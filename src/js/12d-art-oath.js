@@ -55,7 +55,7 @@
     } };
 
   // ---------------- Ser Aldric Vane, the Oathbound (Rare tank) ----------------
-  AK.CHARS.aldric = { name: 'Aldric', circle: 'oath', hs: 1.02, ws: 1.2, aF: -.28, aB: -.5, anim: 'bash', eye: '#2A1E1A',
+  AK.CHARS.aldric = { name: 'Aldric', circle: 'oath', hs: 1.02, ws: 1.2, aF: -.28, aB: -.12, anim: 'bash', eye: '#2A1E1A',
     wpn: { fam: 'ore', fam2: 'hide', t: 2, r: 1 },
     build(k, w) {
       const u = k.u;
@@ -68,7 +68,7 @@
       k.add(3.05, 'up', iron, P(-k.hipW * 1.15, k.waY + .5, k.hipW * 1.15, k.waY + .5, k.hipW * 1.3, k.hiY * .5, -k.hipW * 1.25, k.hiY * .5));
       const tb = k.add(3.1, 'up', crim, P(-k.sw * .45, k.shY + 1.2 * u, k.sw * .6, k.shY + 1.2 * u, k.sw * .55, k.waY, k.hipW * .7, k.hiY * .2, k.hipW * .1, k.hiY * .05, -k.hipW * .55, k.hiY * .2, -k.sw * .45, k.waY), { bev: 1 });
       k.add(3.12, 'up', gold, R(-20, k.shY + 1.2 * u, 40, k.U(1)), { clip: tb });
-      const ex = k.sw * .1, ey = k.shY + (k.waY - k.shY) * .45;
+      const ex = k.sw * .42, ey = k.shY + (k.waY - k.shY) * .45;
       k.add(3.15, 'up', gold, P(ex - 1.2, ey - 1.6, ex + 1.2, ey - 1.6, ex + 1.5, ey + 1.4, ex - 1.5, ey + 1.4));
       k.add(3.16, 'up', m('#FFE9A8', 'glow'), Q(ex - .4, ey - .5, 1, 1), { nl: 1, nolight: 1 });
       belt(k, lea, { buckle: gold, w: 2 });
@@ -80,12 +80,17 @@
       k.add(4.32, 'head', gold, R(hx - hw * 1.3, hy - hh * .45, hw * 2.6, k.U(1)), { clip: helm });
       k.add(4.25, 'head', crim, P(hx - hw * .4, hy - hh * 1.05, hx + hw * .4, hy - hh * 1.2, hx + hw * .1, hy - hh * 1.75, hx - hw * .7, hy - hh * 1.8, hx - hw * 1.6, hy - hh * 1.2, hx - hw * 1.9, hy - hh * .2, hx - hw * 1.3, hy - hh * .7), { bev: .8 });
       // kite shield with a lantern sigil (the role weapon)
-      const sh = k.H * .46, sw2 = sh * .34, scx = k.hB[0] - 1.6 * u, scy = k.hB[1] - sh * .2;
+      const sh = k.H * .46, sw2 = sh * .36, scx = k.hB[0] - 1.2 * u, scy = k.hB[1] - sh * .2;
       const kite = t => P(scx - sw2 + t, scy - sh * .5 + t, scx + sw2 - t, scy - sh * .5 + t, scx + sw2 - t, scy - sh * .1, scx, scy + sh * .5 - t * 1.4, scx - sw2 + t, scy - sh * .1);
-      k.add(5, 'armB', w.r >= 1 ? w.R : w.D, kite(0), { bev: .8 });
+      k.add(5, 'armB', w.r >= 1 ? w.R : w.P, kite(0), { bev: .8 });
       const fld = k.add(5.1, 'armB', crim, kite(k.U(1.2)), { bev: .9, sep: 1 });
-      k.add(5.2, 'armB', gold, P(scx - 1.3, scy - sh * .2, scx + 1.3, scy - sh * .2, scx + 1.6, scy + sh * .08, scx - 1.6, scy + sh * .08), { clip: fld });
-      k.add(5.25, 'armB', w.G || m('#FFE9A8', 'glow'), Q(Math.round(scx - .5), Math.round(scy - sh * .1), 1, 2), { nl: 1, lr: 8, nolight: !w.G });
+      k.add(5.12, 'armB', silver, R(scx - 2.6, scy - sh, 5.2, sh * 2), { clip: fld });
+      // the lantern sigil across both halves: cap, gold cage, lit glass, base
+      const ly = scy - sh * .24;
+      k.add(5.2, 'armB', gold, P(scx - 1.2, ly + 1.2, scx + 1.2, ly + 1.2, scx + .5, ly, scx - .5, ly), { clip: fld });
+      k.add(5.21, 'armB', gold, R(scx - 1.9, ly + 1.2, 3.8, 4.4), { clip: fld });
+      k.add(5.22, 'armB', gold, R(scx - 2.2, ly + 5.4, 4.4, 1.2), { clip: fld });
+      k.add(5.25, 'armB', w.G || m('#FFE9A8', 'glow'), R(scx - 1, ly + 2, 2, 2.8), { nl: 1, lr: 8, nolight: !w.G });
       arm(k, 'F', iron, silver, { bracer: silver, cuff: iron, big: 1.1 });
       const bl = k.H * .46, bw = 1.2;
       k.held(7, 'F', .35, [
@@ -104,13 +109,21 @@
     wpn: { fam: 'ore', fam2: 'wood', t: 1, r: 1 },
     build(k, w) {
       const u = k.u;
-      const habit = m('#6A4A30'), cowl = m('#4E3422'), bronze = m('#C8903E', 'metal'), rope = m('#C8B890', 'leather'), skin = m(SKINS[0], 'skin'), hair = m('#6A4A30', 'hair'), boot = m('#4A3428', 'leather');
+      const habit = m('#5E4230'), cowl = m('#46301F'), bronze = m('#D29A3E', 'metal'), rope = m('#C8B890', 'leather'), skin = m(SKINS[0], 'skin'), hair = m('#6A4A30', 'hair'), boot = m('#4A3428', 'leather');
       // the great bell strapped to his back, taller than his head
-      const bx = -k.sw * .9, by = k.shY - 3;
-      k.add(.1, 'up', bronze, E(bx, by - 8.2, 1.3, 1.1));
-      k.add(.2, 'up', bronze, P(bx - 3, by - 7.5, bx + 3, by - 7.5, bx + 4, by - 3, bx + 4.6, by + 3.4, bx + 6.4, by + 5.2, bx - 6.4, by + 5.2, bx - 4.6, by + 3.4, bx - 4, by - 3), { bev: 1.2 });
-      k.add(.25, 'up', m('#8A5A2A', 'metal'), R(bx - 6.4, by + 3.2, 12.8, 1.1));
-      k.add(.26, 'up', m('#3A2A20', 'flat'), E(bx, by + 5.4, 5, .9), { nl: 1 });
+      // crown loop, a bell profile (narrow crown, waist, flared lip), bright rim, dark mouth,
+      // an iron clapper hanging below the lip, a strap binding it to him
+      const bx = -k.sw * 1.42, bt = k.top - 3.6, bb = k.shY + 1.6, bH = bb - bt;
+      const bronzeD = m('#9A6428', 'metal'), rim = m('#EDC262', 'metal'), clap = m('#4A4450', 'metal'), strap = m('#4A3022', 'leather');
+      k.add(.08, 'up', bronzeD, rrect(bx - 1.6, bt - 2.2, 3.2, 2.6, 1));
+      const bel = k.add(.1, 'up', bronze, P(bx - 3, bt + 1.2, bx - 2, bt, bx + 2, bt, bx + 3, bt + 1.2, bx + 3.3, bt + bH * .45, bx + 4.2, bt + bH * .72, bx + 6.2, bt + bH * .9, bx + 6.6, bb, bx - 6.6, bb, bx - 6.2, bt + bH * .9, bx - 4.2, bt + bH * .72, bx - 3.3, bt + bH * .45), { bev: 1.4 });
+      k.add(.12, 'up', bronzeD, R(bx - 8, bt + bH * .22, 16, k.U(1)), { clip: bel, nl: 1 });
+      k.add(.12, 'up', bronzeD, R(bx - 8, bt + bH * .78, 16, k.U(1.2)), { clip: bel, nl: 1 });
+      k.add(.14, 'up', rim, R(bx - 8, bb - k.U(1.6), 16, k.U(1.6)), { clip: bel, sep: 1 });
+      k.add(.16, 'up', m('#2A1A12', 'flat'), E(bx, bb, 5.6, .9), { nl: 1 });
+      k.add(.17, 'up', clap, C(bx, bb - 1.5, .6, bx, bb + 1.2, .6), { nl: 1 });
+      k.add(.18, 'up', clap, E(bx, bb + 1.7, 1.3, 1.3), { sep: 1 });
+      k.add(.2, 'up', strap, P(bx - 3.6, bt + bH * .42, bx - 2.4, bt + bH * .42, bx + 6, bt + bH * .72, bx + 6, bt + bH * .72 + 1.2), { clip: bel });
       legs(k, m('#4A3A30'), boot, {});
       arm(k, 'B', habit, skin, { bell: habit });
       // round brown habit with a rope belt and a fallen cowl
@@ -198,11 +211,16 @@
       k.add(4.35, 'head', m('#FFD070', 'glow', { light: '#FF9A40' }), Q(Math.round(hx + hw * .5), Math.round(hy - hh * .25), 1, 1), { nl: 1, lr: 8, pulse: 1 });
       seamS(4.34, 'head', R(hx - hw * .6, hy - hh * 1.1, .8, hh * .9));
       // greatshield split by a burning crack (the role weapon)
-      const sh = k.H * .5, sw2 = sh * .36, scx = k.hB[0] - 1.5 * u, scy = k.hB[1] - sh * .2;
+      const sh = k.H * .56, sw2 = sh * .36, scx = k.hB[0] - 2.6 * u, scy = k.hB[1] - sh * .24;
       const gs = t => P(scx - sw2 + t, scy - sh * .5 + t, scx + sw2 - t, scy - sh * .5 + t, scx + sw2 - t, scy + sh * .05, scx + sw2 * .5 - t * .7, scy + sh * .35 - t * .4, scx, scy + sh * .5 - t * 1.2, scx - sw2 * .5 + t * .7, scy + sh * .35 - t * .4, scx - sw2 + t, scy + sh * .05);
-      k.add(5, 'armB', w.r >= 1 ? m('#8A7A70', 'metal') : plateD, gs(0), { bev: .8 });
-      const fld = k.add(5.1, 'armB', m('#2E2426', 'metal'), gs(k.U(1.2)), { bev: .9, sep: 1 });
-      k.add(5.2, 'armB', w.G || seam, P(scx - .4, scy - sh * .5, scx + .8, scy - sh * .5, scx - .2, scy - sh * .15, scx + .9, scy + sh * .15, scx - .1, scy + sh * .5, scx - .9, scy + sh * .5, scx + .1, scy + sh * .15, scx - .9, scy - sh * .15), { clip: fld, nl: 1, lr: 16, pulse: 1 });
+      k.add(5, 'armB', m(mix(w.P.hex, '#8E8488', .55), 'metal'), gs(0), { bev: .8 });
+      const fld = k.add(5.1, 'armB', m('#3A2A2A', 'metal'), gs(k.U(1.5)), { bev: 1, sep: 1 });
+      // the burning crack: one unbroken jagged seam top to bottom, two short branches
+      const ck = [[.6, -.56], [-.6, -.3], [.9, -.08], [-1.2, .18], [-.2, .56]], fire = seam;
+      for (let i = 0; i < ck.length - 1; i++) k.add(5.2, 'armB', fire, C(scx + ck[i][0], scy + ck[i][1] * sh, .8, scx + ck[i + 1][0], scy + ck[i + 1][1] * sh, .8), { clip: fld, nl: 1, lr: i === 2 ? 22 : 0, nolight: i !== 2, pulse: 1 });
+      k.add(5.21, 'armB', fire, C(scx + .9, scy - sh * .08, .6, scx + 3.4, scy - sh * .2, .5), { clip: fld, nl: 1, nolight: 1 });
+      k.add(5.21, 'armB', fire, C(scx - 1.2, scy + sh * .18, .6, scx - 3.6, scy + sh * .3, .5), { clip: fld, nl: 1, nolight: 1 });
+      if (w.r >= 1) for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.add(5.25, 'armB', w.R, Q(Math.round(scx + dx * (sw2 - 1.6) - .5), Math.round(dy < 0 ? scy - sh * .5 + 1.4 : scy + sh * .02), 1, 1), { nl: 1 });
       arm(k, 'F', plateD, plate, { bracer: plate, cuff: plateD, big: 1.1 });
       const bl = k.H * .5, bw = 1.2;
       k.held(7, 'F', .35, [
