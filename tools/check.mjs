@@ -851,7 +851,7 @@ try {
   for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
     const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
-    const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0 })
+    const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} })
       && go.eval('S.items.length') === old.items.length && Object.keys(old.equip).every(k => go.eval(`S.equip.${k}`) === old.equip[k]);
     go.eval('save(); loadSave()');
     assert(ok && go.eval('S.craft.v === 1 && S.items.length') === old.items.length, `${f}: craft defaults added, items and equip untouched, round trip ok`);
@@ -1096,7 +1096,7 @@ try {
     const away = fresh(31); setup(away, kind); const b = away.eval(`S.mats.${kind}[1]`); away.fn.awayGains(3600); const awayN = away.eval(`S.mats.${kind}[1]`) - b;
     assert(Math.abs(awayN / liveN - 1) <= 0.15, `offline ${kind} 1h within 15% of live (${awayN} vs ${liveN})`);
   }
-  const fsetup = h => h.eval('S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
+  const fsetup = h => h.eval('PACE.farmSecs = 1e9; S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
   const live = fresh(41); fsetup(live); const lk = live.eval('S.totalKills'); run(3600, live);
   const liveRate = live.eval('S.mats.hide[0]') / (live.eval('S.totalKills') - lk);
   const away = fresh(41); fsetup(away); const ak = away.eval('S.totalKills'); const r = away.fn.awayGains(3600);

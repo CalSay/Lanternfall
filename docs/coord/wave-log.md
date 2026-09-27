@@ -166,4 +166,5 @@ The owner first picked landscape-only, then withdrew it: don't force landscape. 
 scene is the main view in portrait; each tab opens as a full-screen menu over the game (with sub-views);
 landscape and desktop show the game left and the menu right, responsively.
 The owner's "wait" stopped two agents: the menu restructure (IA, no work saved) and the enemy + stage
-spacing pass (AR3, 6 uncommitted files left in its worktree). Restart them only when the owner says so.
+spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then said "restart everything, I only meant wait about landscape": all four stopped tasks
+(menus, AR3, BAL1, Expeditions) were relaunched; AR3 and BAL1 continue from WIP commits on their old branches.

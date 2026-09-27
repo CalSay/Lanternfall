@@ -26,6 +26,8 @@ function registerGoal(g) {
   return () => { const j = GOALS.indexOf(rec); if (j >= 0) GOALS.splice(j, 1); };
 }
 let topGoals;
+// Counts Next Up craft picks, so the Craft tab refocuses the recipe even when it is the same one.
+var forgeGoalPicks = 0;
 
 {
   // Save field: min = the strip is collapsed to one line (75-goals-ui.js); picked = the player
@@ -220,29 +222,43 @@ let topGoals;
     go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
   });
 
-  // Forge: the best recipe one tier above the player's best equipped gear.
+  // Craft: the next tier of an item the hero can wear (class kinds via CRAFT_FITS/fits; a
+  // classed hero never sees the legacy Sword or Helm, as in the Craft tab), closest to done.
+  // Go opens the Craft tab with that recipe focused (75-craft-ui reads S.fSlot / S.fTier).
+  const kindsFor = pos => {
+    const row = CRAFT_FITS[pos] || {}, who = heroWho();
+    const own = who !== 'any' ? row[who] || [] : [];
+    const list = own.length ? own : row.any || [];
+    return list.filter(k => fits(k, pos, 'hero'));
+  };
   const forgeNext = () => {
-    let top = 0;
-    for (const sl of SLOTS) { const it = equipped(sl.id); if (it && it.t > top) top = it.t; }
-    const t = Math.min(5, top + 1);
-    if (top >= 5 || S.skills.smith.lv < SMITH_REQ[t - 1]) return null;
     let best = null;
-    for (const sl of SLOTS) {
-      const cost = craftCost(sl.id, t), ks = Object.keys(cost);
-      const p = ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], cost[k])), 0) / ks.length;
-      if (!best || p > best.p) best = { slot: sl.id, t, cost, p };
+    const zt = zoneTier(S.maxZone);
+    for (const pos of CRAFT_HERO_POS) {
+      const cur = equipped(pos);
+      for (const kind of kindsFor(pos)) {
+        const have = cur && (cur.slot === kind || cur.u) ? cur.t : 0;
+        const t = have + 1;
+        if (t > Math.min(5, zt)) continue;
+        const c = canCraft(kind, t);
+        if (!c.cost || c.lv < c.need) continue;
+        const ks = Object.keys(c.cost.mats);
+        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
+        const score = p + (pos === 'weapon' ? 0.02 : 0);
+        if (!best || score > best.score) best = { kind, t, cost: c.cost.mats, p, score };
+      }
     }
     return best;
   };
   registerGoal({
     id: 'forge', sys: 'forge',
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
-    label: () => { const b = forgeNext(); if (!b) return ''; const nm = itemName({ slot: b.slot, t: b.t, plus: 0 });
+    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t);
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
-      if (b.p >= 1) return `Forge ${a} ${nm}: you have the materials`;
+      if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => S.mats[k][b.t - 1] < b.cost[k]);
-      return `Forge ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}`; },
-    icon: () => { const b = forgeNext(); return b ? { item: { slot: b.slot, t: b.t } } : null; },
-    go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.slot; S.fTier = b.t; } } }
+      return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}` : `Craft ${a} ${nm}`; },
+    icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
+    go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
   });
 }

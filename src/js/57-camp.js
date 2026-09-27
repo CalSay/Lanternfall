@@ -48,7 +48,7 @@
 
 const CAMP_TUNE = {
   openZone: 5,              // camp opens at this max zone (Hearth 1 is free)
-  goldPerLv: 600,           // building gold = goldPerLv x L foes' worth at the gate zone
+  goldPerLv: 60,            // (BAL1, was 600) building gold = goldPerLv x L foes' worth at the gate zone
   mult: [1, 1.5, 2, 3, 4],  // material multiplier by row (building level)
   troph: [0, 0, 0, 1, 2],   // trophies by row
   secs: [180, 3600, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row

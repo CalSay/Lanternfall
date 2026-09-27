@@ -108,7 +108,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good', null, 'high');
+    toast(`Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, 'good', null, 'high');
   }
 }
 function gainSkill(k, n, quiet) {
@@ -227,15 +227,16 @@ function awayBase(r) {
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
-  const baseDps = dps / boost;
-  const kills = baseDps > 0 ? t / (mobHp(S.zone) / baseDps + 0.45) * 0.75 * boost : 0;
-  const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
+  // The best zone the party can farm, at most S.zone (BAL1: a zone it cannot clear earns nothing).
+  const baseDps = dps / boost, z = farmableZone(S.zone, baseDps);
+  const kills = baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
+  const gold = kills * mobGold(z), tier = zoneTier(z), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
-  if (kills > 0) gainXp(kills * Math.ceil(1.5 * S.zone) * PACE.heroAwayXp, true);
+  if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
-  emit('awayKills', { kills, zone: S.zone, lines: r.lines });
-  r.note = `Your party kept fighting in ${zoneName(S.zone)}.`;
+  emit('awayKills', { kills, zone: z, lines: r.lines });
+  r.note = `Your party kept fighting in ${zoneName(z)}.`;
   return r;
 }

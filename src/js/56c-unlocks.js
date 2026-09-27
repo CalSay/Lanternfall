@@ -46,15 +46,19 @@
 // Sim-tuned against T16 (marked (sim) below; spec values in the comments): with the spec's
 // gates the first Epic landed at 6-20 min (Grenna's 8% at zone 6, Morwen at zone 12).
 
+// BAL1 (owner: "party members are far too easy to get"): T16 is now first recruit 15-30 min,
+// first Rare 1.5-3h, first Epic day 2-4, first Legendary week 2-3. Gold prices are in foes' worth
+// (kills x a normal foe's gold at zone `zone`, or at `from`; foesGold in 56-roster.js), so they
+// follow the PACE curve. Every how line reads these values.
 const UNLOCK_TUNE = {
   renownBounty: 1, renownElite: 3,
-  aldric: { renown: 15, gold: 25000 },
-  vesperRenown: 60,
-  caedmon: { renown: 80, zone: 35 }, wyrmRenown: 5,
+  aldric: { renown: 25, zone: 16, kills: 150 },   // (BAL1) was 15 Renown + 25K gold
+  vesperRenown: 90,                              // (BAL1) was 60
+  caedmon: { renown: 250, zone: 35 }, wyrmRenown: 5, // (BAL1) was 80 Renown
   quests: {
-    bram: { from: 3, wood: [1, 60] },
-    maren: { from: 4, ess: [2, 40] },            // (sim) spec 20: Maren landed at 9-16 min (T16 Rare 15-40)
-    elowen: { from: 48, gold: 2e12, ess: [4, 20] },   // (sim, M6) spec zone 28 + 150M: first Legendary landed at ~2h (T16 wants 6-12h)
+    bram: { from: 10, wood: [1, 80] },            // (BAL1) was zone 3, 60 logs
+    maren: { from: 16, ess: [3, 30] },           // (BAL1) was zone 4 + 40 Glowing (spec 20 Glowing)
+    elowen: { from: 48, kills: 3000, ess: [4, 20] },  // (sim, M6/BAL1) spec zone 28 + 150M; M6 2T gold
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {
@@ -64,13 +68,13 @@ const UNLOCK_TUNE = {
   thessaly: { type: 'wraith', tier: 3 },
   corvin: { bosses: 150, tier: 2, creditMax: 50 },
   rotation: ['anselm', 'kestrel', 'vesper', 'thessaly', 'anselm', 'grenna', 'vesper'],
-  visitorFrom: 6,
-  visitors: {
-    anselm: { from: 6, gold: 60000, ess: [2, 20] },
-    vesper: { from: 18, gold: 20e6, ess: [3, 30] },
-    kestrel: { from: 6, gold: 30000 * 3 },
-    thessaly: { from: 6, gold: 60000 * 3, ess: [2, 20] },
-    grenna: { from: 18, gold: 4e6 * 5, ess: [3, 30] }
+  visitorFrom: 16,                               // (BAL1) was 6
+  visitors: {                                    // gold: kills x a foe of zone `from`
+    anselm: { from: 16, kills: 300, ess: [3, 20] },
+    vesper: { from: 30, kills: 500, ess: [4, 30] },
+    kestrel: { from: 16, kills: 600 },
+    thessaly: { from: 16, kills: 900, ess: [3, 20] },
+    grenna: { from: 30, kills: 1500, ess: [4, 30] }
   },
   trade: { n: 10, goldKills: 150 }
 };
@@ -100,6 +104,8 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   const clamp01 = x => Math.max(0, Math.min(1, x || 0));
   const bossesBeaten = () => (S.stats ? S.stats.bosses : Math.max(0, S.maxZone - 1));
   const ess = t => MAT.ess.short[t - 1] + ' Essence';
+  // Gold of a tune entry: an explicit gold, or kills x a foe of its zone (or `from`).
+  const goldOf = x => x.gold != null ? x.gold : foesGold(x.zone || x.from, x.kills || 0);
   const costTxt = c => [c.gold ? fmt(c.gold) + ' gold' : '', c.ess ? `${c.ess[1]} ${ess(c.ess[0])}` : ''].filter(Boolean).join(' + ');
   // Materials from tier t up (the named tier is spent first), like the roster's essence costs.
   const have = (k, t) => { let n = 0; for (let i = t - 1; i < 5; i++) n += S.mats[k][i] || 0; return n; };
@@ -156,7 +162,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
     const need = [];
     if (q.wood) need.push({ k: 'wood', t: q.wood[0], n: q.wood[1], have: have('wood', q.wood[0]) });
     if (q.ess) need.push({ k: 'ess', t: q.ess[0], n: q.ess[1], have: have('ess', q.ess[0]) });
-    return { need, gold: q.gold || 0, from: q.from, open: S.maxZone >= q.from, done: isRecruited(id) };
+    return { need, gold: goldOf(q) || 0, from: q.from, open: S.maxZone >= q.from, done: isRecruited(id) };
   };
   const itemsReady = id => { const q = questInfo(id); return !!q && q.open && q.need.every(x => x.k === 'ess' || x.have >= x.n); };
 
@@ -218,7 +224,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   };
   const visitorCost = id => {
     const v = T.visitors[id];
-    return { gold: v.gold, ess: v.ess || null };
+    return { gold: goldOf(v), ess: v.ess || null };
   };
 
   // ---------------- routes ----------------
@@ -237,16 +243,16 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
     how: () => `Quest "The Barrow Lamp": bring ${q.maren.ess[1]} ${ess(q.maren.ess[0])} (${Math.min(have('ess', q.maren.ess[0]), q.maren.ess[1])}/${q.maren.ess[1]}, from zone ${q.maren.from}).`
   });
   route('elowen', {
-    source: 'quest', ready: () => S.maxZone >= q.elowen.from, cost: () => ({ gold: q.elowen.gold, ess: q.elowen.ess }),
-    how: () => `Quest "Relight the Chapel" at zone ${q.elowen.from}: ${fmt(q.elowen.gold)} gold and ${q.elowen.ess[1]} ${ess(q.elowen.ess[0])}.`
+    source: 'quest', ready: () => S.maxZone >= q.elowen.from, cost: () => ({ gold: goldOf(q.elowen), ess: q.elowen.ess }),
+    how: () => `Quest "Relight the Chapel" at zone ${q.elowen.from}: ${fmt(goldOf(q.elowen))} gold and ${q.elowen.ess[1]} ${ess(q.elowen.ess[0])}.`
   });
   route('morwen', {
     source: 'quest', ready: () => !!U().quests.morwen, cost: () => ({ gold: 0 }),
     how: () => `Beat the ${zoneName(q.morwen.zone)} boss (zone ${q.morwen.zone}) with no support in your party.`
   }, true);
   route('aldric', {
-    source: 'renown', ready: () => U().renown >= T.aldric.renown, cost: () => ({ gold: T.aldric.gold }),
-    how: () => `Renown ${Math.min(U().renown, T.aldric.renown)}/${T.aldric.renown} on the bounty board, then ${fmt(T.aldric.gold)} gold.`
+    source: 'renown', ready: () => U().renown >= T.aldric.renown, cost: () => ({ gold: goldOf(T.aldric) }),
+    how: () => `Renown ${Math.min(U().renown, T.aldric.renown)}/${T.aldric.renown} on the bounty board, then ${fmt(goldOf(T.aldric))} gold.`
   });
   route('caedmon', {
     source: 'renown', ready: () => caedmonRenown() >= T.caedmon.renown && S.maxZone > T.caedmon.zone, cost: () => ({ gold: 0 }),
@@ -272,7 +278,11 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   }, true);
   route('oriel', {
     source: 'craft', ready: () => !!U().starChart, cost: () => ({ gold: 0 }),
-    how: () => "Craft a Star Chart at the Enchanter's Table (40 Mithril-tier Crystal, 20 Radiant Essence, 1 Wraith Veil). The table is not built yet."
+    how: () => {
+      const c = canCraft('starChart'), m = c.cost.mats, t = 3;
+      const parts = Object.entries(m).map(([k, n]) => `${n} ${matName(k, t)}`).concat((c.cost.troph || []).map(([i, n]) => `${n} ${CRAFT_TROPHIES[i].n}`));
+      return `Craft a Star Chart at the Enchanter's Table (Enchanting ${c.need}): ${parts.join(', ')}.`;
+    }
   }, true);
   route('vesper', {
     source: 'tavern', ready: () => visiting('vesper'), cost: () => visitorCost('vesper'),
@@ -320,7 +330,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
     },
     aldric: () => {
       const r = U().renown, n = T.aldric.renown;
-      return r < n ? { src: 'renown', pct: 0.8 * r / n, how: `Renown ${r}/${n}` } : { src: 'renown', pct: 0.8 + 0.2 * partPct(S.gold, T.aldric.gold), how: `Renown ${n}/${n}. ${fmt(T.aldric.gold)} gold to hire.`, action: recruitAct('aldric', 'Recruit') };
+      return r < n ? { src: 'renown', pct: 0.8 * r / n, how: `Renown ${r}/${n}` } : { src: 'renown', pct: 0.8 + 0.2 * partPct(S.gold, goldOf(T.aldric)), how: `Renown ${n}/${n}. ${fmt(goldOf(T.aldric))} gold to hire.`, action: recruitAct('aldric', 'Recruit') };
     },
     vesper: () => ({ src: 'renown', pct: clamp01(U().renown / T.vesperRenown), how: `Renown ${Math.min(U().renown, T.vesperRenown)}/${T.vesperRenown}, or hire her at the Tavern` }),
     caedmon: () => {

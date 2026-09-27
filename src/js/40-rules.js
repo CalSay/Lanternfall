@@ -40,33 +40,46 @@ function rollRarity(lv) {
 // merges and check with `node tools/sim.mjs --targets` (or try values with --pace k=v).
 // Before M6 the game had no bend: mob HP 40 x 1.42^(z-1) everywhere, boss x8, Starlit
 // essence from zone 25 and one companion XP curve, so Region 1 fell in about 3 hours.
+// BAL1 (owner, 2026-09-27: "the pace still feels far too quick ... damage ramps so fast"): the
+// whole curve is about 3x slower (T1 zones 6-9 / 10-13 / 15-19 at 30m / 1h / 2h, Region 1 boss
+// on day 4-8, Region 2 boss in weeks 3-6). Companion levels now come from time spent fighting
+// (56-roster.js ROSTER_TUNE gapMax, xpSecs), so the zone curve past the first half hour is set by
+// the companion XP curve below, and the HP curve only has to match the power per level.
 const PACE = {
   hp0: 40,                  // zone 1 mob HP (unchanged)
-  hpEarly: 1.48, early: 1,  // BAL1: mob HP x per zone up to zone `early` (the first minutes); 1 = off
-  hpGrowth: 1.48,           // mob HP x per zone up to the bend (was 1.42; brings T1 back into band after B7)
-  bend: 30,                 // zones past the bend grow by hpLate instead
-  hpLate: 1.29,             // mob HP x per zone past zone 30 (was 1.42). Slower growth, because
-                            //   late time is paced by companion XP; it keeps the Region 2 boss
-                            //   below the level-200 roster cap with a few zones to spare
+  hpEarly: 1.9, early: 12,  // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+  hpGrowth: 1.48,           // mob HP x per zone from `early` to the bend (M6 1.48)
+  bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
+  hpLate: 1.21,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
+                            //   about 2 companion levels a zone, so Region 2 is paced by their XP
+                            //   and the level-200 roster cap lands just past the Region 2 boss
   bossHp: 8,                // zone boss HP x a normal mob (unchanged)
   region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
-  regionStep: [5, 2.5],     // mob HP x this from each region's last zone on (x5 from zone 35,
-                            //   x2.5 more from 70; the last value repeats). The step stays, so
-                            //   the zones after a region boss are no easier than the boss
+  regionStep: [2, 1.5],     // (BAL1, was 5 / 2.5) mob HP x this from each region's last zone on
+                            //   (x2 from zone 35, x1.5 more from 70; the last value repeats). The
+                            //   step stays, so the zones after a region boss are no easier
   regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
-  compLv: 90,               // companion levels past compLv need more XP...
-  compXp: 1.2,              //   ...x1.2 per level past it (level 95: x2.5, 100: x6.2)...
-  compXpMax: 80,            //   ...up to x80 from level 114 on: the Region 2 plateau (days, not hours)
+  compLv: 80,               // (BAL1, was 90) companion levels past compLv need more XP...
+  compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 90: x3, 100: x9.6)...
+  compXpMax: 260,           //   ...(BAL1, was 80) up to x260 from level 129 on: Region 2 is a few levels a day
   essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (was every 6 zones, so Starlit
                             //   (tier 5) began at 25). Starlit is now Region 2's essence
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
   // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
-  bladeX: 2, bladeEvery: 25,  // Blade attack x bladeX every bladeEvery levels (was x2 every 25)
-  heroLv: 0.05              // hero damage + heroLv per hero level (was +5%)
+  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25)
+  heroLv: 0.04,             // hero damage + heroLv per hero level (was +5%)
+  // BAL1: idle income never stalls. A normal foe that takes longer than farmSecs to kill means
+  // the zone cannot be farmed: auto-progress (and the away gains) use the highest zone that can.
+  farmSecs: 20
 };
-// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv, so the first
-// two hours keep their numbers.
+// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv (about the end of day 1).
 const paceXp = lv => lv > PACE.compLv ? Math.min(PACE.compXpMax, Math.pow(PACE.compXp, lv - PACE.compLv)) : 1;
+// The highest zone <= maxZ whose normal foe dies within PACE.farmSecs at this dps (zone 1 at worst).
+function farmableZone(maxZ, dps) {
+  let z = Math.max(1, Math.floor(maxZ));
+  while (z > 1 && !(dps > 0 && mobHp(z) / dps <= PACE.farmSecs)) z--;
+  return z;
+}
 const isRegionBoss = z => z % PACE.region === 0;
 const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 // The region steps a zone has passed, multiplied.

@@ -205,7 +205,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
 {
   const T = {
     on: 1,                                              // 0 turns every effect off (sim comparisons)
-    today: 0.1,                                         // (sim) share of each bonus that applies today
+    today: 1,                                           // (BAL1, was 0.1) share of each bonus that applies today: full, so every text is the real number
     commonCause: 0.25, bond: 0.5, bondLv: 25,
     abShare: 0.2, aoeEff: 0.5, lowUp: 0.5, cdMax: 0.5, otherCritX: 2,
     honed: 0.15, seasoned: 0.25,                        // Epic/Legendary L10 ability power; +25% per 25 levels past 25
