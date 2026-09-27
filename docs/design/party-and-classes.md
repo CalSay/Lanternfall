@@ -56,7 +56,8 @@ Missing everything costs time, never progress.
 
 - **New games** open on a character-creation screen: name the hero (1-16 characters, default
   "Wanderer", stored in the existing `S.name`), pick one of 4 class cards, tap "Begin". Each card
-  shows the class sprite, role, a one-line pitch and the ability.
+  shows the class sprite, role, a one-line pitch, the ability and the starting companion. After
+  "Begin", the starter's joining moment plays (3.1).
 - **Existing saves** get a one-time "Choose your path" screen when the update loads. Warden is
   preselected (it matches today's sword hero), so one tap keeps things as they are.
 - The class is permanent. **Mirror of Embers** is the only way to change it: a consumable that
@@ -97,31 +98,106 @@ auto-cast value (a flat 1.05 dps factor; see 4.11).
 
 ## 3. Companions: the roster
 
-Companions are named characters. Each has a title, a bio, a role, a **speciality** (a rule only
-they have), a signature ability, and milestone unlocks as they level. **3 on the field plus the
-hero; the rest wait on the bench.** Characters belong to one of three circles, used by synergies:
-**Hedgefolk** (common folk of the hollows), **the Oath** (the old lantern order), **Dusk Company**
-(sellswords who work at night).
+Companions are named characters. Each has a **rarity**, a title, a bio, a role, a **speciality**
+(a rule only they have), a signature ability, and milestone unlocks as they level. **3 on the
+field plus the hero; the rest wait on the bench.** Characters belong to one of four circles,
+used by synergies: **Hedgefolk** (common folk of the hollows), **the Oath** (the old lantern
+order), **Dusk Company** (sellswords who work at night), **Wayfarers** (travellers passing through).
 
-### 3.1 Roster (10 characters)
+### 3.1 Rarity, roster and how each character joins
 
-`idx` = old `S.comp` index that seeds this character on migration (section 6).
+**Rarity defines strength.** It is fixed per character: there is no rarity upgrading. Finding
+the higher-rarity characters is a long-term goal.
 
-| Character | Title | Role | Circle | idx | Recruited by |
+| Rarity | Frame colour | Base power | Growth per level | Extra kit | Keeps it useful |
 |---|---|---|---|---|---|
-| Tobin Reed | the Hedge Squire | tank | Hedgefolk | 0 | Joins free at the start |
-| Wren Hollowmere | the Batwing Archer | striker | Hedgefolk | 1 | Zone 2, 120 gold |
-| Old Hesketh | the Lamplighter | support | Hedgefolk | - | Beat the Batwing Caves boss (zone 2) once: he joins free |
-| Pip Cinderly | the Hedge Mage | caster | Hedgefolk | 2 | Zone 4, 1,100 gold |
-| Maren Ashvale | the Lampwarden | tank | the Oath | - | Quest at Beetle Barrows (zone 4): bring 20 Glowing Essence to the Barrow Lamp |
-| Ser Aldric Vane | the Oathbound | tank | the Oath | 3 | Zone 8, 25K gold |
-| Kestrel Thane | the Skyfall Dragoon | striker | Dusk Company | 4 | Zone 12, 150K gold |
-| Isolde Marrow | the Duskblade | striker | Dusk Company | - | Boss drop: "Dusk Contract", 25% per zone boss kill from zone 16, guaranteed by the 4th |
-| Oriel Vess | the Starcaller | caster | Dusk Company | 5 | Zone 20, 5M gold |
-| Saint Elowen | the Last Lantern | support | the Oath | 6 | Quest at zone 28: "Relight the Chapel", 150M gold and 20 Blazing Essence |
+| Common | stone `#A9B1BD` | x1 | x1.080 | speciality only | +50% XP, promotions cost x0.5, synergies that include a Common are +25% stronger (*Common Cause*) |
+| Rare | blue `#7FB2FF` | x1.5 | x1.081 | speciality + a Rare trait (one small innate bonus) | - |
+| Epic | violet `#B58CFF` | x2.2 | x1.082 | speciality + innate passive (their L10 passive is active from level 1; L10 instead gives +15% ability power) | - |
+| Legendary | gold `#F2C14E` | x3.2 | x1.083 | Epic kit + a **Legend aura** for the whole party + Bond active from level 1 | - |
 
-Per role: 3 tanks, 3 strikers, 2 casters, 2 supports. Quests show as a card in the Party tab
-with one progress bar and one button.
+The power formula (3.3) multiplies by these. At equal level and rank an Epic out-damages a
+Common by 2.2x, so rarity is a real upgrade. Commons stay in line-ups through cheap promotions,
+fast catch-up, taunts, heals and shields, and Common-heavy synergies (Hedgefolk).
+
+**Roster (18 characters).** `idx` = old `S.comp` index that seeds this character on
+migration (section 6).
+
+| Character | Title | Rarity | Role | Circle | idx | How to recruit (avenue) |
+|---|---|---|---|---|---|---|
+| Tobin Reed | the Hedge Squire | Common | tank | Hedgefolk | 0 | **Starter** for Lanternmage and Ranger. Others: **progress**, reach zone 3 and he joins free |
+| Wren Hollowmere | the Batwing Archer | Common | striker (ranged) | Hedgefolk | 1 | **Starter** for Warden. Others: **progress**, reach zone 2, then 120 gold |
+| Old Hesketh | the Lamplighter | Common | support | Hedgefolk | - | **Progress:** beat the Batwing Caves boss (zone 2) once; joins free |
+| Pip Cinderly | the Hedge Mage | Common | caster | Hedgefolk | 2 | **Progress:** reach zone 4, then 1,100 gold |
+| Bram Hollis | the Woodcutter | Common | striker (melee) | Hedgefolk | - | **Starter** for Chaplain. Others: **quest** "Wood for the Winter", bring 60 Oak Logs to his camp (from zone 3) |
+| Maren Ashvale | the Lampwarden | Rare | tank | the Oath | - | **Quest:** "The Barrow Lamp": bring 20 Glowing Essence (from zone 4) |
+| Ser Aldric Vane | the Oathbound | Rare | tank | the Oath | 3 | **Renown 15** on the bounty board, then 25K gold |
+| Kestrel Thane | the Skyfall Dragoon | Rare | striker (melee) | Dusk Company | 4 | **Progress:** reach zone 12, then 150K gold |
+| Thessaly Gloam | the Bog Seer | Rare | caster | Wayfarers | - | **Bestiary:** finish the Marsh Wraith page (all 3 tiers) |
+| Brother Anselm | the Bellringer | Rare | support | the Oath | - | **Tavern visitor** (from zone 6): 60K gold + 20 Glowing Essence |
+| Grenna Holt | the Stonebreaker | Epic | tank | Wayfarers | - | **Boss drop:** "Stonebreaker's Token" from Quarry Ruins bosses, 8% +8% per miss (guaranteed by the 12th) |
+| Isolde Marrow | the Duskblade | Epic | striker (melee) | Dusk Company | - | **Boss drop:** "Dusk Contract" from any zone boss from zone 16, 10% +10% per miss (guaranteed by the 10th) |
+| Oriel Vess | the Starcaller | Epic | caster | Dusk Company | 5 | **Crafting:** summon with a Star Chart made at the Enchanter's Table (40 Mithril-tier Crystal, 20 Radiant Essence, 1 Wraith Veil) |
+| Morwen Tallow | the Candlewitch | Epic | caster | Wayfarers | - | **Quest with a condition:** beat the Fungal Deep II boss (zone 12) with no support in the party |
+| Vesper Lark | the Songweaver | Epic | support | Wayfarers | - | **Tavern visitor** (from zone 18): 20M gold + 30 Radiant Essence. Fallback: joins free at Renown 60 |
+| Saint Elowen | the Last Lantern | Legendary | support | the Oath | 6 | **Quest** at zone 28: "Relight the Chapel", 150M gold + 20 Blazing Essence |
+| Caedmon the Unburnt | the Ashen Knight | Legendary | tank | the Oath | - | **Region clear + Renown:** clear Region 1 (zone 35 boss) with Renown 80. Optional light route: each Ashen Wyrm raid kill counts as 5 Renown toward him |
+| Corvin Black | the Hollow King's Blade | Legendary | striker (melee) | Dusk Company | - | **Achievement:** "Kingslayer": 150 zone boss kills and every bestiary page at tier 2. Optional later route: the "Hollow Court" expedition counts as 50 boss kills |
+
+Per role and rarity:
+
+| Role | Common | Rare | Epic | Legendary |
+|---|---|---|---|---|
+| tank | Tobin | Maren, Aldric | Grenna | Caedmon |
+| striker | Wren, Bram | Kestrel | Isolde | Corvin |
+| caster | Pip | Thessaly | Oriel, Morwen | - |
+| support | Hesketh | Anselm | Vesper | Elowen |
+
+**Unlock avenues.** No random paid pulls and no gacha. Every character has a deterministic
+route, and every chance-based route has a guarantee.
+
+| Avenue | How it works | Characters |
+|---|---|---|
+| Starter | Joins on "Begin" at character creation, picked by class (below) | Tobin, Wren or Bram |
+| Progress | Reach a zone or clear a region; some then cost gold | Tobin, Wren, Hesketh, Pip, Kestrel, Caedmon (region) |
+| Character quest | A card in the Party tab with one goal: bring items, or win a boss fight under a condition | Bram, Maren, Morwen, Elowen |
+| Boss drop | A named token from zone bosses. Chance rises by a fixed step after every miss and hits 100% (pity shown on the locked card: "Dusk Contract: 30% next boss") | Grenna, Isolde |
+| Renown | Each claimed bounty gives 1 Renown (elite bounties 3). Characters join at thresholds | Aldric (15), Vesper fallback (60), Caedmon (80) |
+| Achievements and bestiary | A bestiary page or an achievement completes the unlock | Thessaly, Corvin |
+| Tavern visitor | One visitor a day in the World tab (Tavern section), from a fixed weekly rotation (below). Hired for gold + essence. Works offline, uses the device date | Anselm, Vesper |
+| Crafting | A summoning item from rare materials at the Enchanter's Table (gathering spec) | Oriel |
+| Raid and expeditions | Optional and light: they shorten another route and are never the only way | Caedmon (raid), Corvin (expedition, later) |
+
+**Visitor rotation** (day = days since 2026-01-01, mod 7): Anselm, Kestrel, Vesper, Thessaly,
+Anselm, Grenna, Vesper. Anselm and Vesper visit twice a week, so each is guaranteed within 4
+days. The other slots let you hire a character early, before their normal route, at 3x the
+gold (Kestrel, Thessaly) or 5x (Grenna). Visitors already recruited are skipped and the slot
+shows a trader selling 10 essence of your top tier. The visitor stays 24 hours.
+
+**Starting companion.** New games start with the hero plus one Common companion who covers
+what the class lacks: a ranged hero gets a melee companion, a melee hero gets a ranged one.
+
+| Class | Starter | Why |
+|---|---|---|
+| Warden (melee, Front) | Wren Hollowmere (ranged striker, Mid) | The Warden holds the pack and Wren kills it from behind: a complete tank + damage pair |
+| Lanternmage (ranged caster, Back) | Tobin Reed (melee tank, Front) | Someone to stand in front of the glass cannon and hold threat while the AoE lands |
+| Ranger (ranged striker, Mid) | Tobin Reed (melee tank, Front) | Same: Tobin holds, the Ranger focuses and bursts |
+| Chaplain (support, Back) | Bram Hollis (melee striker, Front) | The Chaplain deals x0.2 damage, so the pair needs damage more than a second defender. Bram takes hits in Front (5x pow HP, healed by the Chaplain), his Cleave hits two of a pack of 3, and Blessing adds +20%. Tobin would make the pair nearly unkillable but slow, and the first hour would drag |
+
+Joining moments (shown after "Begin", one tap to continue):
+- **Wren:** An arrow lands at your feet, then another in the slime behind you. "You stand in the right place, for once. Hold them there." Wren Hollowmere drops from the branches and does not ask to come along.
+- **Tobin:** A boy in a pot helm trips over a sword too big for him on the road out of Mossy Hollow. "I'm Tobin. I stand in front. That's the whole job, isn't it?" He does not wait for an answer.
+- **Bram:** A woodcutter looks at your lantern for a long time. "Heard a priest was on the road. I've no prayers left, but I can swing." Bram Hollis walks ahead of you, into the dark.
+
+**First 10 minutes with exactly hero + starter.** Every pair has a Front-liner and a damage
+dealer, and three of the four have no healer, so zones 1-3 get an early grace: enemy attack
+x0.5 and 20% max HP regen between packs (normal 10%). Only Moss Slimes (plain melee) appear in
+zone 1; the first bats dive from zone 2, when Hesketh (zone 2 boss) and a second recruit (Wren
+or Tobin, zones 2-3) are about to join. The starters not chosen join through their normal early
+routes above. Existing saves do not get a starter; they keep their migrated characters. Target
+T18 checks the pairs.
+
+Quest cards, token pity, Renown and visitor state live in `S.party.unlock` (section 6).
 
 ### 3.2 Bios, specialities, abilities, art briefs
 
@@ -185,6 +261,76 @@ Elowen did the night the lights went out. She will not talk about it. She keeps 
 - Ability, *Sanctuary* (20s): heal all 20% max HP, then 3% per second for 5s. Elowen deals no damage.
 - Art: slender, hooded, glowing halo-lantern; cream and gold; a lantern held in both hands.
 
+**Bram Hollis, the Woodcutter** (Common striker, melee). Bram has felled trees in Mossy Hollow
+since he could lift an axe. He says monsters are easier: they fall toward you. He never says
+where his family went.
+- Speciality, *Cleave*: his attacks also hit a second Front-column enemy for 50%.
+- Ability, *Felling Blow* (11s): 6 x ATK to the front enemy; a kill makes his next attack instant.
+- Art: stocky, bearded, rolled sleeves; red plaid and brown; a long woodsman's axe over one shoulder.
+
+**Thessaly Gloam, the Bog Seer** (Rare caster). Thessaly lives on stilts in the Wraithmarsh
+and reads the future in bog water. She came along because the water showed your face. She has
+not said what else it showed.
+- Rare trait: her slows last 30% longer.
+- Speciality, *Mire*: her attacks slow the target 40% for 3s; slowed enemies take +10% damage from casters.
+- Ability, *Sinking Mire* (12s): slows every enemy 50% for 5s and ends any dive in progress (peel).
+- Art: thin, stooped, wide reed hat; murky green and grey-teal; a staff hung with little bottles.
+
+**Brother Anselm, the Bellringer** (Rare support, no damage). Anselm rang the chapel bell every
+dusk for thirty years. When the chapel fell, he took the bell with him. It is heavier than he
+is, and he will not put it down.
+- Rare trait: his buffs last 10% longer.
+- Speciality, *Toll*: every 10s the bell tolls: the party gets +15% attack speed for 4s, and allies below 30% HP get a 10% max HP shield.
+- Ability, *Call to Arms* (15s): heals everyone 12% max HP and gives +20% damage for 6s.
+- Art: round, tonsured, brown habit; brown and bronze; a great bell strapped to his back.
+
+**Grenna Holt, the Stonebreaker** (Epic tank). Grenna cut stone until the golems woke and the
+quarry turned on the town. She broke the first golem with her bare hands. The rest she broke
+with a hammer.
+- Speciality, *Rockhide*: every hit she takes gives 2% damage reduction for 5s, stacking to 20%.
+- Innate passive (Epic): *Bedrock*: takes 25% less from heavy hits and row slams.
+- Ability, *Earthshatter* (14s): taunts all enemies, 3 x ATK and a 1.5s stun to the enemy Front column.
+- Art: huge and broad, leather apron, stone dust on her arms; slate and rust; a two-handed maul.
+
+**Morwen Tallow, the Candlewitch** (Epic caster). Morwen makes candles from things she will not
+name, and each burns a different colour. She is kind to children and cruel to everything else.
+The Fungal Deep was her garden before the spores took it.
+- Speciality, *Wick*: burns on enemies she has hit tick 25% faster (Kindle stacks count as burns).
+- Innate passive (Epic): *Wax Seal*: an enemy that dies while burning bursts for 1 x ATK to its pack.
+- Ability, *Candlelight Vigil* (16s): every enemy burns for 1.5 x ATK per second for 6s; ignores armour.
+- Art: hunched, long hair crowned with dripping candles; black and wax white with coloured flames; a candelabra staff.
+
+**Vesper Lark, the Songweaver** (Epic support, no damage). Vesper sings in taverns for a coin and
+a bed, and fights for free when the song is good. She knows every road song in Lanternfall. She
+wrote half of them, and changed the endings.
+- Speciality, *Refrain*: her song cycles every 6s through three verses for the whole party: Haste (+20% attack speed), Ward (10% max HP shield), Mend (5% max HP heal).
+- Innate passive (Epic): *Encore*: allies' ability cooldowns -10%.
+- Ability, *Crescendo* (20s): all three verses at once at double strength.
+- Art: slim, feathered cap, short cape; teal and gold; a lute slung on her back.
+
+**Caedmon the Unburnt, the Ashen Knight** (Legendary tank). Caedmon walked into the Ashen Wyrm's
+fire to buy a village one hour. He walked out three days later, still burning. He does not
+sleep, and he does not talk about what he saw in the flame.
+- Legend aura, *Unburnt*: the party takes 8% less damage and is immune to burns.
+- Speciality, *Cinder Vow*: once per pack, when he would fall he turns Ashen for 5s instead: he cannot die, taunts all enemies and takes no healing.
+- Innate passive: *Everburn*: enemies that hit him take 10% of the hit as burn.
+- Ability, *Pyre Guard* (16s): taunts all enemies for 4s and reflects 30% of damage taken as fire.
+- Art: tall, charred black plate with glowing orange seams, ember eyes in the helm; black, ash and ember orange; a greatshield split by a burning crack. Legendary sprites get a 2-frame ember shimmer.
+
+**Corvin Black, the Hollow King's Blade** (Legendary striker, melee). Corvin killed for the
+Hollow King for twenty years and never once saw his face. When the King fell, Corvin was the
+only one who did not kneel. He fights for you because you asked, and nobody ever had.
+- Legend aura, *King's Shadow*: the party gets +8% crit chance, and crits on enemies below 50% HP deal +25%.
+- Speciality, *Shadowstep*: ignores formation reach, always attacks the enemy with the lowest HP%, and melee enemies cannot target him while he strikes.
+- Innate passive: *Cold Work*: each kill gives +10% damage for 5s, stacking 3 times.
+- Ability, *Hollow Cut* (10s): 15 x ATK to the lowest-HP enemy; a kill refunds half the cooldown.
+- Art: tall, lean, hooded black coat with a crown-shaped clasp, face never shown; black and bone white with a violet edge; twin curved daggers.
+
+**Rarity notes for the original ten.** Rare traits: Maren +10% max HP, Aldric +10% threat,
+Kestrel +10% crit damage. Epic innate passives: Isolde's *Clean Work* and Oriel's
+*Constellation* are active from level 1. Legendary: Elowen's Legend aura, *Last Light*: the
+party gets +10% max HP and +10% healing received.
+
 ### 3.3 Levels: growth comes from use
 
 - **Only fielded characters earn XP**, from kills, boss wins and bounties completed while they
@@ -198,9 +344,9 @@ Elowen did the night the lights went out. She will not talk about it. She keeps 
   tapering to 0). With the par curve above, a new level-1 recruit fielded at zone 20 reaches the
   party in about 170 enemies (about 5 minutes of fighting).
 - **Offline:** fielded characters earn 75% of the XP of the estimated offline kills (4.11).
-- Power: `pow = 4 * 1.08^(lv-1) * 2^rank * (1 + weaponPct/100) * dmgMult() * (1 + gear().party/100) * mod('party')`.
-  Every character uses the same curve, so none becomes obsolete: early recruits stay as strong
-  as late ones at the same level and rank. Characters differ by role, speciality and ability.
+- Power: `pow = 4 * rarityMult * rarityGrowth^(lv-1) * 2^rank * (1 + weaponPct/100) * dmgMult() * (1 + gear().party/100) * mod('party')`,
+  with `rarityMult` and `rarityGrowth` from the rarity table (3.1). Every new recruit starts at
+  level 1 and uses the catch-up bonus; Commons earn +50% XP on top.
 
 ### 3.4 Milestones and promotions
 
@@ -208,7 +354,7 @@ Elowen did the night the lights went out. She will not talk about it. She keeps 
 cap, XP banks (up to one level's worth) and the card shows **Promote**. Promote cost:
 `500 x mobGold(ceil(25 x (rank + 1) / 3))` gold plus `10 x (rank + 1)` essence of tier
 `min(5, rank + 1)`. Effect: rank +1, power x2, cap +25. Ranks: Recruit, Veteran, Captain,
-Champion, Paragon, Legend, Mythic, Lanternborn (0-7, max level 200).
+Champion, Paragon, Legend, Mythic, Lanternborn (0-7, max level 200). Commons pay half.
 
 **Milestones** make levelling feel like growth. The pattern is the same for everyone: L5 camp
 story 1, L10 a second passive, L15 camp story 2, L20 an ability upgrade, L25 camp story 3 plus
@@ -228,6 +374,17 @@ character sheet under "Stories" with a small toast when unlocked.
 | Isolde | *Clean Work*: +15% crit chance on enemies below 50% HP | Execute threshold 30% -> 40% | The Unread Contract / Who Signed It / Finish |
 | Oriel | *Constellation*: +5% ATK per ally crit in the last 5s, max 25% | Starfall adds a 4th pulse | Bad News from the Sky / The Falling Star / What the Stars Want |
 | Elowen | *Low Flame*: Sanctuary cooldown -4s | Sanctuary also cleanses poison and burns | The Night the Lights Went Out / The Chapel / Lanternfall |
+| Bram | *Timber!*: Felling Blow knocks the target back | Felling Blow cleaves the whole Front column | Split Kindling / The Empty Cottage / Where the Road Forks |
+| Thessaly | *Deep Water*: slowed enemies deal 10% less damage | Sinking Mire also stuns divers for 2s | Water Does Not Lie / The Drowned Village / What She Saw |
+| Anselm | *Steady Hands*: Toll every 8s instead of 10s | Call to Arms also cleanses | Thirty Years of Dusk / The Bell's Name / The Last Toll |
+| Grenna | (Bedrock is innate; L10 gives +15% ability power) | Earthshatter also stuns the Mid column | The Quarry Woke / Bare Hands / Stone Remembers |
+| Morwen | (Wax Seal is innate; L10 gives +15% ability power) | Candlelight Vigil also slows 20% | Colours of Wax / The Garden / What the Candles Are Made Of |
+| Vesper | (Encore is innate; L10 gives +15% ability power) | Crescendo also resets the longest ally cooldown | A Coin and a Bed / The Changed Ending / Her Own Song |
+| Caedmon | (Everburn is innate; L10 gives +15% ability power) | Pyre Guard also shields adjacent allies 15% max HP | One Hour / Three Days in the Flame / The Village He Saved |
+| Corvin | (Cold Work is innate; L10 gives +15% ability power) | Hollow Cut strikes a second target | Twenty Years, No Face / The One Who Did Not Kneel / Asked |
+
+Isolde and Oriel (Epic) and Elowen (Legendary) have their L10 passive from level 1 and get
++15% ability power at L10 instead.
 
 ### 3.5 Synergies
 
@@ -244,6 +401,15 @@ Shown as a banner row on the Party screen: lit when active, dim with "needs X" w
 | Mark and Leap | Wren + Kestrel | Leap always strikes the marked enemy and always crits; a diver Wren marks is knocked back when Kestrel lands (peel) |
 | Dusk Company | any 2 Dusk Company | +25% damage to enemies below 50% HP; with Isolde fielded, Execute threshold +10% |
 | Lantern's Chosen | Lanternmage hero + Elowen | Lantern Flare heals the party 3% max HP per enemy hit |
+| Hunting Party | Wren + Bram | Mark lasts 8s; Bram's hits on the marked enemy cleave the whole Front column |
+| Bell and Song | Anselm + Vesper | All their buffs last 50% longer; each Toll also plays Vesper's current verse |
+| Wax and Kindle | Pip + Morwen | Morwen's burns add Kindle stacks; Pip's Kindle stacks tick as burns under Wick |
+| Mire and Lamp | Thessaly + Maren | Slowed enemies that hit Maren take double Lanternlight burn |
+| Old Enemies | Corvin + Aldric | Both +15% damage; Aldric's Intercept covers Corvin wherever he stands |
+| Wayfarers | any 2 Wayfarers | Fielded members earn +10% XP; ability cooldowns -10% |
+
+Common Cause (3.1) makes every synergy that includes a Common 25% stronger, so Common pairs
+such as Hunting Party and Lamp and Ward stay worth fielding next to Epics.
 
 **Sample line-ups** (hero + 3):
 
@@ -259,11 +425,16 @@ Shown as a banner row on the Party screen: lit when active, dim with "needs X" w
 4. **The Last Vigil** (Chaplain + Aldric, Maren, Elowen). The Old Oath, Maren's Keeper passive
    (+30% HP), Elowen's Vigil. Low damage, almost never wipes: the overnight idle team that holds
    the highest zone offline.
+5. **Candle and Bell** (Lanternmage + Grenna, Morwen, Anselm). Grenna's Earthshatter stuns the
+   Front column while Morwen's burns spread through Wax Seal; Anselm's Toll keeps the tempo.
+   The Epic-era pack-clear team.
+6. **The Hollow Court** (Warden + Corvin, Aldric, Elowen). Old Enemies, The Old Oath and two
+   Legend auras. The endgame boss team.
 
 ### 3.6 Role stats
 
 | Role | Damage per second | Max HP | Armour | Speed (attacks/s) | Threat x | Default row |
-|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|
 | tank | 0.5 x pow (melee) | 12 x pow | 20 (Aldric 40) | 0.8 | 4 | Front |
 | striker | 1.4 x pow single target, crit 15% x3 | 5 x pow | 0 | 1.2 | 1 | Mid |
 | caster | 1.0 x pow to all enemies, ignores armour | 4 x pow | 0 | 0.7 | 1.2 | Back |
@@ -570,7 +741,8 @@ registerState('party', {
   field: [],                // up to 3 character ids
   cells: {},                // id or 'hero' -> cell 0..5 (col*2 + lane; col 0 Front, 1 Mid, 2 Back)
   rec: {},                  // id -> { lv, xp, rank, wpn: itemId|null, trk: itemId|null, seen: 0 }
-  quests: {},               // quest id -> progress
+  unlock: { renown: 0, quests: {}, tokens: {}, visitor: { day: -1, hired: false } },
+                            // quests: id -> progress; tokens: id -> misses since last roll (pity)
   autoCast: true, wipeZone: 0
 });
 ```
@@ -585,7 +757,9 @@ registerState('party', {
    silently; their camp stories are marked unread (a dot on the Party tab invites reading).
 3. Migrated characters are recruited even if `S.maxZone` is below their unlock or their quest is
    not done. Hesketh also joins if `S.maxZone >= 3` (he would have joined at the zone 2 boss).
-   Maren and Isolde are not granted.
+   No other character is granted, and existing saves get no class starter (3.1). Every
+   character keeps their rarity from the roster table (Tobin, Wren, Pip Common; Aldric, Kestrel
+   Rare; Oriel Epic; Elowen Legendary); the no-loss check below covers the difference.
 4. Field = the 3 recruits with the highest DPS, a tank first if one exists. Cells by auto-placement.
 5. **No-loss check:** `old` = the old `compDps()` (per-count formula). If the new field's damage
    is below `old`, add 1 level to every migrated character (ignoring the cap for this step only,
@@ -625,15 +799,22 @@ Top to bottom, 16px side gutter, 328px content width:
    (gold when at the cap: "Promote"). A "+100% XP" badge shows while catch-up applies.
 4. **Synergies**: a row of chips (name + icon), lit when active, dim with "needs Pip" when one
    member short. Tap a chip = its effect.
-5. **Bench**: 4-per-row grid of 76px portraits with level. Tap = sheet; "Field" swaps with a
-   chosen member. Locked characters show a silhouette and how to recruit ("Zone 12, 150K gold",
-   "Quest: bring 20 Glowing Essence").
-6. **Quests**: one card per open recruit quest with a progress bar and one button.
+5. **Roster** (bench and locked, 18 slots): 4-per-row grid of 76 x 96px tiles. Each tile has a
+   2px **rarity frame** (Common stone, Rare blue, Epic violet, Legendary gold with a slow 2-frame
+   shimmer, static under reduced motion), the portrait, level and a role pip. Filter chips above
+   the grid: All, Tank, Striker, Caster, Support, plus a rarity sort. Tap = sheet; "Field" swaps
+   with a chosen member.
+   - **Locked characters** show a black silhouette inside their rarity frame, their name and
+     title, and one **how to recruit** line under the tile ("Reach zone 12, then 150K gold",
+     "Renown 12/15", "Dusk Contract: 30% next boss", "Visits the Tavern in 3 days"). The bio stays
+     hidden until they join. Tap a locked tile = a small sheet with the full route and a progress bar.
+6. **Leads**: one card per open recruit route with progress (quests, Renown, token pity, bestiary,
+   the Star Chart recipe), each with a progress bar and one button (Hand in, Craft, Go to Tavern).
 
 ### 7.3 Character sheet (bottom sheet, 90% height, swipe down or X to close)
 
 ```
-[ portrait 64 ]  Wren Hollowmere            Lv 34  Veteran
+[ portrait 64 ]  Wren Hollowmere      Common   Lv 34  Veteran
                  the Batwing Archer   Striker   Hedgefolk
                  [#########-----] XP  (+60% catch-up)
 -----------------------------------------------------------
@@ -753,6 +934,10 @@ of wind-ups) and `--offline-check`.
 | T12 | Each niche line-up in 4.13 reaches zone 20 | within 1.5x of balanced |
 | T13 | Tank holds aggro (enemy-seconds on the tank / total), balanced party at par | >= 85% |
 | T14 | Chaplain-led party: share of party damage from companions | >= 90%, and T3 still passes |
+| T15 | Best all-Common line-up vs best available line-up: time from zone 20 to 30 | <= 1.5x |
+| T16 | First Rare / first Epic / first Legendary recruited (mixed policy, idle) | 15-40 min / 1.5-3h / 6-12h |
+| T17 | Worst-case pity: boss kills to a guaranteed token (Grenna / Isolde) | 12 / 10 |
+| T18 | Each class + its starter only, idle: time to zone 5, wipes | 6-12 min, 0 wipes |
 
 ---
 
@@ -777,12 +962,13 @@ extension-point change of a few lines, reviewed by the coordinator.
 
 | Task | Owns | Small edits in |
 |---|---|---|
-| B1 Roster core: 10 characters, recruit methods and quests, XP from use only, catch-up bonus, milestones, promotions, field/bench/cells, `fieldCompDps()`; `compDps()` switches to it when `S.party.v >= 1` | `src/js/56-roster.js` | `src/js/40-rules.js` (compDps), `src/js/51-actions.js` (hireComp retired) |
-| B2 Specialities and synergies: speciality hooks, 8 synergies, Bond, active-synergy query for the UI | `src/js/56b-synergy.js` | - |
+| B1 Roster core: 18 characters with rarity (power, growth, extra kit), starter by class, recruit costs, XP from use only, catch-up bonus, milestones, promotions, field/bench/cells, `fieldCompDps()`; `compDps()` switches to it when `S.party.v >= 1` | `src/js/56-roster.js` | `src/js/40-rules.js` (compDps), `src/js/51-actions.js` (hireComp retired) |
+| B2 Specialities and synergies: speciality hooks, Rare traits, innate passives, Legend auras, 14 synergies, Common Cause, Bond, active-synergy query for the UI | `src/js/56b-synergy.js` | - |
 | B3 Migration: `migrateParty()`, second fixture, check.mjs asserts T9 | `src/js/57-migrate.js`, `tests/fixtures/save-v2-late.json`, `tools/check.mjs` | `src/js/30-state.js` (call after load) |
 | B4 Companion items: `COMP_SLOTS`, recipes, stats, 6 uniques, boss drops, bag 60 | `src/js/58-comp-items.js` | `src/js/20-data.js`, `src/js/40-rules.js` (itemName/itemColor), `src/js/73-ui-forge.js` (second row) |
-| B5 Party UI: companion cards with loadouts, formation editor with auto and warnings, bench, quests, character sheet with bio, synergies, milestones, stories | `src/js/75-party.js` (continues from A4) | - |
-| B6 Writing and art: Maren, Isolde, Hesketh sprites and portraits; 5 gear icons; 30 camp stories (2-4 sentences each, house voice) | `src/js/12-art-party.js`, `src/js/21-stories.js` (data) | `src/js/10-art.js` (ICON entries) |
+| B5 Party UI: companion cards with loadouts, formation editor with auto and warnings, roster grid with rarity frames and locked silhouettes, leads, starter joining moment, character sheet with bio, synergies, milestones, stories | `src/js/75-party.js` (continues from A4) | - |
+| B6 Writing and art: 11 new sprites and portraits (Hesketh, Bram, Maren, Thessaly, Anselm, Grenna, Isolde, Morwen, Vesper, Caedmon, Corvin), rarity frames, 5 gear icons, 54 camp stories, 3 joining moments (house voice) | `src/js/12-art-party.js`, `src/js/21-stories.js` (data) | `src/js/10-art.js` (ICON entries) |
+| B7 Unlock avenues: Renown from bounties, character quests (incl. the no-support boss win), boss tokens with pity, bestiary and achievement unlocks, Tavern visitor rotation and hiring, Star Chart recipe, raid/expedition shortcuts | `src/js/56c-unlocks.js` | `src/js/74-ui-tavern.js` (visitor section); listens to Phase 0 bounty, bestiary and achievement events; Star Chart recipe via the gathering spec's Enchanter's Table (K6) |
 
 ### Stage C: party combat
 
@@ -801,15 +987,15 @@ agree them first (`onEnemyTick(enemy, dt)`, `onTelegraph(enemy)`, `resolveParry(
 
 ## 11. Open questions for the owner
 
-1. **Uniform power curve:** every character uses the same base power, so early recruits never
-   become obsolete and a late recruit starts at level 1 and catches up through use. The
-   alternative is for late recruits to be stronger per level, which feels like progress but benches
-   early favourites. Keep uniform?
-2. **Mirror of Embers source:** a 2% drop from zone bosses from zone 36, plus a once-per-raid
-   purchase for 400 Embers. Raid purchases tie a single-player choice to the online raid. Is that OK, or should it be a zone drop only?
-3. **Formation freedom:** the hero's row is fixed by class, but companions can stand in any
-   allowed row with warnings. Should support and caster characters be locked to the back row
-   instead, which is simpler but gives fewer options?
+1. **Growth by rarity:** higher rarities also grow slightly faster per level (x1.080 to x1.083),
+   so by level 150 a Legendary is about 1.5x further ahead than base power alone gives. Keep it,
+   or make rarity a flat base-power multiplier so Commons stay closer late?
+2. **Tavern visitor clock:** the rotation uses the device date, so changing the phone clock
+   brings a visitor early. It is single-player and harmless; is that acceptable, or should it
+   count in-game days (24h of play time) instead?
+3. **Legendary pacing:** Caedmon (Region 1 clear + Renown 80) and Corvin (150 boss kills + every
+   bestiary page at tier 2) are 10h+ goals; Elowen is about 6-12h. Is that the right length for
+   the long hunt?
 
 ## Owner decisions (2026-09-27)
 
@@ -827,6 +1013,7 @@ These override anything above that disagrees.
 
 These override the spec above where they conflict.
 
-- **Power curve:** later recruits are stronger. Replace the shared power curve with a base-power tier per character, rising in unlock order (a starting point of x1.6 per tier; tune it with the simulator). Early characters keep their identity through abilities and synergies, and late recruits are the raw-power upgrade. Recruits still start at level 1 and use the catch-up bonus.
+- **Power curve (changed by the owner in round 4):** rarity defines strength, not unlock order. Common x1, Rare x1.5, Epic x2.2, Legendary x3.2 base power, with slightly faster growth per level and extra kit for higher rarities (3.1). Rarity is fixed per character. Commons stay useful through synergies, utility, cheap promotions and faster XP. The earlier rule "later recruits are stronger, x1.6 per tier" is withdrawn.
+- **Round 4:** 18 characters (5 Common, 5 Rare, 5 Epic, 3 Legendary), each with a deterministic unlock route across progress, quests, boss tokens with pity, Renown, achievements and bestiary, the Tavern visitor, crafting, and optional raid or expedition shortcuts. No random paid pulls, no gacha, nothing pay-to-win.
 - **Mirror of Embers:** zone boss drop only, 2% from zone 36. It is not sold for raid Embers.
 - **Supports and casters:** allowed in any row, with warnings. Auto-placement puts them in the back row.
