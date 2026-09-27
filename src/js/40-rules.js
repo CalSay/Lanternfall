@@ -42,6 +42,7 @@ function rollRarity(lv) {
 // essence from zone 25 and one companion XP curve, so Region 1 fell in about 3 hours.
 const PACE = {
   hp0: 40,                  // zone 1 mob HP (unchanged)
+  hpEarly: 1.48, early: 1,  // BAL1: mob HP x per zone up to zone `early` (the first minutes); 1 = off
   hpGrowth: 1.48,           // mob HP x per zone up to the bend (was 1.42; brings T1 back into band after B7)
   bend: 30,                 // zones past the bend grow by hpLate instead
   hpLate: 1.29,             // mob HP x per zone past zone 30 (was 1.42). Slower growth, because
@@ -58,7 +59,10 @@ const PACE = {
   compXpMax: 80,            //   ...up to x80 from level 114 on: the Region 2 plateau (days, not hours)
   essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (was every 6 zones, so Starlit
                             //   (tier 5) began at 25). Starlit is now Region 2's essence
-  heroAwayXp: 0.5           // hero XP while away, as a share of the away kills' XP (was 0)
+  heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
+  // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
+  bladeX: 2, bladeEvery: 25,  // Blade attack x bladeX every bladeEvery levels (was x2 every 25)
+  heroLv: 0.05              // hero damage + heroLv per hero level (was +5%)
 };
 // Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv, so the first
 // two hours keep their numbers.
@@ -69,11 +73,11 @@ const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
 // ================= formulas =================
-const lvlMult = () => 1 + 0.05 * (S.L - 1);
+const lvlMult = () => 1 + PACE.heroLv * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + gear().gold / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
+const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
 const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
@@ -85,7 +89,7 @@ const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => 
 const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
-const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
+const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.

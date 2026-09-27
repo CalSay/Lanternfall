@@ -69,7 +69,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   stationLevel = kind => {
     const st = stationOf(kind); if (!st) return 0;
     const lv = S.skills[st.skill].lv;
-    return RECIPE[kind] && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
+    const d = CRAFT_KINDS[kind], wpn = d && d.cls && d.pos === 'weapon' && globalThis.__wpnSmith;
+    return (RECIPE[kind] || wpn) && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
   };
   craftXpFor = (skill, n) => {
     const behind = CRAFT_CATCHUP[skill];
