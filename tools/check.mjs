@@ -259,5 +259,52 @@ try {
   }
 } catch (e) { fail('roster crashed: ' + (e.stack || e)); }
 
+// ---- 6. Next Up goals (55-goals.js) ----
+console.log('goals');
+try {
+  // built-in goals evaluate on every fixture without errors
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    for (let i = 0; i < 300; i++) g.fn.tick(0.1);
+    const list = g.eval('topGoals(3)');
+    const bad = g.eval('GOALS.filter(x => { try { const p = x.pct(); return p != null && !isFinite(p); } catch (e) { return true; } }).map(x => x.id)');
+    assert(list.length >= 1 && list.length <= 3 && list.every(x => x.label && x.pct > 0 && x.pct <= 1) && !bad.length && !g.errors.length,
+      `${f}: topGoals -> ${list.map(x => x.id + ' ' + Math.round(x.pct * 100) + '%').join(', ')}` + (bad.length ? ' bad: ' + bad : ''));
+  }
+  const g = loadCore();
+  g.eval('GOALS.length = 0; globalThis.gv = {}');
+  const add = (id, sys, prio) => g.eval(`registerGoal({ id: '${id}', sys: '${sys}', prio: ${prio || 0}, label: () => '${id}', pct: () => gv['${id}'] })`);
+  const ids = (opts) => g.eval(`topGoals(3, ${opts || '{ sticky: false }'}).map(x => x.id).join()`);
+  add('a1', 'a'); add('a2', 'a'); add('a3', 'a'); add('b1', 'b'); add('c1', 'c'); add('r1', 'r', 1); add('r2', 'r');
+  g.eval("Object.assign(gv, { a1: 0.9, a2: 0.85, a3: 0.8, b1: 0.3, c1: 0.2, r1: 0, r2: null })");
+  assert(ids() === 'a1,b1,c1', 'diversity: one per system first (a1,b1,c1): ' + ids());
+  g.eval('gv.c1 = 0');
+  assert(ids() === 'a1,a2,b1', 'a second goal from the same system fills a gap: ' + ids());
+  g.eval('gv.r2 = 1.2; gv.r1 = 1');
+  assert(ids() === 'r1,a1,b1', 'ready goals first, then by pct; prio breaks ready ties: ' + ids());
+  const rd = g.eval('topGoals(3, { sticky: false })[0]');
+  assert(rd.ready && rd.pct === 1, 'ready goal pct clamps to 1');
+  g.eval('gv.r1 = 0; gv.r2 = 0; gv.a2 = 0; gv.a3 = 0; gv.a1 = 0.5; gv.b1 = 0.4; gv.c1 = 0.3');
+  let now = 1e6;
+  const sticky = () => { now += 1000; return ids(`{ now: ${now} }`); };
+  { const s0 = sticky(); assert(s0 === 'a1,b1,c1', 'sticky baseline ' + s0); }
+  g.eval('gv.b1 = 0.52');
+  assert(sticky() === 'a1,b1,c1', 'hysteresis: a small lead does not reorder');
+  g.eval('gv.b1 = 0.7');
+  assert(sticky() === 'b1,a1,c1', 'a clear lead reorders');
+  g.eval("registerGoal({ id: 'd1', sys: 'd', label: 'd1', pct: () => 0.33 })");
+  assert(sticky() === 'b1,a1,c1', 'hysteresis: a newcomer barely ahead does not replace a shown goal');
+  g.eval("registerGoal({ id: 'd1', sys: 'd', label: 'd1', pct: () => 0.45 })");
+  assert(sticky() === 'b1,a1,d1', 'a newcomer clearly ahead replaces the weakest (registerGoal replaces by id)');
+  g.eval('gv.a1 = 0.99');
+  const cached = ids(`{ now: ${now + 100} }`);
+  assert(cached === 'b1,a1,d1', 'cached within 450 ms');
+  const off = g.eval("registerGoal({ id: 'x', sys: 'x', label: 'x', pct: () => { throw new Error('boom'); } })");
+  assert(ids() === 'a1,b1,d1', 'a throwing goal is skipped');
+  off();
+  assert(g.eval("GOALS.every(x => x.id !== 'x')"), 'remove fn unregisters');
+} catch (e) { fail('goals crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
