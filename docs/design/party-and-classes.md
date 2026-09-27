@@ -1,7 +1,22 @@
 # Party and classes
 
-Status: design spec for ROADMAP Phase 1. Written 2026-09-27. All numbers are starting values
-for `tools/sim.mjs` to tune; the ratios and rules are the design.
+Status: design spec for ROADMAP Phase 1. Written 2026-09-27, revision 2 after owner review
+the same day. All numbers are starting values for `tools/sim.mjs` to tune; the ratios and
+rules are the design.
+
+Revision 2 owner decisions (these override anything below and in ROADMAP):
+- The hero class is chosen once, at character creation. No free switching. A rare consumable,
+  the Mirror of Embers, allows a change late in the game.
+- Companions are named characters with a bio, a speciality and a signature ability.
+- Synergies between characters make line-ups play differently.
+- A Party tab exists; Raid and Tavern merge into one World tab.
+- Characters grow through use: only fielded characters earn XP (catch-up bonus, milestone
+  unlocks); promotions are gated by level caps.
+- Roles define combat: threat and aggro, healers heal and do not deal damage, casters control,
+  strikers finish off targets, enemy behaviours test composition, and each class taps differently.
+- Formation matters: Front/Mid/Back rows with reach rules on both sides, a formation editor, and
+  movement on the stage that shows it.
+- Kept from revision 1: packs of 3, auto-cast at half rate, wipe retreats one zone.
 
 Owner constraints this spec obeys: no prestige or resets, single-player first, idle most of
 the time with active moments, playable on a 360px phone, Play Store possible later.
@@ -10,8 +25,9 @@ the time with active moments, playable on a 360px phone, Play Store possible lat
 
 ## 1. Fantasy and loop
 
-**Fantasy:** you lead a small lantern-bearing warband. You pick who stands in front, who
-heals, who you are. You watch them hold a line, and step in at the moments that matter.
+**Fantasy:** you are one lantern-bearer, chosen at the start, gathering a small warband of
+people with names and histories. You pick who stands beside you and which of them fight well
+together. You watch them hold a line, and step in at the moments that matter.
 
 **Idle check-in (30 to 90 seconds, several times a day)**
 
@@ -26,7 +42,8 @@ heals, who you are. You watch them hold a line, and step in at the moments that 
    the window to parry.
 2. Fire the hero ability on its button at the right moment (Shield Wall before a heavy hit,
    Lantern Flare into a fresh pack, Rally Hymn when the tank is low).
-3. Try a different class at the Shrine against a boss that walled you. Switching is free.
+3. Against a boss that walled you, try a different line-up of companions to find a synergy
+   that answers it (section 3.5).
 
 Active play is worth about 1.3x idle progress speed at the push zone (see Balance targets).
 Missing everything costs time, never progress.
@@ -35,23 +52,35 @@ Missing everything costs time, never progress.
 
 ## 2. Hero classes
 
-The hero keeps one level, one set of gear and one set of hero upgrades (Blade, Swiftness,
-Fortune). Class changes the hero's role, stat multipliers, aura and ability. Switch at the
-**Shrine** (section in the Fight tab, unlocked at zone 3). Cost: nothing. Limits: not during a
-boss fight; 5 second cooldown between switches to stop mis-taps. Existing and new saves start
-as **Warden** (the current sword hero).
+### 2.1 Choosing a class
+
+- **New games** open on a character-creation screen: name the hero (1-16 characters, default
+  "Wanderer", stored in the existing `S.name`), pick one of 4 class cards, tap "Begin". Each card
+  shows the class sprite, role, a one-line pitch and the ability.
+- **Existing saves** get a one-time "Choose your path" screen when the update loads. Warden is
+  preselected (it matches today's sword hero), so one tap keeps things as they are.
+- The class is permanent. **Mirror of Embers** is the only way to change it: a consumable that
+  drops from zone bosses from zone 36 (Region 2) at 2% per boss kill, or can be bought once
+  per raid generation for 400 Embers. Using it reopens the class picker; gear, levels and
+  upgrades all carry over. Stored as `S.party.mirrors` (count).
+- One hero, one loadout. The hero keeps one level, one set of gear and one set of hero
+  upgrades (Blade, Swiftness, Fortune). Revision 1's question about per-class loadouts is
+  dropped because the class no longer changes day to day.
 
 Hero base values (from existing formulas): `heroAtk()`, `aps()`, `critChance()`, `critMult()`.
 Hero power `hp0 = heroAtk() * aps()`.
 
-| Class | Role | HP | ATK | Armour | Passive | Aura (applies to companions of that role) | Also |
-|---|---|---|---|---|---|---|---|
-| Warden | tank (front) | 12 x hp0 | x0.8 | +30 | Enemies always target the Warden while alive | Tanks: +40% HP, +20 armour | Whole party takes 10% less damage |
-| Lanternmage | caster (back) | 4 x hp0 | x1.0, hits all enemies | 0 | Attacks splash 50% to every other enemy | Casters: +30% ATK | Overkill damage carries to the next enemy |
-| Ranger | striker (mid) | 5 x hp0 | x1.1 | 0 | +10% crit chance, +1.0 crit multiplier | Strikers: +10% crit chance, +50% crit damage | Taps deal +50% |
-| Chaplain | support (back) | 6 x hp0 | x0.6 | +10 | Heals lowest-HP ally for 0.8 x hp0 per second | Supports: +40% healing | Companion ability cooldowns -25% |
+| Class | Pitch | Role | HP | ATK | Armour | Passive | Aura (companions of that role) | Also |
+|---|---|---|---|---|---|---|---|---|
+| Warden | "Stand in front. Nothing gets past." | tank (front) | 12 x hp0 | x0.8 | +30 | Threat x6; every pack starts on the Warden; taps taunt | Tanks: +40% HP, +20 armour | Party takes 10% less damage |
+| Lanternmage | "Burn the whole pack at once." | caster (back) | 4 x hp0 | x1.0, hits all | 0 | Attacks splash 50% to every other enemy; taps plant Embers that Lantern Flare detonates | Casters: +30% ATK | Overkill carries to the next enemy |
+| Ranger | "Find the weak spot. Hit it hard." | striker (mid) | 5 x hp0 | x1.1 | 0 | +10% crit chance, +1.0 crit multiplier; taps set the focus target | Strikers: +10% crit chance, +50% crit damage | Taps deal +50% |
+| Chaplain | "Keep them standing." | support (back) | 6 x hp0 | x0.2 (smite only) | +10 | Heals lowest-HP ally for 1.2 x hp0 per second; taps direct heals and wards | Supports: +40% healing | *Blessing*: all companions +20% damage; companion cooldowns -25% |
 
-### Hero abilities (one per class, tap button on the stage)
+Because the class is fixed, every class must be able to field a full working party: the roster
+has at least 2 characters per role, so a Ranger can still bring a tank and a healer.
+
+### 2.2 Hero abilities (one per class, tap button on the stage)
 
 | Ability | Effect | Cooldown | Auto-cast (idle) |
 |---|---|---|---|
@@ -61,161 +90,426 @@ Hero power `hp0 = heroAtk() * aps()`.
 | Rally Hymn | Heal party 40% max HP; +30% attack speed for 8s; all companion cooldowns advance 50% | 40s | fires when any member < 40% HP |
 
 Auto-cast unlocks at zone 10 and runs at **double cooldown** (a toggle on the button, on by
-default). Manual casting is about 2x the uptime plus good timing. Offline progress assumes
-auto-cast value (a flat 1.05 dps factor; see 4.8).
+default). Manual casting gives about 2x the uptime plus good timing. Offline progress assumes
+auto-cast value (a flat 1.05 dps factor; see 4.11).
 
 ---
 
-## 3. Companions (recruits)
+## 3. Companions: the roster
 
-Companions stop being counters. Each is one named recruit with a role, a level, a rank, two
-gear slots and one ability. **3 on the field plus the hero; the rest wait on the bench.**
-The bench earns 50% XP.
+Companions are named characters. Each has a title, a bio, a role, a **speciality** (a rule only
+they have), a signature ability, and milestone unlocks as they level. **3 on the field plus the
+hero; the rest wait on the bench.** Characters belong to one of three circles, used by synergies:
+**Hedgefolk** (common folk of the hollows), **the Oath** (the old lantern order), **Dusk Company**
+(sellswords who work at night).
 
-### 3.1 Roster (9 recruits)
+### 3.1 Roster (10 characters)
 
-`idx` = old `S.comp` index they migrate from. Base power `b` = the old `COMPS[i].dps`, so a
-level-1 recruit feels like the old unit. New recruits get values on the same curve.
+`idx` = old `S.comp` index that seeds this character on migration (section 6).
 
-| Recruit | Role | idx | b | Unlock | Recruit cost | Ability (auto) | CD |
-|---|---|---|---|---|---|---|---|
-| Squire | tank | 0 | 2 | start | 15g | Guard: 4s, takes 40% less damage | 12s |
-| Archer | striker | 1 | 12 | zone 2 | 120g | Aimed Shot: 5 x ATK, always crits | 10s |
-| Lamplighter (new) | support | - | 30 | zone 3 | 400g | Mend: heal lowest ally 25% max HP | 8s |
-| Hedge Mage | caster | 2 | 70 | zone 4 | 1,100g | Fireball: 4 x ATK to all enemies | 10s |
-| Knight | tank | 3 | 420 | zone 8 | 25K | Shield Bash: 4 x ATK, stuns 1.5s (interrupts a boss wind-up) | 15s |
-| Dragoon | striker | 4 | 2,600 | zone 12 | 150K | Leap: 8 x ATK to front enemy, untargetable 1s | 14s |
-| Duskblade (new) | striker | - | 16,000 | zone 16 | 900K | Execute: 12 x ATK if target < 30% HP, else 3 x | 9s |
-| Starcaller | caster | 5 | 100,000 | zone 20 | 5M | Starfall: 3 pulses of 3 x ATK to all, over 3s | 18s |
-| Lantern Saint | support | 6 | 2.5M | zone 28 | 150M | Sanctuary: heal all 20% max HP, then 3% per second for 5s | 20s |
-
-Recruit cost is one-time gold, about 400 average kills at the unlock zone. Unlock = `S.maxZone`
-reached (migrated recruits are unlocked regardless).
-
-### 3.2 Role stats
-
-Companion power: `pow = b * 1.08^(lv-1) * 2^rank * (1 + weaponPct/100) * dmgMult() * (1 + gear().party/100) * mod('party')`
-
-| Role | Damage per second | Max HP | Armour | Speed (attacks/s) | Targeted by |
+| Character | Title | Role | Circle | idx | Recruited by |
 |---|---|---|---|---|---|
-| tank | 0.5 x pow | 12 x pow | 20 (Knight 40) | 0.8 | front slot |
-| striker | 1.4 x pow, crit 15% x3 | 5 x pow | 0 | 1.2 | mid |
-| caster | 1.0 x pow to all enemies | 4 x pow | 0 | 0.7 | back |
-| support | 0.3 x pow damage + heals 1.0 x pow HP/s to lowest-% ally | 6 x pow | 10 | 1.0 | back |
+| Tobin Reed | the Hedge Squire | tank | Hedgefolk | 0 | Joins free at the start |
+| Wren Hollowmere | the Batwing Archer | striker | Hedgefolk | 1 | Zone 2, 120 gold |
+| Old Hesketh | the Lamplighter | support | Hedgefolk | - | Beat the Batwing Caves boss (zone 2) once: he joins free |
+| Pip Cinderly | the Hedge Mage | caster | Hedgefolk | 2 | Zone 4, 1,100 gold |
+| Maren Ashvale | the Lampwarden | tank | the Oath | - | Quest at Beetle Barrows (zone 4): bring 20 Glowing Essence to the Barrow Lamp |
+| Ser Aldric Vane | the Oathbound | tank | the Oath | 3 | Zone 8, 25K gold |
+| Kestrel Thane | the Skyfall Dragoon | striker | Dusk Company | 4 | Zone 12, 150K gold |
+| Isolde Marrow | the Duskblade | striker | Dusk Company | - | Boss drop: "Dusk Contract", 25% per zone boss kill from zone 16, guaranteed by the 4th |
+| Oriel Vess | the Starcaller | caster | Dusk Company | 5 | Zone 20, 5M gold |
+| Saint Elowen | the Last Lantern | support | the Oath | 6 | Quest at zone 28: "Relight the Chapel", 150M gold and 20 Blazing Essence |
 
-### 3.3 Levels, XP, ranks
+Per role: 3 tanks, 3 strikers, 2 casters, 2 supports. Quests show as a card in the Party tab
+with one progress bar and one button.
 
-- XP source: every kill gives each fielded companion `mob.xp` (1.5 x zone, boss x5). Bench gets 50%. Offline uses the same, closed form.
-- XP to next level: `cxpNeed(lv) = 20 * 1.18^(lv-1)`.
-- Ranks replace the old x2 every 25 count. Level cap = `25 * (rank + 1)`. At the cap, XP banks (up to one level's worth) and the card shows **Promote**.
-- Promote cost: `recruitCost * 4^(rank+1)` gold plus `10 * (rank+1)` essence of tier `min(5, rank+1)`. Effect: rank +1, power x2, cap +25.
-- Ranks: Recruit (0), Veteran (1), Captain (2), Champion (3), Legend (4). Max rank 4, max level 125.
-- Gold sinks after this change: hero upgrades (unchanged), recruits, promotions, forging. The old per-count hire goes away.
+### 3.2 Bios, specialities, abilities, art briefs
 
-### 3.4 Companion gear slots
+**Tobin Reed, the Hedge Squire** (tank). Tobin carried your spare sword out of Mossy Hollow and
+never gave it back. He is not brave, exactly. He just refuses to be the one who runs first.
+- Speciality, *Earned Trust*: +1% damage reduction per pack cleared with no one downed, up to 20%. Resets when anyone goes down.
+- Ability, *Guard* (12s): taunts every enemy that can reach him for 3s and takes 40% less damage for 4s.
+- Art: short, round, oversized pot helm; brown and moss green; a dented buckler and a sword too big for him.
 
-Each companion has 2 slots: **role weapon** and **trinket** (section 5).
+**Wren Hollowmere, the Batwing Archer** (striker). Wren learned to shoot in the caves, where
+you aim at sounds. She talks to her arrows. Most of them come back.
+- Speciality, *Marked*: Aimed Shot marks its target for 5s; marked enemies take +20% damage from all strikers.
+- Ability, *Aimed Shot* (10s): 5 x ATK, always crits, reaches any row, applies Mark (Mark also strips armour and makes the target the party focus).
+- Art: slim, hooded, long scarf trailing; dark green and bat-violet; longbow taller than her.
+
+**Old Hesketh, the Lamplighter** (support). Hesketh lit the road lamps for forty years before
+the dark came in. He still walks the route every evening. Now he brings you along.
+- Speciality, *Warm Light*: overhealing from his heals becomes a shield, up to 20% of the target's max HP.
+- Ability, *Mend* (8s): heal the lowest ally for 25% max HP. Hesketh deals no damage.
+- Art: stooped, long coat, white beard; soot grey and lamp amber; a lighting pole with a small flame on top.
+
+**Pip Cinderly, the Hedge Mage** (caster). Pip taught herself fire from a book with the last
+chapter torn out. She is still looking for it. Nothing near her stays unburnt for long.
+- Speciality, *Kindling*: each of her attacks adds a Kindle stack to the target (max 5). Each stack makes the target take +4% damage from everyone (a debuff); Fireball consumes the stacks for +20% damage each.
+- Ability, *Fireball* (10s): 4 x ATK to all enemies plus a 3s burn; ignores armour.
+- Art: small, wild hair, patched robe; ember orange and purple; a singed book on a strap.
+
+**Maren Ashvale, the Lampwarden** (tank). Maren kept the Barrow Lamp lit for the dead, alone,
+for eleven winters. She does not fear the dark. She is only tired of it.
+- Speciality, *Lanternlight*: boss wind-ups show 0.4s earlier while she is fielded (the parry window grows from 0.8s to 1.1s). Enemies that hit her take 10% of the hit as burn.
+- Ability, *Beacon* (16s): taunts all enemies for 4s and heals herself 20% max HP.
+- Art: tall, heavy cloak, face in shadow; ash grey and pale teal light; a tower shield with a lantern hung from it.
+
+**Ser Aldric Vane, the Oathbound** (tank). The last knight of the lantern order, sworn to a
+banner nobody else remembers. He has decided the banner is yours now.
+- Speciality, *Intercept*: when an ally drops below 25% HP, Aldric takes the next 3 hits aimed at them (once per ally per pack).
+- Ability, *Shield Bash* (15s): 4 x ATK, stuns 1.5s, interrupts a boss wind-up (counts as a parry).
+- Art: broad, full plate, crested helm; crimson and silver; kite shield with a lantern sigil.
+
+**Kestrel Thane, the Skyfall Dragoon** (striker). Kestrel came down from the mountain wars with
+a spear and no stories she will tell. She fights like the ground is a rumour.
+- Speciality, *Skyfall*: Leap knocks the pack back; every enemy's next attack is delayed 1s.
+- Ability, *Leap* (14s): 8 x ATK to any enemy, untargetable for 1s. Auto-targets a diver on the back row first (peel), else the focus target.
+- Art: lean, winged helm, long spear; deep teal and steel blue; cape shaped like a folded wing.
+
+**Isolde Marrow, the Duskblade** (striker). Isolde's contract was signed in the dark, and she
+has never read it. She says it only has one word on it, and the word is "finish".
+- Speciality, *Unfinished Business*: a kill with Execute resets its cooldown. Execute reaches any row and ignores armour.
+- Ability, *Execute* (9s): 12 x ATK if the target is below 30% HP, else 3 x.
+- Art: narrow silhouette, twin short blades, mask; black and dusk rose; a torn contract pinned to her belt.
+
+**Oriel Vess, the Starcaller** (caster). Oriel reads the sky the way others read letters, and
+most of the news is bad. When the stars answer, they answer all at once.
+- Speciality, *Night Sight*: every critical hit by any ally cuts 1s off Starfall's cooldown.
+- Ability, *Starfall* (18s): 3 pulses of 3 x ATK to all enemies over 3s; slows them 30% for 4s and the last pulse stuns 1s (interrupts healers and wind-ups).
+- Art: tall, star-pricked robe, tall collar; indigo and pale lilac; a staff topped with a hanging star.
+
+**Saint Elowen, the Last Lantern** (support). The land is called Lanternfall because of what
+Elowen did the night the lights went out. She will not talk about it. She keeps her flame low.
+- Speciality, *Vigil*: while she stands, downed allies stand up at 60% HP (not 30%) and between-pack regen doubles.
+- Ability, *Sanctuary* (20s): heal all 20% max HP, then 3% per second for 5s. Elowen deals no damage.
+- Art: slender, hooded, glowing halo-lantern; cream and gold; a lantern held in both hands.
+
+### 3.3 Levels: growth comes from use
+
+- **Only fielded characters earn XP**, from kills, boss wins and bounties completed while they
+  are fielded. The bench earns nothing.
+- XP per enemy killed: `cxpGain(z) = cxpNeed(3z) / 40` (boss x5). A bounty completion gives the
+  fielded members 20 kills' worth. At a character's par level (`3 x zone`) that is about 40
+  enemies (13 packs) per level; characters below par level much faster, above par slower.
+- XP to next level: `cxpNeed(lv) = 10 * 1.12^(lv-1)`.
+- **Catch-up bonus:** party level = average of the 3 highest companion levels on the roster. A
+  fielded character `d` levels below it earns `+min(100%, 20% x d)` XP (+100% at 5+ behind,
+  tapering to 0). With the par curve above, a new level-1 recruit fielded at zone 20 reaches the
+  party in about 170 enemies (about 5 minutes of fighting).
+- **Offline:** fielded characters earn 75% of the XP of the estimated offline kills (4.11).
+- Power: `pow = 4 * 1.08^(lv-1) * 2^rank * (1 + weaponPct/100) * dmgMult() * (1 + gear().party/100) * mod('party')`.
+  Every character uses the same curve, so none becomes obsolete: early recruits stay as strong
+  as late ones at the same level and rank. Characters differ by role, speciality and ability.
+
+### 3.4 Milestones and promotions
+
+**Promotions** are the second axis and are gated by use. Level cap = `25 x (rank + 1)`. At the
+cap, XP banks (up to one level's worth) and the card shows **Promote**. Promote cost:
+`500 x mobGold(ceil(25 x (rank + 1) / 3))` gold plus `10 x (rank + 1)` essence of tier
+`min(5, rank + 1)`. Effect: rank +1, power x2, cap +25. Ranks: Recruit, Veteran, Captain,
+Champion, Paragon, Legend, Mythic, Lanternborn (0-7, max level 200).
+
+**Milestones** make levelling feel like growth. The pattern is the same for everyone: L5 camp
+story 1, L10 a second passive, L15 camp story 2, L20 an ability upgrade, L25 camp story 3 plus
+**Bond** (all synergies that include this character are 50% stronger). Past 25: every 25 levels
+the signature ability deals or heals +25%. Camp stories are 2-4 sentences, shown in the
+character sheet under "Stories" with a small toast when unlocked.
+
+| Character | L10 second passive | L20 ability upgrade | Camp stories (L5 / L15 / L25) |
+|---|---|---|---|
+| Tobin | *Stubborn*: survives one lethal hit per pack at 1 HP | Guard also covers the next ally in line | The Borrowed Sword / Mother's Letter / The Day He Didn't Run |
+| Wren | *Echo*: crits on marked enemies fire a free 50% arrow | Aimed Shot pierces to a second enemy | Arrows in the Dark / The Bat Queen / Where the Sound Goes |
+| Hesketh | *Long Route*: +20% healing after 10s in the same fight | Mend heals the two lowest allies | Forty Years of Lamps / The Unlit Road / Last Lamp on the Hill |
+| Pip | *Short Fuse*: Kindle max stacks 5 -> 8 | Fireball leaves burning ground, 1 x ATK/s for 4s | The Torn Chapter / A Singed Eyebrow / The Missing Page |
+| Maren | *Keeper*: +15% max HP for each other Oath member fielded | Beacon also shields the party 10% max HP | Eleven Winters / Names of the Dead / Why the Lamp Stayed Lit |
+| Aldric | *Old Guard*: +20 armour | Shield Bash hits all enemies (stun stays single) | The Banner / The Order's End / An Oath Renewed |
+| Kestrel | *Updraft*: +25% attack speed for 4s after Leap | Leap lands twice | Down from the Mountain / The Spear's Name / A Story She Tells |
+| Isolde | *Clean Work*: +15% crit chance on enemies below 50% HP | Execute threshold 30% -> 40% | The Unread Contract / Who Signed It / Finish |
+| Oriel | *Constellation*: +5% ATK per ally crit in the last 5s, max 25% | Starfall adds a 4th pulse | Bad News from the Sky / The Falling Star / What the Stars Want |
+| Elowen | *Low Flame*: Sanctuary cooldown -4s | Sanctuary also cleanses poison and burns | The Night the Lights Went Out / The Chapel / Lanternfall |
+
+### 3.5 Synergies
+
+Active when all named members are in the party (the hero counts where a class is named).
+Shown as a banner row on the Party screen: lit when active, dim with "needs X" when one short.
+
+| Synergy | Needs | Effect |
+|---|---|---|
+| Shield and Hearth | a tank in Front + a support directly behind it (same lane) | The tank takes 10% less damage and receives 20% more healing |
+| Hedgefolk | any 2 Hedgefolk (3 for the bonus) | +15% attack speed; with 3, Tobin's Guard also shields each Hedgefolk for 10% max HP, and +10% gold |
+| The Old Oath | Aldric + Elowen | Intercept also heals the protected ally 10% max HP; Sanctuary cooldown -5s |
+| Lamp and Ward | Maren + Hesketh | Hesketh's shields on Maren have no cap and last until broken; Beacon heals 30% |
+| Kindle and Starfall | Pip + Oriel | Starfall consumes Kindle stacks for +30% per stack (Pip sets up, Oriel cashes in) |
+| Mark and Leap | Wren + Kestrel | Leap always strikes the marked enemy and always crits; a diver Wren marks is knocked back when Kestrel lands (peel) |
+| Dusk Company | any 2 Dusk Company | +25% damage to enemies below 50% HP; with Isolde fielded, Execute threshold +10% |
+| Lantern's Chosen | Lanternmage hero + Elowen | Lantern Flare heals the party 3% max HP per enemy hit |
+
+**Sample line-ups** (hero + 3):
+
+1. **Hedge Hearth** (Warden + Wren, Hesketh, Pip). Hedgefolk x3 (+speed, +gold) and Shield and
+   Hearth with the Warden in front. Steady, cheap, good gold. The early and middle game farm team.
+2. **Kindle Battery** (Lanternmage + Pip, Oriel, Hesketh). Pip stacks Kindle, Oriel's Starfall
+   cashes it in, the Lanternmage's splash hits the whole pack. Melts packs; weaker on single
+   bosses. With nobody in front, melee enemies reach the back row, so Oriel's slows and stuns
+   and Hesketh's shields keep them alive: it only works while the pack dies fast.
+3. **Night Work** (Ranger + Wren, Kestrel, Isolde). Mark and Leap plus Dusk Company plus the
+   Ranger's crit aura. Highest boss burst; no healer or tank, so it wants an active player
+   parrying. The boss-push team.
+4. **The Last Vigil** (Chaplain + Aldric, Maren, Elowen). The Old Oath, Maren's Keeper passive
+   (+30% HP), Elowen's Vigil. Low damage, almost never wipes: the overnight idle team that holds
+   the highest zone offline.
+
+### 3.6 Role stats
+
+| Role | Damage per second | Max HP | Armour | Speed (attacks/s) | Threat x | Default row |
+|---|---|---|---|---|---|
+| tank | 0.5 x pow (melee) | 12 x pow | 20 (Aldric 40) | 0.8 | 4 | Front |
+| striker | 1.4 x pow single target, crit 15% x3 | 5 x pow | 0 | 1.2 | 1 | Mid |
+| caster | 1.0 x pow to all enemies, ignores armour | 4 x pow | 0 | 0.7 | 1.2 | Back |
+| support | 0 damage; heals 1.2 x pow HP/s to the lowest-% ally | 6 x pow | 10 | 1.0 | 0.5 (of healing) | Back |
+
+Signature ability cooldowns are listed with each character (3.2).
+
+### 3.7 Gear slots and gold
+
+Each character has 2 slots: **role weapon** and **trinket** (section 5). Gold sinks after this
+change: hero upgrades (unchanged), recruiting, promotions, forging. The old per-count hire goes.
 
 ---
 
 ## 4. Combat model
 
+Design rule: **the tank decides who gets hit, strikers decide who dies, casters shape the whole
+pack, supports decide who lives.** Each role does something the others cannot.
+
 ### 4.1 Units
 
 | Unit | HP | Attack per hit | Speed | Armour |
 |---|---|---|---|---|
-| Party member | role table (3.2) or class table (2) | role DPS / speed | role | role + gear |
-| Normal enemy | `0.4 * mobHp(z)` (packs of 3) | `1.2 * 1.55^(z-1)` | 0.8/s | 0 |
-| Zone boss | `8 * mobHp(z)` (unchanged) | `3 * 1.55^(z-1)` | 0.6/s | 0 |
+| Party member | role table (3.6) or class table (2.1) | role DPS / speed | role | role + gear |
+| Normal enemy | `0.4 * mobHp(z)` (packs of 3) | `1.2 * 1.55^(z-1)` | 0.8/s | 0 unless armoured (4.7) |
+| Zone boss | `8 * mobHp(z)` (unchanged) | `3 * 1.55^(z-1)` | 0.6/s | per type |
 
 `mobHp(z) = 10 * 1.55^(z-1)` is unchanged, so gold (`mobGold` per enemy x0.4, pack total 1.2x),
 essence and zone pacing keep their current curve.
 
 **Packs:** normal encounters are packs of 3 enemies side by side (72% zone type, 28% next type,
-per enemy). Kills toward the boss count packs: 10 packs unlock the boss (unchanged number).
-Packs give AoE and casters a job.
+per enemy; from zone 8, packs can mix any two unlocked types). 10 packs unlock the boss.
 
-### 4.2 Targeting
+### 4.2 Formation and position
 
-- Formation has 4 slots: Front, Mid, Back, Back. Player orders it; default auto-order is tank > striker > support > caster.
-- A Warden hero is always Front. Otherwise the hero takes its class slot.
-- Enemies attack the front-most living member. Exceptions from enemy traits (4.5).
-- Party single-target attacks hit the front enemy; AoE hits all.
+**Grid.** Each side has 3 columns (Front, Mid, Back) and 2 lanes (upper, lower): 6 cells, at
+most 2 members per column. The party fills 4 cells (hero + 3 companions).
 
-### 4.3 Damage and healing
+**Where people stand**
+
+| Who | Allowed rows | Auto-placement |
+|---|---|---|
+| Warden hero | Front | Front |
+| Ranger hero | Mid or Back | Mid |
+| Lanternmage, Chaplain heroes | Back | Back |
+| Tanks (Tobin, Maren, Aldric) | Front or Mid | Front |
+| Melee strikers (Kestrel, Isolde) | Front or Mid | Mid (Front if no tank) |
+| Ranged striker (Wren) | Mid or Back | Mid |
+| Casters (Pip, Oriel), supports (Hesketh, Elowen) | any | Back |
+
+**What position does**
+
+| Rule | Effect |
+|---|---|
+| Melee reach | Melee enemies can only attack the party's Front column. If Front is empty, the next occupied column becomes their reach. |
+| Ranged and casters | Ranged and caster enemies can hit any row, by threat. |
+| Divers | Skirmishers and assassins leap over the line to a back-row target for their dive (4.7). |
+| Back row | Takes 20% less damage from ranged attacks and area attacks. |
+| Area attacks | "Row" attacks hit one column (Golem slam hits Front); "line" attacks hit everyone (spore cloud). |
+| Braced | Tanks in Front get +10 armour. |
+| Cover | A tank in Front covers the ally directly behind it in the same lane: that ally takes 15% less damage, and the tank intercepts the first hit of any dive on that ally. |
+| Adjacency | Adjacent = same lane and neighbouring column, or same column and other lane. Aldric's Intercept and Tobin's L20 Guard only reach adjacent allies. |
+| Melee strikers | Kestrel and Isolde attack from Mid by dashing in: while striking (0.5s per attack) they count as Front and can be hit by melee. |
+
+**Party reach into the enemy formation.** Melee attackers (Warden, tanks, Kestrel's and
+Isolde's basic attacks) hit the enemy Front column only, until it is empty. Ranged strikers,
+casters, the Ranger and the Lanternmage hit any column. Kestrel's Leap and Isolde's Execute
+reach any column.
+
+**Enemy formation mirrors this.** Bruisers and armoured enemies stand in front (Slime, Beetle,
+Golem), skirmishers and archers in the middle (Bat, Rattlebones), casters and healers at the back
+(Spore Cap, Wraith). So an enemy healer must be reached by ranged strikers, casters, a Ranger
+focus or a dive.
+
+**Warnings** (formation editor, 7.2): "Nobody in front: melee enemies will reach your mid row."
+"Your healer is in the front row." "No tank: enemies will hit whoever hurts them most."
+
+### 4.3 Threat and aggro
+
+Every enemy keeps a threat table: one number per party member (4 numbers, reset when the
+enemy dies).
+
+| Source | Threat generated |
+|---|---|
+| Damage dealt | damage x role multiplier: tank 4, striker 1, caster 1.2 (on every enemy hit), support 0.5 |
+| Healing and shields | amount x 0.5, split across all living enemies |
+| Taunt | sets the taunter's threat to 120% of the enemy's current top, and forces its target for 3s |
+| Warden hero | passive threat multiplier 6 (instead of 4); every pack starts with the Warden on top |
+| Opening | each tank starts every new pack with threat equal to 1 hit of its own damage x 10 |
+
+**Targeting rule:** an enemy attacks the highest-threat member **it can reach** (4.2). It
+switches only when another reachable member's threat exceeds its current target's by 20%
+(stops flicker). Melee enemies choose within the Front column; ranged and caster enemies
+choose across the whole party, so a caster who bursts before the tank has threat pulls every
+ranged enemy onto themselves.
+
+**What this means in play:** a tank with taunts holds the pack. With two members in Front,
+melee enemies split between them by threat, so a Front-row striker can steal aggro from a weak
+tank. With no tank, enemies spread across whoever hits hardest. Enemy behaviours (4.7) break the
+rule on purpose; taunts pull a diver back once its dive ends, and any stun or knockback ends a
+dive early.
+
+**Party targeting:** single-target attacks hit the enemy the party is focused on: by default the
+enemy attacking the lowest-HP ally, else the lowest-HP enemy. Ranger taps and Wren's Mark
+override this (4.6). AoE hits all.
+
+### 4.4 Damage, healing, crowd control
 
 - `hit = ATK * (crit ? critMult : 1) * mods * (1 - red(target))`
-- `red = min(0.6, armour / (armour + 100))`. Armour is flat: class, role, shields, hero helm (0.1 x helm power).
-- Enemies have no armour; their HP curve is their defence.
-- Healing goes to the ally with the lowest HP fraction. Overheal is lost.
+- Party armour: `red = min(0.6, armour / (armour + 100))`. Flat armour from class, role, shields, hero helm (0.1 x helm power).
+- Armoured enemies: physical hits (hero Warden/Ranger, tanks, strikers) deal 50% damage. Caster damage, burns and Isolde's Execute ignore armour. Wren's Mark removes armour while it lasts.
+- **Healing** goes where it is needed: supports heal the ally with the lowest HP fraction; overheal is lost unless a speciality converts it to shields. Heals scale with incoming damage by design: a support heals only when someone is hurt, so a support's value is measured in damage prevented.
+- **Shields/wards** absorb damage before HP, show as a white segment on the HP bar, last 6s.
+- **Crowd control:** stun (enemy does nothing, interrupts channels and wind-ups), slow (-30% attack speed), knockback (delays the next attack 1s and ends a dive), burn (damage over time, ignores armour), debuff (Kindle: +4% damage taken per stack).
 - Regen: 0.5% max HP/s in combat, plus 10% max HP between packs (the 1s respawn gap).
 
-Par check (why these numbers): at a zone the party can just farm, party DPS about `4 * 1.55^(z-1)`
-(pack of 3 dies in about 3s). Tank HP about `9.6 * 1.55^(z-1)`, incoming about 8% of tank HP
-per second after armour, one support heals about 8% per second. So: at par a party with a
-support holds; without a support it wipes after 5 to 8 packs; at 1.5x par anything holds.
+Par check: at a zone the party can just farm, party DPS about `4 * 1.55^(z-1)` (pack of 3 dies in
+about 3s). Tank HP about `9.6 * 1.55^(z-1)`, incoming about 8% of tank HP per second after
+armour, one support heals about 8% per second. So at par a balanced party holds; with no
+support it wipes after 5 to 8 packs; at 1.5x par anything holds.
 
-### 4.4 Knock-outs, wipes, retreat
+### 4.5 Roles in combat
 
-- A member at 0 HP is **down** until the pack dies, then stands up at 30% HP.
+| Role | Job | Kit | Weakness |
+|---|---|---|---|
+| Tank | Hold aggro, soak | Threat x4, taunts, armour, damage reduction, peel by taunting divers back once their dive ends | Low damage |
+| Striker | Kill the right enemy | Single-target burst, crits, executes on enemies below 30%, focus targets (healers, divers) | Fragile if aggro slips; weak into armour (except Isolde's Execute) |
+| Caster | Shape the pack | AoE, burns, slows, stuns, Kindle debuff that multiplies everyone's damage, ignores armour | Fragile; draws threat if it bursts before the tank |
+| Support | Keep them standing | Heals, shields, cleanses, buffs. **No real damage** (0 for companions) | Nothing dies faster because of them directly |
+
+### 4.6 How the hero's class changes your taps
+
+A tap on the stage does what your class does. Auto-play (idle) performs a competent version at
+about 0.5 taps per second; active play is faster and smarter.
+
+| Class | Tap an enemy | Tap an ally | During a boss wind-up | Idle auto-play |
+|---|---|---|---|---|
+| Warden | Taunt it (forced target 3s, 1s tap cooldown) + tap damage | - | Tap the boss = block/parry | Taunts any enemy not on the Warden, every 4s |
+| Lanternmage | Plant an Ember on it (max 5 per enemy); Lantern Flare detonates Embers for +30% each | - | Tap the boss = flash-stun, counts as a parry | Embers the enemy with the most HP |
+| Ranger | Focus: hero and all strikers switch to it; tap damage gets +20% crit chance | - | Tap the boss = pinning shot, counts as a parry | Focuses healers, then divers, then lowest HP |
+| Chaplain | Smite: 0.3x tap damage and the enemy takes +5% damage for 4s | Direct heal: 8% max HP to that ally (3 charges, 1 back per 2s) | Tap the targeted ally = ward that absorbs the heavy hit, counts as a parry | Heals the lowest ally under 60% |
+
+Hero damage by class: Warden x0.8, Lanternmage x1.0 (hits all), Ranger x1.1, **Chaplain x0.2**.
+The Chaplain's damage budget becomes party power instead: *Blessing* aura, all companions
++20% damage, plus the Chaplain's heals free a party slot (a Chaplain party can field 3 damage
+dealers and still sustain). Target T3 checks classes stay within 15% of each other.
+
+### 4.7 Enemy behaviours (introduced by zone)
+
+| Type (first zone, enemy row) | Behaviour | Tests | Answer |
+|---|---|---|---|
+| Moss Slime (1, Front) | Plain melee | Nothing | Anything |
+| Cave Bat (2, Mid) | **Skirmisher:** every 10s dives the lowest-HP back-row member for 3s, ignoring threat. From zone 9 (cycle II): **assassin**, dives for 5s at x2 damage | Backline safety | Peel: stun, knockback, slow or kill it fast (Kestrel, Aldric, Ranger focus) |
+| Rattlebones (3) | **Armoured archer** (Mid): ranged, hits any row by threat; physical hits deal 50%; reassembles once at 20% HP unless the killing blow is caster damage or a burn | Damage type | Casters, burns, Wren's Mark, Execute |
+| Barrow Beetle (4, Front) | **Bruiser:** attack x1.8, speed 0.6, always attacks the tank if one holds threat | Tank sustain | A support, shields, Guard/Shield Wall |
+| Spore Cap (5, Back) | **Caster:** every 6s a spore cloud hits every party member for 0.8x attack plus poison 2% max HP/s for 4s | Group healing | Sanctuary, Rally Hymn, cleanses, wards |
+| Quarry Golem (6, Front) | **Armoured bruiser:** attack x2.5, speed 0.4, armoured; every 3rd hit is a row slam on the whole Front column | Tank + damage type | Tank with a healer, casters |
+| Marsh Wraith (7, Back) | **Healer:** channels 1.5s (shown with a green "+") to heal its most hurt ally 15% max HP, every 5s | Burst and interrupts | Stun (Aldric, Oriel, Lanternmage tap), focus it down (Ranger, Isolde) |
+
+Behaviours stack with zone cycles: from zone 15, one enemy per pack can be an **elite** (x2 HP,
+gold x2) carrying its type's behaviour at double strength.
+
+### 4.8 Bosses and telegraphs (the active moment)
+
+Every boss has the **heavy hit**: every 8s a 1.5s wind-up (red "!", shrinking ring, rising
+tone) then 4x boss attack on its target. **Parry** = the class action in the last 0.8s (Maren
+extends this to 1.1s): no damage, boss staggered 2s and takes +50% damage. Earlier = **Dodge**:
+damage halved. Shield Wall, Aldric's Shield Bash and a Chaplain ward also count as parries, so
+idle parties with the right members survive bosses without the player.
+
+Each Elder boss adds its type's behaviour as a second telegraph:
+
+| Boss | Second mechanic |
+|---|---|
+| Elder Slime | Splits into 2 half-HP slimes at 50% |
+| Elder Bat | Dives the backline every 12s (blue "!" over the target ally) |
+| Elder Rattlebones | Armoured; every 15s raises 2 skeleton adds |
+| Elder Beetle | Heavy hit every 6s instead of 8s (a tank-buster) |
+| Elder Spore | The heavy hit becomes a party-wide cloud: 1.5x attack to everyone (ward or heal) |
+| Elder Golem | Heavy hit is 6x; armoured |
+| Elder Wraith | Every 10s channels a 20% self-heal (green ring); any stun or parry-tap interrupts |
+
+Boss timer rises from 30s to 45s. Taps outside a wind-up do the class tap. Hit areas are 44px
+minimum. Reduced motion: no shake or ring animation; the "!" and a colour flash stay.
+
+### 4.9 Knock-outs, wipes, retreat
+
+- A member at 0 HP is **down** until the pack dies, then stands up at 30% HP (60% with Elowen).
 - All 4 down = **wipe**. Toast: "Your party fell back to regroup." The party retreats one zone
   (`S.zone - 1`, min 1), fully heals after 5s and keeps farming. No gold, items or XP are lost.
-- Auto-push (existing `S.auto`) returns to the wiped zone once party DPS > 1.15 x the DPS at the
-  wipe (same rule as `failDps` today).
-- Boss fight: timer rises from 30s to 45s. Wipe or timeout = fail, `bossFail` fires as today.
+- Auto-push returns to the wiped zone once the offline hold check (4.11) says it holds.
+- Boss wipe or timeout = fail; `bossFail` fires as today.
 
-### 4.5 Enemy traits (one per type)
+### 4.10 Zone scaling
 
-| Type | Trait |
-|---|---|
-| Moss Slime | none (tutorial enemy) |
-| Cave Bat | fast: speed 1.4, attack x0.6 |
-| Rattlebones | reassembles once at 20% HP unless killed by AoE |
-| Barrow Beetle | HP x1.3, attack x0.8 |
-| Spore Cap | hits apply poison: 2% max HP/s for 4s |
-| Quarry Golem | slow heavy: speed 0.4, attack x2.2 |
-| Marsh Wraith | reach: 30% of hits target the lowest-HP back member |
+Everything enemy-side scales by `1.55^(z-1)`. Party power scales by levels, ranks, gear, hero
+upgrades and relics. Walls come from both too little damage (TTK) and too little sustain
+(incoming damage), and zone behaviours decide which one bites.
 
-### 4.6 Boss telegraphs (the active moment)
+### 4.11 Offline estimate (closed form)
 
-- Every 8s the boss winds up a **heavy hit** for 1.5s: red "!" over the boss, a shrinking ring,
-  a rising tone. Heavy hit = 4 x boss attack on the front member (Hydra/Colossus variants may
-  hit all members at 1.5 x each).
-- **Tap the boss during the last 0.8s = Parry**: no damage, boss staggered 2s, takes +50%
-  damage while staggered. Tap earlier in the wind-up = **Dodge**: damage halved. No tap = full hit.
-- Knight's Shield Bash and Shield Wall also count as a parry (so idle Warden or Knight parties
-  survive bosses without the player).
-- Taps outside a wind-up still deal tap damage, as today. A parry has a 44px hit ring minimum.
-- Reduced motion: no shake or ring animation; the "!" and a colour flash on the boss stay.
-
-### 4.7 Zone scaling
-
-Everything enemy-side scales by `1.55^(z-1)`. Party power scales by levels (x1.08 per level,
-about 6 levels per zone), ranks (x2), gear (%), hero upgrades and relics. The wall is where
-party power falls behind: TTK grows and incoming damage grows together, so walls come from
-both too little DPS and too little sustain, and tanks and supports matter.
-
-### 4.8 Offline estimate (closed form)
-
-No simulation. On load, for `z = S.zone` down to `S.zone - 10`:
+No simulation. The same function drives offline gains and auto-push. For `z = S.zone` down to
+`S.zone - 10`, compute per zone:
 
 ```
-D   = (fieldDps + heroDps*0.5) * aoeFactor * 1.05   // aoeFactor = 1 + 1.0 * aoeShare (about 2 alive on average)
-in  = 0.8 * enemyAtk(z) * (1 - red(front)) * 3/2     // about 1.5 enemies alive per pack on average
-sus = partyHealPerSec + frontRegen                   // heals + 0.5% regen, plus 10%/pack amortised
-holds(z) = sus >= in  OR  frontHp / (in - sus) >= 120s
+D      = sum(member dps, armour-adjusted by zone type) * (1 + aoeShare) * 1.05     // damage rate
+tgt    = tankHolds ? tank : highest-threat member in the Front column (melee share);  // who gets hit
+         ranged share goes to the highest-threat member overall
+tankHolds = tank exists AND tankThreatRate >= 1.2 * max(otherThreatRate * rowFactor)
+in     = 1.5 * enemyAtk(z)/speed * behaviour(z).dmg * (1 - red(tgt)) * rowFactor                 // 1.5 enemies alive on average
+spread = behaviour(z).aoe * enemyAtk(z) * 4 / 6s                                    // spore clouds etc., hit everyone
+sus    = sum(heal rates) + shields/6s + regen(tgt) + 10% maxHp(tgt) per pack         // supports + Chaplain
+holds(z) = (sus >= in + spread*share(tgt)) OR (hp(tgt) / (in + spread*share(tgt) - sus) >= 120s)
+          AND (no backline member dies to spread + dives in 30s)
 ```
 
-Use the highest `z` that holds. Kills = `D * t / mobHp(z) * boost` (boost as today). Gold,
-essence and XP from kills as today; companion XP levels via a loop capped at rank cap (at most
-125 steps per companion). If the zone changed, the card says "Your party held Batwing Caves II."
-Raid and gather offline stay as they are.
+`behaviour(z)` is a small table per zone type (bruiser dmg x1.8, dives add damage to the lowest
+back-row member, armour halves physical dps in `D`, healers add 15% effective HP). Use the
+highest `z` that holds. Kills = `D * t / mobHp(z) * boost`.
 
-### 4.9 World raid
+Why composition matters idle: with no tank, `tgt` becomes a striker with 5x pow HP instead of
+12x; with no support, `sus` is regen only. Either one drops the holdable zone by about 2 to 4
+zones below what a balanced party holds, so the "While you were away" card is lower. The card
+says where the party held: "Your party held Batwing Caves II."
 
-Keep it simple. The raid boss does not attack, and HP does not matter. Party raid DPS =
-`heroDps + fieldCompanionDps` (supports count their 0.3 x pow damage), times `raidMult()`.
-The `raiders/<id>.dps` value keeps its shape (a number). No telegraphs in the raid in this spec.
+Gold and essence from kills as today. **Companion XP offline:** fielded members get 75% of the
+XP of those kills (3.3), levelled by a loop capped at the rank cap.
+
+### 4.12 World raid
+
+Keep it simple. The raid boss does not attack, and HP and threat do not matter. Party raid DPS
+= `heroDps + fieldCompanionDps`, times `raidMult()`. Supports add their buffs (Blessing,
+Hedgefolk speed) but no damage. The `raiders/<id>.dps` value keeps its shape (a number).
+
+### 4.13 Viable line-ups
+
+No class and no character is mandatory. Every class can field a tank and a support from the
+roster. The strongest default is balanced: **tank + support + 2 damage**. Niches that must also
+progress (checked by sim target T12):
+
+| Niche | Example | Strength | Cost |
+|---|---|---|---|
+| Balanced | Warden + Hesketh + Wren + Pip | Holds the highest zone for its power | None; the default |
+| Double support attrition | Chaplain + Tobin + Hesketh + Elowen | Almost never wipes; best overnight | Slow kills, weak boss timers |
+| Glass cannon with a Warden | Warden + Wren + Kestrel + Isolde | Warden holds everything; fastest farm below par | Wipes at a push zone without active Shield Wall and parries |
+| Caster pack-clear | Lanternmage + Aldric + Pip + Oriel | Packs melt, stuns cover healers | Low sustain; relies on killing first |
 
 ---
 
@@ -226,9 +520,9 @@ The `raiders/<id>.dps` value keeps its shape (a number). No telegraphs in the ra
 | Slot id | Item | Fits | Recipe (tier 1, scales like hero recipes) | Stat from power `p` |
 |---|---|---|---|---|
 | `shield` | Shield | tank | ore 5, wood 2, ess 1 | +p% HP, +0.25p armour |
-| `bow` | Bow / Spear (Dragoon, Duskblade) | striker | wood 6, ore 1, ess 1 | +p% damage, +min(20, 0.05p)% crit |
+| `bow` | Bow / Spear / Blades (Wren, Kestrel, Isolde) | striker | wood 6, ore 1, ess 1 | +p% damage, +min(20, 0.05p)% crit |
 | `staff` | Staff | caster | wood 4, ess 4 | +p% damage |
-| `tome` | Tome | support | wood 2, ess 6 | +p% healing, +0.5p% damage |
+| `tome` | Tome | support | wood 2, ess 6 | +p% healing, +0.3p% shield strength |
 | `trinket` | Trinket | any | ore 2, ess 4 | +0.6p% HP, -min(25, 0.05p)% ability cooldown |
 
 Power, rarity, tiers, `+N` upgrades, salvage and forging all reuse the hero rules
@@ -255,8 +549,8 @@ Drop from zone bosses from cycle II (zone 8+), 10% per boss kill, pool by zone t
 | Echo String | bow | Batwing Caves II+ | Crits fire a second shot for 50% | - |
 | Ossuary Staff | staff | The Bonefield II+ | AoE damage +40% | Wielder takes +15% damage |
 | Golem Heart | trinket | Quarry Ruins II+ | +50% max HP | -15% attack speed |
-| Skyfall Spear | bow | Beetle Barrows II+ | **Dragoon only**: Leap hits twice | none on others (cannot equip) |
-| Saint's Wick | trinket | Wraithmarsh II+ | **Lantern Saint only**: once per fight, revives the first downed ally at 30% HP | - |
+| Skyfall Spear | bow | Beetle Barrows II+ | **Kestrel only**: Leap strikes a second enemy | cannot be equipped by others |
+| Saint's Wick | trinket | Wraithmarsh II+ | **Elowen only**: once per fight, revives the first downed ally at 60% HP | cannot be equipped by others |
 
 (Fungal Deep II+ drops a guaranteed companion item instead of a unique.)
 
@@ -265,104 +559,173 @@ Drop from zone bosses from cycle II (zone 8+), 10% per boss kill, pool by zone t
 ## 6. Save migration (v2 to v3)
 
 Principle: never rename or repurpose a field. `S.comp`, `S.blade`, `S.swift`, `S.fortune`,
-`S.items`, `S.equip` stay exactly as they are. New state lives under one new field.
+`S.items`, `S.equip`, `S.name` stay exactly as they are. New state lives under one new field.
+There is one hero loadout: `S.equip` stays the only hero gear record (no `S.loadouts`).
 
 ```js
 registerState('party', {
-  v: 0,                    // 0 = not migrated, 1 = migrated
-  cls: 'warden', clsAt: 0, // class and last switch time
-  field: [], order: [],    // up to 3 recruit ids; formation order incl. 'hero'
-  rec: {},                 // id -> { lv, xp, rank, wpn: itemId|null, trk: itemId|null }
-  autoCast: true, wipeDps: 0
+  v: 0,                     // 0 = not migrated, 1 = migrated
+  cls: null, chosen: false, // class id; false until the creation / "Choose your path" screen is done
+  mirrors: 0,               // Mirror of Embers owned
+  field: [],                // up to 3 character ids
+  cells: {},                // id or 'hero' -> cell 0..5 (col*2 + lane; col 0 Front, 1 Mid, 2 Back)
+  rec: {},                  // id -> { lv, xp, rank, wpn: itemId|null, trk: itemId|null, seen: 0 }
+  quests: {},               // quest id -> progress
+  autoCast: true, wipeZone: 0
 });
 ```
-`S.v` becomes 3 after migration (a new value, old code never reads it as anything else).
+`S.v` becomes 3 after migration (a new value; old code never reads it as anything else).
 
 **Mapping rules** (run once when `S.party.v === 0`, in `migrateParty()`):
 
-1. For each old index `i` with `n = S.comp[i] > 0`, recruit `ID[i]`
-   (`squire, archer, hedgemage, knight, dragoon, starcaller, saint`):
-   `rank = min(4, floor(n / 25))`, `lv = min(25 * (rank + 1), max(1, n))`, `xp = 0`, no gear.
-2. Migrated recruits count as unlocked even if `S.maxZone` is below their unlock zone.
-3. Field = the 3 recruits with the highest DPS, tank first if any tank exists.
-4. **No-loss check:** `old = sum over i of COMPS[i].dps * n * 2^floor(n/25) * multipliers` (the
-   old `compDps()`). If `fieldCompDps() < old`, add 1 level to every migrated recruit (ignoring
-   the cap for this step only, and bumping rank if the cap is passed) and repeat until
-   `fieldCompDps() >= old`, max 500 steps.
-5. `S.party.cls = 'warden'`. `S.party.v = 1`. `S.v = 3`. Save.
-6. `S.comp` is left untouched (read-only history). New code never writes to it.
-7. Items: all existing items keep ids and slots. No companion gear exists yet.
+1. Old index to character: 0 Squire -> `tobin`, 1 Archer -> `wren`, 2 Hedge Mage -> `pip`,
+   3 Knight -> `aldric`, 4 Dragoon -> `kestrel`, 5 Starcaller -> `oriel`, 6 Lantern Saint -> `elowen`.
+2. For each `i` with `n = S.comp[i] > 0`: recruit that character with `rank = min(7, floor(n / 25))`,
+   `lv = min(25 * (rank + 1), max(1, n))`, `xp = 0`, no gear. Milestones already passed unlock
+   silently; their camp stories are marked unread (a dot on the Party tab invites reading).
+3. Migrated characters are recruited even if `S.maxZone` is below their unlock or their quest is
+   not done. Hesketh also joins if `S.maxZone >= 3` (he would have joined at the zone 2 boss).
+   Maren and Isolde are not granted.
+4. Field = the 3 recruits with the highest DPS, a tank first if one exists. Cells by auto-placement.
+5. **No-loss check:** `old` = the old `compDps()` (per-count formula). If the new field's damage
+   is below `old`, add 1 level to every migrated character (ignoring the cap for this step only,
+   bumping rank when the cap is passed) and repeat until it is not, max 500 steps.
+6. `S.party.v = 1`, `S.v = 3`, `S.party.chosen = false` (the "Choose your path" screen shows
+   next, Warden preselected), save.
+7. `S.comp` is left untouched (read-only history). New code never writes to it.
+8. Items: all existing items keep ids and slots. No companion gear exists yet.
 
-Fixture: `tests/fixtures/save-v2.json` (comp `[25,14,6,0,0,0,0]`) must migrate to Squire
-rank 1 lv 25+, Archer lv 14+, Hedge Mage lv 6+, with field DPS >= old `compDps()`.
+Fixture: `tests/fixtures/save-v2.json` (comp `[25,14,6,0,0,0,0]`, maxZone 5) must migrate to
+Tobin rank 1 lv 25+, Wren lv 14+, Pip lv 6+, Hesketh lv 1, with field damage >= old `compDps()`.
 Add `tests/fixtures/save-v2-late.json` with all 7 comps > 0 and check the same.
 
 ---
 
 ## 7. UI on a 360px phone
 
-### 7.1 Where the party lives
+### 7.1 Tabs and first launch
 
-Tabs stay 5 for now (Fight, Gather, Forge, Raid, Tavern). The party is reached two ways:
+Five tabs: **Fight, Party, Gather, Forge, World** (World = Raid and Tavern as two sections,
+Raid first). New games open on the character-creation screen (2.1); existing saves see
+"Choose your path" once. Both are full-screen, one column, 4 class cards of 328 x 88px with
+sprite, name, pitch and ability, then a name field and a 48px "Begin" button.
 
-- **Tap any party member on the stage** (outside a boss wind-up) opens their character sheet.
-- **Fight tab, top section "Party"**: 4 portrait cards in a row (hero + 3), 80 x 88px each,
-  showing sprite, level, HP bar and a role pip. Tap = character sheet. Below it "Recruits"
-  (bench and locked recruits) and the **Shrine** (4 class buttons, 2 x 2 grid, 44px min height).
-- The old companion hire list is replaced by the Recruits list.
+### 7.2 Party tab (loadouts visible)
 
-### 7.2 Character sheet (bottom sheet, 90% height, swipe down or X to close)
+Top to bottom, 16px side gutter, 328px content width:
+
+1. **Formation** (328 x 140): a 3 x 2 grid mirroring the stage, Back | Mid | Front from left to
+   right, upper and lower lanes, each cell 104 x 64 with a 32px portrait. Tap a member then tap a
+   cell to move or swap; long-press 150ms to drag. Cells a member may not use are dimmed while it
+   is picked up. An "Auto" button places by role (4.2). Warnings show as one amber line under the grid.
+2. **Hero card** (328 x 96): portrait 48px, name, class, level, ability name with cooldown, and
+   the 5 hero gear icons (32px each). Tap = hero sheet.
+3. **Companion cards** x3 (328 x 88 each): portrait 48px, name and title, level and rank, role
+   pip, ability name and cooldown, the 2 gear icons (role weapon, trinket) at 32px, an XP bar
+   (gold when at the cap: "Promote"). A "+100% XP" badge shows while catch-up applies.
+4. **Synergies**: a row of chips (name + icon), lit when active, dim with "needs Pip" when one
+   member short. Tap a chip = its effect.
+5. **Bench**: 4-per-row grid of 76px portraits with level. Tap = sheet; "Field" swaps with a
+   chosen member. Locked characters show a silhouette and how to recruit ("Zone 12, 150K gold",
+   "Quest: bring 20 Glowing Essence").
+6. **Quests**: one card per open recruit quest with a progress bar and one button.
+
+### 7.3 Character sheet (bottom sheet, 90% height, swipe down or X to close)
 
 ```
-[ sprite 64x64 ]  Archer          Lv 34  Veteran
-                  Striker         [#####-----] XP
-------------------------------------------------
-HP 12.4K   ATK 3.1K/s   Armour 0   Speed 1.2
-Crit 25%   Crit x3.0    Ability CD 10s
-------------------------------------------------
-[Bow slot 56px]  [Trinket slot 56px]
-------------------------------------------------
-Aimed Shot: 5x damage, always crits. Every 10s.
-------------------------------------------------
-[ Promote 2.1M ]  [ Bench ]  [ Move: Front Mid Back ]
+[ portrait 64 ]  Wren Hollowmere            Lv 34  Veteran
+                 the Batwing Archer   Striker   Hedgefolk
+                 [#########-----] XP  (+60% catch-up)
+-----------------------------------------------------------
+Wren learned to shoot in the caves, where you aim at
+sounds. She talks to her arrows. Most of them come back.
+-----------------------------------------------------------
+HP 12.4K  DMG 3.1K/s  Armour 0  Speed 1.2  Crit 25% x3.0
+Threat x1   Row: Mid (upper)   Targeted by: 0 enemies
+-----------------------------------------------------------
+[ Bow 56px ]  [ Trinket 56px ]
+-----------------------------------------------------------
+Marked (speciality) . Aimed Shot, every 10s . Echo (L10)
+-----------------------------------------------------------
+Synergies: Hedgefolk (active)  Mark and Leap (needs Kestrel)
+Milestones: L5 v  L10 v  L15 v  L20 (next)  L25
+Stories: Arrows in the Dark . The Bat Queen
+-----------------------------------------------------------
+[ Promote 2.1M ]   [ Bench ]
 ```
-Hero sheet shows the 5 hero gear slots in a 5 x 1 row (56px each, fits 360 - 32px gutter) and
-the class with a "Change at Shrine" link.
+The hero sheet swaps the bio for the class pitch, shows the 5 hero gear slots (5 x 56px), the
+tap action for the class, and "Mirror of Embers: 0" with a Use button when one is owned.
 
-### 7.3 Stage layout (logical canvas is about 180 x 100 pixels at P = 2)
+### 7.4 Stage layout (logical canvas 180 x 100 at P = 2)
+
+On phones the stage is 180-220 CSS px tall, so `P = 2` and the logical canvas is 180 x 100 with
+ground line `GY = 84`. Positions are foot-centre x in logical pixels (and fractions of `LW` for
+other widths). The upper lane is 8px higher and 4px further back, drawn first.
 
 ```
- x:  0.10   0.22   0.32   0.42  |  0.60  0.72  0.84
-     back   back   mid    FRONT |  enemy enemy enemy
-     (row y-6)     (row y-6)    |  (boss: one sprite at 0.72)
+            PARTY                                   ENEMIES
+  Back       Mid       Front      gap      Front      Mid       Back
+  x=22       x=46      x=70     (86-96)    x=112      x=136     x=160
+  (0.12)    (0.26)    (0.39)               (0.62)    (0.76)    (0.89)
+  upper lane: x-4, foot y=76      lower lane: foot y=84
+  boss: one 24x24 sprite at scale 3, centred x=138
 ```
-- Two depth rows: slots 1 and 3 at ground line, slots 2 and 4 six pixels higher and drawn first.
-- HP bar 16 x 2px above each unit, green > 50%, amber > 25%, red below. Down = grey sprite, no bar.
-- Ability button: 56px circle, bottom-right corner of the stage, cooldown as a pie sweep; a
-  small gold ring when auto-cast is on. Companion ability pips: 6px dots under each HP bar that fill as cooldowns run.
-- Boss "!" 12px above the boss; parry ring centred on the boss, 44px minimum hit area.
+- Units are 16 x 16 source pixels at scale 2 (32 logical px). Neighbouring columns overlap by
+  about 8px; draw order is upper lane then lower lane, back column to front column.
+- HP bar 16 x 2px, 3px above each head: green > 50%, amber > 25%, red below; shields as a white
+  segment on the right. Down = grey sprite, no bar.
+- **Threat markers:** a 3px pip above each enemy in the colour of its target's role (tank blue,
+  striker green, caster violet, support gold) and a 1px dotted line from the enemy to its target
+  (40% opacity; setting "Show targets", default on). When an enemy leaves a tank for someone
+  else, its pip turns red for 1s and the new target's portrait card flashes an eye icon.
+- **Numbers:** damage white (crits orange, as today), heals green "+123" rising over the healed
+  ally, shields white "+123" with a small shield glyph, misses/parries "PARRY" in gold.
+- Ability button: 56px circle, bottom-right of the stage, cooldown as a pie sweep, gold ring when
+  auto-cast is on. Companion ability pips: 6px dots under each HP bar that fill as cooldowns run.
+- Boss "!" 12px above the boss (red = heavy hit, blue = dive, green = heal channel); parry ring
+  centred on the boss or, for a Chaplain ward, on the targeted ally. 44px minimum hit areas.
+
+### 7.5 Movement on stage (what the art must show)
+
+| Action | Motion |
+|---|---|
+| Melee striker attack | dash from Mid to 14px short of the enemy Front (200ms), strike frame, dash back (250ms) |
+| Tank intercept | step forward 8px on taunt; when a diver lands in the back row, the nearest adjacent tank steps back one column beside the target (200ms), taunts, returns after 2s |
+| Assassin/skirmisher dive | parabolic leap over the Front line (400ms, 16px apex), lands 12px in front of its target; leaps back when the dive ends |
+| Caster cast | 2-frame cast pose in place, projectile 6px per frame, AoE burst on arrival |
+| Healer cast | stays back; 2-frame cast, green motes rise on the target (8 particles) |
+| Enemy ranged | arrow or spore projectile on a 6px arc |
+| Enemy healer channel | green ring on the Wraith, then motes flow to its ally |
+| Knockback | target slides 6px back over 150ms |
+
+Reduced motion: dashes and leaps become instant position swaps with a 1-frame flash; no apex
+arcs, no shake.
 
 ---
 
 ## 8. Art direction
 
-- **Sizes (source pixels):** party and normal enemies 16 x 16 (hero is 14 wide today); zone
-  bosses 24 x 24; raid wyrm unchanged. Draw scale 2 for units, 3 for bosses at P = 2.
+- **Sizes (source pixels):** party and normal enemies 16 x 16; zone bosses 24 x 24; raid wyrm
+  unchanged. Draw scale 2 for units, 3 for bosses at P = 2. Party-tab portraits are the same
+  sprites cropped to the head and shoulders (16 x 12) at 4x.
 - **Frames:** idle 2 (bob 1px, 500ms each); attack 3 (wind-up 120ms, strike 80ms, recover
-  150ms); hit 1 (white flash 80ms plus 1px knockback); down 1. Enemies add wind-up 2 frames
-  (crouch, raised) looped during boss telegraphs with a red outline pulse at 4Hz.
-- **Palette:** max 7 indices per sprite plus outline `#0B0810` (as today). Role colour on the
-  main cloth index: tank steel blue `#3E63C9`, striker green `#3E8A4E`, caster violet `#8A4FC9`,
-  support cream-gold `#EFE6D6`/`#F2C14E`. Classes reuse the hero body with a palette swap plus
-  one overlay (Warden shield, Lanternmage lantern-staff, Ranger bow, Chaplain censer). Zone
-  cycles keep the `shiftPal` hue shift. Must read at 1x on a dark sky: keep a 1px outline.
+  150ms); cast 2; hit 1 (white flash 80ms plus 1px knockback); down 1; dash/leap reuse attack
+  frame 1. Enemies add wind-up 2 frames (crouch, raised) looped during telegraphs with an outline
+  pulse at 4Hz in the telegraph colour.
+- **Palette:** max 7 indices per sprite plus outline `#0B0810` (as today). Each character has
+  its own palette from its brief (3.2), and a role accent on one index so role reads at a glance:
+  tank steel blue `#3E63C9`, striker green `#3E8A4E`, caster violet `#8A4FC9`, support gold
+  `#F2C14E`. The 4 hero classes reuse one hero body with a palette swap plus one overlay (Warden
+  shield, Lanternmage lantern-staff, Ranger bow, Chaplain censer). Zone cycles keep `shiftPal`.
+  Silhouettes must differ at 1x (height, head shape, prop), not only colour.
 - **Pipeline extension:** a sprite becomes `{ base: rows[], frames: { idle: [delta, delta], attack: [...], ... } }`
   where a delta is a list of `[x, y, index]` pixel overrides or a whole-row replacement. Frames
-  are baked once per `(key, frame, paletteKey)` into an offscreen canvas and cached in the
-  existing sprite cache; drawing stays one `drawImage` per unit per frame. Overlays (weapons)
-  are separate 8 x 8 maps with a pivot, drawn after the body (as the hero tool is today).
-- **Motion budget:** at most 8 animated units on screen; 60fps target, 30fps on low-end.
-  `prefers-reduced-motion`: idle frames freeze, no knockback or shake, flashes stay.
+  are baked once per `(key, frame, paletteKey)` into an offscreen canvas and cached; drawing
+  stays one `drawImage` per unit per frame. Props are separate 8 x 8 maps with a pivot, drawn
+  after the body (as the hero tool is today). Movement (dash, leap, knockback) is a position tween
+  in the stage code, not extra frames.
+- **Motion budget:** at most 10 animated units on screen (4 party, 3 enemies, adds); 60fps
+  target, 30fps on low-end. `prefers-reduced-motion`: idle frames freeze, tweens snap, flashes stay.
 
 ---
 
@@ -370,21 +733,26 @@ the class with a "Change at Shrine" link.
 
 Baseline today (`--policy mixed --seed 1`): zone 14 at 30m, 20 at 1h, 29 at 2h, 51 at 3h.
 
-The simulator gets flags `--class warden|lanternmage|ranger|chaplain`, `--active 0|1`
-(1 = casts on cooldown and parries 80% of wind-ups) and `--offline-check`.
+The simulator gets flags `--class warden|lanternmage|ranger|chaplain`, `--lineup <ids>`,
+`--active 0|1` (1 = class taps at 3 per second with good choices, casts on cooldown, parries 80%
+of wind-ups) and `--offline-check`.
 
 | # | Target | Pass band |
 |---|---|---|
-| T1 | Idle mixed policy, any class: max zone at 30m / 1h / 2h | 12-16 / 18-22 / 26-32 |
+| T1 | Idle mixed policy, balanced line-up, any class: max zone at 30m / 1h / 2h | 12-16 / 18-22 / 26-32 |
 | T2 | Late-game runaway: max zone at 3h | <= 42 (today's 51 is a known runaway) |
-| T3 | Class spread: time to zone 20 for each class vs the median | 0.85-1.15 |
+| T3 | Class spread: time to zone 20 for each class (best line-up for it) vs the median | 0.85-1.15 |
 | T4 | Active vs idle (`--active 1` vs `0`): time to zone 20 | active 20-35% faster |
-| T5 | Wipes per hour while farming at `maxZone - 2` | 0 |
-| T6 | Wipes on a fresh push zone with no support in field | 1+ within 10 min (supports matter) |
-| T7 | First boss attempt success rate, idle | 40-70% |
+| T5 | Wipes per hour while farming at `maxZone - 2`, balanced line-up | 0 |
+| T6 | Offline holdable zone: no-tank or no-support line-up vs balanced | 2-4 zones lower |
+| T7 | First boss attempt success rate, idle, balanced | 40-70% |
 | T8 | Offline estimate vs simulated 1h of fighting (gold) | within +-15% |
-| T9 | Migration of both fixtures: field DPS vs old `compDps()` | >= 1.00, <= 1.30 |
-| T10 | Promotion due (cap hit) at least once per 20 min for the top companion before 2h | yes |
+| T9 | Migration of both fixtures: field damage vs old `compDps()` | >= 1.00, <= 1.30 |
+| T10 | Top companion hits a level cap (promotion due) at least once per 20 min before 2h | yes |
+| T11 | A new level-1 recruit fielded at zone 20 reaches party level - 5 | within 5-10 min |
+| T12 | Each niche line-up in 4.13 reaches zone 20 | within 1.5x of balanced |
+| T13 | Tank holds aggro (enemy-seconds on the tank / total), balanced party at par | >= 85% |
+| T14 | Chaplain-led party: share of party damage from companions | >= 90%, and T3 still passes |
 
 ---
 
@@ -395,47 +763,53 @@ main stays playable between merges. Each agent runs `node tools/build.mjs` and
 `node tools/check.mjs`. Owners below are exclusive for the stage; "small edit" means an
 extension-point change of a few lines, reviewed by the coordinator.
 
-### Stage A: classes, abilities, visible party
+### Stage A: class choice, abilities, visible party, tabs
 
 | Task | Owns | Small edits in |
 |---|---|---|
-| A1 Classes core: class table, Shrine switch, auras as `addModifier`, hero abilities (cooldowns, effects, auto-cast), `registerState('party')` | `src/js/55-party.js` | - |
-| A2 Party art data: 16x16 hero body + 4 class overlays, 7 companion maps, frame deltas | `src/js/12-art-party.js` (core, data only) | - |
-| A3 Animation + stage: frame baking/cache, formation drawing (hero + top 3 owned old comps for now), ability button overlay | `src/js/61-anim.js` | `src/js/62-stage.js` |
-| A4 UI: Shrine section, character sheet (hero only), Party cards | `src/js/75-party.js`, `src/styles/60-party.css` | `src/js/71-ui-fight.js` |
+| A1 Classes core: class table, one-time choice, Mirror of Embers, auras as `addModifier`, hero abilities and auto-cast, class tap actions (4.6) with idle auto-play, `registerState('party')` | `src/js/55-party.js` | `src/js/50-sim.js` (`playerTap` routes to the class tap) |
+| A2 Art data: 16x16 hero body + 4 class overlays, the 7 migrated characters' sprites and portraits, frame deltas | `src/js/12-art-party.js` (core, data only) | - |
+| A3 Animation + stage: frame baking/cache, 3x2 formation drawing (hero + top 3 old comps as their characters), position tweens, ability button | `src/js/61-anim.js` | `src/js/62-stage.js` |
+| A4 UI: character-creation and "Choose your path" screens, Party tab shell (hero card, formation grid read-only), World tab merging Raid and Tavern | `src/js/75-party.js`, `src/js/76-create.js`, `src/styles/60-party.css` | `src/js/70-ui.js` (tab list), `src/js/74-ui-raid.js`, `src/js/74-ui-tavern.js` (register as World sections) |
 | A5 Sim: `--class`, `--active` flags; T1, T3, T4 report | `tools/sim.mjs` | - |
 
-### Stage B: recruits, levels, companion gear
+### Stage B: the roster, levels, synergies, companion gear
 
 | Task | Owns | Small edits in |
 |---|---|---|
-| B1 Recruits core: roster, XP, ranks, promote, recruit, field/bench, `fieldCompDps()`; switch `compDps()` to it when `S.party.v >= 1` | `src/js/56-recruits.js` | `src/js/40-rules.js` (compDps), `src/js/51-actions.js` (hireComp retired) |
-| B2 Migration: `migrateParty()`, second fixture, check.mjs asserts T9 | `src/js/57-migrate.js`, `tests/fixtures/save-v2-late.json`, `tools/check.mjs` | `src/js/30-state.js` (call after load) |
-| B3 Companion items: `COMP_SLOTS`, recipes, stats, 6 uniques, boss drops, bag 60 | `src/js/58-comp-items.js` | `src/js/20-data.js`, `src/js/40-rules.js` (itemName/itemColor), `src/js/73-ui-forge.js` (second row) |
-| B4 UI: recruit list, companion character sheet, gear equip, promote, formation order | `src/js/75-party.js` (continues from A4) | - |
-| B5 Art: Lamplighter and Duskblade sprites, 5 companion gear icons | `src/js/12-art-party.js` | `src/js/10-art.js` (ICON entries) |
+| B1 Roster core: 10 characters, recruit methods and quests, XP from use only, catch-up bonus, milestones, promotions, field/bench/cells, `fieldCompDps()`; `compDps()` switches to it when `S.party.v >= 1` | `src/js/56-roster.js` | `src/js/40-rules.js` (compDps), `src/js/51-actions.js` (hireComp retired) |
+| B2 Specialities and synergies: speciality hooks, 8 synergies, Bond, active-synergy query for the UI | `src/js/56b-synergy.js` | - |
+| B3 Migration: `migrateParty()`, second fixture, check.mjs asserts T9 | `src/js/57-migrate.js`, `tests/fixtures/save-v2-late.json`, `tools/check.mjs` | `src/js/30-state.js` (call after load) |
+| B4 Companion items: `COMP_SLOTS`, recipes, stats, 6 uniques, boss drops, bag 60 | `src/js/58-comp-items.js` | `src/js/20-data.js`, `src/js/40-rules.js` (itemName/itemColor), `src/js/73-ui-forge.js` (second row) |
+| B5 Party UI: companion cards with loadouts, formation editor with auto and warnings, bench, quests, character sheet with bio, synergies, milestones, stories | `src/js/75-party.js` (continues from A4) | - |
+| B6 Writing and art: Maren, Isolde, Hesketh sprites and portraits; 5 gear icons; 30 camp stories (2-4 sentences each, house voice) | `src/js/12-art-party.js`, `src/js/21-stories.js` (data) | `src/js/10-art.js` (ICON entries) |
 
-### Stage C: enemy attacks, roles, boss telegraphs
+### Stage C: party combat
 
 | Task | Owns | Small edits in |
 |---|---|---|
-| C1 Combat core: HP, packs, targeting, damage, healing, KO, wipe/retreat, enemy traits | `src/js/59-combat.js` | `src/js/50-sim.js` (tick branches to `combatTick` when flag C) |
-| C2 Offline estimate: `partyAwayEstimate()` per 4.8 | `src/js/58-offline.js` | `src/js/50-sim.js` (awayGains fight branch calls it; coordinate with C1) |
-| C3 Boss telegraphs: wind-up timer, parry/dodge resolution, stagger, `telegraph` events | `src/js/59b-boss.js` | `src/js/50-sim.js` (`playerTap` checks parry first) |
-| C4 Stage combat visuals: packs of 3, HP bars, KO, enemy wind-up frames, parry ring, reduced motion | `src/js/61-anim.js`, `src/js/62-stage.js` | - |
-| C5 Sim: combat in the loop, T5-T8, T10 | `tools/sim.mjs` | - |
+| C1 Combat core: HP, packs, formation reach, threat tables, damage, healing, shields, CC, KO, wipe/retreat | `src/js/59-combat.js` | `src/js/50-sim.js` (tick branches to `combatTick` when flag C) |
+| C2 Enemy behaviours and bosses: 7 behaviours, elites, 7 boss mechanics, telegraphs, parry/dodge/ward resolution | `src/js/59b-enemies.js` | - (called from C1's hooks) |
+| C3 Offline/auto-push estimate: `partyHoldEstimate()` per 4.11 | `src/js/58-offline.js` | `src/js/50-sim.js` (awayGains fight branch calls it) |
+| C4 Stage combat visuals: packs, HP bars, threat pips and lines, heal/shield numbers, dives, dashes, intercepts, telegraph colours, reduced motion | `src/js/61-anim.js`, `src/js/62-stage.js` | - |
+| C5 Sim: combat in the loop, `--lineup`, T5-T14 | `tools/sim.mjs` | - |
 
-C1, C2 and C3 all touch `50-sim.js`: C1 merges first, C2 and C3 rebase on it.
+C1 and C3 both touch `50-sim.js`: C1 merges first, C3 rebases. C2 depends on C1's hook names;
+agree them first (`onEnemyTick(enemy, dt)`, `onTelegraph(enemy)`, `resolveParry(source)`).
 
 ---
 
 ## 11. Open questions for the owner
 
-1. **Party tab:** keep the party inside the Fight tab and the stage (this spec), or merge Raid and Tavern into one "World" tab so Party gets its own tab?
-2. **Wipe cost:** retreat one zone and auto-return when stronger (this spec), or only restart the current pack with no zone change?
-3. **Auto-cast:** hero ability auto-casts at half rate while idle (this spec), or manual only so the button always means "you are playing"?
-4. **Packs of 3 enemies** instead of one at a time. It gives AoE and tanks a job but changes how every fight looks. OK?
-5. **One hero, four classes:** classes share the hero's level and gear (this spec, free switching), or each class keeps its own gear loadout (more to collect, more to manage)?
+1. **Uniform power curve:** every character uses the same base power, so early recruits never
+   become obsolete and a late recruit starts at level 1 and catches up through use. The
+   alternative is for late recruits to be stronger per level, which feels like progress but benches
+   early favourites. Keep uniform?
+2. **Mirror of Embers source:** a 2% drop from zone bosses from zone 36, plus a once-per-raid
+   purchase for 400 Embers. Raid purchases tie a single-player choice to the online raid. Is that OK, or should it be a zone drop only?
+3. **Formation freedom:** the hero's row is fixed by class, but companions can stand in any
+   allowed row with warnings. Should support and caster characters be locked to the back row
+   instead, which is simpler but gives fewer options?
 
 ## Owner decisions (2026-09-27)
 
@@ -444,5 +818,7 @@ These override anything above that disagrees.
 1. **Party gets its own tab.** Raid and Tavern merge into one "World" tab, keeping five tabs: Fight, Party, Gather, Forge, World.
 2. **Enemies come in packs of 3.** As specified.
 3. **Hero ability auto-casts at half rate** once unlocked at zone 10. Casting it manually stays twice as effective.
-4. **Each class keeps its own gear loadout.** Hero level stays shared. Store the loadouts as a new `S.loadouts = {warden: {...slots}, lanternmage: {...}, ...}` field, where each value maps slot to item id, the same shape as `S.equip`. `S.equip` stays the live, active loadout, so all existing code keeps working. Switching class copies `S.equip` into the old class's entry and loads the new class's entry, falling back to the current gear for a class never used. Migration seeds `loadouts.warden` from the existing `S.equip`. The same item can sit in several loadouts; salvage must refuse any item equipped in any loadout. Tools (pickaxe, axe) are shared across classes rather than per loadout.
+4. **The class is a starting choice, with one loadout.** The class is chosen at character creation (or once for existing saves) and changes only with a Mirror of Embers. There is one hero loadout (`S.equip`); the earlier per-class `S.loadouts` decision is withdrawn because the class no longer changes day to day.
 5. **A party wipe retreats one zone** (coordinator's call), and the party pushes back up automatically once it can hold that zone.
+6. **Companions are named characters** with bios, specialities, signature abilities and synergies. They grow through use: only fielded characters earn XP, with a catch-up bonus and milestone unlocks, and promotions gated by level caps.
+7. **Roles define combat:** threat and aggro, healers who heal rather than deal damage, formation rows with reach rules, enemy behaviours that test composition, and class-specific taps.
