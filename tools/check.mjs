@@ -1123,5 +1123,132 @@ try {
   }
 } catch (e) { fail('gathering crashed: ' + (e.stack || e)); }
 
+// ---- expeditions (57b-expeditions.js) ----
+console.log('expeditions');
+try {
+  const mk = seed => {
+    const g = loadCore({ seed }), E = s => g.eval(s);
+    g.clock = new Date(2026, 8, 28, 12, 0, 0).getTime();
+    g.setNow = t => { g.clock = t; E(`Date.now = () => ${t}`); };
+    g.setNow(g.clock);
+    E('almanac.force("none")');
+    E('S.maxZone = 36; ["tobin","wren","hesketh","pip","bram","maren","aldric","kestrel","thessaly","anselm","oriel"].forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 20 + 5 * i; })');
+    E('S.party.autoField = false; charRec("tobin").lv = charRec("wren").lv = charRec("kestrel").lv = 90');
+    E('setField(["tobin","wren","kestrel"])');
+    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.tavern = 1');
+    return g;
+  };
+  const g = mk(71), E = s => g.eval(s);
+  const H = 3600 * 1000;
+  assert(E('expedOpen() && expedSlots() === 3 && expedLengths().join() === "1,4,8,12" && expedRoutes().length === 18'), 'Map Room 5: 3 slots, 1h to 12h, all 18 Region 1 routes open at zone 36');
+  E('S.camp.b.maproom = 1'); assert(E('expedSlots() === 1 && expedLengths().join() === "1,4"'), 'Map Room 1: 1 slot, 1h and 4h');
+  E('S.camp.b.maproom = 0'); assert(!E('expedOpen()') && !E('expedSend("r1a", ["pip"], 1)'), 'no Map Room: closed, nothing sends');
+  E('S.camp.b.maproom = 5');
+  E('S.maxZone = 10'); assert(E('expedRoutes().every(r => EXPED_ROUTES[r].b === 1)') && !E('expedSend("r3a", ["pip"], 1)'), 'a band opens only after its last boss');
+  E('S.maxZone = 36');
+  // fielded characters are blocked
+  assert(!E('expedSend("r1a", ["wren"], 4)') && /in the party/.test(E('expedCan("r1a", ["wren"], 4).why')), 'a fielded character cannot go');
+  // grade shown before sending = grade stored
+  const team = JSON.parse(E('JSON.stringify(expedBest("r3a"))'));
+  const pv = JSON.parse(E(`JSON.stringify(expedPreview("r3a", ${JSON.stringify(team)}, 8))`));
+  const s1 = JSON.parse(E(`JSON.stringify(expedSend("r3a", ${JSON.stringify(team)}, 8))`) || 'null');
+  assert(s1 && s1.grade === pv.grade.g && E('EXPED_GRADES[S.exped.slots[0].grade].n') === pv.grade.name, `the grade matches the preview (${pv.grade.name}, team ${team.join(', ')})`);
+  assert(team.every(id => E(`campStatus("${id}").status`) === 'exped' && !E(`campFree("${id}")`)), 'the team shows "exped" on the Roster board and is not free');
+  assert(!E(`expedSend("r1a", ["${team[0]}"], 1)`), 'a character out on one route cannot go on another');
+  // preview amounts match the fixed haul (floor or ceil of the expected value)
+  const fam = s1.pay.mats.map(m => m[2]), exp = pv.lines.filter(l => l.k === 'mat').map(l => l.n);
+  assert(fam.length === exp.length && fam.every((n, i) => n === Math.floor(exp[i]) || n === Math.ceil(exp[i])), `haul fixed at send matches the preview (${fam.join(', ')} vs ${exp.map(x => x.toFixed(1)).join(', ')})`);
+  // not back yet: no collect; the timer runs offline (away phase collects)
+  assert(E('expedCollect(0)') === null, 'no Collect before the timer ends');
+  const before = JSON.parse(E('JSON.stringify(S.mats)'));
+  g.setNow(g.clock + 8 * H + 1000);
+  E('globalThis.__eb = []; on("expedBack", p => globalThis.__eb.push(p))');
+  const r = JSON.parse(E('JSON.stringify(awayGains(8 * 3600 + 1))'));
+  const gained = s1.pay.mats.every(([f, t, n]) => E(`S.mats.${f}[${t - 1}]`) - before[f][t - 1] >= n);
+  assert(E('S.exped.slots.length') === 0 && gained && E('globalThis.__eb.length') === 1 && E('S.exped.done.r3a') === 1, 'finished while the game was closed: paid on load, team freed, expedBack fired');
+  assert(r.extra.some(l => /Expedition back: Wraithmarsh Reeds/.test(l.txt)), 'the away card lists the expedition');
+  // the same seed pays the same haul, open or closed
+  const runOnce = (closed) => {
+    const h = mk(72), X = s => h.eval(s);
+    X('S.exped.seq = 40'); X('Math.random = () => 0.5');
+    const s = JSON.parse(X('JSON.stringify(expedSend("r2b", ["hesketh", "pip", "thessaly"], 4))'));
+    h.setNow(h.clock + 4 * H + 5);
+    if (closed) h.fn.awayGains(4 * 3600); else { for (let i = 0; i < 12; i++) h.fn.tick(0.1); X('expedCollect(0)'); }
+    return JSON.stringify([s.seed, X('JSON.stringify(S.exped.log[0].haul)')]);
+  };
+  assert(runOnce(false) === runOnce(true), 'same seed: identical haul with the game open or closed');
+  // open game: a finished run waits for Collect (no failure: Fair still pays)
+  E('S.exped.log = []');
+  E('expedSend("r4a", ["hesketh"], 1)');
+  const fairG = E('S.exped.slots[0].grade');
+  g.setNow(g.clock + 1 * H + 2000); for (let i = 0; i < 12; i++) g.fn.tick(0.1);
+  assert(E('S.exped.slots.length') === 1 && E('topGoals(60, { sticky: false }).some(x => x.id === "exped-ready")'), 'open game: the run waits; Next Up says "ready to collect"');
+  const c = JSON.parse(E('JSON.stringify(expedCollect(0))'));
+  assert(fairG === 0 && c && c.haul.mats.reduce((a, m) => a + m[2], 0) > 0, `a Fair run still brings something home (${c && expedHaulText_(c)})`);
+  function expedHaulText_(x) { return E(`expedHaulText(${JSON.stringify(x.haul)})`); }
+  // Next Up timer
+  E('expedSend("r1a", ["hesketh"], 4)');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "exped-timer" && /back in/.test(x.label))'), 'Next Up: "Expedition back in <time>"');
+  E('S.exped.slots = []');
+  // repeats: at most 3 runs in a row, even over a long absence
+  E('expedSend("r1a", ["hesketh", "pip"], 1); expedRepeat(0, true)');
+  g.setNow(g.clock + 10 * H);
+  const d0 = E('S.exped.done.r1a || 0');
+  g.fn.awayGains(10 * 3600);
+  assert(E('(S.exped.done.r1a || 0)') - d0 === 3 && E('S.exped.slots.length') === 0, `Repeat: 3 runs in a row while away, then the team comes home (${E('(S.exped.done.r1a || 0)') - d0} runs)`);
+  E('S.camp.b.maproom = 4'); E('expedSend("r1a", ["hesketh"], 1)'); assert(!E('expedRepeat(0, true)'), 'Repeat needs Map Room 5');
+  E('S.exped.slots = []; S.camp.b.maproom = 5');
+  // call back: half the haul for the time spent, no bonus rolls
+  E('expedSend("r1a", ["hesketh", "pip", "bram"], 8)');
+  const full = E('S.exped.slots[0].pay.mats.reduce((a, m) => a + m[2], 0)');
+  g.setNow(g.clock + 4 * H);
+  const rc = JSON.parse(E('JSON.stringify(expedRecall(0))'));
+  const got = rc.haul.mats.reduce((a, m) => a + m[2], 0);
+  g.setNow(g.clock + 12 * H);
+  assert(E('S.exped.slots.length') === 0 && got <= Math.ceil(full * 0.25) + 1 && got >= Math.floor(full * 0.25) - 2, `Call back at half time pays a quarter (${got} of ${full})`);
+  // XP is capped at party level - 5
+  E('charRec("hesketh").lv = Math.floor(partyLevel()) - 6; charRec("hesketh").xp = 0; charRec("hesketh").rank = 7');
+  E('S.exped.slots = []; expedSend("r2d", ["hesketh"], 12)');
+  g.setNow(g.clock + 30 * H); g.fn.awayGains(3600);
+  assert(E('charRec("hesketh").lv') <= E('Math.floor(partyLevel()) - 5') && E('charRec("hesketh").lv') >= E('Math.floor(partyLevel()) - 6'), `expedition XP stops at party level - 5 (Hesketh ${E('charRec("hesketh").lv')}, party ${E('partyLevel().toFixed(1)')})`);
+  // shortcuts: token rolls, Kingslayer credit, Renown through the unlock API
+  const h = mk(73), X = s => h.eval(s);
+  X('globalThis.__tok = []; on("token", p => globalThis.__tok.push(p)); globalThis.__ks = 0; on("kingslayerCredit", p => globalThis.__ks += p.n)');
+  const ren0 = X('renown()');
+  assert(!X('expedCan("r5d", ["oriel"], 8).ok') && /Aldric/.test(X('expedCan("r5d", ["oriel"], 8).why')), 'The Hollow Court needs Aldric');
+  X('expedSend("r3b", ["maren", "pip"], 12)');
+  X('expedSend("r5d", ["aldric", "oriel", "thessaly"], 8)');
+  const tokPlanned = X('S.exped.slots[0].pay.tok');
+  X('expedSend("r1c", ["hesketh", "anselm"], 12)');
+  h.setNow(h.clock + 13 * H); h.fn.awayGains(13 * 3600);
+  const toks = JSON.parse(X('JSON.stringify(globalThis.__tok)'));
+  assert(tokPlanned > 0 && toks.length >= 1 && toks.every(t => t.id === 'grenna') && (X('S.party.unlock.tokens.grenna.miss') > 0 || X('isRecruited("grenna")')), `Quarry Night Shift rolls Grenna's token through unlockTokenRoll (${toks.length} rolls${X('isRecruited("grenna")') ? ', won' : ''})`);
+  assert(X('globalThis.__ks') > 0 && X('S.party.unlock.ks') === X('globalThis.__ks') && X('S.exped.court') === X('globalThis.__ks'), `The Hollow Court credits Kingslayer (${X('S.party.unlock.ks')})`);
+  assert(X('renown()') > ren0 && X('Object.values(S.exped.lore).some(q => q > 0)'), `Lore routes add Renown (+${X('renown()') - ren0}) and Lore`);
+  X('S.exped.court = 48; S.party.unlock.ks = 48; S.exped.slots = []; expedSend("r5d", ["aldric", "oriel"], 8)');
+  h.setNow(h.clock + 30 * H); h.fn.awayGains(3600);
+  assert(X('S.exped.court') === 50 && X('S.party.unlock.ks') === 50, 'Kingslayer credit stops at 50');
+  // Almanac hooks: Fair Winds raises the haul at send; the weekly counters hear the events
+  const w = mk(74), W = s => w.eval(s);
+  const base = W('expedPreview("r1a", ["hesketh", "pip"], 4).lines[0].n');
+  W('almanac.force("fairWinds")');
+  const fw = W('expedPreview("r1a", ["hesketh", "pip"], 4).lines[0].n');
+  assert(Math.abs(fw / base - 1.3) < 1e-9, 'Fair Winds: +30% for teams sent that day (mod expHaul)');
+  const bad = badNumbers(E('S')).concat(badNumbers(X('S')));
+  assert(!bad.length, 'no NaN in the expedition state' + (bad.length ? ': ' + bad[0] : ''));
+  const errs = g.errors.concat(h.errors, w.errors);
+  assert(!errs.length, 'no expedition errors' + (errs.length ? ': ' + errs[0] : ''));
+  // old saves get the defaults and round-trip
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const go = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
+    const def = go.eval('S.exped.v === 1 && S.exped.slots.length === 0 && S.exped.log.length === 0 && S.exped.court === 0 && S.exped.seq === 0');
+    for (let i = 0; i < 12; i++) go.fn.tick(0.1);
+    const cs = go.eval('JSON.stringify(S.exped)'); go.eval('save(); loadSave()');
+    const rt = go.eval('JSON.stringify(S.exped)') === cs;
+    assert(def && rt && !go.errors.length, `${f}: empty expeditions by default, round trip keeps S.exped`);
+  }
+} catch (e) { fail('expeditions crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
