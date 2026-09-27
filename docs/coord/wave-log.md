@@ -54,3 +54,13 @@ The art style study is still running (owner leans 16-bit; wants clear section de
   `(sim)`), Legendary 2.1-2.6h (want 6-12h) because gold runs away: fix through M6 pacing, then recheck.
   The sim now claims bounties (needed for Renown), which pushes T1 above band (16/23/34); M6 retune must
   use the new sim. Sim `Date.now` follows sim time; `--day N`, `--unlock path=v`, `--bounties 0`.
+- Almanac merged (19 Omens live, 16 deferred until their systems exist; 4 Dares; weekly board).
+  Coordinator fixes: heroDps keeps the exact old expression when nonCrit = 1 (K4 bit-equality), the
+  crate test sums every material family, weekly goals register with Next Up's shape (sys, go -> {tab}),
+  and the boss timer bar divides by the real boss time. Reward stand-ins (Essence for Trophy/Renown,
+  a 1.5x crate for Depth Marks) should be revisited when K5/Deepwell land.
+
+## Owner decision: art direction B1 (2026-09-27)
+
+B1 (16-bit, about 4 heads, full ink outline, section lines, flat 3-tone materials) is the owner's pick.
+Plus more lanterns and lamps dotted around the maps. Art conversion wave follows.

@@ -139,7 +139,7 @@ function ui(force) {
       setHp(mob.hp / mob.max * 100);
       $('mBar').style.background = mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)';
       $('tWrap').hidden = !mob.boss;
-      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / 30 * 100) + '%';
+      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%';
     }
   }
   $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;

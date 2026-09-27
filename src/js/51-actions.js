@@ -21,7 +21,7 @@ function dropUnique(key, t) {
 }
 
 function salvageGive(it) {
-  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
+  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage'));
   if (it.u) S.mats.ess[it.t - 1] += 10;
 }
 // pos: hero position (defaults to the kind's own); the item must fit it for the hero's class.

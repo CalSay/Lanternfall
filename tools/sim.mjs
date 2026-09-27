@@ -9,6 +9,7 @@
 //             Without it, the game's own idle auto-play and auto-cast run.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
 //             possible (saving gold for it first), keep the best 3 fielded (the game's autoField).
+//   --omen <id>|none: fix the daily Omen (default: the device date's Omen).
 //   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 20).
 //   --day N: device day the run starts on (days since 2026-01-01; default 277, a Monday, so
 //             the Tavern rotation starts on Grenna's day). The game's Date.now follows sim time.
@@ -45,6 +46,8 @@ if (args['from-save']) {
   E('loadSave(); gearDirty(); spawn()');
 }
 E('S.amt = "1"');
+// --omen <id>|none: play a fixed Almanac Omen (55-almanac.js) instead of today's.
+if (args.omen) E(`almanac.force(${JSON.stringify(String(args.omen))})`);
 // --tune key=value,key=value overrides ROSTER_TUNE knobs (56-roster.js) for this run.
 if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); E(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.

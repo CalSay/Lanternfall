@@ -26,7 +26,7 @@ const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >
 const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
 function rarityWeights() {
   const sm = S.skills.smith.lv;
-  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: 10 + sm * 0.5, epic: 2 + sm * 0.25 };
+  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
 }
 function rollRarity() {
   const w = rarityWeights(), tot = Object.values(w).reduce((a, b) => a + b, 0);
@@ -48,7 +48,8 @@ const tapMult = () => gear().tap * mod('tap');
 // Once the save is migrated to the roster (56-roster.js), companions are named characters.
 const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
 const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
-const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
+// nonCrit (Almanac Dares) scales non-crit hits; at 1 the original expression is kept so old saves' dps stays bit-identical.
+const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
 const mobHp = z => 40 * Math.pow(1.42, z - 1);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();

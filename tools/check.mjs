@@ -662,5 +662,78 @@ try {
   }
 } catch (e) { fail('unlocks crashed: ' + (e.stack || e)); }
 
+// ---- 6. the Almanac (55-almanac.js) ----
+console.log('almanac');
+try {
+  const at = (day, h = 12) => new Date(2026, 0, 1 + day, h, 0, 0).getTime();
+  const secs = (g, n) => { for (let i = 0; i < n * 10; i++) g.fn.tick(0.1); };
+  const g = loadCore({ seed: 7 });
+  const E = s => g.eval(s);
+  const gB = loadCore({ seed: 99 });
+  const days = [...Array(700).keys()];
+  assert(days.every(d => E(`almanac.omenFor(${d}).id`) === gB.eval(`almanac.omenFor(${d}).id`)), 'Omen pick is deterministic per day (two games agree over 700 days)');
+  E(`Date.now = () => ${at(271, 9)}`); const o1 = E('almanac.today().id'); E(`Date.now = () => ${at(271, 21)}`);
+  assert(E('almanac.today().id') === o1, `same Omen all day (${o1})`);
+  const counts = {}; let same = 0;
+  for (let d = 0; d < 350; d++) { const id = E(`almanac.scheduled(${d}).id`); counts[id] = (counts[id] || 0) + 1; }
+  for (let d = 1; d < 700; d++) if (E(`almanac.scheduled(${d}).cat === almanac.scheduled(${d - 1}).cat`)) same++;
+  assert(Object.keys(counts).length === 35 && Object.values(counts).every(n => n === 10), 'A1: each of 35 Omens scheduled 10 times in 350 days');
+  assert(same === 0, `A1: no category twice in a row over 700 days, cycle edges included (${same} repeats)`);
+  assert(days.every(d => E(`almanac.usable(almanac.omenFor(${d}))`)), 'daily pick never plays an Omen whose system is missing');
+  const upside = E(`OMENS.flatMap(o => [...Object.entries(o.mod || {}).filter(([k, v]) => almanac.lowerBetter.has(k) ? !(v > 0 && v <= 1) : !(v >= 1)), ...Object.entries(o.bonus || {}).filter(([, v]) => !(v >= 0))].map(([k]) => o.id + ':' + k))`);
+  assert(!upside.length, 'every Omen is pure upside; only Dares carry a twist' + (upside.length ? ': ' + upside.join(', ') : ''));
+  const twist = ['foeHp', 'bossHp', 'nonCrit', 'bossTime', 'champHp', 'oilDrain'];
+  assert(E(`OMENS.every(o => !Object.keys(Object.assign({}, o.mod, o.bonus)).some(k => ${JSON.stringify(twist)}.includes(k)))`), 'twist keys appear only in Dares');
+  // Dares: take, check, drop
+  E(`Date.now = () => ${at(271, 12)}`);
+  E('almanac.force("none")'); const noOmen = E('mod("gold")');
+  E('almanac.force("goldRain")');
+  const gm = () => E('mod("gold")') / noOmen;
+  assert(Math.abs(gm() - 1.3) < 1e-9 && E('mod("foeHp")') === 1, 'Gold Rain: +30% gold, foes unchanged');
+  assert(E('almanac.setDare(true)') && E('almanac.dareOn()') && Math.abs(gm() - 1.8) < 1e-9 && E('mod("foeHp")') === 1.3, 'Dare on: gold +80% and foes +30% HP together');
+  assert(E('almanac.setDare(false)') && !E('almanac.dareOn()') && Math.abs(gm() - 1.3) < 1e-9 && E('mod("foeHp")') === 1, 'Dare dropped: twist and reward both off');
+  E('almanac.setDare(true)'); E(`Date.now = () => ${at(272, 12)}`);
+  assert(!E('almanac.dareOn()'), 'a Dare ends at midnight');
+  E('almanac.force("longNight")');
+  assert(!E('almanac.setDare(true)'), 'Omens without a Dare refuse one');
+  E('almanac.force(undefined)');
+  // away uses the Omen of the day you left, never a Dare
+  const leftDay = days.find(d => E(`almanac.omenFor(${d}).id`) === 'longNight' && E(`almanac.omenFor(${d} + 1).id`) !== 'longNight');
+  E(`Date.now = () => ${at(leftDay + 1, 10)}; S.last = ${at(leftDay, 22)}; S.activity = 'fight'`);
+  let seenAway = null; g.fn.on('away', () => { seenAway = E('almanac.active().id + ":" + almanac.dareOn()'); });
+  const r = g.fn.awayGains(3600);
+  assert(seenAway === 'longNight:false' && r.omen === 'longNight' && r.omenHelped, `away time plays the Omen of the day you left (${seenAway})`);
+  assert(E('almanac.active().id') === E('almanac.today().id'), "after away, today's Omen is back");
+  const awayGold = id => { const h = loadCore({ seed: 5 }); h.eval(`S.maxZone = 12; S.zone = 12; almanac.force(${JSON.stringify(id)})`); const g0 = h.eval('S.gold'); h.fn.awayGains(8 * 3600); return h.eval('S.gold') - g0; };
+  const ratio = awayGold('longNight') / awayGold('none');
+  assert(Math.abs(ratio - 1.25) < 1e-9, `A7: 8h away on Long Night is exactly x1.25 (${ratio.toFixed(6)})`);
+  // weekly board: draw, count, swap, auto-claim at week's end
+  const w = loadCore({ seed: 11 }), W = s => w.eval(s);
+  W(`Date.now = () => ${at(271)}; S.last = Date.now()`); secs(w, 1);
+  const wk = W('deviceWeek(Date.now())');
+  assert(W('S.almanac.week') === wk && W('S.almanac.goals.length') === 5 && W('S.almanac.goals.filter(g => g.tier === "easy").length') === 3, 'board: 3 Easy + 2 Steady for this week');
+  assert(W(`JSON.stringify(almanac.drawBoard(${wk}))`) === W(`JSON.stringify(almanac.drawBoard(${wk}))`) && W('new Set(S.almanac.goals.map(g => WEEKLY_GOALS[g.k].kind)).size') === 5, 'board draw is deterministic per week, no two of a kind');
+  assert(W('S.almanac.goals.every(g => almanac.goalOk(g.k))'), 'board only draws goals this save can progress');
+  const k0 = W('S.almanac.goals[1].k');
+  assert(W('almanac.swap(1)') && W('S.almanac.goals[1].k') !== k0 && W('S.almanac.swaps') === 1, 'swap replaces an unfinished goal and uses one of 2 swaps');
+  W('S.almanac.goals = [{ k: "wBoss", tier: "easy", need: 2, have: 0, done: false, claimed: false }, { k: "wKill", tier: "easy", need: 5, have: 0, done: false, claimed: false }]');
+  for (let i = 0; i < 2; i++) W("emit('kill', { mob: { key: 'slime0', boss: true }, zone: 1, gold: 1, ess: 0, tier: 1 })");
+  assert(W('S.almanac.goals[0].done && S.almanac.goals[1].have === 2'), 'live kills count toward weekly goals');
+  const matSum = () => W('Object.values(S.mats).flat().reduce((a, b) => a + b)');
+  const m0 = matSum();
+  W(`Date.now = () => ${at(271 + 7)}`); secs(w, 1.1);
+  assert(W('S.almanac.week') === wk + 1 && W('S.almanac.auto && S.almanac.auto.week') === wk && W('S.almanac.auto.n') === 1 && W('S.almanac.swaps') === 2, 'week rollover claims finished goals for you and draws a new board');
+  assert(matSum() - m0 === 180, `auto-claimed Easy goal paid its crate (3 x 60 before the Deepwell; got ${matSum() - m0})`);
+  assert(W('S.almanac.goals.every(g => !g.claimed && g.have === 0)'), 'new week starts at 0');
+  // old saves
+  const old = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8');
+  const go = loadCore({ storage: memoryStorage({ [KEY]: old }) });
+  assert(go.eval('S.almanac && S.almanac.v === 1 && S.almanac.week === -1 && S.almanac.swaps === 2 && S.almanac.dare.on === false && typeof S.almanac.seen === "object"'), 'old save gets Almanac defaults');
+  const part = JSON.parse(old); part.almanac = { week: 3, goals: [] };
+  const gp = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(part) }) });
+  assert(gp.eval('S.almanac.week === 3 && S.almanac.dare.day === -1 && S.almanac.stamps === 0'), 'partial Almanac state merges without loss');
+  for (const x of [g, w, go]) assert(!x.errors.length, 'no almanac handler errors' + (x.errors.length ? ': ' + x.errors[0] : ''));
+} catch (e) { fail('almanac crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

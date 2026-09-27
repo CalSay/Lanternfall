@@ -239,6 +239,77 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering:
 
 .modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
 .modal .card { width: min(380px, 100%); text-align: center; }
+/* 60-almanac: the Omen banner (Fight tab) and the Almanac part of the World tab (75-almanac-ui.js). */
+
+/* ---- banner ---- */
+.om-sec { gap: 0; }
+.om-bar { width: 100%; min-height: 48px; display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 6px 10px 6px 6px; text-align: left; cursor: pointer;
+  background: linear-gradient(90deg, rgba(181,140,255,.16), rgba(255,158,61,.06) 70%), var(--panel); border: 2px solid #4A3B63; box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 0 #0B0810; }
+.om-bar.dare { border-color: #7A3440; background: linear-gradient(90deg, rgba(224,82,79,.2), rgba(255,158,61,.06) 70%), var(--panel); }
+.om-sec.open .om-bar { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+.om-ic { width: 34px; height: 34px; display: grid; place-items: center; background: var(--well); border: 2px solid #5B4A78; box-shadow: inset 0 0 0 2px #0B0810, 0 0 10px rgba(181,140,255,.35); animation: om-glow 3.2s ease-in-out infinite; }
+.om-ic img { width: 24px; height: 24px; image-rendering: pixelated; }
+.om-tx { display: grid; min-width: 0; line-height: 1.15; }
+.om-eye { font: 600 10.5px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--arcane); }
+
+.om-nm { font: 600 16px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.om-fx.dare { color: #FF9A8E; }
+.om-fx { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.om-chip { padding: 2px 6px; font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); }
+.om-chip[hidden] { display: none; }
+.om-chip.dare { color: #FF8A80; border-color: #7A3440; }
+.om-chip.claim { color: #1A1420; background: var(--gold); border-color: #0B0810; }
+.om-chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-2px) rotate(45deg); margin-right: 2px; }
+.om-sec.open .om-chev { transform: translateY(2px) rotate(-135deg); }
+.om-more { padding: 10px 10px 12px; background: var(--well); border: 2px solid #4A3B63; border-top: 0; box-shadow: 0 2px 0 #0B0810; }
+.om-more[hidden] { display: none; }
+
+/* ---- details (banner and card) ---- */
+.om-det { display: grid; gap: 10px; }
+.om-hint { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.om-hint-tx { margin: 0; font-size: 14px; color: var(--bone); }
+.om-go { min-width: 64px; min-height: 36px; flex: none; }
+.om-go[hidden] { display: none; }
+.om-dare { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; width: 100%; padding: 8px 10px; min-height: 44px; text-align: left; cursor: pointer; background: rgba(224,82,79,.06); border: 2px dashed #6A3040; }
+.om-dare[hidden] { display: none; }
+.om-dare.on { border-style: solid; border-color: var(--hp); background: rgba(224,82,79,.14); }
+.om-box { width: 18px; height: 18px; margin-top: 1px; background: var(--well); border: 2px solid #9A5060; box-shadow: inset 0 0 0 2px #0B0810; }
+.om-dare.on .om-box { background: var(--hp); border-color: #FFB3A8; }
+.om-dare-tx { display: grid; gap: 2px; }
+.om-dare-tx b { font: 600 15px var(--display); color: #FF9A8E; }
+.om-dare-fx { font-size: 12.5px; color: var(--muted); }
+.om-tmr { margin: 0; font-size: 12.5px; color: var(--muted); }
+.om-board { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; }
+.om-board .mini { flex: none; min-height: 36px; }
+
+/* ---- World tab ---- */
+#sec-almanac .world-head { margin-bottom: -6px; }
+.om-card { background: radial-gradient(120% 80% at 0% 0%, rgba(181,140,255,.16), transparent 60%), var(--panel); border-color: #4A3B63; }
+.om-head { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.ic.om-big { width: 56px; height: 56px; border-color: #5B4A78; box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(181,140,255,.35); }
+.ic.om-big img { width: 40px; height: 40px; }
+.om-card .om-eye { margin-bottom: 2px; }
+.om-cfx { font-size: 14px; color: var(--bone); margin-top: 2px; }
+.om-auto { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.4); }
+.om-auto[hidden] { display: none; }
+.om-auto .note { color: #F2E6B0; }
+.om-goal { min-height: 56px; }
+.om-goal .row-name { font-size: 15px; }
+.om-goal .row-desc { font-size: 12.5px; overflow-wrap: anywhere; }
+.om-tier { font: 600 10px var(--body); letter-spacing: .1em; text-transform: uppercase; padding: 0 4px; border: 1px solid var(--line-hi); color: var(--muted); }
+.om-tier.steady { color: var(--arcane); border-color: #5B4A78; }
+.om-gbar { margin-top: 5px; height: 5px; }
+.om-gbar > i { background: var(--gold); }
+.om-goal .buy { min-width: 72px; min-height: 44px; }
+.om-goal .buy[hidden] { display: none; }
+.om-goal.claimed { opacity: .55; }
+.om-goal.claimed .om-gbar > i { background: var(--xp); }
+.om-swap { min-width: 64px; min-height: 44px; padding: 2px 10px; font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); cursor: pointer; }
+.om-swap[hidden] { display: none; }
+.om-foot { font-size: 12px; }
+
+@keyframes om-glow { 50% { box-shadow: inset 0 0 0 2px #0B0810, 0 0 16px rgba(181,140,255,.6); } }
+@media (prefers-reduced-motion: reduce) { .om-ic { animation: none; } }
 /* 60-away: the "While you were away" card (75-away.js) and the Journal (75-stats-ui.js). */
 
 /* ---- away report ---- */
@@ -3361,7 +3432,7 @@ const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >
 const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
 function rarityWeights() {
   const sm = S.skills.smith.lv;
-  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: 10 + sm * 0.5, epic: 2 + sm * 0.25 };
+  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
 }
 function rollRarity() {
   const w = rarityWeights(), tot = Object.values(w).reduce((a, b) => a + b, 0);
@@ -3383,7 +3454,8 @@ const tapMult = () => gear().tap * mod('tap');
 // Once the save is migrated to the roster (56-roster.js), companions are named characters.
 const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
 const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
-const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
+// nonCrit (Almanac Dares) scales non-crit hits; at 1 the original expression is kept so old saves' dps stays bit-identical.
+const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
 const mobHp = z => 40 * Math.pow(1.42, z - 1);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
@@ -3639,13 +3711,13 @@ function spawn() {
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
   const t = TYPES[ti];
-  const hp = mobHp(z) * (boss ? 8 : (0.9 + Math.random() * 0.2));
+  const hp = mobHp(z) * (boss ? 8 * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
     key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
-  if (boss) bossTime = 30;
+  if (boss) bossTime = Math.max(5, 30 + bonus('bossTime'));
 }
 
 // Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
@@ -3664,7 +3736,7 @@ function strike(amount, color, big, at, label) {
 }
 function heroSwing(base, tap, at) {
   const crit = Math.random() < critChance();
-  const dmg = base * (crit ? critMult() : 1) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
+  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
   return { crit, dmg };
@@ -3694,7 +3766,7 @@ function kill() {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    if (Math.random() < (first ? 0.35 : 0.12)) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
+    if (Math.random() < (first ? 0.35 : 0.12) * mod('uniqueChance')) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
     if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
@@ -3849,7 +3921,7 @@ function dropUnique(key, t) {
 }
 
 function salvageGive(it) {
-  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
+  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage'));
   if (it.u) S.mats.ess[it.t - 1] += 10;
 }
 // pos: hero position (defaults to the kind's own); the item must fit it for the hero's class.
@@ -3958,6 +4030,487 @@ function syncGen() {
   save();
 }
 
+// ---- src/js/55-almanac.js ----
+// 55-almanac: the Almanac (docs/design/almanac.md). One daily Omen from the device date, an
+// opt-in Dare on some Omens, and a weekly board of 5 relaxed goals.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules: an Omen only adds (pure upside). A Dare is a twist plus a bigger reward, switched on
+// and off together, taken and dropped for free, never applied to away time. Away time uses
+// the Omen of the day you left (deviceDay(S.last)). Unclaimed finished weekly goals are
+// claimed for you when the week ends.
+//
+// Omens whose system is not in the game yet (needs: 'K5', 'K6', 'Camp', ...) stay in the table
+// and are skipped: that day plays a fallback Omen. They switch on by themselves when the
+// system lands (see AL_NEEDS), as long as it reads the modifier/bonus keys listed here.
+//
+// Exposed: almanac (API object, below), OMENS, WEEKLY_GOALS.
+// Modifier keys read by other files: gold, xp, essence, crit, critDmg, dmg, gatherSpeed,
+// offline, raid, compXp, yield:<family>, skillXp:<skill>, uniqueChance (50-sim kill),
+// foeHp / bossHp (50-sim spawn), nonCrit (50-sim heroSwing, 40-rules heroDps),
+// rareW (40-rules rarityWeights), salvage (51-actions), bountyPay (55-bounties).
+// Bonus keys: bestiaryMult / masteryMult (55-mastery), bountyNoWait (55-bounties),
+// bossTime (seconds added to the boss timer, 50-sim spawn).
+
+const almanac = {};
+let OMENS, WEEKLY_GOALS;
+
+{
+  // ---------------- systems an Omen or goal can wait for ----------------
+  // Each check is a runtime typeof/state probe so this file never needs editing when they merge.
+  const AL_NEEDS = {
+    K5: () => !!(S.skills && S.skills.forage),              // foraging arrives with K5 gathering
+    K6: () => typeof craftItem === 'function',               // K6 crafting core
+    B1: () => rosterLive(),                                  // named companions
+    B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
+    Camp: () => !!S.camp,
+    Expeditions: () => !!S.exped,
+    Deepwell: () => !!S.deep
+  };
+  const needsMet = x => !x.needs || !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]());
+
+  const bossNow = () => awayDay === null && target() === 'mob' && !!mob && !!mob.boss;
+
+  // ---------------- the 35 Omens ----------------
+  // mod: addModifier values while active. bonus: addBonus values. when: extra condition for mod.
+  // ok: this save can use it. dare: { n, fx, mod, bonus } replaces/adds keys while taken.
+  // ic: toast-style icon [name, main, extra]. go: what the "Go" button sets up.
+  OMENS = [
+    { id: 'quietWoods', n: 'Quiet Woods', cat: 'gather', fx: '+50% Wood', mod: { 'yield:wood': 1.5 }, ic: ['log', '#8C6A43'], go: { gather: 'wood' } },
+    { id: 'deepVeins', n: 'Deep Veins', cat: 'gather', fx: '+50% Ore', mod: { 'yield:ore': 1.5 }, ic: ['ore', '#D08A4E'], go: { gather: 'ore' } },
+    { id: 'crystalNight', n: 'Crystal Night', cat: 'gather', fx: '+50% Crystal', mod: { 'yield:crystal': 1.5 }, needs: 'K5', ic: ['crystal', '#9FE8FF'], go: { gather: 'crystal' } },
+    { id: 'bloomDay', n: 'Bloom Day', cat: 'gather', fx: '+50% Herbs and Fibre', mod: { 'yield:herb': 1.5, 'yield:fibre': 1.5 }, needs: 'K5', ic: ['herb', '#6FCB6A'], go: { gather: 'herb' } },
+    { id: 'swiftHands', n: 'Swift Hands', cat: 'gather', fx: 'Gathering is 30% faster', mod: { gatherSpeed: 1.3 }, ic: ['pick', '#F2C14E'], go: { gather: 'any' } },
+    { id: 'glintHour', n: 'Glint Hour', cat: 'gather', fx: 'Glints appear twice as often', bonus: { glintRate: 1 }, needs: 'K5', ic: ['orb', '#FFF3C4'], go: { gather: 'any' } },
+    { id: 'apprentice', n: 'Apprentice Day', cat: 'gather', fx: 'Gathering skills earn +50% XP', mod: { 'skillXp:mine': 1.5, 'skillXp:wood': 1.5, 'skillXp:forage': 1.5 }, ic: ['axe', '#6FCB6A'], go: { gather: 'low' } },
+
+    { id: 'goldRain', n: 'Gold Rain', cat: 'fight', fx: '+30% gold', mod: { gold: 1.3 }, ic: ['coin', '#F2C14E'], go: { fight: 'best' },
+      dare: { n: 'Gold Fever', fx: 'Foes have 30% more HP. Gold is +80% instead of +30%.', mod: { foeHp: 1.3, gold: 1.8 } } },
+    { id: 'wraithTide', n: 'Wraith Tide', cat: 'fight', fx: 'Wraithmarsh zones drop triple essence', mod: { essence: 3 }, when: () => target() === 'mob' && zoneType(S.zone) === 6, ok: () => S.maxZone >= 7, ic: ['orb', '#B8C0E8'], go: { fight: 'wraith' } },
+    { id: 'huntersMoon', n: "Hunter's Moon", cat: 'fight', fx: 'Signature drops come twice as often', mod: { sigDrop: 2 }, needs: 'K5', ic: ['banner', '#E0524F'], go: { fight: 'best' } },
+    { id: 'championsDay', n: "Champion's Day", cat: 'fight', fx: 'Champions appear 3 times as often', mod: { champion: 3 }, needs: 'K5', ic: ['banner', '#F2C14E'], go: { fight: 'best' },
+      dare: { n: 'Big Game', fx: 'Champions have double HP and drop 2 Trophies.', mod: { champHp: 2 }, bonus: { champTrophy: 1 } } },
+    { id: 'bloodMoon', n: 'Blood Moon', cat: 'fight', fx: 'Zone bosses drop double Trophies', mod: { trophy: 2 }, needs: 'K5', ic: ['heart', '#E0524F'], go: { fight: 'boss' },
+      dare: { n: 'Red Sky', fx: 'Bosses have 50% more HP. Trophies x3 instead of x2.', mod: { bossHp: 1.5, trophy: 3 } } },
+    { id: 'luckyStar', n: 'Lucky Star', cat: 'fight', fx: 'Zone bosses drop uniques 50% more often', mod: { uniqueChance: 1.5 }, ic: ['charm', '#FF9E3D', { 6: '#9A97B3' }], go: { fight: 'boss' } },
+    { id: 'keenWinds', n: 'Keen Winds', cat: 'fight', fx: 'Crits come 20% more often', mod: { crit: 1.2 }, ic: ['sword', '#9FE8FF'], go: { fight: 'best' },
+      dare: { n: 'Knife Edge', fx: "Your hero's hits that do not crit deal 25% less. Crits deal 60% more.", mod: { nonCrit: 0.75, critDmg: 1.6 } } },
+    { id: 'scholarSky', n: "Scholar's Sky", cat: 'fight', fx: 'Hero XP +50%', mod: { xp: 1.5 }, ic: ['glass', '#6FCB6A'], go: { fight: 'best' },
+      dare: { n: 'Hard Lessons', fx: 'Foes have 25% more HP. Hero XP is x2.5 instead of +50%.', mod: { foeHp: 1.25, xp: 2.5 } } },
+    { id: 'companyFeast', n: 'Company Feast', cat: 'fight', fx: 'Companions earn +50% XP', mod: { compXp: 1.5 }, needs: 'B1', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
+    { id: 'bestiaryDay', n: 'Bestiary Day', cat: 'fight', fx: 'Kills count double toward bestiary perks', bonus: { bestiaryMult: 1 }, ic: ['banner', '#B58CFF'], go: { fight: 'best' } },
+    { id: 'masteryDay', n: 'Mastery Day', cat: 'fight', fx: 'Kills count double toward zone mastery', bonus: { masteryMult: 1 }, ic: ['banner', '#F2C14E'], go: { fight: 'here' } },
+    { id: 'bossHunt', n: 'Boss Hunt', cat: 'fight', fx: '+25% damage to zone bosses', mod: { dmg: 1.25 }, when: bossNow, ic: ['sword', '#E0524F'], go: { fight: 'boss' },
+      dare: { n: 'Short Fuse', fx: 'The boss timer is 10s shorter. Bosses drop uniques twice as often.', bonus: { bossTime: -10 }, mod: { uniqueChance: 2 } } },
+
+    { id: 'hotForge', n: 'Hot Forge', cat: 'craft', fx: 'Crafting skills earn +50% XP', mod: { 'skillXp:smith': 1.5, 'skillXp:bench': 1.5, 'skillXp:loom': 1.5, 'skillXp:ench': 1.5 }, ic: ['anvil', '#FF9E3D'], go: { tab: 'forge' } },
+    { id: 'steadyHands', n: 'Steady Hands', cat: 'craft', fx: 'Rare and Epic forge odds +50%', mod: { rareW: 1.5 }, ic: ['anvil', '#5FA8FF'], go: { tab: 'forge' } },
+    { id: 'cheapReforge', n: 'Cheap Reforge', cat: 'craft', fx: 'Reforges cost half', mod: { reforge: 0.5 }, needs: 'K6', ic: ['anvil', '#B58CFF'], go: { tab: 'forge' } },
+    { id: 'salvagersLuck', n: "Salvager's Luck", cat: 'craft', fx: 'Salvage returns double', mod: { salvage: 2 }, ic: ['ore', '#F2C14E'], go: { tab: 'forge' } },
+    { id: 'transmuter', n: "Transmuter's Day", cat: 'craft', fx: 'Transmutes cost one less', bonus: { transmuteSave: 1 }, needs: 'K6', ic: ['orb', '#B58CFF'], go: { tab: 'forge' } },
+
+    { id: 'buildersMoon', n: "Builder's Moon", cat: 'road', fx: 'Builds started today are 25% faster', mod: { buildTime: 0.75 }, needs: 'Camp', ic: ['anvil', '#D08A4E'], go: { tab: 'world' } },
+    { id: 'fairWinds', n: 'Fair Winds', cat: 'road', fx: 'Expeditions sent today bring back +30%', mod: { expHaul: 1.3 }, needs: 'Expeditions', ic: ['boot', '#6B4A2E'], go: { tab: 'world' } },
+    { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'B7', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
+    { id: 'bountyDay', n: 'Bounty Day', cat: 'road', fx: 'Bounties refill at once and pay +50%', bonus: { bountyNoWait: 1 }, mod: { bountyPay: 1.5 }, ic: ['banner', '#E0524F'], go: { tab: 'adv' } },
+    { id: 'renownDay', n: 'Renown Day', cat: 'road', fx: 'Bounties give double Renown', mod: { renown: 2 }, needs: 'B7', ic: ['banner', '#F2C14E'], go: { tab: 'adv' } },
+
+    { id: 'deepTide', n: 'Deep Tide', cat: 'deep', fx: 'Depth Marks x1.5', mod: { deepMarks: 1.5 }, needs: 'Deepwell', ic: ['orb', '#3F8FA8'], go: { tab: 'world' },
+      dare: { n: 'Undertow', fx: 'Oil drains 20% faster. Depth Marks x2.5 instead.', mod: { oilDrain: 1.2, deepMarks: 2.5 } } },
+    { id: 'lanternOil', n: 'Lantern Oil', cat: 'deep', fx: 'Deepwell runs start with +30s Oil', bonus: { deepOil: 30 }, needs: 'Deepwell', ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } },
+    { id: 'fallingStars', n: 'Falling Stars', cat: 'deep', fx: 'Deepwell drafts show 4 boons', bonus: { deepOffers: 1 }, needs: 'Deepwell', ic: ['orb', '#FFF3C4'], go: { tab: 'world' } },
+
+    { id: 'longNight', n: 'Long Night', cat: 'rest', fx: 'Away gains +25%', mod: { offline: 1.25 }, ic: ['glass', '#B58CFF'], go: null },
+    { id: 'hearthDay', n: 'Hearth Day', cat: 'rest', fx: 'The Garden grows double', mod: { garden: 2 }, needs: 'Camp', ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: null },
+    { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => S.wyrms > 0 || S.raid.gen > 0, ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
+  ];
+  const OMEN_BY = Object.fromEntries(OMENS.map(o => [o.id, o]));
+  const AL_N = OMENS.length;
+  const FALLBACK = ['goldRain', 'swiftHands', 'scholarSky', 'longNight', 'keenWinds'];
+  // Keys where a value below 1 is the good direction (costs, times).
+  const LOWER_BETTER = new Set(['reforge', 'buildTime']);
+  const CAT_NAME = { gather: 'Gather', fight: 'Fight', craft: 'Craft', road: 'Road', deep: 'Deep', rest: 'Rest' };
+
+  // ---------------- the schedule ----------------
+  const pmod = (a, n) => ((a % n) + n) % n;
+  // The within-cycle order: seeded shuffle, then a fix pass so no two neighbours share a category.
+  const bagCache = new Map();
+  function bagRaw(cycle) {
+    if (bagCache.has(cycle)) return bagCache.get(cycle);
+    const ids = OMENS.map(o => o.id), r = rng(cycle * 7919 + 17);
+    for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
+    const cat = i => OMEN_BY[ids[i]].cat;
+    for (let pass = 0; pass < 8; pass++) {
+      let clean = true;
+      for (let i = 1; i < ids.length; i++) {
+        if (cat(i) !== cat(i - 1)) continue;
+        clean = false;
+        let j = i + 1; while (j < ids.length && cat(j) === cat(i - 1)) j++;
+        if (j < ids.length) { const t = ids[i]; ids[i] = ids[j]; ids[j] = t; continue; }
+        // nothing different is left after i: move ids[i] into an earlier gap where it fits
+        const c = cat(i), x = ids.splice(i, 1)[0];
+        let k = 1; while (k < ids.length && (OMEN_BY[ids[k - 1]].cat === c || OMEN_BY[ids[k]].cat === c)) k++;
+        ids.splice(k, 0, x);
+      }
+      if (clean) break;
+    }
+    bagCache.set(cycle, ids);
+    return ids;
+  }
+  // Cycle boundary: day 0 of a cycle must not share a category with the last day of the one
+  // before. Only positions 0..N-2 move here, so the last entry of every cycle stays fixed.
+  const bagFixed = new Map();
+  function bag(cycle) {
+    if (bagFixed.has(cycle)) return bagFixed.get(cycle);
+    const ids = bagRaw(cycle).slice(), prev = OMEN_BY[bagRaw(cycle - 1)[AL_N - 1]].cat, cat = i => OMEN_BY[ids[i]].cat;
+    if (cat(0) === prev) {
+      for (let k = 2; k < AL_N - 1; k++) {
+        const a = cat(0), b = cat(k);
+        if (b !== prev && b !== cat(1) && a !== cat(k - 1) && a !== cat(k + 1)) { const t = ids[0]; ids[0] = ids[k]; ids[k] = t; break; }
+      }
+    }
+    bagFixed.set(cycle, ids);
+    return ids;
+  }
+  const usable = o => !!o && needsMet(o) && (!o.ok || !!o.ok());
+  // The scheduled Omen for a day (ignores what this save can use).
+  const scheduled = day => OMEN_BY[bag(Math.floor(day / AL_N))[pmod(day, AL_N)]];
+  // The Omen this save plays on a day: the scheduled one, or the day's fallback.
+  function omenFor(day) {
+    const o = scheduled(day);
+    if (usable(o)) return o;
+    const f = OMEN_BY[FALLBACK[pmod(day, FALLBACK.length)]];
+    return usable(f) ? f : OMEN_BY.goldRain;
+  }
+
+  // ---------------- which Omen is in force right now ----------------
+  let awayDay = null;        // set for the length of awayGains(): the day the player left
+  let forced;                // tools only: an Omen id, or 'none'
+  const today = () => deviceDay(Date.now());
+  let actCache = { k: '', o: null };
+  function activeOmen() {
+    if (forced !== undefined) return forced === 'none' ? null : OMEN_BY[forced] || null;
+    const d = awayDay !== null ? awayDay : today();
+    const k = d + ':' + S.maxZone + ':' + (S.raid.gen > 0 || S.wyrms > 0) + ':' + Math.floor(Date.now() / 5000);
+    if (actCache.k !== k) actCache = { k, o: omenFor(d) };
+    return actCache.o;
+  }
+  // A Dare is live only on the day it was taken, never while away.
+  function dareOn() {
+    if (awayDay !== null) return false;
+    const o = activeOmen(), d = S.almanac.dare;
+    return !!(o && o.dare && d.on && d.day === today());
+  }
+  function modVal(key) {
+    const o = activeOmen(); if (!o) return 1;
+    if (dareOn() && o.dare.mod && key in o.dare.mod) return o.dare.mod[key];
+    if (o.mod && key in o.mod && (!o.when || o.when())) return o.mod[key];
+    return 1;
+  }
+  function bonusVal(key) {
+    const o = activeOmen(); if (!o) return 0;
+    let v = o.bonus && key in o.bonus ? o.bonus[key] : 0;
+    if (dareOn() && o.dare.bonus && key in o.dare.bonus) v += o.dare.bonus[key];
+    return v;
+  }
+  const MOD_KEYS = new Set(), BONUS_KEYS = new Set();
+  for (const o of OMENS) {
+    for (const k in o.mod || {}) MOD_KEYS.add(k);
+    for (const k in o.bonus || {}) BONUS_KEYS.add(k);
+    if (o.dare) { for (const k in o.dare.mod || {}) MOD_KEYS.add(k); for (const k in o.dare.bonus || {}) BONUS_KEYS.add(k); }
+  }
+  for (const k of MOD_KEYS) addModifier(k, () => modVal(k));
+  for (const k of BONUS_KEYS) addBonus(k, () => bonusVal(k));
+
+  // ---------------- save state ----------------
+  // auto: the last week's goals claimed for you, shown once { week, n, txt }.
+  registerState('almanac', {
+    v: 1,
+    dare: { day: -1, on: false },
+    week: -1,
+    goals: [],
+    swaps: 2,
+    stamps: 0, full: 0,
+    seen: {},
+    auto: null
+  });
+  const A = () => S.almanac;
+
+  // ---------------- Dares ----------------
+  function setDare(on) {
+    const o = activeOmen();
+    if (!o || !o.dare || awayDay !== null) return false;
+    A().dare = { day: today(), on: !!on };
+    actCache.k = '';
+    toast(on ? `You took the Dare: ${o.dare.n}. Drop it any time.` : `You dropped the Dare. ${o.n} still helps you today.`, on ? 'raid' : 'good', { ic: o.ic });
+    save();
+    return true;
+  }
+
+  // ---------------- "best today" hint ----------------
+  const topTier = kind => { const sk = S.skills[skillOf(kind)]; const lv = sk ? sk.lv : 1; let t = 1; for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1; return t; };
+  const bestWraith = () => { for (let z = S.maxZone; z >= 1; z--) if (zoneType(z) === 6) return z; return 0; };
+  function hintFor(o) {
+    const g = o && o.go;
+    if (!g) return { txt: o && o.id === 'longNight' ? 'Best today: rest easy. Set your party up before you go.' : 'Best today: rest easy.', go: null };
+    if (g.gather) {
+      let kind = g.gather;
+      if (kind === 'any') kind = S.activity === 'gather' ? S.node.kind : S.skills.mine.lv <= S.skills.wood.lv ? 'ore' : 'wood';
+      if (kind === 'low') kind = S.skills.mine.lv <= S.skills.wood.lv ? 'ore' : 'wood';
+      if (!NODE_NAMES[kind] || !S.skills[skillOf(kind)]) return { txt: 'Best today: gathering.', go: { tab: 'gat' } };
+      const t = topTier(kind), where = NODE_NAMES[kind][t - 1];
+      const what = kind === 'ore' ? 'Ore' : kind === 'wood' ? 'Wood' : kind[0].toUpperCase() + kind.slice(1);
+      return { txt: `Best today: ${what}. Your best spot is the ${where}.`, go: { gather: kind, t } };
+    }
+    if (g.fight === 'wraith') {
+      const z = bestWraith();
+      return z ? { txt: `Best today: Wraithmarsh. Your best is ${zoneName(z)} (zone ${z}).`, go: { zone: z } } : { txt: 'Best today: fighting.', go: { zone: S.maxZone } };
+    }
+    if (g.fight === 'boss') return { txt: 'Best today: zone bosses. Beaten bosses can be fought again.', go: { zone: S.maxZone, tab: 'adv' } };
+    if (g.fight === 'here') return { txt: 'Best today: fighting in any zone you like.', go: { zone: S.zone } };
+    if (g.fight) return { txt: `Best today: fighting at your frontier, ${zoneName(S.maxZone)}.`, go: { zone: S.maxZone } };
+    if (g.tab === 'forge') return { txt: 'Best today: the Forge.', go: { tab: 'forge' } };
+    if (g.tab === 'adv') return { txt: 'Best today: bounties on the Fight tab.', go: { tab: 'adv' } };
+    if (o.id === 'wyrmStirs') return { txt: 'Best today: the world raid.', go: { tab: 'world' } };
+    return { txt: 'Best today: the World tab.', go: { tab: 'world' } };
+  }
+  // Sets the party up for the hint. Returns the tab the UI should open.
+  function goFor(o) {
+    const h = hintFor(o), g = h.go; if (!g) return null;
+    if (g.gather) { setNode(g.gather, g.t); setActivity('gather'); return 'gat'; }
+    if (g.zone) { if (S.activity !== 'fight') setActivity('fight'); if (S.zone !== g.zone) setZone(g.zone); return 'adv'; }
+    return g.tab || null;
+  }
+
+  // ---------------- the weekly board ----------------
+  // kind: counter the goal listens to. scale: kill and gather goals grow with maxZone.
+  WEEKLY_GOALS = {
+    wBoss: { tier: 'easy', kind: 'boss', need: 5, txt: n => `Beat ${n} zone bosses`, ic: ['banner', '#E0524F'] },
+    wBty: { tier: 'easy', kind: 'bty', need: 6, txt: n => `Claim ${n} bounties`, ic: ['banner', '#F2C14E'] },
+    wGath: { tier: 'easy', kind: 'gath', need: 300, scale: true, txt: n => `Gather ${num(n)} ore or logs at your top tier or one below`, ic: ['pick', '#D08A4E'] },
+    wCraft: { tier: 'easy', kind: 'craft', need: 5, txt: n => `Forge ${n} items`, ic: ['anvil', '#8A8FA0'] },
+    wExp: { tier: 'easy', kind: 'exp', need: 3, needs: 'Expeditions', txt: n => `Send ${n} expeditions`, ic: ['boot', '#6B4A2E'] },
+    wFloor: { tier: 'easy', kind: 'floor', need: 30, needs: 'Deepwell', txt: n => `Clear ${n} Deepwell floors`, ic: ['orb', '#3F8FA8'] },
+    wCrit: { tier: 'easy', kind: 'crit', need: 300, scale: true, txt: n => `Land ${num(n)} critical hits`, ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }] },
+    wChamp: { tier: 'easy', kind: 'champ', need: 3, needs: 'K5', txt: n => `Defeat ${n} champions`, ic: ['banner', '#F2C14E'] },
+    wBuild: { tier: 'easy', kind: 'build', need: 1, needs: 'Camp', txt: () => 'Finish a building level', ic: ['anvil', '#D08A4E'] },
+    wTrial: { tier: 'easy', kind: 'trial', need: 1, needs: 'Deepwell', txt: () => "Reach floor 15 in this week's Trial", ic: ['orb', '#3F8FA8'] },
+    wKill: { tier: 'easy', kind: 'kill', need: 1000, scale: true, txt: n => `Defeat ${num(n)} foes`, ic: ['sword', '#C9C3D6'] },
+    wTrans: { tier: 'easy', kind: 'trans', need: 5, needs: 'K6', txt: n => `Transmute ${n} times`, ic: ['orb', '#B58CFF'] },
+    wBoss2: { tier: 'steady', kind: 'boss', need: 25, txt: n => `Beat ${n} zone bosses`, ic: ['banner', '#E0524F'] },
+    wLvl: { tier: 'steady', kind: 'lvl', need: 20, needs: 'B1', txt: n => `Gain ${n} companion levels`, ic: ['heart', '#5F8BE8'] },
+    wPromo: { tier: 'steady', kind: 'promo', need: 1, needs: 'B1', ok: () => rosterList().some(k => { const r = charRec(k); return r.rank < 7 && r.lv >= levelCap(r.rank) - 10; }), txt: () => 'Promote a companion', ic: ['banner', '#B58CFF'] },
+    wUp: { tier: 'steady', kind: 'up', need: 10, txt: n => `Upgrade gear ${n} times`, ic: ['anvil', '#FF9E3D'] },
+    wGrade: { tier: 'steady', kind: 'grade', need: 3, needs: 'Expeditions', txt: n => `Bring back ${n} Great or Perfect expeditions`, ic: ['boot', '#F2C14E'] },
+    wDeep: { tier: 'steady', kind: 'deep', need: 1, needs: 'Deepwell', txt: () => 'Reach floor 25 in one Deepwell run', ic: ['orb', '#3F8FA8'] },
+    wStar: { tier: 'steady', kind: 'star', need: 2, ok: () => masteryApi.totalStars() < S.maxZone * 5, txt: n => `Earn ${n} zone mastery stars`, ic: ['banner', '#F2C14E'] },
+    wRef: { tier: 'steady', kind: 'ref', need: 3, needs: 'K6', txt: n => `Reforge ${n} item lines`, ic: ['anvil', '#B58CFF'] },
+    wGath2: { tier: 'steady', kind: 'gath', need: 2000, scale: true, txt: n => `Gather ${num(n)} ore or logs at your top tier or one below`, ic: ['pick', '#D08A4E'] },
+    wBty2: { tier: 'steady', kind: 'bty', need: 15, txt: n => `Claim ${n} bounties`, ic: ['banner', '#F2C14E'] },
+    wRare: { tier: 'steady', kind: 'rare', need: 3, txt: n => `Forge ${n} Rare or better items`, ic: ['anvil', '#5FA8FF'] },
+    wElder: { tier: 'steady', kind: 'elder', need: 1, needs: 'Deepwell', txt: () => 'Clear 2 boss floors in one Deepwell run', ic: ['orb', '#E0524F'] }
+  };
+  const TIER_COUNT = { easy: 3, steady: 2 };
+  const goalOk = k => { const d = WEEKLY_GOALS[k]; return !!d && needsMet(d) && (!d.ok || !!d.ok()); };
+  const num = n => n < 1e5 ? Math.floor(n).toLocaleString('en-US') : fmt(n);
+  const rnd5 = n => Math.max(5, Math.round(n / 5) * 5);
+  const needFor = k => { const d = WEEKLY_GOALS[k]; return d.scale ? rnd5(d.need * (1 + Math.floor(S.maxZone / 10) * 0.25)) : d.need; };
+  const newGoal = (k, tier) => ({ k, tier, need: needFor(k), have: 0, done: false, claimed: false });
+
+  function pickGoal(r, tier, usedKinds, exclude) {
+    const pool = Object.keys(WEEKLY_GOALS).filter(k => WEEKLY_GOALS[k].tier === tier && !usedKinds.has(WEEKLY_GOALS[k].kind) && !(exclude && exclude.has(k)) && goalOk(k));
+    return pool.length ? pool[Math.floor(r() * pool.length)] : null;
+  }
+  // 3 Easy + 2 Steady, seeded by the week, never two of the same kind.
+  function drawBoard(week) {
+    const r = rng(week * 104729 + 7), used = new Set(), out = [];
+    for (const tier of ['easy', 'steady']) for (let i = 0; i < TIER_COUNT[tier]; i++) {
+      const k = pickGoal(r, tier, used); if (!k) break;
+      used.add(WEEKLY_GOALS[k].kind); out.push(newGoal(k, tier));
+    }
+    return out;
+  }
+  function swapGoal(i) {
+    ensureWeek();
+    const a = A(), g = a.goals[i];
+    if (!g || g.done || a.swaps <= 0) return false;
+    const used = new Set(a.goals.filter((x, j) => j !== i).map(x => WEEKLY_GOALS[x.k].kind));
+    const r = rng(a.week * 104729 + 1000 + (2 - a.swaps) * 31 + i);
+    const k = pickGoal(r, g.tier, used, new Set([g.k])); if (!k) return false;
+    a.goals[i] = newGoal(k, g.tier); a.swaps--;
+    save();
+    return true;
+  }
+
+  // ---------------- rewards ----------------
+  // Crates pay the gathered families at your top tier: 3 portions, the family you have least of
+  // first. Until the Deepwell exists, a goal's Depth Marks become 50% more crate (spec 3.2).
+  // Until K5/B7 exist, a Steady goal's Trophy and Renown become 10 Essence at your zone tier.
+  const CRATE_BASE = { small: 40, large: 100 };
+  const crateFams = () => ['ore', 'wood'].concat(AL_NEEDS.K5() ? ['crystal', 'herb', 'fibre'] : []).filter(k => S.mats[k] && NODE_NAMES[k]);
+  function crate(size) {
+    const per = Math.round(CRATE_BASE[size] * (AL_NEEDS.Deepwell() ? 1 : 1.5));
+    const fams = crateFams().map(k => ({ k, t: topTier(k) })).sort((a, b) => (S.mats[a.k][a.t - 1] || 0) - (S.mats[b.k][b.t - 1] || 0));
+    const out = [];
+    for (let i = 0; i < 3 && fams.length; i++) {
+      const f = fams[i % fams.length], e = out.find(x => x.k === f.k);
+      if (e) e.n += per; else out.push({ k: f.k, t: f.t, n: per });
+    }
+    return out;
+  }
+  // Reward preview/payload for a goal tier: { mats: [{k, t, n}], marks }.
+  function rewardFor(tier) {
+    const mats = crate(tier === 'steady' ? 'large' : 'small');
+    if (tier === 'steady') mats.push({ k: 'ess', t: zoneTier(S.maxZone), n: 10 });
+    return { mats, marks: AL_NEEDS.Deepwell() ? (tier === 'steady' ? 40 : 20) : 0 };
+  }
+  const rewardText = rw => rw.mats.map(m => `${fmt(m.n)} ${matName(m.k, m.t)}`).join(', ') + (rw.marks ? `, ${rw.marks} Depth Marks` : '');
+  function pay(rw) {
+    for (const m of rw.mats) S.mats[m.k][m.t - 1] += m.n;
+    if (rw.marks && S.deep) S.deep.marks = (S.deep.marks || 0) + rw.marks;
+  }
+  // Claims goal i. quiet: the week-end auto-claim (no toast). Returns the reward text or null.
+  function claimGoal(i, quiet) {
+    const a = A(), g = a.goals[i];
+    if (!g || !g.done || g.claimed) return null;
+    const rw = rewardFor(g.tier);
+    pay(rw); g.claimed = true;
+    let txt = rewardText(rw);
+    const n = a.goals.filter(x => x.claimed).length;
+    if (n === 3) { a.stamps++; txt += '. Almanac Stamp earned'; }
+    if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
+    if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null); save(); }
+    emit('weeklyClaim', { k: g.k, quiet: !!quiet });
+    return txt;
+  }
+
+  // New week: claim finished goals of the old week for the player, then draw a fresh board.
+  function ensureWeek() {
+    const a = A(), wk = deviceWeek(Date.now());
+    if (a.week === wk) return false;
+    if (a.week !== -1 && a.goals.length) {
+      const got = [];
+      a.goals.forEach((g, i) => { if (g.done && !g.claimed) { const t = claimGoal(i, true); if (t) got.push(t); } });
+      if (got.length) a.auto = { week: a.week, n: got.length, txt: got.join('; ') };
+    }
+    a.week = wk; a.goals = drawBoard(wk); a.swaps = 2;
+    return true;
+  }
+
+  // ---------------- counting (live play only) ----------------
+  let inAway = false;
+  function count(kind, n = 1) {
+    if (inAway || !(n > 0)) return;
+    for (const g of A().goals) {
+      if (g.done || WEEKLY_GOALS[g.k].kind !== kind) continue;
+      g.have = Math.min(g.need, g.have + n);
+      if (g.have >= g.need) {
+        g.done = true;
+        toast(`Weekly goal done: ${WEEKLY_GOALS[g.k].txt(g.need)}. Claim it in the Almanac.`, 'good', { ic: WEEKLY_GOALS[g.k].ic });
+        emit('weeklyDone', { k: g.k });
+      }
+    }
+  }
+  on('kill', ({ mob: m }) => { count('kill'); if (m && m.boss) count('boss'); });
+  on('crit', () => count('crit'));
+  on('harvest', ({ kind, t, n }) => { if (t >= topTier(kind) - 1) count('gath', n); });
+  on('itemAdded', ({ item }) => { if (item && !item.u) { count('craft'); if (item.r === 'rare' || item.r === 'epic' || item.r === 'legendary') count('rare'); } });
+  on('bountyDone', () => count('bty'));
+  on('charLevel', ({ id, quiet }) => { if (!quiet && S.party && S.party.field && S.party.field.includes(id)) count('lvl'); });
+  on('promote', () => count('promo'));
+  // Events named by the later specs; they count as soon as those systems emit them.
+  on('expedSent', () => count('exp'));
+  on('expedBack', p => { if (p && /great|perfect/i.test(String(p.grade))) count('grade'); });
+  on('campBuilt', () => count('build'));
+  on('deepFloor', () => count('floor'));
+  // Gear upgrades and mastery stars have no event: count the growth of their totals.
+  const plusSum = () => S.items.reduce((a, it) => a + (it.plus || 0), 0);
+  let lastPlus = null, lastStars = null;
+
+  on('awayBegin', r => {
+    inAway = true; lineOnce(); awayDay = deviceDay(S.last); actCache.k = '';
+    const o = activeOmen();
+    r.omen = o ? o.id : null;
+    r.omenHelped = !!o && awayKeys().some(k => modVal(k) !== 1);
+  });
+  on('awayEnd', () => { inAway = false; awayDay = null; actCache.k = ''; lastPlus = null; lastStars = null; });
+  // Modifier keys that touch away gains for the current activity.
+  function awayKeys() {
+    if (S.activity === 'gather') return ['offline', 'gatherSpeed', 'yield:' + S.node.kind, 'skillXp:' + skillOf(S.node.kind)];
+    if (S.activity === 'raid') return ['offline', 'raid', 'crit', 'compXp'];
+    return ['offline', 'gold', 'xp', 'essence', 'crit', 'compXp'];
+  }
+
+  let lastDay = null, acc = 5, registered = false;
+  onTick(dt => {
+    acc += dt;
+    if (acc < 1) return;
+    acc = 0;
+    if (!registered) { registered = true; lateRegister(); }
+    const d = today();
+    if (d !== lastDay) {
+      lastDay = d; actCache.k = '';
+      const o = omenFor(d);
+      if (!(o.id in A().seen)) A().seen[o.id] = d;
+      emit('omen', { id: o.id, day: d });
+    }
+    ensureWeek();
+    const p = plusSum(); if (lastPlus !== null && p > lastPlus) count('up', p - lastPlus); lastPlus = p;
+    const st = masteryApi.totalStars(); if (lastStars !== null && st > lastStars) count('star', st - lastStars); lastStars = st;
+  });
+
+  // Registered after every file has loaded: the away line comes last on the card, and Next Up
+  // (registerGoal, built in parallel) may be a const declared in a later file.
+  // The away line registers on the first away report or the first tick, whichever comes first
+  // (boot runs awayGains before any tick), so it sits after lines registered at load.
+  let lineDone = false;
+  function lineOnce() { if (!lineDone) { lineDone = true; registerAwayLine(awayLine); } }
+  function lateRegister() {
+    lineOnce();
+    let rg = null;
+    try { rg = typeof registerGoal === 'function' ? registerGoal : null; } catch (e) { rg = null; }
+    if (!rg) return;
+    for (let i = 0; i < 5; i++) {
+      try {
+        rg({
+          id: 'almanac-week-' + i, sys: 'almanac',
+          get label() { const g = A().goals[i]; return g ? WEEKLY_GOALS[g.k].txt(g.need) + ` (${num(g.have)}/${num(g.need)})` : ''; },
+          pct() { const g = A().goals[i]; return !g || g.claimed ? 0 : Math.min(1, g.have / g.need); },
+          done() { const g = A().goals[i]; return !g || g.claimed; },
+          go() { return { tab: 'world' }; }
+        });
+      } catch (e) { console.error('[lanternfall] registerGoal failed', e); }
+    }
+  }
+
+  function awayLine(r) {
+    const gains = r.kills || r.gold >= 1 || r.xp >= 1 || (r.mats && r.mats.length) || r.raidDmg >= 1 || (r.skills && r.skills.length) || (r.items && r.items.length);
+    if (!gains) return null;
+    const out = [], t = omenFor(today()), was = r.omen && OMEN_BY[r.omen];
+    if (was && r.omenHelped) out.push({ icon: { ic: was.ic }, txt: `${was.n} helped while you were away. ${was.fx}.`, sub: 'The Omen of the day you left covers your whole time away.' });
+    out.push({ icon: { ic: t.ic }, txt: `Today: ${t.n}. ${t.fx}.`, sub: t.dare ? `You can take the Dare in the Almanac: ${t.dare.n}.` : 'See the Almanac on the World tab.' });
+    return out;
+  }
+
+  // ---------------- API ----------------
+  const daysLeftInWeek = () => 7 - pmod(today() + 3, 7);
+  Object.assign(almanac, {
+    omenFor, scheduled, today: () => omenFor(today()), tomorrow: () => omenFor(today() + 1), active: activeOmen,
+    usable, byId: id => OMEN_BY[id] || null, catName: c => CAT_NAME[c] || c, fallback: FALLBACK.slice(), lowerBetter: LOWER_BETTER,
+    dareOn, setDare, hint: hintFor, go: goFor,
+    ensureWeek, drawBoard, swap: swapGoal, claim: claimGoal, count, reward: g => rewardFor(g.tier), rewardText,
+    goalText: g => WEEKLY_GOALS[g.k].txt(g.need), goalIcon: g => WEEKLY_GOALS[g.k].ic, goalOk,
+    readyCount: () => A().goals.filter(g => g.done && !g.claimed).length,
+    doneCount: () => A().goals.filter(g => g.done).length,
+    daysLeft: daysLeftInWeek, num,
+    seenCount: () => Object.keys(A().seen).length,
+    clearAuto: () => { A().auto = null; save(); },
+    // tools only: force an Omen id ('none' = no Omen), undefined to restore the calendar
+    force: id => { forced = id; actCache.k = ''; },
+    needs: AL_NEEDS
+  });
+}
+
 // ---- src/js/55-bounties.js ----
 // 55-bounties: the bounty board. Three short goals built from the player's real state.
 // Claiming pays gold (about 4 minutes of income), materials or essence. A claimed slot
@@ -4010,9 +4563,10 @@ function syncGen() {
     return Math.max(50, Math.round(perSec * 240));
   }
   function bountyReward(b) {
-    if (b.rew === 'gold') return { kind: 'gold', n: btyGold(), txt: fmt(btyGold()) + ' gold' };
+    const pay = mod('bountyPay'), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * pay);
+    if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
-    return { kind, t: b.rewT, n: b.rewN, txt: `${b.rewN} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
+    return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
   }
   const bountyText = b => BTY_TEXT[b.k](b);
 
@@ -4020,7 +4574,7 @@ function syncGen() {
   function bountyRefresh() {
     const sl = S.bounties.slots, now = Date.now();
     while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
-    for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && now >= (sl[i].wait || 0))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
+    for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || bonus('bountyNoWait') > 0))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
   function btyAdd(k, n, test) {
     for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
@@ -4347,7 +4901,7 @@ const masteryApi = {};
   on('kill', ({ mob, zone, tier }) => {
     const m = S.mastery;
     const zb = starsFor(m.zones[zone] || 0);
-    m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1);
+    m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1) * (1 + bonus('masteryMult'));
     const za = starsFor(m.zones[zone]);
     if (za > zb) {
       toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% gold and damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
@@ -4355,7 +4909,7 @@ const masteryApi = {};
     const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
     if (!key || !BESTIARY_PERKS[key]) return;
     const tb = tierFor(m.types[key] || 0);
-    m.types[key] = (m.types[key] || 0) + 1;
+    m.types[key] = (m.types[key] || 0) + 1 + bonus('bestiaryMult');
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
@@ -8157,7 +8711,7 @@ function ui(force) {
       setHp(mob.hp / mob.max * 100);
       $('mBar').style.background = mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)';
       $('tWrap').hidden = !mob.boss;
-      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / 30 * 100) + '%';
+      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%';
     }
   }
   $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;
@@ -8581,6 +9135,217 @@ async function uiTavern() {
     td1.append(el('span', 'hero', String(r.name || 'Wanderer').slice(0, 18)), el('span', 'player', r.id === online.uid ? 'you' : ((names[r.id] && names[r.id].name) || '')));
     tr.append(el('td', 'rank', String(i + 1)), td1, ...[r.L || 1, r.maxZone || 1, r.gear || 0].map(v => el('td', 'n', fmt(+v || 0))));
     tb.append(tr);
+  });
+}
+
+// ---- src/js/75-almanac-ui.js ----
+// 75-almanac-ui: the Omen banner on the Fight tab (tap for details) and the Almanac part of
+// the World tab (today's Omen, the Dare, tomorrow, the weekly board). Core: 55-almanac.js.
+{
+  const AL = () => S.almanac;
+  const omenIc = o => iconOf({ ic: o.ic });
+
+  // One Omen detail block (used in the banner and in the Almanac card).
+  // Returns { root, update() }.
+  function omenDetails(withBoard) {
+    const root = el('div', 'om-det');
+    const hintRow = el('div', 'om-hint');
+    const hintTx = el('p', 'om-hint-tx');
+    const goBtn = el('button', 'mini go om-go', 'Go');
+    hintRow.append(hintTx, goBtn);
+    goBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const tab = almanac.go(almanac.today());
+      if (tab) setTab(tab); else ui(true);
+    });
+
+    const dare = el('button', 'om-dare');
+    dare.setAttribute('role', 'switch');
+    const box = el('span', 'om-box');
+    const dTx = el('span', 'om-dare-tx');
+    const dNm = el('b'), dFx = el('span', 'om-dare-fx');
+    dTx.append(dNm, dFx);
+    dare.append(box, dTx);
+    dare.addEventListener('click', e => {
+      e.stopPropagation();
+      if (almanac.setDare(!almanac.dareOn())) ui(true);
+    });
+
+    const tmr = el('p', 'om-tmr');
+    root.append(hintRow, dare, tmr);
+
+    let board = null, boardTx = null;
+    if (withBoard) {
+      board = el('div', 'om-board');
+      boardTx = el('span');
+      const open = el('button', 'mini', 'Open the Almanac');
+      open.addEventListener('click', e => { e.stopPropagation(); openAlmanac(); });
+      board.append(boardTx, open);
+      root.append(board);
+    }
+
+    let sig = '';
+    function update(force) {
+      const o = almanac.today(), t = almanac.tomorrow(), h = almanac.hint(o), on = almanac.dareOn();
+      const s = [o.id, t.id, h.txt, !!h.go, on, board ? almanac.doneCount() + ':' + almanac.readyCount() : ''].join('|');
+      if (s === sig && !force) return; sig = s;
+      hintTx.textContent = h.txt;
+      goBtn.hidden = !h.go;
+      dare.hidden = !o.dare;
+      if (o.dare) {
+        dare.setAttribute('aria-checked', String(on));
+        dare.classList.toggle('on', on);
+        dNm.textContent = on ? `Dare taken: ${o.dare.n}` : `Take the Dare: ${o.dare.n}`;
+        dFx.textContent = o.dare.fx + (on ? ' Tap to drop it.' : ' Drop it any time.');
+      }
+      tmr.textContent = `Tomorrow: ${t.n}. ${t.fx}.`;
+      if (board) {
+        const g = AL().goals.length, d = almanac.doneCount(), r = almanac.readyCount();
+        boardTx.textContent = `This week: ${d} of ${g} goals done` + (r ? `, ${r} to claim.` : '.');
+      }
+    }
+    return { root, update };
+  }
+
+  let almanacSec = null;
+  function openAlmanac() {
+    setTab('world');
+    if (almanacSec) $('panels').scrollTop = almanacSec.offsetTop - $('panels').offsetTop;
+  }
+
+  // ---------------- Fight tab banner ----------------
+  const ban = {};
+  registerSection('adv', {
+    id: 'omen',
+    mount(sec) {
+      sec.classList.add('om-sec');
+      // Move to the top of the Fight tab once every section has mounted.
+      queueMicrotask(() => sec.parentNode.prepend(sec));
+      const bar = el('button', 'om-bar');
+      bar.setAttribute('aria-expanded', 'false');
+      const ic = el('span', 'om-ic'); ban.img = img(''); ic.append(ban.img);
+      const tx = el('span', 'om-tx');
+      ban.eye = el('span', 'om-eye');
+      ban.nm = el('span', 'om-nm'); ban.fx = el('span', 'om-fx');
+      tx.append(ban.eye, ban.nm, ban.fx);
+      ban.chip = el('span', 'om-chip');
+      const chev = el('span', 'om-chev'); chev.setAttribute('aria-hidden', 'true');
+      bar.append(ic, tx, ban.chip, chev);
+      ban.det = omenDetails(true);
+      ban.more = el('div', 'om-more'); ban.more.hidden = true; ban.more.append(ban.det.root);
+      bar.addEventListener('click', () => {
+        const open = ban.more.hidden;
+        ban.more.hidden = !open; bar.setAttribute('aria-expanded', String(open));
+        sec.classList.toggle('open', open);
+        if (open) ban.det.update(true);
+      });
+      ban.bar = bar;
+      sec.append(bar, ban.more);
+    },
+    update(force) {
+      const o = almanac.today(), on = almanac.dareOn(), r = almanac.readyCount();
+      const u = omenIc(o); if (ban.img.getAttribute('src') !== u) ban.img.src = u;
+      ban.eye.textContent = "Today's Omen";
+      ban.nm.textContent = o.n;
+      ban.fx.textContent = on ? `Dare taken: ${o.dare.n}` : o.fx;
+      ban.fx.classList.toggle('dare', on);
+      ban.chip.hidden = !(on || r || o.dare);
+      ban.chip.className = 'om-chip' + (r ? ' claim' : on ? ' dare' : '');
+      ban.chip.textContent = r ? `${r} to claim` : on ? 'Dare on' : 'Dare';
+      ban.bar.classList.toggle('dare', on);
+      if (!ban.more.hidden) ban.det.update(force);
+    }
+  });
+
+  // ---------------- World tab: the Almanac ----------------
+  const al = {};
+  const rows = [];
+  registerSection('world', {
+    id: 'almanac',
+    mount(sec) {
+      almanacSec = sec;
+      sec.classList.add('panel', 'world-part');
+      sec.parentNode.prepend(sec);
+      sec.append(el('h2', 'world-head', 'Almanac'));
+
+      // today's Omen
+      const card = el('div', 'card om-card');
+      const head = el('div', 'om-head');
+      const ic = el('div', 'ic om-big'); al.img = img(''); ic.append(al.img);
+      const ht = el('div');
+      al.eye = el('div', 'om-eye');
+      al.nm = el('h3');
+      al.fx = el('div', 'om-cfx');
+      ht.append(al.eye, al.nm, al.fx);
+      head.append(ic, ht);
+      al.det = omenDetails(false);
+      card.append(head, al.det.root);
+      sec.append(card);
+
+      // weekly board
+      const wk = el('div', 'sec om-week');
+      const wh = el('div', 'sec-head');
+      wh.append(el('h2', 'sec-title', 'This week'));
+      al.wmeta = el('span', 'note');
+      wh.append(al.wmeta);
+      wk.append(wh);
+      al.auto = el('div', 'om-auto'); al.auto.hidden = true;
+      al.autoTx = el('p', 'note');
+      const ok = el('button', 'mini', 'OK');
+      ok.addEventListener('click', () => { almanac.clearAuto(); ui(true); });
+      al.auto.append(al.autoTx, ok);
+      wk.append(al.auto);
+      al.list = el('div', 'sec');
+      wk.append(al.list);
+      al.foot = el('p', 'note om-foot');
+      wk.append(al.foot);
+      sec.append(wk);
+
+      for (let i = 0; i < 5; i++) {
+        const r = makeRow(al.list, '', false, iconURL('banner', '#F2C14E'));
+        r.row.classList.add('om-goal');
+        const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.desc.before(bar); r.bar = bar.firstChild;
+        r.tier = el('span', 'om-tier'); r.nm.after(r.tier);
+        const sw = el('button', 'om-swap', 'Swap'); r.row.append(sw); r.sw = sw;
+        r.btn.addEventListener('click', () => { if (almanac.claim(i)) ui(true); });
+        sw.addEventListener('click', () => { if (almanac.swap(i)) ui(true); });
+        rows.push(r);
+      }
+    },
+    update(force) {
+      almanac.ensureWeek();
+      const o = almanac.today(), on = almanac.dareOn(), A = AL();
+      const u = omenIc(o); if (al.img.getAttribute('src') !== u) al.img.src = u;
+      al.eye.textContent = `Today · ${almanac.catName(o.cat)} Omen`;
+      al.nm.textContent = o.n;
+      al.fx.textContent = o.fx + '.';
+      al.det.update(force);
+
+      const dl = almanac.daysLeft();
+      al.wmeta.textContent = `Ends ${dl <= 1 ? 'tonight' : `in ${dl} days`} · Swaps ${A.swaps}`;
+      al.auto.hidden = !A.auto;
+      if (A.auto) al.autoTx.textContent = `Last week's finished goals were claimed for you: ${A.auto.txt}.`;
+      A.goals.forEach((g, i) => {
+        const r = rows[i]; if (!r) return;
+        r.row.hidden = false;
+        r.nm.textContent = almanac.goalText(g);
+        r.tier.textContent = g.tier === 'steady' ? 'Steady' : 'Easy';
+        r.tier.className = 'om-tier ' + g.tier;
+        r.own.textContent = g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`;
+        r.bar.style.width = Math.min(100, g.have / g.need * 100) + '%';
+        r.desc.textContent = g.claimed ? 'Reward collected.' : 'Reward: ' + almanac.rewardText(almanac.reward(g));
+        setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
+        r.row.classList.toggle('active', g.done && !g.claimed);
+        r.row.classList.toggle('claimed', g.claimed);
+        r.sw.hidden = g.done || A.swaps <= 0;
+        r.btn.hidden = !g.done || g.claimed;
+        r.btn.disabled = !g.done || g.claimed;
+        r.qty.textContent = 'Done';
+        r.btn.querySelector('.price').textContent = 'Claim';
+      });
+      for (let i = A.goals.length; i < rows.length; i++) rows[i].row.hidden = true;
+      al.foot.textContent = `3 goals earn an Almanac Stamp; all 5 add a bonus crate. Stamps ${A.stamps}. Omens seen ${almanac.seenCount()} of ${OMENS.length}.`;
+    }
   });
 }
 
