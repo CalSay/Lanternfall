@@ -1,0 +1,97 @@
+<meta charset="utf-8">
+<title>Scenery Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=IBM+Plex+Sans+Condensed:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #140F1A; --ink: #0B0810; --panel: #1E1626; --line: #3A2C44; --text: #EFE6D6; --dim: #A89CB0; --ember: #FF9E3D; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 "IBM Plex Sans Condensed", sans-serif; }
+  header { padding: 16px; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; border-bottom: 1px solid var(--line); }
+  h1 { font: 700 20px "Pixelify Sans", monospace; margin: 0; color: var(--ember); }
+  label { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+  select, button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font: inherit; }
+  #stats { color: var(--dim); font-variant-numeric: tabular-nums; }
+  main { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(360px * var(--z, 1)), 1fr)); gap: 16px; padding: 16px; }
+  figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  canvas { display: block; width: calc(360px * var(--z, 1)); height: calc(250px * var(--z, 1)); max-width: 100%; margin: 0 auto; background: var(--ink); }
+  figcaption { padding: 8px 12px; display: flex; justify-content: space-between; gap: 8px; }
+  figcaption b { font: 500 15px "Pixelify Sans", monospace; }
+  figcaption span { color: var(--dim); font-size: 12px; }
+</style>
+<header>
+  <h1>Scenery preview</h1>
+  <label>Zone cycle <select id="cyc"><option value="0">I (hue 0)</option><option value="70">II (+70)</option><option value="140">III (+140)</option><option value="210">IV (+210)</option></select></label>
+  <label><input type="checkbox" id="pan" checked> Camera sway</label>
+  <label><input type="checkbox" id="band" checked> Show party placeholders</label>
+  <label><input type="checkbox" id="atm" checked> Atmosphere</label>
+  <span id="stats"></span>
+</header>
+<main id="grid"></main>
+<p style="padding:0 16px 16px;color:var(--dim)">Add <code>?zoom=2</code> to inspect pixels, or <code>?only=cave,marsh</code> to pick themes.</p>
+<script>
+// Load the shipping file itself (no copy), with a cache-buster so edits show on reload.
+const s0 = document.createElement('script'); s0.src = '../src/js/63-scenery.js?v=' + Date.now();
+s0.onload = () => start(); document.head.append(s0);
+function start() {
+const THEMES_LIST = [
+  ['forest', 'Mossy Hollow'], ['cave', 'Batwing Caves'], ['bone', 'The Bonefield'], ['barrow', 'Beetle Barrows'],
+  ['fungal', 'Fungal Deep'], ['quarry', 'Quarry Ruins'], ['marsh', 'Wraithmarsh'], ['mine', 'Mine (gathering ore)'],
+  ['woods', 'Woods (gathering wood)'], ['raid', 'World raid']
+];
+// URL options: ?zoom=2 shows each stage at 2x; ?only=cave,marsh limits the list.
+const Q = new URLSearchParams(location.search), Z = Math.max(1, +Q.get('zoom') || 1);
+const W = 360, H = 250, DPR = Math.min(window.devicePixelRatio || 1, 2) * Z;
+if (Q.get('only')) { const keep = Q.get('only').split(','); for (let i = THEMES_LIST.length - 1; i >= 0; i--) if (!keep.includes(THEMES_LIST[i][0])) THEMES_LIST.splice(i, 1); }
+if (Z > 1) document.documentElement.style.setProperty('--z', Z);
+const grid = document.getElementById('grid');
+const cards = THEMES_LIST.map(([key, name]) => {
+  const fig = document.createElement('figure');
+  const cv = document.createElement('canvas'); cv.width = W * DPR; cv.height = H * DPR;
+  const cap = document.createElement('figcaption'); cap.innerHTML = `<b>${name}</b><span></span>`;
+  fig.append(cv, cap); grid.append(fig);
+  return { key, cv, ctx: cv.getContext('2d'), info: cap.querySelector('span'), scene: null };
+});
+function rebuild() {
+  const hue = +document.getElementById('cyc').value;
+  for (const c of cards) {
+    const t0 = performance.now(); c.scene = sceneFor(c.key, W, H, hue); const ms = performance.now() - t0;
+    c.info.textContent = `built in ${ms.toFixed(1)} ms · ${c.scene.layers.length} layers`;
+  }
+}
+document.getElementById('cyc').onchange = rebuild;
+rebuild();
+
+// Placeholder party (3 front/back cells) and one enemy, 60px tall, standing on scene.GY.
+function placeholders(g, sc, camX) {
+  const GY = sc.GY;
+  const units = [[0.16, 58, '#3E63C9'], [0.27, 62, '#C9463E'], [0.38, 56, '#3E9C5A'], [0.7, 50, '#8A4FC9']];
+  for (const [fx, h, col] of units) {
+    const x = Math.round(W * fx - camX);
+    g.fillStyle = 'rgba(0,0,0,.4)'; g.beginPath(); g.ellipse(x, GY + 1, 10, 2, 0, 0, 7); g.fill();
+    g.fillStyle = '#0B0810'; g.fillRect(x - 8, GY - h - 1, 16, h + 1);
+    g.fillStyle = col; g.fillRect(x - 7, GY - h, 14, h);
+    g.fillStyle = '#E8C9A8'; g.fillRect(x - 4, GY - h + 3, 8, 8);
+  }
+}
+
+let last = performance.now(), T = 0, acc = 0, frames = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  const camX = document.getElementById('pan').checked ? Math.sin(T * 0.25) * 12 : 0;
+  const showBand = document.getElementById('band').checked, atm = document.getElementById('atm').checked;
+  const t0 = performance.now();
+  for (const c of cards) {
+    const g = c.ctx, sc = c.scene;
+    g.setTransform(DPR, 0, 0, DPR, 0, 0); g.imageSmoothingEnabled = false;
+    drawScene(g, sc, camX);
+    if (showBand) placeholders(g, sc, camX);
+    drawScene(g, sc, camX, 'fg');
+    if (atm) drawAtmosphere(g, sc, T, W, H, camX);
+  }
+  acc += performance.now() - t0; frames++;
+  if (frames === 60) { document.getElementById('stats').textContent = `draw: ${(acc / frames / cards.length).toFixed(2)} ms per scene per frame (${cards.length} scenes)`; acc = 0; frames = 0; }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(t => { last = t; loop(t); });
+}
+</script>
