@@ -1,5 +1,5 @@
 // 70-ui: shared UI plumbing: toasts, row builders, header, tabs, the ui() refresh,
-// the away card, and the section/tab registries for feature UI (75-*.js). Browser-only.
+// and the section/tab registries for feature UI (75-*.js). Browser-only.
 // Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
 
 // ================= UI helpers =================
@@ -157,16 +157,6 @@ function ui(force) {
   for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
   if (slowTick <= 0) slowTick = 1;
 }
-
-function showAway(r) {
-  if (!r || r.secs < 60 || !r.lines.length) return;
-  $('awayTime').textContent = fmtTime(r.secs);
-  const g = $('awayGain'); g.textContent = '';
-  for (const l of r.lines) { const row = el('div', 'gain'); row.append(img(iconOf(l.icon)), el('span', null, l.txt)); g.append(row); }
-  $('awayNote').textContent = r.note + (r.t < r.secs ? ` They stop after ${fmtTime(r.t)}; forge an Hourglass relic to stay out longer.` : '');
-  $('away').hidden = false;
-}
-$('awayOk').addEventListener('click', () => { $('away').hidden = true; ui(true); });
 
 // ================= feature UI registries =================
 // registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })

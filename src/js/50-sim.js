@@ -176,13 +176,21 @@ function harvest() {
 }
 
 // ================= away / offline =================
-// Applies offline gains to S and returns a summary for the "While you were away" card.
-// Line icons are specs (see toast()); the UI turns them into images.
+// Applies offline gains to S and returns the report for the "While you were away" card.
+// Events: 'awayBegin' r (snapshot), 'away' r (other systems apply their own offline gains),
+// 'awayEnd' r (55-stats.js diffs the state into r and collects registerAwayLine lines).
+// r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
-  const cap = (4 + 2 * S.relic.glass) * 3600;
-  const t = Math.min(secs, cap);
+  const r = { t: Math.min(secs, (4 + 2 * S.relic.glass) * 3600), secs, lines: [] };
+  emit('awayBegin', r);
+  awayBase(r);
+  emit('away', r);
+  emit('awayEnd', r);
+  return r;
+}
+function awayBase(r) {
+  const t = r.t;
   const boost = (1 + gear().offline / 100) * mod('offline');
-  const r = { t, secs, lines: [] };
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
     const swings = t / nodeTime(kind, tier) * boost;

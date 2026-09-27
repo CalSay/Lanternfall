@@ -1,12 +1,7 @@
-// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename, lifetime stats).
+// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename). Lifetime stats moved to the Journal (75-stats-ui.js).
 
 let boardSig = '';
 async function uiTavern() {
-  $('lKills').textContent = fmt(S.totalKills);
-  $('lGold').textContent = fmt(S.totalGold);
-  $('lZone').textContent = S.maxZone;
-  $('lWyrms').textContent = S.wyrms;
-  $('lGear').textContent = fmt(gear().score);
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
 
   const box = $('online'); box.textContent = '';
