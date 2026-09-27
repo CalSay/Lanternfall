@@ -888,5 +888,29 @@ try {
   assert(E('S.L') > L0 && !toasts && !g.errors.length, `away time levels the hero quietly (L${L0} -> L${E('S.L')}, ${toasts} toasts)`);
 } catch (e) { fail('pacing crashed: ' + (e.stack || e)); }
 
+// ---- art: every outfit builds in Node (12a-12f, B1) ----
+console.log('art');
+try {
+  const g = loadCore({});
+  const r = g.eval(`(() => {
+    const bad = [], cnt = {}, roster = typeof ROSTER === 'object' ? Object.keys(ROSTER) : [];
+    const poses = [{}, { bob: 1 }, AK.DOWN].concat(Object.values(AK.ANIMS).flatMap(a => [a.wind, a.strike]));
+    const num = s => s.t === 'p' ? s.pts.every(Number.isFinite) : [s.cx, s.cy, s.x1, s.y1, s.x2, s.y2, s.x, s.y].filter(v => v !== undefined).every(Number.isFinite);
+    const run = (id, def, call) => { for (const pose of poses) { const k = AK.makeKit(def, pose); call(k); if (k.parts.length < 15 || !k.parts.every(p => p.m && p.m.hex && num(p.s))) bad.push(id); cnt[id] = k.parts.length; } };
+    for (const id in AK.CLASSES) for (const [t, rr] of [[1, 0], [3, 1], [5, 3]]) {
+      const def = AK.CLASSES[id], gg = {};
+      for (const s in def.slots) gg[s] = AK.gearMats(def.slots[s], t, rr);
+      run(id, def, k => def.build(k, gg, { skin: AK.m(AK.SKINS[0], 'skin'), hair: AK.m(AK.HAIRS[0], 'hair') }));
+      run(id + ':bare', def, k => def.build(k, { weapon: null, off: null, head: null, body: null, charm: null }, { skin: AK.m(AK.SKINS[2], 'skin'), hair: AK.m(AK.HAIRS[1], 'hair') }));
+    }
+    for (const id in AK.CHARS) { const def = AK.CHARS[id]; for (const [t, rr] of [[def.wpn.t, def.wpn.r], [1, 0], [5, 3]]) run(id, def, k => def.build(k, AK.gearMats(def.wpn, t, rr, def.wpn.glow))); }
+    return { bad: [...new Set(bad)], classes: Object.keys(AK.CLASSES), chars: Object.keys(AK.CHARS), missing: roster.filter(k => !AK.CHARS[k]) };
+  })()`);
+  assert(r.classes.join() === 'warden,lanternmage,ranger,lightkeeper', 'four hero classes drawn: ' + r.classes.join(', '));
+  assert(r.chars.length === 18 && !r.missing.length, `every roster character has an outfit (${r.chars.length}${r.missing.length ? ', missing ' + r.missing.join(', ') : ''})`);
+  assert(!r.bad.length, 'every outfit builds in every pose and tier without bad numbers' + (r.bad.length ? ': ' + r.bad.join(', ') : ''));
+  assert(!g.errors.length, 'no art errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('art crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

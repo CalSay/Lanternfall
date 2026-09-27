@@ -120,3 +120,9 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
 - M6 merged after re-merge. `--targets`: T2, P1, P2, P4 pass; T1 fails for Warden only (15/25/35: the
   warblade is crafted at the fast Smithing station, a K6 class-gear parity issue); T10 fails (structural);
   P3 needs Region 3 power. Warden curve: d1 35, d2 46, d7 57, d12 70, d16 77, then plateaus at 78-79.
+- AR1 B1 foundation merged. Outfits now live in per-circle files: 12a body kit (art lead), 12b heroes,
+  12c hedgefolk, 12d oath, 12e dusk, 12f wayfarers. 12-art-rigs.js is deleted. Interim-quality
+  companions: Wren, Hesketh, Pip, Bram, Aldric, Anselm (bell reads as a sack), Caedmon (shield hidden),
+  Kestrel, Isolde (mask hides face), Oriel (faint collar), Thessaly, Morwen, Vesper. Enemies are old
+  rigs at half scale. Stage issue seen in stage-b1.png: the four party members overlap into a clump,
+  so they need more spacing. Agents must use their own scratchpad subfolders.

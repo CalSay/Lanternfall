@@ -13,13 +13,18 @@ pre { background: var(--panel); padding: 8px; white-space: pre-wrap; }
 </style>
 <main>
 <h1>Lanternfall art preview</h1>
-<p><small>Dev page: loads src/js/12-art-rigs.js and src/js/60b-baker.js directly. Each card shows idle0, idle1, wind, strike, hit and down at 2x, then the battle-scale idle and the portrait.</small></p>
+<p><small>Dev page: loads src/js/12a-12f art files and src/js/60b-baker.js directly. Each card shows idle0, idle1, wind, strike, hit and down at 2x, then the battle-scale idle and the portrait.</small></p>
 <h2>Heroes (tier 1 common / tier 3 rare+epic / tier 5 legendary)</h2><div class="row" id="heroes"></div>
 <h2>Companions</h2><div class="row" id="comps"></div>
 <h2>Enemies (13-art-enemies.js if present, else a mock slime)</h2><div class="row" id="enemies"></div>
 <h2>Bake timings (ms)</h2><pre id="times"></pre>
 </main>
-<script src="../src/js/12-art-rigs.js"></script>
+<script src="../src/js/12a-art-body.js"></script>
+<script src="../src/js/12b-art-heroes.js"></script>
+<script src="../src/js/12c-art-hedgefolk.js"></script>
+<script src="../src/js/12d-art-oath.js"></script>
+<script src="../src/js/12e-art-dusk.js"></script>
+<script src="../src/js/12f-art-wayfarers.js"></script>
 <script src="../src/js/13-art-enemies.js" onerror="this.remove()"></script>
 <script src="../src/js/60b-baker.js"></script>
 <script>
@@ -52,7 +57,7 @@ for (const cls of Object.keys(RIG.CLASSES)) for (const [st, lbl, wpn] of looks) 
   card(H, RIG.CLASSES[cls].name + ' ' + lbl, charFrames(spec), spec);
 }
 { const spec = heroSpec(); card(H, 'heroSpec() (no save)', charFrames(spec), spec); }
-for (const k of Object.keys(RIG.COMPANIONS)) { const spec = companionSpec(k); card(C, RIG.COMPANIONS[k].name + ' ' + RIG.COMPANIONS[k].title, charFrames(spec), spec); }
+for (const k of Object.keys(RIG.COMPANIONS)) { const spec = companionSpec(k); card(C, RIG.COMPANIONS[k].name + ' ' + (RIG.COMPANIONS[k].circle || ''), charFrames(spec), spec); }
 const src = typeof ENEMY_RIGS !== 'undefined' ? ENEMY_RIGS : ENEMY_ART;
 for (const k of Object.keys(src)) { const set = enemyFrames(k); if (set) card(E, k, set); const el = enemyFrames(k, 'elder'); }
 // cache check: a second call must not bake

@@ -17,6 +17,10 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 00-util.js | core | `fmt`, `rng`, event bus (`on`/`emit`), `mod`/`addModifier`, `onTick`, storage adapter |
 | 05-platform.js | browser | localStorage adapter (Node tools replace it with an in-memory one) |
 | 10-art.js | core | pixel maps, palettes, colour maths |
+| 12a-art-body.js | core (data) | B1 character kit `AK`: materials, gear tiers, shapes, body anchors, faces, poses (docs/design/art-direction.md) |
+| 12b..12f-art-*.js | core (data) | outfits: 12b hero classes, 12c Hedgefolk, 12d the Oath, 12e Dusk Company, 12f Wayfarers (one owner per file) |
+| 13-art-enemies.js | core (data) | enemy, boss, wyrm and gather-node rigs |
+| 60b-baker.js | browser | B1 baker: `charFrames`, `enemyFrames`, `portraitURL`, `drawCharPreview`, lights |
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
