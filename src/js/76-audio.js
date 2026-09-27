@@ -77,7 +77,7 @@ on('float', ({ color }) => {
 });
 on('kill', ({ mob }) => SFX.play('kill', mob && mob.boss));
 on('nodeHit', () => SFX.play('tapNode'));
-on('harvest', ({ kind }) => SFX.play(kind === 'ore' ? 'ore' : 'wood'));
+on('harvest', ({ kind, away }) => { if (!away) SFX.play(kind === 'ore' ? 'ore' : 'wood'); });
 on('levelup', () => SFX.play('level', true));
 on('skillUp', ({ quiet }) => { if (!quiet) SFX.play('skill', true); });
 on('loot', () => SFX.play('loot', true));

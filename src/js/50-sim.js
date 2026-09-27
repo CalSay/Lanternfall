@@ -198,6 +198,7 @@ function awayBase(r) {
     const swings = t / nodeTime(kind, tier) * boost;
     const got = Math.floor(swings * nodeYieldAvg(kind) * mod('yield:' + kind));
     S.mats[kind][tier - 1] += got;
+    if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;

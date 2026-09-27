@@ -858,5 +858,19 @@ try {
   }
 } catch (e) { fail('crafting crashed: ' + (e.stack || e)); }
 
+// ---- bounties: gathering counts at any tier and while away (owner bug report) ----
+console.log('bounties');
+try {
+  const g = loadCore({});
+  const E = x => g.eval(x);
+  E("S.bounties.slots[0] = { k: 'mine', need: 10, have: 0, t: 3, id: 99, rr: 0 }");
+  E("emit('harvest', { kind: 'ore', t: 1, n: 2 })");
+  assert(E('S.bounties.slots[0].have') === 2, 'mining a lower tier than your best still counts');
+  E("emit('harvest', { kind: 'crystal', t: 1, n: 5 })");
+  assert(E('S.bounties.slots[0].have') === 2, 'other families do not count as ore');
+  E("S.activity = 'gather'; S.node = { kind: 'ore', t: 1 }; awayGains(3600)");
+  assert(E('S.bounties.slots[0].have') === 10, 'gathering while away counts');
+} catch (e) { fail('bounties crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

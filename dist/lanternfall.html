@@ -4022,6 +4022,7 @@ function awayBase(r) {
     const swings = t / nodeTime(kind, tier) * boost;
     const got = Math.floor(swings * nodeYieldAvg(kind) * mod('yield:' + kind));
     S.mats[kind][tier - 1] += got;
+    if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
@@ -4696,8 +4697,8 @@ let OMENS, WEEKLY_GOALS;
   };
   const BTY_TEXT = {
     kill: b => `Defeat ${b.need} foes in zone ${b.z} or beyond`,
-    mine: b => `Mine ${b.need} ${matName('ore', b.t)} or better`,
-    chop: b => `Chop ${b.need} ${matName('wood', b.t)} or better`,
+    mine: b => `Mine ${b.need} ore`,
+    chop: b => `Chop ${b.need} logs`,
     forge: b => b.need > 1 ? `Forge ${b.need} items` : 'Forge an item',
     boss: b => b.need > 1 ? `Beat ${b.need} zone bosses` : 'Beat a zone boss',
     crit: b => `Land ${b.need} critical hits`,
@@ -4737,7 +4738,9 @@ let OMENS, WEEKLY_GOALS;
     for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
   }
   on('kill', ({ mob, zone }) => { btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1); });
-  on('harvest', ({ kind, t, n }) => btyAdd(kind === 'ore' ? 'mine' : 'chop', n, b => t >= b.t));
+  // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
+  // and so does gathering while away (awayBase emits harvest with away: true).
+  on('harvest', ({ kind, n }) => { if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n); });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crit', () => btyAdd('crit', 1));
   on('tap', () => btyAdd('tap', 1));
@@ -12532,7 +12535,7 @@ on('float', ({ color }) => {
 });
 on('kill', ({ mob }) => SFX.play('kill', mob && mob.boss));
 on('nodeHit', () => SFX.play('tapNode'));
-on('harvest', ({ kind }) => SFX.play(kind === 'ore' ? 'ore' : 'wood'));
+on('harvest', ({ kind, away }) => { if (!away) SFX.play(kind === 'ore' ? 'ore' : 'wood'); });
 on('levelup', () => SFX.play('level', true));
 on('skillUp', ({ quiet }) => { if (!quiet) SFX.play('skill', true); });
 on('loot', () => SFX.play('loot', true));
