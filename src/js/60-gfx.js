@@ -30,7 +30,7 @@ function spriteURL(key, rows, pal) {
 const icPal = (main, extra) => ({ 1: main, 2: darken(main, 0.35), 5: '#FFFFFF', 6: '#6B4A2E', 7: '#F2C14E', ...(extra || {}) });
 const iconURL = (name, main, extra) => spriteURL('ic:' + name + main + JSON.stringify(extra || {}), ICON[name], icPal(main, extra));
 const img = (url, cls) => { const i = el('img', cls || 'px'); i.src = url; i.alt = ''; return i; };
-const matIcon = (k, t) => k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
+const matIcon = (k, t) => ICON['mat_' + k] ? iconURL(...craftIcon('mat_' + k, t)) : k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
 function itemIcon(slot, t, u) {
   const extra = slot === 'charm' ? { 6: '#9A97B3' } : null;
   return iconURL(SLOT[slot].icon, itemColor(slot, t, u), extra);

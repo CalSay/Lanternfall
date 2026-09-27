@@ -37,11 +37,12 @@ function spawn() {
   const t = TYPES[ti];
   const hp = mobHp(z) * (boss ? 8 * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
-    key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
+    key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
   if (boss) bossTime = Math.max(5, 30 + bonus('bossTime'));
+  emit('spawn', { mob, zone: z }); // listeners may change the new foe (55-gathering: champions)
 }
 
 // Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
@@ -116,7 +117,10 @@ function gainSkill(k, n, quiet) {
     const stn = Object.values(CRAFT_STATIONS).find(x => x.skill === k);
     const req = stn ? CRAFT_STATION_REQ : NODE_REQ, t = req.indexOf(sk.lv);
     let extra = '';
-    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
+    if (t > 0) {
+      const open = Object.keys(NODE_NAMES).filter(kind => skillOf(kind) === k).map(kind => NODE_NAMES[kind][t]);
+      extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : open.length ? ` The ${open.join(' and the ')} ${open.length > 1 ? 'are' : 'is'} open to you.` : '';
+    }
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
     toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
   }
@@ -166,11 +170,13 @@ function tick(dt) {
 }
 
 function harvest() {
-  const { kind, t } = S.node, g = gear();
-  const dbl = Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100, ex = kind === 'ore' ? g.oreExtra : g.woodExtra;
+  const { kind, t } = S.node, g = gear(), [, dk, ek] = nodeTool(kind);
+  const dbl = Math.min(60, g[dk]) / 100, ex = ek ? g[ek] : 0;
   let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
-  S.mats[kind][t - 1] += n = Math.max(1, Math.round(n * mod('yield:' + kind)));
-  gainSkill(skillOf(kind), nodeXp(t));
+  // Yield modifiers (Omens, home ground) round by chance, so +25% means +25% on average.
+  const y = n * mod('yield:' + kind), fr = y % 1;
+  S.mats[kind][t - 1] += n = Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0));
+  gainSkill(skillOf(kind), nodeXpFor(kind, t));
   addFloat(`+${n} ${matName(kind, t)}`, MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
   burst(0.68, 0.6, MAT[kind].col[t - 1], 12, 0.9);
   emit('harvest', { kind, t, n });
@@ -194,10 +200,16 @@ function awayBase(r) {
   const boost = (1 + gear().offline / 100) * mod('offline');
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
-    const swings = t / nodeTime(kind, tier) * boost;
-    const got = Math.floor(swings * nodeYieldAvg(kind) * mod('yield:' + kind));
+    // In steps, so skill levels gained while away speed up the rest, as in live play.
+    const steps = Math.max(1, Math.min(96, Math.ceil(t / 300)));
+    let got = 0;
+    for (let i = 0; i < steps; i++) {
+      const swings = t / steps / nodeTime(kind, tier) * boost;
+      got += swings * nodeYieldAvg(kind) * mod('yield:' + kind);
+      gainSkill(skillOf(kind), swings * nodeXpFor(kind, tier), true);
+    }
+    got = Math.floor(got);
     S.mats[kind][tier - 1] += got;
-    gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;

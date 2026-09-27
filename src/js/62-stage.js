@@ -35,7 +35,7 @@ let resize, animate, draw, stageStats;
   function pickScene() {
     const tg = target(); let th, hue = 0;
     if (tg === 'world') th = 'raid';
-    else if (tg === 'node') th = S.node.kind === 'ore' ? 'mine' : 'woods';
+    else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SH, hue); curTheme = th; curHue = hue; }
   }
@@ -386,9 +386,9 @@ let resize, animate, draw, stageStats;
     const alive = !(tg === 'mob' && (!mob || mob.dead));
     if (foe.fr) {
       if (alive || (mob && mob.dead < 0.3)) shadowAt(foe.x - cam, Math.max(12, foe.w * 0.42), 0.55);
-      if ((tg === 'mob' && mob && mob.boss && !mob.dead) || raid) {
+      if ((tg === 'mob' && mob && (mob.boss || mob.champ) && !mob.dead) || raid) {
         ctx.globalCompositeOperation = 'lighter';
-        A.lightAt(ctx, raid ? '255,90,60' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
+        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
         ctx.globalCompositeOperation = 'source-over';
       }
     }

@@ -58,13 +58,21 @@ const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));
 const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
+// Gathering per node kind (K5): the kind's tool (CRAFT_NODES[kind].tool) sets the speed, double
+// yield and extra-unit stats; craftNodeBase has the per-kind time (crystal x1.25, fibre x0.9).
+// Ore and wood give exactly the old numbers.
+const NODE_TOOL_STATS = { pick: ['mineSpd', 'oreDbl', 'oreExtra'], axe: ['woodSpd', 'woodDbl', 'woodExtra'], sickle: ['forageSpd', 'forageDbl', null] };
+const nodeKind = kind => CRAFT_NODES[kind] ? kind : 'wood';
+const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
   const g = gear(), lv = S.skills[skillOf(kind)].lv;
-  const spd = (kind === 'ore' ? g.mineSpd : g.woodSpd) + g.gather;
-  return 2.6 * (1 + 0.3 * (t - 1)) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
+  const spd = g[nodeTool(kind)[0]] + g.gather;
+  return craftNodeBase(nodeKind(kind), t) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
 }
-function nodeYieldAvg(kind) { const g = gear(); return 1 + Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100 + (kind === 'ore' ? g.oreExtra : g.woodExtra); }
+// Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
+function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }
 const nodeXp = t => Math.round(6 * Math.pow(t, 1.6));
+const nodeXpFor = (kind, t) => nodeXp(t) * CRAFT_NODES[nodeKind(kind)].xp; // crystal x1.25
 
 const bulkCost = (base, r, owned, n) => base * Math.pow(r, owned) * (Math.pow(r, n) - 1) / (r - 1);
 const maxAfford = (base, r, owned, money) => Math.max(0, Math.floor(Math.log(money * (r - 1) / (base * Math.pow(r, owned)) + 1) / Math.log(r)));
@@ -81,4 +89,4 @@ const zoneType = z => (z - 1) % 7;
 const zoneCycle = z => Math.floor((z - 1) / 7);
 const zoneName = z => ZONES[zoneType(z)] + (zoneCycle(z) ? ' ' + roman(zoneCycle(z) + 1) : '');
 const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
-const nodeColor = () => S.node.kind === 'ore' ? MAT.ore.col[S.node.t - 1] : MAT.wood.col[S.node.t - 1];
+const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
