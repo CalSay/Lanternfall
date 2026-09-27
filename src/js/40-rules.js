@@ -71,9 +71,9 @@ const compDpsOne = i => COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) *
 const compDps = () => COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
 const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
 const totalDps = () => heroDps() + compDps();
-const mobHp = z => 10 * Math.pow(1.55, z - 1);
-const mobGold = z => Math.max(1, mobHp(z) * 0.3) * goldMult();
-const zoneTier = z => Math.min(5, 1 + Math.floor((z - 1) / 5));
+const mobHp = z => 40 * Math.pow(1.42, z - 1);
+const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
+const zoneTier = z => Math.min(5, 1 + Math.floor((z - 1) / 6));
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));

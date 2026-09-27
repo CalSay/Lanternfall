@@ -1,0 +1,131 @@
+{
+ "v": 2,
+ "name": "Brannoc",
+ "L": 17,
+ "xp": 0,
+ "gold": 5000,
+ "embers": 3,
+ "zone": 17,
+ "maxZone": 17,
+ "kills": 0,
+ "blade": 60,
+ "swift": 12,
+ "fortune": 18,
+ "comp": [
+  40,
+  30,
+  20,
+  8,
+  0,
+  0,
+  0
+ ],
+ "relic": {
+  "banner": 2,
+  "coin": 1,
+  "heart": 0,
+  "glass": 1
+ },
+ "auto": true,
+ "activity": "fight",
+ "raid": {
+  "gen": 3,
+  "dmg": 51234.2,
+  "maxHp": 312500,
+  "name": "The Mire Colossus"
+ },
+ "wyrms": 2,
+ "totalKills": 1840,
+ "totalGold": 96120.75,
+ "amt": "10",
+ "tab": "forge",
+ "last": 1790000000000,
+ "hintDone": true,
+ "skills": {
+  "mine": {
+   "lv": 14,
+   "xp": 0
+  },
+  "wood": {
+   "lv": 12,
+   "xp": 0
+  },
+  "smith": {
+   "lv": 8,
+   "xp": 0
+  }
+ },
+ "mats": {
+  "ore": [
+   30,
+   10,
+   0,
+   0,
+   0
+  ],
+  "wood": [
+   20,
+   6,
+   0,
+   0,
+   0
+  ],
+  "ess": [
+   15,
+   8,
+   0,
+   0,
+   0
+  ]
+ },
+ "node": {
+  "kind": "ore",
+  "t": 2
+ },
+ "gProg": 0.35,
+ "items": [
+  {
+   "id": 3,
+   "slot": "weapon",
+   "t": 2,
+   "r": "rare",
+   "plus": 2
+  },
+  {
+   "id": 7,
+   "slot": "helm",
+   "t": 1,
+   "r": "legendary",
+   "plus": 0,
+   "u": "echocowl"
+  },
+  {
+   "id": 8,
+   "slot": "charm",
+   "t": 1,
+   "r": "uncommon",
+   "plus": 1
+  },
+  {
+   "id": 9,
+   "slot": "pick",
+   "t": 2,
+   "r": "common",
+   "plus": 0
+  }
+ ],
+ "equip": {
+  "weapon": 3,
+  "helm": 7,
+  "charm": 8,
+  "pick": 9,
+  "axe": null
+ },
+ "nextId": 10,
+ "found": {
+  "echocowl": 1,
+  "sproutblade": 1
+ },
+ "fSlot": "weapon",
+ "fTier": 2
+}
