@@ -1063,6 +1063,7 @@ try {
   // Blessings
   E('S.camp.b.shrine = 0'); assert(!E('blessToggle("blade")'), 'no Blessing without the Shrine');
   E('S.camp.b.shrine = 1'); const d0 = E('mod("dmg")');
+  E('if (S.codex) Object.assign(S.codex.half, { bestiary: 1, zones: 1 })');   // the Codex gate (57c): their pages are half full
   assert(E('blessToggle("blade")') && near(E('mod("dmg")') / d0, 1.08) && E('blessToggle("coin")') && E('S.camp.bless.join()') === 'coin', 'Shrine 1: one Blessing, swapping replaces it');
   E('S.camp.b.shrine = 3; blessSet(["blade", "coin"])'); assert(near(E('mod("dmg")') / d0, 1.1) && E('S.camp.bless.length') === 2, 'Shrine 3: two Blessings, 25% stronger (Blade +10%)');
   E('S.camp.bless = []');
@@ -1333,6 +1334,96 @@ try {
     assert(def && rt && !go.errors.length, `${f}: empty expeditions by default, round trip keeps S.exped`);
   }
 } catch (e) { fail('expeditions crashed: ' + (e.stack || e)); }
+
+
+
+
+// ---- codex and Lantern Light (57c-codex.js) ----
+console.log('codex');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
+  const recompute = g => g.eval('Math.floor(codexPages().filter(p => !p.locked).reduce((a, p) => a + p.pts, 0) / 2)');
+  // new game: defaults, nothing earned, no toast
+  const g = loadCore({ seed: 21 }), E = s => g.eval(s);
+  assert(E('S.codex.v === 1 && S.codex.init === false && S.codex.lightMax === 0 && Object.keys(S.codex.rec).join() === "champ,aff,mw,syn,mat,dare"'), 'new game: codex defaults');
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+  ticks(g, 25);
+  assert(E('S.codex.init') && E('codexLight()') <= 1 && !toasts.some(t => /Codex/.test(t)), `new game: first load credits only today's Omen (${E('codexLight()')}) and stays quiet`);
+  assert(E('codexPage("deepwell").locked && codexPage("wardrobe").locked && codexPage("deepwell").lightMax === 0'), 'Deepwell and Wardrobe pages are locked until the Deepwell exists');
+  const maxL = E('codexPages().filter(p => !p.locked).reduce((a, p) => a + p.lightMax, 0)');
+  assert(maxL > 800 && maxL < 1105, `Region 1 Light available today: ${maxL} (spec 1,105 with every system)`);
+  // old saves: defaults, one-time retro credit, exact against a fresh computation, twice
+  for (const f of FIX) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const lights = [];
+    for (let k = 0; k < 2; k++) {
+      const o = loadCore({ seed: 5 + k, storage: memoryStorage({ [KEY]: raw }) });
+      const tt = []; o.fn.on('toast', t => tt.push(t.msg));
+      const def = o.eval('S.codex.v === 1 && !S.codex.init && S.codex.title === null');
+      ticks(o, 25);
+      const L = o.eval('codexLight()'), fresh = recompute(o);
+      lights.push(L);
+      if (k === 0) {
+        const retro = tt.filter(t => /Codex holds \d+ Lantern Light/.test(t)).length;
+        assert(def && o.eval('S.codex.init') && L === fresh && L > 0 && retro === 1 && !o.errors.length, `${f}: backfilled ${L} Lantern Light = a fresh computation, one retro toast` + (o.errors.length ? ': ' + o.errors[0] : ''));
+        const cs = o.eval('JSON.stringify(S.codex)'); o.eval('save(); loadSave()');
+        assert(o.eval('JSON.stringify(S.codex)') === cs && o.eval('codexLight()') === L, `${f}: round trip keeps S.codex`);
+      }
+    }
+    assert(lights[0] === lights[1], `${f}: the same Light on a second load (${lights.join(' = ')})`);
+  }
+  // recorders: affixes and Masterwork on arrival, synergies, harvest, trophies, champions
+  E('emit("itemAdded", { item: { id: 9999, slot: "bow", t: 3, r: "rare", plus: 0, a: [["pierce", 0.5], ["hp", 0.2]], mw: 2 } })');
+  assert(E('S.codex.rec.aff.pierce === 4 && S.codex.rec.aff.hp === 4 && S.codex.rec.mw[2] === 1'), 'itemAdded records affix tiers (bitmask) and the Masterwork line');
+  E('emit("synergyChange", { active: ["dusk"], gained: ["dusk"], lost: [] }); emit("harvest", { kind: "herb", t: 2, n: 1 }); emit("trophy", { i: 3, n: 1, source: "boss" })');
+  E('emit("kill", { mob: { key: "golem3", champ: true }, zone: 20, gold: 0, ess: 0, tier: 4 })');
+  assert(E('!!S.codex.rec.syn.dusk && S.codex.rec.mat.herb === 2 && !!(S.codex.rec.mat.troph & 8) && !!S.codex.rec.champ.golem'), 'synergies, materials, trophies and champion kills are recorded');
+  // Lantern Light only rises
+  E('S.mastery.types.slime = 10000; S.found.sproutblade = 2'); ticks(g, 55);
+  const L1 = E('codexLight()');
+  assert(L1 > 0 && E('S.codex.lightMax') === L1, `events raise Light within the refresh window (${L1})`);
+  E('S.found = {}; S.mastery.types = {}; S.mats.herb = [0, 0, 0, 0, 0]'); E('codexRefresh(true)');
+  assert(E('codexLight()') === L1 && E('S.codex.rec.mat.herb') === 2, 'Light never goes down (items lost, materials spent)');
+  let rises = true, prev = E('codexLight()');
+  for (let i = 0; i < 6; i++) { E(`S.mastery.zones[${i + 1}] = 3000; S.maxZone = Math.max(S.maxZone, ${i + 3}); codexRefresh(true)`); const n = E('codexLight()'); if (n < prev) rises = false; prev = n; }
+  assert(rises && prev > L1, `Light only rises as pages fill (${L1} -> ${prev})`);
+  // Blessing gate: a Blessing opens when its page reaches 50%, and stays open
+  const b = loadCore({ seed: 22 }), B = s => b.eval(s); ticks(b, 25);
+  B('S.camp.open = true; S.camp.b.shrine = 1');
+  assert(!B('blessOpen("blade")') && !B('blessToggle("blade")'), 'Blade Blessing closed while the Bestiary is under 50%');
+  const bt = []; b.fn.on('toast', t => bt.push(t.msg));
+  B('for (const t of TYPES) S.mastery.types[t.key] = 1000; S.maxZone = 8; codexRefresh(true)');
+  assert(B('codexPage("bestiary").pct') >= 0.5 && B('blessOpen("blade")') && bt.some(t => /Blade Blessing is open/.test(t)), `Bestiary at ${Math.round(B('codexPage("bestiary").pct') * 100)}%: Blade opens, with a toast`);
+  B('S.mastery.types = {}; codexRefresh(true)');
+  assert(B('blessOpen("blade")') && !B('blessOpen("coin")'), 'an opened Blessing stays open; others stay closed');
+  // milestones: rewards, the expedition slot, titles
+  const s0 = B('bonus("expSlots")');
+  B('S.codex.lightMax = 205; codexRefresh(true)');
+  assert(B('[25, 50, 75, 100, 150, 200].every(k => S.codex.got[k]) && !S.codex.got[250]') && B('codexHas("expslot") && codexExact()'), 'milestones up to 200 granted; exact hints on');
+  assert(B('bonus("expSlots")') === s0 + 1 && B('bonus("bag")') === 0, '+1 expedition slot at 200 Light; Bag +10 waits for 350');
+  assert(!B('codexSetTitle("t_keeper")') && B('codexSetTitle("t_lamplighter") && codexTitle() === "Lamplighter"') && B('codexSetTitle(null) && codexTitle() === ""'), 'only earned titles can be picked; None always');
+  // Seal bonuses are tiny and capped per stat, forever
+  assert(B('Object.keys(CODEX_CAP).every(k => CODEX_CAP[k] <= 0.05)') && B('Object.values(CODEX_PAGES).filter(p => p.seal && p.seal.key).every(p => p.seal.v <= 0.03)'), 'every Seal is 3% or less; every cap is 5%');
+  const d0 = B('mod("dmg")');
+  B('CODEX_PAGES.xa = { id: "xa", n: "Test A", seal: { key: "dmg", v: 0.04, txt: "" }, title: "A", tiles: () => [{ key: "a", n: "a", got: 1, max: 1, pts: 2, ptsMax: 2 }] }; CODEX_PAGES.xb = Object.assign({}, CODEX_PAGES.xa, { id: "xb" }); CODEX_PAGE_IDS.push("xa", "xb")');
+  B('for (const t of TYPES) { S.mastery.types[t.key] = 1e5; S.craft.troph[TYPES.indexOf(t)] = 1; } S.codex.rec.champ = Object.fromEntries(TYPES.map(t => [t.key, 1])); S.maxZone = 40; codexRefresh(true)');
+  assert(B('!!(S.codex.seal.bestiary && S.codex.seal.xa && S.codex.seal.xb)') && Math.abs(B('codexBonus("dmg")') - 0.05) < 1e-12, 'Seal bonuses add up but stop at the 5% cap (dmg 0.02 + 0.04 + 0.04 -> 0.05)');
+  assert(Math.abs(B('mod("dmg")') / d0 - 1.05) < 1e-9, 'mod("dmg") carries exactly the capped Codex bonus');
+  B('delete CODEX_PAGES.xa; delete CODEX_PAGES.xb; CODEX_PAGE_IDS.splice(CODEX_PAGE_IDS.indexOf("xa"), 2)');
+  // performance: with no events, ticks do not recompute the pages
+  const q = loadCore({ seed: 24 }), Q = s => q.eval(s); ticks(q, 25);
+  Q('S.activity = "raid"; globalThis.__pg = codexPages()'); ticks(q, 60);
+  assert(Q('codexPages() === globalThis.__pg'), 'no events, no recompute (the page cache is reused)');
+  // away: quiet, then a line on the card
+  const w = loadCore({ seed: 23 }), W = s => w.eval(s); ticks(w, 25);
+  W('chooseClass("warden"); S.maxZone = S.zone = 12');
+  const wt = []; w.fn.on('toast', t => wt.push(t.msg));
+  W('for (const t of TYPES) S.mastery.types[t.key] = 1000'); const r = w.fn.awayGains(3600);
+  assert(!wt.some(t => /Codex|Lantern/.test(t)) && r.extra.some(l => /Codex/.test(l.txt)), 'away: no Codex toasts; the away card lists the Codex news');
+  const errs = g.errors.concat(b.errors, w.errors, q.errors);
+  assert(!errs.length, 'no codex errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('codex crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
