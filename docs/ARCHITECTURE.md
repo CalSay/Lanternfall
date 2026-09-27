@@ -26,6 +26,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js) |
+| 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
 
@@ -81,6 +82,11 @@ Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMo
 
 Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
 `yield:<family>` (harvest and away yield per material family).
+Almanac hooks (55-almanac.js): modifiers `foeHp`, `bossHp` (spawn), `uniqueChance` (boss unique roll),
+`nonCrit` (hero non-crit hits), `rareW` (Rare/Epic forge weights), `salvage`, `bountyPay`; bonuses
+`bossTime` (seconds added to the boss timer), `bountyNoWait`, `bestiaryMult`, `masteryMult`.
+Events: `omen {id, day}`, `weeklyDone {k}`, `weeklyClaim {k, quiet}`. Later systems can feed weekly
+goals with `almanac.count(kind, n)`.
 
 ```js
 onTick(fn(dt)) -> remove()   // after each core tick; dt in seconds (<= 0.1)
@@ -151,6 +157,10 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `promote` | `{ id, rank }` |
 | `fieldChange` | `{ field }` |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
+| `crafted` | `{ item, kind, t }` (item null for the Star Chart) |
+| `upgraded` / `reforged` | `{ item }` / `{ item, idx, line }` |
+| `transmuted` | `{ fam, fromT, toT, take, give }` |
+| `charGear` | `{ id, pos, item }` (a companion's wpn/trk changed; item null when unequipped) |
 | `synergyChange` | `{ active, gained, lost }` (after a field change) |
 
 | `renown` | `{ n, total, source }` |

@@ -35,7 +35,7 @@ const masteryApi = {};
   on('kill', ({ mob, zone, tier }) => {
     const m = S.mastery;
     const zb = starsFor(m.zones[zone] || 0);
-    m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1);
+    m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1) * (1 + bonus('masteryMult'));
     const za = starsFor(m.zones[zone]);
     if (za > zb) {
       toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% gold and damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
@@ -43,7 +43,7 @@ const masteryApi = {};
     const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
     if (!key || !BESTIARY_PERKS[key]) return;
     const tb = tierFor(m.types[key] || 0);
-    m.types[key] = (m.types[key] || 0) + 1;
+    m.types[key] = (m.types[key] || 0) + 1 + bonus('bestiaryMult');
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);

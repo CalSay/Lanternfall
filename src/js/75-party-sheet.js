@@ -353,6 +353,7 @@ let openSheet, partySheet;
       const tx = el('div');
       tx.append(el('b', null, it ? itemName(it) : noun), el('small', null, it ? noun : 'Empty. Party gear is coming soon.'));
       s.append(tx); g.append(s);
+      if (typeof craftUI === 'object' && craftUI) { s.classList.add('tap'); s.setAttribute('role', 'button'); s.tabIndex = 0; s.addEventListener('click', () => craftUI.pick(k, which)); if (!it) tx.lastChild.textContent = 'Empty. Tap to choose.'; } // K7 item picker
     }
     return section('Gear', g);
   }

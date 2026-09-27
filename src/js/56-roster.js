@@ -73,7 +73,7 @@ const ROSTER = {
   oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', idx: 5, route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
   morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat the Fungal Deep II boss (zone 12) with no support in your party.' },
   vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 18. 20M gold and 30 Radiant Essence.' },
-  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 28: 150M gold and 20 Blazing Essence.' },
+  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 48: 2T gold and 20 Blazing Essence.' },
   caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with 80 Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
@@ -171,9 +171,11 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 
   // ---------------- power ----------------
   const sharedMult = () => dmgMult() * (1 + gear().party / 100) * mod('party');
-  const wpnPct = r => { const it = r.wpn != null ? itemById(r.wpn) : null; return it ? itemPower(it) : 0; };
+  // Weapon power: the damage lines of the character's gear (41-items charGear: Bow/Staff
+  // "Damage", Attack and Spell power affixes; Tome healing counts for a support's buff).
+  const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
-  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(2, r.rank) * (1 + wpnPct(r) / 100);
+  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(2, r.rank) * (1 + wpnPct(id, r) / 100);
   const roleMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };

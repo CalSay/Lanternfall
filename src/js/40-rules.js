@@ -24,12 +24,12 @@ const craftCost = (slot, t) => kindCost(slot, t);
 function upgradeCost(it) { return kindUpgradeCost(it); }
 const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
 const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
-function rarityWeights() {
-  const sm = S.skills.smith.lv;
-  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: 10 + sm * 0.5, epic: 2 + sm * 0.25 };
+// sm: the crafting station's level (55-crafting passes it); Smithing by default.
+function rarityWeights(sm = S.skills.smith.lv) {
+  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
 }
-function rollRarity() {
-  const w = rarityWeights(), tot = Object.values(w).reduce((a, b) => a + b, 0);
+function rollRarity(lv) {
+  const w = rarityWeights(lv), tot = Object.values(w).reduce((a, b) => a + b, 0);
   let r = Math.random() * tot;
   for (const [k, v] of Object.entries(w)) { if ((r -= v) <= 0) return k; }
   return 'common';
@@ -81,7 +81,8 @@ const tapMult = () => gear().tap * mod('tap');
 // Once the save is migrated to the roster (56-roster.js), companions are named characters.
 const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
 const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
-const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
+// nonCrit (Almanac Dares) scales non-crit hits; at 1 the original expression is kept so old saves' dps stays bit-identical.
+const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
 const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);

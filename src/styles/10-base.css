@@ -41,3 +41,5 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering:
 .app { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
 
 [hidden] { display: none !important; }
+/* A button's inner spans are redrawn while the game runs; keep taps landing on the button itself. */
+button * { pointer-events: none; }

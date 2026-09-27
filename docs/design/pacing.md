@@ -144,11 +144,10 @@ when it lands.
   zone 76-80 (reported as INFO). Region 3 needs new power sources from the Region 2 spec: ranks
   past 7, tier-6 materials, Constellations. Budget: about 3 zones of power a day (x2.2 a day
   with `hpLate` 1.29), and give zone 105 its own `regionStep` entry.
-- **The first Legendary (B7).** Elowen's quest (zone 28, 150M gold) lands at 1.8-2.6h because gold
-  grows exponentially with the zone. Change `UNLOCK_TUNE.quests.elowen` to
-  `{ from: 48, gold: 2e12, ess: [4, 20] }`. Measured (13-14h runs, one seed): first Legendary at
-  6.5-11.2h for all four classes (Elowen or Caedmon); T1 and T2 unchanged. Update the "how"
-  text in `ROSTER.elowen` to match.
+- **The first Legendary (B7), applied.** Elowen's quest (zone 28, 150M gold) landed at 1.8-2.6h
+  because gold grows exponentially with the zone. `UNLOCK_TUNE.quests.elowen` is now
+  `{ from: 48, gold: 2e12, ess: [4, 20] }` (her how-text matches). Measured before the K6 merge
+  (13-14h runs, one seed): first Legendary at 6.5-11.2h for all four classes (Elowen or Caedmon).
 - **T10 fails** (a promotion due every 20 minutes before 2h): the gaps are 40-55 minutes. Fielded
   companions level in lockstep and caps come every 25 levels, so cap hits cluster. No small
   `ROSTER_TUNE` change fixes it (`killsPerLv`, `commonXp`, `catchMax` tried). It needs a roster

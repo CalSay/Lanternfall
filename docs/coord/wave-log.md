@@ -54,3 +54,50 @@ The art style study is still running (owner leans 16-bit; wants clear section de
   `(sim)`), Legendary 2.1-2.6h (want 6-12h) because gold runs away: fix through M6 pacing, then recheck.
   The sim now claims bounties (needed for Renown), which pushes T1 above band (16/23/34); M6 retune must
   use the new sim. Sim `Date.now` follows sim time; `--day N`, `--unlock path=v`, `--bounties 0`.
+- Almanac merged (19 Omens live, 16 deferred until their systems exist; 4 Dares; weekly board).
+  Coordinator fixes: heroDps keeps the exact old expression when nonCrit = 1 (K4 bit-equality), the
+  crate test sums every material family, weekly goals register with Next Up's shape (sys, go -> {tab}),
+  and the boss timer bar divides by the real boss time. Reward stand-ins (Essence for Trophy/Renown,
+  a 1.5x crate for Depth Marks) should be revisited when K5/Deepwell land.
+
+## Owner decision: art direction B1 (2026-09-27)
+
+B1 (16-bit, about 4 heads, full ink outline, section lines, flat 3-tone materials) is the owner's pick.
+Plus more lanterns and lamps dotted around the maps. Art conversion wave follows.
+
+## Wave 3a (launched)
+
+AR1 B1 art foundation (baker port, per-circle outfit files, 4 classes, 5 study companions ported,
+interim B1 for the other 13, 2x stage, portraits, lantern lighting, new art-direction.md).
+AR-S B1 scenery with lanterns in every theme. K6 crafting actions (55-crafting.js; companion gear
+goes live). K7 Craft tab UI. M6 pacing still running. Next: AR2 companion polish per circle file,
+enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune after M6.
+
+## Standing orders from the owner (2026-09-27)
+
+- Keep iterating overnight until the owner says stop (hourly check-in routine at :38).
+- When the current plan is finished, write the next one: play-test the build (sim `--days`, browser
+  screenshots of a new game and the fixture saves), find what is weakest for long-term enjoyment,
+  write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
+- Priority: finish the B1 art conversion under way (foundation, scenery, companion polish, enemies),
+  then focus on gameplay. Art comes after, except the art a new gameplay system needs.
+- Decisions that belong to the owner (art direction, monetisation, anything irreversible) go under
+  "Waiting on the owner" below instead of being guessed.
+
+## Waiting on the owner
+
+(none yet)
+
+PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description at milestones).
+- Owner bug: upgrade buttons ignored taps. Cause: setPrice rebuilt the price spans about 5x/s, and
+  a press on the price lost its target. Fixed (update in place, `button * {pointer-events:none}`);
+  slow-press test 0/20 -> 20/20. The same bug is live on main until this PR merges.
+- K6 crafting actions merged (55-crafting.js: craftItem/canCraft, upgrade with trophy gate, reforge,
+  transmute, equipChar with one-wearer rule, tonics, Star Chart -> Oriel; companion weapons use
+  charGear). Notes: transmute-down chains are exploitable (1 tier-5 -> 16 tier-1): limit it in K9.
+  Hide has no source until K5, which blocks G1/G2 for three classes. The Oriel hint text in 56c still
+  says "The table is not built yet". The T1 sim was already above band (16/26/34) before K6.
+- AR-S scenery merged: 10 themes in B1 at 2x with lanterns, scene.lights, moths; no stage edits.
+- K7 Craft tab merged ("Forge" renamed "Craft", tab id stays `forge`). Coordinator fix: the away report
+  names new item kinds (it used SLOT[slot].n). TODO (small, for K8 or a polish task): the Next Up forge
+  goal still suggests legacy Sword/Helm via SLOTS/craftCost; switch it to class kinds via canCraft/fits.

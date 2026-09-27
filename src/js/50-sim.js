@@ -35,13 +35,13 @@ function spawn() {
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
   const t = TYPES[ti];
-  const hp = mobHp(z) * (boss ? bossHpMult(z) : (0.9 + Math.random() * 0.2));
+  const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
     key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
-  if (boss) bossTime = 30;
+  if (boss) bossTime = Math.max(5, 30 + bonus('bossTime'));
 }
 
 // Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
@@ -60,7 +60,7 @@ function strike(amount, color, big, at, label) {
 }
 function heroSwing(base, tap, at) {
   const crit = Math.random() < critChance();
-  const dmg = base * (crit ? critMult() : 1) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
+  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
   return { crit, dmg };
@@ -90,7 +90,7 @@ function kill() {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    if (Math.random() < (first ? 0.35 : 0.12)) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
+    if (Math.random() < (first ? 0.35 : 0.12) * mod('uniqueChance')) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
     if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
@@ -115,10 +115,11 @@ function gainSkill(k, n, quiet) {
     sk.xp -= skillNeed(sk.lv); sk.lv++;
     emit('skillUp', { k, lv: sk.lv, quiet: !!quiet });
     if (quiet) continue;
-    const req = k === 'smith' ? SMITH_REQ : NODE_REQ, t = req.indexOf(sk.lv);
+    const stn = Object.values(CRAFT_STATIONS).find(x => x.skill === k);
+    const req = stn ? CRAFT_STATION_REQ : NODE_REQ, t = req.indexOf(sk.lv);
     let extra = '';
-    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
-    if (k !== 'smith') addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
+    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
+    if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
     toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
   }
 }
