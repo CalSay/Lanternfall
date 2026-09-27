@@ -84,12 +84,13 @@ let openSheet, partySheet;
     }
     const st = fnStatus();
     if (st && typeof SYNERGIES === 'object' && SYNERGIES) {
-      for (const id of Object.keys(SYNERGIES)) {
-        if (seen[id]) continue;
-        const def = SYNERGIES[id] || {};
+      const defs = Array.isArray(SYNERGIES) ? SYNERGIES : Object.keys(SYNERGIES).map(id => Object.assign({ id }, SYNERGIES[id]));
+      for (const def of defs) {
+        const id = def.id;
+        if (!id || seen[id]) continue;
         const s = safe(() => st(id), null); if (!s || s.active) continue;
         const need = s.missing || [];
-        const names = def.members || def.needs || [];
+        const names = s.members || def.members || [];
         if (k && Array.isArray(names) && names.length && !names.includes(k)) continue;
         if (!k && need.length !== 1) continue;           // tab row: only one member short
         if (k && Array.isArray(names) && !names.length) continue;

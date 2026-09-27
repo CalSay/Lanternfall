@@ -404,42 +404,233 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering:
 #p-world > .world-part + .world-part { padding-top: 18px; border-top: 2px solid var(--line); }
 .world-head { margin: 0; font: 600 20px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; }
 
-/* Party tab cards */
+/* ---------- Party tab (75-party.js) ---------- */
+#p-party .mini { min-height: 44px; padding: 6px 14px; }
+.ndot { position: absolute; top: -4px; right: -4px; width: 10px; height: 10px; background: var(--hp); border: 2px solid #0B0810; box-shadow: 0 0 6px rgba(224,82,79,.7); z-index: 2; }
+.tab .pdot { background: var(--hp); box-shadow: 0 0 6px var(--hp); }
+.rp { position: absolute; width: 8px; height: 8px; background: currentColor; border: 1px solid #0B0810; }
+.rp.r-tank { color: var(--tank); } .rp.r-striker { color: var(--striker); } .rp.r-caster { color: var(--caster); } .rp.r-support { color: var(--support); }
+.xbar { height: 8px; background: var(--well); border: 1px solid #0B0810; box-shadow: inset 0 1px 0 rgba(0,0,0,.4); }
+.xbar > i { display: block; height: 100%; width: 0; background: var(--xp); box-shadow: inset 0 1px 0 rgba(255,255,255,.25); transition: width .3s; }
+.xbar.cap > i { background: var(--gold); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 6px rgba(242,193,78,.5); }
+.xbar.xlead > i { background: var(--ember); }
+.ic.soon { border-style: dashed; box-shadow: none; }
+.ic.s56 { width: 56px; height: 56px; } .ic.s56 img { width: 40px; height: 40px; }
+
+/* formation: Back | Mid | Front, two lanes */
+.pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pf-h { text-align: center; font: 600 11px var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.pf-cell { position: relative; min-height: 64px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px dashed var(--line-hi); background: var(--well); padding: 4px; font: 600 11px var(--display); color: var(--muted); cursor: pointer; }
+.pf-cell img { width: 32px; height: 32px; image-rendering: pixelated; }
+.pf-cell .who { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-cell .rp { top: 4px; left: 4px; }
+.pf-cell:disabled { cursor: default; }
+.pf-cell.occ { border: 2px solid var(--line); background: var(--panel); color: var(--bone); }
+.pf-cell.hero { border-color: var(--ember-deep); }
+.pf-cell.picked { border-color: var(--ember); background: #2e2030; box-shadow: 0 0 0 1px var(--ember), 0 0 12px rgba(255,158,61,.35); }
+.pf-cell.drop { border: 2px dashed var(--ember); color: var(--bone); }
+.pf-cell.dim { opacity: .3; }
+.pf-hint, .pf-warn { font-size: 12.5px; }
+.pf-warn::before { content: "! "; font-weight: 700; }
+
+/* hero and companion cards */
 .pcards { display: grid; gap: 8px; }
-.pcard { display: grid; gap: 8px; padding: 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.pcard { position: relative; display: grid; gap: 8px; padding: 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.pcard.tap { cursor: pointer; }
+.pcard.tap:hover { border-color: var(--line-hi); }
+.pcard.tap:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 .pcard.hero { border-color: var(--ember-deep); }
-.pc-top { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
-.pcard .pt { width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; overflow: hidden; }
+.pcard.empty { border-style: dashed; background: transparent; box-shadow: none; gap: 2px; min-height: 64px; align-content: center; }
+.pcard.empty b { font: 600 15px var(--display); color: var(--muted); }
+.pcard.empty small { font-size: 12.5px; color: var(--muted); }
+.pc-top { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.pc-top3 { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.pc-more { font: 600 22px var(--display); color: var(--muted); padding-right: 2px; }
+.pcard .pt { position: relative; width: 48px; height: 48px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; }
 .pcard .pt.big { width: 52px; height: 52px; }
+.pcard .pt.rf { border-color: var(--rc); }
 .pcard .pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .pc-who { display: grid; gap: 2px; min-width: 0; }
-.pc-who b { font: 600 17px/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-who small { font-size: 13px; color: var(--muted); }
-.pc-tags { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.pc-stat { color: var(--bone) !important; font-variant-numeric: tabular-nums; }
+.pc-who b { font: 600 16px/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-who > small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-tags { display: flex; gap: 4px 8px; align-items: center; flex-wrap: wrap; }
+.pc-tags small { font-size: 12px; color: var(--muted); }
+.pc-lv { font: 600 12px var(--display); color: var(--bone); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pc-abn { color: var(--gold) !important; }
+.pc-g2 { display: flex; gap: 4px; }
+.pc-g2 .ic { width: 32px; height: 32px; } .pc-g2 .ic img { width: 22px; height: 22px; }
+.pc-xrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.pc-xrow > [hidden] { display: none; }
+.pc-badge { font: 600 11px var(--display); color: #13200F; background: var(--xp); padding: 2px 5px; border: 1px solid #0B0810; white-space: nowrap; }
+.pc-prom { min-width: 0; padding: 4px 10px 3px; }
+.pc-prom .price { font-size: 13px; }
 .pc-ab { display: grid; gap: 5px; padding-top: 8px; border-top: 1px solid var(--line); }
 .pc-abline { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
 .pc-abline em { font-style: normal; font-weight: 600; color: var(--gold); }
 .pc-cd { height: 6px; background: var(--well); border: 1px solid #0B0810; }
 .pc-cd i { display: block; height: 100%; width: 0; background: var(--ember); }
-.pc-cdtxt { font-size: 12px; color: var(--muted); }
-.pc-auto { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+.pc-cdtxt { font-size: 12.5px; color: var(--muted); }
+.pc-auto { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; min-height: 44px; }
 .pc-gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
 .pc-slot { display: grid; justify-items: center; gap: 3px; min-width: 0; }
 .pc-slot .ic { width: 36px; height: 36px; }
 .pc-slot .ic img { width: 24px; height: 24px; }
 .pc-slot small { font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-slot.soon .ic { border-style: dashed; }
-.pc-gearnote { font-size: 12px; color: var(--muted); }
 
-/* formation grid: Back | Mid | Front, two lanes */
-.pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-.pf-h { text-align: center; font: 600 11px var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
-.pf-cell { min-height: 62px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 2px 6px; border: 1px dashed var(--line-hi); background: var(--well); padding: 4px; font: 600 11px var(--display); color: var(--muted); }
-.pf-cell img { width: 28px; height: 28px; image-rendering: pixelated; }
-.pf-cell.occ { border-style: solid; background: var(--panel); color: var(--bone); }
-.pf-cell.hero { border-color: var(--ember-deep); }
-.pf-cell .who { flex-basis: 100%; text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* synergies */
+.syn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.syn-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px 4px 8px; background: var(--well); border: 2px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.syn-chip i { width: 8px; height: 8px; background: var(--line-hi); }
+.syn-chip small { font: 500 11.5px var(--body); color: var(--muted); }
+.syn-chip.on { color: var(--bone); border-color: var(--gold); background: linear-gradient(#2e2618, var(--panel)); box-shadow: 0 0 10px rgba(242,193,78,.18); }
+.syn-chip.on i { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.syn-chip[aria-expanded="true"] { outline: 2px solid var(--ember); outline-offset: 1px; }
+.syn-det { margin: 0; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.syn-det b { color: var(--bone); font-weight: 600; }
+
+/* roster grid */
+.ros-count { font: 600 12px var(--display); color: var(--bone); letter-spacing: 0; margin-left: 2px; }
+.ros-sort { font-size: 12px !important; }
+.ros-filt { display: grid; grid-template-columns: repeat(5, 1fr); border: 2px solid #0B0810; background: var(--well); }
+.ros-filt button { min-width: 0; min-height: 40px; background: none; border: 0; padding: 4px 2px; font: 600 12px var(--display); color: var(--muted); cursor: pointer; }
+.ros-filt button[aria-pressed="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -2px 0 var(--ember); }
+.rgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 6px; }
+.rtile { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; padding: 0; background: none; border: 0; color: var(--bone); cursor: pointer; text-align: center; }
+.rtile:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.rt-fr { position: relative; display: grid; place-items: center; aspect-ratio: 1; background: radial-gradient(circle at 50% 40%, var(--panel-2), var(--well) 75%); border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810, 0 2px 0 #0B0810; }
+.rt-fr img { position: absolute; left: 7%; top: 7%; width: 86%; height: 86%; object-fit: contain; image-rendering: pixelated; }
+.rtile.bench .rt-fr, .rtile.fielded .rt-fr { box-shadow: inset 0 0 0 2px #0B0810, 0 2px 0 #0B0810, 0 0 8px color-mix(in srgb, var(--rc) 35%, transparent); }
+.rt-fr .rp { top: 4px; left: 4px; }
+.rt-lv { position: absolute; left: 0; bottom: 0; padding: 1px 4px; background: #0B0810E6; font: 600 10.5px var(--display); color: var(--bone); font-variant-numeric: tabular-nums; }
+.rt-in { position: absolute; right: 0; top: 0; padding: 1px 4px; background: var(--ember); color: #1A1420; font: 600 9.5px var(--display); text-transform: uppercase; letter-spacing: .04em; }
+.rt-nm { font: 600 12.5px/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-ti { font-size: 10.5px; line-height: 1.15; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: -2px; }
+.rt-how { font-size: 10.5px; line-height: 1.2; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rtile.locked .rt-fr, .cs-pt.locked, .lead-pt.locked { background: radial-gradient(circle at 50% 42%, #5A4A6E, #2A2233 55%, #1A1420 80%); }
+.rtile.locked .rt-fr img { filter: brightness(0); opacity: .9; }
+.rtile.locked .rt-nm { color: var(--muted); }
+.rtile.ready .rt-how { color: var(--gold); font-weight: 600; }
+.rtile.ready .rt-fr { box-shadow: inset 0 0 0 2px #0B0810, 0 0 10px rgba(242,193,78,.45); }
+.rtile.leg .rt-fr, .pt.leg, .cs-pt.leg { overflow: hidden; }
+.rtile.leg .rt-fr::after, .pt.leg::after, .cs-pt.leg::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 38%, rgba(255,235,190,.28) 50%, transparent 62%); background-size: 250% 100%; background-position: 30% 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .rtile.leg .rt-fr::after, .pt.leg::after, .cs-pt.leg::after { animation: legShim 3.2s steps(1, end) infinite; }
+}
+@keyframes legShim { 0% { background-position: 150% 0; } 50% { background-position: 30% 0; } }
+
+/* leads */
+.leads { display: grid; gap: 8px; }
+.lead { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); border-left: 4px solid var(--rc, var(--line-hi)); box-shadow: 0 2px 0 #0B0810; }
+.lead-pt { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc, var(--line-hi)); cursor: pointer; }
+.lead-pt img { width: 36px; height: 36px; image-rendering: pixelated; }
+.lead-pt.locked img { filter: brightness(0); }
+.lead-tx { display: grid; gap: 4px; min-width: 0; }
+.lead-tx b { font: 600 14px/1.1 var(--display); }
+.lead-tx small { font-size: 12px; color: var(--muted); line-height: 1.25; }
+.lead-sub { font-variant-numeric: tabular-nums; }
+.lead-go { white-space: nowrap; }
+
+/* bottom sheet (75-party-sheet.js) */
+.bsheet-ov { position: fixed; inset: 0; z-index: 35; background: rgba(10,7,14,.72); display: flex; justify-content: center; align-items: flex-end; }
+.bsheet { position: relative; width: min(520px, 100%); height: 90%; display: flex; flex-direction: column; background: var(--panel); border: 2px solid var(--line-hi); border-bottom: 0; box-shadow: 0 -4px 0 #0B0810, 0 -12px 30px rgba(0,0,0,.5); transition: transform .18s ease-out; }
+.bsheet.small { height: auto; max-height: 90%; }
+@media (prefers-reduced-motion: no-preference) {
+  .bsheet-ov { animation: bsFade .18s ease-out; } .bsheet { animation: bsUp .22s ease-out; }
+  .bsheet-ov.out { opacity: 0; transition: opacity .18s ease-in; } .bsheet-ov.out .bsheet { transform: translateY(100%); }
+}
+@keyframes bsFade { from { opacity: 0; } }
+@keyframes bsUp { from { transform: translateY(40%); } }
+.bsheet-grab { position: relative; flex: none; height: 44px; display: grid; place-items: center; touch-action: none; cursor: grab; }
+.bsheet-grab > i { width: 44px; height: 5px; background: var(--line-hi); }
+.bsheet-x { position: absolute; right: 6px; top: 0; width: 44px; height: 44px; background: none; border: 0; color: var(--muted); font: 600 26px/1 var(--display); cursor: pointer; }
+.bsheet-x:hover { color: var(--bone); }
+.bsheet-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 16px; display: grid; align-content: start; gap: 14px; -webkit-overflow-scrolling: touch; }
+.bsheet-foot { flex: none; display: grid; gap: 8px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 2px solid var(--line); background: var(--panel); }
+.bsheet-foot:empty { display: none; }
+
+/* character sheet */
+.cs-top { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: center; }
+.cs-pt { position: relative; width: 72px; height: 72px; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, var(--panel-2), var(--well) 75%); border: 2px solid var(--rc, var(--ember-deep)); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px color-mix(in srgb, var(--rc, #B8621B) 30%, transparent); }
+.cs-pt img { width: 64px; height: 64px; object-fit: contain; image-rendering: pixelated; }
+.cs-pt.locked img { filter: brightness(0); }
+.cs-who { display: grid; gap: 3px; min-width: 0; }
+.cs-name { margin: 0; font: 600 21px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; overflow-wrap: anywhere; }
+.cs-title { font-size: 13.5px; color: var(--muted); }
+.cs-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 2px; }
+.cs-tag { font: 600 11px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 3px 5px; border: 1px solid var(--line-hi); color: var(--muted); }
+.cs-tag.rar { border-color: currentColor; }
+.cs-xp { display: grid; gap: 5px; }
+.cs-xpline { display: flex; justify-content: space-between; align-items: baseline; }
+.cs-xpline b { font: 600 17px var(--display); font-variant-numeric: tabular-nums; }
+.cs-xpline b small { color: var(--muted); font-size: 13px; }
+.cs-rank { font: 600 13px var(--display); color: var(--gold); letter-spacing: .04em; }
+.cs-xpnote { font-size: 12.5px; color: var(--muted); }
+.cs-bio { margin: 0; padding: 10px 12px; background: var(--well); border-left: 3px solid var(--line-hi); font-size: 14px; line-height: 1.45; color: var(--bone); }
+.cs-bio.pitch { font-style: italic; border-left-color: var(--ember); }
+.cs-bio.hidden { color: var(--muted); font-style: italic; }
+.cs-sec { display: grid; gap: 8px; }
+.cs-h { margin: 0; font: 600 11.5px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.cs-h::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.cs-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cs-stat { display: grid; align-content: start; gap: 1px; padding: 6px 7px; background: var(--well); border: 1px solid var(--line); min-width: 0; }
+.cs-stat small { font: 600 10px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-stat b { font: 600 16px var(--display); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-stat em { font-style: normal; font-size: 10.5px; line-height: 1.15; color: var(--muted); }
+.cs-gear { display: grid; gap: 6px; }
+.cs-slot { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px; align-items: center; }
+.cs-slot > div { display: grid; gap: 2px; min-width: 0; }
+.cs-slot b { font: 600 14px var(--display); }
+.cs-slot small { font-size: 12.5px; color: var(--muted); }
+.cs-slot.empty b { color: var(--muted); }
+.cs-hgear { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; justify-items: center; }
+.cs-hslot { display: grid; justify-items: center; gap: 3px; min-width: 0; max-width: 100%; }
+.cs-hslot .ic.s56 { width: min(56px, 100%); aspect-ratio: 1; height: auto; }
+.cs-hslot small { font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-kit, .cs-syns { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cs-kit li, .cs-syn, .cs-kit1 { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); display: grid; gap: 3px; }
+.cs-kit li > div, .cs-syn > div { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.cs-kit b, .cs-syn b, .cs-kit1 b { font: 600 14px var(--display); color: var(--gold); }
+.cs-kit p, .cs-syn p, .cs-kit1 p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.35; }
+.cs-kit li.off { opacity: .55; }
+.cs-kind { font: 600 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.cs-soon { font-size: 11px; color: var(--arcane); font-style: italic; }
+.cs-syn small { font-size: 12px; color: var(--muted); }
+.cs-syn.on { border-color: rgba(242,193,78,.5); }
+.cs-syn.on small { color: var(--gold); }
+.cs-syn:not(.on) b { color: var(--bone); }
+.cs-miles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; }
+.cs-miles::before { content: ""; position: absolute; left: 10%; right: 10%; top: 13px; height: 2px; background: var(--line); }
+.cs-miles li { position: relative; display: grid; justify-items: center; gap: 2px; font-size: 11px; color: var(--muted); }
+.cs-miles li b { width: 28px; height: 28px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); font: 600 11px var(--display); color: var(--muted); }
+.cs-miles li.done b { background: var(--gold); border-color: #0B0810; color: #2A1E07; }
+.cs-miles li.done small { color: var(--bone); }
+.cs-miles li.next b { border-color: var(--ember); color: var(--bone); box-shadow: 0 0 8px rgba(255,158,61,.4); }
+.cs-stories { display: grid; gap: 6px; }
+.cs-story { background: var(--well); border: 1px solid var(--line); }
+.cs-story summary { list-style: none; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer; }
+.cs-story summary::-webkit-details-marker { display: none; }
+.cs-story summary::before { content: "▸"; color: var(--ember); font-size: 12px; }
+.cs-story[open] summary::before { content: "▾"; }
+.cs-story summary b { font: 600 14px var(--display); flex: 1; }
+.cs-story p { margin: 0; padding: 0 12px 12px 28px; font-size: 14px; line-height: 1.5; }
+.cs-story.locked { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; border-style: dashed; }
+.cs-story.locked b { font: 600 14px var(--display); color: var(--muted); }
+.cs-story.locked small { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.udot { font: 600 10px var(--display); text-transform: uppercase; letter-spacing: .06em; color: #fff; background: var(--hp); padding: 2px 5px; }
+.cs-how { display: grid; gap: 8px; }
+.cs-how p { margin: 0; font-size: 14px; }
+.cs-mirror { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.cs-mirror > div { display: grid; gap: 2px; }
+.cs-mirror b { font: 600 14px var(--display); color: var(--arcane); }
+.cs-mirror small { font-size: 12.5px; color: var(--muted); }
+.cs-mirror .mini { min-height: 44px; padding: 6px 14px; }
+.cs-acts { display: flex; gap: 8px; }
+.cs-acts > * { flex: 1; min-height: 48px; }
+.cs-cost { font-size: 12.5px; color: var(--muted); }
+.cs-swap { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cs-swap small { width: 100%; font-size: 12.5px; color: var(--muted); }
+.cs-swapbtn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
+.cs-swapbtn img { width: 24px; height: 24px; image-rendering: pixelated; }
 
 /* creation / choose your path: full-screen overlay above everything */
 .create { position: fixed; inset: 0; z-index: 40; overflow-y: auto; background-color: var(--bg); background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px); background-size: 4px 4px; color: var(--bone); -webkit-overflow-scrolling: touch; }
@@ -7644,50 +7835,6 @@ const compRows = COMPS.map((c, i) => {
   return r;
 });
 
-// Once the save is on the roster (56-roster.js), the same list shows named companions:
-// recruit the ones whose route is open, promote the ones at their level cap. The full
-// Party tab (roster grid, bench, leads) replaces this in Stage B wave 2.
-const rosterRows = ROSTER_KEYS.map(k => {
-  let url = '';
-  try { url = typeof portraitURL === 'function' ? portraitURL(k) : ''; } catch (e) {}
-  const r = makeRow($('compRows'), ROSTER[k].name, false, url || spriteURL('comp0', SPR.hero, HERO_PAL), 'portrait-ic');
-  r.row.hidden = true;
-  r.btn.addEventListener('click', () => { if (isRecruited(k) ? promoteChar(k) : recruit(k)) { save(); ui(true); } });
-  return r;
-});
-function uiRoster() {
-  let teaser = false;
-  ROSTER_KEYS.forEach((k, i) => {
-    const r = rosterRows[i], c = ROSTER[k], rec = charRec(k);
-    if (rec) {
-      const cap = levelCap(rec.rank), pc = promoteCost(k), atCap = rec.lv >= cap && pc;
-      r.row.hidden = false; r.row.classList.remove('locked'); r.ic.classList.remove('ghost');
-      r.nm.textContent = c.name;
-      r.own.textContent = `Lv ${rec.lv}/${cap}`;
-      const where = S.party.field.includes(k) ? 'Fighting' : 'On the bench';
-      r.desc.textContent = `${ROSTER_RANKS[rec.rank]} ${ROLE_STATS[c.role].n}. ${fmt(charDps(k))} DPS. ${where}.` +
-        (atCap ? ` At the level cap. Promote for x2 damage: also ${pc.ess[1]} ${MAT.ess.short[pc.ess[0] - 1]} Essence or better.` : '');
-      r.btn.hidden = !atCap;
-      if (atCap) { r.qty.textContent = 'Promote'; setPrice(r.btn, pc.gold); r.btn.disabled = !canPromote(k); }
-      return;
-    }
-    const cost = recruitCost(k), open = !!cost;
-    const tease = !open && !teaser && c.route.type === 'progress';
-    if (tease) teaser = true;
-    r.row.hidden = !(open || tease);
-    if (r.row.hidden) return;
-    r.row.classList.toggle('locked', !open); r.ic.classList.toggle('ghost', !open);
-    r.nm.textContent = c.name;
-    r.own.textContent = CHAR_RARITY[c.rarity].n;
-    r.desc.textContent = `${c.title}, ${ROLE_STATS[c.role].n.toLowerCase()}. ${recruitHow(k)}` + (open && cost.ess ? ` Also ${cost.ess[1]} ${MAT.ess.short[cost.ess[0] - 1]} Essence.` : '');
-    r.btn.hidden = !open;
-    if (!open) return;
-    r.qty.textContent = 'Recruit';
-    setPrice(r.btn, cost.gold);
-    r.btn.disabled = !canRecruit(k);
-  });
-}
-
 document.querySelectorAll('#amtSeg button').forEach(b => b.addEventListener('click', () => { S.amt = b.dataset.amt; ui(true); }));
 $('autoBoss').checked = S.auto;
 $('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
@@ -7725,8 +7872,9 @@ function uiFight() {
     setPrice(r.btn, p.cost);
     r.btn.disabled = !(p.n > 0 && S.gold >= p.cost);
   });
-  if (rosterLive()) { compRows.forEach(r => { r.row.hidden = true; }); uiRoster(); return; }
-  rosterRows.forEach(r => { r.row.hidden = true; });
+  // Once the save is on the roster (56-roster.js), companions live in the Party tab.
+  $('compRows').parentElement.hidden = rosterLive();
+  if (rosterLive()) return;
   let teaser = false;
   COMPS.forEach((c, i) => {
     const r = compRows[i];
@@ -8514,230 +8662,928 @@ let showAwayReport;
   });
 }
 
-// ---- src/js/75-party.js ----
-// 75-party: the Party tab (hero card, fielded companions, formation). Browser-only.
-// Reads the Stage A contracts: S.party and HERO_CLASSES / castAbility (55-party.js, A1),
-// portraitURL (60b-baker.js, A2). Every one of them is optional: without them the tab
-// falls back to today's sprites and the old companion slots, and never throws.
+// ---- src/js/75-party-sheet.js ----
+// 75-party-sheet: the character sheet (a bottom sheet) and the helpers the Party tab shares
+// with it. Browser-only. Loads before 75-party.js ('-' sorts before '.').
+// Spec: docs/design/party-and-classes.md 7.3 (sheet), 3.4 (milestones, promotions), 3.5 (synergies).
+//
+// Exposed names:
+//   PTY          helpers shared with 75-party.js (portraits, rarity, gear, traits, synergies, leads, costs)
+//   openSheet(build, opts) -> { close, body }   a generic bottom sheet (90% height; X, swipe down, Escape)
+//   partySheet   { open(id), openHero(), refresh(), close(), isOpen() }
+//
+// Reads 56b-synergy.js (activeSynergies, synergyStatus, charTraits, SYNERGIES) and 56c-unlocks.js
+// (leads) only when they exist, so the sheet works without them.
+
+const PTY = {};
+let openSheet, partySheet;
 {
-  const hasParty = () => typeof S === 'object' && S.party && typeof S.party === 'object';
-  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
-  const curClass = () => { const C = classes(); return C && hasParty() && S.party.cls ? C[S.party.cls] || null : null; };
+  // The synergy and unlock files may not exist yet: probe their names with typeof.
+  const fnActive = () => (typeof activeSynergies === 'function' ? activeSynergies : null);
+  const fnStatus = () => (typeof synergyStatus === 'function' ? synergyStatus : null);
+  const fnTraits = () => (typeof charTraits === 'function' ? charTraits : null);
+  const fnLeads = () => (typeof leads === 'function' ? leads : null);
 
   const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
+  const CIRCLE_NAME = { hedgefolk: 'Hedgefolk', oath: 'the Oath', dusk: 'Dusk Company', wayfarers: 'Wayfarers' };
   const COL_NAME = ['Back', 'Mid', 'Front'];
-  // Character key -> card info. idx is the old S.comp slot that pays for them (A1's map).
-  const PARTY_CHARS = {
-    tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', role: 'tank', idx: 0 },
-    wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', role: 'striker', idx: 1 },
-    pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', role: 'caster', idx: 2 },
-    aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', role: 'tank', idx: 3 },
-    kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', role: 'striker', idx: 4 },
-    oriel: { name: 'Oriel Vess', title: 'the Starcaller', role: 'caster', idx: 5 },
-    elowen: { name: 'Saint Elowen', title: 'the Last Lantern', role: 'support', idx: 6 },
-    bram: { name: 'Bram Hollis', title: 'the Woodcutter', role: 'striker', idx: 0 },
-    hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', role: 'support', idx: -1 }
-  };
-  const IDX_KEY = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
-  // Any roster character (56-roster.js) the table above does not list.
-  const pc = k => PARTY_CHARS[k] || (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k] : null);
-  const roster = () => typeof rosterLive === 'function' && rosterLive();
-  // The 5 class gear slots. Weapon, head and charm are today's weapon, helm and charm;
-  // off-hand and body arrive with crafting.
-  const GEAR_NOUN = {
+  const WEAPON_NOUN = { tank: 'Shield', striker: 'Weapon', caster: 'Staff', support: 'Tome' };
+  const WEAPON_BY_CHAR = { wren: 'Bow', kestrel: 'Spear', isolde: 'Blades', corvin: 'Blades', bram: 'Axe' };
+  const HERO_GEAR_NOUN = {
     warden: { weapon: 'Warblade', off: 'Shield', head: 'Greathelm', body: 'Plate' },
     lanternmage: { weapon: 'Staff', off: 'Lantern', head: 'Hood', body: 'Robe' },
     ranger: { weapon: 'Bow', off: 'Quiver', head: 'Hood', body: 'Leathers' },
     lightkeeper: { weapon: 'Censer', off: 'Tome', head: 'Mitre', body: 'Vestments' }
   };
-  const GEAR_SLOTS = [
+  const HERO_SLOTS = [
     { id: 'weapon', old: 'weapon', n: 'Weapon' }, { id: 'off', n: 'Off-hand' },
     { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
   ];
+  const MILESTONES = [
+    { lv: 5, n: 'Story' }, { lv: 10, n: 'Passive' }, { lv: 15, n: 'Story' }, { lv: 20, n: 'Ability' }, { lv: 25, n: 'Bond' }
+  ];
 
-  function heroPortrait() {
-    if (typeof portraitURL === 'function') { try { const u = portraitURL('hero'); if (u) return u; } catch (e) {} }
+  const safe = (fn, dflt) => { try { const v = fn(); return v == null ? dflt : v; } catch (e) { console.error('[lanternfall] party', e); return dflt; } };
+  const live = () => typeof rosterLive === 'function' && rosterLive();
+  const C = k => (typeof ROSTER === 'object' && ROSTER[k]) || null;
+  const heroClass = () => (S.party && S.party.cls && typeof HERO_CLASSES === 'object' && HERO_CLASSES[S.party.cls]) || null;
+  const heroCol = () => { const c = heroClass(); return c ? ({ front: 2, mid: 1, back: 0 })[c.row] : 2; };
+
+  function portrait(k) {
+    if (typeof portraitURL === 'function') { const u = safe(() => portraitURL(k), ''); if (u) return u; }
     return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
   }
-  function compPortrait(key) {
-    if (typeof portraitURL === 'function') { try { const u = portraitURL(key); if (u) return u; } catch (e) {} }
-    const i = pc(key) ? pc(key).idx : -1, c = COMPS[i >= 0 ? i : 0];
-    return spriteURL('comp' + (i >= 0 ? i : 0), SPR.hero, { ...HERO_PAL, 1: c.col, 2: c.helm });
-  }
-  // Fielded companions: S.party.field, else the 3 highest owned old slots (what A1 migrates to).
-  function fieldKeys() {
-    if (hasParty() && Array.isArray(S.party.field) && S.party.field.length) return S.party.field.filter(k => pc(k)).slice(0, 3);
-    const owned = []; for (let i = S.comp.length - 1; i >= 0 && owned.length < 3; i--) if (S.comp[i] > 0) owned.push(IDX_KEY[i]);
-    return owned;
-  }
+  const rarity = k => (C(k) && C(k).rarity) || 'common';
+  const frameCol = k => (RARITY_FRAME[rarity(k)] || RARITY_FRAME.common).col;
+  const rarityName = k => (RARITY_FRAME[rarity(k)] || RARITY_FRAME.common).name;
+  const first = k => k === 'hero' ? S.name : C(k).name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0];
   const pip = role => el('span', 'pip r-' + role, ROLE_NAME[role] || role);
-  const portraitBox = (url, cls) => { const d = el('div', 'pt ' + (cls || '')); d.append(img(url)); return d; };
+  const essName = t => `${MAT.ess.short[t - 1]} Essence`;
+  const costText = c => {
+    if (!c) return '';
+    const p = [];
+    if (c.gold) p.push(fmt(c.gold) + ' gold');
+    if (c.ess) p.push(`${fmt(c.ess[1])} ${essName(c.ess[0])} or better`);
+    return p.length ? p.join(' + ') : 'free';
+  };
+  const weaponNoun = k => WEAPON_BY_CHAR[k] || WEAPON_NOUN[C(k).role] || 'Weapon';
+  const gearOf = (k, which) => { const r = charRec(k); const id = r && r[which]; return id != null ? itemById(id) : null; };
+  function itemIc(it) {
+    try { return itemIcon(it.slot, it.t, it.u); } catch (e) { return iconURL('charm', '#A9B1BD'); }
+  }
+  const itemFrame = it => it.u ? 'legendary' : it.r;
+  function slotTile(it, emptyIcon, size) {
+    const t = it ? icTile(itemIc(it), itemFrame(it)) : icTile(iconURL(emptyIcon, '#4E4060'), null, 'ghost soon');
+    if (size) t.classList.add('s' + size);
+    return t;
+  }
+  const traits = k => { const f = fnTraits(); return f ? safe(() => f(k), null) : null; };
+  // Synergies that include this character: the active ones, plus near misses when the table is exposed.
+  function synergiesFor(k) {
+    const act = fnActive(); if (!act) return null;
+    const out = [], seen = {};
+    for (const s of safe(() => act(), [])) {
+      if (!s || seen[s.id]) continue;
+      if (k && !(s.members || []).includes(k)) continue;
+      seen[s.id] = 1; out.push({ id: s.id, name: s.name, active: true, text: s.effectText || '', stageC: !!s.stageC, members: s.members || [] });
+    }
+    const st = fnStatus();
+    if (st && typeof SYNERGIES === 'object' && SYNERGIES) {
+      const defs = Array.isArray(SYNERGIES) ? SYNERGIES : Object.keys(SYNERGIES).map(id => Object.assign({ id }, SYNERGIES[id]));
+      for (const def of defs) {
+        const id = def.id;
+        if (!id || seen[id]) continue;
+        const s = safe(() => st(id), null); if (!s || s.active) continue;
+        const need = s.missing || [];
+        const names = s.members || def.members || [];
+        if (k && Array.isArray(names) && names.length && !names.includes(k)) continue;
+        if (!k && need.length !== 1) continue;           // tab row: only one member short
+        if (k && Array.isArray(names) && !names.length) continue;
+        seen[id] = 1;
+        out.push({ id, name: def.name || id, active: false, text: s.text || def.effectText || def.text || '', missing: need });
+      }
+    }
+    return out;
+  }
+  const missingText = m => {
+    if (!m || !m.length) return '';
+    const n = m.map(x => (C(x) ? first(x) : String(x)));
+    return 'needs ' + n.join(', ');
+  };
+  // Leads: 56c-unlocks' list, plus built-in cards for routes this file can read (progress routes).
+  function leadList() {
+    const out = [], ids = {};
+    const f = fnLeads();
+    if (f) for (const l of safe(() => f(), [])) { if (!l) continue; ids[l.id] = 1; out.push(l); }
+    if (!live()) return out;
+    let far = 0;
+    const order = ROSTER_KEYS.slice().sort((a, b) => (C(a).route.zone || 999) - (C(b).route.zone || 999));
+    for (const k of order) {
+      if (ids[k] || isRecruited(k)) continue;
+      const cost = recruitCost(k), rt = C(k).route;
+      if (cost) {
+        const pct = cost.gold ? Math.min(1, S.gold / cost.gold) : 1;
+        out.push({ id: k, name: C(k).name, how: `Ready to join for ${costText(cost)}.`, pct, action: { label: 'Recruit', fn: () => recruit(k) }, builtIn: true, ready: canRecruit(k) });
+      } else if (rt.type === 'progress' && rt.zone > S.maxZone && far++ < 2) {
+        out.push({ id: k, name: C(k).name, how: recruitHow(k), pct: Math.min(1, S.maxZone / rt.zone), action: null, builtIn: true, sub: `Zone ${S.maxZone} of ${rt.zone}` });
+      }
+    }
+    return out;
+  }
+  const leadFor = k => leadList().find(l => l.id === k) || null;
+  const pctOf = l => { if (!l || l.pct == null || !isFinite(l.pct)) return null; const p = +l.pct; return Math.max(0, Math.min(1, p > 1 ? p / 100 : p)); };
+  const xpInfo = k => {
+    const r = charRec(k); if (!r) return null;
+    const cap = levelCap(r.rank), need = cxpNeed(r.lv), atCap = r.lv >= cap;
+    return { r, cap, atCap, pct: atCap ? 1 : Math.max(0, Math.min(1, r.xp / need)), catchUp: safe(() => catchUpBonus(k), 0), maxRank: r.rank >= ROSTER_TUNE.maxRank };
+  };
+  const inField = k => !!(S.party && Array.isArray(S.party.field) && S.party.field.includes(k));
+  // Something waiting for the player: an unread story or a promotion they can pay for now.
+  const needsYou = k => isRecruited(k) && (safe(() => storyState(k).unread, 0) > 0 || safe(() => canPromote(k), false));
 
-  // ---------- hero card ----------
+  Object.assign(PTY, {
+    ROLE_NAME, CIRCLE_NAME, COL_NAME, HERO_GEAR_NOUN, HERO_SLOTS, safe, live, C, heroClass, heroCol, portrait, rarity, frameCol,
+    rarityName, first, pip, essName, costText, weaponNoun, gearOf, itemIc, itemFrame, slotTile, traits, synergiesFor, missingText,
+    leadList, leadFor, pctOf, xpInfo, inField, needsYou, fnActive
+  });
+
+  // ================= generic bottom sheet =================
+  let cur = null;
+  openSheet = function (build, opts) {
+    if (cur) cur.close(true);
+    opts = opts || {};
+    const last = document.activeElement;
+    const ov = el('div', 'bsheet-ov');
+    const sh = el('div', 'bsheet' + (opts.small ? ' small' : ''));
+    sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true');
+    if (opts.label) sh.setAttribute('aria-label', opts.label);
+    const grab = el('div', 'bsheet-grab'); grab.append(el('i'));
+    const x = el('button', 'bsheet-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close');
+    grab.append(x);
+    const body = el('div', 'bsheet-body');
+    const foot = el('div', 'bsheet-foot');
+    sh.append(grab, body, foot); ov.append(sh);
+    document.body.append(ov);
+    const api = {
+      body, foot, sheet: sh,
+      close(instant) {
+        if (api.closed) return; api.closed = true;
+        document.removeEventListener('keydown', onKey, true);
+        if (cur === api) cur = null;
+        const done = () => { ov.remove(); if (opts.onClose) safe(opts.onClose); if (last && last.focus && document.contains(last)) try { last.focus({ preventScroll: true }); } catch (e) {} };
+        if (instant || reduced) done();
+        else { ov.classList.add('out'); setTimeout(done, 180); }
+      }
+    };
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); api.close(); return; }
+      if (e.key !== 'Tab') return;
+      const f = [...sh.querySelectorAll('button:not(:disabled), [href], input, summary, [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null);
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    x.addEventListener('click', () => api.close());
+    ov.addEventListener('click', e => { if (e.target === ov) api.close(); });
+    // Swipe down on the handle, or on the body while it is scrolled to the top.
+    let y0 = null, dy = 0, fromBody = false;
+    const down = e => {
+      fromBody = body.contains(e.target);
+      if (fromBody && (body.scrollTop > 0 || e.target.closest('button, summary, input'))) return;
+      y0 = e.touches ? e.touches[0].clientY : e.clientY; dy = 0; sh.style.transition = 'none';
+    };
+    const move = e => {
+      if (y0 == null) return;
+      const y = e.touches ? e.touches[0].clientY : e.clientY; dy = Math.max(0, y - y0);
+      if (fromBody && dy > 0 && body.scrollTop > 0) { y0 = null; sh.style.transform = ''; return; }
+      if (dy > 0) { sh.style.transform = `translateY(${dy}px)`; if (e.cancelable && fromBody) e.preventDefault(); }
+    };
+    const up = () => {
+      if (y0 == null) return; y0 = null; sh.style.transition = '';
+      if (dy > 90) api.close(); else sh.style.transform = '';
+    };
+    grab.addEventListener('pointerdown', e => { if (e.target === x) return; down(e); grab.setPointerCapture(e.pointerId); });
+    grab.addEventListener('pointermove', move); grab.addEventListener('pointerup', up); grab.addEventListener('pointercancel', up);
+    body.addEventListener('touchstart', down, { passive: true });
+    body.addEventListener('touchmove', move, { passive: false });
+    body.addEventListener('touchend', up); body.addEventListener('touchcancel', up);
+    cur = api;
+    build(api);
+    requestAnimationFrame(() => { try { x.focus({ preventScroll: true }); } catch (e) {} });
+    return api;
+  };
+
+  // ================= character sheet =================
+  let who = null, sheet = null, sig = '', openStory = -1, swapOpen = false, mirrorArm = false, refs = {};
+
+  const section = (title, ...kids) => { const s = el('div', 'cs-sec'); if (title) s.append(el('h3', 'cs-h', title)); s.append(...kids); return s; };
+  function statBox(label, value, sub) {
+    const d = el('div', 'cs-stat'); d.append(el('small', null, label), el('b', null, value));
+    if (sub) d.append(el('em', null, sub));
+    return d;
+  }
+  function head(k, locked) {
+    const top = el('div', 'cs-top');
+    const fr = el('div', 'cs-pt' + (locked ? ' locked' : '') + (k !== 'hero' && rarity(k) === 'legendary' ? ' leg' : ''));
+    if (k !== 'hero') fr.style.setProperty('--rc', frameCol(k));
+    fr.append(img(portrait(k)));
+    const t = el('div', 'cs-who');
+    const h = el('h2', 'cs-name', k === 'hero' ? S.name : C(k).name); h.id = 'csName';
+    t.append(h);
+    if (k === 'hero') {
+      const c = heroClass();
+      t.append(el('small', 'cs-title', c ? `the ${c.name}` : 'the Wanderer'));
+      const tags = el('div', 'cs-tags');
+      if (c) tags.append(pip(c.role));
+      t.append(tags);
+    } else {
+      const c = C(k);
+      t.append(el('small', 'cs-title', c.title));
+      const tags = el('div', 'cs-tags');
+      const rt = el('span', 'cs-tag rar', rarityName(k)); rt.style.color = frameCol(k);
+      tags.append(rt, pip(c.role), el('span', 'cs-tag', CIRCLE_NAME[c.circle] || c.circle));
+      t.append(tags);
+    }
+    top.append(fr, t);
+    return top;
+  }
+  function xpBlock(k) {
+    const x = xpInfo(k);
+    const box = el('div', 'cs-xp');
+    const line = el('div', 'cs-xpline');
+    const lv = el('b', null, `Lv ${x.r.lv}`); lv.append(el('small', null, ` / ${x.cap}`));
+    const rk = el('span', 'cs-rank', 'Rank: ' + ROSTER_RANKS[x.r.rank]);
+    line.append(lv, rk);
+    const bar = el('div', 'xbar' + (x.atCap ? ' cap' : '')); const fill = el('i'); bar.append(fill);
+    const note = el('small', 'cs-xpnote');
+    box.append(line, bar, note);
+    refs.xp = { fill, bar, note, k };
+    updateXp();
+    return box;
+  }
+  function updateXp() {
+    const r = refs.xp; if (!r) return;
+    const x = xpInfo(r.k); if (!x) return;
+    r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
+    r.bar.classList.toggle('cap', x.atCap);
+    const bits = [];
+    if (x.atCap) bits.push(x.maxRank ? 'Highest rank reached.' : 'At the level cap. Promote to keep growing.');
+    else bits.push(`${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`);
+    if (!inField(r.k)) bits.push('Earns XP only while fighting.');
+    else if (x.catchUp > 0) bits.push(`+${Math.round(x.catchUp * 100)}% XP to catch up.`);
+    r.note.textContent = bits.join(' ');
+  }
+
+  function kitSection(k) {
+    const list = traits(k);
+    if (!list || !list.length) return null;
+    const ul = el('ul', 'cs-kit');
+    for (const t of list) {
+      const li = el('li', t.active === false ? 'off' : '');
+      const nm = el('b', null, t.name);
+      const kind = el('small', 'cs-kind', String(t.kind || '').replace(/^\w/, m => m.toUpperCase()));
+      const top = el('div'); top.append(nm, kind);
+      if (t.stageC) top.append(el('small', 'cs-soon', 'with party combat'));
+      li.append(top, el('p', null, t.text || ''));
+      ul.append(li);
+    }
+    return section('Kit', ul);
+  }
+  function synSection(k) {
+    const list = synergiesFor(k);
+    if (!list) return null;
+    const box = el('div', 'cs-syns');
+    if (!list.length) box.append(el('p', 'note', 'No synergies with this party yet.'));
+    for (const s of list) {
+      const d = el('div', 'cs-syn' + (s.active ? ' on' : ''));
+      const top = el('div'); top.append(el('b', null, s.name), el('small', null, s.active ? 'Active' : missingText(s.missing) || 'Inactive'));
+      d.append(top);
+      if (s.text) d.append(el('p', null, s.text));
+      box.append(d);
+    }
+    return section('Synergies', box);
+  }
+  function milestoneTrack(k) {
+    const r = charRec(k);
+    const ol = el('ol', 'cs-miles');
+    const nextLv = MILESTONES.find(m => r.lv < m.lv);
+    for (const m of MILESTONES) {
+      const done = r.lv >= m.lv, next = nextLv === m;
+      const li = el('li', done ? 'done' : next ? 'next' : '');
+      li.append(el('b', null, 'L' + m.lv), el('small', null, m.n));
+      li.setAttribute('aria-label', `Level ${m.lv}, ${m.n}: ${done ? 'unlocked' : next ? 'next' : 'locked'}`);
+      ol.append(li);
+    }
+    const kids = [ol];
+    if (r.lv >= 25) {
+      const nx = (Math.floor(r.lv / 25) + 1) * 25;
+      kids.push(el('p', 'note', `Every 25 levels the signature ability grows 25% stronger. Next at Lv ${nx}.`));
+    }
+    return section('Milestones', ...kids);
+  }
+  function storiesSection(k) {
+    const list = (typeof STORIES === 'object' && STORIES[k]) || [];
+    if (!list.length) return null;
+    const st = storyState(k), lvs = ROSTER_TUNE.storyLv;
+    const box = el('div', 'cs-stories');
+    list.forEach((s, i) => {
+      if (i >= st.unlocked) {
+        const d = el('div', 'cs-story locked');
+        d.append(el('b', null, s.title), el('small', null, `Unlocks at Lv ${lvs[i]}`));
+        box.append(d); return;
+      }
+      const det = el('details', 'cs-story');
+      if (openStory === i) det.open = true;
+      const sum = el('summary');
+      sum.append(el('b', null, s.title));
+      if (i >= st.seen) sum.append(el('span', 'udot', 'New'));
+      det.append(sum, el('p', null, s.text));
+      det.addEventListener('toggle', () => {
+        if (det.open) {
+          openStory = i;
+          if (storyState(k).unread > 0) { markStoriesRead(k); save(); emit('storiesRead', { id: k }); box.querySelectorAll('.udot').forEach(n => n.remove()); }
+        } else if (openStory === i) openStory = -1;
+      });
+      box.append(det);
+    });
+    return section('Camp stories', box);
+  }
+  function gearSection(k) {
+    const g = el('div', 'cs-gear');
+    for (const [which, noun, ic] of [['wpn', weaponNoun(k), 'sword'], ['trk', 'Trinket', 'charm']]) {
+      const it = gearOf(k, which);
+      const s = el('div', 'cs-slot' + (it ? '' : ' empty'));
+      s.append(slotTile(it, ic, 56));
+      const tx = el('div');
+      tx.append(el('b', null, it ? itemName(it) : noun), el('small', null, it ? noun : 'Empty. Party gear is coming soon.'));
+      s.append(tx); g.append(s);
+    }
+    return section('Gear', g);
+  }
+  function statsSection(k) {
+    const c = C(k), cell = S.party.cells && S.party.cells[k];
+    const g = el('div', 'cs-stats');
+    const dps = safe(() => charDps(k), 0);
+    const b = statBox(c.role === 'support' ? 'Adds DMG/s' : 'DMG/s', fmt(dps), c.role === 'support' ? 'as a party buff' : inField(k) ? '' : 'when fielded');
+    refs.dps = b.querySelector('b');
+    g.append(b,
+      statBox('HP', '-', 'with party combat'),
+      statBox('Armour', '-', 'with party combat'),
+      statBox('Row', inField(k) && cell ? COL_NAME[cell.col] : 'Bench', inField(k) && cell ? (cell.lane ? 'lower lane' : 'upper lane') : ''));
+    return section('Stats', g);
+  }
+
+  function actions(k) {
+    const foot = sheet.foot; foot.textContent = '';
+    const x = xpInfo(k); const row = el('div', 'cs-acts');
+    if (!x.maxRank) {
+      const pc = promoteCost(k);
+      const b = el('button', 'buy cs-promote'); b.type = 'button';
+      b.append(el('span', 'qty', x.atCap ? 'Promote' : `Promote at Lv ${x.cap}`), el('span', 'price'));
+      const pr = b.querySelector('.price');
+      pr.append(el('span', 'ico gold'), el('span', null, fmt(pc.gold)));
+      b.disabled = !canPromote(k);
+      b.addEventListener('click', () => { if (promoteChar(k)) { save(); ui(true); partySheet.refresh(true); } });
+      row.append(b);
+      if (x.atCap) foot.append(el('small', 'cs-cost', `Also ${fmt(pc.ess[1])} ${essName(pc.ess[0])} or better. Damage x2, level cap +25.`));
+    }
+    if (inField(k)) {
+      const b = el('button', 'mini cs-act', 'Bench'); b.type = 'button';
+      b.addEventListener('click', () => { if (benchChar(k)) { save(); ui(true); partySheet.refresh(true); } });
+      row.append(b);
+    } else {
+      const f = (S.party.field || []).slice(0, 3);
+      const b = el('button', 'mini go cs-act', f.length < 3 ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
+      b.addEventListener('click', () => {
+        if (f.length < 3) { if (fieldChar(k)) { save(); ui(true); partySheet.refresh(true); } return; }
+        swapOpen = !swapOpen; partySheet.refresh(true);
+      });
+      row.append(b);
+    }
+    foot.append(row);
+    if (swapOpen && !inField(k)) {
+      const sw = el('div', 'cs-swap');
+      sw.append(el('small', null, 'Swap in for:'));
+      for (const o of (S.party.field || []).slice(0, 3)) {
+        const b = el('button', 'mini cs-swapbtn'); b.type = 'button';
+        b.append(img(portrait(o)), el('span', null, first(o)));
+        b.addEventListener('click', () => { swapOpen = false; if (fieldChar(k, o)) { save(); ui(true); partySheet.refresh(true); } });
+        sw.append(b);
+      }
+      foot.prepend(sw);
+    }
+  }
+
+  function buildChar(k) {
+    const body = sheet.body; body.textContent = ''; refs = {};
+    sheet.sheet.setAttribute('aria-labelledby', 'csName');
+    const locked = !isRecruited(k);
+    body.append(head(k, locked));
+    if (locked) { buildLocked(k); return; }
+    body.append(xpBlock(k));
+    if (BIOS[k]) body.append(el('p', 'cs-bio', BIOS[k]));
+    body.append(statsSection(k), gearSection(k));
+    const kit = kitSection(k); if (kit) body.append(kit);
+    const syn = synSection(k); if (syn) body.append(syn);
+    body.append(milestoneTrack(k));
+    const st = storiesSection(k); if (st) body.append(st);
+    actions(k);
+  }
+  function buildLocked(k) {
+    const body = sheet.body, c = C(k);
+    const l = leadFor(k), p = pctOf(l), cost = recruitCost(k);
+    const how = el('div', 'cs-how');
+    how.append(el('h3', 'cs-h', 'How they join'), el('p', null, recruitHow(k)));
+    if (l && l.how && l.how !== recruitHow(k)) how.append(el('p', 'note', l.how));
+    if (p != null) {
+      const bar = el('div', 'xbar xlead'); const i = el('i'); i.style.width = (p * 100).toFixed(1) + '%'; bar.append(i);
+      how.append(bar, el('small', 'cs-xpnote', l.sub || `${Math.floor(p * 100)}% of the way`));
+    }
+    body.append(how);
+    body.append(el('p', 'cs-bio hidden', `${ROLE_STATS[c.role].n} · ${rarityName(k)}. Their story stays hidden until they join.`));
+    const foot = sheet.foot; foot.textContent = '';
+    const row = el('div', 'cs-acts');
+    if (cost) {
+      const b = el('button', 'buy cs-promote'); b.type = 'button';
+      b.append(el('span', 'qty', 'Recruit'), el('span', 'price'));
+      b.querySelector('.price').append(el('span', 'ico gold'), el('span', null, cost.gold ? fmt(cost.gold) : 'Free'));
+      b.disabled = !canRecruit(k);
+      b.addEventListener('click', () => { if (recruit(k)) { save(); ui(true); partySheet.refresh(true); } });
+      row.append(b);
+      if (cost.ess) foot.append(el('small', 'cs-cost', `Also ${fmt(cost.ess[1])} ${essName(cost.ess[0])} or better.`));
+    } else if (l && l.action) {
+      const b = el('button', 'mini go cs-act', l.action.label); b.type = 'button';
+      b.addEventListener('click', () => { safe(() => l.action.fn()); save(); ui(true); partySheet.refresh(true); });
+      row.append(b);
+    }
+    if (row.children.length) foot.append(row);
+  }
+
+  function buildHero() {
+    const body = sheet.body; body.textContent = ''; refs = {};
+    sheet.sheet.setAttribute('aria-labelledby', 'csName');
+    const c = heroClass();
+    body.append(head('hero'));
+    const hb = el('div', 'cs-xp'); const bar = el('div', 'xbar'); const fill = el('i'); bar.append(fill);
+    fill.style.width = Math.min(100, S.xp / xpNeed() * 100) + '%';
+    const hl = el('div', 'cs-xpline'); const lvb = el('b', null, 'Lv ' + S.L); const hn = el('small', 'cs-xpnote');
+    hl.append(lvb, hn); hb.append(hl, bar); body.append(hb);
+    refs.heroXp = fill; refs.heroXpTxt = hn;
+    hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
+    if (c) {
+      body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
+      const tap = el('div', 'cs-kit1'); tap.append(el('b', null, 'Tap: ' + c.tapName), el('p', null, c.how));
+      const ab = el('div', 'cs-kit1'); ab.append(el('b', null, `${c.ability.name} · every ${c.ability.cd}s`), el('p', null, c.ability.desc));
+      const auto = el('label', 'pc-auto');
+      const box = el('input'); box.type = 'checkbox'; box.checked = !!S.party.autoCast;
+      box.addEventListener('change', () => { S.party.autoCast = box.checked; save(); });
+      auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
+      ab.append(auto);
+      const au = el('div', 'cs-kit1'); au.append(el('b', null, 'Class aura'), el('p', null, c.aura));
+      body.append(section('Class', tap, ab, au));
+    }
+    const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
+    const g = el('div', 'cs-hgear');
+    for (const s of HERO_SLOTS) {
+      const it = s.old ? equipped(s.old) : null;
+      const d = el('div', 'cs-hslot' + (s.old ? '' : ' soon'));
+      d.append(it ? slotTile(it, null, 56) : slotTile(null, s.old ? SLOT[s.old].icon : s.id === 'off' ? 'banner' : 'helm', 56));
+      d.append(el('small', null, nouns[s.id] || s.n));
+      d.title = it ? itemName(it) : s.old ? 'Empty. Forge one in the Forge tab.' : 'Coming with crafting.';
+      g.append(d);
+    }
+    body.append(section('Gear', g, el('p', 'note', 'Dashed slots arrive with crafting. Forge the rest in the Forge tab.')));
+    const n = (S.party && S.party.mirrors) || 0;
+    const mir = el('div', 'cs-mirror');
+    const mt = el('div'); mt.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? 'Use one to choose a new class. Your level and gear stay.' : 'Bosses from zone 36 sometimes drop one. It lets you change class.'));
+    mir.append(mt);
+    if (n > 0 && typeof useMirror === 'function') {
+      const b = el('button', 'mini' + (mirrorArm ? ' warn' : ' go'), mirrorArm ? 'Tap again to use' : 'Use'); b.type = 'button';
+      b.addEventListener('click', () => {
+        if (!mirrorArm) { mirrorArm = true; buildHero(); return; }
+        mirrorArm = false; partySheet.close(); if (useMirror()) { save(); ui(true); }
+      });
+      mir.append(b);
+    }
+    body.append(section('Class change', mir));
+    sheet.foot.textContent = '';
+  }
+
+  const sigOf = k => {
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L;
+    const r = charRec(k);
+    if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
+    return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
+      JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join()].join('|');
+  };
+  function render(force) {
+    if (!sheet || !who) return;
+    const s = sigOf(who);
+    if (!force && s === sig) {
+      updateXp();
+      if (refs.dps && who !== 'hero') refs.dps.textContent = fmt(safe(() => charDps(who), 0));
+      if (refs.heroXp) { refs.heroXp.style.width = Math.min(100, S.xp / xpNeed() * 100) + '%'; refs.heroXpTxt.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`; }
+      return;
+    }
+    sig = s;
+    const top = sheet.body.scrollTop;
+    sheet.sheet.classList.toggle('small', who !== 'hero' && !isRecruited(who));
+    if (who === 'hero') buildHero(); else buildChar(who);
+    sheet.body.scrollTop = top;
+  }
+  function openFor(k) {
+    who = k; sig = ''; openStory = -1; swapOpen = false; mirrorArm = false;
+    const label = k === 'hero' ? S.name : C(k) ? C(k).name : k;
+    sheet = openSheet(() => {}, { label, small: k !== 'hero' && !isRecruited(k), onClose: () => { who = null; sheet = null; refs = {}; } });
+    sheet.sheet.classList.add('csheet');
+    render(true);
+  }
+  partySheet = {
+    open(k) { if (C(k) && live()) openFor(k); },
+    openHero() { openFor('hero'); },
+    refresh(force) { try { render(force); } catch (e) { console.error('[lanternfall] party sheet', e); } },
+    close() { if (sheet) sheet.close(); },
+    isOpen: () => !!sheet
+  };
+  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop']) on(ev, () => { if (sheet) partySheet.refresh(); });
+}
+
+// ---- src/js/75-party.js ----
+// 75-party: the Party tab. Browser-only. Spec: docs/design/party-and-classes.md 7.2.
+// Top to bottom: formation editor, hero card, the 3 fielded companions, synergies, the roster
+// grid (bench and locked), leads. Tapping a card or tile opens the character sheet
+// (75-party-sheet.js). A red dot on the tab marks an unread camp story or a promotion ready.
+// Reads the roster API (56-roster.js); synergies (56b) and leads (56c) only when present.
+{
+  const { safe, live, C, heroClass, heroCol, portrait, frameCol, first, pip, costText, weaponNoun, gearOf, slotTile,
+    traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive } = PTY;
+  const RAR_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 };
+  const P = () => S.party;
+  const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, 3) : []);
+  const setT = (n, t) => { if (n.textContent !== t) n.textContent = t; };
+  const saveUi = () => { try { save(); } catch (e) {} ui(true); };
+  const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
+
+  // ================= formation =================
+  let picked = null, formSig = '', formRefs = null;
+  const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});
+  const nameOf = k => k === 'hero' ? S.name : C(k).name;
+  const occupant = (col, lane) => Object.keys(cellsNow()).find(k => cellsNow()[k].col === col && cellsNow()[k].lane === lane && (k === 'hero' || inField(k)));
+  // The hero stays in their class column; companions may stand anywhere (the warning line says when it is unwise).
+  function canMove(k, col, lane) {
+    const cells = cellsNow(), from = cells[k]; if (!from) return false;
+    if (k === 'hero' && col !== heroCol()) return false;
+    const o = occupant(col, lane);
+    if (o === 'hero' && from.col !== heroCol()) return false;
+    return true;
+  }
+  function moveTo(k, col, lane) {
+    if (!canMove(k, col, lane)) return false;
+    const cells = { ...cellsNow() }, o = occupant(col, lane);
+    if (o === k) return false;
+    if (o) cells[o] = { ...cells[k] };
+    cells[k] = { col, lane };
+    P().cells = cells;                 // a new object: the stage watches identity
+    emit('fieldChange', { field: P().field });
+    return true;
+  }
+  function warning() {
+    const cells = cellsNow(), f = field();
+    const at = k => cells[k] ? cells[k].col : -1;
+    for (const k of f) { const r = C(k).role; if ((r === 'support' || r === 'caster') && at(k) === 2) return `${first(k)} is a ${r} in the Front row. ${r === 'support' ? 'Supports' : 'Casters'} are safer at the back.`; }
+    const front = ['hero'].concat(f).some(k => at(k) === 2);
+    if (!front && f.length) return 'Nobody stands in the Front row to hold the enemy back.';
+    const frontFree = !occupant(2, 0) || !occupant(2, 1);
+    if (frontFree) for (const k of f) if (C(k).role === 'tank' && at(k) !== 2) return `${first(k)} is a tank in the ${COL_NAME[at(k)] || 'wrong'} row. Tanks hold the Front.`;
+    return '';
+  }
+  function buildForm(sec) {
+    const head = el('div', 'sec-head');
+    const h = sec.querySelector('.sec-title'); head.append(h);
+    const auto = btn('mini pf-auto', 'Auto', () => { picked = null; if (live()) { autoPlace(); saveUi(); } });
+    auto.setAttribute('aria-label', 'Place everyone by role');
+    head.append(auto); sec.prepend(head);
+    const grid = el('div', 'pform');
+    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
+    const cells = [];
+    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+      const b = btn('pf-cell');
+      b.addEventListener('click', () => tapCell(col, lane));
+      grid.append(b); cells.push({ b, col, lane });
+    }
+    const hint = el('p', 'note pf-hint');
+    const warn = el('p', 'note warn pf-warn');
+    sec.append(grid, hint, warn);
+    formRefs = { cells, hint, warn, auto };
+  }
+  function tapCell(col, lane) {
+    const o = occupant(col, lane);
+    if (!picked) { if (o) picked = o; }
+    else if (picked === o) picked = null;
+    else if (canMove(picked, col, lane)) { moveTo(picked, col, lane); picked = null; try { save(); } catch (e) {} }
+    else if (o) picked = o;
+    formSig = ''; ui(true);
+  }
+  function updateForm() {
+    const r = formRefs; if (!r) return;
+    const sig = JSON.stringify(cellsNow()) + field().join() + picked + S.name + P().cls + typeof portraitURL;
+    if (sig === formSig) return; formSig = sig;
+    if (picked && picked !== 'hero' && !inField(picked)) picked = null;
+    for (const c of r.cells) {
+      const o = occupant(c.col, c.lane), b = c.b;
+      b.textContent = '';
+      b.className = 'pf-cell' + (o ? ' occ' : '') + (o === 'hero' ? ' hero' : '') + (picked && o === picked ? ' picked' : '') +
+        (picked && picked !== o && !canMove(picked, c.col, c.lane) ? ' dim' : '') + (picked && picked !== o && canMove(picked, c.col, c.lane) ? ' drop' : '');
+      if (o) {
+        b.append(img(portrait(o)), el('span', 'who', o === 'hero' ? S.name : first(o)));
+        if (o !== 'hero') { const d = el('i', 'rp r-' + C(o).role); b.append(d); }
+      }
+      const where = `${COL_NAME[c.col]} row, ${c.lane ? 'lower' : 'upper'} lane`;
+      b.setAttribute('aria-label', o ? `${nameOf(o)}, ${where}${picked === o ? ', picked up' : ''}` : `Empty, ${where}`);
+      b.setAttribute('aria-pressed', String(!!picked && picked === o));
+      b.disabled = !o && !picked;
+    }
+    r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit cell${picked === 'hero' ? ' in your class row' : ''}, or tap again to cancel.` : 'Tap someone, then tap a cell to move or swap them.';
+    const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
+  }
+
+  // ================= hero card =================
   let heroRefs = null, heroSig = '';
-  function buildHero(sec) {
-    sec.querySelectorAll('.pcard, .note').forEach(n => n.remove());
-    heroRefs = null;
-    const c = curClass();
-    const card = el('div', 'pcard hero');
+  function buildHero(box) {
+    box.textContent = '';
+    const c = heroClass();
+    const card = el('div', 'pcard hero tap'); card.tabIndex = 0; card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${S.name}, open hero sheet`);
     const top = el('div', 'pc-top');
-    const pt = portraitBox(heroPortrait(), 'big');
+    const pt = el('div', 'pt big'); pt.append(img(portrait('hero')));
     const who = el('div', 'pc-who');
     const nm = el('b', null, S.name);
-    const sub = el('small', null, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
-    who.append(nm, sub);
-    if (c) { const tags = el('div', 'pc-tags'); tags.append(pip(c.role)); if (c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName)); who.append(tags); }
-    top.append(pt, who);
+    const sub = el('small');
+    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
+    who.append(nm, sub, tags);
+    top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
-    const refs = { card, pt: pt.querySelector('img'), nm, sub };
+    const refs = { card, nm, sub };
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
-      const abTxt = el('div');
-      abTxt.append(el('em', null, c.ability.name), document.createTextNode(': ' + (c.ability.desc || '')));
-      const cast = el('button', 'mini go', 'Cast'); cast.type = 'button';
-      cast.addEventListener('click', () => { if (typeof castAbility === 'function' && castAbility()) ui(true); });
-      line.append(abTxt, cast);
+      const t = el('div'); t.append(el('em', null, c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
+      const cast = btn('mini go pc-cast', 'Cast', e => { e.stopPropagation(); if (typeof castAbility === 'function' && castAbility()) ui(true); });
+      line.append(t, cast);
       const cd = el('div', 'pc-cd'); cd.append(el('i'));
-      const cdTxt = el('small', 'pc-cdtxt');
-      const auto = el('label', 'pc-auto');
-      const box = el('input'); box.type = 'checkbox';
-      box.addEventListener('change', () => { if (hasParty()) { S.party.autoCast = box.checked; save(); } });
-      auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
-      ab.append(line, cd, cdTxt, auto);
-      card.append(ab);
-      Object.assign(refs, { cast, cdBar: cd.firstChild, cdTxt, box });
+      ab.append(line, cd); card.append(ab);
+      Object.assign(refs, { cast, cdBar: cd.firstChild, cdTxt });
     }
     const gearBox = el('div', 'pc-gear');
-    refs.gear = GEAR_SLOTS.map(g => {
-      const t = el('div', 'pc-slot');
-      const ic = icTile(iconURL('charm', '#3A2F47'), null, 'ghost');
-      const lbl = el('small');
-      t.append(ic, lbl); gearBox.append(t);
-      return { g, t, ic, lbl };
-    });
-    card.append(gearBox, el('small', 'pc-gearnote', 'Dashed slots arrive with crafting. Forge the rest in the Forge tab.'));
-    sec.append(card);
+    const nouns = HERO_GEAR_NOUN[P().cls] || {};
+    for (const s of HERO_SLOTS) {
+      const it = s.old ? equipped(s.old) : null;
+      const d = el('div', 'pc-slot' + (s.old ? '' : ' soon'));
+      d.append(it ? slotTile(it) : slotTile(null, s.old ? SLOT[s.old].icon : s.id === 'off' ? 'banner' : 'helm'), el('small', null, nouns[s.id] || s.n));
+      d.title = it ? itemName(it) : s.old ? 'Empty' : 'Coming with crafting';
+      gearBox.append(d);
+    }
+    card.append(gearBox);
+    const open = () => partySheet.openHero();
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); open(); } });
+    box.append(card);
     heroRefs = refs;
   }
-  function updateHero(sec) {
-    const c = curClass();
-    const sig = [hasParty() && S.party.cls, !!c, typeof portraitURL, JSON.stringify(S.equip)].join('|');
-    if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(sec); }
+  function updateHero(box) {
+    const c = heroClass();
+    const sig = [P().cls, typeof portraitURL, JSON.stringify(S.equip), S.name].join('|');
+    if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(box); }
     const r = heroRefs;
-    r.nm.textContent = S.name;
-    r.sub.textContent = (c ? c.name : 'Wanderer') + ' · Lv ' + S.L;
+    setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
     if (r.cdBar) {
-      const cdMax = (c.ability && c.ability.cd) || 30, left = Math.max(0, +S.party.abilityCd || 0);
+      const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
       r.cdBar.style.width = (100 - Math.min(100, left / cdMax * 100)) + '%';
-      r.cdTxt.textContent = left > 0 ? `Ready in ${Math.ceil(left)}s · cooldown ${cdMax}s` : `Ready · cooldown ${cdMax}s`;
+      setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
       r.cast.disabled = left > 0 || typeof castAbility !== 'function';
-      if (document.activeElement !== r.box) r.box.checked = !!S.party.autoCast;
-    }
-    const nouns = (hasParty() && GEAR_NOUN[S.party.cls]) || {};
-    for (const s of r.gear) {
-      const it = s.g.old ? equipped(s.g.old) : null;
-      const noun = nouns[s.g.id] || s.g.n;
-      if (it) {
-        setIc(s.ic, itemIcon(it.slot || s.g.old, it.t, it.u), it.u ? 'legendary' : it.r);
-        s.lbl.textContent = noun;
-        s.t.title = itemName(it);
-      } else if (s.g.old) {
-        setIc(s.ic, iconURL(SLOT[s.g.old].icon, '#4E4060'), null, 'ghost');
-        s.lbl.textContent = noun; s.t.title = 'Empty. Forge one in the Forge tab.';
-      } else {
-        setIc(s.ic, iconURL(s.g.id === 'off' ? 'banner' : 'helm', '#4E4060'), null, 'ghost');
-        s.lbl.textContent = noun; s.t.title = 'Coming with crafting.';
-        s.t.classList.add('soon');
-      }
     }
   }
 
-  // ---------- companions ----------
+  // ================= companion cards =================
   let compSig = '', compRefs = [];
+  function abilityName(k) {
+    const t = traits(k); if (!t) return '';
+    const a = t.find(x => x && /abil/i.test(x.kind || '')); return a ? a.name : '';
+  }
   function buildComps(box, keys) {
     box.textContent = ''; compRefs = [];
-    if (!keys.length) { box.append(el('p', 'note', 'Nobody fights beside you yet. Recruit companions in the Fight tab.')); return; }
-    for (const k of keys) {
-      const d = pc(k);
-      const card = el('div', 'pcard');
-      const top = el('div', 'pc-top');
+    for (let i = 0; i < 3; i++) {
+      const k = keys[i];
+      if (!k) {
+        const e = el('div', 'pcard empty');
+        e.append(el('b', null, 'Open place'), el('small', null, 'Tap someone on the bench below to field them.'));
+        box.append(e); continue;
+      }
+      const c = C(k);
+      const card = el('div', 'pcard comp tap'); card.tabIndex = 0; card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `${c.name}, open character sheet`);
+      card.style.setProperty('--rc', frameCol(k));
+      const top = el('div', 'pc-top3');
+      const pt = el('div', 'pt rf' + (c.rarity === 'legendary' ? ' leg' : '')); pt.append(img(portrait(k)));
+      const dot = el('span', 'ndot'); dot.hidden = true; pt.append(dot);
       const who = el('div', 'pc-who');
-      const tags = el('div', 'pc-tags'); tags.append(pip(d.role));
-      const stat = el('small', 'pc-stat');
-      who.append(el('b', null, d.name), el('small', null, d.title), tags, stat);
-      top.append(portraitBox(compPortrait(k)), who);
-      card.append(top); box.append(card);
-      compRefs.push({ k, d, stat });
+      who.append(el('b', null, c.name), el('small', null, c.title));
+      const meta = el('div', 'pc-tags'); const lv = el('span', 'pc-lv'); meta.append(pip(c.role), lv);
+      const abn = abilityName(k); if (abn) meta.append(el('small', 'pc-abn', abn));
+      who.append(meta);
+      const gear = el('div', 'pc-g2');
+      for (const [w, noun, ic] of [['wpn', weaponNoun(k), 'sword'], ['trk', 'Trinket', 'charm']]) {
+        const it = gearOf(k, w); const t = slotTile(it, ic); t.title = it ? itemName(it) : `${noun}: coming soon`; gear.append(t);
+      }
+      top.append(pt, who, gear);
+      const xr = el('div', 'pc-xrow');
+      const bar = el('div', 'xbar'); const fill = el('i'); bar.append(fill);
+      const badge = el('span', 'pc-badge'); badge.hidden = true;
+      const prom = btn('buy pc-prom', null, e => { e.stopPropagation(); if (promoteChar(k)) saveUi(); });
+      prom.append(el('span', 'qty', 'Promote'), el('span', 'price'));
+      prom.hidden = true;
+      xr.append(bar, badge, prom);
+      card.append(top, xr);
+      const open = () => partySheet.open(k);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); open(); } });
+      box.append(card);
+      compRefs.push({ k, lv, fill, bar, badge, prom, dot, pSig: '' });
     }
   }
   function updateComps(box) {
-    const keys = fieldKeys();
-    const sig = keys.join(',') + '|' + typeof portraitURL;
+    const keys = field();
+    const sig = keys.join(',') + '|' + typeof portraitURL + '|' + keys.map(k => { const r = charRec(k); return r.wpn + ':' + r.trk; }).join() + (fnActive() ? 1 : 0);
     if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
     for (const r of compRefs) {
-      if (roster()) {
-        const rec = charRec(r.k);
-        r.stat.textContent = rec ? `Lv ${rec.lv} ${ROSTER_RANKS[rec.rank]} · ${fmt(charDps(r.k))} DPS` : 'Joins the fight soon';
-        continue;
+      const x = xpInfo(r.k); if (!x) continue;
+      setT(r.lv, `Lv ${x.r.lv}/${x.cap} · ${ROSTER_RANKS[x.r.rank]}`);
+      r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
+      r.bar.classList.toggle('cap', x.atCap);
+      r.bar.title = x.atCap ? 'At the level cap' : `${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`;
+      const cu = Math.round(x.catchUp * 100);
+      r.badge.hidden = !(cu > 0) || x.atCap; setT(r.badge, `+${cu}% XP`);
+      const showP = x.atCap && !x.maxRank;
+      r.prom.hidden = !showP;
+      if (showP) {
+        const pc = promoteCost(r.k), ps = pc.gold + ':' + canPromote(r.k);
+        if (ps !== r.pSig) { r.pSig = ps; setPrice(r.prom, pc.gold); r.prom.disabled = !canPromote(r.k); r.prom.title = costText(pc); }
       }
-      const i = r.d.idx, n = i >= 0 ? S.comp[i] : 0;
-      let dps = 0; try { dps = i >= 0 ? compDpsOne(i) * n : 0; } catch (e) {}
-      r.stat.textContent = n > 0 ? `${fmt(n)} strong · ${fmt(dps)} DPS` : 'Joins the fight soon';
+      r.dot.hidden = !needsYou(r.k);
     }
   }
 
-  // ---------- formation (read-only for Stage A) ----------
-  let formSig = '';
-  function cellsOf(keys) {
-    const cells = hasParty() && S.party.cells && typeof S.party.cells === 'object' ? S.party.cells : {};
-    const out = {};
-    const put = (k, def) => { const c = cells[k] || def; if (c) out[k] = { col: Math.max(0, Math.min(2, c.col | 0)), lane: c.lane ? 1 : 0 }; };
-    const c = curClass();
-    const heroCol = c && c.row != null ? (typeof c.row === 'number' ? c.row : ({ back: 0, mid: 1, front: 2 })[c.row]) : 2;
-    put('hero', { col: heroCol == null ? 2 : heroCol, lane: 1 });
-    const roleCol = { tank: 2, striker: 1, caster: 0, support: 0 };
-    keys.forEach((k, n) => put(k, { col: roleCol[pc(k).role], lane: n % 2 }));
-    return out;
+  // ================= synergies =================
+  let synSig = '', synOpen = null;
+  function updateSyn(sec) {
+    const on = !!fnActive();
+    sec.hidden = !on; if (!on) return;
+    const list = synergiesFor(null) || [];
+    const sig = JSON.stringify(list.map(s => [s.id, s.active, s.missing])) + synOpen;
+    if (sig === synSig) return; synSig = sig;
+    const row = sec.querySelector('.syn-row'), det = sec.querySelector('.syn-det');
+    row.textContent = '';
+    if (!list.length) { row.append(el('p', 'note', 'No synergies yet. Field characters who share a circle or a story.')); det.hidden = true; return; }
+    for (const s of list) {
+      const b = btn('syn-chip' + (s.active ? ' on' : ''), null, () => { synOpen = synOpen === s.id ? null : s.id; synSig = ''; updateSyn(sec); });
+      b.append(el('i'), el('span', null, s.name));
+      if (!s.active) b.append(el('small', null, missingText(s.missing)));
+      b.setAttribute('aria-expanded', String(synOpen === s.id));
+      row.append(b);
+    }
+    const cur = list.find(s => s.id === synOpen);
+    det.hidden = !cur;
+    if (cur) { det.textContent = ''; det.append(el('b', null, cur.name + (cur.active ? '' : ' (inactive)')), el('span', null, ' ' + (cur.text || ''))); if (cur.stageC) det.append(el('small', 'cs-soon', ' with party combat')); }
   }
-  function updateForm(grid) {
-    const keys = fieldKeys(), cells = cellsOf(keys);
-    const sig = JSON.stringify(cells) + typeof portraitURL + S.name;
-    if (sig === formSig) return; formSig = sig;
-    grid.textContent = '';
-    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
-    const at = {};
-    for (const k in cells) { const id = cells[k].lane + ':' + cells[k].col; (at[id] = at[id] || []).push(k); }
-    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
-      const ks = at[lane + ':' + col] || [];
-      const cell = el('div', 'pf-cell' + (ks.length ? ' occ' : '') + (ks.includes('hero') ? ' hero' : ''));
-      cell.setAttribute('aria-label', `${COL_NAME[col]} row, ${lane ? 'lower' : 'upper'} lane: ${ks.length ? ks.map(k => k === 'hero' ? S.name : pc(k).name).join(', ') : 'empty'}`);
-      for (const k of ks) {
-        cell.append(img(k === 'hero' ? heroPortrait() : compPortrait(k)));
-        cell.append(el('span', 'who', k === 'hero' ? S.name : pc(k).name.split(' ')[0]));
+
+  // ================= roster grid =================
+  const FILTERS = ['all', 'tank', 'striker', 'caster', 'support'];
+  let filt = 'all', sortBy = 'rarity', rosSig = '', rosRefs = null;
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.party.ui') || '{}'); if (FILTERS.includes(v.f)) filt = v.f; if (v.s === 'level' || v.s === 'rarity') sortBy = v.s; } catch (e) {}
+  const keepUi = () => { try { localStorage.setItem('lanternfall.party.ui', JSON.stringify({ f: filt, s: sortBy })); } catch (e) {} };
+  const SHORT = { quest: 'Quest', renown: 'Renown', token: 'Boss token', bestiary: 'Bestiary', achievement: 'Feat', tavern: 'Tavern visitor', craft: 'Crafting' };
+  function shortHow(k, leadsById) {
+    const cost = recruitCost(k), rt = C(k).route, l = leadsById[k], p = pctOf(l);
+    if (cost) return cost.gold ? `Ready: ${fmt(cost.gold)} gold` : 'Ready to join';
+    let s = rt.type === 'progress' ? `Reach zone ${rt.zone}` : SHORT[rt.type] || 'Locked';
+    if (p != null && rt.type !== 'progress') s += ` · ${Math.floor(p * 100)}%`;
+    return s;
+  }
+  function buildRosterHead(sec) {
+    const head = el('div', 'sec-head');
+    const h = sec.querySelector('.sec-title'); const cnt = el('span', 'ros-count'); h.append(cnt); head.append(h);
+    const sort = btn('mini ros-sort', '', () => { sortBy = sortBy === 'rarity' ? 'level' : 'rarity'; keepUi(); rosSig = ''; ui(true); });
+    head.append(sort); sec.prepend(head);
+    const fl = el('div', 'ros-filt'); fl.setAttribute('role', 'group'); fl.setAttribute('aria-label', 'Show role');
+    const fb = FILTERS.map(f => { const b = btn('', f === 'all' ? 'All' : PTY.ROLE_NAME[f], () => { filt = f; keepUi(); rosSig = ''; ui(true); }); fl.append(b); return b; });
+    const grid = el('div', 'rgrid');
+    sec.append(fl, grid);
+    rosRefs = { cnt, sort, fb, grid };
+  }
+  function updateRoster() {
+    const r = rosRefs; if (!r || !live()) return;
+    const leadsById = {}; for (const l of leadList()) leadsById[l.id] = l;
+    const rows = ROSTER_KEYS.map((k, i) => {
+      const rec = charRec(k);
+      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k) };
+    });
+    const sig = [filt, sortBy, typeof portraitURL, JSON.stringify(rows.map(x => [x.k, x.rec && x.rec.lv, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
+    if (sig === rosSig) return; rosSig = sig;
+    r.cnt.textContent = `${rows.filter(x => x.rec).length}/${rows.length}`;
+    r.sort.textContent = sortBy === 'rarity' ? 'Sort: Rarity' : 'Sort: Level';
+    r.sort.setAttribute('aria-label', `Sorted by ${sortBy}. Tap to sort by ${sortBy === 'rarity' ? 'level' : 'rarity'}.`);
+    r.fb.forEach((b, i) => b.setAttribute('aria-pressed', String(FILTERS[i] === filt)));
+    const shown = rows.filter(x => filt === 'all' || C(x.k).role === filt);
+    const rar = x => RAR_ORDER[C(x.k).rarity];
+    shown.sort((a, b) => (!!b.rec - !!a.rec) ||
+      (sortBy === 'rarity' ? rar(a) - rar(b) || (b.rec ? b.rec.lv - a.rec.lv : 0) : (b.rec ? b.rec.lv - a.rec.lv : 0) || rar(a) - rar(b)) || a.i - b.i);
+    r.grid.textContent = '';
+    for (const x of shown) {
+      const c = C(x.k);
+      const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
+      t.style.setProperty('--rc', frameCol(x.k));
+      const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
+      if (x.rec) {
+        fr.append(el('span', 'rt-lv', 'Lv ' + x.rec.lv), el('i', 'rp r-' + c.role));
+        if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
+        if (x.flag) fr.append(el('span', 'ndot'));
+      } else fr.append(el('i', 'rp r-' + c.role));
+      t.append(fr, el('span', 'rt-nm', first(x.k)));
+      if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
+      t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
+      t.addEventListener('click', () => partySheet.open(x.k));
+      r.grid.append(t);
+    }
+    if (!shown.length) r.grid.append(el('p', 'note', 'Nobody with that role yet.'));
+  }
+
+  // ================= leads =================
+  let leadSig = '';
+  function updateLeads(sec) {
+    if (!live()) { sec.hidden = true; return; }
+    const list = leadList();
+    const sig = JSON.stringify(list.map(l => [l.id, l.name, l.how, l.sub, pctOf(l) != null ? Math.floor(pctOf(l) * 100) : null, l.action && l.action.label, l.ready]));
+    sec.hidden = !list.length;
+    if (sig === leadSig) return; leadSig = sig;
+    const box = sec.querySelector('.leads'); box.textContent = '';
+    for (const l of list) {
+      const card = el('div', 'lead');
+      if (C(l.id)) card.style.setProperty('--rc', frameCol(l.id));
+      const pt = el('button', 'lead-pt' + (C(l.id) && !isRecruited(l.id) ? ' locked' : '')); pt.type = 'button';
+      pt.setAttribute('aria-label', `Open ${l.name}`);
+      if (C(l.id)) { pt.append(img(portrait(l.id))); pt.addEventListener('click', () => partySheet.open(l.id)); } else pt.disabled = true;
+      const tx = el('div', 'lead-tx');
+      tx.append(el('b', null, l.name), el('small', null, l.how || ''));
+      const p = pctOf(l);
+      if (p != null) { const bar = el('div', 'xbar xlead'); const i = el('i'); i.style.width = (p * 100).toFixed(1) + '%'; bar.append(i); tx.append(bar); if (l.sub) tx.append(el('small', 'lead-sub', l.sub)); }
+      card.append(pt, tx);
+      if (l.action) {
+        const b = btn('mini go lead-go', l.action.label, () => { safe(() => l.action.fn()); leadSig = ''; saveUi(); });
+        if (l.builtIn && l.ready === false) b.disabled = true;
+        card.append(b);
       }
-      grid.append(cell);
+      box.append(card);
     }
   }
 
+  // ================= tab dot =================
+  const tabBtn = document.querySelector('.tab[data-tab="party"]');
+  const pdot = el('span', 'dot pdot'); pdot.id = 'partyDot'; pdot.hidden = true;
+  if (tabBtn) { tabBtn.append(pdot); }
+  function updateDot() {
+    if (!live()) { pdot.hidden = true; return; }
+    const any = rosterList().some(needsYou);
+    pdot.hidden = !any || S.tab === 'party';
+    if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
+  }
+  let dotT = 0;
+  onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
+  for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
+  if (tabBtn) tabBtn.addEventListener('click', () => updateDot());
+
+  // ================= sections =================
+  const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
+  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', updateForm) });
   registerSection('party', {
-    id: 'party-form', title: 'Formation',
-    mount(sec) {
-      const g = el('div', 'pform'); g.setAttribute('role', 'img'); sec.append(g);
-      sec.append(el('p', 'note', 'Back, Mid and Front, as they stand on the stage. Moving people between rows comes with the next update.'));
-    },
-    update() { try { updateForm(document.querySelector('#sec-party-form .pform')); } catch (e) { console.error('[lanternfall] party formation', e); } }
+    id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
+    update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
   });
   registerSection('party', {
-    id: 'party-hero', title: 'Your hero',
-    mount(sec) {},
-    update(force) { try { updateHero(document.getElementById('sec-party-hero')); } catch (e) { console.error('[lanternfall] party hero', e); } }
+    id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
+    update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
   registerSection('party', {
-    id: 'party-field', title: 'Fighting beside you',
-    mount(sec) { sec.append(el('div', 'pcards')); },
-    update() { try { updateComps(document.querySelector('#sec-party-field .pcards')); } catch (e) { console.error('[lanternfall] party companions', e); } }
+    id: 'party-syn', title: 'Synergies', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
+    update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
   });
+  registerSection('party', { id: 'party-roster', title: 'Roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  registerSection('party', {
+    id: 'party-leads', title: 'Leads', mount(sec) { sec.append(el('div', 'leads')); },
+    update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
+  });
+  // Keep an open sheet live while the tab updates.
+  registerSection('party', { id: 'party-live', title: '', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
 }
 
 // ---- src/js/75-stats-ui.js ----
