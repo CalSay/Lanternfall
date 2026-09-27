@@ -153,3 +153,9 @@ the branch too.) New targets, handed to the balance pass (BAL1):
   G6 (Ranger blocked on wood) need K9 sim work. Class runs now push much faster (Warden zone 48-64 at 2h)
   because class gear is craftable: BAL1 was told. Coordinator flipped CAMP_LIVE on for crystal, fibre,
   herb, hide and trophies. K8 Gather tab redo and Glint-on-stage are still to do.
+- UX layout merged: panel 36% -> 56% of a 360x740 screen (62% scrolled), bottom tab bar, zone/HP/DPS
+  overlaid on the stage, one mode + zone row, stage collapses to a 124px strip on scroll, toasts only
+  over the stage with prio (high/normal/low), "+N" merging and a bell log. The compact stage assumes the
+  ground line at 80% of the stage height (update `.app.compact .stage` translateY if 62-stage moves it).
+- Owner feedback: menus are cluttered with lots of scrolling as systems pile up. Next: an information
+  architecture pass (sub-tabs per tab, one section at a time, progressive disclosure).

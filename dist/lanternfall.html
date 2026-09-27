@@ -43,61 +43,94 @@ button { font: inherit; color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering: pixelated; image-rendering: crisp-edges; }
 
-.app { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
+/* One-screen layout (docs/design/layout.md): header, stage box, control row, scrolling panel, tab bar
+   at the bottom. --stage-h is the full stage; --stage-c the strip it shrinks to while the panel is
+   scrolled (.app.compact). Only the stage box changes height; the canvas keeps its size. */
+.app { --gut: 12px; --stage-h: clamp(168px, calc(100vh - 572px), 256px); --stage-c: 124px;
+  position: relative; height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
+@supports (height: 100dvh) { .app { --stage-h: clamp(168px, calc(100dvh - 572px), 256px); } }
 
 [hidden] { display: none !important; }
 /* A button's inner spans are redrawn while the game runs; keep taps landing on the button itself. */
 button * { pointer-events: none; }
-/* header */
-.top { display: flex; align-items: center; gap: 10px; padding: 10px 16px 8px; }
-.portrait { width: 44px; height: 44px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,158,61,.18); position: relative; }
-.portrait img { width: 32px; height: 32px; object-fit: contain; }
-.portrait b { position: absolute; right: -6px; bottom: -6px; background: var(--ember); color: #1A1420; font: 700 11px/1 var(--display); padding: 3px 4px; box-shadow: 0 2px 0 var(--ember-deep); }
-.who { min-width: 0; flex: 1; display: grid; gap: 5px; }
-.hname { font: 600 19px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
+/* header: one slim row (portrait, name + XP, purse, notices bell) */
+.top { flex: none; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 2px 2px 2px var(--gut); }
+.portrait { width: 36px; height: 36px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810, 0 0 10px rgba(255,158,61,.16); position: relative; }
+.portrait img { width: 28px; height: 28px; object-fit: contain; }
+.portrait b { position: absolute; right: -7px; bottom: -6px; background: var(--ember); color: #1A1420; font: 700 10px/1 var(--display); padding: 2px 3px; box-shadow: 0 2px 0 var(--ember-deep); }
+.who { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.hname { font: 600 16px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
 .bar { height: 7px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
 .bar > i { display: block; height: 100%; width: 0; background: var(--xp); box-shadow: inset 0 2px 0 rgba(255,255,255,.25); transition: width .2s; }
-.purse { display: grid; gap: 3px; justify-items: end; }
-.coin { display: flex; align-items: center; gap: 6px; font: 600 18px/1.1 var(--display); font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #0B0810; }
-.coin img { width: 14px; height: 14px; }
+.top .bar { height: 6px; }
+.purse { display: grid; gap: 1px; justify-items: end; }
+.coin { display: flex; align-items: center; gap: 5px; font: 600 16px/1.1 var(--display); font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #0B0810; }
+.coin.ember-coin { font-size: 13px; }
+.coin img { width: 13px; height: 13px; }
 .ico { width: 11px; height: 11px; display: inline-block; flex: none; }
 .ico.gold { background: var(--gold); border-radius: 50%; box-shadow: inset -2px -2px 0 #B8862A; }
 .ico.ember { background: var(--ember); transform: rotate(45deg) scale(.85); box-shadow: inset -2px -2px 0 var(--ember-deep); }
-
-/* stage */
-.zonebar { display: flex; align-items: center; gap: 8px; padding: 0 16px 8px; }
-.navbtn { width: 32px; height: 32px; flex: none; border: 2px solid var(--line); background: var(--panel); cursor: pointer; font: 600 16px var(--display); box-shadow: 0 2px 0 #0B0810; }
-.navbtn:disabled { opacity: .3; cursor: default; }
-.zinfo { flex: 1; min-width: 0; text-align: center; }
-.zname { font: 600 17px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
-.zsub { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
-.stage { position: relative; height: clamp(220px, 33vh, 256px); margin: 0 16px; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.bell { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: none; border: 0; cursor: pointer; }
+.bell img { width: 22px; height: 22px; opacity: .7; image-rendering: pixelated; }
+.bell:hover img, .bell.has img { opacity: 1; }
+.bell-n { position: absolute; top: 5px; right: 3px; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; background: var(--ember); color: #1A1420; font: 700 10px/1 var(--display); box-shadow: 0 2px 0 var(--ember-deep); }
+.bell.ping img { animation: bellPing .5s ease-out; }
+@keyframes bellPing { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
+@media (prefers-reduced-motion: reduce) { .bell.ping img { animation: none; } }
+/* stage box: clips the stage. Full height at the top of the panel, a strip (--stage-c) once the
+   panel is scrolled. The stage inside keeps its full height (so 62-stage never re-lays out) and
+   slides up so the ground line (80% down, GY in 62-stage) stays in view. */
+.stagebox { position: relative; flex: none; height: var(--stage-h); margin: 0 var(--gut); border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; transition: height .22s ease-out; }
+.stage { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--stage-h) - 4px); overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; transition: transform .22s ease-out; }
 .stage > canvas { display: block; width: 100%; height: 100%; }
-.mob { position: absolute; left: 8px; right: 8px; top: 7px; display: grid; gap: 3px; pointer-events: none; }
+.app.compact .stagebox { height: var(--stage-c); }
+.app.compact .stage { transform: translateY(max(calc(var(--stage-c) - var(--stage-h)), calc(var(--stage-c) - 30px - (var(--stage-h) - 4px) * .8))); }
+
+/* HUD over the stage: zone line, foe name and HP at the top, DPS and Tap at the bottom left.
+   It never takes taps; they fall through to the stage. */
+.hud { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.hud-zone, .mob { position: relative; }
+.hud::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 64px; background: linear-gradient(rgba(11,8,16,.62), rgba(11,8,16,0)); }
+.app.compact .hud::before { height: 36px; }
+.hud-zone { display: flex; align-items: baseline; gap: 8px; padding: 5px 8px 0; min-width: 0; }
+.zname { font: 600 14px/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; text-shadow: 0 2px 0 #000; }
+.zsub { flex: none; font: 600 10.5px/1.2 var(--body); color: #CFC3DC; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 4px #000; }
+.mob { display: grid; gap: 2px; padding: 2px 8px 0; }
 .mob-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; text-shadow: 0 2px 0 #000, 0 0 4px #000; }
-.mob-name { font: 600 15px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mob-hp { font: 600 13px var(--display); font-variant-numeric: tabular-nums; color: var(--bone); white-space: nowrap; }
-.hpbar { position: relative; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
+.mob-name { font: 600 13px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #F6ECDD; }
+.mob-hp { font: 600 12px var(--display); font-variant-numeric: tabular-nums; color: var(--bone); white-space: nowrap; }
+.hpbar { position: relative; height: 9px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
 .hpbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
 .hpbar > i.trail { background: #FFF3E0; transition: width .45s ease-in .12s; }
 .hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
 .timer { height: 4px; background: #0B0810; }
 .timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
-.stage-hint { position: absolute; bottom: 7px; left: 0; right: 0; text-align: center; font: 600 12px var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
+.app.compact .hud-zone, .app.compact .sfx-btn { display: none; }
+.app.compact .mob { padding-top: 3px; gap: 1px; }
+.app.compact .mob-name, .app.compact .mob-hp { font-size: 11.5px; }
+.app.compact .hpbar { height: 6px; border-width: 1px; }
+.stat-nums { position: absolute; left: 8px; bottom: 5px; display: flex; gap: 10px; font: 500 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: #CFC3DC; text-shadow: 0 1px 0 #000, 0 0 4px #000, 0 0 2px #000; }
+.stat-nums b { color: var(--bone); font: 600 13px var(--display); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.stage-hint { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; font: 600 12px var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
 
-.stats { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; padding: 10px 16px 8px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
-.stats b { color: var(--bone); font: 600 14px var(--display); font-variant-numeric: tabular-nums; }
-.stat-nums { display: flex; gap: 12px; }
+/* control row under the stage: what the party is doing, and the zone stepper */
+.ctrl { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px var(--gut) 4px; }
 .modeseg { display: inline-flex; border: 2px solid #0B0810; box-shadow: 0 2px 0 #0B0810; }
-.modeseg button { background: var(--panel-2); border: 0; padding: 6px 12px; font: 600 13px var(--display); color: var(--muted); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.modeseg button { min-height: 40px; min-width: 56px; background: var(--panel-2); border: 0; padding: 0 11px; font: 600 13px var(--display); color: var(--muted); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
 .modeseg button + button { border-left: 2px solid #0B0810; }
 .modeseg button[aria-pressed="true"][data-act="fight"] { background: var(--xp); color: #13200F; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #3B7A37; }
 .modeseg button[aria-pressed="true"][data-act="gather"] { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E; }
 .modeseg button[aria-pressed="true"][data-act="raid"] { background: var(--hp); color: #fff; box-shadow: inset 0 2px 0 rgba(255,255,255,.25), inset 0 -2px 0 #8E2A2A; }
 .modeseg button:disabled { opacity: .4; cursor: default; }
+.zstep { display: flex; align-items: center; gap: 2px; }
+.navbtn { position: relative; width: 40px; height: 44px; flex: none; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; font: 600 20px/1 var(--display); color: var(--bone); }
+.navbtn::after { content: ""; position: absolute; inset: 6px 4px; border: 2px solid var(--line); background: var(--panel); box-shadow: 0 2px 0 #0B0810; z-index: -1; }
+.zstep { isolation: isolate; }
+.navbtn:disabled { opacity: .3; cursor: default; }
+.znum { min-width: 58px; text-align: center; font: 600 13px/1.1 var(--display); color: var(--bone); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ability button (62-stage): round, top-right under the HP bar */
-.abil { position: absolute; right: 8px; top: 52px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember); background: radial-gradient(#4a2a20, #24141a); box-shadow: 0 3px 0 #0B0810, 0 0 10px rgba(255,158,61,.3); cursor: pointer; display: grid; place-items: center; overflow: hidden; padding: 0; touch-action: manipulation; }
+.abil { position: absolute; right: 8px; bottom: calc(20% + 10px); width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember); background: radial-gradient(#4a2a20, #24141a); box-shadow: 0 3px 0 #0B0810, 0 0 10px rgba(255,158,61,.3); cursor: pointer; display: grid; place-items: center; overflow: hidden; padding: 0; touch-action: manipulation; }
 .abil[hidden] { display: none; }
 .abil .abil-ic { width: 24px; height: 24px; image-rendering: pixelated; }
 .abil .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(11,8,16,.78) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
@@ -108,15 +141,16 @@ button * { pointer-events: none; }
 @keyframes abil-glow { 50% { box-shadow: 0 3px 0 #0B0810, 0 0 18px 4px rgba(255,190,90,.75); } }
 @keyframes abil-nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .abil.ready, .abil.nope { animation: none; } .abil.ready { box-shadow: 0 3px 0 #0B0810, 0 0 14px 3px rgba(255,190,90,.6); } }
-.tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 16px; border-bottom: 2px solid var(--line); }
-.tab { background: none; border: 0; padding: 6px 2px 6px; cursor: pointer; font: 600 13px var(--display); color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; display: grid; justify-items: center; gap: 2px; position: relative; }
+/* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
+.tabs { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 4; }
+.tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 12.5px/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
 .tab img { width: 20px; height: 20px; opacity: .55; }
-.tab[aria-selected="true"] { color: var(--bone); border-bottom-color: var(--ember); }
+.tab[aria-selected="true"] { color: var(--bone); border-top-color: var(--ember); background: linear-gradient(rgba(255,158,61,.10), transparent 80%); }
 .tab[aria-selected="true"] img { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,158,61,.5)); }
-.tab .dot { position: absolute; top: 4px; right: calc(50% - 16px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
+.tab .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
 
-.panels { flex: 1; overflow-y: auto; padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); -webkit-overflow-scrolling: touch; }
-.panel { display: grid; gap: 20px; }
+.panels { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px var(--gut) 20px; -webkit-overflow-scrolling: touch; }
+.panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .sec { display: grid; gap: 8px; }
 .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sec-title { font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; align-items: center; gap: 8px; }
@@ -174,9 +208,9 @@ button * { pointer-events: none; }
 .big:disabled { background: var(--panel-2); color: var(--muted); box-shadow: none; cursor: default; }
 .note { font-size: 13px; color: var(--muted); margin: 0; max-width: 60ch; }
 .note.warn { color: #FFB27A; }
-.skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.skills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .skill { background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; padding: 8px 10px; display: grid; gap: 4px; }
-.skill .sn { font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.skill .sn { font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 5px; min-width: 0; white-space: nowrap; overflow: hidden; }
 .skill .sn img { width: 16px; height: 16px; }
 .skill .sl { font: 600 20px/1 var(--display); font-variant-numeric: tabular-nums; }
 .skill .bar > i { background: var(--gold); }
@@ -230,14 +264,36 @@ button * { pointer-events: none; }
 .rename { display: flex; gap: 8px; }
 .rename input { flex: 1; min-width: 0; background: var(--well); border: 2px solid var(--line); padding: 9px 10px; color: var(--bone); font: 600 16px var(--display); }
 .rename button { border: 2px solid #0B0810; padding: 0 16px; background: var(--ember); color: #1A1420; font: 600 15px var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
-.toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(480px, calc(100% - 32px)); display: grid; gap: 6px; pointer-events: none; z-index: 20; }
-.toast { display: flex; align-items: center; gap: 10px; background: #0E0B12F2; border: 2px solid var(--line); border-left: 4px solid var(--ember); padding: 8px 12px; font-size: 14px; animation: tin .25s ease-out; box-shadow: 0 3px 0 #0B0810; }
-.toast img { width: 28px; height: 28px; flex: none; image-rendering: pixelated; }
+/* toasts: inside the stage box, just under the foe HP bar (mostly empty sky), never over the panel.
+   At most 2; only the toast itself takes taps (tap or swipe it away). The right edge stays clear
+   for the ability button. */
+.toasts { position: absolute; left: 6px; right: 62px; top: 62px; z-index: 6; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+.app.compact .toasts { top: 28px; }
+.toast { pointer-events: auto; touch-action: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 30px; background: #0E0B12E8; border: 1px solid var(--line-hi); border-left: 3px solid var(--ember); padding: 4px 8px 4px 6px; font: 500 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810; animation: tin .2s ease-out; transition: transform .16s ease-out, opacity .16s ease-out; }
+.toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.toast.hi .tx, .toast.loot .tx { -webkit-line-clamp: 2; }
+.toast img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
+.toast .more { flex: none; font: 600 11px/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); }
 .toast.ember { border-left-color: var(--arcane); }
 .toast.raid { border-left-color: var(--hp); }
 .toast.good { border-left-color: var(--xp); }
-.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF5, #1A120AF5); font: 600 15px var(--display); box-shadow: 0 3px 0 #0B0810, 0 0 18px rgba(255,158,61,.35); }
-@keyframes tin { from { transform: translateY(-6px) scale(.98); opacity: 0; } }
+.toast.hi { font: 600 12.5px/1.25 var(--body); border-color: rgba(242,193,78,.55); border-left-color: var(--gold); }
+.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF2, #1A120AF2); font: 600 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810, 0 0 14px rgba(255,158,61,.35); }
+.toast.out { opacity: 0; transform: translateY(-6px); }
+.toast.gone { opacity: 0; }
+@keyframes tin { from { transform: translateY(-8px); opacity: 0; } }
+
+/* notice log (bell): a bottom sheet listing recent notices, newest first */
+.nlog { display: grid; gap: 4px; }
+.nlog-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 8px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--ember); font-size: 13.5px; line-height: 1.3; }
+.nlog-row img { width: 22px; height: 22px; image-rendering: pixelated; }
+.nlog-row .ago { font: 500 11px var(--body); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nlog-row.good { border-left-color: var(--xp); } .nlog-row.ember { border-left-color: var(--arcane); } .nlog-row.raid { border-left-color: var(--hp); }
+.nlog-row.loot, .nlog-row.hi { border-left-color: var(--gold); font-weight: 600; }
+.nlog-row.new { background: #1E1626; }
+.nlog-row.low { color: #D8CFE3; }
+.nlog-h { margin: 0; font: 600 20px/1.1 var(--display); }
+.nlog-empty { padding: 20px 0; text-align: center; }
 
 .modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
 .modal .card { width: min(380px, 100%); text-align: center; }
@@ -312,6 +368,15 @@ button * { pointer-events: none; }
 
 @keyframes om-glow { 50% { box-shadow: inset 0 0 0 2px #0B0810, 0 0 16px rgba(181,140,255,.6); } }
 @media (prefers-reduced-motion: reduce) { .om-ic { animation: none; } }
+
+/* compact banner (layout pass, docs/design/layout.md): one 44px row so the Fight tab starts with content */
+.om-bar { min-height: 44px; gap: 8px; padding: 3px 8px 3px 4px; }
+.om-bar .om-ic { width: 30px; height: 30px; }
+.om-bar .om-ic img { width: 20px; height: 20px; }
+.om-bar .om-eye { display: none; }
+.om-bar .om-nm { font-size: 14px; }
+.om-bar .om-nm::before { content: "Omen · "; color: var(--arcane); font-size: 12px; letter-spacing: .04em; }
+.om-bar .om-fx { font-size: 12px; }
 /* 60-away: the "While you were away" card (75-away.js) and the Journal (75-stats-ui.js). */
 
 /* ---- away report ---- */
@@ -1042,11 +1107,14 @@ span.cf-d { font-weight: 600; }
 @keyframes join-rise { from { transform: translateY(10px) scale(.97); opacity: 0; } }
 .join-ov.still, .join-ov.still .join-card { animation: none; }
 @media (prefers-reduced-motion: reduce) { .join-ov, .join-card { animation: none; } }
-@media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } }
-@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; } }
+@media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } .modeseg button { padding: 0 9px; min-width: 50px; } .znum { min-width: 50px; } .skill .sn { letter-spacing: .03em; } }
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; transition: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; }
+  .stagebox, .stage { transition: none; }
+}
 </style>
 
-<div class="app">
+<div class="app" id="app">
   <header class="top">
     <div class="portrait"><img id="portrait" alt=""><b id="hLvl">1</b></div>
     <div class="who">
@@ -1055,45 +1123,43 @@ span.cf-d { font-weight: 600; }
     </div>
     <div class="purse">
       <div class="coin"><img class="px" id="goldIc" alt=""><span id="gold">0</span></div>
-      <div class="coin" style="font-size:15px"><span class="ico ember"></span><span id="embers">0</span></div>
+      <div class="coin ember-coin"><span class="ico ember"></span><span id="embers">0</span></div>
     </div>
+    <button class="bell" id="bellBtn" type="button" aria-label="Notices"><img class="px" id="bellIc" alt=""><b class="bell-n" id="bellN" hidden>0</b></button>
   </header>
 
-  <div class="zonebar">
-    <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
-    <div class="zinfo"><div class="zname" id="zName">Mossy Hollow</div><div class="zsub" id="zSub">Zone 1</div></div>
-    <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
-  </div>
-
-  <div class="stage" id="stage">
-    <canvas id="cv"></canvas>
-    <div class="mob">
-      <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
-      <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
-      <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+  <!-- Layout rules: docs/design/layout.md. The stage box clips the stage; when the panel
+       scrolls down it shrinks to a strip (.app.compact) and the stage slides up inside it,
+       so the canvas never changes size. The HUD and toasts overlay the stage box. -->
+  <div class="stagebox" id="stageBox">
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="stage-hint" id="hint">Tap to strike</div>
     </div>
-    <div class="stage-hint" id="hint">Tap to strike</div>
+    <div class="hud">
+      <div class="hud-zone"><span class="zname" id="zName">Mossy Hollow</span><span class="zsub" id="zSub">Zone 1</span></div>
+      <div class="mob">
+        <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
+        <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
+        <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+      </div>
+      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Tap <b id="sTap">0</b></span></div>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
   </div>
 
-  <div class="stats">
+  <div class="ctrl">
     <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
       <button data-act="fight" aria-pressed="true">Fight</button>
       <button data-act="gather" aria-pressed="false">Gather</button>
       <button data-act="raid" aria-pressed="false">Raid</button>
     </div>
-    <div class="stat-nums" id="statNums">
-      <span>DPS <b id="sDps">0</b></span>
-      <span>Tap <b id="sTap">0</b></span>
+    <div class="zstep" id="zStep">
+      <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
+      <span class="znum" id="zNum">Zone 1</span>
+      <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
     </div>
   </div>
-
-  <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
-    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
-    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
-    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="world" data-ic="camp" aria-selected="false">Camp<span class="dot" id="raidDot" hidden></span></button>
-  </nav>
 
   <div class="panels" id="panels">
     <!-- Fight -->
@@ -1240,9 +1306,15 @@ span.cf-d { font-weight: 600; }
     </div>
     </section>
   </div>
-</div>
 
-<div class="toasts" id="toasts" aria-live="polite"></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
+    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
+    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="world" data-ic="camp" aria-selected="false">Camp<span class="dot" id="raidDot" hidden></span></button>
+  </nav>
+</div>
 
 <script>
 (() => {
@@ -1281,8 +1353,10 @@ function emit(evt, payload) {
   const l = BUS.get(evt); if (!l || !l.length) return;
   for (const fn of l.slice()) { try { fn(payload); } catch (e) { console.error(`[lanternfall] handler for "${evt}" failed`, e); } }
 }
-// toast(msg, kind, icon): icon is a URL string or an icon spec ({ item }, { mat: [k, t] }, { ic: [name, main, extra] })
-const toast = (msg, kind, icon) => emit('toast', { msg, kind, icon });
+// toast(msg, kind, icon, prio): icon is a URL string or an icon spec ({ item }, { mat: [k, t] }, { ic: [name, main, extra] }).
+// prio: 'high' (always pops), 'normal' (pops; extras fold into the bell), 'low' (bell log only).
+// Omitted: by kind ('loot' high, others normal). Rules: docs/design/layout.md.
+const toast = (msg, kind, icon, prio) => emit('toast', { msg, kind, icon, prio });
 
 // ================= storage adapter =================
 // { get(key) -> string|null, set(key, string) }. The browser adapter is installed by
@@ -4664,7 +4738,7 @@ function setActivity(a) {
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
   const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
-  toast(msg, a === 'raid' ? 'raid' : 'good');
+  toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
@@ -4746,7 +4820,7 @@ function kill() {
     emit('shake', 0.3);
     const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
-    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
+    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
   }
@@ -4761,7 +4835,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good');
+    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good', null, 'high');
   }
 }
 function gainSkill(k, n, quiet) {
@@ -4778,7 +4852,7 @@ function gainSkill(k, n, quiet) {
       extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : open.length ? ` The ${open.join(' and the ')} ${open.length > 1 ? 'are' : 'is'} open to you.` : '';
     }
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
+    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, extra ? 'normal' : 'low');
   }
 }
 
@@ -4934,14 +5008,14 @@ function equipItem(id, pos) {
   const it = itemById(id); if (!it) return false;
   pos = pos || kindPos(it.slot);
   if (!(pos in S.equip) || !fits(it, pos, 'hero')) return false;
-  unwearItem(id); S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
+  unwearItem(id); S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }, 'low'); save();
   return true;
 }
 function salvageItem(id) {
   const it = itemById(id); if (!it || isEquipped(id)) return false;
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
-  toast(`Salvaged ${itemName(it)} for materials.`, 'good'); save();
+  toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
   return true;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
@@ -4956,7 +5030,7 @@ function forgeItem(slot, t) {
   const it = newItem(slot, t, r);
   addItem(it);
   gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)));
-  toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } });
+  toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
   save();
   return it;
 }
@@ -5022,7 +5096,7 @@ function syncGen() {
     const share = Math.min(1, S.raid.dmg / (S.raid.maxHp || w.maxHp));
     const e = Math.max(1, Math.round((5 + 25 * share) * (1 + 0.2 * (S.raid.gen - 1))));
     S.embers += e; S.wyrms++;
-    toast(`${S.raid.name || 'The raid boss'} has fallen. You dealt ${(share * 100).toFixed(1)}% of the damage: +${e} Embers.`, 'ember');
+    toast(`${S.raid.name || 'The raid boss'} has fallen. You dealt ${(share * 100).toFixed(1)}% of the damage: +${e} Embers.`, 'ember', null, 'high');
     const ch = share >= 0.25 ? 1 : Math.min(1, 0.35 + share * 2);
     if (Math.random() < ch) dropUnique(RAID_UNIQ[(S.raid.gen - 1) % RAID_UNIQ.length], Math.min(5, S.raid.gen));
     emit('raidReward', { gen: S.raid.gen, share, embers: e });
@@ -5245,7 +5319,7 @@ let OMENS, WEEKLY_GOALS;
     if (!o || !o.dare || awayDay !== null) return false;
     A().dare = { day: today(), on: !!on };
     actCache.k = '';
-    toast(on ? `You took the Dare: ${o.dare.n}. Drop it any time.` : `You dropped the Dare. ${o.n} still helps you today.`, on ? 'raid' : 'good', { ic: o.ic });
+    toast(on ? `You took the Dare: ${o.dare.n}. Drop it any time.` : `You dropped the Dare. ${o.n} still helps you today.`, on ? 'raid' : 'good', { ic: o.ic }, 'low');
     save();
     return true;
   }
@@ -5382,7 +5456,7 @@ let OMENS, WEEKLY_GOALS;
     const n = a.goals.filter(x => x.claimed).length;
     if (n === 3) { a.stamps++; txt += '. Almanac Stamp earned'; }
     if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
-    if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null); save(); }
+    if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null, 'normal'); save(); }
     emit('weeklyClaim', { k: g.k, quiet: !!quiet });
     return txt;
   }
@@ -5601,7 +5675,7 @@ let OMENS, WEEKLY_GOALS;
     S.bounties.claimed++;
     S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
     const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };
-    toast(`Bounty complete! +${r.txt}.`, 'loot', icon);
+    toast(`Bounty complete! +${r.txt}.`, 'loot', icon, 'normal');
     emit('bountyDone', { k: b.k, reward: r });
     save();
     return r;
@@ -5737,7 +5811,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
-    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it });
+    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
     emit('crafted', { item: it, kind, t });
     save();
     return it;
@@ -5769,7 +5843,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     it.plus++;
     gearDirty();
     gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
-    toast(`${itemName(it)} upgraded.`, 'good', { item: it });
+    toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
     emit('upgraded', { item: it });
     save();
     return true;
@@ -5799,7 +5873,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     gearDirty();
     gainStation('ench', CRAFT_XP.reforge(it.t));
     const [[stat, v]] = craftAffixValue(res.line[0], itemPower(it), res.line[1]);
-    toast(`Reforged: ${craftFmtLine(stat, v)}.`, 'good', { item: it });
+    toast(`Reforged: ${craftFmtLine(stat, v)}.`, 'good', { item: it }, 'low');
     emit('reforged', { item: it, idx, line: res.line });
     save();
     return true;
@@ -5828,7 +5902,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const c = canTransmute(fam, fromT, to, toT); if (!c.ok) return false;
     S.mats[fam][fromT - 1] -= c.take; S.mats[fam][c.toT - 1] += c.give;
     if (c.toT > fromT) gainStation('ench', CRAFT_XP.transmute(c.toT)); // no XP for breaking down (1 -> 2 would farm XP)
-    toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] });
+    toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] }, 'low');
     emit('transmuted', { fam, fromT, toT: c.toT, take: c.take, give: c.give });
     save();
     return true;
@@ -5849,7 +5923,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     unwearItem(itemId); // leaves the hero or any other character
     r[pos] = itemId;
     gearDirty();
-    toast(`${ROSTER[charId] ? ROSTER[charId].name.split(' ')[0] : 'They'} took the ${itemName(it)}.`, 'good', { item: it });
+    toast(`${ROSTER[charId] ? ROSTER[charId].name.split(' ')[0] : 'They'} took the ${itemName(it)}.`, 'good', { item: it }, 'low');
     emit('charGear', { id: charId, pos, item: it });
     save();
     return true;
@@ -5897,7 +5971,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     for (const [i, n] of STAR.troph) C().troph[i] -= n;
     C().starChart++;
     gainStation('ench', CRAFT_XP.craft(STAR.t));
-    toast('You drew a Star Chart. Someone out there is reading the same stars.', 'ember');
+    toast('You drew a Star Chart. Someone out there is reading the same stars.', 'ember', null, 'high');
     emit('crafted', { item: null, kind: 'starChart', t: STAR.t });
     if (typeof grantStarChart === 'function') grantStarChart();
     save();
@@ -5915,7 +5989,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     payMats(m, t);
     const p = C().tonics, id = key + ':' + t; p[id] = (p[id] || 0) + 1;
     gainStation('ench', CRAFT_XP.tonic(t));
-    toast(`Brewed a ${d.n}.`, 'good'); save();
+    toast(`Brewed a ${d.n}.`, 'good', null, 'low'); save();
     return true;
   };
   drinkTonic = (key, t) => {
@@ -5923,7 +5997,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!p[id] || tonicActive()) return false;
     p[id]--; if (!p[id]) delete p[id];
     C().tonic = { k: key, t, left: CRAFT_TONIC_RULE.secs };
-    toast(`${CRAFT_TONICS[key].n}: ${CRAFT_TONICS[key].txt.replace('{v}', fmt(tonicV(key, t) * 100))} for 20 minutes.`, 'good'); save();
+    toast(`${CRAFT_TONICS[key].n}: ${CRAFT_TONICS[key].txt.replace('{v}', fmt(tonicV(key, t) * 100))} for 20 minutes.`, 'good', null, 'low'); save();
     return true;
   };
   const burn = s => { const a = C().tonic; if (!a) return; a.left -= s; if (a.left <= 0) C().tonic = null; };
@@ -6165,8 +6239,9 @@ function registerGoal(g) {
 let topGoals;
 
 {
-  // Save field: min = the strip is collapsed to one line (75-goals-ui.js).
-  registerState('nextUp', { min: false });
+  // Save field: min = the strip is collapsed to one line (75-goals-ui.js); picked = the player
+  // has toggled it. Until then the strip starts collapsed (one line), whatever min says.
+  registerState('nextUp', { min: false, picked: false });
   const STICK = 0.06, CACHE_MS = 450, PER_SYS = 2;
   let shown = [];        // ids shown last time, in order
   const cache = new Map();  // n -> { at, list }
@@ -6433,7 +6508,7 @@ const masteryApi = {};
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
-      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round(BESTIARY_PERK_VAL[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good');
+      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round(BESTIARY_PERK_VAL[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good', null, 'low');
     }
   });
 
@@ -6593,7 +6668,7 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
       if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
       else {
         S.comp[slot] += 1;
-        toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good');
+        toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good', null, 'high');
       }
     }
     partyRefreshField(true);
@@ -6739,7 +6814,7 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   on('kill', ({ mob: m, zone }) => {
     if (!m || !m.boss || zone < T.mirrorZone || Math.random() >= T.mirrorChance) return;
     P().mirrors++;
-    toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good');
+    toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
   on('zoneClear', ({ zone }) => {
@@ -7080,7 +7155,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     emit('charLevel', { id, lv: r.lv, quiet: !!quiet });
     if (T.milestones.includes(r.lv) || (r.lv > 25 && r.lv % 25 === 0)) {
       emit('milestone', { id, lv: r.lv, quiet: !!quiet });
-      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good');
+      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good', null, T.storyLv.includes(r.lv) ? 'normal' : 'low');
     }
   }
   // Adds raw XP (multipliers already applied). Levels up to the rank cap; at the cap XP
@@ -7261,7 +7336,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   unlockChar = (id, source, quiet) => {
     if (!R(id) || isRecruited(id)) return false;
     recs()[id] = newRec(1, 0, source || 'progress');
-    if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good');
+    if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good', null, 'high');
     const f = fieldKeys();
     if (source === 'starter') setField([id].concat(f.filter(k => k !== id)));
     else if (P().autoField) fieldIfBetter(id);
@@ -7294,7 +7369,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     const r = charRec(id);
     pay(promoteCost(id));
     r.rank++;
-    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good');
+    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good', null, 'high');
     emit('promote', { id, rank: r.rank });
     giveXp(id, 0.000001);  // spend banked XP
     return true;
@@ -8167,7 +8242,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   buyTrade = () => {
     const o = visitorToday(); if (o.kind !== 'trade' || o.done || S.gold < o.cost.gold) return false;
     S.gold -= o.cost.gold; S.mats.ess[o.trade.t - 1] += o.trade.n; dayState().bought = true;
-    toast(`The trader sells you ${o.trade.n} ${ess(o.trade.t)}.`, 'loot', { mat: ['ess', o.trade.t] });
+    toast(`The trader sells you ${o.trade.n} ${ess(o.trade.t)}.`, 'loot', { mat: ['ess', o.trade.t] }, 'normal');
     save();
     return true;
   };
@@ -8572,7 +8647,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (!c.queue) { rec.start = t; rec.end = t + c.dur; }
     builds().push(rec);
     emit('campStart', { id, to: c.to, queued: !!c.queue });
-    toast(c.queue ? `${B(id).n} Lv ${c.to} is next in line.` : `Work starts on the ${B(id).n}, Lv ${c.to}. Ready in ${fmtTime(c.dur / 1000)}.`, 'good', { ic: ['anvil', '#D08A4E'] });
+    toast(c.queue ? `${B(id).n} Lv ${c.to} is next in line.` : `Work starts on the ${B(id).n}, Lv ${c.to}. Ready in ${fmtTime(c.dur / 1000)}.`, 'good', { ic: ['anvil', '#D08A4E'] }, 'low');
     save();
     return true;
   };
@@ -8616,7 +8691,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
-    toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] });
+    toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;
   onTick(dt => {
@@ -10987,16 +11062,129 @@ function sceneFor() { return null; } // replaced below
 // and the section/tab registries for feature UI (75-*.js). Browser-only.
 // Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
 
-// ================= UI helpers =================
-function showToast(msg, kind, icon) {
-  const t = el('div', 'toast ' + (kind || ''));
-  icon = iconOf(icon);
-  if (icon) t.append(img(icon));
-  t.append(el('span', null, msg));
-  const box = $('toasts'); box.appendChild(t);
-  while (box.children.length > 3) box.firstChild.remove();
-  setTimeout(() => t.remove(), kind === 'loot' ? 6000 : 4200);
+// ================= notices: toasts and the bell log =================
+// Every notice goes to the log (bell, last 50). Priority decides whether it also pops:
+//   high (2): always pops, pushes out an older normal toast.     e.g. level up, zone cleared, unique loot, recruit
+//   normal (1): pops if there is room (2 on screen, 1 on a short stage); otherwise it folds into the newest normal toast
+//               as "+N" and the bell count.                        e.g. boss failed, achievement, rare forge
+//   low (0): log only, bumps the bell count.                      e.g. equipped, salvaged, common forge, skill level
+// Toasts sit over the bottom of the stage box, never over the panel. Tap or swipe one away.
+const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
+const NOTE_KIND_PRIO = { loot: 2 };
+const NOTE_MS = [0, 2600, 4200];
+const notes = { log: [], unread: 0, seq: 0 };
+function notePrio(prio, kind) {
+  if (typeof prio === 'number') return Math.max(0, Math.min(2, prio | 0));
+  if (prio in NOTE_PRIO) return NOTE_PRIO[prio];
+  return kind in NOTE_KIND_PRIO ? NOTE_KIND_PRIO[kind] : 1;
 }
+function bellUpdate(ping) {
+  const b = $('bellBtn'), n = $('bellN');
+  n.hidden = !notes.unread; n.textContent = notes.unread > 9 ? '9+' : String(notes.unread);
+  b.classList.toggle('has', notes.unread > 0);
+  b.setAttribute('aria-label', notes.unread ? `Notices, ${notes.unread} new` : 'Notices');
+  if (ping && !reduced) { b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping'); }
+}
+function dropToast(t, how) {
+  if (t._gone) return; t._gone = true; clearTimeout(t._timer);
+  if (reduced) { t.remove(); return; }
+  t.classList.add(how || 'out'); setTimeout(() => t.remove(), 170);
+}
+function armToast(t) { clearTimeout(t._timer); t._timer = setTimeout(() => dropToast(t), NOTE_MS[t._p] + (t._kind === 'loot' ? 800 : 0)); }
+function fillToast(t, msg, url) {
+  t.textContent = '';
+  if (url) t.append(img(url));
+  t.append(el('span', 'tx', msg));
+  if (t._more) t.append(el('span', 'more', '+' + t._more));
+  t._msg = msg;
+}
+function makeToast(msg, kind, url, p) {
+  const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : ''));
+  t._p = p; t._kind = kind; t._more = 0;
+  t.setAttribute('role', 'status');
+  fillToast(t, msg, url);
+  // Tap to dismiss; swipe sideways to fling it away.
+  let x0 = null, dx = 0;
+  t.addEventListener('pointerdown', e => { e.stopPropagation(); x0 = e.clientX; dx = 0; clearTimeout(t._timer); try { t.setPointerCapture(e.pointerId); } catch (er) {} t.style.transition = 'none'; });
+  t.addEventListener('pointermove', e => { if (x0 == null) return; dx = e.clientX - x0; t.style.transform = `translateX(${dx}px)`; t.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 160)); });
+  const up = () => {
+    if (x0 == null) return; x0 = null; t.style.transition = '';
+    if (Math.abs(dx) > 48 || Math.abs(dx) < 6) { t.style.transform = `translateX(${dx < 0 ? -120 : dx > 6 ? 120 : 0}%)`; dropToast(t, 'gone'); }
+    else { t.style.transform = ''; t.style.opacity = ''; armToast(t); }
+  };
+  t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
+  return t;
+}
+function showToast(msg, kind, icon, prio) {
+  const p = notePrio(prio, kind);
+  let url = null; try { url = iconOf(icon); } catch (e) {}
+  notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
+  if (notes.log.length > 50) notes.log.length = 50;
+  const box = $('toasts');
+  const live = [...box.children].filter(t => !t._gone);
+  const same = live.find(t => t._msg === msg);
+  if (p === 0 || (same && p < 2)) {
+    // Repeats and routine notices never pop: they only count on the bell (and on a matching toast).
+    if (same) { same._more++; fillToast(same, msg, url); armToast(same); }
+    notes.unread++; bellUpdate(true); return;
+  }
+  // Two toasts fit under the HUD on a full stage; a short stage (small phone, compact strip) takes one.
+  const room = $('stageBox').offsetHeight >= 200 ? 2 : 1;
+  if (live.length >= room) {
+    const normals = live.filter(t => t._p < 2);
+    if (p < 2) {
+      const into = normals[normals.length - 1];
+      notes.unread++; bellUpdate(true);
+      if (into) { into._more++; into.className = 'toast ' + (kind || ''); fillToast(into, msg, url); armToast(into); }
+      return;
+    }
+    // high: make room by retiring the oldest normal toasts first, then the oldest high ones
+    const order = normals.concat(live.filter(t => t._p === 2));
+    for (let i = 0; i <= live.length - room; i++) { const out = order[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
+  }
+  const t = makeToast(msg, kind, url, p);
+  box.appendChild(t);
+  armToast(t);
+}
+function openNoticeLog() {
+  if (typeof openSheet !== 'function') return;
+  const seenBefore = notes.seenSeq || 0;
+  notes.unread = 0; notes.seenSeq = notes.seq; bellUpdate(false);
+  for (const t of [...$('toasts').children]) dropToast(t);
+  openSheet(api => {
+    api.body.append(el('h2', 'nlog-h', 'Notices'));
+    if (!notes.log.length) { api.body.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
+    const list = el('div', 'nlog');
+    const now = Date.now();
+    const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
+    for (const n of notes.log) {
+      const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
+      r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+      list.append(r);
+    }
+    api.body.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
+  }, { small: true, label: 'Notices' });
+}
+$('bellIc').src = spriteURL('ui:bell', ['.....77.....', '....1111....', '...122221...', '..12222221..', '..12222221..', '..12222221..', '..12222221..', '.1222222221.', '122222222221', '111111111111', '.....11.....', '............'], { 1: '#B8862A', 2: '#F2C14E', 7: '#FFF3C4' });
+$('bellBtn').addEventListener('click', openNoticeLog);
+
+// ================= compact stage while the panel is scrolled =================
+// Scrolling the panel down shrinks the stage box to a strip (--stage-c); back at the top it grows
+// again. It only collapses when the panel would still scroll afterwards, so it cannot flicker.
+{
+  const panels = $('panels'), app = $('app'), box = $('stageBox');
+  let compact = false;
+  const setCompact = on_ => { if (on_ === compact) return; compact = on_; app.classList.toggle('compact', on_); };
+  panels.addEventListener('scroll', () => {
+    const y = panels.scrollTop;
+    if (!compact && y > 40) {
+      const gain = box.offsetHeight - (parseFloat(getComputedStyle(app).getPropertyValue('--stage-c')) || 124);
+      if (panels.scrollHeight - panels.clientHeight - gain > 48) setCompact(true);
+    } else if (compact && y < 6) setCompact(false);
+  }, { passive: true });
+}
+
+// ================= UI helpers =================
 // Updates the price in place. Rebuilding the spans on every ui() tick removed the element under the
 // player's finger, and the browser then dropped the click (the upgrade buttons felt unresponsive).
 function setPrice(btn, cost, ember) {
@@ -11124,7 +11312,7 @@ function ui(force) {
     $('tWrap').hidden = true;
   } else {
     $('zName').textContent = zoneName(S.zone);
-    $('zSub').textContent = S.zone === S.maxZone ? `Zone ${S.zone} · ${S.kills}/10 foes` : `Zone ${S.zone} · cleared`;
+    $('zSub').textContent = S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared';
     if (mob) {
       $('mName').textContent = mob.name;
       $('mHp').textContent = `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`;
@@ -11134,6 +11322,8 @@ function ui(force) {
       if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%';
     }
   }
+  $('zStep').hidden = tg !== 'mob';
+  $('zNum').textContent = 'Zone ' + S.zone;
   $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;
   $('zNext').disabled = tg !== 'mob' || S.zone >= S.maxZone;
   $('statNums').hidden = tg === 'node';
@@ -11185,7 +11375,7 @@ function registerTab({ id, label, icon, mount, update }) {
 }
 
 // ================= core event wiring =================
-on('toast', t => showToast(t.msg, t.kind, t.icon));
+on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio));
 on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
@@ -11304,7 +11494,7 @@ for (const kind of GATHER_KINDS) {
     r.btn.classList.add('work');
     r.btn.addEventListener('click', () => {
       if (!setNode(kind, t)) return;
-      if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good'); ui(true); }
+      if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
     });
     nodeRows[kind].push(r);
   }
@@ -13238,12 +13428,12 @@ let craftUI = null;
       head.append(el('h2', 'sec-title', 'Next up'));
       toggle = el('button', 'nu-tog');
       toggle.append(el('span', 'nu-chev'));
-      toggle.addEventListener('click', () => setMin(!S.nextUp.min, true));
+      toggle.addEventListener('click', () => { S.nextUp.picked = true; setMin(!S.nextUp.min, true); });
       head.append(toggle);
       list = el('div', 'nu-list');
       empty = el('p', 'note nu-empty', 'Defeat a few foes to see your next goals.');
       sec.append(head, list, empty);
-      setMin(S.nextUp.min);
+      setMin(S.nextUp.picked ? S.nextUp.min : true);
     },
     update(force) { render(force); }
   });
