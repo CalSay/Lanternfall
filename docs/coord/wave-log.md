@@ -64,3 +64,11 @@ The art style study is still running (owner leans 16-bit; wants clear section de
 
 B1 (16-bit, about 4 heads, full ink outline, section lines, flat 3-tone materials) is the owner's pick.
 Plus more lanterns and lamps dotted around the maps. Art conversion wave follows.
+
+## Wave 3a (launched)
+
+AR1 B1 art foundation (baker port, per-circle outfit files, 4 classes, 5 study companions ported,
+interim B1 for the other 13, 2x stage, portraits, lantern lighting, new art-direction.md).
+AR-S B1 scenery with lanterns in every theme. K6 crafting actions (55-crafting.js; companion gear
+goes live). K7 Craft tab UI. M6 pacing still running. Next: AR2 companion polish per circle file,
+enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune after M6.
