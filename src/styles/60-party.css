@@ -22,7 +22,7 @@
 .xbar.cap > i { background: var(--gold); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 6px rgba(242,193,78,.5); }
 .xbar.xlead > i { background: var(--ember); }
 .ic.soon { border-style: dashed; box-shadow: none; }
-.ic.s56 { width: 56px; height: 56px; } .ic.s56 img { width: 40px; height: 40px; }
+.ic.s56 { width: 56px; height: 56px; } .ic.s56 img { width: 48px; height: 48px; }
 
 /* formation: Back | Mid | Front, two lanes */
 .pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
@@ -56,7 +56,8 @@
 .pcard .pt { position: relative; width: 48px; height: 48px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; }
 .pcard .pt.big { width: 52px; height: 52px; }
 .pcard .pt.rf { border-color: var(--rc); }
-.pcard .pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.pcard .pt img { width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
+.pcard .pt.big img { width: 48px; height: 48px; }
 .pc-who { display: grid; gap: 2px; min-width: 0; }
 .pc-who b { font: 600 16px/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-who > small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -105,7 +106,7 @@
 .rtile { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; padding: 0; background: none; border: 0; color: var(--bone); cursor: pointer; text-align: center; }
 .rtile:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 .rt-fr { position: relative; display: grid; place-items: center; aspect-ratio: 1; background: radial-gradient(circle at 50% 40%, var(--panel-2), var(--well) 75%); border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810, 0 2px 0 #0B0810; }
-.rt-fr img { position: absolute; left: 7%; top: 7%; width: 86%; height: 86%; object-fit: contain; image-rendering: pixelated; }
+.rt-fr img { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; max-width: 86%; max-height: 86%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
 .rtile.bench .rt-fr, .rtile.fielded .rt-fr { box-shadow: inset 0 0 0 2px #0B0810, 0 2px 0 #0B0810, 0 0 8px color-mix(in srgb, var(--rc) 35%, transparent); }
 .rt-fr .rp { top: 4px; left: 4px; }
 .rt-lv { position: absolute; left: 0; bottom: 0; padding: 1px 4px; background: #0B0810E6; font: 600 10.5px var(--display); color: var(--bone); font-variant-numeric: tabular-nums; }
@@ -129,7 +130,7 @@
 .leads { display: grid; gap: 8px; }
 .lead { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); border-left: 4px solid var(--rc, var(--line-hi)); box-shadow: 0 2px 0 #0B0810; }
 .lead-pt { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc, var(--line-hi)); cursor: pointer; }
-.lead-pt img { width: 36px; height: 36px; image-rendering: pixelated; }
+.lead-pt img { width: 32px; height: 32px; image-rendering: pixelated; }
 .lead-pt.locked img { filter: brightness(0); }
 .lead-tx { display: grid; gap: 4px; min-width: 0; }
 .lead-tx b { font: 600 14px/1.1 var(--display); }
@@ -249,8 +250,8 @@
 .ccard { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; text-align: left; padding: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); box-shadow: 0 2px 0 #0B0810; cursor: pointer; font: inherit; }
 .ccard[aria-checked="true"] { border-color: var(--ember); background: linear-gradient(#2e2030, var(--panel)); box-shadow: 0 2px 0 #0B0810, 0 0 16px rgba(255,158,61,.22); }
 .ccard:focus-visible, .create input:focus-visible, .create button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
-.ccard .fig { width: 64px; height: 76px; background: var(--well); border: 1px solid #0B0810; display: grid; place-items: center; }
-.ccard .fig canvas { width: 48px; height: 64px; image-rendering: pixelated; }
+.ccard .fig { width: 64px; height: 104px; background: var(--well); border: 1px solid #0B0810; display: grid; place-items: center; }
+.ccard .fig canvas { width: 56px; height: 100px; image-rendering: pixelated; }
 .ccard .ctxt { display: grid; gap: 3px; min-width: 0; }
 .ccard .ctop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ccard b { font: 600 18px/1.1 var(--display); }
@@ -272,4 +273,4 @@
   .join > :nth-child(3) { animation-delay: .3s; } .join > :nth-child(4) { animation-delay: .9s; } .join > :nth-child(5) { animation-delay: 1.5s; } .join > :nth-child(6) { animation-delay: 1.9s; }
 }
 @keyframes joinIn { from { opacity: 0; transform: translateY(4px); } }
-@media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 52px 1fr; } .ccard .fig { width: 52px; } }
+@media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 56px 1fr; } .ccard .fig { width: 56px; } }

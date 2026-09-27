@@ -1,4 +1,4 @@
-<title>Lanternfall Roster</title>
+<title>Lanternfall Roster (B1)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=Pixelify+Sans:wght@400;600;700&display=swap">
@@ -17,28 +17,35 @@ h1 { margin: 0; font: 600 22px/1.1 var(--display); }
 h2 { margin: 20px 0 8px; font: 600 14px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 p.lede { margin: 6px 0 0; color: var(--muted); }
 .stage { border: 2px solid var(--ink); outline: 2px solid var(--line-hi); background: #0e0b12; overflow-x: auto; }
-.stage canvas { display: block; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; }
+canvas { display: block; image-rendering: pixelated; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 10px; }
 .card { background: var(--panel); border: 2px solid var(--line); padding: 8px; min-width: 0; }
-.head { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; }
-.pf { width: 58px; height: 66px; border: 3px solid; image-rendering: pixelated; background: #0e0b12; object-fit: cover; }
+.head { display: flex; gap: 8px; align-items: center; }
+.pf { width: 48px; height: 48px; border: 3px solid; image-rendering: pixelated; background: var(--well); }
+.pf.s32 { width: 32px; height: 32px; border-width: 2px; }
 .nm b { display: block; font: 600 15px/1.15 var(--display); }
 .nm small { color: var(--muted); }
-.card canvas { display: block; width: 100%; margin-top: 6px; background: #0e0b12; }
-.bio { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
-.q { margin: 2px 0 0; font-size: 12px; color: #d8c8a8; font-style: italic; }
-@media (max-width: 420px) { .grid { grid-template-columns: 1fr; } .app { padding: 16px 16px; } }
+.card canvas { margin-top: 6px; }
 </style>
 <div class="app">
-<h1>Roster</h1>
-<p class="lede">All 18 companions from the real rig data (src/js/12-art-rigs.js) and baker (src/js/60b-baker.js). Line-up at 1x, then each card: idle and strike at 1x, idle and strike at 3x, and the portrait in its rarity frame.</p>
-<h2>Battle scale (1x)</h2>
+<h1>Roster (B1)</h1>
+<p class="lede">The real game code: kit src/js/12a-art-body.js, outfits 12b-12f, baker src/js/60b-baker.js. Stage size = 2 CSS px per art px. Cards: idle, wind, strike and down at stage size, idle at 3x stage size, portraits at 48 and 32 px.</p>
+<h2>Heroes: tier 1 Common, tier 3 Rare, tier 5 Legendary (stage size)</h2>
+<div class="stage"><canvas id="heroes"></canvas></div>
+<h2>Companions (stage size)</h2>
 <div class="stage"><canvas id="lineup"></canvas></div>
-<h2>Characters</h2>
+<h2>Close up</h2>
 <div class="grid" id="grid"></div>
 </div>
-<script src="../src/js/12-art-rigs.js"></script>
-<script src="../src/js/21-stories.js"></script>
+<script src="../src/js/12a-art-body.js"></script>
+<script src="../src/js/12b-art-heroes.js"></script>
+<script src="../src/js/12c-art-hedgefolk.js"></script>
+<script src="../src/js/12d-art-oath.js"></script>
+<script src="../src/js/12e-art-dusk.js"></script>
+<script src="../src/js/12f-art-wayfarers.js"></script>
+<script src="../src/js/10-art.js"></script>
+<script src="../src/js/11-art-craft.js"></script>
+<script src="../src/js/13-art-enemies.js"></script>
 <script src="../src/js/60b-baker.js"></script>
 <script>
 'use strict';
@@ -48,65 +55,90 @@ const ROSTER = [
   ['grenna', 'Epic'], ['isolde', 'Epic'], ['oriel', 'Epic'], ['morwen', 'Epic'], ['vesper', 'Epic'],
   ['elowen', 'Legendary'], ['caedmon', 'Legendary'], ['corvin', 'Legendary']
 ];
-const FRAME = typeof RARITY_FRAME !== 'undefined' ? RARITY_FRAME : { Common: '#A9B1BD', Rare: '#7FB2FF', Epic: '#B58CFF', Legendary: '#F2C14E' };
-const frameCol = r => (FRAME[r] && FRAME[r].col) || FRAME[r] || FRAME[r.toLowerCase()] || '#888';
+const FRAME = { Common: '#A9B1BD', Rare: '#7FB2FF', Epic: '#B58CFF', Legendary: '#F2C14E', Hero: '#FF9E3D' };
+const CLS = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+const heroSpecOf = (cls, t, r, skin, hair) => ({ cls, skin, hair, gear: { weapon: { t, r }, off: { t, r }, head: { t, r }, body: { t, r }, charm: { t, r } } });
 
 function paintBG(g, W, H, gy) {
-  const gr = g.createLinearGradient(0, 0, 0, gy); gr.addColorStop(0, '#08121A'); gr.addColorStop(1, '#23485A'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#12293A'; g.beginPath(); g.moveTo(0, gy); for (let x = 0; x <= W; x += 4) g.lineTo(x, gy - 26 + Math.sin(x * 0.02) * 6 + Math.sin(x * 0.05) * 3); g.lineTo(W, gy); g.fill();
-  const gg = g.createLinearGradient(0, gy, 0, H); gg.addColorStop(0, '#16303A'); gg.addColorStop(1, '#0A141A'); g.fillStyle = gg; g.fillRect(0, gy, W, H - gy);
-  g.fillStyle = '#2F5A55'; g.fillRect(0, gy, W, 1);
+  const gr = g.createLinearGradient(0, 0, 0, gy); gr.addColorStop(0, '#1C1838'); gr.addColorStop(1, '#5A4A86'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#26305A'; g.beginPath(); g.moveTo(0, gy); for (let x = 0; x <= W; x += 4) g.lineTo(x, gy - 30 + Math.sin(x * 0.02) * 8 + Math.sin(x * 0.05) * 3); g.lineTo(W, gy); g.fill();
+  g.fillStyle = '#3E7E3A'; g.fillRect(0, gy, W, H - gy); g.fillStyle = '#2E6A3A'; g.fillRect(0, gy, W, 2);
 }
-// draw a frame with feet at (x, y), scale z; returns its lights in canvas px
 function put(g, f, x, y, z) {
   const dx = Math.round(x - f.ox * z), dy = Math.round(y - f.oy * z);
   g.imageSmoothingEnabled = false; g.drawImage(f.c, dx, dy, f.c.width * z, f.c.height * z);
-  return f.lights.map(l => ({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z }));
+  return f.lights.map(l => ({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z, r: l.r }));
 }
-function shadow(g, x, y, rx) { g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(x, y + 1, rx, Math.max(2, rx / 5), 0, 0, 7); g.fill(); }
+function shadow(g, x, y, rx) { g.fillStyle = 'rgba(8,4,14,.4)'; g.beginPath(); g.ellipse(x, y, rx, Math.max(2, rx / 4), 0, 0, 7); g.fill(); }
+function label(g, txt, x, y) { g.font = '600 11px "Pixelify Sans", monospace'; g.textAlign = 'center'; g.fillStyle = '#0B0810'; g.fillText(txt, x + 1, y + 1); g.fillStyle = 'rgba(239,230,214,.92)'; g.fillText(txt, x, y); }
 
-// ---- line-up ----
-const lu = document.getElementById('lineup'), LW = 18 * 44 + 24, LH = 120;
-lu.width = LW; lu.height = LH; lu.style.width = LW + 'px';
-{
-  const g = lu.getContext('2d'), gy = LH - 22; paintBG(g, LW, LH, gy);
-  const lights = [];
-  g.font = '600 9px "Pixelify Sans", monospace'; g.textAlign = 'center';
-  ROSTER.forEach(([k], i) => {
-    const set = charFrames(companionSpec(k)); const x = 30 + i * 44;
-    if (!RIG.COMPANIONS[k]) { g.fillStyle = '#E0524F'; g.fillText('?', x, gy - 20); return; }
-    shadow(g, x, gy, 11); lights.push(...put(g, set.idle0, x, gy, 1));
-    g.fillStyle = 'rgba(239,230,214,.85)'; g.fillText(RIG.COMPANIONS[k].name, x, gy + 13);
-  });
-  charLightPass(g, lights, 0, 1);
-}
-
-// ---- cards ----
-const grid = document.getElementById('grid');
-for (const [k, rar] of ROSTER) {
-  const c = RIG.COMPANIONS[k];
-  const card = document.createElement('div'); card.className = 'card';
-  const head = document.createElement('div'); head.className = 'head';
-  const img = document.createElement('img'); img.className = 'pf'; img.alt = ''; img.style.borderColor = frameCol(rar);
-  if (c) img.src = portraitURL(k);
-  const nm = document.createElement('div'); nm.className = 'nm';
-  nm.innerHTML = `<b>${c ? c.name : k} <span style="color:${frameCol(rar)};font-size:12px">${rar}</span></b><small>${c ? c.title : 'no rig yet'}</small>`;
-  head.append(img, nm); card.append(head);
-  const cv = document.createElement('canvas'); const W = 376, H = 272; cv.width = W; cv.height = H; card.append(cv);
-  const g = cv.getContext('2d'), gy = H - 14; paintBG(g, W, H, gy);
-  if (c) {
-    const set = charFrames(companionSpec(k)), L = [];
-    shadow(g, 22, gy, 10); L.push(...put(g, set.idle0, 22, gy, 1));
-    shadow(g, 58, gy, 10); L.push(...put(g, set.strike, 58, gy, 1));
-    shadow(g, 150, gy, 30); L.push(...put(g, set.idle0, 150, gy, 3));
-    shadow(g, 290, gy, 30); L.push(...put(g, set.strike, 290, gy, 3));
-    charLightPass(g, L, 0, 2);
+const dbg = location.hash.match(/dbg=([\w,:]+)(?:&s=(\d+))?/);
+if (dbg) {
+  // #dbg=warden,tobin&s=4 : every frame of the named characters at s CSS px per art px
+  document.querySelector('.app').innerHTML = '';
+  const host = document.querySelector('.app'); host.style.cssText = 'max-width:none;display:flex;flex-direction:column;gap:6px;background:#3a3448';
+  const sc = +(dbg[2] || 4);
+  for (const id of dbg[1].split(',')) {
+    const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:6px;align-items:flex-end'; host.append(row);
+    const en = id.startsWith('e_'), key = en ? id.slice(2).replace('_', ':') : id;
+    const set = en ? enemyFrames(key, key.startsWith('node') ? { tier: 3 } : {}) : charFrames(CLS.includes(id) ? heroSpecOf(id, 2, 1) : companionSpec(id));
+    for (const f of en ? ['idle0', 'wind', 'strike'] : ['idle0', 'idle1', 'wind', 'strike', 'down']) {
+      const fr = set[f], cv = document.createElement('canvas'); cv.width = fr.art.width * sc; cv.height = fr.art.height * sc;
+      const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(fr.art, 0, 0, cv.width, cv.height); row.append(cv);
+    }
   }
-  const bio = typeof BIOS !== 'undefined' && BIOS[k];
-  if (bio) { const p = document.createElement('p'); p.className = 'bio'; p.textContent = bio; card.append(p); }
-  const qs = typeof QUOTES !== 'undefined' && QUOTES[k];
-  if (qs) for (const q of qs) { const p = document.createElement('p'); p.className = 'q'; p.textContent = '"' + q + '"'; card.append(p); }
-  grid.append(card);
+  document.body.dataset.ready = '1';
+} else {
+  // ---- heroes ----
+  const hv = document.getElementById('heroes'), HW = 12 * 70 + 40, HH = 150;
+  hv.width = HW; hv.height = HH;
+  {
+    const g = hv.getContext('2d'), gy = HH - 26; paintBG(g, HW, HH, gy);
+    const L = []; let i = 0;
+    for (const cls of CLS) for (const [t, r] of [[1, 0], [3, 1], [5, 3]]) {
+      const x = 40 + i * 70, spec = heroSpecOf(cls, t, r, i % 3, (i * 2) % 4), set = charFrames(spec);
+      shadow(g, x, gy, 13); L.push(...put(g, set.idle0, x, gy, 1));
+      label(g, AK.CLASSES[cls].name.slice(0, 7) + ' T' + t, x, gy + 18); i++;
+    }
+    charLightPass(g, L, 0, 1);
+  }
+  // ---- companions ----
+  const lu = document.getElementById('lineup'), LW = 18 * 62 + 40, LH = 150;
+  lu.width = LW; lu.height = LH;
+  {
+    const g = lu.getContext('2d'), gy = LH - 26; paintBG(g, LW, LH, gy);
+    const L = [];
+    ROSTER.forEach(([k], i) => {
+      const x = 36 + i * 62, set = charFrames(companionSpec(k));
+      if (!AK.CHARS[k]) { label(g, '?', x, gy - 20); return; }
+      shadow(g, x, gy, 13); L.push(...put(g, set.idle0, x, gy, 1));
+      label(g, AK.CHARS[k].name, x, gy + 18);
+    });
+    charLightPass(g, L, 0, 1);
+  }
+  // ---- cards ----
+  const grid = document.getElementById('grid');
+  const cards = CLS.map(c => [c, 'Hero']).concat(ROSTER);
+  for (const [k, rar] of cards) {
+    const hero = rar === 'Hero', spec = hero ? heroSpecOf(k, 2, 1) : companionSpec(k), def = hero ? AK.CLASSES[k] : AK.CHARS[k];
+    const card = document.createElement('div'); card.className = 'card';
+    const head = document.createElement('div'); head.className = 'head';
+    const url = def ? portraitURL(spec) : '';
+    for (const cl of ['pf', 'pf s32']) { const im = document.createElement('img'); im.className = cl; im.alt = ''; im.style.borderColor = FRAME[rar]; if (url) im.src = url; head.append(im); }
+    const nm = document.createElement('div'); nm.className = 'nm';
+    nm.innerHTML = `<b>${def ? def.name : k} <span style="color:${FRAME[rar]};font-size:12px">${rar}</span></b><small>${def ? (def.circle || 'class') + ', ' + def.anim : 'not drawn yet'}</small>`;
+    head.append(nm); card.append(head);
+    const cv = document.createElement('canvas'); const W = 376, H = 330; cv.width = W; cv.height = H; card.append(cv);
+    const g = cv.getContext('2d'), gy = H - 12; paintBG(g, W, H, gy);
+    if (def) {
+      const set = charFrames(spec), L = [];
+      [['idle0', 26, 104], ['wind', 86, 104], ['strike', 26, 214], ['idle1', 86, 214]].forEach(([f, x, y]) => { shadow(g, x, y, 11); L.push(...put(g, set[f], x, y, 1)); });
+      L.push(...put(g, set.down, 60, 300, 1));
+      shadow(g, 265, gy, 36); L.push(...put(g, set.idle0, 265, gy - 2, 3));
+      charLightPass(g, L, 0, 1);
+    }
+    grid.append(card);
+  }
+  document.body.dataset.ready = '1';
 }
-document.body.dataset.ready = '1';
 </script>

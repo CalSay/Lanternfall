@@ -34,7 +34,7 @@
     try { S.party.cls = k; return heroSpec(k); } finally { S.party.cls = prev; }
   }
   function drawPreview(cv, k) {
-    cv.width = 48; cv.height = 64;
+    cv.width = 56; cv.height = 100; // B1 sprites: about 70 CSS px tall, staffs reach higher
     const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
     if (typeof drawCharPreview === 'function') {
       try { const spec = previewSpec(k); if (spec) { drawCharPreview(cv, spec, 1); return; } } catch (e) { console.error('[lanternfall] class preview', e); }
