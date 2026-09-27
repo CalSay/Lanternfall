@@ -2906,6 +2906,9 @@ const UNIQ = {
   eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { party: 20, might: 30 }, txt: '+30% damage and your party deals 20% more.' },
   tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' }
 };
+// Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
+// Legendary x3.2), and rarer drops. `owned` scales the chance when you already have that unique at this tier or higher.
+const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5 };
 const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;
@@ -3555,7 +3558,7 @@ let rallyUntil = 0;
 // ================= gear math =================
 const itemById = id => S.items.find(i => i.id === id) || null;
 const equipped = slot => itemById(S.equip[slot]);
-const itemPower = it => TIER_POW[it.t] * RAR[it.r].m * (1 + 0.15 * it.plus);
+const itemPower = it => TIER_POW[it.t] * (it.u ? UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
 // Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
 function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
@@ -3911,7 +3914,8 @@ function kill() {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    if (Math.random() < (first ? 0.35 : 0.12) * mod('uniqueChance')) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
+    const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
     if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
@@ -9591,11 +9595,11 @@ function uiFight() {
     gq.textContent = 'Boss'; gp.textContent = 'Fighting'; gb.disabled = true;
   } else if (S.zone < S.maxZone) {
     $('gateTitle').textContent = 'Rematch this zone\'s boss';
-    $('gateDesc').textContent = `12% chance to drop ${uq}. You can rematch as often as you like.`;
+    $('gateDesc').textContent = `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`;
     gq.textContent = 'Boss'; gp.textContent = 'Rematch'; gb.disabled = false;
   } else {
     $('gateTitle').textContent = bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`;
-    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. 35% chance of the unique ${uq}.`;
+    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`;
     gq.textContent = 'Boss'; gp.textContent = 'Fight'; gb.disabled = !bossReady();
   }
   HERO_UPS.forEach((u, i) => {
