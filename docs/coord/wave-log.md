@@ -81,6 +81,9 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
   write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
 - Priority: finish the B1 art conversion under way (foundation, scenery, companion polish, enemies),
   then focus on gameplay. Art comes after, except the art a new gameplay system needs.
+- Preview build for the owner: https://claude.ai/artifact/JHKGxG17HxZyA2Prit4BxS (private, no online
+  capabilities, its own save). After each merge wave: build, copy dist with title "Lanternfall Preview" to
+  the scratchpad preview/lanternfall-preview.html, and republish to that URL. Never publish the live artifact.
 - Decisions that belong to the owner (art direction, monetisation, anything irreversible) go under
   "Waiting on the owner" below instead of being guessed.
 
