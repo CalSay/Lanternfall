@@ -377,11 +377,15 @@ function campNode() {
   return null;
 }
 let campTurn = 0;
-function bestNode() {
+function bestNode(away) {
   // Every other gather trip goes to the Camp when a build waits on gathered materials.
-  const cn = (campTurn++ % 2) === 0 ? campNode() : null;
+  const cn = !away && (campTurn++ % 2) === 0 ? campNode() : null;   // never a 4h away trip for a few camp logs
   bestNode.camp = false;
   if (cn && fn.setNode(cn[0], cn[1])) { campStats.trips = (campStats.trips || 0) + 1; bestNode.camp = true; return; }
+  // BAL1: the weapon comes first once the tier-1 set is done (a player chases the next weapon tier;
+  // classes whose set spans many families otherwise gathered low-tier set pieces for days).
+  const wt = (fn.equipped('weapon') || { t: 0 }).t;
+  if (swordFirst && (craftStats.g1 != null || wt < fn.zoneTier(E('S.maxZone')) - 1) && weaponNode()) return;
   const b = blockingNode();
   if (b && fn.setNode(b[0], b[1])) { craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; return; }
   if (swordFirst && weaponNode()) return;
@@ -576,7 +580,7 @@ function runDays() {
       checkTiers();
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
       // Leaving: pick the away activity.
-      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(); fn.setActivity('gather'); }
+      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(true); fn.setActivity('gather'); }
       else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
     }
     // Day summary at 24:00 (the away gains for the rest of the night land in the next gap).

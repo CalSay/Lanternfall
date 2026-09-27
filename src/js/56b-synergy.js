@@ -225,7 +225,9 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
     shieldBash: 1, hollowCut: 1,
     // synergies
     hedgeSpeed: 0.15, hedgeGold: 0.1, kindleStar: 0.3, dusk: 0.25, duskExec: 0.1,
-    bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, wayXp: 0.1, wayCd: 0.1
+    bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, wayXp: 0.1, wayCd: 0.1,
+    // hero class auras (BAL1): the damage parts of HERO_CLASSES[cls].aura
+    auras: 1, auraCaster: 0.3, auraCrit: 0.1, auraCritX: 0.5
   };
   SYN_TUNE = T;
   // Signature ability names, for the generated kit lines.
@@ -475,6 +477,17 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // T.today scales every bonus to what applies before party combat (see the header).
   const dp = m => 1 + (m - 1) * T.today;
   addCharModifier(id => live() ? dp(charMult(id)) : 1);
+  // Hero class auras (55-party HERO_CLASSES[cls].aura; BAL1: their texts promised damage that was
+  // never applied). Lanternmage: casters +30% attack. Ranger: strikers +10% crit chance and +50%
+  // crit damage (x3 -> x3.5). Warden and Lightkeeper: health and healing wait for party combat
+  // (the Lightkeeper's +10% for all companions lives in 55-party).
+  const auraMult = id => {
+    const c = hasCls(), role = R(id) && R(id).role;
+    if (c === 'lanternmage' && role === 'caster') return 1 + T.auraCaster;
+    if (c === 'ranger' && role === 'striker') { const s = ROLE_STATS.striker; return (1 + (s.crit + T.auraCrit) * (s.critX + T.auraCritX - 1)) / (1 + s.crit * (s.critX - 1)); }
+    return 1;
+  };
+  addCharModifier(id => live() && T.auras ? auraMult(id) : 1);
   addModifier('dmg', () => { if (!live()) return 1; const { a } = cur(); return dp(a.party) * dp(a.hero); });
   addModifier('party', () => { if (!live()) return 1; return 1 / dp(cur().a.hero); });
   addModifier('gold', () => live() ? dp(cur().a.gold) : 1);

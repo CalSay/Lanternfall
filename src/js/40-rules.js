@@ -50,7 +50,7 @@ const PACE = {
   hpEarly: 1.95, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
   hpGrowth: 1.46,           // (BAL1, M6 1.48) mob HP x per zone from `early` to the bend
   bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
-  hpLate: 1.21,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
+  hpLate: 1.22,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
                             //   about 2 companion levels a zone, so Region 2 is paced by their XP
                             //   and the level-200 roster cap lands just past the Region 2 boss
   bossHp: 8,                // zone boss HP x a normal mob (unchanged)
@@ -61,7 +61,7 @@ const PACE = {
   regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
   compLv: 80,               // (BAL1, was 90) companion levels past compLv need more XP...
   compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 90: x3, 100: x9.6)...
-  compXpMax: 260,           //   ...(BAL1, was 80) up to x260 from level 129 on: Region 2 is a few levels a day
+  compXpMax: 200,           //   ...(BAL1, was 80) up to x200 from level 127 on: Region 2 is a few levels a day
   essTier: [1, 7, 13, 19, 42], // (BAL1: Starlit from 42, was 36) first zone of each essence tier (M6: every 6 zones, so Starlit
                             //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
