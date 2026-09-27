@@ -89,3 +89,12 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
 (none yet)
 
 PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description at milestones).
+- Owner bug: upgrade buttons ignored taps. Cause: setPrice rebuilt the price spans about 5x/s, and
+  a press on the price lost its target. Fixed (update in place, `button * {pointer-events:none}`);
+  slow-press test 0/20 -> 20/20. The same bug is live on main until this PR merges.
+- K6 crafting actions merged (55-crafting.js: craftItem/canCraft, upgrade with trophy gate, reforge,
+  transmute, equipChar with one-wearer rule, tonics, Star Chart -> Oriel; companion weapons use
+  charGear). Notes: transmute-down chains are exploitable (1 tier-5 -> 16 tier-1): limit it in K9.
+  Hide has no source until K5, which blocks G1/G2 for three classes. The Oriel hint text in 56c still
+  says "The table is not built yet". The T1 sim was already above band (16/26/34) before K6.
+- AR-S scenery merged: 10 themes in B1 at 2x with lanterns, scene.lights, moths; no stage edits.
