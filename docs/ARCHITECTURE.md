@@ -25,6 +25,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
+| 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -128,6 +129,10 @@ levels around the `away` phase, so changes made to `S` there appear without a li
 | `promote` | `{ id, rank }` |
 | `fieldChange` | `{ field }` |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
+| `renown` | `{ n, total, source }` |
+| `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
+| `visitorHired` | `{ id, day }` |
+| `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
