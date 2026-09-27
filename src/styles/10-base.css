@@ -73,5 +73,7 @@ button * { pointer-events: none; }
 .bell:hover img, .bell.has img { opacity: 1; }
 .bell-n { position: absolute; top: 5px; right: 3px; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; background: var(--ember); color: #1A1420; font: 700 10px/1 var(--display); box-shadow: 0 2px 0 var(--ember-deep); }
 .bell.ping img { animation: bellPing .5s ease-out; }
+.bell.ping2 img { animation: bellPing2 .5s ease-out; }
 @keyframes bellPing { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
-@media (prefers-reduced-motion: reduce) { .bell.ping img { animation: none; } }
+@keyframes bellPing2 { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
+@media (prefers-reduced-motion: reduce) { .bell.ping img, .bell.ping2 img { animation: none; } }

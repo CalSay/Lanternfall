@@ -21,10 +21,11 @@ function notePrio(prio, kind) {
 }
 function bellUpdate(ping) {
   const b = $('bellBtn'), n = $('bellN');
-  n.hidden = !notes.unread; n.textContent = notes.unread > 9 ? '9+' : String(notes.unread);
-  b.classList.toggle('has', notes.unread > 0);
-  b.setAttribute('aria-label', notes.unread ? `Notices, ${notes.unread} new` : 'Notices');
-  if (ping && !reduced) { b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping'); }
+  putHidden(n, !notes.unread); putText(n, notes.unread > 9 ? '9+' : String(notes.unread));
+  putToggle(b, 'has', notes.unread > 0);
+  putAttr(b, 'aria-label', notes.unread ? `Notices, ${notes.unread} new` : 'Notices');
+  // Restart the wiggle by swapping between two same-looking animations (no layout read).
+  if (ping && !reduced) { const a = b.classList.contains('ping'); b.classList.toggle('ping', !a); b.classList.toggle('ping2', a); }
 }
 function dropToast(t, how) {
   if (t._gone) return; t._gone = true; clearTimeout(t._timer);
@@ -56,6 +57,9 @@ function makeToast(msg, kind, url, p) {
   t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
   return t;
 }
+// The stage box's height, kept by a ResizeObserver so a toast never reads layout.
+let stageBoxH = 0;
+try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offsetHeight; }).observe($('stageBox')); } catch (e) { stageBoxH = 999; }
 function showToast(msg, kind, icon, prio) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
@@ -70,7 +74,7 @@ function showToast(msg, kind, icon, prio) {
     notes.unread++; bellUpdate(true); return;
   }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
-  const room = box.classList.contains('over-menu') || $('stageBox').offsetHeight >= 200 ? 2 : 1;
+  const room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   if (live.length >= room) {
     const normals = live.filter(t => t._p < 2);
     if (p < 2) {
@@ -149,7 +153,7 @@ function icTile(url, frame, extraCls) {
 }
 function setIc(tile, url, frame, extraCls) {
   const im = tile.querySelector('img'); if (im.getAttribute('src') !== url) im.src = url;
-  tile.className = 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : '');
+  putClass(tile, 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : ''));
 }
 function makeRow(parent, name, ember, iconUrl, icCls) {
   const row = el('div', 'row' + (iconUrl ? ' has-ic' : ''));
@@ -298,14 +302,14 @@ function setView(t, id) {
 function viewDots() {
   for (const b of $('viewSeg').children) {
     const v = viewsOf(S.tab).find(x => x.id === b.dataset.view), d = b.querySelector('.vdot');
-    if (d) d.hidden = !(v && v.dot && b.getAttribute('aria-selected') !== 'true' && safeDot(v.dot));
+    if (d) putHidden(d, !(v && v.dot && b.getAttribute('aria-selected') !== 'true' && safeDot(v.dot)));
   }
   document.querySelectorAll('.tab').forEach(tb => {
     const t = tb.dataset.tab;
     let d = tb.querySelector('.dot.vdot');
     if (!d) { d = el('span', 'dot vdot'); d.hidden = true; tb.append(d); }
     const other = tb.querySelector('.dot:not(.vdot):not([hidden])');
-    d.hidden = !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot));
+    putHidden(d, !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot)));
   });
 }
 
@@ -427,77 +431,125 @@ $('renameForm').addEventListener('submit', e => {
 });
 
 // ================= UI update =================
-let uiTimer = 0, slowTick = 0, lastPct = 100;
+// Write-on-change helpers for ui() and the other per-tick updaters (5 calls a second). Every DOM
+// write dirties style and layout, and the browser then redoes them in that frame, so equal values
+// are skipped. Style values are cached per element (the browser may reformat them on read).
+function putText(e, t) { t = String(t); if (e.textContent !== t) e.textContent = t; }
+function putStyle(e, prop, v) { const c = e._ps || (e._ps = {}); if (c[prop] !== v) { c[prop] = v; e.style[prop] = v; } }
+function putAttr(e, name, v) { if (e.getAttribute(name) !== v) e.setAttribute(name, v); }
+function putHidden(e, h) { h = !!h; if (e.hidden !== h) e.hidden = h; }
+function putDisabled(e, d) { d = !!d; if (e.disabled !== d) e.disabled = d; }
+function putClass(e, c) { if (e.className !== c) e.className = c; }
+function putToggle(e, c, on_) { on_ = !!on_; if (e.classList.contains(c) !== on_) e.classList.toggle(c, on_); }
+// Is view v of tab t on screen (its menu open and that sub-view picked)?
+const viewOpen = (t, v) => S.tab === t && curView(t) === v;
+
+let uiTimer = 0, slowTick = 0, lastPct = 100, trailRaf = 0;
+// Static HUD nodes, looked up once.
+const hudEl = {};
+for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint']) hudEl[id] = $(id);
+const modeBtns = [...document.querySelectorAll('#modeSeg button')];
+// The foe's HP bar and its white damage trail scale on the compositor (transform: no relayout per
+// hit). A new foe refills both at once: the trail's transition is off for two frames (instead of
+// reading layout to flush it) and then comes back for the next hit.
 function setHp(pct) {
   pct = Math.max(0, Math.min(100, pct));
-  const tr = $('mTrail');
-  if (pct > lastPct + 0.5) { tr.style.transition = 'none'; tr.style.width = pct + '%'; void tr.offsetWidth; tr.style.transition = ''; }
-  else tr.style.width = pct + '%';
-  $('mBar').style.width = pct + '%'; lastPct = pct;
+  const tr = hudEl.mTrail, sc = `scaleX(${pct / 100})`;
+  if (pct > lastPct + 0.5) {
+    putStyle(tr, 'transition', 'none'); cancelAnimationFrame(trailRaf);
+    trailRaf = requestAnimationFrame(() => { trailRaf = requestAnimationFrame(() => { trailRaf = 0; putStyle(tr, 'transition', ''); }); });
+  }
+  putStyle(tr, 'transform', sc);
+  putStyle(hudEl.mBar, 'transform', sc); lastPct = pct;
 }
 function ui(force) {
-  const tg = target();
-  $('hName').textContent = S.name;
-  $('hLvl').textContent = S.L;
-  $('xpFill').style.width = Math.min(100, S.xp / xpNeed() * 100) + '%';
-  $('gold').textContent = fmt(S.gold);
-  $('embers').textContent = fmt(S.embers);
-  document.querySelectorAll('#modeSeg button').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.act === S.activity));
-    if (b.dataset.act === 'raid') b.disabled = !(online.ready && online.canWrite);
-  });
+  const tg = target(), H = hudEl;
+  putText(H.hName, S.name);
+  putText(H.hLvl, S.L);
+  putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
+  putText(H.gold, fmt(S.gold));
+  putText(H.embers, fmt(S.embers));
+  for (const b of modeBtns) {
+    putAttr(b, 'aria-pressed', String(b.dataset.act === S.activity));
+    if (b.dataset.act === 'raid') putDisabled(b, !(online.ready && online.canWrite));
+  }
 
   if (tg === 'world') {
-    $('zName').textContent = 'The World Raid'; $('zSub').textContent = 'Shared with every hero';
+    putText(H.zName, 'The World Raid'); putText(H.zSub, 'Shared with every hero');
     const hp = worldHp(), mx = online.world ? online.world.maxHp : 1;
-    $('mName').textContent = online.world ? online.world.name : 'World boss';
-    $('mHp').textContent = hp == null ? '...' : `${fmt(hp)} / ${fmt(mx)}`;
+    putText(H.mName, online.world ? online.world.name : 'World boss');
+    putText(H.mHp, hp == null ? '...' : `${fmt(hp)} / ${fmt(mx)}`);
     setHp(hp == null ? 100 : hp / mx * 100);
-    $('mBar').style.background = 'var(--hp)';
-    $('tWrap').hidden = true;
+    putStyle(H.mBar, 'background', 'var(--hp)');
+    putHidden(H.tWrap, true);
   } else if (tg === 'node') {
     const { kind, t } = S.node, sk = S.skills[skillOf(kind)];
-    $('zName').textContent = NODE_NAMES[kind][t - 1];
-    $('zSub').textContent = `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`;
-    $('mName').textContent = matName(kind, t);
-    $('mHp').textContent = `${fmt(S.mats[kind][t - 1])} in pack`;
+    putText(H.zName, NODE_NAMES[kind][t - 1]);
+    putText(H.zSub, `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`);
+    putText(H.mName, matName(kind, t));
+    putText(H.mHp, `${fmt(S.mats[kind][t - 1])} in pack`);
     const sp = Math.min(100, sk.xp / skillNeed(sk.lv) * 100);
     setHp(sp);
-    $('mBar').style.background = 'var(--gold)';
-    $('tWrap').hidden = true;
+    putStyle(H.mBar, 'background', 'var(--gold)');
+    putHidden(H.tWrap, true);
   } else {
-    $('zName').textContent = zoneName(S.zone);
-    $('zSub').textContent = S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared';
+    putText(H.zName, zoneName(S.zone));
+    putText(H.zSub, S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared');
     if (mob) {
-      $('mName').textContent = mob.name;
-      $('mHp').textContent = `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`;
+      putText(H.mName, mob.name);
+      putText(H.mHp, `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`);
       setHp(mob.hp / mob.max * 100);
-      $('mBar').style.background = mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)';
-      $('tWrap').hidden = !mob.boss;
-      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%';
+      putStyle(H.mBar, 'background', mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)');
+      putHidden(H.tWrap, !mob.boss);
+      if (mob.boss) putStyle(H.tBar, 'width', Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%');
     }
   }
-  $('zStep').hidden = tg !== 'mob';
-  $('zNum').textContent = 'Zone ' + S.zone;
-  $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;
-  $('zNext').disabled = tg !== 'mob' || S.zone >= S.maxZone;
-  $('statNums').hidden = tg === 'node';
-  $('sDps').textContent = fmt(totalDps() * (tg === 'world' ? raidMult() : 1));
-  $('sTap').textContent = fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1));
-  $('hint').textContent = tg === 'node' ? 'Tap to work faster' : 'Tap to strike';
+  putHidden(H.zStep, tg !== 'mob');
+  putText(H.zNum, 'Zone ' + S.zone);
+  putDisabled(H.zPrev, tg !== 'mob' || S.zone <= 1);
+  putDisabled(H.zNext, tg !== 'mob' || S.zone >= S.maxZone);
+  putHidden(H.statNums, tg === 'node');
+  putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
+  putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
 
-  if (S.tab === 'adv') uiFight();
+  // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
+  if (viewOpen('adv', 'upgrades')) uiFight();
   if (S.tab === 'gat') uiGather();
-  if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
-  if (S.tab === 'world') uiRaid();
-  if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
+  if (viewOpen('forge', 'uniques') && (force || slowTick <= 0)) uiForge();
+  if (viewOpen('world', 'raid')) uiRaid();
+  if (viewOpen('world', 'tav') && (force || slowTick <= 0)) uiTavern();
   // Sections update while their tab's menu is open and their view is showing (Journal: while the bell sheet shows it).
+  // A section's first update builds its rows; past COLD_MS in this call, the rest wait for warmSections.
+  const t0 = performance.now();
+  let cold = false;
   for (const sec of SECTIONS) {
-    if (!sec.update) continue;
-    const on_ = sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
-    if (on_) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+    if (!sec.update || !secShows(sec)) continue;
+    if (!sec.warm && performance.now() - t0 > COLD_MS) { cold = true; continue; }
+    runSection(sec, force);
   }
+  if (cold && !coldTimer) coldTimer = setTimeout(warmSections, 0);
   if (slowTick <= 0) { slowTick = 1; viewDots(); }
+}
+function secShows(sec) {
+  return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
+}
+function runSection(sec, force) {
+  try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); }
+  sec.warm = true;
+}
+// A tab's first open builds all of its sections: staggered over a few tasks (top first) so no single
+// task stalls the game (docs/design/perf.md). Each task builds sections for up to COLD_MS.
+const COLD_MS = 30;
+let coldTimer = 0;
+function warmSections() {
+  coldTimer = 0;
+  const t0 = performance.now();
+  for (const sec of SECTIONS) {
+    if (sec.warm || !sec.update || !secShows(sec)) continue;
+    if (performance.now() - t0 > COLD_MS) { coldTimer = setTimeout(warmSections, 0); return; }
+    runSection(sec, true);
+  }
 }
 
 // ================= feature UI registries =================

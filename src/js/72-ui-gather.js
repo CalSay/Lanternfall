@@ -65,32 +65,40 @@ const trophyCells = [];
   $('matGrid').nextElementSibling.textContent = 'Hide and essence drop from monsters while you fight. Higher zones drop better tiers. Champions and zone bosses leave Trophies.';
 }
 
+// Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
+// switch calls ui(true), so a view is fresh as soon as it shows).
+const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
 function uiGather() {
-  for (const c of skillCards) {
-    const sk = S.skills[c.k];
-    c.lv.textContent = 'Lv ' + sk.lv;
-    c.bar.style.width = Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%';
+  const view = curView('gat'), nodeView = view !== 'pack';
+  if (nodeView) {
+    for (const c of skillCards) {
+      const sk = S.skills[c.k];
+      putText(c.lv, 'Lv ' + sk.lv);
+      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
+    }
+    const home = homeFamily(), hb = homeBonus(home);
+    putText(homeNote, `Camp: ${zoneName(S.zone)}. ${MAT[home].n} gathered here gives +${Math.round(hb * 100)}%.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars here make it +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
   }
-  const home = homeFamily(), hb = homeBonus(home);
-  homeNote.textContent = `Camp: ${zoneName(S.zone)}. ${MAT[home].n} gathered here gives +${Math.round(hb * 100)}%.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars here make it +${CRAFT_HOME_BONUS.starred * 100}%.` : '');
   for (const kind of GATHER_KINDS) {
+    if (NODE_VIEW[NODE_BOX[kind]] !== view) continue;
     const lv = S.skills[skillOf(kind)].lv, ym = mod('yield:' + kind), hk = homeBonus(kind);
     nodeRows[kind].forEach((r, i) => {
       const t = i + 1, req = NODE_REQ[i], open = lv >= req;
       const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
       const prevOpen = i === 0 || lv >= NODE_REQ[i - 1];
-      r.row.hidden = !open && !prevOpen;
-      r.row.classList.toggle('locked', !open);
-      r.row.classList.toggle('active', here);
-      r.ic.classList.toggle('ghost', !open);
-      r.own.textContent = open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`;
+      putHidden(r.row, !open && !prevOpen);
+      putToggle(r.row, 'locked', !open);
+      putToggle(r.row, 'active', here);
+      putToggle(r.ic, 'ghost', !open);
+      putText(r.own, open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`);
       const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
-      r.desc.textContent = open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute${hk ? ` · home +${Math.round(hk * 100)}%` : ''}` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`;
-      r.qty.textContent = here ? 'Working' : open ? NODE_VERB[kind] : 'Locked';
-      r.btn.querySelector('.price').textContent = here ? '...' : open ? 'Go' : `Lv ${req}`;
-      r.btn.disabled = !open || here;
+      putText(r.desc, open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute${hk ? ` · home +${Math.round(hk * 100)}%` : ''}` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`);
+      putText(r.qty, here ? 'Working' : open ? NODE_VERB[kind] : 'Locked');
+      putText(r.price || (r.price = r.btn.querySelector('.price')), here ? '...' : open ? 'Go' : `Lv ${req}`);
+      putDisabled(r.btn, !open || here);
     });
   }
-  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; n.textContent = fmt(v); c.classList.toggle('none', !v); });
-  trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; n.textContent = fmt(v); c.classList.toggle('none', !v); });
+  if (view !== 'pack') return;
+  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
+  trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
 }

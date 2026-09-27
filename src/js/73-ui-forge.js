@@ -20,13 +20,13 @@ function renderTrophies() {
   let n = 0;
   for (const [key, u] of Object.entries(UNIQ)) {
     const f = S.found[key], e = trophyEls[key]; if (f) n++;
-    e.c.className = 'trophy' + (f ? ' found' : '');
+    putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
-    e.tn.textContent = f ? u.name : '???'; e.tn.className = 'tn' + (f ? ' rar-legendary' : '');
-    e.ts1.textContent = f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src;
-    e.ts2.textContent = f ? u.txt : 'Not found yet';
+    putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
+    putText(e.ts1, f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src);
+    putText(e.ts2, f ? u.txt : 'Not found yet');
   }
-  $('trophyCount').textContent = `${n} / ${Object.keys(UNIQ).length} uniques`;
+  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques`);
 }
 
 function uiForge() { renderTrophies(); }

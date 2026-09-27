@@ -444,9 +444,19 @@ let resize, animate, draw, stageStats;
     let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l;
     const fl = flick();
     const x = best ? hero._x + best.x : hero._x + f.ox, y = best ? hero._y + best.y : GY - 30;
-    A.lightAt(ctx, '255,176,96', x, y, 115 * fl, 0.2);                          // warm key light over the party
-    ctx.globalAlpha = 0.34 * fl; ctx.drawImage(A.glow('255,190,110'), x - 80, GY - 10, 160, 20);  // pool on the ground
+    A.lightAt(ctx, '255,176,96', x, y, 115 * fl, 0.2);                          // warm key light over the party (its radius flickers)
+    // pool on the ground: a fixed size, so it is scaled once to device pixels and copied 1:1
+    const K = DPR * ZM, p = poolSprite(K);
+    ctx.globalAlpha = 0.34 * fl; ctx.drawImage(p, Math.round((x - 80) * K) / K, Math.round((GY - 10) * K) / K, p.width / K, p.height / K);
     ctx.globalAlpha = 1;
+  }
+  let poolDev = null;
+  function poolSprite(K) {
+    if (poolDev && poolDev.K === K) return poolDev.c;
+    const c = document.createElement('canvas'); c.width = Math.round(160 * K); c.height = Math.round(20 * K);
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(A.glow('255,190,110'), 0, 0, c.width, c.height);
+    poolDev = { K, c };
+    return c;
   }
   const foeFrame = () => {
     const f = foe.fr; if (!f) return null;
@@ -491,7 +501,10 @@ let resize, animate, draw, stageStats;
     ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8);
+    // The sky layer is opaque and runs 24 px past each side, so the backdrop fill only matters while a
+    // shake moves it up or down, or when it ends short of the canvas's last device pixels.
+    const sky = scene.layers[0].c;
+    if (sy !== 0 || sky.height * (scene.PX || 1) * K < cv.height) { ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8); }
     drawScene(ctx, scene, camF, 'back');
 
     // smooth under-layer: shadows, boss aura
@@ -992,10 +1005,16 @@ let resize, animate, draw, stageStats;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
-    const r = stageEl.getBoundingClientRect();
+    const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });
+  // The stage's page rect for taps, read in the ResizeObserver (layout is fresh there) rather than on
+  // every tap, where ui() has just written the DOM and a read would force a layout. A scroll or a
+  // window resize drops it; the next tap reads it again.
+  let stageRect = null;
+  addEventListener('resize', () => { stageRect = null; });
+  addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
-  new ResizeObserver(() => resize()).observe(stageEl);
+  new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
   stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats() });
 }

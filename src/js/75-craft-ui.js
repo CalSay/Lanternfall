@@ -182,13 +182,13 @@ let craftUI = null;
       initState(); syncGoalPick();
       for (const s of STATION_KEYS) {
         const e = stEls[s], sk = S.skills[skillOfSt(s)] || { lv: 1, xp: 0 };
-        e.b.setAttribute('aria-pressed', String(st8.st === s));
-        e.lv.textContent = `Lv ${sk.lv}`;
-        e.fill.style.width = Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%';
+        putAttr(e.b, 'aria-pressed', String(st8.st === s));
+        putText(e.lv, `Lv ${sk.lv}`);
+        putStyle(e.fill, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
       }
       const sk = skillOfSt(st8.st), s = S.skills[sk] || { lv: 1, xp: 0 };
       const next = CRAFT_STATION_REQ.find(r => r > s.lv);
-      stEls.info.textContent = `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.');
+      putText(stEls.info, `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.'));
     }
   });
 
@@ -279,58 +279,74 @@ let craftUI = null;
       const mwRow = el('div', 'cf-mw');
       const list = el('div', 'cf-list');
       sec.append(filt, tiers, mwRow, list);
-      rec = { filt, tiers, mwRow, list, sig: '' };
+      rec = { filt, tiers, mwRow, list, sig: '', mwSig: null, rows: {} };
     },
     update(force) {
       initState();
       const st = st8.st, t = st8.tier[st] || 1, lv = lvOf(skillOfSt(st));
-      rec.filt.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === st8.filt)));
-      rec.tiers.querySelectorAll('button').forEach(b => {
+      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
+      for (const b of rec.tiers.children) {
         const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = lv >= req;
-        b.setAttribute('aria-pressed', String(i === t)); b.classList.toggle('locked', !open);
-        b.querySelector('small').textContent = open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`;
-      });
+        putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
+        putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
+      }
+      if (!force && busy()) return;   // never swap a row under the player's finger
       const tr = troph();
-      const w = wearers();
-      const sig = [st, t, st8.filt, st8.mw, JSON.stringify(st8.role), st8.focus, CRAFT_FAMILIES.map(f => S.mats[f][t - 1]).join(), lv, bagCount(), heroWho(),
-        JSON.stringify(S.equip), [...w.keys()].join(), tr.join(), roster().join(), (S.party && S.party.field || []).join(), typeof craftItem, typeof canCraft].join('|');
-      if (!force && (sig === rec.sig || busy())) return;
-      rec.sig = sig;
-      // Masterwork picker: only when the player has a trophy.
-      rec.mwRow.textContent = '';
+      // Masterwork picker: only when the player has a trophy. Rebuilt when the trophies or the pick change.
       if (st8.mw != null && !(tr[st8.mw] > 0)) st8.mw = null;
-      if (tr.some(n => n > 0)) {
-        rec.mwRow.append(el('span', 'cf-lbl', 'Masterwork'));
-        const seg = el('div', 'cf-chips');
-        const add = (i, label, icon) => {
-          const b = el('button', 'cf-chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(st8.mw === i));
-          if (icon) b.append(img(icon)); b.append(el('span', null, label));
-          b.addEventListener('click', () => { st8.mw = i; ui(true); });
-          seg.append(b);
-        };
-        add(null, 'None');
-        tr.forEach((n, i) => { if (n > 0) add(i, `${CRAFT_TROPHIES[i].n} ${n}`, troIcon(i)); });
-        rec.mwRow.append(seg);
-        if (st8.mw != null) {
-          const m = CRAFT_TROPHIES[st8.mw].mw;
-          rec.mwRow.append(el('p', 'note', `Adds 1 gold bonus line: ${CRAFT_STATS[m.gear].n}${m.tool ? ` (${CRAFT_STATS[m.tool].n} on tools)` : ' (not on tools)'}. Uses the trophy.`));
+      const mwSig = tr.join() + '|' + st8.mw;
+      if (mwSig !== rec.mwSig) {
+        rec.mwSig = mwSig;
+        rec.mwRow.textContent = '';
+        if (tr.some(n => n > 0)) {
+          rec.mwRow.append(el('span', 'cf-lbl', 'Masterwork'));
+          const seg = el('div', 'cf-chips');
+          const add = (i, label, icon) => {
+            const b = el('button', 'cf-chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(st8.mw === i));
+            if (icon) b.append(img(icon)); b.append(el('span', null, label));
+            b.addEventListener('click', () => { st8.mw = i; ui(true); });
+            seg.append(b);
+          };
+          add(null, 'None');
+          tr.forEach((n, i) => { if (n > 0) add(i, `${CRAFT_TROPHIES[i].n} ${n}`, troIcon(i)); });
+          rec.mwRow.append(seg);
+          if (st8.mw != null) {
+            const m = CRAFT_TROPHIES[st8.mw].mw;
+            rec.mwRow.append(el('p', 'note', `Adds 1 gold bonus line: ${CRAFT_STATS[m.gear].n}${m.tool ? ` (${CRAFT_STATS[m.tool].n} on tools)` : ' (not on tools)'}. Uses the trophy.`));
+          }
         }
       }
-      rec.list.textContent = '';
+      // The list is built once per station, tier, filter and recipe set. After that a row is rebuilt
+      // only when what it shows changes (materials, can craft, who it beats, ...): see rowSig.
       let ks = listFor(st, st8.filt);
-      if (!ks.length && st8.filt !== 'all') {
-        rec.list.append(el('p', 'note', st8.filt === 'party' ? `Nothing at the ${CRAFT_STATIONS[st].n} fits your companions yet.` : `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
-        ks = [];
-      }
-      for (const k of ks) rec.list.append(recipeRow(k, t));
-      if (st8.filt === 'you' && ks.length) {
-        const extra = listFor(st, 'all').length - ks.length;
+      const extra = st8.filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
+      const sig = [st, t, st8.filt, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
+      if (sig !== rec.sig) {
+        rec.sig = sig; rec.rows = {};
+        rec.list.textContent = '';
+        if (!ks.length && st8.filt !== 'all') {
+          rec.list.append(el('p', 'note', st8.filt === 'party' ? `Nothing at the ${CRAFT_STATIONS[st].n} fits your companions yet.` : `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
+          ks = [];
+        }
+        for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes and companions. Tap All to see them.`));
+      } else {
+        for (const k of ks) {
+          const r = rec.rows[k], rs = rowSig(k, t);
+          if (!r || r.sig === rs) continue;
+          const row = recipeRow(k, t); r.row.replaceWith(row); r.row = row; r.sig = rs;
+        }
       }
       if (!ks.length) return;
       if (!rec.list.querySelector('#forgeBtn')) { const b = rec.list.querySelector('.cf-go'); if (b) b.id = 'forgeBtn'; }
     }
   });
+  // Everything recipeRow(k, t) shows that can change while the list stays the same.
+  function rowSig(k, t) {
+    const can = canDo(k, t), mw = mwFor(k);
+    const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '']);
+  }
 
   // ================= Enchanter's Table extras =================
   let ench = null;
@@ -373,7 +389,7 @@ let craftUI = null;
     },
     update(force) {
       initState();
-      ench.sec.hidden = st8.st !== 'ench';
+      putHidden(ench.sec, st8.st !== 'ench');
       if (ench.sec.hidden) return;
       const { fam, t } = st8.tm, have = S.mats[fam], f = K6.transmute(), lv = lvOf('ench');
       const sig = [fam, t, have.join(), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
@@ -477,10 +493,10 @@ let craftUI = null;
     },
     update(force) {
       const n = bagCount();
-      bag.count.textContent = `${n} / ${CRAFT_BAG_MAX} spare`;
-      bag.count.classList.toggle('full', n >= CRAFT_BAG_MAX);
-      bag.filt.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === st8.bfilt)));
-      bag.sort.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === st8.sort)));
+      putText(bag.count, `${n} / ${CRAFT_BAG_MAX} spare`);
+      putToggle(bag.count, 'full', n >= CRAFT_BAG_MAX);
+      for (const b of bag.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.bfilt));
+      for (const b of bag.sort.children) putAttr(b, 'aria-pressed', String(b.dataset.s === st8.sort));
       const w = wearers();
       const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0)).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
