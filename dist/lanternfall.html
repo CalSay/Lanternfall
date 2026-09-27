@@ -252,6 +252,89 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
 .ms-pips i { width: 8px; height: 8px; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 1px #0B0810; }
 .ms-pips i.on { background: var(--gold); border-color: #8A6A1E; box-shadow: 0 0 4px rgba(242,193,78,.5); }
+/* 60-party: Party tab, World tab headings, and the class creation screen (75-party.js, 76-create.js). */
+:root { --tank: #5F8BE8; --striker: #5FC46E; --caster: #A070E0; --support: #F2C14E; }
+
+/* role chips */
+.pip { display: inline-flex; align-items: center; gap: 4px; font: 600 11px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 3px 5px; border: 1px solid currentColor; }
+.pip::before { content: ""; width: 6px; height: 6px; background: currentColor; }
+.r-tank { color: var(--tank); } .r-striker { color: var(--striker); } .r-caster { color: var(--caster); } .r-support { color: var(--support); }
+
+/* World tab: Raid and Tavern are two parts of one scroll */
+#p-world > .world-part { gap: 20px; }
+#p-world > .world-part + .world-part { padding-top: 18px; border-top: 2px solid var(--line); }
+.world-head { margin: 0; font: 600 20px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; }
+
+/* Party tab cards */
+.pcards { display: grid; gap: 8px; }
+.pcard { display: grid; gap: 8px; padding: 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.pcard.hero { border-color: var(--ember-deep); }
+.pc-top { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.pcard .pt { width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; overflow: hidden; }
+.pcard .pt.big { width: 52px; height: 52px; }
+.pcard .pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.pc-who { display: grid; gap: 2px; min-width: 0; }
+.pc-who b { font: 600 17px/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-who small { font-size: 13px; color: var(--muted); }
+.pc-tags { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pc-stat { color: var(--bone) !important; font-variant-numeric: tabular-nums; }
+.pc-ab { display: grid; gap: 5px; padding-top: 8px; border-top: 1px solid var(--line); }
+.pc-abline { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.pc-abline em { font-style: normal; font-weight: 600; color: var(--gold); }
+.pc-cd { height: 6px; background: var(--well); border: 1px solid #0B0810; }
+.pc-cd i { display: block; height: 100%; width: 0; background: var(--ember); }
+.pc-cdtxt { font-size: 12px; color: var(--muted); }
+.pc-auto { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+.pc-gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.pc-slot { display: grid; justify-items: center; gap: 3px; min-width: 0; }
+.pc-slot .ic { width: 36px; height: 36px; }
+.pc-slot .ic img { width: 24px; height: 24px; }
+.pc-slot small { font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-slot.soon .ic { border-style: dashed; }
+.pc-gearnote { font-size: 12px; color: var(--muted); }
+
+/* formation grid: Back | Mid | Front, two lanes */
+.pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pf-h { text-align: center; font: 600 11px var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.pf-cell { min-height: 62px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 2px 6px; border: 1px dashed var(--line-hi); background: var(--well); padding: 4px; font: 600 11px var(--display); color: var(--muted); }
+.pf-cell img { width: 28px; height: 28px; image-rendering: pixelated; }
+.pf-cell.occ { border-style: solid; background: var(--panel); color: var(--bone); }
+.pf-cell.hero { border-color: var(--ember-deep); }
+.pf-cell .who { flex-basis: 100%; text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* creation / choose your path: full-screen overlay above everything */
+.create { position: fixed; inset: 0; z-index: 40; overflow-y: auto; background-color: var(--bg); background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px); background-size: 4px 4px; color: var(--bone); -webkit-overflow-scrolling: touch; }
+.create-in { width: min(480px, 100%); margin: 0 auto; padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; }
+.create h1 { margin: 0; font: 600 24px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; }
+.create-lede { margin: 0; color: var(--muted); font-size: 14px; }
+.create-warn { margin: 0; font-size: 13px; color: #FFB27A; }
+.ccards { display: grid; gap: 8px; }
+.ccard { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; text-align: left; padding: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); box-shadow: 0 2px 0 #0B0810; cursor: pointer; font: inherit; }
+.ccard[aria-checked="true"] { border-color: var(--ember); background: linear-gradient(#2e2030, var(--panel)); box-shadow: 0 2px 0 #0B0810, 0 0 16px rgba(255,158,61,.22); }
+.ccard:focus-visible, .create input:focus-visible, .create button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ccard .fig { width: 64px; height: 76px; background: var(--well); border: 1px solid #0B0810; display: grid; place-items: center; }
+.ccard .fig canvas { width: 48px; height: 64px; image-rendering: pixelated; }
+.ccard .ctxt { display: grid; gap: 3px; min-width: 0; }
+.ccard .ctop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ccard b { font: 600 18px/1.1 var(--display); }
+.ccard .pitch { font-style: italic; color: var(--bone); font-size: 14px; }
+.ccard .how, .ccard .ab { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.ccard .ab em { font-style: normal; color: var(--gold); font-weight: 600; }
+.namefield { display: grid; gap: 6px; padding-top: 4px; }
+.namefield label { font: 600 13px var(--display); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.namefield input { min-height: 44px; padding: 8px 10px; background: var(--well); color: var(--bone); border: 2px solid var(--line-hi); font: 600 18px var(--display); }
+.create-go { min-height: 48px; margin-top: 4px; }
+.join { display: grid; gap: 12px; padding-top: 18vh; text-align: center; justify-items: center; }
+.join p { margin: 0; max-width: 34ch; font-size: 16px; line-height: 1.45; }
+.join .join-line { color: var(--muted); }
+.join .join-say { color: var(--bone); font-style: italic; }
+.join .create-go { width: 100%; max-width: 320px; }
+@media (prefers-reduced-motion: no-preference) {
+  .join > * { animation: joinIn .5s ease-out both; }
+  .join > :nth-child(3) { animation-delay: .3s; } .join > :nth-child(4) { animation-delay: .9s; } .join > :nth-child(5) { animation-delay: 1.5s; } .join > :nth-child(6) { animation-delay: 1.9s; }
+}
+@keyframes joinIn { from { opacity: 0; transform: translateY(4px); } }
+@media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 52px 1fr; } .ccard .fig { width: 52px; } }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; } }
 </style>
@@ -299,10 +382,10 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
     <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
     <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Forge<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="raid" data-ic="flame" aria-selected="false">Raid<span class="dot" id="raidDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="tav" data-ic="mug" aria-selected="false">Tavern</button>
+    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
   </nav>
 
   <div class="panels" id="panels">
@@ -331,6 +414,9 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
         <div id="compRows" class="sec"></div>
       </div>
     </section>
+
+    <!-- Party (filled by 75-party.js) -->
+    <section class="panel" id="p-party" hidden></section>
 
     <!-- Gather -->
     <section class="panel" id="p-gat" hidden>
@@ -386,8 +472,11 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
       </div>
     </section>
 
-    <!-- Raid -->
-    <section class="panel" id="p-raid" hidden>
+    <!-- World: the Raid and Tavern parts keep their old ids (p-raid, p-tav) so
+         registerSection('raid' | 'tav') and 80-online.js keep working. -->
+    <section class="panel" id="p-world" hidden>
+    <div class="panel world-part" id="p-raid">
+      <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
         <div class="zsub" id="rGen">World raid</div>
         <h3 id="rName">Waiting for the world to load</h3>
@@ -414,10 +503,10 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
         <div class="sec-head"><h2 class="sec-title">Relics</h2><span class="note">Paid in Embers from raids</span></div>
         <div id="relicRows" class="sec"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Tavern -->
-    <section class="panel" id="p-tav" hidden>
+    <div class="panel world-part" id="p-tav">
+      <h2 class="world-head">Tavern</h2>
       <div class="sec">
         <h2 class="sec-title">In the tavern now</h2>
         <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
@@ -448,6 +537,7 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
           <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
         </dl>
       </div>
+    </div>
     </section>
   </div>
 </div>
@@ -1896,19 +1986,30 @@ function updatePortrait() {
 }
 
 // tab icons
-const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }) };
+// Party (two figures) and World (a globe with a lantern-light meridian): local maps, same 12x12 icon format.
+const TAB_PX = {
+  party: ['............','..11....22..','.1111..2222.','.1551..2552.','.1111..2222.','..11....22..','.1111..2222.','111111222222','111111222222','.1111..2222.','.1..1..2..2.','............'],
+  world: ['....1111....','..11222211..','.1222112221.','.1211111121.','122117711221','121117711121','121117711121','122117711221','.1211111121.','.1222112221.','..11222211..','....1111....']
+};
+const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+  party: spriteURL('tab:party', TAB_PX.party, { 1: '#5F8BE8', 2: '#FF9E3D', 5: '#EFE6D6' }), world: spriteURL('tab:world', TAB_PX.world, { 1: '#3E9C8A', 2: '#2A5A6E', 7: '#F2C14E' }) };
 document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= tabs, rename =================
-const TAB_IDS = ['adv', 'gat', 'forge', 'raid', 'tav'];
+const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
+// Raid and Tavern are now parts of the World tab; old ids still open it.
+const TAB_ALIAS = { raid: 'world', tav: 'world' };
+if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
 function setTab(t) {
+  const part = TAB_ALIAS[t] ? $('p-' + t) : null;
+  t = TAB_ALIAS[t] || t;
   S.tab = t;
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
   if (t === 'forge') $('forgeDot').hidden = true;
-  if (t === 'raid') $('raidDot').hidden = true;
-  $('panels').scrollTop = 0;
+  if (t === 'world') $('raidDot').hidden = true;
+  $('panels').scrollTop = part ? part.offsetTop - $('panels').offsetTop : 0;
   ui(true);
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
@@ -1981,9 +2082,9 @@ function ui(force) {
   if (S.tab === 'adv') uiFight();
   if (S.tab === 'gat') uiGather();
   if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
-  if (S.tab === 'raid') uiRaid();
-  if (S.tab === 'tav' && (force || slowTick <= 0)) uiTavern();
-  for (const sec of SECTIONS) if (sec.tab === S.tab && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+  if (S.tab === 'world') uiRaid();
+  if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
+  for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
   if (slowTick <= 0) slowTick = 1;
 }
 
@@ -1999,6 +2100,7 @@ $('awayOk').addEventListener('click', () => { $('away').hidden = true; ui(true);
 
 // ================= feature UI registries =================
 // registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
+// tabId: adv | party | gat | forge | world, or raid | tav (the World tab's two parts).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
 // mount(sec) runs once now; update(force) runs from ui() while that tab is open
 // (about 5 times a second, force = true right after player actions).
@@ -2015,7 +2117,7 @@ function registerSection(tabId, { id, title, mount, update }) {
 // registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
 // tight at 360px wide, so prefer registerSection. icon is a URL or icon spec.
 function registerTab({ id, label, icon, mount, update }) {
-  if (TAB_IDS.includes(id)) throw new Error('registerTab: tab exists ' + id);
+  if (TAB_IDS.includes(id) || TAB_ALIAS[id]) throw new Error('registerTab: tab exists ' + id);
   const b = el('button', 'tab', label);
   b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
   const url = iconOf(icon); if (url) b.prepend(img(url));
@@ -2036,7 +2138,7 @@ on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
 on('itemAdded', () => { $('forgeDot').hidden = S.tab === 'forge'; });
-on('raidReward', () => { $('raidDot').hidden = S.tab === 'raid'; });
+on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });
 
 // ---- src/js/71-ui-fight.js ----
 // 71-ui-fight: the Fight tab (boss gate, hero upgrades, party) and the zone/mode controls.
@@ -2555,6 +2657,224 @@ async function uiTavern() {
   });
 }
 
+// ---- src/js/75-party.js ----
+// 75-party: the Party tab (hero card, fielded companions, formation). Browser-only.
+// Reads the Stage A contracts: S.party and HERO_CLASSES / castAbility (55-party.js, A1),
+// portraitURL (60b-baker.js, A2). Every one of them is optional: without them the tab
+// falls back to today's sprites and the old companion slots, and never throws.
+{
+  const hasParty = () => typeof S === 'object' && S.party && typeof S.party === 'object';
+  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
+  const curClass = () => { const C = classes(); return C && hasParty() && S.party.cls ? C[S.party.cls] || null : null; };
+
+  const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
+  const COL_NAME = ['Back', 'Mid', 'Front'];
+  // Character key -> card info. idx is the old S.comp slot that pays for them (A1's map).
+  const PARTY_CHARS = {
+    tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', role: 'tank', idx: 0 },
+    wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', role: 'striker', idx: 1 },
+    pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', role: 'caster', idx: 2 },
+    aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', role: 'tank', idx: 3 },
+    kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', role: 'striker', idx: 4 },
+    oriel: { name: 'Oriel Vess', title: 'the Starcaller', role: 'caster', idx: 5 },
+    elowen: { name: 'Saint Elowen', title: 'the Last Lantern', role: 'support', idx: 6 },
+    bram: { name: 'Bram Hollis', title: 'the Woodcutter', role: 'striker', idx: 0 },
+    hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', role: 'support', idx: -1 }
+  };
+  const IDX_KEY = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
+  // The 5 class gear slots. Weapon, head and charm are today's weapon, helm and charm;
+  // off-hand and body arrive with crafting.
+  const GEAR_NOUN = {
+    warden: { weapon: 'Warblade', off: 'Shield', head: 'Greathelm', body: 'Plate' },
+    lanternmage: { weapon: 'Staff', off: 'Lantern', head: 'Hood', body: 'Robe' },
+    ranger: { weapon: 'Bow', off: 'Quiver', head: 'Hood', body: 'Leathers' },
+    lightkeeper: { weapon: 'Censer', off: 'Tome', head: 'Mitre', body: 'Vestments' }
+  };
+  const GEAR_SLOTS = [
+    { id: 'weapon', old: 'weapon', n: 'Weapon' }, { id: 'off', n: 'Off-hand' },
+    { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
+  ];
+
+  function heroPortrait() {
+    if (typeof portraitURL === 'function') { try { const u = portraitURL('hero'); if (u) return u; } catch (e) {} }
+    return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
+  }
+  function compPortrait(key) {
+    if (typeof portraitURL === 'function') { try { const u = portraitURL(key); if (u) return u; } catch (e) {} }
+    const i = PARTY_CHARS[key] ? PARTY_CHARS[key].idx : -1, c = COMPS[i >= 0 ? i : 0];
+    return spriteURL('comp' + (i >= 0 ? i : 0), SPR.hero, { ...HERO_PAL, 1: c.col, 2: c.helm });
+  }
+  // Fielded companions: S.party.field, else the 3 highest owned old slots (what A1 migrates to).
+  function fieldKeys() {
+    if (hasParty() && Array.isArray(S.party.field) && S.party.field.length) return S.party.field.filter(k => PARTY_CHARS[k]).slice(0, 3);
+    const owned = []; for (let i = S.comp.length - 1; i >= 0 && owned.length < 3; i--) if (S.comp[i] > 0) owned.push(IDX_KEY[i]);
+    return owned;
+  }
+  const pip = role => el('span', 'pip r-' + role, ROLE_NAME[role] || role);
+  const portraitBox = (url, cls) => { const d = el('div', 'pt ' + (cls || '')); d.append(img(url)); return d; };
+
+  // ---------- hero card ----------
+  let heroRefs = null, heroSig = '';
+  function buildHero(sec) {
+    sec.querySelectorAll('.pcard, .note').forEach(n => n.remove());
+    heroRefs = null;
+    const c = curClass();
+    const card = el('div', 'pcard hero');
+    const top = el('div', 'pc-top');
+    const pt = portraitBox(heroPortrait(), 'big');
+    const who = el('div', 'pc-who');
+    const nm = el('b', null, S.name);
+    const sub = el('small', null, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
+    who.append(nm, sub);
+    if (c) { const tags = el('div', 'pc-tags'); tags.append(pip(c.role)); if (c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName)); who.append(tags); }
+    top.append(pt, who);
+    card.append(top);
+    const refs = { card, pt: pt.querySelector('img'), nm, sub };
+    if (c && c.ability) {
+      const ab = el('div', 'pc-ab');
+      const line = el('div', 'pc-abline');
+      const abTxt = el('div');
+      abTxt.append(el('em', null, c.ability.name), document.createTextNode(': ' + (c.ability.desc || '')));
+      const cast = el('button', 'mini go', 'Cast'); cast.type = 'button';
+      cast.addEventListener('click', () => { if (typeof castAbility === 'function' && castAbility()) ui(true); });
+      line.append(abTxt, cast);
+      const cd = el('div', 'pc-cd'); cd.append(el('i'));
+      const cdTxt = el('small', 'pc-cdtxt');
+      const auto = el('label', 'pc-auto');
+      const box = el('input'); box.type = 'checkbox';
+      box.addEventListener('change', () => { if (hasParty()) { S.party.autoCast = box.checked; save(); } });
+      auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
+      ab.append(line, cd, cdTxt, auto);
+      card.append(ab);
+      Object.assign(refs, { cast, cdBar: cd.firstChild, cdTxt, box });
+    }
+    const gearBox = el('div', 'pc-gear');
+    refs.gear = GEAR_SLOTS.map(g => {
+      const t = el('div', 'pc-slot');
+      const ic = icTile(iconURL('charm', '#3A2F47'), null, 'ghost');
+      const lbl = el('small');
+      t.append(ic, lbl); gearBox.append(t);
+      return { g, t, ic, lbl };
+    });
+    card.append(gearBox, el('small', 'pc-gearnote', 'Dashed slots arrive with crafting. Forge the rest in the Forge tab.'));
+    sec.append(card);
+    heroRefs = refs;
+  }
+  function updateHero(sec) {
+    const c = curClass();
+    const sig = [hasParty() && S.party.cls, !!c, typeof portraitURL, JSON.stringify(S.equip)].join('|');
+    if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(sec); }
+    const r = heroRefs;
+    r.nm.textContent = S.name;
+    r.sub.textContent = (c ? c.name : 'Wanderer') + ' · Lv ' + S.L;
+    if (r.cdBar) {
+      const cdMax = (c.ability && c.ability.cd) || 30, left = Math.max(0, +S.party.abilityCd || 0);
+      r.cdBar.style.width = (100 - Math.min(100, left / cdMax * 100)) + '%';
+      r.cdTxt.textContent = left > 0 ? `Ready in ${Math.ceil(left)}s · cooldown ${cdMax}s` : `Ready · cooldown ${cdMax}s`;
+      r.cast.disabled = left > 0 || typeof castAbility !== 'function';
+      if (document.activeElement !== r.box) r.box.checked = !!S.party.autoCast;
+    }
+    const nouns = (hasParty() && GEAR_NOUN[S.party.cls]) || {};
+    for (const s of r.gear) {
+      const it = s.g.old ? S.equip[s.g.old] : null;
+      const noun = nouns[s.g.id] || s.g.n;
+      if (it) {
+        setIc(s.ic, itemIcon(it.slot || s.g.old, it.t, it.u), it.u ? 'legendary' : it.r);
+        s.lbl.textContent = noun;
+        s.t.title = itemName(it);
+      } else if (s.g.old) {
+        setIc(s.ic, iconURL(SLOT[s.g.old].icon, '#4E4060'), null, 'ghost');
+        s.lbl.textContent = noun; s.t.title = 'Empty. Forge one in the Forge tab.';
+      } else {
+        setIc(s.ic, iconURL(s.g.id === 'off' ? 'banner' : 'helm', '#4E4060'), null, 'ghost');
+        s.lbl.textContent = noun; s.t.title = 'Coming with crafting.';
+        s.t.classList.add('soon');
+      }
+    }
+  }
+
+  // ---------- companions ----------
+  let compSig = '', compRefs = [];
+  function buildComps(box, keys) {
+    box.textContent = ''; compRefs = [];
+    if (!keys.length) { box.append(el('p', 'note', 'Nobody fights beside you yet. Hire companions in the Fight tab.')); return; }
+    for (const k of keys) {
+      const d = PARTY_CHARS[k];
+      const card = el('div', 'pcard');
+      const top = el('div', 'pc-top');
+      const who = el('div', 'pc-who');
+      const tags = el('div', 'pc-tags'); tags.append(pip(d.role));
+      const stat = el('small', 'pc-stat');
+      who.append(el('b', null, d.name), el('small', null, d.title), tags, stat);
+      top.append(portraitBox(compPortrait(k)), who);
+      card.append(top); box.append(card);
+      compRefs.push({ k, d, stat });
+    }
+  }
+  function updateComps(box) {
+    const keys = fieldKeys();
+    const sig = keys.join(',') + '|' + typeof portraitURL;
+    if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
+    for (const r of compRefs) {
+      const i = r.d.idx, n = i >= 0 ? S.comp[i] : 0;
+      let dps = 0; try { dps = i >= 0 ? compDpsOne(i) * n : 0; } catch (e) {}
+      r.stat.textContent = n > 0 ? `${fmt(n)} strong · ${fmt(dps)} DPS` : 'Joins the fight soon';
+    }
+  }
+
+  // ---------- formation (read-only for Stage A) ----------
+  let formSig = '';
+  function cellsOf(keys) {
+    const cells = hasParty() && S.party.cells && typeof S.party.cells === 'object' ? S.party.cells : {};
+    const out = {};
+    const put = (k, def) => { const c = cells[k] || def; if (c) out[k] = { col: Math.max(0, Math.min(2, c.col | 0)), lane: c.lane ? 1 : 0 }; };
+    const c = curClass();
+    const heroCol = c && c.row != null ? (typeof c.row === 'number' ? c.row : ({ back: 0, mid: 1, front: 2 })[c.row]) : 2;
+    put('hero', { col: heroCol == null ? 2 : heroCol, lane: 1 });
+    const roleCol = { tank: 2, striker: 1, caster: 0, support: 0 };
+    keys.forEach((k, n) => put(k, { col: roleCol[PARTY_CHARS[k].role], lane: n % 2 }));
+    return out;
+  }
+  function updateForm(grid) {
+    const keys = fieldKeys(), cells = cellsOf(keys);
+    const sig = JSON.stringify(cells) + typeof portraitURL + S.name;
+    if (sig === formSig) return; formSig = sig;
+    grid.textContent = '';
+    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
+    const at = {};
+    for (const k in cells) { const id = cells[k].lane + ':' + cells[k].col; (at[id] = at[id] || []).push(k); }
+    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+      const ks = at[lane + ':' + col] || [];
+      const cell = el('div', 'pf-cell' + (ks.length ? ' occ' : '') + (ks.includes('hero') ? ' hero' : ''));
+      cell.setAttribute('aria-label', `${COL_NAME[col]} row, ${lane ? 'lower' : 'upper'} lane: ${ks.length ? ks.map(k => k === 'hero' ? S.name : PARTY_CHARS[k].name).join(', ') : 'empty'}`);
+      for (const k of ks) {
+        cell.append(img(k === 'hero' ? heroPortrait() : compPortrait(k)));
+        cell.append(el('span', 'who', k === 'hero' ? S.name : PARTY_CHARS[k].name.split(' ')[0]));
+      }
+      grid.append(cell);
+    }
+  }
+
+  registerSection('party', {
+    id: 'party-form', title: 'Formation',
+    mount(sec) {
+      const g = el('div', 'pform'); g.setAttribute('role', 'img'); sec.append(g);
+      sec.append(el('p', 'note', 'Back, Mid and Front, as they stand on the stage. Moving people between rows comes with the next update.'));
+    },
+    update() { try { updateForm(document.querySelector('#sec-party-form .pform')); } catch (e) { console.error('[lanternfall] party formation', e); } }
+  });
+  registerSection('party', {
+    id: 'party-hero', title: 'Your hero',
+    mount(sec) {},
+    update(force) { try { updateHero(document.getElementById('sec-party-hero')); } catch (e) { console.error('[lanternfall] party hero', e); } }
+  });
+  registerSection('party', {
+    id: 'party-field', title: 'Fighting beside you',
+    mount(sec) { sec.append(el('div', 'pcards')); },
+    update() { try { updateComps(document.querySelector('#sec-party-field .pcards')); } catch (e) { console.error('[lanternfall] party companions', e); } }
+  });
+}
+
 // ---- src/js/76-audio.js ----
 // 76-audio: tiny WebAudio synth for retro sound effects. No audio files.
 // BROWSER FILE. Listens to bus events; adds a mute button to the stage corner.
@@ -2669,6 +2989,175 @@ document.addEventListener('click', e => {
   b.addEventListener('click', e => { e.stopPropagation(); S.settings.sound = !S.settings.sound; draw(); save(); SFX.play('buy'); });
   draw(); st.append(b);
 })();
+
+// ---- src/js/76-create.js ----
+// 76-create: character creation (new games) and the one-time "Choose your path" screen
+// (existing saves, and again after a Mirror of Embers). Browser-only.
+// Needs HERO_CLASSES and chooseClass (55-party.js, A1); drawCharPreview/heroSpec (60b-baker.js,
+// A2) are optional. Without HERO_CLASSES or S.party the screen never opens.
+{
+  const ORDER = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
+  const STARTER = { warden: 'wren', lanternmage: 'tobin', ranger: 'tobin', lightkeeper: 'bram' };
+  const STARTER_NAME = { wren: 'Wren Hollowmere', tobin: 'Tobin Reed', bram: 'Bram Hollis' };
+  const JOIN = {
+    wren: ['An arrow lands at your feet, then another in the slime behind you.',
+      '"You stand in the right place, for once. Hold them there."',
+      'Wren Hollowmere drops from the branches and does not ask to come along.'],
+    tobin: ['A boy in a pot helm trips over a sword too big for him on the road out of Mossy Hollow.',
+      '"I\'m Tobin. I stand in front. That\'s the whole job, isn\'t it?"',
+      'He does not wait for an answer.'],
+    bram: ['A woodcutter looks at your lantern for a long time.',
+      '"Heard a priest was on the road. I\'ve no prayers left, but I can swing."',
+      'Bram Hollis walks ahead of you, into the dark.']
+  };
+  // Fallback look when the new baker is not in: today's hero sprite, tinted per class.
+  const TINT = { warden: '#3E63C9', lanternmage: '#8A4FC9', ranger: '#3E8A4E', lightkeeper: '#EFE6D6' };
+
+  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
+  const needsChoice = () => !!(classes() && typeof S === 'object' && S.party && !S.party.chosen && typeof chooseClass === 'function');
+
+  let root = null, pick = 'warden', mode = 'new', lastFocus = null;
+
+  function previewSpec(k) {
+    if (typeof classPreviewSpec === 'function') return classPreviewSpec(k);
+    if (typeof heroSpec !== 'function') return null;
+    // heroSpec() reads S.party.cls; borrow it for this class, then put it back.
+    const prev = S.party.cls;
+    try { S.party.cls = k; return heroSpec(k); } finally { S.party.cls = prev; }
+  }
+  function drawPreview(cv, k) {
+    cv.width = 48; cv.height = 64;
+    const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
+    if (typeof drawCharPreview === 'function') {
+      try { const spec = previewSpec(k); if (spec) { drawCharPreview(cv, spec, 1); return; } } catch (e) { console.error('[lanternfall] class preview', e); }
+    }
+    const im = sprite('create:' + k, SPR.hero, { ...HERO_PAL, 1: TINT[k] || HERO_PAL[1] });
+    const z = Math.max(1, Math.floor(Math.min(cv.width / im.width, cv.height / im.height)));
+    x.drawImage(im, Math.floor((cv.width - im.width * z) / 2), cv.height - im.height * z, im.width * z, im.height * z);
+  }
+
+  function build() {
+    const C = classes();
+    root = el('div', 'create'); root.id = 'createScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
+    const inner = el('div', 'create-in');
+    const h = el('h1', null, mode === 'new' ? 'Who carries the lantern?' : mode === 'mirror' ? 'The mirror shows another path' : 'Choose your path'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', mode === 'new'
+      ? 'You carry the last lantern. Pick who you are, then name yourself.'
+      : mode === 'mirror'
+        ? 'Pick a new class. Your level, gear and upgrades stay with you.'
+        : 'Heroes now have classes. Warden fights like you always have, so one tap keeps things as they are.');
+    const warn = el('p', 'create-warn', 'This choice is for good. Only a rare Mirror of Embers, dropped by bosses deep in the world, lets you change it.');
+    const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero class');
+    const keys = ORDER.filter(k => C[k]).concat(Object.keys(C).filter(k => !ORDER.includes(k)));
+    const btns = keys.map(k => {
+      const c = C[k];
+      const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k;
+      b.setAttribute('role', 'radio');
+      const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
+      const txt = el('div', 'ctxt');
+      const top = el('div', 'ctop'); top.append(el('b', null, c.name || k));
+      if (c.role) top.append(el('span', 'pip r-' + c.role, ROLE_NAME[c.role] || c.role));
+      txt.append(top);
+      if (c.pitch) txt.append(el('div', 'pitch', '"' + c.pitch + '"'));
+      if (c.how) txt.append(el('div', 'how', c.how));
+      if (c.ability) { const ab = el('div', 'ab'); ab.append(el('em', null, c.ability.name + ': '), document.createTextNode(c.ability.desc || '')); txt.append(ab); }
+      if (mode === 'new' && STARTER[k]) txt.append(el('div', 'how', 'Starts with ' + STARTER_NAME[STARTER[k]] + '.'));
+      b.append(fig, txt);
+      b.addEventListener('click', () => select(k));
+      b.addEventListener('keydown', e => {
+        const i = keys.indexOf(k);
+        const d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return; e.preventDefault();
+        const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
+      });
+      cards.append(b);
+      try { drawPreview(cv, k); } catch (e) { console.error('[lanternfall] preview', e); }
+      return b;
+    });
+    function select(k) {
+      pick = k;
+      for (const b of btns) {
+        const on = b.dataset.cls === k;
+        b.setAttribute('aria-checked', String(on)); b.setAttribute('aria-pressed', String(on)); b.tabIndex = on ? 0 : -1;
+      }
+    }
+    inner.append(h, lede, warn, cards);
+    let nameIn = null;
+    if (mode === 'new') {
+      const nf = el('div', 'namefield');
+      const lb = el('label', null, 'Your name'); lb.htmlFor = 'createName';
+      nameIn = el('input'); nameIn.id = 'createName'; nameIn.maxLength = 16; nameIn.autocomplete = 'off';
+      nameIn.value = S.name && S.name !== 'Wanderer' ? S.name.slice(0, 16) : 'Wanderer';
+      nf.append(lb, nameIn); inner.append(nf);
+    }
+    const begin = el('button', 'big forge create-go', mode === 'new' ? 'Begin' : 'Take this path'); begin.type = 'button';
+    begin.addEventListener('click', () => {
+      let name;
+      if (nameIn) name = nameIn.value.replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯]/g, '').trim().slice(0, 16) || 'Wanderer';
+      const wasMode = mode;
+      try { chooseClass(pick, name); } catch (e) { console.error('[lanternfall] chooseClass', e); return; }
+      if (name && S.name !== name) S.name = name;
+      try { save(); } catch (e) {}
+      if (typeof updatePortrait === 'function') updatePortrait();
+      const starter = wasMode === 'new' ? ((S.party.field && S.party.field[0]) || STARTER[pick]) : null;
+      if (starter && JOIN[starter]) showJoin(inner, starter);
+      else { close(); toast(`You walk on as a ${C[pick].name}.`, 'good'); }
+    });
+    inner.append(begin);
+    root.append(inner);
+    select(pick);
+    root.addEventListener('keydown', trapTab);
+    return root;
+  }
+
+  function showJoin(inner, key) {
+    inner.textContent = '';
+    const box = el('div', 'join');
+    box.append(el('div', 'zsub', 'A companion joins'));
+    const h = el('h1', null, STARTER_NAME[key]); h.id = 'createTitle';
+    box.append(h);
+    for (const line of JOIN[key]) box.append(el('p', line.startsWith('"') ? 'join-say' : 'join-line', line));
+    const go = el('button', 'big forge create-go', 'Into the dark'); go.type = 'button';
+    go.addEventListener('click', close);
+    box.append(go); inner.append(box);
+    if (root) root.scrollTop = 0;
+    go.focus();
+  }
+
+  function trapTab(e) {
+    if (e.key !== 'Tab' || !root) return;
+    const f = [...root.querySelectorAll('button, input')].filter(n => !n.disabled && n.tabIndex !== -1);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  function open() {
+    if (root || !needsChoice()) return;
+    // Mirror mode: the class was already chosen earlier in this session (useMirror reopened it).
+    mode = sawChosen && S.party.cls ? 'mirror' : S.party.newGame ? 'new' : 'path';
+    pick = mode === 'mirror' ? S.party.cls : 'warden';
+    if (!classes()[pick]) pick = Object.keys(classes())[0];
+    lastFocus = document.activeElement;
+    document.body.append(build());
+    const sel = root.querySelector('.ccard[aria-checked="true"]');
+    (sel || root.querySelector('button')).focus();
+  }
+  function close() {
+    if (!root) return;
+    root.remove(); root = null;
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
+    ui(true);
+  }
+
+  // Open now if needed, and whenever the choice reopens (a Mirror of Embers).
+  let sawChosen = !!(typeof S === 'object' && S.party && S.party.chosen);
+  setInterval(() => { try { if (S.party && S.party.chosen) sawChosen = true; open(); } catch (e) {} }, 1000);
+  try { open(); } catch (e) { console.error('[lanternfall] create screen', e); }
+}
 
 // ---- src/js/80-online.js ----
 // 80-online: the shared world over the Artifact capabilities (db, user, room): raider
