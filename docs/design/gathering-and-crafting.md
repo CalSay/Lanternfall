@@ -538,3 +538,18 @@ behind a build flag, `CRAFT_STAGE` in `00-util.js` (off, 1 or 2).
    late gear a fighting goal. OK, or keep upgrades to materials and gold only?
 4. **Hide and Essence from fighting only.** Rangers lean on fighting (56% of their materials).
    OK, or add a small Hunting node so an idle gatherer can get Hide too?
+
+## Owner decisions (2026-09-27)
+
+These override the spec above where they conflict.
+
+1. **Random affixes, not Focus.**
+   - Crafted items roll random affix lines from their role's stat pool (tank: Armour, Threat, Block; striker: Attack, Crit, Pierce; caster: Spell power, Area, Control; support: Healing, Ward, Haste; any role: HP).
+   - Rarity sets the number of lines: Common 1, Uncommon 2, Rare 3, Epic 4. Masterwork (a Trophy) adds 1.
+   - Coordinator's call to keep it player-friendly: the Enchanter's Table can **Reforge** one chosen line for essence plus gold, with the cost rising each time on that item. Rarity and base power stay. Drop the Focus mechanic.
+   - Existing items migrate with no affix lines and keep their exact current stats. Only new crafts roll affixes.
+2. **Bench gathering jobs: yes,** as specified (up to 3 slots, about 12% of the hero's rate, materials only, no XP).
+3. **Trophies gate the +8 to +10 upgrades,** as specified.
+4. **Hide and essence stay fight-only.** No Hunting node.
+
+Coordinator note on combat consistency: the party spec does give enemies armour (armoured types, and "ignores armour" abilities), so **Pierce means armour penetration.** Bonus damage against bosses is not needed.
