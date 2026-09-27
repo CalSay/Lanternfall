@@ -98,3 +98,6 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
   Hide has no source until K5, which blocks G1/G2 for three classes. The Oriel hint text in 56c still
   says "The table is not built yet". The T1 sim was already above band (16/26/34) before K6.
 - AR-S scenery merged: 10 themes in B1 at 2x with lanterns, scene.lights, moths; no stage edits.
+- K7 Craft tab merged ("Forge" renamed "Craft", tab id stays `forge`). Coordinator fix: the away report
+  names new item kinds (it used SLOT[slot].n). TODO (small, for K8 or a polish task): the Next Up forge
+  goal still suggests legacy Sword/Helm via SLOTS/craftCost; switch it to class kinds via canCraft/fits.
