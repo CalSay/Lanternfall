@@ -72,3 +72,16 @@ interim B1 for the other 13, 2x stage, portraits, lantern lighting, new art-dire
 AR-S B1 scenery with lanterns in every theme. K6 crafting actions (55-crafting.js; companion gear
 goes live). K7 Craft tab UI. M6 pacing still running. Next: AR2 companion polish per circle file,
 enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune after M6.
+
+## Standing orders from the owner (2026-09-27)
+
+- Keep iterating overnight until the owner says stop (hourly check-in routine at :38).
+- When the current plan is finished, write the next one: play-test the build (sim `--days`, browser
+  screenshots of a new game and the fixture saves), find what is weakest for long-term enjoyment,
+  write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
+- Decisions that belong to the owner (art direction, monetisation, anything irreversible) go under
+  "Waiting on the owner" below instead of being guessed.
+
+## Waiting on the owner
+
+(none yet)
