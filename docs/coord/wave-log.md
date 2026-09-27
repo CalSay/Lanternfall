@@ -220,3 +220,8 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   about 50ms, long tasks, tap about 190-260ms, camp-roster update up to 84ms). The machine was busy
   (BAL1 and PERF2 running), so the numbers are noisy. PERF2 was given these numbers; nothing new is
   started in its files until it lands.
+- PERF2 merged: guarded DOM writes (putText/putStyle/... helpers in 70-ui.js), only visible views
+  update, HP bar via transform, cached stage rect, chunked roster/camp builds, recipe rows reused.
+  Every tab opens under 150ms on the throttled phone; ui() p95 about 3.3ms. Still over budget on phones:
+  steady-fight frame gap (the canvas raster: 63-scenery scales 5 parallax layers per frame; hotspot 7),
+  the boss-kill spike (hotspot 10) and first frame on the late save (hotspot 11). PERF3 launched.

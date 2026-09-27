@@ -78,8 +78,10 @@ button * { pointer-events: none; }
 .bell:hover img, .bell.has img { opacity: 1; }
 .bell-n { position: absolute; top: 5px; right: 3px; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; background: var(--ember); color: #1A1420; font: 700 10px/1 var(--display); box-shadow: 0 2px 0 var(--ember-deep); }
 .bell.ping img { animation: bellPing .5s ease-out; }
+.bell.ping2 img { animation: bellPing2 .5s ease-out; }
 @keyframes bellPing { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
-@media (prefers-reduced-motion: reduce) { .bell.ping img { animation: none; } }
+@keyframes bellPing2 { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
+@media (prefers-reduced-motion: reduce) { .bell.ping img, .bell.ping2 img { animation: none; } }
 /* stage box: the game's main view. It grows to fill the game column (the canvas reads its size;
    62-stage re-lays out on resize), between a floor and a ceiling so the scene keeps its proportions. */
 .stagebox { position: relative; flex: 1 1 auto; min-height: 180px; margin: 2px var(--gut) 0; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; }
@@ -99,8 +101,8 @@ button * { pointer-events: none; }
 .mob-name { font: 600 13px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #F6ECDD; }
 .mob-hp { font: 600 12px var(--display); font-variant-numeric: tabular-nums; color: var(--bone); white-space: nowrap; }
 .hpbar { position: relative; height: 9px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
-.hpbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
-.hpbar > i.trail { background: #FFF3E0; transition: width .45s ease-in .12s; }
+.hpbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: 0 50%; }
+.hpbar > i.trail { background: #FFF3E0; transition: transform .45s ease-in .12s; }
 .hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
 .timer { height: 4px; background: #0B0810; }
 .timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
@@ -11600,9 +11602,19 @@ let resize, animate, draw, stageStats;
     let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l;
     const fl = flick();
     const x = best ? hero._x + best.x : hero._x + f.ox, y = best ? hero._y + best.y : GY - 30;
-    A.lightAt(ctx, '255,176,96', x, y, 115 * fl, 0.2);                          // warm key light over the party
-    ctx.globalAlpha = 0.34 * fl; ctx.drawImage(A.glow('255,190,110'), x - 80, GY - 10, 160, 20);  // pool on the ground
+    A.lightAt(ctx, '255,176,96', x, y, 115 * fl, 0.2);                          // warm key light over the party (its radius flickers)
+    // pool on the ground: a fixed size, so it is scaled once to device pixels and copied 1:1
+    const K = DPR * ZM, p = poolSprite(K);
+    ctx.globalAlpha = 0.34 * fl; ctx.drawImage(p, Math.round((x - 80) * K) / K, Math.round((GY - 10) * K) / K, p.width / K, p.height / K);
     ctx.globalAlpha = 1;
+  }
+  let poolDev = null;
+  function poolSprite(K) {
+    if (poolDev && poolDev.K === K) return poolDev.c;
+    const c = document.createElement('canvas'); c.width = Math.round(160 * K); c.height = Math.round(20 * K);
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(A.glow('255,190,110'), 0, 0, c.width, c.height);
+    poolDev = { K, c };
+    return c;
   }
   const foeFrame = () => {
     const f = foe.fr; if (!f) return null;
@@ -11647,7 +11659,10 @@ let resize, animate, draw, stageStats;
     ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8);
+    // The sky layer is opaque and runs 24 px past each side, so the backdrop fill only matters while a
+    // shake moves it up or down, or when it ends short of the canvas's last device pixels.
+    const sky = scene.layers[0].c;
+    if (sy !== 0 || sky.height * (scene.PX || 1) * K < cv.height) { ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8); }
     drawScene(ctx, scene, camF, 'back');
 
     // smooth under-layer: shadows, boss aura
@@ -12148,11 +12163,17 @@ let resize, animate, draw, stageStats;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
-    const r = stageEl.getBoundingClientRect();
+    const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });
+  // The stage's page rect for taps, read in the ResizeObserver (layout is fresh there) rather than on
+  // every tap, where ui() has just written the DOM and a read would force a layout. A scroll or a
+  // window resize drops it; the next tap reads it again.
+  let stageRect = null;
+  addEventListener('resize', () => { stageRect = null; });
+  addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
-  new ResizeObserver(() => resize()).observe(stageEl);
+  new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
   stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats() });
 }
 
@@ -13049,10 +13070,11 @@ function notePrio(prio, kind) {
 }
 function bellUpdate(ping) {
   const b = $('bellBtn'), n = $('bellN');
-  n.hidden = !notes.unread; n.textContent = notes.unread > 9 ? '9+' : String(notes.unread);
-  b.classList.toggle('has', notes.unread > 0);
-  b.setAttribute('aria-label', notes.unread ? `Notices, ${notes.unread} new` : 'Notices');
-  if (ping && !reduced) { b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping'); }
+  putHidden(n, !notes.unread); putText(n, notes.unread > 9 ? '9+' : String(notes.unread));
+  putToggle(b, 'has', notes.unread > 0);
+  putAttr(b, 'aria-label', notes.unread ? `Notices, ${notes.unread} new` : 'Notices');
+  // Restart the wiggle by swapping between two same-looking animations (no layout read).
+  if (ping && !reduced) { const a = b.classList.contains('ping'); b.classList.toggle('ping', !a); b.classList.toggle('ping2', a); }
 }
 function dropToast(t, how) {
   if (t._gone) return; t._gone = true; clearTimeout(t._timer);
@@ -13084,6 +13106,9 @@ function makeToast(msg, kind, url, p) {
   t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
   return t;
 }
+// The stage box's height, kept by a ResizeObserver so a toast never reads layout.
+let stageBoxH = 0;
+try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offsetHeight; }).observe($('stageBox')); } catch (e) { stageBoxH = 999; }
 function showToast(msg, kind, icon, prio) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
@@ -13098,7 +13123,7 @@ function showToast(msg, kind, icon, prio) {
     notes.unread++; bellUpdate(true); return;
   }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
-  const room = box.classList.contains('over-menu') || $('stageBox').offsetHeight >= 200 ? 2 : 1;
+  const room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   if (live.length >= room) {
     const normals = live.filter(t => t._p < 2);
     if (p < 2) {
@@ -13177,7 +13202,7 @@ function icTile(url, frame, extraCls) {
 }
 function setIc(tile, url, frame, extraCls) {
   const im = tile.querySelector('img'); if (im.getAttribute('src') !== url) im.src = url;
-  tile.className = 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : '');
+  putClass(tile, 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : ''));
 }
 function makeRow(parent, name, ember, iconUrl, icCls) {
   const row = el('div', 'row' + (iconUrl ? ' has-ic' : ''));
@@ -13326,14 +13351,14 @@ function setView(t, id) {
 function viewDots() {
   for (const b of $('viewSeg').children) {
     const v = viewsOf(S.tab).find(x => x.id === b.dataset.view), d = b.querySelector('.vdot');
-    if (d) d.hidden = !(v && v.dot && b.getAttribute('aria-selected') !== 'true' && safeDot(v.dot));
+    if (d) putHidden(d, !(v && v.dot && b.getAttribute('aria-selected') !== 'true' && safeDot(v.dot)));
   }
   document.querySelectorAll('.tab').forEach(tb => {
     const t = tb.dataset.tab;
     let d = tb.querySelector('.dot.vdot');
     if (!d) { d = el('span', 'dot vdot'); d.hidden = true; tb.append(d); }
     const other = tb.querySelector('.dot:not(.vdot):not([hidden])');
-    d.hidden = !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot));
+    putHidden(d, !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot)));
   });
 }
 
@@ -13455,77 +13480,125 @@ $('renameForm').addEventListener('submit', e => {
 });
 
 // ================= UI update =================
-let uiTimer = 0, slowTick = 0, lastPct = 100;
+// Write-on-change helpers for ui() and the other per-tick updaters (5 calls a second). Every DOM
+// write dirties style and layout, and the browser then redoes them in that frame, so equal values
+// are skipped. Style values are cached per element (the browser may reformat them on read).
+function putText(e, t) { t = String(t); if (e.textContent !== t) e.textContent = t; }
+function putStyle(e, prop, v) { const c = e._ps || (e._ps = {}); if (c[prop] !== v) { c[prop] = v; e.style[prop] = v; } }
+function putAttr(e, name, v) { if (e.getAttribute(name) !== v) e.setAttribute(name, v); }
+function putHidden(e, h) { h = !!h; if (e.hidden !== h) e.hidden = h; }
+function putDisabled(e, d) { d = !!d; if (e.disabled !== d) e.disabled = d; }
+function putClass(e, c) { if (e.className !== c) e.className = c; }
+function putToggle(e, c, on_) { on_ = !!on_; if (e.classList.contains(c) !== on_) e.classList.toggle(c, on_); }
+// Is view v of tab t on screen (its menu open and that sub-view picked)?
+const viewOpen = (t, v) => S.tab === t && curView(t) === v;
+
+let uiTimer = 0, slowTick = 0, lastPct = 100, trailRaf = 0;
+// Static HUD nodes, looked up once.
+const hudEl = {};
+for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint']) hudEl[id] = $(id);
+const modeBtns = [...document.querySelectorAll('#modeSeg button')];
+// The foe's HP bar and its white damage trail scale on the compositor (transform: no relayout per
+// hit). A new foe refills both at once: the trail's transition is off for two frames (instead of
+// reading layout to flush it) and then comes back for the next hit.
 function setHp(pct) {
   pct = Math.max(0, Math.min(100, pct));
-  const tr = $('mTrail');
-  if (pct > lastPct + 0.5) { tr.style.transition = 'none'; tr.style.width = pct + '%'; void tr.offsetWidth; tr.style.transition = ''; }
-  else tr.style.width = pct + '%';
-  $('mBar').style.width = pct + '%'; lastPct = pct;
+  const tr = hudEl.mTrail, sc = `scaleX(${pct / 100})`;
+  if (pct > lastPct + 0.5) {
+    putStyle(tr, 'transition', 'none'); cancelAnimationFrame(trailRaf);
+    trailRaf = requestAnimationFrame(() => { trailRaf = requestAnimationFrame(() => { trailRaf = 0; putStyle(tr, 'transition', ''); }); });
+  }
+  putStyle(tr, 'transform', sc);
+  putStyle(hudEl.mBar, 'transform', sc); lastPct = pct;
 }
 function ui(force) {
-  const tg = target();
-  $('hName').textContent = S.name;
-  $('hLvl').textContent = S.L;
-  $('xpFill').style.width = Math.min(100, S.xp / xpNeed() * 100) + '%';
-  $('gold').textContent = fmt(S.gold);
-  $('embers').textContent = fmt(S.embers);
-  document.querySelectorAll('#modeSeg button').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.act === S.activity));
-    if (b.dataset.act === 'raid') b.disabled = !(online.ready && online.canWrite);
-  });
+  const tg = target(), H = hudEl;
+  putText(H.hName, S.name);
+  putText(H.hLvl, S.L);
+  putStyle(H.xpFill, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%');
+  putText(H.gold, fmt(S.gold));
+  putText(H.embers, fmt(S.embers));
+  for (const b of modeBtns) {
+    putAttr(b, 'aria-pressed', String(b.dataset.act === S.activity));
+    if (b.dataset.act === 'raid') putDisabled(b, !(online.ready && online.canWrite));
+  }
 
   if (tg === 'world') {
-    $('zName').textContent = 'The World Raid'; $('zSub').textContent = 'Shared with every hero';
+    putText(H.zName, 'The World Raid'); putText(H.zSub, 'Shared with every hero');
     const hp = worldHp(), mx = online.world ? online.world.maxHp : 1;
-    $('mName').textContent = online.world ? online.world.name : 'World boss';
-    $('mHp').textContent = hp == null ? '...' : `${fmt(hp)} / ${fmt(mx)}`;
+    putText(H.mName, online.world ? online.world.name : 'World boss');
+    putText(H.mHp, hp == null ? '...' : `${fmt(hp)} / ${fmt(mx)}`);
     setHp(hp == null ? 100 : hp / mx * 100);
-    $('mBar').style.background = 'var(--hp)';
-    $('tWrap').hidden = true;
+    putStyle(H.mBar, 'background', 'var(--hp)');
+    putHidden(H.tWrap, true);
   } else if (tg === 'node') {
     const { kind, t } = S.node, sk = S.skills[skillOf(kind)];
-    $('zName').textContent = NODE_NAMES[kind][t - 1];
-    $('zSub').textContent = `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`;
-    $('mName').textContent = matName(kind, t);
-    $('mHp').textContent = `${fmt(S.mats[kind][t - 1])} in pack`;
+    putText(H.zName, NODE_NAMES[kind][t - 1]);
+    putText(H.zSub, `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`);
+    putText(H.mName, matName(kind, t));
+    putText(H.mHp, `${fmt(S.mats[kind][t - 1])} in pack`);
     const sp = Math.min(100, sk.xp / skillNeed(sk.lv) * 100);
     setHp(sp);
-    $('mBar').style.background = 'var(--gold)';
-    $('tWrap').hidden = true;
+    putStyle(H.mBar, 'background', 'var(--gold)');
+    putHidden(H.tWrap, true);
   } else {
-    $('zName').textContent = zoneName(S.zone);
-    $('zSub').textContent = S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared';
+    putText(H.zName, zoneName(S.zone));
+    putText(H.zSub, S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared');
     if (mob) {
-      $('mName').textContent = mob.name;
-      $('mHp').textContent = `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`;
+      putText(H.mName, mob.name);
+      putText(H.mHp, `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`);
       setHp(mob.hp / mob.max * 100);
-      $('mBar').style.background = mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)';
-      $('tWrap').hidden = !mob.boss;
-      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%';
+      putStyle(H.mBar, 'background', mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)');
+      putHidden(H.tWrap, !mob.boss);
+      if (mob.boss) putStyle(H.tBar, 'width', Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%');
     }
   }
-  $('zStep').hidden = tg !== 'mob';
-  $('zNum').textContent = 'Zone ' + S.zone;
-  $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;
-  $('zNext').disabled = tg !== 'mob' || S.zone >= S.maxZone;
-  $('statNums').hidden = tg === 'node';
-  $('sDps').textContent = fmt(totalDps() * (tg === 'world' ? raidMult() : 1));
-  $('sTap').textContent = fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1));
-  $('hint').textContent = tg === 'node' ? 'Tap to work faster' : 'Tap to strike';
+  putHidden(H.zStep, tg !== 'mob');
+  putText(H.zNum, 'Zone ' + S.zone);
+  putDisabled(H.zPrev, tg !== 'mob' || S.zone <= 1);
+  putDisabled(H.zNext, tg !== 'mob' || S.zone >= S.maxZone);
+  putHidden(H.statNums, tg === 'node');
+  putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
+  putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
 
-  if (S.tab === 'adv') uiFight();
+  // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
+  if (viewOpen('adv', 'upgrades')) uiFight();
   if (S.tab === 'gat') uiGather();
-  if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
-  if (S.tab === 'world') uiRaid();
-  if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
+  if (viewOpen('forge', 'uniques') && (force || slowTick <= 0)) uiForge();
+  if (viewOpen('world', 'raid')) uiRaid();
+  if (viewOpen('world', 'tav') && (force || slowTick <= 0)) uiTavern();
   // Sections update while their tab's menu is open and their view is showing (Journal: while the bell sheet shows it).
+  // A section's first update builds its rows; past COLD_MS in this call, the rest wait for warmSections.
+  const t0 = performance.now();
+  let cold = false;
   for (const sec of SECTIONS) {
-    if (!sec.update) continue;
-    const on_ = sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
-    if (on_) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+    if (!sec.update || !secShows(sec)) continue;
+    if (!sec.warm && performance.now() - t0 > COLD_MS) { cold = true; continue; }
+    runSection(sec, force);
   }
+  if (cold && !coldTimer) coldTimer = setTimeout(warmSections, 0);
   if (slowTick <= 0) { slowTick = 1; viewDots(); }
+}
+function secShows(sec) {
+  return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
+}
+function runSection(sec, force) {
+  try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); }
+  sec.warm = true;
+}
+// A tab's first open builds all of its sections: staggered over a few tasks (top first) so no single
+// task stalls the game (docs/design/perf.md). Each task builds sections for up to COLD_MS.
+const COLD_MS = 30;
+let coldTimer = 0;
+function warmSections() {
+  coldTimer = 0;
+  const t0 = performance.now();
+  for (const sec of SECTIONS) {
+    if (sec.warm || !sec.update || !secShows(sec)) continue;
+    if (performance.now() - t0 > COLD_MS) { coldTimer = setTimeout(warmSections, 0); return; }
+    runSection(sec, true);
+  }
 }
 
 // ================= feature UI registries =================
@@ -13604,53 +13677,57 @@ $('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 
 $('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => setActivity(b.dataset.act)));
 
+// Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
+// second, and an unchanged value must not make the browser lay the page out again.
+const amtBtns = [...document.querySelectorAll('#amtSeg button')];
+const gateEl = { title: $('gateTitle'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price'), comp: $('compRows').parentElement };
 function uiFight() {
-  document.querySelectorAll('#amtSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.amt === S.amt)));
-  const gb = $('gateBtn'), gq = gb.querySelector('.qty'), gp = gb.querySelector('.price');
+  for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
+  const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[ZONE_UNIQ[zoneType(S.zone)]].name;
   if (S.activity !== 'fight') {
-    $('gateTitle').textContent = S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering';
-    $('gateDesc').textContent = 'Switch to Fight above the tabs to clear zones and earn gold and essence.';
-    gq.textContent = 'Party'; gp.textContent = 'Fight'; gb.disabled = false;
+    putText(G.title, S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering');
+    putText(G.desc, 'Switch to Fight above the tabs to clear zones and earn gold and essence.');
+    putText(gq, 'Party'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
-    $('gateTitle').textContent = 'Boss fight underway';
-    $('gateDesc').textContent = `${Math.ceil(bossTime)} seconds left. Tap fast.`;
-    gq.textContent = 'Boss'; gp.textContent = 'Fighting'; gb.disabled = true;
+    putText(G.title, 'Boss fight underway');
+    putText(G.desc, `${Math.ceil(bossTime)} seconds left. Tap fast.`);
+    putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
-    $('gateTitle').textContent = 'Rematch this zone\'s boss';
-    $('gateDesc').textContent = `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`;
-    gq.textContent = 'Boss'; gp.textContent = 'Rematch'; gb.disabled = false;
+    putText(G.title, 'Rematch this zone\'s boss');
+    putText(G.desc, `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`);
+    putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
-    $('gateTitle').textContent = bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`;
-    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`;
-    gq.textContent = 'Boss'; gp.textContent = 'Fight'; gb.disabled = !bossReady();
+    putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
+    putText(G.desc, `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
   HERO_UPS.forEach((u, i) => {
     const r = heroRows[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
-    r.own.textContent = 'Lv ' + S[u.id];
-    r.desc.textContent = u.desc();
-    r.qty.textContent = p.n ? 'Buy ' + p.n : 'Maxed';
+    putText(r.own, 'Lv ' + S[u.id]);
+    putText(r.desc, u.desc());
+    putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');
     setPrice(r.btn, p.cost);
-    r.btn.disabled = !(p.n > 0 && S.gold >= p.cost);
+    putDisabled(r.btn, !(p.n > 0 && S.gold >= p.cost));
   });
   // Once the save is on the roster (56-roster.js), companions live in the Party tab.
-  $('compRows').parentElement.hidden = rosterLive();
+  putHidden(G.comp, rosterLive());
   if (rosterLive()) return;
   let teaser = false;
   COMPS.forEach((c, i) => {
     const r = compRows[i];
     const known = S.comp[i] > 0 || S.totalGold >= c.base * 0.3;
-    r.row.hidden = !known && teaser;
+    putHidden(r.row, !known && teaser);
     if (!known) teaser = true;
-    r.row.classList.toggle('locked', !known);
-    r.ic.classList.toggle('ghost', !known);
-    r.nm.textContent = known ? c.name : 'Unknown ally';
-    r.own.textContent = S.comp[i] ? 'x' + S.comp[i] : '';
-    r.desc.textContent = known ? `${fmt(compDpsOne(i))} DPS each. ${c.blurb}` : `Earn ${fmt(c.base * 0.3)} gold in total to meet them.`;
+    putToggle(r.row, 'locked', !known);
+    putToggle(r.ic, 'ghost', !known);
+    putText(r.nm, known ? c.name : 'Unknown ally');
+    putText(r.own, S.comp[i] ? 'x' + S.comp[i] : '');
+    putText(r.desc, known ? `${fmt(compDpsOne(i))} DPS each. ${c.blurb}` : `Earn ${fmt(c.base * 0.3)} gold in total to meet them.`);
     const p = plan(c.base, 1.15, S.comp[i], S.gold);
-    r.qty.textContent = 'Hire ' + p.n;
+    putText(r.qty, 'Hire ' + p.n);
     setPrice(r.btn, p.cost);
-    r.btn.disabled = !known || S.gold < p.cost;
+    putDisabled(r.btn, !known || S.gold < p.cost);
   });
 }
 
@@ -13722,34 +13799,42 @@ const trophyCells = [];
   $('matGrid').nextElementSibling.textContent = 'Hide and essence drop from monsters while you fight. Higher zones drop better tiers. Champions and zone bosses leave Trophies.';
 }
 
+// Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
+// switch calls ui(true), so a view is fresh as soon as it shows).
+const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
 function uiGather() {
-  for (const c of skillCards) {
-    const sk = S.skills[c.k];
-    c.lv.textContent = 'Lv ' + sk.lv;
-    c.bar.style.width = Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%';
+  const view = curView('gat'), nodeView = view !== 'pack';
+  if (nodeView) {
+    for (const c of skillCards) {
+      const sk = S.skills[c.k];
+      putText(c.lv, 'Lv ' + sk.lv);
+      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
+    }
+    const home = homeFamily(), hb = homeBonus(home);
+    putText(homeNote, `Camp: ${zoneName(S.zone)}. ${MAT[home].n} gathered here gives +${Math.round(hb * 100)}%.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars here make it +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
   }
-  const home = homeFamily(), hb = homeBonus(home);
-  homeNote.textContent = `Camp: ${zoneName(S.zone)}. ${MAT[home].n} gathered here gives +${Math.round(hb * 100)}%.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars here make it +${CRAFT_HOME_BONUS.starred * 100}%.` : '');
   for (const kind of GATHER_KINDS) {
+    if (NODE_VIEW[NODE_BOX[kind]] !== view) continue;
     const lv = S.skills[skillOf(kind)].lv, ym = mod('yield:' + kind), hk = homeBonus(kind);
     nodeRows[kind].forEach((r, i) => {
       const t = i + 1, req = NODE_REQ[i], open = lv >= req;
       const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
       const prevOpen = i === 0 || lv >= NODE_REQ[i - 1];
-      r.row.hidden = !open && !prevOpen;
-      r.row.classList.toggle('locked', !open);
-      r.row.classList.toggle('active', here);
-      r.ic.classList.toggle('ghost', !open);
-      r.own.textContent = open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`;
+      putHidden(r.row, !open && !prevOpen);
+      putToggle(r.row, 'locked', !open);
+      putToggle(r.row, 'active', here);
+      putToggle(r.ic, 'ghost', !open);
+      putText(r.own, open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`);
       const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
-      r.desc.textContent = open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute${hk ? ` · home +${Math.round(hk * 100)}%` : ''}` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`;
-      r.qty.textContent = here ? 'Working' : open ? NODE_VERB[kind] : 'Locked';
-      r.btn.querySelector('.price').textContent = here ? '...' : open ? 'Go' : `Lv ${req}`;
-      r.btn.disabled = !open || here;
+      putText(r.desc, open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute${hk ? ` · home +${Math.round(hk * 100)}%` : ''}` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`);
+      putText(r.qty, here ? 'Working' : open ? NODE_VERB[kind] : 'Locked');
+      putText(r.price || (r.price = r.btn.querySelector('.price')), here ? '...' : open ? 'Go' : `Lv ${req}`);
+      putDisabled(r.btn, !open || here);
     });
   }
-  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; n.textContent = fmt(v); c.classList.toggle('none', !v); });
-  trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; n.textContent = fmt(v); c.classList.toggle('none', !v); });
+  if (view !== 'pack') return;
+  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
+  trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
 }
 
 // ---- src/js/73-ui-forge.js ----
@@ -13775,13 +13860,13 @@ function renderTrophies() {
   let n = 0;
   for (const [key, u] of Object.entries(UNIQ)) {
     const f = S.found[key], e = trophyEls[key]; if (f) n++;
-    e.c.className = 'trophy' + (f ? ' found' : '');
+    putClass(e.c, 'trophy' + (f ? ' found' : ''));
     setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
-    e.tn.textContent = f ? u.name : '???'; e.tn.className = 'tn' + (f ? ' rar-legendary' : '');
-    e.ts1.textContent = f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src;
-    e.ts2.textContent = f ? u.txt : 'Not found yet';
+    putText(e.tn, f ? u.name : '???'); putClass(e.tn, 'tn' + (f ? ' rar-legendary' : ''));
+    putText(e.ts1, f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src);
+    putText(e.ts2, f ? u.txt : 'Not found yet');
   }
-  $('trophyCount').textContent = `${n} / ${Object.keys(UNIQ).length} uniques`;
+  putText($('trophyCount'), `${n} / ${Object.keys(UNIQ).length} uniques`);
 }
 
 function uiForge() { renderTrophies(); }
@@ -13799,50 +13884,50 @@ const relicRows = RELICS.map(u => {
 function uiRaid() {
   const w = online.world;
   if (!online.ready) {
-    $('rGen').textContent = 'World raid';
-    $('rName').textContent = online.checked ? 'The shared world is out of reach' : 'Finding the shared world...';
-    $('rNote').textContent = online.checked
+    putText($('rGen'), 'World raid');
+    putText($('rName'), online.checked ? 'The shared world is out of reach' : 'Finding the shared world...');
+    putText($('rNote'), online.checked
       ? 'Raids, the leaderboard and the tavern work when this game is opened from its Claude link while signed in. Your adventure still saves on this device.'
-      : 'Connecting to the other heroes.';
-    $('rNote').className = 'note' + (online.checked ? ' warn' : '');
-    $('marchBtn').disabled = true; $('hornCard').hidden = true; $('rLootBox').hidden = true;
+      : 'Connecting to the other heroes.');
+    putClass($('rNote'), 'note' + (online.checked ? ' warn' : ''));
+    putDisabled($('marchBtn'), true); putHidden($('hornCard'), true); putHidden($('rLootBox'), true);
   } else {
-    $('rGen').textContent = w ? `Raid #${w.gen}` : 'World raid';
-    $('rName').textContent = w ? w.name : 'A new boss is rising...';
+    putText($('rGen'), w ? `Raid #${w.gen}` : 'World raid');
+    putText($('rName'), w ? w.name : 'A new boss is rising...');
     const hp = worldHp();
-    $('rBar').style.width = w && hp != null ? (hp / w.maxHp * 100) + '%' : '100%';
-    $('rHp').textContent = w && hp != null ? `${fmt(hp)} / ${fmt(w.maxHp)}` : '-';
-    $('rCount').textContent = raiderCount();
+    putStyle($('rBar'), 'width', w && hp != null ? (hp / w.maxHp * 100) + '%' : '100%');
+    putText($('rHp'), w && hp != null ? `${fmt(hp)} / ${fmt(w.maxHp)}` : '-');
+    putText($('rCount'), raiderCount());
     const mine = w && S.raid.gen === w.gen ? S.raid.dmg : 0, share = w ? Math.min(1, mine / w.maxHp) : 0;
-    $('rMine').textContent = fmt(mine);
-    $('rShare').textContent = (share * 100).toFixed(1) + '%';
-    $('rLootBox').hidden = !w;
+    putText($('rMine'), fmt(mine));
+    putText($('rShare'), (share * 100).toFixed(1) + '%');
+    putHidden($('rLootBox'), !w);
     if (w) {
       const key = RAID_UNIQ[(w.gen - 1) % RAID_UNIQ.length], u = UNIQ[key];
       const ch = share >= 0.25 ? 100 : mine > 0 ? Math.min(100, (0.35 + share * 2) * 100) : 0;
       setIc($('rLootIc'), itemIcon(u.slot, Math.min(5, w.gen), key), 'legendary');
-      $('rLoot').textContent = `Drops ${u.name}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`;
+      putText($('rLoot'), `Drops ${u.name}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`);
     }
-    $('rNote').className = 'note' + (online.canWrite ? '' : ' warn');
-    $('rNote').textContent = online.canWrite
+    putClass($('rNote'), 'note' + (online.canWrite ? '' : ' warn'));
+    putText($('rNote'), online.canWrite
       ? 'Everyone who opens Lanternfall fights the same boss. When it falls, each raider earns Embers for their share of the damage.'
-      : 'You can watch this raid. To join it, ask the game\'s owner for Contributor access.';
-    $('marchBtn').disabled = !online.canWrite;
-    $('marchBtn').textContent = S.activity === 'raid' ? 'Return to fighting zones' : 'March to the raid';
-    $('marchBtn').className = 'big' + (S.activity === 'raid' ? ' home' : '');
-    $('hornCard').hidden = !online.room || !online.hornOk;
+      : 'You can watch this raid. To join it, ask the game\'s owner for Contributor access.');
+    putDisabled($('marchBtn'), !online.canWrite);
+    putText($('marchBtn'), S.activity === 'raid' ? 'Return to fighting zones' : 'March to the raid');
+    putClass($('marchBtn'), 'big' + (S.activity === 'raid' ? ' home' : ''));
+    putHidden($('hornCard'), !online.room || !online.hornOk);
     const cd = Math.max(0, 90 - (Date.now() - (online.hornAt || 0)) / 1000);
-    $('hornBtn').disabled = cd > 0 || S.activity !== 'raid';
-    $('hornBtn').textContent = S.activity !== 'raid' ? 'March to the raid to use the horn' : cd > 0 ? `Horn recovers in ${Math.ceil(cd)}s` : 'Sound the war horn';
+    putDisabled($('hornBtn'), cd > 0 || S.activity !== 'raid');
+    putText($('hornBtn'), S.activity !== 'raid' ? 'March to the raid to use the horn' : cd > 0 ? `Horn recovers in ${Math.ceil(cd)}s` : 'Sound the war horn');
   }
   RELICS.forEach((u, i) => {
     const r = relicRows[i], lv = S.relic[u.id], maxed = u.cap !== undefined && lv >= u.cap;
     const cost = u.base * Math.pow(u.r, lv);
-    r.own.textContent = 'Lv ' + lv;
-    r.desc.textContent = u.desc();
-    r.qty.textContent = maxed ? 'Maxed' : 'Forge';
+    putText(r.own, 'Lv ' + lv);
+    putText(r.desc, u.desc());
+    putText(r.qty, maxed ? 'Maxed' : 'Forge');
     setPrice(r.btn, maxed ? Infinity : cost, true);
-    r.btn.disabled = maxed || S.embers < cost;
+    putDisabled(r.btn, maxed || S.embers < cost);
   });
 }
 
@@ -13853,20 +13938,25 @@ let boardSig = '';
 async function uiTavern() {
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
 
-  const box = $('online'); box.textContent = '';
+  const box = $('online');
   const seen = new Set(), list = [];
   for (const p of online.peers) {
     if (p.kind !== 'viewer' || !p.presence || !p.presence.hero || seen.has(p.peer)) continue;
     seen.add(p.peer); list.push(p);
   }
-  if (!online.room) box.append(el('span', 'note', online.checked ? 'The tavern opens when you play from the game\'s Claude link.' : 'Opening the tavern doors...'));
-  else if (list.length <= 1) box.append(el('span', 'note', 'Only you so far. Share the game link and others will show up here.'));
-  if (online.room) for (const p of list) {
-    const act = p.presence.act || (p.presence.raiding ? 'raid' : 'fight');
-    const c = el('span', 'pchip ' + act);
-    const what = act === 'raid' ? 'raiding' : act === 'gather' ? 'gathering' : 'zone ' + (+p.presence.zone || 1);
-    c.append(el('i'), el('span', null, String(p.presence.hero).slice(0, 18) + (p.sameTab ? ' (you)' : '')), el('small', null, `Lv ${+p.presence.lvl || 1} · ${what}`));
-    box.append(c);
+  // Rebuild the chips only when who is here (or what they are doing) changes.
+  const chipSig = JSON.stringify([!!online.room, online.checked, list.map(p => [p.peer, p.sameTab, p.presence.hero, p.presence.act, p.presence.raiding, p.presence.zone, p.presence.lvl])]);
+  if (box._sig !== chipSig) {
+    box._sig = chipSig; box.textContent = '';
+    if (!online.room) box.append(el('span', 'note', online.checked ? 'The tavern opens when you play from the game\'s Claude link.' : 'Opening the tavern doors...'));
+    else if (list.length <= 1) box.append(el('span', 'note', 'Only you so far. Share the game link and others will show up here.'));
+    if (online.room) for (const p of list) {
+      const act = p.presence.act || (p.presence.raiding ? 'raid' : 'fight');
+      const c = el('span', 'pchip ' + act);
+      const what = act === 'raid' ? 'raiding' : act === 'gather' ? 'gathering' : 'zone ' + (+p.presence.zone || 1);
+      c.append(el('i'), el('span', null, String(p.presence.hero).slice(0, 18) + (p.sameTab ? ' (you)' : '')), el('small', null, `Lv ${+p.presence.lvl || 1} · ${what}`));
+      box.append(c);
+    }
   }
 
   const rows = online.raiders.slice().sort((a, b) => (b.L || 0) - (a.L || 0) || (b.maxZone || 0) - (a.maxZone || 0)).slice(0, 25);
@@ -14460,11 +14550,11 @@ let showAwayReport;
     bar.append(fill); w.append(bar, txt);
     return {
       el: w, set(x) {
-        w.hidden = !x; if (!x) return;
+        putHidden(w, !x); if (!x) return;
         const p = x.start ? Math.min(100, (Date.now() - x.start) / Math.max(1, x.end - x.start) * 100) : 0;
-        fill.style.width = p + '%';
+        putStyle(fill, 'width', p + '%');
         setTxt(txt, x.start ? `Lv ${x.to} ready in ${dur(left(x))}` : `Lv ${x.to} is queued. It starts when the builder is free.`);
-        w.classList.toggle('queued', !x.start);
+        putToggle(w, 'queued', !x.start);
       }
     };
   }
@@ -14485,15 +14575,15 @@ let showAwayReport;
     return {
       el: box, set(c, pend) {
         const done = c.max;
-        go.hidden = !!pend || done || !!c.need; cancel.hidden = !pend;
+        putHidden(go, !!pend || done || !!c.need); putHidden(cancel, !pend);
         if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build';
           setTxt(go, isArmed('b:' + id) ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
-          go.disabled = !c.ok; go.classList.toggle('armed', isArmed('b:' + id));
+          putDisabled(go, !c.ok); putToggle(go, 'armed', isArmed('b:' + id));
         }
         const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? 'Not enough yet.' : c.why);
-        setTxt(why, w); why.hidden = !w;
+        setTxt(why, w); putHidden(why, !w);
       }
     };
   }
@@ -14523,26 +14613,26 @@ let showAwayReport;
     },
     update() {
       const open = campOpen();
-      closed.hidden = open; hearthCard.hidden = !open; buildersBox.hidden = !open;
+      putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
         setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
-        closedBar.style.width = Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%';
+        putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
       const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
       setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
       setTxt(H.lv, `Hearth ${l}/10 · ${campBuilders()} builder${campBuilders() > 1 ? 's' : ''}`);
       setTxt(H.fx, campEffects('hearth', l).join(' · '));
-      H.next.hidden = !nx;
+      putHidden(H.next, !nx);
       if (nx) {
         const rename = nx.name !== CAMP_HEARTH_NAMES[l - 1] ? `: the ${nx.name}` : '';
         setTxt(H.nextT, `Next: Hearth ${nx.to}${rename}` + (S.maxZone < nx.zone ? ` (needs zone ${nx.zone})` : ''));
         setTxt(H.nextO, nx.opens.length ? 'Opens ' + nx.opens.join(', ') + '.' : `+3% away gains.`);
       }
-      H.costs.hidden = !!pend || !!c.max;
+      putHidden(H.costs, !!pend || !!c.max);
       if (!pend && !c.max && c.cost) chips(H.costs, c.cost);
       H.timer.set(pend); H.act.set(c, pend);
-      hearthCard.classList.toggle('new', S.camp.news.some(x => x.id === 'hearth'));
+      putToggle(hearthCard, 'new', S.camp.news.some(x => x.id === 'hearth'));
       // builders
       const rows = [], n = campBuilders(), all = campBuilds();
       for (let b = 0; b < n; b++) {
@@ -14565,11 +14655,11 @@ let showAwayReport;
         const r = rows[i]; if (!r) return;
         const who = n > 1 ? `Builder ${i + 1}: ` : '';
         setTxt(row._t, r.run ? `${who}${bname(r.run.id, r.run.to)} · ${dur(left(r.run))}` : `${who}Free. Pick a building below.`);
-        row._bar.hidden = !r.run;
-        if (r.run) row._fill.style.width = Math.min(100, (Date.now() - r.run.start) / Math.max(1, r.run.end - r.run.start) * 100) + '%';
+        putHidden(row._bar, !r.run);
+        if (r.run) putStyle(row._fill, 'width', Math.min(100, (Date.now() - r.run.start) / Math.max(1, r.run.end - r.run.start) * 100) + '%');
         setTxt(row._q, r.q ? `Next: ${bname(r.q.id, r.q.to)}` : r.run ? 'Queue empty. You can queue one build.' : '');
-        row._q.hidden = !row._q.textContent;
-        row.classList.toggle('idle', !r.run);
+        putHidden(row._q, !row._q.textContent);
+        putToggle(row, 'idle', !r.run);
       });
     }
   });
@@ -14625,7 +14715,7 @@ let showAwayReport;
     id: 'camp-buildings', title: 'Buildings',
     mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },
     update() {
-      const sec = listBox.parentNode; sec.hidden = !campOpen(); if (!campOpen()) return;
+      const sec = listBox.parentNode; putHidden(sec, !campOpen()); if (!campOpen()) return;
       const ids = campList().filter(x => x !== 'hearth');
       const sig = ids.join();
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
@@ -14636,14 +14726,14 @@ let showAwayReport;
           : c.max ? campEffects(id, l).join(' · ')
           : `Lv ${c.to}: ${campEffects(id, c.to).filter(x => !campEffects(id, l).includes(x)).join(' · ') || campEffects(id, c.to)[0]}` + (c.need ? ` · needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}` : '');
         setTxt(k.line, line);
-        k.dot.hidden = !c.ok || !!pend;
-        k.w.classList.toggle('locked', !!c.need && !l);
-        k.w.classList.toggle('busy', !!pend);
-        k.w.classList.toggle('new', S.camp.news.some(x => x.id === id));
-        k.row.setAttribute('aria-expanded', String(isOpen)); k.body.hidden = !isOpen;
+        putHidden(k.dot, !c.ok || !!pend);
+        putToggle(k.w, 'locked', !!c.need && !l);
+        putToggle(k.w, 'busy', !!pend);
+        putToggle(k.w, 'new', S.camp.news.some(x => x.id === id));
+        putAttr(k.row, 'aria-expanded', String(isOpen)); putHidden(k.body, !isOpen);
         if (!isOpen) continue;
         effectsTable(k, id, l);
-        k.costs.hidden = !!pend || !!c.max || !c.cost;
+        putHidden(k.costs, !!pend || !!c.max || !c.cost);
         if (!k.costs.hidden) chips(k.costs, c.cost);
         k.tm.set(pend); k.act.set(c, pend);
         extras(k, id);
@@ -14658,7 +14748,7 @@ let showAwayReport;
     mount(sec) { blessNote = el('p', 'note'); blessBox = el('div', 'bless-grid'); sec.append(blessNote, blessBox); },
     update() {
       const sec = blessBox.parentNode, n = blessSlots();
-      sec.hidden = !campOpen() || n < 1; if (sec.hidden) return;
+      putHidden(sec, !campOpen() || n < 1); if (sec.hidden) return;
       const ids = Object.keys(CAMP_BLESS).filter(blessOpen), on = S.camp.bless, sw = blessCanSwap();
       setTxt(blessNote, `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Tap one to choose it. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
       const sig = JSON.stringify([ids, on, blessPower(), sw.ok]);
@@ -14667,7 +14757,7 @@ let showAwayReport;
         const d = CAMP_BLESS[id], b = btn('bless' + (on.includes(id) ? ' on' : ''));
         b.setAttribute('aria-pressed', String(on.includes(id)));
         b.append(el('b', null, d.n), el('span', null, d.fx(d.v * blessPower())));
-        b.disabled = !sw.ok;
+        putDisabled(b, !sw.ok);
         b.addEventListener('click', () => { blessToggle(id); ui(true); });
         blessBox.append(b);
       }
@@ -14688,28 +14778,39 @@ let showAwayReport;
     mount(sec) { rosNote = el('p', 'note'); rosBox = el('div', 'ros-list'); sec.append(rosNote, rosBox); },
     update() {
       const sec = rosBox.parentNode, live = campOpen() && rosterLive();
-      sec.hidden = !live; if (!live) return;
+      putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
       setTxt(rosNote, list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.');
       const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
       if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
-      for (const x of list) {
-        const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
-        const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
-        const body = el('div', 'ros-body');
-        const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
-        const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
-        body.append(nm, st);
-        const acts = el('div', 'ros-acts');
-        if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
-        for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
-        const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
-        row.append(pt, body, acts);
-        rosBox.append(row);
-      }
+      // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open
+      // never stalls the game. A newer rebuild wins.
+      const gen = ++rosGen, queue = list.slice();
+      const chunk = () => {
+        if (gen !== rosGen) return;
+        const t0 = performance.now();
+        while (queue.length && performance.now() - t0 < 20) rosRow(queue.shift());
+        if (queue.length) setTimeout(chunk, 0);
+      };
+      chunk();
     }
   });
+  let rosGen = 0;
+  function rosRow(x) {
+    const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
+    const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
+    const body = el('div', 'ros-body');
+    const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
+    const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
+    body.append(nm, st);
+    const acts = el('div', 'ros-acts');
+    if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
+    for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
+    const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
+    row.append(pt, body, acts);
+    rosBox.append(row);
+  }
 
   // ---------------- tab dot, Go buttons, "finished" glow ----------------
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
@@ -15253,13 +15354,13 @@ let craftUI = null;
       initState(); syncGoalPick();
       for (const s of STATION_KEYS) {
         const e = stEls[s], sk = S.skills[skillOfSt(s)] || { lv: 1, xp: 0 };
-        e.b.setAttribute('aria-pressed', String(st8.st === s));
-        e.lv.textContent = `Lv ${sk.lv}`;
-        e.fill.style.width = Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%';
+        putAttr(e.b, 'aria-pressed', String(st8.st === s));
+        putText(e.lv, `Lv ${sk.lv}`);
+        putStyle(e.fill, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
       }
       const sk = skillOfSt(st8.st), s = S.skills[sk] || { lv: 1, xp: 0 };
       const next = CRAFT_STATION_REQ.find(r => r > s.lv);
-      stEls.info.textContent = `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.');
+      putText(stEls.info, `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.'));
     }
   });
 
@@ -15350,58 +15451,74 @@ let craftUI = null;
       const mwRow = el('div', 'cf-mw');
       const list = el('div', 'cf-list');
       sec.append(filt, tiers, mwRow, list);
-      rec = { filt, tiers, mwRow, list, sig: '' };
+      rec = { filt, tiers, mwRow, list, sig: '', mwSig: null, rows: {} };
     },
     update(force) {
       initState();
       const st = st8.st, t = st8.tier[st] || 1, lv = lvOf(skillOfSt(st));
-      rec.filt.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === st8.filt)));
-      rec.tiers.querySelectorAll('button').forEach(b => {
+      for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
+      for (const b of rec.tiers.children) {
         const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = lv >= req;
-        b.setAttribute('aria-pressed', String(i === t)); b.classList.toggle('locked', !open);
-        b.querySelector('small').textContent = open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`;
-      });
+        putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
+        putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
+      }
+      if (!force && busy()) return;   // never swap a row under the player's finger
       const tr = troph();
-      const w = wearers();
-      const sig = [st, t, st8.filt, st8.mw, JSON.stringify(st8.role), st8.focus, CRAFT_FAMILIES.map(f => S.mats[f][t - 1]).join(), lv, bagCount(), heroWho(),
-        JSON.stringify(S.equip), [...w.keys()].join(), tr.join(), roster().join(), (S.party && S.party.field || []).join(), typeof craftItem, typeof canCraft].join('|');
-      if (!force && (sig === rec.sig || busy())) return;
-      rec.sig = sig;
-      // Masterwork picker: only when the player has a trophy.
-      rec.mwRow.textContent = '';
+      // Masterwork picker: only when the player has a trophy. Rebuilt when the trophies or the pick change.
       if (st8.mw != null && !(tr[st8.mw] > 0)) st8.mw = null;
-      if (tr.some(n => n > 0)) {
-        rec.mwRow.append(el('span', 'cf-lbl', 'Masterwork'));
-        const seg = el('div', 'cf-chips');
-        const add = (i, label, icon) => {
-          const b = el('button', 'cf-chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(st8.mw === i));
-          if (icon) b.append(img(icon)); b.append(el('span', null, label));
-          b.addEventListener('click', () => { st8.mw = i; ui(true); });
-          seg.append(b);
-        };
-        add(null, 'None');
-        tr.forEach((n, i) => { if (n > 0) add(i, `${CRAFT_TROPHIES[i].n} ${n}`, troIcon(i)); });
-        rec.mwRow.append(seg);
-        if (st8.mw != null) {
-          const m = CRAFT_TROPHIES[st8.mw].mw;
-          rec.mwRow.append(el('p', 'note', `Adds 1 gold bonus line: ${CRAFT_STATS[m.gear].n}${m.tool ? ` (${CRAFT_STATS[m.tool].n} on tools)` : ' (not on tools)'}. Uses the trophy.`));
+      const mwSig = tr.join() + '|' + st8.mw;
+      if (mwSig !== rec.mwSig) {
+        rec.mwSig = mwSig;
+        rec.mwRow.textContent = '';
+        if (tr.some(n => n > 0)) {
+          rec.mwRow.append(el('span', 'cf-lbl', 'Masterwork'));
+          const seg = el('div', 'cf-chips');
+          const add = (i, label, icon) => {
+            const b = el('button', 'cf-chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(st8.mw === i));
+            if (icon) b.append(img(icon)); b.append(el('span', null, label));
+            b.addEventListener('click', () => { st8.mw = i; ui(true); });
+            seg.append(b);
+          };
+          add(null, 'None');
+          tr.forEach((n, i) => { if (n > 0) add(i, `${CRAFT_TROPHIES[i].n} ${n}`, troIcon(i)); });
+          rec.mwRow.append(seg);
+          if (st8.mw != null) {
+            const m = CRAFT_TROPHIES[st8.mw].mw;
+            rec.mwRow.append(el('p', 'note', `Adds 1 gold bonus line: ${CRAFT_STATS[m.gear].n}${m.tool ? ` (${CRAFT_STATS[m.tool].n} on tools)` : ' (not on tools)'}. Uses the trophy.`));
+          }
         }
       }
-      rec.list.textContent = '';
+      // The list is built once per station, tier, filter and recipe set. After that a row is rebuilt
+      // only when what it shows changes (materials, can craft, who it beats, ...): see rowSig.
       let ks = listFor(st, st8.filt);
-      if (!ks.length && st8.filt !== 'all') {
-        rec.list.append(el('p', 'note', st8.filt === 'party' ? `Nothing at the ${CRAFT_STATIONS[st].n} fits your companions yet.` : `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
-        ks = [];
-      }
-      for (const k of ks) rec.list.append(recipeRow(k, t));
-      if (st8.filt === 'you' && ks.length) {
-        const extra = listFor(st, 'all').length - ks.length;
+      const extra = st8.filt === 'you' && ks.length ? listFor(st, 'all').length - ks.length : 0;
+      const sig = [st, t, st8.filt, ks.join(), extra, typeof craftItem, typeof canCraft].join('|');
+      if (sig !== rec.sig) {
+        rec.sig = sig; rec.rows = {};
+        rec.list.textContent = '';
+        if (!ks.length && st8.filt !== 'all') {
+          rec.list.append(el('p', 'note', st8.filt === 'party' ? `Nothing at the ${CRAFT_STATIONS[st].n} fits your companions yet.` : `Nothing at the ${CRAFT_STATIONS[st].n} fits your class. See All, or try another station.`));
+          ks = [];
+        }
+        for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
         if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes and companions. Tap All to see them.`));
+      } else {
+        for (const k of ks) {
+          const r = rec.rows[k], rs = rowSig(k, t);
+          if (!r || r.sig === rs) continue;
+          const row = recipeRow(k, t); r.row.replaceWith(row); r.row = row; r.sig = rs;
+        }
       }
       if (!ks.length) return;
       if (!rec.list.querySelector('#forgeBtn')) { const b = rec.list.querySelector('.cf-go'); if (b) b.id = 'forgeBtn'; }
     }
   });
+  // Everything recipeRow(k, t) shows that can change while the list stays the same.
+  function rowSig(k, t) {
+    const can = canDo(k, t), mw = mwFor(k);
+    const cost = Object.entries(kindCost(k, t)).map(([f, n]) => { const h = S.mats[f][t - 1]; return fmt(h) + (h < n ? '<' : '/') + fmt(n); }).join();
+    return JSON.stringify([can.ok, can.why || '', st8.focus === k, subFor(k), beats(k, t), cost, mw, mw != null ? troph()[mw] || 0 : 0, CRAFT_KINDS[k].role === 'any' ? roleFor(k) : '']);
+  }
 
   // ================= Enchanter's Table extras =================
   let ench = null;
@@ -15444,7 +15561,7 @@ let craftUI = null;
     },
     update(force) {
       initState();
-      ench.sec.hidden = st8.st !== 'ench';
+      putHidden(ench.sec, st8.st !== 'ench');
       if (ench.sec.hidden) return;
       const { fam, t } = st8.tm, have = S.mats[fam], f = K6.transmute(), lv = lvOf('ench');
       const sig = [fam, t, have.join(), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
@@ -15548,10 +15665,10 @@ let craftUI = null;
     },
     update(force) {
       const n = bagCount();
-      bag.count.textContent = `${n} / ${CRAFT_BAG_MAX} spare`;
-      bag.count.classList.toggle('full', n >= CRAFT_BAG_MAX);
-      bag.filt.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === st8.bfilt)));
-      bag.sort.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === st8.sort)));
+      putText(bag.count, `${n} / ${CRAFT_BAG_MAX} spare`);
+      putToggle(bag.count, 'full', n >= CRAFT_BAG_MAX);
+      for (const b of bag.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.bfilt));
+      for (const b of bag.sort.children) putAttr(b, 'aria-pressed', String(b.dataset.s === st8.sort));
       const w = wearers();
       const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0)).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
@@ -16622,14 +16739,14 @@ let openSheet, partySheet;
   function updateXp() {
     const r = refs.xp; if (!r) return;
     const x = xpInfo(r.k); if (!x) return;
-    r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
-    r.bar.classList.toggle('cap', x.atCap);
+    putStyle(r.fill, 'width', (x.pct * 100).toFixed(1) + '%');
+    putToggle(r.bar, 'cap', x.atCap);
     const bits = [];
     if (x.atCap) bits.push(x.maxRank ? 'Highest rank reached.' : 'At the level cap. Promote to keep growing.');
     else bits.push(`${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`);
     if (!inField(r.k)) bits.push('Earns XP only while fighting.');
     else if (x.catchUp > 0) bits.push(`+${Math.round(x.catchUp * 100)}% XP to catch up.`);
-    r.note.textContent = bits.join(' ');
+    putText(r.note, bits.join(' '));
   }
 
   function kitSection(k) {
@@ -16880,8 +16997,8 @@ let openSheet, partySheet;
     const s = sigOf(who);
     if (!force && s === sig) {
       updateXp();
-      if (refs.dps && who !== 'hero') refs.dps.textContent = fmt(safe(() => charDps(who), 0));
-      if (refs.heroXp) { refs.heroXp.style.width = Math.min(100, S.xp / xpNeed() * 100) + '%'; refs.heroXpTxt.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`; }
+      if (refs.dps && who !== 'hero') putText(refs.dps, fmt(safe(() => charDps(who), 0)));
+      if (refs.heroXp) { putStyle(refs.heroXp, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%'); putText(refs.heroXpTxt, `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`); }
       return;
     }
     sig = s;
@@ -17057,9 +17174,9 @@ let openSheet, partySheet;
     setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
     if (r.cdBar) {
       const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
-      r.cdBar.style.width = (100 - Math.min(100, left / cdMax * 100)) + '%';
+      putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
       setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
-      r.cast.disabled = left > 0 || typeof castAbility !== 'function';
+      putDisabled(r.cast, left > 0 || typeof castAbility !== 'function');
     }
   }
 
@@ -17117,18 +17234,18 @@ let openSheet, partySheet;
     for (const r of compRefs) {
       const x = xpInfo(r.k); if (!x) continue;
       setT(r.lv, `Lv ${x.r.lv}/${x.cap} · ${ROSTER_RANKS[x.r.rank]}`);
-      r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
-      r.bar.classList.toggle('cap', x.atCap);
-      r.bar.title = x.atCap ? 'At the level cap' : `${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`;
+      putStyle(r.fill, 'width', (x.pct * 100).toFixed(1) + '%');
+      putToggle(r.bar, 'cap', x.atCap);
+      putAttr(r.bar, 'title', x.atCap ? 'At the level cap' : `${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`);
       const cu = Math.round(x.catchUp * 100);
-      r.badge.hidden = !(cu > 0) || x.atCap; setT(r.badge, `+${cu}% XP`);
+      putHidden(r.badge, !(cu > 0) || x.atCap); setT(r.badge, `+${cu}% XP`);
       const showP = x.atCap && !x.maxRank;
-      r.prom.hidden = !showP;
+      putHidden(r.prom, !showP);
       if (showP) {
         const pc = promoteCost(r.k), ps = pc.gold + ':' + canPromote(r.k);
         if (ps !== r.pSig) { r.pSig = ps; setPrice(r.prom, pc.gold); r.prom.disabled = !canPromote(r.k); r.prom.title = costText(pc); }
       }
-      r.dot.hidden = !needsYou(r.k);
+      putHidden(r.dot, !needsYou(r.k));
     }
   }
 
@@ -17136,7 +17253,7 @@ let openSheet, partySheet;
   let synSig = '', synOpen = null;
   function updateSyn(sec) {
     const on = !!fnActive();
-    sec.hidden = !on; if (!on) return;
+    putHidden(sec, !on); if (!on) return;
     const list = synergiesFor(null) || [];
     const sig = JSON.stringify(list.map(s => [s.id, s.active, s.missing])) + synOpen;
     if (sig === synSig) return; synSig = sig;
@@ -17210,24 +17327,35 @@ let openSheet, partySheet;
     r.fb.forEach((b, i) => b.setAttribute('aria-pressed', String(FILTERS[i] === filt)));
     const shown = shownPre;
     r.grid.textContent = '';
-    for (const x of shown) {
-      const c = C(x.k);
-      const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
-      t.style.setProperty('--rc', frameCol(x.k));
-      const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
-      if (x.rec) {
-        const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
-        fr.append(lv, el('i', 'rp r-' + c.role));
-        if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
-        if (x.flag) fr.append(el('span', 'ndot'));
-      } else fr.append(el('i', 'rp r-' + c.role));
-      t.append(fr, el('span', 'rt-nm', first(x.k)));
-      if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
-      t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
-      t.addEventListener('click', () => partySheet.open(x.k));
-      r.grid.append(t);
-    }
+    // Tiles are built in time-boxed chunks (a portrait can need baking): the first screenful now, the
+    // rest in the next tasks, so opening the Roster never stalls the game. A newer rebuild wins.
+    const gen = ++rosGen, queue = shown.slice();
+    const chunk = () => {
+      if (gen !== rosGen) return;
+      const t0 = performance.now();
+      while (queue.length && (performance.now() - t0 < 25 || r.grid.children.length < 6)) addTile(queue.shift());
+      if (queue.length) setTimeout(chunk, 0);
+    };
+    chunk();
     if (!shown.length) r.grid.append(el('p', 'note', 'Nobody with that role yet.'));
+  }
+  let rosGen = 0;
+  function addTile(x) {
+    const r = rosRefs, c = C(x.k);
+    const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
+    t.style.setProperty('--rc', frameCol(x.k));
+    const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
+    if (x.rec) {
+      const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
+      fr.append(lv, el('i', 'rp r-' + c.role));
+      if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
+      if (x.flag) fr.append(el('span', 'ndot'));
+    } else fr.append(el('i', 'rp r-' + c.role));
+    t.append(fr, el('span', 'rt-nm', first(x.k)));
+    if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
+    t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
+    t.addEventListener('click', () => partySheet.open(x.k));
+    r.grid.append(t);
   }
 
   // ================= leads =================
@@ -17236,7 +17364,7 @@ let openSheet, partySheet;
     if (!live()) { sec.hidden = true; return; }
     const list = leadList();
     const sig = JSON.stringify(list.map(l => [l.id, l.name, l.how, l.sub, pctOf(l) != null ? Math.floor(pctOf(l) * 100) : null, l.action && l.action.label, l.ready]));
-    sec.hidden = !list.length;
+    putHidden(sec, !list.length);
     if (sig === leadSig) return; leadSig = sig;
     const box = sec.querySelector('.leads'); box.textContent = '';
     for (const l of list) {
@@ -17266,8 +17394,8 @@ let openSheet, partySheet;
   function updateDot() {
     if (!live()) { pdot.hidden = true; return; }
     const any = rosterList().some(needsYou);
-    pdot.hidden = !any || S.tab === 'party';
-    if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
+    putHidden(pdot, !any || S.tab === 'party');
+    if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
   // The same news marks the Roster sub-view (70-ui registerView).
   registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
