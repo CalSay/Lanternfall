@@ -213,3 +213,10 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   and autosave is skipped while hidden. Behaviour fix: background tabs no longer eat away gains. Still
   over budget on phones: Party/World tab first open, long tasks while fighting (70-ui ui()/uiFight
   rewriting unchanged DOM 5x/s, setHp forcing layout per kill). PERF2 task launched for those hotspots.
+- Codex merged (57c-codex.js: 12 pages, 930 Light today, milestones with titles/hints/+1 expedition slot,
+  Seals capped at 5% per stat, Blessings gated by pages; UI is a 90% sheet opened from the Journal, the
+  Library and Next Up). The hero title line on Party cards is still to do (75-party.js owner).
+- `perf.mjs --quick` after the Codex/HUD merges: 9 metrics over budget on phones (fight frame-gap p95
+  about 50ms, long tasks, tap about 190-260ms, camp-roster update up to 84ms). The machine was busy
+  (BAL1 and PERF2 running), so the numbers are noisy. PERF2 was given these numbers; nothing new is
+  started in its files until it lands.

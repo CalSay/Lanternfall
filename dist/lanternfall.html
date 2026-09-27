@@ -651,6 +651,182 @@ button * { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .bld-row .bar > i, .cb-timer .bar > i { transition: none; }
 }
+/* 60-codex: the Codex sheet and its Journal card (75-codex-ui.js). */
+
+.cx-sheet .bsheet-body { gap: 12px; }
+.cx-eye { font: 600 10.5px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.cx-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; background: var(--ember); border: 2px solid #0B0810; box-shadow: 0 0 6px rgba(255,158,61,.6); }
+.cx-dot[hidden] { display: none; }
+
+/* ---- header ---- */
+.cx-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.cx-lamp { width: 48px; height: 48px; display: grid; place-items: center; background: radial-gradient(circle, rgba(242,193,78,.28), rgba(242,193,78,0) 70%), var(--well); border: 2px solid #6B5320; box-shadow: inset 0 0 0 2px #0B0810, 0 0 14px rgba(242,193,78,.25); }
+.cx-lamp img { width: 32px; height: 32px; image-rendering: pixelated; }
+.cx-lamp.sm { width: 40px; height: 40px; } .cx-lamp.sm img { width: 26px; height: 26px; }
+.cx-htx { min-width: 0; display: grid; gap: 2px; }
+.cx-lrow { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.cx-light { font: 600 28px/1 var(--display); color: var(--gold); text-shadow: 0 0 10px rgba(242,193,78,.35); font-variant-numeric: tabular-nums; }
+.cx-lunit { font-size: 13px; color: var(--muted); }
+.cx-gain { font: 600 12px/1 var(--display); color: #1A1420; background: var(--gold); padding: 2px 5px; }
+.cx-gain[hidden] { display: none; }
+.cx-titlebtn { display: grid; justify-items: end; gap: 1px; max-width: 132px; min-height: 44px; padding: 4px 8px; background: var(--panel-2); border: 2px solid var(--line-hi); color: var(--bone); font: 600 13px/1.15 var(--display); cursor: pointer; text-align: right; box-shadow: 0 2px 0 #0B0810; }
+.cx-tlbl { font: 600 9.5px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- next milestone ---- */
+.cx-next { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 5px 10px; align-items: center; width: 100%; min-height: 48px; padding: 7px 10px; text-align: left; cursor: pointer; background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); border: 2px solid #5A4A2A; box-shadow: 0 2px 0 #0B0810; color: var(--bone); }
+.cx-ntx { font: 500 13px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cx-nbar { grid-column: 1; display: block; height: 6px; background: var(--well); border: 1px solid var(--line); }
+.cx-nbar i { display: block; height: 100%; background: var(--gold); box-shadow: 0 0 6px rgba(242,193,78,.5); }
+.cx-nmore { position: relative; grid-column: 2; grid-row: 1 / 3; font: 600 12px var(--display); padding: 8px 9px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--gold); }
+.cx-nmore .cx-dot { top: -5px; right: -5px; }
+
+/* ---- page cards ---- */
+.cx-pages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cx-card { position: relative; display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 7px; align-items: center; min-height: 72px; padding: 6px 8px 6px 6px; text-align: left; cursor: pointer; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; color: var(--bone); min-width: 0; }
+.cx-card:hover { border-color: var(--line-hi); }
+.cx-card:active { transform: translateY(1px); }
+.cx-card.sealed { border-color: #8A6A20; background: linear-gradient(135deg, rgba(242,193,78,.12), var(--panel) 60%); }
+.cx-card.locked { opacity: .55; cursor: default; background: repeating-linear-gradient(135deg, var(--panel), var(--panel) 6px, #1B1522 6px, #1B1522 12px); }
+.cx-card.locked .cx-cic { filter: grayscale(1) brightness(.6); }
+.cx-rw { position: relative; width: 42px; height: 42px; display: grid; place-items: center; }
+.cx-rw > * { grid-area: 1 / 1; }
+.cx-rw.sm { width: 40px; height: 40px; margin-left: auto; }
+.cx-cic { width: 22px; height: 22px; image-rendering: pixelated; }
+.cx-rpct { font: 600 11px/1 var(--display); color: var(--bone); }
+.cx-ring .bg { fill: var(--well); stroke: #2E2538; stroke-width: 5; }
+.cx-ring .fg { fill: none; stroke: #9C8A6A; stroke-width: 5; }
+.cx-ring.half .fg { stroke: var(--arcane); }
+.cx-ring.done .fg { stroke: var(--gold); filter: drop-shadow(0 0 3px rgba(242,193,78,.6)); }
+.cx-ctx { display: grid; gap: 2px; min-width: 0; }
+.cx-cn { font: 600 15px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-cn.long { font-size: 12.5px; letter-spacing: -.02em; }
+.cx-cs { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-card.locked .cx-cs { white-space: normal; line-height: 1.2; }
+.cx-tags { display: flex; gap: 4px; min-width: 0; }
+.cx-tag:first-child { flex: none; }
+.cx-tag { font: 600 11px/1 var(--body); letter-spacing: .02em; padding: 2px 4px; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-tag.bl { color: #D9C2FF; border-color: #5B4A78; }
+.cx-tag + .cx-tag { font-size: 10px; letter-spacing: 0; padding: 2px 3px; }
+.cx-tag.dim { opacity: .6; }
+.cx-tag.seal { color: #1A1420; background: var(--gold); border-color: #8A6A20; }
+.cx-note { margin: 2px 0 0; font-size: 12.5px; }
+
+/* ---- a page ---- */
+.cx-back { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.cx-backbtn { min-height: 44px; padding: 0 10px; background: var(--panel-2); border: 2px solid var(--line-hi); color: var(--bone); font: 600 14px var(--display); cursor: pointer; box-shadow: 0 2px 0 #0B0810; }
+.cx-ptitle { margin: 0; font: 600 20px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-info { display: grid; gap: 5px; padding: 8px 10px; background: var(--well); border: 2px solid var(--line); }
+.cx-irow { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: 13px; color: var(--muted); }
+.cx-irow b { font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.cx-irow.on span:nth-child(2) { color: var(--bone); }
+.cx-ist { font: 600 11px/1 var(--display); padding: 2px 5px; border: 1px solid var(--line-hi); white-space: nowrap; }
+.cx-irow.on .cx-ist { color: #1A1420; background: var(--gold); border-color: #8A6A20; }
+.cx-ilight { margin: 0; font-size: 12px; color: var(--gold); }
+.cx-grp { margin: 4px 0 -4px; font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+.cx-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cx-tile { position: relative; display: grid; justify-items: center; align-content: center; gap: 4px; min-width: 0; min-height: 76px; padding: 6px 3px 5px; cursor: pointer; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; color: var(--bone); }
+.cx-timg { width: 40px; height: 40px; image-rendering: pixelated; object-fit: contain; }
+.cx-tile.blank .cx-timg, .cx-dic.blank img { filter: brightness(0) opacity(.55); }
+.cx-tile.blank { background: var(--well); }
+.cx-tile.full { border-color: #6B5320; }
+.cx-tn { font: 500 11px/1.1 var(--body); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.cx-tile.full .cx-tn { color: var(--bone); }
+.cx-tile.sel, .cx-row.sel { border-color: var(--gold); }
+
+.cx-rows { display: grid; gap: 5px; }
+.cx-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 9px; align-items: center; width: 100%; min-height: 50px; padding: 4px 8px 4px 5px; text-align: left; cursor: pointer; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; color: var(--bone); }
+.cx-row.blank { background: var(--well); }
+.cx-row.blank .cx-ric img { filter: brightness(0) opacity(.55); }
+.cx-row.full { border-color: #4E4030; }
+.cx-ric { width: 32px; height: 32px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; }
+.cx-ric img { width: 24px; height: 24px; image-rendering: pixelated; object-fit: contain; }
+.cx-rtx { display: grid; gap: 1px; min-width: 0; }
+.cx-rn { font: 600 14px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-row.blank .cx-rn { color: var(--muted); }
+.cx-rs { font-size: 12px; line-height: 1.25; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.cx-rs.hint { color: #B8AEC6; font-style: italic; }
+.cx-chk { width: 18px; height: 18px; display: grid; place-items: center; font: 600 13px/1 var(--display); color: #1A1420; background: var(--well); border: 2px solid var(--line-hi); }
+.cx-chk.on { background: var(--gold); border-color: #8A6A20; }
+
+.cx-pips { display: flex; gap: 2px; align-items: center; }
+.cx-pips i { width: 7px; height: 7px; background: var(--well); border: 1px solid var(--line-hi); }
+.cx-pips i.on { background: var(--gold); border-color: #8A6A20; }
+.cx-bar { display: block; width: 64px; height: 7px; background: var(--well); border: 1px solid var(--line-hi); }
+.cx-bar i { display: block; height: 100%; background: var(--gold); }
+
+/* new entries glow once */
+.cx-tile.glow, .cx-row.glow { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(242,193,78,.6), 0 0 12px rgba(242,193,78,.45), 0 2px 0 #0B0810; }
+@media (prefers-reduced-motion: no-preference) {
+  .cx-tile.glow, .cx-row.glow { animation: cx-glow 2.4s ease-out 1 forwards; }
+}
+@keyframes cx-glow {
+  0% { box-shadow: 0 0 0 2px rgba(242,193,78,.9), 0 0 18px rgba(242,193,78,.7), 0 2px 0 #0B0810; }
+  100% { box-shadow: 0 0 0 0 rgba(242,193,78,0), 0 0 0 rgba(242,193,78,0), 0 2px 0 #0B0810; border-color: #6B5320; }
+}
+
+/* details (sheet footer) */
+.cx-det { display: grid; gap: 6px; }
+.cx-dh { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 44px; gap: 8px; align-items: center; margin-right: -8px; }
+.cx-dic { width: 40px; height: 40px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); }
+.cx-dic img { width: 30px; height: 30px; image-rendering: pixelated; object-fit: contain; }
+.cx-dn { display: grid; gap: 1px; min-width: 0; }
+.cx-dn b { font: 600 16px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-dn span { font-size: 12px; color: var(--gold); }
+.cx-dx { width: 44px; height: 44px; background: none; border: 0; color: var(--muted); font: 600 24px/1 var(--display); cursor: pointer; }
+.cx-dsub { margin: 0; font-size: 13px; color: var(--bone); }
+.cx-dhint { margin: 0; font-size: 13px; color: #CFC6D8; }
+.cx-dhint b { color: var(--gold); font-weight: 600; }
+.cx-dgo { justify-self: start; min-height: 40px; }
+
+/* ---- milestones ---- */
+.cx-mintro { margin: 0; font-size: 13px; color: var(--muted); }
+.cx-miles { list-style: none; margin: 0; padding: 0 0 0 10px; display: grid; gap: 6px; border-left: 3px solid var(--line); }
+.cx-mile { position: relative; display: grid; grid-template-columns: 54px minmax(0, 1fr) 20px; gap: 8px; align-items: start; padding: 7px 8px; background: var(--panel); border: 2px solid var(--line); opacity: .7; }
+.cx-mile::before { content: ''; position: absolute; left: -19px; top: 14px; width: 12px; height: 12px; background: var(--well); border: 2px solid var(--line-hi); }
+.cx-mile.got { opacity: 1; }
+.cx-mile.got::before { background: var(--gold); border-color: #8A6A20; }
+.cx-mile.next { opacity: 1; border-color: var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), var(--panel) 70%); }
+.cx-mile.next::before { background: var(--ember); }
+.cx-mat { display: grid; gap: 2px; }
+.cx-mat b { font: 600 18px/1 var(--display); color: var(--gold); }
+.cx-mat span { font-size: 11px; color: var(--muted); }
+.cx-mrw { display: grid; gap: 5px; min-width: 0; }
+.cx-mr { display: grid; gap: 1px; }
+.cx-mr b { font: 600 14px/1.15 var(--display); }
+.cx-mk { font: 600 9.5px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.cx-mr.qol .cx-mk { color: var(--xp); } .cx-mr.title .cx-mk { color: var(--gold); } .cx-mr.cosmetic .cx-mk { color: #D9C2FF; }
+.cx-mtx { font-size: 12px; color: var(--muted); line-height: 1.25; }
+.cx-mlater { font-size: 12px; color: #FFB37A; line-height: 1.25; }
+.cx-mchk { font: 600 15px/1 var(--display); color: var(--gold); }
+
+/* ---- titles ---- */
+.cx-titles { display: grid; gap: 5px; }
+.cx-ttx { display: grid; gap: 1px; min-width: 0; }
+.cx-trow { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: center; width: 100%; min-height: 46px; padding: 4px 10px; text-align: left; cursor: pointer; background: var(--panel); border: 2px solid var(--line); color: var(--bone); }
+.cx-trow b { font: 600 15px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-tsrc { font-size: 11.5px; color: var(--muted); }
+.cx-tbox { width: 16px; height: 16px; background: var(--well); border: 2px solid var(--line-hi); }
+.cx-trow.on { border-color: var(--gold); }
+.cx-trow.on .cx-tbox { background: var(--gold); border-color: #8A6A20; }
+.cx-trow.locked { opacity: .5; cursor: default; }
+
+/* ---- the Journal card ---- */
+.cx-jsec { margin-bottom: 4px; }
+.cx-jcard { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 8px; cursor: pointer; background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); border: 2px solid #5A4A2A; box-shadow: 0 2px 0 #0B0810; }
+.cx-jtx { display: grid; gap: 3px; min-width: 0; }
+.cx-jtop { display: flex; gap: 8px; align-items: baseline; }
+.cx-jl { font: 600 17px/1.1 var(--display); color: var(--gold); white-space: nowrap; }
+.cx-js { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cx-jopen { position: relative; min-width: 64px; min-height: 44px; }
+.cx-jopen .cx-dot { top: -6px; right: -6px; }
+
+@media (max-width: 380px) {
+  .cx-grid { gap: 5px; }
+  .cx-tile { min-height: 72px; }
+  .cx-titlebtn { max-width: 112px; }
+  .cx-light { font-size: 24px; }
+}
 /* 60-craft: the Craft tab and item sheet (75-craft-ui.js, task K7). 44px touch targets. */
 .cf-seg { display: flex; width: 100%; }
 .cf-seg button { flex: 1 1 0; min-height: 44px; padding: 4px 6px; }
@@ -9701,6 +9877,556 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     pct: () => expedOpen() && expedFree() > 0 && expedRoutes().length && benchPool().length ? 0.9 : 0 });
 }
 
+// ---- src/js/57c-codex.js ----
+// 57c-codex: the Codex and Lantern Light (docs/design/codex.md, Region 1).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules: most entries are READ from state other systems already save (mastery, S.found, the
+// roster, stories, camp levels, expedition Lore and Keepsakes, the Almanac, achievements). The
+// Codex records only what nothing else keeps: champion kills by type, affix tiers and Masterwork
+// lines seen, synergies switched on, materials held by tier, Dares taken. Old saves get full
+// credit on first load (recorded parts are seeded from the bag, the pack and the field).
+// Lantern Light = sum over visible pages of entries found x Light each, halves rounded down at
+// the end. It is never spent and never goes down (codexLight() is the highest value seen).
+// Light gives no direct power: milestones give titles, cosmetics and quality-of-life perks.
+// Page rewards: at 50% the page's Blessing opens at the Shrine (setBlessingGate); at 100% a Page
+// Seal gives a title and a tiny bonus, capped per stat by CODEX_CAP forever (all regions).
+//
+// Performance: pages are recomputed only when an event marked the Codex dirty, at most every
+// CODEX_TUNE.every seconds (a few hundred cheap reads), plus a slow safety sweep. Nothing here
+// scans the bag or other big collections on a tick; S.items is read once, on the first load.
+//
+// Exposed names:
+//   data   CODEX_PAGES (page defs), CODEX_PAGE_IDS, CODEX_MILESTONES, CODEX_CAP, CODEX_TUNE
+//   read   codexPages() -> [page view], codexPage(id) -> page view | null
+//            page view: { id, n, locked, lockTxt, got, max, pct, light, lightMax, half, seal,
+//                         bless, sealTxt, title, tiles: [{ key, n, got, max, pts, ptsMax, hint, sub, ic, grp }] }
+//          codexLight(), codexNext() -> next milestone | null, codexHas(rewardId) -> bool,
+//          codexBonus(key) (capped Seal bonus, 0..CODEX_CAP[key]), codexTitle() -> title text | '',
+//          codexTitles() -> [{ id, n, src, got }], codexExact() (exact hints unlocked),
+//          codexNews() -> pages with entries the player has not looked at, codexIsNew(pageId, i)
+//   act    codexRefresh(force) -> light, codexSeen(pageId) -> [tile indexes that are new] (and
+//          marks them seen), codexSetTitle(id | null) -> bool, codexMilestonesSeen()
+//
+// Events emitted: codexLight { light, gain }, codexPage { id, kind: 'half' | 'seal' },
+//   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
+// Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, harvest,
+//   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, expedBack, omen,
+//   weeklyClaim, achievement, zoneClear, loot, transmuted, crafted.
+// Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
+//   Seal keys, addBonus: expSlots (+1 at 200 Light, works with the Map Room), deepOil, and three
+//   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
+//
+// Save: registerState('codex', { v, rec, got, title, lightMax, init, half, seal, seen, mSeen }).
+//   rec: champ {typeKey: 1}, aff {affixId: tier bitmask}, mw {trophyIdx: 1}, syn {synergyId: 1},
+//        mat {family: tier bitmask, troph: type bitmask}, dare {omenId: 1}
+//   got: milestone Light -> timestamp. half / seal: pageId -> timestamp (permanent once earned).
+//   seen: pageId -> string, one base-36 char per tile = units the player has looked at (for the
+//   one-time glow). mSeen: highest milestone the player has looked at (the "New" dot).
+
+const CODEX_TUNE = { every: 5, sweep: 60, goalFrom: 0.6 };
+const CODEX_CAP = { dmg: 0.05, gold: 0.05, uniqueChance: 0.05, skillXp: 0.05, compXp: 0.05, offline: 0.05,
+  gatherSpeed: 0.05, buildTime: 0.05, expHaul: 0.05, essence: 0.05 };
+
+// Milestones. kind: title | qol | cosmetic. live: false = the unlock is stored and switches on
+// when its system arrives (the UI says so plainly).
+const CODEX_MILESTONES = [
+  { at: 25, rw: [{ id: 't_lamplighter', kind: 'title', n: 'Title: Lamplighter', live: true }] },
+  { at: 50, rw: [{ id: 'salvage1', kind: 'qol', n: 'Auto-salvage, basic', txt: 'Commons below the tier you wear in that spot are salvaged when they drop.', later: 'Saved for later: all gear is made by you today, so this switches on when foes drop gear.' }] },
+  { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Saved: it hangs in camp once the camp scene shows decorations.' }] },
+  { at: 100, rw: [{ id: 'hints', kind: 'qol', n: 'Exact Codex hints', txt: 'Every blank entry says exactly where to find it, at any Library level.', live: true }] },
+  { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Saved: hero lantern colours arrive with hero cosmetics.' }] },
+  { at: 200, rw: [{ id: 'expslot', kind: 'qol', n: '+1 expedition slot', txt: 'The Map Room sends one more team.', live: true }] },
+  { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Saved for later, like the basic filter.' }] },
+  { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Saved: shows once the camp scene shows decorations.' }] },
+  { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
+  { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Saved: the camp builders take it once they read this bonus.' }] },
+  { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Saved: arrives with hero cosmetics.' }] },
+  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: Keeper of the Codex', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
+  { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Saved: the Almanac will show it in a later update.' }] },
+  { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Saved: arrives with hero cosmetics.' }] },
+  { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Saved: shows once the camp scene shows decorations.' }] },
+  { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', later: 'Saved: works when the Deepwell opens.' }] },
+  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: Lanternfall', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
+  { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Saved: shows once the camp scene shows decorations.' }] }
+];
+
+// Page defs. bless: CAMP_BLESS id opened at 50%. seal: { key, v, txt } bonus at 100% (key null =
+// title only). show(): the page's system is in the game (else it shows as a locked card, no Light).
+// tiles(ctx) -> [{ key, n, got, max, pts, ptsMax, ... }] where pts are HALF Light units.
+const CODEX_PAGES = {};
+const CODEX_PAGE_IDS = [];
+
+let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTitle, codexTitles, codexExact,
+  codexNews, codexIsNew, codexRefresh, codexSeen, codexSetTitle, codexMilestonesSeen;
+
+{
+  registerState('codex', {
+    v: 1,
+    rec: { champ: {}, aff: {}, mw: {}, syn: {}, mat: {}, dare: {} },
+    got: {}, title: null, lightMax: 0, init: false,
+    half: {}, seal: {}, seen: {}, mSeen: 0
+  });
+  const CX = () => S.codex;
+  const R = () => CX().rec;
+  const has = v => typeof v !== 'undefined';
+  const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] codex', e); return d; } };
+  const bits = m => { let n = 0; m = m | 0; while (m) { n += m & 1; m >>>= 1; } return n; };
+  const first = id => ROSTER[id] ? ROSTER[id].name.replace(/^(Old|Ser|Brother|Saint) /, '').split(' ')[0] : id;
+  const REGION_ZONES = 35;
+  const mobKey = m => m && m.key ? String(m.key).replace(/\d+$/, '') : null;
+  const tIdx = k => TYPES.findIndex(t => t.key === k);
+  const zonesOf = i => { const z = []; for (let n = i + 1; n <= REGION_ZONES && z.length < 3; n += 7) z.push(n); return z; };
+  const exact = () => (typeof campLevel === 'function' && campLevel('library') >= 3) || !!CX().got[100];
+  codexExact = exact;
+
+  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); CODEX_PAGE_IDS.push(id); };
+
+  // ---------------- 1. Bestiary: 7 types x (4 tiers x2, Elder x3, champion x2) ----------------
+  page('bestiary', {
+    n: 'Bestiary', bless: 'blade', seal: { key: 'dmg', v: 0.02, txt: '+2% damage' }, title: 'Monster Scholar', pic: 'mob',
+    tiles: x => TYPES.map((t, i) => {
+      const kills = (S.mastery && S.mastery.types[t.key]) || 0, tier = masteryApi.tierFor(kills);
+      const elder = S.maxZone > i + 1 ? 1 : 0, champ = R().champ[t.key] ? 1 : 0;
+      let hint = '';
+      if (tier < 4) {
+        const need = Math.ceil(BESTIARY_TIERS[tier] - kills);
+        hint = x.exact ? `Defeat ${fmt(need)} more ${t.name}s (${ZONES[i]}, zones ${zonesOf(i).join(', ')}...).` : `Defeat more ${t.name}s.`;
+      } else if (!elder) hint = x.exact ? `Beat the ${ZONES[i]} boss (zone ${i + 1}).` : 'A boss guards this page.';
+      else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
+      return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
+        sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key };
+    })
+  });
+  // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
+  page('zones', {
+    n: 'Zones', bless: 'coin', seal: { key: 'gold', v: 0.03, txt: '+3% gold' }, title: 'Wayfinder', pic: 'rows',
+    tiles: x => {
+      const out = [];
+      for (let z = 1; z <= REGION_ZONES; z++) {
+        const k = (S.mastery && S.mastery.zones[z]) || 0, st = Math.min(5, masteryApi.starsFor(k));
+        const need = st < 5 ? Math.ceil(MASTERY_STARS[st] - k) : 0;
+        out.push({ key: 'z' + z, n: `${z}. ${zoneName(z)}`, got: st, max: 5, pts: st * 2, ptsMax: 10, zone: z, mob: TYPES[zoneType(z)].key, grp: 'Band ' + roman(Math.ceil(z / 7)),
+          sub: `${fmt(k)} kills here`,
+          hint: st >= 5 ? '' : z > S.maxZone ? (x.exact ? `Reach zone ${z}.` : 'Further down the road.') : x.exact ? `${fmt(need)} more kills here for star ${st + 1}. A boss counts 5.` : 'Fight here more.' });
+      }
+      return out;
+    }
+  });
+  // ---------------- 3. Uniques: 13 hero uniques (companion uniques join when they exist) ----------------
+  page('uniques', {
+    n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'Curator of Wonders', pic: 'item',
+    tiles: x => Object.keys(UNIQ).map(k => {
+      const u = UNIQ[k], got = S.found[k] ? 1 : 0;
+      return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
+        sub: got ? u.txt : '', hint: got ? '' : x.exact ? u.src + '.' : (RAID_UNIQ.includes(k) ? 'The world raid guards it.' : 'A boss guards it.') };
+    })
+  });
+  // ---------------- 4. Armoury: 13 affix stats x 5 tiers seen; 7 Masterwork lines ----------------
+  const roleOf = a => Object.keys(CRAFT_ROLE_POOL).find(r => CRAFT_ROLE_POOL[r].includes(a)) || 'any';
+  const ROLE_TXT = { tank: 'Guardian', striker: 'Striker', caster: 'Caster', support: 'Support', any: 'any' };
+  page('armoury', {
+    n: 'Armoury', bless: 'anvil', seal: { key: 'skillXp', v: 0.03, txt: '+3% crafting XP' }, title: 'Armourer', pic: 'item',
+    tiles: x => {
+      const out = [];
+      for (const a of Object.keys(CRAFT_AFFIXES)) {
+        const m = R().aff[a] | 0, got = bits(m), next = [1, 2, 3, 4, 5].find(t => !(m & (1 << (t - 1))));
+        const nm = (CRAFT_STATS[a] && CRAFT_STATS[a].n) || a, role = ROLE_TXT[roleOf(a)];
+        out.push({ key: 'a_' + a, n: nm, got, max: 5, pts: got * 2, ptsMax: 10, grp: 'Affix lines', mask: m,
+          sub: `Tiers seen: ${[1, 2, 3, 4, 5].map(t => m & (1 << (t - 1)) ? roman(t) : '·').join(' ')}`,
+          hint: !next ? '' : x.exact ? `Craft tier-${next} ${role === 'any' ? '' : role + ' '}gear; ${nm} can roll on it.` : `Craft ${role === 'any' ? 'any' : role} gear.` });
+      }
+      CRAFT_TROPHIES.forEach((tr, i) => {
+        const got = R().mw[i] ? 1 : 0, line = tr.mw.gear && CRAFT_STATS[tr.mw.gear] ? CRAFT_STATS[tr.mw.gear].n : '';
+        out.push({ key: 'mw_' + i, n: `${tr.n} Masterwork`, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Masterwork lines', troph: i,
+          sub: line ? `Adds ${line}.` : '', hint: got ? '' : x.exact ? `Craft a Masterwork item with a ${tr.n}.` : 'Craft with a Trophy.' });
+      });
+      return out;
+    }
+  });
+  // ---------------- 5. Companions: 18 recruited x5; ranks Veteran/Captain/Champion x1; 14 synergies x2 ----------------
+  const live = () => typeof rosterLive === 'function' && rosterLive();
+  page('companions', {
+    n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Friend to All', pic: 'char',
+    tiles: x => {
+      const on = live(), out = [];
+      for (const id of ROSTER_KEYS) {
+        const r = on ? charRec(id) : null, rec = r ? 1 : 0, rk = r ? Math.min(3, r.rank | 0) : 0;
+        out.push({ key: id, n: ROSTER[id].name, got: rec + rk, max: 4, pts: rec * 10 + rk * 2, ptsMax: 16, char: id, grp: 'Companions',
+          sub: r ? `${ROSTER_RANKS[r.rank | 0]} · Lv ${r.lv}` : '',
+          hint: !r ? (x.exact ? ROSTER[id].how : 'Someone may join you.') : rk < 3 ? `Promote ${first(id)} to ${ROSTER_RANKS[rk + 1]}.` : '' });
+      }
+      for (const s of SYNERGIES) {
+        const got = R().syn[s.id] ? 1 : 0;
+        out.push({ key: 's_' + s.id, n: s.name, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Synergies', syn: s.id,
+          sub: got ? s.parts.map(p => p.text).join(' ') : '', hint: got ? '' : x.exact ? `Field: ${s.needs}.` : 'Try new friends side by side.' });
+      }
+      return out;
+    }
+  });
+  // ---------------- 6. Stories: 54 camp stories read, 18 joining moments ----------------
+  page('stories', {
+    n: 'Stories', bless: 'road', seal: { key: 'offline', v: 0.03, txt: '+3% away gains' }, title: 'Storykeeper', pic: 'rows',
+    tiles: x => ROSTER_KEYS.map(id => {
+      const r = live() ? charRec(id) : null, rec = r ? 1 : 0, seen = r ? Math.min(3, r.seen | 0) : 0;
+      const st = r ? storyState(id) : { unlocked: 0 };
+      const nextLv = ROSTER_TUNE.storyLv[st.unlocked];
+      return { key: id, n: ROSTER[id].name, got: rec + seen, max: 4, pts: (rec + seen) * 2, ptsMax: 8, char: id,
+        sub: r ? `Joined · ${seen} of 3 stories read` : '',
+        titles: (STORIES[id] || []).slice(0, seen).map(s => s.title),
+        hint: !r ? 'Recruit them to hear how they joined.' : seen < st.unlocked ? `${first(id)} has a story to read. Open their sheet.` : seen < 3 ? (x.exact && nextLv ? `${first(id)} reaches Lv ${nextLv}.` : `${first(id)} has more to tell.`) : '' };
+    })
+  });
+  // ---------------- 7. Materials: 7 families x 5 tiers; 7 Trophy types (0.5 each) ----------------
+  page('materials', {
+    n: 'Materials', bless: 'wild', seal: { key: 'gatherSpeed', v: 0.02, txt: 'Gathering 2% faster' }, title: 'Forager', pic: 'mat',
+    tiles: x => {
+      const out = [];
+      for (const f of CRAFT_FAMILIES) {
+        const m = R().mat[f] | 0, got = bits(m), next = [1, 2, 3, 4, 5].find(t => !(m & (1 << (t - 1))));
+        out.push({ key: f, n: MAT[f].n, got, max: 5, pts: got, ptsMax: 5, mat: [f, [5, 4, 3, 2, 1].find(t => m & (1 << (t - 1))) || 1], mask: m, grp: 'Families',
+          sub: [1, 2, 3, 4, 5].filter(t => m & (1 << (t - 1))).map(t => MAT[f].short[t - 1]).join(', '),
+          hint: !next ? '' : x.exact ? `Hold ${matName(f, next)}.` : `Gather or find better ${MAT[f].n.toLowerCase()}.` });
+      }
+      const tm = R().mat.troph | 0;
+      CRAFT_TROPHIES.forEach((tr, i) => {
+        const got = tm & (1 << i) ? 1 : 0;
+        out.push({ key: 'tr_' + i, n: tr.n, got, max: 1, pts: got, ptsMax: 1, troph: i, grp: 'Trophies',
+          hint: got ? '' : x.exact ? `Beat a champion ${TYPES[i].name} (zone 20+) or its zone boss.` : 'Beat a champion or a boss.' });
+      });
+      return out;
+    }
+  });
+  // ---------------- 8. Camp: every building level (Hearth 10, 8 buildings x5, Shrine 3) ----------------
+  page('camp', {
+    n: 'Camp', bless: 'hearth', seal: { key: 'buildTime', v: 0.03, txt: 'Builds 3% faster' }, title: 'Master Builder', pic: 'rows',
+    show: () => typeof CAMP_B === 'object',
+    tiles: x => {
+      const open = typeof campOpen === 'function' && campOpen();
+      return Object.keys(CAMP_B).map(id => {
+        const d = CAMP_B[id], lv = open ? Math.min(d.max, campLevel(id)) : 0;
+        return { key: id, n: d.n, got: lv, max: d.max, pts: lv * 2, ptsMax: d.max * 2, bld: id,
+          hint: lv >= d.max ? '' : !open ? 'The camp opens at zone 5.' : `Build the ${d.n} to Lv ${lv + 1}.` };
+      });
+    }
+  });
+  // ---------------- 9. Lore: expedition Lore pages x2, Keepsakes x1 ----------------
+  page('lore', {
+    n: 'Lore', bless: 'wayfarer', seal: { key: 'expHaul', v: 0.03, txt: 'Expeditions bring back 3% more' }, title: 'Loremaster', pic: 'rows',
+    show: () => !!S.exped && typeof EXPED_LORE === 'object',
+    tiles: x => {
+      const out = [];
+      for (const band of Object.keys(EXPED_LORE)) {
+        EXPED_LORE[band].forEach((t, i) => {
+          const q = (S.exped.lore && S.exped.lore[`${band}-${i}`]) || 0, got = q >= 4 ? 1 : 0;
+          const bn = band === 'court' ? 'The Hollow Court' : EXPED_BANDS[band].n;
+          out.push({ key: `l_${band}_${i}`, n: t, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Lore pages', q,
+            sub: got ? bn : q ? `${q} of 4 quarters found` : '',
+            hint: got ? '' : x.exact ? (band === 'court' ? 'Run The Hollow Court with Aldric.' : `Lore routes in ${bn}. Long runs find more.`) : 'Somewhere on the road.' });
+        });
+      }
+      for (const r of Object.keys(EXPED_KEEPSAKES)) {
+        const got = S.exped.keep && S.exped.keep[r] ? 1 : 0;
+        out.push({ key: 'k_' + r, n: EXPED_KEEPSAKES[r], got, max: 1, pts: got * 2, ptsMax: 2, grp: 'Keepsakes',
+          hint: got ? '' : x.exact ? `A bonus find on ${EXPED_ROUTES[r].n}. Great grades roll more.` : 'Found on an expedition.' });
+      }
+      return out;
+    }
+  });
+  // ---------------- 10. Deepwell (locked until the Deepwell exists) ----------------
+  page('deepwell', {
+    n: 'Deepwell', bless: 'deep', seal: { key: null, bonus: 'deepOil', v: 5, txt: '+5s starting Oil (Deepwell only)' }, title: 'Well-read', pic: 'rows',
+    show: () => !!S.deep, lockTxt: 'Opens with the Deepwell.', tiles: () => []
+  });
+  // ---------------- 11. Seals: Almanac Stamps (Trial Seals join with the Deepwell) ----------------
+  page('seals', {
+    n: 'Seals', seal: { key: null, txt: '' }, title: 'The Faithful', pic: 'rows',
+    show: () => !!S.almanac,
+    tiles: x => {
+      const n = Math.min(52, S.almanac.stamps | 0);
+      return [{ key: 'stamps', n: 'Almanac Stamps', got: n, max: 52, pts: n * 2, ptsMax: 104,
+        sub: `${n} of 52 weeks. Any week counts; a missed week costs nothing.`, hint: n >= 52 ? '' : 'Finish 3 weekly goals in a week for a Stamp.' }];
+    }
+  });
+  // ---------------- 12. Omens: Omens seen; Dares taken ----------------
+  const omenOk = o => o.needs !== 'Deepwell' || !!S.deep;
+  page('omens', {
+    n: 'Omens', seal: { key: null, txt: '' }, title: 'Omen-reader', pic: 'rows',
+    show: () => !!S.almanac && Array.isArray(OMENS),
+    tiles: x => {
+      const out = [];
+      for (const o of OMENS) if (omenOk(o)) {
+        const seen = S.almanac.seen && o.id in S.almanac.seen ? 1 : 0;
+        out.push({ key: o.id, n: o.n, got: seen, max: 1, pts: seen * 2, ptsMax: 2, ic: o.ic, grp: 'Omens seen',
+          sub: seen ? o.fx : '', hint: seen ? '' : x.exact ? 'Its day will come. The Almanac shows today and tomorrow.' : 'Comes on its own day.' });
+      }
+      for (const o of OMENS) if (o.dare && omenOk(o)) {
+        const got = R().dare[o.id] ? 1 : 0;
+        out.push({ key: 'd_' + o.id, n: o.dare.n, got, max: 1, pts: got * 2, ptsMax: 2, ic: o.ic, grp: 'Dares taken',
+          sub: got ? o.dare.fx : '', hint: got ? '' : x.exact ? `Take the Dare on a ${o.n} day.` : 'Take a Dare.' });
+      }
+      return out;
+    }
+  });
+  // ---------------- 13. Achievements x2 ----------------
+  page('achievements', {
+    n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'Accomplished', pic: 'rows',
+    show: () => typeof ACH_API === 'object',
+    tiles: x => ACH_API.list.map(a => {
+      const got = S.achievements.got[a.id] ? 1 : 0;
+      return { key: a.id, n: a.name, got, max: 1, pts: got * 4, ptsMax: 4, ic: [a.ic, '#F2C14E'], sub: got ? ACH_API.bonusText(a) : '', hint: got ? '' : a.desc + '.' };
+    })
+  });
+  // ---------------- 14. Wardrobe (locked until the Deepwell shop exists) ----------------
+  page('wardrobe', {
+    n: 'Wardrobe', seal: { key: null, txt: '' }, title: 'Well Dressed', pic: 'rows',
+    show: () => !!(S.deep && S.deep.cos), lockTxt: 'Opens with the Deepwell shop.', tiles: () => []
+  });
+
+  // ---------------- compute and cache ----------------
+  let cache = null, dirty = true, acc = 0, sweep = 0;
+  const visible = p => !p.show || !!safe(p.show, false);
+  function build(p, x) {
+    const vis = visible(p);
+    const tiles = vis ? safe(() => p.tiles(x), []) : [];
+    let got = 0, max = 0, pts = 0, ptsMax = 0;
+    for (const t of tiles) { got += t.got; max += t.max; pts += t.pts; ptsMax += t.ptsMax; }
+    const pct = ptsMax ? pts / ptsMax : 0;
+    const bl = p.bless && typeof CAMP_BLESS === 'object' ? CAMP_BLESS[p.bless] : null;
+    return {
+      id: p.id, n: p.n, locked: !vis || !ptsMax, lockTxt: p.lockTxt || 'Not in the game yet.', got, max, pts, ptsMax, pct,
+      light: pts / 2, lightMax: ptsMax / 2, half: !!CX().half[p.id], seal: !!CX().seal[p.id],
+      bless: bl ? { id: p.bless, n: bl.n, fx: bl.fx(bl.v) } : null, sealTxt: p.seal && p.seal.txt || '', title: p.title, pic: p.pic, tiles
+    };
+  }
+  function compute() {
+    const x = { exact: exact() };
+    const pages = CODEX_PAGE_IDS.map(id => build(CODEX_PAGES[id], x));
+    let pts = 0; for (const p of pages) if (!p.locked) pts += p.pts;
+    return { pages, light: Math.floor(pts / 2), at: Date.now() };
+  }
+
+  // ---------------- recorders ----------------
+  const markAff = it => {
+    if (!it || !Array.isArray(it.a)) return;
+    const b = 1 << (Math.max(1, Math.min(5, it.t | 0)) - 1);
+    for (const l of it.a) if (l && CRAFT_AFFIXES[l[0]]) R().aff[l[0]] = (R().aff[l[0]] | 0) | b;
+    if (it.mw != null && CRAFT_TROPHIES[it.mw]) R().mw[it.mw] = 1;
+  };
+  const markMats = () => {
+    for (const f of CRAFT_FAMILIES) { const a = S.mats[f] || []; let m = R().mat[f] | 0; for (let t = 0; t < 5; t++) if ((a[t] || 0) >= 1) m |= 1 << t; R().mat[f] = m; }
+    const tr = (S.craft && S.craft.troph) || []; let m = R().mat.troph | 0;
+    for (let i = 0; i < 7; i++) if ((tr[i] || 0) >= 1) m |= 1 << i;
+    R().mat.troph = m;
+  };
+  const markSyn = () => { if (typeof activeSynergies === 'function') for (const s of safe(activeSynergies, [])) R().syn[s.id] = 1; };
+  const markDare = () => {
+    if (typeof almanac !== 'object' || !almanac.dareOn || !safe(almanac.dareOn, false)) return;
+    const o = safe(almanac.active, null); if (o && o.dare) R().dare[o.id] = 1;
+  };
+  const dirt = () => { dirty = true; };
+  // Any kill can move a bestiary tier or a mastery star; the refresh itself waits for the timer.
+  on('kill', ({ mob }) => { dirty = true; if (mob && mob.champ) { const k = mobKey(mob); if (k && tIdx(k) >= 0) R().champ[k] = 1; } });
+  on('itemAdded', ({ item }) => { markAff(item); dirty = true; });
+  on('reforged', ({ item }) => { markAff(item); dirty = true; });
+  on('synergyChange', ({ gained }) => { for (const id of gained || []) R().syn[id] = 1; dirty = true; });
+  on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
+  on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
+  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted'])
+    on(e, dirt);
+
+  // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------
+  const sealSum = {};
+  function rebuildSeals() {
+    for (const k in sealSum) sealSum[k] = 0;
+    for (const id of CODEX_PAGE_IDS) {
+      const s = CODEX_PAGES[id].seal; if (!s || !CX().seal[id]) continue;
+      const k = s.key || s.bonus; if (k) sealSum[k] = (sealSum[k] || 0) + s.v;
+    }
+  }
+  rebuildSeals();   // Seals saved earlier count from the first frame
+  codexBonus = key => Math.min(CODEX_CAP[key] != null ? CODEX_CAP[key] : Infinity, sealSum[key] || 0);
+  addModifier('dmg', () => 1 + codexBonus('dmg'));
+  addModifier('gold', () => 1 + codexBonus('gold'));
+  addModifier('uniqueChance', () => 1 + codexBonus('uniqueChance'));
+  for (const k of ['smith', 'bench', 'loom', 'ench']) addModifier('skillXp:' + k, () => 1 + codexBonus('skillXp'));
+  addModifier('compXp', () => 1 + codexBonus('compXp'));
+  addModifier('offline', () => 1 + codexBonus('offline'));
+  addModifier('gatherSpeed', () => 1 + codexBonus('gatherSpeed'));
+  addModifier('buildTime', () => 1 - codexBonus('buildTime'));
+  addModifier('expHaul', () => 1 + codexBonus('expHaul'));
+  addModifier('essence', () => 1 + codexBonus('essence'));
+  addBonus('deepOil', () => codexBonus('deepOil'));
+
+  codexHas = rid => CODEX_MILESTONES.some(m => CX().got[m.at] && m.rw.some(r => r.id === rid));
+  addBonus('expSlots', () => codexHas('expslot') ? 1 : 0);
+  addBonus('bag', () => codexHas('bag10') ? 10 : 0);            // stored for later: nothing reads 'bag' yet
+  addBonus('buildQueue', () => codexHas('queue1') ? 1 : 0);     // stored for later: the camp queue is 1 per builder
+  addBonus('deepRerolls', () => codexHas('deepreroll') ? 1 : 0); // Deepwell only
+
+  const pageByName = {};
+  for (const id of CODEX_PAGE_IDS) pageByName[CODEX_PAGES[id].n] = id;
+  const pageOfBless = b => CODEX_PAGE_IDS.find(id => CODEX_PAGES[id].bless === b) || (typeof CAMP_BLESS === 'object' && CAMP_BLESS[b] ? pageByName[CAMP_BLESS[b].page] : null);
+  // A Blessing is open once its page has reached 50% (recorded, so it never closes again).
+  const gateFn = b => { const id = pageOfBless(b); return !!id && !!CX().half[id]; };
+  if (typeof setBlessingGate === 'function') setBlessingGate(gateFn);
+
+  function grant(c, quiet) {
+    const out = { light: 0, gain: 0, pages: [], miles: [] };
+    for (const p of c.pages) {
+      if (p.locked) continue;
+      if (!CX().half[p.id] && p.pct >= 0.5) { CX().half[p.id] = Date.now(); p.half = true; out.pages.push({ id: p.id, kind: 'half', p }); }
+      if (!CX().seal[p.id] && p.pts >= p.ptsMax) { CX().seal[p.id] = Date.now(); p.seal = true; out.pages.push({ id: p.id, kind: 'seal', p }); }
+    }
+    const before = CX().lightMax;
+    const light = Math.max(before, c.light);
+    CX().lightMax = light; out.light = light; out.gain = light - before;
+    for (const m of CODEX_MILESTONES) if (light >= m.at && !CX().got[m.at]) { CX().got[m.at] = Date.now(); out.miles.push(m); }
+    if (out.pages.some(x => x.kind === 'seal')) rebuildSeals();
+    if (quiet) return out;
+    for (const x of out.pages) {
+      const P = CODEX_PAGES[x.id];
+      if (x.kind === 'half' && x.p.bless) toast(`Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, 'good', { ic: ['banner', '#F2C14E'] }, 'normal');
+      else if (x.kind === 'half') toast(`Codex: the ${P.n} page is half full.`, 'good', { ic: ['banner', '#F2C14E'] }, 'low');
+      if (x.kind === 'seal') toast(`Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, 'good', { ic: ['banner', '#F2C14E'] }, 'high');
+      emit('codexPage', { id: x.id, kind: x.kind });
+    }
+    for (const m of out.miles) {
+      toast(`${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, 'good', { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'normal');
+      emit('codexMilestone', { at: m.at, rewards: m.rw.map(r => r.id) });
+    }
+    if (out.gain > 0) emit('codexLight', { light, gain: out.gain });
+    if (out.pages.length || out.miles.length) save();
+    return out;
+  }
+
+  // ---------------- seen (one-time glow) ----------------
+  const b36 = n => Math.max(0, Math.min(35, n | 0)).toString(36);
+  const seenStr = p => p.tiles.map(t => b36(t.got)).join('');
+  const seenAt = (id, i) => { const s = CX().seen[id]; if (typeof s !== 'string' || i >= s.length) return 0; return parseInt(s[i], 36) || 0; };
+
+  // ---------------- first load: retro credit ----------------
+  function init() {
+    if (CX().init) return;
+    if (typeof ACH_API === 'object' && S.achievements && !S.achievements.init) safe(() => ACH_API.check(), null);
+    for (const it of S.items || []) markAff(it);
+    markMats(); markSyn(); markDare();
+    // Champions: a save that has beaten champions and holds that type's Trophy gets credit.
+    if (S.craft && (S.craft.champ | 0) > 0) (S.craft.troph || []).forEach((n, i) => { if (n > 0 && TYPES[i]) R().champ[TYPES[i].key] = 1; });
+    const c = compute();
+    const g = grant(c, true);
+    for (const p of c.pages) if (!p.locked) CX().seen[p.id] = seenStr(p);
+    CX().mSeen = CODEX_MILESTONES.filter(m => CX().got[m.at]).reduce((a, m) => Math.max(a, m.at), 0);
+    CX().init = true;
+    cache = c; dirty = false;
+    const past = S.totalKills > 0 || S.maxZone > 1;
+    if (past && g.light > 0) {
+      const where = typeof campLevel === 'function' && campLevel('library') > 0 ? 'See the Library in camp.' : 'Open it from the bell, then Journal.';
+      toast(`Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, 'good', { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+    }
+    emit('codexInit', { light: g.light });
+  }
+
+  // quiet: record rewards without toasts (the away card lists them instead).
+  codexRefresh = (force, quiet) => {
+    if (!CX().init) init();
+    if (force || dirty || !cache) {
+      dirty = false;
+      markMats(); markDare();
+      cache = compute();
+      grant(cache, !!quiet);
+    }
+    return CX().lightMax;
+  };
+  onTick(dt => {
+    acc += dt; sweep += dt;
+    if (sweep >= CODEX_TUNE.sweep) { sweep = 0; dirty = true; }
+    // First load: wait 2s so the achievements' own first check (at 1s) has run.
+    if (!CX().init) { if (acc >= 2) { acc = 0; init(); } return; }
+    if (acc < CODEX_TUNE.every) return;
+    acc = 0;
+    if (dirty) codexRefresh(false);
+  });
+
+  // ---------------- read API ----------------
+  const cur = () => { if (!cache || !CX().init) codexRefresh(!cache); return cache; };
+  codexPages = () => cur().pages;
+  codexPage = id => cur().pages.find(p => p.id === id) || null;
+  codexLight = () => Math.max(CX().lightMax, cache ? cache.light : 0);
+  codexNext = () => CODEX_MILESTONES.find(m => !CX().got[m.at]) || null;
+  codexMilestonesSeen = () => { CX().mSeen = CODEX_MILESTONES.filter(m => CX().got[m.at]).reduce((a, m) => Math.max(a, m.at), 0); };
+  codexIsNew = (id, i) => { const p = codexPage(id); return !!p && !!p.tiles[i] && p.tiles[i].got > seenAt(id, i); };
+  codexNews = () => {
+    const out = [];
+    for (const p of codexPages()) if (!p.locked && p.tiles.some((t, i) => t.got > seenAt(p.id, i))) out.push(p.id);
+    return out;
+  };
+  codexSeen = id => {
+    const p = codexPage(id); if (!p || p.locked) return [];
+    const fresh = []; p.tiles.forEach((t, i) => { if (t.got > seenAt(id, i)) fresh.push(i); });
+    CX().seen[id] = seenStr(p);
+    return fresh;
+  };
+
+  // ---------------- titles (local only; never sent online) ----------------
+  codexTitles = () => {
+    const out = [];
+    for (const m of CODEX_MILESTONES) for (const r of m.rw) if (r.kind === 'title') out.push({ id: r.id, n: r.n.replace(/^Title: /, ''), src: `${m.at} Lantern Light`, got: !!CX().got[m.at] });
+    for (const id of CODEX_PAGE_IDS) { const P = CODEX_PAGES[id]; if (visible(P)) out.push({ id: 'p_' + id, n: P.title, src: `${P.n} Page Seal`, got: !!CX().seal[id] }); }
+    return out;
+  };
+  codexSetTitle = id => {
+    if (id == null) { CX().title = null; save(); return true; }
+    const t = codexTitles().find(x => x.id === id); if (!t || !t.got) return false;
+    CX().title = id; save(); return true;
+  };
+  codexTitle = () => { const id = CX().title; if (!id) return ''; const t = codexTitles().find(x => x.id === id); return t && t.got ? t.n : ''; };
+
+  // ---------------- Next Up: a page close to its next reward ----------------
+  let goalCache = { at: -1, v: null };
+  const bestGoal = () => {
+    const now = Date.now();
+    if (now - goalCache.at < 2000 && goalCache.at <= now) return goalCache.v;
+    goalCache.at = now; goalCache.v = null;
+    if (!CX().init || !cache) return null;
+    let best = null;
+    for (const p of cache.pages) {
+      if (p.locked || p.seal) continue;
+      const aim = !p.half && p.bless ? 0.5 : 1, need = p.ptsMax * aim, pr = Math.min(0.99, p.pts / need);
+      if (pr >= CODEX_TUNE.goalFrom && (!best || pr > best.pr)) best = { id: p.id, n: p.n, pr, aim, bless: p.bless, left: Math.max(1, Math.ceil(need - p.pts)) };
+    }
+    goalCache.v = best; return best;
+  };
+  registerGoal({
+    id: 'codex-page', sys: 'codex', prio: -1,
+    label: () => { const b = bestGoal(); if (!b) return 'Codex'; return b.aim < 1 ? `Codex: ${b.n} to half (${b.bless.n} Blessing)` : `Codex: finish the ${b.n} page`; },
+    pct: () => { const b = bestGoal(); return b ? b.pr : null; },
+    go: () => { const b = bestGoal(); return { fn: () => emit('codexOpen', { page: b ? b.id : null }) }; },
+    icon: { ic: ['banner', '#F2C14E'] }
+  });
+
+  // ---------------- away card ----------------
+  let snap = null;
+  // Only after the first load's retro credit (the boot's away phase comes before it, and counts as past deeds).
+  on('awayBegin', () => { if (!CX().init) { snap = null; return; } snap = { light: CX().lightMax, seal: Object.assign({}, CX().seal), half: Object.assign({}, CX().half), got: Object.assign({}, CX().got) }; });
+  registerAwayLine(() => {
+    if (!snap) return null;
+    codexRefresh(true, true);
+    const s = snap; snap = null;
+    const lines = [];
+    for (const id of CODEX_PAGE_IDS) {
+      const P = CODEX_PAGES[id];
+      if (CX().seal[id] && !s.seal[id]) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `Codex: the ${P.n} page is complete`, sub: `${P.seal && P.seal.txt ? P.seal.txt + '. ' : ''}New title: ${P.title}.`, group: 'Codex', go: () => emit('codexOpen', { page: id }) });
+      else if (CX().half[id] && !s.half[id] && P.bless && CAMP_BLESS[P.bless]) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `Codex: the ${P.n} page is half full`, sub: `The ${CAMP_BLESS[P.bless].n} Blessing is open at the Shrine.`, group: 'Codex', go: () => emit('codexOpen', { page: id }) });
+    }
+    const miles = CODEX_MILESTONES.filter(m => CX().got[m.at] && !s.got[m.at]);
+    for (const m of miles) lines.push({ icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `Codex: ${m.at} Lantern Light`, sub: m.rw.map(r => r.n).join(', ') + '.', group: 'Codex', go: () => emit('codexOpen', { page: null }) });
+    const gain = CX().lightMax - s.light;
+    if (gain > 0 && !lines.length) lines.push({ icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `Codex: +${gain} Lantern Light`, sub: `${CX().lightMax} in all.`, group: 'Codex', go: () => emit('codexOpen', { page: null }) });
+    return lines;
+  });
+}
+
 // ---- src/js/60-gfx.js ----
 // 60-gfx: browser-only helpers shared by render and UI: DOM shortcuts, reduced-motion
 // flag, canvas sprite rendering, icon data URLs.
@@ -14001,6 +14727,344 @@ let showAwayReport;
   onTick(dt => {
     if (S.tab !== 'world' || document.hidden || !S.camp.news.length) { seenFor = 0; return; }
     seenFor += dt; if (seenFor > 5) { campSeen(); seenFor = 0; }
+  });
+}
+
+// ---- src/js/75-codex-ui.js ----
+// 75-codex-ui: the Codex sheet (docs/design/codex.md 5). Browser-only; reads 57c-codex.js.
+// Where it lives (docs/design/layout.md): the Camp tab already has 4 views, so the Codex is a
+// 90% bottom sheet opened from (1) a compact card at the top of the bell sheet's Journal,
+// (2) the Library's "Open Codex" action in camp, (3) Next Up and the away card (event codexOpen).
+// Home: Lantern Light, the next milestone, 2 columns of page cards with progress rings.
+// A page: back arrow, Blessing and Seal, entries as a picture grid or text rows; tap one for
+// its details in the sheet's footer. Entries found since the last visit glow once.
+{
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+  const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] codex ui', e); return d; } };
+  const LANTERN = () => iconURL(...craftIcon('lantern', 3));
+  const FLAME = () => iconURL('flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' });
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const GRID_PAGES = { bestiary: 1, uniques: 1, companions: 1, materials: 1 };
+  const PAGE_IC = {
+    bestiary: () => spriteURL('best:slime', SPR.slime, TYPES[0].pal), zones: () => iconURL('banner', '#F2C14E'),
+    uniques: () => itemIcon('weapon', 3, 'sproutblade'), armoury: () => iconURL('anvil', '#A9B1BD'),
+    companions: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }), stories: () => iconURL('charm', '#B58CFF'),
+    materials: () => matIcon('crystal', 3), camp: () => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }),
+    lore: () => iconURL('glass', '#F2E27A'), deepwell: () => iconURL('orb', '#7FB2FF'), seals: () => iconURL('coin', '#F2C14E'),
+    omens: () => iconURL('orb', '#B58CFF'), achievements: () => iconURL('banner', '#E0524F', { 7: '#FFB347' }), wardrobe: () => iconURL('helm', '#C9B8FF')
+  };
+  const pct = p => Math.floor(p * 100) + '%';
+  // Entries whose names are no secret (a zone, a building, an achievement): shown even while blank.
+  const OPEN_NAMES = { zones: 1, camp: 1, achievements: 1, seals: 1, armoury: 1 };
+  const known = (p, t) => !!t.got || !!OPEN_NAMES[p.id];
+  const lightTxt = n => (Math.round(n * 2) / 2).toString();
+
+  // ---- a progress ring (SVG), 0..1 ----
+  function ring(size, p, cls) {
+    const s = document.createElementNS(SVGNS, 'svg'), r = size / 2 - 3, c = 2 * Math.PI * r;
+    s.setAttribute('viewBox', `0 0 ${size} ${size}`); s.setAttribute('width', size); s.setAttribute('height', size);
+    s.setAttribute('class', 'cx-ring' + (cls ? ' ' + cls : '')); s.setAttribute('aria-hidden', 'true');
+    const bg = document.createElementNS(SVGNS, 'circle'), fg = document.createElementNS(SVGNS, 'circle');
+    for (const k of [bg, fg]) { k.setAttribute('cx', size / 2); k.setAttribute('cy', size / 2); k.setAttribute('r', r); }
+    bg.setAttribute('class', 'bg'); fg.setAttribute('class', 'fg');
+    fg.setAttribute('stroke-dasharray', `${(c * Math.max(0, Math.min(1, p))).toFixed(2)} ${c.toFixed(2)}`);
+    fg.setAttribute('transform', `rotate(-90 ${size / 2} ${size / 2})`);
+    s.append(bg, fg);
+    return s;
+  }
+  function pips(got, max) {
+    const w = el('span', 'cx-pips');
+    if (max > 6) { const b = el('span', 'cx-bar'); const f = el('i'); f.style.width = pct(got / max); b.append(f); w.append(b); return w; }
+    for (let i = 0; i < max; i++) w.append(el('i', i < got ? 'on' : null));
+    return w;
+  }
+  function tileImg(t) {
+    return safe(() => {
+      if (t.mob) { const ty = TYPES.find(x => x.key === t.mob); return spriteURL('best:' + ty.key, SPR[ty.key], ty.pal); }
+      if (t.item) return itemIcon(t.item.slot, t.item.t, t.item.u);
+      if (t.char) return (typeof portraitURL === 'function' && portraitURL(t.char)) || iconURL('mug', '#8C6A43');
+      if (t.mat) return matIcon(t.mat[0], t.mat[1]);
+      if (t.troph != null) return iconURL(...craftIcon('tro_' + TYPES[t.troph].key));
+      if (t.ic) return iconURL(...t.ic);
+      if (t.zone) return iconURL('banner', t.got >= 5 ? '#F2C14E' : '#A597B4');
+      if (t.bld) return iconURL('anvil', t.got ? '#D08A4E' : '#6E6878');
+      if (t.syn) return iconURL('heart', '#FF9E3D');
+      return iconURL('charm', t.got ? '#F2E27A' : '#6E6878');
+    }, iconURL('charm', '#6E6878'));
+  }
+
+  // ---------------- the sheet ----------------
+  let api = null, mode = 'home', pageId = null, gainChip = null, lightNum = null;
+  function openCodex(page) {
+    if (typeof openSheet !== 'function') return;
+    codexRefresh(true);
+    mode = page ? 'page' : 'home'; pageId = page || null;
+    api = openSheet(a => { a.sheet.classList.add('cx-sheet'); render(a); }, { label: 'Codex', onClose() { api = null; } });
+  }
+  function render(a) {
+    a = a || api; if (!a) return;
+    a.body.textContent = ''; a.foot.textContent = ''; a.body.scrollTop = 0;
+    if (mode === 'page' && codexPage(pageId)) renderPage(a, codexPage(pageId));
+    else if (mode === 'miles') renderMiles(a);
+    else if (mode === 'titles') renderTitles(a);
+    else { mode = 'home'; renderHome(a); }
+  }
+  const go = (m, id) => { mode = m; pageId = id || null; render(); };
+  function backRow(label) {
+    const r = el('div', 'cx-back');
+    const b = btn('cx-backbtn', '‹ Codex'); b.setAttribute('aria-label', 'Back to the Codex');
+    b.addEventListener('click', () => go('home'));
+    r.append(b, el('h2', 'cx-ptitle', label));
+    return r;
+  }
+
+  // ---- home ----
+  function headBlock() {
+    const h = el('div', 'cx-head');
+    const ic = el('span', 'cx-lamp'); ic.append(img(LANTERN()));
+    const tx = el('div', 'cx-htx');
+    lightNum = el('b', 'cx-light', String(codexLight()));
+    gainChip = el('span', 'cx-gain'); gainChip.hidden = true;
+    const n = el('div', 'cx-lrow'); n.append(lightNum, el('span', 'cx-lunit', 'Lantern Light'), gainChip);
+    tx.append(el('span', 'cx-eye', 'Codex'), n);
+    const tb = btn('cx-titlebtn', codexTitle() ? codexTitle() : 'No title');
+    tb.prepend(el('span', 'cx-tlbl', 'Title'));
+    tb.addEventListener('click', () => go('titles'));
+    h.append(ic, tx, tb);
+    return h;
+  }
+  function nextBlock() {
+    const nx = codexNext(), L = codexLight();
+    const w = btn('cx-next'); w.setAttribute('aria-label', 'Lantern Light milestones');
+    const prev = CODEX_MILESTONES.filter(m => m.at <= L).reduce((a, m) => Math.max(a, m.at), 0);
+    const bar = el('span', 'cx-nbar'), fill = el('i'); bar.append(fill);
+    const newM = CODEX_MILESTONES.some(m => S.codex.got[m.at] && m.at > (S.codex.mSeen || 0));
+    if (nx) {
+      fill.style.width = pct((L - prev) / Math.max(1, nx.at - prev));
+      w.append(el('span', 'cx-ntx', `${nx.at}: ${nx.rw[0].n}${nx.rw.length > 1 ? ` +${nx.rw.length - 1}` : ''}`), bar);
+    } else { fill.style.width = '100%'; w.append(el('span', 'cx-ntx', 'Every milestone reached.'), bar); }
+    const more = el('span', 'cx-nmore', 'Milestones'); if (newM) more.append(el('span', 'cx-dot'));
+    w.append(more);
+    w.addEventListener('click', () => go('miles'));
+    return w;
+  }
+  function pageCard(p) {
+    const news = codexNews().includes(p.id);
+    const c = btn('cx-card' + (p.locked ? ' locked' : '') + (p.seal ? ' sealed' : '') + (news ? ' news' : ''));
+    const rw = el('span', 'cx-rw'); rw.append(ring(42, p.locked ? 0 : p.pct, p.seal ? 'done' : p.half ? 'half' : ''));
+    const ic = img(PAGE_IC[p.id] ? safe(PAGE_IC[p.id], '') : '', 'px cx-cic'); rw.append(ic);
+    const tx = el('span', 'cx-ctx');
+    tx.append(el('span', 'cx-cn' + (p.n.length > 10 ? ' long' : ''), p.n));
+    if (p.locked) tx.append(el('span', 'cx-cs', p.lockTxt));
+    else {
+      tx.append(el('span', 'cx-cs', `${lightTxt(p.light)} / ${lightTxt(p.lightMax)} Light`));
+      const tags = el('span', 'cx-tags');
+      tags.append(p.seal ? el('span', 'cx-tag seal', 'Sealed') : el('span', 'cx-tag', pct(p.pct)));
+      // The Blessing's name: lit once open (50%), dim before.
+      if (p.bless) { const b = el('span', 'cx-tag' + (p.half ? ' bl' : ' dim'), p.bless.n); b.title = p.half ? 'Blessing open' : 'Blessing at 50%'; tags.append(b); }
+      tx.append(tags);
+    }
+    c.append(rw, tx);
+    if (news) c.append(el('span', 'cx-dot'));
+    c.setAttribute('aria-label', p.locked ? `${p.n}: ${p.lockTxt}` : `${p.n}, ${pct(p.pct)}`);
+    if (!p.locked) c.addEventListener('click', () => go('page', p.id));
+    else c.disabled = true;
+    return c;
+  }
+  function renderHome(a) {
+    a.body.append(headBlock(), nextBlock());
+    const grid = el('div', 'cx-pages');
+    const pages = codexPages();
+    for (const p of pages.filter(x => !x.locked)) grid.append(pageCard(p));
+    for (const p of pages.filter(x => x.locked)) grid.append(pageCard(p));
+    a.body.append(grid, el('p', 'note cx-note', 'Lantern Light only goes up. Half a page opens its Blessing at the Shrine; a full page earns a Seal: a title and a tiny bonus.'));
+  }
+
+  // ---- a page ----
+  function renderPage(a, p) {
+    const fresh = new Set(codexSeen(p.id));
+    const top = backRow(p.n);
+    const rw = el('span', 'cx-rw sm'); rw.append(ring(40, p.pct, p.seal ? 'done' : p.half ? 'half' : ''), el('span', 'cx-rpct', pct(p.pct)));
+    top.append(rw);
+    const info = el('div', 'cx-info');
+    if (p.bless) {
+      const row = el('div', 'cx-irow' + (p.half ? ' on' : ''));
+      row.append(el('b', null, 'Blessing'), el('span', null, `${p.bless.n}: ${p.bless.fx}`), el('span', 'cx-ist', p.half ? 'Open' : 'at 50%'));
+      info.append(row);
+    }
+    const srow = el('div', 'cx-irow' + (p.seal ? ' on' : ''));
+    srow.append(el('b', null, 'Seal'), el('span', null, (p.sealTxt ? p.sealTxt + '. ' : '') + `Title: ${p.title}`), el('span', 'cx-ist', p.seal ? 'Earned' : 'at 100%'));
+    info.append(srow, el('p', 'cx-ilight', `${lightTxt(p.light)} of ${lightTxt(p.lightMax)} Lantern Light`));
+    a.body.append(top, info);
+    // groups in order; picture grid or text rows
+    const groups = [];
+    p.tiles.forEach((t, i) => { const g = t.grp || ''; let G = groups.find(x => x.g === g); if (!G) groups.push(G = { g, list: [] }); G.list.push([t, i]); });
+    for (const G of groups) {
+      const pics = GRID_PAGES[p.id] && G.list.every(([t]) => t.mob || t.item || t.char || t.mat || t.troph != null);
+      if (G.g && groups.length > 1) a.body.append(el('h3', 'cx-grp', `${G.g} · ${G.list.filter(([t]) => t.got >= t.max).length} of ${G.list.length}`));
+      const box = el('div', pics ? 'cx-grid' : 'cx-rows');
+      for (const [t, i] of G.list) box.append(pics ? gridTile(a, p, t, i, fresh.has(i)) : rowTile(a, p, t, i, fresh.has(i)));
+      a.body.append(box);
+    }
+    if (!codexExact()) a.body.append(el('p', 'note cx-note', 'Hints get exact at Library Lv 3, or at 100 Lantern Light.'));
+  }
+  function mark(node, t, isNew) {
+    if (t.got >= t.max) node.classList.add('full');
+    else if (!t.got) node.classList.add('blank');
+    if (isNew) node.classList.add('glow');
+  }
+  function gridTile(a, p, t, i, isNew) {
+    const b = btn('cx-tile');
+    const im = img(tileImg(t), 'px cx-timg'); b.append(im);
+    b.append(t.max > 1 ? pips(t.got, t.max) : el('span', 'cx-tn', t.got ? t.n : '?'));
+    mark(b, t, isNew);
+    b.setAttribute('aria-label', t.got ? `${t.n}, ${t.got} of ${t.max}` : `Unknown entry. ${t.hint || ''}`);
+    b.addEventListener('click', () => detail(a, p, t, b));
+    return b;
+  }
+  function rowTile(a, p, t, i, isNew) {
+    const b = btn('cx-row');
+    const ic = el('span', 'cx-ric'); ic.append(img(tileImg(t))); b.append(ic);
+    const tx = el('span', 'cx-rtx');
+    tx.append(el('span', 'cx-rn', known(p, t) ? t.n : '???'));
+    const line = t.got >= t.max ? (t.sub || '') : (t.hint || t.sub || '');
+    if (line) tx.append(el('span', 'cx-rs' + (t.got >= t.max ? '' : ' hint'), line));
+    b.append(tx, t.max > 1 ? pips(t.got, t.max) : el('span', 'cx-chk' + (t.got ? ' on' : ''), t.got ? '✓' : ''));
+    mark(b, t, isNew);
+    b.addEventListener('click', () => detail(a, p, t, b));
+    return b;
+  }
+  // Details in the sheet's footer (one at a time; tap again or × to close).
+  let openTile = null;
+  function detail(a, p, t, node) {
+    a.foot.textContent = '';
+    if (openTile) openTile.classList.remove('sel');
+    if (openTile === node) { openTile = null; return; }
+    openTile = node; node.classList.add('sel');
+    const d = el('div', 'cx-det');
+    const hd = el('div', 'cx-dh');
+    const ic = el('span', 'cx-dic' + (t.got ? '' : ' blank')); ic.append(img(tileImg(t))); hd.append(ic);
+    const nm = el('div', 'cx-dn');
+    nm.append(el('b', null, known(p, t) ? t.n : 'Not found yet'), el('span', null, `${lightTxt(t.pts / 2)} of ${lightTxt(t.ptsMax / 2)} Light`));
+    hd.append(nm, t.max > 1 ? pips(t.got, t.max) : el('span'));
+    const x = btn('cx-dx', '×'); x.setAttribute('aria-label', 'Close details');
+    x.addEventListener('click', () => { a.foot.textContent = ''; node.classList.remove('sel'); openTile = null; });
+    hd.append(x);
+    d.append(hd);
+    if (t.sub) d.append(el('p', 'cx-dsub', t.sub));
+    if (t.titles && t.titles.length) d.append(el('p', 'cx-dsub', 'Read: ' + t.titles.join(', ') + '.'));
+    if (t.kills != null) d.append(el('p', 'cx-dsub', `${fmt(t.kills)} slain.`));
+    if (t.hint) { const h = el('p', 'cx-dhint'); h.append(el('b', null, 'Where: '), document.createTextNode(t.hint)); d.append(h); }
+    if (t.char && p.id === 'stories' && t.got && typeof partySheet === 'object' && partySheet.open) {
+      const g = btn('mini go cx-dgo', `Open ${t.n.split(' ')[0]}'s sheet`);
+      g.addEventListener('click', () => safe(() => partySheet.open(t.char), null));
+      d.append(g);
+    }
+    if (t.zone && t.zone <= S.maxZone) {
+      const g = btn('mini go cx-dgo', `Go to zone ${t.zone}`);
+      g.addEventListener('click', () => { safe(() => { setActivity('fight'); setZone(t.zone); }, null); if (api) api.close(); ui(true); });
+      d.append(g);
+    }
+    a.foot.append(d);
+  }
+
+  // ---- milestones ----
+  function renderMiles(a) {
+    codexMilestonesSeen();
+    a.body.append(backRow('Milestones'));
+    const L = codexLight(), nx = codexNext();
+    a.body.append(el('p', 'cx-mintro', `${L} Lantern Light. Rewards give titles, looks and comfort, never raw power.`));
+    const list = el('ol', 'cx-miles');
+    for (const m of CODEX_MILESTONES) {
+      const got = !!S.codex.got[m.at], li = el('li', 'cx-mile' + (got ? ' got' : nx === m ? ' next' : ''));
+      const at = el('span', 'cx-mat'); at.append(el('b', null, String(m.at)));
+      if (nx === m) at.append(el('span', null, `${m.at - L} to go`));
+      const rw = el('div', 'cx-mrw');
+      for (const r of m.rw) {
+        const line = el('div', 'cx-mr ' + r.kind);
+        line.append(el('span', 'cx-mk', r.kind === 'qol' ? 'Comfort' : r.kind === 'title' ? 'Title' : 'Look'), el('b', null, r.n.replace(/^Title: /, '')));
+        if (r.txt) line.append(el('span', 'cx-mtx', r.txt));
+        if (got && !r.live && r.later) line.append(el('span', 'cx-mlater', r.later));
+        rw.append(line);
+      }
+      li.append(at, rw, el('span', 'cx-mchk', got ? '✓' : ''));
+      list.append(li);
+    }
+    a.body.append(list);
+    requestAnimationFrame(() => { const n = list.querySelector('.next'); if (n) a.body.scrollTop = Math.max(0, n.offsetTop - 140); });
+  }
+
+  // ---- titles (local only) ----
+  function renderTitles(a) {
+    a.body.append(backRow('Titles'));
+    a.body.append(el('p', 'cx-mintro', 'Your title shows in your Codex. Only you see it.'));
+    const list = el('div', 'cx-titles');
+    const cur = S.codex.title;
+    const add = (id, n, src, got) => {
+      const b = btn('cx-trow' + (cur === id || (!cur && id == null) ? ' on' : '') + (got ? '' : ' locked'));
+      const tx = el('span', 'cx-ttx'); tx.append(el('b', null, n), el('span', 'cx-tsrc', got ? src : `Locked: ${src}`));
+      b.append(el('span', 'cx-tbox'), tx);
+      b.disabled = !got;
+      b.addEventListener('click', () => { if (codexSetTitle(id)) go('home'); });
+      list.append(b);
+    };
+    add(null, 'None', 'Always there', true);
+    const ts = codexTitles();
+    for (const t of ts.filter(x => x.got)) add(t.id, t.n, t.src, true);
+    for (const t of ts.filter(x => !x.got)) add(t.id, t.n, t.src, false);
+    a.body.append(list);
+  }
+
+  // ---------------- live updates ----------------
+  let gainT = 0;
+  on('codexLight', ({ light, gain }) => {
+    if (api && lightNum && document.contains(lightNum)) {
+      lightNum.textContent = String(light);
+      gainChip.textContent = `+${gain}`; gainChip.hidden = false;
+      clearTimeout(gainT); gainT = setTimeout(() => { if (gainChip) gainChip.hidden = true; }, 2600);
+    } else if (S.tab === 'world') emit('float', { txt: `+${gain} Lantern Light`, color: '#F2C14E', x: 0.3, y: 0.35 });
+    jSig = '';
+  });
+  on('codexPage', () => { jSig = ''; if (api && mode === 'home') render(); });
+  on('codexMilestone', () => { jSig = ''; if (api && mode === 'home') render(); });
+  on('codexOpen', ({ page } = {}) => openCodex(page || null));
+
+  // ---------------- the Library's action (57-camp) ----------------
+  if (typeof registerCampAction === 'function') registerCampAction('library', { label: 'Open Codex', show: () => campLevel('library') > 0, fn: () => openCodex(null) });
+
+  // ---------------- the Journal card (bell sheet, first in the Journal view) ----------------
+  let jSig = '', jAt = 0, jr = {};
+  registerSection('log', {
+    id: 'codex-card',
+    mount(sec) {
+      sec.classList.add('cx-jsec');
+      queueMicrotask(() => sec.parentNode.prepend(sec));   // first in the Journal, above the lifetime stats (which prepend at load)
+      const c = el('div', 'cx-jcard');
+      const ic = el('span', 'cx-lamp sm'); ic.append(img(LANTERN()));
+      const tx = el('div', 'cx-jtx');
+      jr.light = el('b', 'cx-jl'); jr.sub = el('span', 'cx-js');
+      const top = el('div', 'cx-jtop'); top.append(el('span', 'cx-eye', 'Codex'));
+      jr.bar = el('span', 'cx-nbar'); jr.fill = el('i'); jr.bar.append(jr.fill);
+      tx.append(top, jr.light, jr.sub, jr.bar);
+      jr.open = btn('mini go cx-jopen', 'Open');
+      jr.dot = el('span', 'cx-dot'); jr.dot.hidden = true;
+      jr.open.append(jr.dot);
+      jr.open.addEventListener('click', () => openCodex(null));
+      c.addEventListener('click', e => { if (e.target === c || tx.contains(e.target) || ic.contains(e.target)) openCodex(null); });
+      c.append(ic, tx, jr.open);
+      sec.append(c);
+    },
+    update(force) {
+      const t = Date.now(); if (!force && t - jAt < 1000) return; jAt = t;
+      const L = codexLight(), nx = codexNext(), news = codexNews().length, newM = CODEX_MILESTONES.some(m => S.codex.got[m.at] && m.at > (S.codex.mSeen || 0));
+      const sig = [L, nx && nx.at, news, newM, S.codex.title].join('|');
+      if (sig === jSig) return; jSig = sig;
+      jr.light.textContent = `${L} Lantern Light`;
+      const prev = CODEX_MILESTONES.filter(m => m.at <= L).reduce((a, m) => Math.max(a, m.at), 0);
+      jr.sub.textContent = nx ? `Next at ${nx.at}: ${nx.rw[0].n.replace(/^Title: /, 'Title ')}` : 'Every milestone reached.';
+      jr.fill.style.width = nx ? pct((L - prev) / Math.max(1, nx.at - prev)) : '100%';
+      jr.dot.hidden = !(news || newM);
+    }
   });
 }
 

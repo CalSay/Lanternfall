@@ -36,6 +36,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
+| 57c-codex.js | core | the Codex and Lantern Light (docs/design/codex.md): pages read from other systems' state, recorders for what nothing else keeps, Light (only rises), milestones, capped Page Seal bonuses, the Blessing gate; `codexPages()`, `codexLight()`, `codexBonus(key)`, `codexHas(id)`, `codexTitle()` (state in `S.codex`; UI: 75-codex-ui.js, a sheet opened from the Journal card, the Library and `emit('codexOpen', { page })`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -190,6 +191,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
+| `codexLight` / `codexPage` / `codexMilestone` | `{ light, gain }` / `{ id, kind: 'half'\|'seal' }` / `{ at, rewards }` (57c-codex) |
+| `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
 | `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
