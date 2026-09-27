@@ -142,7 +142,7 @@
     } };
 
   // ---------------- Ranger: hooded archer with a longbow and a quiver ----------------
-  AK.CLASSES.ranger = { name: 'Ranger', hs: 1, ws: 1, aF: -.1, aB: -.55, anim: 'shoot', eye: '#2E2418',
+  AK.CLASSES.ranger = { name: 'Ranger', hs: 1, ws: 1, aF: -.1, aB: -.85, anim: 'shoot', eye: '#2E2418',
     slots: { weapon: { fam: 'wood', fam2: 'hide' }, off: { fam: 'hide', fam2: 'wood' }, head: { fam: 'hide', fam2: 'fibre', dye: '#3E6E3A', dyeAmt: .62 }, body: { fam: 'hide', fam2: 'fibre' }, charm: { fam: 'crystal' } },
     build(k, g, L) {
       const u = k.u, b = g.body, w = g.weapon, o = g.off, hd = g.head, po = k.pose;
@@ -187,7 +187,7 @@
         if (!dr) items.push([str, R(1, -bh + .3, .6, bh * 2 - .6), { nl: 1 }]);
         else items.push([str, P(1, -bh + .3, 1.6, -bh + .3, -pull + .6, .3, -pull, .3), { nl: 1 }], [str, P(-pull, -.3, -pull + .6, -.3, 1.6, bh - .3, 1, bh - .3), { nl: 1 }],
           [m('#8A6440', 'wood'), R(-pull, -.5, pull + 7, 1)], [m('#C8CCD4', 'metal'), P(6.6, -1.2, 8.4, 0, 6.6, 1.2)]);
-        k.held(5.5, 'B', po.rB < -.5 ? 0 : .38, items);
+        k.held(5.5, 'B', 0, items);
       }
     } };
 

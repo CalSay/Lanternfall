@@ -122,7 +122,13 @@
   function showJoin(inner, key) {
     inner.textContent = '';
     const box = el('div', 'join');
-    box.append(el('div', 'zsub', 'A companion joins'));
+    const top = el('div'); // one child, so the line-by-line animation delays stay as they were
+    if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') {
+      const cv = el('canvas', 'join-fig'); cv.width = 120; cv.height = 156;
+      try { drawCharPreview(cv, companionSpec(key), 2); top.append(cv); } catch (e) { console.error('[lanternfall] join figure', e); }
+    }
+    top.append(el('div', 'zsub', 'A companion joins'));
+    box.append(top);
     const h = el('h1', null, STARTER_NAME[key]); h.id = 'createTitle';
     box.append(h);
     for (const line of JOIN[key]) box.append(el('p', line.startsWith('"') ? 'join-say' : 'join-line', line));

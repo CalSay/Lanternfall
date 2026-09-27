@@ -26,7 +26,7 @@ let resize, animate, draw, stageStats;
   // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x):
   // foot-centre x / width per column (back, mid, front); the upper lane (0) stands LANE_Y px higher
   // and LANE_X px further back and is drawn first.
-  const COLX = [0.14, 0.3, 0.46], LANE_X = 22, LANE_Y = 14;
+  const COLX = [0.15, 0.33, 0.51], LANE_X = 24, LANE_Y = 14;
   resize = function () {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     SW = stageEl.clientWidth; SH = stageEl.clientHeight;

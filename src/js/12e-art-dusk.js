@@ -10,8 +10,8 @@
       const u = k.u;
       const teal = m('#2E6E6E'), tealD = m('#1F4A4E'), steel = m('#7E98B8', 'metal'), steelD = m('#5A6E8A', 'metal'), white = m('#DCE4EE'), lea = m('#4E3A2E', 'leather'), skin = m(SKINS[1], 'skin'), hair = m('#2A2030', 'hair');
       // cape shaped like a folded wing, feather tips at the hem
-      const cp = k.add(.2, 'up', teal, P(-k.sw * .8, k.shY - .5, k.sw * .3, k.shY, -k.hipW * .6, k.hiY * .2, -k.hipW * 1.1, -2.5, -k.hipW * 1.6, k.hiY * .1, -k.hipW * 2.1, -3.5, -k.hipW * 2.4, k.hiY * .3, -k.sw * 1.3, k.waY), { bev: 1 });
-      k.add(.25, 'up', white, P(-k.hipW * 2.6, k.hiY * .5, -k.hipW * .4, k.hiY * .5, -k.hipW * .4, 0, -k.hipW * 2.6, 0), { clip: cp });
+      const cp = k.add(.2, 'up', teal, P(-k.sw * .8, k.shY - .5, k.sw * .3, k.shY, -k.hipW * .5, k.hiY * .45, -k.hipW * 1, k.hiY * .3, -k.hipW * 1.4, k.hiY * .5, -k.hipW * 1.8, k.hiY * .35, -k.hipW * 2.3, k.hiY * .55, -k.sw * 1.35, k.waY), { bev: 1 });
+      k.add(.25, 'up', tealD, P(-k.sw * 1.1, k.waY - 3, -k.sw * .9, k.waY - 3, -k.hipW * 1.3, k.hiY * .45, -k.hipW * 1.6, k.hiY * .4), { clip: cp });
       legs(k, tealD, steelD, { greave: steel });
       arm(k, 'B', teal, lea, { bracer: steel });
       // teal tunic skirt, steel breastplate

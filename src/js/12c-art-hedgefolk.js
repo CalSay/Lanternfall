@@ -47,11 +47,11 @@
     } };
 
   // ---------------- Wren Hollowmere, the Batwing Archer (Common striker, ranged) ----------------
-  AK.CHARS.wren = { name: 'Wren', circle: 'hedgefolk', hs: .98, ws: .9, aF: -.15, aB: -.55, anim: 'shoot', eye: '#2A1C18',
-    wpn: { fam: 'wood', fam2: 'hide', t: 2, r: 1 },
+  AK.CHARS.wren = { name: 'Wren', circle: 'hedgefolk', hs: .98, ws: .9, aF: -.15, aB: -.85, anim: 'shoot', eye: '#2A1C18',
+    wpn: { fam: 'wood', fam2: 'hide', t: 1, r: 1 },
     build(k, w) {
       const u = k.u, po = k.pose;
-      const green = m('#34603A'), greenD = m('#24402C'), violet = m('#6B4A9A'), lea = m('#5A3C2A', 'leather'), tr = m('#3A3440'), boot = m('#3E2C26', 'leather'), skin = m(SKINS[1], 'skin'), hair = m('#2A1C18', 'hair');
+      const green = m('#3E7446'), greenD = m('#2A5234'), violet = m('#7A52B0'), lea = m('#5A3C2A', 'leather'), tr = m('#3A3440'), boot = m('#3E2C26', 'leather'), skin = m(SKINS[1], 'skin'), hair = m('#2A1C18', 'hair');
       // long bat-violet scarf trailing behind
       k.add(.25, 'up', violet, P(-k.sw * .3, k.shY - .6, k.sw * .2, k.shY + .4, -k.sw * .75, k.shY + 3, -k.sw * 1.1, k.waY + 2, -k.sw * 1.6, k.waY + 4.5, -k.sw * 1.75, k.waY + 1.5, -k.sw * 1.5, k.shY + 3.4), { bev: .8 });
       legs(k, tr, boot, { cuff: lea });
@@ -73,8 +73,8 @@
       // longbow, taller than her
       const bh = k.H * .44, dr = !!po.drawn, pull = dr ? 5 : 0;
       const items = [
-        [w.P, P(-.7, -1, .5, -1, 2.4, -bh * .45, 2, -bh * .95, .6, -bh, 1.1, -bh * .45, -.7, -1.6)],
-        [w.P, P(-.7, 1, .5, 1, 2.4, bh * .45, 2, bh * .95, .6, bh, 1.1, bh * .45, -.7, 1.6)],
+        [w.P, P(-.8, -1, .7, -1, 3, -bh * .45, 2.6, -bh * .95, .6, -bh - .4, 1.3, -bh * .45, -.8, -1.6)],
+        [w.P, P(-.8, 1, .7, 1, 3, bh * .45, 2.6, bh * .95, .6, bh + .4, 1.3, bh * .45, -.8, 1.6)],
         [w.Q, R(-.9, -1.6, 1.8, 3.2)]
       ];
       if (w.r >= 1) items.push([w.R, Q(1, -Math.round(bh) - .5, 1, 1)], [w.R, Q(1, Math.round(bh) - .5, 1, 1)]);
@@ -83,7 +83,7 @@
       if (!dr) items.push([str, R(1, -bh + .3, .6, bh * 2 - .6), { nl: 1 }]);
       else items.push([str, P(1, -bh + .3, 1.6, -bh + .3, -pull + .6, .3, -pull, .3), { nl: 1 }], [str, P(-pull, -.3, -pull + .6, -.3, 1.6, bh - .3, 1, bh - .3), { nl: 1 }],
         [m('#6E4A30', 'wood'), R(-pull, -.5, pull + 7, 1)], [m('#C8CCD4', 'metal'), P(6.6, -1.2, 8.4, 0, 6.6, 1.2)]);
-      k.held(5.5, 'B', po.rB < -.5 ? 0 : .28, items);
+      k.held(5.5, 'B', 0, items);
     } };
 
   // ---------------- Old Hesketh, the Lamplighter (Common support) ----------------
