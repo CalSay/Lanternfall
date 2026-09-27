@@ -11,7 +11,7 @@ function setActivity(a) {
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
   const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
-  toast(msg, a === 'raid' ? 'raid' : 'good');
+  toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
@@ -35,7 +35,7 @@ function spawn() {
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
   const t = TYPES[ti];
-  const hp = mobHp(z) * (boss ? 8 * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
+  const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
     key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
@@ -90,8 +90,9 @@ function kill() {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    if (Math.random() < (first ? 0.35 : 0.12) * mod('uniqueChance')) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
-    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
+    const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
+    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
   }
@@ -99,12 +100,14 @@ function kill() {
   respawn = 0.45;
 }
 
-function gainXp(n) {
+// quiet: no float or toast (away gains; the away card reports the levels).
+function gainXp(n, quiet) {
   S.xp += n * mod('xp');
   while (S.xp >= xpNeed()) {
-    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L });
+    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
+    if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good');
+    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good', null, 'high');
   }
 }
 function gainSkill(k, n, quiet) {
@@ -118,7 +121,7 @@ function gainSkill(k, n, quiet) {
     let extra = '';
     if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
+    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, extra ? 'normal' : 'low');
   }
 }
 
@@ -197,6 +200,7 @@ function awayBase(r) {
     const swings = t / nodeTime(kind, tier) * boost;
     const got = Math.floor(swings * nodeYieldAvg(kind) * mod('yield:' + kind));
     S.mats[kind][tier - 1] += got;
+    if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
@@ -215,6 +219,8 @@ function awayBase(r) {
   const kills = baseDps > 0 ? t / (mobHp(S.zone) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
+  // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
+  if (kills > 0) gainXp(kills * Math.ceil(1.5 * S.zone) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: S.zone, lines: r.lines });

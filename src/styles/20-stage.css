@@ -26,7 +26,7 @@
 .hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
 .timer { height: 4px; background: #0B0810; }
 .timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
-.app.compact .hud-zone { display: none; }
+.app.compact .hud-zone, .app.compact .sfx-btn { display: none; }
 .app.compact .mob { padding-top: 3px; gap: 1px; }
 .app.compact .mob-name, .app.compact .mob-hp { font-size: 11.5px; }
 .app.compact .hpbar { height: 6px; border-width: 1px; }

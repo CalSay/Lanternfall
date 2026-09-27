@@ -7,7 +7,7 @@
 .tab .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
 
 .panels { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px var(--gut) 20px; -webkit-overflow-scrolling: touch; }
-.panel { display: grid; gap: 16px; }
+.panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .sec { display: grid; gap: 8px; }
 .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sec-title { font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; align-items: center; gap: 8px; }

@@ -25,8 +25,8 @@
   };
   const BTY_TEXT = {
     kill: b => `Defeat ${b.need} foes in zone ${b.z} or beyond`,
-    mine: b => `Mine ${b.need} ${matName('ore', b.t)} or better`,
-    chop: b => `Chop ${b.need} ${matName('wood', b.t)} or better`,
+    mine: b => `Mine ${b.need} ore`,
+    chop: b => `Chop ${b.need} logs`,
     forge: b => b.need > 1 ? `Forge ${b.need} items` : 'Forge an item',
     boss: b => b.need > 1 ? `Beat ${b.need} zone bosses` : 'Beat a zone boss',
     crit: b => `Land ${b.need} critical hits`,
@@ -66,7 +66,9 @@
     for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
   }
   on('kill', ({ mob, zone }) => { btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1); });
-  on('harvest', ({ kind, t, n }) => btyAdd(kind === 'ore' ? 'mine' : 'chop', n, b => t >= b.t));
+  // Any tier counts (owner bug report: mining a lower node than your best never moved the bounty),
+  // and so does gathering while away (awayBase emits harvest with away: true).
+  on('harvest', ({ kind, n }) => { if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n); });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crit', () => btyAdd('crit', 1));
   on('tap', () => btyAdd('tap', 1));
@@ -82,7 +84,7 @@
     S.bounties.claimed++;
     S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
     const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };
-    toast(`Bounty complete! +${r.txt}.`, 'loot', icon);
+    toast(`Bounty complete! +${r.txt}.`, 'loot', icon, 'normal');
     emit('bountyDone', { k: b.k, reward: r });
     save();
     return r;

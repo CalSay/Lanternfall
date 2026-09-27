@@ -101,3 +101,34 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
 - K7 Craft tab merged ("Forge" renamed "Craft", tab id stays `forge`). Coordinator fix: the away report
   names new item kinds (it used SLOT[slot].n). TODO (small, for K8 or a polish task): the Next Up forge
   goal still suggests legacy Sword/Helm via SLOTS/craftCost; switch it to class kinds via canCraft/fits.
+- M6 pacing finished (PACE table in 40-rules.js; R1 boss day 1.8-2.8, R2 boss day 10.8-13.8; T2 fixed;
+  T10 still fails and needs a roster design change; Region 3 needs new power: ranks past 7, tier 6,
+  Constellations). Merge conflicted with K6/K7, so M6 is re-merging in its worktree and applying the
+  Elowen tune. FOLLOW-UP: live saves at zones 2-59 face much more HP after M6 (x10 at zone 35); add a
+  gentle "drop to the best zone you can farm" on load or with auto-progress so idle income doesn't stall.
+- Owner feedback: the menu area is too small (lots of scrolling) and toasts cover the menus. A UX agent
+  owns layout and notifications (bottom tab bar, shorter/collapsing stage, overlays, toast priority and log).
+- Owner feedback: uniques overshadow crafted gear. Cause: every unique rolled Legendary power (x3.2,
+  above a crafted Epic's x2.5) on top of its effect, and dropped 35% on first kill / 12% on every
+  rematch. Change (`UNIQ_TUNE` in 20-data.js): base power at Rare level (x1.8), drops 15% first /
+  4% rematch, and half chance when you already own it at that tier or higher. The effect is now the draw.
+  Existing uniques lose raw power (deliberate balance change the owner asked for; no item is removed).
+  The K4 exact-dps check pins `UNIQ_TUNE.pow = 3.2` for its pre-change baselines.
+- Owner bug: "quests" (bounties) never moved. Mining/chopping bounties only counted your best
+  unlocked tier and ignored away gathering. Fixed: any tier counts, away gathering counts, and new
+  families don't count as logs. Regression check added.
+- M6 merged after re-merge. `--targets`: T2, P1, P2, P4 pass; T1 fails for Warden only (15/25/35: the
+  warblade is crafted at the fast Smithing station, a K6 class-gear parity issue); T10 fails (structural);
+  P3 needs Region 3 power. Warden curve: d1 35, d2 46, d7 57, d12 70, d16 77, then plateaus at 78-79.
+- AR1 B1 foundation merged. Outfits now live in per-circle files: 12a body kit (art lead), 12b heroes,
+  12c hedgefolk, 12d oath, 12e dusk, 12f wayfarers. 12-art-rigs.js is deleted. Interim-quality
+  companions: Wren, Hesketh, Pip, Bram, Aldric, Anselm (bell reads as a sack), Caedmon (shield hidden),
+  Kestrel, Isolde (mask hides face), Oriel (faint collar), Thessaly, Morwen, Vesper. Enemies are old
+  rigs at half scale. Stage issue seen in stage-b1.png: the four party members overlap into a clump,
+  so they need more spacing. Agents must use their own scratchpad subfolders.
+- Camp core merged (57-camp.js, 75-camp-ui.js; the World tab is now the Camp tab, id still `world`).
+  Opens at zone 5 with a free Hearth 1; the Watchtower is the first build; full camp in about 16+ days
+  (estimated without `--days`: retune with the M6 sim in a later balance pass). Families without a
+  source yet cost ore, wood or essence until CAMP_LIVE flips (K5 should flip crystal/fibre/herb/hide/troph).
+  Hooks for Expeditions (registerBenchStatus/Send, bonus('expSlots'), registerCampAction('maproom')),
+  Codex (setBlessingGate, Library action) and camp scene art (CAMP_SPOTS, campBuilds) are documented in its report.

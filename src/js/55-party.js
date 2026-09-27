@@ -148,7 +148,7 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
       if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
       else {
         S.comp[slot] += 1;
-        toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good');
+        toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good', null, 'high');
       }
     }
     partyRefreshField(true);
@@ -294,7 +294,7 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   on('kill', ({ mob: m, zone }) => {
     if (!m || !m.boss || zone < T.mirrorZone || Math.random() >= T.mirrorChance) return;
     P().mirrors++;
-    toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good');
+    toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
   on('zoneClear', ({ zone }) => {

@@ -1,6 +1,6 @@
-// 62-stage: the stage canvas (Hi-bit). One canvas at device resolution, drawn in CSS px units:
-// pixel art (scenery layers, baked characters, enemies) at 1 art px per CSS px on integer
-// positions with smoothing off, then smooth lighting and effects on top. Turns core events
+// 62-stage: the stage canvas. One canvas at device resolution, drawn in CSS px units:
+// pixel art (scenery layers at 1 art px per CSS px; characters and enemies baked by 60b at 2x,
+// B1) on integer positions with smoothing off, then smooth lantern lighting and effects on top. Turns core events
 // (float, burst, shake, lunge, classTap, ability, ...) into short-lived visual state.
 // Browser-only. Pools and glow sprites live in 61-anim.js.
 //
@@ -23,7 +23,10 @@ let resize, animate, draw, stageStats;
   // ================= canvas and scene =================
   const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
   let SW = 0, SH = 0, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1;
-  const COLX = [0.085, 0.215, 0.345];      // formation columns (back, mid, front): foot-centre x / width
+  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x):
+  // foot-centre x / width per column (back, mid, front); the upper lane (0) stands LANE_Y px higher
+  // and LANE_X px further back and is drawn first.
+  const COLX = [0.15, 0.33, 0.51], LANE_X = 24, LANE_Y = 14;
   resize = function () {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     SW = stageEl.clientWidth; SH = stageEl.clientHeight;
@@ -73,8 +76,8 @@ let resize, animate, draw, stageStats;
   }
   function place(a, c) {
     a.col = c.col; a.lane = c.lane;
-    a.hx = Math.round(SW * COLX[c.col]) - (c.lane === 0 ? 5 : 0);
-    a.hy = GY - (c.lane === 0 ? 6 : 0);
+    a.hx = Math.round(SW * COLX[c.col]) - (c.lane === 0 ? LANE_X : 0);
+    a.hy = GY - (c.lane === 0 ? LANE_Y : 0);
   }
   function layout() {
     layoutDirty = false;
@@ -318,16 +321,28 @@ let resize, animate, draw, stageStats;
     ctx.drawImage(f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
     a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
   }
+  // Lantern lighting (style study, direction D on a B1 stage): every emissive piece of a sprite
+  // glows (radius from the baker, in CSS px), and the hero's lantern throws a warm key light over
+  // the party and a pool on the ground. Sprites themselves are never recoloured.
   function lightsOf(a) {
     const f = a._f; if (!f || !f.lights.length) return;
     const fl = flick();
     for (const l of f.lights) {
-      const pulse = l.pulse && !reduced ? 0.7 + 0.5 * Math.sin(T * 4) : 1;
-      const r = Math.min(Math.max(8, l.size * 3), 16) * fl * pulse * 1.6;
+      const pulse = l.pulse && !reduced ? 0.85 + 0.25 * Math.sin(T * 4 + a.ph) : 1;
+      const r = (l.r ? Math.min(40, l.r * 0.8) : Math.min(Math.max(8, l.size * 3), 16) * 1.6) * fl * pulse;
       const x = a._x + l.x, y = a._y + l.y;
-      A.lightAt(ctx, l.rgb, x, y, r, 0.3 * pulse * a.alpha);
-      A.lightAt(ctx, '255,250,230', x, y, r * 0.35, 0.18 * pulse * a.alpha);
+      A.lightAt(ctx, l.rgb, x, y, r, 0.5 * a.alpha);
+      A.lightAt(ctx, '255,250,230', x, y, Math.max(3, r * 0.22), 0.35 * a.alpha);
     }
+  }
+  function keyLight() {
+    const f = hero._f; if (!f) return;
+    let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l;
+    const fl = flick();
+    const x = best ? hero._x + best.x : hero._x + f.ox, y = best ? hero._y + best.y : GY - 30;
+    A.lightAt(ctx, '255,176,96', x, y, 115 * fl, 0.2);                          // warm key light over the party
+    ctx.globalAlpha = 0.34 * fl; ctx.drawImage(A.glow('255,190,110'), x - 80, GY - 10, 160, 20);  // pool on the ground
+    ctx.globalAlpha = 1;
   }
   const foeFrame = () => {
     const f = foe.fr; if (!f) return null;
@@ -419,6 +434,7 @@ let resize, animate, draw, stageStats;
     ctx.imageSmoothingEnabled = true;
     for (const a of order) if (a.slash > 0) drawSlash(a, cam);
     ctx.globalCompositeOperation = 'lighter';
+    keyLight();
     for (const a of order) lightsOf(a);
     if (foeD.f) { const f = foeD.f, fl = flick(); for (const l of f.lights) A.lightAt(ctx, l.rgb, foeD.x + l.x, foeD.y + l.y, Math.min(Math.max(8, l.size * 3), 20) * fl * 1.4, 0.3); }
     ctx.globalCompositeOperation = 'source-over';

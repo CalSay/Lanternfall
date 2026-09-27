@@ -36,11 +36,11 @@ function uiFight() {
     gq.textContent = 'Boss'; gp.textContent = 'Fighting'; gb.disabled = true;
   } else if (S.zone < S.maxZone) {
     $('gateTitle').textContent = 'Rematch this zone\'s boss';
-    $('gateDesc').textContent = `12% chance to drop ${uq}. You can rematch as often as you like.`;
+    $('gateDesc').textContent = `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`;
     gq.textContent = 'Boss'; gp.textContent = 'Rematch'; gb.disabled = false;
   } else {
     $('gateTitle').textContent = bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`;
-    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. 35% chance of the unique ${uq}.`;
+    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`;
     gq.textContent = 'Boss'; gp.textContent = 'Fight'; gb.disabled = !bossReady();
   }
   HERO_UPS.forEach((u, i) => {

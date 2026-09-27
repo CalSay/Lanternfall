@@ -1,6 +1,6 @@
-.skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.skills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .skill { background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; padding: 8px 10px; display: grid; gap: 4px; }
-.skill .sn { font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.skill .sn { font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 5px; min-width: 0; white-space: nowrap; overflow: hidden; }
 .skill .sn img { width: 16px; height: 16px; }
 .skill .sl { font: 600 20px/1 var(--display); font-variant-numeric: tabular-nums; }
 .skill .bar > i { background: var(--gold); }

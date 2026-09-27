@@ -17,6 +17,10 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 00-util.js | core | `fmt`, `rng`, event bus (`on`/`emit`), `mod`/`addModifier`, `onTick`, storage adapter |
 | 05-platform.js | browser | localStorage adapter (Node tools replace it with an in-memory one) |
 | 10-art.js | core | pixel maps, palettes, colour maths |
+| 12a-art-body.js | core (data) | B1 character kit `AK`: materials, gear tiers, shapes, body anchors, faces, poses (docs/design/art-direction.md) |
+| 12b..12f-art-*.js | core (data) | outfits: 12b hero classes, 12c Hedgefolk, 12d the Oath, 12e Dusk Company, 12f Wayfarers (one owner per file) |
+| 13-art-enemies.js | core (data) | enemy, boss, wyrm and gather-node rigs |
+| 60b-baker.js | browser | B1 baker: `charFrames`, `enemyFrames`, `portraitURL`, `drawCharPreview`, lights |
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
@@ -32,7 +36,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
-| 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
+| 70-ui.js | browser | layout (docs/design/layout.md), tabs, toasts and the notice log, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
 | **75-*.js** | browser | **feature UI** |
 | 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
@@ -167,7 +171,7 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
-| `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
+| `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
 ## Save
@@ -182,5 +186,7 @@ keep loading without loss.
 node tools/build.mjs                         # build dist/lanternfall.html
 node tools/check.mjs                         # dist syntax + headless smoke test + save migration
 node tools/sim.mjs --policy mixed --hours 2 --seed 1   # balance timeline (policy fight|mixed, --every MIN)
+node tools/sim.mjs --days 30 --class warden          # normal play over days (check-ins + away gains), docs/design/pacing.md
+node tools/sim.mjs --targets                          # PASS/FAIL for T1, T2, T10 and the pacing targets; retune with --pace k=v
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
 ```

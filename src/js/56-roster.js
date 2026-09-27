@@ -73,7 +73,7 @@ const ROSTER = {
   oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', idx: 5, route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
   morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat the Fungal Deep II boss (zone 12) with no support in your party.' },
   vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 18. 20M gold and 30 Radiant Essence.' },
-  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 28: 150M gold and 20 Blazing Essence.' },
+  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 48: 2T gold and 20 Blazing Essence.' },
   caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with 80 Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
@@ -126,8 +126,11 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 
   // ---------------- levels ----------------
   levelCap = rank => 25 * (rank + 1);
-  cxpNeed = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
-  cxpGain = z => cxpNeed(T.par * z) / T.killsPerLv;
+  // paceXp (40-rules PACE, M6) raises the need past level PACE.compLv; XP per kill does not
+  // include it, so late levels take more kills. It is 1 up to compLv (the first two hours).
+  const cxpBase = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
+  cxpNeed = lv => cxpBase(lv) * paceXp(lv);
+  cxpGain = z => cxpBase(T.par * z) / T.killsPerLv;
   // Party level: average of the 3 highest companion levels on the roster.
   partyLevel = () => {
     const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, 3);
@@ -138,7 +141,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     return Math.min(T.catchMax, T.catchStep * Math.max(0, partyLevel() - r.lv));
   };
   // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax.
-  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpNeed(r.lv + T.gapMax) / T.killsPerLv); };
+  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpBase(r.lv + T.gapMax) / T.killsPerLv); };
   const xpMult = id => (R(id).rarity === 'common' ? T.commonXp : 1) * (1 + catchUpBonus(id)) * mod('compXp');
 
   function levelUp(id, r, quiet) {
@@ -146,7 +149,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     emit('charLevel', { id, lv: r.lv, quiet: !!quiet });
     if (T.milestones.includes(r.lv) || (r.lv > 25 && r.lv % 25 === 0)) {
       emit('milestone', { id, lv: r.lv, quiet: !!quiet });
-      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good');
+      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good', null, T.storyLv.includes(r.lv) ? 'normal' : 'low');
     }
   }
   // Adds raw XP (multipliers already applied). Levels up to the rank cap; at the cap XP
@@ -327,7 +330,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   unlockChar = (id, source, quiet) => {
     if (!R(id) || isRecruited(id)) return false;
     recs()[id] = newRec(1, 0, source || 'progress');
-    if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good');
+    if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good', null, 'high');
     const f = fieldKeys();
     if (source === 'starter') setField([id].concat(f.filter(k => k !== id)));
     else if (P().autoField) fieldIfBetter(id);
@@ -360,7 +363,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     const r = charRec(id);
     pay(promoteCost(id));
     r.rank++;
-    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good');
+    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good', null, 'high');
     emit('promote', { id, rank: r.rank });
     giveXp(id, 0.000001);  // spend banked XP
     return true;
