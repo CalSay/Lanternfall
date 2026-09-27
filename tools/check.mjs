@@ -888,5 +888,240 @@ try {
   assert(E('S.L') > L0 && !toasts && !g.errors.length, `away time levels the hero quietly (L${L0} -> L${E('S.L')}, ${toasts} toasts)`);
 } catch (e) { fail('pacing crashed: ' + (e.stack || e)); }
 
+// ---- art: every outfit builds in Node (12a-12f, B1) ----
+console.log('art');
+try {
+  const g = loadCore({});
+  const r = g.eval(`(() => {
+    const bad = [], cnt = {}, roster = typeof ROSTER === 'object' ? Object.keys(ROSTER) : [];
+    const poses = [{}, { bob: 1 }, AK.DOWN].concat(Object.values(AK.ANIMS).flatMap(a => [a.wind, a.strike]));
+    const num = s => s.t === 'p' ? s.pts.every(Number.isFinite) : [s.cx, s.cy, s.x1, s.y1, s.x2, s.y2, s.x, s.y].filter(v => v !== undefined).every(Number.isFinite);
+    const run = (id, def, call) => { for (const pose of poses) { const k = AK.makeKit(def, pose); call(k); if (k.parts.length < 15 || !k.parts.every(p => p.m && p.m.hex && num(p.s))) bad.push(id); cnt[id] = k.parts.length; } };
+    for (const id in AK.CLASSES) for (const [t, rr] of [[1, 0], [3, 1], [5, 3]]) {
+      const def = AK.CLASSES[id], gg = {};
+      for (const s in def.slots) gg[s] = AK.gearMats(def.slots[s], t, rr);
+      run(id, def, k => def.build(k, gg, { skin: AK.m(AK.SKINS[0], 'skin'), hair: AK.m(AK.HAIRS[0], 'hair') }));
+      run(id + ':bare', def, k => def.build(k, { weapon: null, off: null, head: null, body: null, charm: null }, { skin: AK.m(AK.SKINS[2], 'skin'), hair: AK.m(AK.HAIRS[1], 'hair') }));
+    }
+    for (const id in AK.CHARS) { const def = AK.CHARS[id]; for (const [t, rr] of [[def.wpn.t, def.wpn.r], [1, 0], [5, 3]]) run(id, def, k => def.build(k, AK.gearMats(def.wpn, t, rr, def.wpn.glow))); }
+    return { bad: [...new Set(bad)], classes: Object.keys(AK.CLASSES), chars: Object.keys(AK.CHARS), missing: roster.filter(k => !AK.CHARS[k]) };
+  })()`);
+  assert(r.classes.join() === 'warden,lanternmage,ranger,lightkeeper', 'four hero classes drawn: ' + r.classes.join(', '));
+  assert(r.chars.length === 18 && !r.missing.length, `every roster character has an outfit (${r.chars.length}${r.missing.length ? ', missing ' + r.missing.join(', ') : ''})`);
+  assert(!r.bad.length, 'every outfit builds in every pose and tier without bad numbers' + (r.bad.length ? ': ' + r.bad.join(', ') : ''));
+  assert(!g.errors.length, 'no art errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('art crashed: ' + (e.stack || e)); }
+
+// ---- camp (57-camp.js) ----
+console.log('camp');
+try {
+  const g = loadCore({ seed: 11 });
+  const E = s => g.eval(s);
+  let clock = new Date(2026, 8, 28, 12, 0, 0).getTime();
+  const setNow = t => { clock = t; E(`Date.now = () => ${t}`); };
+  setNow(clock);
+  const secs = n => { for (let i = 0; i < n * 10; i++) g.fn.tick(0.1); };
+  const rich = () => E(`S.gold = 1e12; for (const k of Object.keys(S.mats)) S.mats[k] = [1e5, 1e5, 1e5, 1e5, 1e5]; S.craft.troph = [50, 50, 50, 50, 50, 50, 50]`);
+  assert(E('S.camp.open') === false && E('["forge","bench","loom","ench","tavern"].every(k => campLevel(k) === 1)') && E('campLevel("hearth")') === 0, 'new game: camp closed, stations and Tavern at Lv 1');
+  E('S.maxZone = 5'); secs(1.2);
+  assert(E('S.camp.open && campLevel("hearth") === 1'), 'camp opens at zone 5 with Hearth 1');
+  assert(E('almanac.needs.Camp()') && E('OMENS.filter(o => o.needs === "Camp").every(o => almanac.usable(o))'), "the Almanac's camp Omens switch on");
+  // costs are paid
+  E('S.gold = 0'); assert(!E('campBuild("watch")') && E('campCan("watch").miss.length') > 0, 'no build without the cost');
+  rich();
+  const before = JSON.parse(E('JSON.stringify({ g: S.gold, m: S.mats })')), cost = JSON.parse(E('JSON.stringify(campCost("watch", 1))'));
+  assert(E('campBuild("watch")') && E('S.gold') === before.g - cost.gold && cost.mats.every(([f, t, n]) => E(`S.mats.${f}[${t - 1}]`) === before.m[f][t - 1] - n), `Watchtower Lv 1 paid (${cost.gold} gold, ${cost.mats.map(m => m.join(' ')).join(', ')})`);
+  assert(!E('campBuild("watch")') && E('campCan("watch").why') === 'Already building.', 'one build per building at a time');
+  assert(E('campCan("library").need.hearth') === 2, 'the Library needs Hearth 2');
+  E('S.camp.b.hearth = 2'); const g0 = E('S.gold');
+  assert(E('campBuild("forge")') && E('campBuilds().find(x => x.id === "forge").queued') && E('S.gold') < g0, 'a second build queues behind the first and is paid now');
+  assert(!E('campBuild("tavern")') && E('campCan("tavern").full'), 'one builder with one queued build: the third is refused');
+  // cancel: 100% before it starts
+  const gq = E('S.gold'), fc = JSON.parse(E('JSON.stringify(campPending("forge").cost)'));
+  assert(E('campCancel("forge")') && E('S.gold') === gq + fc.gold, 'cancelling a queued build refunds it all');
+  E('campBuild("forge")');
+  // timers run offline
+  const wEnd = E('campPending("watch").end'), fDur = E('campPending("forge").dur');
+  setNow(wEnd + 1000);
+  const r = JSON.parse(E('JSON.stringify(awayGains(3600))'));
+  assert(E('campLevel("watch")') === 1 && E('campPending("forge").start') === wEnd && E('campPending("forge").end') === wEnd + fDur, 'finished while away; the queued build started at the old end');
+  assert(r.extra.some(l => /Watchtower Lv 1 is finished/.test(l.txt)), 'the away report lists the finished build');
+  setNow(wEnd + fDur + 5);
+  E('globalThis.__cb = []; on("campBuilt", p => globalThis.__cb.push(p))'); secs(1.2);
+  assert(E('campLevel("forge")') === 2 && E('JSON.stringify(globalThis.__cb)') === '[{"id":"forge","lv":2}]', "the tick finishes builds; 'campBuilt' {id, lv} fires");
+  // cancel: 50% once started
+  E('S.camp.b.hearth = 4'); rich();
+  const gs = E('S.gold'), cc = JSON.parse(E('JSON.stringify(campCost("library", 1))'));
+  E('campBuild("library")'); E('campCancel("library")');
+  assert(E('S.gold') === gs - cc.gold + Math.floor(cc.gold / 2), 'cancelling a started build refunds half');
+  // perks apply
+  E('S.relic.glass = 0; S.camp.b.watch = 3');
+  assert(E('bonus("awayHours")') === 6, 'Watchtower Lv 3: +6h away');
+  E('S.relic.glass = 5; S.camp.b.watch = 5'); E('addBonus("awayHours", () => 7)');
+  const r2 = JSON.parse(E('JSON.stringify(awayGains(48 * 3600))'));
+  assert(r2.t === 24 * 3600 && r2.cap === 24 * 3600, `away cap never above 24h (Hourglass 5 + Watchtower 5 + another +7h: ${r2.t / 3600}h)`);
+  E('S.camp.b.hearth = 0; S.camp.b.watch = 0; S.relic.glass = 0');
+  E('almanac.force("none")'); E('Object.assign(S.camp.b, { hearth: 0, forge: 1, bench: 1, loom: 1, ench: 1, library: 0, tavern: 1 })');
+  const base = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("compXp"), bp: mod("bountyPay") })'));
+  E('Object.assign(S.camp.b, { hearth: 10, forge: 5, bench: 5, loom: 5, ench: 5, library: 5, tavern: 4 })');
+  const hi = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("compXp"), bp: mod("bountyPay") })'));
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  assert(near(hi.sx / base.sx, 1.3) && near(hi.sv / base.sv, 1.25) && near(hi.rf / base.rf, 0.8) && hi.ts - base.ts === 1 && near(hi.rw / base.rw, 1.1), 'station Lv 5 perks: XP +30%, salvage, reforge, transmute, rarity');
+  assert(near(hi.off / base.off, 1.3) && near(hi.gx / base.gx, 1.25) && near(hi.cx / base.cx, 1.2) && near(hi.bp / base.bp, 1.15), 'Hearth 10 +30% away, Library 5 XP, Tavern 4 bounties');
+  E('almanac.force("hearthDay")'); assert(near(E('mod("offline")') / base.off, 1.6), 'Hearth Day doubles the Hearth bonus');
+  E('almanac.force("none")');
+  // perks never gate recipes
+  const craftSig = () => E('Object.keys(CRAFT_KINDS).flatMap(k => [1,2,3,4,5].map(t => canCraft(k, t).ok ? 1 : 0)).join("")');
+  E('S.skills.smith.lv = 9; S.skills.bench.lv = 4');
+  E('Object.assign(S.camp.b, { forge: 1, bench: 1, loom: 1, ench: 1 })'); const lo = craftSig();
+  E('Object.assign(S.camp.b, { forge: 5, bench: 5, loom: 5, ench: 5 })'); const hiC = craftSig();
+  assert(lo === hiC && lo.includes('1'), 'station levels never gate a recipe');
+  // Blessings
+  E('S.camp.b.shrine = 0'); assert(!E('blessToggle("blade")'), 'no Blessing without the Shrine');
+  E('S.camp.b.shrine = 1'); const d0 = E('mod("dmg")');
+  assert(E('blessToggle("blade")') && near(E('mod("dmg")') / d0, 1.08) && E('blessToggle("coin")') && E('S.camp.bless.join()') === 'coin', 'Shrine 1: one Blessing, swapping replaces it');
+  E('S.camp.b.shrine = 3; blessSet(["blade", "coin"])'); assert(near(E('mod("dmg")') / d0, 1.1) && E('S.camp.bless.length') === 2, 'Shrine 3: two Blessings, 25% stronger (Blade +10%)');
+  E('S.camp.bless = []');
+  // builders
+  E('S.camp.b.hearth = 5'); assert(E('campBuilders()') === 2, 'Hearth 5 adds a second builder');
+  // Roster board status hook
+  E('S.maxZone = 30; S.gold = 1e12; ["tobin","wren","pip","hesketh","kestrel"].forEach(k => recruit(k))');
+  const bench = JSON.parse(E('JSON.stringify(benchList())'));
+  assert(bench.length >= 1 && bench.every(id => E(`campStatus("${id}").status`) === 'rest' && E(`campFree("${id}")`)), `bench rests at camp (${bench.join(', ')})`);
+  const who = bench[0];
+  E(`globalThis.__rm = registerBenchStatus(id => id === "${who}" ? { status: 'job', label: 'Job: Oak Grove' } : null)`);
+  assert(E(`campStatus("${who}").status`) === 'job' && !E(`campFree("${who}")`) && E(`campStatus(S.party.field[0]).status`) === 'field', 'registerBenchStatus: one status per character, from the owning system');
+  E('globalThis.__rm()'); assert(E(`campStatus("${who}").status`) === 'rest', 'removing the hook frees the character');
+  // Next Up
+  E('S.camp.builds = []'); rich();
+  assert(E('topGoals(8, { sticky: false }).some(x => x.id === "camp-build" && x.ready)'), 'Next Up: "ready to build"');
+  assert(E('campBuild("hearth")'), 'Hearth 6 started');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
+  const bad = badNumbers(E('S'));
+  assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
+  assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  // old saves get the defaults; dps unchanged; round trip keeps S.camp
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const go = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
+    const def = go.eval('S.camp.open === false && S.camp.builds.length === 0 && ["forge","bench","loom","ench","tavern"].every(k => S.camp.b[k] === 1)');
+    for (let i = 0; i < 12; i++) go.fn.tick(0.1);
+    const opened = go.eval('S.camp.open') === (old.maxZone >= 5);
+    // the opened camp changes neither damage nor gear (compare with the camp's levels removed)
+    const dps1 = go.fn.totalDps(), gear1 = JSON.stringify(go.fn.gear()), keep = go.eval('JSON.stringify(S.camp.b)');
+    go.eval('S.camp.b = { hearth: 0, watch: 0, forge: 0, bench: 0, loom: 0, ench: 0, tavern: 0, library: 0, maproom: 0, shrine: 0 }');
+    const dps0 = go.fn.totalDps(), same = dps1 === dps0 && JSON.stringify(go.fn.gear()) === gear1;
+    go.eval(`S.camp.b = ${keep}`);
+    const cs = go.eval('JSON.stringify(S.camp)'); go.eval('save(); loadSave()');
+    const rt = go.eval('JSON.stringify(S.camp)') === cs;
+    assert(def && opened && same && rt, `${f}: camp defaults, opens by zone, dps and gear unchanged, round trip keeps S.camp` + (def && opened && same && rt ? '' : `: ${JSON.stringify({ def, opened, same, rt, dps0, dps1 })}`));
+  }
+} catch (e) { fail('camp crashed: ' + (e.stack || e)); }
+
+// ---- 8. gathering, fight drops, trophies, offline (55-gathering.js, K5) ----
+console.log('gathering');
+try {
+  const fresh = seed => { const g = loadCore({ seed }); g.eval('almanac.force("none")'); return g; };
+  const g = fresh(21), E = s => g.eval(s);
+  const run = (secs, h = g) => { for (let t = 0; t < secs; t += 0.1) h.fn.tick(0.1); };
+  // every family harvestable at its tier, behind its skill gate
+  for (const kind of ['ore', 'crystal', 'wood', 'fibre', 'herb']) {
+    const sk = E(`skillOf(${JSON.stringify(kind)})`);
+    for (const t of [1, 3]) {
+      E(`S.skills.${sk}.lv = ${t === 1 ? 1 : 'NODE_REQ[2] - 1'}`);
+      const locked = t > 1 && !E(`setNode(${JSON.stringify(kind)}, ${t})`);
+      E(`S.skills.${sk}.lv = NODE_REQ[${t - 1}]`);
+      const set = E(`setNode(${JSON.stringify(kind)}, ${t})`); E('setActivity("gather")');
+      const n0 = E(`S.mats.${kind}[${t - 1}]`), x0 = E(`S.skills.${sk}.xp + S.skills.${sk}.lv * 1e6`);
+      run(20);
+      assert(set && (t === 1 || locked) && E(`S.mats.${kind}[${t - 1}]`) > n0 && E(`S.skills.${sk}.xp + S.skills.${sk}.lv * 1e6`) > x0,
+        `${kind} tier ${t}: ${t > 1 ? 'locked below ' + SKILL_NAME(sk) + ' ' + E(`NODE_REQ[${t - 1}]`) + ', ' : ''}harvested ${E(`S.mats.${kind}[${t - 1}]`) - n0}, ${sk} XP gained`);
+    }
+  }
+  function SKILL_NAME(k) { return E(`SKILL[${JSON.stringify(k)}]`); }
+  E('S.skills.mine.lv = 1; S.skills.forage.lv = 1');
+  assert(Math.abs(E('nodeTime("crystal", 2) / nodeTime("ore", 2)') - 1.25) < 1e-9 && Math.abs(E('nodeTime("fibre", 2) / nodeTime("herb", 2)') - 0.9) < 1e-9, 'Geodes take x1.25 the vein time, Fibre x0.9 the herb time');
+  assert(E('nodeXpFor("crystal", 1)') === E('nodeXp(1)') * 1.25, 'Crystal XP x1.25');
+  E('S.skills.mine.lv = 10; S.skills.wood.lv = 10; S.skills.forage.lv = 2; S.skills.forage.xp = 0');
+  assert(E('mod("skillXp:forage")') === 2, 'Foraging catch-up: x2 XP while below Mining/Woodcutting');
+  E('S.skills.forage.lv = 12');
+  assert(E('mod("skillXp:forage")') === 1, '...and x1 once level');
+  // Hide and essence come only from fights
+  E('S.mats.hide = [0, 0, 0, 0, 0]; S.mats.ess = [0, 0, 0, 0, 0]; S.skills.forage.lv = 1; setNode("fibre", 1); setActivity("gather")');
+  run(300);
+  assert(E('S.mats.hide.every(n => n === 0) && S.mats.ess.every(n => n === 0)') && E('!CRAFT_NODES.hide && !CRAFT_NODES.ess'), 'gathering never gives Hide or Essence');
+  E('S.maxZone = 5; S.zone = 4; S.auto = false; setActivity("fight"); S.mastery.zones[4] = 0');
+  const k0 = E('S.totalKills');
+  for (let i = 0; i < 400; i++) E('spawn(); kill()');
+  const hide = E('S.mats.hide[0]'), rate = hide / (E('S.totalKills') - k0);
+  const expect = E('0.72 * CRAFT_SIG_DROPS.beetle.p + 0.28 * CRAFT_SIG_DROPS.spore.p * 0') ;
+  assert(rate > expect * 0.7 && rate < expect * 1.6, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
+  // home ground
+  E('S.zone = 2; S.mastery.zones[2] = 0');
+  assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Crystal +25% (home ground), Ore +0%');
+  E('S.mastery.zones[2] = MASTERY_STARS[2]');
+  assert(E('homeBonus("crystal")') === 0.5, 'home ground +50% with 3 mastery stars');
+  // champions and trophies
+  E('S.craft.troph = [0, 0, 0, 0, 0, 0, 0]; S.craft.champ = 0; S.maxZone = 30; S.zone = 22; fightBoss = false');
+  E('{ const r = Math.random; Math.random = () => 0; spawn(); Math.random = r; }');
+  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / mobHp(22) })');
+  const zt = E('zoneType(22)'), sig = E(`CRAFT_SIG_DROPS[TYPES[${zt}].key]`), before = E(`S.mats.${sig.fam}[3]`);
+  E('kill()');
+  assert(ch.champ && /^Champion /.test(ch.name) && ch.ratio > 2.6, `champion spawns with x3 HP (${ch.name})`);
+  assert(E(`S.craft.troph[${zt}]`) === 1 && E('S.craft.champ') === 1 && E(`S.mats.${sig.fam}[3]`) - before >= 5, 'champion kill: 1 Trophy of its type, 5 signature drops, counted');
+  E('S.zone = 25; S.maxZone = 25; S.kills = 10; challenge(); kill()');
+  const bt = E('zoneType(25)');
+  assert(E(`S.craft.troph[${bt}]`) === E('CRAFT_TROPHY_SRC.firstBoss') + (bt === zt ? 1 : 0) && E('S.maxZone') === 26, 'first kill of a zone boss (zone 20+) gives a Trophy');
+  const tot = E('trophies()');
+  E('S.zone = 25; fightBoss = true; spawn(); kill()');
+  assert(E('trophies()') === tot, 'a boss rematch gives no Trophy');
+  E('S.zone = 5; S.maxZone = 5; S.kills = 10; challenge(); kill()');
+  assert(E('trophies()') === tot, 'bosses below zone 20 give no Trophy');
+  E('S.zone = 5; spawn()'); let champLow = false;
+  for (let i = 0; i < 300; i++) { E('spawn()'); if (E('!!mob.champ')) champLow = true; }
+  assert(!champLow && E('champChance(5)') === 0, 'no champions below zone 20');
+  // the Glint
+  E('S.skills.mine.lv = 1; setNode("ore", 1); setActivity("gather"); S.zone = 1');
+  let on = false; for (let i = 0; i < 300 && !on; i++) { run(0.1); on = E('glint().on'); }
+  const o0 = E('S.mats.ore[0]'); E('emit("tap", { node: true })');
+  assert(on && E('S.mats.ore[0]') - o0 >= 2 && !E('glint().on'), `a Glint shows within 25s; tapping it gives ${E('S.mats.ore[0]') - o0} ore`);
+  const o1 = E('S.mats.ore[0]'); E('emit("tap", { node: true })');
+  assert(E('S.mats.ore[0]') === o1, 'no Glint, no bonus');
+  assert(!g.errors.length, 'no gathering errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+
+  // offline credits vs live, 1h (G10-ish): gathering per family, and fight signature drops
+  const setup = (h, kind) => h.eval(`S.skills.mine.lv = 20; S.skills.wood.lv = 20; S.skills.forage.lv = 20; S.zone = 3; S.maxZone = 3; setNode(${JSON.stringify(kind)}, 2); setActivity("gather")`);
+  for (const kind of ['ore', 'crystal', 'wood', 'fibre', 'herb']) {
+    const live = fresh(31); setup(live, kind); const a = live.eval(`S.mats.${kind}[1]`); run(3600, live); const liveN = live.eval(`S.mats.${kind}[1]`) - a;
+    const away = fresh(31); setup(away, kind); const b = away.eval(`S.mats.${kind}[1]`); away.fn.awayGains(3600); const awayN = away.eval(`S.mats.${kind}[1]`) - b;
+    assert(Math.abs(awayN / liveN - 1) <= 0.15, `offline ${kind} 1h within 15% of live (${awayN} vs ${liveN})`);
+  }
+  const fsetup = h => h.eval('S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
+  const live = fresh(41); fsetup(live); const lk = live.eval('S.totalKills'); run(3600, live);
+  const liveRate = live.eval('S.mats.hide[0]') / (live.eval('S.totalKills') - lk);
+  const away = fresh(41); fsetup(away); const ak = away.eval('S.totalKills'); const r = away.fn.awayGains(3600);
+  const awayRate = away.eval('S.mats.hide[0]') / (away.eval('S.totalKills') - ak);
+  assert(Math.abs(awayRate / liveRate - 1) <= 0.15, `offline Hide per kill within 15% of live (${awayRate.toFixed(3)} vs ${liveRate.toFixed(3)})`);
+  assert(r.mats.some(m => m.k === 'hide'), 'the away report lists the Hide');
+  const cz = fresh(43); cz.eval('addModifier("dmg", () => 1e6); S.maxZone = 30; S.zone = 29; S.auto = false; setActivity("fight"); addModifier("champion", () => 30)');
+  const r2 = cz.fn.awayGains(3600);
+  assert(cz.eval('trophies()') > 0 && cz.eval('S.craft.champ') > 0 && r2.extra.some(l => / (Heart|Fang|Knuckle|Horn|Crown|Core|Veil)$/.test(l.txt)), `offline champions credit Trophies with an away line (${cz.eval('trophies()')})`);
+
+  // old saves: forage and the new families default in; ore/wood node maths is the old formula exactly
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    const defaults = go.eval('S.skills.forage.lv === 1 && ["crystal", "fibre", "herb", "hide"].every(k => S.mats[k].length === 5) && S.craft.troph.length === 7');
+    const same = ['ore', 'wood', 'ess'].every(k => JSON.stringify(go.eval(`S.mats.${k}`)) === JSON.stringify(old.mats[k]));
+    const exact = go.eval(`[1, 2, 3, 4, 5].every(t => {
+      const g = gear(), m = S.skills.mine.lv, w = S.skills.wood.lv;
+      const ot = 2.6 * (1 + 0.3 * (t - 1)) / ((1 + 0.02 * (m - 1)) * (1 + (g.mineSpd + g.gather) / 100)) / mod('gatherSpeed');
+      const wt = 2.6 * (1 + 0.3 * (t - 1)) / ((1 + 0.02 * (w - 1)) * (1 + (g.woodSpd + g.gather) / 100)) / mod('gatherSpeed');
+      return nodeTime('ore', t) === ot && nodeTime('wood', t) === wt;
+    }) && nodeYieldAvg('ore') === 1 + Math.min(60, gear().oreDbl) / 100 + gear().oreExtra && nodeYieldAvg('wood') === 1 + Math.min(60, gear().woodDbl) / 100 + gear().woodExtra`);
+    assert(defaults && same && exact && !go.errors.length, `${f}: Foraging and new families default in, old materials untouched, ore/wood node maths unchanged`);
+  }
+} catch (e) { fail('gathering crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

@@ -17,6 +17,10 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 00-util.js | core | `fmt`, `rng`, event bus (`on`/`emit`), `mod`/`addModifier`, `onTick`, storage adapter |
 | 05-platform.js | browser | localStorage adapter (Node tools replace it with an in-memory one) |
 | 10-art.js | core | pixel maps, palettes, colour maths |
+| 12a-art-body.js | core (data) | B1 character kit `AK`: materials, gear tiers, shapes, body anchors, faces, poses (docs/design/art-direction.md) |
+| 12b..12f-art-*.js | core (data) | outfits: 12b hero classes, 12c Hedgefolk, 12d the Oath, 12e Dusk Company, 12f Wayfarers (one owner per file) |
+| 13-art-enemies.js | core (data) | enemy, boss, wyrm and gather-node rigs |
+| 60b-baker.js | browser | B1 baker: `charFrames`, `enemyFrames`, `portraitURL`, `drawCharPreview`, lights |
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
@@ -27,6 +31,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js) |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
+| 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
 | 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
 
@@ -136,12 +141,14 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 
 | Event | Payload |
 |---|---|
-| `kill` | `{ mob, zone, gold, ess, tier }` |
+| `spawn` | `{ mob, zone }` (a new foe; listeners may change it: champions) |
+| `kill` | `{ mob, zone, gold, ess, tier }` (`mob.type`, `mob.champ`, `mob.firstKill` on bosses) |
 | `zoneClear` | `{ zone }` |
 | `bossFail` | `{ zone, dps }` |
 | `levelup` | `{ L }` |
 | `skillUp` | `{ k: 'mine'|'wood'|'smith', lv, quiet }` |
-| `harvest` | `{ kind: 'ore'|'wood', t, n }` |
+| `harvest` | `{ kind: 'ore'|'crystal'|'wood'|'fibre'|'herb', t, n, glint? }` |
+| `trophy` / `champion` / `glint` | `{ i, n, source }` / `{ mob }` / `{ on }` (55-gathering) |
 | `itemAdded` | `{ item }` |
 | `loot` | `{ item, first, kept }` (unique drop) |
 | `gear` | none (equipped gear changed) |

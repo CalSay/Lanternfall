@@ -286,8 +286,13 @@ function craftTrophyLine(i, kind, p) {
   return [s, p * CRAFT_MW.share * CRAFT_MW.per[s]];
 }
 const CRAFT_TROPHY_SRC = {
-  firstBoss: 3, // first kill of a zone boss: 3 of that zone type
-  champ: { packs: 150, hp: 3, atk: 2, troph: 1, sig: 5, offline: 0.5 }, // 1 pack in 150 has a champion
+  // K5 (sim G9, first Trophy 20-60 min): the spec's 3 per first boss kill from zone 1 gave the
+  // first Trophy at ~1 min and ~65 by 3h. Now 1 per first kill, from zone 20 (~30-35 min).
+  firstBoss: 1, // first kill of a zone boss: 1 of that zone type
+  firstBossFrom: 20,
+  // 1 pack in 150 has a champion (single foes here: 1 spawn in 150). From zone 20 like bosses
+  // (K5 G9: from zone 13 the first Trophy came at 12-17 min in some runs).
+  champ: { packs: 150, fromZone: 20, hp: 3, atk: 2, troph: 1, sig: 5, offline: 0.5 },
   raid: 1 // each raidReward: 1 of a random type
 };
 const CRAFT_TROPHY_GATE = { from: 8, n: 1, max: 10 };
@@ -296,11 +301,12 @@ const craftUpgradeTrophies = plus => plus + 1 >= CRAFT_TROPHY_GATE.from && plus 
 // ================= fight drops, home ground, active and idle bonuses =================
 // One unit of the zone tier per kill at chance p, x (1 + star x mastery stars in that zone).
 // Offline: kills x sum(share x chance) x offline.
+// K5 (sim G2/G6): Hide +0.05 on each hide type (spec 0.2 / 0.15 / 0.3); Rangers waited on Hide.
 const CRAFT_SIG_DROPS = {
   slime: { fam: 'herb', p: 0.2 },
-  bat: { fam: 'hide', p: 0.2, as: 'wing leather' },
-  bones: { fam: 'hide', p: 0.15, as: 'sinew' },
-  beetle: { fam: 'hide', p: 0.3, as: 'scaled hide' },
+  bat: { fam: 'hide', p: 0.25, as: 'wing leather' },
+  bones: { fam: 'hide', p: 0.2, as: 'sinew' },
+  beetle: { fam: 'hide', p: 0.35, as: 'scaled hide' },
   spore: { fam: 'fibre', p: 0.2, as: 'mycelium' },
   golem: { fam: 'crystal', p: 0.15 },
   wraith: { fam: 'ess', p: 0.2 } // a second essence roll

@@ -1,0 +1,330 @@
+// 75-camp-ui: the Camp part of the Camp tab (tab id 'world'): the Hearth card, the builders,
+// one card per building, the Blessings and the Roster board. The Tavern and the World raid parts
+// follow it unchanged. Browser-only; the rules live in 57-camp.js. A clean list UI: the drawn
+// camp scene (camp.md 4) is a later task and mounts above these sections.
+{
+  // ---------------- icons (12x12, the ICON format) ----------------
+  registerIcons({
+    b_fire: ['............', '.....7......', '....717.....', '....7117....', '...711517...', '...7155117..', '..71555517..', '...155551...', '.6.666666.6.', '..66666666..', '.6........6.', '............'],
+    b_tower: ['..1.1.1.1...', '..1111111...', '...12221....', '...12521....', '...12221....', '...12221....', '...12221....', '..1122211...', '..1222221...', '..1222221...', '.666666666..', '............'],
+    b_book: ['............', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2222222222.', '............'],
+    b_map: ['............', '.6666666666.', '.6555555556.', '.6515555156.', '.6551551556.', '.6555115556.', '.6555515516.', '.6551555556.', '.6515555756.', '.6555555556.', '.6666666666.', '............'],
+    b_bell: ['.....66.....', '....1111....', '...111111...', '...115111...', '...115111...', '..11111111..', '..11111111..', '.1111111111.', '.2222222222.', '.....77.....', '............', '............']
+  });
+  const FIRE = { 5: '#FFF3C4', 7: '#FFB347' };
+  const ICONS = {
+    hearth: () => iconURL('b_fire', '#E0524F', FIRE),
+    watch: () => iconURL('b_tower', '#8C8474', { 5: '#FFD27A' }),
+    forge: () => iconURL('anvil', '#8A8FA0'),
+    bench: () => iconURL('log', '#8C6A43', { 6: '#4A3220', 7: '#8C6A43' }),
+    loom: () => iconURL(...craftIcon('robe', 2)),
+    ench: () => iconURL('orb', '#B58CFF', { 7: '#6E6878' }),
+    tavern: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+    library: () => iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' }),
+    maproom: () => iconURL('b_map', '#E0524F', { 5: '#EFE6D6', 6: '#8C6A43' }),
+    shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' })
+  };
+  const icon = id => (ICONS[id] || ICONS.hearth)();
+  const famIcon = (f, t) => ['ore', 'wood', 'ess'].includes(f) ? matIcon(f, t) : iconURL(...craftIcon('mat_' + f, t));
+  const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
+  const shortName = (f, t) => MAT[f].short[t - 1];
+  const bname = (id, to) => id === 'hearth' ? `Hearth ${to}` : `${CAMP_B[id].n} Lv ${to}`;
+  const left = x => Math.max(0, x.end - Date.now()) / 1000;
+  // "2h", "1h 30m", "3m", "45s": no zero parts.
+  const dur = secs => { secs = Math.ceil(secs); const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60); return secs < 60 ? secs + 's' : h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`; };
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+
+  // ---------------- cost chips (rebuilt only when their text changes) ----------------
+  function chips(box, c) {
+    const items = [];
+    if (c.gold) items.push({ u: iconURL('coin', '#F2C14E'), t: `${fmt(Math.min(S.gold, c.gold))}/${fmt(c.gold)}`, s: S.gold < c.gold, n: 'gold' });
+    for (const [f, t, n] of c.mats) { const h = S.mats[f][t - 1] || 0; items.push({ u: famIcon(f, t), t: `${fmt(Math.min(h, n))}/${fmt(n)} ${shortName(f, t)}`, s: h < n, n: matName(f, t) }); }
+    for (const [i, n] of c.troph) { const tr = S.craft.troph, h = i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0; items.push({ u: trophyIcon(i), t: `${Math.min(h, n)}/${n} ${i === 'any' ? 'Trophies' : CRAFT_TROPHIES[i].n}`, s: h < n, n: 'Trophy' }); }
+    const sig = items.map(x => x.t + x.s).join('|');
+    if (box._sig === sig) return; box._sig = sig; box.textContent = '';
+    for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
+  }
+  const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
+
+  // ---------------- confirm buttons (in-page, no confirm()) ----------------
+  // First tap arms the button for 4 seconds; the second tap acts.
+  let armed = null, armedAt = 0;
+  const isArmed = key => armed === key && Date.now() - armedAt < 4000;
+  function arm(key) { armed = key; armedAt = Date.now(); ui(true); }
+  function disarm() { armed = null; }
+
+  // A timer bar for a pending build.
+  function timer() {
+    const w = el('div', 'cb-timer'), bar = el('div', 'bar'), fill = el('i'), txt = el('span', 'cb-left');
+    bar.append(fill); w.append(bar, txt);
+    return {
+      el: w, set(x) {
+        w.hidden = !x; if (!x) return;
+        const p = x.start ? Math.min(100, (Date.now() - x.start) / Math.max(1, x.end - x.start) * 100) : 0;
+        fill.style.width = p + '%';
+        setTxt(txt, x.start ? `Lv ${x.to} ready in ${dur(left(x))}` : `Lv ${x.to} is queued. It starts when the builder is free.`);
+        w.classList.toggle('queued', !x.start);
+      }
+    };
+  }
+
+  // The action area of a card: Build / Queue / Confirm, or Cancel for a pending build.
+  function actions(id) {
+    const box = el('div', 'cb-act'), go = btn('big cb-go'), cancel = btn('mini warn cb-cancel'), why = el('p', 'note cb-why');
+    box.append(why, go, cancel);
+    go.addEventListener('click', () => {
+      const c = campCan(id); if (!c.ok) return;
+      if (!isArmed('b:' + id)) { arm('b:' + id); return; }
+      disarm(); campBuild(id); ui(true);
+    });
+    cancel.addEventListener('click', () => {
+      if (!isArmed('c:' + id)) { arm('c:' + id); return; }
+      disarm(); campCancel(id); ui(true);
+    });
+    return {
+      el: box, set(c, pend) {
+        const done = c.max;
+        go.hidden = !!pend || done || !!c.need; cancel.hidden = !pend;
+        if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
+        if (!pend && !done) {
+          const verb = c.queue ? 'Queue' : 'Build';
+          setTxt(go, isArmed('b:' + id) ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
+          go.disabled = !c.ok; go.classList.toggle('armed', isArmed('b:' + id));
+        }
+        const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? 'Not enough yet.' : c.why);
+        setTxt(why, w); why.hidden = !w;
+      }
+    };
+  }
+
+  // ---------------- the camp part ----------------
+  let head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  registerSection('camp', {
+    id: 'camp', title: null,
+    mount(sec) {
+      // The Camp part leads the tab, above the Almanac (which prepends itself when it mounts).
+      const part = sec.parentNode; part.parentNode.prepend(part);
+      head = el('h2', 'world-head', "Hollow's Rest");
+      closed = el('div', 'card camp-closed');
+      closedTxt = el('p', 'note');
+      const bar = el('div', 'bar'); closedBar = el('i'); bar.append(closedBar);
+      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar);
+      hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
+      const top = el('div', 'ch-top'), ic = el('div', 'ic ch-ic'); ic.append(img(icon('hearth')));
+      const who = el('div', 'ch-who');
+      H.name = el('div', 'ch-name'); H.lv = el('div', 'ch-lv'); H.fx = el('div', 'ch-fx');
+      who.append(H.name, H.lv, H.fx); top.append(ic, who);
+      H.next = el('div', 'ch-next'); H.nextT = el('div', 'ch-next-t'); H.nextO = el('div', 'ch-next-o'); H.next.append(H.nextT, H.nextO);
+      H.costs = el('div', 'costs cb-costs'); H.timer = timer(); H.act = actions('hearth');
+      hearthCard.append(top, H.next, H.costs, H.timer.el, H.act.el);
+      buildersBox = el('div', 'camp-builders');
+      sec.append(head, closed, hearthCard, buildersBox);
+    },
+    update() {
+      const open = campOpen();
+      closed.hidden = open; hearthCard.hidden = !open; buildersBox.hidden = !open;
+      if (!open) {
+        setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
+        closedBar.style.width = Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%';
+        return;
+      }
+      const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
+      setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
+      setTxt(H.lv, `Hearth ${l}/10 · ${campBuilders()} builder${campBuilders() > 1 ? 's' : ''}`);
+      setTxt(H.fx, campEffects('hearth', l).join(' · '));
+      H.next.hidden = !nx;
+      if (nx) {
+        const rename = nx.name !== CAMP_HEARTH_NAMES[l - 1] ? `: the ${nx.name}` : '';
+        setTxt(H.nextT, `Next: Hearth ${nx.to}${rename}` + (S.maxZone < nx.zone ? ` (needs zone ${nx.zone})` : ''));
+        setTxt(H.nextO, nx.opens.length ? 'Opens ' + nx.opens.join(', ') + '.' : `+3% away gains.`);
+      }
+      H.costs.hidden = !!pend || !!c.max;
+      if (!pend && !c.max && c.cost) chips(H.costs, c.cost);
+      H.timer.set(pend); H.act.set(c, pend);
+      hearthCard.classList.toggle('new', S.camp.news.some(x => x.id === 'hearth'));
+      // builders
+      const rows = [], n = campBuilders(), all = campBuilds();
+      for (let b = 0; b < n; b++) {
+        const run = all.find(x => x.b === b && !x.queued), q = all.find(x => x.b === b && x.queued);
+        rows.push({ run, q, b });
+      }
+      const sig = JSON.stringify(rows.map(r => [r.run && [r.run.id, r.run.to], r.q && [r.q.id, r.q.to]]));
+      if (sig !== bSig) {
+        bSig = sig; buildersBox.textContent = '';
+        for (const r of rows) {
+          const row = el('div', 'bld-row'); row.dataset.b = r.b;
+          const ic = el('div', 'ic'); ic.append(img(r.run ? icon(r.run.id) : iconURL('pick', '#8A8FA0')));
+          const body = el('div', 'bld-body'), t = el('div', 'bld-t'), bar = el('div', 'bar'), fill = el('i'), q = el('div', 'bld-q');
+          bar.append(fill); body.append(t, bar, q); row.append(ic, body);
+          row._t = t; row._fill = fill; row._bar = bar; row._q = q;
+          buildersBox.append(row);
+        }
+      }
+      [...buildersBox.children].forEach((row, i) => {
+        const r = rows[i]; if (!r) return;
+        const who = n > 1 ? `Builder ${i + 1}: ` : '';
+        setTxt(row._t, r.run ? `${who}${bname(r.run.id, r.run.to)} · ${dur(left(r.run))}` : `${who}Free. Pick a building below.`);
+        row._bar.hidden = !r.run;
+        if (r.run) row._fill.style.width = Math.min(100, (Date.now() - r.run.start) / Math.max(1, r.run.end - r.run.start) * 100) + '%';
+        setTxt(row._q, r.q ? `Next: ${bname(r.q.id, r.q.to)}` : r.run ? 'Queue empty. You can queue one build.' : '');
+        row._q.hidden = !row._q.textContent;
+        row.classList.toggle('idle', !r.run);
+      });
+    }
+  });
+
+  // ---------------- building cards ----------------
+  const openCards = new Set();
+  const cards = new Map();
+  let listBox, listSig = '';
+  function card(id) {
+    const d = CAMP_B[id], w = el('div', 'cb'); w.id = 'camp-b-' + id;
+    const row = btn('cb-row'); row.setAttribute('aria-expanded', 'false');
+    const ic = el('div', 'ic'); ic.append(img(icon(id)));
+    const mid = el('div', 'cb-mid'), nm = el('div', 'cb-nm'), lvl = el('span', 'cb-lv'), line = el('div', 'cb-line');
+    nm.append(el('span', null, d.n), lvl); mid.append(nm, line);
+    const dot = el('span', 'cb-dot'); dot.hidden = true;
+    row.append(ic, mid, dot);
+    const body = el('div', 'cb-body'); body.hidden = true;
+    const table = el('div', 'cb-fx'), costs = el('div', 'costs cb-costs'), extra = el('div', 'cb-extra'), tm = timer(), act = actions(id);
+    body.append(table, costs, tm.el, act.el, extra);
+    w.append(row, body);
+    row.addEventListener('click', () => { if (openCards.has(id)) openCards.delete(id); else openCards.add(id); ui(true); });
+    return { w, row, lvl, line, dot, body, table, costs, extra, tm, act, fxSig: '', exSig: '' };
+  }
+  function effectsTable(k, id, l) {
+    const max = CAMP_B[id].max, sig = id + l + max;
+    if (k.fxSig === sig) return; k.fxSig = sig; k.table.textContent = '';
+    const now = el('div', 'cb-fxrow now'), nxt = el('div', 'cb-fxrow next');
+    now.append(el('b', null, l ? `Lv ${l}` : 'Now'), el('span', null, campEffects(id, l).join(' · ')));
+    k.table.append(now);
+    if (l < max) { nxt.append(el('b', null, `Lv ${l + 1}`), el('span', null, campEffects(id, l + 1).join(' · '))); k.table.append(nxt); }
+  }
+  // Extra content: Tavern rumours, Shrine Blessings hint, actions other systems add (Open Codex, Expeditions).
+  function extras(k, id) {
+    const acts = campActions(id);
+    const rum = id === 'tavern' ? campRumours() : [];
+    const sig = JSON.stringify([acts.map(a => a.label), rum.map(r => r.txt)]);
+    if (k.exSig === sig) return; k.exSig = sig; k.extra.textContent = '';
+    if (rum.length) {
+      const box = el('div', 'rumours');
+      box.append(el('div', 'rum-h', 'Rumours'));
+      for (const r of rum) {
+        const line = el('div', 'rum');
+        if (r.ic) line.append(img(iconURL(...r.ic)));
+        else if (r.char) line.append(img(iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' })));
+        line.append(el('span', null, r.txt));
+        box.append(line);
+      }
+      k.extra.append(box);
+    } else if (id === 'tavern' && campLevel('tavern') < 2) k.extra.append(el('p', 'note', 'At Lv 2 the Tavern hears rumours about who visits next.'));
+    for (const a of acts) { const b = btn('mini go', a.label); b.addEventListener('click', () => { try { a.fn(); } catch (e) { console.error('[lanternfall] camp action', e); } ui(true); }); k.extra.append(b); }
+  }
+  registerSection('camp', {
+    id: 'camp-buildings', title: 'Buildings',
+    mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },
+    update() {
+      const sec = listBox.parentNode; sec.hidden = !campOpen(); if (!campOpen()) return;
+      const ids = campList().filter(x => x !== 'hearth');
+      const sig = ids.join();
+      if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
+      for (const id of ids) {
+        const k = cards.get(id), l = campLevel(id), max = CAMP_B[id].max, c = campCan(id), pend = campPending(id), isOpen = openCards.has(id);
+        setTxt(k.lvl, l ? `Lv ${l}/${max}` : 'Not built');
+        const line = pend ? `Building Lv ${pend.to} · ${pend.start ? dur(left(pend)) : 'queued'}`
+          : c.max ? campEffects(id, l).join(' · ')
+          : `Lv ${c.to}: ${campEffects(id, c.to).filter(x => !campEffects(id, l).includes(x)).join(' · ') || campEffects(id, c.to)[0]}` + (c.need ? ` · needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}` : '');
+        setTxt(k.line, line);
+        k.dot.hidden = !c.ok || !!pend;
+        k.w.classList.toggle('locked', !!c.need && !l);
+        k.w.classList.toggle('busy', !!pend);
+        k.w.classList.toggle('new', S.camp.news.some(x => x.id === id));
+        k.row.setAttribute('aria-expanded', String(isOpen)); k.body.hidden = !isOpen;
+        if (!isOpen) continue;
+        effectsTable(k, id, l);
+        k.costs.hidden = !!pend || !!c.max || !c.cost;
+        if (!k.costs.hidden) chips(k.costs, c.cost);
+        k.tm.set(pend); k.act.set(c, pend);
+        extras(k, id);
+      }
+    }
+  });
+
+  // ---------------- Blessings ----------------
+  let blessBox, blessNote, blessSig = '';
+  registerSection('camp', {
+    id: 'camp-bless', title: 'Blessings',
+    mount(sec) { blessNote = el('p', 'note'); blessBox = el('div', 'bless-grid'); sec.append(blessNote, blessBox); },
+    update() {
+      const sec = blessBox.parentNode, n = blessSlots();
+      sec.hidden = !campOpen() || n < 1; if (sec.hidden) return;
+      const ids = Object.keys(CAMP_BLESS).filter(blessOpen), on = S.camp.bless, sw = blessCanSwap();
+      setTxt(blessNote, `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Tap one to choose it. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
+      const sig = JSON.stringify([ids, on, blessPower(), sw.ok]);
+      if (sig === blessSig) return; blessSig = sig; blessBox.textContent = '';
+      for (const id of ids) {
+        const d = CAMP_BLESS[id], b = btn('bless' + (on.includes(id) ? ' on' : ''));
+        b.setAttribute('aria-pressed', String(on.includes(id)));
+        b.append(el('b', null, d.n), el('span', null, d.fx(d.v * blessPower())));
+        b.disabled = !sw.ok;
+        b.addEventListener('click', () => { blessToggle(id); ui(true); });
+        blessBox.append(b);
+      }
+    }
+  });
+
+  // ---------------- the Roster board ----------------
+  const hasArt = id => typeof portraitURL === 'function' && typeof RIG === 'object' && RIG.COMPANIONS && !!RIG.COMPANIONS[id];
+  function portrait(id) {
+    if (hasArt(id)) { try { const u = portraitURL(id); if (u) return u; } catch (e) {} }
+    const c = ROSTER[id], i = c.idx, col = i >= 0 ? COMPS[i].col : CHAR_RARITY[c.rarity].col, helm = i >= 0 ? COMPS[i].helm : '#3A2F47';
+    return spriteURL('camp:' + id, SPR.hero, { ...HERO_PAL, 1: col, 2: helm });
+  }
+  const ORDER = { rest: 0, job: 1, exped: 2 };
+  let rosBox, rosNote, rosSig = '';
+  registerSection('camp', {
+    id: 'camp-roster', title: 'Roster board',
+    mount(sec) { rosNote = el('p', 'note'); rosBox = el('div', 'ros-list'); sec.append(rosNote, rosBox); },
+    update() {
+      const sec = rosBox.parentNode, live = campOpen() && rosterLive();
+      sec.hidden = !live; if (!live) return;
+      const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
+        .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
+      setTxt(rosNote, list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.');
+      const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
+      if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
+      for (const x of list) {
+        const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
+        const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
+        const body = el('div', 'ros-body');
+        const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
+        const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
+        body.append(nm, st);
+        const acts = el('div', 'ros-acts');
+        if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
+        for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
+        const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
+        row.append(pt, body, acts);
+        rosBox.append(row);
+      }
+    }
+  });
+
+  // ---------------- tab dot, Go buttons, "finished" glow ----------------
+  const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
+  on('campOpen', dot);
+  on('campBuilt', dot);
+  on('campGoto', ({ tab, sel }) => {
+    setTab(tab);
+    const t = sel && document.querySelector(sel); if (!t) return;
+    const id = sel.replace('#camp-b-', ''); if (CAMP_B[id] && id !== 'hearth') { openCards.add(id); ui(true); }
+    const box = $('panels');
+    box.scrollTop = Math.max(0, t.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12);
+  });
+  // The glow on finished buildings clears after the player has had the Camp tab open for a few seconds.
+  let seenFor = 0;
+  onTick(dt => {
+    if (S.tab !== 'world' || document.hidden || !S.camp.news.length) { seenFor = 0; return; }
+    seenFor += dt; if (seenFor > 5) { campSeen(); seenFor = 0; }
+  });
+}

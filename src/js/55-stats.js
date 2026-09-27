@@ -60,10 +60,10 @@ const statsApi = {};
   Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
 
   // ---- away report ----
-  const MAT_KINDS = ['ore', 'wood', 'ess'];
+  const MAT_KINDS = CRAFT_FAMILIES; // every family (K5), in pouch order
   let snap = null;
   on('awayBegin', r => {
-    r.cap = (4 + 2 * S.relic.glass) * 3600;
+    r.cap = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600;
     r.capped = r.secs > r.cap;
     r.activity = S.activity;
     snap = {
@@ -95,7 +95,7 @@ const statsApi = {};
     r.items = S.items.filter(i => i.id >= b.nextId);
     r.skills = Object.keys(S.skills).filter(k => S.skills[k].lv > (b.skills[k] || 1)).map(k => ({ k, from: b.skills[k] || 1, to: S.skills[k].lv }));
     ST().away += r.t;
-    for (const m of r.mats) if (m.k !== 'ess') ST().gathered += m.n;
+    for (const m of r.mats) if (CRAFT_NODES[m.k]) ST().gathered += m.n; // gathered families only
     r.extra = [];
     for (const fn of AWAY_LINES.slice()) {
       try { const out = fn(r); if (out) r.extra.push(...[].concat(out).filter(Boolean)); }

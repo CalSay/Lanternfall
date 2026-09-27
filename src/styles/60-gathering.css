@@ -1,0 +1,14 @@
+/* 60-gathering: small additions to the Gather tab for K5 (K8 redoes the tab). */
+#skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
+#skillCards .skill .sn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 420px) {
+  #skillCards { gap: 6px; }
+  #skillCards .skill { padding: 8px 6px 8px 8px; }
+  #skillCards .skill .sn { letter-spacing: 0; font-size: 10px; text-transform: none; }
+  #skillCards .skill .sn img { display: none; }
+}
+.gat-home { color: #F2E6B0; }
+.gat-sub { font: 600 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px 2px; }
+.mats .mat.none { opacity: .5; }
+.gat-tro .mat .mn { font-size: 10px; }

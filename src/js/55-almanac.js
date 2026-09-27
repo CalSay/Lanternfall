@@ -30,7 +30,7 @@ let OMENS, WEEKLY_GOALS;
     K6: () => typeof craftItem === 'function',               // K6 crafting core
     B1: () => rosterLive(),                                  // named companions
     B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
-    Camp: () => !!S.camp,
+    Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
     Expeditions: () => !!S.exped,
     Deepwell: () => !!S.deep
   };
@@ -88,7 +88,7 @@ let OMENS, WEEKLY_GOALS;
     { id: 'fallingStars', n: 'Falling Stars', cat: 'deep', fx: 'Deepwell drafts show 4 boons', bonus: { deepOffers: 1 }, needs: 'Deepwell', ic: ['orb', '#FFF3C4'], go: { tab: 'world' } },
 
     { id: 'longNight', n: 'Long Night', cat: 'rest', fx: 'Away gains +25%', mod: { offline: 1.25 }, ic: ['glass', '#B58CFF'], go: null },
-    { id: 'hearthDay', n: 'Hearth Day', cat: 'rest', fx: 'The Garden grows double', mod: { garden: 2 }, needs: 'Camp', ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: null },
+    { id: 'hearthDay', n: 'Hearth Day', cat: 'rest', fx: "The Hearth's away bonus is doubled", mod: { hearth: 2 }, needs: 'Camp', ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: null },
     { id: 'wyrmStirs', n: 'The Wyrm Stirs', cat: 'rest', fx: '+25% raid damage', mod: { raid: 1.25 }, ok: () => S.wyrms > 0 || S.raid.gen > 0, ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }], go: { tab: 'world' } }
   ];
   const OMEN_BY = Object.fromEntries(OMENS.map(o => [o.id, o]));
@@ -239,7 +239,7 @@ let OMENS, WEEKLY_GOALS;
     if (g.tab === 'forge') return { txt: 'Best today: the Forge.', go: { tab: 'forge' } };
     if (g.tab === 'adv') return { txt: 'Best today: bounties on the Fight tab.', go: { tab: 'adv' } };
     if (o.id === 'wyrmStirs') return { txt: 'Best today: the world raid.', go: { tab: 'world' } };
-    return { txt: 'Best today: the World tab.', go: { tab: 'world' } };
+    return { txt: 'Best today: the Camp tab.', go: { tab: 'world' } };
   }
   // Sets the party up for the hint. Returns the tab the UI should open.
   function goFor(o) {
@@ -455,7 +455,7 @@ let OMENS, WEEKLY_GOALS;
     if (!gains) return null;
     const out = [], t = omenFor(today()), was = r.omen && OMEN_BY[r.omen];
     if (was && r.omenHelped) out.push({ icon: { ic: was.ic }, txt: `${was.n} helped while you were away. ${was.fx}.`, sub: 'The Omen of the day you left covers your whole time away.' });
-    out.push({ icon: { ic: t.ic }, txt: `Today: ${t.n}. ${t.fx}.`, sub: t.dare ? `You can take the Dare in the Almanac: ${t.dare.n}.` : 'See the Almanac on the World tab.' });
+    out.push({ icon: { ic: t.ic }, txt: `Today: ${t.n}. ${t.fx}.`, sub: t.dare ? `You can take the Dare in the Almanac: ${t.dare.n}.` : 'See the Almanac on the Camp tab.' });
     return out;
   }
 

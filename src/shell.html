@@ -50,7 +50,7 @@
     <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
     <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
     <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="world" data-ic="camp" aria-selected="false">Camp<span class="dot" id="raidDot" hidden></span></button>
   </nav>
 
   <div class="panels" id="panels">
@@ -137,9 +137,36 @@
       </div>
     </section>
 
-    <!-- World: the Raid and Tavern parts keep their old ids (p-raid, p-tav) so
+    <!-- Camp (tab id "world"): the Camp part (57-camp.js, 75-camp-ui.js), then the Tavern and the
+         World raid. The Raid and Tavern parts keep their old ids (p-raid, p-tav) so
          registerSection('raid' | 'tav') and 80-online.js keep working. -->
     <section class="panel" id="p-world" hidden>
+    <div class="panel world-part" id="p-camp"></div>
+
+    <div class="panel world-part" id="p-tav">
+      <h2 class="world-head">Tavern</h2>
+      <div class="sec">
+        <h2 class="sec-title">In the tavern now</h2>
+        <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Hall of heroes</h2>
+        <div style="overflow-x:auto">
+          <table class="board">
+            <thead><tr><th></th><th>Hero</th><th class="n">Lv</th><th class="n">Zone</th><th class="n">Gear</th></tr></thead>
+            <tbody id="board"><tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Your hero's name</h2>
+        <form class="rename" id="renameForm">
+          <input id="nameInput" maxlength="18" autocomplete="off" aria-label="Hero name">
+          <button type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+
     <div class="panel world-part" id="p-raid">
       <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
@@ -167,30 +194,6 @@
       <div class="sec">
         <div class="sec-head"><h2 class="sec-title">Relics</h2><span class="note">Paid in Embers from raids</span></div>
         <div id="relicRows" class="sec"></div>
-      </div>
-    </div>
-
-    <div class="panel world-part" id="p-tav">
-      <h2 class="world-head">Tavern</h2>
-      <div class="sec">
-        <h2 class="sec-title">In the tavern now</h2>
-        <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Hall of heroes</h2>
-        <div style="overflow-x:auto">
-          <table class="board">
-            <thead><tr><th></th><th>Hero</th><th class="n">Lv</th><th class="n">Zone</th><th class="n">Gear</th></tr></thead>
-            <tbody id="board"><tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="sec">
-        <h2 class="sec-title">Your hero's name</h2>
-        <form class="rename" id="renameForm">
-          <input id="nameInput" maxlength="18" autocomplete="off" aria-label="Hero name">
-          <button type="submit">Save</button>
-        </form>
       </div>
     </div>
     </section>

@@ -34,7 +34,7 @@
     try { S.party.cls = k; return heroSpec(k); } finally { S.party.cls = prev; }
   }
   function drawPreview(cv, k) {
-    cv.width = 48; cv.height = 64;
+    cv.width = 56; cv.height = 100; // B1 sprites: about 70 CSS px tall, staffs reach higher
     const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
     if (typeof drawCharPreview === 'function') {
       try { const spec = previewSpec(k); if (spec) { drawCharPreview(cv, spec, 1); return; } } catch (e) { console.error('[lanternfall] class preview', e); }
@@ -122,7 +122,13 @@
   function showJoin(inner, key) {
     inner.textContent = '';
     const box = el('div', 'join');
-    box.append(el('div', 'zsub', 'A companion joins'));
+    const top = el('div'); // one child, so the line-by-line animation delays stay as they were
+    if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') {
+      const cv = el('canvas', 'join-fig'); cv.width = 120; cv.height = 156;
+      try { drawCharPreview(cv, companionSpec(key), 2); top.append(cv); } catch (e) { console.error('[lanternfall] join figure', e); }
+    }
+    top.append(el('div', 'zsub', 'A companion joins'));
+    box.append(top);
     const h = el('h1', null, STARTER_NAME[key]); h.id = 'createTitle';
     box.append(h);
     for (const line of JOIN[key]) box.append(el('p', line.startsWith('"') ? 'join-say' : 'join-line', line));

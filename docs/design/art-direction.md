@@ -1,181 +1,213 @@
-# Art direction
+# Art direction: B1 (16-bit, bold outline)
 
-Status: chosen by the owner on 2026-09-27 after the side-by-side in `prototypes/art-styles.html`.
-Reference build: `prototypes/characters.html` (the rig, the layer system and the tier ramps).
+Status: live. Chosen by the owner on 2026-09-27 from the style study (direction **B1**, with the
+lantern lighting of direction D on the stage). Replaces the Hi-bit direction, which is kept for
+history in [art-direction-hibit.md](art-direction-hibit.md).
 
-## 1. The style: Hi-bit with smooth lighting
+Why: the owner found the old figures "too thin and tall", the clothing "didn't feel right" and the
+art "lacked definition between different sections". B1 answers all three: stocky 4-head figures,
+costumes built from separate coloured pieces, and a dark line wherever one piece sits on another.
 
-- **Hi-bit pixel art.** Characters are real pixels, about 56 to 64 art px tall, drawn at
-  1 art px per CSS px (2 or 3 device pixels on a phone). Pixels stay crisp (nearest-neighbour).
-- **Smooth lighting on top.** Lantern glow, bloom, fog, spell light and vignette are drawn at
-  device resolution with gradients, never pixelated. Light is the mood: warm lantern-lit dark
-  fantasy, not grimdark.
-- **Parallax backgrounds.** 4 to 5 pixel layers per zone (sky, far, mid, ground, foreground).
-- **Font and UI.** Pixelify Sans for display, IBM Plex Sans Condensed for body. Panels keep the
-  current plum and ember palette.
+Reference pictures: `img/roster-b1.png` (every character from the real code), `img/stage-b1.png`
+(the game at 360 x 740), `img/style-study-zoom.png` (the B1 row is the target look).
+Preview page: `prototypes/roster.html` (`#dbg=warden,tobin&s=6` shows every frame of the named
+characters at 6 CSS px per art px; `e_slime`, `e_node_ore` show enemies and nodes).
 
-## 2. Palette and material ramps
+## 1. The look in one paragraph
 
-Base palette: bg `#140F1A`, ink/outline `#0B0810`, ember `#FF9E3D`, gold `#F2C14E`,
-hp `#E0524F`, xp `#6FCB6A`, arcane `#B58CFF`, bone `#EFE6D6`.
+Classic console heroes. Each character is about **35 art px tall and 4 heads high**, drawn at
+**2x** (1 art px = 2 CSS px, so 70 CSS px on the stage). Every piece of a costume is a flat block
+of its own colour with **3 tones** (lit top-left edge, base, shaded edge), a **dark section line**
+where it meets the piece under it, and the whole sprite has a **1 art px ink outline** (`#120B18`).
+Small detail is left out rather than drawn as noise. Light is the mood: lantern glows, a warm key
+light from the hero's lantern and a pool of light on the ground, drawn smooth at device resolution
+over the crisp pixels.
 
-Every material is a **4-tone ramp** generated from one base colour (`ramp()` in the prototype):
+## 2. Sizes
 
-| Tone | Rule |
+| Thing | Art px | On screen | Notes |
+|---|---|---|---|
+| Party member | 34-38 tall (hs 0.82-1.1), 18-30 wide plus weapon | 2x: 68-76 CSS px | head 9 art px tall (hh 4.6) |
+| Head | 10 wide x 9 tall | | eyes are 1 x 2 px stamps |
+| Portrait | 16 x 16 crop around the head | show at 32, 48, 64 or 96 CSS px | never at a non-integer scale |
+| Enemies, nodes | old rigs at half scale | 2x | until the enemy pass redraws them |
+| Stage | about 328 x 244 CSS px on a 360 phone | | ground line GY = 80% of the height |
+
+Stage formation (62-stage.js): 3 columns x 2 lanes. Foot-centre x = 15%, 33%, 51% of the stage
+width (back, mid, front). The upper lane stands 14 px higher and 24 px further back and is drawn
+first. The foe stands at 73%. Melee units dash to the foe and back; ranged units fire from place.
+
+## 3. Palette and tones
+
+- **One material = one base colour + a kind.** `m('#2F57B0')` is cloth; kinds: `cloth`, `leather`,
+  `metal`, `skin`, `hair`, `wood`, `stone`, `gem`, `slime` (all 3 tones), `flat` (one colour, no
+  light) and `glow` (one colour that also emits light).
+- **3 tones per material, no more** (`ramp3` in 12a). Highlight: +15 lightness (metal +23, less
+  saturated), hue up to 10 degrees toward gold. Shade: -16 (metal -19), hue up to 16 degrees
+  toward plum (262); skin shades toward red. No gradients or dithering inside a piece.
+- **Line colour:** a dark, desaturated tone of the material itself (lightness 8-34). Skin lines are
+  warm brown, never black or orange.
+- **Ink outline** `#120B18` around the whole sprite, 1 art px, 4-way.
+- **Each character: 3 colours** (primary, secondary, accent) from the brief in
+  `party-and-classes.md` 3.2, plus skin and hair. About 6 materials, 3 tones each.
+- **Neighbouring pieces get different hues,** not a lighter or darker version of the same one:
+  brown gloves on a steel vambrace, a brown belt on a blue surcoat, an ember sash on violet.
+- Skins: `#F2C39A`, `#C98E62`, `#8A5A3C`. Hero hair: `#3A2A24`, `#8A4A2A`, `#D8B070`, `#B8B4C0`.
+- Glows: lantern glass `#FFD27A` (light `#FFC070`), embers `#FFB050`, holy `#FFE6A0`, Maren's teal
+  `#AEF6E6`, Corvin's violet `#C49CFF`. Keep glows few: the lantern is the hero of the picture.
+
+## 4. Section definition (what the baker does for you)
+
+These passes run in `60b-baker.js` (`rasterize`). You get them by authoring pieces in the right
+order; you never draw lines by hand.
+
+1. **Tones from volume.** Each piece is shaded from its own shape (ellipses and capsules as round
+   volumes, polygons with a bevelled edge), lit from the top left.
+2. **Section line.** Where a piece sits on top of another (higher z, or later in the same z), the
+   under-piece's pixels touching it become the under-piece's line colour. Pieces of the same
+   material do not get a line unless the top one has `sep: 1`.
+3. **Cast shadow.** The pixels directly under a piece that sits on top go one tone darker.
+4. **Despeckle.** A pixel with no same-coloured neighbour takes its neighbours' colour.
+5. **Ink outline** round the whole sprite.
+6. **Faces are stamps**, not shapes: `face(k, ...)` places whole pixels relative to the head
+   centre, so eyes never blur or vanish in any pose.
+
+Options that change this per piece: `nl` (makes no line or shadow on what is under it: trims,
+stamps, straps that should read as painted on), `nlu` (gets no line), `g: 'name'` (pieces in one
+group share no lines: the skin of head and neck), `clip: part` (only inside another piece, and
+shaded with its volume: bands, emblems, hems), `bev` (bevel width), `tone` (+1 darker, -1 lighter).
+
+## 5. How to author an outfit
+
+Files (all DOM-free, they load in Node):
+
+| File | Holds | Owner after AR1 |
+|---|---|---|
+| `src/js/12a-art-body.js` | the kit: colour, materials, gear tiers, shapes, body anchors, body pieces, faces, hair, hoods, poses | art lead (shared; small edits only) |
+| `src/js/12b-art-heroes.js` | Warden, Lanternmage, Ranger, Lightkeeper and their gear per slot | hero art agent |
+| `src/js/12c-art-hedgefolk.js` | Tobin, Wren, Hesketh, Pip, Bram | Hedgefolk agent |
+| `src/js/12d-art-oath.js` | Maren, Aldric, Anselm, Elowen, Caedmon | Oath agent |
+| `src/js/12e-art-dusk.js` | Kestrel, Isolde, Oriel, Corvin | Dusk Company agent |
+| `src/js/12f-art-wayfarers.js` | Thessaly, Grenna, Morwen, Vesper | Wayfarers agent |
+| `src/js/60b-baker.js` | the renderer, caches, portraits, enemy conversion | art lead |
+
+A companion entry:
+
+```js
+AK.CHARS.tobin = { name: 'Tobin', circle: 'hedgefolk',
+  hs: .82, ws: 1.14,          // height and width scale of the body (hd: head, armW, handS)
+  aF: -.3, aB: -.55,          // resting arm angles (radians; negative swings the hand forward)
+  anim: 'slash',              // attack poses: slash heavy cast lift twin bash shoot swing thrust chop
+  pose: { lean: .1, hb: .6 }, // optional stoop, added to every standing frame
+  eye: '#2E2018',
+  wpn: { fam: 'ore', fam2: 'hide', t: 2, r: 0 },   // role weapon: family, default tier and rarity
+  build(k, w) { ... } };      // w = the role weapon's materials (see 6)
+```
+
+Inside `build`, write every piece **relative to the anchors** on `k`, never in absolute numbers:
+
+| Anchor | Meaning |
 |---|---|
-| Highlight | lighter by 16 (metals 30), hue shifted up to 10 degrees toward gold, less saturated for metals |
-| Base | the material colour |
-| Shadow | darker by 17, hue shifted up to 14 degrees toward plum (265) |
-| Deep | darker by 32, hue shifted up to 24 degrees toward plum; also the lit-side outline colour |
+| `k.hx, k.hy, k.hw, k.hh` | head centre and radii; `k.top`, `k.chin` |
+| `k.shY, k.waY, k.hiY` | shoulder, waist and hip lines (negative y is up; feet at 0) |
+| `k.sw, k.hipW` | half widths at the shoulders and hips |
+| `k.pF, k.pB` / `k.hF, k.hB` | front and back shoulder pivots / hand points |
+| `k.legR, k.armR, k.handR, k.bootH, k.bootL` | limb radii, boot height and toe length |
+| `k.H` | 34, the body height (size props with it: a staff is `k.H * .72`) |
+| `k.U(n)` | detail size: `n * 0.72`, at least 1 art px |
+| `k.pose` | the frame's pose (read `k.pose.drawn` for a drawn bow) |
 
-Rules:
-- Light comes from the top-left (the lantern side). Shading is baked per part: a lit rim,
-  base, a shadow side with a 1px checker dither into it, and a deep edge.
-- A part covered by another part above it gets one step darker (cast shadow).
-- **Selective outline:** the exterior silhouette is outlined 1px. On the lit side the outline
-  is the part's deep tone; on the shadow side it is ink. No black lines inside the figure.
-- Emissive parts (lantern glass, eyes, gems, coals, runes) are flat bright colours and each one
-  also registers a light for the lighting pass.
-- Max about 6 materials per character plus emissives, so figures stay readable at 1x.
+Shapes: `E(cx, cy, rx, ry)` ellipse, `C(x1, y1, r1, x2, y2, r2)` tapered capsule, `P(x, y, ...)`
+polygon, `R(x, y, w, h)` rectangle, `Q(x, y, w, h)` whole-pixel stamp, `rrect`, `ringP`, `arcPts`.
 
-## 3. Proportions and silhouettes
+Body helpers: `legs(k, trousers, boots, { cuff, toe, sole, greave, tall })`,
+`torsoShape(k, { bot, ww, bw })`, `robeShape(k, { hem, flare })`,
+`arm(k, 'F'|'B', sleeve, hand, { bare, bell, bellTrim, bracer, cuff, big })`, `head(k, skin)`,
+`face(k, { eye, brow, glow, one, mouth })`, `hairShort(k, hair, { long })`, `hairFringe`, `beard`,
+`hood(k, mat, { shadow, trim, peak })`, `belt(k, mat, { buckle })`, `lanternItems(size, frame, glass)`.
 
-- **6.5 to 7 heads tall.** Base body: feet at 0, knees -16, hips -30, waist -34, shoulders -48,
-  chin -52, top of head -62 (art px). Real shoulders, a waist, two-part limbs and hands (a hand
-  plus a thumb shape). No chibi heads.
-- **Faces readable but restrained:** one eye, a brow, a nose, a small mouth. Helmets and hoods
-  may hide the face; a hood shades the eyes and leaves a small lit eye.
-- **Three-quarter view facing right** for the party, facing left for enemies.
-- Silhouettes must differ at 1x by height, headgear and the held item: greathelm vs circlet vs
-  hood vs mitre; blade vs staff vs bow vs censer. Colour alone is never the only difference.
-- Companions can vary height (scale 0.9 to 1.0) and build (Tobin is short and stocky, Elowen tall
-  and slender).
+Pieces: `k.add(z, bone, material, shape, options)`. Held props: `k.held(z, 'F'|'B', tilt, [[mat,
+shape, opt], ...])` with shapes in the prop's own frame (origin at the hand, -y along the prop).
 
-## 4. Sprite sizes
-
-| Thing | Native size (art px) | Notes |
-|---|---|---|
-| Party member | 56 to 64 tall, up to 44 wide with weapon | box -20..22 x -76..1 around the feet |
-| Normal enemy | 30 to 64 | bats small, golems big |
-| Zone boss | 72 to 96 | |
-| Raid wyrm | 120+ | |
-| Portrait | the same sprite, head and shoulders crop, shown at 2x | no separate drawing |
-
-## 5. Animation frames
-
-| Animation | Frames | Timing |
-|---|---|---|
-| Idle | 2 (torso and head sink 1px) | 600ms each |
-| Attack | 3: wind-up, strike, recover (recover reuses idle) | 250 / 300 / 150ms |
-| Cast | 2 (reuse wind-up and strike with the cast pose) | |
-| Hit | 1 white flash (generated) plus knockback | 80ms |
-| Down | 1 | |
-| Dash, leap | reuse the strike frame; movement is a position tween | |
-
-Poses are bone values, not new drawings (section 6.2), so each frame is a bake of the same layers.
-
-## 6. Layered equipment (paper-doll)
-
-### 6.1 Layers
-
-A character is a **base body** plus **ordered layers**. Every drawing is a list of shapes, and
-each shape names its layer, its bone and its material.
+Layers (`z`) and bones:
 
 | z | Layer | Examples |
 |---|---|---|
-| 0 | Back | cloak and hood drape, quiver, long hair, mitre lappets, halo |
-| 1 | Back arm | back arm, back sleeve, back pauldron, back vambrace |
-| 2 | Legs | trousers, boots, greaves, sabatons |
-| 3 | Body | tunic, plate, robe, leathers, vestments, belt, belt lantern, charm |
-| 4 | Head | face, hair, greathelm, circlet, hood, mitre |
-| 5 | Off-hand | shield, lantern, tome (held by the back arm, drawn in front of the body) |
-| 6 | Front arm | front arm, sleeve, pauldron, gauntlet |
-| 7 | Weapon | warblade, staff, bow, censer |
-| 8 | Front effects | smoke, sparks, spell light (drawn live, not baked) |
+| 0-0.6 | back | cloak, cape, hood drape, long hair, quiver, lute, bell, plume, halo |
+| 1-1.3 | back arm | back sleeve, back pauldron |
+| 1.8-2.1 | legs | back leg, front leg, boots, greaves |
+| 3-3.9 | body | torso, surcoat, robe, apron, belt, sash, straps, gorget, neck |
+| 4-4.6 | head | head, face stamps, hair, helm, hood ring, hat |
+| 5-5.5 | off-hand | shield, lantern, tome, bow (held by the back arm in front of the body) |
+| 6-6.5 | front arm | sleeve, bracer, glove, pauldron |
+| 7 | weapon | sword, staff, spear, axe |
 
-Within a layer, the order of the list decides overlaps.
+Bones: `legs` (fixed), `up` (torso: bob and lean), `head` (rides on `up`), `armF` / `armB` (rotate
+at the shoulders), `wF` / `wB` (held props: rotate at the hand on top of the arm).
 
-### 6.2 Bones and pose anchors (why gear stays aligned)
+## 6. Gear, tiers and rarity
 
-All drawings are made in one shared coordinate space (the base body). Each shape is tied to a
-bone: `legs`, `up` (torso), `head` (child of `up`), `armF` and `armB` (children of `up`, rotating
-at the shoulder pivots `(5.4, -47.5)` and `(-5.4, -47.5)`). A pose is a handful of numbers:
-`up` (breathing), `lean`, `rotF`, `rotB`, `dx`. The same transform is applied to the body and to
-every gear layer on that bone, so a pauldron, sleeve, gauntlet and blade move exactly with the
-arm through idle and attack frames. Hands are at fixed anchors, front `(6.5, -28.2)` and back
-`(-5.9, -28.2)`: every weapon is drawn around those points.
-
-Frames are baked once per equipment change (4 frames: idle 0, idle 1, wind-up, strike), cached,
-and drawn as one image per frame.
-
-### 6.3 Tier recolour
-
-A gear drawing does not store colours. It uses material keys:
+A gear drawing never stores its colours. It reads a **material set** (`AK.gearMats(spec, tier,
+rarity, glow)`):
 
 | Key | Meaning |
 |---|---|
-| `P` | primary family at the item's tier (Plate: Ore; Robe: Fibre; Bow: Wood) |
-| `D` | primary, one step darker (folds, grooves, back faces) |
-| `Q` | secondary family at the same tier (grip leather, shield face, arrow shafts) |
-| `R` | trim: shown in gold/silver from Rare up, otherwise falls back to `D` |
-| `G` | glow accent: an emissive part that only exists from Epic up |
-| `L`, `Pc`, `Qc` | lamp glass and crystal parts (crystal becomes emissive from Epic up) |
+| `P` | primary family at the tier (Ore: Copper, Iron, Mithril, Starsteel, Emberite; Wood: Oak ... Lanternwood; Crystal, Fibre, Hide), dyed toward the class colour if the slot has `dye` |
+| `D` | primary, darker |
+| `Q` | secondary family at the tier (grips, shafts, frames) |
+| `R` | trim: gold from Rare up, else `D` |
+| `G` | glow accent (Epic and up), else `null` |
+| `C` | crystal: a gem, glowing from Epic |
+| `L` | lamp glass (always lit, tinted by the crystal tier) |
+| `r`, `t`, `pulse` | rarity 0-3, tier 1-5, Legendary pulse |
 
-Families and tiers (from the crafting spec): Ore Copper to Emberite, Wood Oak to Lanternwood,
-Crystal Quartz to Emberglass, Fibre Flax to Gloamsilk, Hide Soft to Ember. Each tier has a base
-colour and a glow colour; `ramp()` makes the 4 tones. **Class dye:** cloth items blend the fibre
-colour 45% toward a class dye (Lanternmage violet, Lightkeeper cream) so a class keeps its identity
-across tiers.
+Rules: every class keeps its own colours whatever the gear (the Warden's surcoat is always blue);
+the tier shows on the metal, wood or leather of the gear itself; Rare adds trim (a helm ridge, a
+plume, a gold hem), Epic adds a glowing accent, Legendary pulses. Heroes: `g.weapon`, `g.off`,
+`g.head`, `g.body`, `g.charm` (null when the slot is empty: draw hair instead of a helm, a hip
+lantern instead of a held one). Companions: `w` is the role weapon (the spec `{ comp, t, r }`
+overrides the tier and rarity).
 
-### 6.4 Rarity
+## 7. Faces, heads and silhouettes
 
-| Rarity | Look |
-|---|---|
-| Common | plain material, no trim |
-| Rare | trim parts appear (gold edges, emblem, buckle, stole) |
-| Epic | glow accents appear (runes, gems, visor glint) and crystals become emissive |
-| Legendary | glow accents pulse and shed sparks; bespoke extras (the Greathelm plume) |
-| Unique | a bespoke drawing or extra parts on the same bones, plus its own glow colour |
+- Eyes: `face()` stamps two 1 x 2 px eyes (the near one at `hx + hw * .48`). A brow is a 2 x 1
+  stamp. Hooded faces use `glow` eyes (1 px, lit) or no face at all (Corvin).
+- Every character must read at stage size by **silhouette**: headgear (pot helm, winged helm,
+  mitre, reed hat, candle crown, hood peak), a big prop (tower shield, maul, spear, lute, bell)
+  and height/width (`hs`, `ws`). Colour is never the only difference.
+- Hair and hats are separate pieces over the head, so the fringe gets a section line.
 
-### 6.5 Drawings needed per class
+## 8. Animation
 
-| Item | Drawings |
-|---|---|
-| Base body | 1 shared body, 3 skin tones and 4 hair colours as ramps, 3 hair styles (short, long, bald) |
-| Weapon, Off-hand, Head, Body | 1 drawing each per class (16 total), plus a drawn-bow variant |
-| Charm | 1 shared |
-| Belt lantern | 1 shared (the hero's identity light when no lantern is held) |
-| Uniques | 1 extra drawing each |
+Frames: `idle0`, `idle1` (bob 1 art px), `wind`, `strike`, `down` (laid on the ground), `hit`
+(white flash of idle0). Poses are numbers, not drawings (`AK.ANIMS`); a prop follows its hand.
+Frame timing and movement are in 62-stage.js (wind 0.14 s, strike 0.12 s, recover 0.2 s).
+`prefers-reduced-motion`: idle frames freeze, dashes snap, the flicker is steady.
 
-So a class needs 4 gear drawings; tiers (5) x rarities (4) come free through ramps and part flags.
-That is 20 looks per slot from one drawing. Poses need no extra drawings.
+## 9. Lighting on the stage (from direction D)
 
-### 6.6 Companions
+- Every `glow` piece is a light (radius `lr` in art px; the baker returns it in CSS px).
+- The hero's brightest light throws a **warm key light** (radius about 115 px) over the party and
+  a **pool of light** on the ground. Sprites are never recoloured; light is added on top.
+- Glows use `lighter` blending, a flicker, and a slow pulse on pulsing pieces (lanterns, halos).
+- Scenery lamps, fog and the vignette belong to 63-scenery.js.
 
-A companion is the same base body plus a **fixed outfit** (their own drawn clothes and headgear,
-fixed materials) plus their **role weapon** and **trinket** as normal tiered gear layers:
+## 10. Enemies (until the enemy pass)
 
-| Role | Role weapon layer |
-|---|---|
-| Tank | Shield (off-hand layer) |
-| Striker | Bow (weapon layer) |
-| Caster | Staff (weapon layer) |
-| Support | Tome (off-hand layer) |
+Enemy and gather-node rigs (13-art-enemies.js, 11-art-craft.js) keep their old format. The baker
+converts them to kit pieces at half scale and runs the same passes, so they get chunky 2x pixels,
+3 tones, section lines and the ink outline. Tiny pieces (eyes, sparkles) become whole-pixel stamps.
+The enemy pass should redraw them in the kit's anchor style.
 
-The trinket is a small belt or chest piece (charm, flask, whistle, wick). Signature props
-(Tobin's borrowed sword, Hesketh's lighting pole, Elowen's lantern and halo) are part of the outfit.
-Upgrading a companion's weapon recolours it on their body, like the hero.
+## 11. Checklist for a new or reworked character
 
-## 7. Lighting pass
-
-- Every emissive part registers a light at bake time (position, colour, size).
-- Per frame: radial glow in `lighter` blend plus a small warm core (bloom), with a lantern flicker.
-  Legendary lights pulse and shed sparks.
-- Fog bands, the moon halo and a vignette are drawn over the scene at device resolution.
-- `prefers-reduced-motion`: idle frames freeze, flicker is steady, no sparks or shake.
-
-## 8. Performance budget
-
-- Baking: about 60 shapes x 4 frames per character, done on equipment change (under 50ms on a
-  mid phone). Up to 10 characters on screen.
-- Per frame: one image per unit, about 1-3 gradient lights per unit, 5 background layers.
+1. Read the brief (party-and-classes.md 3.2). Pick 3 colours plus skin and hair.
+2. Build order: back pieces, legs, back arm, torso and clothing, belt, head, face, hair and
+   headgear, off-hand, front arm, weapon, front pauldron.
+3. Every piece relative to anchors; no absolute coordinates except inside held props.
+4. Neighbouring pieces differ in hue; trims are `clip`ped to their parent.
+5. The role weapon uses `w.P` / `w.R` / `w.G` so its tier and rarity show.
+6. Check `#dbg=<key>&s=6` on `prototypes/roster.html`: every frame, no stray pixels, the face
+   reads, the prop reads, the silhouette differs from the other characters in the circle.
+7. Check the stage at 360 x 740 (the character in the upper and lower lane).
+8. `node tools/build.mjs && node tools/check.mjs` (the art check builds every outfit in every pose).
