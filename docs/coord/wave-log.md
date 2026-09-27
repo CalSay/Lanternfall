@@ -148,3 +148,8 @@ the branch too.) New targets, handed to the balance pass (BAL1):
   +5% per hero level, gear tier jumps) and steepen costs, without creating dead time.
 - AR2b merged: Kestrel, Isolde, Oriel, Thessaly, Morwen, Vesper at reference quality (Vesper's lute moved to her front so it reads; accepted).
 - AR2a merged: Wren, Hesketh, Pip, Bram, Aldric, Anselm (real bell now), Caedmon (burning shield reads). All 18 companions at B1 quality.
+- K5 gathering merged (55-gathering.js: crystal/fibre/herb nodes, Foraging, hide + signature drops,
+  home ground, champions from zone 20, trophies, Glint, offline credits). G1 and G9 pass; G2 spread and
+  G6 (Ranger blocked on wood) need K9 sim work. Class runs now push much faster (Warden zone 48-64 at 2h)
+  because class gear is craftable: BAL1 was told. Coordinator flipped CAMP_LIVE on for crystal, fibre,
+  herb, hide and trophies. K8 Gather tab redo and Glint-on-stage are still to do.

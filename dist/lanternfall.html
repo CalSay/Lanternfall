@@ -663,6 +663,20 @@ span.cf-d { font-weight: 600; }
 .cf-gt b { font: 600 14.5px/1.15 var(--display); overflow-wrap: anywhere; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 20px var(--display); }
+/* 60-gathering: small additions to the Gather tab for K5 (K8 redoes the tab). */
+#skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
+#skillCards .skill .sn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 420px) {
+  #skillCards { gap: 6px; }
+  #skillCards .skill { padding: 8px 6px 8px 8px; }
+  #skillCards .skill .sn { letter-spacing: 0; font-size: 10px; text-transform: none; }
+  #skillCards .skill .sn img { display: none; }
+}
+.gat-home { color: #F2E6B0; }
+.gat-sub { font: 600 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px 2px; }
+.mats .mat.none { opacity: .5; }
+.gat-tro .mat .mn { font-size: 10px; }
 /* 60-goals: the "Next up" strip (Fight tab) and its Go buttons in the away card */
 .sec.nu { gap: 6px; }
 .nu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
@@ -3991,8 +4005,13 @@ function craftTrophyLine(i, kind, p) {
   return [s, p * CRAFT_MW.share * CRAFT_MW.per[s]];
 }
 const CRAFT_TROPHY_SRC = {
-  firstBoss: 3, // first kill of a zone boss: 3 of that zone type
-  champ: { packs: 150, hp: 3, atk: 2, troph: 1, sig: 5, offline: 0.5 }, // 1 pack in 150 has a champion
+  // K5 (sim G9, first Trophy 20-60 min): the spec's 3 per first boss kill from zone 1 gave the
+  // first Trophy at ~1 min and ~65 by 3h. Now 1 per first kill, from zone 20 (~30-35 min).
+  firstBoss: 1, // first kill of a zone boss: 1 of that zone type
+  firstBossFrom: 20,
+  // 1 pack in 150 has a champion (single foes here: 1 spawn in 150). From zone 20 like bosses
+  // (K5 G9: from zone 13 the first Trophy came at 12-17 min in some runs).
+  champ: { packs: 150, fromZone: 20, hp: 3, atk: 2, troph: 1, sig: 5, offline: 0.5 },
   raid: 1 // each raidReward: 1 of a random type
 };
 const CRAFT_TROPHY_GATE = { from: 8, n: 1, max: 10 };
@@ -4001,11 +4020,12 @@ const craftUpgradeTrophies = plus => plus + 1 >= CRAFT_TROPHY_GATE.from && plus 
 // ================= fight drops, home ground, active and idle bonuses =================
 // One unit of the zone tier per kill at chance p, x (1 + star x mastery stars in that zone).
 // Offline: kills x sum(share x chance) x offline.
+// K5 (sim G2/G6): Hide +0.05 on each hide type (spec 0.2 / 0.15 / 0.3); Rangers waited on Hide.
 const CRAFT_SIG_DROPS = {
   slime: { fam: 'herb', p: 0.2 },
-  bat: { fam: 'hide', p: 0.2, as: 'wing leather' },
-  bones: { fam: 'hide', p: 0.15, as: 'sinew' },
-  beetle: { fam: 'hide', p: 0.3, as: 'scaled hide' },
+  bat: { fam: 'hide', p: 0.25, as: 'wing leather' },
+  bones: { fam: 'hide', p: 0.2, as: 'sinew' },
+  beetle: { fam: 'hide', p: 0.35, as: 'scaled hide' },
   spore: { fam: 'fibre', p: 0.2, as: 'mycelium' },
   golem: { fam: 'crystal', p: 0.15 },
   wraith: { fam: 'ess', p: 0.2 } // a second essence roll
@@ -4413,13 +4433,21 @@ const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));
 const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
+// Gathering per node kind (K5): the kind's tool (CRAFT_NODES[kind].tool) sets the speed, double
+// yield and extra-unit stats; craftNodeBase has the per-kind time (crystal x1.25, fibre x0.9).
+// Ore and wood give exactly the old numbers.
+const NODE_TOOL_STATS = { pick: ['mineSpd', 'oreDbl', 'oreExtra'], axe: ['woodSpd', 'woodDbl', 'woodExtra'], sickle: ['forageSpd', 'forageDbl', null] };
+const nodeKind = kind => CRAFT_NODES[kind] ? kind : 'wood';
+const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
   const g = gear(), lv = S.skills[skillOf(kind)].lv;
-  const spd = (kind === 'ore' ? g.mineSpd : g.woodSpd) + g.gather;
-  return 2.6 * (1 + 0.3 * (t - 1)) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
+  const spd = g[nodeTool(kind)[0]] + g.gather;
+  return craftNodeBase(nodeKind(kind), t) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
 }
-function nodeYieldAvg(kind) { const g = gear(); return 1 + Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100 + (kind === 'ore' ? g.oreExtra : g.woodExtra); }
+// Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
+function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }
 const nodeXp = t => Math.round(6 * Math.pow(t, 1.6));
+const nodeXpFor = (kind, t) => nodeXp(t) * CRAFT_NODES[nodeKind(kind)].xp; // crystal x1.25
 
 const bulkCost = (base, r, owned, n) => base * Math.pow(r, owned) * (Math.pow(r, n) - 1) / (r - 1);
 const maxAfford = (base, r, owned, money) => Math.max(0, Math.floor(Math.log(money * (r - 1) / (base * Math.pow(r, owned)) + 1) / Math.log(r)));
@@ -4436,7 +4464,7 @@ const zoneType = z => (z - 1) % 7;
 const zoneCycle = z => Math.floor((z - 1) / 7);
 const zoneName = z => ZONES[zoneType(z)] + (zoneCycle(z) ? ' ' + roman(zoneCycle(z) + 1) : '');
 const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
-const nodeColor = () => S.node.kind === 'ore' ? MAT.ore.col[S.node.t - 1] : MAT.wood.col[S.node.t - 1];
+const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 
 // ---- src/js/41-items.js ----
 // 41-items: the items core (task K4). Item kinds, where they fit, their stat lines, the
@@ -4662,11 +4690,12 @@ function spawn() {
   const t = TYPES[ti];
   const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
-    key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
+    key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
   if (boss) bossTime = Math.max(5, 30 + bonus('bossTime'));
+  emit('spawn', { mob, zone: z }); // listeners may change the new foe (55-gathering: champions)
 }
 
 // Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
@@ -4744,7 +4773,10 @@ function gainSkill(k, n, quiet) {
     const stn = Object.values(CRAFT_STATIONS).find(x => x.skill === k);
     const req = stn ? CRAFT_STATION_REQ : NODE_REQ, t = req.indexOf(sk.lv);
     let extra = '';
-    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
+    if (t > 0) {
+      const open = Object.keys(NODE_NAMES).filter(kind => skillOf(kind) === k).map(kind => NODE_NAMES[kind][t]);
+      extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : open.length ? ` The ${open.join(' and the ')} ${open.length > 1 ? 'are' : 'is'} open to you.` : '';
+    }
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
     toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
   }
@@ -4794,11 +4826,13 @@ function tick(dt) {
 }
 
 function harvest() {
-  const { kind, t } = S.node, g = gear();
-  const dbl = Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100, ex = kind === 'ore' ? g.oreExtra : g.woodExtra;
+  const { kind, t } = S.node, g = gear(), [, dk, ek] = nodeTool(kind);
+  const dbl = Math.min(60, g[dk]) / 100, ex = ek ? g[ek] : 0;
   let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
-  S.mats[kind][t - 1] += n = Math.max(1, Math.round(n * mod('yield:' + kind)));
-  gainSkill(skillOf(kind), nodeXp(t));
+  // Yield modifiers (Omens, home ground) round by chance, so +25% means +25% on average.
+  const y = n * mod('yield:' + kind), fr = y % 1;
+  S.mats[kind][t - 1] += n = Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0));
+  gainSkill(skillOf(kind), nodeXpFor(kind, t));
   addFloat(`+${n} ${matName(kind, t)}`, MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
   burst(0.68, 0.6, MAT[kind].col[t - 1], 12, 0.9);
   emit('harvest', { kind, t, n });
@@ -4822,11 +4856,17 @@ function awayBase(r) {
   const boost = (1 + gear().offline / 100) * mod('offline');
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
-    const swings = t / nodeTime(kind, tier) * boost;
-    const got = Math.floor(swings * nodeYieldAvg(kind) * mod('yield:' + kind));
+    // In steps, so skill levels gained while away speed up the rest, as in live play.
+    const steps = Math.max(1, Math.min(96, Math.ceil(t / 300)));
+    let got = 0;
+    for (let i = 0; i < steps; i++) {
+      const swings = t / steps / nodeTime(kind, tier) * boost;
+      got += swings * nodeYieldAvg(kind) * mod('yield:' + kind);
+      gainSkill(skillOf(kind), swings * nodeXpFor(kind, tier), true);
+    }
+    got = Math.floor(got);
     S.mats[kind][tier - 1] += got;
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
-    gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
@@ -5894,6 +5934,206 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   }
 }
 
+// ---- src/js/55-gathering.js ----
+// 55-gathering: gathering for every family, fight drops, home ground, champions, trophies,
+// the Glint and offline credits (task K5).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Spec: docs/design/gathering-and-crafting.md 2 and 5, with its "Owner decisions" (hide and
+// essence are fight-only). Tables: 21-data-craft.js (K1). Shared-core pieces this builds on:
+// nodeTime / nodeYieldAvg / nodeXpFor (40-rules, generic per node kind), harvest and the away
+// gather branch (50-sim, generic), the 'spawn' event (50-sim) and S.craft (55-crafting).
+//
+// Families: Ore and Crystal (Mining: veins, geodes), Wood (Woodcutting), Fibre and Herbs
+// (Foraging: patches, beds). Hide and Essence come from fighting only. Node tiers unlock at
+// NODE_REQ for every row. Foraging earns x2 XP while it is below max(Mining, Woodcutting).
+//
+// Exposed names:
+//   GATHER_KINDS                 node kinds in display order: ore, crystal, wood, fibre, herb
+//   homeFamily(z = S.zone)       the family whose yield the camp's zone type boosts
+//   homeBonus(fam, z = S.zone)   0, 0.25 or 0.5 (3+ mastery stars in that zone); feeds 'yield:<fam>'
+//   sigDropChance(type, z)       chance per kill of a monster type's signature drop, with stars
+//                                and the 'sigDrop' modifier (Hunter's Moon)
+//   awaySigDrops(kills, z)       { fam: expected units } for offline kills (pure; tools use it)
+//   champChance(z = S.zone)      chance that a new (non-boss) foe is a champion (0 below fromZone)
+//   champsAway(kills, z)         expected champions for offline kills (half the live rate)
+//   addTrophy(i, n, source)      credit n Trophies of type i to S.craft.troph; emits 'trophy'
+//   glint()                      { on, left } the Glint on the current node (runtime only)
+//   tapGlint() -> units | 0      claim the Glint (the 'tap' event on a node calls it)
+//   whereToGet(fam, t)           player text: where a material comes from, with home ground
+//
+// Events: 'spawn' (listened: champions, first-kill flag on bosses), 'kill' (signature drops,
+// champion and boss trophies), 'awayKills' (offline drops and champions), 'raidReward'
+// (1 random Trophy), 'tap' (Glint). Emits 'trophy' { i, n, source }, 'champion' { mob },
+// 'glint' { on }.
+// Almanac keys read here: mod sigDrop, champion, champHp, trophy; bonus champTrophy, glintRate.
+// Save: none of its own. Trophies go to S.craft.troph and champions to S.craft.champ (K6's state).
+
+const GATHER_KINDS = ['ore', 'crystal', 'wood', 'fibre', 'herb'];
+let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway, addTrophy, glint, tapGlint, whereToGet;
+
+{
+  const SRC = CRAFT_TROPHY_SRC, CH = SRC.champ;
+  const typeIndex = key => TYPES.findIndex(x => x.key === key);
+  const typeOfMob = m => m && (m.type || String(m.key || '').replace(/\d+$/, ''));
+  const stars = z => masteryApi.starsFor(masteryApi.zoneKills(z));
+  // Whole units from an expected amount: the fraction rounds up by chance.
+  const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
+  const give = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };
+
+  // ---------------- home ground ----------------
+  homeFamily = (z = S.zone) => CRAFT_HOME[zoneType(z)];
+  homeBonus = (fam, z = S.zone) => craftHomeBonus(zoneType(z), fam, stars(z));
+  for (const fam of GATHER_KINDS) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
+
+  // Foraging catch-up: x2 XP while below the best of Mining and Woodcutting.
+  addModifier('skillXp:forage', () => S.skills.forage.lv < Math.max(...CRAFT_CATCHUP.forage.map(k => S.skills[k].lv)) ? CRAFT_CATCHUP.mult : 1);
+
+  // ---------------- signature drops ----------------
+  sigDropChance = (type, z = S.zone) => {
+    const d = CRAFT_SIG_DROPS[type]; if (!d) return 0;
+    return d.p * (1 + CRAFT_SIG_RULE.star * stars(z)) * mod('sigDrop');
+  };
+  // Offline: kills already carry the 75% away factor (CRAFT_SIG_RULE.offline, the same factor as
+  // offline kills in awayBase), so each kill credits its expected drop. Packs: 72% zone type, 28% next.
+  awaySigDrops = (kills, z = S.zone) => {
+    const out = {}, zt = zoneType(z);
+    for (const [ti, share] of [[zt, 0.72], [(zt + 1) % 7, 0.28]]) {
+      const type = TYPES[ti].key, d = CRAFT_SIG_DROPS[type]; if (!d) continue;
+      out[d.fam] = (out[d.fam] || 0) + kills * share * sigDropChance(type, z);
+    }
+    return out;
+  };
+
+  // ---------------- trophies ----------------
+  addTrophy = (i, n, source) => {
+    n = Math.floor(n); if (!(n > 0) || !CRAFT_TROPHIES[i]) return 0;
+    S.craft.troph[i] = (S.craft.troph[i] || 0) + n;
+    emit('trophy', { i, n, source });
+    return n;
+  };
+  const trophyIcon = i => ({ ic: craftIcon('tro_' + TYPES[i].key) });
+
+  // ---------------- champions ----------------
+  champChance = (z = S.zone) => z >= CH.fromZone ? mod('champion') / CH.packs : 0;
+  champsAway = (kills, z = S.zone) => kills * champChance(z) * CH.offline;
+
+  on('spawn', ({ mob: m, zone }) => {
+    if (!m) return;
+    if (m.boss) { m.firstKill = zone === S.maxZone; return; }
+    if (zone < CH.fromZone || Math.random() >= champChance(zone)) return;
+    const k = CH.hp * mod('champHp');
+    m.champ = true; m.hp *= k; m.max = m.hp; m.gold *= CH.hp; m.xp = Math.ceil(m.xp * CH.hp);
+    m.name = 'Champion ' + m.name;
+    const i = typeIndex(typeOfMob(m));
+    toast(`A champion ${TYPES[i].name} appears. Beat it for a ${CRAFT_TROPHIES[i].n}.`, 'loot', trophyIcon(i));
+    emit('champion', { mob: m });
+  });
+
+  on('kill', ({ mob: m, zone, tier }) => {
+    if (!m) return;
+    const type = typeOfMob(m), i = typeIndex(type), d = CRAFT_SIG_DROPS[type];
+    // Signature drop: one unit of the zone tier.
+    if (d) {
+      const n = give(d.fam, tier, roll(sigDropChance(type, zone)));
+      if (n) addFloat(`+${n} ${matName(d.fam, tier)}`, MAT[d.fam].col[tier - 1], false, 0.72, 0.26);
+    }
+    if (m.champ && i >= 0) {
+      S.craft.champ = (S.craft.champ || 0) + 1;
+      const got = addTrophy(i, CH.troph + bonus('champTrophy'), 'champion');
+      if (d) give(d.fam, tier, CH.sig);
+      if (typeof almanac.count === 'function') almanac.count('champ');
+      toast(`Champion defeated: +${got} ${CRAFT_TROPHIES[i].n}${d ? ` and ${CH.sig} ${matName(d.fam, tier)}` : ''}.`, 'loot', trophyIcon(i));
+    }
+    if (m.boss && m.firstKill && zone >= SRC.firstBossFrom) {
+      const bi = zoneType(zone), got = addTrophy(bi, roll(SRC.firstBoss * mod('trophy')), 'boss');
+      if (got) toast(`The boss leaves a trophy: +${got} ${CRAFT_TROPHIES[bi].n}.`, 'loot', trophyIcon(bi));
+    }
+  });
+
+  on('raidReward', () => {
+    const i = Math.floor(Math.random() * CRAFT_TROPHIES.length);
+    if (addTrophy(i, SRC.raid, 'raid')) toast(`The raid spoils include a ${CRAFT_TROPHIES[i].n}.`, 'loot', trophyIcon(i));
+  });
+
+  // ---------------- offline fighting ----------------
+  let awayTroph = null, awayChamps = 0, lineOn = false;
+  on('awayBegin', () => {
+    awayTroph = S.craft.troph.slice(); awayChamps = S.craft.champ || 0;
+    if (!lineOn) { lineOn = true; registerAwayLine(trophyLines); } // 55-stats loads after this file
+  });
+  on('awayKills', ({ kills, zone }) => {
+    if (!(kills > 0)) return;
+    const tier = zoneTier(zone), zt = zoneType(zone);
+    for (const [fam, n] of Object.entries(awaySigDrops(kills, zone))) give(fam, tier, roll(n));
+    const champs = roll(champsAway(kills, zone));
+    if (champs > 0) {
+      S.craft.champ = (S.craft.champ || 0) + champs;
+      addTrophy(zt, champs * (CH.troph + bonus('champTrophy')), 'champion');
+      const d = CRAFT_SIG_DROPS[TYPES[zt].key];
+      if (d) give(d.fam, tier, champs * CH.sig);
+    }
+  });
+  function trophyLines() {
+    if (!awayTroph) return null;
+    const out = [], champs = (S.craft.champ || 0) - awayChamps;
+    S.craft.troph.forEach((n, i) => {
+      const got = n - (awayTroph[i] || 0);
+      if (got > 0) out.push({ icon: trophyIcon(i), txt: `+${got} ${CRAFT_TROPHIES[i].n}`, sub: champs > 0 ? `${champs} champion${champs > 1 ? 's' : ''} beaten` : 'Trophy' });
+    });
+    awayTroph = null;
+    return out;
+  }
+
+  // ---------------- the Glint ----------------
+  // Every 15-25s on a node a Glint shows for 3s; a tap on the node while it shows gives +2 units.
+  // Runtime only (not saved). Visuals go out on the bus: a float, sparkle bursts, 'glint'.
+  const G = { next: 0, left: 0, spark: 0 };
+  const nextGlint = () => CRAFT_GLINT.min + Math.random() * (CRAFT_GLINT.max - CRAFT_GLINT.min);
+  glint = () => ({ on: G.left > 0, left: Math.max(0, G.left) });
+  const endGlint = () => { if (G.left > 0) emit('glint', { on: false }); G.left = 0; G.next = nextGlint(); };
+  onTick(dt => {
+    if (target() !== 'node') { if (G.left > 0 || !G.next) endGlint(); return; }
+    if (G.left > 0) {
+      G.left -= dt; G.spark -= dt;
+      if (G.spark <= 0) { G.spark = 0.3; burst(0.66, 0.5, '#FFF3C4', 3, 0.35); }
+      if (G.left <= 0) endGlint();
+      return;
+    }
+    if (!G.next) G.next = nextGlint();
+    G.next -= dt * (1 + bonus('glintRate'));
+    if (G.next <= 0) {
+      G.left = CRAFT_GLINT.window; G.spark = 0;
+      addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
+      emit('glint', { on: true });
+    }
+  });
+  tapGlint = () => {
+    if (!(G.left > 0) || target() !== 'node') return 0;
+    const { kind, t } = S.node;
+    const n = give(kind, t, Math.max(1, roll(CRAFT_GLINT.units * mod('yield:' + kind))));
+    endGlint();
+    addFloat(`Glint +${n} ${matName(kind, t)}`, '#FFF3C4', true, 0.68, 0.26);
+    burst(0.66, 0.5, '#FFF3C4', 14, 0.9);
+    emit('harvest', { kind, t, n, glint: true });
+    return n;
+  };
+  on('tap', ({ node }) => { if (node) tapGlint(); });
+
+  // ---------------- where materials come from ----------------
+  const zoneTypesFor = fam => CRAFT_HOME.map((f, i) => f === fam ? ZONES[i] : null).filter(Boolean);
+  whereToGet = (fam, t = 1) => {
+    const nk = CRAFT_NODES[fam], name = matName(fam, t);
+    if (nk) {
+      const home = zoneTypesFor(fam), node = NODE_NAMES[fam][t - 1];
+      const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
+      return `${name}: ${SKILL[nk.skill]} ${NODE_REQ[t - 1]}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
+    }
+    const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).sort((a, b) => b[1].p - a[1].p).map(([k]) => TYPES[typeIndex(k)].name + 's');
+    const zt = Math.ceil(t) > 1 ? ` Fight in zone ${(t - 1) * 6 + 1} or higher for this tier.` : '';
+    return fam === 'ess' ? `${name}: every foe can drop it. Marsh Wraiths drop extra.${zt}` : `${name}: fighting only. ${drop.join(', ')} drop it.${zt}`;
+  };
+}
+
 // ---- src/js/55-goals.js ----
 // 55-goals: "Next Up", the goals closest to done across every system (camp.md N11).
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
@@ -6572,7 +6812,7 @@ const statsApi = {};
   Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
 
   // ---- away report ----
-  const MAT_KINDS = ['ore', 'wood', 'ess'];
+  const MAT_KINDS = CRAFT_FAMILIES; // every family (K5), in pouch order
   let snap = null;
   on('awayBegin', r => {
     r.cap = (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600;
@@ -6607,7 +6847,7 @@ const statsApi = {};
     r.items = S.items.filter(i => i.id >= b.nextId);
     r.skills = Object.keys(S.skills).filter(k => S.skills[k].lv > (b.skills[k] || 1)).map(k => ({ k, from: b.skills[k] || 1, to: S.skills[k].lv }));
     ST().away += r.t;
-    for (const m of r.mats) if (m.k !== 'ess') ST().gathered += m.n;
+    for (const m of r.mats) if (CRAFT_NODES[m.k]) ST().gathered += m.n; // gathered families only
     r.extra = [];
     for (const fn of AWAY_LINES.slice()) {
       try { const out = fn(r); if (out) r.extra.push(...[].concat(out).filter(Boolean)); }
@@ -8161,7 +8401,7 @@ const CAMP_HEARTH = [
 ];
 const CAMP_HEARTH_NAMES = ['Campfire', 'Campfire', 'Hearth', 'Hearth', 'Hearth', 'Hearth', 'Hearth', 'Lantern Hall', 'Lantern Hall', 'Lantern Hall'];
 // Families with a live source. The rest fall back (CAMP_FALLBACK) until K5 switches them on.
-const CAMP_LIVE = { ore: true, wood: true, ess: true, crystal: false, fibre: false, herb: false, hide: false, troph: false };
+const CAMP_LIVE = { ore: true, wood: true, ess: true, crystal: true, fibre: true, herb: true, hide: true, troph: true }; // all have real sources since K5
 const CAMP_FALLBACK = { crystal: 'ore', fibre: 'wood', herb: 'wood', hide: 'ess' };
 
 // Buildings. pre: starts built at this level. opens: Hearth level for Lv 1. fam: M per family.
@@ -9313,7 +9553,7 @@ let resize, animate, draw, stageStats;
   function pickScene() {
     const tg = target(); let th, hue = 0;
     if (tg === 'world') th = 'raid';
-    else if (tg === 'node') th = S.node.kind === 'ore' ? 'mine' : 'woods';
+    else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SH, hue); curTheme = th; curHue = hue; }
   }
@@ -9676,9 +9916,9 @@ let resize, animate, draw, stageStats;
     const alive = !(tg === 'mob' && (!mob || mob.dead));
     if (foe.fr) {
       if (alive || (mob && mob.dead < 0.3)) shadowAt(foe.x - cam, Math.max(12, foe.w * 0.42), 0.55);
-      if ((tg === 'mob' && mob && mob.boss && !mob.dead) || raid) {
+      if ((tg === 'mob' && mob && (mob.boss || mob.champ) && !mob.dead) || raid) {
         ctx.globalCompositeOperation = 'lighter';
-        A.lightAt(ctx, raid ? '255,90,60' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
+        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
         ctx.globalCompositeOperation = 'source-over';
       }
     }
@@ -11028,21 +11268,39 @@ function uiFight() {
 }
 
 // ---- src/js/72-ui-gather.js ----
-// 72-ui-gather: the Gather tab (skills, nodes, pack).
+// 72-ui-gather: the Gather tab (skills, nodes for every family, home ground, pack, trophies).
+// K5 kept this minimal; K8 redoes the tab (pouch, camp).
 
 // ================= Gather panel =================
-const skillCards = ['mine', 'wood', 'smith'].map(k => {
+const skillCards = ['mine', 'wood', 'forage'].map(k => {
   const c = el('div', 'skill');
   const sn = el('span', 'sn');
-  sn.append(img(k === 'mine' ? iconURL('pick', '#A9B1BD') : k === 'wood' ? iconURL('axe', '#A9B1BD') : iconURL('anvil', '#6E6878')), el('span', null, SKILL[k]));
+  const ic = k === 'mine' ? iconURL('pick', '#A9B1BD') : k === 'wood' ? iconURL('axe', '#A9B1BD') : iconURL(...craftIcon('sickle', 1));
+  sn.append(img(ic), el('span', null, SKILL[k]));
   const sl = el('span', 'sl'); const bar = el('div', 'bar'); const bi = el('i'); bar.append(bi);
   c.append(sn, sl, bar); $('skillCards').append(c);
   return { k, lv: sl, bar: bi };
 });
-const nodeRows = { ore: [], wood: [] };
-for (const kind of ['ore', 'wood']) {
+
+// Home ground: which family the camp's zone boosts.
+const homeNote = el('p', 'note gat-home');
+$('skillCards').after(homeNote);
+
+// Foraging section, built here so shell.html stays as it is.
+{
+  const sec = el('div', 'sec');
+  sec.append(el('h2', 'sec-title', SKILL.forage), Object.assign(el('div', 'sec'), { id: 'forageRows' }));
+  $('woodRows').parentElement.after(sec);
+}
+const NODE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
+const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 'forageRows', herb: 'forageRows' };
+const nodeRows = {};
+for (const kind of GATHER_KINDS) {
+  const box = $(NODE_BOX[kind]);
+  if (kind !== 'wood') box.append(el('div', 'gat-sub', CRAFT_NODES[kind].row)); // Veins / Geodes, Fibre patches / Herb beds
+  nodeRows[kind] = [];
   for (let t = 1; t <= 5; t++) {
-    const r = makeRow($(kind === 'ore' ? 'oreRows' : 'woodRows'), NODE_NAMES[kind][t - 1], false, matIcon(kind, t));
+    const r = makeRow(box, NODE_NAMES[kind][t - 1], false, matIcon(kind, t));
     r.btn.classList.add('work');
     r.btn.addEventListener('click', () => {
       if (!setNode(kind, t)) return;
@@ -11051,16 +11309,30 @@ for (const kind of ['ore', 'wood']) {
     nodeRows[kind].push(r);
   }
 }
+
+// Pack: every family by tier, then trophies.
 const matCells = {};
-for (const k of ['ore', 'wood', 'ess']) {
+for (const k of CRAFT_FAMILIES) {
   const row = el('div', 'mat-row'); matCells[k] = [];
   for (let t = 1; t <= 5; t++) {
-    const c = el('div', 'mat'); c.title = matName(k, t);
+    const c = el('div', 'mat'); c.title = whereToGet(k, t);
     const n = el('span', 'mc', '0');
     c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
-    row.append(c); matCells[k].push(n);
+    row.append(c); matCells[k].push({ c, n });
   }
   $('matGrid').append(row);
+}
+const trophyCells = [];
+{
+  const row = el('div', 'mat-row gat-tro');
+  CRAFT_TROPHIES.forEach((tr, i) => {
+    const c = el('div', 'mat'); c.title = `${tr.n}: from champions and zone bosses (zone ${CRAFT_TROPHY_SRC.firstBossFrom} on).`;
+    const n = el('span', 'mc', '0');
+    c.append(img(iconURL(...craftIcon('tro_' + TYPES[i].key))), n, el('div', 'mn', tr.n.split(' ')[1] || tr.n));
+    row.append(c); trophyCells.push({ c, n });
+  });
+  $('matGrid').append(el('div', 'gat-sub', 'Trophies'), row);
+  $('matGrid').nextElementSibling.textContent = 'Hide and essence drop from monsters while you fight. Higher zones drop better tiers. Champions and zone bosses leave Trophies.';
 }
 
 function uiGather() {
@@ -11069,9 +11341,12 @@ function uiGather() {
     c.lv.textContent = 'Lv ' + sk.lv;
     c.bar.style.width = Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%';
   }
-  for (const kind of ['ore', 'wood']) {
+  const home = homeFamily(), hb = homeBonus(home);
+  homeNote.textContent = `Camp: ${zoneName(S.zone)}. ${MAT[home].n} gathered here gives +${Math.round(hb * 100)}%.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars here make it +${CRAFT_HOME_BONUS.starred * 100}%.` : '');
+  for (const kind of GATHER_KINDS) {
+    const lv = S.skills[skillOf(kind)].lv, ym = mod('yield:' + kind), hk = homeBonus(kind);
     nodeRows[kind].forEach((r, i) => {
-      const t = i + 1, req = NODE_REQ[i], lv = S.skills[skillOf(kind)].lv, open = lv >= req;
+      const t = i + 1, req = NODE_REQ[i], open = lv >= req;
       const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
       const prevOpen = i === 0 || lv >= NODE_REQ[i - 1];
       r.row.hidden = !open && !prevOpen;
@@ -11079,14 +11354,15 @@ function uiGather() {
       r.row.classList.toggle('active', here);
       r.ic.classList.toggle('ghost', !open);
       r.own.textContent = open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`;
-      const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind);
-      r.desc.textContent = open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute · ${nodeXp(t)} xp` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`;
-      r.qty.textContent = here ? 'Working' : open ? (kind === 'ore' ? 'Mine' : 'Chop') : 'Locked';
+      const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
+      r.desc.textContent = open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute${hk ? ` · home +${Math.round(hk * 100)}%` : ''}` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`;
+      r.qty.textContent = here ? 'Working' : open ? NODE_VERB[kind] : 'Locked';
       r.btn.querySelector('.price').textContent = here ? '...' : open ? 'Go' : `Lv ${req}`;
       r.btn.disabled = !open || here;
     });
   }
-  for (const k of ['ore', 'wood', 'ess']) matCells[k].forEach((n, i) => { n.textContent = fmt(S.mats[k][i]); });
+  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; n.textContent = fmt(v); c.classList.toggle('none', !v); });
+  trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; n.textContent = fmt(v); c.classList.toggle('none', !v); });
 }
 
 // ---- src/js/73-ui-forge.js ----

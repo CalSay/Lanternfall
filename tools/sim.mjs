@@ -6,9 +6,13 @@
 //          and forges + equips gear whenever mats allow.
 //   --class warden|lanternmage|ranger|lightkeeper: choose the hero class at the start.
 //             With --class, mixed crafts that class's items (weapon, off-hand, head, body) at their
-//             stations (55-crafting.js), gathers the family that blocks the next one, falls back to
-//             the legacy Sword/Helm while a class item is out of reach (Hide before K5), and reports
-//             G1/G2 (first full tier-1/tier-2 class set incl. the Charm).
+//             stations (55-crafting.js), gathers the family that blocks the next one (lowest
+//             unfinished tier of the set first), walks back to an older zone for a fight-only
+//             shortfall (Hide, Essence; --farm 0 turns that off), trains a station that is too low
+//             with any kind it makes, falls back to the legacy Sword/Helm while the station is too
+//             low, and reports G1/G2 (first full tier-1/tier-2 class set incl. the Charm), G4 (gather
+//             share, first 3h), G6 (family the next set craft waits on) and G9 (first Trophy).
+//             The cycle starts 5 min in (fight 5, gather 5, then fight 10 / gather 5).
 //   --transmute 1: with --class, break higher tiers down (Transmute) to cover a class craft's shortfall.
 //   --active: taps the stage every 0.5s and casts the class ability on cooldown.
 //             Without it, the game's own idle auto-play and auto-cast run.
@@ -153,6 +157,10 @@ const CLASS_POS = ['weapon', 'off', 'helm', 'body'];
 const HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
 const classKind = pos => cls ? E(`((CRAFT_FITS[${JSON.stringify(pos)}] || {})[${JSON.stringify(cls)}] || [])[0] || null`) : null;
 const isClassItem = (it, pos) => !!it && it.slot === classKind(pos);
+// The class set of G1/G2 also counts the Charm, so the craft policy gathers for it too.
+const SET_POS = CLASS_POS.concat("charm");
+const setKind = pos => pos === "charm" ? "charm" : classKind(pos);
+const isSetItem = (it, pos) => !!it && it.slot === setKind(pos);
 function keepBest(pos, it) {
   const cur = fn.equipped(pos);
   const better = !cur || (isClassItem(it, pos) && !isClassItem(cur, pos) && !cur.u && it.t >= cur.t) || fn.itemPower(it) > fn.itemPower(cur);
@@ -224,7 +232,7 @@ function forgeRest() {
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
       if (cur && cur.t >= t) continue;
-      if (cls && CLASS_POS.includes(slot) && fn.canCraft(classKind(slot), t).lv >= E(`CRAFT_STATION_REQ[${t - 1}]`) && !fn.canCraft(classKind(slot), t).miss.some(([m]) => m === 'hide')) continue;   // wait for the class item
+      if (cls && CLASS_POS.includes(slot) && fn.canCraft(classKind(slot), t).lv >= E(`CRAFT_STATION_REQ[${t - 1}]`)) continue;   // wait for the class item (Hide drops from fights since K5)
       const it = fn.forgeItem(slot, t);
       if (it) keepBest(slot, it);
     }
@@ -242,18 +250,78 @@ function forgeRest() {
       if (fn.itemPower(it) > fn.itemPower(now)) { fn.equipItem(it.id, pos); fn.salvageItem(now.id); } else fn.salvageItem(it.id);
     }
   }
+  // A station too low for the next set item: craft that kind at a tier the station allows
+  // (keep it if better, else salvage) so the station levels up. One craft per call.
+  if (cls && nextBlock() === 'station' && nextBlock.station) {
+    const { pos, kind, t } = nextBlock.station;
+    // Any kind made at that station trains it (a Mitre trains the Loom as well as a Robe).
+    const kinds = [kind].concat(E(`Object.keys(CRAFT_KINDS).filter(k => CRAFT_KINDS[k].st === CRAFT_KINDS[${JSON.stringify(kind)}].st && !CRAFT_KINDS[k].legacy && !CRAFT_KINDS[k].tool && k !== ${JSON.stringify(kind)})`));
+    done: for (let u = t - 1; u >= 1; u--) for (const k of kinds) {
+      const it = fn.craftItem(k, u); if (!it) continue;
+      if (k === kind) keepBest(pos, it); else fn.salvageItem(it.id);
+      break done;
+    }
+  }
 }
-// The family (and tier) that most blocks the next class craft, if it can be gathered.
+// The family (and tier) that most blocks the next class craft (lowest unfinished tier of the set
+// first, the largest shortfall), if it can be gathered.
 function blockingNode() {
   if (!cls) return null;
-  for (let t = 5; t >= 1; t--) {
-    for (const pos of CLASS_POS) {
-      const cur = fn.equipped(pos), kind = classKind(pos);
-      if (cur && (cur.t > t || (cur.t === t && (isClassItem(cur, pos) || cur.u)))) continue;
+  for (let t = 1; t <= 5; t++) {
+    for (const pos of SET_POS) {
+      const cur = fn.equipped(pos), kind = setKind(pos);
+      if (cur && (cur.t > t || (cur.t === t && (isSetItem(cur, pos) || cur.u)))) continue;
       const c = fn.canCraft(kind, t);
-      if (c.lv < c.need || (c.miss || []).some(([m]) => m === 'hide')) continue;   // Hide has no source before K5
+      if (c.lv < c.need) continue;
+      // Gatherable shortfalls only (Hide and Essence come from fighting, K5).
       const miss = (c.miss || []).filter(([m]) => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]);
-      for (const [m] of miss) if (E(`S.skills[skillOf(${JSON.stringify(m)})].lv >= NODE_REQ[${t - 1}]`)) return [m, t];
+      for (const [m] of miss) {
+        if (E(`S.skills[skillOf(${JSON.stringify(m)})].lv >= NODE_REQ[${t - 1}]`)) return [m, t];
+        // Skill too low for this tier (e.g. Foraging on an old save): train it on the best open node.
+        const top = E(`NODE_REQ.filter(r => S.skills[skillOf(${JSON.stringify(m)})].lv >= r).length`);
+        if (top >= 1) return [m, top];
+      }
+    }
+  }
+  return null;
+}
+// Fight-only shortfall (Hide, Essence) of the lowest unfinished class tier, below the frontier's
+// tier: the zone of that tier that drops it best (walk back, spec 2.2). --farm 0 turns it off.
+function farmZone() {
+  if (!cls || args.farm === '0') return null;
+  for (let t = 1; t <= 5; t++) {
+    for (const pos of SET_POS) {
+      const cur = fn.equipped(pos), kind = setKind(pos);
+      if (cur && (cur.t > t || (cur.t === t && (isSetItem(cur, pos) || cur.u)))) continue;
+      let c = fn.canCraft(kind, t);
+      // Station too low: farm for the training craft one tier down instead (see forgeGear).
+      if (!c.ok && c.lv < c.need && t > 1) { t--; c = fn.canCraft(kind, t); }
+      if (c.ok || c.lv < c.need || t >= fn.zoneTier(E('S.maxZone'))) return null;
+      const fam = (c.miss || []).filter(([m]) => !E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]).map(x => x[0])[0];
+      if (!fam) return null;
+      let best = null, bestV = -1;
+      for (let z = (t - 1) * 6 + 1; z <= Math.min(t * 6, E('S.maxZone') - 1); z++) {
+        const v = E(`(() => { const zt = zoneType(${z}), p = k => { const d = CRAFT_SIG_DROPS[TYPES[k].key]; return d && d.fam === ${JSON.stringify(fam)} ? d.p : 0; }; return 0.72 * p(zt) + 0.28 * p((zt + 1) % 7); })()`) + (fam === 'ess' ? 0.25 : 0);
+        if (v >= bestV) { bestV = v; best = z; }
+      }
+      return best;
+    }
+  }
+  return null;
+}
+// G6: the family the next class craft waits on (largest shortfall), or 'station' / null.
+function nextBlock() {
+  nextBlock.station = null;
+  if (!cls) return null;
+  for (let t = 1; t <= 5; t++) {
+    for (const pos of SET_POS) {
+      const cur = fn.equipped(pos), kind = setKind(pos);
+      if (cur && (cur.t > t || (cur.t === t && (isSetItem(cur, pos) || cur.u)))) continue;
+      const c = fn.canCraft(kind, t);
+      if (c.ok) return null;
+      if (c.lv < c.need) { nextBlock.station = { pos, kind, t }; return 'station'; }
+      const miss = (c.miss || []).slice().sort((a, b) => b[1] - a[1]);
+      return miss.length ? miss[0][0] : null;
     }
   }
   return null;
@@ -266,7 +334,9 @@ function bestNode() {
   for (let t = 5; t >= 1; t--) if (fn.setNode(kind, t)) return;
 }
 // G1/G2: first full class set (weapon, off-hand, head, body and charm) at tier >= 1 / >= 2.
-const craftStats = { g1: null, g2: null, gather: {} };
+const craftStats = { g1: null, g2: null, gather: {}, gatherSec: 0, sec3h: 0, blocks: {}, blockMin: 0, troph: null, champs: 0, farm: 0 };
+fn.on('trophy', () => { if (craftStats.troph == null) craftStats.troph = t; });
+fn.on('champion', () => craftStats.champs++);
 function craftCheck(sec) {
   if (!cls) return;
   const full = t => CLASS_POS.every(p => { const it = fn.equipped(p); return isClassItem(it, p) && it.t >= t; }) && (fn.equipped('charm') || { t: 0 }).t >= t;
@@ -298,13 +368,19 @@ let t = 0, nextLine = 0;
 // mixed 10 min fight / 5 min gather cycle); t is the run clock (events are stamped with it).
 function playSecond(sec) {
   if (policy === 'mixed' && sec % 60 === 0) {
-    const phase = Math.floor(sec / 60) % 15;
+    // With --class the first gather trip comes at 5 min (fight 5, gather 5, then fight 10 / gather 5),
+    // like a player who goes for the first class set; the share stays one third.
+    const phase = (Math.floor(sec / 60) + (cls ? 5 : 0)) % 15;
     if (phase === 0) fn.setActivity('fight');
+    if (phase < 10 && cls) { const fz = farmZone() || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
     else if (phase > 10 && cls) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
     forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
     craftCheck(sec);
+    const b = nextBlock();
+    if (b && b !== 'station') { craftStats.blocks[b] = (craftStats.blocks[b] || 0) + 1; craftStats.blockMin++; }
   }
+  if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
   if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
     if (active) {
@@ -368,6 +444,12 @@ if (cls && policy === "mixed") {
   const set = CLASS_POS.concat('charm').map(p => { const it = fn.equipped(p); return it ? `${p}:${it.slot}${it.t}` : `${p}:-`; }).join(' ');
   console.log(`craft: G1 first tier-1 class set ${m(craftStats.g1)} (want 6-12m) / G2 tier-2 ${m(craftStats.g2)} (want 35-60m) | ${set}`);
   console.log(`craft: stations ${['smith', 'bench', 'loom', 'ench'].map(k => k + ' ' + E(`S.skills.${k}.lv`)).join(', ')} | gather trips for blocks ${JSON.stringify(craftStats.gather)}`);
+  const share = craftStats.sec3h ? craftStats.gatherSec / craftStats.sec3h : 0;
+  const worst = Object.entries(craftStats.blocks).sort((a, b) => b[1] - a[1])[0];
+  const bl = Object.entries(craftStats.blocks).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${Math.round(100 * n / craftStats.blockMin)}%`).join(', ');
+  console.log(`craft: G4 gather share ${Math.round(100 * share)}% (want 25-45%) / G6 top blocker ${worst ? `${worst[0]} ${Math.round(100 * worst[1] / craftStats.blockMin)}%` : '-'} of ${craftStats.blockMin} blocked min (want <= 50%) [${bl}]`);
+  console.log(`craft: G9 first Trophy ${m(craftStats.troph)} (want 20-60m) | farm-back ${craftStats.farm} min | trophies ${E('trophies()')} ${E('JSON.stringify(S.craft.troph)')}, champions ${E('S.craft.champ')} | skills mine ${E('S.skills.mine.lv')} wood ${E('S.skills.wood.lv')} forage ${E('S.skills.forage.lv')}`);
+  console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
 }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
 if (args.debug) console.log(E('JSON.stringify(rosterList().map(k => [k, promoteCost(k), canPromote(k)]))'), E('JSON.stringify(S.mats.ess)'), E('S.gold'));

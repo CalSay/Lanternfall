@@ -75,7 +75,7 @@ const CAMP_HEARTH = [
 ];
 const CAMP_HEARTH_NAMES = ['Campfire', 'Campfire', 'Hearth', 'Hearth', 'Hearth', 'Hearth', 'Hearth', 'Lantern Hall', 'Lantern Hall', 'Lantern Hall'];
 // Families with a live source. The rest fall back (CAMP_FALLBACK) until K5 switches them on.
-const CAMP_LIVE = { ore: true, wood: true, ess: true, crystal: false, fibre: false, herb: false, hide: false, troph: false };
+const CAMP_LIVE = { ore: true, wood: true, ess: true, crystal: true, fibre: true, herb: true, hide: true, troph: true }; // all have real sources since K5
 const CAMP_FALLBACK = { crystal: 'ore', fibre: 'wood', herb: 'wood', hide: 'ess' };
 
 // Buildings. pre: starts built at this level. opens: Hearth level for Lv 1. fam: M per family.
