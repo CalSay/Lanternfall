@@ -32,7 +32,7 @@ let OMENS, WEEKLY_GOALS;
     B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
     Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
     Expeditions: () => !!S.exped,
-    Deepwell: () => !!S.deep
+    Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
   const needsMet = x => !x.needs || !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]());
 

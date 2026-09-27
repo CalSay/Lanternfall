@@ -269,7 +269,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     }
   });
   // ---------------- 12. Omens: Omens seen; Dares taken ----------------
-  const omenOk = o => o.needs !== 'Deepwell' || !!S.deep;
+  const omenOk = o => o.needs !== 'Deepwell' || (typeof deepUnlocked === 'function' ? deepUnlocked() : !!S.deep);
   page('omens', {
     n: 'Omens', seal: { key: null, txt: '' }, title: 'Omen-reader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
