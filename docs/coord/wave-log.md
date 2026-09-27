@@ -177,3 +177,11 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   and a Mirror of Embers switch retools instead of unequipping. Weapon/helm uniques stay usable by every class.
 - Owner: speed and smoothness must be checked constantly. PERF agent builds tools/perf.mjs (throttled-phone
   frame times, load time, long tasks, heap growth, tap latency), a budget in docs/design/perf.md, and a first pass.
+- RETOOL merged: old non-unique swords and helms become the class's kinds on load and on class change
+  (the `rt` field keeps the old base lines, so dps is identical); only class kinds fit; legacy kinds
+  can't be crafted; the sim needs `--class` to forge weapons now. Coordinator fix: a blank stage after
+  long absences (ellipse radii could go negative and throw every frame; three guards in 62-stage.js
+  and 61-anim.js).
+- Owner idea: with full-screen menus the game view has room for a proper combat HUD: party and enemy
+  health bars, hero and companion ability cooldowns (spec 7.4). Queue it as the next stage task after
+  AR3 and the menu restructure land, and fold it into Stage C (party combat), where HP actually matters.
