@@ -1,61 +1,56 @@
-// 13-art-enemies: Hi-bit rigs for monsters, bosses and gather nodes. Data plus pure maths only
-// (no DOM, no canvas): it loads in Node. The baker (60b-baker.js) turns these into frames.
+// 13-art-enemies: Hi-bit rigs for monsters, zone bosses, the world wyrm and gather nodes.
+// Data plus pure maths only (no DOM, no canvas): it loads in Node. 60b-baker.js bakes it via
+// enemyFrames(key, variant). Enemies face left (no flip needed).
 //
-// Exposed names:
-//   ENEMY_ART[key]                 rig: { name, bones, fixed, mats, parts, poses, drawn?, rest?, anim, hover?, elder? }
-//   WYRM_GENS                      6 world-boss palettes, one per raid generation (matches BOSSES order)
-//   enemyMats(key, opts)           -> { mat: base } for this key. opts: { elder, tier (1..5), gen (1..) }
-//   enemyParts(key, lvl, pose)     -> [[z, bone, mat, shape], ...] filtered by lvl, with pose-swapped parts
-//   enemyXform(key, bone, x, y, pose) -> [x, y]  (art px, feet at 0,0)
-//   enemyRot(key, bone, pose)      -> total rotation (radians) of a bone, for ellipse shapes
-//   enemyBox(key, lvl)             -> [x0, y0, x1, y1] bounds over all four poses (art px, unscaled)
-//
-// Part format (same as prototypes/characters.html): [z, bone, mat, shape, minLvl]
-//   z: 0 back, 1 back limb, 2 legs, 3 body, 4 head, 5 off-hand, 6 front limb, 7 weapon
-//   shape: ['e', cx, cy, rx, ry] | ['r', x, y, w, h] | ['p', smooth, x, y, x, y, ...]
-//   minLvl: enemies 0 normal, 1 elder only. Nodes: tier index (tier - 1), so extra glints and
-//   crystals appear from higher tiers.
-// Materials: a hex string is a normal ramp base; { col, metal: 1 } is a metal ramp;
-//   { emit, light? } is a flat emissive colour that registers a light ('r,g,b').
-//   { keep: 1 } marks a material the zone-cycle hue shift should leave alone.
-// Bones: bones[name] = [pivotX, pivotY, parent]. A pose is flat numbers:
-//   dx, dy   move the whole sprite (dy < 0 lifts it: hovering)
-//   up, lean move every bone not listed in rig.fixed (breathing, lunging)
-//   sq       squash around the feet: x * (1 + 0.7 sq), y * (1 - sq)
-//   <bone>   rotation in radians about that bone's pivot (positive = clockwise on screen);
-//            children inherit their parent's rotation
-//   drawn    1 = use rig.drawn parts instead of rig.rest parts (the archer's drawn bowstring)
-//   Bone names never use the reserved pose fields (dx, dy, up, lean, sq, drawn); the torso bone is 'torso'.
-// Enemies face left.
+// Exposed: ENEMY_RIGS (one global). Keys: slime, bat, bones, beetle, spore, golem, wraith, wyrm,
+//   'node:ore', 'node:wood'. Each value is a baker rig, or a function (variant) -> rig:
+//   { name, anim, hover?, parts, mats, metal, piv, parent, ground, poses, S?, variants?, swap?, box }
+//   - parts: [z, bone, mat, shape] (the characters.html format; no minRarity left after build)
+//     z: 0 back, 1 back limb, 2 legs, 3 body, 4 head, 5 off-hand, 6 front limb, 7 weapon
+//     shape: ['e', cx, cy, rx, ry] | ['r', x, y, w, h] | ['p', smooth, x, y, x, y, ...]
+//   - mats: key -> '#hex' (ramped and hue-shifted by the baker) | { emit, light? }. Keys listed in
+//     rig.metal get metal ramps. 'void' and 'gold' come from FIXED (never hue-shifted).
+//   - piv[bone] = [x, y]; parent[bone] = parent bone. Bones never use the character bone names
+//     head / armF / armB (the baker treats those specially): heads are 'face', limbs 'limbF' / 'limbB'.
+//   - poses: idle0, idle1, wind, strike. Numbers up / lean / dx, plus per-bone { rot, dx, dy }
+//     (rot in radians about piv, positive = clockwise on screen; children follow parents).
+//     Hovering rigs lift their root bone with { dy }.
+//   - variants.elder: zone boss look, { S: 1.4, parts: [...] } (crown, horns, extra parts).
+//   - swap (bones only): { rest, drawn } part lists; frames whose pose has drawn: 1 should use
+//     parts minus swap.rest plus swap.drawn (the archer's drawn bowstring and arrow).
+//   - box: [x0, y0, x1, y1] art-px bounds over all poses (unscaled), for layout.
+// Variants: 'elder' | { elder: true, hue } for monsters (hue = zone-cycle shift in degrees);
+//   wyrm: { gen } picks the raid generation palette (WYRM_GENS order matches BOSSES); pass hue as
+//   well to recolour repeats (gen > 6). Nodes: { tier: 1..5 } recolours the ore vein / leaves.
 
-const ENEMY_ART = {};
-const WYRM_GENS = [
-  // The Ashen Wyrm
-  { scale: '#8A3345', scaleD: '#4A1A2A', belly: '#D8A070', wing: '#5A2230', wingM: '#A0444E', horn: '#EFE6D6', eye: '#FFD27A', maw: '#FF6B3D' },
-  // The Hollow King
-  { scale: '#5A4A7A', scaleD: '#2E2444', belly: '#C8BCA8', wing: '#3A2E54', wingM: '#7A6AA0', horn: '#E6DCC4', eye: '#B58CFF', maw: '#D8B8FF' },
-  // The Mire Colossus
-  { scale: '#4E6A3A', scaleD: '#2A3A24', belly: '#A89868', wing: '#34462A', wingM: '#6E8A4A', horn: '#C8B890', eye: '#D8F07A', maw: '#B6F09A' },
-  // The Glass Hydra
-  { scale: '#3F8FA8', scaleD: '#1F4A5E', belly: '#BCE8F0', wing: '#2A5A70', wingM: '#6AB8D0', horn: '#E0F4FF', eye: '#9FE8FF', maw: '#C8FAFF' },
-  // The Lantern Eater
-  { scale: '#3A3040', scaleD: '#1E1824', belly: '#8A6A4A', wing: '#2A2230', wingM: '#5A4A5E', horn: '#D8C8A8', eye: '#FF9E3D', maw: '#FFB347' },
-  // The Pale Tyrant
-  { scale: '#C8C4D4', scaleD: '#7E7890', belly: '#EFE6D6', wing: '#8E88A0', wingM: '#D8D4E4', horn: '#F2C14E', eye: '#E0524F', maw: '#FF8A6A' }
-];
-let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
+const ENEMY_RIGS = {};
 
 {
   const rgb = hex => { const n = parseInt(hex.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; };
   const E = (hex, lit) => lit ? { emit: hex, light: rgb(hex) } : { emit: hex };
-  const VOID = { emit: '#07050B', keep: 1 };
-  const GOLD = { col: '#E0AE44', metal: 1, keep: 1 };
+  const VOID = 'FIXED';
+  const GOLD = 'FIXED';
   const IRON = { col: '#7C8290', metal: 1 };
+  const SRC = {};
+  const WYRM_GENS = [
+    // The Ashen Wyrm
+    { scale: '#8A3345', scaleD: '#4A1A2A', belly: '#D8A070', wing: '#5A2230', wingM: '#A0444E', horn: '#EFE6D6', eye: '#FFD27A', maw: '#FF6B3D' },
+    // The Hollow King
+    { scale: '#5A4A7A', scaleD: '#2E2444', belly: '#C8BCA8', wing: '#3A2E54', wingM: '#7A6AA0', horn: '#E6DCC4', eye: '#B58CFF', maw: '#D8B8FF' },
+    // The Mire Colossus
+    { scale: '#4E6A3A', scaleD: '#2A3A24', belly: '#A89868', wing: '#34462A', wingM: '#6E8A4A', horn: '#C8B890', eye: '#D8F07A', maw: '#B6F09A' },
+    // The Glass Hydra
+    { scale: '#3F8FA8', scaleD: '#1F4A5E', belly: '#BCE8F0', wing: '#2A5A70', wingM: '#6AB8D0', horn: '#E0F4FF', eye: '#9FE8FF', maw: '#C8FAFF' },
+    // The Lantern Eater
+    { scale: '#3A3040', scaleD: '#1E1824', belly: '#8A6A4A', wing: '#2A2230', wingM: '#5A4A5E', horn: '#D8C8A8', eye: '#FF9E3D', maw: '#FFB347' },
+    // The Pale Tyrant
+    { scale: '#C8C4D4', scaleD: '#7E7890', belly: '#EFE6D6', wing: '#8E88A0', wingM: '#D8D4E4', horn: '#F2C14E', eye: '#E0524F', maw: '#FF8A6A' }
+  ];
 
   // ---------- Moss Slime: a glistening mossy ooze with debris inside ----------
-  ENEMY_ART.slime = {
+  SRC.slime = {
     name: 'Moss Slime', anim: 'lunge',
-    bones: { body: [0, 0, null], top: [0, -24, 'body'] }, fixed: [],
+    bones: { body: [0, 0, null], top: [0, -24, 'body'] }, fixed: ['body'],
     mats: {
       ooze: '#6FCB6A', oozeD: '#2F7A4A', core: '#3E9A56', moss: '#4E7A2E', leaf: '#9CC456', debris: '#7A6A58', bone: '#DCD2BC',
       sheen: E('#E6FFD6'), eye: E('#F4F0A0', 1), void: VOID, crown: '#8A8494', rune: E('#B6F09A', 1)
@@ -85,13 +80,13 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [4, 'top', 'crown', ['p', 0, 5.5, -27, 8, -36, 9.5, -25.5], 1],
       [4, 'top', 'rune', ['r', -0.5, -35, 1, 3.4], 1]
     ],
-    poses: { idle0: {}, idle1: { sq: 0.06 }, wind: { sq: 0.15, dx: 3, top: 0.08 }, strike: { sq: -0.14, dx: -7, top: -0.12 } }
+    poses: { idle0: {}, idle1: { up: 1 }, wind: { dx: 3, up: 2, top: { rot: 0.08 } }, strike: { dx: -7, lean: -2, up: -1, top: { rot: -0.12 } } }
   };
 
   // ---------- Cave Bat: leathery wings, big ears (hovers) ----------
-  ENEMY_ART.bat = {
+  SRC.bat = {
     name: 'Cave Bat', anim: 'lunge', hover: 1,
-    bones: { body: [0, -32, null], head: [-2, -37, 'body'], wingF: [-2, -35, 'body'], wingB: [3, -36, 'body'] }, fixed: [],
+    bones: { body: [0, -32, null], face: [-2, -37, 'body'], wingF: [-2, -35, 'body'], wingB: [3, -36, 'body'] }, fixed: [],
     mats: {
       fur: '#4D3B7A', furL: '#8A6FC8', memb: '#6A4E9A', membD: '#3E2E62', skin: '#C88A9A', claw: '#E6DCC4', fang: '#EFE6D6',
       eye: E('#FF5A5A', 1), void: VOID, horn: '#D8CFB8', gold: GOLD
@@ -103,37 +98,37 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [1, 'body', 'claw', ['p', 0, -1, -26, 0, -22.5, 1, -26]], [1, 'body', 'claw', ['p', 0, 2.4, -26, 3.4, -22.5, 4.4, -26]],
       [3, 'body', 'fur', ['e', 1, -31, 5.6, 7.4]],
       [3, 'body', 'furL', ['e', -1.6, -30, 3, 5]],
-      [7, 'head', 'fur', ['p', 1, -7.5, -41, -9.5, -52, -4, -43.5]],
-      [7, 'head', 'fur', ['p', 1, -2.5, -43, 1, -54, 3.5, -41]],
-      [7, 'head', 'skin', ['p', 0, -7.4, -42, -8.8, -49, -5.4, -43.2]],
-      [7, 'head', 'skin', ['p', 0, -1.4, -43.2, 0.8, -51, 2, -42.4]],
-      [7, 'head', 'fur', ['e', -3, -39, 4.8, 4.3]],
-      [7, 'head', 'skin', ['p', 1, -6.5, -40.5, -10.8, -38.8, -9.8, -36.4, -5.8, -36.6]],
-      [7, 'head', 'void', ['r', -10.4, -39.2, 1, 0.8]],
-      [7, 'head', 'eye', ['e', -5.6, -40.4, 1.3, 1.1]],
-      [7, 'head', 'fang', ['p', 0, -9.2, -36.8, -8.6, -34.4, -8, -36.8]], [7, 'head', 'fang', ['p', 0, -7.2, -36.8, -6.7, -35, -6.2, -36.8]],
+      [7, 'face', 'fur', ['p', 1, -7.5, -41, -9.5, -52, -4, -43.5]],
+      [7, 'face', 'fur', ['p', 1, -2.5, -43, 1, -54, 3.5, -41]],
+      [7, 'face', 'skin', ['p', 0, -7.4, -42, -8.8, -49, -5.4, -43.2]],
+      [7, 'face', 'skin', ['p', 0, -1.4, -43.2, 0.8, -51, 2, -42.4]],
+      [7, 'face', 'fur', ['e', -3, -39, 4.8, 4.3]],
+      [7, 'face', 'skin', ['p', 1, -6.5, -40.5, -10.8, -38.8, -9.8, -36.4, -5.8, -36.6]],
+      [7, 'face', 'void', ['r', -10.4, -39.2, 1, 0.8]],
+      [7, 'face', 'eye', ['e', -5.6, -40.4, 1.3, 1.1]],
+      [7, 'face', 'fang', ['p', 0, -9.2, -36.8, -8.6, -34.4, -8, -36.8]], [7, 'face', 'fang', ['p', 0, -7.2, -36.8, -6.7, -35, -6.2, -36.8]],
       [6, 'wingF', 'memb', ['p', 0, -2, -35, -8, -45, -17, -51, -25, -50.5, -27.5, -42, -23.5, -40, -21.5, -33, -17.5, -35.5, -14, -30, -10, -32.5, -6, -28]],
       [6, 'wingF', 'fur', ['p', 0, -2, -35.8, -25, -50.5, -25.2, -49.3, -2, -34.4]],
       [6, 'wingF', 'fur', ['p', 0, -2, -35, -21.5, -33.6, -21.4, -32.5, -2, -34]],
       [6, 'wingF', 'fur', ['p', 0, -2, -34.8, -14, -30.6, -13.8, -29.6, -2, -33.8]],
       [6, 'wingF', 'claw', ['p', 0, -25, -50.5, -27.5, -53.5, -23.8, -51.4]],
       // elder: swept horns and a gold ear ring
-      [7, 'head', 'horn', ['p', 1, -6, -42.5, -11, -46, -15, -51, -10, -47.6, -5, -44.6], 1],
-      [7, 'head', 'horn', ['p', 1, -1, -43.5, 3, -48, 7, -50, 4, -46, 1, -42.5], 1],
-      [7, 'head', 'gold', ['e', 1.8, -44.4, 1, 1.2], 1],
+      [7, 'face', 'horn', ['p', 1, -6, -42.5, -11, -46, -15, -51, -10, -47.6, -5, -44.6], 1],
+      [7, 'face', 'horn', ['p', 1, -1, -43.5, 3, -48, 7, -50, 4, -46, 1, -42.5], 1],
+      [7, 'face', 'gold', ['e', 1.8, -44.4, 1, 1.2], 1],
       [3, 'body', 'claw', ['r', -3.4, -34, 1, 5], 1]
     ],
     poses: {
-      idle0: {}, idle1: { up: 1.5, wingF: -0.45, wingB: 0.4 },
-      wind: { dx: 4, up: -3, wingF: 0.35, wingB: -0.35, head: -0.15 },
-      strike: { dx: -9, up: 3, wingF: -0.55, wingB: 0.5, head: 0.2 }
+      idle0: {}, idle1: { up: 1.5, wingF: { rot: -0.45 }, wingB: { rot: 0.4 } },
+      wind: { dx: 4, up: -3, wingF: { rot: 0.35 }, wingB: { rot: -0.35 }, face: { rot: -0.15 } },
+      strike: { dx: -9, up: 3, wingF: { rot: -0.55 }, wingB: { rot: 0.5 }, face: { rot: 0.2 } }
     }
   };
 
   // ---------- Rattlebones: an armoured skeleton archer (mirrors the hero rig) ----------
-  ENEMY_ART.bones = {
+  SRC.bones = {
     name: 'Rattlebones', anim: 'shoot',
-    bones: { legs: [0, 0, null], torso: [0, -30, null], head: [-0.8, -52, 'torso'], armF: [-5.2, -47, 'torso'], armB: [5.2, -47, 'torso'] }, fixed: ['legs'],
+    bones: { legs: [0, 0, null], torso: [0, -30, null], face: [-0.8, -52, 'torso'], limbF: [-5.2, -47, 'torso'], limbB: [5.2, -47, 'torso'] }, fixed: ['legs'],
     mats: {
       bone: '#D8D3C6', boneD: '#9C978C', gap: '#3E3644', iron: IRON, ironD: { col: '#565C6A', metal: 1 }, rust: '#8A4A2E',
       cloth: '#5A3A4A', leather: '#6E4A30', wood: '#6E4432', string: { emit: '#E8DEC8' }, fletch: '#C8B8A0', soul: E('#9BE3F0', 1),
@@ -143,10 +138,10 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [0, 'torso', 'leather', ['p', 1, 7, -50, 10.5, -48, 6, -30, 3, -31.5]],
       [0, 'torso', 'fletch', ['p', 0, 7.6, -53.6, 9.6, -55.4, 11.4, -50.6, 9.6, -49.6]],
       [0, 'torso', 'fletch', ['p', 0, 5.4, -54.6, 7, -56, 8.6, -51.2, 7, -50.4]],
-      [1, 'armB', 'ironD', ['e', 5.6, -46.4, 3.2, 2.8]],
-      [1, 'armB', 'boneD', ['p', 0, 4.4, -44, 6.4, -44, 6.8, -38, 5, -38]],
-      [1, 'armB', 'boneD', ['p', 0, 5.2, -38.5, 6.8, -38.5, 6, -30, 4.4, -30]],
-      [1, 'armB', 'boneD', ['e', 5.2, -28.6, 1.6, 1.8]],
+      [1, 'limbB', 'ironD', ['e', 5.6, -46.4, 3.2, 2.8]],
+      [1, 'limbB', 'boneD', ['p', 0, 4.4, -44, 6.4, -44, 6.8, -38, 5, -38]],
+      [1, 'limbB', 'boneD', ['p', 0, 5.2, -38.5, 6.8, -38.5, 6, -30, 4.4, -30]],
+      [1, 'limbB', 'boneD', ['e', 5.2, -28.6, 1.6, 1.8]],
       [2, 'legs', 'boneD', ['p', 0, 1, -31, 3.6, -31, 3, -16, 1, -16]],
       [2, 'legs', 'boneD', ['p', 0, 1.2, -16.5, 3.2, -16.5, 3, -3, 1.3, -3]],
       [2, 'legs', 'boneD', ['e', 2.1, -16.2, 1.6, 1.4]],
@@ -163,48 +158,48 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [3, 'torso', 'iron', ['p', 1, -6.8, -48.2, 0.6, -48.2, 1.6, -40, -1, -35.4, -6, -37, -7, -42]],
       [3, 'torso', 'rust', ['e', -3, -41, 1.1, 0.9]],
       [3, 'torso', 'leather', ['r', -5.4, -33.4, 10.8, 1.8]],
-      [4, 'head', 'boneD', ['r', -1.6, -53, 2.4, 5]],
-      [4, 'head', 'bone', ['e', -1, -57, 4.3, 4.7]],
-      [4, 'head', 'bone', ['p', 1, -5.4, -54.6, 0.6, -54.6, 1, -51.6, -4.4, -51.2]],
-      [4, 'head', 'gap', ['r', -5, -53.5, 5, 0.6]],
-      [4, 'head', 'void', ['e', -3.2, -57.2, 1.6, 1.6]],
-      [4, 'head', 'soul', ['e', -3.4, -57.2, 0.8, 0.8]],
-      [4, 'head', 'void', ['p', 0, -5.6, -55.6, -4.6, -55.6, -5.1, -54.2]],
-      [4, 'head', 'iron', ['p', 1, -5.4, -59.6, -4, -63.2, 1.4, -63.8, 4.8, -60.4, 4.8, -58.6, -5.2, -58.8]],
-      [4, 'head', 'ironD', ['p', 1, -9, -59.6, 7.8, -59.6, 6.2, -57.8, -7.6, -57.8]],
-      [4, 'head', 'rust', ['e', 2, -61.6, 1.1, 0.8]],
-      [6, 'armF', 'iron', ['p', 1, -9.6, -46, -8.2, -49.8, -2.8, -50.2, -2, -45.6, -7.8, -43.2]],
-      [6, 'armF', 'bone', ['p', 0, -6.2, -44, -4.2, -44, -4.2, -38, -6.4, -38]],
-      [6, 'armF', 'bone', ['p', 0, -6.2, -38.5, -4.6, -38.5, -5.4, -30, -7, -30]],
-      [6, 'armF', 'ironD', ['r', -7.6, -37.2, 3.6, 5]],
-      [6, 'armF', 'bone', ['e', -6.5, -28.3, 1.7, 2]],
-      [7, 'armF', 'wood', ['p', 1, -6, -29.6, -7.4, -29.6, -10.3, -36.4, -10.6, -42, -9.1, -47.4, -8.4, -47, -9.3, -42, -8.8, -36.4]],
-      [7, 'armF', 'wood', ['p', 1, -6, -26.8, -7.4, -26.8, -10.3, -20, -10.6, -14.4, -9.1, -9, -8.4, -9.4, -9.3, -14.4, -8.8, -20]],
-      [7, 'armF', 'leather', ['r', -8.1, -30.2, 2.4, 4]],
-      [7, 'armF', 'boneD', ['e', -9, -47, 0.9, 0.9]], [7, 'armF', 'boneD', ['e', -9, -9.4, 0.9, 0.9]],
+      [4, 'face', 'boneD', ['r', -1.6, -53, 2.4, 5]],
+      [4, 'face', 'bone', ['e', -1, -57, 4.3, 4.7]],
+      [4, 'face', 'bone', ['p', 1, -5.4, -54.6, 0.6, -54.6, 1, -51.6, -4.4, -51.2]],
+      [4, 'face', 'gap', ['r', -5, -53.5, 5, 0.6]],
+      [4, 'face', 'void', ['e', -3.2, -57.2, 1.6, 1.6]],
+      [4, 'face', 'soul', ['e', -3.4, -57.2, 0.8, 0.8]],
+      [4, 'face', 'void', ['p', 0, -5.6, -55.6, -4.6, -55.6, -5.1, -54.2]],
+      [4, 'face', 'iron', ['p', 1, -5.4, -59.6, -4, -63.2, 1.4, -63.8, 4.8, -60.4, 4.8, -58.6, -5.2, -58.8]],
+      [4, 'face', 'ironD', ['p', 1, -9, -59.6, 7.8, -59.6, 6.2, -57.8, -7.6, -57.8]],
+      [4, 'face', 'rust', ['e', 2, -61.6, 1.1, 0.8]],
+      [6, 'limbF', 'iron', ['p', 1, -9.6, -46, -8.2, -49.8, -2.8, -50.2, -2, -45.6, -7.8, -43.2]],
+      [6, 'limbF', 'bone', ['p', 0, -6.2, -44, -4.2, -44, -4.2, -38, -6.4, -38]],
+      [6, 'limbF', 'bone', ['p', 0, -6.2, -38.5, -4.6, -38.5, -5.4, -30, -7, -30]],
+      [6, 'limbF', 'ironD', ['r', -7.6, -37.2, 3.6, 5]],
+      [6, 'limbF', 'bone', ['e', -6.5, -28.3, 1.7, 2]],
+      [7, 'limbF', 'wood', ['p', 1, -6, -29.6, -7.4, -29.6, -10.3, -36.4, -10.6, -42, -9.1, -47.4, -8.4, -47, -9.3, -42, -8.8, -36.4]],
+      [7, 'limbF', 'wood', ['p', 1, -6, -26.8, -7.4, -26.8, -10.3, -20, -10.6, -14.4, -9.1, -9, -8.4, -9.4, -9.3, -14.4, -8.8, -20]],
+      [7, 'limbF', 'leather', ['r', -8.1, -30.2, 2.4, 4]],
+      [7, 'limbF', 'boneD', ['e', -9, -47, 0.9, 0.9]], [7, 'limbF', 'boneD', ['e', -9, -9.4, 0.9, 0.9]],
       // elder: iron crown over the helm, a torn cape, soul-fire runes
       [0, 'torso', 'cloth', ['p', 1, 4, -50, 9, -48, 12, -30, 13, -12, 10, -14, 8, -9, 6, -14, 3, -30], 1],
-      [4, 'head', 'gold', ['p', 0, -5, -63, -4.4, -67, -2.8, -63.6, -1.4, -68, 0, -64, 1.8, -67.4, 3, -63.4, 4.4, -66, 4.6, -61.6, -4.8, -61.6], 1],
+      [4, 'face', 'gold', ['p', 0, -5, -63, -4.4, -67, -2.8, -63.6, -1.4, -68, 0, -64, 1.8, -67.4, 3, -63.4, 4.4, -66, 4.6, -61.6, -4.8, -61.6], 1],
       [3, 'torso', 'soul', ['r', -4.4, -46, 1, 4], 1], [3, 'torso', 'soul', ['r', -2.6, -44, 1, 2.4], 1]
     ],
-    rest: [[7, 'armF', 'string', ['r', -9.15, -47, 0.55, 37.8]]],
+    rest: [[7, 'limbF', 'string', ['r', -9.15, -47, 0.55, 37.8]]],
     drawn: [
-      [7, 'armF', 'string', ['p', 0, -8.6, -47, -9.2, -47, -1.4, -28, -0.8, -28.2]],
-      [7, 'armF', 'string', ['p', 0, -0.8, -28.2, -1.4, -28.4, -9.2, -9.4, -8.6, -9.4]],
-      [7, 'armF', 'wood', ['r', -15.8, -28.6, 15, 0.8]],
-      [7, 'armF', 'iron', ['p', 0, -15.6, -29.6, -18, -28.2, -15.6, -26.8]]
+      [7, 'limbF', 'string', ['p', 0, -8.6, -47, -9.2, -47, -1.4, -28, -0.8, -28.2]],
+      [7, 'limbF', 'string', ['p', 0, -0.8, -28.2, -1.4, -28.4, -9.2, -9.4, -8.6, -9.4]],
+      [7, 'limbF', 'wood', ['r', -15.8, -28.6, 15, 0.8]],
+      [7, 'limbF', 'iron', ['p', 0, -15.6, -29.6, -18, -28.2, -15.6, -26.8]]
     ],
     poses: {
-      idle0: { armF: -0.05 }, idle1: { up: 1, armF: -0.05 },
-      wind: { drawn: 1, armF: 0.12, lean: 0.6, armB: -0.5 },
-      strike: { armF: 0.05, lean: -0.4, dx: -1 }
+      idle0: { limbF: { rot: -0.05 } }, idle1: { up: 1, limbF: { rot: -0.05 } },
+      wind: { drawn: 1, limbF: { rot: 0.12 }, limbB: { rot: -0.5 }, lean: 0.6 },
+      strike: { limbF: { rot: 0.05 }, lean: -0.4, dx: -1 }
     }
   };
 
   // ---------- Barrow Beetle: a heavy carapace bruiser ----------
-  ENEMY_ART.beetle = {
+  SRC.beetle = {
     name: 'Barrow Beetle', anim: 'lunge',
-    bones: { legs: [0, 0, null], body: [4, -16, null], head: [-12, -17, 'body'] }, fixed: ['legs'],
+    bones: { legs: [0, 0, null], body: [4, -16, null], face: [-12, -17, 'body'] }, fixed: ['legs'],
     mats: {
       shell: '#3F8FA8', shellD: '#1F4A5E', chitin: '#2E6478', chitinD: '#1A3242', mand: '#C8B890',
       rune: E('#9BE3F0', 1), eye: E('#C8FAFF', 1), horn: '#D8CFB8', gold: GOLD
@@ -221,38 +216,38 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [3, 'body', 'rune', ['e', 17.5, -25, 1.3, 1.3]], [3, 'body', 'rune', ['r', 20.5, -18.5, 1, 2.4]], [3, 'body', 'rune', ['r', 7, -22.5, 2.4, 1]],
       [4, 'body', 'chitin', ['p', 1, -17, -22, -9, -28, -1, -25, -2, -11, -14, -10]],
       [4, 'body', 'chitinD', ['r', -14, -13, 11, 1.2]],
-      [4, 'head', 'chitinD', ['p', 0, -19, -21, -24, -29.5, -25.2, -29, -20.4, -20.4]],
-      [4, 'head', 'chitin', ['e', -18.5, -16, 5.6, 5]],
-      [4, 'head', 'mand', ['p', 1, -21, -15.5, -28, -19.5, -31.5, -15, -28, -16.4, -23.5, -13]],
-      [4, 'head', 'mand', ['p', 1, -21, -12.8, -27, -10, -30.5, -5.6, -27.5, -7.8, -22, -10.6]],
-      [4, 'head', 'eye', ['e', -20.5, -18.4, 1.3, 1.1]],
+      [4, 'face', 'chitinD', ['p', 0, -19, -21, -24, -29.5, -25.2, -29, -20.4, -20.4]],
+      [4, 'face', 'chitin', ['e', -18.5, -16, 5.6, 5]],
+      [4, 'face', 'mand', ['p', 1, -21, -15.5, -28, -19.5, -31.5, -15, -28, -16.4, -23.5, -13]],
+      [4, 'face', 'mand', ['p', 1, -21, -12.8, -27, -10, -30.5, -5.6, -27.5, -7.8, -22, -10.6]],
+      [4, 'face', 'eye', ['e', -20.5, -18.4, 1.3, 1.1]],
       [6, 'legs', 'chitin', ['p', 0, -8, -11, -12, -6, -14.5, 0, -12, 0, -10.4, -5, -6.6, -9]],
       [6, 'legs', 'chitin', ['p', 0, 4, -9, 1, -4, 2, 0, 4.4, 0, 3.4, -4, 6.4, -8]],
       [6, 'legs', 'chitin', ['p', 0, 14, -9, 18, -4, 19, 0, 21.4, 0, 20, -4.6, 16, -9]],
       // elder: a great horn and a gold-rimmed crest
-      [4, 'head', 'horn', ['p', 1, -20, -20, -25, -30, -30, -39, -24, -31.5, -16.4, -22], 1],
+      [4, 'face', 'horn', ['p', 1, -20, -20, -25, -30, -30, -39, -24, -31.5, -16.4, -22], 1],
       [4, 'body', 'gold', ['p', 0, -16, -23, -9, -29, -1, -26, -1.4, -24.6, -9, -27.4, -15.4, -21.6], 1],
       [3, 'body', 'rune', ['e', 11, -31, 1.2, 1.2], 1], [3, 'body', 'rune', ['e', 24, -15, 1, 1], 1],
       [3, 'body', 'shellD', ['p', 0, 9, -38, 12, -43, 14, -37.6], 1], [3, 'body', 'shellD', ['p', 0, 19, -35, 24, -39, 23, -32.4], 1]
     ],
     poses: {
-      idle0: {}, idle1: { up: 0.8, head: 0.03 },
-      wind: { dx: 4, up: -1, head: 0.3, lean: 1 },
-      strike: { dx: -9, head: -0.22, lean: -1.5 }
+      idle0: {}, idle1: { up: 0.8, face: { rot: 0.03 } },
+      wind: { dx: 4, up: -1, lean: 1, face: { rot: 0.3 } },
+      strike: { dx: -9, lean: -1.5, face: { rot: -0.22 } }
     }
   };
 
   // ---------- Spore Cap: a mushroom caster with a root staff ----------
-  ENEMY_ART.spore = {
+  SRC.spore = {
     name: 'Spore Cap', anim: 'cast',
-    bones: { legs: [0, 0, null], torso: [0, -20, null], head: [0, -34, 'torso'], armF: [-6, -26, 'torso'], armB: [6, -26, 'torso'] }, fixed: ['legs'],
+    bones: { legs: [0, 0, null], torso: [0, -20, null], face: [0, -34, 'torso'], limbF: [-6, -26, 'torso'], limbB: [6, -26, 'torso'] }, fixed: ['legs'],
     mats: {
       cap: '#D9534F', spot: '#F3E6CF', gill: '#E6C8A8', stem: '#E8D8BC', stemD: '#A89478', wood: '#6E4A30',
       orb: E('#FF9ED8', 1), glowE: E('#FFB8E8'), pod: E('#FFB8E0', 1), void: VOID, gold: GOLD
     },
     parts: [
-      [1, 'armB', 'stemD', ['p', 1, 4.6, -27, 7.6, -26.4, 9.4, -18.4, 7, -18]],
-      [1, 'armB', 'stemD', ['e', 8.4, -17, 1.7, 1.7]],
+      [1, 'limbB', 'stemD', ['p', 1, 4.6, -27, 7.6, -26.4, 9.4, -18.4, 7, -18]],
+      [1, 'limbB', 'stemD', ['e', 8.4, -17, 1.7, 1.7]],
       [2, 'legs', 'stemD', ['p', 1, 1, 0, 2, -7, 6.4, -6, 8.6, 0]],
       [2, 'legs', 'stem', ['p', 1, -8.6, 0, -6.4, -6.6, -2, -8, -1, -3, -3, 0]],
       [3, 'torso', 'stem', ['p', 1, -7, -34, 7, -34, 8, -20, 9, -5, 5, -2, -5, -2, -9, -5, -8, -20]],
@@ -261,43 +256,43 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [3, 'torso', 'void', ['e', -4.8, -29.4, 1.3, 1.5]], [3, 'torso', 'void', ['e', -1, -29.4, 1.1, 1.4]],
       [3, 'torso', 'glowE', ['r', -5.4, -30, 0.9, 0.9]], [3, 'torso', 'glowE', ['r', -1.5, -30, 0.9, 0.9]],
       [3, 'torso', 'stemD', ['r', -4.2, -27.2, 2.4, 0.8]],
-      [4, 'head', 'gill', ['e', 0, -35, 15, 3]],
-      [4, 'head', 'cap', ['p', 1, -18, -35, -16, -42, -8, -49.5, 2, -51.5, 11, -48.5, 17.5, -40.5, 18, -35]],
-      [4, 'head', 'spot', ['e', -8, -44, 2.6, 1.9]], [4, 'head', 'spot', ['e', 3, -47.6, 2.1, 1.5]],
-      [4, 'head', 'spot', ['e', 10, -41, 2.2, 1.6]], [4, 'head', 'spot', ['e', -13.6, -38.6, 1.5, 1.2]], [4, 'head', 'spot', ['e', 0, -40.5, 1.4, 1]],
-      [4, 'head', 'pod', ['e', -12, -33.8, 1.1, 1.1]], [4, 'head', 'pod', ['e', 12, -33.8, 1, 1]],
-      [6, 'armF', 'stem', ['p', 1, -7.4, -27, -4.4, -26.4, -6, -18, -8.6, -18.4]],
-      [7, 'armF', 'wood', ['p', 0, -21, -40, -19.6, -40.4, -6, -1, -7.6, -0.6]],
-      [7, 'armF', 'wood', ['p', 1, -23.6, -42, -21, -45.6, -18, -43, -20, -40.4]],
-      [7, 'armF', 'orb', ['e', -21, -43.4, 2.3, 2.3]],
-      [7, 'armF', 'stem', ['e', -7.4, -17, 1.9, 1.9]],
+      [4, 'face', 'gill', ['e', 0, -35, 15, 3]],
+      [4, 'face', 'cap', ['p', 1, -18, -35, -16, -42, -8, -49.5, 2, -51.5, 11, -48.5, 17.5, -40.5, 18, -35]],
+      [4, 'face', 'spot', ['e', -8, -44, 2.6, 1.9]], [4, 'face', 'spot', ['e', 3, -47.6, 2.1, 1.5]],
+      [4, 'face', 'spot', ['e', 10, -41, 2.2, 1.6]], [4, 'face', 'spot', ['e', -13.6, -38.6, 1.5, 1.2]], [4, 'face', 'spot', ['e', 0, -40.5, 1.4, 1]],
+      [4, 'face', 'pod', ['e', -12, -33.8, 1.1, 1.1]], [4, 'face', 'pod', ['e', 12, -33.8, 1, 1]],
+      [6, 'limbF', 'stem', ['p', 1, -7.4, -27, -4.4, -26.4, -6, -18, -8.6, -18.4]],
+      [7, 'limbF', 'wood', ['p', 0, -21, -40, -19.6, -40.4, -6, -1, -7.6, -0.6]],
+      [7, 'limbF', 'wood', ['p', 1, -23.6, -42, -21, -45.6, -18, -43, -20, -40.4]],
+      [7, 'limbF', 'orb', ['e', -21, -43.4, 2.3, 2.3]],
+      [7, 'limbF', 'stem', ['e', -7.4, -17, 1.9, 1.9]],
       // elder: a crown of small caps and a gold band
-      [4, 'head', 'cap', ['p', 1, -8, -48, -7, -53, -4, -54, -2, -50], 1],
-      [4, 'head', 'cap', ['p', 1, 1, -51, 2, -57, 5.4, -58, 7, -51], 1],
-      [4, 'head', 'cap', ['p', 1, 9, -48, 11, -53, 14, -52, 14, -45.6], 1],
-      [4, 'head', 'pod', ['e', 4, -57, 1.1, 1.1], 1],
+      [4, 'face', 'cap', ['p', 1, -8, -48, -7, -53, -4, -54, -2, -50], 1],
+      [4, 'face', 'cap', ['p', 1, 1, -51, 2, -57, 5.4, -58, 7, -51], 1],
+      [4, 'face', 'cap', ['p', 1, 9, -48, 11, -53, 14, -52, 14, -45.6], 1],
+      [4, 'face', 'pod', ['e', 4, -57, 1.1, 1.1], 1],
       [3, 'torso', 'gold', ['r', -8.6, -22.6, 17.2, 1.4], 1],
-      [4, 'head', 'pod', ['e', -16, -35.6, 1, 1], 1], [4, 'head', 'pod', ['e', 16, -35.6, 1, 1], 1]
+      [4, 'face', 'pod', ['e', -16, -35.6, 1, 1], 1], [4, 'face', 'pod', ['e', 16, -35.6, 1, 1], 1]
     ],
     poses: {
-      idle0: { armF: 0.05 }, idle1: { up: 1, armF: 0.05, head: 0.03 },
-      wind: { armF: -0.2, head: 0.12, lean: 1, up: 0.5 },
-      strike: { armF: 0.45, head: -0.1, lean: -1.5, dx: -2 }
+      idle0: { limbF: { rot: 0.05 } }, idle1: { up: 1, limbF: { rot: 0.05 }, face: { rot: 0.03 } },
+      wind: { limbF: { rot: -0.2 }, face: { rot: 0.12 }, lean: 1, up: 0.5 },
+      strike: { limbF: { rot: 0.45 }, face: { rot: -0.1 }, lean: -1.5, dx: -2 }
     }
   };
 
   // ---------- Quarry Golem: a stone bruiser with glowing seams ----------
-  ENEMY_ART.golem = {
+  SRC.golem = {
     name: 'Quarry Golem', anim: 'slam',
-    bones: { legs: [0, 0, null], torso: [0, -30, null], head: [-3, -52, 'torso'], armF: [-12, -46, 'torso'], armB: [12, -46, 'torso'] }, fixed: ['legs'],
+    bones: { legs: [0, 0, null], torso: [0, -30, null], face: [-3, -52, 'torso'], limbF: [-12, -46, 'torso'], limbB: [12, -46, 'torso'] }, fixed: ['legs'],
     mats: {
       stone: '#9C8F7A', stoneD: '#5E5647', moss: '#5E7A3A', seam: E('#FF9E3D', 1), seamD: E('#C8621B'), core: E('#FFD27A', 1),
       crystal: E('#FFB060', 1), horn: '#C8BCA8'
     },
     parts: [
-      [1, 'armB', 'stoneD', ['e', 12, -45, 6, 6]],
-      [1, 'armB', 'stoneD', ['p', 1, 9, -42, 16, -42, 17, -26, 10, -26]],
-      [1, 'armB', 'stoneD', ['e', 13.4, -22, 5.6, 5]],
+      [1, 'limbB', 'stoneD', ['e', 12, -45, 6, 6]],
+      [1, 'limbB', 'stoneD', ['p', 1, 9, -42, 16, -42, 17, -26, 10, -26]],
+      [1, 'limbB', 'stoneD', ['e', 13.4, -22, 5.6, 5]],
       [2, 'legs', 'stoneD', ['p', 1, 3, -30, 11, -30, 12, -8, 13, 0, 3, 0, 4, -6]],
       [2, 'legs', 'stone', ['p', 1, -12, -30, -3, -30, -3, -6, -2, 0, -15, 0, -13, -8]],
       [2, 'legs', 'seamD', ['p', 0, -9, -20, -7, -20, -8, -13, -9.6, -13]],
@@ -308,41 +303,41 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [3, 'torso', 'seamD', ['p', 0, 9, -34, 13, -38, 13.6, -37, 9.6, -33]],
       [3, 'torso', 'core', ['e', -2, -40, 2.2, 2.2]],
       [3, 'torso', 'moss', ['p', 1, -6, -53.5, 6, -56, 15.5, -49, 6, -51.5]],
-      [4, 'head', 'stone', ['p', 1, -9, -58, 0.6, -60.5, 3, -53, -1, -49.5, -8.6, -50.6]],
-      [4, 'head', 'stoneD', ['r', -9.2, -57.4, 8, 1.6]],
-      [4, 'head', 'seam', ['r', -7.6, -55.2, 2.8, 1.2]],
-      [6, 'armF', 'stone', ['e', -13, -46.5, 7, 6.5]],
-      [6, 'armF', 'moss', ['p', 1, -19, -48, -14, -53, -8, -51, -14, -49]],
-      [6, 'armF', 'stone', ['p', 1, -18, -42, -9, -42, -10, -30, -17, -30]],
-      [6, 'armF', 'seamD', ['r', -15.4, -36.4, 4, 1]],
-      [6, 'armF', 'stone', ['p', 1, -19.5, -32, -9, -32, -8, -22, -20.5, -22]],
-      [6, 'armF', 'stone', ['e', -14.5, -18, 7.2, 6.2]],
-      [6, 'armF', 'seam', ['r', -19.6, -19.4, 6.4, 1]],
+      [4, 'face', 'stone', ['p', 1, -9, -58, 0.6, -60.5, 3, -53, -1, -49.5, -8.6, -50.6]],
+      [4, 'face', 'stoneD', ['r', -9.2, -57.4, 8, 1.6]],
+      [4, 'face', 'seam', ['r', -7.6, -55.2, 2.8, 1.2]],
+      [6, 'limbF', 'stone', ['e', -13, -46.5, 7, 6.5]],
+      [6, 'limbF', 'moss', ['p', 1, -19, -48, -14, -53, -8, -51, -14, -49]],
+      [6, 'limbF', 'stone', ['p', 1, -18, -42, -9, -42, -10, -30, -17, -30]],
+      [6, 'limbF', 'seamD', ['r', -15.4, -36.4, 4, 1]],
+      [6, 'limbF', 'stone', ['p', 1, -19.5, -32, -9, -32, -8, -22, -20.5, -22]],
+      [6, 'limbF', 'stone', ['e', -14.5, -18, 7.2, 6.2]],
+      [6, 'limbF', 'seam', ['r', -19.6, -19.4, 6.4, 1]],
       // elder: glowing crystal horns and a shoulder spike ridge
-      [4, 'head', 'horn', ['p', 1, -8, -58, -13, -64, -16, -72, -10, -64, -5, -59], 1],
-      [4, 'head', 'horn', ['p', 1, -1, -59.6, 2, -66, 6, -71, 4.6, -63, 2, -58.6], 1],
-      [4, 'head', 'crystal', ['p', 0, -14.4, -68, -16, -72, -13, -68.4], 1], [4, 'head', 'crystal', ['p', 0, 5, -67, 6, -71, 3.6, -66.4], 1],
+      [4, 'face', 'horn', ['p', 1, -8, -58, -13, -64, -16, -72, -10, -64, -5, -59], 1],
+      [4, 'face', 'horn', ['p', 1, -1, -59.6, 2, -66, 6, -71, 4.6, -63, 2, -58.6], 1],
+      [4, 'face', 'crystal', ['p', 0, -14.4, -68, -16, -72, -13, -68.4], 1], [4, 'face', 'crystal', ['p', 0, 5, -67, 6, -71, 3.6, -66.4], 1],
       [3, 'torso', 'crystal', ['p', 0, 4, -55, 6, -63, 8, -55.4], 1], [3, 'torso', 'crystal', ['p', 0, 9, -53, 13, -60, 13.4, -51], 1],
-      [6, 'armF', 'crystal', ['p', 0, -18, -51, -21, -58, -15, -52], 1]
+      [6, 'limbF', 'crystal', ['p', 0, -18, -51, -21, -58, -15, -52], 1]
     ],
     poses: {
       idle0: {}, idle1: { up: 1 },
-      wind: { armF: 2.4, lean: 2, up: -1 },
-      strike: { armF: 0.35, lean: -3, dx: -3 }
+      wind: { limbF: { rot: 2.4 }, lean: 2, up: -1 },
+      strike: { limbF: { rot: 0.35 }, lean: -3, dx: -3 }
     }
   };
 
   // ---------- Marsh Wraith: a floating healer spirit ----------
-  ENEMY_ART.wraith = {
+  SRC.wraith = {
     name: 'Marsh Wraith', anim: 'heal', hover: 1,
-    bones: { torso: [0, -30, null], head: [-1, -46, 'torso'], armF: [-6, -41, 'torso'], armB: [6, -41, 'torso'], tail: [2, -14, 'torso'] }, fixed: [],
+    bones: { torso: [0, -30, null], face: [-1, -46, 'torso'], limbF: [-6, -41, 'torso'], limbB: [6, -41, 'torso'], tail: [2, -14, 'torso'] }, fixed: [],
     mats: {
       robe: '#9FD8C9', robeD: '#35524C', cord: '#C8C0A8', hand: '#D8F0E8', spirit: E('#DFFFF4', 1), wisp: E('#B6FFD8', 1),
       void: VOID, antler: '#D8CFB8', chain: IRON
     },
     parts: [
-      [0, 'armB', 'robeD', ['p', 1, 4, -43, 10, -39, 12.5, -30, 7, -31.5]],
-      [0, 'armB', 'hand', ['p', 1, 9.4, -31.6, 12.6, -30, 13, -27, 10, -28.6]],
+      [0, 'limbB', 'robeD', ['p', 1, 4, -43, 10, -39, 12.5, -30, 7, -31.5]],
+      [0, 'limbB', 'hand', ['p', 1, 9.4, -31.6, 12.6, -30, 13, -27, 10, -28.6]],
       [1, 'tail', 'robeD', ['p', 1, 3, -12, 10, -9, 17, -2, 11.4, -4.6, 5, -6.4]],
       [3, 'torso', 'robe', ['p', 1, -9, -44, 8, -44, 11, -26, 12, -12, 9, -6, 6, -10, 3, -3.6, 0, -9, -4, -4.6, -7, -10, -10, -14, -10.4, -26]],
       [3, 'torso', 'robeD', ['p', 0, -3.6, -30, -2.4, -30, -4.4, -7, -5.6, -7.6]],
@@ -350,38 +345,36 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [3, 'torso', 'cord', ['p', 1, -8.6, -31.4, 9.4, -31.4, 9.6, -29.4, -8.8, -29.4]],
       [3, 'torso', 'cord', ['r', -6, -29.6, 1.2, 6]],
       [3, 'torso', 'spirit', ['e', 0.4, -37, 1.4, 2]],
-      [4, 'head', 'robe', ['p', 1, 3, -56.5, 10, -60, 7, -52]],
-      [4, 'head', 'robe', ['p', 1, -9.4, -52, -4, -58, 3, -58.4, 8.6, -52, 9.4, -43.6, -10.4, -42]],
-      [4, 'head', 'void', ['e', -3.6, -48.2, 4.8, 4.8]],
-      [4, 'head', 'spirit', ['e', -5.6, -49, 1.2, 0.9]], [4, 'head', 'spirit', ['e', -1.8, -49, 1.2, 0.9]],
-      [4, 'head', 'robeD', ['p', 0, -9.4, -46, -8.4, -46, -7, -42.4, -9.6, -42.4]],
-      [6, 'armF', 'robe', ['p', 1, -5, -43, -11, -38.6, -13.4, -32.4, -6, -33.4]],
-      [6, 'armF', 'hand', ['p', 1, -11, -35, -16, -33, -18, -30, -14, -31, -11, -32]],
-      [6, 'armF', 'chain', ['r', -18.6, -30, 0.7, 3]],
-      [6, 'armF', 'wisp', ['e', -18.3, -24.8, 2.4, 2.6]],
+      [4, 'face', 'robe', ['p', 1, 3, -56.5, 10, -60, 7, -52]],
+      [4, 'face', 'robe', ['p', 1, -9.4, -52, -4, -58, 3, -58.4, 8.6, -52, 9.4, -43.6, -10.4, -42]],
+      [4, 'face', 'void', ['e', -3.6, -48.2, 4.8, 4.8]],
+      [4, 'face', 'spirit', ['e', -5.6, -49, 1.2, 0.9]], [4, 'face', 'spirit', ['e', -1.8, -49, 1.2, 0.9]],
+      [4, 'face', 'robeD', ['p', 0, -9.4, -46, -8.4, -46, -7, -42.4, -9.6, -42.4]],
+      [6, 'limbF', 'robe', ['p', 1, -5, -43, -11, -38.6, -13.4, -32.4, -6, -33.4]],
+      [6, 'limbF', 'hand', ['p', 1, -11, -35, -16, -33, -18, -30, -14, -31, -11, -32]],
+      [6, 'limbF', 'chain', ['r', -18.6, -30, 0.7, 3]],
+      [6, 'limbF', 'wisp', ['e', -18.3, -24.8, 2.4, 2.6]],
       // elder: an antler crown, a second wisp and hanging chains
-      [4, 'head', 'antler', ['p', 0, -6, -56, -9, -62, -12, -64, -9.4, -60.4, -7.4, -55], 1],
-      [4, 'head', 'antler', ['p', 0, -9.8, -61, -13, -60, -13.4, -58.6, -9.6, -59.6], 1],
-      [4, 'head', 'antler', ['p', 0, 1, -58, 3, -64, 6, -67, 4, -63, 2.6, -57.6], 1],
-      [4, 'head', 'antler', ['p', 0, 4, -64, 8, -64, 8.4, -62.6, 4.2, -62.8], 1],
+      [4, 'face', 'antler', ['p', 0, -6, -56, -9, -62, -12, -64, -9.4, -60.4, -7.4, -55], 1],
+      [4, 'face', 'antler', ['p', 0, -9.8, -61, -13, -60, -13.4, -58.6, -9.6, -59.6], 1],
+      [4, 'face', 'antler', ['p', 0, 1, -58, 3, -64, 6, -67, 4, -63, 2.6, -57.6], 1],
+      [4, 'face', 'antler', ['p', 0, 4, -64, 8, -64, 8.4, -62.6, 4.2, -62.8], 1],
       [3, 'torso', 'chain', ['r', 7, -30, 0.8, 12], 1], [3, 'torso', 'chain', ['r', -8, -30, 0.8, 9], 1],
-      [0, 'armB', 'wisp', ['e', 13, -25, 1.8, 2], 1]
+      [0, 'limbB', 'wisp', ['e', 13, -25, 1.8, 2], 1]
     ],
     poses: {
-      idle0: { dy: -3 }, idle1: { dy: -4.5, tail: 0.12 },
-      wind: { dy: -5, armF: 1.0, armB: -0.4, head: 0.1 },
-      strike: { dy: -3, armF: 0.3, lean: -2, tail: -0.15 }
+      idle0: { torso: { dy: -3 } }, idle1: { torso: { dy: -4.5 }, tail: { rot: 0.12 } },
+      wind: { torso: { dy: -5 }, limbF: { rot: 1.0 }, limbB: { rot: -0.4 }, face: { rot: 0.1 } },
+      strike: { torso: { dy: -3 }, limbF: { rot: 0.3 }, lean: -2, tail: { rot: -0.15 } }
     }
   };
 
-  // Every normal enemy has an elder (zone boss) variant: parts with minLvl 1, drawn at 1.4x.
-  for (const k of ['slime', 'bat', 'bones', 'beetle', 'spore', 'golem', 'wraith']) ENEMY_ART[k].elder = { scale: 1.4 };
 
   // ---------- World boss: the wyrm (palette keys recoloured per raid generation) ----------
-  ENEMY_ART.wyrm = {
+  SRC.wyrm = {
     name: 'Wyrm', anim: 'breath',
     bones: {
-      legs: [0, 0, null], body: [8, -34, null], neck: [-12, -50, 'body'], head: [-34, -80, 'neck'], jaw: [-38, -76, 'head'],
+      legs: [0, 0, null], body: [8, -34, null], neck: [-12, -50, 'body'], face: [-34, -80, 'neck'], jaw: [-38, -76, 'face'],
       wingF: [4, -60, 'body'], wingB: [16, -60, 'body'], tail: [28, -26, 'body']
     },
     fixed: ['legs'],
@@ -412,16 +405,16 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [3, 'neck', 'scaleD', ['p', 0, -22, -56, -18, -56, -18, -55, -22, -55]], [3, 'neck', 'scaleD', ['p', 0, -27, -64, -23, -64, -23, -63, -27, -63]],
       [3, 'neck', 'horn', ['p', 0, -12, -60, -9, -66, -7, -58.6]], [3, 'neck', 'horn', ['p', 0, -18, -70, -16, -76, -13, -68.6]],
       // head and jaw (the glowing maw shows when the jaw drops)
-      [4, 'head', 'maw', ['p', 1, -38, -80, -58, -80, -56, -73, -40, -72]],
+      [4, 'face', 'maw', ['p', 1, -38, -80, -58, -80, -56, -73, -40, -72]],
       [4, 'jaw', 'scale', ['p', 1, -35, -76, -58.5, -76.6, -56, -72.6, -44, -69.6, -35, -71.4]],
       [4, 'jaw', 'fang', ['p', 0, -54, -76.4, -53, -78.4, -52, -76.4]], [4, 'jaw', 'fang', ['p', 0, -48, -76.2, -47, -78, -46, -76.2]],
-      [4, 'head', 'scale', ['p', 1, -30, -86, -40, -90.5, -50, -88.4, -60, -82.5, -62, -78, -50, -77.4, -38, -75.6, -29, -78]],
-      [4, 'head', 'horn', ['p', 1, -34, -87, -28, -96, -19, -101, -25, -93, -30.6, -84]],
-      [4, 'head', 'horn', ['p', 1, -40, -89, -41, -97, -35, -104, -36.6, -95, -36.6, -88]],
-      [4, 'head', 'scaleD', ['p', 0, -40, -87.6, -49, -87, -47, -85.4, -40, -85.8]],
-      [4, 'head', 'eye', ['e', -44.4, -84.4, 1.9, 1.3]],
-      [4, 'head', 'void', ['r', -60.4, -80.6, 1.6, 0.9]],
-      [4, 'head', 'fang', ['p', 0, -57, -77.6, -56, -75.4, -55, -77.6]], [4, 'head', 'fang', ['p', 0, -50, -77.4, -49, -75, -48, -77.4]],
+      [4, 'face', 'scale', ['p', 1, -30, -86, -40, -90.5, -50, -88.4, -60, -82.5, -62, -78, -50, -77.4, -38, -75.6, -29, -78]],
+      [4, 'face', 'horn', ['p', 1, -34, -87, -28, -96, -19, -101, -25, -93, -30.6, -84]],
+      [4, 'face', 'horn', ['p', 1, -40, -89, -41, -97, -35, -104, -36.6, -95, -36.6, -88]],
+      [4, 'face', 'scaleD', ['p', 0, -40, -87.6, -49, -87, -47, -85.4, -40, -85.8]],
+      [4, 'face', 'eye', ['e', -44.4, -84.4, 1.9, 1.3]],
+      [4, 'face', 'void', ['r', -60.4, -80.6, 1.6, 0.9]],
+      [4, 'face', 'fang', ['p', 0, -57, -77.6, -56, -75.4, -55, -77.6]], [4, 'face', 'fang', ['p', 0, -50, -77.4, -49, -75, -48, -77.4]],
       // front wing (raised, mostly above the body)
       [6, 'wingF', 'wingM', ['p', 0, 2, -60, -4, -90, 6, -110, 20, -118, 30, -108, 40, -104, 36, -92, 30, -90, 28, -78, 20, -80, 12, -66]],
       [6, 'wingF', 'scaleD', ['p', 1, 0.6, -61, -5.4, -91, 19, -118.6, 17, -114.4, -2.4, -90, 5.4, -60]],
@@ -435,23 +428,14 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [6, 'legs', 'horn', ['p', 0, 22, -1.4, 18, 0, 22, 0]]
     ],
     poses: {
-      idle0: {}, idle1: { up: 1, wingF: -0.03, wingB: 0.03, tail: 0.03 },
-      wind: { neck: 0.22, head: 0.18, wingF: 0.12, wingB: -0.1, lean: 2, up: -1 },
-      strike: { neck: -0.16, head: -0.2, jaw: -0.45, wingF: -0.06, lean: -3, dx: -5 }
+      idle0: {}, idle1: { up: 1, wingF: { rot: -0.03 }, wingB: { rot: 0.03 }, tail: { rot: 0.03 } },
+      wind: { neck: { rot: 0.22 }, face: { rot: 0.18 }, wingF: { rot: 0.12 }, wingB: { rot: -0.1 }, lean: 2, up: -1 },
+      strike: { neck: { rot: -0.16 }, face: { rot: -0.2 }, jaw: { rot: -0.45 }, wingF: { rot: -0.06 }, lean: -3, dx: -5 }
     }
   };
 
-  // ---------- Gather nodes: material colour follows the node tier ----------
-  const TIER = {
-    ore: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'],
-    oreGlow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'],
-    bark: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'],
-    barkD: ['#5E3E26', '#482A20', '#3E3A30', '#7A8E88', '#8A5020'],
-    leaf: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'],
-    leafD: ['#3E7A3A', '#1E5440', '#5E6A38', '#6E9A96', '#C87A2A'],
-    leafGlow: ['#E8F5C8', '#E8F5C8', '#E8F5C8', '#E0FFF8', '#FFE08A']
-  };
-  ENEMY_ART['node:ore'] = {
+  // ---------- Gather nodes: 'tier' materials follow the node tier (see TIER below) ----------
+  SRC['node:ore'] = {
     name: 'Ore vein', anim: 'shake', tierKind: 'ore',
     bones: { base: [0, -8, null] }, fixed: [],
     mats: { rock: '#6E6878', rockD: '#3A3542', moss: '#4E6A3A', V: 'tier', Vc: 'tier', Vg: 'tier' },
@@ -473,9 +457,9 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [6, 'base', 'Vc', ['p', 0, -17, -8, -18, -16, -14.6, -8.6], 3],
       [3, 'base', 'Vg', ['p', 0, 13.2, -19, 14.8, -27, 15.4, -18.6], 4]
     ],
-    poses: { idle0: {}, idle1: {}, wind: { dx: 1 }, strike: { dx: -1, sq: 0.03 } }
+    poses: { idle0: {}, idle1: {}, wind: { dx: 1 }, strike: { dx: -1 } }
   };
-  ENEMY_ART['node:wood'] = {
+  SRC['node:wood'] = {
     name: 'Tree', anim: 'shake', tierKind: 'wood',
     bones: { base: [0, 0, null], crown: [0, -30, 'base'] }, fixed: [],
     mats: { bark: 'tier', barkD: 'tier', leaf: 'tier', leafD: 'tier', Lg: 'tier', moss: '#4E6A3A' },
@@ -498,67 +482,94 @@ let enemyMats, enemyParts, enemyXform, enemyRot, enemyBox;
       [4, 'crown', 'Lg', ['e', -6, -44, 1.2, 1.5], 3], [4, 'crown', 'Lg', ['e', 8, -48, 1.2, 1.5], 3],
       [4, 'crown', 'Lg', ['e', 0, -58, 1.2, 1.5], 3], [4, 'crown', 'Lg', ['e', -11, -52, 1, 1.2], 4], [4, 'crown', 'Lg', ['e', 12, -40, 1, 1.2], 4]
     ],
-    poses: { idle0: {}, idle1: { crown: 0.015 }, wind: { crown: -0.03 }, strike: { crown: 0.05, dx: 1 } }
+    poses: { idle0: {}, idle1: { crown: { rot: 0.015 } }, wind: { crown: { rot: -0.03 } }, strike: { crown: { rot: 0.05 }, dx: 1 } }
   };
 
-  // ---------- materials ----------
-  enemyMats = (key, opts = {}) => {
-    const rig = ENEMY_ART[key], out = {};
-    if (key === 'wyrm') {
-      const pal = WYRM_GENS[(Math.max(1, opts.gen || 1) - 1) % WYRM_GENS.length];
-      for (const m in rig.mats) {
-        const v = rig.mats[m];
-        out[m] = typeof v === 'string' && pal[v] ? (m === 'eye' || m === 'maw' ? E(pal[v], 1) : pal[v]) : v;
-      }
-      return out;
-    }
-    if (rig.tierKind) {
-      const t = Math.max(0, Math.min(4, (opts.tier || 1) - 1));
-      for (const m in rig.mats) {
-        const v = rig.mats[m];
-        if (v !== 'tier') { out[m] = v; continue; }
-        if (m === 'V') out[m] = { col: TIER.ore[t], metal: 1 };
-        else if (m === 'Vc') out[m] = t >= 3 ? E(TIER.oreGlow[t], 1) : { col: TIER.oreGlow[t], metal: 1 };
-        else if (m === 'Vg') out[m] = E(TIER.oreGlow[t], t >= 2);
-        else if (m === 'Lg') out[m] = E(TIER.leafGlow[t], 1);
-        else out[m] = TIER[m][t];
-      }
-      return out;
-    }
-    return Object.assign({}, rig.mats);
-  };
-  // lvl: 1 for elder, 0 normal; nodes pass tier - 1.
-  enemyParts = (key, lvl = 0, pose = {}) => {
-    const rig = ENEMY_ART[key];
-    let list = rig.parts;
-    if (rig.rest || rig.drawn) list = list.concat((pose.drawn ? rig.drawn : rig.rest) || []);
-    return list.filter(p => (p[4] || 0) <= lvl);
-  };
 
-  // ---------- pose maths ----------
-  const rotAt = (x, y, px, py, r) => { if (!r) return [x, y]; const dx = x - px, dy = y - py, c = Math.cos(r), s = Math.sin(r); return [px + dx * c - dy * s, py + dx * s + dy * c]; };
-  enemyRot = (key, bone, pose) => { const B = ENEMY_ART[key].bones; let r = 0; for (let b = bone; b; b = B[b][2]) r += pose[b] || 0; return r; };
-  enemyXform = (key, bone, x, y, pose) => {
-    const rig = ENEMY_ART[key], B = rig.bones;
-    let q = [x, y];
-    for (let b = bone; b; b = B[b][2]) q = rotAt(q[0], q[1], B[b][0], B[b][1], pose[b] || 0);
-    if (!rig.fixed.includes(bone)) { q[0] += pose.lean || 0; q[1] += pose.up || 0; }
-    if (pose.sq) { q[0] *= 1 + 0.7 * pose.sq; q[1] *= 1 - pose.sq; }
-    return [q[0] + (pose.dx || 0), q[1] + (pose.dy || 0)];
-  };
-  enemyBox = (key, lvl = 0) => {
-    const rig = ENEMY_ART[key], b = [1e9, 1e9, -1e9, -1e9];
+  // ---------- build the baker rigs ----------
+  // Authoring format above: bones { name: [pivX, pivY, parent] }, fixed = ground bones,
+  // mats { key: '#hex' | { col, metal } | { emit, light } | 'FIXED' | 'tier' }, parts with minLvl
+  // (1 = elder only; nodes: tier index), rest / drawn for the archer.
+  const boundsOf = (rig, parts) => {
+    const b = [1e9, 1e9, -1e9, -1e9];
     for (const f in rig.poses) {
       const pose = rig.poses[f];
-      for (const p of enemyParts(key, lvl, pose)) {
-        const s = p[3], pts = s[0] === 'e' ? [s[1] - s[3], s[2] - s[4], s[1] + s[3], s[2] - s[4], s[1] - s[3], s[2] + s[4], s[1] + s[3], s[2] + s[4]]
-          : s[0] === 'r' ? [s[1], s[2], s[1] + s[3], s[2], s[1], s[2] + s[4], s[1] + s[3], s[2] + s[4]] : s.slice(2);
+      const tx = (bone, x, y) => {
+        for (let bn = bone; bn; bn = rig.parent[bn]) {
+          const o = pose[bn], pv = rig.piv[bn];
+          if (o && typeof o === 'object') {
+            if (o.rot) { const dx = x - pv[0], dy = y - pv[1], c = Math.cos(o.rot), s = Math.sin(o.rot); x = pv[0] + dx * c - dy * s; y = pv[1] + dx * s + dy * c; }
+            x += o.dx || 0; y += o.dy || 0;
+          }
+        }
+        if (!rig.ground.includes(bone)) { y += pose.up || 0; x += pose.lean || 0; }
+        return [x + (pose.dx || 0), y];
+      };
+      for (const p of parts) {
+        const s = p[3], pts = s[0] === 'e' ? [s[1] - s[3], s[2] - s[4], s[1] + s[3], s[2] + s[4]]
+          : s[0] === 'r' ? [s[1], s[2], s[1] + s[3], s[2] + s[4]] : s.slice(2);
         for (let i = 0; i < pts.length; i += 2) {
-          const q = enemyXform(key, p[1], pts[i], pts[i + 1], pose);
-          if (q[0] < b[0]) b[0] = q[0]; if (q[1] < b[1]) b[1] = q[1]; if (q[0] > b[2]) b[2] = q[0]; if (q[1] > b[3]) b[3] = q[1];
+          const q = tx(p[1], pts[i], pts[i + 1]);
+          b[0] = Math.min(b[0], q[0]); b[1] = Math.min(b[1], q[1]); b[2] = Math.max(b[2], q[0]); b[3] = Math.max(b[3], q[1]);
         }
       }
     }
-    return b.map((v, i) => (i < 2 ? Math.floor(v) - 1 : Math.ceil(v) + 1));
+    return [Math.floor(b[0]), Math.floor(b[1]), Math.ceil(b[2]), Math.ceil(b[3])];
   };
+  const strip = list => list.map(p => [p[0], p[1], p[2], p[3]]);
+  // mats: resolve the authoring values; 'FIXED' drops the key so the baker uses FIXED[key].
+  const matsOf = (raw, pick) => {
+    const mats = {}, metal = [];
+    for (const k in raw) {
+      let v = pick ? pick(k, raw[k]) : raw[k];
+      if (v === 'FIXED') continue;
+      if (v && typeof v === 'object' && v.col) { if (v.metal) metal.push(k); v = v.col; }
+      mats[k] = v;
+    }
+    return { mats, metal };
+  };
+  const build = (src, lvl, pick) => {
+    const piv = {}, parent = {};
+    for (const b in src.bones) { piv[b] = [src.bones[b][0], src.bones[b][1]]; if (src.bones[b][2]) parent[b] = src.bones[b][2]; }
+    const { mats, metal } = matsOf(src.mats, pick);
+    const rig = { name: src.name, anim: src.anim, hover: !!src.hover, parts: strip(src.parts.filter(p => (p[4] || 0) <= lvl)), mats, metal, piv, parent, ground: src.fixed, poses: src.poses };
+    if (src.rest) { const rest = strip(src.rest); rig.parts = rig.parts.concat(rest); rig.swap = { rest, drawn: strip(src.drawn) }; }
+    return rig;
+  };
+  for (const k of ['slime', 'bat', 'bones', 'beetle', 'spore', 'golem', 'wraith']) {
+    const src = SRC[k], rig = build(src, 0);
+    const elderParts = strip(src.parts.filter(p => p[4] === 1));
+    rig.variants = { elder: { S: 1.4, parts: elderParts } };
+    rig.box = boundsOf(rig, rig.parts.concat(src.drawn ? strip(src.drawn) : []));
+    rig.elderBox = boundsOf(rig, rig.parts.concat(elderParts));
+    ENEMY_RIGS[k] = rig;
+  }
+  // World boss: palette by raid generation.
+  const wyrmRigs = WYRM_GENS.map(pal => build(SRC.wyrm, 0, (k, v) => typeof v === 'string' && pal[v] ? (k === 'eye' || k === 'maw' ? E(pal[v], 1) : pal[v]) : v));
+  const wyrmBox = boundsOf(wyrmRigs[0], wyrmRigs[0].parts);
+  for (const r of wyrmRigs) r.box = wyrmBox;
+  ENEMY_RIGS.wyrm = v => wyrmRigs[(Math.max(1, (v && v.gen) | 0 || 1) - 1) % wyrmRigs.length];
+  ENEMY_RIGS.wyrm.gens = WYRM_GENS;
+  // Gather nodes: tier colours (ore vein, bark and leaves), extra parts from higher tiers.
+  const TIER = {
+    V: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'],
+    oreGlow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'],
+    bark: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'],
+    barkD: ['#5E3E26', '#482A20', '#3E3A30', '#7A8E88', '#8A5020'],
+    leaf: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'],
+    leafD: ['#3E7A3A', '#1E5440', '#5E6A38', '#6E9A96', '#C87A2A'],
+    leafGlow: ['#E8F5C8', '#E8F5C8', '#E8F5C8', '#E0FFF8', '#FFE08A']
+  };
+  for (const k of ['node:ore', 'node:wood']) {
+    const rigs = [0, 1, 2, 3, 4].map(t => build(SRC[k], t, (m, v) => {
+      if (v !== 'tier') return v;
+      if (m === 'V') return { col: TIER.V[t], metal: 1 };
+      if (m === 'Vc') return t >= 3 ? E(TIER.oreGlow[t], 1) : { col: TIER.oreGlow[t], metal: 1 };
+      if (m === 'Vg') return E(TIER.oreGlow[t], t >= 2);
+      if (m === 'Lg') return E(TIER.leafGlow[t], 1);
+      return TIER[m][t];
+    }));
+    for (const r of rigs) r.box = boundsOf(r, r.parts);
+    ENEMY_RIGS[k] = v => rigs[Math.max(0, Math.min(4, ((v && v.tier) | 0 || 1) - 1))];
+  }
 }

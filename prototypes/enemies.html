@@ -30,7 +30,7 @@ header p { margin: 6px 0 12px; color: var(--muted); font-size: 14px; }
 <div class="app">
   <header>
     <h1>Enemy and node art</h1>
-    <p>Rigs from <code>src/js/13-art-enemies.js</code>, baked with the prototype baker. Each card shows the sprite at 1x (battle scale) and 3x, idling and attacking every few seconds.</p>
+    <p>Rigs from <code>src/js/13-art-enemies.js</code>, baked by the real game baker (<code>src/js/60b-baker.js</code>, <code>enemyFrames</code>). Each card shows the sprite at 1x (battle scale) and 3x, idling and attacking every few seconds.</p>
   </header>
   <div class="bar">
     <button type="button" id="elder" aria-pressed="false">Elder (zone boss)</button>
@@ -40,153 +40,54 @@ header p { margin: 6px 0 12px; color: var(--muted); font-size: 14px; }
   </div>
   <div class="grid" id="grid"></div>
 </div>
+<!-- The real game files: rig data, enemy data and the baker (60b-baker.js). -->
+<script src="../src/js/12-art-rigs.js"></script>
 <script src="../src/js/13-art-enemies.js"></script>
+<script src="../src/js/60b-baker.js"></script>
 <script>
 'use strict';
 const RMQ = matchMedia('(prefers-reduced-motion: reduce)');
 let reduced = RMQ.matches;
-const INK = '#0B0810';
 
-// ================= colour ramps (copied from prototypes/characters.html) =================
-function hexToHsl(hex) { const n = parseInt(hex.slice(1), 16); const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s * 100, l * 100]; }
-function hsl(h, s, l) { h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); const to = x => Math.round(x * 255).toString(16).padStart(2, '0'); return '#' + to(f(0)) + to(f(8)) + to(f(4)); }
-const toward = (h, target, amt) => { let d = ((target - h + 540) % 360) - 180; return h + Math.sign(d) * Math.min(Math.abs(d), amt); };
-function ramp(hex, metal) {
-  const [h, s, l] = hexToHsl(hex);
-  return [
-    hsl(toward(h, 50, 10), s * (metal ? 0.55 : 0.9), Math.min(96, l + (metal ? 30 : 16))),
-    hex,
-    hsl(toward(h, 265, 14), Math.min(100, s * 1.05), l - 17),
-    hsl(toward(h, 270, 24), Math.min(100, s * 1.1), Math.max(6, l - 32))
-  ];
-}
-const hueRot = (hex, deg) => { if (!deg) return hex; const [h, s, l] = hexToHsl(hex); return hsl(h + deg, s, l); };
-const rgbOf = hex => { const n = parseInt(hex.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; };
-
-// Resolve a rig's base materials into ramps / emissives, with the zone-cycle hue shift.
-function resolveMats(key, opts, hue) {
-  const base = enemyMats(key, opts), out = {};
-  for (const m in base) {
-    const v = base[m], sh = c => (v.keep ? c : hueRot(c, hue));
-    if (typeof v === 'string') out[m] = ramp(sh(v));
-    else if (v.emit) out[m] = { emit: sh(v.emit), light: v.light ? rgbOf(sh(v.emit)) : null };
-    else out[m] = ramp(sh(v.col), v.metal);
-  }
-  return out;
-}
-
-// ================= baker (the prototype baker, using the rig's bones) =================
-function partPath(key, p, pose, S, ox, oy) {
-  const s = p.shape, P = new Path2D();
-  const M = (x, y) => { const q = enemyXform(key, p.bone, x, y, pose); return [ox + q[0] * S, oy + q[1] * S]; };
-  if (s[0] === 'e') {
-    const c = M(s[1], s[2]), r = enemyRot(key, p.bone, pose), sq = pose.sq || 0;
-    P.ellipse(c[0], c[1], Math.max(0.3, s[3] * S * (1 + 0.7 * sq)), Math.max(0.3, s[4] * S * (1 - sq)), r, 0, Math.PI * 2); return P;
-  }
-  const pts = s[0] === 'r' ? [s[1], s[2], s[1] + s[3], s[2], s[1] + s[3], s[2] + s[4], s[1], s[2] + s[4]] : s.slice(2);
-  const Q = []; for (let i = 0; i < pts.length; i += 2) Q.push(M(pts[i], pts[i + 1]));
-  if (s[0] === 'p' && s[1]) { const n = Q.length, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; const m0 = mid(Q[n - 1], Q[0]); P.moveTo(m0[0], m0[1]); for (let i = 0; i < n; i++) { const a = Q[i], m = mid(a, Q[(i + 1) % n]); P.quadraticCurveTo(a[0], a[1], m[0], m[1]); } }
-  else { P.moveTo(Q[0][0], Q[0][1]); for (let i = 1; i < Q.length; i++) P.lineTo(Q[i][0], Q[i][1]); }
-  P.closePath(); return P;
-}
-function assemble(key, lvl, pose, mats) {
-  const parts = enemyParts(key, lvl, pose).map((p, i) => ({ z: p[0], bone: p[1], mat: mats[p[2]], shape: p[3], i }));
-  for (const p of parts) if (!p.mat) console.warn('missing mat', key, p);
-  parts.sort((a, b) => a.z - b.z || a.i - b.i);
-  for (const p of parts) { const s = p.shape; if (s[0] === 'e') { p.bw = s[3] * 2; p.bh = s[4] * 2; } else if (s[0] === 'r') { p.bw = s[3]; p.bh = s[4]; } else { const xs = [], ys = []; for (let i = 2; i < s.length; i += 2) { xs.push(s[i]); ys.push(s[i + 1]); } p.bw = Math.max(...xs) - Math.min(...xs); p.bh = Math.max(...ys) - Math.min(...ys); } }
-  return parts;
-}
-const scratch = document.createElement('canvas'), sg = scratch.getContext('2d', { willReadFrequently: true });
-function bake(key, parts, pose, S, BOX) {
-  const W = Math.ceil((BOX[2] - BOX[0]) * S) + 6, H = Math.ceil((BOX[3] - BOX[1]) * S) + 6;
-  const ox = Math.round(-BOX[0] * S) + 3, oy = Math.round(-BOX[1] * S) + 3;
-  scratch.width = W; scratch.height = H;
-  const n = parts.length, masks = [], boxes = [], lights = [];
-  for (let i = 0; i < n; i++) {
-    sg.clearRect(0, 0, W, H); sg.fillStyle = '#fff'; sg.fill(partPath(key, parts[i], pose, S, ox, oy));
-    const d = sg.getImageData(0, 0, W, H).data, m = new Uint8Array(W * H);
-    let x0 = W, y0 = H, x1 = -1, y1 = -1; const thin = Math.min(parts[i].bw, parts[i].bh) * S < 2;
-    for (let p = 0; p < W * H; p++) if (d[p * 4 + 3] >= (thin ? 64 : 120)) { m[p] = 1; const x = p % W, y = (p / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    masks.push(m); boxes.push([x0, y0, x1, y1]);
-    if (parts[i].mat && parts[i].mat.light && x1 >= 0) lights.push({ x: (x0 + x1 + 1) / 2, y: (y0 + y1 + 1) / 2, rgb: parts[i].mat.light, size: Math.max(x1 - x0, y1 - y0) + 1 });
-  }
-  const own = new Int16Array(W * H).fill(-1);
-  for (let i = 0; i < n; i++) { const m = masks[i]; for (let p = 0; p < W * H; p++) if (m[p]) own[p] = i; }
-  const out = document.createElement('canvas'); out.width = W; out.height = H;
-  const og = out.getContext('2d'), img = og.createImageData(W, H), od = img.data;
-  const put = (p, hex) => { const v = parseInt(hex.slice(1), 16); od[p * 4] = v >> 16 & 255; od[p * 4 + 1] = v >> 8 & 255; od[p * 4 + 2] = v & 255; od[p * 4 + 3] = 255; };
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const p = y * W + x, i = own[p];
-    if (i < 0) {
-      let nb = -1, lit = false;
-      if (x + 1 < W && own[p + 1] >= 0) { nb = own[p + 1]; lit = true; } else if (y + 1 < H && own[p + W] >= 0) { nb = own[p + W]; lit = true; } else if (x > 0 && own[p - 1] >= 0) nb = own[p - 1]; else if (y > 0 && own[p - W] >= 0) nb = own[p - W];
-      if (nb >= 0) { const r = parts[nb].mat; put(p, lit && !r.emit ? r[3] : INK); }
-      continue;
-    }
-    const mat = parts[i].mat;
-    if (mat.emit) { put(p, mat.emit); continue; }
-    const m = masks[i], b = boxes[i], mn = Math.min(b[2] - b[0] + 1, b[3] - b[1] + 1);
-    const inside = (xx, yy) => xx >= 0 && yy >= 0 && xx < W && yy < H && m[yy * W + xx] === 1;
-    const hd = Math.max(1, Math.round(mn * 0.14)), sd = Math.max(1, Math.round(mn * 0.3));
-    let t = 1;
-    if (!inside(x - hd, y - hd)) t = 0;
-    if (!inside(x + sd, y + sd)) t = 2; else if (!inside(x + sd + 1, y + sd + 1) && ((x + y) & 1)) t = 2;
-    if (t === 2 && !inside(x + 1, y + 1)) t = 3;
-    if (t === 0 && mn < 3) t = 1;
-    const above = y > 0 ? own[p - W] : -1;
-    if (above > i && !parts[above].mat.emit && parts[above].z >= parts[i].z) t = Math.min(3, t + 1);
-    if (t < 3) { const r = x + 1 < W ? own[p + 1] : -1, dn = y + 1 < H ? own[p + W] : -1; if ((r >= 0 && r < i && parts[r].z < parts[i].z) || (dn >= 0 && dn < i && parts[dn].z < parts[i].z)) t = Math.max(t, 2); }
-    put(p, mat[t]);
-  }
-  og.putImageData(img, 0, 0);
-  return { c: out, ox, oy, lights };
-}
-// Bake the four frames for one enemy. S is the art scale (1, or 1.4 for elders).
-function bakeSet(key, lvl, opts, hue, S) {
-  const rig = ENEMY_ART[key], mats = resolveMats(key, opts, hue), BOX = enemyBox(key, lvl), set = {};
-  for (const f of ['idle0', 'idle1', 'wind', 'strike']) { const pose = rig.poses[f]; set[f] = bake(key, assemble(key, lvl, pose, mats), pose, S, BOX); }
-  return set;
-}
-
-// ================= stage drawing =================
-function glow(g, x, y, r, rgb, a) { const gr = g.createRadialGradient(x, y, 0.5, x, y, r); gr.addColorStop(0, `rgba(${rgb},${a})`); gr.addColorStop(0.35, `rgba(${rgb},${a * 0.35})`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
-function drawSprite(g, s, x, y, z) { const dx = Math.round(x - s.ox * z), dy = Math.round(y - s.oy * z); g.imageSmoothingEnabled = false; g.drawImage(s.c, dx, dy, s.c.width * z, s.c.height * z); return s.lights.map(l => ({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, size: l.size * z })); }
-function lightPass(g, lights, T, zoom) {
-  g.globalCompositeOperation = 'lighter';
-  const flick = reduced ? 0.9 : 0.8 + 0.2 * Math.sin(T * 13) * Math.sin(T * 7.3);
-  for (const l of lights) { const r = Math.min(Math.max(8, l.size * 3), 16 * zoom) * flick; glow(g, l.x, l.y, r, l.rgb, 0.26); glow(g, l.x, l.y, r * 0.3, '255,250,230', 0.12); }
-  g.globalCompositeOperation = 'source-over';
-}
 function frameFor(t0, T, phase) {
   const a = T - t0;
   if (a >= 0 && a < 0.25) return 'wind';
   if (a >= 0.25 && a < 0.55) return 'strike';
   return reduced ? 'idle0' : (Math.floor(T * 1.6 + phase) % 2 ? 'idle1' : 'idle0');
 }
+function drawSprite(g, s, x, y, z) {
+  const dx = Math.round(x - s.ox * z), dy = Math.round(y - s.oy * z);
+  g.imageSmoothingEnabled = false; g.drawImage(s.c, dx, dy, s.c.width * z, s.c.height * z);
+  return s.lights.map(l => ({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z }));
+}
 
 const KEYS = ['slime', 'bat', 'bones', 'beetle', 'spore', 'golem', 'wraith', 'node:ore', 'node:wood', 'wyrm'];
 const ST = { elder: false, hue: 0, gen: 1, tier: 1 };
 const cards = [];
 const $ = id => document.getElementById(id);
+const rigOf = (key, v) => typeof ENEMY_RIGS[key] === 'function' ? ENEMY_RIGS[key](v) : ENEMY_RIGS[key];
+function variantOf(key) {
+  if (key === 'wyrm') return { gen: ST.gen, hue: ST.gen > 6 ? 40 * Math.floor((ST.gen - 1) / 6) : 0 };
+  if (key.startsWith('node:')) return { tier: ST.tier };
+  return { elder: ST.elder, hue: ST.hue * 70 };
+}
 function buildCards() {
   const grid = $('grid');
   for (const key of KEYS) {
     const card = document.createElement('div'); card.className = 'card' + (key === 'wyrm' ? ' big' : '');
     const cv = document.createElement('canvas');
     const cap = document.createElement('div'); cap.className = 'cap';
-    const b = document.createElement('b'); b.textContent = ENEMY_ART[key].name; const sm = document.createElement('span');
+    const b = document.createElement('b'); b.textContent = rigOf(key, {}).name; const sm = document.createElement('span');
     cap.append(b, sm); card.append(cv, cap); grid.appendChild(card);
     cards.push({ key, cv, sm, set: null, phase: cards.length * 0.7 });
   }
 }
 function rebake() {
   for (const c of cards) {
-    const rig = ENEMY_ART[c.key], elder = ST.elder && rig.elder;
-    const lvl = c.key.startsWith('node:') ? ST.tier - 1 : elder ? 1 : 0;
-    const S = elder ? rig.elder.scale : 1;
-    c.set = bakeSet(c.key, lvl, { tier: ST.tier, gen: ST.gen }, rig.tierKind || c.key === 'wyrm' ? 0 : ST.hue * 70, S);
-    const box = enemyBox(c.key, lvl);
-    c.sm.textContent = `${c.key}${elder ? ' elder' : ''} - box ${Math.round((box[2] - box[0]) * S)}x${Math.round((box[3] - box[1]) * S)} art px`;
+    const v = variantOf(c.key), rig = rigOf(c.key, v), elder = v.elder;
+    c.set = enemyFrames(c.key, v);
+    const box = elder ? rig.elderBox : rig.box, S = elder ? 1.4 : 1;
+    c.sm.textContent = `${c.key}${elder ? ' elder' : ''} - ${Math.round((box[2] - box[0]) * S)}x${Math.round((box[3] - box[1]) * S)} art px - ${c.set.ms.toFixed(0)}ms`;
   }
 }
 function setup(cv) { const r = cv.getBoundingClientRect(), D = Math.min(window.devicePixelRatio || 1, 2); if (cv.width !== Math.round(r.width * D)) { cv.width = Math.round(r.width * D); cv.height = Math.round(r.height * D); } return { W: r.width, H: r.height, D, g: cv.getContext('2d') }; }
@@ -202,12 +103,12 @@ function loop(now) {
     const t0 = 1 + c.phase + Math.floor((T - 1 - c.phase) / 3.6) * 3.6;
     const f = frameFor(t0, T, c.phase), lights = [];
     const big = c.key === 'wyrm';
-    const x1 = Math.round(W * (big ? 0.2 : 0.2)), x3 = Math.round(W * (big ? 0.62 : 0.66)), z3 = big ? 2 : 3;
+    const x1 = Math.round(W * 0.2), x3 = Math.round(W * (big ? 0.62 : 0.66)), z3 = big ? 2 : 3;
     for (const [x, z] of [[x1, 1], [x3, z3]]) {
       g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(x, gy + 1, (big ? 40 : 14) * z, 2 * z, 0, 0, 7); g.fill();
       lights.push(...drawSprite(g, c.set[f], x, gy, z));
     }
-    lightPass(g, lights, T, 1);
+    charLightPass(g, lights, T, 1);
     g.fillStyle = 'rgba(165,151,180,.8)'; g.font = '600 11px "Pixelify Sans", monospace'; g.textAlign = 'center';
     g.fillText('1x', x1, H - 8); g.fillText(z3 + 'x', x3, H - 8);
   }
