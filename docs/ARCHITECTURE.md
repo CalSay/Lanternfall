@@ -74,6 +74,11 @@ deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; wee
 ```
 Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
 `yield:<family>` (harvest and away yield per material family).
+Almanac hooks (55-almanac.js): modifiers `foeHp`, `bossHp` (spawn), `uniqueChance` (boss unique roll),
+`nonCrit` (hero non-crit hits), `rareW` (Rare/Epic forge weights), `salvage`, `bountyPay`; bonuses
+`bossTime` (seconds added to the boss timer), `bountyNoWait`, `bestiaryMult`, `masteryMult`.
+Events: `omen {id, day}`, `weeklyDone {k}`, `weeklyClaim {k, quiet}`. Later systems can feed weekly
+goals with `almanac.count(kind, n)`.
 
 ```js
 onTick(fn(dt)) -> remove()   // after each core tick; dt in seconds (<= 0.1)

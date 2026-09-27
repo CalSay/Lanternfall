@@ -49,9 +49,10 @@
     return Math.max(50, Math.round(perSec * 240));
   }
   function bountyReward(b) {
-    if (b.rew === 'gold') return { kind: 'gold', n: btyGold(), txt: fmt(btyGold()) + ' gold' };
+    const pay = mod('bountyPay'), g = Math.round(btyGold() * pay), n = Math.round(b.rewN * pay);
+    if (b.rew === 'gold') return { kind: 'gold', n: g, txt: fmt(g) + ' gold' };
     const kind = b.rew;
-    return { kind, t: b.rewT, n: b.rewN, txt: `${b.rewN} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
+    return { kind, t: b.rewT, n, txt: `${n} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
   }
   const bountyText = b => BTY_TEXT[b.k](b);
 
@@ -59,7 +60,7 @@
   function bountyRefresh() {
     const sl = S.bounties.slots, now = Date.now();
     while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
-    for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && now >= (sl[i].wait || 0))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
+    for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && (now >= (sl[i].wait || 0) || bonus('bountyNoWait') > 0))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
   }
   function btyAdd(k, n, test) {
     for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);

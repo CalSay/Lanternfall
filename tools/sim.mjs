@@ -9,6 +9,7 @@
 //             Without it, the game's own idle auto-play and auto-cast run.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
 //             possible (saving gold for it first), keep the best 3 fielded (the game's autoField).
+//   --omen <id>|none: fix the daily Omen (default: the device date's Omen).
 //   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 20).
 //   --tune k=v,k=v: override ROSTER_TUNE knobs (56-roster.js).  --debug 1: roster trace per line.
 // Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
@@ -34,6 +35,8 @@ if (args['from-save']) {
   E('loadSave(); gearDirty(); spawn()');
 }
 E('S.amt = "1"');
+// --omen <id>|none: play a fixed Almanac Omen (55-almanac.js) instead of today's.
+if (args.omen) E(`almanac.force(${JSON.stringify(String(args.omen))})`);
 // --tune key=value,key=value overrides ROSTER_TUNE knobs (56-roster.js) for this run.
 if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); E(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
 if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
