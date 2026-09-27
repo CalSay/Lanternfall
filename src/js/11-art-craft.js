@@ -13,7 +13,7 @@
 //   Trophies:   tro_slime tro_bat tro_bones tro_beetle tro_spore tro_golem tro_wraith (fixed colours)
 //   Draw one:   iconURL(...craftIcon(name, tier))   (60-gfx), or a toast / away spec { ic: craftIcon(name, t) }
 //
-// Gather nodes: CRAFT_NODES holds rig sources for 'node:crystal' (geode), 'node:fibre' (fibre patch) and
+// Gather nodes: CRAFT_NODE_RIGS holds rig sources for 'node:crystal' (geode), 'node:fibre' (fibre patch) and
 //   'node:herb' (herb bed), in the 13-art-enemies authoring format. 13-art-enemies.js builds them like the
 //   ore and wood nodes, so enemyFrames('node:herb', { tier }) bakes them. Part flag 5th value = min tier index.
 
@@ -122,7 +122,7 @@ registerIcons(CRAFT_ICONS);
 
 // ---------------- gather node rigs (built by 13-art-enemies.js) ----------------
 // mats 'tier' resolve through tier(key, tierIndex, E) where E(hex, lit) makes an emissive material.
-const CRAFT_NODES = {
+const CRAFT_NODE_RIGS = {
   // Geode: a split boulder with a crystal cluster; crystals glow from tier 3.
   'node:crystal': {
     name: 'Geode', anim: 'shake',
