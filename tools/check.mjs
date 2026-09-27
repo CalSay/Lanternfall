@@ -60,9 +60,10 @@ try {
   assert(E('S.mats.ore[0]') > ore0 && E('S.skills.mine.lv') > 1, `gathering progress (ore ${E('S.mats.ore[0]')}, mine lv ${E('S.skills.mine.lv')})`);
 
   E('S.mats.ore[0] += 50; S.mats.wood[0] += 50; S.mats.ess[0] += 50');
-  const it = fn.forgeItem('weapon', 1);
+  assert(fn.forgeItem('weapon', 1) === null, 'the legacy Sword is no longer forged');
+  const it = fn.forgeItem('pick', 1);
   assert(it && E('S.items.length') >= 1, 'forged an item');
-  if (it) assert(fn.equipItem(it.id) && fn.gear().might > 0, 'equipped forged weapon');
+  if (it) assert(fn.equipItem(it.id) && fn.gear().mineSpd > 0, 'equipped forged pickaxe');
 
   const bad = badNumbers(E('S'));
   assert(!bad.length, 'no NaN/Infinity in state' + (bad.length ? ': ' + bad.slice(0, 5).join(', ') : ''));
@@ -277,7 +278,7 @@ try {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const old = JSON.parse(raw);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
-    g.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; gearDirty()'); // pre-K4 baselines predate synergies (B2) and the unique rebalance
+    g.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; gearDirty()'); // pre-K4 baselines predate synergies (B2), the unique rebalance and the retool (legacy Sword/Helm fit any class)
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const matsOk = Object.keys(old.mats).every(k => JSON.stringify(old.mats[k]) === JSON.stringify(S.mats[k])) && ['crystal', 'fibre', 'herb', 'hide'].every(k => JSON.stringify(S.mats[k]) === '[0,0,0,0,0]');
     const itemsOk = !deepDiff(old.items, S.items) && S.items.map(i => i.id).join() === old.items.map(i => i.id).join();
@@ -303,7 +304,7 @@ try {
     g.fn.save();
     const saved = g.storage.get(KEY);
     const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
-    g2.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; gearDirty()');
+    g2.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; gearDirty()');
     const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
     assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === want.total && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
   }
@@ -392,13 +393,86 @@ try {
     assert(cg.hp > 0 && cg.haste > 0 && cg.score > 0 && E(`bagCount() === 2 && isEquipped(${tk})`), 'charGear reads wpn/trk; companion-equipped items leave the bag');
     E(`charRec("tobin").wpn = ${st}`);
     assert(E('charGear("tobin").score') === E(`itemPower(itemById(${tk}))`), 'a Staff does not fit a tank companion');
-    assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && fits("weapon", "weapon", "lightkeeper") && fits("helm", "helm", "ranger") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character and legacy rules');
+    assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && !fits("weapon", "weapon", "lightkeeper") && !fits("helm", "helm", "ranger") && fits("weapon", "weapon", "any") && fits("helm", "helm", "any") && fits({ slot: "weapon", t: 1, r: "legendary", plus: 0, u: "sproutblade" }, "weapon", "ranger") && fits({ slot: "helm", t: 1, r: "legendary", plus: 0, u: "echocowl" }, "helm", "warden") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character rules; legacy Sword/Helm only without a class; uniques fit every class');
     assert(E('upgradeCost({ slot: "bow", t: 1, r: "common", plus: 7 }).troph === 1 && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 6 })) && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 10 }))'), 'upgrades to +8, +9 and +10 name a Trophy');
     assert(E('itemName(newItem("bow", 2, "rare")) === "Yew Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
     assert(Object.keys(E('newItem("weapon", 1, "common")')).join() === 'id,slot,t,r,plus', 'legacy forge items carry no new fields');
     assert(!g.errors.length, 'no items handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('items crashed: ' + (e.stack || e)); }
+
+// ---- 6b. retool: class gear only (owner bug "I was able to equip a sword as a ranger") ----
+console.log('retool');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const legacyLeft = 'S.items.filter(i => !i.u && (i.slot === "weapon" || i.slot === "helm")).length';
+  for (const f of FIX) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const row = [];
+    for (const cls of CLASSES) {
+      const q = JSON.stringify(cls);
+      // before: the same load + chooseClass with the retool off (legacy gear fits any class)
+      const g0 = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+      g0.eval(`RETOOL.on = 0; chooseClass(${q})`);
+      const hd0 = g0.fn.heroDps(), td0 = g0.fn.totalDps();
+      // after: load + chooseClass
+      const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = x => g.eval(x);
+      const eq0 = E('JSON.stringify(S.equip)');
+      const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+      E(`chooseClass(${q})`);
+      const hd = g.fn.heroDps(), td = g.fn.totalDps();
+      const ids = E('S.items.map(i => i.id).join()') === old.items.map(i => i.id).join();
+      const same = E(`JSON.stringify(S.items.map(i => [i.t, i.r, i.plus, i.u || null]))`) === JSON.stringify(old.items.map(i => [i.t, i.r, i.plus, i.u || null]));
+      assert(E(legacyLeft) === 0 && ids && same && E('JSON.stringify(S.equip)') === eq0, `${f} ${cls}: no legacy Sword/Helm left; ${old.items.length} items, ids, tier, rarity, +N and equip unchanged`);
+      assert(hd >= hd0 && td >= td0, `${f} ${cls}: heroDps ${hd0.toFixed(2)} -> ${hd.toFixed(2)}, totalDps ${td0.toFixed(2)} -> ${td.toFixed(2)} (never lower)`);
+      const w = E('itemById(S.equip.weapon)');
+      if (w && !w.u) assert(w.slot === E(`CRAFT_FITS.weapon[${q}][0]`) && w.rt === 'weapon', `${f} ${cls}: the worn Sword is now a ${E(`CRAFT_KINDS[${JSON.stringify(w.slot)}].noun`)} (${E('itemName(itemById(S.equip.weapon))')})`);
+      const legN = old.items.filter(i => !i.u && (i.slot === 'weapon' || i.slot === 'helm')).length;
+      const note = toasts.filter(t => /reforged/.test(t));
+      assert(legN ? note.length === 1 && note[0].endsWith(`into ${E(`HERO_CLASSES[${q}].name`)} gear.`) : !note.length, `${f} ${cls}: one notice (${note.join(' | ') || 'none needed'})`);
+      // load -> save -> load: lossless, no second retool, same dps
+      g.fn.save();
+      const saved = g.storage.get(KEY);
+      const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
+      g2.eval('retoolItems(true)');   // what the first tick would do: nothing left to convert
+      const d2 = deepDiff(JSON.parse(saved).items, JSON.parse(JSON.stringify(g2.eval('S.items'))));
+      const r2 = g2.fn.heroDps() / hd;
+      assert(!d2 && g2.eval('JSON.stringify(S.equip)') === E('JSON.stringify(S.equip)') && g2.eval('JSON.stringify(gear())') === E('JSON.stringify(gear())') && Math.abs(r2 - 1) < 1e-9, `${f} ${cls}: round trip lossless` + (d2 ? ': ' + d2 : '') + (Math.abs(r2 - 1) >= 1e-9 ? ` (dps ratio ${r2})` : ''));
+      assert(!g.errors.length && !g2.errors.length, `${f} ${cls}: no handler errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+      row.push(`${cls} ${hd0.toFixed(1)}->${hd.toFixed(1)}`);
+    }
+    console.log(`       ${f} heroDps: ${row.join(', ')}`);
+  }
+  // a save that already has a class retools on load (first tick)
+  {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-a-v1.json'), 'utf8');
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = x => g.eval(x);
+    const hd0 = g.fn.heroDps(), td0 = g.fn.totalDps(), toasts = [];
+    g.fn.on('toast', t => toasts.push(t.msg));
+    g.fn.tick(0.1);
+    assert(E('itemById(3).slot === "censer" && itemById(3).rt === "weapon" && S.equip.weapon === 3 && itemById(7).slot === "helm" && S.equip.helm === 7'), 'save-a-v1 (Lightkeeper): the worn Sword becomes a Censer on load; the Echo Cowl (unique) stays');
+    assert(g.fn.heroDps() >= hd0 && g.fn.totalDps() >= td0 * (1 - 1e-12), `save-a-v1 on load: dps kept (${hd0.toFixed(2)} -> ${g.fn.heroDps().toFixed(2)})`);
+    assert(toasts.includes('Your old sword was reforged into Lightkeeper gear.'), 'on load: one notice');
+    const n = toasts.length; g.fn.tick(0.1); E('retoolItems(true)');
+    assert(toasts.length === n, 'retool runs once: nothing left to convert');
+  }
+  // Ranger: no Warblade, no new Sword; a class switch retools the Bow
+  {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid-v2.json'), 'utf8');
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = x => g.eval(x);
+    E('chooseClass("ranger")');
+    const wb = E('(() => { const it = newItem("warblade", 1, "common"); S.items.push(it); return it.id; })()');
+    const sw = E('(() => { const it = newItem("weapon", 1, "common"); S.items.push(it); return it.id; })()');
+    assert(!E(`equipItem(${wb})`) && !E(`equipItem(${sw})`) && E('S.equip.weapon') === 3 && E('itemById(3).slot') === 'bow', 'a Ranger cannot equip a Warblade or a Sword; the old Sword is a Bow');
+    assert(E('equipItem(7)') && E('S.equip.helm') === 7, 'a Ranger still wears the Echo Cowl (unique)');
+    E(`S.items = S.items.filter(i => i.id !== ${wb} && i.id !== ${sw})`);
+    const gs0 = E('JSON.stringify(gear())');
+    E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
+    assert(E('itemById(3).slot === "warblade" && itemById(3).rt === "weapon" && S.equip.weapon === 3') && E('JSON.stringify(gear())') === gs0, 'Mirror of Embers: the Bow becomes a Warblade, still worn, gear() unchanged');
+    assert(!g.errors.length, 'no retool handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+} catch (e) { fail('retool crashed: ' + (e.stack || e)); }
 
 // ---- 7. synergies, kits, Common Cause and Bond (56b-synergy.js, B2) ----
 console.log('synergy');
@@ -764,8 +838,9 @@ try {
   const tk = E('craftItem("trinket", 1, { role: "caster" })');
   assert(tk && tk.ro === 'caster' && tk.a.every(([id]) => ['spell', 'area', 'control', 'hp'].includes(id)), 'Trinket rolls from the chosen role');
   assert(E('!!forgeItem("staff", 1)') && E('S.items[S.items.length - 1].slot') === 'staff', 'forgeItem delegates new kinds to craftItem');
-  const sx = E('S.skills.smith.xp'); E('forgeItem("weapon", 1)');
-  assert(E('S.skills.smith.xp') > sx, 'forgeItem keeps the legacy Sword path (Smithing XP)');
+  assert(E('forgeItem("weapon", 1) === null && craftItem("helm", 1) === null') && /no longer made/.test(E('canCraft("weapon", 1).why')), 'the legacy Sword and Helm are no longer made');
+  const sx = E('S.skills.smith.xp'); E('forgeItem("pick", 1)');
+  assert(E('S.skills.smith.xp') > sx, 'forgeItem keeps the old Pickaxe path (Smithing XP)');
   // Masterwork
   assert(E('canCraft("robe", 1, { mw: 0 }).why') === 'Needs 1 Moss Heart', 'Masterwork needs its Trophy');
   E('S.craft.troph[0] = 1');
@@ -825,13 +900,22 @@ try {
   assert(E(`equipItem(${up}, 'weapon')`) && E(`charRec(${q}).wpn`) === null, 'equipping on the hero takes it off the companion');
   E(`equipChar(${q}, ${up}, 'wpn')`);
   assert(E(`unequipChar(${q}, 'wpn')`) && E(`charRec(${q}).wpn`) === null && E(`!!itemById(${up})`), 'unequipChar returns the item to the bag');
-  // class change: items that no longer fit return to the bag, never deleted
+  // class change (Mirror of Embers): the hero's class gear is retooled, never unequipped or deleted
   E(`equipItem(${up}, 'weapon')`);
   const lan = E('(() => { const it = newItem("lantern", 1, "common"); S.items.push(it); equipItem(it.id, "off"); return it.id; })()');
-  const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); equipItem(it.id, "helm"); return it.id; })()');
-  const cnt = E('S.items.length');
+  const hood = E('(() => { const it = newItem("hood", 2, "rare"); S.items.push(it); return it.id; })()');
+  const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); return it.id; })()');
+  assert(!E(`equipItem(${helm}, 'helm')`), 'a classed hero cannot equip a legacy Helm');
+  E(`S.equip.helm = ${helm}; gearDirty()`);   // as an old save wears it
+  const cnt = E('S.items.length'), ids0 = E('S.items.map(i => i.id).join()'), gear0 = E('JSON.stringify(gear())'), hd0 = g.fn.heroDps();
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
   E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
-  assert(E('S.equip.weapon') === null && E('S.equip.off') === null && E('S.equip.helm') === helm && E('S.items.length') === cnt && E(`!!itemById(${up}) && !!itemById(${lan})`), 'class change: Staff and Lantern back in the bag, the legacy Helm stays on');
+  const sl = id => E(`itemById(${id}).slot`);
+  assert(E(`S.equip.weapon === ${up} && S.equip.off === ${lan} && S.equip.helm === ${helm}`) && sl(up) === 'warblade' && sl(lan) === 'shield' && sl(helm) === 'greathelm' && sl(hood) === 'greathelm' && sl(bow) === 'bow',
+    `class change retools: Staff -> Warblade, Lantern -> Shield, old Helm -> Greathelm (worn), bag Hood -> Greathelm, bag Bow (companion kind) kept (${[up, lan, helm, hood, bow].map(sl).join(',')})`);
+  assert(E('S.items.length') === cnt && E('S.items.map(i => i.id).join()') === ids0 && E(`itemById(${up}).rt === "staff" && itemById(${helm}).rt === "helm" && itemById(${up}).plus === 4`), 'class change: same ids, count, +N; rt keeps the original kind');
+  assert(E('JSON.stringify(gear())') === gear0 && g.fn.heroDps() >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${g.fn.heroDps().toFixed(1)})`);
+  assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
   E('S.skills.ench.lv = 8');
   assert(E('canCraft("starChart", 3).why') === 'Needs Enchanting 9', 'Star Chart needs Enchanting 9');
