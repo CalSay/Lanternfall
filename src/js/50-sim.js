@@ -90,7 +90,8 @@ function kill() {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    if (Math.random() < (first ? 0.35 : 0.12) * mod('uniqueChance')) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
+    const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
     if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);

@@ -69,6 +69,9 @@ const UNIQ = {
   eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { party: 20, might: 30 }, txt: '+30% damage and your party deals 20% more.' },
   tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' }
 };
+// Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
+// Legendary x3.2), and rarer drops. `owned` scales the chance when you already have that unique at this tier or higher.
+const UNIQ_TUNE = { pow: 1.8, first: 0.15, again: 0.04, owned: 0.5 };
 const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;

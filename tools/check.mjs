@@ -277,7 +277,7 @@ try {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const old = JSON.parse(raw);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
-    g.eval('SYN_TUNE.on = 0; gearDirty()'); // pre-K4 baselines predate synergies (B2)
+    g.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; gearDirty()'); // pre-K4 baselines predate synergies (B2) and the unique rebalance
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const matsOk = Object.keys(old.mats).every(k => JSON.stringify(old.mats[k]) === JSON.stringify(S.mats[k])) && ['crystal', 'fibre', 'herb', 'hide'].every(k => JSON.stringify(S.mats[k]) === '[0,0,0,0,0]');
     const itemsOk = !deepDiff(old.items, S.items) && S.items.map(i => i.id).join() === old.items.map(i => i.id).join();
@@ -303,7 +303,7 @@ try {
     g.fn.save();
     const saved = g.storage.get(KEY);
     const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
-    g2.eval('SYN_TUNE.on = 0; gearDirty()');
+    g2.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; gearDirty()');
     const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
     assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === want.total && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
   }

@@ -108,3 +108,9 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
   gentle "drop to the best zone you can farm" on load or with auto-progress so idle income doesn't stall.
 - Owner feedback: the menu area is too small (lots of scrolling) and toasts cover the menus. A UX agent
   owns layout and notifications (bottom tab bar, shorter/collapsing stage, overlays, toast priority and log).
+- Owner feedback: uniques overshadow crafted gear. Cause: every unique rolled Legendary power (x3.2,
+  above a crafted Epic's x2.5) on top of its effect, and dropped 35% on first kill / 12% on every
+  rematch. Change (`UNIQ_TUNE` in 20-data.js): base power at Rare level (x1.8), drops 15% first /
+  4% rematch, and half chance when you already own it at that tier or higher. The effect is now the draw.
+  Existing uniques lose raw power (deliberate balance change the owner asked for; no item is removed).
+  The K4 exact-dps check pins `UNIQ_TUNE.pow = 3.2` for its pre-change baselines.

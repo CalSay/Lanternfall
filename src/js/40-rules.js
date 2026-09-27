@@ -4,7 +4,7 @@
 // ================= gear math =================
 const itemById = id => S.items.find(i => i.id === id) || null;
 const equipped = slot => itemById(S.equip[slot]);
-const itemPower = it => TIER_POW[it.t] * RAR[it.r].m * (1 + 0.15 * it.plus);
+const itemPower = it => TIER_POW[it.t] * (it.u ? UNIQ_TUNE.pow : RAR[it.r].m) * (1 + 0.15 * it.plus);
 // Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
 function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
