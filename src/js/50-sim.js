@@ -35,7 +35,7 @@ function spawn() {
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
   const t = TYPES[ti];
-  const hp = mobHp(z) * (boss ? 8 : (0.9 + Math.random() * 0.2));
+  const hp = mobHp(z) * (boss ? bossHpMult(z) : (0.9 + Math.random() * 0.2));
   mob = {
     key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),

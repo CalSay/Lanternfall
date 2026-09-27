@@ -11,20 +11,30 @@
 //             possible (saving gold for it first), keep the best 3 fielded (the game's autoField).
 //   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 20).
 //   --tune k=v,k=v: override ROSTER_TUNE knobs (56-roster.js).  --debug 1: roster trace per line.
+//   --pace k=v,k=v: override PACE knobs (40-rules.js); arrays as a/b/c (essTier=1/7/13/19/36).
 // Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
 // Rare/Epic/Legendary recruit; only avenues that exist so far).
+//
+// --days N: normal play over N days (check-ins with the real tick, closed-form away gains
+//   between them; see runDays below and docs/design/pacing.md). --checkins 8,13,19
+//   --session 15 --first 60 change the check-in policy. Prints one row per day.
+// --targets: runs every class for 3h continuous and --days (default 30) normal play in
+//   parallel and prints PASS/FAIL for T1, T2, T10 and the pacing targets P1-P4.
+//   --pace/--tune/--seed pass through, so a retune can be checked in one command.
 import { loadCore } from './lib/core.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
   if (x.startsWith('--')) a.push([x.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
   return a;
 }, []));
-const policy = args.policy || 'fight';
+const days = +(args.days || 0);
+const policy = args.policy || (days ? 'mixed' : 'fight');
 const hours = +(args.hours || 2), seed = +(args.seed || 1), every = +(args.every || 15);
 if (!['fight', 'mixed'].includes(policy)) { console.error('--policy must be fight or mixed'); process.exit(1); }
 const cls = args.class || null, active = !!args.active && args.active !== '0';
 const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0';
 
+if (args.targets) { await runTargets(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
 if (args['from-save']) {
@@ -36,6 +46,8 @@ if (args['from-save']) {
 E('S.amt = "1"');
 // --tune key=value,key=value overrides ROSTER_TUNE knobs (56-roster.js) for this run.
 if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); E(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
+// --pace key=value,... overrides PACE knobs (40-rules.js) for this run.
+if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); E(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
 if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
 
 // Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
@@ -88,7 +100,44 @@ function withReserve(E, res, fn) {
 }
 
 const SLOTS = ['weapon', 'helm', 'charm', 'pick', 'axe'];
+// --forge weapon ("sword first", the default for --days): like a player chasing the next
+// sword. Essence of each tier above the equipped weapon (up to the max zone's tier) is kept
+// for it, the gather phase mines or chops what the next sword is short of, and the sword is
+// forged before promotions reserve anything. Without it, the old policy often runs with no
+// weapon for hours (other slots and promotions eat the matching-tier essence).
+const swordFirst = (args.forge || (days ? 'weapon' : 'any')) === 'weapon';
+const weaponHold = () => {
+  const cur = fn.equipped('weapon'), have = cur ? cur.t : 0, zt = fn.zoneTier(E('S.maxZone')), hold = [0, 0, 0, 0, 0];
+  for (let t = have + 1; t <= zt; t++) hold[t - 1] = fn.craftCost('weapon', t).ess;
+  return hold;
+};
+function forgeWeapon() {
+  if (!swordFirst) return;
+  const cur = fn.equipped('weapon');
+  for (let t = fn.zoneTier(E('S.maxZone')); t > (cur ? cur.t : 0); t--) {
+    const it = fn.forgeItem('weapon', t);
+    if (it) { fn.equipItem(it.id); if (cur) fn.salvageItem(cur.id); return; }
+  }
+}
+function weaponNode() {
+  const cur = fn.equipped('weapon'), have = cur ? cur.t : 0;
+  for (let t = fn.zoneTier(E('S.maxZone')); t > have; t--) {
+    if (E(`S.skills.smith.lv < SMITH_REQ[${t - 1}] || S.mats.ess[${t - 1}] < ${fn.craftCost('weapon', t).ess}`)) continue;
+    const c = fn.craftCost('weapon', t), short = k => E(`S.mats.${k}[${t - 1}]`) / c[k];
+    const order = short('ore') <= short('wood') ? ['ore', 'wood'] : ['wood', 'ore'];
+    for (const k of order) if (short(k) < 1 && fn.setNode(k, t)) return true;
+  }
+  return false;
+}
 function forgeGear() {
+  if (swordFirst) {
+    // Keep the next swords' essence out of the other slots' reach.
+    const hold = weaponHold().map((n, i) => Math.min(n, E(`S.mats.ess[${i}]`)));
+    hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] -= ${n}`); });
+    try { forgeRest(); } finally { hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] += ${n}`); }); }
+  } else forgeRest();
+}
+function forgeRest() {
   for (let t = 5; t >= 1; t--) {
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
@@ -112,6 +161,7 @@ function forgeGear() {
   }
 }
 function bestNode() {
+  if (swordFirst && weaponNode()) return;
   const kind = E('S.skills.mine.lv <= S.skills.wood.lv') ? 'ore' : 'wood';
   for (let t = 5; t >= 1; t--) if (fn.setNode(kind, t)) return;
 }
@@ -119,8 +169,10 @@ function bestNode() {
 const gs = () => SLOTS.reduce((a, s) => { const it = fn.equipped(s); return a + (it ? fn.itemPower(it) : 0); }, 0);
 const fmt = n => n < 1e3 ? n.toFixed(0) : n < 1e6 ? (n / 1e3).toFixed(1) + 'K' : n < 1e9 ? (n / 1e6).toFixed(2) + 'M' : n.toExponential(2);
 const row = (a) => a.map((x, i) => String(x).padStart([6, 4, 5, 8, 8, 5, 15, 5][i] || 6)).join(' ');
-console.log(`policy=${policy} hours=${hours} seed=${seed} class=${cls || 'none'} ${active ? 'active' : 'idle'}`);
-console.log(row(['time', 'lvl', 'zone', 'gold', 'dps', 'gear', 'mine/wood/smith', 'comp%']));
+if (!days) {
+  console.log(`policy=${policy} hours=${hours} seed=${seed} class=${cls || 'none'} ${active ? 'active' : 'idle'}`);
+  console.log(row(['time', 'lvl', 'zone', 'gold', 'dps', 'gear', 'mine/wood/smith', 'comp%']));
+}
 const line = t => console.log(row([`${Math.floor(t / 3600)}h${String(Math.floor(t / 60) % 60).padStart(2, '0')}`, E('S.L'), `${E('S.zone')}/${E('S.maxZone')}`,
   fmt(E('S.gold')), fmt(fn.totalDps()), Math.round(gs()), `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, Math.round(100 * fn.compDps() / fn.totalDps())]));
 
@@ -132,13 +184,14 @@ let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('abili
 const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; if (zone + 1 === 20 && doT11 && !t11Snap) t11Snap = E('JSON.stringify(S)'); });
 const dt = 0.1, total = hours * 3600;
 let t = 0, nextLine = 0;
-for (let sec = 0; sec < total; sec++) {
-  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log('   ', E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
+// One second of active play under the policy. sec = seconds into the session (drives the
+// mixed 10 min fight / 5 min gather cycle); t is the run clock (events are stamped with it).
+function playSecond(sec) {
   if (policy === 'mixed' && sec % 60 === 0) {
     const phase = Math.floor(sec / 60) % 15;
     if (phase === 0) fn.setActivity('fight');
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
-    withReserve(E, rosterStep(E), forgeGear);
+    forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
   }
   if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
@@ -149,6 +202,11 @@ for (let sec = 0; sec < total; sec++) {
     fn.tick(dt);
   }
   t += 1;
+}
+if (days) { runDays(); process.exit(0); }
+for (let sec = 0; sec < total; sec++) {
+  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log('   ', E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
+  playSecond(sec);
 }
 line(total);
 
@@ -171,7 +229,7 @@ if (t11Snap) {
   t11 = { id: newId, min: tt / 60, lv: h.eval(`charRec(${JSON.stringify(newId)}).lv`), target: target() };
 }
 const zAt = s => { let z = 1; for (const [k, v] of Object.entries(reached)) if (v <= s && +k > z) z = +k; return z; };
-console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
+console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} @3h=${zAt(10800)} end=${E('S.maxZone')} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
 if (E('rosterLive()')) {
   const mins = x => (x / 60).toFixed(0);
   const before2h = capHits.filter(c => c.t <= 7200).map(c => c.t);
@@ -186,3 +244,138 @@ if (E('rosterLive()')) {
 }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
 if (args.debug) console.log(E('JSON.stringify(rosterList().map(k => [k, promoteCost(k), canPromote(k)]))'), E('JSON.stringify(S.mats.ess)'), E('S.gold'));
+
+// ================= --days N: normal play over days =================
+// The check-in policy (docs/design/pacing.md): a first session of --first minutes (default 60)
+// on day 1, then --checkins sessions a day (default 8,13,19 o'clock) of --session minutes
+// (default 15), each played with the real tick under the policy (mixed by default). Between
+// sessions the game's own closed-form awayGains() runs for the real gap (the away cap applies),
+// so the night is the 19:15 -> 08:00 gap. Away activity: the gap after the morning session
+// gathers (weaker skill, best node), the others fight at the max zone.
+// "Meaningful upgrades": a new zone, a new gear tier in any slot, a recruit, a promotion.
+// --json 1 prints one JSON summary line at the end (used by --targets).
+function runDays() {
+  const H = 3600, sessMin = +(args.session || 15), firstMin = +(args.first || 60);
+  const checkins = String(args.checkins || '8,13,19').split(',').map(Number).sort((a, b) => a - b);
+  // A fake wall clock inside the game, so Date.now() moves with the simulated days.
+  const epoch = Date.UTC(2026, 9, 5, 0, 0, 0);
+  E(`globalThis.__simNow = ${epoch}; Date.now = () => globalThis.__simNow`);
+  const clock = s => E(`globalThis.__simNow = ${epoch + Math.round(s * 1000)}`);
+  const events = [];   // { t (wall s), kind, what, act (active s so far), ci (session index) }
+  let wall = 0, act = 0, ci = 0;
+  const mark = (kind, what) => events.push({ t: wall, kind, what, act, ci });
+  fn.on('zoneClear', ({ zone }) => mark('zone', zone + 1));
+  fn.on('promote', ({ id, rank }) => mark('promote', `${id}r${rank}`));
+  fn.on('recruit', ({ id }) => mark('recruit', id));
+  const slotTier = {};
+  const checkTiers = () => { for (const s of SLOTS) { const it = fn.equipped(s); if (it && it.t > (slotTier[s] || 0)) { slotTier[s] = it.t; mark('tier', `${s}${it.t}`); } } };
+  const topTier = () => Math.max(0, ...SLOTS.map(s => { const it = fn.equipped(s); return it ? it.t : 0; }));
+  const comps = () => E("rosterLive() ? rosterList().map(k => k + ' ' + charRec(k).lv + 'r' + charRec(k).rank).join(', ') : S.comp.join('/')");
+  const bossAt = {};  // region boss cleared (zone 35 / 70 / 105): wall hours
+  fn.on('zoneClear', ({ zone }) => { if (zone % 35 === 0 && bossAt[zone] === undefined) bossAt[zone] = wall / H; });
+
+  // The session list: [start wall s, length s].
+  const sessions = [];
+  for (let d = 0; d < days; d++) for (const [i, h] of checkins.entries()) sessions.push([(d * 24 + h) * H, (d === 0 && i === 0 ? firstMin : sessMin) * 60]);
+  console.log(`days=${days} policy=${policy} seed=${seed} class=${cls || 'none'} ${active ? 'active' : 'idle'} check-ins ${checkins.join(',')}h x ${sessMin}m (first ${firstMin}m)`);
+  const w = [4, 5, 4, 9, 4, 15, 6];
+  const out = a => console.log(a.map((x, i) => i < w.length ? String(x).padStart(w[i]) : ' ' + x).join(' '));
+  out(['day', 'zone', 'lvl', 'gold/h', 'tier', 'mine/wood/smith', 'bored', 'companions']);
+  const rows = [];
+  let gold0 = E('S.totalGold'), sIdx = 0, awayN = 0;
+  for (let d = 1; d <= days; d++) {
+    const dayEnd = d * 24 * H;
+    for (; sIdx < sessions.length && sessions[sIdx][0] < dayEnd; sIdx++) {
+      const [start, len] = sessions[sIdx];
+      if (start > wall) {
+        // Away until this session: the game's closed-form gains, then the clock jumps.
+        const gap = start - wall;
+        wall = start; clock(wall);
+        fn.awayGains(gap);
+        awayN++;
+      }
+      ci = sIdx;
+      // Back in the game: spend what the away time brought, then play.
+      forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
+      for (let sec = 0; sec < len; sec++) {
+        playSecond(sec); wall++; act++;
+        if (sec % 60 === 0) { clock(wall); checkTiers(); }
+      }
+      checkTiers();
+      if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
+      // Leaving: pick the away activity.
+      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(); fn.setActivity('gather'); }
+      else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
+    }
+    // Day summary at 24:00 (the away gains for the rest of the night land in the next gap).
+    const last = events.length ? events[events.length - 1] : { act: 0 };
+    const goldH = (E('S.totalGold') - gold0) / 24; gold0 = E('S.totalGold');
+    const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps() };
+    rows.push(r);
+    out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', r.comps]);
+  }
+  // Boredom: the longest stretch without a meaningful upgrade, in active minutes and in
+  // check-ins (a check-in is empty when nothing meaningful happened during it).
+  let gapAct = 0, prevAct = 0, gapAt = 0;
+  for (const e of events) { if (e.act - prevAct > gapAct) { gapAct = e.act - prevAct; gapAt = e.t; } prevAct = e.act; }
+  if (act - prevAct > gapAct) { gapAct = act - prevAct; gapAt = wall; }
+  const hit = new Set(events.map(e => e.ci));
+  let run = 0, gapCi = 0; for (let i = 0; i < sessions.length; i++) { run = hit.has(i) ? 0 : run + 1; gapCi = Math.max(gapCi, run); }
+  const empty = sessions.filter((_, i) => !hit.has(i)).length;
+  // The same, only up to the Region 2 boss (after it the roster's level cap is the wall today).
+  const cut = bossAt[70] === undefined ? Infinity : bossAt[70] * H;
+  const ev2 = events.filter(e => e.t <= cut), act2 = cut === Infinity ? act : (ev2.length ? ev2[ev2.length - 1].act : act);
+  let gapAct2 = 0, p2 = 0; for (const e of ev2) { gapAct2 = Math.max(gapAct2, e.act - p2); p2 = e.act; }
+  gapAct2 = Math.max(gapAct2, act2 - p2);
+  const hit2 = new Set(ev2.map(e => e.ci));
+  let run2 = 0, gapCi2 = 0; for (let i = 0; i < sessions.length && sessions[i][0] <= cut; i++) { run2 = hit2.has(i) ? 0 : run2 + 1; gapCi2 = Math.max(gapCi2, run2); }
+  console.log(`regions: ${[35, 70, 105].map(z => `zone ${z} boss ${bossAt[z] === undefined ? '-' : 'day ' + (bossAt[z] / 24).toFixed(1)}`).join(', ')}`);
+  console.log(`boredom to the Region 2 boss: longest gap ${(gapAct2 / 60).toFixed(0)} active min, longest run of empty check-ins ${gapCi2}`);
+  console.log(`boredom (whole run): longest gap ${(gapAct / 60).toFixed(0)} active min (ending day ${(gapAt / 24 / H).toFixed(1)}), longest run of empty check-ins ${gapCi}, empty check-ins ${empty}/${sessions.length}`);
+  console.log(`active play ${(act / H).toFixed(1)}h over ${days} days; away gaps ${awayN}${g.errors.length ? '; errors: ' + g.errors.length : ''}`);
+  if (args.json) console.log('JSON ' + JSON.stringify({ rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl })), bossAt, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
+}
+
+// ================= --targets: PASS/FAIL for the balance targets =================
+// Targets (party-and-classes.md section 9 and docs/design/pacing.md):
+//   T1  idle mixed play, every class: max zone at 30m / 1h / 2h in 12-16 / 18-22 / 26-32
+//   T2  3h continuous mixed play, every class: max zone <= 42
+//   T10 a promotion comes due at least every 20 min before 2h (reported; see pacing.md)
+//   P1  normal play: the Region 1 boss (zone 35) falls on day 2-4 (24h-96h after install)
+//   P2  normal play: the Region 2 boss (zone 70) falls in week 1-3 (7-21 days)
+//   P3  normal play: the Region 3 boss (zone 105) in 30-60 days (needs Region 2 power; reported)
+//   P4  boredom before the Region 2 boss: at most PACE_TARGETS.emptyRun check-ins in a row with
+//       no new zone, gear tier, recruit or promotion
+async function runTargets() {
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
+  const pass = ['pace', 'tune', 'seed'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const nDays = +(args.days || 30);
+  const [cont, dys] = await Promise.all([
+    Promise.all(classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...pass]))),
+    Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass])))
+  ]);
+  const num = (s, re) => { const m = s.match(re); return m ? +m[1] : NaN; };
+  const ok = b => b ? 'PASS' : 'FAIL';
+  const res = [];
+  const t1 = cont.map(o => [num(o, /@30m=(\d+)/), num(o, /@1h=(\d+)/), num(o, /@2h=(\d+)/)]);
+  const inT1 = z => z[0] >= 12 && z[0] <= 16 && z[1] >= 18 && z[1] <= 22 && z[2] >= 26 && z[2] <= 32;
+  res.push([ok(t1.every(inT1)), 'T1 30m/1h/2h in 12-16/18-22/26-32', classes.map((c, i) => `${c} ${t1[i].join('/')}`).join(', ')]);
+  const t2 = cont.map(o => num(o, /@3h=(\d+)/));
+  res.push([ok(t2.every(z => z <= 42)), 'T2 zone at 3h <= 42', classes.map((c, i) => `${c} ${t2[i]}`).join(', ')]);
+  const t10 = cont.map(o => num(o, /longest gap (\d+)m/));
+  res.push([ok(t10.every(m => m <= 20)), 'T10 promotion due every <= 20m before 2h', classes.map((c, i) => `${c} ${t10[i]}m`).join(', ')]);
+  const js = dys.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
+  const day = (j, z) => j.bossAt[z] === undefined ? Infinity : j.bossAt[z] / 24;
+  const dtxt = (j, z) => Number.isFinite(day(j, z)) ? day(j, z).toFixed(1) : '-';
+  const P = { r1: [1, 4], r2: [7, 21], r3: [30, 60], emptyRun: 3 };
+  const inR = (v, [a, b]) => v >= a && v <= b;
+  res.push([ok(js.every(j => inR(day(j, 35), P.r1))), 'P1 Region 1 boss on day 2-4 (1-4 days in)', classes.map((c, i) => `${c} ${dtxt(js[i], 35)}`).join(', ')]);
+  res.push([ok(js.every(j => inR(day(j, 70), P.r2))), 'P2 Region 2 boss in 7-21 days', classes.map((c, i) => `${c} ${dtxt(js[i], 70)}`).join(', ')]);
+  res.push([ok(js.every(j => inR(day(j, 105), P.r3))), 'P3 Region 3 boss in 30-60 days (needs Region 2 content)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${nDays < 60 && !Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
+  res.push([ok(js.every(j => j.toR2.gapCi <= P.emptyRun)), `P4 before the Region 2 boss: <= ${P.emptyRun} empty check-ins in a row`, classes.map((c, i) => `${c} ${js[i].toR2.gapCi} (longest ${Math.round(js[i].toR2.gapAct / 60)} active min)`).join(', ')]);
+  for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
+  console.log(`curve (${classes[0]}): ` + js[0].rows.map(r => `d${r.day} ${r.zone}`).join(' '));
+  if (cont.concat(dys).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
+}

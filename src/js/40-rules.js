@@ -57,6 +57,27 @@ function rollRarity() {
   return 'common';
 }
 
+// ================= pacing: the Lantern Road curve (docs/design/pacing.md) =================
+// Every knob for the long curve lives here so it can be retuned after merges
+// (node tools/sim.mjs --targets). Zones 1..bend and companion levels 1..compLv use the
+// original numbers, so the first two hours (target T1) do not change.
+const PACE = {
+  hp0: 40, hpGrowth: 1.42,  // mob HP = hp0 x hpGrowth^(z-1) up to the bend (unchanged)
+  bend: 30,                 // past this zone mob HP grows by hpLate per zone
+  hpLate: 1.42,             // (kept equal: steeper growth would move the L200 cap zone below 70)
+  bossHp: 8,                // zone boss HP x a normal mob (unchanged)
+  region: 35,               // zones per region; the last zone's boss is the region boss
+  regionBoss: 3,            // extra x on region bosses (zones 35, 70, 105): the region wall
+  compLv: 90,               // companion levels past compLv need more XP (at par: more kills):
+  compXp: 1.15,             //   x compXp per level past compLv...
+  compXpMax: 20,            //   ...up to compXpMax x (a flat plateau: steady zones per day)
+  essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (before M6 tier 5 began at 25)
+  heroAwayXp: 0.5           // hero XP while away, as a share of the away kills' XP
+};
+const paceXp = lv => lv > PACE.compLv ? Math.min(PACE.compXpMax, Math.pow(PACE.compXp, lv - PACE.compLv)) : 1;
+const isRegionBoss = z => z % PACE.region === 0;
+const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
+
 // ================= formulas =================
 const lvlMult = () => 1 + 0.05 * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
@@ -72,9 +93,12 @@ const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.po
 const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
 const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
 const totalDps = () => heroDps() + compDps();
-const mobHp = z => 40 * Math.pow(1.42, z - 1);
+// Before M6: 40 * 1.42^(z-1) for every zone (identical while hpLate = hpGrowth).
+const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend));
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
-const zoneTier = z => Math.min(5, 1 + Math.floor((z - 1) / 6));
+// Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
+// (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
+const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));

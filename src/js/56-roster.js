@@ -126,8 +126,11 @@ let ROSTER_TUNE, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, 
 
   // ---------------- levels ----------------
   levelCap = rank => 25 * (rank + 1);
-  cxpNeed = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
-  cxpGain = z => cxpNeed(T.par * z) / T.killsPerLv;
+  // paceXp (40-rules PACE, M6) raises the need past level PACE.compLv; XP per kill does not
+  // include it, so late levels take more kills. It is 1 up to compLv (the first two hours).
+  const cxpBase = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
+  cxpNeed = lv => cxpBase(lv) * paceXp(lv);
+  cxpGain = z => cxpBase(T.par * z) / T.killsPerLv;
   // Party level: average of the 3 highest companion levels on the roster.
   partyLevel = () => {
     const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, 3);
@@ -138,7 +141,7 @@ let ROSTER_TUNE, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, 
     return Math.min(T.catchMax, T.catchStep * Math.max(0, partyLevel() - r.lv));
   };
   // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax.
-  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpNeed(r.lv + T.gapMax) / T.killsPerLv); };
+  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpBase(r.lv + T.gapMax) / T.killsPerLv); };
   const xpMult = id => (R(id).rarity === 'common' ? T.commonXp : 1) * (1 + catchUpBonus(id)) * mod('compXp');
 
   function levelUp(id, r, quiet) {
