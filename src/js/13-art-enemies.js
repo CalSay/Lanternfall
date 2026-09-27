@@ -19,7 +19,7 @@
 //   is fixed, k.glow(hex) emits light. Elders: k.elder is true and every piece is scaled by k.S.
 // Humanoids (Rattlebones) use the character kit (AK.makeKit, facing right) and are mirrored.
 // Sizes next to the ~35 art px party (src.scale applied): slime 24, bat 26 (hovering), beetle 25, spore 32, bones 36,
-// wraith 35 (hovering), golem 41. Elders are 1.3x and crowned. Wyrm about 80 x 66 at S = 1.
+// wraith 35 (hovering), golem 45. Elders are 1.3x and crowned. Wyrm about 80 x 66 at S = 1.
 
 const ENEMY_RIGS = {};
 
@@ -340,7 +340,7 @@ const ENEMY_RIGS = {};
   // ================= Quarry Golem: stone blocks, moss and a glowing core =================
   const golem = {
     name: 'Quarry Golem', anim: 'slam',
-    bones: { legs: [0, 0, null], body: [0, -14, null], head: [-3, -33, 'body'], armF: [-10, -30, 'body'], armB: [9, -30, 'body'] },
+    bones: { legs: [0, 0, null], body: [0, -14, null], head: [-3, -35, 'body'], armF: [-10, -30, 'body'], armB: [9, -30, 'body'] },
     ground: ['legs'],
     poses: {
       idle0: {}, idle1: { bob: 1 },
@@ -365,10 +365,11 @@ const ENEMY_RIGS = {};
       k.add(3.2, 'body', moss, P(-6, -35.4, 1.6, -38, 12.6, -33.6, 12, -29, 6, -32, -1, -33.6), { clip: tor });
       if (k.elder) for (const [x, y, h, w] of [[5, -35.6, 7, 2.2], [9, -33.8, 5.6, 1.8], [1.4, -36.6, 5, 1.8]]) k.add(2.95, 'body', cry, P(x - w, y + 1, x - w * .3, y - h, x + w * .4, y - h - 1, x + w, y + 1), { nolight: 1 });
       // head: a sunken block with a lit eye slit
-      const hd = k.add(4, 'head', st, P(-10, -40.6, -1.4, -42.2, 1.4, -35.6, -1, -31, -9.6, -31.8), { bev: 1.3 });
-      k.add(4.1, 'head', stD, R(-10.4, -38.4, 10.4, 1.6), { clip: hd, nl: 1 });
-      k.eye(4.2, 'head', -9, -36, 2, 1, seam, 6); k.eye(4.2, 'head', -5, -36, 2, 1, seam, 6);
-      if (k.elder) for (const [x, h, w] of [[-8, 5, 1.5], [-5, 7.6, 1.9], [-2, 5.4, 1.5]]) k.add(4.3, 'head', cry, P(x - w, -40.4, x, -41.4 - h, x + w, -40.8), { lr: 8, nolight: h < 7 });
+      const hd = k.add(4, 'head', st, P(-11, -44, -1.4, -45.6, 1.8, -38.6, -.6, -33, -10.6, -33.8, -11.6, -38), { bev: 1.3, sep: 1 });
+      k.add(4.1, 'head', stD, R(-11.6, -41.6, 12, 1.6), { clip: hd, nl: 1 });
+      k.add(4.15, 'head', k.f('#2A2230', 'flat'), R(-10.6, -38.6, 8, 2.4), { clip: hd, nl: 1 });
+      k.eye(4.2, 'head', -10, -38, 2, 1, seam, 6); k.eye(4.2, 'head', -6, -38, 2, 1, seam, 6);
+      if (k.elder) for (const [x, h, w] of [[-9, 5, 1.5], [-5.6, 7.6, 1.9], [-2, 5.4, 1.5]]) k.add(4.3, 'head', cry, P(x - w, -43.6, x, -44.6 - h, x + w, -44), { lr: 8, nolight: h < 7 });
       // front arm: shoulder boulder, two blocks, a fist
       const sh = k.add(6, 'armF', st, E(-10, -30, 5.6, 5.2));
       k.add(6.05, 'armF', moss, E(-11, -34, 5, 2.6), { clip: sh });

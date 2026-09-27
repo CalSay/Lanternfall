@@ -14,45 +14,68 @@ let resize, animate, draw, stageStats;
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
   let guardN = 0, blessN = 0, markLeft = 0, buffPoll = 0, blessMote = 0, lastEmbers = 0;
-  // Floating numbers and loot text. x / y are stage fractions from the core (y 0.2-0.55); they are
-  // drawn in the band between the foe header and the ground, stacked when they start together,
-  // and they fade out before they reach the header.
+  // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
+  // the height); they are drawn in the band between the foe header and the ground, one row per
+  // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
   const floats = [];
   function pushFloat(txt, color, big, x, y) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
-    let n = 0, near = 0;
-    for (const f of floats) if (Math.abs(f.x - fx) < 0.3) { near++; if (f.life > 0.6) n++; }
-    // a busy spot keeps only the newest few: older text there fades out early
-    if (near >= 4) for (const f of floats) if (Math.abs(f.x - fx) < 0.3 && near-- >= 4) f.life = Math.min(f.life, 0.22);
-    floats.push({ txt, color, big, life: 0.95, x: fx, y: y ?? 0.42, off: Math.min(3, n) * (big ? 21 : 16) });
+    // Each new text takes the first free row (0-3) near its spot, one line below the texts still
+    // rising there; when all rows are busy the oldest text there fades out and gives up its row.
+    const busy = [0, 0, 0, 0]; let oldest = null;
+    for (const f of floats) if (f.row >= 0 && Math.abs(f.x - fx) < 0.3 && f.life > 0.1) { busy[f.row] = 1; if (!oldest || f.life < oldest.life) oldest = f; }
+    let row = busy.indexOf(0);
+    if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
+    floats.push({ txt, color, big, life: 0.95, x: fx, y: y ?? 0.42, row, off: row });
     if (floats.length > 24) floats.shift();
   }
 
   // ================= canvas and scene =================
   const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
-  let SW = 0, SH = 0, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
-  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x). The
+  // Zoom: the stage is laid out in LOGICAL px (SW x SH) and drawn at ZM CSS px per logical px, so
+  // one art px (2 logical px) is 2 * ZM CSS px: 2, 3, 4, 5 or 6 (whole pixels). ZM grows while the
+  // logical stage stays at least ZOOM_W x ZOOM_H (room for the party, the foe and the HUD); on a
+  // whole-number device pixel ratio only zooms that land on whole device pixels are used.
+  // CW x CH: the container in CSS px, re-read on every resize.
+  let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
+  const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_H = 196;
+  function pickZoom(w, h, dpr) {
+    let z = 1;
+    for (const c of ZOOMS) {
+      if (Number.isInteger(dpr) && !Number.isInteger(c * dpr)) continue;
+      if (w / c >= ZOOM_W && h / c >= ZOOM_H) z = c;
+    }
+    return z;
+  }
+  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 logical px tall, 40-50 wide). The
   // columns in use are spread over the party side (PARTY_X0..PARTY_X1 of the width, front column at
-  // X1), at most COL_MAX px apart. The upper lane (0) stands laneY px higher and about half a column
-  // further back, so every member shows between the two in front; it is drawn first and dimmed.
-  const PARTY_X0 = 0.15, PARTY_X1 = 0.52, COL_MAX = 78;
+  // X1), at most COL_MAX px apart, so each member stands clear of the next. The upper lane (0)
+  // stands laneY px higher and about half a column further back: SNES style, each upper member
+  // peeks out between and above the two in front with only a slight overlap. It is drawn first and dimmed.
+  const PARTY_X0 = 0.06, PARTY_X1 = 0.55, COL_MAX = 84;
   // Foe slots (fractions of the width) for a pack of 1, 2 or 3; one foe today.
-  const FOE_X = [[0.73], [0.66, 0.86], [0.62, 0.76, 0.9]];
+  const FOE_X = [[0.78], [0.66, 0.86], [0.62, 0.76, 0.9]];
   let laneY = 14;
-  // Bottom of the foe header (name and HP bar) inside the stage, so text and sprites avoid it.
+  // Bottom of the foe header (name and HP bar) inside the stage, in logical px, so text and sprites avoid it.
   function readHud() {
     const e = stageEl.querySelector('.mob');
-    hudB = e && e.offsetParent && !e.hidden ? e.offsetTop + e.offsetHeight : 0;
+    hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
   }
   resize = function () {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = stageEl.clientWidth, h = stageEl.clientHeight;
     if (!w || !h) return;
-    if (w === SW && h === SH && cv.width === Math.round(w * DPR)) return;
-    SW = w; SH = h;
-    cv.width = Math.round(SW * DPR); cv.height = Math.round(SH * DPR);
-    GY = Math.round(SH * 0.8);
-    laneY = Math.max(10, Math.min(20, Math.round(SH * 0.075)));
+    if (w === CW && h === CH && dpr === DPR && cv.width === Math.round(w * DPR)) return;
+    DPR = dpr; CW = w; CH = h;
+    ZM = pickZoom(w, h, DPR);
+    SW = Math.round(w / ZM); SH = Math.round(h / ZM);
+    cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+    // Ground line 80% down (the compact-strip CSS assumes it). On a short strip the ground drops
+    // nearer the bottom so the party stays under the HUD; the scenery is then built taller (SCH, its
+    // own ground at 80%) and simply runs off the bottom edge.
+    GY = SH >= 210 ? Math.round(SH * 0.8) : Math.round(Math.max(SH * 0.8, SH - 14));
+    SCH = SH >= 210 ? SH : Math.round(GY / 0.8);
+    laneY = Math.max(12, Math.min(26, Math.round(SH * 0.085)));
     readHud();
     scene = null; layoutDirty = true; foe.key = '';
   };
@@ -61,7 +84,7 @@ let resize, animate, draw, stageStats;
     if (tg === 'world') th = 'raid';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
-    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SH, hue); curTheme = th; curHue = hue; }
+    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
 
   // ================= party actors =================
@@ -107,9 +130,11 @@ let resize, animate, draw, stageStats;
     }
     order = order.concat(ghosts.filter(g => g.col >= 0));
     // spread the columns in use; the upper lane sits half a column back
+    // (the upper lane's half-column step counts toward the room, so nobody leaves the left edge)
     const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = SW * PARTY_X1;
-    const D = cols.length > 1 ? Math.min(COL_MAX, (x1 - SW * PARTY_X0) / (cols.length - 1)) : COL_MAX;
-    const laneX = Math.round(Math.max(22, D * 0.48));
+    const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
+    const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
+    const laneX = Math.round(Math.max(16, D * 0.46));
     for (const a of order) {
       const i = cols.indexOf(a.col);
       a.hx = Math.round(x1 - (cols.length - 1 - i) * D) - (a.lane === 0 ? laneX : 0);
@@ -411,13 +436,6 @@ let resize, animate, draw, stageStats;
     ctx.globalAlpha = 1;
     foeD.x = dx; foeD.y = Math.round(y - f.oy); foeD.f = sy < 1 ? null : f;
   }
-  function drawCrown(cam) {
-    const cs = 2, cw = 7 * cs, crx = Math.round(foe.x - cam - cw / 2), cry = Math.round(foe.top - 12 + (reduced ? 0 : Math.sin(T * 2) * 1.5));
-    ctx.fillStyle = '#0B0810'; ctx.fillRect(crx - 1, cry - 1, cw + 2, 4 * cs + 2);
-    ctx.fillStyle = '#F2C14E'; ctx.fillRect(crx, cry + 2 * cs, cw, 2 * cs);
-    for (const k of [0, 3, 6]) ctx.fillRect(crx + k * cs, cry, cs, 2 * cs);
-    ctx.fillStyle = '#E0524F'; ctx.fillRect(crx + 3 * cs, cry + 2 * cs, cs, cs);
-  }
 
   let drawMs = 0;
   draw = function () {
@@ -427,7 +445,8 @@ let resize, animate, draw, stageStats;
     const tg = target(), raid = tg === 'world', gath = tg === 'node';
     const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF);
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
-    ctx.setTransform(DPR, 0, 0, DPR, sx * DPR, sy * DPR);
+    const K = DPR * ZM;
+    ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8);
@@ -475,7 +494,7 @@ let resize, animate, draw, stageStats;
     for (const a of order) lightsOf(a);
     if (foeD.f) { const f = foeD.f, fl = flick(); for (const l of f.lights) A.lightAt(ctx, l.rgb, foeD.x + l.x, foeD.y + l.y, Math.min(Math.max(8, l.size * 3), 20) * fl * 1.4, 0.3); }
     ctx.globalCompositeOperation = 'source-over';
-    drawAtmosphere(ctx, scene, T, SW, SH, camF);
+    drawAtmosphere(ctx, scene, T, SW, SCH, camF);
 
     // class and ability effects, on top of the atmosphere so they read
     ctx.imageSmoothingEnabled = true;
@@ -498,7 +517,7 @@ let resize, animate, draw, stageStats;
     }
     // level ring
     if (ringT > 0) {
-      const rr = (0.8 - ringT) * 60, x = heroHome() - cam;
+      const rr = Math.max(0, (0.8 - ringT) * 60), x = heroHome() - cam;
       ctx.strokeStyle = '#6FCB6A'; ctx.globalAlpha = ringT; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(x, hero.hy - 1, rr, rr * 0.3, 0, 0, 6.2832); ctx.stroke(); ctx.globalAlpha = 1;
     }
@@ -507,20 +526,25 @@ let resize, animate, draw, stageStats;
 
     // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
-    const top = hudB + 3, band = Math.max(20, GY - 6 - top);
+    // Text keeps about the same CSS size at every zoom (a little larger on big stages). It starts
+    // under the foe header (or lower, near the foe's head), never higher than 16% down the stage,
+    // rises, and fades out before it reaches the header; the right edge keeps clear of the ability button.
+    const tz = Math.min(ZM, 1.35) / ZM, top = Math.max(hudB + 4, SH * 0.16), band = Math.max(20, GY - 6 - top);
+    const xr = SW - (target() === 'node' ? 4 : 60 / ZM);
     for (const f of floats) {
       const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
-      const base = f.big ? 21 : 15, size = Math.round(base * pop);
+      const base = (f.big ? 21 : 15) * tz, size = Math.max(6, Math.round(base * pop));
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
-      let y0 = lo + Math.max(0, Math.min(1, (f.y - 0.15) / 0.45)) * band * 0.55;
-      if (onFoe) y0 = Math.min(y0, Math.max(lo, foe.top + 14));   // start at the foe's head, not over its body
-      y0 = Math.min(GY - 6, y0 + f.off);
-      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22)), y = Math.max(lo, yr);
-      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / 10));
+      // one start line per side (just over the foe's head, or half way down the band), then each
+      // row one line higher; a row that would start above the band starts at its top and fades sooner
+      const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, foe.top + 2)) : lo + band * 0.5;
+      const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz);
+      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
       if (ctx.globalAlpha <= 0) continue;
       ctx.font = `700 ${size}px "Pixelify Sans", monospace`;
-      const hw = ctx.measureText(f.txt).width / 2 + 4, x = Math.max(hw, Math.min(SW - hw, f.x * SW));
-      ctx.lineWidth = 4; ctx.strokeStyle = '#0B0810';
+      const hw = ctx.measureText(f.txt).width / 2 + 4, x = Math.max(hw, Math.min(xr - hw, f.x * SW));
+      ctx.lineWidth = 4 * tz; ctx.strokeStyle = '#0B0810';
       ctx.strokeText(f.txt, x, y);
       ctx.fillStyle = f.color; ctx.fillText(f.txt, x, y);
     }
@@ -660,5 +684,5 @@ let resize, animate, draw, stageStats;
   });
 
   new ResizeObserver(() => resize()).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, DPR, actors: order.length, bake: bakeStats() });
+  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, actors: order.length, bake: bakeStats() });
 }
