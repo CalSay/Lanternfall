@@ -168,3 +168,7 @@ landscape and desktop show the game left and the menu right, responsively.
 The owner's "wait" stopped two agents: the menu restructure (IA, no work saved) and the enemy + stage
 spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then said "restart everything, I only meant wait about landscape": all four stopped tasks
 (menus, AR3, BAL1, Expeditions) were relaunched; AR3 and BAL1 continue from WIP commits on their old branches.
+- Owner bug: a Ranger could equip a sword. Cause: K4 made legacy Sword/Helm fit every class to protect
+  saves. Fix in progress (RETOOL agent): on load/class choice, legacy swords and helms become the class's
+  own kinds (same id, tier, rarity, +N; never less damage), only class kinds fit, legacy can't be crafted,
+  and a Mirror of Embers switch retools instead of unequipping. Weapon/helm uniques stay usable by every class.
