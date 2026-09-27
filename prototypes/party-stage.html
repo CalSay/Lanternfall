@@ -433,7 +433,7 @@ function buildParty() {
   for (const u of L) {
     const d = defOf(u.key); const c = el('button', 'lcard' + (u.isHero ? ' hero' : '')); c.type = 'button';
     const pt = portrait(d, 16, 14); pt.classList.add('pt');
-    const mid = el('div'); mid.append(el('b', null, d.name), el('small', null, (u.isHero ? CLASSES[S.cls].name + ' (you)' : d.title) + ' · ' + COLN[u.col] + ' row'), el('small', null, 'Ability: ' + d.abil));
+    const mid = el('div'); mid.append(el('b', null, d.name), el('small', null, (u.isHero ? CLASSES[S.cls].name + ' (you)' : d.title) + ', ' + COLN[u.col] + ' row'), el('small', null, 'Ability: ' + d.abil));
     const gear = el('div', 'gear');
     if (u.isHero) heroSlots(d).forEach(([n, ic]) => { ic.title = n; gear.appendChild(ic); });
     else { const w = weaponIcon(d); w.title = d.wname; const t = trinketIcon(d); t.title = d.trinket; gear.append(w, t); }
@@ -491,7 +491,7 @@ function openSheet(key) {
   const d = defOf(key), isHero = key === 'hero', body = $('sheetBody'); body.textContent = '';
   const top = el('div', 'sh-top'); const pt = portrait(d, 16, 14); pt.classList.add('pt');
   const nm = el('div'); const b = el('b', null, d.name); b.id = 'shName';
-  const sub = el('small', null, (isHero ? CLASSES[S.cls].name + ', your hero' : d.title) + ' · Lv ' + (isHero ? 24 : d.lvl));
+  const sub = el('small', null, (isHero ? CLASSES[S.cls].name + ', your hero' : d.title) + ', Lv ' + (isHero ? 24 : d.lvl));
   const tags = el('div'); tags.append(el('span', 'pip r-' + d.role, ROLE_NAME[d.role]), document.createTextNode(' '), el('small', 'dim', isHero ? 'Lantern-bearer' : d.circle));
   nm.append(b, sub, tags); top.append(pt, nm); body.appendChild(top);
   const sec = (title, ...kids) => { const s = el('div', 'sh-sec'); if (title) s.appendChild(el('h3', null, title)); kids.forEach(k => s.appendChild(typeof k === 'string' ? el('div', null, k) : k)); body.appendChild(s); return s; };
@@ -1098,7 +1098,7 @@ function draw() {
 const tiles = [];
 function buildBattleHead() {
   const c = CLASSES[S.cls], d = defOf('hero');
-  $('bName').textContent = S.name; $('bSub').textContent = c.name + ' · Barrow Downs, zone 14';
+  $('bName').textContent = S.name; $('bSub').textContent = c.name + ', Barrow Downs, zone 14';
   const pc = $('bPt').getContext('2d'); pc.clearRect(0, 0, 16, 14); pc.drawImage(portrait(d, 16, 14), 0, 0);
   const ic = iconBox(ROLE_IC[c.role], { w: OUT, m: ROLE_COL[c.role], M: '#FFF3C4', t: '#F2C14E', b: '#8A5A3A', l: '#FFF3C4', L: '#FFFFFF' }, 12);
   const ac = $('abilIc').getContext('2d'); ac.clearRect(0, 0, 12, 12); ac.drawImage(ic, 0, 0);
