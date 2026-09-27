@@ -203,7 +203,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   buyTrade = () => {
     const o = visitorToday(); if (o.kind !== 'trade' || o.done || S.gold < o.cost.gold) return false;
     S.gold -= o.cost.gold; S.mats.ess[o.trade.t - 1] += o.trade.n; dayState().bought = true;
-    toast(`The trader sells you ${o.trade.n} ${ess(o.trade.t)}.`, 'loot', { mat: ['ess', o.trade.t] });
+    toast(`The trader sells you ${o.trade.n} ${ess(o.trade.t)}.`, 'loot', { mat: ['ess', o.trade.t] }, 'normal');
     save();
     return true;
   };

@@ -30,8 +30,10 @@ function emit(evt, payload) {
   const l = BUS.get(evt); if (!l || !l.length) return;
   for (const fn of l.slice()) { try { fn(payload); } catch (e) { console.error(`[lanternfall] handler for "${evt}" failed`, e); } }
 }
-// toast(msg, kind, icon): icon is a URL string or an icon spec ({ item }, { mat: [k, t] }, { ic: [name, main, extra] })
-const toast = (msg, kind, icon) => emit('toast', { msg, kind, icon });
+// toast(msg, kind, icon, prio): icon is a URL string or an icon spec ({ item }, { mat: [k, t] }, { ic: [name, main, extra] }).
+// prio: 'high' (always pops), 'normal' (pops; extras fold into the bell), 'low' (bell log only).
+// Omitted: by kind ('loot' high, others normal). Rules: docs/design/layout.md.
+const toast = (msg, kind, icon, prio) => emit('toast', { msg, kind, icon, prio });
 
 // ================= storage adapter =================
 // { get(key) -> string|null, set(key, string) }. The browser adapter is installed by

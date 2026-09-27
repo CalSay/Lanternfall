@@ -47,7 +47,7 @@ const masteryApi = {};
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
-      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round(BESTIARY_PERK_VAL[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good');
+      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round(BESTIARY_PERK_VAL[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good', null, 'low');
     }
   });
 

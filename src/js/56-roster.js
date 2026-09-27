@@ -149,7 +149,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     emit('charLevel', { id, lv: r.lv, quiet: !!quiet });
     if (T.milestones.includes(r.lv) || (r.lv > 25 && r.lv % 25 === 0)) {
       emit('milestone', { id, lv: r.lv, quiet: !!quiet });
-      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good');
+      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good', null, T.storyLv.includes(r.lv) ? 'normal' : 'low');
     }
   }
   // Adds raw XP (multipliers already applied). Levels up to the rank cap; at the cap XP
@@ -330,7 +330,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   unlockChar = (id, source, quiet) => {
     if (!R(id) || isRecruited(id)) return false;
     recs()[id] = newRec(1, 0, source || 'progress');
-    if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good');
+    if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good', null, 'high');
     const f = fieldKeys();
     if (source === 'starter') setField([id].concat(f.filter(k => k !== id)));
     else if (P().autoField) fieldIfBetter(id);
@@ -363,7 +363,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     const r = charRec(id);
     pay(promoteCost(id));
     r.rank++;
-    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good');
+    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good', null, 'high');
     emit('promote', { id, rank: r.rank });
     giveXp(id, 0.000001);  // spend banked XP
     return true;

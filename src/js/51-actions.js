@@ -38,14 +38,14 @@ function equipItem(id, pos) {
   const it = itemById(id); if (!it) return false;
   pos = pos || kindPos(it.slot);
   if (!(pos in S.equip) || !fits(it, pos, 'hero')) return false;
-  unwearItem(id); S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
+  unwearItem(id); S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }, 'low'); save();
   return true;
 }
 function salvageItem(id) {
   const it = itemById(id); if (!it || isEquipped(id)) return false;
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
-  toast(`Salvaged ${itemName(it)} for materials.`, 'good'); save();
+  toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
   return true;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
@@ -60,7 +60,7 @@ function forgeItem(slot, t) {
   const it = newItem(slot, t, r);
   addItem(it);
   gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)));
-  toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } });
+  toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
   save();
   return it;
 }

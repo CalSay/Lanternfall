@@ -69,3 +69,12 @@
 
 @keyframes om-glow { 50% { box-shadow: inset 0 0 0 2px #0B0810, 0 0 16px rgba(181,140,255,.6); } }
 @media (prefers-reduced-motion: reduce) { .om-ic { animation: none; } }
+
+/* compact banner (layout pass, docs/design/layout.md): one 44px row so the Fight tab starts with content */
+.om-bar { min-height: 44px; gap: 8px; padding: 3px 8px 3px 4px; }
+.om-bar .om-ic { width: 30px; height: 30px; }
+.om-bar .om-ic img { width: 20px; height: 20px; }
+.om-bar .om-eye { display: none; }
+.om-bar .om-nm { font-size: 14px; }
+.om-bar .om-nm::before { content: "Omen · "; color: var(--arcane); font-size: 12px; letter-spacing: .04em; }
+.om-bar .om-fx { font-size: 12px; }

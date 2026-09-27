@@ -37,7 +37,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
-| 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
+| 70-ui.js | browser | layout (docs/design/layout.md), tabs, toasts and the notice log, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
 | **75-*.js** | browser | **feature UI** |
 | 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
@@ -174,7 +174,7 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
-| `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
+| `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
 ## Save

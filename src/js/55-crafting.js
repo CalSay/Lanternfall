@@ -115,7 +115,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
     addItem(it);
     gainStation(stationOf(kind).skill, CRAFT_XP.craft(t));
-    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it });
+    toast(`Made a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: it }, r === 'legendary' ? 'high' : r === 'epic' || r === 'rare' ? 'normal' : 'low');
     emit('crafted', { item: it, kind, t });
     save();
     return it;
@@ -147,7 +147,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     it.plus++;
     gearDirty();
     gainStation(stationOf(it.slot).skill, CRAFT_XP.upgrade(it.t));
-    toast(`${itemName(it)} upgraded.`, 'good', { item: it });
+    toast(`${itemName(it)} upgraded.`, 'good', { item: it }, 'low');
     emit('upgraded', { item: it });
     save();
     return true;
@@ -177,7 +177,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     gearDirty();
     gainStation('ench', CRAFT_XP.reforge(it.t));
     const [[stat, v]] = craftAffixValue(res.line[0], itemPower(it), res.line[1]);
-    toast(`Reforged: ${craftFmtLine(stat, v)}.`, 'good', { item: it });
+    toast(`Reforged: ${craftFmtLine(stat, v)}.`, 'good', { item: it }, 'low');
     emit('reforged', { item: it, idx, line: res.line });
     save();
     return true;
@@ -206,7 +206,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const c = canTransmute(fam, fromT, to, toT); if (!c.ok) return false;
     S.mats[fam][fromT - 1] -= c.take; S.mats[fam][c.toT - 1] += c.give;
     if (c.toT > fromT) gainStation('ench', CRAFT_XP.transmute(c.toT)); // no XP for breaking down (1 -> 2 would farm XP)
-    toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] });
+    toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] }, 'low');
     emit('transmuted', { fam, fromT, toT: c.toT, take: c.take, give: c.give });
     save();
     return true;
@@ -227,7 +227,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     unwearItem(itemId); // leaves the hero or any other character
     r[pos] = itemId;
     gearDirty();
-    toast(`${ROSTER[charId] ? ROSTER[charId].name.split(' ')[0] : 'They'} took the ${itemName(it)}.`, 'good', { item: it });
+    toast(`${ROSTER[charId] ? ROSTER[charId].name.split(' ')[0] : 'They'} took the ${itemName(it)}.`, 'good', { item: it }, 'low');
     emit('charGear', { id: charId, pos, item: it });
     save();
     return true;
@@ -275,7 +275,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     for (const [i, n] of STAR.troph) C().troph[i] -= n;
     C().starChart++;
     gainStation('ench', CRAFT_XP.craft(STAR.t));
-    toast('You drew a Star Chart. Someone out there is reading the same stars.', 'ember');
+    toast('You drew a Star Chart. Someone out there is reading the same stars.', 'ember', null, 'high');
     emit('crafted', { item: null, kind: 'starChart', t: STAR.t });
     if (typeof grantStarChart === 'function') grantStarChart();
     save();
@@ -293,7 +293,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     payMats(m, t);
     const p = C().tonics, id = key + ':' + t; p[id] = (p[id] || 0) + 1;
     gainStation('ench', CRAFT_XP.tonic(t));
-    toast(`Brewed a ${d.n}.`, 'good'); save();
+    toast(`Brewed a ${d.n}.`, 'good', null, 'low'); save();
     return true;
   };
   drinkTonic = (key, t) => {
@@ -301,7 +301,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!p[id] || tonicActive()) return false;
     p[id]--; if (!p[id]) delete p[id];
     C().tonic = { k: key, t, left: CRAFT_TONIC_RULE.secs };
-    toast(`${CRAFT_TONICS[key].n}: ${CRAFT_TONICS[key].txt.replace('{v}', fmt(tonicV(key, t) * 100))} for 20 minutes.`, 'good'); save();
+    toast(`${CRAFT_TONICS[key].n}: ${CRAFT_TONICS[key].txt.replace('{v}', fmt(tonicV(key, t) * 100))} for 20 minutes.`, 'good', null, 'low'); save();
     return true;
   };
   const burn = s => { const a = C().tonic; if (!a) return; a.left -= s; if (a.left <= 0) C().tonic = null; };

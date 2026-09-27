@@ -209,7 +209,7 @@ let OMENS, WEEKLY_GOALS;
     if (!o || !o.dare || awayDay !== null) return false;
     A().dare = { day: today(), on: !!on };
     actCache.k = '';
-    toast(on ? `You took the Dare: ${o.dare.n}. Drop it any time.` : `You dropped the Dare. ${o.n} still helps you today.`, on ? 'raid' : 'good', { ic: o.ic });
+    toast(on ? `You took the Dare: ${o.dare.n}. Drop it any time.` : `You dropped the Dare. ${o.n} still helps you today.`, on ? 'raid' : 'good', { ic: o.ic }, 'low');
     save();
     return true;
   }
@@ -346,7 +346,7 @@ let OMENS, WEEKLY_GOALS;
     const n = a.goals.filter(x => x.claimed).length;
     if (n === 3) { a.stamps++; txt += '. Almanac Stamp earned'; }
     if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
-    if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null); save(); }
+    if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null, 'normal'); save(); }
     emit('weeklyClaim', { k: g.k, quiet: !!quiet });
     return txt;
   }

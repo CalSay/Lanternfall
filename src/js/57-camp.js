@@ -246,7 +246,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (!c.queue) { rec.start = t; rec.end = t + c.dur; }
     builds().push(rec);
     emit('campStart', { id, to: c.to, queued: !!c.queue });
-    toast(c.queue ? `${B(id).n} Lv ${c.to} is next in line.` : `Work starts on the ${B(id).n}, Lv ${c.to}. Ready in ${fmtTime(c.dur / 1000)}.`, 'good', { ic: ['anvil', '#D08A4E'] });
+    toast(c.queue ? `${B(id).n} Lv ${c.to} is next in line.` : `Work starts on the ${B(id).n}, Lv ${c.to}. Ready in ${fmtTime(c.dur / 1000)}.`, 'good', { ic: ['anvil', '#D08A4E'] }, 'low');
     save();
     return true;
   };
@@ -290,7 +290,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
-    toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] });
+    toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;
   onTick(dt => {

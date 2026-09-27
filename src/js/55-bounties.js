@@ -84,7 +84,7 @@
     S.bounties.claimed++;
     S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
     const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };
-    toast(`Bounty complete! +${r.txt}.`, 'loot', icon);
+    toast(`Bounty complete! +${r.txt}.`, 'loot', icon, 'normal');
     emit('bountyDone', { k: b.k, reward: r });
     save();
     return r;

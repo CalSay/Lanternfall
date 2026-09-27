@@ -34,7 +34,7 @@ for (const kind of GATHER_KINDS) {
     r.btn.classList.add('work');
     r.btn.addEventListener('click', () => {
       if (!setNode(kind, t)) return;
-      if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good'); ui(true); }
+      if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
     });
     nodeRows[kind].push(r);
   }

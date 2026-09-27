@@ -11,7 +11,7 @@ function setActivity(a) {
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
   const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
-  toast(msg, a === 'raid' ? 'raid' : 'good');
+  toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
@@ -93,7 +93,7 @@ function kill() {
     emit('shake', 0.3);
     const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
-    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
+    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
   }
@@ -108,7 +108,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good');
+    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good', null, 'high');
   }
 }
 function gainSkill(k, n, quiet) {
@@ -125,7 +125,7 @@ function gainSkill(k, n, quiet) {
       extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : open.length ? ` The ${open.join(' and the ')} ${open.length > 1 ? 'are' : 'is'} open to you.` : '';
     }
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
+    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, extra ? 'normal' : 'low');
   }
 }
 

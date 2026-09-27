@@ -28,7 +28,7 @@ function syncGen() {
     const share = Math.min(1, S.raid.dmg / (S.raid.maxHp || w.maxHp));
     const e = Math.max(1, Math.round((5 + 25 * share) * (1 + 0.2 * (S.raid.gen - 1))));
     S.embers += e; S.wyrms++;
-    toast(`${S.raid.name || 'The raid boss'} has fallen. You dealt ${(share * 100).toFixed(1)}% of the damage: +${e} Embers.`, 'ember');
+    toast(`${S.raid.name || 'The raid boss'} has fallen. You dealt ${(share * 100).toFixed(1)}% of the damage: +${e} Embers.`, 'ember', null, 'high');
     const ch = share >= 0.25 ? 1 : Math.min(1, 0.35 + share * 2);
     if (Math.random() < ch) dropUnique(RAID_UNIQ[(S.raid.gen - 1) % RAID_UNIQ.length], Math.min(5, S.raid.gen));
     emit('raidReward', { gen: S.raid.gen, share, embers: e });
