@@ -45,8 +45,8 @@ try {
 
   assert(E('rosterLive() && S.party.rv === 1'), 'new game starts on the roster');
   E('S.gold = 50'); assert(!fn.hireComp(0, '1') && E('S.comp[0]') === 0, 'old hire is retired');
-  E('S.maxZone = 2; S.gold = 200');
-  assert(E('recruit("wren")') && E('S.gold') === 80 && E('S.party.field.includes("wren")'), 'recruited Wren by name');
+  E('S.maxZone = ROSTER.wren.route.zone; S.gold = recruitCost("wren").gold + 80');
+  assert(E('recruit("wren")') && E('S.gold') === 80 && E('S.party.field.includes("wren")'), `recruited Wren by name (zone ${E('ROSTER.wren.route.zone')}, ${E('fmt(routeGold(ROSTER.wren.route))')} gold, read from her route)`);
   E('S.maxZone = 1');
   for (let m = 0; m < 30; m++) { run(60); buyAll(); if (E('bossReady()')) fn.challenge(); }
   assert(E('S.maxZone') > 1 || bossFails > 0, `boss attempted (maxZone ${E('S.maxZone')}, fails ${bossFails}, clears ${zoneClears})`);
@@ -207,8 +207,11 @@ try {
     const g = loadCore({ storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2-late.json'), 'utf8') }) });
     const f0 = g.eval('S.party.field.join()');
     g.eval('S.gold = 1e15; S.mats.ess = [999, 999, 999, 999, 999]; promoteChar(S.party.field[0])');
+    const fp = g.eval('S.party.field.join()');
     g.eval('unlockChar("thessaly", "test", true)');
-    assert(g.eval('S.party.field.join()') === f0 && !g.eval('S.party.field.includes("elowen")'), `late save: promote and recruit keep the field (${g.eval('S.party.field.join()')})`);
+    // A recruit may take the place of the weakest member of its kind; nobody else moves.
+    const a = f0.split(','), b = g.eval('S.party.field.slice()'), moved = a.filter((k, i) => b[i] !== k);
+    assert(fp === f0 && moved.length <= 1 && b.every((k, i) => k === a[i] || k === 'thessaly') && !b.includes('elowen'), `late save: promote keeps the field, a recruit swaps at most one member (${f0} -> ${b.join()})`);
   }
   // spec example: save-v2.json -> Tobin rank 1 lv 25+, Wren 14+, Pip 6+, Hesketh 1
   {
@@ -232,20 +235,20 @@ try {
     for (let i = 0; i < 3000; i++) g.fn.tick(0.1);
     assert(E('charRec("wren").lv') > 1 && ms.includes(5), `fielded Wren levels from kills (L${E('charRec("wren").lv')}, milestones ${ms.join(',')})`);
     assert(E('storyState("wren").unread') >= 1 && E('markStoriesRead("wren") && storyState("wren").unread === 0'), 'camp stories unlock and can be marked read');
-    E('S.maxZone = Math.max(S.maxZone, 3)'); g.fn.tick(1.1);
-    assert(E('isRecruited("tobin") && isRecruited("hesketh")'), 'Tobin and Hesketh join free at zone 3');
+    E('S.maxZone = Math.max(S.maxZone, ROSTER.tobin.route.zone, ROSTER.hesketh.route.zone)'); g.fn.tick(1.1);
+    assert(E('isRecruited("tobin") && isRecruited("hesketh")'), `Tobin and Hesketh join free at their zones (${E('ROSTER.tobin.route.zone')}, ${E('ROSTER.hesketh.route.zone')})`);
     E('benchChar("hesketh")');
     const hk = E('charRec("hesketh").lv'); for (let i = 0; i < 1200; i++) g.fn.tick(0.1);
     assert(E('charRec("hesketh").lv') === hk && !E('S.party.field.includes("hesketh")'), 'benched characters earn no XP');
     E('charRec("wren").lv = 25; charRec("wren").xp = 0');
     E('addCharXp("wren", 1e9)');
-    assert(E('charRec("wren").lv') === 25 && E('charRec("wren").xp') <= E('cxpNeed(25)') + 1e-9, 'level cap holds and XP banks one level');
+    assert(E('charRec("wren").lv') === 25 && E('charRec("wren").xp') <= E('bankXp(25)') + 1e-9 && E('charRec("wren").xp') > E('cxpNeed(25)'), `level cap holds and XP banks ${E('ROSTER_TUNE.bankLv')} levels (BAL1)`);
     E('S.gold = 1e12; S.mats.ess = [0, 0, 50, 0, 0]');
-    assert(E('canPromote("wren") && promoteChar("wren")') && E('charRec("wren").rank') === 1 && E('charRec("wren").lv') > 25, 'promotion: rank up, cap +25, banked XP spent, higher-tier essence accepted');
+    assert(E('canPromote("wren") && promoteChar("wren")') && E('charRec("wren").rank') === 1 && E('charRec("wren").lv') >= 40, `promotion: rank up, cap +25, banked XP spent at once (L${E('charRec("wren").lv')}), higher-tier essence accepted`);
     assert(E('S.mats.ess[2]') === 45, 'Common promotion costs half essence (5)');
     E('charRec("wren").lv = 26');
-    const d0 = g.fn.compDps(); E('charRec("wren").rank = 2'); const d1 = g.fn.compDps();
-    assert(d1 > d0 * 1.5, 'rank doubles power');
+    const d0 = E('charPow("wren")'); E('charRec("wren").rank = 2'); const d1 = E('charPow("wren")');
+    assert(Math.abs(d1 / d0 - E('ROSTER_TUNE.rankX')) < 1e-9, `a rank multiplies power by ROSTER_TUNE.rankX (x${E('ROSTER_TUNE.rankX')})`);
     E('S.activity = "fight"; S.zone = S.maxZone');
     const before = E('charRec("tobin").lv'), res = g.fn.awayGains(3600);
     assert(E('charRec("tobin").lv') > before && res.lines.some(l => /Tobin/.test(l.txt)), `offline XP for the field (Tobin L${before} -> L${E('charRec("tobin").lv')})`);
@@ -272,13 +275,15 @@ try {
     'save-a-v1.json': { gear: { might: 65.52, crit: 3.84, critMult: 0.16, tap: 1, echo: 0.5, score: 97.52 }, hero: 432.1058201711884, total: 3964.2446024889095 }
   };
   const OLD_KEYS = ['might', 'crit', 'critMult', 'gold', 'ess', 'mineSpd', 'woodSpd', 'oreDbl', 'woodDbl', 'party', 'tap', 'echo', 'offline', 'raid', 'essExtra', 'oreExtra', 'woodExtra', 'gather', 'score'];
+  // The formulas as they were before these changes; the item maths itself is what K4 must keep exact.
+  const PRE_K4 = 'SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; TIER_POW.splice(0, 6, 0, 10, 28, 70, 160, 360); PACE.heroLv = 0.05; PACE.bladeX = 2; gearDirty()';
   const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const gearDiff = (gs, want) => OLD_KEYS.map(k => [k, gs[k], want[k] !== undefined ? want[k] : k === 'tap' ? 1 : 0]).filter(([, a, b]) => a !== b).map(([k, a, b]) => `${k} ${a} != ${b}`);
   for (const [f, want] of Object.entries(BASE)) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const old = JSON.parse(raw);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
-    g.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; gearDirty()'); // pre-K4 baselines predate synergies (B2), the unique rebalance and the retool (legacy Sword/Helm fit any class)
+    g.eval(PRE_K4); // pre-K4 baselines predate synergies (B2), the unique rebalance, the retool (legacy Sword/Helm fit any class) and the BAL1 ramp (gear tiers, Blade, hero level)
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const matsOk = Object.keys(old.mats).every(k => JSON.stringify(old.mats[k]) === JSON.stringify(S.mats[k])) && ['crystal', 'fibre', 'herb', 'hide'].every(k => JSON.stringify(S.mats[k]) === '[0,0,0,0,0]');
     const itemsOk = !deepDiff(old.items, S.items) && S.items.map(i => i.id).join() === old.items.map(i => i.id).join();
@@ -288,7 +293,8 @@ try {
     const gd = gearDiff(g.fn.gear(), want.gear);
     assert(!gd.length, `${f}: gear() exactly equal to pre-K4` + (gd.length ? ': ' + gd.slice(0, 3).join('; ') : ''));
     const hd = g.fn.heroDps(), td = g.fn.totalDps();
-    assert(hd === want.hero && td === want.total, `${f}: heroDps ${hd} and totalDps ${td} exactly equal to pre-K4`);
+    // totalDps = heroDps + compDps; companions follow the roster formulas (BAL1 changed them), checked by T9 in the roster section.
+    assert(hd === want.hero && td === hd + g.fn.compDps(), `${f}: heroDps ${hd} exactly equal to pre-K4 (total ${td} = hero + party)`);
     assert(g.eval('gear().attack === 0 && gear().spell === 0'), `${f}: no new live stats on old gear`);
     // every equipped item fits its position for every class, and gear() does not depend on the class
     const fitBad = [];
@@ -304,9 +310,9 @@ try {
     g.fn.save();
     const saved = g.storage.get(KEY);
     const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
-    g2.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; gearDirty()');
+    g2.eval(PRE_K4);
     const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
-    assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === want.total && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
+    assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === g.fn.totalDps() && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
   }
 
   // an old save over the bag limit keeps every item on load
@@ -614,21 +620,26 @@ try {
     const recs = {}; g.fn.on('recruit', ({ id }) => { recs[id] = (recs[id] || 0) + 1; });
     return { g, E: s => g.eval(s), recs, setDay: d => g.eval(`Date.__t = new Date(2026, 0, 1 + ${d}, 12).getTime()`), tick: n => { for (let i = 0; i < n; i++) g.fn.tick(0.1); } };
   };
+  const E0 = s => loadCore({ seed: 1 }).eval(s);
   const bossKill = (E, z) => E(`emit('kill', { mob: { key: 'x0', boss: true }, zone: ${z}, gold: 1, ess: 0, tier: 1 })`);
-  // Renown: +1 per claimed bounty; Aldric at 15 then 25K gold; Vesper free at 60; Caedmon 80 + zone 35 boss, wyrms count 5.
+  // Renown: +1 per claimed bounty (elite 3); Aldric at his Renown then gold; Vesper free at hers;
+  // Caedmon at his Renown + the zone 35 boss, wyrms count 5. Values read from UNLOCK_TUNE (BAL1 retuned them).
   {
     const { E, recs, tick } = game(10);
-    for (let i = 0; i < 14; i++) E("emit('bountyDone', { k: 'kill' })");
-    E('S.gold = 1e6');
-    assert(E('renown()') === 14 && !E('canRecruit("aldric")'), 'Renown 14: Aldric not yet');
+    const T = E('UNLOCK_TUNE'), ag = E('recruitCost("aldric") || { gold: -1 }').gold;
+    for (let i = 0; i < T.aldric.renown - 1; i++) E("emit('bountyDone', { k: 'kill' })");
+    E('S.gold = 1e30');
+    assert(E('renown()') === T.aldric.renown - 1 && !E('canRecruit("aldric")'), `Renown ${T.aldric.renown - 1}: Aldric not yet`);
     E("emit('bountyDone', { k: 'kill', elite: true })");
-    assert(E('renown()') === 17 && E('canRecruit("aldric") && recruit("aldric")') && E('S.gold') === 1e6 - 25000 && !E('recruit("aldric")') && recs.aldric === 1, 'Renown 15 + 25K gold recruits Aldric once (elite bounty = 3)');
-    E('addRenown(43, "test")'); tick(11);
-    assert(E('isRecruited("vesper") && charRec("vesper").src === "renown"') && recs.vesper === 1, 'Vesper joins free at Renown 60');
-    E('S.maxZone = 36; S.wyrms = 3'); tick(11);
-    assert(!E('isRecruited("caedmon")') && E('caedmonRenown()') === 75, 'Caedmon waits: Renown 60 + 3 raid kills x 5 = 75 of 80');
-    E('S.wyrms = 4'); tick(11);
-    assert(E('isRecruited("caedmon")') && recs.caedmon === 1, 'Caedmon joins at 80 with the zone 35 boss beaten');
+    const g0 = E('S.gold'), gold = E('recruitCost("aldric").gold');
+    assert(E('renown()') === T.aldric.renown + 2 && E('canRecruit("aldric") && recruit("aldric")') && E('S.gold') === g0 - gold && gold > 0 && !E('recruit("aldric")') && recs.aldric === 1 && E('recruitHow("aldric")').includes(E(`fmt(${gold})`)), `Renown ${T.aldric.renown} + ${E(`fmt(${gold})`)} gold recruits Aldric once (elite bounty = 3; the how line shows the price)`);
+    E(`addRenown(${T.vesperRenown - E('renown()')}, "test")`); tick(11);
+    assert(E('isRecruited("vesper") && charRec("vesper").src === "renown"') && recs.vesper === 1, `Vesper joins free at Renown ${T.vesperRenown}`);
+    const need = T.caedmon.renown - E('renown()'), wy = Math.ceil(need / T.wyrmRenown);
+    E(`S.maxZone = ${T.caedmon.zone + 1}; S.wyrms = ${wy - 1}`); tick(11);
+    assert(!E('isRecruited("caedmon")') && E('caedmonRenown()') < T.caedmon.renown, `Caedmon waits below Renown ${T.caedmon.renown} (${E('caedmonRenown()')})`);
+    E(`S.wyrms = ${wy}`); tick(11);
+    assert(E('isRecruited("caedmon")') && recs.caedmon === 1, `Caedmon joins at Renown ${T.caedmon.renown} with the zone ${T.caedmon.zone} boss beaten`);
   }
   // Old save backfill: Renown from the bounties already claimed, once.
   {
@@ -668,8 +679,11 @@ try {
     const ids = week.map(d => { setDay(d); return E('visitorToday().id'); });
     assert(ids.join() === week.map(d => rot[d % 7]).join() && E('unlockDay()') === 286, `rotation follows the device day (${ids.join(',')})`);
     const aday = week.find(d => rot[d % 7] === 'anselm');
-    setDay(aday); E('S.gold = 1e6; S.mats.ess[1] = 30');
-    assert(E('visitorToday().kind === "hire" && canRecruit("anselm") && recruit("anselm")') && E('S.gold') === 1e6 - 60000 && E('S.mats.ess[1]') === 10 && recs.anselm === 1, 'Anselm hired on his day for 60K + 20 Glowing');
+    const av = E('UNLOCK_TUNE.visitors.anselm');
+    E(`S.maxZone = Math.max(S.maxZone, ${av.from}, UNLOCK_TUNE.visitorFrom)`);
+    setDay(aday); E(`S.gold = 1e30; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${av.ess[0] - 1}] = ${av.ess[1] + 10}`);
+    const ac = E('recruitCost("anselm")');
+    assert(E('visitorToday().kind === "hire" && canRecruit("anselm") && recruit("anselm")') && E('S.gold') === 1e30 - ac.gold && E(`S.mats.ess[${av.ess[0] - 1}]`) === 10 && recs.anselm === 1, `Anselm hired on his day for ${E(`fmt(${ac.gold})`)} gold + ${av.ess[1]} tier-${av.ess[0]} Essence`);
     const vt = E('visitorToday()');
     assert(E('S.party.unlock.visitor.hired') === true && vt.kind === 'trade' && !vt.done, 'a hired visitor is replaced by a trader');
     const t = E('zoneTier(S.maxZone)'), e0 = E(`S.mats.ess[${t - 1}]`);
@@ -677,26 +691,30 @@ try {
     setDay(aday + 1); E('visitorToday()');
     assert(E('S.party.unlock.visitor.day') === aday + 1 && E('S.party.unlock.visitor.hired') === false && E('S.party.unlock.visitor.bought') === false, 'a new device day resets the visitor');
     const kday = week.find(d => rot[d % 7] === 'kestrel');
-    setDay(kday); E('S.maxZone = 8; S.gold = 1e6');
-    assert(E('recruitCost("kestrel").gold') === 90000 && E('recruit("kestrel")') && E('S.gold') === 1e6 - 90000, 'Kestrel hires early at 3x gold before zone 12');
+    const kv = E('UNLOCK_TUNE.visitors.kestrel'), kz = E('ROSTER.kestrel.route.zone');
+    setDay(kday); E(`S.maxZone = ${Math.max(kv.from, E('UNLOCK_TUNE.visitorFrom'))}; S.gold = 1e30`);
+    const kc = E('recruitCost("kestrel").gold');
+    assert(kv.from < kz && kc === E(`foesGold(${kv.from}, ${kv.kills})`) && E('recruit("kestrel")') && E('S.gold') === 1e30 - kc, `Kestrel hires early at the Tavern (${E(`fmt(${kc})`)} gold) before zone ${kz}`);
     setDay(aday + 7);
     assert(E('visitorToday().kind') === 'trade' && E('daysUntilVisit("anselm")') === 0, 'a recruited visitor leaves a trader on their day');
-    E('S.maxZone = 3');
-    assert(E('visitorToday().kind') === 'closed', 'no visitors before zone 6');
+    E('S.maxZone = UNLOCK_TUNE.visitorFrom - 1');
+    assert(E('visitorToday().kind') === 'closed', `no visitors before zone ${E('UNLOCK_TUNE.visitorFrom')}`);
   }
   // Quests: hand-in consumes the items; Morwen's condition.
   {
-    const { E, recs, tick } = game(5);
-    E('S.mats.wood = [40, 30, 0, 0, 0]');
-    assert(E('canRecruit("bram") && recruit("bram")') && E('S.mats.wood.join()') === '0,10,0,0,0' && recs.bram === 1, 'Bram: 60 Oak Logs handed in (better logs count, Oak first)');
-    const mn = E('UNLOCK_TUNE.quests.maren.ess[1]');
-    E(`S.mats.ess = [0, ${mn - 1}, 0, 0, 0]`);
-    assert(!E('canRecruit("maren")') && E('leads().some(l => l.id === "maren" && l.action === null && l.pct < 1)'), `Maren waits for ${mn} Glowing Essence`);
-    E('S.mats.ess[1]++');
+    const { E, recs, tick } = game(Math.max(E0('UNLOCK_TUNE.quests.bram.from'), E0('UNLOCK_TUNE.quests.maren.from')));
+    const bw = E('UNLOCK_TUNE.quests.bram.wood');   // [tier, n]
+    E(`S.mats.wood = [0, 0, 0, 0, 0]; S.mats.wood[${bw[0] - 1}] = ${bw[1] - 20}; S.mats.wood[${bw[0]}] = 30`);
+    assert(E('canRecruit("bram") && recruit("bram")') && E(`S.mats.wood[${bw[0] - 1}]`) === 0 && E(`S.mats.wood[${bw[0]}]`) === 10 && recs.bram === 1, `Bram: ${bw[1]} tier-${bw[0]} logs handed in (better logs count, the named tier first)`);
+    const [mt, mn] = E('UNLOCK_TUNE.quests.maren.ess');
+    E(`S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${mt - 1}] = ${mn - 1}`);
+    assert(!E('canRecruit("maren")') && E('leads().some(l => l.id === "maren" && l.action === null && l.pct < 1)'), `Maren waits for ${mn} tier-${mt} Essence`);
+    E(`S.mats.ess[${mt - 1}]++`);
     const lm = E('leads().find(l => l.id === "maren")');
-    assert(lm && lm.action && lm.action.label === 'Hand in' && E('leads().find(l => l.id === "maren").action.fn()') && E('S.mats.ess[1]') === 0 && recs.maren === 1, 'Maren: the Leads "Hand in" consumes the essence');
-    E('S.maxZone = UNLOCK_TUNE.quests.elowen.from; S.gold = UNLOCK_TUNE.quests.elowen.gold + 5e7; S.mats.ess[3] = 25');
-    assert(E('recruit("elowen")') && E('S.gold') === 5e7 && E('S.mats.ess[3]') === 5, `Elowen: ${E('fmt(UNLOCK_TUNE.quests.elowen.gold)')} gold + 20 Blazing Essence handed in at zone ${E('UNLOCK_TUNE.quests.elowen.from')}`);
+    assert(lm && lm.action && lm.action.label === 'Hand in' && E('leads().find(l => l.id === "maren").action.fn()') && E(`S.mats.ess[${mt - 1}]`) === 0 && recs.maren === 1, 'Maren: the Leads "Hand in" consumes the essence');
+    E('S.maxZone = UNLOCK_TUNE.quests.elowen.from'); const eg = E('recruitCost("elowen").gold'), ee = E('UNLOCK_TUNE.quests.elowen.ess');
+    E(`S.gold = ${eg} + 5e7; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${ee[0] - 1}] = ${ee[1] + 5}`);
+    assert(eg > 0 && E('recruit("elowen")') && E('S.gold') === 5e7 && E(`S.mats.ess[${ee[0] - 1}]`) === 5 && E('recruitHow("elowen")').includes(E(`fmt(${eg})`)), `Elowen: ${E(`fmt(${eg})`)} gold + ${ee[1]} tier-${ee[0]} Essence handed in at zone ${E('UNLOCK_TUNE.quests.elowen.from')}`);
     const mz = E('UNLOCK_TUNE.quests.morwen.zone');
     E(`S.maxZone = ${mz + 1}; unlockChar("hesketh", "test", true); setField(["hesketh", "bram"])`);
     bossKill(E, mz); tick(11);
