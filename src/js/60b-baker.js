@@ -331,7 +331,12 @@ const ART = (() => {
     let rig = typeof src[key] === 'function' ? src[key](variant) : src[key];
     if (!rig || !rig.parts) return null;
     const vk = typeof variant === 'string' ? variant : variant && variant.elder ? 'elder' : null;
-    if (vk && rig.variants && rig.variants[vk]) { const v = rig.variants[vk]; rig = Object.assign({}, rig, v, { parts: rig.parts.concat(v.parts || []), mats: Object.assign({}, rig.mats, v.mats), S: (rig.S || 1) * (v.S || 1) }); }
+    if (vk && rig.variants && rig.variants[vk]) {
+      // Merge the variant; its S multiplies the rig's (read both before merging, so neither overwrites the other).
+      const v = rig.variants[vk], vS = (rig.S || 1) * (v.S || 1);
+      rig = Object.assign({}, rig, v, { parts: rig.parts.concat(v.parts || []), mats: Object.assign({}, rig.mats, v.mats) });
+      rig.S = vS;
+    }
     const hue = variant && typeof variant === 'object' && variant.hue ? variant.hue : 0;
     const scale = (rig.S || 1) * (variant && typeof variant === 'object' && variant.S ? variant.S : 1);
     const mcache = {};
@@ -347,7 +352,9 @@ const ART = (() => {
     const set = {};
     for (const f of ['idle0', 'idle1', 'wind', 'strike']) {
       const pose = Object.assign({}, (rig.poses && (rig.poses[f] || rig.poses.idle0)) || {});
-      const parts = sortParts(rig.parts.filter(p => !p[4] || (variant && variant.rar >= p[4])).map(p => ({ z: p[0], bone: p[1], mat: matOf(p[2]), shape: p[3] })));
+      // swap (e.g. the skeleton archer's bowstring): drawn poses use parts minus swap.rest plus swap.drawn
+      const src = pose.drawn && rig.swap ? rig.parts.filter(p => !rig.swap.rest.includes(p)).concat(rig.swap.drawn) : rig.parts;
+      const parts = sortParts(src.filter(p => !p[4] || (variant && variant.rar >= p[4])).map(p => ({ z: p[0], bone: p[1], mat: matOf(p[2]), shape: p[3] })));
       set[f] = bake(parts, pose, { S: scale, flip: !!rig.flip, rig: { piv: rig.piv || PIV, parent: rig.parent, ground: rig.ground } });
     }
     set.hit = flash(set.idle0);
