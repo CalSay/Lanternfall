@@ -32,8 +32,13 @@ let showAwayReport;
   }
   function onKey(e) {
     if (!root) return;
-    if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); close(); }
-    else if (e.key === 'Tab') { e.preventDefault(); root.querySelector('.away-go').focus(); }
+    const onGo = e.target && e.target.classList && e.target.classList.contains('away-lgo');
+    if (e.key === 'Escape' || (e.key === 'Enter' && !onGo)) { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'Tab') {
+      // cycle through the Go buttons and Collect
+      const f = [...root.querySelectorAll('.away-lgo, .away-go')], i = f.indexOf(document.activeElement);
+      e.preventDefault(); f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
   }
 
   // A number that counts up from 0. fmtFn turns the current value into text.
@@ -158,15 +163,24 @@ let showAwayReport;
     }
 
     // ---- lines from other systems (registerAwayLine) ----
-    if (r.extra && r.extra.length) {
-      const b = block('Also');
-      for (const l of r.extra) {
+    // A line may name its own block (group, e.g. 'Next up') and carry a Go button (go()).
+    const groups = new Map();
+    for (const l of r.extra || []) { const g = l.group || 'Also'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(l); }
+    for (const [title, lines] of groups) {
+      const b = block(title);
+      for (const l of lines) {
         const row = el('div', 'away-line');
         const u = iconOf(l.icon); if (u) row.append(img(u));
-        const tx = el('div');
+        const tx = el('div', 'away-ltx');
         tx.append(el('div', 'away-lt', l.txt || ''));
         if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
-        row.append(tx); b.append(row);
+        row.append(tx);
+        if (typeof l.go === 'function') {
+          const gb = el('button', 'mini go away-lgo', 'Go');
+          gb.addEventListener('click', () => { close(); try { l.go(); } catch (e) { console.error('[lanternfall] away line go failed', e); } });
+          row.append(gb);
+        }
+        b.append(row);
       }
       body.append(b);
     }

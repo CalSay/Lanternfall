@@ -43,3 +43,4 @@ The art style study is still running (owner leans 16-bit; wants clear section de
   cosmetic until retuned. Plan: after M6 lands, a retune task lowers `ROSTER_TUNE.base`, raises
   `today` to about 0.5 to 1, and makes texts show the numbers the player actually gets. autoField ignores
   synergies. The K4 exact-dps check now runs with `SYN_TUNE.on = 0`.
+- Next Up merged (55-goals.js registerGoal/topGoals, strip on Fight tab, away-card block with Go buttons via a small generic edit to 75-away.js: lines may carry group and go).
