@@ -42,6 +42,7 @@ function rollRarity(lv) {
 // essence from zone 25 and one companion XP curve, so Region 1 fell in about 3 hours.
 const PACE = {
   hp0: 40,                  // zone 1 mob HP (unchanged)
+  hpEarly: 1.48, early: 1,  // BAL1: mob HP x per zone up to zone `early` (the first minutes); 1 = off
   hpGrowth: 1.48,           // mob HP x per zone up to the bend (was 1.42; brings T1 back into band after B7)
   bend: 30,                 // zones past the bend grow by hpLate instead
   hpLate: 1.29,             // mob HP x per zone past zone 30 (was 1.42). Slower growth, because
@@ -88,7 +89,7 @@ const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => 
 const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
-const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
+const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
