@@ -17,6 +17,11 @@ Owner decisions (2026-09-27):
 
 ## Phase 1: depth and active play
 
+Spec: [docs/design/party-and-classes.md](docs/design/party-and-classes.md) covers hero classes and
+abilities, companions as recruits, party combat with boss telegraphs, companion gear and the
+save migration, in three build stages (A: classes and visible party, B: recruits and gear,
+C: enemy attacks and telegraphs).
+
 Active moments first, because they define the feel:
 
 - **Hero abilities:** 2 to 3 tap skills on cooldowns, such as Lantern Flare (a burst of damage) and Rally (a party speed boost), unlocked through play
