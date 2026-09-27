@@ -185,3 +185,13 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
 - Owner idea: with full-screen menus the game view has room for a proper combat HUD: party and enemy
   health bars, hero and companion ability cooldowns (spec 7.4). Queue it as the next stage task after
   AR3 and the menu restructure land, and fold it into Stage C (party combat), where HP actually matters.
+- AR3 merged: all enemies, elders, the wyrm and nodes in B1; the stage zooms in whole-pixel steps
+  (2/3/5 CSS px per art px by size); formation spaced out; floating text stacks and stays under the header.
+  B1 art conversion is DONE. From here: gameplay first.
+- Expeditions merged (57b-expeditions.js, 18 routes, seeded hauls, repeats, Call back, shortcuts; tuned
+  slower: an 8h Good run is about 22 min of active gathering). Coordinator: characters on an expedition
+  can't be fielded. Still open: an "Out" line on Party tiles, expedition sim policy (E1-E10), route icons, lore texts.
+- Owner bug: party sorting. The single Rarity/Level toggle read as random, locked characters never
+  sorted, and the whole grid was rebuilt on every level change (eating taps). Fixed: Power/Level/Rarity
+  chips (default Power); Rarity mixes locked and recruited; Power/Level put locked ones by closeness to
+  joining; tiles rebuild only on structural change, and levels update in place.

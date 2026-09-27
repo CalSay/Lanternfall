@@ -98,7 +98,10 @@
 
 /* roster grid */
 .ros-count { font: 600 12px var(--display); color: var(--bone); letter-spacing: 0; margin-left: 2px; }
-.ros-sort { font-size: 12px !important; }
+.ros-sortbar { display: grid; grid-template-columns: auto repeat(3, 1fr); align-items: center; gap: 0; border: 2px solid #0B0810; background: var(--well); margin-bottom: 6px; }
+.ros-sortlbl { padding: 0 8px; font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ros-sortbar button { min-width: 0; min-height: 40px; background: none; border: 0; padding: 4px 2px; font: 600 12px var(--display); color: var(--muted); cursor: pointer; }
+.ros-sortbar button[aria-pressed="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -2px 0 var(--ember); }
 .ros-filt { display: grid; grid-template-columns: repeat(5, 1fr); border: 2px solid #0B0810; background: var(--well); }
 .ros-filt button { min-width: 0; min-height: 40px; background: none; border: 0; padding: 4px 2px; font: 600 12px var(--display); color: var(--muted); cursor: pointer; }
 .ros-filt button[aria-pressed="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -2px 0 var(--ember); }

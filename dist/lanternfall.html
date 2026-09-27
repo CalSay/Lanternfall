@@ -728,6 +728,118 @@ span.cf-d { font-weight: 600; }
 .cf-gt b { font: 600 14.5px/1.15 var(--display); overflow-wrap: anywhere; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 20px var(--display); }
+/* 60-exped: Expeditions in the Camp tab and the send sheet (75-exped-ui.js). */
+
+#sec-exped { gap: 8px; }
+
+/* ---- slots out now ---- */
+.ex-slots { display: grid; gap: 6px; }
+.ex-slot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: start; padding: 7px 9px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.ex-slot.back { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(242,193,78,.3), 0 2px 0 #0B0810, 0 0 14px rgba(242,193,78,.2); }
+.ex-pts { display: flex; }
+.ex-pt { width: 32px; height: 32px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; flex: none; }
+.ex-pts .ex-pt + .ex-pt { margin-left: -6px; }
+.ex-pt.r-rare { border-color: var(--r-rare); }
+.ex-pt.r-epic { border-color: var(--r-epic); }
+.ex-pt.r-legendary { border-color: var(--r-legendary); }
+.ex-pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.ex-mid { min-width: 0; display: grid; gap: 3px; }
+.ex-nm { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; font: 600 14.5px/1.15 var(--display); }
+.ex-nm span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-g { font: 600 12.5px var(--display); flex: none; }
+.ex-mid .bar { height: 8px; }
+.ex-mid .bar > i { background: var(--r-rare); }
+.ex-slot.back .bar > i { background: var(--gold); }
+.ex-sub { font-size: 12.5px; color: var(--muted); }
+.ex-slot.back .ex-sub { color: var(--gold); }
+.ex-foot { display: flex; gap: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 2px; }
+.ex-acts { display: flex; gap: 5px; margin-left: auto; }
+.ex-acts .mini { min-height: 40px; padding: 4px 9px; }
+.ex-acts .mini.on { border-color: var(--xp); color: var(--xp); }
+.ex-acts .mini.armed { background: #3A1E22; }
+.ex-free { min-height: 48px; background: none; border: 2px dashed var(--line-hi); color: var(--muted); font: 600 15px var(--display); cursor: pointer; }
+.ex-free:hover { color: var(--bone); border-color: var(--ember); }
+
+/* ---- filters ---- */
+.ex-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.ex-filters::-webkit-scrollbar { display: none; }
+.ex-chip { flex: none; min-height: 36px; padding: 4px 12px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.ex-chip.on { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
+
+/* ---- route cards ---- */
+.ex-routes { display: grid; gap: 5px; }
+.ex-band { display: flex; gap: 8px; align-items: baseline; margin-top: 4px; font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.ex-band b { font: 600 13px var(--display); color: var(--bone); letter-spacing: 0; }
+.ex-pow { margin-left: auto; }
+.ex-route { width: 100%; min-height: 60px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 6px 9px; text-align: left; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
+.ex-route:hover { border-color: var(--line-hi); }
+.ex-route .ic, .ex-stop .ic { width: 36px; height: 36px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
+.ex-route .ic img, .ex-stop .ic img { width: 24px; height: 24px; image-rendering: pixelated; }
+.ex-rmid { min-width: 0; display: grid; gap: 2px; }
+.ex-rnm { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font: 600 14.5px/1.15 var(--display); }
+.ex-rum { font: 600 11px var(--body); color: #1A1420; background: var(--gold); padding: 0 5px; }
+.ex-focus { font-size: 12px; color: var(--muted); }
+.ex-needs, .ex-nbox { display: flex; gap: 4px; flex-wrap: wrap; }
+.ex-need { font-size: 11.5px; line-height: 1.3; padding: 1px 5px; color: var(--muted); background: var(--well); border: 1px solid var(--line); }
+.ex-need.met { color: var(--xp); border-color: #3E5A38; }
+.ex-gr { font: 600 13px var(--display); text-align: right; }
+.ex-gr.none { color: var(--muted); font-weight: 500; }
+
+/* ---- log ---- */
+.ex-log { background: var(--well); border: 1px solid var(--line); padding: 0 9px; }
+.ex-log summary { min-height: 40px; display: flex; align-items: center; font: 600 13px var(--display); color: var(--muted); cursor: pointer; }
+.ex-log[open] { padding-bottom: 8px; }
+.ex-lrow { display: grid; gap: 1px; padding: 5px 0; border-top: 1px solid var(--line); }
+.ex-lt { display: flex; justify-content: space-between; gap: 8px; font: 600 13px var(--display); }
+.ex-lh { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+/* ---- send sheet ---- */
+.ex-sheet .bsheet-body { gap: 12px; }
+.ex-stop { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ex-stop .ic { width: 40px; height: 40px; }
+.ex-sh { margin: 0; font: 700 20px/1.1 var(--display); }
+.ex-ssub { font-size: 12.5px; color: var(--muted); }
+.ex-len { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.ex-seg { min-height: 44px; display: grid; place-items: center; align-content: center; gap: 0; background: var(--well); border: 2px solid var(--line); font: 600 16px var(--display); cursor: pointer; }
+.ex-seg small { font: 500 10.5px var(--body); color: var(--muted); }
+.ex-seg.on { background: var(--ember); color: #1A1420; border-color: var(--ember-deep); }
+.ex-seg:disabled { opacity: .5; cursor: default; }
+.ex-team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ex-tslot { min-height: 96px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 6px 4px; background: var(--well); border: 2px dashed var(--line-hi); cursor: pointer; }
+.ex-tslot img { width: 48px; height: 48px; image-rendering: pixelated; object-fit: contain; }
+.ex-tslot span { font: 600 14px var(--display); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-tslot small { font-size: 11px; color: var(--muted); }
+.ex-tslot .plus { font-size: 26px; color: var(--muted); }
+.ex-tslot.has { border-style: solid; background: var(--panel); }
+.ex-tslot.r-rare { border-color: var(--r-rare); }
+.ex-tslot.r-epic { border-color: var(--r-epic); }
+.ex-tslot.r-legendary { border-color: var(--r-legendary); }
+.ex-tslot.picking { outline: 2px solid var(--ember); outline-offset: 1px; }
+.ex-best { justify-self: start; min-height: 40px; }
+.ex-bench { display: grid; gap: 4px; padding: 6px; background: var(--well); border: 1px solid var(--line); }
+.ex-bench > .mini { justify-self: start; min-height: 36px; }
+.ex-brow { width: 100%; min-height: 48px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: center; padding: 4px 6px; text-align: left; background: var(--panel); border: 1px solid var(--line); cursor: pointer; }
+.ex-brow.on { border-color: var(--ember); }
+.ex-btxt { min-width: 0; display: grid; }
+.ex-btxt b { font: 600 13.5px var(--display); }
+.ex-btxt small { font-size: 11.5px; color: var(--muted); }
+.ex-btxt .ex-bmet { color: var(--xp); }
+.ex-meter { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.ex-pips { display: flex; gap: 3px; }
+.ex-pips i { width: 18px; height: 10px; background: var(--line); border: 1px solid #0B0810; }
+.ex-meter b { font: 700 18px var(--display); }
+.ex-mult { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+.ex-hint { color: var(--bone); }
+.ex-haul { display: grid; gap: 4px; }
+.ex-hh { font: 600 11px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.ex-hl { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 7px; align-items: center; font-size: 13.5px; }
+.ex-hl img { width: 18px; height: 18px; image-rendering: pixelated; }
+.ex-hl.bonus { grid-template-columns: 1fr; color: var(--gold); font-size: 12.5px; }
+.ex-send { min-height: 48px; font-size: 16px; width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ex-mid .bar > i { transition: none; }
+}
 /* 60-gathering: small additions to the Gather tab for K5 (K8 redoes the tab). */
 #skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
@@ -893,7 +1005,10 @@ span.cf-d { font-weight: 600; }
 
 /* roster grid */
 .ros-count { font: 600 12px var(--display); color: var(--bone); letter-spacing: 0; margin-left: 2px; }
-.ros-sort { font-size: 12px !important; }
+.ros-sortbar { display: grid; grid-template-columns: auto repeat(3, 1fr); align-items: center; gap: 0; border: 2px solid #0B0810; background: var(--well); margin-bottom: 6px; }
+.ros-sortlbl { padding: 0 8px; font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ros-sortbar button { min-width: 0; min-height: 40px; background: none; border: 0; padding: 4px 2px; font: 600 12px var(--display); color: var(--muted); cursor: pointer; }
+.ros-sortbar button[aria-pressed="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -2px 0 var(--ember); }
 .ros-filt { display: grid; grid-template-columns: repeat(5, 1fr); border: 2px solid #0B0810; background: var(--well); }
 .ros-filt button { min-width: 0; min-height: 40px; background: none; border: 0; padding: 4px 2px; font: 600 12px var(--display); color: var(--muted); cursor: pointer; }
 .ros-filt button[aria-pressed="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -2px 0 var(--ember); }
@@ -1505,7 +1620,8 @@ function mix(a, b, t) {
 //
 // Gather nodes: CRAFT_NODE_RIGS holds rig sources for 'node:crystal' (geode), 'node:fibre' (fibre patch) and
 //   'node:herb' (herb bed), in the 13-art-enemies authoring format. 13-art-enemies.js builds them like the
-//   ore and wood nodes, so enemyFrames('node:herb', { tier }) bakes them. Part flag 5th value = min tier index.
+//   ore and wood nodes, so enemyFrames('node:herb', { tier }) bakes them. B1 creature format (see 13): draw(k)
+//   reads k.t (tier index 0-4) and uses AK shapes at call time (AK loads after this file).
 
 // ---------------- tier colours ----------------
 // UI tier colours per family (the spec's table). MAT[fam].col wins when it exists (K1 data), so the
@@ -1611,98 +1727,75 @@ function craftIcon(name, t) {
 registerIcons(CRAFT_ICONS);
 
 // ---------------- gather node rigs (built by 13-art-enemies.js) ----------------
-// mats 'tier' resolve through tier(key, tierIndex, E) where E(hex, lit) makes an emissive material.
+// B1 creature format: k.f(hex, kind) makes a material, k.t is the tier index (0-4), k.add(z, bone, mat, shape, opt).
 const CRAFT_NODE_RIGS = {
   // Geode: a split boulder with a crystal cluster; crystals glow from tier 3.
   'node:crystal': {
     name: 'Geode', anim: 'shake',
-    bones: { base: [0, -8, null] }, fixed: [],
-    mats: { rock: '#6E6878', rockD: '#3A3542', moss: '#4E6A3A', C: 'tier', Cd: 'tier', Cg: 'tier' },
-    parts: [
-      [1, 'base', 'rockD', ['p', 1, -22, 0, -20, -14, -12, -22, 0, -24, 12, -22, 20, -12, 22, 0]],
-      [3, 'base', 'rock', ['p', 1, -20, 0, -19, -12, -12, -19, -6, -12, -8, 0]],
-      [3, 'base', 'rock', ['p', 1, 8, 0, 7, -12, 12, -19, 19, -11, 20, 0]],
-      [3, 'base', 'Cd', ['p', 0, -7, 0, -9, -12, -6, -16, -4, -10, -2, 0]],
-      [3, 'base', 'C', ['p', 0, -4, 0, -3, -18, 0, -24, 3, -18, 4, 0]],
-      [3, 'base', 'Cd', ['p', 0, 0, -24, 3, -18, 4, 0, 1, 0]],
-      [3, 'base', 'C', ['p', 0, 2, 0, 5, -12, 8, -15, 9, -8, 7, 0]],
-      [3, 'base', 'Cg', ['r', -2, -18, 1, 5], 2],
-      [3, 'base', 'Cg', ['r', 5, -11, 1, 3], 3],
-      [3, 'base', 'moss', ['p', 1, -20, -1, -17, -6, -11, -4, -12, 0]],
-      [6, 'base', 'rock', ['p', 1, -26, 0, -24, -5, -18, -6, -15, 0]],
-      [6, 'base', 'C', ['p', 0, 13, 0, 14, -7, 16, -9, 17, 0], 1],
-      [6, 'base', 'C', ['p', 0, -12, 0, -14, -8, -11, -5], 4]
-    ],
+    bones: { base: [0, 0, null] },
     poses: { idle0: {}, idle1: {}, wind: { dx: 1 }, strike: { dx: -1 } },
-    tier(k, t, E) {
-      const c = CRAFT_TIER_COL.crystal[t], g = ['#FFFFFF', '#FFD080', '#D8E0FF', '#C8FAFF', '#FF9A80'][t];
-      if (k === 'C') return t >= 2 ? E(c, 1) : c;
-      if (k === 'Cd') return mix(c, '#3A2450', 0.35);
-      return E(g, t >= 2);
+    draw(k) {
+      const { P, Q } = AK, t = k.t, c = CRAFT_TIER_COL.crystal[t], lit = t >= 2;
+      const rock = k.f('#6E6878', 'stone'), rockD = k.f('#4A4452', 'stone'), moss = k.f('#4E6A3A', 'hair');
+      const cry = lit ? k.f(c, 'glow', { light: c }) : k.f(c, 'gem'), cryD = k.f(mix(c, '#3A2450', .35), 'gem'), glint = k.f(['#FFFFFF', '#FFE0A0', '#E8ECFF', '#E0FCFF', '#FFC0A8'][t], 'glow', { light: c });
+      k.add(1, 'base', rockD, P(-20, 0, -18, -12, -10, -19, 10, -19, 18, -11, 20, 0), { bev: 1.4 });
+      k.add(3, 'base', rock, P(-19, 0, -18, -10, -12, -16, -6, -10, -8, 0), { bev: 1.4 });
+      k.add(3, 'base', rock, P(8, 0, 7, -10, 12, -16, 18, -9, 19, 0), { bev: 1.4 });
+      k.add(2.5, 'base', cryD, P(-7, 0, -9, -11, -6, -15, -3.6, -9, -2, 0), { bev: .7 });
+      k.add(2.6, 'base', cry, P(-4, 0, -3, -17, 0, -23, 3, -17, 4, 0), { bev: .7, lr: 14, pulse: t >= 4 });
+      k.add(2.65, 'base', cryD, P(0, -23, 3, -17, 4, 0, 1, 0), { nl: 1 });
+      k.add(2.7, 'base', cry, P(2, 0, 5, -11, 8, -14, 9, -7, 7, 0), { bev: .7, lr: 10 });
+      k.add(2.8, 'base', glint, Q(-2, -17, 1, 3), { nl: 1, nolight: !lit, lr: 5 });
+      if (t >= 1) k.add(2.8, 'base', glint, Q(5, -10, 1, 2), { nl: 1, nolight: !lit, lr: 5 });
+      k.add(3.2, 'base', moss, P(-18, -1, -15, -5, -10, -3.4, -11, 0), { nl: 1 });
+      k.add(6, 'base', rock, P(-24, 0, -22, -4.6, -17, -5.6, -14, 0), { bev: 1 });
+      if (t >= 1) k.add(6, 'base', cry, P(12, 0, 13, -6.4, 15, -8, 16, 0), { bev: .6, lr: 8 });
+      if (t >= 3) k.add(6, 'base', cry, P(-12, 0, -14, -7, -10.4, -4.4), { lr: 8 });
     }
   },
   // Fibre patch: a clump of tall stalks with seed heads; wisps of silk from tier 4.
   'node:fibre': {
     name: 'Fibre patch', anim: 'shake',
-    bones: { base: [0, 0, null], tops: [0, -14, 'base'] }, fixed: [],
-    mats: { soil: '#3A2E2A', F: 'tier', Fd: 'tier', Fh: 'tier', Fg: 'tier' },
-    parts: [
-      [1, 'base', 'soil', ['e', 0, -1, 17, 3]],
-      [2, 'tops', 'Fd', ['p', 0, -12, 0, -16, -26, -14, -27, -9, 0]],
-      [2, 'tops', 'Fd', ['p', 0, 8, 0, 15, -24, 17, -23, 12, 0]],
-      [3, 'tops', 'F', ['p', 0, -8, 0, -10, -32, -7, -33, -4, 0]],
-      [3, 'tops', 'F', ['p', 0, -2, 0, -1, -36, 2, -36, 2, 0]],
-      [3, 'tops', 'F', ['p', 0, 4, 0, 8, -30, 10, -29, 7, 0]],
-      [3, 'tops', 'Fd', ['p', 0, -16, 0, -21, -18, -18, -18, -13, 0]],
-      [3, 'tops', 'Fd', ['p', 0, 12, 0, 19, -14, 21, -13, 15, 0]],
-      [4, 'tops', 'Fh', ['e', -8.5, -34, 2, 4]],
-      [4, 'tops', 'Fh', ['e', 0.5, -38, 2, 4.5]],
-      [4, 'tops', 'Fh', ['e', 9, -32, 2, 4]],
-      [4, 'tops', 'Fh', ['e', -15, -28, 1.6, 3.4]],
-      [4, 'tops', 'Fh', ['e', 16, -25, 1.6, 3.4]],
-      [4, 'tops', 'Fg', ['p', 1, -6, -24, 0, -27, 6, -23, 11, -26], 3],
-      [4, 'tops', 'Fg', ['e', 0.5, -39, 0.8, 1.2], 4], [4, 'tops', 'Fg', ['e', -8.5, -35, 0.8, 1.2], 4]
-    ],
-    poses: { idle0: {}, idle1: { tops: { rot: 0.02 } }, wind: { tops: { rot: -0.04 } }, strike: { tops: { rot: 0.06 }, dx: 1 } },
-    tier(k, t, E) {
-      const c = CRAFT_TIER_COL.fibre[t];
-      if (k === 'F') return c;
-      if (k === 'Fd') return mix(c, '#3A2450', 0.3);
-      if (k === 'Fh') return mix(c, '#FFF4DC', 0.3);
-      return E(['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'][t], t >= 3);
+    bones: { base: [0, 0, null], tops: [0, -12, 'base'] },
+    poses: { idle0: {}, idle1: { tops: { rot: .03 } }, wind: { tops: { rot: -.05 } }, strike: { tops: { rot: .07 }, dx: 1 } },
+    draw(k) {
+      const { P, E, C, Q } = AK, t = k.t, c = CRAFT_TIER_COL.fibre[t];
+      const soil = k.f('#3A2E2A', 'stone'), F = k.f(c, 'cloth'), Fd = k.f(mix(c, '#3A2450', .3), 'cloth'), Fh = k.f(mix(c, '#FFF4DC', .35), 'hair'), g = ['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'][t];
+      const Fg = k.f(g, 'glow', { light: g });
+      k.add(1, 'base', soil, E(0, -1.2, 16, 2.6));
+      const stalk = (z, x0, x1, top, mat, head) => {
+        k.add(z, 'tops', mat, P(x0 - 1, 0, x1 - .6, top, x1 + .6, top, x0 + 1, 0));
+        if (head) k.add(z + .01, 'tops', Fh, E(x1, top - 2.6, 1.6, 3.2, (x1 - x0) * .04), { sep: 1 });
+      };
+      stalk(2, -11, -15, -24, Fd, 1); stalk(2, 9, 15, -22, Fd, 1);
+      stalk(3, -7, -9, -30, F, 1); stalk(3, -1, 0, -34, F, 1); stalk(3, 5, 8, -28, F, 1);
+      stalk(3.2, -14, -19, -15, Fd, 0); stalk(3.2, 12, 18, -12, Fd, 0); stalk(3.3, -3, -5, -16, F, 0); stalk(3.3, 3, 6, -14, F, 0);
+      if (t >= 3) k.add(4, 'tops', Fg, C(-8, -23, .5, 8, -21, .5), { nl: 1, lr: 8 });
+      if (t >= 4) { k.add(4.1, 'tops', Fg, Q(0, -39, 1, 2), { nl: 1, lr: 6 }); k.add(4.1, 'tops', Fg, Q(-9, -35, 1, 2), { nl: 1, lr: 6 }); }
     }
   },
   // Herb bed: low leafy plants with flower heads; the Lantern Lily glows.
   'node:herb': {
     name: 'Herb bed', anim: 'shake',
-    bones: { base: [0, 0, null], leaves: [0, -8, 'base'] }, fixed: [],
-    mats: { soil: '#3A2E2A', stem: '#3E6A3A', H: 'tier', Hd: 'tier', B: 'tier', Bg: 'tier' },
-    parts: [
-      [1, 'base', 'soil', ['e', 0, -1.5, 19, 3.5]],
-      [2, 'leaves', 'Hd', ['e', -11, -7, 7, 4]],
-      [2, 'leaves', 'Hd', ['e', 11, -8, 7, 4.5]],
-      [3, 'leaves', 'stem', ['r', -6, -22, 1.4, 20]],
-      [3, 'leaves', 'stem', ['r', 5, -18, 1.4, 16]],
-      [3, 'leaves', 'stem', ['r', -0.5, -26, 1.4, 24]],
-      [3, 'leaves', 'H', ['p', 1, -16, -3, -12, -12, -6, -9, -8, -2]],
-      [3, 'leaves', 'H', ['p', 1, 16, -3, 13, -12, 6, -9, 8, -2]],
-      [3, 'leaves', 'H', ['p', 1, -6, -2, -3, -16, 0, -12, 1, -2]],
-      [3, 'leaves', 'H', ['p', 1, 4, -2, 3, -15, 7, -12, 9, -2]],
-      [4, 'leaves', 'Hd', ['p', 1, -1, -18, -5, -21, -4, -17]],
-      [4, 'leaves', 'Hd', ['p', 1, 1, -14, 5, -16, 4, -13]],
-      [4, 'leaves', 'B', ['e', -5.3, -23, 3, 2.6]],
-      [4, 'leaves', 'B', ['e', 0.2, -27, 3.2, 2.8]],
-      [4, 'leaves', 'B', ['e', 5.7, -19, 3, 2.6]],
-      [4, 'leaves', 'Bg', ['e', 0.2, -27.5, 1, 1], 2],
-      [4, 'leaves', 'Bg', ['e', -5.3, -23.4, 0.9, 0.9], 4], [4, 'leaves', 'Bg', ['e', 5.7, -19.4, 0.9, 0.9], 4]
-    ],
-    poses: { idle0: {}, idle1: { leaves: { dy: -0.5 } }, wind: { leaves: { dx: -1 } }, strike: { leaves: { dx: 1 }, dx: 1 } },
-    tier(k, t, E) {
-      const c = ['#B8A0E0', '#E8D870', '#E05A5A', '#EAF8F4', '#FFD27A'][t];
-      if (k === 'H') return ['#7FB86A', '#A8B89A', '#6A7A44', '#9CC8BC', '#6FA85A'][t];
-      if (k === 'Hd') return ['#4E7A3E', '#6E7A62', '#4A5430', '#6A9A90', '#3E7A3A'][t];
-      if (k === 'B') return t >= 3 ? E(c, t >= 4) : c;
-      return E(mix(c, '#FFFFFF', 0.5), t >= 3);
+    bones: { base: [0, 0, null], leaves: [0, -6, 'base'] },
+    poses: { idle0: {}, idle1: { leaves: { dy: -.5 } }, wind: { leaves: { dx: -1 } }, strike: { leaves: { dx: 1 }, dx: 1 } },
+    draw(k) {
+      const { P, E, R, Q } = AK, t = k.t, fc = ['#B8A0E0', '#E8D870', '#E05A5A', '#EAF8F4', '#FFD27A'][t];
+      const soil = k.f('#3A2E2A', 'stone'), stem = k.f('#3E6A3A', 'wood');
+      const H = k.f(['#7FB86A', '#A8B89A', '#6A7A44', '#9CC8BC', '#6FA85A'][t], 'hair'), Hd = k.f(['#4E7A3E', '#6E7A62', '#4A5430', '#6A9A90', '#3E7A3A'][t], 'hair');
+      const B = t >= 3 ? k.f(fc, 'glow', { light: fc }) : k.f(fc, 'cloth'), Bg = k.f(mix(fc, '#FFFFFF', .5), 'glow', { light: fc });
+      k.add(1, 'base', soil, E(0, -1.2, 17, 2.8));
+      k.add(2, 'leaves', Hd, E(-10, -5, 6.6, 3.8));
+      k.add(2, 'leaves', Hd, E(10, -5.6, 6.6, 4));
+      for (const [x, h] of [[-5.4, 18], [.2, 22], [5.6, 14]]) k.add(2.5, 'leaves', stem, R(x - .6, -h, 1.3, h));
+      k.add(3, 'leaves', H, P(-15, -1, -12, -10, -6, -8, -7.4, -1), { bev: .8 });
+      k.add(3, 'leaves', H, P(15, -1, 12.6, -10.4, 6, -8, 7.4, -1), { bev: .8 });
+      k.add(3.1, 'leaves', H, P(-6, -1, -3, -13.6, 0, -10, 1, -1), { bev: .8 });
+      k.add(3.1, 'leaves', H, P(3, -1, 3, -12.4, 7, -10, 8.6, -1), { bev: .8 });
+      k.add(3.2, 'leaves', Hd, P(-1, -16, -5, -19, -4, -15.4), { bev: .6 });
+      for (const [x, y] of [[-5.4, -20], [.2, -24], [5.6, -16]]) k.add(4, 'leaves', B, E(x, y, 2.8, 2.4), { sep: 1, lr: 10, pulse: t >= 4 });
+      if (t >= 2) k.add(4.1, 'leaves', Bg, Q(0, -25, 1, 1), { nl: 1, nolight: t < 3, lr: 5 });
+      if (t >= 4) { k.add(4.1, 'leaves', Bg, Q(-6, -21, 1, 1), { nl: 1, lr: 5 }); k.add(4.1, 'leaves', Bg, Q(5, -17, 1, 1), { nl: 1, lr: 5 }); }
     }
   }
 };
@@ -3105,40 +3198,433 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
 }
 
 // ---- src/js/13-art-enemies.js ----
-// 13-art-enemies: Hi-bit rigs for monsters, zone bosses, the world wyrm and gather nodes.
-// Data plus pure maths only (no DOM, no canvas): it loads in Node. 60b-baker.js bakes it via
-// enemyFrames(key, variant). Enemies face left (no flip needed).
+// 13-art-enemies: B1 monsters, elders (zone bosses), the raid wyrm and the ore and wood nodes.
+// Data plus pure maths only (no DOM, no canvas): it loads in Node. 60b-baker.js bakes a rig with
+// enemyFrames(key, variant) through the same passes as the party (3 tones per material, section
+// lines, cast shadow, despeckle, 1 art px ink outline), drawn at 2x. Guide: docs/design/art-direction.md.
 //
 // Exposed: ENEMY_RIGS (one global). Keys: slime, bat, bones, beetle, spore, golem, wraith, wyrm,
-//   'node:ore', 'node:wood'. Each value is a baker rig, or a function (variant) -> rig:
-//   { name, anim, hover?, parts, mats, metal, piv, parent, ground, poses, S?, variants?, swap?, box }
-//   - parts: [z, bone, mat, shape] (the characters.html format; no minRarity left after build)
-//     z: 0 back, 1 back limb, 2 legs, 3 body, 4 head, 5 off-hand, 6 front limb, 7 weapon
-//     shape: ['e', cx, cy, rx, ry] | ['r', x, y, w, h] | ['p', smooth, x, y, x, y, ...]
-//   - mats: key -> '#hex' (ramped and hue-shifted by the baker) | { emit, light? }. Keys listed in
-//     rig.metal get metal ramps. 'void' and 'gold' come from FIXED (never hue-shifted).
-//   - piv[bone] = [x, y]; parent[bone] = parent bone. Bones never use the character bone names
-//     head / armF / armB (the baker treats those specially): heads are 'face', limbs 'limbF' / 'limbB'.
-//   - poses: idle0, idle1, wind, strike. Numbers up / lean / dx, plus per-bone { rot, dx, dy }
-//     (rot in radians about piv, positive = clockwise on screen; children follow parents).
-//     Hovering rigs lift their root bone with { dy }.
-//   - variants.elder: zone boss look, { S: 1.4, parts: [...] } (crown, horns, extra parts).
-//   - swap (bones only): { rest, drawn } part lists; frames whose pose has drawn: 1 should use
-//     parts minus swap.rest plus swap.drawn (the archer's drawn bowstring and arrow).
-//   - box: [x0, y0, x1, y1] art-px bounds over all poses (unscaled), for layout.
-// Variants: 'elder' | { elder: true, hue } for monsters (hue = zone-cycle shift in degrees);
-//   wyrm: { gen } picks the raid generation palette (WYRM_GENS order matches BOSSES); pass hue as
-//   well to recolour repeats (gen > 6). Nodes: { tier: 1..5 } recolours the ore vein / leaves.
+//   'node:ore', 'node:wood', plus 'node:crystal', 'node:fibre', 'node:herb' from 11-art-craft.js.
+//   Each value: { name, anim, hover, b1: 1, parts(frame, variant) -> kit pieces, box, elderBox? }
+//     frame: idle0 | idle1 | wind | strike. box: [x0, y0, x1, y1] art px over every frame (feet at 0).
+//   variant: monsters { elder, hue } (hue = zone-cycle shift in degrees), wyrm { gen, hue, S },
+//     nodes { tier: 1-5 }. S scales the whole drawing (the stage fits the wyrm to the screen).
+//
+// Authoring (creatures): src = { name, anim, hover, bones: { name: [pivX, pivY, parent] }, ground,
+//   poses: { idle0, idle1, wind, strike }, draw(k, pose) }. Creatures are drawn FACING LEFT (toward
+//   the party) in art px with the feet at (0, 0). k.add(z, bone, mat, shape, opt) as in the kit
+//   (12a); shapes are AK.E / C / P / R / Q. A pose moves bones ({ rot (radians, clockwise), dx, dy })
+//   and the whole figure (bob: down, lean: sideways on non-ground bones, dx), and draw() may read
+//   its own numbers (a slime's squash). Materials: k.c(hex, kind) follows the zone hue, k.f(hex, kind)
+//   is fixed, k.glow(hex) emits light. Elders: k.elder is true and every piece is scaled by k.S.
+// Humanoids (Rattlebones) use the character kit (AK.makeKit, facing right) and are mirrored.
+// Sizes next to the ~35 art px party (src.scale applied): slime 24, bat 26 (hovering), beetle 25, spore 32, bones 36,
+// wraith 35 (hovering), golem 45. Elders are 1.3x and crowned. Wyrm about 80 x 66 at S = 1.
 
 const ENEMY_RIGS = {};
 
 {
-  const rgb = hex => { const n = parseInt(hex.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; };
-  const E = (hex, lit) => lit ? { emit: hex, light: rgb(hex) } : { emit: hex };
-  const VOID = 'FIXED';
-  const GOLD = 'FIXED';
-  const IRON = { col: '#7C8290', metal: 1 };
-  const SRC = {};
+  const { m, E, P, C, R, Q, rotP, arcPts, hueShift, mix, makeKit, ANIMS, shapeBox, legs, arm, torsoShape, belt, head } = AK;
+  const ELDER_S = 1.3;
+  const INKC = '#1A1420';
+
+  // ---------- the creature kit ----------
+  function matKit(k, v) {
+    const hue = v.hue || 0, sh = hex => hue ? hueShift(hex, hue) : hex;
+    k.c = (hex, kind = 'cloth', x) => m(sh(hex), kind, x);
+    k.f = (hex, kind = 'cloth', x) => m(hex, kind, x);
+    k.glow = (hex, fixed) => { const h = fixed ? hex : sh(hex); return m(h, 'glow', { light: h }); };
+    k.gold = m('#E4B44A', 'metal'); k.ink = m(INKC, 'flat');
+    k.gem = m('#FF5A48', 'glow', { light: '#FF7A50' });
+    // lit eye or detail: a whole-pixel stamp that glows
+    k.eye = (z, bone, x, y, w, h, mat, lr) => k.add(z, bone, mat, Q(x, y, w, h), { nl: 1, lr: lr || 5 });
+    return k;
+  }
+  // mirror (humanoids) and scale a finished shape
+  function flipScale(s, S, flip) {
+    const fx = flip ? -1 : 1;
+    switch (s.t) {
+      case 'e': return { t: 'e', cx: s.cx * S * fx, cy: s.cy * S, rx: s.rx * S, ry: s.ry * S, a: s.a * fx };
+      case 'c': return { t: 'c', x1: s.x1 * S * fx, y1: s.y1 * S, r1: s.r1 * S, x2: s.x2 * S * fx, y2: s.y2 * S, r2: s.r2 * S };
+      case 'p': { const o = []; for (let i = 0; i < s.pts.length; i += 2) o.push(s.pts[i] * S * fx, s.pts[i + 1] * S); return { t: 'p', pts: o }; }
+      case 'q': { const cx = (s.x + s.w / 2) * S * fx, cy = (s.y + s.h / 2) * S; return { t: 'q', x: Math.round(cx - s.w / 2), y: Math.round(cy - s.h / 2), w: s.w, h: s.h }; }
+    }
+    return s;
+  }
+  function kit(src, pose, v) {
+    const bones = src.bones || {}, ground = src.ground || [];
+    const S = (v.elder ? ELDER_S : 1) * (v.S || 1) * (src.scale || 1);
+    const k = matKit({ parts: [], ord: 0, pose, v, S, elder: !!v.elder, t: Math.max(0, Math.min(4, ((v.tier | 0) || 1) - 1)) }, v);
+    const onGround = bone => { for (let b = bone; b; b = bones[b] && bones[b][2]) if (ground.includes(b)) return true; return false; };
+    const xf = (x, y, bone) => {
+      let a = 0;
+      for (let b = bone; b && bones[b]; b = bones[b][2]) {
+        const o = pose[b];
+        if (o && typeof o === 'object') { if (o.rot) { [x, y] = rotP(x, y, bones[b], o.rot); a += o.rot; } x += o.dx || 0; y += o.dy || 0; }
+      }
+      if (!onGround(bone)) { x += pose.lean || 0; y += (pose.bob || 0) - (src.lift || 0); }
+      return [(x + (pose.dx || 0)) * S, y * S, a];
+    };
+    const map = (s, bone) => {
+      switch (s.t) {
+        case 'e': { const [cx, cy, a] = xf(s.cx, s.cy, bone); return E(cx, cy, s.rx * S, s.ry * S, s.a + a); }
+        case 'c': { const [x1, y1] = xf(s.x1, s.y1, bone), [x2, y2] = xf(s.x2, s.y2, bone); return C(x1, y1, s.r1 * S, x2, y2, s.r2 * S); }
+        case 'p': { const o = []; for (let i = 0; i < s.pts.length; i += 2) { const q = xf(s.pts[i], s.pts[i + 1], bone); o.push(q[0], q[1]); } return { t: 'p', pts: o }; }
+        case 'q': { const [cx, cy] = xf(s.x + s.w / 2, s.y + s.h / 2, bone); return Q(Math.round(cx - s.w / 2), Math.round(cy - s.h / 2), s.w, s.h); }
+      }
+      return s;
+    };
+    k.add = (z, bone, mat, s, o = {}) => { const p = { z, ord: k.ord++, bone, m: mat, s: map(s, bone), o }; k.parts.push(p); return p; };
+    return k;
+  }
+  // Elder crown: a gold band with three points and a red gem, base centre (cx, by), width w.
+  function crown(k, z, bone, cx, by, w, o = {}) {
+    const h = o.h || 4.6, g = o.mat || k.gold;
+    const c = k.add(z, bone, g, P(cx - w / 2, by, cx + w / 2, by, cx + w / 2 + .5, by - h, cx + w * .22, by - h * .5, cx, by - h * 1.25, cx - w * .22, by - h * .5, cx - w / 2 - .5, by - h), { sep: 1, bev: .7 });
+    k.add(z + .01, bone, o.gem || k.gem, Q(Math.round(cx - .5), Math.round(by - h * .55), 1, 1), { nl: 1, lr: 6 });
+    return c;
+  }
+
+  function boxOf(parts) {
+    const b = [1e9, 1e9, -1e9, -1e9];
+    for (const p of parts) { const q = shapeBox(p.s); b[0] = Math.min(b[0], q[0]); b[1] = Math.min(b[1], q[1]); b[2] = Math.max(b[2], q[2]); b[3] = Math.max(b[3], q[3]); }
+    return [Math.floor(b[0]), Math.floor(b[1]), Math.ceil(b[2]), Math.ceil(b[3])];
+  }
+  const FRAMES = ['idle0', 'idle1', 'wind', 'strike'];
+  function unionBox(rig, v) { let all = []; for (const f of FRAMES) all = all.concat(rig.parts(f, v)); return boxOf(all); }
+  function poseOf(src, f) { return Object.assign({}, src.poses[f] || src.poses.idle0); }
+  function creature(src, elder) {
+    const rig = { name: src.name, anim: src.anim, hover: !!src.hover, b1: 1, src };
+    rig.parts = (f, v) => { v = v || {}; const pose = poseOf(src, f), k = kit(src, pose, v); src.draw(k, pose); return k.parts; };
+    rig.box = unionBox(rig, {});
+    if (elder) rig.elderBox = unionBox(rig, { elder: true });
+    return rig;
+  }
+  // Humanoid: the character kit (facing right), then mirrored and scaled.
+  function humanoid(src) {
+    const rig = { name: src.name, anim: src.anim, hover: !!src.hover, b1: 1, src };
+    rig.parts = (f, v) => {
+      v = v || {};
+      const pose = Object.assign({}, f === 'idle1' ? { bob: 1 } : f === 'wind' || f === 'strike' ? ANIMS[src.anim][f] : {});
+      const k = matKit(makeKit(src.def, pose), v);
+      k.elder = !!v.elder; k.S = (v.elder ? ELDER_S : 1) * (v.S || 1);
+      src.draw(k, pose);
+      for (const p of k.parts) p.s = flipScale(p.s, k.S, true);
+      return k.parts;
+    };
+    rig.box = unionBox(rig, {}); rig.elderBox = unionBox(rig, { elder: true });
+    return rig;
+  }
+
+  // ================= Moss Slime: a glossy green ooze with a sprout =================
+  const slime = {
+    name: 'Moss Slime', anim: 'lunge', scale: 1.25,
+    bones: { body: [0, 0, null] },
+    poses: { idle0: { sq: 0 }, idle1: { sq: .09 }, wind: { sq: .2, lean: 2 }, strike: { sq: -.14, lean: -3 } },
+    draw(k, po) {
+      const sq = po.sq || 0, w = 13 * (1 + sq * .7), h = 9.6 * (1 - sq), top = -2 * h + .6;
+      const ooze = k.c('#5CBE62', 'slime'), core = k.c('#2F8A52', 'slime'), moss = k.c('#3F6A2A', 'hair'), leaf = k.c('#A8D45A', 'cloth'), stem = k.c('#4E7A2E', 'wood');
+      // sprout behind the moss cap (a crown for the elder)
+      if (!k.elder) {
+        k.add(2.5, 'body', stem, C(1, top + 1.5, .7, 2, top - 3.4, .6));
+        k.add(2.6, 'body', leaf, E(-.6, top - 3.6, 2.6, 1.2, .5));
+        k.add(2.6, 'body', leaf, E(4.4, top - 3.8, 2.4, 1.1, -.55));
+      }
+      k.add(2.9, 'body', ooze, E(0, -1.8, w + 1.6, 2.4), { g: 'ooze' });
+      const dome = k.add(3, 'body', ooze, E(0, -h + .4, w, h), { g: 'ooze' });
+      k.add(3.1, 'body', core, E(1.5, -h * .72, w * .5, h * .46), { clip: dome, nl: 1 });
+      k.add(3.2, 'body', moss, E(2, top + 1.2, w * .72, 3.4), { clip: dome });
+      // a skull floats in the elder's ooze
+      if (k.elder) {
+        const bn = k.f('#DCD2BC', 'cloth');
+        k.add(3.15, 'body', bn, E(4, -h * .7, 2.8, 2.5), { clip: dome, nl: 1 });
+        k.add(3.16, 'body', k.ink, Q(2, Math.round(-h * .72), 1, 1), { nl: 1 }); k.add(3.16, 'body', k.ink, Q(4, Math.round(-h * .72), 1, 1), { nl: 1 });
+      }
+      // motes of light in the core, a wet sheen, lit eyes and a mouth
+      k.eye(3.3, 'body', 3, Math.round(-h * .45), 1, 1, k.glow('#E8FFB0'), 4);
+      k.eye(3.3, 'body', 7, Math.round(-h * .9), 1, 1, k.glow('#E8FFB0'), 4);
+      k.add(3.4, 'body', k.f('#F2FFE8', 'flat'), Q(Math.round(-w * .6), Math.round(-h * 1.25), 2, 1), { nl: 1 });
+      k.add(3.4, 'body', k.f('#F2FFE8', 'flat'), Q(Math.round(-w * .72), Math.round(-h * 1.0), 1, 1), { nl: 1 });
+      const ey = Math.round(-h * 1.02);
+      k.add(4, 'body', k.ink, Q(-8, ey, 1, 2), { nl: 1 }); k.add(4, 'body', k.ink, Q(-4, ey, 1, 2), { nl: 1 });
+      k.add(4, 'body', k.ink, Q(-7, ey + 3, 3, 1), { nl: 1 });
+      if (k.elder) crown(k, 4.2, 'body', 1, top + 1.4, 9);
+    }
+  };
+
+  // ================= Cave Bat: violet fur, rose wings, red eyes (hovers) =================
+  const wing = (k, z, bone, x0, dir, mem, bone2, o = {}) => {
+    const s = dir, y0 = -24;
+    const pts = [x0, y0, x0 + 6 * s, -31, x0 + 15 * s, -34.5, x0 + 13 * s, -28, x0 + 10.5 * s, -29.6, x0 + 8.4 * s, -24.6, x0 + 5.6 * s, -26.4, x0 + 1.5 * s, -20];
+    k.add(z, bone, mem, P(pts), { bev: .7, tone: o.tone || 0 });
+    k.add(z + .01, bone, bone2, C(x0, y0, 1.1, x0 + 6 * s, -31, .9), { tone: o.tone || 0 });
+    k.add(z + .02, bone, bone2, C(x0 + 6 * s, -31, .9, x0 + 15 * s, -34.5, .55), { tone: o.tone || 0 });
+    k.add(z + .03, bone, k.c('#E8DCC8'), Q(Math.round(x0 + 15.5 * s - .5), -36, 1, 1), { nl: 1 });
+  };
+  const bat = {
+    name: 'Cave Bat', anim: 'lunge', hover: 1, scale: 1.2,
+    bones: { body: [0, -22, null], head: [-1, -26, 'body'], wingF: [1, -24, 'body'], wingB: [2, -24, 'body'] },
+    poses: {
+      idle0: {}, idle1: { bob: 1.2, wingF: { rot: -.55 }, wingB: { rot: .5 } },
+      wind: { lean: 3, bob: -2, wingF: { rot: .25 }, wingB: { rot: -.25 }, head: { rot: .15 } },
+      strike: { lean: -4, bob: 2, wingF: { rot: -.7 }, wingB: { rot: .6 }, head: { rot: -.2 } }
+    },
+    draw(k) {
+      const fur = k.c('#4E3C78', 'hair'), furL = k.c('#8A6CC0', 'cloth'), mem = k.c('#9A4E86', 'leather'), pink = k.c('#E09AAE', 'skin'), claw = k.c('#E8DCC8');
+      wing(k, .5, 'wingB', 3, 1, mem, fur, { tone: 1 });
+      k.add(1, 'body', claw, Q(-1, -16, 1, 2), { nl: 1 }); k.add(1, 'body', claw, Q(1, -16, 1, 2), { nl: 1 });
+      const body = k.add(3, 'body', fur, E(.5, -21.5, 5, 6));
+      k.add(3.1, 'body', furL, E(-1.6, -20.5, 2.8, 4.2), { clip: body });
+      wing(k, 3.5, 'wingF', 0, -1, mem, fur);
+      // head: ears, snout, lit eyes, fangs
+      k.add(3.8, 'head', fur, P(-5.5, -29.5, -6.8, -36, -2.4, -31));
+      k.add(3.8, 'head', fur, P(-.6, -31, 1, -36.6, 2.2, -29.8));
+      k.add(3.85, 'head', pink, P(-5.3, -31, -6.1, -34.4, -3.6, -31.4), { nl: 1 });
+      const hd = k.add(4, 'head', fur, E(-2, -28, 4.3, 3.8));
+      k.add(4.1, 'head', furL, E(-5.2, -26.6, 2, 1.6), { clip: hd });
+      k.eye(4.2, 'head', -5, -29, 1, 1, k.glow('#FF4A4A'), 6); k.eye(4.2, 'head', -2, -29, 1, 1, k.glow('#FF4A4A'), 6);
+      k.add(4.2, 'head', k.f('#F4F0E8', 'flat'), Q(-6, -26, 1, 1), { nl: 1 }); k.add(4.2, 'head', k.f('#F4F0E8', 'flat'), Q(-4, -26, 1, 1), { nl: 1 });
+      if (k.elder) {
+        const horn = k.c('#D8CFB8', 'cloth');
+        k.add(3.7, 'head', horn, P(-3.4, -31, -7, -34, -10.5, -33, -7.4, -35.6, -2, -32.4));
+        k.add(3.7, 'head', horn, P(.2, -31.2, 3.2, -35, 7, -35.6, 3.6, -36.6, -1, -32));
+        crown(k, 4.3, 'head', -2, -31, 6.4, { h: 3.8 });
+        k.add(4.3, 'head', k.gold, Q(1, -27, 1, 2), { nl: 1 });
+      }
+    }
+  };
+
+  // ================= Rattlebones: a skeleton archer in a rusty pot helm (character kit) =================
+  const bones = {
+    name: 'Rattlebones', anim: 'shoot',
+    def: { hs: 1.02, ws: .82, hd: 1.04, armW: .62, handS: .8, aF: -.15, aB: -.85 },
+    draw(k, po) {
+      const bn = k.c('#DCD4C0', 'cloth'), bnD = k.c('#A89C88', 'cloth'), gap = k.f('#2A2230', 'flat'), iron = k.c('#7E8494', 'metal'), ironD = k.c('#5A6070', 'metal'), rust = k.c('#9A5230', 'leather'), cloth = k.c('#7A3A4A', 'cloth'), lea = k.c('#5A3C2A', 'leather'), wood = k.c('#6E4A30', 'wood'), soul = k.glow('#8FE8FF');
+      const u = k.u;
+      if (k.elder) k.add(.2, 'up', cloth, P(-k.sw * .8, k.shY + .5, k.sw * .5, k.shY, k.sw * .2, k.hiY, -k.sw * .2, -3, -k.sw * 1.1, -5, -k.sw * 1.6, -2, -k.sw * 2, k.waY), { bev: .8, tone: 1 });
+      // quiver on the back
+      const qx = -k.sw * .55, qy = k.shY + 1;
+      k.add(.5, 'up', lea, P(qx - 2, qy - 1, qx + .2, qy - 2.2, qx + 3.2, qy + 9, qx + 1.2, qy + 10), { bev: .8 });
+      k.add(.45, 'up', k.c('#C8B8A0'), P(qx - 3, qy - 3.6, qx - 1.4, qy - 4.8, qx - .2, qy - 1.6, qx - 1.6, qy - 1));
+      arm(k, 'B', bnD, bnD, {});
+      // legs: thin bones with knees, iron sabatons
+      for (const sd of ['B', 'F']) {
+        const x = sd === 'F' ? k.fx : k.bx, z = sd === 'B' ? 1.8 : 2, mat = sd === 'B' ? bnD : bn;
+        k.add(z, 'legs', mat, C(x, k.hiY, .95, x + (sd === 'F' ? .3 : -.3), -k.bootH * .8, .85), { g: 'leg' + sd });
+        k.add(z + .01, 'legs', mat, E(x + .2, k.hiY * .5, 1.25, 1.1), { g: 'leg' + sd });
+      }
+      legs(k, null, ironD, {});
+      // pelvis, spine, ribs
+      k.add(2.6, 'up', bn, E(0, k.hiY + .3, k.hipW * .95, 1.7));
+      k.add(2.7, 'up', bnD, C(0, k.waY - 1, .9, 0, k.hiY, .9));
+      const ribs = k.add(3, 'up', bn, torsoShape(k, { bot: k.waY - .6, ww: .78 }), { bev: 1.1 });
+      k.add(3.05, 'up', gap, R(-k.sw, k.shY + 2.6, k.sw * 2, .9), { clip: ribs, nl: 1 });
+      k.add(3.05, 'up', gap, R(-k.sw, k.shY + 4.9, k.sw * 2, .9), { clip: ribs, nl: 1 });
+      k.add(3.05, 'up', gap, R(-.4, k.shY + 1, .9, 6), { clip: ribs, nl: 1 });
+      if (k.elder) k.eye(3.1, 'up', 0, Math.round(k.shY + 3), 1, 2, soul, 7);
+      // tattered loincloth on a belt
+      k.add(3.2, 'up', cloth, P(-k.hipW, k.waY + .4, k.hipW, k.waY + .4, k.hipW * .95, k.hiY + 3.6, k.hipW * .35, k.hiY + 2.2, 0, k.hiY + 4.6, -k.hipW * .5, k.hiY + 2.4, -k.hipW * 1.05, k.hiY + 4));
+      belt(k, lea, { buckle: iron, w: 1.6 });
+      // skull: sockets with a soul light, nose, teeth
+      head(k, bn, { noNeck: true });
+      k.add(3.9, 'up', bnD, C(k.hx - .3, k.chin - 1, .9, k.hx - .3, k.shY + .5, .9));
+      const ey = Math.round(k.hy - k.hh * .05), e1 = Math.round(k.hx + k.hw * .44), e0 = Math.round(k.hx - k.hw * .2);
+      k.add(4.5, 'head', gap, Q(e1 - 1, ey, 2, 2), { nl: 1 }); k.add(4.5, 'head', gap, Q(e0 - 1, ey, 2, 2), { nl: 1 });
+      k.eye(4.6, 'head', e1, ey, 1, 1, soul, 6); k.eye(4.6, 'head', e0, ey, 1, 1, soul, 5);
+      k.add(4.5, 'head', gap, Q(e1 + 1, ey + 2, 1, 1), { nl: 1 });
+      k.add(4.5, 'head', gap, Q(e0, ey + 4, 4, 1), { nl: 1 });
+      // rusty pot helm (an iron crown for the elder)
+      const hx = k.hx, hy = k.hy, hw = k.hw, hh = k.hh;
+      const helm = k.add(4.6, 'head', iron, P(arcPts(hx - .2, hy - hh * .25, hw * 1.08, hh * .98, Math.PI, Math.PI * 2, 10)), { sep: 1 });
+      k.add(4.65, 'head', rust, E(hx + hw * .5, hy - hh * .8, 1.6, 1.2), { clip: helm, nl: 1 });
+      k.add(4.7, 'head', ironD, R(hx - hw * 1.35, hy - hh * .32, hw * 2.7, 1.3), { sep: 1 });
+      if (k.elder) crown(k, 4.8, 'head', hx - .2, hy - hh * 1.05, 8, { h: 4 });
+      // iron pauldron, front arm, the bow
+      k.add(6.8, 'armF', iron, E(k.pF[0] - .2, k.pF[1] - .5, 2.6, 2.1), { sep: 1 });
+      arm(k, 'F', bn, bn, {});
+      const bh = k.H * .44, dr = !!po.drawn, pull = dr ? 5 : 0;
+      const items = [
+        [wood, P(-.8, -1, .7, -1, 3, -bh * .45, 2.6, -bh * .95, .6, -bh - .4, 1.3, -bh * .45, -.8, -1.6)],
+        [wood, P(-.8, 1, .7, 1, 3, bh * .45, 2.6, bh * .95, .6, bh + .4, 1.3, bh * .45, -.8, 1.6)],
+        [lea, R(-.9, -1.6, 1.8, 3.2)]
+      ];
+      const str = k.f('#E8DEC8', 'flat');
+      if (!dr) items.push([str, R(1, -bh + .3, .6, bh * 2 - .6), { nl: 1 }]);
+      else items.push([str, P(1, -bh + .3, 1.6, -bh + .3, -pull + .6, .3, -pull, .3), { nl: 1 }], [str, P(-pull, -.3, -pull + .6, -.3, 1.6, bh - .3, 1, bh - .3), { nl: 1 }],
+        [wood, R(-pull, -.5, pull + 7, 1)], [soul, P(6.6, -1.2, 8.6, 0, 6.6, 1.2), { nl: 1, lr: 6 }]);
+      k.held(5.5, 'B', 0, items);
+    }
+  };
+
+  // ================= Barrow Beetle: a glossy carapace with glowing runes =================
+  const beetle = {
+    name: 'Barrow Beetle', anim: 'lunge', scale: 1.15,
+    bones: { legs: [0, 0, null], body: [2, -10, null], head: [-11, -9, 'body'], mand: [-15, -8, 'head'] },
+    ground: ['legs'],
+    poses: {
+      idle0: {}, idle1: { bob: .8, head: { rot: -.04 } },
+      wind: { lean: 3, bob: -1, head: { rot: .22 }, mand: { rot: .25 } },
+      strike: { lean: -4, head: { rot: -.18 }, mand: { rot: -.3 } }
+    },
+    draw(k) {
+      const shell = k.c('#3A8AA6', 'gem'), shellD = k.c('#1E4A60', 'flat'), chit = k.c('#2A5A70', 'leather'), chitD = k.c('#1C3848', 'leather'), mand = k.c('#D2C094', 'cloth'), rune = k.glow('#9BE8F4');
+      // legs splay: front ones reach forward, back ones trail
+      const leg = (z, x, s, tone) => {
+        const mat = tone ? chitD : chit, kx = x + s * 4, fx = x + s * 6.4;
+        k.add(z, 'legs', mat, C(x, -5.6, 1.2, kx, -9.2, 1), { tone });
+        k.add(z + .01, 'legs', mat, C(kx, -9.2, 1, fx, -.5, .7), { tone });
+      };
+      for (const [x, s] of [[16, 1], [8, .2], [1, -1]]) leg(1, x + 2.5, s, 1);
+      k.add(2.8, 'body', chitD, E(1, -6.4, 13.5, 3.6));
+      // pronotum and head
+      k.add(3.6, 'body', chit, E(-8.5, -10.5, 5, 5.4));
+      k.add(3.8, 'head', chitD, E(-12.5, -8.4, 4.4, 3.9));
+      k.eye(3.9, 'head', -15, -10, 2, 1, k.glow('#D0FCFF'), 6);
+      k.add(3.7, 'mand', mand, P(-15, -8.4, -20.5, -10.6, -23.4, -8, -20.6, -8.6, -15.4, -6.6));
+      k.add(3.7, 'mand', mand, P(-15.4, -6.4, -20.2, -4.4, -22.6, -1.8, -19.6, -3.2, -14.6, -5.4), { tone: 1 });
+      // carapace with a seam and runes
+      const sh = k.add(3.5, 'body', shell, E(3.5, -11, 14, 8.6));
+      k.add(3.55, 'body', shellD, P(-6, -18.6, -4.4, -19.2, 8, -13, 17.6, -7.4, 17.2, -6.4, 7.4, -11.8), { clip: sh, nl: 1 });
+      k.eye(3.6, 'body', 5, -16, 1, 2, rune, 5); k.eye(3.6, 'body', 9, -15, 2, 1, rune, 5); k.eye(3.6, 'body', 12, -11, 1, 2, rune, 5);
+      if (k.elder) {
+        for (const [x, y] of [[4, -19], [10, -18], [15, -14]]) k.add(3.45, 'body', chitD, P(x - 2, y + 2, x + .5, y - 3.5, x + 2, y + 2.4));
+        k.add(3.9, 'head', mand, P(-13.4, -11.6, -18, -18, -21.6, -25, -17.4, -19.6, -11, -11.8), { sep: 1 });
+        crown(k, 3.7, 'body', -8.5, -15, 7, { h: 3.6 });
+        k.eye(3.6, 'body', 1, -12, 1, 1, rune, 4);
+      }
+      for (const [x, s] of [[13, 1], [5, .2], [-3, -1]]) leg(6, x, s, 0);
+    }
+  };
+
+  // ================= Spore Cap: a mushroom caster with a root staff =================
+  const spore = {
+    name: 'Spore Cap', anim: 'cast', scale: 1.1,
+    bones: { legs: [0, 0, null], body: [0, -8, null], cap: [0, -19, 'body'], armF: [-5, -15, 'body'], armB: [4.5, -15, 'body'] },
+    ground: ['legs'],
+    poses: {
+      idle0: {}, idle1: { bob: .6, cap: { dy: .5 } },
+      wind: { armF: { rot: .45 }, cap: { rot: .06 }, lean: 1 },
+      strike: { armF: { rot: -.55 }, cap: { rot: -.08 }, lean: -2 }
+    },
+    draw(k) {
+      const stem = k.c('#EAD9BA', 'cloth'), stemD = k.c('#B89E7C', 'cloth'), gill = k.c('#B8866A', 'leather'), cap = k.c('#D0463E', 'cloth'), spot = k.c('#F6EAD2', 'cloth'), wood = k.c('#6A4A30', 'wood'), orb = k.glow('#FF8ED0');
+      k.add(1, 'armB', stemD, C(4.5, -15, 1.4, 8, -10.4, 1.3));
+      k.add(2, 'legs', stemD, E(3.2, -1.6, 3.1, 2));
+      k.add(2.1, 'legs', stem, E(-3.4, -1.6, 3.3, 2.1));
+      const body = k.add(3, 'body', stem, E(0, -10.4, 6.6, 8.6));
+      k.add(3.1, 'body', stemD, E(3.6, -9, 2.4, 6.4), { clip: body, nl: 1 });
+      k.add(3.2, 'body', k.ink, Q(-5, -15, 1, 2), { nl: 1 }); k.add(3.2, 'body', k.ink, Q(-2, -15, 1, 2), { nl: 1 });
+      k.add(3.2, 'body', k.ink, Q(-4, -11, 2, 1), { nl: 1 });
+      if (k.elder) k.add(3.3, 'body', k.gold, R(-6.6, -8.4, 13.2, 1.4), { clip: body });
+      // the cap: gills, dome, spots, glowing pods on the rim
+      k.add(3.8, 'cap', gill, E(0, -18.4, 12, 2.2));
+      const dome = k.add(4, 'cap', cap, P(arcPts(0, -18.6, 13.6, 11, Math.PI, Math.PI * 2, 16), 13.2, -17.6, -13.2, -17.6), { bev: 1.8 });
+      for (const [x, y, rx, ry] of [[-6.5, -24.6, 2.4, 1.8], [2.4, -27, 2, 1.5], [8.4, -22, 2.1, 1.6], [-11, -20.4, 1.4, 1.1], [-.4, -21.4, 1.4, 1]]) k.add(4.1, 'cap', spot, E(x, y, rx, ry), { clip: dome });
+      k.eye(4.2, 'cap', -13, -18, 1, 1, orb, 4); k.eye(4.2, 'cap', 12, -18, 1, 1, orb, 4);
+      if (k.elder) {
+        for (const [x, s] of [[-7, .8], [5, 1]]) {
+          k.add(3.95, 'cap', stem, R(x - .7, -30 * 1 - s * 1.5 + 2, 1.4, 4));
+          k.add(3.96, 'cap', cap, P(arcPts(x, -29 - s * 1.5 + 2, 3 * s, 2.6 * s, Math.PI, Math.PI * 2, 8)), { bev: .8 });
+        }
+        crown(k, 4.3, 'cap', 0, -28.6, 7, { h: 3.8 });
+      }
+      // front arm and the root staff with its orb
+      k.add(6, 'armF', stem, C(-5, -15, 1.5, -8.4, -10.6, 1.4));
+      k.add(5.8, 'armF', wood, P(-8.4, -.6, -9.8, -.6, -11.2, -24, -9.8, -24.4));
+      k.add(5.85, 'armF', wood, P(-11.6, -23.6, -13.4, -26.6, -11.6, -29.4, -9, -28.4, -8.6, -26, -9.8, -24.4), { bev: .7 });
+      k.add(5.9, 'armF', orb, E(-11, -27.2, 2.5, 2.5), { lr: 16, pulse: 1 });
+      k.add(6.1, 'armF', stem, E(-9, -10.2, 1.6, 1.6), { sep: 1 });
+    }
+  };
+
+  // ================= Quarry Golem: stone blocks, moss and a glowing core =================
+  const golem = {
+    name: 'Quarry Golem', anim: 'slam',
+    bones: { legs: [0, 0, null], body: [0, -14, null], head: [-3, -35, 'body'], armF: [-10, -30, 'body'], armB: [9, -30, 'body'] },
+    ground: ['legs'],
+    poses: {
+      idle0: {}, idle1: { bob: 1 },
+      wind: { armF: { rot: 2.75 }, lean: 2, bob: -1 },
+      strike: { armF: { rot: .55 }, lean: -3, bob: 1 }
+    },
+    draw(k) {
+      const st = k.c('#94886F', 'stone'), stD = k.c('#6C6352', 'stone'), moss = k.c('#5C8A36', 'hair'), seam = k.glow('#FF9E3D'), core = k.glow('#FFD27A'), cry = k.glow('#7AF0E0');
+      // back arm, legs
+      k.add(1, 'armB', stD, E(9.5, -30, 5, 4.6));
+      k.add(1.05, 'armB', stD, P(7, -27, 13, -27, 13.6, -17, 7.4, -17), { bev: 1.2 });
+      k.add(1.1, 'armB', stD, E(10.8, -13.6, 5, 4.4));
+      k.add(2, 'legs', stD, P(2, -14, 9.6, -14, 10.4, 0, 1.4, 0), { bev: 1.2 });
+      k.add(2.1, 'legs', st, P(-9.4, -14, -1.6, -14, -.6, 0, -11.6, 0, -10.6, -3), { bev: 1.2 });
+      k.add(2.2, 'legs', seam, P(-7, -10, -5.6, -10, -6, -5, -7.2, -5), { nl: 1, lr: 5 });
+      // torso block with glowing cracks, a core and moss on the back
+      k.add(2.9, 'body', stD, P(-9.6, -16.4, 9.6, -16.4, 9.6, -12.4, -9.6, -12.4), { bev: 1 });
+      const tor = k.add(3, 'body', st, P(-12.6, -33.6, 1.6, -37.2, 12, -32.6, 13.2, -21, 8.6, -14, -8.6, -14, -13.4, -20.6), { bev: 1.8 });
+      k.add(3.1, 'body', seam, P(-3.4, -34.6, -2, -34.6, -4.2, -28, -1, -22.4, -2.4, -22.4, -5.6, -28), { clip: tor, nl: 1, lr: 6 });
+      k.add(3.1, 'body', seam, P(6, -30.6, 7.4, -30.6, 4, -23, 2.6, -23), { clip: tor, nl: 1, lr: 5 });
+      k.add(3.15, 'body', core, E(-3.2, -24.6, 2, 2), { nl: 1, lr: 16, pulse: 1 });
+      k.add(3.2, 'body', moss, P(-6, -35.4, 1.6, -38, 12.6, -33.6, 12, -29, 6, -32, -1, -33.6), { clip: tor });
+      if (k.elder) for (const [x, y, h, w] of [[5, -35.6, 7, 2.2], [9, -33.8, 5.6, 1.8], [1.4, -36.6, 5, 1.8]]) k.add(2.95, 'body', cry, P(x - w, y + 1, x - w * .3, y - h, x + w * .4, y - h - 1, x + w, y + 1), { nolight: 1 });
+      // head: a sunken block with a lit eye slit
+      const hd = k.add(4, 'head', st, P(-11, -44, -1.4, -45.6, 1.8, -38.6, -.6, -33, -10.6, -33.8, -11.6, -38), { bev: 1.3, sep: 1 });
+      k.add(4.1, 'head', stD, R(-11.6, -41.6, 12, 1.6), { clip: hd, nl: 1 });
+      k.add(4.15, 'head', k.f('#2A2230', 'flat'), R(-10.6, -38.6, 8, 2.4), { clip: hd, nl: 1 });
+      k.eye(4.2, 'head', -10, -38, 2, 1, seam, 6); k.eye(4.2, 'head', -6, -38, 2, 1, seam, 6);
+      if (k.elder) for (const [x, h, w] of [[-9, 5, 1.5], [-5.6, 7.6, 1.9], [-2, 5.4, 1.5]]) k.add(4.3, 'head', cry, P(x - w, -43.6, x, -44.6 - h, x + w, -44), { lr: 8, nolight: h < 7 });
+      // front arm: shoulder boulder, two blocks, a fist
+      const sh = k.add(6, 'armF', st, E(-10, -30, 5.6, 5.2));
+      k.add(6.05, 'armF', moss, E(-11, -34, 5, 2.6), { clip: sh });
+      k.add(5.9, 'armF', st, P(-14, -27, -6.8, -27, -7.6, -19.4, -13.8, -19.4), { bev: 1.2 });
+      k.add(5.95, 'armF', st, P(-15.2, -20.4, -6, -20.4, -5.4, -12.6, -16, -12.6), { bev: 1.2 });
+      k.add(5.97, 'armF', seam, R(-13.6, -17, 5, 1), { nl: 1, lr: 4 });
+      k.add(6.1, 'armF', st, E(-10.8, -9.8, 6, 5), { sep: 1 });
+      if (k.elder) k.add(6.2, 'armF', cry, P(-15, -33, -17.6, -39, -12.6, -33.8), { lr: 8 });
+    }
+  };
+
+  // ================= Marsh Wraith: a hooded spirit with a wisp lantern (hovers) =================
+  const wraith = {
+    name: 'Marsh Wraith', anim: 'heal', hover: 1, lift: 5,
+    bones: { body: [0, -20, null], head: [-1, -29, 'body'], armF: [-4, -26, 'body'], armB: [4, -26, 'body'], tail: [3, -10, 'body'] },
+    poses: {
+      idle0: {}, idle1: { bob: -1, tail: { rot: .12 } },
+      wind: { bob: -2, armF: { rot: 1.05 }, head: { rot: .08 } },
+      strike: { lean: -2, armF: { rot: .35 }, tail: { rot: -.15 } }
+    },
+    draw(k) {
+      const robe = k.c('#6E9E90', 'cloth'), robeD = k.c('#34504A', 'cloth'), cord = k.c('#C8BE9E', 'leather'), hand = k.c('#CFEDE2', 'cloth'), voidC = k.f('#070A0C', 'flat'), wisp = k.glow('#B6FFD8'), eye = k.glow('#E4FFF4'), chain = k.c('#8A909C', 'metal');
+      k.add(.5, 'tail', robeD, P(2, -12, 9, -9.6, 15.6, -3, 10.4, -4.6, 8, -2, 4.6, -5.6));
+      k.add(1, 'armB', robeD, C(4, -26, 1.7, 8.6, -21, 1.5));
+      k.add(1.05, 'armB', hand, E(9.4, -20.2, 1.3, 1.3), { tone: 1 });
+      const body = k.add(3, 'body', robe, P(-7, -30, 6, -30, 8.6, -19, 10, -9, 7.6, -4.6, 5, -8, 2.4, -2.4, -.6, -6.6, -3.6, -2.6, -6, -7.4, -8.8, -11.4, -8.4, -20), { bev: 1.3 });
+      k.add(3.1, 'body', robeD, P(-3, -18, -2, -18, -3.6, -5.4, -4.6, -6), { clip: body, nl: 1 });
+      k.add(3.1, 'body', robeD, P(2.6, -18, 3.6, -18, 5.4, -7.6, 4.4, -7.2), { clip: body, nl: 1 });
+      k.add(3.2, 'body', cord, R(-8.4, -20.6, 17, 1.4), { clip: body });
+      k.add(3.25, 'body', cord, R(-5.6, -19.6, 1.2, 5));
+      if (k.elder) { k.add(3.3, 'body', chain, R(6, -19, .8, 11), { nl: 1 }); k.add(3.3, 'body', chain, R(-6.6, -19, .8, 8), { nl: 1 }); }
+      // hood with a void and two lit eyes
+      const hood = k.add(4, 'head', robe, P(-8, -28, -7.4, -34.6, -3.4, -39.6, 2.6, -38.8, 6.6, -34, 7.2, -27.4), { bev: 1.3, sep: 1 });
+      k.add(4.05, 'head', robeD, P(2.6, -38.8, 6, -41, 9, -40.4, 6.6, -34), { tone: 0 });
+      k.add(4.1, 'head', voidC, E(-4.2, -32.2, 3.6, 3.8), { clip: hood });
+      k.eye(4.2, 'head', -6, -33, 1, 1, eye, 6); k.eye(4.2, 'head', -3, -33, 1, 1, eye, 6);
+      if (k.elder) {
+        const ant = k.c('#D8CFB8', 'cloth');
+        k.add(3.9, 'head', ant, P(-5, -38, -8, -43, -11.6, -45, -9, -42.2, -6.6, -37.4));
+        k.add(3.9, 'head', ant, P(-8.6, -42.6, -11.8, -41.6, -12, -40.4, -8.4, -41.2));
+        k.add(3.9, 'head', ant, P(1, -39, 3, -45, 6, -48, 4.2, -44, 2.8, -38.6));
+        crown(k, 4.3, 'head', -1, -38.4, 7, { h: 3.4 });
+      }
+      // front arm with the chained wisp
+      k.add(6, 'armF', robe, C(-4, -26, 1.9, -8.6, -21.4, 1.7));
+      k.add(6.1, 'armF', hand, E(-9.4, -20.4, 1.4, 1.4), { sep: 1 });
+      k.add(5.9, 'armF', chain, R(-10, -19.4, .8, 3.4), { nl: 1 });
+      k.add(5.95, 'armF', wisp, E(-9.6, -14.4, 2.2, 2.5), { lr: 16, pulse: 1 });
+    }
+  };
+
+  for (const [key, src] of Object.entries({ slime, bat, beetle, spore, golem, wraith })) ENEMY_RIGS[key] = creature(src, true);
+  ENEMY_RIGS.bones = humanoid(bones);
+
+  // ================= World boss: the wyrm (palette per raid generation) =================
   const WYRM_GENS = [
     // The Ashen Wyrm
     { scale: '#8A3345', scaleD: '#4A1A2A', belly: '#D8A070', wing: '#5A2230', wingM: '#A0444E', horn: '#EFE6D6', eye: '#FFD27A', maw: '#FF6B3D' },
@@ -3153,538 +3639,127 @@ const ENEMY_RIGS = {};
     // The Pale Tyrant
     { scale: '#C8C4D4', scaleD: '#7E7890', belly: '#EFE6D6', wing: '#8E88A0', wingM: '#D8D4E4', horn: '#F2C14E', eye: '#E0524F', maw: '#FF8A6A' }
   ];
-
-  // ---------- Moss Slime: a glistening mossy ooze with debris inside ----------
-  SRC.slime = {
-    name: 'Moss Slime', anim: 'lunge',
-    bones: { body: [0, 0, null], top: [0, -24, 'body'] }, fixed: ['body'],
-    mats: {
-      ooze: '#6FCB6A', oozeD: '#2F7A4A', core: '#3E9A56', moss: '#4E7A2E', leaf: '#9CC456', debris: '#7A6A58', bone: '#DCD2BC',
-      sheen: E('#E6FFD6'), eye: E('#F4F0A0', 1), void: VOID, crown: '#8A8494', rune: E('#B6F09A', 1)
-    },
-    parts: [
-      [3, 'body', 'oozeD', ['e', 0, -2, 19.5, 3]],
-      [3, 'body', 'ooze', ['p', 1, -18, -1, -20, -8, -16, -18, -9, -25, 2, -27.5, 11, -24.5, 17.5, -16, 20, -7, 18.5, -1]],
-      [3, 'body', 'core', ['p', 1, -6, -6, -4, -16, 4, -20, 12, -16, 14, -7, 6, -3]],
-      [3, 'body', 'debris', ['e', 7, -9, 3, 2.2]],
-      [3, 'body', 'debris', ['p', 1, 9, -16, 12, -17, 12.5, -14, 10, -13.5]],
-      [3, 'body', 'bone', ['p', 0, -2.5, -7.5, 4, -11, 4.6, -10, -2, -6.5]],
-      [3, 'body', 'bone', ['e', -2.4, -6.8, 1.2, 1.2]], [3, 'body', 'bone', ['e', 4.4, -10.8, 1.2, 1.2]],
-      [3, 'body', 'leaf', ['p', 1, 2, -17, 6, -19, 8, -16, 4, -15]],
-      [3, 'body', 'sheen', ['e', 1, -13, 0.8, 0.8]], [3, 'body', 'sheen', ['e', 11, -11, 0.7, 0.7]],
-      [3, 'body', 'sheen', ['e', -11, -19, 2.4, 1.3]], [3, 'body', 'sheen', ['r', -15, -15, 1, 2.4]], [3, 'body', 'sheen', ['e', -4, -24, 1.4, 0.8]],
-      [4, 'top', 'moss', ['p', 1, -11, -22.5, -6, -27.5, 2, -29.5, 10, -26.5, 15, -20.5, 9, -22.5, 3, -24.5, -4, -24]],
-      [4, 'top', 'moss', ['p', 0, -6, -27, -5, -31.5, -3, -27.5]],
-      [4, 'top', 'leaf', ['p', 0, 3, -29, 5, -33, 6.5, -28.5]],
-      [4, 'top', 'leaf', ['e', -1, -28.4, 1.6, 1]],
-      [4, 'body', 'eye', ['e', -11, -13.5, 1.7, 2.1]], [4, 'body', 'eye', ['e', -5, -14.5, 1.5, 1.9]],
-      [4, 'body', 'void', ['r', -11.9, -14, 0.9, 1.3]], [4, 'body', 'void', ['r', -5.8, -15, 0.9, 1.2]],
-      [4, 'body', 'void', ['p', 1, -14, -8.4, -9, -7.2, -5, -8.4, -9.5, -6.4]],
-      // elder: standing-stone crown, a skull in the core
-      [3, 'body', 'bone', ['e', -1, -19, 3.4, 3], 1], [3, 'body', 'void', ['e', -2.4, -19.4, 1, 1], 1], [3, 'body', 'void', ['r', -3.2, -17.2, 3, 0.7], 1],
-      [4, 'top', 'crown', ['p', 0, -9, -25, -8, -35, -5.5, -26], 1],
-      [4, 'top', 'crown', ['p', 0, -2.5, -28, 0, -40, 2.5, -28], 1],
-      [4, 'top', 'crown', ['p', 0, 5.5, -27, 8, -36, 9.5, -25.5], 1],
-      [4, 'top', 'rune', ['r', -0.5, -35, 1, 3.4], 1]
-    ],
-    poses: { idle0: {}, idle1: { up: 1 }, wind: { dx: 3, up: 2, top: { rot: 0.08 } }, strike: { dx: -7, lean: -2, up: -1, top: { rot: -0.12 } } }
-  };
-
-  // ---------- Cave Bat: leathery wings, big ears (hovers) ----------
-  SRC.bat = {
-    name: 'Cave Bat', anim: 'lunge', hover: 1,
-    bones: { body: [0, -32, null], face: [-2, -37, 'body'], wingF: [-2, -35, 'body'], wingB: [3, -36, 'body'] }, fixed: [],
-    mats: {
-      fur: '#4D3B7A', furL: '#8A6FC8', memb: '#6A4E9A', membD: '#3E2E62', skin: '#C88A9A', claw: '#E6DCC4', fang: '#EFE6D6',
-      eye: E('#FF5A5A', 1), void: VOID, horn: '#D8CFB8', gold: GOLD
-    },
-    parts: [
-      [0, 'wingB', 'membD', ['p', 0, 3, -36, 9, -45, 17, -50.5, 24, -49.5, 26.5, -42, 22.5, -40, 20.5, -33.5, 16.5, -36, 13, -30.5, 9, -33, 5, -29]],
-      [0, 'wingB', 'fur', ['p', 0, 3.5, -37, 24, -49.5, 24.2, -48.4, 4, -35.6]],
-      [0, 'wingB', 'fur', ['p', 0, 4, -36, 20.5, -34, 20.4, -33, 4, -35]],
-      [1, 'body', 'claw', ['p', 0, -1, -26, 0, -22.5, 1, -26]], [1, 'body', 'claw', ['p', 0, 2.4, -26, 3.4, -22.5, 4.4, -26]],
-      [3, 'body', 'fur', ['e', 1, -31, 5.6, 7.4]],
-      [3, 'body', 'furL', ['e', -1.6, -30, 3, 5]],
-      [7, 'face', 'fur', ['p', 1, -7.5, -41, -9.5, -52, -4, -43.5]],
-      [7, 'face', 'fur', ['p', 1, -2.5, -43, 1, -54, 3.5, -41]],
-      [7, 'face', 'skin', ['p', 0, -7.4, -42, -8.8, -49, -5.4, -43.2]],
-      [7, 'face', 'skin', ['p', 0, -1.4, -43.2, 0.8, -51, 2, -42.4]],
-      [7, 'face', 'fur', ['e', -3, -39, 4.8, 4.3]],
-      [7, 'face', 'skin', ['p', 1, -6.5, -40.5, -10.8, -38.8, -9.8, -36.4, -5.8, -36.6]],
-      [7, 'face', 'void', ['r', -10.4, -39.2, 1, 0.8]],
-      [7, 'face', 'eye', ['e', -5.6, -40.4, 1.3, 1.1]],
-      [7, 'face', 'fang', ['p', 0, -9.2, -36.8, -8.6, -34.4, -8, -36.8]], [7, 'face', 'fang', ['p', 0, -7.2, -36.8, -6.7, -35, -6.2, -36.8]],
-      [6, 'wingF', 'memb', ['p', 0, -2, -35, -8, -45, -17, -51, -25, -50.5, -27.5, -42, -23.5, -40, -21.5, -33, -17.5, -35.5, -14, -30, -10, -32.5, -6, -28]],
-      [6, 'wingF', 'fur', ['p', 0, -2, -35.8, -25, -50.5, -25.2, -49.3, -2, -34.4]],
-      [6, 'wingF', 'fur', ['p', 0, -2, -35, -21.5, -33.6, -21.4, -32.5, -2, -34]],
-      [6, 'wingF', 'fur', ['p', 0, -2, -34.8, -14, -30.6, -13.8, -29.6, -2, -33.8]],
-      [6, 'wingF', 'claw', ['p', 0, -25, -50.5, -27.5, -53.5, -23.8, -51.4]],
-      // elder: swept horns and a gold ear ring
-      [7, 'face', 'horn', ['p', 1, -6, -42.5, -11, -46, -15, -51, -10, -47.6, -5, -44.6], 1],
-      [7, 'face', 'horn', ['p', 1, -1, -43.5, 3, -48, 7, -50, 4, -46, 1, -42.5], 1],
-      [7, 'face', 'gold', ['e', 1.8, -44.4, 1, 1.2], 1],
-      [3, 'body', 'claw', ['r', -3.4, -34, 1, 5], 1]
-    ],
-    poses: {
-      idle0: {}, idle1: { up: 1.5, wingF: { rot: -0.45 }, wingB: { rot: 0.4 } },
-      wind: { dx: 4, up: -3, wingF: { rot: 0.35 }, wingB: { rot: -0.35 }, face: { rot: -0.15 } },
-      strike: { dx: -9, up: 3, wingF: { rot: -0.55 }, wingB: { rot: 0.5 }, face: { rot: 0.2 } }
-    }
-  };
-
-  // ---------- Rattlebones: an armoured skeleton archer (mirrors the hero rig) ----------
-  SRC.bones = {
-    name: 'Rattlebones', anim: 'shoot',
-    bones: { legs: [0, 0, null], torso: [0, -30, null], face: [-0.8, -52, 'torso'], limbF: [-5.2, -47, 'torso'], limbB: [5.2, -47, 'torso'] }, fixed: ['legs'],
-    mats: {
-      bone: '#D8D3C6', boneD: '#9C978C', gap: '#3E3644', iron: IRON, ironD: { col: '#565C6A', metal: 1 }, rust: '#8A4A2E',
-      cloth: '#5A3A4A', leather: '#6E4A30', wood: '#6E4432', string: { emit: '#E8DEC8' }, fletch: '#C8B8A0', soul: E('#9BE3F0', 1),
-      void: VOID, gold: GOLD
-    },
-    parts: [
-      [0, 'torso', 'leather', ['p', 1, 7, -50, 10.5, -48, 6, -30, 3, -31.5]],
-      [0, 'torso', 'fletch', ['p', 0, 7.6, -53.6, 9.6, -55.4, 11.4, -50.6, 9.6, -49.6]],
-      [0, 'torso', 'fletch', ['p', 0, 5.4, -54.6, 7, -56, 8.6, -51.2, 7, -50.4]],
-      [1, 'limbB', 'ironD', ['e', 5.6, -46.4, 3.2, 2.8]],
-      [1, 'limbB', 'boneD', ['p', 0, 4.4, -44, 6.4, -44, 6.8, -38, 5, -38]],
-      [1, 'limbB', 'boneD', ['p', 0, 5.2, -38.5, 6.8, -38.5, 6, -30, 4.4, -30]],
-      [1, 'limbB', 'boneD', ['e', 5.2, -28.6, 1.6, 1.8]],
-      [2, 'legs', 'boneD', ['p', 0, 1, -31, 3.6, -31, 3, -16, 1, -16]],
-      [2, 'legs', 'boneD', ['p', 0, 1.2, -16.5, 3.2, -16.5, 3, -3, 1.3, -3]],
-      [2, 'legs', 'boneD', ['e', 2.1, -16.2, 1.6, 1.4]],
-      [2, 'legs', 'boneD', ['p', 1, 3.4, -3, 1, -3, -2, -1.2, -2, 0, 3.8, 0]],
-      [2, 'legs', 'bone', ['p', 0, -3.8, -31, -1, -31, -1.6, -16, -3.6, -16]],
-      [2, 'legs', 'iron', ['p', 0, -4.6, -16, -1, -16, -1.4, -4, -4.2, -4]],
-      [2, 'legs', 'iron', ['e', -2.8, -16.6, 2.3, 2]],
-      [2, 'legs', 'iron', ['p', 1, -1.2, -4.6, -4.6, -4.6, -7.4, -1.3, -7.4, 0, -1, 0]],
-      [3, 'torso', 'boneD', ['r', -0.8, -46, 2, 15]],
-      [3, 'torso', 'bone', ['p', 1, -6, -47.5, 5, -47.5, 5.6, -41, 3.4, -36, -4, -36, -6.4, -41]],
-      [3, 'torso', 'gap', ['r', -5, -44, 9.6, 0.9]], [3, 'torso', 'gap', ['r', -4.4, -40.8, 8.8, 0.9]], [3, 'torso', 'gap', ['r', -3.4, -38, 6.6, 0.8]],
-      [3, 'torso', 'bone', ['p', 1, -4.8, -32, 4.8, -32, 4, -28, -4, -28]],
-      [3, 'torso', 'cloth', ['p', 0, -4.6, -32, 3.2, -32, 2.8, -19.5, 1.2, -22, -0.4, -17.5, -2, -22, -4.2, -18.5]],
-      [3, 'torso', 'iron', ['p', 1, -6.8, -48.2, 0.6, -48.2, 1.6, -40, -1, -35.4, -6, -37, -7, -42]],
-      [3, 'torso', 'rust', ['e', -3, -41, 1.1, 0.9]],
-      [3, 'torso', 'leather', ['r', -5.4, -33.4, 10.8, 1.8]],
-      [4, 'face', 'boneD', ['r', -1.6, -53, 2.4, 5]],
-      [4, 'face', 'bone', ['e', -1, -57, 4.3, 4.7]],
-      [4, 'face', 'bone', ['p', 1, -5.4, -54.6, 0.6, -54.6, 1, -51.6, -4.4, -51.2]],
-      [4, 'face', 'gap', ['r', -5, -53.5, 5, 0.6]],
-      [4, 'face', 'void', ['e', -3.2, -57.2, 1.6, 1.6]],
-      [4, 'face', 'soul', ['e', -3.4, -57.2, 0.8, 0.8]],
-      [4, 'face', 'void', ['p', 0, -5.6, -55.6, -4.6, -55.6, -5.1, -54.2]],
-      [4, 'face', 'iron', ['p', 1, -5.4, -59.6, -4, -63.2, 1.4, -63.8, 4.8, -60.4, 4.8, -58.6, -5.2, -58.8]],
-      [4, 'face', 'ironD', ['p', 1, -9, -59.6, 7.8, -59.6, 6.2, -57.8, -7.6, -57.8]],
-      [4, 'face', 'rust', ['e', 2, -61.6, 1.1, 0.8]],
-      [6, 'limbF', 'iron', ['p', 1, -9.6, -46, -8.2, -49.8, -2.8, -50.2, -2, -45.6, -7.8, -43.2]],
-      [6, 'limbF', 'bone', ['p', 0, -6.2, -44, -4.2, -44, -4.2, -38, -6.4, -38]],
-      [6, 'limbF', 'bone', ['p', 0, -6.2, -38.5, -4.6, -38.5, -5.4, -30, -7, -30]],
-      [6, 'limbF', 'ironD', ['r', -7.6, -37.2, 3.6, 5]],
-      [6, 'limbF', 'bone', ['e', -6.5, -28.3, 1.7, 2]],
-      [7, 'limbF', 'wood', ['p', 1, -6, -29.6, -7.4, -29.6, -10.3, -36.4, -10.6, -42, -9.1, -47.4, -8.4, -47, -9.3, -42, -8.8, -36.4]],
-      [7, 'limbF', 'wood', ['p', 1, -6, -26.8, -7.4, -26.8, -10.3, -20, -10.6, -14.4, -9.1, -9, -8.4, -9.4, -9.3, -14.4, -8.8, -20]],
-      [7, 'limbF', 'leather', ['r', -8.1, -30.2, 2.4, 4]],
-      [7, 'limbF', 'boneD', ['e', -9, -47, 0.9, 0.9]], [7, 'limbF', 'boneD', ['e', -9, -9.4, 0.9, 0.9]],
-      // elder: iron crown over the helm, a torn cape, soul-fire runes
-      [0, 'torso', 'cloth', ['p', 1, 4, -50, 9, -48, 12, -30, 13, -12, 10, -14, 8, -9, 6, -14, 3, -30], 1],
-      [4, 'face', 'gold', ['p', 0, -5, -63, -4.4, -67, -2.8, -63.6, -1.4, -68, 0, -64, 1.8, -67.4, 3, -63.4, 4.4, -66, 4.6, -61.6, -4.8, -61.6], 1],
-      [3, 'torso', 'soul', ['r', -4.4, -46, 1, 4], 1], [3, 'torso', 'soul', ['r', -2.6, -44, 1, 2.4], 1]
-    ],
-    rest: [[7, 'limbF', 'string', ['r', -9.15, -47, 0.55, 37.8]]],
-    drawn: [
-      [7, 'limbF', 'string', ['p', 0, -8.6, -47, -9.2, -47, -1.4, -28, -0.8, -28.2]],
-      [7, 'limbF', 'string', ['p', 0, -0.8, -28.2, -1.4, -28.4, -9.2, -9.4, -8.6, -9.4]],
-      [7, 'limbF', 'wood', ['r', -15.8, -28.6, 15, 0.8]],
-      [7, 'limbF', 'iron', ['p', 0, -15.6, -29.6, -18, -28.2, -15.6, -26.8]]
-    ],
-    poses: {
-      idle0: { limbF: { rot: -0.05 } }, idle1: { up: 1, limbF: { rot: -0.05 } },
-      wind: { drawn: 1, limbF: { rot: 0.12 }, limbB: { rot: -0.5 }, lean: 0.6 },
-      strike: { limbF: { rot: 0.05 }, lean: -0.4, dx: -1 }
-    }
-  };
-
-  // ---------- Barrow Beetle: a heavy carapace bruiser ----------
-  SRC.beetle = {
-    name: 'Barrow Beetle', anim: 'lunge',
-    bones: { legs: [0, 0, null], body: [4, -16, null], face: [-12, -17, 'body'] }, fixed: ['legs'],
-    mats: {
-      shell: '#3F8FA8', shellD: '#1F4A5E', chitin: '#2E6478', chitinD: '#1A3242', mand: '#C8B890',
-      rune: E('#9BE3F0', 1), eye: E('#C8FAFF', 1), horn: '#D8CFB8', gold: GOLD
-    },
-    parts: [
-      [1, 'legs', 'chitinD', ['p', 0, 8, -12, 14, -7, 16.5, 0, 14, 0, 12, -5.5, 6, -9.5]],
-      [1, 'legs', 'chitinD', ['p', 0, 18, -12, 24, -6, 26.5, 0, 24, 0, 22, -5, 16, -10]],
-      [1, 'legs', 'chitinD', ['p', 0, -3, -12, -1, -6, -2, 0, -4.5, 0, -3.2, -6, -6, -10.5]],
-      [3, 'body', 'chitinD', ['e', 7, -11, 18, 6.5]],
-      [3, 'body', 'shell', ['p', 1, -8, -13, -8, -26, -1, -35, 10, -38.5, 21, -34.5, 27.5, -24, 28.5, -13, 22, -8.5, 6, -7.5, -4, -8.5]],
-      [3, 'body', 'shellD', ['p', 0, 3, -37.5, 4.6, -37.8, 14, -9, 12.2, -8.6]],
-      [3, 'body', 'shellD', ['p', 1, -4, -23, 3, -31, 3.6, -29.4, -3.4, -21.4]],
-      [3, 'body', 'shellD', ['p', 1, 18, -33, 25, -23, 24, -22, 17, -31]],
-      [3, 'body', 'rune', ['e', 17.5, -25, 1.3, 1.3]], [3, 'body', 'rune', ['r', 20.5, -18.5, 1, 2.4]], [3, 'body', 'rune', ['r', 7, -22.5, 2.4, 1]],
-      [4, 'body', 'chitin', ['p', 1, -17, -22, -9, -28, -1, -25, -2, -11, -14, -10]],
-      [4, 'body', 'chitinD', ['r', -14, -13, 11, 1.2]],
-      [4, 'face', 'chitinD', ['p', 0, -19, -21, -24, -29.5, -25.2, -29, -20.4, -20.4]],
-      [4, 'face', 'chitin', ['e', -18.5, -16, 5.6, 5]],
-      [4, 'face', 'mand', ['p', 1, -21, -15.5, -28, -19.5, -31.5, -15, -28, -16.4, -23.5, -13]],
-      [4, 'face', 'mand', ['p', 1, -21, -12.8, -27, -10, -30.5, -5.6, -27.5, -7.8, -22, -10.6]],
-      [4, 'face', 'eye', ['e', -20.5, -18.4, 1.3, 1.1]],
-      [6, 'legs', 'chitin', ['p', 0, -8, -11, -12, -6, -14.5, 0, -12, 0, -10.4, -5, -6.6, -9]],
-      [6, 'legs', 'chitin', ['p', 0, 4, -9, 1, -4, 2, 0, 4.4, 0, 3.4, -4, 6.4, -8]],
-      [6, 'legs', 'chitin', ['p', 0, 14, -9, 18, -4, 19, 0, 21.4, 0, 20, -4.6, 16, -9]],
-      // elder: a great horn and a gold-rimmed crest
-      [4, 'face', 'horn', ['p', 1, -20, -20, -25, -30, -30, -39, -24, -31.5, -16.4, -22], 1],
-      [4, 'body', 'gold', ['p', 0, -16, -23, -9, -29, -1, -26, -1.4, -24.6, -9, -27.4, -15.4, -21.6], 1],
-      [3, 'body', 'rune', ['e', 11, -31, 1.2, 1.2], 1], [3, 'body', 'rune', ['e', 24, -15, 1, 1], 1],
-      [3, 'body', 'shellD', ['p', 0, 9, -38, 12, -43, 14, -37.6], 1], [3, 'body', 'shellD', ['p', 0, 19, -35, 24, -39, 23, -32.4], 1]
-    ],
-    poses: {
-      idle0: {}, idle1: { up: 0.8, face: { rot: 0.03 } },
-      wind: { dx: 4, up: -1, lean: 1, face: { rot: 0.3 } },
-      strike: { dx: -9, lean: -1.5, face: { rot: -0.22 } }
-    }
-  };
-
-  // ---------- Spore Cap: a mushroom caster with a root staff ----------
-  SRC.spore = {
-    name: 'Spore Cap', anim: 'cast',
-    bones: { legs: [0, 0, null], torso: [0, -20, null], face: [0, -34, 'torso'], limbF: [-6, -26, 'torso'], limbB: [6, -26, 'torso'] }, fixed: ['legs'],
-    mats: {
-      cap: '#D9534F', spot: '#F3E6CF', gill: '#E6C8A8', stem: '#E8D8BC', stemD: '#A89478', wood: '#6E4A30',
-      orb: E('#FF9ED8', 1), glowE: E('#FFB8E8'), pod: E('#FFB8E0', 1), void: VOID, gold: GOLD
-    },
-    parts: [
-      [1, 'limbB', 'stemD', ['p', 1, 4.6, -27, 7.6, -26.4, 9.4, -18.4, 7, -18]],
-      [1, 'limbB', 'stemD', ['e', 8.4, -17, 1.7, 1.7]],
-      [2, 'legs', 'stemD', ['p', 1, 1, 0, 2, -7, 6.4, -6, 8.6, 0]],
-      [2, 'legs', 'stem', ['p', 1, -8.6, 0, -6.4, -6.6, -2, -8, -1, -3, -3, 0]],
-      [3, 'torso', 'stem', ['p', 1, -7, -34, 7, -34, 8, -20, 9, -5, 5, -2, -5, -2, -9, -5, -8, -20]],
-      [3, 'torso', 'stemD', ['p', 0, 3, -30, 4.4, -30, 6, -4, 4.4, -4]],
-      [3, 'torso', 'stemD', ['p', 1, -9.4, -24.6, 9.4, -24.6, 8.4, -21, -8.4, -21]],
-      [3, 'torso', 'void', ['e', -4.8, -29.4, 1.3, 1.5]], [3, 'torso', 'void', ['e', -1, -29.4, 1.1, 1.4]],
-      [3, 'torso', 'glowE', ['r', -5.4, -30, 0.9, 0.9]], [3, 'torso', 'glowE', ['r', -1.5, -30, 0.9, 0.9]],
-      [3, 'torso', 'stemD', ['r', -4.2, -27.2, 2.4, 0.8]],
-      [4, 'face', 'gill', ['e', 0, -35, 15, 3]],
-      [4, 'face', 'cap', ['p', 1, -18, -35, -16, -42, -8, -49.5, 2, -51.5, 11, -48.5, 17.5, -40.5, 18, -35]],
-      [4, 'face', 'spot', ['e', -8, -44, 2.6, 1.9]], [4, 'face', 'spot', ['e', 3, -47.6, 2.1, 1.5]],
-      [4, 'face', 'spot', ['e', 10, -41, 2.2, 1.6]], [4, 'face', 'spot', ['e', -13.6, -38.6, 1.5, 1.2]], [4, 'face', 'spot', ['e', 0, -40.5, 1.4, 1]],
-      [4, 'face', 'pod', ['e', -12, -33.8, 1.1, 1.1]], [4, 'face', 'pod', ['e', 12, -33.8, 1, 1]],
-      [6, 'limbF', 'stem', ['p', 1, -7.4, -27, -4.4, -26.4, -6, -18, -8.6, -18.4]],
-      [7, 'limbF', 'wood', ['p', 0, -21, -40, -19.6, -40.4, -6, -1, -7.6, -0.6]],
-      [7, 'limbF', 'wood', ['p', 1, -23.6, -42, -21, -45.6, -18, -43, -20, -40.4]],
-      [7, 'limbF', 'orb', ['e', -21, -43.4, 2.3, 2.3]],
-      [7, 'limbF', 'stem', ['e', -7.4, -17, 1.9, 1.9]],
-      // elder: a crown of small caps and a gold band
-      [4, 'face', 'cap', ['p', 1, -8, -48, -7, -53, -4, -54, -2, -50], 1],
-      [4, 'face', 'cap', ['p', 1, 1, -51, 2, -57, 5.4, -58, 7, -51], 1],
-      [4, 'face', 'cap', ['p', 1, 9, -48, 11, -53, 14, -52, 14, -45.6], 1],
-      [4, 'face', 'pod', ['e', 4, -57, 1.1, 1.1], 1],
-      [3, 'torso', 'gold', ['r', -8.6, -22.6, 17.2, 1.4], 1],
-      [4, 'face', 'pod', ['e', -16, -35.6, 1, 1], 1], [4, 'face', 'pod', ['e', 16, -35.6, 1, 1], 1]
-    ],
-    poses: {
-      idle0: { limbF: { rot: 0.05 } }, idle1: { up: 1, limbF: { rot: 0.05 }, face: { rot: 0.03 } },
-      wind: { limbF: { rot: -0.2 }, face: { rot: 0.12 }, lean: 1, up: 0.5 },
-      strike: { limbF: { rot: 0.45 }, face: { rot: -0.1 }, lean: -1.5, dx: -2 }
-    }
-  };
-
-  // ---------- Quarry Golem: a stone bruiser with glowing seams ----------
-  SRC.golem = {
-    name: 'Quarry Golem', anim: 'slam',
-    bones: { legs: [0, 0, null], torso: [0, -30, null], face: [-3, -52, 'torso'], limbF: [-12, -46, 'torso'], limbB: [12, -46, 'torso'] }, fixed: ['legs'],
-    mats: {
-      stone: '#9C8F7A', stoneD: '#5E5647', moss: '#5E7A3A', seam: E('#FF9E3D', 1), seamD: E('#C8621B'), core: E('#FFD27A', 1),
-      crystal: E('#FFB060', 1), horn: '#C8BCA8'
-    },
-    parts: [
-      [1, 'limbB', 'stoneD', ['e', 12, -45, 6, 6]],
-      [1, 'limbB', 'stoneD', ['p', 1, 9, -42, 16, -42, 17, -26, 10, -26]],
-      [1, 'limbB', 'stoneD', ['e', 13.4, -22, 5.6, 5]],
-      [2, 'legs', 'stoneD', ['p', 1, 3, -30, 11, -30, 12, -8, 13, 0, 3, 0, 4, -6]],
-      [2, 'legs', 'stone', ['p', 1, -12, -30, -3, -30, -3, -6, -2, 0, -15, 0, -13, -8]],
-      [2, 'legs', 'seamD', ['p', 0, -9, -20, -7, -20, -8, -13, -9.6, -13]],
-      [3, 'torso', 'stoneD', ['p', 1, -11, -28.5, 11, -28.5, 12, -24, -12, -24]],
-      [3, 'torso', 'stone', ['p', 1, -15, -52, 6, -55.5, 16.5, -48, 16, -34, 10, -26, -10, -26, -16.5, -36]],
-      [3, 'torso', 'seam', ['p', 0, -4, -50.5, -2.2, -50.5, -5, -42, -1, -36, -3, -36, -7, -42]],
-      [3, 'torso', 'seam', ['p', 0, 6, -46, 7.6, -46, 4, -37.6, 2.4, -37.6]],
-      [3, 'torso', 'seamD', ['p', 0, 9, -34, 13, -38, 13.6, -37, 9.6, -33]],
-      [3, 'torso', 'core', ['e', -2, -40, 2.2, 2.2]],
-      [3, 'torso', 'moss', ['p', 1, -6, -53.5, 6, -56, 15.5, -49, 6, -51.5]],
-      [4, 'face', 'stone', ['p', 1, -9, -58, 0.6, -60.5, 3, -53, -1, -49.5, -8.6, -50.6]],
-      [4, 'face', 'stoneD', ['r', -9.2, -57.4, 8, 1.6]],
-      [4, 'face', 'seam', ['r', -7.6, -55.2, 2.8, 1.2]],
-      [6, 'limbF', 'stone', ['e', -13, -46.5, 7, 6.5]],
-      [6, 'limbF', 'moss', ['p', 1, -19, -48, -14, -53, -8, -51, -14, -49]],
-      [6, 'limbF', 'stone', ['p', 1, -18, -42, -9, -42, -10, -30, -17, -30]],
-      [6, 'limbF', 'seamD', ['r', -15.4, -36.4, 4, 1]],
-      [6, 'limbF', 'stone', ['p', 1, -19.5, -32, -9, -32, -8, -22, -20.5, -22]],
-      [6, 'limbF', 'stone', ['e', -14.5, -18, 7.2, 6.2]],
-      [6, 'limbF', 'seam', ['r', -19.6, -19.4, 6.4, 1]],
-      // elder: glowing crystal horns and a shoulder spike ridge
-      [4, 'face', 'horn', ['p', 1, -8, -58, -13, -64, -16, -72, -10, -64, -5, -59], 1],
-      [4, 'face', 'horn', ['p', 1, -1, -59.6, 2, -66, 6, -71, 4.6, -63, 2, -58.6], 1],
-      [4, 'face', 'crystal', ['p', 0, -14.4, -68, -16, -72, -13, -68.4], 1], [4, 'face', 'crystal', ['p', 0, 5, -67, 6, -71, 3.6, -66.4], 1],
-      [3, 'torso', 'crystal', ['p', 0, 4, -55, 6, -63, 8, -55.4], 1], [3, 'torso', 'crystal', ['p', 0, 9, -53, 13, -60, 13.4, -51], 1],
-      [6, 'limbF', 'crystal', ['p', 0, -18, -51, -21, -58, -15, -52], 1]
-    ],
-    poses: {
-      idle0: {}, idle1: { up: 1 },
-      wind: { limbF: { rot: 2.4 }, lean: 2, up: -1 },
-      strike: { limbF: { rot: 0.35 }, lean: -3, dx: -3 }
-    }
-  };
-
-  // ---------- Marsh Wraith: a floating healer spirit ----------
-  SRC.wraith = {
-    name: 'Marsh Wraith', anim: 'heal', hover: 1,
-    bones: { torso: [0, -30, null], face: [-1, -46, 'torso'], limbF: [-6, -41, 'torso'], limbB: [6, -41, 'torso'], tail: [2, -14, 'torso'] }, fixed: [],
-    mats: {
-      robe: '#9FD8C9', robeD: '#35524C', cord: '#C8C0A8', hand: '#D8F0E8', spirit: E('#DFFFF4', 1), wisp: E('#B6FFD8', 1),
-      void: VOID, antler: '#D8CFB8', chain: IRON
-    },
-    parts: [
-      [0, 'limbB', 'robeD', ['p', 1, 4, -43, 10, -39, 12.5, -30, 7, -31.5]],
-      [0, 'limbB', 'hand', ['p', 1, 9.4, -31.6, 12.6, -30, 13, -27, 10, -28.6]],
-      [1, 'tail', 'robeD', ['p', 1, 3, -12, 10, -9, 17, -2, 11.4, -4.6, 5, -6.4]],
-      [3, 'torso', 'robe', ['p', 1, -9, -44, 8, -44, 11, -26, 12, -12, 9, -6, 6, -10, 3, -3.6, 0, -9, -4, -4.6, -7, -10, -10, -14, -10.4, -26]],
-      [3, 'torso', 'robeD', ['p', 0, -3.6, -30, -2.4, -30, -4.4, -7, -5.6, -7.6]],
-      [3, 'torso', 'robeD', ['p', 0, 3, -30, 4.4, -30, 6.6, -9.4, 5.4, -9]],
-      [3, 'torso', 'cord', ['p', 1, -8.6, -31.4, 9.4, -31.4, 9.6, -29.4, -8.8, -29.4]],
-      [3, 'torso', 'cord', ['r', -6, -29.6, 1.2, 6]],
-      [3, 'torso', 'spirit', ['e', 0.4, -37, 1.4, 2]],
-      [4, 'face', 'robe', ['p', 1, 3, -56.5, 10, -60, 7, -52]],
-      [4, 'face', 'robe', ['p', 1, -9.4, -52, -4, -58, 3, -58.4, 8.6, -52, 9.4, -43.6, -10.4, -42]],
-      [4, 'face', 'void', ['e', -3.6, -48.2, 4.8, 4.8]],
-      [4, 'face', 'spirit', ['e', -5.6, -49, 1.2, 0.9]], [4, 'face', 'spirit', ['e', -1.8, -49, 1.2, 0.9]],
-      [4, 'face', 'robeD', ['p', 0, -9.4, -46, -8.4, -46, -7, -42.4, -9.6, -42.4]],
-      [6, 'limbF', 'robe', ['p', 1, -5, -43, -11, -38.6, -13.4, -32.4, -6, -33.4]],
-      [6, 'limbF', 'hand', ['p', 1, -11, -35, -16, -33, -18, -30, -14, -31, -11, -32]],
-      [6, 'limbF', 'chain', ['r', -18.6, -30, 0.7, 3]],
-      [6, 'limbF', 'wisp', ['e', -18.3, -24.8, 2.4, 2.6]],
-      // elder: an antler crown, a second wisp and hanging chains
-      [4, 'face', 'antler', ['p', 0, -6, -56, -9, -62, -12, -64, -9.4, -60.4, -7.4, -55], 1],
-      [4, 'face', 'antler', ['p', 0, -9.8, -61, -13, -60, -13.4, -58.6, -9.6, -59.6], 1],
-      [4, 'face', 'antler', ['p', 0, 1, -58, 3, -64, 6, -67, 4, -63, 2.6, -57.6], 1],
-      [4, 'face', 'antler', ['p', 0, 4, -64, 8, -64, 8.4, -62.6, 4.2, -62.8], 1],
-      [3, 'torso', 'chain', ['r', 7, -30, 0.8, 12], 1], [3, 'torso', 'chain', ['r', -8, -30, 0.8, 9], 1],
-      [0, 'limbB', 'wisp', ['e', 13, -25, 1.8, 2], 1]
-    ],
-    poses: {
-      idle0: { torso: { dy: -3 } }, idle1: { torso: { dy: -4.5 }, tail: { rot: 0.12 } },
-      wind: { torso: { dy: -5 }, limbF: { rot: 1.0 }, limbB: { rot: -0.4 }, face: { rot: 0.1 } },
-      strike: { torso: { dy: -3 }, limbF: { rot: 0.3 }, lean: -2, tail: { rot: -0.15 } }
-    }
-  };
-
-
-  // ---------- World boss: the wyrm (palette keys recoloured per raid generation) ----------
-  SRC.wyrm = {
+  const wyrm = {
     name: 'Wyrm', anim: 'breath',
-    bones: {
-      legs: [0, 0, null], body: [8, -34, null], neck: [-12, -50, 'body'], face: [-34, -80, 'neck'], jaw: [-38, -76, 'face'],
-      wingF: [4, -60, 'body'], wingB: [16, -60, 'body'], tail: [28, -26, 'body']
-    },
-    fixed: ['legs'],
-    mats: { scale: 'scale', scaleD: 'scaleD', belly: 'belly', wing: 'wing', wingM: 'wingM', horn: 'horn', fang: '#EFE6D6', eye: 'eye', maw: 'maw', void: VOID },
-    parts: [
-      // back wing
-      [0, 'wingB', 'wing', ['p', 0, 16, -60, 26, -90, 38, -104, 54, -110, 62, -102, 60, -90, 54, -86, 52, -74, 46, -76, 42, -64, 34, -66, 26, -56]],
-      [0, 'wingB', 'scaleD', ['p', 1, 14, -62, 36, -104, 54, -111, 52, -107, 36, -100, 18, -58]],
-      [0, 'wingB', 'scaleD', ['p', 0, 36, -102, 60, -91, 59, -89, 36, -99.5]],
-      [0, 'wingB', 'scaleD', ['p', 0, 34, -100, 52, -75, 50.6, -74.4, 33, -99]],
-      // tail and far legs
-      [1, 'tail', 'scale', ['p', 1, 26, -40, 40, -31, 54, -18, 66, -9, 76, -10, 71, -2, 56, -3.6, 42, -11, 26, -20]],
-      [1, 'tail', 'horn', ['p', 1, 70, -12, 82, -17, 79, -5, 72, -4]],
-      [1, 'tail', 'horn', ['p', 0, 44, -30, 49, -33, 48, -25]], [1, 'tail', 'horn', ['p', 0, 56, -19, 61, -22, 60, -14.4]],
-      [1, 'legs', 'scaleD', ['p', 1, 24, -32, 36, -32, 34, -14, 38, -2, 30, 0, 28, -12]],
-      [1, 'legs', 'scaleD', ['p', 1, -8, -32, 1, -32, -1, -16, -3, 0, -11, 0, -8, -16]],
-      // body
-      [3, 'body', 'scale', ['p', 1, -16, -52, 4, -61, 22, -59, 34, -47, 37, -30, 28, -19, 10, -15, -8, -17, -19, -30]],
-      [3, 'body', 'belly', ['p', 1, -19, -44, -13, -45, -6, -33, 6, -22, 14, -18, 2, -16, -10, -19, -18, -30]],
-      [3, 'body', 'scaleD', ['p', 0, -17, -38, -10, -38.6, -9.6, -37.4, -17, -36.8]],
-      [3, 'body', 'scaleD', ['p', 0, -15, -30, -5, -29, -5, -27.8, -15, -28.8]],
-      [3, 'body', 'scaleD', ['p', 0, -8, -22, 4, -20.6, 4, -19.4, -8, -20.8]],
-      [3, 'body', 'horn', ['p', 0, 6, -60, 9, -67, 12, -59.6]], [3, 'body', 'horn', ['p', 0, 16, -59, 20, -66, 22, -57]],
-      [3, 'body', 'horn', ['p', 0, 26, -54, 31, -59, 31.6, -50]],
-      // neck
-      [3, 'neck', 'scale', ['p', 1, -21, -42, -2, -57, -16, -72, -28, -90, -45, -86, -35, -68]],
-      [3, 'neck', 'belly', ['p', 1, -21, -43, -16, -45, -30, -68, -37, -77, -40, -76, -35, -68]],
-      [3, 'neck', 'scaleD', ['p', 0, -22, -56, -18, -56, -18, -55, -22, -55]], [3, 'neck', 'scaleD', ['p', 0, -27, -64, -23, -64, -23, -63, -27, -63]],
-      [3, 'neck', 'horn', ['p', 0, -12, -60, -9, -66, -7, -58.6]], [3, 'neck', 'horn', ['p', 0, -18, -70, -16, -76, -13, -68.6]],
-      // head and jaw (the glowing maw shows when the jaw drops)
-      [4, 'face', 'maw', ['p', 1, -38, -80, -58, -80, -56, -73, -40, -72]],
-      [4, 'jaw', 'scale', ['p', 1, -35, -76, -58.5, -76.6, -56, -72.6, -44, -69.6, -35, -71.4]],
-      [4, 'jaw', 'fang', ['p', 0, -54, -76.4, -53, -78.4, -52, -76.4]], [4, 'jaw', 'fang', ['p', 0, -48, -76.2, -47, -78, -46, -76.2]],
-      [4, 'face', 'scale', ['p', 1, -30, -86, -40, -90.5, -50, -88.4, -60, -82.5, -62, -78, -50, -77.4, -38, -75.6, -29, -78]],
-      [4, 'face', 'horn', ['p', 1, -34, -87, -28, -96, -19, -101, -25, -93, -30.6, -84]],
-      [4, 'face', 'horn', ['p', 1, -40, -89, -41, -97, -35, -104, -36.6, -95, -36.6, -88]],
-      [4, 'face', 'scaleD', ['p', 0, -40, -87.6, -49, -87, -47, -85.4, -40, -85.8]],
-      [4, 'face', 'eye', ['e', -44.4, -84.4, 1.9, 1.3]],
-      [4, 'face', 'void', ['r', -60.4, -80.6, 1.6, 0.9]],
-      [4, 'face', 'fang', ['p', 0, -57, -77.6, -56, -75.4, -55, -77.6]], [4, 'face', 'fang', ['p', 0, -50, -77.4, -49, -75, -48, -77.4]],
-      // front wing (raised, mostly above the body)
-      [6, 'wingF', 'wingM', ['p', 0, 2, -60, -4, -90, 6, -110, 20, -118, 30, -108, 40, -104, 36, -92, 30, -90, 28, -78, 20, -80, 12, -66]],
-      [6, 'wingF', 'scaleD', ['p', 1, 0.6, -61, -5.4, -91, 19, -118.6, 17, -114.4, -2.4, -90, 5.4, -60]],
-      [6, 'wingF', 'scaleD', ['p', 0, -3, -90, 40, -104.6, 40, -103.2, -3, -88.6]],
-      [6, 'wingF', 'scaleD', ['p', 0, -3, -89, 28.6, -78.6, 27.4, -78, -3.6, -88]],
-      [6, 'wingF', 'horn', ['p', 0, -5, -91, -9, -95, -3.6, -94]],
-      // near legs
-      [6, 'legs', 'scale', ['p', 1, -22, -34, -10, -34, -12, -18, -10, -4, -16, 0, -25, 0, -21, -6, -20, -18]],
-      [6, 'legs', 'horn', ['p', 0, -25, -1.4, -29, 0, -25, 0]], [6, 'legs', 'horn', ['p', 0, -20, -1.4, -24, 0, -20, 0]],
-      [6, 'legs', 'scale', ['p', 1, 16, -36, 32, -34, 30, -16, 32, -2, 22, 0, 24, -14]],
-      [6, 'legs', 'horn', ['p', 0, 22, -1.4, 18, 0, 22, 0]]
-    ],
+    bones: { legs: [0, 0, null], body: [6, -21, null], neck: [-6, -27, 'body'], head: [-17, -44, 'neck'], jaw: [-15, -40, 'head'], wingF: [4, -30, 'body'], wingB: [8, -32, 'body'], tail: [18, -22, 'body'] },
+    ground: ['legs'],
     poses: {
-      idle0: {}, idle1: { up: 1, wingF: { rot: -0.03 }, wingB: { rot: 0.03 }, tail: { rot: 0.03 } },
-      wind: { neck: { rot: 0.22 }, face: { rot: 0.18 }, wingF: { rot: 0.12 }, wingB: { rot: -0.1 }, lean: 2, up: -1 },
-      strike: { neck: { rot: -0.16 }, face: { rot: -0.2 }, jaw: { rot: -0.45 }, wingF: { rot: -0.06 }, lean: -3, dx: -5 }
-    }
-  };
-
-  // ---------- Gather nodes: 'tier' materials follow the node tier (see TIER below) ----------
-  SRC['node:ore'] = {
-    name: 'Ore vein', anim: 'shake', tierKind: 'ore',
-    bones: { base: [0, -8, null] }, fixed: [],
-    mats: { rock: '#6E6878', rockD: '#3A3542', moss: '#4E6A3A', V: 'tier', Vc: 'tier', Vg: 'tier' },
-    parts: [
-      [1, 'base', 'rockD', ['p', 1, 2, -1, 5, -18, 13, -27, 21, -21, 24, -4]],
-      [3, 'base', 'rock', ['p', 1, -20, 0, -18.5, -12, -12, -22, -2, -28.5, 8, -25, 14.5, -14, 16, 0]],
-      [3, 'base', 'rockD', ['p', 0, -2, -28, 0, -28, -3, -14, -5, -14]],
-      [3, 'base', 'rockD', ['p', 0, 5, -18, 13, -12, 12.6, -11, 4.6, -16.6]],
-      [3, 'base', 'V', ['p', 1, -14.5, -15, -9, -19.5, -5, -17.4, -8, -14, -12.6, -12.4]],
-      [3, 'base', 'V', ['p', 1, 1, -22, 5, -24, 7.4, -20.4, 3.4, -19]],
-      [3, 'base', 'V', ['p', 1, -6, -8, -1, -10, 2, -6, -3, -5]],
-      [3, 'base', 'V', ['e', 9, -7, 2, 1.6]],
-      [3, 'base', 'moss', ['p', 1, -19, -1, -16, -5, -10, -3, -12, 0]],
-      [6, 'base', 'rock', ['p', 1, -25, 0, -23, -6, -17, -8, -13, 0]],
-      [6, 'base', 'moss', ['p', 1, -22, -6.4, -18, -8.6, -15, -6.4, -19, -6]],
-      [3, 'base', 'Vg', ['r', -10, -18, 1, 1], 1], [3, 'base', 'Vg', ['r', 4, -22.4, 1, 1], 1], [3, 'base', 'Vg', ['r', -2.6, -8.6, 1, 1], 1],
-      [3, 'base', 'Vc', ['p', 0, 12, -18, 15, -30, 17, -17], 2],
-      [3, 'base', 'Vc', ['p', 0, 16, -14, 22, -24, 21, -12], 2],
-      [6, 'base', 'Vc', ['p', 0, -17, -8, -18, -16, -14.6, -8.6], 3],
-      [3, 'base', 'Vg', ['p', 0, 13.2, -19, 14.8, -27, 15.4, -18.6], 4]
-    ],
-    poses: { idle0: {}, idle1: {}, wind: { dx: 1 }, strike: { dx: -1 } }
-  };
-  SRC['node:wood'] = {
-    name: 'Tree', anim: 'shake', tierKind: 'wood',
-    bones: { base: [0, 0, null], crown: [0, -30, 'base'] }, fixed: [],
-    mats: { bark: 'tier', barkD: 'tier', leaf: 'tier', leafD: 'tier', Lg: 'tier', moss: '#4E6A3A' },
-    parts: [
-      [0, 'crown', 'leafD', ['e', 11, -44, 12, 10]],
-      [0, 'crown', 'leafD', ['e', -11, -47, 11, 9]],
-      [2, 'base', 'bark', ['p', 1, -13, 0, -7, -3.4, -4.6, -10, 4.6, -10, 7, -3.4, 13, 0]],
-      [3, 'base', 'bark', ['p', 1, -5, -2, -4.2, -30, -2, -38, 3, -38, 5, -30, 5.2, -2]],
-      [3, 'base', 'bark', ['p', 1, 2, -28, 10, -37, 11.4, -35, 4.4, -25.6]],
-      [3, 'base', 'bark', ['p', 1, -2, -30, -9, -37, -10, -35.6, -3.4, -27]],
-      [3, 'base', 'barkD', ['p', 0, -1, -30, 0.2, -30, -0.4, -5, -1.6, -5]],
-      [3, 'base', 'barkD', ['e', 2.4, -17, 1.4, 2]],
-      [3, 'base', 'moss', ['p', 1, -5.4, -2, -4.8, -8, -1.6, -4, -2, -1.6]],
-      [4, 'crown', 'leaf', ['e', 0, -51, 15.5, 12]],
-      [4, 'crown', 'leaf', ['e', -10, -41, 10, 6.6]],
-      [4, 'crown', 'leaf', ['e', 11, -41.4, 9.6, 6.6]],
-      [4, 'crown', 'leaf', ['e', 2, -62, 10, 7]],
-      [4, 'crown', 'leafD', ['p', 1, -8, -46, 0, -44, 8, -46.4, 1, -42.4]],
-      [4, 'crown', 'leafD', ['p', 1, -4, -57, 5, -55.6, 9, -58, 3, -53.6]],
-      [4, 'crown', 'Lg', ['e', -6, -44, 1.2, 1.5], 3], [4, 'crown', 'Lg', ['e', 8, -48, 1.2, 1.5], 3],
-      [4, 'crown', 'Lg', ['e', 0, -58, 1.2, 1.5], 3], [4, 'crown', 'Lg', ['e', -11, -52, 1, 1.2], 4], [4, 'crown', 'Lg', ['e', 12, -40, 1, 1.2], 4]
-    ],
-    poses: { idle0: {}, idle1: { crown: { rot: 0.015 } }, wind: { crown: { rot: -0.03 } }, strike: { crown: { rot: 0.05 }, dx: 1 } }
-  };
-
-
-  // ---------- build the baker rigs ----------
-  // Authoring format above: bones { name: [pivX, pivY, parent] }, fixed = ground bones,
-  // mats { key: '#hex' | { col, metal } | { emit, light } | 'FIXED' | 'tier' }, parts with minLvl
-  // (1 = elder only; nodes: tier index), rest / drawn for the archer.
-  const boundsOf = (rig, parts) => {
-    const b = [1e9, 1e9, -1e9, -1e9];
-    for (const f in rig.poses) {
-      const pose = rig.poses[f];
-      const tx = (bone, x, y) => {
-        for (let bn = bone; bn; bn = rig.parent[bn]) {
-          const o = pose[bn], pv = rig.piv[bn];
-          if (o && typeof o === 'object') {
-            if (o.rot) { const dx = x - pv[0], dy = y - pv[1], c = Math.cos(o.rot), s = Math.sin(o.rot); x = pv[0] + dx * c - dy * s; y = pv[1] + dx * s + dy * c; }
-            x += o.dx || 0; y += o.dy || 0;
-          }
-        }
-        if (!rig.ground.includes(bone)) { y += pose.up || 0; x += pose.lean || 0; }
-        return [x + (pose.dx || 0), y];
+      idle0: {}, idle1: { bob: 1, wingF: { rot: -.05 }, wingB: { rot: .05 }, tail: { rot: .03 } },
+      wind: { neck: { rot: .22 }, head: { rot: .14 }, wingF: { rot: .1 }, wingB: { rot: -.08 }, lean: 2, bob: -1 },
+      strike: { neck: { rot: -.12 }, head: { rot: -.16 }, jaw: { rot: -.5 }, wingF: { rot: -.08 }, wingB: { rot: .06 }, lean: -3 }
+    },
+    draw(k) {
+      const pal = WYRM_GENS[(Math.max(1, (k.v.gen | 0) || 1) - 1) % WYRM_GENS.length];
+      const sc = k.c(pal.scale, 'leather'), scD = k.c(pal.scaleD, 'leather'), bel = k.c(pal.belly, 'cloth'), wg = k.c(pal.wing, 'leather'), wgM = k.c(pal.wingM, 'leather'), horn = k.c(pal.horn, 'cloth'), eye = k.glow(pal.eye), maw = k.glow(pal.maw), fang = k.f('#F2EADA', 'flat');
+      // wing: shoulder, elbow and tip, the membrane scalloped between the finger struts
+      const wing = (z, bone, sh, el, tip, fingers, mem, tone) => {
+        const pts = [sh[0], sh[1], el[0], el[1], tip[0], tip[1]];
+        for (const f of fingers) pts.push(f[0], f[1], f[2], f[3]);
+        pts.push(sh[0] + (tip[0] - sh[0]) * .3, sh[1] + 4);
+        k.add(z, bone, mem, P(pts), { bev: 1, tone });
+        k.add(z + .01, bone, scD, C(sh[0], sh[1], 1.9, el[0], el[1], 1.3), { tone });
+        k.add(z + .02, bone, scD, C(el[0], el[1], 1.3, tip[0], tip[1], .7), { tone });
+        for (const f of fingers) k.add(z + .02, bone, scD, C(el[0], el[1], 1, f[0], f[1], .6), { tone });
+        k.add(z + .03, bone, horn, P(el[0] - 1, el[1], el[0], el[1] - 3.6, el[0] + 1.4, el[1] - .4));
       };
-      for (const p of parts) {
-        const s = p[3], pts = s[0] === 'e' ? [s[1] - s[3], s[2] - s[4], s[1] + s[3], s[2] + s[4]]
-          : s[0] === 'r' ? [s[1], s[2], s[1] + s[3], s[2] + s[4]] : s.slice(2);
-        for (let i = 0; i < pts.length; i += 2) {
-          const q = tx(p[1], pts[i], pts[i + 1]);
-          b[0] = Math.min(b[0], q[0]); b[1] = Math.min(b[1], q[1]); b[2] = Math.max(b[2], q[0]); b[3] = Math.max(b[3], q[1]);
-        }
-      }
+      wing(0, 'wingB', [8, -32], [-2, -58], [-14, -70], [[-12, -60, -8, -62], [-6, -52, -2, -52]], wgM, 1);
+      // tail with a spade tip, far legs
+      k.add(1, 'tail', sc, P(16, -29, 29, -23, 39, -13, 49, -8, 54, -9, 51, -3.4, 40, -3.4, 29, -9, 17, -15), { bev: 1.3 });
+      k.add(1.05, 'tail', horn, P(50, -10, 60, -14, 57, -3.4, 50.6, -3), { bev: .7 });
+      for (const [x, y] of [[26, -24], [36, -15], [45, -10]]) k.add(.9, 'tail', horn, P(x - 2.2, y + 1, x + .4, y - 3.6, x + 2.2, y + 1.4));
+      k.add(1.1, 'legs', sc, P(17, -14, 25, -14, 24, -4, 27, 0, 17, 0, 18.6, -5), { bev: 1, tone: 1 });
+      k.add(1.1, 'legs', sc, P(-3, -14, 3, -14, 2, -4, 3.4, 0, -5, 0, -3.4, -5), { bev: 1, tone: 1 });
+      // body with belly plates and back spikes
+      for (const [x, y, h] of [[0, -31, 5], [7, -32.4, 5.8], [14, -30.6, 5], [19.6, -27, 4]]) k.add(2.9, 'body', horn, P(x - 2.6, y + 2, x - .2, y - h, x + 2.4, y + 2.4));
+      const body = k.add(3, 'body', sc, E(6, -21, 16, 11));
+      const belly = k.add(3.1, 'body', bel, E(-3, -15.6, 10, 8.4), { clip: body });
+      for (const y of [-19, -14.6]) k.add(3.15, 'body', scD, R(-14, y, 15, .9), { clip: belly, nl: 1 });
+      // neck and head: horns swept back, a lit eye, the maw glows when the jaw drops
+      const nk = k.add(3.4, 'neck', sc, C(-5, -26, 7, -16, -41, 5));
+      k.add(3.45, 'neck', bel, C(-10, -23, 3.8, -20, -38, 2.4), { clip: nk });
+      for (const [x, y] of [[-4, -34], [-10, -41]]) k.add(3.35, 'neck', horn, P(x - 1, y + 1.4, x + 3.8, y - 2.8, x + 2.4, y + 2.6));
+      k.add(3.7, 'head', maw, P(-14, -43.4, -33, -43, -31.4, -39.4, -18, -39), { nl: 1, lr: 14 });
+      k.add(3.8, 'jaw', sc, P(-13, -41.4, -33, -41.2, -31.4, -37.4, -19, -36), { bev: .9, tone: 1 });
+      k.add(3.85, 'jaw', fang, Q(-31, -42, 1, 1), { nl: 1 }); k.add(3.85, 'jaw', fang, Q(-26, -42, 1, 1), { nl: 1 });
+      k.add(3.9, 'head', horn, P(-15, -49, -9, -56, -1, -60, -7, -53, -12.6, -46.6), { bev: .8 });
+      const hd = k.add(4, 'head', sc, P(-11, -47, -19, -51, -29, -49.4, -36, -45, -35, -41.6, -24, -41, -12, -40), { bev: 1.2 });
+      k.add(4.1, 'head', scD, P(-19, -49.6, -29, -47.6, -28.4, -46.2, -19.4, -47.8), { clip: hd, nl: 1 });
+      k.add(4.15, 'head', horn, P(-19, -50, -19, -57, -14, -63, -15.6, -56, -16, -49.4), { bev: .8 });
+      k.eye(4.2, 'head', -25, -47, 2, 1, eye, 10);
+      k.add(4.2, 'head', k.ink, Q(-35, -45, 1, 1), { nl: 1 });
+      k.add(4.2, 'head', fang, Q(-33, -41, 1, 1), { nl: 1 }); k.add(4.2, 'head', fang, Q(-28, -41, 1, 1), { nl: 1 });
+      // near wing, raised behind; near legs with claws
+      wing(5.5, 'wingF', [4, -30], [18, -60], [36, -68], [[34, -56, 29, -58], [27, -46, 22, -48]], wgM, 0);
+      k.add(6, 'legs', sc, P(-9, -17, -1, -17, -2, -5, 0, 0, -11, 0, -8.4, -5.4), { bev: 1.1 });
+      k.add(6.05, 'legs', horn, P(-11, 0, -13.6, 0, -11.4, -2.4)); k.add(6.05, 'legs', horn, P(-6.6, 0, -9, 0, -7, -2.4));
+      k.add(6.1, 'legs', sc, E(14, -13, 7, 7));
+      k.add(6.2, 'legs', sc, P(10, -8, 18, -8, 17.4, 0, 8, 0), { bev: 1 });
+      k.add(6.25, 'legs', horn, P(8, 0, 5.6, 0, 7.6, -2.4));
     }
-    return [Math.floor(b[0]), Math.floor(b[1]), Math.ceil(b[2]), Math.ceil(b[3])];
   };
-  const strip = list => list.map(p => [p[0], p[1], p[2], p[3]]);
-  // mats: resolve the authoring values; 'FIXED' drops the key so the baker uses FIXED[key].
-  const matsOf = (raw, pick) => {
-    const mats = {}, metal = [];
-    for (const k in raw) {
-      let v = pick ? pick(k, raw[k]) : raw[k];
-      if (v === 'FIXED') continue;
-      if (v && typeof v === 'object' && v.col) { if (v.metal) metal.push(k); v = v.col; }
-      mats[k] = v;
-    }
-    return { mats, metal };
-  };
-  const build = (src, lvl, pick) => {
-    const piv = {}, parent = {};
-    for (const b in src.bones) { piv[b] = [src.bones[b][0], src.bones[b][1]]; if (src.bones[b][2]) parent[b] = src.bones[b][2]; }
-    const { mats, metal } = matsOf(src.mats, pick);
-    const rig = { name: src.name, anim: src.anim, hover: !!src.hover, parts: strip(src.parts.filter(p => (p[4] || 0) <= lvl)), mats, metal, piv, parent, ground: src.fixed, poses: src.poses };
-    if (src.rest) { const rest = strip(src.rest); rig.parts = rig.parts.concat(rest); rig.swap = { rest, drawn: strip(src.drawn) }; }
-    return rig;
-  };
-  for (const k of ['slime', 'bat', 'bones', 'beetle', 'spore', 'golem', 'wraith']) {
-    const src = SRC[k], rig = build(src, 0);
-    const elderParts = strip(src.parts.filter(p => p[4] === 1));
-    rig.variants = { elder: { S: 1.4, parts: elderParts } };
-    rig.box = boundsOf(rig, rig.parts.concat(src.drawn ? strip(src.drawn) : []));
-    rig.elderBox = boundsOf(rig, rig.parts.concat(elderParts));
-    ENEMY_RIGS[k] = rig;
-  }
-  // World boss: palette by raid generation.
-  const wyrmRigs = WYRM_GENS.map(pal => build(SRC.wyrm, 0, (k, v) => typeof v === 'string' && pal[v] ? (k === 'eye' || k === 'maw' ? E(pal[v], 1) : pal[v]) : v));
-  const wyrmBox = boundsOf(wyrmRigs[0], wyrmRigs[0].parts);
-  for (const r of wyrmRigs) r.box = wyrmBox;
-  ENEMY_RIGS.wyrm = v => wyrmRigs[(Math.max(1, (v && v.gen) | 0 || 1) - 1) % wyrmRigs.length];
+  ENEMY_RIGS.wyrm = creature(wyrm, false);
   ENEMY_RIGS.wyrm.gens = WYRM_GENS;
-  // Gather nodes: tier colours (ore vein, bark and leaves), extra parts from higher tiers.
+
+  // ================= Gather nodes: ore and wood (tier 1-5 recolours; more detail at high tiers) =================
   const TIER = {
-    V: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'],
+    V: ['#C07A42', '#A8B0C0', '#86D0DE', '#B0A0EA', '#E0663A'],
     oreGlow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'],
     bark: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'],
-    barkD: ['#5E3E26', '#482A20', '#3E3A30', '#7A8E88', '#8A5020'],
     leaf: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'],
     leafD: ['#3E7A3A', '#1E5440', '#5E6A38', '#6E9A96', '#C87A2A'],
     leafGlow: ['#E8F5C8', '#E8F5C8', '#E8F5C8', '#E0FFF8', '#FFE08A']
   };
-  for (const k of ['node:ore', 'node:wood']) {
-    const rigs = [0, 1, 2, 3, 4].map(t => build(SRC[k], t, (m, v) => {
-      if (v !== 'tier') return v;
-      if (m === 'V') return { col: TIER.V[t], metal: 1 };
-      if (m === 'Vc') return t >= 3 ? E(TIER.oreGlow[t], 1) : { col: TIER.oreGlow[t], metal: 1 };
-      if (m === 'Vg') return E(TIER.oreGlow[t], t >= 2);
-      if (m === 'Lg') return E(TIER.leafGlow[t], 1);
-      return TIER[m][t];
-    }));
-    for (const r of rigs) r.box = boundsOf(r, r.parts);
-    ENEMY_RIGS[k] = v => rigs[Math.max(0, Math.min(4, ((v && v.tier) | 0 || 1) - 1))];
-  }
-  // Crafting nodes (11-art-craft.js): same build; each source maps its 'tier' mats with tier(key, t, E).
-  if (typeof CRAFT_NODE_RIGS !== 'undefined') for (const k in CRAFT_NODE_RIGS) {
-    const src = CRAFT_NODE_RIGS[k], rigs = [0, 1, 2, 3, 4].map(t => build(src, t, (m, v) => v === 'tier' ? src.tier(m, t, E) : v));
-    for (const r of rigs) r.box = boundsOf(r, r.parts);
-    ENEMY_RIGS[k] = v => rigs[Math.max(0, Math.min(4, ((v && v.tier) | 0 || 1) - 1))];
-  }
+  const nodeOre = {
+    name: 'Ore vein', anim: 'shake',
+    bones: { base: [0, 0, null] },
+    poses: { idle0: {}, idle1: {}, wind: { dx: 1 }, strike: { dx: -1 } },
+    draw(k) {
+      const t = k.t, rock = k.f('#6E6878', 'stone'), rockD = k.f('#4A4452', 'stone'), moss = k.f('#4E6A3A', 'hair'), vein = k.f(TIER.V[t], 'metal'), glint = k.f(TIER.oreGlow[t], 'glow', { light: TIER.oreGlow[t] });
+      k.add(1, 'base', rockD, P(3, 0, 5, -14, 11, -20.6, 18, -17, 20, -4, 19, 0), { bev: 1.4 });
+      const big = k.add(3, 'base', rock, P(-17, 0, -16, -10, -10.6, -18.4, -2, -23, 7, -20.4, 12.6, -11, 13.6, 0), { bev: 1.8 });
+      k.add(3.05, 'base', rockD, P(-3, -23, -1.6, -23, -4.2, -12, -5.6, -12), { clip: big, nl: 1 });
+      for (const pts of [[-12.4, -12.4, -8, -16.4, -4.6, -14.6, -7.4, -11.4, -11, -10], [1, -18.4, 4.6, -20, 6.6, -17, 3.2, -15.8], [-6, -6.6, -1.4, -8.4, 1.6, -5, -3, -4.2], [6.4, -9, 9.6, -10.2, 10.4, -6.8, 7.4, -6]]) k.add(3.1, 'base', vein, P(pts), { clip: big, bev: .7 });
+      if (t >= 1) for (const [x, y] of [[-9, -15], [4, -19], [-2, -8]]) k.add(3.2, 'base', glint, Q(x, y, 1, 1), { nl: 1, nolight: t < 2, lr: 5 });
+      if (t >= 2) { k.add(2.5, 'base', t >= 3 ? glint : vein, P(9, -14, 12, -25, 15, -13), { bev: .6, lr: 8 }); k.add(2.5, 'base', t >= 3 ? glint : vein, P(13, -10, 19, -19.6, 18.4, -8), { bev: .6, lr: 8 }); }
+      if (t >= 4) k.add(3.3, 'base', glint, P(-15, -4, -16.6, -12, -12.8, -5), { lr: 8 });
+      k.add(3.2, 'base', moss, P(-16, -1, -13, -5.4, -7, -3.4, -9, 0), { clip: big });
+      k.add(6, 'base', rock, P(-22, 0, -20.4, -5.4, -15, -7, -11.4, 0), { bev: 1.2 });
+      k.add(6.1, 'base', moss, P(-20, -5.6, -16.4, -7.6, -13, -5.6, -17, -5), { nl: 1 });
+    }
+  };
+  const nodeWood = {
+    name: 'Tree', anim: 'shake', scale: .8,
+    bones: { base: [0, 0, null], crown: [0, -24, 'base'] },
+    poses: { idle0: {}, idle1: { crown: { rot: .015 } }, wind: { crown: { rot: -.03 } }, strike: { crown: { rot: .05 }, dx: 1 } },
+    draw(k) {
+      const t = k.t, bark = k.f(TIER.bark[t], 'wood'), barkD = k.f(mix(TIER.bark[t], '#1A1020', .4), 'wood'), leaf = k.f(TIER.leaf[t], 'hair'), leafD = k.f(TIER.leafD[t], 'hair'), moss = k.f('#4E6A3A', 'hair'), lg = k.f(TIER.leafGlow[t], 'glow', { light: TIER.leafGlow[t] });
+      k.add(0, 'crown', leafD, E(9, -35, 10, 8));
+      k.add(0, 'crown', leafD, E(-9, -37, 9.6, 7.6));
+      k.add(2, 'base', bark, P(-11, 0, -6, -3, -4, -8, 4, -8, 6, -3, 11, 0), { bev: .9 });
+      const tr = k.add(3, 'base', bark, P(-4.4, -1, -3.6, -24, -1.6, -31, 2.8, -31, 4.4, -24, 4.6, -1), { bev: 1.2 });
+      k.add(3.05, 'base', bark, P(2, -22, 8.6, -29.6, 10, -28, 4, -19.6), { bev: .8 });
+      k.add(3.05, 'base', bark, P(-2, -24, -8, -30, -9, -28.6, -3.2, -21), { bev: .8 });
+      k.add(3.1, 'base', barkD, P(-.8, -24, .4, -24, -.2, -5, -1.4, -5), { clip: tr, nl: 1 });
+      k.add(3.1, 'base', barkD, E(2.2, -13, 1.2, 1.8), { clip: tr, nl: 1 });
+      k.add(3.2, 'base', moss, P(-4.6, -1, -4, -7, -1.4, -3.6, -1.6, -1), { clip: tr });
+      k.add(4, 'crown', leaf, E(0, -41, 13, 10));
+      k.add(4.05, 'crown', leaf, E(-9, -33, 8.4, 5.6));
+      k.add(4.05, 'crown', leaf, E(9.6, -33.4, 8, 5.6));
+      k.add(4.1, 'crown', leaf, E(1.4, -50, 8.4, 6));
+      k.add(4.2, 'crown', leafD, P(-7, -37, 0, -35, 7, -37.4, 1, -33.6), { nl: 1 });
+      k.add(4.2, 'crown', leafD, P(-3.6, -46, 4.6, -45, 8, -47.4, 2.6, -43.4), { nl: 1 });
+      if (t >= 3) for (const [x, y] of [[-6, -36], [7, -40], [0, -49], [-10, -43], [11, -33]].slice(0, t >= 4 ? 5 : 3)) k.add(4.3, 'crown', lg, Q(x, y, 1, 2), { nl: 1, lr: 6 });
+    }
+  };
+  const tierRig = src => {
+    const rig = creature(src, false), parts = rig.parts;
+    rig.parts = (f, v) => parts(f, { tier: (v && v.tier) || 1 });
+    return rig;
+  };
+  ENEMY_RIGS['node:ore'] = tierRig(nodeOre);
+  ENEMY_RIGS['node:wood'] = tierRig(nodeWood);
+  // Crafting nodes (11-art-craft.js) use the same creature format.
+  if (typeof CRAFT_NODE_RIGS !== 'undefined') for (const key in CRAFT_NODE_RIGS) ENEMY_RIGS[key] = tierRig(CRAFT_NODE_RIGS[key]);
 }
 
 // ---- src/js/20-data.js ----
@@ -7310,16 +7385,18 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     P().cells = cells;   // a new object: the stage watches identity
   }
   autoPlace = () => { placeCells(false); emit('fieldChange', { field: P().field }); return P().cells; };
+  // A character out on an expedition (57b) cannot be fielded. try/catch: expedOut may not exist yet at load.
+  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   setField = ids => {
     const f = [];
-    for (const id of ids || []) if (isRecruited(id) && !f.includes(id) && f.length < 3) f.push(id);
+    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < 3) f.push(id);
     P().field = f;       // a new array: the stage watches identity
     placeCells(true);
     emit('fieldChange', { field: f });
     return f;
   };
   fieldChar = (id, replaceId) => {
-    if (!isRecruited(id)) return false;
+    if (!isRecruited(id) || onExped(id)) return false;
     const f = fieldKeys().filter(k => k !== id);
     const i = replaceId ? f.indexOf(replaceId) : -1;
     if (i >= 0) f[i] = id; else if (f.length < 3) f.push(id); else return false;
@@ -9003,6 +9080,514 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
 }
 
+// ---- src/js/57b-expeditions.js ----
+// 57b-expeditions: Expeditions (docs/design/expeditions.md, with the coordinator's decisions:
+// the grade is shown before sending, nothing fails, a team repeats up to 3 runs in a row while
+// away, and companions earn a little XP, capped below the party).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules: benched companions who are resting (campFree) go out in teams of 1 to 3 on a route
+// whose band is cleared. The grade comes from the route's two needs and the team's power, and
+// it alone sets the size of the haul. At send the grade, a seed and the whole haul (with the
+// bonus rolls) are fixed and stored in the slot, so reloading cannot reroll it and an open or
+// closed game pays the same. Only three things happen on return: token rolls (through the
+// unlock pity code, with seeded rolls), which Lore page the quarters fill, and whether a found
+// Keepsake turns into a Trophy. Timers are wall-clock timestamps, so runs finish offline.
+// While the game is open a finished run waits for Collect; while it is closed (the away phase)
+// it is collected on its own and listed on the away card. Repeat (Map Room Lv 5) sends the
+// same team again at once, up to EXPED_TUNE.repMax runs in a row, then the run waits.
+//
+// Exposed names:
+//   data   EXPED_TUNE, EXPED_BANDS, EXPED_ROUTES (id -> route), EXPED_ROUTE_IDS, EXPED_GRADES,
+//          EXPED_KEEPSAKES, EXPED_LORE
+//   read   expedOpen(), expedSlots(), expedLengths(), expedFree() (free slots),
+//          expedRoutes() -> open route ids, expedBandOpen(b), ePow(id), expedR(band),
+//          expedGrade(r, team) -> { pts, g, name, mult, rolls, pow, R, needs: [{ label, met }], hint },
+//          expedPreview(r, team, h) -> { grade, lines: [{ k, key, n, txt }], rolls },
+//          expedBest(r, h?) -> team ids, expedCan(r, team, h) -> { ok, why },
+//          expedOut(id) -> slot | null, expedRumour() -> route id | null, expedLoreFound()
+//   act    expedSend(r, team, h) -> slot | null, expedCollect(i) -> result | null,
+//          expedCollectAll() -> n, expedRecall(i) -> result | null, expedRepeat(i, on) -> bool,
+//          expedCatchUp(now, auto) -> [results]
+//
+// Events: expedSent { r, grade, h, team }, expedBack { r, grade, haul, auto, recall },
+//         expedPick { id } (the Roster board's Send button; the UI opens the send sheet),
+//         expedGoto (the Map Room's Expeditions button). Emits kingslayerCredit { n } (56c).
+// Hooks used: registerBenchStatus / registerBenchSend / registerCampAction('maproom') /
+//   campFree / campMapRoom / bonus('expSlots') (57-camp), mod('expHaul') (Wayfarer Blessing,
+//   Fair Winds Omen), unlockTokenRoll / addRenown (56c), addTrophy (55-gathering),
+//   addCharXp / partyLevel / cxpNeed (56-roster), registerGoal, registerAwayLine.
+//
+// Save: registerState('exped', { v, slots, done, lore, court, keep, log, seq }).
+//   slots: [{ r, team, h, start, end, seed, grade, rep, repOn, pay }]
+//     grade 0..3 (Fair, Good, Great, Perfect); rep = runs finished in this chain;
+//     pay = the fixed haul: { mats: [[fam, t, n]], troph: [[i, n]], ren, tok, lq, ks, keep, xp,
+//           bonus: { mats, troph, lq, keep, ren } } (bonus rolls are kept apart for Call back).
+//   done: route -> runs; lore: page id -> quarters (4 = found); court: Kingslayer credit given;
+//   keep: keepsake id -> 1; log: last 10 { r, grade, haul, at }; seq: seeds sent so far.
+
+const EXPED_TUNE = {
+  openZone: 8,                         // without a Map Room hook: open here with 1 slot
+  gathered: 75,                        // (tuned, spec 90) units per hour of a gathered family
+  fought: 30,                          // (tuned, spec 60) Hide and Essence per hour
+  troph: 0.25,                         // (tuned, spec 0.35) Trophies per hour
+  tokHours: 3, renHours: 2,            // one token roll per 3h, 1 Renown per 2h
+  xp: 0.15,                            // (tuned, spec 0.2) share of a level per hour
+  xpGap: 5,                            // expedition XP stops at party level - 5
+  lengths: [1, 4, 8, 12],
+  lenF: { 1: 1.2, 4: 1.0, 8: 0.9, 12: 0.85 },
+  teamF: [0, 0.45, 0.75, 1.0],
+  court: [3, 5, 8, 10], courtMax: 50,  // Kingslayer credit per grade (Fair given 3, spec none)
+  repMax: 3,                           // runs in a row with Repeat on
+  rumour: 1.5, rumourTavern: 3,
+  logMax: 10
+};
+const EXPED_GRADES = [
+  { n: 'Fair', mult: 0.6, rolls: 0, col: '#A9B1BD' },
+  { n: 'Good', mult: 1.0, rolls: 0, col: '#8FD18A' },
+  { n: 'Great', mult: 1.3, rolls: 1, col: '#7FB2FF' },
+  { n: 'Perfect', mult: 1.6, rolls: 2, col: '#F2C14E' }
+];
+// Region 1: 5 bands of 7 zones. A band opens when its last boss is beaten (maxZone > z1).
+const EXPED_BANDS = [null,
+  { b: 1, z0: 1, z1: 7, t: 1, n: 'Band I' },
+  { b: 2, z0: 8, z1: 14, t: 2, n: 'Band II' },
+  { b: 3, z0: 15, z1: 21, t: 3, n: 'Band III' },
+  { b: 4, z0: 22, z1: 28, t: 4, n: 'Band IV' },
+  { b: 5, z0: 29, z1: 35, t: 5, n: 'Band V' }
+];
+// Needs: { k: 'circle'|'role'|'char'|'size'|'avg'|'rarity', v, n }. twice: the one need counts twice.
+// f: family shares. T: trophy types (zone type index) or 'any2'. K: token character. L: Lore.
+// R: Renown. ks: Kingslayer credit. xp2: double XP. only: fixed length. req: a need that must be met.
+const EXPED_ROUTES = {
+  r1a: { n: 'Mossy Hollow Rounds', b: 1, f: { wood: 0.7, herb: 0.3 }, needs: [{ k: 'circle', v: 'hedgefolk' }, { k: 'role', v: 'striker' }] },
+  r1b: { n: 'Batwing Echoes', b: 1, f: { hide: 0.6, crystal: 0.4 }, needs: [{ k: 'role', v: 'tank' }, { k: 'char', v: 'wren' }] },
+  r1c: { n: 'The Old Bonefield Road', b: 1, L: true, R: true, needs: [{ k: 'role', v: 'support' }, { k: 'size', n: 2 }] },
+  r2a: { n: 'Barrow Silk', b: 2, f: { fibre: 0.6, hide: 0.4 }, needs: [{ k: 'role', v: 'tank' }, { k: 'circle', v: 'oath' }] },
+  r2b: { n: 'Spore Gardens', b: 2, f: { herb: 0.6, ess: 0.4 }, needs: [{ k: 'role', v: 'support' }, { k: 'role', v: 'caster' }] },
+  r2c: { n: 'Quarry Scouting', b: 2, T: [5, 2], needs: [{ k: 'role', v: 'tank' }, { k: 'avg', n: 30 }] },
+  r2d: { n: 'Hedge Muster', b: 2, R: true, xp2: true, twice: true, needs: [{ k: 'circle', v: 'hedgefolk', n: 3 }] },
+  r3a: { n: 'Wraithmarsh Reeds', b: 3, f: { fibre: 0.5, ess: 0.5 }, needs: [{ k: 'role', v: 'caster' }, { k: 'circle', v: 'wayfarers' }] },
+  r3b: { n: 'Quarry Night Shift', b: 3, K: 'grenna', f: { ore: 0.6 }, needs: [{ k: 'role', v: 'tank' }, { k: 'role', v: 'caster' }] },
+  r3c: { n: 'Dusk Errand', b: 3, K: 'isolde', f: { hide: 0.6 }, needs: [{ k: 'role', v: 'striker' }, { k: 'circle', v: 'dusk' }] },
+  r3d: { n: "The Wayfarers' Crossing", b: 3, f: { ess: 0.5 }, R: true, xp2: true, needs: [{ k: 'circle', v: 'wayfarers', n: 2 }, { k: 'avg', n: 45 }] },
+  r4a: { n: 'Deep Geodes', b: 4, f: { crystal: 0.6, ore: 0.4 }, needs: [{ k: 'rarity', v: 'rare' }, { k: 'role', v: 'tank' }] },
+  r4b: { n: 'The Chapel Ruins', b: 4, L: true, R: true, needs: [{ k: 'role', v: 'support' }, { k: 'circle', v: 'oath' }] },
+  r4c: { n: 'Hunting the Barrows', b: 4, T: [3, 1, 0], f: { hide: 0.5 }, needs: [{ k: 'role', v: 'striker', n: 2 }, { k: 'avg', n: 60 }] },
+  r5a: { n: 'Emberwood', b: 5, f: { wood: 0.5, crystal: 0.5 }, needs: [{ k: 'rarity', v: 'epic' }, { k: 'circle', v: 'hedgefolk' }] },
+  r5b: { n: 'The Drowned Road', b: 5, L: true, f: { ess: 0.6 }, needs: [{ k: 'role', v: 'caster' }, { k: 'role', v: 'support' }] },
+  r5c: { n: "Wyrm's Wake", b: 5, T: 'any2', f: { herb: 0.5 }, needs: [{ k: 'role', v: 'tank' }, { k: 'rarity', v: 'legendary' }] },
+  r5d: { n: 'The Hollow Court', b: 5, ks: true, L: 'court', only: 8, req: 0, needs: [{ k: 'char', v: 'aldric' }, { k: 'circle', v: 'dusk' }] }
+};
+const EXPED_ROUTE_IDS = Object.keys(EXPED_ROUTES).sort((a, b) => EXPED_ROUTES[a].b - EXPED_ROUTES[b].b || (a < b ? -1 : 1));
+// Keepsakes: camp decorations, one per route with a material or trophy focus. Cosmetic only.
+const EXPED_KEEPSAKES = {
+  r1a: 'Mossy Lantern', r1b: 'Batwing Kite', r2a: 'Silk Banner', r2b: 'Glowcap Jar', r2c: "Golem's Lamp",
+  r3a: 'Reed Flute', r3b: 'Night-Shift Pick', r3c: 'Dusk Candle', r4a: 'Geode Bowl', r4c: 'Beetle-Shell Drum',
+  r5a: 'Ember Chimes', r5c: 'Wyrm Scale Shield'
+};
+// Lore pages: 5 per band (titles; the texts are a writing task) and 3 for the Hollow Court.
+const EXPED_LORE = {
+  1: ['The First Lamp', 'Moss and Memory', 'Wings in the Dark', 'The Bonefield Bells', 'A Road Relit'],
+  2: ['Barrow Songs', 'The Spore Gardener', 'Stone That Walks', 'The Old Muster', 'Silk and Salt'],
+  3: ['Reeds That Whisper', 'The Night Shift', 'A Dusk Contract', 'The Crossing', 'Wraithlight'],
+  4: ['The Chapel Bell', 'Geode Hearts', 'Barrow Kings', 'The Last Prayer', 'Under the Ruins'],
+  5: ['Emberwood', 'The Drowned Road', "The Wyrm's Wake", 'Letters from the Coast', 'The Great Lantern'],
+  court: ["The King's Blade", 'An Empty Throne', 'Corvin Agrees to Meet You']
+};
+
+let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, ePow, expedR, expedGrade, expedPreview,
+  expedBest, expedCan, expedOut, expedRumour, expedLoreFound, expedSend, expedCollect, expedCollectAll, expedRecall,
+  expedRepeat, expedCatchUp, expedHaulText;
+
+{
+  registerState('exped', { v: 1, slots: [], done: {}, lore: {}, court: 0, keep: {}, log: [], seq: 0 });
+  const X = () => S.exped;
+  const T = EXPED_TUNE;
+  const RT = r => EXPED_ROUTES[r];
+  const now = () => Date.now();
+  const HOUR = 3600 * 1000;
+  const fn = f => typeof f === 'function';
+
+  // ---------------- slots, lengths, open ----------------
+  const mapRoom = () => { try { return typeof campMapRoom === 'function' ? campMapRoom() : null; } catch (e) { return null; } };
+  expedSlots = () => {
+    const m = mapRoom();
+    if (!m) return S.maxZone >= T.openZone ? 1 : 0;
+    return m.slots > 0 ? Math.max(0, Math.floor(bonus('expSlots'))) : 0;
+  };
+  expedLengths = () => { const m = mapRoom(), max = m ? m.route : 4; return T.lengths.filter(h => h <= max); };
+  const repeatOn = () => { const m = mapRoom(); return !!(m && m.repeat); };
+  expedOpen = () => expedSlots() > 0 && rosterLive();
+  expedFree = () => Math.max(0, expedSlots() - X().slots.length);
+  expedBandOpen = b => !!EXPED_BANDS[b] && S.maxZone > EXPED_BANDS[b].z1;
+  expedRoutes = () => EXPED_ROUTE_IDS.filter(r => expedBandOpen(RT(r).b));
+
+  // ---------------- power and needs ----------------
+  ePow = id => { const c = charRec(id); return c ? 10 * CHAR_RARITY[ROSTER[id].rarity].m * c.lv * Math.pow(2, c.rank) : 0; };
+  expedR = b => { const par = 3 * EXPED_BANDS[b].z1; return 3 * 10 * par * Math.pow(2, Math.floor(par / 25)); };
+  const RAR = ['common', 'rare', 'epic', 'legendary'];
+  const CIRC = { hedgefolk: ['a Hedgefolk', 'Hedgefolk'], oath: ['an Oath member', 'Oath members'], dusk: ['a Dusk Company member', 'Dusk Company'], wayfarers: ['a Wayfarer', 'Wayfarers'] };
+  const firstName = id => ROSTER[id].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0];
+  const needLabel = d => {
+    const n = d.n || 1;
+    if (d.k === 'circle') return n > 1 ? `${n} ${CIRC[d.v][1]}` : CIRC[d.v][0];
+    if (d.k === 'role') { const r = ROLE_STATS[d.v].n.toLowerCase(); return n > 1 ? `${n} ${r}s` : `a ${r}`; }
+    if (d.k === 'char') return firstName(d.v);
+    if (d.k === 'size') return `${n}+ companions`;
+    if (d.k === 'avg') return `average Lv ${n}+`;
+    if (d.k === 'rarity') return `a${d.v === 'epic' ? 'n' : ''} ${CHAR_RARITY[d.v].n}${d.v === 'legendary' ? '' : ' or better'}`;
+    return '?';
+  };
+  const needMet = (d, team) => {
+    const n = d.n || 1, ok = team.filter(isRecruited);
+    if (d.k === 'circle') return ok.filter(k => ROSTER[k].circle === d.v).length >= n;
+    if (d.k === 'role') return ok.filter(k => ROSTER[k].role === d.v).length >= n;
+    if (d.k === 'char') return ok.includes(d.v);
+    if (d.k === 'size') return ok.length >= n;
+    if (d.k === 'avg') return ok.length > 0 && ok.reduce((a, k) => a + charRec(k).lv, 0) / ok.length >= n;
+    if (d.k === 'rarity') return ok.some(k => RAR.indexOf(ROSTER[k].rarity) >= RAR.indexOf(d.v));
+    return false;
+  };
+  expedGrade = (r, team) => {
+    const d = RT(r); team = (team || []).filter(Boolean);
+    const needs = d.needs.map(x => ({ label: needLabel(x), met: needMet(x, team) }));
+    const R = expedR(d.b), pow = team.reduce((a, k) => a + ePow(k), 0);
+    let pts = needs.filter(x => x.met).length * (d.twice ? 2 : 1) + (pow >= R ? 1 : 0) + (pow >= 1.5 * R ? 1 : 0);
+    if (!team.length) pts = 0;
+    const g = pts >= 4 ? 3 : pts === 3 ? 2 : pts === 2 ? 1 : 0, G = EXPED_GRADES[g];
+    let hint = '';
+    if (g < 3) {
+      const miss = needs.find(x => !x.met), next = EXPED_GRADES[g + 1].n;
+      if (miss) hint = `Add ${miss.label} for ${next}`;
+      else hint = `Power ${fmt(pow < R ? R : 1.5 * R)} for ${next}`;
+    }
+    return { pts, g, name: G.n, mult: G.mult, rolls: G.rolls, pow, R, needs, hint };
+  };
+
+  // ---------------- the haul ----------------
+  const FOUGHT = { hide: 1, ess: 1 };
+  const rate = f => FOUGHT[f] ? T.fought : T.gathered;
+  // Expected amounts before rounding (the preview). m = mod('expHaul') x rumour, at send.
+  function expect(r, n, h, g, m) {
+    const d = RT(r), t = EXPED_BANDS[d.b].t, k = T.lenF[h] * T.teamF[Math.min(3, n)] * EXPED_GRADES[g].mult;
+    const out = { mats: [], troph: [], ren: 0, tok: 0, lq: 0, ks: 0 };
+    for (const [f, s] of Object.entries(d.f || {})) out.mats.push([f, t, rate(f) * h * k * m * s]);
+    if (d.T) {
+      const types = d.T === 'any2' ? null : d.T, tot = T.troph * h * k * m;
+      if (types) for (const i of types) out.troph.push([i, tot / types.length]);
+      else out.troph.push(['any2', tot]);
+    }
+    if (d.R) out.ren = h / T.renHours * k;
+    if (d.K && !isRecruited(d.K)) out.tok = h / T.tokHours * k;
+    if (d.L) out.lq = h >= 4 ? (g >= 1 ? 4 : 2) : 1;
+    if (d.ks) out.ks = T.court[g];
+    return out;
+  }
+  const whole = (x, rnd) => { const f = x - Math.floor(x); return Math.floor(x) + (f > 1e-9 && rnd() < f ? 1 : 0); };
+  const xpPer = (id, h, g, d) => { const c = charRec(id); return c ? T.xp * cxpNeed(c.lv) * h * EXPED_GRADES[g].mult * (d.xp2 ? 2 : 1) : 0; };
+  // The fixed haul for one run, from its seed.
+  function rollPay(r, team, h, g, m, seed) {
+    const d = RT(r), rnd = rng(seed), e = expect(r, team.length, h, g, m);
+    const pay = { mats: [], troph: [], ren: whole(e.ren, rnd), tok: whole(e.tok, rnd), lq: e.lq, ks: e.ks, xp: {}, bonus: { mats: [], troph: [], lq: 0, keep: 0, ren: 0 } };
+    for (const [f, t, x] of e.mats) { const n = whole(x, rnd); if (n > 0) pay.mats.push([f, t, n]); }
+    for (const [i, x] of e.troph) {
+      if (i !== 'any2') { const n = whole(x, rnd); if (n > 0) pay.troph.push([i, n]); continue; }
+      const a = Math.floor(rnd() * 7); let b = Math.floor(rnd() * 6); if (b >= a) b++;
+      for (const j of [a, b]) { const n = whole(x / 2, rnd); if (n > 0) pay.troph.push([j, n]); }
+    }
+    for (const id of team) pay.xp[id] = xpPer(id, h, g, d);
+    // Bonus rolls (Great 1, Perfect 2): all upside.
+    for (let i = 0; i < EXPED_GRADES[g].rolls; i++) {
+      const x = rnd();
+      if (x < 0.5) {   // extra haul: 25% more of the main focus
+        const main = e.mats.slice().sort((p, q) => q[2] - p[2])[0];
+        if (main) pay.bonus.mats.push([main[0], main[1], Math.max(1, whole(main[2] * 0.25, rnd))]);
+        else if (e.troph.length) pay.bonus.troph.push([Math.floor(rnd() * 7), 1]);
+        else pay.bonus.ren += 1;
+      } else if (x < 0.75) pay.bonus.troph.push([Math.floor(rnd() * 7), 1]);
+      else if (x < 0.9) pay.bonus.lq += 1;
+      else pay.bonus.keep += 1;
+    }
+    pay.tokR = [];
+    for (let i = 0; i < pay.tok; i++) pay.tokR.push(rnd());
+    return pay;
+  }
+  expedPreview = (r, team, h) => {
+    team = (team || []).filter(Boolean);
+    const G = expedGrade(r, team), d = RT(r), lines = [];
+    if (!team.length) return { grade: G, lines, rolls: 0 };
+    const e = expect(r, team.length, h, G.g, haulMult(r));
+    for (const [f, t, x] of e.mats) lines.push({ k: 'mat', key: f, t, n: x, txt: `${fmt(Math.floor(x))} ${matName(f, t)}` });
+    const tro = e.troph.reduce((a, x) => a + x[1], 0);
+    if (tro > 0) lines.push({ k: 'troph', key: d.T === 'any2' ? 'any' : d.T[0], n: tro, txt: `${tro < 1 ? 'a chance of' : '~' + (Math.round(tro * 10) / 10)} Troph${tro === 1 ? 'y' : 'ies'} (${d.T === 'any2' ? 'any 2 kinds' : d.T.map(i => CRAFT_TROPHIES[i].n).join(', ')})` });
+    if (e.tok > 0) lines.push({ k: 'tok', key: d.K, n: e.tok, txt: `${Math.round(e.tok * 10) / 10} rolls for the ${UNLOCK_TUNE.tokens[d.K].name}` });
+    else if (d.K) lines.push({ k: 'tok', key: d.K, n: 0, txt: `${firstName(d.K)} is already with you` });
+    if (e.ren > 0) lines.push({ k: 'ren', n: e.ren, txt: `~${Math.round(e.ren * 10) / 10} Renown` });
+    if (e.lq > 0) lines.push({ k: 'lore', n: e.lq, txt: e.lq >= 4 ? 'A Lore page' : `${e.lq === 2 ? 'Half' : 'A quarter of'} a Lore page` });
+    if (e.ks > 0) { const left = Math.max(0, T.courtMax - X().court); lines.push({ k: 'ks', n: Math.min(left, e.ks), txt: left ? `${Math.min(left, e.ks)} boss kills toward Kingslayer (Corvin)` : 'Kingslayer credit is full' }); }
+    const xp = team.map(id => xpCapped(id, xpPer(id, h, G.g, d)));
+    lines.push({ k: 'xp', n: 0, txt: xp.some(Boolean) ? `Companion XP (${d.xp2 ? 'x2, ' : ''}up to Lv ${xpCap()})` : `No XP: the team is at Lv ${xpCap()}, the expedition limit` });
+    return { grade: G, lines, rolls: G.rolls };
+  };
+
+  // ---------------- XP with the cap ----------------
+  const xpCap = () => Math.max(1, Math.floor(partyLevel()) - T.xpGap);
+  const xpCapped = (id, xp) => { const c = charRec(id); return c && c.lv < xpCap() ? xp : 0; };
+  // Give XP in small steps so no one passes party level - 5; the rest is dropped.
+  function giveXp(id, xp) {
+    const c = charRec(id); if (!c || !(xp > 0)) return 0;
+    const cap = xpCap(), lv0 = c.lv;
+    for (let i = 0; i < 400 && xp > 0 && c.lv < cap; i++) {
+      const step = Math.min(xp, cxpNeed(c.lv) * 0.1);
+      addCharXp(id, step, true); xp -= step;
+      if (c.lv >= levelCap(c.rank) && c.xp >= cxpNeed(c.lv) - 1e-9) break;
+    }
+    return c.lv - lv0;
+  }
+
+  // ---------------- rumour (Tavern Lv 3) ----------------
+  expedRumour = () => {
+    const t = (typeof campLevel === 'function' ? campLevel('tavern') : 0);
+    if (t < T.rumourTavern) return null;
+    const open = expedRoutes().filter(r => !RT(r).only); if (!open.length) return null;
+    const d = deviceDay(now());
+    return open[((d * 7 + 3) % open.length + open.length) % open.length];
+  };
+  const haulMult = r => mod('expHaul') * (expedRumour() === r ? T.rumour : 1);
+
+  // ---------------- send ----------------
+  const fielded = id => !!(S.party && S.party.field && S.party.field.includes(id));
+  expedOut = id => X().slots.find(s => s.team.includes(id)) || null;
+  const free = id => isRecruited(id) && !fielded(id) && !expedOut(id) && (typeof campFree !== 'function' || campFree(id));
+  expedCan = (r, team, h) => {
+    const d = RT(r); team = (team || []).filter(Boolean);
+    if (!d) return { ok: false, why: 'Unknown route.' };
+    if (!expedOpen()) return { ok: false, why: 'Build the Map Room first.' };
+    if (!expedBandOpen(d.b)) return { ok: false, why: `Beat the zone ${EXPED_BANDS[d.b].z1} boss first.` };
+    if (!expedFree()) return { ok: false, why: 'Every slot is out.' };
+    if (!expedLengths().includes(h)) return { ok: false, why: `The Map Room needs a higher level for ${h}h.` };
+    if (d.only && h !== d.only) return { ok: false, why: `This route takes ${d.only}h.` };
+    if (!team.length) return { ok: false, why: 'Pick 1 to 3 companions.' };
+    if (team.length > 3 || new Set(team).size !== team.length) return { ok: false, why: 'A team is 1 to 3 different companions.' };
+    for (const id of team) {
+      if (!isRecruited(id)) return { ok: false, why: 'Not on your roster.' };
+      if (fielded(id)) return { ok: false, why: `${firstName(id)} is in the party. Bench them first.` };
+      if (!free(id)) return { ok: false, why: `${firstName(id)} is busy.` };
+    }
+    if (d.req != null && !needMet(d.needs[d.req], team)) return { ok: false, why: `This route needs ${needLabel(d.needs[d.req])}.` };
+    return { ok: true, why: '' };
+  };
+  const newSeed = () => { X().seq = (X().seq || 0) + 1; return (Math.imul(X().seq, 2654435761) ^ (now() & 0x7fffffff)) >>> 0; };
+  function launch(s, start) {
+    s.seed = newSeed(); s.start = start; s.end = start + s.h * HOUR;
+    s.pay = rollPay(s.r, s.team, s.h, s.grade, s.m, s.seed);
+  }
+  expedSend = (r, team, h) => {
+    team = (team || []).filter(Boolean);
+    const c = expedCan(r, team, h); if (!c.ok) return null;
+    const G = expedGrade(r, team);
+    const s = { r, team: team.slice(), h, start: 0, end: 0, seed: 0, grade: G.g, rep: 0, repOn: false, m: haulMult(r), pay: null };
+    launch(s, now());
+    X().slots.push(s);
+    emit('expedSent', { r, grade: G.name, h, team: team.slice() });
+    toast(`${team.map(firstName).join(', ')} set out: ${RT(r).n} (${G.name}). Back in ${h}h.`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');
+    save();
+    return s;
+  };
+
+  // ---------------- return ----------------
+  const loreKey = (b, i) => `${b}-${i}`;
+  expedLoreFound = () => Object.values(X().lore).filter(q => q >= 4).length;
+  // Quarters go to the first unfinished page of the band (the Hollow Court: its own 3 pages).
+  function addLore(band, q) {
+    let got = 0;
+    const list = EXPED_LORE[band] || [];
+    for (let i = 0; i < list.length && q > 0; i++) {
+      const k = loreKey(band, i), have = X().lore[k] || 0; if (have >= 4) continue;
+      const add = Math.min(4 - have, q); X().lore[k] = have + add; q -= add;
+      if (have + add >= 4) got++;
+    }
+    return got;
+  }
+  const loreTitles = (band, before) => (EXPED_LORE[band] || []).filter((_, i) => (X().lore[loreKey(band, i)] || 0) >= 4 && !before.includes(i));
+  function payOut(s, pay, opts) {
+    const d = RT(s.r), haul = { mats: [], troph: [], ren: 0, ks: 0, lore: [], keep: [], tok: null, xp: 0 };
+    const addMat = (f, t, n) => { if (!(n > 0)) return; S.mats[f][t - 1] += n; const h = haul.mats.find(x => x[0] === f && x[1] === t); if (h) h[2] += n; else haul.mats.push([f, t, n]); };
+    const addTro = (i, n) => { if (!(n > 0)) return; addTrophy(i, n, 'exped'); const h = haul.troph.find(x => x[0] === i); if (h) h[1] += n; else haul.troph.push([i, n]); };
+    const k = opts.frac == null ? 1 : opts.frac;
+    for (const [f, t, n] of pay.mats) addMat(f, t, Math.floor(n * k));
+    for (const [i, n] of pay.troph) addTro(i, Math.floor(n * k));
+    const ren = Math.floor(pay.ren * k) + (opts.frac == null ? pay.bonus.ren : 0);
+    if (ren > 0 && typeof addRenown === 'function') { addRenown(ren, 'expedition'); haul.ren = ren; }
+    let lq = Math.floor(pay.lq * k);
+    if (opts.frac == null) {
+      for (const [f, t, n] of pay.bonus.mats) addMat(f, t, n);
+      for (const [i, n] of pay.bonus.troph) addTro(i, n);
+      lq += pay.bonus.lq;
+      // Keepsake: the route's own, once; after that a Trophy.
+      for (let i = 0; i < pay.bonus.keep; i++) {
+        const id = EXPED_KEEPSAKES[s.r] ? s.r : null;
+        if (id && !X().keep[id]) { X().keep[id] = 1; haul.keep.push(EXPED_KEEPSAKES[id]); }
+        else addTro(zoneType(EXPED_BANDS[d.b].z0 + (s.seed % 7)), 1);
+      }
+      // Kingslayer credit (the Hollow Court), capped at 50 in total.
+      if (pay.ks > 0) {
+        const n = Math.min(pay.ks, Math.max(0, T.courtMax - X().court));
+        if (n > 0) { X().court += n; emit('kingslayerCredit', { n }); haul.ks = n; }
+      }
+      // Token rolls on return, through the pity code, with the run's seeded rolls.
+      if (d.K && pay.tokR.length && typeof unlockTokenRoll === 'function') {
+        let won = false, rolls = 0;
+        for (const x of pay.tokR) { if (isRecruited(d.K)) break; const w = unlockTokenRoll(d.K, x); if (w == null) break; rolls++; if (w) { won = true; break; } }
+        haul.tok = { id: d.K, rolls, won };
+      }
+    }
+    if (lq > 0 && d.L) {
+      const band = d.L === 'court' ? 'court' : d.b, before = (EXPED_LORE[band] || []).map((_, i) => i).filter(i => (X().lore[loreKey(band, i)] || 0) >= 4);
+      addLore(band, lq);
+      haul.lore = loreTitles(band, before);
+      haul.lq = lq;
+    } else if (lq > 0) {   // a Lore scrap on a route without Lore: the band's pages
+      const before = EXPED_LORE[d.b].map((_, i) => i).filter(i => (X().lore[loreKey(d.b, i)] || 0) >= 4);
+      addLore(d.b, lq); haul.lore = loreTitles(d.b, before); haul.lq = lq;
+    }
+    // XP, capped below the party.
+    for (const id of s.team) { const n = (pay.xp[id] || 0) * (opts.xpFrac == null ? 1 : opts.xpFrac); if (n > 0 && isRecruited(id)) haul.xp += giveXp(id, n); }
+    return haul;
+  }
+  function finishRun(s, opts) {
+    const haul = payOut(s, s.pay, opts);
+    X().done[s.r] = (X().done[s.r] || 0) + 1;
+    const G = EXPED_GRADES[s.grade].n;
+    const rec = { r: s.r, grade: G, haul, at: opts.at || now(), h: s.h, team: s.team.slice(), recall: !!opts.recall };
+    X().log.unshift(rec); if (X().log.length > T.logMax) X().log.length = T.logMax;
+    emit('expedBack', { r: s.r, grade: G, haul, auto: !!opts.auto, recall: !!opts.recall });
+    return rec;
+  }
+  // A landed run: Repeat sends the team again at the old end time, up to repMax runs in a row.
+  function land(s, auto) {
+    const out = [];
+    for (let guard = 0; guard < 100 && s.end <= now(); guard++) {
+      const again = s.repOn && repeatOn() && s.rep + 1 < T.repMax;
+      if (!again && !auto) break;   // open game: the run waits for Collect
+      out.push(finishRun(s, { auto: true, at: s.end }));
+      s.rep++;
+      if (!again) { X().slots.splice(X().slots.indexOf(s), 1); break; }
+      launch(s, s.end);
+    }
+    return out;
+  }
+  expedCatchUp = (t, auto) => {
+    const out = [];
+    for (const s of X().slots.slice()) if (s.end <= (t || now())) out.push(...land(s, auto));
+    return out;
+  };
+  expedCollect = i => {
+    const s = X().slots[i]; if (!s || s.end > now()) return null;
+    const rec = finishRun(s, {});
+    X().slots.splice(i, 1);
+    toast(`${RT(s.r).n}: the team is back (${rec.grade}).`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');
+    save();
+    return rec;
+  };
+  expedCollectAll = () => { let n = 0; for (let i = X().slots.length - 1; i >= 0; i--) if (X().slots[i].end <= now() && expedCollect(i)) n++; return n; };
+  // Call back: home now with half the haul for the time spent, all XP earned so far, no bonus rolls.
+  expedRecall = i => {
+    const s = X().slots[i]; if (!s) return null;
+    if (s.end <= now()) return expedCollect(i);
+    const frac = Math.max(0, Math.min(1, (now() - s.start) / (s.end - s.start)));
+    const rec = finishRun(s, { frac: frac * 0.5, xpFrac: frac, recall: true });
+    X().slots.splice(i, 1);
+    save();
+    return rec;
+  };
+  expedRepeat = (i, on) => { const s = X().slots[i]; if (!s || !repeatOn()) return false; s.repOn = !!on; if (on) s.rep = 0; save(); return true; };
+
+  // ---------------- best team ----------------
+  // The best grade (and a full team for the haul), preferring the lowest levels.
+  expedBest = (r, h) => {
+    const d = RT(r), pool = benchPool().slice(0, 17);
+    let best = null;
+    const consider = team => {
+      if (d.req != null && !needMet(d.needs[d.req], team)) return;
+      const G = expedGrade(r, team), score = G.mult * T.teamF[team.length] * 1e6 - team.reduce((a, k) => a + charRec(k).lv, 0);
+      if (!best || score > best.score) best = { team, score };
+    };
+    for (let a = 0; a < pool.length; a++) {
+      consider([pool[a]]);
+      for (let b = a + 1; b < pool.length; b++) {
+        consider([pool[a], pool[b]]);
+        for (let c = b + 1; c < pool.length; c++) consider([pool[a], pool[b], pool[c]]);
+      }
+    }
+    return best ? best.team : [];
+  };
+  const benchPool = () => (rosterLive() ? rosterList() : []).filter(free);
+
+  // ---------------- the Roster board ----------------
+  const left = s => { const m = Math.ceil(Math.max(0, s.end - now()) / 60000); return m <= 0 ? 'back' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ' ' + (m % 60) + 'm' : ''}`; };
+  if (typeof registerBenchStatus === 'function') registerBenchStatus(id => {
+    const s = expedOut(id); if (!s) return null;
+    return { status: 'exped', label: `Out: ${RT(s.r).n}`, sub: s.end <= now() ? 'back, ready to collect' : `${left(s)} left` };
+  });
+  if (typeof registerBenchSend === 'function') registerBenchSend({
+    id: 'exped', label: 'Send',
+    can: () => !expedOpen() ? { ok: false, why: 'Build the Map Room first.' } : !expedFree() ? { ok: false, why: 'Every slot is out.' } : !expedRoutes().length ? { ok: false, why: 'Beat the zone 7 boss first.' } : { ok: true },
+    fn: id => emit('expedPick', { id })
+  });
+  if (typeof registerCampAction === 'function') registerCampAction('maproom', { label: 'Expeditions', show: () => expedOpen(), fn: () => emit('expedGoto', {}) });
+
+  // ---------------- ticks and away ----------------
+  let acc = 0;
+  onTick(dt => {
+    acc += dt; if (acc < 1) return; acc = 0;
+    if (!X().slots.length) return;
+    const got = expedCatchUp(now(), false);
+    for (const x of got) toast(`${RT(x.r).n}: the team came back (${x.grade}) and set out again.`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');
+    if (got.length) save();
+  });
+  let awayBack = [];
+  // The away card only shows after 30s away; a quicker reload leaves landed runs for Collect.
+  on('away', r => { awayBack = !r || !(r.secs < 30) ? expedCatchUp(now(), true) : []; });
+  const haulText = h => {
+    const out = [];
+    for (const [f, t, n] of h.mats) out.push(`${fmt(n)} ${matName(f, t)}`);
+    for (const [i, n] of h.troph) out.push(`${n} ${CRAFT_TROPHIES[i].n}`);
+    if (h.ren) out.push(`${h.ren} Renown`);
+    if (h.ks) out.push(`${h.ks} Kingslayer credit`);
+    if (h.lore && h.lore.length) out.push(`Lore: ${h.lore.join(', ')}`);
+    else if (h.lq) out.push(`${h.lq === 1 ? 'a quarter' : h.lq + ' quarters'} of a Lore page`);
+    if (h.keep && h.keep.length) out.push(`Keepsake: ${h.keep.join(', ')}`);
+    if (h.tok) out.push(h.tok.won ? `${UNLOCK_TUNE.tokens[h.tok.id].name}!` : `${h.tok.rolls} token roll${h.tok.rolls === 1 ? '' : 's'}, no luck yet`);
+    if (h.xp) out.push(`+${h.xp} companion level${h.xp === 1 ? '' : 's'}`);
+    return out.join(', ');
+  };
+  expedHaulText = haulText;
+  registerAwayLine(() => {
+    const out = awayBack.map(x => ({ icon: { ic: ['boot', EXPED_GRADES.find(g => g.n === x.grade).col] }, group: 'Expeditions',
+      txt: `Expedition back: ${RT(x.r).n} (${x.grade})`, sub: haulText(x.haul) || 'Home safe.', go: () => emit('expedGoto', {}) }));
+    awayBack = [];
+    const outNow = X().slots.filter(s => s.end > now());
+    if (out.length && outNow.length) out.push({ icon: { ic: ['boot', '#6B4A2E'] }, group: 'Expeditions', txt: `${outNow.length} still out`, sub: outNow.map(s => `${RT(s.r).n}: ${left(s)}`).join(' · ') });
+    return out;
+  });
+
+  // ---------------- Next Up ----------------
+  const icB = { ic: ['boot', '#6B4A2E'] }, go = { tab: 'world', sel: '#sec-exped' };
+  const landed = () => X().slots.find(s => s.end <= now()) || null;
+  const soonest = () => X().slots.filter(s => s.end > now()).sort((a, b) => a.end - b.end)[0] || null;
+  registerGoal({ id: 'exped-ready', sys: 'exped', prio: 2, icon: icB, go,
+    label: () => { const s = landed(); return s ? `${RT(s.r).n}: ready to collect` : ''; },
+    pct: () => landed() ? 1 : 0 });
+  registerGoal({ id: 'exped-timer', sys: 'exped', icon: icB, go,
+    label: () => { const s = soonest(); return s ? `Expedition back in ${left(s)}` : ''; },
+    pct: () => { const s = soonest(); return s ? Math.min(0.99, Math.max(0.01, (now() - s.start) / Math.max(1, s.end - s.start))) : 0; } });
+  registerGoal({ id: 'exped-free', sys: 'exped', icon: icB, go,
+    label: () => 'A Map Room slot is free: send a team',
+    pct: () => expedOpen() && expedFree() > 0 && expedRoutes().length && benchPool().length ? 0.9 : 0 });
+}
+
 // ---- src/js/60-gfx.js ----
 // 60-gfx: browser-only helpers shared by render and UI: DOM shortcuts, reduced-motion
 // flag, canvas sprite rendering, icon data URLs.
@@ -9420,6 +10005,14 @@ const ART = (() => {
     const ck = 'e' + key + '|' + hashOf(variant == null ? null : variant), hit = cacheGet(ck); if (hit) return hit;
     const t0 = now();
     let rig = typeof src[key] === 'function' ? src[key](variant) : src[key];
+    if (rig && rig.b1) { // B1 rigs (13-art-enemies.js): kit pieces at art px, already posed
+      const set = {};
+      for (const f of ['idle0', 'idle1', 'wind', 'strike']) { set[f] = toCanvas(rasterize(rig.parts(f, variant && typeof variant === 'object' ? variant : {}))); stats.bakes++; }
+      set.hit = flash(set.idle0);
+      set.ms = now() - t0; stats.ms += set.ms;
+      stats.last['enemy:' + key] = Math.round(set.ms * 10) / 10;
+      return cachePut(ck, set);
+    }
     if (!rig || !rig.parts) return null;
     const vk = typeof variant === 'string' ? variant : variant && variant.elder ? 'elder' : null;
     if (vk && rig.variants && rig.variants[vk]) {
@@ -9476,7 +10069,7 @@ const bake = ART.bake, bakeSet = ART.bakeSet;
 // ---- src/js/61-anim.js ----
 // 61-anim: stage animation helpers (browser-only). Fixed-size pools for particles, projectiles,
 // rings and delayed calls, plus cached glow sprites, so the frame loop allocates nothing.
-// All positions are stage CSS px. 62-stage.js drives and draws these.
+// All positions are stage logical px (1 logical px = ZM CSS px, the stage zoom in 62-stage.js), which drives and draws these.
 //
 // Exposed: ANIM = { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts,
 //                   drawProj, drawRings, lightAt }
@@ -9680,25 +10273,69 @@ let resize, animate, draw, stageStats;
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
   let guardN = 0, blessN = 0, markLeft = 0, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
+  // the height); they are drawn in the band between the foe header and the ground, one row per
+  // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
   const floats = [];
   function pushFloat(txt, color, big, x, y) {
-    floats.push({ txt, color, big, life: 0.95, x: x ?? (0.7 + (Math.random() - 0.5) * 0.12), y: y ?? 0.42, vy: big ? 0.28 : 0.2 });
+    const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
+    // Each new text takes the first free row (0-3) near its spot, one line below the texts still
+    // rising there; when all rows are busy the oldest text there fades out and gives up its row.
+    const busy = [0, 0, 0, 0]; let oldest = null;
+    for (const f of floats) if (f.row >= 0 && Math.abs(f.x - fx) < 0.3 && f.life > 0.1) { busy[f.row] = 1; if (!oldest || f.life < oldest.life) oldest = f; }
+    let row = busy.indexOf(0);
+    if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
+    floats.push({ txt, color, big, life: 0.95, x: fx, y: y ?? 0.42, row, off: row });
     if (floats.length > 24) floats.shift();
   }
 
   // ================= canvas and scene =================
   const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
-  let SW = 0, SH = 0, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1;
-  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x):
-  // foot-centre x / width per column (back, mid, front); the upper lane (0) stands LANE_Y px higher
-  // and LANE_X px further back and is drawn first.
-  const COLX = [0.15, 0.33, 0.51], LANE_X = 24, LANE_Y = 14;
+  // Zoom: the stage is laid out in LOGICAL px (SW x SH) and drawn at ZM CSS px per logical px, so
+  // one art px (2 logical px) is 2 * ZM CSS px: 2, 3, 4, 5 or 6 (whole pixels). ZM grows while the
+  // logical stage stays at least ZOOM_W x ZOOM_H (room for the party, the foe and the HUD); on a
+  // whole-number device pixel ratio only zooms that land on whole device pixels are used.
+  // CW x CH: the container in CSS px, re-read on every resize.
+  let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
+  const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_H = 196;
+  function pickZoom(w, h, dpr) {
+    let z = 1;
+    for (const c of ZOOMS) {
+      if (Number.isInteger(dpr) && !Number.isInteger(c * dpr)) continue;
+      if (w / c >= ZOOM_W && h / c >= ZOOM_H) z = c;
+    }
+    return z;
+  }
+  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 logical px tall, 40-50 wide). The
+  // columns in use are spread over the party side (PARTY_X0..PARTY_X1 of the width, front column at
+  // X1), at most COL_MAX px apart, so each member stands clear of the next. The upper lane (0)
+  // stands laneY px higher and about half a column further back: SNES style, each upper member
+  // peeks out between and above the two in front with only a slight overlap. It is drawn first and dimmed.
+  const PARTY_X0 = 0.06, PARTY_X1 = 0.55, COL_MAX = 84;
+  // Foe slots (fractions of the width) for a pack of 1, 2 or 3; one foe today.
+  const FOE_X = [[0.78], [0.66, 0.86], [0.62, 0.76, 0.9]];
+  let laneY = 14;
+  // Bottom of the foe header (name and HP bar) inside the stage, in logical px, so text and sprites avoid it.
+  function readHud() {
+    const e = stageEl.querySelector('.mob');
+    hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
+  }
   resize = function () {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    SW = stageEl.clientWidth; SH = stageEl.clientHeight;
-    if (!SW || !SH) return;
-    cv.width = Math.round(SW * DPR); cv.height = Math.round(SH * DPR);
-    GY = Math.round(SH * 0.8);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    if (!w || !h) return;
+    if (w === CW && h === CH && dpr === DPR && cv.width === Math.round(w * DPR)) return;
+    DPR = dpr; CW = w; CH = h;
+    ZM = pickZoom(w, h, DPR);
+    SW = Math.round(w / ZM); SH = Math.round(h / ZM);
+    cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+    // Ground line 80% down (the compact-strip CSS assumes it). On a short strip the ground drops
+    // nearer the bottom so the party stays under the HUD; the scenery is then built taller (SCH, its
+    // own ground at 80%) and simply runs off the bottom edge.
+    GY = SH >= 210 ? Math.round(SH * 0.8) : Math.round(Math.max(SH * 0.8, SH - 14));
+    SCH = SH >= 210 ? SH : Math.round(GY / 0.8);
+    laneY = Math.max(12, Math.min(26, Math.round(SH * 0.085)));
+    readHud();
     scene = null; layoutDirty = true; foe.key = '';
   };
   function pickScene() {
@@ -9706,7 +10343,7 @@ let resize, animate, draw, stageStats;
     if (tg === 'world') th = 'raid';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
-    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SH, hue); curTheme = th; curHue = hue; }
+    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
 
   // ================= party actors =================
@@ -9740,22 +10377,28 @@ let resize, animate, draw, stageStats;
     });
     layoutDirty = true;
   }
-  function place(a, c) {
-    a.col = c.col; a.lane = c.lane;
-    a.hx = Math.round(SW * COLX[c.col]) - (c.lane === 0 ? LANE_X : 0);
-    a.hy = GY - (c.lane === 0 ? LANE_Y : 0);
-  }
   function layout() {
     layoutDirty = false;
     const cells = (S.party && S.party.cells) || {}, used = {};
     order = [hero].concat(comps);
-    for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; place(a, c); used[c.col + ':' + c.lane] = 1; }
+    for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
-      g.hx = -999;
-      for (let col = 2; col >= 0 && g.hx === -999; col--) for (let lane = 1; lane >= 0; lane--) if (!used[col + ':' + lane]) { used[col + ':' + lane] = 1; place(g, { col, lane }); break; }
+      g.col = -1;
+      for (let col = 2; col >= 0 && g.col < 0; col--) for (let lane = 1; lane >= 0; lane--) if (!used[col + ':' + lane]) { used[col + ':' + lane] = 1; g.col = col; g.lane = lane; break; }
     }
-    order = order.concat(ghosts.filter(g => g.hx !== -999));
+    order = order.concat(ghosts.filter(g => g.col >= 0));
+    // spread the columns in use; the upper lane sits half a column back
+    // (the upper lane's half-column step counts toward the room, so nobody leaves the left edge)
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = SW * PARTY_X1;
+    const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
+    const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
+    const laneX = Math.round(Math.max(16, D * 0.46));
+    for (const a of order) {
+      const i = cols.indexOf(a.col);
+      a.hx = Math.round(x1 - (cols.length - 1 - i) * D) - (a.lane === 0 ? laneX : 0);
+      a.hy = GY - (a.lane === 0 ? laneY : 0);
+    }
     order.sort((a, b) => a.lane - b.lane || a.col - b.col);
     front = hero;
     for (const a of order) if (a.alpha === 1 && (a.col > front.col || (a.col === front.col && a.lane > front.lane))) front = a;
@@ -9775,8 +10418,9 @@ let resize, animate, draw, stageStats;
     const tg = target();
     let key, fr = null;
     if (tg === 'world') {
-      const gen = (online.world && online.world.gen) || 1;
-      const s = Math.max(0.6, Math.min(1.2, Math.floor(Math.min(SW * 0.5 / 156, (GY - 95) / 121) * 10) / 10));
+      const gen = (online.world && online.world.gen) || 1, bx = (ENEMY_RIGS.wyrm && ENEMY_RIGS.wyrm.box) || [-36, -70, 60, 0];
+      const bw = (bx[2] - bx[0]) * 2, bh = (bx[3] - bx[1]) * 2;
+      const s = Math.max(0.5, Math.min(1.1, Math.floor(Math.min(SW * 0.56 / bw, (GY - hudB - 4) / bh) * 10) / 10));
       key = 'w' + gen + ':' + s;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
     } else if (tg === 'node') {
@@ -9800,8 +10444,8 @@ let resize, animate, draw, stageStats;
   }
   function foeGeom() {
     const f = foe.fr && foe.fr.idle0;
-    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : 0.73));
-    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; }
+    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0]));
+    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; foe.x = Math.min(foe.x, SW - 6 - (f.c.width - f.ox)); }
     foe.left = foe.x - (f ? f.ox : 15); foe.top = GY - foe.h; foe.cy = GY - Math.round(foe.h * 0.5);
   }
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
@@ -9927,7 +10571,7 @@ let resize, animate, draw, stageStats;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); }
     refreshFoe(); foeGeom();
     if (layoutDirty) layout();
     if (wyrmHit > 0) wyrmHit -= dt;
@@ -9939,7 +10583,7 @@ let resize, animate, draw, stageStats;
     if (wallT > 0) wallT -= dt;
     if (hymnT > 0) hymnT -= dt;
     if (markLeft > 0) markLeft -= dt;
-    for (const f of floats) { f.life -= dt; f.y -= f.vy * dt; }
+    for (const f of floats) f.life -= dt;
     while (floats.length && floats[0].life <= 0) floats.shift();
     for (const a of order) stepActor(a, dt);
     stepFoe(dt);
@@ -9977,14 +10621,25 @@ let resize, animate, draw, stageStats;
     if (a.st === 2) return f.strike;
     return !reduced && ((T * 2 + a.ph) % 2) >= 1 ? f.idle1 : f.idle0;
   }
-  function shadowAt(x, w, a) {
-    ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, GY - 3, w * 2, 7);
+  function shadowAt(x, w, a, y) {
+    ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, (y ?? GY) - 3, w * 2, 7);
+  }
+  // The upper lane stands further back: its frames are drawn a little darker (cached copies).
+  const dimmed = new WeakMap();
+  function dimOf(c) {
+    let d = dimmed.get(c);
+    if (!d) {
+      d = document.createElement('canvas'); d.width = c.width; d.height = c.height;
+      const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,9,24,0.26)'; g.fillRect(0, 0, d.width, d.height);
+      dimmed.set(c, d);
+    }
+    return d;
   }
   function drawActor(a, cam) {
     const f = frameOf(a); if (!f) return;
     const hx = (a === hero ? heroHome() : a.hx) + a.dx - cam;
     ctx.globalAlpha = a.alpha;
-    ctx.drawImage(f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
+    ctx.drawImage(a.lane === 0 && !a.flash ? dimOf(f.c) : f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
     a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
   }
   // Lantern lighting (style study, direction D on a B1 stage): every emissive piece of a sprite
@@ -10040,13 +10695,6 @@ let resize, animate, draw, stageStats;
     ctx.globalAlpha = 1;
     foeD.x = dx; foeD.y = Math.round(y - f.oy); foeD.f = sy < 1 ? null : f;
   }
-  function drawCrown(cam) {
-    const cs = 2, cw = 7 * cs, crx = Math.round(foe.x - cam - cw / 2), cry = Math.round(foe.top - 12 + (reduced ? 0 : Math.sin(T * 2) * 1.5));
-    ctx.fillStyle = '#0B0810'; ctx.fillRect(crx - 1, cry - 1, cw + 2, 4 * cs + 2);
-    ctx.fillStyle = '#F2C14E'; ctx.fillRect(crx, cry + 2 * cs, cw, 2 * cs);
-    for (const k of [0, 3, 6]) ctx.fillRect(crx + k * cs, cry, cs, 2 * cs);
-    ctx.fillStyle = '#E0524F'; ctx.fillRect(crx + 3 * cs, cry + 2 * cs, cs, cs);
-  }
 
   let drawMs = 0;
   draw = function () {
@@ -10056,7 +10704,8 @@ let resize, animate, draw, stageStats;
     const tg = target(), raid = tg === 'world', gath = tg === 'node';
     const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF);
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
-    ctx.setTransform(DPR, 0, 0, DPR, sx * DPR, sy * DPR);
+    const K = DPR * ZM;
+    ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8);
@@ -10073,7 +10722,7 @@ let resize, animate, draw, stageStats;
         ctx.globalCompositeOperation = 'source-over';
       }
     }
-    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, 13, 0.5 * a.alpha);
+    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * a.alpha, a.hy);
     // Shield Wall dome (back half)
     if (wallT > 0 && !gath) drawDome(cam, false);
     ctx.globalAlpha = 1;
@@ -10104,7 +10753,7 @@ let resize, animate, draw, stageStats;
     for (const a of order) lightsOf(a);
     if (foeD.f) { const f = foeD.f, fl = flick(); for (const l of f.lights) A.lightAt(ctx, l.rgb, foeD.x + l.x, foeD.y + l.y, Math.min(Math.max(8, l.size * 3), 20) * fl * 1.4, 0.3); }
     ctx.globalCompositeOperation = 'source-over';
-    drawAtmosphere(ctx, scene, T, SW, SH, camF);
+    drawAtmosphere(ctx, scene, T, SW, SCH, camF);
 
     // class and ability effects, on top of the atmosphere so they read
     ctx.imageSmoothingEnabled = true;
@@ -10134,16 +10783,29 @@ let resize, animate, draw, stageStats;
     if (raid && Date.now() < rallyUntil) { ctx.fillStyle = '#F2C14E'; ctx.globalAlpha = 0.07 + 0.04 * Math.sin(T * 6); ctx.fillRect(0, 0, SW, SH); ctx.globalAlpha = 1; }
     if (flashA > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, flashA); ctx.fillStyle = `rgb(${flashRgb})`; ctx.fillRect(-4, -4, SW + 8, SH + 8); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
 
-    // crisp floating text
+    // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+    // Text keeps about the same CSS size at every zoom (a little larger on big stages). It starts
+    // under the foe header (or lower, near the foe's head), never higher than 16% down the stage,
+    // rises, and fades out before it reaches the header; the right edge keeps clear of the ability button.
+    const tz = Math.min(ZM, 1.35) / ZM, top = Math.max(hudB + 4, SH * 0.16), band = Math.max(20, GY - 6 - top);
+    const xr = SW - (target() === 'node' ? 4 : 60 / ZM);
     for (const f of floats) {
-      const age = 0.95 - f.life, pop = age < 0.08 ? 1.35 - age * 4 : 1;
-      const size = Math.round((f.big ? 21 : 15) * pop);
-      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2));
+      const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
+      const base = (f.big ? 21 : 15) * tz, size = Math.max(6, Math.round(base * pop));
+      const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
+      // one start line per side (just over the foe's head, or half way down the band), then each
+      // row one line higher; a row that would start above the band starts at its top and fades sooner
+      const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, foe.top + 2)) : lo + band * 0.5;
+      const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz);
+      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
+      if (ctx.globalAlpha <= 0) continue;
       ctx.font = `700 ${size}px "Pixelify Sans", monospace`;
-      ctx.lineWidth = 4; ctx.strokeStyle = '#0B0810';
-      ctx.strokeText(f.txt, f.x * SW, f.y * SH);
-      ctx.fillStyle = f.color; ctx.fillText(f.txt, f.x * SW, f.y * SH);
+      const hw = ctx.measureText(f.txt).width / 2 + 4, x = Math.max(hw, Math.min(xr - hw, f.x * SW));
+      ctx.lineWidth = 4 * tz; ctx.strokeStyle = '#0B0810';
+      ctx.strokeText(f.txt, x, y);
+      ctx.fillStyle = f.color; ctx.fillText(f.txt, x, y);
     }
     ctx.globalAlpha = 1;
     drawMs = drawMs * 0.95 + (performance.now() - t0) * 0.05;
@@ -10281,7 +10943,7 @@ let resize, animate, draw, stageStats;
   });
 
   new ResizeObserver(() => resize()).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, DPR, actors: order.length, bake: bakeStats() });
+  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, actors: order.length, bake: bakeStats() });
 }
 
 // ---- src/js/63-scenery.js ----
@@ -13408,6 +14070,307 @@ let craftUI = null;
   craftUI = { openItem: id => openItem(id), pick: (who, pos) => pick(who, pos) };
 }
 
+// ---- src/js/75-exped-ui.js ----
+// 75-exped-ui: Expeditions in the Camp tab (tab id 'world', Camp part). One section, #sec-exped,
+// placed after the building cards: the slots out now (timers, Collect, Repeat, Call back), then
+// the open routes as compact cards grouped by band, then the log. Tapping a route opens the send
+// sheet (openSheet from 75-party-sheet): length, a team of up to 3 benched companions, Best team,
+// the grade with a hint for the next one, the haul preview, Send. Browser-only; the rules live in
+// 57b-expeditions.js.
+{
+  const R = id => EXPED_ROUTES[id];
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+  const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
+  const safe = (f, d) => { try { return f(); } catch (e) { console.error('[lanternfall] expeditions ui', e); return d; } };
+  const first = id => ROSTER[id].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0];
+  const left = s => { const m = Math.ceil(Math.max(0, s.end - Date.now()) / 60000); return m <= 0 ? 'Back' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h${m % 60 ? ' ' + (m % 60) + 'm' : ''}`; };
+  const hasArt = id => typeof portraitURL === 'function' && typeof RIG === 'object' && RIG.COMPANIONS && !!RIG.COMPANIONS[id];
+  function portrait(id) {
+    if (hasArt(id)) { try { const u = portraitURL(id); if (u) return u; } catch (e) {} }
+    const c = ROSTER[id], i = c.idx, col = i >= 0 ? COMPS[i].col : CHAR_RARITY[c.rarity].col, helm = i >= 0 ? COMPS[i].helm : '#3A2F47';
+    return spriteURL('camp:' + id, SPR.hero, { ...HERO_PAL, 1: col, 2: helm });
+  }
+  const famName = f => (MAT[f] && MAT[f].n) || f;
+  const troIc = i => iconURL(...craftIcon('tro_' + TYPES[i].key, 1));
+  // The route's icon: its main focus.
+  function routeIcon(r) {
+    const d = R(r), t = EXPED_BANDS[d.b].t, fam = Object.entries(d.f || {}).sort((a, b) => b[1] - a[1])[0];
+    if (d.ks) return iconURL('sword', '#E0524F');
+    if (d.K) return iconURL('banner', CHAR_RARITY[ROSTER[d.K].rarity].col);
+    if (d.T) return troIc(d.T === 'any2' ? 5 : d.T[0]);
+    if (d.L) return iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' });
+    if (fam) return matIcon(fam[0], t);
+    return iconURL('banner', '#F2C14E');
+  }
+  const focusText = r => {
+    const d = R(r), out = [];
+    if (d.ks) out.push('Kingslayer');
+    if (d.K) out.push('Token');
+    if (d.T) out.push('Trophies');
+    for (const f of Object.keys(d.f || {})) out.push(famName(f));
+    if (d.L) out.push('Lore');
+    if (d.R) out.push('Renown');
+    if (d.xp2) out.push('XP x2');
+    return out.join(' · ');
+  };
+  const kinds = r => { const d = R(r), k = []; if (d.f) k.push('mat'); if (d.T) k.push('troph'); if (d.K) k.push('tok'); if (d.L || d.R || d.ks) k.push('lore'); return k; };
+  const FILTERS = [['all', 'All'], ['mat', 'Materials'], ['troph', 'Trophies'], ['tok', 'Tokens'], ['lore', 'Lore']];
+  let filter = 'all', pendingId = null;
+
+  // Best team and grade per route, recomputed only when the bench or slots change.
+  let bestSig = '', bestMap = {};
+  function bests() {
+    const sig = JSON.stringify([rosterList().map(k => [k, charRec(k).lv, charRec(k).rank]), S.party.field, S.exped.slots.map(s => s.team), S.maxZone]);
+    if (sig === bestSig) return bestMap;
+    bestSig = sig; bestMap = {};
+    for (const r of expedRoutes()) { const t = safe(() => expedBest(r), []); bestMap[r] = { team: t, g: t.length ? expedGrade(r, t) : null }; }
+    return bestMap;
+  }
+
+  // ---------------- the section ----------------
+  let sec, head, slotBox, filtBox, routeBox, logBox, note, sigSlots = '', sigRoutes = '', sigLog = '';
+  const armed = { key: null, at: 0 };
+  const isArmed = k => armed.key === k && Date.now() - armed.at < 4000;
+  sec = registerSection('camp', {
+    id: 'exped', title: 'Expeditions',
+    mount(s) {
+      head = el('p', 'note');
+      slotBox = el('div', 'ex-slots');
+      filtBox = el('div', 'ex-filters');
+      routeBox = el('div', 'ex-routes');
+      logBox = el('details', 'ex-log');
+      s.append(head, slotBox, filtBox, routeBox, logBox);
+      for (const [k, n] of FILTERS) {
+        const b = btn('ex-chip', n); b.dataset.k = k;
+        b.addEventListener('click', () => { filter = k; sigRoutes = ''; ui(true); });
+        filtBox.append(b);
+      }
+    },
+    update() {
+      const open = expedOpen();
+      sec.hidden = !open || !campOpen(); if (sec.hidden) return;
+      const n = expedSlots(), used = S.exped.slots.length;
+      setTxt(head, pendingId ? `Pick a route for ${first(pendingId)}.` : used ? `Slots ${used}/${n}. Teams earn while you are away.` : `Slots 0/${n}. Send benched companions on a route you have cleared. Nothing can go wrong: the grade shows before you send.`);
+      head.classList.toggle('warn', !!pendingId);
+      drawSlots(n);
+      for (const b of filtBox.children) b.classList.toggle('on', b.dataset.k === filter);
+      drawRoutes();
+      drawLog();
+    }
+  });
+  // After the building cards, before the Blessings and the Roster board.
+  { const b = document.getElementById('sec-camp-bless') || document.getElementById('sec-camp-roster'); if (b && b.parentNode === sec.parentNode) b.before(sec); }
+
+  // ---------------- slots out now ----------------
+  function drawSlots(n) {
+    const sl = S.exped.slots, rep = safe(() => campMapRoom().repeat, false);
+    const sig = JSON.stringify([n, rep, sl.map(s => [s.r, s.team, s.grade, s.repOn, s.rep, s.end <= Date.now(), left(s)]), [...Array(sl.length)].map((_, i) => isArmed('recall' + i))]);
+    if (sig !== sigSlots) {
+      sigSlots = sig; slotBox.textContent = '';
+      sl.forEach((s, i) => {
+        const G = EXPED_GRADES[s.grade], back = s.end <= Date.now();
+        const row = el('div', 'ex-slot' + (back ? ' back' : ''));
+        const pts = el('div', 'ex-pts');
+        for (const id of s.team) { const p = el('span', 'ex-pt r-' + ROSTER[id].rarity); p.append(img(portrait(id))); pts.append(p); }
+        const mid = el('div', 'ex-mid');
+        const nm = el('div', 'ex-nm'); nm.append(el('span', null, R(s.r).n)); const gr = el('b', 'ex-g', G.n); gr.style.color = G.col; nm.append(gr);
+        const bar = el('div', 'bar'), fill = el('i'); bar.append(fill); fill.dataset.slot = i;
+        const foot = el('div', 'ex-foot');
+        const sub = el('div', 'ex-sub', back ? 'Back!' : `${left(s)} left${s.repOn ? ` · run ${s.rep + 1}/${EXPED_TUNE.repMax}` : ` · ${s.h}h trip`}`);
+        const acts = el('div', 'ex-acts');
+        foot.append(sub, acts);
+        mid.append(nm, bar, foot);
+        if (back) { const c = btn('mini go', 'Collect'); c.addEventListener('click', () => { const x = expedCollect(i); if (x) showBack(x); ui(true); }); acts.append(c); }
+        else {
+          if (rep) { const t = btn('mini' + (s.repOn ? ' on' : ''), s.repOn ? 'Repeat on' : 'Repeat'); t.setAttribute('aria-pressed', String(!!s.repOn)); t.addEventListener('click', () => { expedRepeat(i, !s.repOn); ui(true); }); acts.append(t); }
+          const k = 'recall' + i, c = btn('mini' + (isArmed(k) ? ' warn armed' : ''), isArmed(k) ? 'Tap again: half haul' : 'Call back');
+          c.addEventListener('click', () => { if (isArmed(k)) { armed.key = null; const x = expedRecall(i); if (x) showBack(x); } else { armed.key = k; armed.at = Date.now(); } ui(true); });
+          acts.append(c);
+        }
+        row.append(pts, mid);
+        slotBox.append(row);
+      });
+      if (sl.length < n) {
+        const b = btn('ex-free', `+ Send a team (${n - sl.length} slot${n - sl.length > 1 ? 's' : ''} free)`);
+        b.addEventListener('click', () => { const r = pickRoute(); if (r) openSend(r); });
+        slotBox.append(b);
+      }
+    }
+    for (const f of slotBox.querySelectorAll('.bar > i')) { const s = sl[+f.dataset.slot]; if (s) f.style.width = Math.min(100, Math.max(0, (Date.now() - s.start) / (s.end - s.start) * 100)).toFixed(1) + '%'; }
+  }
+  // "+ Send a team": the open route whose best team reaches the highest grade.
+  function pickRoute() {
+    const b = bests(); let best = null;
+    for (const r of expedRoutes()) { const x = b[r]; if (!x || !x.g) continue; if (!best || x.g.g > best.g) best = { r, g: x.g.g }; }
+    return best ? best.r : expedRoutes()[0];
+  }
+
+  // ---------------- route cards ----------------
+  function drawRoutes() {
+    const b = bests(), rum = expedRumour(), routes = expedRoutes().filter(r => filter === 'all' || kinds(r).includes(filter));
+    const sig = JSON.stringify([filter, rum, routes, routes.map(r => b[r] && b[r].g ? [b[r].g.g, b[r].g.needs.map(x => x.met)] : 0), expedFree()]);
+    if (sig === sigRoutes) return; sigRoutes = sig; routeBox.textContent = '';
+    if (!routes.length) { routeBox.append(el('p', 'note', expedRoutes().length ? 'No open route with this focus yet.' : 'Beat the zone 7 boss to open the first routes.')); return; }
+    let band = 0;
+    for (const r of routes) {
+      const d = R(r);
+      if (d.b !== band) {
+        band = d.b; const B = EXPED_BANDS[band], h = el('div', 'ex-band');
+        h.append(el('b', null, B.n), el('span', null, `Zones ${B.z0}-${B.z1}`), el('span', 'ex-pow', `Power ${fmt(expedR(band))}`));
+        routeBox.append(h);
+      }
+      const x = b[r] || {}, G = x.g;
+      const card = btn('ex-route');
+      const ic = el('span', 'ic'); ic.append(img(routeIcon(r)));
+      const mid = el('span', 'ex-rmid');
+      const nm = el('span', 'ex-rnm'); nm.append(el('span', null, d.n));
+      if (rum === r) nm.append(el('small', 'ex-rum', 'Rumour +50%'));
+      const needs = el('span', 'ex-needs');
+      const gNeeds = G ? G.needs : expedGrade(r, []).needs;
+      d.needs.forEach((nd, i) => { const met = gNeeds[i] && gNeeds[i].met; needs.append(el('span', 'ex-need' + (met ? ' met' : ''), (met ? '✓ ' : '') + (gNeeds[i] && gNeeds[i].label || ''))); });
+      mid.append(nm, el('span', 'ex-focus', focusText(r)), needs);
+      const gr = el('span', 'ex-gr');
+      if (G) { gr.textContent = G.name; gr.style.color = EXPED_GRADES[G.g].col; } else { gr.textContent = 'No team'; gr.classList.add('none'); }
+      card.append(ic, mid, gr);
+      card.setAttribute('aria-label', `${d.n}. ${focusText(r)}. Best grade ${G ? G.name : 'none'}.`);
+      card.addEventListener('click', () => openSend(r));
+      routeBox.append(card);
+    }
+  }
+
+  // ---------------- log ----------------
+  function drawLog() {
+    const L = S.exped.log, sig = JSON.stringify(L.map(x => [x.r, x.at]));
+    if (sig === sigLog) return; sigLog = sig; logBox.textContent = '';
+    logBox.hidden = !L.length; if (!L.length) return;
+    logBox.append(el('summary', null, `Log (last ${L.length})`));
+    for (const x of L) {
+      const row = el('div', 'ex-lrow');
+      const g = EXPED_GRADES.find(q => q.n === x.grade) || EXPED_GRADES[1];
+      const t = el('div', 'ex-lt'); t.append(el('span', null, R(x.r).n), el('b', null, x.grade)); t.lastChild.style.color = g.col;
+      row.append(t, el('div', 'ex-lh', (x.recall ? 'Called back. ' : '') + (expedHaulText(x.haul) || 'Home safe.')));
+      logBox.append(row);
+    }
+  }
+
+  // A short "back" notice with the haul.
+  function showBack(x) { toast(`${R(x.r).n} (${x.grade}): ${expedHaulText(x.haul) || 'home safe'}.`, 'good', { ic: ['boot', '#6B4A2E'] }, 'normal'); }
+
+  // ---------------- the send sheet ----------------
+  let sh = null;
+  function openSend(r, team) {
+    if (typeof openSheet !== 'function') return;
+    const lens = expedLengths(), d = R(r);
+    const st = { r, h: d.only || (lens.includes(8) ? 8 : lens[lens.length - 1]), team: (team || []).slice(0, 3), pick: -1 };
+    if (pendingId && !st.team.includes(pendingId)) st.team.unshift(pendingId);
+    pendingId = null;
+    const api = openSheet(() => {}, { label: d.n, onClose: () => { if (sh && sh.api === api) sh = null; ui(true); } });
+    api.sheet.classList.add('ex-sheet');
+    sh = { api, st };
+    renderSend();
+  }
+  function renderSend() {
+    if (!sh) return;
+    const { api, st } = sh, d = R(st.r), B = EXPED_BANDS[d.b], body = api.body, foot = api.foot;
+    body.textContent = ''; foot.textContent = '';
+    // title
+    const top = el('div', 'ex-stop');
+    const ic = el('span', 'ic'); ic.append(img(routeIcon(st.r)));
+    const tt = el('div'); tt.append(el('h3', 'ex-sh', d.n), el('div', 'ex-ssub', `${B.n} · Zones ${B.z0}-${B.z1} · ${focusText(st.r)}`));
+    top.append(ic, tt); body.append(top);
+    // length
+    const lenBox = el('div', 'ex-len'); lenBox.setAttribute('role', 'radiogroup'); lenBox.setAttribute('aria-label', 'Length');
+    const MAPNEED = { 1: 1, 4: 1, 8: 3, 12: 5 };
+    for (const h of EXPED_TUNE.lengths) {
+      const ok = expedLengths().includes(h) && (!d.only || d.only === h);
+      const b = btn('ex-seg' + (st.h === h ? ' on' : ''), `${h}h`);
+      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(st.h === h));
+      if (!ok) { b.disabled = true; b.append(el('small', null, d.only ? '' : `Map Room ${MAPNEED[h]}`)); }
+      b.addEventListener('click', () => { st.h = h; renderSend(); });
+      lenBox.append(b);
+    }
+    body.append(lenBox);
+    // team slots
+    const teamBox = el('div', 'ex-team');
+    for (let i = 0; i < 3; i++) {
+      const id = st.team[i], b = btn('ex-tslot' + (id ? ' has r-' + ROSTER[id].rarity : '') + (st.pick === i ? ' picking' : ''));
+      if (id) { b.append(img(portrait(id)), el('span', null, first(id)), el('small', null, `Lv ${charRec(id).lv} · ${fmt(ePow(id))}`)); b.setAttribute('aria-label', `${ROSTER[id].name}. Tap to change.`); }
+      else b.append(el('span', 'plus', '+'), el('small', null, 'Add'));
+      b.addEventListener('click', () => { st.pick = st.pick === i ? -1 : i; renderSend(); });
+      teamBox.append(b);
+    }
+    const bestB = btn('mini ex-best', 'Best team');
+    bestB.addEventListener('click', () => { st.team = expedBest(st.r); st.pick = -1; renderSend(); });
+    body.append(teamBox, bestB);
+    // bench picker (only benched, free companions), sorted by needs met then lowest level
+    if (st.pick >= 0) {
+      const list = el('div', 'ex-bench');
+      const cur = st.team[st.pick];
+      const others = st.team.filter((_, j) => j !== st.pick);
+      const pool = rosterList().filter(id => !S.party.field.includes(id) && (!expedOut(id)) && (typeof campFree !== 'function' || campFree(id)) && !others.includes(id));
+      const metOf = {}; for (const id of pool) metOf[id] = expedGrade(st.r, [id]).needs.filter(x => x.met).map(x => x.label);
+      const needsOf = id => metOf[id].length;
+      pool.sort((a, b) => needsOf(b) - needsOf(a) || charRec(a).lv - charRec(b).lv);
+      if (!pool.length) list.append(el('p', 'note', 'No one is free. Only benched companions who are resting can go. Fielded companions stay with the party.'));
+      if (cur) { const rm = btn('mini', `Take ${first(cur)} out`); rm.addEventListener('click', () => { st.team.splice(st.pick, 1); st.pick = -1; renderSend(); }); list.append(rm); }
+      for (const id of pool) {
+        const c = ROSTER[id], row = btn('ex-brow' + (id === cur ? ' on' : ''));
+        const pt = el('span', 'ex-pt r-' + c.rarity); pt.append(img(portrait(id)));
+        const met = metOf[id];
+        const txt = el('span', 'ex-btxt'); txt.append(el('b', null, c.name), el('small', null, `Lv ${charRec(id).lv} ${ROLE_STATS[c.role].n} · ${CHAR_CIRCLES[c.circle]} · Power ${fmt(ePow(id))}`));
+        if (met.length) txt.append(el('small', 'ex-bmet', '✓ ' + met.join(', ')));
+        row.append(pt, txt);
+        row.addEventListener('click', () => { if (st.pick < st.team.length) st.team[st.pick] = id; else st.team.push(id); st.pick = -1; renderSend(); });
+        list.append(row);
+      }
+      body.append(list);
+    }
+    // grade meter and haul preview
+    const pv = expedPreview(st.r, st.team, st.h), G = pv.grade;
+    const meter = el('div', 'ex-meter');
+    const pips = el('span', 'ex-pips');
+    for (let i = 0; i < 4; i++) { const p = el('i'); if (st.team.length && i <= G.g) p.style.background = EXPED_GRADES[G.g].col; pips.append(p); }
+    const gname = el('b', null, st.team.length ? G.name : 'No team'); if (st.team.length) gname.style.color = EXPED_GRADES[G.g].col;
+    meter.append(pips, gname, el('span', 'ex-mult', st.team.length ? `haul x${EXPED_GRADES[G.g].mult}` : ''));
+    body.append(meter);
+    const nb = el('div', 'ex-nbox');
+    G.needs.forEach(x => nb.append(el('span', 'ex-need' + (x.met ? ' met' : ''), (x.met ? '✓ ' : '✗ ') + x.label)));
+    nb.append(el('span', 'ex-need' + (G.pow >= G.R ? ' met' : ''), `${G.pow >= G.R ? '✓' : '✗'} Power ${fmt(G.pow)}/${fmt(G.R)}`));
+    nb.append(el('span', 'ex-need' + (G.pow >= 1.5 * G.R ? ' met' : ''), `${G.pow >= 1.5 * G.R ? '✓' : '✗'} Power ${fmt(1.5 * G.R)}`));
+    body.append(nb);
+    if (st.team.length && G.hint) body.append(el('p', 'note ex-hint', `${G.name}: ${G.hint.charAt(0).toLowerCase() + G.hint.slice(1)}.`));
+    if (st.team.length) {
+      const hb = el('div', 'ex-haul');
+      hb.append(el('div', 'ex-hh', `You bring home (${st.h}h)`));
+      for (const l of pv.lines) {
+        const row = el('div', 'ex-hl');
+        const u = l.k === 'mat' ? matIcon(l.key, l.t) : l.k === 'troph' ? troIc(l.key === 'any' ? 5 : l.key) : l.k === 'tok' ? iconURL('banner', CHAR_RARITY[ROSTER[l.key].rarity].col) : l.k === 'lore' ? iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' }) : l.k === 'ks' ? iconURL('sword', '#E0524F') : l.k === 'xp' ? iconURL('heart', '#6FCB6A') : iconURL('banner', '#F2C14E');
+        row.append(img(u), el('span', null, l.txt));
+        hb.append(row);
+      }
+      if (pv.rolls) hb.append(el('div', 'ex-hl bonus', `+ ${pv.rolls} bonus roll${pv.rolls > 1 ? 's' : ''} (more haul, a Trophy, Lore or a Keepsake)`));
+      body.append(hb);
+    }
+    // send
+    const can = expedCan(st.r, st.team, st.h);
+    const send = btn('mini go ex-send', st.team.length ? `Send (${G.name})` : 'Send');
+    send.disabled = !can.ok;
+    send.addEventListener('click', () => { if (expedSend(st.r, st.team, st.h)) { api.close(); ui(true); } else renderSend(); });
+    if (!can.ok && st.team.length) foot.append(el('p', 'note warn', can.why));
+    else if (!st.team.length) foot.append(el('p', 'note', 'Pick up to 3 benched companions, or tap Best team.'));
+    foot.append(send);
+  }
+
+  // ---------------- hooks ----------------
+  const goSec = () => emit('campGoto', { tab: 'world', sel: '#sec-exped' });
+  on('expedGoto', goSec);
+  on('expedPick', ({ id }) => { pendingId = id; goSec(); ui(true); });
+  on('expedBack', p => { if (S.tab !== 'world' && p && !p.recall) $('raidDot').hidden = false; });
+  // Keep the sheet fresh when a slot frees or the roster changes while it is open.
+  on('expedSent', () => { bestSig = ''; });
+  on('fieldChange', () => { bestSig = ''; if (sh) renderSend(); });
+}
+
 // ---- src/js/75-goals-ui.js ----
 // 75-goals-ui: the "Next up" strip at the top of the Fight tab and the "Next up" block of
 // the "While you were away" card. Browser-only. Goals come from topGoals() (55-goals.js).
@@ -14387,8 +15350,9 @@ let openSheet, partySheet;
 
   // ================= roster grid =================
   const FILTERS = ['all', 'tank', 'striker', 'caster', 'support'];
-  let filt = 'all', sortBy = 'rarity', rosSig = '', rosRefs = null;
-  try { const v = JSON.parse(localStorage.getItem('lanternfall.party.ui') || '{}'); if (FILTERS.includes(v.f)) filt = v.f; if (v.s === 'level' || v.s === 'rarity') sortBy = v.s; } catch (e) {}
+  const SORTS = ['power', 'level', 'rarity'], SORT_NAME = { power: 'Power', level: 'Level', rarity: 'Rarity' };
+  let filt = 'all', sortBy = 'power', rosSig = '', rosRefs = null, rosTiles = {};
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.party.ui') || '{}'); if (FILTERS.includes(v.f)) filt = v.f; if (SORTS.includes(v.s)) sortBy = v.s; } catch (e) {}
   const keepUi = () => { try { localStorage.setItem('lanternfall.party.ui', JSON.stringify({ f: filt, s: sortBy })); } catch (e) {} };
   const SHORT = { quest: 'Quest', renown: 'Renown', token: 'Boss token', bestiary: 'Bestiary', achievement: 'Feat', tavern: 'Tavern visitor', craft: 'Crafting' };
   function shortHow(k, leadsById) {
@@ -14401,8 +15365,12 @@ let openSheet, partySheet;
   function buildRosterHead(sec) {
     const head = el('div', 'sec-head');
     const h = sec.querySelector('.sec-title'); const cnt = el('span', 'ros-count'); h.append(cnt); head.append(h);
-    const sort = btn('mini ros-sort', '', () => { sortBy = sortBy === 'rarity' ? 'level' : 'rarity'; keepUi(); rosSig = ''; ui(true); });
-    head.append(sort); sec.prepend(head);
+    sec.prepend(head);
+    // Sort chips (owner bug: the old single toggle read as random and gave no sense of what it did).
+    const so = el('div', 'ros-sortbar'); so.setAttribute('role', 'group'); so.setAttribute('aria-label', 'Sort by');
+    so.append(el('span', 'ros-sortlbl', 'Sort'));
+    const sort = SORTS.map(k => { const b = btn('', SORT_NAME[k], () => { sortBy = k; keepUi(); rosSig = ''; ui(true); }); so.append(b); return b; });
+    sec.append(so);
     const fl = el('div', 'ros-filt'); fl.setAttribute('role', 'group'); fl.setAttribute('aria-label', 'Show role');
     const fb = FILTERS.map(f => { const b = btn('', f === 'all' ? 'All' : PTY.ROLE_NAME[f], () => { filt = f; keepUi(); rosSig = ''; ui(true); }); fl.append(b); return b; });
     const grid = el('div', 'rgrid');
@@ -14416,16 +15384,24 @@ let openSheet, partySheet;
       const rec = charRec(k);
       return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k) };
     });
-    const sig = [filt, sortBy, typeof portraitURL, JSON.stringify(rows.map(x => [x.k, x.rec && x.rec.lv, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
-    if (sig === rosSig) return; rosSig = sig;
+    const pw = x => { try { return x.rec ? charDps(x.k) : 0; } catch (e) { return 0; } };
+    const shownPre = rows.filter(x => filt === 'all' || C(x.k).role === filt);
+    const rarP = x => RAR_ORDER[C(x.k).rarity];
+    const by = { power: (a, b) => pw(b) - pw(a) || rarP(a) - rarP(b), level: (a, b) => (b.rec ? b.rec.lv - a.rec.lv : 0) || rarP(a) - rarP(b), rarity: (a, b) => rarP(a) - rarP(b) || (b.rec ? b.rec.lv - a.rec.lv : 0) };
+    // Locked characters sort too (owner bug): Rarity mixes everyone by rarity (recruited first within a
+    // rarity); Power and Level list recruits first, then locked ones by how close they are to joining.
+    const near = x => x.ready ? 2 : (pctOf(leadsById[x.k]) || 0);
+    shownPre.sort((a, b) => sortBy === 'rarity'
+      ? rarP(a) - rarP(b) || (!!b.rec - !!a.rec) || (a.rec && b.rec ? b.rec.lv - a.rec.lv : near(b) - near(a)) || a.i - b.i
+      : (!!b.rec - !!a.rec) || (a.rec ? by[sortBy](a, b) : near(b) - near(a) || rarP(a) - rarP(b)) || a.i - b.i);
+    // Rebuild tiles only when something structural changes; levels update in place so taps are never lost.
+    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
+    for (const x of rows) { const t = rosTiles[x.k]; if (t && t.lv && x.rec) { const v = 'Lv ' + x.rec.lv; if (t.lv.textContent !== v) t.lv.textContent = v; } }
+    if (sig === rosSig) return; rosSig = sig; rosTiles = {};
     r.cnt.textContent = `${rows.filter(x => x.rec).length}/${rows.length}`;
-    r.sort.textContent = sortBy === 'rarity' ? 'Sort: Rarity' : 'Sort: Level';
-    r.sort.setAttribute('aria-label', `Sorted by ${sortBy}. Tap to sort by ${sortBy === 'rarity' ? 'level' : 'rarity'}.`);
+    r.sort.forEach((b, i) => b.setAttribute('aria-pressed', String(SORTS[i] === sortBy)));
     r.fb.forEach((b, i) => b.setAttribute('aria-pressed', String(FILTERS[i] === filt)));
-    const shown = rows.filter(x => filt === 'all' || C(x.k).role === filt);
-    const rar = x => RAR_ORDER[C(x.k).rarity];
-    shown.sort((a, b) => (!!b.rec - !!a.rec) ||
-      (sortBy === 'rarity' ? rar(a) - rar(b) || (b.rec ? b.rec.lv - a.rec.lv : 0) : (b.rec ? b.rec.lv - a.rec.lv : 0) || rar(a) - rar(b)) || a.i - b.i);
+    const shown = shownPre;
     r.grid.textContent = '';
     for (const x of shown) {
       const c = C(x.k);
@@ -14433,7 +15409,8 @@ let openSheet, partySheet;
       t.style.setProperty('--rc', frameCol(x.k));
       const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
       if (x.rec) {
-        fr.append(el('span', 'rt-lv', 'Lv ' + x.rec.lv), el('i', 'rp r-' + c.role));
+        const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
+        fr.append(lv, el('i', 'rp r-' + c.role));
         if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
         if (x.flag) fr.append(el('span', 'ndot'));
       } else fr.append(el('i', 'rp r-' + c.role));

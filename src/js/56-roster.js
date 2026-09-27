@@ -228,16 +228,18 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     P().cells = cells;   // a new object: the stage watches identity
   }
   autoPlace = () => { placeCells(false); emit('fieldChange', { field: P().field }); return P().cells; };
+  // A character out on an expedition (57b) cannot be fielded. try/catch: expedOut may not exist yet at load.
+  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   setField = ids => {
     const f = [];
-    for (const id of ids || []) if (isRecruited(id) && !f.includes(id) && f.length < 3) f.push(id);
+    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < 3) f.push(id);
     P().field = f;       // a new array: the stage watches identity
     placeCells(true);
     emit('fieldChange', { field: f });
     return f;
   };
   fieldChar = (id, replaceId) => {
-    if (!isRecruited(id)) return false;
+    if (!isRecruited(id) || onExped(id)) return false;
     const f = fieldKeys().filter(k => k !== id);
     const i = replaceId ? f.indexOf(replaceId) : -1;
     if (i >= 0) f[i] = id; else if (f.length < 3) f.push(id); else return false;
