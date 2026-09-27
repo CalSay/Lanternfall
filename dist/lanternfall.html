@@ -229,6 +229,24 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 .gains { display: grid; gap: 6px; justify-items: center; }
 .gain { font: 600 22px var(--display); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .gain img { width: 24px; height: 24px; }
+/* 60-bounties: bounty board rows and the achievements grid */
+.row.bty .bty-bar { margin-top: 5px; height: 5px; }
+.row.bty .bty-bar > i { background: var(--gold); }
+.bty-rr { margin-top: 4px; padding: 2px 6px; font: 600 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); cursor: pointer; }
+.bty-rr:disabled { opacity: .55; cursor: default; }
+.bty-rr[hidden] { display: none; }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.ach { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; padding: 6px 8px; background: var(--panel); border: 2px solid var(--line); opacity: .6; min-width: 0; }
+.ach.got { opacity: 1; border-color: var(--gold); }
+.ach .ic { width: 32px; height: 32px; }
+.ach .ic img { width: 22px; height: 22px; }
+.ach-nm { font: 600 14px/1.1 var(--display); }
+.ach-desc { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.ach-fx { font-size: 12px; color: var(--r-legendary); }
+.ach .bar { height: 4px; margin-top: 3px; }
+.ach .bar > i { background: var(--gold); }
+.ach.got .bar { display: none; }
+.ach:not(.got) .ic img { filter: grayscale(1); opacity: .5; }
 /* 60-mastery: zone mastery pips and bestiary rows */
 .row.ms-row { grid-template-columns: auto 1fr; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
@@ -917,7 +935,7 @@ function heroSwing(base, tap, at) {
   const crit = Math.random() < critChance();
   const dmg = base * (crit ? critMult() : 1) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
-  if (crit) { emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
+  if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
   return { crit, dmg };
 }
 // A player tap on the stage. at = {x, y} stage fractions for the damage number.
@@ -1193,6 +1211,108 @@ function syncGen() {
   save();
 }
 
+// ---- src/js/55-bounties.js ----
+// 55-bounties: the bounty board. Three short goals built from the player's real state.
+// Claiming pays gold (about 4 minutes of income), materials or essence. A claimed slot
+// refills after a 5 minute wait; each slot has one free reroll per hour. All timers use
+// wall-clock time, so they keep running while the player is away.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+{
+  const BTY_SLOTS = 3, BTY_WAIT = 5 * 60 * 1000, BTY_REROLL = 60 * 60 * 1000;
+  // slot: { k, need, have, t, z, rew: 'gold'|'ore'|'wood'|'ess', rewT, rewN, wait, rr }
+  // k === null means the slot is empty and refills at `wait` (ms timestamp).
+  registerState('bounties', { slots: [], claimed: 0, seq: 0 });
+
+  const btyTopTier = kind => { const lv = S.skills[kind === 'ore' ? 'mine' : 'wood'].lv; let t = 1; for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1; return t; };
+  const btyScale = () => 1 + Math.floor(S.maxZone / 10) * 0.25;
+  const btyRound = n => Math.max(1, Math.round(n / 5) * 5);
+
+  // Kinds a player can always make progress on right now.
+  const BTY_KINDS = {
+    kill: () => { const z = Math.max(1, S.maxZone - 3); return { need: btyRound(40 * btyScale()), z, rew: 'gold' }; },
+    mine: () => { const t = btyTopTier('ore'); return { need: btyRound(30 * btyScale()), t, rew: 'wood', rewT: btyTopTier('wood') }; },
+    chop: () => { const t = btyTopTier('wood'); return { need: btyRound(30 * btyScale()), t, rew: 'ore', rewT: btyTopTier('ore') }; },
+    forge: () => ({ need: 1 + (S.skills.smith.lv >= 15 ? 1 : 0), rew: 'ess' }),
+    boss: () => ({ need: 1 + (S.maxZone >= 20 ? 1 : 0), rew: 'ess' }),
+    crit: () => ({ need: btyRound(15 * btyScale()), rew: 'gold' }),
+    tap: () => ({ need: 100, rew: 'gold' })
+  };
+  const BTY_TEXT = {
+    kill: b => `Defeat ${b.need} foes in zone ${b.z} or beyond`,
+    mine: b => `Mine ${b.need} ${matName('ore', b.t)} or better`,
+    chop: b => `Chop ${b.need} ${matName('wood', b.t)} or better`,
+    forge: b => b.need > 1 ? `Forge ${b.need} items` : 'Forge an item',
+    boss: b => b.need > 1 ? `Beat ${b.need} zone bosses` : 'Beat a zone boss',
+    crit: b => `Land ${b.need} critical hits`,
+    tap: b => `Tap the stage ${b.need} times`
+  };
+
+  function btyNew(exclude) {
+    const taken = new Set(S.bounties.slots.map(s => s && s.k).concat(exclude || []));
+    const pool = Object.keys(BTY_KINDS).filter(k => !taken.has(k));
+    const k = pool[Math.floor(Math.random() * pool.length)] || 'kill';
+    const b = Object.assign({ k, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: ++S.bounties.seq }, BTY_KINDS[k]());
+    if (b.rew === 'ess') { b.rewT = zoneTier(S.maxZone); b.rewN = 6 + 2 * b.need; }
+    if (b.rew === 'ore' || b.rew === 'wood') b.rewN = btyRound(b.need * 0.8);
+    return b;
+  }
+  // Gold is priced at claim time: about 4 minutes of kills at the player's farm zone.
+  function btyGold() {
+    const z = Math.max(1, S.zone);
+    const perSec = Math.min(totalDps() / mobHp(z), 2) * mobGold(z);
+    return Math.max(50, Math.round(perSec * 240));
+  }
+  function bountyReward(b) {
+    if (b.rew === 'gold') return { kind: 'gold', n: btyGold(), txt: fmt(btyGold()) + ' gold' };
+    const kind = b.rew;
+    return { kind, t: b.rewT, n: b.rewN, txt: `${b.rewN} ${kind === 'ess' ? MAT.ess.short[b.rewT - 1] + ' Essence' : matName(kind, b.rewT)}` };
+  }
+  const bountyText = b => BTY_TEXT[b.k](b);
+
+  // Fill empty slots whose wait is over (also covers first load and old saves).
+  function bountyRefresh() {
+    const sl = S.bounties.slots, now = Date.now();
+    while (sl.length < BTY_SLOTS) sl.push({ k: null, wait: 0 });
+    for (let i = 0; i < BTY_SLOTS; i++) if (!sl[i] || (!sl[i].k && now >= (sl[i].wait || 0))) { const rr = sl[i] ? sl[i].rr || 0 : 0; sl[i] = btyNew(); sl[i].rr = rr; }
+  }
+  function btyAdd(k, n, test) {
+    for (const b of S.bounties.slots) if (b && b.k === k && b.have < b.need && (!test || test(b))) b.have = Math.min(b.need, b.have + n);
+  }
+  on('kill', ({ mob, zone }) => { btyAdd('kill', 1, b => zone >= b.z); if (mob && mob.boss) btyAdd('boss', 1); });
+  on('harvest', ({ kind, t, n }) => btyAdd(kind === 'ore' ? 'mine' : 'chop', n, b => t >= b.t));
+  on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
+  on('crit', () => btyAdd('crit', 1));
+  on('tap', () => btyAdd('tap', 1));
+  let btyAcc = 0;
+  onTick(dt => { btyAcc += dt; if (btyAcc >= 1) { btyAcc = 0; bountyRefresh(); } });
+
+  // Claim a finished bounty. Returns the reward, or null.
+  function claimBounty(i) {
+    const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
+    const r = bountyReward(b);
+    if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; }
+    else S.mats[r.kind][r.t - 1] += r.n;
+    S.bounties.claimed++;
+    S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
+    const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };
+    toast(`Bounty complete! +${r.txt}.`, 'loot', icon);
+    emit('bountyDone', { k: b.k, reward: r });
+    save();
+    return r;
+  }
+  // Swap an unfinished bounty for a new one. Free once per slot per hour.
+  function rerollBounty(i) {
+    const b = S.bounties.slots[i], now = Date.now();
+    if (!b || !b.k || now < (b.rr || 0)) return false;
+    S.bounties.slots[i] = btyNew([b.k]); S.bounties.slots[i].rr = now + BTY_REROLL;
+    save();
+    return true;
+  }
+  bountyRefresh();
+  // exported to later files via the shared scope
+  var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward };
+}
+
 // ---- src/js/55-mastery.js ----
 // 55-mastery: zone mastery stars and the bestiary. Permanent progress, no DOM.
 // Zone mastery: kills per zone number -> up to 5 stars; +10% gold/dmg per star in that zone,
@@ -1250,6 +1370,77 @@ const masteryApi = {};
   addModifier('dmg', () => (1 + 0.1 * starsFor(zoneKills(S.zone))) * (1 + 0.01 * totalStars()));
   addModifier('gold', () => 1 + 0.1 * starsFor(zoneKills(S.zone)));
   for (const k in BESTIARY_PERKS) addModifier(BESTIARY_PERKS[k].mod, () => 1 + perkBonus(k));
+}
+
+// ---- src/js/56-achievements.js ----
+// 56-achievements: permanent milestones. Each one grants a small bonus through
+// addModifier. Checked once a second against the live state, so old saves unlock what
+// they have already earned on first load (with one summary toast).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+{
+  registerState('achievements', { got: {}, init: false, forged: 0, epic: false });
+  const A = () => S.achievements;
+  const uniqCount = () => Object.keys(S.found).length;
+  const skillLv = k => S.skills[k].lv;
+  // cur() returns progress toward need. bonus: [modifier key, fraction].
+  const ACH = [
+    { id: 'zone10', name: 'Into the Dark', desc: 'Reach zone 10', need: 10, cur: () => S.maxZone, bonus: ['gold', 0.02], ic: 'banner' },
+    { id: 'zone25', name: 'Deep Delver', desc: 'Reach zone 25', need: 25, cur: () => S.maxZone, bonus: ['dmg', 0.03], ic: 'banner' },
+    { id: 'zone50', name: 'Lantern Bearer', desc: 'Reach zone 50', need: 50, cur: () => S.maxZone, bonus: ['gold', 0.05], ic: 'banner' },
+    { id: 'lv20', name: 'Seasoned', desc: 'Reach hero level 20', need: 20, cur: () => S.L, bonus: ['xp', 0.03], ic: 'helm' },
+    { id: 'lv50', name: 'Veteran', desc: 'Reach hero level 50', need: 50, cur: () => S.L, bonus: ['dmg', 0.03], ic: 'helm' },
+    { id: 'kill1k', name: 'Monster Hunter', desc: 'Defeat 1,000 foes', need: 1000, cur: () => S.totalKills, bonus: ['gold', 0.02], ic: 'sword' },
+    { id: 'kill25k', name: 'Slayer', desc: 'Defeat 25,000 foes', need: 25000, cur: () => S.totalKills, bonus: ['dmg', 0.03], ic: 'sword' },
+    { id: 'kill100k', name: 'Legend of the Wilds', desc: 'Defeat 100,000 foes', need: 100000, cur: () => S.totalKills, bonus: ['gold', 0.03], ic: 'sword' },
+    { id: 'gold1m', name: 'Coin Collector', desc: 'Earn 1M gold', need: 1e6, cur: () => S.totalGold, bonus: ['gold', 0.02], ic: 'coin' },
+    { id: 'gold1b', name: 'Dragon Hoard', desc: 'Earn 1B gold', need: 1e9, cur: () => S.totalGold, bonus: ['gold', 0.03], ic: 'coin' },
+    { id: 'mine25', name: 'Stonebreaker', desc: 'Mining level 25', need: 25, cur: () => skillLv('mine'), bonus: ['gatherSpeed', 0.03], ic: 'pick' },
+    { id: 'wood25', name: 'Timberfeller', desc: 'Woodcutting level 25', need: 25, cur: () => skillLv('wood'), bonus: ['gatherSpeed', 0.03], ic: 'axe' },
+    { id: 'smith25', name: 'Master Smith', desc: 'Smithing level 25', need: 25, cur: () => skillLv('smith'), bonus: ['skillXp', 0.03], ic: 'anvil' },
+    { id: 'forge1', name: 'First Spark', desc: 'Forge an item', need: 1, cur: () => A().forged, bonus: ['skillXp', 0.02], ic: 'anvil' },
+    { id: 'forge25', name: 'Busy Anvil', desc: 'Forge 25 items', need: 25, cur: () => A().forged, bonus: ['skillXp', 0.03], ic: 'anvil' },
+    { id: 'epic', name: 'Epic Craft', desc: 'Forge an Epic item', need: 1, cur: () => A().epic ? 1 : 0, bonus: ['crit', 0.03], ic: 'flame' },
+    { id: 'uniq1', name: 'Trophy Hunter', desc: 'Find a unique', need: 1, cur: uniqCount, bonus: ['essence', 0.03], ic: 'charm' },
+    { id: 'uniq3', name: 'Collector', desc: 'Find 3 uniques', need: 3, cur: uniqCount, bonus: ['essence', 0.05], ic: 'charm' },
+    { id: 'uniq7', name: 'Curator', desc: 'Find 7 uniques', need: 7, cur: uniqCount, bonus: ['dmg', 0.05], ic: 'charm' },
+    { id: 'party', name: 'Full Party', desc: 'Hire every companion', need: 7, cur: () => S.comp.filter(n => n > 0).length, bonus: ['party', 0.03], ic: 'mug' },
+    { id: 'bty10', name: 'Bounty Hunter', desc: 'Claim 10 bounties', need: 10, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['offline', 0.03], ic: 'coin' },
+    { id: 'bty50', name: 'Board Regular', desc: 'Claim 50 bounties', need: 50, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['gold', 0.03], ic: 'coin' }
+  ];
+  const BONUS_NAME = { gold: 'gold', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', party: 'party damage', offline: 'away gains' };
+  const achBonusText = a => `+${Math.round(a.bonus[1] * 100)}% ${BONUS_NAME[a.bonus[0]] || a.bonus[0]}`;
+
+  // One modifier per key; cached sum rebuilt when something unlocks.
+  const achSum = {};
+  const achRebuild = () => { for (const k in achSum) achSum[k] = 0; for (const a of ACH) if (A().got[a.id]) achSum[a.bonus[0]] = (achSum[a.bonus[0]] || 0) + a.bonus[1]; };
+  for (const k of new Set(ACH.map(a => a.bonus[0]))) { achSum[k] = 0; addModifier(k, () => 1 + achSum[k]); }
+
+  on('itemAdded', ({ item }) => { if (item.u) return; A().forged++; if (item.r === 'epic') A().epic = true; });
+
+  function achCheck() {
+    const g = A().got, fresh = [];
+    for (const a of ACH) if (!g[a.id] && a.cur() >= a.need) { g[a.id] = Date.now(); fresh.push(a); }
+    if (!fresh.length) return;
+    achRebuild();
+    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. See the Tavern.`, 'good', { ic: ['banner', '#F2C14E'] });
+    else for (const a of fresh) { toast(`Achievement: ${a.name}. ${achBonusText(a)}.`, 'good', { ic: [a.ic, '#F2C14E'] }); emit('achievement', { id: a.id }); }
+    A().init = true;
+    save();
+  }
+  // Old saves: count what the bag already shows before the first check.
+  if (!A().init) {
+    const own = S.items.filter(i => !i.u);
+    A().forged = Math.max(A().forged, own.length);
+    if (own.some(i => i.r === 'epic')) A().epic = true;
+  }
+  achRebuild();
+  let achAcc = 0, achFirst = true;
+  onTick(dt => {
+    achAcc += dt; if (achAcc < 1) return; achAcc = 0;
+    achCheck();
+    if (achFirst) { achFirst = false; A().init = true; }
+  });
+  var ACH_API = { list: ACH, bonusText: achBonusText, check: achCheck };
 }
 
 // ---- src/js/60-gfx.js ----
@@ -1640,7 +1831,7 @@ function draw() {
 let lastTap = 0;
 $('stage').addEventListener('pointerdown', e => {
   const now = performance.now(); if (now - lastTap < 60) return; lastTap = now;
-  lunge = 0.2;
+  lunge = 0.2; emit('tap', { node: target() === 'node' });
   if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
   if (target() === 'node') { tapNode(); return; }
   const r = $('stage').getBoundingClientRect();
@@ -2210,6 +2401,92 @@ async function uiTavern() {
     td1.append(el('span', 'hero', String(r.name || 'Wanderer').slice(0, 18)), el('span', 'player', r.id === online.uid ? 'you' : ((names[r.id] && names[r.id].name) || '')));
     tr.append(el('td', 'rank', String(i + 1)), td1, ...[r.L || 1, r.maxZone || 1, r.gear || 0].map(v => el('td', 'n', fmt(+v || 0))));
     tb.append(tr);
+  });
+}
+
+// ---- src/js/75-bounties-ui.js ----
+// 75-bounties-ui: Bounties section on the Fight tab, Achievements grid on the Tavern tab.
+{
+  const BTY_IC = {
+    kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
+    forge: () => iconURL('anvil', '#8A8FA0'), boss: () => iconURL('banner', '#E0524F'), crit: () => iconURL('flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }),
+    tap: () => iconURL('boot', '#6B4A2E')
+  };
+  const btyRows = [];
+  registerSection('adv', {
+    id: 'bounties', title: 'Bounties',
+    mount(sec) {
+      // sit right under the Boss gate
+      const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
+      for (let i = 0; i < 3; i++) {
+        const r = makeRow(sec, '', false, BTY_IC.kill());
+        r.row.classList.add('bty');
+        const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
+        const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
+        r.btn.addEventListener('click', () => { if (BOUNTY_API.claim(i)) ui(true); });
+        rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
+        btyRows.push(r);
+      }
+    },
+    update() {
+      const now = Date.now();
+      S.bounties.slots.forEach((b, i) => {
+        const r = btyRows[i]; if (!r) return;
+        if (!b || !b.k) {
+          r.row.classList.add('locked'); r.row.classList.remove('active');
+          r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
+          r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
+          r.bar.style.width = '0%'; r.rr.hidden = true;
+          r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
+          return;
+        }
+        const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
+        r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
+        r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
+        r.desc.textContent = 'Reward: ' + rew.txt;
+        r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
+        const url = BTY_IC[b.k](); setIc(r.ic, url);
+        const rrLeft = (b.rr || 0) - now;
+        r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
+        r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
+        r.btn.disabled = !done; r.qty.textContent = done ? 'Done' : 'Bounty';
+        r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
+      });
+    }
+  });
+
+  let achSig = '';
+  const achTiles = [];
+  registerSection('tav', {
+    id: 'achievements', title: 'Achievements',
+    mount(sec) {
+      const head = el('p', 'note ach-sum'); sec.append(head);
+      const grid = el('div', 'ach-grid'); sec.append(grid);
+      for (const a of ACH_API.list) {
+        const t = el('div', 'ach');
+        const ic = icTile(iconURL(a.ic, '#F2C14E'));
+        const body = el('div');
+        body.append(el('div', 'ach-nm', a.name), el('div', 'ach-desc', a.desc), el('div', 'ach-fx', ACH_API.bonusText(a)));
+        const bar = el('div', 'bar'); bar.append(el('i')); body.append(bar);
+        t.append(ic, body); grid.append(t);
+        achTiles.push({ a, t, ic, bar: bar.firstChild, desc: body.children[1] });
+      }
+      achTiles.head = head;
+    },
+    update(force) {
+      const got = S.achievements.got;
+      const sig = achTiles.map(x => got[x.a.id] ? 1 : Math.floor(Math.min(1, x.a.cur() / x.a.need) * 50)).join();
+      if (sig === achSig && !force) return; achSig = sig;
+      let n = 0;
+      for (const x of achTiles) {
+        const on = !!got[x.a.id]; if (on) n++;
+        const c = Math.min(x.a.need, x.a.cur());
+        x.t.classList.toggle('got', on);
+        x.bar.style.width = (on ? 100 : c / x.a.need * 100) + '%';
+        x.desc.textContent = x.a.desc + (on ? '' : ` (${fmt(c)}/${fmt(x.a.need)})`);
+      }
+      achTiles.head.textContent = `${n} of ${achTiles.length} earned. Each one gives a permanent bonus.`;
+    }
   });
 }
 
