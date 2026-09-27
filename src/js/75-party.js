@@ -1,224 +1,375 @@
-// 75-party: the Party tab (hero card, fielded companions, formation). Browser-only.
-// Reads the Stage A contracts: S.party and HERO_CLASSES / castAbility (55-party.js, A1),
-// portraitURL (60b-baker.js, A2). Every one of them is optional: without them the tab
-// falls back to today's sprites and the old companion slots, and never throws.
+// 75-party: the Party tab. Browser-only. Spec: docs/design/party-and-classes.md 7.2.
+// Top to bottom: formation editor, hero card, the 3 fielded companions, synergies, the roster
+// grid (bench and locked), leads. Tapping a card or tile opens the character sheet
+// (75-party-sheet.js). A red dot on the tab marks an unread camp story or a promotion ready.
+// Reads the roster API (56-roster.js); synergies (56b) and leads (56c) only when present.
 {
-  const hasParty = () => typeof S === 'object' && S.party && typeof S.party === 'object';
-  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
-  const curClass = () => { const C = classes(); return C && hasParty() && S.party.cls ? C[S.party.cls] || null : null; };
+  const { safe, live, C, heroClass, heroCol, portrait, frameCol, first, pip, costText, weaponNoun, gearOf, slotTile,
+    traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive } = PTY;
+  const RAR_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 };
+  const P = () => S.party;
+  const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, 3) : []);
+  const setT = (n, t) => { if (n.textContent !== t) n.textContent = t; };
+  const saveUi = () => { try { save(); } catch (e) {} ui(true); };
+  const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
 
-  const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
-  const COL_NAME = ['Back', 'Mid', 'Front'];
-  // Character key -> card info. idx is the old S.comp slot that pays for them (A1's map).
-  const PARTY_CHARS = {
-    tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', role: 'tank', idx: 0 },
-    wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', role: 'striker', idx: 1 },
-    pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', role: 'caster', idx: 2 },
-    aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', role: 'tank', idx: 3 },
-    kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', role: 'striker', idx: 4 },
-    oriel: { name: 'Oriel Vess', title: 'the Starcaller', role: 'caster', idx: 5 },
-    elowen: { name: 'Saint Elowen', title: 'the Last Lantern', role: 'support', idx: 6 },
-    bram: { name: 'Bram Hollis', title: 'the Woodcutter', role: 'striker', idx: 0 },
-    hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', role: 'support', idx: -1 }
-  };
-  const IDX_KEY = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
-  // Any roster character (56-roster.js) the table above does not list.
-  const pc = k => PARTY_CHARS[k] || (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k] : null);
-  const roster = () => typeof rosterLive === 'function' && rosterLive();
-  // The 5 class gear slots. Weapon, head and charm are today's weapon, helm and charm;
-  // off-hand and body arrive with crafting.
-  const GEAR_NOUN = {
-    warden: { weapon: 'Warblade', off: 'Shield', head: 'Greathelm', body: 'Plate' },
-    lanternmage: { weapon: 'Staff', off: 'Lantern', head: 'Hood', body: 'Robe' },
-    ranger: { weapon: 'Bow', off: 'Quiver', head: 'Hood', body: 'Leathers' },
-    lightkeeper: { weapon: 'Censer', off: 'Tome', head: 'Mitre', body: 'Vestments' }
-  };
-  const GEAR_SLOTS = [
-    { id: 'weapon', old: 'weapon', n: 'Weapon' }, { id: 'off', n: 'Off-hand' },
-    { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
-  ];
+  // ================= formation =================
+  let picked = null, formSig = '', formRefs = null;
+  const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});
+  const nameOf = k => k === 'hero' ? S.name : C(k).name;
+  const occupant = (col, lane) => Object.keys(cellsNow()).find(k => cellsNow()[k].col === col && cellsNow()[k].lane === lane && (k === 'hero' || inField(k)));
+  // The hero stays in their class column; companions may stand anywhere (the warning line says when it is unwise).
+  function canMove(k, col, lane) {
+    const cells = cellsNow(), from = cells[k]; if (!from) return false;
+    if (k === 'hero' && col !== heroCol()) return false;
+    const o = occupant(col, lane);
+    if (o === 'hero' && from.col !== heroCol()) return false;
+    return true;
+  }
+  function moveTo(k, col, lane) {
+    if (!canMove(k, col, lane)) return false;
+    const cells = { ...cellsNow() }, o = occupant(col, lane);
+    if (o === k) return false;
+    if (o) cells[o] = { ...cells[k] };
+    cells[k] = { col, lane };
+    P().cells = cells;                 // a new object: the stage watches identity
+    emit('fieldChange', { field: P().field });
+    return true;
+  }
+  function warning() {
+    const cells = cellsNow(), f = field();
+    const at = k => cells[k] ? cells[k].col : -1;
+    for (const k of f) { const r = C(k).role; if ((r === 'support' || r === 'caster') && at(k) === 2) return `${first(k)} is a ${r} in the Front row. ${r === 'support' ? 'Supports' : 'Casters'} are safer at the back.`; }
+    const front = ['hero'].concat(f).some(k => at(k) === 2);
+    if (!front && f.length) return 'Nobody stands in the Front row to hold the enemy back.';
+    const frontFree = !occupant(2, 0) || !occupant(2, 1);
+    if (frontFree) for (const k of f) if (C(k).role === 'tank' && at(k) !== 2) return `${first(k)} is a tank in the ${COL_NAME[at(k)] || 'wrong'} row. Tanks hold the Front.`;
+    return '';
+  }
+  function buildForm(sec) {
+    const head = el('div', 'sec-head');
+    const h = sec.querySelector('.sec-title'); head.append(h);
+    const auto = btn('mini pf-auto', 'Auto', () => { picked = null; if (live()) { autoPlace(); saveUi(); } });
+    auto.setAttribute('aria-label', 'Place everyone by role');
+    head.append(auto); sec.prepend(head);
+    const grid = el('div', 'pform');
+    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
+    const cells = [];
+    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+      const b = btn('pf-cell');
+      b.addEventListener('click', () => tapCell(col, lane));
+      grid.append(b); cells.push({ b, col, lane });
+    }
+    const hint = el('p', 'note pf-hint');
+    const warn = el('p', 'note warn pf-warn');
+    sec.append(grid, hint, warn);
+    formRefs = { cells, hint, warn, auto };
+  }
+  function tapCell(col, lane) {
+    const o = occupant(col, lane);
+    if (!picked) { if (o) picked = o; }
+    else if (picked === o) picked = null;
+    else if (canMove(picked, col, lane)) { moveTo(picked, col, lane); picked = null; try { save(); } catch (e) {} }
+    else if (o) picked = o;
+    formSig = ''; ui(true);
+  }
+  function updateForm() {
+    const r = formRefs; if (!r) return;
+    const sig = JSON.stringify(cellsNow()) + field().join() + picked + S.name + P().cls + typeof portraitURL;
+    if (sig === formSig) return; formSig = sig;
+    if (picked && picked !== 'hero' && !inField(picked)) picked = null;
+    for (const c of r.cells) {
+      const o = occupant(c.col, c.lane), b = c.b;
+      b.textContent = '';
+      b.className = 'pf-cell' + (o ? ' occ' : '') + (o === 'hero' ? ' hero' : '') + (picked && o === picked ? ' picked' : '') +
+        (picked && picked !== o && !canMove(picked, c.col, c.lane) ? ' dim' : '') + (picked && picked !== o && canMove(picked, c.col, c.lane) ? ' drop' : '');
+      if (o) {
+        b.append(img(portrait(o)), el('span', 'who', o === 'hero' ? S.name : first(o)));
+        if (o !== 'hero') { const d = el('i', 'rp r-' + C(o).role); b.append(d); }
+      }
+      const where = `${COL_NAME[c.col]} row, ${c.lane ? 'lower' : 'upper'} lane`;
+      b.setAttribute('aria-label', o ? `${nameOf(o)}, ${where}${picked === o ? ', picked up' : ''}` : `Empty, ${where}`);
+      b.setAttribute('aria-pressed', String(!!picked && picked === o));
+      b.disabled = !o && !picked;
+    }
+    r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit cell${picked === 'hero' ? ' in your class row' : ''}, or tap again to cancel.` : 'Tap someone, then tap a cell to move or swap them.';
+    const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
+  }
 
-  function heroPortrait() {
-    if (typeof portraitURL === 'function') { try { const u = portraitURL('hero'); if (u) return u; } catch (e) {} }
-    return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
-  }
-  function compPortrait(key) {
-    if (typeof portraitURL === 'function') { try { const u = portraitURL(key); if (u) return u; } catch (e) {} }
-    const i = pc(key) ? pc(key).idx : -1, c = COMPS[i >= 0 ? i : 0];
-    return spriteURL('comp' + (i >= 0 ? i : 0), SPR.hero, { ...HERO_PAL, 1: c.col, 2: c.helm });
-  }
-  // Fielded companions: S.party.field, else the 3 highest owned old slots (what A1 migrates to).
-  function fieldKeys() {
-    if (hasParty() && Array.isArray(S.party.field) && S.party.field.length) return S.party.field.filter(k => pc(k)).slice(0, 3);
-    const owned = []; for (let i = S.comp.length - 1; i >= 0 && owned.length < 3; i--) if (S.comp[i] > 0) owned.push(IDX_KEY[i]);
-    return owned;
-  }
-  const pip = role => el('span', 'pip r-' + role, ROLE_NAME[role] || role);
-  const portraitBox = (url, cls) => { const d = el('div', 'pt ' + (cls || '')); d.append(img(url)); return d; };
-
-  // ---------- hero card ----------
+  // ================= hero card =================
   let heroRefs = null, heroSig = '';
-  function buildHero(sec) {
-    sec.querySelectorAll('.pcard, .note').forEach(n => n.remove());
-    heroRefs = null;
-    const c = curClass();
-    const card = el('div', 'pcard hero');
+  function buildHero(box) {
+    box.textContent = '';
+    const c = heroClass();
+    const card = el('div', 'pcard hero tap'); card.tabIndex = 0; card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${S.name}, open hero sheet`);
     const top = el('div', 'pc-top');
-    const pt = portraitBox(heroPortrait(), 'big');
+    const pt = el('div', 'pt big'); pt.append(img(portrait('hero')));
     const who = el('div', 'pc-who');
     const nm = el('b', null, S.name);
-    const sub = el('small', null, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
-    who.append(nm, sub);
-    if (c) { const tags = el('div', 'pc-tags'); tags.append(pip(c.role)); if (c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName)); who.append(tags); }
-    top.append(pt, who);
+    const sub = el('small');
+    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
+    who.append(nm, sub, tags);
+    top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
-    const refs = { card, pt: pt.querySelector('img'), nm, sub };
+    const refs = { card, nm, sub };
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
-      const abTxt = el('div');
-      abTxt.append(el('em', null, c.ability.name), document.createTextNode(': ' + (c.ability.desc || '')));
-      const cast = el('button', 'mini go', 'Cast'); cast.type = 'button';
-      cast.addEventListener('click', () => { if (typeof castAbility === 'function' && castAbility()) ui(true); });
-      line.append(abTxt, cast);
+      const t = el('div'); t.append(el('em', null, c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
+      const cast = btn('mini go pc-cast', 'Cast', e => { e.stopPropagation(); if (typeof castAbility === 'function' && castAbility()) ui(true); });
+      line.append(t, cast);
       const cd = el('div', 'pc-cd'); cd.append(el('i'));
-      const cdTxt = el('small', 'pc-cdtxt');
-      const auto = el('label', 'pc-auto');
-      const box = el('input'); box.type = 'checkbox';
-      box.addEventListener('change', () => { if (hasParty()) { S.party.autoCast = box.checked; save(); } });
-      auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
-      ab.append(line, cd, cdTxt, auto);
-      card.append(ab);
-      Object.assign(refs, { cast, cdBar: cd.firstChild, cdTxt, box });
+      ab.append(line, cd); card.append(ab);
+      Object.assign(refs, { cast, cdBar: cd.firstChild, cdTxt });
     }
     const gearBox = el('div', 'pc-gear');
-    refs.gear = GEAR_SLOTS.map(g => {
-      const t = el('div', 'pc-slot');
-      const ic = icTile(iconURL('charm', '#3A2F47'), null, 'ghost');
-      const lbl = el('small');
-      t.append(ic, lbl); gearBox.append(t);
-      return { g, t, ic, lbl };
-    });
-    card.append(gearBox, el('small', 'pc-gearnote', 'Dashed slots arrive with crafting. Forge the rest in the Forge tab.'));
-    sec.append(card);
+    const nouns = HERO_GEAR_NOUN[P().cls] || {};
+    for (const s of HERO_SLOTS) {
+      const it = s.old ? equipped(s.old) : null;
+      const d = el('div', 'pc-slot' + (s.old ? '' : ' soon'));
+      d.append(it ? slotTile(it) : slotTile(null, s.old ? SLOT[s.old].icon : s.id === 'off' ? 'banner' : 'helm'), el('small', null, nouns[s.id] || s.n));
+      d.title = it ? itemName(it) : s.old ? 'Empty' : 'Coming with crafting';
+      gearBox.append(d);
+    }
+    card.append(gearBox);
+    const open = () => partySheet.openHero();
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); open(); } });
+    box.append(card);
     heroRefs = refs;
   }
-  function updateHero(sec) {
-    const c = curClass();
-    const sig = [hasParty() && S.party.cls, !!c, typeof portraitURL, JSON.stringify(S.equip)].join('|');
-    if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(sec); }
+  function updateHero(box) {
+    const c = heroClass();
+    const sig = [P().cls, typeof portraitURL, JSON.stringify(S.equip), S.name].join('|');
+    if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(box); }
     const r = heroRefs;
-    r.nm.textContent = S.name;
-    r.sub.textContent = (c ? c.name : 'Wanderer') + ' · Lv ' + S.L;
+    setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
     if (r.cdBar) {
-      const cdMax = (c.ability && c.ability.cd) || 30, left = Math.max(0, +S.party.abilityCd || 0);
+      const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
       r.cdBar.style.width = (100 - Math.min(100, left / cdMax * 100)) + '%';
-      r.cdTxt.textContent = left > 0 ? `Ready in ${Math.ceil(left)}s · cooldown ${cdMax}s` : `Ready · cooldown ${cdMax}s`;
+      setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
       r.cast.disabled = left > 0 || typeof castAbility !== 'function';
-      if (document.activeElement !== r.box) r.box.checked = !!S.party.autoCast;
-    }
-    const nouns = (hasParty() && GEAR_NOUN[S.party.cls]) || {};
-    for (const s of r.gear) {
-      const it = s.g.old ? equipped(s.g.old) : null;
-      const noun = nouns[s.g.id] || s.g.n;
-      if (it) {
-        setIc(s.ic, itemIcon(it.slot || s.g.old, it.t, it.u), it.u ? 'legendary' : it.r);
-        s.lbl.textContent = noun;
-        s.t.title = itemName(it);
-      } else if (s.g.old) {
-        setIc(s.ic, iconURL(SLOT[s.g.old].icon, '#4E4060'), null, 'ghost');
-        s.lbl.textContent = noun; s.t.title = 'Empty. Forge one in the Forge tab.';
-      } else {
-        setIc(s.ic, iconURL(s.g.id === 'off' ? 'banner' : 'helm', '#4E4060'), null, 'ghost');
-        s.lbl.textContent = noun; s.t.title = 'Coming with crafting.';
-        s.t.classList.add('soon');
-      }
     }
   }
 
-  // ---------- companions ----------
+  // ================= companion cards =================
   let compSig = '', compRefs = [];
+  function abilityName(k) {
+    const t = traits(k); if (!t) return '';
+    const a = t.find(x => x && /abil/i.test(x.kind || '')); return a ? a.name : '';
+  }
   function buildComps(box, keys) {
     box.textContent = ''; compRefs = [];
-    if (!keys.length) { box.append(el('p', 'note', 'Nobody fights beside you yet. Recruit companions in the Fight tab.')); return; }
-    for (const k of keys) {
-      const d = pc(k);
-      const card = el('div', 'pcard');
-      const top = el('div', 'pc-top');
+    for (let i = 0; i < 3; i++) {
+      const k = keys[i];
+      if (!k) {
+        const e = el('div', 'pcard empty');
+        e.append(el('b', null, 'Open place'), el('small', null, 'Tap someone on the bench below to field them.'));
+        box.append(e); continue;
+      }
+      const c = C(k);
+      const card = el('div', 'pcard comp tap'); card.tabIndex = 0; card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `${c.name}, open character sheet`);
+      card.style.setProperty('--rc', frameCol(k));
+      const top = el('div', 'pc-top3');
+      const pt = el('div', 'pt rf' + (c.rarity === 'legendary' ? ' leg' : '')); pt.append(img(portrait(k)));
+      const dot = el('span', 'ndot'); dot.hidden = true; pt.append(dot);
       const who = el('div', 'pc-who');
-      const tags = el('div', 'pc-tags'); tags.append(pip(d.role));
-      const stat = el('small', 'pc-stat');
-      who.append(el('b', null, d.name), el('small', null, d.title), tags, stat);
-      top.append(portraitBox(compPortrait(k)), who);
-      card.append(top); box.append(card);
-      compRefs.push({ k, d, stat });
+      who.append(el('b', null, c.name), el('small', null, c.title));
+      const meta = el('div', 'pc-tags'); const lv = el('span', 'pc-lv'); meta.append(pip(c.role), lv);
+      const abn = abilityName(k); if (abn) meta.append(el('small', 'pc-abn', abn));
+      who.append(meta);
+      const gear = el('div', 'pc-g2');
+      for (const [w, noun, ic] of [['wpn', weaponNoun(k), 'sword'], ['trk', 'Trinket', 'charm']]) {
+        const it = gearOf(k, w); const t = slotTile(it, ic); t.title = it ? itemName(it) : `${noun}: coming soon`; gear.append(t);
+      }
+      top.append(pt, who, gear);
+      const xr = el('div', 'pc-xrow');
+      const bar = el('div', 'xbar'); const fill = el('i'); bar.append(fill);
+      const badge = el('span', 'pc-badge'); badge.hidden = true;
+      const prom = btn('buy pc-prom', null, e => { e.stopPropagation(); if (promoteChar(k)) saveUi(); });
+      prom.append(el('span', 'qty', 'Promote'), el('span', 'price'));
+      prom.hidden = true;
+      xr.append(bar, badge, prom);
+      card.append(top, xr);
+      const open = () => partySheet.open(k);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); open(); } });
+      box.append(card);
+      compRefs.push({ k, lv, fill, bar, badge, prom, dot, pSig: '' });
     }
   }
   function updateComps(box) {
-    const keys = fieldKeys();
-    const sig = keys.join(',') + '|' + typeof portraitURL;
+    const keys = field();
+    const sig = keys.join(',') + '|' + typeof portraitURL + '|' + keys.map(k => { const r = charRec(k); return r.wpn + ':' + r.trk; }).join() + (fnActive() ? 1 : 0);
     if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
     for (const r of compRefs) {
-      if (roster()) {
-        const rec = charRec(r.k);
-        r.stat.textContent = rec ? `Lv ${rec.lv} ${ROSTER_RANKS[rec.rank]} · ${fmt(charDps(r.k))} DPS` : 'Joins the fight soon';
-        continue;
+      const x = xpInfo(r.k); if (!x) continue;
+      setT(r.lv, `Lv ${x.r.lv}/${x.cap} · ${ROSTER_RANKS[x.r.rank]}`);
+      r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
+      r.bar.classList.toggle('cap', x.atCap);
+      r.bar.title = x.atCap ? 'At the level cap' : `${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`;
+      const cu = Math.round(x.catchUp * 100);
+      r.badge.hidden = !(cu > 0) || x.atCap; setT(r.badge, `+${cu}% XP`);
+      const showP = x.atCap && !x.maxRank;
+      r.prom.hidden = !showP;
+      if (showP) {
+        const pc = promoteCost(r.k), ps = pc.gold + ':' + canPromote(r.k);
+        if (ps !== r.pSig) { r.pSig = ps; setPrice(r.prom, pc.gold); r.prom.disabled = !canPromote(r.k); r.prom.title = costText(pc); }
       }
-      const i = r.d.idx, n = i >= 0 ? S.comp[i] : 0;
-      let dps = 0; try { dps = i >= 0 ? compDpsOne(i) * n : 0; } catch (e) {}
-      r.stat.textContent = n > 0 ? `${fmt(n)} strong · ${fmt(dps)} DPS` : 'Joins the fight soon';
+      r.dot.hidden = !needsYou(r.k);
     }
   }
 
-  // ---------- formation (read-only for Stage A) ----------
-  let formSig = '';
-  function cellsOf(keys) {
-    const cells = hasParty() && S.party.cells && typeof S.party.cells === 'object' ? S.party.cells : {};
-    const out = {};
-    const put = (k, def) => { const c = cells[k] || def; if (c) out[k] = { col: Math.max(0, Math.min(2, c.col | 0)), lane: c.lane ? 1 : 0 }; };
-    const c = curClass();
-    const heroCol = c && c.row != null ? (typeof c.row === 'number' ? c.row : ({ back: 0, mid: 1, front: 2 })[c.row]) : 2;
-    put('hero', { col: heroCol == null ? 2 : heroCol, lane: 1 });
-    const roleCol = { tank: 2, striker: 1, caster: 0, support: 0 };
-    keys.forEach((k, n) => put(k, { col: roleCol[pc(k).role], lane: n % 2 }));
-    return out;
+  // ================= synergies =================
+  let synSig = '', synOpen = null;
+  function updateSyn(sec) {
+    const on = !!fnActive();
+    sec.hidden = !on; if (!on) return;
+    const list = synergiesFor(null) || [];
+    const sig = JSON.stringify(list.map(s => [s.id, s.active, s.missing])) + synOpen;
+    if (sig === synSig) return; synSig = sig;
+    const row = sec.querySelector('.syn-row'), det = sec.querySelector('.syn-det');
+    row.textContent = '';
+    if (!list.length) { row.append(el('p', 'note', 'No synergies yet. Field characters who share a circle or a story.')); det.hidden = true; return; }
+    for (const s of list) {
+      const b = btn('syn-chip' + (s.active ? ' on' : ''), null, () => { synOpen = synOpen === s.id ? null : s.id; synSig = ''; updateSyn(sec); });
+      b.append(el('i'), el('span', null, s.name));
+      if (!s.active) b.append(el('small', null, missingText(s.missing)));
+      b.setAttribute('aria-expanded', String(synOpen === s.id));
+      row.append(b);
+    }
+    const cur = list.find(s => s.id === synOpen);
+    det.hidden = !cur;
+    if (cur) { det.textContent = ''; det.append(el('b', null, cur.name + (cur.active ? '' : ' (inactive)')), el('span', null, ' ' + (cur.text || ''))); if (cur.stageC) det.append(el('small', 'cs-soon', ' with party combat')); }
   }
-  function updateForm(grid) {
-    const keys = fieldKeys(), cells = cellsOf(keys);
-    const sig = JSON.stringify(cells) + typeof portraitURL + S.name;
-    if (sig === formSig) return; formSig = sig;
-    grid.textContent = '';
-    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
-    const at = {};
-    for (const k in cells) { const id = cells[k].lane + ':' + cells[k].col; (at[id] = at[id] || []).push(k); }
-    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
-      const ks = at[lane + ':' + col] || [];
-      const cell = el('div', 'pf-cell' + (ks.length ? ' occ' : '') + (ks.includes('hero') ? ' hero' : ''));
-      cell.setAttribute('aria-label', `${COL_NAME[col]} row, ${lane ? 'lower' : 'upper'} lane: ${ks.length ? ks.map(k => k === 'hero' ? S.name : pc(k).name).join(', ') : 'empty'}`);
-      for (const k of ks) {
-        cell.append(img(k === 'hero' ? heroPortrait() : compPortrait(k)));
-        cell.append(el('span', 'who', k === 'hero' ? S.name : pc(k).name.split(' ')[0]));
+
+  // ================= roster grid =================
+  const FILTERS = ['all', 'tank', 'striker', 'caster', 'support'];
+  let filt = 'all', sortBy = 'rarity', rosSig = '', rosRefs = null;
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.party.ui') || '{}'); if (FILTERS.includes(v.f)) filt = v.f; if (v.s === 'level' || v.s === 'rarity') sortBy = v.s; } catch (e) {}
+  const keepUi = () => { try { localStorage.setItem('lanternfall.party.ui', JSON.stringify({ f: filt, s: sortBy })); } catch (e) {} };
+  const SHORT = { quest: 'Quest', renown: 'Renown', token: 'Boss token', bestiary: 'Bestiary', achievement: 'Feat', tavern: 'Tavern visitor', craft: 'Crafting' };
+  function shortHow(k, leadsById) {
+    const cost = recruitCost(k), rt = C(k).route, l = leadsById[k], p = pctOf(l);
+    if (cost) return cost.gold ? `Ready: ${fmt(cost.gold)} gold` : 'Ready to join';
+    let s = rt.type === 'progress' ? `Reach zone ${rt.zone}` : SHORT[rt.type] || 'Locked';
+    if (p != null && rt.type !== 'progress') s += ` · ${Math.floor(p * 100)}%`;
+    return s;
+  }
+  function buildRosterHead(sec) {
+    const head = el('div', 'sec-head');
+    const h = sec.querySelector('.sec-title'); const cnt = el('span', 'ros-count'); h.append(cnt); head.append(h);
+    const sort = btn('mini ros-sort', '', () => { sortBy = sortBy === 'rarity' ? 'level' : 'rarity'; keepUi(); rosSig = ''; ui(true); });
+    head.append(sort); sec.prepend(head);
+    const fl = el('div', 'ros-filt'); fl.setAttribute('role', 'group'); fl.setAttribute('aria-label', 'Show role');
+    const fb = FILTERS.map(f => { const b = btn('', f === 'all' ? 'All' : PTY.ROLE_NAME[f], () => { filt = f; keepUi(); rosSig = ''; ui(true); }); fl.append(b); return b; });
+    const grid = el('div', 'rgrid');
+    sec.append(fl, grid);
+    rosRefs = { cnt, sort, fb, grid };
+  }
+  function updateRoster() {
+    const r = rosRefs; if (!r || !live()) return;
+    const leadsById = {}; for (const l of leadList()) leadsById[l.id] = l;
+    const rows = ROSTER_KEYS.map((k, i) => {
+      const rec = charRec(k);
+      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k) };
+    });
+    const sig = [filt, sortBy, typeof portraitURL, JSON.stringify(rows.map(x => [x.k, x.rec && x.rec.lv, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
+    if (sig === rosSig) return; rosSig = sig;
+    r.cnt.textContent = `${rows.filter(x => x.rec).length}/${rows.length}`;
+    r.sort.textContent = sortBy === 'rarity' ? 'Sort: Rarity' : 'Sort: Level';
+    r.sort.setAttribute('aria-label', `Sorted by ${sortBy}. Tap to sort by ${sortBy === 'rarity' ? 'level' : 'rarity'}.`);
+    r.fb.forEach((b, i) => b.setAttribute('aria-pressed', String(FILTERS[i] === filt)));
+    const shown = rows.filter(x => filt === 'all' || C(x.k).role === filt);
+    const rar = x => RAR_ORDER[C(x.k).rarity];
+    shown.sort((a, b) => (!!b.rec - !!a.rec) ||
+      (sortBy === 'rarity' ? rar(a) - rar(b) || (b.rec ? b.rec.lv - a.rec.lv : 0) : (b.rec ? b.rec.lv - a.rec.lv : 0) || rar(a) - rar(b)) || a.i - b.i);
+    r.grid.textContent = '';
+    for (const x of shown) {
+      const c = C(x.k);
+      const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
+      t.style.setProperty('--rc', frameCol(x.k));
+      const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
+      if (x.rec) {
+        fr.append(el('span', 'rt-lv', 'Lv ' + x.rec.lv), el('i', 'rp r-' + c.role));
+        if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
+        if (x.flag) fr.append(el('span', 'ndot'));
+      } else fr.append(el('i', 'rp r-' + c.role));
+      t.append(fr, el('span', 'rt-nm', first(x.k)));
+      if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
+      t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
+      t.addEventListener('click', () => partySheet.open(x.k));
+      r.grid.append(t);
+    }
+    if (!shown.length) r.grid.append(el('p', 'note', 'Nobody with that role yet.'));
+  }
+
+  // ================= leads =================
+  let leadSig = '';
+  function updateLeads(sec) {
+    if (!live()) { sec.hidden = true; return; }
+    const list = leadList();
+    const sig = JSON.stringify(list.map(l => [l.id, l.name, l.how, l.sub, pctOf(l) != null ? Math.floor(pctOf(l) * 100) : null, l.action && l.action.label, l.ready]));
+    sec.hidden = !list.length;
+    if (sig === leadSig) return; leadSig = sig;
+    const box = sec.querySelector('.leads'); box.textContent = '';
+    for (const l of list) {
+      const card = el('div', 'lead');
+      if (C(l.id)) card.style.setProperty('--rc', frameCol(l.id));
+      const pt = el('button', 'lead-pt' + (C(l.id) && !isRecruited(l.id) ? ' locked' : '')); pt.type = 'button';
+      pt.setAttribute('aria-label', `Open ${l.name}`);
+      if (C(l.id)) { pt.append(img(portrait(l.id))); pt.addEventListener('click', () => partySheet.open(l.id)); } else pt.disabled = true;
+      const tx = el('div', 'lead-tx');
+      tx.append(el('b', null, l.name), el('small', null, l.how || ''));
+      const p = pctOf(l);
+      if (p != null) { const bar = el('div', 'xbar xlead'); const i = el('i'); i.style.width = (p * 100).toFixed(1) + '%'; bar.append(i); tx.append(bar); if (l.sub) tx.append(el('small', 'lead-sub', l.sub)); }
+      card.append(pt, tx);
+      if (l.action) {
+        const b = btn('mini go lead-go', l.action.label, () => { safe(() => l.action.fn()); leadSig = ''; saveUi(); });
+        if (l.builtIn && l.ready === false) b.disabled = true;
+        card.append(b);
       }
-      grid.append(cell);
+      box.append(card);
     }
   }
 
+  // ================= tab dot =================
+  const tabBtn = document.querySelector('.tab[data-tab="party"]');
+  const pdot = el('span', 'dot pdot'); pdot.id = 'partyDot'; pdot.hidden = true;
+  if (tabBtn) { tabBtn.append(pdot); }
+  function updateDot() {
+    if (!live()) { pdot.hidden = true; return; }
+    const any = rosterList().some(needsYou);
+    pdot.hidden = !any || S.tab === 'party';
+    if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
+  }
+  let dotT = 0;
+  onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
+  for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
+  if (tabBtn) tabBtn.addEventListener('click', () => updateDot());
+
+  // ================= sections =================
+  const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
+  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', updateForm) });
   registerSection('party', {
-    id: 'party-form', title: 'Formation',
-    mount(sec) {
-      const g = el('div', 'pform'); g.setAttribute('role', 'img'); sec.append(g);
-      sec.append(el('p', 'note', 'Back, Mid and Front, as they stand on the stage. Moving people between rows comes with the next update.'));
-    },
-    update() { try { updateForm(document.querySelector('#sec-party-form .pform')); } catch (e) { console.error('[lanternfall] party formation', e); } }
+    id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
+    update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
   });
   registerSection('party', {
-    id: 'party-hero', title: 'Your hero',
-    mount(sec) {},
-    update(force) { try { updateHero(document.getElementById('sec-party-hero')); } catch (e) { console.error('[lanternfall] party hero', e); } }
+    id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
+    update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
   registerSection('party', {
-    id: 'party-field', title: 'Fighting beside you',
-    mount(sec) { sec.append(el('div', 'pcards')); },
-    update() { try { updateComps(document.querySelector('#sec-party-field .pcards')); } catch (e) { console.error('[lanternfall] party companions', e); } }
+    id: 'party-syn', title: 'Synergies', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
+    update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
   });
+  registerSection('party', { id: 'party-roster', title: 'Roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  registerSection('party', {
+    id: 'party-leads', title: 'Leads', mount(sec) { sec.append(el('div', 'leads')); },
+    update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
+  });
+  // Keep an open sheet live while the tab updates.
+  registerSection('party', { id: 'party-live', title: '', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
 }

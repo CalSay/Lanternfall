@@ -5,11 +5,8 @@
 const itemById = id => S.items.find(i => i.id === id) || null;
 const equipped = slot => itemById(S.equip[slot]);
 const itemPower = it => TIER_POW[it.t] * RAR[it.r].m * (1 + 0.15 * it.plus);
-function itemName(it) {
-  if (it.u) return UNIQ[it.u].name + (it.plus ? ` +${it.plus}` : '');
-  const s = SLOT[it.slot];
-  return `${MAT[s.prefix].short[it.t - 1]} ${s.noun}` + (it.plus ? ` +${it.plus}` : '');
-}
+// Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
+function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
   switch (slot) {
     case 'weapon': return `+${fmt(p)}% damage`;
@@ -22,28 +19,9 @@ function slotStats(slot, p) {
 }
 let gsCache = null;
 const gearDirty = () => { gsCache = null; emit('gear'); };
-function gear() {
-  if (gsCache) return gsCache;
-  const s = { might: 0, crit: 0, critMult: 0, gold: 0, ess: 0, mineSpd: 0, woodSpd: 0, oreDbl: 0, woodDbl: 0, party: 0, tap: 1, echo: 0, offline: 0, raid: 0, essExtra: 0, oreExtra: 0, woodExtra: 0, gather: 0, score: 0 };
-  for (const sl of SLOTS) {
-    const it = equipped(sl.id); if (!it) continue;
-    const p = itemPower(it); s.score += p;
-    if (sl.id === 'weapon') s.might += p;
-    if (sl.id === 'helm') { s.crit += Math.min(35, p * 0.12); s.critMult += p / 200; }
-    if (sl.id === 'charm') { s.gold += p * 0.8; s.ess += p * 0.3; }
-    if (sl.id === 'pick') { s.mineSpd += p * 0.6; s.oreDbl += Math.min(60, p * 0.1); }
-    if (sl.id === 'axe') { s.woodSpd += p * 0.6; s.woodDbl += Math.min(60, p * 0.1); }
-    if (it.u) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) { if (k === 'tap') s.tap *= v; else s[k] += v; }
-  }
-  gsCache = s; return s;
-}
-const craftCost = (slot, t) => Object.fromEntries(Object.entries(RECIPE[slot]).map(([k, n]) => [k, Math.ceil(n * (1 + 0.5 * (t - 1)))]));
-function upgradeCost(it) {
-  const m = {};
-  for (const [k, n] of Object.entries(RECIPE[it.slot])) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
-  if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-  return { mats: m, gold: 40 * Math.pow(5, it.t) * (it.plus + 1) };
-}
+function gear() { return gsCache || (gsCache = gearCalc()); }
+const craftCost = (slot, t) => kindCost(slot, t);
+function upgradeCost(it) { return kindUpgradeCost(it); }
 const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
 const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
 function rarityWeights() {
@@ -83,7 +61,7 @@ const lvlMult = () => 1 + 0.05 * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + gear().gold / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult();
+const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
 const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');

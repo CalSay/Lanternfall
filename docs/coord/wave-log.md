@@ -23,3 +23,34 @@ Owner dislikes the current character art: "too thin and tall", clothing/armour "
 maybe the overall style. Art work is paused. A style study (A chibi ~3 heads, B 16-bit JRPG ~4-4.5,
 C sturdy storybook ~5, D art director's wildcard) with redesigned layered costumes goes to the owner
 as a phone-viewable page; the pick then drives a conversion wave. Logic work is unaffected.
+
+- D1 specs merged (camp, expeditions, deepwell, almanac, codex, constellations); decisions recorded in the vision.
+- B0 shared core done by the coordinator (addBonus/bonus, deviceDay/deviceWeek, awayHours, skillXp:<k>, yield:<fam>).
+- B1+B3 roster merged. T1 ok (Lightkeeper 1 zone fast: Stage A hero-damage transfer), T2 fails (forge
+  runaway, M6), T10 fails (caps every ~8 zones), T9/T11 pass. Full Party achievement now counts roster.
+
+## Wave 2 (launched)
+
+B2 synergies, B7 unlock avenues, B5 Party tab, K4 items core, M6 pacing + `--days` sim, Next Up, Almanac.
+The art style study is still running (owner leans 16-bit; wants clear section definition).
+- K4 items core merged (41-items.js). Exact dps equality on all 4 fixtures. Bag = 50 unequipped
+  (coordinator aligned the forge UI to bagFull()/bagCount()). K5-K8 notes are in the K4 report; key
+  ones: trophy gate unenforced, equipChar + one-wearer rule, unequip on class change, iconFor/slotStats
+  need the CRAFT_KINDS path, nodeTime treats non-ore as wood, spell power not applied to abilities,
+  roster should use charGear(id) once companion gear is live.
+- B2 synergies merged. ISSUE: `SYN_TUNE.today = 0.1` scales every synergy to 10% of its design value
+  (texts still show design numbers), because full strength (about x2.3) broke T1. Synergies are nearly
+  cosmetic until retuned. Plan: after M6 lands, a retune task lowers `ROSTER_TUNE.base`, raises
+  `today` to about 0.5 to 1, and makes texts show the numbers the player actually gets. autoField ignores
+  synergies. The K4 exact-dps check now runs with `SYN_TUNE.on = 0`.
+- Next Up merged (55-goals.js registerGoal/topGoals, strip on Fight tab, away-card block with Go buttons via a small generic edit to 75-away.js: lines may carry group and go).
+- B5 Party tab merged. Coordinator fix: the sheet now reads B2's SYNERGIES array (it expected an object), so 'needs X' chips show.
+- Art style study merged (A chibi, B1 16-bit bold outline, B2 16-bit soft outline, C storybook,
+  D lamplit) and published for the owner: https://claude.ai/artifact/4w567kZ5vdzP6dsw1ahagB
+  Art director recommends B1 + D's lantern lighting. Conversion is about 6-8 agent-days: outfits
+  rewritten relative to body anchors; bones, poses, tiers and lights stay. Waiting on the owner's pick.
+- B7 unlock avenues merged (56c-unlocks.js; leads(), Renown, tokens with pity, Tavern visitor, joining
+  overlay). T17 passes. T16: Rare 17-23m ok, Epic 1.5-2h ok after moving 4 gates (UNLOCK_TUNE, marked
+  `(sim)`), Legendary 2.1-2.6h (want 6-12h) because gold runs away: fix through M6 pacing, then recheck.
+  The sim now claims bounties (needed for Renown), which pushes T1 above band (16/23/34); M6 retune must
+  use the new sim. Sim `Date.now` follows sim time; `--day N`, `--unlock path=v`, `--bounties 0`.

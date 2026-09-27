@@ -10,17 +10,23 @@
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
 //             possible (saving gold for it first), keep the best 3 fielded (the game's autoField).
 //   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 20).
-//   --tune k=v,k=v: override ROSTER_TUNE knobs (56-roster.js).  --debug 1: roster trace per line.
+//   --day N: device day the run starts on (days since 2026-01-01; default 277, a Monday, so
+//             the Tavern rotation starts on Grenna's day). The game's Date.now follows sim time.
+//   The roster policy also claims bounties (Renown), hands in quests, hires the Tavern visitor
+//   and benches supports for Morwen's zone 12 boss (56c-unlocks.js).
+//   --tune k=v,k=v: override ROSTER_TUNE knobs (56-roster.js).  --unlock path=v: UNLOCK_TUNE (56c-unlocks.js).  --debug 1: roster trace per line.
 //   --pace k=v,k=v: override PACE knobs (40-rules.js); arrays as a/b/c (essTier=1/7/13/19/36).
+//   --forge weapon|any: gear policy. weapon ("sword first", default for --days and --targets)
+//             keeps essence for the next sword; any is the older policy.
 // Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
-// Rare/Epic/Legendary recruit; only avenues that exist so far).
+// Rare/Epic/Legendary recruit) and T17 (worst-case token pity).
 //
 // --days N: normal play over N days (check-ins with the real tick, closed-form away gains
 //   between them; see runDays below and docs/design/pacing.md). --checkins 8,13,19
 //   --session 15 --first 60 change the check-in policy. Prints one row per day.
 // --targets: runs every class for 3h continuous and --days (default 30) normal play in
 //   parallel and prints PASS/FAIL for T1, T2, T10 and the pacing targets P1-P4.
-//   --pace/--tune/--seed pass through, so a retune can be checked in one command.
+//   --pace/--tune/--unlock/--seed/--bounties/--forge pass through.
 import { loadCore } from './lib/core.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
@@ -37,6 +43,13 @@ const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0'
 if (args.targets) { await runTargets(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
+// Sim clock: the game's Date.now (bounty timers, the Tavern's device day) follows sim time.
+const day0 = args.day !== undefined ? +args.day : 277;
+const clock0 = Date.UTC(2026, 0, 1) + day0 * 864e5 + new Date(Date.UTC(2026, 0, 1) + day0 * 864e5).getTimezoneOffset() * 6e4 + 8 * 3600e3;   // 08:00 local
+const setClock = (h, ms) => h.eval(`Date.__t = ${ms}; if (!Date.__sim) { Date.__sim = true; Date.now = () => Date.__t; }`);
+setClock(g, clock0);
+// The first bounties were drawn while the game loaded, before Math.random was seeded: redraw them.
+if (!args['from-save']) E('S.bounties.slots = []; BOUNTY_API.refresh()');
 if (args['from-save']) {
   // Start from a real save file (e.g. tests/fixtures/save-mid-v2.json) instead of a fresh game.
   const fs = await import('node:fs');
@@ -48,6 +61,9 @@ E('S.amt = "1"');
 if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); E(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
 // --pace key=value,... overrides PACE knobs (40-rules.js) for this run.
 if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); E(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
+// --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
+const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
+unlockTune(g);
 if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
 
 // Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
@@ -76,9 +92,16 @@ function buyBest() {
 // Roster policy: recruit anything affordable, promote whoever is at the cap. Gold and
 // essence for a due promotion (a fielded character at the cap) or an open recruit are held
 // back from hero upgrades and forging.
+let incomeRef = [];   // [t, totalGold] samples, for the recruit reserve
 function rosterStep(E) {
   if (!rosterPolicy || !E('rosterLive()')) return { gold: 0, ess: null };
+  // Unlock avenues (B7): claim finished bounties, swap tap bounties when idle, then recruit
+  // anything open and affordable (quest hand-ins and the Tavern visitor are recruit routes).
+  if (args.bounties !== "0") E(`S.bounties.slots.forEach((b, i) => { if (b && b.k && b.have >= b.need) BOUNTY_API.claim(i); else if (b && b.k === 'tap' && ${!active}) BOUNTY_API.reroll(i); })`);
   for (const id of E('ROSTER_KEYS')) if (E(`canRecruit(${JSON.stringify(id)})`)) E(`recruit(${JSON.stringify(id)})`);
+  // Morwen: bench supports while the zone 12 boss is next.
+  if (E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("S.party.autoField = false; setField(S.party.field.filter(k => ROSTER[k].role !== 'support'))"); }
+  else if (rosterStep.benched) { rosterStep.benched = false; E('S.party.autoField = true'); }
   let gold = 0, ess = null;
   for (const id of E('rosterList()')) if (E(`canPromote(${JSON.stringify(id)})`)) E(`promoteChar(${JSON.stringify(id)})`);
   if (E('S.party.autoField')) E('autoField()');   // field the best 3 (tank first, by potential)
@@ -87,15 +110,26 @@ function rosterStep(E) {
     const c = E(`(() => { const r = charRec(${q}), c = promoteCost(${q}); return r && c && r.lv >= levelCap(r.rank) && S.party.field.includes(${q}) ? c : null; })()`);
     if (c && c.gold > gold) { gold = c.gold; ess = c.ess; }
   }
-  for (const id of E('ROSTER_KEYS')) { const c = E(`recruitCost(${JSON.stringify(id)})`); if (c && !c.ess) gold = Math.max(gold, c.gold); }
-  return { gold, ess };
+  // Hold gold (and essence) for an open recruit that costs at most ~20 minutes of income.
+  const tg = E('S.totalGold'), now = E('Date.now()') / 1000;
+  incomeRef.push([now, tg]); while (incomeRef.length > 2 && now - incomeRef[0][0] > 600) incomeRef.shift();
+  const rate = incomeRef.length > 1 ? (tg - incomeRef[0][1]) / Math.max(1, now - incomeRef[0][0]) : 0;
+  const esses = ess ? [ess] : [];
+  for (const id of E('ROSTER_KEYS')) {
+    const c = E(`recruitCost(${JSON.stringify(id)})`); if (!c) continue;
+    if (c.gold > rate * 1200 && c.gold > E('S.gold')) continue;
+    gold = Math.max(gold, c.gold);
+    if (c.ess) esses.push(c.ess);
+  }
+  return { gold, ess: esses };
 }
 // Run fn with the reserve taken out of S (gold, and essence from the named tier up), then put it back.
 function withReserve(E, res, fn) {
   const held = [0, 0, 0, 0, 0];
   const g = Math.min(res.gold, E('S.gold'));
   E(`S.gold -= ${g}`);
-  if (res.ess) { let left = res.ess[1]; for (let i = res.ess[0] - 1; i < 5 && left > 0; i++) { const n = Math.min(left, E(`S.mats.ess[${i}]`)); held[i] = n; left -= n; E(`S.mats.ess[${i}] -= ${n}`); } }
+  const list = !res.ess ? [] : Array.isArray(res.ess[0]) ? res.ess : typeof res.ess[0] === 'number' ? [res.ess] : res.ess;
+  for (const es of list) { let left = es[1]; for (let i = es[0] - 1; i < 5 && left > 0; i++) { const n = Math.min(left, E(`S.mats.ess[${i}]`)); held[i] += n; left -= n; E(`S.mats.ess[${i}] -= ${n}`); } }
   try { fn(); } finally { E(`S.gold += ${g}`); held.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] += ${n}`); }); }
 }
 
@@ -178,7 +212,9 @@ const line = t => console.log(row([`${Math.floor(t / 3600)}h${String(Math.floor(
 
 const capHits = [], firstRar = {}, recruits = [];
 fn.on('charLevel', ({ id, lv }) => { if (lv >= E(`levelCap(charRec(${JSON.stringify(id)}).rank)`)) capHits.push({ t, id, lv }); });
-fn.on('recruit', ({ id, source }) => { const r = E(`ROSTER[${JSON.stringify(id)}].rarity`); recruits.push(`${id}@${(t / 60).toFixed(0)}m`); if (firstRar[r] === undefined) firstRar[r] = t; });
+const firstId = {};
+if (args.debug) fn.on("token", p => console.log("   token", Math.round(t / 60) + "m", JSON.stringify(p), "zone", E("S.zone")));
+fn.on('recruit', ({ id, source }) => { const r = E(`ROSTER[${JSON.stringify(id)}].rarity`); recruits.push(`${id}@${(t / 60).toFixed(0)}m(${source})`); if (firstRar[r] === undefined) { firstRar[r] = t; firstId[r] = id; } });
 let t11 = null, t11Snap = null;
 let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
 const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; if (zone + 1 === 20 && doT11 && !t11Snap) t11Snap = E('JSON.stringify(S)'); });
@@ -202,6 +238,7 @@ function playSecond(sec) {
     fn.tick(dt);
   }
   t += 1;
+  setClock(g, clock0 + t * 1000);
 }
 if (days) { runDays(); process.exit(0); }
 for (let sec = 0; sec < total; sec++) {
@@ -235,12 +272,18 @@ if (E('rosterLive()')) {
   const before2h = capHits.filter(c => c.t <= 7200).map(c => c.t);
   let gap = 0, prev = 0; for (const c of before2h) { gap = Math.max(gap, c - prev); prev = c; }
   if (before2h.length) gap = Math.max(gap, Math.min(total, 7200) - prev);
-  const fr = r => firstRar[r] === undefined ? '-' : mins(firstRar[r]) + 'm';
+  const fr = r => firstRar[r] === undefined ? '-' : (firstRar[r] >= 3600 ? (firstRar[r] / 3600).toFixed(1) + 'h' : mins(firstRar[r]) + 'm') + ` (${firstId[r]})`;
   console.log(`roster: ${E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')")} | field ${E('S.party.field.join()')} | partyLv ${E('partyLevel().toFixed(1)')}`);
   console.log(`recruits: ${recruits.join(' ')}`);
   console.log(`T10 cap hits before 2h: ${before2h.length} at [${before2h.map(mins).join(',')}]m, longest gap ${mins(gap)}m (want <= 20m, from the first hit)`);
   console.log(`T11 ${t11 ? `${t11.id} L1 -> L${t11.lv} (target ${t11.target.toFixed(1)}) in ${t11.min.toFixed(1)}m (want 5-10m)` : 'n/a (zone 20 not reached)'}`);
-  console.log(`T16 first Rare ${fr('rare')} (want 15-40m) / Epic ${fr('epic')} / Legendary ${fr('legendary')} (no Epic or Legendary avenue exists yet)`);
+  console.log(`T16 first Rare ${fr('rare')} (want 15-40m) / Epic ${fr('epic')} (want 1.5-3h) / Legendary ${fr('legendary')} (want 6-12h)`);
+  console.log(`unlocks: Renown ${E('renown()')} (bounties ${E('S.bounties.claimed')}), tokens ${E('JSON.stringify(S.party.unlock.tokens)')}, bosses ${E('S.stats.bosses')}, wraiths ${E('masteryApi.typeKills("wraith")')}`);
+  console.log(`leads: ${E("leads().map(l => l.id + ' ' + Math.round(l.pct * 100) + '%').join(', ')")}`);
+  // T17: worst-case pity, every roll a miss until the guarantee.
+  const h = loadCore({ seed });
+  const worst = id => h.eval(`(() => { S.maxZone = 40; let n = 0; while (!isRecruited(${JSON.stringify(id)}) && n < 100) { n++; unlockTokenRoll(${JSON.stringify(id)}, 0.999999); } return n; })()`);
+  console.log(`T17 worst-case pity: Grenna ${worst('grenna')} boss kills (want 12) / Isolde ${worst('isolde')} (want 10)`);
 }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
 if (args.debug) console.log(E('JSON.stringify(rosterList().map(k => [k, promoteCost(k), canPromote(k)]))'), E('JSON.stringify(S.mats.ess)'), E('S.gold'));
@@ -257,10 +300,9 @@ if (args.debug) console.log(E('JSON.stringify(rosterList().map(k => [k, promoteC
 function runDays() {
   const H = 3600, sessMin = +(args.session || 15), firstMin = +(args.first || 60);
   const checkins = String(args.checkins || '8,13,19').split(',').map(Number).sort((a, b) => a - b);
-  // A fake wall clock inside the game, so Date.now() moves with the simulated days.
-  const epoch = Date.UTC(2026, 9, 5, 0, 0, 0);
-  E(`globalThis.__simNow = ${epoch}; Date.now = () => globalThis.__simNow`);
-  const clock = s => E(`globalThis.__simNow = ${epoch + Math.round(s * 1000)}`);
+  // wall = seconds since midnight of day 1. The game clock (clock0 is 08:00 on day 1) follows
+  // it: playSecond() moves it with t, so t is kept at wall - 8h.
+  const syncClock = () => { t = wall - 8 * H; setClock(g, clock0 + t * 1000); };
   const events = [];   // { t (wall s), kind, what, act (active s so far), ci (session index) }
   let wall = 0, act = 0, ci = 0;
   const mark = (kind, what) => events.push({ t: wall, kind, what, act, ci });
@@ -290,16 +332,16 @@ function runDays() {
       if (start > wall) {
         // Away until this session: the game's closed-form gains, then the clock jumps.
         const gap = start - wall;
-        wall = start; clock(wall);
+        wall = start; syncClock();
         fn.awayGains(gap);
         awayN++;
       }
-      ci = sIdx;
+      ci = sIdx; syncClock();
       // Back in the game: spend what the away time brought, then play.
       forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
       for (let sec = 0; sec < len; sec++) {
         playSecond(sec); wall++; act++;
-        if (sec % 60 === 0) { clock(wall); checkTiers(); }
+        if (sec % 60 === 0) checkTiers();
       }
       checkTiers();
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
@@ -349,7 +391,7 @@ function runDays() {
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'seed'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'seed', 'bounties', 'forge'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 30);
   const [cont, dys] = await Promise.all([

@@ -9,7 +9,7 @@
 //            ROSTER_TUNE (tuning knobs; sim --tune)
 //   state    rosterLive(), charRec(id), isRecruited(id), rosterList()
 //   power    charPow(id), charDps(id), fieldCompDps(), supportBuff(), rosterSlotDps(i),
-//            oldCompDps(), rosterNoLoss()
+//            oldCompDps(), rosterNoLoss(), addCharModifier(fn(id) -> mult) -> remove(), charMod(id)
 //   levels   levelCap(rank), cxpNeed(lv), cxpGain(z), partyLevel(), catchUpBonus(id), addCharXp(id, xp)
 //   recruit  unlockChar(id, source), addRecruitRoute(id, route), recruitCost(id), canRecruit(id),
 //            recruit(id), recruitHow(id)
@@ -90,7 +90,7 @@ function rosterLive() {
   return !!(S.party && S.party.rv >= 1);
 }
 
-let ROSTER_TUNE, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, fieldCompDps, supportBuff, rosterSlotDps,
+let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, fieldCompDps, supportBuff, rosterSlotDps,
   oldCompDps, rosterNoLoss, levelCap, cxpNeed, cxpGain, partyLevel, catchUpBonus, addCharXp, unlockChar,
   addRecruitRoute, recruitCost, canRecruit, recruit, recruitHow, promoteCost, canPromote, promoteChar,
   setField, fieldChar, benchChar, autoField, autoPlace, rosterSyncField, storyState, markStoriesRead, migrateParty;
@@ -178,13 +178,19 @@ let ROSTER_TUNE, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, 
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };
   // Damage this character adds when fielded (a support's buff counted as damage).
-  charDps = id => { const r = charRec(id); return r ? rawDps(id, r) * sharedMult() : 0; };
+  // Per-character hooks (56b-synergy): fn(id) -> multiplier on that character's damage.
+  // charMod(id) = product, 1 if none. Not part of raw power, so migration and autoField stay raw.
+  const CHAR_MODS = [];
+  addCharModifier = fn => { CHAR_MODS.push(fn); return () => { const i = CHAR_MODS.indexOf(fn); if (i >= 0) CHAR_MODS.splice(i, 1); }; };
+  charMod = id => { let m = 1; for (const f of CHAR_MODS) m *= f(id); return m; };
+  const modDps = (id, r) => rawDps(id, r) * charMod(id);
+  charDps = id => { const r = charRec(id); return r ? modDps(id, r) * sharedMult() : 0; };
   const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, 3);
   const fieldRaw = keys => (keys || fieldKeys()).reduce((a, k) => a + rawDps(k, charRec(k)), 0);
-  fieldCompDps = () => { const f = fieldKeys(); return f.length ? fieldRaw(f) * sharedMult() : 0; };
+  fieldCompDps = () => { const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
   supportBuff = () => {
     let sup = 0, oth = 0;
-    for (const k of fieldKeys()) { const d = rawDps(k, charRec(k)); if (R(k).role === 'support') sup += d; else oth += d; }
+    for (const k of fieldKeys()) { const d = modDps(k, charRec(k)); if (R(k).role === 'support') sup += d; else oth += d; }
     return oth > 0 ? sup / oth : 0;
   };
   rosterSlotDps = i => { const k = COMP_CHAR_KEYS[i]; return k ? charDps(k) : 0; };
@@ -277,7 +283,7 @@ let ROSTER_TUNE, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, 
   };
 
   // ---------------- recruiting ----------------
-  // Routes: id -> [{ source, ready(), cost() -> { gold, ess: [tier, n] } | null, how() }].
+  // Routes: id -> [{ source, ready(), cost() -> { gold, ess: [tier, n] } | null, how(), pay()? }].
   // ready() means the route's condition is met (zone reached, quest done, token won...).
   const ROUTES = {};
   addRecruitRoute = (id, route) => {
@@ -309,6 +315,7 @@ let ROSTER_TUNE, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, 
     if (!canRecruit(id)) return false;
     const rt = readyRoute(id);
     pay(costOf(rt));
+    if (rt.pay) rt.pay();   // extra hand-in a route owns (B7: logs, the visitor's day)
     return unlockChar(id, rt.source || 'progress');
   };
   recruitHow = id => {

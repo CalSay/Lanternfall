@@ -20,11 +20,16 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
+| 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
 | 50-sim.js | core | `tick`, combat, kills, xp, harvest, bosses, offline gains |
 | 51-actions.js | core | player actions: forge, equip, salvage, upgrade, buy, hire, relics, loot |
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
+| 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js) |
 | 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
+| 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
+
+| 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -72,6 +77,8 @@ addModifier('gold', () => 1 + 0.05 * S.bounty.count);
 addBonus(key, fn) -> remove()   // fn() returns a number; bonus(key) = sum of all, 0 if none
 deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; weeks start Monday
 ```
+Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMod(id)` is the product.
+
 Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
 `yield:<family>` (harvest and away yield per material family).
 
@@ -103,6 +110,22 @@ registerAwayLine(r => S.camp.done ? { icon: { ic: ['anvil', '#F2C14E'] }, txt: '
 The card diffs gold, xp, levels, zones, bosses, raid damage, embers, materials, items and skill
 levels around the `away` phase, so changes made to `S` there appear without a line.
 
+```js
+registerGoal({ id, sys, label, pct, go, icon, prio }) -> remove()   // a "Next up" goal (55-goals.js)
+topGoals(n = 3) -> [{ id, sys, label, pct, ready, go, icon }]       // cached ~0.45s, sticky order
+```
+`pct()` returns progress 0..1 (>= 1 = ready, shown first; null or <= 0 hides it); keep it cheap.
+`label` is a string or fn. `sys` groups goals: at most 1-2 per system are shown. `go` is
+`{ tab, sel, fn }` (the UI runs `fn`, opens the tab, scrolls to `sel` and flashes it) or a fn
+returning one. `icon` is a toast icon spec, or `{ mob: typeKey }` / `{ char: rosterId }`.
+`prio` (default 0) breaks ties and orders ready goals. Register from your own 55-*.js file.
+```js
+registerGoal({ id: 'camp-build', sys: 'camp', label: () => `${B.name}: ready to build`,
+  pct: () => campBuildPct(), go: { tab: 'world', sel: '#sec-camp' }, icon: { ic: ['anvil', '#F2C14E'] } });
+```
+Away lines (`registerAwayLine`) may also carry `group` (their own block title, default "Also")
+and `go()` (a Go button that closes the card first); "Next up" uses both.
+
 ## Events
 
 | Event | Payload |
@@ -128,6 +151,12 @@ levels around the `away` phase, so changes made to `S` there appear without a li
 | `promote` | `{ id, rank }` |
 | `fieldChange` | `{ field }` |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
+| `synergyChange` | `{ active, gained, lost }` (after a field change) |
+
+| `renown` | `{ n, total, source }` |
+| `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
+| `visitorHired` | `{ id, day }` |
+| `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
