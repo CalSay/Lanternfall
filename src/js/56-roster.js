@@ -98,7 +98,9 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 {
   // Tuning knobs. Sim-tuned values are marked (sim); the rest come from the spec.
   const T = {
-    base: 7, growth: 1.08,               // (sim) pow = base * rarity * growth^(lv-1) * 2^rank * ...
+    base: 7, growth: 1.08,               // (sim) pow = base * rarity * growth^(lv-1) * rankX^rank * stepX^steps * ...
+    rankX: 2,                            // power x per promotion (rank)
+    stepEvery: 5, stepX: 1,              // training step: every stepEvery levels, power x stepX (BAL1)
     supEq: 1.2,                          // support party buff, worth supEq x its power (3.6 heal rate)
     xpBase: 10, xpR: 1.12, par: 3, killsPerLv: 40, bossXp: 5, bountyKills: 20,
     gapMax: 18,                          // (sim) XP per kill counts the zone's par level at most gapMax above the character
@@ -175,7 +177,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   // "Damage", Attack and Spell power affixes; Tome healing counts for a support's buff).
   const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
-  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(2, r.rank) * (1 + wpnPct(id, r) / 100);
+  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(T.rankX, r.rank) * Math.pow(T.stepX, Math.floor(r.lv / T.stepEvery)) * (1 + wpnPct(id, r) / 100);
   const roleMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };

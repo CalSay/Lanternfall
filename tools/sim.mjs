@@ -73,6 +73,8 @@ if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = k
 if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); E(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
 // --syn v sets SYN_TUNE.today (56b-synergy.js), to check the curve against stronger synergies.
 if (args.syn !== undefined) E(`SYN_TUNE.today = ${+args.syn}`);
+// --eval "code": run code in the game scope after the knobs (experiments, e.g. --eval "CRAFT_CATCHUP.mult = 3").
+if (args.eval) E(String(args.eval));
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);
@@ -174,15 +176,16 @@ function transmuteDown(fam, t, n) {
 const swordFirst = (args.forge || 'weapon') === 'weapon';
 // With --class the next weapon is the class kind (K6 craftItem via forgeItem), or the legacy
 // Sword while the class kind is out of reach (Hide has no source before K5).
-const weaponKind = t => {
-  const k = classKind('weapon');
-  if (!k) return 'weapon';
-  const c = fn.canCraft(k, t);
-  return (c.miss || []).some(([m]) => m === 'hide') ? 'weapon' : k;
-};
+// BAL1: a classed hero cannot make the legacy Sword or Helm in the game (the Craft tab hides
+// them), so with --class the sim no longer falls back to them either.
+const weaponKind = t => classKind('weapon') || 'weapon';
+// Essence kept for the next weapons (by tier).
 const weaponHold = () => {
-  const cur = fn.equipped('weapon'), have = cur ? cur.t : 0, zt = fn.zoneTier(E('S.maxZone')), hold = [0, 0, 0, 0, 0];
-  for (let t = have + 1; t <= zt; t++) hold[t - 1] = fn.craftCost(weaponKind(t), t).ess || 0;
+  const cur = fn.equipped('weapon'), have = cur ? cur.t : 0, zt = fn.zoneTier(E('S.maxZone')), hold = {};
+  for (let t = have + 1; t <= zt; t++) {
+    const c = fn.craftCost(weaponKind(t), t);
+    for (const [k, n] of Object.entries(c)) if (k === 'ess') (hold[k] = hold[k] || [0, 0, 0, 0, 0])[t - 1] += n;
+  }
   return hold;
 };
 function forgeWeapon() {
@@ -196,9 +199,10 @@ function forgeWeapon() {
 function weaponNode() {
   const cur = fn.equipped('weapon'), have = cur ? cur.t : 0;
   for (let t = fn.zoneTier(E('S.maxZone')); t > have; t--) {
-    if (E(`S.skills.smith.lv < SMITH_REQ[${t - 1}] || S.mats.ess[${t - 1}] < ${fn.craftCost('weapon', t).ess}`)) continue;
-    const c = fn.craftCost('weapon', t), short = k => E(`S.mats.${k}[${t - 1}]`) / c[k];
-    const order = short('ore') <= short('wood') ? ['ore', 'wood'] : ['wood', 'ore'];
+    const kind = weaponKind(t), c = fn.craftCost(kind, t);
+    if (fn.canCraft(kind, t).lv < E(`CRAFT_STATION_REQ[${t - 1}]`) || E(`S.mats.ess[${t - 1}]`) < (c.ess || 0)) continue;
+    const short = k => E(`S.mats.${k}[${t - 1}]`) / c[k];
+    const order = Object.keys(c).filter(k => E(`!!CRAFT_NODES[${JSON.stringify(k)}]`)).sort((a, b) => short(a) - short(b));
     for (const k of order) if (short(k) < 1 && fn.setNode(k, t)) return true;
   }
   return false;
@@ -206,9 +210,9 @@ function weaponNode() {
 function forgeGear() {
   if (swordFirst) {
     // Keep the next swords' essence out of the other slots' reach.
-    const hold = weaponHold().map((n, i) => Math.min(n, E(`S.mats.ess[${i}]`)));
-    hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] -= ${n}`); });
-    try { forgeRest(); } finally { hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] += ${n}`); }); }
+    const hold = Object.entries(weaponHold()).map(([k, a]) => [k, a.map((n, i) => Math.min(n, E(`S.mats.${k}[${i}]`)))]);
+    for (const [k, a] of hold) a.forEach((n, i) => { if (n) E(`S.mats.${k}[${i}] -= ${n}`); });
+    try { forgeRest(); } finally { for (const [k, a] of hold) a.forEach((n, i) => { if (n) E(`S.mats.${k}[${i}] += ${n}`); }); }
   } else forgeRest();
 }
 function forgeRest() {
@@ -224,7 +228,7 @@ function forgeRest() {
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
       if (cur && cur.t >= t) continue;
-      if (cls && CLASS_POS.includes(slot) && fn.canCraft(classKind(slot), t).lv >= E(`CRAFT_STATION_REQ[${t - 1}]`) && !fn.canCraft(classKind(slot), t).miss.some(([m]) => m === 'hide')) continue;   // wait for the class item
+      if (cls && CLASS_POS.includes(slot)) continue;   // classed heroes make class items only (BAL1)
       const it = fn.forgeItem(slot, t);
       if (it) keepBest(slot, it);
     }
@@ -259,9 +263,12 @@ function blockingNode() {
   return null;
 }
 function bestNode() {
+  // Sword first (BAL1): the next weapon's materials come before the other class items', as
+  // for a player chasing the next weapon (before, a class whose other items were out of reach
+  // spent every trip on its weapon and pulled ahead).
+  if (swordFirst && weaponNode()) return;
   const b = blockingNode();
   if (b && fn.setNode(b[0], b[1])) { craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; return; }
-  if (swordFirst && weaponNode()) return;
   const kind = E('S.skills.mine.lv <= S.skills.wood.lv') ? 'ore' : 'wood';
   for (let t = 5; t >= 1; t--) if (fn.setNode(kind, t)) return;
 }
@@ -301,7 +308,7 @@ function playSecond(sec) {
     const phase = Math.floor(sec / 60) % 15;
     if (phase === 0) fn.setActivity('fight');
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
-    else if (phase > 10 && cls) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
+    else if (phase > 10 && cls && !(swordFirst && weaponNode())) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
     forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
     craftCheck(sec);
   }
@@ -319,7 +326,7 @@ function playSecond(sec) {
 if (days) { runDays(); process.exit(0); }
 for (let sec = 0; sec < total; sec++) {
   if (sec >= nextLine && args.debug && cls) console.log('   craft', E('JSON.stringify(S.equip)'), [1, 2, 3, 4, 5].map(t => JSON.stringify(fn.canCraft(classKind('weapon'), t).why + ' / ' + fn.canCraft('weapon', t).why)).join(' '), E('JSON.stringify(S.mats)'));
-  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log('   ', E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
+  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("[S.blade, S.swift, S.fortune, S.L].join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
   playSecond(sec);
 }
 line(total);
@@ -475,7 +482,7 @@ function runDays() {
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 30);
   const [cont, dys] = await Promise.all([
