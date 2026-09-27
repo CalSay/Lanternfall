@@ -41,7 +41,7 @@ body {
 }
 button { font: inherit; color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
-img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image-rendering: pixelated; image-rendering: crisp-edges; }
+img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering: pixelated; image-rendering: crisp-edges; }
 
 .app { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
 
@@ -239,9 +239,89 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 
 .modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
 .modal .card { width: min(380px, 100%); text-align: center; }
-.gains { display: grid; gap: 6px; justify-items: center; }
-.gain { font: 600 22px var(--display); display: flex; align-items: center; justify-content: center; gap: 8px; }
-.gain img { width: 24px; height: 24px; }
+/* 60-away: the "While you were away" card (75-away.js) and the Journal (75-stats-ui.js). */
+
+/* ---- away report ---- */
+.away-ov { position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; padding: 16px; background: rgba(10,7,14,.84); animation: away-fade .2s ease-out; }
+.away-card { width: min(380px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: var(--panel); border: 2px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 4px 0 #0B0810, 0 0 40px rgba(255,158,61,.12); animation: away-rise .32s cubic-bezier(.2,.9,.3,1.2); }
+.away-body { overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 12px; display: grid; gap: 14px; -webkit-overflow-scrolling: touch; }
+.away-top { margin: 0 -14px; padding: 16px 14px 14px; text-align: center; display: grid; gap: 4px; justify-items: center;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255,158,61,.22), transparent 70%), linear-gradient(180deg, #2A1E2E, var(--panel)); border-bottom: 2px solid var(--line); }
+.away-eye { font: 600 11px var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--ember); }
+.away-time { font: 700 34px/1 var(--display); color: var(--bone); text-shadow: 0 3px 0 #0B0810, 0 0 18px rgba(255,158,61,.35); font-variant-numeric: tabular-nums; }
+.away-lim { width: min(240px, 100%); display: grid; gap: 5px; justify-items: center; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.away-lim .bar { width: 100%; height: 6px; }
+.away-lim .bar > i { background: linear-gradient(90deg, var(--ember-deep), var(--ember)); transition: none; }
+.away-cap { margin-top: 6px; display: flex; align-items: center; gap: 8px; text-align: left; padding: 6px 9px; background: rgba(242,226,122,.07); border: 1px solid rgba(242,226,122,.35); font-size: 12.5px; line-height: 1.3; color: #F2E6B0; }
+.away-cap img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
+.away-note { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--bone); }
+.away-note img { width: 24px; height: 24px; flex: none; image-rendering: pixelated; }
+
+.away-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.away-tiles[data-n="1"] { grid-template-columns: 1fr; }
+.away-tiles[data-n="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.away-tile { min-width: 0; display: grid; justify-items: center; gap: 2px; padding: 8px 4px 7px; background: var(--well); border: 2px solid var(--line); text-align: center; }
+.away-tile img { width: 24px; height: 24px; image-rendering: pixelated; margin-bottom: 2px; }
+.away-v { font: 600 20px/1.05 var(--display); font-variant-numeric: tabular-nums; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.away-l { font: 600 10px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.away-tile.gold { border-color: rgba(242,193,78,.4); } .away-tile.gold .away-v { color: var(--gold); }
+.away-tile.xp .away-v { color: var(--xp); }
+.away-tile.raid { border-color: #5A2A30; } .away-tile.raid .away-v { color: #FF8A80; }
+.away-tile.ember .away-v { color: var(--arcane); }
+
+.away-block { display: grid; gap: 7px; }
+.away-h { margin: 0; font: 600 11px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.away-h::before { content: ""; width: 6px; height: 6px; background: var(--ember); box-shadow: 0 0 6px rgba(255,158,61,.6); }
+.away-h::after { content: ""; flex: 1; height: 2px; background: var(--line); }
+.away-mrow { display: grid; grid-template-columns: 58px 1fr; gap: 8px; align-items: center; }
+.away-fam { font: 600 13px var(--display); color: var(--muted); }
+.away-chips { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.away-mat { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 3px 4px; background: var(--well); border: 1px solid var(--line-hi); min-width: 0; }
+.away-mat img { width: 22px; height: 22px; flex: none; image-rendering: pixelated; }
+.away-mt { display: grid; line-height: 1.05; }
+.away-mn { font: 600 15px var(--display); font-variant-numeric: tabular-nums; }
+.away-ms { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+.away-items { display: grid; gap: 5px; }
+.away-item { display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 5px; background: var(--well); border: 1px solid var(--line); min-width: 0; }
+.away-item.uniq { border-color: rgba(255,158,61,.5); background: linear-gradient(90deg, rgba(255,158,61,.12), var(--well) 70%); }
+.away-item .ic { width: 36px; height: 36px; } .away-item .ic img { width: 24px; height: 24px; }
+.away-it { display: grid; min-width: 0; }
+.away-in { font: 600 14px/1.15 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.away-ir { font-size: 12px; color: var(--muted); }
+
+.away-skill { display: flex; align-items: center; gap: 9px; padding: 5px 8px; background: var(--well); border: 1px solid var(--line); }
+.away-skill img { width: 22px; height: 22px; image-rendering: pixelated; }
+.away-sn { flex: 1; font: 600 14px var(--display); }
+.away-lv { display: inline-flex; align-items: baseline; gap: 6px; font: 600 15px var(--display); font-variant-numeric: tabular-nums; }
+.away-from { color: var(--muted); } .away-arrow { color: var(--muted); font-size: 13px; }
+.away-lv b { color: var(--gold); font-weight: 600; font-size: 17px; }
+
+.away-line { display: flex; align-items: center; gap: 9px; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); }
+.away-line img { width: 24px; height: 24px; flex: none; image-rendering: pixelated; }
+.away-lt { font: 600 14px/1.2 var(--display); }
+.away-lsub { font-size: 12px; color: var(--muted); }
+
+.away-foot { padding: 10px 14px 14px; border-top: 2px solid var(--line); background: var(--panel); }
+@keyframes away-fade { from { opacity: 0; } }
+@keyframes away-rise { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+
+/* ---- Journal ---- */
+#sec-journal .world-head { margin-bottom: -6px; }
+.jr-hero { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: linear-gradient(180deg, #2A1E2E, var(--panel)); border: 2px solid var(--line-hi); box-shadow: 0 3px 0 #0B0810; }
+.jr-big { display: grid; justify-items: center; gap: 2px; padding: 12px 4px 10px; text-align: center; min-width: 0; }
+.jr-big + .jr-big { border-left: 2px solid var(--line); }
+.jr-big b { font: 700 22px/1.05 var(--display); font-variant-numeric: tabular-nums; color: var(--bone); text-shadow: 0 2px 0 #0B0810; white-space: nowrap; }
+.jr-big span { font: 600 10px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.jr-big.time b { color: var(--ember); }
+.jr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.jr-stat { display: flex; align-items: center; gap: 9px; padding: 7px 8px; background: var(--panel); border: 2px solid var(--line); min-width: 0; }
+.jr-stat img { width: 22px; height: 22px; flex: none; image-rendering: pixelated; }
+.jr-stat > div { display: grid; min-width: 0; }
+.jr-v { font: 600 17px/1.1 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jr-l { font-size: 11.5px; color: var(--muted); line-height: 1.2; }
+
+@media (prefers-reduced-motion: reduce) { .away-ov, .away-card { animation: none; } }
 /* 60-bounties: bounty board rows and the achievements grid */
 .row.bty .bty-bar { margin-top: 5px; height: 5px; }
 .row.bty .bty-bar > i { background: var(--gold); }
@@ -541,32 +621,12 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
           <button type="submit">Save</button>
         </form>
       </div>
-      <div class="sec">
-        <h2 class="sec-title">Lifetime</h2>
-        <dl class="kv" style="margin:0">
-          <div><dt>Foes slain</dt><dd id="lKills">0</dd></div>
-          <div><dt>Gold earned</dt><dd id="lGold">0</dd></div>
-          <div><dt>Best zone</dt><dd id="lZone">1</dd></div>
-          <div><dt>Raid bosses</dt><dd id="lWyrms">0</dd></div>
-          <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
-        </dl>
-      </div>
     </div>
     </section>
   </div>
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
-
-<div class="modal" id="away" hidden>
-  <div class="card">
-    <div class="zsub">While you were away</div>
-    <h3 id="awayTime">2h 10m</h3>
-    <div class="gains" id="awayGain"></div>
-    <p class="note" id="awayNote" style="margin-inline:auto">Your party kept fighting.</p>
-    <button class="big home" id="awayOk">Collect</button>
-  </div>
-</div>
 
 <script>
 (() => {
@@ -2771,13 +2831,21 @@ function harvest() {
 }
 
 // ================= away / offline =================
-// Applies offline gains to S and returns a summary for the "While you were away" card.
-// Line icons are specs (see toast()); the UI turns them into images.
+// Applies offline gains to S and returns the report for the "While you were away" card.
+// Events: 'awayBegin' r (snapshot), 'away' r (other systems apply their own offline gains),
+// 'awayEnd' r (55-stats.js diffs the state into r and collects registerAwayLine lines).
+// r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
-  const cap = (4 + 2 * S.relic.glass) * 3600;
-  const t = Math.min(secs, cap);
+  const r = { t: Math.min(secs, (4 + 2 * S.relic.glass) * 3600), secs, lines: [] };
+  emit('awayBegin', r);
+  awayBase(r);
+  emit('away', r);
+  emit('awayEnd', r);
+  return r;
+}
+function awayBase(r) {
+  const t = r.t;
   const boost = (1 + gear().offline / 100) * mod('offline');
-  const r = { t, secs, lines: [] };
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
     const swings = t / nodeTime(kind, tier) * boost;
@@ -3396,6 +3464,114 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   });
 
   ensureInit();
+}
+
+// ---- src/js/55-stats.js ----
+// 55-stats: lifetime counters for the Journal and the "While you were away" report data.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Away report. awayGains(secs) (50-sim) emits, in order:
+//   'awayBegin' r   this file snapshots the state
+//   'away'      r   other systems apply their own offline progress here (r.t = capped seconds)
+//   'awayEnd'   r   this file diffs the state into r, then asks every registerAwayLine fn for lines
+// After 'awayEnd', r holds:
+//   secs, t, cap, capped, activity, note, kills, gold, xp, levels {from, to}, zones {from, to},
+//   bosses, raidDmg, embers, mats [{ k, t, n }], items [item], skills [{ k, from, to }],
+//   extra [{ icon, txt, sub }], empty (true when nothing changed)
+// Anything a system changes during 'away' (gold, mats, items, levels...) shows up in the diff
+// automatically. For anything else, add a line:
+//   registerAwayLine(r => S.camp.built ? { icon: { ic: ['anvil', '#F2C14E'] }, txt: 'Camp: the smithy is done', sub: 'Tap Camp to see it' } : null)
+// fn(r) returns a line, an array of lines, or nothing. icon is a toast-style icon spec.
+
+const AWAY_LINES = [];
+function registerAwayLine(fn) {
+  AWAY_LINES.push(fn);
+  return () => { const i = AWAY_LINES.indexOf(fn); if (i >= 0) AWAY_LINES.splice(i, 1); };
+}
+
+// Read-only helpers for the Journal (75-stats-ui.js).
+const statsApi = {};
+
+{
+  // played: seconds of active play (sum of ticks). taps: player taps on the stage.
+  // bosses: zone bosses beaten. uniques: unique drops. raidDmg: all world-raid damage dealt.
+  // gathered: ore and logs harvested. away: seconds of away time credited. since: when counting began;
+  // late: counting began on a save that already had progress (the Journal says so).
+  registerState('stats', { played: 0, taps: 0, bosses: 0, uniques: 0, raidDmg: 0, gathered: 0, away: 0, since: 0, late: false, init: false });
+  const ST = () => S.stats;
+
+  // Old saves: start from what the save already proves.
+  if (!ST().init) {
+    ST().init = true;
+    ST().since = Date.now();
+    ST().late = S.totalKills > 0 || S.L > 1;
+    ST().bosses = Math.max(ST().bosses, S.maxZone - 1);
+    ST().uniques = Math.max(ST().uniques, Object.keys(S.found || {}).length);
+    ST().raidDmg = Math.max(ST().raidDmg, +S.raid.dmg || 0);
+  }
+
+  onTick(dt => { ST().played += dt; });
+  on('tap', () => { ST().taps++; });
+  on('kill', ({ mob }) => { if (mob && mob.boss) ST().bosses++; });
+  on('loot', () => { ST().uniques++; });
+  on('harvest', ({ n }) => { ST().gathered += n || 0; });
+
+  // Raid damage has no event; count the growth of S.raid.dmg within a raid generation.
+  let rGen = S.raid.gen, rDmg = +S.raid.dmg || 0;
+  onTick(() => {
+    const d = +S.raid.dmg || 0;
+    if (S.raid.gen !== rGen) { rGen = S.raid.gen; rDmg = 0; }
+    if (d > rDmg) ST().raidDmg += d - rDmg;
+    rDmg = d;
+  });
+
+  const forged = () => (S.achievements && S.achievements.forged) || 0;
+  Object.assign(statsApi, { forged, uniqueKinds: () => Object.keys(S.found || {}).length, uniqueTotal: () => Object.keys(UNIQ).length });
+
+  // ---- away report ----
+  const MAT_KINDS = ['ore', 'wood', 'ess'];
+  let snap = null;
+  on('awayBegin', r => {
+    r.cap = (4 + 2 * S.relic.glass) * 3600;
+    r.capped = r.secs > r.cap;
+    r.activity = S.activity;
+    snap = {
+      L: S.L, xp: S.xp, gold: S.gold, kills: S.totalKills, maxZone: S.maxZone, bosses: ST().bosses,
+      raidGen: S.raid.gen, raidDmg: +S.raid.dmg || 0, embers: S.embers, nextId: S.nextId,
+      mats: JSON.parse(JSON.stringify(S.mats)),
+      skills: Object.fromEntries(Object.entries(S.skills).map(([k, v]) => [k, v.lv]))
+    };
+  });
+  // xpNeed() reads S.L; borrow it to price earlier levels with the real formula.
+  const needAt = l => { const L = S.L; try { S.L = l; return xpNeed(); } finally { S.L = L; } };
+  on('awayEnd', r => {
+    const b = snap; snap = null; if (!b) return;
+    r.kills = Math.max(0, Math.floor(S.totalKills - b.kills));
+    r.gold = Math.max(0, S.gold - b.gold);
+    let xp = S.xp - b.xp;
+    for (let l = b.L; l < S.L; l++) xp += needAt(l);
+    r.xp = Math.max(0, xp);
+    r.levels = { from: b.L, to: S.L };
+    r.zones = { from: b.maxZone, to: S.maxZone };
+    r.bosses = Math.max(0, ST().bosses - b.bosses);
+    r.raidDmg = S.raid.gen === b.raidGen ? Math.max(0, (+S.raid.dmg || 0) - b.raidDmg) : 0;
+    r.embers = Math.max(0, S.embers - b.embers);
+    r.mats = [];
+    for (const k of MAT_KINDS) for (let t = 1; t <= 5; t++) {
+      const n = Math.floor(((S.mats[k] || [])[t - 1] || 0) - ((b.mats[k] || [])[t - 1] || 0));
+      if (n > 0) r.mats.push({ k, t, n });
+    }
+    r.items = S.items.filter(i => i.id >= b.nextId);
+    r.skills = Object.keys(S.skills).filter(k => S.skills[k].lv > (b.skills[k] || 1)).map(k => ({ k, from: b.skills[k] || 1, to: S.skills[k].lv }));
+    ST().away += r.t;
+    for (const m of r.mats) if (m.k !== 'ess') ST().gathered += m.n;
+    r.extra = [];
+    for (const fn of AWAY_LINES.slice()) {
+      try { const out = fn(r); if (out) r.extra.push(...[].concat(out).filter(Boolean)); }
+      catch (e) { console.error('[lanternfall] away line failed', e); }
+    }
+    r.empty = !(r.kills || r.gold >= 1 || r.xp >= 1 || r.zones.to > r.zones.from || r.bosses || r.raidDmg >= 1 || r.embers || r.mats.length || r.items.length || r.skills.length || r.extra.length);
+  });
 }
 
 // ---- src/js/56-achievements.js ----
@@ -5240,7 +5416,7 @@ function sceneFor() { return null; } // replaced below
 
 // ---- src/js/70-ui.js ----
 // 70-ui: shared UI plumbing: toasts, row builders, header, tabs, the ui() refresh,
-// the away card, and the section/tab registries for feature UI (75-*.js). Browser-only.
+// and the section/tab registries for feature UI (75-*.js). Browser-only.
 // Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
 
 // ================= UI helpers =================
@@ -5398,16 +5574,6 @@ function ui(force) {
   for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
   if (slowTick <= 0) slowTick = 1;
 }
-
-function showAway(r) {
-  if (!r || r.secs < 60 || !r.lines.length) return;
-  $('awayTime').textContent = fmtTime(r.secs);
-  const g = $('awayGain'); g.textContent = '';
-  for (const l of r.lines) { const row = el('div', 'gain'); row.append(img(iconOf(l.icon)), el('span', null, l.txt)); g.append(row); }
-  $('awayNote').textContent = r.note + (r.t < r.secs ? ` They stop after ${fmtTime(r.t)}; forge an Hourglass relic to stay out longer.` : '');
-  $('away').hidden = false;
-}
-$('awayOk').addEventListener('click', () => { $('away').hidden = true; ui(true); });
 
 // ================= feature UI registries =================
 // registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
@@ -5775,15 +5941,10 @@ function uiRaid() {
 }
 
 // ---- src/js/74-ui-tavern.js ----
-// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename, lifetime stats).
+// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename). Lifetime stats moved to the Journal (75-stats-ui.js).
 
 let boardSig = '';
 async function uiTavern() {
-  $('lKills').textContent = fmt(S.totalKills);
-  $('lGold').textContent = fmt(S.totalGold);
-  $('lZone').textContent = S.maxZone;
-  $('lWyrms').textContent = S.wyrms;
-  $('lGear').textContent = fmt(gear().score);
   if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
 
   const box = $('online'); box.textContent = '';
@@ -5817,6 +5978,203 @@ async function uiTavern() {
     tr.append(el('td', 'rank', String(i + 1)), td1, ...[r.L || 1, r.maxZone || 1, r.gear || 0].map(v => el('td', 'n', fmt(+v || 0))));
     tb.append(tr);
   });
+}
+
+// ---- src/js/75-away.js ----
+// 75-away: the "While you were away" report card. Browser-only.
+// showAwayReport(r) takes the report built by awayGains() + 55-stats.js (see there for its
+// fields and for registerAwayLine). Shown when the player was gone 30s or more and
+// something happened. Numbers count up; under prefers-reduced-motion they appear at once.
+
+let showAwayReport;
+{
+  const COIN = () => iconURL('coin', '#F2C14E');
+  const IC = {
+    sword: () => iconURL('sword', '#A9B1BD'),
+    banner: () => iconURL('banner', '#F2C14E'),
+    helm: () => iconURL('helm', '#6FCB6A'),
+    flame: () => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }),
+    ember: () => iconURL('flame', '#B58CFF', { 5: '#D9C2FF', 7: '#FFFFFF' }),
+    glass: () => iconURL('glass', '#F2E27A'),
+    boss: () => iconURL('banner', '#E0524F', { 7: '#FFB347' })
+  };
+  const SKILL_IC = { mine: () => iconURL('pick', '#D08A4E'), wood: () => iconURL('axe', '#5FAE4E'), smith: () => iconURL('anvil', '#6E6878') };
+  const FAMILY = { ore: 'Ore', wood: 'Logs', ess: 'Essence' };
+
+  const hm = s => fmtTime(s).replace(/ 0m$/, '');
+  let root = null, lastFocus = null, anim = 0;
+
+  function close() {
+    if (!root) return;
+    cancelAnimationFrame(anim); anim = 0;
+    root.remove(); root = null;
+    document.removeEventListener('keydown', onKey, true);
+    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (e) {} }
+    lastFocus = null;
+    ui(true);
+  }
+  function onKey(e) {
+    if (!root) return;
+    if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === 'Tab') { e.preventDefault(); root.querySelector('.away-go').focus(); }
+  }
+
+  // A number that counts up from 0. fmtFn turns the current value into text.
+  const counters = [];
+  function num(cls, value, fmtFn) {
+    const s = el('span', cls, fmtFn(value));
+    counters.push({ s, value, fmtFn });
+    return s;
+  }
+  function runCounters() {
+    const list = counters.splice(0);
+    if (reduced || !list.length) return;
+    for (const c of list) c.s.textContent = c.fmtFn(0);
+    const t0 = performance.now(), dur = 1100;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      for (const c of list) c.s.textContent = c.fmtFn(k >= 1 ? c.value : c.value * e);
+      anim = k < 1 ? requestAnimationFrame(step) : 0;
+    };
+    anim = requestAnimationFrame(step);
+  }
+
+  function tile(icon, value, label, fmtFn, cls) {
+    const t = el('div', 'away-tile' + (cls ? ' ' + cls : ''));
+    t.append(img(icon), typeof value === 'number' ? num('away-v', value, fmtFn || (v => fmt(Math.floor(v)))) : el('span', 'away-v', value), el('span', 'away-l', label));
+    return t;
+  }
+  function block(title) {
+    const b = el('div', 'away-block');
+    b.append(el('h4', 'away-h', title));
+    return b;
+  }
+
+  function build(r) {
+    root = el('div', 'away-ov');
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'awayTitle');
+    const card = el('div', 'away-card');
+    const body = el('div', 'away-body');
+
+    // ---- header: time away ----
+    const top = el('div', 'away-top');
+    const eyebrow = el('div', 'away-eye', 'While you were away'); eyebrow.id = 'awayTitle';
+    top.append(eyebrow, el('div', 'away-time', hm(r.secs)));
+    if (r.cap) {
+      const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
+      fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
+      bar.append(fill);
+      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `Your party worked ${hm(r.t)} of ${hm(r.cap)}`));
+      top.append(lim);
+    }
+    if (r.capped) {
+      const cap = el('div', 'away-cap');
+      cap.append(img(IC.glass()), el('span', null, `Your party stops after ${hm(r.cap)} away. Each Hourglass relic adds 2 hours.`));
+      top.append(cap);
+    }
+    body.append(top);
+
+    // ---- what the party did ----
+    const actIc = r.activity === 'gather' ? SKILL_IC[S.node.kind === 'wood' ? 'wood' : 'mine']() : r.activity === 'raid' ? IC.flame() : IC.sword();
+    const note = String(r.note || '').replace(/ \w+ is now level \d+\.$/, '');
+    if (note) { const n = el('p', 'away-note'); n.append(img(actIc), el('span', null, note)); body.append(n); }
+
+    // ---- headline numbers ----
+    const tiles = el('div', 'away-tiles');
+    if (r.kills) tiles.append(tile(IC.sword(), r.kills, 'Foes slain'));
+    if (r.gold >= 1) tiles.append(tile(COIN(), r.gold, 'Gold', v => '+' + fmt(Math.floor(v)), 'gold'));
+    if (r.xp >= 1) tiles.append(tile(IC.helm(), r.xp, 'Hero XP', v => '+' + fmt(Math.floor(v)), 'xp'));
+    if (r.levels && r.levels.to > r.levels.from) tiles.append(tile(IC.helm(), `+${r.levels.to - r.levels.from}`, `Levels, now ${r.levels.to}`, null, 'xp'));
+    if (r.zones && r.zones.to > r.zones.from) tiles.append(tile(IC.banner(), `+${r.zones.to - r.zones.from}`, 'Zones cleared'));
+    if (r.bosses) tiles.append(tile(IC.boss(), r.bosses, 'Bosses beaten'));
+    if (r.raidDmg >= 1) tiles.append(tile(IC.flame(), r.raidDmg, 'Raid damage', null, 'raid'));
+    if (r.embers) tiles.append(tile(IC.ember(), r.embers, 'Embers', v => '+' + fmt(Math.floor(v)), 'ember'));
+    if (tiles.children.length) { tiles.dataset.n = Math.min(3, tiles.children.length); body.append(tiles); }
+
+    // ---- materials by family and tier ----
+    if (r.mats && r.mats.length) {
+      const b = block('Materials');
+      for (const k of ['ore', 'wood', 'ess']) {
+        const list = r.mats.filter(m => m.k === k); if (!list.length) continue;
+        const row = el('div', 'away-mrow');
+        row.append(el('span', 'away-fam', FAMILY[k]));
+        const chips = el('div', 'away-chips');
+        for (const m of list) {
+          const c = el('span', 'away-mat');
+          c.title = matName(m.k, m.t);
+          const txt = el('span', 'away-mt');
+          txt.append(num('away-mn', m.n, v => '+' + fmt(Math.floor(v))), el('span', 'away-ms', MAT[m.k].short[m.t - 1]));
+          c.append(img(matIcon(m.k, m.t)), txt);
+          chips.append(c);
+        }
+        row.append(chips); b.append(row);
+      }
+      body.append(b);
+    }
+
+    // ---- items ----
+    if (r.items && r.items.length) {
+      const b = block(r.items.some(i => i.u) ? 'Loot found' : 'Items found');
+      const grid = el('div', 'away-items');
+      for (const it of r.items.slice(0, 8)) {
+        const row = el('div', 'away-item' + (it.u ? ' uniq' : ''));
+        const tx = el('div', 'away-it');
+        tx.append(el('span', 'away-in rar-' + it.r, itemName(it)), el('span', 'away-ir', `${RAR[it.r].n} ${SLOT[it.slot].n.toLowerCase()}`));
+        row.append(icTile(itemIcon(it.slot, it.t, it.u), it.r), tx);
+        grid.append(row);
+      }
+      if (r.items.length > 8) grid.append(el('p', 'note', `And ${r.items.length - 8} more in your bag.`));
+      b.append(grid); body.append(b);
+    }
+
+    // ---- skills ----
+    if (r.skills && r.skills.length) {
+      const b = block('Skills');
+      for (const s of r.skills) {
+        const row = el('div', 'away-skill');
+        const lv = el('span', 'away-lv');
+        lv.append(el('span', 'away-from', String(s.from)), el('span', 'away-arrow', '→'), el('b', null, String(s.to)));
+        row.append(img(SKILL_IC[s.k] ? SKILL_IC[s.k]() : IC.banner()), el('span', 'away-sn', SKILL[s.k] || s.k), lv);
+        b.append(row);
+      }
+      body.append(b);
+    }
+
+    // ---- lines from other systems (registerAwayLine) ----
+    if (r.extra && r.extra.length) {
+      const b = block('Also');
+      for (const l of r.extra) {
+        const row = el('div', 'away-line');
+        const u = iconOf(l.icon); if (u) row.append(img(u));
+        const tx = el('div');
+        tx.append(el('div', 'away-lt', l.txt || ''));
+        if (l.sub) tx.append(el('div', 'away-lsub', l.sub));
+        row.append(tx); b.append(row);
+      }
+      body.append(b);
+    }
+
+    const foot = el('div', 'away-foot');
+    const go = el('button', 'big home away-go', 'Collect');
+    go.addEventListener('click', close);
+    foot.append(go);
+    card.append(body, foot);
+    root.append(card);
+    root.addEventListener('click', e => { if (e.target === root) close(); });
+    return go;
+  }
+
+  showAwayReport = function (r) {
+    if (!r || r.secs < 30 || r.empty || r.empty === undefined && !(r.lines && r.lines.length)) return;
+    if (root) close();
+    counters.length = 0;
+    lastFocus = document.activeElement;
+    const go = build(r);
+    document.body.append(root);
+    document.addEventListener('keydown', onKey, true);
+    runCounters();
+    try { go.focus({ preventScroll: true }); } catch (e) {}
+  };
 }
 
 // ---- src/js/75-bounties-ui.js ----
@@ -6183,6 +6541,76 @@ async function uiTavern() {
     id: 'party-field', title: 'Fighting beside you',
     mount(sec) { sec.append(el('div', 'pcards')); },
     update() { try { updateComps(document.querySelector('#sec-party-field .pcards')); } catch (e) { console.error('[lanternfall] party companions', e); } }
+  });
+}
+
+// ---- src/js/75-stats-ui.js ----
+// 75-stats-ui: the Journal, a lifetime-stats part at the end of the World tab. Browser-only.
+// Reads S.stats (55-stats.js) and existing save fields; writes nothing.
+{
+  const played = s => {
+    s = Math.floor(s);
+    const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+    return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+  };
+  const dateText = ms => { try { return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+  const ST = () => S.stats;
+
+  // [icon, label, value()]
+  const ROWS = [
+    [() => iconURL('sword', '#A9B1BD'), 'Foes slain', () => fmt(S.totalKills)],
+    [() => iconURL('banner', '#E0524F', { 7: '#FFB347' }), 'Zone bosses beaten', () => fmt(ST().bosses)],
+    [() => iconURL('coin', '#F2C14E'), 'Gold earned', () => fmt(S.totalGold)],
+    [() => iconURL('anvil', '#6E6878'), 'Gear forged', () => fmt(statsApi.forged())],
+    [() => iconURL('charm', '#FF9E3D'), 'Uniques found', () => `${fmt(ST().uniques)}`, () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds`],
+    [() => iconURL('pick', '#D08A4E'), 'Ore and logs gathered', () => fmt(ST().gathered)],
+    [() => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), 'Raid damage', () => fmt(ST().raidDmg)],
+    [() => iconURL('banner', '#B58CFF', { 7: '#D9C2FF' }), 'Raid bosses felled', () => fmt(S.wyrms)],
+    [() => iconURL('boot', '#A597B4'), 'Taps', () => fmt(ST().taps)],
+    [() => iconURL('glass', '#F2E27A'), 'Time away', () => played(ST().away)]
+  ];
+
+  const big = {}, cells = [];
+  let note;
+  registerSection('world', {
+    id: 'journal',
+    mount(sec) {
+      sec.classList.add('panel', 'world-part');
+      sec.append(el('h2', 'world-head', 'Journal'));
+
+      const hero = el('div', 'jr-hero');
+      for (const [k, label, cls] of [['time', 'Time played', 'time'], ['lvl', 'Hero level', ''], ['zone', 'Best zone', '']]) {
+        const c = el('div', 'jr-big' + (cls ? ' ' + cls : ''));
+        big[k] = el('b', null, '0');
+        c.append(big[k], el('span', null, label));
+        hero.append(c);
+      }
+      sec.append(hero);
+
+      const grid = el('div', 'jr-grid');
+      for (const [ic, label, val, sub] of ROWS) {
+        const c = el('div', 'jr-stat');
+        const v = el('span', 'jr-v', '0'), l = el('span', 'jr-l', label);
+        const tx = el('div'); tx.append(v, l);
+        c.append(img(ic()), tx);
+        grid.append(c);
+        cells.push({ v, l, val, sub, label });
+      }
+      sec.append(grid);
+      note = el('p', 'note');
+      sec.append(note);
+    },
+    update() {
+      big.time.textContent = played(ST().played);
+      big.lvl.textContent = S.L;
+      big.zone.textContent = S.maxZone;
+      for (const c of cells) {
+        c.v.textContent = c.val();
+        if (c.sub) c.l.textContent = `${c.label} · ${c.sub()}`;
+      }
+      const since = ST().late && ST().since ? dateText(ST().since) : '';
+      note.textContent = 'Time played counts only while the game is open.' + (since ? ` Time, taps and gathering were first counted on ${since}.` : '');
+    }
   });
 }
 
@@ -6558,14 +6986,14 @@ on('activity', () => pushPresence());
 let lastFrame = performance.now();
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { save(); flush(); }
-  else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAway(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+  else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
 addEventListener('pagehide', save);
 
 // ================= boot =================
 resize();
 updatePortrait();
-showAway(awayGains((Date.now() - S.last) / 1000));
+showAwayReport(awayGains((Date.now() - S.last) / 1000));
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();

@@ -9,3 +9,6 @@
 - K2 crafting icons merged (12x12, `iconURL(...craftIcon(name,t))`), gather node rigs `node:crystal|fibre|herb`.
   Renamed K2's `CRAFT_NODES` to `CRAFT_NODE_RIGS` (clash with K1). Polish later: `mat_fibre` reads as a
   bone, `mat_hide` a little turtle-like.
+- Q1 away report + Journal merged. New systems add offline lines via `on('away', r => ...)` or
+  `registerAwayLine(r => {icon, txt, sub})`. `S.stats` added. Tavern "Lifetime" block moved to the
+  Journal (local stats only; no online code touched). Journal sits 3rd in World: consider a shortcut.
