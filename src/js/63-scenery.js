@@ -13,9 +13,6 @@
 // Per frame this is: 4-5 drawImage calls for the layers, plus pre-rendered glow sprites for
 // fog, particles and lamps, plus one stretched overlay for the vignette. No gradients are made
 // per frame and nothing allocates.
-//
-// sceneFor also still answers today's stage, which calls sceneFor(sc) with an object; that
-// branch goes away when wave 2 (A3) replaces the old scene builder in 62-stage.js.
 let drawScene, drawAtmosphere;
 function sceneFor() { return null; } // replaced below
 {
@@ -463,11 +460,6 @@ function sceneFor() { return null; } // replaced below
   }
 
   sceneFor = function (theme, W, H, hue) {
-    if (theme && typeof theme === 'object') { // legacy call from today's 62-stage.js (removed in wave 2)
-      const k = theme.key + ':' + LW + 'x' + LH;
-      if (!sceneCache.has(k)) sceneCache.set(k, buildScene(theme));
-      return sceneCache.get(k);
-    }
     W = Math.max(1, Math.round(W)); H = Math.max(1, Math.round(H)); hue = Math.round(hue || 0) % 360;
     const key = theme + '|' + W + 'x' + H + '|' + hue;
     let sc = cache.get(key);
