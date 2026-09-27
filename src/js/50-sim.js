@@ -66,9 +66,9 @@ function heroSwing(base, tap, at) {
   return { crit, dmg };
 }
 // A player tap on the stage. at = {x, y} stage fractions for the damage number.
+// Routed through the hero's class (55-party.js); gather taps still call tapNode().
 function playerTap(at) {
-  if (target() === 'node') { tapNode(); return; }
-  heroSwing(heroAtk(), true, at);
+  classTap({ target: target(), at });
 }
 function tapNode() {
   S.gProg += 0.12; emit('nodeHit'); burst(0.66, 0.62, nodeColor(), 4, 0.7);
