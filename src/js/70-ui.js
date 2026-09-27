@@ -53,19 +53,30 @@ function updatePortrait() {
 }
 
 // tab icons
-const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }) };
+// Party (two figures) and World (a globe with a lantern-light meridian): local maps, same 12x12 icon format.
+const TAB_PX = {
+  party: ['............','..11....22..','.1111..2222.','.1551..2552.','.1111..2222.','..11....22..','.1111..2222.','111111222222','111111222222','.1111..2222.','.1..1..2..2.','............'],
+  world: ['....1111....','..11222211..','.1222112221.','.1211111121.','122117711221','121117711121','121117711121','122117711221','.1211111121.','.1222112221.','..11222211..','....1111....']
+};
+const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+  party: spriteURL('tab:party', TAB_PX.party, { 1: '#5F8BE8', 2: '#FF9E3D', 5: '#EFE6D6' }), world: spriteURL('tab:world', TAB_PX.world, { 1: '#3E9C8A', 2: '#2A5A6E', 7: '#F2C14E' }) };
 document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= tabs, rename =================
-const TAB_IDS = ['adv', 'gat', 'forge', 'raid', 'tav'];
+const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
+// Raid and Tavern are now parts of the World tab; old ids still open it.
+const TAB_ALIAS = { raid: 'world', tav: 'world' };
+if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
 function setTab(t) {
+  const part = TAB_ALIAS[t] ? $('p-' + t) : null;
+  t = TAB_ALIAS[t] || t;
   S.tab = t;
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
   if (t === 'forge') $('forgeDot').hidden = true;
-  if (t === 'raid') $('raidDot').hidden = true;
-  $('panels').scrollTop = 0;
+  if (t === 'world') $('raidDot').hidden = true;
+  $('panels').scrollTop = part ? part.offsetTop - $('panels').offsetTop : 0;
   ui(true);
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
@@ -138,9 +149,9 @@ function ui(force) {
   if (S.tab === 'adv') uiFight();
   if (S.tab === 'gat') uiGather();
   if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
-  if (S.tab === 'raid') uiRaid();
-  if (S.tab === 'tav' && (force || slowTick <= 0)) uiTavern();
-  for (const sec of SECTIONS) if (sec.tab === S.tab && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+  if (S.tab === 'world') uiRaid();
+  if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
+  for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
   if (slowTick <= 0) slowTick = 1;
 }
 
@@ -156,6 +167,7 @@ $('awayOk').addEventListener('click', () => { $('away').hidden = true; ui(true);
 
 // ================= feature UI registries =================
 // registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
+// tabId: adv | party | gat | forge | world, or raid | tav (the World tab's two parts).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
 // mount(sec) runs once now; update(force) runs from ui() while that tab is open
 // (about 5 times a second, force = true right after player actions).
@@ -172,7 +184,7 @@ function registerSection(tabId, { id, title, mount, update }) {
 // registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
 // tight at 360px wide, so prefer registerSection. icon is a URL or icon spec.
 function registerTab({ id, label, icon, mount, update }) {
-  if (TAB_IDS.includes(id)) throw new Error('registerTab: tab exists ' + id);
+  if (TAB_IDS.includes(id) || TAB_ALIAS[id]) throw new Error('registerTab: tab exists ' + id);
   const b = el('button', 'tab', label);
   b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
   const url = iconOf(icon); if (url) b.prepend(img(url));
@@ -193,4 +205,4 @@ on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
 on('itemAdded', () => { $('forgeDot').hidden = S.tab === 'forge'; });
-on('raidReward', () => { $('raidDot').hidden = S.tab === 'raid'; });
+on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });

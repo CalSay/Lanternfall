@@ -47,10 +47,10 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
     <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
     <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Forge<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="raid" data-ic="flame" aria-selected="false">Raid<span class="dot" id="raidDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="tav" data-ic="mug" aria-selected="false">Tavern</button>
+    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
   </nav>
 
   <div class="panels" id="panels">
@@ -79,6 +79,9 @@
         <div id="compRows" class="sec"></div>
       </div>
     </section>
+
+    <!-- Party (filled by 75-party.js) -->
+    <section class="panel" id="p-party" hidden></section>
 
     <!-- Gather -->
     <section class="panel" id="p-gat" hidden>
@@ -134,8 +137,11 @@
       </div>
     </section>
 
-    <!-- Raid -->
-    <section class="panel" id="p-raid" hidden>
+    <!-- World: the Raid and Tavern parts keep their old ids (p-raid, p-tav) so
+         registerSection('raid' | 'tav') and 80-online.js keep working. -->
+    <section class="panel" id="p-world" hidden>
+    <div class="panel world-part" id="p-raid">
+      <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
         <div class="zsub" id="rGen">World raid</div>
         <h3 id="rName">Waiting for the world to load</h3>
@@ -162,10 +168,10 @@
         <div class="sec-head"><h2 class="sec-title">Relics</h2><span class="note">Paid in Embers from raids</span></div>
         <div id="relicRows" class="sec"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Tavern -->
-    <section class="panel" id="p-tav" hidden>
+    <div class="panel world-part" id="p-tav">
+      <h2 class="world-head">Tavern</h2>
       <div class="sec">
         <h2 class="sec-title">In the tavern now</h2>
         <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
@@ -196,6 +202,7 @@
           <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
         </dl>
       </div>
+    </div>
     </section>
   </div>
 </div>

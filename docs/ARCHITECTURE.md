@@ -26,7 +26,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | **55-*.js** | core | **feature logic (no DOM)** |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
-| 71..74-ui-*.js | browser | Adventure, Gather, Forge, Raid, Tavern panels |
+| 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
 | **75-*.js** | browser | **feature UI** |
 | 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
 | 90-boot.js | browser | boot, timers, frame loop |
@@ -75,7 +75,7 @@ onTick(dt => { S.bounty.timer = Math.max(0, S.bounty.timer - dt); });
 ```
 
 ```js
-registerSection(tabId, { id, title, mount(el), update(force) }) -> el   // tabId: adv|gat|forge|raid|tav
+registerSection(tabId, { id, title, mount(el), update(force) }) -> el   // tabId: adv|party|gat|forge|world, or raid|tav (parts of World)
 registerTab({ id, label, icon, mount(panel), update(force) }) -> panel   // prefer sections (360px)
 ```
 ```js
