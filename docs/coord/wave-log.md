@@ -81,6 +81,9 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
   write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
 - Priority: finish the B1 art conversion under way (foundation, scenery, companion polish, enemies),
   then focus on gameplay. Art comes after, except the art a new gameplay system needs.
+- Speed and smoothness are checked constantly (owner, 2026-09-27). After each merge wave run
+  `node tools/perf.mjs --quick` (once the PERF task lands) and fix any budget failure before new features;
+  every agent brief says to keep per-frame and per-tick work cheap.
 - Preview build for the owner: https://claude.ai/artifact/JHKGxG17HxZyA2Prit4BxS (private, no online
   capabilities, its own save). After each merge wave: build, copy dist with title "Lanternfall Preview" to
   the scratchpad preview/lanternfall-preview.html, and republish to that URL. Never publish the live artifact.
@@ -172,3 +175,5 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   saves. Fix in progress (RETOOL agent): on load/class choice, legacy swords and helms become the class's
   own kinds (same id, tier, rarity, +N; never less damage), only class kinds fit, legacy can't be crafted,
   and a Mirror of Embers switch retools instead of unequipping. Weapon/helm uniques stay usable by every class.
+- Owner: speed and smoothness must be checked constantly. PERF agent builds tools/perf.mjs (throttled-phone
+  frame times, load time, long tasks, heap growth, tap latency), a budget in docs/design/perf.md, and a first pass.
