@@ -3,14 +3,14 @@
 let lastFrame = performance.now();
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { save(); flush(); }
-  else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAway(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+  else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
 addEventListener('pagehide', save);
 
 // ================= boot =================
 resize();
 updatePortrait();
-showAway(awayGains((Date.now() - S.last) / 1000));
+showAwayReport(awayGains((Date.now() - S.last) / 1000));
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();

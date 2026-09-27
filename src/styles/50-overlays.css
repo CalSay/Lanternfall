@@ -9,6 +9,3 @@
 
 .modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
 .modal .card { width: min(380px, 100%); text-align: center; }
-.gains { display: grid; gap: 6px; justify-items: center; }
-.gain { font: 600 22px var(--display); display: flex; align-items: center; justify-content: center; gap: 8px; }
-.gain img { width: 24px; height: 24px; }

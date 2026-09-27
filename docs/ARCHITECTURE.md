@@ -23,7 +23,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 50-sim.js | core | `tick`, combat, kills, xp, harvest, bosses, offline gains |
 | 51-actions.js | core | player actions: forge, equip, salvage, upgrade, buy, hire, relics, loot |
 | 52-raid.js | core | world boss damage and rewards |
-| **55-*.js** | core | **feature logic (no DOM)** |
+| **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -84,6 +84,17 @@ registerSection('adv', { id: 'bounty', title: 'Bounties',
   update(force) { /* ~5x per second while the tab is open */ } });
 ```
 
+```js
+registerAwayLine(fn(r)) -> remove()   // add lines to the "While you were away" card (55-stats.js)
+on('away', r => { /* apply your own offline progress for r.t capped seconds */ })
+```
+```js
+on('away', r => { S.camp.wood += Math.floor(r.t / 60); });          // shows up in the card's diff by itself
+registerAwayLine(r => S.camp.done ? { icon: { ic: ['anvil', '#F2C14E'] }, txt: 'The smithy is built', sub: 'See the Camp tab' } : null);
+```
+The card diffs gold, xp, levels, zones, bosses, raid damage, embers, materials, items and skill
+levels around the `away` phase, so changes made to `S` there appear without a line.
+
 ## Events
 
 | Event | Payload |
@@ -100,6 +111,8 @@ registerSection('adv', { id: 'bounty', title: 'Bounties',
 | `activity` | `{ activity: 'fight'|'gather'|'raid' }` |
 | `raidReward` | `{ gen, share, embers }` |
 | `raidUnavailable` | none |
+| `awayBegin` / `away` / `awayEnd` | `r` (report; see 55-stats.js). Apply offline gains on `away` only |
+| `tap` | `{ node }` (player tap on the stage, browser) |
 | `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
