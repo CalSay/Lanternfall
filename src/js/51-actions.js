@@ -50,9 +50,11 @@ function salvageItem(id) {
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
 // Kinds added by the crafting overhaul go through craftItem (55-crafting.js); the five
-// original kinds keep this exact path (Smithing gate, rng use and XP).
+// original kinds keep this exact path (Smithing gate, rng use and XP). The legacy Sword and
+// Helm are no longer made (class gear only, see retoolItems in 41-items.js).
 function forgeItem(slot, t) {
   if (!RECIPE[slot]) return craftItem(slot, t);
+  if (CRAFT_KINDS[slot].legacy) return null;
   const cost = craftCost(slot, t);
   if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);

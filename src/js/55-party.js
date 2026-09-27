@@ -138,7 +138,7 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   chooseClass = function (key, heroName) {
     ensureInit();
     if (!HERO_CLASSES[key]) return false;
-    const p = P(), first = !p.cls && !p.chosen;
+    const p = P(), first = !p.cls && !p.chosen, from = p.cls;
     if (typeof heroName === 'string') { const n = heroName.trim().slice(0, 16); if (n) S.name = n; }
     p.cls = key; p.chosen = true; p.abilityCd = 0; readyFor = 0;
     guard = []; bless = []; volleyLeft = 0;
@@ -152,7 +152,7 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
       }
     }
     partyRefreshField(true);
-    emit('classChosen', { cls: key });
+    emit('classChosen', { cls: key, from });
     return true;
   };
 

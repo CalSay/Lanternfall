@@ -517,8 +517,8 @@ let resize, animate, draw, stageStats;
     }
     // level ring
     if (ringT > 0) {
-      const rr = Math.max(0, (0.8 - ringT) * 60), x = heroHome() - cam;
-      ctx.strokeStyle = '#6FCB6A'; ctx.globalAlpha = ringT; ctx.lineWidth = 1.5;
+      const rr = Math.max(0, 0.8 - ringT) * 60, x = heroHome() - cam;
+      ctx.strokeStyle = '#6FCB6A'; ctx.globalAlpha = Math.min(1, ringT); ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(x, hero.hy - 1, rr, rr * 0.3, 0, 0, 6.2832); ctx.stroke(); ctx.globalAlpha = 1;
     }
     if (raid && Date.now() < rallyUntil) { ctx.fillStyle = '#F2C14E'; ctx.globalAlpha = 0.07 + 0.04 * Math.sin(T * 6); ctx.fillRect(0, 0, SW, SH); ctx.globalAlpha = 1; }
@@ -575,7 +575,7 @@ let resize, animate, draw, stageStats;
     ctx.strokeStyle = '#F2C14E'; ctx.lineWidth = 2; ctx.globalAlpha = 0.75 * k * pulse;
     ctx.beginPath(); ctx.ellipse(cx, GY, rx, ry, 0, Math.PI, 0); ctx.stroke();
     ctx.strokeStyle = '#FFF3C4'; ctx.lineWidth = 1; ctx.globalAlpha = 0.5 * k;
-    ctx.beginPath(); ctx.ellipse(cx, GY, rx - 5, ry - 5, 0, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx, GY, Math.max(0, rx - 5), Math.max(0, ry - 5), 0, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
     // ribs
     ctx.globalAlpha = 0.25 * k * pulse; ctx.strokeStyle = '#F2C14E';
     for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.ellipse(cx, GY, rx * i / 4, ry, 0, Math.PI, 0); ctx.stroke(); }

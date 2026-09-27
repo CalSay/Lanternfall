@@ -81,6 +81,9 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
   write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
 - Priority: finish the B1 art conversion under way (foundation, scenery, companion polish, enemies),
   then focus on gameplay. Art comes after, except the art a new gameplay system needs.
+- Speed and smoothness are checked constantly (owner, 2026-09-27). After each merge wave run
+  `node tools/perf.mjs --quick` (once the PERF task lands) and fix any budget failure before new features;
+  every agent brief says to keep per-frame and per-tick work cheap.
 - Preview build for the owner: https://claude.ai/artifact/JHKGxG17HxZyA2Prit4BxS (private, no online
   capabilities, its own save). After each merge wave: build, copy dist with title "Lanternfall Preview" to
   the scratchpad preview/lanternfall-preview.html, and republish to that URL. Never publish the live artifact.
@@ -166,4 +169,19 @@ The owner first picked landscape-only, then withdrew it: don't force landscape. 
 scene is the main view in portrait; each tab opens as a full-screen menu over the game (with sub-views);
 landscape and desktop show the game left and the menu right, responsively.
 The owner's "wait" stopped two agents: the menu restructure (IA, no work saved) and the enemy + stage
-spacing pass (AR3, 6 uncommitted files left in its worktree). Restart them only when the owner says so.
+spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then said "restart everything, I only meant wait about landscape": all four stopped tasks
+(menus, AR3, BAL1, Expeditions) were relaunched; AR3 and BAL1 continue from WIP commits on their old branches.
+- Owner bug: a Ranger could equip a sword. Cause: K4 made legacy Sword/Helm fit every class to protect
+  saves. Fix in progress (RETOOL agent): on load/class choice, legacy swords and helms become the class's
+  own kinds (same id, tier, rarity, +N; never less damage), only class kinds fit, legacy can't be crafted,
+  and a Mirror of Embers switch retools instead of unequipping. Weapon/helm uniques stay usable by every class.
+- Owner: speed and smoothness must be checked constantly. PERF agent builds tools/perf.mjs (throttled-phone
+  frame times, load time, long tasks, heap growth, tap latency), a budget in docs/design/perf.md, and a first pass.
+- RETOOL merged: old non-unique swords and helms become the class's kinds on load and on class change
+  (the `rt` field keeps the old base lines, so dps is identical); only class kinds fit; legacy kinds
+  can't be crafted; the sim needs `--class` to forge weapons now. Coordinator fix: a blank stage after
+  long absences (ellipse radii could go negative and throw every frame; three guards in 62-stage.js
+  and 61-anim.js).
+- Owner idea: with full-screen menus the game view has room for a proper combat HUD: party and enemy
+  health bars, hero and companion ability cooldowns (spec 7.4). Queue it as the next stage task after
+  AR3 and the menu restructure land, and fold it into Stage C (party combat), where HP actually matters.
