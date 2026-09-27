@@ -47,7 +47,7 @@
     for (const a of ACH) if (!g[a.id] && a.cur() >= a.need) { g[a.id] = Date.now(); fresh.push(a); }
     if (!fresh.length) return;
     achRebuild();
-    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. See the Tavern.`, 'good', { ic: ['banner', '#F2C14E'] });
+    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. Tap the bell, then Journal.`, 'good', { ic: ['banner', '#F2C14E'] });
     else for (const a of fresh) { toast(`Achievement: ${a.name}. ${achBonusText(a)}.`, 'good', { ic: [a.ic, '#F2C14E'] }); emit('achievement', { id: a.id }); }
     A().init = true;
     save();

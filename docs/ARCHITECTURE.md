@@ -37,7 +37,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
-| 70-ui.js | browser | layout (docs/design/layout.md), tabs, toasts and the notice log, `ui()`, `registerSection`, `registerTab`, event wiring |
+| 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
 | **75-*.js** | browser | **feature UI** |
 | 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
@@ -100,15 +100,28 @@ onTick(fn(dt)) -> remove()   // after each core tick; dt in seconds (<= 0.1)
 onTick(dt => { S.bounty.timer = Math.max(0, S.bounty.timer - dt); });
 ```
 
+Each tab opens as a full-screen menu (portrait) or the right-hand column (wide screens) and is split
+into 2-4 **sub-views** (docs/design/layout.md has the map). Adding a system: pick a view, never append
+to a tab's end.
 ```js
-registerSection(tabId, { id, title, mount(el), update(force) }) -> el   // tabId: adv|party|gat|forge|world, or raid|tav (parts of World)
-registerTab({ id, label, icon, mount(panel), update(force) }) -> panel   // prefer sections (360px)
+registerSection(tabId, { id, title, view, mount(el), update(force) }) -> el
+  // tabId: adv|party|gat|forge|world, camp|tav|raid (the Camp tab's parts, each its own view), or log (bell sheet, Journal)
+  // view: a registerView id; omitted = the tab's first view. A new id makes a new view (label = title).
+registerView(tabId, { id, label, order = 50, dot }) -> view   // a sub-view button; lowest order first (the default)
+  // dot() -> true: attention dot on the button (and the tab) while that view is not open. Keep it cheap.
+setTab(tabOrViewId, sel?)   // open a menu; a view id ('bounties', 'raid', 'make') opens that view; sel picks the view holding it and scrolls there
+closeMenu()                 // back to the game view (portrait). S.tab is '' while no menu is open
+registerTab({ id, label, icon, mount(panel), update(force) }) -> panel   // a sixth tab: avoid, prefer a view
 ```
 ```js
-registerSection('adv', { id: 'bounty', title: 'Bounties',
+registerSection('adv', { id: 'bounty', title: 'Bounties', view: 'bounties',
   mount(sec) { sec.append(el('p', null, 'Kill 50 foes.')); },  // el() helper from 60-gfx
-  update(force) { /* ~5x per second while the tab is open */ } });
+  update(force) { /* ~5x per second while its tab and view are open */ } });
+registerView('forge', { id: 'salvage', label: 'Salvage', order: 25, dot: () => bagFull() });
 ```
+Static markup in `src/shell.html` joins a view with `data-view="id"` on the panel's direct child
+(`"*"` = every view, or a space-separated list). Sections only update while their view shows, so rows
+built in `update()` may not exist yet; `setTab(tab, sel)` builds them once before it looks for `sel`.
 
 ```js
 registerAwayLine(fn(r)) -> remove()   // add lines to the "While you were away" card (55-stats.js)
@@ -127,7 +140,8 @@ topGoals(n = 3) -> [{ id, sys, label, pct, ready, go, icon }]       // cached ~0
 ```
 `pct()` returns progress 0..1 (>= 1 = ready, shown first; null or <= 0 hides it); keep it cheap.
 `label` is a string or fn. `sys` groups goals: at most 1-2 per system are shown. `go` is
-`{ tab, sel, fn }` (the UI runs `fn`, opens the tab, scrolls to `sel` and flashes it) or a fn
+`{ tab, view, sel, fn }` (the UI runs `fn`, opens the tab's menu on the view that holds `sel`, or on
+`view` when there is no `sel`, scrolls to `sel` and flashes it) or a fn
 returning one. `icon` is a toast icon spec, or `{ mob: typeKey }` / `{ char: rosterId }`.
 `prio` (default 0) breaks ties and orders ready goals. Register from your own 55-*.js file.
 ```js
@@ -183,7 +197,9 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 
 Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fields with
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
-keep loading without loss.
+keep loading without loss. `S.tab` is the open menu's tab, or `''` on the game view (portrait).
+`S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
+(last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
 
 ## Commands
 

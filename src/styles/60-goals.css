@@ -1,12 +1,28 @@
-/* 60-goals: the "Next up" strip (Fight tab) and its Go buttons in the away card */
-.sec.nu { gap: 6px; }
-.nu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
-.nu-tog { width: 44px; height: 44px; margin: -8px -8px -8px 0; display: grid; place-items: center; background: none; border: 0; cursor: pointer; color: var(--muted); }
-.nu-chev { width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .15s; }
-.nu.min .nu-chev { transform: translateY(2px) rotate(-135deg); }
-.nu-tog:hover { color: var(--bone); }
-.nu-list { display: grid; gap: 4px; }
-.nu.min .nu-row:not(:first-child) { display: none; }
+/* 60-goals: the "Next up" chip on the game view, its list sheet, and Go buttons in the away card */
+
+/* the chip: one slim row, the top goal and its progress along the bottom edge; tap for the list */
+.nu-chip { position: relative; width: 100%; min-height: 48px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto 14px; gap: 9px; align-items: center; padding: 4px 10px 6px 6px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; cursor: pointer; text-align: left; overflow: hidden; }
+.nu-chip:hover { border-color: var(--line-hi); }
+.nu-chip:active { transform: translateY(1px); }
+.nu-chip .nu-ic { width: 30px; height: 30px; }
+.nu-chip .nu-ic img { width: 20px; height: 20px; }
+.nu-cbody { min-width: 0; display: grid; gap: 1px; }
+.nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.nu-cst { font: 600 13px/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.nu-more { font: 600 11px/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
+.nu-more:empty { display: none; }
+.nu-more.hot { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
+.nu-chip .nu-chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(2px) rotate(-135deg); }
+.nu-cbar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--gold); box-shadow: 0 0 6px rgba(242,193,78,.4); transition: width .3s; }
+.nu-chip.ready { border-color: rgba(242,193,78,.8); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel) 75%); }
+.nu-chip.ready .nu-cst { color: var(--xp); }
+.nu-chip.ready .nu-cbar { background: var(--xp); box-shadow: 0 0 6px rgba(111,203,106,.5); }
+.nu-chip.empty .nu-lbl { color: var(--muted); white-space: normal; }
+.nu-chip.empty .nu-chev, .nu-chip.empty .nu-ic { opacity: .5; }
+
+/* the list (sheet) */
+.nu-list { display: grid; gap: 6px; margin: 10px 0 8px; }
 .nu-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 3px 3px 3px 6px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; min-height: 50px; }
 .nu-row[hidden] { display: none; }
 .nu-row.ready { border-color: rgba(242,193,78,.75); background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); }
@@ -35,12 +51,6 @@
 .away-lgo { flex: none; min-width: 52px; min-height: 44px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .nu-chev { transition: none; }
+  .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
-
-/* collapsed: one row, with the expand toggle as its last cell */
-.nu.min .nu-row:first-child { grid-template-columns: 32px minmax(0, 1fr) auto 36px; gap: 7px; }
-.nu-row .nu-tog { width: 36px; height: 44px; margin: 0; }
-.nu.min .nu-row:first-child .nu-lbl { -webkit-line-clamp: 1; }
-.nu-head[hidden] { display: none; }

@@ -18,9 +18,11 @@
     <button class="bell" id="bellBtn" type="button" aria-label="Notices"><img class="px" id="bellIc" alt=""><b class="bell-n" id="bellN" hidden>0</b></button>
   </header>
 
-  <!-- Layout rules: docs/design/layout.md. The stage box clips the stage; when the panel
-       scrolls down it shrinks to a strip (.app.compact) and the stage slides up inside it,
-       so the canvas never changes size. The HUD and toasts overlay the stage box. -->
+  <!-- Layout rules: docs/design/layout.md. Portrait: the game view (stage, control row, Next Up chip)
+       fills the screen between the header and the tab bar; a tab opens its menu full-screen over it.
+       Landscape and desktop: game on the left, the open menu on the right. The HUD and toasts
+       overlay the stage box (toasts move over the menu while it covers the game). -->
+  <div class="game" id="game">
   <div class="stagebox" id="stageBox">
     <div class="stage" id="stage">
       <canvas id="cv"></canvas>
@@ -50,11 +52,25 @@
       <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
     </div>
   </div>
+  <div class="nu-slot" id="nuSlot"></div>
+  </div>
 
+  <!-- The open tab's menu (70-ui.js): title, close, sub-view switcher, then the scrolling panels.
+       Each direct child of a panel shows in one sub-view (data-view; no attribute = the first view). -->
+  <div class="menu" id="menu" role="region" aria-labelledby="menuTitle">
+    <div class="menu-head" id="menuHead">
+      <div class="menu-bar">
+        <span class="menu-grab" aria-hidden="true"></span>
+        <img class="menu-ic px" id="menuIc" alt="">
+        <h2 class="menu-title" id="menuTitle">Fight</h2>
+        <button class="menu-x" id="menuX" type="button" aria-label="Close menu"><span aria-hidden="true"></span></button>
+      </div>
+      <div class="vseg" id="viewSeg" role="tablist" aria-label="Sections"></div>
+    </div>
   <div class="panels" id="panels">
     <!-- Fight -->
     <section class="panel" id="p-adv">
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <h2 class="sec-title">Boss gate</h2>
         <div class="row">
           <div>
@@ -65,14 +81,14 @@
         </div>
         <label class="note" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="autoBoss" checked> Challenge frontier bosses automatically when ready</label>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <div class="sec-head">
           <h2 class="sec-title">Hero</h2>
           <div class="seg" id="amtSeg"><button data-amt="1" aria-pressed="true">x1</button><button data-amt="10" aria-pressed="false">x10</button><button data-amt="max" aria-pressed="false">Max</button></div>
         </div>
         <div id="heroRows" class="sec"></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <h2 class="sec-title">Party</h2>
         <div id="compRows" class="sec"></div>
       </div>
@@ -83,17 +99,17 @@
 
     <!-- Gather -->
     <section class="panel" id="p-gat" hidden>
-      <div class="skills" id="skillCards"></div>
-      <p class="note">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
-      <div class="sec">
+      <div class="skills" id="skillCards" data-view="mine wood forage"></div>
+      <div class="sec" data-view="mine">
         <h2 class="sec-title">Mining</h2>
         <div id="oreRows" class="sec"></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="wood">
         <h2 class="sec-title">Woodcutting</h2>
         <div id="woodRows" class="sec"></div>
       </div>
-      <div class="sec">
+      <p class="note gat-how" data-view="mine wood forage">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
+      <div class="sec" data-view="pack">
         <h2 class="sec-title">Your pack</h2>
         <div class="mats" id="matGrid"></div>
         <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
@@ -129,19 +145,19 @@
         <div class="sec-head"><h2 class="sec-title">Bag</h2><span class="note" id="bagCount">0 / 40</span></div>
         <div id="bagRows" class="sec"><p class="note">Forged gear and boss loot land here.</p></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="uniques">
         <div class="sec-head"><h2 class="sec-title">Trophy wall</h2><span class="note" id="trophyCount">0 / 13 uniques</span></div>
         <div class="trophies" id="trophies"></div>
       </div>
     </section>
 
-    <!-- Camp (tab id "world"): the Camp part (57-camp.js, 75-camp-ui.js), then the Tavern and the
-         World raid. The Raid and Tavern parts keep their old ids (p-raid, p-tav) so
-         registerSection('raid' | 'tav') and 80-online.js keep working. -->
+    <!-- Camp (tab id "world"): four sub-views, one per part: Camp (57-camp.js, 75-camp-ui.js), Tavern,
+         Almanac (75-almanac-ui.js) and World raid. The Raid and Tavern parts keep their old ids
+         (p-raid, p-tav) so registerSection('raid' | 'tav') and 80-online.js keep working. -->
     <section class="panel" id="p-world" hidden>
-    <div class="panel world-part" id="p-camp"></div>
+    <div class="panel world-part" id="p-camp" data-view="camp"></div>
 
-    <div class="panel world-part" id="p-tav">
+    <div class="panel world-part" id="p-tav" data-view="tav">
       <h2 class="world-head">Tavern</h2>
       <div class="sec">
         <h2 class="sec-title">In the tavern now</h2>
@@ -165,7 +181,7 @@
       </div>
     </div>
 
-    <div class="panel world-part" id="p-raid">
+    <div class="panel world-part" id="p-raid" data-view="raid">
       <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
         <div class="zsub" id="rGen">World raid</div>
@@ -195,6 +211,7 @@
       </div>
     </div>
     </section>
+  </div>
   </div>
 
   <nav class="tabs" role="tablist">
