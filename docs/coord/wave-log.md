@@ -92,7 +92,11 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
 
 ## Waiting on the owner
 
-(none yet)
+- Late-game direction for plan 2 (asked 2026-09-27): which of these to prioritise? Region 2 with new
+  rules (tides), legendary build-defining effects + circle sets, Oaths (player-chosen zone difficulty),
+  pinnacle bosses (after Stage C), a visibly relit world map, a companion endgame (Lanternborn forms,
+  bond stories), Deepwell heat levels. Coordinator recommendation: Region 2 + Oaths + legendary effects/sets.
+  If there is no answer by the time the current plan ends, go with the recommendation.
 
 PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description at milestones).
 - Owner bug: upgrade buttons ignored taps. Cause: setPrice rebuilt the price spans about 5x/s, and
