@@ -101,3 +101,10 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
 - K7 Craft tab merged ("Forge" renamed "Craft", tab id stays `forge`). Coordinator fix: the away report
   names new item kinds (it used SLOT[slot].n). TODO (small, for K8 or a polish task): the Next Up forge
   goal still suggests legacy Sword/Helm via SLOTS/craftCost; switch it to class kinds via canCraft/fits.
+- M6 pacing finished (PACE table in 40-rules.js; R1 boss day 1.8-2.8, R2 boss day 10.8-13.8; T2 fixed;
+  T10 still fails and needs a roster design change; Region 3 needs new power: ranks past 7, tier 6,
+  Constellations). Merge conflicted with K6/K7, so M6 is re-merging in its worktree and applying the
+  Elowen tune. FOLLOW-UP: live saves at zones 2-59 face much more HP after M6 (x10 at zone 35); add a
+  gentle "drop to the best zone you can farm" on load or with auto-progress so idle income doesn't stall.
+- Owner feedback: the menu area is too small (lots of scrolling) and toasts cover the menus. A UX agent
+  owns layout and notifications (bottom tab bar, shorter/collapsing stage, overlays, toast priority and log).
