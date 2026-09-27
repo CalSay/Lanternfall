@@ -1,6 +1,6 @@
 // 61-anim: stage animation helpers (browser-only). Fixed-size pools for particles, projectiles,
 // rings and delayed calls, plus cached glow sprites, so the frame loop allocates nothing.
-// All positions are stage CSS px. 62-stage.js drives and draws these.
+// All positions are stage logical px (1 logical px = ZM CSS px, the stage zoom in 62-stage.js), which drives and draws these.
 //
 // Exposed: ANIM = { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts,
 //                   drawProj, drawRings, lightAt }

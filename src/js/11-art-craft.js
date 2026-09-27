@@ -15,7 +15,8 @@
 //
 // Gather nodes: CRAFT_NODE_RIGS holds rig sources for 'node:crystal' (geode), 'node:fibre' (fibre patch) and
 //   'node:herb' (herb bed), in the 13-art-enemies authoring format. 13-art-enemies.js builds them like the
-//   ore and wood nodes, so enemyFrames('node:herb', { tier }) bakes them. Part flag 5th value = min tier index.
+//   ore and wood nodes, so enemyFrames('node:herb', { tier }) bakes them. B1 creature format (see 13): draw(k)
+//   reads k.t (tier index 0-4) and uses AK shapes at call time (AK loads after this file).
 
 // ---------------- tier colours ----------------
 // UI tier colours per family (the spec's table). MAT[fam].col wins when it exists (K1 data), so the
@@ -121,98 +122,75 @@ function craftIcon(name, t) {
 registerIcons(CRAFT_ICONS);
 
 // ---------------- gather node rigs (built by 13-art-enemies.js) ----------------
-// mats 'tier' resolve through tier(key, tierIndex, E) where E(hex, lit) makes an emissive material.
+// B1 creature format: k.f(hex, kind) makes a material, k.t is the tier index (0-4), k.add(z, bone, mat, shape, opt).
 const CRAFT_NODE_RIGS = {
   // Geode: a split boulder with a crystal cluster; crystals glow from tier 3.
   'node:crystal': {
     name: 'Geode', anim: 'shake',
-    bones: { base: [0, -8, null] }, fixed: [],
-    mats: { rock: '#6E6878', rockD: '#3A3542', moss: '#4E6A3A', C: 'tier', Cd: 'tier', Cg: 'tier' },
-    parts: [
-      [1, 'base', 'rockD', ['p', 1, -22, 0, -20, -14, -12, -22, 0, -24, 12, -22, 20, -12, 22, 0]],
-      [3, 'base', 'rock', ['p', 1, -20, 0, -19, -12, -12, -19, -6, -12, -8, 0]],
-      [3, 'base', 'rock', ['p', 1, 8, 0, 7, -12, 12, -19, 19, -11, 20, 0]],
-      [3, 'base', 'Cd', ['p', 0, -7, 0, -9, -12, -6, -16, -4, -10, -2, 0]],
-      [3, 'base', 'C', ['p', 0, -4, 0, -3, -18, 0, -24, 3, -18, 4, 0]],
-      [3, 'base', 'Cd', ['p', 0, 0, -24, 3, -18, 4, 0, 1, 0]],
-      [3, 'base', 'C', ['p', 0, 2, 0, 5, -12, 8, -15, 9, -8, 7, 0]],
-      [3, 'base', 'Cg', ['r', -2, -18, 1, 5], 2],
-      [3, 'base', 'Cg', ['r', 5, -11, 1, 3], 3],
-      [3, 'base', 'moss', ['p', 1, -20, -1, -17, -6, -11, -4, -12, 0]],
-      [6, 'base', 'rock', ['p', 1, -26, 0, -24, -5, -18, -6, -15, 0]],
-      [6, 'base', 'C', ['p', 0, 13, 0, 14, -7, 16, -9, 17, 0], 1],
-      [6, 'base', 'C', ['p', 0, -12, 0, -14, -8, -11, -5], 4]
-    ],
+    bones: { base: [0, 0, null] },
     poses: { idle0: {}, idle1: {}, wind: { dx: 1 }, strike: { dx: -1 } },
-    tier(k, t, E) {
-      const c = CRAFT_TIER_COL.crystal[t], g = ['#FFFFFF', '#FFD080', '#D8E0FF', '#C8FAFF', '#FF9A80'][t];
-      if (k === 'C') return t >= 2 ? E(c, 1) : c;
-      if (k === 'Cd') return mix(c, '#3A2450', 0.35);
-      return E(g, t >= 2);
+    draw(k) {
+      const { P, Q } = AK, t = k.t, c = CRAFT_TIER_COL.crystal[t], lit = t >= 2;
+      const rock = k.f('#6E6878', 'stone'), rockD = k.f('#4A4452', 'stone'), moss = k.f('#4E6A3A', 'hair');
+      const cry = lit ? k.f(c, 'glow', { light: c }) : k.f(c, 'gem'), cryD = k.f(mix(c, '#3A2450', .35), 'gem'), glint = k.f(['#FFFFFF', '#FFE0A0', '#E8ECFF', '#E0FCFF', '#FFC0A8'][t], 'glow', { light: c });
+      k.add(1, 'base', rockD, P(-20, 0, -18, -12, -10, -19, 10, -19, 18, -11, 20, 0), { bev: 1.4 });
+      k.add(3, 'base', rock, P(-19, 0, -18, -10, -12, -16, -6, -10, -8, 0), { bev: 1.4 });
+      k.add(3, 'base', rock, P(8, 0, 7, -10, 12, -16, 18, -9, 19, 0), { bev: 1.4 });
+      k.add(2.5, 'base', cryD, P(-7, 0, -9, -11, -6, -15, -3.6, -9, -2, 0), { bev: .7 });
+      k.add(2.6, 'base', cry, P(-4, 0, -3, -17, 0, -23, 3, -17, 4, 0), { bev: .7, lr: 14, pulse: t >= 4 });
+      k.add(2.65, 'base', cryD, P(0, -23, 3, -17, 4, 0, 1, 0), { nl: 1 });
+      k.add(2.7, 'base', cry, P(2, 0, 5, -11, 8, -14, 9, -7, 7, 0), { bev: .7, lr: 10 });
+      k.add(2.8, 'base', glint, Q(-2, -17, 1, 3), { nl: 1, nolight: !lit, lr: 5 });
+      if (t >= 1) k.add(2.8, 'base', glint, Q(5, -10, 1, 2), { nl: 1, nolight: !lit, lr: 5 });
+      k.add(3.2, 'base', moss, P(-18, -1, -15, -5, -10, -3.4, -11, 0), { nl: 1 });
+      k.add(6, 'base', rock, P(-24, 0, -22, -4.6, -17, -5.6, -14, 0), { bev: 1 });
+      if (t >= 1) k.add(6, 'base', cry, P(12, 0, 13, -6.4, 15, -8, 16, 0), { bev: .6, lr: 8 });
+      if (t >= 3) k.add(6, 'base', cry, P(-12, 0, -14, -7, -10.4, -4.4), { lr: 8 });
     }
   },
   // Fibre patch: a clump of tall stalks with seed heads; wisps of silk from tier 4.
   'node:fibre': {
     name: 'Fibre patch', anim: 'shake',
-    bones: { base: [0, 0, null], tops: [0, -14, 'base'] }, fixed: [],
-    mats: { soil: '#3A2E2A', F: 'tier', Fd: 'tier', Fh: 'tier', Fg: 'tier' },
-    parts: [
-      [1, 'base', 'soil', ['e', 0, -1, 17, 3]],
-      [2, 'tops', 'Fd', ['p', 0, -12, 0, -16, -26, -14, -27, -9, 0]],
-      [2, 'tops', 'Fd', ['p', 0, 8, 0, 15, -24, 17, -23, 12, 0]],
-      [3, 'tops', 'F', ['p', 0, -8, 0, -10, -32, -7, -33, -4, 0]],
-      [3, 'tops', 'F', ['p', 0, -2, 0, -1, -36, 2, -36, 2, 0]],
-      [3, 'tops', 'F', ['p', 0, 4, 0, 8, -30, 10, -29, 7, 0]],
-      [3, 'tops', 'Fd', ['p', 0, -16, 0, -21, -18, -18, -18, -13, 0]],
-      [3, 'tops', 'Fd', ['p', 0, 12, 0, 19, -14, 21, -13, 15, 0]],
-      [4, 'tops', 'Fh', ['e', -8.5, -34, 2, 4]],
-      [4, 'tops', 'Fh', ['e', 0.5, -38, 2, 4.5]],
-      [4, 'tops', 'Fh', ['e', 9, -32, 2, 4]],
-      [4, 'tops', 'Fh', ['e', -15, -28, 1.6, 3.4]],
-      [4, 'tops', 'Fh', ['e', 16, -25, 1.6, 3.4]],
-      [4, 'tops', 'Fg', ['p', 1, -6, -24, 0, -27, 6, -23, 11, -26], 3],
-      [4, 'tops', 'Fg', ['e', 0.5, -39, 0.8, 1.2], 4], [4, 'tops', 'Fg', ['e', -8.5, -35, 0.8, 1.2], 4]
-    ],
-    poses: { idle0: {}, idle1: { tops: { rot: 0.02 } }, wind: { tops: { rot: -0.04 } }, strike: { tops: { rot: 0.06 }, dx: 1 } },
-    tier(k, t, E) {
-      const c = CRAFT_TIER_COL.fibre[t];
-      if (k === 'F') return c;
-      if (k === 'Fd') return mix(c, '#3A2450', 0.3);
-      if (k === 'Fh') return mix(c, '#FFF4DC', 0.3);
-      return E(['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'][t], t >= 3);
+    bones: { base: [0, 0, null], tops: [0, -12, 'base'] },
+    poses: { idle0: {}, idle1: { tops: { rot: .03 } }, wind: { tops: { rot: -.05 } }, strike: { tops: { rot: .07 }, dx: 1 } },
+    draw(k) {
+      const { P, E, C, Q } = AK, t = k.t, c = CRAFT_TIER_COL.fibre[t];
+      const soil = k.f('#3A2E2A', 'stone'), F = k.f(c, 'cloth'), Fd = k.f(mix(c, '#3A2450', .3), 'cloth'), Fh = k.f(mix(c, '#FFF4DC', .35), 'hair'), g = ['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'][t];
+      const Fg = k.f(g, 'glow', { light: g });
+      k.add(1, 'base', soil, E(0, -1.2, 16, 2.6));
+      const stalk = (z, x0, x1, top, mat, head) => {
+        k.add(z, 'tops', mat, P(x0 - 1, 0, x1 - .6, top, x1 + .6, top, x0 + 1, 0));
+        if (head) k.add(z + .01, 'tops', Fh, E(x1, top - 2.6, 1.6, 3.2, (x1 - x0) * .04), { sep: 1 });
+      };
+      stalk(2, -11, -15, -24, Fd, 1); stalk(2, 9, 15, -22, Fd, 1);
+      stalk(3, -7, -9, -30, F, 1); stalk(3, -1, 0, -34, F, 1); stalk(3, 5, 8, -28, F, 1);
+      stalk(3.2, -14, -19, -15, Fd, 0); stalk(3.2, 12, 18, -12, Fd, 0); stalk(3.3, -3, -5, -16, F, 0); stalk(3.3, 3, 6, -14, F, 0);
+      if (t >= 3) k.add(4, 'tops', Fg, C(-8, -23, .5, 8, -21, .5), { nl: 1, lr: 8 });
+      if (t >= 4) { k.add(4.1, 'tops', Fg, Q(0, -39, 1, 2), { nl: 1, lr: 6 }); k.add(4.1, 'tops', Fg, Q(-9, -35, 1, 2), { nl: 1, lr: 6 }); }
     }
   },
   // Herb bed: low leafy plants with flower heads; the Lantern Lily glows.
   'node:herb': {
     name: 'Herb bed', anim: 'shake',
-    bones: { base: [0, 0, null], leaves: [0, -8, 'base'] }, fixed: [],
-    mats: { soil: '#3A2E2A', stem: '#3E6A3A', H: 'tier', Hd: 'tier', B: 'tier', Bg: 'tier' },
-    parts: [
-      [1, 'base', 'soil', ['e', 0, -1.5, 19, 3.5]],
-      [2, 'leaves', 'Hd', ['e', -11, -7, 7, 4]],
-      [2, 'leaves', 'Hd', ['e', 11, -8, 7, 4.5]],
-      [3, 'leaves', 'stem', ['r', -6, -22, 1.4, 20]],
-      [3, 'leaves', 'stem', ['r', 5, -18, 1.4, 16]],
-      [3, 'leaves', 'stem', ['r', -0.5, -26, 1.4, 24]],
-      [3, 'leaves', 'H', ['p', 1, -16, -3, -12, -12, -6, -9, -8, -2]],
-      [3, 'leaves', 'H', ['p', 1, 16, -3, 13, -12, 6, -9, 8, -2]],
-      [3, 'leaves', 'H', ['p', 1, -6, -2, -3, -16, 0, -12, 1, -2]],
-      [3, 'leaves', 'H', ['p', 1, 4, -2, 3, -15, 7, -12, 9, -2]],
-      [4, 'leaves', 'Hd', ['p', 1, -1, -18, -5, -21, -4, -17]],
-      [4, 'leaves', 'Hd', ['p', 1, 1, -14, 5, -16, 4, -13]],
-      [4, 'leaves', 'B', ['e', -5.3, -23, 3, 2.6]],
-      [4, 'leaves', 'B', ['e', 0.2, -27, 3.2, 2.8]],
-      [4, 'leaves', 'B', ['e', 5.7, -19, 3, 2.6]],
-      [4, 'leaves', 'Bg', ['e', 0.2, -27.5, 1, 1], 2],
-      [4, 'leaves', 'Bg', ['e', -5.3, -23.4, 0.9, 0.9], 4], [4, 'leaves', 'Bg', ['e', 5.7, -19.4, 0.9, 0.9], 4]
-    ],
-    poses: { idle0: {}, idle1: { leaves: { dy: -0.5 } }, wind: { leaves: { dx: -1 } }, strike: { leaves: { dx: 1 }, dx: 1 } },
-    tier(k, t, E) {
-      const c = ['#B8A0E0', '#E8D870', '#E05A5A', '#EAF8F4', '#FFD27A'][t];
-      if (k === 'H') return ['#7FB86A', '#A8B89A', '#6A7A44', '#9CC8BC', '#6FA85A'][t];
-      if (k === 'Hd') return ['#4E7A3E', '#6E7A62', '#4A5430', '#6A9A90', '#3E7A3A'][t];
-      if (k === 'B') return t >= 3 ? E(c, t >= 4) : c;
-      return E(mix(c, '#FFFFFF', 0.5), t >= 3);
+    bones: { base: [0, 0, null], leaves: [0, -6, 'base'] },
+    poses: { idle0: {}, idle1: { leaves: { dy: -.5 } }, wind: { leaves: { dx: -1 } }, strike: { leaves: { dx: 1 }, dx: 1 } },
+    draw(k) {
+      const { P, E, R, Q } = AK, t = k.t, fc = ['#B8A0E0', '#E8D870', '#E05A5A', '#EAF8F4', '#FFD27A'][t];
+      const soil = k.f('#3A2E2A', 'stone'), stem = k.f('#3E6A3A', 'wood');
+      const H = k.f(['#7FB86A', '#A8B89A', '#6A7A44', '#9CC8BC', '#6FA85A'][t], 'hair'), Hd = k.f(['#4E7A3E', '#6E7A62', '#4A5430', '#6A9A90', '#3E7A3A'][t], 'hair');
+      const B = t >= 3 ? k.f(fc, 'glow', { light: fc }) : k.f(fc, 'cloth'), Bg = k.f(mix(fc, '#FFFFFF', .5), 'glow', { light: fc });
+      k.add(1, 'base', soil, E(0, -1.2, 17, 2.8));
+      k.add(2, 'leaves', Hd, E(-10, -5, 6.6, 3.8));
+      k.add(2, 'leaves', Hd, E(10, -5.6, 6.6, 4));
+      for (const [x, h] of [[-5.4, 18], [.2, 22], [5.6, 14]]) k.add(2.5, 'leaves', stem, R(x - .6, -h, 1.3, h));
+      k.add(3, 'leaves', H, P(-15, -1, -12, -10, -6, -8, -7.4, -1), { bev: .8 });
+      k.add(3, 'leaves', H, P(15, -1, 12.6, -10.4, 6, -8, 7.4, -1), { bev: .8 });
+      k.add(3.1, 'leaves', H, P(-6, -1, -3, -13.6, 0, -10, 1, -1), { bev: .8 });
+      k.add(3.1, 'leaves', H, P(3, -1, 3, -12.4, 7, -10, 8.6, -1), { bev: .8 });
+      k.add(3.2, 'leaves', Hd, P(-1, -16, -5, -19, -4, -15.4), { bev: .6 });
+      for (const [x, y] of [[-5.4, -20], [.2, -24], [5.6, -16]]) k.add(4, 'leaves', B, E(x, y, 2.8, 2.4), { sep: 1, lr: 10, pulse: t >= 4 });
+      if (t >= 2) k.add(4.1, 'leaves', Bg, Q(0, -25, 1, 1), { nl: 1, nolight: t < 3, lr: 5 });
+      if (t >= 4) { k.add(4.1, 'leaves', Bg, Q(-6, -21, 1, 1), { nl: 1, lr: 5 }); k.add(4.1, 'leaves', Bg, Q(5, -17, 1, 1), { nl: 1, lr: 5 }); }
     }
   }
 };
