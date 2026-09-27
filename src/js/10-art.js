@@ -33,6 +33,15 @@ const ICON = {
   mug: ['............','..555555....','.55555555...','.17777771...','.1777777111.','.17777771.1.','.17777771.1.','.1777777111.','.17777771...','.11111111...','............','............'],
   flame: ['.....1......','....11......','....151.....','...1151.1...','...115511...','..11155511..','..11555511..','..15557551..','..15577551..','...155551...','....1111....','............']
 };
+// Add icon maps from another art file (e.g. 11-art-craft.js). Names must be new; maps are 12x12.
+function registerIcons(maps) {
+  for (const k in maps) {
+    if (ICON[k]) throw new Error('icon already registered: ' + k);
+    const m = maps[k];
+    if (m.length !== 12 || m.some(r => r.length !== 12)) throw new Error('icon ' + k + ' must be 12x12');
+    ICON[k] = m;
+  }
+}
 const HERO_PAL = { 1: '#3E63C9', 2: '#9A97B3', 3: '#F2C14E', 4: '#1A1420', 5: '#E8E6F0', 6: '#6B4A2E' };
 const WYRM_PAL = { 1: '#8A3345', 2: '#3D1622', 3: '#FFD27A', 4: '#FF6B3D', 5: '#EFE6D6' };
 const RAIDERS_PAL = ['#C9463E', '#3E9C5A', '#8A4FC9', '#C98A3E'].map(c => ({ ...HERO_PAL, 1: c }));
