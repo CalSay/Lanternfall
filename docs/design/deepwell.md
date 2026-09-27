@@ -456,3 +456,43 @@ The vision places the Deepwell in wave 5. Because it runs on today's combat, I r
 3. **The Trial is personal-best only for now.** A light leaderboard would need a new online doc
    shape (coordinator sign-off). Recommended: **personal best now**, revisit with the Phase 2
    online interface.
+
+---
+
+## 14. Build notes (W1-W3, 2026-09-27)
+
+Built in `src/js/57d-deepwell.js` (data, core, no DOM), `src/js/75-deepwell-ui.js` and
+`src/styles/60-deepwell.css`. Changes from the spec above, and why:
+
+- **Scaling anchor.** Foe HP is `par x 1.45^(-6 + 0.7 x (floor - 1))`, where `par` is a foe your
+  party kills in 3.75s at the start of the run (`(heroDps() + compDps()) x 3.75`). Anchoring on
+  `S.maxZone` made depth depend on how far a save sits above its frontier (the late fixture kills
+  a max-zone foe in 0.5s and went 60 floors). The step is 0.7 zones a floor (spec 0.45): at 0.45
+  runs went 45-50 floors and took 15-22 minutes. Steep Week uses 0.85.
+- **Where the run lives.** The Fight tab's Deepwell view (not the Camp's Well). While a run is
+  live, `S.activity` is `'fight'` and your own activity waits in `run.act`; it comes back when you
+  climb out, when the run pauses, and inside every away phase.
+- **Reloads.** A saved run is paused on load (the normal game plays on) and waits for Resume, which
+  restarts the floor with the Oil it began with. Seconds already spent below are added to the
+  load's away time.
+- **The Trial is fixed for everyone:** Deep Lore, the Camp and Codex Oil bonuses and the Almanac's
+  Deepwell Omens are all off in it.
+- **Cosmetics** are stored (`S.deep.cos`, `S.deep.eq`) and shown in the Codex Wardrobe; the stage
+  and the camp scene do not draw them yet. Titles are picked in the Codex.
+
+Balance (`tools/sim`-style harness on `save-v2-late.json`, auto-play, drafts counted at 6s each):
+
+| Case | Median floor | Minutes | Marks (no new best) |
+|---|---|---|---|
+| Idle, greedy picks (4 classes) | 27-29 | 8.7-10.9 | 71-77 |
+| Idle, random picks | 19-25 | 8.1-9.3 | 53-75 |
+| Active, 3 taps a second, greedy | 29-32 | 9.5-12.2 | - |
+| Full Deep Lore (no Stair), greedy | 28-29 | 9.9-11.4 | 74-77 |
+| This week's Trial (Rare Air) | 22-24 | 7.1-9.5 | 108 (with the 10/20 milestones) |
+
+Marks: about 75 a run, so 3-6 runs a week plus the Trial (50) and Almanac goals make 300-550 a
+week: Deep Lore (7,320) in 13-24 weeks, the whole shop (15,470) in 28-52 weeks. Open: D8 (Deep
+Lore 15-25% deeper) is not met; Oil is rarely what ends a run (the boss floors at 25 and 30 are),
+so Oil upgrades add about 1 floor. Rerolls, Banish, Favourite and the Stair help players who plan
+sets, which the harness picker does not. A later balance pass could give Deep Breath a small drain
+cut or add a below-only damage Lore.

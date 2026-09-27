@@ -29,8 +29,12 @@ function setNode(kind, t) {
 // ================= combat state =================
 let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, bossTime = 0, failDps = 0;
 let partyAcc = 0, partyTick = 0;
+// Deepwell arena (57d-deepwell.js): while set it supplies the foes. { spawn() -> mob | null,
+// onKill(mob, overkill) }. Its kills pay nothing here (no 'kill' event) and it has no boss timer.
+let arena = null;
 
 function spawn() {
+  if (arena) { const m = arena.spawn(); if (m) mob = m; return; }
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
@@ -77,6 +81,7 @@ function tapNode() {
 }
 
 function kill() {
+  if (arena && mob.deep) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
   mob.hp = 0; mob.dead = 0.001;
   const g = mob.gold, z = S.zone, tier = zoneTier(z);
   S.gold += g; S.totalGold += g; S.totalKills++;
@@ -159,15 +164,15 @@ function tick(dt) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
       if (tg === 'world' || (mob && !mob.dead)) { emit('lunge'); heroSwing(heroAtk(), false); }
     }
-    if (tg === 'mob' && mob && mob.boss && !mob.dead) {
+    if (tg === 'mob' && mob && mob.boss && !mob.dead && !arena) {
       bossTime -= dt;
       if (bossTime <= 0) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
     if (mob && mob.dead) mob.dead += dt;
     if (mob) mob.born += dt;
-    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
+    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (!arena && S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
     if (!mob) spawn();
-    if (mob.hit > 0) mob.hit -= dt;
+    if (mob && mob.hit > 0) mob.hit -= dt;
   }
   for (const fn of TICK_HOOKS.slice()) { try { fn(dt); } catch (e) { console.error('[lanternfall] tick hook failed', e); } }
 }

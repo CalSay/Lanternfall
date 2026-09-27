@@ -92,6 +92,11 @@ let unitHp, unitCd, bossTelegraph;
   let wallUntil = 0, pauseUntil = 0, hymnUntil = 0, hasteUntil = 0;
   let volleyLeft = 0, volleyNext = 0, volleyEff = 1, worldEmbers = 0;
   let initFor = null, fieldSig = '';
+  // Deepwell boons (57d-deepwell.js) tune the knobs below through bonus('tune:<knob>') and
+  // mod('abilityCd'); both are 0 / 1 outside a Deepwell run. spare: extra ability charges held.
+  const tn = k => T[k] + bonus('tune:' + k);
+  const abCd = c => HERO_CLASSES[c].ability.cd * mod('abilityCd');
+  let spare = 0, spareT = 0;
 
   const P = () => S.party;
   const cls = () => P().cls && HERO_CLASSES[P().cls] ? P().cls : null;
@@ -186,20 +191,21 @@ let unitHp, unitCd, bossTelegraph;
   castAbility = function (opts) {
     ensureInit();
     const c = cls(), p = P();
-    if (!c || p.abilityCd > 0 || !canHit()) return false;
+    if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
     const auto = !!(opts && opts.auto);
     const ab = HERO_CLASSES[c].ability;
     if (c === 'warden') { wallUntil = clock + T.wallT; pauseUntil = clock + T.wallPause; emit('shake', 0.2); }
     else if (c === 'lanternmage') {
       const world = target() === 'world';
       const n = world ? worldEmbers : (mob.embers || 0);
-      if (world) worldEmbers = 0; else mob.embers = 0;
+      if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
       heroSwing(heroAtk() * T.flare * (1 + T.flarePerEmber * n), false);
       emit('shake', 0.3);
     }
-    else if (c === 'ranger') { volleyLeft = T.volleyHits; volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + T.hasteT; }
-    else if (c === 'lightkeeper') { hymnUntil = clock + T.hymnT; }
-    p.abilityCd = ab.cd; readyFor = 0;
+    else if (c === 'ranger') { volleyLeft = tn('volleyHits'); volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + T.hasteT; }
+    else if (c === 'lightkeeper') { hymnUntil = clock + (bonus('tune:hymnFloor') > 0 ? 1e9 : T.hymnT); }
+    if (p.abilityCd > 0) spare--; else p.abilityCd = abCd(c);
+    readyFor = 0;
     emit('ability', { cls: c, name: ab.name, auto });
     return true;
   };
@@ -207,7 +213,7 @@ let unitHp, unitCd, bossTelegraph;
   abilityInfo = function () {
     const c = cls(); if (!c) return null;
     const ab = HERO_CLASSES[c].ability, p = P();
-    return { name: ab.name, desc: ab.desc, cd: ab.cd, left: p.abilityCd, ready: p.abilityCd <= 0,
+    return { name: ab.name, desc: ab.desc, cd: abCd(c), left: p.abilityCd, ready: p.abilityCd <= 0 || spare > 0, spare,
       autoUnlocked: S.maxZone >= T.autoCastZone, autoCast: p.autoCast };
   };
 
@@ -215,7 +221,7 @@ let unitHp, unitCd, bossTelegraph;
   unitHp = () => FULL_HP;
   unitCd = key => {
     const c = key === 'hero' && cls(); if (!c) return null;
-    return { t: P().abilityCd, max: HERO_CLASSES[c].ability.cd };
+    return { t: spare > 0 ? 0 : P().abilityCd, max: abCd(c) };
   };
   bossTelegraph = () => null;
 
@@ -244,13 +250,14 @@ let unitHp, unitCd, bossTelegraph;
     if (tg === 'mob' && !(mob && !mob.dead)) return;
     let kind = 'strike';
     const m = tg === 'mob' ? mob : null;
-    if (c === 'warden') { kind = 'heavy'; pushStack(guard, T.guard * eff, T.guardT, T.guardMax); }
+    if (c === 'warden') { kind = 'heavy'; pushStack(guard, tn('guard') * eff, T.guardT, tn('guardMax')); }
     else if (c === 'lanternmage') {
       kind = 'ember';
-      if (m) m.embers = Math.min(T.embersMax, (m.embers || 0) + 1); else worldEmbers = Math.min(T.embersMax, worldEmbers + 1);
+      const em = tn('embersMax'), per = 1 + bonus('tune:emberPerTap');
+      if (m) m.embers = Math.min(em, (m.embers || 0) + per); else worldEmbers = Math.min(em, worldEmbers + per);
     }
-    else if (c === 'ranger') { kind = 'mark'; if (m) { m.markUntil = clock + T.markT; m.markV = auto ? 1 + (T.mark - 1) * T.autoEff : T.mark; } }
-    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, T.bless * eff, T.blessT, T.blessMax); }
+    else if (c === 'ranger') { kind = 'mark'; if (m) { const mk = tn('mark'); m.markUntil = clock + tn('markT'); m.markV = auto ? 1 + (mk - 1) * T.autoEff : mk; } }
+    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, T.bless * eff, tn('blessT'), tn('blessMax')); }
     const r = heroSwing(heroAtk() * T.tapMul[c] * eff, true, at);
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
     if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * T.lkShare, '#B58CFF', false);
@@ -294,8 +301,12 @@ let unitHp, unitCd, bossTelegraph;
     if (!c) return;
     if (p.abilityCd > 0) { p.abilityCd = Math.max(0, p.abilityCd - dt); readyFor = 0; }
     else readyFor += dt;
+    // Extra charges (a Deepwell boon): while the ability waits ready, the next charge fills.
+    const extra = bonus('tune:charges');
+    if (spare > extra) spare = extra;
+    if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
     // Auto-cast at half rate: it waits one extra cooldown after the ability is ready.
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= HERO_CLASSES[c].ability.cd) castAbility({ auto: true });
+    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c)) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
       if (canHit()) heroSwing(heroAtk() * T.volleyAtk * volleyEff, false);
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
@@ -315,6 +326,7 @@ let unitHp, unitCd, bossTelegraph;
     toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
+  on('deepFloor', () => { if (hymnUntil > clock + T.hymnT) hymnUntil = clock; });
   on('zoneClear', ({ zone }) => {
     if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
   });

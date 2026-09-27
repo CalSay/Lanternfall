@@ -1425,5 +1425,115 @@ try {
   assert(!errs.length, 'no codex errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('codex crashed: ' + (e.stack || e)); }
 
+// ---- the Deepwell (57d-deepwell.js) ----
+console.log('deepwell');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
+  const errs = [];
+  // new game and old saves: defaults, no run, locked until zone 20 (and Hearth 3)
+  const n0 = loadCore({ seed: 31 }), N = s => n0.eval(s);
+  assert(N('S.deep.v === 1 && S.deep.run === null && S.deep.marks === 0 && S.deep.trial.week === -1 && !deepUnlocked() && arena === null'), 'new game: S.deep defaults, no run, locked');
+  assert(N('DW.start(false)') === false && N('S.deep.run') === null, 'a locked Deepwell cannot start a run');
+  errs.push(...n0.errors);
+  for (const f of FIX) {
+    const o = loadCore({ seed: 32, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+    const d = o.eval('JSON.stringify(S.deep)'), keys = o.eval('Object.keys(S.deep).join()');
+    assert(o.eval('S.deep.run === null && S.deep.best === 0 && S.deep.eq.lantern === null') && keys === 'v,best,marks,marksTotal,lore,cos,pages,trial,seen,runs,run,floors,tips,fav,eq,last', `${f}: gets the Deepwell defaults`);
+    o.eval('save(); loadSave()');
+    assert(o.eval('JSON.stringify(S.deep)') === d, `${f}: round trip keeps S.deep`);
+    errs.push(...o.errors);
+  }
+  const part = JSON.parse(rawOf('save-v2.json')); part.deep = { v: 1, marks: 57, lore: { breath: 2 } };
+  const pg = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(part) }) });
+  assert(pg.eval('S.deep.marks === 57 && S.deep.lore.breath === 2 && S.deep.trial.week === -1 && S.deep.run === null'), 'a partial S.deep keeps its values and gains the missing fields');
+
+  // a run on the late save, started from Gather
+  const g = loadCore({ seed: 33, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
+  E('chooseClass("warden")'); ticks(g, 30);
+  E('S.camp.b.hearth = 2'); assert(!E('deepUnlocked()'), 'zone 38 but Hearth 2: still locked');
+  E('S.camp.b.hearth = 3'); assert(E('deepUnlocked()'), 'zone 20+ and Hearth 3: open');
+  g.fn.setActivity('gather'); ticks(g, 5);
+  const main = () => E('JSON.stringify([S.gold, S.totalGold, S.xp, S.L, S.totalKills, S.maxZone, S.zone, S.kills, S.mats, S.items.length, S.found, S.comp])');
+  const before = main(), dps0 = E('totalDps()');
+  const kills = []; g.fn.on('kill', () => kills.push(1));
+  assert(E('DW.start(false)') && E('S.activity') === 'fight' && E('DW.run().act') === 'gather' && E('arena === DEEP_ARENA') && E('mob.deep && mob.floor === 1'), 'start: the arena supplies floor 1; your own activity (gather) is kept in the run');
+  assert(E('DW.run().oil') === 60 && E('DW.oilMax()') === 120, 'starting Oil 60s, most Oil 120s');
+  // Oil drains while a foe stands
+  E('mob.hp = mob.max * 1e6; mob.max = mob.hp'); const o0 = E('DW.run().oil'); ticks(g, 20);
+  assert(Math.abs(o0 - E('DW.run().oil') - 2) < 0.05, `Oil drains 1 per second while a foe stands (${(o0 - E('DW.run().oil')).toFixed(2)} in 2s)`);
+  // clear the floor: 3 foes
+  let guard = 0;
+  while (E('DW.run().phase') === 'fight' && guard++ < 10) { E('mob.hp = 1; strike(10, "#fff")'); ticks(g, 6); }
+  assert(E('DW.run().phase') === 'draft' && E('DW.run().top') === 1 && E('DW.run().floor') === 2, 'three kills clear floor 1 and open the draft');
+  assert(Math.abs(E('DW.run().oil') - (o0 - 2 + 15)) < 1, 'a normal floor refunds 15s of Oil');
+  const offer = E('DW.offerView().cards.map(c => c.id)');
+  assert(offer.length === 3 && new Set(offer).size === 3, `the draft offers 3 different boons (${offer.join(', ')})`);
+  assert(E('DW.reroll()') && E('DW.run().rr') === 0 && !E('DW.reroll()'), 'one reroll a run; then none');
+  const pickId = E('DW.offerView().cards[0].id');
+  assert(E(`DW.pick("${pickId}")`) && E(`DW.run().boons["${pickId}"]`) === 1 && E('DW.run().phase') === 'fight' && E('mob.floor') === 2, `picking ${pickId} starts floor 2`);
+  assert(!kills.length, 'arena kills fire no kill event');
+  assert(main() === before, 'main progress is untouched while below (gold, XP, zones, kills, materials, items)');
+  // the boon modifiers work only while a run is live
+  E('DW.run().boons.whet = 3'); const m1 = E('mod("dmg")');
+  // resume after reload: save mid-floor, reload
+  E('DW.run().oil -= 5'); const oilStart = E('DW.run().oilAtStart'), boons = E('JSON.stringify(DW.run().boons)');
+  E('save()');
+  const g2 = loadCore({ seed: 34, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) }), E2 = s => g2.eval(s);
+  assert(E2('!!S.deep.run && S.deep.run.paused && S.deep.run.floor === 2 && S.activity === "gather" && arena === null'), 'reload: the run is kept, paused on floor 2; your activity is gather again');
+  assert(E2('S.deep.run.oil') === oilStart && E2('JSON.stringify(S.deep.run.boons)') === boons, 'reload: Oil is back to what the floor began with, boons kept');
+  E2('chooseClass("warden")');
+  assert(E2('DW.resume()') && E2('S.activity === "fight" && arena === DEEP_ARENA && mob.deep && mob.floor === 2 && DW.run().oil === DW.run().oilAtStart'), 'resume: the same floor restarts with the same Oil');
+  errs.push(...g2.errors);
+  // climb out: only between floors; marks paid; activity back; away credit for the time below
+  assert(E('DW.climbOut()') === null && !!E('DW.run()'), 'no climbing out mid-floor');
+  guard = 0; while (E('DW.run().phase') === 'fight' && guard++ < 10) { E('mob.hp = 1; strike(10, "#fff")'); ticks(g, 6); }
+  const exp = E('DW.marksNow()'), secs = E('DW.run().secs');
+  let endEv = null; g.fn.on('deepEnd', p => { endEv = p; });
+  const sum = E('DW.climbOut()');
+  assert(sum && sum.reason === 'leave' && E('S.deep.run') === null && E('S.activity') === 'gather' && E('arena') === null, 'climb out: the run ends and gather resumes');
+  assert(E('S.deep.marks') === exp && exp > 0 && E('S.deep.best') === 2 && E('S.deep.runs') === 1, `climb out pays ${exp} Depth Marks and sets the best floor`);
+  assert(endEv && endEv.away && Math.abs(endEv.away.secs - secs) < 1e-6 && endEv.away.t > 0, `the ${secs.toFixed(1)}s below are credited as away gains`);
+  assert(E('mod("dmg")') < m1 && Math.abs(E('totalDps()') / dps0 - 1) < 0.25, 'boons stop when the run ends');
+  // Oil runs out
+  E('S.deep.marks = 0'); E('DW.start(false)'); E('DW.run().oil = 0.3; mob.hp = mob.max = 1e30'); ticks(g, 5);
+  assert(E('S.deep.run') === null && E('S.deep.last.reason') === 'oil', 'out of Oil ends the run');
+  // the shop: Marks buy only Deepwell things; nothing touches power outside a run
+  assert(E('Object.values(DEEP_SHOP).every(x => ["lore", "look", "title", "page"].includes(x.cat))'), 'the shop sells Deep Lore, looks, titles and Lore pages only');
+  E('S.deep.marks = 1e6; S.deep.best = 50'); const dA = E('totalDps()'), gA = E('goldMult()');
+  let bought = 0; for (let i = 0; i < 80; i++) { const id = E('(DW.shop().find(r => r.can) || {}).id'); if (!id) break; if (E(`DW.buy("${id}")`)) bought++; }
+  assert(bought > 30 && E('S.deep.lore.breath') === 5 && E('S.deep.pages') === 10 && !E('DW.buy("nope")'), `bought all ${bought} shop rows`);
+  assert(E('totalDps()') === dA && E('goldMult()') === gA, 'a full Deep Lore changes nothing outside the Deepwell (dps, gold)');
+  assert(E('codexTitles().some(t => t.id === "dt_walker" && t.got)') && E('codexSetTitle("dt_walker") && codexTitle() === "Well-walker"'), 'bought titles are picked in the Codex');
+  E('codexRefresh(true)');
+  assert(!E('codexPage("deepwell").locked') && E('codexPage("deepwell").tiles.filter(t => t.grp === "Deep Lore").every(t => t.got)'), 'the Codex Deepwell page opens and shows the bought Lore pages');
+  E('DW.start(false)'); assert(Math.abs(E('DW.run().oil') - Math.min(150, 60 + 50 + E('bonus("deepOil")'))) < 1e-9 && E('DW.run().rr') >= 4 && E('DW.run().ban') === 2 && E('DW.oilMax()') === 150, 'Deep Lore works below: Oil, rerolls, banish, Deep Pockets');
+  const gS = E('S.gold + S.totalKills'); ticks(g, 30);
+  assert(E('S.gold + S.totalKills') === gS && E('!mob || mob.dead'), 'a run that opens on a draft sets the zone foe aside (no gold, no kills)');
+  assert(E('DW.run().floor') === 11 && E('DW.run().phase') === 'draft' && E('DW.run().queue.length') === 1 && E('DW.run().top') === 10, 'Lantern Stair II: starts on floor 11 after two Common picks, floors 1-10 paid');
+  assert(E('DW.offerView().cards.every(c => c.r === "c")'), 'the Stair picks offer Commons');
+  guard = 0; while (E('DW.run().phase') !== 'fight' && guard++ < 5) E('DW.pick(DW.offerView().cards[0].id)');
+  E('DW.abandon()'); // mid-floor: refused
+  assert(E('DW.run().phase') === 'fight' && E('DW.run().floor') === 11, 'no abandoning mid-floor while live');
+  errs.push(...g.errors);
+  // the weekly Trial: seeded by the week, same offers and foes for everyone
+  const tA = loadCore({ seed: 35, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) });
+  const tB = loadCore({ seed: 99, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) });
+  const trialOf = t => { const X = s => t.eval(s); X('chooseClass("ranger"); S.camp.b.hearth = 3'); ticks(t, 5); X('DW.start(true)');
+    let gg = 0; while (X('DW.run().phase') === 'fight' && gg++ < 10) { X('mob.hp = 1; strike(10, "#fff")'); ticks(t, 6); }
+    return X('JSON.stringify([DW.run().seed, DW.run().rule, DW.offerView().cards.map(c => c.id), DW.floorFoes(7), DW.run().rr])'); };
+  const a = trialOf(tA), b = trialOf(tB);
+  assert(a === b, 'the Trial gives the same seed, rule, foes and offers on two saves in the same week');
+  assert(tA.eval('DW.run().trial && DW.oilMax() === (DW.run().rule === "glass" ? 60 : DW.run().rule === "drought" ? 150 : 120)'), 'the Trial ignores Deep Lore');
+  const rules = tA.eval('Array.from({ length: 12 }, (_, i) => DW.trialRule(24 + i).id)');
+  assert(new Set(rules).size === 12 && tA.eval('DW.trialRule(40).id') === tA.eval('DW.trialRule(40).id'), 'every rule once in each 12-week cycle; the same week always gives the same rule');
+  // a Trial from an earlier week is scored on resume
+  tA.eval('DW.run().paused = true; DW.run().week -= 1'); ticks(tA, 12);
+  assert(tA.eval('S.deep.run === null && S.deep.last.reason === "closed"'), 'a Trial run from an earlier week is scored');
+  errs.push(...tA.errors, ...tB.errors, ...pg.errors);
+  assert(!errs.length, 'no deepwell errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('deepwell crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
