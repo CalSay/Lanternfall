@@ -67,8 +67,9 @@ const aps = () => Math.min(5, 1 + 0.1 * S.swift);
 const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
 const tapMult = () => gear().tap * mod('tap');
-const compDpsOne = i => COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
-const compDps = () => COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
+// Once the save is migrated to the roster (56-roster.js), companions are named characters.
+const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
+const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
 const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
 const totalDps = () => heroDps() + compDps();
 const mobHp = z => 40 * Math.pow(1.42, z - 1);

@@ -68,7 +68,9 @@ function buyHero(id, amt) {
   if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; return true; }
   return false;
 }
+// Retired once the roster is live (56-roster.js): companions are recruited by name.
 function hireComp(i, amt) {
+  if (rosterLive()) return false;
   const c = COMPS[i];
   const p = plan(c.base, 1.15, S.comp[i], S.gold, undefined, amt);
   if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S.comp[i] += p.n; return true; }

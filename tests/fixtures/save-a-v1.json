@@ -1,0 +1,168 @@
+{
+ "v": 2,
+ "name": "Maelis",
+ "L": 14,
+ "xp": 30,
+ "gold": 2750,
+ "embers": 3,
+ "zone": 9,
+ "maxZone": 9,
+ "kills": 3,
+ "blade": 38,
+ "swift": 10,
+ "fortune": 9,
+ "comp": [
+  31,
+  12,
+  5,
+  0,
+  0,
+  0,
+  0
+ ],
+ "relic": {
+  "banner": 2,
+  "coin": 1,
+  "heart": 0,
+  "glass": 1
+ },
+ "auto": true,
+ "activity": "fight",
+ "raid": {
+  "gen": 3,
+  "dmg": 51234.2,
+  "maxHp": 312500,
+  "name": "The Mire Colossus"
+ },
+ "wyrms": 2,
+ "totalKills": 920,
+ "totalGold": 41000,
+ "amt": "10",
+ "tab": "party",
+ "last": 1790000000000,
+ "hintDone": true,
+ "skills": {
+  "mine": {
+   "lv": 14,
+   "xp": 33
+  },
+  "wood": {
+   "lv": 9,
+   "xp": 12
+  },
+  "smith": {
+   "lv": 7,
+   "xp": 20
+  }
+ },
+ "mats": {
+  "ore": [
+   48,
+   12,
+   0,
+   0,
+   0
+  ],
+  "wood": [
+   37,
+   5,
+   0,
+   0,
+   0
+  ],
+  "ess": [
+   22,
+   9,
+   0,
+   0,
+   0
+  ]
+ },
+ "node": {
+  "kind": "ore",
+  "t": 2
+ },
+ "gProg": 0.35,
+ "items": [
+  {
+   "id": 3,
+   "slot": "weapon",
+   "t": 2,
+   "r": "rare",
+   "plus": 2
+  },
+  {
+   "id": 7,
+   "slot": "helm",
+   "t": 1,
+   "r": "legendary",
+   "plus": 0,
+   "u": "echocowl"
+  }
+ ],
+ "equip": {
+  "weapon": 3,
+  "helm": 7,
+  "charm": null,
+  "pick": null,
+  "axe": null
+ },
+ "nextId": 8,
+ "found": {
+  "echocowl": 1,
+  "sproutblade": 1
+ },
+ "fSlot": "weapon",
+ "fTier": 2,
+ "party": {
+  "v": 1,
+  "cls": "lightkeeper",
+  "chosen": true,
+  "newGame": true,
+  "field": [
+   "bram",
+   "wren",
+   "pip"
+  ],
+  "cells": {
+   "hero": {
+    "col": 0,
+    "lane": 1
+   },
+   "bram": {
+    "col": 2,
+    "lane": 1
+   },
+   "wren": {
+    "col": 1,
+    "lane": 1
+   },
+   "pip": {
+    "col": 0,
+    "lane": 0
+   }
+  },
+  "abilityCd": 12.5,
+  "autoCast": true,
+  "mirrors": 0
+ },
+ "mastery": {
+  "zones": {
+   "1": 60,
+   "2": 55,
+   "3": 40
+  },
+  "types": {
+   "slime": 80,
+   "bat": 50
+  }
+ },
+ "achievements": {
+  "got": {
+   "forge1": true
+  },
+  "init": true,
+  "forged": 3,
+  "epic": false
+ }
+}

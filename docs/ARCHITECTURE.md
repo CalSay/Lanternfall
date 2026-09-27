@@ -24,6 +24,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 51-actions.js | core | player actions: forge, equip, salvage, upgrade, buy, hire, relics, loot |
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
+| 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -61,7 +62,7 @@ registerState('bounty', { count: 0, claimed: {} });
 addModifier(key, fn) -> remove()   // fn() returns a multiplier; mod(key) = product of all, 1 if none
 ```
 Keys used by formulas: `dmg`, `gold`, `xp`, `skillXp`, `gatherSpeed` (higher = faster),
-`offline`, `essence`, `crit`, `critDmg`, `tap`, `party`, `raid`.
+`offline`, `essence`, `crit`, `critDmg`, `tap`, `party`, `raid`, `compXp` (companion XP).
 ```js
 addModifier('gold', () => 1 + 0.05 * S.bounty.count);
 // goldMult() now includes it; dps/gold UI updates automatically
@@ -120,6 +121,13 @@ levels around the `away` phase, so changes made to `S` there appear without a li
 | `raidUnavailable` | none |
 | `awayBegin` / `away` / `awayEnd` | `r` (report; see 55-stats.js). Apply offline gains on `away` only |
 | `tap` | `{ node }` (player tap on the stage, browser) |
+| `awayKills` | `{ kills, zone, lines }` (fight branch of `awayGains`; push extra report lines) |
+| `recruit` | `{ id, source }` (a character joined the roster) |
+| `charLevel` | `{ id, lv, quiet }` |
+| `milestone` | `{ id, lv, quiet }` (L5/10/15/20/25, then every 25) |
+| `promote` | `{ id, rank }` |
+| `fieldChange` | `{ field }` |
+| `rosterMigrated` | `{ old, now, ratio, steps }` |
 | `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 

@@ -28,7 +28,7 @@
     { id: 'uniq1', name: 'Trophy Hunter', desc: 'Find a unique', need: 1, cur: uniqCount, bonus: ['essence', 0.03], ic: 'charm' },
     { id: 'uniq3', name: 'Collector', desc: 'Find 3 uniques', need: 3, cur: uniqCount, bonus: ['essence', 0.05], ic: 'charm' },
     { id: 'uniq7', name: 'Curator', desc: 'Find 7 uniques', need: 7, cur: uniqCount, bonus: ['dmg', 0.05], ic: 'charm' },
-    { id: 'party', name: 'Full Party', desc: 'Hire every companion', need: 7, cur: () => S.comp.filter(n => n > 0).length, bonus: ['party', 0.03], ic: 'mug' },
+    { id: 'party', name: 'Full Party', desc: 'Recruit 7 companions', need: 7, cur: () => Math.max(S.comp.filter(n => n > 0).length, typeof rosterList === 'function' && rosterLive() ? rosterList().length : 0), bonus: ['party', 0.03], ic: 'mug' },
     { id: 'bty10', name: 'Bounty Hunter', desc: 'Claim 10 bounties', need: 10, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['offline', 0.03], ic: 'coin' },
     { id: 'bty50', name: 'Board Regular', desc: 'Claim 50 bounties', need: 50, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['gold', 0.03], ic: 'coin' }
   ];

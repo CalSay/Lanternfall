@@ -112,6 +112,8 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
   }
   // The 3 strongest owned old companion slots, strongest first.
   partyRefreshField = function (force) {
+    // 56-roster owns field and cells once the save is on the roster (rv >= 1), even while it loads.
+    if (rosterLive() || P().rv >= 1) { if (rstReady) rosterSyncField(force); return; }
     const st = P().newGame && P().cls ? STARTER[P().cls][1] : -1;
     // New games: the starter always stands first (field[0]); then the strongest owned slots.
     const owned = S.comp.map((n, i) => n > 0 ? i : -1).filter(i => i >= 0 && COMPS[i])
@@ -143,8 +145,11 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
     toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
     if (first && p.newGame) {
       const [ck, slot] = STARTER[key];
-      S.comp[slot] += 1;
-      toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good');
+      if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
+      else {
+        S.comp[slot] += 1;
+        toast(`${ck[0].toUpperCase() + ck.slice(1)} joins your party.`, 'good');
+      }
     }
     partyRefreshField(true);
     emit('classChosen', { cls: key });
