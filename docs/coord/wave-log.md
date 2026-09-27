@@ -33,3 +33,8 @@ as a phone-viewable page; the pick then drives a conversion wave. Logic work is 
 
 B2 synergies, B7 unlock avenues, B5 Party tab, K4 items core, M6 pacing + `--days` sim, Next Up, Almanac.
 The art style study is still running (owner leans 16-bit; wants clear section definition).
+- K4 items core merged (41-items.js). Exact dps equality on all 4 fixtures. Bag = 50 unequipped
+  (coordinator aligned the forge UI to bagFull()/bagCount()). K5-K8 notes are in the K4 report; key
+  ones: trophy gate unenforced, equipChar + one-wearer rule, unequip on class change, iconFor/slotStats
+  need the CRAFT_KINDS path, nodeTime treats non-ore as wood, spell power not applied to abilities,
+  roster should use charGear(id) once companion gear is live.

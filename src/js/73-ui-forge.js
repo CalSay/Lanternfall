@@ -23,7 +23,7 @@ const bagRows = new Map();
 function renderBag() {
   const box = $('bagRows');
   const list = S.items.filter(i => !Object.values(S.equip).includes(i.id)).sort((a, b) => itemPower(b) - itemPower(a));
-  $('bagCount').textContent = `${S.items.length} / ${BAG_MAX}`;
+  $('bagCount').textContent = `${bagCount()} / ${CRAFT_BAG_MAX}`;
   const keep = new Set(list.map(i => i.id));
   for (const [id, r] of bagRows) if (!keep.has(id)) { r.row.remove(); bagRows.delete(id); }
   const empty = box.querySelector(':scope > .note');
@@ -120,8 +120,8 @@ function uiForge() {
   for (const [k, v] of Object.entries(w)) odds.append(el('span', 'rar-' + k, `${RAR[k].n} ${(v / tot * 100).toFixed(0)}%`));
   const locked = sm.lv < SMITH_REQ[t - 1];
   const fb = $('forgeBtn');
-  fb.disabled = locked || !hasMats(cost, t) || S.items.length >= BAG_MAX;
-  fb.textContent = locked ? `Needs Smithing Lv ${SMITH_REQ[t - 1]}` : S.items.length >= BAG_MAX ? 'Bag is full' : `Forge ${itemName(preview)}`;
+  fb.disabled = locked || !hasMats(cost, t) || bagFull();
+  fb.textContent = locked ? `Needs Smithing Lv ${SMITH_REQ[t - 1]}` : bagFull() ? 'Bag is full' : `Forge ${itemName(preview)}`;
   renderBag();
   renderTrophies();
 }

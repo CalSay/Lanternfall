@@ -2419,7 +2419,7 @@ const UNIQ = {
 const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;
-function itemColor(slot, t, u) { return u ? UNIQ[u].col : slot === 'charm' ? MAT.ess.col[t - 1] : MAT.ore.col[t - 1]; }
+function itemColor(slot, t, u) { return kindColor(slot, t, u); } // 41-items.js
 
 const COMPS = [
   { name: 'Squire', dps: 2, base: 15, blurb: 'Carries your spare sword and swings it too.', col: '#8C6A43', helm: '#6B4A2E' },
@@ -3011,10 +3011,12 @@ const fresh = () => Object.assign({
   blade: 0, swift: 0, fortune: 0, comp: [0, 0, 0, 0, 0, 0, 0], relic: { banner: 0, coin: 0, heart: 0, glass: 0 },
   auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
   totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
-  skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 } },
-  mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0] },
+  skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 },
+    forage: { lv: 1, xp: 0 }, bench: { lv: 1, xp: 0 }, loom: { lv: 1, xp: 0 }, ench: { lv: 1, xp: 0 } },
+  mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0],
+    crystal: [0, 0, 0, 0, 0], fibre: [0, 0, 0, 0, 0], herb: [0, 0, 0, 0, 0], hide: [0, 0, 0, 0, 0] },
   node: { kind: 'ore', t: 1 }, gProg: 0,
-  items: [], equip: { weapon: null, helm: null, charm: null, pick: null, axe: null }, nextId: 1,
+  items: [], equip: { weapon: null, off: null, helm: null, body: null, charm: null, pick: null, axe: null, sickle: null }, nextId: 1,
   found: {}, fSlot: 'weapon', fTier: 1
 }, cloneJSON(STATE_DEFAULTS));
 const BASE_KEYS = Object.keys(fresh());
@@ -3064,11 +3066,8 @@ let rallyUntil = 0;
 const itemById = id => S.items.find(i => i.id === id) || null;
 const equipped = slot => itemById(S.equip[slot]);
 const itemPower = it => TIER_POW[it.t] * RAR[it.r].m * (1 + 0.15 * it.plus);
-function itemName(it) {
-  if (it.u) return UNIQ[it.u].name + (it.plus ? ` +${it.plus}` : '');
-  const s = SLOT[it.slot];
-  return `${MAT[s.prefix].short[it.t - 1]} ${s.noun}` + (it.plus ? ` +${it.plus}` : '');
-}
+// Item kinds, stat lines and the 8 hero positions live in 41-items.js (K4).
+function itemName(it) { return kindName(it.slot, it.t, it.u) + (it.plus ? ` +${it.plus}` : ''); }
 function slotStats(slot, p) {
   switch (slot) {
     case 'weapon': return `+${fmt(p)}% damage`;
@@ -3081,28 +3080,9 @@ function slotStats(slot, p) {
 }
 let gsCache = null;
 const gearDirty = () => { gsCache = null; emit('gear'); };
-function gear() {
-  if (gsCache) return gsCache;
-  const s = { might: 0, crit: 0, critMult: 0, gold: 0, ess: 0, mineSpd: 0, woodSpd: 0, oreDbl: 0, woodDbl: 0, party: 0, tap: 1, echo: 0, offline: 0, raid: 0, essExtra: 0, oreExtra: 0, woodExtra: 0, gather: 0, score: 0 };
-  for (const sl of SLOTS) {
-    const it = equipped(sl.id); if (!it) continue;
-    const p = itemPower(it); s.score += p;
-    if (sl.id === 'weapon') s.might += p;
-    if (sl.id === 'helm') { s.crit += Math.min(35, p * 0.12); s.critMult += p / 200; }
-    if (sl.id === 'charm') { s.gold += p * 0.8; s.ess += p * 0.3; }
-    if (sl.id === 'pick') { s.mineSpd += p * 0.6; s.oreDbl += Math.min(60, p * 0.1); }
-    if (sl.id === 'axe') { s.woodSpd += p * 0.6; s.woodDbl += Math.min(60, p * 0.1); }
-    if (it.u) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) { if (k === 'tap') s.tap *= v; else s[k] += v; }
-  }
-  gsCache = s; return s;
-}
-const craftCost = (slot, t) => Object.fromEntries(Object.entries(RECIPE[slot]).map(([k, n]) => [k, Math.ceil(n * (1 + 0.5 * (t - 1)))]));
-function upgradeCost(it) {
-  const m = {};
-  for (const [k, n] of Object.entries(RECIPE[it.slot])) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
-  if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-  return { mats: m, gold: 40 * Math.pow(5, it.t) * (it.plus + 1) };
-}
+function gear() { return gsCache || (gsCache = gearCalc()); }
+const craftCost = (slot, t) => kindCost(slot, t);
+function upgradeCost(it) { return kindUpgradeCost(it); }
 const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
 const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
 function rarityWeights() {
@@ -3121,7 +3101,7 @@ const lvlMult = () => 1 + 0.05 * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + gear().gold / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult();
+const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
 const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
@@ -3162,6 +3142,190 @@ const zoneCycle = z => Math.floor((z - 1) / 7);
 const zoneName = z => ZONES[zoneType(z)] + (zoneCycle(z) ? ' ' + roman(zoneCycle(z) + 1) : '');
 const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
 const nodeColor = () => S.node.kind === 'ore' ? MAT.ore.col[S.node.t - 1] : MAT.wood.col[S.node.t - 1];
+
+// ---- src/js/41-items.js ----
+// 41-items: the items core (task K4). Item kinds, where they fit, their stat lines, the
+// hero's 8 gear positions, companion gear, affix rolls, Reforge maths and the bag rule.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Spec: docs/design/gathering-and-crafting.md 4 and 7, with its "Owner decisions" (random
+// affixes, Reforge, trophies gate +8..+10). Tables live in 21-data-craft.js (K1).
+//
+// Exposed names (everything else is private, inside the block below):
+//   kinds    itemKind(itOrKind) -> CRAFT_KINDS row (legacy slots are kinds: 'weapon' = Sword)
+//            kindPos(kind) -> hero position or companion position the kind goes in
+//   fit      fits(item, pos, who = 'hero')   who: 'hero' (S.party.cls), a class key, a role key,
+//            a roster character id or 'any'. Legacy Sword/Helm and uniques fit for any class.
+//            heroWho() the current class key or 'any'
+//   stats    itemLines(item) -> [[stat, value], ...] in the order gear() adds them
+//            itemStats(item) -> { stat: total } (base lines + affixes + Masterwork + unique fx)
+//            gearCalc() the uncached gear() over CRAFT_HERO_POS (40-rules caches it)
+//            charGear(id) -> the same stat object for a companion's wpn/trk items
+//            spellMult() 1 + spell power / 100 (for the ability code; not wired yet)
+//   names    kindName(slot, t, u), kindColor(slot, t, u), kindCost(kind, t), kindUpgradeCost(item)
+//            (40-rules' itemName/craftCost/upgradeCost and 20-data's itemColor delegate here)
+//   make     newItem(kind, t, r, opts) -> item with a fresh id (not added to the bag)
+//            rollAffixes(kind, rarity, t, role, rnd = Math.random) -> [[affixId, q], ...]
+//   reforge  reforgeCost(item) -> {mats, gold} (craftReforgeCost of the item's tier and rf)
+//            reforgeLine(item, idx, rnd = Math.random) -> { a, rf, line, cost } or null (pure;
+//            the caller pays and applies). Never duplicates an affix stat, never touches mw.
+//   bag      equippedIds() -> Set of item ids worn by the hero or any companion
+//            isEquipped(id), bagCount() (unequipped items), bagFull() (>= CRAFT_BAG_MAX)
+//
+// Item fields (S.items entries). Old items have only the first five and keep their stats:
+//   id, slot (= kind), t, r, plus, u (unique key)
+//   a:  [[affixId, q], ...]  rolled affix lines, q in [0, 1] (2 decimals) is the roll
+//   mw: trophy index         Masterwork line (CRAFT_TROPHIES[mw]); missing = none
+//   rf: n                    reforges done on this item (Reforge cost grows with it)
+//   ro: role key             Trinkets only: the role pool it rolled from (for Reforge)
+//
+// gear() keys: the old ones, unchanged and in the same order, then every other CRAFT_STATS
+// key. Stats with live:false in CRAFT_STATS (hp, armour, threat, block, pierce, area,
+// control, heal, ward, haste, aspd, forageSpd, forageDbl) only aggregate until party
+// combat (Stage C) and K5 read them; their total caps are applied in gear(). Live stats are
+// never capped here (old gear already goes past crit 35; critChance() caps at 75%).
+// 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
+
+let itemKind, kindPos, fits, heroWho, itemLines, itemStats, gearCalc, charGear, spellMult,
+  kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
+  equippedIds, isEquipped, bagCount, bagFull;
+
+{
+  const LEGACY = RECIPE; // weapon, helm, charm, pick, axe: the pre-K4 kinds (and every unique)
+  // gear() keys before K4, in their original order (the exact-equality checks rely on it).
+  const OLD_KEYS = ['might', 'crit', 'critMult', 'gold', 'ess', 'mineSpd', 'woodSpd', 'oreDbl', 'woodDbl', 'party', 'tap', 'echo', 'offline', 'raid', 'essExtra', 'oreExtra', 'woodExtra', 'gather', 'score'];
+  const NEW_KEYS = Object.keys(CRAFT_STATS).filter(k => !OLD_KEYS.includes(k));
+  const blank = () => {
+    const s = {};
+    for (const k of OLD_KEYS) s[k] = k === 'tap' ? 1 : 0;
+    for (const k of NEW_KEYS) s[k] = 0;
+    return s;
+  };
+
+  itemKind = x => CRAFT_KINDS[typeof x === 'string' ? x : x && x.slot] || null;
+  kindPos = kind => { const d = CRAFT_KINDS[kind]; return d ? d.pos || d.comp || null : null; };
+  heroWho = () => (S.party && S.party.cls && HERO_CLASSES[S.party.cls]) ? S.party.cls : 'any';
+  const resolveWho = (pos, who) => {
+    if (who == null || who === 'hero') return heroWho();
+    if (CRAFT_POS[pos] && CRAFT_POS[pos].comp && ROSTER[who]) return ROSTER[who].role;
+    return who;
+  };
+  fits = (it, pos, who = 'hero') => {
+    const kind = typeof it === 'string' ? it : it && it.slot;
+    if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos]) return false;
+    return craftFits(kind, pos, resolveWho(pos, who));
+  };
+
+  // ---- stat lines ----
+  // Legacy kinds use the exact pre-K4 expressions so old items give byte-identical numbers.
+  const legacyLines = (slot, p) => {
+    switch (slot) {
+      case 'weapon': return [['might', p]];
+      case 'helm': return [['crit', Math.min(35, p * 0.12)], ['critMult', p / 200], ['armour', p * 0.1]];
+      case 'charm': return [['gold', p * 0.8], ['ess', p * 0.3]];
+      case 'pick': return [['mineSpd', p * 0.6], ['oreDbl', Math.min(60, p * 0.1)]];
+      case 'axe': return [['woodSpd', p * 0.6], ['woodDbl', Math.min(60, p * 0.1)]];
+    }
+    return [];
+  };
+  itemLines = it => {
+    const d = itemKind(it); if (!d) return [];
+    const p = itemPower(it);
+    const out = LEGACY[it.slot] ? legacyLines(it.slot, p) : craftBaseLines(it.slot, p);
+    if (Array.isArray(it.a)) for (const [id, q] of it.a) if (CRAFT_AFFIXES[id]) out.push(...craftAffixValue(id, p, q));
+    if (it.mw != null) { const l = craftTrophyLine(it.mw, it.slot, p); if (l) out.push(l); }
+    if (it.u && UNIQ[it.u]) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) out.push([k, v]);
+    return out;
+  };
+  const addLines = (s, lines) => { for (const [k, v] of lines) { if (k === 'tap') s.tap *= v; else s[k] = (s[k] || 0) + v; } };
+  itemStats = it => { const s = {}; for (const [k, v] of itemLines(it)) s[k] = k === 'tap' ? (s[k] || 1) * v : (s[k] || 0) + v; return s; };
+  const capNonLive = s => { for (const k of NEW_KEYS) { const c = CRAFT_STATS[k]; if (!c.live && c.cap != null && s[k] > c.cap) s[k] = c.cap; } return s; };
+  gearCalc = () => {
+    const s = blank(), who = heroWho();
+    for (const pos of CRAFT_HERO_POS) {
+      const it = itemById(S.equip[pos]); if (!it || !fits(it, pos, who)) continue;
+      s.score += itemPower(it);
+      addLines(s, itemLines(it));
+    }
+    return capNonLive(s);
+  };
+  charGear = id => {
+    const s = blank(), r = S.party && S.party.rec && S.party.rec[id];
+    if (r) for (const pos of CRAFT_COMP_POS) {
+      const it = r[pos] != null ? itemById(r[pos]) : null; if (!it || !fits(it, pos, id)) continue;
+      s.score += itemPower(it);
+      addLines(s, itemLines(it));
+    }
+    return capNonLive(s);
+  };
+  spellMult = () => 1 + gear().spell / 100;
+
+  // ---- names, colours, costs ----
+  kindName = (slot, t, u) => {
+    if (u) return UNIQ[u].name;
+    const d = CRAFT_KINDS[slot];
+    return `${MAT[d.pre].short[t - 1]} ${d.noun}`;
+  };
+  kindColor = (slot, t, u) => u ? UNIQ[u].col : MAT[(CRAFT_KINDS[slot] || { pre: 'ore' }).pre].col[t - 1];
+  kindCost = (kind, t) => craftRecipe(kind, t);
+  kindUpgradeCost = it => {
+    const m = {};
+    for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
+    if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
+    const c = { mats: m, gold: 40 * Math.pow(5, it.t) * (it.plus + 1) };
+    // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
+    const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
+    return c;
+  };
+
+  // ---- making items ----
+  const round2 = q => Math.round(q * 100) / 100;
+  rollAffixes = (kind, rarity, t, role, rnd = Math.random) => {
+    const pool = craftAffixPool(kind, role).slice(), out = [];
+    let n = Math.min(craftAffixLines(rarity, null), pool.length);
+    while (n-- > 0) {
+      const id = pool.splice(Math.floor(rnd() * pool.length), 1)[0];
+      out.push([id, round2(rnd())]);
+    }
+    return out;
+  };
+  // opts: { role (Trinkets), mw (trophy index), rnd }. Legacy kinds, Charm and tools roll
+  // nothing, so their items (and the rng use) are exactly what forgeItem made before K4.
+  newItem = (kind, t, r, opts = {}) => {
+    const it = { id: S.nextId++, slot: kind, t, r, plus: 0 };
+    const d = CRAFT_KINDS[kind];
+    if (d && d.role) {
+      it.a = rollAffixes(kind, r, t, opts.role, opts.rnd || Math.random);
+      if (d.role === 'any' && opts.role && CRAFT_ROLE_POOL[opts.role]) it.ro = opts.role;
+    }
+    if (opts.mw != null && CRAFT_TROPHIES[opts.mw] && craftTrophyLine(opts.mw, kind, 1)) it.mw = opts.mw;
+    return it;
+  };
+
+  // ---- Reforge ----
+  reforgeCost = it => craftReforgeCost(it.t, it.rf || 0);
+  reforgeLine = (it, idx, rnd = Math.random) => {
+    if (!it || !Array.isArray(it.a) || !it.a[idx]) return null;
+    const pool = craftAffixPool(it.slot, it.ro); if (!pool.length) return null;
+    const have = it.a.map(l => l[0]);
+    let choice = pool.filter(id => !have.includes(id));
+    if (!choice.length) choice = [it.a[idx][0]]; // every stat of the pool is on the item: reroll the value
+    const line = [choice[Math.floor(rnd() * choice.length)], round2(rnd())];
+    const a = it.a.map((l, i) => i === idx ? line : l.slice());
+    return { a, rf: (it.rf || 0) + 1, line, cost: reforgeCost(it) };
+  };
+
+  // ---- bag ----
+  equippedIds = () => {
+    const ids = new Set();
+    for (const v of Object.values(S.equip)) if (v != null) ids.add(v);
+    const rec = S.party && S.party.rec;
+    if (rec) for (const r of Object.values(rec)) for (const pos of CRAFT_COMP_POS) if (r && r[pos] != null) ids.add(r[pos]);
+    return ids;
+  };
+  isEquipped = id => equippedIds().has(id);
+  bagCount = () => { const eq = equippedIds(); return S.items.reduce((n, i) => n + (eq.has(i.id) ? 0 : 1), 0); };
+  bagFull = () => bagCount() >= CRAFT_BAG_MAX;
+}
 
 // ---- src/js/50-sim.js ----
 // 50-sim: the game loop's rules in motion: activity switching, combat, gathering,
@@ -3395,7 +3559,7 @@ function awayBase(r) {
 
 // ================= items =================
 function addItem(it) {
-  if (S.items.length >= BAG_MAX) { salvageGive(it); toast(`Your bag is full, so ${itemName(it)} was salvaged.`, 'raid'); return false; }
+  if (bagFull()) { salvageGive(it); toast(`Your bag is full, so ${itemName(it)} was salvaged.`, 'raid'); return false; }
   S.items.push(it); emit('itemAdded', { item: it }); return true;
 }
 function dropUnique(key, t) {
@@ -3411,16 +3575,19 @@ function dropUnique(key, t) {
 }
 
 function salvageGive(it) {
-  for (const [k, n] of Object.entries(RECIPE[it.slot])) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
+  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
   if (it.u) S.mats.ess[it.t - 1] += 10;
 }
-function equipItem(id) {
+// pos: hero position (defaults to the kind's own); the item must fit it for the hero's class.
+function equipItem(id, pos) {
   const it = itemById(id); if (!it) return false;
-  S.equip[it.slot] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
+  pos = pos || kindPos(it.slot);
+  if (!(pos in S.equip) || !fits(it, pos, 'hero')) return false;
+  S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
   return true;
 }
 function salvageItem(id) {
-  const it = itemById(id); if (!it || Object.values(S.equip).includes(id)) return false;
+  const it = itemById(id); if (!it || isEquipped(id)) return false;
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
   toast(`Salvaged ${itemName(it)} for materials.`, 'good'); save();
@@ -3429,10 +3596,10 @@ function salvageItem(id) {
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
 function forgeItem(slot, t) {
   const cost = craftCost(slot, t);
-  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || S.items.length >= BAG_MAX) return null;
+  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);
   const r = rollRarity();
-  const it = { id: S.nextId++, slot, t, r, plus: 0 };
+  const it = newItem(slot, t, r);
   addItem(it);
   gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)));
   toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } });
@@ -6820,7 +6987,7 @@ const bagRows = new Map();
 function renderBag() {
   const box = $('bagRows');
   const list = S.items.filter(i => !Object.values(S.equip).includes(i.id)).sort((a, b) => itemPower(b) - itemPower(a));
-  $('bagCount').textContent = `${S.items.length} / ${BAG_MAX}`;
+  $('bagCount').textContent = `${bagCount()} / ${CRAFT_BAG_MAX}`;
   const keep = new Set(list.map(i => i.id));
   for (const [id, r] of bagRows) if (!keep.has(id)) { r.row.remove(); bagRows.delete(id); }
   const empty = box.querySelector(':scope > .note');
@@ -6917,8 +7084,8 @@ function uiForge() {
   for (const [k, v] of Object.entries(w)) odds.append(el('span', 'rar-' + k, `${RAR[k].n} ${(v / tot * 100).toFixed(0)}%`));
   const locked = sm.lv < SMITH_REQ[t - 1];
   const fb = $('forgeBtn');
-  fb.disabled = locked || !hasMats(cost, t) || S.items.length >= BAG_MAX;
-  fb.textContent = locked ? `Needs Smithing Lv ${SMITH_REQ[t - 1]}` : S.items.length >= BAG_MAX ? 'Bag is full' : `Forge ${itemName(preview)}`;
+  fb.disabled = locked || !hasMats(cost, t) || bagFull();
+  fb.textContent = locked ? `Needs Smithing Lv ${SMITH_REQ[t - 1]}` : bagFull() ? 'Bag is full' : `Forge ${itemName(preview)}`;
   renderBag();
   renderTrophies();
 }
