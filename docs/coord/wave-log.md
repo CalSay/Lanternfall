@@ -132,3 +132,14 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
   source yet cost ore, wood or essence until CAMP_LIVE flips (K5 should flip crystal/fibre/herb/hide/troph).
   Hooks for Expeditions (registerBenchStatus/Send, bonus('expSlots'), registerCampAction('maproom')),
   Codex (setBlessingGate, Library action) and camp scene art (CAMP_SPOTS, campBuilds) are documented in its report.
+
+## Owner decision: slower pace (2026-09-27)
+
+"The pace still feels far too quick. Party members are far too easy to get. Damage ramps so fast."
+(The owner plays the live game, which has neither M6 nor the roster, but the direction applies to
+the branch too.) New targets, handed to the balance pass (BAL1):
+- T1: zones 6-9 / 10-13 / 15-19 at 30m / 1h / 2h; end of day 1 around zones 20-26; T2 <= 24 at 3h.
+- Region 1 boss on day 4-8; Region 2 boss in 3-6 weeks; P4 (never more than 3 empty check-ins) kept.
+- Recruits: first after the starter at 15-30 min, first Rare 1.5-3h, first Epic day 2-4, first Legendary week 2-3.
+- Damage ramp: flatten the exponential milestone steps (x2 per 25 upgrade levels, x2 per rank,
+  +5% per hero level, gear tier jumps) and steepen costs, without creating dead time.
