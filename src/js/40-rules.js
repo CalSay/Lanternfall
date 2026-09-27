@@ -35,26 +35,38 @@ function rollRarity() {
   return 'common';
 }
 
-// ================= pacing: the Lantern Road curve (docs/design/pacing.md) =================
-// Every knob for the long curve lives here so it can be retuned after merges
-// (node tools/sim.mjs --targets). Zones 1..bend and companion levels 1..compLv use the
-// original numbers, so the first two hours (target T1) do not change.
+// ================= pacing: the Lantern Road curve (docs/design/pacing.md, task M6) =================
+// Every knob for the long curve is in this one table, so the coordinator can retune after
+// merges and check with `node tools/sim.mjs --targets` (or try values with --pace k=v).
+// Before M6 the game had no bend: mob HP 40 x 1.42^(z-1) everywhere, boss x8, Starlit
+// essence from zone 25 and one companion XP curve, so Region 1 fell in about 3 hours.
 const PACE = {
-  hp0: 40, hpGrowth: 1.42,  // mob HP = hp0 x hpGrowth^(z-1) up to the bend (unchanged)
-  bend: 30,                 // past this zone mob HP grows by hpLate per zone
-  hpLate: 1.42,             // (kept equal: steeper growth would move the L200 cap zone below 70)
+  hp0: 40,                  // zone 1 mob HP (unchanged)
+  hpGrowth: 1.48,           // mob HP x per zone up to the bend (was 1.42; brings T1 back into band after B7)
+  bend: 30,                 // zones past the bend grow by hpLate instead
+  hpLate: 1.29,             // mob HP x per zone past zone 30 (was 1.42). Slower growth, because
+                            //   late time is paced by companion XP; it keeps the Region 2 boss
+                            //   below the level-200 roster cap with a few zones to spare
   bossHp: 8,                // zone boss HP x a normal mob (unchanged)
-  region: 35,               // zones per region; the last zone's boss is the region boss
-  regionBoss: 3,            // extra x on region bosses (zones 35, 70, 105): the region wall
-  compLv: 90,               // companion levels past compLv need more XP (at par: more kills):
-  compXp: 1.15,             //   x compXp per level past compLv...
-  compXpMax: 20,            //   ...up to compXpMax x (a flat plateau: steady zones per day)
-  essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (before M6 tier 5 began at 25)
-  heroAwayXp: 0.5           // hero XP while away, as a share of the away kills' XP
+  region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
+  regionStep: [5, 2.5],     // mob HP x this from each region's last zone on (x5 from zone 35,
+                            //   x2.5 more from 70; the last value repeats). The step stays, so
+                            //   the zones after a region boss are no easier than the boss
+  regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
+  compLv: 90,               // companion levels past compLv need more XP...
+  compXp: 1.2,              //   ...x1.2 per level past it (level 95: x2.5, 100: x6.2)...
+  compXpMax: 80,            //   ...up to x80 from level 114 on: the Region 2 plateau (days, not hours)
+  essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (was every 6 zones, so Starlit
+                            //   (tier 5) began at 25). Starlit is now Region 2's essence
+  heroAwayXp: 0.5           // hero XP while away, as a share of the away kills' XP (was 0)
 };
+// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv, so the first
+// two hours keep their numbers.
 const paceXp = lv => lv > PACE.compLv ? Math.min(PACE.compXpMax, Math.pow(PACE.compXp, lv - PACE.compLv)) : 1;
 const isRegionBoss = z => z % PACE.region === 0;
 const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
+// The region steps a zone has passed, multiplied.
+const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
 // ================= formulas =================
 const lvlMult = () => 1 + 0.05 * (S.L - 1);
@@ -71,8 +83,8 @@ const compDpsOne = i => rosterLive() ? rosterSlotDps(i) : COMPS[i].dps * Math.po
 const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
 const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
 const totalDps = () => heroDps() + compDps();
-// Before M6: 40 * 1.42^(z-1) for every zone (identical while hpLate = hpGrowth).
-const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend));
+// Before M6: 40 * 1.42^(z-1) for every zone.
+const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.

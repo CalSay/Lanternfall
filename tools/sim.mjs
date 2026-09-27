@@ -16,8 +16,9 @@
 //   and benches supports for Morwen's zone 12 boss (56c-unlocks.js).
 //   --tune k=v,k=v: override ROSTER_TUNE knobs (56-roster.js).  --unlock path=v: UNLOCK_TUNE (56c-unlocks.js).  --debug 1: roster trace per line.
 //   --pace k=v,k=v: override PACE knobs (40-rules.js); arrays as a/b/c (essTier=1/7/13/19/36).
-//   --forge weapon|any: gear policy. weapon ("sword first", default for --days and --targets)
-//             keeps essence for the next sword; any is the older policy.
+//   --syn v: SYN_TUNE.today (56b-synergy.js) for this run.
+//   --forge weapon|any: gear policy. weapon ("sword first", the default) keeps essence for the
+//             next sword; any is the pre-M6 policy, which often ran for hours with no sword.
 // Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
 // Rare/Epic/Legendary recruit) and T17 (worst-case token pity).
 //
@@ -61,6 +62,8 @@ E('S.amt = "1"');
 if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); E(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
 // --pace key=value,... overrides PACE knobs (40-rules.js) for this run.
 if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); E(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
+// --syn v sets SYN_TUNE.today (56b-synergy.js), to check the curve against stronger synergies.
+if (args.syn !== undefined) E(`SYN_TUNE.today = ${+args.syn}`);
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);
@@ -134,12 +137,12 @@ function withReserve(E, res, fn) {
 }
 
 const SLOTS = ['weapon', 'helm', 'charm', 'pick', 'axe'];
-// --forge weapon ("sword first", the default for --days): like a player chasing the next
+// --forge weapon ("sword first", the default since M6): like a player chasing the next
 // sword. Essence of each tier above the equipped weapon (up to the max zone's tier) is kept
 // for it, the gather phase mines or chops what the next sword is short of, and the sword is
 // forged before promotions reserve anything. Without it, the old policy often runs with no
 // weapon for hours (other slots and promotions eat the matching-tier essence).
-const swordFirst = (args.forge || (days ? 'weapon' : 'any')) === 'weapon';
+const swordFirst = (args.forge || 'weapon') === 'weapon';
 const weaponHold = () => {
   const cur = fn.equipped('weapon'), have = cur ? cur.t : 0, zt = fn.zoneTier(E('S.maxZone')), hold = [0, 0, 0, 0, 0];
   for (let t = have + 1; t <= zt; t++) hold[t - 1] = fn.craftCost('weapon', t).ess;
@@ -385,13 +388,13 @@ function runDays() {
 //   T10 a promotion comes due at least every 20 min before 2h (reported; see pacing.md)
 //   P1  normal play: the Region 1 boss (zone 35) falls on day 2-4 (24h-96h after install)
 //   P2  normal play: the Region 2 boss (zone 70) falls in week 1-3 (7-21 days)
-//   P3  normal play: the Region 3 boss (zone 105) in 30-60 days (needs Region 2 power; reported)
+//   P3  normal play: the Region 3 boss (zone 105) in 30-60 days (INFO until Region 3 power exists)
 //   P4  boredom before the Region 2 boss: at most PACE_TARGETS.emptyRun check-ins in a row with
 //       no new zone, gear tier, recruit or promotion
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'seed', 'bounties', 'forge'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 30);
   const [cont, dys] = await Promise.all([
@@ -415,9 +418,11 @@ async function runTargets() {
   const inR = (v, [a, b]) => v >= a && v <= b;
   res.push([ok(js.every(j => inR(day(j, 35), P.r1))), 'P1 Region 1 boss on day 2-4 (1-4 days in)', classes.map((c, i) => `${c} ${dtxt(js[i], 35)}`).join(', ')]);
   res.push([ok(js.every(j => inR(day(j, 70), P.r2))), 'P2 Region 2 boss in 7-21 days', classes.map((c, i) => `${c} ${dtxt(js[i], 70)}`).join(', ')]);
-  res.push([ok(js.every(j => inR(day(j, 105), P.r3))), 'P3 Region 3 boss in 30-60 days (needs Region 2 content)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${nDays < 60 && !Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
+  // P3 is INFO until Region 3 power exists: the level-200 roster cap stops the party near zone 76-80.
+  res.push([js.every(j => inR(day(j, 105), P.r3)) ? 'PASS' : 'INFO', 'P3 Region 3 boss in 30-60 days (needs Region 2/3 power: ranks past 7, tier 6)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${nDays < 60 && !Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
   res.push([ok(js.every(j => j.toR2.gapCi <= P.emptyRun)), `P4 before the Region 2 boss: <= ${P.emptyRun} empty check-ins in a row`, classes.map((c, i) => `${c} ${js[i].toR2.gapCi} (longest ${Math.round(js[i].toR2.gapAct / 60)} active min)`).join(', ')]);
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
+  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} targets pass`);
   console.log(`curve (${classes[0]}): ` + js[0].rows.map(r => `d${r.day} ${r.zone}`).join(' '));
   if (cont.concat(dys).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
 }

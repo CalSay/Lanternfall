@@ -662,5 +662,21 @@ try {
   }
 } catch (e) { fail('unlocks crashed: ' + (e.stack || e)); }
 
+// ---- pacing table (40-rules.js PACE, M6). The balance targets: node tools/sim.mjs --targets ----
+console.log('pacing');
+try {
+  const g = loadCore({ seed: 3 }), E = s => g.eval(s);
+  const hp = E('Array.from({ length: 140 }, (_, i) => mobHp(i + 1))');
+  assert(hp.every((h, i) => Number.isFinite(h) && (i === 0 || h > hp[i - 1])), 'mob HP rises every zone to 140');
+  assert(E('mobHp(35) / mobHp(34)') > E('mobHp(36) / mobHp(35)'), 'region 1 step lands on zone 35 and stays');
+  assert(E('[1, 6, 7, 19, 35, 36, 200].map(zoneTier).join()') === '1,1,2,4,4,5,5', 'essence tiers by zone (Starlit from 36)');
+  assert(E('paceXp(1) === 1 && paceXp(PACE.compLv) === 1 && paceXp(200) === PACE.compXpMax'), 'companion XP curve: 1 up to compLv, capped at compXpMax');
+  // Hero XP while away: quiet level-ups, no toasts.
+  E('chooseClass("warden"); S.maxZone = S.zone = 20; S.activity = "fight"');
+  let toasts = 0; g.fn.on('toast', () => toasts++);
+  const L0 = E('S.L'); g.fn.awayGains(4 * 3600);
+  assert(E('S.L') > L0 && !toasts && !g.errors.length, `away time levels the hero quietly (L${L0} -> L${E('S.L')}, ${toasts} toasts)`);
+} catch (e) { fail('pacing crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
