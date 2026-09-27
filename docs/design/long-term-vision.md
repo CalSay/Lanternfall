@@ -121,6 +121,31 @@ These are small features that make the long game pleasant:
 - a guided first ten minutes
 - an auto-salvage filter
 
+## Coordinator decisions after the D1 specs (2026-09-27)
+
+The owner delegated these calls to the coordinator. All D1 recommendations are accepted:
+
+- **Pacing is the biggest risk.** Region 1 clears in about 3 hours today. Days, weeks and months
+  are paced by real-time systems (builds, expeditions, the weekly Trial and board, Codex pages),
+  and the zone curve bends after Region 1. Target: Region 2 boss in 1 to 3 weeks of normal play,
+  Region 3 in 1 to 2 months. The sim gains a `--days` mode (task M6).
+- **One Roster board** shows every benched character with one status: Resting, Job or Expedition.
+- **Names:** the camp-level building is the **Hearth** (Campfire, Hearth, Lantern Hall). Shrine
+  bonuses are **Blessings**, not Relics.
+- **Omens are pure upside.** Twists are opt-in **Dares**. Away time uses the Omen of the day you left.
+- **Buildings never gate recipes.** Station levels add perks only. The Watchtower adds to the
+  Hourglass relic, up to a 24h away cap.
+- **The World tab becomes the Camp tab.** The raid section moves inside it unchanged.
+- **Build speed-ups are never sold.** Lantern Light gives no direct power. Titles are local for now.
+- **Next Up** is added. It shows the 3 goals closest to done across every system, and systems
+  add goals with `registerGoal`. It replaces a standalone Garden.
+- **The Deepwell and the Codex move to wave 3.** The Deepwell uses Oil as run health, so it needs
+  no party combat.
+- **Hero XP while away** is 50%, with the sim re-checking T1 and T2. At most 2 keystones are lit.
+  Expeditions show the grade before sending, never fail, and repeat up to 3 runs while away.
+- **Shared core (B0) is done:** `addBonus`/`bonus`, `deviceDay`/`deviceWeek`, and the away-cap,
+  per-skill XP and per-family yield hooks.
+
 ## Build order
 
 The party (Stage B) and crafting overhaul specs come first, because the Camp, Expeditions and
@@ -130,10 +155,10 @@ soon as their foundations are in.
 | Wave | Work |
 |---|---|
 | 1 | B1+B3 roster core and migration. B6 character art and writing. K1 craft data. K2 craft art. D1 specs for the new systems. Q1 "While you were away" and stats |
-| 2 | B2 synergies. B7 unlock avenues. B5 Party UI. K4 items core. Camp core. Almanac and Omens |
-| 3 | K5-K8 gathering and crafting. B4 companion uniques. Camp UI and art. Expeditions |
+| 2 | B2 synergies. B7 unlock avenues. B5 Party UI. K4 items core. M6 pacing and `--days` sim. Next Up. Almanac and Omens. Art style study, then the art conversion |
+| 3 | K5-K8 gathering and crafting. B4 companion uniques. Camp. Expeditions. Deepwell. Codex |
 | 4 | Stage C party combat (C1-C5). Settings and onboarding |
-| 5 | Deepwell. Constellations. Codex and Lantern Light |
+| 5 | Constellations. Region 2 spec |
 | 6 | Region 2: the Sunken Coast. The first festival |
 
 After every wave the coordinator merges, builds, runs the check and the balance sim,
