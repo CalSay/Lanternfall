@@ -201,7 +201,9 @@ function awayGains(secs) {
     r.note = 'Your party kept hammering the raid boss.';
     return r;
   }
-  const kills = dps * t / mobHp(S.zone);
+  // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
+  const baseDps = dps / boost;
+  const kills = baseDps > 0 ? t / (mobHp(S.zone) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
