@@ -61,20 +61,22 @@ on('classChosen', () => updatePortrait());
 on('mirrorUsed', () => updatePortrait());
 
 // tab icons
-// Party (two figures) and World (a globe with a lantern-light meridian): local maps, same 12x12 icon format.
+// Party (two figures), World (a globe with a lantern-light meridian) and Camp (a tent by a fire): local maps, same 12x12 icon format.
 const TAB_PX = {
   party: ['............','..11....22..','.1111..2222.','.1551..2552.','.1111..2222.','..11....22..','.1111..2222.','111111222222','111111222222','.1111..2222.','.1..1..2..2.','............'],
+  camp: ['............','.....1......','....121.....','...12221....','..1222221...','.122232221..','12223332221.','1223333322..','1233333332.7','..........77','66666666.767','............'],
   world: ['....1111....','..11222211..','.1222112221.','.1211111121.','122117711221','121117711121','121117711121','122117711221','.1211111121.','.1222112221.','..11222211..','....1111....']
 };
 const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
-  party: spriteURL('tab:party', TAB_PX.party, { 1: '#5F8BE8', 2: '#FF9E3D', 5: '#EFE6D6' }), world: spriteURL('tab:world', TAB_PX.world, { 1: '#3E9C8A', 2: '#2A5A6E', 7: '#F2C14E' }) };
+  party: spriteURL('tab:party', TAB_PX.party, { 1: '#5F8BE8', 2: '#FF9E3D', 5: '#EFE6D6' }), world: spriteURL('tab:world', TAB_PX.world, { 1: '#3E9C8A', 2: '#2A5A6E', 7: '#F2C14E' }),
+  camp: spriteURL('tab:camp', TAB_PX.camp, { 1: '#C9A56A', 2: '#8C6A43', 3: '#2A1E14', 6: '#6B4A2E', 7: '#FF9E3D' }) };
 document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= tabs, rename =================
 const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
-// Raid and Tavern are now parts of the World tab; old ids still open it.
-const TAB_ALIAS = { raid: 'world', tav: 'world' };
+// The World tab is now the Camp tab (id 'world' kept for old saves). Camp, Raid and Tavern are its parts; their ids still open it.
+const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
 function setTab(t) {
   const part = TAB_ALIAS[t] ? $('p-' + t) : null;
@@ -165,7 +167,7 @@ function ui(force) {
 
 // ================= feature UI registries =================
 // registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
-// tabId: adv | party | gat | forge | world, or raid | tav (the World tab's two parts).
+// tabId: adv | party | gat | forge | world, or camp | raid | tav (the Camp tab's three parts).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
 // mount(sec) runs once now; update(force) runs from ui() while that tab is open
 // (about 5 times a second, force = true right after player actions).
