@@ -45,3 +45,7 @@ The art style study is still running (owner leans 16-bit; wants clear section de
   synergies. The K4 exact-dps check now runs with `SYN_TUNE.on = 0`.
 - Next Up merged (55-goals.js registerGoal/topGoals, strip on Fight tab, away-card block with Go buttons via a small generic edit to 75-away.js: lines may carry group and go).
 - B5 Party tab merged. Coordinator fix: the sheet now reads B2's SYNERGIES array (it expected an object), so 'needs X' chips show.
+- Art style study merged (A chibi, B1 16-bit bold outline, B2 16-bit soft outline, C storybook,
+  D lamplit) and published for the owner: https://claude.ai/artifact/4w567kZ5vdzP6dsw1ahagB
+  Art director recommends B1 + D's lantern lighting. Conversion is about 6-8 agent-days: outfits
+  rewritten relative to body anchors; bones, poses, tiers and lights stay. Waiting on the owner's pick.
