@@ -5,7 +5,7 @@
 
 // ================= items =================
 function addItem(it) {
-  if (S.items.length >= BAG_MAX) { salvageGive(it); toast(`Your bag is full, so ${itemName(it)} was salvaged.`, 'raid'); return false; }
+  if (bagFull()) { salvageGive(it); toast(`Your bag is full, so ${itemName(it)} was salvaged.`, 'raid'); return false; }
   S.items.push(it); emit('itemAdded', { item: it }); return true;
 }
 function dropUnique(key, t) {
@@ -21,16 +21,19 @@ function dropUnique(key, t) {
 }
 
 function salvageGive(it) {
-  for (const [k, n] of Object.entries(RECIPE[it.slot])) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
+  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
   if (it.u) S.mats.ess[it.t - 1] += 10;
 }
-function equipItem(id) {
+// pos: hero position (defaults to the kind's own); the item must fit it for the hero's class.
+function equipItem(id, pos) {
   const it = itemById(id); if (!it) return false;
-  S.equip[it.slot] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
+  pos = pos || kindPos(it.slot);
+  if (!(pos in S.equip) || !fits(it, pos, 'hero')) return false;
+  S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
   return true;
 }
 function salvageItem(id) {
-  const it = itemById(id); if (!it || Object.values(S.equip).includes(id)) return false;
+  const it = itemById(id); if (!it || isEquipped(id)) return false;
   salvageGive(it);
   S.items = S.items.filter(i => i.id !== id);
   toast(`Salvaged ${itemName(it)} for materials.`, 'good'); save();
@@ -39,10 +42,10 @@ function salvageItem(id) {
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
 function forgeItem(slot, t) {
   const cost = craftCost(slot, t);
-  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || S.items.length >= BAG_MAX) return null;
+  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);
   const r = rollRarity();
-  const it = { id: S.nextId++, slot, t, r, plus: 0 };
+  const it = newItem(slot, t, r);
   addItem(it);
   gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)));
   toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } });

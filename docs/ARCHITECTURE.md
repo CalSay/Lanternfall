@@ -20,6 +20,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
+| 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
 | 50-sim.js | core | `tick`, combat, kills, xp, harvest, bosses, offline gains |
 | 51-actions.js | core | player actions: forge, equip, salvage, upgrade, buy, hire, relics, loot |
 | 52-raid.js | core | world boss damage and rewards |
