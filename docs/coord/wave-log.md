@@ -12,3 +12,7 @@
 - Q1 away report + Journal merged. New systems add offline lines via `on('away', r => ...)` or
   `registerAwayLine(r => {icon, txt, sub})`. `S.stats` added. Tavern "Lifetime" block moved to the
   Journal (local stats only; no online code touched). Journal sits 3rd in World: consider a shortcut.
+- B6 merged: rigs for all 18 companions, `STORIES`, `BIOS`, `JOIN_LINES`, `QUOTES`, `RARITY_FRAME` in
+  21-stories.js; preview prototypes/roster.html. Grenna/Anselm/Vesper wield maul/handbell/lute as their
+  role weapons (brief wins over the generic shield/tome rule). Polish backlog: shared skin ramp shades
+  faces very red at 1x; Vesper's lute body hidden; Corvin needs more bone-white.
