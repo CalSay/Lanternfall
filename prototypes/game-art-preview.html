@@ -1,0 +1,71 @@
+<title>Lanternfall Art Preview</title>
+<style>
+:root { color-scheme: dark; --bg: #140F1A; --panel: #1F1827; --line: #3A2F47; --bone: #EFE6D6; --muted: #A597B4; }
+body { margin: 0; background: var(--bg); color: var(--bone); font: 14px/1.4 system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 20px; margin: 0 0 4px; } h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 20px 0 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 6px; text-align: center; font-size: 12px; }
+.card canvas { display: block; image-rendering: pixelated; background: #0e1a22; }
+.card img { display: block; image-rendering: pixelated; background: #0e1a22; margin: 0 auto; }
+small { color: var(--muted); }
+pre { background: var(--panel); padding: 8px; white-space: pre-wrap; }
+</style>
+<main>
+<h1>Lanternfall art preview</h1>
+<p><small>Dev page: loads src/js/12-art-rigs.js and src/js/60b-baker.js directly. Each card shows idle0, idle1, wind, strike, hit and down at 2x, then the battle-scale idle and the portrait.</small></p>
+<h2>Heroes (tier 1 common / tier 3 rare+epic / tier 5 legendary)</h2><div class="row" id="heroes"></div>
+<h2>Companions</h2><div class="row" id="comps"></div>
+<h2>Enemies (13-art-enemies.js if present, else a mock slime)</h2><div class="row" id="enemies"></div>
+<h2>Bake timings (ms)</h2><pre id="times"></pre>
+</main>
+<script src="../src/js/12-art-rigs.js"></script>
+<script src="../src/js/13-art-enemies.js" onerror="this.remove()"></script>
+<script src="../src/js/60b-baker.js"></script>
+<script>
+'use strict';
+if (typeof ENEMY_RIGS === 'undefined' && typeof ENEMY_ART === 'undefined') {
+  window.ENEMY_RIGS = { mockSlime: { flip: true, mats: { goo: '#5FAE4E' }, piv: { body: [0, -6] },
+    parts: [[3, 'body', 'goo', ['p', 1, -9, 0, -8, -8, -3, -13, 4, -12, 9, -5, 9, 0]], [4, 'body', 'eye', ['r', 3, -9, 1.4, 2]], [4, 'body', 'eyeLit', ['r', 3.2, -9, 0.6, 0.6]]],
+    poses: { idle0: {}, idle1: { body: { dy: 1 } }, wind: { body: { dx: -2, dy: 1 } }, strike: { body: { dx: 4, rot: 0.2 } } } } };
+}
+const FR = ['idle0', 'idle1', 'wind', 'strike', 'hit', 'down'];
+function card(parent, label, set, spec, T) {
+  const d = document.createElement('div'); d.className = 'card';
+  const z = 2, names = FR.filter(f => set[f]);
+  let w = 0, top = 0, bot = 0; for (const f of names) { const s = set[f]; w += (s.c.width + 4) * z; top = Math.max(top, s.oy); bot = Math.max(bot, s.c.height - s.oy); }
+  const c = document.createElement('canvas'); c.width = w + 60; c.height = (top + bot) * z + 4; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  let x = 2; const lights = [];
+  for (const f of names) { const s = set[f], dx = x, dy = top * z - s.oy * z + 2; g.drawImage(s.c, dx, dy, s.c.width * z, s.c.height * z); for (const l of s.lights) lights.push({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z }); x += (s.c.width + 4) * z; }
+  const s = set.idle0; g.drawImage(s.c, x + 10, top * z - s.oy + 2);
+  charLightPass(g, lights, T || 0, z);
+  d.append(c);
+  if (spec) { const im = new Image(); im.src = portraitURL(spec); d.append(im); }
+  const cap = document.createElement('div'); cap.innerHTML = label + ' <small>' + (set.ms ? set.ms.toFixed(1) + ' ms' : '') + '</small>'; d.append(cap);
+  parent.append(d);
+}
+const H = document.getElementById('heroes'), C = document.getElementById('comps'), E = document.getElementById('enemies');
+const looks = [[{ t: 1, r: 0 }, 'T1 common'], [{ t: 3, r: 1 }, 'T3 rare', { t: 3, r: 2 }], [{ t: 5, r: 3 }, 'T5 legendary']];
+for (const cls of Object.keys(RIG.CLASSES)) for (const [st, lbl, wpn] of looks) {
+  const gear = {}; for (const s of RIG.SLOT_KEYS) gear[s] = Object.assign({}, st); if (wpn) gear.weapon = wpn;
+  const spec = { cls, gear, skin: cls === 'ranger' ? 2 : 1, hair: cls === 'lanternmage' ? 3 : 0 };
+  card(H, RIG.CLASSES[cls].name + ' ' + lbl, charFrames(spec), spec);
+}
+{ const spec = heroSpec(); card(H, 'heroSpec() (no save)', charFrames(spec), spec); }
+for (const k of Object.keys(RIG.COMPANIONS)) { const spec = companionSpec(k); card(C, RIG.COMPANIONS[k].name + ' ' + RIG.COMPANIONS[k].title, charFrames(spec), spec); }
+const src = typeof ENEMY_RIGS !== 'undefined' ? ENEMY_RIGS : ENEMY_ART;
+for (const k of Object.keys(src)) { const set = enemyFrames(k); if (set) card(E, k, set); const el = enemyFrames(k, 'elder'); }
+// cache check: a second call must not bake
+const before = bakeStats().bakes; charFrames(companionSpec('bram')); portraitURL('bram');
+const st = bakeStats(); st.recallBakes = st.bakes - before;
+document.getElementById('times').textContent = JSON.stringify(st, null, 1);
+window.__stats = st;
+// close-up sheet: every companion and class idle0 at 3x, plus battle scale
+function sheet(keys) {
+  const specs = keys.map(k => RIG.CLASSES[k] ? classPreviewSpec(k) : companionSpec(k));
+  const c = document.createElement('canvas'); c.width = 60 * 3 * specs.length; c.height = 90 * 3 + 90; c.id = 'sheet';
+  specs.forEach((s, i) => { const sub = document.createElement('canvas'); sub.width = 180; sub.height = 270; drawCharPreview(sub, s, 3); c.getContext('2d').drawImage(sub, i * 180, 0); const f = charFrames(s).idle0; c.getContext('2d').drawImage(f.c, i * 180 + 90 - f.ox, 350 - f.oy); });
+  return c;
+}
+window.sheet = sheet;
+</script>
