@@ -7,7 +7,8 @@
 // colour where another piece sits on it), despeckle, then a 1 art px ink outline.
 //
 // Exposed: charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview,
-//          charLightPass, enemyFrames, bakeStats, ART (also bake, bakeSet, resolve, rasterize, PX)
+//          charLightPass, enemyFrames, bakeStats, idleTask, ART (also bake, bakeSet, resolve, rasterize, PX)
+// Frame sets are lazy: a frame bakes on first use or while the page is idle (lazySet).
 //
 // Frame: { c: canvas (2x), ox, oy, lights, anchor, art }. Feet at (ox, oy) in canvas px (= CSS px).
 //   lights: [{ x, y (canvas px), rgb: 'r,g,b', pulse, size (CSS px), r (glow radius, CSS px) }]
@@ -201,11 +202,65 @@ const ART = (() => {
     stats.bakes++; stats.ms += now() - t0;
     return fr;
   }
+  // ---------------- lazy frame sets ----------------
+  // A set bakes its `now` frames at once; the others (and `hit`, the flash of idle0) are getters
+  // that bake on first use. queueRest() also queues them to bake while the page is idle. So a new
+  // party member, foe or zone costs one or two frames of baking in the frame that needs it, not five
+  // or six, and a portrait costs one.
+  const idleQ = [];
+  let idleArmed = false;
+  function idleRun(dl) {
+    idleArmed = false;
+    const t0 = now();
+    let n = 0;
+    while (idleQ.length) {
+      const left = dl && dl.timeRemaining ? dl.timeRemaining() : 12 - (now() - t0);
+      if (left < 4 && !(n === 0 && (!dl || dl.didTimeout))) break; // a timed-out callback still does one task
+      n++;
+      const fn = idleQ.shift();
+      try { fn(); } catch (e) { console.error('[lanternfall] idle bake', e); }
+    }
+    if (idleQ.length) idleArm();
+  }
+  function idleArm() {
+    if (idleArmed) return; idleArmed = true;
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(idleRun, { timeout: 1500 });
+    else setTimeout(idleRun, 80);
+  }
+  // idleTask(fn): run fn when the page is idle (small tasks; a few per idle period, in order).
+  function idleTask(fn) { idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
+  function lazySet(names, nowNames, bakeOne) {
+    const set = {};
+    Object.defineProperty(set, '_queued', { value: false, writable: true, enumerable: false });
+    const def = (name, fn) => Object.defineProperty(set, name, {
+      configurable: true, enumerable: true,
+      get() { const v = fn(); Object.defineProperty(set, name, { value: v, writable: true, enumerable: true, configurable: true }); return v; }
+    });
+    for (const f of names) def(f, () => bakeOne(f));
+    if (names.includes('idle0')) def('hit', () => flash(set.idle0));
+    for (const f of nowNames) if (names.includes(f)) void set[f];
+    return set;
+  }
+  // Queue a lazy set's unbaked frames for idle time (once per set).
+  function queueRest(set) {
+    if (!set || set._queued !== false) return set;
+    set._queued = true;
+    for (const f of Object.keys(set)) { const d = Object.getOwnPropertyDescriptor(set, f); if (d && d.get) idleTask(() => void set[f]); }
+    return set;
+  }
+
   // Bake the named frames of a resolved character. Frames: idle0, idle1, wind, strike, down (+ hit from idle0).
-  function bakeSet(rs, names) {
-    const t0 = now(), set = {};
-    for (const f of names || ['idle0', 'idle1', 'wind', 'strike', 'down']) set[f] = bakeChar(rs, f);
-    if (set.idle0) set.hit = flash(set.idle0);
+  // lazy: bake idle0 and idle1 now ('lite': idle0 only), the rest on first use (see lazySet).
+  function bakeSet(rs, names, lazy) {
+    const t0 = now();
+    const list = names || ['idle0', 'idle1', 'wind', 'strike', 'down'];
+    let set;
+    if (lazy) set = lazySet(list, lazy === 'lite' ? ['idle0'] : ['idle0', 'idle1'], f => bakeChar(rs, f));
+    else {
+      set = {};
+      for (const f of list) set[f] = bakeChar(rs, f);
+      if (set.idle0) set.hit = flash(set.idle0);
+    }
     set.ms = now() - t0;
     return set;
   }
@@ -216,13 +271,14 @@ const ART = (() => {
   const cacheGet = k => { const v = setCache.get(k); if (v) { setCache.delete(k); setCache.set(k, v); } return v; };
   const cachePut = (k, v) => { setCache.set(k, v); while (setCache.size > MAX_SETS) setCache.delete(setCache.keys().next().value); return v; };
   const hashOf = spec => JSON.stringify(spec);
-  // charFrames(spec) -> { idle0, idle1, wind, strike, hit, down }; cached by spec hash.
-  function charFrames(spec) {
-    const k = 'c' + hashOf(spec), hit = cacheGet(k); if (hit) return hit;
+  // charFrames(spec) -> { idle0, idle1, wind, strike, hit, down }; cached by spec hash. Frames past
+  // idle0/idle1 bake on first use or in idle time. lite (portraits): bake idle0 only and queue nothing.
+  function charFrames(spec, lite) {
+    const k = 'c' + hashOf(spec), hit = cacheGet(k); if (hit) return lite ? hit : queueRest(hit);
     const rs = resolve(spec); if (!rs) return null;
-    const set = bakeSet(rs);
+    const set = bakeSet(rs, null, lite ? 'lite' : true);
     stats.last[spec.comp || spec.cls || '?'] = Math.round(set.ms * 10) / 10;
-    return cachePut(k, set);
+    return cachePut(k, lite ? set : queueRest(set));
   }
 
   // ---------------- specs from game state ----------------
@@ -266,7 +322,7 @@ const ART = (() => {
   const PORT = 16;
   const portraitCache = new Map();
   function portraitCanvas(spec) {
-    const set = charFrames(spec); if (!set) return null;
+    const set = charFrames(spec, true); if (!set) return null;
     const f = set.idle0, a = f.anchor;
     const hx = f.artOx + a.hx, hy = f.artOy + a.hy;
     const x0 = Math.round(hx - PORT / 2), y0 = Math.round(hy - PORT * .44);
@@ -385,8 +441,8 @@ const ART = (() => {
       else { const f = OLD_FIXED[k] || OLD_FIXED.void; res = m(f[0], f[1]); }
       return (mcache[k] = res);
     };
-    const set = {};
-    for (const f of ['idle0', 'idle1', 'wind', 'strike']) {
+    const bakeOne = f => {
+      const t1 = now();
       const pose = Object.assign({}, (rig.poses && (rig.poses[f] || rig.poses.idle0)) || {});
       const list = pose.drawn && rig.swap ? rig.parts.filter(p => !rig.swap.rest.includes(p)).concat(rig.swap.drawn) : rig.parts;
       const tx = oldTx(pose, rig), sx = scale * (rig.flip ? -1 : 1);
@@ -402,18 +458,20 @@ const ART = (() => {
         const small = FLATK[mt.kind] && w * h < 6;
         parts.push({ z: p[0], ord: i, m: mt, s, o: small || s.t === 'q' ? { nl: 1, lr: 7 } : { bev: .9 } });
       });
-      set[f] = toCanvas(rasterize(parts));
-      stats.bakes++;
-    }
-    set.hit = flash(set.idle0);
-    set.ms = now() - t0; stats.ms += set.ms;
+      const fr = toCanvas(rasterize(parts));
+      stats.bakes++; stats.ms += now() - t1;
+      return fr;
+    };
+    // idle0 now; idle1, wind, strike and hit on first use or when idle (lazySet)
+    const set = queueRest(lazySet(['idle0', 'idle1', 'wind', 'strike'], ['idle0'], bakeOne));
+    set.ms = now() - t0;
     stats.last['enemy:' + key] = Math.round(set.ms * 10) / 10;
     return cachePut(ck, set);
   }
 
   const bakeStats = () => ({ bakes: stats.bakes, totalMs: Math.round(stats.ms), perSet: Object.assign({}, stats.last), cached: setCache.size });
 
-  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
+  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
 })();
 const { charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview, charLightPass, enemyFrames, bakeStats } = ART;
-const bake = ART.bake, bakeSet = ART.bakeSet;
+const bake = ART.bake, bakeSet = ART.bakeSet, idleTask = ART.idleTask;

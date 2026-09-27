@@ -209,5 +209,6 @@ node tools/check.mjs                         # dist syntax + headless smoke test
 node tools/sim.mjs --policy mixed --hours 2 --seed 1   # balance timeline (policy fight|mixed, --every MIN)
 node tools/sim.mjs --days 30 --class warden          # normal play over days (check-ins + away gains), docs/design/pacing.md
 node tools/sim.mjs --targets                          # PASS/FAIL for T1, T2, T10 and the pacing targets; retune with --pace k=v
+node tools/perf.mjs --quick                  # frame, load, tap and memory benchmark vs the budget (docs/design/perf.md)
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
 ```
