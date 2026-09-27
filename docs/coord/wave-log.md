@@ -203,3 +203,7 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   closeMenu(). Not done yet: card-level progressive disclosure (hero rows, camp list, almanac cards).
   Follow-up: on tall portrait stages the sprites are small with empty sky; scale the party and foes with
   height, and use the room for a combat HUD (party/enemy HP bars, ability cooldowns) (HUD task).
+- HUD merged: height-aware zoom (phones now 3 CSS px per art px), party/foe HP bars, ability gauges,
+  status chips (Guard, Blessing, Focus, Embers, buffs), boss "!" telegraph with a wind-up ring, a Glint
+  sparkle, a 60px ability button with a cooldown sweep, and a HUD toggle (S.settings.hud). Stage C
+  hooks to fill: unitHp(key), unitCd(key), bossTelegraph() (defaults in 55-party.js).
