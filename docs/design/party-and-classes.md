@@ -1017,3 +1017,9 @@ These override the spec above where they conflict.
 - **Round 4:** 18 characters (5 Common, 5 Rare, 5 Epic, 3 Legendary), each with a deterministic unlock route across progress, quests, boss tokens with pity, Renown, achievements and bestiary, the Tavern visitor, crafting, and optional raid or expedition shortcuts. No random paid pulls, no gacha, nothing pay-to-win.
 - **Mirror of Embers:** zone boss drop only, 2% from zone 36. It is not sold for raid Embers.
 - **Supports and casters:** allowed in any row, with warnings. Auto-placement puts them in the back row.
+
+### Owner decisions, round 5 (2026-09-27)
+
+- **Rarity is a flat base-power multiplier.** Common x1, Rare x1.5, Epic x2.2, Legendary x3.2. Every rarity uses the same per-level growth (x1.080), so the gap never widens with level. Drop the per-rarity growth rates.
+- **The Legendary hunt stays long, as designed.** Elowen takes about 6–12 hours; Caedmon and Corvin take 10 hours or more.
+- **The Tavern visitor uses the device date** (coordinator's call). Clock changes only affect the player's own single-player game, so there is no play-time gate.
