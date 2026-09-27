@@ -54,7 +54,18 @@ const RIG = (() => {
     char: ramp('#3A2C2A'), pipRobe: ramp('#5E3A7E'), pipHat: ramp('#4A2E68'), patch: ramp('#A8763E'), emberCloth: ramp('#D8702E'),
     steel: ramp('#6E8CA8', true), wingwhite: ramp('#C8D4E0', true), teal: ramp('#2E6E6E'),
     indigo: ramp('#3A3478'), lilac: ramp('#C8B8E8'),
-    plaid: ramp('#A23A30'), plaidDk: ramp('#4A1C20'), brown: ramp('#6A4A30'), boots: ramp('#4A3428')
+    plaid: ramp('#A23A30'), plaidDk: ramp('#4A1C20'), brown: ramp('#6A4A30'), boots: ramp('#4A3428'),
+    // B6 roster: Maren, Thessaly, Anselm, Grenna, Isolde, Morwen, Vesper, Caedmon, Corvin
+    ashgrey: ramp('#7A7680'), ashcloak: ramp('#4E4B56'), tealLamp: { emit: '#C8FFF0', light: '140,235,215' }, eyeTeal: { emit: '#BFF4EA' },
+    murk: ramp('#4A5A36'), greyteal: ramp('#56706C'), reed: ramp('#A8985C'), reedDk: ramp('#6E6440'), bogGlow: { emit: '#B8F08A', light: '160,230,120' },
+    bronze: ramp('#B07A3A', true), rope: ramp('#C8B890'), cowl: ramp('#4E3422'),
+    slate: ramp('#5E6470'), rust: ramp('#9A5A34'), dust: { emit: '#BDB5AA' },
+    dusk: ramp('#2A2230'), rose: ramp('#B0566E'), seal: ramp('#9E2E3A'),
+    witch: ramp('#2A2230'), wax: ramp('#E8E0CC'), flameG: { emit: '#A8FF8A', light: '140,255,120' }, flameV: { emit: '#D8A8FF' }, flameO: { emit: '#FFB050' }, flameB: { emit: '#9ADCFF' },
+    vteal: ramp('#2E7A74'), vtealDk: ramp('#1F5553'), feather: ramp('#E8D8A8'),
+    charPlate: ramp('#3A2E30', true), ash: ramp('#7A7070'), seam: { emit: '#FF7A2E' },
+    seamGlow: { emit: '#FFA040', light: '255,130,50', pulse: true }, emberEye: { emit: '#FFD070', light: '255,150,60', pulse: true },
+    coatBlack: ramp('#241E2A'), violetLine: { emit: '#C8A8FF' }, ashface: ramp('#686470')
   };
   const SKINS = ['#F0C8A0', '#C98E62', '#7E5238'];
   const HAIRS = ['#3A2A24', '#8A4A2A', '#C8A060', '#B8B4C0'];
@@ -301,6 +312,93 @@ const RIG = (() => {
       [7, 'armF', 'D', ['r', 4.4, -68, 1.8, 4.4]],
       [7, 'armF', 'R', ['r', 5.5, -24, 2.2, 3.4], 1],
       [7, 'armF', 'G', ['r', 11.8, -70, 0.7, 6.2], 2]
+    ] },
+    // ----- B6 roster role weapons -----
+    towerShield: { name: 'Tower Shield', fam: 'ore', fam2: 'hide', parts: [
+      [5, 'armB', 'P', ['p', 0, -12.8, -49.4, 0.8, -49.4, 0.8, -14.6, -12.8, -14.6]],
+      [5, 'armB', 'Q', ['p', 0, -11.6, -48.2, -0.4, -48.2, -0.4, -15.8, -11.6, -15.8]],
+      [5, 'armB', 'R', ['r', -6.6, -48.2, 1.2, 32.4], 1],
+      [5, 'armB', 'P', ['e', -6, -30, 1.9, 1.9]],
+      [5, 'armB', 'G', ['e', -6, -30, 1, 1], 2],
+      // the lantern hung from the shield's top edge
+      [5, 'armB', 'iron', ['r', -3.4, -50.6, 0.8, 4]],
+      [5, 'armB', 'iron', ['r', -5, -46.8, 4, 1]],
+      [5, 'armB', 'tealLamp', ['r', -4.6, -45.8, 3.2, 4.4]],
+      [5, 'armB', 'iron', ['r', -5, -41.4, 4, 1]]
+    ] },
+    bottleStaff: { name: 'Bottle Staff', fam: 'wood', fam2: 'crystal', parts: [
+      [7, 'armF', 'P', ['p', 0, 5.8, -64, 7.2, -64.4, 7.4, -16, 5.8, -16]],
+      [7, 'armF', 'D', ['p', 1, 4.8, -64, 6.2, -68, 8.8, -67, 8.4, -63.4, 7, -62.4]],
+      [7, 'armF', 'D', ['r', 2.8, -64.2, 9.4, 1]],
+      [7, 'armF', 'string', ['r', 3.1, -63.2, 0.45, 3.2]], [7, 'armF', 'string', ['r', 11.3, -63.2, 0.45, 4.4]], [7, 'armF', 'string', ['r', 9.1, -63.2, 0.45, 1.6]],
+      [7, 'armF', 'Qc', ['e', 3.3, -58.6, 1.3, 1.7]],
+      [7, 'armF', 'bogGlow', ['e', 11.5, -57.4, 1.3, 1.7]],
+      [7, 'armF', 'Qc', ['e', 9.3, -60.4, 1, 1.3]],
+      [7, 'armF', 'R', ['r', 5.5, -50, 2.2, 1], 1],
+      [7, 'armF', 'G', ['e', 6.5, -44, 0.8, 0.8], 2]
+    ] },
+    handbell: { name: 'Handbell', fam: 'ore', fam2: 'wood', parts: [
+      [7, 'armF', 'Q', ['r', 6, -33, 1.1, 5.4]],
+      [7, 'armF', 'P', ['p', 1, 3.8, -22.2, 9.2, -22.2, 8.4, -26.4, 6.6, -28, 4.6, -26.4]],
+      [7, 'armF', 'R', ['r', 3.8, -23, 5.4, 0.9], 1],
+      [7, 'armF', 'iron', ['e', 6.5, -21.6, 0.8, 0.8]],
+      [7, 'armF', 'G', ['e', 6.5, -25.4, 0.7, 0.7], 2]
+    ] },
+    maul: { name: 'Maul', fam: 'ore', fam2: 'wood', parts: [
+      [7, 'armF', 'Q', ['p', 0, 5.8, -67, 7.4, -67, 7.4, -15, 5.8, -15]],
+      [7, 'armF', 'P', ['p', 0, 1.2, -74.4, 12, -74.4, 12, -65.6, 1.2, -65.6]],
+      [7, 'armF', 'D', ['r', 9.8, -74.4, 2.2, 8.8]],
+      [7, 'armF', 'D', ['r', 1.2, -70.6, 10.8, 1]],
+      [7, 'armF', 'R', ['r', 0.8, -75, 11.6, 1.1], 1], [7, 'armF', 'R', ['r', 0.8, -66.2, 11.6, 1.1], 1],
+      [7, 'armF', 'G', ['e', 5.6, -72.4, 1, 1], 2],
+      [7, 'armF', 'D', ['r', 5.6, -22, 2, 4]]
+    ] },
+    twinBlades: { name: 'Twin Blades', fam: 'ore', fam2: 'hide', parts: [
+      // front hand: short straight blade, point up; back hand: reverse grip, point down
+      [7, 'armF', 'Q', ['r', 5.8, -31.4, 1.4, 5]],
+      [7, 'armF', 'D', ['r', 4.2, -32.6, 4.6, 1]],
+      [7, 'armF', 'P', ['p', 0, 5.6, -32.4, 7.6, -32.4, 7.4, -45, 6.6, -47.4, 5.8, -45]],
+      [7, 'armF', 'G', ['r', 6.4, -44, 0.5, 10], 2],
+      [1, 'armB', 'Q', ['r', -6.6, -31.6, 1.4, 4.4]],
+      [1, 'armB', 'D', ['r', -8.2, -27.4, 4.6, 1]],
+      [1, 'armB', 'P', ['p', 0, -7, -26.6, -4.8, -26.6, -5, -15, -5.9, -12.8, -6.8, -15]],
+      [1, 'armB', 'G', ['r', -6.1, -25.6, 0.5, 10], 2]
+    ] },
+    candelabra: { name: 'Candelabra', fam: 'wood', fam2: 'ore', parts: [
+      [7, 'armF', 'P', ['r', 5.9, -66, 1.3, 50]],
+      [7, 'armF', 'Q', ['p', 1, 2.4, -67.8, 4, -66.4, 6.5, -65.4, 9, -66.4, 10.6, -67.8, 10.6, -66.4, 6.5, -64, 2.4, -66.4]],
+      [7, 'armF', 'Q', ['r', 2.2, -69.6, 2, 1]], [7, 'armF', 'Q', ['r', 9.6, -69.6, 2, 1]], [7, 'armF', 'Q', ['r', 5.5, -67.6, 2, 1]],
+      [7, 'armF', 'wax', ['r', 2.5, -72.6, 1.4, 3]], [7, 'armF', 'wax', ['r', 9.9, -72.6, 1.4, 3]], [7, 'armF', 'wax', ['r', 5.8, -72, 1.4, 4.4]],
+      [7, 'armF', 'wax', ['r', 2.4, -69.8, 0.6, 2.4]], [7, 'armF', 'wax', ['r', 7, -67.8, 0.6, 3]],
+      [7, 'armF', 'flameV', ['e', 3.2, -73.8, 0.7, 1.2]], [7, 'armF', 'flameO', ['e', 10.6, -73.8, 0.7, 1.2]],
+      [7, 'armF', 'flameG', ['e', 6.5, -73.4, 0.8, 1.4]],
+      [7, 'armF', 'R', ['r', 5.5, -58, 2.1, 1], 1],
+      [7, 'armF', 'G', ['e', 6.55, -62, 0.8, 0.8], 2]
+    ] },
+    lute: { name: 'Lute', fam: 'wood', fam2: 'fibre', parts: [
+      [0, 'up', 'D', ['p', 0, -9, -42, -7.2, -42, -11.6, -62, -13.2, -61.6]],
+      [0, 'up', 'D', ['p', 1, -13.6, -61.4, -11.4, -62.2, -12, -66, -14.4, -65.2]],
+      [0, 'up', 'P', ['e', -8.6, -36.6, 4.4, 5.6]],
+      [0, 'up', 'R', ['e', -8.6, -38, 2, 2], 1],
+      [0, 'up', 'shade', ['e', -8.6, -38, 1.2, 1.2]],
+      [0, 'up', 'Q', ['r', -10.6, -33.4, 4, 1]],
+      [0, 'up', 'G', ['e', -7.4, -34, 0.8, 0.8], 2]
+    ] },
+    greatshield: { name: 'Greatshield', fam: 'ore', fam2: 'hide', parts: [
+      [5, 'armB', 'P', ['p', 1, -14, -50.4, 2.6, -50.4, 2.8, -36, -0.6, -23.6, -5.6, -15.4, -10.8, -23.6, -14.2, -36]],
+      [5, 'armB', 'char', ['p', 1, -12.6, -49, 1.2, -49, 1.4, -36.2, -1.8, -24.8, -5.6, -18.4, -9.6, -24.8, -12.8, -36.2]],
+      [5, 'armB', 'seamGlow', ['p', 0, -5.2, -49, -3.6, -49, -5, -42.4, -3.4, -36, -5.6, -29, -4.4, -22.4, -5.6, -18.8, -6.8, -22.4, -5.4, -29, -7.4, -36, -6.4, -42.4]],
+      [5, 'armB', 'R', ['e', -11.6, -47.2, 0.8, 0.8], 1], [5, 'armB', 'R', ['e', 0.2, -47.2, 0.8, 0.8], 1], [5, 'armB', 'R', ['e', -11.2, -36.2, 0.8, 0.8], 1], [5, 'armB', 'R', ['e', -0.2, -36.2, 0.8, 0.8], 1]
+    ] },
+    curvedDaggers: { name: 'Curved Daggers', fam: 'ore', fam2: 'hide', parts: [
+      [7, 'armF', 'Q', ['r', 5.8, -31.2, 1.4, 4.8]],
+      [7, 'armF', 'D', ['r', 4.6, -32.6, 4.2, 1]],
+      [7, 'armF', 'P', ['p', 1, 5.6, -32, 7.8, -32, 10.2, -38, 10, -45, 8.6, -43, 7.2, -37]],
+      [7, 'armF', 'G', ['p', 0, 9.4, -38.4, 10.2, -38.6, 10, -45, 9.4, -43.4], 2],
+      [1, 'armB', 'Q', ['r', -6.6, -31.4, 1.4, 4.4]],
+      [1, 'armB', 'D', ['r', -8, -27.4, 4.2, 1]],
+      [1, 'armB', 'P', ['p', 1, -7, -26.6, -4.8, -26.6, -4.6, -21, -7, -14, -8.2, -16, -6.8, -21]],
+      [1, 'armB', 'G', ['p', 0, -8.4, -16.4, -7.6, -15, -6.8, -20.4, -7.4, -20.6], 2]
     ] }
   };
   ITEMS.hoodCream = Object.assign({}, ITEMS.hood, { fam: 'fibre', dye: '#EFE6D6', parts: ITEMS.hood.parts.filter(p => p[2] !== 'eyeLit') });
@@ -321,7 +419,8 @@ const RIG = (() => {
     shoot: { wind: { rotF: -0.12, lean: -0.6, drawn: true }, strike: { rotF: -0.05, lean: 0.4 } },
     swing: { wind: { rotF: -1.1, lean: -0.5 }, strike: { rotF: 1.2, dx: 1.5, lean: 0.8 } },
     thrust: { wind: { rotF: 1.25, dx: -2, lean: -1 }, strike: { rotF: 1.5, dx: 4, lean: 1.6 } },
-    chop: { wind: { rotF: -2.5, up: 0.5, lean: -1 }, strike: { rotF: 1.0, dx: 3, lean: 1.6, up: 0.6 } }
+    chop: { wind: { rotF: -2.5, up: 0.5, lean: -1 }, strike: { rotF: 1.0, dx: 3, lean: 1.6, up: 0.6 } },
+    twin: { wind: { rotF: -1.9, rotB: 0.6, up: 0.5, lean: -0.8 }, strike: { rotF: 1.2, rotB: -0.9, dx: 4, lean: 1.6 } }
   };
   const DOWN_POSE = { fall: -1.48, rotF: 0.9, rotB: -0.6, head: 0.4 };
 
@@ -456,7 +555,184 @@ const RIG = (() => {
         [2, 'legs', 'brown', ['p', 0, -4.9, -31, -0.4, -31, -1.2, -16, -4.5, -16]], [2, 'legs', 'brown', ['p', 0, -4.5, -16.6, -1.2, -16.6, -1.8, -5, -4.2, -5]],
         [2, 'legs', 'brown', ['p', 0, 0.2, -31, 4.8, -31, 4.9, -16, 1.4, -16]], [2, 'legs', 'brown', ['p', 0, 1.4, -16.6, 4.9, -16.6, 4.5, -5, 2, -5]],
         [2, 'legs', 'boots', ['p', 1, -4.9, -6.4, -1.2, -6.4, 0.4, -1.3, 0.5, 0, -5, 0]], [2, 'legs', 'boots', ['p', 1, 1.3, -6.4, 4.9, -6.4, 7.4, -1.3, 7.4, 0, 1.2, 0]]
-      ].concat(ROLLED) }
+      ].concat(ROLLED) },
+
+    // ---------- B6: the rest of the roster ----------
+    // pose (optional): bone offsets added to every frame except 'down' (lean forward, head drop = a stoop).
+    maren: { name: 'Maren', title: 'the Lampwarden', S: 1.03, bw: 1.06, skin: SKINS[1], hair: '#B8B4C0', dye: '#5A5862', hairStyle: 'long', anim: 'slash', idleRot: 0.2,
+      gear: [{ key: 'towerShield', tier: 2, rar: 1, role: true, m: { Q: 'ashface' } }],
+      extra: [
+        // heavy cloak falling behind to the ankles
+        [0, 'up', 'ashcloak', ['p', 1, -6, -51, 3, -51.5, 5, -47, 2, -44, -1, -30, 1, -4, -2, -1.4, -10.4, -1.6, -12, -12, -10.8, -30, -9.4, -44]],
+        // long ash surcoat, teal belt, iron vambrace
+        [3, 'up', 'ashgrey', ['p', 1, -6.6, -48.6, 6.2, -48.6, 6.5, -43, 5, -34, 6.8, -17, -6.6, -17, -5, -34, -6.5, -43]],
+        [3, 'up', 'ashcloak', ['r', -0.2, -34, 1, 17]],
+        [3, 'up', '#6FA8A0', ['r', -5.4, -33.6, 11, 1.8]],
+        [3, 'up', 'iron', ['r', 1.2, -33.4, 1.6, 1.4]],
+        [2, 'legs', 'iron', ['p', 0, -4.6, -14, -1.2, -14, -1.6, -4.4, -4.2, -4.4]], [2, 'legs', 'iron', ['p', 0, 1.4, -14, 4.9, -14, 4.5, -4.4, 1.9, -4.4]],
+        // mantle over the shoulders
+        [3, 'up', 'ashcloak', ['p', 1, -7.6, -50.4, 7, -50.4, 8, -44, 4, -41, -3, -40.6, -8.2, -43]],
+        [6, 'armF', 'ashcloak', ['p', 1, 3, -50, 8.2, -49.6, 9, -44.6, 3.6, -43.6]],
+        [6, 'armF', 'iron', ['p', 0, 4.3, -37, 7.5, -37, 7.8, -31, 5, -31]],
+        // deep hood: the face stays in shadow, one pale eye
+        [4, 'head', 'ashcloak', ['p', 1, -5.8, -57.4, -4.2, -63.6, 2.4, -65, 6.8, -61.4, 7.6, -55, 5.8, -52.4, 6, -57.8, 3, -60.4, 0, -60.2, -1.4, -56, -3.6, -51.4, -6.8, -50]],
+        [4, 'head', 'shade', ['p', 0, -0.2, -60.4, 5.8, -58.6, 6, -52.8, 1, -52, -0.8, -56]],
+        [4, 'head', 'eyeTeal', ['r', 3.2, -57.8, 1, 0.9]],
+        // flanged mace
+        [7, 'armF', 'wood1', ['r', 5.9, -40, 1.3, 15]],
+        [7, 'armF', 'iron', ['e', 6.5, -42.4, 2.3, 2.6]],
+        [7, 'armF', 'iron', ['r', 3.6, -43, 5.8, 1.2]],
+        [7, 'armF', 'iron', ['r', 6, -46.4, 1, 1.6]]
+      ] },
+    thessaly: { name: 'Thessaly', title: 'the Bog Seer', S: 0.95, bw: 0.88, skin: SKINS[1], hair: '#9A9A88', dye: '#56706C', hairStyle: 'long', anim: 'cast', idleRot: 0.1, pose: { lean: 1.3, head: 1 },
+      gear: [{ key: 'bottleStaff', tier: 2, rar: 1, role: true }],
+      extra: [
+        // ragged floor-length robe, grey-teal shawl, reed belt and a gourd
+        [3, 'up', 'murk', ['p', 0, -6.6, -48.8, 6.2, -48.8, 6.6, -42, 4.8, -34, 7, -12, 7.6, -1, 5, -2.8, 3, -0.6, 0, -2.6, -3, -0.6, -6, -2.6, -7.6, -0.8, -6.8, -12, -4.8, -34, -6.6, -42]],
+        [3, 'up', 'greyteal', ['p', 1, -7.4, -50.4, 6.8, -50.4, 7.4, -45, 3, -39, 0.6, -36.6, -3, -39.6, -7.8, -44]],
+        [3, 'up', 'reed', ['r', -5, -33.6, 10, 1.2]],
+        [3, 'up', 'reedDk', ['e', -5.4, -29, 1.7, 2.3]], [3, 'up', 'reed', ['r', -5.8, -31.8, 0.8, 0.8]],
+        [1, 'armB', 'murk', ['p', 1, -7.9, -40, -3.8, -40, -3, -31, -8.6, -31]],
+        [6, 'armF', 'murk', ['p', 1, 3.8, -40, 7.8, -40, 9, -31, 4, -31]],
+        // wide reed hat
+        [4, 'head', 'reed', ['e', 1.2, -60.6, 10.6, 1.7]],
+        [4, 'head', 'reed', ['p', 1, -3.4, -61, 5.8, -61, 3.4, -64.8, 1, -66.4, -1.4, -64.8]],
+        [4, 'head', 'reedDk', ['r', -3.2, -62.4, 8.6, 1.1]],
+        [4, 'head', 'reedDk', ['p', 0, -9.2, -60.4, -8.2, -60.4, -8.8, -58.4]], [4, 'head', 'reedDk', ['p', 0, 10.4, -60.6, 11.4, -60.6, 11, -58.6]]
+      ] },
+    anselm: { name: 'Anselm', title: 'the Bellringer', S: 0.9, bw: 1.2, skin: SKINS[0], hair: '#6A4A30', dye: '#6A4A30', hairStyle: 'bald', anim: 'swing', idleRot: 0.05,
+      gear: [{ key: 'handbell', tier: 1, rar: 1, role: true }],
+      extra: [
+        // the great bell strapped to his back, taller than his head
+        [0, 'up', 'bronze', ['e', -7, -67, 1.8, 1.5]],
+        [0, 'up', 'bronze', ['p', 1, -9.8, -65.6, -4.2, -65.6, -2.4, -60, -1.8, -46, 0.6, -38.6, 0.8, -35.8, -14.8, -35.8, -14.6, -38.6, -12.2, -46, -11.6, -60]],
+        [0, 'up', 'bronze', ['r', -14.4, -40.4, 14.8, 1.2]],
+        [0, 'up', 'bronze', ['r', -12, -55, 9.4, 1]],
+        // round brown habit with a rope belt and a fallen cowl
+        [3, 'up', 'brown', ['p', 1, -6.8, -48.8, 6.4, -48.8, 8.6, -40, 9.2, -32, 7.8, -12, 8.6, -0.8, -8.4, -0.8, -7.6, -12, -7.2, -32, -7.2, -42]],
+        [3, 'up', 'cowl', ['p', 1, -6.4, -51.2, 4.8, -51.2, 5.8, -48, 1, -45.6, -6.8, -46.6]],
+        [3, 'up', 'leather', ['p', 0, -6.2, -46.6, -4.8, -47, 4, -33.6, 2.6, -33.2]],
+        [3, 'up', 'rope', ['r', -7.4, -33.2, 16.4, 1.4]],
+        [3, 'up', 'rope', ['p', 0, 4.4, -32, 5.4, -32, 5, -21, 4.2, -21]],
+        [3, 'up', 'cowl', ['r', -1, -20, 1, 19]],
+        [1, 'armB', 'brown', ['p', 1, -7.9, -48.9, -3.6, -48.9, -3.8, -38, -3, -31, -8.8, -31]],
+        [6, 'armF', 'brown', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8.4, -38, 9.4, -31, 4, -31]],
+        // tonsure: a ring of hair, bald crown
+        [4, 'head', 'hair', ['p', 1, -3.8, -60, 1.6, -60.4, 4.6, -59.4, 4.4, -58.2, 0, -58.8, -2.8, -57.8, -3, -55]]
+      ] },
+    grenna: { name: 'Grenna', title: 'the Stonebreaker', S: 1.08, bw: 1.3, skin: SKINS[1], hair: '#3A2A24', dye: '#5E6470', hairStyle: 'short', anim: 'chop', idleRot: 0.15,
+      gear: [{ key: 'maul', tier: 2, rar: 2, role: true }],
+      extra: [
+        // bare, dusty arms (skin over the sleeves)
+        [1, 'armB', 'skin', ['p', 0, -7.4, -46, -4, -46, -4.3, -38, -7.5, -38]], [1, 'armB', 'skin', ['p', 0, -7.4, -38.6, -4.4, -38.6, -4.8, -30, -7, -30]],
+        [6, 'armF', 'skin', ['p', 0, 4, -46, 7.4, -46, 7.2, -38, 4.2, -38]], [6, 'armF', 'skin', ['p', 0, 4.3, -38.6, 7.3, -38.6, 7.7, -30, 5, -30]],
+        [6, 'armF', 'slate', ['p', 1, 3.2, -49.6, 8, -49.2, 8.2, -45.4, 3.6, -45]],
+        [1, 'armB', 'slate', ['p', 1, -8.2, -49.2, -3.4, -49.6, -3.6, -45, -8.4, -45.4]],
+        [6, 'armF', 'dust', ['r', 5, -41, 0.7, 0.7]], [6, 'armF', 'dust', ['r', 6.4, -36, 0.7, 0.7]], [6, 'armF', 'dust', ['r', 5.4, -33, 0.7, 0.7]],
+        [1, 'armB', 'dust', ['r', -6.4, -40, 0.7, 0.7]], [1, 'armB', 'dust', ['r', -5.4, -34.6, 0.7, 0.7]],
+        // slate shirt, rust leather apron to the knee, belt, heavy boots
+        [3, 'up', 'slate', ['p', 1, -6.8, -48.8, 6.4, -48.8, 6.8, -43, 5, -34.5, 5.8, -29.5, -5.8, -29.5, -5, -34.5, -6.8, -43]],
+        [3, 'up', 'rust', ['p', 0, -4.2, -45.4, 4.6, -45.4, 5, -34, 6.6, -13, -5.4, -13, -4.4, -34]],
+        [3, 'up', 'rust', ['p', 0, -3.6, -49, -2.6, -49, -2, -45, -3, -45]], [3, 'up', 'rust', ['p', 0, 3, -49, 4, -49, 4, -45, 3, -45]],
+        [3, 'up', 'leather', ['r', -6, -33.4, 12.4, 2]],
+        [3, 'up', 'dust', ['r', -2, -26, 0.7, 0.7]], [3, 'up', 'dust', ['r', 2.4, -20, 0.7, 0.7]], [3, 'up', 'dust', ['r', -3.4, -16.4, 0.7, 0.7]],
+        [2, 'legs', 'boots', ['p', 1, -4.9, -8, -1.2, -8, 0.4, -1.3, 0.5, 0, -5, 0]], [2, 'legs', 'boots', ['p', 1, 1.3, -8, 4.9, -8, 7.4, -1.3, 7.4, 0, 1.2, 0]],
+        // hair tied back in a knot, dusty headband
+        [0, 'head', 'hair', ['e', -4, -59, 2, 2]],
+        [4, 'head', 'rust', ['p', 0, -3.6, -59.8, 4.8, -60.4, 4.9, -59.2, -3.8, -58.6]]
+      ] },
+    isolde: { name: 'Isolde', title: 'the Duskblade', S: 0.98, bw: 0.84, skin: SKINS[0], hair: '#1E1620', dye: '#2A2230', hairStyle: 'short', anim: 'twin', idleRot: 0.3,
+      gear: [{ key: 'twinBlades', tier: 3, rar: 2, role: true, glow: '#F0A0B8' }],
+      extra: [
+        // high tail of black hair
+        [0, 'head', 'hair', ['p', 1, -2, -61.8, -5, -62.8, -8.8, -58, -9.8, -49.6, -7.4, -53.6, -5, -58.4]],
+        // fitted dusk leathers, rose sash with a trailing end
+        [0, 'up', 'rose', ['p', 1, -4.6, -33.2, -3, -32.6, -7.8, -21.6, -9.4, -22.8]],
+        [3, 'up', 'dusk', ['p', 1, -6.4, -48.6, 6, -48.6, 6.3, -43, 4.4, -34.5, 5.6, -27, -5.6, -27, -4.4, -34.5, -6.3, -43]],
+        [3, 'up', 'rose', ['p', 0, -6, -47.4, -4.2, -48.6, 5.6, -34.4, 3.8, -33.4]],
+        [3, 'up', 'rose', ['r', -5, -33.6, 10.4, 1.8]],
+        [2, 'legs', 'dusk', ['p', 0, -4.6, -15, -1.2, -15, -1.4, -4.6, -4.4, -4.6]], [2, 'legs', 'dusk', ['p', 0, 1.4, -15, 4.9, -15, 4.5, -4.6, 1.9, -4.6]],
+        // the torn contract pinned to her belt, with its wax seal
+        [3, 'up', 'page', ['p', 0, 1.2, -32.6, 4.8, -32.6, 5.2, -26.2, 4, -27.4, 3, -25.6, 2.2, -27, 1.2, -25.8]],
+        [3, 'up', 'shade', ['r', 1.8, -30.2, 2.6, 0.5]], [3, 'up', 'seal', ['e', 3, -28.6, 0.9, 0.9]],
+        // mask over the lower face
+        [4, 'head', 'dusk', ['p', 1, -1.2, -56.4, 6, -56.6, 6, -54, 4, -51.8, -0.2, -52]]
+      ] },
+    morwen: { name: 'Morwen', title: 'the Candlewitch', S: 0.94, bw: 0.98, skin: '#DCCCBC', hair: '#46404C', dye: '#2A2230', hairStyle: 'long', anim: 'cast', idleRot: 0.1, pose: { lean: 1.6, head: 1.2 },
+      gear: [{ key: 'candelabra', tier: 2, rar: 2, role: true }],
+      extra: [
+        // ragged black robe, wax-white shawl with drips
+        [3, 'up', 'witch', ['p', 0, -6.8, -48.8, 6.4, -48.8, 6.8, -42, 5, -34, 7.6, -12, 8.4, -0.8, 5.6, -2.4, 3.6, -0.6, 1, -2.4, -2, -0.6, -5, -2.4, -8, -0.8, -7.4, -12, -5, -34, -6.8, -42]],
+        [3, 'up', 'wax', ['p', 1, -7.4, -50.4, 6.8, -50.4, 7.2, -45.4, 3, -41, 1, -38, -2.4, -41.6, -7.8, -44.6]],
+        [3, 'up', 'wax', ['r', 2, -41, 0.7, 3]], [3, 'up', 'wax', ['r', -4.6, -42.6, 0.7, 2.4]],
+        [3, 'up', 'wax', ['r', -5, -33.4, 10, 1]],
+        [1, 'armB', 'witch', ['p', 1, -7.9, -48.9, -3.6, -48.9, -3.8, -38, -3, -31, -8.8, -31]],
+        [6, 'armF', 'witch', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8.4, -38, 9.4, -31, 4, -31]],
+        // stringy hair over the side of the face
+        [4, 'head', 'hair', ['p', 0, -3.6, -58.4, -5, -49.6, -3, -48.2, -2.4, -55]],
+        // crown of dripping candles, each a different flame
+        [4, 'head', 'iron', ['r', -3.4, -61.6, 8.2, 1]],
+        [4, 'head', 'wax', ['r', -2.8, -65.6, 1.5, 4.2]], [4, 'head', 'wax', ['r', 0.4, -67.6, 1.7, 6.2]], [4, 'head', 'wax', ['r', 3.4, -65, 1.5, 3.6]],
+        [4, 'head', 'wax', ['r', -3, -61.2, 0.6, 3]], [4, 'head', 'wax', ['r', 2, -61.2, 0.6, 3.8]], [4, 'head', 'wax', ['r', 4.4, -61.2, 0.6, 2]],
+        [4, 'head', 'flameV', ['e', -2.05, -66.6, 0.7, 1.1]], [4, 'head', 'flameG', ['e', 1.25, -68.8, 0.8, 1.3]], [4, 'head', 'flameB', ['e', 4.15, -66, 0.7, 1.1]]
+      ] },
+    vesper: { name: 'Vesper', title: 'the Songweaver', S: 0.96, bw: 0.9, skin: SKINS[1], hair: '#A85A2E', dye: '#2E7A74', hairStyle: 'long', anim: 'cast', idleRot: -0.2,
+      gear: [{ key: 'lute', tier: 2, rar: 2, role: true }],
+      extra: [
+        // short cape behind the shoulders
+        [0, 'up', 'vtealDk', ['p', 1, -6, -51, 2, -51.4, -3, -46, -5.6, -42.6, -10.8, -41, -10.6, -45.6]],
+        // teal doublet with gold trim, strap for the lute
+        [3, 'up', 'vteal', ['p', 1, -6.4, -48.6, 6, -48.6, 6.3, -43, 4.6, -34.5, 6.4, -24, -6.2, -24, -4.6, -34.5, -6.3, -43]],
+        [3, 'up', 'gold', ['r', 0, -48, 1, 23.6]],
+        [3, 'up', 'leather', ['p', 0, -6.2, -40, -5, -40.6, 4.4, -48.8, 5.6, -48]],
+        [3, 'up', 'gold', ['r', -5.4, -33.4, 11, 1.4]],
+        [3, 'up', 'vtealDk', ['p', 1, -7.2, -50.4, 6.8, -50.4, 7.2, -46.6, 0.5, -45, -7.4, -46.6]],
+        [2, 'legs', 'boots', ['p', 1, -4.7, -10, -1.3, -10, 0.3, -1.3, 0.4, 0, -4.9, 0]], [2, 'legs', 'boots', ['p', 1, 1.4, -10, 4.8, -10, 7.2, -1.3, 7.2, 0, 1.3, 0]],
+        // feathered cap
+        [4, 'head', 'vtealDk', ['p', 1, -4.2, -58.4, 5.8, -58.8, 6.6, -60.4, 3, -63.6, -2.2, -63.2, -4.6, -60.6]],
+        [4, 'head', 'gold', ['r', -4, -59.4, 9.8, 0.9]],
+        [4, 'head', 'feather', ['p', 1, -1, -62.4, -6, -67.4, -12.4, -68.2, -15.6, -65.4, -11, -65.8, -5.8, -64.4, -2, -61]]
+      ] },
+    caedmon: { name: 'Caedmon', title: 'the Ashen Knight', S: 1.06, bw: 1.14, skin: SKINS[2], hair: '#1A1418', dye: '#2A2226', hairStyle: 'short', anim: 'slash', idleRot: 0.25,
+      gear: [{ key: 'greatshield', tier: 5, rar: 3, role: true }, { key: 'plate', tier: 5, rar: 1, m: { P: 'charPlate', D: 'char', R: 'ash' } },
+        { key: 'warblade', tier: 5, rar: 1, m: { P: 'charPlate', D: 'char', Q: 'leather', R: 'ash' } }],
+      extra: [
+        // burnt, tattered cloak
+        [0, 'up', 'char', ['p', 0, -6, -50, -1, -50.6, -4, -40, -6, -26, -8.6, -18, -9.6, -22, -11, -13, -11.8, -24, -10.4, -34, -9, -44]],
+        // ash tabard hanging below the belt, ember seams in the plate
+        [3, 'up', 'ash', ['p', 0, -3.2, -35.6, 4, -35.6, 4.8, -20, 2.2, -22, 0.4, -18.6, -1.4, -22, -4, -20]],
+        [3, 'up', 'seam', ['p', 0, -3.2, -47, -2.4, -47, -1, -41, -3.4, -36.4, -4.2, -36.6, -2, -41]],
+        [3, 'up', 'seam', ['p', 0, 3.2, -46.4, 4, -46.4, 3.4, -41.4, 2.6, -41.4]],
+        [2, 'legs', 'seam', ['r', 3, -14, 0.6, 6]], [2, 'legs', 'seam', ['r', -3.2, -13, 0.6, 5]],
+        [6, 'armF', 'seam', ['r', 5.6, -48, 0.6, 3.4]], [6, 'armF', 'seam', ['r', 5.8, -36.4, 0.6, 4]],
+        // flat-topped helm with a charred crest; ember eyes behind the slit
+        [0, 'head', 'ash', ['p', 1, 2, -62.6, -1, -65.6, -5.6, -66, -9.6, -63.4, -11.4, -58.6, -8.4, -61, -6.4, -58.4, -5.4, -61.4, -2.6, -61.4]],
+        [0, 'head', 'seam', ['p', 0, -11.6, -58.4, -10.4, -60.8, -9.6, -60, -10.8, -57.6]],
+        [4, 'head', 'charPlate', ['p', 1, -4.2, -62.6, 5.2, -63.2, 6.6, -57.6, 6.2, -51.4, -3.8, -51.4, -4.8, -56.8]],
+        [4, 'head', 'void', ['r', 1.2, -58.4, 5.4, 1.4]],
+        [4, 'head', 'emberEye', ['r', 3.4, -58.2, 1.8, 1]],
+        [4, 'head', 'seam', ['p', 0, -1.6, -63, -0.8, -63, -0.2, -55.6, -1, -55.6]]
+      ] },
+    corvin: { name: 'Corvin', title: "the Hollow King's Blade", S: 1.04, bw: 0.9, skin: SKINS[1], hair: '#101014', dye: '#241E2A', hairStyle: 'bald', anim: 'twin', idleRot: 0.3,
+      gear: [{ key: 'curvedDaggers', tier: 4, rar: 3, role: true, glow: '#B58CFF' }],
+      extra: [
+        // long black coat: tails behind, split front, violet edge on the hem
+        [0, 'up', 'coatBlack', ['p', 0, -6, -34, -1.6, -34, -3.6, -7, -9.8, -5, -11.4, -9.4]],
+        [0, 'up', 'violetLine', ['p', 0, -9.8, -5.4, -3.6, -7.4, -3.6, -6.6, -9.8, -4.6]],
+        [3, 'up', 'coatBlack', ['p', 1, -6.8, -48.8, 6.4, -48.8, 6.8, -42, 5, -34, 6.4, -20, 7.6, -8.6, 3, -9.6, 1, -24, -1, -9.6, -7.6, -8.6, -6.4, -20, -5, -34, -6.8, -42]],
+        [3, 'up', 'violetLine', ['p', 0, -7.4, -9.4, -1.2, -10.2, -1.2, -9.4, -7.4, -8.6]], [3, 'up', 'violetLine', ['p', 0, 3.2, -10.2, 7.4, -9.2, 7.4, -8.4, 3.2, -9.4]],
+        [3, 'up', 'bone', ['p', 0, -3.4, -49, -1.8, -49, 0.7, -45.4, 3.2, -49, 4.8, -49, 0.7, -43]],
+        [3, 'up', 'leather', ['r', -5.6, -33.8, 11.2, 1.6]],
+        // crown-shaped clasp
+        [3, 'up', 'bone', ['p', 0, -1.6, -39.4, -1.6, -43, -0.5, -41.4, 0.7, -43.6, 1.9, -41.4, 3, -43, 3, -39.4]],
+        [1, 'armB', 'coatBlack', ['p', 1, -7.9, -48.9, -3.6, -48.9, -3.8, -38, -3.4, -30.6, -8.4, -30.6]],
+        [6, 'armF', 'coatBlack', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8, -38, 8.8, -30.6, 4.2, -30.6]],
+        [2, 'legs', 'coatBlack', ['p', 1, -4.9, -9, -1.2, -9, 0.4, -1.3, 0.5, 0, -5, 0]], [2, 'legs', 'coatBlack', ['p', 1, 1.3, -9, 4.9, -9, 7.4, -1.3, 7.4, 0, 1.2, 0]],
+        // deep hood with a long point behind; the face is never shown
+        [0, 'head', 'coatBlack', ['p', 1, -3.4, -62, -7, -59.4, -9.6, -52, -10, -45.6, -7.6, -47.6, -5, -54]],
+        [4, 'head', 'coatBlack', ['p', 0, -5.8, -57, -5.2, -62, -3.4, -65, -1.6, -68.6, 1.6, -65.6, 5.4, -63.8, 7.6, -59.4, 7.8, -53, 5.8, -50.6, -1.6, -50.2, -6.8, -50]],
+        [4, 'head', 'void', ['p', 1, 1.2, -60.8, 6.8, -59, 7, -53, 2.6, -52.2, 0.8, -56]]
+      ] }
   };
   // Portrait crop (art px around the feet anchor, scaled by the character's S): head and shoulders.
   const PORTRAIT = { x0: -13, x1: 14, y0: -72, y1: -41 };

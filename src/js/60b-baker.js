@@ -219,6 +219,8 @@ const ART = (() => {
     if (f === 'idle1') base.up = 1 / (rs.S || 1);
     if (f === 'wind' || f === 'strike') Object.assign(base, (ANIMS[rs.anim] || ANIMS.slash)[f]);
     if (f === 'down') Object.assign(base, RIG.DOWN_POSE);
+    // per-character posture offsets (e.g. a stoop: lean + head), added on top of every standing frame
+    else if (rs.pose) for (const k in rs.pose) base[k] = (base[k] || 0) + rs.pose[k];
     return base;
   }
   // Bake the named frames of a resolved character. Frames: idle0, idle1, wind, strike, down (+ hit from idle0).
