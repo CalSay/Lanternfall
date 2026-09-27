@@ -195,3 +195,11 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   sorted, and the whole grid was rebuilt on every level change (eating taps). Fixed: Power/Level/Rarity
   chips (default Power); Rarity mixes locked and recruited; Power/Level put locked ones by closeness to
   joining; tiles rebuild only on structural change, and levels update in place.
+- Menus merged: portrait is game-first (the stage fills the free space: 71-77% of the height), each tab
+  opens a full-screen menu with sub-views (Fight: Upgrades/Bounties/Bestiary; Party: Team/Roster; Gather:
+  Mining/Wood/Foraging/Pack; Craft: Make/Gear/Uniques; Camp: Camp/Tavern/Almanac/Raid), the bell sheet
+  has Notices | Journal (with Achievements), wide screens split game left / menu right. API:
+  registerView(tab, {id, label, order, dot}), registerSection(..., {view}), setTab(tabOrView, sel),
+  closeMenu(). Not done yet: card-level progressive disclosure (hero rows, camp list, almanac cards).
+  Follow-up: on tall portrait stages the sprites are small with empty sky; scale the party and foes with
+  height, and use the room for a combat HUD (party/enemy HP bars, ability cooldowns) (HUD task).

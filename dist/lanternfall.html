@@ -43,12 +43,15 @@ button { font: inherit; color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering: pixelated; image-rendering: crisp-edges; }
 
-/* One-screen layout (docs/design/layout.md): header, stage box, control row, scrolling panel, tab bar
-   at the bottom. --stage-h is the full stage; --stage-c the strip it shrinks to while the panel is
-   scrolled (.app.compact). Only the stage box changes height; the canvas keeps its size. */
-.app { --gut: 12px; --stage-h: clamp(168px, calc(100vh - 572px), 256px); --stage-c: 124px;
-  position: relative; height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
-@supports (height: 100dvh) { .app { --stage-h: clamp(168px, calc(100dvh - 572px), 256px); } }
+/* One-screen layout (docs/design/layout.md). Portrait: header, then the game view (stage, control row,
+   Next Up chip), then the tab bar. An open menu covers the game view (same grid cell) and slides up.
+   Landscape and desktop (min-aspect-ratio 1/1, 600px+ wide, see 30-panels.css): game left, menu right. */
+.app { --gut: 12px; --tabs-h: 54px;
+  position: relative; height: 100%; max-width: 560px; margin: 0 auto; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "top" "main" "tabs"; }
+.top { grid-area: top; }
+.game { grid-area: main; min-height: 0; display: flex; flex-direction: column; }
 
 [hidden] { display: none !important; }
 /* A button's inner spans are redrawn while the game runs; keep taps landing on the button itself. */
@@ -77,21 +80,17 @@ button * { pointer-events: none; }
 .bell.ping img { animation: bellPing .5s ease-out; }
 @keyframes bellPing { 30% { transform: rotate(-14deg); } 60% { transform: rotate(10deg); } }
 @media (prefers-reduced-motion: reduce) { .bell.ping img { animation: none; } }
-/* stage box: clips the stage. Full height at the top of the panel, a strip (--stage-c) once the
-   panel is scrolled. The stage inside keeps its full height (so 62-stage never re-lays out) and
-   slides up so the ground line (80% down, GY in 62-stage) stays in view. */
-.stagebox { position: relative; flex: none; height: var(--stage-h); margin: 0 var(--gut); border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; transition: height .22s ease-out; }
-.stage { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--stage-h) - 4px); overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; transition: transform .22s ease-out; }
+/* stage box: the game's main view. It grows to fill the game column (the canvas reads its size;
+   62-stage re-lays out on resize), between a floor and a ceiling so the scene keeps its proportions. */
+.stagebox { position: relative; flex: 1 1 auto; min-height: 180px; margin: 2px var(--gut) 0; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; }
+.stage { position: absolute; inset: 0; overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; }
 .stage > canvas { display: block; width: 100%; height: 100%; }
-.app.compact .stagebox { height: var(--stage-c); }
-.app.compact .stage { transform: translateY(max(calc(var(--stage-c) - var(--stage-h)), calc(var(--stage-c) - 30px - (var(--stage-h) - 4px) * .8))); }
 
 /* HUD over the stage: zone line, foe name and HP at the top, DPS and Tap at the bottom left.
    It never takes taps; they fall through to the stage. */
 .hud { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .hud-zone, .mob { position: relative; }
 .hud::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 64px; background: linear-gradient(rgba(11,8,16,.62), rgba(11,8,16,0)); }
-.app.compact .hud::before { height: 36px; }
 .hud-zone { display: flex; align-items: baseline; gap: 8px; padding: 5px 8px 0; min-width: 0; }
 .zname { font: 600 14px/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; text-shadow: 0 2px 0 #000; }
 .zsub { flex: none; font: 600 10.5px/1.2 var(--body); color: #CFC3DC; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 4px #000; }
@@ -105,10 +104,6 @@ button * { pointer-events: none; }
 .hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
 .timer { height: 4px; background: #0B0810; }
 .timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
-.app.compact .hud-zone, .app.compact .sfx-btn { display: none; }
-.app.compact .mob { padding-top: 3px; gap: 1px; }
-.app.compact .mob-name, .app.compact .mob-hp { font-size: 11.5px; }
-.app.compact .hpbar { height: 6px; border-width: 1px; }
 .stat-nums { position: absolute; left: 8px; bottom: 5px; display: flex; gap: 10px; font: 500 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: #CFC3DC; text-shadow: 0 1px 0 #000, 0 0 4px #000, 0 0 2px #000; }
 .stat-nums b { color: var(--bone); font: 600 13px var(--display); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .stage-hint { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; font: 600 12px var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
@@ -142,16 +137,70 @@ button * { pointer-events: none; }
 @keyframes abil-nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .abil.ready, .abil.nope { animation: none; } .abil.ready { box-shadow: 0 3px 0 #0B0810, 0 0 14px 3px rgba(255,190,90,.6); } }
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
-.tabs { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 4; }
+.tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 6; }
 .tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 12.5px/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
 .tab img { width: 20px; height: 20px; opacity: .55; }
 .tab[aria-selected="true"] { color: var(--bone); border-top-color: var(--ember); background: linear-gradient(rgba(255,158,61,.10), transparent 80%); }
 .tab[aria-selected="true"] img { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,158,61,.5)); }
 .tab .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
 
-.panels { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px var(--gut) 20px; -webkit-overflow-scrolling: touch; }
+/* ---- menus (70-ui.js, docs/design/layout.md) ----
+   Portrait: the open tab's menu fills the game cell (header and tab bar stay) and slides up from the
+   tab bar; closed, it sits below, hidden. Swipe down, the close button, Escape or the open tab close it. */
+.menu { grid-area: main; z-index: 5; min-height: 0; display: flex; flex-direction: column;
+  background-color: var(--bg); background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px); background-size: 4px 4px;
+  border-top: 2px solid var(--line-hi); box-shadow: 0 -6px 18px rgba(0,0,0,.45);
+  transform: translateY(0); visibility: visible; transition: transform .26s cubic-bezier(.2,.85,.25,1), visibility 0s; }
+.app:not(.menu-open) .menu { transform: translateY(calc(100% + 8px)); visibility: hidden; transition: transform .2s ease-in, visibility 0s .2s; }
+.menu.dragging { transition: none; }
+.menu-head { flex: none; background: #17111E; border-bottom: 2px solid #0B0810; box-shadow: 0 2px 0 rgba(255,255,255,.03); touch-action: none; user-select: none; -webkit-user-select: none; }
+.menu-bar { position: relative; display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 4px 2px 0 var(--gut); }
+.menu-grab { position: absolute; left: 50%; top: 5px; width: 36px; height: 4px; margin-left: -18px; background: var(--line-hi); }
+.menu-ic { width: 22px; height: 22px; flex: none; filter: drop-shadow(0 0 4px rgba(255,158,61,.45)); }
+.menu-title { flex: 1; min-width: 0; margin: 0; font: 600 20px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-x { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: none; border: 0; cursor: pointer; color: var(--muted); }
+.menu-x::before { content: ""; position: absolute; inset: 6px; border: 2px solid var(--line); background: var(--panel); box-shadow: 0 2px 0 #0B0810; }
+.menu-x span { position: relative; width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-3px) rotate(45deg); }
+.menu-x:hover { color: var(--bone); }
+/* sub-view switcher: one row of equal buttons; the open view has the lit edge, dots mark news */
+.vseg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 4px var(--gut) 10px; border: 2px solid #0B0810; background: var(--well); box-shadow: 0 2px 0 #0B0810; }
+.vseg button { position: relative; min-height: 40px; min-width: 0; padding: 0 4px; background: none; border: 0; cursor: pointer; font: 600 14px/1.1 var(--display); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vseg button + button { border-left: 2px solid #0B0810; }
+.vseg button[aria-selected="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -3px 0 var(--ember), inset 0 1px 0 rgba(255,255,255,.06); }
+.vseg button:hover:not([aria-selected="true"]) { color: var(--bone); }
+.vseg .vdot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
+.off-view { display: none !important; }
+.panel > * { min-width: 0; }
+.panels { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px var(--gut) 24px; -webkit-overflow-scrolling: touch; }
+/* the Camp tab's parts are views now: one shows at a time, and the switcher names it */
+.menu #p-world > .world-part + .world-part { padding-top: 0; border-top: 0; }
+#p-tav > .world-head, #p-raid > .world-head, #sec-almanac > .world-head, #p-log .world-head { display: none; }
+
+/* Next Up chip slot on the game view (75-goals-ui.js, 60-goals.css) */
+.nu-slot { flex: none; padding: 0 var(--gut) 8px; }
+
+/* ---- landscape, tablets, desktop: game left, menu right, always open ---- */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
+  .app { max-width: 1480px; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+    grid-template-areas: "top menu" "main menu" "main tabs"; }
+  .app:not(.menu-open) .menu, .menu { transform: none; visibility: visible; transition: none; }
+  .menu { grid-area: menu; border-top: 0; border-left: 2px solid var(--line); box-shadow: -4px 0 0 #0B0810; }
+  .tabs { border-left: 2px solid var(--line); }
+  .menu-grab, .menu-x { display: none; }
+  .menu-head { touch-action: auto; }
+  .stagebox { max-height: none; }
+}
+/* short landscape (phones turned sideways): the tab bar names the tab, so the title row goes */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .app { --tabs-h: 48px; }
+  .menu-bar { display: none; }
+  .vseg { margin-top: 8px; margin-bottom: 8px; }
+  .vseg button { min-height: 36px; font-size: 13px; }
+  .tab { min-height: 48px; padding: 4px 2px; }
+  .tab img { width: 18px; height: 18px; }
+}
 .panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.sec { display: grid; gap: 8px; }
+.sec { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sec-title { font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; align-items: center; gap: 8px; }
 .sec-title::before { content: ""; width: 6px; height: 6px; background: var(--ember); box-shadow: 0 0 6px rgba(255,158,61,.6); }
@@ -268,7 +317,9 @@ button * { pointer-events: none; }
    At most 2; only the toast itself takes taps (tap or swipe it away). The right edge stays clear
    for the ability button. */
 .toasts { position: absolute; left: 6px; right: 62px; top: 62px; z-index: 6; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-.app.compact .toasts { top: 28px; }
+/* over an open full-screen menu (portrait): above the tab bar, full width */
+.toasts.over-menu { top: auto; bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 8px); left: var(--gut); right: var(--gut); z-index: 7; }
+.toasts.over-menu .toast { min-height: 36px; box-shadow: 0 3px 0 #0B0810, 0 6px 18px rgba(0,0,0,.5); }
 .toast { pointer-events: auto; touch-action: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 30px; background: #0E0B12E8; border: 1px solid var(--line-hi); border-left: 3px solid var(--ember); padding: 4px 8px 4px 6px; font: 500 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810; animation: tin .2s ease-out; transition: transform .16s ease-out, opacity .16s ease-out; }
 .toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .toast.hi .tx, .toast.loot .tx { -webkit-line-clamp: 2; }
@@ -297,6 +348,8 @@ button * { pointer-events: none; }
 
 .modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
 .modal .card { width: min(380px, 100%); text-align: center; }
+/* bell sheet: Notices | Journal switcher */
+.nlog-seg { margin: 0 0 12px; }
 /* 60-almanac: the Omen banner (Fight tab) and the Almanac part of the World tab (75-almanac-ui.js). */
 
 /* ---- banner ---- */
@@ -854,15 +907,31 @@ span.cf-d { font-weight: 600; }
 .gat-sub { font: 600 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px 2px; }
 .mats .mat.none { opacity: .5; }
 .gat-tro .mat .mn { font-size: 10px; }
-/* 60-goals: the "Next up" strip (Fight tab) and its Go buttons in the away card */
-.sec.nu { gap: 6px; }
-.nu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
-.nu-tog { width: 44px; height: 44px; margin: -8px -8px -8px 0; display: grid; place-items: center; background: none; border: 0; cursor: pointer; color: var(--muted); }
-.nu-chev { width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .15s; }
-.nu.min .nu-chev { transform: translateY(2px) rotate(-135deg); }
-.nu-tog:hover { color: var(--bone); }
-.nu-list { display: grid; gap: 4px; }
-.nu.min .nu-row:not(:first-child) { display: none; }
+/* 60-goals: the "Next up" chip on the game view, its list sheet, and Go buttons in the away card */
+
+/* the chip: one slim row, the top goal and its progress along the bottom edge; tap for the list */
+.nu-chip { position: relative; width: 100%; min-height: 48px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto 14px; gap: 9px; align-items: center; padding: 4px 10px 6px 6px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; cursor: pointer; text-align: left; overflow: hidden; }
+.nu-chip:hover { border-color: var(--line-hi); }
+.nu-chip:active { transform: translateY(1px); }
+.nu-chip .nu-ic { width: 30px; height: 30px; }
+.nu-chip .nu-ic img { width: 20px; height: 20px; }
+.nu-cbody { min-width: 0; display: grid; gap: 1px; }
+.nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.nu-cst { font: 600 13px/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.nu-more { font: 600 11px/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
+.nu-more:empty { display: none; }
+.nu-more.hot { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
+.nu-chip .nu-chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(2px) rotate(-135deg); }
+.nu-cbar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--gold); box-shadow: 0 0 6px rgba(242,193,78,.4); transition: width .3s; }
+.nu-chip.ready { border-color: rgba(242,193,78,.8); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel) 75%); }
+.nu-chip.ready .nu-cst { color: var(--xp); }
+.nu-chip.ready .nu-cbar { background: var(--xp); box-shadow: 0 0 6px rgba(111,203,106,.5); }
+.nu-chip.empty .nu-lbl { color: var(--muted); white-space: normal; }
+.nu-chip.empty .nu-chev, .nu-chip.empty .nu-ic { opacity: .5; }
+
+/* the list (sheet) */
+.nu-list { display: grid; gap: 6px; margin: 10px 0 8px; }
 .nu-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 3px 3px 3px 6px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; min-height: 50px; }
 .nu-row[hidden] { display: none; }
 .nu-row.ready { border-color: rgba(242,193,78,.75); background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); }
@@ -891,15 +960,9 @@ span.cf-d { font-weight: 600; }
 .away-lgo { flex: none; min-width: 52px; min-height: 44px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .nu-chev { transition: none; }
+  .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
-
-/* collapsed: one row, with the expand toggle as its last cell */
-.nu.min .nu-row:first-child { grid-template-columns: 32px minmax(0, 1fr) auto 36px; gap: 7px; }
-.nu-row .nu-tog { width: 36px; height: 44px; margin: 0; }
-.nu.min .nu-row:first-child .nu-lbl { -webkit-line-clamp: 1; }
-.nu-head[hidden] { display: none; }
 /* 60-mastery: zone mastery pips and bestiary rows */
 .row.ms-row { grid-template-columns: auto 1fr; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
@@ -1225,7 +1288,7 @@ span.cf-d { font-weight: 600; }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } .modeseg button { padding: 0 9px; min-width: 50px; } .znum { min-width: 50px; } .skill .sn { letter-spacing: .03em; } }
 @media (prefers-reduced-motion: reduce) {
   .toast { animation: none; transition: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; }
-  .stagebox, .stage { transition: none; }
+  .menu, .app:not(.menu-open) .menu { transition: none; }
 }
 </style>
 
@@ -1243,9 +1306,11 @@ span.cf-d { font-weight: 600; }
     <button class="bell" id="bellBtn" type="button" aria-label="Notices"><img class="px" id="bellIc" alt=""><b class="bell-n" id="bellN" hidden>0</b></button>
   </header>
 
-  <!-- Layout rules: docs/design/layout.md. The stage box clips the stage; when the panel
-       scrolls down it shrinks to a strip (.app.compact) and the stage slides up inside it,
-       so the canvas never changes size. The HUD and toasts overlay the stage box. -->
+  <!-- Layout rules: docs/design/layout.md. Portrait: the game view (stage, control row, Next Up chip)
+       fills the screen between the header and the tab bar; a tab opens its menu full-screen over it.
+       Landscape and desktop: game on the left, the open menu on the right. The HUD and toasts
+       overlay the stage box (toasts move over the menu while it covers the game). -->
+  <div class="game" id="game">
   <div class="stagebox" id="stageBox">
     <div class="stage" id="stage">
       <canvas id="cv"></canvas>
@@ -1275,11 +1340,25 @@ span.cf-d { font-weight: 600; }
       <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
     </div>
   </div>
+  <div class="nu-slot" id="nuSlot"></div>
+  </div>
 
+  <!-- The open tab's menu (70-ui.js): title, close, sub-view switcher, then the scrolling panels.
+       Each direct child of a panel shows in one sub-view (data-view; no attribute = the first view). -->
+  <div class="menu" id="menu" role="region" aria-labelledby="menuTitle">
+    <div class="menu-head" id="menuHead">
+      <div class="menu-bar">
+        <span class="menu-grab" aria-hidden="true"></span>
+        <img class="menu-ic px" id="menuIc" alt="">
+        <h2 class="menu-title" id="menuTitle">Fight</h2>
+        <button class="menu-x" id="menuX" type="button" aria-label="Close menu"><span aria-hidden="true"></span></button>
+      </div>
+      <div class="vseg" id="viewSeg" role="tablist" aria-label="Sections"></div>
+    </div>
   <div class="panels" id="panels">
     <!-- Fight -->
     <section class="panel" id="p-adv">
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <h2 class="sec-title">Boss gate</h2>
         <div class="row">
           <div>
@@ -1290,14 +1369,14 @@ span.cf-d { font-weight: 600; }
         </div>
         <label class="note" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="autoBoss" checked> Challenge frontier bosses automatically when ready</label>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <div class="sec-head">
           <h2 class="sec-title">Hero</h2>
           <div class="seg" id="amtSeg"><button data-amt="1" aria-pressed="true">x1</button><button data-amt="10" aria-pressed="false">x10</button><button data-amt="max" aria-pressed="false">Max</button></div>
         </div>
         <div id="heroRows" class="sec"></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="upgrades">
         <h2 class="sec-title">Party</h2>
         <div id="compRows" class="sec"></div>
       </div>
@@ -1308,17 +1387,17 @@ span.cf-d { font-weight: 600; }
 
     <!-- Gather -->
     <section class="panel" id="p-gat" hidden>
-      <div class="skills" id="skillCards"></div>
-      <p class="note">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
-      <div class="sec">
+      <div class="skills" id="skillCards" data-view="mine wood forage"></div>
+      <div class="sec" data-view="mine">
         <h2 class="sec-title">Mining</h2>
         <div id="oreRows" class="sec"></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="wood">
         <h2 class="sec-title">Woodcutting</h2>
         <div id="woodRows" class="sec"></div>
       </div>
-      <div class="sec">
+      <p class="note gat-how" data-view="mine wood forage">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
+      <div class="sec" data-view="pack">
         <h2 class="sec-title">Your pack</h2>
         <div class="mats" id="matGrid"></div>
         <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
@@ -1354,19 +1433,19 @@ span.cf-d { font-weight: 600; }
         <div class="sec-head"><h2 class="sec-title">Bag</h2><span class="note" id="bagCount">0 / 40</span></div>
         <div id="bagRows" class="sec"><p class="note">Forged gear and boss loot land here.</p></div>
       </div>
-      <div class="sec">
+      <div class="sec" data-view="uniques">
         <div class="sec-head"><h2 class="sec-title">Trophy wall</h2><span class="note" id="trophyCount">0 / 13 uniques</span></div>
         <div class="trophies" id="trophies"></div>
       </div>
     </section>
 
-    <!-- Camp (tab id "world"): the Camp part (57-camp.js, 75-camp-ui.js), then the Tavern and the
-         World raid. The Raid and Tavern parts keep their old ids (p-raid, p-tav) so
-         registerSection('raid' | 'tav') and 80-online.js keep working. -->
+    <!-- Camp (tab id "world"): four sub-views, one per part: Camp (57-camp.js, 75-camp-ui.js), Tavern,
+         Almanac (75-almanac-ui.js) and World raid. The Raid and Tavern parts keep their old ids
+         (p-raid, p-tav) so registerSection('raid' | 'tav') and 80-online.js keep working. -->
     <section class="panel" id="p-world" hidden>
-    <div class="panel world-part" id="p-camp"></div>
+    <div class="panel world-part" id="p-camp" data-view="camp"></div>
 
-    <div class="panel world-part" id="p-tav">
+    <div class="panel world-part" id="p-tav" data-view="tav">
       <h2 class="world-head">Tavern</h2>
       <div class="sec">
         <h2 class="sec-title">In the tavern now</h2>
@@ -1390,7 +1469,7 @@ span.cf-d { font-weight: 600; }
       </div>
     </div>
 
-    <div class="panel world-part" id="p-raid">
+    <div class="panel world-part" id="p-raid" data-view="raid">
       <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
         <div class="zsub" id="rGen">World raid</div>
@@ -1420,6 +1499,7 @@ span.cf-d { font-weight: 600; }
       </div>
     </div>
     </section>
+  </div>
   </div>
 
   <nav class="tabs" role="tablist">
@@ -5693,7 +5773,7 @@ let OMENS, WEEKLY_GOALS;
           get label() { const g = A().goals[i]; return g ? WEEKLY_GOALS[g.k].txt(g.need) + ` (${num(g.have)}/${num(g.need)})` : ''; },
           pct() { const g = A().goals[i]; return !g || g.claimed ? 0 : Math.min(1, g.have / g.need); },
           done() { const g = A().goals[i]; return !g || g.claimed; },
-          go() { return { tab: 'world' }; }
+          go() { return { tab: 'world', view: 'almanac' }; }
         });
       } catch (e) { console.error('[lanternfall] registerGoal failed', e); }
     }
@@ -6363,8 +6443,10 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 //   pct    fn() -> progress 0..1; >= 1 means ready (shown first, as "Ready");
 //          null/undefined/NaN/<= 0 hides the goal. Keep it cheap: it runs about 2x a second.
 //   go     where the Go button takes the player (read by 75-goals-ui.js):
-//          { tab: 'adv'|'party'|'gat'|'forge'|'world'|'raid'|'tav', sel: '#css-selector', fn() }
+//          { tab: 'adv'|'party'|'gat'|'forge'|'world'|'raid'|'tav', view, sel: '#css-selector', fn() }
 //          fn (optional) runs first, e.g. to preselect a forge recipe. Or a plain fn().
+//          The UI opens the menu and sub-view that hold sel; view (optional, a registerView id
+//          such as 'bounties' or 'almanac') picks the sub-view when there is no sel.
 //   icon   optional toast-style icon spec or fn() -> spec ({ ic: [name, colour] }, { mat: [k, t] },
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
@@ -6490,7 +6572,7 @@ let topGoals;
       if (b.r.lv < b.cap) { const left = b.cap - b.r.lv; return `${nm}: ${left} level${left > 1 ? 's' : ''} to Promote`; }
       return b.p >= 1 ? `${nm}: ready to Promote` : `${nm}: Promote needs more gold or essence`; },
     icon: () => { const b = promoNext(); return b ? { char: b.k } : null; },
-    go: { tab: 'adv', sel: '#compRows' }
+    go: { tab: 'party', sel: '#sec-party-roster' }
   });
 
   // Roster: the next recruit whose route is open.
@@ -6513,7 +6595,7 @@ let topGoals;
       if (b.p >= 1) return `${nm} can join: Recruit`;
       return S.gold < b.c.gold ? `Recruit ${nm}: ${fmt(Math.ceil(b.c.gold - S.gold))} more gold` : `Recruit ${nm}: more essence needed`; },
     icon: () => { const b = recruitNext(); return b ? { char: b.k } : null; },
-    go: { tab: 'adv', sel: '#compRows' }
+    go: { tab: 'party', sel: '#sec-party-roster' }
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).
@@ -7133,7 +7215,7 @@ const statsApi = {};
     for (const a of ACH) if (!g[a.id] && a.cur() >= a.need) { g[a.id] = Date.now(); fresh.push(a); }
     if (!fresh.length) return;
     achRebuild();
-    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. See the Tavern.`, 'good', { ic: ['banner', '#F2C14E'] });
+    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. Tap the bell, then Journal.`, 'good', { ic: ['banner', '#F2C14E'] });
     else for (const a of fresh) { toast(`Achievement: ${a.name}. ${achBonusText(a)}.`, 'good', { ic: [a.ic, '#F2C14E'] }); emit('achievement', { id: a.id }); }
     A().init = true;
     save();
@@ -11806,7 +11888,8 @@ function sceneFor() { return null; } // replaced below
 //   normal (1): pops if there is room (2 on screen, 1 on a short stage); otherwise it folds into the newest normal toast
 //               as "+N" and the bell count.                        e.g. boss failed, achievement, rare forge
 //   low (0): log only, bumps the bell count.                      e.g. equipped, salvaged, common forge, skill level
-// Toasts sit over the bottom of the stage box, never over the panel. Tap or swipe one away.
+// Toasts sit in the stage box under the HUD. While a full-screen menu covers the game (portrait),
+// they move over the bottom of the menu, just above the tab bar (placeToasts). Tap or swipe one away.
 const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
 const NOTE_KIND_PRIO = { loot: 2 };
 const NOTE_MS = [0, 2600, 4200];
@@ -11866,8 +11949,8 @@ function showToast(msg, kind, icon, prio) {
     if (same) { same._more++; fillToast(same, msg, url); armToast(same); }
     notes.unread++; bellUpdate(true); return;
   }
-  // Two toasts fit under the HUD on a full stage; a short stage (small phone, compact strip) takes one.
-  const room = $('stageBox').offsetHeight >= 200 ? 2 : 1;
+  // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
+  const room = box.classList.contains('over-menu') || $('stageBox').offsetHeight >= 200 ? 2 : 1;
   if (live.length >= room) {
     const normals = live.filter(t => t._p < 2);
     if (p < 2) {
@@ -11884,43 +11967,51 @@ function showToast(msg, kind, icon, prio) {
   box.appendChild(t);
   armToast(t);
 }
+// The bell sheet has two views: Notices (this visit's log) and the Journal (lifetime stats,
+// registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
+const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
+let logView = '';
 function openNoticeLog() {
   if (typeof openSheet !== 'function') return;
   const seenBefore = notes.seenSeq || 0;
   notes.unread = 0; notes.seenSeq = notes.seq; bellUpdate(false);
   for (const t of [...$('toasts').children]) dropToast(t);
+  const hasJournal = logPanel.children.length > 0;
   openSheet(api => {
-    api.body.append(el('h2', 'nlog-h', 'Notices'));
-    if (!notes.log.length) { api.body.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
-    const list = el('div', 'nlog');
-    const now = Date.now();
-    const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
-    for (const n of notes.log) {
-      const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
-      r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
-      list.append(r);
-    }
-    api.body.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
-  }, { small: true, label: 'Notices' });
+    const top = el('div', 'nlog-top');
+    const box = el('div', 'nlog-box');
+    const views = [['notes', 'Notices'], ['journal', 'Journal']];
+    const seg = el('div', 'vseg nlog-seg'); seg.setAttribute('role', 'tablist');
+    const show = v => {
+      logView = v; uiPrefs.views.log = v; saveUiPrefs();
+      for (const b of seg.children) b.setAttribute('aria-selected', String(b.dataset.v === v));
+      box.textContent = '';
+      if (v === 'journal') { logPanel.hidden = false; box.append(logPanel); ui(true); return; }
+      logPanel.hidden = true;
+      if (!notes.log.length) { box.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
+      const list = el('div', 'nlog');
+      const now = Date.now();
+      const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
+      for (const n of notes.log) {
+        const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
+        r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        list.append(r);
+      }
+      box.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
+    };
+    if (hasJournal) {
+      for (const [v, label] of views) {
+        const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.setAttribute('role', 'tab');
+        b.addEventListener('click', () => show(v)); seg.append(b);
+      }
+      top.append(seg);
+    } else top.append(el('h2', 'nlog-h', 'Notices'));
+    api.body.append(top, box);
+    show(hasJournal && uiPrefs.views.log === 'journal' ? 'journal' : 'notes');
+  }, { small: true, label: 'Notices and journal', onClose() { logView = ''; logPanel.hidden = true; $('app').append(logPanel); } });
 }
 $('bellIc').src = spriteURL('ui:bell', ['.....77.....', '....1111....', '...122221...', '..12222221..', '..12222221..', '..12222221..', '..12222221..', '.1222222221.', '122222222221', '111111111111', '.....11.....', '............'], { 1: '#B8862A', 2: '#F2C14E', 7: '#FFF3C4' });
 $('bellBtn').addEventListener('click', openNoticeLog);
-
-// ================= compact stage while the panel is scrolled =================
-// Scrolling the panel down shrinks the stage box to a strip (--stage-c); back at the top it grows
-// again. It only collapses when the panel would still scroll afterwards, so it cannot flicker.
-{
-  const panels = $('panels'), app = $('app'), box = $('stageBox');
-  let compact = false;
-  const setCompact = on_ => { if (on_ === compact) return; compact = on_; app.classList.toggle('compact', on_); };
-  panels.addEventListener('scroll', () => {
-    const y = panels.scrollTop;
-    if (!compact && y > 40) {
-      const gain = box.offsetHeight - (parseFloat(getComputedStyle(app).getPropertyValue('--stage-c')) || 124);
-      if (panels.scrollHeight - panels.clientHeight - gain > 48) setCompact(true);
-    } else if (compact && y < 6) setCompact(false);
-  }, { passive: true });
-}
 
 // ================= UI helpers =================
 // Updates the price in place. Rebuilding the spans on every ui() tick removed the element under the
@@ -11984,23 +12075,229 @@ const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08
 document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
-// ================= tabs, rename =================
+// ================= menus: tabs, sub-views, open and close =================
+// Layout rules: docs/design/layout.md. Portrait: tapping a tab opens its menu full-screen over the game
+// (S.tab = that tab); closing it returns to the game view (S.tab = ''). Landscape and desktop (WIDE_Q):
+// the game sits left and a menu is always open on the right.
+// Each tab has 2-4 sub-views (registerView). Every direct child of a tab's panel belongs to one view
+// (data-view; none = the tab's first view; '*' = every view). The last view per tab is kept in
+// localStorage under UI_KEY (not the save).
 const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
-// The World tab is now the Camp tab (id 'world' kept for old saves). Camp, Raid and Tavern are its parts; their ids still open it.
+// The World tab is now the Camp tab (id 'world' kept for old saves). Camp, Raid and Tavern are its parts
+// and its sub-views; their ids still open it (setTab('raid')).
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
-function setTab(t) {
-  const part = TAB_ALIAS[t] ? $('p-' + t) : null;
-  t = TAB_ALIAS[t] || t;
-  S.tab = t;
+const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
+const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
+const WIDE_Q = '(min-aspect-ratio: 1/1) and (min-width: 600px)';
+const wideMQ = matchMedia(WIDE_Q);
+const isWide = () => wideMQ.matches;
+const UI_KEY = 'lanternfall.ui.v1';
+const uiPrefs = (() => { let o = null; try { o = JSON.parse(localStorage.getItem(UI_KEY)); } catch (e) {} return o && typeof o === 'object' ? o : {}; })();
+if (!uiPrefs.views || typeof uiPrefs.views !== 'object') uiPrefs.views = {};
+function saveUiPrefs() { try { localStorage.setItem(UI_KEY, JSON.stringify(uiPrefs)); } catch (e) {} }
+
+// registerView(tabId, { id, label, order, dot }) -> view
+//   A sub-view of a tab: one button in the menu's switcher. order sorts the buttons (lowest first; the
+//   first is the default view). dot() (optional, cheap) -> true puts an attention dot on the button
+//   and on the tab while that view is not open. Sections join a view with registerSection's `view`.
+function registerView(tabId, { id, label, order = 50, dot } = {}) {
+  tabId = TAB_ALIAS[tabId] || tabId;
+  if (!id) throw new Error('registerView: needs an id');
+  const list = VIEWS[tabId] || (VIEWS[tabId] = []);
+  let v = list.find(x => x.id === id);
+  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; }
+  else { v = { id, label: label || id, order, dot: dot || null }; list.push(v); }
+  list.sort((a, b) => a.order - b.order);
+  if (!VIEW_OF[id] && !TAB_IDS.includes(id)) VIEW_OF[id] = tabId;
+  if (S.tab === tabId) { buildViewSeg(tabId); applyView(tabId); }
+  return v;
+}
+function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
+registerView('adv', { id: 'upgrades', label: 'Upgrades', order: 10 });
+registerView('adv', { id: 'bounties', label: 'Bounties', order: 20,
+  dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
+registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30 });
+registerView('party', { id: 'team', label: 'Team', order: 10 });
+registerView('party', { id: 'roster', label: 'Roster', order: 20 });
+registerView('gat', { id: 'mine', label: 'Mining', order: 10 });
+registerView('gat', { id: 'wood', label: 'Wood', order: 20 });
+registerView('gat', { id: 'forage', label: 'Foraging', order: 30 });
+registerView('gat', { id: 'pack', label: 'Pack', order: 40 });
+registerView('forge', { id: 'make', label: 'Make', order: 10 });
+registerView('forge', { id: 'gear', label: 'Gear', order: 20 });
+registerView('forge', { id: 'uniques', label: 'Uniques', order: 30 });
+registerView('world', { id: 'camp', label: 'Camp', order: 10, dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
+registerView('world', { id: 'tav', label: 'Tavern', order: 20,
+  dot: () => { if (typeof visitorToday !== 'function') return false; const v = visitorToday(); return v.kind === 'hire' && !v.done; } });
+registerView('world', { id: 'almanac', label: 'Almanac', order: 30, dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
+registerView('world', { id: 'raid', label: 'Raid', order: 40 });
+
+function viewsOf(t) { return VIEWS[t] || []; }
+function curView(t) {
+  const list = viewsOf(t), want = uiPrefs.views[t];
+  return (list.find(v => v.id === want) || list[0] || { id: '' }).id;
+}
+// data-view holds one view id, several separated by spaces, or '*' (every view).
+function viewList(t, node) { return (node.dataset.view || (viewsOf(t)[0] || {}).id || '').split(/\s+/); }
+// The view to show for a node inside tab t's panel (from its top-level ancestor): the open view if
+// the node shows there, else its first view. null when it is not in that panel.
+function viewOfEl(t, node) {
+  const panel = $('p-' + t); if (!panel || !node || node === panel || !panel.contains(node)) return null;
+  while (node.parentNode !== panel) node = node.parentNode;
+  const vs = viewList(t, node), cur = curView(t);
+  return vs.includes('*') || vs.includes(cur) ? cur : vs[0];
+}
+function applyView(t) {
+  const panel = $('p-' + t); if (!panel) return;
+  const cur = curView(t);
+  for (const c of panel.children) { const vs = viewList(t, c); c.classList.toggle('off-view', !vs.includes('*') && !vs.includes(cur)); }
+  for (const b of $('viewSeg').children) b.setAttribute('aria-selected', String(b.dataset.view === cur));
+}
+function buildViewSeg(t) {
+  const seg = $('viewSeg'), list = viewsOf(t);
+  seg.textContent = ''; seg.hidden = list.length < 2;
+  seg.style.setProperty('--n', list.length);
+  for (const v of list) {
+    const b = el('button', null, v.label); b.type = 'button'; b.dataset.view = v.id;
+    b.setAttribute('role', 'tab');
+    const d = el('span', 'vdot'); d.hidden = true; b.append(d);
+    b.addEventListener('click', () => setView(t, v.id));
+    seg.append(b);
+  }
+}
+function setView(t, id) {
+  const same = curView(t) === id;
+  uiPrefs.views[t] = id; saveUiPrefs();
+  applyView(t);
+  if (!same) $('panels').scrollTop = 0;
+  ui(true); viewDots();
+}
+// Attention dots: on switcher buttons (views not open) and on tabs (any view of a tab not open).
+function viewDots() {
+  for (const b of $('viewSeg').children) {
+    const v = viewsOf(S.tab).find(x => x.id === b.dataset.view), d = b.querySelector('.vdot');
+    if (d) d.hidden = !(v && v.dot && b.getAttribute('aria-selected') !== 'true' && safeDot(v.dot));
+  }
+  document.querySelectorAll('.tab').forEach(tb => {
+    const t = tb.dataset.tab;
+    let d = tb.querySelector('.dot.vdot');
+    if (!d) { d = el('span', 'dot vdot'); d.hidden = true; tb.append(d); }
+    const other = tb.querySelector('.dot:not(.vdot):not([hidden])');
+    d.hidden = !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot));
+  });
+}
+
+// Toasts live on the stage; while a menu covers the game they move over the bottom of the menu.
+function placeToasts() {
+  const box = $('toasts'), over = !!S.tab && !isWide();
+  const home = over ? $('app') : $('stageBox');
+  if (box.parentNode !== home) home.append(box);
+  box.classList.toggle('over-menu', over);
+}
+function scrollMenuTo(node, smooth) {
+  const box = $('panels');
+  const y = Math.max(0, node.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12);
+  if (smooth && !reduced) { try { box.scrollTo({ top: y, behavior: 'smooth' }); return; } catch (e) {} }
+  box.scrollTop = y;
+}
+function renderMenu(t) {
+  const open = !!t;
+  $('app').classList.toggle('menu-open', open);
+  $('menu').inert = !open;
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
+  if (open) {
+    $('menuTitle').textContent = TAB_TITLE[t] || t;
+    const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc');
+    mi.hidden = !ti; if (ti && mi.getAttribute('src') !== ti.getAttribute('src')) mi.src = ti.src;
+  }
+  placeToasts();
+}
+// setTab(tab, sel?): open a tab's menu. tab is a tab id, a view id ('bounties', 'raid', 'almanac')
+// or an old part id ('tav'). sel (a CSS selector or node) picks the view that holds it and scrolls there.
+function setTab(t, sel) {
+  let view = null;
+  if (!TAB_IDS.includes(t) && (VIEW_OF[t] || TAB_ALIAS[t])) { view = t; t = VIEW_OF[t] || TAB_ALIAS[t]; }
+  if (!TAB_IDS.includes(t)) t = 'adv';
+  const find = () => sel ? (typeof sel === 'string' ? document.querySelector(sel) : sel) : null;
+  let target = find();
+  // Sections build some rows in update(), and only the open view updates: build the whole tab once.
+  if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }
+  const tv = target && viewOfEl(t, target); if (tv) view = tv;
+  const was = S.tab, wasView = curView(t);
+  S.tab = t; uiPrefs.tab = t;
+  if (view) uiPrefs.views[t] = view;
+  saveUiPrefs();
+  if (was !== t) buildViewSeg(t);
+  renderMenu(t); applyView(t);
   if (t === 'forge') $('forgeDot').hidden = true;
   if (t === 'world') $('raidDot').hidden = true;
-  $('panels').scrollTop = part ? part.offsetTop - $('panels').offsetTop : 0;
-  ui(true);
+  if (was !== t || curView(t) !== wasView) $('panels').scrollTop = 0;
+  ui(true); viewDots();
+  if (target && target.offsetParent !== null) scrollMenuTo(target);
 }
-document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+// Back to the game view (portrait only: wide screens always show a menu).
+function closeMenu() {
+  if (!S.tab || isWide()) return;
+  // Keyboard users keep their place: focus goes back to the tab that opened the menu.
+  if ($('menu').contains(document.activeElement)) { const tb = document.querySelector(`.tab[data-tab="${S.tab}"]`); if (tb) try { tb.focus({ preventScroll: true }); } catch (e) {} }
+  S.tab = '';
+  renderMenu('');
+  ui(true); viewDots();
+}
+// Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
+function initMenus() {
+  const last = TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : TAB_IDS.includes(S.tab) ? S.tab : 'adv';
+  S.tab = '';
+  if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
+}
+wideMQ.addEventListener('change', () => {
+  if (isWide() && !S.tab) setTab(TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : 'adv');
+  else renderMenu(S.tab);
+});
+// Tapping the open tab again closes its menu (portrait).
+function tabClick(t) { if (S.tab === t && !isWide()) closeMenu(); else setTab(t); }
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => tabClick(b.dataset.tab)));
+$('menuX').addEventListener('click', closeMenu);
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !S.tab || isWide()) return;
+  if (document.querySelector('.bsheet-ov, .modal, .away-ov, .join-ov, .create')) return;
+  closeMenu();
+});
+// Swipe down to close: on the menu's head, or on its content while it is scrolled to the top.
+{
+  const menu = $('menu'), head = $('menuHead'), panels = $('panels');
+  let y0 = null, x0 = 0, dy = 0, t0 = 0, drag = false;
+  const start = (x, y) => { if (!S.tab || isWide()) return; y0 = y; x0 = x; dy = 0; t0 = performance.now(); drag = false; };
+  const move = (x, y, e) => {
+    if (y0 == null) return;
+    dy = y - y0;
+    if (!drag) {
+      if (dy > 10 && dy > Math.abs(x - x0) * 1.4) { drag = true; menu.classList.add('dragging'); }
+      else { if (Math.abs(x - x0) > 12 || dy < -8) y0 = null; return; }
+    }
+    if (e && e.cancelable) e.preventDefault();
+    menu.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  };
+  const end = () => {
+    if (y0 == null) return; y0 = null;
+    if (!drag) return; drag = false;
+    const fast = dy / Math.max(1, performance.now() - t0) > 0.5;
+    menu.classList.remove('dragging');
+    if (dy > 110 || (fast && dy > 36)) closeMenu();
+    menu.style.transform = '';
+  };
+  head.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' && e.button === 0) start(e.clientX, e.clientY); });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'touch') move(e.clientX, e.clientY, e); });
+  addEventListener('pointerup', e => { if (e.pointerType !== 'touch') end(); });
+  for (const n of [head, panels]) {
+    n.addEventListener('touchstart', e => { if (e.touches.length === 1 && (n === head || panels.scrollTop <= 0)) start(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    n.addEventListener('touchmove', e => move(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false });
+    n.addEventListener('touchend', end); n.addEventListener('touchcancel', end);
+  }
+}
 $('marchBtn').addEventListener('click', () => setActivity(S.activity === 'raid' ? 'fight' : 'raid'));
 $('renameForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -12074,22 +12371,36 @@ function ui(force) {
   if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
   if (S.tab === 'world') uiRaid();
   if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
-  for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
-  if (slowTick <= 0) slowTick = 1;
+  // Sections update while their tab's menu is open and their view is showing (Journal: while the bell sheet shows it).
+  for (const sec of SECTIONS) {
+    if (!sec.update) continue;
+    const on_ = sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
+    if (on_) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+  }
+  if (slowTick <= 0) { slowTick = 1; viewDots(); }
 }
 
 // ================= feature UI registries =================
-// registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
-// tabId: adv | party | gat | forge | world, or camp | raid | tav (the Camp tab's three parts).
+// registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', view: 'gear', mount(sec) {...}, update(force) {...} })
+// tabId: adv | party | gat | forge | world, or camp | raid | tav (the Camp tab's parts, each its own view),
+// or log (the bell sheet's Journal view).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
-// mount(sec) runs once now; update(force) runs from ui() while that tab is open
+// view: the sub-view it shows in (registerView; a new id makes a new view). Without it the section joins
+// the tab's first view. Pick a view; never just append to the end of a busy one (docs/design/layout.md).
+// mount(sec) runs once now; update(force) runs from ui() while its tab and view are open
 // (about 5 times a second, force = true right after player actions).
 const SECTIONS = [];
-function registerSection(tabId, { id, title, mount, update }) {
+function registerSection(tabId, { id, title, view, mount, update }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
   const sec = el('div', 'sec'); sec.id = 'sec-' + id;
   if (title) sec.append(el('h2', 'sec-title', title));
+  if (view && TAB_IDS.includes(tabId)) {
+    if (view !== '*' && !/\s/.test(view) && !viewsOf(tabId).some(v => v.id === view)) registerView(tabId, { id: view, label: title || view, order: 90 });
+    sec.dataset.view = view;
+    if (S.tab === tabId) queueMicrotask(() => applyView(tabId));
+  }
   panel.append(sec);
+  if (tabId !== 'log' && TAB_IDS.includes(tabId) && S.tab === tabId) applyView(tabId);
   if (mount) mount(sec);
   SECTIONS.push({ tab: tabId, id, update, el: sec });
   return sec;
@@ -12101,9 +12412,9 @@ function registerTab({ id, label, icon, mount, update }) {
   const b = el('button', 'tab', label);
   b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
   const url = iconOf(icon); if (url) b.prepend(img(url));
-  b.addEventListener('click', () => setTab(id));
+  b.addEventListener('click', () => tabClick(id));
   const nav = document.querySelector('.tabs'); nav.append(b);
-  TAB_IDS.push(id);
+  TAB_IDS.push(id); TAB_TITLE[id] = label;
   nav.style.gridTemplateColumns = 'repeat(' + TAB_IDS.length + ', 1fr)';
   const panel = el('section', 'panel'); panel.id = 'p-' + id; panel.hidden = true;
   $('panels').append(panel);
@@ -12211,14 +12522,14 @@ const skillCards = ['mine', 'wood', 'forage'].map(k => {
 });
 
 // Home ground: which family the camp's zone boosts.
-const homeNote = el('p', 'note gat-home');
+const homeNote = el('p', 'note gat-home'); homeNote.dataset.view = 'mine wood forage'; // the node sub-views (70-ui)
 $('skillCards').after(homeNote);
 
 // Foraging section, built here so shell.html stays as it is.
 {
-  const sec = el('div', 'sec');
+  const sec = el('div', 'sec'); sec.dataset.view = 'forage';
   sec.append(el('h2', 'sec-title', SKILL.forage), Object.assign(el('div', 'sec'), { id: 'forageRows' }));
-  $('woodRows').parentElement.after(sec);
+  $('woodRows').parentElement.after(sec);  // before the how-to note, which ends each node view
 }
 const NODE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
 const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 'forageRows', herb: 'forageRows' };
@@ -12498,8 +12809,7 @@ async function uiTavern() {
 
   let almanacSec = null;
   function openAlmanac() {
-    setTab('world');
-    if (almanacSec) $('panels').scrollTop = almanacSec.offsetTop - $('panels').offsetTop;
+    setTab('almanac');
   }
 
   // ---------------- Fight tab banner ----------------
@@ -12550,7 +12860,7 @@ async function uiTavern() {
   const al = {};
   const rows = [];
   registerSection('world', {
-    id: 'almanac',
+    id: 'almanac', view: 'almanac',
     mount(sec) {
       almanacSec = sec;
       sec.classList.add('panel', 'world-part');
@@ -12850,7 +13160,7 @@ let showAwayReport;
 }
 
 // ---- src/js/75-bounties-ui.js ----
-// 75-bounties-ui: Bounties section on the Fight tab, Achievements grid on the Tavern tab.
+// 75-bounties-ui: Bounties (Fight tab, Bounties view) and the Achievements grid (bell sheet, Journal view).
 {
   const BTY_IC = {
     kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
@@ -12859,7 +13169,7 @@ let showAwayReport;
   };
   const btyRows = [];
   registerSection('adv', {
-    id: 'bounties', title: 'Bounties',
+    id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
       // sit right under the Boss gate
       const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
@@ -12902,7 +13212,7 @@ let showAwayReport;
 
   let achSig = '';
   const achTiles = [];
-  registerSection('tav', {
+  registerSection('log', {  // the Journal view of the bell sheet (70-ui.js), after the lifetime stats
     id: 'achievements', title: 'Achievements',
     mount(sec) {
       const head = el('p', 'note ach-sum'); sec.append(head);
@@ -13253,7 +13563,7 @@ let showAwayReport;
   on('campOpen', dot);
   on('campBuilt', dot);
   on('campGoto', ({ tab, sel }) => {
-    setTab(tab);
+    setTab(tab, sel);
     const t = sel && document.querySelector(sel); if (!t) return;
     const id = sel.replace('#camp-b-', ''); if (CAMP_B[id] && id !== 'hearth') { openCards.add(id); ui(true); }
     const box = $('panels');
@@ -13683,7 +13993,7 @@ let craftUI = null;
   // ================= Your gear =================
   let gearEls = null;
   registerSection('forge', {
-    id: 'craft-gear', title: 'Your gear',
+    id: 'craft-gear', title: 'Your gear', view: 'gear',
     mount(sec) {
       const g = el('div', 'cf-gear');
       gearEls = {};
@@ -13722,7 +14032,7 @@ let craftUI = null;
   let bag = null;
   const SORTS = { power: (a, b) => itemPower(b) - itemPower(a) || b.id - a.id, new: (a, b) => b.id - a.id, kind: (a, b) => (kindOrder(a.slot) - kindOrder(b.slot)) || itemPower(b) - itemPower(a) };
   registerSection('forge', {
-    id: 'craft-bag', title: 'Bag',
+    id: 'craft-bag', title: 'Bag', view: 'gear',
     mount(sec) {
       const head = sec.querySelector('.sec-title');
       const hw = el('div', 'sec-head'); sec.insertBefore(hw, head);
@@ -14024,7 +14334,7 @@ let craftUI = null;
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
         if (k) {
           const b = el('button', 'big forge', `Go to the ${STATION_SHORT[CRAFT_KINDS[k].st]}`); b.type = 'button';
-          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('forge'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
+          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('make'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
           body.append(b);
         }
         return;
@@ -14372,8 +14682,9 @@ let craftUI = null;
 }
 
 // ---- src/js/75-goals-ui.js ----
-// 75-goals-ui: the "Next up" strip at the top of the Fight tab and the "Next up" block of
-// the "While you were away" card. Browser-only. Goals come from topGoals() (55-goals.js).
+// 75-goals-ui: the "Next up" chip on the game view (tap: the full list in a sheet) and the "Next up"
+// block of the "While you were away" card. Browser-only. Goals come from topGoals() (55-goals.js).
+// S.nextUp (min, picked) belonged to the old Fight-tab strip; it stays in the save, unused.
 {
   // ---- icons: toast-style specs, plus { mob: typeKey } and { char: rosterId } ----
   const FALLBACK = { ic: ['banner', '#F2C14E'] };
@@ -14388,18 +14699,16 @@ let craftUI = null;
     } catch (e) { return iconOf(FALLBACK); }
   }
 
-  // ---- Go: run the goal's fn, open the tab, scroll to the element and flash it ----
+  // ---- Go: run the goal's fn, open the menu and view that hold the target, scroll there and flash it ----
   function goTo(g) {
     let spec = g.go;
     try { if (typeof spec === 'function') spec = spec(); if (spec && spec.fn) spec.fn(); }
     catch (e) { console.error('[lanternfall] goal go failed', g.id, e); return; }
     if (!spec || !spec.tab) { ui(true); return; }
-    setTab(spec.tab);
+    setTab(spec.view || spec.tab, spec.sel);   // setTab picks the view that holds sel
     const target = spec.sel ? document.querySelector(spec.sel) : null;
-    if (!target) return;
-    const box = $('panels');
-    const y = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12;
-    try { box.scrollTo({ top: Math.max(0, y), behavior: reduced ? 'auto' : 'smooth' }); } catch (e) { box.scrollTop = Math.max(0, y); }
+    if (!target || target.offsetParent === null) return;
+    scrollMenuTo(target, true);
     const hit = target.closest('.row') || target;
     hit.classList.remove('nu-flash'); void hit.offsetWidth; hit.classList.add('nu-flash');
     setTimeout(() => hit.classList.remove('nu-flash'), 1600);
@@ -14407,78 +14716,85 @@ let craftUI = null;
 
   const pctTxt = g => g.ready ? 'Ready' : Math.floor(g.pct * 100) + '%';
 
-  // ---- the strip ----
-  let sec, head, list, toggle, empty, rows = [], sig = '';
-  // Collapsed, the strip is one line: the top goal's row carries the expand toggle.
-  function placeToggle() {
-    const first = rows[0] && !rows[0].r.hidden ? rows[0].r : null;
-    const inRow = S.nextUp.min && first;
-    head.hidden = !!inRow;
-    if (inRow) { if (toggle.parentNode !== first) first.append(toggle); }
-    else if (toggle.parentNode !== head) head.append(toggle);
+  // ---- the chip on the game view: the top goal; tap it for the full list (a sheet) ----
+  const chip = el('button', 'nu-chip'); chip.type = 'button'; chip.id = 'nuChip';
+  const cIc = el('span', 'nu-ic'), cIm = img(goalIcon(FALLBACK)); cIc.append(cIm);
+  const cBody = el('span', 'nu-cbody'), cEye = el('span', 'nu-eye', 'Next up'), cLbl = el('span', 'nu-lbl');
+  cBody.append(cEye, cLbl);
+  const cSt = el('span', 'nu-cst'), cMore = el('span', 'nu-more'), cChev = el('span', 'nu-chev');
+  const cBar = el('i', 'nu-cbar');
+  chip.append(cIc, cBody, cSt, cMore, cChev, cBar);
+  $('nuSlot').append(chip);
+  let cUrl = '', cSig = '';
+  function renderChip() {
+    const goals = topGoals(3), g = goals[0];
+    const s = goals.map(x => x.id + '|' + x.label + '|' + Math.floor(x.pct * 100)).join('~');
+    if (s === cSig) return; cSig = s;
+    chip.classList.toggle('ready', !!(g && g.ready));
+    chip.classList.toggle('empty', !g);
+    if (!g) {
+      cLbl.textContent = 'Defeat a few foes to see your next goals.'; cSt.textContent = ''; cMore.textContent = '';
+      cBar.style.width = '0%'; chip.setAttribute('aria-label', 'Next up: nothing yet'); return;
+    }
+    const url = goalIcon(g.icon); if (url !== cUrl) { cIm.src = url; cUrl = url; }
+    const readyN = goals.filter(x => x.ready).length;
+    cLbl.textContent = g.label;
+    cSt.textContent = pctTxt(g);
+    cMore.textContent = goals.length > 1 ? '+' + (goals.length - 1) : '';
+    cMore.classList.toggle('hot', readyN > 1);
+    cBar.style.width = (g.pct * 100).toFixed(1) + '%';
+    chip.setAttribute('aria-label', `Next up: ${g.label}, ${pctTxt(g)}. Show all goals`);
   }
-  function mkRow() {
+  setInterval(() => { try { renderChip(); } catch (e) {} }, 500);
+
+  // The list sheet: up to 3 goals, each with a Go button (Go closes the sheet first).
+  function mkRow(api) {
     const r = el('div', 'nu-row');
     const ic = el('div', 'nu-ic'); const im = img(goalIcon(FALLBACK)); ic.append(im);
     const body = el('div', 'nu-body');
     const lbl = el('div', 'nu-lbl'), bar = el('div', 'bar nu-bar'), fill = el('i');
     bar.append(fill); body.append(lbl, bar);
-    const go = el('button', 'nu-go');
+    const go = el('button', 'nu-go'); go.type = 'button';
     const gq = el('span', 'nu-st'), gl = el('span', 'nu-gol', 'Go');
     go.append(gq, gl);
     r.append(ic, body, go);
     const x = { r, im, lbl, fill, go, gq, goal: null, url: '' };
-    go.addEventListener('click', () => { if (x.goal) goTo(x.goal); });
+    go.addEventListener('click', () => { const g = x.goal; if (!g) return; api.close(true); goTo(g); });
     return x;
   }
-  // persist = false at mount: save() stamps S.last, which would eat the away report.
-  function setMin(min, persist) {
-    S.nextUp.min = !!min;
-    sec.classList.toggle('min', S.nextUp.min);
-    toggle.setAttribute('aria-expanded', String(!S.nextUp.min));
-    toggle.setAttribute('aria-label', S.nextUp.min ? 'Show all goals' : 'Show only the top goal');
-    placeToggle();
-    if (persist) { try { save(); } catch (e) {} }
+  function openList() {
+    if (typeof openSheet !== 'function') return;
+    let timer = 0;
+    openSheet(api => {
+      api.body.append(el('h2', 'nlog-h', 'Next up'));
+      const list = el('div', 'nu-list'), empty = el('p', 'note nu-empty', 'Defeat a few foes to see your next goals.');
+      api.body.append(list, empty, el('p', 'note', 'The goals closest to done, across everything you do. Go takes you there.'));
+      const rows = [];
+      let sig = '';
+      const render = () => {
+        const goals = topGoals(3);
+        const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100)).join('~');
+        if (s === sig) return; sig = s;
+        empty.hidden = goals.length > 0;
+        while (rows.length < goals.length) { const x = mkRow(api); rows.push(x); list.append(x.r); }
+        rows.forEach((x, i) => {
+          const g = goals[i];
+          x.r.hidden = !g; x.goal = g || null;
+          if (!g) return;
+          const url = goalIcon(g.icon);
+          if (url !== x.url) { x.im.src = url; x.url = url; }
+          x.r.classList.toggle('ready', g.ready);
+          x.lbl.textContent = g.label;
+          x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
+          x.gq.textContent = pctTxt(g);
+          x.go.setAttribute('aria-label', 'Go: ' + g.label);
+        });
+      };
+      render();
+      timer = setInterval(render, 500);
+    }, { small: true, label: 'Next up', onClose() { clearInterval(timer); } });
   }
-  function render(force) {
-    const goals = topGoals(3);
-    const s = goals.map(g => g.id + '|' + g.label + '|' + Math.floor(g.pct * 100)).join('~');
-    if (s === sig && !force) return;
-    sig = s;
-    empty.hidden = goals.length > 0;
-    while (rows.length < goals.length) { const x = mkRow(); rows.push(x); list.append(x.r); }
-    rows.forEach((x, i) => {
-      const g = goals[i];
-      x.r.hidden = !g; x.goal = g || null;
-      if (!g) return;
-      const url = goalIcon(g.icon);
-      if (url !== x.url) { x.im.src = url; x.url = url; }
-      x.r.classList.toggle('ready', g.ready);
-      x.lbl.textContent = g.label;
-      x.fill.style.width = (g.pct * 100).toFixed(1) + '%';
-      x.gq.textContent = pctTxt(g);
-      x.go.setAttribute('aria-label', 'Go: ' + g.label);
-    });
-    placeToggle();
-  }
-  registerSection('adv', {
-    id: 'nextup', title: '',
-    mount(s) {
-      sec = s; sec.classList.add('nu');
-      const panel = sec.parentNode; panel.insertBefore(sec, panel.firstChild);
-      head = el('div', 'nu-head');
-      head.append(el('h2', 'sec-title', 'Next up'));
-      toggle = el('button', 'nu-tog');
-      toggle.append(el('span', 'nu-chev'));
-      toggle.addEventListener('click', () => { S.nextUp.picked = true; setMin(!S.nextUp.min, true); });
-      head.append(toggle);
-      list = el('div', 'nu-list');
-      empty = el('p', 'note nu-empty', 'Defeat a few foes to see your next goals.');
-      sec.append(head, list, empty);
-      setMin(S.nextUp.picked ? S.nextUp.min : true);
-    },
-    update(force) { render(force); }
-  });
+  chip.addEventListener('click', openList);
 
   // ---- "Next up" in the away card (only when the card has something else to say) ----
   registerAwayLine(r => {
@@ -14498,7 +14814,7 @@ let craftUI = null;
   // ---- Zone mastery ----
   let zRow;
   registerSection('adv', {
-    id: 'mastery', title: 'Zone mastery',
+    id: 'mastery', title: 'Zone mastery', view: 'bestiary',
     mount(sec) {
       zRow = makeRow(sec, '', false, iconURL('banner', '#F2C14E'));
       zRow.btn.remove();
@@ -14524,7 +14840,7 @@ let craftUI = null;
   // ---- Bestiary ----
   const bRows = [];
   registerSection('adv', {
-    id: 'bestiary', title: 'Bestiary',
+    id: 'bestiary', title: 'Bestiary', view: 'bestiary',
     mount(sec) {
       TYPES.forEach(t => {
         const url = spriteURL('best:' + t.key, SPR[t.key], t.pal);
@@ -15462,6 +15778,8 @@ let openSheet, partySheet;
     pdot.hidden = !any || S.tab === 'party';
     if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
   }
+  // The same news marks the Roster sub-view (70-ui registerView).
+  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -15482,17 +15800,17 @@ let openSheet, partySheet;
     id: 'party-syn', title: 'Synergies', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
     update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
   });
-  registerSection('party', { id: 'party-roster', title: 'Roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
   registerSection('party', {
-    id: 'party-leads', title: 'Leads', mount(sec) { sec.append(el('div', 'leads')); },
+    id: 'party-leads', title: 'Leads', view: 'roster', mount(sec) { sec.append(el('div', 'leads')); },
     update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
   });
   // Keep an open sheet live while the tab updates.
-  registerSection('party', { id: 'party-live', title: '', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
+  registerSection('party', { id: 'party-live', title: '', view: '*', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
 }
 
 // ---- src/js/75-stats-ui.js ----
-// 75-stats-ui: the Journal, a lifetime-stats part at the end of the World tab. Browser-only.
+// 75-stats-ui: the Journal, lifetime stats in the bell sheet (Notices | Journal). Browser-only.
 // Reads S.stats (55-stats.js) and existing save fields; writes nothing.
 {
   const played = s => {
@@ -15519,10 +15837,10 @@ let openSheet, partySheet;
 
   const big = {}, cells = [];
   let note;
-  registerSection('world', {
+  registerSection('log', {  // the bell sheet's Journal view (70-ui.js)
     id: 'journal',
     mount(sec) {
-      sec.classList.add('panel', 'world-part');
+      sec.classList.add('panel', 'world-part'); sec.parentNode.prepend(sec);  // stats first, then Achievements
       sec.append(el('h2', 'world-head', 'Journal'));
 
       const hero = el('div', 'jr-hero');
@@ -16091,7 +16409,7 @@ showAwayReport(awayGains((Date.now() - S.last) / 1000));
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();
-setTab(TAB_IDS.includes(S.tab) ? S.tab : 'adv');
+initMenus();  // 70-ui: game view in portrait, last menu open on wide screens
 connect();
 
 setInterval(save, 5000);
