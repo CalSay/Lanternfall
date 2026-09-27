@@ -572,4 +572,10 @@ const ENEMY_RIGS = {};
     for (const r of rigs) r.box = boundsOf(r, r.parts);
     ENEMY_RIGS[k] = v => rigs[Math.max(0, Math.min(4, ((v && v.tier) | 0 || 1) - 1))];
   }
+  // Crafting nodes (11-art-craft.js): same build; each source maps its 'tier' mats with tier(key, t, E).
+  if (typeof CRAFT_NODES !== 'undefined') for (const k in CRAFT_NODES) {
+    const src = CRAFT_NODES[k], rigs = [0, 1, 2, 3, 4].map(t => build(src, t, (m, v) => v === 'tier' ? src.tier(m, t, E) : v));
+    for (const r of rigs) r.box = boundsOf(r, r.parts);
+    ENEMY_RIGS[k] = v => rigs[Math.max(0, Math.min(4, ((v && v.tier) | 0 || 1) - 1))];
+  }
 }

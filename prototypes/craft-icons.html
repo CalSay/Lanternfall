@@ -1,0 +1,82 @@
+<title>Lanternfall Craft Icons</title>
+<style>
+:root { color-scheme: dark; --bg: #140F1A; --panel: #1F1827; --well: #110D16; --line: #3A2F47; --line-hi: #4E4060; --bone: #EFE6D6; --muted: #A597B4; }
+body { margin: 0; background: var(--bg); color: var(--bone); font: 13px/1.35 system-ui, sans-serif; }
+main { width: 1180px; margin: 0 auto; padding: 14px; }
+h1 { font-size: 18px; margin: 0 0 2px; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+small { color: var(--muted); }
+.grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
+.card .top { display: flex; align-items: flex-end; gap: 8px; }
+.card .tiers { display: flex; gap: 4px; align-items: flex-end; }
+.card .cap { font-size: 11px; color: var(--muted); }
+.card .cap b { color: var(--bone); font-weight: 600; }
+img, canvas { image-rendering: pixelated; display: block; }
+.ic { width: 40px; height: 40px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; box-sizing: border-box; }
+.ic img { width: 28px; height: 28px; }
+.nodes .card canvas { background: #171327; }
+</style>
+<main>
+<h1>Lanternfall crafting icons (K2)</h1>
+<small>Dev page: loads src/js directly. Each card: 1x, 3x, 6x (tier 3 for tiered icons), the in-game 40px tile, then tiers 1 to 5 at 1x and 3x. Background = panel #1F1827.</small>
+<h2>Existing icons (for comparison)</h2><div class="grid" id="old"></div>
+<h2>Materials</h2><div class="grid" id="mats"></div>
+<h2>Class items and tools</h2><div class="grid" id="kinds"></div>
+<h2>Trophies</h2><div class="grid" id="tro"></div>
+<h2>Gather nodes (rigs, idle frame at 2x, tiers 1 to 5; ore and wood for comparison)</h2><div class="grid nodes" id="nodes"></div>
+</main>
+<script src="../src/js/00-util.js"></script>
+<script src="../src/js/10-art.js"></script>
+<script src="../src/js/11-art-craft.js"></script>
+<script src="../src/js/12-art-rigs.js"></script>
+<script src="../src/js/13-art-enemies.js"></script>
+<script src="../src/js/20-data.js"></script>
+<script src="../src/js/60-gfx.js"></script>
+<script src="../src/js/60b-baker.js"></script>
+<script>
+'use strict';
+const big = (url, z) => { const i = new Image(); i.src = url; i.onload = () => { i.width = i.naturalWidth * z; i.height = i.naturalHeight * z; }; return i; };
+const tile = url => { const d = document.createElement('div'); d.className = 'ic'; d.append(big(url, 2)); return d; };
+function card(parent, label, urlAt, tiered) {
+  const c = document.createElement('div'); c.className = 'card';
+  const top = document.createElement('div'); top.className = 'top';
+  const u = urlAt(3);
+  top.append(big(u, 1), big(u, 3), big(u, 6), tile(u));
+  c.append(top);
+  if (tiered) {
+    const t1 = document.createElement('div'); t1.className = 'tiers';
+    for (let t = 1; t <= 5; t++) t1.append(big(urlAt(t), 1));
+    for (let t = 1; t <= 5; t++) t1.append(big(urlAt(t), 3));
+    c.append(t1);
+  }
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = '<b>' + label + '</b>'; c.append(cap);
+  parent.append(c);
+}
+const $$ = id => document.getElementById(id);
+// existing
+card($$('old'), 'ore', t => matIcon('ore', t), true);
+card($$('old'), 'log', t => matIcon('wood', t), true);
+card($$('old'), 'orb (essence)', t => matIcon('ess', t), true);
+for (const s of ['weapon', 'helm', 'charm', 'pick', 'axe']) card($$('old'), SLOT[s].n, t => itemIcon(s, t), true);
+// new
+const ck = n => t => iconURL(...craftIcon(n, t));
+for (const n of ['mat_crystal', 'mat_fibre', 'mat_herb', 'mat_hide']) card($$('mats'), n, ck(n), true);
+for (const n of ['warblade', 'shield', 'greathelm', 'plate', 'staff', 'lantern', 'circlet', 'robe', 'bow', 'quiver', 'hood', 'leathers', 'censer', 'tome', 'mitre', 'vestments', 'trinket', 'sickle']) card($$('kinds'), n, ck(n), true);
+for (const n of ['tro_slime', 'tro_bat', 'tro_bones', 'tro_beetle', 'tro_spore', 'tro_golem', 'tro_wraith']) card($$('tro'), n, ck(n), false);
+// nodes
+for (const k of ['node:ore', 'node:wood', 'node:crystal', 'node:fibre', 'node:herb']) {
+  const c = document.createElement('div'); c.className = 'card';
+  const row = document.createElement('div'); row.className = 'tiers';
+  for (let t = 1; t <= 5; t++) {
+    const f = enemyFrames(k, { tier: t }).idle0, z = 2;
+    const cv = document.createElement('canvas'); cv.width = f.c.width * z; cv.height = f.c.height * z;
+    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(f.c, 0, 0, cv.width, cv.height);
+    charLightPass(g, f.lights.map(l => Object.assign({}, l, { x: l.x * z, y: l.y * z, size: l.size * z })), 0, z);
+    row.append(cv);
+  }
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = '<b>' + k + '</b>';
+  c.append(row, cap); $$('nodes').append(c);
+}
+document.body.dataset.ready = '1';
+</script>
