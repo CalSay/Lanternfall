@@ -220,17 +220,24 @@ let topGoals;
     go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
   });
 
-  // Forge: the best recipe one tier above the player's best equipped gear.
+  // Forge: the best recipe one tier above the player's best equipped gear. Weapon and head are
+  // the class kinds (no class: none; the legacy Sword and Helm are no longer made).
+  const forgeKinds = () => {
+    const cls = heroWho();
+    return SLOTS.map(sl => sl.id === 'weapon' || sl.id === 'helm' ? (cls === 'any' ? null : ((CRAFT_FITS[sl.id] || {})[cls] || [])[0] || null) : sl.id).filter(Boolean);
+  };
   const forgeNext = () => {
     let top = 0;
     for (const sl of SLOTS) { const it = equipped(sl.id); if (it && it.t > top) top = it.t; }
     const t = Math.min(5, top + 1);
-    if (top >= 5 || S.skills.smith.lv < SMITH_REQ[t - 1]) return null;
+    if (top >= 5) return null;
     let best = null;
-    for (const sl of SLOTS) {
-      const cost = craftCost(sl.id, t), ks = Object.keys(cost);
+    for (const k of forgeKinds()) {
+      const lv = typeof stationLevel === 'function' ? stationLevel(k) : S.skills.smith.lv;
+      if (lv < CRAFT_STATION_REQ[t - 1]) continue;
+      const cost = craftCost(k, t), ks = Object.keys(cost);
       const p = ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], cost[k])), 0) / ks.length;
-      if (!best || p > best.p) best = { slot: sl.id, t, cost, p };
+      if (!best || p > best.p) best = { slot: k, t, cost, p };
     }
     return best;
   };
@@ -239,9 +246,9 @@ let topGoals;
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
     label: () => { const b = forgeNext(); if (!b) return ''; const nm = itemName({ slot: b.slot, t: b.t, plus: 0 });
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
-      if (b.p >= 1) return `Forge ${a} ${nm}: you have the materials`;
+      if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => S.mats[k][b.t - 1] < b.cost[k]);
-      return `Forge ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}`; },
+      return `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.slot, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.slot; S.fTier = b.t; } } }
   });

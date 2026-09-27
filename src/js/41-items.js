@@ -8,8 +8,12 @@
 //   kinds    itemKind(itOrKind) -> CRAFT_KINDS row (legacy slots are kinds: 'weapon' = Sword)
 //            kindPos(kind) -> hero position or companion position the kind goes in
 //   fit      fits(item, pos, who = 'hero')   who: 'hero' (S.party.cls), a class key, a role key,
-//            a roster character id or 'any'. Legacy Sword/Helm and uniques fit for any class.
-//            heroWho() the current class key or 'any'
+//            a roster character id or 'any'. Weapon and head uniques fit every class. A legacy
+//            Sword/Helm (non-unique) fits only a hero with no class (a kind string counts as
+//            non-unique). heroWho() the current class key or 'any'
+//   retool   retoolItems(swap = false) -> { legacy: {weapon, helm}, swap: n, from: [class keys] }
+//            swap: true or the class key just left (a class change), which names it in the notice
+//            RETOOL.on (1; the K4 exact-dps check sets 0 for the pre-retool rules)
 //   stats    itemLines(item) -> [[stat, value], ...] in the order gear() adds them
 //            itemStats(item) -> { stat: total } (base lines + affixes + Masterwork + unique fx)
 //            gearCalc() the uncached gear() over CRAFT_HERO_POS (40-rules caches it)
@@ -31,7 +35,20 @@
 //   mw: trophy index         Masterwork line (CRAFT_TROPHIES[mw]); missing = none
 //   rf: n                    reforges done on this item (Reforge cost grows with it)
 //   ro: role key             Trinkets only: the role pool it rolled from (for Reforge)
+//   rt: kind                 retooled (see below): the kind the item was made as. Its base lines
+//                            come from that kind, so a retool never lowers its stats.
 //
+// Retool (owner bug: "I was able to equip a sword as a ranger"). Class gear only: once the hero
+// has a class (on load: the first tick; on chooseClass), every non-unique legacy Sword ('weapon')
+// and Helm ('helm') becomes that class's kind for the same position: Warblade/Staff/Bow/Censer
+// and Greathelm/Circlet/Hood/Mitre. Same id, tier, rarity, +N, affixes and Masterwork; it stays
+// where it was worn. On a class change (Mirror of Embers), gear of another class that the hero
+// wears, and bag items of another class that are not companion kinds, become the new class's kind
+// the same way (companion-worn items and bag Bows/Staffs/Shields/Tomes stay as they are).
+// Power rule: `rt` keeps the original kind, and the item keeps that kind's base lines (a Hood
+// that was a Helm keeps the Helm's crit, crit damage and armour lines; a Bow that was a Sword
+// keeps Might p, which is also the Bow's line). So item stats, gear(), heroDps() and totalDps()
+// are exactly what they were. Only the name, look, recipe for upgrades and salvage change.//
 // gear() keys: the old ones, unchanged and in the same order, then every other CRAFT_STATS
 // key. Stats with live:false in CRAFT_STATS (hp, armour, threat, block, pierce, area,
 // control, heal, ward, haste, aspd, forageSpd, forageDbl) only aggregate until party
@@ -39,7 +56,7 @@
 // never capped here (old gear already goes past crit 35; critChance() caps at 75%).
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
 
-let itemKind, kindPos, fits, heroWho, itemLines, itemStats, gearCalc, charGear, spellMult,
+let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, charGear, spellMult,
   kindName, kindColor, kindCost, kindUpgradeCost, newItem, rollAffixes, reforgeCost, reforgeLine,
   equippedIds, isEquipped, bagCount, bagFull;
 
@@ -63,11 +80,55 @@ let itemKind, kindPos, fits, heroWho, itemLines, itemStats, gearCalc, charGear, 
     if (CRAFT_POS[pos] && CRAFT_POS[pos].comp && ROSTER[who]) return ROSTER[who].role;
     return who;
   };
+  RETOOL = { on: 1 };
+  const RT_KINDS = { weapon: 1, helm: 1 }; // legacy kinds that retool into class kinds
+  const pendingLegacy = it => !!it && typeof it === 'object' && !it.u && !!RT_KINDS[it.slot];
   fits = (it, pos, who = 'hero') => {
     const kind = typeof it === 'string' ? it : it && it.slot;
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos]) return false;
-    return craftFits(kind, pos, resolveWho(pos, who));
+    const w = resolveWho(pos, who);
+    if (RETOOL.on && RT_KINDS[kind] && w !== 'any' && !(it && typeof it === 'object' && it.u)) return false;
+    return craftFits(kind, pos, w);
   };
+
+  // ---- retool: legacy Sword/Helm (and another class's gear on a class change) -> class kinds ----
+  const classKindAt = (pos, cls) => ((CRAFT_FITS[pos] || {})[cls] || [])[0] || null;
+  const clsName = c => HERO_CLASSES[c] ? HERO_CLASSES[c].name : c;
+  retoolItems = (swap = false) => {
+    const out = { legacy: { weapon: 0, helm: 0 }, swap: 0, from: [] };
+    const cls = heroWho(); if (!RETOOL.on || cls === 'any' || !Array.isArray(S.items)) return out;
+    const hero = new Set(CRAFT_HERO_POS.map(p => S.equip[p]).filter(v => v != null));
+    const comp = new Set(), rec = S.party && S.party.rec;
+    if (rec) for (const r of Object.values(rec)) for (const p of CRAFT_COMP_POS) if (r && r[p] != null) comp.add(r[p]);
+    for (const it of S.items) {
+      if (!it || it.u || comp.has(it.id)) continue;
+      const d = CRAFT_KINDS[it.slot]; if (!d || !d.pos) continue;
+      let why = null;
+      if (RT_KINDS[it.slot]) why = 'legacy';
+      else if (swap && d.cls && d.cls !== cls && (hero.has(it.id) || !d.comp)) why = 'swap';
+      if (!why) continue;
+      const to = classKindAt(d.pos, cls); if (!to || to === it.slot) continue;
+      if (it.rt == null) it.rt = it.slot;
+      if (why === 'legacy') out.legacy[it.slot]++;
+      else { out.swap++; if (!out.from.includes(d.cls)) out.from.push(d.cls); }
+      it.slot = to;
+    }
+    const nl = out.legacy.weapon + out.legacy.helm;
+    if (!nl && !out.swap) return out;
+    if (nl) {
+      const w = out.legacy.weapon, h = out.legacy.helm, word = (n, one, many) => n === 1 ? one : many;
+      const what = w && h ? `${word(w, 'sword', 'swords')} and ${word(h, 'helm', 'helms')}` : w ? word(w, 'sword', 'swords') : word(h, 'helm', 'helms');
+      toast(`Your old ${what} ${nl === 1 ? 'was' : 'were'} reforged into ${clsName(cls)} gear.`, 'good', null, 'high');
+    }
+    if (out.swap) toast(`Your ${HERO_CLASSES[swap] ? clsName(swap) : 'other'} gear was reforged into ${clsName(cls)} gear.`, 'good', null, 'high');
+    gearDirty(); save();
+    emit('retooled', out);
+    return out;
+  };
+  // On load: once per loaded save, at the first tick (S is replaced by loadSave()). Until then
+  // gearCalc still counts a worn legacy Sword/Helm, so no number moves before the retool.
+  let rtFor = null;
+  onTick(() => { if (rtFor === S || !RETOOL.on) return; rtFor = S; retoolItems(); });
 
   // ---- stat lines ----
   // Legacy kinds use the exact pre-K4 expressions so old items give byte-identical numbers.
@@ -84,7 +145,8 @@ let itemKind, kindPos, fits, heroWho, itemLines, itemStats, gearCalc, charGear, 
   itemLines = it => {
     const d = itemKind(it); if (!d) return [];
     const p = itemPower(it);
-    const out = LEGACY[it.slot] ? legacyLines(it.slot, p) : craftBaseLines(it.slot, p);
+    const bk = it.rt && CRAFT_KINDS[it.rt] ? it.rt : it.slot; // retooled: the original kind's lines
+    const out = LEGACY[bk] ? legacyLines(bk, p) : craftBaseLines(bk, p);
     if (Array.isArray(it.a)) for (const [id, q] of it.a) if (CRAFT_AFFIXES[id]) out.push(...craftAffixValue(id, p, q));
     if (it.mw != null) { const l = craftTrophyLine(it.mw, it.slot, p); if (l) out.push(l); }
     if (it.u && UNIQ[it.u]) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) out.push([k, v]);
@@ -96,7 +158,7 @@ let itemKind, kindPos, fits, heroWho, itemLines, itemStats, gearCalc, charGear, 
   gearCalc = () => {
     const s = blank(), who = heroWho();
     for (const pos of CRAFT_HERO_POS) {
-      const it = itemById(S.equip[pos]); if (!it || !fits(it, pos, who)) continue;
+      const it = itemById(S.equip[pos]); if (!it || !(fits(it, pos, who) || (pendingLegacy(it) && kindPos(it.slot) === pos))) continue;
       s.score += itemPower(it);
       addLines(s, itemLines(it));
     }

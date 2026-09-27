@@ -168,6 +168,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `upgraded` / `reforged` | `{ item }` / `{ item, idx, line }` |
 | `transmuted` | `{ fam, fromT, toT, take, give }` |
 | `charGear` | `{ id, pos, item }` (a companion's wpn/trk changed; item null when unequipped) |
+| `classChosen` | `{ cls, from }` (from: the class left, null on the first choice) |
+| `retooled` | `{ legacy: { weapon, helm }, swap, from }` (41-items `retoolItems`: old gear became class gear) |
 | `synergyChange` | `{ active, gained, lost }` (after a field change) |
 
 | `renown` | `{ n, total, source }` |
