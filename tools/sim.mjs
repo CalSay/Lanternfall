@@ -16,6 +16,12 @@ if (!['fight', 'mixed'].includes(policy)) { console.error('--policy must be figh
 
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
+if (args['from-save']) {
+  // Start from a real save file (e.g. tests/fixtures/save-mid-v2.json) instead of a fresh game.
+  const fs = await import('node:fs');
+  g.storage.set('lanternfall.save.v1', fs.readFileSync(args['from-save'], 'utf8'));
+  E('loadSave(); gearDirty(); spawn()');
+}
 E('S.amt = "1"');
 
 // Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
@@ -49,6 +55,19 @@ function forgeGear() {
       if (cur && cur.t >= t) continue;
       const it = fn.forgeItem(slot, t);
       if (it) { if (!cur || fn.itemPower(it) > fn.itemPower(cur)) fn.equipItem(it.id); else fn.salvageItem(it.id); }
+    }
+  }
+  // Like a player: upgrade equipped gear when affordable, and re-roll equipped-tier gear
+  // (forge, keep if better, else salvage) while mats are plentiful. Both train Smithing.
+  for (const slot of SLOTS) { for (let k = 0; k < 3 && fn.upgradeEquipped(slot); k++); }
+  for (const slot of SLOTS) {
+    const cur = fn.equipped(slot); if (!cur || cur.u) continue;
+    for (let k = 0; k < 3; k++) {
+      const c = fn.craftCost(slot, cur.t);
+      if (!Object.entries(c).every(([m, n]) => E(`S.mats.${m}[${cur.t - 1}]`) >= n * 3)) break;
+      const it = fn.forgeItem(slot, cur.t); if (!it) break;
+      const now = fn.equipped(slot);
+      if (fn.itemPower(it) > fn.itemPower(now)) { fn.equipItem(it.id); fn.salvageItem(now.id); } else fn.salvageItem(it.id);
     }
   }
 }

@@ -35,8 +35,8 @@ const MAT = {
 };
 const matName = (k, t) => `${MAT[k].short[t - 1]} ${MAT[k].unit}`;
 const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starsteel Crater', 'Emberite Heart'], wood: ['Oak Grove', 'Yew Thicket', 'Ironbark Stand', 'Ghostwood Hollow', 'Lanternwood Grove'] };
-const NODE_REQ = [1, 10, 22, 38, 60];
-const SMITH_REQ = [1, 6, 15, 28, 45];
+const NODE_REQ = [1, 8, 18, 30, 45];
+const SMITH_REQ = [1, 4, 9, 16, 25];
 const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
 const skillOf = kind => kind === 'ore' ? 'mine' : 'wood';
 
