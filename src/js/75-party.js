@@ -345,6 +345,8 @@
     pdot.hidden = !any || S.tab === 'party';
     if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
   }
+  // The same news marks the Roster sub-view (70-ui registerView).
+  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -365,11 +367,11 @@
     id: 'party-syn', title: 'Synergies', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
     update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
   });
-  registerSection('party', { id: 'party-roster', title: 'Roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
   registerSection('party', {
-    id: 'party-leads', title: 'Leads', mount(sec) { sec.append(el('div', 'leads')); },
+    id: 'party-leads', title: 'Leads', view: 'roster', mount(sec) { sec.append(el('div', 'leads')); },
     update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
   });
   // Keep an open sheet live while the tab updates.
-  registerSection('party', { id: 'party-live', title: '', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
+  registerSection('party', { id: 'party-live', title: '', view: '*', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
 }

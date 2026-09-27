@@ -13,14 +13,14 @@ const skillCards = ['mine', 'wood', 'forage'].map(k => {
 });
 
 // Home ground: which family the camp's zone boosts.
-const homeNote = el('p', 'note gat-home');
+const homeNote = el('p', 'note gat-home'); homeNote.dataset.view = 'mine wood forage'; // the node sub-views (70-ui)
 $('skillCards').after(homeNote);
 
 // Foraging section, built here so shell.html stays as it is.
 {
-  const sec = el('div', 'sec');
+  const sec = el('div', 'sec'); sec.dataset.view = 'forage';
   sec.append(el('h2', 'sec-title', SKILL.forage), Object.assign(el('div', 'sec'), { id: 'forageRows' }));
-  $('woodRows').parentElement.after(sec);
+  $('woodRows').parentElement.after(sec);  // before the how-to note, which ends each node view
 }
 const NODE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
 const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 'forageRows', herb: 'forageRows' };

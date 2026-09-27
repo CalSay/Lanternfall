@@ -412,7 +412,7 @@ let craftUI = null;
   // ================= Your gear =================
   let gearEls = null;
   registerSection('forge', {
-    id: 'craft-gear', title: 'Your gear',
+    id: 'craft-gear', title: 'Your gear', view: 'gear',
     mount(sec) {
       const g = el('div', 'cf-gear');
       gearEls = {};
@@ -449,7 +449,7 @@ let craftUI = null;
   let bag = null;
   const SORTS = { power: (a, b) => itemPower(b) - itemPower(a) || b.id - a.id, new: (a, b) => b.id - a.id, kind: (a, b) => (kindOrder(a.slot) - kindOrder(b.slot)) || itemPower(b) - itemPower(a) };
   registerSection('forge', {
-    id: 'craft-bag', title: 'Bag',
+    id: 'craft-bag', title: 'Bag', view: 'gear',
     mount(sec) {
       const head = sec.querySelector('.sec-title');
       const hw = el('div', 'sec-head'); sec.insertBefore(hw, head);
@@ -751,7 +751,7 @@ let craftUI = null;
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
         if (k) {
           const b = el('button', 'big forge', `Go to the ${STATION_SHORT[CRAFT_KINDS[k].st]}`); b.type = 'button';
-          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('forge'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
+          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('make'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
           body.append(b);
         }
         return;

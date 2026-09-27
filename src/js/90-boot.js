@@ -14,7 +14,7 @@ showAwayReport(awayGains((Date.now() - S.last) / 1000));
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();
-setTab(TAB_IDS.includes(S.tab) ? S.tab : 'adv');
+initMenus();  // 70-ui: game view in portrait, last menu open on wide screens
 connect();
 
 setInterval(save, 5000);

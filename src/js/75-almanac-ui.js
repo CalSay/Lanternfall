@@ -68,8 +68,7 @@
 
   let almanacSec = null;
   function openAlmanac() {
-    setTab('world');
-    if (almanacSec) $('panels').scrollTop = almanacSec.offsetTop - $('panels').offsetTop;
+    setTab('almanac');
   }
 
   // ---------------- Fight tab banner ----------------
@@ -120,7 +119,7 @@
   const al = {};
   const rows = [];
   registerSection('world', {
-    id: 'almanac',
+    id: 'almanac', view: 'almanac',
     mount(sec) {
       almanacSec = sec;
       sec.classList.add('panel', 'world-part');

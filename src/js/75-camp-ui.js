@@ -315,7 +315,7 @@
   on('campOpen', dot);
   on('campBuilt', dot);
   on('campGoto', ({ tab, sel }) => {
-    setTab(tab);
+    setTab(tab, sel);
     const t = sel && document.querySelector(sel); if (!t) return;
     const id = sel.replace('#camp-b-', ''); if (CAMP_B[id] && id !== 'hearth') { openCards.add(id); ui(true); }
     const box = $('panels');

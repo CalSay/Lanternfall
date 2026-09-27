@@ -6,7 +6,7 @@
   // ---- Zone mastery ----
   let zRow;
   registerSection('adv', {
-    id: 'mastery', title: 'Zone mastery',
+    id: 'mastery', title: 'Zone mastery', view: 'bestiary',
     mount(sec) {
       zRow = makeRow(sec, '', false, iconURL('banner', '#F2C14E'));
       zRow.btn.remove();
@@ -32,7 +32,7 @@
   // ---- Bestiary ----
   const bRows = [];
   registerSection('adv', {
-    id: 'bestiary', title: 'Bestiary',
+    id: 'bestiary', title: 'Bestiary', view: 'bestiary',
     mount(sec) {
       TYPES.forEach(t => {
         const url = spriteURL('best:' + t.key, SPR[t.key], t.pal);
