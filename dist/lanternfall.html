@@ -49,7 +49,7 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 /* header */
 .top { display: flex; align-items: center; gap: 10px; padding: 10px 16px 8px; }
 .portrait { width: 44px; height: 44px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,158,61,.18); position: relative; }
-.portrait img { width: 32px; height: 36px; }
+.portrait img { width: 36px; height: 36px; object-fit: contain; }
 .portrait b { position: absolute; right: -6px; bottom: -6px; background: var(--ember); color: #1A1420; font: 700 11px/1 var(--display); padding: 3px 4px; box-shadow: 0 2px 0 var(--ember-deep); }
 .who { min-width: 0; flex: 1; display: grid; gap: 5px; }
 .hname { font: 600 19px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
@@ -228,7 +228,7 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 .rename { display: flex; gap: 8px; }
 .rename input { flex: 1; min-width: 0; background: var(--well); border: 2px solid var(--line); padding: 9px 10px; color: var(--bone); font: 600 16px var(--display); }
 .rename button { border: 2px solid #0B0810; padding: 0 16px; background: var(--ember); color: #1A1420; font: 600 15px var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
-.toasts { position: fixed; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); width: min(480px, calc(100% - 32px)); display: grid; gap: 6px; pointer-events: none; z-index: 20; }
+.toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(480px, calc(100% - 32px)); display: grid; gap: 6px; pointer-events: none; z-index: 20; }
 .toast { display: flex; align-items: center; gap: 10px; background: #0E0B12F2; border: 2px solid var(--line); border-left: 4px solid var(--ember); padding: 8px 12px; font-size: 14px; animation: tin .25s ease-out; box-shadow: 0 3px 0 #0B0810; }
 .toast img { width: 28px; height: 28px; flex: none; image-rendering: pixelated; }
 .toast.ember { border-left-color: var(--arcane); }
@@ -3912,7 +3912,6 @@ let resize, animate, draw, stageStats;
     // pixel pass: foe, party (upper lane first), projectiles
     ctx.imageSmoothingEnabled = false;
     drawFoe(cam);
-    if (tg === 'mob' && mob && mob.boss && !mob.dead) drawCrown(cam);
     if (gath && foe.fr) {
       const pw = Math.round(foe.w * 0.7), px0 = Math.round(foe.x - cam - pw / 2);
       ctx.fillStyle = '#0B0810'; ctx.fillRect(px0 - 1, GY + 5, pw + 2, 3);
@@ -4718,8 +4717,11 @@ function costChips(box, mats, t, gold) {
   }
 }
 function updatePortrait() {
-  $('portrait').src = spriteURL('hero-portrait', SPR.hero, HERO_PAL);
+  const hasNew = typeof portraitURL === 'function' && S.party && S.party.cls;
+  $('portrait').src = hasNew ? portraitURL('hero') : spriteURL('hero-portrait', SPR.hero, HERO_PAL);
 }
+on('classChosen', () => updatePortrait());
+on('mirrorUsed', () => updatePortrait());
 
 // tab icons
 // Party (two figures) and World (a globe with a lantern-light meridian): local maps, same 12x12 icon format.

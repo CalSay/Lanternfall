@@ -400,7 +400,6 @@ let resize, animate, draw, stageStats;
     // pixel pass: foe, party (upper lane first), projectiles
     ctx.imageSmoothingEnabled = false;
     drawFoe(cam);
-    if (tg === 'mob' && mob && mob.boss && !mob.dead) drawCrown(cam);
     if (gath && foe.fr) {
       const pw = Math.round(foe.w * 0.7), px0 = Math.round(foe.x - cam - pw / 2);
       ctx.fillStyle = '#0B0810'; ctx.fillRect(px0 - 1, GY + 5, pw + 2, 3);

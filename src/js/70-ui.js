@@ -49,8 +49,11 @@ function costChips(box, mats, t, gold) {
   }
 }
 function updatePortrait() {
-  $('portrait').src = spriteURL('hero-portrait', SPR.hero, HERO_PAL);
+  const hasNew = typeof portraitURL === 'function' && S.party && S.party.cls;
+  $('portrait').src = hasNew ? portraitURL('hero') : spriteURL('hero-portrait', SPR.hero, HERO_PAL);
 }
+on('classChosen', () => updatePortrait());
+on('mirrorUsed', () => updatePortrait());
 
 // tab icons
 // Party (two figures) and World (a globe with a lantern-light meridian): local maps, same 12x12 icon format.
