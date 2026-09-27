@@ -79,6 +79,8 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
 - When the current plan is finished, write the next one: play-test the build (sim `--days`, browser
   screenshots of a new game and the fixture saves), find what is weakest for long-term enjoyment,
   write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
+- Priority: finish the B1 art conversion under way (foundation, scenery, companion polish, enemies),
+  then focus on gameplay. Art comes after, except the art a new gameplay system needs.
 - Decisions that belong to the owner (art direction, monetisation, anything irreversible) go under
   "Waiting on the owner" below instead of being guessed.
 
