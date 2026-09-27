@@ -38,7 +38,10 @@ const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starstee
 const NODE_REQ = [1, 8, 18, 30, 45];
 const SMITH_REQ = [1, 4, 9, 16, 25];
 const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
-const skillOf = kind => kind === 'ore' ? 'mine' : 'wood';
+// Gathering skill per node kind. Later data files (21-data-craft) add kinds to this table
+// and to NODE_NAMES; unknown kinds fall back to 'wood', as before.
+const NODE_SKILL = { ore: 'mine', wood: 'wood' };
+const skillOf = kind => NODE_SKILL[kind] || 'wood';
 
 const TIER_POW = [0, 10, 28, 70, 160, 360];
 const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };

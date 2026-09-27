@@ -111,5 +111,46 @@ try {
   assert(g2.eval('S.activity') === 'raid' && g2.eval('S.raiding') === undefined, 'legacy raiding flag migrates');
 } catch (e) { fail('migration crashed: ' + (e.stack || e)); }
 
+// ---- 4. craft data tables (21-data-craft.js) ----
+console.log('craft data');
+try {
+  const g = loadCore({ seed: 3 });
+  const r = g.eval(`(() => {
+    const bad = [], fam = new Set(CRAFT_FAMILIES);
+    if (CRAFT_FAMILIES.some(k => !MAT[k] || MAT[k].short.length !== 5 || MAT[k].col.length !== 5)) bad.push('family missing from MAT');
+    for (const [k, d] of Object.entries(CRAFT_KINDS)) {
+      for (const m of Object.keys(d.rec)) if (!fam.has(m)) bad.push(k + ' recipe uses ' + m);
+      if (!CRAFT_STATIONS[d.st]) bad.push(k + ' station ' + d.st);
+      if (!fam.has(d.pre)) bad.push(k + ' prefix ' + d.pre);
+      for (const [s] of d.base) if (!CRAFT_STATS[s]) bad.push(k + ' base stat ' + s);
+      const rows = Object.entries(CRAFT_FITS).filter(([, row]) => Object.values(row).some(l => l.includes(k))).map(([p]) => p);
+      if (!rows.length) bad.push(k + ' has no FITS row');
+      for (const p of [d.pos, d.comp].filter(Boolean)) if (!rows.includes(p)) bad.push(k + ' missing from FITS.' + p);
+      if (d.role && !craftAffixPool(k).length) bad.push(k + ' empty affix pool');
+    }
+    for (const row of Object.values(CRAFT_FITS)) for (const l of Object.values(row)) for (const k of l) if (!CRAFT_KINDS[k]) bad.push('FITS names unknown kind ' + k);
+    for (const [r, l] of Object.entries(CRAFT_ROLE_POOL)) {
+      if (!l.length) bad.push(r + ' pool empty');
+      for (const a of l) if (!CRAFT_AFFIXES[a] || CRAFT_AFFIXES[a].give.some(([s]) => !CRAFT_STATS[s])) bad.push('affix ' + a);
+    }
+    for (const tr of CRAFT_TROPHIES) for (const s of Object.values(tr.mw)) if (s && !(CRAFT_STATS[s] && CRAFT_MW.per[s])) bad.push('trophy ' + tr.key + ' line ' + s);
+    for (const d of Object.values(CRAFT_SIG_DROPS)) if (!fam.has(d.fam)) bad.push('sig drop ' + d.fam);
+    for (const d of Object.values(CRAFT_TONICS)) for (const m of Object.keys(d.rec)) if (!fam.has(m)) bad.push('tonic uses ' + m);
+    for (const k of Object.keys(CRAFT_NODES)) if (!NODE_NAMES[k] || NODE_NAMES[k].length !== 5 || !SKILL[skillOf(k)]) bad.push('node ' + k);
+    if (CRAFT_TROPHIES.length !== TYPES.length || CRAFT_HOME.length !== TYPES.length || TYPES.some(t => !CRAFT_SIG_DROPS[t.key])) bad.push('per-type tables not 7 long');
+    // spec 1 demand check: tier-1 units for a full class set (4 class kinds + Charm)
+    const want = { warden: 48, lanternmage: 45, ranger: 43, lightkeeper: 44 };
+    for (const [c, n] of Object.entries(want)) {
+      const set = ['weapon', 'off', 'helm', 'body'].map(p => CRAFT_FITS[p][c][0]).concat('charm');
+      const got = set.reduce((a, k) => a + Object.values(CRAFT_KINDS[k].rec).reduce((x, y) => x + y, 0), 0);
+      if (got !== n) bad.push(c + ' set needs ' + got + ', spec says ' + n);
+    }
+    for (const k of Object.keys(RECIPE)) if (CRAFT_KINDS[k].rec !== RECIPE[k]) bad.push('legacy recipe ' + k + ' changed');
+    return bad;
+  })()`);
+  assert(!r.length, 'craft tables consistent' + (r.length ? ': ' + r.slice(0, 5).join('; ') : ''));
+  assert(g.eval("skillOf('ore') === 'mine' && skillOf('wood') === 'wood' && skillOf('crystal') === 'mine' && skillOf('herb') === 'forage'"), 'skillOf is table-driven');
+} catch (e) { fail('craft data crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
