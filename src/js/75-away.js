@@ -91,7 +91,7 @@ let showAwayReport;
     }
     if (r.capped) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your party stops after ${hm(r.cap)} away. Each Hourglass relic adds 2 hours.`));
+      cap.append(img(IC.glass()), el('span', null, `Your party stops after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
       top.append(cap);
     }
     body.append(top);

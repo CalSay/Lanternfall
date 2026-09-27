@@ -912,5 +912,111 @@ try {
   assert(!g.errors.length, 'no art errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('art crashed: ' + (e.stack || e)); }
 
+// ---- camp (57-camp.js) ----
+console.log('camp');
+try {
+  const g = loadCore({ seed: 11 });
+  const E = s => g.eval(s);
+  let clock = new Date(2026, 8, 28, 12, 0, 0).getTime();
+  const setNow = t => { clock = t; E(`Date.now = () => ${t}`); };
+  setNow(clock);
+  const secs = n => { for (let i = 0; i < n * 10; i++) g.fn.tick(0.1); };
+  const rich = () => E(`S.gold = 1e12; for (const k of Object.keys(S.mats)) S.mats[k] = [1e5, 1e5, 1e5, 1e5, 1e5]; S.craft.troph = [50, 50, 50, 50, 50, 50, 50]`);
+  assert(E('S.camp.open') === false && E('["forge","bench","loom","ench","tavern"].every(k => campLevel(k) === 1)') && E('campLevel("hearth")') === 0, 'new game: camp closed, stations and Tavern at Lv 1');
+  E('S.maxZone = 5'); secs(1.2);
+  assert(E('S.camp.open && campLevel("hearth") === 1'), 'camp opens at zone 5 with Hearth 1');
+  assert(E('almanac.needs.Camp()') && E('OMENS.filter(o => o.needs === "Camp").every(o => almanac.usable(o))'), "the Almanac's camp Omens switch on");
+  // costs are paid
+  E('S.gold = 0'); assert(!E('campBuild("watch")') && E('campCan("watch").miss.length') > 0, 'no build without the cost');
+  rich();
+  const before = JSON.parse(E('JSON.stringify({ g: S.gold, m: S.mats })')), cost = JSON.parse(E('JSON.stringify(campCost("watch", 1))'));
+  assert(E('campBuild("watch")') && E('S.gold') === before.g - cost.gold && cost.mats.every(([f, t, n]) => E(`S.mats.${f}[${t - 1}]`) === before.m[f][t - 1] - n), `Watchtower Lv 1 paid (${cost.gold} gold, ${cost.mats.map(m => m.join(' ')).join(', ')})`);
+  assert(!E('campBuild("watch")') && E('campCan("watch").why') === 'Already building.', 'one build per building at a time');
+  assert(E('campCan("library").need.hearth') === 2, 'the Library needs Hearth 2');
+  E('S.camp.b.hearth = 2'); const g0 = E('S.gold');
+  assert(E('campBuild("forge")') && E('campBuilds().find(x => x.id === "forge").queued') && E('S.gold') < g0, 'a second build queues behind the first and is paid now');
+  assert(!E('campBuild("tavern")') && E('campCan("tavern").full'), 'one builder with one queued build: the third is refused');
+  // cancel: 100% before it starts
+  const gq = E('S.gold'), fc = JSON.parse(E('JSON.stringify(campPending("forge").cost)'));
+  assert(E('campCancel("forge")') && E('S.gold') === gq + fc.gold, 'cancelling a queued build refunds it all');
+  E('campBuild("forge")');
+  // timers run offline
+  const wEnd = E('campPending("watch").end'), fDur = E('campPending("forge").dur');
+  setNow(wEnd + 1000);
+  const r = JSON.parse(E('JSON.stringify(awayGains(3600))'));
+  assert(E('campLevel("watch")') === 1 && E('campPending("forge").start') === wEnd && E('campPending("forge").end') === wEnd + fDur, 'finished while away; the queued build started at the old end');
+  assert(r.extra.some(l => /Watchtower Lv 1 is finished/.test(l.txt)), 'the away report lists the finished build');
+  setNow(wEnd + fDur + 5);
+  E('globalThis.__cb = []; on("campBuilt", p => globalThis.__cb.push(p))'); secs(1.2);
+  assert(E('campLevel("forge")') === 2 && E('JSON.stringify(globalThis.__cb)') === '[{"id":"forge","lv":2}]', "the tick finishes builds; 'campBuilt' {id, lv} fires");
+  // cancel: 50% once started
+  E('S.camp.b.hearth = 4'); rich();
+  const gs = E('S.gold'), cc = JSON.parse(E('JSON.stringify(campCost("library", 1))'));
+  E('campBuild("library")'); E('campCancel("library")');
+  assert(E('S.gold') === gs - cc.gold + Math.floor(cc.gold / 2), 'cancelling a started build refunds half');
+  // perks apply
+  E('S.relic.glass = 0; S.camp.b.watch = 3');
+  assert(E('bonus("awayHours")') === 6, 'Watchtower Lv 3: +6h away');
+  E('S.relic.glass = 5; S.camp.b.watch = 5'); E('addBonus("awayHours", () => 7)');
+  const r2 = JSON.parse(E('JSON.stringify(awayGains(48 * 3600))'));
+  assert(r2.t === 24 * 3600 && r2.cap === 24 * 3600, `away cap never above 24h (Hourglass 5 + Watchtower 5 + another +7h: ${r2.t / 3600}h)`);
+  E('S.camp.b.hearth = 0; S.camp.b.watch = 0; S.relic.glass = 0');
+  E('almanac.force("none")'); E('Object.assign(S.camp.b, { hearth: 0, forge: 1, bench: 1, loom: 1, ench: 1, library: 0, tavern: 1 })');
+  const base = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("compXp"), bp: mod("bountyPay") })'));
+  E('Object.assign(S.camp.b, { hearth: 10, forge: 5, bench: 5, loom: 5, ench: 5, library: 5, tavern: 4 })');
+  const hi = JSON.parse(E('JSON.stringify({ sx: mod("skillXp:smith"), sv: mod("salvage"), rf: mod("reforge"), ts: bonus("transmuteSave"), rw: mod("rareW"), off: mod("offline"), gx: mod("skillXp:mine"), cx: mod("compXp"), bp: mod("bountyPay") })'));
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  assert(near(hi.sx / base.sx, 1.3) && near(hi.sv / base.sv, 1.25) && near(hi.rf / base.rf, 0.8) && hi.ts - base.ts === 1 && near(hi.rw / base.rw, 1.1), 'station Lv 5 perks: XP +30%, salvage, reforge, transmute, rarity');
+  assert(near(hi.off / base.off, 1.3) && near(hi.gx / base.gx, 1.25) && near(hi.cx / base.cx, 1.2) && near(hi.bp / base.bp, 1.15), 'Hearth 10 +30% away, Library 5 XP, Tavern 4 bounties');
+  E('almanac.force("hearthDay")'); assert(near(E('mod("offline")') / base.off, 1.6), 'Hearth Day doubles the Hearth bonus');
+  E('almanac.force("none")');
+  // perks never gate recipes
+  const craftSig = () => E('Object.keys(CRAFT_KINDS).flatMap(k => [1,2,3,4,5].map(t => canCraft(k, t).ok ? 1 : 0)).join("")');
+  E('S.skills.smith.lv = 9; S.skills.bench.lv = 4');
+  E('Object.assign(S.camp.b, { forge: 1, bench: 1, loom: 1, ench: 1 })'); const lo = craftSig();
+  E('Object.assign(S.camp.b, { forge: 5, bench: 5, loom: 5, ench: 5 })'); const hiC = craftSig();
+  assert(lo === hiC && lo.includes('1'), 'station levels never gate a recipe');
+  // Blessings
+  E('S.camp.b.shrine = 0'); assert(!E('blessToggle("blade")'), 'no Blessing without the Shrine');
+  E('S.camp.b.shrine = 1'); const d0 = E('mod("dmg")');
+  assert(E('blessToggle("blade")') && near(E('mod("dmg")') / d0, 1.08) && E('blessToggle("coin")') && E('S.camp.bless.join()') === 'coin', 'Shrine 1: one Blessing, swapping replaces it');
+  E('S.camp.b.shrine = 3; blessSet(["blade", "coin"])'); assert(near(E('mod("dmg")') / d0, 1.1) && E('S.camp.bless.length') === 2, 'Shrine 3: two Blessings, 25% stronger (Blade +10%)');
+  E('S.camp.bless = []');
+  // builders
+  E('S.camp.b.hearth = 5'); assert(E('campBuilders()') === 2, 'Hearth 5 adds a second builder');
+  // Roster board status hook
+  E('S.maxZone = 30; S.gold = 1e12; ["tobin","wren","pip","hesketh","kestrel"].forEach(k => recruit(k))');
+  const bench = JSON.parse(E('JSON.stringify(benchList())'));
+  assert(bench.length >= 1 && bench.every(id => E(`campStatus("${id}").status`) === 'rest' && E(`campFree("${id}")`)), `bench rests at camp (${bench.join(', ')})`);
+  const who = bench[0];
+  E(`globalThis.__rm = registerBenchStatus(id => id === "${who}" ? { status: 'job', label: 'Job: Oak Grove' } : null)`);
+  assert(E(`campStatus("${who}").status`) === 'job' && !E(`campFree("${who}")`) && E(`campStatus(S.party.field[0]).status`) === 'field', 'registerBenchStatus: one status per character, from the owning system');
+  E('globalThis.__rm()'); assert(E(`campStatus("${who}").status`) === 'rest', 'removing the hook frees the character');
+  // Next Up
+  E('S.camp.builds = []'); rich();
+  assert(E('topGoals(8, { sticky: false }).some(x => x.id === "camp-build" && x.ready)'), 'Next Up: "ready to build"');
+  assert(E('campBuild("hearth")'), 'Hearth 6 started');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "camp-timer" && /finishes in/.test(x.label))'), 'Next Up: "build finishes in <time>"');
+  const bad = badNumbers(E('S'));
+  assert(!bad.length, 'no NaN in the camp state' + (bad.length ? ': ' + bad[0] : ''));
+  assert(!g.errors.length, 'no camp errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  // old saves get the defaults; dps unchanged; round trip keeps S.camp
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const go = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
+    const def = go.eval('S.camp.open === false && S.camp.builds.length === 0 && ["forge","bench","loom","ench","tavern"].every(k => S.camp.b[k] === 1)');
+    for (let i = 0; i < 12; i++) go.fn.tick(0.1);
+    const opened = go.eval('S.camp.open') === (old.maxZone >= 5);
+    // the opened camp changes neither damage nor gear (compare with the camp's levels removed)
+    const dps1 = go.fn.totalDps(), gear1 = JSON.stringify(go.fn.gear()), keep = go.eval('JSON.stringify(S.camp.b)');
+    go.eval('S.camp.b = { hearth: 0, watch: 0, forge: 0, bench: 0, loom: 0, ench: 0, tavern: 0, library: 0, maproom: 0, shrine: 0 }');
+    const dps0 = go.fn.totalDps(), same = dps1 === dps0 && JSON.stringify(go.fn.gear()) === gear1;
+    go.eval(`S.camp.b = ${keep}`);
+    const cs = go.eval('JSON.stringify(S.camp)'); go.eval('save(); loadSave()');
+    const rt = go.eval('JSON.stringify(S.camp)') === cs;
+    assert(def && opened && same && rt, `${f}: camp defaults, opens by zone, dps and gear unchanged, round trip keeps S.camp` + (def && opened && same && rt ? '' : `: ${JSON.stringify({ def, opened, same, rt, dps0, dps1 })}`));
+  }
+} catch (e) { fail('camp crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

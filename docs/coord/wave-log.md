@@ -126,3 +126,9 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
   Kestrel, Isolde (mask hides face), Oriel (faint collar), Thessaly, Morwen, Vesper. Enemies are old
   rigs at half scale. Stage issue seen in stage-b1.png: the four party members overlap into a clump,
   so they need more spacing. Agents must use their own scratchpad subfolders.
+- Camp core merged (57-camp.js, 75-camp-ui.js; the World tab is now the Camp tab, id still `world`).
+  Opens at zone 5 with a free Hearth 1; the Watchtower is the first build; full camp in about 16+ days
+  (estimated without `--days`: retune with the M6 sim in a later balance pass). Families without a
+  source yet cost ore, wood or essence until CAMP_LIVE flips (K5 should flip crystal/fibre/herb/hide/troph).
+  Hooks for Expeditions (registerBenchStatus/Send, bonus('expSlots'), registerCampAction('maproom')),
+  Codex (setBlessingGate, Library action) and camp scene art (CAMP_SPOTS, campBuilds) are documented in its report.
