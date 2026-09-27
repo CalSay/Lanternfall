@@ -113,10 +113,11 @@ function gainSkill(k, n, quiet) {
     sk.xp -= skillNeed(sk.lv); sk.lv++;
     emit('skillUp', { k, lv: sk.lv, quiet: !!quiet });
     if (quiet) continue;
-    const req = k === 'smith' ? SMITH_REQ : NODE_REQ, t = req.indexOf(sk.lv);
+    const stn = Object.values(CRAFT_STATIONS).find(x => x.skill === k);
+    const req = stn ? CRAFT_STATION_REQ : NODE_REQ, t = req.indexOf(sk.lv);
     let extra = '';
-    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
-    if (k !== 'smith') addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
+    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
+    if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
     toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
   }
 }

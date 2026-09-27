@@ -5,6 +5,11 @@
 //   mixed: alternates 10 min fighting / 5 min gathering (best unlocked node for the weaker skill)
 //          and forges + equips gear whenever mats allow.
 //   --class warden|lanternmage|ranger|lightkeeper: choose the hero class at the start.
+//             With --class, mixed crafts that class's items (weapon, off-hand, head, body) at their
+//             stations (55-crafting.js), gathers the family that blocks the next one, falls back to
+//             the legacy Sword/Helm while a class item is out of reach (Hide before K5), and reports
+//             G1/G2 (first full tier-1/tier-2 class set incl. the Charm).
+//   --transmute 1: with --class, break higher tiers down (Transmute) to cover a class craft's shortfall.
 //   --active: taps the stage every 0.5s and casts the class ability on cooldown.
 //             Without it, the game's own idle auto-play and auto-cast run.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
@@ -32,6 +37,7 @@ const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0'
 
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
+Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
 // Sim clock: the game's Date.now (bounty timers, the Tavern's device day) follows sim time.
 const day0 = args.day !== undefined ? +args.day : 277;
 const clock0 = Date.UTC(2026, 0, 1) + day0 * 864e5 + new Date(Date.UTC(2026, 0, 1) + day0 * 864e5).getTimezoneOffset() * 6e4 + 8 * 3600e3;   // 08:00 local
@@ -123,35 +129,89 @@ function withReserve(E, res, fn) {
 }
 
 const SLOTS = ['weapon', 'helm', 'charm', 'pick', 'axe'];
+// With --class, the mixed policy crafts its class kinds (55-crafting.js) for weapon, off-hand,
+// head and body, falling back to the legacy Sword/Helm while a class item is out of reach
+// (e.g. Hide, which only K5 fight drops will supply). Charm and tools stay as before.
+const CLASS_POS = ['weapon', 'off', 'helm', 'body'];
+const HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
+const classKind = pos => cls ? E(`((CRAFT_FITS[${JSON.stringify(pos)}] || {})[${JSON.stringify(cls)}] || [])[0] || null`) : null;
+const isClassItem = (it, pos) => !!it && it.slot === classKind(pos);
+function keepBest(pos, it) {
+  const cur = fn.equipped(pos);
+  const better = !cur || (isClassItem(it, pos) && !isClassItem(cur, pos) && !cur.u && it.t >= cur.t) || fn.itemPower(it) > fn.itemPower(cur);
+  if (better && fn.equipItem(it.id, pos)) { if (cls && cur && !cur.u) fn.salvageItem(cur.id); } else fn.salvageItem(it.id);
+}
+// Fill a shortfall of `n` units of fam at tier t by transmuting higher tiers down (1 -> 2).
+function transmuteDown(fam, t, n) {
+  const have = () => E(`S.mats.${fam}[${t - 1}]`), need = have() + n;
+  for (let guard = 0; guard < 200 && have() < need; guard++) {
+    let u = t + 1; while (u <= 5 && E(`S.mats.${fam}[${u - 1}]`) <= 0) u++;
+    if (u > 5 || !E(`transmute(${JSON.stringify(fam)}, ${u}, 'down')`)) break;
+  }
+}
 function forgeGear() {
   for (let t = 5; t >= 1; t--) {
+    for (const pos of cls ? CLASS_POS : []) {
+      const kind = classKind(pos), cur = fn.equipped(pos);
+      if (cur && cur.t >= t && (isClassItem(cur, pos) || cur.u || cur.t > t)) continue;
+      const c = fn.canCraft(kind, t);
+      if (args.transmute && args.transmute !== '0' && !c.ok && c.lv >= c.need) for (const [m, n] of c.miss) transmuteDown(m, t, n);   // break higher tiers down (Enchanter's Table)
+      const it = fn.craftItem(kind, t);
+      if (it) keepBest(pos, it);
+    }
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
       if (cur && cur.t >= t) continue;
+      if (cls && CLASS_POS.includes(slot) && fn.canCraft(classKind(slot), t).lv >= E(`CRAFT_STATION_REQ[${t - 1}]`) && !fn.canCraft(classKind(slot), t).miss.some(([m]) => m === 'hide')) continue;   // wait for the class item
       const it = fn.forgeItem(slot, t);
-      if (it) { if (!cur || fn.itemPower(it) > fn.itemPower(cur)) fn.equipItem(it.id); else fn.salvageItem(it.id); }
+      if (it) keepBest(slot, it);
     }
   }
   // Like a player: upgrade equipped gear when affordable, and re-roll equipped-tier gear
-  // (forge, keep if better, else salvage) while mats are plentiful. Both train Smithing.
-  for (const slot of SLOTS) { for (let k = 0; k < 3 && fn.upgradeEquipped(slot); k++); }
-  for (const slot of SLOTS) {
-    const cur = fn.equipped(slot); if (!cur || cur.u) continue;
+  // (forge, keep if better, else salvage) while mats are plentiful. Both train the stations.
+  for (const pos of HERO_POS) { for (let k = 0; k < 3 && fn.upgradeEquipped(pos); k++); }
+  for (const pos of HERO_POS) {
+    const cur = fn.equipped(pos); if (!cur || cur.u) continue;
     for (let k = 0; k < 3; k++) {
-      const c = fn.craftCost(slot, cur.t);
+      const c = fn.craftCost(cur.slot, cur.t);
       if (!Object.entries(c).every(([m, n]) => E(`S.mats.${m}[${cur.t - 1}]`) >= n * 3)) break;
-      const it = fn.forgeItem(slot, cur.t); if (!it) break;
-      const now = fn.equipped(slot);
-      if (fn.itemPower(it) > fn.itemPower(now)) { fn.equipItem(it.id); fn.salvageItem(now.id); } else fn.salvageItem(it.id);
+      const it = fn.forgeItem(cur.slot, cur.t); if (!it) break;
+      const now = fn.equipped(pos);
+      if (fn.itemPower(it) > fn.itemPower(now)) { fn.equipItem(it.id, pos); fn.salvageItem(now.id); } else fn.salvageItem(it.id);
     }
   }
 }
+// The family (and tier) that most blocks the next class craft, if it can be gathered.
+function blockingNode() {
+  if (!cls) return null;
+  for (let t = 5; t >= 1; t--) {
+    for (const pos of CLASS_POS) {
+      const cur = fn.equipped(pos), kind = classKind(pos);
+      if (cur && (cur.t > t || (cur.t === t && (isClassItem(cur, pos) || cur.u)))) continue;
+      const c = fn.canCraft(kind, t);
+      if (c.lv < c.need || (c.miss || []).some(([m]) => m === 'hide')) continue;   // Hide has no source before K5
+      const miss = (c.miss || []).filter(([m]) => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]);
+      for (const [m] of miss) if (E(`S.skills[skillOf(${JSON.stringify(m)})].lv >= NODE_REQ[${t - 1}]`)) return [m, t];
+    }
+  }
+  return null;
+}
 function bestNode() {
+  const b = blockingNode();
+  if (b && fn.setNode(b[0], b[1])) { craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; return; }
   const kind = E('S.skills.mine.lv <= S.skills.wood.lv') ? 'ore' : 'wood';
   for (let t = 5; t >= 1; t--) if (fn.setNode(kind, t)) return;
 }
+// G1/G2: first full class set (weapon, off-hand, head, body and charm) at tier >= 1 / >= 2.
+const craftStats = { g1: null, g2: null, gather: {} };
+function craftCheck(sec) {
+  if (!cls) return;
+  const full = t => CLASS_POS.every(p => { const it = fn.equipped(p); return isClassItem(it, p) && it.t >= t; }) && (fn.equipped('charm') || { t: 0 }).t >= t;
+  if (craftStats.g1 == null && full(1)) craftStats.g1 = sec;
+  if (craftStats.g2 == null && full(2)) craftStats.g2 = sec;
+}
 
-const gs = () => SLOTS.reduce((a, s) => { const it = fn.equipped(s); return a + (it ? fn.itemPower(it) : 0); }, 0);
+const gs = () => HERO_POS.reduce((a, s) => { const it = fn.equipped(s); return a + (it ? fn.itemPower(it) : 0); }, 0);
 const fmt = n => n < 1e3 ? n.toFixed(0) : n < 1e6 ? (n / 1e3).toFixed(1) + 'K' : n < 1e9 ? (n / 1e6).toFixed(2) + 'M' : n.toExponential(2);
 const row = (a) => a.map((x, i) => String(x).padStart([6, 4, 5, 8, 8, 5, 15, 5][i] || 6)).join(' ');
 console.log(`policy=${policy} hours=${hours} seed=${seed} class=${cls || 'none'} ${active ? 'active' : 'idle'}`);
@@ -170,12 +230,15 @@ const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) r
 const dt = 0.1, total = hours * 3600;
 let t = 0, nextLine = 0;
 for (let sec = 0; sec < total; sec++) {
+  if (sec >= nextLine && args.debug && cls) console.log('   craft', E('JSON.stringify(S.equip)'), [1, 2, 3, 4, 5].map(t => JSON.stringify(fn.canCraft(classKind('weapon'), t).why + ' / ' + fn.canCraft('weapon', t).why)).join(' '), E('JSON.stringify(S.mats)'));
   if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log('   ', E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
   if (policy === 'mixed' && sec % 60 === 0) {
     const phase = Math.floor(sec / 60) % 15;
     if (phase === 0) fn.setActivity('fight');
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
+    else if (phase > 10 && cls) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
     withReserve(E, rosterStep(E), forgeGear);
+    craftCheck(sec);
   }
   if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
@@ -227,6 +290,13 @@ if (E('rosterLive()')) {
   const h = loadCore({ seed });
   const worst = id => h.eval(`(() => { S.maxZone = 40; let n = 0; while (!isRecruited(${JSON.stringify(id)}) && n < 100) { n++; unlockTokenRoll(${JSON.stringify(id)}, 0.999999); } return n; })()`);
   console.log(`T17 worst-case pity: Grenna ${worst('grenna')} boss kills (want 12) / Isolde ${worst('isolde')} (want 10)`);
+}
+if (cls && policy === "mixed") {
+  if (args.debug) console.log(E("JSON.stringify(S.mats)"), [1,2,3,4,5].map(t => JSON.stringify(fn.canCraft(classKind("weapon"), t).why)).join(" "));
+  const m = x => x == null ? '-' : (x / 60).toFixed(0) + 'm';
+  const set = CLASS_POS.concat('charm').map(p => { const it = fn.equipped(p); return it ? `${p}:${it.slot}${it.t}` : `${p}:-`; }).join(' ');
+  console.log(`craft: G1 first tier-1 class set ${m(craftStats.g1)} (want 6-12m) / G2 tier-2 ${m(craftStats.g2)} (want 35-60m) | ${set}`);
+  console.log(`craft: stations ${['smith', 'bench', 'loom', 'ench'].map(k => k + ' ' + E(`S.skills.${k}.lv`)).join(', ')} | gather trips for blocks ${JSON.stringify(craftStats.gather)}`);
 }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
 if (args.debug) console.log(E('JSON.stringify(rosterList().map(k => [k, promoteCost(k), canPromote(k)]))'), E('JSON.stringify(S.mats.ess)'), E('S.gold'));

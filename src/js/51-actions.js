@@ -23,13 +23,22 @@ function dropUnique(key, t) {
 function salvageGive(it) {
   for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage'));
   if (it.u) S.mats.ess[it.t - 1] += 10;
+  craftSalvageBonus(it); // 55-crafting: affixed items may give an essence
+}
+// One wearer per item: take it off the hero and every companion. Returns how many it left.
+function unwearItem(id) {
+  let n = 0;
+  for (const k of Object.keys(S.equip)) if (S.equip[k] === id) { S.equip[k] = null; n++; }
+  const rec = S.party && S.party.rec;
+  if (rec) for (const r of Object.values(rec)) for (const p of CRAFT_COMP_POS) if (r && r[p] === id) { r[p] = null; n++; }
+  return n;
 }
 // pos: hero position (defaults to the kind's own); the item must fit it for the hero's class.
 function equipItem(id, pos) {
   const it = itemById(id); if (!it) return false;
   pos = pos || kindPos(it.slot);
   if (!(pos in S.equip) || !fits(it, pos, 'hero')) return false;
-  S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
+  unwearItem(id); S.equip[pos] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
   return true;
 }
 function salvageItem(id) {
@@ -40,7 +49,10 @@ function salvageItem(id) {
   return true;
 }
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
+// Kinds added by the crafting overhaul go through craftItem (55-crafting.js); the five
+// original kinds keep this exact path (Smithing gate, rng use and XP).
 function forgeItem(slot, t) {
+  if (!RECIPE[slot]) return craftItem(slot, t);
   const cost = craftCost(slot, t);
   if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);
@@ -52,15 +64,10 @@ function forgeItem(slot, t) {
   save();
   return it;
 }
-// Upgrade the item equipped in a slot by +1 (max +10).
+// Upgrade the item equipped in a slot by +1 (max +10; +8..+10 need a Trophy): upgradeItem (55-crafting).
 function upgradeEquipped(slot) {
-  const it = equipped(slot); if (!it || it.plus >= 10) return false;
-  const c = upgradeCost(it);
-  if (!hasMats(c.mats, it.t) || S.gold < c.gold) return false;
-  payMats(c.mats, it.t); S.gold -= c.gold; it.plus++; gearDirty();
-  gainSkill('smith', Math.round(6 * Math.pow(it.t, 1.5)));
-  toast(`${itemName(it)} upgraded.`, 'good', { item: it }); save();
-  return true;
+  const it = equipped(slot); if (!it) return false;
+  return upgradeItem(it.id);
 }
 
 // ================= shops =================

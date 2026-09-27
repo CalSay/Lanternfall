@@ -168,9 +168,11 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 
   // ---------------- power ----------------
   const sharedMult = () => dmgMult() * (1 + gear().party / 100) * mod('party');
-  const wpnPct = r => { const it = r.wpn != null ? itemById(r.wpn) : null; return it ? itemPower(it) : 0; };
+  // Weapon power: the damage lines of the character's gear (41-items charGear: Bow/Staff
+  // "Damage", Attack and Spell power affixes; Tome healing counts for a support's buff).
+  const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
-  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(2, r.rank) * (1 + wpnPct(r) / 100);
+  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(2, r.rank) * (1 + wpnPct(id, r) / 100);
   const roleMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };

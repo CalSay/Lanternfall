@@ -24,12 +24,12 @@ const craftCost = (slot, t) => kindCost(slot, t);
 function upgradeCost(it) { return kindUpgradeCost(it); }
 const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
 const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
-function rarityWeights() {
-  const sm = S.skills.smith.lv;
+// sm: the crafting station's level (55-crafting passes it); Smithing by default.
+function rarityWeights(sm = S.skills.smith.lv) {
   return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: (10 + sm * 0.5) * mod('rareW'), epic: (2 + sm * 0.25) * mod('rareW') };
 }
-function rollRarity() {
-  const w = rarityWeights(), tot = Object.values(w).reduce((a, b) => a + b, 0);
+function rollRarity(lv) {
+  const w = rarityWeights(lv), tot = Object.values(w).reduce((a, b) => a + b, 0);
   let r = Math.random() * tot;
   for (const [k, v] of Object.entries(w)) { if ((r -= v) <= 0) return k; }
   return 'common';

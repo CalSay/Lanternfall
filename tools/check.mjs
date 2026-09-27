@@ -735,5 +735,128 @@ try {
   for (const x of [g, w, go]) assert(!x.errors.length, 'no almanac handler errors' + (x.errors.length ? ': ' + x.errors[0] : ''));
 } catch (e) { fail('almanac crashed: ' + (e.stack || e)); }
 
+// ---- 7. crafting actions (55-crafting.js, K6) ----
+console.log('crafting');
+try {
+  const g = loadCore({ seed: 5 }), E = s => g.eval(s);
+  E('globalThis.__crafted = []; on("crafted", p => { globalThis.__crafted.push(p.kind + ":" + p.t); })');
+  E('chooseClass("lanternmage")');
+  const mats = () => E('JSON.stringify(S.mats)');
+  // gates and player-facing reasons
+  const why0 = E('canCraft("robe", 1).why');
+  assert(why0 === '7 more Flax Fibre, 1 more Quartz Shard, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
+  assert(E('canCraft("robe", 2).why') === 'Needs Tailoring 4' && E('craftItem("robe", 2)') === null, 'station tier gate: Needs Tailoring 4');
+  assert(E('canCraft("charm", 3).why') === 'Needs Enchanting 9', "Charm gates on the Enchanter's Table...");
+  E('S.skills.smith.lv = 9');
+  assert(E('canCraft("charm", 3).why') !== 'Needs Enchanting 9', '...or Smithing, so old saves keep the recipe (camp N4)');
+  E('S.skills.smith.lv = 1');
+  // pays exactly, rolls affixes, station XP, events
+  E('for (const k of CRAFT_FAMILIES) S.mats[k] = [200, 200, 200, 200, 200]');
+  const m0 = JSON.parse(mats()), n0 = E('S.items.length');
+  const it = E('craftItem("robe", 1)');
+  const m1 = JSON.parse(mats());
+  const paid = Object.fromEntries(Object.keys(m0).map(k => [k, m0[k][0] - m1[k][0]]).filter(([, n]) => n));
+  assert(it && it.slot === 'robe' && Array.isArray(it.a) && it.a.length >= 1 && E('S.items.length') === n0 + 1, `craftItem makes a Robe with ${it && it.a.length} affix line(s)`);
+  assert(JSON.stringify(paid) === JSON.stringify({ ess: 2, crystal: 1, fibre: 7, herb: 1 }), `craft pays the recipe exactly (${JSON.stringify(paid)})`);
+  assert(E('S.skills.loom.xp') === 20 && E('globalThis.__crafted.join()') === 'robe:1', 'Tailoring XP 20 (no catch-up when level) and a crafted event');
+  E('S.skills.smith.lv = 10; S.skills.loom.lv = 1; S.skills.loom.xp = 0'); E('craftItem("mitre", 1)');
+  assert(E('craftXpFor("loom", 20)') === 40 && E('S.skills.loom.lv') === 2 && E('S.skills.loom.xp') === 40 - 25, 'catch-up: x2 XP while below Smithing');
+  const tk = E('craftItem("trinket", 1, { role: "caster" })');
+  assert(tk && tk.ro === 'caster' && tk.a.every(([id]) => ['spell', 'area', 'control', 'hp'].includes(id)), 'Trinket rolls from the chosen role');
+  assert(E('!!forgeItem("staff", 1)') && E('S.items[S.items.length - 1].slot') === 'staff', 'forgeItem delegates new kinds to craftItem');
+  const sx = E('S.skills.smith.xp'); E('forgeItem("weapon", 1)');
+  assert(E('S.skills.smith.xp') > sx, 'forgeItem keeps the legacy Sword path (Smithing XP)');
+  // Masterwork
+  assert(E('canCraft("robe", 1, { mw: 0 }).why') === 'Needs 1 Moss Heart', 'Masterwork needs its Trophy');
+  E('S.craft.troph[0] = 1');
+  const mw = E('craftItem("robe", 1, { mw: 0 })');
+  assert(mw && mw.mw === 0 && E('S.craft.troph[0]') === 0, 'Masterwork craft spends the Trophy and marks the item');
+  // bag rule
+  E('while (bagCount() < CRAFT_BAG_MAX) S.items.push(newItem("weapon", 1, "common"))');
+  const mb = mats();
+  assert(/bag is full/.test(E('canCraft("robe", 1).why')) && E('craftItem("robe", 1)') === null && mats() === mb, 'full bag: no craft, nothing paid');
+  // salvage is generic
+  const robe = E('S.items.find(i => i.slot === "robe").id');
+  const f0 = E('S.mats.fibre[0]');
+  assert(E(`salvageItem(${robe})`) && E('S.mats.fibre[0]') - f0 === Math.floor(7 * 0.4), 'salvage returns 40% of a Robe');
+  E('S.items = S.items.filter(i => i.slot !== "weapon")');
+  // Reforge
+  const staff = E('S.items.find(i => i.slot === "staff")');
+  E('S.gold = 1e6; S.skills.ench.lv = 1');
+  const rc = E(`canReforge(${staff.id}, 0)`);
+  assert(rc.ok && rc.cost.mats.ess === 3 && rc.cost.gold === 150, `Reforge cost: 3 essence and 150 gold (${JSON.stringify(rc.cost)})`);
+  const e0 = E('S.mats.ess[0]');
+  assert(E(`reforgeItem(${staff.id}, 0)`) && E(`itemById(${staff.id}).rf`) === 1 && E('S.mats.ess[0]') === e0 - 3 && E('S.gold') === 1e6 - 150, 'reforgeItem pays and counts');
+  const a = E(`itemById(${staff.id}).a`);
+  assert(new Set(a.map(l => l[0])).size === a.length, 'a reforged line never duplicates a stat');
+  assert(E(`canReforge(${staff.id}, 0).cost.gold`) === 225, 'the next Reforge costs more');
+  E('S.items.push(newItem("staff", 2, "rare"))');
+  assert(E('canReforge(S.items[S.items.length - 1].id, 0).why') === 'Needs Enchanting 4', 'Reforge needs Enchanting for the tier');
+  // Transmute
+  E('S.skills.ench.lv = 1; S.mats.ore = [8, 0, 0, 0, 0]');
+  assert(E('canTransmute("ore", 1, "ore").why') === 'Needs Enchanting 4' && !E('transmute("ore", 1, 2)'), 'Transmute up needs Enchanting for the new tier');
+  E('S.skills.ench.lv = 4');
+  assert(E('transmute("ore", 1, "ore")') && E('JSON.stringify(S.mats.ore)') === '[4,1,0,0,0]', 'Transmute up: 4 Copper -> 1 Iron');
+  assert(E('transmute("ore", 2, "down")') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute down: 1 Iron -> 2 Copper');
+  assert(!E('transmute("ore", 1, "wood")') && !E('transmute("hide", 5, 6)') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute never crosses families or goes past tier 5');
+  // Upgrades: trophies gate +8..+10
+  const up = E('S.items.find(i => i.slot === "staff").id');
+  E(`itemById(${up}).plus = 7; for (const k of CRAFT_FAMILIES) S.mats[k] = [500, 500, 500, 500, 500]; S.gold = 1e9; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
+  assert(E(`canUpgrade(${up}).why`) === 'Needs 1 Trophy of any kind' && !E(`upgradeItem(${up})`), '+8 needs a Trophy');
+  E('S.craft.troph[3] = 1');
+  assert(E(`upgradeItem(${up})`) && E(`itemById(${up}).plus`) === 8 && E('S.craft.troph[3]') === 0, '+8 spends one Trophy');
+  E(`S.equip.weapon = ${up}; itemById(${up}).plus = 9`);
+  assert(!E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 9, 'upgradeEquipped honours the gate too');
+  E(`itemById(${up}).plus = 3`);
+  assert(E('upgradeEquipped("weapon")') && E(`itemById(${up}).plus`) === 4, 'below +8 no Trophy is needed');
+  // companion gear and the one-wearer rule
+  assert(E('rosterLive()'), 'roster is live in a new game');
+  const caster = E('ROSTER_KEYS.find(k => ROSTER[k].role === "caster" && !isRecruited(k) && k !== "oriel")'), q = JSON.stringify(caster);
+  E(`unlockChar(${q}, 'test', true)`);
+  E('S.equip.weapon = null; gearDirty()');   // hero Might is party-wide: measure without it
+  const d0 = E(`charDps(${q})`);
+  E(`S.equip.weapon = ${up}; gearDirty()`);
+  assert(E(`equipChar(${q}, ${up}, 'wpn')`) && E('S.equip.weapon') === null && E(`charRec(${q}).wpn`) === up, 'equipChar moves the Staff off the hero');
+  const d1 = E(`charDps(${q})`);
+  assert(d1 > d0 * 1.1, `companion weapon power is live through charGear (${d0.toFixed(1)} -> ${d1.toFixed(1)})`);
+  assert(E('bagCount()') === E('S.items.length') - E('equippedIds().size'), 'items a companion wears leave the bag count');
+  const bow = E('(() => { const it = newItem("bow", 1, "common"); S.items.push(it); return it.id; })()');
+  assert(!E(`equipChar(${q}, ${bow}, 'wpn')`), 'a Bow does not fit a caster');
+  assert(E(`equipItem(${up}, 'weapon')`) && E(`charRec(${q}).wpn`) === null, 'equipping on the hero takes it off the companion');
+  E(`equipChar(${q}, ${up}, 'wpn')`);
+  assert(E(`unequipChar(${q}, 'wpn')`) && E(`charRec(${q}).wpn`) === null && E(`!!itemById(${up})`), 'unequipChar returns the item to the bag');
+  // class change: items that no longer fit return to the bag, never deleted
+  E(`equipItem(${up}, 'weapon')`);
+  const lan = E('(() => { const it = newItem("lantern", 1, "common"); S.items.push(it); equipItem(it.id, "off"); return it.id; })()');
+  const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); equipItem(it.id, "helm"); return it.id; })()');
+  const cnt = E('S.items.length');
+  E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
+  assert(E('S.equip.weapon') === null && E('S.equip.off') === null && E('S.equip.helm') === helm && E('S.items.length') === cnt && E(`!!itemById(${up}) && !!itemById(${lan})`), 'class change: Staff and Lantern back in the bag, the legacy Helm stays on');
+  // Star Chart -> Oriel
+  E('S.skills.ench.lv = 8');
+  assert(E('canCraft("starChart", 3).why') === 'Needs Enchanting 9', 'Star Chart needs Enchanting 9');
+  E('S.skills.ench.lv = 9; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]');
+  assert(E('canCraft("starChart", 3).why') === '1 more Wraith Veil', 'Star Chart needs a Wraith Veil');
+  E('S.craft.troph[6] = 1');
+  assert(E('!!craftItem("starChart", 3)') && E('S.party.unlock.starChart') === true && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Oriel's route");
+  assert(E('isRecruited("oriel")') && !E('canCraft("starChart", 3).ok'), 'Oriel joins; no second Star Chart');
+  // Tonics (K6b)
+  E('almanac.force("none")'); const dm = E('mod("dmg")');
+  E('S.mats.herb[0] = 10; S.mats.ess[0] = 10');
+  assert(E('brewTonic("vigor", 1) && drinkTonic("vigor", 1)') && Math.abs(E('mod("dmg")') / dm - 1.15) < 1e-9, 'Vigor Tonic: +15% damage');
+  E('emit("away", { secs: 1300, t: 1300, lines: [] })');
+  assert(E('tonicActive()') === null && E('mod("dmg")') === dm, 'the Tonic timer runs offline');
+  assert(!g.errors.length, 'no crafting errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  // old saves: defaults only, nothing else touched
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    const ok = go.eval('JSON.stringify(S.craft)') === JSON.stringify({ v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0 })
+      && go.eval('S.items.length') === old.items.length && Object.keys(old.equip).every(k => go.eval(`S.equip.${k}`) === old.equip[k]);
+    go.eval('save(); loadSave()');
+    assert(ok && go.eval('S.craft.v === 1 && S.items.length') === old.items.length, `${f}: craft defaults added, items and equip untouched, round trip ok`);
+  }
+} catch (e) { fail('crafting crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
