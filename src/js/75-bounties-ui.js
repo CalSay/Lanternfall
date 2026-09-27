@@ -1,0 +1,84 @@
+// 75-bounties-ui: Bounties section on the Fight tab, Achievements grid on the Tavern tab.
+{
+  const BTY_IC = {
+    kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
+    forge: () => iconURL('anvil', '#8A8FA0'), boss: () => iconURL('banner', '#E0524F'), crit: () => iconURL('flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }),
+    tap: () => iconURL('boot', '#6B4A2E')
+  };
+  const btyRows = [];
+  registerSection('adv', {
+    id: 'bounties', title: 'Bounties',
+    mount(sec) {
+      // sit right under the Boss gate
+      const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
+      for (let i = 0; i < 3; i++) {
+        const r = makeRow(sec, '', false, BTY_IC.kill());
+        r.row.classList.add('bty');
+        const bar = el('div', 'bar bty-bar'); bar.append(el('i')); r.desc.after(bar); r.bar = bar.firstChild;
+        const rr = el('button', 'bty-rr', 'Swap'); r.desc.parentNode.append(rr); r.rr = rr;
+        r.btn.addEventListener('click', () => { if (BOUNTY_API.claim(i)) ui(true); });
+        rr.addEventListener('click', () => { if (BOUNTY_API.reroll(i)) ui(true); });
+        btyRows.push(r);
+      }
+    },
+    update() {
+      const now = Date.now();
+      S.bounties.slots.forEach((b, i) => {
+        const r = btyRows[i]; if (!r) return;
+        if (!b || !b.k) {
+          r.row.classList.add('locked'); r.row.classList.remove('active');
+          r.nm.textContent = 'New bounty soon'; r.own.textContent = '';
+          r.desc.textContent = `A new bounty is posted in ${fmtTime(Math.max(0, (b ? b.wait : 0) - now) / 1000)}.`;
+          r.bar.style.width = '0%'; r.rr.hidden = true;
+          r.btn.disabled = true; r.qty.textContent = 'Posting'; r.btn.querySelector('.price').textContent = '...';
+          return;
+        }
+        const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
+        r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
+        r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
+        r.desc.textContent = 'Reward: ' + rew.txt;
+        r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
+        const url = BTY_IC[b.k](); setIc(r.ic, url);
+        const rrLeft = (b.rr || 0) - now;
+        r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
+        r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
+        r.btn.disabled = !done; r.qty.textContent = done ? 'Done' : 'Bounty';
+        r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
+      });
+    }
+  });
+
+  let achSig = '';
+  const achTiles = [];
+  registerSection('tav', {
+    id: 'achievements', title: 'Achievements',
+    mount(sec) {
+      const head = el('p', 'note ach-sum'); sec.append(head);
+      const grid = el('div', 'ach-grid'); sec.append(grid);
+      for (const a of ACH_API.list) {
+        const t = el('div', 'ach');
+        const ic = icTile(iconURL(a.ic, '#F2C14E'));
+        const body = el('div');
+        body.append(el('div', 'ach-nm', a.name), el('div', 'ach-desc', a.desc), el('div', 'ach-fx', ACH_API.bonusText(a)));
+        const bar = el('div', 'bar'); bar.append(el('i')); body.append(bar);
+        t.append(ic, body); grid.append(t);
+        achTiles.push({ a, t, ic, bar: bar.firstChild, desc: body.children[1] });
+      }
+      achTiles.head = head;
+    },
+    update(force) {
+      const got = S.achievements.got;
+      const sig = achTiles.map(x => got[x.a.id] ? 1 : Math.floor(Math.min(1, x.a.cur() / x.a.need) * 50)).join();
+      if (sig === achSig && !force) return; achSig = sig;
+      let n = 0;
+      for (const x of achTiles) {
+        const on = !!got[x.a.id]; if (on) n++;
+        const c = Math.min(x.a.need, x.a.cur());
+        x.t.classList.toggle('got', on);
+        x.bar.style.width = (on ? 100 : c / x.a.need * 100) + '%';
+        x.desc.textContent = x.a.desc + (on ? '' : ` (${fmt(c)}/${fmt(x.a.need)})`);
+      }
+      achTiles.head.textContent = `${n} of ${achTiles.length} earned. Each one gives a permanent bonus.`;
+    }
+  });
+}

@@ -335,7 +335,7 @@ function draw() {
 let lastTap = 0;
 $('stage').addEventListener('pointerdown', e => {
   const now = performance.now(); if (now - lastTap < 60) return; lastTap = now;
-  lunge = 0.2;
+  lunge = 0.2; emit('tap', { node: target() === 'node' });
   if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
   if (target() === 'node') { tapNode(); return; }
   const r = $('stage').getBoundingClientRect();

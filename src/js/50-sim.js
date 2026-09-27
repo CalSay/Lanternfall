@@ -62,7 +62,7 @@ function heroSwing(base, tap, at) {
   const crit = Math.random() < critChance();
   const dmg = base * (crit ? critMult() : 1) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
-  if (crit) { emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
+  if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
   return { crit, dmg };
 }
 // A player tap on the stage. at = {x, y} stage fractions for the damage number.
