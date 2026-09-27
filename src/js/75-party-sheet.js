@@ -260,14 +260,14 @@ let openSheet, partySheet;
   function updateXp() {
     const r = refs.xp; if (!r) return;
     const x = xpInfo(r.k); if (!x) return;
-    r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
-    r.bar.classList.toggle('cap', x.atCap);
+    putStyle(r.fill, 'width', (x.pct * 100).toFixed(1) + '%');
+    putToggle(r.bar, 'cap', x.atCap);
     const bits = [];
     if (x.atCap) bits.push(x.maxRank ? 'Highest rank reached.' : 'At the level cap. Promote to keep growing.');
     else bits.push(`${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`);
     if (!inField(r.k)) bits.push('Earns XP only while fighting.');
     else if (x.catchUp > 0) bits.push(`+${Math.round(x.catchUp * 100)}% XP to catch up.`);
-    r.note.textContent = bits.join(' ');
+    putText(r.note, bits.join(' '));
   }
 
   function kitSection(k) {
@@ -518,8 +518,8 @@ let openSheet, partySheet;
     const s = sigOf(who);
     if (!force && s === sig) {
       updateXp();
-      if (refs.dps && who !== 'hero') refs.dps.textContent = fmt(safe(() => charDps(who), 0));
-      if (refs.heroXp) { refs.heroXp.style.width = Math.min(100, S.xp / xpNeed() * 100) + '%'; refs.heroXpTxt.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`; }
+      if (refs.dps && who !== 'hero') putText(refs.dps, fmt(safe(() => charDps(who), 0)));
+      if (refs.heroXp) { putStyle(refs.heroXp, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%'); putText(refs.heroXpTxt, `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`); }
       return;
     }
     sig = s;

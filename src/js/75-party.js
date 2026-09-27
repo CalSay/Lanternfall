@@ -147,9 +147,9 @@
     setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
     if (r.cdBar) {
       const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
-      r.cdBar.style.width = (100 - Math.min(100, left / cdMax * 100)) + '%';
+      putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
       setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
-      r.cast.disabled = left > 0 || typeof castAbility !== 'function';
+      putDisabled(r.cast, left > 0 || typeof castAbility !== 'function');
     }
   }
 
@@ -207,18 +207,18 @@
     for (const r of compRefs) {
       const x = xpInfo(r.k); if (!x) continue;
       setT(r.lv, `Lv ${x.r.lv}/${x.cap} · ${ROSTER_RANKS[x.r.rank]}`);
-      r.fill.style.width = (x.pct * 100).toFixed(1) + '%';
-      r.bar.classList.toggle('cap', x.atCap);
-      r.bar.title = x.atCap ? 'At the level cap' : `${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`;
+      putStyle(r.fill, 'width', (x.pct * 100).toFixed(1) + '%');
+      putToggle(r.bar, 'cap', x.atCap);
+      putAttr(r.bar, 'title', x.atCap ? 'At the level cap' : `${Math.floor(x.pct * 100)}% to Lv ${x.r.lv + 1}`);
       const cu = Math.round(x.catchUp * 100);
-      r.badge.hidden = !(cu > 0) || x.atCap; setT(r.badge, `+${cu}% XP`);
+      putHidden(r.badge, !(cu > 0) || x.atCap); setT(r.badge, `+${cu}% XP`);
       const showP = x.atCap && !x.maxRank;
-      r.prom.hidden = !showP;
+      putHidden(r.prom, !showP);
       if (showP) {
         const pc = promoteCost(r.k), ps = pc.gold + ':' + canPromote(r.k);
         if (ps !== r.pSig) { r.pSig = ps; setPrice(r.prom, pc.gold); r.prom.disabled = !canPromote(r.k); r.prom.title = costText(pc); }
       }
-      r.dot.hidden = !needsYou(r.k);
+      putHidden(r.dot, !needsYou(r.k));
     }
   }
 
@@ -226,7 +226,7 @@
   let synSig = '', synOpen = null;
   function updateSyn(sec) {
     const on = !!fnActive();
-    sec.hidden = !on; if (!on) return;
+    putHidden(sec, !on); if (!on) return;
     const list = synergiesFor(null) || [];
     const sig = JSON.stringify(list.map(s => [s.id, s.active, s.missing])) + synOpen;
     if (sig === synSig) return; synSig = sig;
@@ -300,24 +300,35 @@
     r.fb.forEach((b, i) => b.setAttribute('aria-pressed', String(FILTERS[i] === filt)));
     const shown = shownPre;
     r.grid.textContent = '';
-    for (const x of shown) {
-      const c = C(x.k);
-      const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
-      t.style.setProperty('--rc', frameCol(x.k));
-      const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
-      if (x.rec) {
-        const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
-        fr.append(lv, el('i', 'rp r-' + c.role));
-        if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
-        if (x.flag) fr.append(el('span', 'ndot'));
-      } else fr.append(el('i', 'rp r-' + c.role));
-      t.append(fr, el('span', 'rt-nm', first(x.k)));
-      if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
-      t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
-      t.addEventListener('click', () => partySheet.open(x.k));
-      r.grid.append(t);
-    }
+    // Tiles are built in time-boxed chunks (a portrait can need baking): the first screenful now, the
+    // rest in the next tasks, so opening the Roster never stalls the game. A newer rebuild wins.
+    const gen = ++rosGen, queue = shown.slice();
+    const chunk = () => {
+      if (gen !== rosGen) return;
+      const t0 = performance.now();
+      while (queue.length && (performance.now() - t0 < 25 || r.grid.children.length < 6)) addTile(queue.shift());
+      if (queue.length) setTimeout(chunk, 0);
+    };
+    chunk();
     if (!shown.length) r.grid.append(el('p', 'note', 'Nobody with that role yet.'));
+  }
+  let rosGen = 0;
+  function addTile(x) {
+    const r = rosRefs, c = C(x.k);
+    const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
+    t.style.setProperty('--rc', frameCol(x.k));
+    const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
+    if (x.rec) {
+      const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
+      fr.append(lv, el('i', 'rp r-' + c.role));
+      if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
+      if (x.flag) fr.append(el('span', 'ndot'));
+    } else fr.append(el('i', 'rp r-' + c.role));
+    t.append(fr, el('span', 'rt-nm', first(x.k)));
+    if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
+    t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
+    t.addEventListener('click', () => partySheet.open(x.k));
+    r.grid.append(t);
   }
 
   // ================= leads =================
@@ -326,7 +337,7 @@
     if (!live()) { sec.hidden = true; return; }
     const list = leadList();
     const sig = JSON.stringify(list.map(l => [l.id, l.name, l.how, l.sub, pctOf(l) != null ? Math.floor(pctOf(l) * 100) : null, l.action && l.action.label, l.ready]));
-    sec.hidden = !list.length;
+    putHidden(sec, !list.length);
     if (sig === leadSig) return; leadSig = sig;
     const box = sec.querySelector('.leads'); box.textContent = '';
     for (const l of list) {
@@ -356,8 +367,8 @@
   function updateDot() {
     if (!live()) { pdot.hidden = true; return; }
     const any = rosterList().some(needsYou);
-    pdot.hidden = !any || S.tab === 'party';
-    if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
+    putHidden(pdot, !any || S.tab === 'party');
+    if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
   // The same news marks the Roster sub-view (70-ui registerView).
   registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });

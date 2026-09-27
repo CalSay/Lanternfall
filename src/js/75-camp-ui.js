@@ -59,11 +59,11 @@
     bar.append(fill); w.append(bar, txt);
     return {
       el: w, set(x) {
-        w.hidden = !x; if (!x) return;
+        putHidden(w, !x); if (!x) return;
         const p = x.start ? Math.min(100, (Date.now() - x.start) / Math.max(1, x.end - x.start) * 100) : 0;
-        fill.style.width = p + '%';
+        putStyle(fill, 'width', p + '%');
         setTxt(txt, x.start ? `Lv ${x.to} ready in ${dur(left(x))}` : `Lv ${x.to} is queued. It starts when the builder is free.`);
-        w.classList.toggle('queued', !x.start);
+        putToggle(w, 'queued', !x.start);
       }
     };
   }
@@ -84,15 +84,15 @@
     return {
       el: box, set(c, pend) {
         const done = c.max;
-        go.hidden = !!pend || done || !!c.need; cancel.hidden = !pend;
+        putHidden(go, !!pend || done || !!c.need); putHidden(cancel, !pend);
         if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
           const verb = c.queue ? 'Queue' : 'Build';
           setTxt(go, isArmed('b:' + id) ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
-          go.disabled = !c.ok; go.classList.toggle('armed', isArmed('b:' + id));
+          putDisabled(go, !c.ok); putToggle(go, 'armed', isArmed('b:' + id));
         }
         const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? 'Not enough yet.' : c.why);
-        setTxt(why, w); why.hidden = !w;
+        setTxt(why, w); putHidden(why, !w);
       }
     };
   }
@@ -122,26 +122,26 @@
     },
     update() {
       const open = campOpen();
-      closed.hidden = open; hearthCard.hidden = !open; buildersBox.hidden = !open;
+      putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
         setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
-        closedBar.style.width = Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%';
+        putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
       const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
       setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
       setTxt(H.lv, `Hearth ${l}/10 · ${campBuilders()} builder${campBuilders() > 1 ? 's' : ''}`);
       setTxt(H.fx, campEffects('hearth', l).join(' · '));
-      H.next.hidden = !nx;
+      putHidden(H.next, !nx);
       if (nx) {
         const rename = nx.name !== CAMP_HEARTH_NAMES[l - 1] ? `: the ${nx.name}` : '';
         setTxt(H.nextT, `Next: Hearth ${nx.to}${rename}` + (S.maxZone < nx.zone ? ` (needs zone ${nx.zone})` : ''));
         setTxt(H.nextO, nx.opens.length ? 'Opens ' + nx.opens.join(', ') + '.' : `+3% away gains.`);
       }
-      H.costs.hidden = !!pend || !!c.max;
+      putHidden(H.costs, !!pend || !!c.max);
       if (!pend && !c.max && c.cost) chips(H.costs, c.cost);
       H.timer.set(pend); H.act.set(c, pend);
-      hearthCard.classList.toggle('new', S.camp.news.some(x => x.id === 'hearth'));
+      putToggle(hearthCard, 'new', S.camp.news.some(x => x.id === 'hearth'));
       // builders
       const rows = [], n = campBuilders(), all = campBuilds();
       for (let b = 0; b < n; b++) {
@@ -164,11 +164,11 @@
         const r = rows[i]; if (!r) return;
         const who = n > 1 ? `Builder ${i + 1}: ` : '';
         setTxt(row._t, r.run ? `${who}${bname(r.run.id, r.run.to)} · ${dur(left(r.run))}` : `${who}Free. Pick a building below.`);
-        row._bar.hidden = !r.run;
-        if (r.run) row._fill.style.width = Math.min(100, (Date.now() - r.run.start) / Math.max(1, r.run.end - r.run.start) * 100) + '%';
+        putHidden(row._bar, !r.run);
+        if (r.run) putStyle(row._fill, 'width', Math.min(100, (Date.now() - r.run.start) / Math.max(1, r.run.end - r.run.start) * 100) + '%');
         setTxt(row._q, r.q ? `Next: ${bname(r.q.id, r.q.to)}` : r.run ? 'Queue empty. You can queue one build.' : '');
-        row._q.hidden = !row._q.textContent;
-        row.classList.toggle('idle', !r.run);
+        putHidden(row._q, !row._q.textContent);
+        putToggle(row, 'idle', !r.run);
       });
     }
   });
@@ -224,7 +224,7 @@
     id: 'camp-buildings', title: 'Buildings',
     mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },
     update() {
-      const sec = listBox.parentNode; sec.hidden = !campOpen(); if (!campOpen()) return;
+      const sec = listBox.parentNode; putHidden(sec, !campOpen()); if (!campOpen()) return;
       const ids = campList().filter(x => x !== 'hearth');
       const sig = ids.join();
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
@@ -235,14 +235,14 @@
           : c.max ? campEffects(id, l).join(' · ')
           : `Lv ${c.to}: ${campEffects(id, c.to).filter(x => !campEffects(id, l).includes(x)).join(' · ') || campEffects(id, c.to)[0]}` + (c.need ? ` · needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}` : '');
         setTxt(k.line, line);
-        k.dot.hidden = !c.ok || !!pend;
-        k.w.classList.toggle('locked', !!c.need && !l);
-        k.w.classList.toggle('busy', !!pend);
-        k.w.classList.toggle('new', S.camp.news.some(x => x.id === id));
-        k.row.setAttribute('aria-expanded', String(isOpen)); k.body.hidden = !isOpen;
+        putHidden(k.dot, !c.ok || !!pend);
+        putToggle(k.w, 'locked', !!c.need && !l);
+        putToggle(k.w, 'busy', !!pend);
+        putToggle(k.w, 'new', S.camp.news.some(x => x.id === id));
+        putAttr(k.row, 'aria-expanded', String(isOpen)); putHidden(k.body, !isOpen);
         if (!isOpen) continue;
         effectsTable(k, id, l);
-        k.costs.hidden = !!pend || !!c.max || !c.cost;
+        putHidden(k.costs, !!pend || !!c.max || !c.cost);
         if (!k.costs.hidden) chips(k.costs, c.cost);
         k.tm.set(pend); k.act.set(c, pend);
         extras(k, id);
@@ -257,7 +257,7 @@
     mount(sec) { blessNote = el('p', 'note'); blessBox = el('div', 'bless-grid'); sec.append(blessNote, blessBox); },
     update() {
       const sec = blessBox.parentNode, n = blessSlots();
-      sec.hidden = !campOpen() || n < 1; if (sec.hidden) return;
+      putHidden(sec, !campOpen() || n < 1); if (sec.hidden) return;
       const ids = Object.keys(CAMP_BLESS).filter(blessOpen), on = S.camp.bless, sw = blessCanSwap();
       setTxt(blessNote, `The Shrine holds ${n === 1 ? '1 Blessing' : n + ' Blessings'}. Tap one to choose it. Swapping is free${sw.ok ? '.' : ', but ' + sw.why.toLowerCase()}`);
       const sig = JSON.stringify([ids, on, blessPower(), sw.ok]);
@@ -266,7 +266,7 @@
         const d = CAMP_BLESS[id], b = btn('bless' + (on.includes(id) ? ' on' : ''));
         b.setAttribute('aria-pressed', String(on.includes(id)));
         b.append(el('b', null, d.n), el('span', null, d.fx(d.v * blessPower())));
-        b.disabled = !sw.ok;
+        putDisabled(b, !sw.ok);
         b.addEventListener('click', () => { blessToggle(id); ui(true); });
         blessBox.append(b);
       }
@@ -287,28 +287,39 @@
     mount(sec) { rosNote = el('p', 'note'); rosBox = el('div', 'ros-list'); sec.append(rosNote, rosBox); },
     update() {
       const sec = rosBox.parentNode, live = campOpen() && rosterLive();
-      sec.hidden = !live; if (!live) return;
+      putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
       setTxt(rosNote, list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.');
       const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
       if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
-      for (const x of list) {
-        const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
-        const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
-        const body = el('div', 'ros-body');
-        const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
-        const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
-        body.append(nm, st);
-        const acts = el('div', 'ros-acts');
-        if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
-        for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
-        const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
-        row.append(pt, body, acts);
-        rosBox.append(row);
-      }
+      // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open
+      // never stalls the game. A newer rebuild wins.
+      const gen = ++rosGen, queue = list.slice();
+      const chunk = () => {
+        if (gen !== rosGen) return;
+        const t0 = performance.now();
+        while (queue.length && performance.now() - t0 < 20) rosRow(queue.shift());
+        if (queue.length) setTimeout(chunk, 0);
+      };
+      chunk();
     }
   });
+  let rosGen = 0;
+  function rosRow(x) {
+    const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
+    const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
+    const body = el('div', 'ros-body');
+    const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
+    const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
+    body.append(nm, st);
+    const acts = el('div', 'ros-acts');
+    if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
+    for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
+    const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
+    row.append(pt, body, acts);
+    rosBox.append(row);
+  }
 
   // ---------------- tab dot, Go buttons, "finished" glow ----------------
   const dot = () => { if (S.tab !== 'world') $('raidDot').hidden = false; };
