@@ -54,7 +54,7 @@ const UNLOCK_TUNE = {
   quests: {
     bram: { from: 3, wood: [1, 60] },
     maren: { from: 4, ess: [2, 40] },            // (sim) spec 20: Maren landed at 9-16 min (T16 Rare 15-40)
-    elowen: { from: 28, gold: 150e6, ess: [4, 20] },
+    elowen: { from: 48, gold: 2e12, ess: [4, 20] },   // (sim, M6) spec zone 28 + 150M: first Legendary landed at ~2h (T16 wants 6-12h)
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {

@@ -35,7 +35,7 @@ function spawn() {
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
   const t = TYPES[ti];
-  const hp = mobHp(z) * (boss ? 8 * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
+  const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
     key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
@@ -100,10 +100,12 @@ function kill() {
   respawn = 0.45;
 }
 
-function gainXp(n) {
+// quiet: no float or toast (away gains; the away card reports the levels).
+function gainXp(n, quiet) {
   S.xp += n * mod('xp');
   while (S.xp >= xpNeed()) {
-    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L });
+    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
+    if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
     toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good');
   }
@@ -217,6 +219,8 @@ function awayBase(r) {
   const kills = baseDps > 0 ? t / (mobHp(S.zone) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
+  // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
+  if (kills > 0) gainXp(kills * Math.ceil(1.5 * S.zone) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: S.zone, lines: r.lines });

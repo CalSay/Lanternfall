@@ -621,8 +621,8 @@ try {
     E('S.mats.ess[1]++');
     const lm = E('leads().find(l => l.id === "maren")');
     assert(lm && lm.action && lm.action.label === 'Hand in' && E('leads().find(l => l.id === "maren").action.fn()') && E('S.mats.ess[1]') === 0 && recs.maren === 1, 'Maren: the Leads "Hand in" consumes the essence');
-    E('S.maxZone = 28; S.gold = 2e8; S.mats.ess[3] = 25');
-    assert(E('recruit("elowen")') && E('S.gold') === 5e7 && E('S.mats.ess[3]') === 5, 'Elowen: 150M gold + 20 Blazing Essence handed in');
+    E('S.maxZone = UNLOCK_TUNE.quests.elowen.from; S.gold = UNLOCK_TUNE.quests.elowen.gold + 5e7; S.mats.ess[3] = 25');
+    assert(E('recruit("elowen")') && E('S.gold') === 5e7 && E('S.mats.ess[3]') === 5, `Elowen: ${E('fmt(UNLOCK_TUNE.quests.elowen.gold)')} gold + 20 Blazing Essence handed in at zone ${E('UNLOCK_TUNE.quests.elowen.from')}`);
     const mz = E('UNLOCK_TUNE.quests.morwen.zone');
     E(`S.maxZone = ${mz + 1}; unlockChar("hesketh", "test", true); setField(["hesketh", "bram"])`);
     bossKill(E, mz); tick(11);
@@ -871,6 +871,22 @@ try {
   E("S.activity = 'gather'; S.node = { kind: 'ore', t: 1 }; awayGains(3600)");
   assert(E('S.bounties.slots[0].have') === 10, 'gathering while away counts');
 } catch (e) { fail('bounties crashed: ' + (e.stack || e)); }
+
+// ---- pacing table (40-rules.js PACE, M6). The balance targets: node tools/sim.mjs --targets ----
+console.log('pacing');
+try {
+  const g = loadCore({ seed: 3 }), E = s => g.eval(s);
+  const hp = E('Array.from({ length: 140 }, (_, i) => mobHp(i + 1))');
+  assert(hp.every((h, i) => Number.isFinite(h) && (i === 0 || h > hp[i - 1])), 'mob HP rises every zone to 140');
+  assert(E('mobHp(35) / mobHp(34)') > E('mobHp(36) / mobHp(35)'), 'region 1 step lands on zone 35 and stays');
+  assert(E('[1, 6, 7, 19, 35, 36, 200].map(zoneTier).join()') === '1,1,2,4,4,5,5', 'essence tiers by zone (Starlit from 36)');
+  assert(E('paceXp(1) === 1 && paceXp(PACE.compLv) === 1 && paceXp(200) === PACE.compXpMax'), 'companion XP curve: 1 up to compLv, capped at compXpMax');
+  // Hero XP while away: quiet level-ups, no toasts.
+  E('chooseClass("warden"); S.maxZone = S.zone = 20; S.activity = "fight"');
+  let toasts = 0; g.fn.on('toast', () => toasts++);
+  const L0 = E('S.L'); g.fn.awayGains(4 * 3600);
+  assert(E('S.L') > L0 && !toasts && !g.errors.length, `away time levels the hero quietly (L${L0} -> L${E('S.L')}, ${toasts} toasts)`);
+} catch (e) { fail('pacing crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

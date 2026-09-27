@@ -114,3 +114,9 @@ PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description 
   4% rematch, and half chance when you already own it at that tier or higher. The effect is now the draw.
   Existing uniques lose raw power (deliberate balance change the owner asked for; no item is removed).
   The K4 exact-dps check pins `UNIQ_TUNE.pow = 3.2` for its pre-change baselines.
+- Owner bug: "quests" (bounties) never moved. Mining/chopping bounties only counted your best
+  unlocked tier and ignored away gathering. Fixed: any tier counts, away gathering counts, and new
+  families don't count as logs. Regression check added.
+- M6 merged after re-merge. `--targets`: T2, P1, P2, P4 pass; T1 fails for Warden only (15/25/35: the
+  warblade is crafted at the fast Smithing station, a K6 class-gear parity issue); T10 fails (structural);
+  P3 needs Region 3 power. Warden curve: d1 35, d2 46, d7 57, d12 70, d16 77, then plateaus at 78-79.

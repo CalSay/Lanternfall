@@ -3589,6 +3589,39 @@ function rollRarity(lv) {
   return 'common';
 }
 
+// ================= pacing: the Lantern Road curve (docs/design/pacing.md, task M6) =================
+// Every knob for the long curve is in this one table, so the coordinator can retune after
+// merges and check with `node tools/sim.mjs --targets` (or try values with --pace k=v).
+// Before M6 the game had no bend: mob HP 40 x 1.42^(z-1) everywhere, boss x8, Starlit
+// essence from zone 25 and one companion XP curve, so Region 1 fell in about 3 hours.
+const PACE = {
+  hp0: 40,                  // zone 1 mob HP (unchanged)
+  hpGrowth: 1.48,           // mob HP x per zone up to the bend (was 1.42; brings T1 back into band after B7)
+  bend: 30,                 // zones past the bend grow by hpLate instead
+  hpLate: 1.29,             // mob HP x per zone past zone 30 (was 1.42). Slower growth, because
+                            //   late time is paced by companion XP; it keeps the Region 2 boss
+                            //   below the level-200 roster cap with a few zones to spare
+  bossHp: 8,                // zone boss HP x a normal mob (unchanged)
+  region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
+  regionStep: [5, 2.5],     // mob HP x this from each region's last zone on (x5 from zone 35,
+                            //   x2.5 more from 70; the last value repeats). The step stays, so
+                            //   the zones after a region boss are no easier than the boss
+  regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
+  compLv: 90,               // companion levels past compLv need more XP...
+  compXp: 1.2,              //   ...x1.2 per level past it (level 95: x2.5, 100: x6.2)...
+  compXpMax: 80,            //   ...up to x80 from level 114 on: the Region 2 plateau (days, not hours)
+  essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (was every 6 zones, so Starlit
+                            //   (tier 5) began at 25). Starlit is now Region 2's essence
+  heroAwayXp: 0.5           // hero XP while away, as a share of the away kills' XP (was 0)
+};
+// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv, so the first
+// two hours keep their numbers.
+const paceXp = lv => lv > PACE.compLv ? Math.min(PACE.compXpMax, Math.pow(PACE.compXp, lv - PACE.compLv)) : 1;
+const isRegionBoss = z => z % PACE.region === 0;
+const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
+// The region steps a zone has passed, multiplied.
+const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
+
 // ================= formulas =================
 const lvlMult = () => 1 + 0.05 * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
@@ -3605,9 +3638,12 @@ const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => 
 // nonCrit (Almanac Dares) scales non-crit hits; at 1 the original expression is kept so old saves' dps stays bit-identical.
 const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
-const mobHp = z => 40 * Math.pow(1.42, z - 1);
+// Before M6: 40 * 1.42^(z-1) for every zone.
+const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
-const zoneTier = z => Math.min(5, 1 + Math.floor((z - 1) / 6));
+// Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
+// (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
+const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
 const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));
@@ -3859,7 +3895,7 @@ function spawn() {
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
   const t = TYPES[ti];
-  const hp = mobHp(z) * (boss ? 8 * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
+  const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
     key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
@@ -3924,10 +3960,12 @@ function kill() {
   respawn = 0.45;
 }
 
-function gainXp(n) {
+// quiet: no float or toast (away gains; the away card reports the levels).
+function gainXp(n, quiet) {
   S.xp += n * mod('xp');
   while (S.xp >= xpNeed()) {
-    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L });
+    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
+    if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
     toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good');
   }
@@ -4041,6 +4079,8 @@ function awayBase(r) {
   const kills = baseDps > 0 ? t / (mobHp(S.zone) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
+  // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
+  if (kills > 0) gainXp(kills * Math.ceil(1.5 * S.zone) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: S.zone, lines: r.lines });
@@ -5959,7 +5999,7 @@ const ROSTER = {
   oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', idx: 5, route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
   morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat the Fungal Deep II boss (zone 12) with no support in your party.' },
   vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 18. 20M gold and 30 Radiant Essence.' },
-  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 28: 150M gold and 20 Blazing Essence.' },
+  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 48: 2T gold and 20 Blazing Essence.' },
   caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with 80 Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
@@ -6012,8 +6052,11 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 
   // ---------------- levels ----------------
   levelCap = rank => 25 * (rank + 1);
-  cxpNeed = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
-  cxpGain = z => cxpNeed(T.par * z) / T.killsPerLv;
+  // paceXp (40-rules PACE, M6) raises the need past level PACE.compLv; XP per kill does not
+  // include it, so late levels take more kills. It is 1 up to compLv (the first two hours).
+  const cxpBase = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
+  cxpNeed = lv => cxpBase(lv) * paceXp(lv);
+  cxpGain = z => cxpBase(T.par * z) / T.killsPerLv;
   // Party level: average of the 3 highest companion levels on the roster.
   partyLevel = () => {
     const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, 3);
@@ -6024,7 +6067,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     return Math.min(T.catchMax, T.catchStep * Math.max(0, partyLevel() - r.lv));
   };
   // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax.
-  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpNeed(r.lv + T.gapMax) / T.killsPerLv); };
+  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpBase(r.lv + T.gapMax) / T.killsPerLv); };
   const xpMult = id => (R(id).rarity === 'common' ? T.commonXp : 1) * (1 + catchUpBonus(id)) * mod('compXp');
 
   function levelUp(id, r, quiet) {
@@ -6970,7 +7013,7 @@ const UNLOCK_TUNE = {
   quests: {
     bram: { from: 3, wood: [1, 60] },
     maren: { from: 4, ess: [2, 40] },            // (sim) spec 20: Maren landed at 9-16 min (T16 Rare 15-40)
-    elowen: { from: 28, gold: 150e6, ess: [4, 20] },
+    elowen: { from: 48, gold: 2e12, ess: [4, 20] },   // (sim, M6) spec zone 28 + 150M: first Legendary landed at ~2h (T16 wants 6-12h)
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {
@@ -12536,7 +12579,7 @@ on('float', ({ color }) => {
 on('kill', ({ mob }) => SFX.play('kill', mob && mob.boss));
 on('nodeHit', () => SFX.play('tapNode'));
 on('harvest', ({ kind, away }) => { if (!away) SFX.play(kind === 'ore' ? 'ore' : 'wood'); });
-on('levelup', () => SFX.play('level', true));
+on('levelup', e => { if (!(e && e.quiet)) SFX.play('level', true); });   // quiet: away levels
 on('skillUp', ({ quiet }) => { if (!quiet) SFX.play('skill', true); });
 on('loot', () => SFX.play('loot', true));
 on('itemAdded', ({ item }) => { if (!item.u) SFX.play('forge', true); });
