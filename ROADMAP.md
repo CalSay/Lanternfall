@@ -8,7 +8,9 @@ Owner decisions (2026-09-27):
 - **Store launch possible, monetisation undecided.** Keep doors open: original art only, no restrictive third-party assets, nothing pay-to-win designed in.
 - **Owner role: player.** The coordinator drives the roadmap and brings playable builds and decisions at milestones.
 
-## Phase 0: modular sprint (in progress)
+Beyond these phases, the coordinator's long-term plan (the Camp, Expeditions, the Deepwell, daily Omens, Constellations, the Codex and Lantern Light, regions, festivals) and the wave order are in [docs/design/long-term-vision.md](docs/design/long-term-vision.md).
+
+## Phase 0: modular sprint (done)
 
 - Split the code into modules with extension hooks, a build script, save checks and a headless balance simulator
 - Zone mastery and bestiary (permanent, no resets)
