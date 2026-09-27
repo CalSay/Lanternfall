@@ -1,0 +1,119 @@
+# Lanternfall architecture
+
+The published game is one HTML file, `dist/lanternfall.html`, built from `src/`.
+Never edit `dist/` by hand.
+
+## Build
+
+`tools/build.mjs` = `src/shell.html` with `<!-- @styles -->` replaced by every
+`src/styles/*.css` (filename order) in one `<style>`, and `<!-- @script -->` replaced by every
+`src/js/*.js` (filename order) concatenated inside one `(() => { 'use strict'; ... })()`.
+All JS files share one scope: top-level `const`/`function` in one file is visible to later files.
+
+## Module map (load order)
+
+| File | Layer | Owns |
+|---|---|---|
+| 00-util.js | core | `fmt`, `rng`, event bus (`on`/`emit`), `mod`/`addModifier`, `onTick`, storage adapter |
+| 05-platform.js | browser | localStorage adapter (Node tools replace it with an in-memory one) |
+| 10-art.js | core | pixel maps, palettes, colour maths |
+| 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
+| 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
+| 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
+| 50-sim.js | core | `tick`, combat, kills, xp, harvest, bosses, offline gains |
+| 51-actions.js | core | player actions: forge, equip, salvage, upgrade, buy, hire, relics, loot |
+| 52-raid.js | core | world boss damage and rewards |
+| **55-*.js** | core | **feature logic (no DOM)** |
+| 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
+| 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
+| 71..74-ui-*.js | browser | Adventure, Gather, Forge, Raid, Tavern panels |
+| **75-*.js** | browser | **feature UI** |
+| 80-online.js | browser | db/room/user capabilities (do not change without sign-off) |
+| 90-boot.js | browser | boot, timers, frame loop |
+
+Core files (< 60, except 05) must not touch `document`, `window`, canvas or `localStorage`:
+`tools/lib/core.mjs` loads them into a Node vm for `check.mjs` and `sim.mjs`.
+
+Shared files: 00-52, 60-74, 80, 90, `src/shell.html`, `src/styles/*`. Change them only at
+extension points, in small edits. Feature-owned files: your own `55-<feature>.js`,
+`75-<feature>.js`, and optionally `src/styles/60-<feature>.css`.
+
+## Extension API
+
+```js
+on(evt, fn) -> off()        // subscribe; handler errors are caught and logged
+emit(evt, payload)
+```
+```js
+on('kill', ({ zone, gold }) => { S.bounty.count++; });
+emit('bountyDone', { id });
+```
+
+```js
+registerState(key, defaults) -> S[key]   // new top-level save field; merges into fresh() and old saves (missing keys only)
+```
+```js
+registerState('bounty', { count: 0, claimed: {} });
+// S.bounty.count is now always defined, for new players and old saves
+```
+
+```js
+addModifier(key, fn) -> remove()   // fn() returns a multiplier; mod(key) = product of all, 1 if none
+```
+Keys used by formulas: `dmg`, `gold`, `xp`, `skillXp`, `gatherSpeed` (higher = faster),
+`offline`, `essence`, `crit`, `critDmg`, `tap`, `party`, `raid`.
+```js
+addModifier('gold', () => 1 + 0.05 * S.bounty.count);
+// goldMult() now includes it; dps/gold UI updates automatically
+```
+
+```js
+onTick(fn(dt)) -> remove()   // after each core tick; dt in seconds (<= 0.1)
+```
+```js
+onTick(dt => { S.bounty.timer = Math.max(0, S.bounty.timer - dt); });
+```
+
+```js
+registerSection(tabId, { id, title, mount(el), update(force) }) -> el   // tabId: adv|gat|forge|raid|tav
+registerTab({ id, label, icon, mount(panel), update(force) }) -> panel   // prefer sections (360px)
+```
+```js
+registerSection('adv', { id: 'bounty', title: 'Bounties',
+  mount(sec) { sec.append(el('p', null, 'Kill 50 foes.')); },  // el() helper from 60-gfx
+  update(force) { /* ~5x per second while the tab is open */ } });
+```
+
+## Events
+
+| Event | Payload |
+|---|---|
+| `kill` | `{ mob, zone, gold, ess, tier }` |
+| `zoneClear` | `{ zone }` |
+| `bossFail` | `{ zone, dps }` |
+| `levelup` | `{ L }` |
+| `skillUp` | `{ k: 'mine'|'wood'|'smith', lv, quiet }` |
+| `harvest` | `{ kind: 'ore'|'wood', t, n }` |
+| `itemAdded` | `{ item }` |
+| `loot` | `{ item, first, kept }` (unique drop) |
+| `gear` | none (equipped gear changed) |
+| `activity` | `{ activity: 'fight'|'gather'|'raid' }` |
+| `raidReward` | `{ gen, share, embers }` |
+| `raidUnavailable` | none |
+| `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
+| visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
+
+## Save
+
+Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fields with
+`registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
+keep loading without loss.
+
+## Commands
+
+```
+node tools/build.mjs                         # build dist/lanternfall.html
+node tools/check.mjs                         # dist syntax + headless smoke test + save migration
+node tools/sim.mjs --policy mixed --hours 2 --seed 1   # balance timeline (policy fight|mixed, --every MIN)
+node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
+```

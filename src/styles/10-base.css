@@ -1,0 +1,41 @@
+:root {
+  color-scheme: dark;
+  --bg: #140F1A;
+  --panel: #1F1827;
+  --panel-2: #2A2233;
+  --well: #110D16;
+  --line: #3A2F47;
+  --line-hi: #4E4060;
+  --bone: #EFE6D6;
+  --muted: #A597B4;
+  --ember: #FF9E3D;
+  --ember-deep: #B8621B;
+  --gold: #F2C14E;
+  --hp: #E0524F;
+  --xp: #6FCB6A;
+  --arcane: #B58CFF;
+  --r-common: #CFC6D8;
+  --r-uncommon: #6FCB6A;
+  --r-rare: #5FA8FF;
+  --r-epic: #B58CFF;
+  --r-legendary: #FF9E3D;
+  --display: "Pixelify Sans", "Courier New", monospace;
+  --body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  background: var(--bg);
+}
+html { height: 100%; box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  height: 100%; margin: 0; overflow: hidden;
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size: 4px 4px;
+  color: var(--bone);
+  font: 15px/1.4 var(--body);
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+.app { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }

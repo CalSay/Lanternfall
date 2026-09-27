@@ -1,0 +1,2268 @@
+<title>Lanternfall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #140F1A;
+  --panel: #1F1827;
+  --panel-2: #2A2233;
+  --well: #110D16;
+  --line: #3A2F47;
+  --line-hi: #4E4060;
+  --bone: #EFE6D6;
+  --muted: #A597B4;
+  --ember: #FF9E3D;
+  --ember-deep: #B8621B;
+  --gold: #F2C14E;
+  --hp: #E0524F;
+  --xp: #6FCB6A;
+  --arcane: #B58CFF;
+  --r-common: #CFC6D8;
+  --r-uncommon: #6FCB6A;
+  --r-rare: #5FA8FF;
+  --r-epic: #B58CFF;
+  --r-legendary: #FF9E3D;
+  --display: "Pixelify Sans", "Courier New", monospace;
+  --body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  background: var(--bg);
+}
+html { height: 100%; box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  height: 100%; margin: 0; overflow: hidden;
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size: 4px 4px;
+  color: var(--bone);
+  font: 15px/1.4 var(--body);
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+.app { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
+/* header */
+.top { display: flex; align-items: center; gap: 10px; padding: 10px 16px 8px; }
+.portrait { width: 44px; height: 44px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,158,61,.18); position: relative; }
+.portrait img { width: 32px; height: 36px; }
+.portrait b { position: absolute; right: -6px; bottom: -6px; background: var(--ember); color: #1A1420; font: 700 11px/1 var(--display); padding: 3px 4px; box-shadow: 0 2px 0 var(--ember-deep); }
+.who { min-width: 0; flex: 1; display: grid; gap: 5px; }
+.hname { font: 600 19px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
+.bar { height: 7px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--xp); box-shadow: inset 0 2px 0 rgba(255,255,255,.25); transition: width .2s; }
+.purse { display: grid; gap: 3px; justify-items: end; }
+.coin { display: flex; align-items: center; gap: 6px; font: 600 18px/1.1 var(--display); font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #0B0810; }
+.coin img { width: 14px; height: 14px; }
+.ico { width: 11px; height: 11px; display: inline-block; flex: none; }
+.ico.gold { background: var(--gold); border-radius: 50%; box-shadow: inset -2px -2px 0 #B8862A; }
+.ico.ember { background: var(--ember); transform: rotate(45deg) scale(.85); box-shadow: inset -2px -2px 0 var(--ember-deep); }
+
+/* stage */
+.zonebar { display: flex; align-items: center; gap: 8px; padding: 0 16px 8px; }
+.navbtn { width: 32px; height: 32px; flex: none; border: 2px solid var(--line); background: var(--panel); cursor: pointer; font: 600 16px var(--display); box-shadow: 0 2px 0 #0B0810; }
+.navbtn:disabled { opacity: .3; cursor: default; }
+.zinfo { flex: 1; min-width: 0; text-align: center; }
+.zname { font: 600 17px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #0B0810; }
+.zsub { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.stage { position: relative; height: clamp(190px, 30vh, 250px); margin: 0 16px; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.stage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.mob { position: absolute; left: 8px; right: 8px; top: 7px; display: grid; gap: 3px; pointer-events: none; }
+.mob-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; text-shadow: 0 2px 0 #000, 0 0 4px #000; }
+.mob-name { font: 600 15px var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mob-hp { font: 600 13px var(--display); font-variant-numeric: tabular-nums; color: var(--bone); white-space: nowrap; }
+.hpbar { position: relative; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
+.hpbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; }
+.hpbar > i.trail { background: #FFF3E0; transition: width .45s ease-in .12s; }
+.hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
+.timer { height: 4px; background: #0B0810; }
+.timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
+.stage-hint { position: absolute; bottom: 7px; left: 0; right: 0; text-align: center; font: 600 12px var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
+
+.stats { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; padding: 10px 16px 8px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.stats b { color: var(--bone); font: 600 14px var(--display); font-variant-numeric: tabular-nums; }
+.stat-nums { display: flex; gap: 12px; }
+.modeseg { display: inline-flex; border: 2px solid #0B0810; box-shadow: 0 2px 0 #0B0810; }
+.modeseg button { background: var(--panel-2); border: 0; padding: 6px 12px; font: 600 13px var(--display); color: var(--muted); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.modeseg button + button { border-left: 2px solid #0B0810; }
+.modeseg button[aria-pressed="true"][data-act="fight"] { background: var(--xp); color: #13200F; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #3B7A37; }
+.modeseg button[aria-pressed="true"][data-act="gather"] { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E; }
+.modeseg button[aria-pressed="true"][data-act="raid"] { background: var(--hp); color: #fff; box-shadow: inset 0 2px 0 rgba(255,255,255,.25), inset 0 -2px 0 #8E2A2A; }
+.modeseg button:disabled { opacity: .4; cursor: default; }
+.tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 16px; border-bottom: 2px solid var(--line); }
+.tab { background: none; border: 0; padding: 6px 2px 6px; cursor: pointer; font: 600 13px var(--display); color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; display: grid; justify-items: center; gap: 2px; position: relative; }
+.tab img { width: 20px; height: 20px; opacity: .55; }
+.tab[aria-selected="true"] { color: var(--bone); border-bottom-color: var(--ember); }
+.tab[aria-selected="true"] img { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,158,61,.5)); }
+.tab .dot { position: absolute; top: 4px; right: calc(50% - 16px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
+
+.panels { flex: 1; overflow-y: auto; padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); -webkit-overflow-scrolling: touch; }
+.panel { display: grid; gap: 20px; }
+.sec { display: grid; gap: 8px; }
+.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sec-title { font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; align-items: center; gap: 8px; }
+.sec-title::before { content: ""; width: 6px; height: 6px; background: var(--ember); box-shadow: 0 0 6px rgba(255,158,61,.6); }
+.seg { display: inline-flex; border: 2px solid #0B0810; flex-wrap: wrap; background: var(--well); }
+.seg button { background: none; border: 0; padding: 5px 10px; font: 600 12px var(--display); color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 -2px 0 var(--ember); }
+.seg button:disabled { opacity: .35; cursor: default; }
+
+.row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 9px 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.row.has-ic { grid-template-columns: auto 1fr auto; }
+.row.locked { opacity: .45; }
+.row.active { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(242,193,78,.3), 0 2px 0 #0B0810, 0 0 14px rgba(242,193,78,.15); }
+.row-name { font: 600 16px/1.15 var(--display); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.row-name .own { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; }
+.row-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.row-fx { font-size: 13px; color: var(--r-legendary); margin-top: 2px; }
+
+.ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; position: relative; overflow: hidden; }
+.ic img { width: 28px; height: 28px; }
+.ic.portrait-ic img { width: 24px; height: 28px; }
+.ic.f-uncommon { border-color: var(--r-uncommon); }
+.ic.f-rare { border-color: var(--r-rare); box-shadow: inset 0 0 0 2px #0B0810, 0 0 8px rgba(95,168,255,.3); }
+.ic.f-epic { border-color: var(--r-epic); box-shadow: inset 0 0 0 2px #0B0810, 0 0 10px rgba(181,140,255,.4); }
+.ic.f-legendary { border-color: var(--r-legendary); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,158,61,.45); }
+.ic.f-legendary::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,235,190,.35) 50%, transparent 65%); background-size: 250% 100%; animation: shine 2.6s linear infinite; }
+.ic.ghost img { filter: brightness(0); opacity: .45; }
+@keyframes shine { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+
+.buy { min-width: 88px; padding: 7px 10px 6px; border: 2px solid #0B0810; cursor: pointer; background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); display: grid; justify-items: center; gap: 1px; }
+.buy:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 -1px 0 var(--ember-deep); }
+.buy:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; cursor: default; }
+.buy .qty { font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; opacity: .8; }
+.buy .price { font: 600 15px var(--display); display: flex; gap: 5px; align-items: center; font-variant-numeric: tabular-nums; }
+.buy.embers { background: var(--arcane); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 #6D4BB0; }
+.buy.work { background: var(--gold); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 #A77B1E; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.mini { border: 2px solid #0B0810; background: var(--panel-2); padding: 6px 10px; font: 600 13px var(--display); cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; }
+.mini.go { background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 var(--ember-deep); }
+.mini.warn { color: #FF8A80; }
+.mini:disabled { opacity: .4; cursor: default; }
+
+.card { background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 3px 0 #0B0810; padding: 14px; display: grid; gap: 10px; }
+.card h3 { margin: 0; font: 600 20px/1.15 var(--display); text-wrap: balance; text-shadow: 0 2px 0 #0B0810; }
+.card.raidcard { background: linear-gradient(180deg, #2A1218 0%, var(--panel) 70%); border-color: #5A2A30; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+.kv div { display: grid; gap: 1px; }
+.kv dt { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.kv dd { margin: 0; font: 600 17px var(--display); font-variant-numeric: tabular-nums; }
+.big { width: 100%; padding: 12px; border: 2px solid #0B0810; cursor: pointer; font: 600 17px var(--display); background: var(--hp); color: #fff; box-shadow: inset 0 2px 0 rgba(255,255,255,.25), inset 0 -4px 0 #8E2A2A, 0 2px 0 #0B0810; }
+.big:active:not(:disabled) { transform: translateY(2px); }
+.big.home { background: var(--xp); color: #13200F; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -4px 0 #3B7A37, 0 2px 0 #0B0810; }
+.big.horn { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -4px 0 #A77B1E, 0 2px 0 #0B0810; }
+.big.forge { background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -4px 0 var(--ember-deep), 0 2px 0 #0B0810; }
+.big:disabled { background: var(--panel-2); color: var(--muted); box-shadow: none; cursor: default; }
+.note { font-size: 13px; color: var(--muted); margin: 0; max-width: 60ch; }
+.note.warn { color: #FFB27A; }
+.skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.skill { background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; padding: 8px 10px; display: grid; gap: 4px; }
+.skill .sn { font: 600 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.skill .sn img { width: 16px; height: 16px; }
+.skill .sl { font: 600 20px/1 var(--display); font-variant-numeric: tabular-nums; }
+.skill .bar > i { background: var(--gold); }
+
+.mats { display: grid; gap: 6px; }
+.mat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.mat { background: var(--well); border: 2px solid var(--line); padding: 5px 5px 4px; display: grid; gap: 1px; min-width: 0; justify-items: center; text-align: center; }
+.mat img { width: 22px; height: 22px; }
+.mat .mc { font: 600 14px var(--display); font-variant-numeric: tabular-nums; }
+.mat .mn { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+.costs { display: flex; flex-wrap: wrap; gap: 5px; }
+.cost { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px 3px 4px; background: var(--well); border: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
+.cost img { width: 16px; height: 16px; }
+.cost.short { color: #FF8A80; border-color: #5A2A30; }
+.odds { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 600 12px var(--display); }
+
+.forge-preview { display: flex; gap: 12px; align-items: center; }
+.forge-preview .ic { width: 56px; height: 56px; }
+.forge-preview .ic img { width: 40px; height: 40px; }
+.slotname { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.iname { font: 600 16px/1.2 var(--display); }
+.rar-common { color: var(--r-common); } .rar-uncommon { color: var(--r-uncommon); } .rar-rare { color: var(--r-rare); } .rar-epic { color: var(--r-epic); } .rar-legendary { color: var(--r-legendary); }
+.row.rb-legendary { border-color: rgba(255,158,61,.55); background: linear-gradient(90deg, rgba(255,158,61,.08), var(--panel) 60%); }
+.delta { font-size: 12px; font-weight: 600; }
+.delta.up { color: var(--xp); } .delta.down { color: var(--muted); }
+
+.trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.trophy { background: var(--panel); border: 2px dashed var(--line); padding: 8px; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; }
+.trophy .ic { grid-row: span 3; width: 36px; height: 36px; }
+.trophy .ic img { width: 24px; height: 24px; }
+.trophy.found { border-style: solid; border-color: rgba(255,158,61,.45); }
+.trophy .tn { font: 600 14px var(--display); }
+.trophy .ts { font-size: 12px; color: var(--muted); }
+
+.online { display: flex; flex-wrap: wrap; gap: 6px; }
+.pchip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 5px; background: var(--panel); border: 2px solid var(--line); font-size: 13px; }
+.pchip i { width: 8px; height: 8px; background: var(--xp); display: inline-block; box-shadow: 0 0 6px currentColor; }
+.pchip.raid i { background: var(--hp); } .pchip.gather i { background: var(--gold); }
+.pchip small { color: var(--muted); }
+.board { width: 100%; border-collapse: collapse; font-size: 14px; }
+.board th { text-align: left; font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 0 6px 6px; border-bottom: 2px solid var(--line); }
+.board td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.board td.n { font: 600 15px var(--display); font-variant-numeric: tabular-nums; text-align: right; }
+.board th.n { text-align: right; }
+.board .rank { font: 600 15px var(--display); color: var(--muted); width: 1.8em; }
+.board tr:nth-child(1) .rank { color: var(--gold); } .board tr:nth-child(2) .rank { color: #CFC6D8; } .board tr:nth-child(3) .rank { color: #D08A4E; }
+.board tr.me td { background: rgba(255,158,61,.08); }
+.board .hero { font: 600 15px var(--display); display: block; }
+.board .player { font-size: 12px; color: var(--muted); }
+.rename { display: flex; gap: 8px; }
+.rename input { flex: 1; min-width: 0; background: var(--well); border: 2px solid var(--line); padding: 9px 10px; color: var(--bone); font: 600 16px var(--display); }
+.rename button { border: 2px solid #0B0810; padding: 0 16px; background: var(--ember); color: #1A1420; font: 600 15px var(--display); cursor: pointer; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
+.toasts { position: fixed; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); width: min(480px, calc(100% - 32px)); display: grid; gap: 6px; pointer-events: none; z-index: 20; }
+.toast { display: flex; align-items: center; gap: 10px; background: #0E0B12F2; border: 2px solid var(--line); border-left: 4px solid var(--ember); padding: 8px 12px; font-size: 14px; animation: tin .25s ease-out; box-shadow: 0 3px 0 #0B0810; }
+.toast img { width: 28px; height: 28px; flex: none; image-rendering: pixelated; }
+.toast.ember { border-left-color: var(--arcane); }
+.toast.raid { border-left-color: var(--hp); }
+.toast.good { border-left-color: var(--xp); }
+.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF5, #1A120AF5); font: 600 15px var(--display); box-shadow: 0 3px 0 #0B0810, 0 0 18px rgba(255,158,61,.35); }
+@keyframes tin { from { transform: translateY(-6px) scale(.98); opacity: 0; } }
+
+.modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
+.modal .card { width: min(380px, 100%); text-align: center; }
+.gains { display: grid; gap: 6px; justify-items: center; }
+.gain { font: 600 22px var(--display); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.gain img { width: 24px; height: 24px; }
+@media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="portrait"><img id="portrait" alt=""><b id="hLvl">1</b></div>
+    <div class="who">
+      <span class="hname" id="hName">Wanderer</span>
+      <div class="bar" title="Experience to next level"><i id="xpFill"></i></div>
+    </div>
+    <div class="purse">
+      <div class="coin"><img class="px" id="goldIc" alt=""><span id="gold">0</span></div>
+      <div class="coin" style="font-size:15px"><span class="ico ember"></span><span id="embers">0</span></div>
+    </div>
+  </header>
+
+  <div class="zonebar">
+    <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
+    <div class="zinfo"><div class="zname" id="zName">Mossy Hollow</div><div class="zsub" id="zSub">Zone 1</div></div>
+    <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="mob">
+      <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
+      <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
+      <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+    </div>
+    <div class="stage-hint" id="hint">Tap to strike</div>
+  </div>
+
+  <div class="stats">
+    <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
+      <button data-act="fight" aria-pressed="true">Fight</button>
+      <button data-act="gather" aria-pressed="false">Gather</button>
+      <button data-act="raid" aria-pressed="false">Raid</button>
+    </div>
+    <div class="stat-nums" id="statNums">
+      <span>DPS <b id="sDps">0</b></span>
+      <span>Tap <b id="sTap">0</b></span>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
+    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Forge<span class="dot" id="forgeDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="raid" data-ic="flame" aria-selected="false">Raid<span class="dot" id="raidDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="tav" data-ic="mug" aria-selected="false">Tavern</button>
+  </nav>
+
+  <div class="panels" id="panels">
+    <!-- Fight -->
+    <section class="panel" id="p-adv">
+      <div class="sec">
+        <h2 class="sec-title">Boss gate</h2>
+        <div class="row">
+          <div>
+            <div class="row-name" id="gateTitle">Clear 10 foes to face the zone boss</div>
+            <div class="row-desc" id="gateDesc">Beat the boss in 30 seconds to open the next zone.</div>
+          </div>
+          <button class="buy" id="gateBtn"><span class="qty">Boss</span><span class="price">Fight</span></button>
+        </div>
+        <label class="note" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="autoBoss" checked> Challenge frontier bosses automatically when ready</label>
+      </div>
+      <div class="sec">
+        <div class="sec-head">
+          <h2 class="sec-title">Hero</h2>
+          <div class="seg" id="amtSeg"><button data-amt="1" aria-pressed="true">x1</button><button data-amt="10" aria-pressed="false">x10</button><button data-amt="max" aria-pressed="false">Max</button></div>
+        </div>
+        <div id="heroRows" class="sec"></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Party</h2>
+        <div id="compRows" class="sec"></div>
+      </div>
+    </section>
+
+    <!-- Gather -->
+    <section class="panel" id="p-gat" hidden>
+      <div class="skills" id="skillCards"></div>
+      <p class="note">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
+      <div class="sec">
+        <h2 class="sec-title">Mining</h2>
+        <div id="oreRows" class="sec"></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Woodcutting</h2>
+        <div id="woodRows" class="sec"></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Your pack</h2>
+        <div class="mats" id="matGrid"></div>
+        <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
+      </div>
+    </section>
+
+    <!-- Forge -->
+    <section class="panel" id="p-forge" hidden>
+      <div class="sec">
+        <h2 class="sec-title">Equipped</h2>
+        <div id="eqRows" class="sec"></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">
+          <h3 style="font-size:18px">Forge new gear</h3>
+          <span class="note" id="smithLbl">Smithing Lv 1</span>
+        </div>
+        <div class="bar"><i id="smithBar" style="background:var(--ember)"></i></div>
+        <div class="seg" id="slotSeg"></div>
+        <div class="seg" id="tierSeg"></div>
+        <div class="forge-preview">
+          <div class="ic" id="fIc"><img alt=""></div>
+          <div>
+            <div class="iname" id="fName">Copper Sword</div>
+            <div class="row-desc" id="fStat">Common: +10% damage</div>
+          </div>
+        </div>
+        <div class="costs" id="fCost"></div>
+        <div class="odds" id="fOdds"></div>
+        <button class="big forge" id="forgeBtn">Forge</button>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><h2 class="sec-title">Bag</h2><span class="note" id="bagCount">0 / 40</span></div>
+        <div id="bagRows" class="sec"><p class="note">Forged gear and boss loot land here.</p></div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><h2 class="sec-title">Trophy wall</h2><span class="note" id="trophyCount">0 / 13 uniques</span></div>
+        <div class="trophies" id="trophies"></div>
+      </div>
+    </section>
+
+    <!-- Raid -->
+    <section class="panel" id="p-raid" hidden>
+      <div class="card raidcard">
+        <div class="zsub" id="rGen">World raid</div>
+        <h3 id="rName">Waiting for the world to load</h3>
+        <div class="hpbar" style="height:14px"><i class="fill" id="rBar"></i></div>
+        <dl class="kv" style="margin:0">
+          <div><dt>Boss HP</dt><dd id="rHp">-</dd></div>
+          <div><dt>Raiders</dt><dd id="rCount">0</dd></div>
+          <div><dt>Your damage</dt><dd id="rMine">0</dd></div>
+          <div><dt>Your share</dt><dd id="rShare">0%</dd></div>
+        </dl>
+        <div class="forge-preview" id="rLootBox" hidden>
+          <div class="ic f-legendary" id="rLootIc"><img alt=""></div>
+          <p class="note" id="rLoot"></p>
+        </div>
+        <p class="note" id="rNote">Everyone who opens Lanternfall fights the same boss. When it falls, each raider earns Embers for their share of the damage.</p>
+        <button class="big" id="marchBtn">March to the raid</button>
+      </div>
+      <div class="card" id="hornCard">
+        <h3 style="font-size:17px">War horn</h3>
+        <p class="note">Sound it and every raider online gets +25% raid damage for 20 seconds. The horn needs 90 seconds to recover.</p>
+        <button class="big horn" id="hornBtn">Sound the war horn</button>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><h2 class="sec-title">Relics</h2><span class="note">Paid in Embers from raids</span></div>
+        <div id="relicRows" class="sec"></div>
+      </div>
+    </section>
+
+    <!-- Tavern -->
+    <section class="panel" id="p-tav" hidden>
+      <div class="sec">
+        <h2 class="sec-title">In the tavern now</h2>
+        <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Hall of heroes</h2>
+        <div style="overflow-x:auto">
+          <table class="board">
+            <thead><tr><th></th><th>Hero</th><th class="n">Lv</th><th class="n">Zone</th><th class="n">Gear</th></tr></thead>
+            <tbody id="board"><tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Your hero's name</h2>
+        <form class="rename" id="renameForm">
+          <input id="nameInput" maxlength="18" autocomplete="off" aria-label="Hero name">
+          <button type="submit">Save</button>
+        </form>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Lifetime</h2>
+        <dl class="kv" style="margin:0">
+          <div><dt>Foes slain</dt><dd id="lKills">0</dd></div>
+          <div><dt>Gold earned</dt><dd id="lGold">0</dd></div>
+          <div><dt>Best zone</dt><dd id="lZone">1</dd></div>
+          <div><dt>Raid bosses</dt><dd id="lWyrms">0</dd></div>
+          <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="modal" id="away" hidden>
+  <div class="card">
+    <div class="zsub">While you were away</div>
+    <h3 id="awayTime">2h 10m</h3>
+    <div class="gains" id="awayGain"></div>
+    <p class="note" id="awayNote" style="margin-inline:auto">Your party kept fighting.</p>
+    <button class="big home" id="awayOk">Collect</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+// ---- src/js/00-util.js ----
+// 00-util: pure helpers, the event bus and the extension registries.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+
+// ================= numbers =================
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (!isFinite(n)) return '∞';
+  if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n));
+  let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; }
+  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i];
+}
+function fmtTime(s) { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}h ${m}m` : m ? `${m}m ${s % 60}s` : `${s}s`; }
+const roman = n => ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][n - 1] || String(n);
+
+// seeded PRNG (mulberry32); returns a function giving floats in [0, 1)
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// ================= event bus =================
+// Core emits, render/UI/features subscribe. Handlers run synchronously in the
+// order they subscribed. A throwing handler is logged and skipped so one broken
+// feature cannot stall the game loop. See docs/ARCHITECTURE.md for the event list.
+const BUS = new Map();
+function on(evt, fn) {
+  if (!BUS.has(evt)) BUS.set(evt, []);
+  BUS.get(evt).push(fn);
+  return () => off(evt, fn);
+}
+function off(evt, fn) { const l = BUS.get(evt); if (l) { const i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); } }
+function emit(evt, payload) {
+  const l = BUS.get(evt); if (!l || !l.length) return;
+  for (const fn of l.slice()) { try { fn(payload); } catch (e) { console.error(`[lanternfall] handler for "${evt}" failed`, e); } }
+}
+// toast(msg, kind, icon): icon is a URL string or an icon spec ({ item }, { mat: [k, t] }, { ic: [name, main, extra] })
+const toast = (msg, kind, icon) => emit('toast', { msg, kind, icon });
+
+// ================= storage adapter =================
+// { get(key) -> string|null, set(key, string) }. The browser adapter is installed by
+// 05-platform.js; the Node tools install an in-memory one.
+let storage = { get: () => null, set: () => {} };
+const useStorage = s => { storage = s; };
+
+// ================= modifiers =================
+// mod(key) is the product of every registered multiplier for that key (1 when none).
+// Formulas multiply by it at the END of their expression so a neutral 1 is exact.
+const MODS = new Map();
+function addModifier(key, fn) {
+  if (!MODS.has(key)) MODS.set(key, []);
+  MODS.get(key).push(fn);
+  return () => { const l = MODS.get(key), i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); };
+}
+function mod(key) {
+  const l = MODS.get(key); if (!l || !l.length) return 1;
+  let m = 1; for (const f of l) m *= f();
+  return m;
+}
+
+// ================= tick hooks =================
+// onTick(fn): fn(dt) runs at the end of every core tick (in the browser and in the Node tools).
+const TICK_HOOKS = [];
+const onTick = fn => { TICK_HOOKS.push(fn); return () => { const i = TICK_HOOKS.indexOf(fn); if (i >= 0) TICK_HOOKS.splice(i, 1); }; };
+
+// ---- src/js/05-platform.js ----
+// 05-platform: browser-only adapters for core. The Node tools skip this file and
+// install their own (in-memory) storage instead.
+useStorage({
+  get: key => { try { return localStorage.getItem(key); } catch (e) { return null; } },
+  set: (key, value) => { try { localStorage.setItem(key, value); } catch (e) {} }
+});
+
+// ---- src/js/10-art.js ----
+// 10-art: pixel maps, palettes and colour maths. Pure data and functions (no DOM),
+// so core can build mob palettes. Canvas sprite rendering lives in 60-gfx.js.
+
+// ================= pixel art =================
+const SPR = {
+  slime: ['............','............','............','....1111....','...113311...','..11311111..','..11411411..','.1111111111.','.1112222111.','.1111111111.','..22222222..','............'],
+  bat: ['............','.2........2.','.22..11..22.','.222.11.222.','.2221111222.','.2214114122.','..21111112..','...211112...','....2112....','.....22.....','............','............'],
+  bones: ['....5555....','...555555...','..55555555..','..52255225..','..52255225..','..55555555..','...555555...','...5.55.5...','....5555....','...5.55.5...','....5..5....','...55..55...'],
+  beetle: ['............','...2....2...','....2..2....','...111111...','..13111111..','.1311211111.','.1111211111.','.1111211111.','.2111211112.','..22222222..','..2.2..2.2..','............'],
+  spore: ['...111111...','..11511511..','.1111111111.','.1511115111.','..11111111..','....5555....','....5445....','....5555....','....5555....','...555555...','............','............'],
+  golem: ['............','....1111....','...114411...','...111111...','.1122222211.','11.211112.11','11.211112.11','22.211112.22','...222222...','...22..22...','..222..222..','............'],
+  wraith: ['....3333....','...333333...','..33333333..','..34433443..','..33333333..','..33322333..','..33333333..','.3333333333.','.3333333333.','.33.333.333.','.3..33..3.3.','............'],
+  hero: ['....222.......','...22522......','...2222222....','...2224444....','...2222222....','....22222.....','..1111111111..','.211133111112.','.211111111112.','.2111111111...','..6666666666..','..1111111111..','...111..111...','...222..222...','...222..222...','..2222.2222...'],
+  wyrm: ['................','..2.........2...','..22.......22...','...2211111122...','...1111111111...','..113411114311..','..111111111111..','..11115555111111','...111555511111.','....111111111...','..2111111111112.','.22111133311122.','.22111133311122.','..2211111111122.','...22..11..22...','...2...22...2...'],
+  rock: ['............','............','............','....2222....','...211112...','..21131112..','..21111312..','.2113111112.','.2111111312.','.2131111112.','..22222222..','............'],
+  tree: ['....3333....','..33333333..','.3333443333.','.3334333333.','..33333343..','...333333...','.....11.....','.....11.....','.....11.....','....1111....','...111111...','............']
+};
+const ICON = {
+  sword: ['..........55','.........511','........512.','.......512..','......512...','.....512....','..7.512.....','...712......','...67.......','..6.77......','.6..........','............'],
+  helm: ['............','....1111....','...115111...','..11511111..','..11111111..','..12222221..','..1.2..2.1..','..1......1..','..11....11..','...1....1...','............','............'],
+  charm: ['...66..66...','..6......6..','..6......6..','...6....6...','....6..6....','.....77.....','....7117....','...715117...','...711117...','....7117....','.....77.....','............'],
+  pick: ['...111111...','..11555511..','.11..66..11.','.1...66...1.','.....66.....','.....66.....','.....66.....','.....66.....','.....66.....','.....66.....','.....66.....','............'],
+  axe: ['.....6111...','.....61551..','.....61111..','.....6111...','.....6......','.....6......','.....6......','.....6......','.....6......','.....6......','....666.....','............'],
+  ore: ['............','............','....2222....','...211112...','..21511112..','..21111112..','..21115112..','..21111122..','...222222...','............','............','............'],
+  log: ['............','............','............','...66666661.','..677777761.','..6777777611','..677777761.','...66666661.','............','............','............','............'],
+  orb: ['............','....1111....','...115511...','..11155111..','..11111111..','..11111111..','...111111...','....1111....','.....77.....','....7777....','............','............'],
+  banner: ['..6.........','..6111111...','..6155111...','..6111111...','..6111111...','..611..11...','..61....1...','..6.........','..6.........','..6.........','.666........','............'],
+  coin: ['............','....7777....','...777777...','..77755777..','..77577777..','..77777777..','..77777777..','...777777...','....7777....','............','............','............'],
+  heart: ['............','..11....11..','.1551..1111.','.1511111111.','.1111111111.','..11111111..','...111111...','....1111....','.....11.....','............','............','............'],
+  glass: ['..77777777..','...1....1...','...11..11...','....1111....','.....11.....','....1..1....','...1.11.1...','...111111...','..77777777..','............','............','............'],
+  boot: ['............','....6666....','....6666....','....6666....','....6666....','....66666...','...6666666..','..666666666.','..677777776.','..666666666.','............','............'],
+  anvil: ['............','............','111111111...','.1155551111.','..11111111..','....1111....','....1111....','...111111...','..11111111..','............','............','............'],
+  mug: ['............','..555555....','.55555555...','.17777771...','.1777777111.','.17777771.1.','.17777771.1.','.1777777111.','.17777771...','.11111111...','............','............'],
+  flame: ['.....1......','....11......','....151.....','...1151.1...','...115511...','..11155511..','..11555511..','..15557551..','..15577551..','...155551...','....1111....','............']
+};
+const HERO_PAL = { 1: '#3E63C9', 2: '#9A97B3', 3: '#F2C14E', 4: '#1A1420', 5: '#E8E6F0', 6: '#6B4A2E' };
+const WYRM_PAL = { 1: '#8A3345', 2: '#3D1622', 3: '#FFD27A', 4: '#FF6B3D', 5: '#EFE6D6' };
+const RAIDERS_PAL = ['#C9463E', '#3E9C5A', '#8A4FC9', '#C98A3E'].map(c => ({ ...HERO_PAL, 1: c }));
+const OUTLINE = '#0B0810';
+
+function hexToHsl(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+    h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60;
+  }
+  return [h, s * 100, l * 100];
+}
+const shift = (hex, deg) => { if (!deg || hex[0] !== '#') return hex; const [h, s, l] = hexToHsl(hex); return `hsl(${(h + deg) % 360} ${s}% ${l}%)`; };
+const shiftPal = (pal, deg) => Object.fromEntries(Object.entries(pal).map(([k, v]) => [k, shift(v, deg)]));
+const darken = (hex, amt) => { const [h, s, l] = hexToHsl(hex); return `hsl(${h} ${s}% ${l * (1 - amt)}%)`; };
+function mix(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ch = sh => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
+  return '#' + ((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1);
+}
+
+// ---- src/js/20-data.js ----
+// 20-data: content tables. Pure data (plus a few pure lookups); no DOM.
+// Icons are stored as specs (ic: [name, colour, extra]) and turned into images by the UI.
+
+const TYPES = [
+  { key: 'slime', name: 'Moss Slime', pal: { 1: '#6FCB6A', 2: '#3E8A4E', 3: '#B6F09A', 4: '#1A1420' } },
+  { key: 'bat', name: 'Cave Bat', pal: { 1: '#8A6FC8', 2: '#4D3B7A', 4: '#FF5A5A' } },
+  { key: 'bones', name: 'Rattlebones', pal: { 5: '#EFE6D6', 2: '#1A1420' } },
+  { key: 'beetle', name: 'Barrow Beetle', pal: { 1: '#3F8FA8', 2: '#1F4A5E', 3: '#9BE3F0' } },
+  { key: 'spore', name: 'Spore Cap', pal: { 1: '#D9534F', 5: '#F3E6CF', 4: '#1A1420' } },
+  { key: 'golem', name: 'Quarry Golem', pal: { 1: '#9C8F7A', 2: '#5E5647', 4: '#FF9E3D' } },
+  { key: 'wraith', name: 'Marsh Wraith', pal: { 3: '#9FD8C9', 2: '#35524C', 4: '#1A1420' } }
+];
+const ZONES = ['Mossy Hollow', 'Batwing Caves', 'The Bonefield', 'Beetle Barrows', 'Fungal Deep', 'Quarry Ruins', 'Wraithmarsh'];
+const ZONE_THEME = ['forest', 'cave', 'bone', 'barrow', 'fungal', 'quarry', 'marsh'];
+const BOSSES = ['The Ashen Wyrm', 'The Hollow King', 'The Mire Colossus', 'The Glass Hydra', 'The Lantern Eater', 'The Pale Tyrant'];
+
+const THEMES = {
+  forest: { sky: ['#101C18', '#35533F'], far: '#223A2E', mid: '#172A20', ground: '#101A14', top: '#3E6B3A', stars: true, amb: 'firefly', ambCol: '#D8F07A' },
+  cave: { sky: ['#0A0910', '#211C34'], far: '#171327', mid: '#100D1C', ground: '#0D0A15', top: '#3A3052', ceiling: true, amb: 'drip', ambCol: '#7FB2FF' },
+  bone: { sky: ['#12090C', '#4A2226'], far: '#2A1619', mid: '#1C0F12', ground: '#150B0D', top: '#5A3A2E', moon: '#E0524F', amb: 'ash', ambCol: '#9A8F8F' },
+  barrow: { sky: ['#0A151C', '#224452'], far: '#16303C', mid: '#0F2029', ground: '#0B181E', top: '#2F5A55', stars: true, fog: '#9BE3F0', amb: 'mote', ambCol: '#9BE3F0' },
+  fungal: { sky: ['#140B1C', '#4A2A54'], far: '#2A1834', mid: '#1C1024', ground: '#140A1A', top: '#6A3A6E', amb: 'spore', ambCol: '#FF9ED8' },
+  quarry: { sky: ['#15130F', '#4B4337'], far: '#322D27', mid: '#24201B', ground: '#191612', top: '#6E6250', moon: '#EFE6D6', amb: 'dust', ambCol: '#CDBFA0' },
+  marsh: { sky: ['#08110F', '#274240'], far: '#182C29', mid: '#10201E', ground: '#0C1615', top: '#35524C', moon: '#CFE8E0', fog: '#9FD8C9', amb: 'wisp', ambCol: '#9FD8C9' },
+  raid: { sky: ['#0E0407', '#5A1A20'], far: '#2A0C12', mid: '#1A070B', ground: '#10060A', top: '#5A1E22', moon: '#FF9E3D', amb: 'ember', ambCol: '#FF9E3D' },
+  mine: { sky: ['#0A090D', '#1E1A26'], far: '#17141D', mid: '#110E16', ground: '#120F17', top: '#3A3442', ceiling: true, beams: true, amb: 'dust', ambCol: '#A9B1BD' },
+  woods: { sky: ['#13241B', '#46714F'], far: '#274532', mid: '#1B3325', ground: '#122016', top: '#4E7F42', shafts: true, amb: 'leaf', ambCol: '#5FAE4E' }
+};
+
+// ================= materials, gear, uniques =================
+const MAT = {
+  ore: { n: 'Ore', short: ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'], col: ['#D08A4E', '#A9B1BD', '#7FD6E0', '#C9B8FF', '#FF7A3D'], unit: 'Ore' },
+  wood: { n: 'Wood', short: ['Oak', 'Yew', 'Ironbark', 'Ghostwood', 'Lanternwood'], col: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'], unit: 'Log' },
+  ess: { n: 'Essence', short: ['Dim', 'Glowing', 'Radiant', 'Blazing', 'Starlit'], col: ['#9A8FB8', '#7FB2FF', '#F2E27A', '#FF8A4D', '#E6D7FF'], unit: 'Essence' }
+};
+const matName = (k, t) => `${MAT[k].short[t - 1]} ${MAT[k].unit}`;
+const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starsteel Crater', 'Emberite Heart'], wood: ['Oak Grove', 'Yew Thicket', 'Ironbark Stand', 'Ghostwood Hollow', 'Lanternwood Grove'] };
+const NODE_REQ = [1, 10, 22, 38, 60];
+const SMITH_REQ = [1, 6, 15, 28, 45];
+const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
+const skillOf = kind => kind === 'ore' ? 'mine' : 'wood';
+
+const TIER_POW = [0, 10, 28, 70, 160, 360];
+const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };
+const SLOTS = [
+  { id: 'weapon', n: 'Weapon', noun: 'Sword', prefix: 'ore', icon: 'sword' },
+  { id: 'helm', n: 'Helm', noun: 'Helm', prefix: 'ore', icon: 'helm' },
+  { id: 'charm', n: 'Charm', noun: 'Charm', prefix: 'ess', icon: 'charm' },
+  { id: 'pick', n: 'Pickaxe', noun: 'Pickaxe', prefix: 'ore', icon: 'pick' },
+  { id: 'axe', n: 'Axe', noun: 'Axe', prefix: 'ore', icon: 'axe' }
+];
+const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
+const RECIPE = { weapon: { ore: 6, wood: 3, ess: 2 }, helm: { ore: 5, ess: 3 }, charm: { wood: 3, ess: 5 }, pick: { ore: 4, wood: 4 }, axe: { wood: 5, ore: 3 } };
+const UNIQ = {
+  sproutblade: { name: 'Sproutblade', slot: 'weapon', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
+  echocowl: { name: 'Echo Cowl', slot: 'helm', col: '#8A6FC8', src: 'Zone boss · Batwing Caves', fx: { echo: 0.5 }, txt: 'Critical hits strike again for 50%.' },
+  rattlecharm: { name: 'Rattlebone Charm', slot: 'charm', col: '#EFE6D6', src: 'Zone boss · The Bonefield', fx: { party: 15 }, txt: 'Your party deals 15% more damage.' },
+  carapacepick: { name: 'Carapace Pick', slot: 'pick', col: '#3F8FA8', src: 'Zone boss · Beetle Barrows', fx: { oreExtra: 0.25 }, txt: '25% chance of an extra ore per swing.' },
+  sporeheart: { name: 'Sporeheart', slot: 'charm', col: '#D9534F', src: 'Zone boss · Fungal Deep', fx: { offline: 50 }, txt: '+50% gains while you are away.' },
+  golemfist: { name: 'Golemfist', slot: 'weapon', col: '#9C8F7A', src: 'Zone boss · Quarry Ruins', fx: { tap: 2 }, txt: 'Your taps deal double damage.' },
+  wispaxe: { name: 'Wisp Axe', slot: 'axe', col: '#9FD8C9', src: 'Zone boss · Wraithmarsh', fx: { woodSpd: 30, woodExtra: 0.2 }, txt: '30% faster chopping, 20% chance of an extra log.' },
+  wyrmscale: { name: 'Wyrmscale Helm', slot: 'helm', col: '#C9463E', src: 'World raid · The Ashen Wyrm', fx: { raid: 25 }, txt: '+25% raid damage.' },
+  hollowcrown: { name: 'Crown of Hollows', slot: 'helm', col: '#F2C14E', src: 'World raid · The Hollow King', fx: { gold: 40 }, txt: '+40% gold.' },
+  colossuspick: { name: 'Colossus Pick', slot: 'pick', col: '#6E7F4A', src: 'World raid · The Mire Colossus', fx: { gather: 40 }, txt: 'All gathering 40% faster.' },
+  hydraglass: { name: 'Hydra Glass', slot: 'charm', col: '#7FD6E0', src: 'World raid · The Glass Hydra', fx: { crit: 10 }, txt: '+10% critical hit chance.' },
+  eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { party: 20, might: 30 }, txt: '+30% damage and your party deals 20% more.' },
+  tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' }
+};
+const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
+const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
+const BAG_MAX = 40;
+function itemColor(slot, t, u) { return u ? UNIQ[u].col : slot === 'charm' ? MAT.ess.col[t - 1] : MAT.ore.col[t - 1]; }
+
+const COMPS = [
+  { name: 'Squire', dps: 2, base: 15, blurb: 'Carries your spare sword and swings it too.', col: '#8C6A43', helm: '#6B4A2E' },
+  { name: 'Archer', dps: 12, base: 120, blurb: 'Never misses twice.', col: '#3E8A4E', helm: '#5A7A3A' },
+  { name: 'Hedge Mage', dps: 70, base: 1100, blurb: 'Self-taught. Mostly fire.', col: '#8A4FC9', helm: '#5A3A8A' },
+  { name: 'Knight', dps: 420, base: 12000, blurb: 'Sworn to your banner.', col: '#C9463E', helm: '#C9CCD8' },
+  { name: 'Dragoon', dps: 2600, base: 140000, blurb: 'Lands from very high up.', col: '#2F7D5A', helm: '#3F8FA8' },
+  { name: 'Starcaller', dps: 16000, base: 1.8e6, blurb: 'Pulls light down from the sky.', col: '#2A2F7A', helm: '#C9B8FF' },
+  { name: 'Lantern Saint', dps: 100000, base: 2.5e7, blurb: 'The reason this land is called Lanternfall.', col: '#EFE6D6', helm: '#F2C14E' }
+];
+
+// desc() thunks read live numbers from 40-rules; only the UI calls them.
+const HERO_UPS = [
+  { id: 'blade', name: 'Blade', base: 10, r: 1.14, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, doubles every 25.` },
+  { id: 'swift', name: 'Swiftness', base: 50, r: 1.6, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
+  { id: 'fortune', name: 'Fortune', base: 100, r: 1.35, ic: ['coin', '#F2C14E'], desc: () => `x${goldMult().toFixed(2)} gold from every kill.` }
+];
+const RELICS = [
+  { id: 'banner', name: 'Warbanner', base: 5, r: 1.6, ic: ['banner', '#E0524F'], desc: () => `+20% damage everywhere per level.` },
+  { id: 'coin', name: 'Lucky Coin', base: 5, r: 1.6, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+25% gold per level.` },
+  { id: 'heart', name: 'Ember Heart', base: 4, r: 1.5, ic: ['heart', '#FF7A3D'], desc: () => `+30% raid damage per level.` },
+  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `Your party works for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
+];
+
+// ---- src/js/30-state.js ----
+// 30-state: the save (S), load/migrate, save(), registered feature fields, and
+// runtime (non-saved) shared-world state.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Save compatibility is sacred: never rename or repurpose a field below.
+
+// ================= save =================
+const KEY = 'lanternfall.save.v1';
+// Feature save fields added with registerState(key, defaults). Kept in registration order.
+const STATE_DEFAULTS = {};
+const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
+const isPlainObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+function fillDefaults(target, defs) {
+  for (const [k, v] of Object.entries(defs)) {
+    if (target[k] === undefined) target[k] = cloneJSON(v);
+    else if (isPlainObj(v) && isPlainObj(target[k])) fillDefaults(target[k], v);
+  }
+  return target;
+}
+const fresh = () => Object.assign({
+  v: 2, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
+  blade: 0, swift: 0, fortune: 0, comp: [0, 0, 0, 0, 0, 0, 0], relic: { banner: 0, coin: 0, heart: 0, glass: 0 },
+  auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
+  totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
+  skills: { mine: { lv: 1, xp: 0 }, wood: { lv: 1, xp: 0 }, smith: { lv: 1, xp: 0 } },
+  mats: { ore: [0, 0, 0, 0, 0], wood: [0, 0, 0, 0, 0], ess: [0, 0, 0, 0, 0] },
+  node: { kind: 'ore', t: 1 }, gProg: 0,
+  items: [], equip: { weapon: null, helm: null, charm: null, pick: null, axe: null }, nextId: 1,
+  found: {}, fSlot: 'weapon', fTier: 1
+}, cloneJSON(STATE_DEFAULTS));
+const BASE_KEYS = Object.keys(fresh());
+let S = fresh();
+function loadSave() {
+  try {
+    const raw = storage.get(KEY);
+    if (raw) {
+      const o = JSON.parse(raw);
+      S = Object.assign(fresh(), o);
+      S.relic = Object.assign(fresh().relic, o.relic || {});
+      S.raid = Object.assign(fresh().raid, o.raid || {});
+      S.skills = Object.assign(fresh().skills, o.skills || {});
+      S.mats = Object.assign(fresh().mats, o.mats || {});
+      S.equip = Object.assign(fresh().equip, o.equip || {});
+      while (S.comp.length < 7) S.comp.push(0);
+      if (!o.activity) S.activity = o.raiding ? 'raid' : 'fight';
+      delete S.raiding;
+      for (const [k, d] of Object.entries(STATE_DEFAULTS)) if (isPlainObj(d) && isPlainObj(S[k])) fillDefaults(S[k], d);
+    }
+  } catch (e) {}
+}
+loadSave();
+function save() { S.last = Date.now(); try { storage.set(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// registerState('achievements', { got: {}, seen: 0 }): adds a top-level save field.
+// Defaults merge into fresh() and into the loaded save (missing keys only, recursively
+// for plain objects); existing values are never overwritten. Call from a 55-*.js file.
+function registerState(key, defaults) {
+  if (BASE_KEYS.includes(key) || key in STATE_DEFAULTS) throw new Error(`registerState: "${key}" is already a save field`);
+  STATE_DEFAULTS[key] = cloneJSON(defaults);
+  if (S[key] === undefined) S[key] = cloneJSON(defaults);
+  else if (isPlainObj(defaults) && isPlainObj(S[key])) fillDefaults(S[key], defaults);
+  return S[key];
+}
+
+// ================= runtime shared-world state (not saved) =================
+// Filled in by 80-online.js. Core only reads it (raid target, raid rewards).
+const online = { ready: false, checked: false, db: null, user: null, room: null, uid: null, canWrite: true, world: null, bossLoaded: false, raiders: [], peers: [], flushKey: '', flushing: false, advancing: false, hornOk: true, hornAt: 0, presKey: '' };
+let rallyUntil = 0;
+
+// ---- src/js/40-rules.js ----
+// 40-rules: every formula and the gear maths. Pure functions of S (plus the modifier registry).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+
+// ================= gear math =================
+const itemById = id => S.items.find(i => i.id === id) || null;
+const equipped = slot => itemById(S.equip[slot]);
+const itemPower = it => TIER_POW[it.t] * RAR[it.r].m * (1 + 0.15 * it.plus);
+function itemName(it) {
+  if (it.u) return UNIQ[it.u].name + (it.plus ? ` +${it.plus}` : '');
+  const s = SLOT[it.slot];
+  return `${MAT[s.prefix].short[it.t - 1]} ${s.noun}` + (it.plus ? ` +${it.plus}` : '');
+}
+function slotStats(slot, p) {
+  switch (slot) {
+    case 'weapon': return `+${fmt(p)}% damage`;
+    case 'helm': return `+${Math.min(35, p * 0.12).toFixed(1)}% crit chance, +${(p / 200).toFixed(1)}x crit damage`;
+    case 'charm': return `+${fmt(p * 0.8)}% gold, +${fmt(p * 0.3)}% essence drops`;
+    case 'pick': return `+${fmt(p * 0.6)}% mining speed, ${Math.min(60, p * 0.1).toFixed(0)}% double ore`;
+    case 'axe': return `+${fmt(p * 0.6)}% chopping speed, ${Math.min(60, p * 0.1).toFixed(0)}% double logs`;
+  }
+  return '';
+}
+let gsCache = null;
+const gearDirty = () => { gsCache = null; emit('gear'); };
+function gear() {
+  if (gsCache) return gsCache;
+  const s = { might: 0, crit: 0, critMult: 0, gold: 0, ess: 0, mineSpd: 0, woodSpd: 0, oreDbl: 0, woodDbl: 0, party: 0, tap: 1, echo: 0, offline: 0, raid: 0, essExtra: 0, oreExtra: 0, woodExtra: 0, gather: 0, score: 0 };
+  for (const sl of SLOTS) {
+    const it = equipped(sl.id); if (!it) continue;
+    const p = itemPower(it); s.score += p;
+    if (sl.id === 'weapon') s.might += p;
+    if (sl.id === 'helm') { s.crit += Math.min(35, p * 0.12); s.critMult += p / 200; }
+    if (sl.id === 'charm') { s.gold += p * 0.8; s.ess += p * 0.3; }
+    if (sl.id === 'pick') { s.mineSpd += p * 0.6; s.oreDbl += Math.min(60, p * 0.1); }
+    if (sl.id === 'axe') { s.woodSpd += p * 0.6; s.woodDbl += Math.min(60, p * 0.1); }
+    if (it.u) for (const [k, v] of Object.entries(UNIQ[it.u].fx)) { if (k === 'tap') s.tap *= v; else s[k] += v; }
+  }
+  gsCache = s; return s;
+}
+const craftCost = (slot, t) => Object.fromEntries(Object.entries(RECIPE[slot]).map(([k, n]) => [k, Math.ceil(n * (1 + 0.5 * (t - 1)))]));
+function upgradeCost(it) {
+  const m = {};
+  for (const [k, n] of Object.entries(RECIPE[it.slot])) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
+  if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
+  return { mats: m, gold: 40 * Math.pow(5, it.t) * (it.plus + 1) };
+}
+const hasMats = (m, t) => Object.entries(m).every(([k, n]) => S.mats[k][t - 1] >= n);
+const payMats = (m, t) => { for (const [k, n] of Object.entries(m)) S.mats[k][t - 1] -= n; };
+function rarityWeights() {
+  const sm = S.skills.smith.lv;
+  return { common: Math.max(8, 60 - sm * 1.1), uncommon: 28 + sm * 0.2, rare: 10 + sm * 0.5, epic: 2 + sm * 0.25 };
+}
+function rollRarity() {
+  const w = rarityWeights(), tot = Object.values(w).reduce((a, b) => a + b, 0);
+  let r = Math.random() * tot;
+  for (const [k, v] of Object.entries(w)) { if ((r -= v) <= 0) return k; }
+  return 'common';
+}
+
+// ================= formulas =================
+const lvlMult = () => 1 + 0.05 * (S.L - 1);
+const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
+const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + gear().gold / 100) * mod('gold');
+const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
+const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult();
+const aps = () => Math.min(5, 1 + 0.1 * S.swift);
+const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
+const critMult = () => (4 + gear().critMult) * mod('critDmg');
+const tapMult = () => gear().tap * mod('tap');
+const compDpsOne = i => COMPS[i].dps * Math.pow(2, Math.floor(S.comp[i] / 25)) * dmgMult() * (1 + gear().party / 100) * mod('party');
+const compDps = () => COMPS.reduce((a, c, i) => a + compDpsOne(i) * S.comp[i], 0);
+const heroDps = () => heroAtk() * aps() * (1 + critChance() * (critMult() - 1));
+const totalDps = () => heroDps() + compDps();
+const mobHp = z => 10 * Math.pow(1.55, z - 1);
+const mobGold = z => Math.max(1, mobHp(z) * 0.3) * goldMult();
+const zoneTier = z => Math.min(5, 1 + Math.floor((z - 1) / 5));
+const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
+const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
+const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));
+const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
+function nodeTime(kind, t) {
+  const g = gear(), lv = S.skills[skillOf(kind)].lv;
+  const spd = (kind === 'ore' ? g.mineSpd : g.woodSpd) + g.gather;
+  return 2.6 * (1 + 0.3 * (t - 1)) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
+}
+function nodeYieldAvg(kind) { const g = gear(); return 1 + Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100 + (kind === 'ore' ? g.oreExtra : g.woodExtra); }
+const nodeXp = t => Math.round(6 * Math.pow(t, 1.6));
+
+const bulkCost = (base, r, owned, n) => base * Math.pow(r, owned) * (Math.pow(r, n) - 1) / (r - 1);
+const maxAfford = (base, r, owned, money) => Math.max(0, Math.floor(Math.log(money * (r - 1) / (base * Math.pow(r, owned)) + 1) / Math.log(r)));
+// amt defaults to the player's x1/x10/Max choice; the Node tools pass their own.
+function plan(base, r, owned, money, cap, amt = S.amt) {
+  let n = amt === 'max' ? Math.max(1, maxAfford(base, r, owned, money)) : +amt;
+  if (cap !== undefined) n = Math.min(n, cap - owned);
+  if (n <= 0) return { n: 0, cost: Infinity };
+  return { n, cost: bulkCost(base, r, owned, n) };
+}
+
+const target = () => S.activity === 'raid' && online.ready ? 'world' : S.activity === 'gather' ? 'node' : 'mob';
+const zoneType = z => (z - 1) % 7;
+const zoneCycle = z => Math.floor((z - 1) / 7);
+const zoneName = z => ZONES[zoneType(z)] + (zoneCycle(z) ? ' ' + roman(zoneCycle(z) + 1) : '');
+const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
+const nodeColor = () => S.node.kind === 'ore' ? MAT.ore.col[S.node.t - 1] : MAT.wood.col[S.node.t - 1];
+
+// ---- src/js/50-sim.js ----
+// 50-sim: the game loop's rules in motion: activity switching, combat, gathering,
+// kills, harvests, level-ups, boss attempts, taps and away gains.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Visual feedback goes out on the event bus (float, burst, shake, lunge, ...).
+
+// ================= activity =================
+function setActivity(a) {
+  if (a === 'raid' && !(online.ready && online.canWrite)) { emit('raidUnavailable'); return; }
+  if (S.activity === a) return;
+  S.activity = a; fightBoss = false; emit('sceneReset');
+  if (a === 'fight') spawn();
+  if (a === 'gather') S.gProg = 0;
+  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  toast(msg, a === 'raid' ? 'raid' : 'good');
+  emit('activity', { activity: a });
+}
+// Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
+function setZone(z) {
+  S.zone = z; fightBoss = false; emit('sceneReset'); spawn();
+}
+// Pick the gathering node. Returns false if the skill level is too low. Does not
+// switch activity; call setActivity('gather') for that.
+function setNode(kind, t) {
+  if (S.skills[skillOf(kind)].lv < NODE_REQ[t - 1]) return false;
+  S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
+  return true;
+}
+
+// ================= combat state =================
+let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, bossTime = 0, failDps = 0;
+let partyAcc = 0, partyTick = 0;
+
+function spawn() {
+  const z = S.zone, cyc = zoneCycle(z);
+  const boss = fightBoss;
+  const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
+  const t = TYPES[ti];
+  const hp = mobHp(z) * (boss ? 8 : (0.9 + Math.random() * 0.2));
+  mob = {
+    key: t.key + cyc, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
+    name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
+    hit: 0, dead: 0, born: 0
+  };
+  if (boss) bossTime = 30;
+}
+
+// Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
+const addFloat = (txt, color, big, x, y) => emit('float', { txt, color, big, x, y });
+const burst = (x, y, color, n, spd) => emit('burst', { x, y, color, n, spd });
+
+// at: optional {x, y} stage position for the damage number (taps); label overrides its text.
+function strike(amount, color, big, at, label) {
+  const tg = target();
+  if (tg === 'world') { addRaidDmg(amount); addFloat(label || fmt(amount), color, big, at ? at.x : 0.72 + (Math.random() - 0.5) * 0.14, at ? at.y : 0.38); emit('wyrmHit'); burst(0.7, 0.5, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5); return; }
+  if (tg !== 'mob' || !mob || mob.dead) return;
+  mob.hp -= amount; mob.hit = 0.08;
+  addFloat(label || fmt(amount), color, big, at ? at.x : undefined, at ? at.y : undefined);
+  burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
+  if (mob.hp <= 0) kill();
+}
+function heroSwing(base, tap, at) {
+  const crit = Math.random() < critChance();
+  const dmg = base * (crit ? critMult() : 1) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
+  strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
+  if (crit) { emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
+  return { crit, dmg };
+}
+// A player tap on the stage. at = {x, y} stage fractions for the damage number.
+function playerTap(at) {
+  if (target() === 'node') { tapNode(); return; }
+  heroSwing(heroAtk(), true, at);
+}
+function tapNode() {
+  S.gProg += 0.12; emit('nodeHit'); burst(0.66, 0.62, nodeColor(), 4, 0.7);
+  if (S.gProg >= 1) { S.gProg -= 1; harvest(); }
+}
+
+function kill() {
+  mob.hp = 0; mob.dead = 0.001;
+  const g = mob.gold, z = S.zone, tier = zoneTier(z);
+  S.gold += g; S.totalGold += g; S.totalKills++;
+  addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
+  burst(0.68, 0.62, mob.pal[1] || mob.pal[5] || mob.pal[3], 14);
+  gainXp(mob.xp);
+  let ess = mob.boss ? 3 : 0;
+  const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
+  if (Math.random() < gear().essExtra) ess++;
+  if (ess) { S.mats.ess[tier - 1] += ess; addFloat(`+${ess} ${MAT.ess.short[tier - 1]} Essence`, MAT.ess.col[tier - 1], false, 0.68, 0.2); }
+  if (mob.boss) {
+    const first = S.zone === S.maxZone;
+    fightBoss = false; failDps = 0;
+    emit('shake', 0.3);
+    if (Math.random() < (first ? 0.35 : 0.12)) dropUnique(ZONE_UNIQ[zoneType(z)], tier);
+    if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good'); emit('zoneClear', { zone: z }); }
+  } else if (S.zone === S.maxZone) {
+    S.kills = Math.min(10, S.kills + 1);
+  }
+  emit('kill', { mob, zone: z, gold: g, ess, tier });
+  respawn = 0.45;
+}
+
+function gainXp(n) {
+  S.xp += n * mod('xp');
+  while (S.xp >= xpNeed()) {
+    S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L });
+    addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
+    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good');
+  }
+}
+function gainSkill(k, n, quiet) {
+  const sk = S.skills[k]; sk.xp += n * mod('skillXp');
+  while (sk.xp >= skillNeed(sk.lv)) {
+    sk.xp -= skillNeed(sk.lv); sk.lv++;
+    emit('skillUp', { k, lv: sk.lv, quiet: !!quiet });
+    if (quiet) continue;
+    const req = k === 'smith' ? SMITH_REQ : NODE_REQ, t = req.indexOf(sk.lv);
+    let extra = '';
+    if (t > 0) extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : ` The ${NODE_NAMES[k === 'mine' ? 'ore' : 'wood'][t]} is open to you.`;
+    if (k !== 'smith') addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
+    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good');
+  }
+}
+
+// Start (or rematch) the zone boss. Returns true if a boss fight began.
+function challenge() {
+  if (fightBoss || target() !== 'mob') return false;
+  if (!(S.zone < S.maxZone || bossReady())) return false;
+  fightBoss = true; spawn(); respawn = 0;
+  return true;
+}
+
+// ================= tick =================
+function tick(dt) {
+  const tg = target();
+  if (tg === 'node') {
+    const { kind, t } = S.node;
+    S.gProg += dt / nodeTime(kind, t);
+    if (S.gProg >= 1) { S.gProg = Math.min(S.gProg - 1, 0.9); harvest(); }
+    heroTimer -= dt;
+    if (heroTimer <= 0) { heroTimer = 0.6; emit('lunge'); }
+  } else {
+    const pd = compDps() * (tg === 'world' ? raidMult() : 1);
+    if (pd > 0) {
+      if (tg === 'world') addRaidDmg(pd * dt);
+      else if (mob && !mob.dead) { mob.hp -= pd * dt; if (mob.hp <= 0) kill(); }
+      partyAcc += pd * dt; partyTick += dt;
+      if (partyTick >= 0.6) { addFloat(fmt(partyAcc), '#B58CFF', false, 0.76 + (Math.random() - 0.5) * 0.1, 0.55); partyAcc = 0; partyTick = 0; }
+    }
+    heroTimer -= dt;
+    if (heroTimer <= 0) {
+      heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
+      if (tg === 'world' || (mob && !mob.dead)) { emit('lunge'); heroSwing(heroAtk(), false); }
+    }
+    if (tg === 'mob' && mob && mob.boss && !mob.dead) {
+      bossTime -= dt;
+      if (bossTime <= 0) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
+    }
+    if (mob && mob.dead) mob.dead += dt;
+    if (mob) mob.born += dt;
+    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
+    if (!mob) spawn();
+    if (mob.hit > 0) mob.hit -= dt;
+  }
+  for (const fn of TICK_HOOKS.slice()) { try { fn(dt); } catch (e) { console.error('[lanternfall] tick hook failed', e); } }
+}
+
+function harvest() {
+  const { kind, t } = S.node, g = gear();
+  const dbl = Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100, ex = kind === 'ore' ? g.oreExtra : g.woodExtra;
+  const n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
+  S.mats[kind][t - 1] += n;
+  gainSkill(skillOf(kind), nodeXp(t));
+  addFloat(`+${n} ${matName(kind, t)}`, MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
+  burst(0.68, 0.6, MAT[kind].col[t - 1], 12, 0.9);
+  emit('harvest', { kind, t, n });
+}
+
+// ================= away / offline =================
+// Applies offline gains to S and returns a summary for the "While you were away" card.
+// Line icons are specs (see toast()); the UI turns them into images.
+function awayGains(secs) {
+  const cap = (4 + 2 * S.relic.glass) * 3600;
+  const t = Math.min(secs, cap);
+  const boost = (1 + gear().offline / 100) * mod('offline');
+  const r = { t, secs, lines: [] };
+  if (S.activity === 'gather') {
+    const { kind, t: tier } = S.node;
+    const swings = t / nodeTime(kind, tier) * boost;
+    const got = Math.floor(swings * nodeYieldAvg(kind));
+    S.mats[kind][tier - 1] += got;
+    gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
+    r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
+    r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
+    return r;
+  }
+  const dps = (compDps() + heroDps() * 0.5) * boost;
+  if (S.activity === 'raid') {
+    const dmg = dps * raidMult() * t * 0.5;
+    S.raid.dmg += dmg;
+    r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
+    r.note = 'Your party kept hammering the raid boss.';
+    return r;
+  }
+  const kills = dps * t / mobHp(S.zone);
+  const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
+  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
+  r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
+  if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
+  r.note = `Your party kept fighting in ${zoneName(S.zone)}.`;
+  return r;
+}
+
+// ---- src/js/51-actions.js ----
+// 51-actions: player actions on items and the shops (hero upgrades, party, relics,
+// forge, equip, upgrade, salvage). Each returns a truthy value when it did something;
+// the UI then refreshes. The Node tools call these directly.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+
+// ================= items =================
+function addItem(it) {
+  if (S.items.length >= BAG_MAX) { salvageGive(it); toast(`Your bag is full, so ${itemName(it)} was salvaged.`, 'raid'); return false; }
+  S.items.push(it); emit('itemAdded', { item: it }); return true;
+}
+function dropUnique(key, t) {
+  const u = UNIQ[key];
+  const it = { id: S.nextId++, slot: u.slot, t, r: 'legendary', plus: 0, u: key };
+  const firstTime = !S.found[key];
+  S.found[key] = Math.max(S.found[key] || 0, t);
+  const kept = addItem(it);
+  if (kept) toast(`Unique loot! ${u.name} (${MAT.ore.short[t - 1]} tier)${firstTime ? ' joins your trophy wall' : ''}.`, 'loot', { item: it });
+  emit('loot', { item: it, first: firstTime, kept });
+  burst(0.68, 0.5, '#FF9E3D', 24, 1); burst(0.68, 0.5, '#FFD27A', 16, 1);
+  save();
+}
+
+function salvageGive(it) {
+  for (const [k, n] of Object.entries(RECIPE[it.slot])) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3));
+  if (it.u) S.mats.ess[it.t - 1] += 10;
+}
+function equipItem(id) {
+  const it = itemById(id); if (!it) return false;
+  S.equip[it.slot] = id; gearDirty(); toast(`Equipped ${itemName(it)}.`, 'good', { item: it }); save();
+  return true;
+}
+function salvageItem(id) {
+  const it = itemById(id); if (!it || Object.values(S.equip).includes(id)) return false;
+  salvageGive(it);
+  S.items = S.items.filter(i => i.id !== id);
+  toast(`Salvaged ${itemName(it)} for materials.`, 'good'); save();
+  return true;
+}
+// Forge a new item of slot/tier. Returns the item, or null if not allowed.
+function forgeItem(slot, t) {
+  const cost = craftCost(slot, t);
+  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || S.items.length >= BAG_MAX) return null;
+  payMats(cost, t);
+  const r = rollRarity();
+  const it = { id: S.nextId++, slot, t, r, plus: 0 };
+  addItem(it);
+  gainSkill('smith', Math.round(20 * Math.pow(t, 1.7)));
+  toast(`Forged a ${RAR[r].n} ${itemName(it)}.`, r === 'epic' || r === 'rare' ? 'ember' : 'good', { item: { slot, t } });
+  save();
+  return it;
+}
+// Upgrade the item equipped in a slot by +1 (max +10).
+function upgradeEquipped(slot) {
+  const it = equipped(slot); if (!it || it.plus >= 10) return false;
+  const c = upgradeCost(it);
+  if (!hasMats(c.mats, it.t) || S.gold < c.gold) return false;
+  payMats(c.mats, it.t); S.gold -= c.gold; it.plus++; gearDirty();
+  gainSkill('smith', Math.round(6 * Math.pow(it.t, 1.5)));
+  toast(`${itemName(it)} upgraded.`, 'good', { item: it }); save();
+  return true;
+}
+
+// ================= shops =================
+// amt: '1' | '10' | 'max' (defaults to the player's x1/x10/Max choice).
+function buyHero(id, amt) {
+  const u = HERO_UPS.find(h => h.id === id);
+  const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, amt);
+  if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; return true; }
+  return false;
+}
+function hireComp(i, amt) {
+  const c = COMPS[i];
+  const p = plan(c.base, 1.15, S.comp[i], S.gold, undefined, amt);
+  if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S.comp[i] += p.n; return true; }
+  return false;
+}
+function buyRelic(id) {
+  const u = RELICS.find(r => r.id === id);
+  const lv = S.relic[u.id];
+  if (u.cap !== undefined && lv >= u.cap) return false;
+  const cost = u.base * Math.pow(u.r, lv);
+  if (S.embers >= cost) { S.embers -= cost; S.relic[u.id]++; save(); return true; }
+  return false;
+}
+
+// ---- src/js/52-raid.js ----
+// 52-raid: world-raid maths and rewards (pure; reads the runtime `online` state that
+// 80-online.js keeps up to date). Network code lives in 80-online.js.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+
+function worldHp() {
+  const w = online.world; if (!w) return null;
+  let sum = 0;
+  for (const r of online.raiders) if (r.gen === w.gen && r.id !== online.uid) sum += +r.dmg || 0;
+  if (S.raid.gen === w.gen) sum += S.raid.dmg;
+  return Math.max(0, w.maxHp - sum);
+}
+function raiderCount() {
+  const w = online.world; if (!w) return 0;
+  let n = 0;
+  for (const r of online.raiders) if (r.gen === w.gen && r.id !== online.uid && r.dmg > 0) n++;
+  if (S.raid.gen === w.gen && S.raid.dmg > 0) n++;
+  return n;
+}
+function addRaidDmg(d) {
+  const w = online.world; if (!w) return;
+  if (S.raid.gen !== w.gen) syncGen();
+  S.raid.dmg += d;
+}
+function syncGen() {
+  const w = online.world; if (!w) return;
+  if (S.raid.gen === w.gen) { S.raid.maxHp = w.maxHp; S.raid.name = w.name; return; }
+  if (S.raid.gen && S.raid.gen < w.gen && S.raid.dmg > 0) {
+    const share = Math.min(1, S.raid.dmg / (S.raid.maxHp || w.maxHp));
+    const e = Math.max(1, Math.round((5 + 25 * share) * (1 + 0.2 * (S.raid.gen - 1))));
+    S.embers += e; S.wyrms++;
+    toast(`${S.raid.name || 'The raid boss'} has fallen. You dealt ${(share * 100).toFixed(1)}% of the damage: +${e} Embers.`, 'ember');
+    const ch = share >= 0.25 ? 1 : Math.min(1, 0.35 + share * 2);
+    if (Math.random() < ch) dropUnique(RAID_UNIQ[(S.raid.gen - 1) % RAID_UNIQ.length], Math.min(5, S.raid.gen));
+    emit('raidReward', { gen: S.raid.gen, share, embers: e });
+  } else if (S.raid.gen && S.raid.gen < w.gen) {
+    toast(`${S.raid.name || 'The raid boss'} fell to the other heroes. ${w.name} has appeared.`, 'raid');
+  }
+  S.raid = { gen: w.gen, dmg: 0, maxHp: w.maxHp, name: w.name };
+  save();
+}
+
+// ---- src/js/60-gfx.js ----
+// 60-gfx: browser-only helpers shared by render and UI: DOM shortcuts, reduced-motion
+// flag, canvas sprite rendering, icon data URLs.
+
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// sprite with a 1px dark outline, cached
+const sprCache = new Map();
+function sprite(key, rows, pal, flash) {
+  const k = key + (flash ? '!' : '');
+  if (sprCache.has(k)) return sprCache.get(k);
+  const w = Math.max(...rows.map(r => r.length)), h = rows.length;
+  const on = (x, y) => y >= 0 && y < h && x >= 0 && x < rows[y].length && rows[y][x] !== '.' && !!pal[rows[y][x]];
+  const c = document.createElement('canvas'); c.width = w + 2; c.height = h + 2;
+  const x = c.getContext('2d');
+  x.fillStyle = flash ? '#FFE9C9' : OUTLINE;
+  for (let yy = -1; yy <= h; yy++) for (let xx = -1; xx <= w; xx++) {
+    if (on(xx, yy)) continue;
+    if (on(xx - 1, yy) || on(xx + 1, yy) || on(xx, yy - 1) || on(xx, yy + 1)) x.fillRect(xx + 1, yy + 1, 1, 1);
+  }
+  rows.forEach((r, y) => { for (let i = 0; i < r.length; i++) { if (!on(i, y)) continue; x.fillStyle = flash ? '#FFFFFF' : pal[r[i]]; x.fillRect(i + 1, y + 1, 1, 1); } });
+  sprCache.set(k, c); return c;
+}
+const urlCache = new Map();
+function spriteURL(key, rows, pal) {
+  if (urlCache.has(key)) return urlCache.get(key);
+  const u = sprite('u:' + key, rows, pal).toDataURL(); urlCache.set(key, u); return u;
+}
+const icPal = (main, extra) => ({ 1: main, 2: darken(main, 0.35), 5: '#FFFFFF', 6: '#6B4A2E', 7: '#F2C14E', ...(extra || {}) });
+const iconURL = (name, main, extra) => spriteURL('ic:' + name + main + JSON.stringify(extra || {}), ICON[name], icPal(main, extra));
+const img = (url, cls) => { const i = el('img', cls || 'px'); i.src = url; i.alt = ''; return i; };
+const matIcon = (k, t) => k === 'ore' ? iconURL('ore', MAT.ore.col[t - 1], { 2: '#3A3542', 1: MAT.ore.col[t - 1] }) : k === 'wood' ? iconURL('log', MAT.wood.col[t - 1], { 6: '#4A3220', 7: '#8C6A43', 1: MAT.wood.col[t - 1] }) : iconURL('orb', MAT.ess.col[t - 1], { 7: '#6E6878' });
+function itemIcon(slot, t, u) {
+  const extra = slot === 'charm' ? { 6: '#9A97B3' } : null;
+  return iconURL(SLOT[slot].icon, itemColor(slot, t, u), extra);
+}
+
+// Resolve an icon spec from core (toast / away lines) to a data URL.
+// Accepts a URL string, { item: {slot, t, u} }, { mat: [kind, tier] } or { ic: [name, main, extra] }.
+function iconOf(spec) {
+  if (!spec) return null;
+  if (typeof spec === 'string') return spec;
+  if (spec.item) return itemIcon(spec.item.slot, spec.item.t, spec.item.u);
+  if (spec.mat) return matIcon(spec.mat[0], spec.mat[1]);
+  if (spec.ic) return iconURL(...spec.ic);
+  return null;
+}
+
+// ---- src/js/62-stage.js ----
+// 62-stage: the stage canvas. Draws the scene, mobs, hero and effects, and turns core
+// events (float, burst, shake, lunge, ...) into short-lived visual state. Browser-only.
+
+// ================= visual state (driven by core events) =================
+let lunge = 0, nodeHit = 0, wyrmHit = 0, shake = 0, beamT = 0, ringT = 0;
+const floats = [], sparks = [], ambient = [];
+function pushFloat(txt, color, big, x, y) {
+  floats.push({ txt, color, big, life: 0.95, x: x ?? (0.68 + (Math.random() - 0.5) * 0.12), y: y ?? 0.42, vy: big ? 0.28 : 0.2 });
+  if (floats.length > 24) floats.shift();
+}
+function pushSparks(x, y, color, n, spd) { for (let i = 0; i < n; i++) sparks.push({ x, y, vx: (Math.random() - 0.5) * (spd || 0.7), vy: -Math.random() * (spd || 0.9), life: 0.5 + Math.random() * 0.3, color }); }
+on('float', f => pushFloat(f.txt, f.color, f.big, f.x, f.y));
+on('burst', b => pushSparks(b.x, b.y, b.color, b.n, b.spd));
+on('shake', amt => { shake = reduced ? 0 : amt; });
+on('lunge', () => { lunge = 0.2; });
+on('nodeHit', () => { nodeHit = 0.12; });
+on('wyrmHit', () => { wyrmHit = 0.1; });
+on('levelup', () => { ringT = 0.8; });
+on('skillUp', p => { if (!p.quiet && p.k !== 'smith') ringT = 0.8; });
+on('loot', () => { beamT = 1.6; });
+on('sceneReset', () => { ambient.length = 0; });
+
+// Per-frame decay of the visual state (was the tail of the old tick()).
+function animate(dt) {
+  const tg = target();
+  if (wyrmHit > 0) wyrmHit -= dt;
+  if (nodeHit > 0) nodeHit -= dt;
+  if (lunge > 0) { const before = lunge; lunge -= dt; if (tg === 'node' && before > 0.1 && lunge <= 0.1) { nodeHit = 0.12; pushSparks(0.66, 0.62, nodeColor(), 3, 0.6); } }
+  if (shake > 0) shake -= dt;
+  if (beamT > 0) beamT -= dt;
+  if (ringT > 0) ringT -= dt;
+  for (const f of floats) { f.life -= dt; f.y -= f.vy * dt; }
+  while (floats.length && floats[0].life <= 0) floats.shift();
+  for (const s of sparks) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 1.8 * dt; }
+  for (let i = sparks.length - 1; i >= 0; i--) if (sparks[i].life <= 0) sparks.splice(i, 1);
+  ambientTick(dt);
+}
+
+// ================= stage: low-res pixel canvas =================
+const cv = $('cv'), ctx = cv.getContext('2d');
+const lo = document.createElement('canvas'), L = lo.getContext('2d');
+let SW = 0, SH = 0, DPR = 1, P = 2, LW = 1, LH = 1, GY = 1;
+function resize() {
+  const r = $('stage').getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  SW = r.width; SH = r.height;
+  cv.width = Math.round(SW * DPR); cv.height = Math.round(SH * DPR);
+  P = Math.max(2, Math.round(SH / 100));
+  LW = Math.ceil(SW / P); LH = Math.ceil(SH / P); GY = Math.round(LH * 0.84);
+  lo.width = LW; lo.height = LH;
+  sceneCache.clear(); vignette = null;
+}
+const sceneCache = new Map();
+let vignette = null;
+new ResizeObserver(resize).observe($('stage'));
+
+function currentScene() {
+  const tg = target();
+  if (tg === 'world') return { key: 'raid', th: THEMES.raid, hue: 0, seed: 777 };
+  if (tg === 'node') {
+    const th = S.node.kind === 'ore' ? THEMES.mine : THEMES.woods;
+    return { key: 'g' + S.node.kind + S.node.t, th: { ...th, ambCol: nodeColor() }, hue: 0, seed: 31 * S.node.t + (S.node.kind === 'ore' ? 5 : 9) };
+  }
+  const cyc = zoneCycle(S.zone);
+  return { key: 'z' + S.zone, th: THEMES[ZONE_THEME[zoneType(S.zone)]], hue: cyc * 70, seed: S.zone * 97, name: ZONE_THEME[zoneType(S.zone)] };
+}
+
+function buildScene(sc) {
+  const c = document.createElement('canvas'); c.width = LW; c.height = LH;
+  const g = c.getContext('2d'); const th = sc.th, H = sc.hue, r = rng(sc.seed);
+  const col = hex => shift(hex, H);
+  const px = (x, y, w, h, cl) => { g.fillStyle = cl; g.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h))); };
+  // banded sky
+  const bands = 9;
+  for (let i = 0; i < bands; i++) px(0, Math.floor(i * GY / bands), LW, Math.ceil(GY / bands) + 1, col(mix(th.sky[0], th.sky[1], i / (bands - 1))));
+  // dithered band edges
+  for (let i = 1; i < bands; i++) { const y = Math.floor(i * GY / bands); for (let x = (i % 2); x < LW; x += 2) px(x, y - 1, 1, 1, col(mix(th.sky[0], th.sky[1], i / (bands - 1)))); }
+  if (th.stars || sc.key === 'raid') for (let i = 0; i < LW / 5; i++) px(r() * LW, r() * GY * 0.55, 1, 1, r() < 0.3 ? 'rgba(255,240,210,.9)' : 'rgba(239,230,214,.45)');
+  if (th.moon) {
+    const mx = LW * 0.8, my = LH * 0.2, mr = Math.max(5, LH * 0.09);
+    g.fillStyle = th.moon; g.globalAlpha = 0.18; g.beginPath(); g.arc(mx, my, mr * 2.2, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 1; g.beginPath(); g.arc(mx, my, mr, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(Math.round(mx - mr * 0.3), Math.round(my - mr * 0.2), 2, 2); g.fillRect(Math.round(mx + mr * 0.2), Math.round(my + mr * 0.3), 3, 2);
+  }
+  if (th.shafts) { g.globalAlpha = 0.07; for (let i = 0; i < 4; i++) { const x = r() * LW; g.fillStyle = '#FFF3C4'; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 8, 0); g.lineTo(x + 30, GY); g.lineTo(x + 16, GY); g.fill(); } g.globalAlpha = 1; }
+  // far ridge
+  const s1 = r() * 10, s2 = r() * 10, s3 = r() * 10;
+  for (let x = 0; x < LW; x++) {
+    const y = GY * 0.55 + Math.sin(x * 0.045 + s1) * LH * 0.06 + Math.sin(x * 0.13 + s2) * LH * 0.025 + Math.sin(x * 0.02 + s3) * LH * 0.08;
+    px(x, Math.round(y / 2) * 2, 1, GY - y + 2, col(th.far));
+    if (th.ceiling) { const cy = LH * 0.1 + Math.sin(x * 0.09 + s2) * LH * 0.04 + Math.sin(x * 0.23 + s1) * LH * 0.02; px(x, 0, 1, cy, col(th.far)); }
+  }
+  // mid features
+  const mid = col(th.mid), n = Math.round(LW / 22);
+  const tri = (cx, top, h, hw, down) => { for (let i = 0; i < h; i++) { const w = Math.round(hw * (down ? 1 - i / h : (i + 1) / h)); px(cx - w, top + i, 2 * w + 1, 1, mid); } };
+  for (let i = 0; i < n; i++) {
+    const x = (i + r() * 0.8) * LW / n, h = LH * (0.2 + r() * 0.3);
+    switch (sc.name || (sc.key === 'raid' ? 'raid' : th === THEMES.mine || sc.key.startsWith('gore') ? 'mine' : 'woods')) {
+      case 'forest': tri(x, GY - h, h * 0.45, h * 0.18); tri(x, GY - h * 0.72, h * 0.45, h * 0.26); tri(x, GY - h * 0.45, h * 0.42, h * 0.32); px(x - 1, GY - h * 0.08, 2, h * 0.08, mid); break;
+      case 'cave': tri(x, 0, h * 0.7, 3 + r() * 4, true); if (r() < 0.6) tri(x + 7, GY - h * 0.35, h * 0.35, 2 + r() * 3); break;
+      case 'bone':
+        if (r() < 0.5) { px(x, GY - h * 0.8, 2, h * 0.8, mid); px(x - 5, GY - h * 0.6, 6, 1, mid); px(x - 5, GY - h * 0.6 - 3, 1, 3, mid); px(x + 2, GY - h * 0.5, 6, 1, mid); px(x + 7, GY - h * 0.5 - 4, 1, 4, mid); }
+        else { px(x, GY - 8, 6, 8, mid); px(x + 1, GY - 9, 4, 1, mid); px(x + 2, GY - 7, 2, 1, 'rgba(0,0,0,.3)'); }
+        break;
+      case 'barrow': { const rx = 10 + r() * 14, ry = 5 + r() * 8; for (let dx = -rx; dx <= rx; dx++) { const hh = Math.sqrt(1 - (dx / rx) ** 2) * ry; px(x + dx, GY - hh, 1, hh, mid); } if (r() < 0.5) px(x + rx, GY - 14, 3, 14, mid); break; }
+      case 'fungal': { const sh = h * 0.7, cw = 6 + r() * 8; px(x - 1, GY - sh, 3, sh, mid); for (let dx = -cw; dx <= cw; dx++) { const hh = Math.sqrt(1 - (dx / cw) ** 2) * cw * 0.55; px(x + dx, GY - sh - hh, 1, hh + 1, mid); } g.fillStyle = shift('#FF9ED8', H); g.globalAlpha = .35; g.fillRect(Math.round(x - cw * .4), Math.round(GY - sh - 2), 2, 1); g.fillRect(Math.round(x + cw * .3), Math.round(GY - sh - 3), 1, 1); g.globalAlpha = 1; break; }
+      case 'quarry': { const ph = h * (0.5 + r() * 0.6); px(x, GY - ph, 6, ph, mid); px(x - 1, GY - ph, 8, 2, mid); for (let k = 0; k < 3; k++) px(x + r() * 6, GY - ph - 1, 1, 1, col(th.sky[1])); if (r() < 0.5) px(x + 10, GY - 5, 7, 5, mid); break; }
+      case 'marsh': for (let k = 0; k < 5; k++) { const rx = x + k * 2 + r() * 2, rh = 5 + r() * 10; px(rx, GY - rh, 1, rh, mid); if (r() < 0.4) px(rx, GY - rh - 2, 1, 2, col(th.top)); } if (r() < 0.4) px(x + 12, GY - 6, 4, 6, mid); break;
+      case 'raid': tri(x, GY - h * 1.1, h * 1.1, 2 + r() * 3); break;
+      case 'mine': if (i % 2 === 0) { px(x, LH * 0.12, 3, GY - LH * 0.12, mid); px(x + 16, LH * 0.12, 3, GY - LH * 0.12, mid); px(x - 2, LH * 0.12, 23, 3, mid); px(x + 8, LH * 0.12 + 3, 1, 4, mid); g.fillStyle = 'rgba(255,190,110,.25)'; g.beginPath(); g.arc(x + 8.5, LH * 0.12 + 9, 6, 0, Math.PI * 2); g.fill(); px(x + 7, LH * 0.12 + 7, 3, 3, '#FFB347'); } break;
+      default: { const tw = 5 + r() * 5; px(x, 0, tw, GY, mid); g.fillStyle = mid; g.beginPath(); g.arc(x + tw / 2, LH * 0.05, 14 + r() * 8, 0, Math.PI * 2); g.fill(); }
+    }
+  }
+  // ground
+  px(0, GY, LW, LH - GY, col(th.ground));
+  px(0, GY, LW, 1, col(th.top));
+  for (let x = 0; x < LW; x += 1) if (r() < 0.35) px(x, GY - (r() < 0.3 ? 2 : 1), 1, r() < 0.3 ? 2 : 1, col(th.top));
+  for (let i = 0; i < LW / 3; i++) px(r() * LW, GY + 2 + r() * (LH - GY - 3), r() < 0.2 ? 2 : 1, 1, 'rgba(255,255,255,.06)');
+  return c;
+}
+function sceneFor(sc) {
+  const k = sc.key + ':' + LW + 'x' + LH;
+  if (!sceneCache.has(k)) sceneCache.set(k, buildScene(sc));
+  return sceneCache.get(k);
+}
+
+function ambientTick(dt) {
+  const sc = currentScene(), th = sc.th, type = th.amb;
+  const rate = { firefly: 2, drip: 3, ash: 5, mote: 3, spore: 5, dust: 4, wisp: 2, ember: 9, leaf: 3 }[type] || 2;
+  if (ambient.length < 42 && Math.random() < rate * dt) {
+    const a = { type, x: Math.random() * LW, y: 0, vx: 0, vy: 0, life: 0, max: 4 + Math.random() * 4, ph: Math.random() * 6, col: shift(th.ambCol, sc.hue) };
+    if (type === 'drip') { a.y = LH * 0.12; a.vy = 0; a.max = 3; }
+    else if (type === 'leaf') { a.y = -2; a.vy = 6 + Math.random() * 5; }
+    else if (type === 'ash' || type === 'dust') { a.y = Math.random() * GY; a.vx = 3 + Math.random() * 5; a.vy = type === 'ash' ? 1.5 : -0.5; }
+    else if (type === 'ember' || type === 'spore') { a.y = GY - Math.random() * 6; a.vy = -(type === 'ember' ? 10 + Math.random() * 10 : 3 + Math.random() * 4); }
+    else { a.y = LH * 0.3 + Math.random() * (GY - LH * 0.3); a.vy = type === 'firefly' ? 0 : -1.5; }
+    ambient.push(a);
+  }
+  for (const a of ambient) {
+    a.life += dt;
+    if (a.type === 'drip') { if (a.life > 0.6) a.vy += 90 * dt; if (a.y >= GY) a.life = a.max; }
+    if (a.type === 'firefly' || a.type === 'wisp' || a.type === 'mote') a.vx = Math.sin(a.life * 1.3 + a.ph) * 4;
+    if (a.type === 'leaf' || a.type === 'spore') a.vx = Math.sin(a.life * 2 + a.ph) * 6;
+    a.x += a.vx * dt; a.y += a.vy * dt;
+  }
+  for (let i = ambient.length - 1; i >= 0; i--) { const a = ambient[i]; if (a.life >= a.max || a.y < -4 || a.y > LH || a.x > LW + 4) ambient.splice(i, 1); }
+}
+
+let T = 0;
+function blit(img, x, y, s, alpha) {
+  L.globalAlpha = alpha ?? 1;
+  L.drawImage(img, Math.round(x), Math.round(y), img.width * s, img.height * s);
+  L.globalAlpha = 1;
+}
+function shadow(cx, w) { L.fillStyle = 'rgba(0,0,0,.4)'; L.beginPath(); L.ellipse(Math.round(cx), GY + 1, w, 2, 0, 0, Math.PI * 2); L.fill(); }
+
+function heldTool() {
+  const tg = target();
+  if (tg === 'node') {
+    const slot = S.node.kind === 'ore' ? 'pick' : 'axe', it = equipped(slot);
+    return { name: SLOT[slot].icon, col: it ? itemColor(slot, it.t, it.u) : '#8C8A96', piv: slot === 'pick' ? [7, 12] : [6, 12], base: -0.9, swing: 2.0 };
+  }
+  const it = equipped('weapon');
+  return { name: 'sword', col: it ? itemColor('weapon', it.t, it.u) : '#A9B1BD', piv: [3, 11], base: -0.5, swing: 1.9 };
+}
+
+function draw() {
+  if (!SW) return;
+  const tg = target(), raid = tg === 'world', gath = tg === 'node';
+  const sc = currentScene();
+  L.imageSmoothingEnabled = false;
+  L.globalCompositeOperation = 'source-over';
+  L.drawImage(sceneFor(sc), 0, 0);
+
+  // fog behind characters
+  if (sc.th.fog) {
+    L.fillStyle = shift(sc.th.fog, sc.hue);
+    for (let x = 0; x < LW; x += 2) {
+      const y = GY - 8 + Math.sin(x * 0.06 + T * 0.6) * 3 + Math.sin(x * 0.17 - T * 0.4) * 1.5;
+      L.globalAlpha = 0.07; L.fillRect(x, Math.round(y), 2, 10);
+    }
+    L.globalAlpha = 1;
+  }
+  // ambient
+  for (const a of ambient) {
+    let al = Math.min(1, a.life * 2, (a.max - a.life) * 2);
+    if (a.type === 'firefly' || a.type === 'wisp') al *= 0.5 + 0.5 * Math.sin(a.life * 5 + a.ph);
+    L.globalAlpha = Math.max(0, al); L.fillStyle = a.col;
+    const sz = a.type === 'leaf' || a.type === 'wisp' ? 2 : 1;
+    L.fillRect(Math.round(a.x), Math.round(a.y), sz, a.type === 'drip' ? 2 : sz);
+    if (a.type === 'firefly' || a.type === 'wisp' || a.type === 'ember') { L.globalAlpha = Math.max(0, al) * 0.25; L.fillRect(Math.round(a.x) - 1, Math.round(a.y) - 1, 3, 3); }
+  }
+  L.globalAlpha = 1;
+
+  const HS = 2;
+  // other raiders
+  if (raid) {
+    const others = online.peers.filter(p => !p.sameTab && p.kind === 'viewer' && p.presence && (p.presence.act === 'raid' || p.presence.raiding)).slice(0, 3);
+    others.forEach((p, i) => {
+      const im = sprite('raider' + i, SPR.hero, RAIDERS_PAL[i]);
+      const x = LW * 0.04 + i * 22, bob = reduced ? 0 : Math.round(Math.sin(T * 5 + i * 1.7));
+      shadow(x + im.width, 8); blit(im, x, GY - im.height * HS + HS + bob, HS, 0.8);
+    });
+  }
+
+  // target
+  if (raid) {
+    const WS = Math.max(3, Math.floor(LH / 30));
+    const hue = (((online.world && online.world.gen) || 1) - 1) * 50;
+    const im = sprite('wyrm' + hue, SPR.wyrm, shiftPal(WYRM_PAL, hue), wyrmHit > 0);
+    const bob = reduced ? 0 : Math.round(Math.sin(T * 1.6) * 2);
+    const cx = LW * 0.72;
+    L.fillStyle = 'rgba(255,90,60,' + (0.12 + 0.05 * Math.sin(T * 3)) + ')'; L.beginPath(); L.ellipse(cx, GY - im.height * WS * 0.45, im.width * WS * 0.7, im.height * WS * 0.55, 0, 0, Math.PI * 2); L.fill();
+    shadow(cx, im.width * WS * 0.4);
+    blit(im, cx - im.width * WS / 2, GY - im.height * WS + WS + bob, WS);
+  } else if (gath) {
+    const { kind, t } = S.node, NS = 3;
+    const pal = kind === 'ore' ? { 1: '#6E6878', 2: '#3A3542', 3: MAT.ore.col[t - 1] } : { 1: '#6B4A2E', 3: MAT.wood.col[t - 1], 4: '#E8F5C8' };
+    const im = sprite('node' + kind + t, kind === 'ore' ? SPR.rock : SPR.tree, pal);
+    const sh = nodeHit > 0 && !reduced ? Math.round((Math.random() - 0.5) * 3) : 0;
+    const cx = LW * 0.68;
+    shadow(cx, im.width * NS * 0.35);
+    blit(im, cx - im.width * NS / 2 + sh, GY - im.height * NS + NS, NS);
+    if (kind === 'ore') { const gl = 0.5 + 0.5 * Math.sin(T * 3); L.globalAlpha = 0.3 * gl; L.fillStyle = MAT.ore.col[t - 1]; L.beginPath(); L.arc(cx, GY - im.height * NS * 0.4, im.width * NS * 0.45, 0, Math.PI * 2); L.fill(); L.globalAlpha = 1; }
+    // progress pips under the node
+    const pw = im.width * NS * 0.8, pxs = Math.round(cx - pw / 2);
+    L.fillStyle = '#0B0810'; L.fillRect(pxs - 1, GY + 3, Math.round(pw) + 2, 3);
+    L.fillStyle = nodeColor(); L.fillRect(pxs, GY + 4, Math.round(pw * Math.min(1, S.gProg)), 1);
+  } else if (mob) {
+    const MS = mob.boss ? 4 : 3;
+    const im = sprite(mob.key, mob.rows, mob.pal, mob.hit > 0);
+    const bob = reduced ? 0 : Math.round(Math.sin(T * 3 + (mob.boss ? 1 : 0)) * 1.5);
+    const pop = mob.born < 0.15 ? mob.born / 0.15 : 1;
+    const a = mob.dead ? Math.max(0, 1 - mob.dead / 0.4) : pop;
+    const cx = LW * 0.68 + (mob.hit > 0 ? 2 : 0);
+    const w = im.width * MS, h = im.height * MS;
+    if (mob.boss) {
+      L.fillStyle = 'rgba(255,80,80,' + (0.12 + 0.06 * Math.sin(T * 4)) + ')'; L.beginPath(); L.ellipse(cx, GY - h * 0.45, w * 0.75, h * 0.6, 0, 0, Math.PI * 2); L.fill();
+    }
+    shadow(cx, w * 0.38 * (mob.dead ? a : 1));
+    const my = GY - h + MS + bob + (mob.dead ? Math.round(mob.dead * 30) : 0);
+    blit(im, cx - w / 2, my, MS, a);
+    if (mob.boss && !mob.dead) {
+      const cs = 2, cw = 7 * cs, crx = Math.round(cx - cw / 2), cry = Math.round(my - 4 * cs);
+      L.fillStyle = OUTLINE; L.fillRect(crx - 1, cry - 1, cw + 2, 4 * cs + 2);
+      L.fillStyle = '#F2C14E'; L.fillRect(crx, cry + 2 * cs, cw, 2 * cs);
+      for (const k of [0, 3, 6]) L.fillRect(crx + k * cs, cry, cs, 2 * cs);
+      L.fillStyle = '#E0524F'; L.fillRect(crx + 3 * cs, cry + 2 * cs, cs, cs);
+    }
+  }
+
+  // hero + lantern + tool
+  const him = sprite('hero', SPR.hero, HERO_PAL);
+  const swingP = lunge > 0 ? Math.sin(Math.min(1, (0.2 - lunge) / 0.2) * Math.PI) : 0;
+  const step = Math.round(swingP * (gath ? 2 : 6));
+  const hb = reduced ? 0 : Math.round(Math.sin(T * 4) * 0.8);
+  const hx = Math.round(LW * (raid ? 0.36 : 0.27) - (him.width * HS) / 2) + step;
+  const hy = GY - him.height * HS + HS + hb;
+  shadow(hx + him.width * HS / 2, 9);
+  // lantern (behind hand)
+  const lx = hx - 2, ly = hy + 17 * HS / 2 + 4;
+  L.fillStyle = '#3A3542'; L.fillRect(lx + 1, ly - 5, 1, 5);
+  L.fillStyle = OUTLINE; L.fillRect(lx - 1, ly - 1, 5, 7);
+  L.fillStyle = '#6E6878'; L.fillRect(lx, ly, 3, 5);
+  const flick = 0.75 + 0.25 * Math.sin(T * 13) * Math.sin(T * 7.3);
+  L.fillStyle = flick > 0.8 ? '#FFF3C4' : '#FFD27A'; L.fillRect(lx + 1, ly + 1, 1, 3);
+  blit(him, hx, hy, HS);
+  // tool
+  const tool = heldTool();
+  const tim = sprite('tool:' + tool.name + tool.col, ICON[tool.name], icPal(tool.col, tool.name === 'charm' ? { 6: '#9A97B3' } : null));
+  const handX = hx + 13 * HS, handY = hy + 9 * HS;
+  const ang = tool.base + swingP * tool.swing;
+  L.save(); L.translate(handX, handY); L.rotate(ang);
+  L.drawImage(tim, -tool.piv[0] * 1.5, -tool.piv[1] * 1.5, tim.width * 1.5, tim.height * 1.5);
+  L.restore();
+  // slash arc
+  if (!gath && swingP > 0.5 && (raid || (mob && !mob.dead))) {
+    L.strokeStyle = 'rgba(255,255,255,' + (swingP - 0.4) + ')'; L.lineWidth = 1;
+    L.beginPath(); L.arc(handX + 4, handY + 2, 16, -1.3, 0.5); L.stroke();
+    L.strokeStyle = 'rgba(255,210,122,' + (swingP - 0.5) + ')';
+    L.beginPath(); L.arc(handX + 4, handY + 2, 14, -1.1, 0.3); L.stroke();
+  }
+
+  // sparks
+  for (const s of sparks) { L.globalAlpha = Math.max(0, s.life * 2); L.fillStyle = s.color; L.fillRect(Math.round(s.x * LW), Math.round(s.y * LH), 1, 1); }
+  L.globalAlpha = 1;
+
+  // unique beam
+  if (beamT > 0) {
+    const bx = LW * 0.68, a = Math.min(1, beamT) * 0.6, bw = 6 + Math.sin(T * 20) * 1;
+    const bg = L.createLinearGradient(0, 0, 0, GY);
+    bg.addColorStop(0, 'rgba(255,210,122,0)'); bg.addColorStop(1, `rgba(255,190,90,${a})`);
+    L.fillStyle = bg; L.fillRect(Math.round(bx - bw), 0, Math.round(bw * 2), GY);
+    L.fillStyle = `rgba(255,243,196,${a})`; L.fillRect(Math.round(bx - 1), 0, 2, GY);
+  }
+  // level ring
+  if (ringT > 0) {
+    const rr = (0.8 - ringT) * 40;
+    L.strokeStyle = `rgba(111,203,106,${ringT})`; L.lineWidth = 1;
+    L.beginPath(); L.ellipse(hx + him.width, GY - 2, rr, rr * 0.35, 0, 0, Math.PI * 2); L.stroke();
+  }
+
+  // lighting: lantern glow + vignette
+  L.globalCompositeOperation = 'lighter';
+  const gr = L.createRadialGradient(lx + 1.5, ly + 2, 1, lx + 1.5, ly + 2, 34 * flick + 4);
+  gr.addColorStop(0, `rgba(255,190,100,${0.35 * flick})`); gr.addColorStop(0.4, `rgba(255,150,60,${0.12 * flick})`); gr.addColorStop(1, 'rgba(255,150,60,0)');
+  L.fillStyle = gr; L.fillRect(0, 0, LW, LH);
+  L.globalCompositeOperation = 'source-over';
+  if (!vignette) { vignette = L.createRadialGradient(LW * 0.5, LH * 0.55, LH * 0.35, LW * 0.5, LH * 0.55, LW * 0.72); vignette.addColorStop(0, 'rgba(6,4,10,0)'); vignette.addColorStop(1, 'rgba(6,4,10,.62)'); }
+  L.fillStyle = vignette; L.fillRect(0, 0, LW, LH);
+  if (raid && Date.now() < rallyUntil) { L.fillStyle = `rgba(242,193,78,${0.06 + 0.04 * Math.sin(T * 6)})`; L.fillRect(0, 0, LW, LH); }
+
+  // blit to screen
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
+  ctx.fillStyle = '#0B0810'; ctx.fillRect(0, 0, SW, SH);
+  ctx.drawImage(lo, sx, sy, LW * P, LH * P);
+
+  // crisp floating text
+  ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+  for (const f of floats) {
+    const age = 0.95 - f.life, pop = age < 0.08 ? 1.35 - age * 4 : 1;
+    const size = Math.round((f.big ? 21 : 15) * pop);
+    ctx.globalAlpha = Math.min(1, f.life * 2.2);
+    ctx.font = `700 ${size}px "Pixelify Sans", monospace`;
+    ctx.lineWidth = 4; ctx.strokeStyle = '#0B0810';
+    ctx.strokeText(f.txt, f.x * SW, f.y * SH);
+    ctx.fillStyle = f.color; ctx.fillText(f.txt, f.x * SW, f.y * SH);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ================= taps =================
+let lastTap = 0;
+$('stage').addEventListener('pointerdown', e => {
+  const now = performance.now(); if (now - lastTap < 60) return; lastTap = now;
+  lunge = 0.2;
+  if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
+  if (target() === 'node') { tapNode(); return; }
+  const r = $('stage').getBoundingClientRect();
+  playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
+});
+
+// ---- src/js/70-ui.js ----
+// 70-ui: shared UI plumbing: toasts, row builders, header, tabs, the ui() refresh,
+// the away card, and the section/tab registries for feature UI (75-*.js). Browser-only.
+// Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
+
+// ================= UI helpers =================
+function showToast(msg, kind, icon) {
+  const t = el('div', 'toast ' + (kind || ''));
+  icon = iconOf(icon);
+  if (icon) t.append(img(icon));
+  t.append(el('span', null, msg));
+  const box = $('toasts'); box.appendChild(t);
+  while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => t.remove(), kind === 'loot' ? 6000 : 4200);
+}
+function setPrice(btn, cost, ember) {
+  const p = btn.querySelector('.price'); p.textContent = '';
+  p.append(el('span', 'ico ' + (ember ? 'ember' : 'gold')), el('span', null, isFinite(cost) ? fmt(cost) : 'Max'));
+}
+function icTile(url, frame, extraCls) {
+  const d = el('div', 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : ''));
+  d.append(img(url)); return d;
+}
+function setIc(tile, url, frame, extraCls) {
+  const im = tile.querySelector('img'); if (im.getAttribute('src') !== url) im.src = url;
+  tile.className = 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : '');
+}
+function makeRow(parent, name, ember, iconUrl, icCls) {
+  const row = el('div', 'row' + (iconUrl ? ' has-ic' : ''));
+  if (iconUrl) row.append(icTile(iconUrl, null, icCls));
+  const body = el('div'); body.innerHTML = '<div class="row-name"><span class="nm"></span><span class="own"></span></div><div class="row-desc"></div>';
+  const btn = el('button', 'buy' + (ember ? ' embers' : '')); btn.innerHTML = '<span class="qty"></span><span class="price"></span>';
+  row.append(body, btn);
+  body.querySelector('.nm').textContent = name;
+  parent.appendChild(row);
+  return { row, ic: row.querySelector('.ic'), own: body.querySelector('.own'), desc: body.querySelector('.row-desc'), btn, qty: btn.querySelector('.qty'), nm: body.querySelector('.nm') };
+}
+function costChips(box, mats, t, gold) {
+  box.textContent = '';
+  for (const [k, n] of Object.entries(mats)) {
+    const have = S.mats[k][t - 1];
+    const c = el('span', 'cost' + (have < n ? ' short' : ''));
+    c.append(img(matIcon(k, t)), el('span', null, `${fmt(have)}/${fmt(n)} ${matName(k, t)}`));
+    box.append(c);
+  }
+  if (gold) {
+    const c = el('span', 'cost' + (S.gold < gold ? ' short' : ''));
+    c.append(img(iconURL('coin', '#F2C14E')), el('span', null, fmt(gold)));
+    box.append(c);
+  }
+}
+function updatePortrait() {
+  $('portrait').src = spriteURL('hero-portrait', SPR.hero, HERO_PAL);
+}
+
+// tab icons
+const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }) };
+document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
+$('goldIc').src = iconURL('coin', '#F2C14E');
+
+// ================= tabs, rename =================
+const TAB_IDS = ['adv', 'gat', 'forge', 'raid', 'tav'];
+function setTab(t) {
+  S.tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
+  if (t === 'forge') $('forgeDot').hidden = true;
+  if (t === 'raid') $('raidDot').hidden = true;
+  $('panels').scrollTop = 0;
+  ui(true);
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+$('marchBtn').addEventListener('click', () => setActivity(S.activity === 'raid' ? 'fight' : 'raid'));
+$('renameForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('nameInput').value.replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯]/g, '').trim().slice(0, 18);
+  if (!v) { toast('Give your hero a name first.', 'raid'); return; }
+  S.name = v; save(); pushPresence(); online.flushKey = ''; toast(`Your hero is now known as ${v}.`, 'good'); ui(true);
+});
+
+// ================= UI update =================
+let uiTimer = 0, slowTick = 0, lastPct = 100;
+function setHp(pct) {
+  pct = Math.max(0, Math.min(100, pct));
+  const tr = $('mTrail');
+  if (pct > lastPct + 0.5) { tr.style.transition = 'none'; tr.style.width = pct + '%'; void tr.offsetWidth; tr.style.transition = ''; }
+  else tr.style.width = pct + '%';
+  $('mBar').style.width = pct + '%'; lastPct = pct;
+}
+function ui(force) {
+  const tg = target();
+  $('hName').textContent = S.name;
+  $('hLvl').textContent = S.L;
+  $('xpFill').style.width = Math.min(100, S.xp / xpNeed() * 100) + '%';
+  $('gold').textContent = fmt(S.gold);
+  $('embers').textContent = fmt(S.embers);
+  document.querySelectorAll('#modeSeg button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.act === S.activity));
+    if (b.dataset.act === 'raid') b.disabled = !(online.ready && online.canWrite);
+  });
+
+  if (tg === 'world') {
+    $('zName').textContent = 'The World Raid'; $('zSub').textContent = 'Shared with every hero';
+    const hp = worldHp(), mx = online.world ? online.world.maxHp : 1;
+    $('mName').textContent = online.world ? online.world.name : 'World boss';
+    $('mHp').textContent = hp == null ? '...' : `${fmt(hp)} / ${fmt(mx)}`;
+    setHp(hp == null ? 100 : hp / mx * 100);
+    $('mBar').style.background = 'var(--hp)';
+    $('tWrap').hidden = true;
+  } else if (tg === 'node') {
+    const { kind, t } = S.node, sk = S.skills[skillOf(kind)];
+    $('zName').textContent = NODE_NAMES[kind][t - 1];
+    $('zSub').textContent = `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`;
+    $('mName').textContent = matName(kind, t);
+    $('mHp').textContent = `${fmt(S.mats[kind][t - 1])} in pack`;
+    const sp = Math.min(100, sk.xp / skillNeed(sk.lv) * 100);
+    setHp(sp);
+    $('mBar').style.background = 'var(--gold)';
+    $('tWrap').hidden = true;
+  } else {
+    $('zName').textContent = zoneName(S.zone);
+    $('zSub').textContent = S.zone === S.maxZone ? `Zone ${S.zone} · ${S.kills}/10 foes` : `Zone ${S.zone} · cleared`;
+    if (mob) {
+      $('mName').textContent = mob.name;
+      $('mHp').textContent = `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`;
+      setHp(mob.hp / mob.max * 100);
+      $('mBar').style.background = mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)';
+      $('tWrap').hidden = !mob.boss;
+      if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / 30 * 100) + '%';
+    }
+  }
+  $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;
+  $('zNext').disabled = tg !== 'mob' || S.zone >= S.maxZone;
+  $('statNums').hidden = tg === 'node';
+  $('sDps').textContent = fmt(totalDps() * (tg === 'world' ? raidMult() : 1));
+  $('sTap').textContent = fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1));
+  $('hint').textContent = tg === 'node' ? 'Tap to work faster' : 'Tap to strike';
+
+  if (S.tab === 'adv') uiFight();
+  if (S.tab === 'gat') uiGather();
+  if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
+  if (S.tab === 'raid') uiRaid();
+  if (S.tab === 'tav' && (force || slowTick <= 0)) uiTavern();
+  for (const sec of SECTIONS) if (sec.tab === S.tab && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+  if (slowTick <= 0) slowTick = 1;
+}
+
+function showAway(r) {
+  if (!r || r.secs < 60 || !r.lines.length) return;
+  $('awayTime').textContent = fmtTime(r.secs);
+  const g = $('awayGain'); g.textContent = '';
+  for (const l of r.lines) { const row = el('div', 'gain'); row.append(img(iconOf(l.icon)), el('span', null, l.txt)); g.append(row); }
+  $('awayNote').textContent = r.note + (r.t < r.secs ? ` They stop after ${fmtTime(r.t)}; forge an Hourglass relic to stay out longer.` : '');
+  $('away').hidden = false;
+}
+$('awayOk').addEventListener('click', () => { $('away').hidden = true; ui(true); });
+
+// ================= feature UI registries =================
+// registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
+// Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
+// mount(sec) runs once now; update(force) runs from ui() while that tab is open
+// (about 5 times a second, force = true right after player actions).
+const SECTIONS = [];
+function registerSection(tabId, { id, title, mount, update }) {
+  const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
+  const sec = el('div', 'sec'); sec.id = 'sec-' + id;
+  if (title) sec.append(el('h2', 'sec-title', title));
+  panel.append(sec);
+  if (mount) mount(sec);
+  SECTIONS.push({ tab: tabId, id, update, el: sec });
+  return sec;
+}
+// registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
+// tight at 360px wide, so prefer registerSection. icon is a URL or icon spec.
+function registerTab({ id, label, icon, mount, update }) {
+  if (TAB_IDS.includes(id)) throw new Error('registerTab: tab exists ' + id);
+  const b = el('button', 'tab', label);
+  b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
+  const url = iconOf(icon); if (url) b.prepend(img(url));
+  b.addEventListener('click', () => setTab(id));
+  const nav = document.querySelector('.tabs'); nav.append(b);
+  TAB_IDS.push(id);
+  nav.style.gridTemplateColumns = 'repeat(' + TAB_IDS.length + ', 1fr)';
+  const panel = el('section', 'panel'); panel.id = 'p-' + id; panel.hidden = true;
+  $('panels').append(panel);
+  if (mount) mount(panel);
+  if (update) SECTIONS.push({ tab: id, id, update, el: panel });
+  return panel;
+}
+
+// ================= core event wiring =================
+on('toast', t => showToast(t.msg, t.kind, t.icon));
+on('gear', () => updatePortrait());
+on('activity', () => ui(true));
+on('raidUnavailable', () => setTab('raid'));
+on('itemAdded', () => { $('forgeDot').hidden = S.tab === 'forge'; });
+on('raidReward', () => { $('raidDot').hidden = S.tab === 'raid'; });
+
+// ---- src/js/71-ui-fight.js ----
+// 71-ui-fight: the Fight tab (boss gate, hero upgrades, party) and the zone/mode controls.
+
+// ================= Fight panel =================
+const heroRows = HERO_UPS.map(u => {
+  const r = makeRow($('heroRows'), u.name, false, iconURL(...u.ic));
+  r.btn.addEventListener('click', () => { if (buyHero(u.id)) ui(true); });
+  return r;
+});
+const compRows = COMPS.map((c, i) => {
+  const pal = { ...HERO_PAL, 1: c.col, 2: c.helm };
+  const r = makeRow($('compRows'), c.name, false, spriteURL('comp' + i, SPR.hero, pal), 'portrait-ic');
+  r.url = spriteURL('comp' + i, SPR.hero, pal);
+  r.btn.addEventListener('click', () => { if (hireComp(i)) ui(true); });
+  return r;
+});
+
+document.querySelectorAll('#amtSeg button').forEach(b => b.addEventListener('click', () => { S.amt = b.dataset.amt; ui(true); }));
+$('autoBoss').checked = S.auto;
+$('autoBoss').addEventListener('change', e => { S.auto = e.target.checked; });
+$('gateBtn').addEventListener('click', () => { if (S.activity !== 'fight') setActivity('fight'); if (challenge()) ui(true); });
+$('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 1); ui(true); } });
+$('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
+document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => setActivity(b.dataset.act)));
+
+function uiFight() {
+  document.querySelectorAll('#amtSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.amt === S.amt)));
+  const gb = $('gateBtn'), gq = gb.querySelector('.qty'), gp = gb.querySelector('.price');
+  const uq = UNIQ[ZONE_UNIQ[zoneType(S.zone)]].name;
+  if (S.activity !== 'fight') {
+    $('gateTitle').textContent = S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering';
+    $('gateDesc').textContent = 'Switch to Fight above the tabs to clear zones and earn gold and essence.';
+    gq.textContent = 'Party'; gp.textContent = 'Fight'; gb.disabled = false;
+  } else if (fightBoss) {
+    $('gateTitle').textContent = 'Boss fight underway';
+    $('gateDesc').textContent = `${Math.ceil(bossTime)} seconds left. Tap fast.`;
+    gq.textContent = 'Boss'; gp.textContent = 'Fighting'; gb.disabled = true;
+  } else if (S.zone < S.maxZone) {
+    $('gateTitle').textContent = 'Rematch this zone\'s boss';
+    $('gateDesc').textContent = `12% chance to drop ${uq}. You can rematch as often as you like.`;
+    gq.textContent = 'Boss'; gp.textContent = 'Rematch'; gb.disabled = false;
+  } else {
+    $('gateTitle').textContent = bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`;
+    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. 35% chance of the unique ${uq}.`;
+    gq.textContent = 'Boss'; gp.textContent = 'Fight'; gb.disabled = !bossReady();
+  }
+  HERO_UPS.forEach((u, i) => {
+    const r = heroRows[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
+    r.own.textContent = 'Lv ' + S[u.id];
+    r.desc.textContent = u.desc();
+    r.qty.textContent = p.n ? 'Buy ' + p.n : 'Maxed';
+    setPrice(r.btn, p.cost);
+    r.btn.disabled = !(p.n > 0 && S.gold >= p.cost);
+  });
+  let teaser = false;
+  COMPS.forEach((c, i) => {
+    const r = compRows[i];
+    const known = S.comp[i] > 0 || S.totalGold >= c.base * 0.3;
+    r.row.hidden = !known && teaser;
+    if (!known) teaser = true;
+    r.row.classList.toggle('locked', !known);
+    r.ic.classList.toggle('ghost', !known);
+    r.nm.textContent = known ? c.name : 'Unknown ally';
+    r.own.textContent = S.comp[i] ? 'x' + S.comp[i] : '';
+    r.desc.textContent = known ? `${fmt(compDpsOne(i))} DPS each. ${c.blurb}` : `Earn ${fmt(c.base * 0.3)} gold in total to meet them.`;
+    const p = plan(c.base, 1.15, S.comp[i], S.gold);
+    r.qty.textContent = 'Hire ' + p.n;
+    setPrice(r.btn, p.cost);
+    r.btn.disabled = !known || S.gold < p.cost;
+  });
+}
+
+// ---- src/js/72-ui-gather.js ----
+// 72-ui-gather: the Gather tab (skills, nodes, pack).
+
+// ================= Gather panel =================
+const skillCards = ['mine', 'wood', 'smith'].map(k => {
+  const c = el('div', 'skill');
+  const sn = el('span', 'sn');
+  sn.append(img(k === 'mine' ? iconURL('pick', '#A9B1BD') : k === 'wood' ? iconURL('axe', '#A9B1BD') : iconURL('anvil', '#6E6878')), el('span', null, SKILL[k]));
+  const sl = el('span', 'sl'); const bar = el('div', 'bar'); const bi = el('i'); bar.append(bi);
+  c.append(sn, sl, bar); $('skillCards').append(c);
+  return { k, lv: sl, bar: bi };
+});
+const nodeRows = { ore: [], wood: [] };
+for (const kind of ['ore', 'wood']) {
+  for (let t = 1; t <= 5; t++) {
+    const r = makeRow($(kind === 'ore' ? 'oreRows' : 'woodRows'), NODE_NAMES[kind][t - 1], false, matIcon(kind, t));
+    r.btn.classList.add('work');
+    r.btn.addEventListener('click', () => {
+      if (!setNode(kind, t)) return;
+      if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good'); ui(true); }
+    });
+    nodeRows[kind].push(r);
+  }
+}
+const matCells = {};
+for (const k of ['ore', 'wood', 'ess']) {
+  const row = el('div', 'mat-row'); matCells[k] = [];
+  for (let t = 1; t <= 5; t++) {
+    const c = el('div', 'mat'); c.title = matName(k, t);
+    const n = el('span', 'mc', '0');
+    c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
+    row.append(c); matCells[k].push(n);
+  }
+  $('matGrid').append(row);
+}
+
+function uiGather() {
+  for (const c of skillCards) {
+    const sk = S.skills[c.k];
+    c.lv.textContent = 'Lv ' + sk.lv;
+    c.bar.style.width = Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%';
+  }
+  for (const kind of ['ore', 'wood']) {
+    nodeRows[kind].forEach((r, i) => {
+      const t = i + 1, req = NODE_REQ[i], lv = S.skills[skillOf(kind)].lv, open = lv >= req;
+      const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
+      const prevOpen = i === 0 || lv >= NODE_REQ[i - 1];
+      r.row.hidden = !open && !prevOpen;
+      r.row.classList.toggle('locked', !open);
+      r.row.classList.toggle('active', here);
+      r.ic.classList.toggle('ghost', !open);
+      r.own.textContent = open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`;
+      const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind);
+      r.desc.textContent = open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute · ${nodeXp(t)} xp` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`;
+      r.qty.textContent = here ? 'Working' : open ? (kind === 'ore' ? 'Mine' : 'Chop') : 'Locked';
+      r.btn.querySelector('.price').textContent = here ? '...' : open ? 'Go' : `Lv ${req}`;
+      r.btn.disabled = !open || here;
+    });
+  }
+  for (const k of ['ore', 'wood', 'ess']) matCells[k].forEach((n, i) => { n.textContent = fmt(S.mats[k][i]); });
+}
+
+// ---- src/js/73-ui-forge.js ----
+// 73-ui-forge: the Forge tab (equipped, forge card, bag, trophy wall).
+
+// ================= Forge panel =================
+SLOTS.forEach(s => { const b = el('button', null, s.n); b.dataset.slot = s.id; b.addEventListener('click', () => { S.fSlot = s.id; ui(true); }); $('slotSeg').append(b); });
+for (let t = 1; t <= 5; t++) { const b = el('button', null, MAT.ore.short[t - 1]); b.dataset.tier = t; b.addEventListener('click', () => { S.fTier = t; ui(true); }); $('tierSeg').append(b); }
+$('forgeBtn').addEventListener('click', () => { if (forgeItem(S.fSlot, S.fTier)) ui(true); });
+
+const eqRows = {};
+SLOTS.forEach(s => {
+  const row = el('div', 'row has-ic');
+  const tile = icTile(itemIcon(s.id, 1)); tile.classList.add('ghost');
+  const body = el('div');
+  body.innerHTML = '<div class="slotname"></div><div class="iname"></div><div class="row-desc"></div><div class="row-fx"></div><div class="costs" style="margin-top:6px"></div>';
+  const btns = el('div', 'btns'); const btn = el('button', 'mini go', 'Upgrade'); btns.append(btn);
+  row.append(tile, body, btns);
+  body.querySelector('.slotname').textContent = s.n;
+  btn.addEventListener('click', () => { if (upgradeEquipped(s.id)) ui(true); });
+  $('eqRows').append(row);
+  eqRows[s.id] = { row, tile, name: body.querySelector('.iname'), desc: body.querySelector('.row-desc'), fx: body.querySelector('.row-fx'), costs: body.querySelector('.costs'), btn };
+});
+
+const bagRows = new Map();
+function renderBag() {
+  const box = $('bagRows');
+  const list = S.items.filter(i => !Object.values(S.equip).includes(i.id)).sort((a, b) => itemPower(b) - itemPower(a));
+  $('bagCount').textContent = `${S.items.length} / ${BAG_MAX}`;
+  const keep = new Set(list.map(i => i.id));
+  for (const [id, r] of bagRows) if (!keep.has(id)) { r.row.remove(); bagRows.delete(id); }
+  const empty = box.querySelector(':scope > .note');
+  if (!list.length) { if (!empty) box.append(el('p', 'note', 'Forged gear and boss loot land here.')); return; }
+  if (empty) empty.remove();
+  const order = list.map(i => i.id).join(',');
+  const reorder = order !== renderBag.order; renderBag.order = order;
+  list.forEach(it => {
+    let r = bagRows.get(it.id);
+    if (!r) {
+      const row = el('div', 'row has-ic');
+      const tile = icTile(itemIcon(it.slot, it.t, it.u), it.r);
+      const body = el('div'); body.innerHTML = '<div class="slotname"></div><div class="iname"></div><div class="row-desc"></div><div class="row-fx"></div>';
+      const btns = el('div', 'btns'); const eq = el('button', 'mini go', 'Equip'); const sv = el('button', 'mini warn', 'Salvage'); btns.append(eq, sv);
+      row.append(tile, body, btns);
+      eq.addEventListener('click', () => { if (equipItem(it.id)) ui(true); });
+      sv.addEventListener('click', () => {
+        if (sv.dataset.arm && Date.now() - +sv.dataset.arm < 3000) { if (salvageItem(it.id)) ui(true); return; }
+        sv.dataset.arm = Date.now(); sv.textContent = 'Confirm';
+        setTimeout(() => { if (sv.isConnected) { sv.textContent = 'Salvage'; delete sv.dataset.arm; } }, 3000);
+      });
+      r = { row, slot: body.querySelector('.slotname'), name: body.querySelector('.iname'), desc: body.querySelector('.row-desc'), fx: body.querySelector('.row-fx') };
+      bagRows.set(it.id, r);
+    }
+    if (reorder || !r.row.isConnected) box.append(r.row);
+    const cur = equipped(it.slot), d = itemPower(it) - (cur ? itemPower(cur) : 0);
+    r.row.className = 'row has-ic' + (it.u ? ' rb-legendary' : '');
+    r.slot.textContent = '';
+    r.slot.append(el('span', null, `${SLOT[it.slot].n} · ${RAR[it.r].n} `), el('span', 'delta ' + (d > 0 ? 'up' : 'down'), d > 0 ? `+${fmt(d)} power vs equipped` : d < 0 ? `${fmt(d)} power` : 'same power'));
+    r.name.textContent = itemName(it); r.name.className = 'iname rar-' + it.r;
+    r.desc.textContent = slotStats(it.slot, itemPower(it));
+    r.fx.textContent = it.u ? UNIQ[it.u].txt : ''; r.fx.hidden = !it.u;
+  });
+}
+const trophyEls = {};
+for (const [key, u] of Object.entries(UNIQ)) {
+  const c = el('div', 'trophy');
+  const tile = icTile(itemIcon(u.slot, 3, key), null, 'ghost');
+  const tn = el('span', 'tn'), ts1 = el('span', 'ts'), ts2 = el('span', 'ts');
+  c.append(tile, tn, ts1, ts2); $('trophies').append(c);
+  trophyEls[key] = { c, tile, tn, ts1, ts2 };
+}
+function renderTrophies() {
+  let n = 0;
+  for (const [key, u] of Object.entries(UNIQ)) {
+    const f = S.found[key], e = trophyEls[key]; if (f) n++;
+    e.c.className = 'trophy' + (f ? ' found' : '');
+    setIc(e.tile, itemIcon(u.slot, f || 3, key), f ? 'legendary' : null, f ? '' : 'ghost');
+    e.tn.textContent = f ? u.name : '???'; e.tn.className = 'tn' + (f ? ' rar-legendary' : '');
+    e.ts1.textContent = f ? `${SLOT[u.slot].n} · best ${MAT.ore.short[f - 1]} tier` : u.src;
+    e.ts2.textContent = f ? u.txt : 'Not found yet';
+  }
+  $('trophyCount').textContent = `${n} / ${Object.keys(UNIQ).length} uniques`;
+}
+
+function uiForge() {
+  const sm = S.skills.smith;
+  $('smithLbl').textContent = `Smithing Lv ${sm.lv}`;
+  $('smithBar').style.width = Math.min(100, sm.xp / skillNeed(sm.lv) * 100) + '%';
+  for (const s of SLOTS) {
+    const r = eqRows[s.id], it = equipped(s.id);
+    if (!it) {
+      setIc(r.tile, itemIcon(s.id, 1), null, 'ghost');
+      r.name.textContent = 'Empty'; r.name.className = 'iname'; r.name.style.color = 'var(--muted)';
+      r.desc.textContent = `Forge a ${s.n.toLowerCase()} below.`; r.fx.hidden = true; r.costs.textContent = ''; r.btn.hidden = true; r.row.className = 'row has-ic';
+      continue;
+    }
+    setIc(r.tile, itemIcon(s.id, it.t, it.u), it.r);
+    r.name.style.color = '';
+    r.name.textContent = itemName(it); r.name.className = 'iname rar-' + it.r;
+    r.row.className = 'row has-ic' + (it.u ? ' rb-legendary' : '');
+    r.desc.textContent = `${RAR[it.r].n} · ${slotStats(s.id, itemPower(it))}`;
+    r.fx.textContent = it.u ? UNIQ[it.u].txt : ''; r.fx.hidden = !it.u;
+    r.btn.hidden = false;
+    if (it.plus >= 10) { r.costs.textContent = ''; r.btn.textContent = 'Max +10'; r.btn.disabled = true; continue; }
+    const c = upgradeCost(it);
+    costChips(r.costs, c.mats, it.t, c.gold);
+    r.btn.textContent = `Upgrade to +${it.plus + 1}`;
+    r.btn.disabled = !hasMats(c.mats, it.t) || S.gold < c.gold;
+  }
+  document.querySelectorAll('#slotSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.slot === S.fSlot)));
+  document.querySelectorAll('#tierSeg button').forEach(b => {
+    const t = +b.dataset.tier; b.setAttribute('aria-pressed', String(t === S.fTier));
+    b.textContent = sm.lv >= SMITH_REQ[t - 1] ? MAT.ore.short[t - 1] : `${MAT.ore.short[t - 1]} (Lv ${SMITH_REQ[t - 1]})`;
+  });
+  const t = S.fTier, slot = S.fSlot, cost = craftCost(slot, t);
+  const preview = { slot, t, r: 'common', plus: 0 };
+  setIc($('fIc'), itemIcon(slot, t));
+  $('fName').textContent = itemName(preview);
+  $('fStat').textContent = `Common ${slotStats(slot, TIER_POW[t])} · up to x2.5 at Epic`;
+  costChips($('fCost'), cost, t);
+  const w = rarityWeights(), tot = Object.values(w).reduce((a, b) => a + b, 0);
+  const odds = $('fOdds'); odds.textContent = '';
+  for (const [k, v] of Object.entries(w)) odds.append(el('span', 'rar-' + k, `${RAR[k].n} ${(v / tot * 100).toFixed(0)}%`));
+  const locked = sm.lv < SMITH_REQ[t - 1];
+  const fb = $('forgeBtn');
+  fb.disabled = locked || !hasMats(cost, t) || S.items.length >= BAG_MAX;
+  fb.textContent = locked ? `Needs Smithing Lv ${SMITH_REQ[t - 1]}` : S.items.length >= BAG_MAX ? 'Bag is full' : `Forge ${itemName(preview)}`;
+  renderBag();
+  renderTrophies();
+}
+
+// ---- src/js/74-ui-raid.js ----
+// 74-ui-raid: the Raid tab (world boss card, war horn state, relics). The raid's
+// network side is in 80-online.js.
+
+const relicRows = RELICS.map(u => {
+  const r = makeRow($('relicRows'), u.name, true, iconURL(...u.ic));
+  r.btn.addEventListener('click', () => { if (buyRelic(u.id)) ui(true); });
+  return r;
+});
+
+function uiRaid() {
+  const w = online.world;
+  if (!online.ready) {
+    $('rGen').textContent = 'World raid';
+    $('rName').textContent = online.checked ? 'The shared world is out of reach' : 'Finding the shared world...';
+    $('rNote').textContent = online.checked
+      ? 'Raids, the leaderboard and the tavern work when this game is opened from its Claude link while signed in. Your adventure still saves on this device.'
+      : 'Connecting to the other heroes.';
+    $('rNote').className = 'note' + (online.checked ? ' warn' : '');
+    $('marchBtn').disabled = true; $('hornCard').hidden = true; $('rLootBox').hidden = true;
+  } else {
+    $('rGen').textContent = w ? `Raid #${w.gen}` : 'World raid';
+    $('rName').textContent = w ? w.name : 'A new boss is rising...';
+    const hp = worldHp();
+    $('rBar').style.width = w && hp != null ? (hp / w.maxHp * 100) + '%' : '100%';
+    $('rHp').textContent = w && hp != null ? `${fmt(hp)} / ${fmt(w.maxHp)}` : '-';
+    $('rCount').textContent = raiderCount();
+    const mine = w && S.raid.gen === w.gen ? S.raid.dmg : 0, share = w ? Math.min(1, mine / w.maxHp) : 0;
+    $('rMine').textContent = fmt(mine);
+    $('rShare').textContent = (share * 100).toFixed(1) + '%';
+    $('rLootBox').hidden = !w;
+    if (w) {
+      const key = RAID_UNIQ[(w.gen - 1) % RAID_UNIQ.length], u = UNIQ[key];
+      const ch = share >= 0.25 ? 100 : mine > 0 ? Math.min(100, (0.35 + share * 2) * 100) : 0;
+      setIc($('rLootIc'), itemIcon(u.slot, Math.min(5, w.gen), key), 'legendary');
+      $('rLoot').textContent = `Drops ${u.name}: ${u.txt} Your chance right now: ${ch.toFixed(0)}%. Deal 25% of the damage to guarantee it.`;
+    }
+    $('rNote').className = 'note' + (online.canWrite ? '' : ' warn');
+    $('rNote').textContent = online.canWrite
+      ? 'Everyone who opens Lanternfall fights the same boss. When it falls, each raider earns Embers for their share of the damage.'
+      : 'You can watch this raid. To join it, ask the game\'s owner for Contributor access.';
+    $('marchBtn').disabled = !online.canWrite;
+    $('marchBtn').textContent = S.activity === 'raid' ? 'Return to fighting zones' : 'March to the raid';
+    $('marchBtn').className = 'big' + (S.activity === 'raid' ? ' home' : '');
+    $('hornCard').hidden = !online.room || !online.hornOk;
+    const cd = Math.max(0, 90 - (Date.now() - (online.hornAt || 0)) / 1000);
+    $('hornBtn').disabled = cd > 0 || S.activity !== 'raid';
+    $('hornBtn').textContent = S.activity !== 'raid' ? 'March to the raid to use the horn' : cd > 0 ? `Horn recovers in ${Math.ceil(cd)}s` : 'Sound the war horn';
+  }
+  RELICS.forEach((u, i) => {
+    const r = relicRows[i], lv = S.relic[u.id], maxed = u.cap !== undefined && lv >= u.cap;
+    const cost = u.base * Math.pow(u.r, lv);
+    r.own.textContent = 'Lv ' + lv;
+    r.desc.textContent = u.desc();
+    r.qty.textContent = maxed ? 'Maxed' : 'Forge';
+    setPrice(r.btn, maxed ? Infinity : cost, true);
+    r.btn.disabled = maxed || S.embers < cost;
+  });
+}
+
+// ---- src/js/74-ui-tavern.js ----
+// 74-ui-tavern: the Tavern tab (who is online, hall of heroes, rename, lifetime stats).
+
+let boardSig = '';
+async function uiTavern() {
+  $('lKills').textContent = fmt(S.totalKills);
+  $('lGold').textContent = fmt(S.totalGold);
+  $('lZone').textContent = S.maxZone;
+  $('lWyrms').textContent = S.wyrms;
+  $('lGear').textContent = fmt(gear().score);
+  if (document.activeElement !== $('nameInput') && !$('nameInput').value) $('nameInput').value = S.name;
+
+  const box = $('online'); box.textContent = '';
+  const seen = new Set(), list = [];
+  for (const p of online.peers) {
+    if (p.kind !== 'viewer' || !p.presence || !p.presence.hero || seen.has(p.peer)) continue;
+    seen.add(p.peer); list.push(p);
+  }
+  if (!online.room) box.append(el('span', 'note', online.checked ? 'The tavern opens when you play from the game\'s Claude link.' : 'Opening the tavern doors...'));
+  else if (list.length <= 1) box.append(el('span', 'note', 'Only you so far. Share the game link and others will show up here.'));
+  if (online.room) for (const p of list) {
+    const act = p.presence.act || (p.presence.raiding ? 'raid' : 'fight');
+    const c = el('span', 'pchip ' + act);
+    const what = act === 'raid' ? 'raiding' : act === 'gather' ? 'gathering' : 'zone ' + (+p.presence.zone || 1);
+    c.append(el('i'), el('span', null, String(p.presence.hero).slice(0, 18) + (p.sameTab ? ' (you)' : '')), el('small', null, `Lv ${+p.presence.lvl || 1} · ${what}`));
+    box.append(c);
+  }
+
+  const rows = online.raiders.slice().sort((a, b) => (b.L || 0) - (a.L || 0) || (b.maxZone || 0) - (a.maxZone || 0)).slice(0, 25);
+  const sig = JSON.stringify(rows.map(r => [r.id, r.name, r.L, r.maxZone, r.gear]));
+  if (sig === boardSig) return; boardSig = sig;
+  const tb = $('board');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr>'; return; }
+  let names = {};
+  if (online.user) { try { names = await online.user.profiles(rows.map(r => r.id)); } catch (e) {} }
+  tb.textContent = '';
+  rows.forEach((r, i) => {
+    const tr = el('tr', r.id === online.uid ? 'me' : '');
+    const td1 = el('td');
+    td1.append(el('span', 'hero', String(r.name || 'Wanderer').slice(0, 18)), el('span', 'player', r.id === online.uid ? 'you' : ((names[r.id] && names[r.id].name) || '')));
+    tr.append(el('td', 'rank', String(i + 1)), td1, ...[r.L || 1, r.maxZone || 1, r.gear || 0].map(v => el('td', 'n', fmt(+v || 0))));
+    tb.append(tr);
+  });
+}
+
+// ---- src/js/80-online.js ----
+// 80-online: the shared world over the Artifact capabilities (db, user, room): raider
+// docs, world boss upkeep, presence, war horn. Browser-only. Do not change shapes here
+// without coordinator sign-off (see CLAUDE.md). The `online` state object is in 30-state.js.
+
+// ================= online world =================
+
+async function flush() {
+  const { db, uid } = online;
+  if (!db || !uid || !online.canWrite || online.flushing) return;
+  const body = { name: S.name, L: S.L, maxZone: S.maxZone, wyrms: S.wyrms, gear: Math.round(gear().score), dps: Math.round(totalDps()), gen: S.raid.gen, dmg: Math.round(S.raid.dmg) };
+  const key = JSON.stringify(body);
+  if (key === online.flushKey) return;
+  online.flushing = true;
+  try { await db.doc('raiders/' + uid).set({ ...body, updatedAt: Date.now() }); online.flushKey = key; }
+  catch (e) { if (e && (e.code === 'invalid_argument' || e.code === 'not_granted' || e.code === 'revoked')) { online.canWrite = false; if (S.activity === 'raid') { S.activity = 'fight'; spawn(); } ui(true); } }
+  finally { online.flushing = false; }
+}
+
+async function maintainBoss() {
+  const { db, uid } = online;
+  if (!db || !uid || !online.canWrite || online.advancing || !online.bossLoaded) return;
+  const w = online.world, hp = worldHp();
+  if (w && hp > 0) return;
+  online.advancing = true;
+  try {
+    const ref = db.doc('world/boss');
+    const lease = await ref.acquire({ holder: uid, ttlMs: 5000 });
+    if (!lease.acquired) return;
+    const snap = await ref.get();
+    const cur = snap.exists ? snap.data() : null;
+    if ((cur && w && cur.gen !== w.gen) || (cur && !w)) return;
+    const gen = cur ? cur.gen + 1 : 1;
+    const topDps = Math.max(0, ...online.raiders.map(r => +r.dps || 0), totalDps());
+    await ref.set({ gen, name: BOSSES[(gen - 1) % BOSSES.length], maxHp: Math.max(bossHpFor(gen), Math.round(topDps * 900)), spawnedAt: Date.now() });
+  } catch (e) {}
+  finally { online.advancing = false; }
+}
+
+function pushPresence() {
+  if (!online.room) return;
+  const p = { hero: S.name, lvl: S.L, zone: S.zone, act: S.activity, raiding: S.activity === 'raid' };
+  const k = JSON.stringify(p); if (k === online.presKey) return; online.presKey = k;
+  online.room.presence(p).catch(() => {});
+}
+
+$('hornBtn').addEventListener('click', () => {
+  if (!online.room) return;
+  online.room.emit('rally', { hero: S.name }).then(() => { online.hornAt = Date.now(); ui(true); })
+    .catch(e => { if (e && e.code === 'not_permitted') { online.hornOk = false; ui(true); } });
+});
+
+async function connect() {
+  const cl = window.claude && typeof window.claude.use === 'function' ? window.claude : null;
+  const use = async n => { try { return cl ? await cl.use(n) : null; } catch (e) { return null; } };
+  const [db, user, room] = await Promise.all([use('db'), use('user'), use('room')]);
+  online.db = db; online.user = user; online.room = room;
+  if (user) { try { online.uid = await user.id(); } catch (e) {} try { if (await user.can('data.write') === false) online.canWrite = false; } catch (e) {} }
+  online.checked = true;
+  if (db && online.uid) {
+    online.ready = true;
+    db.doc('world/boss').onSnapshot(s => {
+      online.bossLoaded = true;
+      online.world = s.exists ? s.data() : null;
+      if (online.world) syncGen();
+    }, () => { online.ready = false; if (S.activity === 'raid') { S.activity = 'fight'; spawn(); } ui(true); });
+    db.collection('raiders').onSnapshot(q => { online.raiders = q.docs.map(d => ({ id: d.id, ...d.data() })); }, () => {});
+  } else if (S.activity === 'raid') { S.activity = 'fight'; spawn(); }
+  if (room) {
+    room.onPeers(ch => { online.peers = ch.peers; }, () => { online.room = null; });
+    room.on('rally', msg => {
+      const who = String((msg.data && msg.data.hero) || 'A raider').slice(0, 18);
+      rallyUntil = Date.now() + 20000;
+      toast(`${who} sounds the war horn! Raid damage +25% for 20 seconds.`, 'raid', iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }));
+    }, () => {});
+    pushPresence();
+  }
+  ui(true);
+}
+
+on('activity', () => pushPresence());
+
+// ---- src/js/90-boot.js ----
+// 90-boot: page lifecycle, boot sequence, timers and the frame loop. Browser-only.
+
+let lastFrame = performance.now();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { save(); flush(); }
+  else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAway(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
+});
+addEventListener('pagehide', save);
+
+// ================= boot =================
+resize();
+updatePortrait();
+showAway(awayGains((Date.now() - S.last) / 1000));
+S.last = Date.now();
+if (S.hintDone) $('hint').style.opacity = 0;
+spawn();
+setTab(TAB_IDS.includes(S.tab) ? S.tab : 'adv');
+connect();
+
+setInterval(save, 5000);
+setInterval(() => { flush(); maintainBoss(); }, 4000);
+setInterval(pushPresence, 3000);
+
+function frame(now) {
+  let dt = (now - lastFrame) / 1000; lastFrame = now;
+  if (dt > 1) dt = 0;
+  dt = Math.min(dt, 0.1);
+  T += dt;
+  tick(dt); animate(dt); draw();
+  uiTimer -= dt; slowTick -= dt;
+  if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>

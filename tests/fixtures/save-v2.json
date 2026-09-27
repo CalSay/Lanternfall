@@ -1,0 +1,15 @@
+{
+  "v": 2, "name": "Brannoc", "L": 10, "xp": 42, "gold": 18234.5, "embers": 3, "zone": 4, "maxZone": 5, "kills": 6,
+  "blade": 31, "swift": 9, "fortune": 12, "comp": [25, 14, 6, 0, 0, 0, 0], "relic": { "banner": 2, "coin": 1, "heart": 0, "glass": 1 },
+  "auto": true, "activity": "fight", "raid": { "gen": 3, "dmg": 51234.2, "maxHp": 312500, "name": "The Mire Colossus" }, "wyrms": 2,
+  "totalKills": 1840, "totalGold": 96120.75, "amt": "10", "tab": "forge", "last": 1790000000000, "hintDone": true,
+  "skills": { "mine": { "lv": 14, "xp": 33 }, "wood": { "lv": 9, "xp": 12 }, "smith": { "lv": 7, "xp": 20 } },
+  "mats": { "ore": [48, 12, 0, 0, 0], "wood": [37, 5, 0, 0, 0], "ess": [22, 9, 0, 0, 0] },
+  "node": { "kind": "ore", "t": 2 }, "gProg": 0.35,
+  "items": [
+    { "id": 3, "slot": "weapon", "t": 2, "r": "rare", "plus": 2 },
+    { "id": 7, "slot": "helm", "t": 1, "r": "legendary", "plus": 0, "u": "echocowl" }
+  ],
+  "equip": { "weapon": 3, "helm": 7, "charm": null, "pick": null, "axe": null }, "nextId": 8,
+  "found": { "echocowl": 1, "sproutblade": 1 }, "fSlot": "weapon", "fTier": 2
+}

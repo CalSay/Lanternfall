@@ -1,0 +1,215 @@
+<title>Lanternfall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
+<!-- @styles -->
+
+<div class="app">
+  <header class="top">
+    <div class="portrait"><img id="portrait" alt=""><b id="hLvl">1</b></div>
+    <div class="who">
+      <span class="hname" id="hName">Wanderer</span>
+      <div class="bar" title="Experience to next level"><i id="xpFill"></i></div>
+    </div>
+    <div class="purse">
+      <div class="coin"><img class="px" id="goldIc" alt=""><span id="gold">0</span></div>
+      <div class="coin" style="font-size:15px"><span class="ico ember"></span><span id="embers">0</span></div>
+    </div>
+  </header>
+
+  <div class="zonebar">
+    <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
+    <div class="zinfo"><div class="zname" id="zName">Mossy Hollow</div><div class="zsub" id="zSub">Zone 1</div></div>
+    <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="mob">
+      <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
+      <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
+      <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+    </div>
+    <div class="stage-hint" id="hint">Tap to strike</div>
+  </div>
+
+  <div class="stats">
+    <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
+      <button data-act="fight" aria-pressed="true">Fight</button>
+      <button data-act="gather" aria-pressed="false">Gather</button>
+      <button data-act="raid" aria-pressed="false">Raid</button>
+    </div>
+    <div class="stat-nums" id="statNums">
+      <span>DPS <b id="sDps">0</b></span>
+      <span>Tap <b id="sTap">0</b></span>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
+    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Forge<span class="dot" id="forgeDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="raid" data-ic="flame" aria-selected="false">Raid<span class="dot" id="raidDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="tav" data-ic="mug" aria-selected="false">Tavern</button>
+  </nav>
+
+  <div class="panels" id="panels">
+    <!-- Fight -->
+    <section class="panel" id="p-adv">
+      <div class="sec">
+        <h2 class="sec-title">Boss gate</h2>
+        <div class="row">
+          <div>
+            <div class="row-name" id="gateTitle">Clear 10 foes to face the zone boss</div>
+            <div class="row-desc" id="gateDesc">Beat the boss in 30 seconds to open the next zone.</div>
+          </div>
+          <button class="buy" id="gateBtn"><span class="qty">Boss</span><span class="price">Fight</span></button>
+        </div>
+        <label class="note" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="autoBoss" checked> Challenge frontier bosses automatically when ready</label>
+      </div>
+      <div class="sec">
+        <div class="sec-head">
+          <h2 class="sec-title">Hero</h2>
+          <div class="seg" id="amtSeg"><button data-amt="1" aria-pressed="true">x1</button><button data-amt="10" aria-pressed="false">x10</button><button data-amt="max" aria-pressed="false">Max</button></div>
+        </div>
+        <div id="heroRows" class="sec"></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Party</h2>
+        <div id="compRows" class="sec"></div>
+      </div>
+    </section>
+
+    <!-- Gather -->
+    <section class="panel" id="p-gat" hidden>
+      <div class="skills" id="skillCards"></div>
+      <p class="note">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
+      <div class="sec">
+        <h2 class="sec-title">Mining</h2>
+        <div id="oreRows" class="sec"></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Woodcutting</h2>
+        <div id="woodRows" class="sec"></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Your pack</h2>
+        <div class="mats" id="matGrid"></div>
+        <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
+      </div>
+    </section>
+
+    <!-- Forge -->
+    <section class="panel" id="p-forge" hidden>
+      <div class="sec">
+        <h2 class="sec-title">Equipped</h2>
+        <div id="eqRows" class="sec"></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">
+          <h3 style="font-size:18px">Forge new gear</h3>
+          <span class="note" id="smithLbl">Smithing Lv 1</span>
+        </div>
+        <div class="bar"><i id="smithBar" style="background:var(--ember)"></i></div>
+        <div class="seg" id="slotSeg"></div>
+        <div class="seg" id="tierSeg"></div>
+        <div class="forge-preview">
+          <div class="ic" id="fIc"><img alt=""></div>
+          <div>
+            <div class="iname" id="fName">Copper Sword</div>
+            <div class="row-desc" id="fStat">Common: +10% damage</div>
+          </div>
+        </div>
+        <div class="costs" id="fCost"></div>
+        <div class="odds" id="fOdds"></div>
+        <button class="big forge" id="forgeBtn">Forge</button>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><h2 class="sec-title">Bag</h2><span class="note" id="bagCount">0 / 40</span></div>
+        <div id="bagRows" class="sec"><p class="note">Forged gear and boss loot land here.</p></div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><h2 class="sec-title">Trophy wall</h2><span class="note" id="trophyCount">0 / 13 uniques</span></div>
+        <div class="trophies" id="trophies"></div>
+      </div>
+    </section>
+
+    <!-- Raid -->
+    <section class="panel" id="p-raid" hidden>
+      <div class="card raidcard">
+        <div class="zsub" id="rGen">World raid</div>
+        <h3 id="rName">Waiting for the world to load</h3>
+        <div class="hpbar" style="height:14px"><i class="fill" id="rBar"></i></div>
+        <dl class="kv" style="margin:0">
+          <div><dt>Boss HP</dt><dd id="rHp">-</dd></div>
+          <div><dt>Raiders</dt><dd id="rCount">0</dd></div>
+          <div><dt>Your damage</dt><dd id="rMine">0</dd></div>
+          <div><dt>Your share</dt><dd id="rShare">0%</dd></div>
+        </dl>
+        <div class="forge-preview" id="rLootBox" hidden>
+          <div class="ic f-legendary" id="rLootIc"><img alt=""></div>
+          <p class="note" id="rLoot"></p>
+        </div>
+        <p class="note" id="rNote">Everyone who opens Lanternfall fights the same boss. When it falls, each raider earns Embers for their share of the damage.</p>
+        <button class="big" id="marchBtn">March to the raid</button>
+      </div>
+      <div class="card" id="hornCard">
+        <h3 style="font-size:17px">War horn</h3>
+        <p class="note">Sound it and every raider online gets +25% raid damage for 20 seconds. The horn needs 90 seconds to recover.</p>
+        <button class="big horn" id="hornBtn">Sound the war horn</button>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><h2 class="sec-title">Relics</h2><span class="note">Paid in Embers from raids</span></div>
+        <div id="relicRows" class="sec"></div>
+      </div>
+    </section>
+
+    <!-- Tavern -->
+    <section class="panel" id="p-tav" hidden>
+      <div class="sec">
+        <h2 class="sec-title">In the tavern now</h2>
+        <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Hall of heroes</h2>
+        <div style="overflow-x:auto">
+          <table class="board">
+            <thead><tr><th></th><th>Hero</th><th class="n">Lv</th><th class="n">Zone</th><th class="n">Gear</th></tr></thead>
+            <tbody id="board"><tr><td colspan="5" class="note">The hall fills up as heroes join the shared world.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Your hero's name</h2>
+        <form class="rename" id="renameForm">
+          <input id="nameInput" maxlength="18" autocomplete="off" aria-label="Hero name">
+          <button type="submit">Save</button>
+        </form>
+      </div>
+      <div class="sec">
+        <h2 class="sec-title">Lifetime</h2>
+        <dl class="kv" style="margin:0">
+          <div><dt>Foes slain</dt><dd id="lKills">0</dd></div>
+          <div><dt>Gold earned</dt><dd id="lGold">0</dd></div>
+          <div><dt>Best zone</dt><dd id="lZone">1</dd></div>
+          <div><dt>Raid bosses</dt><dd id="lWyrms">0</dd></div>
+          <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="modal" id="away" hidden>
+  <div class="card">
+    <div class="zsub">While you were away</div>
+    <h3 id="awayTime">2h 10m</h3>
+    <div class="gains" id="awayGain"></div>
+    <p class="note" id="awayNote" style="margin-inline:auto">Your party kept fighting.</p>
+    <button class="big home" id="awayOk">Collect</button>
+  </div>
+</div>
+
+<!-- @script -->
