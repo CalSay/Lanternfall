@@ -13,7 +13,7 @@ Design rules:
 
 1. **Every family makes something a player wants.** No material exists only to feed another.
 2. **Each class has a signature material** that most of its gear needs: Warden uses Ore,
-   Lanternmage uses Crystal, Ranger uses Hide and Chaplain uses Herbs.
+   Lanternmage uses Crystal, Ranger uses Hide and Lightkeeper uses Herbs.
 3. **Fight and Gather stay a real choice.** Hide, Essence and Trophies come only from fighting.
    Ore, Crystal, Wood, Fibre and Herbs come mainly from gathering, with a small trickle from fights.
 4. **Stats come from materials, not dice.** Rarity is still a roll, but which role stat an item
@@ -54,7 +54,7 @@ recipes are in section 4.2):
 | Warden | 48 | 32 (67%) | 16 | Ore 23 (48%) |
 | Lanternmage | 45 | 33 (73%) | 12 | Crystal 13 (29%) |
 | Ranger | 43 | 19 (44%) | 24 | Hide 15 (35%) |
-| Chaplain | 44 | 32 (73%) | 12 | Herb 10 + Fibre 14 |
+| Lightkeeper | 44 | 32 (73%) | 12 | Herb 10 + Fibre 14 |
 
 Ranger leans on fighting by design (a hunter). Section 8 sets the time budget so that every
 class spends 25 to 45% of its time gathering.
@@ -174,9 +174,9 @@ not separate screens (section 6). Every station uses the tier gate
 
 | Station | Skill (save key) | Makes | Mainly serves |
 |---|---|---|---|
-| Forge | Smithing (`smith`, exists) | Warblade, Shield, Greathelm, Plate, Censer, Pickaxe, Sickle | Warden, tanks, Chaplain weapon, tools |
+| Forge | Smithing (`smith`, exists) | Warblade, Shield, Greathelm, Plate, Censer, Pickaxe, Sickle | Warden, tanks, Lightkeeper weapon, tools |
 | Workbench | Woodcraft (`bench`, new) | Bow, Staff, Quiver, Axe | Ranger, Lanternmage weapon, strikers, casters |
-| Loom | Tailoring (`loom`, new) | Hood, Leathers, Circlet, Robe, Mitre, Vestments, Tome | Ranger and Lanternmage armour, Chaplain, supports |
+| Loom | Tailoring (`loom`, new) | Hood, Leathers, Circlet, Robe, Mitre, Vestments, Tome | Ranger and Lanternmage armour, Lightkeeper, supports |
 | Enchanter's Table | Enchanting (`ench`, new) | Lantern, Charm, Trinket, Tonics, Transmute, Refocus | Lanternmage off-hand, everyone's charm and trinkets |
 
 - Crafting XP uses today's formula for every station: `20 x t^1.7` per craft and `6 x t^1.5` per
@@ -185,7 +185,7 @@ not separate screens (section 6). Every station uses the tier gate
 - **Rarity** uses today's `rarityWeights()`, fed by the level of the station that makes the item
   (the Forge still uses `smith`, so Forge odds are unchanged).
 - Every class needs 2 or 3 stations. Warden: Forge and Enchanter. Lanternmage: Workbench, Loom
-  and Enchanter. Ranger: Workbench, Loom and Enchanter. Chaplain: Forge, Loom and Enchanter.
+  and Enchanter. Ranger: Workbench, Loom and Enchanter. Lightkeeper: Forge, Loom and Enchanter.
 
 ### 3.5 Enchanter's Table utilities
 
@@ -201,7 +201,7 @@ not separate screens (section 6). Every station uses the tier gate
   - Forager's Draught: herb 3, fibre 2. +25% gathering speed.
   - Mending Draught: herb 4, crystal 1. +20% healing.
 
-  Tonics are the Herb sink for classes that are not Chaplains.
+  Tonics are the Herb sink for classes that are not Lightkeepers.
 
 ---
 
@@ -214,7 +214,7 @@ meant Sword. Where it can be worn is looked up in a `FITS` table. The hero has 8
 (`S.equip` keys): `weapon`, `off` (new), `helm` (the key is kept, shown as "Head"), `body` (new),
 `charm`, `pick`, `axe` and `sickle` (new). A companion has `wpn` and `trk` (party spec).
 
-| Position | Warden (tank) | Lanternmage (caster) | Ranger (striker) | Chaplain (support) | Any class |
+| Position | Warden (tank) | Lanternmage (caster) | Ranger (striker) | Lightkeeper (support) | Any class |
 |---|---|---|---|---|---|
 | Weapon | Warblade | Staff | Bow | Censer | legacy Sword, weapon uniques |
 | Off-hand | Shield | Lantern | Quiver | Tome | - |
@@ -228,7 +228,7 @@ meant Sword. Where it can be worn is looked up in a `FITS` table. The hero has 8
 | Tank | Shield (the same kind as the Warden off-hand) | Trinket (any role) |
 | Striker | Bow (the same kind as the Ranger weapon) | Trinket |
 | Caster | Staff (the same kind as the Lanternmage weapon) | Trinket |
-| Support | Tome (the same kind as the Chaplain off-hand) | Trinket |
+| Support | Tome (the same kind as the Lightkeeper off-hand) | Trinket |
 
 Four kinds are shared between hero and companions, so one recipe serves both. That makes 21
 kinds in total: 16 class kinds, Trinket, Charm and 3 tools. The legacy Sword and Helm stay

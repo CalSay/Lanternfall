@@ -76,7 +76,7 @@ Hero power `hp0 = heroAtk() * aps()`.
 | Warden | "Stand in front. Nothing gets past." | tank (front) | 12 x hp0 | x0.8 | +30 | Threat x6; every pack starts on the Warden; taps taunt | Tanks: +40% HP, +20 armour | Party takes 10% less damage |
 | Lanternmage | "Burn the whole pack at once." | caster (back) | 4 x hp0 | x1.0, hits all | 0 | Attacks splash 50% to every other enemy; taps plant Embers that Lantern Flare detonates | Casters: +30% ATK | Overkill carries to the next enemy |
 | Ranger | "Find the weak spot. Hit it hard." | striker (mid) | 5 x hp0 | x1.1 | 0 | +10% crit chance, +1.0 crit multiplier; taps set the focus target | Strikers: +10% crit chance, +50% crit damage | Taps deal +50% |
-| Chaplain | "Keep them standing." | support (back) | 6 x hp0 | x0.2 (smite only) | +10 | Heals lowest-HP ally for 1.2 x hp0 per second; taps direct heals and wards | Supports: +40% healing | *Blessing*: all companions +20% damage; companion cooldowns -25% |
+| Lightkeeper | "Keep them standing." | support (back) | 6 x hp0 | x0.2 (smite only) | +10 | Heals lowest-HP ally for 1.2 x hp0 per second; taps direct heals and wards | Supports: +40% healing | *Blessing*: all companions +20% damage; companion cooldowns -25% |
 
 Because the class is fixed, every class must be able to field a full working party: the roster
 has at least 2 characters per role, so a Ranger can still bring a tank and a healer.
@@ -129,7 +129,7 @@ migration (section 6).
 | Wren Hollowmere | the Batwing Archer | Common | striker (ranged) | Hedgefolk | 1 | **Starter** for Warden. Others: **progress**, reach zone 2, then 120 gold |
 | Old Hesketh | the Lamplighter | Common | support | Hedgefolk | - | **Progress:** beat the Batwing Caves boss (zone 2) once; joins free |
 | Pip Cinderly | the Hedge Mage | Common | caster | Hedgefolk | 2 | **Progress:** reach zone 4, then 1,100 gold |
-| Bram Hollis | the Woodcutter | Common | striker (melee) | Hedgefolk | - | **Starter** for Chaplain. Others: **quest** "Wood for the Winter", bring 60 Oak Logs to his camp (from zone 3) |
+| Bram Hollis | the Woodcutter | Common | striker (melee) | Hedgefolk | - | **Starter** for Lightkeeper. Others: **quest** "Wood for the Winter", bring 60 Oak Logs to his camp (from zone 3) |
 | Maren Ashvale | the Lampwarden | Rare | tank | the Oath | - | **Quest:** "The Barrow Lamp": bring 20 Glowing Essence (from zone 4) |
 | Ser Aldric Vane | the Oathbound | Rare | tank | the Oath | 3 | **Renown 15** on the bounty board, then 25K gold |
 | Kestrel Thane | the Skyfall Dragoon | Rare | striker (melee) | Dusk Company | 4 | **Progress:** reach zone 12, then 150K gold |
@@ -182,7 +182,7 @@ what the class lacks: a ranged hero gets a melee companion, a melee hero gets a 
 | Warden (melee, Front) | Wren Hollowmere (ranged striker, Mid) | The Warden holds the pack and Wren kills it from behind: a complete tank + damage pair |
 | Lanternmage (ranged caster, Back) | Tobin Reed (melee tank, Front) | Someone to stand in front of the glass cannon and hold threat while the AoE lands |
 | Ranger (ranged striker, Mid) | Tobin Reed (melee tank, Front) | Same: Tobin holds, the Ranger focuses and bursts |
-| Chaplain (support, Back) | Bram Hollis (melee striker, Front) | The Chaplain deals x0.2 damage, so the pair needs damage more than a second defender. Bram takes hits in Front (5x pow HP, healed by the Chaplain), his Cleave hits two of a pack of 3, and Blessing adds +20%. Tobin would make the pair nearly unkillable but slow, and the first hour would drag |
+| Lightkeeper (support, Back) | Bram Hollis (melee striker, Front) | The Lightkeeper deals x0.2 damage, so the pair needs damage more than a second defender. Bram takes hits in Front (5x pow HP, healed by the Lightkeeper), his Cleave hits two of a pack of 3, and Blessing adds +20%. Tobin would make the pair nearly unkillable but slow, and the first hour would drag |
 
 Joining moments (shown after "Begin", one tap to continue):
 - **Wren:** An arrow lands at your feet, then another in the slime behind you. "You stand in the right place, for once. Hold them there." Wren Hollowmere drops from the branches and does not ask to come along.
@@ -422,7 +422,7 @@ such as Hunting Party and Lamp and Ward stay worth fielding next to Epics.
 3. **Night Work** (Ranger + Wren, Kestrel, Isolde). Mark and Leap plus Dusk Company plus the
    Ranger's crit aura. Highest boss burst; no healer or tank, so it wants an active player
    parrying. The boss-push team.
-4. **The Last Vigil** (Chaplain + Aldric, Maren, Elowen). The Old Oath, Maren's Keeper passive
+4. **The Last Vigil** (Lightkeeper + Aldric, Maren, Elowen). The Old Oath, Maren's Keeper passive
    (+30% HP), Elowen's Vigil. Low damage, almost never wipes: the overnight idle team that holds
    the highest zone offline.
 5. **Candle and Bell** (Lanternmage + Grenna, Morwen, Anselm). Grenna's Earthshatter stuns the
@@ -479,7 +479,7 @@ most 2 members per column. The party fills 4 cells (hero + 3 companions).
 |---|---|---|
 | Warden hero | Front | Front |
 | Ranger hero | Mid or Back | Mid |
-| Lanternmage, Chaplain heroes | Back | Back |
+| Lanternmage, Lightkeeper heroes | Back | Back |
 | Tanks (Tobin, Maren, Aldric) | Front or Mid | Front |
 | Melee strikers (Kestrel, Isolde) | Front or Mid | Mid (Front if no tank) |
 | Ranged striker (Wren) | Mid or Back | Mid |
@@ -575,11 +575,11 @@ about 0.5 taps per second; active play is faster and smarter.
 | Warden | Taunt it (forced target 3s, 1s tap cooldown) + tap damage | - | Tap the boss = block/parry | Taunts any enemy not on the Warden, every 4s |
 | Lanternmage | Plant an Ember on it (max 5 per enemy); Lantern Flare detonates Embers for +30% each | - | Tap the boss = flash-stun, counts as a parry | Embers the enemy with the most HP |
 | Ranger | Focus: hero and all strikers switch to it; tap damage gets +20% crit chance | - | Tap the boss = pinning shot, counts as a parry | Focuses healers, then divers, then lowest HP |
-| Chaplain | Smite: 0.3x tap damage and the enemy takes +5% damage for 4s | Direct heal: 8% max HP to that ally (3 charges, 1 back per 2s) | Tap the targeted ally = ward that absorbs the heavy hit, counts as a parry | Heals the lowest ally under 60% |
+| Lightkeeper | Smite: 0.3x tap damage and the enemy takes +5% damage for 4s | Direct heal: 8% max HP to that ally (3 charges, 1 back per 2s) | Tap the targeted ally = ward that absorbs the heavy hit, counts as a parry | Heals the lowest ally under 60% |
 
-Hero damage by class: Warden x0.8, Lanternmage x1.0 (hits all), Ranger x1.1, **Chaplain x0.2**.
-The Chaplain's damage budget becomes party power instead: *Blessing* aura, all companions
-+20% damage, plus the Chaplain's heals free a party slot (a Chaplain party can field 3 damage
+Hero damage by class: Warden x0.8, Lanternmage x1.0 (hits all), Ranger x1.1, **Lightkeeper x0.2**.
+The Lightkeeper's damage budget becomes party power instead: *Blessing* aura, all companions
++20% damage, plus the Lightkeeper's heals free a party slot (a Lightkeeper party can field 3 damage
 dealers and still sustain). Target T3 checks classes stay within 15% of each other.
 
 ### 4.7 Enemy behaviours (introduced by zone)
@@ -602,7 +602,7 @@ gold x2) carrying its type's behaviour at double strength.
 Every boss has the **heavy hit**: every 8s a 1.5s wind-up (red "!", shrinking ring, rising
 tone) then 4x boss attack on its target. **Parry** = the class action in the last 0.8s (Maren
 extends this to 1.1s): no damage, boss staggered 2s and takes +50% damage. Earlier = **Dodge**:
-damage halved. Shield Wall, Aldric's Shield Bash and a Chaplain ward also count as parries, so
+damage halved. Shield Wall, Aldric's Shield Bash and a Lightkeeper ward also count as parries, so
 idle parties with the right members survive bosses without the player.
 
 Each Elder boss adds its type's behaviour as a second telegraph:
@@ -646,7 +646,7 @@ tgt    = tankHolds ? tank : highest-threat member in the Front column (melee sha
 tankHolds = tank exists AND tankThreatRate >= 1.2 * max(otherThreatRate * rowFactor)
 in     = 1.5 * enemyAtk(z)/speed * behaviour(z).dmg * (1 - red(tgt)) * rowFactor                 // 1.5 enemies alive on average
 spread = behaviour(z).aoe * enemyAtk(z) * 4 / 6s                                    // spore clouds etc., hit everyone
-sus    = sum(heal rates) + shields/6s + regen(tgt) + 10% maxHp(tgt) per pack         // supports + Chaplain
+sus    = sum(heal rates) + shields/6s + regen(tgt) + 10% maxHp(tgt) per pack         // supports + Lightkeeper
 holds(z) = (sus >= in + spread*share(tgt)) OR (hp(tgt) / (in + spread*share(tgt) - sus) >= 120s)
           AND (no backline member dies to spread + dives in 30s)
 ```
@@ -678,7 +678,7 @@ progress (checked by sim target T12):
 | Niche | Example | Strength | Cost |
 |---|---|---|---|
 | Balanced | Warden + Hesketh + Wren + Pip | Holds the highest zone for its power | None; the default |
-| Double support attrition | Chaplain + Tobin + Hesketh + Elowen | Almost never wipes; best overnight | Slow kills, weak boss timers |
+| Double support attrition | Lightkeeper + Tobin + Hesketh + Elowen | Almost never wipes; best overnight | Slow kills, weak boss timers |
 | Glass cannon with a Warden | Warden + Wren + Kestrel + Isolde | Warden holds everything; fastest farm below par | Wipes at a push zone without active Shield Wall and parries |
 | Caster pack-clear | Lanternmage + Aldric + Pip + Oriel | Packs melt, stuns cover healers | Low sustain; relies on killing first |
 
@@ -864,7 +864,7 @@ other widths). The upper lane is 8px higher and 4px further back, drawn first.
 - Ability button: 56px circle, bottom-right of the stage, cooldown as a pie sweep, gold ring when
   auto-cast is on. Companion ability pips: 6px dots under each HP bar that fill as cooldowns run.
 - Boss "!" 12px above the boss (red = heavy hit, blue = dive, green = heal channel); parry ring
-  centred on the boss or, for a Chaplain ward, on the targeted ally. 44px minimum hit areas.
+  centred on the boss or, for a Lightkeeper ward, on the targeted ally. 44px minimum hit areas.
 
 ### 7.5 Movement on stage (what the art must show)
 
@@ -897,7 +897,7 @@ arcs, no shake.
   its own palette from its brief (3.2), and a role accent on one index so role reads at a glance:
   tank steel blue `#3E63C9`, striker green `#3E8A4E`, caster violet `#8A4FC9`, support gold
   `#F2C14E`. The 4 hero classes reuse one hero body with a palette swap plus one overlay (Warden
-  shield, Lanternmage lantern-staff, Ranger bow, Chaplain censer). Zone cycles keep `shiftPal`.
+  shield, Lanternmage lantern-staff, Ranger bow, Lightkeeper censer). Zone cycles keep `shiftPal`.
   Silhouettes must differ at 1x (height, head shape, prop), not only colour.
 - **Pipeline extension:** a sprite becomes `{ base: rows[], frames: { idle: [delta, delta], attack: [...], ... } }`
   where a delta is a list of `[x, y, index]` pixel overrides or a whole-row replacement. Frames
@@ -914,7 +914,7 @@ arcs, no shake.
 
 Baseline today (`--policy mixed --seed 1`): zone 14 at 30m, 20 at 1h, 29 at 2h, 51 at 3h.
 
-The simulator gets flags `--class warden|lanternmage|ranger|chaplain`, `--lineup <ids>`,
+The simulator gets flags `--class warden|lanternmage|ranger|lightkeeper`, `--lineup <ids>`,
 `--active 0|1` (1 = class taps at 3 per second with good choices, casts on cooldown, parries 80%
 of wind-ups) and `--offline-check`.
 
@@ -933,7 +933,7 @@ of wind-ups) and `--offline-check`.
 | T11 | A new level-1 recruit fielded at zone 20 reaches party level - 5 | within 5-10 min |
 | T12 | Each niche line-up in 4.13 reaches zone 20 | within 1.5x of balanced |
 | T13 | Tank holds aggro (enemy-seconds on the tank / total), balanced party at par | >= 85% |
-| T14 | Chaplain-led party: share of party damage from companions | >= 90%, and T3 still passes |
+| T14 | Lightkeeper-led party: share of party damage from companions | >= 90%, and T3 still passes |
 | T15 | Best all-Common line-up vs best available line-up: time from zone 20 to 30 | <= 1.5x |
 | T16 | First Rare / first Epic / first Legendary recruited (mixed policy, idle) | 15-40 min / 1.5-3h / 6-12h |
 | T17 | Worst-case pity: boss kills to a guaranteed token (Grenna / Isolde) | 12 / 10 |
@@ -1023,3 +1023,7 @@ These override the spec above where they conflict.
 - **Rarity is a flat base-power multiplier.** Common x1, Rare x1.5, Epic x2.2, Legendary x3.2. Every rarity uses the same per-level growth (x1.080), so the gap never widens with level. Drop the per-rarity growth rates.
 - **The Legendary hunt stays long, as designed.** Elowen takes about 6–12 hours; Caedmon and Corvin take 10 hours or more.
 - **The Tavern visitor uses the device date** (coordinator's call). Clock changes only affect the player's own single-player game, so there is no play-time gate.
+
+### Owner decisions, round 6 (2026-09-27)
+
+- **The support class is called the Lightkeeper,** not the Chaplain. The code key is `lightkeeper`. All docs and prototypes are renamed.

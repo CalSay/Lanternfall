@@ -124,7 +124,7 @@ A gear drawing does not store colours. It uses material keys:
 Families and tiers (from the crafting spec): Ore Copper to Emberite, Wood Oak to Lanternwood,
 Crystal Quartz to Emberglass, Fibre Flax to Gloamsilk, Hide Soft to Ember. Each tier has a base
 colour and a glow colour; `ramp()` makes the 4 tones. **Class dye:** cloth items blend the fibre
-colour 45% toward a class dye (Lanternmage violet, Chaplain cream) so a class keeps its identity
+colour 45% toward a class dye (Lanternmage violet, Lightkeeper cream) so a class keeps its identity
 across tiers.
 
 ### 6.4 Rarity

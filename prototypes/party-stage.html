@@ -221,7 +221,7 @@ const BODIES = {
   warden: { br: 11, hand: [12, 13], lantern: [1, 14], rows: ['.....rR.......', '....rRr.......', '....Rr........', '....wwwwg.....', '...wwwwwwg....', '...wwwwwwwg...', '...wwwwgeeg...', '...gwwwwwwg...', '....gggggg....', '..wwgmmmmgww..', '.wwwgmttmgwww.', '.ggmmmmttmmMgg', '.ggmmmmttmmMgg', '.ssTTTTTTTTTss', '..mmmmmttmmM..', '...mmmmttmmM..', '...MMMMMMMMM..', '....gwg.gwg...', '....gwg.gwg...', '....ggg.ggg...', '...Bbbb.Bbbb..', '...BBBB.BBBB..'] },
   mage: { br: 13, hand: [12, 10], lantern: null, rows: ['.......M......', '......Mm......', '.....MMmm.....', '....MMmmmm....', '....Mmmmmmm...', '...MmmHHsss...', '...MmHssesS...', '...MmmHsssm...', '...MMmmSSmm...', '..MMmmmtmmmMm.', '..MmmmmtmmmMs.', '..MmmmmtmmmM..', '..MmmmtttmmM..', '.MMmmmmtmmmmm.', '.MMmmmmtmmmmm.', '.MMmmmmtmmmmmm', 'MMMmmmmtmmmmmm', 'MMMmmmmtmmmmmm', 'MMMMmmmtmmmmMM', '.MMMMMMMMMMMM.', '...bb...bb....', '..BBB...BBB...'] },
   ranger: { br: 11, hand: [11, 11], lantern: [0, 14], rows: ['..............', '.....NNNn.....', '....NNnnnn....', '...NNnnnnnn...', '...NNnhhhhn...', '..NNnhsssss...', '..NNnhsseSs...', '..NN.nsssss...', '.NNNnnnSSn....', '.NNmmmmbmmm...', '.NNmmmmbmmms..', '.NNmmmmbmmMs..', '.NNmmmbmmmM...', '.NNBBBBtBBB...', '.NN.mmmmmM....', '.N..mmmmmM....', '....mmm.mM....', '....bbb.bb....', '....bbb.bbb...', '....bBB.bBB...', '...bbBB.bbBB..', '...BBBB.BBBB..'] },
-  chaplain: { br: 14, hand: [12, 10], lantern: [0, 13], rows: ['..............', '.....nnnn.....', '....nnnnnn....', '...Nnnhhhnn...', '...NnhSssss...', '...NnhssesS...', '...NnhssssS...', '...NNnSSSn....', '..NnnttttnnN..', '..mmmmtTmmmm..', '.mmmmmtTmmmms.', '.MmmmmtTmmmm..', '.MmmmmtTmmmm..', '.MmmmtttTmmM..', '.MmmmmtTmmmM..', '.MmmmmtTmmmM..', 'MMmmmmtTmmmMM.', 'MMmmmmtTmmmMM.', 'MMMmmmtTmmMMM.', '.MMMMMMMMMMM..', '...BB...BB....', '..BBB...BBB...'] },
+  lightkeeper: { br: 14, hand: [12, 10], lantern: [0, 13], rows: ['..............', '.....nnnn.....', '....nnnnnn....', '...Nnnhhhnn...', '...NnhSssss...', '...NnhssesS...', '...NnhssssS...', '...NNnSSSn....', '..NnnttttnnN..', '..mmmmtTmmmm..', '.mmmmmtTmmmms.', '.MmmmmtTmmmm..', '.MmmmmtTmmmm..', '.MmmmtttTmmM..', '.MmmmmtTmmmM..', '.MmmmmtTmmmM..', 'MMmmmmtTmmmMM.', 'MMmmmmtTmmmMM.', 'MMMmmmtTmmMMM.', '.MMMMMMMMMMM..', '...BB...BB....', '..BBB...BBB...'] },
   squire: { br: 12, hand: [12, 11], buckler: [2, 11], rows: ['..............', '..............', '.....gwwwg....', '....gwwwwwg...', '..gggwwwwwggg.', '....Hssssss...', '....HssseSs...', '....HsssssS...', '.....SSSSS....', '...wgmmmmmgw..', '..wgmmmtmmMgw.', '..ggmmmtmmMss.', '..ssmmmtmmM...', '....BBBtBBB...', '....mmmmmmM...', '....mMM.mMM...', '....gwg.gwg...', '....ggg.ggg...', '...bbbB.bbbB..', '...BBBB.BBBB..'] },
   archer: { br: 11, hand: [11, 11], rows: ['..........r...', '.........rR...', '.....mmmmR....', '....mmmmmm....', '...MMmmmmmmm..', '....hsssss....', '....hssseSs...', '....hsssssS...', '.....SSSS.....', '...NnnnnnnN...', '..NnnnbnnnNs..', '..NnnnnbnnNs..', '..ss.nnnbnN...', '....BBBBtBB...', '....nnnnnnN...', '....nnN.nnN...', '....bbb.bbb...', '....bbb.bbb...', '....bBB.bBB...', '...bbBB.bbBB..', '...BBBB.BBBB..'] },
   hedge: { br: 14, hand: [11, 11], rows: ['......MM......', '.....MmmM.....', '......mmM.....', '.....MmmmM....', '....MmmmmmM...', '..MMMMMMMMMMM.', '....Hsssss....', '....HsseSs....', '....nnnnnnn...', '...Nnnnnnnb...', '..bbNnnnnbbs..', '..bbbNnnbbbs..', '..ssbbNNbbb...', '...bbbbtbbb...', '...bbbbbbbbB..', '..bbbbbbbbbB..', '..bbbbbbbbbBB.', '..BbbbbbbbbBB.', '..BBBBBBBBBBB.', '....BB..BB....', '...BBB..BBB...'] },
@@ -257,7 +257,7 @@ const CLASSES = {
   warden: { name: 'Warden', role: 'tank', body: 'warden', weapon: 'shield', pal: { m: '#3E63C9', M: '#243C86', r: '#E0524F', R: '#8E2A2E' }, pitch: 'Stand in front. Nothing gets past.', how: 'Tap an enemy to taunt it onto you. Tap as the boss winds up to block.', tapK: 'Taunt', abil: 'Shield Wall', abilTxt: 'For 6s the party takes 60% less damage, and the next heavy hit is blocked.', cd: 14, rows: [2], wname: 'Oak Tower Shield' },
   lanternmage: { name: 'Lanternmage', role: 'caster', body: 'mage', weapon: 'lstaff', pal: { m: '#7A48B4', M: '#442670', H: '#241532' }, pitch: 'Burn the whole pack at once.', how: 'Tap enemies to plant Embers. Lantern Flare sets them all off.', tapK: 'Ember', abil: 'Lantern Flare', abilTxt: 'Burst every enemy, then burn. Each Ember adds 30%.', cd: 12, rows: [0], wname: 'Lantern Staff' },
   ranger: { name: 'Ranger', role: 'striker', body: 'ranger', weapon: 'bow', pal: { n: '#4E7F42', N: '#2A4A28', m: '#8A6A3E', M: '#56401F', h: '#A0522D' }, pitch: 'Find the weak spot. Hit it hard.', how: 'Tap an enemy to focus it. You and your strikers switch to it.', tapK: 'Focus', abil: 'Volley', abilTxt: '10 arrows rain on the pack. Strikers attack faster for 8s.', cd: 12, rows: [1, 0], wname: 'Yew Longbow' },
-  chaplain: { name: 'Chaplain', role: 'support', body: 'chaplain', weapon: 'censer', pal: { n: '#EFE6D6', N: '#A99E8C', m: '#B23A44', M: '#6E1F2A' }, pitch: 'Keep them standing.', how: 'Tap an ally to heal them. Tap an enemy to smite it.', tapK: 'Heal', abil: 'Rally Hymn', abilTxt: 'Heal the party 40% and speed everyone up for 8s.', cd: 14, rows: [0], wname: 'Brass Censer' }
+  lightkeeper: { name: 'Lightkeeper', role: 'support', body: 'lightkeeper', weapon: 'censer', pal: { n: '#EFE6D6', N: '#A99E8C', m: '#B23A44', M: '#6E1F2A' }, pitch: 'Keep them standing.', how: 'Tap an ally to heal them. Tap an enemy to smite it.', tapK: 'Heal', abil: 'Rally Hymn', abilTxt: 'Heal the party 40% and speed everyone up for 8s.', cd: 14, rows: [0], wname: 'Brass Censer' }
 };
 const ROSTER = {
   tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', role: 'tank', circle: 'Hedgefolk', body: 'squire', weapon: 'sword', lvl: 18, pal: { m: '#7A8A3A', M: '#4A5422', t: '#C8A060', T: '#8A6A3A' },
@@ -303,7 +303,7 @@ function lineup() {
   return L;
 }
 function allowedCols(key) {
-  if (key === 'hero') return { warden: [2], ranger: [1, 0], lanternmage: [0], chaplain: [0] }[S.cls];
+  if (key === 'hero') return { warden: [2], ranger: [1, 0], lanternmage: [0], lightkeeper: [0] }[S.cls];
   const r = ROSTER[key];
   if (r.role === 'tank') return [2, 1];
   if (r.role === 'striker') return r.melee ? [2, 1] : [1, 0];
@@ -857,7 +857,7 @@ function classTap(tgt, auto) {
     case 'warden': if (isFoe) { taunt(hero, [tgt], 3); dmgFoe(hero, tgt, 12); } break;
     case 'lanternmage': if (isFoe) { tgt.embers = Math.min(5, tgt.embers + 1); pop('EMBER', '#FF9E3D', cx(tgt), tgt.gy - tgt.h - 6); spark(cx(tgt), cy(tgt), '#FF9E3D', 5, 20); if (!auto) dmgFoe(hero, tgt, 10); } break;
     case 'ranger': if (isFoe) { focus = tgt; tgt.mark = Math.max(tgt.mark || 0, 3); pop('FOCUS', '#5FC46E', cx(tgt), tgt.gy - tgt.h - 6); if (!auto) dmgFoe(hero, tgt, 18, { crit: Math.random() < 0.45 }); } break;
-    case 'chaplain':
+    case 'lightkeeper':
       if (isFoe) { dmgFoe(hero, tgt, 6, { col: '#F2C14E' }); tgt.vuln = Math.max(tgt.vuln, 0); pop('SMITE', '#F2C14E', cx(tgt), tgt.gy - tgt.h - 6); }
       else if (tgt) { if (charges <= 0) { pop('NO CHARGE', '#9A97B3', cx(tgt), tgt.gy - tgt.h - 6); break; } charges--; cast(hero); heal(hero, tgt, Math.round(tgt.max * 0.12)); }
       break;
@@ -869,7 +869,7 @@ function autoTap() {
     case 'warden': { const off = a.find(e => e.tgt && e.tgt !== party[0]); if (off) classTap(off, true); break; }
     case 'lanternmage': { const e = a.filter(x => x.embers < 5).sort((p, q) => q.hp - p.hp)[0]; if (e) classTap(e, true); break; }
     case 'ranger': { const e = a.find(x => x.dive) || a.find(x => x.key === 'wight' && x.chan) || a.slice().sort((p, q) => p.hp / p.max - q.hp / q.max)[0]; if (e && e !== focus) classTap(e, true); break; }
-    case 'chaplain': { const low = aliveP().sort((p, q) => p.hp / p.max - q.hp / q.max)[0]; if (low && low.hp / low.max < 0.6 && charges > 0) classTap(low, true); break; }
+    case 'lightkeeper': { const low = aliveP().sort((p, q) => p.hp / p.max - q.hp / q.max)[0]; if (low && low.hp / low.max < 0.6 && charges > 0) classTap(low, true); break; }
   }
 }
 function castAbility() {
@@ -885,7 +885,7 @@ function castAbility() {
       break;
     }
     case 'ranger': banner('VOLLEY', '#FF9E3D'); volleyT = 8; hero.anim = { t: 0, ph: [0.2, 0.08, 0.2] }; for (let i = 0; i < 10; i++) later(0.15 + i * 0.12, () => { const a = aliveF(); if (!a.length) return; const e = a[Math.floor(Math.random() * a.length)], x = cx(e) + (Math.random() - 0.5) * 8; shoot('arrow', x - 16, -4, x, cy(e), 0.26, '#FF9E3D', () => dmgFoe(hero, e, 40)); }); later(0.8, () => kick(0.2)); break;
-    case 'chaplain': banner('RALLY HYMN', '#6FCB6A'); hymnT = 8; flashIt('#F2E6A8', 0.3); cast(hero); aliveP().forEach((u, i) => later(0.1 + i * 0.1, () => { rings.push({ x: cx(u), y: u.gy, r1: 10, col: '#F2C14E', life: 0, max: 0.5, flat: 0.35, pillar: true }); heal(hero, u, Math.round(u.max * 0.4)); })); break;
+    case 'lightkeeper': banner('RALLY HYMN', '#6FCB6A'); hymnT = 8; flashIt('#F2E6A8', 0.3); cast(hero); aliveP().forEach((u, i) => later(0.1 + i * 0.1, () => { rings.push({ x: cx(u), y: u.gy, r1: 10, col: '#F2C14E', life: 0, max: 0.5, flat: 0.35, pillar: true }); heal(hero, u, Math.round(u.max * 0.4)); })); break;
   }
 }
 $('abil').addEventListener('click', e => { e.stopPropagation(); castAbility(); });
@@ -1128,7 +1128,7 @@ function uiTick(dt) {
   const w = foes.find(e => e.wind);
   const hint = $('hint');
   if (w) { const inWin = w.wind.dur - w.wind.t <= parryWin(); hint.classList.add('now'); $('hintK').textContent = inWin ? 'TAP NOW' : 'Get ready'; $('hintT').textContent = inWin ? 'Tap the stage to parry the heavy hit.' : 'The Wight is winding up. Tap when the ring turns gold.'; }
-  else { hint.classList.remove('now'); $('hintK').textContent = 'Tap: ' + c.tapK; $('hintT').textContent = c.how + (S.cls === 'chaplain' ? ' Heals left: ' + charges + '/3.' : '') + (T - lastTap > 4 ? ' (Auto-play is tapping for you.)' : ''); }
+  else { hint.classList.remove('now'); $('hintK').textContent = 'Tap: ' + c.tapK; $('hintT').textContent = c.how + (S.cls === 'lightkeeper' ? ' Heals left: ' + charges + '/3.' : '') + (T - lastTap > 4 ? ' (Auto-play is tapping for you.)' : ''); }
   party.forEach((u, i) => { const t = tiles[i]; if (!t) return; const f = u.hp / u.max; t.fi.style.width = (f * 100).toFixed(1) + '%'; t.fi.style.background = f > 0.5 ? '#6FCB6A' : f > 0.25 ? '#F2A03E' : '#E0524F'; t.sh.style.width = Math.min(100, u.shield / u.max * 100).toFixed(1) + '%'; t.sh.style.right = '0'; t.el.classList.toggle('down', !!u.down); t.eye.classList.toggle('on', u.eye > 0); });
 }
 
