@@ -357,6 +357,14 @@ const ART = (() => {
     const ck = 'e' + key + '|' + hashOf(variant == null ? null : variant), hit = cacheGet(ck); if (hit) return hit;
     const t0 = now();
     let rig = typeof src[key] === 'function' ? src[key](variant) : src[key];
+    if (rig && rig.b1) { // B1 rigs (13-art-enemies.js): kit pieces at art px, already posed
+      const set = {};
+      for (const f of ['idle0', 'idle1', 'wind', 'strike']) { set[f] = toCanvas(rasterize(rig.parts(f, variant && typeof variant === 'object' ? variant : {}))); stats.bakes++; }
+      set.hit = flash(set.idle0);
+      set.ms = now() - t0; stats.ms += set.ms;
+      stats.last['enemy:' + key] = Math.round(set.ms * 10) / 10;
+      return cachePut(ck, set);
+    }
     if (!rig || !rig.parts) return null;
     const vk = typeof variant === 'string' ? variant : variant && variant.elder ? 'elder' : null;
     if (vk && rig.variants && rig.variants[vk]) {

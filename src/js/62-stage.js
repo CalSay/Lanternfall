@@ -14,25 +14,46 @@ let resize, animate, draw, stageStats;
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
   let guardN = 0, blessN = 0, markLeft = 0, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  // Floating numbers and loot text. x / y are stage fractions from the core (y 0.2-0.55); they are
+  // drawn in the band between the foe header and the ground, stacked when they start together,
+  // and they fade out before they reach the header.
   const floats = [];
   function pushFloat(txt, color, big, x, y) {
-    floats.push({ txt, color, big, life: 0.95, x: x ?? (0.7 + (Math.random() - 0.5) * 0.12), y: y ?? 0.42, vy: big ? 0.28 : 0.2 });
+    const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
+    let n = 0, near = 0;
+    for (const f of floats) if (Math.abs(f.x - fx) < 0.3) { near++; if (f.life > 0.6) n++; }
+    // a busy spot keeps only the newest few: older text there fades out early
+    if (near >= 4) for (const f of floats) if (Math.abs(f.x - fx) < 0.3 && near-- >= 4) f.life = Math.min(f.life, 0.22);
+    floats.push({ txt, color, big, life: 0.95, x: fx, y: y ?? 0.42, off: Math.min(3, n) * (big ? 21 : 16) });
     if (floats.length > 24) floats.shift();
   }
 
   // ================= canvas and scene =================
   const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
-  let SW = 0, SH = 0, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1;
-  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x):
-  // foot-centre x / width per column (back, mid, front); the upper lane (0) stands LANE_Y px higher
-  // and LANE_X px further back and is drawn first.
-  const COLX = [0.15, 0.33, 0.51], LANE_X = 24, LANE_Y = 14;
+  let SW = 0, SH = 0, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
+  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x). The
+  // columns in use are spread over the party side (PARTY_X0..PARTY_X1 of the width, front column at
+  // X1), at most COL_MAX px apart. The upper lane (0) stands laneY px higher and about half a column
+  // further back, so every member shows between the two in front; it is drawn first and dimmed.
+  const PARTY_X0 = 0.15, PARTY_X1 = 0.52, COL_MAX = 78;
+  // Foe slots (fractions of the width) for a pack of 1, 2 or 3; one foe today.
+  const FOE_X = [[0.73], [0.66, 0.86], [0.62, 0.76, 0.9]];
+  let laneY = 14;
+  // Bottom of the foe header (name and HP bar) inside the stage, so text and sprites avoid it.
+  function readHud() {
+    const e = stageEl.querySelector('.mob');
+    hudB = e && e.offsetParent && !e.hidden ? e.offsetTop + e.offsetHeight : 0;
+  }
   resize = function () {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
-    SW = stageEl.clientWidth; SH = stageEl.clientHeight;
-    if (!SW || !SH) return;
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    if (!w || !h) return;
+    if (w === SW && h === SH && cv.width === Math.round(w * DPR)) return;
+    SW = w; SH = h;
     cv.width = Math.round(SW * DPR); cv.height = Math.round(SH * DPR);
     GY = Math.round(SH * 0.8);
+    laneY = Math.max(10, Math.min(20, Math.round(SH * 0.075)));
+    readHud();
     scene = null; layoutDirty = true; foe.key = '';
   };
   function pickScene() {
@@ -74,22 +95,26 @@ let resize, animate, draw, stageStats;
     });
     layoutDirty = true;
   }
-  function place(a, c) {
-    a.col = c.col; a.lane = c.lane;
-    a.hx = Math.round(SW * COLX[c.col]) - (c.lane === 0 ? LANE_X : 0);
-    a.hy = GY - (c.lane === 0 ? LANE_Y : 0);
-  }
   function layout() {
     layoutDirty = false;
     const cells = (S.party && S.party.cells) || {}, used = {};
     order = [hero].concat(comps);
-    for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; place(a, c); used[c.col + ':' + c.lane] = 1; }
+    for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
-      g.hx = -999;
-      for (let col = 2; col >= 0 && g.hx === -999; col--) for (let lane = 1; lane >= 0; lane--) if (!used[col + ':' + lane]) { used[col + ':' + lane] = 1; place(g, { col, lane }); break; }
+      g.col = -1;
+      for (let col = 2; col >= 0 && g.col < 0; col--) for (let lane = 1; lane >= 0; lane--) if (!used[col + ':' + lane]) { used[col + ':' + lane] = 1; g.col = col; g.lane = lane; break; }
     }
-    order = order.concat(ghosts.filter(g => g.hx !== -999));
+    order = order.concat(ghosts.filter(g => g.col >= 0));
+    // spread the columns in use; the upper lane sits half a column back
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = SW * PARTY_X1;
+    const D = cols.length > 1 ? Math.min(COL_MAX, (x1 - SW * PARTY_X0) / (cols.length - 1)) : COL_MAX;
+    const laneX = Math.round(Math.max(22, D * 0.48));
+    for (const a of order) {
+      const i = cols.indexOf(a.col);
+      a.hx = Math.round(x1 - (cols.length - 1 - i) * D) - (a.lane === 0 ? laneX : 0);
+      a.hy = GY - (a.lane === 0 ? laneY : 0);
+    }
     order.sort((a, b) => a.lane - b.lane || a.col - b.col);
     front = hero;
     for (const a of order) if (a.alpha === 1 && (a.col > front.col || (a.col === front.col && a.lane > front.lane))) front = a;
@@ -109,8 +134,9 @@ let resize, animate, draw, stageStats;
     const tg = target();
     let key, fr = null;
     if (tg === 'world') {
-      const gen = (online.world && online.world.gen) || 1;
-      const s = Math.max(0.6, Math.min(1.2, Math.floor(Math.min(SW * 0.5 / 156, (GY - 95) / 121) * 10) / 10));
+      const gen = (online.world && online.world.gen) || 1, bx = (ENEMY_RIGS.wyrm && ENEMY_RIGS.wyrm.box) || [-36, -70, 60, 0];
+      const bw = (bx[2] - bx[0]) * 2, bh = (bx[3] - bx[1]) * 2;
+      const s = Math.max(0.5, Math.min(1.1, Math.floor(Math.min(SW * 0.56 / bw, (GY - hudB - 4) / bh) * 10) / 10));
       key = 'w' + gen + ':' + s;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
     } else if (tg === 'node') {
@@ -134,8 +160,8 @@ let resize, animate, draw, stageStats;
   }
   function foeGeom() {
     const f = foe.fr && foe.fr.idle0;
-    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : 0.73));
-    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; }
+    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0]));
+    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; foe.x = Math.min(foe.x, SW - 6 - (f.c.width - f.ox)); }
     foe.left = foe.x - (f ? f.ox : 15); foe.top = GY - foe.h; foe.cy = GY - Math.round(foe.h * 0.5);
   }
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
@@ -261,7 +287,7 @@ let resize, animate, draw, stageStats;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); }
     refreshFoe(); foeGeom();
     if (layoutDirty) layout();
     if (wyrmHit > 0) wyrmHit -= dt;
@@ -273,7 +299,7 @@ let resize, animate, draw, stageStats;
     if (wallT > 0) wallT -= dt;
     if (hymnT > 0) hymnT -= dt;
     if (markLeft > 0) markLeft -= dt;
-    for (const f of floats) { f.life -= dt; f.y -= f.vy * dt; }
+    for (const f of floats) f.life -= dt;
     while (floats.length && floats[0].life <= 0) floats.shift();
     for (const a of order) stepActor(a, dt);
     stepFoe(dt);
@@ -311,14 +337,25 @@ let resize, animate, draw, stageStats;
     if (a.st === 2) return f.strike;
     return !reduced && ((T * 2 + a.ph) % 2) >= 1 ? f.idle1 : f.idle0;
   }
-  function shadowAt(x, w, a) {
-    ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, GY - 3, w * 2, 7);
+  function shadowAt(x, w, a, y) {
+    ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, (y ?? GY) - 3, w * 2, 7);
+  }
+  // The upper lane stands further back: its frames are drawn a little darker (cached copies).
+  const dimmed = new WeakMap();
+  function dimOf(c) {
+    let d = dimmed.get(c);
+    if (!d) {
+      d = document.createElement('canvas'); d.width = c.width; d.height = c.height;
+      const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,9,24,0.26)'; g.fillRect(0, 0, d.width, d.height);
+      dimmed.set(c, d);
+    }
+    return d;
   }
   function drawActor(a, cam) {
     const f = frameOf(a); if (!f) return;
     const hx = (a === hero ? heroHome() : a.hx) + a.dx - cam;
     ctx.globalAlpha = a.alpha;
-    ctx.drawImage(f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
+    ctx.drawImage(a.lane === 0 && !a.flash ? dimOf(f.c) : f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
     a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
   }
   // Lantern lighting (style study, direction D on a B1 stage): every emissive piece of a sprite
@@ -407,7 +444,7 @@ let resize, animate, draw, stageStats;
         ctx.globalCompositeOperation = 'source-over';
       }
     }
-    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, 13, 0.5 * a.alpha);
+    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * a.alpha, a.hy);
     // Shield Wall dome (back half)
     if (wallT > 0 && !gath) drawDome(cam, false);
     ctx.globalAlpha = 1;
@@ -468,16 +505,24 @@ let resize, animate, draw, stageStats;
     if (raid && Date.now() < rallyUntil) { ctx.fillStyle = '#F2C14E'; ctx.globalAlpha = 0.07 + 0.04 * Math.sin(T * 6); ctx.fillRect(0, 0, SW, SH); ctx.globalAlpha = 1; }
     if (flashA > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, flashA); ctx.fillStyle = `rgb(${flashRgb})`; ctx.fillRect(-4, -4, SW + 8, SH + 8); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
 
-    // crisp floating text
+    // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+    const top = hudB + 3, band = Math.max(20, GY - 6 - top);
     for (const f of floats) {
-      const age = 0.95 - f.life, pop = age < 0.08 ? 1.35 - age * 4 : 1;
-      const size = Math.round((f.big ? 21 : 15) * pop);
-      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2));
+      const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
+      const base = f.big ? 21 : 15, size = Math.round(base * pop);
+      const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
+      let y0 = lo + Math.max(0, Math.min(1, (f.y - 0.15) / 0.45)) * band * 0.55;
+      if (onFoe) y0 = Math.min(y0, Math.max(lo, foe.top + 14));   // start at the foe's head, not over its body
+      y0 = Math.min(GY - 6, y0 + f.off);
+      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22)), y = Math.max(lo, yr);
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / 10));
+      if (ctx.globalAlpha <= 0) continue;
       ctx.font = `700 ${size}px "Pixelify Sans", monospace`;
+      const hw = ctx.measureText(f.txt).width / 2 + 4, x = Math.max(hw, Math.min(SW - hw, f.x * SW));
       ctx.lineWidth = 4; ctx.strokeStyle = '#0B0810';
-      ctx.strokeText(f.txt, f.x * SW, f.y * SH);
-      ctx.fillStyle = f.color; ctx.fillText(f.txt, f.x * SW, f.y * SH);
+      ctx.strokeText(f.txt, x, y);
+      ctx.fillStyle = f.color; ctx.fillText(f.txt, x, y);
     }
     ctx.globalAlpha = 1;
     drawMs = drawMs * 0.95 + (performance.now() - t0) * 0.05;
