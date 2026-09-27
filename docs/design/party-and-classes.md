@@ -436,3 +436,13 @@ C1, C2 and C3 all touch `50-sim.js`: C1 merges first, C2 and C3 rebase on it.
 3. **Auto-cast:** hero ability auto-casts at half rate while idle (this spec), or manual only so the button always means "you are playing"?
 4. **Packs of 3 enemies** instead of one at a time. It gives AoE and tanks a job but changes how every fight looks. OK?
 5. **One hero, four classes:** classes share the hero's level and gear (this spec, free switching), or each class keeps its own gear loadout (more to collect, more to manage)?
+
+## Owner decisions (2026-09-27)
+
+These override anything above that disagrees.
+
+1. **Party gets its own tab.** Raid and Tavern merge into one "World" tab, keeping five tabs: Fight, Party, Gather, Forge, World.
+2. **Enemies come in packs of 3.** As specified.
+3. **Hero ability auto-casts at half rate** once unlocked at zone 10. Casting it manually stays twice as effective.
+4. **Each class keeps its own gear loadout.** Hero level stays shared. Store the loadouts as a new `S.loadouts = {warden: {...slots}, lanternmage: {...}, ...}` field, where each value maps slot to item id, the same shape as `S.equip`. `S.equip` stays the live, active loadout, so all existing code keeps working. Switching class copies `S.equip` into the old class's entry and loads the new class's entry, falling back to the current gear for a class never used. Migration seeds `loadouts.warden` from the existing `S.equip`. The same item can sit in several loadouts; salvage must refuse any item equipped in any loadout. Tools (pickaxe, axe) are shared across classes rather than per loadout.
+5. **A party wipe retreats one zone** (coordinator's call), and the party pushes back up automatically once it can hold that zone.
