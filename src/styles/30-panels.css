@@ -1,12 +1,13 @@
-.tabs { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 16px; border-bottom: 2px solid var(--line); }
-.tab { background: none; border: 0; padding: 6px 2px 6px; cursor: pointer; font: 600 13px var(--display); color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; display: grid; justify-items: center; gap: 2px; position: relative; }
+/* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
+.tabs { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 4; }
+.tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 12.5px/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
 .tab img { width: 20px; height: 20px; opacity: .55; }
-.tab[aria-selected="true"] { color: var(--bone); border-bottom-color: var(--ember); }
+.tab[aria-selected="true"] { color: var(--bone); border-top-color: var(--ember); background: linear-gradient(rgba(255,158,61,.10), transparent 80%); }
 .tab[aria-selected="true"] img { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,158,61,.5)); }
-.tab .dot { position: absolute; top: 4px; right: calc(50% - 16px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
+.tab .dot { position: absolute; top: 6px; right: calc(50% - 17px); width: 7px; height: 7px; background: var(--ember); box-shadow: 0 0 6px var(--ember); }
 
-.panels { flex: 1; overflow-y: auto; padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px)); -webkit-overflow-scrolling: touch; }
-.panel { display: grid; gap: 20px; }
+.panels { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px var(--gut) 20px; -webkit-overflow-scrolling: touch; }
+.panel { display: grid; gap: 16px; }
 .sec { display: grid; gap: 8px; }
 .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sec-title { font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; align-items: center; gap: 8px; }

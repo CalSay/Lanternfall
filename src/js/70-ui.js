@@ -2,16 +2,127 @@
 // and the section/tab registries for feature UI (75-*.js). Browser-only.
 // Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
 
-// ================= UI helpers =================
-function showToast(msg, kind, icon) {
-  const t = el('div', 'toast ' + (kind || ''));
-  icon = iconOf(icon);
-  if (icon) t.append(img(icon));
-  t.append(el('span', null, msg));
-  const box = $('toasts'); box.appendChild(t);
-  while (box.children.length > 3) box.firstChild.remove();
-  setTimeout(() => t.remove(), kind === 'loot' ? 6000 : 4200);
+// ================= notices: toasts and the bell log =================
+// Every notice goes to the log (bell, last 50). Priority decides whether it also pops:
+//   high (2): always pops, pushes out an older normal toast.     e.g. level up, zone cleared, unique loot, recruit
+//   normal (1): pops if there is room (2 on screen); otherwise it folds into the newest normal toast
+//               as "+N" and the bell count.                        e.g. boss failed, achievement, rare forge
+//   low (0): log only, bumps the bell count.                      e.g. equipped, salvaged, common forge, skill level
+// Toasts sit over the bottom of the stage box, never over the panel. Tap or swipe one away.
+const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
+const NOTE_KIND_PRIO = { loot: 2 };
+const NOTE_MS = [0, 2600, 4200];
+const notes = { log: [], unread: 0, seq: 0 };
+function notePrio(prio, kind) {
+  if (typeof prio === 'number') return Math.max(0, Math.min(2, prio | 0));
+  if (prio in NOTE_PRIO) return NOTE_PRIO[prio];
+  return kind in NOTE_KIND_PRIO ? NOTE_KIND_PRIO[kind] : 1;
 }
+function bellUpdate(ping) {
+  const b = $('bellBtn'), n = $('bellN');
+  n.hidden = !notes.unread; n.textContent = notes.unread > 9 ? '9+' : String(notes.unread);
+  b.classList.toggle('has', notes.unread > 0);
+  b.setAttribute('aria-label', notes.unread ? `Notices, ${notes.unread} new` : 'Notices');
+  if (ping && !reduced) { b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping'); }
+}
+function dropToast(t, how) {
+  if (t._gone) return; t._gone = true; clearTimeout(t._timer);
+  if (reduced) { t.remove(); return; }
+  t.classList.add(how || 'out'); setTimeout(() => t.remove(), 170);
+}
+function armToast(t) { clearTimeout(t._timer); t._timer = setTimeout(() => dropToast(t), NOTE_MS[t._p] + (t._kind === 'loot' ? 800 : 0)); }
+function fillToast(t, msg, url) {
+  t.textContent = '';
+  if (url) t.append(img(url));
+  t.append(el('span', 'tx', msg));
+  if (t._more) t.append(el('span', 'more', '+' + t._more));
+  t._msg = msg;
+}
+function makeToast(msg, kind, url, p) {
+  const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : ''));
+  t._p = p; t._kind = kind; t._more = 0;
+  t.setAttribute('role', 'status');
+  fillToast(t, msg, url);
+  // Tap to dismiss; swipe sideways to fling it away.
+  let x0 = null, dx = 0;
+  t.addEventListener('pointerdown', e => { e.stopPropagation(); x0 = e.clientX; dx = 0; clearTimeout(t._timer); try { t.setPointerCapture(e.pointerId); } catch (er) {} t.style.transition = 'none'; });
+  t.addEventListener('pointermove', e => { if (x0 == null) return; dx = e.clientX - x0; t.style.transform = `translateX(${dx}px)`; t.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 160)); });
+  const up = () => {
+    if (x0 == null) return; x0 = null; t.style.transition = '';
+    if (Math.abs(dx) > 48 || Math.abs(dx) < 6) { t.style.transform = `translateX(${dx < 0 ? -120 : dx > 6 ? 120 : 0}%)`; dropToast(t, 'gone'); }
+    else { t.style.transform = ''; t.style.opacity = ''; armToast(t); }
+  };
+  t.addEventListener('pointerup', up); t.addEventListener('pointercancel', up);
+  return t;
+}
+function showToast(msg, kind, icon, prio) {
+  const p = notePrio(prio, kind);
+  let url = null; try { url = iconOf(icon); } catch (e) {}
+  notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
+  if (notes.log.length > 50) notes.log.length = 50;
+  const box = $('toasts');
+  const live = [...box.children].filter(t => !t._gone);
+  const same = live.find(t => t._msg === msg);
+  if (p === 0 || (same && p < 2)) {
+    // Repeats and routine notices never pop: they only count on the bell (and on a matching toast).
+    if (same) { same._more++; fillToast(same, msg, url); armToast(same); }
+    notes.unread++; bellUpdate(true); return;
+  }
+  if (live.length >= 2) {
+    const normals = live.filter(t => t._p < 2);
+    if (p < 2) {
+      const into = normals[normals.length - 1];
+      notes.unread++; bellUpdate(true);
+      if (into) { into._more++; into.className = 'toast ' + (kind || '') ; fillToast(into, msg, url); armToast(into); }
+      return;
+    }
+    // high: make room by retiring the oldest normal toast (or the oldest toast)
+    const out = normals[0] || live[0];
+    out._gone = true; clearTimeout(out._timer); out.remove();
+  }
+  const t = makeToast(msg, kind, url, p);
+  box.appendChild(t);
+  armToast(t);
+}
+function openNoticeLog() {
+  if (typeof openSheet !== 'function') return;
+  const seenBefore = notes.seenSeq || 0;
+  notes.unread = 0; notes.seenSeq = notes.seq; bellUpdate(false);
+  for (const t of [...$('toasts').children]) dropToast(t);
+  openSheet(api => {
+    api.body.append(el('h2', 'nlog-h', 'Notices'));
+    if (!notes.log.length) { api.body.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
+    const list = el('div', 'nlog');
+    const now = Date.now();
+    const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
+    for (const n of notes.log) {
+      const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
+      r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+      list.append(r);
+    }
+    api.body.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
+  }, { small: true, label: 'Notices' });
+}
+$('bellIc').src = spriteURL('ui:bell', ['.....77.....', '....1111....', '...122221...', '..12222221..', '..12222221..', '..12222221..', '..12222221..', '.1222222221.', '122222222221', '111111111111', '.....11.....', '............'], { 1: '#B8862A', 2: '#F2C14E', 7: '#FFF3C4' });
+$('bellBtn').addEventListener('click', openNoticeLog);
+
+// ================= compact stage while the panel is scrolled =================
+// Scrolling the panel down shrinks the stage box to a strip (--stage-c); back at the top it grows
+// again. It only collapses when the panel would still scroll afterwards, so it cannot flicker.
+{
+  const panels = $('panels'), app = $('app'), box = $('stageBox');
+  let compact = false;
+  const setCompact = on_ => { if (on_ === compact) return; compact = on_; app.classList.toggle('compact', on_); };
+  panels.addEventListener('scroll', () => {
+    const y = panels.scrollTop;
+    if (!compact && y > 40) {
+      const gain = box.offsetHeight - (parseFloat(getComputedStyle(app).getPropertyValue('--stage-c')) || 124);
+      if (panels.scrollHeight - panels.clientHeight - gain > 48) setCompact(true);
+    } else if (compact && y < 6) setCompact(false);
+  }, { passive: true });
+}
+
+// ================= UI helpers =================
 // Updates the price in place. Rebuilding the spans on every ui() tick removed the element under the
 // player's finger, and the browser then dropped the click (the upgrade buttons felt unresponsive).
 function setPrice(btn, cost, ember) {
@@ -137,7 +248,7 @@ function ui(force) {
     $('tWrap').hidden = true;
   } else {
     $('zName').textContent = zoneName(S.zone);
-    $('zSub').textContent = S.zone === S.maxZone ? `Zone ${S.zone} · ${S.kills}/10 foes` : `Zone ${S.zone} · cleared`;
+    $('zSub').textContent = S.zone === S.maxZone ? `${S.kills}/10 foes` : 'Cleared';
     if (mob) {
       $('mName').textContent = mob.name;
       $('mHp').textContent = `${fmt(Math.max(0, mob.hp))} / ${fmt(mob.max)}`;
@@ -147,6 +258,8 @@ function ui(force) {
       if (mob.boss) $('tBar').style.width = Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%';
     }
   }
+  $('zStep').hidden = tg !== 'mob';
+  $('zNum').textContent = 'Zone ' + S.zone;
   $('zPrev').disabled = tg !== 'mob' || S.zone <= 1;
   $('zNext').disabled = tg !== 'mob' || S.zone >= S.maxZone;
   $('statNums').hidden = tg === 'node';
@@ -198,7 +311,7 @@ function registerTab({ id, label, icon, mount, update }) {
 }
 
 // ================= core event wiring =================
-on('toast', t => showToast(t.msg, t.kind, t.icon));
+on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio));
 on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));

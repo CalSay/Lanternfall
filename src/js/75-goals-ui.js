@@ -96,12 +96,12 @@
       head.append(el('h2', 'sec-title', 'Next up'));
       toggle = el('button', 'nu-tog');
       toggle.append(el('span', 'nu-chev'));
-      toggle.addEventListener('click', () => setMin(!S.nextUp.min, true));
+      toggle.addEventListener('click', () => { S.nextUp.picked = true; setMin(!S.nextUp.min, true); });
       head.append(toggle);
       list = el('div', 'nu-list');
       empty = el('p', 'note nu-empty', 'Defeat a few foes to see your next goals.');
       sec.append(head, list, empty);
-      setMin(S.nextUp.min);
+      setMin(S.nextUp.picked ? S.nextUp.min : true);
     },
     update(force) { render(force); }
   });

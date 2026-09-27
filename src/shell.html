@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
 <!-- @styles -->
 
-<div class="app">
+<div class="app" id="app">
   <header class="top">
     <div class="portrait"><img id="portrait" alt=""><b id="hLvl">1</b></div>
     <div class="who">
@@ -13,45 +13,43 @@
     </div>
     <div class="purse">
       <div class="coin"><img class="px" id="goldIc" alt=""><span id="gold">0</span></div>
-      <div class="coin" style="font-size:15px"><span class="ico ember"></span><span id="embers">0</span></div>
+      <div class="coin ember-coin"><span class="ico ember"></span><span id="embers">0</span></div>
     </div>
+    <button class="bell" id="bellBtn" type="button" aria-label="Notices"><img class="px" id="bellIc" alt=""><b class="bell-n" id="bellN" hidden>0</b></button>
   </header>
 
-  <div class="zonebar">
-    <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
-    <div class="zinfo"><div class="zname" id="zName">Mossy Hollow</div><div class="zsub" id="zSub">Zone 1</div></div>
-    <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
-  </div>
-
-  <div class="stage" id="stage">
-    <canvas id="cv"></canvas>
-    <div class="mob">
-      <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
-      <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
-      <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+  <!-- Layout rules: docs/design/layout.md. The stage box clips the stage; when the panel
+       scrolls down it shrinks to a strip (.app.compact) and the stage slides up inside it,
+       so the canvas never changes size. The HUD and toasts overlay the stage box. -->
+  <div class="stagebox" id="stageBox">
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="stage-hint" id="hint">Tap to strike</div>
     </div>
-    <div class="stage-hint" id="hint">Tap to strike</div>
+    <div class="hud">
+      <div class="hud-zone"><span class="zname" id="zName">Mossy Hollow</span><span class="zsub" id="zSub">Zone 1</span></div>
+      <div class="mob">
+        <div class="mob-line"><span class="mob-name" id="mName">Moss Slime</span><span class="mob-hp" id="mHp">10 / 10</span></div>
+        <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
+        <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
+      </div>
+      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Tap <b id="sTap">0</b></span></div>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
   </div>
 
-  <div class="stats">
+  <div class="ctrl">
     <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
       <button data-act="fight" aria-pressed="true">Fight</button>
       <button data-act="gather" aria-pressed="false">Gather</button>
       <button data-act="raid" aria-pressed="false">Raid</button>
     </div>
-    <div class="stat-nums" id="statNums">
-      <span>DPS <b id="sDps">0</b></span>
-      <span>Tap <b id="sTap">0</b></span>
+    <div class="zstep" id="zStep">
+      <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
+      <span class="znum" id="zNum">Zone 1</span>
+      <button class="navbtn" id="zNext" aria-label="Next zone">&rsaquo;</button>
     </div>
   </div>
-
-  <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
-    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
-    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
-    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
-  </nav>
 
   <div class="panels" id="panels">
     <!-- Fight -->
@@ -195,8 +193,14 @@
     </div>
     </section>
   </div>
-</div>
 
-<div class="toasts" id="toasts" aria-live="polite"></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
+    <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
+    <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
+    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
+  </nav>
+</div>
 
 <!-- @script -->

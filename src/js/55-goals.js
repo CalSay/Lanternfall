@@ -28,8 +28,9 @@ function registerGoal(g) {
 let topGoals;
 
 {
-  // Save field: min = the strip is collapsed to one line (75-goals-ui.js).
-  registerState('nextUp', { min: false });
+  // Save field: min = the strip is collapsed to one line (75-goals-ui.js); picked = the player
+  // has toggled it. Until then the strip starts collapsed (one line), whatever min says.
+  registerState('nextUp', { min: false, picked: false });
   const STICK = 0.06, CACHE_MS = 450, PER_SYS = 2;
   let shown = [];        // ids shown last time, in order
   const cache = new Map();  // n -> { at, list }
