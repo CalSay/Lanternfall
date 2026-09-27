@@ -1,0 +1,5 @@
+/* 60-mastery: zone mastery pips and bestiary rows */
+.row.ms-row { grid-template-columns: auto 1fr; }
+.ms-pips { display: inline-flex; gap: 3px; align-self: center; }
+.ms-pips i { width: 8px; height: 8px; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 1px #0B0810; }
+.ms-pips i.on { background: var(--gold); border-color: #8A6A1E; box-shadow: 0 0 4px rgba(242,193,78,.5); }

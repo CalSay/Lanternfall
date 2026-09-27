@@ -76,6 +76,10 @@ try {
   assert(st.a === 1 && g3.eval('fresh().zz_test.b.c') === 2, 'registerState merges into S and fresh()');
   let ticks = 0; g3.fn.onTick(() => ticks++); g3.fn.tick(0.1);
   assert(ticks === 1, 'onTick fires');
+  // zone mastery / bestiary (55-mastery.js)
+  assert(g3.eval('S.mastery && typeof S.mastery.zones === "object"'), 'mastery state registered');
+  g3.eval("emit('kill', { mob: { key: 'slime0', boss: false }, zone: 1, gold: 1, ess: 0, tier: 1 })");
+  assert(g3.eval('S.mastery.zones[1] === 1 && S.mastery.types.slime === 1'), 'kill increments mastery and bestiary');
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
 
 // ---- 3. fixture migration ----

@@ -229,6 +229,11 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 .gains { display: grid; gap: 6px; justify-items: center; }
 .gain { font: 600 22px var(--display); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .gain img { width: 24px; height: 24px; }
+/* 60-mastery: zone mastery pips and bestiary rows */
+.row.ms-row { grid-template-columns: auto 1fr; }
+.ms-pips { display: inline-flex; gap: 3px; align-self: center; }
+.ms-pips i { width: 8px; height: 8px; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 1px #0B0810; }
+.ms-pips i.on { background: var(--gold); border-color: #8A6A1E; box-shadow: 0 0 4px rgba(242,193,78,.5); }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; } }
 </style>
@@ -1186,6 +1191,65 @@ function syncGen() {
   }
   S.raid = { gen: w.gen, dmg: 0, maxHp: w.maxHp, name: w.name };
   save();
+}
+
+// ---- src/js/55-mastery.js ----
+// 55-mastery: zone mastery stars and the bestiary. Permanent progress, no DOM.
+// Zone mastery: kills per zone number -> up to 5 stars; +10% gold/dmg per star in that zone,
+// +1% dmg per star across all zones. Bestiary: kills per monster type -> 4 perk tiers.
+// Counts live kills only (offline/away gains do not emit per-kill events).
+
+const MASTERY_STARS = [25, 100, 300, 800, 2000];
+const BESTIARY_TIERS = [10, 100, 1000, 10000];
+const BESTIARY_PERK_VAL = [0.03, 0.06, 0.10, 0.15];
+// Perk per monster type, keyed by TYPES[].key. mod = addModifier key.
+const BESTIARY_PERKS = {
+  slime: { mod: 'essence', label: 'essence drops' },
+  bat: { mod: 'crit', label: 'crit chance' },
+  bones: { mod: 'gold', label: 'gold' },
+  beetle: { mod: 'gatherSpeed', label: 'gather speed' },
+  spore: { mod: 'offline', label: 'offline gains' },
+  golem: { mod: 'tap', label: 'tap damage' },
+  wraith: { mod: 'xp', label: 'XP' }
+};
+
+// Helpers for the UI (75-mastery-ui.js) and tools; filled in below.
+const masteryApi = {};
+
+{
+  registerState('mastery', { zones: {}, types: {} });
+
+  const starsFor = n => { let s = 0; while (s < MASTERY_STARS.length && n >= MASTERY_STARS[s]) s++; return s; };
+  const tierFor = n => { let t = 0; while (t < BESTIARY_TIERS.length && n >= BESTIARY_TIERS[t]) t++; return t; };
+  const zoneKills = z => S.mastery.zones[z] || 0;
+  const typeKills = k => S.mastery.types[k] || 0;
+  const totalStars = () => { let s = 0; for (const z in S.mastery.zones) s += starsFor(S.mastery.zones[z]); return s; };
+  const perkBonus = k => { const t = tierFor(typeKills(k)); return t ? BESTIARY_PERK_VAL[t - 1] : 0; };
+
+  Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus });
+
+  on('kill', ({ mob, zone, tier }) => {
+    const m = S.mastery;
+    const zb = starsFor(m.zones[zone] || 0);
+    m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1);
+    const za = starsFor(m.zones[zone]);
+    if (za > zb) {
+      toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% gold and damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
+    }
+    const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
+    if (!key || !BESTIARY_PERKS[key]) return;
+    const tb = tierFor(m.types[key] || 0);
+    m.types[key] = (m.types[key] || 0) + 1;
+    const ta = tierFor(m.types[key]);
+    if (ta > tb) {
+      const t = TYPES.find(x => x.key === key);
+      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round(BESTIARY_PERK_VAL[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good');
+    }
+  });
+
+  addModifier('dmg', () => (1 + 0.1 * starsFor(zoneKills(S.zone))) * (1 + 0.01 * totalStars()));
+  addModifier('gold', () => 1 + 0.1 * starsFor(zoneKills(S.zone)));
+  for (const k in BESTIARY_PERKS) addModifier(BESTIARY_PERKS[k].mod, () => 1 + perkBonus(k));
 }
 
 // ---- src/js/60-gfx.js ----
@@ -2146,6 +2210,69 @@ async function uiTavern() {
     td1.append(el('span', 'hero', String(r.name || 'Wanderer').slice(0, 18)), el('span', 'player', r.id === online.uid ? 'you' : ((names[r.id] && names[r.id].name) || '')));
     tr.append(el('td', 'rank', String(i + 1)), td1, ...[r.L || 1, r.maxZone || 1, r.gear || 0].map(v => el('td', 'n', fmt(+v || 0))));
     tb.append(tr);
+  });
+}
+
+// ---- src/js/75-mastery-ui.js ----
+// 75-mastery-ui: "Zone mastery" and "Bestiary" sections on the Fight tab.
+{
+  const MA = masteryApi;
+  const pct = v => Math.round(v * 100) + '%';
+
+  // ---- Zone mastery ----
+  let zRow;
+  registerSection('adv', {
+    id: 'mastery', title: 'Zone mastery',
+    mount(sec) {
+      zRow = makeRow(sec, '', false, iconURL('banner', '#F2C14E'));
+      zRow.btn.remove();
+      zRow.row.classList.add('ms-row');
+      zRow.pips = el('span', 'ms-pips');
+      for (let i = 0; i < MASTERY_STARS.length; i++) zRow.pips.append(el('i'));
+      zRow.own.after(zRow.pips);
+      zRow.fx = el('div', 'row-fx');
+      zRow.desc.after(zRow.fx);
+    },
+    update() {
+      const z = S.zone, n = MA.zoneKills(z), s = MA.starsFor(n), all = MA.totalStars();
+      zRow.nm.textContent = zoneName(z);
+      zRow.pips.querySelectorAll('i').forEach((p, i) => p.classList.toggle('on', i < s));
+      zRow.own.textContent = '';
+      zRow.desc.textContent = s >= MASTERY_STARS.length
+        ? `${fmt(n)} kills. Fully mastered.`
+        : `${fmt(n)} kills. ${fmt(MASTERY_STARS[s] - n)} more for the next star.`;
+      zRow.fx.textContent = `Here: +${s * 10}% gold and damage. All zones: +${all}% damage (${all} stars).`;
+    }
+  });
+
+  // ---- Bestiary ----
+  const bRows = [];
+  registerSection('adv', {
+    id: 'bestiary', title: 'Bestiary',
+    mount(sec) {
+      TYPES.forEach(t => {
+        const url = spriteURL('best:' + t.key, SPR[t.key], t.pal);
+        const r = makeRow(sec, t.name, false, url, 'portrait-ic');
+        r.btn.remove(); r.row.classList.add('ms-row');
+        r.fx = el('div', 'row-fx'); r.desc.after(r.fx);
+        r.t = t; bRows.push(r);
+      });
+    },
+    update() {
+      for (const r of bRows) {
+        const k = r.t.key, n = MA.typeKills(k), tier = MA.tierFor(n), perk = BESTIARY_PERKS[k];
+        const seen = n > 0;
+        r.ic.classList.toggle('ghost', !seen);
+        r.nm.textContent = seen ? r.t.name : '???';
+        r.own.textContent = seen ? fmt(n) + ' slain' : '';
+        r.fx.textContent = tier ? `+${pct(MA.perkBonus(k))} ${perk.label}` : '';
+        r.desc.textContent = tier >= BESTIARY_TIERS.length
+          ? 'All milestones reached.'
+          : seen
+            ? `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct(BESTIARY_PERK_VAL[tier])} ${perk.label}.`
+            : 'Not yet met.';
+      }
+    }
   });
 }
 
