@@ -1,0 +1,121 @@
+<title>Lanternfall Enemies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=Pixelify+Sans:wght@400;600;700&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #140F1A; --panel: #1F1827; --panel-2: #2A2233; --line: #3A2F47; --line-hi: #4E4060; --bone: #EFE6D6; --muted: #A597B4;
+  --ember: #FF9E3D; --gold: #F2C14E; --ink: #0B0810;
+  --display: "Pixelify Sans", "Courier New", monospace;
+  --body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--bone); font: 15px/1.45 var(--body); }
+.app { max-width: 980px; margin: 0 auto; padding: 16px 16px 40px; }
+h1 { margin: 0; font: 600 22px/1.1 var(--display); text-shadow: 0 2px 0 var(--ink); }
+header p { margin: 6px 0 12px; color: var(--muted); font-size: 14px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 14px; font-size: 14px; color: var(--muted); }
+.bar label { display: flex; gap: 6px; align-items: center; }
+.bar button { background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); padding: 5px 10px; font: 600 13px var(--display); cursor: pointer; }
+.bar button[aria-pressed="true"] { border-color: var(--ember); color: var(--ember); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 2px solid var(--ink); outline: 1px solid var(--line); }
+.card canvas { display: block; width: 100%; height: 230px; }
+.card.big canvas { height: 420px; }
+.card.big { grid-column: 1 / -1; }
+.cap { display: flex; justify-content: space-between; padding: 6px 10px 8px; font-size: 13px; color: var(--muted); }
+.cap b { color: var(--bone); font: 600 14px var(--display); }
+</style>
+<div class="app">
+  <header>
+    <h1>Enemy and node art</h1>
+    <p>Rigs from <code>src/js/13-art-enemies.js</code>, baked by the real game baker (<code>src/js/60b-baker.js</code>, <code>enemyFrames</code>). Each card shows the sprite at 1x (battle scale) and 3x, idling and attacking every few seconds.</p>
+  </header>
+  <div class="bar">
+    <button type="button" id="elder" aria-pressed="false">Elder (zone boss)</button>
+    <label>Zone cycle hue <input type="range" id="hue" min="0" max="6" value="0"> <span id="hueV">0</span></label>
+    <label>Wyrm generation <input type="range" id="gen" min="1" max="7" value="1"> <span id="genV">1</span></label>
+    <label>Node tier <input type="range" id="tier" min="1" max="5" value="1"> <span id="tierV">1</span></label>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<!-- The real game files: rig data, enemy data and the baker (60b-baker.js). -->
+<script src="../src/js/12-art-rigs.js"></script>
+<script src="../src/js/13-art-enemies.js"></script>
+<script src="../src/js/60b-baker.js"></script>
+<script>
+'use strict';
+const RMQ = matchMedia('(prefers-reduced-motion: reduce)');
+let reduced = RMQ.matches;
+
+function frameFor(t0, T, phase) {
+  const a = T - t0;
+  if (a >= 0 && a < 0.25) return 'wind';
+  if (a >= 0.25 && a < 0.55) return 'strike';
+  return reduced ? 'idle0' : (Math.floor(T * 1.6 + phase) % 2 ? 'idle1' : 'idle0');
+}
+function drawSprite(g, s, x, y, z) {
+  const dx = Math.round(x - s.ox * z), dy = Math.round(y - s.oy * z);
+  g.imageSmoothingEnabled = false; g.drawImage(s.c, dx, dy, s.c.width * z, s.c.height * z);
+  return s.lights.map(l => ({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z }));
+}
+
+const KEYS = ['slime', 'bat', 'bones', 'beetle', 'spore', 'golem', 'wraith', 'node:ore', 'node:wood', 'wyrm'];
+const ST = { elder: false, hue: 0, gen: 1, tier: 1 };
+const cards = [];
+const $ = id => document.getElementById(id);
+const rigOf = (key, v) => typeof ENEMY_RIGS[key] === 'function' ? ENEMY_RIGS[key](v) : ENEMY_RIGS[key];
+function variantOf(key) {
+  if (key === 'wyrm') return { gen: ST.gen, hue: ST.gen > 6 ? 40 * Math.floor((ST.gen - 1) / 6) : 0 };
+  if (key.startsWith('node:')) return { tier: ST.tier };
+  return { elder: ST.elder, hue: ST.hue * 70 };
+}
+function buildCards() {
+  const grid = $('grid');
+  for (const key of KEYS) {
+    const card = document.createElement('div'); card.className = 'card' + (key === 'wyrm' ? ' big' : '');
+    const cv = document.createElement('canvas');
+    const cap = document.createElement('div'); cap.className = 'cap';
+    const b = document.createElement('b'); b.textContent = rigOf(key, {}).name; const sm = document.createElement('span');
+    cap.append(b, sm); card.append(cv, cap); grid.appendChild(card);
+    cards.push({ key, cv, sm, set: null, phase: cards.length * 0.7 });
+  }
+}
+function rebake() {
+  for (const c of cards) {
+    const v = variantOf(c.key), rig = rigOf(c.key, v), elder = v.elder;
+    c.set = enemyFrames(c.key, v);
+    const box = elder ? rig.elderBox : rig.box, S = elder ? 1.4 : 1;
+    c.sm.textContent = `${c.key}${elder ? ' elder' : ''} - ${Math.round((box[2] - box[0]) * S)}x${Math.round((box[3] - box[1]) * S)} art px - ${c.set.ms.toFixed(0)}ms`;
+  }
+}
+function setup(cv) { const r = cv.getBoundingClientRect(), D = Math.min(window.devicePixelRatio || 1, 2); if (cv.width !== Math.round(r.width * D)) { cv.width = Math.round(r.width * D); cv.height = Math.round(r.height * D); } return { W: r.width, H: r.height, D, g: cv.getContext('2d') }; }
+
+let T = 0, last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  for (const c of cards) {
+    if (!c.set) continue;
+    const { W, H, D, g } = setup(c.cv); g.setTransform(D, 0, 0, D, 0, 0);
+    const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0E0B14'); gr.addColorStop(1, '#231C2E'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    const gy = H - 26; g.fillStyle = '#16121E'; g.fillRect(0, gy, W, H - gy); g.fillStyle = '#3A3052'; g.fillRect(0, gy, W, 1);
+    const t0 = 1 + c.phase + Math.floor((T - 1 - c.phase) / 3.6) * 3.6;
+    const f = frameFor(t0, T, c.phase), lights = [];
+    const big = c.key === 'wyrm';
+    const x1 = Math.round(W * 0.2), x3 = Math.round(W * (big ? 0.62 : 0.66)), z3 = big ? 2 : 3;
+    for (const [x, z] of [[x1, 1], [x3, z3]]) {
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(x, gy + 1, (big ? 40 : 14) * z, 2 * z, 0, 0, 7); g.fill();
+      lights.push(...drawSprite(g, c.set[f], x, gy, z));
+    }
+    charLightPass(g, lights, T, 1);
+    g.fillStyle = 'rgba(165,151,180,.8)'; g.font = '600 11px "Pixelify Sans", monospace'; g.textAlign = 'center';
+    g.fillText('1x', x1, H - 8); g.fillText(z3 + 'x', x3, H - 8);
+  }
+  requestAnimationFrame(loop);
+}
+$('elder').onclick = () => { ST.elder = !ST.elder; $('elder').setAttribute('aria-pressed', ST.elder); rebake(); };
+for (const k of ['hue', 'gen', 'tier']) $(k).oninput = e => { ST[k] = +e.target.value; $(k + 'V').textContent = ST[k]; rebake(); };
+buildCards(); rebake();
+requestAnimationFrame(t => { last = t; loop(t); });
+</script>
