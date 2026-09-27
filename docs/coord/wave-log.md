@@ -159,3 +159,11 @@ the branch too.) New targets, handed to the balance pass (BAL1):
   ground line at 80% of the stage height (update `.app.compact .stage` translateY if 62-stage moves it).
 - Owner feedback: menus are cluttered with lots of scrolling as systems pile up. Next: an information
   architecture pass (sub-tabs per tab, one section at a time, progressive disclosure).
+
+## Owner decision: game-first layout, no forced landscape (2026-09-27)
+
+The owner first picked landscape-only, then withdrew it: don't force landscape. Direction: the game
+scene is the main view in portrait; each tab opens as a full-screen menu over the game (with sub-views);
+landscape and desktop show the game left and the menu right, responsively.
+The owner's "wait" stopped two agents: the menu restructure (IA, no work saved) and the enemy + stage
+spacing pass (AR3, 6 uncommitted files left in its worktree). Restart them only when the owner says so.
