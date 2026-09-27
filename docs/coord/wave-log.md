@@ -147,3 +147,4 @@ the branch too.) New targets, handed to the balance pass (BAL1):
 - Damage ramp: flatten the exponential milestone steps (x2 per 25 upgrade levels, x2 per rank,
   +5% per hero level, gear tier jumps) and steepen costs, without creating dead time.
 - AR2b merged: Kestrel, Isolde, Oriel, Thessaly, Morwen, Vesper at reference quality (Vesper's lute moved to her front so it reads; accepted).
+- AR2a merged: Wren, Hesketh, Pip, Bram, Aldric, Anselm (real bell now), Caedmon (burning shield reads). All 18 companions at B1 quality.
