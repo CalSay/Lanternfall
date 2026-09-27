@@ -208,6 +208,7 @@ function awayGains(secs) {
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
+  emit('awayKills', { kills, zone: S.zone, lines: r.lines });
   r.note = `Your party kept fighting in ${zoneName(S.zone)}.`;
   return r;
 }

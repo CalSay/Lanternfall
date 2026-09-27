@@ -22,6 +22,9 @@
     hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', role: 'support', idx: -1 }
   };
   const IDX_KEY = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
+  // Any roster character (56-roster.js) the table above does not list.
+  const pc = k => PARTY_CHARS[k] || (typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k] : null);
+  const roster = () => typeof rosterLive === 'function' && rosterLive();
   // The 5 class gear slots. Weapon, head and charm are today's weapon, helm and charm;
   // off-hand and body arrive with crafting.
   const GEAR_NOUN = {
@@ -41,12 +44,12 @@
   }
   function compPortrait(key) {
     if (typeof portraitURL === 'function') { try { const u = portraitURL(key); if (u) return u; } catch (e) {} }
-    const i = PARTY_CHARS[key] ? PARTY_CHARS[key].idx : -1, c = COMPS[i >= 0 ? i : 0];
+    const i = pc(key) ? pc(key).idx : -1, c = COMPS[i >= 0 ? i : 0];
     return spriteURL('comp' + (i >= 0 ? i : 0), SPR.hero, { ...HERO_PAL, 1: c.col, 2: c.helm });
   }
   // Fielded companions: S.party.field, else the 3 highest owned old slots (what A1 migrates to).
   function fieldKeys() {
-    if (hasParty() && Array.isArray(S.party.field) && S.party.field.length) return S.party.field.filter(k => PARTY_CHARS[k]).slice(0, 3);
+    if (hasParty() && Array.isArray(S.party.field) && S.party.field.length) return S.party.field.filter(k => pc(k)).slice(0, 3);
     const owned = []; for (let i = S.comp.length - 1; i >= 0 && owned.length < 3; i--) if (S.comp[i] > 0) owned.push(IDX_KEY[i]);
     return owned;
   }
@@ -116,7 +119,7 @@
     }
     const nouns = (hasParty() && GEAR_NOUN[S.party.cls]) || {};
     for (const s of r.gear) {
-      const it = s.g.old ? S.equip[s.g.old] : null;
+      const it = s.g.old ? equipped(s.g.old) : null;
       const noun = nouns[s.g.id] || s.g.n;
       if (it) {
         setIc(s.ic, itemIcon(it.slot || s.g.old, it.t, it.u), it.u ? 'legendary' : it.r);
@@ -137,9 +140,9 @@
   let compSig = '', compRefs = [];
   function buildComps(box, keys) {
     box.textContent = ''; compRefs = [];
-    if (!keys.length) { box.append(el('p', 'note', 'Nobody fights beside you yet. Hire companions in the Fight tab.')); return; }
+    if (!keys.length) { box.append(el('p', 'note', 'Nobody fights beside you yet. Recruit companions in the Fight tab.')); return; }
     for (const k of keys) {
-      const d = PARTY_CHARS[k];
+      const d = pc(k);
       const card = el('div', 'pcard');
       const top = el('div', 'pc-top');
       const who = el('div', 'pc-who');
@@ -156,6 +159,11 @@
     const sig = keys.join(',') + '|' + typeof portraitURL;
     if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
     for (const r of compRefs) {
+      if (roster()) {
+        const rec = charRec(r.k);
+        r.stat.textContent = rec ? `Lv ${rec.lv} ${ROSTER_RANKS[rec.rank]} · ${fmt(charDps(r.k))} DPS` : 'Joins the fight soon';
+        continue;
+      }
       const i = r.d.idx, n = i >= 0 ? S.comp[i] : 0;
       let dps = 0; try { dps = i >= 0 ? compDpsOne(i) * n : 0; } catch (e) {}
       r.stat.textContent = n > 0 ? `${fmt(n)} strong · ${fmt(dps)} DPS` : 'Joins the fight soon';
@@ -172,7 +180,7 @@
     const heroCol = c && c.row != null ? (typeof c.row === 'number' ? c.row : ({ back: 0, mid: 1, front: 2 })[c.row]) : 2;
     put('hero', { col: heroCol == null ? 2 : heroCol, lane: 1 });
     const roleCol = { tank: 2, striker: 1, caster: 0, support: 0 };
-    keys.forEach((k, n) => put(k, { col: roleCol[PARTY_CHARS[k].role], lane: n % 2 }));
+    keys.forEach((k, n) => put(k, { col: roleCol[pc(k).role], lane: n % 2 }));
     return out;
   }
   function updateForm(grid) {
@@ -186,10 +194,10 @@
     for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
       const ks = at[lane + ':' + col] || [];
       const cell = el('div', 'pf-cell' + (ks.length ? ' occ' : '') + (ks.includes('hero') ? ' hero' : ''));
-      cell.setAttribute('aria-label', `${COL_NAME[col]} row, ${lane ? 'lower' : 'upper'} lane: ${ks.length ? ks.map(k => k === 'hero' ? S.name : PARTY_CHARS[k].name).join(', ') : 'empty'}`);
+      cell.setAttribute('aria-label', `${COL_NAME[col]} row, ${lane ? 'lower' : 'upper'} lane: ${ks.length ? ks.map(k => k === 'hero' ? S.name : pc(k).name).join(', ') : 'empty'}`);
       for (const k of ks) {
         cell.append(img(k === 'hero' ? heroPortrait() : compPortrait(k)));
-        cell.append(el('span', 'who', k === 'hero' ? S.name : PARTY_CHARS[k].name.split(' ')[0]));
+        cell.append(el('span', 'who', k === 'hero' ? S.name : pc(k).name.split(' ')[0]));
       }
       grid.append(cell);
     }
