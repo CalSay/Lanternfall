@@ -87,3 +87,5 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
 ## Waiting on the owner
 
 (none yet)
+
+PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description at milestones).
