@@ -5,7 +5,8 @@
 // Contract: docs/design/stage-a-plan.md ("State (A1)", "Class data and actions (A1)").
 //
 // Exposed names: HERO_CLASSES, COMP_CHAR_KEYS, CHAR_ROLE, chooseClass, castAbility,
-// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField.
+// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField,
+// and the stage HUD hooks unitHp, unitCd, bossTelegraph (Stage C combat replaces them).
 // Everything else is private (inside the block below, or prefixed pty).
 //
 // Stage A interim rules (monsters don't attack yet): every class effect is a damage
@@ -54,6 +55,15 @@ const CHAR_ROLE = {
 };
 
 let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField;
+// Stage HUD hooks (read by 62-stage.js about 10 times a second; Stage C combat fills them in).
+//   unitHp(key)     -> { hp, max, shield } | null   key: 'hero' or a character key. Party HP is not
+//                      simulated yet, so every unit is full. null = draw no bar.
+//   unitCd(key)     -> { t, max } | null            t: seconds left on the unit's ability (0 = ready).
+//                      The hero's is its class ability; companion abilities are not simulated yet (null).
+//   bossTelegraph() -> { kind, left, dur, target } | null   the boss wind-up now showing. kind: 'heavy'
+//                      (red "!"), 'dive' (blue, over the target ally), 'heal' (green); left and dur in
+//                      seconds; target: a unit key for 'dive'. Called every frame: return a kept object.
+let unitHp, unitCd, bossTelegraph;
 
 {
   registerState('party', {
@@ -200,6 +210,14 @@ let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, 
     return { name: ab.name, desc: ab.desc, cd: ab.cd, left: p.abilityCd, ready: p.abilityCd <= 0,
       autoUnlocked: S.maxZone >= T.autoCastZone, autoCast: p.autoCast };
   };
+
+  const FULL_HP = { hp: 1, max: 1, shield: 0 };
+  unitHp = () => FULL_HP;
+  unitCd = key => {
+    const c = key === 'hero' && cls(); if (!c) return null;
+    return { t: P().abilityCd, max: HERO_CLASSES[c].ability.cd };
+  };
+  bossTelegraph = () => null;
 
   // Active timed effects, for the UI: [{ id, name, left, stacks }].
   partyBuffs = function () {

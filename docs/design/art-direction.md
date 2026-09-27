@@ -36,14 +36,29 @@ over the crisp pixels.
 
 Stage zoom (62-stage.js): the stage is laid out in logical px and drawn at a zoom ZM of 1, 1.5, 2,
 2.5 ... so one art px is 2, 3, 4, 5 ... CSS px (whole pixels). ZM is the largest that keeps the
-logical stage at least 272 x 196; on a device pixel ratio of 1 or 2 only zooms that land on whole
-device pixels are used. Examples (DPR 2): 360 x 330 -> 1x (2 CSS px per art px), 412 x 520 and
-440 x 360 -> 1.5x (3 px), 760 x 700 -> 2.5x (5 px). The container is re-read on every resize. Taps
-use stage fractions, so they work at any zoom. On a strip under 210 logical px the ground drops to
-14 px above the bottom and the scenery is built taller so it runs off the bottom edge.
+logical stage at least minW x 196, where minW is 272 on square or wide stages and eases down to 216
+on tall portrait stages (height 1.3x the width or more), so the party fills a tall stage instead of
+standing small under an empty sky. On a device pixel ratio of 1 or 2 only zooms that land on whole
+device pixels are used. Examples (DPR 2): 336 x 526 (360 x 740 phone) and 388 x 701 (412 x 915) ->
+1.5x (3 px), 408 x 200 (740 x 360) -> 1x, 723 x 640 (1280 x 800, DPR 1) -> 2x. The container is
+re-read on every resize. Taps use stage fractions, so they work at any zoom. On a strip under 210
+logical px the ground drops to 14 px above the bottom and the scenery is built taller so it runs off
+the bottom edge. A stage with a floor band of 76 CSS px or more under the ground is "tall": the
+ability button (60 px) and the stage buttons move into the floor, and the upper lane stands higher
+(10% of the height, up to 40 px).
+
+Combat HUD (62-stage.js, drawn on the canvas in device px, toggled by the two-bar button on the
+stage, `S.settings.hud`): an HP bar over each party member (green, amber, red; shield in white) with
+an ability gauge under it (blue, gold when ready), an HP bar over each non-boss foe (red; champions
+orange with a gold edge), status chips (Guard, Blessing, Shield Wall, Rally Hymn, haste to the right
+of the hero's bar; Focus and Embers over the foe), the boss "!" telegraph (red heavy hit, green heal
+over the boss, blue dive over the ally) with a shrinking wind-up ring, and the Glint over a gather
+node. Data hooks for Stage C: `unitHp`, `unitCd`, `bossTelegraph` in 55-party.js. Screenshots:
+`img/hud-*.png`.
 
 Stage formation: 3 columns x 2 lanes. The columns in use spread from 6% to 55% of the logical
-width, at most 84 px apart; the upper lane stands 8.5% of the height higher (12-26 px) and about
+width (52% under 250 px, and short of a big foe's box), at most 84 px apart, pulled in so no sprite
+leaves the left edge; the upper lane stands 8.5% of the height higher (12-26 px) and about
 half a column further back, so each upper member shows between and above the two in front (slight
 overlap only). It is drawn first and dimmed. The foe stands at 78%. Melee units dash to the foe and
 back; ranged units fire from place. Floating numbers start just over the foe's head, stack upward
