@@ -1,0 +1,112 @@
+/* 60-exped: Expeditions in the Camp tab and the send sheet (75-exped-ui.js). */
+
+#sec-exped { gap: 8px; }
+
+/* ---- slots out now ---- */
+.ex-slots { display: grid; gap: 6px; }
+.ex-slot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: start; padding: 7px 9px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.ex-slot.back { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(242,193,78,.3), 0 2px 0 #0B0810, 0 0 14px rgba(242,193,78,.2); }
+.ex-pts { display: flex; }
+.ex-pt { width: 32px; height: 32px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; flex: none; }
+.ex-pts .ex-pt + .ex-pt { margin-left: -6px; }
+.ex-pt.r-rare { border-color: var(--r-rare); }
+.ex-pt.r-epic { border-color: var(--r-epic); }
+.ex-pt.r-legendary { border-color: var(--r-legendary); }
+.ex-pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.ex-mid { min-width: 0; display: grid; gap: 3px; }
+.ex-nm { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; font: 600 14.5px/1.15 var(--display); }
+.ex-nm span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-g { font: 600 12.5px var(--display); flex: none; }
+.ex-mid .bar { height: 8px; }
+.ex-mid .bar > i { background: var(--r-rare); }
+.ex-slot.back .bar > i { background: var(--gold); }
+.ex-sub { font-size: 12.5px; color: var(--muted); }
+.ex-slot.back .ex-sub { color: var(--gold); }
+.ex-foot { display: flex; gap: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 2px; }
+.ex-acts { display: flex; gap: 5px; margin-left: auto; }
+.ex-acts .mini { min-height: 40px; padding: 4px 9px; }
+.ex-acts .mini.on { border-color: var(--xp); color: var(--xp); }
+.ex-acts .mini.armed { background: #3A1E22; }
+.ex-free { min-height: 48px; background: none; border: 2px dashed var(--line-hi); color: var(--muted); font: 600 15px var(--display); cursor: pointer; }
+.ex-free:hover { color: var(--bone); border-color: var(--ember); }
+
+/* ---- filters ---- */
+.ex-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.ex-filters::-webkit-scrollbar { display: none; }
+.ex-chip { flex: none; min-height: 36px; padding: 4px 12px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.ex-chip.on { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
+
+/* ---- route cards ---- */
+.ex-routes { display: grid; gap: 5px; }
+.ex-band { display: flex; gap: 8px; align-items: baseline; margin-top: 4px; font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.ex-band b { font: 600 13px var(--display); color: var(--bone); letter-spacing: 0; }
+.ex-pow { margin-left: auto; }
+.ex-route { width: 100%; min-height: 60px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 6px 9px; text-align: left; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
+.ex-route:hover { border-color: var(--line-hi); }
+.ex-route .ic, .ex-stop .ic { width: 36px; height: 36px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
+.ex-route .ic img, .ex-stop .ic img { width: 24px; height: 24px; image-rendering: pixelated; }
+.ex-rmid { min-width: 0; display: grid; gap: 2px; }
+.ex-rnm { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font: 600 14.5px/1.15 var(--display); }
+.ex-rum { font: 600 11px var(--body); color: #1A1420; background: var(--gold); padding: 0 5px; }
+.ex-focus { font-size: 12px; color: var(--muted); }
+.ex-needs, .ex-nbox { display: flex; gap: 4px; flex-wrap: wrap; }
+.ex-need { font-size: 11.5px; line-height: 1.3; padding: 1px 5px; color: var(--muted); background: var(--well); border: 1px solid var(--line); }
+.ex-need.met { color: var(--xp); border-color: #3E5A38; }
+.ex-gr { font: 600 13px var(--display); text-align: right; }
+.ex-gr.none { color: var(--muted); font-weight: 500; }
+
+/* ---- log ---- */
+.ex-log { background: var(--well); border: 1px solid var(--line); padding: 0 9px; }
+.ex-log summary { min-height: 40px; display: flex; align-items: center; font: 600 13px var(--display); color: var(--muted); cursor: pointer; }
+.ex-log[open] { padding-bottom: 8px; }
+.ex-lrow { display: grid; gap: 1px; padding: 5px 0; border-top: 1px solid var(--line); }
+.ex-lt { display: flex; justify-content: space-between; gap: 8px; font: 600 13px var(--display); }
+.ex-lh { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+/* ---- send sheet ---- */
+.ex-sheet .bsheet-body { gap: 12px; }
+.ex-stop { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ex-stop .ic { width: 40px; height: 40px; }
+.ex-sh { margin: 0; font: 700 20px/1.1 var(--display); }
+.ex-ssub { font-size: 12.5px; color: var(--muted); }
+.ex-len { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.ex-seg { min-height: 44px; display: grid; place-items: center; align-content: center; gap: 0; background: var(--well); border: 2px solid var(--line); font: 600 16px var(--display); cursor: pointer; }
+.ex-seg small { font: 500 10.5px var(--body); color: var(--muted); }
+.ex-seg.on { background: var(--ember); color: #1A1420; border-color: var(--ember-deep); }
+.ex-seg:disabled { opacity: .5; cursor: default; }
+.ex-team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ex-tslot { min-height: 96px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 6px 4px; background: var(--well); border: 2px dashed var(--line-hi); cursor: pointer; }
+.ex-tslot img { width: 48px; height: 48px; image-rendering: pixelated; object-fit: contain; }
+.ex-tslot span { font: 600 14px var(--display); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex-tslot small { font-size: 11px; color: var(--muted); }
+.ex-tslot .plus { font-size: 26px; color: var(--muted); }
+.ex-tslot.has { border-style: solid; background: var(--panel); }
+.ex-tslot.r-rare { border-color: var(--r-rare); }
+.ex-tslot.r-epic { border-color: var(--r-epic); }
+.ex-tslot.r-legendary { border-color: var(--r-legendary); }
+.ex-tslot.picking { outline: 2px solid var(--ember); outline-offset: 1px; }
+.ex-best { justify-self: start; min-height: 40px; }
+.ex-bench { display: grid; gap: 4px; padding: 6px; background: var(--well); border: 1px solid var(--line); }
+.ex-bench > .mini { justify-self: start; min-height: 36px; }
+.ex-brow { width: 100%; min-height: 48px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: center; padding: 4px 6px; text-align: left; background: var(--panel); border: 1px solid var(--line); cursor: pointer; }
+.ex-brow.on { border-color: var(--ember); }
+.ex-btxt { min-width: 0; display: grid; }
+.ex-btxt b { font: 600 13.5px var(--display); }
+.ex-btxt small { font-size: 11.5px; color: var(--muted); }
+.ex-btxt .ex-bmet { color: var(--xp); }
+.ex-meter { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.ex-pips { display: flex; gap: 3px; }
+.ex-pips i { width: 18px; height: 10px; background: var(--line); border: 1px solid #0B0810; }
+.ex-meter b { font: 700 18px var(--display); }
+.ex-mult { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+.ex-hint { color: var(--bone); }
+.ex-haul { display: grid; gap: 4px; }
+.ex-hh { font: 600 11px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.ex-hl { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 7px; align-items: center; font-size: 13.5px; }
+.ex-hl img { width: 18px; height: 18px; image-rendering: pixelated; }
+.ex-hl.bonus { grid-template-columns: 1fr; color: var(--gold); font-size: 12.5px; }
+.ex-send { min-height: 48px; font-size: 16px; width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ex-mid .bar > i { transition: none; }
+}

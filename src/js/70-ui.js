@@ -8,7 +8,8 @@
 //   normal (1): pops if there is room (2 on screen, 1 on a short stage); otherwise it folds into the newest normal toast
 //               as "+N" and the bell count.                        e.g. boss failed, achievement, rare forge
 //   low (0): log only, bumps the bell count.                      e.g. equipped, salvaged, common forge, skill level
-// Toasts sit over the bottom of the stage box, never over the panel. Tap or swipe one away.
+// Toasts sit in the stage box under the HUD. While a full-screen menu covers the game (portrait),
+// they move over the bottom of the menu, just above the tab bar (placeToasts). Tap or swipe one away.
 const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
 const NOTE_KIND_PRIO = { loot: 2 };
 const NOTE_MS = [0, 2600, 4200];
@@ -68,8 +69,8 @@ function showToast(msg, kind, icon, prio) {
     if (same) { same._more++; fillToast(same, msg, url); armToast(same); }
     notes.unread++; bellUpdate(true); return;
   }
-  // Two toasts fit under the HUD on a full stage; a short stage (small phone, compact strip) takes one.
-  const room = $('stageBox').offsetHeight >= 200 ? 2 : 1;
+  // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
+  const room = box.classList.contains('over-menu') || $('stageBox').offsetHeight >= 200 ? 2 : 1;
   if (live.length >= room) {
     const normals = live.filter(t => t._p < 2);
     if (p < 2) {
@@ -86,43 +87,51 @@ function showToast(msg, kind, icon, prio) {
   box.appendChild(t);
   armToast(t);
 }
+// The bell sheet has two views: Notices (this visit's log) and the Journal (lifetime stats,
+// registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
+const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
+let logView = '';
 function openNoticeLog() {
   if (typeof openSheet !== 'function') return;
   const seenBefore = notes.seenSeq || 0;
   notes.unread = 0; notes.seenSeq = notes.seq; bellUpdate(false);
   for (const t of [...$('toasts').children]) dropToast(t);
+  const hasJournal = logPanel.children.length > 0;
   openSheet(api => {
-    api.body.append(el('h2', 'nlog-h', 'Notices'));
-    if (!notes.log.length) { api.body.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
-    const list = el('div', 'nlog');
-    const now = Date.now();
-    const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
-    for (const n of notes.log) {
-      const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
-      r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
-      list.append(r);
-    }
-    api.body.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
-  }, { small: true, label: 'Notices' });
+    const top = el('div', 'nlog-top');
+    const box = el('div', 'nlog-box');
+    const views = [['notes', 'Notices'], ['journal', 'Journal']];
+    const seg = el('div', 'vseg nlog-seg'); seg.setAttribute('role', 'tablist');
+    const show = v => {
+      logView = v; uiPrefs.views.log = v; saveUiPrefs();
+      for (const b of seg.children) b.setAttribute('aria-selected', String(b.dataset.v === v));
+      box.textContent = '';
+      if (v === 'journal') { logPanel.hidden = false; box.append(logPanel); ui(true); return; }
+      logPanel.hidden = true;
+      if (!notes.log.length) { box.append(el('p', 'note nlog-empty', 'Nothing yet. Level ups, loot and other news land here.')); return; }
+      const list = el('div', 'nlog');
+      const now = Date.now();
+      const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
+      for (const n of notes.log) {
+        const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
+        r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        list.append(r);
+      }
+      box.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
+    };
+    if (hasJournal) {
+      for (const [v, label] of views) {
+        const b = el('button', null, label); b.type = 'button'; b.dataset.v = v; b.setAttribute('role', 'tab');
+        b.addEventListener('click', () => show(v)); seg.append(b);
+      }
+      top.append(seg);
+    } else top.append(el('h2', 'nlog-h', 'Notices'));
+    api.body.append(top, box);
+    show(hasJournal && uiPrefs.views.log === 'journal' ? 'journal' : 'notes');
+  }, { small: true, label: 'Notices and journal', onClose() { logView = ''; logPanel.hidden = true; $('app').append(logPanel); } });
 }
 $('bellIc').src = spriteURL('ui:bell', ['.....77.....', '....1111....', '...122221...', '..12222221..', '..12222221..', '..12222221..', '..12222221..', '.1222222221.', '122222222221', '111111111111', '.....11.....', '............'], { 1: '#B8862A', 2: '#F2C14E', 7: '#FFF3C4' });
 $('bellBtn').addEventListener('click', openNoticeLog);
-
-// ================= compact stage while the panel is scrolled =================
-// Scrolling the panel down shrinks the stage box to a strip (--stage-c); back at the top it grows
-// again. It only collapses when the panel would still scroll afterwards, so it cannot flicker.
-{
-  const panels = $('panels'), app = $('app'), box = $('stageBox');
-  let compact = false;
-  const setCompact = on_ => { if (on_ === compact) return; compact = on_; app.classList.toggle('compact', on_); };
-  panels.addEventListener('scroll', () => {
-    const y = panels.scrollTop;
-    if (!compact && y > 40) {
-      const gain = box.offsetHeight - (parseFloat(getComputedStyle(app).getPropertyValue('--stage-c')) || 124);
-      if (panels.scrollHeight - panels.clientHeight - gain > 48) setCompact(true);
-    } else if (compact && y < 6) setCompact(false);
-  }, { passive: true });
-}
 
 // ================= UI helpers =================
 // Updates the price in place. Rebuilding the spans on every ui() tick removed the element under the
@@ -186,23 +195,229 @@ const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08
 document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
-// ================= tabs, rename =================
+// ================= menus: tabs, sub-views, open and close =================
+// Layout rules: docs/design/layout.md. Portrait: tapping a tab opens its menu full-screen over the game
+// (S.tab = that tab); closing it returns to the game view (S.tab = ''). Landscape and desktop (WIDE_Q):
+// the game sits left and a menu is always open on the right.
+// Each tab has 2-4 sub-views (registerView). Every direct child of a tab's panel belongs to one view
+// (data-view; none = the tab's first view; '*' = every view). The last view per tab is kept in
+// localStorage under UI_KEY (not the save).
 const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
-// The World tab is now the Camp tab (id 'world' kept for old saves). Camp, Raid and Tavern are its parts; their ids still open it.
+// The World tab is now the Camp tab (id 'world' kept for old saves). Camp, Raid and Tavern are its parts
+// and its sub-views; their ids still open it (setTab('raid')).
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
-function setTab(t) {
-  const part = TAB_ALIAS[t] ? $('p-' + t) : null;
-  t = TAB_ALIAS[t] || t;
-  S.tab = t;
+const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
+const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
+const WIDE_Q = '(min-aspect-ratio: 1/1) and (min-width: 600px)';
+const wideMQ = matchMedia(WIDE_Q);
+const isWide = () => wideMQ.matches;
+const UI_KEY = 'lanternfall.ui.v1';
+const uiPrefs = (() => { let o = null; try { o = JSON.parse(localStorage.getItem(UI_KEY)); } catch (e) {} return o && typeof o === 'object' ? o : {}; })();
+if (!uiPrefs.views || typeof uiPrefs.views !== 'object') uiPrefs.views = {};
+function saveUiPrefs() { try { localStorage.setItem(UI_KEY, JSON.stringify(uiPrefs)); } catch (e) {} }
+
+// registerView(tabId, { id, label, order, dot }) -> view
+//   A sub-view of a tab: one button in the menu's switcher. order sorts the buttons (lowest first; the
+//   first is the default view). dot() (optional, cheap) -> true puts an attention dot on the button
+//   and on the tab while that view is not open. Sections join a view with registerSection's `view`.
+function registerView(tabId, { id, label, order = 50, dot } = {}) {
+  tabId = TAB_ALIAS[tabId] || tabId;
+  if (!id) throw new Error('registerView: needs an id');
+  const list = VIEWS[tabId] || (VIEWS[tabId] = []);
+  let v = list.find(x => x.id === id);
+  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; }
+  else { v = { id, label: label || id, order, dot: dot || null }; list.push(v); }
+  list.sort((a, b) => a.order - b.order);
+  if (!VIEW_OF[id] && !TAB_IDS.includes(id)) VIEW_OF[id] = tabId;
+  if (S.tab === tabId) { buildViewSeg(tabId); applyView(tabId); }
+  return v;
+}
+function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
+registerView('adv', { id: 'upgrades', label: 'Upgrades', order: 10 });
+registerView('adv', { id: 'bounties', label: 'Bounties', order: 20,
+  dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
+registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30 });
+registerView('party', { id: 'team', label: 'Team', order: 10 });
+registerView('party', { id: 'roster', label: 'Roster', order: 20 });
+registerView('gat', { id: 'mine', label: 'Mining', order: 10 });
+registerView('gat', { id: 'wood', label: 'Wood', order: 20 });
+registerView('gat', { id: 'forage', label: 'Foraging', order: 30 });
+registerView('gat', { id: 'pack', label: 'Pack', order: 40 });
+registerView('forge', { id: 'make', label: 'Make', order: 10 });
+registerView('forge', { id: 'gear', label: 'Gear', order: 20 });
+registerView('forge', { id: 'uniques', label: 'Uniques', order: 30 });
+registerView('world', { id: 'camp', label: 'Camp', order: 10, dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
+registerView('world', { id: 'tav', label: 'Tavern', order: 20,
+  dot: () => { if (typeof visitorToday !== 'function') return false; const v = visitorToday(); return v.kind === 'hire' && !v.done; } });
+registerView('world', { id: 'almanac', label: 'Almanac', order: 30, dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
+registerView('world', { id: 'raid', label: 'Raid', order: 40 });
+
+function viewsOf(t) { return VIEWS[t] || []; }
+function curView(t) {
+  const list = viewsOf(t), want = uiPrefs.views[t];
+  return (list.find(v => v.id === want) || list[0] || { id: '' }).id;
+}
+// data-view holds one view id, several separated by spaces, or '*' (every view).
+function viewList(t, node) { return (node.dataset.view || (viewsOf(t)[0] || {}).id || '').split(/\s+/); }
+// The view to show for a node inside tab t's panel (from its top-level ancestor): the open view if
+// the node shows there, else its first view. null when it is not in that panel.
+function viewOfEl(t, node) {
+  const panel = $('p-' + t); if (!panel || !node || node === panel || !panel.contains(node)) return null;
+  while (node.parentNode !== panel) node = node.parentNode;
+  const vs = viewList(t, node), cur = curView(t);
+  return vs.includes('*') || vs.includes(cur) ? cur : vs[0];
+}
+function applyView(t) {
+  const panel = $('p-' + t); if (!panel) return;
+  const cur = curView(t);
+  for (const c of panel.children) { const vs = viewList(t, c); c.classList.toggle('off-view', !vs.includes('*') && !vs.includes(cur)); }
+  for (const b of $('viewSeg').children) b.setAttribute('aria-selected', String(b.dataset.view === cur));
+}
+function buildViewSeg(t) {
+  const seg = $('viewSeg'), list = viewsOf(t);
+  seg.textContent = ''; seg.hidden = list.length < 2;
+  seg.style.setProperty('--n', list.length);
+  for (const v of list) {
+    const b = el('button', null, v.label); b.type = 'button'; b.dataset.view = v.id;
+    b.setAttribute('role', 'tab');
+    const d = el('span', 'vdot'); d.hidden = true; b.append(d);
+    b.addEventListener('click', () => setView(t, v.id));
+    seg.append(b);
+  }
+}
+function setView(t, id) {
+  const same = curView(t) === id;
+  uiPrefs.views[t] = id; saveUiPrefs();
+  applyView(t);
+  if (!same) $('panels').scrollTop = 0;
+  ui(true); viewDots();
+}
+// Attention dots: on switcher buttons (views not open) and on tabs (any view of a tab not open).
+function viewDots() {
+  for (const b of $('viewSeg').children) {
+    const v = viewsOf(S.tab).find(x => x.id === b.dataset.view), d = b.querySelector('.vdot');
+    if (d) d.hidden = !(v && v.dot && b.getAttribute('aria-selected') !== 'true' && safeDot(v.dot));
+  }
+  document.querySelectorAll('.tab').forEach(tb => {
+    const t = tb.dataset.tab;
+    let d = tb.querySelector('.dot.vdot');
+    if (!d) { d = el('span', 'dot vdot'); d.hidden = true; tb.append(d); }
+    const other = tb.querySelector('.dot:not(.vdot):not([hidden])');
+    d.hidden = !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot));
+  });
+}
+
+// Toasts live on the stage; while a menu covers the game they move over the bottom of the menu.
+function placeToasts() {
+  const box = $('toasts'), over = !!S.tab && !isWide();
+  const home = over ? $('app') : $('stageBox');
+  if (box.parentNode !== home) home.append(box);
+  box.classList.toggle('over-menu', over);
+}
+function scrollMenuTo(node, smooth) {
+  const box = $('panels');
+  const y = Math.max(0, node.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12);
+  if (smooth && !reduced) { try { box.scrollTo({ top: y, behavior: 'smooth' }); return; } catch (e) {} }
+  box.scrollTop = y;
+}
+function renderMenu(t) {
+  const open = !!t;
+  $('app').classList.toggle('menu-open', open);
+  $('menu').inert = !open;
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
+  if (open) {
+    $('menuTitle').textContent = TAB_TITLE[t] || t;
+    const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc');
+    mi.hidden = !ti; if (ti && mi.getAttribute('src') !== ti.getAttribute('src')) mi.src = ti.src;
+  }
+  placeToasts();
+}
+// setTab(tab, sel?): open a tab's menu. tab is a tab id, a view id ('bounties', 'raid', 'almanac')
+// or an old part id ('tav'). sel (a CSS selector or node) picks the view that holds it and scrolls there.
+function setTab(t, sel) {
+  let view = null;
+  if (!TAB_IDS.includes(t) && (VIEW_OF[t] || TAB_ALIAS[t])) { view = t; t = VIEW_OF[t] || TAB_ALIAS[t]; }
+  if (!TAB_IDS.includes(t)) t = 'adv';
+  const find = () => sel ? (typeof sel === 'string' ? document.querySelector(sel) : sel) : null;
+  let target = find();
+  // Sections build some rows in update(), and only the open view updates: build the whole tab once.
+  if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }
+  const tv = target && viewOfEl(t, target); if (tv) view = tv;
+  const was = S.tab, wasView = curView(t);
+  S.tab = t; uiPrefs.tab = t;
+  if (view) uiPrefs.views[t] = view;
+  saveUiPrefs();
+  if (was !== t) buildViewSeg(t);
+  renderMenu(t); applyView(t);
   if (t === 'forge') $('forgeDot').hidden = true;
   if (t === 'world') $('raidDot').hidden = true;
-  $('panels').scrollTop = part ? part.offsetTop - $('panels').offsetTop : 0;
-  ui(true);
+  if (was !== t || curView(t) !== wasView) $('panels').scrollTop = 0;
+  ui(true); viewDots();
+  if (target && target.offsetParent !== null) scrollMenuTo(target);
 }
-document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+// Back to the game view (portrait only: wide screens always show a menu).
+function closeMenu() {
+  if (!S.tab || isWide()) return;
+  // Keyboard users keep their place: focus goes back to the tab that opened the menu.
+  if ($('menu').contains(document.activeElement)) { const tb = document.querySelector(`.tab[data-tab="${S.tab}"]`); if (tb) try { tb.focus({ preventScroll: true }); } catch (e) {} }
+  S.tab = '';
+  renderMenu('');
+  ui(true); viewDots();
+}
+// Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
+function initMenus() {
+  const last = TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : TAB_IDS.includes(S.tab) ? S.tab : 'adv';
+  S.tab = '';
+  if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
+}
+wideMQ.addEventListener('change', () => {
+  if (isWide() && !S.tab) setTab(TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : 'adv');
+  else renderMenu(S.tab);
+});
+// Tapping the open tab again closes its menu (portrait).
+function tabClick(t) { if (S.tab === t && !isWide()) closeMenu(); else setTab(t); }
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => tabClick(b.dataset.tab)));
+$('menuX').addEventListener('click', closeMenu);
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !S.tab || isWide()) return;
+  if (document.querySelector('.bsheet-ov, .modal, .away-ov, .join-ov, .create')) return;
+  closeMenu();
+});
+// Swipe down to close: on the menu's head, or on its content while it is scrolled to the top.
+{
+  const menu = $('menu'), head = $('menuHead'), panels = $('panels');
+  let y0 = null, x0 = 0, dy = 0, t0 = 0, drag = false;
+  const start = (x, y) => { if (!S.tab || isWide()) return; y0 = y; x0 = x; dy = 0; t0 = performance.now(); drag = false; };
+  const move = (x, y, e) => {
+    if (y0 == null) return;
+    dy = y - y0;
+    if (!drag) {
+      if (dy > 10 && dy > Math.abs(x - x0) * 1.4) { drag = true; menu.classList.add('dragging'); }
+      else { if (Math.abs(x - x0) > 12 || dy < -8) y0 = null; return; }
+    }
+    if (e && e.cancelable) e.preventDefault();
+    menu.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  };
+  const end = () => {
+    if (y0 == null) return; y0 = null;
+    if (!drag) return; drag = false;
+    const fast = dy / Math.max(1, performance.now() - t0) > 0.5;
+    menu.classList.remove('dragging');
+    if (dy > 110 || (fast && dy > 36)) closeMenu();
+    menu.style.transform = '';
+  };
+  head.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' && e.button === 0) start(e.clientX, e.clientY); });
+  addEventListener('pointermove', e => { if (e.pointerType !== 'touch') move(e.clientX, e.clientY, e); });
+  addEventListener('pointerup', e => { if (e.pointerType !== 'touch') end(); });
+  for (const n of [head, panels]) {
+    n.addEventListener('touchstart', e => { if (e.touches.length === 1 && (n === head || panels.scrollTop <= 0)) start(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    n.addEventListener('touchmove', e => move(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false });
+    n.addEventListener('touchend', end); n.addEventListener('touchcancel', end);
+  }
+}
 $('marchBtn').addEventListener('click', () => setActivity(S.activity === 'raid' ? 'fight' : 'raid'));
 $('renameForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -276,22 +491,36 @@ function ui(force) {
   if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
   if (S.tab === 'world') uiRaid();
   if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
-  for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
-  if (slowTick <= 0) slowTick = 1;
+  // Sections update while their tab's menu is open and their view is showing (Journal: while the bell sheet shows it).
+  for (const sec of SECTIONS) {
+    if (!sec.update) continue;
+    const on_ = sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
+    if (on_) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+  }
+  if (slowTick <= 0) { slowTick = 1; viewDots(); }
 }
 
 // ================= feature UI registries =================
-// registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
-// tabId: adv | party | gat | forge | world, or camp | raid | tav (the Camp tab's three parts).
+// registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', view: 'gear', mount(sec) {...}, update(force) {...} })
+// tabId: adv | party | gat | forge | world, or camp | raid | tav (the Camp tab's parts, each its own view),
+// or log (the bell sheet's Journal view).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
-// mount(sec) runs once now; update(force) runs from ui() while that tab is open
+// view: the sub-view it shows in (registerView; a new id makes a new view). Without it the section joins
+// the tab's first view. Pick a view; never just append to the end of a busy one (docs/design/layout.md).
+// mount(sec) runs once now; update(force) runs from ui() while its tab and view are open
 // (about 5 times a second, force = true right after player actions).
 const SECTIONS = [];
-function registerSection(tabId, { id, title, mount, update }) {
+function registerSection(tabId, { id, title, view, mount, update }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
   const sec = el('div', 'sec'); sec.id = 'sec-' + id;
   if (title) sec.append(el('h2', 'sec-title', title));
+  if (view && TAB_IDS.includes(tabId)) {
+    if (view !== '*' && !/\s/.test(view) && !viewsOf(tabId).some(v => v.id === view)) registerView(tabId, { id: view, label: title || view, order: 90 });
+    sec.dataset.view = view;
+    if (S.tab === tabId) queueMicrotask(() => applyView(tabId));
+  }
   panel.append(sec);
+  if (tabId !== 'log' && TAB_IDS.includes(tabId) && S.tab === tabId) applyView(tabId);
   if (mount) mount(sec);
   SECTIONS.push({ tab: tabId, id, update, el: sec });
   return sec;
@@ -303,9 +532,9 @@ function registerTab({ id, label, icon, mount, update }) {
   const b = el('button', 'tab', label);
   b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
   const url = iconOf(icon); if (url) b.prepend(img(url));
-  b.addEventListener('click', () => setTab(id));
+  b.addEventListener('click', () => tabClick(id));
   const nav = document.querySelector('.tabs'); nav.append(b);
-  TAB_IDS.push(id);
+  TAB_IDS.push(id); TAB_TITLE[id] = label;
   nav.style.gridTemplateColumns = 'repeat(' + TAB_IDS.length + ', 1fr)';
   const panel = el('section', 'panel'); panel.id = 'p-' + id; panel.hidden = true;
   $('panels').append(panel);

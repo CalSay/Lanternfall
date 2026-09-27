@@ -18,8 +18,9 @@
 //   drawAtmosphere(ctx, scene, T, W, H, camX = 0)   T in seconds; draws on top of everything.
 //
 // Per frame: 5 drawImage calls for the layers, 1-2 cached glow sprites per lamp (about 10-18
-// lamps), a few fog blobs and particles, and one stretched vignette. No gradients are made per
-// frame and nothing allocates. Flicker is static under prefers-reduced-motion.
+// lamps), a few fog blobs and particles, and one vignette. The fog and vignette are drawn 1:1 from
+// device-resolution copies (no per-frame scaling; see atmoDev). No gradients are made per frame.
+// Flicker is static under prefers-reduced-motion.
 let drawScene, drawAtmosphere;
 function sceneFor() { return null; } // replaced below
 {
@@ -760,6 +761,21 @@ function sceneFor() { return null; } // replaced below
     }
   };
 
+  // Device-resolution copies of the vignette overlay and the 4 fog bands for the current scene.
+  // The overlay is stored at half size and the fog at 64 px; scaling them every frame (bilinear, full
+  // stage) was most of the stage's raster time on phones. One slot: rebuilt when the scene, size or
+  // pixel ratio changes (a zone change), which costs one scaled draw each.
+  let dev = null;
+  function atmoDev(ctx, scene, W, H) {
+    let d = 1; try { d = ctx.getTransform().a || 1; } catch (e) {}
+    if (dev && dev.scene === scene && dev.d === d && dev.W === W && dev.H === H) return dev;
+    const mk = (src, w, h) => { const c = mkCanvas(Math.round(w * d), Math.round(h * d)), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(src, 0, 0, c.width, c.height); return c; };
+    const fg = glow(scene.fog.rgb, 0), fog = [];
+    for (let i = 0; i < 4; i++) fog.push(mk(fg, W * (0.7 + 0.15 * i), 18 + i * 6));
+    dev = { scene, d, W, H, ov: mk(scene.light.overlay, W, H), fog };
+    return dev;
+  }
+
   // lamp flicker: gentle for lanterns (1), livelier for fire (2), none for crystals and runes (0)
   const flickAt = (lp, T) => REDUCED || !lp.flick ? 1 : lp.flick === 2
     ? 0.86 + 0.08 * Math.sin(T * 11 + lp.ph) + 0.06 * Math.sin(T * 17.3 + lp.ph * 2)
@@ -771,15 +787,18 @@ function sceneFor() { return null; } // replaced below
     const smooth = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = true;
     ctx.globalCompositeOperation = 'source-over';
-    // fog bands: wide soft blobs drifting along the ground, one higher and fainter
-    const fg = glow(scene.fog.rgb, 0), fa = scene.fog.a;
+    // fog bands: wide soft blobs drifting along the ground, one higher and fainter.
+    // Drawn 1:1 from device-resolution copies (atmoDev) at whole device pixels: no per-frame scaling.
+    const dv = atmoDev(ctx, scene, W, H), d = dv.d, fa = scene.fog.a;
+    ctx.imageSmoothingEnabled = false;
     for (let i = 0; i < 4; i++) {
-      const bw = W * (0.7 + 0.15 * i), bh = 18 + i * 6;
-      const x = ((t * (4 + i * 2.5) + i * W * 0.45) % (W + bw)) - bw - camX * 0.8;
-      const y = (i === 3 ? GY - 50 : GY - 8 + i * 6) - bh / 2;
+      const bw = W * (0.7 + 0.15 * i), bh = 18 + i * 6, band = dv.fog[i], dw = band.width / d, dh = band.height / d;
+      const x = Math.round((((t * (4 + i * 2.5) + i * W * 0.45) % (W + bw)) - bw - camX * 0.8) * d) / d;
+      const y = Math.round(((i === 3 ? GY - 50 : GY - 8 + i * 6) - bh / 2) * d) / d;
       ctx.globalAlpha = fa * (i === 3 ? 0.6 : 1);
-      ctx.drawImage(fg, x, y, bw, bh); ctx.drawImage(fg, x + W + bw, y, bw, bh);
+      ctx.drawImage(band, x, y, dw, dh); ctx.drawImage(band, Math.round((x + W + bw) * d) / d, y, dw, dh);
     }
+    ctx.imageSmoothingEnabled = true;
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'lighter';
     const L = scene.light;
@@ -841,7 +860,8 @@ function sceneFor() { return null; } // replaced below
     }
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(L.overlay, 0, 0, W, H);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(dv.ov, 0, 0, dv.ov.width / d, dv.ov.height / d);
     ctx.imageSmoothingEnabled = smooth;
   };
 }

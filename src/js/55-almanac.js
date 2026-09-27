@@ -444,7 +444,7 @@ let OMENS, WEEKLY_GOALS;
           get label() { const g = A().goals[i]; return g ? WEEKLY_GOALS[g.k].txt(g.need) + ` (${num(g.have)}/${num(g.need)})` : ''; },
           pct() { const g = A().goals[i]; return !g || g.claimed ? 0 : Math.min(1, g.have / g.need); },
           done() { const g = A().goals[i]; return !g || g.claimed; },
-          go() { return { tab: 'world' }; }
+          go() { return { tab: 'world', view: 'almanac' }; }
         });
       } catch (e) { console.error('[lanternfall] registerGoal failed', e); }
     }

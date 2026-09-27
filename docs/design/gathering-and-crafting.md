@@ -341,6 +341,19 @@ is shown as a gold line, one per item.
 
 ### 4.7 Existing gear: nothing lost, nothing invalid
 
+**Superseded by the retool (owner bug: "I was able to equip a sword as a ranger").** Class gear
+only. Once the hero has a class (on load, at the first tick; on "Choose your path"), every
+non-unique legacy Sword becomes that class's weapon (Warblade, Staff, Bow, Censer) and every
+non-unique legacy Helm its head piece (Greathelm, Circlet, Hood, Mitre). Same id, tier, rarity,
++N; it stays worn. The item gets `rt` (the kind it was made as) and keeps that kind's base lines,
+so a Hood that was a Helm keeps the crit, crit damage and armour lines and a Bow that was a
+Sword keeps Might p: `gear()`, `heroDps()` and `totalDps()` do not move. A Mirror of Embers
+switch retools the hero's worn gear of the old class, and bag items of other classes that are not
+companion kinds, the same way (it no longer unequips). Legacy Sword/Helm fit only a hero with no
+class and can no longer be crafted. Weapon and head uniques still fit every class. One notice:
+"Your old swords and helms were reforged into Ranger gear." The table below is the K4 rule
+(`RETOOL.on = 0`), kept for the exact-dps check.
+
 | Existing item (`slot`) | New kind name | Fits | Stats |
 |---|---|---|---|
 | `weapon` (Sword) | Sword (legacy) | hero Weapon, any class | unchanged: Damage/Might +p% |

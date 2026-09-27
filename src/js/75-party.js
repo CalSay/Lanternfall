@@ -247,8 +247,9 @@
 
   // ================= roster grid =================
   const FILTERS = ['all', 'tank', 'striker', 'caster', 'support'];
-  let filt = 'all', sortBy = 'rarity', rosSig = '', rosRefs = null;
-  try { const v = JSON.parse(localStorage.getItem('lanternfall.party.ui') || '{}'); if (FILTERS.includes(v.f)) filt = v.f; if (v.s === 'level' || v.s === 'rarity') sortBy = v.s; } catch (e) {}
+  const SORTS = ['power', 'level', 'rarity'], SORT_NAME = { power: 'Power', level: 'Level', rarity: 'Rarity' };
+  let filt = 'all', sortBy = 'power', rosSig = '', rosRefs = null, rosTiles = {};
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.party.ui') || '{}'); if (FILTERS.includes(v.f)) filt = v.f; if (SORTS.includes(v.s)) sortBy = v.s; } catch (e) {}
   const keepUi = () => { try { localStorage.setItem('lanternfall.party.ui', JSON.stringify({ f: filt, s: sortBy })); } catch (e) {} };
   const SHORT = { quest: 'Quest', renown: 'Renown', token: 'Boss token', bestiary: 'Bestiary', achievement: 'Feat', tavern: 'Tavern visitor', craft: 'Crafting' };
   function shortHow(k, leadsById) {
@@ -261,8 +262,12 @@
   function buildRosterHead(sec) {
     const head = el('div', 'sec-head');
     const h = sec.querySelector('.sec-title'); const cnt = el('span', 'ros-count'); h.append(cnt); head.append(h);
-    const sort = btn('mini ros-sort', '', () => { sortBy = sortBy === 'rarity' ? 'level' : 'rarity'; keepUi(); rosSig = ''; ui(true); });
-    head.append(sort); sec.prepend(head);
+    sec.prepend(head);
+    // Sort chips (owner bug: the old single toggle read as random and gave no sense of what it did).
+    const so = el('div', 'ros-sortbar'); so.setAttribute('role', 'group'); so.setAttribute('aria-label', 'Sort by');
+    so.append(el('span', 'ros-sortlbl', 'Sort'));
+    const sort = SORTS.map(k => { const b = btn('', SORT_NAME[k], () => { sortBy = k; keepUi(); rosSig = ''; ui(true); }); so.append(b); return b; });
+    sec.append(so);
     const fl = el('div', 'ros-filt'); fl.setAttribute('role', 'group'); fl.setAttribute('aria-label', 'Show role');
     const fb = FILTERS.map(f => { const b = btn('', f === 'all' ? 'All' : PTY.ROLE_NAME[f], () => { filt = f; keepUi(); rosSig = ''; ui(true); }); fl.append(b); return b; });
     const grid = el('div', 'rgrid');
@@ -276,16 +281,24 @@
       const rec = charRec(k);
       return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k) };
     });
-    const sig = [filt, sortBy, typeof portraitURL, JSON.stringify(rows.map(x => [x.k, x.rec && x.rec.lv, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
-    if (sig === rosSig) return; rosSig = sig;
+    const pw = x => { try { return x.rec ? charDps(x.k) : 0; } catch (e) { return 0; } };
+    const shownPre = rows.filter(x => filt === 'all' || C(x.k).role === filt);
+    const rarP = x => RAR_ORDER[C(x.k).rarity];
+    const by = { power: (a, b) => pw(b) - pw(a) || rarP(a) - rarP(b), level: (a, b) => (b.rec ? b.rec.lv - a.rec.lv : 0) || rarP(a) - rarP(b), rarity: (a, b) => rarP(a) - rarP(b) || (b.rec ? b.rec.lv - a.rec.lv : 0) };
+    // Locked characters sort too (owner bug): Rarity mixes everyone by rarity (recruited first within a
+    // rarity); Power and Level list recruits first, then locked ones by how close they are to joining.
+    const near = x => x.ready ? 2 : (pctOf(leadsById[x.k]) || 0);
+    shownPre.sort((a, b) => sortBy === 'rarity'
+      ? rarP(a) - rarP(b) || (!!b.rec - !!a.rec) || (a.rec && b.rec ? b.rec.lv - a.rec.lv : near(b) - near(a)) || a.i - b.i
+      : (!!b.rec - !!a.rec) || (a.rec ? by[sortBy](a, b) : near(b) - near(a) || rarP(a) - rarP(b)) || a.i - b.i);
+    // Rebuild tiles only when something structural changes; levels update in place so taps are never lost.
+    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
+    for (const x of rows) { const t = rosTiles[x.k]; if (t && t.lv && x.rec) { const v = 'Lv ' + x.rec.lv; if (t.lv.textContent !== v) t.lv.textContent = v; } }
+    if (sig === rosSig) return; rosSig = sig; rosTiles = {};
     r.cnt.textContent = `${rows.filter(x => x.rec).length}/${rows.length}`;
-    r.sort.textContent = sortBy === 'rarity' ? 'Sort: Rarity' : 'Sort: Level';
-    r.sort.setAttribute('aria-label', `Sorted by ${sortBy}. Tap to sort by ${sortBy === 'rarity' ? 'level' : 'rarity'}.`);
+    r.sort.forEach((b, i) => b.setAttribute('aria-pressed', String(SORTS[i] === sortBy)));
     r.fb.forEach((b, i) => b.setAttribute('aria-pressed', String(FILTERS[i] === filt)));
-    const shown = rows.filter(x => filt === 'all' || C(x.k).role === filt);
-    const rar = x => RAR_ORDER[C(x.k).rarity];
-    shown.sort((a, b) => (!!b.rec - !!a.rec) ||
-      (sortBy === 'rarity' ? rar(a) - rar(b) || (b.rec ? b.rec.lv - a.rec.lv : 0) : (b.rec ? b.rec.lv - a.rec.lv : 0) || rar(a) - rar(b)) || a.i - b.i);
+    const shown = shownPre;
     r.grid.textContent = '';
     for (const x of shown) {
       const c = C(x.k);
@@ -293,7 +306,8 @@
       t.style.setProperty('--rc', frameCol(x.k));
       const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
       if (x.rec) {
-        fr.append(el('span', 'rt-lv', 'Lv ' + x.rec.lv), el('i', 'rp r-' + c.role));
+        const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
+        fr.append(lv, el('i', 'rp r-' + c.role));
         if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
         if (x.flag) fr.append(el('span', 'ndot'));
       } else fr.append(el('i', 'rp r-' + c.role));
@@ -345,6 +359,8 @@
     pdot.hidden = !any || S.tab === 'party';
     if (tabBtn) tabBtn.setAttribute('aria-label', 'Party' + (any ? ', something new' : ''));
   }
+  // The same news marks the Roster sub-view (70-ui registerView).
+  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -365,11 +381,11 @@
     id: 'party-syn', title: 'Synergies', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
     update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
   });
-  registerSection('party', { id: 'party-roster', title: 'Roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
   registerSection('party', {
-    id: 'party-leads', title: 'Leads', mount(sec) { sec.append(el('div', 'leads')); },
+    id: 'party-leads', title: 'Leads', view: 'roster', mount(sec) { sec.append(el('div', 'leads')); },
     update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
   });
   // Keep an open sheet live while the tab updates.
-  registerSection('party', { id: 'party-live', title: '', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
+  registerSection('party', { id: 'party-live', title: '', view: '*', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
 }

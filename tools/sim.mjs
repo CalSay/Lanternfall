@@ -9,8 +9,7 @@
 //             stations (55-crafting.js), gathers the family that blocks the next one (lowest
 //             unfinished tier of the set first), walks back to an older zone for a fight-only
 //             shortfall (Hide, Essence; --farm 0 turns that off), trains a station that is too low
-//             with any kind it makes, falls back to the legacy Sword/Helm while the station is too
-//             low, and reports G1/G2 (first full tier-1/tier-2 class set incl. the Charm), G4 (gather
+//             with any kind it makes (the legacy Sword/Helm are no longer made), and reports G1/G2 (first full tier-1/tier-2 class set incl. the Charm), G4 (gather
 //             share, first 3h), G6 (family the next set craft waits on) and G9 (first Trophy).
 //             The cycle starts 5 min in (fight 5, gather 5, then fight 10 / gather 5).
 //   --transmute 1: with --class, break higher tiers down (Transmute) to cover a class craft's shortfall.
@@ -27,8 +26,10 @@
 //   --tune k=v,k=v: override ROSTER_TUNE knobs (56-roster.js).  --unlock path=v: UNLOCK_TUNE (56c-unlocks.js).  --debug 1: roster trace per line.
 //   --pace k=v,k=v: override PACE knobs (40-rules.js); arrays as a/b/c (essTier=1/7/13/19/36).
 //   --syn v: SYN_TUNE.today (56b-synergy.js) for this run.
-//   --forge weapon|any: gear policy. weapon ("sword first", the default) keeps essence for the
-//             next sword; any is the pre-M6 policy, which often ran for hours with no sword.
+//   --forge weapon|any: gear policy. weapon ("weapon first", the default) keeps essence for the
+//             next class weapon; any is the pre-M6 policy, which often ran for hours with no weapon.
+//   Without --class there is no weapon or head gear (no hero is classless in the game, and the
+//   legacy Sword/Helm are no longer made): only the Charm and tools are forged.
 // Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
 // Rare/Epic/Legendary recruit) and T17 (worst-case token pity).
 //
@@ -160,10 +161,9 @@ function withReserve(E, res, fn) {
   try { fn(); } finally { E(`S.gold += ${g}`); held.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] += ${n}`); }); }
 }
 
-const SLOTS = ['weapon', 'helm', 'charm', 'pick', 'axe'];
+const SLOTS = ['charm', 'pick', 'axe'];
 // With --class, the mixed policy crafts its class kinds (55-crafting.js) for weapon, off-hand,
-// head and body, falling back to the legacy Sword/Helm while a class item is out of reach
-// (e.g. Hide, which only K5 fight drops will supply). Charm and tools stay as before.
+// head and body. Charm and tools stay as before. The legacy Sword/Helm are no longer made.
 const CLASS_POS = ['weapon', 'off', 'helm', 'body'];
 const HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
 const classKind = pos => cls ? E(`((CRAFT_FITS[${JSON.stringify(pos)}] || {})[${JSON.stringify(cls)}] || [])[0] || null`) : null;
@@ -194,36 +194,32 @@ function transmuteDown(fam, t, n) {
 // forged before promotions reserve anything. Without it, the old policy often runs with no
 // weapon for hours (other slots and promotions eat the matching-tier essence).
 const swordFirst = (args.forge || 'weapon') === 'weapon';
-// With --class the next weapon is the class kind (K6 craftItem via forgeItem), or the legacy
-// Sword while the class kind is out of reach (Hide has no source before K5).
-// BAL1: a classed hero cannot make the legacy Sword or Helm in the game (the Craft tab hides
-// them), so with --class the sim no longer falls back to them either.
-const weaponKind = t => classKind('weapon') || 'weapon';
-// Essence kept for the next weapons (by tier).
+// With --class the next weapon is the class kind (K6 craftItem via forgeItem). Without a class
+// there is none (the legacy Sword is no longer made).
+const weaponKind = () => classKind('weapon');
 const weaponHold = () => {
-  const cur = fn.equipped('weapon'), have = cur ? cur.t : 0, zt = fn.zoneTier(E('S.maxZone')), hold = {};
-  for (let t = have + 1; t <= zt; t++) {
-    const c = fn.craftCost(weaponKind(t), t);
-    for (const [k, n] of Object.entries(c)) if (k === 'ess') (hold[k] = hold[k] || [0, 0, 0, 0, 0])[t - 1] += n;
-  }
+  const cur = fn.equipped('weapon'), have = cur ? cur.t : 0, zt = fn.zoneTier(E('S.maxZone')), hold = [0, 0, 0, 0, 0];
+  if (weaponKind()) for (let t = have + 1; t <= zt; t++) hold[t - 1] = fn.craftCost(weaponKind(), t).ess || 0;
   return hold;
 };
 function forgeWeapon() {
-  if (!swordFirst) return;
+  if (!swordFirst || !weaponKind()) return;
   const cur = fn.equipped('weapon');
   for (let t = fn.zoneTier(E('S.maxZone')); t > (cur ? cur.t : 0); t--) {
-    const it = fn.forgeItem(weaponKind(t), t);
+    const it = fn.forgeItem(weaponKind(), t);
     if (it) { keepBest('weapon', it); return; }
   }
 }
+// Gather what the next class weapon is short of (its gatherable families, the scarcest first).
 function weaponNode() {
+  const k = weaponKind(); if (!k) return false;
   const cur = fn.equipped('weapon'), have = cur ? cur.t : 0;
   for (let t = fn.zoneTier(E('S.maxZone')); t > have; t--) {
-    const kind = weaponKind(t), c = fn.craftCost(kind, t);
-    if (fn.canCraft(kind, t).lv < E(`CRAFT_STATION_REQ[${t - 1}]`) || E(`S.mats.ess[${t - 1}]`) < (c.ess || 0)) continue;
-    const short = k => E(`S.mats.${k}[${t - 1}]`) / c[k];
-    const order = Object.keys(c).filter(k => E(`!!CRAFT_NODES[${JSON.stringify(k)}]`)).sort((a, b) => short(a) - short(b));
-    for (const k of order) if (short(k) < 1 && fn.setNode(k, t)) return true;
+    const c = fn.canCraft(k, t);
+    if (c.lv < c.need || E(`S.mats.ess[${t - 1}]`) < (c.cost.mats.ess || 0)) continue;
+    const cost = c.cost.mats, short = m => E(`S.mats.${m}[${t - 1}]`) / cost[m];
+    const order = Object.keys(cost).filter(m => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => short(a) - short(b));
+    for (const m of order) if (short(m) < 1 && fn.setNode(m, t)) return true;
   }
   return false;
 }
@@ -239,9 +235,9 @@ function forgeGear() {
 function forgeGear2() {
   if (swordFirst) {
     // Keep the next swords' essence out of the other slots' reach.
-    const hold = Object.entries(weaponHold()).map(([k, a]) => [k, a.map((n, i) => Math.min(n, E(`S.mats.${k}[${i}]`)))]);
-    for (const [k, a] of hold) a.forEach((n, i) => { if (n) E(`S.mats.${k}[${i}] -= ${n}`); });
-    try { forgeRest(); } finally { for (const [k, a] of hold) a.forEach((n, i) => { if (n) E(`S.mats.${k}[${i}] += ${n}`); }); }
+    const hold = weaponHold().map((n, i) => Math.min(n, E(`S.mats.ess[${i}]`)));
+    hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] -= ${n}`); });
+    try { forgeRest(); } finally { hold.forEach((n, i) => { if (n) E(`S.mats.ess[${i}] += ${n}`); }); }
   } else forgeRest();
 }
 function forgeRest() {
@@ -257,7 +253,6 @@ function forgeRest() {
     for (const slot of SLOTS) {
       const cur = fn.equipped(slot);
       if (cur && cur.t >= t) continue;
-      if (cls && CLASS_POS.includes(slot)) continue;   // classed heroes make class items only: the Craft tab hides the legacy Sword/Helm from them (BAL1)
       const it = fn.forgeItem(slot, t);
       if (it) keepBest(slot, it);
     }

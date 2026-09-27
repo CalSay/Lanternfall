@@ -3,6 +3,11 @@
 {
   const AL = () => S.almanac;
   const omenIc = o => iconOf({ ic: o.ic });
+  // Write only on change: setting textContent replaces the text node and makes the browser lay the
+  // panel out again, 5 times a second while the tab is open.
+  const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
+  const setCls = (e, c) => { if (e.className !== c) e.className = c; };
+  const setW = (e, pct) => { const w = pct + '%'; if (e.style.width !== w) e.style.width = w; };
 
   // One Omen detail block (used in the banner and in the Almanac card).
   // Returns { root, update() }.
@@ -68,8 +73,7 @@
 
   let almanacSec = null;
   function openAlmanac() {
-    setTab('world');
-    if (almanacSec) $('panels').scrollTop = almanacSec.offsetTop - $('panels').offsetTop;
+    setTab('almanac');
   }
 
   // ---------------- Fight tab banner ----------------
@@ -120,7 +124,7 @@
   const al = {};
   const rows = [];
   registerSection('world', {
-    id: 'almanac',
+    id: 'almanac', view: 'almanac',
     mount(sec) {
       almanacSec = sec;
       sec.classList.add('panel', 'world-part');
@@ -175,35 +179,35 @@
       almanac.ensureWeek();
       const o = almanac.today(), on = almanac.dareOn(), A = AL();
       const u = omenIc(o); if (al.img.getAttribute('src') !== u) al.img.src = u;
-      al.eye.textContent = `Today · ${almanac.catName(o.cat)} Omen`;
-      al.nm.textContent = o.n;
-      al.fx.textContent = o.fx + '.';
+      setTxt(al.eye, `Today · ${almanac.catName(o.cat)} Omen`);
+      setTxt(al.nm, o.n);
+      setTxt(al.fx, o.fx + '.');
       al.det.update(force);
 
       const dl = almanac.daysLeft();
-      al.wmeta.textContent = `Ends ${dl <= 1 ? 'tonight' : `in ${dl} days`} · Swaps ${A.swaps}`;
+      setTxt(al.wmeta, `Ends ${dl <= 1 ? 'tonight' : `in ${dl} days`} · Swaps ${A.swaps}`);
       al.auto.hidden = !A.auto;
-      if (A.auto) al.autoTx.textContent = `Last week's finished goals were claimed for you: ${A.auto.txt}.`;
+      if (A.auto) setTxt(al.autoTx, `Last week's finished goals were claimed for you: ${A.auto.txt}.`);
       A.goals.forEach((g, i) => {
         const r = rows[i]; if (!r) return;
         r.row.hidden = false;
-        r.nm.textContent = almanac.goalText(g);
-        r.tier.textContent = g.tier === 'steady' ? 'Steady' : 'Easy';
-        r.tier.className = 'om-tier ' + g.tier;
-        r.own.textContent = g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`;
-        r.bar.style.width = Math.min(100, g.have / g.need * 100) + '%';
-        r.desc.textContent = g.claimed ? 'Reward collected.' : 'Reward: ' + almanac.rewardText(almanac.reward(g));
+        setTxt(r.nm, almanac.goalText(g));
+        setTxt(r.tier, g.tier === 'steady' ? 'Steady' : 'Easy');
+        setCls(r.tier, 'om-tier ' + g.tier);
+        setTxt(r.own, g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`);
+        setW(r.bar, Math.min(100, g.have / g.need * 100));
+        setTxt(r.desc, g.claimed ? 'Reward collected.' : 'Reward: ' + almanac.rewardText(almanac.reward(g)));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
         r.sw.hidden = g.done || A.swaps <= 0;
         r.btn.hidden = !g.done || g.claimed;
         r.btn.disabled = !g.done || g.claimed;
-        r.qty.textContent = 'Done';
-        r.btn.querySelector('.price').textContent = 'Claim';
+        setTxt(r.qty, 'Done');
+        setTxt(r.btn.querySelector('.price'), 'Claim');
       });
       for (let i = A.goals.length; i < rows.length; i++) rows[i].row.hidden = true;
-      al.foot.textContent = `3 goals earn an Almanac Stamp; all 5 add a bonus crate. Stamps ${A.stamps}. Omens seen ${almanac.seenCount()} of ${OMENS.length}.`;
+      setTxt(al.foot, `3 goals earn an Almanac Stamp; all 5 add a bonus crate. Stamps ${A.stamps}. Omens seen ${almanac.seenCount()} of ${OMENS.length}.`);
     }
   });
 }

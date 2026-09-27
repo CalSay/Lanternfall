@@ -78,6 +78,8 @@ let craftUI = null;
   }
   const wornBy = id => wearers().get(id) || null;
   const heroFits = k => { const d = CRAFT_KINDS[k]; return !!(d && d.pos && fits(k, d.pos, 'hero')); };
+  // An item (not a kind): weapon and head uniques fit every class.
+  const heroFitsIt = it => { const d = itemKind(it); return !!(d && d.pos && fits(it, d.pos, 'hero')); };
   const partyFits = k => { const d = CRAFT_KINDS[k]; return d && d.comp ? roster().filter(c => fits(k, d.comp, c)) : []; };
   const compItem = (k, pos) => { const r = typeof charRec === 'function' ? charRec(k) : null; return r && r[pos] != null ? itemById(r[pos]) : null; };
 
@@ -193,8 +195,7 @@ let craftUI = null;
   // ================= Recipes =================
   let rec = null;
   function kindsFor(st) {
-    const legacyOk = heroWho() === 'any';
-    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && (!d.legacy || legacyOk); });
+    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy; }); // Sword/Helm are no longer made
   }
   const POS_ORDER = [...CRAFT_HERO_POS, ...CRAFT_COMP_POS];
   const kindOrder = k => { const d = CRAFT_KINDS[k]; return POS_ORDER.indexOf(d.pos || d.comp || 'charm'); };
@@ -413,7 +414,7 @@ let craftUI = null;
   // ================= Your gear =================
   let gearEls = null;
   registerSection('forge', {
-    id: 'craft-gear', title: 'Your gear',
+    id: 'craft-gear', title: 'Your gear', view: 'gear',
     mount(sec) {
       const g = el('div', 'cf-gear');
       gearEls = {};
@@ -435,6 +436,8 @@ let craftUI = null;
       if (!force && sig === gearEls.sig) return;
       gearEls.sig = sig;
       const EMPTY_IC = { weapon: 'sword', off: 'banner', helm: 'helm', body: 'plate', charm: 'charm', pick: 'pick', axe: 'axe', sickle: 'sickle' };
+      const w = heroWho();
+      if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS) {
         const e = gearEls[p], it = itemById(S.equip[p]);
         if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
@@ -450,7 +453,7 @@ let craftUI = null;
   let bag = null;
   const SORTS = { power: (a, b) => itemPower(b) - itemPower(a) || b.id - a.id, new: (a, b) => b.id - a.id, kind: (a, b) => (kindOrder(a.slot) - kindOrder(b.slot)) || itemPower(b) - itemPower(a) };
   registerSection('forge', {
-    id: 'craft-bag', title: 'Bag',
+    id: 'craft-bag', title: 'Bag', view: 'gear',
     mount(sec) {
       const head = sec.querySelector('.sec-title');
       const hw = el('div', 'sec-head'); sec.insertBefore(hw, head);
@@ -543,10 +546,10 @@ let craftUI = null;
     const tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
     const who = el('div', 'cf-ihw');
     who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
-    const meta = [RAR[it.r].n, `Tier ${it.t}`, d ? d.noun + (d.legacy ? ' (old style)' : '') : ''].filter(Boolean).join(' · ');
+    const meta = [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
     who.append(el('div', 'cf-im', meta));
     const fit = [];
-    if (d && d.pos) fit.push(heroFits(it.slot) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for a ${d.cls && HERO_CLASSES[d.cls] ? HERO_CLASSES[d.cls].name : 'another class'}`);
+    if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
     if (d && d.comp) fit.push(d.comp === 'trk' ? 'Trinket for any companion' : `${d.pos ? 'Also for' : 'Weapon for'} ${ROLE_NAME[d.role].toLowerCase()} companions`);
     who.append(el('div', 'cf-im', fit.join(' · ') + ` · Power ${fmt(itemPower(it))}`));
     if (wr) { const wb = el('div', 'cf-worn'); wb.append(img(portraitOf(wr.who)), el('span', null, wr.who === 'hero' ? `You wear it (${posName(wr.pos)})` : `${firstName(wr.who)} wears it`)); who.append(wb); }
@@ -573,7 +576,7 @@ let craftUI = null;
     if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
 
     // ---- compare ----
-    if (d && d.pos && heroFits(it.slot) && !(wr && wr.who === 'hero')) {
+    if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
       const cur = itemById(S.equip[d.pos]);
       const box = el('div', 'cf-cmp');
       if (!cur) box.append(el('p', 'note', `You wear nothing as ${posName(d.pos)}. Everything above is a gain.`));
@@ -595,13 +598,13 @@ let craftUI = null;
 
     // ---- wear: equip, give, take off ----
     const wear = [];
-    if (d && d.pos && heroFits(it.slot)) {
+    if (d && d.pos && heroFitsIt(it)) {
       const b = el('button', 'big forge cf-act', wr && wr.who === 'hero' ? 'You wear it' : 'Equip'); b.type = 'button';
       b.disabled = !!(wr && wr.who === 'hero');
       b.addEventListener('click', () => equipHero(it.id, d.pos));
       wear.push(b);
     }
-    const giveToggle = d && d.comp && heroFits(it.slot);
+    const giveToggle = d && d.comp && heroFitsIt(it);
     if (giveToggle) {
       const b = el('button', 'big cf-act cf-give', sheet.mode === 'give' ? 'Hide companions' : 'Give to...'); b.type = 'button';
       b.addEventListener('click', () => { sheet.mode = sheet.mode === 'give' ? null : 'give'; renderItem(); });
@@ -752,7 +755,7 @@ let craftUI = null;
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
         if (k) {
           const b = el('button', 'big forge', `Go to the ${STATION_SHORT[CRAFT_KINDS[k].st]}`); b.type = 'button';
-          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('forge'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
+          b.addEventListener('click', () => { st8.st = CRAFT_KINDS[k].st; st8.filt = isHero ? 'you' : 'party'; st8.focus = k; sheet.back = null; switching = true; api.close(true); switching = false; setTab('make'); const t = $('forgeBtn'); if (t) t.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' }); });
           body.append(b);
         }
         return;

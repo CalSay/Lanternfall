@@ -30,12 +30,40 @@ over the crisp pixels.
 | Party member | 34-38 tall (hs 0.82-1.1), 18-30 wide plus weapon | 2x: 68-76 CSS px | head 9 art px tall (hh 4.6) |
 | Head | 10 wide x 9 tall | | eyes are 1 x 2 px stamps |
 | Portrait | 16 x 16 crop around the head | show at 32, 48, 64 or 96 CSS px | never at a non-integer scale |
-| Enemies, nodes | old rigs at half scale | 2x | until the enemy pass redraws them |
-| Stage | about 328 x 244 CSS px on a 360 phone | | ground line GY = 80% of the height |
+| Monsters | slime 24, bat 26 (hovers), beetle 25, spore 32, bones 36, wraith 35 (hovers), golem 45 tall | 2x | elders 1.3x and crowned |
+| Wyrm, nodes | wyrm about 80 x 66 (scaled to fit the stage); nodes 20-40 | 2x | |
+| Stage | 124 to 800 CSS px tall, 360 to 800 wide | zoom 1x-4x | ground line GY = 80% of the height |
 
-Stage formation (62-stage.js): 3 columns x 2 lanes. Foot-centre x = 15%, 33%, 51% of the stage
-width (back, mid, front). The upper lane stands 14 px higher and 24 px further back and is drawn
-first. The foe stands at 73%. Melee units dash to the foe and back; ranged units fire from place.
+Stage zoom (62-stage.js): the stage is laid out in logical px and drawn at a zoom ZM of 1, 1.5, 2,
+2.5 ... so one art px is 2, 3, 4, 5 ... CSS px (whole pixels). ZM is the largest that keeps the
+logical stage at least minW x 196, where minW is 272 on square or wide stages and eases down to 216
+on tall portrait stages (height 1.3x the width or more), so the party fills a tall stage instead of
+standing small under an empty sky. On a device pixel ratio of 1 or 2 only zooms that land on whole
+device pixels are used. Examples (DPR 2): 336 x 526 (360 x 740 phone) and 388 x 701 (412 x 915) ->
+1.5x (3 px), 408 x 200 (740 x 360) -> 1x, 723 x 640 (1280 x 800, DPR 1) -> 2x. The container is
+re-read on every resize. Taps use stage fractions, so they work at any zoom. On a strip under 210
+logical px the ground drops to 14 px above the bottom and the scenery is built taller so it runs off
+the bottom edge. A stage with a floor band of 76 CSS px or more under the ground is "tall": the
+ability button (60 px) and the stage buttons move into the floor, and the upper lane stands higher
+(10% of the height, up to 40 px).
+
+Combat HUD (62-stage.js, drawn on the canvas in device px, toggled by the two-bar button on the
+stage, `S.settings.hud`): an HP bar over each party member (green, amber, red; shield in white) with
+an ability gauge under it (blue, gold when ready), an HP bar over each non-boss foe (red; champions
+orange with a gold edge), status chips (Guard, Blessing, Shield Wall, Rally Hymn, haste to the right
+of the hero's bar; Focus and Embers over the foe), the boss "!" telegraph (red heavy hit, green heal
+over the boss, blue dive over the ally) with a shrinking wind-up ring, and the Glint over a gather
+node. Data hooks for Stage C: `unitHp`, `unitCd`, `bossTelegraph` in 55-party.js. Screenshots:
+`img/hud-*.png`.
+
+Stage formation: 3 columns x 2 lanes. The columns in use spread from 6% to 55% of the logical
+width (52% under 250 px, and short of a big foe's box), at most 84 px apart, pulled in so no sprite
+leaves the left edge; the upper lane stands 8.5% of the height higher (12-26 px) and about
+half a column further back, so each upper member shows between and above the two in front (slight
+overlap only). It is drawn first and dimmed. The foe stands at 78%. Melee units dash to the foe and
+back; ranged units fire from place. Floating numbers start just over the foe's head, stack upward
+one row per text and fade before they reach the foe header (never higher than 16% down the stage).
+Screenshots: `img/stage-b1-<W>x<H>-<zone>.png`.
 
 ## 3. Palette and tones
 
@@ -192,12 +220,23 @@ Frame timing and movement are in 62-stage.js (wind 0.14 s, strike 0.12 s, recove
 - Glows use `lighter` blending, a flicker, and a slow pulse on pulsing pieces (lanterns, halos).
 - Scenery lamps, fog and the vignette belong to 63-scenery.js.
 
-## 10. Enemies (until the enemy pass)
+## 10. Enemies and gather nodes
 
-Enemy and gather-node rigs (13-art-enemies.js, 11-art-craft.js) keep their old format. The baker
-converts them to kit pieces at half scale and runs the same passes, so they get chunky 2x pixels,
-3 tones, section lines and the ink outline. Tiny pieces (eyes, sparkles) become whole-pixel stamps.
-The enemy pass should redraw them in the kit's anchor style.
+Monsters, elders, the raid wyrm and the gather nodes are drawn in B1 with kit pieces
+(13-art-enemies.js; crystal, fibre and herb node rigs in 11-art-craft.js) and baked by the same
+passes as the party (`enemyFrames(key, variant)`, rigs marked `b1: 1`). Reference sheet:
+`img/enemies-b1.png`; preview page `prototypes/enemies.html` (`#frames=slime,golem&s=4`, add
+`&elder` for elders).
+
+- Creatures face left, feet at 0. Bones with pivots and poses (`idle0`, `idle1`, `wind`, `strike`;
+  `hit` is a white flash). Rattlebones uses the character kit and is mirrored.
+- Materials: `k.c(hex, kind)` follows the zone-cycle hue (+70 degrees per cycle), `k.f` is fixed,
+  `k.glow` emits light. Eyes, runes and cores are glowing whole-pixel stamps or glow pieces.
+- Elders: 1.3x, a gold crown with a red gem (the golem wears a crystal crown) plus one extra
+  feature each (a skull in the slime, horns, a cape, a horn, twin caps, antlers). Champions keep
+  their gold aura from the stage.
+- Wyrm: one palette per raid generation (`ENEMY_RIGS.wyrm.gens`); the stage fits it with `S`.
+- Nodes: `{ tier: 1-5 }` recolours the material and adds detail and glow at higher tiers.
 
 ## 11. Checklist for a new or reworked character
 

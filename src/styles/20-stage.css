@@ -1,18 +1,14 @@
-/* stage box: clips the stage. Full height at the top of the panel, a strip (--stage-c) once the
-   panel is scrolled. The stage inside keeps its full height (so 62-stage never re-lays out) and
-   slides up so the ground line (80% down, GY in 62-stage) stays in view. */
-.stagebox { position: relative; flex: none; height: var(--stage-h); margin: 0 var(--gut); border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; transition: height .22s ease-out; }
-.stage { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--stage-h) - 4px); overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; transition: transform .22s ease-out; }
+/* stage box: the game's main view. It grows to fill the game column (the canvas reads its size;
+   62-stage re-lays out on resize), between a floor and a ceiling so the scene keeps its proportions. */
+.stagebox { position: relative; flex: 1 1 auto; min-height: 180px; margin: 2px var(--gut) 0; border: 2px solid #0B0810; outline: 2px solid var(--line-hi); outline-offset: 0; overflow: hidden; background: #0e0b12; }
+.stage { position: absolute; inset: 0; overflow: hidden; background: #0e0b12; touch-action: manipulation; cursor: crosshair; user-select: none; -webkit-user-select: none; }
 .stage > canvas { display: block; width: 100%; height: 100%; }
-.app.compact .stagebox { height: var(--stage-c); }
-.app.compact .stage { transform: translateY(max(calc(var(--stage-c) - var(--stage-h)), calc(var(--stage-c) - 30px - (var(--stage-h) - 4px) * .8))); }
 
 /* HUD over the stage: zone line, foe name and HP at the top, DPS and Tap at the bottom left.
    It never takes taps; they fall through to the stage. */
 .hud { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .hud-zone, .mob { position: relative; }
 .hud::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 64px; background: linear-gradient(rgba(11,8,16,.62), rgba(11,8,16,0)); }
-.app.compact .hud::before { height: 36px; }
 .hud-zone { display: flex; align-items: baseline; gap: 8px; padding: 5px 8px 0; min-width: 0; }
 .zname { font: 600 14px/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; text-shadow: 0 2px 0 #000; }
 .zsub { flex: none; font: 600 10.5px/1.2 var(--body); color: #CFC3DC; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 4px #000; }
@@ -26,10 +22,6 @@
 .hpbar > i.fill { background: var(--hp); box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25); }
 .timer { height: 4px; background: #0B0810; }
 .timer > i { display: block; height: 100%; background: var(--gold); width: 100%; }
-.app.compact .hud-zone, .app.compact .sfx-btn { display: none; }
-.app.compact .mob { padding-top: 3px; gap: 1px; }
-.app.compact .mob-name, .app.compact .mob-hp { font-size: 11.5px; }
-.app.compact .hpbar { height: 6px; border-width: 1px; }
 .stat-nums { position: absolute; left: 8px; bottom: 5px; display: flex; gap: 10px; font: 500 11px var(--body); letter-spacing: .06em; text-transform: uppercase; color: #CFC3DC; text-shadow: 0 1px 0 #000, 0 0 4px #000, 0 0 2px #000; }
 .stat-nums b { color: var(--bone); font: 600 13px var(--display); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .stage-hint { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; font: 600 12px var(--display); color: rgba(239,230,214,.8); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; transition: opacity .6s; text-shadow: 0 2px 0 #000; }
@@ -50,15 +42,28 @@
 .navbtn:disabled { opacity: .3; cursor: default; }
 .znum { min-width: 58px; text-align: center; font: 600 13px/1.1 var(--display); color: var(--bone); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* ability button (62-stage): round, top-right under the HP bar */
-.abil { position: absolute; right: 8px; bottom: calc(20% + 10px); width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember); background: radial-gradient(#4a2a20, #24141a); box-shadow: 0 3px 0 #0B0810, 0 0 10px rgba(255,158,61,.3); cursor: pointer; display: grid; place-items: center; overflow: hidden; padding: 0; touch-action: manipulation; }
+/* ability button (62-stage): round, right side, just over the ground line on short stages. On tall
+   stages (.stage.tall: a floor band of 76 px or more under the ground) it is bigger and sits in the
+   floor, bottom right, beside the sound and battle-bar buttons. Cooldown: a dark pie sweep and the
+   seconds left. Auto-cast on: a gold ring around it. */
+.abil { position: absolute; right: 8px; bottom: calc(20% + 10px); width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember); background: radial-gradient(#4a2a20, #24141a); box-shadow: 0 3px 0 #0B0810, 0 0 10px rgba(255,158,61,.3); cursor: pointer; display: grid; place-items: center; overflow: hidden; padding: 0; touch-action: manipulation; outline: 0 solid transparent; outline-offset: 1px; }
 .abil[hidden] { display: none; }
 .abil .abil-ic { width: 24px; height: 24px; image-rendering: pixelated; }
-.abil .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(11,8,16,.78) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
-.abil .n { position: absolute; font: 700 17px var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810; pointer-events: none; }
-.abil.auto { border-color: var(--gold); }
+.abil .cd { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(rgba(11,8,16,.8) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
+.abil .n { position: absolute; font: 700 17px var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 3px #0B0810; pointer-events: none; }
+.abil.auto { outline: 3px solid var(--gold); }
 .abil.ready { animation: abil-glow 1.2s ease-in-out infinite; }
 .abil.nope { animation: abil-nope .25s; }
+.stage.tall .abil { right: 42px; bottom: 8px; width: 60px; height: 60px; border-width: 3px; }
+.stage.tall .abil .abil-ic { width: 36px; height: 36px; }
+.stage.tall .abil .n { font-size: 22px; }
 @keyframes abil-glow { 50% { box-shadow: 0 3px 0 #0B0810, 0 0 18px 4px rgba(255,190,90,.75); } }
 @keyframes abil-nope { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .abil.ready, .abil.nope { animation: none; } .abil.ready { box-shadow: 0 3px 0 #0B0810, 0 0 14px 3px rgba(255,190,90,.6); } }
+
+/* battle-bar toggle (62-stage): left of the sound button; above it on tall stages */
+.hud-btn { position: absolute; right: 38px; bottom: 6px; z-index: 5; width: 28px; height: 28px; padding: 0; border: 2px solid var(--line-hi); background: var(--well); cursor: pointer; opacity: .8; display: grid; place-items: center; }
+.hud-btn:hover { opacity: 1; }
+.hud-btn.off { opacity: .6; }
+.hud-btn canvas { width: 14px; height: 14px; image-rendering: pixelated; }
+.stage.tall .hud-btn { right: 6px; bottom: 38px; }

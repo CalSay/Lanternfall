@@ -8,8 +8,10 @@
 //   pct    fn() -> progress 0..1; >= 1 means ready (shown first, as "Ready");
 //          null/undefined/NaN/<= 0 hides the goal. Keep it cheap: it runs about 2x a second.
 //   go     where the Go button takes the player (read by 75-goals-ui.js):
-//          { tab: 'adv'|'party'|'gat'|'forge'|'world'|'raid'|'tav', sel: '#css-selector', fn() }
+//          { tab: 'adv'|'party'|'gat'|'forge'|'world'|'raid'|'tav', view, sel: '#css-selector', fn() }
 //          fn (optional) runs first, e.g. to preselect a forge recipe. Or a plain fn().
+//          The UI opens the menu and sub-view that hold sel; view (optional, a registerView id
+//          such as 'bounties' or 'almanac') picks the sub-view when there is no sel.
 //   icon   optional toast-style icon spec or fn() -> spec ({ ic: [name, colour] }, { mat: [k, t] },
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
@@ -137,7 +139,7 @@ var forgeGoalPicks = 0;
       if (b.r.lv < b.cap) { const left = b.cap - b.r.lv; return `${nm}: ${left} level${left > 1 ? 's' : ''} to Promote`; }
       return b.p >= 1 ? `${nm}: ready to Promote` : `${nm}: Promote needs more gold or essence`; },
     icon: () => { const b = promoNext(); return b ? { char: b.k } : null; },
-    go: { tab: 'adv', sel: '#compRows' }
+    go: { tab: 'party', sel: '#sec-party-roster' }
   });
 
   // Roster: the next recruit whose route is open.
@@ -160,7 +162,7 @@ var forgeGoalPicks = 0;
       if (b.p >= 1) return `${nm} can join: Recruit`;
       return S.gold < b.c.gold ? `Recruit ${nm}: ${fmt(Math.ceil(b.c.gold - S.gold))} more gold` : `Recruit ${nm}: more essence needed`; },
     icon: () => { const b = recruitNext(); return b ? { char: b.k } : null; },
-    go: { tab: 'adv', sel: '#compRows' }
+    go: { tab: 'party', sel: '#sec-party-roster' }
   });
 
   // Bounties: the one closest to done (a finished one is ready to claim).
@@ -229,7 +231,7 @@ var forgeGoalPicks = 0;
     const row = CRAFT_FITS[pos] || {}, who = heroWho();
     const own = who !== 'any' ? row[who] || [] : [];
     const list = own.length ? own : row.any || [];
-    return list.filter(k => fits(k, pos, 'hero'));
+    return list.filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, "hero"));
   };
   const forgeNext = () => {
     let best = null;

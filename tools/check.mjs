@@ -60,9 +60,10 @@ try {
   assert(E('S.mats.ore[0]') > ore0 && E('S.skills.mine.lv') > 1, `gathering progress (ore ${E('S.mats.ore[0]')}, mine lv ${E('S.skills.mine.lv')})`);
 
   E('S.mats.ore[0] += 50; S.mats.wood[0] += 50; S.mats.ess[0] += 50');
-  const it = fn.forgeItem('weapon', 1);
+  assert(fn.forgeItem('weapon', 1) === null, 'the legacy Sword is no longer forged');
+  const it = fn.forgeItem('pick', 1);
   assert(it && E('S.items.length') >= 1, 'forged an item');
-  if (it) assert(fn.equipItem(it.id) && fn.gear().might > 0, 'equipped forged weapon');
+  if (it) assert(fn.equipItem(it.id) && fn.gear().mineSpd > 0, 'equipped forged pickaxe');
 
   const bad = badNumbers(E('S'));
   assert(!bad.length, 'no NaN/Infinity in state' + (bad.length ? ': ' + bad.slice(0, 5).join(', ') : ''));
@@ -277,7 +278,7 @@ try {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const old = JSON.parse(raw);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
-    g.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; gearDirty()'); // pre-K4 baselines predate synergies (B2) and the unique rebalance
+    g.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; gearDirty()'); // pre-K4 baselines predate synergies (B2), the unique rebalance and the retool (legacy Sword/Helm fit any class)
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const matsOk = Object.keys(old.mats).every(k => JSON.stringify(old.mats[k]) === JSON.stringify(S.mats[k])) && ['crystal', 'fibre', 'herb', 'hide'].every(k => JSON.stringify(S.mats[k]) === '[0,0,0,0,0]');
     const itemsOk = !deepDiff(old.items, S.items) && S.items.map(i => i.id).join() === old.items.map(i => i.id).join();
@@ -303,7 +304,7 @@ try {
     g.fn.save();
     const saved = g.storage.get(KEY);
     const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
-    g2.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; gearDirty()');
+    g2.eval('SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; gearDirty()');
     const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
     assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === want.total && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
   }
@@ -392,13 +393,86 @@ try {
     assert(cg.hp > 0 && cg.haste > 0 && cg.score > 0 && E(`bagCount() === 2 && isEquipped(${tk})`), 'charGear reads wpn/trk; companion-equipped items leave the bag');
     E(`charRec("tobin").wpn = ${st}`);
     assert(E('charGear("tobin").score') === E(`itemPower(itemById(${tk}))`), 'a Staff does not fit a tank companion');
-    assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && fits("weapon", "weapon", "lightkeeper") && fits("helm", "helm", "ranger") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character and legacy rules');
+    assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && !fits("weapon", "weapon", "lightkeeper") && !fits("helm", "helm", "ranger") && fits("weapon", "weapon", "any") && fits("helm", "helm", "any") && fits({ slot: "weapon", t: 1, r: "legendary", plus: 0, u: "sproutblade" }, "weapon", "ranger") && fits({ slot: "helm", t: 1, r: "legendary", plus: 0, u: "echocowl" }, "helm", "warden") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character rules; legacy Sword/Helm only without a class; uniques fit every class');
     assert(E('upgradeCost({ slot: "bow", t: 1, r: "common", plus: 7 }).troph === 1 && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 6 })) && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 10 }))'), 'upgrades to +8, +9 and +10 name a Trophy');
     assert(E('itemName(newItem("bow", 2, "rare")) === "Yew Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
     assert(Object.keys(E('newItem("weapon", 1, "common")')).join() === 'id,slot,t,r,plus', 'legacy forge items carry no new fields');
     assert(!g.errors.length, 'no items handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('items crashed: ' + (e.stack || e)); }
+
+// ---- 6b. retool: class gear only (owner bug "I was able to equip a sword as a ranger") ----
+console.log('retool');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const legacyLeft = 'S.items.filter(i => !i.u && (i.slot === "weapon" || i.slot === "helm")).length';
+  for (const f of FIX) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const row = [];
+    for (const cls of CLASSES) {
+      const q = JSON.stringify(cls);
+      // before: the same load + chooseClass with the retool off (legacy gear fits any class)
+      const g0 = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+      g0.eval(`RETOOL.on = 0; chooseClass(${q})`);
+      const hd0 = g0.fn.heroDps(), td0 = g0.fn.totalDps();
+      // after: load + chooseClass
+      const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = x => g.eval(x);
+      const eq0 = E('JSON.stringify(S.equip)');
+      const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+      E(`chooseClass(${q})`);
+      const hd = g.fn.heroDps(), td = g.fn.totalDps();
+      const ids = E('S.items.map(i => i.id).join()') === old.items.map(i => i.id).join();
+      const same = E(`JSON.stringify(S.items.map(i => [i.t, i.r, i.plus, i.u || null]))`) === JSON.stringify(old.items.map(i => [i.t, i.r, i.plus, i.u || null]));
+      assert(E(legacyLeft) === 0 && ids && same && E('JSON.stringify(S.equip)') === eq0, `${f} ${cls}: no legacy Sword/Helm left; ${old.items.length} items, ids, tier, rarity, +N and equip unchanged`);
+      assert(hd >= hd0 && td >= td0, `${f} ${cls}: heroDps ${hd0.toFixed(2)} -> ${hd.toFixed(2)}, totalDps ${td0.toFixed(2)} -> ${td.toFixed(2)} (never lower)`);
+      const w = E('itemById(S.equip.weapon)');
+      if (w && !w.u) assert(w.slot === E(`CRAFT_FITS.weapon[${q}][0]`) && w.rt === 'weapon', `${f} ${cls}: the worn Sword is now a ${E(`CRAFT_KINDS[${JSON.stringify(w.slot)}].noun`)} (${E('itemName(itemById(S.equip.weapon))')})`);
+      const legN = old.items.filter(i => !i.u && (i.slot === 'weapon' || i.slot === 'helm')).length;
+      const note = toasts.filter(t => /reforged/.test(t));
+      assert(legN ? note.length === 1 && note[0].endsWith(`into ${E(`HERO_CLASSES[${q}].name`)} gear.`) : !note.length, `${f} ${cls}: one notice (${note.join(' | ') || 'none needed'})`);
+      // load -> save -> load: lossless, no second retool, same dps
+      g.fn.save();
+      const saved = g.storage.get(KEY);
+      const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
+      g2.eval('retoolItems(true)');   // what the first tick would do: nothing left to convert
+      const d2 = deepDiff(JSON.parse(saved).items, JSON.parse(JSON.stringify(g2.eval('S.items'))));
+      const r2 = g2.fn.heroDps() / hd;
+      assert(!d2 && g2.eval('JSON.stringify(S.equip)') === E('JSON.stringify(S.equip)') && g2.eval('JSON.stringify(gear())') === E('JSON.stringify(gear())') && Math.abs(r2 - 1) < 1e-9, `${f} ${cls}: round trip lossless` + (d2 ? ': ' + d2 : '') + (Math.abs(r2 - 1) >= 1e-9 ? ` (dps ratio ${r2})` : ''));
+      assert(!g.errors.length && !g2.errors.length, `${f} ${cls}: no handler errors` + (g.errors.length ? ': ' + g.errors[0] : ''));
+      row.push(`${cls} ${hd0.toFixed(1)}->${hd.toFixed(1)}`);
+    }
+    console.log(`       ${f} heroDps: ${row.join(', ')}`);
+  }
+  // a save that already has a class retools on load (first tick)
+  {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-a-v1.json'), 'utf8');
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = x => g.eval(x);
+    const hd0 = g.fn.heroDps(), td0 = g.fn.totalDps(), toasts = [];
+    g.fn.on('toast', t => toasts.push(t.msg));
+    g.fn.tick(0.1);
+    assert(E('itemById(3).slot === "censer" && itemById(3).rt === "weapon" && S.equip.weapon === 3 && itemById(7).slot === "helm" && S.equip.helm === 7'), 'save-a-v1 (Lightkeeper): the worn Sword becomes a Censer on load; the Echo Cowl (unique) stays');
+    assert(g.fn.heroDps() >= hd0 && g.fn.totalDps() >= td0 * (1 - 1e-12), `save-a-v1 on load: dps kept (${hd0.toFixed(2)} -> ${g.fn.heroDps().toFixed(2)})`);
+    assert(toasts.includes('Your old sword was reforged into Lightkeeper gear.'), 'on load: one notice');
+    const n = toasts.length; g.fn.tick(0.1); E('retoolItems(true)');
+    assert(toasts.length === n, 'retool runs once: nothing left to convert');
+  }
+  // Ranger: no Warblade, no new Sword; a class switch retools the Bow
+  {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-mid-v2.json'), 'utf8');
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = x => g.eval(x);
+    E('chooseClass("ranger")');
+    const wb = E('(() => { const it = newItem("warblade", 1, "common"); S.items.push(it); return it.id; })()');
+    const sw = E('(() => { const it = newItem("weapon", 1, "common"); S.items.push(it); return it.id; })()');
+    assert(!E(`equipItem(${wb})`) && !E(`equipItem(${sw})`) && E('S.equip.weapon') === 3 && E('itemById(3).slot') === 'bow', 'a Ranger cannot equip a Warblade or a Sword; the old Sword is a Bow');
+    assert(E('equipItem(7)') && E('S.equip.helm') === 7, 'a Ranger still wears the Echo Cowl (unique)');
+    E(`S.items = S.items.filter(i => i.id !== ${wb} && i.id !== ${sw})`);
+    const gs0 = E('JSON.stringify(gear())');
+    E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
+    assert(E('itemById(3).slot === "warblade" && itemById(3).rt === "weapon" && S.equip.weapon === 3') && E('JSON.stringify(gear())') === gs0, 'Mirror of Embers: the Bow becomes a Warblade, still worn, gear() unchanged');
+    assert(!g.errors.length, 'no retool handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+} catch (e) { fail('retool crashed: ' + (e.stack || e)); }
 
 // ---- 7. synergies, kits, Common Cause and Bond (56b-synergy.js, B2) ----
 console.log('synergy');
@@ -764,8 +838,9 @@ try {
   const tk = E('craftItem("trinket", 1, { role: "caster" })');
   assert(tk && tk.ro === 'caster' && tk.a.every(([id]) => ['spell', 'area', 'control', 'hp'].includes(id)), 'Trinket rolls from the chosen role');
   assert(E('!!forgeItem("staff", 1)') && E('S.items[S.items.length - 1].slot') === 'staff', 'forgeItem delegates new kinds to craftItem');
-  const sx = E('S.skills.smith.xp'); E('forgeItem("weapon", 1)');
-  assert(E('S.skills.smith.xp') > sx, 'forgeItem keeps the legacy Sword path (Smithing XP)');
+  assert(E('forgeItem("weapon", 1) === null && craftItem("helm", 1) === null') && /no longer made/.test(E('canCraft("weapon", 1).why')), 'the legacy Sword and Helm are no longer made');
+  const sx = E('S.skills.smith.xp'); E('forgeItem("pick", 1)');
+  assert(E('S.skills.smith.xp') > sx, 'forgeItem keeps the old Pickaxe path (Smithing XP)');
   // Masterwork
   assert(E('canCraft("robe", 1, { mw: 0 }).why') === 'Needs 1 Moss Heart', 'Masterwork needs its Trophy');
   E('S.craft.troph[0] = 1');
@@ -825,13 +900,22 @@ try {
   assert(E(`equipItem(${up}, 'weapon')`) && E(`charRec(${q}).wpn`) === null, 'equipping on the hero takes it off the companion');
   E(`equipChar(${q}, ${up}, 'wpn')`);
   assert(E(`unequipChar(${q}, 'wpn')`) && E(`charRec(${q}).wpn`) === null && E(`!!itemById(${up})`), 'unequipChar returns the item to the bag');
-  // class change: items that no longer fit return to the bag, never deleted
+  // class change (Mirror of Embers): the hero's class gear is retooled, never unequipped or deleted
   E(`equipItem(${up}, 'weapon')`);
   const lan = E('(() => { const it = newItem("lantern", 1, "common"); S.items.push(it); equipItem(it.id, "off"); return it.id; })()');
-  const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); equipItem(it.id, "helm"); return it.id; })()');
-  const cnt = E('S.items.length');
+  const hood = E('(() => { const it = newItem("hood", 2, "rare"); S.items.push(it); return it.id; })()');
+  const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); return it.id; })()');
+  assert(!E(`equipItem(${helm}, 'helm')`), 'a classed hero cannot equip a legacy Helm');
+  E(`S.equip.helm = ${helm}; gearDirty()`);   // as an old save wears it
+  const cnt = E('S.items.length'), ids0 = E('S.items.map(i => i.id).join()'), gear0 = E('JSON.stringify(gear())'), hd0 = g.fn.heroDps();
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
   E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
-  assert(E('S.equip.weapon') === null && E('S.equip.off') === null && E('S.equip.helm') === helm && E('S.items.length') === cnt && E(`!!itemById(${up}) && !!itemById(${lan})`), 'class change: Staff and Lantern back in the bag, the legacy Helm stays on');
+  const sl = id => E(`itemById(${id}).slot`);
+  assert(E(`S.equip.weapon === ${up} && S.equip.off === ${lan} && S.equip.helm === ${helm}`) && sl(up) === 'warblade' && sl(lan) === 'shield' && sl(helm) === 'greathelm' && sl(hood) === 'greathelm' && sl(bow) === 'bow',
+    `class change retools: Staff -> Warblade, Lantern -> Shield, old Helm -> Greathelm (worn), bag Hood -> Greathelm, bag Bow (companion kind) kept (${[up, lan, helm, hood, bow].map(sl).join(',')})`);
+  assert(E('S.items.length') === cnt && E('S.items.map(i => i.id).join()') === ids0 && E(`itemById(${up}).rt === "staff" && itemById(${helm}).rt === "helm" && itemById(${up}).plus === 4`), 'class change: same ids, count, +N; rt keeps the original kind');
+  assert(E('JSON.stringify(gear())') === gear0 && g.fn.heroDps() >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${g.fn.heroDps().toFixed(1)})`);
+  assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
   E('S.skills.ench.lv = 8');
   assert(E('canCraft("starChart", 3).why') === 'Needs Enchanting 9', 'Star Chart needs Enchanting 9');
@@ -1122,6 +1206,133 @@ try {
     assert(defaults && same && exact && !go.errors.length, `${f}: Foraging and new families default in, old materials untouched, ore/wood node maths unchanged`);
   }
 } catch (e) { fail('gathering crashed: ' + (e.stack || e)); }
+
+// ---- expeditions (57b-expeditions.js) ----
+console.log('expeditions');
+try {
+  const mk = seed => {
+    const g = loadCore({ seed }), E = s => g.eval(s);
+    g.clock = new Date(2026, 8, 28, 12, 0, 0).getTime();
+    g.setNow = t => { g.clock = t; E(`Date.now = () => ${t}`); };
+    g.setNow(g.clock);
+    E('almanac.force("none")');
+    E('S.maxZone = 36; ["tobin","wren","hesketh","pip","bram","maren","aldric","kestrel","thessaly","anselm","oriel"].forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 20 + 5 * i; })');
+    E('S.party.autoField = false; charRec("tobin").lv = charRec("wren").lv = charRec("kestrel").lv = 90');
+    E('setField(["tobin","wren","kestrel"])');
+    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.tavern = 1');
+    return g;
+  };
+  const g = mk(71), E = s => g.eval(s);
+  const H = 3600 * 1000;
+  assert(E('expedOpen() && expedSlots() === 3 && expedLengths().join() === "1,4,8,12" && expedRoutes().length === 18'), 'Map Room 5: 3 slots, 1h to 12h, all 18 Region 1 routes open at zone 36');
+  E('S.camp.b.maproom = 1'); assert(E('expedSlots() === 1 && expedLengths().join() === "1,4"'), 'Map Room 1: 1 slot, 1h and 4h');
+  E('S.camp.b.maproom = 0'); assert(!E('expedOpen()') && !E('expedSend("r1a", ["pip"], 1)'), 'no Map Room: closed, nothing sends');
+  E('S.camp.b.maproom = 5');
+  E('S.maxZone = 10'); assert(E('expedRoutes().every(r => EXPED_ROUTES[r].b === 1)') && !E('expedSend("r3a", ["pip"], 1)'), 'a band opens only after its last boss');
+  E('S.maxZone = 36');
+  // fielded characters are blocked
+  assert(!E('expedSend("r1a", ["wren"], 4)') && /in the party/.test(E('expedCan("r1a", ["wren"], 4).why')), 'a fielded character cannot go');
+  // grade shown before sending = grade stored
+  const team = JSON.parse(E('JSON.stringify(expedBest("r3a"))'));
+  const pv = JSON.parse(E(`JSON.stringify(expedPreview("r3a", ${JSON.stringify(team)}, 8))`));
+  const s1 = JSON.parse(E(`JSON.stringify(expedSend("r3a", ${JSON.stringify(team)}, 8))`) || 'null');
+  assert(s1 && s1.grade === pv.grade.g && E('EXPED_GRADES[S.exped.slots[0].grade].n') === pv.grade.name, `the grade matches the preview (${pv.grade.name}, team ${team.join(', ')})`);
+  assert(team.every(id => E(`campStatus("${id}").status`) === 'exped' && !E(`campFree("${id}")`)), 'the team shows "exped" on the Roster board and is not free');
+  assert(!E(`expedSend("r1a", ["${team[0]}"], 1)`), 'a character out on one route cannot go on another');
+  // preview amounts match the fixed haul (floor or ceil of the expected value)
+  const fam = s1.pay.mats.map(m => m[2]), exp = pv.lines.filter(l => l.k === 'mat').map(l => l.n);
+  assert(fam.length === exp.length && fam.every((n, i) => n === Math.floor(exp[i]) || n === Math.ceil(exp[i])), `haul fixed at send matches the preview (${fam.join(', ')} vs ${exp.map(x => x.toFixed(1)).join(', ')})`);
+  // not back yet: no collect; the timer runs offline (away phase collects)
+  assert(E('expedCollect(0)') === null, 'no Collect before the timer ends');
+  const before = JSON.parse(E('JSON.stringify(S.mats)'));
+  g.setNow(g.clock + 8 * H + 1000);
+  E('globalThis.__eb = []; on("expedBack", p => globalThis.__eb.push(p))');
+  const r = JSON.parse(E('JSON.stringify(awayGains(8 * 3600 + 1))'));
+  const gained = s1.pay.mats.every(([f, t, n]) => E(`S.mats.${f}[${t - 1}]`) - before[f][t - 1] >= n);
+  assert(E('S.exped.slots.length') === 0 && gained && E('globalThis.__eb.length') === 1 && E('S.exped.done.r3a') === 1, 'finished while the game was closed: paid on load, team freed, expedBack fired');
+  assert(r.extra.some(l => /Expedition back: Wraithmarsh Reeds/.test(l.txt)), 'the away card lists the expedition');
+  // the same seed pays the same haul, open or closed
+  const runOnce = (closed) => {
+    const h = mk(72), X = s => h.eval(s);
+    X('S.exped.seq = 40'); X('Math.random = () => 0.5');
+    const s = JSON.parse(X('JSON.stringify(expedSend("r2b", ["hesketh", "pip", "thessaly"], 4))'));
+    h.setNow(h.clock + 4 * H + 5);
+    if (closed) h.fn.awayGains(4 * 3600); else { for (let i = 0; i < 12; i++) h.fn.tick(0.1); X('expedCollect(0)'); }
+    return JSON.stringify([s.seed, X('JSON.stringify(S.exped.log[0].haul)')]);
+  };
+  assert(runOnce(false) === runOnce(true), 'same seed: identical haul with the game open or closed');
+  // open game: a finished run waits for Collect (no failure: Fair still pays)
+  E('S.exped.log = []');
+  E('expedSend("r4a", ["hesketh"], 1)');
+  const fairG = E('S.exped.slots[0].grade');
+  g.setNow(g.clock + 1 * H + 2000); for (let i = 0; i < 12; i++) g.fn.tick(0.1);
+  assert(E('S.exped.slots.length') === 1 && E('topGoals(60, { sticky: false }).some(x => x.id === "exped-ready")'), 'open game: the run waits; Next Up says "ready to collect"');
+  const c = JSON.parse(E('JSON.stringify(expedCollect(0))'));
+  assert(fairG === 0 && c && c.haul.mats.reduce((a, m) => a + m[2], 0) > 0, `a Fair run still brings something home (${c && expedHaulText_(c)})`);
+  function expedHaulText_(x) { return E(`expedHaulText(${JSON.stringify(x.haul)})`); }
+  // Next Up timer
+  E('expedSend("r1a", ["hesketh"], 4)');
+  assert(E('topGoals(60, { sticky: false }).some(x => x.id === "exped-timer" && /back in/.test(x.label))'), 'Next Up: "Expedition back in <time>"');
+  E('S.exped.slots = []');
+  // repeats: at most 3 runs in a row, even over a long absence
+  E('expedSend("r1a", ["hesketh", "pip"], 1); expedRepeat(0, true)');
+  g.setNow(g.clock + 10 * H);
+  const d0 = E('S.exped.done.r1a || 0');
+  g.fn.awayGains(10 * 3600);
+  assert(E('(S.exped.done.r1a || 0)') - d0 === 3 && E('S.exped.slots.length') === 0, `Repeat: 3 runs in a row while away, then the team comes home (${E('(S.exped.done.r1a || 0)') - d0} runs)`);
+  E('S.camp.b.maproom = 4'); E('expedSend("r1a", ["hesketh"], 1)'); assert(!E('expedRepeat(0, true)'), 'Repeat needs Map Room 5');
+  E('S.exped.slots = []; S.camp.b.maproom = 5');
+  // call back: half the haul for the time spent, no bonus rolls
+  E('expedSend("r1a", ["hesketh", "pip", "bram"], 8)');
+  const full = E('S.exped.slots[0].pay.mats.reduce((a, m) => a + m[2], 0)');
+  g.setNow(g.clock + 4 * H);
+  const rc = JSON.parse(E('JSON.stringify(expedRecall(0))'));
+  const got = rc.haul.mats.reduce((a, m) => a + m[2], 0);
+  g.setNow(g.clock + 12 * H);
+  assert(E('S.exped.slots.length') === 0 && got <= Math.ceil(full * 0.25) + 1 && got >= Math.floor(full * 0.25) - 2, `Call back at half time pays a quarter (${got} of ${full})`);
+  // XP is capped at party level - 5
+  E('charRec("hesketh").lv = Math.floor(partyLevel()) - 6; charRec("hesketh").xp = 0; charRec("hesketh").rank = 7');
+  E('S.exped.slots = []; expedSend("r2d", ["hesketh"], 12)');
+  g.setNow(g.clock + 30 * H); g.fn.awayGains(3600);
+  assert(E('charRec("hesketh").lv') <= E('Math.floor(partyLevel()) - 5') && E('charRec("hesketh").lv') >= E('Math.floor(partyLevel()) - 6'), `expedition XP stops at party level - 5 (Hesketh ${E('charRec("hesketh").lv')}, party ${E('partyLevel().toFixed(1)')})`);
+  // shortcuts: token rolls, Kingslayer credit, Renown through the unlock API
+  const h = mk(73), X = s => h.eval(s);
+  X('globalThis.__tok = []; on("token", p => globalThis.__tok.push(p)); globalThis.__ks = 0; on("kingslayerCredit", p => globalThis.__ks += p.n)');
+  const ren0 = X('renown()');
+  assert(!X('expedCan("r5d", ["oriel"], 8).ok') && /Aldric/.test(X('expedCan("r5d", ["oriel"], 8).why')), 'The Hollow Court needs Aldric');
+  X('expedSend("r3b", ["maren", "pip"], 12)');
+  X('expedSend("r5d", ["aldric", "oriel", "thessaly"], 8)');
+  const tokPlanned = X('S.exped.slots[0].pay.tok');
+  X('expedSend("r1c", ["hesketh", "anselm"], 12)');
+  h.setNow(h.clock + 13 * H); h.fn.awayGains(13 * 3600);
+  const toks = JSON.parse(X('JSON.stringify(globalThis.__tok)'));
+  assert(tokPlanned > 0 && toks.length >= 1 && toks.every(t => t.id === 'grenna') && (X('S.party.unlock.tokens.grenna.miss') > 0 || X('isRecruited("grenna")')), `Quarry Night Shift rolls Grenna's token through unlockTokenRoll (${toks.length} rolls${X('isRecruited("grenna")') ? ', won' : ''})`);
+  assert(X('globalThis.__ks') > 0 && X('S.party.unlock.ks') === X('globalThis.__ks') && X('S.exped.court') === X('globalThis.__ks'), `The Hollow Court credits Kingslayer (${X('S.party.unlock.ks')})`);
+  assert(X('renown()') > ren0 && X('Object.values(S.exped.lore).some(q => q > 0)'), `Lore routes add Renown (+${X('renown()') - ren0}) and Lore`);
+  X('S.exped.court = 48; S.party.unlock.ks = 48; S.exped.slots = []; expedSend("r5d", ["aldric", "oriel"], 8)');
+  h.setNow(h.clock + 30 * H); h.fn.awayGains(3600);
+  assert(X('S.exped.court') === 50 && X('S.party.unlock.ks') === 50, 'Kingslayer credit stops at 50');
+  // Almanac hooks: Fair Winds raises the haul at send; the weekly counters hear the events
+  const w = mk(74), W = s => w.eval(s);
+  const base = W('expedPreview("r1a", ["hesketh", "pip"], 4).lines[0].n');
+  W('almanac.force("fairWinds")');
+  const fw = W('expedPreview("r1a", ["hesketh", "pip"], 4).lines[0].n');
+  assert(Math.abs(fw / base - 1.3) < 1e-9, 'Fair Winds: +30% for teams sent that day (mod expHaul)');
+  const bad = badNumbers(E('S')).concat(badNumbers(X('S')));
+  assert(!bad.length, 'no NaN in the expedition state' + (bad.length ? ': ' + bad[0] : ''));
+  const errs = g.errors.concat(h.errors, w.errors);
+  assert(!errs.length, 'no expedition errors' + (errs.length ? ': ' + errs[0] : ''));
+  // old saves get the defaults and round-trip
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const go = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
+    const def = go.eval('S.exped.v === 1 && S.exped.slots.length === 0 && S.exped.log.length === 0 && S.exped.court === 0 && S.exped.seq === 0');
+    for (let i = 0; i < 12; i++) go.fn.tick(0.1);
+    const cs = go.eval('JSON.stringify(S.exped)'); go.eval('save(); loadSave()');
+    const rt = go.eval('JSON.stringify(S.exped)') === cs;
+    assert(def && rt && !go.errors.length, `${f}: empty expeditions by default, round trip keeps S.exped`);
+  }
+} catch (e) { fail('expeditions crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

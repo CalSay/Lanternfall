@@ -1,6 +1,6 @@
 // 61-anim: stage animation helpers (browser-only). Fixed-size pools for particles, projectiles,
 // rings and delayed calls, plus cached glow sprites, so the frame loop allocates nothing.
-// All positions are stage CSS px. 62-stage.js drives and draws these.
+// All positions are stage logical px (1 logical px = ZM CSS px, the stage zoom in 62-stage.js), which drives and draws these.
 //
 // Exposed: ANIM = { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts,
 //                   drawProj, drawRings, lightAt }
@@ -179,7 +179,7 @@ const ANIM = (() => {
       if (!r.on || r.delay > 0) continue;
       const u = r.t / r.dur, rr = r.r0 + (r.r1 - r.r0) * (1 - (1 - u) * (1 - u));
       ctx.globalAlpha = (1 - u) * 0.9; ctx.strokeStyle = `rgb(${r.rgb})`; ctx.lineWidth = r.w;
-      ctx.beginPath(); ctx.ellipse(r.x, r.y, rr, rr * r.flat, 0, 0, 6.2832); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(r.x, r.y, Math.max(0, rr), Math.max(0, rr * r.flat), 0, 0, 6.2832); ctx.stroke();
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }

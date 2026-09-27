@@ -81,6 +81,9 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
   write `docs/design/plan-<n>.md`, record it here and in the vision, then execute it.
 - Priority: finish the B1 art conversion under way (foundation, scenery, companion polish, enemies),
   then focus on gameplay. Art comes after, except the art a new gameplay system needs.
+- Speed and smoothness are checked constantly (owner, 2026-09-27). After each merge wave run
+  `node tools/perf.mjs --quick` (once the PERF task lands) and fix any budget failure before new features;
+  every agent brief says to keep per-frame and per-tick work cheap.
 - Preview build for the owner: https://claude.ai/artifact/JHKGxG17HxZyA2Prit4BxS (private, no online
   capabilities, its own save). After each merge wave: build, copy dist with title "Lanternfall Preview" to
   the scratchpad preview/lanternfall-preview.html, and republish to that URL. Never publish the live artifact.
@@ -168,3 +171,45 @@ landscape and desktop show the game left and the menu right, responsively.
 The owner's "wait" stopped two agents: the menu restructure (IA, no work saved) and the enemy + stage
 spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then said "restart everything, I only meant wait about landscape": all four stopped tasks
 (menus, AR3, BAL1, Expeditions) were relaunched; AR3 and BAL1 continue from WIP commits on their old branches.
+- Owner bug: a Ranger could equip a sword. Cause: K4 made legacy Sword/Helm fit every class to protect
+  saves. Fix in progress (RETOOL agent): on load/class choice, legacy swords and helms become the class's
+  own kinds (same id, tier, rarity, +N; never less damage), only class kinds fit, legacy can't be crafted,
+  and a Mirror of Embers switch retools instead of unequipping. Weapon/helm uniques stay usable by every class.
+- Owner: speed and smoothness must be checked constantly. PERF agent builds tools/perf.mjs (throttled-phone
+  frame times, load time, long tasks, heap growth, tap latency), a budget in docs/design/perf.md, and a first pass.
+- RETOOL merged: old non-unique swords and helms become the class's kinds on load and on class change
+  (the `rt` field keeps the old base lines, so dps is identical); only class kinds fit; legacy kinds
+  can't be crafted; the sim needs `--class` to forge weapons now. Coordinator fix: a blank stage after
+  long absences (ellipse radii could go negative and throw every frame; three guards in 62-stage.js
+  and 61-anim.js).
+- Owner idea: with full-screen menus the game view has room for a proper combat HUD: party and enemy
+  health bars, hero and companion ability cooldowns (spec 7.4). Queue it as the next stage task after
+  AR3 and the menu restructure land, and fold it into Stage C (party combat), where HP actually matters.
+- AR3 merged: all enemies, elders, the wyrm and nodes in B1; the stage zooms in whole-pixel steps
+  (2/3/5 CSS px per art px by size); formation spaced out; floating text stacks and stays under the header.
+  B1 art conversion is DONE. From here: gameplay first.
+- Expeditions merged (57b-expeditions.js, 18 routes, seeded hauls, repeats, Call back, shortcuts; tuned
+  slower: an 8h Good run is about 22 min of active gathering). Coordinator: characters on an expedition
+  can't be fielded. Still open: an "Out" line on Party tiles, expedition sim policy (E1-E10), route icons, lore texts.
+- Owner bug: party sorting. The single Rarity/Level toggle read as random, locked characters never
+  sorted, and the whole grid was rebuilt on every level change (eating taps). Fixed: Power/Level/Rarity
+  chips (default Power); Rarity mixes locked and recruited; Power/Level put locked ones by closeness to
+  joining; tiles rebuild only on structural change, and levels update in place.
+- Menus merged: portrait is game-first (the stage fills the free space: 71-77% of the height), each tab
+  opens a full-screen menu with sub-views (Fight: Upgrades/Bounties/Bestiary; Party: Team/Roster; Gather:
+  Mining/Wood/Foraging/Pack; Craft: Make/Gear/Uniques; Camp: Camp/Tavern/Almanac/Raid), the bell sheet
+  has Notices | Journal (with Achievements), wide screens split game left / menu right. API:
+  registerView(tab, {id, label, order, dot}), registerSection(..., {view}), setTab(tabOrView, sel),
+  closeMenu(). Not done yet: card-level progressive disclosure (hero rows, camp list, almanac cards).
+  Follow-up: on tall portrait stages the sprites are small with empty sky; scale the party and foes with
+  height, and use the room for a combat HUD (party/enemy HP bars, ability cooldowns) (HUD task).
+- HUD merged: height-aware zoom (phones now 3 CSS px per art px), party/foe HP bars, ability gauges,
+  status chips (Guard, Blessing, Focus, Embers, buffs), boss "!" telegraph with a wind-up ring, a Glint
+  sparkle, a 60px ability button with a cooldown sweep, and a HUD toggle (S.settings.hud). Stage C
+  hooks to fill: unitHp(key), unitCd(key), bossTelegraph() (defaults in 55-party.js).
+- PERF merged: `node tools/perf.mjs` (full, ~7 min) and `--quick` (phone, ~40s); budget in
+  docs/design/perf.md. Phone fight fps 40-43 -> 49-54, Party first open 1.1s -> 0.4-0.5s; the scenery
+  vignette/fog is cached, frames bake lazily with idleTask, the next zone prewarms during boss fights,
+  and autosave is skipped while hidden. Behaviour fix: background tabs no longer eat away gains. Still
+  over budget on phones: Party/World tab first open, long tasks while fighting (70-ui ui()/uiFight
+  rewriting unchanged DOM 5x/s, setHp forcing layout per kill). PERF2 task launched for those hotspots.

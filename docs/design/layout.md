@@ -1,48 +1,89 @@
-# Layout and notices
+# Layout, menus and notices
 
-Owner feedback: the menu area was small, so players scrolled a lot, and notifications
-covered the menus. This pass gives the panel most of the screen and moves notices onto the stage.
+Owner feedback, in order: "The menus definitely need some work. With more being added, they're very
+cluttered. Lots of scrolling." Then: menus that "when selected filling the screen is a good thing", but
+no forced landscape. This pass makes the game the main view and turns each tab into a full-screen menu
+with 2-4 sub-views. The previous pass (bottom tabs, HUD on the stage, quiet toasts with a bell log) stays;
+its compact-stage-on-scroll is gone, because a menu no longer shares the screen with the stage in portrait.
 
-## Measured panel height (the scrolling menu area)
+## Screens
 
-Mid-game save (`tests/fixtures/save-mid-v2.json`), Chromium, same on every tab.
+**Portrait (phones; any viewport taller than wide, or narrower than 600 px).** Max width 560 px, centred.
 
-| Viewport | Before | After, panel at top | After, panel scrolled (compact stage) |
-|---|---|---|---|
-| 360 x 740 | 264 px (36%) | 416 px (56%) | 460 px (62%) |
-| 412 x 915 | 450 px (49%) | 503 px (55%) | 635 px (69%) |
+1. **Header, 48 px.** Portrait with level, name and XP bar, gold and embers, the bell. Always visible.
+2. **Game view.** The stage box fills the space (`flex: 1`, at least 180 px), then the control row
+   (Fight / Gather / Raid, zone stepper), then the **Next Up chip**: the top goal with its progress along
+   the bottom edge, "Ready" or a percent, and "+N" for the other goals (orange when more than one is ready).
+   Tap the chip for the full list in a sheet; each row has a Go button.
+3. **Tab bar, 54 px, at the bottom.**
 
-Screenshots: `img/layout-before-*.png` (before) and `img/layout-360-*.png`, `img/layout-412-*.png`
-(after: fight, party, craft, camp, scrolled, toasts, log).
+Tapping a tab opens its **menu** over the game view (same grid cell, so the header and the tab bar stay):
+it slides up from the tab bar in 0.26 s (instant under `prefers-reduced-motion`). It has a title row
+(tab icon, name, a close button with a down chevron and a grab handle), the sub-view switcher, then the
+scrolling content. It closes on: the close button, tapping the open tab again, Escape, or a swipe down
+(on the title row, or on the content while it is scrolled to the top; 110 px, or a quick 36 px flick).
+The tab bar stays live, so the player hops between menus without closing them.
 
-## Screen, top to bottom
+**Wide (viewport at least as wide as tall and 600 px or wider: phones turned sideways, tablets, desktop).**
+Game on the left (1.4 fr, about 58%), the menu on the right (1 fr, at least 300 px). A menu is always
+open; there is no close button or overlay. The header sits over the game column, the tab bar under the
+menu column. Below 500 px tall (phones sideways) the menu drops its title row (the tab bar names the
+tab) and the tab bar shrinks to 48 px.
 
-1. **Header, 48 px.** Portrait with level, name and XP bar, gold and embers, notices bell.
-2. **Stage box.** Height `--stage-h = clamp(168px, 100dvh - 572px, 256px)`: 168 px on a 740 px phone,
-   full 256 px from about 830 px tall. A HUD overlays its top (zone name and foe count, foe name, HP bar,
-   boss timer) and its bottom left (DPS and Tap). The HUD never takes taps; they reach the stage.
-3. **Control row, 50 px.** Fight / Gather / Raid on the left, the zone stepper (`< Zone 17 >`) on the
-   right. The stepper hides while gathering or raiding.
-4. **Panel.** Fills everything else and scrolls.
-5. **Tab bar, 54 px, at the bottom** (thumb reach), plus the safe-area inset.
+| Viewport | Stage box | Menu content (scroll area) |
+|---|---|---|
+| 360 x 740 | 336 x 526 (71%) | 360 x 528 (was 416-460) |
+| 412 x 915 | 388 x 701 (77%) | 412 x 703 (was 503-635) |
+| 740 x 360 | 408 x 200 | 306 x 254 |
+| 915 x 412 | 510 x 252 | 379 x 306 |
+| 1280 x 800 | 723 x 640 | 531 x 640 |
 
-## Compact stage
+Mid/late save (`tests/fixtures/save-v2-late.json` with a class chosen), Chromium. The portrait stage
+fills what the header, control row, chip and tab bar leave (more than the 45-60% first sketched, because
+the alternative is empty space under it).
 
-When the panel scrolls down (past 40 px, and only if it would still scroll afterwards), the stage box
-shrinks to `--stage-c` (124 px) and the stage slides up inside it so the party and foe stay in view.
-Back at the top of the panel (under 6 px) it grows again. Switching tabs resets it.
+Screenshots (`img/menus-*.png`): `menus-360-game`, `-fight`, `-party`, `-gather`, `-craft`, `-camp`,
+`-camp-tavern`, `-nextup`, `-journal`; `menus-412-game`, `-fight` (Bounties), `-party` (Roster),
+`-gather` (Pack), `-craft` (Gear), `-camp` (Almanac); `menus-740x360-fight`, `-camp`;
+`menus-915x412-party`, `-craft`; `menus-1280x800-fight`, `-gather`.
 
-- Only the box height changes. `#stage` and the canvas keep their full size, so 62-stage never
-  re-lays out or re-bakes during the transition.
-- The slide assumes the ground line sits at 80% of the stage height (`GY` in 62-stage). If that
-  changes, update the `translateY` in `.app.compact .stage` (20-stage.css).
-- In compact mode the zone line and the sound button hide; the foe line and HP bar shrink.
-- 0.22 s ease-out; instant under `prefers-reduced-motion`.
+## Sub-views
+
+| Tab | Views (first is the default) | Holds |
+|---|---|---|
+| Fight | Upgrades · Bounties · Bestiary | Omen banner, boss gate, hero upgrades, old companions (before the roster) · bounties · zone mastery, bestiary |
+| Party | Team · Roster | formation, your hero, fighting beside you, synergies · roster grid, leads |
+| Gather | Mining · Wood · Foraging · Pack | skill cards, home ground and a how-to line on each node view · the pack (materials and trophies) |
+| Craft | Make · Gear · Uniques | stations, recipes, Enchanter's Table · your gear, the bag · unique loot |
+| Camp | Camp · Tavern · Almanac · Raid | camp, buildings, blessings, roster board · visitor, who is online, hall of heroes, rename · today's Omen and the week · world raid, war horn, relics |
+
+The **Journal** (lifetime stats) and **Achievements** moved to the bell: the bell sheet has
+Notices | Journal.
+
+The switcher is one row of equal buttons (40 px tall plus borders). The open view has the lit bottom edge.
+A dot marks a view with news while it is not open: Bounties (a bounty is ready to claim), Roster (a
+promotion, milestone or new face; same rule as the Party tab's dot), Camp (a build finished), Tavern
+(today's visitor can be hired), Almanac (a weekly goal to claim). A tab gets the same dot when one of its
+views has news and the tab is not open (unless the tab already shows its own dot).
+
+The last view per tab and the last tab are remembered in `localStorage` key `lanternfall.ui.v1`
+(`{ tab, views: { tabId: viewId, log } }`), not in the save. Portrait always starts on the game view;
+wide screens reopen the last menu.
+
+## Navigation
+
+- `setTab(tab, sel?)`: `tab` is a tab id, a view id (`'bounties'`, `'raid'`, `'almanac'`, `'make'`) or an
+  old part id (`'tav'`). `sel` (selector or node) opens the view that holds it and scrolls to it. If the
+  element does not exist yet (rows built in `update()`), the tab's sections are updated once to build it.
+- Next Up `go: { tab, view, sel, fn }` goes through `setTab`, then scrolls smoothly and flashes the row.
+  All built-in goals were checked to land on a visible target (promote and recruit now go to the Roster;
+  they pointed at the retired companion rows).
+- `closeMenu()` returns to the game view (portrait only). `S.tab` is `''` while no menu is open, so
+  "is this tab open?" checks (`S.tab === 'world'`) stay true only while the player can see it.
 
 ## Notices (toasts)
 
-API unchanged: `toast(msg, kind, icon)` or `emit('toast', { msg, kind, icon })`. New optional 4th
-argument / field `prio`: `'high' | 'normal' | 'low'`. Without it: kind `loot` is high, the rest normal.
+Unchanged rules: `toast(msg, kind, icon, prio)` or `emit('toast', { msg, kind, icon, prio })`.
 
 | Priority | What happens | Use for |
 |---|---|---|
@@ -50,30 +91,33 @@ argument / field `prio`: `'high' | 'normal' | 'low'`. Without it: kind `loot` is
 | normal | Pops if there is room; otherwise folds into the newest normal toast as "+N" and counts on the bell. 2.6 s. | Boss failed, achievement, bounty done, rare or epic forge, weekly goal, skill level that opens a new tier |
 | low | Log only; counts on the bell. | Anything the player just did and can see (equip, salvage, common forge, upgrade, reforge, transmute, brew, switch mode, build queued), routine skill levels, bestiary steps |
 
-Rules:
+- On the game view, toasts sit in the stage box under the HP bar, never over the control row or the
+  ability button (right 62 px stay clear). At most 2 on a stage 200 px or taller, else 1.
+- While a menu covers the game (portrait), the toast stack moves over the bottom of the menu, just above
+  the tab bar, full width, at most 2. Wide screens keep them on the stage (it stays visible).
+- Tap or swipe a toast away. Repeats become "+1". Every notice goes to the bell log (last 50, this visit).
 
-- Toasts live inside the stage box, just under the HP bar (in the sky), never over the panel, the
-  control row or the ability button (right 62 px stay clear).
-- At most 2 on a stage 200 px or taller, 1 on a shorter stage (small phones, compact strip).
-- The container ignores pointers; each toast takes taps. Tap or swipe it sideways to dismiss.
-- The same message twice while on screen becomes "+1" on the first.
-- Every notice goes to the log: the bell in the header opens a bottom sheet with the last 50
-  (this visit only, not saved). The bell count is the notices that did not pop. Opening the log clears it.
+## Adding a system: pick a view, never append to a tab's end
 
-When you add a toast, pick the priority by asking: would the player be sorry to miss this? If they just
-tapped a button and the panel already shows the result, it is `low`.
-
-## Fight tab top
-
-- The Omen banner is one 44 px row ("Omen · name", effect below). Tap to expand as before.
-- Next Up starts collapsed to one row until the player toggles it (`S.nextUp.picked`, new field,
-  default false; `S.nextUp.min` keeps its meaning).
+1. Decide which existing view your section belongs to, by what the player is doing there
+   (upgrading, hunting, managing the team, gathering one skill, making, wearing, camp life, news).
+   `registerSection(tab, { id, title, view: 'bounties', mount, update })`.
+2. Only if it is a new activity with its own list, make a view: `registerView(tab, { id, label, order, dot })`.
+   Keep labels to one short word (4 views fit at 360 px). A tab holds 2-4 views; past that, merge.
+3. Without `view` a section joins the tab's first view. That is the busiest one: do not.
+4. Things every view of a tab needs are rare; mark them `data-view="*"` (or a space-separated list).
+5. Show essentials on a card; put details behind a tap (a sheet via `openSheet`) or a chevron.
+6. Give the view a `dot()` only for news the player should act on, and keep it cheap (runs once a second).
 
 ## Rules for later UI work
 
-- Size the stage from CSS only (`--stage-h`, `--stage-c` on `.app`). 62-stage reads its container.
-- Nothing new between the header and the panel. New controls go in the panel (`registerSection`).
+- Size the stage from CSS only. 62-stage reads its container (it re-lays out on resize).
+- Nothing new on the game view beyond the stage, the control row and the Next Up chip. New controls go in
+  a menu view.
 - Keep taps on the stage working: overlays on the stage need `pointer-events: none` unless they are
   buttons that stop propagation (the ability and sound buttons).
-- Tap targets stay 44 px or larger. No horizontal scroll at 360 px; panel grids use `minmax(0, 1fr)`.
-- Side gutter is `--gut` (12 px) for the header, stage, control row, panel and tab bar.
+- Tap targets stay 44 px or larger. No horizontal scroll at 360 px or in a 300 px wide menu column:
+  panel and section grids use `minmax(0, 1fr)` and their children `min-width: 0`.
+- Side gutter is `--gut` (12 px). The menu slide and every new motion respect `prefers-reduced-motion`.
+- Checks when you touch layout: portrait 360x740 and 412x915 (game view and each tab), landscape 740x360
+  and 915x412, desktop 1280x800; no console errors; no horizontal scroll.

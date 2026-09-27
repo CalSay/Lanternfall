@@ -40,7 +40,10 @@
 //   - Rarity: rollRarity(level of the station), so the Forge odds are exactly as before.
 //   - Station XP: CRAFT_XP; x CRAFT_CATCHUP.mult while below the listed skills.
 //   - The bag must have room (bagFull()) to craft. Equipped items never count.
-//   - Class change: hero items that no longer fit go back to the bag (even past the limit).
+//   - Legacy Sword/Helm (kinds 'weapon', 'helm') are no longer made: canCraft refuses them.
+//   - Class change (chooseClass, Mirror of Embers): retoolItems(true) (41-items) turns legacy
+//     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
+//     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
 // Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd }).
 //   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
@@ -90,6 +93,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (kind === 'starChart') return canStar();
     const d = CRAFT_KINDS[kind];
     if (!d) return no('Unknown item.');
+    if (d.legacy) return no('Swords and helms are no longer made. Craft your class weapon and head piece.');
     if (!validTier(t)) return no('Unknown tier.');
     const st = stationOf(kind), lv = stationLevel(kind), need = CRAFT_STATION_REQ[t - 1];
     const cost = splitCost(craftRecipe(kind, t));
@@ -249,8 +253,9 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     return true;
   };
 
-  // ---- class change: hero items that no longer fit go back to the bag ----
-  on('classChosen', () => {
+  // ---- class change: retool to the new class's kinds; anything that still does not fit goes back to the bag ----
+  on('classChosen', ({ from } = {}) => {
+    retoolItems(from || true);
     const back = [];
     for (const pos of CRAFT_HERO_POS) {
       const it = itemById(S.equip[pos]);

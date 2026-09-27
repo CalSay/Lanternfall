@@ -1,4 +1,4 @@
-// 75-stats-ui: the Journal, a lifetime-stats part at the end of the World tab. Browser-only.
+// 75-stats-ui: the Journal, lifetime stats in the bell sheet (Notices | Journal). Browser-only.
 // Reads S.stats (55-stats.js) and existing save fields; writes nothing.
 {
   const played = s => {
@@ -25,10 +25,10 @@
 
   const big = {}, cells = [];
   let note;
-  registerSection('world', {
+  registerSection('log', {  // the bell sheet's Journal view (70-ui.js)
     id: 'journal',
     mount(sec) {
-      sec.classList.add('panel', 'world-part');
+      sec.classList.add('panel', 'world-part'); sec.parentNode.prepend(sec);  // stats first, then Achievements
       sec.append(el('h2', 'world-head', 'Journal'));
 
       const hero = el('div', 'jr-hero');

@@ -13,26 +13,80 @@ let resize, animate, draw, stageStats;
   // ================= visual state (driven by core events) =================
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
-  let guardN = 0, blessN = 0, markLeft = 0, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  let guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
+  // the height); they are drawn in the band between the foe header and the ground, one row per
+  // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
   const floats = [];
   function pushFloat(txt, color, big, x, y) {
-    floats.push({ txt, color, big, life: 0.95, x: x ?? (0.7 + (Math.random() - 0.5) * 0.12), y: y ?? 0.42, vy: big ? 0.28 : 0.2 });
+    const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
+    // Each new text takes the first free row (0-3) near its spot, one line below the texts still
+    // rising there; when all rows are busy the oldest text there fades out and gives up its row.
+    const busy = [0, 0, 0, 0]; let oldest = null;
+    for (const f of floats) if (f.row >= 0 && Math.abs(f.x - fx) < 0.3 && f.life > 0.1) { busy[f.row] = 1; if (!oldest || f.life < oldest.life) oldest = f; }
+    let row = busy.indexOf(0);
+    if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
+    floats.push({ txt, color, big, life: 0.95, x: fx, y: y ?? 0.42, row, off: row });
     if (floats.length > 24) floats.shift();
   }
 
   // ================= canvas and scene =================
   const stageEl = $('stage'), cv = $('cv'), ctx = cv.getContext('2d');
-  let SW = 0, SH = 0, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1;
-  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 CSS px tall, 40-50 wide at 2x):
-  // foot-centre x / width per column (back, mid, front); the upper lane (0) stands LANE_Y px higher
-  // and LANE_X px further back and is drawn first.
-  const COLX = [0.15, 0.33, 0.51], LANE_X = 24, LANE_Y = 14;
+  // Zoom: the stage is laid out in LOGICAL px (SW x SH) and drawn at ZM CSS px per logical px, so
+  // one art px (2 logical px) is 2 * ZM CSS px: 2, 3, 4, 5 or 6 (whole pixels). ZM is the largest
+  // that keeps the logical stage at least minW x ZOOM_H (room for the party, the foe and the HUD);
+  // on a whole-number device pixel ratio only zooms that land on whole device pixels are used.
+  // The width floor depends on the shape: ZOOM_W on square or wide stages, easing down to ZOOM_WT
+  // on tall portrait stages (height 1.3x the width or more), where height is spare and the sprites
+  // would otherwise stay small under a tall empty sky. ZOOM_WT still fits 3 columns and the foe.
+  // CW x CH: the container in CSS px, re-read on every resize.
+  let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
+  const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196;
+  function pickZoom(w, h, dpr) {
+    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = ZOOM_W - (ZOOM_W - ZOOM_WT) * k;
+    let z = 1;
+    for (const c of ZOOMS) {
+      if (Number.isInteger(dpr) && !Number.isInteger(c * dpr)) continue;
+      if (w / c >= minW && h / c >= ZOOM_H) z = c;
+    }
+    return z;
+  }
+  // Formation (3 columns x 2 lanes) for B1 sprites (about 70 logical px tall, 40-50 wide). The
+  // columns in use are spread over the party side (PARTY_X0..PARTY_X1 of the width, front column at
+  // X1), at most COL_MAX px apart, so each member stands clear of the next. The upper lane (0)
+  // stands laneY px higher and about half a column further back: SNES style, each upper member
+  // peeks out between and above the two in front with only a slight overlap. It is drawn first and dimmed.
+  const PARTY_X0 = 0.06, PARTY_X1 = 0.55, COL_MAX = 84;
+  // Foe slots (fractions of the width) for a pack of 1, 2 or 3; one foe today.
+  const FOE_X = [[0.78], [0.66, 0.86], [0.62, 0.76, 0.9]];
+  let laneY = 14;
+  // Bottom of the foe header (name and HP bar) inside the stage, in logical px, so text and sprites avoid it.
+  function readHud() {
+    // the header overlay (.hud) is a sibling of the stage inside the stage box
+    const e = (stageEl.closest('.stagebox') || document).querySelector('.mob');
+    hudB = e && e.offsetParent && !e.hidden ? (e.offsetTop + e.offsetHeight) / ZM : 0;
+  }
   resize = function () {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    SW = stageEl.clientWidth; SH = stageEl.clientHeight;
-    if (!SW || !SH) return;
-    cv.width = Math.round(SW * DPR); cv.height = Math.round(SH * DPR);
-    GY = Math.round(SH * 0.8);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = stageEl.clientWidth, h = stageEl.clientHeight;
+    if (!w || !h) return;
+    if (w === CW && h === CH && dpr === DPR && cv.width === Math.round(w * DPR)) return;
+    DPR = dpr; CW = w; CH = h;
+    ZM = pickZoom(w, h, DPR);
+    SW = Math.round(w / ZM); SH = Math.round(h / ZM);
+    cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+    // Ground line 80% down (the compact-strip CSS assumes it). On a short strip the ground drops
+    // nearer the bottom so the party stays under the HUD; the scenery is then built taller (SCH, its
+    // own ground at 80%) and simply runs off the bottom edge.
+    GY = SH >= 210 ? Math.round(SH * 0.8) : Math.round(Math.max(SH * 0.8, SH - 14));
+    SCH = SH >= 210 ? SH : Math.round(GY / 0.8);
+    // Tall stages keep a floor band of 76 CSS px or more under the ground line: the ability button
+    // and the small stage buttons move down into it (20-stage.css, .stage.tall). There the upper
+    // lane also stands higher (10% of the height, up to 40 px), so both ranks and their HP bars read
+    // clearly even when a narrow stage packs the columns close.
+    tall = h - GY * ZM >= 76; stageEl.classList.toggle('tall', tall);
+    laneY = Math.max(12, Math.min(tall ? 40 : 26, Math.round(SH * (tall ? 0.1 : 0.085))));
+    readHud();
     scene = null; layoutDirty = true; foe.key = '';
   };
   function pickScene() {
@@ -40,7 +94,7 @@ let resize, animate, draw, stageStats;
     if (tg === 'world') th = 'raid';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
-    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SH, hue); curTheme = th; curHue = hue; }
+    if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
 
   // ================= party actors =================
@@ -74,25 +128,58 @@ let resize, animate, draw, stageStats;
     });
     layoutDirty = true;
   }
-  function place(a, c) {
-    a.col = c.col; a.lane = c.lane;
-    a.hx = Math.round(SW * COLX[c.col]) - (c.lane === 0 ? LANE_X : 0);
-    a.hy = GY - (c.lane === 0 ? LANE_Y : 0);
-  }
   function layout() {
     layoutDirty = false;
     const cells = (S.party && S.party.cells) || {}, used = {};
     order = [hero].concat(comps);
-    for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; place(a, c); used[c.col + ':' + c.lane] = 1; }
+    for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
-      g.hx = -999;
-      for (let col = 2; col >= 0 && g.hx === -999; col--) for (let lane = 1; lane >= 0; lane--) if (!used[col + ':' + lane]) { used[col + ':' + lane] = 1; place(g, { col, lane }); break; }
+      g.col = -1;
+      for (let col = 2; col >= 0 && g.col < 0; col--) for (let lane = 1; lane >= 0; lane--) if (!used[col + ':' + lane]) { used[col + ':' + lane] = 1; g.col = col; g.lane = lane; break; }
     }
-    order = order.concat(ghosts.filter(g => g.hx !== -999));
+    order = order.concat(ghosts.filter(g => g.col >= 0));
+    // spread the columns in use; the upper lane sits half a column back
+    // (the upper lane's half-column step counts toward the room, so nobody leaves the left edge)
+    // The front column stands at PARTY_X1 (a little less on narrow stages), and further back when a
+    // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
+    const hf = hero.fr && hero.fr.idle0, reach = foe.fr ? foe.left + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16) : 1e9;
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * 0.38, Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
+    const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
+    const laneX = Math.round(Math.max(16, D * 0.46));
+    for (const a of order) {
+      const i = cols.indexOf(a.col);
+      a.hx = Math.round(x1 - (cols.length - 1 - i) * D) - (a.lane === 0 ? laneX : 0);
+      a.hy = GY - (a.lane === 0 ? laneY : 0);
+    }
+    // On a narrow logical stage (tall portrait at a high zoom) a wide sprite at the back can run off
+    // the left edge: pull the ranks in toward the front column until every sprite shows whole.
+    let k = 1;
+    for (const a of order) {
+      const f = a.fr && a.fr.idle0, ext = f ? f.ox - leftEdge(f) : 20, d = x1 - a.hx;
+      if (d > 0 && a.hx - ext < 2) k = Math.min(k, Math.max(0.5, (x1 - 2 - ext) / d));
+    }
+    if (k < 1) for (const a of order) a.hx = Math.round(x1 - (x1 - a.hx) * k);
     order.sort((a, b) => a.lane - b.lane || a.col - b.col);
     front = hero;
     for (const a of order) if (a.alpha === 1 && (a.col > front.col || (a.col === front.col && a.lane > front.lane))) front = a;
+  }
+  // First opaque column of a baked frame (cached per canvas): the sprite's real left edge.
+  const leftEdges = new WeakMap();
+  function leftEdge(f) {
+    let e = leftEdges.get(f.c);
+    if (e === undefined) {
+      e = 0;
+      try {
+        const c = f.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let x = 0;
+        for (; x < c.width; x++) { let hit = false; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
+        e = x < c.width ? x : 0;
+      } catch (er) { e = 0; }
+      leftEdges.set(f.c, e);
+    }
+    return e;
   }
   function refreshGhosts() {
     const want = target() === 'world' ? online.peers.filter(p => !p.sameTab && p.kind === 'viewer' && p.presence && (p.presence.act === 'raid' || p.presence.raiding)).length : 0;
@@ -109,8 +196,9 @@ let resize, animate, draw, stageStats;
     const tg = target();
     let key, fr = null;
     if (tg === 'world') {
-      const gen = (online.world && online.world.gen) || 1;
-      const s = Math.max(0.6, Math.min(1.2, Math.floor(Math.min(SW * 0.5 / 156, (GY - 95) / 121) * 10) / 10));
+      const gen = (online.world && online.world.gen) || 1, bx = (ENEMY_RIGS.wyrm && ENEMY_RIGS.wyrm.box) || [-36, -70, 60, 0];
+      const bw = (bx[2] - bx[0]) * 2, bh = (bx[3] - bx[1]) * 2;
+      const s = Math.max(0.5, Math.min(1.1, Math.floor(Math.min(SW * 0.56 / bw, (GY - hudB - 4) / bh) * 10) / 10));
       key = 'w' + gen + ':' + s;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
     } else if (tg === 'node') {
@@ -126,16 +214,19 @@ let resize, animate, draw, stageStats;
       const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
       foe.anim = rig && rig.anim || 'lunge'; foe.hover = !!(rig && rig.hover);
       foe.st = 0; foe.next = 1.5 + Math.random() * 3; markLeft = 0; lastEmbers = 0;
+      if (key !== foe.key) layoutDirty = true;
       foe.key = key; foe.fr = fr; return;
     }
     if (key === foe.key) return;
+    layoutDirty = true;
     foe.key = key; foe.fr = fr; foe.m = null; foe.st = 0; foe.next = 2 + Math.random() * 3;
     foe.anim = tg === 'world' ? 'breath' : 'shake'; foe.hover = false;
   }
   function foeGeom() {
     const f = foe.fr && foe.fr.idle0;
-    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : 0.73));
-    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; }
+    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0)));
+    // on short stages the ability button stands over the right edge of the scene: keep the foe clear of it
+    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; foe.x = Math.min(foe.x, SW - 6 - (f.c.width - f.ox) - (tall || target() === 'node' ? 0 : Math.round(50 / ZM))); }
     foe.left = foe.x - (f ? f.ox : 15); foe.top = GY - foe.h; foe.cy = GY - Math.round(foe.h * 0.5);
   }
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
@@ -261,7 +352,7 @@ let resize, animate, draw, stageStats;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); }
     refreshFoe(); foeGeom();
     if (layoutDirty) layout();
     if (wyrmHit > 0) wyrmHit -= dt;
@@ -273,16 +364,17 @@ let resize, animate, draw, stageStats;
     if (wallT > 0) wallT -= dt;
     if (hymnT > 0) hymnT -= dt;
     if (markLeft > 0) markLeft -= dt;
-    for (const f of floats) { f.life -= dt; f.y -= f.vy * dt; }
+    if (hasteLeft > 0) hasteLeft -= dt;
+    for (const f of floats) f.life -= dt;
     while (floats.length && floats[0].life <= 0) floats.shift();
     for (const a of order) stepActor(a, dt);
     stepFoe(dt);
     // buffs from 55-party (polled, it allocates)
     buffPoll -= dt;
     if (buffPoll <= 0 && typeof partyBuffs === 'function') {
-      buffPoll = 0.2; guardN = 0; blessN = 0; let mk = 0;
-      for (const b of partyBuffs() || []) { if (b.id === 'guard') guardN = b.stacks; else if (b.id === 'bless') blessN = b.stacks; else if (b.id === 'mark') mk = b.left; else if (b.id === 'wall') wallT = Math.max(wallT, b.left); else if (b.id === 'hymn') hymnT = Math.max(hymnT, b.left); }
-      markLeft = mk;
+      buffPoll = 0.2; guardN = 0; blessN = 0; let mk = 0, hs = 0;
+      for (const b of partyBuffs() || []) { if (b.id === 'guard') guardN = b.stacks; else if (b.id === 'bless') blessN = b.stacks; else if (b.id === 'mark') mk = b.left; else if (b.id === 'wall') wallT = Math.max(wallT, b.left); else if (b.id === 'hymn') hymnT = Math.max(hymnT, b.left); else if (b.id === 'haste') hs = b.left; }
+      markLeft = mk; hasteLeft = hs;
     }
     if (mob && !mob.dead && target() === 'mob') lastEmbers = mob.embers | 0;
     if (volleyT > 0) {
@@ -298,6 +390,7 @@ let resize, animate, draw, stageStats;
       if (blessMote <= 0) { blessMote = 0.45; for (const a of comps) A.part(a.hx + (Math.random() - 0.5) * 12, a.hy - 10 - Math.random() * 30, 0, -14, 0.9, '#F2C14E', 0, 1, 3); }
     }
     A.step(dt);
+    if (hudOn()) stepHud(dt);
     abilityTimer -= dt;
     if (abilityTimer <= 0) { abilityTimer = 0.1; updateAbilityButton(); }
   };
@@ -311,14 +404,25 @@ let resize, animate, draw, stageStats;
     if (a.st === 2) return f.strike;
     return !reduced && ((T * 2 + a.ph) % 2) >= 1 ? f.idle1 : f.idle0;
   }
-  function shadowAt(x, w, a) {
-    ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, GY - 3, w * 2, 7);
+  function shadowAt(x, w, a, y) {
+    ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, (y ?? GY) - 3, w * 2, 7);
+  }
+  // The upper lane stands further back: its frames are drawn a little darker (cached copies).
+  const dimmed = new WeakMap();
+  function dimOf(c) {
+    let d = dimmed.get(c);
+    if (!d) {
+      d = document.createElement('canvas'); d.width = c.width; d.height = c.height;
+      const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,9,24,0.26)'; g.fillRect(0, 0, d.width, d.height);
+      dimmed.set(c, d);
+    }
+    return d;
   }
   function drawActor(a, cam) {
     const f = frameOf(a); if (!f) return;
     const hx = (a === hero ? heroHome() : a.hx) + a.dx - cam;
     ctx.globalAlpha = a.alpha;
-    ctx.drawImage(f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
+    ctx.drawImage(a.lane === 0 && !a.flash ? dimOf(f.c) : f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
     a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
   }
   // Lantern lighting (style study, direction D on a B1 stage): every emissive piece of a sprite
@@ -374,13 +478,6 @@ let resize, animate, draw, stageStats;
     ctx.globalAlpha = 1;
     foeD.x = dx; foeD.y = Math.round(y - f.oy); foeD.f = sy < 1 ? null : f;
   }
-  function drawCrown(cam) {
-    const cs = 2, cw = 7 * cs, crx = Math.round(foe.x - cam - cw / 2), cry = Math.round(foe.top - 12 + (reduced ? 0 : Math.sin(T * 2) * 1.5));
-    ctx.fillStyle = '#0B0810'; ctx.fillRect(crx - 1, cry - 1, cw + 2, 4 * cs + 2);
-    ctx.fillStyle = '#F2C14E'; ctx.fillRect(crx, cry + 2 * cs, cw, 2 * cs);
-    for (const k of [0, 3, 6]) ctx.fillRect(crx + k * cs, cry, cs, 2 * cs);
-    ctx.fillStyle = '#E0524F'; ctx.fillRect(crx + 3 * cs, cry + 2 * cs, cs, cs);
-  }
 
   let drawMs = 0;
   draw = function () {
@@ -390,7 +487,8 @@ let resize, animate, draw, stageStats;
     const tg = target(), raid = tg === 'world', gath = tg === 'node';
     const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF);
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
-    ctx.setTransform(DPR, 0, 0, DPR, sx * DPR, sy * DPR);
+    const K = DPR * ZM;
+    ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8);
@@ -407,7 +505,7 @@ let resize, animate, draw, stageStats;
         ctx.globalCompositeOperation = 'source-over';
       }
     }
-    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, 13, 0.5 * a.alpha);
+    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * a.alpha, a.hy);
     // Shield Wall dome (back half)
     if (wallT > 0 && !gath) drawDome(cam, false);
     ctx.globalAlpha = 1;
@@ -422,8 +520,8 @@ let resize, animate, draw, stageStats;
     }
     for (const a of order) drawActor(a, cam);
     ctx.globalAlpha = 1;
-    // hero guard pips (Warden)
-    if (guardN > 0 && hero._f) {
+    // hero guard pips (Warden), when the HUD (which shows them as a chip) is off
+    if (guardN > 0 && hero._f && !hudOn()) {
       const top = hero._y - 7;
       for (let i = 0; i < guardN; i++) { const x = hero._x + hero._f.ox - guardN * 3 + i * 6; ctx.fillStyle = '#0B0810'; ctx.fillRect(x - 1, top - 1, 5, 5); ctx.fillStyle = i % 2 ? '#8FB8FF' : '#C8DCFF'; ctx.fillRect(x, top, 3, 3); }
     }
@@ -438,7 +536,7 @@ let resize, animate, draw, stageStats;
     for (const a of order) lightsOf(a);
     if (foeD.f) { const f = foeD.f, fl = flick(); for (const l of f.lights) A.lightAt(ctx, l.rgb, foeD.x + l.x, foeD.y + l.y, Math.min(Math.max(8, l.size * 3), 20) * fl * 1.4, 0.3); }
     ctx.globalCompositeOperation = 'source-over';
-    drawAtmosphere(ctx, scene, T, SW, SH, camF);
+    drawAtmosphere(ctx, scene, T, SW, SCH, camF);
 
     // class and ability effects, on top of the atmosphere so they read
     ctx.imageSmoothingEnabled = true;
@@ -450,6 +548,7 @@ let resize, animate, draw, stageStats;
       if (markLeft > 0) drawReticle(cam);
     } else if (raid && markLeft > 0) drawReticle(cam);
     A.drawRings(ctx);
+    if (hudOn()) drawTeleRing(cam);
     A.drawParts(ctx);
     // unique beam
     if (beamT > 0) {
@@ -461,25 +560,43 @@ let resize, animate, draw, stageStats;
     }
     // level ring
     if (ringT > 0) {
-      const rr = (0.8 - ringT) * 60, x = heroHome() - cam;
-      ctx.strokeStyle = '#6FCB6A'; ctx.globalAlpha = ringT; ctx.lineWidth = 1.5;
+      const rr = Math.max(0, 0.8 - ringT) * 60, x = heroHome() - cam;
+      ctx.strokeStyle = '#6FCB6A'; ctx.globalAlpha = Math.min(1, ringT); ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.ellipse(x, hero.hy - 1, rr, rr * 0.3, 0, 0, 6.2832); ctx.stroke(); ctx.globalAlpha = 1;
     }
     if (raid && Date.now() < rallyUntil) { ctx.fillStyle = '#F2C14E'; ctx.globalAlpha = 0.07 + 0.04 * Math.sin(T * 6); ctx.fillRect(0, 0, SW, SH); ctx.globalAlpha = 1; }
     if (flashA > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, flashA); ctx.fillStyle = `rgb(${flashRgb})`; ctx.fillRect(-4, -4, SW + 8, SH + 8); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
 
-    // crisp floating text
+    // combat HUD (device px), then back to logical px for the floating text
+    const hud = hudOn();
+    if (hud) { drawHud(cam, sx, sy); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
+
+    // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+    // Text keeps about the same CSS size at every zoom (a little larger on big stages). It starts
+    // under the foe header (or lower, near the foe's head), never higher than 16% down the stage,
+    // rises, and fades out before it reaches the header; the right edge keeps clear of the ability button.
+    const tz = Math.min(ZM, 1.35) / ZM, top = Math.max(hudB + 4, SH * 0.16), band = Math.max(20, GY - 6 - top);
+    const xr = SW - (target() === 'node' || tall ? 4 : 60 / ZM), fTop = hud ? Math.min(foe.top, hudFoeTop) : foe.top;
     for (const f of floats) {
-      const age = 0.95 - f.life, pop = age < 0.08 ? 1.35 - age * 4 : 1;
-      const size = Math.round((f.big ? 21 : 15) * pop);
-      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2));
+      const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
+      const base = (f.big ? 21 : 15) * tz, size = Math.max(6, Math.round(base * pop));
+      const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
+      // one start line per side (just over the foe's head, or half way down the band), then each
+      // row one line higher; a row that would start above the band starts at its top and fades sooner
+      const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, fTop + 2)) : lo + band * 0.5;
+      const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz);
+      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
+      if (ctx.globalAlpha <= 0) continue;
       ctx.font = `700 ${size}px "Pixelify Sans", monospace`;
-      ctx.lineWidth = 4; ctx.strokeStyle = '#0B0810';
-      ctx.strokeText(f.txt, f.x * SW, f.y * SH);
-      ctx.fillStyle = f.color; ctx.fillText(f.txt, f.x * SW, f.y * SH);
+      const hw = ctx.measureText(f.txt).width / 2 + 4, x = Math.max(hw, Math.min(xr - hw, f.x * SW));
+      ctx.lineWidth = 4 * tz; ctx.strokeStyle = '#0B0810';
+      ctx.strokeText(f.txt, x, y);
+      ctx.fillStyle = f.color; ctx.fillText(f.txt, x, y);
     }
     ctx.globalAlpha = 1;
+    if (hud) drawBang();
     drawMs = drawMs * 0.95 + (performance.now() - t0) * 0.05;
   };
 
@@ -506,7 +623,7 @@ let resize, animate, draw, stageStats;
     ctx.strokeStyle = '#F2C14E'; ctx.lineWidth = 2; ctx.globalAlpha = 0.75 * k * pulse;
     ctx.beginPath(); ctx.ellipse(cx, GY, rx, ry, 0, Math.PI, 0); ctx.stroke();
     ctx.strokeStyle = '#FFF3C4'; ctx.lineWidth = 1; ctx.globalAlpha = 0.5 * k;
-    ctx.beginPath(); ctx.ellipse(cx, GY, rx - 5, ry - 5, 0, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx, GY, Math.max(0, rx - 5), Math.max(0, ry - 5), 0, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
     // ribs
     ctx.globalAlpha = 0.25 * k * pulse; ctx.strokeStyle = '#F2C14E';
     for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.ellipse(cx, GY, rx * i / 4, ry, 0, Math.PI, 0); ctx.stroke(); }
@@ -549,6 +666,251 @@ let resize, animate, draw, stageStats;
     ctx.globalAlpha = 1;
   }
 
+  // ================= combat HUD (canvas) =================
+  // Small HP bars over every party member and foe, an ability gauge under each bar, status chips
+  // (Guard, Blessing, Shield Wall, Rally Hymn, haste on the hero; Focus and Embers on the foe), the
+  // boss "!" telegraph and the Glint on a gather node. Drawn after everything but the floating text,
+  // in DEVICE px on a grid of U device px (a HUD pixel: about 0.5 + ZM CSS px, 1.5 at zoom 1 up
+  // to 3 on big stages), so it stays crisp and readable at every zoom. It stacks upward from the top of each head,
+  // so it never covers a face. Per frame: a few fillRects and cached 3x5 glyph and 5x5 icon sprites;
+  // no text, gradients or DOM. Data: the 55-party hooks unitHp / unitCd (polled at 10 Hz into each
+  // actor), bossTelegraph (per frame; null until Stage C), partyBuffs (polled above), mob.hp / mob.max.
+  // Setting: S.settings.hud (missing = on), toggled by the small bars button on the stage.
+  let U = 3, hudPoll = 0, glintT = 0, hudFoeTop = 0;
+  const hudOn = () => !(S.settings && S.settings.hud === false);
+  const HK = '#0B0810', HBG = '#2B2033', BONE = '#F4ECDC';
+  const hudPx = () => Math.max(2, Math.round(DPR * Math.min(3, 0.5 + ZM)));
+  // 3x5 digits, baked once per colour into a strip of 4 px cells.
+  const GLM = ['111101101101111', '010110010010111', '111001111100111', '111001011001111', '101101111001001', '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111'];
+  const glyphSets = new Map();
+  function glyphs(col) {
+    let c = glyphSets.get(col);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = GLM.length * 4; c.height = 5;
+      const g = c.getContext('2d'); g.fillStyle = col;
+      GLM.forEach((m, i) => { for (let p = 0; p < 15; p++) if (m[p] === '1') g.fillRect(i * 4 + p % 3, (p / 3) | 0, 1, 1); });
+      glyphSets.set(col, c);
+    }
+    return c;
+  }
+  // 5x5 status icons.
+  const IP = { b: '#DCE8FF', B: '#7FA6F0', g: '#FFE08A', G: '#D9A03A', w: '#FFF6E0', o: '#FF9E3D', y: '#FFD27A', l: '#C8F59A', L: '#7ED36A' };
+  const IMAP = {
+    guard: ['bbbbb', 'bBBBb', 'bBbBb', '.bBb.', '..b..'],
+    wall: ['ggggg', 'gGGGg', 'gGwGg', '.gGg.', '..g..'],
+    bless: ['..g..', '.gyg.', 'gywyg', '.gyg.', '..g..'],
+    hymn: ['..ggg', '..g.g', '..g..', 'ggg..', 'gg...'],
+    haste: ['L.L..', '.L.L.', '..L.L', '.L.L.', 'L.L..'],
+    mark: ['LL.LL', 'L...L', '..l..', 'L...L', 'LL.LL'],
+    ember: ['..o..', '.oy..', '.oyo.', 'oywyo', '.oyo.'],
+    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..']
+  };
+  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A' };
+  const icons = {};
+  function icon(id) {
+    let c = icons[id];
+    if (!c) {
+      c = icons[id] = document.createElement('canvas'); c.width = 5; c.height = 5;
+      const g = c.getContext('2d');
+      IMAP[id].forEach((r, y) => { for (let x = 0; x < 5; x++) if (IP[r[x]]) { g.fillStyle = IP[r[x]]; g.fillRect(x, y, 1, 1); } });
+    }
+    return c;
+  }
+  // Top of the head: the first opaque row near the foot column of a baked frame (cached per canvas),
+  // so bars sit just over the hair or hat, not over a raised weapon.
+  const headTops = new WeakMap();
+  function headTop(f) {
+    let t = headTops.get(f.c);
+    if (t === undefined) {
+      t = 0;
+      try {
+        const c = f.c, x0 = Math.max(0, f.ox - 9), w = Math.min(c.width - x0, 18), d = c.getContext('2d').getImageData(x0, 0, w, c.height).data;
+        let y = 0;
+        for (; y < c.height; y++) { let hit = false; for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
+        t = y < c.height ? y : 0;
+      } catch (e) { t = 0; }
+      headTops.set(f.c, t);
+    }
+    return t;
+  }
+  function pollHud() {
+    for (const a of order) {
+      if (a.alpha < 1) { a.hpT = -1; a.cdF = -1; continue; }
+      const h = typeof unitHp === 'function' ? unitHp(a.key) : null;
+      if (!h || !(h.max > 0)) a.hpT = -1;
+      else { a.hpT = Math.max(0, Math.min(1, h.hp / h.max)); a.shT = Math.max(0, Math.min(1, (h.shield || 0) / h.max)); }
+      const c = typeof unitCd === 'function' ? unitCd(a.key) : null;
+      a.cdF = c && c.max > 0 ? Math.max(0, Math.min(1, 1 - c.t / c.max)) : -1;
+    }
+    const gl = typeof glint === 'function' && target() === 'node' ? glint() : null;
+    glintT = gl && gl.on ? gl.left : 0;
+  }
+  // Bars ease toward their values; a pale trail shows the damage just taken, then drains.
+  function easeBar(o, v, dt) {
+    if (o.hpF == null || reduced) { o.hpF = v; o.trail = reduced ? v : Math.max(v, o.trail || v); return; }
+    o.hpF += (v - o.hpF) * Math.min(1, dt * 14);
+    o.trail = o.trail < o.hpF ? o.hpF : Math.max(o.hpF, o.trail - dt * (o.trail - o.hpF > 0.3 ? 1.2 : 0.45));
+  }
+  function stepHud(dt) {
+    hudPoll -= dt;
+    if (hudPoll <= 0) { hudPoll = 0.1; pollHud(); }
+    for (const a of order) {
+      if (a.hpT >= 0) easeBar(a, a.hpT, dt);
+      a.shF = (a.shF || 0) + ((a.shT || 0) - (a.shF || 0)) * (reduced ? 1 : Math.min(1, dt * 10));
+    }
+    if (glintT > 0) glintT -= dt;
+    const m = target() === 'mob' && mob && !mob.dead ? mob : null;
+    if (m !== foe.hm) { foe.hm = m; foe.hpF = null; foe.trail = 1; }
+    if (m) easeBar(foe, Math.max(0, Math.min(1, m.hp / m.max)), dt);
+  }
+  // HP bar at device X, Y (top-left), inner width w. Party: green > 50%, amber > 25%, red below;
+  // the shield is a white segment after the fill. Foes: red (champions orange with a gold edge).
+  // gauge >= 0 adds the ability gauge under the bar (blue while charging, gold when ready).
+  const HP_COL = [['#7ED36A', '#C8F59A', '#3F8A3A'], ['#F2C14E', '#FFE08A', '#A77B1E'], ['#E0524F', '#FF9A8A', '#8E2A2A']];
+  const FOE_COL = ['#E0524F', '#FF9A8A', '#8E2A2A'], CHAMP_COL = ['#F29B3E', '#FFD08A', '#9A5A1E'];
+  const gaugeH = () => U + Math.max(1, U >> 1);
+  function bar(X, Y, w, f, trail, sh, pal, gauge, edge) {
+    const h = 2 * U, hi = Math.max(1, U >> 1), gy = gauge >= 0 ? gaugeH() : 0, H = h + 2 * U + gy;
+    ctx.fillStyle = edge || HK; ctx.fillRect(X, Y, w + 2 * U, H);
+    if (edge) { ctx.fillStyle = HK; ctx.fillRect(X + hi, Y + hi, w + 2 * U - 2 * hi, H - 2 * hi); }
+    ctx.fillStyle = HBG; ctx.fillRect(X + U, Y + U, w, h);
+    const fw = Math.round(w * f), tw = Math.round(w * trail);
+    if (tw > fw) { ctx.fillStyle = '#FFF3E0'; ctx.fillRect(X + U + fw, Y + U, tw - fw, h); }
+    if (fw > 0) {
+      ctx.fillStyle = pal[0]; ctx.fillRect(X + U, Y + U, fw, h);
+      ctx.fillStyle = pal[1]; ctx.fillRect(X + U, Y + U, fw, hi);
+      ctx.fillStyle = pal[2]; ctx.fillRect(X + U, Y + U + h - hi, fw, hi);
+    }
+    if (sh > 0.001) { const sw = Math.min(w - fw, Math.max(U, Math.round(w * sh))); if (sw > 0) { ctx.fillStyle = '#F4F7FF'; ctx.fillRect(X + U + fw, Y + U, sw, h); } }
+    if (gauge >= 0) {
+      const gh = gy - U, gY = Y + h + U + (U >> 1);
+      ctx.fillStyle = HBG; ctx.fillRect(X + U, gY, w, gh);
+      const ready = gauge >= 1, blink = ready && !reduced && (T * 2.5 % 1) < 0.5;
+      ctx.fillStyle = ready ? (blink ? '#FFF3C4' : '#F2C14E') : '#8FB8FF';
+      ctx.fillRect(X + U, gY, Math.round(w * gauge), gh);
+    }
+    return H;
+  }
+  // Status chip: [icon][count] on a dark plate; frac (time left, 0-1) as a line along the bottom.
+  function chip(X, Y, id, n, frac) {
+    const w = (n > 0 ? 11 : 7) * U, h = (frac >= 0 ? 8 : 7) * U, e = Math.max(1, U >> 1);
+    ctx.fillStyle = HK; ctx.fillRect(X, Y, w, h);
+    ctx.fillStyle = HBG; ctx.fillRect(X + e, Y + e, w - 2 * e, h - 2 * e);
+    ctx.drawImage(icon(id), X + U, Y + U, 5 * U, 5 * U);
+    if (n > 0) ctx.drawImage(glyphs(BONE), Math.min(9, n) * 4, 0, 3, 5, X + 7 * U, Y + U, 3 * U, 5 * U);
+    if (frac >= 0) { ctx.fillStyle = ICOL[id]; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
+    return w;
+  }
+  // Chips queue up (pooled records), then chipRow draws them centred on X (or starting at X when
+  // left is set) with their bottom at Y, and returns the row height (0 when empty).
+  const chipList = [], chipPool = [];
+  function pushChip(id, n, f) {
+    const c = chipPool[chipList.length] || (chipPool[chipList.length] = { id: '', n: 0, f: -1 });
+    c.id = id; c.n = n; c.f = f; chipList.push(c);
+  }
+  function chipRow(X, Y, left) {
+    if (!chipList.length) return 0;
+    let tw = -U, h = 0;
+    for (const c of chipList) { tw += (c.n > 0 ? 11 : 7) * U + U; h = Math.max(h, (c.f >= 0 ? 8 : 7) * U); }
+    let x = Math.max(2 * U, Math.min(cv.width - tw - 2 * U, left ? X : Math.round(X - tw / 2)));
+    for (const c of chipList) x += chip(x, Y - h, c.id, c.n, c.f) + U;
+    chipList.length = 0;
+    return h;
+  }
+  // Boss telegraph: a "!" plate (red heavy hit, blue dive, green heal) with a pointer, bottom at Yb.
+  // s: its pixel size (2U; U on short stages where the full size would run under the header).
+  const TELE = { heavy: ['#E0524F', '#FF9A8A', '#8E2A2A'], cloud: ['#E0524F', '#FF9A8A', '#8E2A2A'], dive: ['#4F86E0', '#9CC4FF', '#27488E'], heal: ['#4FB860', '#A8F0A0', '#2A7A3A'] };
+  // drawHud only places the marker (bangAt); drawBang paints it after the floating text, on top.
+  const bangQ = { on: false, X: 0, Yb: 0, kind: '', s: 0 };
+  function bangAt(X, Yb, kind, s) { s = s || 2 * U; bangQ.on = true; bangQ.X = X; bangQ.Yb = Yb; bangQ.kind = kind; bangQ.s = s; return 13 * s; }
+  function drawBang() {
+    if (!bangQ.on) return;
+    bangQ.on = false;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1;
+    bang(bangQ.X, bangQ.Yb, bangQ.kind, bangQ.s);
+  }
+  function bang(X, Yb, kind, s) {
+    const pal = TELE[kind] || TELE.heavy;
+    s = s || 2 * U;
+    const w = 7 * s, h = 11 * s, x = Math.round(X - w / 2), y = Math.round(Yb - h - 2 * s);
+    const lit = reduced || (T * 4 % 1) < 0.7;   // a steady flash; reduced motion keeps it lit
+    ctx.fillStyle = HK; ctx.fillRect(x, y, w, h); ctx.fillRect(x + 2 * s, y + h, 3 * s, s); ctx.fillRect(x + 3 * s, y + h + s, s, s);
+    const e = s >> 1;
+    ctx.fillStyle = lit ? pal[0] : pal[2]; ctx.fillRect(x + e, y + e, w - 2 * e, h - 2 * e); ctx.fillRect(x + 2 * s + e, y + h - e, s * 3 - 2 * e, s - e);
+    ctx.fillStyle = pal[1]; ctx.fillRect(x + e, y + e, w - 2 * e, e);
+    ctx.fillStyle = '#FFF6E0'; ctx.fillRect(x + 3 * s - e, y + 2 * s, s + 2 * e, 5 * s); ctx.fillRect(x + 3 * s - e, y + 8 * s, s + 2 * e, s + e);
+    return h + 2 * s;
+  }
+  function drawHud(cam, ox, oy) {
+    const K = DPR * ZM, X = x => Math.round((x + ox) * K), Y = y => Math.round((y + oy) * K);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    U = hudPx(); chipList.length = 0; bangQ.on = false;
+    const tg = target(), gap = 2 * U, minY = Math.round((hudB + 3) * K);
+    hudFoeTop = foe.top;
+    if (tg === 'node') {
+      // the Glint: a sparkle chip with its timer over the node, and a blinking star above it
+      if (glintT > 0 && foe.fr) {
+        const cx = X(foe.x - cam), top = Math.max(minY + 8 * U, Y(GY - foe.h + headTop(foe.fr.idle0)) - gap);
+        pushChip('glint', 0, Math.min(1, glintT / 3));
+        const h = chipRow(cx, top);
+        if (reduced || (T * 3 % 1) < 0.6) ctx.drawImage(icon('glint'), cx - 5 * U, top - h - 11 * U, 10 * U, 10 * U);
+      }
+      return;
+    }
+    const tele = typeof bossTelegraph === 'function' ? bossTelegraph() : null;
+    const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
+    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0;
+    // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
+    // (toward the foe: above it they would cover the face of an ally in the upper lane)
+    for (const a of order) {
+      if (a.alpha < 1 || !a.fr || !(a.hpT >= 0)) continue;
+      const f = a.fr.idle0, cx = X((a === hero ? heroHome() : a.hx) + a.dx - cam);
+      const bh = 4 * U + (a.cdF >= 0 ? gaugeH() : 0);
+      const y = Math.max(minY + (a === hero && heroChips ? 4 * U : 0), Y(a.hy - f.oy + headTop(f)) - gap - bh);
+      bar(cx - (bw >> 1) - U, y, bw, a.hpF == null ? a.hpT : a.hpF, a.trail || 0, a.shF || 0, a.hpT > 0.5 ? HP_COL[0] : a.hpT > 0.25 ? HP_COL[1] : HP_COL[2], a.cdF);
+      if (a === hero && heroChips) {
+        if (guardN > 0) pushChip('guard', guardN, -1);
+        if (blessN > 0) pushChip('bless', blessN, -1);
+        if (wallT > 0) pushChip('wall', 0, Math.min(1, wallT / 6));
+        if (hymnT > 0) pushChip('hymn', 0, Math.min(1, hymnT / 8));
+        if (hasteLeft > 0) pushChip('haste', 0, Math.min(1, hasteLeft / 10));
+        chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
+      }
+      if (tele && tele.kind === 'dive' && tele.target === a.key) bangAt(cx, y, 'dive');
+    }
+    // foe: HP bar (not for bosses: their HP is in the header), its chips, then the telegraph
+    if (!foe.fr || !foeAlive()) return;
+    const boss = tg === 'world' || !!(mob && mob.boss), cx = X(foe.x - cam);
+    let y = Y(GY - foe.h + headTop(foe.fr.idle0)) - gap;
+    if (!boss && mob && foe.hpF != null) {
+      const fw = Math.max(14 * U, Math.min(24 * U, Math.round(foe.w * 0.5 * K / U) * U));
+      y = Math.max(minY, y - 4 * U);
+      bar(cx - (fw >> 1) - U, y, fw, foe.hpF, foe.trail, 0, mob.champ ? CHAMP_COL : FOE_COL, -1, mob.champ ? '#F2C14E' : null);
+    }
+    if (tg === 'mob' && mob) {
+      if (markLeft > 0) pushChip('mark', 0, Math.min(1, markLeft / 8));
+      if (mob.embers | 0) pushChip('ember', mob.embers | 0, -1);
+      const h = chipRow(cx, y - U);
+      if (h) y -= h + U;
+    }
+    if (tele && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
+    hudFoeTop = Math.min(foe.top, y / K - oy);
+  }
+  // Wind-up ring for the telegraph (logical px, smooth pass): it shrinks onto the boss (or the
+  // dived ally) as the hit nears. None under reduced motion (the "!" stays).
+  function drawTeleRing(cam) {
+    if (reduced || typeof bossTelegraph !== 'function' || target() === 'node') return;
+    const t = bossTelegraph(); if (!t || !(t.dur > 0)) return;
+    const u = Math.max(0, Math.min(1, t.left / t.dur)), pal = TELE[t.kind] || TELE.heavy;
+    let x = foe.x - cam, y = foe.cy, r0 = Math.max(foe.w, foe.h) * 0.45;
+    if (t.kind === 'dive') { const a = order.find(o => o.key === t.target); if (!a) return; x = (a === hero ? heroHome() : a.hx) - cam; y = a.hy - 30; r0 = 18; }
+    const r = r0 + 40 * u;
+    ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = pal[0]; ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.3 + 0.6 * (1 - u);
+    ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.9, 0, 0, 6.2832); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+
   // ================= ability button =================
   const ICONS = {};
   function abilityIcon(cls) {
@@ -583,6 +945,26 @@ let resize, animate, draw, stageStats;
     e.stopPropagation();
     if (!castAbility()) { abBtn.classList.remove('nope'); void abBtn.offsetWidth; abBtn.classList.add('nope'); }
   });
+  // Battle HUD toggle (S.settings.hud; a missing value means on): a small two-bar button.
+  const hudBtn = el('button', 'hud-btn'); hudBtn.type = 'button';
+  const hudIc = el('canvas'); hudIc.width = 7; hudIc.height = 7; hudBtn.append(hudIc);
+  let hudBtnOn = null;
+  function drawHudBtn() {
+    const on_ = hudBtnOn = hudOn(), g = hudIc.getContext('2d');
+    g.clearRect(0, 0, 7, 7);
+    g.fillStyle = on_ ? '#7ED36A' : '#6B6275'; g.fillRect(1, 1, 5, 2);
+    g.fillStyle = on_ ? '#8FB8FF' : '#6B6275'; g.fillRect(1, 4, 3, 2);
+    hudBtn.classList.toggle('off', !on_);
+    hudBtn.title = on_ ? 'Battle bars on. Tap to hide.' : 'Battle bars off. Tap to show.';
+    hudBtn.setAttribute('aria-label', hudBtn.title); hudBtn.setAttribute('aria-pressed', on_ ? 'true' : 'false');
+  }
+  hudBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  hudBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!S.settings) return;
+    S.settings.hud = !hudOn(); drawHudBtn(); save();
+  });
+  drawHudBtn(); stageEl.append(hudBtn);
   let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
   function updateAbilityButton() {
     const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
@@ -615,5 +997,5 @@ let resize, animate, draw, stageStats;
   });
 
   new ResizeObserver(() => resize()).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, DPR, actors: order.length, bake: bakeStats() });
+  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats() });
 }

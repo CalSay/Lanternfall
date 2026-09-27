@@ -1,4 +1,4 @@
-// 75-bounties-ui: Bounties section on the Fight tab, Achievements grid on the Tavern tab.
+// 75-bounties-ui: Bounties (Fight tab, Bounties view) and the Achievements grid (bell sheet, Journal view).
 {
   const BTY_IC = {
     kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
@@ -7,7 +7,7 @@
   };
   const btyRows = [];
   registerSection('adv', {
-    id: 'bounties', title: 'Bounties',
+    id: 'bounties', title: 'Bounties', view: 'bounties',
     mount(sec) {
       // sit right under the Boss gate
       const panel = sec.parentNode; if (panel.children.length > 1) panel.insertBefore(sec, panel.children[1]);
@@ -50,7 +50,7 @@
 
   let achSig = '';
   const achTiles = [];
-  registerSection('tav', {
+  registerSection('log', {  // the Journal view of the bell sheet (70-ui.js), after the lifetime stats
     id: 'achievements', title: 'Achievements',
     mount(sec) {
       const head = el('p', 'note ach-sum'); sec.append(head);
