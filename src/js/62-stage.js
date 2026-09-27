@@ -992,10 +992,16 @@ let resize, animate, draw, stageStats;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
-    const r = stageEl.getBoundingClientRect();
+    const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });
+  // The stage's page rect for taps, read in the ResizeObserver (layout is fresh there) rather than on
+  // every tap, where ui() has just written the DOM and a read would force a layout. A scroll or a
+  // window resize drops it; the next tap reads it again.
+  let stageRect = null;
+  addEventListener('resize', () => { stageRect = null; });
+  addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
-  new ResizeObserver(() => resize()).observe(stageEl);
+  new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
   stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats() });
 }

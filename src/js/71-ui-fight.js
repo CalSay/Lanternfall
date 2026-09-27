@@ -22,52 +22,56 @@ $('zPrev').addEventListener('click', () => { if (S.zone > 1) { setZone(S.zone - 
 $('zNext').addEventListener('click', () => { if (S.zone < S.maxZone) { setZone(S.zone + 1); ui(true); } });
 document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => setActivity(b.dataset.act)));
 
+// Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
+// second, and an unchanged value must not make the browser lay the page out again.
+const amtBtns = [...document.querySelectorAll('#amtSeg button')];
+const gateEl = { title: $('gateTitle'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price'), comp: $('compRows').parentElement };
 function uiFight() {
-  document.querySelectorAll('#amtSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.amt === S.amt)));
-  const gb = $('gateBtn'), gq = gb.querySelector('.qty'), gp = gb.querySelector('.price');
+  for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
+  const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[ZONE_UNIQ[zoneType(S.zone)]].name;
   if (S.activity !== 'fight') {
-    $('gateTitle').textContent = S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering';
-    $('gateDesc').textContent = 'Switch to Fight above the tabs to clear zones and earn gold and essence.';
-    gq.textContent = 'Party'; gp.textContent = 'Fight'; gb.disabled = false;
+    putText(G.title, S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering');
+    putText(G.desc, 'Switch to Fight above the tabs to clear zones and earn gold and essence.');
+    putText(gq, 'Party'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
-    $('gateTitle').textContent = 'Boss fight underway';
-    $('gateDesc').textContent = `${Math.ceil(bossTime)} seconds left. Tap fast.`;
-    gq.textContent = 'Boss'; gp.textContent = 'Fighting'; gb.disabled = true;
+    putText(G.title, 'Boss fight underway');
+    putText(G.desc, `${Math.ceil(bossTime)} seconds left. Tap fast.`);
+    putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
-    $('gateTitle').textContent = 'Rematch this zone\'s boss';
-    $('gateDesc').textContent = `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`;
-    gq.textContent = 'Boss'; gp.textContent = 'Rematch'; gb.disabled = false;
+    putText(G.title, 'Rematch this zone\'s boss');
+    putText(G.desc, `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`);
+    putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
-    $('gateTitle').textContent = bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`;
-    $('gateDesc').textContent = `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`;
-    gq.textContent = 'Boss'; gp.textContent = 'Fight'; gb.disabled = !bossReady();
+    putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
+    putText(G.desc, `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
   HERO_UPS.forEach((u, i) => {
     const r = heroRows[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
-    r.own.textContent = 'Lv ' + S[u.id];
-    r.desc.textContent = u.desc();
-    r.qty.textContent = p.n ? 'Buy ' + p.n : 'Maxed';
+    putText(r.own, 'Lv ' + S[u.id]);
+    putText(r.desc, u.desc());
+    putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');
     setPrice(r.btn, p.cost);
-    r.btn.disabled = !(p.n > 0 && S.gold >= p.cost);
+    putDisabled(r.btn, !(p.n > 0 && S.gold >= p.cost));
   });
   // Once the save is on the roster (56-roster.js), companions live in the Party tab.
-  $('compRows').parentElement.hidden = rosterLive();
+  putHidden(G.comp, rosterLive());
   if (rosterLive()) return;
   let teaser = false;
   COMPS.forEach((c, i) => {
     const r = compRows[i];
     const known = S.comp[i] > 0 || S.totalGold >= c.base * 0.3;
-    r.row.hidden = !known && teaser;
+    putHidden(r.row, !known && teaser);
     if (!known) teaser = true;
-    r.row.classList.toggle('locked', !known);
-    r.ic.classList.toggle('ghost', !known);
-    r.nm.textContent = known ? c.name : 'Unknown ally';
-    r.own.textContent = S.comp[i] ? 'x' + S.comp[i] : '';
-    r.desc.textContent = known ? `${fmt(compDpsOne(i))} DPS each. ${c.blurb}` : `Earn ${fmt(c.base * 0.3)} gold in total to meet them.`;
+    putToggle(r.row, 'locked', !known);
+    putToggle(r.ic, 'ghost', !known);
+    putText(r.nm, known ? c.name : 'Unknown ally');
+    putText(r.own, S.comp[i] ? 'x' + S.comp[i] : '');
+    putText(r.desc, known ? `${fmt(compDpsOne(i))} DPS each. ${c.blurb}` : `Earn ${fmt(c.base * 0.3)} gold in total to meet them.`);
     const p = plan(c.base, 1.15, S.comp[i], S.gold);
-    r.qty.textContent = 'Hire ' + p.n;
+    putText(r.qty, 'Hire ' + p.n);
     setPrice(r.btn, p.cost);
-    r.btn.disabled = !known || S.gold < p.cost;
+    putDisabled(r.btn, !known || S.gold < p.cost);
   });
 }
