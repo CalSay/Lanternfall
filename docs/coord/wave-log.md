@@ -49,3 +49,8 @@ The art style study is still running (owner leans 16-bit; wants clear section de
   D lamplit) and published for the owner: https://claude.ai/artifact/4w567kZ5vdzP6dsw1ahagB
   Art director recommends B1 + D's lantern lighting. Conversion is about 6-8 agent-days: outfits
   rewritten relative to body anchors; bones, poses, tiers and lights stay. Waiting on the owner's pick.
+- B7 unlock avenues merged (56c-unlocks.js; leads(), Renown, tokens with pity, Tavern visitor, joining
+  overlay). T17 passes. T16: Rare 17-23m ok, Epic 1.5-2h ok after moving 4 gates (UNLOCK_TUNE, marked
+  `(sim)`), Legendary 2.1-2.6h (want 6-12h) because gold runs away: fix through M6 pacing, then recheck.
+  The sim now claims bounties (needed for Renown), which pushes T1 above band (16/23/34); M6 retune must
+  use the new sim. Sim `Date.now` follows sim time; `--day N`, `--unlock path=v`, `--bounties 0`.

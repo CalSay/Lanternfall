@@ -529,5 +529,138 @@ try {
   assert(g.eval("GOALS.every(x => x.id !== 'x')"), 'remove fn unregisters');
 } catch (e) { fail('goals crashed: ' + (e.stack || e)); }
 
+// ---- 6. unlock avenues (56c-unlocks.js, B7) ----
+console.log('unlocks');
+try {
+  // A started game at a given zone; Date.now is pinned so setDay(d) picks the device day.
+  const game = (zone, seed = 7) => {
+    const g = loadCore({ seed });
+    g.eval('chooseClass("warden"); Date.__t = Date.now(); Date.now = () => Date.__t');
+    g.eval(`S.maxZone = ${zone}; S.zone = ${zone}`);
+    const recs = {}; g.fn.on('recruit', ({ id }) => { recs[id] = (recs[id] || 0) + 1; });
+    return { g, E: s => g.eval(s), recs, setDay: d => g.eval(`Date.__t = new Date(2026, 0, 1 + ${d}, 12).getTime()`), tick: n => { for (let i = 0; i < n; i++) g.fn.tick(0.1); } };
+  };
+  const bossKill = (E, z) => E(`emit('kill', { mob: { key: 'x0', boss: true }, zone: ${z}, gold: 1, ess: 0, tier: 1 })`);
+  // Renown: +1 per claimed bounty; Aldric at 15 then 25K gold; Vesper free at 60; Caedmon 80 + zone 35 boss, wyrms count 5.
+  {
+    const { E, recs, tick } = game(10);
+    for (let i = 0; i < 14; i++) E("emit('bountyDone', { k: 'kill' })");
+    E('S.gold = 1e6');
+    assert(E('renown()') === 14 && !E('canRecruit("aldric")'), 'Renown 14: Aldric not yet');
+    E("emit('bountyDone', { k: 'kill', elite: true })");
+    assert(E('renown()') === 17 && E('canRecruit("aldric") && recruit("aldric")') && E('S.gold') === 1e6 - 25000 && !E('recruit("aldric")') && recs.aldric === 1, 'Renown 15 + 25K gold recruits Aldric once (elite bounty = 3)');
+    E('addRenown(43, "test")'); tick(11);
+    assert(E('isRecruited("vesper") && charRec("vesper").src === "renown"') && recs.vesper === 1, 'Vesper joins free at Renown 60');
+    E('S.maxZone = 36; S.wyrms = 3'); tick(11);
+    assert(!E('isRecruited("caedmon")') && E('caedmonRenown()') === 75, 'Caedmon waits: Renown 60 + 3 raid kills x 5 = 75 of 80');
+    E('S.wyrms = 4'); tick(11);
+    assert(E('isRecruited("caedmon")') && recs.caedmon === 1, 'Caedmon joins at 80 with the zone 35 boss beaten');
+  }
+  // Old save backfill: Renown from the bounties already claimed, once.
+  {
+    const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
+    old.bounties = { slots: [], claimed: 12, seq: 12 };
+    const g = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
+    assert(g.eval('renown() === 12 && S.party.unlock.rb === true'), 'old save: 12 claimed bounties backfill 12 Renown');
+    g.eval("emit('bountyDone', { k: 'kill' })"); g.fn.save();
+    const g2 = loadCore({ storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(g2.eval('renown()') === 13, 'backfill runs once (13 after reload, not 25)');
+    const cmp = JSON.parse(JSON.stringify(old)); delete cmp.bounties.slots; delete cmp.bounties.seq; delete cmp.last; if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
+    const d = subsetDiff(cmp, JSON.parse(JSON.stringify(g.eval('S'))));
+    assert(!d, 'old save fields kept with the unlock state added' + (d ? ': ' + d : ''));
+  }
+  // Tokens: pity guarantees (worst case 12 / 10), right bosses only.
+  {
+    const { E, recs } = game(40);
+    let n = 0; while (!E('isRecruited("grenna")') && n < 50) { n++; E('unlockTokenRoll("grenna", 0.999999)'); }
+    let m = 0; while (!E('isRecruited("isolde")') && m < 50) { m++; E('unlockTokenRoll("isolde", 0.999999)'); }
+    assert(n === 12 && m === 10 && recs.grenna === 1 && recs.isolde === 1, `T17 worst-case pity: Grenna ${n} (want 12), Isolde ${m} (want 10)`);
+    assert(E('unlockTokenRoll("grenna", 0) === null'), 'no rolls once won');
+  }
+  {
+    const { E } = game(60);
+    const gz = E('UNLOCK_TUNE.tokens.grenna.from'), iz = E('UNLOCK_TUNE.tokens.isolde.from');
+    const quarry = E(`(() => { for (let z = Math.max(${gz}, ${iz}); ; z++) if (zoneType(z) === 5) return z; })()`);
+    bossKill(E, gz - 7); bossKill(E, iz - 1);   // a Quarry Ruins boss below the token zone, and the zone below the Dusk Contract
+    assert(E('(S.party.unlock.tokens.grenna || { miss: 0 }).miss') === 0 && E('(S.party.unlock.tokens.isolde || { miss: 0 }).miss') === 0, 'no token roll below the token zones');
+    E('Math.random = () => 0.999999'); bossKill(E, quarry); bossKill(E, quarry); bossKill(E, quarry + 1);
+    assert(E('S.party.unlock.tokens.grenna.miss') === 2 && E('S.party.unlock.tokens.isolde.miss') === 3, 'Quarry Ruins bosses roll the token (repeat kills count); every boss from the zone rolls the Dusk Contract');
+    assert(Math.abs(E('tokenChance("grenna")') - 0.24) < 1e-9 && E('addTokenProgress("isolde", 100)') === 1, 'pity shown as the next chance; addTokenProgress caps at a sure roll');
+  }
+  // Tavern visitor: rotation by device day, hire once, trader for recruited visitors.
+  {
+    const { E, setDay, recs } = game(20);
+    const rot = E('UNLOCK_TUNE.rotation'), week = [280, 281, 282, 283, 284, 285, 286];
+    const ids = week.map(d => { setDay(d); return E('visitorToday().id'); });
+    assert(ids.join() === week.map(d => rot[d % 7]).join() && E('unlockDay()') === 286, `rotation follows the device day (${ids.join(',')})`);
+    const aday = week.find(d => rot[d % 7] === 'anselm');
+    setDay(aday); E('S.gold = 1e6; S.mats.ess[1] = 30');
+    assert(E('visitorToday().kind === "hire" && canRecruit("anselm") && recruit("anselm")') && E('S.gold') === 1e6 - 60000 && E('S.mats.ess[1]') === 10 && recs.anselm === 1, 'Anselm hired on his day for 60K + 20 Glowing');
+    const vt = E('visitorToday()');
+    assert(E('S.party.unlock.visitor.hired') === true && vt.kind === 'trade' && !vt.done, 'a hired visitor is replaced by a trader');
+    const t = E('zoneTier(S.maxZone)'), e0 = E(`S.mats.ess[${t - 1}]`);
+    assert(E('buyTrade()') && E(`S.mats.ess[${t - 1}]`) === e0 + 10 && !E('buyTrade()'), 'the trader sells 10 essence of the top tier, once a day');
+    setDay(aday + 1); E('visitorToday()');
+    assert(E('S.party.unlock.visitor.day') === aday + 1 && E('S.party.unlock.visitor.hired') === false && E('S.party.unlock.visitor.bought') === false, 'a new device day resets the visitor');
+    const kday = week.find(d => rot[d % 7] === 'kestrel');
+    setDay(kday); E('S.maxZone = 8; S.gold = 1e6');
+    assert(E('recruitCost("kestrel").gold') === 90000 && E('recruit("kestrel")') && E('S.gold') === 1e6 - 90000, 'Kestrel hires early at 3x gold before zone 12');
+    setDay(aday + 7);
+    assert(E('visitorToday().kind') === 'trade' && E('daysUntilVisit("anselm")') === 0, 'a recruited visitor leaves a trader on their day');
+    E('S.maxZone = 3');
+    assert(E('visitorToday().kind') === 'closed', 'no visitors before zone 6');
+  }
+  // Quests: hand-in consumes the items; Morwen's condition.
+  {
+    const { E, recs, tick } = game(5);
+    E('S.mats.wood = [40, 30, 0, 0, 0]');
+    assert(E('canRecruit("bram") && recruit("bram")') && E('S.mats.wood.join()') === '0,10,0,0,0' && recs.bram === 1, 'Bram: 60 Oak Logs handed in (better logs count, Oak first)');
+    const mn = E('UNLOCK_TUNE.quests.maren.ess[1]');
+    E(`S.mats.ess = [0, ${mn - 1}, 0, 0, 0]`);
+    assert(!E('canRecruit("maren")') && E('leads().some(l => l.id === "maren" && l.action === null && l.pct < 1)'), `Maren waits for ${mn} Glowing Essence`);
+    E('S.mats.ess[1]++');
+    const lm = E('leads().find(l => l.id === "maren")');
+    assert(lm && lm.action && lm.action.label === 'Hand in' && E('leads().find(l => l.id === "maren").action.fn()') && E('S.mats.ess[1]') === 0 && recs.maren === 1, 'Maren: the Leads "Hand in" consumes the essence');
+    E('S.maxZone = 28; S.gold = 2e8; S.mats.ess[3] = 25');
+    assert(E('recruit("elowen")') && E('S.gold') === 5e7 && E('S.mats.ess[3]') === 5, 'Elowen: 150M gold + 20 Blazing Essence handed in');
+    const mz = E('UNLOCK_TUNE.quests.morwen.zone');
+    E(`S.maxZone = ${mz + 1}; unlockChar("hesketh", "test", true); setField(["hesketh", "bram"])`);
+    bossKill(E, mz); tick(11);
+    assert(!E('isRecruited("morwen")'), 'Morwen: no join with a support fielded');
+    E('setField(["bram"])'); bossKill(E, mz - 7); tick(11);
+    assert(!E('isRecruited("morwen")'), 'Morwen: only her Fungal Deep boss counts');
+    bossKill(E, mz); bossKill(E, mz); tick(11);
+    assert(E('isRecruited("morwen")') && recs.morwen === 1, `Morwen joins once after the zone ${mz} boss with no support`);
+  }
+  // Bestiary, Kingslayer, Star Chart, Leads.
+  {
+    const { E, recs, tick } = game(30);
+    E('S.mastery.types.wraith = 999'); tick(11);
+    assert(!E('isRecruited("thessaly")'), 'Thessaly waits for the full Marsh Wraith page');
+    E('S.mastery.types.wraith = 1000'); tick(11);
+    assert(E('isRecruited("thessaly")') && recs.thessaly === 1, 'Thessaly joins at the Marsh Wraith tier 3 page');
+    E('TYPES.forEach(t => S.mastery.types[t.key] = 100); S.stats.bosses = 120'); tick(11);
+    assert(!E('isRecruited("corvin")'), 'Corvin waits for 150 boss kills');
+    E("emit('kingslayerCredit', { n: 80 })"); tick(11);
+    assert(E('S.party.unlock.ks') === 50 && E('isRecruited("corvin")') && recs.corvin === 1, 'Kingslayer: expedition credit (capped at 50) completes Corvin');
+    assert(!E('canRecruit("oriel")') && /Star Chart/.test(E('recruitHow("oriel")')), 'Oriel waits for a Star Chart');
+    E('grantStarChart()');
+    assert(E('isRecruited("oriel") && charRec("oriel").src === "craft"') && recs.oriel === 1, 'grantStarChart() brings Oriel');
+    const L = E('leads()');
+    assert(Array.isArray(L) && L.length > 0 && L.every(l => l.id && l.name && typeof l.how === 'string' && l.pct >= 0 && l.pct <= 1 && (l.action === null || (l.action.label && typeof l.action.fn === 'function'))), `leads() shape (${L.map(l => l.id).join(',')})`);
+    assert(E('ROSTER_KEYS.every(k => isRecruited(k) || recruitHow(k).length > 0)'), 'every locked character has a how line');
+  }
+  // Fixtures: unlock state merged, migrated Oriel kept, no errors after a minute of play.
+  for (const f of ['save-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: raw }) });
+    const u = g.eval('S.party.unlock');
+    assert(u && typeof u.renown === 'number' && u.visitor && 'bought' in u.visitor && 'starChart' in u, `${f}: unlock state merged`);
+    const hadOriel = (JSON.parse(raw).comp || [])[5] > 0;
+    for (let i = 0; i < 600; i++) g.fn.tick(0.1);
+    assert((!hadOriel || g.eval('isRecruited("oriel")')) && !g.errors.length, `${f}: plays a minute with the unlock avenues` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+} catch (e) { fail('unlocks crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

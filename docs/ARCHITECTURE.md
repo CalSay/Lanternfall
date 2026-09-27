@@ -28,6 +28,8 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js) |
 | 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
+
+| 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -150,6 +152,11 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `fieldChange` | `{ field }` |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
 | `synergyChange` | `{ active, gained, lost }` (after a field change) |
+
+| `renown` | `{ n, total, source }` |
+| `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
+| `visitorHired` | `{ id, day }` |
+| `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 

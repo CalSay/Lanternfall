@@ -280,7 +280,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   };
 
   // ---------------- recruiting ----------------
-  // Routes: id -> [{ source, ready(), cost() -> { gold, ess: [tier, n] } | null, how() }].
+  // Routes: id -> [{ source, ready(), cost() -> { gold, ess: [tier, n] } | null, how(), pay()? }].
   // ready() means the route's condition is met (zone reached, quest done, token won...).
   const ROUTES = {};
   addRecruitRoute = (id, route) => {
@@ -312,6 +312,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     if (!canRecruit(id)) return false;
     const rt = readyRoute(id);
     pay(costOf(rt));
+    if (rt.pay) rt.pay();   // extra hand-in a route owns (B7: logs, the visitor's day)
     return unlockChar(id, rt.source || 'progress');
   };
   recruitHow = id => {
