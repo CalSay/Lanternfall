@@ -58,3 +58,29 @@ function mod(key) {
 // onTick(fn): fn(dt) runs at the end of every core tick (in the browser and in the Node tools).
 const TICK_HOOKS = [];
 const onTick = fn => { TICK_HOOKS.push(fn); return () => { const i = TICK_HOOKS.indexOf(fn); if (i >= 0) TICK_HOOKS.splice(i, 1); }; };
+
+// ================= additive bonuses =================
+// bonus(key) is the SUM of every registered value for that key (0 when none). Use it for
+// hours, slots, counts and flat knobs that do not fit a product of multipliers.
+// Keys: awayHours (added to the away cap).
+const BONUSES = new Map();
+function addBonus(key, fn) {
+  if (!BONUSES.has(key)) BONUSES.set(key, []);
+  BONUSES.get(key).push(fn);
+  return () => { const l = BONUSES.get(key), i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); };
+}
+function bonus(key) {
+  const l = BONUSES.get(key); if (!l || !l.length) return 0;
+  let s = 0; for (const f of l) s += f();
+  return s;
+}
+
+// ================= device calendar =================
+// deviceDay(): the local date as whole days since 2026-01-01 (the Tavern visitor's epoch).
+// deviceWeek(): weeks start on Monday (2026-01-01 was a Thursday).
+// Single-player only: changing the device clock only affects the player's own game.
+function deviceDay(now) {
+  const d = now === undefined ? new Date() : new Date(now);
+  return Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 0, 1)) / 864e5);
+}
+const deviceWeek = now => Math.floor((deviceDay(now) + 3) / 7);

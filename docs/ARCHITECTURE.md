@@ -68,6 +68,13 @@ addModifier('gold', () => 1 + 0.05 * S.bounty.count);
 ```
 
 ```js
+addBonus(key, fn) -> remove()   // fn() returns a number; bonus(key) = sum of all, 0 if none
+deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; weeks start Monday
+```
+Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
+`yield:<family>` (harvest and away yield per material family).
+
+```js
 onTick(fn(dt)) -> remove()   // after each core tick; dt in seconds (<= 0.1)
 ```
 ```js

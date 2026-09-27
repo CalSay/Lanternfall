@@ -108,7 +108,7 @@ function gainXp(n) {
   }
 }
 function gainSkill(k, n, quiet) {
-  const sk = S.skills[k]; sk.xp += n * mod('skillXp');
+  const sk = S.skills[k]; sk.xp += n * mod('skillXp') * mod('skillXp:' + k);
   while (sk.xp >= skillNeed(sk.lv)) {
     sk.xp -= skillNeed(sk.lv); sk.lv++;
     emit('skillUp', { k, lv: sk.lv, quiet: !!quiet });
@@ -167,8 +167,8 @@ function tick(dt) {
 function harvest() {
   const { kind, t } = S.node, g = gear();
   const dbl = Math.min(60, kind === 'ore' ? g.oreDbl : g.woodDbl) / 100, ex = kind === 'ore' ? g.oreExtra : g.woodExtra;
-  const n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
-  S.mats[kind][t - 1] += n;
+  let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
+  S.mats[kind][t - 1] += n = Math.max(1, Math.round(n * mod('yield:' + kind)));
   gainSkill(skillOf(kind), nodeXp(t));
   addFloat(`+${n} ${matName(kind, t)}`, MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
   burst(0.68, 0.6, MAT[kind].col[t - 1], 12, 0.9);
@@ -181,7 +181,7 @@ function harvest() {
 // 'awayEnd' r (55-stats.js diffs the state into r and collects registerAwayLine lines).
 // r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
-  const r = { t: Math.min(secs, (4 + 2 * S.relic.glass) * 3600), secs, lines: [] };
+  const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
@@ -194,7 +194,7 @@ function awayBase(r) {
   if (S.activity === 'gather') {
     const { kind, t: tier } = S.node;
     const swings = t / nodeTime(kind, tier) * boost;
-    const got = Math.floor(swings * nodeYieldAvg(kind));
+    const got = Math.floor(swings * nodeYieldAvg(kind) * mod('yield:' + kind));
     S.mats[kind][tier - 1] += got;
     gainSkill(skillOf(kind), Math.floor(swings * nodeXp(tier)), true);
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
