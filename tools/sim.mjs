@@ -431,6 +431,7 @@ function playSecond(sec) {
     if (phase === 0) fn.setActivity('fight');
     if (phase < 10 && cls) { const fz = farmZone() || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
+    else if (phase > 10 && bestNode.camp) { const cn = campNode(); if (cn && (E('S.node.kind') !== cn[0] || E('S.node.t') !== cn[1])) fn.setNode(cn[0], cn[1]); }
     else if (phase > 10 && cls && !bestNode.camp) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
     withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
     craftCheck(sec);
@@ -602,7 +603,8 @@ function runDays() {
   let gapAct2 = 0, p2 = 0; for (const e of ev2) { gapAct2 = Math.max(gapAct2, e.act - p2); p2 = e.act; }
   gapAct2 = Math.max(gapAct2, act2 - p2);
   const hit2 = new Set(ev2.map(e => e.ci));
-  let run2 = 0, gapCi2 = 0; for (let i = 0; i < sessions.length && sessions[i][0] <= cut; i++) { run2 = hit2.has(i) ? 0 : run2 + 1; gapCi2 = Math.max(gapCi2, run2); }
+  let run2 = 0, gapCi2 = 0, gapEnd2 = 0; for (let i = 0; i < sessions.length && sessions[i][0] <= cut; i++) { run2 = hit2.has(i) ? 0 : run2 + 1; if (run2 > gapCi2) { gapCi2 = run2; gapEnd2 = sessions[i][0] / H / 24; } }
+  if (args.debug) console.log(`   longest empty run to the Region 2 boss: ${gapCi2} check-ins, ending day ${gapEnd2.toFixed(2)}`);
   console.log(`regions: ${[35, 70, 105].map(z => `zone ${z} boss ${bossAt[z] === undefined ? '-' : 'day ' + (bossAt[z] / 24).toFixed(1)}`).join(', ')}`);
   console.log(`boredom to the Region 2 boss: longest gap ${(gapAct2 / 60).toFixed(0)} active min, longest run of empty check-ins ${gapCi2}`);
   console.log(`boredom (whole run): longest gap ${(gapAct / 60).toFixed(0)} active min (ending day ${(gapAt / 24 / H).toFixed(1)}), longest run of empty check-ins ${gapCi}, empty check-ins ${empty}/${sessions.length}`);
@@ -640,9 +642,12 @@ async function runTargets() {
   const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 45);
-  const [cont, dys] = await Promise.all([
+  // T3 averages three seeds (one seed swings a class by +-10%); the rest read the first seed.
+  const seed0 = +(args.seed || 1), passNoSeed = pass.filter((x, i) => x !== '--seed' && pass[i - 1] !== '--seed');
+  const [cont, dys, more] = await Promise.all([
     Promise.all(classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...pass]))),
-    Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass])))
+    Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass]))),
+    Promise.all([1, 2].flatMap(k => classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...passNoSeed, '--seed', String(seed0 + k)]))))
   ]);
   const num = (s, re) => { const m = s.match(re); return m ? +m[1] : NaN; };
   const ok = b => b ? 'PASS' : 'FAIL';
@@ -653,9 +658,10 @@ async function runTargets() {
   res.push([ok(t1.every(z => z.every((v, i) => inR(v, B1[i])))), 'T1 30m/1h/2h in 6-9/10-13/15-19', classes.map((c, i) => `${c} ${t1[i].join('/')}`).join(', ')]);
   const t2 = cont.map(o => num(o, /@3h=(\d+)/));
   res.push([ok(t2.every(z => z <= 24)), 'T2 zone at 3h <= 24', classes.map((c, i) => `${c} ${t2[i]}`).join(', ')]);
-  const t15 = cont.map(o => num(o, /toZone15=([\d.]+)m/));
+  const z15 = o => num(o, /toZone15=([\d.]+)m/);
+  const t15 = classes.map((c, i) => (z15(cont[i]) + z15(more[i]) + z15(more[classes.length + i])) / 3);
   const med = t15.slice().sort((a, b) => a - b), m15 = (med[1] + med[2]) / 2;
-  res.push([ok(t15.every(v => inR(v / m15, [0.85, 1.15]))), 'T3 class parity: time to zone 15 within 0.85-1.15 of the median', classes.map((c, i) => `${c} ${t15[i]}m (${(t15[i] / m15).toFixed(2)})`).join(', ')]);
+  res.push([ok(t15.every(v => inR(v / m15, [0.85, 1.15]))), 'T3 class parity: time to zone 15 (mean of 3 seeds) within 0.85-1.15 of the median', classes.map((c, i) => `${c} ${t15[i].toFixed(0)}m (${(t15[i] / m15).toFixed(2)})`).join(', ')]);
   const t10 = cont.map(o => num(o, /longest gap (\d+)m/));
   res.push([ok(t10.every(m => m <= 30)), 'T10 roster step (promotion due or drill) every <= 30m before 2h', classes.map((c, i) => `${c} ${t10[i]}m`).join(', ')]);
   const js = dys.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));

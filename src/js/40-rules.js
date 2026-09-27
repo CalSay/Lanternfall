@@ -47,23 +47,23 @@ function rollRarity(lv) {
 // the companion XP curve below, and the HP curve only has to match the power per level.
 const PACE = {
   hp0: 40,                  // zone 1 mob HP (unchanged)
-  hpEarly: 1.9, early: 12,  // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
-  hpGrowth: 1.48,           // mob HP x per zone from `early` to the bend (M6 1.48)
+  hpEarly: 1.95, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+  hpGrowth: 1.46,           // (BAL1, M6 1.48) mob HP x per zone from `early` to the bend
   bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
   hpLate: 1.21,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
                             //   about 2 companion levels a zone, so Region 2 is paced by their XP
                             //   and the level-200 roster cap lands just past the Region 2 boss
   bossHp: 8,                // zone boss HP x a normal mob (unchanged)
   region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
-  regionStep: [2, 1.5],     // (BAL1, was 5 / 2.5) mob HP x this from each region's last zone on
-                            //   (x2 from zone 35, x1.5 more from 70; the last value repeats). The
+  regionStep: [1.7, 1.2],   // (BAL1, was 5 / 2.5) mob HP x this from each region's last zone on
+                            //   (x1.7 from zone 35, x1.2 more from 70; the last value repeats). The
                             //   step stays, so the zones after a region boss are no easier
   regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
   compLv: 80,               // (BAL1, was 90) companion levels past compLv need more XP...
   compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 90: x3, 100: x9.6)...
   compXpMax: 260,           //   ...(BAL1, was 80) up to x260 from level 129 on: Region 2 is a few levels a day
-  essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (was every 6 zones, so Starlit
-                            //   (tier 5) began at 25). Starlit is now Region 2's essence
+  essTier: [1, 7, 13, 19, 42], // (BAL1: Starlit from 42, was 36) first zone of each essence tier (M6: every 6 zones, so Starlit
+                            //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
   // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
   bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25)

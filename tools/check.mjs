@@ -981,7 +981,8 @@ try {
   const hp = E('Array.from({ length: 140 }, (_, i) => mobHp(i + 1))');
   assert(hp.every((h, i) => Number.isFinite(h) && (i === 0 || h > hp[i - 1])), 'mob HP rises every zone to 140');
   assert(E('mobHp(35) / mobHp(34)') > E('mobHp(36) / mobHp(35)'), 'region 1 step lands on zone 35 and stays');
-  assert(E('[1, 6, 7, 19, 35, 36, 200].map(zoneTier).join()') === '1,1,2,4,4,5,5', 'essence tiers by zone (Starlit from 36)');
+  const et = E('PACE.essTier'), zt = E(`[1, ${et[1] - 1}, ${et[1]}, ${et[3]}, ${et[4] - 1}, ${et[4]}, 200].map(zoneTier).join()`);
+  assert(zt === '1,1,2,4,4,5,5', `essence tiers by zone (Starlit from ${et[4]}): ${zt}`);
   assert(E('paceXp(1) === 1 && paceXp(PACE.compLv) === 1 && paceXp(200) === PACE.compXpMax'), 'companion XP curve: 1 up to compLv, capped at compXpMax');
   // Hero XP while away: quiet level-ups, no toasts.
   E('chooseClass("warden"); S.maxZone = S.zone = 20; S.activity = "fight"');
@@ -989,6 +990,99 @@ try {
   const L0 = E('S.L'); g.fn.awayGains(4 * 3600);
   assert(E('S.L') > L0 && !toasts && !g.errors.length, `away time levels the hero quietly (L${L0} -> L${E('S.L')}, ${toasts} toasts)`);
 } catch (e) { fail('pacing crashed: ' + (e.stack || e)); }
+
+// ---- balance pass BAL1: drills, transmute limit, farm fall-back, craft goal, synergy texts ----
+console.log('balance');
+try {
+  // Item 3 (T10): a drill every stepEvery levels between promotions, power x stepX, one event each.
+  {
+    const g = loadCore({ seed: 21 }), E = s => g.eval(s);
+    E('chooseClass("warden")');
+    const T = E('ROSTER_TUNE');
+    assert(E('drillsAt(4) === 0 && drillsAt(5) === 1 && drillsAt(24) === 4 && drillsAt(25) === 4 && drillsAt(30) === 5 && isDrillLv(20) && !isDrillLv(25)'), 'drills at levels 5, 10, 15, 20, 30... (the 25s are promotions)');
+    const drills = []; g.fn.on('drill', p => drills.push(p.lv));
+    E('charRec("wren").lv = 9; charRec("wren").xp = 0');
+    const p9 = E('charPow("wren")'); E('addCharXp("wren", cxpNeed(9) / ((ROSTER.wren.rarity === "common" ? ROSTER_TUNE.commonXp : 1) * (1 + catchUpBonus("wren")) * mod("compXp")) + 1e-6, true)');
+    const p10 = E('charPow("wren")');
+    assert(E('charRec("wren").lv') === 10 && drills.join() === '10' && Math.abs(p10 / p9 - T.growth * T.stepX) < 1e-6, `level 10 is a drill: one event, power x${(p10 / p9).toFixed(3)} (growth ${T.growth} x drill ${T.stepX})`);
+    let tst = 0; g.fn.on('toast', () => tst++);
+    E('charRec("wren").lv = 14; charRec("wren").xp = cxpNeed(14) * 0.999999');
+    E('addCharXp("wren", cxpNeed(14), false)');
+    assert(E('charRec("wren").lv') >= 15 && tst >= 1, 'a drill shows a toast when you are playing');
+  }
+  // Item 4: transmute-down chains stop after one step (a tier-5 unit used to become 16 tier-1).
+  {
+    const g = loadCore({ seed: 22 }), E = s => g.eval(s);
+    E('chooseClass("ranger"); S.skills.ench.lv = 30; S.mats.ore = [0, 0, 0, 0, 1]');
+    assert(E('transmute("ore", 5, "down")') && E('S.mats.ore.join()') === '0,0,0,2,0', '1 tier-5 ore breaks into 2 tier-4');
+    assert(!E('transmute("ore", 4, "down")') && E('S.mats.ore.join()') === '0,0,0,2,0' && /cannot be broken down again/.test(E('canTransmute("ore", 4, "down").why')), 'broken-down ore cannot be broken down again (with a plain reason)');
+    E('S.mats.ore[3] += 1');
+    assert(E('transmute("ore", 4, "down")') && E('S.mats.ore.join()') === '0,0,2,2,0' && !E('transmute("ore", 3, "down")'), 'a gathered unit of that tier still breaks down, once');
+    E('S.mats.ore[3] = 0'); E('S.mats.ore[3] = 3');
+    assert(E('canTransmute("ore", 4, "down").ok'), 'spending the flagged units frees the pile (the flag never exceeds the pile)');
+    assert(E('transmute("ore", 1, "up") || true') && E('JSON.stringify(S.craft.tmd.ore).length > 0'), 'the flag is saved in S.craft.tmd');
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8');
+    const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    assert(go.eval('JSON.stringify(S.craft.tmd)') === '{}', 'old saves get an empty flag table');
+  }
+  // Item 6: idle income never stalls. A zone whose foe takes > farmSecs drops to the best farmable zone.
+  {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2-late.json'), 'utf8');
+    const old = JSON.parse(raw), stuck = 60;   // far past what this save can farm under the new curve
+    old.zone = stuck; old.maxZone = Math.max(old.maxZone, stuck); old.activity = 'fight'; old.auto = true;
+    const g = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
+    const secs = E(`mobHp(${stuck}) * mod('foeHp') / totalDps()`), best = E(`farmableZone(${stuck}, totalDps() / mod('foeHp'))`);
+    const msgs = []; g.fn.on('toast', t => msgs.push(t.msg || t));
+    for (let i = 0; i < 40; i++) g.fn.tick(0.1);
+    const fell = msgs.filter(m => /fell back to Zone/.test(m));
+    assert(secs > E('PACE.farmSecs') && E('S.zone') === best && best < stuck && fell.length === 1 && fell[0] === `Your party fell back to Zone ${best} to keep earning.`, `old save stuck at zone ${stuck} (a foe takes ${secs.toFixed(0)}s) falls back to zone ${best} with one toast`);
+    for (let i = 0; i < 100; i++) g.fn.tick(0.1);
+    assert(msgs.filter(m => /fell back/.test(m)).length === 1 && E('S.maxZone') >= stuck && E('S.pace.fell') === stuck, 'no second toast; the max zone and the save are untouched (fell back from is remembered)');
+    const g2 = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E3 = s => g2.eval(s);
+    E3('S.auto = false');   // away gains alone: no live fall-back first
+    const gold0 = E3('S.gold'), r = g2.fn.awayGains(4 * 3600);
+    assert(E3('S.gold') > gold0 && r.note.includes(E3(`zoneName(${best})`)), `away gains farm zone ${best} (the best farmable zone <= S.zone): +${E3(`fmt(${E3('S.gold') - gold0})`)} gold`);
+    // Climbing back: once the next zone is easy again, auto-progress walks up to where it fell from.
+    E('S.zone = ' + best + '; S.pace.fell = ' + (best + 1));
+    E('S.gold = 0; const __boost = addModifier("dmg", () => 1000)');
+    E('paceCheck()');
+    assert(E('S.zone') === best + 1 && E('S.pace.fell') === 0, 'with power to spare it climbs back to the zone it fell from');
+    // A new game never falls back (every early foe dies fast).
+    const g3 = loadCore({ seed: 24 }); let n = 0; g3.fn.on('toast', t => { if (/fell back/.test(t.msg || t)) n++; });
+    g3.eval('chooseClass("warden")'); for (let i = 0; i < 1200; i++) g3.fn.tick(0.1);
+    assert(n === 0 && !g3.errors.length && !g.errors.length && !g2.errors.length, 'a new game never falls back; no errors');
+  }
+  // Item 5: the Next Up craft goal names the class kind and opens its recipe.
+  {
+    const g = loadCore({ seed: 25 }), E = s => g.eval(s);
+    E('chooseClass("ranger"); S.maxZone = S.zone = 3; S.mats.wood[0] = 5; S.mats.hide[0] = 1; S.mats.ess[0] = 1');
+    const goal = E('topGoals(20, { sticky: false }).find(x => x.id === "forge")');
+    assert(goal && /Bow|Quiver|Hood|Leathers|Charm|Pickaxe|Axe|Sickle/.test(goal.label) && !/Sword|Helm\b/.test(goal.label), `craft goal names a class item (${goal && goal.label})`);
+    const n0 = E('forgeGoalPicks');
+    E('GOALS.find(x => x.id === "forge").go.fn()');
+    assert(E('CRAFT_KINDS[S.fSlot] && !CRAFT_KINDS[S.fSlot].legacy && fits(S.fSlot, kindPos(S.fSlot), "hero")') && E('forgeGoalPicks') === n0 + 1 && E('GOALS.find(x => x.id === "forge").go.sel') === '#forgeBtn', `Go picks ${E('S.fSlot')} tier ${E('S.fTier')} and focuses #forgeBtn in the Craft tab`);
+    const g2 = loadCore({ seed: 26 }); g2.eval('S.maxZone = 3; S.mats.ore[0] = 99; S.mats.wood[0] = 99; S.mats.ess[0] = 99');
+    const lab = g2.eval('(topGoals(20, { sticky: false }).find(x => x.id === "forge") || {}).label || ""');
+    assert(!/Sword|Helm\b/.test(lab), `no class: the goal never suggests the legacy Sword or Helm (${lab || 'none'})`);
+  }
+  // Item 1: synergies at full strength, and the texts show what you get.
+  {
+    const g = loadCore({ seed: 27 }), E = s => g.eval(s);
+    assert(E('SYN_TUNE.today') >= 0.5, `SYN_TUNE.today ${E('SYN_TUNE.today')} (>= 0.5)`);
+    E('chooseClass("warden"); for (const k of ["tobin", "pip", "hesketh"]) unlockChar(k, "t", true); S.party.autoField = false; setField(["wren", "tobin", "pip"])');
+    const a = E('activeSynergies().find(x => x.id === "hedgefolk")');
+    const want = Math.round(15 * a.strength * E('SYN_TUNE.today'));
+    assert(a && a.effectText.includes(`attacks ${want}% faster`), `Hedgefolk with a Common shows its real number (${a && a.effectText})`);
+    const mods = E('synergyMods()');
+    assert(Math.abs(mods.party - (1 + E('SYN_TUNE.hedgeSpeed') * a.strength * E('SYN_TUNE.today'))) < 0.2 + 1e-9 && mods.party > 1.1, `and the party gets it (x${mods.party.toFixed(3)} damage, Kindle included)`);
+    E('SYN_TUNE.today = 0.5');
+    const half = E('activeSynergies().find(x => x.id === "hedgefolk").effectText');
+    assert(half.includes(`attacks ${Math.round(15 * a.strength * 0.5)}% faster`) && E('SYNERGIES.find(x => x.id === "dusk") && true'), `a lower SYN_TUNE.today changes the text too (${half})`);
+    E('SYN_TUNE.today = 1');
+    const dusk = E('(() => { const d = SYNERGIES.find(x => x.id === "dusk"); return d.text; })()');
+    assert(/below 50% HP/.test(dusk), 'thresholds such as "below 50% HP" are never scaled');
+  }
+} catch (e) { fail('balance crashed: ' + (e.stack || e)); }
 
 // ---- art: every outfit builds in Node (12a-12f, B1) ----
 console.log('art');

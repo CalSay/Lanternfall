@@ -58,7 +58,7 @@ const UNLOCK_TUNE = {
   quests: {
     bram: { from: 10, wood: [1, 80] },            // (BAL1) was zone 3, 60 logs
     maren: { from: 16, ess: [3, 30] },           // (BAL1) was zone 4 + 40 Glowing (spec 20 Glowing)
-    elowen: { from: 48, kills: 3000, ess: [4, 20] },  // (sim, M6/BAL1) spec zone 28 + 150M; M6 2T gold
+    elowen: { from: 51, kills: 3000, ess: [4, 20] },  // (BAL1) spec zone 28 + 150M; M6 zone 48 + 2T gold
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {
@@ -71,10 +71,10 @@ const UNLOCK_TUNE = {
   visitorFrom: 16,                               // (BAL1) was 6
   visitors: {                                    // gold: kills x a foe of zone `from`
     anselm: { from: 16, kills: 300, ess: [3, 20] },
-    vesper: { from: 30, kills: 500, ess: [4, 30] },
+    vesper: { from: 32, kills: 500, ess: [4, 30] },
     kestrel: { from: 16, kills: 600 },
     thessaly: { from: 16, kills: 900, ess: [3, 20] },
-    grenna: { from: 30, kills: 1500, ess: [4, 30] }
+    grenna: { from: 32, kills: 1500, ess: [4, 30] }
   },
   trade: { n: 10, goldKills: 150 }
 };

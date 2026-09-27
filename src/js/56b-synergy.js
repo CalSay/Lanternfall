@@ -51,10 +51,11 @@
 // |  taunts, slows, stuns, peel,    |                                                     |                                 |
 // |  parry window, burn immunity    |                                                     |                                 |
 //
-// Scale: T.today (0.1) is the share of every bonus above that applies before party combat.
-// B1's power (ROSTER_TUNE.base) was tuned with no synergies and T1 has almost no headroom
-// (a flat +10% damage moves the 2h zone by 1 to 5), so today's effects are scaled down
-// while the texts keep the design numbers. Stage C should retune base power and raise it.
+// Scale: T.today is the share of every bonus above that applies before party combat. B2 shipped
+// 0.1 (texts showed the design numbers, so synergies read 10x stronger than they were). BAL1 set
+// it to 1 after the pacing retune made room, so the numbers in the texts are the ones you get.
+// If it is ever lowered again, the texts follow: shownText() scales every bonus percentage by
+// today (and an active synergy's by its strength); thresholds such as "below 50% HP" stay.
 // T.on = 0 turns everything off (sim comparisons).
 //
 // Synergy strength = 1 x 1.25 if a Common is a member (Common Cause) x 1.5 if any member has
@@ -489,13 +490,17 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // ---------------- queries ----------------
   const nameOf = k => k === 'hero' ? 'your hero' : first(k);
   const listText = l => l.length <= 1 ? (l[0] || '') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1];
-  const todayOf = d => d.parts.filter(p => p.stage !== 'C').map(p => p.text).join(' ') || null;
+  // A bonus percentage times k, rounded; "50% HP" / "10% of max HP" (thresholds, sizes) stay.
+  const scalePct = (txt, k) => Math.abs(k - 1) < 1e-9 ? txt : txt.replace(/(\d+(?:\.\d+)?)%(?! HP| of)/g, (m, n) => `${Math.round(n * k)}%`);
+  const partText = (p, k) => p.stage === 'C' ? p.text : scalePct(p.text, k * T.today);
+  const shownText = (d, k = 1) => d.parts.map(p => partText(p, k)).join(' ');
+  const todayOf = (d, k = 1) => d.parts.filter(p => p.stage !== 'C').map(p => partText(p, k)).join(' ') || null;
 
   activeSynergies = () => {
     if (!live()) return [];
     return cur().syn.map(({ d, r, s }) => ({
-      id: d.id, name: d.name, members: r.members.slice(), effectText: d.text, strength: s,
-      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d)
+      id: d.id, name: d.name, members: r.members.slice(), effectText: shownText(d, s), strength: s,
+      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d, s)
     }));
   };
 
@@ -521,7 +526,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   charTraits = id => {
     if (!R(id)) return [];
     const lv = lvOf(id);
-    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.text, lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
+    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.stage === 'C' ? e.text : scalePct(e.text, T.today), lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
   };
 
   synergyMods = () => {
