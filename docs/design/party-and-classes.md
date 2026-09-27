@@ -187,7 +187,7 @@ what the class lacks: a ranged hero gets a melee companion, a melee hero gets a 
 Joining moments (shown after "Begin", one tap to continue):
 - **Wren:** An arrow lands at your feet, then another in the slime behind you. "You stand in the right place, for once. Hold them there." Wren Hollowmere drops from the branches and does not ask to come along.
 - **Tobin:** A boy in a pot helm trips over a sword too big for him on the road out of Mossy Hollow. "I'm Tobin. I stand in front. That's the whole job, isn't it?" He does not wait for an answer.
-- **Bram:** A woodcutter looks at your lantern for a long time. "Heard a priest was on the road. I've no prayers left, but I can swing." Bram Hollis walks ahead of you, into the dark.
+- **Bram:** A woodcutter looks at your lantern for a long time. "Heard a Lightkeeper was on the road. I've no light of my own, but I can swing." Bram Hollis walks ahead of you, into the dark.
 
 **First 10 minutes with exactly hero + starter.** Every pair has a Front-liner and a damage
 dealer, and three of the four have no healer, so zones 1-3 get an early grace: enemy attack

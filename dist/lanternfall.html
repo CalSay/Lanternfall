@@ -252,6 +252,89 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
 .ms-pips i { width: 8px; height: 8px; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 1px #0B0810; }
 .ms-pips i.on { background: var(--gold); border-color: #8A6A1E; box-shadow: 0 0 4px rgba(242,193,78,.5); }
+/* 60-party: Party tab, World tab headings, and the class creation screen (75-party.js, 76-create.js). */
+:root { --tank: #5F8BE8; --striker: #5FC46E; --caster: #A070E0; --support: #F2C14E; }
+
+/* role chips */
+.pip { display: inline-flex; align-items: center; gap: 4px; font: 600 11px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; padding: 3px 5px; border: 1px solid currentColor; }
+.pip::before { content: ""; width: 6px; height: 6px; background: currentColor; }
+.r-tank { color: var(--tank); } .r-striker { color: var(--striker); } .r-caster { color: var(--caster); } .r-support { color: var(--support); }
+
+/* World tab: Raid and Tavern are two parts of one scroll */
+#p-world > .world-part { gap: 20px; }
+#p-world > .world-part + .world-part { padding-top: 18px; border-top: 2px solid var(--line); }
+.world-head { margin: 0; font: 600 20px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; }
+
+/* Party tab cards */
+.pcards { display: grid; gap: 8px; }
+.pcard { display: grid; gap: 8px; padding: 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.pcard.hero { border-color: var(--ember-deep); }
+.pc-top { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.pcard .pt { width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; overflow: hidden; }
+.pcard .pt.big { width: 52px; height: 52px; }
+.pcard .pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.pc-who { display: grid; gap: 2px; min-width: 0; }
+.pc-who b { font: 600 17px/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-who small { font-size: 13px; color: var(--muted); }
+.pc-tags { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pc-stat { color: var(--bone) !important; font-variant-numeric: tabular-nums; }
+.pc-ab { display: grid; gap: 5px; padding-top: 8px; border-top: 1px solid var(--line); }
+.pc-abline { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.pc-abline em { font-style: normal; font-weight: 600; color: var(--gold); }
+.pc-cd { height: 6px; background: var(--well); border: 1px solid #0B0810; }
+.pc-cd i { display: block; height: 100%; width: 0; background: var(--ember); }
+.pc-cdtxt { font-size: 12px; color: var(--muted); }
+.pc-auto { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+.pc-gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.pc-slot { display: grid; justify-items: center; gap: 3px; min-width: 0; }
+.pc-slot .ic { width: 36px; height: 36px; }
+.pc-slot .ic img { width: 24px; height: 24px; }
+.pc-slot small { font-size: 11px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-slot.soon .ic { border-style: dashed; }
+.pc-gearnote { font-size: 12px; color: var(--muted); }
+
+/* formation grid: Back | Mid | Front, two lanes */
+.pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pf-h { text-align: center; font: 600 11px var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.pf-cell { min-height: 62px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 2px 6px; border: 1px dashed var(--line-hi); background: var(--well); padding: 4px; font: 600 11px var(--display); color: var(--muted); }
+.pf-cell img { width: 28px; height: 28px; image-rendering: pixelated; }
+.pf-cell.occ { border-style: solid; background: var(--panel); color: var(--bone); }
+.pf-cell.hero { border-color: var(--ember-deep); }
+.pf-cell .who { flex-basis: 100%; text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* creation / choose your path: full-screen overlay above everything */
+.create { position: fixed; inset: 0; z-index: 40; overflow-y: auto; background-color: var(--bg); background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px); background-size: 4px 4px; color: var(--bone); -webkit-overflow-scrolling: touch; }
+.create-in { width: min(480px, 100%); margin: 0 auto; padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; }
+.create h1 { margin: 0; font: 600 24px/1.1 var(--display); text-shadow: 0 2px 0 #0B0810; }
+.create-lede { margin: 0; color: var(--muted); font-size: 14px; }
+.create-warn { margin: 0; font-size: 13px; color: #FFB27A; }
+.ccards { display: grid; gap: 8px; }
+.ccard { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: start; text-align: left; padding: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); box-shadow: 0 2px 0 #0B0810; cursor: pointer; font: inherit; }
+.ccard[aria-checked="true"] { border-color: var(--ember); background: linear-gradient(#2e2030, var(--panel)); box-shadow: 0 2px 0 #0B0810, 0 0 16px rgba(255,158,61,.22); }
+.ccard:focus-visible, .create input:focus-visible, .create button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ccard .fig { width: 64px; height: 76px; background: var(--well); border: 1px solid #0B0810; display: grid; place-items: center; }
+.ccard .fig canvas { width: 48px; height: 64px; image-rendering: pixelated; }
+.ccard .ctxt { display: grid; gap: 3px; min-width: 0; }
+.ccard .ctop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ccard b { font: 600 18px/1.1 var(--display); }
+.ccard .pitch { font-style: italic; color: var(--bone); font-size: 14px; }
+.ccard .how, .ccard .ab { font-size: 13px; color: var(--muted); line-height: 1.3; }
+.ccard .ab em { font-style: normal; color: var(--gold); font-weight: 600; }
+.namefield { display: grid; gap: 6px; padding-top: 4px; }
+.namefield label { font: 600 13px var(--display); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.namefield input { min-height: 44px; padding: 8px 10px; background: var(--well); color: var(--bone); border: 2px solid var(--line-hi); font: 600 18px var(--display); }
+.create-go { min-height: 48px; margin-top: 4px; }
+.join { display: grid; gap: 12px; padding-top: 18vh; text-align: center; justify-items: center; }
+.join p { margin: 0; max-width: 34ch; font-size: 16px; line-height: 1.45; }
+.join .join-line { color: var(--muted); }
+.join .join-say { color: var(--bone); font-style: italic; }
+.join .create-go { width: 100%; max-width: 320px; }
+@media (prefers-reduced-motion: no-preference) {
+  .join > * { animation: joinIn .5s ease-out both; }
+  .join > :nth-child(3) { animation-delay: .3s; } .join > :nth-child(4) { animation-delay: .9s; } .join > :nth-child(5) { animation-delay: 1.5s; } .join > :nth-child(6) { animation-delay: 1.9s; }
+}
+@keyframes joinIn { from { opacity: 0; transform: translateY(4px); } }
+@media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 52px 1fr; } .ccard .fig { width: 52px; } }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; } }
 </style>
@@ -299,10 +382,10 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
     <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
     <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Forge<span class="dot" id="forgeDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="raid" data-ic="flame" aria-selected="false">Raid<span class="dot" id="raidDot" hidden></span></button>
-    <button class="tab" role="tab" data-tab="tav" data-ic="mug" aria-selected="false">Tavern</button>
+    <button class="tab" role="tab" data-tab="world" data-ic="world" aria-selected="false">World<span class="dot" id="raidDot" hidden></span></button>
   </nav>
 
   <div class="panels" id="panels">
@@ -331,6 +414,9 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
         <div id="compRows" class="sec"></div>
       </div>
     </section>
+
+    <!-- Party (filled by 75-party.js) -->
+    <section class="panel" id="p-party" hidden></section>
 
     <!-- Gather -->
     <section class="panel" id="p-gat" hidden>
@@ -386,8 +472,11 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
       </div>
     </section>
 
-    <!-- Raid -->
-    <section class="panel" id="p-raid" hidden>
+    <!-- World: the Raid and Tavern parts keep their old ids (p-raid, p-tav) so
+         registerSection('raid' | 'tav') and 80-online.js keep working. -->
+    <section class="panel" id="p-world" hidden>
+    <div class="panel world-part" id="p-raid">
+      <h2 class="world-head">World raid</h2>
       <div class="card raidcard">
         <div class="zsub" id="rGen">World raid</div>
         <h3 id="rName">Waiting for the world to load</h3>
@@ -414,10 +503,10 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
         <div class="sec-head"><h2 class="sec-title">Relics</h2><span class="note">Paid in Embers from raids</span></div>
         <div id="relicRows" class="sec"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Tavern -->
-    <section class="panel" id="p-tav" hidden>
+    <div class="panel world-part" id="p-tav">
+      <h2 class="world-head">Tavern</h2>
       <div class="sec">
         <h2 class="sec-title">In the tavern now</h2>
         <div class="online" id="online"><span class="note">Nobody else is here yet.</span></div>
@@ -448,6 +537,7 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img, .gain img { image
           <div><dt>Gear score</dt><dd id="lGear">0</dd></div>
         </dl>
       </div>
+    </div>
     </section>
   </div>
 </div>
@@ -597,6 +687,474 @@ function mix(a, b, t) {
   const ch = sh => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
   return '#' + ((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1);
 }
+
+// ---- src/js/12-art-rigs.js ----
+// 12-art-rigs: Hi-bit character rig DATA (ported from prototypes/characters.html). No DOM.
+// Loads in Node too, so only plain objects and pure colour maths live here. 60b-baker.js draws it.
+//
+// Part format: [z, bone, mat, shape, minRarity?]
+//   z: 0 back, 1 back arm, 2 legs, 3 torso, 4 head, 5 off-hand, 6 front arm, 7 weapon, 8 front fx
+//   bone: legs | up | head | armF | armB   (arms rotate at RIG.PIV; head rides on up)
+//   shape: ['e', cx, cy, rx, ry] | ['p', smooth, x, y, ...] | ['r', x, y, w, h]   (art px, feet at 0,0, facing right)
+//   mat in gear items: P primary tier material, D darker primary, Q secondary family, R trim (Rare+, else D),
+//     G glow (Epic+), L lamp glass, Pc/Qc crystal (emissive from Epic). Any other key: FIXED[key].
+//   mat in outfits (extra): FIXED key, 'U' (under-dye), 'skin', 'hair', or a '#hex' base colour.
+// Exposed names: RIG, FAM, FIXED, ramp.
+
+const RIG = (() => {
+  // ---------- colour: 4-tone hue-shifted ramps from one base colour ----------
+  const toHsl = hex => { const n = parseInt(hex.slice(1), 16); const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s * 100, l * 100]; };
+  const hsl = (h, s, l) => { h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); const to = x => Math.round(x * 255).toString(16).padStart(2, '0'); return '#' + to(f(0)) + to(f(8)) + to(f(4)); };
+  const toward = (h, target, amt) => { const d = ((target - h + 540) % 360) - 180; return h + Math.sign(d) * Math.min(Math.abs(d), amt); };
+  // highlight shifts toward warm gold, shadows toward cool plum; metals get a brighter, less saturated highlight
+  function ramp(hex, metal) {
+    const [h, s, l] = toHsl(hex);
+    return [
+      hsl(toward(h, 50, 10), s * (metal ? 0.55 : 0.9), Math.min(96, l + (metal ? 30 : 16))),
+      hex,
+      hsl(toward(h, 265, 14), Math.min(100, s * 1.05), l - 17),
+      hsl(toward(h, 270, 24), Math.min(100, s * 1.1), Math.max(6, l - 32))
+    ];
+  }
+  const mixHex = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16); const ch = sh => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t); return '#' + ((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1); };
+  const lift = (hex, dl) => { const [h, s, l] = toHsl(hex); return hsl(h, s, l + dl); };
+  const hueShift = (hex, deg) => { const [h, s, l] = toHsl(hex); return hsl(h + deg, s, l); };
+  const rgbOf = hex => { const n = parseInt(hex.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; };
+
+  // ---------- materials by family and tier (index = tier - 1) ----------
+  const FAM = {
+    ore: { names: ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'], col: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'], metal: true, glow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'] },
+    wood: { names: ['Oak', 'Yew', 'Ironbark', 'Ghostwood', 'Lanternwood'], col: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'], glow: ['#FFD08A', '#FFC08A', '#D8F0B0', '#C8FFF4', '#FFC060'] },
+    crystal: { names: ['Quartz', 'Amber', 'Moonstone', 'Starglass', 'Emberglass'], col: ['#D8D8E6', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], glow: ['#FFFFFF', '#FFD080', '#D8E0FF', '#C8FAFF', '#FF9A80'] },
+    fibre: { names: ['Flax', 'Nettle', 'Silkgrass', 'Moonsilk', 'Gloamsilk'], col: ['#C8B890', '#7E9860', '#DCD6B8', '#B8C8E4', '#7A6EAE'], glow: ['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'] },
+    hide: { names: ['Soft', 'Tough', 'Scaled', 'Dusk', 'Ember'], col: ['#A07C5E', '#7E5E3C', '#546E60', '#52445E', '#A83C36'], glow: ['#FFD8A8', '#FFC890', '#B0F0D0', '#D8B8FF', '#FF8A6A'] }
+  };
+  const RARITY = [{ n: 'Common', k: 'C', col: '#CFC6D8' }, { n: 'Rare', k: 'R', col: '#5FA8FF' }, { n: 'Epic', k: 'E', col: '#B58CFF' }, { n: 'Legendary', k: 'L', col: '#FF9E3D' }];
+  // Fixed materials: a 4-tone ramp array, or { emit: '#hex', light?: 'r,g,b', pulse? } for emissive parts.
+  const FIXED = {
+    void: { emit: '#07050B' }, eye: { emit: '#1A1420' }, eyeLit: { emit: '#E8E0D0' }, mouth: { emit: '#8A4A42' },
+    lamp: { emit: '#FFF1B8', light: '255,190,100' }, coal: { emit: '#FF9A40', light: '255,140,60' }, halo: { emit: '#FFE9A8', light: '255,220,140' },
+    string: { emit: '#E8DEC8' }, page: { emit: '#EFE6D0' }, shade: { emit: '#2A1C24' },
+    glass: { emit: '#FFD27A', light: '255,200,120' }, wick: { emit: '#FFE9A8', light: '255,220,150' },
+    gleam: { emit: '#FFE9A8' }, star: { emit: '#F4EEFF', light: '200,190,255' }, starpt: { emit: '#DCD4FF' }, ember: { emit: '#FFB050', light: '255,150,70' },
+    gold: ramp('#E0AE44', true), silver: ramp('#B8BCC8', true), plume: ramp('#C8423C'), iron: ramp('#7C8290', true), leather: ramp('#6E4A30'), trousers: ramp('#3A3444'),
+    beard: ramp('#D8D2C8'), scarf: ramp('#6B4A9A'), moss: ramp('#5E7A3A'), cream: ramp('#E6DCC4'),
+    fletch: ramp('#E8E0D0'), crimson: ramp('#9E2E3A'), bone: ramp('#D8CFB8'),
+    coatgrey: ramp('#6E6878'), amberscarf: ramp('#E09A3E'), capgrey: ramp('#4A4652'), wood1: ramp('#7A5634'),
+    // new companions
+    char: ramp('#3A2C2A'), pipRobe: ramp('#5E3A7E'), pipHat: ramp('#4A2E68'), patch: ramp('#A8763E'), emberCloth: ramp('#D8702E'),
+    steel: ramp('#6E8CA8', true), wingwhite: ramp('#C8D4E0', true), teal: ramp('#2E6E6E'),
+    indigo: ramp('#3A3478'), lilac: ramp('#C8B8E8'),
+    plaid: ramp('#A23A30'), plaidDk: ramp('#4A1C20'), brown: ramp('#6A4A30'), boots: ramp('#4A3428')
+  };
+  const SKINS = ['#F0C8A0', '#C98E62', '#7E5238'];
+  const HAIRS = ['#3A2A24', '#8A4A2A', '#C8A060', '#B8B4C0'];
+
+  // ---------- base body (about 6.8 heads tall; facing right) ----------
+  const PIV = { armF: [5.4, -47.5], armB: [-5.4, -47.5], head: [0.8, -52] };
+  const HAND_F = [6.5, -28.2], HAND_B = [-5.9, -28.2];
+  const BODY = [
+    [1, 'armB', 'U', ['p', 0, -7.7, -48.6, -3.7, -48.6, -4.3, -38, -7.5, -38]],
+    [1, 'armB', 'U', ['p', 0, -7.4, -38.6, -4.4, -38.6, -4.8, -30, -7, -30]],
+    [1, 'armB', 'skin', ['e', -5.9, -28.2, 1.7, 2.2]],
+    [2, 'legs', 'trousers', ['p', 0, -4.8, -31, -0.6, -31, -1.2, -16, -4.4, -16]],
+    [2, 'legs', 'trousers', ['p', 0, -4.4, -16.6, -1.2, -16.6, -1.8, -3, -4, -3]],
+    [2, 'legs', 'leather', ['p', 1, -4.7, -5, -1.4, -5, 0.3, -1.3, 0.4, 0, -4.9, 0]],
+    [2, 'legs', 'trousers', ['p', 0, 0.2, -31, 4.6, -31, 4.8, -16, 1.4, -16]],
+    [2, 'legs', 'trousers', ['p', 0, 1.4, -16.6, 4.8, -16.6, 4.4, -3, 2, -3]],
+    [2, 'legs', 'leather', ['p', 1, 1.5, -5, 4.7, -5, 7.2, -1.3, 7.2, 0, 1.3, 0]],
+    [3, 'up', 'U', ['p', 1, -6.8, -48.8, 6.2, -48.8, 6.7, -44, 4.6, -34.5, 5.7, -29.5, -5.7, -29.5, -4.6, -34.5, -6.7, -44]],
+    [3, 'up', 'leather', ['r', -5.4, -32.2, 11, 2]],
+    [3, 'up', 'skin', ['r', -1.1, -53, 3.2, 5]],
+    [4, 'head', 'skin', ['e', 0.8, -57, 4.2, 4.9]],
+    [4, 'head', 'skin', ['p', 1, -2.4, -56.5, 5, -56.5, 4.7, -53, 2.6, -51.5, -1, -52.6]],
+    [4, 'head', 'skin', ['e', -1.5, -56.4, 1, 1.5]],
+    [4, 'head', 'skin', ['p', 0, 4.4, -57.8, 6, -55.3, 4.5, -55]],
+    [4, 'head', 'eye', ['r', 2.7, -57.7, 1.1, 1.4]],
+    [4, 'head', 'mouth', ['r', 3.3, -53.8, 1.7, 0.6]],
+    [6, 'armF', 'U', ['p', 0, 3.7, -48.6, 7.4, -48.6, 7.2, -38, 4.2, -38]],
+    [6, 'armF', 'U', ['p', 0, 4.3, -38.6, 7.3, -38.6, 7.7, -30, 5, -30]],
+    [6, 'armF', 'skin', ['e', 6.5, -28.2, 1.8, 2.3]],
+    [6, 'armF', 'skin', ['e', 7.9, -29.2, 0.8, 1.1]]
+  ];
+  // o: { hairStyle: 'short'|'long'|'bald', beard: bool }
+  function bodyParts(o) {
+    const P = BODY.slice();
+    if (o.hairStyle === 'long') P.push([0, 'head', 'hair', ['p', 1, -4.2, -60, 1, -62.2, 3.5, -60, -1, -58, -3.8, -48.5, -6.4, -47.6]]);
+    if (o.hairStyle !== 'bald') P.push([4, 'head', 'hair', ['p', 1, -3.6, -58, -2.6, -61.6, 1.5, -62.6, 4.9, -60.6, 5.1, -58.6, 2, -59.7, -1, -59.1, -2.5, -55]]);
+    else P.push([4, 'head', 'hair', ['p', 1, -3.6, -57.5, -3, -60, -1.8, -60, -2, -55]]);
+    P.push([4, 'head', 'hair', ['r', 2.3, -59, 2.6, 0.8]]); // brow
+    if (o.beard) P.push([4, 'head', 'beard', ['p', 1, -1, -55.5, 5.4, -55, 5.2, -51, 2.4, -48.6, -0.8, -51]]);
+    return P;
+  }
+  // lower-arm skin (rolled sleeves) and the matching cuffs
+  const ROLLED = [
+    [1, 'armB', 'skin', ['p', 0, -7.3, -37.8, -4.5, -37.8, -4.8, -30, -7, -30]],
+    [1, 'armB', 'U', ['p', 1, -7.9, -40, -4.1, -40, -4.2, -37.2, -7.7, -37.2]],
+    [6, 'armF', 'skin', ['p', 0, 4.4, -37.8, 7.3, -37.8, 7.7, -30, 5, -30]],
+    [6, 'armF', 'U', ['p', 1, 3.9, -40, 7.7, -40, 7.8, -37.2, 4.1, -37.2]]
+  ];
+
+  // ---------- gear drawings (one per class slot; tiers x rarities come from ramps and part flags) ----------
+  const ITEMS = {
+    // ----- Warden -----
+    warblade: { name: 'Warblade', fam: 'ore', fam2: 'hide', parts: [
+      [7, 'armF', 'Q', ['r', 5.8, -32.8, 1.6, 7.2]],
+      [7, 'armF', 'R', ['e', 6.6, -25.4, 1.3, 1.3]],
+      [7, 'armF', 'R', ['p', 1, 2.6, -34.4, 10.6, -34.4, 10.2, -32.8, 3, -32.8]],
+      [7, 'armF', 'P', ['p', 0, 5.5, -34.4, 7.8, -34.4, 7.6, -58.5, 6.65, -61.2, 5.7, -58.5]],
+      [7, 'armF', 'D', ['r', 6.4, -56, 0.6, 20]],
+      [7, 'armF', 'G', ['r', 6.4, -54, 0.6, 16], 2]
+    ] },
+    shield: { name: 'Shield', fam: 'ore', fam2: 'hide', parts: [
+      [5, 'armB', 'P', ['p', 1, -11.6, -45, 1.4, -45, 1.8, -33, -1.6, -24, -5, -19.8, -8.6, -24, -12, -33]],
+      [5, 'armB', 'Q', ['p', 1, -10.3, -43.6, 0.1, -43.6, 0.5, -33, -2.3, -25.3, -5, -21.8, -7.8, -25.3, -10.7, -33]],
+      [5, 'armB', 'R', ['r', -5.7, -42, 1.3, 17.5], 1], [5, 'armB', 'R', ['r', -9.4, -37, 8.6, 1.3], 1],
+      [5, 'armB', 'P', ['e', -5, -36.4, 1.9, 1.9]],
+      [5, 'armB', 'G', ['e', -5, -36.4, 1, 1], 2]
+    ] },
+    greathelm: { name: 'Greathelm', fam: 'ore', parts: [
+      [4, 'head', 'P', ['p', 1, -3.9, -61.8, 4.7, -62.3, 6.2, -57, 5.8, -51.6, -3.6, -51.6, -4.6, -56.4]],
+      [4, 'head', 'D', ['r', -2.6, -52.4, 8, 1.6]],
+      [4, 'head', 'R', ['p', 0, 0.1, -63, 1.5, -63, 1.7, -51.8, 0.3, -51.8], 1],
+      [4, 'head', 'void', ['r', 1.6, -58, 4.8, 1.2]],
+      [4, 'head', 'void', ['r', 4.4, -54.8, 0.9, 0.9]], [4, 'head', 'void', ['r', 4.4, -53.4, 0.9, 0.9]],
+      [4, 'head', 'G', ['r', 4.6, -57.8, 1.1, 0.8], 2],
+      [0, 'head', 'plume', ['p', 1, 0.5, -62.4, -2, -66.6, -7.5, -65, -9.6, -59, -5, -61.8, -1, -62.6], 3]
+    ] },
+    plate: { name: 'Plate', fam: 'ore', fam2: 'hide', parts: [
+      [3, 'up', 'P', ['p', 1, -6.5, -48.4, 6.4, -48.4, 6.9, -43, 5, -35.6, -5, -35.6, -6.9, -43]],
+      [3, 'up', 'D', ['r', 0.3, -47, 1.1, 11]],
+      [3, 'up', 'R', ['r', -4.4, -48.6, 9.4, 1.1], 1],
+      [3, 'up', 'P', ['p', 0, -5.6, -35.9, 5.6, -35.9, 6.2, -30.6, -6.2, -30.6]],
+      [3, 'up', 'P', ['p', 1, -5.9, -31.2, 0, -31.2, -0.5, -24.4, -5.3, -25.6]],
+      [3, 'up', 'P', ['p', 1, 0.5, -31.2, 6.4, -31.2, 6.1, -25.6, 1, -24.4]],
+      [3, 'up', 'R', ['r', -6, -31.2, 12.4, 1], 1],
+      [3, 'up', 'G', ['e', 0.8, -33.2, 1.1, 1.1], 2],
+      [1, 'armB', 'P', ['e', -5.8, -47.2, 4, 3.6]], [1, 'armB', 'P', ['r', -7.7, -37.2, 3.5, 6.4]],
+      [2, 'legs', 'P', ['p', 0, -4.7, -16.4, -1, -16.4, -1.6, -4.4, -4.2, -4.4]], [2, 'legs', 'P', ['e', -2.8, -16.5, 2.3, 1.9]],
+      [2, 'legs', 'P', ['p', 0, 1.2, -16.4, 5, -16.4, 4.6, -4.4, 1.8, -4.4]], [2, 'legs', 'P', ['e', 3.2, -16.5, 2.4, 2]],
+      [2, 'legs', 'P', ['p', 1, 1.4, -4.8, 4.8, -4.8, 7.4, -1.3, 7.4, 0, 1.2, 0]],
+      [6, 'armF', 'P', ['p', 1, 2.6, -50.2, 8.6, -49.8, 9.8, -45.6, 8.1, -43.4, 3, -44.5]],
+      [6, 'armF', 'R', ['r', 3.4, -45.2, 5.8, 0.9], 1],
+      [6, 'armF', 'P', ['r', 4, -43.6, 3.5, 5.2]], [6, 'armF', 'P', ['e', 5.8, -38.4, 1.9, 1.6]],
+      [6, 'armF', 'P', ['p', 0, 4.2, -37.4, 7.5, -37.4, 7.9, -31, 5, -31]],
+      [6, 'armF', 'P', ['e', 6.6, -28.4, 2.1, 2.4]]
+    ] },
+    // ----- Lanternmage -----
+    staff: { name: 'Staff', fam: 'wood', fam2: 'crystal', parts: [
+      [7, 'armF', 'P', ['r', 5.9, -62, 1.4, 45]],
+      [7, 'armF', 'D', ['p', 0, 4.2, -66.5, 5.6, -62, 7.8, -62, 9.2, -66.5, 7.6, -63.6, 5.8, -63.6]],
+      [7, 'armF', 'Qc', ['e', 6.7, -66.4, 1.8, 2.8]],
+      [7, 'armF', 'R', ['r', 5.5, -61, 2.3, 1.1], 1], [7, 'armF', 'R', ['r', 5.7, -18.2, 1.9, 1.2], 1]
+    ] },
+    lantern: { name: 'Lantern', fam: 'crystal', fam2: 'ore', parts: [
+      [5, 'armB', 'Q', ['r', -6.3, -28.5, 0.9, 3.6]],
+      [5, 'armB', 'Q', ['p', 0, -8.8, -25, -3, -25, -3.9, -23.4, -7.9, -23.4]],
+      [5, 'armB', 'L', ['r', -8.2, -23.4, 4.6, 6.4]],
+      [5, 'armB', 'Q', ['r', -6.3, -23.4, 0.8, 6.4]],
+      [5, 'armB', 'Q', ['r', -8.8, -17.2, 5.8, 1.3]],
+      [5, 'armB', 'R', ['r', -8.8, -25.6, 5.8, 0.8], 1]
+    ] },
+    circlet: { name: 'Circlet', fam: 'crystal', parts: [
+      [4, 'head', 'silver', ['p', 0, -3.8, -59.4, 5, -59.8, 5.1, -58.6, -3.9, -58.2]],
+      [4, 'head', 'Pc', ['e', 4.4, -59.6, 1.3, 1.5]],
+      [4, 'head', 'R', ['e', 1.5, -59.6, 0.8, 0.9], 1]
+    ] },
+    robe: { name: 'Robe', fam: 'fibre', dye: '#6A3E9E', parts: [
+      [0, 'up', 'D', ['p', 1, -7, -50.4, -2, -51.8, 3, -50.2, 3.8, -47, -6.2, -46]],
+      [3, 'up', 'P', ['p', 1, -6.8, -48.8, 6.4, -48.8, 7, -42, 5, -34, 8, -12, 9.6, -0.6, -8.6, -0.6, -7.5, -12, -5, -34, -7, -42]],
+      [3, 'up', 'D', ['p', 0, -2, -30, -1, -30, -3, -1.5, -4.6, -1.5]],
+      [3, 'up', 'D', ['p', 0, 3, -30, 4, -30, 6.2, -1.5, 4.6, -1.5]],
+      [3, 'up', 'D', ['p', 0, 0.5, -26, 1.3, -26, 1.5, -1.5, 0.3, -1.5]],
+      [3, 'up', 'R', ['r', -5, -34.6, 10.5, 2.4]],
+      [3, 'up', 'R', ['p', 0, -8.7, -3, 9.5, -3, 9.7, -0.6, -8.8, -0.6], 1],
+      [3, 'up', 'G', ['r', -6.2, -11, 1, 3.4], 2], [3, 'up', 'G', ['r', 7.2, -11, 1, 3.4], 2],
+      [1, 'armB', 'P', ['p', 1, -7.9, -48.9, -3.5, -48.9, -3.7, -38, -2.8, -30.4, -8.9, -30.4]],
+      [6, 'armF', 'P', ['p', 1, 3.5, -48.9, 7.6, -48.9, 8.4, -38, 9.8, -30.4, 3.9, -30.4]],
+      [6, 'armF', 'R', ['r', 3.9, -31.6, 5.9, 1.4], 1]
+    ] },
+    // ----- Ranger -----
+    bow: { name: 'Bow', fam: 'wood', fam2: 'hide', parts: [
+      [7, 'armF', 'P', ['p', 1, 6, -29.6, 7.4, -29.6, 10.3, -36.4, 10.6, -42, 9.1, -47.4, 8.4, -47, 9.3, -42, 8.8, -36.4]],
+      [7, 'armF', 'P', ['p', 1, 6, -26.8, 7.4, -26.8, 10.3, -20, 10.6, -14.4, 9.1, -9, 8.4, -9.4, 9.3, -14.4, 8.8, -20]],
+      [7, 'armF', 'Q', ['r', 5.7, -30.2, 2.4, 4]],
+      [7, 'armF', 'R', ['e', 9, -47, 0.9, 0.9], 1], [7, 'armF', 'R', ['e', 9, -9.4, 0.9, 0.9], 1],
+      [7, 'armF', 'G', ['r', 9.9, -41, 0.7, 3], 2], [7, 'armF', 'G', ['r', 9.9, -18.4, 0.7, 3], 2]
+    ], idle: [[7, 'armF', 'string', ['r', 8.6, -47, 0.55, 37.8]]],
+      drawn: [[7, 'armF', 'string', ['p', 0, 8.6, -47, 9.2, -47, 1.4, -28, 0.8, -28.2]], [7, 'armF', 'string', ['p', 0, 0.8, -28.2, 1.4, -28.4, 9.2, -9.4, 8.6, -9.4]], [7, 'armF', 'D', ['r', 0.8, -28.6, 15, 0.8]], [7, 'armF', 'silver', ['p', 0, 15.6, -29.6, 18, -28.2, 15.6, -26.8]]] },
+    quiver: { name: 'Quiver', fam: 'hide', fam2: 'wood', parts: [
+      [0, 'up', 'P', ['p', 1, -10, -49.4, -6.4, -51, -1.6, -32.6, -4.8, -31.6]],
+      [0, 'up', 'fletch', ['p', 0, -11, -53.6, -9.2, -55, -7.4, -50.8, -9, -49.8]],
+      [0, 'up', 'fletch', ['p', 0, -8.8, -55, -7.2, -56, -5.8, -51.4, -7.4, -50.4]],
+      [0, 'up', 'R', ['p', 0, -9.6, -47.6, -6, -49.2, -5.6, -48, -9.2, -46.4], 1],
+      [0, 'up', 'G', ['e', -4.6, -36, 0.9, 0.9], 2]
+    ] },
+    hood: { name: 'Hood', fam: 'hide', fam2: 'fibre', parts: [
+      [0, 'up', 'D', ['p', 1, -6.4, -50.6, -3, -49.4, -4, -36, -8.8, -29.6, -9.4, -40]],
+      [4, 'head', 'P', ['p', 1, -5.6, -58, -3.8, -63, 2.4, -63.8, 6.4, -60.6, 7, -55.4, 5.2, -54, 5.5, -57.8, 3, -60.4, 0, -60, -1.4, -56, -3.6, -51.4, -6.6, -50]],
+      [4, 'head', 'shade', ['p', 0, 0.2, -60, 5.6, -58.2, 5.4, -56.3, 1.2, -56.7]],
+      [4, 'head', 'eyeLit', ['r', 2.8, -57.6, 0.9, 0.8]],
+      [4, 'head', 'R', ['p', 0, 5.5, -58, 7, -55.4, 6.4, -55, 5, -57.4], 1]
+    ] },
+    leathers: { name: 'Leathers', fam: 'hide', fam2: 'fibre', parts: [
+      [3, 'up', 'P', ['p', 1, -6.6, -48.6, 6.2, -48.6, 6.5, -43, 4.8, -34.5, 6.2, -26.5, -6.2, -26.5, -4.8, -34.5, -6.5, -43]],
+      [3, 'up', 'Q', ['r', 0.3, -47, 0.8, 12]],
+      [3, 'up', 'D', ['p', 0, -6, -48, -4, -48, 5, -33, 3, -33]],
+      [3, 'up', 'D', ['r', -5.6, -33.2, 11.4, 2.2]],
+      [3, 'up', 'R', ['r', 0.2, -33.4, 2, 2.6], 1],
+      [3, 'up', 'P', ['p', 1, -7.2, -50.6, 5, -50.6, 7.4, -46, -7.6, -45.4]],
+      [3, 'up', 'G', ['e', -3, -41, 0.8, 0.8], 2],
+      [1, 'armB', 'P', ['r', -7.5, -37.2, 3.2, 5.8]],
+      [2, 'legs', 'D', ['p', 0, -4.8, -12, -1.2, -12, -1.4, -4.6, -4.4, -4.6]], [2, 'legs', 'D', ['p', 0, 1.3, -12, 4.9, -12, 4.6, -4.6, 1.7, -4.6]],
+      [6, 'armF', 'P', ['r', 4.4, -37.2, 3.4, 5.8]]
+    ] },
+    // ----- Lightkeeper -----
+    censer: { name: 'Censer', fam: 'ore', parts: [
+      [7, 'armF', 'iron', ['r', 6.3, -27.4, 0.6, 7.4]],
+      [7, 'armF', 'P', ['p', 0, 4.4, -19.6, 9, -19.6, 8, -21.8, 5.4, -21.8]],
+      [7, 'armF', 'P', ['e', 6.7, -17.6, 2.7, 2.5]],
+      [7, 'armF', 'coal', ['r', 5.1, -18, 3.2, 0.8]],
+      [7, 'armF', 'R', ['e', 6.7, -22.5, 0.8, 0.8], 1],
+      [7, 'armF', 'D', ['r', 5.6, -15.4, 2.3, 1]]
+    ] },
+    tome: { name: 'Tome', fam: 'hide', fam2: 'fibre', parts: [
+      [5, 'armB', 'P', ['p', 0, -10.4, -34, -2.8, -34, -2.6, -25.6, -10.2, -25.6]],
+      [5, 'armB', 'page', ['r', -3.5, -33.4, 0.8, 7.2]],
+      [5, 'armB', 'R', ['r', -7, -34.6, 1.3, 9.4], 1],
+      [5, 'armB', 'G', ['e', -6.4, -29.8, 1, 1], 2]
+    ] },
+    mitre: { name: 'Mitre', fam: 'fibre', dye: '#E6DCC4', parts: [
+      [0, 'head', 'D', ['p', 0, -3, -58.6, -1.8, -58.6, -2.4, -50, -3.6, -50.4]],
+      [4, 'head', 'P', ['p', 1, -3.5, -59, 4.5, -59.3, 5.1, -62, 1, -69.4, -3.8, -62.6]],
+      [4, 'head', 'R', ['r', -3.7, -60.1, 8.4, 1.4]],
+      [4, 'head', 'R', ['r', 0.3, -68, 1.3, 8.6], 1],
+      [4, 'head', 'G', ['e', 0.9, -64, 0.9, 0.9], 2]
+    ] },
+    vestments: { name: 'Vestments', fam: 'fibre', dye: '#E6DCC4', parts: [
+      [3, 'up', 'P', ['p', 1, -6.8, -48.8, 6.4, -48.8, 6.8, -42, 5.2, -34, 6.8, -10, 7.8, -0.6, -7.6, -0.6, -6.6, -10, -5.2, -34, -6.8, -42]],
+      [3, 'up', 'crimson', ['p', 0, -2.4, -47, 3.4, -47, 3.8, -3.6, 0.5, -1.4, -2.8, -3.6]],
+      [3, 'up', 'R', ['r', -4.2, -48.4, 1.4, 26]], [3, 'up', 'R', ['r', 4, -48.4, 1.4, 26]],
+      [3, 'up', 'R', ['e', 0.5, -40, 1.7, 1.7], 1],
+      [3, 'up', 'G', ['e', 0.5, -40, 0.8, 0.8], 2],
+      [3, 'up', 'Q', ['r', -5.3, -34.6, 10.6, 1.5]],
+      [1, 'armB', 'P', ['p', 1, -7.9, -48.9, -3.6, -48.9, -3.8, -38, -3.4, -30.6, -8.5, -30.6]],
+      [6, 'armF', 'P', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8, -38, 8.8, -30.6, 4.2, -30.6]]
+    ] },
+    // ----- shared -----
+    charm: { name: 'Charm', fam: 'crystal', parts: [
+      [3, 'up', 'gold', ['p', 0, -2.6, -48.4, -2, -48.4, 0.9, -43.2, 0.4, -42.8]],
+      [3, 'up', 'gold', ['p', 0, 3.8, -48.4, 4.4, -48.4, 1.4, -42.8, 0.9, -43.2]],
+      [3, 'up', 'Pc', ['e', 0.9, -41.6, 1.4, 1.6]]
+    ] },
+    beltLantern: { name: 'Lantern', fam: 'crystal', parts: [
+      [3, 'up', 'iron', ['r', -7.2, -30.6, 3.2, 1]], [3, 'up', 'lamp', ['r', -7, -29.6, 2.8, 3.4]], [3, 'up', 'iron', ['r', -7.2, -26.2, 3.2, 0.9]]
+    ] },
+    // ----- companion role weapons (tiered like hero gear) -----
+    emberStaff: { name: 'Singed Staff', fam: 'wood', fam2: 'crystal', parts: [
+      [7, 'armF', 'P', ['p', 0, 5.9, -60.5, 7.3, -61, 7.2, -17, 5.9, -17]],
+      [7, 'armF', 'char', ['p', 1, 5.6, -61, 6.4, -64.6, 7.4, -63.4, 8.2, -65.2, 7.8, -60.6, 7.4, -58.4, 5.8, -58.2]],
+      [7, 'armF', 'ember', ['e', 7.1, -64.8, 1.2, 1.6]],
+      [7, 'armF', 'D', ['r', 5.9, -40, 1.4, 1]],
+      [7, 'armF', 'R', ['r', 5.5, -57.6, 2.2, 1], 1],
+      [7, 'armF', 'Qc', ['e', 6.6, -56, 0.9, 0.9], 2]
+    ] },
+    kiteShield: { name: 'Kite Shield', fam: 'ore', fam2: 'hide', parts: [
+      [5, 'armB', 'P', ['p', 1, -12.2, -46.4, 1.8, -46.4, 2, -36, -5.1, -16.6, -12.4, -36]],
+      [5, 'armB', 'crimson', ['p', 1, -10.9, -45, 0.5, -45, 0.7, -36.4, -5.1, -19.4, -11.1, -36.4]],
+      [5, 'armB', 'gold', ['p', 0, -6.9, -39.4, -5.1, -42, -3.3, -39.4]],
+      [5, 'armB', 'gold', ['r', -6.7, -39.4, 3.2, 5]],
+      [5, 'armB', 'wick', ['r', -5.8, -38.4, 1.4, 3]],
+      [5, 'armB', 'gold', ['r', -6.9, -34.6, 3.6, 1]],
+      [5, 'armB', 'R', ['p', 0, -12, -46.6, 1.6, -46.6, 1.7, -45.2, -12.1, -45.2], 1],
+      [5, 'armB', 'G', ['e', -5.1, -24, 0.9, 1.2], 2]
+    ] },
+    spear: { name: 'Spear', fam: 'wood', fam2: 'ore', parts: [
+      [7, 'armF', 'P', ['r', 6, -74, 1.2, 66]],
+      [7, 'armF', 'D', ['r', 6, -32, 1.2, 7]],
+      [7, 'armF', 'Q', ['p', 1, 6.6, -82.4, 8.1, -77.6, 6.6, -73.6, 5.1, -77.6]],
+      [7, 'armF', 'teal', ['p', 0, 6.1, -73.4, 7.1, -73.4, 8.6, -67.8, 7.2, -68.6, 6.4, -66.8]],
+      [7, 'armF', 'R', ['r', 4.8, -74.2, 3.6, 1], 1],
+      [7, 'armF', 'G', ['r', 6.4, -80, 0.5, 4.4], 2]
+    ] },
+    starStaff: { name: 'Star Staff', fam: 'wood', fam2: 'crystal', parts: [
+      [7, 'armF', 'P', ['r', 5.9, -70, 1.3, 53]],
+      [7, 'armF', 'P', ['p', 1, 5.7, -69.6, 6.6, -73.6, 10.4, -75, 13.4, -72.6, 13, -69.6, 11.8, -71.8, 9.8, -72.8, 7.6, -71.4, 7.2, -68.6]],
+      [7, 'armF', 'string', ['r', 12.4, -70.4, 0.45, 4.2]],
+      [7, 'armF', 'star', ['p', 0, 12.6, -67.4, 13.3, -65.5, 15.2, -65.3, 13.7, -64.1, 14.2, -62.1, 12.6, -63.2, 11, -62.1, 11.5, -64.1, 10, -65.3, 11.9, -65.5]],
+      [7, 'armF', 'Pc', ['e', 6.5, -71.8, 1, 1]],
+      [7, 'armF', 'R', ['r', 5.5, -66.8, 2.1, 1], 1], [7, 'armF', 'R', ['r', 5.6, -19, 1.9, 1], 1],
+      [7, 'armF', 'G', ['e', 6.5, -60, 0.8, 0.8], 2]
+    ] },
+    woodaxe: { name: 'Woodsman\'s Axe', fam: 'wood', fam2: 'ore', parts: [
+      [7, 'armF', 'P', ['p', 0, 5.8, -68.5, 7.3, -68.5, 7.4, -18, 5.8, -18]],
+      [7, 'armF', 'Q', ['p', 1, 7, -68.4, 11.6, -71.2, 12.8, -62.8, 11.4, -63.4, 7, -62.2]],
+      [7, 'armF', 'D', ['r', 4.4, -68, 1.8, 4.4]],
+      [7, 'armF', 'R', ['r', 5.5, -24, 2.2, 3.4], 1],
+      [7, 'armF', 'G', ['r', 11.8, -70, 0.7, 6.2], 2]
+    ] }
+  };
+  ITEMS.hoodCream = Object.assign({}, ITEMS.hood, { fam: 'fibre', dye: '#EFE6D6', parts: ITEMS.hood.parts.filter(p => p[2] !== 'eyeLit') });
+
+  // ---------- hero classes: body dye, hair style, one gear drawing per slot, attack animation ----------
+  const SLOT_KEYS = ['weapon', 'off', 'head', 'body', 'charm'];
+  const CLASSES = {
+    warden: { name: 'Warden', dye: '#5A4E44', hairStyle: 'short', slots: { weapon: 'warblade', off: 'shield', head: 'greathelm', body: 'plate', charm: 'charm' }, idleRot: 0.3, anim: 'slash' },
+    lanternmage: { name: 'Lanternmage', dye: '#4A3A5E', hairStyle: 'long', slots: { weapon: 'staff', off: 'lantern', head: 'circlet', body: 'robe', charm: 'charm' }, idleRot: 0.12, anim: 'cast' },
+    ranger: { name: 'Ranger', dye: '#4E5A3A', hairStyle: 'short', slots: { weapon: 'bow', off: 'quiver', head: 'hood', body: 'leathers', charm: 'charm' }, idleRot: 0.05, anim: 'shoot' },
+    lightkeeper: { name: 'Lightkeeper', dye: '#6A5A48', hairStyle: 'bald', slots: { weapon: 'censer', off: 'tome', head: 'mitre', body: 'vestments', charm: 'charm' }, idleRot: 0, anim: 'swing' }
+  };
+
+  // ---------- poses (bone values; every frame is a bake of the same layers) ----------
+  const ANIMS = {
+    slash: { wind: { rotF: -2.1, up: 0.5, lean: -0.8 }, strike: { rotF: 0.9, dx: 3, lean: 1.2 } },
+    cast: { wind: { rotF: -0.5, rotB: -0.3, up: 0.3 }, strike: { rotF: 0.45, dx: 1, lean: 0.8 } },
+    shoot: { wind: { rotF: -0.12, lean: -0.6, drawn: true }, strike: { rotF: -0.05, lean: 0.4 } },
+    swing: { wind: { rotF: -1.1, lean: -0.5 }, strike: { rotF: 1.2, dx: 1.5, lean: 0.8 } },
+    thrust: { wind: { rotF: 1.25, dx: -2, lean: -1 }, strike: { rotF: 1.5, dx: 4, lean: 1.6 } },
+    chop: { wind: { rotF: -2.5, up: 0.5, lean: -1 }, strike: { rotF: 1.0, dx: 3, lean: 1.6, up: 0.6 } }
+  };
+  const DOWN_POSE = { fall: -1.48, rotF: 0.9, rotB: -0.6, head: 0.4 };
+
+  // ---------- companions: fixed outfit + role weapon (role: true, tiered) + trinket ----------
+  // gear entry: { key, tier, rar, role?, m?: { P|D|Q|R: FIXED key } material override }
+  const COMPANIONS = {
+    tobin: { name: 'Tobin', title: 'the Hedge Squire', S: 0.92, bw: 1.06, skin: SKINS[0], hair: '#6A3A22', dye: '#5E7A3A', hairStyle: 'short', anim: 'slash', idleRot: 0.25,
+      gear: [{ key: 'shield', tier: 1, rar: 0, role: true }, { key: 'warblade', tier: 1, rar: 0 }],
+      extra: [
+        [3, 'up', 'moss', ['p', 1, -6.6, -48.6, 6.2, -48.6, 6.5, -43, 4.8, -34.5, 6, -24, -6, -24, -4.8, -34.5, -6.5, -43]],
+        [3, 'up', 'leather', ['r', -5.6, -33, 11.2, 2]],
+        [4, 'head', 'iron', ['p', 1, -6.6, -58.6, 7.4, -58.6, 5, -60, 3.6, -63.4, -2.4, -63.4, -4, -60]],
+        [3, 'up', 'gold', ['e', 4.4, -30.6, 1.1, 1.3]]
+      ] },
+    wren: { name: 'Wren', title: 'the Batwing Archer', S: 0.96, skin: SKINS[1], hair: '#2A1C18', dye: '#3E6B42', hairStyle: 'short', anim: 'shoot', idleRot: 0.05,
+      gear: [{ key: 'bow', tier: 2, rar: 1, role: true }, { key: 'quiver', tier: 2, rar: 0 }, { key: 'hood', tier: 4, rar: 0 }, { key: 'leathers', tier: 2, rar: 0 }],
+      extra: [[0, 'up', 'scarf', ['p', 1, -2, -51, 2, -51, -6, -44, -13, -40, -12, -43, -6, -47]], [3, 'up', 'bone', ['r', 3, -31.4, 1, 2.6]]] },
+    pip: { name: 'Pip', title: 'the Hedge Mage', S: 0.9, bw: 0.96, skin: SKINS[0], hair: '#B8502A', dye: '#5E3A7E', hairStyle: 'short', anim: 'cast', idleRot: 0.1,
+      gear: [{ key: 'emberStaff', tier: 1, rar: 0, role: true }],
+      extra: [
+        // wild hair tufts under the hat
+        [0, 'head', 'hair', ['p', 0, -3.4, -60.4, -7.4, -58.4, -4.6, -57, -7.8, -54.2, -4.2, -54.8, -6, -51.6, -2.4, -53.4]],
+        // patched robe, knee length, with an ember sash
+        [3, 'up', 'pipRobe', ['p', 1, -6.6, -48.8, 6.2, -48.8, 6.8, -42, 4.8, -34, 7.4, -12, 7.8, -9, -7.4, -9, -7, -12, -4.8, -34, -6.8, -42]],
+        [3, 'up', 'patch', ['r', -5, -20, 3, 3]], [3, 'up', 'patch', ['r', 2.6, -41.4, 2.4, 2.4]],
+        [3, 'up', 'pipHat', ['p', 0, -7.6, -10.8, -4.4, -12, -2, -9, -7.6, -9]],
+        [3, 'up', 'emberCloth', ['p', 0, -5.2, -34.8, 5.4, -34.8, 5.6, -32.2, -5.2, -32.2]],
+        [3, 'up', 'emberCloth', ['p', 0, 3.8, -32.4, 5.4, -32.4, 6.2, -26.6, 4.6, -26]],
+        [1, 'armB', 'pipRobe', ['p', 1, -7.9, -48.9, -3.6, -48.9, -3.8, -38, -3, -31.4, -8.6, -31.4]],
+        [6, 'armF', 'pipRobe', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8, -38, 9, -31.4, 4, -31.4]],
+        [6, 'armF', 'patch', ['r', 4.4, -40, 2.2, 2]],
+        // book strap and the torn spellbook at her hip (trinket)
+        [3, 'up', 'leather', ['p', 0, -5.6, -48.4, -4.2, -48.8, 4.8, -30.6, 3.4, -30]],
+        [3, 'up', 'leather', ['p', 0, -1, -29.8, 5.8, -29.8, 5.8, -23.2, 1.4, -23.2, -1, -24.6]],
+        [3, 'up', 'page', ['p', 0, 5, -29.2, 6.2, -29.2, 6.2, -24.2, 5, -24.2]],
+        [3, 'up', 'char', ['p', 0, -1.2, -29.9, 1, -29.9, -1.2, -27.6]],
+        // pointed hat: wide brim, bent cone, ember band
+        [4, 'head', 'pipHat', ['e', 0.8, -60.2, 7.4, 1.5]],
+        [4, 'head', 'pipHat', ['p', 1, -3.8, -60.6, 4.8, -60.6, 2.6, -65.6, -0.4, -70.8, -5.4, -74.2, -3.2, -69.4, -2.8, -64.6]],
+        [4, 'head', 'emberCloth', ['p', 0, -3.6, -62.8, 4.4, -62.8, 4.6, -61.2, -3.8, -61.2]],
+        [4, 'head', 'patch', ['r', 0, -67.4, 1.8, 1.8]]
+      ] },
+    aldric: { name: 'Aldric', title: 'the Oathbound', S: 1, bw: 1.12, skin: SKINS[0], hair: '#4A3A30', dye: '#8E2A36', hairStyle: 'short', anim: 'slash', idleRot: 0.22,
+      gear: [{ key: 'kiteShield', tier: 2, rar: 1, role: true }, { key: 'plate', tier: 2, rar: 1, m: { P: 'silver', D: 'iron', R: 'gold' } }, { key: 'warblade', tier: 2, rar: 1, m: { P: 'silver', D: 'iron', Q: 'crimson', R: 'gold' } }],
+      extra: [
+        // crimson tabard with a gold lantern sigil
+        [3, 'up', 'crimson', ['p', 0, -3.4, -46.6, 4.2, -46.6, 4.8, -24.6, 0.4, -21.4, -4, -24.6]],
+        [3, 'up', 'gold', ['r', -3.4, -46.8, 7.6, 1]],
+        [3, 'up', 'gold', ['p', 0, -0.6, -40.6, 0.4, -42.2, 1.4, -40.6, 1.4, -37.4, -0.6, -37.4]],
+        // order signet on a chain (trinket)
+        [3, 'up', 'gold', ['p', 0, -4.4, -48.6, -3.6, -48.6, 0.2, -44.6, -0.4, -44.2]],
+        [3, 'up', 'gold', ['e', -0.2, -43.4, 1.3, 1.3]], [3, 'up', 'gleam', ['e', -0.2, -43.4, 0.6, 0.6]],
+        // open-faced helm with a nasal and a tall crimson crest trailing back
+        [4, 'head', 'silver', ['p', 1, -4.4, -57.6, -3.6, -62.4, 1, -63.8, 5, -62.2, 5.8, -58.8, 3.6, -59.4, -0.8, -59.2, -2, -55, -4.6, -52]],
+        [4, 'head', 'silver', ['r', 4.3, -60, 1.1, 4.4]],
+        [4, 'head', 'gold', ['p', 0, -3.8, -59.8, 5.4, -60.4, 5.5, -59.4, -3.8, -58.8]],
+        [0, 'head', 'plume', ['p', 1, -1.4, -63.2, 0.8, -68, 4, -66.8, -2, -66, -6.4, -63, -9.4, -56.6, -5, -60.4]]
+      ] },
+    kestrel: { name: 'Kestrel', title: 'the Skyfall Dragoon', S: 0.98, bw: 0.92, skin: SKINS[1], hair: '#2A2030', dye: '#2E6E6E', hairStyle: 'long', anim: 'thrust', idleRot: 0.05,
+      gear: [{ key: 'spear', tier: 2, rar: 1, role: true }],
+      extra: [
+        // cape shaped like a folded wing
+        [0, 'up', 'teal', ['p', 1, -5, -49.6, -1, -50.2, -3, -44, -6.6, -30, -10.4, -12, -8.8, -15.4, -9.6, -9, -7.2, -14, -7.6, -8, -5.6, -18, -4, -34]],
+        [0, 'up', 'wingwhite', ['p', 0, -10.4, -12, -9.4, -12.4, -9.6, -9, -8.8, -15.4]],
+        // teal tunic skirt, steel breastplate, pauldron and greaves
+        [3, 'up', 'teal', ['p', 1, -5.6, -35, 5.4, -35, 6.6, -21, -6.4, -21]],
+        [3, 'up', 'steel', ['p', 1, -6.4, -48.4, 6.2, -48.4, 6.6, -43, 4.6, -35.6, -4.6, -35.6, -6.6, -43]],
+        [3, 'up', 'leather', ['r', -5.4, -33.8, 11, 1.8]],
+        [3, 'up', 'bone', ['p', 0, 3.4, -32.2, 4.6, -32.2, 4, -28.4]], // talon charm (trinket)
+        [2, 'legs', 'steel', ['p', 0, -4.6, -14, -1.2, -14, -1.6, -4.4, -4.2, -4.4]],
+        [2, 'legs', 'steel', ['p', 0, 1.4, -14, 4.9, -14, 4.5, -4.4, 1.9, -4.4]],
+        [6, 'armF', 'steel', ['p', 1, 2.8, -50, 8.4, -49.6, 9.2, -45.6, 7.8, -43.8, 3.2, -44.6]],
+        [6, 'armF', 'steel', ['p', 0, 4.4, -36.4, 7.6, -36.4, 7.8, -31, 5, -31]],
+        // winged helm
+        [4, 'head', 'steel', ['p', 1, -4.2, -58.2, -3.4, -62.6, 1, -63.8, 4.8, -62.2, 5.8, -58.4, 3.8, -59, -1, -59.4, -2.4, -55.2, -4.4, -52.6]],
+        [4, 'head', 'steel', ['p', 0, 3.6, -59, 5.8, -58.4, 5.2, -55, 3.8, -55.6]],
+        [4, 'head', 'wingwhite', ['p', 1, -1.6, -61.2, -6.6, -67, -11.2, -68.6, -8.8, -65, -11, -64, -7.4, -62, -9, -60.2, -3.6, -58.4]],
+        [4, 'head', 'wingwhite', ['p', 1, 1.4, -63.4, 0.4, -67.4, -2.6, -69.6, -1.6, -66.6, -2.4, -65.6, -0.6, -63.2]]
+      ] },
+    oriel: { name: 'Oriel', title: 'the Starcaller', S: 1, bw: 0.93, skin: SKINS[2], hair: '#2A2438', dye: '#3A3478', hairStyle: 'long', anim: 'cast', idleRot: 0.12,
+      gear: [{ key: 'starStaff', tier: 3, rar: 1, role: true }],
+      extra: [
+        // tall standing collar behind the head
+        [0, 'up', 'indigo', ['p', 1, -6.6, -49.4, -7.8, -57.6, -6, -64, -3.4, -57, -1.6, -51.6]],
+        [0, 'up', 'lilac', ['p', 0, -7.8, -57.6, -6, -64, -5.6, -62.6, -7, -57.4]],
+        // floor-length star-pricked robe with lilac trim
+        [3, 'up', 'indigo', ['p', 1, -6.8, -48.8, 6.4, -48.8, 6.8, -42, 5, -34, 7.6, -12, 9, -0.6, -8.4, -0.6, -7.2, -12, -5, -34, -6.8, -42]],
+        [3, 'up', 'lilac', ['p', 0, 0, -48.6, 2, -48.6, 2.6, -0.8, -0.6, -0.8]],
+        [3, 'up', 'lilac', ['p', 0, -8.5, -2.4, 9, -2.4, 9.1, -0.6, -8.6, -0.6]],
+        [3, 'up', 'lilac', ['p', 0, 3.2, -50.6, 6.8, -55.4, 6.4, -49, 4.4, -47.2]],
+        [3, 'up', 'gold', ['r', -5, -34.4, 10.4, 1.4]],
+        [3, 'up', 'starpt', ['r', -4.4, -26, 0.9, 0.9]], [3, 'up', 'starpt', ['r', 4.4, -18, 0.9, 0.9]], [3, 'up', 'starpt', ['r', -3, -12, 0.9, 0.9]],
+        [3, 'up', 'starpt', ['r', 5.6, -8, 0.9, 0.9]], [3, 'up', 'starpt', ['r', -4.6, -41, 0.9, 0.9]], [3, 'up', 'starpt', ['r', -6, -5, 0.9, 0.9]],
+        // astrolabe on the belt (trinket)
+        [3, 'up', 'gold', ['e', 4.2, -31, 1.4, 1.4]], [3, 'up', 'starpt', ['r', 3.8, -31.4, 0.9, 0.9]],
+        [1, 'armB', 'indigo', ['p', 1, -7.9, -48.9, -3.5, -48.9, -3.7, -38, -2.8, -30.4, -8.9, -30.4]],
+        [6, 'armF', 'indigo', ['p', 1, 3.5, -48.9, 7.6, -48.9, 8.4, -38, 9.8, -30.4, 3.9, -30.4]],
+        [6, 'armF', 'lilac', ['r', 3.9, -31.8, 5.9, 1.4]]
+      ] },
+    hesketh: { name: 'Hesketh', title: 'the Lamplighter', S: 0.98, skin: SKINS[0], hair: '#D8D2C8', dye: '#6E6878', hairStyle: 'short', beard: true, anim: 'swing', idleRot: -0.05,
+      gear: [{ key: 'tome', tier: 1, rar: 0, role: true }],
+      extra: [
+        [3, 'up', 'coatgrey', ['p', 1, -7, -49, 6.4, -49, 7, -42, 6, -30, 8.4, -6, -8.6, -6, -6.6, -30, -7, -42]],
+        [3, 'up', 'amberscarf', ['p', 0, -2.4, -50, 4.6, -50, 1.4, -42]],
+        [4, 'head', 'capgrey', ['e', 0.9, -61.4, 6.4, 1.8]], [4, 'head', 'capgrey', ['e', 0.4, -62.8, 4.6, 2.4]],
+        [7, 'armF', 'wood1', ['r', 5.8, -72, 1.5, 70]], [7, 'armF', 'gold', ['r', 5.8, -73.4, 6, 1.4]], [7, 'armF', 'gold', ['r', 9.4, -73, 3.8, 5.4]], [7, 'armF', 'coal', ['e', 11.3, -70.4, 1.1, 1.7]],
+        [3, 'up', 'glass', ['r', 3.6, -30.6, 2, 3.2]]
+      ] },
+    elowen: { name: 'Elowen', title: 'the Last Lantern', S: 1, bw: 0.96, skin: SKINS[0], hair: '#C8A060', dye: '#E6DCC4', hairStyle: 'long', anim: 'cast', idleRot: -0.35,
+      gear: [{ key: 'tome', tier: 3, rar: 1, role: true }, { key: 'hoodCream', tier: 3, rar: 1 }],
+      extra: [
+        [0, 'head', 'halo', ['p', 0, -4, -66, 6, -66, 6, -65, -4, -65]],
+        [3, 'up', 'cream', ['p', 1, -6.6, -48.8, 6.2, -48.8, 6.6, -42, 5, -34, 7.6, -10, 8.8, -0.6, -8.2, -0.6, -7, -10, -5, -34, -6.6, -42]],
+        [3, 'up', 'gold', ['p', 0, -8.3, -3, 8.9, -3, 9, -0.6, -8.4, -0.6]], [3, 'up', 'gold', ['r', -0.2, -47, 1.4, 44]],
+        [6, 'armF', 'cream', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8, -38, 8.8, -30.6, 4.2, -30.6]],
+        [7, 'armF', 'iron', ['r', 6.2, -28.6, 0.8, 3]], [7, 'armF', 'iron', ['p', 0, 3.6, -25.6, 9.6, -25.6, 8.6, -24, 4.6, -24]], [7, 'armF', 'lamp', ['r', 4.4, -24, 4.4, 6]], [7, 'armF', 'iron', ['r', 3.6, -18, 6, 1.2]],
+        [3, 'up', 'wick', ['e', 3.6, -31.4, 0.9, 0.9]]
+      ] },
+    bram: { name: 'Bram', title: 'the Woodcutter', S: 1, bw: 1.14, skin: SKINS[0], hair: '#6A3A22', beardCol: '#6A3A22', dye: '#A23A30', hairStyle: 'short', beard: true, anim: 'chop', idleRot: 0.1,
+      gear: [{ key: 'woodaxe', tier: 2, rar: 0, role: true }],
+      extra: [
+        // red plaid shirt: dark checks over the dyed torso
+        [3, 'up', 'plaidDk', ['r', -3.6, -48.4, 0.9, 16]], [3, 'up', 'plaidDk', ['r', 1.6, -48.4, 0.9, 16]],
+        [3, 'up', 'plaidDk', ['r', -6.2, -44.2, 12.6, 0.9]], [3, 'up', 'plaidDk', ['r', -5.2, -38.4, 10.6, 0.9]],
+        // open brown leather vest and belt
+        [3, 'up', 'brown', ['p', 1, -6.8, -48.8, -2.8, -48.8, -2.2, -34, -5.6, -33, -4.6, -40, -7, -44]],
+        [3, 'up', 'brown', ['p', 1, 3.6, -48.8, 6.4, -48.8, 6.8, -44, 4.8, -38, 5.4, -33, 3.2, -34]],
+        [3, 'up', 'leather', ['r', -5.8, -32.8, 11.8, 2.4]], [3, 'up', 'iron', ['r', -0.2, -32.6, 1.8, 2]],
+        // flask on the belt (trinket)
+        [3, 'up', 'iron', ['p', 1, -7.6, -31, -4.8, -31, -4.8, -25.6, -7.6, -25.6]], [3, 'up', 'leather', ['r', -6.8, -32.4, 1.2, 1.6]],
+        // brown work trousers and heavy boots
+        [2, 'legs', 'brown', ['p', 0, -4.9, -31, -0.4, -31, -1.2, -16, -4.5, -16]], [2, 'legs', 'brown', ['p', 0, -4.5, -16.6, -1.2, -16.6, -1.8, -5, -4.2, -5]],
+        [2, 'legs', 'brown', ['p', 0, 0.2, -31, 4.8, -31, 4.9, -16, 1.4, -16]], [2, 'legs', 'brown', ['p', 0, 1.4, -16.6, 4.9, -16.6, 4.5, -5, 2, -5]],
+        [2, 'legs', 'boots', ['p', 1, -4.9, -6.4, -1.2, -6.4, 0.4, -1.3, 0.5, 0, -5, 0]], [2, 'legs', 'boots', ['p', 1, 1.3, -6.4, 4.9, -6.4, 7.4, -1.3, 7.4, 0, 1.2, 0]]
+      ].concat(ROLLED) }
+  };
+  // Portrait crop (art px around the feet anchor, scaled by the character's S): head and shoulders.
+  const PORTRAIT = { x0: -13, x1: 14, y0: -72, y1: -41 };
+
+  return { ramp, mixHex, lift, hueShift, rgbOf, FAM, RARITY, FIXED, SKINS, HAIRS, PIV, HAND_F, HAND_B, bodyParts, ITEMS, SLOT_KEYS, CLASSES, ANIMS, DOWN_POSE, COMPANIONS, PORTRAIT };
+})();
+const FAM = RIG.FAM, FIXED = RIG.FIXED, ramp = RIG.ramp;
 
 // ---- src/js/13-art-enemies.js ----
 // 13-art-enemies: Hi-bit rigs for monsters, bosses and gather nodes. Data plus pure maths only
@@ -2061,6 +2619,372 @@ function iconOf(spec) {
   return null;
 }
 
+// ---- src/js/60b-baker.js ----
+// 60b-baker: Hi-bit baker (browser). Turns rig data (12-art-rigs, 13-art-enemies) into cached canvases.
+// Shapes -> per-part masks -> 4-tone shading with selective outline, plus a light list per frame.
+// Baking is lazy and cached by spec hash: a spec bakes once, then every call returns the same frames.
+//
+// Exposed: bake, bakeSet, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview,
+//          charLightPass, enemyFrames, bakeStats
+//
+// Frame: { c: canvas, ox, oy, lights: [{ x, y, rgb: 'r,g,b', pulse, size }] }; feet at (ox, oy) in canvas px
+// (1 canvas px = 1 art px at scale 1). Character spec formats (plain JSON, hashable):
+//   hero:      { cls, skin: 0-2 | '#hex', hair: 0-3 | '#hex', gear: { weapon|off|head|body|charm: { t: 1-5, r: 0-3, glow?: '#hex' } } }
+//   companion: { comp: key, t?: 1-5, r?: 0-3 }   (t/r override the role weapon's tier and rarity)
+
+const ART = (() => {
+  const INK = '#0B0810';
+  const { FIXED, FAM, ITEMS, CLASSES, COMPANIONS, ANIMS, PIV, ramp, mixHex, lift, hueShift, rgbOf } = RIG;
+  const RAR_IDX = { common: 0, uncommon: 1, rare: 1, epic: 2, legendary: 3 };
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const stats = { bakes: 0, ms: 0, last: {} };
+
+  let scratch = null, sg = null;
+  const scratchCtx = (W, H) => {
+    if (!scratch) { scratch = document.createElement('canvas'); sg = scratch.getContext('2d', { willReadFrequently: true }); }
+    if (scratch.width < W || scratch.height < H) { scratch.width = Math.max(scratch.width, W); scratch.height = Math.max(scratch.height, H); }
+    return sg;
+  };
+
+  // ---------------- materials ----------------
+  const rampCache = new Map();
+  const rampOf = (hex, metal) => { const k = hex + (metal ? 'm' : ''); let r = rampCache.get(k); if (!r) { r = ramp(hex, metal); rampCache.set(k, r); } return r; };
+  // Resolve a gear item's parts to concrete materials for a tier and rarity.
+  function itemParts(g, pose) {
+    const it = ITEMS[g.key]; if (!it) return [];
+    const rar = g.rar | 0, t = Math.max(0, Math.min(4, (g.tier | 0) - 1));
+    const f = FAM[it.fam], f2 = FAM[it.fam2 || it.fam];
+    let base = f.col[t]; if (it.dye) base = mixHex(base, it.dye, it.fam === 'fibre' ? 0.45 : 0);
+    const m = g.m || {};
+    const P = m.P ? FIXED[m.P] : rampOf(base, f.metal), D = m.D ? FIXED[m.D] : rampOf(lift(base, -12), f.metal), Q = m.Q ? FIXED[m.Q] : rampOf(f2.col[t], f2.metal);
+    const R = rar >= 1 ? (m.R ? FIXED[m.R] : it.fam === 'crystal' || it.fam === 'fibre' ? FIXED.gold : rampOf(rar >= 3 ? '#F2C14E' : '#D8B060', true)) : D;
+    const glowCol = g.glow || f.glow[t];
+    const res = k => k === 'P' ? P : k === 'D' ? D : k === 'Q' ? Q : k === 'R' ? R
+      : k === 'G' ? { emit: glowCol, light: rgbOf(glowCol), pulse: rar >= 3 }
+      : k === 'L' ? { emit: mixHex('#FFF1B8', FAM.crystal.col[t], 0.35), light: rgbOf(mixHex('#FFC070', FAM.crystal.col[t], 0.4)) }
+      : k === 'Pc' || k === 'Qc' ? (rar >= 2 ? { emit: g.glow || FAM.crystal.glow[t], light: rgbOf(g.glow || FAM.crystal.col[t]), pulse: rar >= 3 } : rampOf(FAM.crystal.col[t]))
+      : FIXED[k];
+    let list = it.parts;
+    if (it.idle) list = list.concat(pose.drawn ? it.drawn : it.idle);
+    return list.filter(p => (p[4] || 0) <= rar).map(p => ({ z: p[0], bone: p[1], mat: res(p[2]), shape: p[3] }));
+  }
+
+  // ---------------- spec resolution ----------------
+  const colOf = (v, list) => typeof v === 'string' ? v : list[Math.max(0, Math.min(list.length - 1, v | 0))];
+  // -> full character: { skin, hair, dye, hairStyle, beard, beardCol, gear: [{key,tier,rar,m,glow}], extra, S, bw, anim, idleRot }
+  function resolve(spec) {
+    if (spec.comp) {
+      const c = COMPANIONS[spec.comp]; if (!c) return null;
+      const gear = c.gear.map(g => g.role && (spec.t || spec.r != null) ? Object.assign({}, g, { tier: spec.t || g.tier, rar: spec.r != null ? spec.r : g.rar }) : g);
+      return Object.assign({}, c, { gear });
+    }
+    const C = CLASSES[spec.cls] || CLASSES.warden;
+    const gs = spec.gear || {}, gear = [];
+    for (const s of RIG.SLOT_KEYS) { const st = gs[s]; if (st && st.t) gear.push({ key: C.slots[s], tier: st.t, rar: st.r | 0, glow: st.glow }); }
+    const heldLantern = gs.off && gs.off.t && spec.cls === 'lanternmage';
+    if (!heldLantern && spec.cls !== 'lightkeeper') gear.push({ key: 'beltLantern', tier: 1, rar: 0 });
+    return { skin: colOf(spec.skin == null ? 1 : spec.skin, RIG.SKINS), hair: colOf(spec.hair == null ? 0 : spec.hair, RIG.HAIRS), dye: C.dye, hairStyle: C.hairStyle, gear, S: 1, bw: 1, anim: C.anim, idleRot: C.idleRot };
+  }
+  function assemble(rs, pose) {
+    const mats = { skin: rampOf(rs.skin), hair: rampOf(rs.hair), U: rampOf(rs.dye), beard: rs.beardCol ? rampOf(rs.beardCol) : FIXED.beard };
+    const matOf = k => typeof k !== 'string' ? k : mats[k] || FIXED[k] || (k[0] === '#' ? rampOf(k) : FIXED.void);
+    const parts = RIG.bodyParts(rs).map(p => ({ z: p[0], bone: p[1], mat: matOf(p[2]), shape: p[3] }));
+    for (const g of rs.gear) parts.push(...itemParts(g, pose));
+    if (rs.extra) for (const p of rs.extra) parts.push({ z: p[0], bone: p[1], mat: matOf(p[2]), shape: p[3] });
+    return sortParts(parts);
+  }
+  function sortParts(parts) {
+    parts.forEach((p, i) => { p.i = i; });
+    parts.sort((a, b) => a.z - b.z || a.i - b.i);
+    for (const p of parts) { const s = p.shape; if (s[0] === 'e') { p.bw = s[3] * 2; p.bh = s[4] * 2; } else if (s[0] === 'r') { p.bw = s[3]; p.bh = s[4]; } else { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (let i = 2; i < s.length; i += 2) { x0 = Math.min(x0, s[i]); x1 = Math.max(x1, s[i]); y0 = Math.min(y0, s[i + 1]); y1 = Math.max(y1, s[i + 1]); } p.bw = x1 - x0; p.bh = y1 - y0; } }
+    return parts;
+  }
+
+  // ---------------- pose transform ----------------
+  // Character bones: legs | up | head | armF | armB (pose: up, lean, head, rotF, rotB, dx, fall).
+  // Generic bones (enemies): pose[bone] = { rot, dx, dy } around rig.piv[bone]; rig.parent[bone] chains.
+  function makeTx(pose, rig) {
+    const piv = (rig && rig.piv) || PIV, parent = (rig && rig.parent) || {}, ground = (rig && rig.ground) || ['legs'];
+    const fall = pose.fall || 0, fc = Math.cos(fall), fs = Math.sin(fall);
+    const boneTx = (bone, x, y, depth) => {
+      const b = pose[bone];
+      if (b && typeof b === 'object') {
+        const pv = piv[bone] || [0, 0];
+        if (b.rot) { const dx = x - pv[0], dy = y - pv[1], c = Math.cos(b.rot), s = Math.sin(b.rot); x = pv[0] + dx * c - dy * s; y = pv[1] + dx * s + dy * c; }
+        x += b.dx || 0; y += b.dy || 0;
+      }
+      const par = parent[bone];
+      return par && depth < 8 ? boneTx(par, x, y, depth + 1) : [x, y];
+    };
+    return (bone, x, y) => {
+      if (bone === 'armF' || bone === 'armB') {
+        const pv = PIV[bone], r = bone === 'armF' ? pose.rotF || 0 : pose.rotB || 0;
+        if (r) { const dx = x - pv[0], dy = y - pv[1], c = Math.cos(r), s = Math.sin(r); x = pv[0] + dx * c - dy * s; y = pv[1] + dx * s + dy * c; }
+      } else if (rig) { const q = boneTx(bone, x, y, 0); x = q[0]; y = q[1]; }
+      if (bone === 'head') y += pose.head || 0;
+      if (!ground.includes(bone)) { y += pose.up || 0; x += pose.lean || 0; }
+      x += pose.dx || 0;
+      if (fall) { const X = x * fc - y * fs, Y = x * fs + y * fc; x = X; y = Y - (pose.lift || 0); }
+      return [x, y];
+    };
+  }
+  // shape -> list of art-space points (ellipse: centre plus radius)
+  function shapePts(p, tx) {
+    const s = p.shape;
+    if (s[0] === 'e') { const c = tx(p.bone, s[1], s[2]); return { e: true, c, rx: s[3], ry: s[4] }; }
+    const pts = s[0] === 'r' ? [s[1], s[2], s[1] + s[3], s[2], s[1] + s[3], s[2] + s[4], s[1], s[2] + s[4]] : s.slice(2);
+    const Q = []; for (let i = 0; i < pts.length; i += 2) Q.push(tx(p.bone, pts[i], pts[i + 1]));
+    return { e: false, Q, smooth: s[0] === 'p' && s[1] };
+  }
+  function boundsOf(geo) {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const g of geo) {
+      if (g.e) { const r = Math.max(g.rx, g.ry); x0 = Math.min(x0, g.c[0] - r); x1 = Math.max(x1, g.c[0] + r); y0 = Math.min(y0, g.c[1] - r); y1 = Math.max(y1, g.c[1] + r); }
+      else for (const q of g.Q) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+    }
+    return [x0, y0, x1, y1];
+  }
+
+  // ---------------- the baker ----------------
+  // parts: sorted resolved parts; pose: numeric pose; opt: { S, bw, flip, rig, ground }
+  function bake(parts, pose, opt) {
+    const t0 = now();
+    const S = opt.S || 1, sx = S * (opt.bw || 1) * (opt.flip ? -1 : 1);
+    let tx = makeTx(pose, opt.rig), geo = parts.map(p => shapePts(p, tx));
+    let b = boundsOf(geo);
+    if (pose.fall) { pose = Object.assign({}, pose, { lift: b[3] }); tx = makeTx(pose, opt.rig); geo = parts.map(p => shapePts(p, tx)); b = boundsOf(geo); }
+    const pxL = Math.min(b[0] * sx, b[2] * sx), pxR = Math.max(b[0] * sx, b[2] * sx);
+    const ox = 3 - Math.floor(pxL), oy = 3 - Math.floor(b[1] * S);
+    const W = Math.ceil(pxR) + ox + 4, H = Math.max(Math.ceil(b[3] * S), 0) + oy + 4;
+    const g = scratchCtx(W, H);
+    const n = parts.length, N = W * H, own = new Int16Array(N).fill(-1), masks = [], boxes = [], lights = [];
+    const X = x => ox + x * sx, Y = y => oy + y * S;
+    for (let i = 0; i < n; i++) {
+      const p = parts[i], gm = geo[i], P = new Path2D();
+      let bx0, by0, bx1, by1;
+      if (gm.e) {
+        const cx = X(gm.c[0]), cy = Y(gm.c[1]), r = p.bone === 'armF' ? pose.rotF || 0 : p.bone === 'armB' ? pose.rotB || 0 : 0;
+        P.ellipse(cx, cy, Math.max(0.3, gm.rx * Math.abs(sx)), Math.max(0.3, gm.ry * S), (r + (pose.fall || 0)) * (opt.flip ? -1 : 1), 0, Math.PI * 2);
+        const rr = Math.max(gm.rx * Math.abs(sx), gm.ry * S); bx0 = cx - rr; bx1 = cx + rr; by0 = cy - rr; by1 = cy + rr;
+      } else {
+        const Q = gm.Q.map(q => [X(q[0]), Y(q[1])]);
+        bx0 = 1e9; by0 = 1e9; bx1 = -1e9; by1 = -1e9; for (const q of Q) { bx0 = Math.min(bx0, q[0]); bx1 = Math.max(bx1, q[0]); by0 = Math.min(by0, q[1]); by1 = Math.max(by1, q[1]); }
+        if (gm.smooth) { const k = Q.length, mid = (a, c) => [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2]; const m0 = mid(Q[k - 1], Q[0]); P.moveTo(m0[0], m0[1]); for (let j = 0; j < k; j++) { const a = Q[j], m = mid(a, Q[(j + 1) % k]); P.quadraticCurveTo(a[0], a[1], m[0], m[1]); } }
+        else { P.moveTo(Q[0][0], Q[0][1]); for (let j = 1; j < Q.length; j++) P.lineTo(Q[j][0], Q[j][1]); }
+        P.closePath();
+      }
+      // only rasterise and read back the part's own box
+      const rx0 = Math.max(0, Math.floor(bx0) - 1), ry0 = Math.max(0, Math.floor(by0) - 1), rx1 = Math.min(W - 1, Math.ceil(bx1) + 1), ry1 = Math.min(H - 1, Math.ceil(by1) + 1);
+      const m = new Uint8Array(N); masks.push(m);
+      if (rx1 < rx0 || ry1 < ry0) { boxes.push([W, H, -1, -1]); continue; }
+      const rw = rx1 - rx0 + 1, rh = ry1 - ry0 + 1;
+      g.clearRect(rx0, ry0, rw, rh); g.fillStyle = '#fff'; g.fill(P);
+      const d = g.getImageData(rx0, ry0, rw, rh).data, thr = Math.min(p.bw, p.bh) * S < 2 ? 64 : 120;
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (let yy = 0; yy < rh; yy++) for (let xx = 0; xx < rw; xx++) {
+        if (d[(yy * rw + xx) * 4 + 3] < thr) continue;
+        const x = rx0 + xx, y = ry0 + yy, q = y * W + x; m[q] = 1; own[q] = i;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      g.clearRect(rx0, ry0, rw, rh);
+      boxes.push([x0, y0, x1, y1]);
+      if (p.mat && p.mat.light && x1 >= 0) lights.push({ x: (x0 + x1 + 1) / 2, y: (y0 + y1 + 1) / 2, rgb: p.mat.light, pulse: !!p.mat.pulse, size: Math.max(x1 - x0, y1 - y0) + 1 });
+    }
+    const out = document.createElement('canvas'); out.width = W; out.height = H;
+    const og = out.getContext('2d'), img = og.createImageData(W, H), od = img.data;
+    const hexCache = {};
+    const put = (q, hex) => { let v = hexCache[hex]; if (v === undefined) v = hexCache[hex] = parseInt(hex.slice(1), 16); od[q * 4] = v >> 16 & 255; od[q * 4 + 1] = v >> 8 & 255; od[q * 4 + 2] = v & 255; od[q * 4 + 3] = 255; };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const q = y * W + x, i = own[q];
+      if (i < 0) {
+        // selective outline: a dark tone of the neighbour's own ramp on lit sides, ink elsewhere
+        let nb = -1, lit = false;
+        if (x + 1 < W && own[q + 1] >= 0) { nb = own[q + 1]; lit = true; } else if (y + 1 < H && own[q + W] >= 0) { nb = own[q + W]; lit = true; } else if (x > 0 && own[q - 1] >= 0) nb = own[q - 1]; else if (y > 0 && own[q - W] >= 0) nb = own[q - W];
+        if (nb >= 0) { const r = parts[nb].mat; put(q, lit && !r.emit ? r[3] : INK); }
+        continue;
+      }
+      const mat = parts[i].mat;
+      if (mat.emit) { put(q, mat.emit); continue; }
+      const m = masks[i], bx = boxes[i], mn = Math.min(bx[2] - bx[0] + 1, bx[3] - bx[1] + 1);
+      const inside = (xx, yy) => xx >= 0 && yy >= 0 && xx < W && yy < H && m[yy * W + xx] === 1;
+      const hd = Math.max(1, Math.round(mn * 0.14)), sd = Math.max(1, Math.round(mn * 0.3));
+      let t = 1;
+      if (!inside(x - hd, y - hd)) t = 0;
+      if (!inside(x + sd, y + sd)) t = 2; else if (!inside(x + sd + 1, y + sd + 1) && ((x + y) & 1)) t = 2;
+      if (t === 2 && !inside(x + 1, y + 1)) t = 3;
+      if (t === 0 && mn < 3) t = 1;
+      const above = y > 0 ? own[q - W] : -1;
+      if (above > i && !parts[above].mat.emit && parts[above].z >= parts[i].z) t = Math.min(3, t + 1);
+      if (t < 3) { const r = x + 1 < W ? own[q + 1] : -1, dn = y + 1 < H ? own[q + W] : -1; if ((r >= 0 && r < i && parts[r].z < parts[i].z) || (dn >= 0 && dn < i && parts[dn].z < parts[i].z)) t = Math.max(t, 2); }
+      put(q, mat[t]);
+    }
+    og.putImageData(img, 0, 0);
+    const ms = now() - t0; stats.bakes++; stats.ms += ms;
+    return { c: out, ox, oy, lights };
+  }
+  // White-flash copy of a frame (hit reaction).
+  function flash(f) {
+    const c = document.createElement('canvas'); c.width = f.c.width; c.height = f.c.height;
+    const g = c.getContext('2d'); g.drawImage(f.c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = '#FFF6EA'; g.fillRect(0, 0, c.width, c.height);
+    return { c, ox: f.ox, oy: f.oy, lights: f.lights };
+  }
+
+  // ---------------- caches ----------------
+  const MAX_SETS = 48;
+  const setCache = new Map();
+  const cacheGet = k => { const v = setCache.get(k); if (v) { setCache.delete(k); setCache.set(k, v); } return v; };
+  const cachePut = (k, v) => { setCache.set(k, v); while (setCache.size > MAX_SETS) setCache.delete(setCache.keys().next().value); return v; };
+  const hashOf = spec => JSON.stringify(spec);
+
+  function framePose(rs, f) {
+    const base = { up: 0, rotF: rs.idleRot || 0, rotB: 0, lean: 0, dx: 0 };
+    if (f === 'idle1') base.up = 1 / (rs.S || 1);
+    if (f === 'wind' || f === 'strike') Object.assign(base, (ANIMS[rs.anim] || ANIMS.slash)[f]);
+    if (f === 'down') Object.assign(base, RIG.DOWN_POSE);
+    return base;
+  }
+  // Bake the named frames of a resolved character. Frames: idle0, idle1, wind, strike, down (+ hit from idle0).
+  function bakeSet(rs, names) {
+    const t0 = now(), set = {};
+    for (const f of names || ['idle0', 'idle1', 'wind', 'strike', 'down']) {
+      const pose = framePose(rs, f);
+      set[f] = bake(assemble(rs, pose), pose, { S: rs.S || 1, bw: rs.bw || 1 });
+    }
+    if (set.idle0) set.hit = flash(set.idle0);
+    set.ms = now() - t0;
+    return set;
+  }
+  // charFrames(spec) -> { idle0, idle1, wind, strike, hit, down }; cached by spec hash.
+  function charFrames(spec) {
+    const k = 'c' + hashOf(spec), hit = cacheGet(k); if (hit) return hit;
+    const rs = resolve(spec); if (!rs) return null;
+    const set = bakeSet(rs);
+    stats.last[spec.comp || spec.cls || '?'] = Math.round(set.ms * 10) / 10;
+    return cachePut(k, set);
+  }
+
+  // ---------------- specs from game state ----------------
+  function heroSpec() {
+    const st = typeof S !== 'undefined' && S ? S : null;
+    const party = st && st.party || {}, cls = CLASSES[party.cls] ? party.cls : 'warden';
+    const slotOf = id => {
+      const it = st && st.equip && st.equip[id] != null && typeof itemById === 'function' ? itemById(st.equip[id]) : null;
+      if (!it) return null;
+      const u = it.u && typeof UNIQ !== 'undefined' ? UNIQ[it.u] : null;
+      const o = { t: Math.max(1, Math.min(5, it.t | 0 || 1)), r: u ? 3 : (RAR_IDX[it.r] || 0) };
+      if (u && u.col) o.glow = u.col;
+      return o;
+    };
+    const gear = { weapon: slotOf('weapon') || { t: 1, r: 0 }, off: { t: 1, r: 0 }, body: { t: 1, r: 0 } };
+    const h = slotOf('helm'); if (h) gear.head = h;
+    const c = slotOf('charm'); if (c) gear.charm = c;
+    const spec = { cls, gear };
+    if (party.skin != null) spec.skin = party.skin;
+    if (party.hair != null) spec.hair = party.hair;
+    return spec;
+  }
+  // Creation screen: the class in its base look (tier 1 Common weapon, off-hand, head and body).
+  function classPreviewSpec(cls, opt) {
+    const T1 = () => ({ t: 1, r: 0 });
+    const spec = { cls: CLASSES[cls] ? cls : 'warden', gear: { weapon: T1(), off: T1(), head: T1(), body: T1() } };
+    if (opt && opt.skin != null) spec.skin = opt.skin;
+    if (opt && opt.hair != null) spec.hair = opt.hair;
+    return spec;
+  }
+  function companionSpec(key, opt) {
+    const spec = { comp: COMPANIONS[key] ? key : 'tobin' };
+    if (opt && opt.t) spec.t = opt.t;
+    if (opt && opt.r != null) spec.r = opt.r;
+    return spec;
+  }
+
+  // ---------------- portraits and previews ----------------
+  const portraitCache = new Map();
+  function portraitURL(key) {
+    const spec = key && typeof key === 'object' ? key : key === 'hero' ? heroSpec() : companionSpec(key);
+    const k = hashOf(spec); if (portraitCache.has(k)) return portraitCache.get(k);
+    const set = charFrames(spec); if (!set) return '';
+    const rs = resolve(spec), f = set.idle0, sc = rs.S || 1, bw = rs.bw || 1, P = RIG.PORTRAIT;
+    const x0 = Math.round(f.ox + P.x0 * sc * bw), y0 = Math.round(f.oy + P.y0 * sc), w = Math.round((P.x1 - P.x0) * sc * bw), h = Math.round((P.y1 - P.y0) * sc);
+    const c = document.createElement('canvas'); c.width = w * 2; c.height = h * 2;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(f.c, x0, y0, w, h, 0, 0, w * 2, h * 2);
+    let url = ''; try { url = c.toDataURL(); } catch (e) { url = ''; }
+    if (portraitCache.size > 64) portraitCache.delete(portraitCache.keys().next().value);
+    portraitCache.set(k, url);
+    return url;
+  }
+  const reducedMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  // Additive glow for a frame's lights, already mapped to the target context (x, y, size in its px).
+  function charLightPass(g, lights, T, zoom) {
+    const red = reducedMotion(), z = zoom || 1;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const flick = red ? 0.9 : 0.8 + 0.2 * Math.sin(T * 13) * Math.sin(T * 7.3);
+    for (const l of lights) {
+      const pulse = l.pulse && !red ? 0.7 + 0.5 * Math.sin(T * 4) : 1;
+      const r = Math.min(Math.max(8, l.size * 3), 16 * z) * flick * pulse;
+      for (const [rr, a, rgb] of [[r, 0.26 * pulse, l.rgb], [r * 0.3, 0.12 * pulse, '255,250,230']]) {
+        const gr = g.createRadialGradient(l.x, l.y, 0.5, l.x, l.y, rr);
+        gr.addColorStop(0, `rgba(${rgb},${a})`); gr.addColorStop(0.35, `rgba(${rgb},${a * 0.35})`); gr.addColorStop(1, `rgba(${rgb},0)`);
+        g.fillStyle = gr; g.fillRect(l.x - rr, l.y - rr, rr * 2, rr * 2);
+      }
+    }
+    g.restore();
+  }
+  // Draw a character centred with feet near the bottom of the canvas (canvas px), plus its lights.
+  function drawCharPreview(canvas, spec, zoom, frame, T) {
+    const set = charFrames(spec); if (!set) return null;
+    const f = set[frame || 'idle0'] || set.idle0, z = zoom || 2, g = canvas.getContext('2d');
+    g.clearRect(0, 0, canvas.width, canvas.height);
+    const x = Math.round(canvas.width / 2 - f.ox * z), y = Math.round(canvas.height - 4 * z - f.oy * z);
+    g.imageSmoothingEnabled = false; g.drawImage(f.c, x, y, f.c.width * z, f.c.height * z);
+    charLightPass(g, f.lights.map(l => ({ x: x + l.x * z, y: y + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z })), T || 0, z);
+    return f;
+  }
+
+  // ---------------- enemies and gather nodes (13-art-enemies.js, same part format) ----------------
+  // Rig: { parts, mats?, piv?, parent?, ground?, poses: { idle0, idle1, wind, strike }, S?, flip?, variants?: { name: partial rig } }
+  // or a function (variant) -> rig. variant: a variants key, or { hue, S, elder, tier, gen, ... } passed to function rigs.
+  const enemySrc = () =>
+    typeof ENEMY_RIGS !== 'undefined' ? ENEMY_RIGS : typeof ENEMY_ART !== 'undefined' ? ENEMY_ART : typeof ENEMIES_ART !== 'undefined' ? ENEMIES_ART : null;
+  function enemyFrames(key, variant) {
+    const src = enemySrc(); if (!src || !src[key]) return null;
+    const ck = 'e' + key + '|' + hashOf(variant == null ? null : variant), hit = cacheGet(ck); if (hit) return hit;
+    const t0 = now();
+    let rig = typeof src[key] === 'function' ? src[key](variant) : src[key];
+    if (!rig || !rig.parts) return null;
+    const vk = typeof variant === 'string' ? variant : variant && variant.elder ? 'elder' : null;
+    if (vk && rig.variants && rig.variants[vk]) { const v = rig.variants[vk]; rig = Object.assign({}, rig, v, { parts: rig.parts.concat(v.parts || []), mats: Object.assign({}, rig.mats, v.mats), S: (rig.S || 1) * (v.S || 1) }); }
+    const hue = variant && typeof variant === 'object' && variant.hue ? variant.hue : 0;
+    const scale = (rig.S || 1) * (variant && typeof variant === 'object' && variant.S ? variant.S : 1);
+    const mcache = {};
+    const matOf = k => {
+      if (typeof k !== 'string') return Array.isArray(k) && hue ? k.map(c => hueShift(c, hue)) : k;
+      if (mcache[k]) return mcache[k];
+      let m = rig.mats && rig.mats[k] != null ? rig.mats[k] : FIXED[k] || (k[0] === '#' ? k : null);
+      if (typeof m === 'string') m = rampOf(hue ? hueShift(m, hue) : m, rig.metal && rig.metal.includes && rig.metal.includes(k));
+      else if (Array.isArray(m) && hue) m = m.map(c => hueShift(c, hue));
+      else if (m && m.emit && hue && rig.mats && rig.mats[k]) m = Object.assign({}, m, { emit: hueShift(m.emit, hue) });
+      return (mcache[k] = m || FIXED.void);
+    };
+    const set = {};
+    for (const f of ['idle0', 'idle1', 'wind', 'strike']) {
+      const pose = Object.assign({}, (rig.poses && (rig.poses[f] || rig.poses.idle0)) || {});
+      const parts = sortParts(rig.parts.filter(p => !p[4] || (variant && variant.rar >= p[4])).map(p => ({ z: p[0], bone: p[1], mat: matOf(p[2]), shape: p[3] })));
+      set[f] = bake(parts, pose, { S: scale, flip: !!rig.flip, rig: { piv: rig.piv || PIV, parent: rig.parent, ground: rig.ground } });
+    }
+    set.hit = flash(set.idle0);
+    set.ms = now() - t0;
+    stats.last['enemy:' + key] = Math.round(set.ms * 10) / 10;
+    return cachePut(ck, set);
+  }
+
+  const bakeStats = () => ({ bakes: stats.bakes, totalMs: Math.round(stats.ms), perSet: Object.assign({}, stats.last), cached: setCache.size });
+
+  return { bake, bakeSet, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
+})();
+const { charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview, charLightPass, enemyFrames, bakeStats } = ART;
+const bake = ART.bake, bakeSet = ART.bakeSet;
+
 // ---- src/js/62-stage.js ----
 // 62-stage: the stage canvas. Draws the scene, mobs, hero and effects, and turns core
 // events (float, burst, shake, lunge, ...) into short-lived visual state. Browser-only.
@@ -2406,6 +3330,565 @@ $('stage').addEventListener('pointerdown', e => {
   playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
 });
 
+// ---- src/js/63-scenery.js ----
+// 63-scenery: Hi-bit parallax backgrounds (1 art px per CSS px) plus smooth device-resolution
+// atmosphere (fog, ambient particles, lamp glows, moon halo, vignette). Browser-only.
+//
+//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid
+//     scene = { layers: [{ c, f, fg }], fog, amb, light, W, H, GY, M, theme, hue }
+//     Layers are W + 2*M wide (M = 24 px parallax margin), H tall, cached per (theme, W, H, hue).
+//     GY is the ground line (feet). The band from GY-72 to GY, between 12% and 90% of W, is kept clear.
+//   drawScene(ctx, scene, camX, which = 'back')   which: 'back' (sky..ground) | 'fg' (foreground) | 'all'
+//     ctx must be in CSS px units (e.g. setTransform(DPR,...)) with imageSmoothingEnabled = false.
+//     camX in CSS px, keep within +-16.
+//   drawAtmosphere(ctx, scene, T, W, H, camX = 0)   T in seconds; draws on top of everything.
+//
+// Per frame this is: 4-5 drawImage calls for the layers, plus pre-rendered glow sprites for
+// fog, particles and lamps, plus one stretched overlay for the vignette. No gradients are made
+// per frame and nothing allocates.
+//
+// sceneFor also still answers today's stage, which calls sceneFor(sc) with an object; that
+// branch goes away when wave 2 (A3) replaces the old scene builder in 62-stage.js.
+let drawScene, drawAtmosphere;
+function sceneFor() { return null; } // replaced below
+{
+  const M = 24;
+  const REDUCED = typeof reduced !== 'undefined' ? reduced : !!(typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const mkCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); return c; };
+  const rand = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+
+  // ---------- colour ----------
+  const hx = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  function toHsl([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0;
+    if (mx !== mn) { const d = mx - mn; s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+    return [h, s, l];
+  }
+  function toRgb(h, s, l) {
+    h = ((h % 360) + 360) % 360 / 360; s = Math.max(0, Math.min(1, s)); l = Math.max(0, Math.min(1, l));
+    if (!s) { const v = Math.round(l * 255); return [v, v, v]; }
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+    return [Math.round(f(h + 1 / 3) * 255), Math.round(f(h) * 255), Math.round(f(h - 1 / 3) * 255)];
+  }
+  const toward = (h, target, amt) => { const d = ((target - h + 540) % 360) - 180; return h + Math.sign(d) * Math.min(Math.abs(d), amt); };
+  const rot = (rgb, deg) => { if (!deg) return rgb; const [h, s, l] = toHsl(rgb); return toRgb(h + deg, s, l); };
+  const blend = (a, b, t) => [0, 1, 2].map(i => Math.round(a[i] * (1 - t) + b[i] * t));
+  const css = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+  // 4-tone background ramp [highlight, base, shadow, deep], hue-shifted like the character ramps
+  // (toward gold when lit, toward plum in shadow), with deltas scaled for dark scenery.
+  function ramp(rgb) {
+    const [h, s, l] = toHsl(rgb);
+    return [
+      toRgb(toward(h, 45, 10), s * 0.95, Math.min(0.92, l + Math.max(0.05, Math.min(0.16, l * 0.75)))),
+      rgb,
+      toRgb(toward(h, 265, 12), s, l * 0.7),
+      toRgb(toward(h, 265, 22), s, l * 0.48)
+    ];
+  }
+
+  // ---------- material buffers ----------
+  // Each layer is painted as a buffer of material ids, then shaded in one pass:
+  //  full: lit rim top-left, base, shadow on the right with a checker dither, deep edge
+  //  top:  lit top edge, then darker with depth (ground, ridges)
+  //  flat: one colour (stars, emissives, specks)
+  function Layer(w, h) { this.w = w; this.h = h; this.m = new Uint8Array(w * h); }
+  Layer.prototype.px = function (x, y, id) { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < this.w && y < this.h) this.m[y * this.w + x] = id; };
+  Layer.prototype.rect = function (x, y, w, h, id) {
+    const x0 = Math.max(0, Math.round(x)), y0 = Math.max(0, Math.round(y)), x1 = Math.min(this.w, Math.round(x + w)), y1 = Math.min(this.h, Math.round(y + h));
+    for (let yy = y0; yy < y1; yy++) this.m.fill(id, yy * this.w + x0, yy * this.w + Math.max(x0, x1));
+  };
+  // filled ellipse; half: 'top' keeps the upper half only
+  Layer.prototype.oval = function (cx, cy, rx, ry, id, half) {
+    for (let dy = -Math.ceil(ry); dy <= (half === 'top' ? 0 : Math.ceil(ry)); dy++) {
+      const k = 1 - (dy / (ry + 0.5)) ** 2; if (k <= 0) continue;
+      const w = Math.round(rx * Math.sqrt(k)); this.rect(cx - w, cy + dy, 2 * w + 1, 1, id);
+    }
+  };
+  // triangle pointing up (or down when down = true), apex at (cx, top)
+  Layer.prototype.tri = function (cx, top, h, hw, id, down) {
+    for (let i = 0; i < h; i++) { const w = Math.round(hw * (down ? 1 - i / h : (i + 1) / h)); this.rect(cx - w, top + i, 2 * w + 1, 1, id); }
+  };
+  Layer.prototype.line = function (x0, y0, x1, y1, wd, id) {
+    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
+    for (let i = 0; i <= n; i++) { const t = i / n, w = Math.max(1, Math.round(wd)); this.rect(x0 + (x1 - x0) * t - w / 2, y0 + (y1 - y0) * t - w / 2, w, w, id); }
+  };
+  // column fill from y(x) to bottom (ridges, ground)
+  Layer.prototype.fillFrom = function (yf, bottom, id) { for (let x = 0; x < this.w; x++) { const y = Math.round(yf(x)); this.rect(x, y, 1, bottom - y, id); } };
+
+  function shade(L, mats, img) {
+    const { w, h, m } = L, d = img.data;
+    const same = (x, y, id) => x >= 0 && x < w && y >= 0 && y < h && m[y * w + x] === id;
+    for (let x = 0; x < w; x++) {
+      let run = 0, runId = 0;
+      for (let y = 0; y < h; y++) {
+        const i = y * w + x, id = m[i];
+        if (!id) continue;
+        // a run restarts below empty space or another shaded material; flat specks don't break it
+        const up = y ? m[i - w] : 0, mt = mats[id]; let t = 1;
+        if (mt.mode !== 'flat' && (!up || (up !== id && (mats[up].mode !== 'flat' || runId !== id)))) { run = y; runId = id; }
+        if (mt.mode === 'top') {
+          const dt = y - run, k = mt.k;
+          t = dt === 0 ? 0 : dt < k ? 1 : dt < k + 3 ? (((x + y) & 1) ? 2 : 1) : dt < 2.4 * k ? 2 : dt < 2.4 * k + 3 ? (((x + y) & 1) ? 3 : 2) : 3;
+        } else if (mt.mode === 'full') {
+          if (y === run || !same(x - 1, y, id)) t = 0;
+          else if (!same(x + 1, y, id)) t = 3;
+          else if (!same(x + 2, y, id)) t = 2;
+          else if (!same(x + 3, y, id) && ((x + y) & 1)) t = 2;
+          else if (!same(x, y + 1, id) && mt.under) t = 2;
+        }
+        const c = mt.r[t], o = i * 4;
+        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+      }
+    }
+  }
+
+  // ---------- themes ----------
+  // Colours keep today's identity (THEMES in 20-data.js); extras add Hi-bit detail.
+  const TH = {
+    forest: { sky: ['#101C18', '#35533F'], far: '#223A2E', mid: '#1F3A2A', ground: '#101A14', top: '#3E6B3A', stars: 1,
+      amb: ['firefly', '#D8F07A', 16], fog: ['#8FC7A0', 0.08] },
+    cave: { sky: ['#0A0910', '#211C34'], far: '#171327', mid: '#1C1830', ground: '#0D0A15', top: '#3A3052',
+      amb: ['drip', '#7FB2FF', 7], fog: ['#6E7FC0', 0.05], glow: '#7FB2FF' },
+    bone: { sky: ['#12090C', '#4A2226'], far: '#2A1619', mid: '#2A181B', ground: '#150B0D', top: '#5A3A2E', moon: '#E0524F', bone: '#B8AE9C',
+      amb: ['ash', '#9A8F8F', 26], fog: ['#8A4048', 0.07] },
+    barrow: { sky: ['#0A151C', '#224452'], far: '#16303C', mid: '#1A3542', ground: '#0B181E', top: '#2F5A55', stars: 1, stone: '#3E5A64', glow: '#9BE3F0',
+      amb: ['mote', '#9BE3F0', 18], fog: ['#9BE3F0', 0.16] },
+    fungal: { sky: ['#140B1C', '#4A2A54'], far: '#2A1834', mid: '#2C1A38', ground: '#140A1A', top: '#6A3A6E', cap: '#6A3A7E', glow: '#FF9ED8',
+      amb: ['spore', '#FF9ED8', 24], fog: ['#B070C0', 0.07] },
+    quarry: { sky: ['#15130F', '#4B4337'], far: '#322D27', mid: '#4A4236', ground: '#191612', top: '#6E6250', moon: '#EFE6D6',
+      amb: ['dust', '#CDBFA0', 22], fog: ['#CDBFA0', 0.05] },
+    marsh: { sky: ['#08110F', '#274240'], far: '#182C29', mid: '#1C3330', ground: '#0C1615', top: '#35524C', moon: '#CFE8E0', water: '#1E3A3A',
+      amb: ['wisp', '#9FD8C9', 10], fog: ['#9FD8C9', 0.2] },
+    mine: { sky: ['#0A090D', '#1E1A26'], far: '#17141D', mid: '#4A3524', ground: '#120F17', top: '#3A3442', glow: '#FFB347',
+      amb: ['dust', '#A9B1BD', 16], fog: ['#8A7A6A', 0.05] },
+    woods: { sky: ['#13241B', '#46714F'], far: '#274532', mid: '#2A3A26', ground: '#122016', top: '#4E7F42', leaf: '#2E5A34',
+      amb: ['leaf', '#5FAE4E', 12], fog: ['#CFE8B0', 0.06], shafts: 1 },
+    raid: { sky: ['#0E0407', '#5A1A20'], far: '#2A0C12', mid: '#24101A', ground: '#10060A', top: '#5A1E22', moon: '#FF9E3D', glow: '#FF7A3D', stars: 1,
+      amb: ['ember', '#FF9E3D', 30], fog: ['#FF6A3D', 0.07] }
+  };
+
+  const cache = new Map();
+
+  function build(theme, W, H, hue) {
+    const th = TH[theme] || TH.forest;
+    const LW = W + 2 * M, GY = Math.round(H * 0.8);
+    const r = rand(theme.length * 7919 + W * 13 + H * 31 + 7);
+    const C = hex => rot(hx(hex), hue);
+    const mats = [null];
+    const mat = (rgb, mode, k) => { mats.push({ r: ramp(rgb), mode: mode || 'full', k: k || 4 }); return mats.length - 1; };
+    const flat = rgb => { mats.push({ r: [rgb, rgb, rgb, rgb], mode: 'flat' }); return mats.length - 1; };
+    const skyTop = C(th.sky[0]), skyBot = C(th.sky[1]);
+    const haze = (hex, t) => blend(C(hex), skyBot, t);        // atmospheric perspective
+    const X = fx => M + fx * W;                               // screen fraction -> layer x
+    const band = x => x > X(0.12) && x < X(0.9);              // the characters' band
+    const lights = [], drips = [];
+    const lamp = (x, y, hex, rad, a, f, pulse) => lights.push({ x, y, rgb: C(hex).join(','), r: rad, a, f, pulse: pulse || 0, ph: r() * 6 });
+
+    const sky = new Layer(LW, H), far = new Layer(LW, H), mid = new Layer(LW, H), gnd = new Layer(LW, H), fg = new Layer(LW, H);
+
+    // ---- sky: 6-step ramp with 4x4 ordered dithering ----
+    const steps = [0, 1, 2, 3, 4, 5].map(i => blend(skyTop, skyBot, i / 5));
+    const skyImg = new ImageData(LW, H), sd = skyImg.data;
+    const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (let y = 0; y < H; y++) {
+      const fr = Math.min(1, y / GY) * 5, i0 = Math.floor(fr), fx = fr - i0;
+      for (let x = 0; x < LW; x++) {
+        const c = steps[Math.min(5, fx > (bayer[(y & 3) * 4 + (x & 3)] + 0.5) / 16 ? i0 + 1 : i0)], o = (y * LW + x) * 4;
+        sd[o] = c[0]; sd[o + 1] = c[1]; sd[o + 2] = c[2]; sd[o + 3] = 255;
+      }
+    }
+    if (th.stars) {
+      const s1 = flat(blend(C('#FFF4DC'), skyTop, 0.1)), s2 = flat(blend(C('#8FA8B0'), skyTop, 0.35));
+      for (let i = 0; i < LW / 7; i++) sky.px(r() * LW, r() * GY * 0.5, r() < 0.3 ? s1 : s2);
+    }
+    let moon = null;
+    if (th.moon) {
+      const big = theme === 'bone' || theme === 'raid';
+      const mx = X(theme === 'raid' ? 0.5 : big ? 0.74 : 0.8), my = Math.round(H * (big ? 0.2 : 0.16)), mr = big ? 15 : 10;
+      const mc = C(th.moon), id = mat(mc);
+      mats[id].r[0] = blend(mc, [255, 250, 235], 0.35);
+      sky.oval(mx, my, mr, mr, id);
+      const cr = flat(blend(mc, ramp(mc)[2], 0.45));
+      for (const [cx, cy, cr2] of [[-0.25, 0.1, 2.2], [0.35, 0.35, 1.4], [0.2, -0.4, 1]]) sky.oval(mx + cx * mr, my + cy * mr, cr2 * mr / 10, cr2 * mr / 12, cr);
+      moon = { x: mx, y: my, r: mr, rgb: mc.join(',') };
+    }
+
+    // ---- far ridge (f 0.2) ----
+    const farC = haze(th.far, 0.25), farC2 = haze(th.far, 0.05);
+    const s = [r() * 10, r() * 10, r() * 10];
+    const ridgeY = (x, base, amp) => base + Math.sin(x * 0.021 + s[0]) * amp + Math.sin(x * 0.057 + s[1]) * amp * 0.45 + Math.sin(x * 0.009 + s[2]) * amp * 1.2;
+    const ceilY = x => H * 0.1 + Math.sin(x * 0.05 + s[1]) * H * 0.04 + Math.sin(x * 0.13 + s[0]) * H * 0.02;
+    const back = mat(farC, 'top', 6), front = mat(farC2, 'top', 5);
+
+    // ---- per-theme features ----
+    const pine = (L, x, base, h, id, trunk) => {
+      L.rect(x - 1, base - h * 0.14, 3, h * 0.14 + 1, trunk);
+      const tiers = 4;
+      for (let t = 0; t < tiers; t++) { const top = base - h + t * h * 0.2, th2 = h * 0.34, hw = h * (0.12 + t * 0.07); L.tri(x, top, th2, hw, id); }
+    };
+    const deadTree = (L, x, base, len, wd, id, rr) => {
+      const br = (x0, y0, a, l, w, d) => {
+        if (d > 4 || w < 0.8) return;
+        const x1 = x0 + Math.cos(a) * l, y1 = y0 + Math.sin(a) * l; L.line(x0, y0, x1, y1, w, id);
+        br(x1, y1, a - 0.45 - rr() * 0.35, l * 0.68, w * 0.62, d + 1); if (rr() < 0.85) br(x1, y1, a + 0.4 + rr() * 0.35, l * 0.6, w * 0.6, d + 1);
+      };
+      br(x, base, -Math.PI / 2 - 0.08 + rr() * 0.16, len, wd, 0);
+    };
+    const gT = th.top, gG = th.ground;
+
+    switch (theme) {
+      case 'forest': {
+        far.fillFrom(x => ridgeY(x, GY - H * 0.34, 8), GY + 2, back);
+        for (let x = r() * 6; x < LW; x += 5 + r() * 6) { const b = ridgeY(x, GY - H * 0.2, 5), h = 12 + r() * 18; far.tri(x, b - h, h, h * 0.28, front); far.rect(x - 2, b - 1, 5, GY - b + 3, front); }
+        const pId = mat(C(th.mid)), tr = mat(C('#2A2018'));
+        const xs = [0.02, 0.1, 0.3, 0.52, 0.7, 0.86, 0.97];
+        for (const fx of xs) { const x = X(fx) + (r() - 0.5) * 16, h = band(x) ? H * (0.42 + r() * 0.12) : H * (0.62 + r() * 0.12); pine(mid, x, GY + 1, h, pId, tr); }
+        break;
+      }
+      case 'cave': {
+        for (let x = 0; x < LW; x++) { const cy = Math.round(ceilY(x)); far.rect(x, 0, 1, cy, back); }
+        far.fillFrom(x => ridgeY(x, GY - H * 0.22, 6), GY + 2, front);
+        for (let x = r() * 20; x < LW; x += 14 + r() * 22) { const b = ridgeY(x, GY - H * 0.22, 6), h = 8 + r() * 16; far.tri(x, b - h, h, 3 + r() * 3, front); }
+        const rk = mat(C(th.mid)), cry = flat(C(th.glow)), cryD = flat(ramp(C(th.glow))[2]);
+        for (let x = r() * 10; x < LW; x += 10 + r() * 16) {
+          const len = band(x) ? H * (0.1 + r() * 0.2) : H * (0.18 + r() * 0.3), hw = 3 + r() * 5;
+          mid.tri(x, 0, len, hw, rk, true);
+          if (r() < 0.55) drips.push({ x, y: len - 1, f: 0.5 });
+        }
+        mid.rect(0, 0, LW, 4, rk);
+        for (let i = 0; i < 6; i++) { const x = X([0.02, 0.07, 0.92, 0.97, 0.45, 0.6][i]) + r() * 6, h = i < 4 ? 14 + r() * 16 : 6 + r() * 5; mid.tri(x, GY - h, h + 1, 3 + h * 0.18, rk); }
+        const crystal = (L, x, base, n) => { for (let k = 0; k < n; k++) { const cx = x + k * 3 - n, ch = 4 + r() * 7; L.tri(cx, base - ch, ch, 1.2, k % 2 ? cry : cryD); } if (L === mid || L === fg) lamp(x, base - 5, th.glow, 26, 0.35, L === fg ? 1.35 : 0.5, 1); };
+        crystal(mid, X(0.05), GY, 3); crystal(mid, X(0.95), GY, 4);
+        break;
+      }
+      case 'bone': {
+        far.fillFrom(x => ridgeY(x, GY - H * 0.2, 7), GY + 2, back);
+        for (let x = r() * 30; x < LW; x += 24 + r() * 30) { const b = ridgeY(x, GY - H * 0.2, 7); far.rect(x, b - 7, 1, 7, back); far.rect(x - 2, b - 5, 5, 1, back); }
+        far.fillFrom(x => ridgeY(x + 400, GY - H * 0.1, 4), GY + 2, front);
+        const wood = mat(C(th.mid)), stone = mat(C('#4A3A3C')), boneC = flat(blend(C(th.bone), C(gG), 0.45)), crossDark = flat(ramp(C('#4A3A3C'))[3]);
+        deadTree(mid, X(0.06), GY + 1, H * 0.2, 6, wood, r);
+        deadTree(mid, X(0.93), GY + 1, H * 0.22, 7, wood, r);
+        deadTree(mid, X(0.46), GY + 1, H * 0.1, 3, wood, r);
+        for (const fx of [0.18, 0.31, 0.6, 0.74, 0.84]) {
+          const x = X(fx) + (r() - 0.5) * 10, h = 10 + r() * 7, w = 7 + r() * 3;
+          mid.rect(x, GY - h + 3, w, h, stone); mid.oval(x + w / 2 - 0.5, GY - h + 3, w / 2, 3, stone, 'top');
+          if (r() < 0.5) { mid.rect(x + w / 2 - 1, GY - h + 3, 1, 5, crossDark); mid.rect(x + w / 2 - 2, GY - h + 4, 3, 1, crossDark); }
+        }
+        for (let i = 0; i < 18; i++) { const x = X(r()), y = GY + 3 + r() * (H - GY - 6); gnd.rect(x, y, 2 + r() * 3, 1, boneC); }
+        break;
+      }
+      case 'barrow': {
+        far.fillFrom(x => ridgeY(x, GY - H * 0.3, 8), GY + 2, back);
+        far.fillFrom(x => ridgeY(x + 300, GY - H * 0.16, 6), GY + 2, front);
+        const mound = mat(C(th.mid)), stone = mat(C(th.stone)), dark = flat(ramp(C(th.mid))[3]), rune = flat(C(th.glow));
+        const mounds = [[0.06, 40, 24], [0.34, 36, 14], [0.62, 44, 16], [0.94, 42, 26]];
+        for (const [fx, rx, ry] of mounds) {
+          const x = X(fx); mid.oval(x, GY + 2, rx, ry, mound, 'top');
+          if (ry > 20) { mid.rect(x - 4, GY - 9, 9, 11, dark); mid.rect(x - 6, GY - 11, 13, 2, stone); mid.rect(x - 6, GY - 9, 2, 11, stone); mid.rect(x + 5, GY - 9, 2, 11, stone); }
+        }
+        const stones = [[0.17, 7, 26], [0.23, 5, 17], [0.79, 8, 28], [0.5, 4, 12]];
+        for (const [fx, sw, sh] of stones) {
+          const x = X(fx); mid.rect(x - sw / 2, GY - sh + 2, sw, sh, stone); mid.oval(x - 0.5, GY - sh + 2, sw / 2, 2, stone, 'top');
+          if (sh > 20) { mid.px(x - 1, GY - sh * 0.6, rune); mid.px(x, GY - sh * 0.6 + 1, rune); mid.px(x - 1, GY - sh * 0.6 + 3, rune); lamp(x, GY - sh * 0.6, th.glow, 14, 0.25, 0.5, 1); }
+        }
+        break;
+      }
+      case 'fungal': {
+        far.fillFrom(x => ridgeY(x, GY - H * 0.14, 5), GY + 2, back);
+        for (let x = r() * 20; x < LW; x += 18 + r() * 26) { const b = GY - H * 0.1, h = 14 + r() * 26, cw = 5 + r() * 8; far.rect(x - 1, b - h, 3, h + 4, back); far.oval(x, b - h, cw, cw * 0.55, back, 'top'); }
+        const stem = mat(C('#8A6E88')), cap = mat(C(th.cap)), gill = flat(ramp(C(th.cap))[3]), spot = flat(C(th.glow)), spotD = flat(blend(C(th.glow), C(th.cap), 0.5));
+        mats[stem].under = 1;
+        const shroom = (L, x, h, cw, f) => {
+          const sw = Math.max(3, Math.round(cw * 0.34)); L.rect(x - sw / 2, GY - h, sw, h + 1, stem);
+          L.rect(x - cw * 0.22, GY - 2, cw * 0.44, 3, stem);
+          L.oval(x, GY - h, cw, cw * 0.62, cap, 'top'); L.rect(x - cw + 2, GY - h, 2 * cw - 3, 1, gill);
+          const n = Math.round(cw / 3);
+          for (let k = 0; k < n; k++) { const sx = x + (r() - 0.5) * cw * 1.4, sy = GY - h - 1 - r() * cw * 0.4; L.px(sx, sy, k % 3 ? spotD : spot); L.px(sx + 1, sy, spotD); }
+          lamp(x, GY - h - cw * 0.25, th.glow, cw * 3.2, 0.2, f, 1);
+        };
+        shroom(mid, X(0.04), H * 0.42, 30, 0.5); shroom(mid, X(0.95), H * 0.5, 34, 0.5);
+        shroom(mid, X(0.3), H * 0.16, 8, 0.5); shroom(mid, X(0.62), H * 0.12, 6, 0.5); shroom(mid, X(0.72), H * 0.2, 9, 0.5);
+        shroom(fg, X(-0.01), 16, 7, 1.35); shroom(fg, X(0.04), 9, 4, 1.35); shroom(fg, X(1.0), 12, 6, 1.35);
+        break;
+      }
+      case 'quarry': {
+        for (let pass = 0; pass < 2; pass++) {
+          const base = pass ? GY - H * 0.14 : GY - H * 0.34, id = pass ? front : back;
+          far.fillFrom(x => Math.round(ridgeY(x + pass * 200, base, pass ? 5 : 10) / 6) * 6, GY + 2, id);
+        }
+        const st = mat(C(th.mid)), flute = mat(ramp(C(th.mid))[2]), rub = mat(blend(C(th.mid), C(th.ground), 0.3));
+        const pillar = (x, h, w, intact) => {
+          mid.rect(x, GY - h, w, h + 1, st);
+          for (let k = 2; k < w - 1; k += 3) mid.rect(x + k, GY - h + (intact ? 4 : 2), 1, h - 6, flute);
+          mid.rect(x - 2, GY - 3, w + 4, 4, st);
+          if (intact) { mid.rect(x - 2, GY - h - 3, w + 4, 4, st); mid.rect(x - 4, GY - h - 6, w + 8, 3, st); }
+          else for (let k = 0; k < w; k++) mid.rect(x + k, GY - h - Math.round(r() * 5), 1, 6, st);
+        };
+        pillar(X(0.02), H * 0.55, 18, true); pillar(X(0.2), H * 0.2, 14, false); pillar(X(0.58), H * 0.14, 13, false);
+        pillar(X(0.8), H * 0.3, 15, false); pillar(X(0.93), H * 0.6, 18, true);
+        for (const fx of [0.36, 0.69, 0.13]) { const x = X(fx); mid.rect(x, GY - 5, 12, 6, rub); mid.rect(x + 13, GY - 3, 6, 4, rub); }
+        const seam = flat(ramp(C(th.ground))[3]);
+        for (let y = GY + 8; y < H; y += 9 + (y - GY) / 4) { gnd.rect(0, y, LW, 1, seam); }
+        break;
+      }
+      case 'marsh': {
+        far.fillFrom(x => ridgeY(x, GY - H * 0.1, 3), GY + 2, back);
+        for (let x = r() * 12; x < LW; x += 8 + r() * 14) { const h = 10 + r() * 22, b = GY - H * 0.08; far.rect(x, b - h, 1 + (r() < 0.3 ? 1 : 0), h, back); if (r() < 0.6) far.line(x, b - h * 0.6, x + (r() - 0.5) * 12, b - h * 0.85, 1, back); }
+        const reed = mat(C(th.mid)), head = flat(ramp(C('#5A4028'))[1]), stump = mat(C('#2A2A24'));
+        const clump = (x, n, hmax) => { for (let k = 0; k < n; k++) { const rx = x + k * 2 + r() * 2, rh = hmax * (0.4 + r() * 0.6); mid.rect(rx, GY - rh, 1, rh + 1, reed); if (r() < 0.35) mid.rect(rx, GY - rh - 3, 1, 4, head); } };
+        clump(X(0.0), 9, 42); clump(X(0.9), 10, 46); clump(X(0.3), 4, 14); clump(X(0.62), 5, 12);
+        deadTree(mid, X(0.14), GY + 1, H * 0.12, 4, stump, r); deadTree(mid, X(0.78), GY + 1, H * 0.08, 3, stump, r);
+        const water = mat(C(th.water), 'top', 2), glint = flat(blend(C(th.moon), C(th.water), 0.5));
+        for (const [fx, w] of [[0.05, 70], [0.45, 90], [0.82, 60]]) { const y = GY + 14 + r() * 16; gnd.oval(X(fx) + w / 2, y, w / 2, 4, water); for (let k = 0; k < 4; k++) gnd.rect(X(fx) + 8 + r() * (w - 16), y - 1 + r() * 3, 2 + r() * 4, 1, glint); }
+        break;
+      }
+      case 'mine': {
+        for (let x = 0; x < LW; x++) far.rect(x, 0, 1, Math.round(ceilY(x)), back);
+        far.fillFrom(x => ceilY(x) + 2, GY + 2, front);
+        const wall = far, dark = flat(ramp(C(th.far))[3]);
+        wall.oval(X(0.55), GY + 1, 26, 34, dark, 'top');
+        const oreCols = ['#D08A4E', '#A9B1BD', '#7FD6E0'].map(h => flat(blend(C(h), C(th.far), 0.35)));
+        for (let i = 0; i < LW / 9; i++) { const x = r() * LW, y = H * 0.18 + r() * (GY - H * 0.25); wall.px(x, y, oreCols[i % 3]); if (r() < 0.4) wall.px(x + 1, y + 1, oreCols[i % 3]); }
+        const wood = mat(C(th.mid)), iron = flat(C('#3A3542')), glass = flat(C(th.glow));
+        const beamY = Math.round(H * 0.14);
+        for (const fx of [-0.02, 0.38, 0.78]) {
+          const x = X(fx), w = W * 0.34;
+          mid.rect(x, beamY, 5, GY - beamY + 1, wood); mid.rect(x + w, beamY, 5, GY - beamY + 1, wood);
+          mid.rect(x - 3, beamY - 2, w + 11, 6, wood);
+          mid.line(x + 5, beamY + 16, x + 18, beamY + 4, 3, wood); mid.line(x + w, beamY + 16, x + w - 13, beamY + 4, 3, wood);
+          const lx = x + w * 0.5 + 2, ly = beamY + 4 + 16;
+          mid.rect(lx, beamY + 4, 1, 16, iron); mid.rect(lx - 2, ly, 5, 7, iron); mid.rect(lx - 1, ly + 1, 3, 5, glass); mid.rect(lx - 3, ly - 1, 7, 1, iron);
+          lamp(lx + 0.5, ly + 3.5, th.glow, 58, 0.34, 0.5, 2);
+        }
+        const rail = flat(ramp(C('#6E6878'))[2]), sleeper = flat(ramp(C(th.mid))[3]);
+        const ry = GY + Math.round((H - GY) * 0.62);
+        for (let x = 0; x < LW; x += 7) gnd.rect(x, ry - 1, 4, 5, sleeper);
+        gnd.rect(0, ry, LW, 1, rail); gnd.rect(0, ry + 3, LW, 1, rail);
+        break;
+      }
+      case 'woods': {
+        const backT = mat(haze(th.far, 0.5), 'full');
+        for (let x = r() * 10; x < LW; x += 14 + r() * 18) far.rect(x, 0, 2 + r() * 5, GY, r() < 0.5 ? back : backT);
+        far.fillFrom(x => ridgeY(x, GY - H * 0.08, 3), GY + 2, front);
+        for (let x = 0; x < LW; x++) far.rect(x, 0, 1, Math.round(H * 0.08 + Math.sin(x * 0.07 + s[0]) * 5 + Math.sin(x * 0.19) * 3), back);
+        const bark = mat(C(th.mid)), groove = flat(ramp(C(th.mid))[3]), leaves = mat(C(th.leaf));
+        const trunk = (x, w) => {
+          mid.rect(x, 0, w, GY + 1, bark);
+          mid.tri(x + w / 2, GY - 10, 11, w * 0.85, bark);
+          for (let k = 3; k < w - 3; k += 4 + Math.round(r() * 2)) { let y = r() * 20; while (y < GY - 8) { const l = 8 + r() * 26; mid.rect(x + k, y, 1, l, groove); y += l + 4 + r() * 10; } }
+        };
+        trunk(X(-0.02), 26); trunk(X(0.9), 30); trunk(X(0.4), 12);
+        for (let x = -10; x < LW + 10; x += 16 + r() * 10) mid.oval(x, H * 0.02, 14 + r() * 10, 8 + r() * 10, leaves);
+        break;
+      }
+      case 'raid': {
+        const cone = (x, base, h, hw, id) => { for (let i = 0; i < h; i++) { const w = Math.round(hw * (0.25 + 0.75 * i / h)); far.rect(x - w, base - h + i, 2 * w + 1, 1, id); } };
+        far.fillFrom(x => ridgeY(x, GY - H * 0.12, 4), GY + 2, front);
+        cone(X(0.2), GY - H * 0.1, H * 0.34, 50, back); cone(X(0.78), GY - H * 0.1, H * 0.46, 64, back);
+        const lava = flat(C('#FF7A3D')), lavaD = flat(C('#C23A20'));
+        for (const [fx, h] of [[0.2, H * 0.34], [0.78, H * 0.46]]) {
+          const top = GY - H * 0.1 - h, x0 = X(fx);
+          far.rect(x0 - 6, top, 13, 1, lava);
+          for (let k = 0; k < 3; k++) { let x = x0 + (k - 1) * 4, y = top + 1; while (y < GY - H * 0.1 - 4 && r() < 0.96) { far.px(x, y, y % 3 ? lava : lavaD); y++; x += r() < 0.3 ? (r() < 0.5 ? -1 : 1) : 0; } }
+          lamp(x0, top, '#FF7A3D', 60, 0.3, 0.2, 1);
+        }
+        const obs = mat(C(th.mid));
+        for (const fx of [0.02, 0.09, 0.9, 0.97, 0.3, 0.64]) { const x = X(fx) + r() * 6, h = band(x) ? 10 + r() * 10 : H * (0.3 + r() * 0.25); mid.tri(x, GY - h, h + 1, 3 + h * 0.12, obs); }
+        const crack = flat(C('#FF7A3D')), crackD = flat(C('#8A2A18'));
+        for (let i = 0; i < 6; i++) {
+          let x = X(r()), y = GY + 6 + r() * (H - GY - 10); const len = 10 + r() * 30;
+          for (let k = 0; k < len; k++) { gnd.px(x, y, k % 5 ? crackD : crack); x += 1; y += r() < 0.3 ? (r() < 0.5 ? -1 : 1) : 0; }
+          if (!band(x) || y > GY + 16) lamp(x - len / 2, y, '#FF7A3D', 18, 0.22, 1, 1);
+        }
+        break;
+      }
+    }
+
+    // ---- ground (f 1) ----
+    const gm = mat(C(gG), 'top', 7);
+    mats[gm].r[0] = C(gT);
+    gnd.m.forEach((v, i) => { if (!v && i >= (GY + 1) * LW) gnd.m[i] = gm; }); // keep features painted above
+    const top = flat(C(gT)), topD = flat(ramp(C(gT))[2]);
+    gnd.rect(0, GY, LW, 1, top);
+    const grassy = theme !== 'raid' && theme !== 'mine' && theme !== 'quarry' && theme !== 'cave';
+    for (let x = 0; x < LW; x++) {
+      if (grassy && r() < 0.4) { const h = r() < 0.3 ? 2 : 1; gnd.rect(x, GY - h, 1, h, r() < 0.5 ? top : topD); }
+      else if (!grassy && r() < 0.15) gnd.px(x, GY - 1, topD);
+    }
+    const speck = flat(ramp(C(gG))[0]), speckD = flat(ramp(C(gG))[3]);
+    for (let i = 0; i < LW / 4; i++) { const y = GY + 4 + r() * (H - GY - 4); gnd.rect(r() * LW, y, r() < 0.3 ? 2 : 1, 1, r() < 0.5 ? speck : speckD); }
+
+    // ---- foreground (f 1.35): corners and the bottom strip only ----
+    const fgC = blend(C(gG), [4, 3, 6], 0.45), fgId = mat(fgC), fgT = flat(ramp(fgC)[3]);
+    const corner = (fx, fn) => fn(X(fx));
+    const tuft = (x, n, hmax) => { for (let k = 0; k < n; k++) { const bx = x + k * 2 + r() * 2, h = 3 + r() * hmax; fg.line(bx, H, bx + (r() - 0.5) * 4, H - h, 1, fgT); } };
+    switch (theme) {
+      case 'cave': case 'mine':
+        corner(-0.03, x => fg.tri(x + 10, 0, H * 0.22, 12, fgId, true)); corner(1.0, x => fg.tri(x, 0, H * 0.16, 10, fgId, true));
+        corner(-0.02, x => fg.oval(x + 8, H + 2, 22, 12, fgId, 'top')); corner(0.98, x => fg.oval(x, H + 2, 18, 9, fgId, 'top'));
+        break;
+      case 'forest': case 'woods':
+        corner(-0.03, x => { fg.rect(x, 0, 12, H, fgId); }); tuft(X(0.0), 8, 14); tuft(X(0.92), 8, 12); tuft(X(0.5), 3, 5);
+        break;
+      case 'marsh': tuft(X(-0.02), 10, 26); tuft(X(0.93), 9, 22); tuft(X(0.4), 3, 6); break;
+      case 'bone': case 'barrow': tuft(X(-0.01), 7, 12); tuft(X(0.94), 7, 10);
+        if (theme === 'bone') corner(0.965, x => { const b = flat(blend(C(th.bone), fgC, 0.55)); fg.rect(x, H - 7, 7, 5, b); fg.rect(x + 1, H - 2, 5, 2, b); fg.px(x + 1, H - 5, fgT); fg.px(x + 4, H - 5, fgT); });
+        break;
+      case 'quarry': case 'raid': corner(-0.02, x => { fg.oval(x + 6, H + 2, 18, 10, fgId, 'top'); fg.oval(x + 26, H + 2, 8, 5, fgId, 'top'); }); corner(0.97, x => fg.oval(x, H + 2, 16, 8, fgId, 'top')); break;
+      default: tuft(X(0), 5, 8); tuft(X(0.95), 5, 8);
+    }
+
+    // ---- shade and bake ----
+    const bake = (L, base) => { const c = mkCanvas(LW, H), g = c.getContext('2d'), img = base || new ImageData(LW, H); shade(L, mats, img); g.putImageData(img, 0, 0); return c; };
+    const layers = [
+      { c: bake(sky, skyImg), f: 0.05 },
+      { c: bake(far), f: 0.2 },
+      { c: bake(mid), f: 0.5 },
+      { c: bake(gnd), f: 1 },
+      { c: bake(fg), f: 1.35, fg: true }
+    ];
+
+    // ---- atmosphere data ----
+    const [type, ambHex, n] = th.amb;
+    const ambRgb = C(ambHex).join(',');
+    const pr = rand(W * 3 + H + theme.length);
+    const parts = [];
+    for (let i = 0; i < n; i++) parts.push({ x: pr() * (W + 40) - 20, y: pr(), sp: 0.6 + pr() * 0.8, ph: pr() * 6.283, sz: 0.6 + pr() * 0.8, d: drips.length ? drips[i % drips.length] : null, per: 1.6 + pr() * 2.4 });
+    const fog = { rgb: C(th.fog[0]).join(','), a: th.fog[1], y: GY - 6 };
+    // overlay: vignette plus a theme tint, pre-rendered small and stretched when drawn
+    const ov = mkCanvas(Math.ceil(W / 2), Math.ceil(H / 2)), og = ov.getContext('2d'), ow = ov.width, oh = ov.height;
+    const vg = og.createRadialGradient(ow * 0.5, oh * 0.56, oh * 0.38, ow * 0.5, oh * 0.56, ow * 0.78);
+    vg.addColorStop(0, 'rgba(6,4,10,0)'); vg.addColorStop(1, 'rgba(6,4,10,.62)');
+    og.fillStyle = vg; og.fillRect(0, 0, ow, oh);
+    const tint = { raid: ['255,90,40', 0.16, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.25, 0], mine: ['10,8,14', 0.2, 0], fungal: ['200,90,200', 0.06, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
+    if (tint) { const lg = og.createLinearGradient(0, 0, 0, oh); const [c, a, bottom] = tint; lg.addColorStop(bottom ? 0.4 : 0, `rgba(${c},${bottom ? 0 : a})`); lg.addColorStop(bottom ? 1 : 0.45, `rgba(${c},${bottom ? a : 0})`); og.fillStyle = lg; og.fillRect(0, 0, ow, oh); }
+
+    return {
+      theme, hue, W, H, GY, M, layers,
+      fog, amb: { type, rgb: ambRgb, parts },
+      light: { moon, lamps: lights, shafts: !!th.shafts, overlay: ov }
+    };
+  }
+
+  // ---------- cached glow sprites (shared) ----------
+  const glowCache = new Map();
+  function glow(rgb, soft) {
+    const k = rgb + (soft ? 's' : '');
+    let c = glowCache.get(k);
+    if (!c) {
+      c = mkCanvas(64, 64); const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      if (soft) { gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(1, `rgba(${rgb},0)`); }
+      else { gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.3, `rgba(${rgb},.35)`); gr.addColorStop(1, `rgba(${rgb},0)`); }
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); glowCache.set(k, c);
+    }
+    return c;
+  }
+  let shaftSprite = null;
+  function shaft() {
+    if (!shaftSprite) {
+      shaftSprite = mkCanvas(64, 128); const g = shaftSprite.getContext('2d');
+      const lg = g.createLinearGradient(0, 0, 0, 128); lg.addColorStop(0, 'rgba(255,243,196,.9)'); lg.addColorStop(1, 'rgba(255,243,196,0)');
+      g.fillStyle = lg; g.beginPath(); g.moveTo(20, 0); g.lineTo(34, 0); g.lineTo(64, 128); g.lineTo(30, 128); g.closePath(); g.fill();
+    }
+    return shaftSprite;
+  }
+
+  sceneFor = function (theme, W, H, hue) {
+    if (theme && typeof theme === 'object') { // legacy call from today's 62-stage.js (removed in wave 2)
+      const k = theme.key + ':' + LW + 'x' + LH;
+      if (!sceneCache.has(k)) sceneCache.set(k, buildScene(theme));
+      return sceneCache.get(k);
+    }
+    W = Math.max(1, Math.round(W)); H = Math.max(1, Math.round(H)); hue = Math.round(hue || 0) % 360;
+    const key = theme + '|' + W + 'x' + H + '|' + hue;
+    let sc = cache.get(key);
+    if (!sc) {
+      sc = build(theme, W, H, hue);
+      cache.set(key, sc);
+      if (cache.size > 8) cache.delete(cache.keys().next().value);
+    } else { cache.delete(key); cache.set(key, sc); }
+    return sc;
+  };
+
+  drawScene = function (ctx, scene, camX, which) {
+    camX = camX || 0; which = which || 'back';
+    for (const ly of scene.layers) {
+      if (which === 'back' && ly.fg) continue;
+      if (which === 'fg' && !ly.fg) continue;
+      ctx.drawImage(ly.c, Math.round(-scene.M - camX * ly.f), 0);
+    }
+  };
+
+  drawAtmosphere = function (ctx, scene, T, W, H, camX) {
+    camX = camX || 0; W = W || scene.W; H = H || scene.H;
+    const t = REDUCED ? 0 : T, M0 = scene.M, GY = scene.GY * H / scene.H;
+    const smooth = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalCompositeOperation = 'source-over';
+    // fog bands: wide soft blobs drifting along the ground, one higher and fainter
+    const fg = glow(scene.fog.rgb, true), fa = scene.fog.a;
+    for (let i = 0; i < 4; i++) {
+      const bw = W * (0.7 + 0.15 * i), bh = 18 + i * 6;
+      const x = ((t * (4 + i * 2.5) + i * W * 0.45) % (W + bw)) - bw - camX * 0.8;
+      const y = (i === 3 ? GY - 50 : GY - 8 + i * 6) - bh / 2;
+      ctx.globalAlpha = fa * (i === 3 ? 0.6 : 1);
+      ctx.drawImage(fg, x, y, bw, bh); ctx.drawImage(fg, x + W + bw, y, bw, bh);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'lighter';
+    const L = scene.light;
+    if (L.moon) { const m = L.moon, rr = m.r * 4.5; ctx.globalAlpha = 0.22; ctx.drawImage(glow(m.rgb, true), m.x - M0 - camX * 0.05 - rr, m.y - rr, rr * 2, rr * 2); }
+    if (L.shafts) {
+      const sp = shaft();
+      for (let i = 0; i < 4; i++) { ctx.globalAlpha = 0.07 + 0.03 * Math.sin(t * 0.4 + i * 1.7); ctx.drawImage(sp, W * (0.08 + i * 0.26) - camX * 0.3, -4, W * 0.18, GY + 8); }
+    }
+    for (const lp of L.lamps) {
+      const fl = REDUCED ? 1 : lp.pulse === 2 ? 0.85 + 0.15 * Math.sin(T * 13 + lp.ph) * Math.sin(T * 7.3) : lp.pulse ? 0.85 + 0.15 * Math.sin(T * 1.3 + lp.ph) : 1;
+      const x = lp.x - M0 - camX * lp.f, rr = lp.r * fl;
+      ctx.globalAlpha = lp.a * fl; ctx.drawImage(glow(lp.rgb), x - rr, lp.y - rr, rr * 2, rr * 2);
+    }
+    // ambient particles: stateless, positions are a function of time
+    const A = scene.amb, spr = glow(A.rgb), W2 = W + 40;
+    const wrap = (v, m) => ((v % m) + m) % m;
+    for (const p of A.parts) {
+      let x, y, a = 1, sz = 1.2 * p.sz, g = 6;
+      switch (A.type) {
+        case 'firefly': x = p.x + Math.sin(t * 0.3 * p.sp + p.ph) * 22; y = GY - 20 - p.y * (GY * 0.5) + Math.sin(t * 0.5 + p.ph * 2) * 8; a = 0.5 + 0.5 * Math.sin(t * 2.2 * p.sp + p.ph); g = 9; break;
+        case 'drip': {
+          if (!p.d) continue;
+          const c = wrap(t + p.ph, p.per), sx = p.d.x - M0 - camX * p.d.f;
+          x = sx; if (c < 0.8) { y = p.d.y + 1; a = c / 0.8; sz = 0.9; } else { y = p.d.y + 0.5 * 300 * (c - 0.8) ** 2; if (y > GY) { const q = Math.min(1, (y - GY) / 30); y = GY; a = 1 - q; sz = 0.8 + q * 2; } }
+          g = 5; break;
+        }
+        case 'ash': x = wrap(p.x + t * 5 * p.sp, W2) - 20; y = wrap(p.y * H + t * 4 * p.sp, H); x += Math.sin(t + p.ph) * 3; a = 0.7; g = 0; sz = 1; break;
+        case 'mote': x = p.x + Math.sin(t * 0.4 + p.ph) * 10; y = GY + 4 - wrap(p.y * GY + t * 3 * p.sp, GY * 0.8); a = Math.min(1, (GY + 4 - y) / 20) * (0.6 + 0.4 * Math.sin(t * 1.5 + p.ph)); g = 7; break;
+        case 'spore': x = p.x + Math.sin(t * 0.8 * p.sp + p.ph) * 8; y = GY - wrap(p.y * GY + t * 5 * p.sp, GY); a = Math.min(1, (GY - y) / 20) * 0.8; g = 6; break;
+        case 'dust': x = wrap(p.x + t * 6 * p.sp, W2) - 20; y = GY * (0.35 + 0.6 * p.y) + Math.sin(t * 0.7 + p.ph) * 4; a = 0.45; g = 0; sz = 1; break;
+        case 'wisp': x = wrap(p.x + t * 3 * p.sp + Math.sin(t * 0.3 + p.ph) * 20, W2) - 20; y = GY - 10 - p.y * 50 + Math.sin(t * 0.9 + p.ph) * 6; a = 0.5 + 0.5 * Math.sin(t * 0.8 + p.ph); g = 14; sz = 1.6; break;
+        case 'ember': x = p.x + Math.sin(t * 1.4 * p.sp + p.ph) * 6; y = GY + 6 - wrap(p.y * H + t * 22 * p.sp, H); a = Math.min(1, (GY + 6 - y) / 30, y / 40) * (0.7 + 0.3 * Math.sin(t * 9 + p.ph)); g = 6; break;
+        case 'leaf': x = wrap(p.x + t * 5 * p.sp + Math.sin(t * 1.3 + p.ph) * 10, W2) - 20; y = wrap(p.y * H + t * 10 * p.sp, GY + 10); a = 0.85; g = 0; sz = 1.5; break;
+        default: continue;
+      }
+      if (A.type !== 'drip') x -= camX * 0.9;
+      if (a <= 0.02) continue;
+      if (g) { ctx.globalAlpha = a * 0.35; ctx.drawImage(spr, x - g, y - g, g * 2, g * 2); }
+      ctx.globalAlpha = a;
+      ctx.globalCompositeOperation = g ? 'lighter' : 'source-over';
+      ctx.fillStyle = `rgb(${A.rgb})`;
+      if (A.type === 'leaf') ctx.fillRect(x, y, Math.sin(t * 3 + p.ph) > 0 ? 2 : 1, 1);
+      else if (A.type === 'drip' && y < GY) ctx.fillRect(x - sz / 2, y, sz, sz * 2);
+      else ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+      ctx.globalCompositeOperation = 'lighter';
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(L.overlay, 0, 0, W, H);
+    ctx.imageSmoothingEnabled = smooth;
+  };
+}
+
 // ---- src/js/70-ui.js ----
 // 70-ui: shared UI plumbing: toasts, row builders, header, tabs, the ui() refresh,
 // the away card, and the section/tab registries for feature UI (75-*.js). Browser-only.
@@ -2462,19 +3945,30 @@ function updatePortrait() {
 }
 
 // tab icons
-const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }) };
+// Party (two figures) and World (a globe with a lantern-light meridian): local maps, same 12x12 icon format.
+const TAB_PX = {
+  party: ['............','..11....22..','.1111..2222.','.1551..2552.','.1111..2222.','..11....22..','.1111..2222.','111111222222','111111222222','.1111..2222.','.1..1..2..2.','............'],
+  world: ['....1111....','..11222211..','.1222112221.','.1211111121.','122117711221','121117711121','121117711121','122117711221','.1211111121.','.1222112221.','..11222211..','....1111....']
+};
+const TAB_IC = { sword: iconURL('sword', '#A9B1BD'), pick: iconURL('pick', '#D08A4E'), anvil: iconURL('anvil', '#6E6878'), flame: iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), mug: iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
+  party: spriteURL('tab:party', TAB_PX.party, { 1: '#5F8BE8', 2: '#FF9E3D', 5: '#EFE6D6' }), world: spriteURL('tab:world', TAB_PX.world, { 1: '#3E9C8A', 2: '#2A5A6E', 7: '#F2C14E' }) };
 document.querySelectorAll('.tab').forEach(b => b.prepend(img(TAB_IC[b.dataset.ic])));
 $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= tabs, rename =================
-const TAB_IDS = ['adv', 'gat', 'forge', 'raid', 'tav'];
+const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
+// Raid and Tavern are now parts of the World tab; old ids still open it.
+const TAB_ALIAS = { raid: 'world', tav: 'world' };
+if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
 function setTab(t) {
+  const part = TAB_ALIAS[t] ? $('p-' + t) : null;
+  t = TAB_ALIAS[t] || t;
   S.tab = t;
   document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
   if (t === 'forge') $('forgeDot').hidden = true;
-  if (t === 'raid') $('raidDot').hidden = true;
-  $('panels').scrollTop = 0;
+  if (t === 'world') $('raidDot').hidden = true;
+  $('panels').scrollTop = part ? part.offsetTop - $('panels').offsetTop : 0;
   ui(true);
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
@@ -2547,9 +4041,9 @@ function ui(force) {
   if (S.tab === 'adv') uiFight();
   if (S.tab === 'gat') uiGather();
   if (S.tab === 'forge' && (force || slowTick <= 0)) uiForge();
-  if (S.tab === 'raid') uiRaid();
-  if (S.tab === 'tav' && (force || slowTick <= 0)) uiTavern();
-  for (const sec of SECTIONS) if (sec.tab === S.tab && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
+  if (S.tab === 'world') uiRaid();
+  if (S.tab === 'world' && (force || slowTick <= 0)) uiTavern();
+  for (const sec of SECTIONS) if ((sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && sec.update) { try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); } }
   if (slowTick <= 0) slowTick = 1;
 }
 
@@ -2565,6 +4059,7 @@ $('awayOk').addEventListener('click', () => { $('away').hidden = true; ui(true);
 
 // ================= feature UI registries =================
 // registerSection('forge', { id: 'salvage-all', title: 'Bulk salvage', mount(sec) {...}, update(force) {...} })
+// tabId: adv | party | gat | forge | world, or raid | tav (the World tab's two parts).
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
 // mount(sec) runs once now; update(force) runs from ui() while that tab is open
 // (about 5 times a second, force = true right after player actions).
@@ -2581,7 +4076,7 @@ function registerSection(tabId, { id, title, mount, update }) {
 // registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
 // tight at 360px wide, so prefer registerSection. icon is a URL or icon spec.
 function registerTab({ id, label, icon, mount, update }) {
-  if (TAB_IDS.includes(id)) throw new Error('registerTab: tab exists ' + id);
+  if (TAB_IDS.includes(id) || TAB_ALIAS[id]) throw new Error('registerTab: tab exists ' + id);
   const b = el('button', 'tab', label);
   b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
   const url = iconOf(icon); if (url) b.prepend(img(url));
@@ -2602,7 +4097,7 @@ on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
 on('itemAdded', () => { $('forgeDot').hidden = S.tab === 'forge'; });
-on('raidReward', () => { $('raidDot').hidden = S.tab === 'raid'; });
+on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });
 
 // ---- src/js/71-ui-fight.js ----
 // 71-ui-fight: the Fight tab (boss gate, hero upgrades, party) and the zone/mode controls.
@@ -3121,6 +4616,224 @@ async function uiTavern() {
   });
 }
 
+// ---- src/js/75-party.js ----
+// 75-party: the Party tab (hero card, fielded companions, formation). Browser-only.
+// Reads the Stage A contracts: S.party and HERO_CLASSES / castAbility (55-party.js, A1),
+// portraitURL (60b-baker.js, A2). Every one of them is optional: without them the tab
+// falls back to today's sprites and the old companion slots, and never throws.
+{
+  const hasParty = () => typeof S === 'object' && S.party && typeof S.party === 'object';
+  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
+  const curClass = () => { const C = classes(); return C && hasParty() && S.party.cls ? C[S.party.cls] || null : null; };
+
+  const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
+  const COL_NAME = ['Back', 'Mid', 'Front'];
+  // Character key -> card info. idx is the old S.comp slot that pays for them (A1's map).
+  const PARTY_CHARS = {
+    tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', role: 'tank', idx: 0 },
+    wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', role: 'striker', idx: 1 },
+    pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', role: 'caster', idx: 2 },
+    aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', role: 'tank', idx: 3 },
+    kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', role: 'striker', idx: 4 },
+    oriel: { name: 'Oriel Vess', title: 'the Starcaller', role: 'caster', idx: 5 },
+    elowen: { name: 'Saint Elowen', title: 'the Last Lantern', role: 'support', idx: 6 },
+    bram: { name: 'Bram Hollis', title: 'the Woodcutter', role: 'striker', idx: 0 },
+    hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', role: 'support', idx: -1 }
+  };
+  const IDX_KEY = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
+  // The 5 class gear slots. Weapon, head and charm are today's weapon, helm and charm;
+  // off-hand and body arrive with crafting.
+  const GEAR_NOUN = {
+    warden: { weapon: 'Warblade', off: 'Shield', head: 'Greathelm', body: 'Plate' },
+    lanternmage: { weapon: 'Staff', off: 'Lantern', head: 'Hood', body: 'Robe' },
+    ranger: { weapon: 'Bow', off: 'Quiver', head: 'Hood', body: 'Leathers' },
+    lightkeeper: { weapon: 'Censer', off: 'Tome', head: 'Mitre', body: 'Vestments' }
+  };
+  const GEAR_SLOTS = [
+    { id: 'weapon', old: 'weapon', n: 'Weapon' }, { id: 'off', n: 'Off-hand' },
+    { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
+  ];
+
+  function heroPortrait() {
+    if (typeof portraitURL === 'function') { try { const u = portraitURL('hero'); if (u) return u; } catch (e) {} }
+    return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
+  }
+  function compPortrait(key) {
+    if (typeof portraitURL === 'function') { try { const u = portraitURL(key); if (u) return u; } catch (e) {} }
+    const i = PARTY_CHARS[key] ? PARTY_CHARS[key].idx : -1, c = COMPS[i >= 0 ? i : 0];
+    return spriteURL('comp' + (i >= 0 ? i : 0), SPR.hero, { ...HERO_PAL, 1: c.col, 2: c.helm });
+  }
+  // Fielded companions: S.party.field, else the 3 highest owned old slots (what A1 migrates to).
+  function fieldKeys() {
+    if (hasParty() && Array.isArray(S.party.field) && S.party.field.length) return S.party.field.filter(k => PARTY_CHARS[k]).slice(0, 3);
+    const owned = []; for (let i = S.comp.length - 1; i >= 0 && owned.length < 3; i--) if (S.comp[i] > 0) owned.push(IDX_KEY[i]);
+    return owned;
+  }
+  const pip = role => el('span', 'pip r-' + role, ROLE_NAME[role] || role);
+  const portraitBox = (url, cls) => { const d = el('div', 'pt ' + (cls || '')); d.append(img(url)); return d; };
+
+  // ---------- hero card ----------
+  let heroRefs = null, heroSig = '';
+  function buildHero(sec) {
+    sec.querySelectorAll('.pcard, .note').forEach(n => n.remove());
+    heroRefs = null;
+    const c = curClass();
+    const card = el('div', 'pcard hero');
+    const top = el('div', 'pc-top');
+    const pt = portraitBox(heroPortrait(), 'big');
+    const who = el('div', 'pc-who');
+    const nm = el('b', null, S.name);
+    const sub = el('small', null, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
+    who.append(nm, sub);
+    if (c) { const tags = el('div', 'pc-tags'); tags.append(pip(c.role)); if (c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName)); who.append(tags); }
+    top.append(pt, who);
+    card.append(top);
+    const refs = { card, pt: pt.querySelector('img'), nm, sub };
+    if (c && c.ability) {
+      const ab = el('div', 'pc-ab');
+      const line = el('div', 'pc-abline');
+      const abTxt = el('div');
+      abTxt.append(el('em', null, c.ability.name), document.createTextNode(': ' + (c.ability.desc || '')));
+      const cast = el('button', 'mini go', 'Cast'); cast.type = 'button';
+      cast.addEventListener('click', () => { if (typeof castAbility === 'function' && castAbility()) ui(true); });
+      line.append(abTxt, cast);
+      const cd = el('div', 'pc-cd'); cd.append(el('i'));
+      const cdTxt = el('small', 'pc-cdtxt');
+      const auto = el('label', 'pc-auto');
+      const box = el('input'); box.type = 'checkbox';
+      box.addEventListener('change', () => { if (hasParty()) { S.party.autoCast = box.checked; save(); } });
+      auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
+      ab.append(line, cd, cdTxt, auto);
+      card.append(ab);
+      Object.assign(refs, { cast, cdBar: cd.firstChild, cdTxt, box });
+    }
+    const gearBox = el('div', 'pc-gear');
+    refs.gear = GEAR_SLOTS.map(g => {
+      const t = el('div', 'pc-slot');
+      const ic = icTile(iconURL('charm', '#3A2F47'), null, 'ghost');
+      const lbl = el('small');
+      t.append(ic, lbl); gearBox.append(t);
+      return { g, t, ic, lbl };
+    });
+    card.append(gearBox, el('small', 'pc-gearnote', 'Dashed slots arrive with crafting. Forge the rest in the Forge tab.'));
+    sec.append(card);
+    heroRefs = refs;
+  }
+  function updateHero(sec) {
+    const c = curClass();
+    const sig = [hasParty() && S.party.cls, !!c, typeof portraitURL, JSON.stringify(S.equip)].join('|');
+    if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(sec); }
+    const r = heroRefs;
+    r.nm.textContent = S.name;
+    r.sub.textContent = (c ? c.name : 'Wanderer') + ' · Lv ' + S.L;
+    if (r.cdBar) {
+      const cdMax = (c.ability && c.ability.cd) || 30, left = Math.max(0, +S.party.abilityCd || 0);
+      r.cdBar.style.width = (100 - Math.min(100, left / cdMax * 100)) + '%';
+      r.cdTxt.textContent = left > 0 ? `Ready in ${Math.ceil(left)}s · cooldown ${cdMax}s` : `Ready · cooldown ${cdMax}s`;
+      r.cast.disabled = left > 0 || typeof castAbility !== 'function';
+      if (document.activeElement !== r.box) r.box.checked = !!S.party.autoCast;
+    }
+    const nouns = (hasParty() && GEAR_NOUN[S.party.cls]) || {};
+    for (const s of r.gear) {
+      const it = s.g.old ? S.equip[s.g.old] : null;
+      const noun = nouns[s.g.id] || s.g.n;
+      if (it) {
+        setIc(s.ic, itemIcon(it.slot || s.g.old, it.t, it.u), it.u ? 'legendary' : it.r);
+        s.lbl.textContent = noun;
+        s.t.title = itemName(it);
+      } else if (s.g.old) {
+        setIc(s.ic, iconURL(SLOT[s.g.old].icon, '#4E4060'), null, 'ghost');
+        s.lbl.textContent = noun; s.t.title = 'Empty. Forge one in the Forge tab.';
+      } else {
+        setIc(s.ic, iconURL(s.g.id === 'off' ? 'banner' : 'helm', '#4E4060'), null, 'ghost');
+        s.lbl.textContent = noun; s.t.title = 'Coming with crafting.';
+        s.t.classList.add('soon');
+      }
+    }
+  }
+
+  // ---------- companions ----------
+  let compSig = '', compRefs = [];
+  function buildComps(box, keys) {
+    box.textContent = ''; compRefs = [];
+    if (!keys.length) { box.append(el('p', 'note', 'Nobody fights beside you yet. Hire companions in the Fight tab.')); return; }
+    for (const k of keys) {
+      const d = PARTY_CHARS[k];
+      const card = el('div', 'pcard');
+      const top = el('div', 'pc-top');
+      const who = el('div', 'pc-who');
+      const tags = el('div', 'pc-tags'); tags.append(pip(d.role));
+      const stat = el('small', 'pc-stat');
+      who.append(el('b', null, d.name), el('small', null, d.title), tags, stat);
+      top.append(portraitBox(compPortrait(k)), who);
+      card.append(top); box.append(card);
+      compRefs.push({ k, d, stat });
+    }
+  }
+  function updateComps(box) {
+    const keys = fieldKeys();
+    const sig = keys.join(',') + '|' + typeof portraitURL;
+    if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
+    for (const r of compRefs) {
+      const i = r.d.idx, n = i >= 0 ? S.comp[i] : 0;
+      let dps = 0; try { dps = i >= 0 ? compDpsOne(i) * n : 0; } catch (e) {}
+      r.stat.textContent = n > 0 ? `${fmt(n)} strong · ${fmt(dps)} DPS` : 'Joins the fight soon';
+    }
+  }
+
+  // ---------- formation (read-only for Stage A) ----------
+  let formSig = '';
+  function cellsOf(keys) {
+    const cells = hasParty() && S.party.cells && typeof S.party.cells === 'object' ? S.party.cells : {};
+    const out = {};
+    const put = (k, def) => { const c = cells[k] || def; if (c) out[k] = { col: Math.max(0, Math.min(2, c.col | 0)), lane: c.lane ? 1 : 0 }; };
+    const c = curClass();
+    const heroCol = c && c.row != null ? (typeof c.row === 'number' ? c.row : ({ back: 0, mid: 1, front: 2 })[c.row]) : 2;
+    put('hero', { col: heroCol == null ? 2 : heroCol, lane: 1 });
+    const roleCol = { tank: 2, striker: 1, caster: 0, support: 0 };
+    keys.forEach((k, n) => put(k, { col: roleCol[PARTY_CHARS[k].role], lane: n % 2 }));
+    return out;
+  }
+  function updateForm(grid) {
+    const keys = fieldKeys(), cells = cellsOf(keys);
+    const sig = JSON.stringify(cells) + typeof portraitURL + S.name;
+    if (sig === formSig) return; formSig = sig;
+    grid.textContent = '';
+    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
+    const at = {};
+    for (const k in cells) { const id = cells[k].lane + ':' + cells[k].col; (at[id] = at[id] || []).push(k); }
+    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+      const ks = at[lane + ':' + col] || [];
+      const cell = el('div', 'pf-cell' + (ks.length ? ' occ' : '') + (ks.includes('hero') ? ' hero' : ''));
+      cell.setAttribute('aria-label', `${COL_NAME[col]} row, ${lane ? 'lower' : 'upper'} lane: ${ks.length ? ks.map(k => k === 'hero' ? S.name : PARTY_CHARS[k].name).join(', ') : 'empty'}`);
+      for (const k of ks) {
+        cell.append(img(k === 'hero' ? heroPortrait() : compPortrait(k)));
+        cell.append(el('span', 'who', k === 'hero' ? S.name : PARTY_CHARS[k].name.split(' ')[0]));
+      }
+      grid.append(cell);
+    }
+  }
+
+  registerSection('party', {
+    id: 'party-form', title: 'Formation',
+    mount(sec) {
+      const g = el('div', 'pform'); g.setAttribute('role', 'img'); sec.append(g);
+      sec.append(el('p', 'note', 'Back, Mid and Front, as they stand on the stage. Moving people between rows comes with the next update.'));
+    },
+    update() { try { updateForm(document.querySelector('#sec-party-form .pform')); } catch (e) { console.error('[lanternfall] party formation', e); } }
+  });
+  registerSection('party', {
+    id: 'party-hero', title: 'Your hero',
+    mount(sec) {},
+    update(force) { try { updateHero(document.getElementById('sec-party-hero')); } catch (e) { console.error('[lanternfall] party hero', e); } }
+  });
+  registerSection('party', {
+    id: 'party-field', title: 'Fighting beside you',
+    mount(sec) { sec.append(el('div', 'pcards')); },
+    update() { try { updateComps(document.querySelector('#sec-party-field .pcards')); } catch (e) { console.error('[lanternfall] party companions', e); } }
+  });
+}
+
 // ---- src/js/76-audio.js ----
 // 76-audio: tiny WebAudio synth for retro sound effects. No audio files.
 // BROWSER FILE. Listens to bus events; adds a mute button to the stage corner.
@@ -3235,6 +4948,175 @@ document.addEventListener('click', e => {
   b.addEventListener('click', e => { e.stopPropagation(); S.settings.sound = !S.settings.sound; draw(); save(); SFX.play('buy'); });
   draw(); st.append(b);
 })();
+
+// ---- src/js/76-create.js ----
+// 76-create: character creation (new games) and the one-time "Choose your path" screen
+// (existing saves, and again after a Mirror of Embers). Browser-only.
+// Needs HERO_CLASSES and chooseClass (55-party.js, A1); drawCharPreview/heroSpec (60b-baker.js,
+// A2) are optional. Without HERO_CLASSES or S.party the screen never opens.
+{
+  const ORDER = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
+  const STARTER = { warden: 'wren', lanternmage: 'tobin', ranger: 'tobin', lightkeeper: 'bram' };
+  const STARTER_NAME = { wren: 'Wren Hollowmere', tobin: 'Tobin Reed', bram: 'Bram Hollis' };
+  const JOIN = {
+    wren: ['An arrow lands at your feet, then another in the slime behind you.',
+      '"You stand in the right place, for once. Hold them there."',
+      'Wren Hollowmere drops from the branches and does not ask to come along.'],
+    tobin: ['A boy in a pot helm trips over a sword too big for him on the road out of Mossy Hollow.',
+      '"I\'m Tobin. I stand in front. That\'s the whole job, isn\'t it?"',
+      'He does not wait for an answer.'],
+    bram: ['A woodcutter looks at your lantern for a long time.',
+      '"Heard a Lightkeeper was on the road. I\'ve no light of my own, but I can swing."',
+      'Bram Hollis walks ahead of you, into the dark.']
+  };
+  // Fallback look when the new baker is not in: today's hero sprite, tinted per class.
+  const TINT = { warden: '#3E63C9', lanternmage: '#8A4FC9', ranger: '#3E8A4E', lightkeeper: '#EFE6D6' };
+
+  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
+  const needsChoice = () => !!(classes() && typeof S === 'object' && S.party && !S.party.chosen && typeof chooseClass === 'function');
+
+  let root = null, pick = 'warden', mode = 'new', lastFocus = null;
+
+  function previewSpec(k) {
+    if (typeof classPreviewSpec === 'function') return classPreviewSpec(k);
+    if (typeof heroSpec !== 'function') return null;
+    // heroSpec() reads S.party.cls; borrow it for this class, then put it back.
+    const prev = S.party.cls;
+    try { S.party.cls = k; return heroSpec(k); } finally { S.party.cls = prev; }
+  }
+  function drawPreview(cv, k) {
+    cv.width = 48; cv.height = 64;
+    const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
+    if (typeof drawCharPreview === 'function') {
+      try { const spec = previewSpec(k); if (spec) { drawCharPreview(cv, spec, 1); return; } } catch (e) { console.error('[lanternfall] class preview', e); }
+    }
+    const im = sprite('create:' + k, SPR.hero, { ...HERO_PAL, 1: TINT[k] || HERO_PAL[1] });
+    const z = Math.max(1, Math.floor(Math.min(cv.width / im.width, cv.height / im.height)));
+    x.drawImage(im, Math.floor((cv.width - im.width * z) / 2), cv.height - im.height * z, im.width * z, im.height * z);
+  }
+
+  function build() {
+    const C = classes();
+    root = el('div', 'create'); root.id = 'createScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
+    const inner = el('div', 'create-in');
+    const h = el('h1', null, mode === 'new' ? 'Who carries the lantern?' : mode === 'mirror' ? 'The mirror shows another path' : 'Choose your path'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', mode === 'new'
+      ? 'You carry the last lantern. Pick who you are, then name yourself.'
+      : mode === 'mirror'
+        ? 'Pick a new class. Your level, gear and upgrades stay with you.'
+        : 'Heroes now have classes. Warden fights like you always have, so one tap keeps things as they are.');
+    const warn = el('p', 'create-warn', 'This choice is for good. Only a rare Mirror of Embers, dropped by bosses deep in the world, lets you change it.');
+    const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero class');
+    const keys = ORDER.filter(k => C[k]).concat(Object.keys(C).filter(k => !ORDER.includes(k)));
+    const btns = keys.map(k => {
+      const c = C[k];
+      const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k;
+      b.setAttribute('role', 'radio');
+      const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
+      const txt = el('div', 'ctxt');
+      const top = el('div', 'ctop'); top.append(el('b', null, c.name || k));
+      if (c.role) top.append(el('span', 'pip r-' + c.role, ROLE_NAME[c.role] || c.role));
+      txt.append(top);
+      if (c.pitch) txt.append(el('div', 'pitch', '"' + c.pitch + '"'));
+      if (c.how) txt.append(el('div', 'how', c.how));
+      if (c.ability) { const ab = el('div', 'ab'); ab.append(el('em', null, c.ability.name + ': '), document.createTextNode(c.ability.desc || '')); txt.append(ab); }
+      if (mode === 'new' && STARTER[k]) txt.append(el('div', 'how', 'Starts with ' + STARTER_NAME[STARTER[k]] + '.'));
+      b.append(fig, txt);
+      b.addEventListener('click', () => select(k));
+      b.addEventListener('keydown', e => {
+        const i = keys.indexOf(k);
+        const d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return; e.preventDefault();
+        const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
+      });
+      cards.append(b);
+      try { drawPreview(cv, k); } catch (e) { console.error('[lanternfall] preview', e); }
+      return b;
+    });
+    function select(k) {
+      pick = k;
+      for (const b of btns) {
+        const on = b.dataset.cls === k;
+        b.setAttribute('aria-checked', String(on)); b.setAttribute('aria-pressed', String(on)); b.tabIndex = on ? 0 : -1;
+      }
+    }
+    inner.append(h, lede, warn, cards);
+    let nameIn = null;
+    if (mode === 'new') {
+      const nf = el('div', 'namefield');
+      const lb = el('label', null, 'Your name'); lb.htmlFor = 'createName';
+      nameIn = el('input'); nameIn.id = 'createName'; nameIn.maxLength = 16; nameIn.autocomplete = 'off';
+      nameIn.value = S.name && S.name !== 'Wanderer' ? S.name.slice(0, 16) : 'Wanderer';
+      nf.append(lb, nameIn); inner.append(nf);
+    }
+    const begin = el('button', 'big forge create-go', mode === 'new' ? 'Begin' : 'Take this path'); begin.type = 'button';
+    begin.addEventListener('click', () => {
+      let name;
+      if (nameIn) name = nameIn.value.replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯]/g, '').trim().slice(0, 16) || 'Wanderer';
+      const wasMode = mode;
+      try { chooseClass(pick, name); } catch (e) { console.error('[lanternfall] chooseClass', e); return; }
+      if (name && S.name !== name) S.name = name;
+      try { save(); } catch (e) {}
+      if (typeof updatePortrait === 'function') updatePortrait();
+      const starter = wasMode === 'new' ? ((S.party.field && S.party.field[0]) || STARTER[pick]) : null;
+      if (starter && JOIN[starter]) showJoin(inner, starter);
+      else { close(); toast(`You walk on as a ${C[pick].name}.`, 'good'); }
+    });
+    inner.append(begin);
+    root.append(inner);
+    select(pick);
+    root.addEventListener('keydown', trapTab);
+    return root;
+  }
+
+  function showJoin(inner, key) {
+    inner.textContent = '';
+    const box = el('div', 'join');
+    box.append(el('div', 'zsub', 'A companion joins'));
+    const h = el('h1', null, STARTER_NAME[key]); h.id = 'createTitle';
+    box.append(h);
+    for (const line of JOIN[key]) box.append(el('p', line.startsWith('"') ? 'join-say' : 'join-line', line));
+    const go = el('button', 'big forge create-go', 'Into the dark'); go.type = 'button';
+    go.addEventListener('click', close);
+    box.append(go); inner.append(box);
+    if (root) root.scrollTop = 0;
+    go.focus();
+  }
+
+  function trapTab(e) {
+    if (e.key !== 'Tab' || !root) return;
+    const f = [...root.querySelectorAll('button, input')].filter(n => !n.disabled && n.tabIndex !== -1);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  function open() {
+    if (root || !needsChoice()) return;
+    // Mirror mode: the class was already chosen earlier in this session (useMirror reopened it).
+    mode = sawChosen && S.party.cls ? 'mirror' : S.party.newGame ? 'new' : 'path';
+    pick = mode === 'mirror' ? S.party.cls : 'warden';
+    if (!classes()[pick]) pick = Object.keys(classes())[0];
+    lastFocus = document.activeElement;
+    document.body.append(build());
+    const sel = root.querySelector('.ccard[aria-checked="true"]');
+    (sel || root.querySelector('button')).focus();
+  }
+  function close() {
+    if (!root) return;
+    root.remove(); root = null;
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
+    ui(true);
+  }
+
+  // Open now if needed, and whenever the choice reopens (a Mirror of Embers).
+  let sawChosen = !!(typeof S === 'object' && S.party && S.party.chosen);
+  setInterval(() => { try { if (S.party && S.party.chosen) sawChosen = true; open(); } catch (e) {} }, 1000);
+  try { open(); } catch (e) { console.error('[lanternfall] create screen', e); }
+}
 
 // ---- src/js/80-online.js ----
 // 80-online: the shared world over the Artifact capabilities (db, user, room): raider
