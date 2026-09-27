@@ -38,3 +38,8 @@ The art style study is still running (owner leans 16-bit; wants clear section de
   ones: trophy gate unenforced, equipChar + one-wearer rule, unequip on class change, iconFor/slotStats
   need the CRAFT_KINDS path, nodeTime treats non-ore as wood, spell power not applied to abilities,
   roster should use charGear(id) once companion gear is live.
+- B2 synergies merged. ISSUE: `SYN_TUNE.today = 0.1` scales every synergy to 10% of its design value
+  (texts still show design numbers), because full strength (about x2.3) broke T1. Synergies are nearly
+  cosmetic until retuned. Plan: after M6 lands, a retune task lowers `ROSTER_TUNE.base`, raises
+  `today` to about 0.5 to 1, and makes texts show the numbers the player actually gets. autoField ignores
+  synergies. The K4 exact-dps check now runs with `SYN_TUNE.on = 0`.

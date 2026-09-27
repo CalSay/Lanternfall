@@ -277,6 +277,7 @@ try {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
     const old = JSON.parse(raw);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    g.eval('SYN_TUNE.on = 0; gearDirty()'); // pre-K4 baselines predate synergies (B2)
     const S = JSON.parse(JSON.stringify(g.eval('S')));
     const matsOk = Object.keys(old.mats).every(k => JSON.stringify(old.mats[k]) === JSON.stringify(S.mats[k])) && ['crystal', 'fibre', 'herb', 'hide'].every(k => JSON.stringify(S.mats[k]) === '[0,0,0,0,0]');
     const itemsOk = !deepDiff(old.items, S.items) && S.items.map(i => i.id).join() === old.items.map(i => i.id).join();
@@ -302,6 +303,7 @@ try {
     g.fn.save();
     const saved = g.storage.get(KEY);
     const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
+    g2.eval('SYN_TUNE.on = 0; gearDirty()');
     const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
     assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === want.total && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
   }
@@ -397,6 +399,88 @@ try {
     assert(!g.errors.length, 'no items handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('items crashed: ' + (e.stack || e)); }
+
+// ---- 7. synergies, kits, Common Cause and Bond (56b-synergy.js, B2) ----
+console.log('synergy');
+try {
+  const g = loadCore({ seed: 6 });
+  const E = s => g.eval(s);
+  E('chooseClass("warden"); ROSTER_KEYS.forEach(k => unlockChar(k, "test", true))');
+  const lv = (ids, n) => E(`${JSON.stringify(ids)}.forEach(k => { charRec(k).lv = ${n}; })`);
+  const field = ids => E(`setField(${JSON.stringify(ids)})`);
+  const act = () => E('activeSynergies()');
+  const syn = id => act().find(s => s.id === id) || null;
+  E('ROSTER_KEYS.forEach(k => { charRec(k).lv = 1; })');
+  // line-ups
+  field(['tobin', 'wren', 'pip']);
+  assert(syn('hedgefolk') && syn('hedgefolk').members.length === 3 && !syn('kindlestar'), 'Hedgefolk x3 active, Kindle and Starfall not');
+  field(['pip', 'oriel', 'kestrel']);
+  assert(syn('kindlestar') && syn('dusk') && !syn('hedgefolk'), 'Pip + Oriel + Kestrel: Kindle and Starfall, Dusk Company');
+  field(['corvin', 'aldric', 'elowen']);
+  assert(syn('oldenemies') && syn('oldoath') && !syn('chosen'), 'Corvin + Aldric + Elowen: Old Enemies, The Old Oath; no Chosen for a Warden');
+  assert(E('synergyStatus("chosen").text') === 'needs a Lanternmage hero', `Chosen status: ${E('synergyStatus("chosen").text')}`);
+  field(['wren', 'bram', 'kestrel']);
+  assert(syn('hunting') && syn('markleap') && syn('hedgefolk'), 'Wren + Bram + Kestrel: Hunting Party, Mark and Leap, Hedgefolk x2');
+  assert(/A third Hedgefolk/.test(E('synergyStatus("hedgefolk").text')), 'Hedgefolk x2 asks for a third');
+  // Shield and Hearth reads the cells: tank in Front, support next behind in the same lane
+  field(['tobin', 'hesketh', 'pip']);
+  E('S.party.cells = { hero: { col: 1, lane: 1 }, tobin: { col: 2, lane: 0 }, hesketh: { col: 0, lane: 0 }, pip: { col: 0, lane: 1 } }');
+  assert(syn('hearth') && syn('hearth').stageC && syn('hearth').members.join() === 'tobin,hesketh', 'Shield and Hearth: Tobin in front, Hesketh behind (Mid empty)');
+  E('S.party.cells = { hero: { col: 1, lane: 0 }, tobin: { col: 2, lane: 0 }, hesketh: { col: 0, lane: 0 }, pip: { col: 0, lane: 1 } }');
+  assert(!syn('hearth') && E('synergyStatus("hearth").text') === 'needs a support right behind your tank', 'Shield and Hearth off when someone else stands between');
+  // Common Cause and Bond
+  field(['kestrel', 'oriel', 'maren']);
+  assert(syn('dusk') && syn('dusk').strength === 1, 'Dusk Company (Rare + Epic, below 25): strength 1');
+  const d1 = E('synergyMods().party');
+  lv(['kestrel'], 25); field(['kestrel', 'oriel', 'maren']);
+  assert(syn('dusk').strength === 1.5, 'Bond at level 25: strength 1.5');
+  const d2 = E('synergyMods().party');
+  assert(Math.abs((d2 - 1) / (d1 - 1) - 1.5) < 1e-9, `Bond scales the effect by 1.5 (${d1.toFixed(4)} -> ${d2.toFixed(4)})`);
+  field(['tobin', 'wren', 'maren']);
+  assert(syn('hedgefolk').strength === 1.25, 'Common Cause: Hedgefolk strength 1.25');
+  lv(['tobin', 'wren'], 25); field(['tobin', 'wren', 'maren']);
+  assert(syn('hedgefolk').strength === 1.875, 'Common Cause x Bond: 1.875 (Bond counts once)');
+  field(['corvin', 'aldric', 'maren']);
+  assert(syn('oldenemies').strength === 1.5, 'Legendary Bond from level 1');
+  // removing a member deactivates and removes the effect
+  E('ROSTER_KEYS.forEach(k => { charRec(k).lv = 30; })');
+  const ev = []; g.fn.on('synergyChange', p => ev.push(p));
+  field(['pip', 'oriel', 'morwen']);
+  const om = E('synergyMods().char.oriel'), cd = g.fn.compDps();
+  assert(syn('kindlestar') && syn('waxkindle') && om > 1, `Pip + Oriel + Morwen active (Oriel x${om.toFixed(3)})`);
+  field(['tobin', 'oriel', 'morwen']);
+  assert(!syn('kindlestar') && !syn('waxkindle') && E('synergyMods().char.oriel') < om && ev.some(p => p.lost.includes('kindlestar')), 'benching Pip ends both synergies and emits synergyChange');
+  assert(E('synergyMods().char.tobin') >= 1 && E('synergyMods().char.pip') === undefined, 'benched characters get no multiplier');
+  // synergies only add: compDps with effects >= without
+  field(['pip', 'oriel', 'morwen']);
+  const on = g.fn.compDps(); E('SYN_TUNE.on = 0'); const offD = g.fn.compDps(); E('SYN_TUNE.on = 1');
+  assert(Math.abs(on / cd - 1) < 1e-9 && on > offD, `effects add damage (x${(on / offD).toFixed(3)}); switching off restores the base`);
+  // no NaN: every character at levels 1 / 25 / 100, in varied line-ups, for every class
+  const bad = [];
+  for (const cls of ['warden', 'lanternmage', 'ranger', 'lightkeeper']) {
+    E(`S.party.cls = ${JSON.stringify(cls)}`);
+    for (const n of [1, 25, 100]) {
+      E(`ROSTER_KEYS.forEach(k => { charRec(k).lv = ${n}; charRec(k).rank = Math.floor((${n} - 1) / 25); })`);
+      const keys = E('ROSTER_KEYS');
+      keys.forEach((k, i) => {
+        field([k, keys[(i + 5) % 18], keys[(i + 11) % 18]]);
+        const v = E(`[charDps(${JSON.stringify(k)}), compDps(), totalDps(), goldMult(), critChance(), mod('compXp')]`);
+        if (!v.every(x => Number.isFinite(x) && x > 0)) bad.push(`${cls} ${k} L${n}: ${v.join(',')}`);
+      });
+    }
+  }
+  assert(!bad.length, 'charDps finite for all 18 at levels 1/25/100' + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
+  // kit data for the UI
+  const kit = E(`ROSTER_KEYS.map(k => { const t = charTraits(k); return [k, t.length, t.some(x => x.kind === 'speciality'), t.some(x => x.kind === 'bond'), t.every(x => x.text && x.name && typeof x.active === 'boolean' && typeof x.stageC === 'boolean')]; })`);
+  assert(kit.every(([, n, sp, bd, okT]) => n >= 4 && sp && bd && okT), 'every character has a speciality, a bond and well-formed traits');
+  assert(E("['kestrel','maren','aldric','thessaly','anselm'].every(k => charTraits(k).some(t => t.kind === 'trait')) && ['elowen','caedmon','corvin'].every(k => charTraits(k).some(t => t.kind === 'aura'))"), 'Rares have a trait, Legendaries an aura');
+  assert(E('SYNERGIES.length === 14 && SYNERGIES.every(s => synergyStatus(s.id) && synergyStatus(s.id).text)'), '14 synergies, each with a status line');
+  field(['pip', 'tobin']);
+  assert(E('synergyStatus("markleap").text') === 'needs Wren and Kestrel' && E('synergyStatus("dusk").text') === 'needs 2 more Dusk Company', `missing text (${E('synergyStatus("markleap").text')} / ${E('synergyStatus("dusk").text')})`);
+  field(['wren', 'kestrel']);
+  assert(E('synergyStatus("markleap").text') === 'Active, 88% stronger.', `active text (${E('synergyStatus("markleap").text')})`);
+  assert(!g.errors.length, 'no synergy handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('synergy crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

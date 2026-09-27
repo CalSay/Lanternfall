@@ -26,6 +26,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
+| 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | tabs, toasts, `ui()`, `registerSection`, `registerTab`, event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -73,6 +74,8 @@ addModifier('gold', () => 1 + 0.05 * S.bounty.count);
 addBonus(key, fn) -> remove()   // fn() returns a number; bonus(key) = sum of all, 0 if none
 deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; weeks start Monday
 ```
+Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMod(id)` is the product.
+
 Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
 `yield:<family>` (harvest and away yield per material family).
 
@@ -129,6 +132,7 @@ levels around the `away` phase, so changes made to `S` there appear without a li
 | `promote` | `{ id, rank }` |
 | `fieldChange` | `{ field }` |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
+| `synergyChange` | `{ active, gained, lost }` (after a field change) |
 | `toast` | `{ msg, kind, icon }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 
