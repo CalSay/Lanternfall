@@ -1,0 +1,619 @@
+<title>Lanternfall Characters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=Pixelify+Sans:wght@400;600;700&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #140F1A; --panel: #1F1827; --panel-2: #2A2233; --well: #110D16;
+  --line: #3A2F47; --line-hi: #4E4060; --bone: #EFE6D6; --muted: #A597B4;
+  --ember: #FF9E3D; --ember-deep: #B8621B; --gold: #F2C14E; --xp: #6FCB6A; --arcane: #B58CFF; --ink: #0B0810;
+  --r-common: #CFC6D8; --r-rare: #5FA8FF; --r-epic: #B58CFF; --r-legendary: #FF9E3D;
+  --display: "Pixelify Sans", "Courier New", monospace;
+  --body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); }
+.wrap { min-height: 100vh; background-color: var(--bg); background-image: radial-gradient(rgba(255,255,255,.028) 1px, transparent 1px); background-size: 4px 4px; color: var(--bone); font: 15px/1.45 var(--body); }
+.app { max-width: 440px; margin: 0 auto; padding: 16px 0 32px; }
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+header, .pad { padding: 0 16px; }
+h1 { margin: 0; font: 600 22px/1.1 var(--display); text-shadow: 0 2px 0 var(--ink); }
+h2 { margin: 22px 16px 8px; font: 600 14px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+header p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+.stage { position: relative; margin: 0 16px; border: 2px solid var(--ink); outline: 2px solid var(--line-hi); overflow: hidden; background: #0e0b12; }
+.stage canvas { display: block; width: 100%; }
+#preview { height: 300px; }
+#lineup { height: 250px; }
+.caption { position: absolute; left: 8px; top: 6px; font: 600 13px var(--display); text-shadow: 0 2px 0 #000; pointer-events: none; }
+.caption small { display: block; font: 400 12px var(--body); color: var(--muted); }
+.atk { position: absolute; right: 8px; bottom: 8px; min-height: 40px; padding: 6px 12px; border: 2px solid var(--ember); background: linear-gradient(#4a2a20, #24141a); font: 600 14px var(--display); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+.row { display: flex; gap: 6px; padding: 10px 16px 0; flex-wrap: wrap; }
+.cls { flex: 1 1 0; min-width: 0; min-height: 40px; border: 2px solid var(--line); background: var(--panel); box-shadow: 0 2px 0 var(--ink); cursor: pointer; font: 600 13px var(--display); color: var(--muted); padding: 4px 2px; }
+.cls[aria-pressed="true"] { border-color: var(--ember); color: var(--bone); background: var(--panel-2); }
+.slots { display: grid; gap: 6px; padding: 10px 16px 0; }
+.slot { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 8px; background: var(--panel); border: 2px solid var(--line); }
+.slot .nm { min-width: 0; }
+.slot .nm b { display: block; font: 600 13px/1.15 var(--display); }
+.slot .nm small { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg { display: flex; border: 1px solid var(--line-hi); }
+.seg button { min-width: 30px; min-height: 32px; border: 0; background: var(--well); font: 600 12px var(--display); color: var(--muted); cursor: pointer; padding: 0 5px; }
+.seg button + button { border-left: 1px solid var(--line-hi); }
+.seg button[aria-pressed="true"] { background: var(--ember); color: #1A1420; }
+.rar { min-width: 44px; min-height: 32px; border: 1px solid currentColor; background: var(--well); font: 700 12px var(--display); cursor: pointer; }
+.swatches { display: flex; gap: 6px; align-items: center; padding: 10px 16px 0; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.sw { width: 28px; height: 28px; border: 2px solid var(--line-hi); cursor: pointer; padding: 0; }
+.sw[aria-pressed="true"] { border-color: var(--ember); box-shadow: 0 0 0 1px var(--ember); }
+.note { margin: 10px 16px 0; font-size: 13px; color: var(--muted); }
+.note b { color: var(--bone); font-weight: 600; }
+@media (max-width: 380px) { .stage { margin: 0 10px; } .row, .slots, .swatches, header, .pad { padding-left: 10px; padding-right: 10px; } h2, .note { margin-left: 10px; margin-right: 10px; } }
+@media (prefers-reduced-motion: reduce) { .atk { transition: none; } }
+</style>
+<div class="wrap"><div class="app">
+<header><h1>Characters</h1><p>Hi-bit style, taller proportions, and gear you can see. Change the hero's gear below and watch it change on the body.</p></header>
+
+<h2>Hero sheet</h2>
+<div class="stage"><canvas id="preview"></canvas><div class="caption" id="cap"></div><button class="atk" id="atk" type="button">Attack</button></div>
+<div class="row" id="classes" role="group" aria-label="Class"></div>
+<div class="slots" id="slots"></div>
+<div class="swatches" id="looks"></div>
+<p class="note">Tiers change the <b>material</b> (Copper, Mithril, Emberite; Oak, Ironbark, Lanternwood; Flax, Silkgrass, Gloamsilk). Rarity adds <b>trim</b> (Rare), <b>glow accents</b> (Epic) and <b>moving light</b> (Legendary). Tap the rarity letter to cycle it.</p>
+
+<h2>Battle scale</h2>
+<div class="stage"><canvas id="lineup"></canvas></div>
+<p class="note">True in-game size: one art pixel per screen point. Top row: the four hero classes in full tier-3 gear. Bottom row: Tobin, Wren, Old Hesketh and Saint Elowen in their fixed outfits, each with a visible role weapon and trinket.</p>
+</div></div>
+<script>
+'use strict';
+const RMQ = matchMedia('(prefers-reduced-motion: reduce)');
+let reduced = RMQ.matches;
+if (RMQ.addEventListener) RMQ.addEventListener('change', e => { reduced = e.matches; });
+const INK = '#0B0810';
+
+// ================= colour: ramps from one base colour =================
+function hexToHsl(hex) { const n = parseInt(hex.slice(1), 16); const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s * 100, l * 100]; }
+function hsl(h, s, l) { h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(100, s)) / 100; l = Math.max(0, Math.min(100, l)) / 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); const to = x => Math.round(x * 255).toString(16).padStart(2, '0'); return '#' + to(f(0)) + to(f(8)) + to(f(4)); }
+const toward = (h, target, amt) => { let d = ((target - h + 540) % 360) - 180; return h + Math.sign(d) * Math.min(Math.abs(d), amt); };
+// Ramp rule: highlight shifts toward warm gold, shadows toward cool plum. Metals get a brighter, less saturated highlight.
+function ramp(hex, metal) {
+  const [h, s, l] = hexToHsl(hex);
+  return [
+    hsl(toward(h, 50, 10), s * (metal ? 0.55 : 0.9), Math.min(96, l + (metal ? 30 : 16))),
+    hex,
+    hsl(toward(h, 265, 14), Math.min(100, s * 1.05), l - 17),
+    hsl(toward(h, 270, 24), Math.min(100, s * 1.1), Math.max(6, l - 32))
+  ];
+}
+function mixHex(a, b, t) { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16); const ch = sh => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t); return '#' + ((1 << 24) + (ch(16) << 16) + (ch(8) << 8) + ch(0)).toString(16).slice(1); }
+const lift = (hex, dl) => { const [h, s, l] = hexToHsl(hex); return hsl(h, s, l + dl); };
+
+// ================= materials by family and tier =================
+const FAM = {
+  ore: { names: ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'], col: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'], metal: true, glow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'] },
+  wood: { names: ['Oak', 'Yew', 'Ironbark', 'Ghostwood', 'Lanternwood'], col: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'], glow: ['#FFD08A', '#FFC08A', '#D8F0B0', '#C8FFF4', '#FFC060'] },
+  crystal: { names: ['Quartz', 'Amber', 'Moonstone', 'Starglass', 'Emberglass'], col: ['#D8D8E6', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], glow: ['#FFFFFF', '#FFD080', '#D8E0FF', '#C8FAFF', '#FF9A80'] },
+  fibre: { names: ['Flax', 'Nettle', 'Silkgrass', 'Moonsilk', 'Gloamsilk'], col: ['#C8B890', '#7E9860', '#DCD6B8', '#B8C8E4', '#7A6EAE'], glow: ['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'] },
+  hide: { names: ['Soft', 'Tough', 'Scaled', 'Dusk', 'Ember'], col: ['#A07C5E', '#7E5E3C', '#546E60', '#52445E', '#A83C36'], glow: ['#FFD8A8', '#FFC890', '#B0F0D0', '#D8B8FF', '#FF8A6A'] }
+};
+const RARITY = [{ n: 'Common', k: 'C', col: '#CFC6D8' }, { n: 'Rare', k: 'R', col: '#5FA8FF' }, { n: 'Epic', k: 'E', col: '#B58CFF' }, { n: 'Legendary', k: 'L', col: '#FF9E3D' }];
+const FIXED = {
+  void: { emit: '#07050B' }, eye: { emit: '#1A1420' }, eyeLit: { emit: '#E8E0D0' }, mouth: { emit: '#8A4A42' },
+  lamp: { emit: '#FFF1B8', light: '255,190,100' }, coal: { emit: '#FF9A40', light: '255,140,60' }, halo: { emit: '#FFE9A8', light: '255,220,140' },
+  string: { emit: '#E8DEC8' }, page: { emit: '#EFE6D0' }, shade: { emit: '#2A1C24' },
+  gold: ramp('#E0AE44', true), silver: ramp('#B8BCC8', true), plume: ramp('#C8423C'), iron: ramp('#7C8290', true), leather: ramp('#6E4A30'), trousers: ramp('#3A3444'),
+  beard: ramp('#D8D2C8'), scarf: ramp('#6B4A9A'), moss: ramp('#5E7A3A'), cream: ramp('#E6DCC4')
+};
+const SKINS = ['#F0C8A0', '#C98E62', '#7E5238'];
+const HAIRS = ['#3A2A24', '#8A4A2A', '#C8A060', '#B8B4C0'];
+
+// ================= base body (about 6.8 heads tall; facing right) =================
+// part: [z, bone, mat, shape, minRarity?]. z: 0 back, 1 back arm, 2 legs, 3 torso, 4 head, 5 off-hand, 6 front arm, 7 weapon, 8 front fx
+// shape: ['e', cx, cy, rx, ry] | ['p', smooth, x, y, ...] | ['r', x, y, w, h]
+// Bones: legs, up (torso), head (child of up), armF / armB (children of up, rotate at the shoulders). Every layer uses the same bones,
+// so gear stays aligned through every pose.
+const PIV = { armF: [5.4, -47.5], armB: [-5.4, -47.5], head: [0.8, -52] };
+function bodyParts(o) {
+  const P = [
+    [1, 'armB', 'U', ['p', 0, -7.7, -48.6, -3.7, -48.6, -4.3, -38, -7.5, -38]],
+    [1, 'armB', 'U', ['p', 0, -7.4, -38.6, -4.4, -38.6, -4.8, -30, -7, -30]],
+    [1, 'armB', 'skin', ['e', -5.9, -28.2, 1.7, 2.2]],
+    [2, 'legs', 'trousers', ['p', 0, -4.8, -31, -0.6, -31, -1.2, -16, -4.4, -16]],
+    [2, 'legs', 'trousers', ['p', 0, -4.4, -16.6, -1.2, -16.6, -1.8, -3, -4, -3]],
+    [2, 'legs', 'leather', ['p', 1, -4.7, -5, -1.4, -5, 0.3, -1.3, 0.4, 0, -4.9, 0]],
+    [2, 'legs', 'trousers', ['p', 0, 0.2, -31, 4.6, -31, 4.8, -16, 1.4, -16]],
+    [2, 'legs', 'trousers', ['p', 0, 1.4, -16.6, 4.8, -16.6, 4.4, -3, 2, -3]],
+    [2, 'legs', 'leather', ['p', 1, 1.5, -5, 4.7, -5, 7.2, -1.3, 7.2, 0, 1.3, 0]],
+    [3, 'up', 'U', ['p', 1, -6.8, -48.8, 6.2, -48.8, 6.7, -44, 4.6, -34.5, 5.7, -29.5, -5.7, -29.5, -4.6, -34.5, -6.7, -44]],
+    [3, 'up', 'leather', ['r', -5.4, -32.2, 11, 2]],
+    [3, 'up', 'skin', ['r', -1.1, -53, 3.2, 5]],
+    [4, 'head', 'skin', ['e', 0.8, -57, 4.2, 4.9]],
+    [4, 'head', 'skin', ['p', 1, -2.4, -56.5, 5, -56.5, 4.7, -53, 2.6, -51.5, -1, -52.6]],
+    [4, 'head', 'skin', ['e', -1.5, -56.4, 1, 1.5]],
+    [4, 'head', 'skin', ['p', 0, 4.4, -57.8, 6, -55.3, 4.5, -55]],
+    [4, 'head', 'eye', ['r', 2.7, -57.7, 1.1, 1.4]],
+    [4, 'head', 'mouth', ['r', 3.3, -53.8, 1.7, 0.6]],
+    [6, 'armF', 'U', ['p', 0, 3.7, -48.6, 7.4, -48.6, 7.2, -38, 4.2, -38]],
+    [6, 'armF', 'U', ['p', 0, 4.3, -38.6, 7.3, -38.6, 7.7, -30, 5, -30]],
+    [6, 'armF', 'skin', ['e', 6.5, -28.2, 1.8, 2.3]],
+    [6, 'armF', 'skin', ['e', 7.9, -29.2, 0.8, 1.1]]
+  ];
+  // hair styles
+  if (o.hairStyle === 'long') P.push([0, 'head', 'hair', ['p', 1, -4.2, -60, 1, -62.2, 3.5, -60, -1, -58, -3.8, -48.5, -6.4, -47.6]]);
+  if (o.hairStyle !== 'bald') P.push([4, 'head', 'hair', ['p', 1, -3.6, -58, -2.6, -61.6, 1.5, -62.6, 4.9, -60.6, 5.1, -58.6, 2, -59.7, -1, -59.1, -2.5, -55]]);
+  else P.push([4, 'head', 'hair', ['p', 1, -3.6, -57.5, -3, -60, -1.8, -60, -2, -55]]);
+  P.push([4, 'head', 'hair', ['r', 2.3, -59, 2.6, 0.8]]); // brow
+  if (o.beard) P.push([4, 'head', 'beard', ['p', 1, -1, -55.5, 5.4, -55, 5.2, -51, 2.4, -48.6, -0.8, -51]]);
+  return P;
+}
+const HAND_F = [6.5, -28.2], HAND_B = [-5.9, -28.2];
+
+// ================= gear layers =================
+// mat keys inside items: P primary (tier material), D primary one step darker, Q secondary family, R trim (Rare+; else D), G glow accent (Epic+), L lamp glass
+const ITEMS = {
+  // ----- Warden -----
+  warblade: { name: 'Warblade', fam: 'ore', fam2: 'hide', parts: [
+    [7, 'armF', 'Q', ['r', 5.8, -32.8, 1.6, 7.2]],
+    [7, 'armF', 'R', ['e', 6.6, -25.4, 1.3, 1.3]],
+    [7, 'armF', 'R', ['p', 1, 2.6, -34.4, 10.6, -34.4, 10.2, -32.8, 3, -32.8]],
+    [7, 'armF', 'P', ['p', 0, 5.5, -34.4, 7.8, -34.4, 7.6, -58.5, 6.65, -61.2, 5.7, -58.5]],
+    [7, 'armF', 'D', ['r', 6.4, -56, 0.6, 20]],
+    [7, 'armF', 'G', ['r', 6.4, -54, 0.6, 16], 2]
+  ] },
+  shield: { name: 'Shield', fam: 'ore', fam2: 'hide', parts: [
+    [5, 'armB', 'P', ['p', 1, -11.6, -45, 1.4, -45, 1.8, -33, -1.6, -24, -5, -19.8, -8.6, -24, -12, -33]],
+    [5, 'armB', 'Q', ['p', 1, -10.3, -43.6, 0.1, -43.6, 0.5, -33, -2.3, -25.3, -5, -21.8, -7.8, -25.3, -10.7, -33]],
+    [5, 'armB', 'R', ['r', -5.7, -42, 1.3, 17.5], 1], [5, 'armB', 'R', ['r', -9.4, -37, 8.6, 1.3], 1],
+    [5, 'armB', 'P', ['e', -5, -36.4, 1.9, 1.9]],
+    [5, 'armB', 'G', ['e', -5, -36.4, 1, 1], 2]
+  ] },
+  greathelm: { name: 'Greathelm', fam: 'ore', parts: [
+    [4, 'head', 'P', ['p', 1, -3.9, -61.8, 4.7, -62.3, 6.2, -57, 5.8, -51.6, -3.6, -51.6, -4.6, -56.4]],
+    [4, 'head', 'D', ['r', -2.6, -52.4, 8, 1.6]],
+    [4, 'head', 'R', ['p', 0, 0.1, -63, 1.5, -63, 1.7, -51.8, 0.3, -51.8], 1],
+    [4, 'head', 'void', ['r', 1.6, -58, 4.8, 1.2]],
+    [4, 'head', 'void', ['r', 4.4, -54.8, 0.9, 0.9]], [4, 'head', 'void', ['r', 4.4, -53.4, 0.9, 0.9]],
+    [4, 'head', 'G', ['r', 4.6, -57.8, 1.1, 0.8], 2],
+    [0, 'head', 'plume', ['p', 1, 0.5, -62.4, -2, -66.6, -7.5, -65, -9.6, -59, -5, -61.8, -1, -62.6], 3]
+  ] },
+  plate: { name: 'Plate', fam: 'ore', fam2: 'hide', parts: [
+    [3, 'up', 'P', ['p', 1, -6.5, -48.4, 6.4, -48.4, 6.9, -43, 5, -35.6, -5, -35.6, -6.9, -43]],
+    [3, 'up', 'D', ['r', 0.3, -47, 1.1, 11]],
+    [3, 'up', 'R', ['r', -4.4, -48.6, 9.4, 1.1], 1],
+    [3, 'up', 'P', ['p', 0, -5.6, -35.9, 5.6, -35.9, 6.2, -30.6, -6.2, -30.6]],
+    [3, 'up', 'P', ['p', 1, -5.9, -31.2, 0, -31.2, -0.5, -24.4, -5.3, -25.6]],
+    [3, 'up', 'P', ['p', 1, 0.5, -31.2, 6.4, -31.2, 6.1, -25.6, 1, -24.4]],
+    [3, 'up', 'R', ['r', -6, -31.2, 12.4, 1], 1],
+    [3, 'up', 'G', ['e', 0.8, -33.2, 1.1, 1.1], 2],
+    [1, 'armB', 'P', ['e', -5.8, -47.2, 4, 3.6]], [1, 'armB', 'P', ['r', -7.7, -37.2, 3.5, 6.4]],
+    [2, 'legs', 'P', ['p', 0, -4.7, -16.4, -1, -16.4, -1.6, -4.4, -4.2, -4.4]], [2, 'legs', 'P', ['e', -2.8, -16.5, 2.3, 1.9]],
+    [2, 'legs', 'P', ['p', 0, 1.2, -16.4, 5, -16.4, 4.6, -4.4, 1.8, -4.4]], [2, 'legs', 'P', ['e', 3.2, -16.5, 2.4, 2]],
+    [2, 'legs', 'P', ['p', 1, 1.4, -4.8, 4.8, -4.8, 7.4, -1.3, 7.4, 0, 1.2, 0]],
+    [6, 'armF', 'P', ['p', 1, 2.6, -50.2, 8.6, -49.8, 9.8, -45.6, 8.1, -43.4, 3, -44.5]],
+    [6, 'armF', 'R', ['r', 3.4, -45.2, 5.8, 0.9], 1],
+    [6, 'armF', 'P', ['r', 4, -43.6, 3.5, 5.2]], [6, 'armF', 'P', ['e', 5.8, -38.4, 1.9, 1.6]],
+    [6, 'armF', 'P', ['p', 0, 4.2, -37.4, 7.5, -37.4, 7.9, -31, 5, -31]],
+    [6, 'armF', 'P', ['e', 6.6, -28.4, 2.1, 2.4]]
+  ] },
+  // ----- Lanternmage -----
+  staff: { name: 'Staff', fam: 'wood', fam2: 'crystal', parts: [
+    [7, 'armF', 'P', ['r', 5.9, -62, 1.4, 45]],
+    [7, 'armF', 'D', ['p', 0, 4.2, -66.5, 5.6, -62, 7.8, -62, 9.2, -66.5, 7.6, -63.6, 5.8, -63.6]],
+    [7, 'armF', 'Qc', ['e', 6.7, -66.4, 1.8, 2.8]],
+    [7, 'armF', 'R', ['r', 5.5, -61, 2.3, 1.1], 1], [7, 'armF', 'R', ['r', 5.7, -18.2, 1.9, 1.2], 1]
+  ] },
+  lantern: { name: 'Lantern', fam: 'crystal', fam2: 'ore', parts: [
+    [5, 'armB', 'Q', ['r', -6.3, -28.5, 0.9, 3.6]],
+    [5, 'armB', 'Q', ['p', 0, -8.8, -25, -3, -25, -3.9, -23.4, -7.9, -23.4]],
+    [5, 'armB', 'L', ['r', -8.2, -23.4, 4.6, 6.4]],
+    [5, 'armB', 'Q', ['r', -6.3, -23.4, 0.8, 6.4]],
+    [5, 'armB', 'Q', ['r', -8.8, -17.2, 5.8, 1.3]],
+    [5, 'armB', 'R', ['r', -8.8, -25.6, 5.8, 0.8], 1]
+  ] },
+  circlet: { name: 'Circlet', fam: 'crystal', parts: [
+    [4, 'head', 'silver', ['p', 0, -3.8, -59.4, 5, -59.8, 5.1, -58.6, -3.9, -58.2]],
+    [4, 'head', 'Pc', ['e', 4.4, -59.6, 1.3, 1.5]],
+    [4, 'head', 'R', ['e', 1.5, -59.6, 0.8, 0.9], 1]
+  ] },
+  robe: { name: 'Robe', fam: 'fibre', dye: '#6A3E9E', parts: [
+    [0, 'up', 'D', ['p', 1, -7, -50.4, -2, -51.8, 3, -50.2, 3.8, -47, -6.2, -46]],
+    [3, 'up', 'P', ['p', 1, -6.8, -48.8, 6.4, -48.8, 7, -42, 5, -34, 8, -12, 9.6, -0.6, -8.6, -0.6, -7.5, -12, -5, -34, -7, -42]],
+    [3, 'up', 'D', ['p', 0, -2, -30, -1, -30, -3, -1.5, -4.6, -1.5]],
+    [3, 'up', 'D', ['p', 0, 3, -30, 4, -30, 6.2, -1.5, 4.6, -1.5]],
+    [3, 'up', 'D', ['p', 0, 0.5, -26, 1.3, -26, 1.5, -1.5, 0.3, -1.5]],
+    [3, 'up', 'R', ['r', -5, -34.6, 10.5, 2.4]],
+    [3, 'up', 'R', ['p', 0, -8.7, -3, 9.5, -3, 9.7, -0.6, -8.8, -0.6], 1],
+    [3, 'up', 'G', ['r', -6.2, -11, 1, 3.4], 2], [3, 'up', 'G', ['r', 7.2, -11, 1, 3.4], 2],
+    [1, 'armB', 'P', ['p', 1, -7.9, -48.9, -3.5, -48.9, -3.7, -38, -2.8, -30.4, -8.9, -30.4]],
+    [6, 'armF', 'P', ['p', 1, 3.5, -48.9, 7.6, -48.9, 8.4, -38, 9.8, -30.4, 3.9, -30.4]],
+    [6, 'armF', 'R', ['r', 3.9, -31.6, 5.9, 1.4], 1]
+  ] },
+  // ----- Ranger -----
+  bow: { name: 'Bow', fam: 'wood', fam2: 'hide', parts: [
+    [7, 'armF', 'P', ['p', 1, 6, -29.6, 7.4, -29.6, 10.3, -36.4, 10.6, -42, 9.1, -47.4, 8.4, -47, 9.3, -42, 8.8, -36.4]],
+    [7, 'armF', 'P', ['p', 1, 6, -26.8, 7.4, -26.8, 10.3, -20, 10.6, -14.4, 9.1, -9, 8.4, -9.4, 9.3, -14.4, 8.8, -20]],
+    [7, 'armF', 'Q', ['r', 5.7, -30.2, 2.4, 4]],
+    [7, 'armF', 'R', ['e', 9, -47, 0.9, 0.9], 1], [7, 'armF', 'R', ['e', 9, -9.4, 0.9, 0.9], 1],
+    [7, 'armF', 'G', ['r', 9.9, -41, 0.7, 3], 2], [7, 'armF', 'G', ['r', 9.9, -18.4, 0.7, 3], 2]
+  ], idle: [[7, 'armF', 'string', ['r', 8.6, -47, 0.55, 37.8]]],
+    drawn: [[7, 'armF', 'string', ['p', 0, 8.6, -47, 9.2, -47, 1.4, -28, 0.8, -28.2]], [7, 'armF', 'string', ['p', 0, 0.8, -28.2, 1.4, -28.4, 9.2, -9.4, 8.6, -9.4]], [7, 'armF', 'D', ['r', 0.8, -28.6, 15, 0.8]], [7, 'armF', 'silver', ['p', 0, 15.6, -29.6, 18, -28.2, 15.6, -26.8]]] },
+  quiver: { name: 'Quiver', fam: 'hide', fam2: 'wood', parts: [
+    [0, 'up', 'P', ['p', 1, -10, -49.4, -6.4, -51, -1.6, -32.6, -4.8, -31.6]],
+    [0, 'up', 'fletch', ['p', 0, -11, -53.6, -9.2, -55, -7.4, -50.8, -9, -49.8]],
+    [0, 'up', 'fletch', ['p', 0, -8.8, -55, -7.2, -56, -5.8, -51.4, -7.4, -50.4]],
+    [0, 'up', 'R', ['p', 0, -9.6, -47.6, -6, -49.2, -5.6, -48, -9.2, -46.4], 1],
+    [0, 'up', 'G', ['e', -4.6, -36, 0.9, 0.9], 2]
+  ] },
+  hood: { name: 'Hood', fam: 'hide', fam2: 'fibre', parts: [
+    [0, 'up', 'D', ['p', 1, -6.4, -50.6, -3, -49.4, -4, -36, -8.8, -29.6, -9.4, -40]],
+    [4, 'head', 'P', ['p', 1, -5.6, -58, -3.8, -63, 2.4, -63.8, 6.4, -60.6, 7, -55.4, 5.2, -54, 5.5, -57.8, 3, -60.4, 0, -60, -1.4, -56, -3.6, -51.4, -6.6, -50]],
+    [4, 'head', 'shade', ['p', 0, 0.2, -60, 5.6, -58.2, 5.4, -56.3, 1.2, -56.7]],
+    [4, 'head', 'eyeLit', ['r', 2.8, -57.6, 0.9, 0.8]],
+    [4, 'head', 'R', ['p', 0, 5.5, -58, 7, -55.4, 6.4, -55, 5, -57.4], 1]
+  ] },
+  leathers: { name: 'Leathers', fam: 'hide', fam2: 'fibre', parts: [
+    [3, 'up', 'P', ['p', 1, -6.6, -48.6, 6.2, -48.6, 6.5, -43, 4.8, -34.5, 6.2, -26.5, -6.2, -26.5, -4.8, -34.5, -6.5, -43]],
+    [3, 'up', 'Q', ['r', 0.3, -47, 0.8, 12]],
+    [3, 'up', 'D', ['p', 0, -6, -48, -4, -48, 5, -33, 3, -33]],
+    [3, 'up', 'D', ['r', -5.6, -33.2, 11.4, 2.2]],
+    [3, 'up', 'R', ['r', 0.2, -33.4, 2, 2.6], 1],
+    [3, 'up', 'P', ['p', 1, -7.2, -50.6, 5, -50.6, 7.4, -46, -7.6, -45.4]],
+    [3, 'up', 'G', ['e', -3, -41, 0.8, 0.8], 2],
+    [1, 'armB', 'P', ['r', -7.5, -37.2, 3.2, 5.8]],
+    [2, 'legs', 'D', ['p', 0, -4.8, -12, -1.2, -12, -1.4, -4.6, -4.4, -4.6]], [2, 'legs', 'D', ['p', 0, 1.3, -12, 4.9, -12, 4.6, -4.6, 1.7, -4.6]],
+    [6, 'armF', 'P', ['r', 4.4, -37.2, 3.4, 5.8]]
+  ] },
+  // ----- Chaplain -----
+  censer: { name: 'Censer', fam: 'ore', parts: [
+    [7, 'armF', 'iron', ['r', 6.3, -27.4, 0.6, 7.4]],
+    [7, 'armF', 'P', ['p', 0, 4.4, -19.6, 9, -19.6, 8, -21.8, 5.4, -21.8]],
+    [7, 'armF', 'P', ['e', 6.7, -17.6, 2.7, 2.5]],
+    [7, 'armF', 'coal', ['r', 5.1, -18, 3.2, 0.8]],
+    [7, 'armF', 'R', ['e', 6.7, -22.5, 0.8, 0.8], 1],
+    [7, 'armF', 'D', ['r', 5.6, -15.4, 2.3, 1]]
+  ] },
+  tome: { name: 'Tome', fam: 'hide', fam2: 'fibre', parts: [
+    [5, 'armB', 'P', ['p', 0, -10.4, -34, -2.8, -34, -2.6, -25.6, -10.2, -25.6]],
+    [5, 'armB', 'page', ['r', -3.5, -33.4, 0.8, 7.2]],
+    [5, 'armB', 'R', ['r', -7, -34.6, 1.3, 9.4], 1],
+    [5, 'armB', 'G', ['e', -6.4, -29.8, 1, 1], 2]
+  ] },
+  mitre: { name: 'Mitre', fam: 'fibre', dye: '#E6DCC4', parts: [
+    [0, 'head', 'D', ['p', 0, -3, -58.6, -1.8, -58.6, -2.4, -50, -3.6, -50.4]],
+    [4, 'head', 'P', ['p', 1, -3.5, -59, 4.5, -59.3, 5.1, -62, 1, -69.4, -3.8, -62.6]],
+    [4, 'head', 'R', ['r', -3.7, -60.1, 8.4, 1.4]],
+    [4, 'head', 'R', ['r', 0.3, -68, 1.3, 8.6], 1],
+    [4, 'head', 'G', ['e', 0.9, -64, 0.9, 0.9], 2]
+  ] },
+  vestments: { name: 'Vestments', fam: 'fibre', dye: '#E6DCC4', parts: [
+    [3, 'up', 'P', ['p', 1, -6.8, -48.8, 6.4, -48.8, 6.8, -42, 5.2, -34, 6.8, -10, 7.8, -0.6, -7.6, -0.6, -6.6, -10, -5.2, -34, -6.8, -42]],
+    [3, 'up', 'crimson', ['p', 0, -2.4, -47, 3.4, -47, 3.8, -3.6, 0.5, -1.4, -2.8, -3.6]],
+    [3, 'up', 'R', ['r', -4.2, -48.4, 1.4, 26]], [3, 'up', 'R', ['r', 4, -48.4, 1.4, 26]],
+    [3, 'up', 'R', ['e', 0.5, -40, 1.7, 1.7], 1],
+    [3, 'up', 'G', ['e', 0.5, -40, 0.8, 0.8], 2],
+    [3, 'up', 'Q', ['r', -5.3, -34.6, 10.6, 1.5]],
+    [1, 'armB', 'P', ['p', 1, -7.9, -48.9, -3.6, -48.9, -3.8, -38, -3.4, -30.6, -8.5, -30.6]],
+    [6, 'armF', 'P', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8, -38, 8.8, -30.6, 4.2, -30.6]]
+  ] },
+  charm: { name: 'Charm', fam: 'crystal', parts: [
+    [3, 'up', 'gold', ['p', 0, -2.6, -48.4, -2, -48.4, 0.9, -43.2, 0.4, -42.8]],
+    [3, 'up', 'gold', ['p', 0, 3.8, -48.4, 4.4, -48.4, 1.4, -42.8, 0.9, -43.2]],
+    [3, 'up', 'Pc', ['e', 0.9, -41.6, 1.4, 1.6]]
+  ] },
+  beltLantern: { name: 'Lantern', fam: 'crystal', parts: [
+    [3, 'up', 'iron', ['r', -7.2, -30.6, 3.2, 1]], [3, 'up', 'lamp', ['r', -7, -29.6, 2.8, 3.4]], [3, 'up', 'iron', ['r', -7.2, -26.2, 3.2, 0.9]]
+  ] }
+};
+FIXED.fletch = ramp('#E8E0D0'); FIXED.crimson = ramp('#9E2E3A'); FIXED.bone = ramp('#D8CFB8');
+const CLASSES = {
+  warden: { name: 'Warden', dye: '#5A4E44', hairStyle: 'short', slots: { weapon: 'warblade', off: 'shield', head: 'greathelm', body: 'plate', charm: 'charm' }, idle: { rotF: 0.3 }, anim: 'slash' },
+  lanternmage: { name: 'Lanternmage', dye: '#4A3A5E', hairStyle: 'long', slots: { weapon: 'staff', off: 'lantern', head: 'circlet', body: 'robe', charm: 'charm' }, idle: { rotF: 0.12 }, anim: 'cast' },
+  ranger: { name: 'Ranger', dye: '#4E5A3A', hairStyle: 'short', slots: { weapon: 'bow', off: 'quiver', head: 'hood', body: 'leathers', charm: 'charm' }, idle: { rotF: 0.05 }, anim: 'shoot' },
+  chaplain: { name: 'Chaplain', dye: '#6A5A48', hairStyle: 'bald', slots: { weapon: 'censer', off: 'tome', head: 'mitre', body: 'vestments', charm: 'charm' }, idle: { rotF: 0 }, anim: 'swing' }
+};
+const SLOT_NAMES = { weapon: 'Weapon', off: 'Off-hand', head: 'Head', body: 'Body', charm: 'Charm' };
+
+// Resolve an item's parts to concrete ramps for a tier and rarity.
+function itemParts(key, tier, rar, pose) {
+  const it = ITEMS[key], f = FAM[it.fam], f2 = FAM[it.fam2 || it.fam], t = tier - 1;
+  let base = f.col[t]; if (it.dye) base = mixHex(base, it.dye, it.fam === 'fibre' ? 0.45 : 0);
+  const P = ramp(base, f.metal), D = ramp(lift(base, -12), f.metal), Q = ramp(f2.col[t], f2.metal);
+  const R = rar >= 1 ? (it.fam === 'crystal' || it.fam === 'fibre' ? FIXED.gold : ramp(rar >= 3 ? '#F2C14E' : '#D8B060', true)) : D;
+  const glowCol = f.glow[t];
+  const res = m => m === 'P' ? P : m === 'D' ? D : m === 'Q' ? Q : m === 'R' ? R
+    : m === 'G' ? { emit: glowCol, light: rgbOf(glowCol), pulse: rar >= 3 }
+    : m === 'L' ? { emit: mixHex('#FFF1B8', FAM.crystal.col[t], 0.35), light: rgbOf(mixHex('#FFC070', FAM.crystal.col[t], 0.4)) }
+    : m === 'Pc' || m === 'Qc' ? (rar >= 2 ? { emit: FAM.crystal.glow[t], light: rgbOf(FAM.crystal.col[t]), pulse: rar >= 3 } : ramp(FAM.crystal.col[t]))
+    : FIXED[m];
+  let list = it.parts.slice();
+  if (it.idle) list = list.concat(pose === 'drawn' ? it.drawn : it.idle);
+  return list.filter(p => (p[4] || 0) <= rar).map(p => ({ z: p[0], bone: p[1], mat: res(p[2]), shape: p[3], legend: rar >= 3 && p[2] === 'G' }));
+}
+function rgbOf(hex) { const n = parseInt(hex.slice(1), 16); return `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; }
+
+// Assemble a full character: base body + ordered layers.
+function assemble(spec, pose) {
+  const skin = ramp(spec.skin), hair = ramp(spec.hair), under = ramp(spec.dye);
+  const mats = { skin, hair, U: under };
+  const parts = bodyParts(spec).map(p => ({ z: p[0], bone: p[1], mat: mats[p[2]] || FIXED[p[2]], shape: p[3] }));
+  for (const g of spec.gear) if (g) parts.push(...itemParts(g.key, g.tier, g.rar, pose));
+  if (spec.extra) for (const p of spec.extra) parts.push({ z: p[0], bone: p[1], mat: FIXED[p[2]] || p[2], shape: p[3] });
+  // stable sort by layer
+  parts.forEach((p, i) => { p.i = i; });
+  parts.sort((a, b) => a.z - b.z || a.i - b.i);
+  for (const p of parts) { const s = p.shape; if (s[0] === 'e') { p.bw = s[3] * 2; p.bh = s[4] * 2; } else if (s[0] === 'r') { p.bw = s[3]; p.bh = s[4]; } else { const xs = [], ys = []; for (let i = 2; i < s.length; i += 2) { xs.push(s[i]); ys.push(s[i + 1]); } p.bw = Math.max(...xs) - Math.min(...xs); p.bh = Math.max(...ys) - Math.min(...ys); } }
+  return parts;
+}
+
+// ================= pose + path =================
+function tp(bone, x, y, pose) {
+  if (bone !== 'legs') { y += pose.up || 0; x += pose.lean || 0; }
+  if (bone === 'head') { y += pose.head || 0; }
+  if (bone === 'armF' || bone === 'armB') {
+    const pv = PIV[bone], px = pv[0] + (pose.lean || 0), py = pv[1] + (pose.up || 0), r = bone === 'armF' ? pose.rotF || 0 : pose.rotB || 0;
+    if (r) { const dx = x - px, dy = y - py, c = Math.cos(r), s = Math.sin(r); x = px + dx * c - dy * s; y = py + dx * s + dy * c; }
+  }
+  return [x + (pose.dx || 0), y];
+}
+function partPath(p, pose, S, ox, oy) {
+  const s = p.shape, P = new Path2D();
+  const M = (x, y) => { const q = tp(p.bone, x, y, pose); return [ox + q[0] * S, oy + q[1] * S]; };
+  if (s[0] === 'e') { const c = M(s[1], s[2]); const r = p.bone === 'armF' ? pose.rotF || 0 : p.bone === 'armB' ? pose.rotB || 0 : 0; P.ellipse(c[0], c[1], Math.max(0.3, s[3] * S), Math.max(0.3, s[4] * S), r, 0, Math.PI * 2); return P; }
+  const pts = s[0] === 'r' ? [s[1], s[2], s[1] + s[3], s[2], s[1] + s[3], s[2] + s[4], s[1], s[2] + s[4]] : s.slice(2);
+  const Q = []; for (let i = 0; i < pts.length; i += 2) Q.push(M(pts[i], pts[i + 1]));
+  if (s[0] === 'p' && s[1]) { const n = Q.length, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; const m0 = mid(Q[n - 1], Q[0]); P.moveTo(m0[0], m0[1]); for (let i = 0; i < n; i++) { const a = Q[i], m = mid(a, Q[(i + 1) % n]); P.quadraticCurveTo(a[0], a[1], m[0], m[1]); } }
+  else { P.moveTo(Q[0][0], Q[0][1]); for (let i = 1; i < Q.length; i++) P.lineTo(Q[i][0], Q[i][1]); }
+  P.closePath(); return P;
+}
+
+// ================= Hi-bit baker: shapes -> 4-tone shaded pixels with selective outline =================
+const scratch = document.createElement('canvas'), sg = scratch.getContext('2d', { willReadFrequently: true });
+const BOX = [-20, -76, 22, 1];
+function bake(parts, pose, S) {
+  const W = Math.ceil((BOX[2] - BOX[0]) * S) + 6, H = Math.ceil((BOX[3] - BOX[1]) * S) + 6;
+  const ox = Math.round(-BOX[0] * S) + 3, oy = Math.round(-BOX[1] * S) + 3;
+  scratch.width = W; scratch.height = H;
+  const n = parts.length, masks = [], boxes = [], lights = [];
+  for (let i = 0; i < n; i++) {
+    sg.clearRect(0, 0, W, H); sg.fillStyle = '#fff'; sg.fill(partPath(parts[i], pose, S, ox, oy));
+    const d = sg.getImageData(0, 0, W, H).data, m = new Uint8Array(W * H);
+    let x0 = W, y0 = H, x1 = -1, y1 = -1; const thin = Math.min(parts[i].bw, parts[i].bh) * S < 2;
+    for (let p = 0; p < W * H; p++) if (d[p * 4 + 3] >= (thin ? 64 : 120)) { m[p] = 1; const x = p % W, y = (p / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    masks.push(m); boxes.push([x0, y0, x1, y1]);
+    if (parts[i].mat && parts[i].mat.light && x1 >= 0) lights.push({ x: (x0 + x1 + 1) / 2, y: (y0 + y1 + 1) / 2, rgb: parts[i].mat.light, pulse: parts[i].mat.pulse, size: Math.max(x1 - x0, y1 - y0) + 1 });
+  }
+  const own = new Int16Array(W * H).fill(-1);
+  for (let i = 0; i < n; i++) { const m = masks[i]; for (let p = 0; p < W * H; p++) if (m[p]) own[p] = i; }
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const og = out.getContext('2d'), img = og.createImageData(W, H), od = img.data;
+  const put = (p, hex) => { const v = parseInt(hex.slice(1), 16); od[p * 4] = v >> 16 & 255; od[p * 4 + 1] = v >> 8 & 255; od[p * 4 + 2] = v & 255; od[p * 4 + 3] = 255; };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const p = y * W + x, i = own[p];
+    if (i < 0) {
+      let nb = -1, lit = false;
+      if (x + 1 < W && own[p + 1] >= 0) { nb = own[p + 1]; lit = true; } else if (y + 1 < H && own[p + W] >= 0) { nb = own[p + W]; lit = true; } else if (x > 0 && own[p - 1] >= 0) nb = own[p - 1]; else if (y > 0 && own[p - W] >= 0) nb = own[p - W];
+      if (nb >= 0) { const r = parts[nb].mat; put(p, lit && !r.emit ? r[3] : INK); }
+      continue;
+    }
+    const mat = parts[i].mat;
+    if (mat.emit) { put(p, mat.emit); continue; }
+    const m = masks[i], b = boxes[i], mn = Math.min(b[2] - b[0] + 1, b[3] - b[1] + 1);
+    const inside = (xx, yy) => xx >= 0 && yy >= 0 && xx < W && yy < H && m[yy * W + xx] === 1;
+    const hd = Math.max(1, Math.round(mn * 0.14)), sd = Math.max(1, Math.round(mn * 0.3));
+    let t = 1;
+    if (!inside(x - hd, y - hd)) t = 0;
+    if (!inside(x + sd, y + sd)) t = 2; else if (!inside(x + sd + 1, y + sd + 1) && ((x + y) & 1)) t = 2;
+    if (t === 2 && !inside(x + 1, y + 1)) t = 3;
+    if (t === 0 && mn < 3) t = 1;
+    const above = y > 0 ? own[p - W] : -1;
+    if (above > i && !parts[above].mat.emit && parts[above].z >= parts[i].z) t = Math.min(3, t + 1);
+    // interior separation: a darker line where this part meets a lower part on its right/bottom edge
+    if (t < 3) { const r = x + 1 < W ? own[p + 1] : -1, dn = y + 1 < H ? own[p + W] : -1; if ((r >= 0 && r < i && parts[r].z < parts[i].z) || (dn >= 0 && dn < i && parts[dn].z < parts[i].z)) t = Math.max(t, 2); }
+    put(p, mat[t]);
+  }
+  og.putImageData(img, 0, 0);
+  return { c: out, ox, oy, lights };
+}
+
+// ================= poses and animation =================
+const ANIMS = {
+  slash: { wind: { rotF: -2.1, up: 0.5, lean: -0.8 }, strike: { rotF: 0.9, dx: 3, lean: 1.2 } },
+  cast: { wind: { rotF: -0.5, rotB: -0.3, up: 0.3 }, strike: { rotF: 0.45, dx: 1, lean: 0.8 } },
+  shoot: { wind: { rotF: -0.12, lean: -0.6, drawn: true }, strike: { rotF: -0.05, lean: 0.4 } },
+  swing: { wind: { rotF: -1.1, lean: -0.5 }, strike: { rotF: 1.2, dx: 1.5, lean: 0.8 } }
+};
+function framePose(spec, f) {
+  const base = { up: 0, rotF: spec.idleRot || 0, rotB: 0, lean: 0, dx: 0 };
+  if (f === 'idle1') base.up = 1 / spec.S;
+  if (f === 'wind' || f === 'strike') Object.assign(base, ANIMS[spec.anim][f]);
+  return base;
+}
+function bakeSet(spec) {
+  const set = {};
+  for (const f of ['idle0', 'idle1', 'wind', 'strike']) {
+    const pose = framePose(spec, f);
+    set[f] = bake(assemble(spec, pose.drawn ? 'drawn' : 'idle'), pose, spec.S);
+  }
+  return set;
+}
+
+// ================= hero state + UI =================
+const H = { cls: 'warden', skin: 1, hair: 0, gear: {} };
+function defaultGear() { const g = {}; for (const s in SLOT_NAMES) g[s] = { tier: 3, rar: s === 'weapon' ? 2 : s === 'charm' ? 2 : 1 }; return g; }
+H.gear = defaultGear();
+function heroSpec(cls, gearState, S, skin, hair) {
+  const C = CLASSES[cls];
+  const gear = [];
+  for (const s in SLOT_NAMES) { const st = gearState[s]; if (st && st.tier) gear.push({ key: C.slots[s], tier: st.tier, rar: st.rar }); }
+  const hasLantern = gearState.off && gearState.off.tier && cls === 'lanternmage';
+  if (!hasLantern && cls !== 'chaplain') gear.push({ key: 'beltLantern', tier: 1, rar: 0 });
+  return { skin: SKINS[skin ?? H.skin], hair: HAIRS[hair ?? H.hair], dye: C.dye, hairStyle: C.hairStyle, gear, S, anim: C.anim, idleRot: C.idle.rotF };
+}
+let heroSet = null, heroLabel = '';
+function rebuildHero() {
+  heroSet = bakeSet(heroSpec(H.cls, H.gear, 1));
+  const C = CLASSES[H.cls];
+  $('cap').innerHTML = '';
+  const b = document.createElement('span'); b.textContent = 'Wanderer the ' + C.name;
+  const sm = document.createElement('small');
+  const parts = []; for (const s in SLOT_NAMES) { const st = H.gear[s]; if (st.tier) parts.push(itemLabel(C.slots[s], st.tier, st.rar)); }
+  sm.textContent = parts.length ? parts.length + ' of 5 slots equipped' : 'No gear: base outfit';
+  $('cap').append(b, sm);
+}
+function itemLabel(key, tier, rar) { const it = ITEMS[key]; const f = FAM[it.fam]; return f.names[tier - 1] + ' ' + it.name + (rar ? ' (' + RARITY[rar].n + ')' : ''); }
+const $ = id => document.getElementById(id);
+function buildUI() {
+  const cls = $('classes'); cls.textContent = '';
+  for (const k in CLASSES) { const b = document.createElement('button'); b.type = 'button'; b.className = 'cls'; b.textContent = CLASSES[k].name; b.setAttribute('aria-pressed', k === H.cls); b.onclick = () => { H.cls = k; buildUI(); rebuildHero(); }; cls.appendChild(b); }
+  const slots = $('slots'); slots.textContent = '';
+  const C = CLASSES[H.cls];
+  for (const s in SLOT_NAMES) {
+    const st = H.gear[s], row = document.createElement('div'); row.className = 'slot';
+    const nm = document.createElement('div'); nm.className = 'nm';
+    const b = document.createElement('b'); b.textContent = SLOT_NAMES[s];
+    const sm = document.createElement('small'); sm.textContent = st.tier ? itemLabel(C.slots[s], st.tier, st.rar) : 'Empty (' + ITEMS[C.slots[s]].name + ')';
+    nm.append(b, sm);
+    const seg = document.createElement('div'); seg.className = 'seg'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', SLOT_NAMES[s] + ' tier');
+    for (const t of [0, 1, 3, 5]) { const x = document.createElement('button'); x.type = 'button'; x.textContent = t ? 'T' + t : '-'; x.setAttribute('aria-label', t ? 'Tier ' + t : 'Empty'); x.setAttribute('aria-pressed', st.tier === t); x.onclick = () => { st.tier = t; buildUI(); rebuildHero(); }; seg.appendChild(x); }
+    const r = document.createElement('button'); r.type = 'button'; r.className = 'rar'; r.textContent = RARITY[st.rar].k; r.style.color = RARITY[st.rar].col; r.setAttribute('aria-label', 'Rarity: ' + RARITY[st.rar].n + '. Tap to change.');
+    r.onclick = () => { st.rar = (st.rar + 1) % 4; buildUI(); rebuildHero(); };
+    row.append(nm, seg, r); slots.appendChild(row);
+  }
+  const looks = $('looks'); looks.textContent = '';
+  looks.append('Skin');
+  SKINS.forEach((c, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.style.background = c; b.setAttribute('aria-label', 'Skin tone ' + (i + 1)); b.setAttribute('aria-pressed', H.skin === i); b.onclick = () => { H.skin = i; buildUI(); rebuildHero(); }; looks.appendChild(b); });
+  looks.append(' Hair');
+  HAIRS.forEach((c, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.style.background = c; b.setAttribute('aria-label', 'Hair colour ' + (i + 1)); b.setAttribute('aria-pressed', H.hair === i); b.onclick = () => { H.hair = i; buildUI(); rebuildHero(); }; looks.appendChild(b); });
+}
+let heroAtkT = -9;
+$('atk').onclick = () => { heroAtkT = T; };
+
+// ================= companions (fixed outfit + role weapon + trinket) =================
+const COMPANIONS = [
+  { name: 'Tobin', title: 'Hedge Squire', S: 0.92, skin: SKINS[0], hair: '#6A3A22', dye: '#5E7A3A', hairStyle: 'short', anim: 'slash', idleRot: 0.25,
+    gear: [{ key: 'shield', tier: 1, rar: 0 }, { key: 'warblade', tier: 1, rar: 0 }, { key: 'greathelm', tier: 1, rar: 0, skip: true }],
+    extra: [
+      [3, 'up', 'moss', ['p', 1, -6.6, -48.6, 6.2, -48.6, 6.5, -43, 4.8, -34.5, 6, -24, -6, -24, -4.8, -34.5, -6.5, -43]],
+      [3, 'up', 'leather', ['r', -5.6, -33, 11.2, 2]],
+      [4, 'head', 'iron', ['p', 1, -6.6, -58.6, 7.4, -58.6, 5, -60, 3.6, -63.4, -2.4, -63.4, -4, -60]],
+      [3, 'up', 'gold', ['e', 4.4, -30.6, 1.1, 1.3]]
+    ] },
+  { name: 'Wren', title: 'Batwing Archer', S: 0.96, skin: SKINS[1], hair: '#2A1C18', dye: '#3E6B42', hairStyle: 'short', anim: 'shoot', idleRot: 0.05,
+    gear: [{ key: 'bow', tier: 2, rar: 1 }, { key: 'quiver', tier: 2, rar: 0 }, { key: 'hood', tier: 4, rar: 0 }, { key: 'leathers', tier: 2, rar: 0 }],
+    extra: [[0, 'up', 'scarf', ['p', 1, -2, -51, 2, -51, -6, -44, -13, -40, -12, -43, -6, -47]], [3, 'up', 'bone', ['r', 3, -31.4, 1, 2.6]]] },
+  { name: 'Hesketh', title: 'the Lamplighter', S: 0.98, skin: SKINS[0], hair: '#D8D2C8', dye: '#6E6878', hairStyle: 'short', beard: true, anim: 'swing', idleRot: -0.05,
+    gear: [{ key: 'tome', tier: 1, rar: 0 }],
+    extra: [
+      [3, 'up', 'coatgrey', ['p', 1, -7, -49, 6.4, -49, 7, -42, 6, -30, 8.4, -6, -8.6, -6, -6.6, -30, -7, -42]],
+      [3, 'up', 'amberscarf', ['p', 0, -2.4, -50, 4.6, -50, 1.4, -42]],
+      [4, 'head', 'capgrey', ['e', 0.9, -61.4, 6.4, 1.8]], [4, 'head', 'capgrey', ['e', 0.4, -62.8, 4.6, 2.4]],
+      [7, 'armF', 'wood1', ['r', 5.8, -72, 1.5, 70]], [7, 'armF', 'gold', ['r', 5.8, -73.4, 6, 1.4]], [7, 'armF', 'gold', ['r', 9.4, -73, 3.8, 5.4]], [7, 'armF', 'coal', ['e', 11.3, -70.4, 1.1, 1.7]],
+      [3, 'up', 'glass', ['r', 3.6, -30.6, 2, 3.2]]
+    ] },
+  { name: 'Elowen', title: 'the Last Lantern', S: 1, skin: SKINS[0], hair: '#C8A060', dye: '#E6DCC4', hairStyle: 'long', anim: 'cast', idleRot: -0.35,
+    gear: [{ key: 'tome', tier: 3, rar: 1 }, { key: 'hood', tier: 3, rar: 1, cream: true }],
+    extra: [
+      [0, 'head', 'halo', ['p', 0, -4, -66, 6, -66, 6, -65, -4, -65]],
+      [3, 'up', 'cream', ['p', 1, -6.6, -48.8, 6.2, -48.8, 6.6, -42, 5, -34, 7.6, -10, 8.8, -0.6, -8.2, -0.6, -7, -10, -5, -34, -6.6, -42]],
+      [3, 'up', 'gold', ['p', 0, -8.3, -3, 8.9, -3, 9, -0.6, -8.4, -0.6]], [3, 'up', 'gold', ['r', -0.2, -47, 1.4, 44]],
+      [6, 'armF', 'cream', ['p', 1, 3.6, -48.9, 7.6, -48.9, 8, -38, 8.8, -30.6, 4.2, -30.6]],
+      [7, 'armF', 'iron', ['r', 6.2, -28.6, 0.8, 3]], [7, 'armF', 'iron', ['p', 0, 3.6, -25.6, 9.6, -25.6, 8.6, -24, 4.6, -24]], [7, 'armF', 'lamp', ['r', 4.4, -24, 4.4, 6]], [7, 'armF', 'iron', ['r', 3.6, -18, 6, 1.2]],
+      [3, 'up', 'wick', ['e', 3.6, -31.4, 0.9, 0.9]]
+    ] }
+];
+FIXED.coatgrey = ramp('#6E6878'); FIXED.amberscarf = ramp('#E09A3E'); FIXED.capgrey = ramp('#4A4652'); FIXED.wood1 = ramp('#7A5634'); FIXED.glass = { emit: '#FFD27A', light: '255,200,120' }; FIXED.wick = { emit: '#FFE9A8', light: '255,220,150' };
+function companionSpec(c) {
+  const gear = c.gear.filter(g => !g.skip).map(g => ({ key: g.key, tier: g.tier, rar: g.rar }));
+  const spec = { skin: c.skin, hair: c.hair, dye: c.dye, hairStyle: c.hairStyle, beard: c.beard, gear, S: c.S, anim: c.anim, idleRot: c.idleRot, extra: c.extra };
+  if (c.name === 'Elowen') { spec.gear = spec.gear.map(g => g.key === 'hood' ? { ...g, key: 'hoodCream' } : g); }
+  return spec;
+}
+ITEMS.hoodCream = { ...ITEMS.hood, fam: 'fibre', dye: '#EFE6D6', parts: ITEMS.hood.parts.filter(p => p[2] !== 'eyeLit') };
+
+// ================= stages =================
+function setupCanvas(cv) { const r = cv.getBoundingClientRect(); const D = Math.min(window.devicePixelRatio || 1, 2); cv.width = Math.round(r.width * D); cv.height = Math.round(r.height * D); return { W: r.width, H: r.height, D, g: cv.getContext('2d') }; }
+let PV = null, LU = null, lineupSets = null;
+function resizeAll() { PV = setupCanvas($('preview')); LU = setupCanvas($('lineup')); PV.bg = null; LU.bg = null; }
+function paintBG(st, gy) {
+  const c = document.createElement('canvas'); c.width = st.g.canvas.width; c.height = st.g.canvas.height; const g = c.getContext('2d'); g.scale(st.D, st.D);
+  const gr = g.createLinearGradient(0, 0, 0, gy); gr.addColorStop(0, '#08121A'); gr.addColorStop(1, '#23485A'); g.fillStyle = gr; g.fillRect(0, 0, st.W, st.H);
+  g.fillStyle = '#12293A'; g.beginPath(); g.moveTo(0, gy); for (let x = 0; x <= st.W; x += 4) g.lineTo(x, gy - 26 + Math.sin(x * 0.02) * 6 + Math.sin(x * 0.05) * 3); g.lineTo(st.W, gy); g.fill();
+  const gg = g.createLinearGradient(0, gy, 0, st.H); gg.addColorStop(0, '#16303A'); gg.addColorStop(1, '#0A141A'); g.fillStyle = gg; g.fillRect(0, gy, st.W, st.H - gy);
+  g.fillStyle = '#2F5A55'; g.fillRect(0, gy, st.W, 1);
+  return c;
+}
+function glow(g, x, y, r, rgb, a) { const gr = g.createRadialGradient(x, y, 0.5, x, y, r); gr.addColorStop(0, `rgba(${rgb},${a})`); gr.addColorStop(0.35, `rgba(${rgb},${a * 0.35})`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+function frameFor(t0, T, phase) {
+  const a = T - t0;
+  if (a >= 0 && a < 0.25) return 'wind';
+  if (a >= 0.25 && a < 0.55) return 'strike';
+  return reduced ? 'idle0' : (Math.floor(T * 1.6 + phase) % 2 ? 'idle1' : 'idle0');
+}
+// draw a baked sprite with feet at (x, y) in CSS px, scale z; returns light list in CSS px
+function drawSprite(g, s, x, y, z) { const dx = Math.round(x - s.ox * z), dy = Math.round(y - s.oy * z); g.imageSmoothingEnabled = false; g.drawImage(s.c, dx, dy, s.c.width * z, s.c.height * z); return s.lights.map(l => ({ x: dx + l.x * z, y: dy + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z })); }
+function lightPass(g, lights, T, zoom) {
+  g.globalCompositeOperation = 'lighter';
+  const flick = reduced ? 0.9 : 0.8 + 0.2 * Math.sin(T * 13) * Math.sin(T * 7.3);
+  for (const l of lights) {
+    const pulse = l.pulse && !reduced ? 0.7 + 0.5 * Math.sin(T * 4) : 1;
+    const r = Math.min(Math.max(8, l.size * 3), 16 * zoom) * flick * pulse;
+    glow(g, l.x, l.y, r, l.rgb, 0.26 * pulse);
+    glow(g, l.x, l.y, r * 0.3, "255,250,230", 0.12 * pulse);
+    if (l.pulse && !reduced && Math.random() < 0.12) sparks.push({ x: l.x + (Math.random() - 0.5) * 6 * zoom, y: l.y, vy: -12 - Math.random() * 14, t: 0, rgb: l.rgb, z: zoom, g });
+  }
+  g.globalCompositeOperation = 'source-over';
+}
+let sparks = [];
+function drawSparks(g, dt, zoom) {
+  for (const s of sparks) if (s.g === g) { s.t += dt; s.y += s.vy * dt; g.globalAlpha = Math.max(0, 1 - s.t / 0.9); g.fillStyle = `rgb(${s.rgb})`; g.fillRect(Math.round(s.x), Math.round(s.y), Math.max(1, s.z), Math.max(1, s.z)); }
+  g.globalAlpha = 1; sparks = sparks.filter(s => s.t < 0.9);
+}
+function vignette(g, W, H) { const v = g.createRadialGradient(W / 2, H * 0.55, H * 0.3, W / 2, H * 0.55, W * 0.75); v.addColorStop(0, 'rgba(6,4,10,0)'); v.addColorStop(1, 'rgba(6,4,10,.55)'); g.fillStyle = v; g.fillRect(0, 0, W, H); }
+
+let T = 0, last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  // preview
+  if (PV && heroSet) {
+    const { g, W, H: Hh, D } = PV; g.setTransform(D, 0, 0, D, 0, 0);
+    const gy = Hh - 34; if (!PV.bg) PV.bg = paintBG(PV, gy);
+    g.drawImage(PV.bg, 0, 0, W, Hh);
+    const zoom = Math.max(2, Math.min(3, Math.floor((Hh - 50) / 78)));
+    g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(W / 2, gy + 1, 14 * zoom, 2.4 * zoom, 0, 0, 7); g.fill();
+    const f = frameFor(heroAtkT, T, 0);
+    const lights = drawSprite(g, heroSet[f], W / 2, gy, zoom);
+    drawSparks(g, dt, zoom); lightPass(g, lights, T, zoom); vignette(g, W, Hh);
+    if (T - heroAtkT > 2.5 && !reduced && Math.floor(T) % 5 === 0 && T - heroAtkT > 4.5) heroAtkT = T;
+  }
+  // lineup at battle scale (1 art px = 1 CSS px)
+  if (LU && lineupSets) {
+    const { g, W, H: Hh, D } = LU; g.setTransform(D, 0, 0, D, 0, 0);
+    const row1 = Math.round(Hh * 0.43), row2 = Hh - 22;
+    if (!LU.bg) LU.bg = paintBG(LU, row2 - 6);
+    g.drawImage(LU.bg, 0, 0, W, Hh);
+    const lights = [];
+    g.font = '600 10px "Pixelify Sans", monospace'; g.textAlign = 'center';
+    lineupSets.forEach((e, i) => {
+      const col = i % 4, row = i < 4 ? row1 : row2, x = Math.round(W * (0.14 + col * 0.24));
+      const t0 = 1 + i * 0.9 + Math.floor((T - 1 - i * 0.9) / 7.2) * 7.2;
+      const f = frameFor(t0, T, i * 0.7);
+      g.fillStyle = 'rgba(0,0,0,.45)'; g.beginPath(); g.ellipse(x, row + 1, 11, 2, 0, 0, 7); g.fill();
+      lights.push(...drawSprite(g, e.set[f], x, row, 1));
+      g.fillStyle = 'rgba(239,230,214,.85)'; g.fillText(e.label, x, row + 12);
+    });
+    drawSparks(g, dt, 1); lightPass(g, lights, T, 1); vignette(g, W, Hh);
+  }
+  requestAnimationFrame(loop);
+}
+
+function buildLineup() {
+  const full = s => { const g = {}; for (const k in SLOT_NAMES) g[k] = { tier: 3, rar: k === 'weapon' ? 2 : 1 }; return g; };
+  lineupSets = [];
+  for (const k in CLASSES) lineupSets.push({ label: CLASSES[k].name, set: bakeSet(heroSpec(k, full(), 1, 1, k === 'lanternmage' ? 3 : k === 'ranger' ? 1 : 0)) });
+  for (const c of COMPANIONS) lineupSets.push({ label: c.name, set: bakeSet(companionSpec(c)) });
+}
+
+resizeAll(); buildUI(); rebuildHero(); buildLineup();
+let rt = 0; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resizeAll, 150); });
+requestAnimationFrame(t => { last = t; loop(t); });
+</script>
