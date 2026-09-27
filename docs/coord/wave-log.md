@@ -207,3 +207,9 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   status chips (Guard, Blessing, Focus, Embers, buffs), boss "!" telegraph with a wind-up ring, a Glint
   sparkle, a 60px ability button with a cooldown sweep, and a HUD toggle (S.settings.hud). Stage C
   hooks to fill: unitHp(key), unitCd(key), bossTelegraph() (defaults in 55-party.js).
+- PERF merged: `node tools/perf.mjs` (full, ~7 min) and `--quick` (phone, ~40s); budget in
+  docs/design/perf.md. Phone fight fps 40-43 -> 49-54, Party first open 1.1s -> 0.4-0.5s; the scenery
+  vignette/fog is cached, frames bake lazily with idleTask, the next zone prewarms during boss fights,
+  and autosave is skipped while hidden. Behaviour fix: background tabs no longer eat away gains. Still
+  over budget on phones: Party/World tab first open, long tasks while fighting (70-ui ui()/uiFight
+  rewriting unchanged DOM 5x/s, setHp forcing layout per kill). PERF2 task launched for those hotspots.
