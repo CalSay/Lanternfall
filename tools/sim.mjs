@@ -4,6 +4,9 @@
 //   fight: fight only; auto-buys the best-value upgrade/companion, challenges bosses when ready.
 //   mixed: alternates 10 min fighting / 5 min gathering (best unlocked node for the weaker skill)
 //          and forges + equips gear whenever mats allow.
+//   --class warden|lanternmage|ranger|lightkeeper: choose the hero class at the start.
+//   --active: taps the stage every 0.5s and casts the class ability on cooldown.
+//             Without it, the game's own idle auto-play and auto-cast run.
 import { loadCore } from './lib/core.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
@@ -13,6 +16,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
 const policy = args.policy || 'fight';
 const hours = +(args.hours || 2), seed = +(args.seed || 1), every = +(args.every || 15);
 if (!['fight', 'mixed'].includes(policy)) { console.error('--policy must be fight or mixed'); process.exit(1); }
+const cls = args.class || null, active = !!args.active && args.active !== '0';
 
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
@@ -23,6 +27,7 @@ if (args['from-save']) {
   E('loadSave(); gearDirty(); spawn()');
 }
 E('S.amt = "1"');
+if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
 
 // Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
 function buyBest() {
@@ -79,12 +84,13 @@ function bestNode() {
 const gs = () => SLOTS.reduce((a, s) => { const it = fn.equipped(s); return a + (it ? fn.itemPower(it) : 0); }, 0);
 const fmt = n => n < 1e3 ? n.toFixed(0) : n < 1e6 ? (n / 1e3).toFixed(1) + 'K' : n < 1e9 ? (n / 1e6).toFixed(2) + 'M' : n.toExponential(2);
 const row = (a) => a.map((x, i) => String(x).padStart([6, 4, 5, 8, 8, 5, 15][i] || 6)).join(' ');
-console.log(`policy=${policy} hours=${hours} seed=${seed}`);
+console.log(`policy=${policy} hours=${hours} seed=${seed} class=${cls || 'none'} ${active ? 'active' : 'idle'}`);
 console.log(row(['time', 'lvl', 'zone', 'gold', 'dps', 'gear', 'mine/wood/smith']));
 const line = t => console.log(row([`${Math.floor(t / 3600)}h${String(Math.floor(t / 60) % 60).padStart(2, '0')}`, E('S.L'), `${E('S.zone')}/${E('S.maxZone')}`,
   fmt(E('S.gold')), fmt(fn.totalDps()), Math.round(gs()), `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`]));
 
-let bossTries = 0; fn.on('bossFail', () => bossTries++);
+let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
+const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; });
 const dt = 0.1, total = hours * 3600;
 let t = 0, nextLine = 0;
 for (let sec = 0; sec < total; sec++) {
@@ -96,8 +102,16 @@ for (let sec = 0; sec < total; sec++) {
     forgeGear();
   }
   if (sec % 5 === 0 && E('S.activity') === 'fight') { buyBest(); if (fn.bossReady() && E('totalDps() > failDps * 1.15')) fn.challenge(); }
-  for (let k = 0; k < 10; k++) fn.tick(dt);
+  for (let k = 0; k < 10; k++) {
+    if (active) {
+      if (k % 5 === 0) fn.playerTap({ x: 0.66, y: 0.5 });
+      if (cls) E('castAbility()');
+    }
+    fn.tick(dt);
+  }
   t += 1;
 }
 line(total);
+const zAt = s => { let z = 1; for (const [k, v] of Object.entries(reached)) if (v <= s && +k > z) z = +k; return z; };
+console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);

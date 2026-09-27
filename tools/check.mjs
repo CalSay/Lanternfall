@@ -80,6 +80,16 @@ try {
   assert(g3.eval('S.mastery && typeof S.mastery.zones === "object"'), 'mastery state registered');
   g3.eval("emit('kill', { mob: { key: 'slime0', boss: false }, zone: 1, gold: 1, ess: 0, tier: 1 })");
   assert(g3.eval('S.mastery.zones[1] === 1 && S.mastery.types.slime === 1'), 'kill increments mastery and bestiary');
+  // classes (55-party.js)
+  const g4 = loadCore({ seed: 2 });
+  assert(g4.eval('S.party.newGame === true && S.party.chosen === false'), 'new game flagged newGame');
+  assert(g4.eval('chooseClass("ranger", "Tess")') && g4.eval('S.party.cls === "ranger" && S.party.chosen && S.name === "Tess"'), 'class chosen');
+  assert(g4.eval('S.comp[0] === 1 && S.party.field[0] === "tobin"'), 'starter granted and fielded first');
+  for (let i = 0; i < 20; i++) g4.fn.tick(0.1);
+  assert(g4.eval('castAbility()') && g4.eval('S.party.abilityCd === HERO_CLASSES.ranger.ability.cd') && !g4.eval('castAbility()'), 'ability cast starts cooldown');
+  g4.fn.playerTap({ x: 0.6, y: 0.5 });
+  assert(g4.eval('mob.markUntil > 0'), 'class tap marks the mob');
+  assert(!g4.errors.length, 'no party handler errors' + (g4.errors.length ? ': ' + g4.errors[0] : ''));
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
 
 // ---- 3. fixture migration ----
@@ -94,6 +104,7 @@ try {
   assert(S.zz_feature && S.zz_feature.n === 0, 'registered feature field added to old save');
   assert(g.fn.equipped('helm') && g.fn.equipped('helm').u === 'echocowl', 'equipped unique still equipped');
   assert(Number.isFinite(g.fn.totalDps()) && g.fn.totalDps() > 0, 'dps finite for migrated save');
+  assert(g.eval('S.party.newGame === false && S.party.chosen === false && S.party.field.join() === "pip,wren,tobin"'), 'existing save fields its top 3 companions');
   // a pre-activity save (raiding flag) still migrates
   const legacy = { ...old }; delete legacy.activity; legacy.raiding = true;
   const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(legacy) }) });
