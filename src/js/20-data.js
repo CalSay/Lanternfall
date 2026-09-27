@@ -72,7 +72,7 @@ const UNIQ = {
 const ZONE_UNIQ = ['sproutblade', 'echocowl', 'rattlecharm', 'carapacepick', 'sporeheart', 'golemfist', 'wispaxe'];
 const RAID_UNIQ = ['wyrmscale', 'hollowcrown', 'colossuspick', 'hydraglass', 'eaterfang', 'tyrantaxe'];
 const BAG_MAX = 40;
-function itemColor(slot, t, u) { return u ? UNIQ[u].col : slot === 'charm' ? MAT.ess.col[t - 1] : MAT.ore.col[t - 1]; }
+function itemColor(slot, t, u) { return kindColor(slot, t, u); } // 41-items.js
 
 const COMPS = [
   { name: 'Squire', dps: 2, base: 15, blurb: 'Carries your spare sword and swings it too.', col: '#8C6A43', helm: '#6B4A2E' },

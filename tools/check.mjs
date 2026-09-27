@@ -259,5 +259,144 @@ try {
   }
 } catch (e) { fail('roster crashed: ' + (e.stack || e)); }
 
+// ---- 6. items core (41-items.js, K4; gathering spec 7 / G11) ----
+console.log('items');
+try {
+  // Measured with the pre-K4 code (commit 5c6c186) on each fixture right after load.
+  // gear() keys not listed were 0 (tap 1). K4 must reproduce these exactly.
+  const BASE = {
+    'save-v2.json': { gear: { might: 65.52, crit: 3.84, critMult: 0.16, tap: 1, echo: 0.5, score: 97.52 }, hero: 1429.9470853022208, total: 3121.288117110944 },
+    'save-mid-v2.json': { gear: { might: 65.52, crit: 3.84, critMult: 0.16, gold: 12.42, ess: 4.6575, mineSpd: 16.8, oreDbl: 2.8000000000000003, tap: 1, echo: 0.5, score: 141.045 }, hero: 7767.596499399474, total: 21767.801063696992 },
+    'save-v2-late.json': { gear: { might: 760, crit: 44.943999999999996, critMult: 1.456, gold: 334.08, ess: 125.27999999999999, mineSpd: 353.28, woodSpd: 90.72000000000001, oreDbl: 58.879999999999995, woodDbl: 15.120000000000003, tap: 1, oreExtra: 0.25, score: 2208.7999999999997 }, hero: 114042445.98411426, total: 195938176.23101446 },
+    'save-a-v1.json': { gear: { might: 65.52, crit: 3.84, critMult: 0.16, tap: 1, echo: 0.5, score: 97.52 }, hero: 432.1058201711884, total: 3964.2446024889095 }
+  };
+  const OLD_KEYS = ['might', 'crit', 'critMult', 'gold', 'ess', 'mineSpd', 'woodSpd', 'oreDbl', 'woodDbl', 'party', 'tap', 'echo', 'offline', 'raid', 'essExtra', 'oreExtra', 'woodExtra', 'gather', 'score'];
+  const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const gearDiff = (gs, want) => OLD_KEYS.map(k => [k, gs[k], want[k] !== undefined ? want[k] : k === 'tap' ? 1 : 0]).filter(([, a, b]) => a !== b).map(([k, a, b]) => `${k} ${a} != ${b}`);
+  for (const [f, want] of Object.entries(BASE)) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const old = JSON.parse(raw);
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    const S = JSON.parse(JSON.stringify(g.eval('S')));
+    const matsOk = Object.keys(old.mats).every(k => JSON.stringify(old.mats[k]) === JSON.stringify(S.mats[k])) && ['crystal', 'fibre', 'herb', 'hide'].every(k => JSON.stringify(S.mats[k]) === '[0,0,0,0,0]');
+    const itemsOk = !deepDiff(old.items, S.items) && S.items.map(i => i.id).join() === old.items.map(i => i.id).join();
+    const eqOk = Object.keys(old.equip).every(k => S.equip[k] === old.equip[k]) && ['off', 'body', 'sickle'].every(k => S.equip[k] === null);
+    const skOk = ['forage', 'bench', 'loom', 'ench'].every(k => S.skills[k] && S.skills[k].lv === 1 && S.skills[k].xp === 0) && ['mine', 'wood', 'smith'].every(k => !deepDiff(old.skills[k], S.skills[k]));
+    assert(matsOk && itemsOk && eqOk && skOk, `${f}: materials, ${S.items.length} items, ids, equip and skills identical after load (new ones empty)`);
+    const gd = gearDiff(g.fn.gear(), want.gear);
+    assert(!gd.length, `${f}: gear() exactly equal to pre-K4` + (gd.length ? ': ' + gd.slice(0, 3).join('; ') : ''));
+    const hd = g.fn.heroDps(), td = g.fn.totalDps();
+    assert(hd === want.hero && td === want.total, `${f}: heroDps ${hd} and totalDps ${td} exactly equal to pre-K4`);
+    assert(g.eval('gear().attack === 0 && gear().spell === 0'), `${f}: no new live stats on old gear`);
+    // every equipped item fits its position for every class, and gear() does not depend on the class
+    const fitBad = [];
+    for (const cls of CLASSES.concat('any')) {
+      for (const [pos, id] of Object.entries(S.equip)) if (id != null && !g.eval(`fits(itemById(${id}), ${JSON.stringify(pos)}, ${JSON.stringify(cls)})`)) fitBad.push(`${pos}#${id} as ${cls}`);
+      g.eval(`S.party.cls = ${cls === 'any' ? 'null' : JSON.stringify(cls)}; gearDirty()`);
+      const d = gearDiff(g.fn.gear(), want.gear); if (d.length) fitBad.push(`gear as ${cls}: ${d[0]}`);
+    }
+    g.eval(`S.party.cls = ${JSON.stringify(S.party.cls)}; gearDirty()`);
+    assert(!fitBad.length, `${f}: equipped items fit for every class` + (fitBad.length ? ': ' + fitBad.slice(0, 3).join('; ') : ''));
+    assert(g.eval('S.items.every(i => !("a" in i) && !("mw" in i) && itemName(i) && itemColor(i.slot, i.t, i.u))'), `${f}: old items gain no fields and keep names and colours`);
+    // load -> save -> load loses nothing
+    g.fn.save();
+    const saved = g.storage.get(KEY);
+    const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
+    const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
+    assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === want.total && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
+  }
+
+  // an old save over the bag limit keeps every item on load
+  {
+    const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
+    let id = old.nextId; for (let i = 0; i < 70; i++) old.items.push({ id: id++, slot: 'charm', t: 1, r: 'common', plus: 0 });
+    old.nextId = id;
+    const g = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
+    assert(g.eval('S.items.length') === old.items.length && g.eval('bagCount()') === old.items.length - 2 && g.eval('bagFull()'), `loading ${old.items.length} items deletes none; equipped ones are not in the bag`);
+  }
+
+  // affix rolls: deterministic under the seeded rng, distinct lines, within ranges
+  {
+    const g = loadCore({ seed: 7 });
+    const r = g.eval(`(() => {
+      const bad = [], R = ['common', 'uncommon', 'rare', 'epic'];
+      const roll = seed => { const rnd = rng(seed), out = []; for (const k of Object.keys(CRAFT_KINDS)) for (const r of R) for (const ro of [undefined, 'tank', 'striker', 'caster', 'support']) out.push(rollAffixes(k, r, 2, ro, rnd)); return out; };
+      if (JSON.stringify(roll(11)) !== JSON.stringify(roll(11))) bad.push('not deterministic');
+      if (JSON.stringify(roll(11)) === JSON.stringify(roll(12))) bad.push('seed ignored');
+      const rnd = rng(5);
+      for (const [k, d] of Object.entries(CRAFT_KINDS)) for (const r of R) for (let n = 0; n < 20; n++) {
+        const role = d.role === 'any' ? ['tank', 'striker', 'caster', 'support'][n % 4] : undefined;
+        const a = rollAffixes(k, r, 1 + n % 5, role, rnd), pool = craftAffixPool(k, role);
+        const want = Math.min(craftAffixLines(r, null), pool.length);
+        if (a.length !== want) bad.push(k + ' ' + r + ' has ' + a.length + ' lines, want ' + want);
+        if (new Set(a.map(l => l[0])).size !== a.length) bad.push(k + ' duplicate affix');
+        if (a.some(([id, q]) => !pool.includes(id) || !(q >= 0 && q <= 1))) bad.push(k + ' affix out of pool or range');
+        if (!d.role && a.length) bad.push(k + ' should roll nothing');
+        const it = { id: -1, slot: k, t: 1 + n % 5, r, plus: n % 11, a, mw: n % 3 ? undefined : n % 7 };
+        const p = itemPower(it), lines = itemLines(it);
+        let j = craftBaseLines(k, p).length;
+        for (const [id] of a) {
+          const lo = craftAffixValue(id, p, 0), hi = craftAffixValue(id, p, 1);
+          lo.forEach(([s, v], i) => { const [ls, lv] = lines[j++]; if (ls !== s || lv < v - 1e-9 || lv > hi[i][1] + 1e-9) bad.push(k + ' ' + s + ' value out of range'); });
+        }
+      }
+      return bad;
+    })()`);
+    assert(!r.length, 'affix rolls deterministic, distinct and within range' + (r.length ? ': ' + [...new Set(r)].slice(0, 4).join('; ') : ''));
+    // Reforge: never duplicates a stat, never touches mw, cost rises
+    const rf = g.eval(`(() => {
+      const bad = [], rnd = rng(9);
+      for (const k of ['warblade', 'bow', 'staff', 'tome', 'trinket', 'plate']) for (const r of ['common', 'rare', 'epic']) {
+        let it = newItem(k, 3, r, { role: k === 'trinket' ? 'caster' : undefined, mw: 3, rnd });
+        const n0 = it.a.length; let last = 0;
+        for (let i = 0; i < 60; i++) {
+          const idx = i % it.a.length, res = reforgeLine(it, idx, rnd);
+          if (!res) { bad.push(k + ' reforge refused'); break; }
+          if (res.cost.gold <= last) bad.push(k + ' cost does not rise'); last = res.cost.gold;
+          if (res.a.some((l, j) => j !== idx && (l[0] !== it.a[j][0] || l[1] !== it.a[j][1]))) bad.push(k + ' touched another line');
+          it = Object.assign({}, it, { a: res.a, rf: res.rf });
+          if (new Set(it.a.map(l => l[0])).size !== it.a.length) bad.push(k + ' duplicate stat after reforge');
+          if (it.mw !== 3 || it.a.length !== n0) bad.push(k + ' mw or line count changed');
+          if (!craftAffixPool(k, it.ro).includes(res.line[0])) bad.push(k + ' reforged out of pool');
+        }
+      }
+      if (reforgeLine({ slot: 'charm', t: 1, r: 'rare', plus: 0 }, 0) !== null) bad.push('reforged an item with no affixes');
+      return bad;
+    })()`);
+    assert(!rf.length, 'reforge keeps lines distinct, leaves mw alone, cost rises per reforge' + (rf.length ? ': ' + [...new Set(rf)].slice(0, 4).join('; ') : ''));
+  }
+
+  // new positions, class fits, attack feeds hero damage, companion gear, trophy gate
+  {
+    const g = loadCore({ seed: 8 });
+    const E = s => g.eval(s);
+    E('chooseClass("ranger")');
+    const d0 = g.fn.heroDps();
+    E('S.items.push(newItem("bow", 1, "rare", { rnd: rng(1) }), newItem("quiver", 1, "common", { rnd: rng(2) }), newItem("warblade", 1, "common"), newItem("leathers", 1, "epic", { mw: 0 }))');
+    const [bow, quiver, blade, leath] = E('S.items.map(i => i.id)');
+    assert(E(`equipItem(${bow}) && equipItem(${quiver}) && !equipItem(${blade}) && equipItem(${leath}, 'body')`) && E(`S.equip.weapon === ${bow} && S.equip.off === ${quiver} && S.equip.body === ${leath}`), 'Ranger wears Bow, Quiver, Leathers; not a Warblade');
+    const gs = E('gear()'), want = E(`(() => { const s = {}; for (const id of [${bow}, ${quiver}, ${leath}]) for (const [k, v] of itemLines(itemById(id))) s[k] = (s[k] || 0) + v; return s; })()`);
+    assert(Object.entries(want).every(([k, v]) => Math.abs(gs[k] - v) < 1e-9) && gs.hp > 0, 'gear() adds base, affix and Masterwork lines over the new positions');
+    assert(g.fn.heroDps() > d0, `class gear raises hero dps (${d0.toFixed(1)} -> ${g.fn.heroDps().toFixed(1)})`);
+    E('S.party.cls = "warden"; gearDirty()');
+    assert(E('gear().might === 0 && gear().score === 0'), 'gear that no longer fits the class is ignored');
+    E('S.party.cls = "ranger"; gearDirty()');
+    assert(E(`bagCount() === 1 && isEquipped(${bow})`), 'equipped items do not count towards the bag');
+    // companion gear (wpn/trk): Tobin is the Ranger's starter tank
+    E('S.items.push(newItem("shield", 2, "rare"), newItem("staff", 2, "rare"), newItem("trinket", 2, "uncommon", { role: "tank" }))');
+    const [sh, st, tk] = E('S.items.slice(-3).map(i => i.id)');
+    E(`charRec("tobin").wpn = ${sh}; charRec("tobin").trk = ${tk}`);
+    const cg = E('charGear("tobin")');
+    assert(cg.hp > 0 && cg.haste > 0 && cg.score > 0 && E(`bagCount() === 2 && isEquipped(${tk})`), 'charGear reads wpn/trk; companion-equipped items leave the bag');
+    E(`charRec("tobin").wpn = ${st}`);
+    assert(E('charGear("tobin").score') === E(`itemPower(itemById(${tk}))`), 'a Staff does not fit a tank companion');
+    assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && fits("weapon", "weapon", "lightkeeper") && fits("helm", "helm", "ranger") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character and legacy rules');
+    assert(E('upgradeCost({ slot: "bow", t: 1, r: "common", plus: 7 }).troph === 1 && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 6 })) && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 10 }))'), 'upgrades to +8, +9 and +10 name a Trophy');
+    assert(E('itemName(newItem("bow", 2, "rare")) === "Yew Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
+    assert(Object.keys(E('newItem("weapon", 1, "common")')).join() === 'id,slot,t,r,plus', 'legacy forge items carry no new fields');
+    assert(!g.errors.length, 'no items handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+} catch (e) { fail('items crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
