@@ -16,3 +16,10 @@
   21-stories.js; preview prototypes/roster.html. Grenna/Anselm/Vesper wield maul/handbell/lute as their
   role weapons (brief wins over the generic shield/tome rule). Polish backlog: shared skin ramp shades
   faces very red at 1x; Vesper's lute body hidden; Corvin needs more bone-white.
+
+## Art direction reset (owner feedback, 2026-09-27)
+
+Owner dislikes the current character art: "too thin and tall", clothing/armour "doesn't feel right",
+maybe the overall style. Art work is paused. A style study (A chibi ~3 heads, B 16-bit JRPG ~4-4.5,
+C sturdy storybook ~5, D art director's wildcard) with redesigned layered costumes goes to the owner
+as a phone-viewable page; the pick then drives a conversion wave. Logic work is unaffected.
