@@ -12,9 +12,14 @@ function showToast(msg, kind, icon) {
   while (box.children.length > 3) box.firstChild.remove();
   setTimeout(() => t.remove(), kind === 'loot' ? 6000 : 4200);
 }
+// Updates the price in place. Rebuilding the spans on every ui() tick removed the element under the
+// player's finger, and the browser then dropped the click (the upgrade buttons felt unresponsive).
 function setPrice(btn, cost, ember) {
-  const p = btn.querySelector('.price'); p.textContent = '';
-  p.append(el('span', 'ico ' + (ember ? 'ember' : 'gold')), el('span', null, isFinite(cost) ? fmt(cost) : 'Max'));
+  const p = btn.querySelector('.price'), txt = isFinite(cost) ? fmt(cost) : 'Max', cls = 'ico ' + (ember ? 'ember' : 'gold');
+  let ico = p.firstElementChild, val = ico && ico.nextElementSibling;
+  if (!val) { p.textContent = ''; ico = el('span', cls); val = el('span'); p.append(ico, val); }
+  if (ico.className !== cls) ico.className = cls;
+  if (val.textContent !== txt) val.textContent = txt;
 }
 function icTile(url, frame, extraCls) {
   const d = el('div', 'ic' + (frame ? ' f-' + frame : '') + (extraCls ? ' ' + extraCls : ''));
