@@ -229,3 +229,10 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   Every tab opens under 150ms on the throttled phone; ui() p95 about 3.3ms. Still over budget on phones:
   steady-fight frame gap (the canvas raster: 63-scenery scales 5 parallax layers per frame; hotspot 7),
   the boss-kill spike (hotspot 10) and first frame on the late save (hotspot 11). PERF3 launched.
+- Deepwell merged (57d-deepwell.js: unlock at zone 20 + Hearth 3, a Deepwell view on the Fight tab, 37
+  boons plus 6 live sets (9 [C] boons wait for party combat), Oil, landings, Marks shop, 12-rule weekly
+  Trial). Coordinator APPROVED the scaling change: foe HP anchors on "a foe your party kills in 3.75s
+  at run start" with 0.7 zones per floor (runs 8-12 min, about 75 Marks). Follow-ups: D8 miss (Deep Lore
+  adds only about 3%: add a Deepwell-only damage or drain upgrade); stage owner adds a real `well` theme,
+  hides the zone HUD natively, a cold foe palette, lantern colour/trail from S.deep.eq, and camp
+  decorations from S.deep.cos. Note: runs set S.activity = 'fight' and restore it on exit.

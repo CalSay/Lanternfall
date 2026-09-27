@@ -972,6 +972,163 @@ span.cf-d { font-weight: 600; }
 .cf-gt b { font: 600 14.5px/1.15 var(--display); overflow-wrap: anywhere; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 20px var(--display); }
+/* 60-deepwell: the Deepwell (75-deepwell-ui.js): run HUD over the stage, the boon strip in place of
+   the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
+:root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
+
+/* ---- in a run: swap the zone line and the control row ---- */
+.dw-hud, .dw-row { display: none; }
+.app.deep-run .hud-zone { visibility: hidden; }
+.app.deep-run #tWrap { display: none !important; }
+.app.deep-run .ctrl { display: none; }
+.app.deep-run .dw-row { display: flex; }
+.app.deep-run .dw-hud { display: flex; }
+
+.dw-hud { position: absolute; left: 0; right: 0; top: 0; z-index: 4; pointer-events: none; align-items: center; gap: 10px; padding: 4px 8px 0; height: 23px; }
+.dw-oil { display: flex; align-items: center; gap: 5px; flex: none; }
+.dw-oilic { width: 16px; height: 16px; image-rendering: pixelated; filter: drop-shadow(0 0 4px rgba(255,158,61,.7)); }
+.dw-oilbar { position: relative; width: 120px; height: 10px; background: #0B0810; border: 2px solid #0B0810; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
+.dw-oilbar > i { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: var(--oil); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 rgba(0,0,0,.25); transition: width .2s linear; }
+.dw-oiltxt { font: 600 13px var(--display); font-variant-numeric: tabular-nums; min-width: 3.2em; color: #FFE2B8; text-shadow: 0 2px 0 #000; }
+.dw-oil.low .dw-oilbar > i { background: var(--hp); animation: dw-pulse .8s ease-in-out infinite; }
+.dw-oil.low .dw-oiltxt { color: #FF8A80; }
+@keyframes dw-pulse { 50% { opacity: .55; } }
+.dw-floor { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin-left: auto; }
+.dw-fn { font: 600 14px/1.2 var(--display); color: #DFF0FF; text-shadow: 0 2px 0 #000, 0 0 6px rgba(127,178,255,.6); white-space: nowrap; }
+.dw-fk { font: 600 10.5px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 #000; }
+
+.dw-row { flex: none; align-items: center; gap: 8px; height: 54px; padding: 6px var(--gut) 4px; }
+.dw-strip { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 4px 8px; text-align: left; cursor: pointer; background: linear-gradient(90deg, rgba(127,178,255,.14), rgba(127,178,255,.02)), var(--panel); border: 2px solid #2E4466; box-shadow: 0 2px 0 #0B0810; }
+.dw-strip-ics { display: flex; gap: 2px; flex: none; align-items: center; }
+.dw-sic { width: 16px; height: 16px; image-rendering: pixelated; }
+.dw-sic.rare { filter: drop-shadow(0 0 2px var(--r-rare)); }
+.dw-sic.epic { filter: drop-shadow(0 0 3px var(--r-epic)); }
+.dw-more { font: 600 11px var(--display); color: var(--muted); padding-left: 2px; }
+.dw-strip-txt { min-width: 0; font: 600 12px var(--display); color: #CFE2FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dw-rowmarks, .dw-emarks, .dw-marks { display: inline-flex; align-items: center; gap: 4px; flex: none; font: 600 15px var(--display); font-variant-numeric: tabular-nums; color: #DFF0FF; }
+.dw-rowmarks img, .dw-emarks img, .dw-marks img { width: 18px; height: 18px; image-rendering: pixelated; }
+.dw-emarks span { font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- the full-screen sheets ---- */
+.dw-ov { position: fixed; inset: 0; z-index: 32; display: flex; justify-content: center; overflow-y: auto; overscroll-behavior: contain;
+  background-color: #080B14; background-image: radial-gradient(110% 60% at 50% 0%, rgba(63,111,168,.4), transparent 65%), radial-gradient(rgba(127,178,255,.05) 1px, transparent 1px); background-size: auto, 6px 6px; opacity: 0; transition: opacity .18s; }
+.dw-ov.in { opacity: 1; }
+.dw-end, .dw-list { z-index: 33; }
+.dw-sheet { width: 100%; max-width: 560px; min-height: 100%; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
+.dw-dhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.dw-dtitle { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.dw-dtop { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 22px; }
+.dw-dtitle h2 { margin: 0; font: 600 24px/1.1 var(--display); color: #EAF3FF; text-shadow: 0 2px 0 #0B0810, 0 0 12px rgba(127,178,255,.35); text-wrap: balance; }
+.dw-eye { font: 600 10.5px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--deep); }
+.dw-dsub { font-size: 14px; color: #FFD9A8; }
+.dw-doil { display: flex; align-items: center; gap: 5px; flex: none; }
+.dw-doil .dw-oilbar { width: 72px; }
+.dw-doil b { font: 600 13px var(--display); color: #FFE2B8; font-variant-numeric: tabular-nums; }
+
+.dw-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: auto; }
+.dw-cards[data-n="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dw-cards[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 520px) { .dw-cards[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.dw-cwrap { position: relative; display: grid; min-width: 0; }
+.dw-card { --rc: #8C8496; position: relative; min-height: 172px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 6px 10px; text-align: center; cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%), #1A1624; border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810; color: var(--bone); }
+.dw-card.r-r { --rc: var(--r-rare); background: linear-gradient(180deg, rgba(95,168,255,.16), transparent 45%), #161B2A; box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810, 0 0 12px rgba(95,168,255,.25); }
+.dw-card.r-e { --rc: var(--r-epic); background: linear-gradient(180deg, rgba(181,140,255,.2), transparent 45%), #1C1628; box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810, 0 0 16px rgba(181,140,255,.35); }
+.dw-card.land { --rc: #3F6FA8; }
+.dw-card:active:not(:disabled) { transform: translateY(2px); }
+.dw-card:disabled { opacity: .45; cursor: default; }
+.dw-crar { font: 600 9.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--rc); }
+.dw-card.r-c .dw-crar { color: var(--muted); }
+.dw-cic { width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810; }
+.dw-cic img { width: 32px; height: 32px; image-rendering: pixelated; }
+.dw-cn { font: 600 14px/1.1 var(--display); text-wrap: balance; overflow-wrap: anywhere; }
+.dw-crank { font: 600 11px var(--display); color: var(--gold); }
+.dw-ctx { font-size: 12px; line-height: 1.3; color: #D6CFE0; overflow-wrap: anywhere; }
+.dw-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: auto; }
+.dw-tag { font: 600 10px var(--body); letter-spacing: .04em; padding: 1px 4px; color: var(--muted); border: 1px solid var(--line-hi); background: var(--well); white-space: nowrap; }
+.dw-tag.part { color: #CFE2FF; border-color: var(--deep-dim); }
+.dw-tag.on { color: #13200F; background: var(--xp); border-color: #0B0810; }
+.dw-ban { position: absolute; top: -6px; right: -6px; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid #0B0810; background: #3A2330; color: #FF9A8E; font: 600 16px/1 var(--display); cursor: pointer; }
+.dw-hint { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; }
+.dw-dfoot { display: flex; gap: 8px; flex-wrap: wrap; }
+.dw-b { flex: 1 1 0; min-height: 44px; min-width: 0; padding: 4px 6px; line-height: 1.15; text-wrap: balance; }
+.dw-confirm { display: grid; gap: 8px; padding: 14px; margin-top: auto; background: var(--panel); border: 2px solid #5A2A30; box-shadow: 0 3px 0 #0B0810; }
+.dw-confirm h3 { margin: 0; font: 600 20px var(--display); }
+.dw-confirm p { margin: 0; font-size: 14px; }
+.dw-card, .dw-confirm { animation: dw-in .22s ease-out both; }
+.dw-cwrap:nth-child(2) .dw-card { animation-delay: .04s; } .dw-cwrap:nth-child(3) .dw-card { animation-delay: .08s; } .dw-cwrap:nth-child(4) .dw-card { animation-delay: .12s; }
+@keyframes dw-in { from { opacity: 0; transform: translateY(10px); } }
+
+.dw-have { display: grid; gap: 6px; justify-items: start; padding: 10px 12px; background: rgba(127,178,255,.05); border: 1px solid #22324C; }
+.dw-have-ics { display: flex; flex-wrap: wrap; gap: 4px; }
+.dw-have .dw-sic { width: 20px; height: 20px; }
+.dw-have .dw-tags { justify-content: flex-start; margin: 0; }
+
+/* boons list */
+.dw-sets { display: grid; gap: 6px; }
+.dw-set { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: center; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+.dw-set img { width: 16px; height: 16px; image-rendering: pixelated; }
+.dw-set b { font: 600 13px var(--display); color: var(--bone); white-space: nowrap; }
+.dw-set.on { border-color: var(--xp); color: var(--bone); background: rgba(111,203,106,.08); }
+.dw-blist { display: grid; gap: 6px; }
+.dw-bi { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; padding: 6px 8px; background: var(--panel); border: 2px solid var(--line); }
+.dw-bi .ic { width: 36px; height: 36px; } .dw-bi .ic img { width: 24px; height: 24px; }
+
+/* run end */
+.dw-kv { background: var(--panel); border: 2px solid var(--line); padding: 10px; box-shadow: 0 2px 0 #0B0810; }
+.dw-pb { margin: 0; font: 600 15px var(--display); color: var(--gold); }
+.dw-lines { display: grid; gap: 2px; }
+.dw-line { display: flex; justify-content: space-between; padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.dw-line b { font: 600 14px var(--display); color: #DFF0FF; }
+.dw-below { padding: 10px 12px; background: rgba(242,193,78,.07); border: 1px solid rgba(242,193,78,.35); }
+.dw-below p { margin: 4px 0 0; font-size: 14px; }
+.dw-end .dw-dfoot { margin-top: auto; }
+
+/* ---- Fight tab: the Deepwell view ---- */
+.dw-hide { display: none !important; }
+.dw-entry { background: radial-gradient(120% 90% at 0% 0%, rgba(63,111,168,.35), transparent 60%), linear-gradient(180deg, #121A2A, var(--panel) 80%); border-color: #2E4466; }
+.dw-ehead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.ic.dw-eic { width: 52px; height: 52px; border-color: var(--deep-dim); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(127,178,255,.35); }
+.ic.dw-eic img { width: 36px; height: 36px; }
+.dw-ett { display: grid; gap: 4px; min-width: 0; }
+.dw-ett h3 { margin: 0; }
+.dw-ebody { display: grid; gap: 8px; }
+.dw-lock { margin: 0; font: 600 14px var(--display); color: var(--deep); }
+.dw-need { margin: 0; padding-left: 18px; font-size: 14px; }
+.dw-now { margin: 0; font-size: 14px; color: #DFF0FF; }
+.big.dw-go { background: var(--deep); color: #0C1626; box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -4px 0 var(--deep-dim), 0 2px 0 #0B0810; }
+.dw-abandon { justify-self: start; min-height: 40px; }
+.dw-choice { display: grid; gap: 2px; width: 100%; min-height: 56px; padding: 9px 12px; text-align: left; cursor: pointer; background: linear-gradient(90deg, rgba(127,178,255,.2), rgba(127,178,255,.04)), var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px #3F6FA8, 0 2px 0 #0B0810; }
+.dw-choice b { font: 600 17px var(--display); color: #EAF3FF; }
+.dw-choice span { font-size: 13px; color: var(--muted); }
+.dw-choice.trial { background: linear-gradient(90deg, rgba(242,193,78,.18), rgba(242,193,78,.03)), var(--panel-2); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px #A77B1E, 0 2px 0 #0B0810; }
+.dw-choice:active { transform: translateY(2px); }
+.dw-trial { border-color: #5A4A22; }
+.dw-thead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.dw-tdays { font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.dw-tfx { margin: 0; font-size: 14px; color: #F2E6B0; }
+.dw-miles { display: flex; flex-wrap: wrap; gap: 5px; }
+.dw-mile { font: 600 11.5px var(--display); padding: 3px 7px; background: var(--well); border: 1px solid var(--line); color: var(--muted); }
+.dw-mile.got { color: #13200F; background: var(--gold); border-color: #0B0810; }
+.dw-shophead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dw-seg button { min-height: 36px; }
+.dw-shop { display: grid; gap: 8px; }
+.dw-srow .row-desc { overflow-wrap: anywhere; }
+.buy.dw-buy { background: var(--deep); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 0 var(--deep-dim); }
+.buy.dw-buy:disabled { background: var(--panel-2); color: var(--muted); box-shadow: inset 0 -3px 0 #1a1420; }
+.dw-pic { width: 14px; height: 14px; image-rendering: pixelated; }
+.dw-fav { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.dw-fav select { min-height: 36px; min-width: 0; flex: 1; background: var(--well); color: var(--bone); border: 2px solid var(--line); font: 600 13px var(--display); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dw-ov { transition: none; }
+  .dw-card, .dw-confirm { animation: none; }
+  .dw-oil.low .dw-oilbar > i { animation: none; }
+  .dw-oilbar > i { transition: none; }
+}
+
+/* wide screens: the choice sheet and the run-end card sit in the middle */
+@media (min-width: 600px) and (min-height: 600px) { .dw-draft .dw-sheet, .dw-end .dw-sheet { justify-content: center; } .dw-cards { margin-top: 8px; } .dw-end .dw-dfoot { margin-top: 8px; } }
 /* 60-exped: Expeditions in the Camp tab and the send sheet (75-exped-ui.js). */
 
 #sec-exped { gap: 8px; }
@@ -5164,8 +5321,12 @@ function setNode(kind, t) {
 // ================= combat state =================
 let mob = null, respawn = 0, heroTimer = 0, fightBoss = false, bossTime = 0, failDps = 0;
 let partyAcc = 0, partyTick = 0;
+// Deepwell arena (57d-deepwell.js): while set it supplies the foes. { spawn() -> mob | null,
+// onKill(mob, overkill) }. Its kills pay nothing here (no 'kill' event) and it has no boss timer.
+let arena = null;
 
 function spawn() {
+  if (arena) { const m = arena.spawn(); if (m) mob = m; return; }
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
@@ -5212,6 +5373,7 @@ function tapNode() {
 }
 
 function kill() {
+  if (arena && mob.deep) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
   mob.hp = 0; mob.dead = 0.001;
   const g = mob.gold, z = S.zone, tier = zoneTier(z);
   S.gold += g; S.totalGold += g; S.totalKills++;
@@ -5294,15 +5456,15 @@ function tick(dt) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
       if (tg === 'world' || (mob && !mob.dead)) { emit('lunge'); heroSwing(heroAtk(), false); }
     }
-    if (tg === 'mob' && mob && mob.boss && !mob.dead) {
+    if (tg === 'mob' && mob && mob.boss && !mob.dead && !arena) {
       bossTime -= dt;
       if (bossTime <= 0) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
     if (mob && mob.dead) mob.dead += dt;
     if (mob) mob.born += dt;
-    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
+    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (!arena && S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
     if (!mob) spawn();
-    if (mob.hit > 0) mob.hit -= dt;
+    if (mob && mob.hit > 0) mob.hit -= dt;
   }
   for (const fn of TICK_HOOKS.slice()) { try { fn(dt); } catch (e) { console.error('[lanternfall] tick hook failed', e); } }
 }
@@ -5552,7 +5714,7 @@ let OMENS, WEEKLY_GOALS;
     B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
     Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
     Expeditions: () => !!S.exped,
-    Deepwell: () => !!S.deep
+    Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
   const needsMet = x => !x.needs || !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]());
 
@@ -7036,6 +7198,11 @@ let unitHp, unitCd, bossTelegraph;
   let wallUntil = 0, pauseUntil = 0, hymnUntil = 0, hasteUntil = 0;
   let volleyLeft = 0, volleyNext = 0, volleyEff = 1, worldEmbers = 0;
   let initFor = null, fieldSig = '';
+  // Deepwell boons (57d-deepwell.js) tune the knobs below through bonus('tune:<knob>') and
+  // mod('abilityCd'); both are 0 / 1 outside a Deepwell run. spare: extra ability charges held.
+  const tn = k => T[k] + bonus('tune:' + k);
+  const abCd = c => HERO_CLASSES[c].ability.cd * mod('abilityCd');
+  let spare = 0, spareT = 0;
 
   const P = () => S.party;
   const cls = () => P().cls && HERO_CLASSES[P().cls] ? P().cls : null;
@@ -7130,20 +7297,21 @@ let unitHp, unitCd, bossTelegraph;
   castAbility = function (opts) {
     ensureInit();
     const c = cls(), p = P();
-    if (!c || p.abilityCd > 0 || !canHit()) return false;
+    if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
     const auto = !!(opts && opts.auto);
     const ab = HERO_CLASSES[c].ability;
     if (c === 'warden') { wallUntil = clock + T.wallT; pauseUntil = clock + T.wallPause; emit('shake', 0.2); }
     else if (c === 'lanternmage') {
       const world = target() === 'world';
       const n = world ? worldEmbers : (mob.embers || 0);
-      if (world) worldEmbers = 0; else mob.embers = 0;
+      if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
       heroSwing(heroAtk() * T.flare * (1 + T.flarePerEmber * n), false);
       emit('shake', 0.3);
     }
-    else if (c === 'ranger') { volleyLeft = T.volleyHits; volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + T.hasteT; }
-    else if (c === 'lightkeeper') { hymnUntil = clock + T.hymnT; }
-    p.abilityCd = ab.cd; readyFor = 0;
+    else if (c === 'ranger') { volleyLeft = tn('volleyHits'); volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + T.hasteT; }
+    else if (c === 'lightkeeper') { hymnUntil = clock + (bonus('tune:hymnFloor') > 0 ? 1e9 : T.hymnT); }
+    if (p.abilityCd > 0) spare--; else p.abilityCd = abCd(c);
+    readyFor = 0;
     emit('ability', { cls: c, name: ab.name, auto });
     return true;
   };
@@ -7151,7 +7319,7 @@ let unitHp, unitCd, bossTelegraph;
   abilityInfo = function () {
     const c = cls(); if (!c) return null;
     const ab = HERO_CLASSES[c].ability, p = P();
-    return { name: ab.name, desc: ab.desc, cd: ab.cd, left: p.abilityCd, ready: p.abilityCd <= 0,
+    return { name: ab.name, desc: ab.desc, cd: abCd(c), left: p.abilityCd, ready: p.abilityCd <= 0 || spare > 0, spare,
       autoUnlocked: S.maxZone >= T.autoCastZone, autoCast: p.autoCast };
   };
 
@@ -7159,7 +7327,7 @@ let unitHp, unitCd, bossTelegraph;
   unitHp = () => FULL_HP;
   unitCd = key => {
     const c = key === 'hero' && cls(); if (!c) return null;
-    return { t: P().abilityCd, max: HERO_CLASSES[c].ability.cd };
+    return { t: spare > 0 ? 0 : P().abilityCd, max: abCd(c) };
   };
   bossTelegraph = () => null;
 
@@ -7188,13 +7356,14 @@ let unitHp, unitCd, bossTelegraph;
     if (tg === 'mob' && !(mob && !mob.dead)) return;
     let kind = 'strike';
     const m = tg === 'mob' ? mob : null;
-    if (c === 'warden') { kind = 'heavy'; pushStack(guard, T.guard * eff, T.guardT, T.guardMax); }
+    if (c === 'warden') { kind = 'heavy'; pushStack(guard, tn('guard') * eff, T.guardT, tn('guardMax')); }
     else if (c === 'lanternmage') {
       kind = 'ember';
-      if (m) m.embers = Math.min(T.embersMax, (m.embers || 0) + 1); else worldEmbers = Math.min(T.embersMax, worldEmbers + 1);
+      const em = tn('embersMax'), per = 1 + bonus('tune:emberPerTap');
+      if (m) m.embers = Math.min(em, (m.embers || 0) + per); else worldEmbers = Math.min(em, worldEmbers + per);
     }
-    else if (c === 'ranger') { kind = 'mark'; if (m) { m.markUntil = clock + T.markT; m.markV = auto ? 1 + (T.mark - 1) * T.autoEff : T.mark; } }
-    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, T.bless * eff, T.blessT, T.blessMax); }
+    else if (c === 'ranger') { kind = 'mark'; if (m) { const mk = tn('mark'); m.markUntil = clock + tn('markT'); m.markV = auto ? 1 + (mk - 1) * T.autoEff : mk; } }
+    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, T.bless * eff, tn('blessT'), tn('blessMax')); }
     const r = heroSwing(heroAtk() * T.tapMul[c] * eff, true, at);
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
     if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * T.lkShare, '#B58CFF', false);
@@ -7238,8 +7407,12 @@ let unitHp, unitCd, bossTelegraph;
     if (!c) return;
     if (p.abilityCd > 0) { p.abilityCd = Math.max(0, p.abilityCd - dt); readyFor = 0; }
     else readyFor += dt;
+    // Extra charges (a Deepwell boon): while the ability waits ready, the next charge fills.
+    const extra = bonus('tune:charges');
+    if (spare > extra) spare = extra;
+    if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
     // Auto-cast at half rate: it waits one extra cooldown after the ability is ready.
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= HERO_CLASSES[c].ability.cd) castAbility({ auto: true });
+    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c)) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
       if (canHit()) heroSwing(heroAtk() * T.volleyAtk * volleyEff, false);
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
@@ -7259,6 +7432,7 @@ let unitHp, unitCd, bossTelegraph;
     toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
+  on('deepFloor', () => { if (hymnUntil > clock + T.hymnT) hymnUntil = clock; });
   on('zoneClear', ({ zone }) => {
     if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
   });
@@ -10151,7 +10325,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     }
   });
   // ---------------- 12. Omens: Omens seen; Dares taken ----------------
-  const omenOk = o => o.needs !== 'Deepwell' || !!S.deep;
+  const omenOk = o => o.needs !== 'Deepwell' || (typeof deepUnlocked === 'function' ? deepUnlocked() : !!S.deep);
   page('omens', {
     n: 'Omens', seal: { key: null, txt: '' }, title: 'Omen-reader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
@@ -10427,6 +10601,871 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     if (gain > 0 && !lines.length) lines.push({ icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `Codex: +${gain} Lantern Light`, sub: `${CX().lightMax} in all.`, group: 'Codex', go: () => emit('codexOpen', { page: null }) });
     return lines;
   });
+}
+
+// ---- src/js/57d-deepwell.js ----
+// 57d-deepwell: the Deepwell (docs/design/deepwell.md). Runs down an old well, floor by floor,
+// on today's single-foe combat. Oil is the run's health; a boon draft after every fight floor;
+// Depth Marks buy Deepwell-only upgrades, cosmetics, titles and Lore pages; a weekly Trial.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules this file keeps:
+//  - Main progress is never touched by a run. Arena kills emit 'deepKill', never 'kill' (no gold,
+//    XP, drops or counters). Boons, sets and Deep Lore work only while a run is live (deepActive()).
+//  - While a run is live S.activity is set to 'fight' (target() must be 'mob' for the arena) and the
+//    player's own activity is kept in run.act. It is put back when the run ends or pauses, and for
+//    the length of any away phase. The seconds spent below are credited with awayGains(secs) when
+//    the player climbs out (or on the next load), so the farm keeps its away rate while below.
+//  - A run survives reloads: on load it is paused (the normal game plays on) and the Resume button
+//    restarts the floor with the Oil it had when the floor began.
+//  - Depth Marks buy only things in DEEP_SHOP: Deep Lore (works below only, off in the Trial),
+//    cosmetics (stored; shown by the Codex Wardrobe), titles (through the Codex) and Lore pages.
+//
+// Combat hook (50-sim.js): the global `arena` is set to DEEP_ARENA while a run is live and not
+//   paused: { spawn() -> mob | null, onKill(mob, overkill) }. Stage C (party combat) can replace
+//   DEEP_ARENA.spawn with packs and read run HP from the same run object; [C] boons are in the data
+//   and join the pool when deepStageC() is true.
+// Party hooks (55-party.js reads them): bonus('tune:<knob>') for embersMax, guardMax, markT,
+//   blessMax, mark, emberPerTap, guard, blessT, volleyHits, charges, keepEmbers, hymnFloor;
+//   mod('abilityCd'). All are 0 / 1 outside a live run.
+//
+// Exposed names:
+//   data  DEEP_TUNE, DEEP_BOONS, DEEP_BOON_IDS, DEEP_SETS, DEEP_RULES, DEEP_SHOP, DEEP_PAGES
+//   read  deepUnlocked(), deepActive(), deepStageC(), DW (API below)
+//   DW    run() -> run | null, live(), unlockInfo() -> { open, zone, hearth, need }
+//         floorKind(f, run?), oilMax(run?), oil(), drainRate(), refundFor(kind), marksNow(),
+//         offerView() -> { title, kind, cards: [card], rr, ban, skipOil, landing }, card(id),
+//         owned() -> [card], setProgress() -> [{ id, n, have, on }], trialRule(week?), trialInfo(),
+//         shop(cat) -> [row], nextLore() -> row | null
+//   act   start(trial) -> bool, resume() -> bool, pick(id), reroll(), banish(id), skip(),
+//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id)
+// Events: deepStart { trial }, deepFloorStart { floor, kind }, deepKill { mob, floor },
+//   deepFloor { floor, kind, trial, refund } (the Almanac counts it), deepOffer { kind },
+//   deepPick { id, rank }, deepOil { oil } (Oil ran low: under 15s, once a floor),
+//   deepEnd { summary, away }, deepBuy { id }, deepTip { i, txt }.
+// Save: registerState('deep', ...) below (spec 10) plus: floors (lifetime floors cleared),
+//   tips (first-run tips shown), fav (Favourite boon), eq { lantern, trail } (cosmetics in use),
+//   last (the last run's summary, for the run-end card).
+
+const DEEP_TUNE = {
+  unlockZone: 20, hearth: 3,
+  // Foe HP on floor f = par x growth^(start + step x (f - 1)). par: a foe your party kills in parKill
+  // seconds at the run's start (the boss-ready pace), so every account meets the same curve.
+  parKill: 3.75, step: 0.7, stepSteep: 0.85, start: -6, growth: 1.45,   // step: zones per floor (spec 0.45; tuned, see report)
+  hpMul: { normal: 1, elite: 3, boss: 8 },
+  oilStart: 60, oilMax: 120, oilPockets: 150, oilLow: 15,
+  refund: { normal: 15, elite: 22, boss: 35 }, skipOil: 8, landingOil: 25,
+  rarityW: { c: 65, r: 28, e: 7 }, rarityStep: { c: -5, r: 3, e: 2 }, classW: 1.5,
+  offers: 3, rerolls: 1,
+  marks: f => f <= 10 ? 1 : f <= 25 ? 2 : 3, bossMarks: 5, pbMarks: 3,
+  trialMiles: { 10: 20, 20: 30, 30: 40, 40: 50 }, sealFloor: 15
+};
+
+// ---------------- boons (spec 3.3) ----------------
+// r: c | r | e. sets: set ids. max: ranks. cls: a class key, 'any' (needs a class) or null.
+// c: Stage C only. v: per-rank value used by the wiring below. txt(rank) -> effect text.
+const DEEP_SETS = {
+  flame: { n: 'Flame', fx: 'Bonfire: +20% damage' },
+  oil: { n: 'Oil', fx: 'Deep Breath: no Oil drain for the first 4s of each floor' },
+  crit: { n: 'Crit', fx: 'Starburst: crits strike again for 30%' },
+  tap: { n: 'Tap', fx: 'Drumbeat: every 25th tap hits for 15x your attack' },
+  company: { n: 'Company', fx: 'Shoulder to Shoulder: companions +2% damage per floor cleared (max +60%)' },
+  path: { n: 'Path', fx: 'True Path: your class ability cooldown halves' },
+  guard: { n: 'Guard', fx: 'Iron Line: tanks take 25% less damage', c: true },
+  mend: { n: 'Mend', fx: 'Deep Mercy: all healing +30%', c: true }
+};
+const DEEP_BOONS = {};
+const DEEP_BOON_IDS = [];
+{
+  const pc = v => Math.round(v * 100) + '%';
+  const B = (id, n, r, sets, max, cls, v, txt, c) => { DEEP_BOONS[id] = { id, n, r, sets, max, cls, v, txt, c: !!c }; DEEP_BOON_IDS.push(id); };
+  // Common
+  B('whet', 'Whetstone', 'c', ['flame'], 3, null, 0.12, k => `+${pc(0.12 * k)} damage`);
+  B('luck', 'Lucky Break', 'c', ['crit'], 3, null, 0.2, k => `Crits come ${pc(0.2 * k)} more often`);
+  B('heavy', 'Heavy Hand', 'c', ['tap'], 3, null, 0.4, k => `Taps deal +${pc(0.4 * k)}`);
+  B('warm', 'Warm Oil', 'c', ['oil'], 3, null, 15, k => `+15s Oil now. Clears refund +${2 * k}s`);
+  B('steady', 'Steady Flame', 'c', ['oil'], 2, null, 0.1, k => `Oil drains ${pc(0.1 * k)} slower`);
+  B('drill', 'Company Drill', 'c', ['company'], 3, null, 0.15, k => `Companions deal +${pc(0.15 * k)}`);
+  B('sharp', 'Sharp Eye', 'c', ['crit'], 3, null, 0.2, k => `Crit damage +${pc(0.2 * k)}`);
+  B('first', 'First Strike', 'c', ['flame'], 1, null, 0.5, () => 'The first foe on each floor starts at half health');
+  B('map', 'Bounty Map', 'c', [], 1, null, 1, () => '+1 Depth Mark for each floor from now on');
+  B('study', 'Quick Study', 'c', [], 1, null, 1, () => '+1 reroll now');
+  B('kindle', 'Kindling', 'c', ['path'], 2, 'lanternmage', 2, k => `You can stack ${2 * k} more Embers`);
+  B('shield', 'Shield Drill', 'c', ['path'], 2, 'warden', 2, k => `You can hold ${2 * k} more guard stacks`);
+  B('fletch', 'Fletching', 'c', ['path'], 2, 'ranger', 4, k => `Focus lasts ${4 * k}s longer`);
+  B('psalm', 'Psalm', 'c', ['path'], 2, 'lightkeeper', 1, k => `You can stack ${k} more Blessing${k > 1 ? 's' : ''}`);
+  // Rare
+  B('heart', 'Ember Heart', 'r', ['flame'], 1, null, 0.08, () => 'Every 3 floors you clear from now: +8% damage for the rest of the run');
+  B('flow', 'Overflow', 'r', ['flame'], 1, null, 1, () => 'Extra damage from a kill carries to the next foe on the floor');
+  B('exec', 'Executioner', 'r', ['crit'], 1, null, 0.15, () => 'Foes below 15% health die at once');
+  B('sconce', 'Oil Sconce', 'r', ['oil'], 2, null, 15, k => `Boss floors refund ${15 * k}s more Oil`);
+  B('twin', 'Twin Flame', 'r', ['path'], 2, 'any', 0.15, k => `Your ability cooldown is ${pc(0.15 * k)} shorter`);
+  B('rhythm', 'Tap Rhythm', 'r', ['tap'], 1, null, 0.05, () => 'Quick taps build a combo: +5% tap damage per step, up to +60%');
+  B('cascade', 'Crit Cascade', 'r', ['crit', 'oil'], 1, null, 0.2, () => 'Each crit gives back 0.2s of Oil (up to 3s a floor)');
+  B('glass', 'Cracked Lantern', 'r', ['flame'], 1, null, 0.45, () => '+45% damage, but clears refund 4s less Oil');
+  B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `Companions deal +${pc(0.25 * k)} on elite and boss floors`);
+  B('focus', "Hunter's Focus", 'r', ['path'], 1, 'ranger', 0.25, () => 'Focused foes take +50% from everyone (was +25%)');
+  B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each tap plants 2 Embers');
+  B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each guard stack gives +5% (was +3%)');
+  B('choir', 'Choir', 'r', ['path'], 1, 'lightkeeper', 4, () => 'Blessings last 10s (was 6s)');
+  // Epic
+  B('twice', 'Kindle Twice', 'e', ['path'], 1, 'lanternmage', 1, () => 'Once a floor, Lantern Flare leaves its Embers in place');
+  B('wallnight', 'Wall of Night', 'e', ['path', 'oil'], 1, 'warden', 6, () => 'Shield Wall also stops the Oil drain for 6s');
+  B('storm', 'Arrow Storm', 'e', ['path'], 1, 'ranger', 10, () => 'Volley fires 20 arrows (was 10)');
+  B('hymn', 'Endless Hymn', 'e', ['path'], 1, 'lightkeeper', 1, () => 'Rally Hymn lasts until the floor is cleared');
+  B('lheart', 'Lantern Heart', 'e', [], 1, 'any', 1, () => 'Your ability holds 2 charges');
+  B('pact', 'Deep Pact', 'e', ['flame'], 1, null, 0.5, () => 'Damage x1.5, but your most Oil is halved');
+  B('relight', 'Quick Relight', 'e', ['oil'], 1, null, 6, () => 'Floors cleared in under 6s refund double Oil');
+  B('crown', 'Crown of the Deep', 'e', [], 1, null, 1, () => 'Each boss floor you clear gives a free Rare boon (pick 1 of 3)');
+  B('mass', 'Critical Mass', 'e', ['crit'], 1, null, 0.5, () => 'Crits come 50% more often and deal +50%');
+  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'Companions deal +60%');
+  // Stage C (party combat): in the data now, in the pool once deepStageC() is true
+  B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'Your tanks reflect 30% of the damage they take', 1);
+  B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `Tanks +${pc(0.2 * k)} max health`, 1);
+  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warden taps taunt for 2s', 1);
+  B('dward', 'Deep Ward', 'r', ['mend'], 1, null, 0.2, () => 'Overhealing becomes a shield, up to 20% max health', 1);
+  B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `The party heals ${pc(0.1 * k)} max health per floor cleared`, 1);
+  B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, a member who would go down stays at 1 health', 1);
+  B('wild', 'Wildfire', 'e', ['flame'], 1, null, 1, () => 'Burns and Embers jump to a new foe when their foe dies', 1);
+  B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => "Each striker's first hit on a foe always crits", 1);
+  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => 'The parry window is 0.4s longer', 1);
+}
+
+// ---------------- the weekly Trial's rules (spec 5) ----------------
+const DEEP_RULES = [
+  { id: 'glass', n: 'Glass Week', fx: 'Damage x2. Your most Oil is 60s' },
+  { id: 'company', n: 'Company Week', fx: 'Your hero barely scratches. Companions x2' },
+  { id: 'drum', n: 'Drum Week', fx: 'Taps x3. Auto-attacks x0.5' },
+  { id: 'rush', n: 'Boss Rush', fx: 'Every 3rd floor is a boss floor' },
+  { id: 'rare', n: 'Rare Air', fx: 'Drafts show 2 boons, both Rare or better' },
+  { id: 'drought', n: 'Drought', fx: 'Oil refunds halved. Start with 150s Oil' },
+  { id: 'crit', n: 'Crit Week', fx: 'Crits come twice as often. Other hits deal half' },
+  { id: 'wick', n: 'Short Wick', fx: 'No rerolls. Drafts show 4 boons' },
+  { id: 'elder', n: 'Elder Hall', fx: 'An elite floor every other floor. Elite drafts hold an Epic' },
+  { id: 'path', n: 'Pathfinder', fx: 'Class boons show up twice as often' },
+  { id: 'steep', n: 'Steep Week', fx: 'Foes grow faster each floor. Marks x1.5' },
+  { id: 'one', n: 'One of Each', fx: 'At most one boon from each set' }
+];
+
+// ---------------- the Depth Marks shop (spec 4.2) ----------------
+// cat: lore (Deep Lore: works below only, off in the Trial) | look (cosmetics) | title | page.
+// cost: one price or an array of prices by rank. kind (look): lantern | decor | trail.
+const DEEP_SHOP = {};
+{
+  const S_ = (id, cat, n, cost, fx, o) => { DEEP_SHOP[id] = Object.assign({ id, cat, n, cost, fx }, o || {}); };
+  S_('breath', 'lore', 'Deep Breath', [50, 100, 200, 350, 500], k => `+${10 * k}s starting Oil`);
+  S_('wick', 'lore', 'Spare Wick', [80, 240, 600], k => `+${k} reroll${k > 1 ? 's' : ''} each run`);
+  S_('banish', 'lore', 'Banish', [150, 450], k => `Banish ${k} offered boon${k > 1 ? 's' : ''} each run`);
+  S_('wider', 'lore', 'Wider Choice', [800], () => 'Boss-floor drafts show 4 boons');
+  S_('fav', 'lore', 'Favourite', [500, 1500], k => k > 1 ? 'Start each run with a Common or Rare boon you choose' : 'Start each run with a Common boon you choose');
+  S_('stair', 'lore', 'Lantern Stair', [300, 900], k => `Start on floor ${1 + 5 * k}. Skipped floors pay their Marks, and you pick ${k} Common boon${k > 1 ? 's' : ''} first`);
+  S_('pockets', 'lore', 'Deep Pockets', [600], () => 'Your most Oil is 150s');
+  const lan = [['l_blue', 'Deep Blue', '#5FA8FF'], ['l_ghost', 'Ghost Green', '#8FF0B0'], ['l_ember', 'Ember Red', '#FF6A3D'], ['l_moon', 'Moon White', '#EFF3FF'], ['l_violet', 'Violet', '#B58CFF'], ['l_gold', 'Gold', '#F2C14E']];
+  for (const [id, n, col] of lan) S_(id, 'look', n + ' lantern', 150, () => "Your hero's light on the stage", { kind: 'lantern', col });
+  const dec = [['d_crystal', 'Deep Crystals', 200], ['d_moss', 'Glow Moss', 200], ['d_wlamp', 'Well Lanterns', 250], ['d_skull', "The Elder's Skull", 400], ['d_arch', 'Chain Arch', 300], ['d_brazier', 'Blue Brazier', 250], ['d_bridge', 'Rope Bridge', 300], ['d_bell', 'Drowned Bell', 350]];
+  for (const [id, n, c] of dec) S_(id, 'look', n, c, () => 'Camp decoration', { kind: 'decor' });
+  const tr = [['t_motes', 'Mote trail', '#9BE3F0'], ['t_embers', 'Ember trail', '#FF9E3D'], ['t_frost', 'Frost trail', '#DFF6FF']];
+  for (const [id, n, col] of tr) S_(id, 'look', n, 600, () => 'A trail behind your hero on the stage', { kind: 'trail', col });
+  const ti = [['dt_walker', 'Well-walker', 100], ['dt_sipper', 'Oil-sipper', 150], ['dt_diver', 'Deep Diver', 250], ['dt_lightless', 'Lightless', 400], ['dt_keeper', 'Keeper of the Well', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
+  for (const [id, n, c, floor] of ti) S_(id, 'title', n, c, () => 'A title for your hero (pick it in the Codex)', { floor: floor || 0 });
+  S_('pages', 'page', 'Deep Lore page', 100, k => `Page ${k} of 10`, { max: 10 });
+}
+// The Deepwell's own story, bought a page at a time (100 Marks each, in order).
+const DEEP_PAGES = [
+  ['The Rope', 'The first rope went down forty fathoms and came back dry. The second went down a hundred and came back warm.'],
+  ['The Diggers', "Hollow's Rest was a mining camp before it was a village. The miners dug for silver and found a stair instead."],
+  ['The Stair', 'The stair was cut by hands smaller than ours. Every step is worn in the middle, as if something climbed it for a thousand years.'],
+  ['The First Lantern', 'The miners carried oil lamps. Below the ninth landing the flames turned blue, and the dark stopped moving away from them.'],
+  ['The Quiet Landings', 'Every sixth landing is still. No foe comes there. Someone left benches, and a jar of oil, and a name scratched in the stone: Maud.'],
+  ['Maud', 'Maud Tallow kept the camp lamps. When the miners stopped coming back up, she went down after them with the brightest lantern she had.'],
+  ['The Elders', 'The Deep Elders are not beasts that wandered in. They are what the dark makes of things that stay below too long.'],
+  ['What Glows', 'The light at the bottom is not fire. It is older than fire. It is what the dark is afraid of, and it is waiting.'],
+  ["Maud's Lantern", "Deep down, a lantern hangs from a hook where no hook should be. It still burns. Its oil never runs out. The name on the handle is Maud's."],
+  ['Why It Glows', 'Maud never came back up. She did not want to. She stayed to keep the light lit, so that the dark stays down there, and we stay up here.']
+];
+
+let deepUnlocked, deepActive, deepStageC, DW;
+let DEEP_ARENA = null;
+
+{
+  registerState('deep', {
+    v: 1,
+    best: 0,
+    marks: 0, marksTotal: 0,
+    lore: {},
+    cos: {},
+    pages: 0,
+    trial: { week: -1, best: 0, paid: {}, hist: {} },
+    seen: {},
+    runs: 0,
+    run: null,
+    floors: 0, tips: 0, fav: null, eq: { lantern: null, trail: null }, last: null
+  });
+  const D = () => S.deep;
+  const R = () => D().run;
+  const T = DEEP_TUNE;
+  let inAway = false, initFor = null;
+
+  // ---------------- small helpers ----------------
+  const hash = (...xs) => { let h = 0x811C9DC5; for (const x of xs) { h ^= (x | 0); h = Math.imul(h, 0x01000193); h ^= h >>> 13; } return h >>> 0; };
+  const rank = id => { const r = R(); return r && r.boons[id] ? r.boons[id] : 0; };
+  const cls = () => S.party && S.party.cls ? S.party.cls : null;
+  const hasCompanions = () => { const f = S.party && S.party.field; return Array.isArray(f) ? f.length > 0 : S.comp.some(n => n > 0); };
+  const hearthLv = () => typeof campLevel === 'function' && S.camp ? campLevel('hearth') : null;
+  deepStageC = () => typeof partyCombatOn === 'function' && !!partyCombatOn();
+
+  deepUnlocked = () => {
+    if (S.maxZone < T.unlockZone) return false;
+    const h = hearthLv();
+    return h === null || h >= T.hearth;
+  };
+  // Live: a run exists, is not paused, and we are not inside an away phase.
+  deepActive = () => { const r = R(); return !!r && !r.paused && !inAway; };
+  const fighting = () => { const r = R(); return deepActive() && r.phase === 'fight'; };
+  const syncArena = () => { arena = deepActive() ? DEEP_ARENA : null; };
+
+  // ---------------- rules of the current run ----------------
+  const ruleOf = r => r && r.trial ? r.rule : null;
+  const loreOf = (r, id) => r && r.trial ? 0 : (D().lore[id] || 0);
+  function trialRule(week) {
+    const w = week === undefined ? deviceWeek() : week;
+    const cyc = Math.floor(w / 12), rr = rng(hash(cyc, 0x7E1A1));
+    const order = DEEP_RULES.map((x, i) => i);
+    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rr() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    return DEEP_RULES[order[((w % 12) + 12) % 12]];
+  }
+  function floorKind(f, r) {
+    r = r || R();
+    const rule = ruleOf(r);
+    if (rule === 'rush' ? f % 3 === 0 : f % 5 === 0) return 'boss';
+    if (f % 6 === 0) return 'landing';
+    if (rule === 'elder' ? f % 2 === 0 : f % 5 === 3) return 'elite';
+    return 'normal';
+  }
+  function oilMax(r) {
+    r = r || R();
+    let m = loreOf(r, 'pockets') ? T.oilPockets : T.oilMax;
+    const rule = ruleOf(r);
+    if (rule === 'glass') m = 60;
+    if (rule === 'drought') m = Math.max(m, 150);
+    if (r && r.boons.pact) m *= 0.5;
+    return m;
+  }
+  const setCount = (s, r) => { r = r || R(); if (!r) return 0; let n = 0; for (const id in r.boons) if (DEEP_BOONS[id] && DEEP_BOONS[id].sets.includes(s)) n++; return n; };
+  const setOn = s => setCount(s) >= 3;
+  function drainRate() {
+    const r = R(); if (!r) return 0;
+    let d = 1 - DEEP_BOONS.steady.v * rank('steady');
+    if (!r.trial) d *= mod('oilDrain');
+    return d;
+  }
+  function refundFor(kind, r) {
+    r = r || R();
+    let x = T.refund[kind] || 0;
+    x += 2 * rank('warm');
+    if (r.boons.glass) x -= 4;
+    if (kind === 'boss') x += DEEP_BOONS.sconce.v * rank('sconce');
+    if (r.boons.relight && r.ft < DEEP_BOONS.relight.v) x *= 2;
+    if (ruleOf(r) === 'drought') x *= 0.5;
+    return Math.max(0, x);
+  }
+  // HP of a foe on floor f: a smooth curve anchored on your party's power when the run began.
+  function foeHp(r, f, mul) {
+    const step = ruleOf(r) === 'steep' ? T.stepSteep : T.step;
+    return (r.par || mobHp(r.anchor)) * Math.pow(T.growth, T.start + step * (f - 1)) * mul;
+  }
+  const parHp = () => Math.max(mobHp(1), (heroDps() + compDps()) * T.parKill);
+  function floorFoes(r, f) {
+    const kind = floorKind(f, r), rr = rng(hash(r.seed, f, 0xF0E));
+    const mk = (m, extra) => Object.assign({ ti: Math.floor(rr() * TYPES.length), mul: T.hpMul[m] * (0.9 + rr() * 0.2) }, extra);
+    if (kind === 'boss') return [mk('boss', { boss: true })];
+    if (kind === 'elite') return [mk('elite', { elite: true }), mk('normal')];
+    if (kind === 'landing') return [];
+    return [mk('normal'), mk('normal'), mk('normal')];
+  }
+
+  // ---------------- the draft ----------------
+  function eligible(id, r, opts) {
+    const b = DEEP_BOONS[id];
+    if (b.c && !deepStageC()) return false;
+    if ((r.boons[id] || 0) >= b.max) return false;
+    if (r.banned.includes(id)) return false;
+    if (b.cls === 'any' ? !cls() : b.cls && b.cls !== cls()) return false;
+    if (b.sets.includes('company') && !hasCompanions()) return false;
+    if (opts && opts.rar && !opts.rar.includes(b.r)) return false;
+    if (ruleOf(r) === 'one' && !r.boons[id] && b.sets.some(s => setCount(s, r) >= 1)) return false;
+    return true;
+  }
+  function rarityW(f) {
+    const k = Math.floor(f / 5), w = {};
+    for (const x of ['c', 'r', 'e']) w[x] = Math.max(x === 'c' ? 15 : 1, T.rarityW[x] + T.rarityStep[x] * k);
+    return w;
+  }
+  // kind: normal | elite | boss | crown | study | start | fav. Seeded: same state, same offer.
+  function makeOffer(r, kind) {
+    const rule = ruleOf(r);
+    let n = T.offers, rar = null, need = null;
+    if (kind === 'boss' && loreOf(r, 'wider')) n = 4;
+    if (!r.trial) n += Math.max(0, Math.round(bonus('deepOffers')));
+    if (rule === 'wick') n = 4;
+    if (rule === 'rare') { n = 2; rar = ['r', 'e']; }
+    if (kind === 'elite') need = rule === 'elder' ? 'e' : 'r';
+    if (kind === 'boss') need = 'e';
+    if (kind === 'crown' || kind === 'study') rar = kind === 'crown' ? ['r'] : ['r', 'e'];
+    if (kind === 'start') { rar = ['c']; n = 3; }
+    const rr = rng(hash(r.seed, r.floor, r.rrUsed + 1, ['normal', 'elite', 'boss', 'crown', 'study', 'start'].indexOf(kind) + 1, r.picks));
+    const w = rarityW(r.floor), cw = rule === 'path' ? T.classW * 2 : T.classW;
+    const weight = id => { const b = DEEP_BOONS[id]; return w[b.r] * (b.cls ? cw : 1); };
+    let pool = DEEP_BOON_IDS.filter(id => eligible(id, r, { rar }));
+    const out = [];
+    const draw = list => {
+      let tot = 0; for (const id of list) tot += weight(id);
+      let x = rr() * tot;
+      for (const id of list) { x -= weight(id); if (x <= 0) return id; }
+      return list[list.length - 1];
+    };
+    while (out.length < n && pool.length) { const id = draw(pool); out.push(id); pool = pool.filter(x => x !== id); }
+    // Guarantees: elite drafts hold a Rare or better, boss drafts an Epic (when any is left).
+    if (need && out.length) {
+      const ok = need === 'e' ? ['e'] : ['r', 'e'];
+      if (!out.some(id => ok.includes(DEEP_BOONS[id].r))) {
+        const alt = DEEP_BOON_IDS.filter(id => ok.includes(DEEP_BOONS[id].r) && !out.includes(id) && eligible(id, r));
+        if (alt.length) out[out.length - 1] = draw(alt);
+      }
+    }
+    return { kind, ids: out };
+  }
+  function openDraft(kind) {
+    const r = R();
+    r.phase = 'draft'; r.offer = makeOffer(r, kind);
+    if (!r.offer.ids.length) { r.offer = null; return next(); }
+    emit('deepOffer', { kind });
+    save();
+  }
+  function grant(id, quiet) {
+    const r = R(), b = DEEP_BOONS[id]; if (!b) return;
+    const was = setsOnList();
+    r.boons[id] = (r.boons[id] || 0) + 1;
+    r.picks++;
+    D().seen[id] = (D().seen[id] || 0) + 1;
+    if (id === 'warm') r.oil = Math.min(oilMax(), r.oil + b.v);
+    if (id === 'study') r.rr++;
+    if (id === 'heart' && r.boons.heart === 1) r.heartAt = r.cleared;
+    if (id === 'pact') r.oil = Math.min(r.oil, oilMax());
+    const now = setsOnList();
+    for (const s of now) if (!was.includes(s) && !quiet) toast(`Set bonus: ${DEEP_SETS[s].fx}.`, 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
+    emit('deepPick', { id, rank: r.boons[id] });
+  }
+  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => !DEEP_SETS[s].c && setOn(s));
+
+  // After a draft or a Landing: the queued extra draft, or the next floor.
+  function next() {
+    const r = R();
+    r.offer = null; r.landing = null;
+    if (r.queue.length) return openDraft(r.queue.shift());
+    if (floorKind(r.floor) === 'landing') { r.phase = 'landing'; r.landing = ['refill', 'sharpen', 'study']; save(); emit('deepOffer', { kind: 'landing' }); return; }
+    startFloor();
+  }
+  function startFloor() {
+    const r = R();
+    r.phase = 'fight'; r.foeI = 0; r.oilAtStart = r.oil; r.ft = 0; r.carry = 0;
+    r.twiceUsed = false; r.cascade = 0; r.wallT = -1; r.lowWarned = false;
+    save();
+    emit('deepFloorStart', { floor: r.floor, kind: floorKind(r.floor) });
+    if (deepActive()) { syncArena(); spawn(); }
+  }
+
+  // ---------------- the arena (50-sim.js calls it) ----------------
+  DEEP_ARENA = {
+    spawn() {
+      const r = R();
+      if (!r || r.phase !== 'fight') return null;
+      if (mob && mob.deep && !mob.dead && mob.run === r.id) return mob;   // never reset a live foe
+      const foes = floorFoes(r, r.floor), f = foes[r.foeI];
+      if (!f) return null;
+      const t = TYPES[f.ti], kind = floorKind(r.floor);
+      let hp = foeHp(r, r.floor, f.mul);
+      if (r.foeI === 0 && r.boons.first) hp *= 0.5;
+      const max = hp;
+      if (r.carry > 0) { hp = Math.max(max * 0.01, hp - r.carry); r.carry = 0; }
+      const cyc = Math.floor((r.floor - 1) / 7);
+      return {
+        key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, 200 + cyc * 40), boss: !!f.boss, champ: !!f.elite,
+        hp, max, name: f.boss ? `Deep Elder ${t.name}` : f.elite ? `Deep ${t.name} (elite)` : `Deep ${t.name}`,
+        gold: 0, xp: 0, hit: 0, dead: 0, born: 0, deep: true, run: r.id, floor: r.floor, fk: kind
+      };
+    },
+    onKill(m, over) {
+      const r = R(); if (!r || !m.deep) return;
+      emit('deepKill', { mob: m, floor: r.floor });
+      r.foeI++;
+      if (r.boons.flow && over > 0) r.carry = over;
+      if (r.foeI >= floorFoes(r, r.floor).length) clearFloor();
+    }
+  };
+
+  function payTrialMile(r, f) {
+    const tr = D().trial;
+    if (!r.trial || r.week !== tr.week) return;
+    const m = T.trialMiles[f];
+    if (m && !tr.paid[f]) { tr.paid[f] = 1; r.bonus += m; toast(`Trial: floor ${f} reached. +${m} Depth Marks.`, 'good', { ic: ['orb', '#7FB2FF'] }, 'normal'); }
+  }
+  function clearFloor() {
+    const r = R(), f = r.floor, kind = floorKind(f);
+    const refund = refundFor(kind);
+    r.oil = Math.min(oilMax(), r.oil + refund);
+    r.lastRefund = refund; r.lastKind = kind;
+    passFloor(r, f, kind);
+    emit('deepFloor', { floor: f, kind, trial: r.trial, refund });
+    r.floor = f + 1;
+    if (kind === 'boss' && r.boons.crown) r.queue.push('crown');
+    openDraft(kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'normal');
+  }
+  // Marks and records for a floor passed (fought, a Landing, or skipped by the Lantern Stair).
+  function passFloor(r, f, kind, quiet) {
+    r.top = Math.max(r.top, f); r.cleared++; D().floors++;
+    r.marks += T.marks(f) + (r.boons.map ? 1 : 0) + (kind === 'boss' ? T.bossMarks : 0);
+    if (kind === 'boss') r.bosses++;
+    if (r.trial) {
+      payTrialMile(r, f);
+      const tr = D().trial;
+      if (r.week === tr.week) {
+        tr.best = Math.max(tr.best, f); tr.hist[r.week] = Math.max(tr.hist[r.week] || 0, f);
+        if (f === T.sealFloor && !quiet) { almanac.count && almanac.count('trial'); toast('Trial Seal earned for this week. The Codex keeps it.', 'good', { ic: ['coin', '#F2C14E'] }, 'normal'); }
+      }
+    }
+    if (!quiet) {
+      if (f === 25) almanac.count && almanac.count('deep');
+      if (kind === 'boss' && r.bosses === 2) almanac.count && almanac.count('elder');
+    }
+  }
+
+  // ---------------- run life ----------------
+  function newRun(trial) {
+    const week = deviceWeek();
+    return {
+      id: Math.floor(Math.random() * 1e9), trial: !!trial, week, rule: trial ? trialRule(week).id : null,
+      seed: trial ? hash(week, 0xDEE9) : Math.floor(Math.random() * 2147483647),
+      anchor: Math.max(1, S.maxZone), par: parHp(), floor: 1, phase: 'fight', oil: 0, oilAtStart: 0,
+      boons: {}, offer: null, landing: null, queue: [], banned: [],
+      rr: 0, rrUsed: 0, ban: 0, marks: 0, bonus: 0, secs: 0, picks: 0,
+      top: 0, cleared: 0, bosses: 0, foeI: 0, ft: 0, carry: 0, heartAt: 0, act: S.activity || 'fight',
+      paused: false, twiceUsed: false, cascade: 0, wallT: -1, taps: 0, combo: 0, lastTap: -9, lowWarned: false,
+      started: Date.now(), lastRefund: 0, lastKind: null
+    };
+  }
+  function enter(r) {
+    r.act = S.activity || 'fight';
+    S.activity = 'fight'; fightBoss = false;
+    r.paused = false;
+    syncArena();
+    retire();
+    emit('sceneReset'); emit('activity', { activity: 'fight' });
+  }
+  // The foe on the stage when a run starts, resumes or ends is set aside (dead, no reward), so no
+  // zone foe is fought under the arena and no well foe is left for the normal game.
+  function retire() { if (mob && !mob.dead) { mob.hp = 0; mob.dead = 0.001; mob.deep = true; } }
+  // Put the player's own activity back and hand the stage to the normal game.
+  function leave(r) {
+    const act = r.act || 'fight';
+    S.activity = act === 'raid' && !(online.ready && online.canWrite) ? 'fight' : act;
+    retire();
+    arena = null; fightBoss = false;
+    emit('sceneReset');
+    if (S.activity === 'fight') spawn();
+    emit('activity', { activity: S.activity });
+  }
+  function start(trial) {
+    ensureInit();
+    if (R() || !deepUnlocked()) return false;
+    const r = newRun(trial); D().run = r;
+    ensureTrialWeek();
+    r.oil = Math.min(oilMax(r), T.oilStart + (trial ? 0 : 10 * loreOf(r, 'breath') + bonus('deepOil')));
+    if (ruleOf(r) === 'drought') r.oil = 150;
+    r.rr = ruleOf(r) === 'wick' ? 0 : T.rerolls + loreOf(r, 'wick') + (trial ? 0 : bonus('deepRerolls'));
+    r.ban = loreOf(r, 'banish');
+    enter(r);
+    emit('deepStart', { trial: r.trial });
+    // Deep Lore: Lantern Stair skips floors (their Marks are paid) and gives Common picks first.
+    const stair = loreOf(r, 'stair');
+    if (stair) { for (let f = 1; f <= 5 * stair; f++) passFloor(r, f, floorKind(f, r), true); r.floor = 1 + 5 * stair; }
+    const fav = loreOf(r, 'fav') && D().fav && DEEP_BOONS[D().fav];
+    if (fav && eligible(D().fav, r) && (DEEP_BOONS[D().fav].r === 'c' || (loreOf(r, 'fav') >= 2 && DEEP_BOONS[D().fav].r === 'r'))) grant(D().fav, true);
+    for (let i = 0; i < stair; i++) r.queue.push('start');
+    if (!D().tips) tip(0);
+    next();
+    return true;
+  }
+  function resume() {
+    ensureInit();
+    const r = R(); if (!r || !r.paused) return false;
+    if (closedTrial(r)) return false;
+    enter(r);
+    if (r.phase === 'fight') { r.oil = r.oilAtStart; startFloor(); }
+    else save();
+    return true;
+  }
+  const closedTrial = r => {
+    if (!r.trial || r.week === deviceWeek()) return false;
+    end('closed');
+    toast('That Trial has closed. Your run was scored.', 'good', { ic: ['orb', '#7FB2FF'] }, 'high');
+    return true;
+  };
+  function marksNow(r) {
+    r = r || R(); if (!r) return 0;
+    const pb = r.trial ? 0 : Math.max(0, r.top - D().best) * T.pbMarks;
+    const mul = (ruleOf(r) === 'steep' ? 1.5 : 1) * mod('deepMarks');
+    return Math.round((r.marks + pb) * mul) + r.bonus;
+  }
+  // reason: oil | leave | abandon | closed
+  function end(reason) {
+    const r = R(); if (!r) return null;
+    const d = D(), oldBest = r.trial ? d.trial.best : d.best;
+    const marks = marksNow(r), pb = !r.trial && r.top > d.best;
+    if (!r.trial) d.best = Math.max(d.best, r.top);
+    d.marks += marks; d.marksTotal += marks; d.runs++;
+    const summary = {
+      reason, trial: r.trial, rule: r.rule, week: r.week, floor: r.top, best: r.trial ? d.trial.best : d.best, oldBest,
+      pb, marks, bosses: r.bosses, cleared: r.cleared, boons: Object.assign({}, r.boons), secs: Math.round(r.secs),
+      lines: [
+        { txt: 'Floors cleared', v: r.marks - r.bosses * T.bossMarks },
+        { txt: 'Boss floors', v: r.bosses * T.bossMarks },
+        { txt: 'New best', v: pb ? (r.top - oldBest) * T.pbMarks : 0 },
+        { txt: 'Trial milestones', v: r.bonus }
+      ].filter(x => x.v > 0)
+    };
+    const secs = r.paused ? 0 : r.secs;
+    const wasLive = !r.paused;
+    d.run = null;
+    if (wasLive) leave(r); else arena = null;
+    let away = null;
+    if (secs >= 1) away = awayGains(secs);
+    summary.away = away ? { gold: away.gold || 0, xp: away.xp || 0, mats: away.mats || [], raidDmg: away.raidDmg || 0, kills: away.kills || 0, secs } : null;
+    d.last = { floor: summary.floor, best: summary.best, pb, marks, trial: r.trial, reason, at: Date.now() };
+    if (typeof codexRefresh === 'function') codexRefresh(true);
+    save();
+    emit('deepEnd', { summary, away });
+    return summary;
+  }
+
+  // ---------------- player actions ----------------
+  function pick(id) {
+    const r = R(); if (!r || r.phase !== 'draft' || !r.offer || !r.offer.ids.includes(id)) return false;
+    grant(id); next(); return true;
+  }
+  function reroll() {
+    const r = R(); if (!r || r.phase !== 'draft' || !r.offer || r.rr <= 0) return false;
+    r.rr--; r.rrUsed++;
+    r.offer = makeOffer(r, r.offer.kind); save(); return true;
+  }
+  function banish(id) {
+    const r = R(); if (!r || r.phase !== 'draft' || !r.offer || r.ban <= 0 || !r.offer.ids.includes(id)) return false;
+    r.ban--; r.banned.push(id);
+    const i = r.offer.ids.indexOf(id), fill = makeOffer(r, r.offer.kind).ids.filter(x => !r.offer.ids.includes(x));
+    if (fill.length) r.offer.ids[i] = fill[0]; else r.offer.ids.splice(i, 1);
+    if (!r.offer.ids.length) next(); else save();
+    return true;
+  }
+  function skip() {
+    const r = R(); if (!r || r.phase !== 'draft') return false;
+    r.oil = Math.min(oilMax(), r.oil + T.skipOil); next(); return true;
+  }
+  function landing(choice) {
+    const r = R(); if (!r || r.phase !== 'landing') return false;
+    const sharpen = sharpenable(r);
+    if (choice === 'sharpen' && !sharpen.length) return false;
+    passFloor(r, r.floor, 'landing');
+    emit('deepFloor', { floor: r.floor, kind: 'landing', trial: r.trial, refund: 0 });
+    r.floor++;
+    if (choice === 'refill') { r.oil = Math.min(oilMax(), r.oil + T.landingOil); next(); }
+    else if (choice === 'sharpen') { const id = sharpen[Math.floor(rng(hash(r.seed, r.floor, 0x5A))() * sharpen.length)]; grant(id); toast(`${DEEP_BOONS[id].n} rises to rank ${roman(r.boons[id])}.`, 'good', null, 'low'); next(); }
+    else if (choice === 'study') { r.landing = null; openDraft('study'); }
+    else return false;
+    return true;
+  }
+  const sharpenable = r => Object.keys(r.boons).filter(id => DEEP_BOONS[id] && r.boons[id] < DEEP_BOONS[id].max);
+  const between = () => { const r = R(); return !!r && (r.phase === 'draft' || r.phase === 'landing'); };
+  const climbOut = () => between() ? end('leave') : null;
+  const abandon = () => { const r = R(); return r && (r.paused || between()) ? end('abandon') : null; };
+
+  // ---------------- tick: Oil, the floor clock, Executioner ----------------
+  onTick(dt => {
+    const r = R();
+    if (!r) return;
+    ensureInit();
+    if (r.paused) return;
+    if (inAway) return;
+    syncArena();
+    r.secs += dt;
+    if (r.phase !== 'fight') return;
+    // The player switched activity from outside the Deepwell: remember it for the climb out.
+    if (S.activity !== 'fight') { r.act = S.activity; S.activity = 'fight'; emit('activity', { activity: 'fight' }); }
+    const alive = mob && mob.deep && !mob.dead;
+    if (!alive) { if (!mob || !mob.deep) spawn(); return; }
+    r.ft += dt;
+    const free = (setOn('oil') && r.ft < 4) || (r.wallT >= 0 && r.ft < r.wallT);
+    if (!free) r.oil -= dt * drainRate();
+    if (r.oil < T.oilLow && !r.lowWarned) { r.lowWarned = true; emit('deepOil', { oil: r.oil }); }
+    if (r.boons.exec && mob.hp > 0 && mob.hp < mob.max * DEEP_BOONS.exec.v) strike(mob.hp * 1.0001 + 1e-9, '#9FE8FF', true, null, 'EXECUTE');
+    if (r.oil <= 0) {
+      r.oil = 0;
+      if (D().run === r) end('oil');
+    }
+  });
+
+  // ---------------- boon wiring ----------------
+  const on_ = () => deepActive();
+  const glassW = () => ruleOf(R()) === 'glass';
+  addModifier('dmg', () => {
+    if (!on_()) return 1;
+    const r = R();
+    let m = (1 + DEEP_BOONS.whet.v * rank('whet')) * (r.boons.glass ? 1.45 : 1) * (r.boons.pact ? 1.5 : 1);
+    if (r.boons.heart) m *= 1 + DEEP_BOONS.heart.v * Math.floor((r.cleared - r.heartAt) / 3);
+    if (setOn('flame')) m *= 1.2;
+    const rule = ruleOf(r);
+    if (rule === 'glass') m *= 2;
+    if (rule === 'company') m *= 0.01;
+    if (rule === 'drum') m *= 0.5;
+    return m;
+  });
+  addModifier('party', () => {
+    if (!on_()) return 1;
+    const r = R();
+    let m = (1 + DEEP_BOONS.drill.v * rank('drill')) * (r.boons.warband ? 1.6 : 1);
+    const fk = r.phase === 'fight' ? floorKind(r.floor) : null;
+    if ((fk === 'elite' || fk === 'boss') && r.boons.ration) m *= 1 + DEEP_BOONS.ration.v * rank('ration');
+    if (setOn('company')) m *= 1 + Math.min(0.6, 0.02 * r.cleared);
+    const rule = ruleOf(r);
+    if (rule === 'company') m *= 200;       // hero x0.01 on dmg; companions net x2
+    if (rule === 'drum') m *= 2;            // dmg x0.5 on everyone; companions net x1
+    return m;
+  });
+  addModifier('crit', () => {
+    if (!on_()) return 1;
+    return (1 + DEEP_BOONS.luck.v * rank('luck')) * (R().boons.mass ? 1.5 : 1) * (ruleOf(R()) === 'crit' ? 2 : 1);
+  });
+  addModifier('critDmg', () => on_() ? (1 + DEEP_BOONS.sharp.v * rank('sharp')) * (R().boons.mass ? 1.5 : 1) : 1);
+  addModifier('nonCrit', () => on_() && ruleOf(R()) === 'crit' ? 0.5 : 1);
+  addModifier('tap', () => {
+    if (!on_()) return 1;
+    const r = R();
+    let m = 1 + DEEP_BOONS.heavy.v * rank('heavy');
+    if (r.boons.rhythm) m *= 1 + Math.min(0.6, DEEP_BOONS.rhythm.v * r.combo);
+    if (ruleOf(r) === 'drum') m *= 6;       // dmg x0.5 -> taps net x3
+    return m;
+  });
+  addModifier('abilityCd', () => on_() ? (1 - DEEP_BOONS.twin.v * rank('twin')) * (setOn('path') ? 0.5 : 1) : 1);
+  const TUNES = { embersMax: 'kindle', guardMax: 'shield', markT: 'fletch', blessMax: 'psalm', mark: 'focus', emberPerTap: 'double', guard: 'bulwark', blessT: 'choir', volleyHits: 'storm', charges: 'lheart' };
+  for (const k in TUNES) addBonus('tune:' + k, () => on_() ? DEEP_BOONS[TUNES[k]].v * rank(TUNES[k]) : 0);
+  addBonus('tune:keepEmbers', () => on_() && R().boons.twice && !R().twiceUsed ? 1 : 0);
+  addBonus('tune:hymnFloor', () => on_() && R().boons.hymn ? 1 : 0);
+
+  on('ability', p => {
+    if (!fighting()) return;
+    const r = R();
+    if (p.cls === 'lanternmage' && r.boons.twice) r.twiceUsed = true;
+    if (p.cls === 'warden' && r.boons.wallnight) r.wallT = r.ft + DEEP_BOONS.wallnight.v;
+  });
+  on('crit', () => {
+    if (!fighting()) return;
+    const r = R();
+    if (r.boons.cascade && r.cascade < 3) { const g = Math.min(0.2, 3 - r.cascade); r.cascade += g; r.oil = Math.min(oilMax(), r.oil + g); }
+    if (setOn('crit') && mob && mob.deep && !mob.dead) strike(heroAtk() * critMult() * 0.3, '#FFD27A', false);
+  });
+  on('classTap', p => {
+    if (!fighting() || p.auto || p.target !== 'mob') return;
+    const r = R();
+    r.taps++;
+    if (r.boons.rhythm) { r.combo = r.ft - r.lastTap < 0.4 ? Math.min(12, r.combo + 1) : 0; r.lastTap = r.ft; }
+    if (setOn('tap') && r.taps % 25 === 0 && mob && mob.deep && !mob.dead) strike(heroAtk() * 15, '#FFD27A', true, null, 'DRUMBEAT');
+  });
+
+  // ---------------- away phases, load and resume ----------------
+  // Inside an away phase the player's own activity is in S.activity and no boon applies.
+  on('awayBegin', () => { const r = R(); inAway = true; if (r && !r.paused) { S.activity = r.act || 'fight'; arena = null; } });
+  on('awayEnd', () => { const r = R(); inAway = false; if (r && !r.paused) S.activity = 'fight'; syncArena(); });
+
+  // A loaded save with a live run (the app closed mid-run): credit the seconds already spent below
+  // with the load's away gains, and pause the run until the player taps Resume.
+  function ensureInit() {
+    if (initFor === S) return;
+    initFor = S;
+    const r = R();
+    if (!r) { syncArena(); return; }
+    if (!r.paused) {
+      if (r.secs > 0) S.last -= r.secs * 1000;
+      r.secs = 0; r.paused = true;
+      S.activity = r.act || 'fight';
+      if (r.phase === 'fight') { r.oil = r.oilAtStart; r.foeI = 0; }
+    }
+    arena = null;
+  }
+  function ensureTrialWeek() {
+    const tr = D().trial, w = deviceWeek();
+    if (tr.week !== w) { tr.week = w; tr.best = 0; tr.paid = {}; }
+  }
+  let slow = 0;
+  onTick(dt => {
+    slow += dt; if (slow < 1) return; slow = 0;
+    ensureInit();
+    if (!deepUnlocked()) return;
+    ensureTrialWeek();
+    const r = R();
+    if (r && r.paused && r.trial && r.week !== deviceWeek()) closedTrial(r);
+  });
+
+  function tip(i) {
+    const txt = ['Oil is your run. It drains while a foe stands, and each floor you clear refunds some.',
+      'After each floor, pick 1 of 3 boons. Three boons of one set switch on its bonus.',
+      'You can climb out between floors. You keep every Mark you found.'][i];
+    if (!txt) return;
+    D().tips = Math.max(D().tips, i + 1);
+    toast(txt, 'good', { ic: ['flame', '#7FB2FF', { 5: '#BFE0FF', 7: '#FFFFFF' }] }, 'normal');
+    emit('deepTip', { i, txt });
+  }
+  on('deepOffer', () => { if (D().tips === 1) tip(1); else if (D().tips === 2 && R() && R().cleared >= 2) tip(2); });
+
+  // ---------------- views for the UI ----------------
+  function card(id) {
+    const b = DEEP_BOONS[id], r = R(), have = r ? r.boons[id] || 0 : 0;
+    return {
+      id, n: b.n, r: b.r, max: b.max, from: have, to: Math.min(b.max, have + 1), cls: b.cls,
+      txt: b.txt(Math.min(b.max, have + 1)), now: have ? b.txt(have) : '',
+      sets: b.sets.map(s => ({ id: s, n: DEEP_SETS[s].n, have: setCount(s), need: 3, on: setOn(s) }))
+    };
+  }
+  function offerView() {
+    const r = R(); if (!r) return null;
+    if (r.phase === 'landing') {
+      const sh = sharpenable(r);
+      return { kind: 'landing', floor: r.floor, landing: [
+        { id: 'refill', n: 'Refill', txt: `+${T.landingOil}s Oil` },
+        { id: 'sharpen', n: 'Sharpen', txt: sh.length ? 'A random boon you hold gains a rank' : 'No boon can rank up yet', off: !sh.length },
+        { id: 'study', n: 'Study', txt: 'Pick from 3 Rare or Epic boons' }] };
+    }
+    if (r.phase !== 'draft' || !r.offer) return null;
+    return { kind: r.offer.kind, floor: r.floor - 1, cards: r.offer.ids.map(card), rr: r.rr, ban: r.ban, skipOil: T.skipOil, refund: r.lastRefund, lastKind: r.lastKind };
+  }
+  const owned = () => { const r = R(); return r ? Object.keys(r.boons).map(card) : []; };
+  const setProgress = () => Object.keys(DEEP_SETS).filter(s => !DEEP_SETS[s].c || deepStageC()).map(s => ({ id: s, n: DEEP_SETS[s].n, fx: DEEP_SETS[s].fx, have: setCount(s), on: setOn(s) }));
+  function trialInfo() {
+    const w = deviceWeek(), rule = trialRule(w), tr = D().trial;
+    const best = tr.week === w ? tr.best : 0;
+    const seals = Object.keys(tr.hist).filter(k => tr.hist[k] >= T.sealFloor).length;
+    const miles = Object.keys(T.trialMiles).map(f => ({ f: +f, m: T.trialMiles[f], got: tr.week === w && !!tr.paid[f] }));
+    return { week: w, rule, best, seals, miles, sealed: best >= T.sealFloor, next: trialRule(w + 1) };
+  }
+
+  // ---------------- the shop ----------------
+  const levelOf = id => { const it = DEEP_SHOP[id]; return it.cat === 'lore' ? D().lore[id] || 0 : it.cat === 'page' ? D().pages : D().cos[id] ? 1 : 0; };
+  const maxOf = id => { const it = DEEP_SHOP[id]; return Array.isArray(it.cost) ? it.cost.length : it.max || 1; };
+  const priceOf = id => { const it = DEEP_SHOP[id], lv = levelOf(id); return lv >= maxOf(id) ? null : Array.isArray(it.cost) ? it.cost[lv] : it.cost; };
+  function shopRow(id) {
+    const it = DEEP_SHOP[id], lv = levelOf(id), max = maxOf(id), price = priceOf(id);
+    const lock = it.floor && D().best < it.floor ? `Reach floor ${it.floor}` : '';
+    return { id, cat: it.cat, kind: it.kind, col: it.col, n: it.n, lv, max, price, done: lv >= max, lock,
+      fx: it.fx(Math.max(1, Math.min(max, lv + (lv < max ? 1 : 0)))), fxNow: lv ? it.fx(lv) : '',
+      can: price !== null && !lock && D().marks >= price, eq: it.kind ? D().eq[it.kind] === id : false };
+  }
+  const shop = cat => Object.keys(DEEP_SHOP).filter(id => !cat || DEEP_SHOP[id].cat === cat).map(shopRow);
+  function nextLore() {
+    let best = null;
+    for (const id in DEEP_SHOP) { if (DEEP_SHOP[id].cat !== 'lore') continue; const p = priceOf(id); if (p !== null && (!best || p < best.price)) best = { id, price: p }; }
+    return best ? shopRow(best.id) : null;
+  }
+  function buy(id) {
+    ensureInit();
+    const it = DEEP_SHOP[id]; if (!it) return false;
+    const row = shopRow(id);
+    if (!row.can) return false;
+    D().marks -= row.price;
+    if (it.cat === 'lore') D().lore[id] = row.lv + 1;
+    else if (it.cat === 'page') D().pages = row.lv + 1;
+    else D().cos[id] = 1;
+    if (it.kind && !D().eq[it.kind]) D().eq[it.kind] = id;
+    if (typeof codexRefresh === 'function') codexRefresh(true);
+    save();
+    emit('deepBuy', { id });
+    return true;
+  }
+  const favChoices = () => { const lv = D().lore.fav || 0; if (!lv) return []; return DEEP_BOON_IDS.filter(id => { const b = DEEP_BOONS[id]; return !b.c && (b.r === 'c' || (lv >= 2 && b.r === 'r')) && (!b.cls || b.cls === 'any' || b.cls === cls()); }); };
+  const setFav = id => { if (id !== null && !favChoices().includes(id)) return false; D().fav = id; save(); return true; };
+  const equip = (slot, id) => { if (id !== null && (!D().cos[id] || DEEP_SHOP[id].kind !== slot)) return false; D().eq[slot] = id; save(); return true; };
+
+  // ---------------- the Codex: Deepwell, Seals and Wardrobe pages, bought titles ----------------
+  if (typeof CODEX_PAGES === 'object') {
+    const P = CODEX_PAGES;
+    if (P.deepwell) Object.assign(P.deepwell, {
+      show: () => deepUnlocked(),
+      tiles: x => {
+        const d = D(), out = [];
+        for (const f of [10, 20, 30, 40, 50, 60]) out.push({ key: 'depth' + f, n: `Depth ${f}`, got: d.best >= f ? 1 : 0, max: 1, pts: d.best >= f ? 10 : 0, ptsMax: 10, grp: 'Depth',
+          hint: d.best >= f ? '' : x.exact ? `Clear floor ${f} in a normal run.` : 'Deeper down.' });
+        for (const id of DEEP_BOON_IDS) { const b = DEEP_BOONS[id]; if (b.c && !deepStageC()) continue; const got = d.seen[id] ? 1 : 0;
+          out.push({ key: 'b_' + id, n: b.n, got, max: 1, pts: got, ptsMax: 1, grp: 'Boons picked', sub: got ? b.txt(1) : '', hint: got ? '' : x.exact ? `A ${{ c: 'Common', r: 'Rare', e: 'Epic' }[b.r]} boon${b.cls && b.cls !== 'any' ? ' for the ' + HERO_CLASSES[b.cls].name : ''}.` : 'Pick it in a draft.' }); }
+        DEEP_PAGES.forEach(([n, txt], i) => { const got = d.pages > i ? 1 : 0; out.push({ key: 'p' + i, n: got ? n : `Deep Lore page ${i + 1}`, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Deep Lore', sub: got ? txt : '', hint: got ? '' : 'Buy it with Depth Marks.' }); });
+        return out;
+      }
+    });
+    if (P.seals && typeof P.seals.tiles === 'function') {
+      const base = P.seals.tiles, baseShow = P.seals.show;
+      P.seals.show = () => (baseShow ? baseShow() : true) || deepUnlocked();
+      P.seals.tiles = x => {
+        const out = S.almanac ? base(x) : [];
+        if (!deepUnlocked()) return out;
+        const n = Math.min(52, Object.keys(D().trial.hist).filter(k => D().trial.hist[k] >= T.sealFloor).length);
+        out.push({ key: 'trial', n: 'Trial Seals', got: n, max: 52, pts: n * 2, ptsMax: 104, sub: `${n} of 52 weeks. Any week counts; a missed week costs nothing.`, hint: n >= 52 ? '' : `Reach floor ${T.sealFloor} in a week's Trial.` });
+        return out;
+      };
+    }
+    if (P.wardrobe) Object.assign(P.wardrobe, {
+      show: () => deepUnlocked(),
+      tiles: () => Object.keys(DEEP_SHOP).filter(id => DEEP_SHOP[id].cat === 'look').map(id => {
+        const it = DEEP_SHOP[id], got = D().cos[id] ? 1 : 0;
+        return { key: id, n: it.n, got, max: 1, pts: got * 2, ptsMax: 2, grp: { lantern: 'Lanterns', decor: 'Camp decorations', trail: 'Trails' }[it.kind],
+          sub: got ? 'Saved: shows once the stage and camp draw Deepwell looks.' : '', hint: got ? '' : `${it.cost} Depth Marks in the Deepwell shop.` };
+      })
+    });
+  }
+  if (typeof codexTitles === 'function') {
+    const base = codexTitles;
+    codexTitles = () => base().concat(Object.keys(DEEP_SHOP).filter(id => DEEP_SHOP[id].cat === 'title')
+      .map(id => ({ id, n: DEEP_SHOP[id].n, src: 'Deepwell shop', got: !!D().cos[id] })));
+  }
+
+  // ---------------- Next Up, the away card ----------------
+  const go = { tab: 'adv', view: 'deep' };
+  const DEEP_IC = { ic: ['orb', '#7FB2FF'] };
+  registerGoal({ id: 'deep-open', sys: 'deep', icon: DEEP_IC, go,
+    label: () => deepUnlocked() ? 'The Deepwell is open: take your first run' : S.maxZone >= T.unlockZone ? `Build the Hearth to level ${T.hearth} to open the Deepwell` : `The Deepwell opens at zone ${T.unlockZone}`,
+    pct: () => {
+      if (D().runs || R()) return null; if (deepUnlocked()) return 1;
+      if (S.maxZone >= T.unlockZone) return Math.min(0.99, (hearthLv() || 0) / T.hearth);
+      return S.maxZone >= T.unlockZone - 5 ? Math.min(0.99, S.maxZone / T.unlockZone) : null;
+    } });
+  registerGoal({ id: 'deep-resume', sys: 'deep', icon: DEEP_IC, go, prio: 1,
+    label: () => { const r = R(); return r ? `Deepwell: your run waits on floor ${r.floor}` : 'Deepwell'; },
+    pct: () => { const r = R(); return r && r.paused ? 1 : null; } });
+  registerGoal({ id: 'deep-trial', sys: 'deep', icon: { ic: ['coin', '#F2C14E'] }, go,
+    label: () => `Trial (${trialRule().n}): reach floor ${T.sealFloor} for a Seal`,
+    pct: () => { if (!deepUnlocked() || !D().runs || R()) return null; const t = trialInfo(); return t.sealed ? null : Math.max(0.05, Math.min(0.99, t.best / T.sealFloor)); } });
+  registerGoal({ id: 'deep-shop', sys: 'deep', icon: DEEP_IC, go: { tab: 'adv', view: 'deep', sel: '#sec-deep-shop' },
+    label: () => { const n = nextLore(); return n ? `Deep Lore: ${n.n} ${roman(n.lv + 1)}` : 'Deep Lore'; },
+    pct: () => { if (!deepUnlocked() || R()) return null; const n = nextLore(); return n ? Math.min(1, D().marks / n.price) : null; } });
+  registerAwayLine(() => {
+    const r = R(); if (!r || !r.paused) return null;
+    return { icon: DEEP_IC, txt: `Your Deepwell run waits on floor ${r.floor}`, sub: `${Math.ceil(r.phase === 'fight' ? r.oilAtStart : r.oil)}s of Oil. Resume it on the Fight tab.`, group: 'Deepwell', go: () => { if (typeof setTab === 'function') setTab('deep'); } };
+  });
+
+  DW = {
+    run: R, live: deepActive, unlockInfo: () => ({ open: deepUnlocked(), zone: T.unlockZone, hearth: hearthLv() === null ? 0 : T.hearth, hearthNow: hearthLv(), maxZone: S.maxZone }),
+    floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
+    offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
+    start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
+    _init: () => { initFor = null; ensureInit(); }
+  };
+  ensureInit();
 }
 
 // ---- src/js/60-gfx.js ----
@@ -15986,6 +17025,446 @@ let craftUI = null;
   });
 
   craftUI = { openItem: id => openItem(id), pick: (who, pos) => pick(who, pos) };
+}
+
+// ---- src/js/75-deepwell-ui.js ----
+// 75-deepwell-ui: the Deepwell's screens (docs/design/deepwell.md 9). Browser-only.
+//   - Fight tab, "Deepwell" view: the entrance card (runs, resume), the weekly Trial, the Marks shop.
+//   - In a run: an Oil bar and the floor over the stage (in place of the zone name), a boon strip in
+//     place of the control row, and a full-screen choice sheet for each draft and Quiet Landing.
+//   - Run end: a card with the floor, Marks and what the party earned up top while you were below.
+//   - The stage shows the well: drawScene / drawAtmosphere (63-scenery) are wrapped to draw a cold
+//     cave scene while a run is live (no 62-stage edit). The stage owner can later add a real
+//     `well` theme and hide the zone name (see the branch report).
+// Per frame: nothing when no run is live (one boolean check in each scenery wrapper). The HUD
+// updates 5 times a second, writing only what changed.
+{
+  const setTxt = (e, t) => { if (e && e.textContent !== t) e.textContent = t; };
+  const setCls = (e, c, on) => { if (e && e.classList.contains(c) !== !!on) e.classList.toggle(c, !!on); };
+  const RAR = { c: 'Common', r: 'Rare', e: 'Epic' };
+  const RAR_F = { c: '', r: 'rare', e: 'epic' };
+  const btn = (cls, txt, fn) => { const b = el('button', cls, txt); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
+
+  // ---------------- icons (12x12 pixel maps, 1 main, 2 dark, 5 white, 6 brown, 7 gold) ----------------
+  const PX = {
+    lantern: ['.....77.....', '....7..7....', '...666666...', '...611116...', '...615516...', '...615516...', '...611116...', '...611116...', '...666666...', '....6666....', '............', '............'],
+    star: ['.....11.....', '.....11.....', '....1551....', '....1551....', '111115511111', '.1115555111.', '..11155111..', '...111111...', '...11..11...', '..11....11..', '..1......1..', '............'],
+    fist: ['............', '...1.1.1....', '..11111111..', '..15151511..', '..11111111..', '.111111111..', '.11111111...', '..1111111...', '...11111....', '...22222....', '...22222....', '............'],
+    rune: ['.....11.....', '....1551....', '...15..51...', '..15....51..', '.15..11..51.', '.1..1551..1.', '.1..1551..1.', '.15..11..51.', '..15....51..', '...15..51...', '....1551....', '.....11.....']
+  };
+  const pxURL = (name, main, extra) => spriteURL('dw:' + name + main + JSON.stringify(extra || {}), PX[name], icPal(main, extra));
+  const SET_IC = {
+    flame: () => iconURL('flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }), oil: () => pxURL('lantern', '#7FB2FF', { 5: '#DFF0FF' }),
+    crit: () => pxURL('star', '#FFD27A'), tap: () => pxURL('fist', '#E8C9A0', { 2: '#8C6A43' }), company: () => iconURL('banner', '#6FCB6A'),
+    path: () => pxURL('rune', '#B58CFF'), guard: () => iconURL('helm', '#A9B1BD'), mend: () => iconURL('heart', '#6FCB6A')
+  };
+  const boonIc = c => c.id === 'map' ? iconURL('banner', '#F2C14E') : c.id === 'study' ? iconURL('glass', '#F2E27A') : c.id === 'crown' ? iconURL('coin', '#F2C14E') : c.id === 'lheart' ? iconURL('heart', '#FF9E3D') : c.sets[0] ? SET_IC[c.sets[0].id]() : iconURL('orb', '#7FB2FF');
+  const OIL_IC = () => pxURL('lantern', '#FF9E3D', { 5: '#FFF3C4' });
+  const MARK_IC = () => iconURL('orb', '#7FB2FF', { 7: '#3F8FA8' });
+  const markChip = n => { const s = el('span', 'dw-marks'); s.append(img(MARK_IC()), el('b', null, fmt(n))); return s; };
+
+  // ---------------- the stage: the well's scene while a run is live ----------------
+  // A cold, hue-shifted cave until the scenery owner adds THEMES.well. sceneFor caches it by size.
+  const WELL_THEME = 'cave', WELL_HUE = 330;
+  let wellSc = null;
+  const wellFor = sc => {
+    if (!sc) return sc;
+    if (!wellSc || wellSc.W !== sc.W || wellSc.H !== sc.H) wellSc = sceneFor(WELL_THEME, sc.W, sc.H, WELL_HUE);
+    return wellSc;
+  };
+  const baseScene = drawScene, baseAtmo = drawAtmosphere;
+  drawScene = (ctx, sc, camX, which) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which);
+  drawAtmosphere = (ctx, sc, T_, W, H, camX) => baseAtmo(ctx, arena ? wellFor(sc) : sc, T_, W, H, camX);
+
+  // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------
+  const app = $('app'), box = $('stageBox');
+  const hud = el('div', 'dw-hud'); hud.setAttribute('aria-live', 'off');
+  const hudOil = el('div', 'dw-oil'), oilBar = el('div', 'dw-oilbar'), oilFill = el('i'), oilTxt = el('b', 'dw-oiltxt');
+  oilBar.append(oilFill); hudOil.append(img(OIL_IC(), 'px dw-oilic'), oilBar, oilTxt);
+  const hudFloor = el('div', 'dw-floor'), floorN = el('span', 'dw-fn'), floorK = el('span', 'dw-fk');
+  hudFloor.append(floorN, floorK);
+  hud.append(hudOil, hudFloor); box.append(hud);
+
+  const row = el('div', 'dw-row');
+  const strip = btn('dw-strip', null, () => openBoons());
+  strip.setAttribute('aria-label', 'Your boons this run');
+  const stripIcs = el('span', 'dw-strip-ics'), stripTxt = el('span', 'dw-strip-txt');
+  strip.append(stripIcs, stripTxt);
+  const rowMarks = el('div', 'dw-rowmarks'); const rowMarksN = el('b');
+  rowMarks.append(img(MARK_IC()), rowMarksN);
+  row.append(strip, rowMarks);
+  const ctrl = document.querySelector('.ctrl'); if (ctrl) ctrl.after(row); else $('game').append(row);
+
+  let stripSig = null;
+  function updStrip(r) {
+    const ids = Object.keys(r.boons), sig = ids.map(id => id + r.boons[id]).join();
+    if (sig !== stripSig) {
+      stripSig = sig; stripIcs.textContent = '';
+      const cards = DW.owned();
+      for (const c of cards.slice(0, 10)) { const i = img(boonIc(c), 'px dw-sic' + (c.r !== 'c' ? ' ' + RAR_F[c.r] : '')); i.title = c.n + (c.from > 1 ? ' ' + roman(c.from) : ''); stripIcs.append(i); }
+      if (cards.length > 10) stripIcs.append(el('span', 'dw-more', '+' + (cards.length - 10)));
+      const on = DW.setProgress().filter(s => s.on).map(s => s.n);
+      setTxt(stripTxt, !cards.length ? 'No boons yet' : on.length ? on.join(', ') + ' set' + (on.length > 1 ? 's' : '') + ' on' : `${cards.length} boon${cards.length > 1 ? 's' : ''}`);
+    }
+  }
+  const KIND_TXT = { normal: '', elite: 'Elite', boss: 'Deep Elder', landing: 'Quiet Landing' };
+  let lastOn = false;
+  function updHud() {
+    const r = DW.run(), live = !!r && DW.live();
+    if (live !== lastOn) {
+      lastOn = live; setCls(app, 'deep-run', live);
+      if (!live) { closeDraft(); stripSig = null; }
+    }
+    if (!live) return;
+    const max = DW.oilMax(), oil = Math.max(0, r.oil);
+    const pct = Math.max(0, Math.min(100, oil / max * 100));
+    const w = pct.toFixed(1) + '%'; if (oilFill.style.width !== w) oilFill.style.width = w;
+    setCls(hudOil, 'low', oil < DEEP_TUNE.oilLow && r.phase === 'fight');
+    setTxt(oilTxt, Math.ceil(oil) + 's');
+    const f = r.phase === 'fight' ? r.floor : Math.max(1, r.floor - (r.phase === 'landing' ? 0 : 1));
+    setTxt(floorN, `Floor ${f}`);
+    const k = r.phase === 'fight' || r.phase === 'landing' ? KIND_TXT[DW.floorKind(r.floor)] : '';
+    setTxt(floorK, k + (r.trial ? (k ? ' · ' : '') + 'Trial' : ''));
+    setTxt(rowMarksN, fmt(DW.marksNow()));
+    updStrip(r);
+    if ((r.phase === 'draft' || r.phase === 'landing') && !draft) openDraft();
+    else if (draft && r.phase === 'fight') closeDraft();
+    else if (draft) refreshDraft();
+  }
+  let acc = 0;
+  onTick(dt => {
+    if (!lastOn && !(S.deep && S.deep.run && !S.deep.run.paused)) return;
+    acc += dt; if (acc < 0.2) return; acc = 0;
+    updHud();
+  });
+
+  // ---------------- the full-screen choice sheet (drafts and Quiet Landings) ----------------
+  let draft = null, draftSig = '';
+  function mkOverlay(cls, label) {
+    const ov = el('div', 'dw-ov ' + cls);
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', label);
+    const inner = el('div', 'dw-sheet'); ov.append(inner);
+    document.body.append(ov);
+    return { ov, inner };
+  }
+  // Escape closes a sheet that can be closed (the boons list, the run-end card; never a draft).
+  function onEscape(ov, close) {
+    const k = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+    document.addEventListener('keydown', k, true);
+    new MutationObserver((m, mo) => { if (!ov.isConnected) { document.removeEventListener('keydown', k, true); mo.disconnect(); } }).observe(document.body, { childList: true });
+  }
+  function openDraft() {
+    if (draft) return;
+    const o = mkOverlay('dw-draft', 'Choose a boon');
+    draft = Object.assign(o, { confirm: false });
+    draftSig = '';
+    refreshDraft();
+    if (!reduced) requestAnimationFrame(() => draft && draft.ov.classList.add('in')); else draft.ov.classList.add('in');
+  }
+  function closeDraft() { if (!draft) return; draft.ov.remove(); draft = null; draftSig = ''; }
+  function refreshDraft() {
+    const r = DW.run(), v = DW.offerView();
+    if (!r || !v) { closeDraft(); return; }
+    const sig = JSON.stringify([v, draft.confirm, Math.round(r.oil), r.rr, r.ban]);
+    if (sig === draftSig) return;
+    draftSig = sig;
+    const s = draft.inner; s.textContent = '';
+    // header
+    const head = el('div', 'dw-dhead');
+    const tt = el('div', 'dw-dtitle');
+    const land = v.kind === 'landing';
+    const title = land ? `Floor ${v.floor}: a Quiet Landing` : v.kind === 'crown' ? 'Crown of the Deep: a free Rare boon' : v.kind === 'study' ? 'Study: pick a Rare or Epic boon' : v.kind === 'start' ? 'Lantern Stair: pick a Common boon' : `Floor ${v.floor} cleared`;
+    const oil = el('div', 'dw-doil'); const ob = el('div', 'dw-oilbar'), of = el('i'); of.style.width = Math.min(100, r.oil / DW.oilMax() * 100) + '%'; ob.append(of);
+    oil.append(img(OIL_IC(), 'px dw-oilic'), ob, el('b', null, Math.ceil(r.oil) + 's'));
+    const top = el('div', 'dw-dtop'); top.append(el('div', 'dw-eye', r.trial ? `Trial: ${DW.trialRule(r.week).n}` : 'The Deepwell'), oil);
+    tt.append(top, el('h2', null, title));
+    if (!land && ['normal', 'elite', 'boss'].includes(v.kind) && v.refund) tt.append(el('div', 'dw-dsub', `+${Math.round(v.refund)}s Oil`));
+    else if (land) tt.append(el('div', 'dw-dsub', 'No foe comes here. Pick one.'));
+    head.append(tt);
+    s.append(head);
+    if (draft.confirm) {
+      const c = el('div', 'dw-confirm');
+      c.append(el('h3', null, 'Climb out now?'), el('p', null, `You keep ${DW.marksNow()} Depth Marks. Your run ends here.`));
+      const bs = el('div', 'dw-dfoot');
+      bs.append(btn('mini dw-b', 'Stay below', () => { draft.confirm = false; refreshDraft(); }), btn('mini go dw-b', 'Climb out', () => { DW.climbOut(); }));
+      c.append(bs); s.append(c);
+      return;
+    }
+    // what you hold so far: boons and the sets you are building
+    const mine = DW.owned();
+    if (mine.length) {
+      const have = el('div', 'dw-have');
+      const ics = el('div', 'dw-have-ics');
+      for (const c of mine.slice(0, 14)) { const i = img(boonIc(c), 'px dw-sic' + (c.r !== 'c' ? ' ' + RAR_F[c.r] : '')); i.title = c.n; ics.append(i); }
+      if (mine.length > 14) ics.append(el('span', 'dw-more', '+' + (mine.length - 14)));
+      const sets = el('div', 'dw-tags');
+      for (const x of DW.setProgress()) if (x.have) sets.append(el('span', 'dw-tag' + (x.on ? ' on' : ' part'), x.on ? x.n + ' on' : `${x.n} ${x.have}/3`));
+      have.append(el('div', 'dw-eye', 'Your boons'), ics, sets);
+      s.append(have);
+    }
+    // cards
+    const grid = el('div', 'dw-cards');
+    if (land) {
+      const ics = { refill: OIL_IC(), sharpen: pxURL('star', '#FFD27A'), study: iconURL('glass', '#F2E27A') };
+      for (const c of v.landing) {
+        const b = btn('dw-card land' + (c.off ? ' off' : ''), null, () => { if (!c.off) { DW.landing(c.id); refreshDraft(); } });
+        b.disabled = !!c.off;
+        const ic = el('div', 'dw-cic'); ic.append(img(ics[c.id]));
+        b.append(ic, el('div', 'dw-cn', c.n), el('div', 'dw-ctx', c.txt));
+        grid.append(b);
+      }
+    } else {
+      for (const c of v.cards) {
+        const wrap = el('div', 'dw-cwrap');
+        const b = btn('dw-card r-' + c.r, null, () => { DW.pick(c.id); refreshDraft(); });
+        b.setAttribute('aria-label', `${c.n}, ${RAR[c.r]}. ${c.txt}`);
+        const ic = el('div', 'dw-cic'); ic.append(img(boonIc(c)));
+        const top = el('div', 'dw-crar', RAR[c.r]);
+        b.append(top, ic, el('div', 'dw-cn', c.n));
+        if (c.max > 1) b.append(el('div', 'dw-crank', c.from ? `${roman(c.from)} to ${roman(c.to)}` : `Rank I of ${roman(c.max)}`));
+        b.append(el('div', 'dw-ctx', c.txt));
+        if (c.sets.length) {
+          const tags = el('div', 'dw-tags');
+          for (const t of c.sets) { const g = el('span', 'dw-tag' + (t.on ? ' on' : t.have ? ' part' : ''), t.on ? t.n + ' on' : `${t.n} ${Math.min(3, t.have + (c.from ? 0 : 1))}/3`); tags.append(g); }
+          b.append(tags);
+        }
+        wrap.append(b);
+        if (v.ban > 0) { const x = btn('dw-ban', '×', () => { DW.banish(c.id); refreshDraft(); }); x.setAttribute('aria-label', `Banish ${c.n} for this run`); wrap.append(x); }
+        grid.append(wrap);
+      }
+    }
+    grid.dataset.n = land ? 3 : v.cards.length;
+    s.append(grid);
+    if (!land && v.ban > 0) s.append(el('p', 'dw-hint', `Tap × on a card to banish it for this run (${v.ban} left).`));
+    // footer
+    const foot = el('div', 'dw-dfoot');
+    if (!land) {
+      const rr = btn('mini dw-b', `Reroll (${v.rr})`, () => { DW.reroll(); refreshDraft(); }); rr.disabled = v.rr <= 0;
+      foot.append(rr, btn('mini dw-b', `Skip (+${v.skipOil}s Oil)`, () => { DW.skip(); refreshDraft(); }));
+    }
+    foot.append(btn('mini warn dw-b', 'Climb out', () => { draft.confirm = true; refreshDraft(); }));
+    s.append(foot);
+    const first = s.querySelector('.dw-card'); if (first && document.activeElement === document.body) try { first.focus({ preventScroll: true }); } catch (e) {}
+  }
+
+  // ---------------- boons list (tap the strip) ----------------
+  function openBoons() {
+    const r = DW.run(); if (!r) return;
+    const o = mkOverlay('dw-list in', 'Your boons');
+    const s = o.inner;
+    const head = el('div', 'dw-dhead'); const tt = el('div', 'dw-dtitle');
+    tt.append(el('div', 'dw-eye', `Floor ${r.floor}`), el('h2', null, 'Your boons'));
+    head.append(tt, btn('mini dw-b', 'Close', () => o.ov.remove())); s.append(head);
+    const sets = el('div', 'dw-sets');
+    for (const x of DW.setProgress()) { const g = el('div', 'dw-set' + (x.on ? ' on' : '')); const ic = img(SET_IC[x.id](), 'px'); g.append(ic, el('b', null, `${x.n} ${Math.min(3, x.have)}/3`), el('span', null, x.fx)); sets.append(g); }
+    s.append(sets);
+    const list = el('div', 'dw-blist');
+    const cards = DW.owned();
+    if (!cards.length) list.append(el('p', 'note', 'Pick boons after each floor. They last until the run ends.'));
+    for (const c of cards) {
+      const it = el('div', 'dw-bi'); const ic = el('div', 'ic' + (RAR_F[c.r] ? ' f-' + RAR_F[c.r] : '')); ic.append(img(boonIc(c)));
+      const tx = el('div'); tx.append(el('div', 'row-name', c.n + (c.max > 1 ? ` ${roman(c.from)}` : '')), el('div', 'row-desc', c.now));
+      it.append(ic, tx); list.append(it);
+    }
+    s.append(list);
+    o.ov.addEventListener('click', e => { if (e.target === o.ov) o.ov.remove(); });
+    onEscape(o.ov, () => o.ov.remove());
+  }
+
+  // ---------------- run end ----------------
+  const MAT_NAME = m => matName(m.k, m.t);
+  on('deepEnd', ({ summary: x }) => {
+    closeDraft(); updHud();
+    const o = mkOverlay('dw-end in', 'Your run is over');
+    const s = o.inner;
+    const head = el('div', 'dw-dhead'); const tt = el('div', 'dw-dtitle');
+    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
+    tt.append(el('div', 'dw-eye', x.trial ? `This week's Trial: ${DW.trialRule(x.week).n}` : 'The Deepwell'), el('h2', null, `Floor ${x.floor}`), el('div', 'dw-dsub', why));
+    head.append(tt); s.append(head);
+    const kv = el('dl', 'kv dw-kv');
+    const kvi = (k, v) => { const d = el('div'); d.append(el('dt', null, k), el('dd', null, v)); kv.append(d); };
+    kvi(x.trial ? 'Best this week' : 'Your best', `Floor ${x.best}`);
+    kvi('Depth Marks', '+' + x.marks);
+    kvi('Time below', fmtTime(x.secs));
+    s.append(kv);
+    if (x.pb && x.oldBest > 0) s.append(el('p', 'dw-pb', `New best! ${x.floor - x.oldBest} floor${x.floor - x.oldBest > 1 ? 's' : ''} deeper than before.`));
+    if (x.lines.length) {
+      const l = el('div', 'dw-lines');
+      for (const ln of x.lines) { const d = el('div', 'dw-line'); d.append(el('span', null, ln.txt), el('b', null, '+' + ln.v)); l.append(d); }
+      s.append(l);
+    }
+    const a = x.away;
+    if (a && (a.gold >= 1 || a.xp >= 1 || a.mats.length || a.raidDmg >= 1)) {
+      const w = el('div', 'dw-below');
+      w.append(el('div', 'dw-eye', 'While you were below'));
+      const parts = [];
+      if (a.gold >= 1) parts.push(`+${fmt(a.gold)} gold`);
+      if (a.xp >= 1) parts.push(`+${fmt(a.xp)} XP`);
+      if (a.raidDmg >= 1) parts.push(`${fmt(a.raidDmg)} raid damage`);
+      for (const m of a.mats.slice(0, 3)) parts.push(`+${fmt(m.n)} ${MAT_NAME(m)}`);
+      w.append(el('p', null, parts.join(', ') + '.'));
+      s.append(w);
+    }
+    const foot = el('div', 'dw-dfoot');
+    const close = () => { o.ov.remove(); ui(true); };
+    const again = btn('mini go dw-b', 'Go again', () => { close(); if (DW.start(!!x.trial && DW.trialRule().id === x.rule)) closeMenuIfTall(); });
+    foot.append(again, btn('mini dw-b', 'Marks shop', () => { close(); setTab('deep', '#sec-deep-shop'); }), btn('mini dw-b', 'Done', close));
+    s.append(foot);
+    o.ov.addEventListener('click', e => { if (e.target === o.ov) close(); });
+    onEscape(o.ov, close);
+    try { again.focus({ preventScroll: true }); } catch (e) {}
+  });
+
+  // ---------------- feedback ----------------
+  on('deepOil', () => toast('Your Oil is running low. Clear the floor to refill it.', 'raid', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'normal'));
+  on('deepKill', ({ mob: m }) => { if (typeof SFX === 'object' && SFX.play) SFX.play('kill', m && m.boss); });
+  on('deepFloor', ({ floor, kind }) => { if (kind === 'boss') toast(`Deep Elder beaten on floor ${floor}.`, 'good', { ic: ['banner', '#7FB2FF'] }, 'low'); });
+  const closeMenuIfTall = () => { if (typeof isWide === 'function' && !isWide() && S.tab) closeMenu(); };
+
+  // ---------------- Fight tab: the Deepwell view ----------------
+  registerView('adv', { id: 'deep', label: 'Deepwell', order: 40, dot: () => { const d = S.deep; return !!d && ((d.run && d.run.paused) || (deepUnlocked() && !d.runs && !d.run)); } });
+
+  // Entrance card
+  let ent = null, entSig = '';
+  registerSection('adv', {
+    id: 'deep-entry', view: 'deep',
+    mount(sec) {
+      const card = el('div', 'card dw-entry');
+      const head = el('div', 'dw-ehead');
+      const ic = el('div', 'ic dw-eic'); ic.append(img(pxURL('lantern', '#7FB2FF', { 5: '#DFF0FF' })));
+      const tt = el('div', 'dw-ett'); const h = el('h3', null, 'The Deepwell'); const sub = el('p', 'note');
+      tt.append(h, sub);
+      const mk = el('div', 'dw-emarks'); const mkN = el('b'); mk.append(img(MARK_IC()), mkN, el('span', null, 'Marks'));
+      head.append(ic, tt, mk);
+      const body = el('div', 'dw-ebody');
+      card.append(head, body);
+      sec.append(card);
+      ent = { sub, mkN, body };
+    },
+    update(force) {
+      if (!ent) return;
+      const d = S.deep, r = d.run, u = DW.unlockInfo(), t = DW.trialInfo();
+      const sig = JSON.stringify([u.open, u.maxZone, u.hearthNow, d.marks, d.best, r && [r.floor, r.paused, Math.ceil(r.phase === 'fight' ? r.oilAtStart : r.oil), r.phase], t.best, t.rule.id, ent.confirm]);
+      setTxt(ent.mkN, fmt(d.marks));
+      if (sig === entSig && !force) return;
+      entSig = sig;
+      const b = ent.body; b.textContent = '';
+      if (!u.open) {
+        setTxt(ent.sub, 'An old well under the camp, deeper than any rope. Your lantern pushes the dark back, floor by floor.');
+        const need = [`Reach zone ${u.zone} (now ${u.maxZone})`]; if (u.hearth) need.push(`Build the Hearth to level ${u.hearth} (now ${u.hearthNow || 0})`);
+        const l = el('ul', 'dw-need'); for (const n of need) l.append(el('li', null, n)); b.append(el('p', 'dw-lock', 'Opens when you:'), l);
+        return;
+      }
+      setTxt(ent.sub, 'Go down floor by floor. Oil is your run: it drains while a foe stands. Your farm keeps working while you are below.');
+      if (r && !r.paused) {
+        b.append(el('p', 'dw-now', `You are below, on floor ${r.floor}.`));
+        if (typeof isWide === 'function' && !isWide()) b.append(btn('big dw-go', 'Back to the well', () => closeMenu()));
+        return;
+      }
+      if (r) {
+        const oil = Math.ceil(r.phase === 'fight' ? r.oilAtStart : r.oil);
+        b.append(el('p', 'dw-now', `Your ${r.trial ? 'Trial ' : ''}run waits on floor ${r.floor} with ${oil}s of Oil.`));
+        b.append(btn('big dw-go', `Resume run: floor ${r.floor}`, () => { if (DW.resume()) closeMenuIfTall(); ui(true); }));
+        if (ent.confirm) {
+          const c = el('div', 'dw-confirm');
+          c.append(el('p', null, `End this run? You keep ${DW.marksNow()} Depth Marks.`));
+          const bs = el('div', 'btns'); bs.append(btn('mini', 'Keep it', () => { ent.confirm = false; entSig = ''; }), btn('mini warn', 'End the run', () => { ent.confirm = false; DW.abandon(); }));
+          c.append(bs); b.append(c);
+        } else b.append(btn('mini warn dw-abandon', 'End this run', () => { ent.confirm = true; entSig = ''; }));
+        return;
+      }
+      const runB = btn('dw-choice', null, () => { if (DW.start(false)) closeMenuIfTall(); ui(true); });
+      runB.append(el('b', null, 'Normal run'), el('span', null, d.best ? `Best: floor ${d.best}` : 'Your first run'));
+      const trB = btn('dw-choice trial', null, () => { if (DW.start(true)) closeMenuIfTall(); ui(true); });
+      trB.append(el('b', null, `This week's Trial: ${t.rule.n}`), el('span', null, `${t.rule.fx}. ${t.best ? `Best this week: floor ${t.best}` : 'Not tried this week'}`));
+      b.append(runB, trB);
+    }
+  });
+
+  // The weekly Trial
+  let tri = null, triSig = '';
+  registerSection('adv', {
+    id: 'deep-trial', title: 'Weekly Trial', view: 'deep',
+    mount(sec) { const c = el('div', 'card dw-trial'); sec.append(c); tri = c; },
+    update(force) {
+      if (!tri) return;
+      const open = deepUnlocked();
+      setCls(tri.parentNode, 'dw-hide', !open);
+      if (!open) return;
+      const t = DW.trialInfo(), days = 7 - ((deviceDay() + 3) % 7 + 7) % 7;
+      const sig = JSON.stringify([t, days]);
+      if (sig === triSig && !force) return; triSig = sig;
+      tri.textContent = '';
+      const h = el('div', 'dw-thead');
+      h.append(el('h3', null, t.rule.n), el('span', 'dw-tdays', `${days} day${days > 1 ? 's' : ''} left`));
+      tri.append(h, el('p', 'dw-tfx', t.rule.fx + '.'));
+      tri.append(el('p', 'note', 'Everyone meets the same foes and the same boon offers this week. Deep Lore is off. Try as often as you like.'));
+      const miles = el('div', 'dw-miles');
+      for (const m of t.miles) { const c = el('span', 'dw-mile' + (m.got ? ' got' : ''), `Floor ${m.f}: +${m.m}`); miles.append(c); }
+      tri.append(miles);
+      const kv = el('dl', 'kv');
+      const kvi = (k, v) => { const d = el('div'); d.append(el('dt', null, k), el('dd', null, v)); kv.append(d); };
+      kvi('Best this week', t.best ? `Floor ${t.best}` : '-');
+      kvi('Trial Seals', `${t.seals}` + (t.sealed ? ' (this week)' : ''));
+      tri.append(kv);
+      tri.append(el('p', 'note', `Reach floor ${DEEP_TUNE.sealFloor} for this week's Trial Seal in the Codex. Next week: ${t.next.n}.`));
+    }
+  });
+
+  // The Marks shop
+  let shop = null, shopSig = '', shopCat = 'lore';
+  const CATS = [['lore', 'Deep Lore'], ['look', 'Looks'], ['title', 'Titles'], ['page', 'Pages']];
+  registerSection('adv', {
+    id: 'deep-shop', title: 'Depth Marks shop', view: 'deep',
+    mount(sec) {
+      const top = el('div', 'dw-shophead');
+      const seg = el('div', 'seg dw-seg');
+      for (const [id, n] of CATS) { const b = btn(null, n, () => { shopCat = id; shopSig = ''; for (const x of seg.children) x.setAttribute('aria-pressed', String(x === b)); }); b.setAttribute('aria-pressed', String(id === shopCat)); seg.append(b); }
+      const mk = el('div', 'dw-emarks'); const mkN = el('b'); mk.append(img(MARK_IC()), mkN);
+      top.append(seg, mk);
+      const note = el('p', 'note');
+      const list = el('div', 'dw-shop');
+      sec.append(top, note, list);
+      shop = { sec, list, note, mkN };
+    },
+    update(force) {
+      if (!shop) return;
+      const open = deepUnlocked();
+      setCls(shop.sec, 'dw-hide', !open);
+      if (!open) return;
+      setTxt(shop.mkN, fmt(S.deep.marks));
+      const rows = DW.shop(shopCat);
+      const sig = JSON.stringify([shopCat, S.deep.marks, S.deep.fav, S.deep.eq, rows.map(r => [r.lv, r.can, r.lock])]);
+      if (sig === shopSig && !force) return; shopSig = sig;
+      setTxt(shop.note, { lore: 'Deep Lore works only in the Deepwell, and is off in the Trial.', look: "Looks for your hero and your camp. They change nothing else.", title: 'Titles show on your hero. Pick one in the Codex.', page: "The well's own story, a page at a time." }[shopCat]);
+      const L = shop.list; L.textContent = '';
+      for (const x of rows) {
+        const icUrl = x.cat === 'lore' ? pxURL('lantern', '#7FB2FF', { 5: '#DFF0FF' }) : x.kind === 'lantern' ? pxURL('lantern', x.col, { 5: '#FFFFFF' }) : x.kind === 'trail' ? pxURL('star', x.col) : x.kind === 'decor' ? iconURL('orb', '#7FB2FF') : x.cat === 'title' ? iconURL('banner', '#F2C14E') : iconURL('glass', '#F2E27A');
+        const r = makeRow(L, x.n, false, icUrl);
+        r.row.classList.add('dw-srow');
+        setTxt(r.own, x.max > 1 ? `${x.lv}/${x.max}` : x.done ? 'Owned' : '');
+        setTxt(r.desc, x.done && x.fxNow ? x.fxNow : x.lock ? `${x.fx}. ${x.lock} first.` : x.lv ? `Now: ${x.fxNow}. Next: ${x.fx}` : x.fx);
+        r.btn.classList.add('dw-buy');
+        if (x.done) {
+          if (x.kind === 'lantern' || x.kind === 'trail') { setTxt(r.qty, x.eq ? 'In use' : 'Owned'); setTxt(r.btn.querySelector('.price'), x.eq ? 'Take off' : 'Use'); r.btn.addEventListener('click', () => { DW.equip(x.kind, x.eq ? null : x.id); shopSig = ''; }); }
+          else { r.btn.disabled = true; setTxt(r.qty, 'Done'); setTxt(r.btn.querySelector('.price'), x.cat === 'title' ? 'Owned' : 'Max'); }
+        } else {
+          r.btn.disabled = !x.can;
+          setTxt(r.qty, x.lv ? `To ${roman(x.lv + 1)}` : 'Buy');
+          const p = r.btn.querySelector('.price'); p.textContent = ''; p.append(img(MARK_IC(), 'px dw-pic'), el('span', null, fmt(x.price)));
+          r.btn.addEventListener('click', () => { if (DW.buy(x.id)) { toast(`${x.n}${x.max > 1 ? ' ' + roman(x.lv + 1) : ''}: bought.`, 'good', { ic: ['orb', '#7FB2FF'] }, 'low'); shopSig = ''; ui(true); } });
+        }
+        if (x.id === 'fav' && x.lv > 0) {
+          const pick = el('label', 'dw-fav'); pick.append(el('span', null, 'Favourite:'));
+          const sel = el('select'); const none = el('option', null, 'None'); none.value = ''; sel.append(none);
+          for (const id of DW.favChoices()) { const o = el('option', null, DEEP_BOONS[id].n); o.value = id; if (S.deep.fav === id) o.selected = true; sel.append(o); }
+          sel.addEventListener('change', () => { DW.setFav(sel.value || null); shopSig = ''; });
+          pick.append(sel); r.desc.after(pick);
+        }
+      }
+      if (shopCat === 'page' && S.deep.pages) L.append(el('p', 'note', 'Read your pages in the Codex, on the Deepwell page.'));
+    }
+  });
 }
 
 // ---- src/js/75-exped-ui.js ----
