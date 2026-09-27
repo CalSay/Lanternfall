@@ -23,3 +23,13 @@ Owner dislikes the current character art: "too thin and tall", clothing/armour "
 maybe the overall style. Art work is paused. A style study (A chibi ~3 heads, B 16-bit JRPG ~4-4.5,
 C sturdy storybook ~5, D art director's wildcard) with redesigned layered costumes goes to the owner
 as a phone-viewable page; the pick then drives a conversion wave. Logic work is unaffected.
+
+- D1 specs merged (camp, expeditions, deepwell, almanac, codex, constellations); decisions recorded in the vision.
+- B0 shared core done by the coordinator (addBonus/bonus, deviceDay/deviceWeek, awayHours, skillXp:<k>, yield:<fam>).
+- B1+B3 roster merged. T1 ok (Lightkeeper 1 zone fast: Stage A hero-damage transfer), T2 fails (forge
+  runaway, M6), T10 fails (caps every ~8 zones), T9/T11 pass. Full Party achievement now counts roster.
+
+## Wave 2 (launched)
+
+B2 synergies, B7 unlock avenues, B5 Party tab, K4 items core, M6 pacing + `--days` sim, Next Up, Almanac.
+The art style study is still running (owner leans 16-bit; wants clear section definition).
