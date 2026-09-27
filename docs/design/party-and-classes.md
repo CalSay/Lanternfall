@@ -822,3 +822,11 @@ These override anything above that disagrees.
 5. **A party wipe retreats one zone** (coordinator's call), and the party pushes back up automatically once it can hold that zone.
 6. **Companions are named characters** with bios, specialities, signature abilities and synergies. They grow through use: only fielded characters earn XP, with a catch-up bonus and milestone unlocks, and promotions gated by level caps.
 7. **Roles define combat:** threat and aggro, healers who heal rather than deal damage, formation rows with reach rules, enemy behaviours that test composition, and class-specific taps.
+
+### Owner decisions, round 3 (2026-09-27)
+
+These override the spec above where they conflict.
+
+- **Power curve:** later recruits are stronger. Replace the shared power curve with a base-power tier per character, rising in unlock order (a starting point of x1.6 per tier; tune it with the simulator). Early characters keep their identity through abilities and synergies, and late recruits are the raw-power upgrade. Recruits still start at level 1 and use the catch-up bonus.
+- **Mirror of Embers:** zone boss drop only, 2% from zone 36. It is not sold for raid Embers.
+- **Supports and casters:** allowed in any row, with warnings. Auto-placement puts them in the back row.
