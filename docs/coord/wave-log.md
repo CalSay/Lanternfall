@@ -90,6 +90,12 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
 - Decisions that belong to the owner (art direction, monetisation, anything irreversible) go under
   "Waiting on the owner" below instead of being guessed.
 
+## PAUSE REQUESTED BY THE OWNER (2026-09-28)
+
+When the three running tasks (C4 combat visuals, BAL2 balance, R0 regions) are merged: do NOT launch
+any new tasks. Build, check, republish the preview, and show the owner the latest version with a short
+summary. Resume only when the owner says so.
+
 ## Waiting on the owner
 
 - Late-game direction for plan 2 (asked 2026-09-27): which of these to prioritise? Region 2 with new
