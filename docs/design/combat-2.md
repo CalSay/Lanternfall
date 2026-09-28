@@ -616,3 +616,183 @@ Finishers, active boss kills.
   "Finisher ready".
 - **Colour-blind:** the words and shapes carry every meaning (check in the three filters and greyscale, as
   core-2 2.1).
+
+---
+
+## 4. Bosses
+
+### 4.1 The template
+
+Every boss is one data row in `BOSS_KITS` (8.3) read by one scheduler. The shape:
+
+| Part | Zone elder | Region boss | Deep Elder | Raid wyrm | Pinnacle |
+|---|---|---|---|---|---|
+| Phases | **2** (at 50%) | **3** (66% / 33%) | 2 (floors 5-15), 3 (floor 20+) | 3, by the **shared** world HP | 3 (70% / 35%, pinnacles.md kept) |
+| Timer | 45 s, then Enrage | 60 s, then Enrage | none (Oil) | none | 90 s (Enrage at 70 s) |
+| Phase 1 | the heavy hit (parry) + the boss's **identity** mechanic | the same | the elder kit of its type | heavy + the generation's signature | pinnacles.md 4 |
+| Each later phase | **one** new mechanic: adds, a wind-up, a hazard or a `sig` cast | the same | the same, plus Oil's own at 20+ | the same | pinnacles.md 4 |
+| Answer kinds | at least 2 of parry, dodge, interrupt (plus line-up answers) | at least 3, and one `hard` cast | as its type | parry, dodge, interrupt | pinnacles.md 3.2 |
+
+Rules for every kit:
+
+- **Phase change:** a 1.5 s `hard` roar ("It stops listening."), which clears the warning showing. The boss is
+  **never** invulnerable (idle play must not stall). The fallen stand up at 30% HP.
+- **Scheduler:** one answer warning at a time, 1.0 s apart; wind-ups ≥ 1.2 s; cast bars ≥ 1.5 s (pinnacles 3.2).
+  The first use of each mechanic in a player's first fight shows one hint line under the banner
+  ("Hit it with an ability while it casts").
+- **Damage:** the boss's `atk` is set for the 30-40 s target (1.5) with the caps on (1.4). Mechanics are written
+  as multiples of the boss's attack.
+- **Type:** the boss hits with its family's type (`dt`) and takes its family's weakness and resists (core-2 2.3).
+  A region boss may add one resist.
+- **Stagger:** 100 points (core-2 6.4). Finishers as 3.4.
+
+**The signature buff item** (plan-4 2.3, core-2 5.4):
+
+- Each boss names one buff item id, `<family>_<w>` (core-2 5.4: `pearl_h`, `glass_l`, ...), of its region's family,
+  in the weight that fits its theme (a shelled crab carries a heavy Pearl; a witch a light one).
+- **Visible in the body:** the rig gets a `gem` anchor (a bone and an offset). The stage draws a 3x3 art-px
+  glint there in the family's colour with a slow pulse (reduced motion: steady). It is baked into the rig's
+  frames once, so it costs nothing per frame.
+- **Always drops**, first kill and every rematch, at least Uncommon (RG1's rarity roll). An active kill (3.8)
+  rolls a second one. On the kill the glint pops out of the body and floats to the header (reduced motion: it
+  fades out there and in at the header).
+- **Region 1 has no buff item family** (core-2 5.4: Enchanting opens in Region 2). Hollow bosses carry their
+  **heart-light** (the light they stole) in the same anchor; it drops today's rewards. Whether they should drop
+  a buff item once Enchanting is open is decision D2 (8.6).
+
+**The themed unique hook** (plan-4 4.7, core-2 5.5): each kit row names `uniq`, an id in RG1's Uniques 2.0
+list. RG1 owns the list, the power and the drop rate (`UNIQ_TUNE`, Echoes). CB2 gives the powers events to hook:
+`parry`, `dodge` (`perfect`), `interrupt`, `stagger`, `finisher`, `reaction`, `phase`, `bossSig` (the drop). The
+kits below give each boss a **theme word** for RG1 ("poison spread", "shell"), nothing more.
+
+```js
+// 21g-data-bosses.js (CB2 data; no save)
+BOSS_KITS.slime = {
+  name: 'Elder Moss Slime', fam: 'plant', dt: 'poison', res: [], phases: [0.5], timer: 45, hp: 12, atk: 1,
+  sig: null, heart: '#B6F09A', uniq: null /* RG1 */, theme: 'poison spread', gem: ['body', 2, -6],
+  mech: [
+    { id: 'engulf', tele: 'heavy', ph: 1, every: 8, wind: 1.5, x: 4, cap: 0.35 },
+    { id: 'ooze', tele: 'zone', ph: 1, every: 14, wind: 1.8, x: 2, slots: 1, apply: ['venom', 3], cap: 0.35 },
+    { id: 'split', tele: 'hard', ph: 2, at: 0.5, wind: 1.5, adds: ['slime', 2, 0.12] }
+  ] };
+```
+
+### 4.2 The Hollow: seven elders and the Listener
+
+Zone elders: 2 phases, 45 s. Their HP and attack follow the zone (today's rule, x1.5 HP for the timer). The
+identity mechanic is today's second mechanic, now with a proper warning.
+
+| Elder (`fam`, hits) | Phase 1 (100-50%): heavy + identity | Phase 2 (under 50%): one new | Answers | Theme (RG1) |
+|---|---|---|---|---|
+| **Elder Moss Slime** (plant, poison) | **Engulf** (heavy, 4x, 8 s). **Ooze** (`zone`, 14 s): a patch under 1 slot, 2x and Venom 3 | **Split** (`hard` at 50%): 2 small slimes (12% HP each), Ooze under 2 slots | parry, dodge; area for the split | poison spread |
+| **Elder Cave Bat** (beast, phys) | **Rending Bite** (heavy, 8 s). **Dive** (`dive`, 12 s): the Back member, 2x for 5 s | **Call the Colony** (`summon`, 2 s, 16 s): 4 bats (3% HP each, half-size) | parry; taunt, stun or cover for the dive; interrupt or area | bleed and swarm |
+| **Elder Rattlebones** (undead, phys) | **Grave Blow** (heavy, 8 s). **Raise the Dead** (`summon`, 2 s, 15 s): 2 Rattlebones | **Bone Volley** (`line`, 14 s): 1.5x to every member | parry, interrupt; shields and heals | undead rising |
+| **Elder Barrow Beetle** (beast, phys) | **Mandibles** (heavy, every **6 s**: the heavy-hit boss) | **Burrow** (`zone`, 12 s): digs under the Back or Middle slot and bursts up, 2.5x (it can still be hit: the mound) | parry, dodge | armour and thorns |
+| **Elder Spore Cap** (plant, poison) | **Spore Burst** (`line`, 8 s, its heavy): 1.5x to every member and Venom 2 | **Spore Bloom** (`sig`, 2.5 s, 16 s): Venom 5 on every member | shields, cleanse; interrupt | venom bloom |
+| **Elder Quarry Golem** (construct, phys, armoured) | **Crushing Fist** (heavy, 6x, capped 35%, 8 s) | **Rockfall** (`slam`, 11 s): the Front slot, 3x | parry, dodge; `pierce`, frost (weak) | stone and shatter |
+| **Elder Marsh Wraith** (spirit, frost) | **Cold Touch** (heavy, 8 s). **Mend** (`heal`, 1.5 s, 12 s): heals itself 10% (a tap stops it, today's rule) | **Drown the Light** (`sig`, 2 s, 15 s): Curses the lowest-HP member (no healing, 4 s) | parry, tap, interrupt, cleanse; holy (weak) | cold and silence |
+
+**The Listener** (Region 1 boss, zone 35, the Elder of Wraithmarsh V; `spirit`, hits frost; 60 s, 3 phases).
+"The first wraith to hear a voice in the dark. While it listens, no lamp here holds."
+
+| Phase | New mechanic | Warning | Effect | Answers |
+|---|---|---|---|---|
+| 1. It Listens (100-66%) | **Cold Hand** (heavy, 8 s) and **Listen** | `heavy`; `sig`, 2.5 s, every 16 s | Listen, if it lands: every timed buff on the party ends (Empower, Keen, Shield Wall...) and the party is **Hushed** (deals 20% less for 5 s) | parry; interrupt with an ability, an `interrupt` hero, a stun |
+| 2. It Calls (66-33%) | **Echoes** | `summon`, 2 s, every 20 s | 2 Marsh Wraiths (6% HP each, healers) | interrupt; area; focus the healers (Mark) |
+| 3. The Voice Answers (under 33%) | **Whisper** | `zone`, every 10 s, 2 slots | 2.5x frost to each member in the patch; the stage darkens a step (a cached dim plate) | dodge; frost resist; a formation that keeps one slot clear |
+| Phase changes | **It stops listening** | `hard`, 1.5 s | nothing (it turns to your lamp) | - |
+
+Signature: the heart-light (D2). Theme: "the voice": interrupts and silence. It is the Hollow's exam: all three
+answer kinds, each alone first.
+
+### 4.3 The Sunken Coast: seven elders and the Drowned Keeper
+
+region-2.md 4.1's second mechanics become the identity; each gets one phase-2 mechanic. The tide still applies
+(region-2 3.2). Region-2's "immune to physical" Reef Wall becomes **physical x0.3** because core-2 2.3 says
+nothing is immune to a damage type.
+
+| Elder (`fam`, hits) | Phase 1: heavy + identity | Phase 2: one new | Signature buff item | Theme (RG1) |
+|---|---|---|---|---|
+| **Elder Shinglecrab** (beast, phys) | **Claw** (heavy, 8 s). **Shell Up** at 75% (a 1 s `hard`-looking wind-up that a stun attempt or knockback stops; in its shell it takes 10% and regains 2% HP a second, 4 s) | **Tidal Snap** (`slam`, 10 s): the Front slot, 3x; Shell Up again at 50% and 25% | `pearl_h` (heavy) | shell and block |
+| **Elder Stormgull** (beast, phys) | **Beak** (heavy, 8 s). **Squall** (`sig`, 2 s, 12 s): strips every shield, and every member's next attack and ability wait 1 s | **Gull Storm** (`summon`, 2 s, 18 s): 6 gulls (2% HP each, half-size) | `pearl_m` (medium) | wind and speed |
+| **The Bosun** (Elder Deckhand; drowned, frost) | **Belaying Pin** (heavy, 8 s). **Ship's Bell** (`summon`, 2 s, 15 s): 2 Drowned Deckhands (at High tide they get up once) | **Undertow** (`dive`, 12 s): drags a Middle or Back member to the Front for 4 s | `pearl_h` | the bell: taunts |
+| **Elder Kelp Strangler** (drowned, phys) | **Lash** (heavy, 8 s). **Bind** (`dive`-style blue "!", 10 s): 2 members cannot act for 3 s, broken when it loses 15% HP | **Crushing Coils** (`sig`, 2.5 s, 18 s): the bound members take 2.5x (capped 35%) | `pearl_m` | roots and holds |
+| **Elder Lanternjelly** (drowned, poison) | **Sting** (heavy, 8 s). **Chain Shock** (passive, 6 s): 1.2x to one member, 60% to the next slots | **Split** (`hard` at 50%): 3 small jellies (8% HP each) with Chain Shock; each one's death gives Jellylight (+10% party damage, 3 s) | `pearl_l` (light) | chain damage |
+| **Elder Brine Witch** (drowned, frost) | **Brine Lash** (heavy, 8 s). **Brine Hex** (passive, 9 s): Curses the top damage dealer (no healing, 4 s; core-2 3.1 names it) | **Brine Renewal** (`sig`, 2 s, 12 s): heals her 8% | `pearl_l` | hex and curse |
+| **Elder Coral Warden** (construct, phys, armoured) | **Coral Crush** (heavy, 5x, 8 s). **Reef Wall** (`hard`, 1.5 s, every 20 s): physical x0.3 for 5 s | **Coral Spikes** (`zone`, 13 s): 2 slots, 2.5x | `pearl_h` | reflect |
+
+**The Drowned Keeper** (zone 70, region boss; `drowned`, hits frost; 60 s; 3 phases; the fight's own fast tide:
+20 s High, 20 s Low, region-2 7). His six mechanics map onto the grammar; formation is a line of three slots now,
+so the Green Beam strikes slots, not columns.
+
+| Phase | Mechanics | Warning | Effect | Answers |
+|---|---|---|---|---|
+| 1. The Lamp (100-66%) | **Lamp Swing** | `heavy`, 8 s | 4x on his target | parry |
+| | **Green Beam** | `zone`, 14 s, 2 slots side by side | 2.5x frost to each (x1.5 at High tide; Soaked +50%), capped 35% | dodge (was: "tap turns the lens away") |
+| | The sea feeds the lens / On the rocks | `hazard` at High / Low | High: he regains 1% HP a second (a stun attempt stops it for 5 s); Low: +25% damage taken | stuns at High; save bursts for Low |
+| 2. The Undertow (66-33%) | **Undertow** | `dive` (blue arrow), 12 s | drags the lowest-HP Middle or Back member to the Front for 5 s | taunt, knockback; a tap in the wind-up is a dodge (2 s instead of 5 s) |
+| 3. The Bell (under 33%) | **Toll the Drowned Bell** | `sig`, 2.5 s, 15 s | 2 Drowned Deckhands | interrupt with an ability; area |
+| Phase changes | **The Lens Flares** | `hard`, 1.5 s | the lens turns green-white; nothing else | - |
+
+Signature: **`pearl_l`, the green pearl set in the lens** (the lens is already his lantern prop; it burns gold on
+rematches). Theme: "the lens": beams and light.
+
+### 4.4 The Deepwell Elders
+
+A Deep Elder is a Hollow elder type in the well's cold palette (deepwell.md 2.1). Its kit is **that type's elder
+kit** (4.2) with the Deepwell's depth rules:
+
+| Floors | Kit |
+|---|---|
+| 5, 10, 15 | the 2-phase elder kit; no timer |
+| 20, 25, 30, 35 | 3 phases: phase 3 (under 33%) adds **Snuff the Lamp** (`sig`, 2 s, every 18 s): -5 s Oil unless interrupted |
+| 40+ | as 20+, and every mechanic comes 15% more often (wind-ups never under their minimums) |
+| Elder Hall week (every other floor an elite) | unchanged; the elites roll traits (6.1) |
+
+- Parries give 2 s of Oil (today, `parryOil`); CB2 adds: an interrupt +2 s, a perfect dodge +1 s, a Finisher
+  +3 s (6.1).
+- **Signature item:** deepwell.md's rule 4 says Deepwell power stays in the Deepwell, and plan-4 says bosses
+  always drop their buff item. Decision D3 (8.6); the recommendation is **at most one buff item a run**, from the
+  first Deep Elder at floor 20 or deeper, of your highest region's family, plus the in-run reward in 6.1.
+
+### 4.5 The raid wyrm
+
+Section 6.2 has the raid's rules (shared phases, a local party, no change to the shared data). The kit:
+
+| Phase (shared: the world HP every raider sees) | Mechanic | Warning | Effect |
+|---|---|---|---|
+| All | **Tail Sweep** | `heavy`, every 10 s | 4x on your front member |
+| 1 (100-66%) | the **generation's signature** (below) | per generation | - |
+| 2 (66-33%) | **Ash Call** | `summon`, 2 s, every 20 s | 6 whelps (a half-size swarm, 1.5% of a zone elder's HP each, local) |
+| 3 (under 33%) | **Wyrmfire** | `zone`, every 12 s, 2 of your 3 slots | 3x of its type to each member in it, capped 35% |
+
+| Generation (`WYRM_GENS`) | Signature (phase 1 on) | Type | Signature buff item |
+|---|---|---|---|
+| 1 The Ashen Wyrm | **Flame Breath** (`zone`, 14 s, 2 slots) | fire | `glass_l` |
+| 2 The Hollow King | **Kneel** (`sig`, 2 s, 16 s: stuns every member 2 s) | frost | `pearl_h` |
+| 3 The Mire Colossus | **Mire Spawn** (`summon`, 2 s, 16 s: 3 mire slimes) | poison | `pearl_m` |
+| 4 The Glass Hydra | **Shard Rain** (`line`, 12 s: 1.2x and Chill) | frost | `pearl_l` |
+| 5 The Lantern Eater | **Swallow the Light** (`sig`, 2.5 s, 18 s: ends every timed buff; Hushed 5 s) | fire | `glass_m` |
+| 6 The Pale Tyrant | **Pale Roar** (`hard`, 2 s, 20 s: Chill on every member 4 s) | frost | `r4_h` (Region 4's family; `pearl_h` until it exists) |
+
+The generation's rig shows its signature item in the chest (the wyrm rig gets the `gem` anchor; its palette per
+generation is untouched).
+
+### 4.6 The pinnacles
+
+pinnacles.md stays the design of the four fights. Core 2.0 changes only what the rulebook changes:
+
+| Change | Rule |
+|---|---|
+| Party | the Lanternbearer and **2** heroes (formation.md), not 3 companions. Line-ups in pinnacles 5.1 drop their weakest member; the Weight of the Crown and the Many-Handed Swipe still want two taunters (a Warrior Lanternbearer with a tank hero, or two tank heroes) |
+| Answers | PARRY is `heavy`; INTERRUPT is `sig`; **SCATTER is the dodge** (`zone`; the stage tap, no Scatter button); CLEANSE and SWAP get their own telegraph ids `cleanse` and `swap` (proposal 8.2-3) and keep the Lantern touch |
+| Stagger and Finishers | all four have a 100-point stagger bar and take Finishers |
+| Damage | `PIN_TUNE.atk` is retuned with the new `bossAtk` and the caps (pinnacles 3.4's caps already match 1.4) |
+| Signature items | the King `pearl_h`, the Lurelight `pearl_l`, the First Fire `glass_l`, the Climber `pearl_m` (a Region 5 item later). Always dropped; the active kill adds one |
+| Uniques | the four pinnacle powers (pinnacles 7.2) are these bosses' themed uniques; RG1 merges them into Uniques 2.0 |
+
+### 4.7 Regions 3-5
+
+The template applies unchanged. The Pyre Knight (Ser Hadric) and the Caedmon duel use the `challenge` telegraph
+(core-2 6.3) for their duel moments; the Region 3 spec writes them. LORE-R45 names Regions 4-5's bosses; each
+region's spec writes seven elders and a region boss in the 4.2 tables' shape, meeting 1.2's type shares.
