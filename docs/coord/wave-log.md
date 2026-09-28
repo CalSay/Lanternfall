@@ -791,3 +791,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   later season?). (4) Hero AWAKENINGS: yes (heroes keep their character; one Awakening each for 1.0).
   (6) Uniques are boss drops themed to the boss type (owner likes this); keep the merge simple: each boss has
   a themed unique carrying a power, duplicates (Echoes) upgrade it, the Lantern Book collects them.
+- OWNER: Season 1 (1.0) ENDS with the first confrontation with the Voice at the bottom of the Deepwell: the
+  party wins, the Voice retreats deeper, and a reveal sets up Season 2 (2.0). lore.md's sealed ending is to be
+  reworked to that (writer task). Also: a SECONDARY UPDATE after Core 2.0 redesigns and fleshes out the
+  playable characters (the three base classes and six evolutions as characters: looks, personality,
+  backstory tied to the lore, how the heroes react to each).
