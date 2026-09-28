@@ -717,3 +717,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   requirements), new abilities per branch, synergy depth through types and statuses, hero (companion)
   interplay, enemy/boss damage targets for BAL3, and a build plan. (1) goes to UX-F (Craft + Armoury) right
   after the style kit; (2) to BAL3 with CL1's targets.
+- OWNER (2026-09-28, more for 1.0): (a) upgrade trees for gatherers and for camp buildings (inside each
+  building, not just its level); (b) random events and secrets; (c) a deeper revision of the uniques;
+  (d) an ACTIVE COMBAT overhaul beyond parry, more fun and rewarding, especially for dungeons and raid fights.
+  Plan: (d) = CB2 "active combat 2.0" spec right after CL1 (it builds on CL1's abilities, types and statuses);
+  (a) joins N1b (gatherer trees) and a camp spec (building trees); (b) an events/secrets spec; (c) a uniques
+  2.0 spec. All go into the Road to 1.0 roadmap in build order.
