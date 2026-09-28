@@ -1,176 +1,338 @@
-# Plan 4: the Road to 1.0 (coordinator, 2026-09-28)
+# Plan 4: Season 1 (version 1.0): full scope (coordinator, rewritten 2026-09-28)
 
-This file gathers every decision and request from the owner up to 2026-09-28 into one build order.
-Plans 2 and 3 and the specs they name still hold where this file doesn't change them.
-docs/coord/wave-log.md has the dated decisions.
+Everything the owner asked for or approved, grouped by area, with the build task that delivers it
+(the IDs are listed in build-map.md, which holds the order and dependencies). Items marked **(done)**
+are already in the game. docs/coord/wave-log.md has the dated decisions, and roadmap-review.md has the
+worked numbers.
 
-## What 1.0 is (owner)
+## 1. What 1.0 is
 
-- **Five regions**, fully fleshed out with complex mechanics, ending with the Voice (the final boss, at the
-  bottom of the Deepwell after Region 5, as lore.md has it). 1.0 ships a complete story.
-- **32 heroes** (18 today).
-- **Two named gatherers per resource type**, each with different benefits (a named cast, not random applicants).
-- Launch essentials: a polished first hour, save safety (export/import at least, cloud ideally), an in-game
-  guide, accessibility, sound and music.
-- **Deferred until after launch:** art commissions and monetisation. Art only gets fixed before then if
-  something is hideous.
+- **Season 1: five regions**, fully fleshed out with complex mechanics. The story continues in Season 2
+  (the 2.0 release).
+- **Season 1 ends with the first fight against the Voice** at the bottom of the Deepwell: the party wins,
+  the Voice retreats deeper, and a reveal sets up Season 2. (LORE-R45, VOICE)
+- **32 heroes** (18 today). Each hero gets one **Awakening**; they keep their character and style. (HQ1, HER)
+- **Two named gatherers per resource job**, each with different benefits. (N1b)
+- **Length:** the story (reaching the Voice) takes about **2-3 months** of normal play. Completion (all
+  heroes maxed, hard Feats, challenge modes) takes **6-9 months**. It gets tuned to how fun and replayable
+  the loop proves with testers. (BAL-F)
+- **Deferred until after launch:** art commissions and monetisation (section 12). Art only gets fixed
+  before then if something is hideous.
 
-## Standing rules
+## 2. Combat overhaul (CB2 design, then slices S1, S6, S7)
 
-- Weekdays run moderately (up to 4 agents, check-ins at 09:38, 13:38, 17:38 and 21:38 UK). Weekends run at
-  full speed. The owner can say pause or lighter at any time.
-- Model routing: Opus for hard cross-system work and balance; Sonnet for well-specified builds, UI, art from
-  a guide, and writing; Haiku for small mechanical jobs.
-- Netlify deploys go out at most four times a day, only on commits marked `[deploy]`.
-- Save compatibility is sacred. The online layer changes only with sign-off.
-- Words: heroes (not companions); the Lanternbearer (the player's character); the party.
+**2.1 Enemies and bosses hit much harder** (owner). Normal packs deal about 2-3× today's damage. A boss can
+kill an unprepared party in about 30-40 s at its intended power level. Fights become a real test of your
+line-up, gear and play. (S6, BAL3)
 
-## Phase A: design the core of 1.0 (next session)
+**2.2 Active combat beyond parry** (owner: "much more fun and rewarding", "especially dungeons and raids").
+Everything works one-handed and is optional; idle zones stay idle.
 
-| Task | What | Model |
+| Mechanic | How it works |
+|---|---|
+| Parry | Kept (done). |
+| Dodge | Telegraphed attacks show a danger zone; tap to step out. A perfect dodge gives +20% damage for 3 s. |
+| Stagger bar | On bosses and elites. Heavy hits, stuns and combos fill it. When full, the enemy is staggered for 5 s and takes ×1.5 damage, and a **Finisher** tap lands a class-specific big hit. |
+| Interrupts | Casters show a cast bar. Tapping your ability interrupts; interrupting a boss's signature cast skips that attack. |
+| Ability timing | Abilities charge. Firing into a stagger or a combo window gives a bonus. |
+| Rewards | A boss beaten with active play (3+ dodges or interrupts) drops +1 buff item and more XP. Idle kills are never punished. |
+
+**2.3 Bosses become special** (owner). Each boss gets:
+- 2-3 **phases**, each with one new mechanic (adds, a wind-up, an arena hazard);
+- a **signature buff item** visibly set into its body, which always drops (section 4.6);
+- its own **themed unique** (section 4.7).
+
+The Deepwell and the raid get the full boss kit first.
+
+**2.4 Elite traits** (owner: yes). Elites roll traits: Shielded, Vampiric, Explosive on death, Summoner,
+Enraged, Frozen-armour, Cursed. They get 1 trait from Region 2 and 2 traits from Region 4. Each trait has
+a counter (for example holy beats Cursed, fire beats Frozen-armour), so line-up and class choice matter
+zone by zone. (S6)
+
+**2.5 Damage types and statuses** (owner: evolutions bring holy, poison and so on). The types are
+physical, holy, poison, fire and frost.
+
+| Status | Effect |
+|---|---|
+| Bleed | Damage over time |
+| Venom | Stacking damage over time that ramps |
+| Burn | Spreads on death |
+| Chill | Slows the target |
+| Stun | Stops the target acting |
+| Mark | Target takes more damage |
+| Curse | No healing; detonates |
+
+- **Combos:** Venom + Burn = Blight, Chill + a heavy hit = Shatter, Mark + holy = Judgement.
+- **Enemy weaknesses and resistances by region:** undead are weak to holy, drowned things resist frost,
+  the Emberwaste resists fire, and so on.
+- **Colour-blind safe:** every type has its own icon shape. (CORE-G, S1, A11Y)
+
+**2.6 Formation** (done): the party is the Lanternbearer plus 2 heroes in Front / Middle / Back slots, with
+slot jobs, combos, Kin and Bonds.
+
+**2.7 Tactics** (owner: "tower defense vibes", after combat is substantial).
+- Each hero has 3 **IF / THEN** rules; the Lanternbearer has 2.
+- Conditions: boss HP, ally HP, statuses, elite traits, stagger full, cast bar showing.
+- Actions: use an ability, focus a target, hold for stagger, taunt, cleanse, swap slot.
+- Rules unlock through evolutions and Awakenings. There are presets for Boss, Farm and Deepwell.
+- Tactics run while idle; active play still beats them. (S7)
+
+**2.8 Hero fatigue** (owner: yes, but it must not slow progression).
+- A **Rested** meter gives +10% while above half. It fades over about 10 h of fighting and refills at camp
+  (away time counts).
+- It is **never a penalty below normal.** Rested heroes coming back get +25% XP for an hour, so rotating
+  4-5 heroes pays. (S7)
+
+**2.9 Class balance rule** (owner). Playing a tank or support must not be weaker. Utility evolutions
+(Warden, Trapper, Priest) must visibly lift the party's progress, not just survive. Parity target: all
+classes within 1 zone at 2 h, day 1 and day 7, and within 15% on the days to each region boss.
+Tanks and supports stay best on hard walls: bosses, pinnacles and the Deepwell. (CL1, BAL3)
+
+## 3. Classes 2.0 (CL1 design, then S2 and S3)
+
+**3.1 Three base classes by armour weight** (owner): **Warrior** (heavy), **Ranger** (medium),
+**Mage** (light).
+
+**3.2 First evolutions: damage or utility** (owner-named):
+
+| Base | Damage evolution | Utility evolution |
 |---|---|---|
-| **CL1** Classes 2.0 | Three base classes by armour weight: **Warrior** (heavy), **Ranger** (medium), **Mage** (light). Each has two first-tier evolutions, one damage and one utility: Warrior → **Reaver** / **Warden**; Ranger → **Venomstalker** (damage over time) / **Trapper**; Mage → **Warlock** / **Priest**. An evolution unlocks at a level plus a trial/boss/story step. Each one is a felt power spike and brings a new core mechanic, a signature ability, a second ability slot, a new look and title, and a party role. Also: damage types and statuses (holy, poison, fire, frost, physical; burn, venom, chill, stun, bleed); enemy weaknesses and resistances by region; synergy depth through types and statuses; how heroes fit in; enemy and boss damage targets for BAL3; room for a **second evolution tier after 1.0**. Migration: Warden → Warrior with Warden granted, Ranger → Ranger, Lanternmage → Mage, Lightkeeper → Mage with Priest granted. Class backstories tie into lore.md. | Opus |
-| **MAP0** World map art study | Three candidate styles for the map and its landmarks and icons (Hollow's Rest, Tavern, Deepwell, Great Lantern, raid pin, Almanac post, road), full-screen at 360px. The owner picks one. Other UI icons stay as they are for now. | Opus |
-| **N1b** Named gatherer roster | Two named gatherers per resource type, including K13's secondary resources and the Coast's, each pair splitting the job two ways (for example steady vs lucky). Each gets a lore hook, a recruit route (Tavern, quest, region) and **an upgrade tree**. A gem/socket-finder perk per pair. Keep levels, shifts, Bunkhouse beds and parcels. Migrate Tam and any Hands already hired. | Opus |
-| **RD1** Road to 1.0 | This plan. It becomes a checklist and later sessions keep it current. | Sonnet |
+| Warrior | **Reaver**: Bloodlust (hits build fury, lower HP hits harder); *Rend* causes bleeds | **Warden**: Bulwark (blocked hits store a counter); *Stand Fast* taunts and returns the stored hits |
+| Ranger | **Venomstalker** (damage over time): ramping venom stacks; *Toxic Bloom* bursts them | **Trapper**: traps ahead of packs, marks that make everyone hit harder; *Snare Field* roots a pack |
+| Mage | **Warlock**: spreading curses and dark fire (turning the dark's power on itself); *Hex Nova* detonates the curses | **Priest**: holy heals that overflow into shields and smite undead; *Sanctuary* |
 
-## Phase B: menus, and making what exists usable
+**3.3 Evolution rules:**
+- The trial opens at the **Region 1 boss** (level 60+): a solo challenge for the Lanternbearer.
+- Evolving gives a **felt power spike** (about +35%): a new core mechanic, a second ability slot, a new
+  look and title, and a party role.
+- The choice is **permanent**, with a costly respec through the Mirror of Embers (owner: yes).
 
-- **N3** Gatherer screens: the Tavern board, gatherer cards, send and return, the Bunkhouse, node-row chips.
-  Follows N1b.
-- **HINT1** Steady hint pop-ups (docked to a fixed band, no jitter).
-- **UX-B** Shared style kit, a slimmer menu header, the Journal via the portrait (Deeds, Tracks, Feats,
+**3.4 A second evolution tier** comes after 1.0. The save format and screens leave room for it now.
+
+**3.5 Deeper synergies and reasons to pick a class** (owner): damage types, statuses, combos, elite
+counters, hero types, and Bonds that react to the Lanternbearer's class.
+
+**3.6 Migration:** Warden saves become Warrior with Warden granted, Ranger stays Ranger, Lanternmage becomes
+Mage, and Lightkeeper becomes Mage with Priest granted. Nothing is lost.
+
+**3.7 Characters follow-up (CHAR1):** a secondary update after Core 2.0 redesigns and fleshes out the
+playable characters: looks, personality, backstories tied to the lore, and how heroes react to each class.
+
+## 4. Resource and gear overhaul (RG1 design, then S4 and S5)
+
+**4.1 Gear by weight** (owner). Each class's gear uses two families:
+
+| Class | Main family | Second family |
+|---|---|---|
+| Warrior | metal | leather |
+| Ranger | wood | leather |
+| Mage | wood | cloth |
+
+The main family makes up about 70% of a recipe, the second about 30%, and small accents cross over. Every
+gathering line matters a bit to every class and a lot to one.
+
+**4.2 More tiers** (owner): **15 tiers, 3 per region**, so crafting never becomes pointless. There are
+sample names per region; old tiers map across without loss.
+
+**4.3 Resources gated by region** (owner): each region brings its three tiers. Balance is tuned per region.
+Skill levels still matter for speed, yield and rare finds. Existing saves keep everything.
+
+**4.4 Production chains** (owner): one step, running in the background at stations:
+
+| Inputs | Station | Output |
+|---|---|---|
+| ore + coal | Smelter / Forge | ingots |
+| hide + salt | **Tannery** (owner: yes) | leather |
+| fibre + dye | Loom | cloth |
+| log | Sawmill / Workbench | planks |
+
+- **Secondary resources** (coal, dye, salt): the Lanternbearer can gather them, but they are low value for
+  the hero and ideal gatherer jobs.
+- Each station has a queue that runs while you are away. Gatherers can work stations as **refiners**.
+- Region 1 recipes stay raw so the first hour stays simple.
+
+**4.5 Enchanting** (owner): the way buff items are applied to gear. It unlocks in **Region 2**.
+- Crafted gear has sockets by rarity (0 / 1 / 1 / 2 / 3) and otherwise only base stats.
+- The Enchanting skill sets how strongly a buff applies.
+- Removing a buff item destroys it unless a Salvage Rune is used.
+
+**4.6 Buff items** (owner: class-specific, from gathering in each area; gems for mining, but not
+mining-only).
+- **One family per region:** Pearls on the Coast (fishing, Tide Pools), Ember-glass in the Emberwaste
+  (mining); Regions 4-5 come from LORE-R45.
+- **Each family has a version per weight:** heavy (sturdiness, resists), medium (speed, statuses) and light
+  (power, casting).
+- Rarities apply. Gatherer finder perks raise find rates (owner: about +5%), and active gathering finds
+  more (owner).
+- **Bosses always drop their signature buff item** (owner).
+
+**4.7 Uniques 2.0** (owner: boss drops themed to the boss type).
+- Every boss has a **themed unique**: for example a spore boss drops a poison-spreading item.
+- It carries a **power** (merged with the legendary powers) and comes **pre-socketed** with that boss's
+  buff item, slightly better (about +10%) than a crafted equivalent.
+- Killing the boss again drops **Echoes** that raise the power.
+- The **Lantern Book** collects every one.
+- About 6 uniques per region, 30 for 1.0.
+- Crafted gear stays within about 10% on raw stats, so a unique wins on its effect (owner rule: uniques
+  weaker and rarer, 2026-09-27).
+
+**4.8 Storehouse** (done): holds materials only, with caps sized so a full night away fits and upgrades
+keep pace. The owner's rules are logged.
+
+**4.9 Armoury** (owner): a separate building for gear. (UX-F, BT1)
+- A bigger bag per level (50 base; nothing lost).
+- Gear sets and loadouts for the Lanternbearer and heroes.
+- Lock and favourite; an auto-salvage filter; sort and filter.
+- A display rack at camp.
+
+**4.10 Gathering pace** (done): slower levels and wider gaps between tiers.
+**4.11 Tools and tool mastery** (done).
+
+**4.12 Trade routes inside expeditions** (owner): send surplus to a town in a region you've reached. Each
+town has a weekly demand list, and prices run 60-160% of base. Returns are gold or goods you can't make.
+(UX-W3, WC1)
+
+## 5. Gatherers (Hands) (N1b design, then N3, S4 and BT1)
+
+- **Two named gatherers per job** (owner). The jobs are Miner, Coal-digger, Woodcutter, **Hunter** (hides;
+  owner: yes), Herbalist, Weaver-gatherer (fibre, dye), Salter, Fisher and Gem-seeker. That is 18 now,
+  about 22 by Region 5.
+  - Each pair splits **Steady vs Lucky** (reliability vs rare and buff-item finds).
+  - Each gatherer has a name, a lore hook, and a recruit route (Tavern, a hero quest, a secret, a region).
+  - The Hollises are a pair; Tam is the free starter.
+- **Upgrade trees per gatherer** (owner): 3 branches × 4 nodes, paid for with hours worked plus materials.
+- **They live at camp in the Bunkhouse** (owner, done). There is a **cap on gatherers that grows later**
+  (owner; data-driven beds, done).
+- **No skill XP or tool mastery for the Lanternbearer** (owner, done). Gatherers earn a share of your rate,
+  so your own skill still matters.
+- **Gatherer screens:** Tavern board, cards, send and return, Bunkhouse, and chips on node rows. (N3)
+
+## 6. Camp and world (WC1 design, then UX-W1-3, BT1, N2)
+
+**6.1 Building catalogue** (gap found while mapping): every building's purpose, unlocks, costs, tree, plot
+and region gate. New buildings: Armoury, Tannery, Smelter (or a Forge branch), Kitchen, Trophy Wall
+(done), and fatigue rest in the Bunkhouse or an Infirmary. Weak buildings (Garden, Library, Shrine) get
+merged or cut.
+
+**6.2 Building upgrade trees** (owner: inside each building, not just its level). Each level gives one
+point into 3 branches × 4 nodes, with free respec while idle. For example the Forge has Weaponsmith,
+Armourer and Smelter branches. Damage nodes are capped. (BT1)
+
+**6.3 The camp as a place** (N2):
+- A drawn panorama with plots; buildings grow visibly.
+- Gatherers and resting heroes at the fire; critters; day and night.
+- The Trophy Wall moves into the scene.
+
+**6.4 The World tab** (owner). Tabs are Fight · Gather · Party · Craft · **World**. World is a map for
+everything that isn't fighting or gathering:
+- Hollow's Rest, the Tavern, dungeons (the Deepwell, and one per region), the raid site, the Almanac post
+  and the Great Lanterns;
+- expeditions and trade routes sent from the map;
+- travel to lit zones.
+
+The layout is designed (ux-overhaul.md). **The map must be designed well** (owner): an art study with
+3 styles for its landmarks and icons comes first. (MAP0, UX-W1-3)
+
+**6.5 Map across five regions** (gap): does each region get an **outpost** (a forward camp with a local
+town and a dungeon entrance)? Also to settle: where trade towns, dungeons and raids sit, how secrets and
+events appear, and what locked regions look like. (WC1)
+
+**6.6 Factions and reputation** (owner: maybe, once the map has real places). Optional for 1.0.
+
+**6.7 Random events and secrets** (owner). There are 12 events at launch, at most 1 active at a time and
+2-4 a day. **They wait for you** (no FOMO). Examples: a wandering merchant, a golden beetle, a lost
+pilgrim, a strange light leading to a hidden mini-zone, storms, letters. Secrets are hidden zones and
+bosses behind odd actions, hinted by Tavern rumours. They tie into the secret achievements. (EV1)
+
+**6.8 Kitchen and fishing:** meals as buffs; the fishing rod as a tool. (R2)
+
+## 7. Heroes (HQ1, HER)
+
+- Grow from **18 to 32 heroes**, each with a home slot, a type, Bonds and a role.
+- **Hero quests** (3 steps each) end in an **Awakening**: a new passive, an upgraded signature, a new look
+  and title, and their Sworn Bond story. Owner: Awakenings, not branching, so heroes keep their character.
+- **No XP on the bench, no rapid catch-up** (owner, done). Levelling a new hero is an investment.
+- **Region 2 expects a trained-up stronger hero** (owner: yes), with a hint when your pair hits its limit.
+  (BAL2.5)
+- The **Full Company Feat** text changes to about 6-9 months.
+
+## 8. Story and regions (LORE-*, R2-R5, VOICE)
+
+- Why we fight (done): the dark hunts and smothers light, and the Voice wants the world dark.
+- The Hollow's story on screen (done). Expedition lore and Omen lines (done).
+- **Region 2, the Sunken Coast** is built on Core 2.0 (tide, foes, elders, the Drowned Keeper, pearls,
+  fishing, the Kitchen).
+- **Region 3, the Emberwaste**, with the Pyre Knight (Ser Hadric) and the Caedmon duel.
+- **Regions 4 and 5** get themes, materials and bosses (LORE-R45, owner approves), then specs and builds.
+- **The Voice finale** closes Season 1.
+- **Writing:**
+  - Hearth opening, Bond stories (42 plus 21 Sworn), gatherer talk and fire stories, the Hollises
+  - Raid lines (approved)
+  - Region stories and class backstories
+  - Hero quests and Awakenings
+- **Chapter goals** per region. (AC6)
+- Plan-2 carry-overs:
+  - **Oaths** become challenge modes.
+  - **Pinnacle bosses** become Season 1 endgame fights.
+  - The **legendary powers** combat side folds into Uniques 2.0.
+
+## 9. Menus (UX-B...G, HINT1, NM1)
+
+- Done:
+  - the one-tap activity switcher
+  - remembered nodes and swipe
+  - the rebuilt Gather screen with skill levels on the tabs
+  - the Storehouse view
+- The **shared style kit**, a slimmer header, and the **Journal** from the portrait (Deeds, Tracks, Feats,
   Codex; the rename box moves there).
-- **NM1** Rename pass: companions → heroes; the player's character → the Lanternbearer.
-- **UX-F** Craft + **Armoury** (owner priority: sort out crafting and gear). The Armoury is a bigger bag by
-  level (50 base, nothing lost), gear sets and loadouts, lock and favourite, an auto-salvage filter, sort and
-  filter, and a display rack at camp.
-- **UX-W1** World tab and map in the chosen style (registerPlace; absorbs plan-2's Lantern Road map), then
-  **UX-W2** (Hollow's Rest, Tavern sheet, Almanac post) and **UX-W3** (Deepwell place, raid pin,
-  expeditions from the map, **trade routes** as expeditions).
-- **UX-D** Party, **UX-E** Fight (the boss gate restyled), **UX-G** polish (onboarding pointers,
-  empty/locked states, wide screens).
-- Tab bar: Fight · Gather · Party · Craft · World.
+- **Crafting and gear menus sorted** (owner priority): Craft becomes Make · Armoury · Powers.
+- The **World tab** (section 6.4). Then Party, Fight (boss gate restyle) and polish.
+- **Steady hint pop-ups** (owner): docked, with no jitter.
+- **Rename:** companions become **heroes**; the player's character becomes the **Lanternbearer** (owner).
+- **Map icons redesigned** in the map art study (owner: map icons only; other icons are fine for now).
 
-## Phase C: the gear and resource overhaul
+## 10. Achievements (done, with follow-ups)
 
-- **RG1** Resources and Gear 2.0 (spec, Opus, alongside CL1):
-  - Armour weights: Warrior = metal + leather, Ranger = wood + leather, Mage = wood + cloth.
-  - **15 material tiers**, 3 per region, gated by region; old tiers map across without loss.
-  - **Production chains (K13):** Smelter (ore + coal → ingots), tanning (hide → leather), weaving
-    (fibre → cloth), sawmill, still.
-  - **Secondary resources** (coal, dye, salt...): the Lanternbearer can gather them, but they are ideal
-    gatherer jobs.
-  - Refining runs in the background at stations, faster with gatherer refiners.
-  - **Enchanting** is how you apply buff (socket) items to gear. It unlocks in **Region 2**. Buff items
-    come from gathering in each region.
-  - Crafted gear has slots (otherwise base stats only). Uniques come pre-socketed, slightly better than
-    crafted gear of the same rarity.
-  - **Bosses carry signature buff items and always drop them.**
-  - Gatherers can have find-rate perks, and active gathering finds more.
-  - Balance around region gating.
-- **Uniques 2.0**: signature play-changing effects, more of them, tied to bosses and regions, with story.
-- **Camp building upgrade trees**: a tree inside each building (for example Forge weapon vs armour
-  specialisation, Storehouse sorting/spillover, Bunkhouse comfort), not just building levels.
-- **Kitchen** and **fishing** (the rod as a tool; meals as buffs).
+- **Done:** 92 tracks with Everflame as the top tier, 21 Feats, 16 secrets, short epithet titles (owner),
+  accessories, the Trophy Wall, and the stats wall.
+- **Follow-ups:**
+  - Dormant tracks go live as their systems land.
+  - Chapter goals.
+  - The Full Company text.
 
-## Phase D: combat depth
+## 11. Launch readiness (Phase F)
 
-- **CB2 Active combat overhaul**: beyond parry. Dodging telegraphs, combos and ability chains, weak points
-  and stagger bars, interrupts, and big-ability timing. Boss phases and mechanics; **elite traits**
-  (Shielded, Vampiric, Explosive, Summoner...). Especially for dungeons and raids. Enemies, and bosses in
-  particular, **hit much harder**. Idle-friendly, with active play clearly rewarded.
-- **Tactics**: simple per-hero rules ("use the ability when a boss is under 50%", "heal under 30%", "focus
-  poisoned targets"). Built after CB2.
-- **Hero fatigue**: framed as a Rested bonus that fades over long stretches and returns at camp. Away time
-  counts as rest. Rotating heroes never slows progression.
-- **BAL3** Rebalance (a weekend):
-  - class parity for the new classes
-  - enemy and boss damage
-  - the Region 2 recruit rule (**needs the owner's decision**; recommended: Region 2 expects you to have
-    trained a stronger hero, with a hint when the pair hits its limit)
-  - the benched-XP and catch-up changes
-  - crafting Gold achievements arriving too early
-  - gatherer pacing (HS9-12)
-  - T1/D1/P1 pacing
-  - the Deepwell run length, the Overflow boon and the Deep Lore cost
-  - the Full Company Feat text (now about 6-7 months)
-  - quiet perf re-runs
+- **Save safety:** export/import codes plus automatic backups before migrations (SAVE1, early). Cloud save
+  needs a backend (post-1.0 unless the backend comes sooner). **An installable web app** (PWA) on Netlify,
+  deployed at most 4 times a day (done: the deploy rule).
+- **In-game guide and glossary** (GUIDE). **Accessibility**: colour-blind-safe types, text size, reduced
+  motion (done), volume mixer (A11Y).
+- **Sound and music:** synthesised sound effects and a chiptune loop per region (SFX1, MUS1).
+- **Challenge modes:** boss rush, Oath replays, the weekly Deepwell trial. Rewards are cosmetic only (CH1).
+- **Shareable camp card** (CARD1).
+- **First-hour polish** with a testers' checklist (FH1). **Final balance** (BAL-F).
+- **Testers:** a send-feedback button plus local error capture (FB1). A size and speed budget
+  (dist ≤ 4 MB, first frame ≤ 2.5 s on a mid-range phone).
 
-## Phase E: content to 1.0
+## 12. After 1.0
 
-- **Region 2, the Sunken Coast**: R2-1 to R2-8 (tide, foes, elders, the Drowned Keeper, pearls, fishing,
-  coast buff items). The coast foe keys must match LORE2's bestiary keys.
-- **Region 3, the Emberwaste**: spec (D4) and build. The Pyre Knight (Ser Hadric), with a Caedmon duel.
-- **Region 4** and **Region 5**: new specs from lore.md's road and mystery ladder. Each region has its
-  Great Lantern, a dungeon slot, a raid, and 3 material tiers with its buff items.
-- **The Voice**: the final-boss spec (DV) and fight at the bottom of the Deepwell after Region 5, plus the
-  ending (LORE13).
-- **Heroes 18 → 32**, each with a home slot, Bonds and a role. **Hero quests**: per-hero chains that unlock
-  top Bonds and a hero's own evolution.
-- **Plan-2 carry-overs**: Oaths (O1-O4), legendary combat powers (L3, L6), pinnacle fights (PB1-PB3,
-  PB5), drawn cosmetics at camp.
-- **Random events and secrets**: wandering merchants, golden creatures, hidden areas, secret bosses, lore
-  scraps.
-- **Camp life** (N2): the camp panorama with plots, the Trophy Wall at plot p13, gatherers at the fire,
-  day and night.
-- **Writing**:
-  - LORE6: the Hearth opening
-  - LORE7: 42 Bond stories and 21 Sworn lines
-  - LORE8: gatherer talk and fire stories (plus LORE8b, the Hollises)
-  - LORE9: raid lines (approved)
-  - LORE10: the Emberwaste
-  - LORE11: Lanternborn
-  - LORE13: the last fight
-  - class backstories
-  - Region 4 and Region 5 story
-- **AC6** Chapter goals per region. Dormant achievement tracks go live as their systems land.
-- **Factions and reputation**: maybe. Only once the World map has real places to go.
+- **Season 2 (2.0):** the story continues past the Voice's retreat; a **second evolution tier** for every
+  class; hero branching maybe.
+- **Art:** commission the three classes and six evolutions (one signature look each; capes, hats and auras
+  layer on top), then the 32 heroes. The **asset gallery** doubles as the artist's brief; a build step swaps
+  in PNGs. Commercial-use licences required.
+- **Monetisation** (owner direction). The vision's fairness pillar gets rewritten when this starts.
+  - A free plus paid **battle pass**.
+  - A **membership** with capped convenience: longer away time, faster builds, an extra builder, a camp skin
+    and effects, and the premium pass included; nothing is taken back when it lapses.
+  - **Skins**, a Founder pack, and gems as cosmetic or convenience only; never exclusive power.
+  - Needs accounts, server-side purchase checks and payments.
+- **Online:** titles for other players (owner: yes, post-1.0), guilds and social features, and a backend
+  for the standalone version.
+- **The Lantern Festival** (owner: after 1.0).
 
-## Phase F: launch readiness
+## 13. Rejected or parked
 
-- A polished first hour.
-- **Save safety**: export/import codes (with the installable web app / PWA), then cloud save (needs a
-  backend).
-- An **in-game guide/glossary** (damage types, statuses, evolutions, trees).
-- **Accessibility**: colour-blind-safe damage types (icons and shapes), text size, reduced motion, a volume
-  mixer.
-- **Sound and music.**
-- **Challenge modes**: boss rush, Oath replays, the weekly Deepwell trial.
-- A **shareable camp card**.
-- The **Lantern Festival** (seasonal; plan-3 said before December; decide whether it goes before 1.0).
-- The **companion endgame** (D5, built on Sworn Bonds and Lanternborn).
-
-## Small fixes queue
-
-- Hesketh cut off at 360px; station stakes crowd the oak; the Company Cape reads weakly.
-- A leftover Deepwell wipe animation behind the run-end card.
-- The expedition "haul won't fit" warning.
-- Gatherer counters on the Codex Camp page.
-- No lifetime counter for Hide.
-- AP6 nudge share.
-- The boss gate button restyle (UX-E).
-- Quiet perf re-runs for UX-A, AC3 and looks.
-
-## After 1.0
-
-- A second evolution tier for every class.
-- Art commissions: first the three base classes and their evolutions (one signature look per class;
-  capes, hats and auras layer on top), then the 32 heroes. An asset gallery doubles as the artist brief.
-  The build step swaps in PNGs.
-- Monetisation:
-  - a free + paid battle pass
-  - a membership: capped longer away time, faster builds, an extra builder, camp skin and effects,
-    includes the premium pass
-  - skins and a Founder pack
-  - gems tied in only as cosmetics or convenience, never exclusive power
-  - this needs accounts, server-side purchase checks and payments; the vision's fairness pillar gets
-    rewritten then
-- Guilds and bigger social features; an online backend for the standalone version.
-
-## Waiting on the owner
-
-- The Region 2 recruit rule (above).
-- Online titles for other players (O1) and the own title on your Tavern row.
-- Linking Netlify to the repo (deploys start then).
-- Festival timing relative to 1.0.
+- The lantern network (owner: no).
+- A general icon redraw (owner: other icons are fine for now).
+- Bench XP and rapid catch-up (owner: no).

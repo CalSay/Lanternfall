@@ -797,3 +797,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   playable characters (the three base classes and six evolutions as characters: looks, personality,
   backstory tied to the lore, how the heroes react to each).
 - Build map written: docs/design/build-map.md (task list with dependencies, models and sizes; ~35 sessions to Season 1; gap found: full building catalogue, camp scene, map growth across 5 regions/outposts -> new WC1 World and Camp 2.0 spec).
+- plan-4.md rewritten as the full Season 1 scope (owner: the build map had compressed the combat and resource overhauls): every discussed item, grouped, with its task ID; build-map.md keeps the order.
