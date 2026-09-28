@@ -557,3 +557,102 @@ speed           = (1 + 0.2 x (station level - 1)) x (1 + refiners) x mod('refine
 - The stations' refining queues, the Tannery and the secondary nodes open together at the Great Lantern of
   the Hollow, one step before the first grade-4 recipe. A player's first hour is exactly today's.
 - Kept grades (1.8) craft raw before the Coast, so a Region 1 save never meets a refined recipe early.
+
+---
+
+## 4. Enchanting
+
+### 4.1 Sockets
+
+- Counts by rarity and position (core-2 5.3; table in 2.5). Uniques 2.0: one locked socket and one open
+  socket (Region 1 uniques: one open socket, 6.1). Classic uniques: one open socket. Tools: none.
+- Item field `so`: the **open** sockets, `[[buffId, rarity, strength], ...]` (core-2 8.2), index = socket.
+  A missing or short array means empty sockets. A unique's locked socket is **data** (its row in `UNIQ2`),
+  never saved (store ids, not derived numbers).
+- **The version must match the item's weight** (core-2 5.4): heavy items take `_h`, medium `_m`, light
+  `_l`; charms take any; hero weapons take their role's weight; hero trinkets take any.
+
+### 4.2 Setting a buff item
+
+At the **Enchanter's Table**, from the Great Lantern of the Hollow (the Coast reached; core-2: Region 1
+has no buff items). The Enchanting skill (`ench`) already exists; this is its main job from Region 2 on.
+
+| | Rule |
+|---|---|
+| Action | **Set** a buff item from the Storehouse into an empty socket of a fitting version |
+| Cost | Gold `foesGold(S.maxZone, 20)` and 2 Essence of the item's grade. The buff item is used up into the socket |
+| Strength | Fixed when set: `enchStr(lv) = 0.70 + 0.30 x min(1, (lv - 1) / 79)`: **100% at Enchanting 80** |
+| XP | `8 x g` Enchanting XP (g = the item's grade) |
+| Value | The socket budget (core-2 5.4, with `Pc` for rating lines) split over the buff item's two lines (5.2) |
+
+| Enchanting | 1 | 20 | 36 | 54 | 66 | 80 |
+|---|---|---|---|---|---|---|
+| Strength | 70% | 77% | 83% | 90% | 95% | 100% |
+
+- **Why 80:** GP1 has Enchanting near 36 when a class reaches the Coast (tier 4 on day 3.5-11.5), so the
+  first settings land at about 83%. Level 80 comes around the middle of Region 3 for a player who enchants
+  and brews, and a bit later for one who does not: the skill matters for two regions and then stops being a
+  tax. Uniques' locked sockets are fixed at 110% (core-2).
+- **Tune:** re-set a buff item at your current strength without taking it out. Gold
+  `foesGold(S.maxZone, 10)`, no Essence, `2 x g` XP. It is the reason to keep levelling Enchanting past the
+  first settings, and it never costs the buff item.
+- **Heroes' sockets are worth it** (core-2 Q7): the cost is small and flat (gold plus 2 Essence); the buff
+  item is the real price, and heroes deal most of the party's damage, so a Rare buff item in a hero's weapon
+  is often the best use of one. The sim's settings policy (8) fills hero weapons second, after the
+  Lanternbearer's weapon.
+
+### 4.3 Taking a buff item out
+
+| Way | Result |
+|---|---|
+| **Take out** | The buff item breaks (owner rule). In-page ask: "Take out the Rare Lantern Pearl? It will break. [Break it] [Keep it]" |
+| **Take out with a Salvage Rune** | The buff item goes back to the Storehouse at its rarity. Its strength is set again when you next set it |
+| **Set another over it** | Asks the same question first; never silent |
+| **Salvage the item** | The salvage sheet lists its buff items with a toggle "Use N Salvage Runes to keep them" (on when you hold runes). Without runes they break, and the sheet says so. **Auto-salvage never picks an item with a buff item in it** |
+| **Upgrade (+N)** | Buff items stay. The socket budget reads the item's grade and the buff's rarity and strength, not +N |
+| **Class change (retool)** | Buff items turn into the new weight's version of the same family, rarity and strength |
+| **Temper a unique** (6.5) | Buff items stay; their value follows the new grade up to `famTop` |
+
+**Salvage Runes** (a count in `S.gear2.rune`, shown on the Buff Items page):
+
+| Source | Amount |
+|---|---|
+| Craft at the Enchanter's Table | 5 Crystal + 3 Essence of any grade from 4 (you pick the pile; default your highest), + 1 Tincture if the Still exists (else 3 Herbs). 10 Enchanting XP |
+| Region boss first kill (Coast onward) | 3 |
+| Bounties, the Almanac board, trade towns (7) | 1-2 as rewards |
+
+A rune costs about as much as an hour of mid-region gathering: cheap enough to move Rare and better buff
+items, not worth it for Commons, which is the decision the owner's rule asks for.
+
+### 4.4 What the Lanternbearer sees (360 px)
+
+**Item sheet (Armoury, UX-F), the sockets row** under the lines:
+
+```
+ Coralsteel Plate +4         Rare · Heavy · Tier 6
+ HP +619%   Armour +47
+ ...affix lines...
+ Sockets  [ ◆ Rare Lantern Pearl 92% ]   [ ◇ empty ]
+          +42% max HP, +7% frost resist    Tap to set
+          Tidefast on the Coast
+```
+
+**Tap an empty socket → "Set a buff item"** (a 90% bottom sheet):
+
+```
+ Set a buff item · heavy                        [x]
+ Your Enchanting 55: 90% strength
+ ── Lantern Pearl ─────────────────────────────────
+ ◆ Rare       ×3   +42% max HP, +7.0% frost resist   [Set]
+ ◆ Uncommon   ×7   +31% max HP, +5.3% frost resist   [Set]
+ ◆ Common    ×12   +23% max HP, +3.9% frost resist   [Set]
+ Costs 1.2K gold and 2 Gleaming Essence
+```
+
+- Only versions that fit are listed; the lines are the real values at this item's grade and your
+  strength. Families you have none of show one grey row: "Lantern Pearls: fishing and Tide Pools".
+- **Tap a filled socket** → a small sheet: its lines, "Set at 92%. Your Enchanting gives 95%."
+  **[Tune to 95%: 600 gold]**, **[Take out with a Salvage Rune (you have 4)]**, **[Take out (it breaks)]**.
+- Toasts: "Set a Rare Lantern Pearl in Coralsteel Plate." (low). Colour is never the only signal: the
+  rarity word is always written, and the version shows as a small weight icon plus the word.
+- Reduced motion: no sparkle on setting; the socket fills at once.
