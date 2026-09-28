@@ -88,6 +88,8 @@ if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = k
 if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); E(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
 // --syn v sets SYN_TUNE.today (56b-synergy.js), to check the curve against stronger synergies.
 if (args.syn !== undefined) E(`SYN_TUNE.today = ${+args.syn}`);
+// --tools 0|1: right tool, tool mastery perks and rare finds (55-tools.js, H2); 0 = the old gathering rules.
+if (args.tools !== undefined) E(`TOOL_TUNE.on = ${+args.tools}`);
 // --eval "code": run code in the game scope after the knobs (experiments, e.g. --eval "CRAFT_CATCHUP.mult = 3").
 if (args.eval) E(String(args.eval));
 // --evalfile path: the same, from a file (probes that print from an onTick hook).
@@ -102,6 +104,7 @@ function applyKnobs(h) {
   if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
   if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); h.eval(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
   if (args.syn !== undefined) h.eval(`SYN_TUNE.today = ${+args.syn}`);
+  if (args.tools !== undefined) h.eval(`TOOL_TUNE.on = ${+args.tools}`);
   for (const [flag, obj] of [['combat', 'COMBAT_TUNE'], ['enemy', 'ENEMY_TUNE']]) if (args[flag]) for (const kv of String(args[flag]).split(',')) { const [k, v] = kv.split('='); h.eval(`${obj}.${k} = ${+v}`); }
   if (args.eval) h.eval(String(args.eval));
 }

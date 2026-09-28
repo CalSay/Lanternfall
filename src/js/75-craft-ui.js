@@ -595,6 +595,8 @@ let craftUI = null;
     const lgb = LG() ? safe(() => LG().itemBoxes(it, sheet, renderItem), []) : [];   // Learn (top), Inscribe, Mark
     body.append(...lgb.filter(b => b.dataset.top));
     body.append(secBox('What it does', lines));
+    const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
+    if (tlb) body.append(tlb);
     if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
     body.append(...lgb.filter(b => !b.dataset.top));
 

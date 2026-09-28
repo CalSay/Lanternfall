@@ -118,7 +118,7 @@ const CRAFT_XP = {
 // ================= positions =================
 const CRAFT_POS = {
   weapon: { n: 'Weapon' }, off: { n: 'Off-hand' }, helm: { n: 'Head' }, body: { n: 'Body' },
-  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Axe' }, sickle: { n: 'Sickle' },
+  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Woodaxe' }, sickle: { n: 'Sickle' },
   wpn: { n: 'Weapon', comp: true }, trk: { n: 'Trinket', comp: true }
 };
 const CRAFT_HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
@@ -151,9 +151,13 @@ const CRAFT_STATS = {
   oreDbl: { n: 'Double ore', f: '{v}% double ore', dp: 0, live: true, gear: 'oreDbl' },
   woodSpd: { n: 'Chopping speed', f: '+{v}% chopping speed', live: true, gear: 'woodSpd' },
   woodDbl: { n: 'Double logs', f: '{v}% double logs', dp: 0, live: true, gear: 'woodDbl' },
-  forageSpd: { n: 'Foraging speed', f: '+{v}% foraging speed' },
-  forageDbl: { n: 'Double yield', f: '{v}% double fibre and herbs', dp: 0 },
-  gather: { n: 'Gathering speed', f: '+{v}% gathering speed', live: true, gear: 'gather' }
+  forageSpd: { n: 'Foraging speed', f: '+{v}% foraging speed', live: true },
+  forageDbl: { n: 'Double yield', f: '{v}% double fibre and herbs', dp: 0, live: true },
+  gather: { n: 'Gathering speed', f: '+{v}% gathering speed', live: true, gear: 'gather' },
+  // H2 (hearth-and-hands.md 2.2): each unit gathered may bring 1 of the next tier (55-tools.js).
+  oreFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
+  woodFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
+  forageFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true }
 };
 function craftFmtLine(stat, v) {
   const s = CRAFT_STATS[stat];
@@ -186,9 +190,11 @@ const CRAFT_KINDS = {
   vestments: { noun: 'Vestments', pos: 'body', st: 'loom', rec: { fibre: 7, herb: 2, ess: 2 }, pre: 'fibre', base: [['hp', 1]], role: 'support', cls: 'lightkeeper' },
   trinket: { noun: 'Trinket', comp: 'trk', st: 'ench', rec: { crystal: 2, herb: 2, ess: 2 }, pre: 'crystal', base: [['hp', 0.6], ['haste', 0.05, 25]], role: 'any' },
   charm: { noun: 'Charm', pos: 'charm', st: 'ench', rec: RECIPE.charm, pre: 'ess', base: [['gold', 0.8], ['ess', 0.3]], ic: 'charm' },
-  pick: { noun: 'Pickaxe', pos: 'pick', st: 'forge', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60]], tool: true, ic: 'pick' },
-  axe: { noun: 'Axe', pos: 'axe', st: 'bench', rec: RECIPE.axe, pre: 'ore', base: [['woodSpd', 0.6], ['woodDbl', 0.1, 60]], tool: true, ic: 'axe' },
-  sickle: { noun: 'Sickle', pos: 'sickle', st: 'forge', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['forageSpd', 0.6], ['forageDbl', 0.1, 60]], tool: true },
+  // Tools (H2, hearth-and-hands.md 2): all at the Workbench, gated on max(Woodcraft, Smithing)
+  // (55-crafting stationLevel). Lines: speed, double yield, rare find (per-line caps 60 and 8).
+  pick: { noun: 'Pickaxe', pos: 'pick', st: 'bench', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60], ['oreFind', 0.012, 8]], tool: true, ic: 'pick' },
+  axe: { noun: 'Woodaxe', pos: 'axe', st: 'bench', rec: RECIPE.axe, pre: 'ore', base: [['woodSpd', 0.6], ['woodDbl', 0.1, 60], ['woodFind', 0.012, 8]], tool: true, ic: 'axe' },
+  sickle: { noun: 'Sickle', pos: 'sickle', st: 'bench', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['forageSpd', 0.6], ['forageDbl', 0.1, 60], ['forageFind', 0.012, 8]], tool: true },
   weapon: { noun: 'Sword', pos: 'weapon', st: 'forge', rec: RECIPE.weapon, pre: 'ore', base: [['might', 1]], legacy: true, ic: 'sword' },
   helm: { noun: 'Helm', pos: 'helm', st: 'forge', rec: RECIPE.helm, pre: 'ore', base: [['crit', 0.12, 35], ['critMult', 0.005], ['armour', 0.1]], legacy: true, ic: 'helm' }
 };

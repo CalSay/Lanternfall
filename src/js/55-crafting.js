@@ -74,7 +74,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   stationLevel = kind => {
     const st = stationOf(kind); if (!st) return 0;
     const lv = S.skills[st.skill].lv;
-    return RECIPE[kind] && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
+    // Pre-K4 kinds and every tool (H2: the Sickle moved from the Forge) keep the better of Smithing.
+    return (RECIPE[kind] || (CRAFT_KINDS[kind] && CRAFT_KINDS[kind].tool)) && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
   };
   craftXpFor = (skill, n) => {
     const behind = CRAFT_CATCHUP[skill];

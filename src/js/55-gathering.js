@@ -165,7 +165,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     if (!G.next) G.next = nextGlint();
     G.next -= dt * (1 + bonus('glintRate'));
     if (G.next <= 0) {
-      G.left = CRAFT_GLINT.window; G.spark = 0;
+      G.left = CRAFT_GLINT.window + bonus('glint:' + skillOf(S.node.kind)); G.spark = 0;   // H2: tool mastery 10
       addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
       emit('glint', { on: true });
     }
