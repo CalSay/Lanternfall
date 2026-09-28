@@ -31,6 +31,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js); the craft goal sets `S.fSlot`/`S.fTier` and bumps `forgeGoalPicks` so the Craft tab focuses that recipe |
 | 55-onboard.js | core | the guided first ten minutes (docs/design/onboarding.md): `FEATURES` unlock table, `isUnlocked(id)`, `onboardReveal`, `onboardUnlockAll`, the guide (`GUIDE_STEPS`, `onboardStep`, `onboardDone`, `onboardTips`), `goalGate` for Next Up (on only in the browser); state `S.onboard` (old saves: all open). UI: 75-onboard-ui.js. Views and sections declare `feature: id` in `registerView`/`registerSection` |
+| 55-welcome.js | core | the one-time live-save welcome (plan-2 D3): a save with progress and no `S.camp` gets the Hearth its max zone allows (`CAMP_HZ`), free, once; `welcomeApply()` (57-camp calls it after registering `camp`), `welcomeNote()` (the camp's opening notice, then null), `welcomeInfo()`; state `S.welcome` |
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
@@ -131,6 +132,10 @@ registerView('forge', { id: 'salvage', label: 'Salvage', order: 25, dot: () => b
 Static markup in `src/shell.html` joins a view with `data-view="id"` on the panel's direct child
 (`"*"` = every view, or a space-separated list). Sections only update while their view shows, so rows
 built in `update()` may not exist yet; `setTab(tab, sel)` builds them once before it looks for `sel`.
+`mount(sec)` does not run at load: it runs when the section's tab first opens (every section of that
+tab at once, in registration order; `log` sections when the Journal first shows). The section's own
+element exists from registration. Keep event handlers (`on(...)`) outside `mount`, and never rely on
+nodes that `mount` builds before the tab has opened.
 
 ```js
 registerAwayLine(fn(r)) -> remove()   // add lines to the "While you were away" card (55-stats.js)
@@ -214,6 +219,7 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `starLit` / `starUnlit` / `starReset` / `starLayout` | 57e-constellations: `{ cls, id }` / `{ cls, id }` / `{ cls, n }` / `{ cls, i }` |
 | `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` |
 | `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
+| `whatsNew` | `{ msg, icon, first }`: a line in the bell's one "What's new" notice (70-ui; `first` puts it at the top). Toasts raised in the first 2.5 s of play fold into it too (old-save catch-ups) |
 | `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
 

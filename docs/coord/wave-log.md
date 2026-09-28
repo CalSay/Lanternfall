@@ -97,6 +97,11 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
   pinnacle bosses (after Stage C), a visibly relit world map, a companion endgame (Lanternborn forms,
   bond stories), Deepwell heat levels. Coordinator recommendation: Region 2 + Oaths + legendary effects/sets.
   If there is no answer by the time the current plan ends, go with the recommendation.
+  -> Plan 2 went ahead with the recommendation (Coast, then Oaths + legendaries, then pinnacles). Also
+  decided by the coordinator on the designer's advice: a one-time welcome for old live saves (the Hearth
+  is built up to what their zone allows), a real-clock tide, rank 8 at the Coast lantern, saves past
+  zone 35 move to the Coast at once, Oaths give no extra XP. Still owner-gated: the first festival and
+  the companion endgame.
 
 PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description at milestones).
 - Owner bug: upgrade buttons ignored taps. Cause: setPrice rebuilt the price spans about 5x/s, and
@@ -265,3 +270,41 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   implement the keystone flags (starKeystone(id), STAR_KS). Until then Dawnbringer is too strong, Pack
   Leader has no cost, Sanctuary Hymn has no upside, and Glass Lantern lacks its Flare bonus. Forwarded
   to Stage C. Coordinator fix: onboarding treated a feature unlocked at play time 0 as locked (!= null).
+- PERF3 merged: packed 1:1 scene plates and cached glows (phone/new fight 31 -> 55 fps, 0 long tasks;
+  phone/late 26 -> 42 fps), a prewarm that now actually hits (the kill frame drops from about 150ms to
+  about 20ms), and lazy tab mounts (first frame about 1.1-1.3s). phone/new and desktop are within
+  budget; phone/late still over (fight frame-gap p95 about 40ms, the scene build on a player zone jump,
+  Camp first open up to 154ms). CONTRACT CHANGE: a section's mount() now runs on its tab's first open;
+  keep on() handlers outside mount. Coordinator resolved a 70-ui.js conflict (lazy mounts + onboarding
+  `feature`) and smoke-tested every tab (no errors).
+
+## Plan 2 (started 2026-09-28)
+
+See docs/design/plan-2.md. Wave 1 started: D2 pinnacle spec and Q1+D3 quality fixes plus the old-save welcome, now;
+C4, C6, AF, R0 and BAL2 after Stage C lands.
+- D2 pinnacles.md merged (Hollow King, Lurelight, First Fire, the Climber; open after the Drowned Keeper + Oath 15, about day 33-40). Coordinator accepts its recommendations: live-play kills only, an Assist switch (1.5x wind-ups, full rewards), Boss of the Week pays a Seal + stamp only. Section 12 lists hooks Stage C needs in 59-combat/59b-enemies.
+- Q1 + D3 merged: the out-of-reach upgrade hint ("Best spent on recruits now"), the Watchtower hint via
+  partyHoldEstimate (it guessed the return shape: verify when Stage C lands), one "What's new" bell
+  notice for old saves (emit('whatsNew', ...)), 44px targets (Omen, weekly board, synergy chips,
+  Expeditions), the Omen pinned for the whole check run, and 55-welcome.js (old saves without a camp get
+  the Hearth up to what their zone allows, free, once; save-v2-late gets Hearth 8 with 2 builders).
+- R2-6 Coast writing merged (21b-stories-coast.js: COAST_ARRIVAL, COAST_STORY beats 0-5 with notes, head
+  and say lines, KEEPER_LINES, COAST_LORE bands VI-X, COAST_BOUNTY_TEXT {crab, pearl, beam},
+  COAST_OMEN_TEXT {springTide, calmSea, pearlMoon}). Canon: the Keeper is Silas Penrow, writing to Old
+  Hallam. R2-3/R2-7 must use these keys. The PB4 writer should know the Keeper's name and the light
+  Lurelight foreshadowing. The Codex must settle the "Letters from the Coast" title clash.
+- PB0 + PB4 merged (21d-data-pinnacle.js, 21e-stories-pinnacle.js; checked for fairness caps and
+  timings). Coordinator accepts its gap fills: Lure Song charm 3s, Ash Fall 8s, riders capped, Weight
+  of the Crown at most 1 stack/2s, 8 named Oath sets (levels 10-14) for Boss of the Week, and PIN_POWERS
+  living in 21d until 21c-data-legend.js exists (L1 imports them).
+- L1 + L5 merged (21c-data-legend.js: 43 powers incl. the 4 pinnacle ones by reference, 4 circle
+  sets, costs, caps; 11b-art-legend.js: icons, sigils, orange frame). DESIGN ISSUE: the section-6 caps
+  (+30/+45/+70% at rank I/III/V) cannot hold if 6-piece circle sets (+12-18%) stack on top of the
+  powers; the data check passes only with sets counted at 0. COORDINATOR DECISION for L2: enforce the
+  caps at RUNTIME. All legendary power + set damage multipliers are summed into one legend budget and
+  clamped to the cap for the player's highest rank, and the UI shows "capped" when a build hits it.
+  Sets stay valuable through their non-damage effects and by letting weaker powers reach the cap.
+  L6's sim verifies L4/L5. Pick one legendary colour: use #FF8A3D and update --r-legendary.
+- 02:5x UTC: the account usage limit stopped all three agents (Stage C, PERF4, L2); it reset at 03:50.
+  At 04:39 all three were resumed with their context and uncommitted work intact (Stage C had 4 commits
+  plus WIP, PERF4 12 changed files). Nothing was lost.

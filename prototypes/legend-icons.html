@@ -1,0 +1,74 @@
+<title>Lanternfall Legendary Icons</title>
+<style>
+:root { color-scheme: dark; --bg: #140F1A; --panel: #1F1827; --well: #110D16; --line: #3A2F47; --line-hi: #4E4060; --bone: #EFE6D6; --muted: #A597B4; --leg: #FF8A3D; }
+body { margin: 0; background: var(--bg); color: var(--bone); font: 13px/1.35 system-ui, sans-serif; }
+main { width: 1180px; margin: 0 auto; padding: 14px; }
+h1 { font-size: 18px; margin: 0 0 2px; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+small { color: var(--muted); }
+.grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.card { background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; width: 176px; box-sizing: border-box; }
+.card .top { display: flex; align-items: center; gap: 8px; }
+.card .cap { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .cap b { color: var(--leg); font-weight: 600; }
+img, canvas { image-rendering: pixelated; display: block; }
+.ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810; box-sizing: border-box; }
+.ic img { width: 28px; height: 28px; }
+.ic.f-leg { border-color: var(--leg); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,138,61,.45); }
+.ic.ghost img { filter: brightness(0); opacity: .45; }
+</style>
+<main>
+<h1>Lanternfall legendary power icons (L5)</h1>
+<small>Dev page: loads src/js directly. Each card: 1x, 3x, the pixel frame (LEG_FRAME) at 3x, the in-game 40px tile with the orange frame. Background = panel #1F1827.</small>
+<h2>Existing icons (for comparison)</h2><div class="grid" id="old"></div>
+<h2>Warden</h2><div class="grid" id="warden"></div>
+<h2>Lanternmage</h2><div class="grid" id="lanternmage"></div>
+<h2>Ranger</h2><div class="grid" id="ranger"></div>
+<h2>Lightkeeper</h2><div class="grid" id="lightkeeper"></div>
+<h2>Companion powers</h2><div class="grid" id="comp"></div>
+<h2>Pinnacle powers</h2><div class="grid" id="pin"></div>
+<h2>Circle Sigils, and an unknown power (silhouette)</h2><div class="grid" id="sig"></div>
+</main>
+<script src="../src/js/00-util.js"></script>
+<script src="../src/js/10-art.js"></script>
+<script src="../src/js/11-art-craft.js"></script>
+<script src="../src/js/11b-art-legend.js"></script>
+<script src="../src/js/20-data.js"></script>
+<script src="../src/js/21-data-craft.js"></script>
+<script src="../src/js/21c-data-legend.js"></script>
+<script src="../src/js/21d-data-pinnacle.js"></script>
+<script src="../src/js/60-gfx.js"></script>
+<script>
+'use strict';
+const big = (url, z) => { const i = new Image(); i.src = url; i.width = 14 * z; i.height = 14 * z; return i; };
+const tile = (url, cls) => { const d = document.createElement('div'); d.className = 'ic ' + (cls || ''); d.append(big(url, 2)); return d; };
+// The pixel frame: 16x16 LEG_FRAME.map, the 14x14 outlined icon inside at (1, 1).
+function framed(url, z) {
+  const cv = document.createElement('canvas'); cv.width = 16 * z; cv.height = 16 * z;
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = '#110D16'; g.fillRect(z, z, 14 * z, 14 * z);
+  const pal = { 1: LEG_FRAME.col, 2: LEG_FRAME.lo, 3: LEG_FRAME.hi };
+  LEG_FRAME.map.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (pal[r[x]]) { g.fillStyle = pal[r[x]]; g.fillRect(x * z, y * z, z, z); } });
+  const i = new Image(); i.onload = () => g.drawImage(i, z, z, 14 * z, 14 * z); i.src = url;
+  return cv;
+}
+function card(parent, label, sub, url, opt = {}) {
+  const c = document.createElement('div'); c.className = 'card';
+  const top = document.createElement('div'); top.className = 'top';
+  top.append(big(url, 1), big(url, 3));
+  if (!opt.plain) top.append(framed(url, 3));
+  top.append(tile(url, 'tile' in opt ? opt.tile : 'f-leg'));
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = '<b>' + label + '</b> ' + sub;
+  c.append(top, cap); parent.append(c);
+}
+const $$ = id => document.getElementById(id);
+for (const n of ['warblade', 'shield', 'lantern', 'bow', 'censer', 'trinket']) card($$('old'), n, 'tier 4', iconURL(...craftIcon(n, 4)), { plain: 1, tile: '' });
+for (const n of ['sword', 'flame', 'orb']) card($$('old'), n, 'old', iconURL(n, '#9CA4B4'), { plain: 1, tile: '' });
+const leg = id => iconURL(...legendIcon(id));
+for (const cls of LEG_CLASSES) for (const id of LEG_CLASS_IDS[cls]) card($$(cls), LEG_POWERS[id].n, LEG_ICON_SPEC[id][0], leg(id));
+for (const id of LEG_COMP_IDS) card($$('comp'), LEG_POWERS[id].n, LEG_POWERS[id].fits, leg(id));
+for (const id of LEG_PIN_IDS) card($$('pin'), LEG_POWERS[id].n, LEG_ICON_SPEC[id][0], leg(id));
+LEG_CIRCLES.forEach((c, i) => card($$('sig'), LEG_CIRCLE_NAME[c], 'Sigil', iconURL(...sigilIcon(i)), { tile: '' }));
+card($$('sig'), 'Unknown', 'silhouette', leg('tidewall'), { tile: 'ghost' });
+document.body.dataset.ready = '1';
+</script>

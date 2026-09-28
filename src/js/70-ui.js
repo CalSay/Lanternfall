@@ -51,6 +51,7 @@ function makeToast(msg, kind, url, p) {
   t.addEventListener('pointermove', e => { if (x0 == null) return; dx = e.clientX - x0; t.style.transform = `translateX(${dx}px)`; t.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 160)); });
   const up = () => {
     if (x0 == null) return; x0 = null; t.style.transition = '';
+    if (Math.abs(dx) < 6 && t._tap) { dropToast(t, 'gone'); t._tap(); return; }
     if (Math.abs(dx) > 48 || Math.abs(dx) < 6) { t.style.transform = `translateX(${dx < 0 ? -120 : dx > 6 ? 120 : 0}%)`; dropToast(t, 'gone'); }
     else { t.style.transform = ''; t.style.opacity = ''; armToast(t); }
   };
@@ -63,6 +64,7 @@ try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offset
 function showToast(msg, kind, icon, prio) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
+  if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
   notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
   if (notes.log.length > 50) notes.log.length = 50;
   const box = $('toasts');
@@ -91,6 +93,60 @@ function showToast(msg, kind, icon, prio) {
   box.appendChild(t);
   armToast(t);
 }
+// ---- What's new ----
+// Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
+// deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
+// instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
+// on the first ticks; the Codex at 2 s). One notice alone pops as usual. Achievements join into
+// one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
+// the list), e.g. the camp welcome (55-welcome.js).
+const NEWS = { open: true, t: 0, lines: [], entry: null };
+function newsEntry(lines) {
+  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
+  if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
+  else {
+    const list = lines.filter(l => l.first).concat(lines.filter(l => !l.first));
+    NEWS.entry = { id: ++notes.seq, msg: `What's new: ${list.length} things since your last visit.`, kind: 'good news', url: (list.find(l => l.url) || {}).url || null, p: 2, at: Date.now(), list };
+    notes.log.unshift(NEWS.entry);
+    if (notes.log.length > 50) notes.log.length = 50;
+  }
+  notes.unread++; bellUpdate(true);
+  newsToast();
+}
+// One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
+function newsToast() {
+  NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  const box = $('toasts');
+  for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
+  // Room as for a high notice: retire the oldest normal toasts first.
+  const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
+  const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
+  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
+  const t = makeToast(`What's new since your last visit. Tap to read.`, 'good', NEWS.entry.url, 2);
+  t._news = true; t._tap = openNoticeLog;
+  box.appendChild(t); armToast(t);
+}
+on('createDone', () => { if (NEWS.wait) newsToast(); });
+function newsFlush() {
+  NEWS.open = false;
+  let lines = NEWS.lines; NEWS.lines = [];
+  // The lines now live in the bell: point them at the Journal directly.
+  for (const l of lines) l.msg = l.msg.replace('Tap the bell, then Journal.', 'See the Journal.').replace('from the bell, then Journal.', 'from the Journal.');
+  const ach = lines.filter(l => /^Achievement: /.test(l.msg));
+  if (ach.length > 1) {
+    const names = ach.map(l => l.msg.slice(13).split('. ')[0]);
+    lines = lines.filter(l => !ach.includes(l));
+    lines.push({ msg: `${ach.length} achievements earned: ${names.join(', ')}. See the Journal.`, url: ach[0].url, kind: 'good', p: 1 });
+  }
+  if (lines.length === 1 && !lines[0].first) { const l = lines[0]; showToast(l.msg, l.kind, l.url, l.p); return; }
+  if (lines.length) newsEntry(lines);
+}
+onTick(dt => { if (NEWS.open && (NEWS.t += dt) >= 2.5) newsFlush(); });
+on('whatsNew', w => {
+  let url = null; try { url = iconOf(w.icon); } catch (e) {}
+  const line = { msg: w.msg, url, kind: 'good', p: 2, first: !!w.first };
+  if (NEWS.open) NEWS.lines.push(line); else newsEntry([line]);
+});
 // The bell sheet has two views: Notices (this visit's log) and the Journal (lifetime stats,
 // registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
 const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
@@ -119,6 +175,12 @@ function openNoticeLog() {
       for (const n of notes.log) {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
         r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        if (n.list) {
+          r.firstChild.nextSibling.textContent = "What's new";
+          const ul = el('ul', 'nlog-news');
+          for (const l of n.list) { const li = el('li', l.first ? 'first' : ''); li.append(l.url ? img(l.url) : el('span'), el('span', null, l.msg)); ul.append(li); }
+          r.append(ul);
+        }
         list.append(r);
       }
       box.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
@@ -353,10 +415,11 @@ function setTab(t, sel) {
   let view = null;
   if (!TAB_IDS.includes(t) && (VIEW_OF[t] || TAB_ALIAS[t])) { view = t; t = VIEW_OF[t] || TAB_ALIAS[t]; }
   if (!TAB_IDS.includes(t)) t = 'adv';
+  mountTab(t);
   const find = () => sel ? (typeof sel === 'string' ? document.querySelector(sel) : sel) : null;
   let target = find();
   // Sections build some rows in update(), and only the open view updates: build the whole tab once.
-  if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }
+  if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }  // (mountTab ran above)
   const tv = target && viewOfEl(t, target); if (tv) view = tv;
   // Sent to a view that is still locked (Next Up, an away card, another system): it opens for good.
   if (typeof onboardReveal === 'function') {
@@ -387,6 +450,7 @@ function closeMenu() {
 }
 // Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
 function initMenus() {
+  menusReady = true;
   const last = TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : TAB_IDS.includes(S.tab) ? S.tab : 'adv';
   S.tab = '';
   if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
@@ -538,7 +602,9 @@ function ui(force) {
   const t0 = performance.now();
   let cold = false;
   for (const sec of SECTIONS) {
-    if (!sec.update || !secShows(sec)) continue;
+    if (!secShows(sec)) continue;
+    if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
+    if (!sec.update) continue;
     if (!sec.warm && performance.now() - t0 > COLD_MS) { cold = true; continue; }
     runSection(sec, force);
   }
@@ -550,6 +616,7 @@ function secShows(sec) {
   return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
 }
 function runSection(sec, force) {
+  if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
   try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); }
   sec.warm = true;
 }
@@ -574,10 +641,24 @@ function warmSections() {
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
 // view: the sub-view it shows in (registerView; a new id makes a new view). Without it the section joins
 // the tab's first view. Pick a view; never just append to the end of a busy one (docs/design/layout.md).
-// mount(sec) runs once now; update(force) runs from ui() while its tab and view are open
-// (about 5 times a second, force = true right after player actions).
-// feature (optional): a 55-onboard.js feature id; the section stays hidden (no updates) until unlocked.
+// mount(sec) runs once, when its tab (for log: the Journal view) first opens, or now if that tab is
+// open; update(force) runs from ui() while its tab and view are open (about 5 times a second,
+// force = true right after player actions). feature (optional): a 55-onboard.js feature id; the
+// section stays hidden (no updates) until unlocked. A mount may move its section within its panel (every
+// section's element is in place from registration) but must not be needed before the tab opens.
 const SECTIONS = [];
+// Sections of closed tabs mount on the tab's first open, all of that tab's at once and in
+// registration order (a mount may place its section relative to the others), so boot does not build
+// panels nobody has opened yet (docs/design/perf.md, hotspot 11).
+let menusReady = false;
+function mountSec(sec) {
+  if (sec.mounted) return;
+  sec.mounted = true;
+  try { sec.mount(sec.el); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' mount failed', e); }
+}
+function mountTab(t) {
+  for (const sec of SECTIONS) if (!sec.mounted && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) mountSec(sec);
+}
 function registerSection(tabId, { id, title, view, mount, update, feature }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
   const sec = el('div', 'sec'); sec.id = 'sec-' + id;
@@ -589,9 +670,11 @@ function registerSection(tabId, { id, title, view, mount, update, feature }) {
   }
   panel.append(sec);
   if (tabId !== 'log' && TAB_IDS.includes(tabId) && S.tab === tabId) applyView(tabId);
-  if (mount) mount(sec);
   if (feature) { sec.dataset.feature = feature; sec.classList.toggle('f-off', !featOk(feature)); }
-  SECTIONS.push({ tab: tabId, id, update, el: sec, feature: feature || null });
+  const rec = { tab: tabId, id, update, el: sec, mount, mounted: !mount, feature: feature || null };
+  SECTIONS.push(rec);
+  // after boot, a section of an open tab (or of a tab already mounted) mounts at once
+  if (mount && menusReady && (secShows(rec) || SECTIONS.some(s => s !== rec && s.mounted && s.mount && s.tab === tabId))) mountSec(rec);
   return sec;
 }
 // registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are

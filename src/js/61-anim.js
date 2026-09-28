@@ -3,7 +3,7 @@
 // All positions are stage logical px (1 logical px = ZM CSS px, the stage zoom in 62-stage.js), which drives and draws these.
 //
 // Exposed: ANIM = { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts,
-//                   drawProj, drawRings, lightAt }
+//                   drawProj, drawRings, lightAt, glowAt, devView }
 
 const ANIM = (() => {
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
@@ -45,7 +45,48 @@ const ANIM = (() => {
   // Additive glow at (x, y), radius r.
   function lightAt(ctx, rgb, x, y, r, a) {
     if (a <= 0.01 || r <= 0) return;
-    ctx.globalAlpha = Math.min(1, a); ctx.drawImage(glow(rgb), x - r, y - r, r * 2, r * 2);
+    glowAt(ctx, glow(rgb), x, y, r, a);
+  }
+
+  // ---------- device-resolution glow copies ----------
+  // Stretching a 64 px glow over a big radius with smoothing on, every frame, is the costliest kind of
+  // draw on a software canvas (the key light alone was about a fifth of a phone frame). glowAt keeps
+  // copies at device size and draws them 1:1 at whole device pixels. Sizes snap to a 4% grid, so a
+  // flickering light cycles through a handful of copies; under DEV_MIN device px the plain scaled draw
+  // is as cheap. The stage sets the view (device px per CSS px and the translation) each frame; with
+  // no view (k = 0) everything draws scaled as before. LRU, capped by pixel count, and at most
+  // DEV_NEW new copies per frame (the rest draw scaled this frame), so a burst never stalls a frame.
+  const DEV_MIN = 96, DEV_CAP = 5e6, DEV_NEW = 2, LOG_STEP = Math.log(1.04);
+  const devSets = new Map();   // src canvas -> Map(size -> { c, used })
+  let vk = 0, vox = 0, voy = 0, devPx = 0, devNew = 0, devFrame = 0;
+  function devView(k, ox, oy) { vk = k || 0; vox = ox || 0; voy = oy || 0; if (k) { devNew = 0; devFrame++; } }
+  function devEvict() {
+    while (devPx > DEV_CAP) {
+      let old = null, oldSet = null, oldD = 0;
+      for (const set of devSets.values()) for (const [d, e] of set) if (!old || e.used < old.used) { old = e; oldSet = set; oldD = d; }
+      if (!old) return;
+      oldSet.delete(oldD); devPx -= old.c.width * old.c.height;
+    }
+  }
+  // Draw the square sprite src (a soft glow) centred on (x, y) with radius r, at globalAlpha a.
+  function glowAt(ctx, src, x, y, r, a) {
+    if (a <= 0.01 || r <= 0) return;
+    ctx.globalAlpha = Math.min(1, a);
+    const want = 2 * r * vk;
+    if (want < DEV_MIN) { ctx.drawImage(src, x - r, y - r, r * 2, r * 2); return; }
+    const D = Math.round(Math.exp(Math.round(Math.log(want) / LOG_STEP) * LOG_STEP));
+    let set = devSets.get(src); if (!set) devSets.set(src, set = new Map());
+    let e = set.get(D);
+    if (!e) {
+      if (devNew >= DEV_NEW) { ctx.drawImage(src, x - r, y - r, r * 2, r * 2); return; }
+      devNew++;
+      const c = mk(D, D), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(src, 0, 0, D, D);
+      set.set(D, e = { c, used: 0 }); devPx += D * D; e.used = devFrame; devEvict();
+    }
+    e.used = devFrame;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(e.c, Math.round(vox + x * vk - D / 2), Math.round(voy + y * vk - D / 2));
+    ctx.setTransform(vk, 0, 0, vk, vox, voy);
   }
 
   // ---------- particles ----------
@@ -184,5 +225,5 @@ const ANIM = (() => {
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
 
-  return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt };
+  return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt, glowAt, devView };
 })();

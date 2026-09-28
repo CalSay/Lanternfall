@@ -4,7 +4,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { ROOT, loadCore, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
+import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
+
+// Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
+// changes prices, drops or odds under a check. The Almanac checks restore the calendar with
+// almanac.force(undefined) where they test it.
+function loadCore(opts) {
+  const g = loadCoreRaw(opts);
+  try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
+  return g;
+}
 
 let failed = 0;
 const ok = msg => console.log('  ok   ' + msg);
@@ -2035,6 +2044,321 @@ try {
   }
   assert(!errs.length, 'no constellation errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('constellations crashed: ' + (e.stack || e)); }
+
+// ---- Q1 quality fixes and the D3 live-save welcome (55-welcome.js) ----
+console.log('welcome');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
+  const DEF = { watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 };
+  const errs = [];
+  // The Omen pin holds for every game this run loads.
+  assert(loadCore({ seed: 3 }).eval('almanac.active() === null'), 'the Omen is pinned to none for the whole check run');
+  for (const f of ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const old = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 8, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
+    const E = s => g.eval(s);
+    const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
+    const news = [], toasts = [];
+    g.fn.on('whatsNew', w => news.push(w.msg)); g.fn.on('toast', t => toasts.push(t.msg));
+    // at load, before any tick: the Hearth only, no cost
+    const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
+    assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
+    ticks(g, 2);
+    const b = E('S.camp.b');
+    assert(E('S.camp.open') && b.hearth === Math.max(1, allow) && Object.entries(DEF).every(([k, v]) => b[k] === v), `${f}: camp open at Hearth ${b.hearth}; every other building as a new camp has it`);
+    if (welcomed) {
+      assert(E('S.welcome.at') > 0 && E('S.welcome.hearth') === allow && E('S.welcome.zone') === old.maxZone && E('S.welcome.said') === 1, `${f}: welcome recorded and said once`);
+      assert(news.length === 1 && /Welcome back/.test(news[0]) && news[0].includes(`level ${allow}`) && !toasts.some(m => /made camp/.test(m)), `${f}: one What's new line, no second camp notice: "${news[0]}"`);
+    } else assert(E('S.welcome.at') === 0 && !news.length && toasts.some(m => /made camp/.test(m)), `${f}: no welcome; the usual camp notice`);
+    // one time only: reload the saved game
+    g.fn.save();
+    const g2 = loadCore({ seed: 9, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    const n2 = []; g2.fn.on('whatsNew', w => n2.push(w)); ticks(g2, 2);
+    assert(g2.eval('campLevel("hearth")') === Math.max(1, allow) && g2.eval('S.welcome.at') === E('S.welcome.at') && !n2.length && g2.eval('welcomeNote()') === null, `${f}: reload gives no second welcome`);
+    errs.push(...g.errors, ...g2.errors);
+  }
+  // a new game gets nothing, even past zone 38
+  const n = loadCore({ seed: 4 }); n.eval('S.maxZone = 38; S.zone = 38'); ticks(n, 2);
+  assert(n.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'new game: no welcome (the camp opens at Hearth 1)');
+  // a save that already has a camp keeps it as it is
+  const withCamp = JSON.parse(rawOf('save-v2-late.json'));
+  withCamp.camp = { v: 1, open: true, b: { hearth: 2, watch: 1, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 }, builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {} };
+  const c = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(withCamp) }) }); ticks(c, 2);
+  assert(c.eval('S.welcome.at === 0 && campLevel("hearth") === 2 && campLevel("watch") === 1'), 'a save that has a camp: nothing changes (Hearth 2 stays 2)');
+  // an old save still below zone 5 is not welcomed now, and not later when it reaches the camp
+  const low = JSON.parse(rawOf('save-v2.json')); low.maxZone = 3; low.zone = 3;
+  const l = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: JSON.stringify(low) }) }); ticks(l, 1);
+  l.eval('S.maxZone = 20; S.zone = 20'); ticks(l, 2);
+  assert(l.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'old save below zone 5: no welcome, the camp opens at Hearth 1');
+  errs.push(...n.errors, ...c.errors, ...l.errors);
+  // Watchtower hold hint: partyHoldEstimate() when party combat defines it, today's rule otherwise
+  const hz = extra => { const h = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }), extraSource: extra }); return h.eval('campHoldZone()'); };
+  const base = hz('');
+  assert(base >= 1 && base <= 38, `hold hint without party combat: zone ${base} (3-second kills)`);
+  assert(hz('function partyHoldEstimate() { return { zone: 12 }; }') === 12 && hz('function partyHoldEstimate() { return 30.6; }') === 30, 'hold hint reads partyHoldEstimate() ({ zone } or a number)');
+  assert(hz('function partyHoldEstimate() { return 99; }') === 38 && hz('function partyHoldEstimate() { throw new Error("x"); }') === base, 'hold hint: capped at your best zone; falls back if the estimate fails');
+  assert(!errs.length, 'no welcome errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('welcome crashed: ' + (e.stack || e)); }
+
+// ---- coast writing (21b-stories-coast.js): every entry there, non-empty, inside UI limits ----
+console.log('coast writing');
+try {
+  const g = loadCore(), E = x => g.eval(x);
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const arr = E('COAST_ARRIVAL'), story = E('COAST_STORY'), keep = E('KEEPER_LINES'), lore = E('COAST_LORE');
+  const bty = E('COAST_BOUNTY_TEXT'), omen = E('COAST_OMEN_TEXT');
+  assert(arr.length === 7 && arr.every(s => str(s, 80)) && str(E('COAST_ARRIVAL_BOSS'), 80), 'coast: 7 arrival lines and the boss arrival, each under 80 chars');
+  const beatBad = story.filter(b => !str(b.title, 40) || !str(b.text, 420) || sents(b.text) < 2 || sents(b.text) > 5 || !str(b.note, 80)
+    || (b.head !== undefined && !str(b.head, 60)) || (b.say && !Object.values(b.say).every(s => str(s, 60))));
+  assert(story.length === 6 && !beatBad.length && story[0].head && story[5].head && story[5].say.caedmon && story[3].say.thessaly,
+    'coast: beats 0-5, text 2-5 sentences, notes, Great Lantern heads, character lines' + (beatBad.length ? ': ' + beatBad[0].id : ''));
+  const kKeys = ['intro', 'swing', 'beam', 'undertow', 'bell', 'feed', 'rocks', 'win', 'fall', 'rematch'];
+  const kBad = kKeys.filter(k => !Array.isArray(keep[k]) || !keep[k].length || !keep[k].every(s => str(s, 59)));
+  assert(!kBad.length, 'coast: Keeper lines for every moment, barks under 60 chars' + (kBad.length ? ': ' + kBad.join(', ') : ''));
+  const pages = [6, 7, 8, 9, 10].flatMap(b => lore[b] || []);
+  const lBad = pages.filter(p => !str(p.title, 32) || !str(p.text, 420) || sents(p.text) < 2 || sents(p.text) > 5 || !['keeper', 'hallam', 'found'].includes(p.by));
+  assert(pages.length === 10 && [6, 7, 8, 9, 10].every(b => lore[b].length === 2) && !lBad.length && new Set(pages.map(p => p.title)).size === 10,
+    'coast: 10 Lore pages (2 per band VI-X), unique titles, 2-5 sentences' + (lBad.length ? ': ' + lBad[0].title : ''));
+  const bOk = ['crab', 'pearl', 'beam'].every(k => typeof bty[k] === 'function' && str(bty[k]({ need: 40 }), 40) && str(bty[k]({ need: 1 }), 40) && bty[k]({ need: 40 }).includes('40'));
+  assert(bOk, 'coast: 3 bounty texts (one and many) under 40 chars');
+  const oOk = ['springTide', 'calmSea', 'pearlMoon'].every(k => omen[k] && str(omen[k].n, 24) && str(omen[k].fx, 60) && str(omen[k].say, 60));
+  assert(oOk, 'coast: 3 Omen texts (name, effect, line) inside limits');
+} catch (e) { fail('coast writing crashed: ' + (e.stack || e)); }
+
+// ---- pinnacle data and writing (21d-data-pinnacle.js, 21e-stories-pinnacle.js; pinnacles.md 3-7, PN11) ----
+console.log('pinnacle data');
+try {
+  for (const f of ['21d-data-pinnacle.js', '21e-stories-pinnacle.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `pinnacle: ${f} is data only (no DOM, no state)`);
+  }
+  const g = loadCore(), E = x => g.eval(x);
+  const ids = E('PIN_IDS'), P = E('PIN'), T = E('PIN_TUNE'), K = E('PIN_KINDS'), C = E('PIN_CAPS'), M = E('PIN_MECH');
+  const V = E('PIN_VOW_RULES'), W = E('PIN_WEEK'), R = E('PIN_REWARDS'), PW = E('PIN_POWERS'), CO = E('PIN_COSMETICS'), CX = E('PIN_CODEX');
+  const roster = E('ROSTER_KEYS'), classes = E('Object.keys(HERO_CLASSES)');
+  const eps = 1e-9, str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const is3 = a => Array.isArray(a) && a.length === 3;
+
+  // every boss has every field
+  const bossKeys = ['id', 'n', 'area', 'theme', 'overlay', 'rig', 'anchor', 'order', 'cols', 'takeX', 'phases', 'mech', 'enrage', 'needs', 'counters', 'samples', 'friend', 'reward'];
+  const bBad = ids.filter(b => { const x = P[b];
+    return !x || bossKeys.some(k => x[k] === undefined) || x.id !== b || !str(x.n, 24) || !str(x.area, 24) || x.anchor !== T.anchor[b]
+      || !is3(x.cols) || !x.cols.every(c => ['front', 'mid', 'back'].includes(c)) || !is3(x.takeX) || !is3(x.phases) || !x.phases.every(p => str(p.n, 24))
+      || !str(x.enrage.id, 24) || !str(x.enrage.n, 24) || !Object.keys(x.enrage.every).every(m => x.mech[m])
+      || !classes.every(c => Array.isArray(x.samples[c]) && x.samples[c].length === 3 && x.samples[c].every(k => roster.includes(k)))
+      || !Object.keys(x.friend).every(k => roster.includes(k)); });
+  assert(ids.length === 4 && ids.join() === 'king,lure,fire,below' && !bBad.length, 'pinnacle: 4 bosses, every field, anchors match PIN_TUNE, sample line-ups use real characters' + (bBad.length ? ': ' + bBad[0] : ''));
+  assert(P.lure.tide && P.fire.sky && P.fire.cart && P.below.light && P.below.light.start === 100, 'pinnacle: each boss rule block (the Lurelight tide, the sky and the cart, Maud\'s Light)');
+
+  // every mechanic has every field; 17 in all; one heavy hit per boss
+  const mKeys = ['id', 'n', 'kind', 'ph', 'every', 'first', 'wind', 'target', 'fx', 'cap', 'tap', 'idle', 'role'];
+  const mIds = Object.keys(M);
+  const mBad = mIds.filter(id => { const m = M[id];
+    return mKeys.some(k => m[k] === undefined) || m.id !== id || !K[m.kind] || !C[m.kind] || !str(m.n, 24) || !is3(m.ph) || !is3(m.every)
+      || !m.ph.some(Boolean) || !Array.isArray(m.idle) || !m.idle.length || !m.role.length
+      || (m.kind === 'swap' ? m.every.some(Boolean) || !(m.fx.stacks > m.fx.tapAt && m.fx.tapAt > 0)
+        : m.ph.some((on, i) => (on ? !(m.every[i] > 0) : m.every[i] !== 0)) || !(m.first >= 0)); });
+  const heavy = ids.map(b => Object.values(P[b].mech).filter(m => m.kind === 'parry').length);
+  assert(mIds.length === 17 && ids.reduce((n, b) => n + Object.keys(P[b].mech).length, 0) === 17 && !mBad.length && heavy.every(n => n === 1),
+    'pinnacle: 17 mechanics with every field, unique ids, one heavy hit per boss' + (mBad.length ? ': ' + mBad[0] : ''));
+
+  // telegraph windows: positive, over the floor, parryable, and room for the next one, normal and Assist
+  const restless = 1 + V.restless.often * V.restless.max;
+  const tBad = [];
+  for (const id of mIds) { const m = M[id], b = P[m.boss];
+    const shrinks = [1].concat(b.light ? [b.light.lowWindX] : []);
+    for (const ax of [1, T.assist]) {
+      if (m.kind === 'swap') {       // the tap window is the time between two stacking hits
+        const gapS = m.fx.stackOn === 'bossHit' ? m.fx.stackEvery : Math.min(...M[m.fx.stackOn].every.filter(Boolean), b.enrage.every[m.fx.stackOn] || 1e9) / restless;
+        if (!(gapS >= T.windMin)) tBad.push(`${id} swap window ${gapS}`);
+        continue;
+      }
+      if (!(m.wind >= T.windMin)) tBad.push(`${id} wind ${m.wind} under the floor`);
+      for (const sh of shrinks) {
+        const w = Math.max(T.windMin, m.wind * sh) * ax;
+        const win = T.parryMaren * ax;
+        if (!(w > 0)) tBad.push(`${id} wind not positive`);
+        if (m.kind === 'parry' && !(win < w - eps && T.parry * ax < win + eps)) tBad.push(`${id} parry window ${win} not inside wind-up ${w}`);
+        let cad = Math.min(...m.every.filter(Boolean), b.enrage.every[id] || 1e9) * (m.fx.addAliveX || 1) / restless;
+        if (!(cad >= w + T.gap - eps)) tBad.push(`${id} cadence ${cad.toFixed(2)} < wind-up ${w} + gap (Assist x${ax})`);
+      }
+    }
+  }
+  assert(!tBad.length, `pinnacle: every wind-up >= ${T.windMin}s, parry window inside it, cadence leaves the gap (normal, Assist x${T.assist}, Restless, low Light)` + (tBad.length ? ': ' + tBad[0] : ''));
+
+  // fairness caps (3.4, PN11), from the data
+  const worst6 = f => { const dps = t => (f.stackEvery ? Math.min(f.stacks, 1 + Math.floor(t / f.stackEvery)) : 1) * f.dps;
+    let best = 0; for (let s = 0; s <= f.secs; s += 0.25) { let d = 0; for (let t = s; t < Math.min(f.secs, s + 6); t += 0.01) d += dps(t) * 0.01; best = Math.max(best, d); } return best; };
+  const cBad = mIds.filter(id => { const m = M[id], c = C[m.kind], f = m.fx;
+    switch (m.kind) {
+      case 'parry': return !(m.cap.hit <= c.hit + eps) || (f.hitCap || m.cap.hit) + (f.swallowed ? f.swallowed.secs * f.swallowed.dps : 0) > c.hit + eps;
+      case 'interrupt': return (f.stun || 0) > c.stun || (f.charm || 0) > c.stun || Math.abs(Math.min(0, f.light || 0)) > c.light || (f.heal || 0) > c.heal;
+      case 'cleanse': return !(worst6(f) <= c.dot + eps) || !(f.secs > 0) || !(f.count >= 1 && f.count <= 2);
+      case 'swap': return !(f.crushed.secs <= c.crushed && f.crushed.takeX <= c.takeX + eps);
+      case 'scatter': return (f.hitCap || m.cap.hit) + (f.burn ? f.burn.dps * f.burn.secs : 0) > c.hit + eps;
+      case 'dive': return (m.cap.hit || 0) > (c.hit + eps) || (f.hold || 0) > c.stun || (f.cartHit || 0) > c.hit + eps;
+      default: return true;
+    } });
+  assert(!cBad.length, 'pinnacle: every mechanic inside the fairness caps (hit 35%, stun 3s, dot 25% in 6s, scatter 30%, Crushed 3s x1.5)' + (cBad.length ? ': ' + cBad[0] : ''));
+
+  // Vows, the Week's Oath, rewards, powers, cosmetics
+  assert(Object.values(V).reduce((n, v) => n + v.w * v.max, 0) === 30, 'pinnacle: Vow rules sum to level 30');
+  const lv = W.bag.map(s => W.level(s));
+  const wBad = W.bag.filter(s => Object.keys(s.vows).some(k => !V[k] || s.vows[k] < 1 || s.vows[k] > V[k].max));
+  const combos = new Set(); for (let w = 0; w < 32; w++) combos.add(W.boss(w) + ':' + W.oath(w).id);
+  assert(W.bag.length === 8 && lv.every(l => l >= 10 && l <= 14) && !wBad.length && new Set(W.bag.map(s => s.id)).size === 8 && combos.size === 32 && W.boss(0) === 'king' && W.boss(3) === 'below',
+    `pinnacle: Week's Oath bag of 8 at level 10-14 (${lv.join(', ')}), every boss meets every set in 32 weeks`);
+  assert(R.legend.base === T.lgBase && R.legend.per === T.lgPer && R.legend.pity === T.pity && R.first.rank === T.firstRank && R.every.echo === T.echo && W.seal === 1,
+    'pinnacle: rewards match PIN_TUNE; the Boss of the Week pays one Seal');
+  const pBad = ids.filter(b => { const rw = P[b].reward, pw = PW[rw.power];
+    return !pw || pw.boss !== b || pw.fits !== 'hero' || !str(pw.n, 24) || !Object.values(pw.v).every(a => a.length === 5) || ![1, 2, 3, 4, 5].every(r => str(pw.txt(r), 180))
+      || !['colour', 'trail', 'trophy'].every(k => CO[rw[k]] && CO[rw[k]].boss === b && CO[rw[k]].vow === { colour: 0, trail: R.vow.trail, trophy: R.vow.trophy }[k]); });
+  assert(Object.keys(PW).length === 4 && Object.keys(CO).length === 12 && !pBad.length && Object.values(CO).every(c => str(c.n, 24)),
+    'pinnacle: 4 powers (5 ranks, text), 12 cosmetics, each boss\'s rewards exist' + (pBad.length ? ': ' + pBad[0] : ''));
+  assert(CX.first * 4 + CX.band * 4 * T.vowBands.length + CX.card * 5 === CX.total && CX.total === 90, 'pinnacle: Codex page 15 totals 90 Light');
+
+  // writing (21e): every string there, non-empty, inside UI limits
+  const ST = E('PIN_STORY'), VO = E('PIN_VOICE'), LN = E('PIN_LINES'), SAY = E('PIN_SAY'), HI = E('PIN_HINTS'), CH = E('PIN_CHIPS');
+  const LE = E('PIN_LESSONS'), CT = E('PIN_COUNTER_TEXT'), TI = E('PIN_TITLES'), WN = E('PIN_WEEK_NAMES'), UI = E('PIN_UI_TEXT');
+  const card = (c, lo) => c && str(c.title, 32) && str(c.text, 420) && sents(c.text) >= lo && sents(c.text) <= 5;
+  const sBad = ids.filter(b => !ST[b] || !str(ST[b].quote, 60) || !card(ST[b].intro, 2) || !card(ST[b].kill, 3));
+  assert(!sBad.length && card(VO, 3) && str(VO.note, 80) && /Emberwaste/.test(VO.text), 'pinnacle: intro and kill cards (3-5 sentences), sheet quotes, The Voice points to the Emberwaste' + (sBad.length ? ': ' + sBad[0] : ''));
+  const bark = a => Array.isArray(a) && a.length > 0 && a.every(s => str(s, 59));
+  const lBad = ids.filter(b => !LN[b] || !['intro', 'phase2', 'phase3', 'enrage', 'win', 'fall', 'rematch'].every(k => bark(LN[b][k]))
+    || !Object.keys(P[b].mech).every(id => bark(LN[b].mech[id])));
+  const sayBad = ids.filter(b => !SAY[b] || Object.keys(SAY[b]).some(k => !P[b].friend[k] || !str(SAY[b][k].line, 59)) || Object.keys(P[b].friend).some(k => !SAY[b][k]));
+  assert(!lBad.length && !sayBad.length && SAY.king.corvin && SAY.fire.caedmon, 'pinnacle: barks under 60 chars for every moment and mechanic; Corvin, Caedmon and Morwen lines' + (lBad.concat(sayBad).length ? ': ' + lBad.concat(sayBad)[0] : ''));
+  const hBad = mIds.filter(id => !str(HI[id], 44) || !CH[id] || !str(CH[id].idle, 36) || !str(CH[id].tap, 36) || typeof LE[id] !== 'function' || !str(LE[id](3), 100) || !LE[id](3).includes('3') || !str(LE[id](1), 100));
+  assert(!hBad.length && Object.keys(HI).length === 17 && str(E('PIN_LESSON_TIME'), 100) && str(E('PIN_LESSON_WIPE'), 100), 'pinnacle: 17 first-use hints (44 chars), counter chips (36), fail lessons (100)' + (hBad.length ? ': ' + hBad[0] : ''));
+  const tags = ids.flatMap(b => P[b].counters.strong.concat(P[b].counters.weak));
+  const titleIds = ids.flatMap(b => [P[b].reward.title, P[b].reward.title30]).concat(Object.values(CX.allFour), CX.pageSeal);
+  assert(tags.every(t => str(CT[t], 32)) && titleIds.every(t => TI[t] && str(TI[t].n, 24) && str(TI[t].how, 48)) && W.bag.every(s => str(WN[s.id], 24)),
+    'pinnacle: counter texts, every title (name, how), Week\'s Oath names');
+  assert(str(UI.locked, 64) && UI.lockParts.length === 2 && str(UI.guide, 80) && UI.tips.length === 3 && UI.tips.every(t => str(t.title, 24) && str(t.text, 100))
+    && str(UI.goalReady('The Hollow King'), 48) && str(UI.goalWeek('The First Fire'), 48) && str(UI.newBest('1:04', 12), 40), 'pinnacle: UI texts inside limits');
+} catch (e) { fail('pinnacle data crashed: ' + (e.stack || e)); }
+
+// ---- legendary powers, circle sets and their icons (21c-data-legend.js, 11b-art-legend.js; legendaries.md 3-6) ----
+console.log('legendary data');
+try {
+  for (const f of ['21c-data-legend.js', '11b-art-legend.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `legend: ${f} is data only (no DOM, no state)`);
+  }
+  const g = loadCore(), E = x => g.eval(x);
+  const P = E('LEG_POWERS'), ids = E('LEG_IDS'), CI = E('LEG_CLASS_IDS'), CO = E('LEG_COMP_IDS'), PI = E('LEG_PIN_IDS');
+  const FITS = E('LEG_FITS'), WIRE = E('LEG_WIRE'), SETS = E('LEG_SETS'), CAPS = E('LEG_CAPS'), CIRC = E('LEG_CIRCLES'), CLS = E('LEG_CLASSES');
+  const R = E('ROSTER'), keys = E('ROSTER_KEYS'), ICON = E('ICON'), SPEC = E('LEG_ICON_SPEC'), PW = E('PIN_POWERS');
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const num = x => typeof x === 'number' && isFinite(x);
+
+  // one list: 24 class (6 a class), 15 companion, the 4 pinnacle powers by reference
+  const all = CLS.flatMap(c => CI[c]).concat(CO, PI);
+  assert(CLS.join() === E('Object.keys(HERO_CLASSES)').join() && CLS.every(c => CI[c].length === 6) && CO.length === 15 && PI.length === 4
+    && ids.length === 43 && new Set(all).size === 43 && all.every(id => ids.includes(id)) && PI.every(id => P[id] === PW[id]),
+    'legend: 43 powers in one list (24 class, 15 companion, the 4 pinnacle rows are PIN_POWERS itself)');
+
+  // every power has every field
+  const heroPos = FITS.hero;
+  const fBad = ids.filter(id => { const p = P[id], pin = PI.includes(id);
+    return !p || p.id !== id || !str(p.n, 26) || !FITS[p.fits] || !num(p.p1) || !num(p.p5) || p.p1 < 0 || p.p5 < p.p1 || p.p5 > 0.2
+      || !p.v || !Object.keys(p.v).length || Object.values(p.v).some(a => !Array.isArray(a) || a.length !== 5 || !a.every(num))
+      || typeof p.txt !== 'function' || !WIRE[p.wire]
+      || (pin ? p.fits !== 'hero' || p.cls !== null
+        : !['class', 'comp'].includes(p.src) || !str(p.at, 60)
+          || (p.src === 'class' ? p.fits !== 'hero' || !CLS.includes(p.cls) || !CI[p.cls].includes(id) : p.fits === 'hero' || p.cls !== null || !CO.includes(id)))
+      || (p.only && (!R[p.only] || R[p.only].role !== p.fits))
+      || (p.per && (!CIRC.includes(p.per) || typeof p.pPer !== 'boolean'))
+      || (p.down && !p.down.every(k => p.v[k])); });
+  assert(!fBad.length && heroPos.join() === 'weapon,off,helm,body' && FITS.trinket.join() === 'trk' && ['tank', 'striker', 'caster', 'support'].every(r => FITS[r].join() === 'wpn'),
+    'legend: every power has id, name, fits, class, p1 <= p5, 5-rank values, text, wiring; hero powers on weapon/off/helm/body, role powers on wpn, trinkets on trk' + (fBad.length ? ': ' + fBad[0] : ''));
+  assert(new Set(ids.map(id => P[id].n)).size === ids.length, 'legend: power names are unique');
+
+  // values rise with rank (intervals such as `every` and the row's `down` keys fall); each power changes from I to V
+  const eps = 1e-9, vBad = [];
+  for (const id of ids) { const p = P[id]; let moves = false;
+    for (const [k, a] of Object.entries(p.v)) { const dn = (p.down || []).includes(k) || k === 'every';
+      for (let i = 1; i < 5; i++) if (dn ? a[i] > a[i - 1] + eps : a[i] < a[i - 1] - eps) vBad.push(`${id}.${k}`);
+      if (Math.abs(a[4] - a[0]) > eps) moves = true; }
+    if (!moves) vBad.push(id + ' never changes'); }
+  const dbl = ['tidewall', 'kindled', 'mossguard', 'echostring', 'compass'].every(id => { const a = Object.values(P[id].v)[0]; return Math.abs(a[4] - 2 * a[0]) < eps && Math.abs(a[1] - 1.25 * a[0]) < eps; });
+  assert(!vBad.length && dbl, 'legend: values rise with rank (intervals fall), each power grows from I to V, rank V doubles rank I at 25% a rank' + (vBad.length ? ': ' + vBad[0] : ''));
+
+  // texts: every rank, non-empty, inside the card (180 chars), and the number on the card changes with rank
+  const tBad = ids.filter(id => { const t = [1, 2, 3, 4, 5].map(r => P[id].txt(r));
+    return !t.every(s => str(s, 180) && !/undefined|NaN/.test(s)) || t[0] === t[4]; });
+  assert(!tBad.length && E("legendText('tidewall', 1)").includes('20%') && E("legendText('tidewall', 5)").includes('40%') && E("legendVal('patience', 'mult', 5)") === 9,
+    'legend: every power has a text at every rank (under 180 chars), rank I and V read differently' + (tBad.length ? ': ' + tBad[0] : ''));
+
+  // icons: every power, the 4 Sigils, the frame
+  const hex = c => typeof c === 'string' && /^(#[0-9A-Fa-f]{6}|hsl\()/.test(c);
+  const iBad = ids.filter(id => { const s = SPEC[id], ic = E(`legendIcon('${id}')`);
+    return !s || !ICON[s[0]] || ic[0] !== s[0] || !hex(ic[1]) || ![1, 2, 3, 4, 5, 6, 7].every(k => hex(ic[2][k])); });
+  const sig = CIRC.map((c, i) => E(`sigilIcon(${i})`));
+  const sBad = CIRC.filter((c, i) => { const m = ICON['sigil_' + c]; return !m || m.length !== 12 || m.some(r => r.length !== 12) || sig[i][0] !== 'sigil_' + c || E(`sigilIcon('${c}')[0]`) !== sig[i][0]; });
+  const FR = E('LEG_FRAME');
+  assert(!iBad.length && Object.keys(SPEC).length === ids.length && !sBad.length && new Set(sig.map(s => s[1])).size === 4
+    && FR.col === E('LEG_COL') && FR.map.length === 16 && FR.map.every(r => r.length === 16),
+    'legend: every power has an icon (a recoloured ICON map), 4 Sigil icons registered, the 16x16 orange frame' + (iBad.concat(sBad).length ? ': ' + iBad.concat(sBad)[0] : ''));
+
+  // sets: one per real circle (ROSTER), tiers 2/4/6 with text, the 6-piece named, gross 12-18%
+  const rc = new Set(keys.map(k => R[k].circle));
+  const setBad = CIRC.filter((c, i) => { const s = SETS[c];
+    if (!s || s.circle !== c || s.i !== i || !rc.has(c) || !str(s.n, 24) || Object.keys(s.tiers).join() !== '2,4,6') return true;
+    const gross = [2, 4, 6].reduce((n, t) => n + s.tiers[t].p, 0);
+    return ![2, 4, 6].every(t => str(s.tiers[t].txt, 100) && s.tiers[t].p > 0 && s.tiers[t].fx) || !str(s.tiers[6].n, 24)
+      || gross < CAPS.setGross[0] - eps || gross > CAPS.setGross[1] + eps; });
+  assert(!setBad.length && rc.size === 4 && [...rc].every(c => CIRC.includes(c)) && Object.keys(SETS).length === 4,
+    'legend: 4 circle sets on the ROSTER circles, 2/4/6-piece tiers with text, 6-piece sets +12-18% gross' + (setBad.length ? ': ' + setBad[0] : ''));
+
+  // costs and limits (5, 2.3, 4.1, 7)
+  const C = E('LEG_COST'), T = E('LEG_TUNE'), CX = E('LEG_CODEX');
+  assert([1, 2, 3, 4, 5].map(r => C.inscribe.pearls(r)).join() === '4,6,8,10,12' && C.inscribe.ess === 5 && C.inscribe.goldFoes === 100 && C.mark.sigil === 1 && C.mark.pearls === 2
+    && T.heroMax === 2 && T.compMax === 1 && T.markMax === heroPos.length + 2 * 3 && T.echoPerRank === 3
+    && CX.powers === ids.length - PI.length && CX.total === CX.powers * (CX.learn + CX.rank * 4),
+    'legend: Inscribe 2 + 2 x rank Pearls, 5 Essence, 100 foes\' gold; Mark 1 Sigil + 2 Pearls; 2 hero powers, 1 a companion, 10 marks; Codex 234 Light');
+
+  // the power budget (6): the best legal build at rank I / III / V stays under the caps
+  const M = CAPS.model;
+  const pAt = (id, r) => P[id].p1 + (P[id].p5 - P[id].p1) * (r - 1) / 4;
+  const perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+  function legendBest(r) {
+    let top = { v: 0 };
+    for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) for (let c = b + 1; c < keys.length; c++) {
+      const line = [keys[a], keys[b], keys[c]], n = {};
+      for (const k of line) n[R[k].circle] = (n[R[k].circle] || 0) + 1;
+      let cv = 1, cp = [];
+      for (const pm of perms) { const used = new Set(); let v = 1; const pick = [];
+        for (const i of pm) { const k = line[i];
+          const o = CO.filter(id => !used.has(id) && (P[id].fits === R[k].role || P[id].fits === 'trinket') && (!P[id].only || P[id].only === k)).sort((x, y) => pAt(y, r) - pAt(x, r))[0];
+          if (o) { used.add(o); pick.push(o); v *= 1 + pAt(o, r) * M.comp; } }
+        if (v > cv) { cv = v; cp = pick; } }
+      const sv = CIRC.map(ci => { const t = SETS[ci].tiers; return [ci, (t[2].p + t[4].p + t[6].p) * M.setNet, (t[2].p + t[4].p) * M.setNet]; });
+      let sb = 1; for (const x of sv) for (const y of sv) if (x !== y) sb = Math.max(sb, (1 + x[1]) * (1 + y[2]));
+      for (const cls of CLS) {
+        const hv = CI[cls].concat(PI).map(id => [id, pAt(id, r) * (P[id].pPer ? (n[P[id].per] || 0) : 1)]).sort((x, y) => y[1] - x[1]);
+        const v = (1 + hv[0][1]) * (1 + hv[1][1]) * cv * sb;
+        if (v > top.v) top = { v, d: `${cls} ${hv[0][0]} + ${hv[1][0]}, ${line.join('/')} with ${cp.join('/')}` };
+      }
+    }
+    return top;
+  }
+  const bb = [1, 3, 5].map(r => [r, legendBest(r)]);
+  const capBad = bb.filter(([r, t]) => t.v - 1 > CAPS.best[r] + eps);
+  assert(!capBad.length, `legend: the best build stays under the caps (${bb.map(([r, t]) => `rank ${r} +${(100 * (t.v - 1)).toFixed(1)}% <= +${Math.round(100 * CAPS.best[r])}%`).join(', ')})`
+    + (capBad.length ? ': ' + capBad[0][1].d : ''));
+  // no single best pair (L4) by the estimates: each class has 3+ hero pairs within 10% of its best at rank III
+  // (per-member powers with 3 of their circle fielded)
+  const pr = CAPS.pairs, pairBad = CLS.filter(cls => {
+    const pool = CI[cls].concat(PI), vals = [];
+    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+      const f = id => 1 + pAt(id, pr.rank) * (P[id].pPer ? 3 : 1); vals.push(f(pool[i]) * f(pool[j])); }
+    const best = Math.max(...vals); return vals.filter(v => (v - 1) >= (best - 1) * (1 - pr.within) - eps).length < pr.min; });
+  assert(!pairBad.length, 'legend: every class has 3+ hero power pairs within 10% of its best pair at rank III (by the estimates)' + (pairBad.length ? ': ' + pairBad[0] : ''));
+} catch (e) { fail('legendary data crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

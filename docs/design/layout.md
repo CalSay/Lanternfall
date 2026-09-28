@@ -96,6 +96,10 @@ Unchanged rules: `toast(msg, kind, icon, prio)` or `emit('toast', { msg, kind, i
 - While a menu covers the game (portrait), the toast stack moves over the bottom of the menu, just above
   the tab bar, full width, at most 2. Wide screens keep them on the stage (it stays visible).
 - Tap or swipe a toast away. Repeats become "+1". Every notice goes to the bell log (last 50, this visit).
+- **What's new** (Q1): notices raised in the first 2.5 s of play (old-save catch-ups: achievements, Codex
+  Light, retooled gear, the camp and its welcome) fold into one bell notice with a short list, and one toast
+  says so (tap it to open the bell; it waits until "Choose your path" closes). A single notice pops as usual.
+  `emit('whatsNew', { msg, icon, first })` adds a line later.
 
 ## Adding a system: pick a view, never append to a tab's end
 

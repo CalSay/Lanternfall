@@ -7,7 +7,7 @@
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
-let resize, animate, draw, stageStats;
+let resize, animate, draw, stageStats, warmScene;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
@@ -96,6 +96,20 @@ let resize, animate, draw, stageStats;
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
+  // Build the scene for zone z at the stage's size, its device-size plates and its atmosphere copies
+  // in idle time (three tasks, each well under a long task at x4), so entering that zone draws from
+  // caches. sceneFor keys on the stage's logical size (SW x SCH), not the element's CSS size.
+  // Returns false before the first resize.
+  warmScene = function (z) {
+    if (!SW || typeof idleTask !== 'function') return false;
+    const th = ZONE_THEME[zoneType(z)], hue = (zoneCycle(z) * 70) % 360, w = SW, h = SCH, k = DPR * ZM;
+    // soon (front of the queue), queued in reverse: the scene, its plates, its atmosphere copies
+    const same = () => typeof scenePlates === 'function' && w === SW && h === SCH && k === DPR * ZM;
+    idleTask(() => { if (same()) scenePlates(sceneFor(th, w, h, hue), k, w, h, 'atmo'); }, true);
+    idleTask(() => { if (same()) scenePlates(sceneFor(th, w, h, hue), k, w, h, 'plates'); }, true);
+    idleTask(() => sceneFor(th, w, h, hue), true);
+    return true;
+  };
 
   // ================= party actors =================
   // kind: '' melee (dashes), 'arrow' | 'bolt' | 'mote' (ranged). col: projectile colour.
@@ -402,7 +416,8 @@ let resize, animate, draw, stageStats;
     if (a.flash > 0) return f.hit;
     if (a.st === 1) return f.wind;
     if (a.st === 2) return f.strike;
-    return !reduced && ((T * 2 + a.ph) % 2) >= 1 ? f.idle1 : f.idle0;
+    // idle1 bakes in idle time (60b): until then the idle bob holds idle0 instead of baking in a frame
+    return !reduced && ((T * 2 + a.ph) % 2) >= 1 && ART.ready(f, 'idle1') ? f.idle1 : f.idle0;
   }
   function shadowAt(x, w, a, y) {
     ctx.globalAlpha = a; ctx.drawImage(A.glow('0,0,0'), x - w, (y ?? GY) - 3, w * 2, 7);
@@ -444,7 +459,10 @@ let resize, animate, draw, stageStats;
     let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l;
     const fl = flick();
     const x = best ? hero._x + best.x : hero._x + f.ox, y = best ? hero._y + best.y : GY - 30;
-    A.lightAt(ctx, '255,176,96', x, y, 115 * fl, 0.2);                          // warm key light over the party (its radius flickers)
+    // Warm key light over the party. Its radius flickers; it is drawn from device-size copies (glowAt),
+    // so the flicker is snapped to 8 steps to keep that to 8 copies (about 0.6 MB each on a phone).
+    const fq = reduced ? fl : 0.6 + Math.round((fl - 0.6) / 0.4 * 7) / 7 * 0.4;
+    A.lightAt(ctx, '255,176,96', x, y, 115 * fq, 0.2);
     // pool on the ground: a fixed size, so it is scaled once to device pixels and copied 1:1
     const K = DPR * ZM, p = poolSprite(K);
     ctx.globalAlpha = 0.34 * fl; ctx.drawImage(p, Math.round((x - 80) * K) / K, Math.round((GY - 10) * K) / K, p.width / K, p.height / K);
@@ -465,7 +483,7 @@ let resize, animate, draw, stageStats;
     if (tg === 'node') return nodeShake > 0 ? f.strike : f.idle0;
     if (foe.st === 1) return f.wind;
     if (foe.st === 2) return f.strike;
-    return !reduced && (T * 1.6 % 2) >= 1 ? f.idle1 : f.idle0;
+    return !reduced && (T * 1.6 % 2) >= 1 && ART.ready(f, 'idle1') ? f.idle1 : f.idle0;
   };
   const foeD = { x: 0, y: 0, f: null };
   function drawFoe(cam) {
@@ -499,13 +517,11 @@ let resize, animate, draw, stageStats;
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
     const K = DPR * ZM;
     ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
+    A.devView(K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    // The sky layer is opaque and runs 24 px past each side, so the backdrop fill only matters while a
-    // shake moves it up or down, or when it ends short of the canvas's last device pixels.
-    const sky = scene.layers[0].c;
-    if (sy !== 0 || sky.height * (scene.PX || 1) * K < cv.height) { ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8); }
-    drawScene(ctx, scene, camF, 'back');
+    // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
+    drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
 
     // smooth under-layer: shadows, boss aura
     ctx.imageSmoothingEnabled = true;
@@ -539,7 +555,7 @@ let resize, animate, draw, stageStats;
       for (let i = 0; i < guardN; i++) { const x = hero._x + hero._f.ox - guardN * 3 + i * 6; ctx.fillStyle = '#0B0810'; ctx.fillRect(x - 1, top - 1, 5, 5); ctx.fillStyle = i % 2 ? '#8FB8FF' : '#C8DCFF'; ctx.fillRect(x, top, 3, 3); }
     }
     A.drawProj(ctx);
-    drawScene(ctx, scene, camF, 'fg');
+    drawScene(ctx, scene, camF, 'fg', K, sx * K, sy * K);
 
     // smooth pass: slashes, character and effect lights
     ctx.imageSmoothingEnabled = true;
@@ -582,7 +598,7 @@ let resize, animate, draw, stageStats;
 
     // combat HUD (device px), then back to logical px for the floating text
     const hud = hudOn();
-    if (hud) { drawHud(cam, sx, sy); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
+    if (hud) { A.devView(0); drawHud(cam, sx, sy); ctx.setTransform(K, 0, 0, K, sx * K, sy * K); A.devView(K, sx * K, sy * K); ctx.imageSmoothingEnabled = true; }
 
     // crisp floating text, in the band under the foe header
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
@@ -610,6 +626,7 @@ let resize, animate, draw, stageStats;
     }
     ctx.globalAlpha = 1;
     if (hud) drawBang();
+    A.devView(0);   // glows drawn outside the stage's draw (none today) stay scaled
     drawMs = drawMs * 0.95 + (performance.now() - t0) * 0.05;
   };
 
