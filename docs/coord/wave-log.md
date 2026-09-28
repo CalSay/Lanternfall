@@ -479,3 +479,5 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   `title` id in raiders/<userId> and room presence so others see titles) and item 10 (your own title on your
   own Tavern row: online-layer UI file, no data change). Until then titles show locally only.
   AC2 launched.
+- OWNER: the top achievement tier is EVERFLAME, not Lantern (Bronze, Silver, Gold, Everflame; stars after
+  it). achievements.md updated; AC2 told. The accessory slot named "Lantern" and Feat names are unchanged.

@@ -69,7 +69,7 @@ AC2 re-measures everything with `--report deeds` (section 10).
 |---|---|
 | **Track** | One counted thing with tiers, for example "Slayer: foes defeated" |
 | **Tier** | A step on a track: **Bronze** (I), **Silver** (II), **Gold** (III), **Lantern** (IV) |
-| **Star** | Endless steps after Lantern on counting tracks: each one is x10 again (x1,000 for gold and damage). Shown as "Lantern ★3" |
+| **Star** | Endless steps after Everflame on counting tracks: each one is x10 again (x1,000 for gold and damage). Shown as "Everflame ★3" |
 | **Feat** | The hard tier: a long-haul goal (weeks to months) with a title and an accessory |
 | **Secret** | An odd feat whose name is hidden until you do it |
 | **Chapter** | The story's quest log for one region: 7 steps, each with the reason we fight |
@@ -86,11 +86,11 @@ player sees "Achievements".
 
 Each table row is one track. **Source** says what it reads: *save* = a number the save keeps today
 (full retro credit), *derived* = computed from state (full retro credit), *new* = a counter AC2 adds
-(seeded where the save allows, section 8.3). **★** = endless stars after Lantern. **Bonus** is the
-key its Gold and Lantern tiers feed (section 5). **Waits for** names the task that must merge before
+(seeded where the save allows, section 8.3). **★** = endless stars after Everflame. **Bonus** is the
+key its Gold and Everflame tiers feed (section 5). **Waits for** names the task that must merge before
 the track shows; empty = live today.
 
-Points per tier: Bronze 5, Silver 10, Gold 20, Lantern 40, each star 10.
+Points per tier: Bronze 5, Silver 10, Gold 20, Everflame 40, each star 10.
 
 ### 2.1 Combat (10 tracks; bonus `dmg` unless noted)
 
@@ -361,8 +361,8 @@ found 3 secrets. 15 points and a title each. No power.
 
 | Source | Points |
 |---|---|
-| Tier: Bronze / Silver / Gold / Lantern / each star | 5 / 10 / 20 / 40 / 10 |
-| A group with every track at Gold / at Lantern | 25 / 50 |
+| Tier: Bronze / Silver / Gold / Everflame / each star | 5 / 10 / 20 / 40 / 10 |
+| A group with every track at Gold / at Everflame | 25 / 50 |
 | Classic achievement | 10 |
 | Feat (the capstone 250) | 100 |
 | Secret | 15 |
@@ -383,7 +383,7 @@ The ladder (automatic, a toast and a "New" dot on the menu):
 | 3,500 | The wall stage 3 | month 2-3 |
 | 5,000 | Cape: **Starlit Cape** | month 5-6 |
 | 6,500 | Gold portrait frame; title "Living Legend" | month 8-10 |
-| 8,000 | **Lantern frame** (a thin flame edge); title "Beacon" | a year or more |
+| 8,000 | **Everflame frame** (a thin flame edge); title "Beacon" | a year or more |
 
 Portrait frames share the header portrait's frame slot with the pinnacle frame (pinnacles.md 7.3).
 The player picks one in the Looks view; the default is the best one owned.
@@ -393,7 +393,7 @@ The player picks one in the Looks view; the default is the best one owned.
 | Source | Titles |
 |---|---|
 | Groups at Gold (12) | Seasoned Blade, Roadworn, Well-Off, Handy, Journeyman, Homemaker, Good Company, Wayfarer, Stair-Sure, Stargazer, Well-Read, Raider |
-| Groups at Lantern (12) | Terror of the Dark, Walker of the Long Road, Hoard-Keeper, Master Gatherer, Master Crafter, Keeper of the Hearth, Friend of Every Circle, Pathfinder, Deepborn, Lantern-Sage, Keeper of Days, Wyrmbane |
+| Groups at Everflame (12) | Terror of the Dark, Walker of the Long Road, Hoard-Keeper, Master Gatherer, Master Crafter, Keeper of the Hearth, Friend of Every Circle, Pathfinder, Deepborn, Lantern-Sage, Keeper of Days, Wyrmbane |
 | Feats (21) | section 3 |
 | Secrets (16) | section 3.1 |
 | Chapters (2 now, 1 per later region) | Hollow's Light, Tide-Lit |
@@ -422,16 +422,16 @@ number. A slot can be empty. The hero wears one item per slot.
 
 | Slot | Items (source) |
 |---|---|
-| **Cape** (6) | Hollow Cloak (Chapter 1), Tide Cloak (Chapter 2), Tally Cloak (Combat at Lantern), Company Cape (`f_company`), Wyrmscale Mantle (`f_raid`), Starlit Cape (5,000 points) |
-| **Hat** (6) | Forager's Straw Hat (Gathering at Lantern), Wayfarer's Hat (Expeditions at Lantern), Artisan's Cap (`f_trades`), Well-Warden's Hood (`f_trials`), Nightcap (`s_night`), Oathkeeper's Circlet (`f_oaths`) |
-| **Lantern** (7) | Gilded Lamp (Wealth at Lantern), Tinker's Lamp (Crafting at Lantern), Moon Paper Lantern (Codex and Almanac at Lantern), Watch Lamp (`f_watch`), Well Lamp (`f_deep`), Book Lantern (`f_book`), Brass Storelamp (`f_stock`) |
-| **Flame** (5) | Moonflame (the Road at Lantern), Hearth Rose (Camp at Lantern), Kinfire (Companions at Lantern), Storm White (`f_hit`), Coin Gold (`f_gold`) |
-| **Aura** (6) | Ember Halo (`f_champs`), Steel Ring (`f_parry`), Star Ring (`f_stars`), Bond Light (`f_sworn`), Lantern Bloom (`f_all`), Stair Glow (the Deepwell at Lantern) |
+| **Cape** (6) | Hollow Cloak (Chapter 1), Tide Cloak (Chapter 2), Tally Cloak (Combat at Everflame), Company Cape (`f_company`), Wyrmscale Mantle (`f_raid`), Starlit Cape (5,000 points) |
+| **Hat** (6) | Forager's Straw Hat (Gathering at Everflame), Wayfarer's Hat (Expeditions at Everflame), Artisan's Cap (`f_trades`), Well-Warden's Hood (`f_trials`), Nightcap (`s_night`), Oathkeeper's Circlet (`f_oaths`) |
+| **Lantern** (7) | Gilded Lamp (Wealth at Everflame), Tinker's Lamp (Crafting at Everflame), Moon Paper Lantern (Codex and Almanac at Everflame), Watch Lamp (`f_watch`), Well Lamp (`f_deep`), Book Lantern (`f_book`), Brass Storelamp (`f_stock`) |
+| **Flame** (5) | Moonflame (the Road at Everflame), Hearth Rose (Camp at Everflame), Kinfire (Companions at Everflame), Storm White (`f_hit`), Coin Gold (`f_gold`) |
+| **Aura** (6) | Ember Halo (`f_champs`), Steel Ring (`f_parry`), Star Ring (`f_stars`), Bond Light (`f_sworn`), Lantern Bloom (`f_all`), Stair Glow (the Deepwell at Everflame) |
 | **Critter** (6) | Mossling (`f_lamps`), Lampmoth (`f_stamps`), Road Fox (`f_perfect`), Hearth Cat (`f_town`), Gold Wisp (`s_wisp`), Lantern Crab (`f_tides`) |
-| Frame (4) | Bronze, Silver, Gold, Lantern (the points ladder) |
+| Frame (4) | Bronze, Silver, Gold, Everflame (the points ladder) |
 
-Groups with no accessory at Lantern: Stars and legends, and the Raid (title only). The Deepwell's
-Lantern reward is the Stair Glow aura.
+Groups with no accessory at Everflame: Stars and legends, and the Raid (title only). The Deepwell's
+Everflame reward is the Stair Glow aura.
 
 **How each slot is drawn** (the B1 kit, art-direction.md 5; AC4 owns the pieces):
 
@@ -488,7 +488,7 @@ the Deepwell's (codex.md page 14). That adds up to 36 Light, most of it months i
 
 ### 4.4 The small permanent bonuses and the hard cap
 
-- **Only Gold and Lantern tiers pay a bonus**: +0.5% at Gold and +0.5% more at Lantern, to the
+- **Only Gold and Everflame tiers pay a bonus**: +0.5% at Gold and +0.5% more at Everflame, to the
   track's key (section 2). Bronze and Silver pay points only. So the first days of play are exactly
   as BAL1 and BAL2 tuned them.
 - Stars, Feats, secrets, chapters, groups and points never add power.
@@ -496,7 +496,7 @@ the Deepwell's (codex.md page 14). That adds up to 36 Light, most of it months i
   `deedBonus(key) = min(DEED_CAP[key], sum of the key's earned values)`. `buildTime` is the one key
   where lower is faster: `addModifier('buildTime', () => 1 - deedBonus('buildTime'))`.
   `deepOil` is a bonus in seconds: `addBonus('deepOil', () => deedBonus('deepOil'))`, where a Gold
-  tier adds 1 s and a Lantern tier 1 s more.
+  tier adds 1 s and an Everflame tier 1 s more.
 
 **The cap, forever, for all regions** (`DEED_CAP` in `23-data-deeds.js`):
 
@@ -534,7 +534,7 @@ asserts each key at or below its cap (section 9).
   crafts, about day 7), so the bonus is 0. No early target moves.
 - **Week 1 (P1, Region 1 boss day 4-8):** 2 to 5 Gold tiers, mostly crafting and gathering keys.
   At most +1% damage. P1 moves by less than an hour.
-- **Day 30 (P2, Region 2 boss day 21-42):** about 20 Gold and 5 Lantern tiers, about +2-3% damage
+- **Day 30 (P2, Region 2 boss day 21-42):** about 20 Gold and 5 Everflame tiers, about +2-3% damage
   and +1-2% party. Past the bend, foe HP grows x1.22 a zone, so +5% party damage is worth
   `ln 1.05 / ln 1.22` = 0.25 zone, about 0.2 days at 1.3 zones a day. P2 moves by less than half a
   day; the band is 21 days wide.
@@ -710,12 +710,12 @@ Rules:
 registerState('deeds', {
   v: 1,
   init: 0,        // time of the first-load retro credit (0 = not yet)
-  tier: {},       // track id -> highest tier earned: 1..4, then 5, 6, ... for Lantern stars
+  tier: {},       // track id -> highest tier earned: 1..4, then 5, 6, ... for Everflame stars
   at: {},         // 'trackId:tier', feat id, secret id, 'ch1:3', milestone -> time earned (ms)
   feat: {},       // feat id -> 1 (earned)
   sec: {},        // secret id -> 1 (found)
   ch: {},         // chapter id -> step reached (0..7)
-  grp: {},        // group id -> 1 at Gold, 2 at Lantern
+  grp: {},        // group id -> 1 at Gold, 2 at Everflame
   mil: {},        // points milestone -> 1
   n: {            // new counters (lifetime, only rise)
     crit: 0, parry: 0, dodge: 0, intr: 0, abil: 0, dmg: 0, taken: 0, heal: 0, boss: 0,
@@ -862,8 +862,8 @@ lines, never shrink.
 |---|---|---|
 | Bronze tier | `low` toast (the bell log only) | same |
 | Silver or Gold tier | `normal` toast with the medal icon: "Slayer III (Gold). +0.5% damage." | same |
-| Lantern tier or a star | `high` toast; a gold ring expands once around the header portrait | the ring shows for 1 s, no motion |
-| Group at Gold or Lantern | `high` toast naming the title (and the accessory) | same |
+| Everflame tier or a star | `high` toast; a gold ring expands once around the header portrait | the ring shows for 1 s, no motion |
+| Group at Gold or Everflame | `high` toast naming the title (and the accessory) | same |
 | Feat | A card (70% of the screen, one tap to close): the trophy, the Feat's name, "It took you 94 days", the hero preview **wearing the new accessory**, and two buttons: **Wear it** and **Later**. A burst on the stage | the card fades in, no burst |
 | Secret | `normal` toast: "Secret found: Night Owl." | same |
 | Chapter step / chapter done | `normal` toast with the why line / the Feat-style card with the cloak | as above |
@@ -886,7 +886,7 @@ The "New" dot on the Journal card and the Deeds view shows while `S.deeds.pts > 
 | AP5 | Feats by day 60 | none before day 14; at most 2 by day 60 |
 | AP6 | Near-miss goal share of Next Up rows (sampled each check-in) | at most 1 of 3 rows, shown at 20-60% of check-ins |
 | AP7 | Every live track reaches Bronze within 7 days (for a player who uses that system) | all |
-| AP8 | Lantern tiers: none before day 7; the median live Lantern tier lands between day 30 and day 120 | all |
+| AP8 | Everflame tiers: none before day 7; the median live Everflame tier lands between day 30 and day 120 | all |
 
 AC2 tunes thresholds only in the direction the sim asks, one step (x10 or x1,000 for counters) at a
 time, and records the table in this section.
@@ -978,7 +978,7 @@ branch; the coordinator merges.
 - **O2. Hats hide helms.** B1 reads each class by its headgear silhouette. A hat replaces the helm
   drawing (the "Show helm" switch brings the helm back). Recommended: **yes**; the switch keeps class
   looks one tap away.
-- **O3. Endless stars** past Lantern on 45 counting tracks, points only. Recommended: **yes**; it is
+- **O3. Endless stars** past Everflame on 45 counting tracks, points only. Recommended: **yes**; it is
   the "numbers going up" the friend asked for, and it costs nothing in power.
 - **O4. Secrets with a clock** (`s_night`, `s_wisp`) use the device time, like the Omens and the
   Hands' Early Riser and Night Owl. They give a hat and a critter, no power. Recommended: **yes**.
