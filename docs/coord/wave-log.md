@@ -497,3 +497,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   on Netlify from GitHub instead: root netlify.toml (command `node tools/site.mjs site`, publish `site`).
   Waiting on the owner to link CalSay/Lanternfall, branch claude/elegant-johnson-m6k00u, in Netlify. Then
   every push (only after a merge passes build + check) deploys automatically.
+- Merged claude/trusting-hopper-5v9927 (the owner's crash-fix session): its Almanac fix replaces the coordinator's (an early probe never caches the day's Omen), bounties skip the Omen bonus at load, plus a regression test. That branch is now redundant.
