@@ -614,3 +614,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   spoonfed"). CU1 launched: drop catchGap/catchStep/catchMax/catchPromo multipliers, planner scores recruits at
   real level, redefine T11/T18 to "levelling a new hero is an investment", keep P1/P2/P4 passing without
   needing recruits; the Full Company Feat stays months away.
+- Bench XP off: --targets confirms no stall (P2 PASS, P4 PASS). Fails: T1, T16, D1, P1, T6, T8, T11 (catch-up target, being redefined by CU1), T12, T18: all BAL3/CU1 territory.
