@@ -4833,6 +4833,246 @@ try {
   })();
 } catch (e) { fail('nav crashed: ' + (e.stack || e)); }
 
+// ---- S1: damage types, statuses, reactions, foe weaknesses, hero types (21x-data-types.js, 59a-status.js;
+// docs/design/core-2.md 2-3, combat-2.md 2.1 and 8.3, classes-2.md 5.1) ----
+console.log('types and statuses (S1)');
+try {
+  const near = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol * Math.max(1, Math.abs(b));
+  // A controlled fight: a Warden at zone z, the pack frozen (no attacks, huge HP), nothing fielded.
+  const arena = (z, seed = 71) => {
+    const g = loadCore({ seed }), E = s => g.eval(s);
+    E('chooseClass("warden"); S.party.autoField = false; setField([]); S.auto = false');
+    E(`S.maxZone = ${z}; S.activity = "fight"; setZone(${z})`);
+    for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+    E('combatFoes().forEach(f => { f.atk = 0; f.max = f.hp = 1e12; f.armoured = false; f.ss = null; f.markT = 0; f.mkV = 0; f.markUntil = 0; f.vulnT = 0; f.stunT = 0; f.chillT = 0; f.rxT = 0; f.elite = false; f.champ = false; })');
+    return { g, E };
+  };
+  // 1. the type chart (core-2 2.1, 2.3)
+  {
+    const g = loadCore({ seed: 70 }), E = s => g.eval(s);
+    assert(E('DMG_TYPES.join()') === 'phys,holy,poison,fire,frost' && E('DMG_TYPES.every(d => DT_INFO[d] && /^#[0-9A-F]{6}$/i.test(DT_INFO[d].col) && DT_INFO[d].icon.length === 7 && DT_INFO[d].icon.every(r => r.length === 7))'),
+      'five damage types, each with a colour and a 7x7 icon (core-2 2.1)');
+    assert(E('TYPE_X.weak === 1.5 && TYPE_X.neutral === 1 && TYPE_X.resist === 0.6'), 'weak x1.5, neutral x1, resists x0.6 (core-2 2.3)');
+    assert(E('Object.values(FOE_FAMS).every(r => DMG_TYPES.includes(r.weak) && r.res.length <= 2 && r.res.every(d => DMG_TYPES.includes(d) && d !== r.weak))') && E('Object.keys(FOE_FAMS).join()') === 'beast,plant,undead,spirit,construct,drowned,ember,pale,deep',
+      'nine families, each 1 weakness and at most 2 resists, never both (core-2 2.3)');
+    const chart = E('JSON.stringify(Object.keys(FOE_TYPE).map(k => DMG_TYPES.map(d => typeXKey(k, d))))');
+    assert(JSON.parse(chart).every(row => row.every(x => x === 0.6 || x === 1 || x === 1.5)), 'every foe takes x0.6, x1 or x1.5 from every type: nothing is immune');
+    const want = { 'slime,fire': 1.5, 'slime,poison': 0.6, 'bat,poison': 1.5, 'bones,holy': 1.5, 'bones,poison': 0.6, 'beetle,phys': 1, 'spore,fire': 1.5, 'golem,frost': 1.5, 'golem,poison': 0.6,
+      'wraith,holy': 1.5, 'wraith,phys': 0.6, 'deckhand,holy': 1.5, 'deckhand,frost': 0.6, 'witch,fire': 0.6, 'jelly,holy': 1.5, 'crab,poison': 1.5, 'coral,frost': 1.5, 'kelp,phys': 1 };
+    const bad = Object.entries(want).filter(([k, x]) => { const [f, d] = k.split(','); return E(`typeXKey(${JSON.stringify(f)}, ${JSON.stringify(d)})`) !== x; });
+    assert(!bad.length, `the chart per foe matches core-2 2.3 (${Object.keys(want).length} spot checks)` + (bad.length ? ': ' + bad.map(b => b[0]).join(' ') : ''));
+    assert(E('typeRel("slime", "fire") === 1 && typeRel("slime", "poison") === -1 && typeRel("beetle", "fire") === 0'), 'typeRel: weak 1, resisted -1, neutral 0 (the number marks)');
+    // zone 7 is Wraithmarsh I: 72% Wraiths, 28% the next type (Moss Slime, zone 8)
+    assert(near(E('typeZone("phys", 7)'), 0.72 * 0.6 + 0.28 * 1) && near(E('typeZone("fire", 7)'), 0.72 * 1 + 0.28 * 1.5), 'typeZone weighs a zone\'s pack (72% its type, 28% the next)');
+    assert(E('Object.keys(ST_ICONS).length === 8 && Object.keys(STATUS_DEFS).every(id => ST_ICONS[id] && ST_ICONS[id].rows.length === 5 && ST_ICONS[id].rows.every(r => r.length === 5 && [...r].every(c => c === "." || ST_ICONS[id].pal[c])))'),
+      'eight harmful statuses, each with a 5x5 badge in its own shape (core-2 3.1)');
+    assert(!g.errors.length, 'no type chart errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 2. foe data (combat-2 2.1): every Hollow and Coast foe has size, members, family, hit type and weakness
+  {
+    const g = loadCore({ seed: 72 }), E = s => g.eval(s);
+    const rows = JSON.parse(E('JSON.stringify(FOE_TYPE)'));
+    const hol = Object.keys(rows).filter(k => rows[k].region === 'hollow'), coast = Object.keys(rows).filter(k => rows[k].region === 'coast');
+    const incomplete = Object.entries(rows).filter(([k, r]) => !(E(`!!PACK_SIZES[${JSON.stringify(r.size)}]`) && r.n >= E(`PACK_SIZES[${JSON.stringify(r.size)}][0]`) && r.n <= E(`PACK_SIZES[${JSON.stringify(r.size)}][1]`)
+      && E(`!!FOE_FAMS[${JSON.stringify(r.fam)}]`) && E(`DMG_TYPES.includes(${JSON.stringify(r.dt)})`) && E(`DMG_TYPES.includes(${JSON.stringify(r.weak)})`) && Array.isArray(r.res) && r.name && [0, 1, 2].includes(r.row)));
+    assert(hol.length === 7 && coast.length === 7 && !incomplete.length, `7 Hollow and 7 Coast foes, each with size, members in its size's range, family, hit type dt and weakness` + (incomplete.length ? ': ' + incomplete.map(x => x[0]).join() : ''));
+    assert(E('TYPES.slice(0, 7).every(t => FOE_TYPE[t.key] && FOE_TYPE[t.key].region === "hollow" && FOE_BEH[t.key].size === FOE_TYPE[t.key].size && FOE_BEH[t.key].fam === FOE_TYPE[t.key].fam && FOE_BEH[t.key].dt === FOE_TYPE[t.key].dt)'),
+      'the Hollow\'s 7 foe types carry size, fam and dt in FOE_BEH (core-2 8.2)');
+    const sizes = k => Object.values(rows).filter(r => r.region === k).reduce((o, r) => (o[r.size] = (o[r.size] || 0) + 1, o), {});
+    const cs = sizes('coast');
+    assert(cs.brute === 2 && cs.normal === 3 && cs.swarm === 2, `the Coast has 2 brutes, 3 normal and 2 swarms (combat-2 2.1: ${JSON.stringify(cs)})`);
+    const hitShare = E('(() => { const n = {}; for (const k in FOE_TYPE) if (FOE_TYPE[k].region === "hollow") n[FOE_TYPE[k].dt] = (n[FOE_TYPE[k].dt] || 0) + 1; return JSON.stringify(n); })()');
+    assert(hitShare === JSON.stringify({ poison: 2, phys: 4, frost: 1 }), `Hollow hit types: Slime and Spore poison, Wraith frost, the rest physical (combat-2 1.2: ${hitShare})`);
+    assert(E('PACK_TUNE.swarmHp === 1.25 && PACK_TUNE.swarmPay === 1.25') && E('combatFoes().length') <= 6, 'swarm totals recorded at 1.25 / 1.25 (owner D7, used from S6); packs stay 3 in S1');
+  }
+  // 3. hero types (classes-2 5.1, core-2 2.2)
+  {
+    const g = loadCore({ seed: 73 }), E = s => g.eval(s);
+    const miss = E('ROSTER_KEYS.filter(k => !DMG_TYPES.includes(ROSTER[k].dt) || !ROSTER[k].sst).join()');
+    assert(!miss, 'every hero has a base type (ROSTER[id].dt) and a signature status' + (miss ? ': ' + miss : ''));
+    const per = JSON.parse(E('JSON.stringify(DMG_TYPES.map(d => ROSTER_KEYS.filter(k => ROSTER[k].dt === d).length))'));
+    assert(per.every(n => n >= 2), `each type is on at least 2 heroes (phys/holy/poison/fire/frost: ${per.join('/')})`);
+    assert(E('["tank", "striker", "caster", "support"].every(r => ROSTER_KEYS.some(k => ROSTER[k].role === r && ROSTER[k].dt !== "phys"))'), 'each role has a non-physical hero');
+    assert(E('ROSTER.maren.dt === "holy" && ROSTER.caedmon.dt === "fire" && ROSTER.kestrel.dt === "frost" && ROSTER.isolde.dt === "poison" && ROSTER.corvin.dt === "poison" && ROSTER.pip.dt === "fire" && ROSTER.elowen.dt === "holy" && ROSTER.tobin.dt === "phys"'), 'spot checks: Maren holy, Caedmon fire, Kestrel frost, Isolde and Corvin poison, Pip fire, Elowen holy, Tobin physical');
+    assert(E('Object.keys(HERO_CLASSES).every(c => DMG_TYPES.includes(LB_DT[c])) && LB_DT.lanternmage === "fire" && LB_DT.mage === "fire" && LB_DT.warden === "phys"'), 'the Lanternbearer has a type for every class (the Mage is fire: change log CL1 8.2-1)');
+    E('chooseClass("lanternmage")'); for (let i = 0; i < 3; i++) g.fn.tick(0.1);
+    assert(E('lbType() === "fire" && cbUnitByKey("hero").dt === "fire"'), 'the Lanternbearer\'s combat unit carries its type');
+  }
+  // 4. hits take the type chart, Mark and the vuln cap; armour cuts physical only
+  {
+    const { g, E } = arena(1);   // Mossy Hollow: Moss Slimes (plant: weak fire, resists poison)
+    const hit = (dt, kind = 'magic', tags = 0) => E(`(() => { const f = combatFoes().find(x => x.type === 'slime' && !x.dead); return cbDamageFoe(f, 100, -1, ${JSON.stringify(kind)}, ${JSON.stringify(dt)}, ${tags}); })()`);
+    assert(near(hit('fire'), 150) && near(hit('poison'), 60) && near(hit('phys'), 100) && near(hit('holy'), 100), 'a Moss Slime takes fire x1.5, poison x0.6, physical and holy x1');
+    E('(() => { const f = combatFoes().find(x => x.type === "slime" && !x.dead); stApply(f, "mark", 1, 0, -1); })()');
+    assert(near(hit('phys'), 120) && near(hit('fire'), 180), 'a Marked foe takes +20% from every source (core-2 3.1)');
+    E('(() => { const f = combatFoes().find(x => x.type === "slime" && !x.dead); stApply(f, "mark", 1, 0, -1, { v: 0.15 }); })()');
+    assert(near(hit('phys'), 120), 'a weaker Mark does not replace a stronger one');
+    E('(() => { const f = combatFoes().find(x => x.type === "slime" && !x.dead); f.mkV = 5; })()');
+    assert(near(hit('phys'), 160), 'Σ vuln is capped at +60%');
+    E('(() => { const f = combatFoes().find(x => x.type === "slime" && !x.dead); f.markT = 0; f.mkV = 0; f.armoured = true; })()');
+    assert(near(hit('phys', 'phys'), 100 * E('COMBAT_TUNE.armourX')) && near(hit('fire', 'phys'), 150), 'armour cuts a physical hit, not a typed one (core-2 1.2)');
+    assert(!g.errors.length, 'no hit errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 5. statuses: stacking, caps, durations, the one-a-second beat
+  {
+    const { g, E } = arena(3);   // Bone Barrow: Rattlebones (undead: weak holy, resists poison)
+    E('globalThis.__f = combatFoes().find(x => !x.dead && x.type === "bones") || combatFoes()[0]; __f.again = true');
+    const F = s => E(`(() => { const f = __f; ${/;/.test(s) ? s : 'return ' + s}; })()`);   // statements (with ;) or one expression
+    F('stApply(f, "bleed", 3, 100, -1) && stApply(f, "bleed", 4, 100, -1)');
+    assert(F('stStacks(f, "bleed")') === 5 && near(F('stLeft(f, "bleed")'), 6), 'Bleed stacks to 5 at most; a new stack refreshes all (6 s)');
+    F('stApply(f, "venom", 7, 100, -1) && stApply(f, "venom", 7, 100, -1)');
+    assert(F('stStacks(f, "venom")') === 10 && near(F('stLeft(f, "venom")'), 8), 'Venom stacks to 10 at most (8 s)');
+    const hp0 = F('f.hp'); E('stTick(1.0)'); const d1 = hp0 - F('f.hp');
+    const want = 0.08 * 100 * 5 * E('typeXKey("bones", "phys")') + 0.04 * 100 * 10 * 2 * E('typeXKey("bones", "poison")');
+    assert(near(d1, want, 1e-6), `one beat: Bleed 0.08 P x 5 and Venom 0.04 P x 10 x (1 + 0.1 x 10), by the chart (${d1.toFixed(1)} of ${want.toFixed(1)})`);
+    assert(F('stHealX(f)') === 0.5, 'Venom 5+ halves a foe\'s healing (anti-heal, core-2 3.2)');
+    F('stApply(f, "burn", 1, 100, -1)'); F('stApply(f, "burn", 1, 50, -1)');
+    assert(F('f.ss.burn.p') === 100 && near(F('stLeft(f, "burn")'), 4), 'one Burn per foe: the stronger stays (4 s)');
+    F('stApply(f, "burn", 1, 200, -1)');
+    assert(F('f.ss.burn.p') === 200, 'a stronger Burn replaces a weaker one');
+    F('stApply(f, "curse", 1, 100, -1)');
+    assert(F('stHealX(f)') === 0 && !F('stApply(f, "curse", 1, 500, -1)'), 'Curse: no healing (it wins over Venom), one per foe');
+    F('stApply(f, "chill", 1, 0, -1, { dur: 20 })');
+    assert(near(F('stLeft(f, "chill")'), 6) && near(F('stSlow(f)'), 0.3), 'Chill slows 30%, capped at 6 s');
+    // stun: diminishing returns, caps, elites, bosses
+    F('f.ss.stun = null; f.stunT = 0; stApply(f, "stun", 1, 0, -1, { dur: 9 })');
+    const s1 = F('f.stunT'); F('f.stunT = 0; stApply(f, "stun", 1, 0, -1, { dur: 2 })'); const s2 = F('f.stunT'); F('f.stunT = 0; stApply(f, "stun", 1, 0, -1, { dur: 2 })'); const s3 = F('f.stunT');
+    assert(near(s1, 3) && near(s2, 1) && s3 === 0, `Stun: capped at 3 s; a second within 8 s lasts half; a third is ignored (${s1}, ${s2}, ${s3})`);
+    E('stTick(8.1)'); F('f.stunT = 0; stApply(f, "stun", 1, 0, -1, { dur: 2 })');
+    assert(near(F('f.stunT'), 2), '8 s without a stun resets the diminishing returns');
+    F('f.ss.stun = null; f.stunT = 0; f.elite = true; stApply(f, "stun", 1, 0, -1, { dur: 2 })');
+    assert(near(F('f.stunT'), 1), 'an elite is stunned half as long');
+    F('f.ss.stun = null; f.stunT = 0; f.elite = false; f.boss = true; f.stag = 0; stApply(f, "stun", 1, 0, -1, { dur: 1.5 }); stApply(f, "root", 1, 0, -1)');
+    assert(F('f.stunT') === 0 && near(F('f.stag'), 12) && !F('stHas(f, "root")'), 'a boss is immune to Stun and Root; each stun second fills 8 stagger instead');
+    F('f.ss.chill = null; stApply(f, "chill", 1, 0, -1)');
+    assert(near(F('stSlow(f)'), 0.15), 'a Chilled boss is slowed 15%');
+    F('f.boss = false; f.ss.root = null; stApply(f, "root", 1, 0, -1)');
+    assert(near(F('stLeft(f, "root")'), 3) && near(F('f.rootT'), 3), 'Root lasts 3 s');
+    F('stApply(f, "venom", 10, 100, -1); stApply(f, "burn", 1, 100, -1); f.ss.curse = null; stApply(f, "curse", 1, 100, -1)');
+    assert(E('stBadges(__f).length') === 4 && E('stBadges(__f).map(b => b.id).join()') === 'root,burn,curse,venom' && E('stBadges(__f)[3].n') === 10, `the focus foe shows at most 4 badges, the most important first, with stack digits (${E('stBadges(__f).map(b => b.id + b.n).join()')})`);
+    assert(!g.errors.length, 'no status errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 6. reactions (core-2 3.5)
+  {
+    // Blight: Venom and Burn on one foe; each Burn tick also ticks the Venom
+    const { g, E } = arena(2);   // Cave Bats (beast: weak poison)
+    E('globalThis.__f = combatFoes().find(x => !x.dead)');
+    const F = s => E(`(() => { const f = __f; ${/;/.test(s) ? s : 'return ' + s}; })()`);   // statements (with ;) or one expression
+    let rx = []; g.fn.on('reaction', r => rx.push(r.id));
+    F('stApply(f, "venom", 4, 100, -1)');
+    let h0 = F('f.hp'); E('stTick(1.0)'); const vOnly = h0 - F('f.hp');
+    F('stApply(f, "burn", 1, 100, -1)');
+    assert(rx.includes('blight') && F('f.blight') === true, 'Blight: Venom and Burn on one foe set it off');
+    h0 = F('f.hp'); E('stTick(1.0)'); const both = h0 - F('f.hp');
+    const burnTick = 0.12 * 100 * E(`typeXKey(__f.type, "fire")`);
+    assert(near(both, 2 * vOnly + burnTick, 1e-6), `a Blighted beat: the Burn tick plus the Venom twice (${both.toFixed(1)} = 2 x ${vOnly.toFixed(1)} + ${burnTick.toFixed(1)})`);
+    assert(F('f.rxT') > 1.5, 'a reaction opens the 3 s window on its foe (a beat later, 2 s are left)');
+    const plain = E('cbDamageFoe(__f, 100, -1, "magic", "phys", 0)'), ab = E('cbDamageFoe(__f, 100, -1, "magic", "phys", ST_AB)');
+    assert(near(ab / plain, 1.25), 'an ability landing in the window deals x1.25 (timingX)');
+    // Burn spreads on death: to the 2 nearest living foes, carrying half the Venom of a Blighted foe
+    E('combatFoes().forEach(f => { if (f !== __f) { f.ss = null; f.burnT = 0; } })');
+    const others = E('combatFoes().filter(f => f !== __f && !f.dead).length');
+    E('__f.again = true; cbDamageFoe(__f, __f.hp + 1, -1, "true", "phys")');
+    const got = E('combatFoes().filter(f => f !== __f && !f.dead && stHas(f, "burn")).length'), ven = E('combatFoes().filter(f => f !== __f && !f.dead && stStacks(f, "venom") === 2).length');
+    assert(others >= 2 && got === 2 && ven === 2, `a Burning foe's death spreads its Burn to 2 others, with half its Venom (${got} burning, ${ven} with 2 Venom)`);
+    // Shatter: a heavy hit on a Chilled foe deals x2 and uses up the Chill
+    E('globalThis.__f = combatFoes().find(x => !x.dead)');
+    F('f.ss = null; f.chillT = 0; f.rxT = 0; stApply(f, "chill", 1, 0, -1)');
+    const light = E('cbDamageFoe(__f, 100, -1, "magic", "fire", 0)');
+    const heavy = E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
+    assert(near(light, 100 * E('typeXKey(__f.type, "fire")')) && near(heavy, 2 * light) && !F('stHas(f, "chill")') && rx.includes('shatter'), `Shatter: a heavy hit on a Chilled foe deals x2 and ends the Chill (${light} -> ${heavy})`);
+    const again = E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
+    assert(near(again, light * 1.25) || near(again, light), 'once per Chill: the next heavy hit is plain (the window may still add x1.25 to abilities only)');
+    F('f.boss = true; f.stag = 0; stApply(f, "chill", 1, 0, -1)'); E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
+    assert(near(F('f.stag'), 20 + 0), 'a Shatter on a boss fills 20 stagger');
+    F('f.boss = false');
+    // heavy by size: a single hit of 3 P or more (a crit's multiplier does not count)
+    E('stApply(__f, "chill", 1, 0, -1)');
+    const P = E('heroAtk()');
+    const small = E(`cbDamageFoe(__f, ${P * 2}, 0, "phys", "phys", 0)`);
+    assert(E('stHas(__f, "chill")'), 'a hit under 3 P is not heavy (no Shatter)');
+    E(`cbDamageFoe(__f, ${P * 3.2}, 0, "phys", "phys", 0)`);
+    assert(!E('stHas(__f, "chill")') && small > 0, 'a hit of 3 P or more is heavy (Shatter)');
+    // Judgement: holy damage on a Marked foe heals every party member 10% of it, at most 5% max HP a second
+    E('S.party.autoField = false; unlockChar("hesketh", "test", true); setField(["hesketh"])'); for (let i = 0; i < 4; i++) g.fn.tick(0.1);
+    E('combatFoes().forEach(f => { f.atk = 0; f.max = f.hp = 1e12; }); globalThis.__f = combatFoes().find(x => !x.dead)');
+    E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.5; })');
+    const hp0 = E('cbUnitByKey("hero").hp'), mx = E('cbUnitByKey("hero").maxHp'), hin = E('cbUnitByKey("hero").healIn');
+    E('cbDamageFoe(__f, 10, -1, "magic", "holy")');
+    assert(E('cbUnitByKey("hero").hp') === hp0, 'holy damage on an unmarked foe heals nobody');
+    rx = [];
+    E('stApply(__f, "mark", 1, 0, -1)');
+    const dealt = E('cbDamageFoe(__f, 100, -1, "magic", "holy")');
+    const healed = E('cbUnitByKey("hero").hp') - hp0;
+    assert(rx.includes('judgement') && near(healed, Math.min(dealt * 0.1, mx * 0.05) * hin, 1e-6), `Judgement: holy damage on a Marked foe heals every member 10% of it (${healed.toFixed(2)} of ${dealt.toFixed(1)})`);
+    E(`cbDamageFoe(__f, ${mx * 10}, -1, "magic", "holy")`);
+    assert(near(E('cbUnitByKey("hero").hp') - hp0, mx * 0.05 * hin, 1e-6), 'Judgement healing stops at 5% of max HP a second per member');
+    assert(!g.errors.length, 'no reaction errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 7. statuses on the party: the Spore cloud's Venom, the 5% cap, cleanse, Curse, typed hits
+  {
+    const { g, E } = arena(5);   // Fungal Deep: Spore Caps
+    E('globalThis.__u = cbUnitByKey("hero")');
+    E('__u.hp = __u.maxHp; stUnitApply(__u, "bleed", 5); stUnitApply(__u, "venom", 10); stUnitApply(__u, "burn", 1)');
+    // the amount asked of cbHitUnit (the member's own damage reductions apply after it, as for any hit)
+    E('globalThis.__sum = 0; globalThis.__hit = cbHitUnit; cbHitUnit = (u, a, k, f) => { if (u === __u) __sum += a; return __hit(u, a, k, f); }');
+    const mx = E('__u.maxHp');
+    E('stTick(1.0)');
+    E('cbHitUnit = __hit');
+    assert(near(E('__sum'), mx * 0.05, 1e-6), `all damage over time on one member: at most 5% of max HP a tick (Bleed 5 + Venom 10 + Burn ask ${(E('__sum') / mx * 100).toFixed(2)}%)`);
+    E('stCleanse(__u, 1)');
+    assert(E('!(__u.us.venom.t > 0) && __u.us.bleed.t > 0 && __u.us.burn.t > 0'), 'a cleanse removes the worst harmful status (here Venom), all its stacks');
+    E('stUnitApply(__u, "curse", 1); __u.hp = __u.maxHp * 0.5');
+    const hc = E('__u.hp'); E('cbHealUnit(__u, 100, null)');
+    assert(E('__u.hp') === hc, 'a Cursed member takes no healing');
+    E('stUnitClear(__u); __u.hp = __u.maxHp');
+    // a spore cloud: Venom 3 (a floor, not added) for 4 s
+    E('(() => { const f = combatFoes().find(x => x.type === "spore" && !x.dead) || combatFoes()[0]; f.type = "spore"; f.atk = 1; f.bt = ENEMY_TUNE.cloudEvery; f.bx = 1; onEnemyTick(f, 0.01); f.bt = ENEMY_TUNE.cloudEvery; onEnemyTick(f, 0.01); f.atk = 0; })()');
+    assert(E('__u.us.venom.n') === 3 && near(E('__u.us.venom.t'), 4), 'a Spore cloud Venoms the party: 3 stacks for 4 s, not added up by a second cloud (S1, until S6\'s pack cadence)');
+    // typed hits: half armour and the resist to that type
+    E('__u.armour = 100; stUnitClear(__u); __u.hp = __u.maxHp; __u.sh = 0; __u.blockP = 0; __u.drT = 0');
+    const mk = t => `({ dt: ${JSON.stringify(t)}, atk: 0, gone: false, dead: 0, hp: 0 })`;
+    const hitBy = t => { E('__u.hp = __u.maxHp'); return E(`cbHitUnit(__u, __u.maxHp * 0.1, "hit", ${mk(t)})`); };
+    const hp = hitBy('phys'), hf = hitBy('frost');
+    assert(near(hf / hp, (1 - 50 / 150) / (1 - E('Math.min(0.6, 100 / 200)'))), `a typed hit meets half the armour rating (physical ${hp.toFixed(1)}, frost ${hf.toFixed(1)})`);
+    E('stUnitApply(__u, "mark", 1)');
+    assert(near(hitBy('phys') / hp, 1.2), 'a Marked member takes +20%');
+    assert(!g.errors.length, 'no party status errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 8. heroes apply their statuses in a real fight; nothing is saved; every fixture loads and fights
+  {
+    const g = loadCore({ seed: 74 }), E = s => g.eval(s);
+    E('chooseClass("warden")');
+    E('(() => { const f = ["isolde", "pip"]; for (const id of f) { unlockChar(id, "test", true); charRec(id).lv = 40; } S.party.autoField = false; setField(f); S.auto = false; S.L = 40; S.blade = 40; S.maxZone = 15; S.activity = "fight"; setZone(12); })()');
+    for (let i = 0; i < 1800; i++) g.fn.tick(0.1);
+    const st = JSON.parse(E('JSON.stringify(ST_STATS)'));
+    assert(st.applied.venom > 0 && st.applied.burn > 0 && st.reactions.blight > 0 && st.dot > 0 && st.beats >= 150, `a live fight: Isolde's Venom, Pip's Burn, Blight, ${st.dot} damage-over-time ticks in ${st.beats} beats`);
+    E('save()');
+    const js = g.storage.get(KEY);
+    assert(js && !/"ss":|"stag":|"chillT":|"mkV":/.test(js) && !/"us":\{/.test(js), 'runtime statuses are never saved (core-2 8.1-5)');
+    assert(!g.errors.length && !badNumbers(E('S')).length, 'no errors and no NaN after 3 minutes of statuses' + (g.errors.length ? ': ' + g.errors[0] : ''));
+    for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json'))) {
+      const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+      const h = loadCore({ seed: 75, storage: memoryStorage({ [KEY]: raw }) }), H = s => h.eval(s);
+      const cmp = JSON.parse(raw); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
+      const d = subsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
+      H('S.activity = "fight"; spawn()');
+      for (let i = 0; i < 600; i++) h.fn.tick(0.1);
+      H('save(); loadSave()');
+      const bad = badNumbers(H('S')).concat(badNumbers(H('combatUnits().map(u => [u.hp, u.maxHp])')));
+      assert(!d && !bad.length && !h.errors.length && H('combatUnits().filter(u => u.live).every(u => DMG_TYPES.includes(u.dt))'),
+        `${f}: loads, keeps every field, fights a minute with types and statuses, saves and loads again` + (d ? ': ' + d : bad.length ? ': ' + bad[0] : h.errors.length ? ': ' + h.errors[0] : ''));
+    }
+  }
+  // 9. the stage shows typed numbers and the focus foe's badges (source checks; the draw runs in the browser)
+  {
+    const stage = fs.readFileSync(path.join(ROOT, 'src', 'js', '62-stage.js'), 'utf8');
+    assert(/stBadges\(m\)/.test(stage) && /typeIcon\(dt\)/.test(stage) && /f\.dt, f\.rel/.test(stage), '62-stage draws the type icon and weak / resisted marks on numbers and the focus foe\'s status badges');
+    const core = fs.readFileSync(path.join(ROOT, 'src', 'js', '59a-status.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'src', 'js', '21x-data-types.js'), 'utf8');
+    assert(!/\b(document|window|localStorage)\b/.test(core.replace(/\/\/.*$/gm, '')), '21x and 59a are core files: no DOM, window or storage');
+  }
+} catch (e) { fail('types and statuses crashed: ' + (e.stack || e)); }
+
 // ---- 8. error capture (55-errors.js) ----
 console.log('error capture');
 try {
