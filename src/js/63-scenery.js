@@ -5,7 +5,8 @@
 // Lanterns are the world's heartbeat: every theme has its own lamps, and each lit lamp casts a
 // baked, banded light pool into the pixels plus a soft device-resolution glow that flickers.
 //
-//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid|well (the Deepwell)
+//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid|well (the Deepwell),
+//     or one added with registerSceneTheme (the gathering scenes: 63c-scenery-gather.js)
 //     scene = { layers: [{ c, f, fg }], fog, amb, light, lights, W, H, GY, M, PX, theme, hue }
 //     Layers are drawn at PX = 2 CSS px per art px, (W + 2*M) CSS px wide (M = 24 px parallax margin),
 //     cached per (theme, W, H, hue). GY is the ground line (feet), in CSS px.
@@ -30,6 +31,11 @@
 // made per frame. Flicker is static under prefers-reduced-motion.
 let drawScene, drawAtmosphere, scenePlates, sceneSteps;
 function sceneFor() { return null; } // replaced below
+// Themes from other files (63c-scenery-gather.js): registerSceneTheme(name, { th, paint(A), fg(A), grassy, tint }).
+// th: colours as in TH below; paint(A) draws the far, mid and ground layers and fg(A) the foreground, with
+// A = this build's layers and helpers (see extApi); A.out is kept on the scene as scene.ext.
+const SCENE_EXT = {};
+function registerSceneTheme(name, def) { SCENE_EXT[name] = def; }
 {
   const PX = 2, M = 24, MA = M / PX;
   const REDUCED = typeof reduced !== 'undefined' ? reduced : !!(typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -200,7 +206,7 @@ function sceneFor() { return null; } // replaced below
   // The build is a generator: each yield ends a step (about 5-15 ms at x4 CPU), so an idle-time
   // warm-up can spread it over several small tasks (sceneSteps); sceneFor runs it to the end.
   function* buildSteps(theme, W, H, hue) {
-    const th = TH[theme] || TH.forest;
+    const ext = SCENE_EXT[theme], th = ext ? ext.th : TH[theme] || TH.forest;
     const Wa = Math.ceil(W / PX), Ha = Math.ceil(H / PX), LW = Wa + 2 * MA;
     const GY = Math.round(H * 0.8), G = Math.floor(GY / PX);
     const r = rand(theme.length * 7919 + W * 13 + H * 31 + 7);
@@ -360,6 +366,9 @@ function sceneFor() { return null; } // replaced below
     gnd.rect(0, gTop, LW, Ha - gTop, gm);
     const pathM = th.path ? mat(th.path, 'top') : 0;
     const pathTop = G - 1, pathBot = G + 7;
+    const XA = ext ? { th, r, C, X, band, W, H, Wa, Ha, LW, G, GY, PX, MA, M, gTop, pathTop, pathBot, sky, far, mid, gnd, fg, lamps, drips, motes,
+      mat, matS, flat, tinted, add, hz, ramp, blend, desat, light, lantern, bulb, lampPost, brokenPost, hang, rope, candle, windowLit, flame, brazier,
+      farLamp, pine, deadTree, ridgeY, ceilY, farBack, farFront, farDark, iron, ironL, glass, hot, flameO, deadGlass, gm, lipM, lipD, pathM, FLAME, out: {} } : null;
 
     switch (theme) {
       // ================= Mossy Hollow: lamplit forest road, the most lanterns (hope) =================
@@ -752,11 +761,12 @@ function sceneFor() { return null; } // replaced below
         }
         break;
       }
+      default: if (XA && ext.paint) ext.paint(XA);
     }
 
     yield;
     // ---- ground detail common to all: lip tufts, specks ----
-    const grassy = theme === 'forest' || theme === 'woods' || theme === 'barrow' || theme === 'bone' || theme === 'fungal';
+    const grassy = (ext && ext.grassy) || theme === 'forest' || theme === 'woods' || theme === 'barrow' || theme === 'bone' || theme === 'fungal';
     for (let x = 0; x < LW; x++) {
       if (grassy && r() < 0.45) { const h = r() < 0.3 ? 2 : 1; gnd.rect(x, gTop - h, 1, h, r() < 0.55 ? lipM : lipD); }
       else if (!grassy && theme !== 'marsh' && r() < 0.12) gnd.px(x, gTop - 1, lipD);
@@ -793,7 +803,7 @@ function sceneFor() { return null; } // replaced below
         break;
       }
       case 'quarry': case 'raid': fg.oval(X(-0.02) + 3, Ha + 1, 9, 5, fgId, 'top'); fg.oval(X(-0.02) + 13, Ha + 1, 4, 3, fgId, 'top'); fg.oval(X(0.98), Ha + 1, 8, 4, fgId, 'top'); break;
-      default: tuft(X(0), 4, 5); tuft(X(0.95), 4, 5);
+      default: if (XA && ext.fg) ext.fg(Object.assign(XA, { fgC, fgId, fgT, tuft })); else { tuft(X(0), 4, 5); tuft(X(0.95), 4, 5); }
     }
 
     // ---- shade and bake ----
@@ -828,7 +838,7 @@ function sceneFor() { return null; } // replaced below
     const vg = og.createRadialGradient(ow * 0.5, oh * 0.56, oh * 0.4, ow * 0.5, oh * 0.56, ow * 0.8);
     vg.addColorStop(0, 'rgba(6,4,12,0)'); vg.addColorStop(1, 'rgba(6,4,12,.5)');
     og.fillStyle = vg; og.fillRect(0, 0, ow, oh);
-    const tint = { well: ['4,8,18', 0.34, 0], raid: ['255,90,40', 0.14, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.22, 0], mine: ['10,8,14', 0.18, 0], fungal: ['200,90,200', 0.05, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
+    const tint = (ext && ext.tint) || { well: ['4,8,18', 0.34, 0], raid: ['255,90,40', 0.14, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.22, 0], mine: ['10,8,14', 0.18, 0], fungal: ['200,90,200', 0.05, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
     if (tint) { const lg = og.createLinearGradient(0, 0, 0, oh); const [c, a, bottom] = tint; lg.addColorStop(bottom ? 0.4 : 0, `rgba(${c},${bottom ? 0 : a})`); lg.addColorStop(bottom ? 1 : 0.45, `rgba(${c},${bottom ? a : 0})`); og.fillStyle = lg; og.fillRect(0, 0, ow, oh); }
 
     // public light list: stage CSS px at camX = 0
@@ -836,7 +846,7 @@ function sceneFor() { return null; } // replaced below
     return {
       theme, hue, W, H, GY, M, PX, layers, lights: lamps,
       fog, amb: { type, rgb: ambRgb, parts, moths }, amb2,
-      light: { moon, lamps, shafts: !!th.shafts, overlay: ov }
+      light: { moon, lamps, shafts: !!th.shafts, overlay: ov }, ext: XA ? XA.out : null
     };
   }
 

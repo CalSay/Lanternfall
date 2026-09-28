@@ -150,7 +150,7 @@ let resize, animate, draw, stageStats, warmScene;
     const tg = target(); let th, hue = 0;
     if (tg === 'world') th = 'raid';
     else if (deepOn()) th = 'well';
-    else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
+    else if (tg === 'node') th = typeof gatherTheme === 'function' ? gatherTheme(S.node.kind) : skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = zoneTheme(S.zone); hue = zoneHue(S.zone); }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
@@ -326,7 +326,8 @@ let resize, animate, draw, stageStats, warmScene;
   for (let i = 0; i < NSLOT; i++) slots.push(mkFoeV());
   let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
   const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
-  const soloX = () => Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0)));
+  const gSpot = () => target() === 'node' && typeof gatherSpot === 'function' ? gatherSpot(SW, GY) : null;
+  const soloX = () => { const g = gSpot(); return g ? g.x : Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0))); };
   function refreshFoe() {
     const tg = target();
     if (tg === 'mob') { syncPack(); return; }
@@ -516,7 +517,7 @@ let resize, animate, draw, stageStats, warmScene;
     s.left = s.x - (f ? f.ox : 15); s.top = s.gy - s.h; s.cy = s.gy - Math.round(s.h * 0.5);
   }
   function foeGeom() {
-    if (target() !== 'mob') { solo.hx = soloX(); solo.hy = GY; geomOf(solo); return; }
+    if (target() !== 'mob') { const g = gSpot(); solo.hx = soloX(); solo.hy = g ? g.y : GY; geomOf(solo); return; }
     if (!packN) { foe.fr = null; return; }
     for (let i = 0; i < packN; i++) geomOf(slots[i]);
   }
@@ -536,7 +537,7 @@ let resize, animate, draw, stageStats, warmScene;
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
 
   // ================= attacks =================
-  const heroHome = () => target() === 'node' ? foe.left - 4 - (hero.fr ? hero.fr.idle0.c.width - hero.fr.idle0.ox : 14) : hero.hx;
+  const heroHome = () => { if (target() !== 'node') return hero.hx; const x = foe.left - 4 - (hero.fr ? hero.fr.idle0.c.width - hero.fr.idle0.ox : 14); return typeof gatherHeroX === 'function' ? gatherHeroX(x) : x; };
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
   // front-most foe: melee reaches the enemy Front) and back; arc: a leap with a 16 px apex (Kestrel).
   // Reduced motion: the dash is an instant swap with a one-frame flash.
@@ -737,7 +738,7 @@ let resize, animate, draw, stageStats, warmScene;
     A.burstPx(x, y, b.color || '#FFFFFF', Math.min(16, b.n || 4), (b.spd || 0.7) * 70);
   });
   on('shake', amt => { shake = reduced ? 0 : amt; });
-  on('lunge', () => attack(hero));
+  on('lunge', () => { if (!(target() === 'node' && typeof gatherWalking === 'function' && gatherWalking())) attack(hero); });
   on('nodeHit', () => { nodeShake = 0.12; });
   on('wyrmHit', () => { wyrmHit = 0.1; });
   on('levelup', () => { ringT = 0.8; });
@@ -1168,11 +1169,12 @@ let resize, animate, draw, stageStats, warmScene;
     // dived over the line (in front of the party), projectiles
     ctx.imageSmoothingEnabled = false;
     if (fight) { for (const i of drawOrd) if (i < packN && slots[i].dv === 0) drawFoe(slots[i], cam, tele); }
-    else drawFoe(solo, cam, null);
+    else { if (gath && typeof gatherDraw === 'function') gatherDraw(ctx, scene, cam, 'back', solo); drawFoe(solo, cam, null); }
     if (gath && foe.fr) {
       const pw = Math.round(foe.w * 0.7), px0 = Math.round(foe.x - cam - pw / 2);
-      ctx.fillStyle = '#0B0810'; ctx.fillRect(px0 - 1, GY + 5, pw + 2, 3);
-      ctx.fillStyle = nodeColor(); ctx.fillRect(px0, GY + 6, Math.round(pw * Math.min(1, S.gProg)), 1);
+      ctx.fillStyle = '#0B0810'; ctx.fillRect(px0 - 1, foe.gy + 5, pw + 2, 3);
+      ctx.fillStyle = nodeColor(); ctx.fillRect(px0, foe.gy + 6, Math.round(pw * Math.min(1, S.gProg)), 1);
+      if (typeof gatherDraw === 'function') gatherDraw(ctx, scene, cam, 'front', solo);
     }
     for (const a of order) drawActor(a, cam);
     if (fight) for (let i = 0; i < packN; i++) if (slots[i].dv > 0) drawFoe(slots[i], cam, tele);
@@ -1254,7 +1256,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (al <= 0) continue;
       if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0); f.wz = base; }
       // over a pack, a text stays over the foe it was raised on (its x then) as the next steps up
-      const fx = onFoe && packN > 1 ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
+      const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
       ctx.globalAlpha = al; drawText(f, x, y, pop);
     }
@@ -1576,7 +1578,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (tg === 'node') {
       // the Glint: a sparkle chip with its timer over the node, and a blinking star above it
       if (glintT > 0 && foe.fr) {
-        const cx = X(foe.x - cam), top = Math.max(minY + 8 * U, Y(GY - foe.h + headTop(foe.fr.idle0)) - gap);
+        const cx = X(foe.x - cam), top = Math.max(minY + 8 * U, Y(foe.gy - foe.h + headTop(foe.fr.idle0)) - gap);
         pushChip('glint', 0, Math.min(1, glintT / 3));
         const h = chipRow(cx, top);
         if (reduced || (T * 3 % 1) < 0.6) ctx.drawImage(icon('glint'), cx - 5 * U, top - h - 11 * U, 10 * U, 10 * U);
