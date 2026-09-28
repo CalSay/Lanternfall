@@ -449,3 +449,111 @@ into lines.)
 - **Crafted slots in all:** the Lanternbearer has 5 socket-bearing positions (up to 3 each) and each hero 2
   (up to 2 + 1). A party in Legendary gear has 21 sockets; a typical Region 2 party (Rare and Epic) has
   about 11.
+
+---
+
+## 3. Production chains
+
+### 3.1 The chains
+
+One step each, from Region 2 on. Every output is a family in `S.mats` (1.1).
+
+| Chain | Takes (for 1 output) | Station | Makes | Station skill (XP) |
+|---|---|---|---|---|
+| **Smelting** | 2 Ore + 1 Coal of that grade's region | the Forge's Smelter | 1 Ingot | Smithing |
+| **Sawing** | 2 Logs | the Workbench's Saw | 1 Plank | Woodcraft |
+| **Tanning** | 2 Hide + 1 Salt of that grade's region | the **Tannery** (new building) | 1 Leather | Tailoring |
+| **Weaving** | 2 Fibre + 1 Dye of that grade's region | the Loom | 1 Cloth | Tailoring |
+| **Distilling** | 3 Herbs | the Still at the Enchanter's Table | 1 Tincture | Enchanting |
+
+- Refined goods are **denser**: recipes ask half as many (2.3), and the Storehouse holds half as many
+  (1.7), so the raw behind a recipe is the same as before plus the secondary.
+- Sawing has no secondary: medium gear pays in salt (leather) and heavy gear in coal and salt, light gear
+  in dye. Heavy gear costs the most secondary; it is also the most durable in the Storehouse sense (the
+  Warrior replaces fewer pieces, since armour caps early, 2.4).
+- **Tinctures** go into Tonics from grade 4 (1 Tincture replaces 3 Herbs in a Tonic recipe) and Salvage
+  Runes (4.4). The Still is optional for 1.0 (owner decision O6); without it, runes take Herbs.
+- Who needs what: every class needs Ingots only as accents and tools, Planks in every light piece, Leather
+  for heavy and medium, Cloth for light. So each class runs two or three chains and touches all five a little.
+
+### 3.2 Stations, queues and where they live
+
+| Station | Where (WC1 decides the building; this is the job) | Opens | Queue |
+|---|---|---|---|
+| Smelter | The Forge's Smelter branch (plan-4 6.2 names it); WC1 may make it its own building | The Great Lantern of the Hollow (Region 2 reached) | 3 orders |
+| Saw | The Workbench (a Sawmill branch) | same | 3 |
+| Loom | The Loom | same | 3 |
+| **Tannery** | **New building**, its own plot. The plot shows a stake from zone 30: "Opens when the Great Lantern of the Hollow burns" | same | 3 |
+| Still | The Enchanter's Table | same | 3 |
+
+- **An order** is a grade and a count (up to 250 x station level at once). The inputs are taken when the
+  order is placed, so the pouch never promises what the queue already spent. **Cancel** gives back what is
+  not yet refined (a gift: it always lands). Building trees can add a 4th and 5th order (BT1).
+- **Outputs arrive one by one as a flow** into the Storehouse. If that cell is full the order pauses
+  ("Storehouse full: Starsteel Ingot. Refining waits."), like a node at its cap. Nothing is lost.
+- **It runs while you are away**, up to the away cap, in closed form (orders run in queue order).
+- A station builds up to Lv 5 on the standard camp rows (WC1/BT1 cost them). The Tannery's Lv 1 costs
+  Region 1 materials so it can stand on arrival: Mithril Ore 60, Ironbark Log 80, Scaled Hide 40, 10 min.
+- **Coast arrival gift** (a gift, lands above the cap): 50 Sea Coal, 25 Sea Salt, 25 Whelk Dye, so the first
+  grade-4 weapon is one short queue away. Next Up: "Smelt your first Starsteel Ingots at the Forge."
+
+### 3.3 Refining speed
+
+```
+secs per output = 6 x (1 + 0.15 x (g - 4)) / speed
+speed           = (1 + 0.2 x (station level - 1)) x (1 + refiners) x mod('refine')
+```
+
+| Grade | Lv 1, no refiner | Lv 3, 1 Common refiner | Lv 5, 2 Rare refiners |
+|---|---|---|---|
+| 4 | 600 an hour | 1,050 | 1,890 |
+| 6 | 460 | 810 | 1,450 |
+| 9 | 340 | 600 | 1,080 |
+| 12 | 270 | 480 | 860 |
+| 15 | 230 | 400 | 710 |
+
+(A Rare refiner adds `2.5 x 15%` = +37.5%; Lv 5 is x1.8.)
+
+- **Demand check:** a Rare +5 set of four at the new grade (recipes plus upgrades, `10 x recipe`) takes
+  about 500 main + 250 second refined units at grade 6, and 1,100 + 550 at grade 15. That is about one away
+  session at Lv 1 with no help, and 2-3 hours with a built-up station and refiners. Refining should never
+  hold a new grade back by more than one check-in (target E4, section 8).
+- **Refining XP:** `0.3 x g` a unit to the station's skill (a grade-15 set's ingots are about 2-3 crafts of
+  XP). It lets a player who keeps a queue running pass the station gates (1.4) without re-rolling gear.
+- The knob table is `REFINE_TUNE` (`secs`, `perGrade`, `perLv`, `batch`, `xp`) in the S4 data file.
+
+### 3.4 Secondary resources: the throttle
+
+- **One secondary unit per refined unit** (none for planks). A grade-6 heavy set needs about 500 Sea Coal
+  and 250 Sea Salt.
+- **The Lanternbearer can gather them** (the owner's rule: the game is playable without Hands). A coal seam
+  gives 3 Coal a swing at 0.8x the time of the region's first ore node: about 3.75x that node's rate, so 10
+  minutes of coal covers an hour of ore. But it gives half the skill XP and no rare finds, so the hero's own
+  time is better spent on the grade it is climbing. **That is what makes it a Hand job**, not a penalty.
+- **Hands on secondaries:** a Common Coal-digger at 10% share gathers `0.1 x 3.75` = 37% of the hero's ore
+  rate in Coal, which feeds 75% of that ore into ingots. One secondary Hand per chain a class runs is enough.
+
+### 3.5 Gatherer jobs RG1 needs (N1b owns the roster, names and trees)
+
+| Job | Works | Rate | Notes |
+|---|---|---|---|
+| Coal-digger | Coal seams | share x the hero's rate at that seam | from Region 2 |
+| Salter | Salt pans (and rime, stone) | same | from Region 2 (roadmap-review 2.5) |
+| Weaver-gatherer | Fibre patches and Dye plants | same | fibre from Region 1, dye from Region 2 |
+| **Hunter** (owner: yes) | A lit zone the party has cleared | `share x huntRef(g)`, `huntRef(g)` = 0.5 x the hero's reference rate at the best grade-g node it has | Brings Hide of the zone's grade. +25% in zones whose foes drop hide as a signature (beasts) |
+| Gem-seeker | A region's buff-item node (5.4) | finds at share x the node's find rate | The Lucky one of the pair gets +5% find rate (owner) |
+| **Refiner** (any Hand) | A station instead of a node | +`2.5 x share` station speed (Common 25%, Legendary 62%); x1.5 on its own chain (a Coal-digger at the Smelter) | At most 2 refiners a station. No haul and no pack: the queue is the pay. Hand XP by hours worked, as today |
+
+- The Lanternbearer never hunts: owner decision 4 (hide is fight-only for the hero) stands; hunting is a
+  Hand job (plan-4 5, owner "Hunter: yes").
+- Refiners and Hunters sleep in the Bunkhouse like any Hand; the bed cap's late-game rise (`handBeds`)
+  is where they come from.
+- The `role` field on a Hand record (57f-hands.js: "missing = 'gather'") takes `refine` and `hunt`.
+
+### 3.6 Region 1 stays raw
+
+- Grades 1-3 take raw materials only. The refined cells for grades 1-3 exist in the save (15-long arrays)
+  but are never made or shown.
+- The stations' refining queues, the Tannery and the secondary nodes open together at the Great Lantern of
+  the Hollow, one step before the first grade-4 recipe. A player's first hour is exactly today's.
+- Kept grades (1.8) craft raw before the Coast, so a Region 1 save never meets a refined recipe early.
