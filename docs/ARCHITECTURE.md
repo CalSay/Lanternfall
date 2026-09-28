@@ -23,6 +23,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 60b-baker.js | browser | B1 baker: `charFrames`, `enemyFrames`, `portraitURL`, `drawCharPreview`, lights |
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 22-data-regions.js | core (data) | the Lantern Road's regions (region-2.md 2.2): `REGIONS` (the Hollow 1-35, the Sunken Coast 36-70; per region its 7 types as TYPES indices, names, themes, uniques, home grounds, hue rule, boss), `ROAD_BEYOND`, `regionOf`/`regionIdx`/`regionById`, `zoneNextType`, `zoneTheme`, `zoneHue`, `zoneUnique`, `zoneHome`, `regionBossZone`, `lanternsLitAt`. `zonePlace`/`zoneCycle`/`zoneType`/`zoneName` (40-rules) read it. Region 2's own data plugs in through `REGION_COAST` (22-data-coast.js); until then the coast reuses the Hollow's foes under its own names |
+| 23-data-deeds.js | core (data) | achievements data (docs/design/achievements.md, AC2): `DEED_TRACKS` (92 tracks, tiers Bronze/Silver/Gold/Everflame, stars), `DEED_GROUPS`, `DEED_FEATS`, `DEED_SECRETS`, `DEED_LOOKS` (36 accessories + 4 frames), `DEED_LADDER`, `DEED_CHAPTERS`, `DEED_CAP` (the hard bonus cap per key), `DEED_TUNE` |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
 | 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
@@ -53,6 +54,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 59b-enemies.js | core | foe behaviours by zone type (dives, archers, bruisers, spore clouds, slams, healers), elites, boss mechanics and telegraphs, parry/dodge (`resolveParry(source)`, `cbTelegraph()`), knobs `ENEMY_TUNE`, data `FOE_BEH` |
 | 59c-deepwell-combat.js | core | the Deepwell on party combat (deepwell.md 8.2 and 15, plan-3 W6b): a floor is one pack (wraps `DEEP_ARENA.spawn`/`onKill`), party HP carried between floors (`run.hpAt`), a wipe ends the run (`DW.fall()`, reason `wipe`), Oil refunds +5s and parries give Oil, Taunt Drill for every class, Lifeline once a floor (`dcLifeline`), the Deep Edge Lore (D8); knobs `DEEP_COMBAT_TUNE`, `deepCombatOn()`, `DWC` (state in `S.deepCombat`: the one-time tip). 59-combat hooks: `cbArena` adopts `mob.pack`, `cbRestore(clear)` |
 | 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
+| 58-deeds.js | core | achievements core (AC2): tracks read the save or new counters (`S.deeds.n/g/rec`, combat as `CB_STATS` deltas once a second), a quarter of the tracks checked per second, groups, Feats, secrets, points and ladder, capped Gold/Everflame bonuses (`deedBonus(key)`), titles joined to `codexTitles()` (ids `a_*`), looks and `wearGet(slot)`, the `deeds-near` Next Up goal, away lines, old-save credit (one What's new line); waiting tracks light up by runtime probes (`S.store`, `S.hands`, `S.kitchen`, `S.bond`, `S.oath`, `S.pin`, `REGIONS[1].plugged`); API `deeds` (header of the file); state `S.deeds` |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -184,6 +186,7 @@ topGoals(n = 3) -> [{ id, sys, label, pct, ready, go, icon }]       // cached ~0
 `view` when there is no `sel`, scrolls to `sel` and flashes it) or a fn
 returning one. `icon` is a toast icon spec, or `{ mob: typeKey }` / `{ char: rosterId }`.
 `prio` (default 0) breaks ties and orders ready goals. Register from your own 55-*.js file.
+`cap: 1` (optional): the diversity pass never takes a second goal from that `sys` (the deeds nudge, the story chapter).
 ```js
 registerGoal({ id: 'camp-build', sys: 'camp', label: () => `${B.name}: ready to build`,
   pct: () => campBuildPct(), go: { tab: 'world', sel: '#sec-camp' }, icon: { ic: ['anvil', '#F2C14E'] } });
@@ -245,6 +248,10 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `codexLight` / `codexPage` / `codexMilestone` | `{ light, gain }` / `{ id, kind: 'half'\|'seal' }` / `{ at, rewards }` (57c-codex) |
+| `deedTier` / `deedGroup` / `deedFeat` / `deedSecret` | 58-deeds: `{ id, tier, quiet }` / `{ id, lv, quiet }` (1 Gold, 2 Everflame) / `{ id, quiet }` / `{ id }` |
+| `deedPoints` / `deedMilestone` / `deedLook` / `deedChapter` / `deedsInit` | `{ pts, gain }` / `{ at }` / `{ slot, id }` (worn look changed; slot `helm` = the Show helm switch) / `{ id, step, quiet }` / `{ tiers, pts }` |
+| `deedsOpen` (listened, UI) | `{ view: 'deeds'\|'tracks'\|'feats'\|'looks', id }`: open the Achievements menu (the nudge's Go, away lines) |
+| `meal` / `tideTurn` / `storeCap` (listened) | 58-deeds counts them for Well Fed, Tide-Turner and the Pack Rat secret (K12, R2, H3 emit them) |
 | `starLit` / `starUnlit` / `starReset` / `starLayout` | 57e-constellations: `{ cls, id }` / `{ cls, id }` / `{ cls, n }` / `{ cls, i }` |
 | `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` (`summary.reason`: oil, wipe, leave, abandon, closed). With party combat `deepKill` fires once per floor (the pack) |
 | `legendDrop` / `legendLearn` / `legendRank` | 55-legend: `{ id, rank, kind: 'item'\|'echo'\|'rankUp'\|'book', source, item }` / `{ id, rank, echo, up }` / `{ id, rank }` |
@@ -263,6 +270,8 @@ Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fie
 keep loading without loss, and so must every fixture in `tests/fixtures/` (`save-v3-four.json`: a
 chosen class and a full old field of 3 with gear, for the F1 party-of-three migration). `S.tab` is the open menu's tab, or `''` on the game view (portrait).
 `S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
+`S.settings.num` ('letters' | 'sci'; missing = letters): `fmt` reads it through `setNumFormat` (00-util;
+58-deeds syncs it, `deeds.setNum(v)` switches). Letters past Dc go on aa, ab, ...; below 1e36 `fmt` is unchanged.
 `S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
 (last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
 
