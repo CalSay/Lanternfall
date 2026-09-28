@@ -70,6 +70,27 @@
   [data-style="C"] .pin .lbl { background: rgba(10,8,18,.78); border: 0; border-bottom: 2px solid rgba(255,186,96,.55); color: #FFE9C0; }
   [data-style="C"] .pin.dim .lbl { border-bottom-color: #3A3450; color: var(--muted); }
   [data-style="C"] .zr { color: rgba(255,226,170,.8); }
+  /* MAP1 style H: C's lamplight labels; a cold (dusk) chip for dark places; fireflies and motes */
+  [data-style="H"] .pin .lbl { background: rgba(8,8,16,.82); border: 0; border-bottom: 2px solid rgba(255,186,96,.6); color: #FFE9C0; }
+  [data-style="H"] .pin .lbl.cold { border-bottom-color: #3A4466; color: #B8BCD8; }
+  [data-style="H"] .zr { color: rgba(255,226,170,.78); }
+  [data-style="H"] .map, [data-style="H"] .sec { background: #07090F; }
+  .mote { position: absolute; width: 2px; height: 2px; pointer-events: none; z-index: 1; }
+  .mote.ff { background: #F4FFB0; box-shadow: 0 0 0 2px rgba(216,240,122,.22), 0 0 8px 3px rgba(200,236,100,.32); animation: ff1 7s ease-in-out infinite alternate, blink 2.6s steps(2) infinite; }
+  .mote.ff.p2 { animation-name: ff2, blink; animation-duration: 9s, 3.4s; } .mote.ff.p3 { animation-name: ff3, blink; animation-duration: 8s, 2.2s; }
+  .mote.mo { background: rgba(170,190,232,.6); animation: mo1 12s linear infinite; }
+  .mote.em { background: #FFB060; box-shadow: 0 0 6px 2px rgba(255,107,61,.45); animation: em1 6s linear infinite; }
+  @keyframes ff1 { 0% { transform: translate(0, 0); } 35% { transform: translate(6px, -4px); } 70% { transform: translate(-2px, -9px); } 100% { transform: translate(5px, -3px); } }
+  @keyframes ff2 { 0% { transform: translate(0, 0); } 40% { transform: translate(-7px, -3px); } 100% { transform: translate(-3px, 5px); } }
+  @keyframes ff3 { 0% { transform: translate(0, 0); } 50% { transform: translate(4px, 6px); } 100% { transform: translate(-5px, 2px); } }
+  @keyframes blink { 0% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes mo1 { 0% { transform: translate(0, 0); opacity: 0; } 20% { opacity: .8; } 80% { opacity: .6; } 100% { transform: translate(10px, -18px); opacity: 0; } }
+  @keyframes em1 { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-4px, -22px); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .mote { animation: none !important; opacity: .85; } }
+  .sh-ramp { display: flex; gap: 14px; flex-wrap: wrap; } .rp { margin: 0; } .rp-row { display: flex; border: 2px solid var(--line); } .rp-row i { width: 22px; height: 30px; display: block; }
+  .rp figcaption { font: 600 calc(12px * var(--k))/1 var(--display); color: var(--muted); margin-top: 4px; }
+  .strips { width: 600px; } .strip { margin: 0 0 12px; } .strip figcaption { font: 600 calc(15px * var(--k))/1 var(--display); color: var(--bone); margin: 0 0 6px; } .strip canvas { border: 2px solid var(--line); }
+  [data-style="H"] .sh-regions canvas { border: 2px solid var(--line); }
   /* expedition bar and tabs */
   .exp { height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 12px; background: var(--panel); border-top: 2px solid var(--line); }
   .exp .t { flex: 1; display: flex; flex-direction: column; gap: 2px; } .exp b { font: 600 calc(12px * var(--k))/1 var(--display); letter-spacing: .1em; color: var(--muted); } .exp span { font: 500 13px/1.1 var(--body); }
@@ -109,4 +130,5 @@
 <script src="style-a.js"></script>
 <script src="style-b.js"></script>
 <script src="style-c.js"></script>
+<script src="style-h.js"></script>
 <script src="page.js"></script>

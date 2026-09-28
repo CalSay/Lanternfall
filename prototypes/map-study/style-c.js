@@ -328,6 +328,7 @@ const STYLE_C = (() => {
   return {
     key: 'C', name: 'Lamplit terraces', pitch: 'The region at night, seen from the side like the fight stage: the road zigzags down the hill in stone terraces, one tall lamp per zone with a picture of its zone. Lit lamps light their terrace; the rest is cold blue.',
     paintHollow, paintCoast, paintBeyond, sheet, swatch, youFrame, team, flag, glowK: 1.1, P, regionTile,
+    parts: { rest, tavern, well, greatLantern, sign, lamp, wyrm, horn, youFrame, team, flag, gate, vignette }, // MAP1: style H borrows the landmarks
     youTip: l => [l.x + (l.band % 2 === 0 ? -10 : 13), l.y + 3], teamAt: (res, band) => [band % 2 === 0 ? 34 : 146, res.rows[band] + 3], flagDy: 34, zrDy: 10
   };
 })();

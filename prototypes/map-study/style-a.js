@@ -427,6 +427,7 @@ const STYLE_A = (() => {
   };
   return {
     key: 'A', name: 'Dusk overworld', pitch: 'A 16-bit JRPG world map: tiles, forests, a cliff, a pond. The land past your last lamp waits in the night palette.',
-    paintHollow, paintCoast, paintBeyond, sheet, swatch, youFrame, team, flag, P, night, regionTile
+    paintHollow, paintCoast, paintBeyond, sheet, swatch, youFrame, team, flag, P, night, regionTile,
+    parts: { tree, pine, rock, bush, grave, shroom, reed, mound, lamp, gate } // MAP1: style H borrows the terrain stamps
   };
 })();

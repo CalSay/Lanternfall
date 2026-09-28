@@ -1,5 +1,5 @@
 // map-study/shots.mjs: renders the study PNGs into docs/design/img/map/ (MAP0 scratch).
-// node prototypes/map-study/shots.mjs [out-dir] [--only a-screen,b-sheet] [--fonts dir]
+// node prototypes/map-study/shots.mjs [out-dir] [--only a-screen,h-strip] [--fonts dir]
 // Needs the global playwright package and /opt/pw-browsers/chromium (as tools/perf.mjs).
 // Google Fonts: pass --fonts <dir> holding handjet.css, barlow.css and the woff2 files (named
 // s_<path with / as _>), or the page falls back to Arial Narrow.
@@ -18,11 +18,12 @@ fs.mkdirSync(out, { recursive: true });
 const exe = ['/opt/pw-browsers/chromium/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
 const JOBS = [];
-for (const k of ['a', 'b', 'c']) {
+for (const k of ['a', 'b', 'c', 'h']) {
   JOBS.push({ name: `map-${k}-screen`, q: `style=${k.toUpperCase()}&view=screen`, w: 360, h: 740, dpr: 2, sel: '.phone' });
   JOBS.push({ name: `map-${k}-full`, q: `style=${k.toUpperCase()}&view=full`, w: 360, h: 740, dpr: 2, sel: '.phone' });
   JOBS.push({ name: `map-${k}-closeups`, q: `style=${k.toUpperCase()}&view=sheet`, w: 1000, h: 800, dpr: 1, sel: '.sheet' });
 }
+JOBS.push({ name: 'map-h-strip', q: 'style=H&view=strip', w: 600, h: 600, dpr: 1, sel: '.sheet' });
 JOBS.push({ name: 'map-overview', q: 'style=A&view=overview', w: 1240, h: 900, dpr: 1, sel: '.ov', last: 1 });
 for (const j of JOBS) {
   if (only && !only.includes(j.name.replace(/^map-/, ''))) continue;
