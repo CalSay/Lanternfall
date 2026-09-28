@@ -538,3 +538,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (Lightkeeper fixed), T1/T3/T14/T18 fail (Ranger fast, Lightkeeper 1.19): BAL3. Coordinator updated the
   AC2 dormant-track check (bonds/together live now: 79 live). Next: F4 Party UI; F3 is running with
   formQuick available.
+- OWNER: the Storehouse must scale up quickly (idle game): never 'only worth idling 10 minutes', meaningful but not ridiculous. H3 told to re-derive caps from real rates: Lv 1 holds a full 8 h away session of the best open node; later levels keep pace with the away cap (up to 24 h) and tiers; active play fills a cell in ~1-3 h; upgrades quick early. Spec table (100..10,000) was far too small.
