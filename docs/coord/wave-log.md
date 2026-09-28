@@ -583,3 +583,15 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   wear change, lookIconURL/looksPreview/lookCritterDraw). Coordinator kept both new check sections (looks,
   story). Follow-ups: Company Cape reads weakly; flames read mainly through stage light; critter sleeping by
   the camp fire waits for a camp scene; gather JS p95 maybe +1-2 ms with looks worn (noisy): re-measure.
+- H3 merged: 55-store.js, 75-store-ui.js (every credit through stashAdd: flow / parcel / preview / gift;
+  skill XP and tool mastery keep counting at the cap; "Storehouse full" chip with Switch and Spillover; held
+  vs cap on rows and the Pack). Caps (owner's idle rule, from sim rates), gathered per cell by level 0-8:
+  5,000 / 40,000 / 50,000 / 100,000 / 200,000 / 300,000 / 750,000 / 1,250,000 / 2,500,000 (fought: half).
+  Builds 90 s, 10 m, 30 m, 2 h, 6 h, 12 h, 18 h, 24 h. HS19 check: a full away session fits at each expected
+  level. Owner rule 3 (active fills a cell in 1-3 h) cannot hold with rules 1-2 (active only ~2x away):
+  rules 1-2 kept; told to the owner. Not built: the expedition send-sheet "haul would not fit" warning.
+- F5 merged: partyLevel over the field of 2, benched companions get 25% kill XP (quiet), combat get-up after
+  15 s mid-pack and a 90 s stall counts as a wipe/retreat, hold estimate uses real power for the hero's HP.
+  --targets 15/20 (P1, P2, P4, T4, T6, T11 pass). Bench XP may be strong (L1 -> L19 in 2 min): BAL3.
+- LORE4+5 merged: 21i-lore-exped.js (28 Lore pages, 12 keepsakes), 21j-lore-omens.js (35 Omens, 7 Dares,
+  omenLine), shown in the Codex and on the Almanac card.
