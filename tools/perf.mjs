@@ -36,8 +36,8 @@ const BUDGET = {
 
 // ---------------- windows ----------------
 const W = QUICK
-  ? { warm: 1500, fight: 7000, tab: 1500, toast: 2000, boss: 1500, heap: 12000, taps: 3 }
-  : { warm: 3000, fight: 20000, tab: 4000, toast: 4000, boss: 3000, heap: 60000, taps: 7 };
+  ? { warm: 1500, fight: 7000, tab: 1500, toast: 2000, boss: 1500, heap: 12000, taps: 3, gather: 3000 }
+  : { warm: 3000, fight: 20000, tab: 4000, toast: 4000, boss: 3000, heap: 60000, taps: 7, gather: 6000 };
 
 // ---------------- playwright ----------------
 function loadPlaywright() {
@@ -258,6 +258,13 @@ async function runScenario(browser, base, { dev, save }) {
     handledMed: r1(pct(taps.map(t => t.handled - t.down), 50)),
     paintMed: r1(pct(taps.map(t => t.painted - t.down), 50)), paintMax: r1(Math.max(0, ...taps.map(t => t.painted - t.down)))
   };
+  // ---- gathering scenes (G2): the switch to each (its longest task), then steady gathering ----
+  out.gather = {};
+  for (const kind of ['ore', 'wood', 'herb', 'crystal']) {
+    const sw = await window_(2000, () => page.evaluate(k => window.__lf.x(`setNode('${k}', 1); if (S.activity !== 'gather') setActivity('gather')`), kind));
+    out.gather[kind] = { ...summarize(await window_(W.gather)), switchLong: Math.round(Math.max(0, ...sw.lt.map(l => l[1]))) };
+  }
+  await page.evaluate(() => window.__lf.x("setActivity('fight')"));
   out.stage = await page.evaluate(() => window.__lf.stage());
   out.sections = await page.evaluate(() => Object.entries(window.__lfp.sec).map(([k, a]) => {
     const s = [...a].sort((x, y) => x - y);
@@ -284,6 +291,12 @@ function judge(o) {
   }
   chk('toast burst: longest task', o.toasts.longMax, B.eventLong, 'ms');
   chk('boss kill: longest task', o.boss.longMax, B.eventLong, 'ms');
+  for (const [k, g] of Object.entries(o.gather || {})) {
+    chk(`gather ${k}: JS/frame p95`, g.jsP95, B.jsP95, 'ms');
+    chk(`gather ${k}: frame gap p95`, g.gapP95, B.gapP95, 'ms');
+    chk(`gather ${k}: long tasks`, g.long, Math.round(B.longPer10s * W.gather / 10000));
+    chk(`gather ${k}: switch, longest task`, g.switchLong, B.eventLong, 'ms');
+  }
   chk('heap growth', Math.max(0, o.mem.growthMBmin), B.heapMin, 'MB/min');
   chk('DOM nodes', o.mem.dom, B.dom);
   chk('tap to paint (median)', o.tap.paintMed, B.tap, 'ms');
@@ -314,6 +327,8 @@ function report(all) {
     ...Object.keys(all[0].tabs).map(id => row(`tab ${id} gap p95, long (n/max)`, o => `${o.tabs[id].gapP95}, ${o.tabs[id].long}/${o.tabs[id].longMax}`)),
     row('toast burst JS p95, long n/max', o => `${o.toasts.jsP95}, ${o.toasts.long}/${o.toasts.longMax}`),
     row('boss kill JS max, long n/max', o => `${o.boss.jsMax}, ${o.boss.long}/${o.boss.longMax}`),
+    ...Object.keys(all[0].gather || {}).map(k => row(`gather ${k} fps, JS p95/p99, gap med/p95`, o => `${o.gather[k].fps}, ${o.gather[k].jsP95}/${o.gather[k].jsP99}, ${o.gather[k].gapMed}/${o.gather[k].gapP95}`)),
+    ...Object.keys(all[0].gather || {}).map(k => row(`gather ${k} long (n / max), switch max`, o => `${o.gather[k].long} / ${o.gather[k].longMax}, ${o.gather[k].switchLong}`)),
     row('heap MB, growth MB/min', o => `${o.mem.heapMB}, ${o.mem.growthMBmin}`),
     row('DOM nodes / listeners', o => `${o.mem.dom} / ${o.mem.listeners}`),
     row('tap: handled / paint med / max', o => `${o.tap.handledMed} / ${o.tap.paintMed} / ${o.tap.paintMax}`),

@@ -21024,6 +21024,11 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     { const x = Math.round(X(0.86)), leg = mat('#5A4030'), lg = mat('#7A5A3A', 'vol', { sep: 1 }), end = flat('#D8B47A', { nl: 0 });
       mid.line(x - 6, G, x - 3, G - 7, 1, leg); mid.line(x, G, x - 3, G - 7, 1, leg); mid.line(x + 6, G, x + 9, G - 7, 1, leg); mid.line(x + 12, G, x + 9, G - 7, 1, leg);
       mid.grp(() => mid.rect(x - 7, G - 10, 20, 3, lg)); mid.rect(x + 13, G - 10, 1, 3, end); }
+    // late sun through the gap in the canopy, baked into the layers (no per-frame shafts)
+    const sun = [255, 236, 180];
+    light(far, X(0.52), G - Ha * 0.12, 90, { rgb: sun, a: 0.2, core: 0, flick: 0, pool: 0.22, px: 0.7, py: 1.2, kind: 'sun', bakeOnly: 1 });
+    light(mid, X(0.55), G - Ha * 0.3, 80, { rgb: sun, a: 0.2, core: 0, flick: 0, pool: 0.16, px: 0.6, py: 1.3, kind: 'sun', bakeOnly: 1 });
+    light(gnd, X(0.56), G + 3, 70, { rgb: sun, a: 0.2, core: 0, flick: 0, pool: 0.28, px: 1.1, py: 0.35, kind: 'sun', bakeOnly: 1 });
     // ferns and bushes at the trunks' feet
     for (const [fx, rx] of [[0.04, 9], [0.96, 10], [0.36, 4], [0.7, 5]]) mid.oval(X(fx), G - 1, rx, rx * 0.6, leaf2, 'top');
     // -- ground: grass, a trodden clearing, chips, flowers, old stumps near the viewer --
@@ -21068,7 +21073,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
       const fx0 = Math.round(X(0.74)), fb = Math.round(ridgeY(X(0.74) + 300, G - Ha * 0.15, 4)) + 1, wall = matS(hz('#7A6450', 0.25)), roof = matS(hz('#5A3430', 0.25));
       far.rect(fx0 - 9, fb - 8, 18, 9, wall); far.poly([fx0 - 11, fb - 8, fx0 - 2, fb - 14, fx0 + 7, fb - 14, fx0 + 11, fb - 8], roof); far.rect(fx0 + 5, fb - 17, 2, 4, roof);
       windowLit(far, fx0 - 6, fb - 6, 2, 2, { r: 10, a: 0.55 }); windowLit(far, fx0 + 3, fb - 6, 2, 2, { r: 10, a: 0.55 });
-      for (const fx of [0.1, 0.5, 0.93]) farLamp(Math.round(X(fx)), Math.round(ridgeY(X(fx) + 300, G - Ha * 0.15, 4)) - 3);
+      for (const fx of [0.1, 0.93]) farLamp(Math.round(X(fx)), Math.round(ridgeY(X(fx) + 300, G - Ha * 0.15, 4)) - 3);
     } else {
       // standing stones on the far hill, crystals catching the moon
       for (const fx of [0.3, 0.7]) { const x = Math.round(X(fx)), b = Math.round(ridgeY(x, G - Ha * 0.3, 6)) + 2; far.rect(x - 5, b - 9, 3, 9, farFront); far.rect(x + 3, b - 9, 3, 9, farFront); far.rect(x - 6, b - 11, 13, 2, farFront); }
@@ -21134,7 +21139,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
   });
   registerSceneTheme('gwoods', {
     th: { sky: ['#0E1C18', '#18301F', '#27462C', '#3A5E3A'], far: '#20382A', far2: '#27422F', leaf: '#2E5E36', leaf2: '#27502F', bark: '#553E2C', iron: '#3A3444',
-      gnd: '#26482A', lip: '#4F8A42', path: '#5A4630', amb: ['leaf', '#7FBE5E', 10], amb2: ['firefly', '#D8F07A', 10], fog: ['#CFE8B0', 0.06], shafts: 1 },
+      gnd: '#26482A', lip: '#4F8A42', path: '#5A4630', amb: ['leaf', '#7FBE5E', 10], amb2: ['firefly', '#D8F07A', 10], fog: ['#CFE8B0', 0.06] },
     paint: paintWoods, fg: fgWoods, grassy: 1
   });
   registerSceneTheme('gmeadow', {
@@ -21156,33 +21161,54 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
   const REGROW = 8;      // s at least for a spent node to grow back (presentation only)
   const WALK = 80;       // the hero's walking speed, logical px per second
   const PILE_MAX = { cart: 6, logs: 15, basket: 6, crate: 6 };
-  // node slots: [fraction of the stage width, lane (1 front, 0 back)]
-  const SLOTS = {
-    3: [[0.3, 1], [0.58, 0], [0.86, 1]],
-    4: [[0.26, 1], [0.46, 0], [0.66, 1], [0.87, 0]],
-    5: [[0.22, 1], [0.38, 0], [0.55, 1], [0.72, 0], [0.89, 1]]
-  };
-  const G = { key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
+  // Where the worked node can stand: the hero stands on its left with the tool's strike reaching
+  // NODE_HIT of the way into the node's box (62-stage heroHome, G1; the same fractions), and the hero
+  // must stay on the stage (its feet HERO_MIN px in). So the nodes the hero works fill the stage from
+  // there to the right edge; at least MIN_SEEN nodes show, the extra ones in the back lane on the left
+  // (not worked: more of the seam, the grove or the bed).
+  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
+  const HERO_MIN = 26, REACH = 66, MIN_SEEN = 3;
+  function heroReach() {
+    try {
+      const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(G.kind))));
+      if (!f || !ART.ready(f, 'strike')) return 0;
+      const q = f.strike, c = q.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      for (let x = c.width - 1; x >= 0; x--) for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) return x + 1 - q.ox;
+    } catch (e) {}
+    return 0;
+  }
+  const G = { reach: 0, reachT: -9, key: '', kind: '', t: 1, fam: 'rock', fr: null, nodes: [], cur: 0, pile: 0, lastT: -1, SW: 0, GY: 0, lift: 0, walk: null, snap: true, stage: 0, cutX: 0 };
   const ease = q => q < 0 ? 0 : q > 1 ? 1 : q * q * (3 - 2 * q);
   const frames = () => enemyFrames('node:' + G.kind, { tier: G.t });
 
   function ensure(SW, GY) {
-    const kind = S.node.kind, t = S.node.t, key = kind + t + '|' + SW + '|' + GY;
+    const kind = S.node.kind, t = S.node.t;
+    // the hero's real reach, once its strike frame is baked (until then an estimate)
+    if (!G.reach && kind === G.kind && T > G.reachT + 1) { G.reachT = T; const r = heroReach(); if (r) { G.reach = r; G.key = ''; } }
+    const key = kind + t + '|' + SW + '|' + GY;
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
+    if (!again) { G.reach = 0; G.reachT = -9; }
     G.key = key; G.kind = kind; G.t = t; G.fam = FAM[kind] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY;
     G.lift = Math.max(10, Math.min(28, Math.round(GY * 0.075)));
-    const f = G.fr && G.fr.idle0, rx = f ? f.c.width - f.ox : 20;
-    const n = SW < 270 ? 3 : SW < 400 ? 4 : 5, old = again ? G.nodes : null;
-    G.nodes = SLOTS[n].map(([fx, lane], i) => {
+    const f = G.fr && G.fr.idle0, w = f ? f.c.width : 60, ox = f ? f.ox : 30, rx = w - ox;
+    const xa = Math.round(HERO_MIN + (G.reach || REACH) - w * (NODE_HIT[kind] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), SW - 6 - rx);
+    const gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
+    const nw = Math.max(1, Math.min(nMax, Math.floor(Math.max(0, xb - xa) / gap) + 1)), nd = Math.max(0, MIN_SEEN - nw);
+    const list = [];
+    // extra nodes at the back on the left, then the worked ones, back and front lanes in turn (the last in front)
+    for (let i = 0; i < nd; i++) list.push({ x: Math.max(ox + 4, Math.round(xa - gap * (nd - i) * 0.9)), lane: 0, deco: true });
+    for (let i = 0; i < nw; i++) list.push({ x: nw > 1 ? Math.round(xa + (xb - xa) * i / (nw - 1)) : Math.max(xa, xb), lane: (nw - 1 - i) % 2 ? 0 : 1 });
+    const old = again && G.nodes.length === list.length ? G.nodes : null;
+    G.nodes = list.map((q, i) => {
       const o = old && old[i];
-      return { x: Math.min(Math.round(fx * SW), SW - 6 - rx), lane, y: GY - (lane ? 0 : G.lift), st: o ? o.st : 'full', g: o ? o.g : 0, hits: o ? o.hits : 0, rg: o ? o.rg : REGROW * 2, ph: i * 1.7 };
+      return Object.assign(q, { y: GY - (q.lane ? 0 : G.lift), st: o ? o.st : 'full', g: o ? o.g : 0, hits: o ? o.hits : 0, rg: o ? o.rg : REGROW * 2, ph: i * 1.7 });
     });
     if (!old) {
-      G.cur = 0; G.pile = 0; G.snap = true;
-      // one node is already growing back: the place has been worked before
-      if (n >= 4) { const k = n - 1; G.nodes[k].st = 'gone'; G.nodes[k].g = 0.45; }
-    } else G.cur = Math.min(G.cur, n - 1);
+      G.cur = nd; G.pile = again ? G.pile : 0; G.snap = !again;
+      // a node already growing back: the place has been worked before
+      if (nw >= 3) { const k = G.nodes.length - 1; G.nodes[k].st = 'gone'; G.nodes[k].g = 0.45; }
+    }
     G.stage = 0;
   }
   on('sceneReset', () => { G.key = ''; G.kind = ''; G.walk = null; G.snap = true; });
@@ -21207,7 +21233,8 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
   // becomes the worked node. With none full, the one nearest to grown back is ready early.
   // How many gathers a node takes: about LIFE s of work at the current speed.
   const unitT = () => { try { return Math.max(0.3, nodeTime(G.kind, G.t)); } catch (e) { return 3; } };
-  const capOf = () => Math.max(1, Math.min(8, Math.round(LIFE / unitT())));
+  let capT = -9, capV = 1;
+  const capOf = () => { if (T > capT + 0.5 || T < capT) { capT = T; capV = Math.max(1, Math.min(8, Math.round(LIFE / unitT()))); } return capV; };
   function deplete() {
     const N = G.nodes, n = N.length; if (!n) return;
     const nd = N[G.cur], cap = capOf();
@@ -21218,8 +21245,8 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     nd.rg = Math.max(REGROW, Math.min(40, (n - 1) * cap * unitT() * 0.8));
     spentFx(nd);
     let next = -1;
-    for (let k = 1; k < n && next < 0; k++) { const j = (G.cur + k) % n; if (N[j].st === 'full') next = j; }
-    if (next < 0) { let best = -1; for (let j = 0; j < n; j++) if (j !== G.cur && (best < 0 || N[j].g > N[best].g)) best = j; next = best < 0 ? G.cur : best; N[next].st = 'full'; N[next].g = 0; N[next].hits = 0; }
+    for (let k = 1; k < n && next < 0; k++) { const j = (G.cur + k) % n; if (N[j].st === 'full' && !N[j].deco) next = j; }
+    if (next < 0) { let best = -1; for (let j = 0; j < n; j++) if (j !== G.cur && !N[j].deco && (best < 0 || N[j].g > N[best].g)) best = j; next = best < 0 ? G.cur : best; N[next].st = 'full'; N[next].g = 0; N[next].hits = 0; }
     G.cur = next; G.stage = 0;
   }
   on('harvest', p => { if (!p || p.away || p.glint || target() !== 'node' || !G.nodes.length || p.kind !== G.kind) return; deplete(); });
@@ -21501,27 +21528,30 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
       if (nd === cur || nd.st !== 'full') continue;
       const L = f0.lights; if (!L || !L.length) continue;
       const x0 = nd.x - cam - f0.ox, y0 = nd.y - f0.oy;
-      for (let i = 0; i < Math.min(2, L.length); i++) { const l = L[i]; ANIM.lightAt(ctx, l.rgb, x0 + l.x, y0 + l.y, Math.min(Math.max(8, l.size * 3), 20) * 1.3, nd.lane ? 0.26 : 0.18); }
+      for (let i = 0; i < 1; i++) { const l = L[i]; ANIM.lightAt(ctx, l.rgb, x0 + l.x, y0 + l.y, Math.min(Math.max(8, l.size * 3), 20) * 1.3, nd.lane ? 0.26 : 0.18); }
     }
     ctx.globalCompositeOperation = 'source-over';
     ctx.imageSmoothingEnabled = smooth;
   };
 
   // ---------------- warm-up: build a gathering scene in idle time before it is needed ----------------
-  // (the scene only: its device-size plates build after the switch, so the two plate slots keep the
-  // zone on screen and the next zone's)
-  let warmKey = '';
+  // Picking a node switches to it at once, so the scenes are built ahead, in small idle steps: the last
+  // node's scene a few seconds after boot, every gathering scene when the Gather menu opens, a newly
+  // picked kind's while fighting. The scene only: its device-size plates build after the switch, so
+  // the two plate slots keep the zone on screen and the next zone's.
+  const warmed = new Set();
   function warm(kind) {
     if (typeof stageStats !== 'function' || typeof sceneSteps !== 'function' || typeof idleTask !== 'function') return;
     const st = stageStats(); if (!st || !st.SW) return;
     const SCH = st.SH >= 210 ? st.SH : Math.round(st.GY / 0.8), th = gatherTheme(kind), key = th + '|' + st.SW + 'x' + SCH;
-    if (key === warmKey) return;
-    warmKey = key;
-    const stepF = sceneSteps(th, st.SW, SCH, 0), run = () => { if (warmKey === key && !stepF()) idleTask(run); };
+    if (warmed.has(key)) return;
+    warmed.add(key);
+    const stepF = sceneSteps(th, st.SW, SCH, 0), run = () => { if (!stepF()) idleTask(run); };
     idleTask(run);
   }
-  on('menuView', p => { if (p && p.tab === 'gat') warm(S.node.kind); });
+  on('menuView', p => { if (p && p.tab === 'gat') { warm(S.node.kind); for (const k of GATHER_KINDS) warm(k); } });
   on('sceneReset', () => { if (S.activity !== 'gather') warm(S.node.kind); });
+  if (typeof setTimeout === 'function') setTimeout(() => warm(S.node.kind), 3000);
 }
 
 // ---- src/js/70-ui.js ----
