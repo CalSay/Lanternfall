@@ -393,3 +393,328 @@ So the choice is real at every stage: about half the people you have met can wor
 and tree.
 
 ---
+
+## 7. Production chains: how gatherers feed them
+
+### 7.1 Who feeds which chain
+
+| Chain (gear-2 3.1) | Takes | Gathered by | Refined best by (own chain) |
+|---|---|---|---|
+| Smelting | 2 Ore + 1 Coal | Miner (Ore), Coal-digger (Coal) | Miner, Coal-digger; Ned's Full Scuttle wants it running |
+| Sawing | 2 Logs | Woodcutter | Woodcutter |
+| Tanning | 2 Hide + 1 Salt | Hunter (Hide), Salter (Salt); Gil skips it for 20% of his hide | Hunter, Salter; Ada x2 (x3 with Master) |
+| Weaving | 2 Fibre + 1 Dye | Weaver-gatherer (both; Gammer Loy's Tight Weave brings the dye with the fibre) | Weaver-gatherer |
+| Distilling | 3 Herbs | Herbalist | Herbalist |
+
+Three ways a gatherer helps a chain, from light to heavy:
+
+1. **Supply the secondary.** Coal, salt and dye are the throttle (gear-2 3.4). The Lanternbearer's own
+   time is better spent on the grade it is climbing, so this is the first bed a Region 2 player fills.
+2. **Supply the main input.** Miners, Woodcutters, Hunters and Weaver-gatherers add to what the
+   Lanternbearer gathers.
+3. **Refine.** A refiner speeds a station while their shift runs; **Standing Order** keeps the station
+   busy while you are away.
+
+### 7.2 A worked example (Region 2, grade 4, the Warrior's heavy set)
+
+Let R be the Lanternbearer's rate at the grade-4 ore vein (units an hour). A coal seam gives the
+Lanternbearer about 3.75R (gear-2 3.4).
+
+| Who (Lv 1) | Where | Rate |
+|---|---|---|
+| Ned Culver (Steady: 12% x 1.15) | Region 2 coal seam | 0.52R coal an hour |
+| The Lanternbearer | grade-4 ore | R ore an hour, which needs 0.5R coal to smelt |
+| Nan Tarrow (Steady, Deep Seam) | grade-4 ore (her top grade) | 0.17R ore an hour |
+| The Smelter, Lv 1 | grade 4 | 600 ingots an hour |
+| + Nan refining (own chain) | | +2.5 x 12% x 1.5 = +45%: 870 an hour |
+| + Ned refining too (own chain; 2 at most) | | about 1,140 an hour |
+
+So **one Coal-digger keeps up with all the ore the Lanternbearer mines**, and a Miner either adds ore or,
+better once the queue is long, refines. Two beds of the crew run the Smelter. A Warrior also wants a
+Salter (and later a Hunter) for leather; a Mage a Weaver-gatherer; a Ranger a Woodcutter and a Salter.
+With 6-7 beds in Region 2 a player runs their class's two chains and one more.
+
+A player with no gatherers still progresses (gear-2 design rule 3): the Lanternbearer gathers coal in 10
+minutes for an hour of ore, and the station runs alone.
+
+### 7.3 Refiner numbers
+
+| | Lv 1 (12%) | Lv 10 (15.6%) | Lv 20 (19.6%) |
+|---|---|---|---|
+| Station speed, other chain (`2.5 x share`) | +30% | +39% | +49% |
+| Own chain (x1.5) | +45% | +59% | +74% |
+| Own chain with Handy (C1, x1.25) | +56% | +73% | +92% |
+| Own chain with Handy and Master (x2 instead of x1.5) | - | - | +123% |
+
+Two such refiners and a Lv 5 station (x1.8) give about x6 the Lv 1 speed at grade 4: a Rare +5 set's
+refined goods in well under one away session (gear-2 E4).
+
+---
+
+## 8. Idle and offline
+
+- **A shift is fixed at send**, as N1: place (node, zone or station), length, rate and seed. Reload and
+  offline pay the same as watching. The rate uses the Lanternbearer's rate at send, without Tonics,
+  Omens, meals or the Glint (N1's `handsHeroRate`).
+- **Length:** 4 h for every named gatherer (N1's 2-8 h by rarity goes with rarity), +15 min every 5
+  levels, +30 min with Long Legs, +1 h with Tireless: 4 to 6.5 h.
+- **Coming home:** the pack unloads into the Storehouse as parcels (N1). Big Pack lets a pack unload what
+  fits and hold the rest.
+- **Second Wind** (B2): if the pack unloaded in full when they got home, the gatherer rests 30 minutes
+  and goes out again to the same place, with the same rate and the next seed. Once per send (twice with
+  Tireless). It is worked out in closed form inside `handsCatchUp`, so it fires the same offline. A pack
+  that waits (Storehouse full) cancels it: the gatherer stays home, which is the Storehouse's signal.
+- **What a night away gives:** a gatherer with Second Wind covers 8.5-13 h of an 8-12 h night; without
+  it, 4-6.5 h. The owner's rule stands: they go out for a set time and come home.
+- **Hunters** work their zone for the shift like a node. **Refiners** add their speed to the station only
+  between their shift's start and end; S4's away closed form splits the away window at those times (at
+  most 2 refiners x 3 shifts a station: a few segments).
+- **Buff-item and find rolls** come from the seed at the end of the shift, so a reload cannot re-roll them.
+- **Lodgers** do nothing while you are away. **At Camp** perks work while the crew member is at camp, as
+  N1's at-camp traits (the best one of a kind counts).
+- **Send all again** (N1's `handsSendAgain`) stays the one-tap check-in: every crew member at camp goes
+  back to their last place.
+
+---
+
+## 9. Data and save
+
+### 9.1 Data (`src/js/21p-data-gatherers.js`, data only)
+
+```js
+GATHER_TUNE = {
+  on: 1,                        // 0: N1's random applicants (tools/sim.mjs --named 0)
+  share: 0.12, perLv: 0.004,    // 12% at Lv 1, 19.6% at Lv 20
+  shiftH: 4, secondWindMin: 30,
+  steadyY: 0.15, luckyKeen: 0.03, luckyTroph: 0.03, luckyBuff: 0.05, luckyBuffEveryH: 2,
+  gemEveryMin: { base: 10, steady: 8 },
+  hunt: { ref: 0.5, beast: 0.25 },
+  refine: { k: 2.5, own: 1.5, max: 2 },
+  pts: [3, 5, 7, 9, 11, 14, 17, 20], rows: [3, 7, 11, 17],
+  teach: [[150, 'raw'], [400, 'raw'], [80, 'ref'], [200, 'ref', 1]],   // [n, raw or refined, trophies]
+  campFx: { store: 0.03, away: 0.02, build: 0.05, hide: 0.05, rested: 0.10, meal: 0.10, tune: 0.25 }
+};
+GATHER_JOBS = {            // id -> { n, sk, fams, chain, st, camp, from (region), refined }
+  miner: { n: 'Miner', sk: 'mine', fams: ['ore', 'crystal'], chain: 'smelt', st: 'smelter', camp: 'stonework', from: 1, refined: 'ingot' },
+  coal:  { n: 'Coal-digger', sk: 'mine', fams: ['coal'], chain: 'smelt', st: 'smelter', camp: 'bank', from: 2, refined: 'ingot' },
+  // wood, hunter, herb, weaver, salter, fisher, gem: as the table in section 1
+};
+GATHERERS = [              // 22 rows; the Region 4 and 5 pairs have live: 0 until their region specs
+  { key: 'nan', n: 'Nan Tarrow', job: 'miner', tmp: 'steady', about: 'Worked the quarry before the dark. Grenna knows her.',
+    sig:  { id: 'deep', n: 'Deep Seam', txt: '+25% yield on the highest grade her job has open', y: 0.25, top: 1 },
+    sigp: { txt: '+40%, on the two highest grades', y: 0.40, top: 2 },
+    route: { k: 'region', when: () => ..., fb: { zone: 25 }, hint: 'Someone still works the quarry tunnels, by feel.' } },
+  // ...
+];
+GATHER_TREE = { A: { steady: [4 nodes], lucky: [4 nodes] }, B: [4], C: [4], noChain: { fisher: [3], gem: [3] } };
+// node: { id, n, txt, fx: { y, keen, troph, buff, shiftMin, sw, haul, split, refine, standing, own, camp } }
+```
+
+Effects reuse N1's machinery where they can: `y` adds to `yieldOf`, `shiftMin` to `handsShiftSecs`, `keen`
+and `troph` to N1's Keen Eye and Lucky rolls, the at-camp perks to N1's `handsCampTrait` pattern.
+
+### 9.2 Save: the `hands` key, `v: 2`
+
+The save key stays `lanternfall.save.v1`, and the state stays `S.hands` (`registerState('hands', ...)`).
+New fields only; nothing renamed or repurposed:
+
+| Field | Meaning |
+|---|---|
+| `S.hands.v` | 2 |
+| `S.hands.leads` | `{ [key]: { at, n, ev } }`: a route under way (rumour minutes mined, an event waiting) |
+| `S.hands.met` | (exists) key -> ms they arrived; now every named gatherer |
+| hand `trade` | The job id (`miner` ...). Missing = an old random Hand, read by N1's rules. (**Not** `job`: that field is the current shift) |
+| hand `tmp` | `steady` or `lucky` |
+| hand `bed` | 1 = crew, 0 = lodger |
+| hand `role` | `gather` (missing), `hunt`, `refine` (gear-2 9.1) |
+| hand `tree` | `{ k: [taught node ids], on: [active node ids] }` |
+| job `z`, `st`, `sw` | The zone (hunt), the station (refine), Second Winds left |
+
+- `r` stays on named records as `common` (N1's repair code needs a known rarity); the share reads
+  `GATHER_TUNE` when `key` is a named gatherer.
+- **The v1 to v2 step** (small; skipped if S4 bumps the save key and starts fresh): Tam, the five
+  Legendaries and the Hollises already in `list` get `trade`, `tmp` and `bed: 1` and keep their levels;
+  their `tr` and `cl` stay in the save, but the signature replaces them. Old random Hands stay exactly as
+  they are (N1's rules, a bed each, Let go works). Random applicants on the board leave (never hired,
+  nothing paid). Routes that are already true fire quietly, with one card: "3 people have come to the
+  fire while you were away."
+- `HANDS_LATER` (the Hollises) is superseded by their `GATHERERS` rows.
+
+---
+
+## 10. Screens for N3 (360 px wide)
+
+All tap targets 44 px or more. No information on hover only. Reduced motion: no walking or bobbing; bars
+jump instead of filling.
+
+### 10.1 The Bunkhouse (Camp > Bunkhouse): the crew
+
+```
++------------------------------------------+
+| Crew  4 of 5 beds             [Send all] |
+|------------------------------------------|
+| [pt] Nan Tarrow   Miner · Steady          |
+|      Out: grade-4 ore vein    1 h 20 m    |
+|      [=========--------]                  |
+|------------------------------------------|
+| [pt] Ned Culver   Coal-digger · Steady    |
+|      Refining at the Smelter · +45%       |
+|------------------------------------------|
+| [pt] Rook         Miner · Lucky   [Send]  |
+|      At the fire                          |
+|------------------------------------------|
+| ( )  Empty bed                 [Swap in]  |
+|------------------------------------------|
+| > Lodging at the Tavern (5)               |
++------------------------------------------+
+```
+
+- A row is 64 px: a 40 px portrait, name and chips on line 1, status on line 2, a bar when out. The right
+  button is the next thing to do: **Send**, **Collect** (a pack waits: opens the Storehouse note), or none.
+- Tap a row to open the gatherer's card. The lodgers fold opens a list with a **Swap** button on each
+  (disabled, with "Everyone in the crew is out", when nobody can swap).
+
+### 10.2 The gatherer card (a sheet)
+
+Portrait (96 px, N2's art), name, job and temper chips, the one-liner in italics. Then:
+
+- **Level 7**, a bar, "9 h to level 8". "Brings 14.4% of your rate."
+- The **Signature** box: name and line; "Signature+" greyed until A4 is active.
+- Now: status and time left. One row of buttons: **Send**, **Tree**, **Swap** or **Send to lodge**.
+- Folded: hours worked, units brought, finds, stories heard (N1's counters).
+
+### 10.3 The send sheet
+
+Tabs show only when they apply: **Gather** (every node the Lanternbearer has open), **Hunt** (Hunters:
+cleared zones, beast zones first), **Refine** (once S4's stations exist: each station with its 2 refiner
+slots and its queue).
+
+```
+| Gather   Hunt   Refine                    |
+| * grade-4 ore vein           Own job      |
+|   2,340 in 4 h 30 m · The Smelter needs ore |
+|   grade-3 ore vein           Own job      |
+|   1,980 in 4 h 30 m                        |
+|   grade-4 grove              Half share   |
+```
+
+The top row is the suggestion (N1's `handsSuggest`, extended: a chain's missing input or secondary first,
+then camp builds, then the smallest pile), with its reason on the second line. Rows marked "Full" show the
+Storehouse chip and stay tappable (the pack will wait).
+
+### 10.4 The tree (a sheet)
+
+Three columns (**Trade**, **Road**, **Hearth**), four rows. At 360 px each column is about 104 px; a node
+is a 52 px tile with its icon and a two-line name (11 px). States: locked (row level not reached),
+teachable (a cost chip), taught (outlined), active (filled). "Points: 3 of 5". Tapping a node opens a panel
+at the bottom with the effect, the cost and one button: **Teach (150 grade-2 Logs)**, **Put a point
+here** or **Take the point back**. The **Move points** toggle shows only while the gatherer is at camp.
+
+### 10.5 Word on the Road (the Tavern)
+
+The Tavern's section that replaces the Job board: gatherer cards in a 2-column grid (156 px each), grouped
+by region (reached regions and the next one only). States as in 5.3. A card with a route under way has a
+small bar ("12 of 20 min").
+
+### 10.6 Chips and notes elsewhere
+
+| Where | What | How |
+|---|---|---|
+| Gather node rows | "Nan · 1 h 20 m" | `registerGatherRowNote(fn(kind, t))` (72-ui-gather, exists) |
+| S4's station sheet | Refiner slots: "Ned refining · +45%", or "Empty: send a gatherer" | S4's refine UI reads `handsRefiners(st)` |
+| Away card | Group "Gatherers": "Nan is back: +2,340 grade-4 ore." / "Pell found an Uncommon buff item." / "Ada worked the Tannery for 4 h." | N1's away lines |
+| Next Up | "Nan is back: send again", "Gil Rushby has come to the fire", "Rook is in the quarry: mine at a grade-2 vein" | N1's goals, plus leads |
+| Arrival | A camp card: portrait, the arrival line, **Meet** (opens the card) | new |
+
+---
+
+## 11. Sim targets and hooks
+
+| Id | Target | Band |
+|---|---|---|
+| GT1 | First named gatherer after Tam (Gammer Loy) | hour 2-4 |
+| GT2 | Each arrival against 5.2's expected column | within +/- 25% of the region's length |
+| GT3 | Beds in use at check-ins after day 1 (the policy) | 80% or more |
+| GT4 | Gatherers' share of gathered units (HS9, extended) | day 2: 10-20%; day 14: 20-35%; day 45: 25-40% |
+| GT5 | One gatherer's rate over the Lanternbearer's reference (HS10, revised) | 10-30% (a Lv 20 Steady with a full Trade branch is the top) |
+| GT6 | Chains: from day 10, no station waits on coal, salt or dye for more than one check-in with the policy's crew | yes |
+| GT7 | Steady vs Lucky: a day's value, same job, same level | within 15% |
+| GT8 | Buff items from gatherers (Lucky rolls, Gem-seekers, Brannoc, Morrow, Pell) | 15-25 a region (inside gear-2 E6's 80-110) |
+| GT9 | Refining with the policy's refiners: gear-2 E4 holds; with no gatherers at all, E4 misses by at most one more check-in | yes |
+| GT10 | Trees: first node taught / first capstone / 8 points on one gatherer | day 1-2 / day 20-30 / day 35-45 |
+| GT11 | Offline 8 h vs live 8 h, with Second Wind | within 15% per family |
+| GT12 | Every teaching cost fits the Storehouse level expected when its row opens (HS8) | exact (check.mjs, static) |
+| GT13 | Gatherers never add skill XP or tool mastery: the Lanternbearer's XP is identical with `--named 0` and `1` for the same actions | exact (check.mjs) |
+
+**Sim flags:** `--named 0|1` (the named roster; 0 = N1's random applicants) and `--report gatherers`
+(units by gatherer and job, finds, beds used, arrivals by day, tree points spent). **Policy:** fill beds by
+need (a secondary for each chain the class runs, then the class's main family, then a Lucky Gem-seeker
+once Enchanting is open, then the rest); send by the extended `handsSuggest`; one refiner per running chain
+once its queue holds more than one away session; teach the Trade branch first, then the Hearth branch for
+chain jobs and the Road branch for the others; swap lodgers in when a job is needed.
+
+**Core helpers for the sim (no DOM):** `gatherRoster()`, `gatherLead(key, stage)`, `gatherMeet(key)`,
+`gatherSwap(inKey, outKey)`, `gatherTeach(id, node)`, `gatherPoint(id, node, on)`,
+`handsSendHunt(id, z)`, `handsSendRefine(id, st)`, `handsRefiners(st)` (a speed multiplier).
+
+---
+
+## 12. Build split
+
+File numbers were checked against `src/js` and every file name the design docs reserve: `21p`, `21q` and
+`57h` are free. Nothing here uses 59e, 59g, 59h, 59i or 59j.
+
+| Task | Work | Owns (new files) | Small edits in | Needs |
+|---|---|---|---|---|
+| **N3a** Gatherers core (Opus or Sonnet, M) | Data (9.1), the roster and routes, leads and arrivals, crew, lodgers and Swap, tempers, signatures, levels and points, trees (teach, points, respec), the Hunter, Second Wind and Big Pack, the v2 step, refiner hooks for S4 (`handsRefiners`, `handsSendRefine`; the role is stored and shown, and speed counts once S4's stations exist), away lines, Next Up goals; sim `--named`, `--report gatherers`, GT1-GT13; check section `gatherers` | `src/js/21p-data-gatherers.js`, `src/js/57h-gatherers.js` | `57f-hands.js` (hook points: a yield adder, a shift adder, a find hook, the own-job rule by families, `role`, `trade`, random applicants off when `GATHER_TUNE.on`); `21f-data-hands.js` (`beds` to 8 levels, `bedMax` 10, `HANDS_LATER` retired); `57c-codex.js` (Camp page: met of 22); `tools/sim.mjs`, `tools/check.mjs` | N1 (done) |
+| **N3b** Gatherer screens (Sonnet, M) | Section 10: the crew view, the card, the send sheet, the tree sheet, Word on the Road, arrival cards, node chips, the away group | `src/js/75-hands-ui.js`, `src/styles/60-hands.css` (both named in hearth-and-hands 10) | `74-ui-tavern.js` (mount Word on the Road), `75-camp-ui.js` (the Bunkhouse card opens the crew view) | N3a |
+| **LORE-G** Gatherer words (Sonnet, S) | 22 arrival lines, route hints, about 8 talk lines each, 4 fire stories each (88), rumour lines | `src/js/21q-gatherers-talk.js` | - | N3a (keys) |
+| **S4** (in its own files) | Stations call `handsRefiners(st)` for speed and split the away window at refiner shift ends; `zoneGrade` for the Hunter; coal, salt and dye nodes as job families; Ned carries the Coast arrival gift; tree rows 3-4 read the refined families | - | `55-gear2.js`, `75-refine-ui.js` (refiner slots) | N3a |
+| **S5** | Lucky and Gem-seeker buff rolls go through `55-enchant.js`'s find table (off until S5: no buff items exist yet) | - | `55-enchant.js` | N3a |
+| **BT1 / WC1** | Bunkhouse Lv 6-8 rows (region-gated) and the Bunkhouse tree's "Bunk beds" (+1 through `addBonus('handBeds')`) | - | `57-camp.js` | N3a |
+| **R2, EV1, HQ1** | Quill's, Oona's and Morrow's triggers and the `fish` skill; Dorrie's and Jory's events; the Elowen quest probe. Each calls `gatherLead(key, stage)` | - | their own files | N3a |
+| **N2** | Art for 22 on the B1 townsfolk kit; camp spots by job (Hunter by the Tannery, Salter and Fisher by the Kitchen, Coal-digger by the Forge, Gem-seeker by the Enchanter's Table) | `src/js/12g-art-hands.js` (reserved) | - | N3a (keys) |
+
+Merge order: N3a first, then N3b and LORE-G in parallel. N3a runs on today's 5 tiers: the Hunter works at
+once, the coal, salt and dye jobs and refiners switch on with S4, buff rolls with S5, and the Region 4 and
+5 pairs with their regions (`live: 0`). Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
+`node tools/perf.mjs --quick`. Per-tick work stays at one route probe a second.
+
+---
+
+## 13. Player-facing copy (starting lines)
+
+| Where | Line |
+|---|---|
+| Arrival | Nan Tarrow has come to the fire. |
+| Arrival, no bed | Gil Rushby has come to the fire. No bed is free, so he lodges at the Tavern. |
+| Temper chips | Steady: brings more. / Lucky: finds things. |
+| Rumour | Nan says there's a lad still down in the quarry cracks. |
+| Lead | Mine at a grade-2 vein. He follows the sound of your pick. (12 of 20 min) |
+| Swap | Swap Rook for Gammer Loy? |
+| Tree gate | Needs Ingots. The Smelter opens when the Great Lantern of the Hollow burns. |
+| Second Wind | Nan rested and went back out. |
+| Refiner | Ned is refining at the Smelter: +45% speed. |
+| Idle refiner | Waiting for an order at the Smelter. |
+
+---
+
+## 14. Decisions for the owner
+
+- **D1. Named gatherers only.** Random applicants, rarity and hire prices go. Every gatherer is a named
+  person with a route, recruited free. A save's existing random Hands keep working as they are.
+  Recommended: **yes** (it is what "two named gatherers per job" means, and it removes the gacha board).
+- **D2. The cap is on who works, not on who you meet.** Beds set the crew (10 by Region 5); everyone else
+  lodges at the Tavern and swaps in for free while at camp. Nobody leaves for good. Recommended: **yes**.
+- **D3. Trees: 8 points across 12 nodes.** Points come from levels; each node is taught once with
+  materials (rows 3-4 ask for refined goods, so chains feed the trees); points move freely between taught
+  nodes at camp. Recommended: **yes**.
+- **D4. Shifts stay bounded.** The tree's Second Wind sends a gatherer out once more (twice at most), so a
+  night away is covered, but nobody works for ever without a check-in. Recommended: **yes** (it keeps
+  your earlier rule that they come back to camp when done).
+- **D5. Old names, new jobs.** Jory becomes the Lucky Hunter, Mother Ashby the Lucky Herbalist, Old
+  Bracken the Lucky Woodcutter; the Hollises arrive together at the Coast's boss but work two jobs (Ada
+  salts, Pell fishes). Recommended: **yes**.
+- **D6. 22 by Region 5.** The Region 4 and 5 pairs (LORE-R45's Fenn and Wick, Old Corrin and Sable) are
+  extra Gem-seekers with a home-region bonus; the R4 and R5 specs keep or rename them. Recommended:
+  **yes**.
