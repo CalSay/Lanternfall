@@ -106,7 +106,10 @@ Unchanged rules: `toast(msg, kind, icon, prio)` or `emit('toast', { msg, kind, i
    Keep labels to one short word (4 views fit at 360 px). A tab holds 2-4 views; past that, merge.
 3. Without `view` a section joins the tab's first view. That is the busiest one: do not.
 4. Things every view of a tab needs are rare; mark them `data-view="*"` (or a space-separated list).
-5. Show essentials on a card; put details behind a tap (a sheet via `openSheet`) or a chevron.
+5. Show essentials on a card; put details behind a tap (a sheet via `openSheet`) or a chevron. The chevron
+   pattern is `disclose(row, trigger, onToggle)` in 71-ui-fight.js (row gets `dz`/`open`; styles in
+   60-disclose.css; `.dz-list` joins rows into one frame). Done for the Fight upgrades and boss gate, the Camp
+   Hearth cost and building list, and the Almanac weekly goals (polish pass, 2026-09-28).
 6. Give the view a `dot()` only for news the player should act on, and keep it cheap (runs once a second).
 
 ## Rules for later UI work

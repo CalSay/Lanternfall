@@ -136,7 +136,24 @@ let openSheet, partySheet;
   // Something waiting for the player: an unread story or a promotion they can pay for now.
   const needsYou = k => isRecruited(k) && (safe(() => storyState(k).unread, 0) > 0 || safe(() => canPromote(k), false));
 
+  // Out on an expedition (57b expedOut): { route, back, left: '3h 12m', txt: 'Out: Route, 3h 12m' } or null.
+  const outOf = k => {
+    const sl = typeof expedOut === 'function' ? safe(() => expedOut(k), null) : null; if (!sl) return null;
+    const rt = (typeof EXPED_ROUTES === 'object' && EXPED_ROUTES[sl.r]) || null, route = rt ? rt.n : 'an expedition';
+    const m = Math.ceil((sl.end - Date.now()) / 60000), back = m <= 0;
+    const left = back ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h` + (m % 60 ? ` ${m % 60}m` : '');
+    return { id: sl.r, route, back, left, txt: `Out: ${route}, ${back ? 'back' : left}` };
+  };
+  // The player's Codex title (57c codexTitle), cached by the chosen title's id.
+  let ctKey, ctVal = '';
+  const heroTitle = () => {
+    const key = S.codex ? S.codex.title : null;
+    if (key !== ctKey) { ctKey = key; ctVal = key && typeof codexTitle === 'function' ? safe(() => codexTitle(), '') : ''; }
+    return ctVal;
+  };
+
   Object.assign(PTY, {
+    outOf, heroTitle,
     ROLE_NAME, CIRCLE_NAME, COL_NAME, HERO_GEAR_NOUN, HERO_SLOTS, safe, live, C, heroClass, heroCol, portrait, rarity, frameCol,
     rarityName, first, pip, essName, costText, weaponNoun, gearOf, itemIc, itemFrame, slotTile, traits, synergiesFor, missingText,
     leadList, leadFor, pctOf, xpInfo, inField, needsYou, fnActive
@@ -227,7 +244,8 @@ let openSheet, partySheet;
     const h = el('h2', 'cs-name', k === 'hero' ? S.name : C(k).name); h.id = 'csName';
     t.append(h);
     if (k === 'hero') {
-      const c = heroClass();
+      const c = heroClass(), ct = heroTitle();
+      if (ct) t.append(el('small', 'cs-ctitle', ct));
       t.append(el('small', 'cs-title', c ? `the ${c.name}` : 'the Wanderer'));
       const tags = el('div', 'cs-tags');
       if (c) tags.append(pip(c.role));
@@ -388,6 +406,12 @@ let openSheet, partySheet;
       const b = el('button', 'mini cs-act', 'Bench'); b.type = 'button';
       b.addEventListener('click', () => { if (benchChar(k)) { save(); ui(true); partySheet.refresh(true); } });
       row.append(b);
+    } else if (outOf(k)) {
+      // setField/fieldChar refuse someone on an expedition: say why instead of a dead button.
+      const b = el('button', 'mini go cs-act', 'Field'); b.type = 'button'; b.disabled = true;
+      b.title = 'Out on an expedition';
+      row.append(b);
+      foot.append(el('small', 'cs-cost', 'On an expedition. Field them when they are back.'));
     } else {
       const f = (S.party.field || []).slice(0, 3);
       const b = el('button', 'mini go cs-act', f.length < 3 ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
@@ -411,12 +435,15 @@ let openSheet, partySheet;
     }
   }
 
+  const outLine = o => o.back ? `Back from ${o.route}. Collect them in Camp > Expeditions.` : `Out: ${o.route}, ${o.left} left. They can join the party when they are back.`;
   function buildChar(k) {
     const body = sheet.body; body.textContent = ''; refs = {};
     sheet.sheet.setAttribute('aria-labelledby', 'csName');
     const locked = !isRecruited(k);
     body.append(head(k, locked));
     if (locked) { buildLocked(k); return; }
+    const o = outOf(k);
+    if (o) { const ln = el('p', 'cs-out'); refs.out = { ln, k }; ln.textContent = outLine(o); body.append(ln); }
     body.append(xpBlock(k));
     if (BIOS[k]) body.append(el('p', 'cs-bio', BIOS[k]));
     body.append(statsSection(k), gearSection(k));
@@ -507,11 +534,11 @@ let openSheet, partySheet;
   }
 
   const sigOf = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L;
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
     return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
-      JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join()].join('|');
+      JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join(), (o => o ? o.id + o.back : '')(outOf(k))].join('|');
   };
   function render(force) {
     if (!sheet || !who) return;
@@ -519,6 +546,7 @@ let openSheet, partySheet;
     if (!force && s === sig) {
       updateXp();
       if (refs.dps && who !== 'hero') putText(refs.dps, fmt(safe(() => charDps(who), 0)));
+      if (refs.out) { const o = outOf(refs.out.k); if (o) putText(refs.out.ln, outLine(o)); }
       if (refs.heroXp) { putStyle(refs.heroXp, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%'); putText(refs.heroXpTxt, `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`); }
       return;
     }
@@ -542,5 +570,5 @@ let openSheet, partySheet;
     close() { if (sheet) sheet.close(); },
     isOpen: () => !!sheet
   };
-  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop']) on(ev, () => { if (sheet) partySheet.refresh(); });
+  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop', 'expedSent', 'expedBack']) on(ev, () => { if (sheet) partySheet.refresh(); });
 }
