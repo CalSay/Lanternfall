@@ -505,3 +505,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   F2/F3/BAL3: --targets 12/20 (was 16): T3, P1, P2 (Lightkeeper stuck at zone 36 days 10-40), P4, T12 fail;
   C9 power ratio 0.75-1.37 across fixtures. Accepted to unblock F2/F3/F4; BAL3 retunes trioX, trioFrom
   and the hero floor. F2 also owns: 56b hearth -> "support in Back", legendary markMax 10 -> 8.
+- G2 merged: 63c-scenery-gather.js (mine with timbers, rails and a filling ore cart; woods with a growing
+  woodpile; meadow with a windmill; crystal glade), 3-5 nodes in view that crack, deplete and regrow, the hero
+  walks between them, gatherRight(x) keeps H1's plots clear. Perf level with the old single node within
+  noise (machine load 28-36). Follow-ups: far nodes crowd at 360px; cold-Hearth third stake under a canopy;
+  the Hearth tip covers part of the cold scene.
