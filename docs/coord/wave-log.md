@@ -759,3 +759,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   with the Lightkeeper evolution already chosen (nothing lost). Two linked specs: CL1 (classes, evolutions,
   damage types) and RG1 (resources by weight, production chains K13, cross-weight recipes, socket families
   by weight and region, crafted slots vs uniques 2.0).
+- OWNER DECISION (classes 2.0): three base classes by armour weight: WARRIOR (heavy), RANGER (medium),
+  MAGE (light). Each evolves into two playstyles, one damage-focused and one utility-focused:
+  Warrior -> Warden (utility/tank) or a damage branch (name TBD); Ranger -> two branches (names TBD; owner's
+  earlier idea: poison); Mage -> Priest (utility: holy, heals) or Warlock (damage). Existing saves migrate
+  without loss (Warden -> Warrior with the Warden evolution granted; Ranger -> Ranger; Lanternmage -> Mage;
+  Lightkeeper -> Mage with Priest granted). Names proposed to the owner; CL1 briefs from this.
