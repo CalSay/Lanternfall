@@ -325,26 +325,34 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     return mode === 1 || !holdsWith(A) ? B : A;
   }
   // AF (56d-autofield.js): the line-up planner (synergies, roles, cells, the zone's foes) when present.
+  // F3: through autoPlan (56d planner v3), so the change counts for its dwell.
   autoField = by => {
+    if (typeof autoPlan === 'function') { try { if (autoPlan('call', { by: by || 'potential', force: true })) return P().field; } catch (e) {} }
     if (typeof bestLineup === 'function') { try { const b = bestLineup({ by: by || 'potential' }); if (b && b.field.length) return applyLineup(b); } catch (e) {} }
     return setField(bestThree(by || 'potential'));
   };
   // A new recruit steps in when the field has room, or when they will out-damage a member
   // of the same kind (a tank replaces the weakest tank, anyone else the weakest non-tank).
   // Nobody else moves, so a recruit never reshuffles the bench.
+  // F3: the planner (autoPlan, 56d) decides; this rule says whether it may switch at once.
   function fieldIfBetter(id) {
     const f = fieldKeys();
     if (f.includes(id)) return;
-    if (f.length < T.fieldMax) { setField(f.concat(id)); return; }
+    const next = betterField(id, f);
+    if (typeof autoPlan === 'function') { try { if (autoPlan('recruit', { id, now: !!next })) return; } catch (e) {} }
+    if (next) setField(next);
+  }
+  function betterField(id, f) {
+    if (f.length < T.fieldMax) return f.concat(id);
     // Peers: tanks replace tanks; with party combat supports replace supports, and a first support
     // takes the weakest damage dealer's place (the party needs a healer more than a third hitter).
     const kind = k => R(k).role === 'tank' ? 't' : R(k).role === 'support' && combatOn() ? 's' : 'd';
     let peers = f.filter(k => kind(k) === kind(id));
     if (!peers.length && kind(id) === 's' && (supMode() === 1 || !holdsWith(f))) peers = f.filter(k => kind(k) === 'd');
-    if (!peers.length) return;
-    if (kind(id) === 's' && peers.every(k => kind(k) === 'd')) { setField(f.map(k => k === peers.sort((a, b) => potential(a) - potential(b))[0] ? id : k)); return; }
+    if (!peers.length) return null;
+    if (kind(id) === 's' && peers.every(k => kind(k) === 'd')) return f.map(k => k === peers.sort((a, b) => potential(a) - potential(b))[0] ? id : k);
     const weakest = peers.sort((a, b) => potential(a) - potential(b))[0];
-    if (potential(id) > potential(weakest)) setField(f.map(k => k === weakest ? id : k));
+    return potential(id) > potential(weakest) ? f.map(k => k === weakest ? id : k) : null;
   }
   // Called by 55-party (partyRefreshField) once the roster is live.
   rosterSyncField = force => {
