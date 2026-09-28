@@ -943,3 +943,154 @@ What an idle party does today stays, plus four small defaults (none needs a sett
 3. **A casting foe (`heal`, `summon`) becomes the party's focus while it casts**, so stuns and signatures land on
    it by default. (Today the focus is the marked foe, the one hitting the most hurt ally, else the most hurt foe.)
 4. Hero signatures tagged `interrupt` or that stun fire at a `sig` cast if they have a charge (they do not hold).
+
+---
+
+## 8. Answers, rulebook changes, build split and checks
+
+### 8.1 Answers to core-2's open questions for CB2
+
+9. **Auto-cast efficiency (`autoEff`).** Auto-**taps** keep **0.5** (the tap is the active verb, and the
+   classes' meters already fill idle; CL1 agrees). Auto-cast **abilities** fire at **full power** at the first
+   valid target, with one smart wait (up to 1.5 s for a Stagger at 90%+). The auto-**Finisher** is a tap verb:
+   **0.5**, at 2.5 s. Tactics' Finisher: 0.8. The active edge is timing (x1.25 windows, x1.5 Stagger, Keen,
+   Reeling, interrupts), never a cut to idle play.
+10. **Swarm totals.** **Higher:** a swarm pack totals **1.25x** HP and pays **1.25x** gold and XP
+    (`swarmHp`, `swarmPay`). Single-target parties earn about the same a second there; area parties earn
+    15-30% more (CX8). Area damage becomes a reason to pick a class, not a tax on the others.
+11. **Interrupting boss signatures.** **Every time.** The limit is the Lanternbearer's charges (`ab1` 20-40 s,
+    `ab2` 12-30 s against a signature every 14-20 s), so spending a charge on an interrupt or holding it for a
+    Stagger is the decision. Heroes with an `interrupt` signature and stuns (which stop a boss's cast while
+    turning into stagger) cover the rest. Every region boss also has a `hard` cast that nothing stops.
+12. **The zone boss timer vs the 30-40 s kill target.** **The timer becomes an Enrage timer and gets longer:**
+    zone elders 45 s, region bosses 60 s, with boss HP x1.5 / x2 so the damage needed to win is today's. At 0 the
+    boss enrages (50% faster, +10% damage a second); the fight fails 15 s later. A prepared party wins at today's
+    power; an unprepared one falls first and needs 1-2 zones more (1.5). The Warrior's Shield Wall keeps its
+    3 s pause (it holds back the Enrage).
+
+### 8.2 Proposed core-2 changes (for the change log, section 10; pending the coordinator's sign-off)
+
+| # | Section | Change | Why |
+|---|---|---|---|
+| 8.2-1 | 1.2, 6.3 | **Reeling** is a vuln entry: +50%, added into Σ vuln (cap +60%), 2 s, the foe does nothing | Core-2 names Reeling but not where it sits in the formula. Today it is a separate x1.5 |
+| 8.2-2 | 6.4 | Stagger fill: **perfect dodge +10**; a unit's heavy hits fill **at most 4 a second** | Dodges must feed the Stagger like parries; tap speed alone must not stagger a boss |
+| 8.2-3 | 6.3 | Telegraph ids **`cleanse`** and **`swap`** (the pinnacles' answers); `zone` windows fixed: dodge in the last 1.0 s, perfect in the last 0.5 s; the pinnacles' Scatter is a `zone` | Pinnacles use two answers core-2 has no id for; the dodge window needs a start |
+| 8.2-4 | 6.1, 8.2 | Foe data adds **`dt`** (hit type) and **`quota`** next to `size` and `fam`; normal packs are 5 or 6 **per type**; swarm totals `swarmHp` / `swarmPay` 1.25 | Core-2 1.4 says foes hit with their region's types but gives no field; Q10 |
+| 8.2-5 | 1.2 | The **Finisher** takes `staggerX`, not `timingX` | It only exists in the window; x1.875 on the biggest hit would dwarf everything else |
+| 8.2-6 | 4.5 | Tactics condition **`reaction`** (a reaction window is open on the focus foe) and action **`finish`** (the Lanternbearer's Finisher at 80%) | Reaction windows are the other half of ability timing; Tactics needs a Finisher short of the player's 100% |
+| 8.2-7 | 3.4 | A stun on a boss during a **`sig`** cast stops the cast (the stun itself still becomes stagger) | Stunners are the idle answer to signatures, as in pinnacles.md |
+| 8.2-8 | 1.4 | **Hit caps:** telegraphed 35% of max HP, boss swings 15%, pack swings 10% (swarm 4%), Explosive blast 20% | No one-shots once bosses hit 6.5x harder (the probe: the Golem's heavy took 65% of a striker) |
+| 8.2-9 | 6.2 | The **boss timer is an Enrage timer**: 45 s zone elders, 60 s region bosses, fail 15 s after; boss HP x1.5 / x2 | Q12 |
+| 8.2-10 | 6.6 | The active reward counts the **player's own** parries, `zone` / `slam` dodges and interrupts; not line-up answers, Tactics, Finishers or the heavy's early half-damage tap | 6.6 does not say whose answers count |
+| 8.2-11 | 3.1 | **Keen** goes on each member who stepped out of the patch | One tap moves the whole party out; Keen on the Lanternbearer only would read as a bug |
+| 8.2-12 | 5.4 | Signature item exceptions: **Hollow bosses** carry a heart-light, not a buff item (Region 1 has no family); **Deep Elders** drop at most one a run (D2, D3) | Core-2 5.4 says "bosses always drop" and "Region 1 has none"; deepwell.md rule 4 |
+
+`armourX` 0.8 (1.1) is inside core-2's 15-25% range and needs no line. CL1's lines 8.2-4 (the ability shape,
+`var`) and 8.2-7 (`stacks`, `meter`) touch this spec only through Tactics; nothing here conflicts with them.
+
+### 8.3 Build split and file ownership
+
+**What S1 needs from CB2** (S1 is the types and statuses slice; it proves core-2 first):
+
+- The data in 2.1: `FOE_BEH[k].fam` and `.dt` for the Hollow's 7 types (and the Coast's once R2 lands), so foes
+  take weakness and resists and hit with a type (resists `res*` answer it). `size` and `quota` ride along as data
+  but do nothing until S6.
+- Typed numbers and status badges on the **focus foe** (2.6, 2.7's first row). The pack number and the other
+  rows are S6.
+- `FOE_MAX` stays 6 and packs stay 3 in S1.
+
+**Slice S6: active combat, elites and the boss overhaul.** Eight tasks:
+
+| Task | Owns | Small edits in | Depends on | Model |
+|---|---|---|---|---|
+| **S6-A** Engine: pack sizes, the foe pool (12), quotas, spawn rhythm, swarm totals, the damage knobs, hit caps, the Enrage timer and the auto-challenge survival test | `src/js/59-combat.js`, `src/js/59b-enemies.js` | `src/js/50-sim.js` (Enrage at `bossTime` 0, fail at -15 s), `src/js/40-rules.js` (`PACE.bossHp`, `regionBoss`) | S1 | opus |
+| **S6-B** Active core: the answer scheduler (one queue in place of the single `TELE`), dodge and `zone`, cast bars and interrupt rules, the stagger bar, Finishers, Keen, Reeling, active counters and rewards, `cbState()`, the events | `src/js/59g-active.js` (new, core) | `src/js/55-party.js` (tap priority 1-4 in `classTap`; the ability buttons' interrupt and window states), `src/js/59b-enemies.js` (`resolveParry` calls into 59g) | S6-A; S2 (Finisher data; S3 for evolution Finishers) | opus |
+| **S6-C** Bosses: the kit interpreter, phases, every kit in section 4, the planner's `needs` and lean counters | `src/js/59h-bosses.js` (new, core), `src/js/21g-data-bosses.js` (new, data: `BOSS_KITS`, `ELITE_TRAITS`, trait weights, leans, hints and copy) | `src/js/59b-enemies.js` (`bossStart` hands a kit boss to 59h), `src/js/56d-autofield.js` (score `needs` and lean counters), `src/js/22-data-regions.js` (`lean[7]` per region) | S6-B; S5 (the `bossSig` drop grants a buff item) | opus |
+| **S6-D** Elite traits | `src/js/59i-elites.js` (new, core) | `src/js/59-combat.js` (roll traits at spawn; the shield pool in `cbDamageFoe`; the heal hook) | S6-A, S1 | opus |
+| **S6-E** Stage and fight UI: layout for 12 foes and depth ranks, the zoom step, the bar rules, merged numbers, `zone` patches, cast bars, the stagger outline and bar, trait overlays and badges, gem glints, the Finisher prompt, the banner (DOM, `aria-live`), settings (Assist timing, Haptics, Buttons on the left) | `src/js/13d-art-combat.js` (new: trait overlays, glints, heart-lights, hatch pattern, badges), `src/styles/60-combat2.css` (new) | `src/js/62-stage.js` (layout, zoom floor, HUD rules, numbers), `src/js/60b-baker.js` (the 1x swarm bake), `src/js/71-ui-fight.js` (the header: pack bar, stagger bar, cast name, "Enrage in", active pips), `src/js/70-ui.js` (three settings rows), `src/js/13-art-enemies.js` (`gem` anchors on the rigs) | S6-B | opus (perf-sensitive) |
+| **S6-F** The Deepwell and the raid | `src/js/59j-raid-combat.js` (new, core: the local raid fight, the shared clock, Falter, the stance, the signature grant on `raidReward`) | `src/js/59c-deepwell-combat.js` (Oil for answers, the 4-card draft, trait floors), `src/js/57d-deepwell.js` (5 boon rows, the set, `offers` 4 after an active kill) | S6-C, S6-D | opus |
+| **S6-G** Sim, checks, perf | `tools/sim.mjs` (`--cbtap`, `--cbharness`, CX1-CX14) | `tools/check.mjs` (8.5), `tools/perf.mjs` (`swarm10`, `bossKit`) | all | opus |
+| **S6-H** Writing: first-use hints, trait toasts, the Listener's lines, boss intro and fall lines for new kits, win-toast lines, the Deepwell tip, settings copy | text fields in `src/js/21g-data-bosses.js` (S6-C owns the file; S6-H fills copy fields only) and `src/js/21h-lore-hollow.js` (Listener lines) | - | - | sonnet |
+
+- **Untouched:** `52-raid.js`, `80-online.js`, the shared data shapes, the room, the leaderboard.
+- **Reserved names respected:** `59d` (the coast, region-2), `59e` (CL1's class combat), `59f` and `13c`
+  (pinnacles). CB2 takes `59g`-`59j`, `21g` and `13d`.
+- **Order:** S6-A, then S6-B; S6-C, S6-D and S6-E in parallel once S6-B's events exist; S6-F after C and D;
+  S6-G last, and it retunes the knobs (a BAL3 pass for the slice). S6-H any time.
+- **Pinnacles (PB1-PB5)** build on this: if they are built after S6, 59f uses 59g's scheduler and 59h's kit
+  interpreter and needs none of pinnacles.md 12's private hooks.
+
+### 8.4 Save
+
+```js
+registerState('cb2', {
+  v: 1,
+  assist: 0,      // Assist timing (3.9)
+  haptic: 1,      // Haptics
+  left: 0,        // Buttons on the left
+  seen: {},       // mechanic or trait id -> 1 once its first-use hint or toast has shown
+  n: { parry: 0, dodge: 0, perfect: 0, intr: 0, fin: 0, act: 0 }   // counters for deeds and stats (act: active boss kills)
+});
+```
+
+- All new, merged into old saves by `registerState`. Nothing existing is renamed or repurposed: `S.combat` (`on`,
+  `back`, `tip`) is untouched; `S.raid` keeps its shape.
+- **Runtime combat state is never saved** (core-2 8.1-5): stagger, casts, traits rolled on a pack, phases, the
+  raid's local fight. A reload mid-boss ends the attempt, as today.
+- The Deepwell's saved draft already stores its offered cards as a list; a 4-card offer needs no new field.
+
+### 8.5 Checks and performance tests
+
+`tools/check.mjs`, a new "cb2" section:
+
+1. **Kits:** every `BOSS_KITS` row has 2-3 phases; each phase after the first adds exactly one mechanic; every
+   telegraph id is core-2's (plus 8.2-3's); every mechanic has a cap within 1.4, an answer and an idle answer;
+   wind-ups ≥ 1.2 s and cast bars ≥ 1.5 s; each region boss has a `hard` cast.
+2. **Traits:** exactly core-2's 7 ids; the Explosive + Enraged pair never rolls (enumerate every pair); Region 1
+   weight 0; each region's `lean[7]` names real traits.
+3. **Foes:** every type has `size`, `fam` (core-2 2.3's list) and `dt` (core-2 2.1's ids); member counts in
+   range.
+4. **Pack totals:** with the noise seeded, the members' max HP sums to the pack total (x1.25 for swarms), gold to
+   the pack's gold, and `kill` fires once per pack.
+5. **Caps:** 120 s of each Hollow elder against the late fixture: no party hit above its cap (1.4).
+6. **Idle is whole:** the late fixture's idle gold a minute over 10 minutes ≥ 97% of the HEAD number stored in the
+   check (CX7).
+7. **No overlap:** in 50 seeded fights per kit, answer warnings never overlap and are ≥ 1.0 s apart.
+8. **Enrage:** `bossTime` 0 enrages; the fail comes at -15 s; Short Fuse still takes 10 s off.
+9. **Active reward:** a scripted fight with 3 manual answers rolls the signature item twice; the same fight idle
+   rolls it once; Tactics answers do not count.
+10. **Save:** the `cb2` round trip; every fixture loads; the existing "dps unchanged at load" check passes.
+
+`tools/perf.mjs` (phone profile, 360 x 740, DPR 2, x4 CPU), both must pass before S6 merges:
+
+| Scenario | Script | Budget (2.8) |
+|---|---|---|
+| `swarm10` | a swarm zone (10 foes), 30 s of fighting with Burns spreading, statuses, merged numbers, an Explosive elite | JS/frame p95 ≤ 8 ms and ≤ +1.5 ms over the 3-foe baseline; frame gap p95 ≤ 34 ms; no long task on pack arrival or the zoom step; heap < 2 MB a minute |
+| `bossKit` | the Listener: 3 phase changes, a summon, a Stagger and a Finisher, 45 s | frame gap p95 ≤ 34 ms; no long task over 50 ms at a phase change or the Finisher |
+
+### 8.6 Decisions for the owner
+
+| # | Decision | Recommended |
+|---|---|---|
+| D1 | **The boss timer becomes an Enrage timer:** 45 s for zone elders and 60 s for region bosses (HP x1.5 / x2, so the same party wins at the same power); at 0 the boss enrages and the fight fails 15 s later | **Yes.** It makes "bosses can kill you" real without slowing a prepared player |
+| D2 | **Hollow bosses carry no buff item** (Region 1 has none; Enchanting opens in Region 2). They show a heart-light and drop today's rewards | **Yes, keep Region 1 simple.** RG1 may add a small Hollow family later if the first region feels bare |
+| D3 | **Deep Elders drop at most one buff item a run** (from floor 20, your highest region's family), an exception to "Deepwell power stays in the Deepwell" | **Yes.** It makes the dungeon rewarding (plan-4 2.2) and buff items are capped by sockets |
+| D4 | **The raid gets a local fight:** the wyrm hits your party, members Falter and stand up (no loss), phases follow the shared world HP, warnings follow a shared clock; a x1.12 raid stance keeps idle raid damage at least today's. No change to the shared data | **Yes** |
+| D5 | **Assist timing** (all warnings 1.5x longer) with full rewards | **Yes** (pinnacles.md Q2 asked the same) |
+| D6 | **The auto-Finisher** fires for idle players at 50% | **Yes.** Idle gets a taste; the tap doubles it |
+| D7 | **Swarms have 25% more HP and pay 25% more** | **Yes.** Area classes gain; nobody loses |
+| D8 | **Brutes and elites get a parry-able heavy hit in normal zones** (from zone 15, inside today's damage budget) | **Yes.** An optional active moment in idle zones, at no idle cost |
+
+For the coordinator: sign-off on the change-log lines 8.2-1 to 8.2-12, and a note to CL1 (8.2-5, 8.2-6 touch
+Finishers and Tactics) and RG1 (8.2-12 touches signature drops; section 4 lists each boss's buff item id and a
+theme word for its unique).
+
+### 8.7 Specs this changes
+
+| Spec | Change |
+|---|---|
+| region-2.md 4.1, 7 | Reef Wall is physical x0.3 (not immune); the Green Beam is a dodge over 2 slots; Brine Hex is a Curse; the Keeper's phases as 4.3 |
+| pinnacles.md 3.2, 5.1, 8.3, 12 | a party of three; Scatter is the stage-tap dodge (no Scatter button); `cleanse` / `swap` ids; stagger and Finishers on all four; the hooks come from 59g/59h |
+| deepwell.md 1 (rule 4), 8.2 | the one-item-a-run exception (D3); Oil for answers; the 4-card draft; new boons |
+| party-and-classes.md 4.7, 4.8 | behaviours become pack quotas; the heavy and parry live in this grammar |
+| perf.md | the `swarm10` and `bossKit` scenarios |
