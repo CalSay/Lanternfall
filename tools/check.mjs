@@ -1904,5 +1904,119 @@ try {
   assert(oOk, 'coast: 3 Omen texts (name, effect, line) inside limits');
 } catch (e) { fail('coast writing crashed: ' + (e.stack || e)); }
 
+// ---- pinnacle data and writing (21d-data-pinnacle.js, 21e-stories-pinnacle.js; pinnacles.md 3-7, PN11) ----
+console.log('pinnacle data');
+try {
+  for (const f of ['21d-data-pinnacle.js', '21e-stories-pinnacle.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `pinnacle: ${f} is data only (no DOM, no state)`);
+  }
+  const g = loadCore(), E = x => g.eval(x);
+  const ids = E('PIN_IDS'), P = E('PIN'), T = E('PIN_TUNE'), K = E('PIN_KINDS'), C = E('PIN_CAPS'), M = E('PIN_MECH');
+  const V = E('PIN_VOW_RULES'), W = E('PIN_WEEK'), R = E('PIN_REWARDS'), PW = E('PIN_POWERS'), CO = E('PIN_COSMETICS'), CX = E('PIN_CODEX');
+  const roster = E('ROSTER_KEYS'), classes = E('Object.keys(HERO_CLASSES)');
+  const eps = 1e-9, str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const is3 = a => Array.isArray(a) && a.length === 3;
+
+  // every boss has every field
+  const bossKeys = ['id', 'n', 'area', 'theme', 'overlay', 'rig', 'anchor', 'order', 'cols', 'takeX', 'phases', 'mech', 'enrage', 'needs', 'counters', 'samples', 'friend', 'reward'];
+  const bBad = ids.filter(b => { const x = P[b];
+    return !x || bossKeys.some(k => x[k] === undefined) || x.id !== b || !str(x.n, 24) || !str(x.area, 24) || x.anchor !== T.anchor[b]
+      || !is3(x.cols) || !x.cols.every(c => ['front', 'mid', 'back'].includes(c)) || !is3(x.takeX) || !is3(x.phases) || !x.phases.every(p => str(p.n, 24))
+      || !str(x.enrage.id, 24) || !str(x.enrage.n, 24) || !Object.keys(x.enrage.every).every(m => x.mech[m])
+      || !classes.every(c => Array.isArray(x.samples[c]) && x.samples[c].length === 3 && x.samples[c].every(k => roster.includes(k)))
+      || !Object.keys(x.friend).every(k => roster.includes(k)); });
+  assert(ids.length === 4 && ids.join() === 'king,lure,fire,below' && !bBad.length, 'pinnacle: 4 bosses, every field, anchors match PIN_TUNE, sample line-ups use real characters' + (bBad.length ? ': ' + bBad[0] : ''));
+  assert(P.lure.tide && P.fire.sky && P.fire.cart && P.below.light && P.below.light.start === 100, 'pinnacle: each boss rule block (the Lurelight tide, the sky and the cart, Maud\'s Light)');
+
+  // every mechanic has every field; 17 in all; one heavy hit per boss
+  const mKeys = ['id', 'n', 'kind', 'ph', 'every', 'first', 'wind', 'target', 'fx', 'cap', 'tap', 'idle', 'role'];
+  const mIds = Object.keys(M);
+  const mBad = mIds.filter(id => { const m = M[id];
+    return mKeys.some(k => m[k] === undefined) || m.id !== id || !K[m.kind] || !C[m.kind] || !str(m.n, 24) || !is3(m.ph) || !is3(m.every)
+      || !m.ph.some(Boolean) || !Array.isArray(m.idle) || !m.idle.length || !m.role.length
+      || (m.kind === 'swap' ? m.every.some(Boolean) || !(m.fx.stacks > m.fx.tapAt && m.fx.tapAt > 0)
+        : m.ph.some((on, i) => (on ? !(m.every[i] > 0) : m.every[i] !== 0)) || !(m.first >= 0)); });
+  const heavy = ids.map(b => Object.values(P[b].mech).filter(m => m.kind === 'parry').length);
+  assert(mIds.length === 17 && ids.reduce((n, b) => n + Object.keys(P[b].mech).length, 0) === 17 && !mBad.length && heavy.every(n => n === 1),
+    'pinnacle: 17 mechanics with every field, unique ids, one heavy hit per boss' + (mBad.length ? ': ' + mBad[0] : ''));
+
+  // telegraph windows: positive, over the floor, parryable, and room for the next one, normal and Assist
+  const restless = 1 + V.restless.often * V.restless.max;
+  const tBad = [];
+  for (const id of mIds) { const m = M[id], b = P[m.boss];
+    const shrinks = [1].concat(b.light ? [b.light.lowWindX] : []);
+    for (const ax of [1, T.assist]) {
+      if (m.kind === 'swap') {       // the tap window is the time between two stacking hits
+        const gapS = m.fx.stackOn === 'bossHit' ? m.fx.stackEvery : Math.min(...M[m.fx.stackOn].every.filter(Boolean), b.enrage.every[m.fx.stackOn] || 1e9) / restless;
+        if (!(gapS >= T.windMin)) tBad.push(`${id} swap window ${gapS}`);
+        continue;
+      }
+      if (!(m.wind >= T.windMin)) tBad.push(`${id} wind ${m.wind} under the floor`);
+      for (const sh of shrinks) {
+        const w = Math.max(T.windMin, m.wind * sh) * ax;
+        const win = T.parryMaren * ax;
+        if (!(w > 0)) tBad.push(`${id} wind not positive`);
+        if (m.kind === 'parry' && !(win < w - eps && T.parry * ax < win + eps)) tBad.push(`${id} parry window ${win} not inside wind-up ${w}`);
+        let cad = Math.min(...m.every.filter(Boolean), b.enrage.every[id] || 1e9) * (m.fx.addAliveX || 1) / restless;
+        if (!(cad >= w + T.gap - eps)) tBad.push(`${id} cadence ${cad.toFixed(2)} < wind-up ${w} + gap (Assist x${ax})`);
+      }
+    }
+  }
+  assert(!tBad.length, `pinnacle: every wind-up >= ${T.windMin}s, parry window inside it, cadence leaves the gap (normal, Assist x${T.assist}, Restless, low Light)` + (tBad.length ? ': ' + tBad[0] : ''));
+
+  // fairness caps (3.4, PN11), from the data
+  const worst6 = f => { const dps = t => (f.stackEvery ? Math.min(f.stacks, 1 + Math.floor(t / f.stackEvery)) : 1) * f.dps;
+    let best = 0; for (let s = 0; s <= f.secs; s += 0.25) { let d = 0; for (let t = s; t < Math.min(f.secs, s + 6); t += 0.01) d += dps(t) * 0.01; best = Math.max(best, d); } return best; };
+  const cBad = mIds.filter(id => { const m = M[id], c = C[m.kind], f = m.fx;
+    switch (m.kind) {
+      case 'parry': return !(m.cap.hit <= c.hit + eps) || (f.hitCap || m.cap.hit) + (f.swallowed ? f.swallowed.secs * f.swallowed.dps : 0) > c.hit + eps;
+      case 'interrupt': return (f.stun || 0) > c.stun || (f.charm || 0) > c.stun || Math.abs(Math.min(0, f.light || 0)) > c.light || (f.heal || 0) > c.heal;
+      case 'cleanse': return !(worst6(f) <= c.dot + eps) || !(f.secs > 0) || !(f.count >= 1 && f.count <= 2);
+      case 'swap': return !(f.crushed.secs <= c.crushed && f.crushed.takeX <= c.takeX + eps);
+      case 'scatter': return (f.hitCap || m.cap.hit) + (f.burn ? f.burn.dps * f.burn.secs : 0) > c.hit + eps;
+      case 'dive': return (m.cap.hit || 0) > (c.hit + eps) || (f.hold || 0) > c.stun || (f.cartHit || 0) > c.hit + eps;
+      default: return true;
+    } });
+  assert(!cBad.length, 'pinnacle: every mechanic inside the fairness caps (hit 35%, stun 3s, dot 25% in 6s, scatter 30%, Crushed 3s x1.5)' + (cBad.length ? ': ' + cBad[0] : ''));
+
+  // Vows, the Week's Oath, rewards, powers, cosmetics
+  assert(Object.values(V).reduce((n, v) => n + v.w * v.max, 0) === 30, 'pinnacle: Vow rules sum to level 30');
+  const lv = W.bag.map(s => W.level(s));
+  const wBad = W.bag.filter(s => Object.keys(s.vows).some(k => !V[k] || s.vows[k] < 1 || s.vows[k] > V[k].max));
+  const combos = new Set(); for (let w = 0; w < 32; w++) combos.add(W.boss(w) + ':' + W.oath(w).id);
+  assert(W.bag.length === 8 && lv.every(l => l >= 10 && l <= 14) && !wBad.length && new Set(W.bag.map(s => s.id)).size === 8 && combos.size === 32 && W.boss(0) === 'king' && W.boss(3) === 'below',
+    `pinnacle: Week's Oath bag of 8 at level 10-14 (${lv.join(', ')}), every boss meets every set in 32 weeks`);
+  assert(R.legend.base === T.lgBase && R.legend.per === T.lgPer && R.legend.pity === T.pity && R.first.rank === T.firstRank && R.every.echo === T.echo && W.seal === 1,
+    'pinnacle: rewards match PIN_TUNE; the Boss of the Week pays one Seal');
+  const pBad = ids.filter(b => { const rw = P[b].reward, pw = PW[rw.power];
+    return !pw || pw.boss !== b || pw.fits !== 'hero' || !str(pw.n, 24) || !Object.values(pw.v).every(a => a.length === 5) || ![1, 2, 3, 4, 5].every(r => str(pw.txt(r), 180))
+      || !['colour', 'trail', 'trophy'].every(k => CO[rw[k]] && CO[rw[k]].boss === b && CO[rw[k]].vow === { colour: 0, trail: R.vow.trail, trophy: R.vow.trophy }[k]); });
+  assert(Object.keys(PW).length === 4 && Object.keys(CO).length === 12 && !pBad.length && Object.values(CO).every(c => str(c.n, 24)),
+    'pinnacle: 4 powers (5 ranks, text), 12 cosmetics, each boss\'s rewards exist' + (pBad.length ? ': ' + pBad[0] : ''));
+  assert(CX.first * 4 + CX.band * 4 * T.vowBands.length + CX.card * 5 === CX.total && CX.total === 90, 'pinnacle: Codex page 15 totals 90 Light');
+
+  // writing (21e): every string there, non-empty, inside UI limits
+  const ST = E('PIN_STORY'), VO = E('PIN_VOICE'), LN = E('PIN_LINES'), SAY = E('PIN_SAY'), HI = E('PIN_HINTS'), CH = E('PIN_CHIPS');
+  const LE = E('PIN_LESSONS'), CT = E('PIN_COUNTER_TEXT'), TI = E('PIN_TITLES'), WN = E('PIN_WEEK_NAMES'), UI = E('PIN_UI_TEXT');
+  const card = (c, lo) => c && str(c.title, 32) && str(c.text, 420) && sents(c.text) >= lo && sents(c.text) <= 5;
+  const sBad = ids.filter(b => !ST[b] || !str(ST[b].quote, 60) || !card(ST[b].intro, 2) || !card(ST[b].kill, 3));
+  assert(!sBad.length && card(VO, 3) && str(VO.note, 80) && /Emberwaste/.test(VO.text), 'pinnacle: intro and kill cards (3-5 sentences), sheet quotes, The Voice points to the Emberwaste' + (sBad.length ? ': ' + sBad[0] : ''));
+  const bark = a => Array.isArray(a) && a.length > 0 && a.every(s => str(s, 59));
+  const lBad = ids.filter(b => !LN[b] || !['intro', 'phase2', 'phase3', 'enrage', 'win', 'fall', 'rematch'].every(k => bark(LN[b][k]))
+    || !Object.keys(P[b].mech).every(id => bark(LN[b].mech[id])));
+  const sayBad = ids.filter(b => !SAY[b] || Object.keys(SAY[b]).some(k => !P[b].friend[k] || !str(SAY[b][k].line, 59)) || Object.keys(P[b].friend).some(k => !SAY[b][k]));
+  assert(!lBad.length && !sayBad.length && SAY.king.corvin && SAY.fire.caedmon, 'pinnacle: barks under 60 chars for every moment and mechanic; Corvin, Caedmon and Morwen lines' + (lBad.concat(sayBad).length ? ': ' + lBad.concat(sayBad)[0] : ''));
+  const hBad = mIds.filter(id => !str(HI[id], 44) || !CH[id] || !str(CH[id].idle, 36) || !str(CH[id].tap, 36) || typeof LE[id] !== 'function' || !str(LE[id](3), 100) || !LE[id](3).includes('3') || !str(LE[id](1), 100));
+  assert(!hBad.length && Object.keys(HI).length === 17 && str(E('PIN_LESSON_TIME'), 100) && str(E('PIN_LESSON_WIPE'), 100), 'pinnacle: 17 first-use hints (44 chars), counter chips (36), fail lessons (100)' + (hBad.length ? ': ' + hBad[0] : ''));
+  const tags = ids.flatMap(b => P[b].counters.strong.concat(P[b].counters.weak));
+  const titleIds = ids.flatMap(b => [P[b].reward.title, P[b].reward.title30]).concat(Object.values(CX.allFour), CX.pageSeal);
+  assert(tags.every(t => str(CT[t], 32)) && titleIds.every(t => TI[t] && str(TI[t].n, 24) && str(TI[t].how, 48)) && W.bag.every(s => str(WN[s.id], 24)),
+    'pinnacle: counter texts, every title (name, how), Week\'s Oath names');
+  assert(str(UI.locked, 64) && UI.lockParts.length === 2 && str(UI.guide, 80) && UI.tips.length === 3 && UI.tips.every(t => str(t.title, 24) && str(t.text, 100))
+    && str(UI.goalReady('The Hollow King'), 48) && str(UI.goalWeek('The First Fire'), 48) && str(UI.newBest('1:04', 12), 40), 'pinnacle: UI texts inside limits');
+} catch (e) { fail('pinnacle data crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
