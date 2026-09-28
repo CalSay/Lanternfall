@@ -86,6 +86,8 @@ if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = k
 if (args.syn !== undefined) E(`SYN_TUNE.today = ${+args.syn}`);
 // --eval "code": run code in the game scope after the knobs (experiments, e.g. --eval "CRAFT_CATCHUP.mult = 3").
 if (args.eval) E(String(args.eval));
+// --evalfile path: the same, from a file (probes that print from an onTick hook).
+if (args.evalfile) E((await import('node:fs')).readFileSync(String(args.evalfile), 'utf8'));
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);

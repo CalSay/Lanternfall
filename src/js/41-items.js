@@ -50,10 +50,11 @@
 // keeps Might p, which is also the Bow's line). So item stats, gear(), heroDps() and totalDps()
 // are exactly what they were. Only the name, look, recipe for upgrades and salvage change.//
 // gear() keys: the old ones, unchanged and in the same order, then every other CRAFT_STATS
-// key. Stats with live:false in CRAFT_STATS (hp, armour, threat, block, pierce, area,
-// control, heal, ward, haste, aspd, forageSpd, forageDbl) only aggregate until party
-// combat (Stage C) and K5 read them; their total caps are applied in gear(). Live stats are
-// never capped here (old gear already goes past crit 35; critChance() caps at 75%).
+// key. Stage C made the combat stats live (hp, armour, threat, block, pierce, area, control,
+// heal, ward, haste: 59-combat.js reads them; they keep their caps, flagged combat: true).
+// aspd, forageSpd and forageDbl stay live:false and only aggregate; their total caps are applied
+// in gear(). The old live stats are never capped here (old gear already goes past crit 35;
+// critChance() caps at 75%).
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
 
 let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats, gearCalc, charGear, spellMult,
@@ -154,7 +155,10 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
   };
   const addLines = (s, lines) => { for (const [k, v] of lines) { if (k === 'tap') s.tap *= v; else s[k] = (s[k] || 0) + v; } };
   itemStats = it => { const s = {}; for (const [k, v] of itemLines(it)) s[k] = k === 'tap' ? (s[k] || 1) * v : (s[k] || 0) + v; return s; };
-  const capNonLive = s => { for (const k of NEW_KEYS) { const c = CRAFT_STATS[k]; if (!c.live && c.cap != null && s[k] > c.cap) s[k] = c.cap; } return s; };
+  // Stage C (K11): party combat (59-combat.js) reads the role stats, so they are live now. They keep
+  // their caps (combat: true); the old live stats stay uncapped here.
+  for (const k of ['hp', 'armour', 'threat', 'block', 'ward', 'heal', 'area', 'control', 'pierce', 'haste']) if (CRAFT_STATS[k]) { CRAFT_STATS[k].live = true; CRAFT_STATS[k].combat = true; }
+  const capNonLive = s => { for (const k of NEW_KEYS) { const c = CRAFT_STATS[k]; if ((!c.live || c.combat) && c.cap != null && s[k] > c.cap) s[k] = c.cap; } return s; };
   gearCalc = () => {
     const s = blank(), who = heroWho();
     for (const pos of CRAFT_HERO_POS) {

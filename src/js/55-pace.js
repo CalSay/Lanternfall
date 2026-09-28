@@ -18,11 +18,18 @@ let paceCheck;
   const P = () => S.pace;
   const foeSecs = (z, dps) => dps > 0 ? mobHp(z) * mod('foeHp') / dps : Infinity;
   // Returns the zone moved to, or 0 when nothing changed.
+  let loadedFor = null;
   paceCheck = () => {
-    if (!S.auto || S.activity !== 'fight' || fightBoss) return 0;
+    if (!S.auto || S.activity !== 'fight' || fightBoss || arena) return 0;
     const dps = totalDps();
-    if (foeSecs(S.zone, dps) > PACE.farmSecs) {
-      const z = farmableZone(S.zone, dps / mod('foeHp'));
+    // Stage C: on the first check after a load (an old save meeting party combat), a zone the party
+    // cannot hold (59-combat.js partyHolds) falls back like a slow one. During play a wipe retreats
+    // on its own (59-combat.js), and climbing back waits until the next zone holds.
+    const holds = z => typeof partyHolds !== 'function' || partyHolds(z);
+    const first = loadedFor !== S; loadedFor = S;
+    if (foeSecs(S.zone, dps) > PACE.farmSecs || (first && !holds(S.zone))) {
+      let z = farmableZone(S.zone, dps / mod('foeHp'));
+      while (z > 1 && !holds(z)) z--;
       if (z >= S.zone) return 0;
       P().fell = Math.max(P().fell || 0, S.zone);
       setZone(z);
@@ -32,7 +39,7 @@ let paceCheck;
     const fell = P().fell || 0;
     if (!fell) return 0;
     if (S.zone >= Math.min(fell, S.maxZone)) { P().fell = 0; return 0; }
-    if (foeSecs(S.zone + 1, dps) <= PACE.farmSecs / 2) { setZone(S.zone + 1); if (S.zone >= Math.min(fell, S.maxZone)) P().fell = 0; return S.zone; }
+    if (foeSecs(S.zone + 1, dps) <= PACE.farmSecs / 2 && holds(S.zone + 1)) { setZone(S.zone + 1); if (S.zone >= Math.min(fell, S.maxZone)) P().fell = 0; return S.zone; }
     return 0;
   };
   // First tick after a load, then every 3 seconds.

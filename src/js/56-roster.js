@@ -216,8 +216,13 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
   const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(T.rankX, r.rank) * Math.pow(T.stepX, drillsAt(r.lv)) * (1 + wpnPct(id, r) / 100);
-  const roleMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
+  // Party combat (Stage C, 59-combat.js): supports heal and deal no damage. valueMult keeps the old
+  // support worth (supEq x power) for ranking (autoField, recruits stepping in).
+  const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
+  const valueMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
+  const roleMult = role => role === 'support' && combatOn() ? 0 : valueMult(role);
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
+  const rawValue = (id, r) => rawPow(id, r) * valueMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };
   // Damage this character adds when fielded (a support's buff counted as damage).
   // Per-character hooks (56b-synergy): fn(id) -> multiplier on that character's damage.
@@ -296,13 +301,16 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // Damage once caught up to party level and promoted to match (catch-up makes this quick).
   function potential(k) {
     const r = charRec(k), lv = Math.max(r.lv, Math.floor(partyLevel()));
-    return rawDps(k, { lv, rank: Math.max(r.rank, Math.floor((lv - 1) / 25)), wpn: r.wpn });
+    return rawValue(k, { lv, rank: Math.max(r.rank, Math.floor((lv - 1) / 25)), wpn: r.wpn });
   }
   function bestThree(by) {
-    const score = k => by === 'now' ? rawDps(k, charRec(k)) : potential(k);
-    const all = rosterList().sort((a, b) => score(b) - score(a));
+    const score = k => by === 'now' ? rawValue(k, charRec(k)) : potential(k);
+    const all = rosterList().filter(k => !onExped(k)).sort((a, b) => score(b) - score(a));
     const tank = all.find(k => R(k).role === 'tank');
     const f = tank ? [tank] : [];
+    // Stage C: a support keeps the party standing (tank + support + damage, spec 4.13).
+    const sup = combatOn() && all.find(k => R(k).role === 'support');
+    if (sup) f.push(sup);
     for (const k of all) if (f.length < 3 && !f.includes(k)) f.push(k);
     return f;
   }
@@ -314,9 +322,13 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const f = fieldKeys();
     if (f.includes(id)) return;
     if (f.length < 3) { setField(f.concat(id)); return; }
-    const tank = R(id).role === 'tank';
-    const peers = f.filter(k => (R(k).role === 'tank') === tank);
+    // Peers: tanks replace tanks; with party combat supports replace supports, and a first support
+    // takes the weakest damage dealer's place (the party needs a healer more than a third hitter).
+    const kind = k => R(k).role === 'tank' ? 't' : R(k).role === 'support' && combatOn() ? 's' : 'd';
+    let peers = f.filter(k => kind(k) === kind(id));
+    if (!peers.length && kind(id) === 's') peers = f.filter(k => kind(k) === 'd');
     if (!peers.length) return;
+    if (kind(id) === 's' && peers.every(k => kind(k) === 'd')) { setField(f.map(k => k === peers.sort((a, b) => potential(a) - potential(b))[0] ? id : k)); return; }
     const weakest = peers.sort((a, b) => potential(a) - potential(b))[0];
     if (potential(id) > potential(weakest)) setField(f.map(k => k === weakest ? id : k));
   }

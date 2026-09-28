@@ -113,7 +113,8 @@ try {
   assert(S.zz_feature && S.zz_feature.n === 0, 'registered feature field added to old save');
   assert(g.fn.equipped('helm') && g.fn.equipped('helm').u === 'echocowl', 'equipped unique still equipped');
   assert(Number.isFinite(g.fn.totalDps()) && g.fn.totalDps() > 0, 'dps finite for migrated save');
-  assert(g.eval('S.party.newGame === false && S.party.chosen === false && S.party.field.join() === "tobin,wren,pip"'), 'existing save fields its top 3 companions, tank first');
+  // Stage C: autoField picks a tank, then a support (party combat heals), then the strongest.
+  assert(g.eval('S.party.newGame === false && S.party.chosen === false && S.party.field.join() === "tobin,hesketh,wren"'), `existing save fields a tank, a support, then its strongest companion (${g.eval('S.party.field.join()')})`);
   // a pre-activity save (raiding flag) still migrates
   const legacy = { ...old }; delete legacy.activity; legacy.raiding = true;
   const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(legacy) }) });
@@ -211,7 +212,7 @@ try {
     g.eval('unlockChar("thessaly", "test", true)');
     // A recruit may take the place of the weakest member of its kind; nobody else moves.
     const a = f0.split(','), b = g.eval('S.party.field.slice()'), moved = a.filter((k, i) => b[i] !== k);
-    assert(fp === f0 && moved.length <= 1 && b.every((k, i) => k === a[i] || k === 'thessaly') && !b.includes('elowen'), `late save: promote keeps the field, a recruit swaps at most one member (${f0} -> ${b.join()})`);
+    assert(fp === f0 && moved.length <= 1 && b.every((k, i) => k === a[i] || k === 'thessaly') && b.includes('elowen'), `late save: promote keeps the field, a recruit swaps at most one member, the support stays (${f0} -> ${b.join()})`);
   }
   // spec example: save-v2.json -> Tobin rank 1 lv 25+, Wren 14+, Pip 6+, Hesketh 1
   {
@@ -505,7 +506,7 @@ try {
   // Shield and Hearth reads the cells: tank in Front, support next behind in the same lane
   field(['tobin', 'hesketh', 'pip']);
   E('S.party.cells = { hero: { col: 1, lane: 1 }, tobin: { col: 2, lane: 0 }, hesketh: { col: 0, lane: 0 }, pip: { col: 0, lane: 1 } }');
-  assert(syn('hearth') && syn('hearth').stageC && syn('hearth').members.join() === 'tobin,hesketh', 'Shield and Hearth: Tobin in front, Hesketh behind (Mid empty)');
+  assert(syn('hearth') && !syn('hearth').stageC && syn('hearth').members.join() === 'tobin,hesketh', 'Shield and Hearth: Tobin in front, Hesketh behind (Mid empty); live with party combat');
   E('S.party.cells = { hero: { col: 1, lane: 0 }, tobin: { col: 2, lane: 0 }, hesketh: { col: 0, lane: 0 }, pip: { col: 0, lane: 1 } }');
   assert(!syn('hearth') && E('synergyStatus("hearth").text') === 'needs a support right behind your tank', 'Shield and Hearth off when someone else stands between');
   // Common Cause and Bond
@@ -545,7 +546,9 @@ try {
       keys.forEach((k, i) => {
         field([k, keys[(i + 5) % 18], keys[(i + 11) % 18]]);
         const v = E(`[charDps(${JSON.stringify(k)}), compDps(), totalDps(), goldMult(), critChance(), mod('compXp')]`);
-        if (!v.every(x => Number.isFinite(x) && x > 0)) bad.push(`${cls} ${k} L${n}: ${v.join(',')}`);
+        // Stage C: supports deal no damage (they heal), so their charDps is 0 and an all-support field has no compDps.
+        const sup = E(`ROSTER[${JSON.stringify(k)}].role === 'support'`), allSup = E(`S.party.field.every(x => ROSTER[x].role === 'support')`);
+        if (!v.every((x, j) => Number.isFinite(x) && (x > 0 || (j === 0 && sup) || (j === 1 && allSup)))) bad.push(`${cls} ${k} L${n}: ${v.join(',')}`);
       });
     }
   }
@@ -1032,9 +1035,11 @@ try {
     const old = JSON.parse(raw), stuck = 60;   // far past what this save can farm under the new curve
     old.zone = stuck; old.maxZone = Math.max(old.maxZone, stuck); old.activity = 'fight'; old.auto = true;
     const g = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
-    const secs = E(`mobHp(${stuck}) * mod('foeHp') / totalDps()`), best = E(`farmableZone(${stuck}, totalDps() / mod('foeHp'))`);
+    // Stage C: the fall-back zone is also one the party can hold (partyHolds, 59-combat.js).
+    const secs = E(`mobHp(${stuck}) * mod('foeHp') / totalDps()`);
     const msgs = []; g.fn.on('toast', t => msgs.push(t.msg || t));
     for (let i = 0; i < 40; i++) g.fn.tick(0.1);
+    const best = E(`(() => { let z = farmableZone(${stuck}, totalDps() / mod('foeHp')); while (z > 1 && !partyHolds(z)) z--; return z; })()`);
     const fell = msgs.filter(m => /fell back to Zone/.test(m));
     assert(secs > E('PACE.farmSecs') && E('S.zone') === best && best < stuck && fell.length === 1 && fell[0] === `Your party fell back to Zone ${best} to keep earning.`, `old save stuck at zone ${stuck} (a foe takes ${secs.toFixed(0)}s) falls back to zone ${best} with one toast`);
     for (let i = 0; i < 100; i++) g.fn.tick(0.1);
@@ -1042,7 +1047,8 @@ try {
     const g2 = loadCore({ seed: 23, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E3 = s => g2.eval(s);
     E3('S.auto = false');   // away gains alone: no live fall-back first
     const gold0 = E3('S.gold'), r = g2.fn.awayGains(4 * 3600);
-    assert(E3('S.gold') > gold0 && r.note.includes(E3(`zoneName(${best})`)), `away gains farm zone ${best} (the best farmable zone <= S.zone): +${E3(`fmt(${E3('S.gold') - gold0})`)} gold`);
+    const held = E3(`partyHoldEstimate(${stuck}).zone`);
+    assert(E3('S.gold') > gold0 && r.note.includes(E3(`zoneName(${held})`)) && held <= best + 2, `away gains farm zone ${held} (the best zone <= S.zone the party holds): +${E3(`fmt(${E3('S.gold') - gold0})`)} gold`);
     // Climbing back: once the next zone is easy again, auto-progress walks up to where it fell from.
     E('S.zone = ' + best + '; S.pace.fell = ' + (best + 1));
     E('S.gold = 0; const __boost = addModifier("dmg", () => 1000)');
@@ -1262,7 +1268,8 @@ try {
   // champions and trophies
   E('S.craft.troph = [0, 0, 0, 0, 0, 0, 0]; S.craft.champ = 0; S.maxZone = 30; S.zone = 22; fightBoss = false');
   E('{ const r = Math.random; Math.random = () => 0; spawn(); Math.random = r; }');
-  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / mobHp(22) })');
+  // Stage C: the champion is the pack's lead foe (a third of the pack's HP before the x3).
+  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / (mobHp(22) * COMBAT_TUNE.packHp / COMBAT_TUNE.packSize) })');
   const zt = E('zoneType(22)'), sig = E(`CRAFT_SIG_DROPS[TYPES[${zt}].key]`), before = E(`S.mats.${sig.fam}[3]`);
   E('kill()');
   assert(ch.champ && /^Champion /.test(ch.name) && ch.ratio > 2.6, `champion spawns with x3 HP (${ch.name})`);
@@ -1578,9 +1585,11 @@ try {
   assert(Math.abs(o0 - E('DW.run().oil') - 2) < 0.05, `Oil drains 1 per second while a foe stands (${(o0 - E('DW.run().oil')).toFixed(2)} in 2s)`);
   // clear the floor: 3 foes
   let guard = 0;
-  while (E('DW.run().phase') === 'fight' && guard++ < 10) { E('mob.hp = 1; strike(10, "#fff")'); ticks(g, 6); }
+  // (Stage C: a Rattlebones may get back up once, so count the Oil from the last strike.)
+  let oLast = o0 - 2;
+  while (E('DW.run().phase') === 'fight' && guard++ < 10) { oLast = E('DW.run().oil'); E('mob.hp = 1; strike(10, "#fff")'); ticks(g, 6); }
   assert(E('DW.run().phase') === 'draft' && E('DW.run().top') === 1 && E('DW.run().floor') === 2, 'three kills clear floor 1 and open the draft');
-  assert(Math.abs(E('DW.run().oil') - (o0 - 2 + 15)) < 1, 'a normal floor refunds 15s of Oil');
+  assert(Math.abs(E('DW.run().oil') - (oLast + 15)) < 1, 'a normal floor refunds 15s of Oil');
   const offer = E('DW.offerView().cards.map(c => c.id)');
   assert(offer.length === 3 && new Set(offer).size === 3, `the draft offers 3 different boons (${offer.join(', ')})`);
   assert(E('DW.reroll()') && E('DW.run().rr') === 0 && !E('DW.reroll()'), 'one reroll a run; then none');

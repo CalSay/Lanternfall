@@ -217,13 +217,17 @@ let unitHp, unitCd, bossTelegraph;
       autoUnlocked: S.maxZone >= T.autoCastZone, autoCast: p.autoCast };
   };
 
-  const FULL_HP = { hp: 1, max: 1, shield: 0 };
-  unitHp = () => FULL_HP;
+  // Stage C: party combat (59-combat.js, 59b-enemies.js) fills these. Kept objects, no allocation.
+  const FULL_HP = { hp: 1, max: 1, shield: 0 }, HERO_CD = { t: 0, max: 1 };
+  const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
+  unitHp = key => (combatOn() && typeof cbUnitHp === 'function' && cbUnitHp(key)) || FULL_HP;
   unitCd = key => {
-    const c = key === 'hero' && cls(); if (!c) return null;
-    return { t: spare > 0 ? 0 : P().abilityCd, max: abCd(c) };
+    if (key !== 'hero') return combatOn() && typeof cbUnitCd === 'function' ? cbUnitCd(key) : null;
+    const c = cls(); if (!c) return null;
+    HERO_CD.t = spare > 0 ? 0 : P().abilityCd; HERO_CD.max = abCd(c);
+    return HERO_CD;
   };
-  bossTelegraph = () => null;
+  bossTelegraph = () => combatOn() && typeof cbTelegraph === 'function' ? cbTelegraph() : null;
 
   // Active timed effects, for the UI: [{ id, name, left, stacks }].
   partyBuffs = function () {
@@ -246,6 +250,8 @@ let unitHp, unitCd, bossTelegraph;
     if (!auto) lastTap = clock;
     if (tg === 'node') { tapNode(); emit('classTap', { cls: cls(), kind: 'gather', target: tg, auto }); return; }
     const c = cls();
+    // Stage C: a tap during a boss wind-up is the parry (59b-enemies.js resolveParry), not the class tap.
+    if (!auto && tg === 'mob' && typeof resolveParry === 'function' && resolveParry('tap')) { emit('classTap', { cls: c, kind: 'parry', target: tg, auto }); return; }
     if (!c) { heroSwing(heroAtk(), true, at); emit('classTap', { cls: null, kind: 'strike', target: tg, auto }); return; }
     if (tg === 'mob' && !(mob && !mob.dead)) return;
     let kind = 'strike';

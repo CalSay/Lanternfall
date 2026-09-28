@@ -324,7 +324,8 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // fx(ctx, a, id, lv) per kit entry name; entries without fx are Stage C or have no today effect.
   const FX = {
     wren: {
-      Marked: (c, a) => a.role('striker', 1 + T.marked * markUp(c)),
+      // Stage C: the mark is real (59-combat.js: the marked foe takes +20% from strikers and loses its armour).
+      Marked: (c, a) => { if (!combatOn()) a.role('striker', 1 + T.marked * markUp(c)); },
       Echo: (c, a, id) => a.comp(id, 1 + markUp(c) * ROLE_STATS.striker.crit * T.echo / (1 + ROLE_STATS.striker.crit * (ROLE_STATS.striker.critX - 1))),
       'Aimed Shot': (c, a, id) => a.ab(id, T.aoeEff)
     },
@@ -333,7 +334,8 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
       Fireball: (c, a, id) => a.ab(id, T.pipGround)
     },
     bram: {
-      Cleave: (c, a, id) => a.comp(id, 1 + T.cleave * T.aoeEff),
+      // Stage C: real hits on a second front-row foe (59-combat.js).
+      Cleave: (c, a, id) => { if (!combatOn()) a.comp(id, 1 + T.cleave * T.aoeEff); },
       'Felling Blow': (c, a, id) => a.ab(id, T.aoeEff)
     },
     aldric: { 'Shield Bash': (c, a, id) => a.ab(id, T.shieldBash * T.aoeEff) },
@@ -401,7 +403,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
         a.ab('isolde', (execVal(Math.min(1, th0 + T.duskExec * s)) - execVal(th0)) / execVal(T.execTh));
       }
     },
-    hunting: (c, a, s) => a.comp('bram', 1 + markUp(c) * T.cleave * T.aoeEff * s),
+    hunting: (c, a, s) => { if (!combatOn()) a.comp('bram', 1 + markUp(c) * T.cleave * T.aoeEff * s); },
     waxkindle: (c, a, s) => a.comp('pip', 1 + T.waxPip * s),
     oldenemies: (c, a, s) => { a.comp('corvin', 1 + T.oldEnemies * s); a.comp('aldric', 1 + T.oldEnemies * s); },
     wayfarers: (c, a, s) => { a.compXp *= 1 + T.wayXp * s; a.cdAll(T.wayCd * s); }
@@ -450,11 +452,15 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
     const p = P(), f = p && p.field;
     let lvs = '';
     if (f) for (const k of f) lvs += lvOf(k) + ',';
-    if (cache && cache.S === S && cache.f === f && cache.cells === p.cells && cache.cls === p.cls && cache.lvs === lvs) return cache.v;
-    cache = { S, f, cells: p.cells, cls: p.cls, lvs, v: evaluate() };
+    const co = combatOn();
+    if (cache && cache.S === S && cache.f === f && cache.cells === p.cells && cache.cls === p.cls && cache.lvs === lvs && cache.co === co) return cache.v;
+    cache = { S, f, cells: p.cells, cls: p.cls, lvs, co, v: evaluate() };
     return cache.v;
   }
   const live = () => { try { return !!T.on && rosterLive(); } catch (e) { return false; } };
+  // Stage C: party combat (59-combat.js) runs the 'C' effects for real, so they are live too.
+  const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
+  const waits = p => p.stage === 'C' && !combatOn();
 
   // One companion's multiplier: flat bonuses x crit x ability share (supports have no damage ability).
   function charMult(id) {
@@ -507,13 +513,13 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   const scalePct = (txt, k) => Math.abs(k - 1) < 1e-9 ? txt : txt.replace(/(\d+(?:\.\d+)?)%(?! HP| of)/g, (m, n) => `${Math.round(n * k)}%`);
   const partText = (p, k) => p.stage === 'C' ? p.text : scalePct(p.text, k * T.today);
   const shownText = (d, k = 1) => d.parts.map(p => partText(p, k)).join(' ');
-  const todayOf = (d, k = 1) => d.parts.filter(p => p.stage !== 'C').map(p => partText(p, k)).join(' ') || null;
+  const todayOf = (d, k = 1) => d.parts.filter(p => !waits(p)).map(p => partText(p, k)).join(' ') || null;
 
   activeSynergies = () => {
     if (!live()) return [];
     return cur().syn.map(({ d, r, s }) => ({
       id: d.id, name: d.name, members: r.members.slice(), effectText: shownText(d, s), strength: s,
-      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d, s)
+      stageC: d.parts.some(waits), todayText: todayOf(d, s)
     }));
   };
 
@@ -539,7 +545,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   charTraits = id => {
     if (!R(id)) return [];
     const lv = lvOf(id);
-    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.stage === 'C' ? e.text : scalePct(e.text, T.today), lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
+    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.stage === 'C' ? e.text : scalePct(e.text, T.today), lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: waits(e) }));
   };
 
   synergyMods = () => {
