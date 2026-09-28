@@ -708,3 +708,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   N1b (a named roster: 2 per resource type incl. K13's secondary resources and the Coast's, each a character
   with a distinct perk pair, a lore hook and a way to recruit them; keep levels/shifts/beds/parcels; migrate
   Tam and any hired Hands). N3 (gatherer screens) follows N1b.
+- OWNER (2026-09-28): (1) sort out the crafting and gear menus (Craft/Armoury organisation); (2) enemies,
+  and definitely bosses, must hit harder; (3) much deeper synergies and real reasons to pick one class over
+  another; each class must feel good and exciting; (4) CLASS EVOLUTIONS at a level plus other requirements,
+  e.g. the Lightkeeper evolving into holy damage, the Ranger into poison. QUEUED CL1 "Classes 2.0" spec
+  (opus): class identity and fantasy, damage types and statuses (holy, poison, fire, frost...), enemy
+  resistances/weaknesses by region, two evolution branches per class (level + trial/boss/quest
+  requirements), new abilities per branch, synergy depth through types and statuses, hero (companion)
+  interplay, enemy/boss damage targets for BAL3, and a build plan. (1) goes to UX-F (Craft + Armoury) right
+  after the style kit; (2) to BAL3 with CL1's targets.
