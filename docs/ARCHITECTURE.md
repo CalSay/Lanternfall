@@ -234,6 +234,7 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fields with
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
 keep loading without loss. `S.tab` is the open menu's tab, or `''` on the game view (portrait).
+`S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
 `S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
 (last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
 
