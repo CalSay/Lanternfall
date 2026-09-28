@@ -42,7 +42,7 @@
 //     opts.goal    'push' (default) | 'farm'
 //     opts.filter  fn(id) -> bool | [ids] | { circle } | { role }
 //     opts.key     cache key for a function filter (without it a function filter is not cached)
-//     opts.by      'now' (default: today's levels) | 'potential' (levels once caught up; autoPlan)
+//     opts.by      'now' (default: today's levels) | 'potential' (autoPlan; CU1: also today's levels)
 //     opts.boss    push only: count the zone boss (default true)
 //     opts.pin     [ids] kept in every plan (default S.party.pin; [] for none)
 //     opts.bossW   override the boss weight w
@@ -244,21 +244,12 @@ var afRealPow = null;
     if (fl.role) return k => R(k).role === fl.role;
     return () => true;
   }
-  // 'potential': levels once caught up to the party level and promoted to match (as 56-roster).
-  function withLevels(by, ids, fn) {
-    if (by !== 'potential') return fn();
-    const pl = Math.floor(partyLevel()), saved = [], real = {};
-    for (const k of ids) {
-      const r = charRec(k); if (!r) continue;
-      const lv = Math.max(r.lv, pl);
-      saved.push([r, r.lv, r.rank]); real[k] = charPow(k);
-      r.rank = Math.max(r.rank, Math.min(7, Math.floor((lv - 1) / 25))); r.lv = Math.min(lv, levelCap(r.rank));
-    }
-    // F5: the hold estimate gives the hero its HP at the companions' real power (59-combat readPartyP):
-    // companions catch up in minutes, the hero's HP would only follow them
-    const prev = afRealPow; afRealPow = real;
-    try { return fn(); } finally { afRealPow = prev; for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
-  }
+  // 'potential' used to lift every candidate to the party level (and the rank to match), because
+  // recruits caught up in minutes. CU1 (owner, 2026-09-28): no rapid catch-up, so levelling a recruit
+  // takes days. The planner scores everyone at their real level and rank, so the auto line-up never
+  // fields a level-1 recruit over a strong pair; fielding one to train it is the player's call.
+  // 'potential' stays accepted (same as 'now'); afRealPow stays null.
+  function withLevels(by, ids, fn) { return fn(); }
   const value = k => charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : ROLE_STATS[R(k).role].dps * (1 + (ROLE_STATS[R(k).role].crit || 0) * ((ROLE_STATS[R(k).role].critX || 1) - 1)));
   const pinsOf = (o, pass) => {
     const l = Array.isArray(o.pin) ? o.pin : (P() && Array.isArray(P().pin) ? P().pin : []);

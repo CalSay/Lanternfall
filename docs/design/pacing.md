@@ -89,8 +89,9 @@ Now (`ROSTER_TUNE`):
 - `killWorth`: a kill gives (seconds a normal foe of that zone takes the party) / `xpSecs` (5)
   kills' worth, at most `xpWorthMax` (8). XP therefore follows time spent fighting. Farming an easy
   zone for fast kills earns no more than pushing at the front, and a wall zone no less.
-- A character behind the party still counts up to the party level (`catchGap` 18): a new recruit
-  catches up in minutes (T11).
+- ~~A character behind the party still counts up to the party level (`catchGap` 18): a new recruit
+  catches up in minutes (T11).~~ Removed by CU1 (section 13): a hero behind the party earns the XP
+  of its own level.
 - Away XP (`offlineXp` 1, was 0.75) is given in 40 steps, so its price follows the levels gained
   while away (one lump priced at the starting level bought only a few levels).
 - At the level cap XP banks up to `bankLv` 25 levels (was 1), spent the moment you promote: a long
@@ -549,3 +550,86 @@ exponential gathering curves (the gaps shrink at the top).
   foraged and Tailoring stayed at tier 1 for three weeks.
 - P4: a gathering tier that opens counts as a meaningful upgrade (new nodes), like a gear tier.
 - The policy gates on `skillTierOpen` / `skillTopTier` instead of `NODE_REQ` levels.
+
+## 13. CU1: no rapid catch-up for heroes (2026-09-28)
+
+Owner: "They shouldn't have rapid catch-up XP either. We could have an achievement for maxing out
+all heroes and that shouldn't be spoonfed." (The bench already earns no XP: `benchXp` 0.)
+
+### Knobs (before -> after)
+
+| Knob | Before | After |
+|---|---|---|
+| `ROSTER_TUNE.catchGap` (par counted up to the party level for a hero behind it) | 35 | removed |
+| `ROSTER_TUNE.catchStep` / `catchMax` (+XP per level behind the party) | 0.6 / 3 (up to +300%) | removed (`catchUpBonus()` is always 0) |
+| `ROSTER_TUNE.catchPromo` (promotion price a rank behind the party) | 0.25 | removed (full price) |
+| `ROSTER_TUNE.gapMax` (par at most this far above the hero) | 4 | 4 (kept: the natural rule) |
+| `ROSTER_TUNE.commonXp` | 1.5 | 1.5 (a rarity trait, not a catch-up) |
+| Planner `by: 'potential'` (56-roster `potential`, 56d `withLevels`) | lifted every candidate to the party level and rank | real level and rank (same as `'now'`); `afRealPow` stays null |
+
+A hero behind the party now earns the XP of its own level. The natural effect stays: past `compLv`
+(75) each level costs x1.12 more, up to x250, so a low hero gains levels much faster than the pair
+in the same fight. The auto line-up never fields a level-1 recruit over a strong pair; fielding one
+to train it is the player's choice. The anti-flapping rules (6% gain, 300 s dwell, no return within
+10 min) are unchanged.
+
+### T11 redefined
+
+Was: a level-1 recruit fielded at zone 20 reaches party level - 5 in 5-10 min.
+
+Now: **levelling a new hero takes real play.** (a) Continuous: a level-1 recruit fielded at zone 15
+needs at least 60 min to reach party level - 5 (the fork stops at 90 min; zone 20 is no longer
+reached in the 3h runs). (b) Normal play (`--train 3`): a hero recruited at the first check-in
+after day 3 and fielded in place of the lower-level member reaches the pair's level of that
+moment within **1-5 days** of being fielded.
+
+Measured (seed 1): continuous, Kestrel L1 -> L29 in 90 min (target L56); normal play, Thessaly
+reaches the pair (L116-120) in 4.0 / 5.0 / 4.0 / 4.0 days (Warden / Lanternmage / Ranger /
+Lightkeeper). Levels 1-75 go in under a day of normal play; the rest is the paceXp curve.
+
+T18 (starter only, zone 5 in 6-12 min) runs with the roster off and has no catch-up in it; it is
+unchanged (it fails on the Lightkeeper at 5.8 min, as before CU1).
+
+### The Full Company Feat (all 18 at Lanternborn, rank 7)
+
+Rank 7 needs level 175 (the rank 6 cap). Levels 1-175 cost about 15,000 level-1-equivalents of XP
+(75 + ~2,400 for 76-124 + 50 x 250 for 125-174); a fielded hero earns about 600-650 a day in
+normal play (the pair reached L200 around day 30-35). 13 non-Commons plus 5 Commons (x1.5 XP) is
+about 380 fielded hero-days, 2 at a time: **about 6-7 months** of normal play (was a few weeks of
+rotation with catch-up). The Feat's "3-5 months" text (23-data-deeds.js, achievements.md) should
+read "6+ months" or the level 125+ multiplier (`compXpMax` 250) should come down for the Feat to
+stay at 3-5 months; not changed here (owner's call).
+
+### Targets before -> after (`--targets`, seed 1; the branch was already 13/22 before CU1)
+
+| Target | Before | After |
+|---|---|---|
+| T1 | 8/11/16, 8/11/17, 10/12/17, 8/10/17 (FAIL) | 8/11/16, 8/11/14, 10/12/14, 8/11/13 (FAIL) |
+| T2 | 19-20 | 17-19 |
+| T3 | 0.95-1.07 | 0.88-1.07 |
+| T4 | 32% | 37% (FAIL) |
+| T6 | 3 / 5 lower (FAIL) | 2 / 2 lower (PASS) |
+| T8 | 1.17 (FAIL) | 1.02 (PASS) |
+| T11 | n/a (FAIL) | see above; the continuous leg read n/a in that run (zone 20), fixed to zone 15 after it |
+| T16 | Epic d2.3-5.3 (FAIL) | Epic d3.5-5.3 (FAIL) |
+| P1 | day 5.3-9.3 (FAIL) | day 7.8-10.3 (FAIL) |
+| P2 | day 24.6-37.3 | Warden 30.8, Lightkeeper 42.3; Lanternmage and Ranger never (zone 69-70 at day 45) (FAIL) |
+| P4 | 1-3 | 3 / 28 / 31 / 13 (FAIL: the stall at the zone 70 wall) |
+| Total | 13/22 | 12/22 |
+
+### Open: progress without recruits (coordinator decision)
+
+The fielded pair plus promotions no longer carries Region 2. With no catch-up the planner keeps
+the first pair it had (in the sim usually the starter and a Common, fielded before the Rares
+arrived), and two Commons at the level-200 cap cannot beat the zone 70 boss (the stall F3 saw).
+P1 slips about 2 days and P2/P4 fail for the Lanternmage and Ranger. Options:
+
+1. Retune Region 2 for a Common pair at the cap (zone 70 boss and `hpLate`), so recruits are never
+   required (the brief's rule); Rares/Epics then make it faster.
+2. Make the sim player invest: when the fielded pair is capped (level 200, or a rank cap it cannot
+   pay), field the benched hero with the highest ceiling. A real player would, but it means
+   recruits are required for Region 2.
+3. A small, fair rule for a hero far behind (e.g. gapMax counts from the pair's level down to
+   gapMax x 2 behind), kept well short of the old catch-up.
+
+Save compatibility: no stored field is added, renamed or changed; only formulas and knobs.

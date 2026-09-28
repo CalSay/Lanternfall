@@ -13746,7 +13746,7 @@ let welcomeApply, welcomeNote, welcomeInfo;
 //   state    rosterLive(), charRec(id), isRecruited(id), rosterList()
 //   power    charPow(id), charDps(id), fieldCompDps(), supportBuff(), rosterSlotDps(i),
 //            oldCompDps(), rosterNoLoss(), addCharModifier(fn(id) -> mult) -> remove(), charMod(id)
-//   levels   levelCap(rank), drillsAt(lv), isDrillLv(lv), rankXTxt(), cxpNeed(lv), cxpGain(z), partyLevel(), catchUpBonus(id), addCharXp(id, xp)
+//   levels   levelCap(rank), drillsAt(lv), isDrillLv(lv), rankXTxt(), cxpNeed(lv), cxpGain(z), partyLevel(), catchUpBonus(id) (CU1: always 0), addCharXp(id, xp)
 //   recruit  foesGold(z, k), routeGold(route), unlockChar(id, source), addRecruitRoute(id, route), recruitCost(id), canRecruit(id),
 //            recruit(id), recruitHow(id)
 //   promote  promoteCost(id), canPromote(id), promoteChar(id)
@@ -13780,8 +13780,9 @@ let welcomeApply, welcomeNote, welcomeInfo;
 // BAL1 (owner: "party members are far too easy to get ... damage ramps so fast"):
 //   - Levels come from time spent fighting: XP per kill counts the zone's par level at most
 //     gapMax (4) above the character (was 18) and scales with how long the foe takes (killWorth),
-//     so pushing zones no longer drags companions up 3 levels a zone. Behind the party, a
-//     character still counts up to the party level (catchGap 35, BAL2), so recruits catch up fast.
+//     so pushing zones no longer drags companions up 3 levels a zone. (CU1, owner 2026-09-28: no
+//     rapid catch-up. A new recruit levels at the normal rate for its own level; the old catchGap,
+//     catchStep/catchMax and catchPromo are gone.)
 //   - Power: growth 1.06 a level (was 1.08), x1.5 a rank (was x2), and a drill every 5 levels
 //     between promotions (x1.1 each, 'drill' event), so a roster step is due every 10-20 minutes early (T10).
 //   - Promotions cost promoGold x (rank + 1) foes of your max zone (was 60 x mobGold(cap / 3)),
@@ -13860,21 +13861,26 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     // XP per kill counts the zone's par level (par x zone) at most gapMax above the character.
     // BAL1: gapMax 18 -> 4 and par 3 -> 6, so levels come from kills (about 25 a level) instead of
     // racing to 3 x the zone: companion power grows with play time, not with each zone pushed.
-    // A character behind the party level still counts up to the party level (at most catchGap
-    // above itself), so new recruits catch up in minutes (T11).
-    gapMax: 4, catchGap: 35,             // (BAL2) catchGap was 18: a recruit reached party level - 5 in 25 min (T11 wants 5-10)
+    // CU1 (owner, 2026-09-28: "They shouldn't have rapid catch-up XP either. We could have an
+    // achievement for maxing out all heroes and that shouldn't be spoonfed."): no catch-up. A hero
+    // behind the party earns the normal XP for its own level. Removed: catchGap 35 (par counted up
+    // to the party level), catchStep 0.6 / catchMax 3 (up to +300% XP behind the party) and
+    // catchPromo 0.25 (a quarter-price promotion a rank behind). The natural effect stays: past
+    // PACE.compLv each level needs more XP (paceXp), so a low hero still gains levels faster than a
+    // high one for the same fight. Levelling a new hero to the pair's level takes days (T11).
+    gapMax: 4,
     xpSecs: 5.5, xpWorthMax: 8,          // (BAL1 5, BAL2 5.5) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
-    catchStep: 0.6, catchMax: 3, commonXp: 1.5, offlineXp: 1,   // (BAL1) offlineXp was 0.75; (BAL2) catchStep 0.2 -> 0.6, catchMax 1 -> 3
+    commonXp: 1.5, offlineXp: 1,         // Commons earn +50% XP (a rarity trait, not a catch-up); (BAL1) offlineXp was 0.75
     promoGold: 60, promoEss: 10,         // (BAL1) gold = promoGold x (rank + 1) foes of your max zone (was promoGold x mobGold(cap / 3): levels no longer track zones)
-    commonPromo: 0.5, catchPromo: 0.25, maxRank: 7,
+    commonPromo: 0.5, maxRank: 7,
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
                                          //   Starlit, zone 36, walled Region 1 at level 125, and Radiant walled day 1 at level 75)
     storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3,
     fieldMax: 2,                         // (F1, formation.md) companions in the party: the hero is the third (was 3)
-    // (F5) benched companions earn benchXp of a fielded member's kill XP (quietly; catch-up applies), so the
+    // (F5) benched companions earn benchXp of a fielded member's kill XP (quietly), so the
     // bench does not freeze at level 1 while the field climbs (the Lanternmage stalled at the zone 70 boss)
-    benchXp: 0                           // (owner, 2026-09-28) the bench earns no XP; a fielded recruit catches up (catchGap/catchMax); F5 had 0.25
+    benchXp: 0                           // (owner, 2026-09-28) the bench earns no XP; F5 had 0.25
   };
   ROSTER_TUNE = T;
   const RST_DEF = {
@@ -13913,14 +13919,12 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, Math.max(1, T.fieldMax));
     return l.length ? l.reduce((a, b) => a + b, 0) / l.length : 1;
   };
-  catchUpBonus = id => {
-    const r = charRec(id); if (!r) return 0;
-    return Math.min(T.catchMax, T.catchStep * Math.max(0, partyLevel() - r.lv));
-  };
-  // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax (or at the party
-  // level, up to lv + catchGap, for a character behind the party).
-  const gainFor = (id, z) => { const r = charRec(id), ref = Math.max(r.lv + T.gapMax, Math.min(partyLevel(), r.lv + T.catchGap)); return Math.min(cxpGain(z), cxpBase(ref) / T.killsPerLv); };
-  const xpMult = id => (R(id).rarity === 'common' ? T.commonXp : 1) * (1 + catchUpBonus(id)) * mod('compXp');
+  // CU1 (owner): no catch-up XP. Kept as an API (the Party sheet shows a badge when it is above 0).
+  catchUpBonus = () => 0;
+  // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax (CU1: no longer lifted
+  // to the party level for a character behind it).
+  const gainFor = (id, z) => Math.min(cxpGain(z), cxpBase(charRec(id).lv + T.gapMax) / T.killsPerLv);
+  const xpMult = id => (R(id).rarity === 'common' ? T.commonXp : 1) * mod('compXp');
 
   function levelUp(id, r, quiet) {
     r.lv++;
@@ -13949,7 +13953,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     }
     return r.lv - lv0;
   }
-  // XP from outside the fight (quests, expeditions): multipliers (Common, catch-up, compXp) apply.
+  // XP from outside the fight (quests, expeditions): multipliers (Common, compXp) apply.
   addCharXp = (id, xp, quiet) => isRecruited(id) ? giveXp(id, xp * xpMult(id), quiet) : 0;
 
   // ---------------- power ----------------
@@ -14031,12 +14035,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     setField(f.filter(k => k !== id)); return true;
   };
   // Pick the best 3, a tank first when one is recruited. by: 'now' (current damage) or
-  // 'potential' (damage once caught up to party level and promoted to match).
-  // Damage once caught up to party level and promoted to match (catch-up makes this quick).
-  function potential(k) {
-    const r = charRec(k), lv = Math.max(r.lv, Math.floor(partyLevel()));
-    return rawValue(k, { lv, rank: Math.max(r.rank, Math.floor((lv - 1) / 25)), wpn: r.wpn });
-  }
+  // 'potential' (CU1: the same, damage at the real level and rank. It used to assume a recruit
+  // caught up to the party level in minutes; with no catch-up a level-1 recruit is scored as it is,
+  // so the auto line-up never fields a weak recruit over a strong pair).
+  function potential(k) { return rawValue(k, charRec(k)); }
   // Stage C (party combat, 59-combat.js): would this field hold the max zone (closed-form estimate)?
   function holdsWith(f) {
     if (typeof partyHoldEstimate !== 'function' || !combatOn()) return true;
@@ -14170,9 +14172,8 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   }
 
   // ---------------- promotions ----------------
-  // BAL1: a character a whole rank behind the party (a new recruit catching up) pays catchPromo of the price.
-  const behind = id => { const r = charRec(id); return r && Math.floor((partyLevel() - 1) / 25) > r.rank; };
-  const promoMult = id => (R(id).rarity === 'common' ? T.commonPromo : 1) * (behind(id) ? T.catchPromo : 1);
+  // Commons pay commonPromo of the price. (CU1: the quarter price a rank behind the party, catchPromo, is gone.)
+  const promoMult = id => R(id).rarity === 'common' ? T.commonPromo : 1;
   promoteCost = id => {
     const r = charRec(id); if (!r || r.rank >= T.maxRank) return null;
     const m = promoMult(id);
@@ -15625,7 +15626,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
 //     opts.goal    'push' (default) | 'farm'
 //     opts.filter  fn(id) -> bool | [ids] | { circle } | { role }
 //     opts.key     cache key for a function filter (without it a function filter is not cached)
-//     opts.by      'now' (default: today's levels) | 'potential' (levels once caught up; autoPlan)
+//     opts.by      'now' (default: today's levels) | 'potential' (autoPlan; CU1: also today's levels)
 //     opts.boss    push only: count the zone boss (default true)
 //     opts.pin     [ids] kept in every plan (default S.party.pin; [] for none)
 //     opts.bossW   override the boss weight w
@@ -15827,21 +15828,12 @@ var afRealPow = null;
     if (fl.role) return k => R(k).role === fl.role;
     return () => true;
   }
-  // 'potential': levels once caught up to the party level and promoted to match (as 56-roster).
-  function withLevels(by, ids, fn) {
-    if (by !== 'potential') return fn();
-    const pl = Math.floor(partyLevel()), saved = [], real = {};
-    for (const k of ids) {
-      const r = charRec(k); if (!r) continue;
-      const lv = Math.max(r.lv, pl);
-      saved.push([r, r.lv, r.rank]); real[k] = charPow(k);
-      r.rank = Math.max(r.rank, Math.min(7, Math.floor((lv - 1) / 25))); r.lv = Math.min(lv, levelCap(r.rank));
-    }
-    // F5: the hold estimate gives the hero its HP at the companions' real power (59-combat readPartyP):
-    // companions catch up in minutes, the hero's HP would only follow them
-    const prev = afRealPow; afRealPow = real;
-    try { return fn(); } finally { afRealPow = prev; for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
-  }
+  // 'potential' used to lift every candidate to the party level (and the rank to match), because
+  // recruits caught up in minutes. CU1 (owner, 2026-09-28): no rapid catch-up, so levelling a recruit
+  // takes days. The planner scores everyone at their real level and rank, so the auto line-up never
+  // fields a level-1 recruit over a strong pair; fielding one to train it is the player's call.
+  // 'potential' stays accepted (same as 'now'); afRealPow stays null.
+  function withLevels(by, ids, fn) { return fn(); }
   const value = k => charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : ROLE_STATS[R(k).role].dps * (1 + (ROLE_STATS[R(k).role].crit || 0) * ((ROLE_STATS[R(k).role].critX || 1) - 1)));
   const pinsOf = (o, pass) => {
     const l = Array.isArray(o.pin) ? o.pin : (P() && Array.isArray(P().pin) ? P().pin : []);
