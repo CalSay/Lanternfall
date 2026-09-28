@@ -39,11 +39,11 @@ function spawn() {
   if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = Math.max(5, 30 + bonus('bossTime')); return; }
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
-  const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
+  const ti = boss || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);
   const t = TYPES[ti];
   const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
-    key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
+    key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
@@ -110,7 +110,7 @@ function killPack(m, g) {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
     if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {

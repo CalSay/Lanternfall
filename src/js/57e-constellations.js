@@ -273,7 +273,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   const isKey = s => s.kind === 'key' || s.kind === 'crown';
 
   // ---- points ----
-  greatLanternsLit = () => Math.max(0, Math.floor(((S.maxZone || 1) - 1) / T.lanternZone));
+  greatLanternsLit = () => lanternsLitAt(S.maxZone);   // region bosses beaten (22-data-regions)
   starPoints = () => Math.floor((S.L || 1) / T.every) + T.lanternPts * greatLanternsLit();
 
   // ---- state ----
@@ -483,10 +483,9 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     if (quiet || L % T.every !== 0 || !starCls() || typeof isUnlocked !== 'function' || !isUnlocked('stars')) return;
     toast(`+1 star point. You have ${starFree()} to spend in Party, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
   });
-  on('zoneClear', ({ zone }) => {
-    if ((zone % T.lanternZone) !== 0) return;
-    toast(`A Great Lantern is lit. +${T.lanternPts} star points.`, 'good', { ic: ['constel', '#F2C14E'] }, 'high');
-  });
+  // The points come from greatLanternsLit(); the Great Lantern card (55-lantern, 75-lantern-ui) says so.
+  // A quiet catch-up (a save already past the boss) has counted them all along: nothing new to list.
+  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${T.lanternPts} star points`, ic: ['constel', '#F2C14E'] }); });
 
   // ---- Next Up ----
   // The cheapest star you can light now (points and rules), or null.

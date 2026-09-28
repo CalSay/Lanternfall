@@ -44,8 +44,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   const give = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };
 
   // ---------------- home ground ----------------
-  homeFamily = (z = S.zone) => CRAFT_HOME[zoneType(z)];
-  homeBonus = (fam, z = S.zone) => craftHomeBonus(zoneType(z), fam, stars(z));
+  homeFamily = (z = S.zone) => zoneHome(z);
+  homeBonus = (fam, z = S.zone) => zoneHome(z) !== fam ? 0 : stars(z) >= CRAFT_HOME_BONUS.stars ? CRAFT_HOME_BONUS.starred : CRAFT_HOME_BONUS.base;
   for (const fam of GATHER_KINDS) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
 
   // Foraging catch-up: x2 XP while below the best of Mining and Woodcutting.
@@ -60,7 +60,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   // offline kills in awayBase), so each kill credits its expected drop. Packs: 72% zone type, 28% next.
   awaySigDrops = (kills, z = S.zone) => {
     const out = {}, zt = zoneType(z);
-    for (const [ti, share] of [[zt, 0.72], [(zt + 1) % 7, 0.28]]) {
+    for (const [ti, share] of [[zt, 0.72], [zoneNextType(z), 0.28]]) {
       const type = TYPES[ti].key, d = CRAFT_SIG_DROPS[type]; if (!d) continue;
       out[d.fam] = (out[d.fam] || 0) + kills * share * sigDropChance(type, z);
     }
@@ -108,7 +108,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
       toast(`Champion defeated: +${got} ${CRAFT_TROPHIES[i].n}${d ? ` and ${CH.sig} ${matName(d.fam, tier)}` : ''}.`, 'loot', trophyIcon(i));
     }
     if (m.boss && m.firstKill && zone >= SRC.firstBossFrom) {
-      const bi = zoneType(zone), got = addTrophy(bi, roll(SRC.firstBoss * mod('trophy')), 'boss');
+      const bi = zonePlace(zone), got = addTrophy(bi, roll(SRC.firstBoss * mod('trophy')), 'boss');
       if (got) toast(`The boss leaves a trophy: +${got} ${CRAFT_TROPHIES[bi].n}.`, 'loot', trophyIcon(bi));
     }
   });
@@ -131,7 +131,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     const champs = roll(champsAway(kills, zone));
     if (champs > 0) {
       S.craft.champ = (S.craft.champ || 0) + champs;
-      addTrophy(zt, champs * (CH.troph + bonus('champTrophy')), 'champion');
+      addTrophy(zonePlace(zone), champs * (CH.troph + bonus('champTrophy')), 'champion');
       const d = CRAFT_SIG_DROPS[TYPES[zt].key];
       if (d) give(d.fam, tier, champs * CH.sig);
     }

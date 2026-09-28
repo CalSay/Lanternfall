@@ -102,7 +102,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (tg === 'world') th = 'raid';
     else if (deepOn()) th = 'well';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
-    else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
+    else { th = zoneTheme(S.zone); hue = zoneHue(S.zone); }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
   // The well's scene (a Deepwell run) is built when the player opens the Deepwell view (or has a
@@ -124,7 +124,7 @@ let resize, animate, draw, stageStats, warmScene;
   // logical size (SW x SCH), not the element's CSS size. Returns false before the first resize.
   warmScene = function (z) {
     if (!SW || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return false;
-    const th = ZONE_THEME[zoneType(z)], hue = (zoneCycle(z) * 70) % 360, w = SW, h = SCH, k = DPR * ZM;
+    const th = zoneTheme(z), hue = zoneHue(z), w = SW, h = SCH, k = DPR * ZM;
     const same = () => w === SW && h === SCH && k === DPR * ZM, step = sceneSteps(th, w, h, hue);
     // soon (front of the queue): one build step per task, then the plates and atmosphere steps
     const run = () => { if (!same()) return; const sc = step(); if (sc) scenePlates(sc, k, w, h, 'queue'); else idleTask(run, true); };
@@ -246,8 +246,8 @@ let resize, animate, draw, stageStats, warmScene;
       const type = mob.key.replace(/\d+$/, '');
       if (mob.deep) { const b = coldBand(mob.floor); key = 'd' + type + (mob.boss ? 'E' : '') + b; fr = coldFrames(type, !!mob.boss, b); }
       else {
-        key = 'm' + type + (mob.boss ? 'E' : '') + zoneCycle(S.zone);
-        fr = enemyFrames(type, { elder: !!mob.boss, hue: (zoneCycle(S.zone) * 70) % 360 });
+        key = 'm' + type + (mob.boss ? 'E' : '') + zoneHue(S.zone);
+        fr = enemyFrames(type, { elder: !!mob.boss, hue: zoneHue(S.zone) });
       }
       const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
       foe.anim = rig && rig.anim || 'lunge'; foe.hover = !!(rig && rig.hover);
