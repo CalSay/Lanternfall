@@ -2,10 +2,8 @@
    the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
 :root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
 
-/* ---- in a run: swap the zone line and the control row ---- */
+/* ---- in a run: the control row swaps for the boon strip (62-stage hides the zone line and boss timer) ---- */
 .dw-hud, .dw-row { display: none; }
-.app.deep-run .hud-zone { visibility: hidden; }
-.app.deep-run #tWrap { display: none !important; }
 .app.deep-run .ctrl { display: none; }
 .app.deep-run .dw-row { display: flex; }
 .app.deep-run .dw-hud { display: flex; }
