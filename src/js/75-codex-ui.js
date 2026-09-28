@@ -18,7 +18,8 @@
     companions: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }), stories: () => iconURL('charm', '#B58CFF'),
     materials: () => matIcon('crystal', 3), camp: () => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }),
     lore: () => iconURL('glass', '#F2E27A'), deepwell: () => iconURL('orb', '#7FB2FF'), seals: () => iconURL('coin', '#F2C14E'),
-    omens: () => iconURL('orb', '#B58CFF'), achievements: () => iconURL('banner', '#E0524F', { 7: '#FFB347' }), wardrobe: () => iconURL('helm', '#C9B8FF')
+    omens: () => iconURL('orb', '#B58CFF'), achievements: () => iconURL('banner', '#E0524F', { 7: '#FFB347' }), wardrobe: () => iconURL('helm', '#C9B8FF'),
+    legendaries: () => iconURL(...legendIcon('tidewall'))
   };
   const pct = p => Math.floor(p * 100) + '%';
   // Entries whose names are no secret (a zone, a building, an achievement): shown even while blank.

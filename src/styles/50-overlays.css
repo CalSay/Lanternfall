@@ -14,7 +14,7 @@
 .toast.raid { border-left-color: var(--hp); }
 .toast.good { border-left-color: var(--xp); }
 .toast.hi { font: 600 12.5px/1.25 var(--body); border-color: rgba(242,193,78,.55); border-left-color: var(--gold); }
-.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF2, #1A120AF2); font: 600 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810, 0 0 14px rgba(255,158,61,.35); }
+.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF2, #1A120AF2); font: 600 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810, 0 0 14px rgba(255,138,61,.35); }
 .toast.out { opacity: 0; transform: translateY(-6px); }
 .toast.gone { opacity: 0; }
 @keyframes tin { from { transform: translateY(-8px); opacity: 0; } }
