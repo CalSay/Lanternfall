@@ -340,3 +340,7 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   stage natively hides the zone HUD during runs, cold recoloured well foes (colder every 7 floors), and
   Deepwell decorations as icons on the Hearth card. Coordinator ACCEPTS lantern colour/trail showing
   everywhere (a bought cosmetic should show). Perf within noise.
+- AF line-up planner merged (56d-autofield.js bestLineup/lineupScore/applyLineup; autoField uses it;
+  Team view "Best line-up" button with a preview and a why line, e.g. "Hedgefolk, a tank for the
+  bruisers. +60% damage over yours."). It shifts pacing: T2 26/24/24/24 (FAIL), P1 4.3-8.8 (FAIL), P2
+  22-24, P4 PASS, T4 PASS. BAL2 was told to retune with the planner merged.

@@ -1552,6 +1552,28 @@ span.cf-d { font-weight: 600; }
 .mini.cf-armb { background: var(--gold); color: #2A1E07; }
 .lg-askb { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .lg-askb .mini { min-height: 44px; }
+/* 60-lineup: the Best line-up button, its one-line why and the preview (75-party.js, AF). */
+#p-party .sec-head .pf-btns { display: flex; gap: 6px; margin-left: auto; }
+.lu-why { font-size: 12.5px; color: var(--bone); }
+.lu-prev { display: grid; gap: 8px; padding: 10px; background: var(--panel); border: 2px solid var(--ember-deep); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.lu-t { font: 600 15px var(--display); }
+.lu-line { margin: 0; font-size: 13.5px; color: var(--gold); }
+.lu-ch { display: flex; flex-wrap: wrap; gap: 6px; }
+.lu-same { font-size: 12.5px; color: var(--muted); }
+.lu-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border: 1px solid var(--line-hi); background: var(--well); font: 600 12px var(--display); }
+.lu-chip img { width: 24px; height: 24px; image-rendering: pixelated; }
+.lu-chip.in { border-color: var(--striker); color: var(--striker); }
+.lu-chip.out { border-color: var(--line); color: var(--muted); }
+.lu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.lu-cell { position: relative; min-height: 44px; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 2px 4px; border: 1px dashed var(--line); background: var(--well); font: 600 11px var(--display); color: var(--muted); }
+.lu-cell.occ { border: 1px solid var(--line-hi); color: var(--bone); }
+.lu-cell.new { border: 2px solid var(--ember); }
+.lu-cell img { width: 24px; height: 24px; image-rendering: pixelated; flex: none; }
+.lu-cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lu-cell .rp { top: 3px; left: 3px; }
+.lu-stats { margin: 0; font-size: 12.5px; }
+.lu-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.lu-row .lu-use { flex: 1 1 auto; }
 /* 60-mastery: zone mastery pips and bestiary rows */
 .row.ms-row { grid-template-columns: auto 1fr; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
@@ -10518,7 +10540,11 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const B = fill(fill(tank ? [tank, sup] : [sup], dmg), all);
     return mode === 1 || !holdsWith(A) ? B : A;
   }
-  autoField = by => setField(bestThree(by || 'potential'));
+  // AF (56d-autofield.js): the line-up planner (synergies, roles, cells, the zone's foes) when present.
+  autoField = by => {
+    if (typeof bestLineup === 'function') { try { const b = bestLineup({ by: by || 'potential' }); if (b && b.field.length) return applyLineup(b); } catch (e) {} }
+    return setField(bestThree(by || 'potential'));
+  };
   // A new recruit steps in when the field has room, or when they will out-damage a member
   // of the same kind (a tank replaces the weakest tank, anyone else the weakest non-tank).
   // Nobody else moves, so a recruit never reshuffles the bench.
@@ -11703,6 +11729,291 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   };
 
   U();
+}
+
+// ---- src/js/56d-autofield.js ----
+// 56d-autofield: the line-up planner (plan-2 task AF, autoField v2).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Picks the best 3 companions and their formation cells for a zone. Every candidate field is
+// scored with the game's own closed-form hold estimate (59-combat partyHoldEstimate: party
+// damage with synergies, who gets hit, healing, the zone's foe behaviours), so roles come in
+// only when the estimate needs them: a tank or a healer takes a damage dealer's place when the
+// party cannot hold the zone without one. On top of that, small tie-breaks: an active synergy
+// (56b activeSynergies, by strength) wins when damage is close, and the zone's foe behaviours
+// (59b FOE_BEH) favour a tank in Front against divers and a stun against the Wraith healers.
+// Cells follow the reach rules (melee foes hit the front-most column): tanks Front, strikers
+// Mid (melee strikers Front when there is no tank), casters and supports Back; the planner also
+// tries a support right behind the tank in the same lane (Shield and Hearth) and keeps the better.
+//
+// Exposed names:
+//   bestLineup(opts) -> { field, cells, score, why, parts } | null (no roster yet)
+//     opts.zone    zone to plan for (default: the next zone past your best for 'push', the current zone for 'farm')
+//     opts.goal    'push' (default: hold the zone, most damage) | 'farm' (most gold per second)
+//     opts.filter  fn(id) -> bool | [ids] | { circle } | { role } (e.g. circle-only for the Oaths)
+//     opts.key     cache key for a function filter (without it a function filter is not cached)
+//     opts.by      'now' (default: today's levels) | 'potential' (levels once caught up; autoField)
+//     opts.boss    push only: count the zone boss (default true: a Front tank for its heavy hit)
+//     parts: { zone, goal, dps, holds, margin, goldPerSec, synergies: [{ id, name, strength }],
+//              reasons: [text], foe, current: { score, dps, holds } | null, gain, same, cand }
+//   lineupScore(field, opts) -> { score, dps, holds, margin, goldPerSec, cells, synergies } (checks, UI)
+//   applyLineup(res) -> field  (sets the field and cells; the caller decides when: see autoField)
+//   AF_TUNE (knobs)
+//
+// Cost: at most perRole characters of each role are candidates (12 at most: 220 fields of 3),
+// one estimate each, plus the Hearth cells for the top few. Results are cached per roster /
+// zone / class / expedition change (levels in steps of 5), and nothing here runs per tick.
+// Characters out on an expedition (57b expedOut) are never picked.
+
+let AF_TUNE, bestLineup, lineupScore, applyLineup;
+
+{
+  const T = {
+    perRole: 3,           // candidates per role (by value), so the search stays bounded
+    synBonus: 0.03,       // tie-break per active synergy, x its strength (Common Cause, Bond)
+    synMax: 0.08,         // at most +8%: a synergy wins when damage is close, never against a big gap
+    behBonus: 0.03,       // foe behaviours the estimate does not model (a Front tank vs divers, a stun vs Wraith healers)
+    bossTank: 0.35,       // push: a field with no tank in Front scores 35% less (the zone boss's heavy hit; the
+                          //   estimate models packs only; without this, lightkeeper runs stalled at a boss)
+    zoneX: 1.55,          // push: a field's score drops by this for each zone short of the target it holds
+    farmFail: 0.1,        // farming: a field that does not hold is worth a tenth
+    needGap: 0.05,        // (unused since held zones decide the reasons)
+    hearthTop: 4,         // Hearth cells are tried for this many of the best fields
+    deep: 6,              // fields per make-up (with or without a tank, a support) that get the full estimate
+    lvStep: 5             // cache: levels in steps of 5
+  };
+  AF_TUNE = T;
+
+  const R = id => ROSTER[id];
+  const P = () => S.party;
+  const COLS = { front: 2, mid: 1, back: 0 };
+  const FOE_WORD = { slime: 'slimes', bat: 'divers', bones: 'archers', beetle: 'bruisers', spore: 'spore clouds', golem: 'golems', wraith: 'wraiths' };
+  const STUNS = { aldric: 1, grenna: 1, thessaly: 1, oriel: 1, kestrel: 1 };
+  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
+  const heroCls = () => (P() && P().cls && HERO_CLASSES[P().cls]) ? P().cls : null;
+  const heroColOf = () => { const c = heroCls(); return c ? COLS[HERO_CLASSES[c].row] : 2; };
+  const heroRole = () => { const c = heroCls(); return c ? HERO_CLASSES[c].role : null; };
+  const roleOf = k => k === 'hero' ? heroRole() : R(k).role;
+  const foeKey = z => { try { const t = TYPES[zoneType(z)]; return t ? t.key : ''; } catch (e) { return ''; } };
+
+  // ---------------- cells (reach rules) ----------------
+  // Default: as 56-roster placeCells (tank Front, melee strikers Front without a tank, else the role
+  // column), lanes filled lower first. pre: cells already taken { key: { col, lane } }; ban: 'col:lane' kept empty.
+  function placeAll(field, pre, ban) {
+    const cells = Object.assign({}, pre || {}), used = {};
+    for (const k in cells) used[cells[k].col + ':' + cells[k].lane] = 1;
+    if (ban) used[ban] = 1;
+    const hasTank = field.some(k => R(k).role === 'tank');
+    const want = k => {
+      if (k === 'hero') return heroColOf();
+      const c = R(k), col = ROLE_STATS[c.role].col;
+      return c.role === 'striker' && !c.ranged && !hasTank ? 2 : col;
+    };
+    for (const k of ['hero'].concat(field)) {
+      if (cells[k]) continue;
+      const col = want(k), order = k === 'hero' ? [col] : [col, col === 1 ? 2 : 1, col === 0 ? 2 : 0];
+      let done = false;
+      for (const c of order) for (const lane of [1, 0]) if (!done && !used[c + ':' + lane]) { cells[k] = { col: c, lane }; used[c + ':' + lane] = 1; done = true; }
+    }
+    return cells;
+  }
+  // Shield and Hearth: a tank in Front and a support right behind it in the same lane.
+  function hearthCells(field) {
+    const all = ['hero'].concat(field);
+    const tank = all.find(k => roleOf(k) === 'tank'), sup = all.find(k => roleOf(k) === 'support');
+    if (!tank || !sup) return [];
+    const hc = heroColOf(), out = [];
+    if (tank === 'hero' && hc !== 2) return [];
+    for (const lane of [1, 0]) {
+      const pre = { [tank]: { col: 2, lane } };
+      let ban = null;
+      if (sup === 'hero') { if (hc === 1) pre.hero = { col: 1, lane }; else { pre.hero = { col: 0, lane }; ban = '1:' + lane; } }
+      else pre[sup] = { col: 1, lane };
+      out.push(placeAll(field, pre, ban));
+    }
+    return out;
+  }
+
+  // ---------------- one field ----------------
+  let bossNow = false;   // set per call: push plans also face the zone boss (see T.bossTank)
+  // Scores a field with cells: the hold estimate at zone z, today's synergies, the zone's foes.
+  function measure(field, cells, z, goal) {
+    const p = P(), f0 = p.field, c0 = p.cells;
+    p.field = field.slice(); p.cells = cells;
+    try {
+      // The estimate scans z down to z - 10 and reports the highest zone this field holds.
+      let dps = 0, holds = true, margin = 99, gps = 0, held = z;
+      if (typeof partyHoldEstimate === 'function') {
+        const e = partyHoldEstimate(z);
+        dps = e.dps; margin = e.margin; gps = e.goldPerSec;
+        held = e.holds && e.zone >= z - 10 ? e.zone : z - 11;
+        holds = held >= z;
+      } else {
+        dps = heroDps() + field.reduce((a, k) => a + charDps(k), 0); gps = dps;
+      }
+      const syn = typeof activeSynergies === 'function' ? activeSynergies().map(s => ({ id: s.id, name: s.name, strength: s.strength })) : [];
+      const synF = 1 + Math.min(T.synMax, T.synBonus * syn.reduce((a, s) => a + s.strength, 0));
+      const fk = foeKey(z);
+      let behF = 1;
+      if (fk === 'bat' && field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2)) behF += T.behBonus;
+      if (fk === 'wraith' && field.some(k => STUNS[k])) behF += T.behBonus;
+      const frontTank = (roleOf('hero') === 'tank' && heroColOf() === 2) || field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2);
+      if (bossNow && !frontTank) behF *= 1 - T.bossTank;
+      // push: damage, x zoneX for each zone short of z the field holds (a zone is about 1.55x the foe
+      // HP), so a field that holds more zones wins unless it is far weaker. farm: gold per second there.
+      const base = goal === 'farm' ? gps : dps;
+      const holdF = goal === 'farm' ? (holds ? 1 : T.farmFail) : Math.pow(T.zoneX, held - z);
+      const score = Number.isFinite(base) ? base * holdF * synF * behF : 0;
+      return { field: field.slice(), cells, score, dps, holds, held, margin, goldPerSec: gps, synergies: syn };
+    } finally { p.field = f0; p.cells = c0; }
+  }
+
+  // ---------------- candidates ----------------
+  function filterFn(fl) {
+    if (!fl) return () => true;
+    if (typeof fl === 'function') return fl;
+    if (Array.isArray(fl)) return k => fl.includes(k);
+    if (fl.circle) return k => R(k).circle === fl.circle;
+    if (fl.role) return k => R(k).role === fl.role;
+    return () => true;
+  }
+  // 'potential': levels once caught up to the party level and promoted to match (as 56-roster).
+  function withLevels(by, ids, fn) {
+    if (by !== 'potential') return fn();
+    const pl = Math.floor(partyLevel()), saved = [];
+    for (const k of ids) {
+      const r = charRec(k), lv = Math.max(r.lv, pl);
+      saved.push([r, r.lv, r.rank]);
+      r.rank = Math.max(r.rank, Math.min(7, Math.floor((lv - 1) / 25))); r.lv = Math.min(lv, levelCap(r.rank));
+    }
+    try { return fn(); } finally { for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
+  }
+  const value = k => charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : ROLE_STATS[R(k).role].dps * (1 + (ROLE_STATS[R(k).role].crit || 0) * ((ROLE_STATS[R(k).role].critX || 1) - 1)));
+  function candidates(pass) {
+    const all = rosterList().filter(k => !onExped(k) && pass(k));
+    const out = [];
+    for (const role of ['tank', 'striker', 'caster', 'support']) out.push(...all.filter(k => R(k).role === role).sort((a, b) => value(b) - value(a)).slice(0, T.perRole));
+    return out;
+  }
+  function combos(list) {
+    const n = list.length, out = [];
+    if (n <= 3) return [list.slice()];
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) out.push([list[a], list[b], list[c]]);
+    return out;
+  }
+  // Two stages: every field gets a quick damage number (synergies included, no estimate), then the
+  // best T.deep of each make-up (tank or not, support or not) get the full hold estimate. So a role
+  // the estimate needs is always weighed, and the search stays at about 25 estimates.
+  function shortlist(list) {
+    if (list.length <= T.deep) return list;
+    const p = P(), f0 = p.field, groups = {};
+    try {
+      for (const f of list) {
+        p.field = f.slice();
+        const q = fieldCompDps() + heroDps();
+        const g = (f.some(k => R(k).role === 'tank') ? 't' : '') + (f.some(k => R(k).role === 'support') ? 's' : '');
+        (groups[g] = groups[g] || []).push({ f, q });
+      }
+    } finally { p.field = f0; }
+    const out = [];
+    for (const g in groups) out.push(...groups[g].sort((a, b) => b.q - a.q).slice(0, T.deep).map(x => x.f));
+    return out;
+  }
+  const sameSet = (a, b) => a.length === b.length && a.every(k => b.includes(k));
+  const sameCells = (a, b, keys) => keys.every(k => a && b && a[k] && b[k] && a[k].col === b[k].col && a[k].lane === b[k].lane);
+
+  // ---------------- the why line ----------------
+  function reasons(best, evals, z) {
+    const fk = foeKey(z), foes = FOE_WORD[fk] || 'foes here';
+    const out = [];
+    const lacking = test => { let s = 0; for (const e of evals) if (!e.field.some(test) && e.score > s) s = e.score; return evals.some(e => !e.field.some(test)) ? s : null; };
+    const need = (test, text) => {
+      if (!best.field.some(test)) return;
+      const s = lacking(test); if (s == null) return;
+      const w = evals.find(e => e.score === s && !e.field.some(test));
+      // a reason only when the hold estimate says so: without it the zone does not hold (or holds much worse)
+      if (w && (w.held < best.held || (!w.holds && best.holds))) out.push(text);
+    };
+    need(k => R(k).role === 'tank', 'tank');
+    need(k => R(k).role === 'support', 'healer');
+    if (out.length) out.splice(0, out.length, `a ${out.join(' and a ')} for the ${foes}`);
+    // a tank the packs do not need, fielded for the boss's heavy hit
+    else if (bossNow && best.field.some(k => R(k).role === 'tank') && roleOf('hero') !== 'tank' && lacking(k => R(k).role === 'tank') != null) out.push('a tank for the boss');
+    if (fk === 'bones' || fk === 'golem') need(k => R(k).role === 'caster', 'a caster for the armour');
+    if (fk === 'wraith') need(k => !!STUNS[k], 'a stun for the healers');
+    return out.slice(0, 2);
+  }
+  function whyLine(best, rs, goal) {
+    const syn = best.synergies.slice().sort((a, b) => b.strength - a.strength).slice(0, 2).map(s => s.name);
+    const head = syn.join(' + ');
+    const tail = rs.join(' and ');
+    if (head && tail) return `${head}, ${tail}`;
+    if (head || tail) return head || (tail[0].toUpperCase() + tail.slice(1));
+    return goal === 'farm' ? 'The fastest gold here' : best.holds ? 'Your strongest three' : 'Your toughest three';
+  }
+
+  // ---------------- search (cached) ----------------
+  let cache = new Map(), cacheFor = null;
+  function sigOf(o, z, goal, by) {
+    const step = Math.max(1, T.lvStep);
+    let s = [heroCls(), z, goal, by, bossNow, o.key || (typeof o.filter === 'function' ? '' : JSON.stringify(o.filter || null)), S.L, Math.floor((S.blade || 0) / 10)].join('|') + '|';
+    for (const k of rosterList()) { const r = charRec(k); s += k + Math.floor(r.lv / step) + '.' + r.rank + '.' + r.wpn + '.' + r.trk + (onExped(k) ? 'x' : '') + ','; }
+    return s;
+  }
+  bestLineup = opts => {
+    if (!(typeof rosterLive === 'function' && rosterLive())) return null;
+    const o = opts || {}, goal = o.goal === 'farm' ? 'farm' : 'push', by = o.by === 'potential' ? 'potential' : 'now';
+    const z = Math.max(1, Math.floor(o.zone || (goal === 'farm' ? S.zone : (S.maxZone || 0) + 1) || 1));
+    const cacheable = typeof o.filter !== 'function' || !!o.key;
+    bossNow = goal === 'push' && o.boss !== false;
+    if (cacheFor !== S) { cache = new Map(); cacheFor = S; }
+    const sig = cacheable ? sigOf(o, z, goal, by) : null;
+    let res = sig ? cache.get(sig) : null;
+    if (!res) {
+      const pass = filterFn(o.filter), list = candidates(pass);
+      res = withLevels(by, list, () => {
+        const evals = shortlist(combos(list)).map(f => measure(f, placeAll(f), z, goal)).sort((a, b) => b.score - a.score);
+        if (!evals.length) evals.push(measure([], placeAll([]), z, goal));
+        // Hearth cells for the best few: keep them when they score higher.
+        for (let i = 0; i < Math.min(T.hearthTop, evals.length); i++) {
+          for (const c of hearthCells(evals[i].field)) { const m = measure(evals[i].field, c, z, goal); if (m.score > evals[i].score * (1 + 1e-9)) evals[i] = m; }
+        }
+        evals.sort((a, b) => b.score - a.score);
+        const best = evals[0], rs = reasons(best, evals, z);
+        return { best, rs, cand: list.length, n: evals.length };
+      });
+      if (sig) { if (cache.size > 24) cache.clear(); cache.set(sig, res); }
+    }
+    // The pick is cached; its numbers and the field you have now are measured fresh (two estimates),
+    // so the preview compares like with like and follows your moves.
+    const b = withLevels(by, res.best.field, () => measure(res.best.field, res.best.cells, z, goal));
+    const f0 = (P().field || []).filter(k => isRecruited(k)).slice(0, 3), c0 = P().cells || {};
+    const same = sameSet(f0, b.field) && sameCells(c0, b.cells, ['hero'].concat(b.field));
+    let current = null;
+    if (same) current = { score: b.score, dps: b.dps, holds: b.holds, held: b.held };
+    else try { const m = withLevels(by, f0, () => measure(f0, c0, z, goal)); current = { score: m.score, dps: m.dps, holds: m.holds, held: m.held }; } catch (e) {}
+    return {
+      field: b.field.slice(), cells: JSON.parse(JSON.stringify(b.cells)), score: b.score, why: whyLine(b, res.rs, goal),
+      parts: { zone: z, goal, by, dps: b.dps, holds: b.holds, held: b.held, margin: b.margin, goldPerSec: b.goldPerSec, synergies: b.synergies.slice(), reasons: res.rs.slice(),
+        foe: foeKey(z), current, gain: current && current.score > 0 ? b.score / current.score : null, same, cand: res.cand }
+    };
+  };
+  lineupScore = (field, opts) => {
+    const o = opts || {}, goal = o.goal === 'farm' ? 'farm' : 'push';
+    const z = Math.max(1, Math.floor(o.zone || (goal === 'farm' ? S.zone : (S.maxZone || 0) + 1) || 1));
+    const f = (field || []).filter(k => isRecruited(k)).slice(0, 3);
+    bossNow = goal === 'push' && o.boss !== false;
+    return withLevels(o.by, f, () => measure(f, o.cells || placeAll(f), z, goal));
+  };
+  applyLineup = res => {
+    if (!res || !Array.isArray(res.field)) return null;
+    const f = setField(res.field);
+    if (res.cells && sameSet(f, res.field) && res.cells.hero) {
+      P().cells = JSON.parse(JSON.stringify(res.cells));   // a new object: the stage watches identity
+      emit('fieldChange', { field: P().field });
+    }
+    return f;
+  };
 }
 
 // ---- src/js/57-camp.js ----
@@ -25074,7 +25385,10 @@ let openSheet, partySheet;
     const h = sec.querySelector('.sec-title'); head.append(h);
     const auto = btn('mini pf-auto', 'Auto', () => { picked = null; if (live()) { autoPlace(); saveUi(); } });
     auto.setAttribute('aria-label', 'Place everyone by role');
-    head.append(auto); sec.prepend(head);
+    const best = btn('mini pf-best', 'Best line-up', () => { picked = null; openLineup(); });
+    best.setAttribute('aria-label', 'Show the best line-up for your best zone');
+    const btns = el('div', 'pf-btns'); btns.append(auto, best);
+    head.append(btns); sec.prepend(head);
     const grid = el('div', 'pform');
     for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
     const cells = [];
@@ -25085,8 +25399,10 @@ let openSheet, partySheet;
     }
     const hint = el('p', 'note pf-hint');
     const warn = el('p', 'note warn pf-warn');
-    sec.append(grid, hint, warn);
-    formRefs = { cells, hint, warn, auto };
+    const why = el('p', 'note lu-why'); why.hidden = true;
+    const prev = el('div', 'lu-prev'); prev.hidden = true;
+    sec.append(grid, hint, warn, why, prev);
+    formRefs = { cells, hint, warn, auto, best, why, prev };
   }
   function tapCell(col, lane) {
     const o = occupant(col, lane);
@@ -25117,6 +25433,92 @@ let openSheet, partySheet;
     }
     r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit cell${picked === 'hero' ? ' in your class row' : ''}, or tap again to cancel.` : 'Tap someone, then tap a cell to move or swap them.';
     const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
+  }
+
+  // ================= best line-up (AF, 56d-autofield.js) =================
+  // The line under the formation explains the best line-up for your best zone in one line; the
+  // button opens a preview of the change (who comes in, who goes out, the new places, damage and
+  // hold) and applies it only on "Use this line-up". Planned at most every few seconds, cached by 56d.
+  let luRes = null, luT = -1e9, luOpen = false, luSig = '', luField = null, luCells = null;
+  const luOk = () => typeof bestLineup === 'function' && live() && rosterList().length >= 1;
+  // Background refreshes run in their own task (never inside a ui() pass, so opening the tab stays
+  // smooth); a tap on the button or a manual move plans at once.
+  let luQueued = false;
+  const luRun = () => {
+    luT = performance.now();
+    try { luRes = bestLineup({ goal: 'push' }); } catch (e) { luRes = null; console.error('[lanternfall] bestLineup', e); }
+    return luRes;
+  };
+  const luPlan = force => {
+    if (force) return luRun();
+    if ((!luRes || performance.now() - luT >= 5000) && !luQueued) {
+      luQueued = true;
+      setTimeout(() => { luQueued = false; if (formRefs && formRefs.why.isConnected) { luRun(); luSig = ''; try { updateWhy(); } catch (e) {} } }, 60);
+    }
+    return luRes;
+  };
+  const pctTxt = g => { const p = Math.round((g - 1) * 100); return p > 0 ? `+${p}%` : `${p}%`; };
+  function updateWhy() {
+    const r = formRefs; if (!r) return;
+    putHidden(r.best, !luOk());
+    if (!luOk()) { r.why.hidden = true; r.prev.hidden = true; return; }
+    const moved = !!luRes && (luField !== P().field || luCells !== P().cells);   // a manual move: plan again now (the pick is cached, so this is cheap)
+    luField = P().field; luCells = P().cells;
+    const b = luPlan(moved);
+    if (!b) { r.why.hidden = true; return; }
+    // The gain in the words of the preview: damage when yours holds too, else the hold itself.
+    const g = b.parts.gain, cur = b.parts.current;
+    const dz = cur ? (b.parts.held || 0) - (cur.held || 0) : 0;
+    const more = !g || g <= 1.005 || !cur ? '' : dz >= 10 ? ' Yours cannot hold these zones.' : dz > 0 ? ` It holds ${dz} more zone${dz === 1 ? '' : 's'} than yours.` : b.parts.dps > cur.dps * 1.005 ? ` ${pctTxt(b.parts.dps / Math.max(1e-9, cur.dps))} damage over yours.` : '';
+    const t = b.parts.same ? `Best line-up: ${b.why}. You have it.` : `Best line-up: ${b.why}.` + more;
+    setT(r.why, t); r.why.hidden = false;
+    putToggle(r.best, 'go', !b.parts.same && !!g && g > 1.02);
+    if (luOpen) renderPrev(b);
+  }
+  function openLineup() {
+    luOpen = !luOpen;
+    if (luOpen) luPlan(true);
+    luSig = '';
+    const r = formRefs; if (!r) return;
+    r.prev.hidden = !luOpen;
+    putAttr(r.best, 'aria-expanded', String(luOpen));
+    if (luOpen && luRes) renderPrev(luRes);
+  }
+  function renderPrev(b) {
+    const r = formRefs, box = r.prev;
+    const now = field(), sig = JSON.stringify([b.field, b.cells, b.why, now, cellsNow(), Math.round((b.parts.gain || 0) * 100)]);
+    if (sig === luSig) return; luSig = sig;
+    box.textContent = ''; box.hidden = false;
+    box.append(el('b', 'lu-t', `Best line-up to push zone ${b.parts.zone}`), el('p', 'lu-line', b.why + '.'));
+    const ins = b.field.filter(k => !now.includes(k)), outs = now.filter(k => !b.field.includes(k));
+    const ch = el('div', 'lu-ch');
+    if (b.parts.same) ch.append(el('span', 'lu-same', 'Your line-up is already the best one.'));
+    else if (!ins.length && !outs.length) ch.append(el('span', 'lu-same', 'Same three, new places.'));
+    for (const k of ins) { const c = el('span', 'lu-chip in'); c.append(img(portrait(k)), el('span', null, 'In: ' + first(k))); ch.append(c); }
+    for (const k of outs) { const c = el('span', 'lu-chip out'); c.append(img(portrait(k)), el('span', null, 'Out: ' + first(k))); ch.append(c); }
+    box.append(ch);
+    // The new formation, Back | Mid | Front.
+    const grid = el('div', 'lu-grid'); grid.setAttribute('aria-label', 'New places');
+    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
+    const at = (col, lane) => Object.keys(b.cells).find(k => b.cells[k].col === col && b.cells[k].lane === lane);
+    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+      const o = at(col, lane), was = o && cellsNow()[o];
+      const moved = o && (!was || was.col !== col || was.lane !== lane || (o !== 'hero' && !now.includes(o)));
+      const d = el('div', 'lu-cell' + (o ? ' occ' : '') + (moved ? ' new' : ''));
+      if (o) { d.append(img(portrait(o)), el('span', null, o === 'hero' ? S.name : first(o))); if (o !== 'hero') d.append(el('i', 'rp r-' + C(o).role)); }
+      grid.append(d);
+    }
+    box.append(grid);
+    const p = b.parts, cur = p.current;
+    const stats = el('p', 'note lu-stats');
+    stats.textContent = (cur && !p.same ? `Damage ${fmt(cur.dps)} → ${fmt(p.dps)}` + (p.gain ? ` (${pctTxt(p.dps / Math.max(1e-9, cur.dps))})` : '') + '. ' : '') +
+      (p.holds ? `Holds zone ${p.zone}.` : p.held >= 1 ? `Holds zone ${p.held}, not ${p.zone} yet.` : `Cannot hold zone ${p.zone} yet.`);
+    box.append(stats);
+    const row = el('div', 'lu-row');
+    const use = btn('mini go lu-use', 'Use this line-up', () => { if (live() && typeof applyLineup === 'function') { applyLineup(b); luOpen = false; box.hidden = true; putAttr(r.best, 'aria-expanded', 'false'); luPlan(true); formSig = ''; saveUi(); } });
+    use.disabled = !!p.same;
+    const keep = btn('mini lu-keep', 'Keep mine', () => { luOpen = false; box.hidden = true; putAttr(r.best, 'aria-expanded', 'false'); });
+    row.append(use, keep); box.append(row);
   }
 
   // ================= hero card =================
@@ -25417,7 +25819,7 @@ let openSheet, partySheet;
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', updateForm) });
+  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
