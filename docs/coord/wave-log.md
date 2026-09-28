@@ -660,3 +660,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   fixed band instead of tracking moving targets; reposition only on real layout changes, no jitter).
 - OWNER: skill levels should sit above the resource tabs. UX-A told: the Gather sub-tabs carry the level
   ("Mining 52") with a thin XP bar under each, so all skills show at once above the lists.
+- UX2b merged: bottom tabs Fight · Gather · Party · Craft · World (world id kept); World = a vertical map strip
+  (regions stacked, road rows of lamps per band, Hollow's Rest place view, Tavern sheet, Deepwell place,
+  raid pin, Almanac post, Great Lanterns, band sheets to travel, expedition bar); 9 small sprites; no per-frame
+  work. Phases: A, B, then W1 (shell + map + registerPlace; absorbs plan-2 RD), W2 (Rest/Tavern/Almanac),
+  W3 (Deepwell/raid/expeditions), D, E, F, then G. Coordinator decisions on 10: raid pin in the foe's home
+  region; UX-A does not reorder the tab bar (W1 does); the Tavern is a sheet.
