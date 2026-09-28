@@ -52,6 +52,15 @@
 //   whose pile fills in under half the trip goes to what a camp build waits on, else to the node with
 //   the most room (--storeaway 0: only the full-pile switch). Reports HS4 (Storehouse Lv 1 built) and
 //   HS7 (share of gathering time, live and away, spent on a full pile: days 1-3 and 7-21), split live/away.
+// --hands 0|1 (N1, hearth-and-hands.md 7.3): Hands on (1, the default) or off (0). Policy (handsStep, each
+//   minute of continuous mixed play and at the start and end of every check-in): hire the best applicant when
+//   a Bunkhouse bed is free and the price is under 10 minutes of income (gold over the last 24 h of sim time,
+//   30 min in continuous play); with every bed taken, swap the weakest Hand at camp for a better applicant; when
+//   the board is full and nothing can be hired, turn the worst applicant away; send every Hand at camp to
+//   handsSuggest (the node the next camp build is short of, own skill first); never empty a pack. The camp
+//   policy builds the Bunkhouse after the Tavern. Reports hands: first hire, hired by rarity, units by source.
+// --report hands [--days 35] [--classes a,b]: HS9-HS12 and HS17 (hearth-and-hands.md 7.2), units per family by
+//   source (hero live, hero away, rare finds, Hands), packs that waited, hires by rarity, tool mastery levels.
 // --report deeds [--days 60] [--classes a,b]: the achievements targets AP1-AP8 (achievements.md 10),
 //   every class with and without the deeds bonuses (AC2).
 // --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
@@ -75,6 +84,7 @@ const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0'
 if (args.targets) { await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
 if (args.report === 'deeds') { await runDeedsReport(); process.exit(0); }
+if (args.report === 'hands') { await runHandsReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
 Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
@@ -118,6 +128,57 @@ const storeOn = args.store !== '0';
 const storeSw = args.storeswitch !== '0';
 if (!storeOn) E('STORE_TUNE.on = 0'); else if (storeSw) E('S.store.spill = 1');
 const storeStats = { lv1: null };
+// --hands 0|1 (N1): Hands on (the default) or off. handsSim collects units by source per sim day (cur, then byDay).
+const handsOn = args.hands !== '0';
+if (!handsOn) E('HANDS_TUNE.on = 0');
+const hsFresh = () => ({ live: {}, away: {}, finds: {}, hands: {} });
+const handsSim = { byDay: [], cur: hsFresh(), firstHire: null, firstRar: {}, hired: {}, letGo: 0, turned: 0, sent: 0, waits: 0, waitSecs: 0, back: {}, inc: [] };
+{
+  const add = (src, fam, n) => { if (n > 0) handsSim.cur[src][fam] = (handsSim.cur[src][fam] || 0) + n; };
+  fn.on('harvest', ({ kind, n, away }) => add(away ? 'away' : 'live', kind, n));
+  fn.on('rareFind', ({ kind, n }) => add('finds', kind, n));
+  fn.on('handsUnload', ({ id, fam, n }) => {
+    if (fam !== 'troph') add('hands', fam, n);
+    const b = handsSim.back[id]; if (b !== undefined && E(`(handsGet(${JSON.stringify(id)}) || { pack: [] }).pack.length`) === 0) { const w = E('Date.now()') / 1000 - b; if (w > 60) { handsSim.waits++; handsSim.waitSecs += w; } delete handsSim.back[id]; }
+  });
+  fn.on('handsBack', ({ id, at }) => { handsSim.back[id] = at / 1000; });
+  fn.on('handsHire', ({ r, free }) => { handsSim.hired[r] = (handsSim.hired[r] || 0) + 1; if (!free && handsSim.firstHire === null) handsSim.firstHire = t; if (!free && handsSim.firstRar[r] === undefined) handsSim.firstRar[r] = t; });
+}
+// Income for the hire rule: gold per second over the last `win` seconds of sim time (t; days mode keeps t = wall - 8h).
+const handsIncome = win => {
+  const a = handsSim.inc, G = E('S.totalGold');
+  a.push([t, G]);
+  while (a.length > 2 && a[1][0] <= t - win) a.shift();
+  const [t0, g0] = a[0];
+  return t > t0 ? (G - g0) / (t - t0) : 0;
+};
+function handsStep() {
+  if (!handsOn || !E('handsOpen()')) return;
+  const inc = handsIncome(days ? 86400 : 1800);
+  const R = () => E('handsBoard().map(x => ({ i: x.i, r: HANDS_RAR.indexOf(x.app.r), cost: x.cost }))').sort((a, b) => b.r - a.r || a.cost - b.cost);
+  const weakest = () => E('(() => { const l = handsList().filter(x => !x.job && !x.pack.length).sort((a, b) => HANDS_RAR.indexOf(a.r) - HANDS_RAR.indexOf(b.r) || a.lv - b.lv); return l[0] ? { id: l[0].id, r: HANDS_RAR.indexOf(l[0].r) } : null; })()');
+  for (let guard = 0; guard < 6; guard++) {
+    const b = R(); if (!b.length) break;
+    const best = b[0];
+    if (best.cost > inc * 600 || best.cost > E('S.gold')) break;
+    if (E('handsFree()') <= 0) {
+      const w = weakest();
+      if (!w || w.r >= best.r) break;
+      if (!E(`handsLetGo(${JSON.stringify(w.id)})`)) break;
+      handsSim.letGo++;
+    }
+    if (!E(`!!handsHire(${best.i})`)) break;
+  }
+  // A full board nobody can take: turn the worst applicant away so the next one can come.
+  if (E('S.hands.board.apps.length >= HANDS_TUNE.maxWait && handsFree() <= 0')) {
+    const b = R(), worst = b[b.length - 1], minHand = E('Math.min(...handsList().map(x => HANDS_RAR.indexOf(x.r)))');
+    if (worst && worst.r <= minHand && E(`handsTurnAway(${worst.i})`)) handsSim.turned++;
+  }
+  handsSim.sent += E('handsList().reduce((n, x) => { if (x.job || x.pack.length) return n; const s = handsSuggest(x); return n + (s && handsSend(x.id, s.kind, s.t) ? 1 : 0); }, 0)');
+}
+const handsJson = () => handsOn ? { byDay: handsSim.byDay, firstHire: handsSim.firstHire, firstRar: handsSim.firstRar, hired: handsSim.hired, letGo: handsSim.letGo, turned: handsSim.turned, sent: handsSim.sent,
+  waits: handsSim.waits, waitH: handsSim.waits ? handsSim.waitSecs / handsSim.waits / 3600 : 0, lost: E('STORE_STATS.lost'),
+  end: E('handsOpen() ? handsList().map(x => [x.n, x.r, x.lv, x.sk]) : []'), beds: E('handsBeds()'), bunk: E('campLevel("bunk")'), mastery: E('JSON.parse(JSON.stringify(S.tools.m))') } : null;
 fn.on('campBuilt', ({ id, lv }) => { if (id === 'store' && lv === 1 && storeStats.lv1 === null) storeStats.lv1 = t; });
 // H3: before an away gather trip, a player does not leave the hero on a pile that fills in minutes. Keep
 // the chosen node when it has room for half the trip; else what a Camp build waits on (campNode); else the
@@ -148,6 +209,7 @@ if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class m
 // Nested knobs use dots (hp.tank=10). applyKnobs also runs on the forks (T5, T6, T8, T11).
 function applyKnobs(h) {
   if (!storeOn) h.eval('STORE_TUNE.on = 0'); else if (storeSw) h.eval('S.store.spill = 1');
+  if (args.hands === '0') h.eval('HANDS_TUNE.on = 0');
   if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
   if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); h.eval(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
   if (args.syn !== undefined) h.eval(`SYN_TUNE.today = ${+args.syn}`);
@@ -469,7 +531,7 @@ function nextBlock() {
 }
 // Camp (57-camp.js): like a player, start any build that is affordable, in this order
 // (Watchtower first: it lengthens the away cap). --camp 0 turns it off.
-const CAMP_ORDER0 = ['watch', 'hearth', 'tavern', 'forge', 'bench', 'loom', 'ench', 'store', 'library', 'shrine', 'maproom'];
+const CAMP_ORDER0 = ['watch', 'hearth', 'tavern', 'bunk', 'forge', 'bench', 'loom', 'ench', 'store', 'library', 'shrine', 'maproom'];   // bunk: N1's Bunkhouse (beds for Hands)
 // H3: with caps on, the Storehouse right after the Watchtower (a full pile stops income); --store 0: never.
 CAMP_ORDER0.splice(CAMP_ORDER0.indexOf('store'), 1);
 if (args.store !== '0') CAMP_ORDER0.splice(1, 0, 'store');
@@ -608,6 +670,7 @@ function playSecond(sec) {
     else if (phase > 10 && bestNode.camp) { const cn = campNode(); if (cn && (E('S.node.kind') !== cn[0] || E('S.node.t') !== cn[1])) fn.setNode(cn[0], cn[1]); }
     else if (phase > 10 && cls && !bestNode.camp) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
     withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
+    if (!days) handsStep();
     storeFullSwitch();
     craftCheck(sec);
     const b = nextBlock();
@@ -694,6 +757,7 @@ if (cls && policy === "mixed") {
   console.log(`craft: G9 first Trophy ${m(craftStats.troph)} (want 20-60m) | farm-back ${craftStats.farm} min | trophies ${E('trophies()')} ${E('JSON.stringify(S.craft.troph)')}, champions ${E('S.craft.champ')} | skills mine ${E('S.skills.mine.lv')} wood ${E('S.skills.wood.lv')} forage ${E('S.skills.forage.lv')}`);
   console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
 }
+if (handsOn && !days) { const u = handsSim.cur, sum = o => Object.values(o).reduce((a, b) => a + b, 0), hs = sum(u.hands), all = sum(u.live) + sum(u.away) + sum(u.finds) + hs; console.log(`hands: HS11 first hire ${handsSim.firstHire === null ? '-' : (handsSim.firstHire / 60).toFixed(0) + 'm'} | hired ${JSON.stringify(handsSim.hired)} | Bunkhouse Lv ${E('campLevel("bunk")')} (${E('handsBeds()')} beds) | Hands' share of gathered units ${all ? Math.round(100 * hs / all) : 0}% (${Math.round(hs)} of ${Math.round(all)})`); }
 if (storeOn) { const st = E('STORE_STATS'); console.log(`store: HS4 Lv 1 built ${storeStats.lv1 === null ? '-' : (storeStats.lv1 / 60).toFixed(1) + 'm'} | level ${E('storeLevel()')} | HS7 live time at cap ${st.gatherSecs ? Math.round(100 * st.fullSecs / st.gatherSecs) : 0}% of ${Math.round(st.gatherSecs / 60)} gather min | lost ${JSON.stringify(Object.fromEntries(Object.entries(st.lost).map(([k, v]) => [k, Math.round(v)])))}`); }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
 // Party combat report (T7, T13, T14, T18) and the forks at 2h (T5, T6, T8).
@@ -815,6 +879,7 @@ function runDays() {
       ci = sIdx; syncClock();
       // Back in the game: spend what the away time brought, then play.
       withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
+      handsStep();
       if (hasDeeds) { const tg = E('topGoals(3, { sticky: false }).map(x => x.sys)'); dd.near.push([tg.filter(x => x === 'deeds').length, tg.length]); }
       for (let sec = 0; sec < len; sec++) {
         playSecond(sec); wall++; act++;
@@ -824,6 +889,7 @@ function runDays() {
       }
       checkTiers();
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
+      handsStep();
       // Leaving: pick the away activity.
       if (sIdx % checkins.length === 0 && checkins.length > 1 && (bestNode(true), storeAwayPick())) fn.setActivity('gather');
       else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
@@ -841,6 +907,7 @@ function runDays() {
       r.deeds = E('({ pts: deeds.points(), tiers: Object.values(S.deeds.tier).reduce((a, k) => a + k, 0), feats: Object.keys(S.deeds.feat).length, dmg: deedBonus("dmg"), party: deedBonus("party"), xp: deedBonus("xp"), gold: deedBonus("gold"), hit: S.deeds.rec.hit, totalGold: S.totalGold })');
       if (d === 7) dd.v7 = E('Object.fromEntries(deeds.tracks().map(t => [t.id, t.v]))');
     }
+    if (handsOn) { handsSim.byDay.push(handsSim.cur); handsSim.cur = hsFresh(); }
     rows.push(r);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
     // --snapday D:path writes the save at the end of day D (debugging).
@@ -886,7 +953,7 @@ function runDays() {
   const awayLog = storeDays.map(x => (x[5] || []).reduce((m, e) => !m || e[1] > m[1] ? e : m, null));
   if (store) store.away = awayLog;
   console.log('store: away rate by day (Storehouse Lv, units/h before the cap, away hours, tier): ' + awayLog.map((e, i) => e && [1, 2, 3, 5, 7, 10, 14, 21, 30, 45].includes(i + 1) ? `d${i + 1} Lv${e[0]} ${e[1]}/h ${e[2]}h T${e[3]} ${e[9]} (H${e[5]} skill ${e[6]} tool ${e[7]} m${e[8]})` : '').filter(Boolean).join(' | '));
-  if (args.json) console.log('JSON ' + JSON.stringify({ store, rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
+  if (args.json) console.log('JSON ' + JSON.stringify({ store, rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -907,7 +974,7 @@ function runDays() {
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'store', 'storeaway', 'storeswitch'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'store', 'storeaway', 'storeswitch', 'hands'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 45);
   // T3 averages three seeds (one seed swings a class by +-10%); the rest read the first seed.
@@ -1152,4 +1219,87 @@ async function runSkillsReport() {
   js.forEach((j, i) => console.log(classes[i].padEnd(12) + ' ' + ['mine', 'wood', 'forage'].map(k => { const gg = j.skGather[k] || { live: 0, away: 0 }; return `${k} ${(gg.live / 3600).toFixed(1)}+${(gg.away / 3600).toFixed(0)}h`; }).join(', ')
     + ' | ' + SKILL_KEYS.map(k => k + ' ' + DAYS.map(d => (j.rows[d - 1] && j.rows[d - 1].sk) ? j.rows[d - 1].sk[k] : '-').join('/')).join(' ')));
   if (args.json) console.log('JSON ' + JSON.stringify({ focus: focusRes, days: js.map((j, i) => ({ cls: classes[i], skTier: j.skTier, skGather: j.skGather, rows: j.rows })) }));
+}
+
+// ================= --report hands: Hands targets (hearth-and-hands.md 7.2, N1) =================
+// HS9  Hands' share of gathered units (that day's units: hero live + hero away + rare finds + Hands): day 2 10-20%, day 14 20-35%
+// HS10 one Hand's rate over the hero's reference: 10-25% at every rarity and level (the share; traits and Master tools add on top)
+// HS11 first Hand hired (not Tam): 1-2 h of continuous play; day 1 in normal play
+// HS12 first Rare Hand day 1-3; first Legendary Hand day 14-35 (normal play)
+// HS17 offline 8 h vs live 8 h (Hands and the hero's gathering, Storehouse caps on): within 15% per family
+async function runHandsReport() {
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'store', 'tools'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const classes = String(args.classes || 'warden,lanternmage,ranger,lightkeeper').split(','), nDays = +(args.days || 35);
+  // (the report dispatches before the run's own knobs exist: the forks here take only these)
+  const knobs = h => { if (args.hands === '0') h.eval('HANDS_TUNE.on = 0'); if (args.tools !== undefined) h.eval('TOOL_TUNE.on = ' + (+args.tools)); if (args.eval) h.eval(String(args.eval)); };
+  const [cont, dys] = await Promise.all([
+    Promise.all(classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...pass]))),
+    Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass])))
+  ]);
+  const js = dys.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
+  const ok = b => b ? 'PASS' : 'FAIL', inR = (v, [a, b]) => v >= a && v <= b, res = [];
+  const sum = o => Object.values(o || {}).reduce((a, b) => a + b, 0);
+  const shareOn = (j, d) => { const u = j.hands && j.hands.byDay[d - 1]; if (!u) return null; const h = sum(u.hands), a = sum(u.live) + sum(u.away) + sum(u.finds) + h; return a ? h / a : 0; };
+  const pc = x => x == null ? '-' : Math.round(100 * x) + '%';
+  const hs9 = js.map(j => [shareOn(j, 2), shareOn(j, 14)]);
+  res.push([ok(hs9.every(([a, b]) => a != null && inR(a, [0.1, 0.2]) && (b == null || inR(b, [0.2, 0.35])))), "HS9 Hands' share of the day's gathered units: day 2 10-20%, day 14 20-35%", classes.map((c, i) => `${c} ${pc(hs9[i][0])} / ${pc(hs9[i][1])}`).join(', ')]);
+  // HS10: static, from the core (every rarity, levels 1-20, own skill, no traits)
+  const h = loadCore({ seed }); knobs(h);
+  const b10 = h.eval(`(() => { const out = []; for (const r of HANDS_RAR) for (let lv = 1; lv <= 20; lv++) out.push(handsShare({ r, lv })); return [Math.min(...out), Math.max(...out)]; })()`);
+  res.push([ok(b10[0] >= 0.1 - 1e-9 && b10[1] <= 0.25 + 1e-9), "HS10 one Hand's rate over the hero's reference, every rarity and level: 10-25%", `${(b10[0] * 100).toFixed(2)}%..${(b10[1] * 100).toFixed(2)}% (traits up to +40% and Master tools +10% on top)`]);
+  const num = (o, re) => { const m = o.match(re); return m ? +m[1] : Infinity; };
+  const c11 = cont.map(o => num(o, /HS11 first hire (\d+)m/)), d11 = js.map(j => j.hands && j.hands.firstHire != null ? (j.hands.firstHire + 8 * 3600) / 86400 : Infinity);
+  const f1 = x => Number.isFinite(x) ? x.toFixed(1) : '-', f0 = x => Number.isFinite(x) ? x.toFixed(0) : '-';
+  res.push([ok(c11.every(m => inR(m, [60, 120])) && d11.every(d => d <= 1)), 'HS11 first Hand hired (not Tam): 1-2 h continuous; day 1 in normal play', classes.map((c, i) => `${c} ${f0(c11[i])}m / day ${f1(d11[i])}`).join(', ')]);
+  const dayOf = (j, r) => j.hands && j.hands.firstRar[r] != null ? (j.hands.firstRar[r] + 8 * 3600) / 86400 : Infinity;
+  const rare = js.map(j => Math.min(dayOf(j, 'rare'), dayOf(j, 'epic'), dayOf(j, 'legendary'))), leg = js.map(j => dayOf(j, 'legendary'));
+  res.push([ok(rare.every(d => inR(d, [1, 3]) || d < 1) && leg.every(d => inR(d, [14, 35]))), 'HS12 first Rare Hand (or better) day 1-3; first Legendary Hand day 14-35', classes.map((c, i) => `${c} day ${f1(rare[i])} / day ${f1(leg[i])}`).join(', ')]);
+  // HS17: a mid-game camp, the hero gathering and five Hands out; 8 h live (the real tick) vs 8 h away.
+  const hs17 = () => {
+    const T0 = new Date(2026, 8, 28, 12).getTime();
+    const mk = () => {
+      const x = loadCore({ seed: seed + 17 }); knobs(x);
+      x.eval(`hearthWarm(); Date.__t = ${T0}; Date.now = () => Date.__t; almanac.force('none')`);
+      x.eval(`S.maxZone = 30; S.camp.open = true; Object.assign(S.camp.b, { hearth: 5, tavern: 3, bunk: 5, store: 5, watch: 2 }); S.gold = 1e30;
+        for (const k of ['mine', 'wood', 'forage']) S.skills[k].lv = 70;
+        for (let i = 0; i < 12; i++) tick(0.1);
+        S.hands.list.length = 0;
+        while (handsList().length < 5) { S.hands.board.apps = [handsRollApp()]; handsHire(0); }
+        setNode('ore', 3); setActivity('gather'); S.store.spill = 0;
+        handsList().forEach(h => { const s = handsSuggest(h); handsSend(h.id, s.kind, s.t); });`);
+      const hu = {}; x.fn.on('handsUnload', ({ fam, n }) => { if (fam !== 'troph') hu[fam] = (hu[fam] || 0) + n; });
+      return [x, hu, x.eval('JSON.stringify(S.mats)')];
+    };
+    const diff = (x, m0) => { const a = JSON.parse(m0), b = x.eval('S.mats'), out = {}; for (const f of ['ore', 'crystal', 'wood', 'fibre', 'herb']) out[f] = b[f].reduce((s, n, i) => s + n - a[f][i], 0); return out; };
+    const [A, hA, mA] = mk();
+    for (let s = 0; s < 8 * 3600; s++) { for (let k = 0; k < 10; k++) A.fn.tick(0.1); A.eval(`Date.__t += 1000`); }
+    const [B, hB, mB] = mk();
+    B.eval(`Date.__t += ${8 * 3600e3}`); B.eval('awayGains(8 * 3600)');
+    return { live: diff(A, mA), away: diff(B, mB), hLive: hA, hAway: hB, boost: B.eval("(1 + gear().offline / 100) * mod('offline')") };
+  };
+  const t17 = hs17();
+  const fams = Object.keys(t17.live).filter(f => t17.live[f] > 0 || t17.away[f] > 0);
+  const r17 = fams.map(f => [f, t17.away[f] / Math.max(1, t17.live[f]), (t17.hAway[f] || 0) / Math.max(1, t17.hLive[f] || 0)]);
+  res.push([ok(r17.every(([, r, rh]) => inR(r, [0.85, 1.15]) && (!(t17.hLive[fams[0]] >= 0) || inR(rh, [0.99, 1.01])))), 'HS17 offline 8 h vs live 8 h, Hands and the hero gathering with caps: within 15% per family',
+    r17.map(([f, r, rh]) => `${f} ${f1(t17.live[f])} live / ${f1(t17.away[f])} away (x${r.toFixed(2)}; Hands x${rh.toFixed(2)})`).join(', ') + ` | away boost x${t17.boost.toFixed(2)}`]);
+  for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
+  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.length} hands targets pass`);
+  // Units per family by source over the run, hires, packs that waited, mastery.
+  console.log(`units per family by source over ${nDays} days (hero live / hero away / rare finds / Hands):`);
+  for (const [i, c] of classes.entries()) {
+    const j = js[i], tot = { live: {}, away: {}, finds: {}, hands: {} };
+    for (const d of (j.hands ? j.hands.byDay : [])) for (const k of Object.keys(tot)) for (const [f, n] of Object.entries(d[k])) tot[k][f] = (tot[k][f] || 0) + n;
+    const fs = ['ore', 'crystal', 'wood', 'fibre', 'herb'], fN = n => n < 1e3 ? n.toFixed(0) : n < 1e6 ? (n / 1e3).toFixed(1) + 'K' : (n / 1e6).toFixed(2) + 'M';
+    console.log(`  ${c.padEnd(11)} ` + fs.map(f => `${f} ${fN(tot.live[f] || 0)}/${fN(tot.away[f] || 0)}/${fN(tot.finds[f] || 0)}/${fN(tot.hands[f] || 0)}`).join(' | '));
+  }
+  console.log('hires and camp (hired by rarity incl. Tam; let go; turned away; packs that waited, mean wait; Bunkhouse; Hands at the end):');
+  for (const [i, c] of classes.entries()) {
+    const x = js[i].hands; if (!x) continue;
+    console.log(`  ${c.padEnd(11)} ${JSON.stringify(x.hired)} | let go ${x.letGo}, turned away ${x.turned}, shifts ${x.sent} | packs waited ${x.waits} (${x.waitH.toFixed(1)} h) | Bunkhouse ${x.bunk} (${x.beds} beds) | ${x.end.map(e => `${e[0]} ${e[1][0].toUpperCase()}${e[2]} ${e[3]}`).join(', ')}`);
+    console.log(`  ${''.padEnd(11)} mastery ${Object.entries(x.mastery).map(([k, v]) => k + ' ' + v[0]).join(', ')} | lost at the cap ${JSON.stringify(Object.fromEntries(Object.entries(x.lost || {}).map(([k, v]) => [k, Math.round(v)])))}`);
+  }
+  console.log("Hands' share by day: " + classes.map((c, i) => `${c} ` + [1, 2, 3, 5, 7, 10, 14, 21, 28, 35].filter(d => d <= nDays).map(d => `d${d} ${pc(shareOn(js[i], d))}`).join(' ')).join('\n  '));
+  if (js.some(j => j.errors)) console.log('WARN  game errors in a run (run it alone to see them)');
 }

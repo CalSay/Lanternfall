@@ -26,6 +26,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 22-data-regions.js | core (data) | the Lantern Road's regions (region-2.md 2.2): `REGIONS` (the Hollow 1-35, the Sunken Coast 36-70; per region its 7 types as TYPES indices, names, themes, uniques, home grounds, hue rule, boss), `ROAD_BEYOND`, `regionOf`/`regionIdx`/`regionById`, `zoneNextType`, `zoneTheme`, `zoneHue`, `zoneUnique`, `zoneHome`, `regionBossZone`, `lanternsLitAt`. `zonePlace`/`zoneCycle`/`zoneType`/`zoneName` (40-rules) read it. Region 2's own data plugs in through `REGION_COAST` (22-data-coast.js); until then the coast reuses the Hollow's foes under its own names |
 | 23-data-deeds.js | core (data) | achievements data (docs/design/achievements.md, AC2): `DEED_TRACKS` (92 tracks, tiers Bronze/Silver/Gold/Everflame, stars), `DEED_GROUPS`, `DEED_FEATS`, `DEED_SECRETS`, `DEED_LOOKS` (36 accessories + 4 frames), `DEED_LADDER`, `DEED_CHAPTERS`, `DEED_CAP` (the hard bonus cap per key), `DEED_TUNE` |
+| 21f-data-hands.js | core (data) | Hands data (hearth-and-hands.md 5, N1): `HANDS_TUNE` (odds, pity, shares, shifts, arrivals, beds by Bunkhouse level, trait numbers), `HANDS_RAR`, `HANDS_SKILLS`, 16 `HANDS_TRAITS` (3 work at camp), `HANDS_CALLINGS`, the 5 named `HANDS_LEGENDS`, `HANDS_TAM`, `HANDS_LATER` (the Hollises, off until LORE8b), name pools |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
 | 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
@@ -59,6 +60,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 59b-enemies.js | core | foe behaviours by zone type (dives, archers, bruisers, spore clouds, slams, healers), elites, boss mechanics and telegraphs, parry/dodge (`resolveParry(source)`, `cbTelegraph()`), knobs `ENEMY_TUNE`, data `FOE_BEH` |
 | 59c-deepwell-combat.js | core | the Deepwell on party combat (deepwell.md 8.2 and 15, plan-3 W6b): a floor is one pack (wraps `DEEP_ARENA.spawn`/`onKill`), party HP carried between floors (`run.hpAt`), a wipe ends the run (`DW.fall()`, reason `wipe`), Oil refunds +5s and parries give Oil, Taunt Drill for every class, Lifeline once a floor (`dcLifeline`), the Deep Edge Lore (D8); knobs `DEEP_COMBAT_TUNE`, `deepCombatOn()`, `DWC` (state in `S.deepCombat`: the one-time tip). 59-combat hooks: `cbArena` adopts `mob.pack`, `cbRestore(clear)` |
 | 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
+| 57f-hands.js | core | Hands (N1): townsfolk who gather at a share of the hero's rate; applicants at the Tavern (pity), beds in the Bunkhouse (`CAMP_B.bunk`), shifts fixed at send (rate, length, seed), pay into packs that unload as Storehouse parcels, levels by hours, at-camp traits, `campClock()`, away lines, Next Up goals; never emits `harvest`. API below ("Hands") and at the top of the file |
 | 58-deeds.js | core | achievements core (AC2): tracks read the save or new counters (`S.deeds.n/g/rec`, combat as `CB_STATS` deltas once a second), a quarter of the tracks checked per second, groups, Feats, secrets, points and ladder, capped Gold/Everflame bonuses (`deedBonus(key)`), titles joined to `codexTitles()` (ids `a_*`), looks and `wearGet(slot)`, the `deeds-near` Next Up goal, away lines, old-save credit (one What's new line); waiting tracks light up by runtime probes (`S.store`, `S.hands`, `S.kitchen`, `S.bond`, `S.oath`, `S.pin`, `REGIONS[1].plugged`); API `deeds` (header of the file); state `S.deeds` |
 | 75-deeds-ui.js | browser | the Achievements menu (AC3): hidden tab `deeds`, views `ach-deeds`/`ach-tracks`/`ach-feats`/`ach-looks`, track and Feat sheets, the Feat card (replaces the core's Feat toast), the Everflame portrait ring, toast taps, the title picker (local titles only); `deedsUI { open(view, id), heroRow(), featCard(id), chapterSlot() }`; optional hooks `lookIconURL(id)`, `looksPreview(canvas, wear, zoom)` (AC4), `featTrophyURL(id)` (AC5). 75-stats-ui.js: the Journal's Achievements card, the stats wall and the number switch |
 | 64-looks.js | browser | looks on the stage and in the UI (AC4): aura rings and critters through the chained `stageDeco` (phases back / front / light), the portrait frame (60-looks.css), idle pre-bake on `deedLook`; hooks `lookIconURL(id, slot)`, `looksPreview(canvas, wear, zoom)`, `lookCritterDraw(g, x, y, frame)` |
@@ -136,6 +138,20 @@ Everything reads the current `S.party.field` / `cells`, so a planner that swaps 
 scores slots, Out of place, `trioX` and the hero floor for free. Save: `field` (at most 2) and `cells` keep
 their meaning; `formV`, `pin`, `formOld` merge into `S.party` through its registered defaults.
 
+Hands (57f-hands.js, N1; N2 art and camp life and N3 UI read these, full list at the top of the file):
+```js
+handsOpen() / handsBeds() / handsFree() / handsBedsAt(bunkLv, hearthLv)      // beds: Bunkhouse level (+1 at Hearth 8), bonus('handBeds'), bonus('handBedsMax')
+handsList() -> [hand] (live records, read only) / handsGet(id) / handsStats() -> { hired, hours, units, stories, legends, byRar, out, home }
+handsBoard() -> [{ i, app, cost, free, rate, kind, t, afford, can }] / handsNextApp() -> ms | null / handsHireCost(app)
+handsStatus(h | id) -> { st: 'out' | 'back' | 'pack' | 'camp', label, left, pct, kind, t, spot }   // spot at camp: store | bench | kitchen | fire
+handsRate(h, kind, t) / handsShare(h) / handsShiftSecs(h, kind) / handsPreview(h, kind, t) / handsSuggest(h) / handsNodes(h) / handsHeroRate(kind, t)
+handsTraits(h) / handsName(h) / handsRarName(h) / handsSkillName(h) / handsNodeName(kind, t) / handsLevelNeed(lv) / handsStoryDue(h)
+handsCampTrait(id) / handsMealMult() / handsMealBonus()   // K12: Cook at camp (meals last 25% longer), Mother Ashby (+10%)
+campClock(now) -> { phase: 'dawn' | 'day' | 'dusk' | 'night', h }
+handsHire(i) / handsTurnAway(i) / handsLetGo(id) / handsSend(id, kind, t) / handsSendAgain() / handsEmpty(id)   // the UI asks first (Empty, Let go)
+handsStoryHeard(id) / handsTalk(id) / handsExclude(fn(key) -> mult)   // N2 stories and talk; K12 meals left out of the Hands' reference rate
+handsBunkFx(lv) / handsTavernFx(lv)   // effect lines (57-camp campEffects)
+```
 Bonus keys: `awayHours` (added to the away cap), `find:<skill>` (rare find points), `glint:<skill>` (Glint seconds).
 Extra modifier keys: `skillXp:<skill>` (per-skill XP), `yield:<family>` (harvest and away yield per material family),
 `gatherSpeed:<skill>` (node speed for one gathering skill; 55-tools mastery).
@@ -283,6 +299,9 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `greatLantern` | `{ n, region, zone, name, head, text, note, quiet, rewards, say }` (55-lantern: a region boss's first kill; `quiet` = an old save's catch-up, shown as a bell line; listeners push `{ txt, ic }` onto `rewards` for the card, e.g. 57e's star points; `say`: `[{ id, name, short, line }]` from recruited characters, 55-story `storySay`) |
 | `storyArrival` / `storyBeat` / `storyElder` / `storyRead` | `{ key, zone, region, head, line }` / `{ id, beat, quiet }` / `{ key, kind: 'intro' \| 'fall', name, line, zone }` / `{ id }` (55-story; the UI shows them on the stage) |
 | `storeFull`, `storeCap` / `storeSpill` | 55-store: `{ fam, t }` (a flow hit the cap; once per fill; `storeCap` is the name 58-deeds reads) / `{ from, to, away? }` (Spillover or Switch moved the hero to another node) |
+| `handsOpen` / `handsArrive` / `handsHire` / `handsTurnAway` / `handsLetGo` | 57f-hands: `{ quiet }` / `{ app, quiet }` (an applicant at the Tavern) / `{ id, r, free }` (Tam: free) / `{ app }` / `{ id, n }` |
+| `handsSend` / `handsBack` / `handsUnload` / `handsEmpty` | `{ id, kind, t, end, secs }` / `{ id, n, kind, t, lines, away, at }` (a shift ended; the haul is in the pack) / `{ id, fam, t, n }` (a pack line landed in the Storehouse; `fam` 'troph': a Trophy, `t` its index) / `{ id, n }` |
+| `handsLevel` / `handsStory` | `{ id, lv, quiet }` / `{ id, lv }` (57f-hands: a Hand's level; a story at the fire heard) |
 | `whatsNew` | `{ msg, icon, first }`: a line in the bell's one "What's new" notice (70-ui; `first` puts it at the top). Toasts raised in the first 2.5 s of play fold into it too (old-save catch-ups) |
 | `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
@@ -294,6 +313,8 @@ Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fie
 keep loading without loss, and so must every fixture in `tests/fixtures/` (`save-v3-four.json`: a
 chosen class and a full old field of 3 with gear, for the F1 party-of-three migration). `S.tab` is the open menu's tab, or `''` on the game view (portrait).
 `S.story` (55-story, LORE3): `{ v, seen: { 'a:<region>:<place>\|boss', 'b:<beatId>' (ms; negative = filed by the old-save catch-up), 'ei:<elder>', 'ef:<elder>' }, read: { beatId: 1 }, init }`.
+`S.hands` (57f-hands, N1): `{ v, seq, list, board: { apps, next }, pity, tam, log, hired, hrs, got, met, heard, open, rs, mig }`
+(fields of a Hand at the top of 57f-hands.js); `S.camp.b.bunk`: the Bunkhouse level.
 `S.bond` (56f, plan-3 F2): `{ v, t: { id: seconds together }, lv: { id: level announced }, seen: { id: stories read } }`.
 `S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
 `S.settings.num` ('letters' | 'sci'; missing = letters): `fmt` reads it through `setNumFormat` (00-util;
@@ -311,6 +332,7 @@ node tools/sim.mjs --days 30 --class warden          # normal play over days (ch
 node tools/sim.mjs --targets                          # PASS/FAIL for T1-T18, D1, P1-P4 (docs/design/pacing.md, party-and-classes.md 9) and the recruit table; retune with --pace/--tune/--unlock/--combat/--enemy k=v
 node tools/sim.mjs --class warden --lineup hesketh,wren,pip --t5 1 --t6 1 --t8 1   # a fixed line-up; party combat forks at 2h (T5 wipes, T6 hold zones, T8 offline vs live)
 node tools/sim.mjs --report skills [--days 30]  # GP1: time to each gathering tier (focused, hours) and the day each skill opens each tier in normal play
+node tools/sim.mjs --report hands [--days 35]   # N1: HS9-HS12, HS17, units per family by source, hires by rarity (--hands 0 turns Hands off anywhere)
 node tools/perf.mjs --quick                  # frame, load, tap and memory benchmark vs the budget (docs/design/perf.md)
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
 ```

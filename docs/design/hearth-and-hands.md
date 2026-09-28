@@ -115,7 +115,7 @@ Lv 1 builds cost **no gold**. Lv 2-5 keep today's rows (`campCost`, `CAMP_HREQ`)
 | 3 | **Storehouse** | Forge built, or any pile at 80 of 100 | 30 Oak Log, 20 Copper Ore | 90 s | Caps go from 100 to 300 (4) |
 | 4 | **Loom** | zone 5 (Foraging opens) | 20 Flax Fibre, 10 Oak Log, 5 Soft Hide | 2 min | Robes, hoods, leathers, tomes, mitres, vestments, circlets |
 | 5 | **Enchanter's Table** | zone 6 | 15 Quartz Shard, 10 Dim Essence, 10 Oak Log | 3 min | Lanterns, trinkets, charms, Reforge, Transmute, Tonics |
-| 6 | **Tavern** | zone 8 | 40 Oak Log, 20 Sage Sprig | 3 min | The visitor, Rumours at Lv 2, Hands' beds (5.7) |
+| 6 | **Tavern** | zone 8 | 40 Oak Log, 20 Sage Sprig | 3 min | The visitor, Rumours at Lv 2, where Hands apply (5.3; their beds are the Bunkhouse's, 5.7) |
 | - | Watchtower, Library, Map Room, Shrine | as today (Hearth 1, 2, 2, 4) | today's rows | today's | today's |
 | 7 | **Kitchen** (wave 3) | Hearth 3 (zone 14) | 6.1 | 6.1 | Meals (6) |
 
@@ -170,7 +170,7 @@ The fire and the first two builds cost about 90 seconds of the first ten minutes
 | forage | Gather: Foraging | zone 5, or Foraging above 1 | same |
 | bestiary, almanac, roster, uniques, codex, raid, stars, deep, synergy, exped | as today | same | same |
 | tavern | Camp: Tavern | the Tavern is built | 14 min or zone 8 |
-| **hands** (N1, late) | Camp: Hands; the Tavern's Job board | Hearth 2 and the Tavern built | new |
+| **hands** (N1, late) | Camp: Hands; the Tavern's Job board | Hearth 2, the Tavern and the Bunkhouse built | new |
 | **kitchen** (K12, late) | Camp: the Kitchen card | the Kitchen plot opens (Hearth 3) | new |
 
 `hands` and `kitchen` are `late: true` rows, so old saves see them when their own rule holds, not
@@ -469,7 +469,7 @@ fight, never go on expeditions, never join the Roster board. They live at camp, 
 | Size | 10-25% of the hero's rate at that node | Set by grade and route |
 | Length | 2-8 h by rarity and traits | 1, 4, 8 or 12 h, chosen |
 | Grows | Hand levels 1-20 (hours worked) | Companion XP (capped) |
-| Needs | A bed (the Tavern) | A Map Room slot |
+| Needs | A bed (the Bunkhouse) | A Map Room slot |
 | At camp | At the fire or their work spot; talk, stories | Resting at their favourite spot |
 
 ### 5.2 Rarity
@@ -499,7 +499,8 @@ traits.
   now". Buttons: **Hire** (gold) and **Turn away** (frees the spot; the next applicant still waits
   its 8 hours).
 - **Tam**, Hesketh's nephew, a Common Woodcutter with the Steady trait, arrives free when Hands
-  open (Hearth 2 and the Tavern built). Old saves past Hearth 2 get him when N1 lands.
+  open (Hearth 2, the Tavern and the Bunkhouse built). Old saves past Hearth 2 get the Bunkhouse at Lv 1
+  and him when N1 lands.
 - **Let go** on a Hand's card (in-page ask) frees a bed. They wave from the road.
 
 ### 5.4 Skills
@@ -534,15 +535,28 @@ Level 1-20. XP = hours worked (shift hours, paid at the end). Hours to the next 
 (380 hours to Lv 20: about 3 weeks of shifts). Each level: +0.25% share. Every 5 levels: +15 min
 shift and a story at the fire (5.9).
 
-### 5.7 Beds: how many Hands
+### 5.7 Beds: how many Hands (the Bunkhouse)
 
-Beds are rooms above the Tavern. No new building.
+**Revised by the owner (2026-09-28, N1):** "Shouldn't gatherers stay at camp with us?" Hands live AT
+CAMP. Their beds are a camp building, the **Bunkhouse** (`CAMP_B.bunk`, 57-camp), on a plot near the
+fire. The Tavern stays where Hands apply and are hired (5.3).
 
-| Tavern Lv | 1 | 2 | 3 | 4 | 5 | + Hearth 8 (Lantern Hall) |
+- The Bunkhouse opens at Hearth 2 (`opens: 2`). On a cold start its plot opens once the Tavern stands
+  (`HEARTH_PLOT.bunk`, set by 57f-hands). Costs, gates and timers use the standard camp rows (Oak and
+  Flax, Grave Knuckle Trophies at rows 4-5, like the other buildings).
+- Hands open at Hearth 2 with the Tavern and the Bunkhouse built. Old saves at Hearth 2+ get the
+  Bunkhouse at Lv 1 once, at their first load with N1 (What's new: "Your camp has a Bunkhouse now.").
+
+| Bunkhouse Lv | 1 | 2 | 3 | 4 | 5 | + Hearth 8 (Lantern Hall) |
 |---|---|---|---|---|---|---|
 | Beds | 1 | 2 | 3 | 4 | 5 | +1 (6 at most) |
 
-The Tavern's effect lines gain "N beds for Hands" (a one-line edit in `campEffects`).
+The bed cap is data-driven so it can rise later: `HANDS_TUNE.beds` (by level), `hallHearth`/`hallBeds`,
+`bedMax`, and two bonus keys any later system can feed: `bonus('handBeds')` (more beds) and
+`bonus('handBedsMax')` (a higher cap). The owner wants the cap on Hands to rise late game, and the
+production chains (K13) will add Hands who refine at stations (Smelter, Sawmill) and gather secondary
+resources (coal, dye, salt); they will need those beds. The Bunkhouse's effect lines say "N beds for
+Hands"; the Tavern's say "Hands apply here: one every 8 h" (6 h from Lv 3).
 
 ### 5.8 Traits
 
@@ -783,7 +797,8 @@ pity, shares, per-level 0.0025, shifts, arrival hours 8 / 6, hire foes, beds, of
 | `S.tools` (new) | H2 | `registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 })`. `m[kind] = [level, seconds into the level]`; the Coast adds `rod` |
 | items | H2 | No new fields. Tools gain the `*Find` line by formula, not by field |
 | `S.store` (new) | H3 | `registerState('store', { v: 1, mig: { lv: 0, at: 0, over: [] }, spill: 0, said: {} })`. `mig`: what the migration gave; `spill`: Spillover on; `said`: cells already toasted this fill |
-| `S.hands` (new) | N1 | `registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [] })`. `list[i] = { id, n, r, sk, tr: [..], lv, xp, job: { kind, t, start, end, rate, seed } \| null, pack: [[fam, t, n]], last: { kind, t }, talk, st }`. `st`: stories heard |
+| `S.hands` (new) | N1 | `registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [], hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, mig: 0 })`. `list[i] = { id, n, r, sk, tr: [..], cl, key, lv, xp, job: { kind, t, start, end, rate, seed, bo } \| null, pack: [[fam, t, n]], last: { kind, t }, talk, st, hired, hrs, got, back }`. `st`: stories heard; `cl`: a Legendary's calling; `key`: a named Hand; `bo`: Friendly / Felling Song windows; `rs`: the Hands' own random stream; `mig`: the Bunkhouse step for old saves ran. Full list at the top of `57f-hands.js` |
+| `S.camp.b.bunk` | N1 | New key in the camp's `b` default (0): the Bunkhouse level (5.7) |
 | `S.kitchen` (new) | K12 | `registerState('kitchen', { v: 1, meal: null, pantry: {} })`. `meal = { k, t, end }` |
 | `S.equip.rod` | R2-1 (Coast) | Reserved: added to `fresh().equip` with the Coast |
 | `S.craft.jobs` | - | Stays in the save, unused (bench jobs are superseded; never delete a field) |
@@ -796,8 +811,8 @@ pity, shares, per-level 0.0025, shifts, arrival hours 8 / 6, hire foes, beds, of
    bonus. Mastery starts at 1 for every kind. `gear()` keys that existed keep their values;
    `heroDps()` and `totalDps()` are identical.
 3. Storehouse: 4.7.
-4. Hands: open when the save has Hearth 2 and the Tavern (every warm save past zone 10). Tam
-   arrives. Nothing else.
+4. Hands: a save at Hearth 2+ gets the Bunkhouse at Lv 1 (once); Hands open with Hearth 2, the Tavern
+   and the Bunkhouse (every warm save past zone 10). Tam arrives. Nothing else.
 5. Kitchen: its plot opens at Hearth 3.
 6. One "What's new" block: "Your stations were already built. Tools now have mastery. Your
    Storehouse is level N. Hands can be hired at the Tavern." (lines appear only for what is live).
@@ -836,6 +851,7 @@ pity, shares, per-level 0.0025, shifts, arrival hours 8 / 6, hire foes, beds, of
    and Hands are the owner's newer ask for the same need. Companions stay fighters and expedition
    teams. `CRAFT_JOBS` stays as inert data. Worth one line to the owner.
 10. **Beds come from the Tavern** (1-5, +1 at Hearth 8), no upkeep, a free starter Hand (Tam).
+    **Superseded (owner, 2026-09-28):** beds come from the Bunkhouse, a camp building (5.7).
 11. **Applicants arrive every 8 hours, up to 3 waiting**, instead of a daily board, so there is no
     daily-login pressure.
 12. **Hands skip home ground and work off-skill at half share.**
