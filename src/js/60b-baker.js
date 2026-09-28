@@ -18,6 +18,8 @@
 //   hero:      { cls, skin: 0-2 | '#hex', hair: 0-3 | '#hex', gear: { weapon|off|head|body|charm: { t: 1-5, r: 0-3, glow?: '#hex' } } }
 //   companion: { comp: key, t?: 1-5, r?: 0-3 }   (t / r override the role weapon's tier and rarity)
 //   gathering: a hero spec with tool: { k: 'pick'|'axe'|'sickle'|'rod', t, r } (TOOL_ART.gatherSpec, 11c)
+//   looks (AC4): acc: { cape, hat, lamp, fl: '#hex' } (lookAcc(), 12g) joins the hash; a hat hides the helm
+//     (g.head = null for drawing only) and AK.applyAcc(k, acc) adds the pieces after the class build.
 
 const ART = (() => {
   const PX = 2;
@@ -207,7 +209,8 @@ const ART = (() => {
     const gs = spec.gear || {}, g = {};
     for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = !tool || (s !== 'weapon' && s !== 'off') ? gs[s] : null; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
     const look = { skin: m(colOf(spec.skin == null ? 0 : spec.skin, SKINS), 'skin'), hair: m(colOf(spec.hair == null ? 0 : spec.hair, HAIRS), 'hair') };
-    return { def, kind: 'hero', g, look };
+    const acc = spec.acc || null; if (acc && acc.hat) g.head = null;   // a worn hat hides the helm (its stats stay)
+    return { def, kind: 'hero', g, look, acc };
   }
   function framePose(def, f) {
     const pose = {};
@@ -220,6 +223,7 @@ const ART = (() => {
   function buildParts(rs, pose) {
     const k = makeKit(rs.def, pose);
     if (rs.kind === 'comp') rs.def.build(k, rs.w); else rs.def.build(k, rs.g, rs.look);
+    if (rs.acc && AK.applyAcc) AK.applyAcc(k, rs.acc);
     let parts = k.parts;
     if (pose.fall) { // lay the figure on the ground
       let y1 = -1e9; for (const p of parts) y1 = Math.max(y1, shapeBox(p.s)[3]);
@@ -359,6 +363,7 @@ const ART = (() => {
     const spec = { cls, gear };
     if (party.skin != null) spec.skin = party.skin;
     if (party.hair != null) spec.hair = party.hair;
+    const acc = typeof lookAcc === 'function' ? lookAcc() : null; if (acc) spec.acc = acc;
     return spec;
   }
   // Creation screen: the class in its base look (tier 1 Common weapon, off-hand, head and body).

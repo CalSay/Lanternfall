@@ -15,12 +15,14 @@
     k.add(3.86, 'up', c.C, Q(Math.round(x - .5), Math.round(y), 1, 1), { nl: 1, lr: 6 });
   }
   // A lantern on the hip (the hero always carries one unless it is in hand).
+  // acc tags and k.lamp: the Lantern and Flame looks (12g) swap or tint it.
   function hipLantern(k, x) {
     const d = m('#4E4452', 'metal'), lamp = m('#FFD27A', 'glow', { light: '#FFC070' });
-    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)));
-    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)));
-    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1 });
-    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)));
+    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)), { acc: 'lamp' });
+    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)), { acc: 'lamp' });
+    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1, acc: 'glass' });
+    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)), { acc: 'lamp' });
+    k.lamp = { at: 'hip', x };
   }
 
   // ---------------- Warden: knight with warblade and heater shield ----------------
@@ -124,8 +126,9 @@
       // lantern hanging from the back hand
       if (o) {
         const items = lanternItems(k.H * .1, o.Q, o.L, { lr: 22 });
-        if (o.r >= 1) items.push([o.R, R(-k.H * .055, k.H * .045 - .2, k.H * .11, .9)]);
+        if (o.r >= 1) items.push([o.R, R(-k.H * .055, k.H * .045 - .2, k.H * .11, .9), { acc: 'lamp' }]);
         k.held(5, 'B', 0, items);
+        k.lamp = { at: 'held', side: 'B', z: 5, s: k.H * .1, glass: o.L };
       }
       // front arm and staff
       arm(k, 'F', robe, L.skin, { bell: robe, bellTrim: gold });
@@ -148,7 +151,7 @@
       const u = k.u, b = g.body, w = g.weapon, o = g.off, hd = g.head, po = k.pose;
       const green = m('#3E7A3E'), greenD = m('#2C5230'), jerk = b ? b.P : m('#8A6440', 'leather'), lea = m('#5E3E26', 'leather'), tr = m('#4A4038'), boot = m('#5A3C28', 'leather'), cream = m('#D8C8A0'), trim = trimOf(b);
       // cloak behind (green), falling to the knee
-      k.add(.2, 'up', greenD, P(-k.sw * .9, k.shY, k.sw * .4, k.shY, -k.hipW * .3, k.hiY * .35, -k.hipW * 1.5, k.hiY * .25, -k.hipW * 1.9, k.hiY * .55, -k.sw * 1.1, k.waY), { bev: 1 });
+      k.add(.2, 'up', greenD, P(-k.sw * .9, k.shY, k.sw * .4, k.shY, -k.hipW * .3, k.hiY * .35, -k.hipW * 1.5, k.hiY * .25, -k.hipW * 1.9, k.hiY * .55, -k.sw * 1.1, k.waY), { bev: 1, acc: 'back' });
       legs(k, tr, boot, { cuff: lea });
       arm(k, 'B', green, m('#6E4A30', 'leather'), { bracer: lea });
       // green tunic, leather jerkin laced up the front, belt with a pouch
@@ -244,7 +247,7 @@
           [ch, R(-.35, 0, .7, drop), { nl: 1 }],
           [w.r >= 1 ? w.R : w.D, P(-cr * .7, drop, cr * .7, drop, cr * .45, drop - 1, -cr * .45, drop - 1)],
           [w.P, E(0, drop + cr * .9, cr, cr * .9), { bev: .8 }],
-          [coal, R(-cr * .6, drop + .6, cr * 1.2, .9), { lr: 14, pulse: 1 }],
+          [coal, R(-cr * .6, drop + .6, cr * 1.2, .9), { lr: 14, pulse: 1, acc: 'flame' }],
           w.G ? [w.G, Q(0, drop + cr * .9, 1, 1), { nl: 1, lr: 8 }] : null
         ]);
       }

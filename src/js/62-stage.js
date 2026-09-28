@@ -5,14 +5,17 @@
 // Browser-only. Pools and glow sprites live in 61-anim.js.
 // Deepwell: while a run is live (arena === DEEP_ARENA) the stage draws the 'well' scene, well foes
 // (mob.deep) in a cold palette by depth, and hides the zone line and boss timer. The hero's lantern
-// colour and trail come from S.deep.eq (Marks shop cosmetics) everywhere.
+// colour and trail come from wearGet('flame'/'trail') everywhere (58-deeds: an achievement Flame, else
+// the Marks shop's S.deep.eq; the colour through lookFlameCol, 12g).
 //
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
 // Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
-// pass) or 'light' (additive lights). v = { cam, SW, SH, GY, T, tg, nodeR } (reused; nodeR: the gather node's right
-// edge, camera-free). 63d-scenery-camp: the cold Hearth.
+// pass), 'front' (after the actors, pixel pass) or 'light' (additive lights); ignore other phases.
+// v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY } (reused; nodeR: the gather node's right
+// edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
+// frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
 let resize, animate, draw, stageStats, warmScene;
 {
@@ -1046,14 +1049,16 @@ let resize, animate, draw, stageStats, warmScene;
   const look = { id: '', lamp: null, key: null, pool: null, trail: null, t: 0 };
   const mixRgb = (hex, w, k) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255]; return c.map((v, i) => Math.round(v + (w[i] - v) * k)).join(','); };
   function readLooks() {
-    const eq = S.deep && S.deep.eq, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : null;
-    const ln = eq && eq.lantern && shop && shop[eq.lantern], tr = eq && eq.trail && shop && shop[eq.trail];
-    const id = (ln ? ln.id : '') + '|' + (tr ? tr.id : '');
+    const eq = S.deep && S.deep.eq, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : null, wg = typeof wearGet === 'function';
+    const fid = wg ? wearGet('flame') : eq && eq.lantern, tid = wg ? wearGet('trail') : eq && eq.trail;
+    const col = typeof lookFlameCol === 'function' ? lookFlameCol(fid) : fid && shop && shop[fid] ? shop[fid].col : null;
+    const tr = tid && shop && shop[tid] && shop[tid].kind === 'trail' ? shop[tid] : null;
+    const id = (col || '') + '|' + (tr ? tr.id : '');
     if (id === look.id) return;
     look.id = id;
-    look.lamp = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.15) : null;
-    look.key = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.1) : null;
-    look.pool = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.2) : null;
+    look.lamp = col ? mixRgb(col, [255, 255, 255], 0.15) : null;
+    look.key = col ? mixRgb(col, [255, 255, 255], 0.1) : null;
+    look.pool = col ? mixRgb(col, [255, 255, 255], 0.2) : null;
     look.trail = tr && tr.col ? { kind: tr.id, col: tr.col, alt: tr.id === 't_embers' ? '#FFD27A' : tr.id === 't_frost' ? '#9FD8FF' : '#DFFBFF' } : null;
   }
   // the hero's lantern: its brightest light (largest glow radius)
@@ -1170,7 +1175,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
 
   let drawMs = 0;
-  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0 };
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -1185,7 +1190,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
-    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -1217,6 +1222,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (typeof gatherDraw === 'function') gatherDraw(ctx, scene, cam, 'front', solo);
     }
     for (const a of order) drawActor(a, cam);
+    if (stageDeco) stageDeco(ctx, 'front', dv);
     if (fight) for (let i = 0; i < packN; i++) if (slots[i].dv > 0) drawFoe(slots[i], cam, tele);
     ctx.globalAlpha = 1;
     // hero guard pips (Warden), when the HUD (which shows them as a chip) is off

@@ -578,3 +578,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   bestiary lines, "The Listener" at zone 35, Great Lantern character lines; storyBeat API for the Coast;
   S.story). Class screen now reads "You carry one of the last lanterns." RAID_LORE unused: needs the owner's
   sign-off to edit 74-ui-raid.js (online-layer UI, no data change) = LORE9.
+- AC4 merged: 12g-art-accessories.js (6 capes, 6 hats, 7 lantern skins, 5 flames, 6 auras, 4 frames as B1
+  kit pieces), 13b-art-critters.js (6 critters), 64-looks.js (stage aura/critter, portrait frames, bake on
+  wear change, lookIconURL/looksPreview/lookCritterDraw). Coordinator kept both new check sections (looks,
+  story). Follow-ups: Company Cape reads weakly; flames read mainly through stage light; critter sleeping by
+  the camp fire waits for a camp scene; gather JS p95 maybe +1-2 ms with looks worn (noisy): re-measure.

@@ -1,0 +1,10 @@
+/* 60-looks: achievement looks (AC4, 64-looks.js). The header portrait's frame, and the Looks
+   plate's CSS aura hidden once looksPreview draws the real one on the canvas. */
+.portrait.lk-fr { border-color: var(--lk-c); box-shadow: 0 0 0 1px var(--lk-lo), inset 0 0 0 1px var(--lk-hi), inset 0 0 0 3px #0B0810, 0 0 10px rgba(255,158,61,.16); }
+/* the Everflame edge: a flame glow that breathes (opacity only, so the compositor does it) */
+.portrait.lk-ever::after { content: ''; position: absolute; inset: -3px; pointer-events: none; box-shadow: 0 -2px 7px 1px rgba(255,158,61,.75), 0 0 3px rgba(255,208,122,.6); animation: lkEver 1.6s ease-in-out infinite alternate; }
+@keyframes lkEver { from { opacity: .45; } to { opacity: 1; } }
+.lk-drawn > .dd-aura { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .portrait.lk-ever::after { animation: none; opacity: .8; }
+}
