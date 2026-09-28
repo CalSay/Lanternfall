@@ -2018,5 +2018,124 @@ try {
     && str(UI.goalReady('The Hollow King'), 48) && str(UI.goalWeek('The First Fire'), 48) && str(UI.newBest('1:04', 12), 40), 'pinnacle: UI texts inside limits');
 } catch (e) { fail('pinnacle data crashed: ' + (e.stack || e)); }
 
+// ---- legendary powers, circle sets and their icons (21c-data-legend.js, 11b-art-legend.js; legendaries.md 3-6) ----
+console.log('legendary data');
+try {
+  for (const f of ['21c-data-legend.js', '11b-art-legend.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `legend: ${f} is data only (no DOM, no state)`);
+  }
+  const g = loadCore(), E = x => g.eval(x);
+  const P = E('LEG_POWERS'), ids = E('LEG_IDS'), CI = E('LEG_CLASS_IDS'), CO = E('LEG_COMP_IDS'), PI = E('LEG_PIN_IDS');
+  const FITS = E('LEG_FITS'), WIRE = E('LEG_WIRE'), SETS = E('LEG_SETS'), CAPS = E('LEG_CAPS'), CIRC = E('LEG_CIRCLES'), CLS = E('LEG_CLASSES');
+  const R = E('ROSTER'), keys = E('ROSTER_KEYS'), ICON = E('ICON'), SPEC = E('LEG_ICON_SPEC'), PW = E('PIN_POWERS');
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const num = x => typeof x === 'number' && isFinite(x);
+
+  // one list: 24 class (6 a class), 15 companion, the 4 pinnacle powers by reference
+  const all = CLS.flatMap(c => CI[c]).concat(CO, PI);
+  assert(CLS.join() === E('Object.keys(HERO_CLASSES)').join() && CLS.every(c => CI[c].length === 6) && CO.length === 15 && PI.length === 4
+    && ids.length === 43 && new Set(all).size === 43 && all.every(id => ids.includes(id)) && PI.every(id => P[id] === PW[id]),
+    'legend: 43 powers in one list (24 class, 15 companion, the 4 pinnacle rows are PIN_POWERS itself)');
+
+  // every power has every field
+  const heroPos = FITS.hero;
+  const fBad = ids.filter(id => { const p = P[id], pin = PI.includes(id);
+    return !p || p.id !== id || !str(p.n, 26) || !FITS[p.fits] || !num(p.p1) || !num(p.p5) || p.p1 < 0 || p.p5 < p.p1 || p.p5 > 0.2
+      || !p.v || !Object.keys(p.v).length || Object.values(p.v).some(a => !Array.isArray(a) || a.length !== 5 || !a.every(num))
+      || typeof p.txt !== 'function' || !WIRE[p.wire]
+      || (pin ? p.fits !== 'hero' || p.cls !== null
+        : !['class', 'comp'].includes(p.src) || !str(p.at, 60)
+          || (p.src === 'class' ? p.fits !== 'hero' || !CLS.includes(p.cls) || !CI[p.cls].includes(id) : p.fits === 'hero' || p.cls !== null || !CO.includes(id)))
+      || (p.only && (!R[p.only] || R[p.only].role !== p.fits))
+      || (p.per && (!CIRC.includes(p.per) || typeof p.pPer !== 'boolean'))
+      || (p.down && !p.down.every(k => p.v[k])); });
+  assert(!fBad.length && heroPos.join() === 'weapon,off,helm,body' && FITS.trinket.join() === 'trk' && ['tank', 'striker', 'caster', 'support'].every(r => FITS[r].join() === 'wpn'),
+    'legend: every power has id, name, fits, class, p1 <= p5, 5-rank values, text, wiring; hero powers on weapon/off/helm/body, role powers on wpn, trinkets on trk' + (fBad.length ? ': ' + fBad[0] : ''));
+  assert(new Set(ids.map(id => P[id].n)).size === ids.length, 'legend: power names are unique');
+
+  // values rise with rank (intervals such as `every` and the row's `down` keys fall); each power changes from I to V
+  const eps = 1e-9, vBad = [];
+  for (const id of ids) { const p = P[id]; let moves = false;
+    for (const [k, a] of Object.entries(p.v)) { const dn = (p.down || []).includes(k) || k === 'every';
+      for (let i = 1; i < 5; i++) if (dn ? a[i] > a[i - 1] + eps : a[i] < a[i - 1] - eps) vBad.push(`${id}.${k}`);
+      if (Math.abs(a[4] - a[0]) > eps) moves = true; }
+    if (!moves) vBad.push(id + ' never changes'); }
+  const dbl = ['tidewall', 'kindled', 'mossguard', 'echostring', 'compass'].every(id => { const a = Object.values(P[id].v)[0]; return Math.abs(a[4] - 2 * a[0]) < eps && Math.abs(a[1] - 1.25 * a[0]) < eps; });
+  assert(!vBad.length && dbl, 'legend: values rise with rank (intervals fall), each power grows from I to V, rank V doubles rank I at 25% a rank' + (vBad.length ? ': ' + vBad[0] : ''));
+
+  // texts: every rank, non-empty, inside the card (180 chars), and the number on the card changes with rank
+  const tBad = ids.filter(id => { const t = [1, 2, 3, 4, 5].map(r => P[id].txt(r));
+    return !t.every(s => str(s, 180) && !/undefined|NaN/.test(s)) || t[0] === t[4]; });
+  assert(!tBad.length && E("legendText('tidewall', 1)").includes('20%') && E("legendText('tidewall', 5)").includes('40%') && E("legendVal('patience', 'mult', 5)") === 9,
+    'legend: every power has a text at every rank (under 180 chars), rank I and V read differently' + (tBad.length ? ': ' + tBad[0] : ''));
+
+  // icons: every power, the 4 Sigils, the frame
+  const hex = c => typeof c === 'string' && /^(#[0-9A-Fa-f]{6}|hsl\()/.test(c);
+  const iBad = ids.filter(id => { const s = SPEC[id], ic = E(`legendIcon('${id}')`);
+    return !s || !ICON[s[0]] || ic[0] !== s[0] || !hex(ic[1]) || ![1, 2, 3, 4, 5, 6, 7].every(k => hex(ic[2][k])); });
+  const sig = CIRC.map((c, i) => E(`sigilIcon(${i})`));
+  const sBad = CIRC.filter((c, i) => { const m = ICON['sigil_' + c]; return !m || m.length !== 12 || m.some(r => r.length !== 12) || sig[i][0] !== 'sigil_' + c || E(`sigilIcon('${c}')[0]`) !== sig[i][0]; });
+  const FR = E('LEG_FRAME');
+  assert(!iBad.length && Object.keys(SPEC).length === ids.length && !sBad.length && new Set(sig.map(s => s[1])).size === 4
+    && FR.col === E('LEG_COL') && FR.map.length === 16 && FR.map.every(r => r.length === 16),
+    'legend: every power has an icon (a recoloured ICON map), 4 Sigil icons registered, the 16x16 orange frame' + (iBad.concat(sBad).length ? ': ' + iBad.concat(sBad)[0] : ''));
+
+  // sets: one per real circle (ROSTER), tiers 2/4/6 with text, the 6-piece named, gross 12-18%
+  const rc = new Set(keys.map(k => R[k].circle));
+  const setBad = CIRC.filter((c, i) => { const s = SETS[c];
+    if (!s || s.circle !== c || s.i !== i || !rc.has(c) || !str(s.n, 24) || Object.keys(s.tiers).join() !== '2,4,6') return true;
+    const gross = [2, 4, 6].reduce((n, t) => n + s.tiers[t].p, 0);
+    return ![2, 4, 6].every(t => str(s.tiers[t].txt, 100) && s.tiers[t].p > 0 && s.tiers[t].fx) || !str(s.tiers[6].n, 24)
+      || gross < CAPS.setGross[0] - eps || gross > CAPS.setGross[1] + eps; });
+  assert(!setBad.length && rc.size === 4 && [...rc].every(c => CIRC.includes(c)) && Object.keys(SETS).length === 4,
+    'legend: 4 circle sets on the ROSTER circles, 2/4/6-piece tiers with text, 6-piece sets +12-18% gross' + (setBad.length ? ': ' + setBad[0] : ''));
+
+  // costs and limits (5, 2.3, 4.1, 7)
+  const C = E('LEG_COST'), T = E('LEG_TUNE'), CX = E('LEG_CODEX');
+  assert([1, 2, 3, 4, 5].map(r => C.inscribe.pearls(r)).join() === '4,6,8,10,12' && C.inscribe.ess === 5 && C.inscribe.goldFoes === 100 && C.mark.sigil === 1 && C.mark.pearls === 2
+    && T.heroMax === 2 && T.compMax === 1 && T.markMax === heroPos.length + 2 * 3 && T.echoPerRank === 3
+    && CX.powers === ids.length - PI.length && CX.total === CX.powers * (CX.learn + CX.rank * 4),
+    'legend: Inscribe 2 + 2 x rank Pearls, 5 Essence, 100 foes\' gold; Mark 1 Sigil + 2 Pearls; 2 hero powers, 1 a companion, 10 marks; Codex 234 Light');
+
+  // the power budget (6): the best legal build at rank I / III / V stays under the caps
+  const M = CAPS.model;
+  const pAt = (id, r) => P[id].p1 + (P[id].p5 - P[id].p1) * (r - 1) / 4;
+  const perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+  function legendBest(r) {
+    let top = { v: 0 };
+    for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) for (let c = b + 1; c < keys.length; c++) {
+      const line = [keys[a], keys[b], keys[c]], n = {};
+      for (const k of line) n[R[k].circle] = (n[R[k].circle] || 0) + 1;
+      let cv = 1, cp = [];
+      for (const pm of perms) { const used = new Set(); let v = 1; const pick = [];
+        for (const i of pm) { const k = line[i];
+          const o = CO.filter(id => !used.has(id) && (P[id].fits === R[k].role || P[id].fits === 'trinket') && (!P[id].only || P[id].only === k)).sort((x, y) => pAt(y, r) - pAt(x, r))[0];
+          if (o) { used.add(o); pick.push(o); v *= 1 + pAt(o, r) * M.comp; } }
+        if (v > cv) { cv = v; cp = pick; } }
+      const sv = CIRC.map(ci => { const t = SETS[ci].tiers; return [ci, (t[2].p + t[4].p + t[6].p) * M.setNet, (t[2].p + t[4].p) * M.setNet]; });
+      let sb = 1; for (const x of sv) for (const y of sv) if (x !== y) sb = Math.max(sb, (1 + x[1]) * (1 + y[2]));
+      for (const cls of CLS) {
+        const hv = CI[cls].concat(PI).map(id => [id, pAt(id, r) * (P[id].pPer ? (n[P[id].per] || 0) : 1)]).sort((x, y) => y[1] - x[1]);
+        const v = (1 + hv[0][1]) * (1 + hv[1][1]) * cv * sb;
+        if (v > top.v) top = { v, d: `${cls} ${hv[0][0]} + ${hv[1][0]}, ${line.join('/')} with ${cp.join('/')}` };
+      }
+    }
+    return top;
+  }
+  const bb = [1, 3, 5].map(r => [r, legendBest(r)]);
+  const capBad = bb.filter(([r, t]) => t.v - 1 > CAPS.best[r] + eps);
+  assert(!capBad.length, `legend: the best build stays under the caps (${bb.map(([r, t]) => `rank ${r} +${(100 * (t.v - 1)).toFixed(1)}% <= +${Math.round(100 * CAPS.best[r])}%`).join(', ')})`
+    + (capBad.length ? ': ' + capBad[0][1].d : ''));
+  // no single best pair (L4) by the estimates: each class has 3+ hero pairs within 10% of its best at rank III
+  // (per-member powers with 3 of their circle fielded)
+  const pr = CAPS.pairs, pairBad = CLS.filter(cls => {
+    const pool = CI[cls].concat(PI), vals = [];
+    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+      const f = id => 1 + pAt(id, pr.rank) * (P[id].pPer ? 3 : 1); vals.push(f(pool[i]) * f(pool[j])); }
+    const best = Math.max(...vals); return vals.filter(v => (v - 1) >= (best - 1) * (1 - pr.within) - eps).length < pr.min; });
+  assert(!pairBad.length, 'legend: every class has 3+ hero power pairs within 10% of its best pair at rank III (by the estimates)' + (pairBad.length ? ': ' + pairBad[0] : ''));
+} catch (e) { fail('legendary data crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
