@@ -67,7 +67,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
     heroHp: { warden: 12, lanternmage: 4, ranger: 5, lightkeeper: 6 },
     armour: { tank: 20, striker: 0, caster: 0, support: 10 }, heroArmour: { warden: 30, lanternmage: 0, ranger: 0, lightkeeper: 10 },
-    aldricArmour: 20, braced: 10, redMax: 0.6,
+    aldricArmour: 20, braced: 10, redMax: 0.6, tankDr: 0,
     wardenTankHp: 0.4, wardenTankArmour: 20, wardenDr: 0.1, wardenThreat: 6,
     lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 0.8,   // heal: a support heals 0.8 x power a second (spec 1.2; T6 wants a support worth 2-4 zones of hold)
     cover: 0.15, backRanged: 0.2,
@@ -80,7 +80,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     cdMin: 0.5,                          // cooldown reductions stop at -50%
     fieldSupport: 2,                     // autoField (56-roster): 2 a support when the party cannot hold its max zone without one, 1 always, 0 never
     bossGate: 1, bossWait: 600,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s)
-    refresh: 0.25, pushEvery: 5, holdSecs: 120, estSafety: 1.25, estEff: 1, awayRate: 0.75, autoCast: 1.05,
+    refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1.25, estEff: 1, awayRate: 0.75, autoCast: 1.05,
     // kit numbers (3.2, 3.5)
     guardDr: 0.4, guardT: 4, trustStep: 0.01, trustMax: 0.2, mend: 0.25, warmCap: 0.2, longRoute: 0.2,
     beacon: 0.2, beaconLamp: 0.3, beaconSh: 0.1, burnBack: 0.1, keeper: 0.15, sturdy: 0.1,
@@ -199,7 +199,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (key === 'aldric') u.armour += T.aldricArmour + (lv >= 10 ? 20 : 0);
       u.thX = T.threat[role] * (1 + g.threat / 100) * (key === 'aldric' ? 1.1 : 1);
       u.melee = role === 'tank' || (role === 'striker' && !R.ranged); u.ranged = !u.melee;
-      u.dps = role === 'support' ? 0 : charDps(key);
+      u.dps = charDps(key);   // BAL2: supports strike too (Smite, ROSTER_TUNE.supDps)
       u.spd = ROLE_STATS[role].spd;
       let hx = 1 + g.heal / 100;
       const innate = R.rarity === 'epic' || R.rarity === 'legendary';
@@ -476,12 +476,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // ---------------- party actions ----------------
   function companionTick(u, dt) {
     // basic attack
-    if (u.role !== 'support' && u.dps > 0) {
+    if (u.dps > 0) {
       u.swing -= dt;
       if (u.swing <= 0) {
         u.swing += 1 / u.spd;
-        const hit = u.dps * (1 - T.abF) / u.spd;
-        if (u.role === 'caster') {
+        // supports have no damage ability: their Smite is all of their damage (magic, ignores armour)
+        const hit = u.dps * (u.role === 'support' ? 1 : 1 - T.abF) / u.spd;
+        if (u.role === 'support') { const f = focusFoe(); if (f) cbDamageFoe(f, hit, u.i, 'magic'); }
+        else if (u.role === 'caster') {
           const f = focusFoe(); if (f) {
             cbDamageFoe(f, hit, u.i, 'magic');
             const o = (T.aoeOther + u.area) * hit;
@@ -797,6 +799,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
     if (synFlags.hearthTank === u.key) dr *= 1 - T.hearthDr;
+    if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && f.slowT > 0 && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
@@ -883,6 +886,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     } else {
       const to = Math.max(1, z - 1);
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
+      backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
       toast('Your party fell back to regroup.', 'raid', null, 'normal');
     }
@@ -896,12 +900,15 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) return;
     spawn();
   }
+  let backZone = 0, backAt = 0, backWipes = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
     const back = S.combat && S.combat.back || 0;
     if (!back || fightBoss || arena || target() !== 'mob') return 0;
     if (S.zone >= Math.min(back, S.maxZone)) { S.combat.back = 0; return 0; }
-    if (!partyHolds(S.zone + 1)) return 0;
+    // BAL2: the estimate is careful, so the party also tries again after pushRetry s (doubling with each
+    // wipe at that zone, up to 8x): a zone it can hold live is never walled by a pessimistic estimate.
+    if (!partyHolds(S.zone + 1) && !(S.zone + 1 === backZone && clock - backAt >= T.pushRetry * Math.min(8, Math.pow(2, backWipes - 1)))) return 0;
     ST.pushes++;
     setZone(S.zone + 1);
     if (S.zone >= Math.min(back, S.maxZone)) S.combat.back = 0;
@@ -1022,6 +1029,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     { dmg: 1, ranged: 1, arm: 0, aoe: 0.8 / 6, heal: 0, dive: 0, pois: 1 }, { dmg: 2.5 * 0.5 * 1.33, ranged: 0, arm: 1, aoe: 0, heal: 0, dive: 0 },
     { dmg: 1, ranged: 1, arm: 0, aoe: 0, heal: 0.15, dive: 0 }
   ];
+  const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
+    vesper: () => 2 * (T.verseMend + T.verseWard) };
   const thrRate = (u, i) => (i === 0 ? heroDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
   const EST_T = [null, null];
   partyHoldEstimate = (zMax, opts) => {
@@ -1032,9 +1041,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let compPhys = 0, compMagic = 0, heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
     for (let i = 1; i < n; i++) {
       const u = EST[i];
-      if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else compPhys += u.dps;
+      if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else if (u.role === 'support') compMagic += u.dps; else compPhys += u.dps;
     }
     for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; }
+    // BAL2: support abilities heal a share of the target's max HP per cast (Mend, Call to Arms, Sanctuary,
+    // Verse), and the Lightkeeper's auto-cast Rally Hymn heals everyone: a share of max HP a second.
+    let abHeal = 0;
+    for (let i = 1; i < n; i++) { const u = EST[i], f = AB_HEAL[u.id]; if (f && u.cdMax > 0) abHeal += f(u) * healMul(u) / u.cdMax; }
+    if (hero.cls === 'lightkeeper' && S.maxZone >= 10) abHeal += T.hymnHeal / (HERO_CLASSES.lightkeeper.ability.cd * mod('abilityCd') * 2);
     // who gets hit: melee foes the highest-threat member of the front-most column, ranged foes the highest threat overall
     for (let i = 0; i < n; i++) {
       const u = EST[i], tr = thrRate(u, i);
@@ -1044,7 +1058,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
-    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1);
+    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1);
     EST_T[0] = front; EST_T[1] = top === front ? null : top;
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
@@ -1067,10 +1081,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (u === front) { inc += alive * atk * T.spd * dmgX * (1 - rng) * (1 - red(u.armour)) * drOf(u); share += 1 - rng; }
         if (u === top) { inc += alive * atk * T.spd * dmgX * rng * (1 - red(u.armour)) * drOf(u) * (u.col === 0 ? 1 - T.backRanged : 1); share += rng; }
         // healing follows the damage: a support heals whoever is hit, in proportion
-        const sus = heal * Math.min(1, share) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
+        const sus = (heal * Math.min(1, share) + abHeal * u.maxHp) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
         const net = inc * T.estSafety - sus;   // estSafety: headroom for bad packs (elites, three spore clouds at once)
         if (!(net <= 0 || u.maxHp / net >= T.holdSecs)) holds = false;
-        worst = Math.min(worst, inc > 0 ? sus / inc : 99); incMax = Math.max(incMax, inc);
+        worst = Math.min(worst, inc > 0 ? sus / inc : 99); incMax = Math.max(incMax, inc); if (o.dbg) o.dbg.push([u.key, inc.toExponential(2), sus.toExponential(2), u.maxHp.toExponential(2), share.toFixed(2)].join(" "));   // DBGTMP
       }
       // The rest of the party only meets the spread (spore clouds): a member it knocks out is down for
       // the rest of each pack (they stand up between packs), so its damage is lost for that share.
@@ -1112,7 +1126,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (clock - readyFor >= T.bossWait) return true;
     const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1;
     let D = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);
-    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' ? 1 : phys);
+    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' ? 1 : phys);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
     return D * T.estEff * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;
   };

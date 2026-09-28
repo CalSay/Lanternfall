@@ -351,6 +351,28 @@ function farmZone() {
   }
   return null;
 }
+// BAL2 (C1): a Camp build short only of a fight-only material (Soft Hide for the Map Room) walks
+// back to the zone of that tier that drops it best, every other fight cycle (a player would; the
+// Ranger's gear eats every Hide, so its Map Room waited forever). --farm 0 turns it off.
+let campFarmTurn = 0;
+function campFarmZone() {
+  if (args.farm === '0' || args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return null;
+  for (const id of CAMP_ORDER) {
+    const c = E(`campCan(${JSON.stringify(id)})`);
+    if (c.ok || c.max || c.busy || c.full || c.need || !c.cost) continue;
+    for (const [f, tt, n] of c.cost.mats) {
+      if (E(`!!CRAFT_NODES[${JSON.stringify(f)}] || S.mats.${f}[${tt - 1}] >= ${n}`)) continue;
+      let best = null, bestV = -1;
+      for (let z = 1; z <= E('S.maxZone') - 1; z++) {
+        if (fn.zoneTier(z) !== tt) continue;
+        const v = E(`(() => { const zt = zoneType(${z}), p = k => { const d = CRAFT_SIG_DROPS[TYPES[k].key]; return d && d.fam === ${JSON.stringify(f)} ? d.p : 0; }; return 0.72 * p(zt) + 0.28 * p((zt + 1) % 7); })()`);
+        if (v > 0 && v >= bestV) { bestV = v; best = z; }
+      }
+      if (best) return best;
+    }
+  }
+  return null;
+}
 // G6: the family the next class craft waits on (largest shortfall), or 'station' / null.
 function nextBlock() {
   nextBlock.station = null;
@@ -460,8 +482,8 @@ function playSecond(sec) {
     // With --class the first gather trip comes at 5 min (fight 5, gather 5, then fight 10 / gather 5),
     // like a player who goes for the first class set; the share stays one third.
     const phase = (Math.floor(sec / 60) + (cls ? 5 : 0)) % 15;
-    if (phase === 0) fn.setActivity('fight');
-    if (phase < 10 && cls) { const fz = farmZone() || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
+    if (phase === 0) { fn.setActivity('fight'); campFarmTurn++; }
+    if (phase < 10 && cls) { const fz = farmZone() || (campFarmTurn % 2 === 0 && campFarmZone()) || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
     else if (phase > 10 && bestNode.camp) { const cn = campNode(); if (cn && (E('S.node.kind') !== cn[0] || E('S.node.t') !== cn[1])) fn.setNode(cn[0], cn[1]); }
     else if (phase > 10 && cls && !bestNode.camp) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }

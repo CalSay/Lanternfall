@@ -118,6 +118,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     // so promotions cluster every 25 levels; drills put a smaller step between them.
     stepEvery: 5, stepX: 1.1,
     supEq: 1.2,                          // support party buff, worth supEq x its power (3.6 heal rate)
+    supDps: 0.5,                         // (BAL2) party combat: a support also strikes (Smite) for supDps x its power (was 0)
     xpBase: 10, xpR: 1.12, par: 6, killsPerLv: 40, bossXp: 5, bountyKills: 20,
     // XP per kill counts the zone's par level (par x zone) at most gapMax above the character.
     // BAL1: gapMax 18 -> 4 and par 3 -> 6, so levels come from kills (about 25 a level) instead of
@@ -216,11 +217,11 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
   const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(T.rankX, r.rank) * Math.pow(T.stepX, drillsAt(r.lv)) * (1 + wpnPct(id, r) / 100);
-  // Party combat (Stage C, 59-combat.js): supports heal and deal no damage. valueMult keeps the old
+  // Party combat (Stage C, 59-combat.js): supports heal and strike softly (BAL2 supDps). valueMult keeps the old
   // support worth (supEq x power) for ranking (autoField, recruits stepping in).
   const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
   const valueMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
-  const roleMult = role => role === 'support' && combatOn() ? 0 : valueMult(role);
+  const roleMult = role => role === 'support' && combatOn() ? T.supDps : valueMult(role);
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   const rawValue = (id, r) => rawPow(id, r) * valueMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };
