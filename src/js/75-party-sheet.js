@@ -382,7 +382,7 @@ let openSheet, partySheet;
       b.disabled = !canPromote(k);
       b.addEventListener('click', () => { if (promoteChar(k)) { save(); ui(true); partySheet.refresh(true); } });
       row.append(b);
-      if (x.atCap) foot.append(el('small', 'cs-cost', `Also ${fmt(pc.ess[1])} ${essName(pc.ess[0])} or better. Damage x2, level cap +25.`));
+      if (x.atCap) foot.append(el('small', 'cs-cost', `Also ${fmt(pc.ess[1])} ${essName(pc.ess[0])} or better. Damage ${rankXTxt()}, level cap +25.`));
     }
     if (inField(k)) {
       const b = el('button', 'mini cs-act', 'Bench'); b.type = 'button';

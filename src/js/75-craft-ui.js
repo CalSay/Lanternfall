@@ -118,11 +118,11 @@ let craftUI = null;
     const cls = S.party && S.party.cls;
     st8.st = { warden: 'forge', lanternmage: 'bench', ranger: 'bench', lightkeeper: 'loom' }[cls] || 'forge';
     for (const s of STATION_KEYS) st8.tier[s] = openTier(s);
-    st8.pick = S.fSlot + ':' + S.fTier;
+    st8.pick = S.fSlot + ':' + S.fTier + ':0';
   }
   // "Next up" goals set S.fSlot / S.fTier and open this tab: jump to that recipe.
   function syncGoalPick() {
-    const key = S.fSlot + ':' + S.fTier; if (key === st8.pick) return;
+    const key = S.fSlot + ':' + S.fTier + ':' + forgeGoalPicks; if (key === st8.pick) return;
     st8.pick = key;
     let k = S.fSlot; const d = CRAFT_KINDS[k]; if (!d) return;
     if (d.legacy) { const row = CRAFT_FITS[d.pos] || {}; const w = heroWho(); k = (row[w] && row[w][0]) || k; }
@@ -360,7 +360,7 @@ let craftUI = null;
     id: 'craft-ench', title: "Enchanter's Table",
     mount(sec) {
       const card = el('div', 'card cf-tm');
-      card.append(el('h3', null, 'Transmute'), el('p', 'note', 'Trade within one material. 4 of a tier make 1 of the next. 1 makes 2 of the tier below.'));
+      card.append(el('h3', null, 'Transmute'), el('p', 'note', 'Trade within one material. 4 of a tier make 1 of the next. 1 makes 2 of the tier below, once: what you break down cannot be broken down again.'));
       const fams = el('div', 'cf-fams'); fams.setAttribute('aria-label', 'Material');
       for (const f of CRAFT_FAMILIES) {
         const b = el('button', 'cf-fam'); b.type = 'button'; b.dataset.f = f; b.setAttribute('aria-label', MAT[f].n);
@@ -392,7 +392,7 @@ let craftUI = null;
       putHidden(ench.sec, st8.st !== 'ench');
       if (ench.sec.hidden) return;
       const { fam, t } = st8.tm, have = S.mats[fam], f = K6.transmute(), lv = lvOf('ench');
-      const sig = [fam, t, have.join(), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
+      const sig = [fam, t, have.join(), JSON.stringify((S.craft && S.craft.tmd) || {}), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
       if (!force && (sig === ench.sig || busy())) return;
       ench.sig = sig;
       ench.fams.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === fam)));
@@ -409,8 +409,9 @@ let craftUI = null;
       ench.dnB.textContent = t > 1 ? `${D.take} ${nm(t)} → ${D.give} ${nm(t - 1)}` : 'Lowest tier';
       const upReq = t < 5 ? CRAFT_STATION_REQ[t] : 0;
       ench.upB.disabled = !f || t >= 5 || have[t - 1] < U.take || lv < upReq;
-      ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take;
-      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : t < 5 && lv < upReq ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : '';
+      const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
+      ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
+      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : t < 5 && lv < upReq ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
       // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.party && S.party.unlock && S.party.unlock.starChart);
       ench.star.hidden = !(sc && !CRAFT_KINDS.starchart);

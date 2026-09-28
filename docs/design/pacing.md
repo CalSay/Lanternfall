@@ -1,160 +1,225 @@
-# The Lantern Road: pacing (task M6)
+# The Lantern Road: pacing (M6, retuned by BAL1)
 
-Status: implemented on the M6 branch. Owner of the knobs: the `PACE` table in `src/js/40-rules.js`.
-Check with `node tools/sim.mjs --targets`. Try values without editing with `--pace key=value`.
+Status: BAL1 (the slower pace the owner asked for) on top of M6. Owners of the knobs: `PACE` in
+`src/js/40-rules.js`, `ROSTER_TUNE` in `56-roster.js`, `UNLOCK_TUNE` in `56c-unlocks.js`,
+`CAMP_TUNE` in `57-camp.js`, `SYN_TUNE` in `56b-synergy.js`. Check with
+`node tools/sim.mjs --targets` (about 2.5 minutes). Try values without editing with
+`--pace k=v`, `--tune k=v`, `--unlock path=v`, `--syn v` or `--eval "code"`.
 
-## 1. The problem
+## 1. The owner's direction (2026-09-27)
 
-Before M6 the zone curve had no bend. Mob HP grew by x1.42 per zone for ever, every zone boss
-had 8x HP, Starlit (tier 5) essence dropped from zone 25, and companion XP per kill was
-normalised to the zone ("par" = 3 levels per zone). Companions therefore levelled as fast as
-the party pushed, and any one-off multiplier was amplified into many zones. A tier-5 sword
-(damage x10 to x20 at about 2h45) pushed the party 20 zones in ten minutes. Region 1 fell in
-about 3 hours. Normal play reached zone 73 by day 3 and then hit the roster's level-200 cap,
-so Region 2 was also gone in the first weekend.
+"The pace of the game still feels far too quick. Party members are far too easy to get. Damage
+feels like it ramps so fast too." Uniques were already toned down (`UNIQ_TUNE`, 20-data.js).
 
-## 2. Normal play (the check-in policy)
-
-The sim's `--days N` mode plays this policy. All of it is flags, so other policies can be tried.
+## 2. Normal play (the check-in policy, `--days N`)
 
 | Part | Default | Flag |
 |---|---|---|
-| Day 1 first session | 60 min at 08:00 | `--first 60` |
-| Check-ins | 3 a day, at 08:00, 13:00 and 19:00 | `--checkins 8,13,19` |
-| Session length | 15 min, played with the real tick (10 min fight, 5 min gather) | `--session 15` |
-| Between sessions | the game's own closed-form `awayGains()`, capped by the away cap (4h today) | - |
-| Night | the 19:15 to 08:00 gap (8h of sleep inside it) | - |
-| Away activity | gather after the morning check-in, fight at the max zone otherwise | - |
-| Gear | "sword first": essence is kept for the next sword tier (`--forge weapon`, the default) | `--forge any` |
+| Install | at the first check-in (08:00 on day 1). BAL1 fixed the sim, which gave a new game 8h of away gains before it was installed | - |
+| Day 1 first session | 60 min | `--first 60` |
+| Check-ins | 08:00, 13:00, 19:00 | `--checkins 8,13,19` |
+| Session length | 15 min with the real tick (10 min fight, 5 min gather) | `--session 15` |
+| Between sessions | the game's closed-form `awayGains()` (away cap 4h + 2h per Watchtower level, 24h at most) | - |
+| Away activity | gather after the morning check-in (the node the gear needs, never a camp trip), fight otherwise | - |
+| Gear | "weapon first": essence kept for the next class weapon; once the tier-1 set is done (or the weapon is 2 tiers behind) the gather trip goes to the weapon | `--forge any` |
+| Camp | any affordable build, Watchtower first; every other live gather trip fetches a build's missing materials; an old lower-tier material is broken down at the Enchanter's Table | `--camp 0` |
 
-That is 45 minutes of active play a day (1.5h on day 1) plus about 12 hours of away gains.
+"Meaningful upgrade" (the boredom metric): a new zone, a new gear tier in any hero position, a
+recruit, a promotion, a drill (BAL1) or a finished Camp build (BAL1).
 
-"Meaningful upgrade" (the boredom metric): a new zone, a new gear tier in any slot, a recruit,
-or a promotion. The sim counts check-ins in which none of these happened.
+## 3. The targets (BAL1)
 
-## 3. The target curve
-
-| When | Target | Why |
+| Id | When | Target |
 |---|---|---|
-| 30m / 1h / 2h of play (continuous) | zones 12-16 / 18-22 / 26-32 (T1) | the onboarding; unchanged |
-| 3h of play (continuous) | zone 42 at most (T2) | no runaway |
-| End of day 1 (normal play) | zone 28-32 | the evening check-in closes on the Region 1 approach |
-| Region 1 boss (zone 35) | day 2-4 (P1) | the first milestone lands on the second or third day |
-| Region 2 (zones 36-70) | 2-5 zones a day, steady | always a next zone within a day |
-| Region 2 boss (zone 70) | 7-21 days, aim 12-14 (P2) | the first "weeks" rung |
-| Region 3 boss (zone 105) | 30-60 days (P3) | needs Region 3 power (see 7) |
-| Boredom before the Region 2 boss | at most 3 empty check-ins in a row (P4) | never a full day without an upgrade |
+| T1 | 30m / 1h / 2h continuous, mixed idle play with class gear, every class | zones 6-9 / 10-13 / 15-19 |
+| T2 | 3h continuous | zone 24 at most |
+| T3 | class parity | each class reaches zone 15 within 0.85-1.15 x the median time (mean of 3 seeds) |
+| T10 | before 2h | a roster step (a promotion comes due, or a drill) at least every 30 min |
+| T16 | recruits | first after the starter 15-30 min, first Rare 1.5-3h (continuous); first Epic day 2-4, first Legendary day 14-21 (normal play) |
+| D1 | end of day 1, normal play | zones 20-26 |
+| P1 | Region 1 boss (zone 35) | day 4-8 |
+| P2 | Region 2 boss (zone 70) | day 21-42 |
+| P3 | Region 3 boss | INFO until Region 3 power exists |
+| P4 | before the Region 2 boss | never more than 3 empty check-ins in a row |
+| C1 | the Camp | first build in the first 10-20 min, full camp over several weeks (INFO) |
 
-### What the sim shows now (warden, seed 1, `--days 21`)
+### What the sim shows now (`--targets`, seed 1)
 
-| Day | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 16 | 18 | 21 |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Max zone | 29 | 35 | 42 | 46 | 50 | 53 | 55 | 57 | 62 | 65 | 67 | 70 | 70 | 71 | 74 | 76 | 76 |
-| Hero level | 28 | 30 | 32 | 34 | 36 | 37 | 38 | 39 | 39 | 40 | 40 | 41 | 41 | 41 | 42 | 43 | 44 |
+| Target | Warden | Lanternmage | Ranger | Lightkeeper | |
+|---|---|---|---|---|---|
+| T1 | 9 / 11 / 16 | 8 / 11 / 18 | 9 / 12 / 18 | 9 / 12 / 16 | PASS |
+| T2 | 22 | 22 | 23 | 21 | PASS |
+| T3 (min to zone 15) | 105 (1.05) | 94 (0.95) | 86 (0.86) | 109 (1.09) | PASS |
+| T10 (longest gap) | 11m | 8m | 8m | 12m | PASS |
+| T16 | 18m / 1.9h / d2.3 / d17.3 | 19m / 1.6h / d2.8 / d17.3 | 25m / 1.5h / d2.3 / d15.8 | 17m / 2.0h / d2.8 / d15.3 | PASS |
+| D1 | 19 | 18 | 18 | 18 | FAIL (see 8) |
+| P1 (day) | 6.8 | 7.3 | 5.3 | 6.3 | PASS |
+| P2 (day) | 30.3 | 31.8 | 29.3 | 28.5 | PASS |
+| P4 | 2 | 2 | 3 | 2 | PASS |
+| C1 first build / full | 19m / day 22 | 36m / day 24 | 17m / (48 of 53: Map Room waits on Soft Hide) | 19m / day 21 | INFO |
 
-Region 1 boss: day 2.8. Region 2 boss: day 13.8. Longest stretch without a meaningful upgrade
-before the Region 2 boss: 46 active minutes (2 check-ins). Companions: the best three reach
-about level 105 (rank 4) on day 3, 140 (rank 5) on day 7, 185 (rank 7) on day 14 and the
-level-200 cap around day 20. The top gear tier is 4 on day 1 and 5 (Starlit) from day 2.
+Warden curve (max zone, hero level) by day: d1 19 (L24), d2 29, d3 31, d4 33, d6 35, d8 37,
+d10 41, d14 49, d21 57, d28 68, d35 72, d42 73. Before BAL1 it was d1 35, d2 45, d7 62, d12 72,
+then the level-200 wall at 78-79.
 
-All classes (`--targets`): Region 1 boss on day 1.8-2.8, Region 2 boss on day 10.8-13.8.
+Continuous warden, dps at 1h / 2h / 3h: 3.8K / 59K / 519K (zone 11 / 16 / 22). Before BAL1:
+316K / 4.9M / 8.2M (zone 28 / 35 / 35).
 
-## 4. The levers
+Recruits (first after the starter / first Rare / first Epic / first Legendary):
 
-| Lever | What it does | Verdict |
-|---|---|---|
-| Zone HP growth past zone 30 | More power per zone. | It cannot slow time on its own: kill time at the wall is fixed by the boss rule (8x HP in 30s = normal mobs die in about 4s), so kills per hour do not change. Steeper growth only moves the level-200 cap zone down, below zone 70. Used the other way: **gentler** (1.29) so the cap sits at zone 76-80 and the Region 2 boss is never a hard wall. |
-| Boss walls at region ends | A one-off bump. | A boss-only wall is followed by a burst: the next few zones are easier than the boss. Used as a **region step** instead: mob HP x5 from zone 35 and x2.5 more from zone 70, and it stays. |
-| Gear tier gates by material tier | When the big multipliers arrive. | Used: Starlit (tier 5) essence now drops from zone 36, so the tier-5 sword is Region 2's reward, not the thing that skips the Region 1 boss. |
-| The forge runaway | x10-x20 in one forge. | Mostly a sim artefact: the old policy ran with no sword for hours (other slots and promotions ate the matching essence), then forged tier 5 in one go. The sim now forges "sword first". The real fix is the essence gate above plus the XP curve below, which stops companions racing after the jump. |
-| Companion promotion costs | A hard gate every 25 levels. | Not used: a gold or essence gate is a hard wall, and gold grows exponentially so any fixed cost is soon trivial. |
-| **Companion XP curve** | Levels past 90 need more kills. | **The main lever.** Companions are 60-95% of damage, and their XP per kill is normalised to the zone, so their level *is* the pacing. From level 90 the XP needed grows x1.2 per level up to x80 (level 114). Region 2 is paced by that plateau: about 2-4 levels a day per companion, which is 2-5 zones a day. |
-| Early zone HP growth | T1. | 1.42 -> 1.48. The merged B7 unlocks (bounty claims, Maren, Renown) had pushed T1 to 16-18 / 24-27 / 31-35. |
+| Class | First | Rare | Epic | Legendary |
+|---|---|---|---|---|
+| Warden | 18m Tobin | 1.9h Aldric | day 2.3 Vesper | day 17.3 Elowen |
+| Lanternmage | 19m Wren | 1.6h Maren | day 2.8 Vesper | day 17.3 Elowen |
+| Ranger | 25m Wren | 1.5h Maren | day 2.3 Vesper | day 15.8 Elowen |
+| Lightkeeper | 17m Tobin | 2.0h Anselm | day 2.8 Vesper | day 15.3 Elowen |
 
-### Why this wall is soft
+Before BAL1: Tobin/Hesketh at 1 min, Maren (Rare) at 13-16 min, an Epic at about 1.2h.
 
-- Every check-in has something close: a companion level (each is +11% damage), a promotion
-  every 25 levels, a new zone most sessions, Blade and Fortune buys, gear rerolls and +levels.
-- The XP curve ramps (x2.5 at level 95, x6 at 100, x15 at 105) instead of stepping, so there is
-  no single day on which progress stops.
-- New recruits stay fast: the curve is by the companion's own level, so a level-1 recruit still
-  catches up in minutes (T11 unchanged).
-- Away time matters more than raw play time: about 12 hours of away gains a day are most of a
-  companion's XP, so three short check-ins keep pace with a long session.
-- The region steps come with a reward on the far side (Starlit essence, the tier-5 sword).
-- Measured: before the Region 2 boss the longest run of empty check-ins is 2-3 (at most a day),
-  and the longest stretch is 37-46 active minutes.
+## 4. The model: levels from time spent fighting
+
+Before BAL1, companion XP per kill was normalised to the zone ("par" = 3 levels a zone, up to 18
+levels above the character). Companions raced to about 3 x the zone, so every zone pushed dragged
+their power up by about x1.37, and any one-off multiplier cascaded into many zones.
+
+Now (`ROSTER_TUNE`):
+- XP per kill counts the par level at most `gapMax` 4 above the character (was 18), with `par` 6,
+  so the cap nearly always binds: about 25 kills' worth of XP a level at any zone.
+- `killWorth`: a kill gives (seconds a normal foe of that zone takes the party) / `xpSecs` (5)
+  kills' worth, at most `xpWorthMax` (8). XP therefore follows time spent fighting. Farming an easy
+  zone for fast kills earns no more than pushing at the front, and a wall zone no less.
+- A character behind the party still counts up to the party level (`catchGap` 18): a new recruit
+  catches up in minutes (T11).
+- Away XP (`offlineXp` 1, was 0.75) is given in 40 steps, so its price follows the levels gained
+  while away (one lump priced at the starting level bought only a few levels).
+- At the level cap XP banks up to `bankLv` 25 levels (was 1), spent the moment you promote: a long
+  absence is never lost behind a cap, and promoting after a night away is a big moment.
+- Past level `compLv` 80 each level needs x`compXp` 1.12 more XP, up to x`compXpMax` 200 (from level
+  127). Region 2 is a few levels a day.
+
+So the zone curve past the first half hour is: levels a day x power per level / ln(HP per zone).
+Power per level is about x1.094 (growth 1.06, a drill x1.1 every 5 levels, x1.5 a rank). The HP
+curve only has to match it: `hpGrowth` 1.46 (zones 12-27) and `hpLate` 1.22 past the bend at 27
+(about 2 levels a zone).
 
 ## 5. Changes (before -> after)
 
-All in `PACE` (`src/js/40-rules.js`) unless named.
+### Damage ramp (owner: "damage ramps so fast")
 
-| Knob | Before | After | Effect |
+| What | Before | After |
+|---|---|---|
+| Companion power per level (`ROSTER_TUNE.growth`) | x1.08 | x1.06 |
+| Per promotion (`rankX`) | x2 | x1.5 (texts read it) |
+| Drill every 5 levels between promotions (`stepEvery`, `stepX`) | none | x1.1 |
+| One rank of 25 levels, all in | x13.7 | x9.4 |
+| Blade (`PACE.bladeX` every `bladeEvery`) | x2 every 25 | x1.5 every 25 (text reads it) |
+| Blade cost growth (`HERO_UPS` blade `r`) | x1.14 a level (x27 per 25) | x1.18 (x63 per 25) |
+| Hero damage per level (`PACE.heroLv`) | +5% (linear) | +4% (the level-up toast reads it) |
+| Gear tier power (`TIER_POW`) | 10 / 28 / 70 / 160 / 360 (tier 5 = x36 tier 1) | 10 / 22 / 42 / 75 / 130 (x13); affix rolls scale with it |
+| Promotion gold (`promoGold`) | 60 x mobGold(cap / 3) | 60 x (rank + 1) foes of your max zone (x0.5 Commons, x0.25 when a whole rank behind the party) |
+| Promotion essence tier | rank + 1 (Starlit for rank 5: walled Region 1 at level 125) | rank, at most tier 4 (`promoTierLag`, `promoTierMax`) |
+
+### Pace (`PACE`)
+
+| Knob | M6 | BAL1 | Why |
 |---|---|---|---|
-| `hpGrowth` (mob HP per zone, zones 1-30) | 1.42 | 1.48 | T1 back in band after B7. Zone 30 has 3.3x the old HP |
-| `hpLate` (per zone past 30) | 1.42 | 1.29 | the level-200 cap moves from zone 73 to 76-80 |
-| `regionStep` (HP step from zones 35 / 70) | none | x5 / x2.5 | the region walls; they stay (no burst after) |
-| `regionBoss` (extra on region bosses only) | none | 1 (off) | spare knob |
-| `bossHp` | 8 | 8 | unchanged, now a knob |
-| `essTier` (first zone of each essence tier) | 1, 7, 13, 19, 25 | 1, 7, 13, 19, 36 | Starlit is Region 2's essence |
-| `compLv` / `compXp` / `compXpMax` (companion XP need past level 90) | none | 90 / x1.2 per level / cap x80 | the time lever |
-| `heroAwayXp` (hero XP while away) | 0 | 0.5 | constellations.md: 50% of the away kills' XP. T1/T2 are continuous play, so unaffected; normal play reaches hero level 42 instead of 33 by day 16 and the Region 2 boss about a day sooner |
+| `hpEarly`, `early` | none | x1.95 a zone up to zone 12 | zones 1-6 in minutes, then T1's 30 min |
+| `hpGrowth` | 1.48 | 1.46 | zones 12-27 |
+| `bend` | 30 | 27 | |
+| `hpLate` | 1.29 | 1.22 | about 2 companion levels a zone |
+| `regionStep` | x5 / x2.5 | x1.7 / x1.2 | the level-200 cap is the end of today's power, so the Region 2 boss must not need the last levels |
+| `compLv` / `compXp` / `compXpMax` | 90 / 1.2 / 80 | 80 / 1.12 / 200 | the day-2+ curve |
+| `essTier` (Starlit) | from 36 | from 42 | Starlit gear is a mid-Region 2 step instead of a burst after zone 35 |
+| `farmSecs` | none | 20 | idle income never stalls (see 6) |
 
-Code edits outside the table (small):
-- `56-roster.js`: `cxpNeed(lv)` multiplies by `paceXp(lv)`; XP per kill (`cxpGain`, the gapMax cap)
-  uses the old curve (`cxpBase`). No `ROSTER_TUNE` value changed.
-- `50-sim.js`: bosses use `bossHpMult(z)`; `awayBase` gives quiet hero XP; `gainXp(n, quiet)`.
-- `76-audio.js`: no level-up sound for quiet (away) levels.
+### Recruits (`ROSTER` routes, `UNLOCK_TUNE`)
 
-### Save compatibility
+Prices in gold are now foes' worth (`kills` x a normal foe's gold at the gate zone, `foesGold`), so
+they follow the curve. Every how line is built from the tuned values.
 
-No stored value is changed or lowered, and no field is added. What changes for a live save:
-zones 2-59 have more HP than before (x1.5 at zone 10, x3.3 at 30, x10 at 35), zones past 60 have
-less. Companions past level 90 keep their XP but need more for the next level. A save farming
-zones 25-35 now earns Blazing (tier 4) essence there instead of Starlit; Starlit already owned is
-kept. A player past the new curve simply finds the next zones harder.
+| Who | Before | After |
+|---|---|---|
+| Tobin | zone 3, free | zone 8, free |
+| Wren | zone 2 + 120 | zone 8 + 30 foes' gold |
+| Hesketh | zone 3, free | zone 11, free |
+| Pip | zone 4 + 1.1K | zone 12 + 60 foes |
+| Bram | from zone 3, 60 Oak | from zone 10, 80 Oak |
+| Maren (Rare) | from zone 4, 40 Glowing | from zone 16, 30 Radiant |
+| Aldric (Rare) | 15 Renown + 25K | 25 Renown + 150 foes of zone 16 |
+| Kestrel (Rare) | zone 12 + 30K | zone 18 + 200 foes |
+| Tavern | visitors from zone 6; Vesper, Grenna from 18 | from 16; Vesper, Grenna from 31 (gold in foes) |
+| Isolde (Epic) | tokens from zone 30 | from 29 |
+| Vesper (Epic) | Renown 60 | Renown 90 |
+| Elowen (Legendary) | zone 48, 2T gold | zone 54, 3000 foes of zone 54, 20 Blazing |
+| Caedmon (Legendary) | Region 1 + 80 Renown | Region 1 + 250 Renown |
 
-## 6. Retuning after merges
+### Camp (`CAMP_TUNE`), checked with `--days`
 
-`node tools/sim.mjs --targets` runs every class for 3h continuous and 30 days of normal play and
-prints PASS/FAIL. It takes about a minute. `--pace`, `--tune`, `--unlock`, `--syn`, `--seed`,
-`--forge` pass through, so a retune can be tried in one command, e.g.
-`node tools/sim.mjs --targets --syn 0.75 --pace hpGrowth=1.51`.
+Building gold 600 -> 60 x level foes' worth at the gate zone (the old value was 40 minutes of
+income for the first build), row-1 materials x0.6. The first build (the Watchtower) lands at
+17-36 minutes, the full camp on day 21-24 (Ranger: the Map Room waits on Soft Hide, which the sim
+does not walk back for). Timers were checked and left as they are: the full camp is limited by
+materials and trophies, not by timers.
+
+## 6. Other BAL1 changes
+
+- **Synergies matter** (`SYN_TUNE.today` 0.1 -> 1). Texts now show what you get: an active
+  synergy's percentages are scaled by its strength (Common Cause, Bond), and if `today` is ever
+  lowered the texts follow it; thresholds ("below 50% HP") are never scaled. Line-ups with every
+  one of 9 (zone 20) or 14 (zone 40) recruits at the same level (warden hero): the best synergy
+  line-up (Wren, Bram, Kestrel: Hedgefolk + Mark and Leap + Hunting Party) deals x2.96 its raw
+  damage at zone 20 and x3.16 at zone 40, 2.6x / 2.3x the average random line-up (x1.74 / x1.69,
+  kits included). At zone 40 it beats the best raw line-up (Kestrel, Vesper, Isolde) by x1.03.
+  autoField still picks by raw power, so a player who plans the field is ahead of the sim.
+- **Class auras deal their damage** (they were text only): Lanternmage casters +30%, Ranger
+  strikers +10% crit chance and +50% crit damage (`SYN_TUNE.auras`).
+- **T10 drills**: every 5 levels between promotions a character finishes a drill (x1.1 damage,
+  `drill` event, a quiet toast). Fielded companions level together, so promotions cluster every
+  25 levels; drills put a smaller step every 5. Measured: a roster step every 8-12 minutes early.
+- **Transmute-down chains**: units made by breaking down cannot be broken down again
+  (`S.craft.tmd`), so one tier-5 unit gives 2 tier-4, not 16 tier-1.
+- **Next Up craft goal**: suggests the next tier of an item the hero can wear (`CRAFT_FITS` via
+  `fits`, `canCraft`, `kindName`; never the legacy Sword or Helm) and opens the Craft tab with that
+  recipe focused (`#forgeBtn`).
+- **Idle income never stalls** (55-pace.js): with auto-progress on, a zone whose normal foe would
+  take more than `farmSecs` (20s) drops to the highest farmable zone with one toast ("Your party
+  fell back to Zone 31 to keep earning."), on load and during play, and climbs back one zone at a
+  time while the next is easy. `awayGains` farms the best farmable zone at most `S.zone`.
+- **Class weapon paths**: with the flatter tiers and time-based levels, gear no longer decides the
+  race (the Warden's Smithing head start is gone: T3 1.05). The sim's classed heroes no longer fall
+  back to the legacy Sword; the WIP experiment of gating class weapons on Smithing was measured
+  and dropped (it widened the gap for the Workbench classes).
+
+## 7. Save compatibility
+
+No stored value is lowered or deleted, and no field is renamed. New fields: `S.pace.fell`,
+`S.craft.tmd` (defaults `0` and `{}`). What changes for a live save: formulas. Companions keep
+their levels and XP (XP above the old cap now banks up to 25 levels), their power per level and
+rank is lower, gear tiers give less, and zones have a different HP curve (early zones harder,
+Region 2 easier). A save parked at a zone it can no longer farm falls back (item above) instead of
+earning nothing. Recruits already on the roster stay.
+
+## 8. Open items for the coordinator
+
+- **D1 fails (18-19, target 20-26).** With the sim's install bug fixed, day 1 is 1.5h of play and
+  one 6h fight gap. The evening push is power-limited at about continuous 2.5h. Tried: away XP x1-2,
+  XP bank 15-50 levels, `hpGrowth` 1.40-1.48, earlier Radiant essence, earlier Rares, `compLv` 85:
+  D1 stayed 17-20 while T2 or P1 left their bands. Either accept about 19, or treat the morning
+  away gap as fighting in the policy.
+- **P3**: Region 3 still needs new power (ranks past 7, tier 6). The level-200 cap now lands just
+  past the Region 2 boss (zone 73-77 by day 45).
+- **autoField ignores synergies**: planning the field is worth up to x1.5-2.6 damage.
+- **Warden aura** (tanks +40% health, +20 armour) still waits for party combat, so the Warden has
+  no party damage aura; T3 is in band without it.
+
+## 9. Retuning after merges
 
 | Symptom | Knob |
 |---|---|
-| T1 too fast (more early power: synergies, affixes) | `hpGrowth` up. With `SYN_TUNE.today` 0.75, T1 is 15-19 / 23-24 / 30; `hpGrowth` 1.51-1.52 puts it back in band |
-| Region 2 too fast or too slow (more away hours from the Camp, more party damage) | `compXpMax` (plateau height); x80 -> x120 is about +4 days (and up to 6 empty check-ins in a row) |
-| Region 1 boss too early | `regionStep[0]` up (x5 -> x6 adds up to half a day for the slower classes) |
-| Region 2 boss is a long stall | `regionStep[1]` down, or `hpLate` down (moves the level-200 cap zone up) |
-| A burst after a region boss | keep `regionBoss` at 1; walls belong in `regionStep` |
-| The transition around zone 30-40 feels abrupt | `compXp` (ramp speed) and `compLv` (where it starts) |
-
-Headroom: with synergies raised to 0.75 (`--syn 0.75`, about +30-50% party damage) the long
-curve barely moves (Region 1 boss day 1.8-2.3, Region 2 boss day 10.8-14.3, P4 still passes).
-T1 is the sensitive target; retune it with `hpGrowth` only.
-
-The Camp's Watchtower (away cap up to 24h) will be the biggest future shift: companion XP is
-mostly away XP, so tripling the away hours roughly halves the Region 2 time. Raise `compXpMax`
-when it lands.
-
-## 7. Open items for the coordinator
-
-- **Region 3 (P3).** Today's power ends at the level-200 roster cap (rank 7): the party stops at
-  zone 76-80 (reported as INFO). Region 3 needs new power sources from the Region 2 spec: ranks
-  past 7, tier-6 materials, Constellations. Budget: about 3 zones of power a day (x2.2 a day
-  with `hpLate` 1.29), and give zone 105 its own `regionStep` entry.
-- **The first Legendary (B7), applied.** Elowen's quest (zone 28, 150M gold) landed at 1.8-2.6h
-  because gold grows exponentially with the zone. `UNLOCK_TUNE.quests.elowen` is now
-  `{ from: 48, gold: 2e12, ess: [4, 20] }` (her how-text matches). Measured before the K6 merge
-  (13-14h runs, one seed): first Legendary at 6.5-11.2h for all four classes (Elowen or Caedmon).
-- **T10 fails** (a promotion due every 20 minutes before 2h): the gaps are 40-55 minutes. Fielded
-  companions level in lockstep and caps come every 25 levels, so cap hits cluster. No small
-  `ROSTER_TUNE` change fixes it (`killsPerLv`, `commonXp`, `catchMax` tried). It needs a roster
-  design change: shorter early ranks, or staggered recruits.
-- **T1 lightkeeper** reaches zone 23 at 1h (band 18-22). It was 23 before M6 too (the class is
-  strong early). That is a class knob in `55-party.js`, not a pacing one.
-- **T16 Rare**: Maren joins at 8-10 min for warden and lightkeeper (target 15-40 min). That is B7's
-  `quests.maren`.
-- The sim's T1/T2 numbers now use the "sword first" gear policy. The old policy (`--forge any`)
-  often ran for hours with no sword, which made the late jump look bigger than a player's.
+| T1 30m too fast | `hpEarly` (1.95), or later first recruits |
+| T1 1h-3h / T2 | `ROSTER_TUNE.xpSecs` (5; higher = slower levels), `hpGrowth` |
+| Region 1 boss too early / late | `regionStep[0]` (1.7), `compLv` (80) |
+| Region 2 too fast / slow | `compXpMax` (200), `hpLate` (1.22) together |
+| Empty check-ins in Region 2 | `hpLate` down with `compXpMax` down (more zones and levels a day) |
+| Recruits | `ROSTER` route `zone`/`kills`, `UNLOCK_TUNE` (`from`, `kills`, Renown) |
+| More away hours (Watchtower, Codex) | companion XP is mostly away XP: raise `compXpMax` |

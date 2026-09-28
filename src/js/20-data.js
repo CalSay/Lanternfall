@@ -43,7 +43,8 @@ const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
 const NODE_SKILL = { ore: 'mine', wood: 'wood' };
 const skillOf = kind => NODE_SKILL[kind] || 'wood';
 
-const TIER_POW = [0, 10, 28, 70, 160, 360];
+// BAL1 (owner: "damage ramps too fast"): gear tiers step x2.2 / x1.9 / x1.8 / x1.7 (was 10, 28, 70, 160, 360).
+const TIER_POW = [0, 10, 22, 42, 75, 130];
 const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };
 const SLOTS = [
   { id: 'weapon', n: 'Weapon', noun: 'Sword', prefix: 'ore', icon: 'sword' },
@@ -89,7 +90,7 @@ const COMPS = [
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
 const HERO_UPS = [
-  { id: 'blade', name: 'Blade', base: 10, r: 1.14, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, doubles every 25.` },
+  { id: 'blade', name: 'Blade', base: 10, r: 1.18, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
   { id: 'swift', name: 'Swiftness', base: 50, r: 1.6, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
   { id: 'fortune', name: 'Fortune', base: 100, r: 1.35, ic: ['coin', '#F2C14E'], desc: () => `x${goldMult().toFixed(2)} gold from every kill.` }
 ];

@@ -51,10 +51,11 @@
 // |  taunts, slows, stuns, peel,    |                                                     |                                 |
 // |  parry window, burn immunity    |                                                     |                                 |
 //
-// Scale: T.today (0.1) is the share of every bonus above that applies before party combat.
-// B1's power (ROSTER_TUNE.base) was tuned with no synergies and T1 has almost no headroom
-// (a flat +10% damage moves the 2h zone by 1 to 5), so today's effects are scaled down
-// while the texts keep the design numbers. Stage C should retune base power and raise it.
+// Scale: T.today is the share of every bonus above that applies before party combat. B2 shipped
+// 0.1 (texts showed the design numbers, so synergies read 10x stronger than they were). BAL1 set
+// it to 1 after the pacing retune made room, so the numbers in the texts are the ones you get.
+// If it is ever lowered again, the texts follow: shownText() scales every bonus percentage by
+// today (and an active synergy's by its strength); thresholds such as "below 50% HP" stay.
 // T.on = 0 turns everything off (sim comparisons).
 //
 // Synergy strength = 1 x 1.25 if a Common is a member (Common Cause) x 1.5 if any member has
@@ -205,7 +206,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
 {
   const T = {
     on: 1,                                              // 0 turns every effect off (sim comparisons)
-    today: 0.1,                                         // (sim) share of each bonus that applies today
+    today: 1,                                           // (BAL1, was 0.1) share of each bonus that applies today: full, so every text is the real number
     commonCause: 0.25, bond: 0.5, bondLv: 25,
     abShare: 0.2, aoeEff: 0.5, lowUp: 0.5, cdMax: 0.5, otherCritX: 2,
     honed: 0.15, seasoned: 0.25,                        // Epic/Legendary L10 ability power; +25% per 25 levels past 25
@@ -224,7 +225,9 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
     shieldBash: 1, hollowCut: 1,
     // synergies
     hedgeSpeed: 0.15, hedgeGold: 0.1, kindleStar: 0.3, dusk: 0.25, duskExec: 0.1,
-    bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, wayXp: 0.1, wayCd: 0.1
+    bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, wayXp: 0.1, wayCd: 0.1,
+    // hero class auras (BAL1): the damage parts of HERO_CLASSES[cls].aura
+    auras: 1, auraCaster: 0.3, auraCrit: 0.1, auraCritX: 0.5
   };
   SYN_TUNE = T;
   // Signature ability names, for the generated kit lines.
@@ -474,6 +477,17 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // T.today scales every bonus to what applies before party combat (see the header).
   const dp = m => 1 + (m - 1) * T.today;
   addCharModifier(id => live() ? dp(charMult(id)) : 1);
+  // Hero class auras (55-party HERO_CLASSES[cls].aura; BAL1: their texts promised damage that was
+  // never applied). Lanternmage: casters +30% attack. Ranger: strikers +10% crit chance and +50%
+  // crit damage (x3 -> x3.5). Warden and Lightkeeper: health and healing wait for party combat
+  // (the Lightkeeper's +10% for all companions lives in 55-party).
+  const auraMult = id => {
+    const c = hasCls(), role = R(id) && R(id).role;
+    if (c === 'lanternmage' && role === 'caster') return 1 + T.auraCaster;
+    if (c === 'ranger' && role === 'striker') { const s = ROLE_STATS.striker; return (1 + (s.crit + T.auraCrit) * (s.critX + T.auraCritX - 1)) / (1 + s.crit * (s.critX - 1)); }
+    return 1;
+  };
+  addCharModifier(id => live() && T.auras ? auraMult(id) : 1);
   addModifier('dmg', () => { if (!live()) return 1; const { a } = cur(); return dp(a.party) * dp(a.hero); });
   addModifier('party', () => { if (!live()) return 1; return 1 / dp(cur().a.hero); });
   addModifier('gold', () => live() ? dp(cur().a.gold) : 1);
@@ -489,13 +503,17 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // ---------------- queries ----------------
   const nameOf = k => k === 'hero' ? 'your hero' : first(k);
   const listText = l => l.length <= 1 ? (l[0] || '') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1];
-  const todayOf = d => d.parts.filter(p => p.stage !== 'C').map(p => p.text).join(' ') || null;
+  // A bonus percentage times k, rounded; "50% HP" / "10% of max HP" (thresholds, sizes) stay.
+  const scalePct = (txt, k) => Math.abs(k - 1) < 1e-9 ? txt : txt.replace(/(\d+(?:\.\d+)?)%(?! HP| of)/g, (m, n) => `${Math.round(n * k)}%`);
+  const partText = (p, k) => p.stage === 'C' ? p.text : scalePct(p.text, k * T.today);
+  const shownText = (d, k = 1) => d.parts.map(p => partText(p, k)).join(' ');
+  const todayOf = (d, k = 1) => d.parts.filter(p => p.stage !== 'C').map(p => partText(p, k)).join(' ') || null;
 
   activeSynergies = () => {
     if (!live()) return [];
     return cur().syn.map(({ d, r, s }) => ({
-      id: d.id, name: d.name, members: r.members.slice(), effectText: d.text, strength: s,
-      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d)
+      id: d.id, name: d.name, members: r.members.slice(), effectText: shownText(d, s), strength: s,
+      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d, s)
     }));
   };
 
@@ -521,7 +539,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   charTraits = id => {
     if (!R(id)) return [];
     const lv = lvOf(id);
-    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.text, lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
+    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.stage === 'C' ? e.text : scalePct(e.text, T.today), lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
   };
 
   synergyMods = () => {

@@ -45,7 +45,8 @@
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart }).
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd }).
+//   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
@@ -54,7 +55,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   drinkTonic, tonicActive, craftSalvageBonus;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0 });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
   const SALVAGE_ESS = 0.2; // chance per affix line of 1 extra essence (at most 1)
@@ -188,6 +189,9 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   };
 
   // ---- Transmute (within one family) ----
+  // S.craft.tmd[fam][t - 1]: units of that pile that came from breaking down (never more than the pile).
+  const brokeRow = fam => { const m = C().tmd || (C().tmd = {}); return m[fam] || (m[fam] = [0, 0, 0, 0, 0]); };
+  const brokeN = (fam, t) => Math.min(S.mats[fam][t - 1] || 0, ((C().tmd || {})[fam] || [])[t - 1] || 0);
   const resolveT = (fam, fromT, to, toT) => {
     if (typeof to === 'number') return to;
     if (to === 'up' || to === 'down') return to === 'up' ? fromT + 1 : fromT - 1;
@@ -204,11 +208,15 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (up && S.skills.ench.lv < CRAFT_STATION_REQ[tt - 1]) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
     const have = S.mats[fam][fromT - 1];
     if (have < take) return no(`${take - have} more ${matName(fam, fromT)}`, x);
+    // BAL1: units made by breaking down cannot be broken down again (1 tier-5 unit used to
+    // chain into 16 tier-1 units). Spending uses the other units first.
+    if (!up && have - brokeN(fam, fromT) < take) return no(`${matName(fam, fromT)} made by breaking down cannot be broken down again.`, x);
     return yes(x);
   };
   transmute = (fam, fromT, to, toT) => {
     const c = canTransmute(fam, fromT, to, toT); if (!c.ok) return false;
     S.mats[fam][fromT - 1] -= c.take; S.mats[fam][c.toT - 1] += c.give;
+    if (c.toT < fromT) { const b = brokeRow(fam); b[c.toT - 1] = brokeN(fam, c.toT) + c.give; }
     if (c.toT > fromT) gainStation('ench', CRAFT_XP.transmute(c.toT)); // no XP for breaking down (1 -> 2 would farm XP)
     toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] }, 'low');
     emit('transmuted', { fam, fromT, toT: c.toT, take: c.take, give: c.give });

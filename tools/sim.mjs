@@ -30,15 +30,21 @@
 //             next class weapon; any is the pre-M6 policy, which often ran for hours with no weapon.
 //   Without --class there is no weapon or head gear (no hero is classless in the game, and the
 //   legacy Sword/Helm are no longer made): only the Charm and tools are forged.
-// Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
-// Rare/Epic/Legendary recruit) and T17 (worst-case token pity).
+// Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (roster steps: level caps and drills),
+// T11, T16 (first recruit after the starter, first Rare/Epic/Legendary) and T17 (token pity).
+// Both modes build the Camp like a player (--camp 0 turns it off): any affordable build in
+// CAMP_ORDER, every other gather trip for a build's missing materials, and a break-down at the
+// Enchanter's Table for an old lower-tier material. --campdebug 1 traces the Watchtower.
 //
 // --days N: normal play over N days (check-ins with the real tick, closed-form away gains
 //   between them; see runDays below and docs/design/pacing.md). --checkins 8,13,19
-//   --session 15 --first 60 change the check-in policy. Prints one row per day.
-// --targets: runs every class for 3h continuous and --days (default 30) normal play in
-//   parallel and prints PASS/FAIL for T1, T2, T10 and the pacing targets P1-P4.
-//   --pace/--tune/--unlock/--seed/--bounties/--forge pass through.
+//   --session 15 --first 60 change the check-in policy. Prints one row per day. The game is
+//   installed at the first check-in (BAL1: before, a new game got 8h of away gains first).
+//   Reports first recruits by rarity, Camp progress and (--debug 1) the zone timeline.
+// --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
+//   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
+//   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
+//   --eval/--camp pass through.
 import { loadCore } from './lib/core.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
@@ -78,6 +84,8 @@ if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = k
 if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); E(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
 // --syn v sets SYN_TUNE.today (56b-synergy.js), to check the curve against stronger synergies.
 if (args.syn !== undefined) E(`SYN_TUNE.today = ${+args.syn}`);
+// --eval "code": run code in the game scope after the knobs (experiments, e.g. --eval "CRAFT_CATCHUP.mult = 3").
+if (args.eval) E(String(args.eval));
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);
@@ -138,6 +146,15 @@ function rosterStep(E) {
     gold = Math.max(gold, c.gold);
     if (c.ess) esses.push(c.ess);
   }
+  // Camp: hold gold for the next build whose materials are in hand (at most ~20 minutes of income).
+  if (args.camp !== '0' && E('typeof campCan === "function" && campOpen()')) {
+    for (const id of CAMP_ORDER) {
+      const c = E(`campCan(${JSON.stringify(id)})`);
+      if (!c.cost || c.max || c.busy || c.full || c.need) continue;
+      const matsOk = E(`${JSON.stringify(c.cost.mats)}.every(([f, t, n]) => S.mats[f][t - 1] >= n) && ${JSON.stringify(c.cost.troph)}.every(([i, n]) => (i === 'any' ? trophies() : S.craft.troph[i]) >= n)`);
+      if (matsOk && (c.cost.gold <= rate * 1200 || c.cost.gold <= E('S.gold'))) { gold = Math.max(gold, c.cost.gold); break; }
+    }
+  }
   return { gold, ess: esses };
 }
 // Run fn with the reserve taken out of S (gold, and essence from the named tier up), then put it back.
@@ -161,9 +178,12 @@ const isClassItem = (it, pos) => !!it && it.slot === classKind(pos);
 const SET_POS = CLASS_POS.concat("charm");
 const setKind = pos => pos === "charm" ? "charm" : classKind(pos);
 const isSetItem = (it, pos) => !!it && it.slot === setKind(pos);
+// Compare items as a player would, who upgrades the new one: power at +0 (BAL1: a fresh higher
+// tier can be weaker than a +10 one until it is upgraded; the old policy salvaged it for ever).
+const basePow = it => fn.itemPower(Object.assign({}, it, { plus: 0 }));
 function keepBest(pos, it) {
   const cur = fn.equipped(pos);
-  const better = !cur || (isClassItem(it, pos) && !isClassItem(cur, pos) && !cur.u && it.t >= cur.t) || fn.itemPower(it) > fn.itemPower(cur);
+  const better = !cur || (isClassItem(it, pos) && !isClassItem(cur, pos) && !cur.u && it.t >= cur.t) || basePow(it) > basePow(cur);
   if (better && fn.equipItem(it.id, pos)) { if (cls && cur && !cur.u) fn.salvageItem(cur.id); } else fn.salvageItem(it.id);
 }
 // Fill a shortfall of `n` units of fam at tier t by transmuting higher tiers down (1 -> 2).
@@ -210,6 +230,15 @@ function weaponNode() {
   return false;
 }
 function forgeGear() {
+  // Until the first Camp build, keep its materials out of the forge (a player saving for it).
+  if (campStats.first === null && args.camp !== '0' && E('typeof campCan === "function" && campOpen()')) {
+    const c = E('campCan("watch")'), held = [];
+    if (c.cost && !c.max && !c.busy) for (const [f, tt, n] of c.cost.mats) { const k = Math.min(n, E(`S.mats.${f}[${tt - 1}]`)); if (k > 0) { held.push([f, tt, k]); E(`S.mats.${f}[${tt - 1}] -= ${k}`); } }
+    try { return forgeGear2(); } finally { for (const [f, tt, k] of held) E(`S.mats.${f}[${tt - 1}] += ${k}`); }
+  }
+  return forgeGear2();
+}
+function forgeGear2() {
   if (swordFirst) {
     // Keep the next swords' essence out of the other slots' reach.
     const hold = weaponHold().map((n, i) => Math.min(n, E(`S.mats.ess[${i}]`)));
@@ -323,7 +352,46 @@ function nextBlock() {
   }
   return null;
 }
-function bestNode() {
+// Camp (57-camp.js): like a player, start any build that is affordable, in this order
+// (Watchtower first: it lengthens the away cap). --camp 0 turns it off.
+const CAMP_ORDER = ['watch', 'hearth', 'tavern', 'forge', 'bench', 'loom', 'ench', 'library', 'shrine', 'maproom'];
+const campStats = { first: null, builds: 0, full: null };
+function campStep(E) {
+  if (args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return;
+  if (args.campdebug) console.log('   camp', Math.round(t / 60) + 'm', E('S.gold|0'), E('campCan("watch").why'), E('JSON.stringify([S.mats.wood[0], S.mats.ore[0]])'));
+  // A build short only of a lower-tier material (Dim Essence long after zone 6): break one tier
+  // above down at the Enchanter's Table (once per unit since BAL1), as a player would.
+  for (const id of CAMP_ORDER) {
+    const c = E(`campCan(${JSON.stringify(id)})`);
+    if (c.ok || !c.miss || c.max || c.busy || c.full || c.need || !c.cost) continue;
+    if (E(`S.gold < ${c.cost.gold}`)) continue;
+    for (const [f, tt, n] of c.cost.mats) for (let guard = 0; guard < 400 && tt < 5 && E(`S.mats.${f}[${tt - 1}] < ${n}`); guard++) if (!E(`transmute(${JSON.stringify(f)}, ${tt + 1}, 'down')`)) break;
+  }
+  for (const id of CAMP_ORDER) if (E(`campCan(${JSON.stringify(id)}).ok`) && E(`campBuild(${JSON.stringify(id)})`)) {
+    campStats.builds++;
+    if (campStats.first === null) campStats.first = { t, id };
+  }
+}
+// The gatherable material (and tier) the next Camp build waits on, if any (CAMP_ORDER first).
+function campNode() {
+  if (args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return null;
+  for (const id of CAMP_ORDER) {
+    const c = E(`campCan(${JSON.stringify(id)})`);
+    if (c.ok || c.max || c.busy || c.full || c.need || !c.cost) continue;
+    for (const [f, tt, n] of c.cost.mats) if (E(`!!CRAFT_NODES[${JSON.stringify(f)}] && S.mats.${f}[${tt - 1}] < ${n}`) && E(`S.skills[skillOf(${JSON.stringify(f)})].lv >= NODE_REQ[${tt - 1}]`)) return [f, tt];
+  }
+  return null;
+}
+let campTurn = 0;
+function bestNode(away) {
+  // Every other gather trip goes to the Camp when a build waits on gathered materials.
+  const cn = !away && (campTurn++ % 2) === 0 ? campNode() : null;   // never a 4h away trip for a few camp logs
+  bestNode.camp = false;
+  if (cn && fn.setNode(cn[0], cn[1])) { campStats.trips = (campStats.trips || 0) + 1; bestNode.camp = true; return; }
+  // BAL1: the weapon comes first once the tier-1 set is done (a player chases the next weapon tier;
+  // classes whose set spans many families otherwise gathered low-tier set pieces for days).
+  const wt = (fn.equipped('weapon') || { t: 0 }).t;
+  if (swordFirst && (craftStats.g1 != null || wt < fn.zoneTier(E('S.maxZone')) - 1) && weaponNode()) return;
   const b = blockingNode();
   if (b && fn.setNode(b[0], b[1])) { craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; return; }
   if (swordFirst && weaponNode()) return;
@@ -352,10 +420,12 @@ const line = t => console.log(row([`${Math.floor(t / 3600)}h${String(Math.floor(
   fmt(E('S.gold')), fmt(fn.totalDps()), Math.round(gs()), `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, Math.round(100 * fn.compDps() / fn.totalDps())]));
 
 const capHits = [], firstRar = {}, recruits = [];
-fn.on('charLevel', ({ id, lv }) => { if (lv >= E(`levelCap(charRec(${JSON.stringify(id)}).rank)`)) capHits.push({ t, id, lv }); });
+// T10 roster steps: a promotion comes due (a level cap) or a drill lands (BAL1, every 5 levels between caps).
+fn.on('charLevel', ({ id, lv }) => { if (lv >= E(`levelCap(charRec(${JSON.stringify(id)}).rank)`) || E(`ROSTER_TUNE.stepX !== 1 && isDrillLv(${lv})`)) capHits.push({ t, id, lv }); });
 const firstId = {};
 if (args.debug) fn.on("token", p => console.log("   token", Math.round(t / 60) + "m", JSON.stringify(p), "zone", E("S.zone")));
-fn.on('recruit', ({ id, source }) => { const r = E(`ROSTER[${JSON.stringify(id)}].rarity`); recruits.push(`${id}@${(t / 60).toFixed(0)}m(${source})`); if (firstRar[r] === undefined) { firstRar[r] = t; firstId[r] = id; } });
+let firstJoin = null;   // first recruit after the class starter (T16)
+fn.on('recruit', ({ id, source }) => { const r = E(`ROSTER[${JSON.stringify(id)}].rarity`); recruits.push(`${id}@${(t / 60).toFixed(0)}m(${source})`); if (source !== 'starter' && firstJoin === null) firstJoin = { t, id }; if (firstRar[r] === undefined) { firstRar[r] = t; firstId[r] = id; } });
 let t11 = null, t11Snap = null;
 let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
 const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; if (zone + 1 === 20 && doT11 && !t11Snap) t11Snap = E('JSON.stringify(S)'); });
@@ -371,8 +441,9 @@ function playSecond(sec) {
     if (phase === 0) fn.setActivity('fight');
     if (phase < 10 && cls) { const fz = farmZone() || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
-    else if (phase > 10 && cls) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
-    forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
+    else if (phase > 10 && bestNode.camp) { const cn = campNode(); if (cn && (E('S.node.kind') !== cn[0] || E('S.node.t') !== cn[1])) fn.setNode(cn[0], cn[1]); }
+    else if (phase > 10 && cls && !bestNode.camp) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
+    withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
     craftCheck(sec);
     const b = nextBlock();
     if (b && b !== 'station') { craftStats.blocks[b] = (craftStats.blocks[b] || 0) + 1; craftStats.blockMin++; }
@@ -391,8 +462,8 @@ function playSecond(sec) {
 }
 if (days) { runDays(); process.exit(0); }
 for (let sec = 0; sec < total; sec++) {
-  if (sec >= nextLine && args.debug && cls) console.log('   craft', E('JSON.stringify(S.equip)'), [1, 2, 3, 4, 5].map(t => JSON.stringify(fn.canCraft(classKind('weapon'), t).why)).join(' '), E('JSON.stringify(S.mats)'));
-  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log('   ', E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
+  if (sec >= nextLine && args.debug && cls) console.log('   craft', E('JSON.stringify(S.equip)'), [1, 2, 3, 4, 5].map(t => JSON.stringify(fn.canCraft(classKind('weapon'), t).why + ' / ' + fn.canCraft('weapon', t).why)).join(' '), E('JSON.stringify(S.mats)'));
+  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("[S.blade, S.swift, S.fortune, S.L].join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
   playSecond(sec);
 }
 line(total);
@@ -416,7 +487,8 @@ if (t11Snap) {
   t11 = { id: newId, min: tt / 60, lv: h.eval(`charRec(${JSON.stringify(newId)}).lv`), target: target() };
 }
 const zAt = s => { let z = 1; for (const [k, v] of Object.entries(reached)) if (v <= s && +k > z) z = +k; return z; };
-console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} @3h=${zAt(10800)} end=${E('S.maxZone')} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
+console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} @3h=${zAt(10800)} end=${E('S.maxZone')} toZone15=${reached[15] ? (reached[15] / 60).toFixed(1) + 'm' : '-'} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
+console.log(`zones: ${Object.entries(reached).map(([z, s]) => `${z}@${(s / 60).toFixed(0)}m`).join(" ")}`);
 if (E('rosterLive()')) {
   const mins = x => (x / 60).toFixed(0);
   const before2h = capHits.filter(c => c.t <= 7200).map(c => c.t);
@@ -425,9 +497,9 @@ if (E('rosterLive()')) {
   const fr = r => firstRar[r] === undefined ? '-' : (firstRar[r] >= 3600 ? (firstRar[r] / 3600).toFixed(1) + 'h' : mins(firstRar[r]) + 'm') + ` (${firstId[r]})`;
   console.log(`roster: ${E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')")} | field ${E('S.party.field.join()')} | partyLv ${E('partyLevel().toFixed(1)')}`);
   console.log(`recruits: ${recruits.join(' ')}`);
-  console.log(`T10 cap hits before 2h: ${before2h.length} at [${before2h.map(mins).join(',')}]m, longest gap ${mins(gap)}m (want <= 20m, from the first hit)`);
+  console.log(`T10 roster steps (promotion due or drill) before 2h: ${before2h.length} at [${before2h.map(mins).join(',')}]m, longest gap ${mins(gap)}m (want <= 30m, from the first step)`);
   console.log(`T11 ${t11 ? `${t11.id} L1 -> L${t11.lv} (target ${t11.target.toFixed(1)}) in ${t11.min.toFixed(1)}m (want 5-10m)` : 'n/a (zone 20 not reached)'}`);
-  console.log(`T16 first Rare ${fr('rare')} (want 15-40m) / Epic ${fr('epic')} (want 1.5-3h) / Legendary ${fr('legendary')} (want 6-12h)`);
+  console.log(`T16 first recruit ${firstJoin ? mins(firstJoin.t) + 'm (' + firstJoin.id + ')' : '-'} (want 15-30m) / first Rare ${fr('rare')} (want 1.5-3h) / Epic ${fr('epic')} (want day 2-4) / Legendary ${fr('legendary')} (want week 2-3)`);
   console.log(`unlocks: Renown ${E('renown()')} (bounties ${E('S.bounties.claimed')}), tokens ${E('JSON.stringify(S.party.unlock.tokens)')}, bosses ${E('S.stats.bosses')}, wraiths ${E('masteryApi.typeKills("wraith")')}`);
   console.log(`leads: ${E("leads().map(l => l.id + ' ' + Math.round(l.pct * 100) + '%').join(', ')")}`);
   // T17: worst-case pity, every roll a miss until the guarantee.
@@ -472,8 +544,11 @@ function runDays() {
   fn.on('zoneClear', ({ zone }) => mark('zone', zone + 1));
   fn.on('promote', ({ id, rank }) => mark('promote', `${id}r${rank}`));
   fn.on('recruit', ({ id }) => mark('recruit', id));
+  // BAL1: drills (a +10% step every 5 levels between promotions) and finished Camp builds count too.
+  fn.on('drill', ({ id, lv }) => mark('drill', `${id}${lv}`));
+  fn.on('campBuilt', ({ id, lv }) => mark('camp', `${id}${lv}`));
   const slotTier = {};
-  const checkTiers = () => { for (const s of SLOTS) { const it = fn.equipped(s); if (it && it.t > (slotTier[s] || 0)) { slotTier[s] = it.t; mark('tier', `${s}${it.t}`); } } };
+  const checkTiers = () => { for (const s of HERO_POS) { const it = fn.equipped(s); if (it && it.t > (slotTier[s] || 0)) { slotTier[s] = it.t; mark('tier', `${s}${it.t}`); } } };
   const topTier = () => Math.max(0, ...SLOTS.map(s => { const it = fn.equipped(s); return it ? it.t : 0; }));
   const comps = () => E("rosterLive() ? rosterList().map(k => k + ' ' + charRec(k).lv + 'r' + charRec(k).rank).join(', ') : S.comp.join('/')");
   const bossAt = {};  // region boss cleared (zone 35 / 70 / 105): wall hours
@@ -488,6 +563,8 @@ function runDays() {
   out(['day', 'zone', 'lvl', 'gold/h', 'tier', 'mine/wood/smith', 'bored', 'companions']);
   const rows = [];
   let gold0 = E('S.totalGold'), sIdx = 0, awayN = 0;
+  // The game is installed at the first check-in (BAL1: the old loop gave a new game 8h of away gains first).
+  wall = sessions.length ? sessions[0][0] : 0;
   for (let d = 1; d <= days; d++) {
     const dayEnd = d * 24 * H;
     for (; sIdx < sessions.length && sessions[sIdx][0] < dayEnd; sIdx++) {
@@ -495,13 +572,13 @@ function runDays() {
       if (start > wall) {
         // Away until this session: the game's closed-form gains, then the clock jumps.
         const gap = start - wall;
-        wall = start; syncClock();
+        wall = start; ci = sIdx; syncClock();
         fn.awayGains(gap);
         awayN++;
       }
       ci = sIdx; syncClock();
       // Back in the game: spend what the away time brought, then play.
-      forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
+      withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
       for (let sec = 0; sec < len; sec++) {
         playSecond(sec); wall++; act++;
         if (sec % 60 === 0) checkTiers();
@@ -509,15 +586,18 @@ function runDays() {
       checkTiers();
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
       // Leaving: pick the away activity.
-      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(); fn.setActivity('gather'); }
+      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(true); fn.setActivity('gather'); }
       else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
     }
     // Day summary at 24:00 (the away gains for the rest of the night land in the next gap).
     const last = events.length ? events[events.length - 1] : { act: 0 };
     const goldH = (E('S.totalGold') - gold0) / 24; gold0 = E('S.totalGold');
-    const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps() };
+    const campLv = E('typeof campList === "function" ? campList().reduce((a, id) => a + campLevel(id), 0) : 0');
+    const campMax = E('typeof campList === "function" ? campList().reduce((a, id) => a + campMaxLevel(id), 0) : 0');
+    if (campStats.full === null && campMax && campLv >= campMax) campStats.full = d;
+    const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
     rows.push(r);
-    out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', r.comps]);
+    out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
   }
   // Boredom: the longest stretch without a meaningful upgrade, in active minutes and in
   // check-ins (a check-in is empty when nothing meaningful happened during it).
@@ -533,56 +613,94 @@ function runDays() {
   let gapAct2 = 0, p2 = 0; for (const e of ev2) { gapAct2 = Math.max(gapAct2, e.act - p2); p2 = e.act; }
   gapAct2 = Math.max(gapAct2, act2 - p2);
   const hit2 = new Set(ev2.map(e => e.ci));
-  let run2 = 0, gapCi2 = 0; for (let i = 0; i < sessions.length && sessions[i][0] <= cut; i++) { run2 = hit2.has(i) ? 0 : run2 + 1; gapCi2 = Math.max(gapCi2, run2); }
+  let run2 = 0, gapCi2 = 0, gapEnd2 = 0; for (let i = 0; i < sessions.length && sessions[i][0] <= cut; i++) { run2 = hit2.has(i) ? 0 : run2 + 1; if (run2 > gapCi2) { gapCi2 = run2; gapEnd2 = sessions[i][0] / H / 24; } }
+  if (args.debug) console.log(`   longest empty run to the Region 2 boss: ${gapCi2} check-ins, ending day ${gapEnd2.toFixed(2)}`);
   console.log(`regions: ${[35, 70, 105].map(z => `zone ${z} boss ${bossAt[z] === undefined ? '-' : 'day ' + (bossAt[z] / 24).toFixed(1)}`).join(', ')}`);
   console.log(`boredom to the Region 2 boss: longest gap ${(gapAct2 / 60).toFixed(0)} active min, longest run of empty check-ins ${gapCi2}`);
   console.log(`boredom (whole run): longest gap ${(gapAct / 60).toFixed(0)} active min (ending day ${(gapAt / 24 / H).toFixed(1)}), longest run of empty check-ins ${gapCi}, empty check-ins ${empty}/${sessions.length}`);
   console.log(`active play ${(act / H).toFixed(1)}h over ${days} days; away gaps ${awayN}${g.errors.length ? '; errors: ' + g.errors.length : ''}`);
-  if (args.json) console.log('JSON ' + JSON.stringify({ rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl })), bossAt, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
+  if (args.debug) console.log('   zones', Object.entries(reached).map(([z, s]) => `${z}@${Math.floor((s + 8 * H) / H)}:${String(Math.floor((s + 8 * H) / 60) % 60).padStart(2, '0')}`).join(' '), 'boss fails', bossTries);
+  if (args.debug && cls) console.log('   end craft', CLASS_POS.concat('charm').map(p => { const k = setKind(p); return p + ':' + [1, 2, 3, 4, 5].map(t => fn.canCraft(k, t).why || 'ok').join('/'); }).join(' | '), E('JSON.stringify(S.equip)'), E('JSON.stringify(S.mats)'), 'bag', E('bagCount()'), 'skills', E('JSON.stringify(Object.fromEntries(Object.entries(S.skills).map(([k, v]) => [k, v.lv])))'));
+  // Recruits by rarity (wall days since install; t is wall - 8h) and the Camp.
+  const wday = x => (x + 8 * H) / 24 / H;
+  const rec = Object.fromEntries(Object.entries(firstRar).map(([r, x]) => [r, { day: wday(x), id: firstId[r] }]));
+  if (firstJoin) rec.join = { day: wday(firstJoin.t), id: firstJoin.id };
+  console.log(`recruits: ${['join', 'rare', 'epic', 'legendary'].map(k => `${k} ${rec[k] ? (rec[k].day * 24 < 3 ? (rec[k].day * 1440 - 480).toFixed(0) + 'm' : 'day ' + rec[k].day.toFixed(1)) + ' (' + rec[k].id + ')' : '-'}`).join(', ')} | all: ${recruits.join(' ')}`);
+  const campFirst = campStats.first ? { min: (campStats.first.t) / 60, id: campStats.first.id } : null;
+  console.log(`camp: first build ${campFirst ? campFirst.min.toFixed(0) + ' min after install (' + campFirst.id + ')' : '-'}, full camp ${campStats.full ? 'day ' + campStats.full : '-'}, levels by day ${rows.filter(r => [1, 3, 7, 14, 21, 30, 45].includes(r.day)).map(r => `d${r.day} ${r.camp}/${r.campMax}`).join(' ')}`);
+  if (args.json) console.log('JSON ' + JSON.stringify({ rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl })), bossAt, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
-// Targets (party-and-classes.md section 9 and docs/design/pacing.md):
-//   T1  idle mixed play, every class: max zone at 30m / 1h / 2h in 12-16 / 18-22 / 26-32
-//   T2  3h continuous mixed play, every class: max zone <= 42
-//   T10 a promotion comes due at least every 20 min before 2h (reported; see pacing.md)
-//   P1  normal play: the Region 1 boss (zone 35) falls on day 2-4 (24h-96h after install)
-//   P2  normal play: the Region 2 boss (zone 70) falls in week 1-3 (7-21 days)
-//   P3  normal play: the Region 3 boss (zone 105) in 30-60 days (INFO until Region 3 power exists)
-//   P4  boredom before the Region 2 boss: at most PACE_TARGETS.emptyRun check-ins in a row with
-//       no new zone, gear tier, recruit or promotion
+// Targets (docs/design/pacing.md, BAL1 "slower pace" from the owner):
+//   T1  idle mixed play with class gear, every class: max zone at 30m / 1h / 2h in 6-9 / 10-13 / 15-19
+//   T2  3h continuous mixed play, every class: max zone <= 24
+//   T3  class parity: each class reaches zone 15 within 0.85-1.15 x the median time
+//   T10 a roster step (a promotion comes due, or a drill) at least every 30 min before 2h
+//   T16 recruits: first after the starter 15-30 min, first Rare 1.5-3h (continuous play);
+//       first Epic day 2-4, first Legendary day 14-21 (normal play)
+//   D1  normal play: max zone at the end of day 1 in 20-26
+//   P1  normal play: the Region 1 boss (zone 35) falls on day 4-8
+//   P2  normal play: the Region 2 boss (zone 70) falls in week 3-6 (21-42 days)
+//   P3  normal play: the Region 3 boss (zone 105) (INFO until Region 3 power exists)
+//   P4  boredom before the Region 2 boss: at most 3 check-ins in a row with no new zone, gear
+//       tier, recruit or promotion
+//   C1  the Camp: first build within 10-20 min, full camp after 14+ days (INFO)
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
-  const nDays = +(args.days || 30);
-  const [cont, dys] = await Promise.all([
+  const nDays = +(args.days || 45);
+  // T3 averages three seeds (one seed swings a class by +-10%); the rest read the first seed.
+  const seed0 = +(args.seed || 1), passNoSeed = pass.filter((x, i) => x !== '--seed' && pass[i - 1] !== '--seed');
+  const [cont, dys, more] = await Promise.all([
     Promise.all(classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...pass]))),
-    Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass])))
+    Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass]))),
+    Promise.all([1, 2].flatMap(k => classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...passNoSeed, '--seed', String(seed0 + k)]))))
   ]);
   const num = (s, re) => { const m = s.match(re); return m ? +m[1] : NaN; };
   const ok = b => b ? 'PASS' : 'FAIL';
+  const inR = (v, [a, b]) => v >= a && v <= b;
   const res = [];
   const t1 = cont.map(o => [num(o, /@30m=(\d+)/), num(o, /@1h=(\d+)/), num(o, /@2h=(\d+)/)]);
-  const inT1 = z => z[0] >= 12 && z[0] <= 16 && z[1] >= 18 && z[1] <= 22 && z[2] >= 26 && z[2] <= 32;
-  res.push([ok(t1.every(inT1)), 'T1 30m/1h/2h in 12-16/18-22/26-32', classes.map((c, i) => `${c} ${t1[i].join('/')}`).join(', ')]);
+  const B1 = [[6, 9], [10, 13], [15, 19]];
+  res.push([ok(t1.every(z => z.every((v, i) => inR(v, B1[i])))), 'T1 30m/1h/2h in 6-9/10-13/15-19', classes.map((c, i) => `${c} ${t1[i].join('/')}`).join(', ')]);
   const t2 = cont.map(o => num(o, /@3h=(\d+)/));
-  res.push([ok(t2.every(z => z <= 42)), 'T2 zone at 3h <= 42', classes.map((c, i) => `${c} ${t2[i]}`).join(', ')]);
+  res.push([ok(t2.every(z => z <= 24)), 'T2 zone at 3h <= 24', classes.map((c, i) => `${c} ${t2[i]}`).join(', ')]);
+  const z15 = o => num(o, /toZone15=([\d.]+)m/);
+  const t15 = classes.map((c, i) => (z15(cont[i]) + z15(more[i]) + z15(more[classes.length + i])) / 3);
+  const med = t15.slice().sort((a, b) => a - b), m15 = (med[1] + med[2]) / 2;
+  res.push([ok(t15.every(v => inR(v / m15, [0.85, 1.15]))), 'T3 class parity: time to zone 15 (mean of 3 seeds) within 0.85-1.15 of the median', classes.map((c, i) => `${c} ${t15[i].toFixed(0)}m (${(t15[i] / m15).toFixed(2)})`).join(', ')]);
   const t10 = cont.map(o => num(o, /longest gap (\d+)m/));
-  res.push([ok(t10.every(m => m <= 20)), 'T10 promotion due every <= 20m before 2h', classes.map((c, i) => `${c} ${t10[i]}m`).join(', ')]);
+  res.push([ok(t10.every(m => m <= 30)), 'T10 roster step (promotion due or drill) every <= 30m before 2h', classes.map((c, i) => `${c} ${t10[i]}m`).join(', ')]);
   const js = dys.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
+  // T16: first recruit and first Rare from the continuous runs (minutes), Epic and Legendary from normal play (days).
+  const cmin = (o, re) => { const m = o.match(re); if (!m) return Infinity; return m[1].endsWith('h') ? parseFloat(m[1]) * 60 : parseFloat(m[1]); };
+  const tJoin = cont.map(o => cmin(o, /T16 first recruit ([\d.]+m)/)), tRare = cont.map(o => cmin(o, /first Rare ([\d.]+[mh])/));
+  const dEpic = js.map(j => j.rec.epic ? j.rec.epic.day : Infinity), dLeg = js.map(j => j.rec.legendary ? j.rec.legendary.day : Infinity);
+  const f1 = x => Number.isFinite(x) ? x.toFixed(1) : '-', f0 = x => Number.isFinite(x) ? x.toFixed(0) : '-';
+  res.push([ok(tJoin.every(v => inR(v, [15, 30])) && tRare.every(v => inR(v, [90, 180])) && dEpic.every(v => inR(v, [2, 4])) && dLeg.every(v => inR(v, [14, 21]))),
+    'T16 recruits: first 15-30m, Rare 1.5-3h, Epic day 2-4, Legendary day 14-21',
+    classes.map((c, i) => `${c} ${f0(tJoin[i])}m/${f1(tRare[i] / 60)}h/d${f1(dEpic[i])}/d${f1(dLeg[i])}`).join(', ')]);
+  const d1 = js.map(j => j.rows[0].zone);
+  res.push([ok(d1.every(z => inR(z, [20, 26]))), 'D1 end of day 1 (normal play) in zones 20-26', classes.map((c, i) => `${c} ${d1[i]}`).join(', ')]);
   const day = (j, z) => j.bossAt[z] === undefined ? Infinity : j.bossAt[z] / 24;
   const dtxt = (j, z) => Number.isFinite(day(j, z)) ? day(j, z).toFixed(1) : '-';
-  const P = { r1: [1, 4], r2: [7, 21], r3: [30, 60], emptyRun: 3 };
-  const inR = (v, [a, b]) => v >= a && v <= b;
-  res.push([ok(js.every(j => inR(day(j, 35), P.r1))), 'P1 Region 1 boss on day 2-4 (1-4 days in)', classes.map((c, i) => `${c} ${dtxt(js[i], 35)}`).join(', ')]);
-  res.push([ok(js.every(j => inR(day(j, 70), P.r2))), 'P2 Region 2 boss in 7-21 days', classes.map((c, i) => `${c} ${dtxt(js[i], 70)}`).join(', ')]);
-  // P3 is INFO until Region 3 power exists: the level-200 roster cap stops the party near zone 76-80.
-  res.push([js.every(j => inR(day(j, 105), P.r3)) ? 'PASS' : 'INFO', 'P3 Region 3 boss in 30-60 days (needs Region 2/3 power: ranks past 7, tier 6)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${nDays < 60 && !Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
+  const P = { r1: [4, 8], r2: [21, 42], emptyRun: 3 };
+  res.push([ok(js.every(j => inR(day(j, 35), P.r1))), 'P1 Region 1 boss on day 4-8', classes.map((c, i) => `${c} ${dtxt(js[i], 35)}`).join(', ')]);
+  res.push([ok(js.every(j => inR(day(j, 70), P.r2))), 'P2 Region 2 boss in 21-42 days', classes.map((c, i) => `${c} ${dtxt(js[i], 70)}${!Number.isFinite(day(js[i], 70)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
+  res.push(['INFO', 'P3 Region 3 boss (needs Region 3 power: ranks past 7, tier 6)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${!Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
   res.push([ok(js.every(j => j.toR2.gapCi <= P.emptyRun)), `P4 before the Region 2 boss: <= ${P.emptyRun} empty check-ins in a row`, classes.map((c, i) => `${c} ${js[i].toR2.gapCi} (longest ${Math.round(js[i].toR2.gapAct / 60)} active min)`).join(', ')]);
+  res.push(['INFO', 'C1 Camp: first build 10-20 min after install, full camp over several weeks', classes.map((c, i) => { const j = js[i]; const at = d => j.campRows[d - 1] !== undefined ? j.campRows[d - 1] : '-'; return `${c} first ${j.campFirst ? j.campFirst.min.toFixed(0) + 'm ' + j.campFirst.id : '-'}, d7 ${at(7)}/${j.campMax}, d14 ${at(14)}, d30 ${at(30)}, full ${j.campFull ? 'day ' + j.campFull : '-'}`; }).join('; ')]);
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
   console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} targets pass`);
-  console.log(`curve (${classes[0]}): ` + js[0].rows.map(r => `d${r.day} ${r.zone}`).join(' '));
+  for (const [i, c] of classes.entries()) console.log(`curve (${c}): ` + js[i].rows.filter(r => r.day <= 10 || r.day % 5 === 0).map(r => `d${r.day} ${r.zone}`).join(' '));
+  console.log('recruits (first after the starter / Rare / Epic / Legendary):');
+  for (const [i, c] of classes.entries()) {
+    const o = cont[i], j = js[i], id = re => (o.match(re) || [])[1] || '-';
+    const rj = j.rec;
+    console.log(`  ${c.padEnd(11)} ${f0(tJoin[i])}m ${id(/T16 first recruit [\d.]+m \((\w+)\)/)} | ${f1(tRare[i] / 60)}h ${id(/first Rare [\d.]+[mh] \((\w+)\)/)} | day ${rj.epic ? rj.epic.day.toFixed(1) + ' ' + rj.epic.id : '-'} | day ${rj.legendary ? rj.legendary.day.toFixed(1) + ' ' + rj.legendary.id : '-'}`);
+  }
   if (cont.concat(dys).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
 }
