@@ -51,7 +51,7 @@ const DEED_KEY_TXT = {
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
   gatherSpeed: 'gathering speed', 'gatherSpeed:mine': 'Mining speed', 'gatherSpeed:wood': 'Woodcutting speed',
   'gatherSpeed:forage': 'Foraging speed', 'gatherSpeed:fish': 'Fishing speed',
-  'yield:ore': 'Ore', 'yield:crystal': 'Crystal', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
+  'yield:ore': 'Ore', 'yield:crystal': 'Gems', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
   'yield:pearl': 'Pearls', 'yield:fish': 'Fish', deepOil: 'starting Oil in the Deepwell'
 };
 
@@ -101,7 +101,7 @@ const DEED_TRACKS = [
   { id: 'wood', g: 'gather', n: 'Woodcutter', what: 'Woodcutting level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:wood', src: 'save', kind: 'level', u: ['Woodcutting level', 'Woodcutting levels'] },
   { id: 'forage', g: 'gather', n: 'Forager', what: 'Foraging level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:forage', src: 'save', kind: 'level', u: ['Foraging level', 'Foraging levels'] },
   { id: 'g_ore', g: 'gather', n: 'Ore', what: 'Ore gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:ore', src: 'new', u: ['Ore', 'Ore'] },
-  { id: 'g_crystal', g: 'gather', n: 'Crystal', what: 'Crystal gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Crystal', 'Crystal'] },
+  { id: 'g_crystal', g: 'gather', n: 'Gems', what: 'Gems gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Gem', 'Gems'] },
   { id: 'g_wood', g: 'gather', n: 'Timber', what: 'Wood gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:wood', src: 'new', u: ['Wood', 'Wood'] },
   { id: 'g_fibre', g: 'gather', n: 'Fibre', what: 'Fibre gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:fibre', src: 'new', u: ['Fibre', 'Fibre'] },
   { id: 'g_herb', g: 'gather', n: 'Herbs', what: 'Herbs gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:herb', src: 'new', u: ['Herb', 'Herbs'] },

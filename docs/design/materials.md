@@ -34,6 +34,12 @@ the Gloamvale.
 | 14 | Gloamvale | Aetherium | Wraithwood | Voidweave | Manticore Hide | Wolfsbane | Bloodstone |
 | 15 | Gloamvale | Voidsteel | Heartwood | Dreamweave | Nightdrake Hide | Gloamlily | Black Diamond |
 
+**Coordinator addition (owner concern, gems vs buff items getting confused):** the `crystal` family's
+player-facing label is **Gems**, not "Crystal" (Quartz through Black Diamond; still gathered from Geodes
+while mining, gear-2.md row 2.16). The id stays `crystal`; only the family label (`MAT.crystal.n`)
+changes. This keeps the raw-material word "Gem" and the buff-item word "Sigil" (section 7) from ever
+being confused for one another.
+
 Notes:
 
 - **Grades 1-5 are relabelled** (owner-approved): grade 3 ore is now **Silver** (was Mithril); **Mithril**
@@ -146,28 +152,56 @@ These replace the LORE-R45 placeholders "Glimmercoal", "Frostsalt" and "Frostblo
 1.4) and give Regions 3 and 5 names they never had. None of this is built in code yet (gear-2.md 1.3),
 so nothing in `src/js` needs to change for this table.
 
-## 7. Buff-item families, one per region — Owner to approve
+## 7. Buff items: Sigils, one family per region — OWNER DECISION (coordinator, 2026-09-28, applied)
 
-The Coast family can no longer be called Lantern Pearl / Pearl, since grade-4 gem is now Pearl (section
-1). The Emberwaste's "Emberglass" / "Ember-glass" spelling clash (gear-2.md 1.2, core-2.md 5.2) is also
-resolved here, since grade-5 gem is no longer Emberglass (it's Aquamarine), which frees the word up for
-the buff item alone.
+The owner's concern: a buff item must never read like a gem, a stone, glass or any crafting material —
+a player should never wonder whether a "Pearl" is the grade-4 gem or the Coast's buff item. The whole
+category is renamed, player-facing, to **Sigils**. This replaces "Lantern Pearl", "Ember-glass" /
+"Emberglass", "Starshard" and "Wellglass" everywhere in the docs. Family ids stay generic (`pearl`,
+`glass`, `star`, `well`, core-2.md 5.4 / gear-2.md 5.1) — this is a display-name decision, not an id
+change.
 
-| Region | Family id | Old / placeholder name | New name |
+| Region | Family id | Family's player-facing name | Old name it replaces |
 |---|---|---|---|
-| Coast | `pearl` | Lantern Pearl | **Tidelight** |
-| Emberwaste | `glass` | Ember-glass / Emberglass (clash) | **Emberglass** (one spelling, now unique) |
-| Pale Reach | `star` | Starshard (working name) | **Starshard** (kept — no clash once grade-5 gem moves to Aquamarine) |
-| Gloamvale | `well` | Wellglass (the old "Long Stair" name) | **Gloamlight** |
+| Coast | `pearl` | **Tide Sigil** | Lantern Pearl |
+| Emberwaste | `glass` | **Ember Sigil** | Ember-glass / Emberglass (spelling clash, now moot) |
+| Pale Reach | `star` | **Frost Sigil** | Starshard |
+| Gloamvale | `well` | **Gloam Sigil** | Wellglass |
 
-Buff items are not built in code yet (gear-2.md 0, 1.1): nothing in `src/js` names them today, so this
-table is a naming decision for RG1's build, not a code change here. Docs updated by this task (gear-2.md,
-regions-4-5.md, core-2.md, plan-4.md, lore.md) now use these names in place of the placeholders.
+**Individual buff items are named `<Boss or theme> Sigil`** (core-2.md 5.4's per-boss buff item, gear-2.md
+5.5's "bosses always drop their signature buff item"), not `<family> Sigil` — e.g. the Coast Shroud
+Silas the Fogbound drops a **Fogbound Sigil**; a Tide Sigil is the family/category name used on the
+Storehouse's Buff Items page and in generic copy ("Set a Tide Sigil"), not an item's own name.
 
-## 8. Owner to approve — summary
+**The old Coast "Pearl" currency becomes Tide Sigils.** Every place gear-2.md, region-2.md or lore.md
+used "Lantern Pearl" as a **currency or found item** (Rank 8's 25-Pearl cost, the Storehouse Buff Items
+page, "Matched: Lantern Pearls", the away-card "Found a Rare Lantern Pearl") now reads Tide Sigil(s).
+"Pearl" on its own, from here on, means only the grade-4 gem (section 1).
 
-Everything in sections 3, 6 and 7 (essence grades 6-15, the four secondary-resource sets, and the four
-buff-item family names) is new naming proposed by this task, in the owner's real-or-standard-fantasy
-style, and needs sign-off the way the grade 1-15 ladder itself did. Section 1's ladder and the grade 1-5
-relabel are already owner-approved (wave log, 2026-09-28) and are live in this task's code and doc
-changes.
+Buff items/Sigils are not built in code yet (gear-2.md 0, 1.1): nothing in `src/js` names them today, so
+this table is a naming decision for RG1's build, not a `src/js` change in this task. The docs this task
+updates (gear-2.md, regions-4-5.md, core-2.md, plan-4.md, lore.md) now use Sigil names in place of the
+old placeholders.
+
+## 8. Materials vs Sigils — the rule
+
+Two different kinds of thing sit in the pouch, and they must never look or read alike:
+
+| | **Materials** (ore, wood, cloth, hide, herb, gem, essence, secondaries, refined goods) | **Sigils** (buff items) |
+|---|---|---|
+| Naming | Plain material nouns (Copper, Silk, Quartz, Cobalt Ingot) | `<Boss or theme> Sigil` for the item; `<Region> Sigil` (Tide/Ember/Frost/Gloam) for the family |
+| Where kept | Stack in the **Storehouse**, by family and grade (gear-2.md 1.7) | Their own **Buff Items** page in the Storehouse, counted like Trophies, not capped (gear-2.md 1.7, 5.6) |
+| Look | Flat icon per family/grade, no glow | A glowing item icon with its own rarity trim, distinct from any gem or crystal icon shape |
+| What they do | Feed recipes, refining and Reforge | Go into gear **sockets** only (core-2.md 5.4); never a recipe ingredient |
+
+A quick check for any future name: if it could be mistaken for something you gather and stack, it is a
+material name and belongs in section 1; if it is only ever found, socketed and never spent on a recipe,
+it is a Sigil and takes the `<Boss/theme> Sigil` or `<Region> Sigil` shape above.
+
+## 9. Owner to approve — summary
+
+Essence grades 6-15 (section 3) and the four secondary-resource sets (section 6) are new naming proposed
+by this task, in the owner's real-or-standard-fantasy style, and need sign-off the way the grade 1-15
+ladder itself did. Section 1's ladder, the grade 1-5 relabel, the Gems label and the Sigils rename
+(sections 7-8) are already owner/coordinator-approved (wave log, 2026-09-28) and are live in this task's
+code and doc changes.

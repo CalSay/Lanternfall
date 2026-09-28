@@ -1355,7 +1355,7 @@ try {
   assert(rate > expect * 0.7 && rate < expect * 1.9, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
   // home ground
   E('S.zone = 2; S.mastery.zones[2] = 0');
-  assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Crystal +25% (home ground), Ore +0%');
+  assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Gems +25% (home ground), Ore +0%');
   E('S.mastery.zones[2] = MASTERY_STARS[2]');
   assert(E('homeBonus("crystal")') === 0.5, 'home ground +50% with 3 mastery stars');
   // champions and trophies

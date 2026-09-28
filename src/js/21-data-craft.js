@@ -64,7 +64,7 @@
 // MAT1 (2026-09-28): display-name ladder from docs/design/materials.md; ids/indices unchanged.
 // Hide names are already complete nouns (Rawhide, Wolfhide...), so unit is '' (matName, 20-data.js).
 Object.assign(MAT, {
-  crystal: { n: 'Crystal', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
+  crystal: { n: 'Gems', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
   fibre: { n: 'Fibre', short: ['Hemp', 'Linen', 'Wool', 'Cotton', 'Silk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
   herb: { n: 'Herbs', short: ['Sage', 'Yarrow', 'Foxglove', 'Sea Lavender', 'Mandrake'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
   hide: { n: 'Hide', short: ['Rawhide', 'Leather', 'Wolfhide', 'Sharkskin', 'Bearhide'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: '' }

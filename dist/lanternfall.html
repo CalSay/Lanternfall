@@ -6374,7 +6374,7 @@ const RELICS = [
 // MAT1 (2026-09-28): display-name ladder from docs/design/materials.md; ids/indices unchanged.
 // Hide names are already complete nouns (Rawhide, Wolfhide...), so unit is '' (matName, 20-data.js).
 Object.assign(MAT, {
-  crystal: { n: 'Crystal', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
+  crystal: { n: 'Gems', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
   fibre: { n: 'Fibre', short: ['Hemp', 'Linen', 'Wool', 'Cotton', 'Silk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
   herb: { n: 'Herbs', short: ['Sage', 'Yarrow', 'Foxglove', 'Sea Lavender', 'Mandrake'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
   hide: { n: 'Hide', short: ['Rawhide', 'Leather', 'Wolfhide', 'Sharkskin', 'Bearhide'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: '' }
@@ -8499,7 +8499,7 @@ const DEED_KEY_TXT = {
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
   gatherSpeed: 'gathering speed', 'gatherSpeed:mine': 'Mining speed', 'gatherSpeed:wood': 'Woodcutting speed',
   'gatherSpeed:forage': 'Foraging speed', 'gatherSpeed:fish': 'Fishing speed',
-  'yield:ore': 'Ore', 'yield:crystal': 'Crystal', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
+  'yield:ore': 'Ore', 'yield:crystal': 'Gems', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
   'yield:pearl': 'Pearls', 'yield:fish': 'Fish', deepOil: 'starting Oil in the Deepwell'
 };
 
@@ -8549,7 +8549,7 @@ const DEED_TRACKS = [
   { id: 'wood', g: 'gather', n: 'Woodcutter', what: 'Woodcutting level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:wood', src: 'save', kind: 'level', u: ['Woodcutting level', 'Woodcutting levels'] },
   { id: 'forage', g: 'gather', n: 'Forager', what: 'Foraging level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:forage', src: 'save', kind: 'level', u: ['Foraging level', 'Foraging levels'] },
   { id: 'g_ore', g: 'gather', n: 'Ore', what: 'Ore gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:ore', src: 'new', u: ['Ore', 'Ore'] },
-  { id: 'g_crystal', g: 'gather', n: 'Crystal', what: 'Crystal gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Crystal', 'Crystal'] },
+  { id: 'g_crystal', g: 'gather', n: 'Gems', what: 'Gems gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Gem', 'Gems'] },
   { id: 'g_wood', g: 'gather', n: 'Timber', what: 'Wood gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:wood', src: 'new', u: ['Wood', 'Wood'] },
   { id: 'g_fibre', g: 'gather', n: 'Fibre', what: 'Fibre gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:fibre', src: 'new', u: ['Fibre', 'Fibre'] },
   { id: 'g_herb', g: 'gather', n: 'Herbs', what: 'Herbs gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:herb', src: 'new', u: ['Herb', 'Herbs'] },
