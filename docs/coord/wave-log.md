@@ -703,3 +703,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - VERSION 1.0 (owner): four regions fully fleshed out with complex mechanics, 32 heroes (18 today), and
   "2*" different gatherers per resource type (clarifying the number). Queued: a Road to 1.0 roadmap
   (plan-4) that maps every remaining task to that target.
+- OWNER: gatherers for 1.0 = 2 per resource type, each with different benefits (a named cast, not random
+  applicants). N1 built random applicants with rarities, pity and 5 named Legendaries: REDESIGN queued as
+  N1b (a named roster: 2 per resource type incl. K13's secondary resources and the Coast's, each a character
+  with a distinct perk pair, a lore hook and a way to recruit them; keep levels/shifts/beds/parcels; migrate
+  Tam and any hired Hands). N3 (gatherer screens) follows N1b.
