@@ -232,7 +232,7 @@ try {
     E('chooseClass("warden")');
     const ms = [], lv = [];
     g.fn.on('milestone', p => ms.push(p.lv)); g.fn.on('charLevel', p => lv.push(p.id));
-    for (let i = 0; i < 3000; i++) g.fn.tick(0.1);
+    for (let i = 0; i < 9000; i++) g.fn.tick(0.1);   // BAL1: levels follow time spent fighting, so 15 minutes (was 5)
     assert(E('charRec("wren").lv') > 1 && ms.includes(5), `fielded Wren levels from kills (L${E('charRec("wren").lv')}, milestones ${ms.join(',')})`);
     assert(E('storyState("wren").unread') >= 1 && E('markStoriesRead("wren") && storyState("wren").unread === 0'), 'camp stories unlock and can be marked read');
     E('S.maxZone = Math.max(S.maxZone, ROSTER.tobin.route.zone, ROSTER.hesketh.route.zone)'); g.fn.tick(1.1);
@@ -831,6 +831,7 @@ try {
 console.log('crafting');
 try {
   const g = loadCore({ seed: 5 }), E = s => g.eval(s);
+  E("almanac.force('none')");   // the calendar Omen (e.g. Cheap Reforge) would change the prices below
   E('globalThis.__crafted = []; on("crafted", p => { globalThis.__crafted.push(p.kind + ":" + p.t); })');
   E('chooseClass("lanternmage")');
   const mats = () => E('JSON.stringify(S.mats)');
