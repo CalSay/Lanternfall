@@ -811,3 +811,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (no relabelling), new names only for new grades, rename the draft grade that clashes with Emberite; buff
   items live in the Storehouse (a Buff Items page); enchant 100% at a level RG1 sets. CB2: its questions are
   its own (auto-cast efficiency, swarm HP, interrupt limits, the boss timer vs the kill target).
+- CL1 launched (opus). Running: MAP0, HINT1, CL1. Next when a slot frees: CB2 (opus), then LORE-R45 (sonnet), then RG1 (opus).
