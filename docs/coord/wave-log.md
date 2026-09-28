@@ -943,3 +943,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   costs incl. one Sigil, so none in the Hollow); roster 18 existing + 14 new = 32 (8 per role); build
   HER1-HER5, needs S1 and S3 first. Owner decisions D1-D6 put to the owner (D2 start levels checked against
   the no-catch-up rule). Solveig's quest needs a Beacon (WC1).
+- MERGED WC1 (docs/design/world-camp-2.md): 17 buildings with 3x4 trees; Bunkhouse becomes Tents (2 -> 10);
+  scrolling camp (720 -> 992 art px, 2x/1x zoom); gatherers idle in camp with talk panel; gold costs relative
+  (G1-G15) for ECON1; milestone table final: Tannery / Infirmary / Lamp House / Beacon, powers Proving /
+  Lanternlit+Pinnacles / Awakenings / third star-map keystone; outposts, 3 region dungeons, 12 map events.
+  Owner decisions O1-O8 put to the owner. Conflict to settle: Awakenings (HQ1: from Region 2 via Sigils) vs
+  WC1 O3 (Lamp House after the Emberwaste boss). File clash 57g (K12 kitchen vs TR1 trade): TR1 -> 57j.
+- check.mjs failed intermittently twice today (after MAP1 and HQ1 merges, docs-only), passing on every re-run;
+  both times 3 agents were running. Suspect a timing/perf check under load. Next failure: save the output.
