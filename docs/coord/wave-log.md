@@ -610,3 +610,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   code ids, save fields and events keep their names. QUEUED NM1 copy pass across all UI, toasts, story, lore
   and docs (watch 360px widths; "Hero level" -> "Lanternbearer level" or "Level"; companion XP -> hero XP).
   Run it before UX2's build phases so new screens use the new words.
+- OWNER: no rapid catch-up XP for heroes either ("an achievement for maxing all heroes shouldn't be
+  spoonfed"). CU1 launched: drop catchGap/catchStep/catchMax/catchPromo multipliers, planner scores recruits at
+  real level, redefine T11/T18 to "levelling a new hero is an investment", keep P1/P2/P4 passing without
+  needing recruits; the Full Company Feat stays months away.
