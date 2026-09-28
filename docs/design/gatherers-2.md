@@ -65,7 +65,7 @@ tree reuses several of them as node effects (Keen Eye, Lucky, Night Owl, Storyte
 ## 1. The nine jobs
 
 Confirmed against gear-2.md 3.5 and plan-4 5: Miner, Coal-digger, Woodcutter, **Hunter**, Herbalist,
-Weaver-gatherer, Salter, Fisher and Gem-seeker. **Refiner is a role, not a job**: any gatherer can take a
+Weaver-gatherer, Salter, Fisher and Seeker. **Refiner is a role, not a job**: any gatherer can take a
 shift at a station instead of a node.
 
 | Job (`job`) | Skill (for the rate) | Works | Brings | Its chain (own-chain x1.5 as a refiner) | Opens |
@@ -78,10 +78,10 @@ shift at a station instead of a node.
 | **Weaver-gatherer** `weaver` | Foraging | Fibre patches; dye plants from Region 2 | Fibre, Dye | Weaving (the Loom) | Region 1 (dye from Region 2) |
 | **Salter** `salter` | Foraging | Salt pans (and the later regions' rime and stone) | Salt of that region | Tanning | Region 2 |
 | **Fisher** `fisher` | Fishing (R2) | Fishing spots | Fish (R2 owns the family) | none: the Kitchen instead (4.3) | Region 2 |
-| **Gem-seeker** `gem` | the node's skill | A region's buff-item node (gear-2 5.4) | Buff items (rolls, not units) | none: the Enchanter's Table instead (4.3) | Region 2 |
+| **Seeker** `gem` | the node's skill | A region's buff-item node (gear-2 5.4) | Buff items (rolls, not units) | none: the Enchanter's Table instead (4.3) | Region 2 |
 
 - **Full share on the job's own nodes, half share on any other gathering node** (N1's off-skill rule,
-  `HANDS_TUNE.offSkill` 0.5, keyed on the job's families instead of the skill). A Hunter, Gem-seeker or
+  `HANDS_TUNE.offSkill` 0.5, keyed on the job's families instead of the skill). A Hunter, Seeker or
   refiner has no off-job gathering: they gather at half share like anyone else if sent to a node.
 - **Hide and Fishing:** the Lanternbearer never hunts (gear-2 O13). Fishing is the Lanternbearer's too
   (R2); the Fisher works it at a share like any node.
@@ -114,7 +114,7 @@ As gear-2 3.3 and 3.5, with named shares:
 - A refiner at an empty queue idles (the card says "Waiting for an order at the Smelter"). The shift still
   ends on time. The **Standing order** node (4.3) keeps the queue fed.
 
-### 1.3 The Gem-seeker
+### 1.3 The Seeker
 
 - Works the buff-item node of any region reached (Tide Pools on the Coast, Glass seams in the Emberwaste,
   and the later regions' nodes, gear-2 5.4).
@@ -127,7 +127,7 @@ As gear-2 3.3 and 3.5, with named shares:
 ### 1.4 Regions 4 and 5: one more pair each
 
 LORE-R45 proposed a pair for the Pale Reach's Starfall fields and one for Region 5's deep glass
-(regions-4-5.md 1.9, 2.9). They join the **Gem-seeker** job as **region pairs**: full finds anywhere, +25%
+(regions-4-5.md 1.9, 2.9). They join the **Seeker** job as **region pairs**: full finds anywhere, +25%
 finds at their own region's node. That makes **22 by Region 5**, as plan-4 5 expects. Their names below
 are LORE-R45's working names; the R4 and R5 specs keep or replace them (Region 5 is being reworked in
 LORE-R45b).
@@ -177,22 +177,22 @@ tired, glad of the fire). The signature is what makes each one different from th
 | 9 | `gil` | **Gil Rushby** | Hunter | Steady | A marsh trapper. He lived on a reed island with one shaded lamp. | **Dresses the Hide:** from Region 2, 20% of his hide comes home as Leather (2 hide to 1, no salt) | 35% |
 | 10 | `jory` | **Jory Quickhands** | Hunter | Lucky | He lived by his wits in the dark. He will not say how. | **Light Fingers:** his Trophy chance is 6% a shift, not 3% | 10%, and the Trophy is the type your next +8 to +10 upgrade needs |
 | 11 | `ned` | **Ned Culver** | Coal-digger | Steady | Picks sea coal off the Grey Shingle. He has not missed a low tide in ten years. | **Full Scuttle:** +50% coal while the Smelter has an order running | +75% |
-| 12 | `brannoc` | **Brannoc** | Coal-digger | Lucky | A kiln-hand from the Emberwaste. He kept the Kilns' last fire banked, not burning, so the dark walked past. | **Glass in the Coal:** his coal shifts roll for the region's buff item at half a Gem-seeker's rate | at a full Gem-seeker's rate |
+| 12 | `brannoc` | **Brannoc** | Coal-digger | Lucky | A kiln-hand from the Emberwaste. He kept the Kilns' last fire banked, not burning, so the dark walked past. | **Glass in the Coal:** his coal shifts roll for the region's buff item at half a Seeker's rate | at a full Seeker's rate |
 | 13 | `ada` | **Ada Hollis** | Salter | Steady | Bram's wife. She followed his marks home. Salt kept them fed on the coast. | **Brine Vats:** refining at the Tannery, her own-chain bonus is x2, not x1.5 | x2.5, and Tannery orders take 10% less salt while she works there |
 | 14 | `morrow` | **Morrow** | Salter | Lucky | Rakes the salt pans at the far edge, where nobody else will go at low tide. | **Tide-wrack:** each shift 10% chance of one Coast find: a Trophy, 25 Fish, or a Common buff item | 20% |
 | 15 | `quill` | **Quill** | Fisher | Steady | Fishes from the drowned village's bell tower. He says the fish there are used to bells. | **Early Tide:** +30% fish on shifts sent 05:00-11:00, +10% at other times | +45% / +15% |
 | 16 | `pell` | **Pell Hollis** | Fisher | Lucky | Bram's boy. Not small any more. | **Bram's Boy:** +15% yield while Bram is in the party; his fishing rolls for the region's buff item +5% more | 10% of his buff finds come one rarity higher |
-| 17 | `oona` | **Oona** | Gem-seeker | Steady | Dives the Tide Pools. She holds her breath longer than anyone and will not say where she learned. | **Long Breath:** her rolls come every 6 min (Steady's 8) | every 5 min |
-| 18 | `sparrow` | **Sparrow** | Gem-seeker | Lucky | A glass-picker from the Emberwaste flats. Reads cracks in the ground like a map. | **Reads the Cracks:** 20% of her finds come one rarity higher | 35% |
+| 17 | `oona` | **Oona** | Seeker | Steady | Dives the Tide Pools. She holds her breath longer than anyone and will not say where she learned. | **Long Breath:** her rolls come every 6 min (Steady's 8) | every 5 min |
+| 18 | `sparrow` | **Sparrow** | Seeker | Lucky | A glass-picker from the Emberwaste flats. Reads cracks in the ground like a map. | **Reads the Cracks:** 20% of her finds come one rarity higher | 35% |
 
 The region pairs (1.4; names from LORE-R45, for the R4 and R5 specs to keep or replace):
 
 | # | Key | Name | Job | Temper | Who | Signature |
 |---|---|---|---|---|---|---|
-| 19 | `fenn` | Fenn | Gem-seeker (Region 4) | Steady | A survivor of the Silent Village. Knows the Starfall fields better than any outsider. | +25% finds at the Region 4 node (all region pairs); rolls every 6 min |
-| 20 | `wick` | Wick | Gem-seeker (Region 4) | Lucky | Fenn's neighbour. Named for a candle, and lucky like one that will not blow out. | +25% at home; 20% of finds one rarity higher |
-| 21 | `corrin` | Old Corrin | Gem-seeker (Region 5) | Steady | A retired Deepwell miner. Came this far down because nobody else would. | +25% at home; rolls every 6 min |
-| 22 | `sable` | Sable | Gem-seeker (Region 5) | Lucky | Found a way down that nobody else had. | +25% at home; 20% of finds one rarity higher |
+| 19 | `fenn` | Fenn | Seeker (Region 4) | Steady | A survivor of the Silent Village. Knows the Starfall fields better than any outsider. | +25% finds at the Region 4 node (all region pairs); rolls every 6 min |
+| 20 | `wick` | Wick | Seeker (Region 4) | Lucky | Fenn's neighbour. Named for a candle, and lucky like one that will not blow out. | +25% at home; 20% of finds one rarity higher |
+| 21 | `corrin` | Old Corrin | Seeker (Region 5) | Steady | A retired Deepwell miner. Came this far down because nobody else would. | +25% at home; rolls every 6 min |
+| 22 | `sable` | Sable | Seeker (Region 5) | Lucky | Found a way down that nobody else had. | +25% at home; 20% of finds one rarity higher |
 
 ### 3.2 Why these pairs
 
@@ -257,11 +257,11 @@ A Lucky's tree adds at most +5% a roll (A2 + A3), the "up to +5% more" of gear-2
 | Weaver-gatherer | Mends | Storehouse cap +3% on Fibre and Cloth |
 | Salter | Salts the Stores | Storehouse cap +3% on Hide and Leather |
 | Fisher | Fish Supper | Meals last 10% longer (as N1's Cook; best one counts) |
-| Gem-seeker | Loupe | Tuning a buff item costs 25% less (gear-2 4.2) |
+| Seeker | Loupe | Tuning a buff item costs 25% less (gear-2 4.2) |
 
-**Fisher and Gem-seeker have no chain.** Their C1, C2 and C4 read:
+**Fisher and Seeker have no chain.** Their C1, C2 and C4 read:
 
-| Row | Fisher (the Kitchen) | Gem-seeker (the Enchanter's Table) |
+| Row | Fisher (the Kitchen) | Seeker (the Enchanter's Table) |
 |---|---|---|
 | C1 | **Gutting Knife:** +10% fish | **Cutter:** Salvage Runes cost 15% less |
 | C2 | **Fresh Catch:** each shift's fish also counts as one meal's fish in the Kitchen (K12's pantry) | **Appraiser:** 10% of Common finds come as Uncommon |
@@ -277,7 +277,7 @@ trees too.
 |---|---|
 | 1 | 150 raw of the job's family, grade g |
 | 2 | 400 raw, grade g |
-| 3 | 80 of the job's refined goods, grade max(g, 4): Miner and Coal-digger Ingots, Woodcutter Planks, Hunter and Salter Leather, Weaver-gatherer Cloth, Herbalist Tinctures (Herbs x3 if the Still is cut, gear-2 O6), Fisher Planks (a boat), Gem-seeker Ingots (tools) |
+| 3 | 80 of the job's refined goods, grade max(g, 4): Miner and Coal-digger Ingots, Woodcutter Planks, Hunter and Salter Leather, Weaver-gatherer Cloth, Herbalist Tinctures (Herbs x3 if the Still is cut, gear-2 O6), Fisher Planks (a boat), Seeker Ingots (tools) |
 | 4 | 200 refined, grade max(g, 4), and 1 Trophy of any type |
 
 - Row 3 therefore opens for real in Region 2 (refined goods start at grade 4). A Region 1 gatherer reaches
@@ -648,7 +648,7 @@ small bar ("12 of 20 min").
 
 **Sim flags:** `--named 0|1` (the named roster; 0 = N1's random applicants) and `--report gatherers`
 (units by gatherer and job, finds, beds used, arrivals by day, tree points spent). **Policy:** fill beds by
-need (a secondary for each chain the class runs, then the class's main family, then a Lucky Gem-seeker
+need (a secondary for each chain the class runs, then the class's main family, then a Lucky Seeker
 once Enchanting is open, then the rest); send by the extended `handsSuggest`; one refiner per running chain
 once its queue holds more than one away session; teach the Trade branch first, then the Hearth branch for
 chain jobs and the Road branch for the others; swap lodgers in when a job is needed.
@@ -670,10 +670,10 @@ File numbers were checked against `src/js` and every file name the design docs r
 | **N3b** Gatherer screens (Sonnet, M) | Section 10: the crew view, the card, the send sheet, the tree sheet, Word on the Road, arrival cards, node chips, the away group | `src/js/75-hands-ui.js`, `src/styles/60-hands.css` (both named in hearth-and-hands 10) | `74-ui-tavern.js` (mount Word on the Road), `75-camp-ui.js` (the Bunkhouse card opens the crew view) | N3a |
 | **LORE-G** Gatherer words (Sonnet, S) | 22 arrival lines, route hints, about 8 talk lines each, 4 fire stories each (88), rumour lines | `src/js/21q-gatherers-talk.js` | - | N3a (keys) |
 | **S4** (in its own files) | Stations call `handsRefiners(st)` for speed and split the away window at refiner shift ends; `zoneGrade` for the Hunter; coal, salt and dye nodes as job families; Ned carries the Coast arrival gift; tree rows 3-4 read the refined families | - | `55-gear2.js`, `75-refine-ui.js` (refiner slots) | N3a |
-| **S5** | Lucky and Gem-seeker buff rolls go through `55-enchant.js`'s find table (off until S5: no buff items exist yet) | - | `55-enchant.js` | N3a |
+| **S5** | Lucky and Seeker buff rolls go through `55-enchant.js`'s find table (off until S5: no buff items exist yet) | - | `55-enchant.js` | N3a |
 | **BT1 / WC1** | Bunkhouse Lv 6-8 rows (region-gated) and the Bunkhouse tree's "Bunk beds" (+1 through `addBonus('handBeds')`) | - | `57-camp.js` | N3a |
 | **R2, EV1, HQ1** | Quill's, Oona's and Morrow's triggers and the `fish` skill; Dorrie's and Jory's events; the Elowen quest probe. Each calls `gatherLead(key, stage)` | - | their own files | N3a |
-| **N2** | Art for 22 on the B1 townsfolk kit; camp spots by job (Hunter by the Tannery, Salter and Fisher by the Kitchen, Coal-digger by the Forge, Gem-seeker by the Enchanter's Table) | `src/js/12g-art-hands.js` (reserved) | - | N3a (keys) |
+| **N2** | Art for 22 on the B1 townsfolk kit; camp spots by job (Hunter by the Tannery, Salter and Fisher by the Kitchen, Coal-digger by the Forge, Seeker by the Enchanter's Table) | `src/js/12g-art-hands.js` (reserved) | - | N3a (keys) |
 
 Merge order: N3a first, then N3b and LORE-G in parallel. N3a runs on today's 5 tiers: the Hunter works at
 once, the coal, salt and dye jobs and refiners switch on with S4, buff rolls with S5, and the Region 4 and

@@ -934,3 +934,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - OWNER: gatherers hang around visibly in the camp; tap one to talk, then send them on a job tied to their
   profession (pick resource and grade, see the fee). Sent to WC1 (camp panorama/UI); part of ECON1/N1c too.
 - OWNER: camp grows by horizontal scrolling (swipe to pan), with an overview zoom as a secondary view. Sent to WC1.
+- MERGED MAT1 (docs/design/materials.md; docs updated; grades 1-5 display names relabelled in code, ids kept;
+  Sigils/Gems applied). gatherers-2.md: "Gem-seeker" -> "Seeker" (coordinator). Follow-ups: "Leather
+  Leathers" naming for the leathers kind at grade 2 (fix in S4); owner to approve essence 6-15 and the
+  coal/salt/dye names. Slot freed -> launching ECON1/N1c.
