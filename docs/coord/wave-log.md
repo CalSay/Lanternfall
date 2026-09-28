@@ -778,3 +778,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - OWNER ANSWERS: (1) Region 2 expects a trained-up stronger hero: YES (BAL3 builds option 2, with a hint when
   the pair hits its limit). (2) Online titles: yes, but not for 1.0. (3) Netlify is already linked (deploys
   follow the [deploy] rule). (4) The festival comes AFTER 1.0.
+- Coordinator review of plan-4: docs/design/roadmap-review.md (Core 2.0 designed as one package then 7 slices; BAL2.5 now, BAL3 per slice; SAVE1 early; accessibility/guide inside Core 2.0; LORE-R45; 1.0 pacing targets; hero Awakenings; filled-out designs for evolutions, damage types, gear/tiers/chains/enchanting/uniques, active combat, gatherer roster, building trees, fatigue, tactics, events, trade routes, hero quests, challenge modes, first hour, sound; 6 owner questions).
