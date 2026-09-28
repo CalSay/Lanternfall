@@ -1,10 +1,26 @@
-# LORE-R45: Region 4 (the Pale Reach) and Region 5 (the Long Stair)
+# LORE-R45b: Region 4 (the Pale Reach) and Region 5 (the Gloamvale)
 
-Status: story and content draft for task LORE-R45, written 2026-09-28. It answers the gaps CORE-G
-(core-2.md 5.2, 5.4) and plan-4.md (sections 1, 4, 6, 8) left for LORE-R45: region themes, the
-signature gathering and buff-item family per region, material names for grades 10-15, and the
-grade-9 name clash. It also fills material-name gaps left in Regions 1-3 (grade 6, and grades 7-9)
-so the full 15-grade ladder in core-2.md 5.2 has names end to end.
+Status: story and content draft for task LORE-R45, written 2026-09-28, revised the same day for task
+**LORE-R45b** on the owner's feedback: region bosses must never read as lamp roles, the reveal line
+made no sense, and Region 5 needed to be its own place, not the Deepwell continued. This revision
+renames Region 4's boss to **the Whitehush**, reworks the Coast's and the Emberwaste's bosses so
+neither reads as a lamp-keeper or a lantern guardian, replaces Region 5 ("the Long Stair") with a new
+place, **the Gloamvale**, and adds a milestone table for all five region bosses plus the Season 1
+finale. See lore.md 4.4, 4.4a and 8.4-8.8 for the parts of this that also live there.
+
+**Material and buff-item names (coordinator correction, 2026-09-28): superseded by MAT1.** The owner
+wants every material name in the game based on real or standard fantasy materials (Silver, Cobalt,
+Orichalcum, Adamantite, Yew, Ebony, Silk, Wyvernhide, Mandrake, Sapphire), not invented compounds
+like "Coralsteel" or "Cinderwool". Task **MAT1** will rename the whole 15-grade ladder. This doc no
+longer invents grade 13-15 names for the Gloamvale (2.4 says "see MAT1" instead); the grade 10-12
+table for the Pale Reach (1.4), the grade 6-9 fill for Regions 1-3 (section 3), and the full-ladder
+summary (4.1) are kept exactly as LORE-R45 drafted them, but every name in them is **superseded by
+MAT1** and should not be locked into a code task until MAT1 lands. The buff-item family names
+(Starshard, Wellglass) are the same working-draft status.
+
+It answers the gaps CORE-G (core-2.md 5.2, 5.4) and plan-4.md (sections 1, 4, 6, 8) left for
+LORE-R45: region themes, the signature gathering and buff-item family per region, and the region
+boss for Regions 4 and 5.
 
 It builds on region-2.md (the shape a region spec takes) and lore.md sections 4, 8.3, 8.4 and 8.5
 (where these two regions sit in the mystery ladder). Story input only: a later spec (per plan-4.md
@@ -12,7 +28,9 @@ It builds on region-2.md (the shape a region spec takes) and lore.md sections 4,
 builds") turns this into zone tables, numbers and code tasks, the way D4 turned lore.md 8.3 into
 the Emberwaste.
 
-Names marked **(working)** need the owner's sign-off before a code task locks them in (section 6).
+Names marked **(working)** need the owner's sign-off before a code task locks them in (section 5).
+The "LORE-R45b changes" section at the end of this doc lists every `src/` file a code task should
+check before it starts.
 
 ---
 
@@ -58,8 +76,8 @@ What the player learns here, in order:
 3. One person tried to stop it at the Frostgate and did not come back. Kestrel's spear carries their
    name. Region 4 tells the player who that was and what "jumped first" means (1.6).
 4. The reveal that closes the region: the Pale Tyrant (already a world-raid name, lore.md 4.7) is not
-   the same thing as Region 4's Listener. The raid boss is the storm's shape, out on the pass, always
-   returning. The Listener is what stayed behind after, and still listens.
+   the same thing as Region 4's Shroud. The raid boss is the storm's own shape, out on the pass,
+   always returning. The Shroud is what the storm left behind, and it never stopped hunting fire.
 
 ### 1.3 Signature gathering and buff-item family: Starshards
 
@@ -68,23 +86,36 @@ shards of the light that fell here the night of the Fall, half-buried in the sno
 and warm to the eye. It reads as a new node type (like Tide Pools), not a new skill: it sits on the
 Mining tab, since the shards behave like ore-bright crystal in the hand.
 
-**The buff-item family** (core-2.md 5.4 table, family id `star`, region `pale`, top grade **12**):
+**The buff-item family** (core-2.md 5.4 table, family id `star`, region `pale`, top grade **12**;
+**names superseded by MAT1**, see the doc header):
 
 | Name | Where found | Notes |
 |---|---|---|
-| **Starshard** | Starfall gathering (active finds more, as Tide Pools do); a Region 4 boss's signature drop | Cold to hold; it does not melt snow near it |
+| **Starshard** (working name, MAT1 may rename) | Starfall gathering (active finds more, as Tide Pools do); a Region 4 boss's signature drop | Cold to hold; it does not melt snow near it |
 
-Three weight versions, `star_h` / `star_m` / `star_l`, drawing the core-2.md 5.4 line pools (`h`:
-armour, hp, block, frost resist; `m`: attack speed, haste, crit, status power, control; `l`: spell
-power, healing, ward, frost power). No new mechanic is proposed here (that is CB2/RG1's call); the
-Pale Reach does not need a tide-style twist to justify its own buff family, the way the coast's tide
-justified Tidefast and Shellbreaker. If a later spec wants one, a natural hook is already in the
-region's foe list (1.5): a **Whiteout** hazard that halves visibility and rewards frost resist, the
-way Wading rewards Tidefast.
+Three weight versions (`h`: armour, hp, block, frost resist; `m`: attack speed, haste, crit, status
+power, control; `l`: spell power, healing, ward, frost power), drawing the core-2.md 5.4 line pools.
+No new mechanic is proposed here (that is CB2/RG1's call); the Pale Reach's own hazard, the Whiteout
+(1.3a), gives Starshard farming a reason to keep going through weather the way Wading does for Tide
+Pools, without needing a second mechanic invented just for this region.
 
-### 1.4 Material names, grades 10-12
+### 1.3a The Whiteout (player-facing, for LORE2-style copy)
 
-Per core-2.md 5.2, Region 4 owns grades 10-12. Family names below extend the existing five-family
+The Pale Reach's own weather hazard, the way the Coast has the tide. A Whiteout can roll in over any
+Pale Reach zone: visibility halves, so danger warnings show later than normal, and frost resist cuts
+how much it slows you down. Farming through a Whiteout pays better, the way wading through a high
+tide does on the Coast — it is a risk a player can choose to lean into, never a wall.
+
+Player-facing, one line for the almanac or an arrival card: *"The Whiteout rolls in fast and cuts
+what you can see. Frost resist keeps you moving. Push through it, and the ground pays better for the
+trouble."*
+
+### 1.4 Material names, grades 10-12 (superseded by MAT1)
+
+**These names are the LORE-R45 working draft; task MAT1 renames the whole 15-grade ladder to real or
+standard fantasy material words, per the owner's correction (doc header). Nothing below should be
+locked into a code task before MAT1 lands.** Per core-2.md 5.2, Region 4 owns grades 10-12. Family
+names below extend the existing five-family
 ladder (ore, wood, fibre, hide) plus herb and crystal, which this doc also fills for Regions 1-3
 (section 5). Grade 10 is the Pale Reach's own first tier; nothing here touches grades 1-9.
 
@@ -135,25 +166,27 @@ snow again" — never "only people again"; nothing implies the dead came back to
 Elders follow lore.md 4.1 (crowned, the thing that has held the dark longest in its zone). One elder
 per zone type, same shape as Regions 1-3.
 
-**The region boss (the Listener): "the Star-Fallen" (working name).** The person whose name is on
-Kestrel's spear — **the one who jumped first**. Ten winters ago, when the storm came for the Silent
-Village, this person climbed to the Frostgate alone to hold it, the way Caedmon held Emberlea's road
-for an hour. They did not walk out of the dark the way Caedmon walked out of the fire; the storm
-buried them at the gate, and what came up at dawn wore their shape and listened for the Voice ever
-since. Kestrel does not know this at Region 3; Region 4 is where she finds out, and her own thread
-(lore.md 6.2: "Region 4, the Pale Reach, and the Pale Tyrant") pays off here, not against the raid
-boss.
+**The region boss (a Shroud, not a Listener): the Whitehush.** Coordinator decision, LORE-R45b: it is
+never a guardian, a keeper or anything that tends a light. **The Whitehush is a dark thing that walks
+inside the Whiteout (1.3a) and snuffs every fire it finds.** It has done this every storm season for
+ten winters, and it is the reason the Silent Village never relit a single sill-candle on its own: any
+fire lit in a reoccupied house there goes out by morning, until the Whitehush falls.
 
-- Kestrel's line, first sight: a single line, no more than the Caedmon/Pyre Knight rival fight gets.
-  Draft: *"That's the name on my spear. I came all this way and it's still standing there."*
-- **Not a rival duel** (unlike the Pyre Knight/Caedmon fight, 8.3): this person did not choose the
-  dark. They were buried holding the gate, the way a smothered lamp goes dark without being called.
-  The right beat is quieter: Kestrel gets one line at the fall, not a fight-long mechanic.
-  Draft: *"Rest, then. I'll hold it now."*
-- **Its listening:** while it listens, the dark hears every candle relit in the Pale Reach (the region
-  has no lamps to smother, so instead: every fire lit in a reoccupied house in the Silent Village
-  goes out by morning, until the Star-Fallen falls). This keeps the region's own flavour of "why the
-  Listener stops the region from holding light" instead of reusing the lamp-smothering line verbatim.
+- **It killed the person whose name is on Kestrel's spear.** Ten winters ago, when the storm first
+  came for the Silent Village, **Rowan** — a Dusk Company scout, Kestrel's partner on the pass —
+  climbed to the Frostgate alone to hold it, the way Caedmon held Emberlea's road for an hour. Rowan
+  did not walk out of the storm. The Whitehush is not what Rowan became; Rowan is simply gone, the
+  way a smothered lamp goes dark without being called. The Whitehush is what killed them, and has
+  walked the Whiteout ever since. Kestrel does not know how Rowan died until Region 4; her own
+  thread (lore.md 6.2, "Region 4, the Pale Reach, and the Whitehush", not the raid's Pale Tyrant)
+  pays off here.
+- **Kestrel's thread is a reckoning, not a rival fight**, and it is kept to two lines total so it
+  never competes with the Pyre Knight/Caedmon duel (8.3), which is a different kind of story.
+  - First sight, one line: *"Rowan's spear-name. I always thought they got clear. They didn't."*
+  - At the fall, one line: *"That's for Rowan. Wherever the storm keeps them, they can hear that."*
+- **No Challenge mechanic, no second phase for Kestrel.** Unlike the Pyre Knight, the Whitehush was
+  never a person who chose the dark, so there is no "you walked away, I stayed" exchange to write and
+  no reason to lock Kestrel into the fight beyond fielding her normally.
 
 **Champions and packs:** as 4.1/4.8, nothing new needed.
 
@@ -181,7 +214,8 @@ Reach."**
   boss's identity clear without changing `world/boss` or any online shape: the Pale Tyrant is the
   storm itself, the shape the dark wears when it comes down off this mountain, and it keeps re-forming
   the way the Ashen Wyrm keeps re-forming from the Emberwaste (4.7's existing pattern). It is not the
-  Star-Fallen. Client text only, as LORE9 already scopes.
+  Whitehush, and the two should never be drawn or written as the same thing. Client text only, as
+  LORE9 already scopes.
 
 ### 1.9 New hero and gatherer hooks
 
@@ -195,155 +229,171 @@ Reach."**
 
 ---
 
-## 2. Region 5: the Long Stair
+## 2. Region 5: the Gloamvale (rewritten, LORE-R45b)
+
+**This whole region changes from the LORE-R45 draft.** The owner's feedback: Region 5 must be
+separate content with its own look, not the Deepwell continued, though the Deepwell should still tie
+into the story. Everything below is new; nothing here should be read as an edit to "the Long Stair" —
+that name and its Deepwell-reused palette are dropped.
 
 ### 2.1 Name, theme and look
 
-**The Long Stair.** Not a new landscape: the road's last stretch is down, through the Deepwell under
-Hollow's Rest, past every landing the Deep Lore pages already named (Appendix A.4), to depths no
-miner's rope or the Climber's thousand years ever reached. The loop the Lantern Road takes (lore.md
-2.1) closes here: Region 5 is where the road that left Hollow's Rest going east comes back to it
-going down.
+**The Gloamvale.** A valley past the last pass of the Pale Reach, under a sky the dark closed over,
+long before the Fall, for reasons the story never fully explains in Season 1. Not underground, not
+the Deepwell: a real place, outdoors, that the dark simply never let see true daylight again. The
+Lantern Road's loop still closes here (lore.md 2.1): the road that left Hollow's Rest going east
+comes back to it, at the very end, through what the Voice does once it is beaten (8.6), not through
+a shared dungeon.
 
-- **Palette:** the well theme "at its darkest" (lore.md 8.7): near-black stone, a fading warm gold
-  from the party's own lamps (the only light source that is not hostile), and one cold blue-white for
-  the deepest landings, where fire turns blue (Deep Lore page 4) and stays that colour for the rest of
-  the region.
-- **Landmarks:** the Ninth Landing (where fire first turns blue), the Quiet Landings (benches, oil,
-  a name carved at each one: "Maud", per Deep Lore), the Diggers' Cut (where the miners' dig broke
-  through into the stair, Deep Lore page 2), Maud's Lantern at the last landing before the true
-  bottom, and the Bottom of the Stair itself (the Voice's ground, 8.7).
-- **Lantern angle:** every lamp in Region 5 is the hero's own, carried down. There are no lamps to
-  relight here (like Region 4, for a different reason: nobody has ever lit one this far down). The
-  only light that was ever here belongs to Maud, and it has never gone out.
+- **Palette (its own, distinct from both the Pale Reach's white-blue snow and the Deepwell's
+  near-black stone and blue-fire):** a flat, close grey-violet sky with no stars and no sun, ground
+  growth that has drained to ash-grey and hangs rather than stands, and exactly one warm colour in
+  the whole region — the gold of the party's own lamp, and the rare, guttering hand-lit fire of
+  something that tried to survive here and mostly didn't. Where the Pale Reach is cold and bright and
+  the Deepwell is a held breath, the Gloamvale should read as **hushed and used up**: a place light
+  gave up on, not a place fighting to keep it.
+- **Landmarks:** the Last Descent (the switchback road down from the Frostgate Bastion, the only way
+  in), the Hush (a windless grey forest where nothing ever rustles), the Flats of No Reflection (the
+  valley floor's still black water, which shows no sky because there is none to show), Emberhearth
+  Ruins (an older settlement whose hearths finally went out, generations before the hero's time — a
+  quiet warning of what could have happened to the Pale Reach's Silent Village with worse luck), and
+  the Heart of the Gloamvale (the Voice's ground, lore.md 8.6-8.7).
+- **No Shroud, no lamp angle.** There is nothing here for a region boss to shroud, hunt or take: the
+  Gloamvale has been fully dark since before the Order ever lit a lamp. This is the one region where
+  the "why is this place still dark" question is not answered by a Shroud falling; it is answered by
+  the Voice itself leaving, at the very end (8.6).
 
 ### 2.2 Place on the road and the mystery ladder
 
-Region 5 is the last stage of lore.md's mystery ladder (8.5, "Months 3+" through "The end"). It does
-not add a new question; it answers the last one the game has been asking since day 0 ("what is at
-the bottom, and can I go there"). Its zones are not a new place so much as **the last of a place the
-player has half-seen since the first hour** (the Deepwell has existed as a separate dungeon since
-Region 1; Region 5 continues past everywhere that dungeon's own content ends).
+Region 5 is the last stage of lore.md's mystery ladder (8.5, "Months 3+" through "The end"). It
+answers the last question the game has been asking since day 0 ("what is at the end of the road, and
+can I go there") with a place the player has never half-seen before, unlike every earlier region:
+**this is the twist Region 5 is built to deliver — not "more of what you know," but "somewhere the
+road never told you about."** The Deepwell, which players have known since Region 1, is not this
+place, and its own content (Maud, the Climber, the spring, Deep Lore) is not touched or continued
+here (2.8 says exactly what does change about it, and only after the ending).
 
-**A note for the coordinator:** per the owner's decision (plan-4.md 1, section 6 below), Region 5
-does **not** end in a Great Lantern. Lore.md 8.4 and the Region 4/5 table in 4.4 already say so: "no
-Listener and no Great Lantern at its end. There is the Voice, and the last fight." This doc keeps
-that. What Region 5 gives the player instead of a Great Lantern is in 2.7.
+Region 5 does **not** end in a Great Lantern; there is nothing here to relight (lore.md 4.4, 4.4a).
+What it gives the player instead of a Great Lantern is in 2.7.
 
-### 2.3 Signature gathering and buff-item family: Wellglass
+### 2.3 Signature gathering and buff-item family
 
-**The gathering.** Below the Ninth Landing, ordinary fire turns blue (Deep Lore page 4) and, rarer,
-drips: cold blue-fire glass forms where it lands and cools, in seams along the Long Stair's walls. It
-is found by mining, the same skill as every other region, one new node type unlocked at the region's
-start.
+**Names superseded by MAT1** (doc header): this section describes the activity and the fantasy, not
+a locked name. The Gloamvale's own gathering resource is mined from the still black water of the
+Flats of No Reflection and the roots of the Hush's dead-grey trees — something that grew here in the
+dark, the same way Starshards are what fell here in the Pale Reach and Lantern Pearls are what the
+sea swallowed on the Coast. It is the last buff-item family in Season 1 (core-2.md 5.4 table, region
+id `gloam`, top grade **15**; family id and item name: **see MAT1**). Three weight versions follow
+the usual core-2.md 5.4 line pools (`h`: armour, hp, block, the region's threat-type resist; `m`:
+attack speed, haste, crit, status power, control; `l`: spell power, healing, ward, holy power, since
+`gloam` foes reward holy, 2.5). RG1 should treat it as the top of the whole ladder, not just this
+region's own.
 
-**The buff-item family** (core-2.md 5.4 table, family id `well`, region `deep`, top grade **15**):
+### 2.4 Material names, grades 13-15: see MAT1
 
-| Name | Where found | Notes |
-|---|---|---|
-| **Wellglass** | Mining below the Ninth Landing; a Region 5 elder's signature drop | Warm to the eye, cold to the hand, the opposite of ordinary fire |
+Per core-2.md 5.2, Region 5 owns grades 13-15, the last three grades in the game. **This doc does not
+propose names for them.** The owner wants the whole 15-grade ladder renamed to real or standard
+fantasy material words (Silver, Cobalt, Orichalcum, Adamantite, Yew, Ebony, Silk, Wyvernhide,
+Mandrake, Sapphire are the kind of words meant, not invented compounds); task **MAT1** owns that
+rename end to end, including the last three grades. A later code task should wait on MAT1's names
+rather than inventing its own for the Gloamvale specifically, since these are the grades most likely
+to ship last and easiest to get right the first time.
 
-Three weight versions, `well_h` / `well_m` / `well_l`, the same core-2.md 5.4 line pools as any
-family (`h`: armour, hp, block, the region's threat-type resist; `m`: attack speed, haste, crit,
-status power, control; `l`: spell power, healing, ward, holy power, since `deep` foes reward holy,
-core-2.md 2.3). Wellglass is the last buff family in Season 1; RG1 should treat it as the top of the
-whole ladder, not just Region 5's own.
-
-### 2.4 Material names, grades 13-15
-
-Per core-2.md 5.2, Region 5 owns grades 13-15, the last three grades in the game.
-
-| Family | 13 | 14 | 15 |
-|---|---|---|---|
-| Ore (metal) | Deepiron | Rootsteel | Wellsteel |
-| Wood | Wellwood | Rootwood | Duskwood |
-| Fibre (cloth) | Deepweave | Shadewool | Duskweave |
-| Hide (leather) | Wellhide | Roothide | Gloamhide |
-| Herb | Deeproot | Shademoss | Duskbloom |
-| Crystal | Deepglass | Rootglass | Wellglow |
-
-"Deep-" and "Root-" carry how far down this is (below where even the Climber's thousand years of
-climbing reached, Deep Lore's "worn in the middle as if something climbed it"); "Dusk-" and "Gloam-"
-at grade 15 tie to lore.md's language for the long dusk that has not ended (Anselm, 3.2) — the last
-materials in the game are named for the thing the whole story is about ending.
-
-**Secondary resources:** **Wellcoal** (found in seams near the same walls as Wellglass), **Deep
-Salt** (mineral salt that sweats from the stair's stone, never from any sea), **Gloam Dye** (from a
-lightless fungus that only grows this far down). Same low-value, gatherer-and-refiner role as every
-other region's secondaries.
+**Secondary resources:** the region needs the usual three low-value gatherer-and-refiner inputs (a
+coal-like fuel, a salt, a dye-plant), matching every other region's role for them (1.4, 3); MAT1
+should name these too rather than this doc guessing compounds ahead of it.
 
 ### 2.5 The seven zone types
 
-Named after the Deep Lore pages already in the game (Appendix A.4), so the player recognises the
-place before a single new line of story is written.
+New zone types built for the Gloamvale's own look (2.1), not reused from the Deepwell's Deep Lore
+pages. `gloam` (weak holy, no resist) is the region's own family, carried by its two emotional-core
+zones (the Hush and Emberhearth Ruins), the same pattern Region 4 used for `pale`.
 
-| Zone type | Theme and look (from Deep Lore) | Foe | Family | Weak to | Resists |
+| Zone type | Theme and look | Foe | Family | Weak to | Resists |
 |---|---|---|---|---|---|
-| The Ninth Landing | Fire turns blue here; the dark stops moving away | Blueflame Wisp (a wisp that no longer flees a lamp) | `deep` | holy | - |
-| The Worn Stair | Steps "worn in the middle as if something climbed it for a thousand years" | Stairwalker (a stone thing shaped like the wear in the steps) | `construct` | frost | poison |
-| The Quiet Landings | Benches, oil, a name at each one | Landing Watcher (stands where a bench should be sat in; does not move until approached) | `deep` | holy | - |
-| The Diggers' Cut | Where the miners broke through, pick marks still in the wall | The Delved (what the dark makes of a digger who never came back up) | `undead` | holy | poison |
-| Maud's Approach | The stair narrows; oil-lamp soot on the walls, older than any lit lamp here | Hollow Reacher (long-armed, reaches for a light before it is seen) | `deep` | holy | - |
-| Beneath the Spring | Close enough to the Old Light's spring that even the dark moves slow | Spring-Touched (a thing half-lit by the spring it guards against, and hating it) | `spirit` | holy | phys |
-| The Bottom of the Stair | The Voice's ground (lore.md 8.7) | boss zone: the Voice | - | - | - |
+| The Last Descent | The switchback road down from the Frostgate Bastion; loose scree, a wind that dies as you go lower | Gloam Hound (a pack hunter shaped by the valley's permanent dusk) | `beast` | fire | - |
+| The Hush | A windless grey forest; nothing rustles, nothing sings | Hushwalker (moves only when nothing is looking at it) | `gloam` | holy | phys |
+| The Flats of No Reflection | Still black water that shows no sky, because there has been none to show for longer than anyone has lived | Stillbound (rises without a ripple) | `spirit` | holy | frost |
+| The Long Dusk Fields | Grey farmland, standing crop that never ripened and never rotted either | Fieldwatcher (a shape the dark filled in where a farmhand should stand) | `construct` | frost | poison |
+| Emberhearth Ruins | The remains of a settlement whose hearths finally went out, long before the hero's time | Ash Echo (what is left when even the memory of a fire goes out) | `gloam` | holy | phys |
+| The Closed Orchard | A dead orchard, fruit hanging like stones, never fallen | Orchard Husk (slow, heavy, drops only when struck) | `undead` | holy | poison |
+| The Heart of the Gloamvale | The Voice's ground (lore.md 8.6-8.7) | boss zone: the Voice | - | - | - |
 
-`deep` (core-2.md 2.3: weak holy, no resist) is the region's own family, as the table already
-promises ("LORE-R45 confirms").
+Pack rule as every other region: 72% the zone's type, 28% the next in the cycle.
 
 ### 2.6 Elders, and why there is no separate region boss
 
-One elder per zone type, as always. **The Climber** (lore.md 4.5) already exists as a pinnacle-tier
-boss tied to this stretch of the game; Region 5's build should place its lair on the way down (a
-dungeon-style encounter along the Diggers' Cut or Maud's Approach, not a new fight, since the Climber
-is already fully written) rather than invent a second "thing that climbs" for the zone table.
+One elder per zone type (six regular zones; the seventh is the Voice's own). Elders follow lore.md
+4.1 as everywhere else: crowned, the thing that has held the dark longest in its zone.
 
-There is no Listener for Region 5 (lore.md 4.4, 4.5, 8.4: "There is no Listener and no Great Lantern
-at its end. There is the Voice, and the last fight"). The Voice itself is both the thing the region
-has been walking toward and the fight that ends Season 1 (8.7, reworked for the Season 1 arc in the
-updated lore.md 8.6/8.7/8.8). Do not add a separate "Region 5 boss" distinct from the Voice; that
-would give the player two climaxes where the story wants one.
+There is no Shroud for Region 5, and no separate region boss distinct from the Voice (lore.md 4.4,
+4.4a, 8.4: "no Shroud... the Voice itself waits at its heart"). The Voice is both the thing the
+region has been walking toward and the fight that ends Season 1 (8.6-8.8). Do not add a "Region 5
+boss" on top of the Voice; that gives the player two climaxes where the story wants one.
 
-### 2.7 What replaces the Great Lantern: the Last Landing
+The Climber (lore.md 4.5) stays exactly where it already is, in the Deepwell, and is not placed in
+the Gloamvale. It is a different hand of the dark, in a different place, doing a different job (2.8).
 
-Region 5 needs one chapter-end beat, even without a Great Lantern, so the region does not simply stop
-before the Voice fight. Proposed beat, **the Last Landing**, at Maud's Lantern:
+### 2.7 What replaces the Great Lantern: the Seam
 
-- The party reaches Maud's Lantern (already lit, has never gone out, lore.md 4.5). The hero's own
-  lamp and Maud's flame sit side by side for a moment before the party goes on past it, below the
-  spring, where lore.md 8.6 says only a given light can go and stay lit.
+**Replaces the old "Last Landing at Maud's Lantern" beat**, which belonged to the Deepwell reading of
+this region and no longer fits. The Gloamvale's chapter-end beat, **the Seam**, happens just before
+the party reaches the Heart of the Gloamvale:
+
+- For one stretch of the Closed Orchard, right before the road turns down toward the valley's heart,
+  the closed sky shows a seam: a thin crack of real daylight, grey and far away, the first true sky
+  anyone in the party has seen since the Frostgate. It does not open the sky up; it is a crack, not a
+  door. Then the road turns, and it is gone behind them.
+- This is the same seam the final fight's arena keeps overhead (lore.md 8.7, "one small gap in it far
+  above where a little grey daylight still gets through"): the beat and the arena should be built
+  from the same piece of art if that is practical, so the player recognises it when the fight begins.
 - No new rank, no new gear tier unlocks here (grade 15 is already open from reaching the region, per
   core-2.md 5.2's gating); this is a story beat and a save point, not an economy chapter-end.
-- One line, Hesketh's if fielded, otherwise narration: *"She's kept it this long. It'll hold a little
-  longer."* This sets up his last line at the true ending (lore.md 8.6, "Every road needs a place to
-  come back to") without repeating it early.
-- This is a proposal, not a lock: it needs the same sign-off as everything else in section 6.
+- One line, Hesketh's if fielded, otherwise narration: *"That's real sky. First I've seen of it since
+  the pass."* This plants the "sky" image so the warm beat after the Voice falls (lore.md 8.6, "true
+  sky shows through it for the first time") pays it off rather than introducing it cold.
+- This is a proposal, not a lock: it needs the same sign-off as everything else in section 5.
 
-### 2.8 Dungeon and raid ideas
+### 2.8 The Deepwell tie, and what changes about it in Season 1
 
-- The Deepwell dungeon (already built, plan-4.md and deepwell.md) is Region 5's dungeon in
-  everything but name; a later spec should decide whether Region 5's zones sit above the existing
-  Deepwell content, continue past its current end, or fold it in outright, rather than build a
-  second down-going dungeon next to it.
-- **No new raid boss for Region 5.** The Voice never appears in the world raid or any online data
-  (lore.md 8.7, "Left for DV"), and this doc keeps that rule. A raid-scale foe here would compete
-  with the Voice fight for the region's one big moment.
+**The Deepwell stays its own dungeon, with its own content, unchanged in shape.** Maud, the Climber,
+the spring, the landings, all of Deep Lore (Appendix A.4) — none of it moves, none of it is retold as
+part of Region 5. What the story adds is smaller and happens only after the Season 1 ending:
+
+- **After the Voice retreats (lore.md 8.6),** it goes down into the Deepwell, under Hollow's Rest,
+  under the party's own camp — the first time in the whole story it has ever been there. The rematch
+  encounter (lore.md 8.6, "the last fight stays open as a rematch") opens somewhere in the Deepwell
+  past everywhere the Climber has ever climbed, not in the Gloamvale itself. This is the one place the
+  Deepwell's dungeon content grows in Season 1: one new reachable stretch, past its current end,
+  unlocked only once the Voice has gone there.
+- **Seed it earlier, in the Deepwell's existing Deep Lore pages,** so the ending's twist has a thread
+  a returning player can notice: one small addition to an existing page (not a new page), something
+  like "the stair goes further than any rope has measured" or "the dig never found where it ends" —
+  a hint that the Deepwell reaches somewhere much further away than anyone climbing it has ever
+  proven, without saying where. This is a small text change to an existing Deep Lore page, not a new
+  one, and it should read as something that was always slightly strange, not a retcon.
+- **No new raid boss for Region 5 and no new raid content in the Deepwell.** The Voice never appears
+  in the world raid or any online data (lore.md 8.7, "Left for DV"), and this doc keeps that rule.
 
 ### 2.9 New hero and gatherer hooks
 
-- **A gatherer hook fits Wellglass mining** the same way N1b already covers every other resource: a
-  Steady/Lucky pair, recruited only this late because nobody else would come this far down. Working
-  names: **Old Corrin** (Steady, a retired Deepwell miner) and **Sable** (Lucky, "found a way down
-  nobody else had").
+- **A gatherer hook for the Gloamvale's own resource** (2.3), the same shape as every other region's
+  (N1b, plan-4.md 5): a Steady/Lucky pair recruited from the Pale Reach's own survivors — the last
+  people willing to follow the road this far, since nothing lives in the Gloamvale to recruit from.
+  Working names: **Haldor** (Steady) and **Nessa** (Lucky).
 - **No new companion is proposed for Region 5.** Every open companion thread that pays off this late
-  (Elowen, Thessaly, Hesketh, Anselm, Vesper) already has its payoff written into lore.md 8.6; adding
-  a brand-new face this close to the story's climax risks crowding it. HER's roster growth (32
-  heroes, plan-4.md 7) should lean on Regions 2-4 for new faces, not Region 5.
+  (Elowen, Thessaly, Hesketh, Anselm, Vesper) already has its payoff written into lore.md 8.6, and
+  Kestrel's reckoning is Region 4's, not Region 5's (1.6). Adding a brand-new face this close to the
+  story's climax risks crowding it. HER's roster growth (32 heroes, plan-4.md 7) should lean on
+  Regions 2-4 for new faces, not Region 5.
 
 ---
 
-## 3. Material names: filling the Region 1-3 gaps
+## 3. Material names: filling the Region 1-3 gaps (superseded by MAT1)
 
-Core-2.md 5.2 fixes grades 1-15, but the game's data files (12a-art-body.js, 20-data.js, 21-data-craft.js)
+**These names are the LORE-R45 working draft; task MAT1 renames the whole 15-grade ladder to real or
+standard fantasy material words, per the owner's correction (doc header). Nothing below should be
+locked into a code task before MAT1 lands.** Core-2.md 5.2 fixes grades 1-15, but the game's data files (12a-art-body.js, 20-data.js, 21-data-craft.js)
 only name grades 1-5 today (Region 1, grades 1-3, plus Region 2's first two grades, 4-5). Region 2's
 third grade (6) and all of Region 3 (7-9) have no names yet. This section fills them, so RG1 has a
 complete ladder to grade 15 without waiting on a second doc, and fixes the grade-9 clash core-2.md
@@ -374,15 +424,18 @@ family in this table repeats an existing name.
 
 ## 4. Summary tables for the coordinator
 
-### 4.1 Grade ladder, full (core-2.md 5.2 plus this doc)
+### 4.1 Grade ladder, full (core-2.md 5.2 plus this doc; superseded by MAT1)
+
+**Names below are the LORE-R45 working draft, kept for reference only. MAT1 renames the whole ladder;
+do not lock any of these into a code task first.**
 
 | Grade | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Region | Hollow | Hollow | Hollow | Coast | Coast | Coast | Ember | Ember | Ember | Pale Reach | Pale Reach | Pale Reach | Long Stair | Long Stair | Long Stair |
-| Ore | Copper | Iron | Mithril | Starsteel | Emberite | Coralsteel | Cinderore | Ashsteel | Wyrmsteel | Frostiron | Rime-steel | Skysteel | Deepiron | Rootsteel | Wellsteel |
+| Region | Hollow | Hollow | Hollow | Coast | Coast | Coast | Ember | Ember | Ember | Pale Reach | Pale Reach | Pale Reach | Gloamvale | Gloamvale | Gloamvale |
+| Ore | Copper | Iron | Mithril | Starsteel | Emberite | Coralsteel | Cinderore | Ashsteel | Wyrmsteel | Frostiron | Rime-steel | Skysteel | see MAT1 | see MAT1 | see MAT1 |
 
-(The other five families follow the same grade-to-region mapping; see sections 1.4, 2.4 and 3 for
-their full rows.)
+(The other five families follow the same grade-to-region mapping; see sections 1.4 and 3 for their
+draft rows for grades 1-12, and 2.4 for why grades 13-15 are left to MAT1 rather than drafted here.)
 
 ### 4.2 Buff-item families, full (core-2.md 5.4)
 
@@ -390,30 +443,106 @@ their full rows.)
 |---|---|---|---|---|
 | `pearl` | Lantern Pearl | Coast | 6 | Fishing, Tide Pools |
 | `glass` | Ember-glass | Emberwaste | 9 | Emberwaste mining |
-| `star` | Starshard | Pale Reach | 12 | Starfall gathering (new node type, Mining tab) |
-| `well` | Wellglass | Long Stair | 15 | Mining below the Ninth Landing |
+| `star` | Starshard (working, MAT1 may rename) | Pale Reach | 12 | Starfall gathering (new node type, Mining tab) |
+| `gloam` | see MAT1 | Gloamvale | 15 | Mining the Flats of No Reflection and the Hush |
 
 ---
 
 ## 5. Open questions for the owner
 
-1. **Region 4's Listener name and title** ("the Star-Fallen", working). It needs an actual name to
-   go on Kestrel's spear, which this doc left unnamed on purpose (Kestrel's own bio only says "the
-   name on her spear belonged to someone who jumped first"; a name change here also touches her Bond
-   material). Recommended: pick a short, plain name in the house voice (one or two syllables, no
-   invented fantasy spelling), and confirm the "not a rival duel, just a quiet fall" beat (1.6) over a
-   Pyre Knight-style rival fight.
-2. **Region 5's chapter-end beat, the Last Landing (2.7).** This doc proposes it as a story beat only
-   (no rank, no gear gate) to respect the "no Great Lantern for Region 5" rule already in lore.md.
-   Confirm the beat, or say if Region 5 should get some other chapter-end reward instead (a title
-   only, for symmetry with the other four regions, without a full Great Lantern ceremony).
-3. **Whether the Deepwell dungeon and Region 5's zones are the same content, continued content, or
-   separate content that shares a look** (2.8). This changes how much of `57d-deepwell.js` a Region 5
-   spec can reuse versus build fresh.
-4. **All new names in sections 1.4, 1.6, 1.9, 2.4 and 2.9** (Frostiron through Wellsteel, the
-   Starshard/Wellglass buff families, Fenn/Wick, Old Corrin/Sable): approve as a set, or flag any
-   that should change before a code task locks them into save data and item ids.
-5. **Whether Region 4 needs its own signature hazard** (a Whiteout, sketched as a hook in 1.3) the
-   way the Coast has the tide and the Emberwaste has its heat. Not required for the region to ship;
-   flagged because the coast's tide is the reason Pearls have a job "from day one" (region-2.md, rule
-   3), and Starshards currently do not have an equivalent hook.
+1. **Region 5's chapter-end beat, the Seam (2.7).** This doc proposes it as a story beat only (no
+   rank, no gear gate), matching the same "no Great Lantern for Region 5" rule as before, and ties it
+   visually to the final arena's own "seam in the sky" (lore.md 8.7). Confirm the beat, or say if
+   Region 5 should get some other chapter-end reward instead (a title only, for symmetry with the
+   other four regions, without a full Great Lantern ceremony).
+2. **Whether the Deepwell's Season 1 addition (2.8: one new reachable stretch past the Climber's
+   landing, opened only after the ending, for the Voice's rematch) is the right size of change**, or
+   whether the coordinator wants the Deepwell to stay completely untouched until Season 2 and have
+   the rematch live somewhere else (for example, back in the Gloamvale, unlocked after the ending).
+3. **All new character names in this doc** (Rowan, Haldor, Nessa): approve as a set, or flag any that
+   should change. (Material and buff-item names are no longer an open question here — see MAT1.)
+
+---
+
+## LORE-R45b changes
+
+### What changed
+
+- **Region bosses are Shrouds, not Listeners** (lore.md 4.4, 4.4a). None of the five reads as a lamp
+  role any more: no guarding, keeping or listening for a light. Each one already took a region's
+  light away, once, and holds the region shrouded since.
+  - The Hollow: **The Drowning Dark** (was "The Listener"). Same creature (the Elder Marsh Wraith of
+    Wraithmarsh V); the "hears every lamp" framing is dropped for "drowned the marsh's own lights and
+    has held the fog since."
+  - The Sunken Coast: **Silas Penrow, the Fogbound** (was "The Drowned Keeper"). Same character and
+    the same broad history (he gave his light to the sea's promise); the "lamp-keeper who agreed"
+    framing is dropped for "the sea-fog he wears is the shroud, and it is what the Voice wanted all
+    along, not his light specifically."
+  - The Emberwaste: **the Pyre Knight** keeps his name; "guards the fire for the Voice" is dropped —
+    he does not guard or keep anything, he is what holds the Lea's stolen light captive.
+  - The Pale Reach: **the Whitehush** (was "the Star-Fallen"). A new identity, not a renamed person:
+    it is what killed the comrade named on Kestrel's spear, not a shape that comrade turned into.
+    That comrade is now named: **Rowan**.
+  - The Gloamvale (Region 5): still no Shroud; the Voice itself waits at its heart. Unchanged in kind,
+    renamed in place (below).
+- **The Voice's reveal line changes** from "There were lamps before this one" to **"Every flame goes
+  out. I can wait."** (lore.md 8.6). The Season 1 closing question changes to match: not a riddle
+  about an older lantern, but the plain fact that the Voice has gone to wait under the party's own
+  camp.
+- **Region 5 is a new place, the Gloamvale**, not the Deepwell continued (lore.md 8.4; this doc,
+  section 2, fully rewritten). It has its own palette, landmarks, seven zone types and elders. The
+  Season 1 finale moves from "the Bottom of the Stair" to "the Heart of the Gloamvale" (lore.md 8.6,
+  8.7). The Deepwell stays its own dungeon, unchanged, except for one new reachable stretch that opens
+  only after the ending, where the Voice's rematch lives (2.8).
+- **Milestones for all five region-boss falls, plus the Season 1 finale**, written as a table (lore.md
+  4.4a): each gives a sight (the shroud lifts, for good), a person (someone freed comes to Hollow's
+  Rest and brings a building or service), and a power (a new system, timed to plan-4.md's unlock
+  order where that order is already fixed — the Hollow's Proving, the Coast's Enchanting — and
+  flagged as a draft where it is not yet fixed — the Emberwaste's and the Pale Reach's).
+- **The Whiteout is explained** for players (1.3a): an optional Pale Reach hazard, like the Coast's
+  tide, that halves visibility, delays danger warnings, and rewards frost resist; farming through it
+  pays better.
+- **Material and buff-item names are marked superseded by MAT1** throughout both docs (coordinator
+  correction, this task): nothing new was invented for the Gloamvale, and the existing Region 1-4
+  draft tables are flagged, not rewritten, pending MAT1's rename to real/standard fantasy words.
+
+### src/ files and strings a code task should check
+
+None of this has been built yet, so nothing in `src/` is wrong today — but the following already use
+the terms and names this revision retires, and a code task drawing on this doc (or on the earlier
+LORE-R45 draft) should use the new names instead:
+
+- `src/js/21h-lore-hollow.js`: `HOLLOW_ARRIVAL_BOSS` comment and the `listener` beat id/title/text (11,
+  71, 161) all say "the Listener" — rename to reflect "The Drowning Dark" (a Shroud) when this file is
+  next touched.
+- `src/js/22-data-regions.js`: `boss: { zone: 35, name: 'The Listener', ... }` (line 48) — the display
+  name should become `'The Drowning Dark'` when a code task updates it (not done by this doc; docs
+  only, per CLAUDE.md).
+- `src/js/55-story.js`: comments at lines 13 and 176 refer to "the Listener" for the Hollow's boss
+  name slot — update the comment text alongside the display-name change above.
+- `src/js/57c-codex.js` (line ~119) and `src/js/58-deeds.js` (line ~113) and `src/js/21i-lore-exped.js`
+  (line ~14): comments mentioning "the Listener" — cosmetic, but should be updated for anyone reading
+  the code after this doc lands.
+- `src/js/21b-stories-coast.js`: no code line currently says "Listener", but several written lines
+  lean on the "lamp-keeper who kept his promise" framing this revision drops. A future coast-story
+  pass should look at: the `win` lines `'The light stays lit. That was the promise.'` and `'Go home.
+  Keep your little lamps.'`, and the `fall` lines `'It promised the light would never go out.'` and
+  `'Tell Hallam I kept it lit.'` (all currently readable as "he is still a keeper, just a corrupted
+  one," which is exactly the framing the owner asked to drop in favour of "the fog is the point").
+  This doc does not rewrite them, since `21b-stories-coast.js` belongs to a different task's file
+  ownership; it only flags them.
+- No file in `src/` contains "Star-Fallen", "lamps before this one" or "Lamp-Thief" (checked by grep):
+  the Star-Fallen and the old reveal line were never wired into code, so there is no in-code string to
+  migrate for those; the Warlock's title was already changed to "the Shadowbinder" in `classes-2.md`
+  ahead of this task and needs no further follow-up here.
+- Any future Region 4/5 build task should read core-2.md 5.2/5.4 and wait on **MAT1** for grade and
+  buff-item names rather than using the working names in sections 1.4, 2.3, 2.4, 3 and 4 of this doc.
+
+### Open questions for the owner
+
+Kept to three; see section 5 above for the full text of each:
+
+1. Confirm the Gloamvale's chapter-end beat, the Seam, or ask for a different close (section 5.1).
+2. Confirm the size of the Deepwell's Season 1 addition (the rematch's new stretch), or move the
+   rematch elsewhere (section 5.2).
+3. Approve the new character names — Rowan, Haldor, Nessa (section 5.3).
