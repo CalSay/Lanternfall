@@ -796,3 +796,150 @@ pinnacles.md stays the design of the four fights. Core 2.0 changes only what the
 The template applies unchanged. The Pyre Knight (Ser Hadric) and the Caedmon duel use the `challenge` telegraph
 (core-2 6.3) for their duel moments; the Region 3 spec writes them. LORE-R45 names Regions 4-5's bosses; each
 region's spec writes seven elders and a region boss in the 4.2 tables' shape, meeting 1.2's type shares.
+
+---
+
+## 5. Elite traits
+
+### 5.1 The seven traits
+
+Ids and counters are core-2's (6.5). CB2 sets the numbers, the look and where they roll. Every trait is data
+in `ELITE_TRAITS` (21g) with one small handler (59i).
+
+| Id | Name | Effect | Counter (core-2) and how it works | Look on the stage | Badge (5x5) |
+|---|---|---|---|---|---|
+| `shielded` | Shielded | Starts with a shield of **30%** of its max HP. **5 s** after it last took damage the shield comes back full | **Heavy hits** deal **x2** to the shield; burst it and keep hitting | a pale blue hexagon rim (a cached overlay per rig size), cracked under 50% | hexagon |
+| `vampiric` | Vampiric | Heals **20%** of the damage it deals (after the party's armour and reductions), at most 3% of its max HP a second | **Curse**: no healing; **Venom 5+**: half (core-2 3.2) | up to 3 red drops rise when it heals | fang |
+| `explosive` | Explosive | On death: a **1.5 s `zone`** patch under the slot it was hitting, then **2x** its attack to each member there (capped **20%**) | **Dodge** it; or kill it while **Chilled**: it freezes and fizzles, no blast | glowing orange cracks; a fuse spark while the patch shows | bomb |
+| `summoner` | Summoner | Every **12 s** a **2 s `summon`** cast: 2 adds of the pack's type, each **8%** of its max HP, no gold or XP; at most 4 of its adds alive | **Interrupt** (the stage tap, an ability, a stun, an `interrupt` hero); area damage for the adds | a purple sigil under its feet while it casts | circle sigil |
+| `enraged` | Enraged | Under **50%** HP it attacks **50% faster** and deals **20% more** | **Chill** turns the rage off while it lasts; burst it past 50% | red steam over it once raging | horns |
+| `frozen` | Frozen-armour | Takes **x0.5** from physical and frost while iced. **3 fire hits** break the ice (Burn ticks and Curse detonations count as hits); it re-forms **8 s** after breaking | **Fire** | a white-blue ice crust (a cached palette variant and rim); gone when broken | flake in a square, with 3 pips |
+| `cursed` | Cursed | Its hits **Curse** the member hit (no healing, 4 s, refreshed by each hit) | **Holy** damage on it turns the aura off for **5 s**; **cleanse** lifts the Curse | a violet ring at its feet | cracked ring |
+
+- **First sighting:** the first time a trait appears, one toast: "Shielded elite: heavy hits break its shield
+  twice as fast." (one line per trait, from 21g). The Bestiary's foe page lists the traits met and their counters.
+- **Two traits never share a counter** (core-2 6.5). The only pair that would is Explosive + Enraged (both answer
+  to Chill), so they never roll together.
+- **Idle bound** (CX14): with no counter, a trait adds at most 40% to its pack's clear time; with its counter,
+  10% or less. The stall guard (90 s) stays.
+- Champions keep today's rules (no traits).
+
+### 5.2 Where they roll
+
+| Where | Traits per elite | Elites per pack | Weights: Shielded / Vampiric / Explosive / Summoner / Enraged / Frozen / Cursed |
+|---|---|---|---|
+| Region 1 (the Hollow) | **0** (today's elites: x2 HP, behaviour at double strength) | ≤ 1 | - |
+| Region 2 (the Coast) | 1 | ≤ 1 | 25 / 20 / 5 / 20 / 10 / 0 / 20 (drowned foes are holy-weak, so Cursed and its holy counter fit; no Frozen by the sea) |
+| Region 3 (the Emberwaste) | 1 | ≤ 1 | 20 / 10 / 25 / 15 / 25 / 0 / 5 (fire and fury; no ice in a burning land) |
+| Region 4 (the Pale Reach) | **2** | ≤ 2 in `normal` and `swarm` | 15 / 10 / 10 / 15 / 10 / 30 / 10 (Frozen's home: fire is the answer there, core-2 2.3) |
+| Region 5 (the Long Stair) | 2 | ≤ 2 | 15 / 15 / 10 / 15 / 10 / 10 / 25 (the deep curses; holy is the answer) |
+| The Deepwell | 1 from floor 8, 2 from floor 20 | as the floor | equal weights |
+| Pinnacles, the raid | none (bosses have kits instead) | - | - |
+
+**Zone leans.** So a line-up can be built "zone by zone" (plan-4 2.4), each zone of a region's 7-zone cycle
+leans to **two** traits (weight x3). The region data holds `lean[7]` (a pair per zone place). The Bestiary and the
+zone's info line say it: "Elites here are often Vampiric or Shielded." The planner (56d) gives a small score to a
+line-up that carries a lean's counter (8.3, S6-C), so idle players get sensible picks too.
+
+---
+
+## 6. The Deepwell and the raid
+
+### 6.1 The Deepwell: where active play pays most
+
+The Deepwell is the mode built for attention (deepwell.md 1: "active"). CB2 turns that into rewards that stay
+below (deepwell.md rule 4), plus the signature item in D3.
+
+| What | Rule |
+|---|---|
+| Packs | a floor's foes use their `size` (2.1), all at once, floor HP split as today |
+| Elite floors | the elite rolls traits: 1 from floor 8, 2 from floor 20 (Elder Hall weeks too) |
+| Deep Elders | full kits (4.4): 2 phases to floor 15, 3 from floor 20 with Snuff the Lamp |
+| **Oil for answers** | parry +2 s (today), **interrupt +2 s, perfect dodge +1 s, Finisher +3 s**; at most +12 s a floor from answers |
+| **An active boss kill** (3.8's rule) | the draft after it shows **4 cards** instead of 3 (all Rare or better) |
+| New boons (`[A]`, active) | **Steady Feet** (dodge window +0.3 s, perfect +0.2 s), **Breaker** (+30% stagger below), **Coup de Grâce** (Finishers +50%; the auto-Finisher fires at 80%), **Silence** (an interrupt gives back 30% of that ability's charge) |
+| New boon (idle-friendly) | **Lamplight Ward** (a wind-up that lands unanswered deals 30% less), so idle drafts are not worse off |
+| New set | **The Dance** (Steady Feet, Breaker, Coup de Grâce): each perfect dodge also gives 2 s of Oil |
+| The weekly Trial | the same kits; the new boons join the Trial's pool |
+| Idle | target CX12: the idle median floor stays within ±2 of HEAD (more HP loss is offset by the Lamplight Ward and the Oil being unchanged) |
+
+What active play adds below, in one line for the Deepwell's tips card: "Parry, dodge and interrupt to earn Oil.
+Beat a Deep Elder with your own answers and your next draft shows four cards."
+
+### 6.2 The raid: a shared foe, a local fight
+
+**Today** the raid is a damage race with no party HP: your party's damage (x `raidMult`) adds to `S.raid.dmg`,
+which 80-online writes to your `raiders/<userId>` doc. **The online layer does not change** (CLAUDE.md): not
+`world/boss`, not `raiders/*`, not the room presence or the `rally` topic, not `52-raid.js` or `80-online.js`.
+Everything below is local, in a new core file (8.3), reading `online.world` and `worldHp()` only.
+
+| Rule | Value |
+|---|---|
+| The fight | your party on the stage against the wyrm (today's scene), with the kit in 4.5 |
+| **Shared phases** | from the shared world HP (`worldHp() / maxHp`): every raider is in the same phase at the same time |
+| **Shared clock** | the wyrm's warnings run on a schedule seeded by `gen` and the UTC second, so every raider sees the same Flame Breath at the same moment. No messages are sent |
+| Party HP | the wyrm's hits land on your party. **Falter, not wipe:** a fallen member stands up after 6 s at 50%; if all three fall, the party regroups for 8 s (no damage) and stands up whole. A raid never ends in a loss |
+| Your damage | HEAD's raid damage x **raid stance 1.12** (a flat lift that covers an idle party's small downtime, so idle damage an hour is at least HEAD's: CX13) x the local multipliers (your Staggers x1.5, Keen, Reeling, Finishers) |
+| Stagger and Finishers | local: your own stagger bar on your view of the wyrm; your Staggers raise only your damage |
+| Active answers | parry the Tail Sweep, dodge the breath and Wyrmfire, interrupt the `sig` casts |
+| Rewards | today's Embers and raid unique on the wyrm's fall (unchanged). **Plus** the generation's signature buff item for every raider with at least 1% of the damage, and one more if you gave 3+ active answers during that wyrm (3.8). Granted locally from the existing `raidReward` event |
+| Away | the away raid gain is unchanged (0.5 x damage a second) |
+
+What active play adds in a raid: about 15-30% more of your damage (CX13), a second signature item, and the
+feeling of a room full of lanterns dodging the same breath.
+
+---
+
+## 7. Tactics hooks (for S7)
+
+### 7.1 What Tactics can and cannot do
+
+| Mechanic | Tactics can | Tactics cannot |
+|---|---|---|
+| Parry, dodge | answer with the line-up (IF `telegraph heavy` THEN `use ab1` for a Shield Wall; IF `telegraph zone` THEN `moveTo` a clear slot) | parry or dodge. Those stay the player's own (roadmap-review 2.8: "active play still beats Tactics on perfect dodges") |
+| Interrupt | IF `castBar sig` THEN `interrupt` (the first charged ability that can) | beat a charge that is not there |
+| Stagger | IF `staggerNear 80` THEN `hold ab1`; IF `staggerFull` THEN `use ab2` | - |
+| Finisher | IF `staggerFull` THEN `finish` (proposal 8.2-6): fires at 0.5 s at 80% | reach 100% (the player's tap) |
+| Elites | IF `elite vampiric` THEN `focus`; IF `allyHas curse` THEN `cleanse` | - |
+| Reactions | IF `reaction` THEN `use ab1` (proposal 8.2-6: a reaction window is open on the focus foe) | - |
+
+Tactics answers do **not** count toward the active reward (3.8): they already work while idle.
+
+### 7.2 The ids CB2 feeds (core-2 4.5)
+
+| Condition | CB2's args | Source |
+|---|---|---|
+| `telegraph` | `heavy` `dive` `heal` `zone` `slam` `line` `sig` `hard` `summon` `hazard` `enrage` (`cleanse` `swap` proposed) | the scheduler (59g) |
+| `castBar` | `any`, `sig` | 59g |
+| `elite` | a trait id or `any` | 59i |
+| `staggerFull`, `staggerNear` | -, % | 59g |
+| `phase` | 1-3 | 59h |
+| `packSize` | n (3, 5, 8 now mean brutes, normal, swarm) | 59-combat |
+| `bossHp` | % | 59-combat |
+| `reaction` (proposed) | - | S1's reaction engine |
+
+Actions CB2 serves: `use`, `hold`, `focus`, `taunt`, `cleanse`, `interrupt`, `moveTo` (all core-2), and `finish`
+(proposed, the Lanternbearer only).
+
+**Engine hook:** `cbState()` returns one reused, read-only snapshot for Tactics and the UI:
+`{ tele: { kind, left, win, foe }, cast: { kind, left, foe }, stag: { v, max, on, left }, rxWin, phase,
+elites: [traits], packN }`. Tactics reads it 4 times a second, never per frame.
+
+### 7.3 Presets (content for S7)
+
+| Preset | Lanternbearer (2 rules) | Heroes (3 rules each, as their kit allows) |
+|---|---|---|
+| `boss` | IF `castBar sig` THEN `interrupt`; IF `staggerFull` THEN `finish` | IF `staggerNear 80` THEN `hold sig`; IF `allyHp 40` THEN `use sig` (healers); IF `telegraph dive` THEN `taunt` (tanks) |
+| `farm` | IF `packSize 5` THEN `use ab1`; IF `elite any` THEN `focus` | IF `packSize 5` THEN `use sig` (area heroes); IF `allyHas curse` THEN `cleanse` (Priest, cleansers) |
+| `deepwell` | IF `telegraph zone` THEN `use ab1` (a shield or Guard ability; else skipped); IF `castBar sig` THEN `interrupt` | IF `allyHp 50` THEN `use sig`; IF `elite summoner` THEN `use sig` (stunners); IF `telegraph dive` THEN `taunt` |
+
+### 7.4 Auto-play without Tactics
+
+What an idle party does today stays, plus four small defaults (none needs a setting):
+
+1. Abilities auto-cast at full power at the first valid target; they wait up to 1.5 s when a Stagger is at 90%+
+   (3.6).
+2. The auto-Finisher fires 2.5 s into a Stagger at 50% (3.4).
+3. **A casting foe (`heal`, `summon`) becomes the party's focus while it casts**, so stuns and signatures land on
+   it by default. (Today the focus is the marked foe, the one hitting the most hurt ally, else the most hurt foe.)
+4. Hero signatures tagged `interrupt` or that stun fire at a `sig` cast if they have a charge (they do not hold).
