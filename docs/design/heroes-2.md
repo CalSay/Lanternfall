@@ -340,3 +340,348 @@ Lore note: an Awakening is not a new flame. Lanternborn (rank 7, D5) is still "a
 straighter. Copy should never call it a light or a lamp being lit.
 
 ---
+
+## 3. The roster of 32
+
+### 3.1 Counting today's heroes
+
+`ROSTER` in `src/js/56-roster.js` has exactly **18** heroes: Tobin, Wren, Hesketh, Pip, Bram (Hedgefolk,
+5); Maren, Aldric, Anselm, Elowen, Caedmon (the Oath, 5); Kestrel, Isolde, Oriel, Corvin (Dusk Company,
+4); Thessaly, Grenna, Morwen, Vesper (Wayfarers, 4). 32 - 18 = **14 new heroes**.
+
+Where today's heroes are recruited, by the tuned gates in `56c-unlocks.js`: 16 in the Hollow; **Elowen**
+(her chapel quest opens at zone 57) and **Corvin** (150 zone bosses, about week 2-3) land in Region 2 by
+timing. The owner's "Region 2 gives 2 recruits" is read here as **2 new faces** on the Coast (D1).
+
+### 3.2 How the 14 were chosen
+
+- **Roles to 8 each.** Today: 5 tanks, 5 strikers, 4 casters, 4 supports. New: 3 tanks, 3 strikers,
+  4 casters, 4 supports.
+- **Types to 6-7 each** (CL1 5.1 has physical 5, holy 5, fire 3, frost 3, poison 2). New: physical 2,
+  holy 2, fire 3, frost 3, poison 4. Result: physical 7, holy 7, fire 6, frost 6, poison 6. This meets
+  CL1 C3: two poison heroes (a Coast beast-hunter, Cass, and an Emberwaste one, Ferrin; plus Eskil and
+  Ragna) and a physical support (Wynn).
+- **Each region's recruits answer its resistances.** The Emberwaste resists fire, so none of its six is
+  fire. The Pale Reach's `pale` foes are weak to fire and its beasts to poison, so its five lean fire and
+  poison. The Gloamvale's one recruit is a guide, not a fighter from the valley.
+- **Spread:** Coast 2 (owner rule), Emberwaste 6, Pale Reach 5, Gloamvale 1. regions-4-5.md 2.9 asked for
+  no new face in Region 5; Aslaug is a Pale Reach guide met at the top of the road down, recruited in the
+  first Gloamvale zone, and her quest never touches the Voice (D1).
+- **Rarity:** no new Commons (a late Common would be dead weight). Rare 5, Epic 7, Legendary 2. Result
+  for 32: Common 5, Rare 10, Epic 12, Legendary 5. Awakenings keep early heroes worth fielding.
+- **Circles:** a fifth circle, **Reachfolk**, for the four Pale Reach people who never had lanterns and
+  gave each other light hand to hand (D3). Result: Hedgefolk 7, the Oath 7, Dusk Company 7, Wayfarers 7,
+  Reachfolk 4.
+- **Every new hero has a Bond** (14 new Bonds, 3.4), and their quest's first step uses it.
+
+### 3.3 The roster table
+
+Weight follows role (core-2 5.1): tank heavy, striker medium, caster and support light. "Feeds" is the
+reaction the signature's status feeds (CL1 5.1).
+
+| # | Hero (title now -> Awakened) | Role | Home | Type | Signature (status) | Feeds | Rarity | Circle | Recruited in | How | Awakens in |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Tobin Reed (the Hedge Squire -> the Hedge Knight) | tank | Front | phys | Guard (`guard`) | none | Common | Hedgefolk | Hollow | zone 8, free | Coast |
+| 2 | Wren Hollowmere (the Batwing Archer -> the Nightbow) | striker | Middle | phys | Aimed Shot (`mark`) | Judgement | Common | Hedgefolk | Hollow | zone 8, gold | Coast |
+| 3 | Old Hesketh (the Lamplighter -> of the Hill Lamp) | support | Back | holy | Mend (`shield`) | Judgement | Common | Hedgefolk | Hollow | zone 11, free | Coast |
+| 4 | Pip Cinderly (the Hedge Mage -> the Last Page) | caster | Back | fire | Fireball (`burn`) | Blight | Common | Hedgefolk | Hollow | zone 12, gold | Emberwaste |
+| 5 | Bram Hollis (the Woodcutter -> the Homeward) | striker | Front | phys | Felling Blow (`bleed`) | Shatter | Common | Hedgefolk | Hollow | hand in wood | Coast |
+| 6 | Maren Ashvale (the Lampwarden -> of the Barrow Lamp) | tank | Front | holy | Beacon (`taunt`) | Judgement | Rare | the Oath | Hollow | hand in Essence | Coast |
+| 7 | Ser Aldric Vane (the Oathbound -> the Banner-Bearer) | tank | Front | phys | Shield Bash (`stun`) | Shatter | Rare | the Oath | Hollow | Renown, gold | Coast |
+| 8 | Kestrel Thane (the Skyfall Dragoon -> Rowan's Spear) | striker | Middle | frost | Leap (`chill`) | Shatter | Rare | Dusk Company | Hollow | zone 20, gold | Pale Reach |
+| 9 | Thessaly Gloam (the Bog Seer -> the Deep-Water Seer) | caster | Middle | frost | Sinking Mire (`chill`) | Shatter | Rare | Wayfarers | Hollow | bestiary | Coast |
+| 10 | Brother Anselm (the Bellringer -> of Patience) | support | Middle | holy | Call to Arms (`empower`) | Judgement | Rare | the Oath | Hollow | Tavern | Emberwaste |
+| 11 | Grenna Holt (the Stonebreaker -> the Unbroken) | tank | Front | phys | Earthshatter (`stun`) | Shatter | Epic | Wayfarers | Hollow | token | Emberwaste |
+| 12 | Isolde Marrow (the Duskblade -> the Contract Kept) | striker | Middle | poison | Execute (`venom`) | Blight | Epic | Dusk Company | Hollow | token | Emberwaste |
+| 13 | Oriel Vess (the Starcaller -> Who Found Your Star) | caster | Back | frost | Starfall (`stun`) | Shatter | Epic | Dusk Company | Hollow | craft | Emberwaste |
+| 14 | Morwen Tallow (the Candlewitch -> Maud's Kin) | caster | Back | fire | Candlelight Vigil (`burn`) | Blight | Epic | Wayfarers | Hollow | boss, no support | Coast |
+| 15 | Vesper Lark (the Songweaver -> of the Road Song) | support | Middle | holy | Crescendo (`regen`) | Judgement | Epic | Wayfarers | Hollow | Tavern / Renown | Pale Reach |
+| 16 | Saint Elowen (the Last Lantern -> Who Kept One Back) | support | Back | holy | Chapel Light (`regen`) | Judgement | Legendary | the Oath | Coast (zone 57) | chapel quest | Pale Reach |
+| 17 | Caedmon the Unburnt (the Ashen Knight -> the Knight of the Hour) | tank | Front | fire | Pyre Guard (`burn`) | Blight | Legendary | the Oath | Hollow | Region 1 boss + Renown | Emberwaste |
+| 18 | Corvin Black (the Hollow King's Blade -> the Freed Blade) | striker | Middle | poison | Hollow Cut (`venom`) | Blight | Legendary | Dusk Company | Coast (timing) | Kingslayer | Emberwaste |
+| 19 | **Cass Penhallow** (the Reef Harpooner -> the Reefbreaker) | striker | Middle | poison | Harpoon (`venom`) | Blight | Rare | Wayfarers | **Coast** | Kelp Strangler elder, gold | Coast |
+| 20 | **Merrin Penrow** (the Keeper's Daughter -> of Saltreach Light) | caster | Back | holy | Lens (`mark`) | Judgement | Epic | the Oath | **Coast** | letters, hand in gems | Coast |
+| 21 | **Wynn Ashby** (the Water-Carrier -> of Emberlea) | support | Middle | phys | Bucket Line (`shield`) | none (cleanse) | Rare | Wayfarers | **Emberwaste** | Mother Ashby + Emberlea | Emberwaste |
+| 22 | **Ferrin Slake** (the Kiln Rat -> the Paid-Up) | striker | Middle | poison | Sulphur Pot (`venom`) | Blight | Rare | Dusk Company | **Emberwaste** | token (Kiln Tally) | Emberwaste |
+| 23 | **Linnet Cole** (the Glassblower -> of the Glass Flats) | caster | Back | frost | Cold Glass (`chill`) | Shatter | Epic | Wayfarers | **Emberwaste** | bestiary (Glasswalker) | Emberwaste |
+| 24 | **Oswin Hale** (the Ash Squire -> Ser Oswin, the Squire Who Stayed) | tank | Front | phys | Shieldbearer (`taunt`) | Shatter | Epic | the Oath | **Emberwaste** | Tavern | Emberwaste |
+| 25 | **Hob Tarrow** (the Icehouse Man -> the Cold Harbour) | tank | Front | frost | Cold Store (`chill`) | Shatter | Rare | Hedgefolk | **Emberwaste** | Nan's rumour | Emberwaste |
+| 26 | **Orla Fairweather** (the Hedge Scholar -> Who Wrote It Down) | support | Back | holy | Somewhere to Go (`regen`, cleanse) | Judgement | Legendary | Hedgefolk | **Emberwaste** | Region 3 boss (milestone) | Pale Reach |
+| 27 | **Eskil Brandt** (the Pass Scout -> of the Frostgate) | striker | Middle | poison | Wolfsbane Arrow (`venom`) | Blight | Rare | Dusk Company | **Pale Reach** | zone 113, gold | Pale Reach |
+| 28 | **Brynja Holm** (the Doorward -> of the Warm Door) | tank | Front | fire | Brazier (`taunt`, `burn`) | Blight | Epic | Reachfolk | **Pale Reach** | hand in fibre and hide | Pale Reach |
+| 29 | **Inga Fallow** (the Starwright -> of the Starfall) | caster | Back | frost | Shardfall (`chill`) | Shatter | Epic | Dusk Company | **Pale Reach** | first Starfall gather | Pale Reach |
+| 30 | **Ragna Moss** (the Lichen-Witch -> of the Rimewood) | caster | Back | poison | Black Lichen (`venom`) | Blight | Epic | Reachfolk | **Pale Reach** | token (Lichen Bundle) | Pale Reach |
+| 31 | **Solveig Lund** (the Sill-Candle -> Who Kept the Village) | support | Back | fire | Sill-Candle (`regen`, `burn`) | Blight | Legendary | Reachfolk | **Pale Reach** | Region 4 boss (milestone) | Gloamvale |
+| 32 | **Aslaug Grey** (the Guide -> Who Went Down) | support | Middle | fire | Torch Up (`empower`, `burn`) | Blight | Epic | Reachfolk | **Gloamvale** | zone 141 | Gloamvale |
+
+Totals. Roles: tank 8, striker 8, caster 8, support 8. Types: physical 7 (Tobin, Wren, Bram, Aldric,
+Grenna, Wynn, Oswin), holy 7 (Hesketh, Maren, Anselm, Vesper, Elowen, Merrin, Orla), fire 6 (Pip,
+Morwen, Caedmon, Brynja, Solveig, Aslaug), frost 6 (Kestrel, Thessaly, Oriel, Linnet, Hob, Inga), poison
+6 (Isolde, Corvin, Cass, Ferrin, Eskil, Ragna). Every type has at least one tank or support except
+poison (whose heroes are strikers and a caster, as the type's damage-over-time job suits).
+
+### 3.4 The 14 new Bonds
+
+Same shape as formation.md 2.3 (effect at 100% = level 3, two stories and a Sworn line each). Bonds
+keep the +40% / -20% caps.
+
+| id | Bond | Pair | Why | Effect at 100% | Stories (Friends / Close) |
+|---|---|---|---|---|---|
+| `drowned` | Drowned Villages | Cass + Thessaly | Both lost a village to the water | Chilled foes take 15% more Venom damage from Cass; Thessaly's Mire lasts 1 s longer on foes with Venom | Two Villages / What the Water Kept Back |
+| `lightsaw` | The Light He Saw | Merrin + Hesketh | Silas saw Hesketh's hill lamp from Saltreach Light | Mend on a Marked ally also shields 5%; Lens comes back 2 s sooner while Hesketh stands | A Small Light Inland / Her Father's Last Letter |
+| `onehour` | One Hour | Wynn + Caedmon | Caedmon held the road; Wynn carried the water | Caedmon's Cinder Vow ends with a Bucket Line cleanse; Wynn's shields on Caedmon are 50% bigger | Water Up the Road / Nine Years Old |
+| `badco` | Bad Company | Ferrin + Isolde | He owes her money; she has not decided whether to collect | Execute on a foe with 5+ Venom takes 2 s off Sulphur Pot; both crit 8% more on Venomed foes | The Debt / Paid in Full |
+| `stoneglass` | Stone and Glass | Linnet + Grenna | The stone woke; the sand stood up | Earthshatter Shatters Cold Glass's Chill for 20% more; Grenna takes 10% less while a foe is Chilled | Glass Is Only Stone / What the Flats Remember |
+| `accolade` | The Accolade | Oswin + Aldric | The last knight of the Order and a squire with no knight | Both get +15 armour; Intercept and Shieldbearer never cover the same ally at once (they share the work) | A Squire Again / Kneel |
+| `nansbro` | Nan's Brother | Hob + Grenna | Grenna worked the quarry with Nan Tarrow | Heavy hits by either on a Chilled foe Stagger 20% more; Hob's Cold Store also covers Grenna | Ice From the Quarry / Forty People |
+| `author` | The Author | Orla + Pip | Pip taught herself fire from Orla's book | Fireball on a foe carrying a Burn Orla moved uses Kindle for 30% each; Orla's heals on Pip are 20% bigger | Your Handwriting / The Page I Tore Out |
+| `rowan` | Rowan's Friends | Eskil + Kestrel | They scouted the pass with Rowan | Leap on a foe with Venom Chills 2 s longer; Wolfsbane Arrow goes to Kestrel's landing target | The Three of Us / The Cairn |
+| `door` | Hold the Door | Brynja + Tobin | Two people who never run first | The party takes 6% less damage; Guard on Brynja also Burns her attacker | Doors / Nobody Runs First |
+| `twoskies` | Two Skies | Inga + Oriel | One reads the stars from above, one from where they fell | Each cast of Starfall or Shardfall takes 2 s off the other; both +5% crit | Up and Down / Where Your Star Fell |
+| `mosswax` | Moss and Wax | Ragna + Morwen | Two witches, a garden each, both lost | Wax Seal bursts spread Ragna's Venom too; Black Lichen on a Burning foe adds 2 Venom | Recipes / What We Don't Name |
+| `candlespark` | Candle and Spark | Solveig + Elowen | One candle for a village, sparks for a land | Chapel Light and Sill-Candle heal 20% more on an ally the other healed in the last 5 s | Low Flames / Ten Winters, Ten Years |
+| `lastvalley` | The Last Valley | Aslaug + Thessaly | The seer saw the valley in the water; the guide has seen it with her eyes | Torch Up takes 2 s off Sinking Mire; Thessaly's Chill lasts 1 s longer on foes Aslaug Burned | She Saw It Too / Don't Turn Back |
+
+Bonds in all: 21 today + 5 from CL1 + 14 here = **40** (80 stories, 40 Sworn lines).
+
+**Reachfolk Kin** (`reachkin`, D3): two Reachfolk in the party: "Hand to Hand: healing on one party
+member also heals the others for 15% of it." (x1.25 with a Common never applies: Reachfolk has none.)
+
+---
+
+### 3.5 Every hero: character, quest, Awakening
+
+Each entry: role, type and circle; recruit; the quest with its step kinds; the Awakening. New heroes
+also get two lines of character (their bio). Step lines are the player's copy (at most 60 characters);
+the kind is in brackets for HER. Numbers are starting values for BAL3.
+
+#### The Hollow's heroes (recruited in Region 1, and Elowen and Corvin by timing)
+
+**1. Tobin Reed** · tank, physical, Hedgefolk · zone 8, free.
+- **Quest: The Borrowed Sword** (Coast)
+  1. Fight beside Bram until you trust each other. [`bond mossy 3`]
+  2. Reach the Coast. A letter from his mother waits. [`reach z36`]
+  3. Bring 50 grade-4 wood for a new hedge gate. [`bring wood g4 50`]
+  4. Win Tobin's Stand: *Nobody Runs First* (`hold`: Mossy Hollow's lamp on its hook, the first night's
+     bats; twist: three `heavy` dives to parry). [`stand`]
+- **Awakening: the Hedge Knight.** **Guard II:** Guard covers two allies, and when it breaks it comes
+  back once at half strength. **First to Stand:** Earned Trust goes up to 30%, and the first fall in a
+  pack no longer resets it. Look: a hedge-green tabard with a gold hem; your spare sword, finally in its
+  own scabbard.
+
+**2. Wren Hollowmere** · striker, physical, Hedgefolk · zone 8, gold.
+- **Quest: Aim at Sounds** (Coast)
+  1. Fight beside Kestrel until you trust each other. [`bond markleap 3`]
+  2. Beat the Bat Queen's Eldest in the Batwing caves. [`foe batwing q_bateldest`]
+  3. Reach the Gullcliffs. The caves are quiet now. [`reach gullcliffs`]
+  4. Win Wren's Stand: *Don't Answer* (`hunt`: a Marsh Wraith sings her name and runs for the dark; it
+     stops at 3 old lamp posts). [`stand`]
+  The singing is the Voice trying to lure her lamp (lore.md 6.2). Copy only ever says "a voice".
+- **Awakening: the Nightbow.** **Aimed Shot II:** pierces the whole column and Marks every foe it hits.
+  **Aim at Sounds:** her crits on a Marked foe add 5 Stagger. Look: a dark-green hood with a silver
+  fletch at the shoulder.
+
+**3. Old Hesketh** · support, holy, Hedgefolk · zone 11, free.
+- **Quest: The Hill Lamp** (Coast; 5 steps)
+  1. Fight beside Maren until you trust each other. [`bond lampward 3`]
+  2. Send Hesketh on a Hollow expedition. He walks the old route. [`exped band1`]
+  3. Read the Keeper's Letters in the Coral Nave. [`beat coast4`]
+  4. Bring 30 grade-5 Essence for the hill lamp. [`bring ess g5 30`]
+  5. Win Hesketh's Stand: *The Long Route* (`keep`: his hill lamp, lit for his wife; wisps try to snuff
+     it; twist: fog at 30 s halves sight). [`stand`]
+  Step 3 is where Silas's "one small light on a hill" is read. The Awakened story is the Bond story "The
+  Last Lamp Lit" told from his side: he lets you see the lamp.
+- **Awakening: of the Hill Lamp.** **Mend II:** heals the two most hurt allies and leaves a small lamp at
+  their feet (holy regen, 2% of max HP a second for 5 s). **Lit for Her:** his shields cannot be stripped
+  (Stormgull dives, Shielded counters), and Warm Light holds up to 30% of max HP. Look: the lamp on his
+  pole burns gold, with a thin ribbon tied to it.
+
+**4. Pip Cinderly** · caster, fire, Hedgefolk · zone 12, gold.
+- **Quest: The Last Page** (Emberwaste)
+  1. Fight beside Oriel until you trust each other. [`bond kindlestar 3`]
+  2. Reach the Ashfall. Scorched pages blow in the ash. [`reach ashfall`]
+  3. Beat the Kiln elder. The page is in its fire. [`foe kilns q_kilnpage`]
+  4. Win Pip's Stand: *Somewhere to Go* (`wave`: Kept Lights and Ash Moths; twist: a Fireball on a Kept
+     Light sends it home and counts as a kill). [`stand`]
+  LORE10 owns Pip's last page and its line; step 3 is where the quest hands it to her (a Mage
+  Lanternbearer may already carry it through the Bond "The Last Page"; the line is read once either way).
+- **Awakening: the Last Page.** **Fireball II:** uses up Kindle for 25% more each (was 20%) and splashes
+  its Burn on the column. **Somewhere to Go:** a Burn that spreads on death carries the dead foe's Kindle
+  stacks with it. Look: a singed book on a strap at her hip; orange lining.
+
+**5. Bram Hollis** · striker (melee), physical, Hedgefolk · hand in grade-1 wood.
+- **Quest: Marks at Every Fork** (Coast)
+  1. Fight beside Wren until you trust each other. [`bond hunting 3`]
+  2. Bring 60 grade-4 wood. He carves new marks down the coast road. [`bring wood g4 60`]
+  3. Beat Silas the Fogbound. The road home is safe. [`boss 2`]
+  4. Win Bram's Stand: *The Tree That Fell Right* (`hunt`: a Coral Warden champion walls in a cart on
+     the shingle; stop it before the wall closes). [`stand`]
+  Step 3 lines up with the Hollises' arrival (lore.md 7.2): Ada and Pell reach the fire the same day. Their
+  Hands' route stays as gatherers-2 5.2 says (no Bond gate, no quest gate).
+- **Awakening: the Homeward.** **Felling Blow II:** Bleeds 2 and Shatters a Chilled foe for 50% more.
+  **Steady Swing:** Cleave hits the second foe for 75% (was 50%), and every 6th hit is heavy. Look: an
+  axe-haft carved with a fork mark; a wool scarf (Ada made it).
+
+**6. Maren Ashvale** · tank, holy, the Oath · hand in grade-3 Essence.
+- **Quest: Lit for the Dead** (Coast)
+  1. Fight beside Thessaly until you trust each other. [`bond mirelamp 3`]
+  2. Send Maren home to the Barrows on an expedition. [`exped band2`]
+  3. Beat the Barrow Beetle's Eldest in the Barrows. [`foe barrows q_barrowdoor`]
+  4. Win Maren's Stand: *Eleven Winters* (`hold`: the Barrow Lamp; Rattlebones rise twice unless burned;
+     twist: a `line` slam to dodge). [`stand`]
+  Her Awakened story is lore.md 11.4 told plainly: it held because it was lit for the dead, and because
+  of her own care.
+- **Awakening: of the Barrow Lamp.** **Beacon II:** taunts, shields the party for 15% of max HP, and for
+  4 s every hit on her burns back twice. **Her Own Care:** Lanternlight burns back 15% (was 10%) as holy
+  and Marks the attacker for 3 s. Look: a lamp on her back with a barrow-door knocker set in its frame.
+
+**7. Ser Aldric Vane** · tank, physical, the Oath · Renown, gold.
+- **Quest: Yours Now** (Coast)
+  1. Fight beside Elowen until you trust each other. [`bond oldoath 3`, alt any]
+  2. Bring 60 grade-5 fibre for a new banner. [`bring fibre g5 60`]
+  3. Beat the Coral Warden's Eldest in the Coral Nave. [`foe nave q_naveguard`]
+  4. Win Aldric's Stand: *The Banner Stands* (`hold`: the banner in the Nave's aisle; Drowned Deckhands
+     and a bell that calls more; twist: a cast bar to interrupt). [`stand`]
+- **Awakening: the Banner-Bearer.** **Shield Bash II:** hits every foe and stuns two; stunned foes take
+  30% more Stagger. **Order of One:** while he stands in Front, the Middle and Back take 5% less damage.
+  Look: the banner on his back, new, in your colours.
+
+**8. Kestrel Thane** · striker (melee), frost, Dusk Company · zone 20, gold.
+- **Quest: Rowan's Spear** (Pale Reach; 5 steps)
+  1. Fight beside Wren until you are close. [`bond markleap 4`]
+  2. Reach the Frostgate Pass. [`reach frostgate`]
+  3. Beat the Rimewolf's Eldest at Rowan's cairn. [`foe frostgate q_cairnwolf`]
+  4. Beat the Whitehush, with Kestrel in the party. [`boss 4 field`]
+  5. Win Kestrel's Stand: *Hold the Pass* (`hold`: the Frostgate in the Whiteout, what Rowan did; twist:
+     sight halves for 10 s). [`stand`]
+  Her two lines at the Whitehush stay the region's (regions-4-5.md 1.6); the quest adds no rival
+  mechanic. No step line says how Rowan died before step 4.
+- **Awakening: Rowan's Spear.** **Leap II:** lands twice; the second landing is `heavy` and Shatters a
+  Chilled foe. **Two Names:** Leap Chills for 6 s (was 4), and her crits on Chilled foes add 5 Stagger.
+  Look: a pale ribbon on the spear with Rowan's name stitched in.
+
+**9. Thessaly Gloam** · caster, frost, Wayfarers · bestiary (Marsh Wraith).
+- **Quest: The Drowned Village** (Coast)
+  1. Fight beside Cass until you trust each other. [`bond drowned 3`, alt any]
+  2. Reach Drowned Saltreach. Her story plays there. [`beat coast3`]
+  3. Beat the Brine Witch's Eldest in Drowned Saltreach. [`foe saltreach q_brineeldest`]
+  4. Win Thessaly's Stand: *Bog Water* (`wave`: green wisps over the marsh; twist: a heal cast to
+     interrupt). [`stand`]
+  Sealed (lore.md 8.6): nothing here says who holds the lantern in her vision.
+- **Awakening: the Deep-Water Seer.** **Sinking Mire II:** Roots the column for 2 s and Chills it.
+  **Still Water:** her Chill lasts 30% longer, and Chilled foes deal 15% less damage. Look: a string of
+  sea-glass beads on her staff.
+
+**10. Brother Anselm** · support, holy, the Oath · Tavern.
+- **Quest: The Crack in Patience** (Emberwaste)
+  1. Fight beside Vesper until you trust each other. [`bond bellsong 3`]
+  2. Bring 60 grade-8 ore. Bell-metal for the crack. [`bring ore g8 60`]
+  3. Beat the Slagback's Eldest. The Kilns are free to use. [`foe kilns q_slageldest`]
+  4. Win Anselm's Stand: *Ring Every Dusk* (`keep`: the bell on its frame; Ash Moths smother its sound;
+     twist: each toll clears the nearest moth). [`stand`]
+  The crack is mended; the last toll is not rung (lore.md 8.6 keeps it for the Voice).
+- **Awakening: of Patience.** **Call to Arms II:** also Marks the focus foe for 4 s (holy hits on it set
+  off Judgement). **True Note:** each toll also cleanses one harmful status from the most hurt ally.
+  Look: the bell's crack filled with a bright bronze seam.
+
+**11. Grenna Holt** · tank, physical, Wayfarers · Stonebreaker's Token.
+- **Quest: Stone Remembers** (Emberwaste)
+  1. Fight beside Vesper until you trust each other. [`bond quarry 3`]
+  2. Reach the Glass Flats. [`reach glassflats`]
+  3. Beat the Glasswalker's Eldest, with Grenna in Front. [`foe glassflats q_glasseldest`]
+  4. Win Grenna's Stand: *The Quarry Woke* (`hold`: a quarry crane with Nan's lift-cage; golems slam;
+     twist: two `heavy` slams to parry). [`stand`]
+- **Awakening: the Unbroken.** **Earthshatter II:** stuns the Front and Middle columns and is `heavy`.
+  **Bedrock II:** Rockhide goes up to 30%, and at full Rockhide the foe that hits her takes 10 Stagger.
+  Look: glass shards set in her hammer's head like studs.
+
+**12. Isolde Marrow** · striker (melee), poison, Dusk Company · Dusk Contract.
+- **Quest: Finish** (Emberwaste)
+  1. Fight beside Corvin until you trust each other. [`bond signed 3`]
+  2. Beat the Hollow King (pinnacle), with Isolde in the party. [`boss pin_king field`]
+  3. Win a second Dusk Contract from zone bosses. She reads it. [`bring token dusk 1`]
+  4. Win Isolde's Stand: *Finish It* (`hunt`: a champion wraith behind a curtain of bats). [`stand`]
+  Her contract says "finish"; Corvin signed it (lore.md 6.2). The Bond "Finish, Together" is the pair's;
+  this quest is hers alone.
+- **Awakening: the Contract Kept.** **Execute II:** a kill with Execute puts 5 Venom on the foes next to
+  it. **Read at Last:** Unfinished Business also carries 3 Venom to the next target. Look: the contract
+  rolled in a black ribbon at her belt.
+
+**13. Oriel Vess** · caster, frost, Dusk Company · Star Chart (craft).
+- **Quest: A New Star** (Emberwaste)
+  1. Fight beside Pip until you are close. [`bond kindlestar 4`]
+  2. Beat Silas the Fogbound. The new star brightens. [`boss 2`]
+  3. Bring 40 grade-7 gems for a new chart. [`bring crystal g7 40`]
+  4. Win Oriel's Stand: *Read the Sky* (`wave`: Ash Moths under falling embers; twist: Starfall pulses
+     land where the chart says; stand out of the third). [`stand`]
+  The small new star is your lamp seen from the sky (lore.md 6.2). The good news she finally reads is
+  that one.
+- **Awakening: Who Found Your Star.** **Starfall II:** the last pulse stuns for 1.5 s and Chills.
+  **Good News at Last:** Night Sight cuts 1.5 s per crit (was 1), and Constellation goes up to 35%. Look:
+  one bright pixel star on her hood, always in the same place.
+
+**14. Morwen Tallow** · caster, fire, Wayfarers · Fungal Deep boss with no support.
+- **Quest: My Family Kept the Lamps** (Coast)
+  1. Fight beside Pip until you trust each other. [`bond waxkindle 3`]
+  2. Reach Maud's landing in the Deepwell, with Morwen in the run. [`reach deep_maud field`]
+  3. Beat the Spore Cap's Eldest again, with no support. [`foe fungal q_gardeneldest nosup`]
+  4. Win Morwen's Stand: *The Garden* (`wave`: spore clouds that Curse; twist: burn a cloud before it
+     lands). [`stand`]
+  The candles stay a secret, forever (lore.md 6.2). Her Awakened story names Maud, not the wax.
+- **Awakening: Maud's Kin.** **Candlelight Vigil II:** the candles also heal allies near them 1% of max
+  HP a second and Burn foes near them. **Kept Lamps:** Wax Seal bursts add 2 Burn and 1 Venom to the foes
+  they hit. Look: a small iron lantern at her belt, Maud's make.
+
+**15. Vesper Lark** · support, holy, Wayfarers · Tavern or Renown.
+- **Quest: The Road Song** (Pale Reach)
+  1. Fight beside Anselm until you are close. [`bond bellsong 4`]
+  2. Hear a verse in every region you have reached. [`beat verses`] (one line on each arrival beat:
+     Coast, Emberwaste, Pale Reach)
+  3. Beat the Palefolk's Eldest in the Silent Village. [`foe silentvillage q_paleeldest`]
+  4. Win Vesper's Stand: *Sing Them Home* (`keep`: a Silent Village child who follows the song; twist:
+     the verse must change on the cast bar). [`stand`]
+  Her last verse stays unfinished; she finishes it after the last fight (lore.md 8.6).
+- **Awakening: of the Road Song.** **Crescendo II:** resets the longest ally cooldown and plays all
+  three verses at double strength for 4 s. **Refrain II:** the song turns every 5 s (was 6). Look: a
+  lute with a new gold string.
+
+**16. Saint Elowen** · support, holy, the Oath · chapel quest (zone 57).
+- **Quest: The Night She Chose** (Pale Reach; 5 steps)
+  1. Fight beside Aldric until you are close. [`bond oldoath 4`, alt any]
+  2. Beat the Pyre Knight. The held lights go home. [`boss 3`]
+  3. Reach the Silent Village. A people who gave light hand to hand. [`reach silentvillage`]
+  4. Bring 40 grade-11 herbs to the chapel. [`bring herb g11 40`] (Sister Fennel gets one new talk line)
+  5. Win Elowen's Stand: *Keep One Back* (`keep`: a small spark in a jar; the dark goes for it, not her;
+     twist: a Lure Song cast to interrupt). [`stand`]
+  Months 3+ on the mystery ladder (lore.md 8.5): her choice in full. She does **not** turn her spark up;
+  that belongs to the finale (lore.md 8.6).
+- **Awakening: Who Kept One Back.** **Chapel Light II:** cleanses Curse and poison and leaves a shield of
+  10% of max HP. **Given:** Vigil stands fallen allies up at 70% HP (was 60%), and Last Light gives +15%
+  max HP (was 10%). Look: her flame, still low, white-gold at the core.
+
+**17. Caedmon the Unburnt** · tank, fire, the Oath · Region 1 boss and Renown.
+- **Quest: The Brother Who Stayed** (Emberwaste; 5 steps)
+  1. Fight beside Elowen until you are close. [`bond lasttwo 4`]
+  2. Reach Emberlea Ruins. The tables are empty. [`reach emberlea`]
+  3. Beat the Pyre Knight, with Caedmon in the party. [`boss 3 field`]
+  4. Build the Kitchen to level 3. Mother Ashby keeps his place. [`camp kitchen 3`]
+  5. Win Caedmon's Stand: *One Hour* (`duel`: the Emberlea road; the fire speaks in his brother's voice;
+     twist: its offer is a cast bar, and interrupting it is the only way to hurt the fire). [`stand`]
+  Step 3 is the rival fight (lore.md 8.3: the Challenge duels; "He agreed. I did not."). LORE10's camp
+  story "The Brother Who Stayed" plays at step 3; the Awakened story is him sitting down at the table.
+- **Awakening: the Knight of the Hour.** **Pyre Guard II:** shields the allies next to him and Burns
+  every foe that hits them. **Refused:** Cinder Vow works twice a pack, and Unburnt gives 10% (was 8%).
+  Look: his armour cooled from ember-red to dark iron with one warm seam; the helm under his arm.
+
+**18. Corvin Black** · striker (melee), poison, Dusk Company · Kingslayer.
+- **Quest: A Face at Last** (Emberwaste)
+  1. Fight beside Aldric until you are close. [`bond oldenemies 4`, alt any]
+  2. Beat the Hollow King (pinnacle), with Corvin in the party. [`boss pin_king field`]
+  3. Beat the Barrow Beetle's Eldest. He leaves his old blade on the King's seat. [`foe barrows q_kingseat`]
+  4. Win Corvin's Stand: *No Face* (`hunt`: a hooded court shade that runs between curtains). [`stand`]
+  There was no face (lore.md 6.2). The Ranger's Bond "A Face at Last" (yours) stays the Ranger's.
+- **Awakening: the Freed Blade.** **Hollow Cut II:** strikes two foes and puts 4 Venom on each; on a foe
+  below 30% HP it strikes twice. **Asked, Answered:** a kill takes 3 s off Hollow Cut, and King's Shadow
+  gives +10% crit (was 8%). Look: his own blade, plain, no crest.
+
+---
