@@ -90,6 +90,9 @@ if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = k
 if (args.syn !== undefined) E(`SYN_TUNE.today = ${+args.syn}`);
 // --tools 0|1: right tool, tool mastery perks and rare finds (55-tools.js, H2); 0 = the old gathering rules.
 if (args.tools !== undefined) E(`TOOL_TUNE.on = ${+args.tools}`);
+// --cold 0|1: a new game starts at a cold Hearth (55-hearth.js, H1; default 1): the policy chops 8 Oak,
+// lights the fire, then plays as before and builds each station as soon as it can pay. 0 = the old warm start.
+if (args.cold === '0') E('hearthWarm()');
 // --eval "code": run code in the game scope after the knobs (experiments, e.g. --eval "CRAFT_CATCHUP.mult = 3").
 if (args.eval) E(String(args.eval));
 // --evalfile path: the same, from a file (probes that print from an onTick hook).
@@ -400,10 +403,15 @@ function nextBlock() {
 }
 // Camp (57-camp.js): like a player, start any build that is affordable, in this order
 // (Watchtower first: it lengthens the away cap). --camp 0 turns it off.
-const CAMP_ORDER = ['watch', 'hearth', 'tavern', 'forge', 'bench', 'loom', 'ench', 'library', 'shrine', 'maproom'];
-const campStats = { first: null, builds: 0, full: null };
+const CAMP_ORDER0 = ['watch', 'hearth', 'tavern', 'forge', 'bench', 'loom', 'ench', 'store', 'library', 'shrine', 'maproom'];
+// A cold Hearth (H1): the stations still to build on open plots come first, in chain order.
+const campOrder = () => { const st = E('typeof hearthCold === "function" && hearthCold() ? HEARTH_CHAIN.filter(id => CAMP_B[id] && campLevel(id) < 1 && hearthPlotOpen(id)) : []'); return st.length ? st.concat(CAMP_ORDER0.filter(x => !st.includes(x))) : CAMP_ORDER0; };
+let CAMP_ORDER = CAMP_ORDER0;
+const campStats = { first: null, builds: 0, full: null, st: {} };
+fn.on('campBuilt', ({ id, lv }) => { if (lv === 1 && campStats.st[id] === undefined) campStats.st[id] = t; });
 function campStep(E) {
   if (args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return;
+  CAMP_ORDER = campOrder();
   if (args.campdebug) console.log('   camp', Math.round(t / 60) + 'm', E('S.gold|0'), E('campCan("watch").why'), E('JSON.stringify([S.mats.wood[0], S.mats.ore[0]])'));
   // A build short only of a lower-tier material (Dim Essence long after zone 6): break one tier
   // above down at the Enchanter's Table (once per unit since BAL1), as a player would.
@@ -421,6 +429,7 @@ function campStep(E) {
 // The gatherable material (and tier) the next Camp build waits on, if any (CAMP_ORDER first).
 function campNode() {
   if (args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return null;
+  CAMP_ORDER = campOrder();
   for (const id of CAMP_ORDER) {
     const c = E(`campCan(${JSON.stringify(id)})`);
     if (c.ok || c.max || c.busy || c.full || c.need || !c.cost) continue;
@@ -485,7 +494,31 @@ const dt = 0.1, total = hours * 3600;
 let t = 0, nextLine = 0;
 // One second of active play under the policy. sec = seconds into the session (drives the
 // mixed 10 min fight / 5 min gather cycle); t is the run clock (events are stamped with it).
+// H1: while the fire is out, the hero chops the grove by it and lights it as soon as 8 Oak are in.
+// Then, as the guide asks, a trip for each station's gathered materials as its plot opens (after the
+// first boss; Hide and Essence come from the fights), then for the first class weapon (the guide's
+// "Build the Forge for your weapon"), back to the fight as soon as they are in.
+let coldLit = args.cold === '0', coldTrip = null, coldDone = args.cold === '0';
+function coldStep() {
+  if (coldDone) return;
+  if (!coldLit) {
+    if (!E('typeof hearthLit === "function" && !hearthLit()')) { coldLit = true; if (!E('typeof hearthCold === "function" && hearthCold()')) coldDone = true; return; }
+    if (E('hearthCan().ok') && E('hearthLight()')) { coldLit = true; campStats.lit = t; return; }
+    if (E('S.activity !== "gather" || S.node.kind !== "wood" || S.node.t !== 1')) { fn.setNode('wood', 1); fn.setActivity('gather'); }
+    return;
+  }
+  if (t % 5) return;
+  const built = E('HEARTH_CHAIN.every(id => !CAMP_B[id] || campLevel(id) >= 1)');
+  const armed = !cls || !weaponKind() || !!fn.equipped('weapon');
+  if (built && armed) { coldDone = true; if (coldTrip) { coldTrip = null; fn.setActivity('fight'); } return; }
+  if (E('S.maxZone < 2')) return;
+  const need = built ? null : E(`(() => { for (const id of HEARTH_CHAIN) { if (!CAMP_B[id] || campLevel(id) >= 1 || !hearthPlotOpen(id)) continue; const c = campCan(id); if (!c.cost || c.busy) continue; const m = c.cost.mats.filter(([f, tt, n]) => CRAFT_NODES[f] && S.mats[f][tt - 1] < n && S.skills[skillOf(f)].lv >= NODE_REQ[tt - 1])[0]; if (m) return m; } return null; })()`);
+  const want = need || (armed ? null : E(`(c => c.unbuilt ? null : (c.miss || []).filter(([f]) => CRAFT_NODES[f] && S.skills[skillOf(f)].lv >= NODE_REQ[0]).map(([f]) => [f, 1])[0] || null)(canCraft(${JSON.stringify(weaponKind())}, 1))`));
+  if (want) { if (!coldTrip || coldTrip[0] !== want[0] || coldTrip[1] !== want[1] || E('S.activity !== "gather"')) { coldTrip = want; fn.setNode(want[0], want[1]); fn.setActivity('gather'); } }
+  else if (coldTrip) { coldTrip = null; fn.setActivity('fight'); }
+}
 function playSecond(sec) {
+  coldStep();
   if (policy === 'mixed' && sec % 60 === 0) {
     // With --class the first gather trip comes at 5 min (fight 5, gather 5, then fight 10 / gather 5),
     // like a player who goes for the first class set; the share stays one third.
@@ -543,6 +576,7 @@ if (t11Snap) {
 }
 const zAt = s => { let z = 1; for (const [k, v] of Object.entries(reached)) if (v <= s && +k > z) z = +k; return z; };
 console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} @3h=${zAt(10800)} end=${E('S.maxZone')} toZone15=${reached[15] ? (reached[15] / 60).toFixed(1) + 'm' : '-'} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
+if (campStats.lit !== undefined) console.log(`hearth: lit ${campStats.lit}s | stations Lv 1 at ${['bench', 'forge', 'store', 'loom', 'ench', 'tavern'].map(id => `${id} ${campStats.st[id] !== undefined ? (campStats.st[id] / 60).toFixed(1) + 'm' : '-'}`).join(', ')}`);
 console.log(`zones: ${Object.entries(reached).map(([z, s]) => `${z}@${(s / 60).toFixed(0)}m`).join(" ")}`);
 if (E('rosterLive()')) {
   const mins = x => (x / 60).toFixed(0);

@@ -244,7 +244,7 @@ var forgeGoalPicks = 0;
         const t = have + 1;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
-        if (!c.cost || c.lv < c.need) continue;
+        if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
