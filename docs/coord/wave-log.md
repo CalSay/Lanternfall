@@ -471,3 +471,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   15 elders incl. the Listener, 6 raid lines as client data only, LORE_LIMITS, LORE_BANNED). NOTE for R2-1:
   coast foe keys must be crab, gull, deckhand, kelp, jelly, witch, coral, or add bestiary entries under the
   chosen keys (check.mjs fails otherwise). LORE3 (delivery code) is next in the lore line. AC1 launched.
+- AC1 achievements.md merged: 92 tracks (368 tiers), 22 Classic kept, 16 secrets, 21 Feats (hard tier,
+  title + accessory each; capstone "Lanternfall"), 68 titles, 36 accessories, points ladder, chapters 1-2,
+  bonus caps (at most +9.2% party damage, nothing on day 1). Coordinator accepts section 14 items 1, 2, 4-9;
+  decides O2 yes (hats hide helms, with a Show helm switch), O3 yes (endless stars, points only), O4 yes
+  only for clock secrets that never pressure (no streaks, no "log in at"). ASKED THE OWNER: O1 (an optional
+  `title` id in raiders/<userId> and room presence so others see titles) and item 10 (your own title on your
+  own Tavern row: online-layer UI file, no data change). Until then titles show locally only.
+  AC2 launched.
