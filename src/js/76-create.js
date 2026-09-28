@@ -164,6 +164,7 @@
     root.remove(); root = null;
     if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
     ui(true);
+    emit('createDone', { mode });   // 75-onboard-ui.js: the guide's first hint (tap the foe) starts now
   }
 
   // Open now if needed, and whenever the choice reopens (a Mirror of Embers).

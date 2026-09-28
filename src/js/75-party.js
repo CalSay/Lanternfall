@@ -397,7 +397,7 @@
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
   registerSection('party', {
-    id: 'party-syn', title: 'Synergies', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
+    id: 'party-syn', title: 'Synergies', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
     update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
   });
   registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });

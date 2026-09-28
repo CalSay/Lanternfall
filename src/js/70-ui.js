@@ -226,42 +226,48 @@ function saveUiPrefs() { try { localStorage.setItem(UI_KEY, JSON.stringify(uiPre
 //   A sub-view of a tab: one button in the menu's switcher. order sorts the buttons (lowest first; the
 //   first is the default view). dot() (optional, cheap) -> true puts an attention dot on the button
 //   and on the tab while that view is not open. Sections join a view with registerSection's `view`.
-function registerView(tabId, { id, label, order = 50, dot } = {}) {
+//   feature (optional): a 55-onboard.js feature id; the view (and a tab with no view left) stays
+//   hidden until isUnlocked(feature).
+function registerView(tabId, { id, label, order = 50, dot, feature } = {}) {
   tabId = TAB_ALIAS[tabId] || tabId;
   if (!id) throw new Error('registerView: needs an id');
   const list = VIEWS[tabId] || (VIEWS[tabId] = []);
   let v = list.find(x => x.id === id);
-  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; }
-  else { v = { id, label: label || id, order, dot: dot || null }; list.push(v); }
+  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; if (feature) v.feature = feature; }
+  else { v = { id, label: label || id, order, dot: dot || null, feature: feature || null }; list.push(v); }
   list.sort((a, b) => a.order - b.order);
   if (!VIEW_OF[id] && !TAB_IDS.includes(id)) VIEW_OF[id] = tabId;
   if (S.tab === tabId) { buildViewSeg(tabId); applyView(tabId); }
   return v;
 }
 function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
+// Progressive unlocks (55-onboard.js): a view or section with a feature id shows once it is unlocked.
+const featOk = f => !f || typeof isUnlocked !== 'function' || isUnlocked(f);
 registerView('adv', { id: 'upgrades', label: 'Upgrades', order: 10 });
-registerView('adv', { id: 'bounties', label: 'Bounties', order: 20,
+registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bounties',
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
-registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30 });
-registerView('party', { id: 'team', label: 'Team', order: 10 });
-registerView('party', { id: 'roster', label: 'Roster', order: 20 });
-registerView('gat', { id: 'mine', label: 'Mining', order: 10 });
-registerView('gat', { id: 'wood', label: 'Wood', order: 20 });
-registerView('gat', { id: 'forage', label: 'Foraging', order: 30 });
-registerView('gat', { id: 'pack', label: 'Pack', order: 40 });
-registerView('forge', { id: 'make', label: 'Make', order: 10 });
-registerView('forge', { id: 'gear', label: 'Gear', order: 20 });
-registerView('forge', { id: 'uniques', label: 'Uniques', order: 30 });
-registerView('world', { id: 'camp', label: 'Camp', order: 10, dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
-registerView('world', { id: 'tav', label: 'Tavern', order: 20,
+registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30, feature: 'bestiary' });
+registerView('party', { id: 'team', label: 'Team', order: 10, feature: 'party' });
+registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });
+registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
+registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
+registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });
+registerView('gat', { id: 'pack', label: 'Pack', order: 40, feature: 'gather' });
+registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' });
+registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
+registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });
+registerView('world', { id: 'camp', label: 'Camp', order: 10, feature: 'camp', dot: () => !!(S.camp && S.camp.news && S.camp.news.length) });
+registerView('world', { id: 'tav', label: 'Tavern', order: 20, feature: 'tavern',
   dot: () => { if (typeof visitorToday !== 'function') return false; const v = visitorToday(); return v.kind === 'hire' && !v.done; } });
-registerView('world', { id: 'almanac', label: 'Almanac', order: 30, dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
-registerView('world', { id: 'raid', label: 'Raid', order: 40 });
+registerView('world', { id: 'almanac', label: 'Almanac', order: 30, feature: 'almanac', dot: () => typeof almanac === 'object' && almanac.readyCount() > 0 });
+registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' });
 
 function viewsOf(t) { return VIEWS[t] || []; }
+// The views the player can see now (locked ones are left out of the switcher).
+function shownViews(t) { return viewsOf(t).filter(v => featOk(v.feature)); }
 function curView(t) {
-  const list = viewsOf(t), want = uiPrefs.views[t];
-  return (list.find(v => v.id === want) || list[0] || { id: '' }).id;
+  const all = viewsOf(t), list = shownViews(t), want = uiPrefs.views[t];
+  return (list.find(v => v.id === want) || list[0] || all[0] || { id: '' }).id;
 }
 // data-view holds one view id, several separated by spaces, or '*' (every view).
 function viewList(t, node) { return (node.dataset.view || (viewsOf(t)[0] || {}).id || '').split(/\s+/); }
@@ -280,13 +286,14 @@ function applyView(t) {
   for (const b of $('viewSeg').children) b.setAttribute('aria-selected', String(b.dataset.view === cur));
 }
 function buildViewSeg(t) {
-  const seg = $('viewSeg'), list = viewsOf(t);
+  const seg = $('viewSeg'), list = shownViews(t);
   seg.textContent = ''; seg.hidden = list.length < 2;
   seg.style.setProperty('--n', list.length);
   for (const v of list) {
     const b = el('button', null, v.label); b.type = 'button'; b.dataset.view = v.id;
     b.setAttribute('role', 'tab');
     const d = el('span', 'vdot'); d.hidden = true; b.append(d);
+    if (typeof onboardIsNew === 'function' && onboardIsNew(v)) b.classList.add('is-new');
     b.addEventListener('click', () => setView(t, v.id));
     seg.append(b);
   }
@@ -297,6 +304,7 @@ function setView(t, id) {
   applyView(t);
   if (!same) $('panels').scrollTop = 0;
   ui(true); viewDots();
+  emit('menuView', { tab: t, view: id });
 }
 // Attention dots: on switcher buttons (views not open) and on tabs (any view of a tab not open).
 function viewDots() {
@@ -309,7 +317,7 @@ function viewDots() {
     let d = tb.querySelector('.dot.vdot');
     if (!d) { d = el('span', 'dot vdot'); d.hidden = true; tb.append(d); }
     const other = tb.querySelector('.dot:not(.vdot):not([hidden])');
-    putHidden(d, !!other || S.tab === t || !viewsOf(t).some(v => v.dot && safeDot(v.dot)));
+    putHidden(d, !!other || S.tab === t || !shownViews(t).some(v => v.dot && safeDot(v.dot)));
   });
 }
 
@@ -350,6 +358,11 @@ function setTab(t, sel) {
   // Sections build some rows in update(), and only the open view updates: build the whole tab once.
   if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }
   const tv = target && viewOfEl(t, target); if (tv) view = tv;
+  // Sent to a view that is still locked (Next Up, an away card, another system): it opens for good.
+  if (typeof onboardReveal === 'function') {
+    const v = view ? viewsOf(t).find(x => x.id === view) : !shownViews(t).length && viewsOf(t)[0];
+    if (v && !featOk(v.feature)) onboardReveal(v.feature);
+  }
   const was = S.tab, wasView = curView(t);
   S.tab = t; uiPrefs.tab = t;
   if (view) uiPrefs.views[t] = view;
@@ -360,6 +373,7 @@ function setTab(t, sel) {
   if (t === 'world') $('raidDot').hidden = true;
   if (was !== t || curView(t) !== wasView) $('panels').scrollTop = 0;
   ui(true); viewDots();
+  emit('menuView', { tab: t, view: curView(t) });
   if (target && target.offsetParent !== null) scrollMenuTo(target);
 }
 // Back to the game view (portrait only: wide screens always show a menu).
@@ -532,6 +546,7 @@ function ui(force) {
   if (slowTick <= 0) { slowTick = 1; viewDots(); }
 }
 function secShows(sec) {
+  if (!featOk(sec.feature)) return false;
   return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
 }
 function runSection(sec, force) {
@@ -561,8 +576,9 @@ function warmSections() {
 // the tab's first view. Pick a view; never just append to the end of a busy one (docs/design/layout.md).
 // mount(sec) runs once now; update(force) runs from ui() while its tab and view are open
 // (about 5 times a second, force = true right after player actions).
+// feature (optional): a 55-onboard.js feature id; the section stays hidden (no updates) until unlocked.
 const SECTIONS = [];
-function registerSection(tabId, { id, title, view, mount, update }) {
+function registerSection(tabId, { id, title, view, mount, update, feature }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
   const sec = el('div', 'sec'); sec.id = 'sec-' + id;
   if (title) sec.append(el('h2', 'sec-title', title));
@@ -574,7 +590,8 @@ function registerSection(tabId, { id, title, view, mount, update }) {
   panel.append(sec);
   if (tabId !== 'log' && TAB_IDS.includes(tabId) && S.tab === tabId) applyView(tabId);
   if (mount) mount(sec);
-  SECTIONS.push({ tab: tabId, id, update, el: sec });
+  if (feature) { sec.dataset.feature = feature; sec.classList.toggle('f-off', !featOk(feature)); }
+  SECTIONS.push({ tab: tabId, id, update, el: sec, feature: feature || null });
   return sec;
 }
 // registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are

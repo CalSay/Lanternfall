@@ -30,6 +30,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js); the craft goal sets `S.fSlot`/`S.fTier` and bumps `forgeGoalPicks` so the Craft tab focuses that recipe |
+| 55-onboard.js | core | the guided first ten minutes (docs/design/onboarding.md): `FEATURES` unlock table, `isUnlocked(id)`, `onboardReveal`, `onboardUnlockAll`, the guide (`GUIDE_STEPS`, `onboardStep`, `onboardDone`, `onboardTips`), `goalGate` for Next Up (on only in the browser); state `S.onboard` (old saves: all open). UI: 75-onboard-ui.js. Views and sections declare `feature: id` in `registerView`/`registerSection` |
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
@@ -190,6 +191,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `classChosen` | `{ cls, from }` (from: the class left, null on the first choice) |
 | `retooled` | `{ legacy: { weapon, helm }, swap, from }` (41-items `retoolItems`: old gear became class gear) |
 | `synergyChange` | `{ active, gained, lost }` (after a field change) |
+| `unlock` / `onboardStep` | `{ id, tab, view, quiet }` (a feature opened; id `'*'` = all) / `{ id }` (a guide step done), 55-onboard |
+| `menuView` / `createDone` (UI) | `{ tab, view }` (70-ui: a menu view shows) / `{ mode }` (76-create closed) |
 
 | `renown` | `{ n, total, source }` |
 | `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |

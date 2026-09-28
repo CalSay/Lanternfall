@@ -1648,5 +1648,70 @@ try {
   assert(!errs.length, 'no deepwell errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('deepwell crashed: ' + (e.stack || e)); }
 
+// ---- onboarding (55-onboard.js): progressive unlocks and the guide ----
+console.log('onboarding');
+try {
+  const errs = [];
+  // old saves: any progress and no S.onboard -> everything open, guide finished
+  for (const f of ['save-a-v1.json', 'save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const g = loadCore({ storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8') }) });
+    const E = s => g.eval(s);
+    E('ONBOARD.gate = true');
+    assert(E('S.onboard.all && !S.onboard.tips && FEATURES.every(x => isUnlocked(x.id)) && onboardStep() === null && GUIDE_STEPS.every(x => S.onboard.done[x.id])'),
+      `${f}: every feature open, no tips`);
+    assert(E('topGoals(60, { sticky: false }).length') === E('(ONBOARD.gate = false, topGoals(60, { sticky: false }).length)'), `${f}: Next Up hides nothing`);
+    errs.push(...g.errors);
+  }
+  // a save made after this change keeps its onboarding state
+  {
+    const st = memoryStorage();
+    const g = loadCore({ storage: st });
+    g.eval('chooseClass("warden"); S.onboard.got.party = 30; S.onboard.done.tap = 1; S.maxZone = 3; save()');
+    const g2 = loadCore({ storage: st });
+    assert(g2.eval('!S.onboard.all && S.onboard.got.party === 30 && S.onboard.done.tap === 1 && S.onboard.tips'), 'a new game with progress stays guided after a reload');
+  }
+  // a new game: Fight only, then things open as the player goes
+  const g = loadCore({ seed: 7 });
+  const E = s => g.eval(s);
+  E('chooseClass("warden")');
+  assert(E('!S.onboard.all && S.onboard.tips && FEATURES.every(x => !isUnlocked(x.id)) && isUnlocked(null) && isUnlocked("nope")'), 'new game: every feature starts hidden (unknown ids are open)');
+  E('ONBOARD.gate = true');
+  const shown = () => E('topGoals(60, { sticky: false }).map(x => x.sys)');
+  assert(!shown().some(s => ['bounty', 'bestiary', 'skill', 'forge', 'camp', 'roster'].includes(s)), 'Next Up hides goals of hidden systems: ' + shown().join(','));
+  assert(E('onboardStep().id') === 'tap', 'the guide starts with "tap the foe"');
+  E('emit("tap", {}); emit("tap", {}); emit("tap", {})');
+  assert(E('onboardStep().id') === 'ability', 'three taps -> "your ability"');
+  E('castAbility()');
+  // play like a new player: fight, buy the cheapest upgrade, gather now and then, craft what Next Up offers
+  const got = {}, log = [];
+  g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
+  let firstUp = null;
+  const buy = () => E(`{ let n = 0; for (let k = 0; k < 50; k++) { const c = HERO_UPS.map(u => ({ u, p: plan(u.base, u.r, S[u.id], S.gold, u.cap, '1') })).filter(o => o.p.n > 0 && o.p.cost <= S.gold).sort((a, b) => a.p.cost - b.p.cost)[0]; if (!c) break; buyHero(c.u.id, '1'); n++; } n }`);
+  for (let sec = 0; sec < 12 * 60; sec++) {
+    for (let i = 0; i < 10; i++) g.fn.tick(0.1);
+    if (firstUp === null && E('S.gold >= 10')) firstUp = sec;
+    if (sec % 5 === 0) buy();
+    if (sec > 240 && sec % 150 === 0) { E('S.node = { kind: "ore", t: 1 }; setActivity("gather")'); for (let i = 0; i < 600; i++) g.fn.tick(0.1); E('setActivity("fight")'); }
+  }
+  const at = id => got[id] === undefined ? Infinity : got[id];
+  const mmss = t => t === Infinity ? 'never' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  console.log('       timeline: ' + Object.entries(got).map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
+  assert(firstUp !== null && firstUp < 60, `first upgrade affordable in under a minute (${firstUp}s)`);
+  assert(at('party') < 120 && at('nextup') < 120, `Party and Next Up open in the first 2 minutes (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
+  assert(at('gather') < 240 && at('bounties') < 300, `Gather and Bounties open by 4-5 minutes (${mmss(at('gather'))}, ${mmss(at('bounties'))})`);
+  assert(['camp', 'forage', 'craft', 'bestiary', 'almanac', 'roster'].every(k => at(k) <= 660), 'Camp, Foraging, Craft, Bestiary, Almanac and Roster open by 11 minutes');
+  const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
+  let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
+  assert(early.length >= 8 && gap <= 180, `something new at least every 3 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
+  // the guide ends; skip and "show every tab" work
+  assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
+  E('onboardTips(true); onboardUnlockAll()');
+  assert(E('S.onboard.all && FEATURES.every(x => isUnlocked(x.id))'), 'Show every tab: everything opens');
+  assert(E('GOALS.every(x => goalGate(x))'), 'Next Up shows every system again once it is open');
+  assert(E('(onboardReveal("deep"), true)'), 'reveal after all is harmless');
+  errs.push(...g.errors);
+  assert(!errs.length, 'no onboarding errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('onboarding crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

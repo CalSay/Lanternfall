@@ -59,7 +59,7 @@
   const armed = { key: null, at: 0 };
   const isArmed = k => armed.key === k && Date.now() - armed.at < 4000;
   sec = registerSection('camp', {
-    id: 'exped', title: 'Expeditions',
+    id: 'exped', title: 'Expeditions', feature: 'exped',
     mount(s) {
       head = el('p', 'note');
       slotBox = el('div', 'ex-slots');

@@ -79,7 +79,7 @@
   // ---------------- Fight tab banner ----------------
   const ban = {};
   registerSection('adv', {
-    id: 'omen',
+    id: 'omen', feature: 'almanac',
     mount(sec) {
       sec.classList.add('om-sec');
       // Move to the top of the Fight tab once every section has mounted.
