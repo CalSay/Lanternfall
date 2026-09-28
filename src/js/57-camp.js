@@ -90,6 +90,8 @@ const CAMP_B = {
   tavern: { n: 'Tavern', max: 5, pre: 1, fam: { wood: 30, herb: 15 }, tro: 1 },
   // H3 (55-store.js): its own cost rows, Hearth gates and effect lines; max 8.
   store: { n: 'Storehouse', max: 8, opens: 1, hreq: STORE_HREQ, cost: storeCampCost, fx: storeEffects },
+  // N1 (57f-hands.js): beds for Hands at camp; effect lines from HANDS_TUNE (21f). Its plot opens after the Tavern.
+  bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => !!HANDS_TUNE.on },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
   maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped },
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
@@ -127,7 +129,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 {
   registerState('camp', {
     v: 1, open: false,
-    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0, store: 0 },
+    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0, store: 0, bunk: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
   // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
@@ -371,7 +373,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? ['Away report shows the zone your party could hold'] : []);
     if (id === 'library') return LIB(l);
     if (id === 'maproom') { const m = MAP; return [`${m.slots[l]} expedition slot${m.slots[l] > 1 ? 's' : ''}`, `Routes up to ${m.route[l]}h`].concat(l >= 5 ? ['Repeats while you are away'] : []); }
-    if (id === 'tavern') return l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1));
+    if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
     if (id === 'shrine') return [SHR[Math.min(3, l)]].concat(l >= 3 ? ['Blessings 25% stronger'] : []);
     return [];
   };

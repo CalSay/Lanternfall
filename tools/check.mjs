@@ -2335,7 +2335,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built|Skills now level more slowly|Your party is now three|Pairs who fight side by side|Your old friends kept)|Storehouse/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth'); the skill pace line: GP1's; the party of three: F1's ('formation'); Bonds: F2's ('bonds')   // + Storehouse lines: H3's ('store')
+    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built|Skills now level more slowly|Your party is now three|Pairs who fight side by side|Your old friends kept)|Storehouse|Bunkhouse/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth'); the skill pace line: GP1's; the party of three: F1's ('formation'); Bonds: F2's ('bonds')   // + Storehouse lines: H3's ('store')
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -3722,11 +3722,12 @@ try {
   assert(allTitles.length === 68 && !tooLong.length, `AD1 all 68 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
   const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
   // F2 (Bonds) is merged, so 'bonds' and 'together' are live; the rest wait for their systems. H3 (the Storehouse) is merged: 'store' is live.
-  assert(live.length === 80 && hidden.sort().join() === ['fish', 'g_fish', 'g_pearl', 'handhrs', 'hands', 'lanterns', 'meals', 'oath', 'oathseals', 'pinkills', 'tides', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
+  // N1 (Hands) is merged: 'hands' and 'handhrs' are live.
+  assert(live.length === 82 && hidden.sort().join() === ['fish', 'g_fish', 'g_pearl', 'lanterns', 'meals', 'oath', 'oathseals', 'pinkills', 'tides', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
   E('S.store = { v: 1 }; S.bond = { v: 1, t: { a: 36000 }, lv: { a: 3 } }');
   assert(E('deeds.track("store").live && deeds.track("bonds").live && deeds._cur("together") === 10 && deeds._cur("bonds") === 3'), 'a runtime probe lights a waiting track up when its save field appears (S.store, S.bond)');
   E('delete S.store; delete S.bond');
-  assert(E('(() => { try { return deeds.tracks().length === 77; } catch (e) { return false; } })()'), 'probes of later systems never throw');
+  assert(E('(() => { try { return deeds.tracks().length === 79; } catch (e) { return false; } })()'), 'probes of later systems never throw');
 
   // AD7 numbers
   const oldFmt = n => { const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc']; if (!isFinite(n)) return '∞'; if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n)); let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; } return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i]; };
@@ -4416,6 +4417,173 @@ try {
     assert(!g.errors.length, 'F5 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('formation follow-ups crashed: ' + (e.stack || e)); }
+
+// ---- N1: Hands (hearth-and-hands.md 5, 8.3): pay bands, shifts end, parcels wait, pity, no harvest, save ----
+console.log('hands');
+try {
+  const FIX = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json')).sort();
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const secs = (g, n) => { for (let i = 0; i < n * 10; i++) g.fn.tick(0.1); };
+  const errs = [];
+  const T0 = new Date(2026, 8, 28, 12).getTime();   // noon: no clock trait fires
+  const clock = (g, ms) => g.eval(`Date.__t = ${ms}; if (!Date.__sim) { Date.__sim = true; Date.now = () => Date.__t; }`);
+  // A warm game at Hearth 2 with the Bunkhouse at level bunk, the Storehouse at 1 and plenty of gold.
+  const mk = (seed, bunk = 1) => {
+    const g = loadCore({ seed }), E = s => g.eval(s);
+    clock(g, T0);
+    E(`S.maxZone = 12; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.camp.b.bunk = ${bunk}; S.camp.b.store = 1; S.gold = 1e12`);
+    secs(g, 1.2);
+    return [g, E];
+  };
+  // -- fixtures: defaults merge, nothing else moves, Tam comes once where Hands are open --
+  for (const f of FIX) {
+    const old = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 81, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
+    clock(g, T0);
+    assert(!('hands' in old) && E('Array.isArray(S.hands.list) && S.hands.list.length === 0 && S.hands.tam === 0 && S.hands.board.apps.length === 0'), `${f}: S.hands defaults in (no Hands yet at load)`);
+    secs(g, 2);
+    const open = E('handsOpen()'), h2 = E('campOpen() && campLevel("hearth") >= 2');
+    assert(E('campLevel("bunk")') === (h2 ? 1 : 0) && open === h2, `${f}: ${h2 ? 'Hearth 2+: the Bunkhouse at Lv 1, once' : 'below Hearth 2: no Bunkhouse yet'}`);
+    assert(E('S.hands.got') === 0 && E('S.hands.tam') === (open ? 1 : 0) && E('S.hands.list.length') === (open ? 1 : 0) && E('S.hands.board.apps.length') === (open ? 1 : 0),
+      `${f} (Hearth ${E('campLevel("hearth")')}, Tavern ${E('campLevel("tavern")')}, Bunkhouse ${E('campLevel("bunk")')}): ${open ? 'Tam arrives with the first applicant' : 'Hands not open yet'}; no Hand delivered anything yet`);
+    const saved = (E('save(), 1'), g.storage.get(KEY));
+    const g2 = loadCore({ seed: 82, storage: memoryStorage({ [KEY]: saved }) }); clock(g2, T0 + 5000); secs(g2, 2);
+    assert(JSON.stringify(g2.eval('S.hands.list')) === JSON.stringify(E('S.hands.list')) && g2.eval('S.hands.tam') === E('S.hands.tam') && g2.eval('S.hands.board.apps.length') === E('S.hands.board.apps.length'),
+      `${f}: round trip keeps S.hands; Tam does not come twice`);
+    errs.push(...g.errors, ...g2.errors);
+  }
+  // -- pay bands (HS10): share 10%..24.75% for every rarity and level; off-skill half; transients left out --
+  {
+    const [g, E] = mk(83);
+    const r = E(`(() => {
+      const out = [], x = { r: 'common', sk: 'mine', tr: [], lv: 1 };
+      for (const r of HANDS_RAR) for (let lv = 1; lv <= 20; lv++) { x.r = r; x.lv = lv; out.push(handsRate(x, 'ore', 1) / handsHeroRate('ore', 1)); }
+      x.r = 'common'; x.lv = 1;
+      const off = handsRate(x, 'wood', 1) / handsHeroRate('wood', 1);
+      x.lv = 20;
+      return { min: Math.min(...out), max: Math.max(...out), off, c20: handsShare(x) };
+    })()`);
+    assert(Math.abs(r.min - 0.10) < 1e-9 && Math.abs(r.max - 0.2475) < 1e-9 && Math.abs(r.c20 - 0.1475) < 1e-9, `HS10 a Hand's rate over the hero's reference: ${(r.min * 100).toFixed(2)}%..${(r.max * 100).toFixed(2)}% (Common Lv 20 ${(r.c20 * 100).toFixed(2)}%)`);
+    assert(Math.abs(r.off - 0.05) < 1e-9, 'off-skill nodes pay half (a Common Miner at a grove: 5%)');
+    const hr0 = E('handsHeroRate("ore", 1)'), nt0 = E('nodeTime("ore", 1)');
+    E('S.craft.tonic = { k: "forager", t: 1, left: 600 }');
+    assert(E('nodeTime("ore", 1)') < nt0 && Math.abs(E('handsHeroRate("ore", 1)') / hr0 - 1) < 1e-9, "a Forager's Draught speeds the hero, not the Hands' reference rate");
+    E('S.craft.tonic = null; S.tools.m.pick = [20, 0]');
+    assert(Math.abs(E('handsRate({ r: "common", sk: "mine", tr: [], lv: 1 }, "ore", 1) / handsHeroRate("ore", 1)') - 0.11) < 1e-9, 'Pickaxe mastery 20: Hands mining get +10%');
+    assert(E('campEffects("bunk", 3).includes("3 beds for Hands")') && E('handsBedsAt(5, 8)') === 6 && E('handsBedsAt(5, 7)') === 5 && E('handsBedsAt(0, 8)') === 0 && E('campEffects("tavern", 3).some(x => /Hands apply here: one every 6 h/.test(x))'),
+      'beds: the Bunkhouse level, +1 at Hearth 8 (6 at most); the Bunkhouse lists them, the Tavern says Hands apply there');
+    const rmB = E('(() => { globalThis.__rb = [addBonus("handBeds", () => 2), addBonus("handBedsMax", () => 2)]; return handsBedsAt(5, 8); })()');
+    E('globalThis.__rb.forEach(f => f())');
+    assert(rmB === 8 && E('handsBedsAt(5, 8)') === 6, 'the bed cap is data-driven: bonuses handBeds and handBedsMax raise it (8 with +2 / +2)');
+    assert(E('CAMP_B.bunk.opens') === 2 && E('campList().includes("bunk")') && E('campCan("bunk").to') === 2 && E('campCost("bunk", 2).mats.length') > 0, 'the Bunkhouse is a camp building (Lv 1-5, opens at Hearth 2)');
+    {
+      const c = loadCore({ seed: 91, cold: true }), C = s => c.eval(s);
+      C('S.mats.wood[0] = 20; hearthLight()');
+      assert(C('hearthLit() && !campList().includes("bunk")') && C('(S.camp.b.tavern = 1, campList().includes("bunk"))'), 'a cold Hearth: the Bunkhouse plot opens after the Tavern');
+      errs.push(...c.errors);
+    }
+    errs.push(...g.errors);
+  }
+  // -- beds cap hires; Tam once; the board holds 3 and fills every 8 h --
+  {
+    const [g, E] = mk(84, 1);
+    assert(E('S.hands.tam') === 1 && E('handsGet("tam").sk') === 'wood' && E('handsGet("tam").tr.join()') === 'steady' && E('handsGet("tam").r') === 'common', 'Tam arrives free: a Common Woodcutter, Steady');
+    assert(E('handsFree()') === 0 && E('handsHire(0)') === null && /No free bed/.test(E('handsBoard()[0].can.why')), 'Bunkhouse Lv 1: one bed, Tam has it, hiring is refused');
+    E('S.camp.b.bunk = 2');
+    const g0 = E('S.gold'), cost = E('handsBoard()[0].cost');
+    assert(E('!!handsHire(0)') && E('S.gold') === g0 - cost && E('handsList().length') === 2 && E('handsFree()') === 0, `Bunkhouse Lv 2: a second bed; the hire costs ${cost} gold (foesGold)`);
+    clock(g, T0 + 3 * 864e5); secs(g, 1.2);
+    assert(E('S.hands.board.apps.length') === 3 && E('handsNextApp()') === null, 'three days closed: 3 applicants wait, no more');
+    E('handsTurnAway(0)');
+    assert(E('S.hands.board.apps.length') === 2 && Math.abs(E('handsNextApp()') - 8 * 3600e3) < 2000, 'turning one away frees the spot; the next one comes in 8 h');
+    E('S.camp.b.tavern = 3; handsTurnAway(0); handsTurnAway(0); S.hands.board.next = Date.now() - 1');
+    secs(g, 1.2);
+    assert(E('S.hands.board.apps.length') === 1 && Math.abs(E('handsNextApp()') - 6 * 3600e3) < 2000, 'Tavern Lv 3: applicants every 6 h');
+    E('S.hands.list = S.hands.list.filter(x => x.id !== "tam")'); secs(g, 1.2);
+    assert(E('!handsGet("tam")'), 'Tam comes once (let go, he does not come back)');
+    errs.push(...g.errors);
+  }
+  // -- a shift ends, the pack unloads, levels count; same seed same haul; online = offline --
+  const shift = (online, seed = 85) => {
+    const [g, E] = mk(seed, 2);
+    const ev = { harvest: 0 }; g.fn.on('harvest', () => ev.harvest++);
+    E('handsHire(0); setActivity("fight")');
+    // the hero fights; what gathering would move must not move (58-deeds counts gathered units only on harvest)
+    const snap = () => E('JSON.stringify([S.skills.mine, S.skills.wood, S.skills.forage, S.tools.m, S.tools.finds, S.stats.gathered])');
+    const st0 = snap();
+    const j = E('handsSend("tam", "wood", 1)'); E('handsSendAgain()');
+    clock(g, T0 + 9 * 3600e3);
+    const r = online ? (secs(g, 1.2), null) : E('awayGains(9 * 3600)');
+    const out = { g, E, ev, j, r, wood: E('S.mats.wood[0]'), log: E('JSON.stringify(S.hands.log.map(l => l.lines))'), st0, st1: snap() };
+    errs.push(...g.errors);
+    return out;
+  };
+  {
+    const a = shift(true), b = shift(false), c = shift(true);
+    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => /Tam is back from the Oak Grove: \+\d+ Oak Log/.test(l.txt));
+    assert(a.j && Math.abs(a.j.end - a.j.start - 2 * 3600e3) < 1 && a.j.rate > 0, `a Common Lv 1 shift is 2 h, fixed at send (rate ${a.j.rate.toFixed(1)} an hour)`);
+    assert(E('handsList().every(x => !x.job && !x.pack.length)') && E('handsStatus("tam").st') === 'camp' && a.wood > 0, `the shift ends: Tam comes home, the pack unloads (+${a.wood} Oak Log), he waits at camp`);
+    assert(a.log === b.log && a.wood === b.wood && !!backLine, `the same haul online and through awayGains (${a.log}); the away card: "${backLine ? backLine.txt : '-'}"`);
+    assert(a.log === c.log, 'the same seed gives the same haul');
+    // (the Journal's away diff, 55-stats, counts every gathered family that grew while away, expedition and Hands' parcels included)
+    const noG = x => JSON.stringify(JSON.parse(x).slice(0, 5));
+    assert(a.ev.harvest === 0 && b.ev.harvest === 0 && a.st0 === a.st1 && noG(b.st0) === noG(b.st1), "Hands emit no harvest: no skill XP, no tool mastery, no rare finds, no achievement gathered units (live: no Journal units either)");
+    assert(E('handsGet("tam").lv') === 2 && Math.abs(E('S.hands.hrs') - E('handsList().reduce((a, x) => a + x.hrs, 0)')) < 1e-9 && E('handsGet("tam").hrs') === 2 && E('handsStats().hours') === E('S.hands.hrs') && E('handsStats().hired') === 2, `levels by hours worked (Tam Lv ${E('handsGet("tam").lv')} after 2 h; ${E('S.hands.hrs').toFixed(1)} h in all)`);
+  }
+  // -- parcels wait for room; a Hand with a pack cannot be sent; Empty the pack --
+  {
+    const [g, E] = mk(86, 1);
+    E('handsSend("tam", "wood", 1); S.mats.wood[0] = storeCap("wood", 1) - 10');
+    clock(g, T0 + 3 * 3600e3); secs(g, 1.2);
+    const pack = JSON.parse(E('JSON.stringify(handsGet("tam").pack)'));
+    assert(pack.length === 1 && pack[0][2] > 10 && E('S.mats.wood[0]') === E('storeCap("wood", 1)') - 10 && E('handsStatus("tam").st') === 'pack', `the pack waits whole when the Storehouse lacks room (${pack[0] && pack[0][2]} Oak Log, 10 free)`);
+    assert(!E('handsCanSend("tam", "wood", 1).ok') && E('handsSend("tam", "wood", 1)') === null && /pack waits/.test(E('handsCanSend("tam", "wood", 1).why')), `a Hand with a pack cannot be sent ("${E('handsCanSend("tam", "wood", 1).why')}")`);
+    assert(!E('handsLetGo("tam")'), 'a Hand with a pack cannot be let go');
+    E('S.mats.wood[0] = 0'); secs(g, 1.2);
+    assert(E('handsGet("tam").pack.length') === 0 && E('S.mats.wood[0]') === pack[0][2], '...and it lands once there is room');
+    E('handsSend("tam", "wood", 1); S.mats.wood[0] = storeCap("wood", 1)'); clock(g, T0 + 6 * 3600e3); secs(g, 1.2);
+    const n = E('handsGet("tam").pack[0][2]');
+    assert(E('handsEmpty("tam")') === n && E('handsGet("tam").pack.length') === 0 && E('handsCanSend("tam", "wood", 1).ok'), `Empty the pack throws it away (${n}) and frees the Hand`);
+    E('handsSend("tam", "wood", 1)');
+    assert(!E('handsLetGo("tam")'), 'a Hand out on a shift cannot be let go');
+    errs.push(...g.errors);
+  }
+  // -- pity: Rare+ every 8, Epic+ every 25, Legendary every 90 --
+  {
+    const [g, E] = mk(87, 5);
+    const gaps = E(`(() => {
+      const last = [0, 0, 0], worst = [0, 0, 0], got = {};
+      for (let i = 1; i <= 3000; i++) {
+        const a = handsRollApp(), r = HANDS_RAR.indexOf(a.r); got[a.r] = (got[a.r] || 0) + 1;
+        for (let k = 0; k < 3; k++) if (r >= k + 2) { worst[k] = Math.max(worst[k], i - last[k]); last[k] = i; }
+      }
+      return { worst, got };
+    })()`);
+    assert(gaps.worst[0] <= 8 && gaps.worst[1] <= 25 && gaps.worst[2] <= 90 && gaps.got.legendary > 0, `pity holds over 3,000 applicants: longest gaps ${gaps.worst.join(' / ')} (want <= 8 / 25 / 90); ${JSON.stringify(gaps.got)}`);
+    const leg = E('(() => { S.hands.pity = [0, 0, 89]; return handsRollApp(); })()');
+    assert(leg.r === 'legendary' && !!leg.key && !!leg.cl && leg.tr.length === 2, `the 90th applicant without one is a named Legendary (${leg.n}, ${leg.cl})`);
+    errs.push(...g.errors);
+  }
+  // -- save round trip mid-shift: the job pays the same after a reload --
+  {
+    const [g, E] = mk(88, 2);
+    E('handsHire(0); handsSend("tam", "wood", 1); handsSendAgain()');
+    const saved = (E('save(), 1'), g.storage.get(KEY));
+    const g2 = loadCore({ seed: 89, storage: memoryStorage({ [KEY]: saved }) }); clock(g2, T0 + 1000);
+    assert(JSON.stringify(g2.eval('S.hands')) === JSON.stringify(E('S.hands')), 'round trip keeps S.hands mid-shift (jobs, seeds, board, pity)');
+    clock(g, T0 + 10 * 3600e3); clock(g2, T0 + 10 * 3600e3); secs(g, 1.2); secs(g2, 1.2);
+    assert(g2.eval('JSON.stringify(S.hands.log)') === E('JSON.stringify(S.hands.log)') && g2.eval('JSON.stringify(S.mats)') === E('JSON.stringify(S.mats)'), 'after the reload the shifts pay exactly the same');
+    errs.push(...g.errors, ...g2.errors);
+  }
+  // -- Next Up and 58-deeds read the Hands --
+  {
+    const [g, E] = mk(90, 2);
+    assert(E('topGoals(10, { sticky: false }).some(x => x.id === "hands-back")'), 'Next Up: a Hand at camp asks to be sent ("' + E('(topGoals(10, { sticky: false }).find(x => x.id === "hands-back") || {}).label') + '")');
+    assert(E('deeds.track("hands").live && deeds._cur("hands") === handsStats().hired'), 'the achievements read Hands hired from handsStats()');
+    errs.push(...g.errors);
+  }
+  assert(!errs.length, 'no hands errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('hands crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
