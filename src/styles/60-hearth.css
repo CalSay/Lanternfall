@@ -1,0 +1,10 @@
+/* 63d-scenery-camp (H1): the cold Hearth's fire button over the stage. Centred on the fire. */
+.hearth-fire { position: absolute; width: 56px; height: 56px; margin: -40px 0 0 -28px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; z-index: 3; touch-action: manipulation; }
+.hearth-fire[hidden] { display: none; }
+.hearth-fire::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 2px dashed rgba(239,230,214,.35); }
+.hearth-fire.ready::before { border: 2px solid #FFB347; box-shadow: 0 0 12px rgba(255,179,71,.55); animation: hf-pulse 1.4s ease-in-out infinite; }
+.hearth-fire:focus-visible { outline: 2px solid #FFF3C4; outline-offset: 2px; }
+.hf-tag { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px); white-space: nowrap; font: 600 11px var(--display); letter-spacing: .04em; color: #EFE6D6; background: rgba(11,8,16,.82); border: 1px solid #0B0810; padding: 1px 6px; text-shadow: 0 1px 0 #000; }
+.hearth-fire.ready .hf-tag { color: #0B0810; background: #FFB347; }
+@keyframes hf-pulse { 50% { box-shadow: 0 0 20px rgba(255,179,71,.85); } }
+@media (prefers-reduced-motion: reduce) { .hearth-fire.ready::before { animation: none; } }

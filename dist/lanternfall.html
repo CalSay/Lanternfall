@@ -1416,6 +1416,16 @@ span.cf-d { font-weight: 600; }
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+/* 63d-scenery-camp (H1): the cold Hearth's fire button over the stage. Centred on the fire. */
+.hearth-fire { position: absolute; width: 56px; height: 56px; margin: -40px 0 0 -28px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; z-index: 3; touch-action: manipulation; }
+.hearth-fire[hidden] { display: none; }
+.hearth-fire::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 2px dashed rgba(239,230,214,.35); }
+.hearth-fire.ready::before { border: 2px solid #FFB347; box-shadow: 0 0 12px rgba(255,179,71,.55); animation: hf-pulse 1.4s ease-in-out infinite; }
+.hearth-fire:focus-visible { outline: 2px solid #FFF3C4; outline-offset: 2px; }
+.hf-tag { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px); white-space: nowrap; font: 600 11px var(--display); letter-spacing: .04em; color: #EFE6D6; background: rgba(11,8,16,.82); border: 1px solid #0B0810; padding: 1px 6px; text-shadow: 0 1px 0 #000; }
+.hearth-fire.ready .hf-tag { color: #0B0810; background: #FFB347; }
+@keyframes hf-pulse { 50% { box-shadow: 0 0 20px rgba(255,179,71,.85); } }
+@media (prefers-reduced-motion: reduce) { .hearth-fire.ready::before { animation: none; } }
 /* 60-lantern: the Great Lantern card and the Lantern Road strip (75-lantern-ui.js). */
 
 /* ---- the Great Lantern card ---- */
@@ -8198,7 +8208,7 @@ let OMENS, WEEKLY_GOALS;
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/gathering-and-crafting.md 3, 4 and 9 (K6) with its "Owner decisions"
 // (random affixes, Reforge at the Enchanter's Table, trophies gate +8..+10) and camp.md N4
-// (buildings never gate recipes). Tables: 21-data-craft.js (K1). Items: 41-items.js (K4).
+// (buildings never gate recipes), except a new game's cold Hearth (H1): there a station must be built. Tables: 21-data-craft.js (K1). Items: 41-items.js (K4).
 //
 // Exposed names (the Craft tab, K7, calls these; every action saves and returns falsy when refused):
 //   craftItem(kind, t, opts?) -> item | null     opts: { role } (Trinkets), { mw: trophyIndex }
@@ -8278,6 +8288,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   };
   const gainStation = (skill, n) => gainSkill(skill, craftXpFor(skill, n));
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
+  // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
+  const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
 
   // ---- materials ----
   const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - S.mats[k][t - 1]]).filter(([, n]) => n > 0);
@@ -8295,6 +8307,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
     const x = { cost, lv, need, miss: [] };
+    if (unbuilt(st.key)) return no(unbuilt(st.key), Object.assign(x, { unbuilt: true }));
     if (lv < need) return no(gateWhy(st.skill, need), x);
     if (d.role === 'any' && opts.role != null && !CRAFT_ROLE_POOL[opts.role]) return no('Pick a role for the Trinket.', x);
     if (opts.mw != null) {
@@ -8366,6 +8379,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const it = itemById(id); if (!it) return no('No such item.');
     if (!Array.isArray(it.a) || !it.a[idx]) return no('Pick a line to reforge.');
     const cost = reforgePrice(it), x = { cost }, need = CRAFT_STATION_REQ[it.t - 1];
+    if (unbuilt('ench')) return no(unbuilt('ench'), x);
     if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
     const miss = missing(cost.mats, it.t);
     if (miss.length) return no(missWhy(miss, it.t), x);
@@ -8403,6 +8417,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!validTier(fromT) || !validTier(tt) || Math.abs(tt - fromT) !== 1) return no('Transmute moves one tier at a time.');
     const up = tt > fromT, rule = up ? CRAFT_TRANSMUTE.up : CRAFT_TRANSMUTE.down;
     const take = Math.max(1, rule.take - (up ? bonus('transmuteSave') : 0)), x = { take, give: rule.give, toT: tt };
+    if (unbuilt('ench')) return no(unbuilt('ench'), x);
     if (up && S.skills.ench.lv < CRAFT_STATION_REQ[tt - 1]) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
     const have = S.mats[fam][fromT - 1];
     if (have < take) return no(`${take - have} more ${matName(fam, fromT)}`, x);
@@ -8472,6 +8487,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
     if (orielDone()) return no('Oriel already answered your Star Chart.', x);
+    if (unbuilt(STAR.st)) return no(unbuilt(STAR.st), x);
     if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
     const tmiss = STAR.troph.filter(([i, n]) => (C().troph[i] || 0) < n);
     x.miss = missing(cost.mats, t);
@@ -8498,7 +8514,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   const tonicV = (key, t) => CRAFT_TONICS[key].v * (1 + CRAFT_TONIC_RULE.scale * (t - 1));
   tonicActive = () => { const a = C().tonic; return a && a.left > 0 && CRAFT_TONICS[a.k] ? { key: a.k, t: a.t, left: a.left, v: tonicV(a.k, a.t) } : null; };
   brewTonic = (key, t) => {
-    const d = CRAFT_TONICS[key]; if (!d || !validTier(t)) return false;
+    const d = CRAFT_TONICS[key]; if (!d || !validTier(t) || unbuilt('ench')) return false;
     if (S.skills.ench.lv < CRAFT_STATION_REQ[t - 1]) return false;
     const m = Object.fromEntries(Object.entries(d.rec).map(([k, n]) => [k, craftScale(n, t)]));
     if (!hasMats(m, t)) return false;
@@ -8971,7 +8987,7 @@ var forgeGoalPicks = 0;
         const t = have + 1;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
-        if (!c.cost || c.lv < c.need) continue;
+        if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
@@ -8990,6 +9006,209 @@ var forgeGoalPicks = 0;
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
+  });
+}
+
+// ---- src/js/55-hearth.js ----
+// 55-hearth: the cold Hearth start and building each station (task H1).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Spec: docs/design/hearth-and-hands.md 1 (section 9 decisions accepted, plan-3 D7).
+//
+// Who is cold: a NEW game only. At load, S.camp is undefined and the save has no progress
+// (S.totalKills 0, S.L 1, S.maxZone 1). It gets S.hearth.cold = 1, starts at the unlit fire,
+// gathering the Oak Grove by the fire, with the Forge, Workbench, Loom, Enchanter's Table and
+// Tavern at Lv 0 (plots to build). Every other save is warm and nothing here changes it: its
+// stations stay at Lv 1 (57-camp's defaults), the camp opens at zone 5 as before.
+//
+// Rules (cold saves; knobs in HEARTH_TUNE):
+//   - Fighting is never gated. The fire is the first thing to do, not a wall.
+//   - hearthLight(): pays 8 Oak Log, Hearth 1, the camp opens (campOpen { quiet: false }),
+//     emits hearthLit, and the hero walks out to zone 1 (S.activity = 'fight'). Instant.
+//   - Stations are built on plots. A plot opens by its rule (HEARTH_PLOT); an unopened plot is not
+//     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (no gold, a short
+//     timer) through campCost; Lv 2-5 keep 57-camp's rows.
+//   - Crafting needs the station built (hearthStationWhy, read by 55-crafting): "Build the
+//     Workbench first." Only a cold save can have a station at Lv 0.
+//   - The Storehouse (id 'store') belongs to H3 (55-store.js); this file only opens its plot and
+//     gives its Lv 1 row (spec 1.3). Its behaviour is H3's.
+//
+// Exposed names:
+//   HEARTH_TUNE, HEARTH_CHAIN (station build order), HEARTH_PLOT { id: fn -> bool }
+//   hearthCold() -> bool      this save began at a cold Hearth
+//   hearthLit() -> bool       the fire burns (always true for warm saves)
+//   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
+//   hearthLight() -> bool     light the fire (cold, unlit, 8 Oak)
+//   hearthPlotOpen(id) -> bool   57-camp: is this building's plot open (warm: always)
+//   hearthFirst(id) -> { mats, secs } | null   57-camp: the Lv 1 row of a station
+//   hearthStationWhy(st) -> '' | 'Build the Workbench first.'   (st: CRAFT_STATIONS key)
+//   hearthNext() -> 'hearth' | station id | null   the next thing a player should build (sim policy)
+//   hearthApply()             57-camp calls it right after registerState('camp'): a cold start
+//                             sets the stations to Lv 0 (once, at the first load)
+//   hearthWarm() -> bool      tools only: turn a pristine cold start back into the old warm start
+//                             (check.mjs's older sections, sim --cold 0)
+// Events: emits hearthLit { quiet } and campOpen { quiet }; listens 'crafted' (the guide's tool
+//   step) and the first tick (the one-time What's new line for warm saves).
+// Save: registerState('hearth', { v: 1, cold: 0, lit: 0, said: 0 }).
+//   cold: this save began at a cold Hearth. lit: ms the fire was lit (0 = not; warm saves 0,
+//   never read). said: the warm What's new line was shown.
+
+const HEARTH_TUNE = {
+  on: 1,                               // 0: new games start warm, as before (tools)
+  light: [['wood', 1, 8]],             // the fire: 8 Oak Log
+  // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
+  first: {
+    bench: { mats: [['wood', 1, 20]], secs: 30 },
+    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 60 },
+    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 90 },
+    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 120 },
+    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 180 },
+    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 180 }
+  },
+  near: 0.8,       // the Storehouse plot also opens when any pile reaches 80% of what the packs hold
+  packs: 100,      // what the packs hold before a Storehouse (H3's storeCap wins when it exists)
+  zones: { loom: 5, ench: 6, tavern: 8 }
+};
+const HEARTH_CHAIN = ['bench', 'forge', 'store', 'loom', 'ench', 'tavern'];
+// The stations a cold start leaves unbuilt.
+const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
+let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+  hearthApply, hearthWarm, HEARTH_PLOT;
+
+{
+  // Decide before 57-camp registers S.camp: a new game has no camp field and no progress.
+  const noProgress = () => !(S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
+  const isNew = S.camp === undefined && S.hearth === undefined && noProgress();
+  const hadField = S.hearth !== undefined;
+  registerState('hearth', { v: 1, cold: 0, lit: 0, said: 0 });
+  const Hs = () => S.hearth || (S.hearth = { v: 1, cold: 0, lit: 0, said: 0 });
+  let coldStart = false;
+  if (isNew && HEARTH_TUNE.on) {
+    coldStart = true;
+    Hs().cold = 1;
+    S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0;
+  } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
+
+  const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
+  hearthCold = () => !!Hs().cold;
+  hearthLit = () => !hearthCold() || !!Hs().lit;
+
+  hearthApply = () => {
+    if (!coldStart || !S.camp || !S.camp.b) return;
+    coldStart = false;
+    for (const id of HEARTH_COLD_B) S.camp.b[id] = 0;
+    S.camp.b.hearth = 0; S.camp.open = false;
+  };
+
+  // ---- the fire ----
+  const short = cost => cost.filter(([f, t, n]) => (S.mats[f][t - 1] || 0) < n);
+  hearthCan = () => {
+    const cost = HEARTH_TUNE.light;
+    if (!hearthCold()) return { ok: false, why: 'The fire is already lit.', cost };
+    if (Hs().lit) return { ok: false, why: 'The fire is already lit.', cost, lit: true };
+    const miss = short(cost);
+    if (miss.length) return { ok: false, why: miss.map(([f, t, n]) => `${n - (S.mats[f][t - 1] || 0)} more ${matName(f, t)}`).join(', '), cost, miss };
+    return { ok: true, why: '', cost };
+  };
+  hearthLight = () => {
+    const c = hearthCan(); if (!c.ok) return false;
+    for (const [f, t, n] of c.cost) S.mats[f][t - 1] -= n;
+    Hs().lit = Date.now();
+    S.camp.b.hearth = Math.max(1, lv('hearth'));
+    S.camp.open = true;
+    emit('campOpen', { quiet: false });
+    emit('hearthLit', { quiet: false });
+    toast('The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+    if (S.activity !== 'fight') setActivity('fight');
+    save();
+    return true;
+  };
+
+  // ---- plots ----
+  const packCap = (f, t) => typeof storeCap === 'function' ? storeCap(f, t) : HEARTH_TUNE.packs;
+  const CAPPED = ['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'];
+  const nearFull = () => {
+    for (const f of CAPPED) { const row = S.mats[f]; if (!row) continue; for (let t = 1; t <= row.length; t++) { const c = packCap(f, t); if (c > 0 && Number.isFinite(c) && row[t - 1] >= HEARTH_TUNE.near * c) return true; } }
+    return false;
+  };
+  HEARTH_PLOT = {
+    bench: () => hearthLit(),
+    forge: () => lv('bench') >= 1,
+    store: () => lv('forge') >= 1 || nearFull(),
+    loom: () => S.maxZone >= HEARTH_TUNE.zones.loom,
+    ench: () => S.maxZone >= HEARTH_TUNE.zones.ench,
+    tavern: () => S.maxZone >= HEARTH_TUNE.zones.tavern
+  };
+  hearthPlotOpen = id => {
+    if (!hearthCold() || lv(id) > 0) return true;
+    if (!hearthLit()) return false;               // nothing to build before the fire
+    const f = HEARTH_PLOT[id];
+    return !f || !!f();
+  };
+  hearthFirst = id => HEARTH_TUNE.first[id] || null;
+
+  // ---- crafting gate ----
+  hearthStationWhy = st => {
+    if (!st || !hearthCold() || lv(st) >= 1) return '';
+    const d = typeof CRAFT_STATIONS === 'object' && CRAFT_STATIONS[st];
+    return `Build the ${d ? d.n : 'station'} first.`;
+  };
+
+  // ---- the sim's policy: what to build next ----
+  hearthNext = () => {
+    if (!hearthCold()) return null;
+    if (!hearthLit()) return 'hearth';
+    for (const id of HEARTH_CHAIN) {
+      if (typeof CAMP_B !== 'object' || !CAMP_B[id]) continue;
+      if (lv(id) >= 1) continue;
+      if (typeof campPending === 'function' && campPending(id)) continue;
+      if (hearthPlotOpen(id)) return id;
+    }
+    return null;
+  };
+
+  // ---- tools: undo a pristine cold start ----
+  hearthWarm = () => {
+    if (!hearthCold() || Hs().lit || !noProgress() || !S.camp) return false;
+    Hs().cold = 0; Hs().said = 1;
+    for (const id of HEARTH_COLD_B) S.camp.b[id] = Math.max(1, lv(id));
+    S.activity = 'fight'; S.node = { kind: 'ore', t: 1 }; S.gProg = 0;   // as fresh() has them
+    return true;
+  };
+
+  // ---- the guide's tool step: any tool made ----
+  on('crafted', e => {
+    const d = e && typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[e.kind];
+    if (d && d.tool && hearthCold() && typeof onboardDone === 'function') onboardDone('tool');
+  });
+
+  // ---- one What's new line for an old save (spec 8.2 step 6; H3 adds the Storehouse line) ----
+  let first = true;
+  onTick(() => {
+    if (!first) return; first = false;
+    if (hearthCold() || Hs().said) return;
+    Hs().said = 1;
+    emit('whatsNew', { msg: 'Your stations were already built. Tools now have mastery.', icon: { ic: ['anvil', '#D08A4E'] } });
+  });
+
+  // ---- Next Up: the Map Room (queued hint, plan-3 wave 2) ----
+  const mapAvail = () => typeof CAMP_B === 'object' && CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs());
+  const benched = () => typeof benchList === 'function' ? benchList().length : 0;
+  registerGoal({
+    id: 'maproom', sys: 'maproom', icon: { ic: ['anvil', '#D08A4E'] },
+    label: 'Build the Map Room to send companions on expeditions',
+    pct: () => {
+      if (!mapAvail() || lv('maproom') >= 1 || !(typeof campOpen === 'function' && campOpen()) || !benched()) return 0;
+      if (lv('hearth') < 2) return 0;
+      if (typeof campPending === 'function' && campPending('maproom')) return 0;
+      const c = campCan('maproom');
+      if (c.ok) return 1;
+      if (!c.cost) return 0;
+      let p = 1;
+      if (c.cost.gold > 0) p = Math.min(p, S.gold / c.cost.gold);
+      for (const [f, t, n] of c.cost.mats) p = Math.min(p, (S.mats[f][t - 1] || 0) / n);
+      return Math.max(0.01, Math.min(0.95, p));
+    },
+    go: { tab: 'world', sel: '#camp-b-maproom' }
   });
 }
 
@@ -9810,24 +10029,33 @@ const ONBOARD = { gate: false };
 function goalGate(g) { return !ONBOARD.gate || typeof onboardGoalOk !== 'function' || onboardGoalOk(g); }
 let onboardGoalOk;
 
+// A new game's cold Hearth (55-hearth, H1; hearth-and-hands.md 1.5): Gather from the start, Camp
+// when the fire is lit, Craft when the Workbench is built, the Tavern when it is built. Warm saves
+// keep the old rules.
+const coldH = () => typeof hearthCold === 'function' && hearthCold();
+const campLv = id => typeof campLevel === 'function' ? campLevel(id) : 0;
+const plotOpen = id => typeof CAMP_B === 'object' && !!CAMP_B[id] && typeof hearthPlotOpen === 'function' && hearthPlotOpen(id) && !(typeof campPending === 'function' && campPending(id));
+const oak8 = () => typeof hearthCan === 'function' && hearthCan().ok;
+const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
+
 // FEATURES: one row per thing that unlocks. tab/view say where it lives (for the UI's toast and
 // "new" marks); when() is checked about once a second; `why` is the rule in words (docs and checks).
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + S.fortune > 0 || S.maxZone >= 2 },
-  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down)', when: () => S.maxZone >= 3 },
+  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start', when: () => coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
-  { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5)', when: () => S.maxZone >= 5 || (typeof campOpen === 'function' && campOpen()) },
+  { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
-  { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6', when: () => S.maxZone >= 6 || S.items.length > 0 || craftReady() },
+  { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '8 minutes played or zone 8', when: () => O().t >= 480 || S.maxZone >= 8 },
   { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
   { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
   { id: 'synergy', tab: 'party', view: 'team', name: 'Synergies', why: 'two companions in the party', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
-  { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8', when: () => O().t >= 840 || S.maxZone >= 8 },
+  { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
   { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
@@ -9842,16 +10070,24 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
+// Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
+// tab:world and tab:forge are done from the start (chop, light and tool replace them).
 const GUIDE_STEPS = [
-  { id: 'tap', when: () => true, done: () => O().taps >= 3 || S.totalKills >= 25 },
+  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
+  { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
   { id: 'ability', when: () => stepDone('tap') && abilityOk(), done: () => O().casts >= 1 },
   { id: 'boss', when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', when: () => S.gold >= cheapestUp(), done: () => S.blade + S.swift + S.fortune > 0 },
   { id: 'tab:party', when: () => isUnlocked('party'), done: () => !!O().seen.party },
+  { id: 'bench', when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campLv('bench') >= 1 },
+  { id: 'tool', when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
   { id: 'nextup', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 2, done: () => false },
-  { id: 'tab:gat', when: () => isUnlocked('gather'), done: () => !!O().seen.gat },
-  { id: 'tab:world', when: () => isUnlocked('camp'), done: () => !!O().seen.world },
-  { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => !!O().seen.forge },
+  { id: 'forge', when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campLv('forge') >= 1 },
+  { id: 'store', when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campLv('store') >= 1 },
+  { id: 'tab:gat', when: () => isUnlocked('gather'), done: () => coldH() || !!O().seen.gat },
+  { id: 'tab:world', when: () => isUnlocked('camp'), done: () => coldH() || !!O().seen.world },
+  { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => coldH() || !!O().seen.forge },
   { id: 'recruit', when: () => !!O().rec || recruitable(), done: () => !!O().rec && !!O().seen.partyAfterRec }
 ];
 
@@ -9934,7 +10170,8 @@ function craftReady() {
   onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
-  on('tap', e => { if (!O().all || !guideOver()) O().taps++; });
+  // A cold save's chops (taps on the tree) do not count toward "tap a foe".
+  on('tap', e => { if (e && e.node && coldH()) return; if (!O().all || !guideOver()) O().taps++; });
   on('ability', e => { if (!e || !e.auto) O().casts++; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
@@ -12727,7 +12964,7 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
 // Costs are paid when a build is started or queued; a queued build starts the moment the
 // one ahead of it finishes (offline too). Cancel refunds 100% before a build starts, 50% after.
 // Stations (Forge, Workbench, Loom, Enchanter's Table) and the Tavern start at Lv 1 for every
-// save; their levels add perks only. Only play shortens builds (mod('buildTime'): the Builder's
+// save except a new game's cold Hearth (55-hearth, H1: it builds them on plots); their levels add perks only. Only play shortens builds (mod('buildTime'): the Builder's
 // Moon Omen, the Hearth Blessing, a Codex Seal later). Nothing is for sale.
 //
 // Exposed names:
@@ -12849,6 +13086,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
   // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
   if (typeof welcomeApply === 'function') welcomeApply();
+  // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
+  if (typeof hearthApply === 'function') hearthApply();
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -12859,7 +13098,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   campOpen = () => !!C().open;
   campBuilders = () => 1 + (lv('hearth') >= 5 ? 1 : 0) + Math.max(0, Math.floor(bonus('builders')));
   campMaxLevel = id => B(id) ? B(id).max : 0;
-  const shown = id => { const d = B(id); return !!d && (!d.needs || !!d.needs()); };
+  // H1: a cold save lists a building once its plot opens (hearthPlotOpen; warm saves: always).
+  const shown = id => { const d = B(id); return !!d && (!d.needs || !!d.needs()) && (typeof hearthPlotOpen !== 'function' || hearthPlotOpen(id)); };
   campList = () => CAMP_IDS.filter(shown);
 
   // ---------------- gates ----------------
@@ -12891,6 +13131,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       c.secs = h.secs;
       return c;
     }
+    // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
+    const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
+    if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
     const c = liveCost(campGold(zRef, T.goldPerLv * to), mats, d.tro, T.troph[r - 1], r);
@@ -12941,7 +13184,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 
   campCan = id => {
     const d = B(id); if (!d) return { ok: false, why: 'Unknown building.' };
-    if (!campOpen()) return { ok: false, why: `Reach zone ${T.openZone} to make camp.` };
+    if (!campOpen()) return { ok: false, why: S.hearth && S.hearth.cold ? 'Light the fire first.' : `Reach zone ${T.openZone} to make camp.` };
     if (!shown(id)) return { ok: false, why: 'Not open yet.' };
     const to = lv(id) + 1;
     if (to > d.max) return { ok: false, why: 'Fully built.', to, max: true };
@@ -13018,7 +13261,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   let firstCheck = true, acc = 1;
   onTick(dt => {
     acc += dt; if (acc < 1) return; acc = 0;
-    if (!C().open && S.maxZone >= T.openZone) openCamp(firstCheck);
+    if (!C().open && S.maxZone >= T.openZone && !(S.hearth && S.hearth.cold)) openCamp(firstCheck);   // H1: a cold save opens it by lighting the fire
     firstCheck = false;
     if (builds().length) campCatchUp(now());
   });
@@ -18200,6 +18443,10 @@ const ANIM = (() => {
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
+// Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
+// pass) or 'light' (additive lights). v = { cam, SW, SH, GY, T, tg, nodeR } (reused; nodeR: the gather node's right
+// edge, camera-free). 63d-scenery-camp: the cold Hearth.
+let stageDeco = null;
 let resize, animate, draw, stageStats, warmScene;
 {
   const A = ANIM;
@@ -19346,6 +19593,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
 
   let drawMs = 0;
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0 };
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -19360,6 +19608,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? foe.left + foe.w : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -19405,6 +19654,7 @@ let resize, animate, draw, stageStats, warmScene;
     for (const a of order) if (a.slash > 0) drawSlash(a, cam);
     ctx.globalCompositeOperation = 'lighter';
     keyLight();
+    if (stageDeco) stageDeco(ctx, 'light', dv);
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';
@@ -21265,6 +21515,163 @@ function sceneFor() { return null; } // replaced below
     } else ctx.drawImage(dv.ov, 0, 0, dv.ov.width / d, dv.ov.height / d);
     ctx.imageSmoothingEnabled = smooth;
   };
+}
+
+// ---- src/js/63d-scenery-camp.js ----
+// 63d-scenery-camp: the cold Hearth on the stage (task H1, hearth-and-hands.md 1.2). Browser-only.
+// A new game (55-hearth: hearthCold()) opens in the grove by the fire: a ring of stones and a dead
+// fire, Old Hesketh with his lamp out, and the oak the hero chops (the gather node). It is night in
+// the scene until the fire is lit. Stakes mark the station plots that are open; a built station
+// shows as a small piece of camp beside the fire. Drawn through 62-stage's stageDeco hook while a
+// cold save gathers wood; warm saves never see it.
+//
+// The fire is a button (#hearthFire) over the stage while it can be lit: a tap lights it (the
+// guide's "Tap the fire to light it." points here). Taps on it never reach the stage (no chop).
+// Reduced motion: no flicker, no smoke drift, Hesketh stands still.
+//
+// N2 (the camp scene) may share paintFire below with its own panorama.
+{
+  const P = 2;   // CSS px per art px (as the scenery and the sprites)
+  const COL = {
+    st: '#8C8494', stM: '#6B6275', stD: '#3A3444', log: '#7A5434', logD: '#4A3220', ash: '#2A2230',
+    f1: '#E0524F', f2: '#FF9E3D', f3: '#FFD27A', f4: '#FFF3C4', smoke: 'rgba(170,160,190,',
+    post: '#8C6A43', postD: '#4A3220', tag: '#EFE6D6', ink: '#0B0810', iron: '#5A5A66', ironD: '#34303C'
+  };
+  const box = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w * P, h * P); };
+  const cold = () => typeof hearthCold === 'function' && hearthCold();
+  const lit = () => typeof hearthLit === 'function' && hearthLit();
+  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood';
+  const showing = tg => cold() && atGrove(tg);
+
+  // ---- the fire: base centre (x, y = the ground line) ----
+  function paintFire(g, x, y, on, t) {
+    const X = a => x + a * P, Y = a => y + a * P;
+    // back stones, logs, front stones
+    for (const [a, c] of [[-6, COL.stM], [-2, COL.stD], [2, COL.stM]]) box(g, X(a), Y(-5), 3, 2, c);
+    box(g, X(-5), Y(-4), 10, 2, COL.ash);
+    box(g, X(-5), Y(-5), 9, 2, on ? COL.log : COL.logD); box(g, X(-4), Y(-5), 7, 1, on ? '#9A6A42' : COL.log);
+    box(g, X(-3), Y(-7), 2, 3, COL.logD); box(g, X(1), Y(-7), 2, 3, COL.logD);
+    if (on) {
+      const f = reduced ? 0 : Math.floor(t * 9) % 3, hs = [[6, 8, 5], [7, 6, 6], [5, 7, 8]][f];
+      box(g, X(-3), Y(-5 - hs[0]), 2, hs[0], COL.f2); box(g, X(-1), Y(-5 - hs[1]), 3, hs[1], COL.f2); box(g, X(2), Y(-5 - hs[2]), 2, hs[2], COL.f2);
+      box(g, X(-2), Y(-4 - hs[0]), 1, hs[0] - 2, COL.f3); box(g, X(0), Y(-4 - hs[1]), 1, hs[1] - 1, COL.f3); box(g, X(2), Y(-4 - hs[2]), 1, hs[2] - 2, COL.f3);
+      box(g, X(0), Y(-7), 1, 2, COL.f4); box(g, X(-4), Y(-6), 8, 1, COL.f1);
+    } else {
+      // a thread of smoke from the dead fire
+      for (let i = 0; i < 5; i++) {
+        const k = reduced ? i / 5 : ((t * 0.35 + i / 5) % 1), sx = X(Math.sin(k * 6 + i) * 1.5), sy = Y(-7 - k * 20);
+        g.fillStyle = COL.smoke + (0.35 * (1 - k)).toFixed(2) + ')'; g.fillRect(Math.round(sx), Math.round(sy), P, P);
+      }
+    }
+    for (const [a, c] of [[-7, COL.st], [-4, COL.stM], [-1, COL.st], [2, COL.stM], [5, COL.st]]) { box(g, X(a), Y(-2), 3, 2, c); box(g, X(a), Y(-2), 3, 1, a % 2 ? COL.st : '#A8A0B0'); }
+    box(g, X(-7), Y(0), 15, 1, 'rgba(11,8,16,.45)');
+  }
+  // A plot stake with a tag (an open plot), or the station itself (built).
+  function paintPlot(g, id, x, y, built) {
+    const X = a => x + a * P, Y = a => y + a * P;
+    if (!built) {
+      box(g, X(0), Y(-9), 1, 9, COL.post); box(g, X(1), Y(-9), 1, 9, COL.postD);
+      box(g, X(-2), Y(-8), 6, 3, COL.ink); box(g, X(-2), Y(-8), 5, 2, COL.tag); box(g, X(-1), Y(-7), 3, 1, '#B8AE9A');
+      return;
+    }
+    if (id === 'bench') {   // a workbench: top, legs, a saw
+      box(g, X(-5), Y(-7), 11, 2, COL.log); box(g, X(-5), Y(-7), 11, 1, '#9A6A42');
+      box(g, X(-4), Y(-5), 1, 5, COL.logD); box(g, X(4), Y(-5), 1, 5, COL.logD); box(g, X(-4), Y(-3), 9, 1, COL.logD);
+      box(g, X(-1), Y(-9), 4, 2, COL.iron);
+    } else if (id === 'forge') {   // an anvil on a stump, a warm coal bed behind
+      box(g, X(-6), Y(-6), 4, 6, COL.stD); box(g, X(-5), Y(-7), 2, 1, COL.f1);
+      box(g, X(-1), Y(-3), 5, 3, COL.logD); box(g, X(-2), Y(-6), 7, 2, COL.iron); box(g, X(-3), Y(-6), 2, 1, COL.iron); box(g, X(0), Y(-4), 3, 1, COL.ironD);
+    } else if (id === 'store') {   // a crate and a sack
+      box(g, X(-4), Y(-8), 8, 8, COL.log); box(g, X(-4), Y(-8), 8, 1, '#9A6A42'); box(g, X(-4), Y(-4), 8, 1, COL.logD); box(g, X(-1), Y(-8), 1, 8, COL.logD);
+      box(g, X(4), Y(-5), 4, 5, '#B8A078'); box(g, X(5), Y(-6), 2, 1, '#8C7A5A');
+    } else {
+      box(g, X(-3), Y(-6), 7, 6, COL.stM); box(g, X(-3), Y(-6), 7, 1, COL.st);
+    }
+  }
+  // Where things stand: the fire and Hesketh left of the hero (who stands at about 0.3-0.45 of the
+  // width, by the oak); the station plots from the right edge inward, in build order, CSS px apart
+  // (on a phone the oak's canopy may hang over the last one; the ground pieces stay clear).
+  const FIRE_X = 0.17, HES_DX = -24, PLOT_GAP = 22;
+  const PLOTS = ['bench', 'forge', 'store'];
+  const lv = id => typeof campLevel === 'function' ? campLevel(id) : 0;
+  const plotOpen = id => typeof CAMP_B === 'object' && !!CAMP_B[id] && typeof hearthPlotOpen === 'function' && hearthPlotOpen(id);
+
+  // Hesketh's frames bake once, in idle time.
+  let hes = null, hesAsked = false;
+  function hesFrames() {
+    if (hes || hesAsked || typeof charFrames !== 'function' || typeof companionSpec !== 'function') return hes;
+    hesAsked = true;
+    const bake = () => { try { hes = charFrames(companionSpec('hesketh')); } catch (e) { console.error('[lanternfall] hearth: Hesketh', e); } };
+    if (typeof idleTask === 'function') idleTask(bake, true); else bake();
+    return hes;
+  }
+  const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
+
+  stageDeco = (g, phase, v) => {
+    if (!showing(v.tg)) { at.on = false; return; }
+    const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY;
+    if (phase === 'back') {
+      if (!on) { g.fillStyle = 'rgba(6,5,16,.42)'; g.fillRect(-4, -4, v.SW + 8, v.SH + 8); }   // night until the fire is lit
+      let px = Math.min(Math.round(v.SW) - 16, Math.round(v.nodeR) + 14 + 2 * PLOT_GAP);
+      for (const id of PLOTS) {
+        const built = lv(id) >= 1;
+        if (!built && !plotOpen(id)) continue;
+        paintPlot(g, id, Math.min(px, v.SW - 16) - v.cam, gy - 1, built); px -= PLOT_GAP;
+      }
+      const H = hesFrames();
+      if (H && H.idle0) {
+        const f = !reduced && H.idle1 && Math.floor(v.T * 1.6) % 2 ? H.idle1 : H.idle0;
+        g.drawImage(f.c, Math.round(fx + HES_DX - f.ox), Math.round(gy - f.oy));
+      }
+      paintFire(g, fx, gy, on, v.T);
+      at.x = fx + v.cam; at.y = gy - 8; at.SW = v.SW; at.SH = v.SH; at.on = true;
+      return;
+    }
+    // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
+    if (!on) return;
+    const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
+    ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
+    ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);
+    const H = hes;
+    if (H && H.idle0 && H.idle0.lights) for (const l of H.idle0.lights) ANIM.lightAt(g, l.rgb, Math.round(fx + HES_DX - H.idle0.ox) + l.x, Math.round(gy - H.idle0.oy) + l.y, l.r || 14, 0.5);
+  };
+
+  // ---- the fire button: over the fire while it can be lit ----
+  const stageEl = $('stage');
+  const fire = el('button', 'hearth-fire'); fire.type = 'button'; fire.id = 'hearthFire'; fire.hidden = true;
+  const tag = el('span', 'hf-tag'); fire.append(tag);
+  stageEl.append(fire);
+  fire.addEventListener('pointerdown', e => e.stopPropagation());   // not a chop
+  fire.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!hearthLight()) { const c = hearthCan(); if (c.why && !c.lit) toast(`Chop more Oak first: ${c.why}.`, 'bad', { mat: ['wood', 1] }, 'normal'); return; }
+    ui(true);
+  });
+  let lastSig = '';
+  function place() {
+    const show = at.on && cold() && !lit() && S.activity === 'gather';
+    if (fire.hidden === show) fire.hidden = !show;
+    if (!show) return;
+    const c = hearthCan(), have = Math.min(8, S.mats.wood[0] || 0);
+    const sig = `${Math.round(at.x)}|${at.y}|${at.SW}|${at.SH}|${c.ok}|${have}`;
+    if (sig === lastSig) return; lastSig = sig;
+    putStyle(fire, 'left', (at.x / at.SW * 100).toFixed(2) + '%');
+    putStyle(fire, 'top', (at.y / at.SH * 100).toFixed(2) + '%');
+    putToggle(fire, 'ready', c.ok);
+    putText(tag, c.ok ? 'Light' : `${have}/8 Oak`);
+    putAttr(fire, 'aria-label', c.ok ? 'Light the fire (8 Oak Log)' : `The fire needs 8 Oak Log. You have ${have}.`);
+  }
+  setInterval(place, 200);
+
+  // ---- words: the opening card (the stage hint is 70-ui's: 'Tap to work faster') ----
+  const opening = () => {
+    if (!cold() || lit()) return;
+    toast('Old Hesketh\'s lamp has gone out. "Wood first. Then we talk."', 'good', { mat: ['wood', 1] }, 'high');
+  };
+  on('createDone', ({ mode } = {}) => { if (mode === 'new') opening(); });
+  // A reload before the fire is lit (the class is already chosen): the card again.
+  setTimeout(() => { if (S.party && S.party.chosen) opening(); }, 600);
+  on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
 }
 
 // ---- src/js/70-ui.js ----
@@ -23148,7 +23555,7 @@ let showAwayReport;
   }
 
   // ---------------- the camp part ----------------
-  let head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
   registerSection('camp', {
     id: 'camp', title: null,
     mount(sec) {
@@ -23158,7 +23565,9 @@ let showAwayReport;
       closed = el('div', 'card camp-closed');
       closedTxt = el('p', 'note');
       const bar = el('div', 'bar'); closedBar = el('i'); bar.append(closedBar);
-      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar);
+      lightBtn = btn('big cb-go', 'Light the fire · 8 Oak'); lightBtn.hidden = true;
+      lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
+      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
       const top = el('div', 'ch-top'), ic = el('div', 'ic ch-ic'); ic.append(img(icon('hearth')));
       const who = el('div', 'ch-who');
@@ -23180,6 +23589,16 @@ let showAwayReport;
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
+        // H1: a cold Hearth waits for its fire (8 Oak Log), not for a zone.
+        const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
+        putHidden(lightBtn, !cold);
+        if (cold) {
+          const have = Math.min(8, S.mats.wood[0] || 0);
+          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Oak Log to light it. You have ${have}.`);
+          putStyle(closedBar, 'width', have / 8 * 100 + '%');
+          putDisabled(lightBtn, !hc.ok);
+          return;
+        }
         setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
@@ -23293,7 +23712,9 @@ let showAwayReport;
     mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },
     update() {
       const sec = listBox.parentNode; putHidden(sec, !campOpen()); if (!campOpen()) return;
-      const ids = campList().filter(x => x !== 'hearth');
+      let ids = campList().filter(x => x !== 'hearth');
+      // H1: on a cold Hearth the stations still to build lead the list, in build order.
+      if (typeof hearthCold === 'function' && hearthCold()) { const k = id => { const i = HEARTH_CHAIN.indexOf(id); return i >= 0 && campLevel(id) < 1 ? i : 99; }; ids = ids.slice().sort((a, b) => k(a) - k(b)); }
       const sig = ids.join();
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
       for (const id of ids) {
@@ -23363,7 +23784,9 @@ let showAwayReport;
       putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
-      setTxt(rosNote, list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.');
+      // The queued Map Room hint (plan-3 wave 2): until it is built, say what it is for.
+      const map = CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs()) && campLevel('maproom') < 1 ? ' Build the Map Room (Hearth 2) to send companions on expeditions.' : '';
+      setTxt(rosNote, (list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.') + map);
       const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
       if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
       // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open
@@ -26285,7 +26708,7 @@ let legendUI = null;
   const OPEN_TXT = {
     party: 'New tab: Party. See who fights beside you.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
-    camp: 'You made camp. A new tab: Camp.',
+    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
     nextup: 'Next Up shows your best next goal.',
     bounties: 'New on the Fight tab: Bounties.',
@@ -26352,8 +26775,30 @@ let legendUI = null;
     return { node: n, text: words[2] };
   }
   // step id -> () => { node, text, at?: [fx, fy] (a point inside node) } | null
+  // The cold Hearth (H1): the fire's button lives on the stage (63d-scenery-camp.js).
+  const cold = () => typeof hearthCold === 'function' && hearthCold();
+  const atGrove = () => target() === 'node' && S.node.kind === 'wood';
+  const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
   const STEP_UI = {
-    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: 'Tap the foe to strike.' } : null,
+    chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
+    light: () => {
+      if (!onGame()) return null;
+      const f = $('hearthFire');
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
+      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Oak for the fire.' };
+      return null;
+    },
+    bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
+    tool: () => {
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is built. Open Craft.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]'), text: 'Open Make.' };
+      const st = q('.cf-st[data-st="bench"]');
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go'), side: 'up', text: 'Make a Copper Pickaxe.' };
+    },
+    forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
+    store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
+    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: cold() ? 'The road is dark. Tap a foe to strike.' : 'Tap the foe to strike.' } : null,
     ability: () => {
       const n = q('#stage .abil'), a = typeof abilityInfo === 'function' ? abilityInfo() : null;
       return onGame() && a ? { node: n, round: true, text: `${a.name} is ready. Tap it.` } : null;

@@ -9,9 +9,13 @@ import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, sub
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
 // changes prices, drops or odds under a check. The Almanac checks restore the calendar with
 // almanac.force(undefined) where they test it.
+// A new game starts at a cold Hearth (55-hearth, H1). Sections written before it play the old warm
+// start (hearthWarm() undoes a pristine cold start; loaded saves are untouched): pass { cold: true }
+// to keep the cold start (the 'cold hearth' section).
 function loadCore(opts) {
   const g = loadCoreRaw(opts);
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
+  if (!(opts && opts.cold)) try { g.eval("typeof hearthWarm === 'function' && hearthWarm()"); } catch (e) {}
   return g;
 }
 
@@ -2251,7 +2255,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^The Great Lantern/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section
+    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built)/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth')
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -2929,6 +2933,162 @@ try {
   assert(a0.gold > 0 && Math.abs(a1.gold - a0.gold) < 1e-6 * a0.gold && a1.left === 0 && !a0.errs && !a1.errs, `away fighting: the same gold with or without Well Rested (${Math.round(a0.gold)}), and it is used up`);
   assert(!g.errors.length, 'no Well Rested errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('tools and Well Rested crashed: ' + (e.stack || e)); }
+
+// ---- cold hearth (55-hearth.js, H1): a new game starts at an unlit fire and builds each station ----
+console.log('cold hearth');
+try {
+  const errs = [];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const STN = ['forge', 'bench', 'loom', 'ench', 'tavern'];
+  const clock = g => g.eval('Date.__t = Date.now(); Date.now = () => Date.__t');   // camp timers follow the check's clock
+  const tickS = (g, secs) => { for (let i = 0; i < secs * 10; i++) { g.fn.tick(0.1); if (i % 10 === 9) g.eval('Date.__t += 1000'); } };
+  // a new game is cold
+  const g = loadCore({ seed: 21, cold: true }); clock(g);
+  const E = s => g.eval(s);
+  assert(E('S.hearth.cold === 1 && S.hearth.lit === 0 && hearthCold() && !hearthLit()'), 'a new game starts at a cold Hearth');
+  assert(E(`${JSON.stringify(STN)}.every(id => campLevel(id) === 0) && campLevel('hearth') === 0 && !campOpen()`), 'stations and Hearth at 0, no camp yet');
+  assert(E('S.activity === "gather" && S.node.kind === "wood" && S.node.t === 1 && target() === "node"'), 'the hero chops the grove by the fire');
+  assert(E('!campList().includes("bench") && campCan("bench").why === "Light the fire first."'), 'nothing to build before the fire: ' + E('campCan("bench").why'));
+  E('S.mats.ore[0] = 50; S.mats.wood[0] = 50; S.mats.ore[1] = 50');
+  assert(E('canCraft("pick", 1).why') === 'Build the Workbench first.' && !E('craftItem("pick", 1)'), 'crafting refused: "Build the Workbench first."');
+  assert(/Build the Forge first\./.test(E('canCraft(Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].st === "forge" && !CRAFT_KINDS[k].legacy), 1).why')), 'the Forge too');
+  assert(/Build the Enchanter/.test(E('canTransmute("ore", 2, "down").why')) && !E('brewTonic(Object.keys(CRAFT_TONICS)[0], 1)'), "Transmute and Tonics wait for the Enchanter's Table");
+  E('S.mats.ore = [0, 0, 0, 0, 0]; S.mats.wood[0] = 5');
+  assert(!E('hearthLight()') && E('hearthCan().why') === '3 more Oak Log', 'the fire needs 8 Oak Log: ' + E('hearthCan().why'));
+  const ev = []; g.fn.on('campOpen', e => ev.push('campOpen:' + e.quiet)); g.fn.on('hearthLit', () => ev.push('lit'));
+  E('S.mats.wood[0] = 8');
+  assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "fight"'), 'hearthLight(): pays 8 Oak, Hearth 1, the camp opens, the hero walks out to fight');
+  assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
+  assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
+  const c1 = E('campCost("bench", 1)');
+  assert(c1.gold === 0 && JSON.stringify(c1.mats) === '[["wood",1,20]]' && c1.secs === 30, `Workbench Lv 1: 20 Oak, no gold, 30 s (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
+  assert(E('JSON.stringify(campCost("bench", 2))') === E('(() => { const f = hearthFirst; hearthFirst = () => null; try { return JSON.stringify(campCost("bench", 2)); } finally { hearthFirst = f; } })()'), 'Lv 2 keeps the old row');
+  E('S.mats.wood[0] = 20');
+  assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0, 'Workbench building');
+  tickS(g, 31);
+  assert(E('campLevel("bench") === 1 && campList().includes("forge")'), 'Workbench built after 30 s; the Forge plot opens');
+  E('S.mats.ore[0] = 4; S.mats.wood[0] = 4');
+  let toolDone = false; g.fn.on('onboardStep', e => { if (e.id === 'tool') toolDone = true; });
+  assert(E('!!craftItem("pick", 1)') && toolDone, "a Copper Pickaxe made at the Workbench; the guide's tool step is done");
+  E('S.mats.ore[0] = 25; S.mats.wood[0] = 10');
+  assert(E('campBuild("forge")'), 'the Forge building (25 Copper, 10 Oak)'); tickS(g, 61);
+  assert(E('campLevel("forge") === 1 && canCraft(Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].st === "forge" && !CRAFT_KINDS[k].legacy), 1).why !== "Build the Forge first."'), 'Forge built after 60 s: its recipes open');
+  if (E('!!CAMP_B.store')) assert(E('campList().includes("store")'), 'the Storehouse plot opens with the Forge');
+  assert(E('!campList().includes("loom") && !campList().includes("ench") && !campList().includes("tavern")'), "Loom, Enchanter's Table and Tavern plots wait for their zones");
+  E('S.maxZone = 5'); assert(E('campList().includes("loom") && !campList().includes("ench")'), 'zone 5: the Loom plot');
+  E('S.maxZone = 6'); assert(E('campList().includes("ench") && !campList().includes("tavern")'), "zone 6: the Enchanter's Table plot");
+  E('S.maxZone = 8'); assert(E('campList().includes("tavern")'), 'zone 8: the Tavern plot');
+  E('S.maxZone = 1');
+  assert(E('JSON.stringify(campCost("tavern", 1).mats)') === '[["wood",1,40],["herb",1,20]]' && E('campCost("ench", 1).secs') === 180, "Tavern and Enchanter's Table rows as the spec (1.3)");
+  // round trip: a cold save stays cold and keeps what it built
+  g.fn.save();
+  const g2 = loadCore({ seed: 22, cold: true, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+  assert(g2.eval('hearthCold() && hearthLit() && campLevel("bench") === 1 && campLevel("forge") === 1 && campLevel("loom") === 0 && campOpen()'), 'reload: still a cold save, stations as built');
+  // a reload before the fire (no progress yet): not set up twice, still cold
+  const g3 = loadCore({ seed: 23, cold: true }); g3.eval('S.mats.wood[0] = 3; save()');
+  const g4 = loadCore({ seed: 24, cold: true, storage: memoryStorage({ [KEY]: g3.storage.get(KEY) }) });
+  assert(g4.eval('hearthCold() && !hearthLit() && S.mats.wood[0] === 3 && campLevel("bench") === 0 && !campOpen()'), 'reload before the fire: the same cold start');
+  // tools: a pristine cold start warms back (older sections, sim --cold 0); a lit one never does
+  const w = loadCore({ seed: 25 });
+  assert(w.eval(`!hearthCold() && ${JSON.stringify(STN)}.every(id => campLevel(id) === 1) && S.activity === 'fight'`) && !E('hearthWarm()'), 'hearthWarm(): the old warm start (tools only); a lit Hearth stays');
+  w.eval('S.mats.ore[0] = 50; S.mats.wood[0] = 50');
+  assert(w.eval('canCraft("pick", 1).ok'), 'a warm game crafts without building (the gate is for cold saves only)');
+  errs.push(...g.errors, ...g2.errors, ...g3.errors, ...g4.errors, ...w.errors);
+
+  // every fixture is warm: stations Lv 1, recipes and camp rows exactly as before, one What's new line
+  for (const f of ['save-a-v1.json', 'save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const h = loadCore({ seed: 26, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+    const H = s => h.eval(s);
+    const news = []; h.fn.on('whatsNew', x => news.push(x.msg));
+    assert(H(`!hearthCold() && hearthLit() && ${JSON.stringify(STN)}.every(id => campLevel(id) >= 1)`), `${f}: warm, every station built`);
+    const same = H(`(() => {
+      const kinds = Object.keys(CRAFT_KINDS), all = () => JSON.stringify([kinds.map(k => [1, 2, 3, 4, 5].map(t => { const c = canCraft(k, t); return [c.ok, c.why]; })), canTransmute('ore', 2, 'down').why, campList(), campList().map(id => { const c = campCan(id); return [c.ok, c.why, c.cost]; })]);
+      const a = all(), sw = hearthStationWhy, po = hearthPlotOpen, fi = hearthFirst;
+      hearthStationWhy = () => ''; hearthPlotOpen = () => true; hearthFirst = () => null;
+      try { return a === all(); } finally { hearthStationWhy = sw; hearthPlotOpen = po; hearthFirst = fi; }
+    })()`);
+    assert(same, `${f}: every recipe, Transmute and camp row exactly as without the Hearth rules`);
+    const mats0 = JSON.stringify(H('S.mats')), items0 = H('S.items.length');
+    for (let i = 0; i < 20; i++) h.fn.tick(0.1);
+    assert(news.filter(m => /^Your stations were already built/.test(m)).length === 1 && H('S.hearth.said') === 1, `${f}: one What's new line: "${news.find(m => /stations/.test(m))}"`);
+    const m0 = JSON.parse(mats0), m1 = H('S.mats');
+    assert(Object.keys(m0).every(k => m0[k].every((n, i) => m1[k][i] >= n)) && H('S.items.length') >= items0 && H('!GUIDE_STEPS.some(x => ["chop", "light", "bench", "tool", "forge", "store"].includes(x.id) && x.when())'), `${f}: nothing taken, no cold-Hearth tips`);
+    h.fn.save();
+    const h2 = loadCore({ seed: 27, storage: memoryStorage({ [KEY]: h.storage.get(KEY) }) }); const n2 = []; h2.fn.on('whatsNew', x => n2.push(x.msg));
+    for (let i = 0; i < 20; i++) h2.fn.tick(0.1);
+    assert(!n2.some(m => /stations/.test(m)), `${f}: the line shows once`);
+    errs.push(...h.errors, ...h2.errors);
+  }
+
+  // the first ten minutes, driving the core like a new player (warden, mixed play, spec 1.4)
+  {
+    const p = loadCore({ seed: 7, cold: true }); clock(p);
+    const P = s => p.eval(s);
+    P('chooseClass("warden"); ONBOARD.gate = true');
+    const got = {}, marks = {};
+    const now = () => P('Math.round(S.onboard.t)');
+    const mark = k => { if (marks[k] === undefined) marks[k] = now(); };
+    p.fn.on('unlock', e => { if (got[e.id] === undefined) got[e.id] = now(); });
+    p.fn.on('campBuilt', e => mark(e.id + e.lv));
+    p.fn.on('zoneClear', e => mark('zone' + (e.zone + 1)));
+    p.fn.on('crafted', e => { const d = P(`CRAFT_KINDS[${JSON.stringify(e.kind)}] || {}`); if (d.tool) mark('tool'); if (d.pos === 'weapon') mark('weapon'); });
+    const steps = []; p.fn.on('onboardStep', e => steps.push([e.id, now()]));
+    const buy = () => P(`{ let n = 0; for (let k = 0; k < 50; k++) { const c = HERO_UPS.map(u => ({ u, p: plan(u.base, u.r, S[u.id], S.gold, u.cap, '1') })).filter(o => o.p.n > 0 && o.p.cost <= S.gold).sort((a, b) => a.p.cost - b.p.cost)[0]; if (!c) break; buyHero(c.u.id, '1'); n++; } n }`);
+    const weapon = P('Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].pos === "weapon" && !CRAFT_KINDS[k].legacy && fits(k, "weapon", "hero"))');
+    // what the player gathers for: the next station, then the pickaxe, then the class weapon
+    const want = () => P(`(() => {
+      const nx = hearthNext(), need = [];
+      if (campLevel('bench') >= 1 && !S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)) for (const [f, n] of Object.entries(craftRecipe('pick', 1))) if (f !== 'gold') need.push([f, 1, n]);
+      if (nx && nx !== 'hearth') { const c = campCan(nx); if (c.cost && !c.busy) for (const [f, t, n] of c.cost.mats) need.push([f, t, n]); }
+      if (campLevel('forge') >= 1 && !equipped('weapon')) for (const [f, n] of Object.entries(craftRecipe(${JSON.stringify(weapon)}, 1))) if (f !== 'gold') need.push([f, 1, n]);
+      for (const [f, t, n] of need) if (CRAFT_NODES[f] && (S.mats[f][t - 1] || 0) < n && S.skills[skillOf(f)].lv >= NODE_REQ[t - 1]) return [f, t, n];
+      return null;
+    })()`);
+    let firstUp = null, gatherUntil = 0, trip = null;
+    for (let sec = 0; sec < 10 * 60; sec++) {
+      // taps go through the stage as the browser sends them: the 'tap' event, then the strike or the chop
+      if (!P('hearthLit()')) { if (sec % 2 === 0) P('emit("tap", { node: target() === "node" }); playerTap({ x: 0.7, y: 0.5 })'); if (P('hearthCan().ok') && P('hearthLight()')) mark('lit'); }
+      else {
+        if (sec < 120 && sec % 3 === 0) P('emit("tap", { node: target() === "node" }); playerTap({ x: 0.7, y: 0.5 })');
+        if (sec % 20 === 0) P('castAbility()');
+        const nx = P('hearthNext()');
+        if (nx && nx !== 'hearth' && P(`campCan(${JSON.stringify(nx)}).ok`)) P(`campBuild(${JSON.stringify(nx)})`);
+        if (P('campLevel("bench") >= 1 && canCraft("pick", 1).ok && !S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)')) { const it = P('craftItem("pick", 1)'); if (it) P(`equipItem(${it.id})`); }
+        if (weapon && P(`canCraft(${JSON.stringify(weapon)}, 1).ok && !equipped("weapon")`)) { const it = P(`craftItem(${JSON.stringify(weapon)}, 1)`); if (it) P(`equipItem(${it.id})`); }
+        // after the first boss the player gathers what the next build or recipe waits on, in short trips
+        if (P('S.activity') === 'fight') {
+          if (P('S.maxZone') >= 2 && sec >= gatherUntil) { trip = want(); if (trip && P(`setNode(${JSON.stringify(trip[0])}, ${trip[1]})`)) { P('setActivity("gather")'); gatherUntil = sec + 120; } }
+        } else if (!trip || P(`S.mats.${trip[0]}[${trip[1] - 1}]`) >= trip[2] || sec >= gatherUntil) { trip = null; P('setActivity("fight")'); gatherUntil = sec + 20; }
+      }
+      if (firstUp === null && P('S.gold >= 10')) firstUp = now();
+      // the UI asks for the step to show about 4 times a second; the player follows a tab hint and taps Next Up
+      const st = P('(s => s && s.id)(onboardStep())');
+      if (st && st.startsWith('tab:')) P(`S.onboard.seen[${JSON.stringify(st.slice(4))}] = 1`);
+      if (st === 'nextup') P('onboardDone("nextup")');
+      if (sec % 5 === 0) buy();
+      tickS(p, 1);
+    }
+    const at = k => marks[k] ?? got[k] ?? Infinity;
+    const mmss = t => t === Infinity ? 'never' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    const tl = Object.entries(Object.assign({}, got, marks)).sort((a, b) => a[1] - b[1]);
+    console.log('       timeline: ' + tl.map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
+    console.log('       guide: ' + steps.map(([k, t]) => `${k} ${mmss(t)}`).join(', ') + ` | zone ${P('S.maxZone')} at 10:00`);
+    assert(at('lit') <= 60, `the fire lit under 1:00 (${mmss(at('lit'))})`);
+    assert(firstUp !== null && firstUp < 90, `first upgrade affordable under 1:30 (${mmss(firstUp)})`);
+    assert(at('party') <= 150 && at('nextup') <= 150, `Party and Next Up by 2:30 (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
+    assert(at('gather') <= 1 && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather from the start, Camp with the fire, Craft with the Workbench (${mmss(at('camp'))}, ${mmss(at('craft'))})`);
+    assert(at('tool') <= 300, `a tool by 5:00 (${mmss(at('tool'))})`);
+    assert(at('bench1') <= 240 && at('forge1') <= 600, `Workbench by 4:00, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
+    const early = tl.map(x => x[1]).filter(t => t <= 600);
+    let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
+    assert(early.length >= 8 && gap <= 180, `something new at least every 3 minutes in the first 10 (${early.length} events, longest gap ${gap}s)`);
+    const order = steps.map(x => x[0]);
+    assert(order.indexOf('chop') >= 0 && order.indexOf('chop') < order.indexOf('light') && order.indexOf('light') < order.indexOf('tap') && ['tab:gat', 'tab:world', 'tab:forge'].every(id => order.includes(id)), 'guide: chop, then light, then tap a foe; the old tab steps are done for a cold save');
+    assert(order.includes('bench') && order.includes('tool') && order.includes('forge'), 'guide: bench, tool and forge steps done');
+    errs.push(...p.errors);
+  }
+  assert(!errs.length, 'no cold hearth errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('cold hearth crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

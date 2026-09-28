@@ -4,7 +4,7 @@
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/gathering-and-crafting.md 3, 4 and 9 (K6) with its "Owner decisions"
 // (random affixes, Reforge at the Enchanter's Table, trophies gate +8..+10) and camp.md N4
-// (buildings never gate recipes). Tables: 21-data-craft.js (K1). Items: 41-items.js (K4).
+// (buildings never gate recipes), except a new game's cold Hearth (H1): there a station must be built. Tables: 21-data-craft.js (K1). Items: 41-items.js (K4).
 //
 // Exposed names (the Craft tab, K7, calls these; every action saves and returns falsy when refused):
 //   craftItem(kind, t, opts?) -> item | null     opts: { role } (Trinkets), { mw: trophyIndex }
@@ -84,6 +84,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   };
   const gainStation = (skill, n) => gainSkill(skill, craftXpFor(skill, n));
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
+  // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
+  const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
 
   // ---- materials ----
   const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - S.mats[k][t - 1]]).filter(([, n]) => n > 0);
@@ -101,6 +103,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
     const x = { cost, lv, need, miss: [] };
+    if (unbuilt(st.key)) return no(unbuilt(st.key), Object.assign(x, { unbuilt: true }));
     if (lv < need) return no(gateWhy(st.skill, need), x);
     if (d.role === 'any' && opts.role != null && !CRAFT_ROLE_POOL[opts.role]) return no('Pick a role for the Trinket.', x);
     if (opts.mw != null) {
@@ -172,6 +175,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const it = itemById(id); if (!it) return no('No such item.');
     if (!Array.isArray(it.a) || !it.a[idx]) return no('Pick a line to reforge.');
     const cost = reforgePrice(it), x = { cost }, need = CRAFT_STATION_REQ[it.t - 1];
+    if (unbuilt('ench')) return no(unbuilt('ench'), x);
     if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
     const miss = missing(cost.mats, it.t);
     if (miss.length) return no(missWhy(miss, it.t), x);
@@ -209,6 +213,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!validTier(fromT) || !validTier(tt) || Math.abs(tt - fromT) !== 1) return no('Transmute moves one tier at a time.');
     const up = tt > fromT, rule = up ? CRAFT_TRANSMUTE.up : CRAFT_TRANSMUTE.down;
     const take = Math.max(1, rule.take - (up ? bonus('transmuteSave') : 0)), x = { take, give: rule.give, toT: tt };
+    if (unbuilt('ench')) return no(unbuilt('ench'), x);
     if (up && S.skills.ench.lv < CRAFT_STATION_REQ[tt - 1]) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
     const have = S.mats[fam][fromT - 1];
     if (have < take) return no(`${take - have} more ${matName(fam, fromT)}`, x);
@@ -278,6 +283,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
     if (orielDone()) return no('Oriel already answered your Star Chart.', x);
+    if (unbuilt(STAR.st)) return no(unbuilt(STAR.st), x);
     if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
     const tmiss = STAR.troph.filter(([i, n]) => (C().troph[i] || 0) < n);
     x.miss = missing(cost.mats, t);
@@ -304,7 +310,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   const tonicV = (key, t) => CRAFT_TONICS[key].v * (1 + CRAFT_TONIC_RULE.scale * (t - 1));
   tonicActive = () => { const a = C().tonic; return a && a.left > 0 && CRAFT_TONICS[a.k] ? { key: a.k, t: a.t, left: a.left, v: tonicV(a.k, a.t) } : null; };
   brewTonic = (key, t) => {
-    const d = CRAFT_TONICS[key]; if (!d || !validTier(t)) return false;
+    const d = CRAFT_TONICS[key]; if (!d || !validTier(t) || unbuilt('ench')) return false;
     if (S.skills.ench.lv < CRAFT_STATION_REQ[t - 1]) return false;
     const m = Object.fromEntries(Object.entries(d.rec).map(([k, n]) => [k, craftScale(n, t)]));
     if (!hasMats(m, t)) return false;

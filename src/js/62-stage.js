@@ -10,6 +10,10 @@
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
+// Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
+// pass) or 'light' (additive lights). v = { cam, SW, SH, GY, T, tg, nodeR } (reused; nodeR: the gather node's right
+// edge, camera-free). 63d-scenery-camp: the cold Hearth.
+let stageDeco = null;
 let resize, animate, draw, stageStats, warmScene;
 {
   const A = ANIM;
@@ -1156,6 +1160,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
 
   let drawMs = 0;
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0 };
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -1170,6 +1175,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? foe.left + foe.w : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -1215,6 +1221,7 @@ let resize, animate, draw, stageStats, warmScene;
     for (const a of order) if (a.slash > 0) drawSlash(a, cam);
     ctx.globalCompositeOperation = 'lighter';
     keyLight();
+    if (stageDeco) stageDeco(ctx, 'light', dv);
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';

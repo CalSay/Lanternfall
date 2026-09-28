@@ -42,7 +42,7 @@
   const OPEN_TXT = {
     party: 'New tab: Party. See who fights beside you.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
-    camp: 'You made camp. A new tab: Camp.',
+    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
     nextup: 'Next Up shows your best next goal.',
     bounties: 'New on the Fight tab: Bounties.',
@@ -109,8 +109,30 @@
     return { node: n, text: words[2] };
   }
   // step id -> () => { node, text, at?: [fx, fy] (a point inside node) } | null
+  // The cold Hearth (H1): the fire's button lives on the stage (63d-scenery-camp.js).
+  const cold = () => typeof hearthCold === 'function' && hearthCold();
+  const atGrove = () => target() === 'node' && S.node.kind === 'wood';
+  const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
   const STEP_UI = {
-    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: 'Tap the foe to strike.' } : null,
+    chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
+    light: () => {
+      if (!onGame()) return null;
+      const f = $('hearthFire');
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
+      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Oak for the fire.' };
+      return null;
+    },
+    bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
+    tool: () => {
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is built. Open Craft.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]'), text: 'Open Make.' };
+      const st = q('.cf-st[data-st="bench"]');
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go'), side: 'up', text: 'Make a Copper Pickaxe.' };
+    },
+    forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
+    store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
+    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: cold() ? 'The road is dark. Tap a foe to strike.' : 'Tap the foe to strike.' } : null,
     ability: () => {
       const n = q('#stage .abil'), a = typeof abilityInfo === 'function' ? abilityInfo() : null;
       return onGame() && a ? { node: n, round: true, text: `${a.name} is ready. Tap it.` } : null;
