@@ -258,3 +258,10 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   10-step hint guide; old saves see everything). A new game unlocks something every 1-2 min early; the
   first recruit lands at about 22 min. The first boss falls at 0:35-1:00, which is zone-1 difficulty (a
   pacing note, not a bug). "Skip tips" / "Show every tab now" live in the Journal.
+- Constellations merged (57e: 4 maps x 31 stars, 4 keystones each, max 2 lit, 2 layouts, free reset;
+  the Party > Stars view unlocks at hero level 10). Best builds add about +7/+20/+34% at L20/40/60.
+  Hooks for the combat owner: route the `tune:<knob>` bonuses in 55-party.js through tn() (guardT, wallT,
+  wallPause, wall, flare, flarePerEmber, hasteT, bless, hymn, hymnT, lkShare, lkAura, autoEff, autoCd) and
+  implement the keystone flags (starKeystone(id), STAR_KS). Until then Dawnbringer is too strong, Pack
+  Leader has no cost, Sanctuary Hymn has no upside, and Glass Lantern lacks its Flare bonus. Forwarded
+  to Stage C. Coordinator fix: onboarding treated a feature unlocked at play time 0 as locked (!= null).

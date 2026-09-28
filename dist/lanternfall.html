@@ -1737,6 +1737,98 @@ span.cf-d { font-weight: 600; }
 .rt-in.rt-away { background: var(--r-rare); color: #0B0810; }
 .rtile .rt-out { color: #9CC1FF; }
 .rtile .rt-out { -webkit-line-clamp: 3; overflow-wrap: anywhere; }
+/* 60-stars: the Stars view on the Party tab (75-stars-ui.js, docs/design/constellations.md) */
+.st-sec { gap: 10px; }
+.st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.st-title { margin: 0; font: 600 20px/1.15 var(--display); text-shadow: 0 2px 0 #0B0810; }
+.st-pts { font: 600 14px var(--display); color: var(--muted); font-variant-numeric: tabular-nums; }
+.st-pts.has { color: var(--gold); text-shadow: 0 0 8px rgba(242,193,78,.35); }
+.st-sub { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.st-how { font-size: 12px; }
+.st-keys { font: 600 13px var(--display); color: var(--bone); padding: 3px 8px; background: var(--well); border: 2px solid var(--line-hi); }
+.st-keys.full { border-color: var(--gold); color: var(--gold); }
+.st-bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.st-chips button { min-width: 76px; min-height: 44px; padding: 6px 12px; font-size: 14px; -webkit-touch-callout: none; user-select: none; }
+.st-btns { display: flex; gap: 6px; }
+.st-mini { min-height: 44px; min-width: 60px; padding: 6px 8px; }
+.st-panel { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 10px; background: var(--panel); border: 2px solid var(--line-hi); }
+.st-panel .mini { min-height: 44px; }
+.st-confirm .note { flex: 1 1 100%; color: var(--bone); }
+.st-input { flex: 1; min-width: 0; min-height: 44px; padding: 6px 10px; font: 600 16px var(--display); color: var(--bone); background: var(--well); border: 2px solid var(--line-hi); }
+.st-mode button { min-height: 44px; min-width: 60px; font-size: 13px; }
+
+/* the map */
+.st-map { width: 100%; max-width: 440px; justify-self: center; background: radial-gradient(circle at 50% 50%, #241a33 0%, #120d19 62%, var(--well) 100%); border: 2px solid var(--line); box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810; }
+.st-svg { display: block; width: 100%; height: auto; aspect-ratio: 380 / 376; touch-action: manipulation; cursor: pointer; -webkit-user-select: none; user-select: none; }
+.st-orbit { fill: none; stroke: rgba(165,151,180,.08); stroke-width: 1; stroke-dasharray: 2 6; }
+.st-div { stroke: rgba(165,151,180,.12); stroke-width: 1; stroke-dasharray: 3 5; }
+.st-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; padding: 6px 8px 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.st-leg { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.st-leg b { font: 600 12px var(--display); color: var(--bone); }
+.st-legn { font-variant-numeric: tabular-nums; }
+.st-arrow { font: 700 13px/1 var(--body); font-style: normal; color: var(--muted); }
+.st-dust { fill: rgba(239,230,214,.35); }
+.st-edge { stroke: rgba(165,151,180,.28); stroke-width: 2; }
+.st-edge.half { stroke: rgba(165,151,180,.45); }
+.st-edge.lit { stroke: var(--gold); stroke-width: 3; }
+.st-star { outline: none; }
+.st-star .st-glow { fill: var(--role); opacity: 0; }
+.st-star .st-ring { fill: none; stroke: transparent; stroke-width: 2; }
+.st-star .st-body { fill: #2A2233; stroke: #6E6080; stroke-width: 2; }
+.st-star.dim .st-body { fill: #1A1422; stroke: #3A2F47; }
+.st-star.near .st-body { stroke: #8A7D9C; }
+.st-star.open .st-ring { stroke: #FFFFFF; }
+.st-star.open .st-body { stroke: #EFE6D6; }
+.st-star.lit .st-body { fill: var(--role); stroke: #FFF3D6; }
+.st-star.lit .st-glow { opacity: .28; }
+.st-star.k-hearth .st-body { fill: var(--gold); stroke: #FFF3D6; }
+.st-star.k-key.lit .st-glow, .st-star.k-crown.lit .st-glow { opacity: .42; animation: st-twinkle 3.2s ease-in-out infinite; }
+.st-star.k-key .st-body, .st-star.k-crown .st-body { stroke-width: 2.5; }
+.st-star.sel .st-ring { stroke: var(--gold); stroke-width: 3; }
+.st-star:focus-visible .st-ring { stroke: var(--ember); stroke-width: 3; }
+.st-lockic { display: none; fill: #A597B4; stroke: #A597B4; stroke-width: 1.4; }
+.st-star.kblock .st-lockic { display: inline; }
+.st-star.kblock .st-body { opacity: .55; }
+.st-star.pop { animation: st-pop .38s ease-out; transform-box: fill-box; }
+@keyframes st-twinkle { 0%, 100% { opacity: .42; } 50% { opacity: .2; } }
+@keyframes st-pop { 0% { opacity: .5; } 60% { opacity: 1; } }
+
+/* the detail card */
+.st-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 3px 0 #0B0810; min-height: 88px; }
+.st-card.is-lit { border-color: #6E5A2A; }
+.st-cl { min-width: 0; display: grid; gap: 3px; }
+.st-cname { font: 600 18px/1.15 var(--display); }
+.st-ckind { font: 600 12px var(--body); letter-spacing: .04em; color: var(--muted); }
+.st-ctext { margin: 2px 0 0; font-size: 14px; }
+.st-cc { margin: 0; font-size: 12px; color: #7F7390; }
+.st-cwhy { margin: 0; font-size: 13px; color: #FFB27A; }
+.st-card.is-lit .st-cwhy { color: var(--muted); }
+.st-cbtn { min-height: 48px; min-width: 96px; font: 600 15px var(--display); }
+.st-cbtn.off { background: var(--panel-2); color: var(--bone); box-shadow: inset 0 2px 0 rgba(255,255,255,.08), inset 0 -3px 0 #1a1420; }
+
+/* the list view */
+.st-list { display: grid; gap: 12px; }
+.st-group { display: grid; gap: 4px; }
+.st-gtitle { margin: 0 0 2px; font: 600 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.st-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px 6px 10px; background: var(--panel); border: 2px solid var(--line); cursor: pointer; }
+.st-row.sel { border-color: var(--gold); }
+.st-row.dim { opacity: .7; }
+.st-dot { width: 14px; height: 14px; background: #1A1422; border: 2px solid #6E6080; transform: rotate(45deg); }
+.st-row.k-minor .st-dot, .st-row.k-bridge .st-dot { border-radius: 50%; transform: none; width: 12px; height: 12px; }
+.st-row.open .st-dot { border-color: #FFFFFF; }
+.st-row.lit .st-dot { background: var(--role, var(--gold)); border-color: #FFF3D6; box-shadow: 0 0 8px var(--role, var(--gold)); }
+.st-rname { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font: 600 15px/1.2 var(--display); }
+.st-rkind { font: 500 11px var(--body); letter-spacing: .06em; color: var(--muted); }
+.st-rdesc { font-size: 13px; color: var(--muted); }
+.st-rwhy { font-size: 12px; color: #FFB27A; }
+.st-rbtn { min-height: 44px; min-width: 84px; }
+@media (prefers-reduced-motion: reduce) {
+  .st-star.k-key.lit .st-glow, .st-star.k-crown.lit .st-glow, .st-star.pop { animation: none; }
+}
+@media (max-width: 440px) {
+  .st-card { grid-template-columns: minmax(0, 1fr); }
+  .st-cbtn { justify-self: end; min-width: 132px; }
+}
 /* 60-unlocks: the Tavern visitor card and the joining moment overlay (75-unlocks-ui.js). */
 
 /* ---- Tavern visitor ---- */
@@ -7330,6 +7422,7 @@ const FEATURES = [
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8', when: () => O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
+  { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
@@ -7381,7 +7474,7 @@ function craftReady() {
   registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
-  isUnlocked = id => !id || O().all || !FEATURE_OF[id] || !!O().got[id];
+  isUnlocked = id => !id || O().all || !FEATURE_OF[id] || O().got[id] != null;
   function unlock(id, quiet) {
     const f = FEATURE_OF[id]; if (!f || isUnlocked(id)) return false;
     O().got[id] = Math.round(O().t);
@@ -7399,11 +7492,11 @@ function craftReady() {
     const out = [];
     if (O().all) return out;
     for (const f of FEATURES) {
-      if (O().got[f.id]) continue;
+      if (O().got[f.id] != null) continue;
       let ok = false; try { ok = !!f.when(); } catch (e) {}
       if (ok && unlock(f.id)) out.push(f.id);
     }
-    if (FEATURES.every(f => O().got[f.id])) O().all = true;
+    if (FEATURES.every(f => O().got[f.id] != null)) O().all = true;
     return out;
   };
 
@@ -11930,6 +12023,573 @@ let DEEP_ARENA = null;
     _init: () => { initFor = null; ensureInit(); }
   };
   ensureInit();
+}
+
+// ---- src/js/57e-constellations.js ----
+// 57e-constellations: the per-class talent star map (docs/design/constellations.md).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// UI: 75-stars-ui.js (the Party tab's Stars view).
+//
+// Points:   starPoints() = floor(S.L / 3) + 4 x greatLanternsLit() (region bosses beaten: zone 35, 70, ...).
+//           Derived, never stored. starFree() = points not spent in the active layout.
+// Map:      a Hearthstar (lit for free), 3 arms of 8 stars (spine 1-2-3-4-5-8, side branch 4-6-7;
+//           stars 3 and 6 are notables, 8 the keystone), a crown ring of 5 bridges and a crown
+//           keystone. 31 stars per class. A star lights when it touches a lit star and you have the
+//           points. An arm keystone needs 5 lit stars in its arm; the crown needs 3 lit bridges and
+//           3 lit stars in every arm. At most STAR_TUNE.keyMax (2) keystones lit. Unlighting is
+//           allowed while every other lit star stays connected and every lit keystone keeps its need.
+//           Reset and layout switches are free. None of it while a zone boss fight or a Deepwell run
+//           is live (starLocked()).
+// Layouts:  2 per class ("Farm", "Push"), renamable (12 chars). Changing class keeps each class's map.
+//
+// API: STAR_MAPS, STAR_TUNE, starPoints, greatLanternsLit, starFree, starSpent, starMap(cls),
+//   starCls, starLayout, starLayouts, starIsLit, starCheck(id) -> { ok, why, act }, starLight,
+//   starUnlight, starReset, starUseLayout(i), starRename(i, name), starLocked(), starKeysLit(),
+//   starKeystone(id), starEffects(), starPowerEst(cls, lit), starBest(cls, points), starText(star).
+//
+// Wiring (all effects go through the shared registries; nothing here edits 55-party.js):
+//   m     addModifier keys: dmg, party, tap, crit, critDmg, abilityCd, xp, compXp, gold, offline.
+//   hero  hero-only damage (the A1 trick: dmg x k, party x 1/k, so companions are unchanged).
+//   t     bonus('tune:<knob>') for 55-party.js's class knobs (T table). Knobs 55-party routes
+//         through tn() today: STAR_TUNE_ROUTED. The rest wait for the combat owner (see report).
+//   ks    a flag for new combat behaviour: bonus('ks:<id>') > 0, or starKeystone(id). Combat code
+//         reads it; the numbers it should use are in STAR_KS below.
+//   live  small effects that need no combat change, done here from events: afterglow, finisher,
+//         stalker, bash, challenger.
+//   p     the design's estimate of the star's effective damage at the push zone (x). starPowerEst
+//         multiplies them; check.mjs keeps the best build under the pace caps.
+
+const STAR_TUNE = { every: 3, lanternPts: 4, lanternZone: 35, keyMax: 2, armKeyNeed: 5, crownBridges: 3, crownArm: 3, nameMax: 12 };
+// Knobs 55-party.js reads through tn()/bonus() today; stars on other knobs are data until it does.
+const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'embersMax', 'markT', 'mark', 'volleyHits', 'blessT', 'blessMax', 'emberPerTap', 'charges', 'keepEmbers', 'hymnFloor'];
+// Numbers the combat code should use for each ks flag (the text on the star says the same).
+const STAR_KS = {
+  unbroken: { holdSecs: 3 },                  // guard stacks never fall off while a heavy hit lands at least every 3s
+  crush: { every: 5, mult: 3 },               // every 5th heavy hit deals x3
+  challenger: { taunt: true },                // [C] taps taunt for 2s, -20% damage taken while taunting
+  bastion: { cdPerHeavy: 1, wallPauseFull: true }, // each heavy hit takes 1s off Shield Wall; the Wall stops the boss timer for its whole length
+  oathsworn: {},                              // [C] tanks +80% HP, +40 armour
+  twinSpark: { chance: 0.25 },                // a tap has a 25% chance to plant 2 Embers
+  slowBurn: { perEmber: 0.05 },               // each Ember burns for 0.05x hero attack per second
+  wildfire: {},                               // Embers jump to the next foe when their foe dies
+  overflow: {},                               // overkill damage carries to the next foe
+  everburn: { perEmber: 0.1, plant: 2 },      // Embers burn 0.1x attack/s; Flare plants 2 new Embers
+  glass: {},                                  // (numbers are tune/mod lines on the star)
+  storm: {},                                  // (keepEmbers tune + abilityCd x1.5 on the star)
+  nextMark: { secs: 4 },                      // when a marked foe dies, the next foe starts marked for 4s
+  pack: { markCrit: 1 },                      // no crit bonus on marked foes for the Ranger
+  quickdraw: { atk: 2.5 },                    // Volley arrows at 2.5x attack (was 1.5x)
+  hawk: {},                                   // the hero's first hit on each foe always crits
+  deadeye: { critMult: 2 },                   // one mark at a time, lasts until the foe dies; crits on it x2
+  rain: { every: 10, arrows: 5, atk: 1 },     // every 10th tap fires 5 free arrows at 1x attack
+  dawn: {},                                   // (tune lines on the star)
+  sanctuary: {},                              // (tune lines on the star) [C] heals 5% max HP a second
+  martyr: {},                                 // (mod lines on the star)
+  ages: { blessEvery: 2 }                     // while the Hymn is up Blessings do not fade; +1 Blessing every 2s
+};
+
+// ---- the four maps ----
+// Each arm: [name, stars 1..8]; star: [name, text, fx, p, cText?]. Slots 3 and 6 are notables (2
+// points), slot 8 the keystone (3 points), the rest minors (1 point).
+const STAR_MAPS = {
+  warden: {
+    hearth: "Warden's Oath", color: '#3E63C9',
+    arms: [
+      ['Bulwark', [
+        ['Long Guard', 'Guard stacks last 2s longer.', { t: { guardT: 2 } }, 1.004],
+        ['Firm Stance', 'Each guard stack gives +0.4% more damage.', { t: { guard: 0.004 } }, 1.01],
+        ['Deep Guard', 'Guard cap +2.', { t: { guardMax: 2 } }, 1.02],
+        ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
+        ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more guard.'],
+        ['Long Guard II', 'Guard stacks last 2s longer.', { t: { guardT: 2 } }, 1.004],
+        ['Unbroken', 'Guard stacks never fall off while you land a heavy hit at least every 3s. Guard cap +5, but each stack gives 1% less.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each guard stack also gives 2 armour.']
+      ]],
+      ['Vanguard', [
+        ['Heavy Arm', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Edge', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
+        ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
+        ['Hard Hits', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        ['Heavy Arm II', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
+        ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
+        ['Challenger', 'Your taps deal +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Taps taunt every foe for 2s, and you take 20% less damage while taunting.']
+      ]],
+      ['Oath', [
+        ['Comrades', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Comrades II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Shield Brothers', "Shield Wall's party bonus +10% (x1.4, was x1.3).", { t: { wall: 0.1 } }, 1.02],
+        ['Drillmaster', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
+        ['Comrades III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Banner Over Camp', '+6% gold and +6% away gains.', { m: { gold: 1.06, offline: 1.06 } }, 1],
+        ['Comrades IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
+      ]]
+    ],
+    crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
+  },
+  lanternmage: {
+    hearth: 'First Spark', color: '#8A4FC9',
+    arms: [
+      ['Kindle', [
+        ['More Tinder', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.012],
+        ['Hot Coals', 'Each Ember adds 2% more to Flare.', { t: { flarePerEmber: 0.02 } }, 1.006],
+        ['Twin Spark', 'A tap has a 25% chance to plant 2 Embers.', { ks: 'twinSpark' }, 1.015],
+        ['More Tinder II', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.01],
+        ['Quick Fingers', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Slow Burn', 'Each Ember burns its foe for 0.05x your attack every second.', { ks: 'slowBurn' }, 1.02],
+        ['Hot Coals II', 'Each Ember adds 2% more to Flare.', { t: { flarePerEmber: 0.02 } }, 1.006],
+        ['Wildfire', 'When a foe with Embers dies, its Embers jump to the next foe.', { ks: 'wildfire' }, 1.035, 'They spread to every foe in the pack at half the count.']
+      ]],
+      ['Flare', [
+        ['Short Wick', 'Lantern Flare cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Bright Flare', 'Lantern Flare +5% (21x your attack, was 20x).', { t: { flare: 1 } }, 1.006],
+        ['Afterglow', 'After a Flare, you deal +15% for 4s.', { live: 'afterglow' }, 1.02],
+        ['Short Wick II', 'Lantern Flare cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Spark', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
+        ['Ready Lamp', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
+        ['Bright Flare II', 'Lantern Flare +5%.', { t: { flare: 1 } }, 1.006],
+        ['Kindling Storm', "Flare no longer uses up Embers, but its cooldown is 50% longer.", { ks: 'storm', t: { keepEmbers: 1 }, m: { abilityCd: 1.5 } }, 1.03]
+      ]],
+      ['Glass', [
+        ['Spark II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
+        ['Clear Eye', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
+        ['Focused Lens', 'Crit damage +10%.', { m: { critDmg: 1.1 } }, 1.022],
+        ['Spark III', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
+        ['Clean Cut', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        ['Overkill', 'Damage past a kill carries to the next foe.', { ks: 'overflow' }, 1.02],
+        ['Spark IV', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
+        ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your taps deal half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
+      ]]
+    ],
+    crown: ['Everburn', 'Each Ember burns its foe for 0.1x your attack every second, and Flare plants 2 new Embers after it goes off.', { ks: 'everburn' }, 1.035]
+  },
+  ranger: {
+    hearth: 'Keen Eye', color: '#3E8A4E',
+    arms: [
+      ['Hunt', [
+        ['Long Mark', 'Focus lasts 2s longer.', { t: { markT: 2 } }, 1.006],
+        ['Open Wound', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
+        ['Next in Line', 'When a marked foe dies, the next foe starts marked for 4s.', { ks: 'nextMark' }, 1.02],
+        ['Open Wound II', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
+        ['Long Mark II', 'Focus lasts 2s longer.', { t: { markT: 2 } }, 1.006],
+        ['Boss Stalker', 'Your party deals +6% to bosses, and a boss you marked drops its unique 10% more often.', { live: 'stalker' }, 1.02],
+        ['Open Wound III', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
+        ['Pack Leader', "Focus gives your party +50% on the mark (was +25%), but you lose your own crit bonus on marked foes.", { ks: 'pack', t: { mark: 0.25 } }, 1.035]
+      ]],
+      ['Volley', [
+        ['Quick Nock', 'Volley cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Full Quiver', 'Volley fires 1 more arrow.', { t: { volleyHits: 1 } }, 1.008],
+        ['Quiver Song', 'The haste after Volley lasts 3s longer.', { t: { hasteT: 3 } }, 1.02],
+        ['Quick Nock II', 'Volley cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Hunting Call', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Steady Draw', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
+        ['Full Quiver II', 'Volley fires 1 more arrow.', { t: { volleyHits: 1 } }, 1.008],
+        ['Quickdraw', "Volley's cooldown is 40% shorter. It fires 4 fewer arrows, each at 2.5x your attack (was 1.5x).", { ks: 'quickdraw', t: { volleyHits: -4 }, m: { abilityCd: 0.6 } }, 1.03]
+      ]],
+      ['Deadeye', [
+        ['Steady Aim', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
+        ['Barbs', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        ['Hawk Eye', 'Your first hit on each foe always crits.', { ks: 'hawk' }, 1.02],
+        ['Fast Hands', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Barbs II', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        ['Finisher', 'Foes under 20% health take +20% from you.', { live: 'finisher' }, 1.015],
+        ['Steady Aim II', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
+        ['Deadeye', 'You mark one foe at a time, and the mark lasts until it dies. Your crits on it deal double.', { ks: 'deadeye' }, 1.035]
+      ]]
+    ],
+    crown: ['Rain of Arrows', 'Every 10th tap fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
+  },
+  lightkeeper: {
+    hearth: 'Small Light', color: '#F2C14E',
+    arms: [
+      ['Dawn', [
+        ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
+        ['Warm Light', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
+        ['Morning Choir', 'Blessing cap +1.', { t: { blessMax: 1 } }, 1.02],
+        ['Lingering Light II', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
+        ['Warm Light II', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
+        ['Kind Hands', 'Idle auto-play blesses 50% more often.', { t: { autoEff: 0.25 } }, 1.02],
+        ['Warm Light III', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
+        ['Dawnbringer', 'Blessing cap +3 and each lasts 6s longer, but each gives 8% less (+12%, was +20%).', { ks: 'dawn', t: { blessMax: 3, blessT: 6, bless: -0.08 } }, 1.03]
+      ]],
+      ['Hymn', [
+        ['Short Verse', 'Rally Hymn cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Loud Verse', 'Rally Hymn +4% (x1.44, was x1.4).', { t: { hymn: 0.04 } }, 1.008],
+        ['Refrain', 'Rally Hymn lasts 2s longer.', { t: { hymnT: 2 } }, 1.02],
+        ['Short Verse II', 'Rally Hymn cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
+        ['Loud Verse II', 'Rally Hymn +4%.', { t: { hymn: 0.04 } }, 1.008],
+        ['Steady Voice', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
+        ['Teacher', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
+        ['Sanctuary Hymn', 'Rally Hymn lasts 8s longer, but its cooldown is 50% longer.', { ks: 'sanctuary', t: { hymnT: 8 }, m: { abilityCd: 1.5 } }, 1.03, 'The Hymn heals 5% of max health every second.']
+      ]],
+      ['Martyr', [
+        ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Lantern Share', 'The damage you give up goes 6% further.', { t: { lkShare: 0.06 } }, 1.015],
+        ['Gift III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Wider Glow', 'Your aura +2% (companions +12%, was +10%).', { t: { lkAura: 0.02 } }, 1.012],
+        ['Vigil', '+6% gold and +6% away gains.', { m: { gold: 1.06, offline: 1.06 } }, 1],
+        ['Gift IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+      ]]
+    ],
+    crown: ['Lamp of Ages', 'While Rally Hymn is up, Blessings do not fade, and the Hymn adds a Blessing every 2s.', { ks: 'ages' }, 1.035]
+  }
+};
+// The crown ring, shared by every class: [name, text, fx, p].
+const STAR_BRIDGES = [
+  ['Ring of Might', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
+  ['Ring of Friends', 'Companions deal +1.5%.', { m: { party: 1.015 } }, 1.011],
+  ['Ring of Haste', 'Ability cooldown -3%.', { m: { abilityCd: 0.97 } }, 1.005],
+  ['Ring of Fire', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
+  ['Ring of Learning', 'Hero XP +4%.', { m: { xp: 1.04 } }, 1]
+];
+// Geometry on the map (viewBox 10 4 380 376, centre 200, 212). Per arm slot: [radius, degrees off the
+// arm's axis]; arms point up, lower right and lower left. Each arm is a Y: the spine runs out to star
+// 4 on the axis, then forks: stars 5 and 8 (the keystone) curl back on one side, the branch 6-7 on
+// the other. Ring nodes sit 34 degrees each side of an arm. Stars are at least 44 units apart.
+const STAR_GEO = {
+  axes: [-90, 30, 150], cx: 200, cy: 212, view: [10, 4, 380, 376],
+  slot: [[50, 0], [95, 0], [140, 0], [185, 0], [172, 19], [172, -19], [150, -38], [150, 38]],
+  ring: 104, ringOff: 34
+};
+
+let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLayout, starLayouts, starIsLit,
+  starCheck, starLight, starUnlight, starReset, starUseLayout, starRename, starLocked, starKeysLit, starKeystone,
+  starEffects, starPowerEst, starBest, starText, starValidate;
+
+{
+  registerState('stars', { v: 1, maps: {}, seen: 0 });
+  const T = STAR_TUNE;
+  const ST = () => S.stars;
+  const KIND_COST = { minor: 1, notable: 2, key: 3, bridge: 1, crown: 3, hearth: 0 };
+
+  // ---- build each class map once: stars by id, edges, adjacency ----
+  const MAPS = {};
+  const polar = (deg, r) => { const a = deg * Math.PI / 180; return [Math.round(STAR_GEO.cx + r * Math.cos(a)), Math.round(STAR_GEO.cy + r * Math.sin(a))]; };
+  function build(cls) {
+    const d = STAR_MAPS[cls]; if (!d) return null;
+    const stars = {}, order = [], edges = [], adj = {};
+    const add = s => { stars[s.id] = s; order.push(s.id); adj[s.id] = []; };
+    const link = (a, b) => { edges.push([a, b]); adj[a].push(b); adj[b].push(a); };
+    add({ id: 'hearth', name: d.hearth, kind: 'hearth', cost: 0, text: 'Your path starts here. It is always lit.', fx: {}, p: 1, pos: [STAR_GEO.cx, STAR_GEO.cy], arm: -1 });
+    d.arms.forEach(([armName, list], a) => {
+      list.forEach(([name, text, fx, p, c], i) => {
+        const slot = i + 1, kind = slot === 8 ? 'key' : slot === 3 || slot === 6 ? 'notable' : 'minor';
+        const [r, off] = STAR_GEO.slot[i];
+        add({ id: `a${a}s${slot}`, name, kind, cost: KIND_COST[kind], text, c: c || '', fx, p, pos: polar(STAR_GEO.axes[a] + off, r), arm: a, slot, armName });
+      });
+      const s = n => `a${a}s${n}`;
+      link('hearth', s(1)); link(s(1), s(2)); link(s(2), s(3)); link(s(3), s(4)); link(s(4), s(5)); link(s(5), s(8)); link(s(4), s(6)); link(s(6), s(7));
+    });
+    // Ring: arm a's star 3 touches the node before it (-29 deg) and after it (+29 deg). Arm 0's
+    // "before" node is the crown keystone. Nodes of neighbouring arms link across the gap.
+    const bridgeAt = [['crown', 0, -1], ['b0', 0, 1], ['b1', 1, -1], ['b2', 1, 1], ['b3', 2, -1], ['b4', 2, 1]];
+    let bi = 0;
+    for (const [id, a, side] of bridgeAt) {
+      const pos = polar(STAR_GEO.axes[a] + side * STAR_GEO.ringOff, STAR_GEO.ring);
+      if (id === 'crown') { const [name, text, fx, p, c] = d.crown; add({ id, name, kind: 'crown', cost: KIND_COST.crown, text, c: c || '', fx, p, pos, arm: -1 }); }
+      else { const [name, text, fx, p] = STAR_BRIDGES[bi++]; add({ id, name, kind: 'bridge', cost: 1, text, c: '', fx, p, pos, arm: -1 }); }
+      link(`a${a}s3`, id);
+    }
+    link('b0', 'b1'); link('b2', 'b3'); link('b4', 'crown');
+    return { cls, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj };
+  }
+  starMap = cls => cls && STAR_MAPS[cls] ? (MAPS[cls] || (MAPS[cls] = build(cls))) : null;
+  const isKey = s => s.kind === 'key' || s.kind === 'crown';
+
+  // ---- points ----
+  greatLanternsLit = () => Math.max(0, Math.floor(((S.maxZone || 1) - 1) / T.lanternZone));
+  starPoints = () => Math.floor((S.L || 1) / T.every) + T.lanternPts * greatLanternsLit();
+
+  // ---- state ----
+  starCls = () => S.party && S.party.cls && STAR_MAPS[S.party.cls] ? S.party.cls : null;
+  function mapRec(cls, make) {
+    const m = ST().maps;
+    let r = m[cls];
+    if (!r && make) r = m[cls] = { layouts: [{ name: 'Farm', lit: [] }, { name: 'Push', lit: [] }], active: 0 };
+    return r || null;
+  }
+  starLayouts = cls => { cls = cls || starCls(); const r = cls && mapRec(cls, false); return r ? r.layouts : [{ name: 'Farm', lit: [] }, { name: 'Push', lit: [] }]; };
+  starLayout = cls => { cls = cls || starCls(); const r = cls && mapRec(cls, false); return r ? r.layouts[r.active] || r.layouts[0] : { name: 'Farm', lit: [] }; };
+  const activeIdx = cls => { const r = mapRec(cls, false); return r ? r.active : 0; };
+  const spentOf = (map, lit) => lit.reduce((a, id) => a + (map.stars[id] ? map.stars[id].cost : 0), 0);
+  starSpent = cls => { cls = cls || starCls(); const map = starMap(cls); return map ? spentOf(map, starLayout(cls).lit) : 0; };
+  starFree = cls => Math.max(0, starPoints() - starSpent(cls));
+  starIsLit = (id, cls) => id === 'hearth' || starLayout(cls).lit.includes(id);
+  let ver = 0;
+  const bump = () => { ver++; };
+
+  // ---- rules ----
+  const litSet = lit => new Set(['hearth', ...lit]);
+  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s)) n++; } return n; }
+  const armCount = (map, set, a) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.arm === a && s.kind !== 'key') n++; } return n; };
+  // Why a lit keystone's need is not met in this set (null when it is).
+  function needWhy(map, s, set) {
+    if (s.kind === 'key') { const n = armCount(map, set, s.arm); return n >= T.armKeyNeed ? null : `Light ${T.armKeyNeed} stars in ${s.armName} first (${n} of ${T.armKeyNeed}).`; }
+    if (s.kind === 'crown') {
+      let b = 0; for (const id of set) if (map.stars[id] && map.stars[id].kind === 'bridge') b++;
+      if (b < T.crownBridges) return `Light ${T.crownBridges} ring stars first (${b} of ${T.crownBridges}).`;
+      for (let a = 0; a < 3; a++) if (armCount(map, set, a) < T.crownArm) return `Light ${T.crownArm} stars in every arm first (${map.armNames[a]}: ${armCount(map, set, a)}).`;
+    }
+    return null;
+  }
+  // Every lit star reaches the Hearthstar through lit stars.
+  function connected(map, set) {
+    const seen = new Set(['hearth']), q = ['hearth'];
+    while (q.length) { const id = q.pop(); for (const n of map.adj[id]) if (set.has(n) && !seen.has(n)) { seen.add(n); q.push(n); } }
+    return seen.size === set.size;
+  }
+  starLocked = () => {
+    if (typeof deepActive === 'function' && deepActive()) return 'Not during a Deepwell run.';
+    if (typeof fightBoss !== 'undefined' && fightBoss && typeof mob !== 'undefined' && mob && mob.boss && !mob.dead) return 'Not during a boss fight.';
+    return null;
+  };
+  // starCheck(id) -> { ok, act: 'light'|'unlight'|null, why }
+  starCheck = (id, cls) => {
+    cls = cls || starCls();
+    const map = starMap(cls), s = map && map.stars[id];
+    if (!s) return { ok: false, act: null, why: 'Choose a class first.' };
+    if (s.kind === 'hearth') return { ok: false, act: null, why: 'The Hearthstar is always lit.' };
+    const lit = starLayout(cls).lit, set = litSet(lit), on = set.has(id);
+    const lock = starLocked();
+    if (on) {
+      set.delete(id);
+      let why = null;
+      if (!connected(map, set)) why = 'Other lit stars hang from this one. Unlight them first.';
+      else for (const o of set) { const os = map.stars[o]; if (os && isKey(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
+      if (!why && lock) why = lock;
+      return { ok: !why, act: 'unlight', why };
+    }
+    let why = null;
+    if (isKey(s) && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
+    else if (!map.adj[id].some(n => set.has(n))) why = 'Light a star next to it first.';
+    else if (isKey(s)) why = needWhy(map, s, set);
+    if (!why) { const free = starPoints() - spentOf(map, lit); if (free < s.cost) why = `Needs ${s.cost} point${s.cost > 1 ? 's' : ''} (you have ${free}).`; }
+    if (!why && lock) why = lock;
+    return { ok: !why, act: 'light', why };
+  };
+  starLight = (id, cls) => {
+    cls = cls || starCls(); const c = starCheck(id, cls);
+    if (!c.ok || c.act !== 'light') return false;
+    mapRec(cls, true); starLayout(cls).lit.push(id); bump();
+    emit('starLit', { cls, id });
+    return true;
+  };
+  starUnlight = (id, cls) => {
+    cls = cls || starCls(); const c = starCheck(id, cls);
+    if (!c.ok || c.act !== 'unlight') return false;
+    const lit = starLayout(cls).lit; lit.splice(lit.indexOf(id), 1); bump();
+    emit('starUnlit', { cls, id });
+    return true;
+  };
+  starReset = cls => {
+    cls = cls || starCls(); if (!cls || starLocked()) return false;
+    const r = mapRec(cls, true), l = r.layouts[r.active];
+    const n = l.lit.length; l.lit = []; bump();
+    emit('starReset', { cls, n });
+    return true;
+  };
+  starUseLayout = (i, cls) => {
+    cls = cls || starCls(); if (!cls || starLocked() || !(i === 0 || i === 1)) return false;
+    const r = mapRec(cls, true);
+    if (r.active === i) return true;
+    r.active = i; starValidate(cls); bump();
+    emit('starLayout', { cls, i });
+    return true;
+  };
+  starRename = (i, name, cls) => {
+    cls = cls || starCls(); if (!cls || !(i === 0 || i === 1)) return false;
+    const n = String(name == null ? '' : name).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim().slice(0, T.nameMax);
+    if (!n) return false;
+    mapRec(cls, true).layouts[i].name = n; bump();
+    return true;
+  };
+  starKeysLit = cls => { cls = cls || starCls(); const map = starMap(cls); return map ? keysIn(map, litSet(starLayout(cls).lit)) : 0; };
+
+  // Makes a layout valid: known ids once each, connected, keystone needs and limit, within the
+  // points. Unlights from the most recent star back. Returns how many stars went dark.
+  function fixLayout(map, l, points) {
+    const before = Array.isArray(l.lit) ? l.lit.length : 0;
+    const seen = new Set();
+    let lit = (Array.isArray(l.lit) ? l.lit : []).filter(id => typeof id === 'string' && map.stars[id] && id !== 'hearth' && !seen.has(id) && seen.add(id));
+    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (isKey(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
+    let guard = 64;
+    while (!ok(lit) && guard-- > 0) {
+      // drop the latest star whose removal keeps the rest connected (a tip); else the latest one
+      let drop = -1;
+      for (let i = lit.length - 1; i >= 0 && drop < 0; i--) { const rest = lit.filter((_, j) => j !== i); if (connected(map, litSet(rest))) drop = i; }
+      lit.splice(drop < 0 ? lit.length - 1 : drop, 1);
+    }
+    l.lit = lit;
+    if (typeof l.name !== 'string' || !l.name.trim()) l.name = 'Layout';
+    return before - lit.length;
+  }
+  starValidate = (cls, quiet) => {
+    const r = mapRec(cls, false), map = starMap(cls); if (!r || !map) return 0;
+    if (!Array.isArray(r.layouts)) r.layouts = [];
+    while (r.layouts.length < 2) r.layouts.push({ name: r.layouts.length ? 'Push' : 'Farm', lit: [] });
+    r.layouts = r.layouts.slice(0, 2).map((l, i) => l && typeof l === 'object' ? l : { name: i ? 'Push' : 'Farm', lit: [] });
+    if (!(r.active === 0 || r.active === 1)) r.active = 0;
+    let n = 0; const pts = starPoints();
+    for (const l of r.layouts) n += fixLayout(map, l, pts);
+    if (n) bump();
+    if (n && !quiet) toast(`Your star map changed: ${n} star${n > 1 ? 's' : ''} went dark and gave back ${n > 1 ? 'their' : 'its'} points.`, 'raid', null, 'normal');
+    return n;
+  };
+  // Once per loaded save: a fresh object for S.stars fields, then every class's layouts checked.
+  let initFor = null;
+  function ensure() {
+    if (initFor === S) return;
+    initFor = S;
+    const st = ST();
+    if (!st.maps || typeof st.maps !== 'object' || Array.isArray(st.maps)) st.maps = {};
+    if (!(st.seen >= 0)) st.seen = 0;
+    for (const k of Object.keys(st.maps)) { if (!STAR_MAPS[k]) continue; starValidate(k); }
+    bump();
+  }
+
+  // ---- effects ----
+  const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'gold', 'offline'];
+  const TUNE_KEYS = new Set(), KS_IDS = new Set(Object.keys(STAR_KS));
+  for (const c in STAR_MAPS) for (const s of Object.values(starMap(c).stars)) { for (const k in (s.fx.t || {})) TUNE_KEYS.add(k); if (s.fx.ks) KS_IDS.add(s.fx.ks); }
+  const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
+  // Cached per class and layout version: the modifiers below run on every hit and dps read.
+  let eff = NONE, effCls, effVer = -1;
+  starEffects = () => {
+    if (initFor !== S) ensure();
+    const cls = starCls();
+    if (cls === effCls && ver === effVer) return eff;
+    effCls = cls; effVer = ver;
+    if (!cls) return (eff = NONE);
+    const map = starMap(cls), e = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
+    for (const id of starLayout(cls).lit) {
+      const s = map.stars[id]; if (!s) continue;
+      const fx = s.fx;
+      for (const k in (fx.m || {})) e.m[k] = (e.m[k] || 1) * fx.m[k];
+      for (const k in (fx.t || {})) e.t[k] = (e.t[k] || 0) + fx.t[k];
+      if (fx.ks) e.ks[fx.ks] = 1;
+      if (fx.live) e.live[fx.live] = 1;
+      if (fx.hero) e.hero *= fx.hero;
+    }
+    if (e.live.challenger) e.live.bash = 0;   // Challenger replaces Bash
+    return (eff = e);
+  };
+  starKeystone = id => !!starEffects().ks[id];
+  for (const k of MOD_KEYS) addModifier(k, () => starEffects().m[k] || 1);
+  for (const k of TUNE_KEYS) addBonus('tune:' + k, () => starEffects().t[k] || 0);
+  for (const id of KS_IDS) addBonus('ks:' + id, () => starEffects().ks[id] ? 1 : 0);
+
+  // ---- live effects (no combat change needed) ----
+  let clock = 0, glowUntil = -1, bossRef = null, bossAdded = 0;
+  const heroOnly = () => {
+    const e = starEffects();
+    let k = e.hero;
+    if (e.live.afterglow && glowUntil > clock) k *= 1.15;
+    if (e.live.finisher && typeof mob !== 'undefined' && mob && !mob.dead && mob.max > 0 && mob.hp < 0.2 * mob.max && target() === 'mob') k *= 1.2;
+    return k;
+  };
+  const onBoss = () => typeof mob !== 'undefined' && mob && mob.boss && !mob.dead && target() === 'mob';
+  addModifier('dmg', () => { const e = starEffects(); let m = heroOnly(); if (e.live.stalker && onBoss()) m *= 1.06; return m; });
+  addModifier('party', () => { const k = heroOnly(); return k === 1 ? 1 : k > 0 ? 1 / k : 1; });
+  addModifier('uniqueChance', () => starEffects().live.stalker && typeof mob !== 'undefined' && mob && mob.boss && mob.markUntil ? 1.1 : 1);
+  onTick(dt => { if (initFor !== S) ensure(); clock += dt; });
+  on('ability', ({ cls }) => { if (cls === 'lanternmage' && starEffects().live.afterglow) glowUntil = clock + 4; });
+  on('classTap', ({ cls, kind }) => {
+    if (cls !== 'warden' || kind !== 'heavy') return;
+    const e = starEffects(), per = e.live.challenger ? 0.3 : e.live.bash ? 0.2 : 0, cap = e.live.challenger ? 10 : 6;
+    if (!per || typeof fightBoss === 'undefined' || !fightBoss || !onBoss()) return;
+    if (bossRef !== mob) { bossRef = mob; bossAdded = 0; }
+    const add = Math.min(per, cap - bossAdded); if (add <= 0) return;
+    bossAdded += add; bossTime += add;
+  });
+
+  // ---- news: new points ----
+  on('levelup', ({ L, quiet }) => {
+    if (quiet || L % T.every !== 0 || !starCls() || typeof isUnlocked !== 'function' || !isUnlocked('stars')) return;
+    toast(`+1 star point. You have ${starFree()} to spend in Party, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
+  });
+  on('zoneClear', ({ zone }) => {
+    if ((zone % T.lanternZone) !== 0) return;
+    toast(`A Great Lantern is lit. +${T.lanternPts} star points.`, 'good', { ic: ['constel', '#F2C14E'] }, 'high');
+  });
+
+  // ---- Next Up ----
+  // The cheapest star you can light now (points and rules), or null.
+  function cheapestOpen() {
+    const cls = starCls(); if (!cls || starLocked()) return null;
+    const map = starMap(cls); let best = null;
+    for (const id of map.order) { const s = map.stars[id]; if (best && s.cost >= best.cost) continue; if (starCheck(id, cls).ok && !starIsLit(id, cls)) best = s; }
+    return best;
+  }
+  registerGoal({
+    id: 'stars', sys: 'stars', prio: -1,
+    label: () => { const n = starFree(); return `You have ${n} star point${n === 1 ? '' : 's'}`; },
+    pct: () => (typeof isUnlocked !== 'function' || isUnlocked('stars')) && starCls() && starFree() > 0 && cheapestOpen() ? 1 : 0,
+    go: { tab: 'party', view: 'stars' },
+    icon: () => ({ ic: ['constel', starCls() ? STAR_MAPS[starCls()].color : '#F2C14E'] })
+  });
+
+  // ---- power estimate (design numbers; check.mjs and the report use them) ----
+  starPowerEst = (cls, lit) => { const map = starMap(cls); let p = 1; for (const id of lit || []) if (map.stars[id]) p *= map.stars[id].p; return p; };
+  // The layout with the best estimate for a number of points (search over each arm's valid shapes).
+  starBest = (cls, points) => {
+    const map = starMap(cls); if (!map) return { lit: [], p: 1 };
+    // arm shapes: connected sets hanging from star 1 (spine 1-2-3-4-5-8, branch 4-6-7)
+    const shapes = [];
+    const par = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 8: 5, 6: 4, 7: 6 }, slots = [1, 2, 3, 4, 5, 6, 7, 8];
+    for (let mask = 0; mask < 256; mask++) {
+      const on = slots.filter((_, i) => mask & (1 << i));
+      if (!on.every(n => par[n] === 0 || on.includes(par[n]))) continue;
+      if (on.includes(8) && on.filter(n => n !== 8).length < T.armKeyNeed) continue;
+      shapes.push(on);
+    }
+    const RING = ['b0', 'b1', 'b2', 'b3', 'b4', 'crown'], ringSets = [];
+    for (let mask = 0; mask < 64; mask++) ringSets.push(RING.filter((_, i) => mask & (1 << i)));
+    // per arm: the best shape for each (cost, keystone, 3+ stars) (the crown needs 3 in every arm)
+    const armOpts = a => {
+      const best = {};
+      for (const sh of shapes) {
+        const ids = sh.map(n => `a${a}s${n}`), cost = spentOf(map, ids); if (cost > points) continue;
+        const o = { ids, cost, p: starPowerEst(cls, ids), key: sh.includes(8) ? 1 : 0 }, k = `${cost}|${o.key}|${sh.length - o.key >= T.crownArm ? 1 : 0}`;
+        if (!best[k] || best[k].p < o.p) best[k] = o;
+      }
+      return Object.values(best);
+    };
+    const A = [0, 1, 2].map(armOpts);
+    let best = { lit: [], p: 1 };
+    for (const o0 of A[0]) for (const o1 of A[1]) {
+      const c01 = o0.cost + o1.cost; if (c01 > points) continue;
+      for (const o2 of A[2]) {
+        const c = c01 + o2.cost; if (c > points) continue;
+        const keys = o0.key + o1.key + o2.key; if (keys > T.keyMax) continue;
+        const base = o0.p * o1.p * o2.p;
+        for (const rs of ringSets) {
+          const lit = [...o0.ids, ...o1.ids, ...o2.ids, ...rs];
+          const cost = c + spentOf(map, rs); if (cost > points) continue;
+          const p = base * starPowerEst(cls, rs);
+          if (p <= best.p) continue;
+          const set = litSet(lit);
+          if (!connected(map, set) || keysIn(map, set) > T.keyMax || (rs.includes('crown') && needWhy(map, map.stars.crown, set))) continue;
+          best = { lit, p, cost };
+        }
+      }
+    }
+    return best;
+  };
+
+  // Plain text for a star (the card): kind and cost.
+  starText = s => {
+    if (!s) return '';
+    const kind = { minor: 'Star', notable: 'Notable', key: 'Keystone', bridge: 'Ring star', crown: 'Crown keystone', hearth: 'Hearthstar' }[s.kind];
+    return s.cost ? `${kind} · ${s.cost} point${s.cost > 1 ? 's' : ''}` : kind;
+  };
+
+  // A 12x12 star icon for toasts and Next Up.
+  if (!ICON.constel) registerIcons({ constel: ['.....11.....', '.....11.....', '....1551....', '....1551....', '111115511111', '.1111551111.', '..11155111..', '...111111...', '..111..111..', '..11....11..', '.11......11.', '............'] });
+
+  ensure();
 }
 
 // ---- src/js/60-gfx.js ----
@@ -19772,6 +20432,317 @@ let openSheet, partySheet;
   });
   // Keep an open sheet live while the tab updates.
   registerSection('party', { id: 'party-live', title: '', view: '*', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
+}
+
+// ---- src/js/75-stars-ui.js ----
+// 75-stars-ui: the Stars view on the Party tab (docs/design/constellations.md section 4).
+// Browser-only. Rules and state: 57e-constellations.js. Unlocks at hero level 10 (55-onboard FEATURES 'stars').
+// One section: points and keystones, the Farm/Push layout chips (hold or Rename to rename, Reset with
+// an in-page confirm), a Map | List switch, the 400x400 SVG star map (tap a star: nearest star within
+// reach, so taps stay clean on a 336px map) with its detail card, and the list view (56px rows).
+{
+  const NS = 'http://www.w3.org/2000/svg';
+  const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const KIND_R = { hearth: 13, minor: 7, bridge: 7, notable: 10, key: 13, crown: 13 };
+  const UI = { mode: 'map' };
+  try { const m = JSON.parse(localStorage.getItem('lanternfall.stars.ui') || '{}'); if (m.mode === 'list') UI.mode = 'list'; } catch (e) {}
+  const saveUi = () => { try { localStorage.setItem('lanternfall.stars.ui', JSON.stringify({ mode: UI.mode })); } catch (e) {} };
+  const ICON_OF = c => iconURL('constel', c ? STAR_MAPS[c].color : '#F2C14E');
+  // SVG elements: className is read-only there, so write the attribute (on change only).
+  const svgClass = (e, c) => { if (e._c !== c) { e._c = c; e.setAttribute('class', c); } };
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+  registerView('party', { id: 'stars', label: 'Stars', order: 30, feature: 'stars',
+    dot: () => !!(starCls() && S.stars && starPoints() > S.stars.seen && starFree() > 0) });
+  on('menuView', ({ view }) => { if (view === 'stars' && S.stars) S.stars.seen = Math.max(S.stars.seen, starPoints()); });
+  on('unlock', ({ id, quiet }) => {
+    if (id !== 'stars' || quiet) return;
+    toast('New on the Party tab: Stars. Spend star points on your class.', 'good', ICON_OF(starCls()), 'high');
+  });
+
+  let R = null;      // DOM refs
+  let sel = null;    // selected star id
+  let builtFor = '', sig = '';
+
+  function mount(sec) {
+    sec.classList.add('st-sec');
+    R = {};
+    const head = el('div', 'st-head');
+    R.title = el('h3', 'st-title');
+    R.pts = el('span', 'st-pts');
+    head.append(R.title, R.pts);
+    R.sub = el('div', 'st-sub');
+    R.keys = el('span', 'st-keys');
+    R.how = el('p', 'note st-how', 'You earn a star point every 3 hero levels, and 4 for each region boss. Unlighting is free.');
+    // layouts, rename, reset
+    const bar = el('div', 'st-bar');
+    R.chips = el('div', 'seg st-chips'); R.chips.setAttribute('role', 'group'); R.chips.setAttribute('aria-label', 'Layouts');
+    R.chipBtns = [0, 1].map(i => {
+      const b = el('button', 'st-chip'); b.type = 'button';
+      b.addEventListener('click', () => { if (b._held) { b._held = false; return; } if (starUseLayout(i)) { sel = null; save(); } else flashLock(); refresh(true); });
+      let t = null;
+      const cancel = () => { if (t) { clearTimeout(t); t = null; } };
+      b.addEventListener('pointerdown', () => { cancel(); t = setTimeout(() => { t = null; b._held = true; openRename(i); }, 550); });
+      b.addEventListener('pointerup', cancel); b.addEventListener('pointerleave', cancel); b.addEventListener('pointercancel', cancel);
+      b.addEventListener('contextmenu', e => e.preventDefault());
+      R.chips.append(b); return b;
+    });
+    R.renBtn = el('button', 'mini st-mini', 'Rename'); R.renBtn.type = 'button';
+    R.resetBtn = el('button', 'mini st-mini warn', 'Reset'); R.resetBtn.type = 'button';
+    R.renBtn.addEventListener('click', () => openRename(starCls() ? S.stars.maps[starCls()] ? S.stars.maps[starCls()].active : 0 : 0));
+    R.resetBtn.addEventListener('click', () => { closePanels(); R.confirm.hidden = false; putText(R.confirmTxt, `Unlight every star in ${starLayout().name}? It is free.`); R.confirmYes.focus(); });
+    const btns = el('div', 'st-btns'); btns.append(R.renBtn, R.resetBtn);
+    bar.append(R.chips, btns);
+
+    R.rename = el('form', 'st-panel st-rename'); R.rename.hidden = true;
+    R.renInput = el('input', 'st-input'); R.renInput.maxLength = STAR_TUNE.nameMax; R.renInput.setAttribute('aria-label', 'Layout name'); R.renInput.autocomplete = 'off';
+    const rs = el('button', 'mini go', 'Save'); rs.type = 'submit';
+    const rc = el('button', 'mini', 'Cancel'); rc.type = 'button';
+    R.rename.append(R.renInput, rs, rc);
+    R.rename.addEventListener('submit', e => { e.preventDefault(); if (starRename(R.renIdx, R.renInput.value)) save(); R.rename.hidden = true; refresh(true); });
+    rc.addEventListener('click', () => { R.rename.hidden = true; });
+
+    R.confirm = el('div', 'st-panel st-confirm'); R.confirm.hidden = true;
+    R.confirmTxt = el('p', 'note');
+    R.confirmYes = el('button', 'mini go', 'Unlight all'); R.confirmYes.type = 'button';
+    const cn = el('button', 'mini', 'Keep them'); cn.type = 'button';
+    const cb = el('div', 'st-btns'); cb.append(R.confirmYes, cn);
+    R.confirm.append(R.confirmTxt, cb);
+    R.confirmYes.addEventListener('click', () => { if (starReset()) { toast('Every star is dark again. Your points are back.', 'good', ICON_OF(starCls()), 'low'); save(); } else flashLock(); R.confirm.hidden = true; sel = null; refresh(true); });
+    cn.addEventListener('click', () => { R.confirm.hidden = true; });
+
+    R.lock = el('p', 'note warn st-lock'); R.lock.hidden = true;
+
+    R.mode = el('div', 'seg st-mode'); R.mode.setAttribute('role', 'group'); R.mode.setAttribute('aria-label', 'Show as');
+    R.modeBtns = ['map', 'list'].map(m => {
+      const b = el('button', null, m === 'map' ? 'Map' : 'List'); b.type = 'button';
+      b.addEventListener('click', () => { UI.mode = m; saveUi(); refresh(true); });
+      R.mode.append(b); return b;
+    });
+
+    R.mapBox = el('div', 'st-map');
+    R.card = el('div', 'st-card'); R.card.setAttribute('aria-live', 'polite');
+    R.cName = el('div', 'st-cname'); R.cKind = el('div', 'st-ckind'); R.cText = el('p', 'st-ctext'); R.cC = el('p', 'st-cc');
+    R.cBtn = el('button', 'buy st-cbtn'); R.cBtn.type = 'button';
+    R.cWhy = el('p', 'st-cwhy');
+    const cl = el('div', 'st-cl'); cl.append(R.cName, R.cKind, R.cText, R.cC, R.cWhy);
+    R.card.append(cl, R.cBtn);
+    R.cBtn.addEventListener('click', () => act(sel));
+
+    R.list = el('div', 'st-list');
+    R.none = el('p', 'note', 'Choose a class to see its stars.'); R.none.hidden = true;
+    R.sub.append(R.keys, R.mode);
+    sec.append(head, R.sub, bar, R.rename, R.confirm, R.lock, R.mapBox, R.card, R.list, R.how, R.none);
+  }
+
+  // After a tap on the map, bring the card into view if it is below the fold (the map stays mostly on screen).
+  function showCard() {
+    const box = $('panels'); if (!box || !R.card.getClientRects().length) return;
+    const b = box.getBoundingClientRect(), c = R.card.getBoundingClientRect();
+    const over = c.bottom - b.bottom + 8; if (over <= 0) return;
+    const y = box.scrollTop + over;
+    if (!reduced) { try { box.scrollTo({ top: y, behavior: 'smooth' }); return; } catch (e) {} }
+    box.scrollTop = y;
+  }
+  function closePanels() { R.rename.hidden = true; R.confirm.hidden = true; }
+  function openRename(i) {
+    if (!starCls()) return;
+    closePanels();
+    R.renIdx = i; R.renInput.value = starLayouts()[i].name; R.rename.hidden = false;
+    try { R.renInput.focus(); R.renInput.select(); } catch (e) {}
+  }
+  function flashLock() { const w = starLocked(); if (w) toast(w, 'raid', null, 'normal'); }
+  function act(id) {
+    if (!id) return;
+    const c = starCheck(id);
+    if (!c.ok) { flashLock(); return; }
+    const s = starMap(starCls()).stars[id];
+    const done = c.act === 'light' ? starLight(id) : starUnlight(id);
+    if (done) {
+      save();
+      if (!reduced && c.act === 'light' && R.nodes && R.nodes[id]) { const g = R.nodes[id].g; g.classList.remove('pop'); void g.getBoundingClientRect(); g.classList.add('pop'); }
+      if (c.act === 'light' && (s.kind === 'key' || s.kind === 'crown')) toast(`${s.name} is lit.`, 'good', ICON_OF(starCls()), 'low');
+    }
+    refresh(true);
+  }
+
+  // ---- the SVG map (built once per class) ----
+  function buildMap(cls) {
+    const map = starMap(cls);
+    R.mapBox.textContent = '';
+    const [vx, vy, vw, vh] = STAR_GEO.view, cx = STAR_GEO.cx, cy = STAR_GEO.cy;
+    const svg = sv('svg', { viewBox: STAR_GEO.view.join(' '), class: 'st-svg', role: 'group', 'aria-label': `${HERO_CLASSES[cls].name} star map` });
+    svg.style.setProperty('--role', map.color);
+    // backdrop: faint rings and dust (seeded, static)
+    const bg = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
+    for (const r of [STAR_GEO.ring, 184]) bg.append(sv('circle', { cx, cy, r, class: 'st-orbit' }));
+    // faint dividers between the three arms
+    for (const a of STAR_GEO.axes) { const t = (a + 60) * Math.PI / 180; bg.append(sv('line', { x1: cx + 70 * Math.cos(t), y1: cy + 70 * Math.sin(t), x2: cx + 200 * Math.cos(t), y2: cy + 200 * Math.sin(t), class: 'st-div' })); }
+    const rnd = rng(7);
+    for (let i = 0; i < 46; i++) bg.append(sv('circle', { cx: (vx + rnd() * vw).toFixed(1), cy: (vy + rnd() * vh).toFixed(1), r: (0.6 + rnd() * 0.9).toFixed(2), class: 'st-dust' }));
+    svg.append(bg);
+    const eg = sv('g', { class: 'st-edges', 'aria-hidden': 'true' });
+    R.edges = map.edges.map(([a, b]) => {
+      const [x1, y1] = map.stars[a].pos, [x2, y2] = map.stars[b].pos;
+      const ln = sv('line', { x1, y1, x2, y2, class: 'st-edge' }); eg.append(ln); return { a, b, ln };
+    });
+    svg.append(eg);
+    const ng = sv('g', { class: 'st-nodes' });
+    R.nodes = {};
+    for (const id of map.order) {
+      const s = map.stars[id], [x, y] = s.pos, r = KIND_R[s.kind];
+      const g = sv('g', { class: `st-star k-${s.kind}`, transform: `translate(${x} ${y})`, tabindex: '0', role: 'button', 'data-id': id, 'aria-label': `${s.name}, ${starText(s)}` });
+      const glow = sv('circle', { r: r + 9, class: 'st-glow' });
+      const ring = sv('circle', { r: r + 5, class: 'st-ring' });
+      let body;
+      if (s.kind === 'key' || s.kind === 'crown' || s.kind === 'hearth') {
+        const pts = []; for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + i * Math.PI / 4, rr = i % 2 ? r * 0.45 : r; pts.push((rr * Math.cos(a)).toFixed(1) + ',' + (rr * Math.sin(a)).toFixed(1)); }
+        body = sv('polygon', { points: pts.join(' '), class: 'st-body' });
+      } else if (s.kind === 'notable') body = sv('rect', { x: -r * 0.78, y: -r * 0.78, width: r * 1.56, height: r * 1.56, transform: 'rotate(45)', class: 'st-body' });
+      else body = sv('circle', { r, class: 'st-body' });
+      const lock = sv('g', { class: 'st-lockic', transform: `translate(${r * 0.7} ${-r * 0.9})` });
+      lock.append(sv('rect', { x: -4, y: -1, width: 8, height: 6, rx: 1 }), sv('path', { d: 'M-2.5 -1 v-2 a2.5 2.5 0 0 1 5 0 v2', fill: 'none' }));
+      g.append(glow, ring, body, lock);
+      ng.append(g);
+      R.nodes[id] = { g, s };
+    }
+    svg.append(ng);
+    // Tap: the nearest star within reach (the map is 336px wide on a phone, so stars are about 40px apart).
+    svg.addEventListener('click', e => {
+      const r = svg.getBoundingClientRect(); if (!r.width) return;
+      const k = vw / r.width, x = vx + (e.clientX - r.left) * k, y = vy + (e.clientY - r.top) * (vh / r.height);
+      let best = null, bd = 34 * Math.max(1, k * 0.9);
+      for (const id of map.order) { const [sx, sy] = map.stars[id].pos, d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = id; } }
+      if (best) { sel = best; closePanels(); refresh(true); showCard(); }
+    });
+    svg.addEventListener('keydown', e => {
+      const id = e.target && e.target.getAttribute && e.target.getAttribute('data-id');
+      if (!id || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      if (sel === id) act(id); else { sel = id; refresh(true); showCard(); }
+    });
+    R.svg = svg;
+    // legend: which arm points where, and how many of its stars are lit
+    R.legend = el('div', 'st-legend');
+    R.legBits = map.armNames.map((n, a) => { const b = el('span', 'st-leg'); b.append(el('i', 'st-arrow', ['↑', '↘', '↙'][a]), el('b', null, n), el('span', 'st-legn')); R.legend.append(b); return b; });
+    const rb = el('span', 'st-leg'); rb.append(el('i', 'st-arrow', '○'), el('b', null, 'Ring'), el('span', 'st-legn')); R.legend.append(rb); R.legBits.push(rb);
+    R.mapBox.append(svg, R.legend);
+  }
+
+  // ---- the list view (built once per class) ----
+  function buildList(cls) {
+    const map = starMap(cls);
+    R.list.textContent = '';
+    R.list.style.setProperty('--role', map.color);
+    R.rows = {};
+    const group = (title, ids) => {
+      const box = el('div', 'st-group');
+      box.append(el('h4', 'st-gtitle', title));
+      for (const id of ids) {
+        const s = map.stars[id];
+        const row = el('div', 'st-row k-' + s.kind);
+        const dot = el('i', 'st-dot');
+        const txt = el('div', 'st-rtxt');
+        const nm = el('div', 'st-rname'); const nmT = el('span', null, s.name); const kd = el('span', 'st-rkind', starText(s)); nm.append(nmT, kd);
+        const d = el('div', 'st-rdesc', s.text);
+        const why = el('div', 'st-rwhy');
+        txt.append(nm, d, why);
+        const b = el('button', 'mini st-rbtn'); b.type = 'button';
+        b.addEventListener('click', () => { sel = id; act(id); });
+        row.addEventListener('click', e => { if (e.target === b) return; sel = id; refresh(true); });
+        row.append(dot, txt, b);
+        if (s.kind === 'hearth') b.remove();
+        box.append(row);
+        R.rows[id] = { row, b, why };
+      }
+      R.list.append(box);
+    };
+    group('Hearthstar', ['hearth']);
+    map.armNames.forEach((n, a) => group(n, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `a${a}s${k}`)));
+    group('Crown ring', ['b0', 'b1', 'b2', 'b3', 'b4', 'crown']);
+  }
+
+  // ---- update ----
+  function refresh(force) {
+    if (!R) return;
+    const cls = starCls();
+    putHidden(R.none, !!cls);
+    for (const n of [R.mode, R.mapBox, R.card, R.list, R.lock]) if (!cls) putHidden(n, true);
+    putDisabled(R.renBtn, !cls); putDisabled(R.resetBtn, !cls);
+    if (!cls) { putText(R.title, 'Stars'); putText(R.pts, ''); putText(R.keys, ''); R.chipBtns.forEach(b => putHidden(b, true)); return; }
+    if (builtFor !== cls) { builtFor = cls; sel = null; buildMap(cls); buildList(cls); sig = ''; }
+    const map = starMap(cls), lay = starLayout(), lays = starLayouts(), ai = S.stars.maps[cls] ? S.stars.maps[cls].active : 0;
+    const pts = starPoints(), free = starFree(), keys = starKeysLit(), lock = starLocked();
+    if (!sel || !map.stars[sel]) {
+      // default: the cheapest star you can light, else the Hearthstar
+      let best = null;
+      for (const id of map.order) { const s = map.stars[id]; if (id !== 'hearth' && !starIsLit(id) && starCheck(id).ok && (!best || s.cost < map.stars[best].cost)) best = id; }
+      sel = best || 'hearth';
+    }
+    const s2 = [cls, ai, lay.lit.join(','), pts, lock || '', sel, UI.mode, lays[0].name, lays[1].name].join('|');
+    if (!force && s2 === sig) return;
+    sig = s2;
+    putText(R.title, `${HERO_CLASSES[cls].name} stars`);
+    putText(R.pts, `${free} of ${plural(pts, 'point')} left`);
+    putToggle(R.pts, 'has', free > 0);
+    putText(R.keys, `Keystones ${keys} of ${STAR_TUNE.keyMax}`);
+    putToggle(R.keys, 'full', keys >= STAR_TUNE.keyMax);
+    R.chipBtns.forEach((b, i) => { putHidden(b, false); putText(b, lays[i].name); putAttr(b, 'aria-pressed', String(i === ai)); putAttr(b, 'title', 'Hold to rename'); });
+    putHidden(R.lock, !lock); if (lock) putText(R.lock, lock + ' Your stars stay as they are until it ends.');
+    putHidden(R.mode, false);
+    R.modeBtns.forEach((b, i) => putAttr(b, 'aria-pressed', String((i === 0) === (UI.mode === 'map'))));
+    putHidden(R.mapBox, UI.mode !== 'map'); putHidden(R.card, UI.mode !== 'map'); putHidden(R.list, UI.mode !== 'list');
+
+    // star states
+    const litSet = new Set(['hearth', ...lay.lit]);
+    const state = {};
+    for (const id of map.order) {
+      const s = map.stars[id], lit = litSet.has(id);
+      const c = lit ? null : starCheck(id);
+      const keyBlocked = !lit && (s.kind === 'key' || s.kind === 'crown') && keys >= STAR_TUNE.keyMax;
+      state[id] = { lit, open: !lit && c.ok, keyBlocked, near: !lit && map.adj[id].some(n => litSet.has(n)) };
+    }
+    if (UI.mode === 'map') {
+      for (const id of map.order) {
+        const n = R.nodes[id], st = state[id];
+        svgClass(n.g, `st-star k-${n.s.kind}${st.lit ? ' lit' : st.open ? ' open' : st.near ? ' near' : ' dim'}${st.keyBlocked ? ' kblock' : ''}${sel === id ? ' sel' : ''}`);
+      }
+      const cnt = [0, 0, 0, 0];
+      for (const id of lay.lit) { const s = map.stars[id]; if (s) cnt[s.arm >= 0 ? s.arm : 3]++; }
+      R.legBits.forEach((b, i) => putText(b.lastChild, `${cnt[i]}/${i < 3 ? 8 : 6}`));
+      for (const e of R.edges) svgClass(e.ln, 'st-edge' + (litSet.has(e.a) && litSet.has(e.b) ? ' lit' : litSet.has(e.a) || litSet.has(e.b) ? ' half' : ''));
+      // detail card
+      const s = map.stars[sel], st = state[sel], c = sel === 'hearth' ? null : starCheck(sel);
+      putText(R.cName, s.name);
+      putText(R.cKind, starText(s) + (s.arm >= 0 ? ` · ${map.armNames[s.arm]}` : ''));
+      putText(R.cText, s.text);
+      putHidden(R.cC, !s.c); if (s.c) putText(R.cC, 'With party combat: ' + s.c);
+      putHidden(R.cBtn, !c);
+      if (c) {
+        putText(R.cBtn, st.lit ? 'Unlight' : c.ok ? `Light (${s.cost})` : 'Locked');
+        putDisabled(R.cBtn, !c.ok);
+        putToggle(R.cBtn, 'off', st.lit);
+      }
+      const why = c && !c.ok ? c.why : st.lit && sel !== 'hearth' ? 'Lit. Unlighting is free.' : '';
+      putText(R.cWhy, why); putHidden(R.cWhy, !why);
+      putToggle(R.card, 'is-lit', st.lit);
+    } else {
+      for (const id of map.order) {
+        const r = R.rows[id], st = state[id]; if (!r) continue;
+        putClass(r.row, `st-row k-${map.stars[id].kind}${st.lit ? ' lit' : st.open ? ' open' : ' dim'}${sel === id ? ' sel' : ''}`);
+        if (id === 'hearth') continue;
+        const c = st.lit || st.open ? null : starCheck(id);
+        putText(r.b, st.lit ? 'Unlight' : st.open ? `Light (${map.stars[id].cost})` : 'Locked');
+        putDisabled(r.b, !st.lit && !st.open);
+        putToggle(r.b, 'go', st.open);
+        const w = c ? c.why : '';
+        putText(r.why, w); putHidden(r.why, !w);
+      }
+    }
+  }
+
+  registerSection('party', { id: 'stars', title: '', view: 'stars', feature: 'stars', mount, update: force => refresh(force) });
+  on('classChosen', () => { sel = null; refresh(true); });
 }
 
 // ---- src/js/75-stats-ui.js ----

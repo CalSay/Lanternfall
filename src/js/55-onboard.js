@@ -98,7 +98,7 @@ function craftReady() {
   registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
-  isUnlocked = id => !id || O().all || !FEATURE_OF[id] || !!O().got[id];
+  isUnlocked = id => !id || O().all || !FEATURE_OF[id] || O().got[id] != null;
   function unlock(id, quiet) {
     const f = FEATURE_OF[id]; if (!f || isUnlocked(id)) return false;
     O().got[id] = Math.round(O().t);
@@ -116,11 +116,11 @@ function craftReady() {
     const out = [];
     if (O().all) return out;
     for (const f of FEATURES) {
-      if (O().got[f.id]) continue;
+      if (O().got[f.id] != null) continue;
       let ok = false; try { ok = !!f.when(); } catch (e) {}
       if (ok && unlock(f.id)) out.push(f.id);
     }
-    if (FEATURES.every(f => O().got[f.id])) O().all = true;
+    if (FEATURES.every(f => O().got[f.id] != null)) O().all = true;
     return out;
   };
 
