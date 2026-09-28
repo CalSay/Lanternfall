@@ -1228,7 +1228,7 @@ identical before and after each slice).
 
 | File | Owner | What |
 |---|---|---|
-| `src/js/21o-data-trade.js` (new, data only), `src/js/57g-trade.js` (new, core) | TR1 | Towns, weekly demand, prices, returns, `S.trade` |
+| `src/js/21o-data-trade.js` (new, data only), `src/js/57k-trade.js` (new, core) | TR1 | Towns, weekly demand, prices, returns, `S.trade` |
 | `src/js/57b-expeditions.js`, `src/js/75-exped-ui.js` | TR1 (small edits) | The trade route kind and its send sheet |
 
 Parallel safety: S4 and S5 are in sequence (S5 reads S4's grades and weights). TR1 can run beside S5; they

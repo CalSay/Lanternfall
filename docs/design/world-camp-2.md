@@ -744,7 +744,7 @@ so the scene stays visible above it):
 
 ## 7. Data shapes and save keys
 
-### 7.1 Data (`src/js/21r-data-camp2.js`, data only)
+### 7.1 Data (`src/js/21u-data-camp2.js`, data only)
 
 ```js
 // Rows merged into 57-camp's CAMP_B (new ids) and read by the trees core.
@@ -834,7 +834,7 @@ should give one of them another letter). `14-art-camp.js` was reserved by camp.m
 
 | Task | Work | Owns (new files) | Small edits in | Needs |
 |---|---|---|---|---|
-| **BT1** Building trees and the catalogue (Sonnet, M) | 21r data (2.1-2.8, 7.1 except the map parts); the new rows merged into `CAMP_B`; the Tents rule and curve; the Chapel merge; region-gated Lv 6-10 and the grade fix; the tree core (points, order, free respec while idle, caps, every node's modifier or bonus); Next Up "a point to spend"; check section `camptree`; sim `--camp2`, `--trees`, WC-T1 to T7, T10 | `src/js/21r-data-camp2.js`, `src/js/57i-camp-trees.js`, `src/js/75-camp-trees-ui.js`, `src/styles/60-camp-trees.css` | `57-camp.js` (merge rows, `CAMP_GRADE`, gates, `bunk`/`library` names, `shrine` read), `21f-data-hands.js` (beds to tents, `hallBeds` 0, `bedMax` 10), `55-hearth.js` (`HEARTH_PLOT` rows p0-p17, `HEARTH_PANO_W` by region), `57e-constellations.js` (`keyMax` reads a bonus), `tools/sim.mjs`, `tools/check.mjs` | WC1, S4 (the chain branches read its queues; before S4 they show locked) |
+| **BT1** Building trees and the catalogue (Sonnet, M) | 21r data (2.1-2.8, 7.1 except the map parts); the new rows merged into `CAMP_B`; the Tents rule and curve; the Chapel merge; region-gated Lv 6-10 and the grade fix; the tree core (points, order, free respec while idle, caps, every node's modifier or bonus); Next Up "a point to spend"; check section `camptree`; sim `--camp2`, `--trees`, WC-T1 to T7, T10 | `src/js/21u-data-camp2.js`, `src/js/57i-camp-trees.js`, `src/js/75-camp-trees-ui.js`, `src/styles/60-camp-trees.css` | `57-camp.js` (merge rows, `CAMP_GRADE`, gates, `bunk`/`library` names, `shrine` read), `21f-data-hands.js` (beds to tents, `hallBeds` 0, `bedMax` 10), `55-hearth.js` (`HEARTH_PLOT` rows p0-p17, `HEARTH_PANO_W` by region), `57e-constellations.js` (`keyMax` reads a bonus), `tools/sim.mjs`, `tools/check.mjs` | WC1, S4 (the chain branches read its queues; before S4 they show locked) |
 | **WM1** Milestones and the Shroud (Sonnet, M) | `CAMP_FOLK`; the person's arrival on `greatLantern` (quiet for old saves); the gift build (Lv 1 free, 10 min, no builder); the power flags (Proving via classes' gate, Lanternlit via rank 8's gate, Awakenings flag for HQ1, `keyMax` +1); arrival cards; the Shroud layer for the map (hole, weather, lift overlay, the walk); `S.folk`; check section `milestones` (each region's person, building and power exactly once; no pin inside a hole) | `src/js/55-shroud.js`, `src/js/75-shroud-ui.js` | `55-lantern.js` (push person and power lines onto `rewards`), `75-world-ui.js` (a `registerMapLight(fn)` hook and a `registerMapLayer(fn)` hook, if UX-W1 has not added them) | UX-W1, BT1 |
 | **UX-W2** Hollow's Rest and the Tavern (as ux-overhaul 8) | Plus: the Build groups with the new rows, region-gate lines, milestone plot rows, the arrival card slot, the Tree tab mount (BT1's UI), Work's fee lines (6.2, 6.3) | as ux-overhaul 8 | `75-camp-ui.js` | UX-W1, BT1 (for the tree tab; ships without it) |
 | **UX-W3** (as ux-overhaul 8) plus outposts | Plus: outpost pins and sheets (3.1), town sheets for TR1, the dungeon entrance view shape with a view id per dungeon | `src/js/75-outposts-ui.js` | - | UX-W1 |
@@ -842,7 +842,7 @@ should give one of them another letter). `14-art-camp.js` was reserved by camp.m
 | **N3b** (gatherers-2 12) plus the talk panel | 6.4: the talk panel and the job picker limited to the profession, fees shown before Send (N1c's numbers), Swap in for lodgers; N2's scene and the People list open it through `campTalk(id)` | N3b's files (`75-hands-ui.js`, `60-hands.css`) | - | N3a, N1c |
 | **EV1** Events and secrets | Its own spec work, using 3.6 and 3.7 for placement and the Shroud rules; the Beacon's call through `eventsCall()` | EV1's files (suggested `src/js/57j-events.js`, `src/js/75-events-ui.js`) | - | UX-W1, WM1 |
 | **R2-R5** each region | Its `OUTPOSTS` and `SHROUD_MAP` rows, its dungeon (the Deepwell engine with the region's foes and hazard), its plate's weather and motes | the region's own files | - | WM1, UX-W3 |
-| **LORE** | lore.md 4.4a updated to section 1.2; arrival lines for the four people; the Shroud lines on the stakes; outpost news lines (about 8 a region); event text with EV1 | `src/js/21s-camp-words.js` (new, data only: `CAMP_WORDS`; `21q-gatherers-talk.js` stays N1b's) | - | owner sign-off |
+| **LORE** | lore.md 4.4a updated to section 1.2; arrival lines for the four people; the Shroud lines on the stakes; outpost news lines (about 8 a region); event text with EV1 | `src/js/21v-camp-words.js` (new, data only: `CAMP_WORDS`; `21q-gatherers-talk.js` stays N1b's) | - | owner sign-off |
 
 Merge order: BT1 first (data and trees; the camp works without N2), then WM1 and N2 in parallel (WM1's camp
 side needs no art; N2 draws what BT1 lists), then UX-W2's extras. R2 adds the Coast's outpost and the

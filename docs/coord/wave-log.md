@@ -951,3 +951,5 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   WC1 O3 (Lamp House after the Emberwaste boss). File clash 57g (K12 kitchen vs TR1 trade): TR1 -> 57j.
 - check.mjs failed intermittently twice today (after MAP1 and HQ1 merges, docs-only), passing on every re-run;
   both times 3 agents were running. Suspect a timing/perf check under load. Next failure: save the output.
+- FILE-NAME CLASHES fixed by the coordinator: TR1 trade 57g -> 57k-trade (K12 keeps 57g-kitchen; EV1 has 57j);
+  WC1 21r-data-camp2 -> 21u-data-camp2 and 21s-camp-words -> 21v-camp-words (HQ1 keeps 21r/21s/21t).
