@@ -28,7 +28,8 @@
 //          expedCatchUp(now, auto) -> [results]
 //
 // Events: expedSent { r, grade, h, team }, expedBack { r, grade, haul, auto, recall, g, team, circles }
-//         (g: grade index; circles: { circle: members } of the returning team, for Circle Sigils in 55-legend),
+//         (g: grade index; circles: { circle: members } of the returning team, for Circle Sigils in 55-legend;
+//         secs: seconds the team was out, for Bonds in 56f),
 //         expedPick { id } (the Roster board's Send button; the UI opens the send sheet),
 //         expedGoto (the Map Room's Expeditions button). Emits kingslayerCredit { n } (56c).
 // Hooks used: registerBenchStatus / registerBenchSend / registerCampAction('maproom') /
@@ -381,7 +382,8 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     const rec = { r: s.r, grade: G, haul, at: opts.at || now(), h: s.h, team: s.team.slice(), recall: !!opts.recall };
     X().log.unshift(rec); if (X().log.length > T.logMax) X().log.length = T.logMax;
     const circles = {}; for (const k of s.team) if (ROSTER[k] && isRecruited(k)) circles[ROSTER[k].circle] = (circles[ROSTER[k].circle] || 0) + 1;
-    emit('expedBack', { r: s.r, grade: G, haul, auto: !!opts.auto, recall: !!opts.recall, g: s.grade, team: s.team.slice(), circles });
+    const secs = Math.max(0, (Math.min(opts.at || now(), s.end) - s.start) / 1000);   // time out together (56f Bonds)
+    emit('expedBack', { r: s.r, grade: G, haul, auto: !!opts.auto, recall: !!opts.recall, g: s.grade, team: s.team.slice(), circles, secs });
     return rec;
   }
   // A landed run: Repeat sends the team again at the old end time, up to repMax runs in a row.

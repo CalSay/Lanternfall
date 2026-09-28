@@ -66,12 +66,12 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
   // F1 (interim until F3's planner v3): one member per slot, from 56e-formation slotsFor (home slots,
   // else the nearest free slot toward Middle). pre: cells already taken { key: { col } }.
   const placeAll = (field, pre) => slotsFor(['hero'].concat(field), pre, null);
-  // Shield and Hearth: a tank in Front and a support right behind it (the Middle).
+  // Lifeline (F2, was Shield and Hearth): a tank in Front and a support in Back.
   function hearthCells(field) {
     const all = ['hero'].concat(field);
     const tank = all.find(k => roleOf(k) === 'tank'), sup = all.find(k => roleOf(k) === 'support');
     if (!tank || !sup) return [];
-    return [placeAll(field, { [tank]: { col: 2 }, [sup]: { col: 1 } })];
+    return [placeAll(field, { [tank]: { col: 2 }, [sup]: { col: 0 } })];
   }
 
   // ---------------- one field ----------------

@@ -62,7 +62,7 @@ const LEG_TUNE = {
   drop: { cls: 0.6, comp: 0.4, unknownW: 2, only: ['kestrel', 'elowen'] },   // what drops (2.1)
   item: { r: 'epic', pos: ['weapon', 'off', 'helm', 'body'], comp: ['wpn', 'trk'] },   // the item a power comes on
   heroMax: 2, compMax: 1,                  // powers at once (2.3)
-  markMax: 10,                             // 4 hero pieces + 2 x 3 companions (4.1)
+  markMax: 8,                              // 4 hero pieces + 2 x 2 companions (4.1; formation.md 4.5: a party of three)
   setTiers: [2, 4, 6], setsActive: 2,      // a tier at 2 / 4 / 6 marked pieces; two circles at once (4.2)
   sigil: { expedMin: 2, good: 1, perfect: 2, oathLevel: 8, oath: 1, bond: 2, bondLevel: 25, bondCreditMax: 10 }
 };

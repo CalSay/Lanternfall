@@ -42,10 +42,11 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-skillpace.js | core | the save rule for the slower skill pace (GP1, pacing.md 12): a save that predates GP1 keeps every tier the old gates gave its levels (`S.skillPace.hw`, set once per loaded save; a new game keeps nothing); `skillKept(k)`, `skillPaceInfo()`, one What's new line. The gates themselves: `SKILL_TUNE` (20-data: `NODE_REQ`, `SMITH_REQ`, XP curves, `nodeXp`, speed per level) and `skillTopTier(k)`, `skillTierOpen(k, t)`, `skillReq(k, t)`, `skillNextReq(k)`, `skillNeed(lv, k)` (40-rules); `stationTierOpen(kind, t)` (55-crafting). Gate on these, never on `S.skills[k].lv >= NODE_REQ[t - 1]` |
 | 55-legend.js | core | legendary powers and circle sets (docs/design/legendaries.md, L2): the Lantern Book (`legendKnown`, `legendEchoes`, `legendEchoCap`), drops (`legendDrop(rank, source, opts)`, owed rolls `legendOwe`/`legendPayOwed`), actions with `legendCanX` checks (`legendLearn`, `legendInscribe`, `legendMark`, `legendSigil`), limits (`legendHeroCheck` for the in-page "Take off X?" ask, `legendCanWear`), reads (`legendActive`, `legendSets`, `legendSetTier`, `legendBudget` / `legendScale` = the runtime cap, `legendV`, `legendItemState`, `legendCardLines`, `legendBest`), `bonus('lg:<id>')`, Next Up goals; state `S.legend` (item fields `lg`, `lr`, `cm`). Data: 21c-data-legend.js; icons: 11b-art-legend.js; UI: 75-legend-ui.js (the Craft tab's Powers view, feature `powers`; `legendUI` helpers for the item sheet and the Party tab) |
 | 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells (`setField` keeps `ROSTER_TUNE.fieldMax` 2 companions and places them with 56e `placeSlots`), `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
-| 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
+| 56b-synergy.js | core | specialities, traits, passives, Legend auras; the three synergy layers of the party of three (plan-3 F2, formation.md 2): 12 slot jobs (`SLOT_JOBS`, `slotJob(key)`), 8 combos and 4 Kin, 21 Bonds (all in `SYNERGIES` with `layer`), Common Cause, the caps (`FORM_TUNE.synCap`/`drCap`); `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` (the L25 milestone is Old Friend), `synUnit(key)`/`synParty()` (59-combat), `formQuick(trio, prep)`/`formQuickPrep()` (F3's quick score); knobs `SYN_TUNE` |
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 56e-formation.js | core | the party of three (plan-3 F1, docs/design/formation.md): the hero and 2 companions in one line of slots Back / Middle / Front (`S.party.cells[key].col` 0 / 1 / 2, `lane` 1); homes (`HOME_SLOT`, `CLASS_HOME`), Out of place, the hero floor and `trioX`, the migration of old parties of 3 (`S.party.formV`, `formOld`), pins (`S.party.pin`); knobs `FORM_TUNE`. API below ("Formation") |
+| 56f-bonds.js | core | Bonds (plan-3 F2, formation.md 2.3, 3.3): time together (`S.bond`), levels Met..Sworn (`FORM_TUNE.bondH`/`bondX`), growth live / away / at the Hearth / on expeditions, Old Friend, seeds for old saves, stories (`bondStories`, `bondRead`; text in 21f-stories-bonds.js, LORE7), `swornOf(id)` (D5), `bondInfo`, `bondCounts` (AC2), `bondText` (toast copy for F4). API at the top of the file |
 | 56d-autofield.js | core | the line-up planner (AF): scores fields of 2 companions (F1; the hero is the third) with the hold estimate, synergies, roles, cells and the zone's foes; `bestLineup({ zone, goal: 'push' \| 'farm', filter, by })` -> `{ field, cells, score, why, parts }` (cached per roster/zone change), `lineupScore(field, opts)`, `applyLineup(res)`; `autoField()` (56-roster) uses it; UI: the Best line-up button and why line on Party > Team (75-party.js). No save fields |
 | 57c-codex.js | core | the Codex and Lantern Light (docs/design/codex.md): pages read from other systems' state, recorders for what nothing else keeps, Light (only rises), milestones, capped Page Seal bonuses, the Blessing gate; `codexPages()`, `codexLight()`, `codexBonus(key)`, `codexHas(id)`, `codexTitle()` (state in `S.codex`; UI: 75-codex-ui.js, a sheet opened from the Journal card, the Library and `emit('codexOpen', { page })`) |
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
@@ -112,6 +113,16 @@ setPin(id, on) / isPinned(id)                                                  /
 placeSlots(keep) -> cells; slotsFor(keys, pre, cur) -> cells                  // the placement rule (pure form for planners)
 trioMult(), heroFloorDps(), heroCombatDps(), heroStand(tap), offSlotMult(key)  // party-combat damage
 formNoLoss() -> { before, after, ratio, old, field } | null                   // this save's migration (T9)
+```
+Synergies and Bonds (56b, 56f; plan-3 F2):
+```js
+SYNERGIES [{ id, name, layer: 'combo' | 'kin' | 'bond', needs, text, parts, need, circle, pair, cls, stories }]   // 14 old ids first
+slotJob(key) -> { role, slot, name, label, text }; SLOT_JOBS[role][slot]; BOND_LV_NAME ['Not yet', 'Met', ... 'Sworn']
+activeSynergies() -> [{ id, name, layer, lv, members, effectText, strength }]; synergyStatus(id) -> { active, layer, lv, missing, text }
+synUnit(key) -> { dr, hp, heal, healIn, th, cd, ctrl, area }; synParty() -> { revive, diveTaunt }   // 59-combat / 59b
+formQuickPrep() -> prep; formQuick({ front, mid, back }, prep) -> { d, st, front, sup, syn }        // F3: pure, ~13 us a call
+bondLevel(id) / bondTime(id) / bondToNext(id) / bondInfo(id) / bondsOf(key, all) / partyBonds() / bondCounts()
+bondStories(id) / bondRead(id, i) / bondUnread(id) / bondSworn(id) / swornOf(charId) / bondText(id, lv) / bondSet(id, lv)
 ```
 Everything reads the current `S.party.field` / `cells`, so a planner that swaps them in to measure a line-up
 scores slots, Out of place, `trioX` and the hero floor for free. Save: `field` (at most 2) and `cells` keep
@@ -227,7 +238,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `charGear` | `{ id, pos, item }` (a companion's wpn/trk changed; item null when unequipped) |
 | `classChosen` | `{ cls, from }` (from: the class left, null on the first choice) |
 | `retooled` | `{ legacy: { weapon, helm }, swap, from }` (41-items `retoolItems`: old gear became class gear) |
-| `synergyChange` | `{ active, gained, lost }` (after a field change) |
+| `synergyChange` | `{ active, gained, lost }` (after a field change or a Bond level change) |
+| `bondLevel` / `bondStory` | `{ id, lv, prev, quiet, story: 0 \| 1 \| 2, sworn }` (56f: a Bond reached a level; quiet for seeds and away) / `{ id, i }` (a Bond story read) |
 | `packSpawn` | `{ foes }` (59-combat: a new pack, or a boss and its adds; `mob` is the foe the stage shows) |
 | `unitHit` / `unitHeal` | `{ key, amount, kind, foe, blocked, shield }` / `{ key, amount, shield }` (party member hit or healed; kind hit, ranged, heavy, cloud, slam, dive, poison, burn) |
 | `unitDown` / `unitUp` / `unitAbility` | `{ key }` / `{ key, hp }` / `{ key, id }` (knocked out; stands up between packs or after a wipe; a companion's signature ability) |
@@ -249,7 +261,7 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` (`summary.reason`: oil, wipe, leave, abandon, closed). With party combat `deepKill` fires once per floor (the pack) |
 | `legendDrop` / `legendLearn` / `legendRank` | 55-legend: `{ id, rank, kind: 'item'\|'echo'\|'rankUp'\|'book', source, item }` / `{ id, rank, echo, up }` / `{ id, rank }` |
 | `legendInscribe` / `legendMark` / `legendSigil` / `legendChange` | 55-legend: `{ id, item }` / `{ item, circle }` / `{ circle, n, source }` / none (anything the active-build cache reads changed) |
-| `expedBack` circles (listened) | 55-legend reads `{ g, circles, recall }` for Circle Sigils |
+| `expedBack` circles (listened) | 55-legend reads `{ g, circles, recall }` for Circle Sigils; 56f reads `{ team, secs }` (time out together) for Bonds |
 | `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
 | `greatLantern` | `{ n, region, zone, name, head, text, note, quiet, rewards }` (55-lantern: a region boss's first kill; `quiet` = an old save's catch-up, shown as a bell line; listeners push `{ txt, ic }` onto `rewards` for the card, e.g. 57e's star points) |
 | `whatsNew` | `{ msg, icon, first }`: a line in the bell's one "What's new" notice (70-ui; `first` puts it at the top). Toasts raised in the first 2.5 s of play fold into it too (old-save catch-ups) |
@@ -262,6 +274,7 @@ Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fie
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
 keep loading without loss, and so must every fixture in `tests/fixtures/` (`save-v3-four.json`: a
 chosen class and a full old field of 3 with gear, for the F1 party-of-three migration). `S.tab` is the open menu's tab, or `''` on the game view (portrait).
+`S.bond` (56f, plan-3 F2): `{ v, t: { id: seconds together }, lv: { id: level announced }, seen: { id: stories read } }`.
 `S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
 `S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
 (last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
