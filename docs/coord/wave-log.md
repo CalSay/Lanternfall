@@ -97,6 +97,11 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
   pinnacle bosses (after Stage C), a visibly relit world map, a companion endgame (Lanternborn forms,
   bond stories), Deepwell heat levels. Coordinator recommendation: Region 2 + Oaths + legendary effects/sets.
   If there is no answer by the time the current plan ends, go with the recommendation.
+  -> Plan 2 went ahead with the recommendation (Coast, then Oaths + legendaries, then pinnacles). Also
+  decided by the coordinator on the designer's advice: a one-time welcome for old live saves (the Hearth
+  is built up to what their zone allows), a real-clock tide, rank 8 at the Coast lantern, saves past
+  zone 35 move to the Coast at once, Oaths give no extra XP. Still owner-gated: the first festival and
+  the companion endgame.
 
 PR: https://github.com/CalSay/Lanternfall/pull/1 (draft; update its description at milestones).
 - Owner bug: upgrade buttons ignored taps. Cause: setPrice rebuilt the price spans about 5x/s, and
@@ -272,3 +277,8 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   Camp first open up to 154ms). CONTRACT CHANGE: a section's mount() now runs on its tab's first open;
   keep on() handlers outside mount. Coordinator resolved a 70-ui.js conflict (lazy mounts + onboarding
   `feature`) and smoke-tested every tab (no errors).
+
+## Plan 2 (started 2026-09-28)
+
+See docs/design/plan-2.md. Wave 1 started: D2 pinnacle spec and Q1+D3 quality fixes plus the old-save welcome, now;
+C4, C6, AF, R0 and BAL2 after Stage C lands.

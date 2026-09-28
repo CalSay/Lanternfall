@@ -163,3 +163,17 @@ soon as their foundations are in.
 
 After every wave the coordinator merges, builds, runs the check and the balance sim,
 play-tests a new game and the fixture saves, and opens a pull request for the owner.
+
+## Plan 2 (2026-09-28)
+
+The first build order is almost done. Plan 2 is in [plan-2.md](plan-2.md), with specs in region-2.md,
+oaths.md and legendaries.md. The play-test found that the game stops after the Region 2 boss
+(day 28-31), that Region 2 is Region 1 recoloured, and that late choices stop mattering. Waves:
+1. Party combat lands, then its follow-ups (combat visuals, class knobs and keystones, the Deepwell on
+   combat, a line-up planner, regions and the Great Lantern moment, quality fixes, balance, a pinnacle spec).
+2. The Sunken Coast: a real-clock tide, new foes, Pearls, and rank 8 "Lanternlit".
+3. Oaths and legendary powers with circle sets.
+4. Pinnacle bosses, the Lantern Road map, cosmetics, and the Region 3 spec.
+5. Owner-gated: the first festival and the companion endgame.
+The coordinator accepted the designer's recommendations (the owner delegated these calls); the owner can
+still redirect.
