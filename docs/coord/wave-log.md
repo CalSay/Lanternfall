@@ -492,3 +492,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Owner wants a friend to play-test. builds/lanternfall-test.html: dist wrapped with a doctype, charset and
   viewport (standards mode, no page errors from file://). Queued: P1 installable web app (PWA build target,
   hosted link, Export/Import save), host to be chosen by the owner.
+- Netlify project `lanternfall` created in the owner's team (https://lanternfall.netlify.app, no deploy
+  yet). The container's network policy blocks api.netlify.com and netlify-mcp.netlify.app, so deploys run
+  on Netlify from GitHub instead: root netlify.toml (command `node tools/site.mjs site`, publish `site`).
+  Waiting on the owner to link CalSay/Lanternfall, branch claude/elegant-johnson-m6k00u, in Netlify. Then
+  every push (only after a merge passes build + check) deploys automatically.
