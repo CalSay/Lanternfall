@@ -329,3 +329,18 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   too slow) are REAL role-design gaps: BAL2 must make tanks and supports matter (COMBAT_TUNE hp/atk/heal).
   C4 (stage visuals for packs, threat, heals, KO, telegraph colours) waits for the Deepwell-visuals agent
   to release 62-stage/61-anim. Save: S.combat {on, back, tip}.
+- L4 merged: Craft > Powers view (your powers, the Lantern Book, Inscribe sheet, circle sets and Sigils,
+  a Capped chip), item-sheet Learn/Inscribe/Mark, the 2-power "Take off X?" question, Party pips, Sets
+  chips, the Codex Legendaries page (page 16). Powers opens on the first legendary or Sigil (a "late"
+  feature, so it stays hidden on old saves until then). --r-legendary is now #FF8A3D. Also fixed: the
+  hero card showed off-hand/body as "coming soon" even when worn. L3 should mark combat-only powers
+  "with party combat" until wired.
+- Deepwell visuals merged: the `well` theme (stone shaft, stair, rope and pulley, ladder, lanterns on
+  brackets, a cold glow below, drips and rising motes via the packed-plate path; bakeOnly glows), the
+  stage natively hides the zone HUD during runs, cold recoloured well foes (colder every 7 floors), and
+  Deepwell decorations as icons on the Hearth card. Coordinator ACCEPTS lantern colour/trail showing
+  everywhere (a bought cosmetic should show). Perf within noise.
+- AF line-up planner merged (56d-autofield.js bestLineup/lineupScore/applyLineup; autoField uses it;
+  Team view "Best line-up" button with a preview and a why line, e.g. "Hedgefolk, a tank for the
+  bruisers. +60% damage over yours."). It shifts pacing: T2 26/24/24/24 (FAIL), P1 4.3-8.8 (FAIL), P2
+  22-24, P4 PASS, T4 PASS. BAL2 was told to retune with the planner merged.

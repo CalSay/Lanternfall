@@ -56,7 +56,8 @@
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. Find it in the Journal (the bell).',
     raid: 'The World raid is open on the Camp tab.',
-    deep: 'New on the Fight tab: the Deepwell.'
+    deep: 'New on the Fight tab: the Deepwell.',
+    powers: 'New on the Craft tab: Powers. Learn and inscribe legendary powers.'
   };
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {

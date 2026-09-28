@@ -9,7 +9,15 @@
     b_tower: ['..1.1.1.1...', '..1111111...', '...12221....', '...12521....', '...12221....', '...12221....', '...12221....', '..1122211...', '..1222221...', '..1222221...', '.666666666..', '............'],
     b_book: ['............', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2222222222.', '............'],
     b_map: ['............', '.6666666666.', '.6555555556.', '.6515555156.', '.6551551556.', '.6555115556.', '.6555515516.', '.6551555556.', '.6515555756.', '.6555555556.', '.6666666666.', '............'],
-    b_bell: ['.....66.....', '....1111....', '...111111...', '...115111...', '...115111...', '..11111111..', '..11111111..', '.1111111111.', '.2222222222.', '.....77.....', '............', '............']
+    b_bell: ['.....66.....', '....1111....', '...111111...', '...115111...', '...115111...', '..11111111..', '..11111111..', '.1111111111.', '.2222222222.', '.....77.....', '............', '............'],
+    // Deepwell camp decorations (S.deep.cos), shown on the Hearth card
+    dc_crystal: ['............', '.....1......', '....151.....', '....151.....', '.1..151..1..', '151.151.151.', '151.151.151.', '1511151.151.', '1511151.1511', '111111111111', '.2222222222.', '............'],
+    dc_moss: ['............', '............', '....3.......', '...111..3...', '..11311111..', '.1111113111.', '.1311111111.', '111111131111', '266666666662', '.2666666662.', '..22222222..', '............'],
+    dc_wlamp: ['............', '66..........', '..66........', '...6666.....', '...6..6666..', '...6.....666', '..222....6..', '..272...222.', '..252...272.', '..272...252.', '..222...272.', '.........222'],
+    dc_skull: ['............', '...7.7.7....', '...77777....', '..1111111...', '.111111111..', '.112111211..', '.122111221..', '.111121111..', '..1111111...', '...15151....', '...11111....', '............'],
+    dc_arch: ['............', '....1111....', '...1....1...', '..1......1..', '..2......2..', '.1........1.', '.1........1.', '.2........2.', '.1........1.', '.1........1.', '666......666', '666......666'],
+    dc_brazier: ['.....3......', '....353.....', '...35553.3..', '...355553...', '..33555533..', '.1111111111.', '.2111111112.', '..21111112..', '....2112....', '.....11.....', '...222222...', '............'],
+    dc_bridge: ['............', '1..........1', '11........11', '1.1......1.1', '1..11..11..1', '1....11....1', '666666666666', '6.6.6.6.6.6.', '............', '............', '............', '............']
   });
   const FIRE = { 5: '#FFF3C4', 7: '#FFB347' };
   const ICONS = {
@@ -25,6 +33,15 @@
     shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' })
   };
   const icon = id => (ICONS[id] || ICONS.hearth)();
+  // Deepwell decorations bought with Marks (DEEP_SHOP kind 'decor', owned in S.deep.cos). The Camp is
+  // a list today, so they show as small icons on the Hearth card; the drawn camp scene (camp.md 4,
+  // future work) should place them in the camp itself.
+  const DECO_IC = {
+    d_crystal: () => iconURL('dc_crystal', '#7FB2FF', { 2: '#3F5F9A' }), d_moss: () => iconURL('dc_moss', '#3E8A6E', { 3: '#9FF0D8', 6: '#5A5A66', 2: '#2E3A40' }),
+    d_wlamp: () => iconURL('dc_wlamp', '#FFD27A', { 2: '#3A3444', 6: '#9A8260', 5: '#FFF3C4' }), d_skull: () => iconURL('dc_skull', '#D8D0C0', { 2: '#2A2230' }),
+    d_arch: () => iconURL('dc_arch', '#9AA0B4', { 2: '#5A6070', 6: '#5A5A66' }), d_brazier: () => iconURL('dc_brazier', '#4A5064', { 3: '#7FB2FF', 5: '#EAF6FF', 2: '#2A2E3A' }),
+    d_bridge: () => iconURL('dc_bridge', '#B89A6A'), d_bell: () => iconURL('b_bell', '#4F8A7A', { 5: '#9FD8C9', 6: '#2E4A44', 7: '#8C7A4A' })
+  };
   const famIcon = (f, t) => ['ore', 'wood', 'ess'].includes(f) ? matIcon(f, t) : iconURL(...craftIcon('mat_' + f, t));
   const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
   const shortName = (f, t) => MAT[f].short[t - 1];
@@ -107,6 +124,21 @@
     };
   }
 
+  // The Hearth card's decoration row: rebuilt only when the owned set changes.
+  function updDeco() {
+    const cos = S.deep && S.deep.cos, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : {};
+    const ids = cos ? Object.keys(DECO_IC).filter(id => cos[id] && shop[id]) : [];
+    const sig = ids.join();
+    if (sig === H.decoSig) return;
+    H.decoSig = sig; H.deco.textContent = ''; putHidden(H.deco, !ids.length);
+    if (!ids.length) return;
+    H.deco.append(el('span', null, 'From the Deepwell:'));
+    for (const id of ids) {
+      const i = img(DECO_IC[id]()); i.style.cssText = 'width:24px;height:24px';
+      i.title = shop[id].n; i.alt = shop[id].n; H.deco.append(i);
+    }
+  }
+
   // ---------------- the camp part ----------------
   let head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
   registerSection('camp', {
@@ -129,7 +161,10 @@
       // The cost: one summary line ("Cost: 2 of 5 ready"); the chips open on a tap.
       H.cost = el('div', 'ch-cost'); H.costT = el('span', 'ch-cost-t'); H.cost.append(H.costT);
       H.dz = disclose(hearthCard, H.cost, () => ui(true)); H.cost.append(H.dz.chev);
-      hearthCard.append(top, H.next, H.cost, H.costs, H.timer.el, H.act.el);
+      // Deepwell decorations: a row of small icons, only when the player owns any
+      H.deco = el('div', 'ch-deco'); H.deco.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12.5px;color:var(--muted)';
+      H.deco.hidden = true; H.decoSig = '';
+      hearthCard.append(top, H.deco, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
       sec.append(head, closed, hearthCard, buildersBox);
     },
@@ -161,6 +196,7 @@
       }
       H.timer.set(pend); H.act.set(c, pend);
       putToggle(hearthCard, 'new', S.camp.news.some(x => x.id === 'hearth'));
+      updDeco();
       // builders
       const rows = [], n = campBuilders(), all = campBuilds();
       for (let b = 0; b < n; b++) {

@@ -1,0 +1,22 @@
+/* 60-lineup: the Best line-up button, its one-line why and the preview (75-party.js, AF). */
+#p-party .sec-head .pf-btns { display: flex; gap: 6px; margin-left: auto; }
+.lu-why { font-size: 12.5px; color: var(--bone); }
+.lu-prev { display: grid; gap: 8px; padding: 10px; background: var(--panel); border: 2px solid var(--ember-deep); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.lu-t { font: 600 15px var(--display); }
+.lu-line { margin: 0; font-size: 13.5px; color: var(--gold); }
+.lu-ch { display: flex; flex-wrap: wrap; gap: 6px; }
+.lu-same { font-size: 12.5px; color: var(--muted); }
+.lu-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 2px; border: 1px solid var(--line-hi); background: var(--well); font: 600 12px var(--display); }
+.lu-chip img { width: 24px; height: 24px; image-rendering: pixelated; }
+.lu-chip.in { border-color: var(--striker); color: var(--striker); }
+.lu-chip.out { border-color: var(--line); color: var(--muted); }
+.lu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.lu-cell { position: relative; min-height: 44px; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 2px 4px; border: 1px dashed var(--line); background: var(--well); font: 600 11px var(--display); color: var(--muted); }
+.lu-cell.occ { border: 1px solid var(--line-hi); color: var(--bone); }
+.lu-cell.new { border: 2px solid var(--ember); }
+.lu-cell img { width: 24px; height: 24px; image-rendering: pixelated; flex: none; }
+.lu-cell span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lu-cell .rp { top: 3px; left: 3px; }
+.lu-stats { margin: 0; font-size: 12.5px; }
+.lu-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.lu-row .lu-use { flex: 1 1 auto; }

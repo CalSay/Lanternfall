@@ -477,8 +477,14 @@ Built in `src/js/57d-deepwell.js` (data, core, no DOM), `src/js/75-deepwell-ui.j
   load's away time.
 - **The Trial is fixed for everyone:** Deep Lore, the Camp and Codex Oil bonuses and the Almanac's
   Deepwell Omens are all off in it.
-- **Cosmetics** are stored (`S.deep.cos`, `S.deep.eq`) and shown in the Codex Wardrobe; the stage
-  and the camp scene do not draw them yet. Titles are picked in the Codex.
+- **Cosmetics** are stored (`S.deep.cos`, `S.deep.eq`) and shown in the Codex Wardrobe. Titles are
+  picked in the Codex. Stage follow-up (done): 62-stage draws the lantern colour (the hero's own
+  light, key light and ground pool) and the trail everywhere; the Camp is a list, so owned
+  decorations show as icons on the Hearth card (the drawn camp scene should place them later).
+- **Stage in a run** (stage follow-up, done): a real `well` scene (63-scenery), well foes in a cold
+  palette that deepens every 7 floors, the zone line and boss timer hidden by 62-stage; the Deepwell
+  UI no longer wraps `drawScene`. Pictures: `img/well-360.png`, `img/well-1280.png`,
+  `img/well-boss-360.png`, `img/well-frost-1280.png`, `img/well-camp-360.png`.
 
 Balance (`tools/sim`-style harness on `save-v2-late.json`, auto-play, drafts counted at 6s each):
 

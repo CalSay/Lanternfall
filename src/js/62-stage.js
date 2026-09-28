@@ -3,6 +3,9 @@
 // B1) on integer positions with smoothing off, then smooth lantern lighting and effects on top. Turns core events
 // (float, burst, shake, lunge, classTap, ability, ...) into short-lived visual state.
 // Browser-only. Pools and glow sprites live in 61-anim.js.
+// Deepwell: while a run is live (arena === DEEP_ARENA) the stage draws the 'well' scene, well foes
+// (mob.deep) in a cold palette by depth, and hides the zone line and boss timer. The hero's lantern
+// colour and trail come from S.deep.eq (Marks shop cosmetics) everywhere.
 //
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
@@ -89,12 +92,31 @@ let resize, animate, draw, stageStats, warmScene;
     readHud();
     scene = null; layoutDirty = true; foe.key = '';
   };
+  // A Deepwell run is live: the arena (57d) replaces the zone's foes. The stage then shows the well
+  // (63-scenery 'well'), cold foes, and no zone line or boss timer (the run's own HUD sits there).
+  const hudZone = document.querySelector('.hud-zone'), hudTimer = $('tWrap');
+  let deepHud = false;
+  const deepOn = () => typeof DEEP_ARENA !== 'undefined' && !!arena && arena === DEEP_ARENA && target() === 'mob';
   function pickScene() {
     const tg = target(); let th, hue = 0;
     if (tg === 'world') th = 'raid';
+    else if (deepOn()) th = 'well';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
+  }
+  // The well's scene (a Deepwell run) is built when the player opens the Deepwell view (or has a
+  // paused run), in idle time and small steps like warmScene, so a dive does not build it inside a
+  // frame and nobody else pays for it. Plates are left to the run's first frames (two plate slots:
+  // the zone on screen and the next zone keep theirs).
+  let wellWarm = '';
+  function warmWell() {
+    const key = SW + 'x' + SCH;
+    if (!SW || wellWarm === key || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return;
+    if (!(S.deep && S.deep.run) && !(typeof viewOpen === 'function' && viewOpen('adv', 'deep'))) return;
+    wellWarm = key;
+    const step = sceneSteps('well', SW, SCH, 0), run = () => { if (wellWarm === key && !step()) idleTask(run); };
+    idleTask(run);
   }
   // Build the scene for zone z at the stage's size, then its device-size plates and atmosphere copies,
   // in idle time and in small steps (each well under a long task at x4: sceneSteps, scenePlates
@@ -222,8 +244,11 @@ let resize, animate, draw, stageStats, warmScene;
       if (mob === foe.m && foe.key) return;
       foe.m = mob;
       const type = mob.key.replace(/\d+$/, '');
-      key = 'm' + type + (mob.boss ? 'E' : '') + zoneCycle(S.zone);
-      fr = enemyFrames(type, { elder: !!mob.boss, hue: (zoneCycle(S.zone) * 70) % 360 });
+      if (mob.deep) { const b = coldBand(mob.floor); key = 'd' + type + (mob.boss ? 'E' : '') + b; fr = coldFrames(type, !!mob.boss, b); }
+      else {
+        key = 'm' + type + (mob.boss ? 'E' : '') + zoneCycle(S.zone);
+        fr = enemyFrames(type, { elder: !!mob.boss, hue: (zoneCycle(S.zone) * 70) % 360 });
+      }
       const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
       foe.anim = rig && rig.anim || 'lunge'; foe.hover = !!(rig && rig.hover);
       foe.st = 0; foe.next = 1.5 + Math.random() * 3; markLeft = 0; lastEmbers = 0;
@@ -234,6 +259,59 @@ let resize, animate, draw, stageStats, warmScene;
     layoutDirty = true;
     foe.key = key; foe.fr = fr; foe.m = null; foe.st = 0; foe.next = 2 + Math.random() * 3;
     foe.anim = tg === 'world' ? 'breath' : 'shake'; foe.hover = false;
+  }
+  // Well foes (mob.deep) wear a cold palette: every hue is folded into a 70-degree band of teal to
+  // indigo (so neighbouring pieces keep different hues), colours are muted, the ink turns blue-black
+  // and bright glowing pixels (eyes, cores) burn ice-white. Deeper floors sit colder: the band moves
+  // from teal (floors 1-7) toward indigo (22+). A recoloured copy of the baked frames, made lazily per
+  // frame like the base set (an art-size pass of a few thousand pixels, then one 2x scale).
+  const coldBand = f => Math.max(0, Math.min(3, Math.floor(((f | 0) - 1) / 7)));
+  const COLD_H0 = [172, 186, 200, 214], COLD_SPAN = 70, COLD_INK = [11, 14, 26];
+  function coldPx(d, band) {
+    const h0 = COLD_H0[band];
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+      if (mx < 0.13) { d[i] = COLD_INK[0]; d[i + 1] = COLD_INK[1]; d[i + 2] = COLD_INK[2]; continue; }
+      let h = 0, sat = 0;
+      if (mx !== mn) { const dd = mx - mn; sat = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn); h = (mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4) * 60; }
+      let H, Sa, L;
+      if (l > 0.78 && sat > 0.5) { H = 188; Sa = 0.85; L = Math.max(l, 0.82); }            // glows: ice-white
+      else { H = h0 + ((h + 20) % 360) / 360 * COLD_SPAN; Sa = sat * 0.6 + 0.1; L = l * 0.9 + 0.03 - band * 0.012; }
+      const q = L < 0.5 ? L * (1 + Sa) : L + Sa - L * Sa, p = 2 * L - q, hk = H / 360;
+      const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+      d[i] = Math.round(f(hk + 1 / 3) * 255); d[i + 1] = Math.round(f(hk) * 255); d[i + 2] = Math.round(f(hk - 1 / 3) * 255);
+    }
+  }
+  const coldRgb = (rgb, band) => { const v = rgb.split(',').map(Number), d = new Uint8ClampedArray([v[0], v[1], v[2], 255]); coldPx(d, band); return d[0] + ',' + d[1] + ',' + d[2]; };
+  function chill(f, band) {
+    if (!f || !f.art) return f;
+    const a = f.art, w = a.width, h = a.height, img = a.getContext('2d').getImageData(0, 0, w, h);
+    coldPx(img.data, band);
+    const art = document.createElement('canvas'); art.width = w; art.height = h; art.getContext('2d').putImageData(img, 0, 0);
+    const c = document.createElement('canvas'); c.width = f.c.width; c.height = f.c.height;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(art, 0, 0, c.width, c.height);
+    return Object.assign({}, f, { c, art, lights: f.lights.map(l => Object.assign({}, l, { rgb: coldRgb(l.rgb, band) })) });
+  }
+  const coldSets = new Map();
+  function coldFrames(type, elder, band) {
+    const k = type + (elder ? 'E' : '') + band;
+    let set = coldSets.get(k);
+    if (set) { coldSets.delete(k); coldSets.set(k, set); return set; }
+    const base = enemyFrames(type, { elder, hue: 0 });
+    if (!base) return null;
+    set = {};
+    // same lazy shape as the baker's sets (ART.ready reads the getters): a frame is made on first use
+    // or in idle time; the hit flash is the base set's (white either way)
+    for (const n of Object.keys(base)) Object.defineProperty(set, n, {
+      configurable: true, enumerable: true,
+      get() { const v = n === 'hit' ? base.hit : chill(base[n], band); Object.defineProperty(set, n, { value: v, writable: true, enumerable: true, configurable: true }); return v; }
+    });
+    void set.idle0;
+    if (typeof idleTask === 'function') for (const n of ['idle1', 'wind', 'strike', 'hit']) if (n in set) idleTask(() => void set[n], true);
+    coldSets.set(k, set);
+    if (coldSets.size > 12) coldSets.delete(coldSets.keys().next().value);
+    return set;
   }
   function foeGeom() {
     const f = foe.fr && foe.fr.idle0;
@@ -365,7 +443,15 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); readLooks(); warmWell(); }
+    // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
+    // 70-ui keeps writing tWrap.hidden underneath)
+    const dOn = deepOn();
+    if (dOn !== deepHud) {
+      deepHud = dOn;
+      if (hudZone) hudZone.style.visibility = dOn ? 'hidden' : '';
+      if (hudTimer) hudTimer.style.display = dOn ? 'none' : '';
+    }
     refreshFoe(); foeGeom();
     if (layoutDirty) layout();
     if (wyrmHit > 0) wyrmHit -= dt;
@@ -402,6 +488,7 @@ let resize, animate, draw, stageStats, warmScene;
       blessMote -= dt;
       if (blessMote <= 0) { blessMote = 0.45; for (const a of comps) A.part(a.hx + (Math.random() - 0.5) * 12, a.hy - 10 - Math.random() * 30, 0, -14, 0.9, '#F2C14E', 0, 1, 3); }
     }
+    if (look.trail && hero._f) stepTrail(dt);
     A.step(dt);
     if (hudOn()) stepHud(dt);
     abilityTimer -= dt;
@@ -439,40 +526,77 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.drawImage(a.lane === 0 && !a.flash ? dimOf(f.c) : f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
     a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
   }
+  // ================= the hero's looks (Deepwell cosmetics, S.deep.eq) =================
+  // lantern: the colour of the hero's own light (its brightest glow), the key light over the party
+  // and the pool on the ground. trail: small particles shed behind the hero (Motes rise, Embers
+  // flicker up, Frost falls), a few a second, more while dashing. Read once a second; nothing is
+  // drawn or made when none is equipped. Under prefers-reduced-motion the trail sparkles in place.
+  const look = { id: '', lamp: null, key: null, pool: null, trail: null, t: 0 };
+  const mixRgb = (hex, w, k) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255]; return c.map((v, i) => Math.round(v + (w[i] - v) * k)).join(','); };
+  function readLooks() {
+    const eq = S.deep && S.deep.eq, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : null;
+    const ln = eq && eq.lantern && shop && shop[eq.lantern], tr = eq && eq.trail && shop && shop[eq.trail];
+    const id = (ln ? ln.id : '') + '|' + (tr ? tr.id : '');
+    if (id === look.id) return;
+    look.id = id;
+    look.lamp = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.15) : null;
+    look.key = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.1) : null;
+    look.pool = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.2) : null;
+    look.trail = tr && tr.col ? { kind: tr.id, col: tr.col, alt: tr.id === 't_embers' ? '#FFD27A' : tr.id === 't_frost' ? '#9FD8FF' : '#DFFBFF' } : null;
+  }
+  // the hero's lantern: its brightest light (largest glow radius)
+  function heroLamp(f) { let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l; return best; }
+  function stepTrail(dt) {
+    const tr = look.trail, f = hero._f, moving = Math.abs(hero.dx) > 2;
+    look.t -= dt * (moving ? 2.5 : 1);
+    if (look.t > 0) return;
+    const kind = tr.kind, lamp = heroLamp(f);
+    look.t = kind === 't_embers' ? 0.13 : kind === 't_frost' ? 0.16 : 0.18;
+    if (reduced) look.t *= 3;
+    const cx = hero._x + f.ox, top = hero._y, h = f.oy, col = Math.random() < 0.35 ? tr.alt : tr.col, m = reduced ? 0 : 1;
+    if (kind === 't_embers') {
+      const x = lamp ? hero._x + lamp.x : cx, y = lamp ? hero._y + lamp.y : top + h * 0.5;
+      A.part(x + (Math.random() - 0.5) * 6, y + (Math.random() - 0.5) * 4, m * (-8 - Math.random() * 10), m * (-14 - Math.random() * 12), 0.8 + Math.random() * 0.4, col, m * -12, 1, 4, 0.6);
+    } else if (kind === 't_frost') {
+      A.part(cx - 4 - Math.random() * 12, top + h * (0.15 + Math.random() * 0.4), m * (-6 - Math.random() * 6), m * (4 + Math.random() * 5), 1.4 + Math.random() * 0.5, col, m * 5, Math.random() < 0.3 ? 2 : 1, 3, 0.4);
+    } else {
+      A.part(cx - 2 - Math.random() * 12, top + h * (0.45 + Math.random() * 0.5), m * (-5 - Math.random() * 6), m * (-7 - Math.random() * 7), 1.3 + Math.random() * 0.5, col, 0, Math.random() < 0.3 ? 2 : 1, 5, 0.3);
+    }
+  }
   // Lantern lighting (style study, direction D on a B1 stage): every emissive piece of a sprite
   // glows (radius from the baker, in CSS px), and the hero's lantern throws a warm key light over
   // the party and a pool on the ground. Sprites themselves are never recoloured.
   function lightsOf(a) {
     const f = a._f; if (!f || !f.lights.length) return;
-    const fl = flick();
+    const fl = flick(), lamp = a === hero && look.lamp ? heroLamp(f) : null;
     for (const l of f.lights) {
       const pulse = l.pulse && !reduced ? 0.85 + 0.25 * Math.sin(T * 4 + a.ph) : 1;
       const r = (l.r ? Math.min(40, l.r * 0.8) : Math.min(Math.max(8, l.size * 3), 16) * 1.6) * fl * pulse;
       const x = a._x + l.x, y = a._y + l.y;
-      A.lightAt(ctx, l.rgb, x, y, r, 0.5 * a.alpha);
-      A.lightAt(ctx, '255,250,230', x, y, Math.max(3, r * 0.22), 0.35 * a.alpha);
+      A.lightAt(ctx, l === lamp ? look.lamp : l.rgb, x, y, r, 0.5 * a.alpha);
+      A.lightAt(ctx, l === lamp ? look.pool : '255,250,230', x, y, Math.max(3, r * 0.22), 0.35 * a.alpha);
     }
   }
   function keyLight() {
     const f = hero._f; if (!f) return;
-    let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l;
+    const best = heroLamp(f);
     const fl = flick();
     const x = best ? hero._x + best.x : hero._x + f.ox, y = best ? hero._y + best.y : GY - 30;
     // Warm key light over the party. Its radius flickers; it is drawn from device-size copies (glowAt),
     // so the flicker is snapped to 8 steps to keep that to 8 copies (about 0.6 MB each on a phone).
     const fq = reduced ? fl : 0.6 + Math.round((fl - 0.6) / 0.4 * 7) / 7 * 0.4;
-    A.lightAt(ctx, '255,176,96', x, y, 115 * fq, 0.2);
+    A.lightAt(ctx, look.key || '255,176,96', x, y, 115 * fq, 0.2);
     // pool on the ground: a fixed size, so it is scaled once to device pixels and copied 1:1
-    const K = DPR * ZM, p = poolSprite(K);
+    const K = DPR * ZM, p = poolSprite(K, look.pool || '255,190,110');
     ctx.globalAlpha = 0.34 * fl; ctx.drawImage(p, Math.round((x - 80) * K) / K, Math.round((GY - 10) * K) / K, p.width / K, p.height / K);
     ctx.globalAlpha = 1;
   }
   let poolDev = null;
-  function poolSprite(K) {
-    if (poolDev && poolDev.K === K) return poolDev.c;
+  function poolSprite(K, rgb) {
+    if (poolDev && poolDev.K === K && poolDev.rgb === rgb) return poolDev.c;
     const c = document.createElement('canvas'); c.width = Math.round(160 * K); c.height = Math.round(20 * K);
-    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(A.glow('255,190,110'), 0, 0, c.width, c.height);
-    poolDev = { K, c };
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(A.glow(rgb), 0, 0, c.width, c.height);
+    poolDev = { K, rgb, c };
     return c;
   }
   const foeFrame = () => {
@@ -529,7 +653,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (alive || (mob && mob.dead < 0.3)) shadowAt(foe.x - cam, Math.max(12, foe.w * 0.42), 0.55);
       if ((tg === 'mob' && mob && (mob.boss || mob.champ) && !mob.dead) || raid) {
         ctx.globalCompositeOperation = 'lighter';
-        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
+        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : mob.deep ? '110,170,255' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
         ctx.globalCompositeOperation = 'source-over';
       }
     }

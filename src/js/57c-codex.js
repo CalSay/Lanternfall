@@ -133,7 +133,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       return out;
     }
   });
-  // ---------------- 3. Uniques: 13 hero uniques (companion uniques join when they exist) ----------------
+  // ---------------- 3. Uniques: 13 hero uniques (the 6 companion uniques became legendary powers: page 16) ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'Curator of Wonders', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
@@ -303,6 +303,25 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     show: () => !!(S.deep && S.deep.cos), lockTxt: 'Opens with the Deepwell shop.', tiles: () => []
   });
 
+  // ---------------- 16. Legendaries: the 39 powers in the Lantern Book (legendaries.md 7) ----------------
+  // 2 Light for a learned power, +1 per rank above I (234 in all). Title only, no power bonus. Opens with
+  // the first legendary drop or Circle Sigil (the Powers view's rule). Pinnacle powers score on their page.
+  const legOpen = () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length));
+  page('legendaries', {
+    n: 'Legendaries', seal: { key: null, txt: '' }, title: LEG_CODEX.title, pic: 'rows',
+    show: legOpen, lockTxt: 'Opens with your first legendary power.',
+    tiles: x => {
+      const out = [], C = LEG_CODEX;
+      const grp = id => { const p = LEG_POWERS[id]; return p.cls && HERO_CLASSES[p.cls] ? HERO_CLASSES[p.cls].name : 'Companions'; };
+      for (const id of LEG_CLASSES.flatMap(c => LEG_CLASS_IDS[c]).concat(LEG_COMP_IDS)) {
+        const p = LEG_POWERS[id], r = S.legend.book[id] | 0, pts = r ? (C.learn + C.rank * (r - 1)) * 2 : 0;
+        out.push({ key: id, n: p.n, got: r ? 1 : 0, max: 1, pts, ptsMax: (C.learn + C.rank * 4) * 2, ic: legendIcon(id), grp: grp(id),
+          sub: r ? `Rank ${roman(r)}. ${legendText(id, r)}` : '', hint: r ? '' : x.exact ? `${C.hint}. ${p.only ? 'Drops once ' + first(p.only) + ' is recruited.' : ''}`.trim() : 'A legendary power.' });
+      }
+      return out;
+    }
+  });
+
   // ---------------- compute and cache ----------------
   let cache = null, dirty = true, acc = 0, sweep = 0;
   const visible = p => !p.show || !!safe(p.show, false);
@@ -352,7 +371,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('synergyChange', ({ gained }) => { for (const id of gained || []) R().syn[id] = 1; dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted'])
+  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'legendDrop', 'legendLearn', 'legendRank'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------

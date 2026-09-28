@@ -18,7 +18,7 @@
   --r-uncommon: #6FCB6A;
   --r-rare: #5FA8FF;
   --r-epic: #B58CFF;
-  --r-legendary: #FF9E3D;
+  --r-legendary: #FF8A3D;   /* one legendary orange: LEG_COL, LEG_FRAME (legendaries.md 1) */
   --display: "Pixelify Sans", "Courier New", monospace;
   --body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
   background: var(--bg);

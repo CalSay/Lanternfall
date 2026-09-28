@@ -43,7 +43,7 @@
 
 .away-items { display: grid; gap: 5px; }
 .away-item { display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 5px; background: var(--well); border: 1px solid var(--line); min-width: 0; }
-.away-item.uniq { border-color: rgba(255,158,61,.5); background: linear-gradient(90deg, rgba(255,158,61,.12), var(--well) 70%); }
+.away-item.uniq { border-color: rgba(255,138,61,.5); background: linear-gradient(90deg, rgba(255,138,61,.12), var(--well) 70%); }
 .away-item .ic { width: 36px; height: 36px; } .away-item .ic img { width: 24px; height: 24px; }
 .away-it { display: grid; min-width: 0; }
 .away-in { font: 600 14px/1.15 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
