@@ -293,6 +293,8 @@
     } else if (id === 'tavern' && campLevel('tavern') < 2) k.extra.append(el('p', 'note', 'At Lv 2 the Tavern hears rumours about who visits next.'));
     for (const a of acts) { const b = btn('mini go', a.label); b.addEventListener('click', () => { try { a.fn(); } catch (e) { console.error('[lanternfall] camp action', e); } ui(true); }); k.extra.append(b); }
   }
+  // The Trophy Wall card (63e-scenery-wall.js, AC5): a small scene at the road gate; a tap opens Feats.
+  if (typeof trophyWall === 'object' && trophyWall) registerSection('camp', { id: 'camp-wall', title: 'Trophy Wall', mount: s => trophyWall.mount(s), update: f => trophyWall.update(f) });
   registerSection('camp', {
     id: 'camp-buildings', title: 'Buildings',
     mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },

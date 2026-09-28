@@ -641,3 +641,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   K13 production chains: the Lanternbearer CAN gather secondary resources (coal, dye, salt) so the game is
   playable without Hands, but they are low-value for the hero and ideal Hand jobs; refining runs in the
   background at stations (timed), worked faster by Hand refiners.
+- AC5 merged: 63e-scenery-wall.js (Trophy Wall card on the Camp view: 4 stages, 21 Feat trophies, pennants,
+  12 group medals, the worn critter asleep by the fire, day/dusk/night; featTrophyURL; trophyWall.paint for
+  the future camp panorama at plot p13). Coordinator kept both check sections (store, wall).
