@@ -467,3 +467,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   companion critter), plus rare titles shown on the hero card and in the tavern/raid name line (display
   only; the online data shape does not change). Show rarity (how few reach it is local-only; no online
   stats). Every cosmetic is earned, never sold, and never gives power.
+- LORE2 merged: 21h-lore-hollow.js (Hollow arrivals and 4 beats, 14 bestiary entries incl. the Coast's,
+  15 elders incl. the Listener, 6 raid lines as client data only, LORE_LIMITS, LORE_BANNED). NOTE for R2-1:
+  coast foe keys must be crab, gull, deckhand, kelp, jelly, witch, coral, or add bestiary entries under the
+  chosen keys (check.mjs fails otherwise). LORE3 (delivery code) is next in the lore line. AC1 launched.
