@@ -1309,6 +1309,157 @@ span.cf-d { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   .ex-mid .bar > i { transition: none; }
 }
+/* 60-formation: Party > Team for the party of three (plan-3 F4, formation.md 6): slot cards, the bench,
+   combo and Kin chips, Bond rows, the Bond sheet, the Sworn frame (75-party.js, 75-bonds-ui.js). */
+:root { --combo: #7FA3C8; --kin: #6FCB6A; --bond: #F2C14E; --amber: #FFB27A; }
+
+/* ---- slot cards: Back | Middle | Front ---- */
+.fslots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fslot { position: relative; min-width: 0; min-height: 148px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 8px;
+  background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810;
+  color: var(--bone); text-align: center; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.fslot:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.fslot.hero { border-color: var(--ember-deep); }
+.fslot.empty { border-style: dashed; border-color: var(--line-hi); background: var(--well); box-shadow: none; justify-content: flex-start; }
+.fs-slot { display: inline-flex; align-items: center; gap: 4px; font: 600 calc(11px * var(--display-k))/1 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.fs-home { width: 12px; height: 12px; image-rendering: pixelated; }
+.fs-pt { position: relative; width: 52px; height: 52px; margin-top: 3px; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, var(--panel-2), var(--well) 75%); border: 2px solid var(--rc, var(--line-hi)); box-shadow: inset 0 0 0 2px #0B0810; }
+.fs-pt img { width: 44px; height: 44px; object-fit: contain; image-rendering: pixelated; }
+.fs-nm { max-width: 100%; margin-top: 2px; font: 600 calc(15px * var(--display-k))/1.05 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fs-role { font: 600 calc(11px * var(--display-k))/1.1 var(--display); letter-spacing: .06em; text-transform: uppercase; }
+.fs-job { max-width: 100%; font: 500 12px/1.2 var(--body); color: var(--bone); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fs-off { margin-top: 2px; padding: 1px 4px; border: 1px solid var(--amber); color: var(--amber); background: rgba(255,178,122,.1); font: 600 11px/1.2 var(--body); white-space: nowrap; }
+.fs-stay { margin-top: 2px; font: 500 11px/1.2 var(--body); color: var(--muted); }
+.fs-empty { margin-top: 10px; padding: 0 4px; font: 500 12px/1.3 var(--body); color: var(--muted); }
+.fs-lock { position: absolute; right: 0; bottom: 0; width: 44px; height: 44px; padding: 0 2px 2px 0; display: grid; place-items: end; background: none; border: 0; cursor: pointer; }
+.fs-lock img { width: 24px; height: 24px; image-rendering: pixelated; opacity: .7; }
+.fs-lock.on img { opacity: 1; filter: drop-shadow(0 0 3px rgba(242,193,78,.6)); }
+.fs-lock:focus-visible { outline: 2px solid var(--ember); outline-offset: -4px; }
+.fslot.comp { padding-bottom: 30px; }   /* a row for the lock, under the job and the Out of place chip */
+.fslot .fs-off { max-width: calc(100% - 4px); overflow: hidden; text-overflow: ellipsis; }
+.fslot img, .fb-tile img { -webkit-user-drag: none; pointer-events: none; }
+/* lifted, a place to drop, under a dragged card, just changed */
+.fslot.up { border-color: var(--gold); background: #2e2618; box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(242,193,78,.35); }
+.fslot.drop { border-style: dashed; border-color: var(--ember); }
+.fslot.dover, #sec-party-bench.dover { outline: 2px solid var(--gold); outline-offset: 2px; background: #2e2618; }
+.fslot.dragging, .fb-tile.dragging { opacity: .45; }
+.fslot.flash { animation: fsFlash .7s steps(4, end); }
+@keyframes fsFlash { 0% { background: #4a3a18; border-color: var(--gold); } 100% { background: var(--panel); } }
+@media (prefers-reduced-motion: no-preference) {
+  .fslot { transition: transform .12s ease-out, box-shadow .12s; }
+  .fslot.up { transform: translateY(-4px); }
+}
+.f-hint { font-size: 12.5px; min-height: 1.3em; }
+.f-warn { margin: 0; padding: 6px 10px; border-left: 3px solid var(--amber); background: rgba(255,178,122,.08); color: var(--amber); font-size: 13px; }
+.f-warn[hidden] { display: none; }
+/* the drag ghost follows the finger */
+.fdrag { position: fixed; left: 0; top: 0; z-index: 50; width: 56px; height: 56px; display: grid; place-items: center; pointer-events: none;
+  background: var(--panel-2); border: 2px solid var(--gold); box-shadow: 0 4px 12px rgba(0,0,0,.5); opacity: .92; }
+.fdrag img { width: 48px; height: 48px; image-rendering: pixelated; }
+
+/* ---- the bench ---- */
+.fbench { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+.fb-tile { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-width: 0; padding: 0; background: none; border: 0; color: var(--bone); text-align: center; cursor: pointer;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.fb-tile:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.fb-pt { position: relative; display: grid; place-items: center; aspect-ratio: 1; background: radial-gradient(circle at 50% 40%, var(--panel-2), var(--well) 75%); border: 2px solid var(--rc); box-shadow: inset 0 0 0 2px #0B0810, 0 2px 0 #0B0810; }
+.fb-pt img { width: 48px; height: 48px; max-width: 84%; max-height: 84%; object-fit: contain; image-rendering: pixelated; }
+.fb-pt .rp { top: 4px; left: 4px; }
+.fb-nm { font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-sub { font-size: 11px; line-height: 1.15; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fb-tile.up .fb-pt { border-color: var(--gold); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(242,193,78,.5); background: #2e2618; }
+.fb-tile.drop .fb-pt { border-style: dashed; }
+.fb-tile.out .fb-pt img { opacity: .45; }
+.fb-tile.out .fb-sub { color: #9CC1FF; }
+
+/* ---- combo and Kin chips (the chip shape is .syn-chip in 60-party.css) ---- */
+/* (this file loads before 60-party.css: three classes beat .syn-chip.on) */
+.syn-chip.cb-chip.combo { border-color: var(--combo); background: linear-gradient(#1c2634, var(--panel)); box-shadow: 0 0 10px rgba(127,163,200,.18); }
+.syn-chip.cb-chip.combo i { background: var(--combo); box-shadow: 0 0 6px var(--combo); }
+.syn-chip.cb-chip.kin { border-color: var(--kin); background: linear-gradient(#1b2a1c, var(--panel)); box-shadow: 0 0 10px rgba(111,203,106,.16); }
+.syn-chip.cb-chip.kin i { background: var(--kin); box-shadow: 0 0 6px var(--kin); }
+.cb-all-btn { min-height: 44px; }
+.cb-none { width: 100%; margin: 0; }
+.cb-name { margin: 0; font: 600 calc(20px * var(--display-k))/1.1 var(--display); }
+.cb-name.combo { color: var(--combo); } .cb-name.kin { color: var(--kin); }
+.cb-layer { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: -8px; }
+.cb-fx { margin: 0; font-size: 14px; line-height: 1.45; }
+.cb-need { margin: 0; font-size: 13.5px; color: var(--muted); }
+.cb-all { display: grid; gap: 6px; }
+.cb-item { display: grid; gap: 3px; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--line-hi); opacity: .72; }
+.cb-item > div { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+.cb-item b { font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); }
+.cb-item small { font-size: 12px; color: var(--muted); }
+.cb-item p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.35; }
+.cb-item .cb-needs { color: var(--muted); font-style: italic; }
+.cb-item.on { opacity: 1; }
+.cb-item.combo.on { border-left-color: var(--combo); } .cb-item.kin.on { border-left-color: var(--kin); }
+.cb-item.on small { color: var(--bone); }
+
+/* ---- Bond rows (Team view, character sheet) ---- */
+.bd-rows, .bs-list { display: grid; gap: 6px; }
+.bd-none { margin: 0; }
+.bd-row, .bs-item { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 52px; padding: 6px 10px;
+  background: var(--panel); border: 2px solid var(--line); border-left: 3px solid var(--bond); box-shadow: 0 2px 0 #0B0810; color: var(--bone); text-align: left; cursor: pointer; font: inherit; }
+.bs-item { background: var(--well); box-shadow: none; }
+.bd-row.zero, .bs-item.zero { border-left-color: var(--line-hi); }
+.bd-row:focus-visible, .bs-item:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.bd-pts { display: flex; }
+.bd-pts .bd-face + .bd-face { margin-left: -10px; }
+.bd-face { position: relative; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc, var(--line-hi)); box-shadow: inset 0 0 0 1px #0B0810; flex: none; }
+.bd-face.hero { border-color: var(--ember-deep); }
+.bd-face.s32 { width: 34px; height: 34px; } .bd-face.s32 img { width: 28px; height: 28px; }
+.bd-face.s48 { width: 56px; height: 56px; } .bd-face.s48 img { width: 48px; height: 48px; }
+.bd-face img { object-fit: contain; image-rendering: pixelated; }
+.bd-face.locked img { filter: brightness(0); opacity: .9; }
+.bd-tx { display: grid; gap: 2px; min-width: 0; }
+.bd-tx b { font: 600 calc(14.5px * var(--display-k))/1.1 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-sub { font-size: 12px; color: var(--muted); line-height: 1.2; }
+.bd-lv { display: grid; justify-items: end; gap: 3px; }
+.bd-lv small { font: 600 calc(11px * var(--display-k))/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--bond); }
+.bd-row.zero .bd-lv small, .bs-item.zero .bd-lv small { color: var(--muted); }
+.bd-pips { display: flex; gap: 2px; }
+.bd-pips i { width: 7px; height: 7px; background: var(--well); border: 1px solid var(--line-hi); }
+.bd-pips i.on { background: var(--bond); border-color: #0B0810; box-shadow: 0 0 4px rgba(242,193,78,.5); }
+.bd-row .ndot, .bs-item .ndot { top: -4px; right: -4px; }
+
+/* the Sworn frame: a thin gold double line on the portrait (Team view, bench, roster, Bond rows) */
+.fs-pt.sworn, .fb-pt.sworn, .rt-fr.sworn, .bd-face.sworn { border: 3px double var(--bond); }
+
+/* ---- the Bond sheet ---- */
+.bs-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.bs-pts { display: flex; }
+.bs-pts .bd-face + .bd-face { margin-left: -12px; }
+.bs-who { display: grid; gap: 3px; min-width: 0; }
+.bs-name { margin: 0; font: 600 calc(21px * var(--display-k))/1.1 var(--display); color: var(--bond); text-shadow: 0 2px 0 #0B0810; overflow-wrap: anywhere; }
+.bs-who small { font-size: 13px; color: var(--muted); }
+.bs-who .bs-cls { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; }
+.bs-lv { display: grid; gap: 6px; }
+.bs-lvline { display: flex; gap: 10px; align-items: center; }
+.bs-lvline .bd-pips i { width: 12px; height: 12px; }
+.bs-lvline b { font: 600 calc(16px * var(--display-k)) var(--display); }
+.xbar.bs-bar > i { background: var(--bond); }
+.bs-note { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bs-grow { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
+.bs-fx { display: grid; gap: 6px; }
+.bs-fx1 { display: grid; gap: 3px; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.bs-fx1 small { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.bs-fx1 p { margin: 0; font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+.bs-fx1.on { border-color: rgba(242,193,78,.5); }
+.bs-fx1.on small { color: var(--bond); } .bs-fx1.on p { color: var(--bone); }
+.cs-story.locked.soon { border-style: solid; }
+.cs-story.locked.soon small { color: var(--arcane); font-style: italic; }
+.bs-sworn { display: grid; gap: 3px; padding: 10px 12px; border: 1px dashed var(--line-hi); }
+.bs-sworn small { font: 600 11px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.bs-sworn p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.bs-sworn.on { border: 3px double var(--bond); background: linear-gradient(#2e2618, transparent); }
+.bs-sworn.on small { color: var(--bond); }
+.bs-sworn.on p { color: var(--bone); font-style: italic; font-size: 15px; line-height: 1.45; }
+
+@media (max-width: 360px) {
+  .fslots { gap: 6px; }
+  .fbench { gap: 8px 4px; }
+}
 /* 60-gathering: the Gather tab (72-ui-gather.js): skill cards, the status strip, node rows, the Pack. */
 #skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
@@ -1708,21 +1859,8 @@ span.cf-d { font-weight: 600; }
 .ic.soon { border-style: dashed; box-shadow: none; }
 .ic.s56 { width: 56px; height: 56px; } .ic.s56 img { width: 48px; height: 48px; }
 
-/* formation: Back | Mid | Front, two lanes */
-.pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+/* the planner preview's slot heads (60-lineup.css); the slot cards are in 60-formation.css (F4) */
 .pf-h { text-align: center; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
-.pf-cell { position: relative; min-height: 64px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px dashed var(--line-hi); background: var(--well); padding: 4px; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--muted); cursor: pointer; }
-.pf-cell img { width: 32px; height: 32px; image-rendering: pixelated; }
-.pf-cell .who { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pf-cell .rp { top: 4px; left: 4px; }
-.pf-cell:disabled { cursor: default; }
-.pf-cell.occ { border: 2px solid var(--line); background: var(--panel); color: var(--bone); }
-.pf-cell.hero { border-color: var(--ember-deep); }
-.pf-cell.picked { border-color: var(--ember); background: #2e2030; box-shadow: 0 0 0 1px var(--ember), 0 0 12px rgba(255,158,61,.35); }
-.pf-cell.drop { border: 2px dashed var(--ember); color: var(--bone); }
-.pf-cell.dim { opacity: .3; }
-.pf-hint, .pf-warn { font-size: 12.5px; }
-.pf-warn::before { content: "! "; font-weight: 700; }
 
 /* hero and companion cards */
 .pcards { display: grid; gap: 8px; }
@@ -10655,7 +10793,7 @@ const FEATURES = [
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '8 minutes played or zone 8', when: () => O().t >= 480 || S.maxZone >= 8 },
   { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
   { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
-  { id: 'synergy', tab: 'party', view: 'team', name: 'Synergies', why: 'two companions in the party', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
+  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
@@ -26659,6 +26797,235 @@ let showAwayReport;
   };
 }
 
+// ---- src/js/75-bonds-ui.js ----
+// 75-bonds-ui: Bonds on the Party tab (plan-3 task F4; docs/design/formation.md 6.3). Browser-only.
+// Reads 56f-bonds.js (bondInfo, partyBonds, bondsOf, bondStories, bondRead, bondSworn, bondText,
+// bondUnreadAll) and 56b-synergy.js (SYNERGIES, BOND_LV_NAME, SYN_TUNE); every read is guarded, so the
+// tab still works if those files change shape.
+//
+// Exposed names:
+//   bondsUI  { rows(box) (the Team view's Bond rows: the pairs in the party now), open(id) (the Bond
+//              sheet), charSection(key) (the character sheet's Bonds list; key 'hero' or an id),
+//              swornAny(key) (the Sworn frame), pips(lv), sig() (changes when levels or reads change) }
+// Toasts: on bondLevel (not quiet), the copy from bondText(id, lv) and its priority (Met low, Friends
+//   to Close normal, Sworn high). Seeds and away gains are quiet: the away card lists those.
+// PTY and openSheet come from 75-party-sheet.js, which loads after this file: read them lazily.
+
+let bondsUI = null;
+{
+  const ok = () => typeof bondInfo === 'function' && typeof SYNERGIES === 'object';
+  const safe = (fn, d) => { try { const v = fn(); return v == null ? d : v; } catch (e) { console.error('[lanternfall] bonds ui', e); return d; } };
+  const MAXLV = () => (typeof FORM_TUNE === 'object' && FORM_TUNE.bondH ? FORM_TUNE.bondH.length : 5);
+  const LVN = lv => (typeof BOND_LV_NAME === 'object' && BOND_LV_NAME[lv]) || '';
+  const DEF = id => SYNERGIES.find(d => d.id === id) || null;
+  const nm = k => k === 'hero' ? 'You' : PTY.first(k);
+  const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
+  const clsOk = d => !d.cls || !!(S.party && S.party.cls === d.cls);
+
+  // Five pips, gold up to the level.
+  function pips(lv) {
+    const p = el('span', 'bd-pips');
+    p.setAttribute('aria-hidden', 'true');
+    for (let i = 1; i <= MAXLV(); i++) p.append(el('i', i <= lv ? 'on' : ''));
+    return p;
+  }
+  // A portrait in its frame: the hero, a companion, or a silhouette (not recruited).
+  function face(k, size) {
+    const f = el('span', 'bd-face s' + size);
+    const locked = k !== 'hero' && typeof isRecruited === 'function' && !isRecruited(k);
+    if (k !== 'hero') f.style.setProperty('--rc', PTY.frameCol(k));
+    else f.classList.add('hero');
+    if (locked) f.classList.add('locked');
+    if (!locked && swornAny(k)) f.classList.add('sworn');
+    f.append(img(PTY.portrait(k)));
+    return f;
+  }
+  // Sworn frame (6.3): this member holds a Sworn Bond (hero Bonds only for the current class).
+  function swornAny(k) {
+    if (typeof swornOf !== 'function') return false;
+    return safe(() => swornOf(k).some(id => { const d = DEF(id); return d && clsOk(d); }), false);
+  }
+  // "2h 10m together to Close" (the next level), or the state at Sworn.
+  function progressText(b) {
+    if (!b.next) return 'Sworn. Nothing can break this Bond.';
+    const t = `${fmtTime(Math.max(60, b.next.left))} together to ${b.next.name}`;
+    return b.together ? (b.rate > 0 ? t : 'Grows while they fight. ' + t) : t;
+  }
+  // The effect with bonus numbers scaled to a strength (as 56b shows them): "50% HP" and "of max HP" stay.
+  const scaled = (txt, k) => Math.abs(k - 1) < 1e-9 ? txt : txt.replace(/(\d+(?:\.\d+)?)%(?! HP| of)/g, (m, n) => `${Math.round(n * k)}%`);
+  // Strength at a level, with Common Cause (as bondInfo reports it for the current level).
+  function strengthAt(id, lv) {
+    const d = DEF(id); if (!d || !lv) return 0;
+    const cc = d.pair.some(k => k !== 'hero' && ROSTER[k] && ROSTER[k].rarity === 'common') ? 1 + ((SYN_TUNE && SYN_TUNE.commonCause) || 0) : 1;
+    return (FORM_TUNE.bondX[lv - 1] || 0) * cc;
+  }
+  function effectAt(id, lv) {
+    const d = DEF(id); if (!d || !lv) return '';
+    const today = SYN_TUNE && SYN_TUNE.today != null ? SYN_TUNE.today : 1;
+    return scaled(d.text, strengthAt(id, lv) * today);
+  }
+
+  // ---------------- Team view rows ----------------
+  // One button per Bond of the pairs in the party (at most 3). Progress text updates in place.
+  let rowRefs = [];
+  function rows(box, force) {
+    if (!ok()) { box.textContent = ''; return; }
+    const ids = safe(() => partyBonds(), []);
+    const sig = ids.map(id => { const b = bondInfo(id); return id + b.lv + ':' + b.unread + ':' + swornAny('hero'); }).join() + '|' + typeof portraitURL + '|' + (S.party && S.party.cls);
+    if (force || box._sig !== sig) {
+      box._sig = sig; box.textContent = ''; rowRefs = [];
+      if (!ids.length) { box.append(el('p', 'note bd-none', 'No Bonds in this party. Pairs with a Bond grow closer when they fight side by side.')); return; }
+      for (const id of ids) {
+        const b = bondInfo(id);
+        const r = btn('bd-row' + (b.lv ? '' : ' zero') + (b.lv >= MAXLV() ? ' sworn' : ''));
+        const pts = el('span', 'bd-pts'); pts.append(face(b.pair[0], 32), face(b.pair[1], 32));
+        const tx = el('span', 'bd-tx');
+        const sub = el('small', 'bd-sub');
+        tx.append(el('b', null, b.name), sub);
+        const lv = el('span', 'bd-lv'); lv.append(pips(b.lv), el('small', null, b.lvName));
+        r.append(pts, tx, lv);
+        if (b.unread) r.append(el('span', 'ndot'));
+        r.setAttribute('aria-label', `${b.name}, ${nm(b.pair[0])} and ${nm(b.pair[1])}. ${b.lvName}.${b.unread ? ' A story is ready.' : ''} Open the Bond.`);
+        r.addEventListener('click', () => open(id));
+        box.append(r);
+        rowRefs.push({ id, sub });
+      }
+    }
+    for (const x of rowRefs) putText(x.sub, progressText(bondInfo(x.id)));
+  }
+
+  // ---------------- the Bond sheet ----------------
+  let sh = null, shId = null, shSig = '', shRefs = null, shTimer = 0;
+  const sheetSig = id => { const b = bondInfo(id); return [id, b.lv, b.unread, b.stories.map(s => +s.open + '' + +s.read + !!s.text).join(), !!b.sworn, b.together, typeof portraitURL].join('|'); };
+  function open(id) {
+    if (!ok() || !DEF(id)) return;
+    shId = id;
+    const b0 = bondInfo(id);
+    sh = openSheet(() => {}, { label: b0.name, small: true, onClose: () => { sh = null; shId = null; shRefs = null; clearInterval(shTimer); } });
+    sh.sheet.classList.add('bsheet-bond');
+    build();
+    clearInterval(shTimer);
+    shTimer = setInterval(() => { try { tickSheet(); } catch (e) {} }, 1000);
+  }
+  function build() {
+    const id = shId, b = bondInfo(id), d = DEF(id), body = sh.body;
+    shSig = sheetSig(id);
+    const top = body.scrollTop;
+    body.textContent = '';
+    // Both portraits, the name and the pair.
+    const hd = el('div', 'bs-top');
+    const pts = el('div', 'bs-pts'); pts.append(face(b.pair[0], 48), face(b.pair[1], 48));
+    const who = el('div', 'bs-who');
+    const h = el('h2', 'bs-name', b.name); h.id = 'bsName';
+    who.append(h, el('small', null, `${nm(b.pair[0])} and ${nm(b.pair[1])}`));
+    if (d.cls && HERO_CLASSES[d.cls]) who.append(el('small', 'bs-cls', `A ${HERO_CLASSES[d.cls].name} Bond`));
+    hd.append(pts, who);
+    sh.sheet.setAttribute('aria-labelledby', 'bsName');
+    body.append(hd);
+    // Level: pips, the name, a bar to the next level.
+    const lvBox = el('div', 'bs-lv');
+    const line = el('div', 'bs-lvline');
+    line.append(pips(b.lv), el('b', null, b.lv ? `${b.lvName} (level ${b.lv} of ${MAXLV()})` : 'Not yet'));
+    const bar = el('div', 'xbar bs-bar' + (b.next ? '' : ' cap')); const fill = el('i'); bar.append(fill);
+    const note = el('small', 'bs-note');
+    lvBox.append(line, bar, note);
+    body.append(lvBox);
+    // Why they are bound (the pair's line), and how it grows.
+    const why = el('p', 'bs-grow');
+    body.append(why);
+    shRefs = { fill, note, why };
+    // Effect now and at the next level.
+    const fx = el('div', 'bs-fx');
+    const now = el('div', 'bs-fx1' + (b.lv ? ' on' : ''));
+    now.append(el('small', null, b.lv ? `Now (${Math.round(b.strength * 100)}%)` : 'Now'), el('p', null, b.lv ? effectAt(id, b.lv) : `Off. It starts at Met: ${fmtTime(FORM_TUNE.bondH[0] * 3600)} together.`));
+    fx.append(now);
+    if (b.next) {
+      const nx = el('div', 'bs-fx1 next');
+      nx.append(el('small', null, `At ${b.next.name} (${Math.round(strengthAt(id, b.next.lv) * 100)}%)`), el('p', null, effectAt(id, b.next.lv)));
+      fx.append(nx);
+    }
+    body.append(PTY_section('Effect', fx));
+    // Stories: locked ones show their title and the level they open at; unwritten ones "Story coming soon".
+    const st = el('div', 'cs-stories');
+    b.stories.forEach((s, i) => {
+      if (!s.open) {
+        const x = el('div', 'cs-story locked'); x.append(el('b', null, s.title), el('small', null, `At ${LVN(s.lv)}`)); st.append(x); return;
+      }
+      if (!s.text) {
+        const x = el('div', 'cs-story locked soon'); x.append(el('b', null, s.title), el('small', null, 'Story coming soon')); st.append(x); return;
+      }
+      const det = el('details', 'cs-story');
+      const sum = el('summary'); sum.append(el('b', null, s.title));
+      if (!s.read) sum.append(el('span', 'udot', 'New'));
+      det.append(sum, el('p', null, s.text));
+      det.addEventListener('toggle', () => {
+        if (!det.open || s.read) return;
+        if (bondRead(id, i)) { try { save(); } catch (e) {} const u = sum.querySelector('.udot'); if (u) u.remove(); shSig = sheetSig(id); }
+      });
+      st.append(det);
+    });
+    body.append(PTY_section('Camp stories', st));
+    // The Sworn line, once reached.
+    const sw = el('div', 'bs-sworn' + (b.lv >= MAXLV() ? ' on' : ''));
+    if (b.lv >= MAXLV()) sw.append(el('small', null, 'Sworn'), el('p', null, b.sworn ? `"${b.sworn}"` : 'Their Sworn words are coming soon.'));
+    else sw.append(el('small', null, 'Sworn'), el('p', null, `At Sworn they say the words, and both portraits get a gold frame.`));
+    body.append(sw);
+    body.scrollTop = top;
+    tickSheet();
+  }
+  const PTY_section = (title, ...kids) => { const s = el('div', 'cs-sec'); s.append(el('h3', 'cs-h', title), ...kids); return s; };
+  function tickSheet() {
+    if (!sh || !shId || !shRefs) return;
+    if (sheetSig(shId) !== shSig) { build(); return; }
+    const b = bondInfo(shId), d = DEF(shId);
+    const pct = b.next ? Math.max(0, Math.min(1, (b.t - (b.lv ? FORM_TUNE.bondH[b.lv - 1] * 3600 : 0)) / (b.next.at - (b.lv ? FORM_TUNE.bondH[b.lv - 1] * 3600 : 0)))) : 1;
+    putStyle(shRefs.fill, 'width', (pct * 100).toFixed(1) + '%');
+    putText(shRefs.note, b.next ? `${fmtTime(Math.max(60, b.next.left))} together to ${b.next.name}. ${fmtTime(b.t)} so far.` : `${fmtTime(b.t)} together.`);
+    const bits = [];
+    if (d.needs) bits.push(d.needs.replace(/\.$/, '') + ' in the party, fighting side by side.');
+    if (!b.together) bits.push('Paused: they are not both in the party.');
+    else if (!(b.rate > 0)) bits.push('Paused while you are not fighting.');
+    else bits.push('Growing now.');
+    if (b.oldFriend) bits.push('Old Friend: grows 50% faster.');
+    putText(shRefs.why, bits.join(' '));
+  }
+
+  // ---------------- the character sheet's Bonds ----------------
+  function charSection(key) {
+    if (!ok() || typeof bondsOf !== 'function') return null;
+    const ids = safe(() => bondsOf(key, false), []).filter(id => { const d = DEF(id); return d && clsOk(d); });
+    if (!ids.length) return null;
+    const box = el('div', 'bs-list');
+    for (const id of ids) {
+      const b = bondInfo(id), other = b.pair.find(k => k !== key) || b.pair[1];
+      const met = other === 'hero' || isRecruited(other);
+      const r = btn('bs-item' + (b.lv ? '' : ' zero'));
+      const tx = el('span', 'bd-tx');
+      tx.append(el('b', null, b.name), el('small', 'bd-sub', met ? `with ${other === 'hero' ? 'you' : PTY.first(other)}` : 'Not met yet'));
+      const lv = el('span', 'bd-lv'); lv.append(pips(b.lv), el('small', null, b.lvName));
+      r.append(face(other, 32), tx, lv);
+      if (b.unread) r.append(el('span', 'ndot'));
+      r.setAttribute('aria-label', `${b.name}, with ${met ? (other === 'hero' ? 'you' : PTY.first(other)) : 'someone not met yet'}. ${b.lvName}. Open the Bond.`);
+      r.addEventListener('click', () => open(id));
+      box.append(r);
+    }
+    const s = el('div', 'cs-sec'); s.append(el('h3', 'cs-h', 'Bonds'), box);
+    return s;
+  }
+
+  // ---------------- toasts (6.3) ----------------
+  on('bondLevel', ev => {
+    if (!ev || ev.quiet || !(ev.lv >= 1) || !(ev.lv > (ev.prev | 0)) || typeof bondText !== 'function') return;
+    const t = safe(() => bondText(ev.id, ev.lv), null);
+    if (t && t.msg) toast(t.msg, 'good', { ic: ['heart', '#F2C14E'] }, t.prio);
+  });
+  for (const e of ['bondLevel', 'bondStory', 'fieldChange']) on(e, () => { if (sh) safe(() => tickSheet()); });
+
+  let sigRev = 0;
+  on('bondLevel', () => sigRev++); on('bondStory', () => sigRev++);
+  bondsUI = { rows, open, charSection, swornAny, pips, sig: () => sigRev };
+}
+
 // ---- src/js/75-bounties-ui.js ----
 // 75-bounties-ui: Bounties (Fight tab, Bounties view) and the Achievements grid (bell sheet, Journal view).
 {
@@ -30049,7 +30416,7 @@ let legendUI = null;
     almanac: "New on the Camp tab: the Almanac. Check today's Omen.",
     roster: 'New on the Party tab: Roster. See who could join you.',
     exped: 'Expeditions are open on the Camp tab.',
-    synergy: 'Synergies: some companions fight better together. See the Party tab.',
+    synergy: 'Where each one stands matters. Put a tank in Front and a healer in Back for Lifeline.',
     uniques: 'New on the Craft tab: Uniques.',
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. Find it in the Journal (the bell).',
@@ -30261,7 +30628,7 @@ let openSheet, partySheet;
     { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
   ];
   const MILESTONES = [
-    { lv: 5, n: 'Story' }, { lv: 10, n: 'Passive' }, { lv: 15, n: 'Story' }, { lv: 20, n: 'Ability' }, { lv: 25, n: 'Bond' }
+    { lv: 5, n: 'Story' }, { lv: 10, n: 'Passive' }, { lv: 15, n: 'Story' }, { lv: 20, n: 'Ability' }, { lv: 25, n: 'Old Friend' }
   ];
 
   const safe = (fn, dflt) => { try { const v = fn(); return v == null ? dflt : v; } catch (e) { console.error('[lanternfall] party', e); return dflt; } };
@@ -30530,18 +30897,22 @@ let openSheet, partySheet;
     return section('Kit', ul);
   }
   function synSection(k) {
-    const list = synergiesFor(k);
-    if (!list) return null;
+    const all = synergiesFor(k);
+    if (!all) return null;
+    // F4: Bonds have their own section (75-bonds-ui); an inactive entry shows its effect, not its need twice.
+    const defOf = id => (Array.isArray(SYNERGIES) && SYNERGIES.find(d => d.id === id)) || {};
+    const list = all.filter(s => defOf(s.id).layer !== 'bond');
     const box = el('div', 'cs-syns');
-    if (!list.length) box.append(el('p', 'note', 'No synergies with this party yet.'));
+    if (!list.length) box.append(el('p', 'note', 'No combos or Kin with this party yet.'));
     for (const s of list) {
       const d = el('div', 'cs-syn' + (s.active ? ' on' : ''));
       const top = el('div'); top.append(el('b', null, s.name), el('small', null, s.active ? 'Active' : missingText(s.missing) || 'Inactive'));
       d.append(top);
-      if (s.text) d.append(el('p', null, s.text));
+      const tx = s.active ? s.text : defOf(s.id).text || '';
+      if (tx) d.append(el('p', null, tx));
       box.append(d);
     }
-    return section('Synergies', box);
+    return section('Combos and Kin', box);
   }
   function milestoneTrack(k) {
     const r = charRec(k);
@@ -30615,7 +30986,7 @@ let openSheet, partySheet;
     g.append(b,
       statBox('HP', '-', 'with party combat'),
       statBox('Armour', '-', 'with party combat'),
-      statBox('Row', inField(k) && cell ? COL_NAME[cell.col] : 'Bench', inField(k) && cell ? (cell.lane ? 'lower lane' : 'upper lane') : ''));
+      statBox('Slot', inField(k) && cell ? SLOT_NAME[FORM_SLOTS[cell.col]] : 'Bench', inField(k) && cell ? (offSlot(k) ? 'out of place' : 'home') : `home: ${SLOT_NAME[homeSlot(k)]}`));
     return section('Stats', g);
   }
 
@@ -30680,6 +31051,7 @@ let openSheet, partySheet;
     body.append(statsSection(k), gearSection(k));
     const kit = kitSection(k); if (kit) body.append(kit);
     const syn = synSection(k); if (syn) body.append(syn);
+    const bd = bondsUI && safe(() => bondsUI.charSection(k), null); if (bd) body.append(bd);   // F4: this character's Bonds
     body.append(milestoneTrack(k));
     const st = storiesSection(k); if (st) body.append(st);
     actions(k);
@@ -30763,11 +31135,13 @@ let openSheet, partySheet;
       });
       mir.append(b);
     }
+    const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     body.append(section('Class change', mir));
     sheet.foot.textContent = '';
   }
 
-  const sigOf = k => {
+  const sigOf = k => (bondsUI ? bondsUI.sig() + '|' : '') + sigOf0(k);   // F4: a Bond level or story read redraws
+  const sigOf0 = k => {
     if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
@@ -30808,90 +31182,282 @@ let openSheet, partySheet;
 }
 
 // ---- src/js/75-party.js ----
-// 75-party: the Party tab. Browser-only. Spec: docs/design/party-and-classes.md 7.2.
-// Top to bottom: formation editor, hero card, the 3 fielded companions, synergies, the roster
-// grid (bench and locked), leads. Tapping a card or tile opens the character sheet
-// (75-party-sheet.js). A red dot on the tab marks an unread camp story or a promotion ready.
-// Reads the roster API (56-roster.js); synergies (56b) and leads (56c) only when present.
+// 75-party: the Party tab. Browser-only. Spec: docs/design/formation.md 6 (Team view, plan-3 F4) and
+// party-and-classes.md 7.2. Team view, top to bottom: the three slot cards (Back, Middle, Front) with
+// the Best line-up button (56d, F3 owns its logic and why line) and the one amber warning, combos and
+// Kin chips, Bond rows (75-bonds-ui.js), the bench, the hero card, the fielded companions' cards.
+// Roster view: the roster grid and leads. Tapping a companion card or roster tile opens the character
+// sheet (75-party-sheet.js). A red dot on the tab marks an unread camp or Bond story, or a promotion.
+// Reads the roster API (56-roster.js) and the formation API (56e); synergies (56b) and leads (56c).
 {
   const { safe, live, C, heroClass, heroCol, portrait, frameCol, first, pip, costText, weaponNoun, gearOf, slotTile,
     traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive, outOf, heroTitle } = PTY;
   const RAR_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 };
   const P = () => S.party;
-  const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, 3) : []);
+  const fieldMax = () => (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE.fieldMax) || 2;
+  const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, fieldMax()) : []);
   const setT = (n, t) => { if (n.textContent !== t) n.textContent = t; };
   const saveUi = () => { try { save(); } catch (e) {} ui(true); };
   const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
 
-  // ================= formation =================
-  let picked = null, formSig = '', formRefs = null;
-  const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});
-  const nameOf = k => k === 'hero' ? S.name : C(k).name;
-  const occupant = (col, lane) => Object.keys(cellsNow()).find(k => cellsNow()[k].col === col && cellsNow()[k].lane === lane && (k === 'hero' || inField(k)));
-  // F1 (interim until F4's slot cards): one line of three slots (lane 1); anyone, the hero too, may
-  // stand in any slot. A move is a swap through 56e-formation swapSlots.
-  function canMove(k, col, lane) {
-    const from = cellsNow()[k];
-    return !!from && lane === 1 && from.col !== col;
+  // ================= the three slots (plan-3 F4, formation.md 6.1) =================
+  // Back, Middle and Front, left to right as on the stage. Tap a card to lift it, then tap another
+  // card to swap, or a bench companion to put them in that slot. Or tap a bench companion first, then
+  // a slot. Or hold a card or a bench tile for 150 ms and drag it onto a slot (a companion's card
+  // dropped on the bench goes to the bench). The lock pins a companion (the planner keeps them).
+  // Every change goes through 56e-formation: swapSlots, fieldTo, setPin; benching through benchChar.
+  registerIcons({
+    f_lock: ['............', '....2222....', '...2....2...', '...2....2...', '...2....2...', '..11111111..', '..11111111..', '..11155111..', '..11155111..', '..11111111..', '..11111111..', '............'],
+    f_home: ['............', '.....11.....', '....1111....', '...111111...', '..11111111..', '.1111111111.', '..11111111..', '..111..111..', '..11.22.11..', '..11.22.11..', '..11.22.11..', '............']
+  });
+  const FT_ = () => (typeof FORM_TUNE === 'object' && FORM_TUNE) || { offSlot: 0.1, maxPins: 2 };
+  const offPct = () => Math.round((FT_().offSlot || 0.1) * 100);
+  const SLOT_TIP = { front: 'Front takes the hits.', mid: 'Middle strikes and covers both sides.', back: 'Back is safe from blades. Heal and cast from here.' };
+  const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});   // the planner preview reads it
+  const nameOf = k => k === 'hero' ? 'You' : first(k);
+  const fullName = k => k === 'hero' ? S.name : C(k).name;
+  // lift: null | { slot } (a slot card is lifted) | { id } (a bench companion is lifted)
+  let lift = null, say = '', sayT = 0, formSig = '', formRefs = null, flash = {};
+  const tell = msg => { say = msg; sayT = performance.now(); formSig = ''; };
+  const pinned = k => typeof isPinned === 'function' && isPinned(k);
+  // After a change: save, redraw, and flash the cards that changed (a colour flash, kept in reduced motion).
+  function changed(slots) {
+    const now = performance.now();
+    for (const s of slots) flash[s] = now;
+    lift = null; formSig = ''; benchSig = '';
+    saveUi();
+    setTimeout(() => { flash = {}; formSig = ''; try { updateForm(); } catch (e) {} }, 700);
   }
-  function moveTo(k, col, lane) {
-    if (!canMove(k, col, lane)) return false;
-    return swapSlots(FORM_SLOTS[cellsNow()[k].col], FORM_SLOTS[col]);
+  function moveSlots(a, b) {
+    if (a === b) return false;
+    if (swapSlots(a, b)) { changed([a, b]); return true; }
+    return false;
   }
-  const warning = () => formWarning();
+  function putIn(id, slot) {
+    if (whoIn(slot) === 'hero') { tell(FORM_TEXT.heroStays); lift = null; return false; }
+    const o = outOf(id); if (o) { tell(`${first(id)} is on an expedition. They can join when they are back.`); lift = null; return false; }
+    if (fieldTo(id, slot)) { changed([slot]); return true; }
+    lift = null; formSig = '';
+    return false;
+  }
+  function toBench(k) {
+    if (k === 'hero') { tell(FORM_TEXT.heroStays); return false; }
+    const s = slotOf(k);
+    if (benchChar(k)) { tell(`${first(k)} is on the bench.`); changed(s ? [s] : []); return true; }
+    return false;
+  }
+  function tapSlot(slot) {
+    if (!live()) return;
+    const k = whoIn(slot);
+    if (lift && lift.id) putIn(lift.id, slot);
+    else if (lift && lift.slot === slot) lift = null;
+    else if (lift && lift.slot) moveSlots(lift.slot, slot);
+    else lift = { slot };   // an empty slot lifts too: then a bench companion fills it
+    formSig = ''; benchSig = ''; ui(true);
+  }
+  function tapBench(id) {
+    if (!live()) return;
+    if (lift && lift.slot) {
+      if (whoIn(lift.slot) === 'hero') tell(FORM_TEXT.heroStays);
+      else putIn(id, lift.slot);
+    } else if (lift && lift.id === id) lift = null;
+    else if (outOf(id)) tell(`${first(id)} is on an expedition. They can join when they are back.`);
+    else lift = { id };
+    formSig = ''; benchSig = ''; ui(true);
+  }
+  function togglePin(k) {
+    const on = !pinned(k);
+    if (on && ((P().pin || []).length >= (FT_().maxPins || 2))) { tell(`You can lock ${FT_().maxPins || 2} companions at most.`); ui(true); return; }
+    if (typeof setPin === 'function' && setPin(k, on)) { tell(on ? `${first(k)} stays in the party.` : `The planner can move ${first(k)} again.`); saveUi(); }
+  }
+
+  // ---- drag: hold 150 ms, then drag onto a slot card (or a companion card onto the bench) ----
+  let drag = null, eatClick = 0;
+  const dragEat = () => performance.now() < eatClick;
+  function dragFrom(node, get) {
+    node.addEventListener('pointerdown', e => {
+      if ((e.button || 0) > 0 || drag || e.target.closest('.fs-lock')) return;
+      const src = get(); if (!src) return;
+      drag = { src, node, x: e.clientX, y: e.clientY, on: false, pid: e.pointerId, over: null, ghost: null };
+      drag.t = setTimeout(dragStart, 150);
+      window.addEventListener('pointermove', dragMove);
+      window.addEventListener('pointerup', dragUp);
+      window.addEventListener('pointercancel', dragCancel);
+    });
+    // Once a drag is on, the page must not scroll under the finger.
+    node.addEventListener('touchmove', e => { if (drag && drag.on && e.cancelable) e.preventDefault(); }, { passive: false });
+    node.addEventListener('contextmenu', e => { if (drag) e.preventDefault(); });
+    node.addEventListener('dragstart', e => e.preventDefault());   // no native image drag (it cancels the pointer)
+  }
+  function dragStart() {
+    if (!drag) return;
+    drag.on = true;
+    const g = el('div', 'fdrag'); g.append(img(portrait(drag.src.key)));
+    g.style.transform = `translate(${drag.x - 28}px, ${drag.y - 28}px)`;
+    document.body.append(g); drag.ghost = g;
+    drag.node.classList.add('dragging');
+    lift = null;
+    putText(formRefs.hint, `Drop ${nameOf(drag.src.key) === 'You' ? 'your hero' : nameOf(drag.src.key)} on a slot${drag.src.slot && drag.src.key !== 'hero' ? ', or on the bench' : ''}.`);
+  }
+  function dragMove(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    if (!drag.on) { if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 10) dragCancel(); return; }
+    drag.ghost.style.transform = `translate(${e.clientX - 28}px, ${e.clientY - 28}px)`;
+    const t = document.elementFromPoint(e.clientX, e.clientY);
+    let over = t && (t.closest('.fslot') || t.closest('#sec-party-bench'));
+    if (over && over === drag.node) over = null;
+    if (over && over.id === 'sec-party-bench' && !drag.src.slot) over = null;
+    if (over !== drag.over) { if (drag.over) drag.over.classList.remove('dover'); if (over) over.classList.add('dover'); drag.over = over; }
+  }
+  function dragEnd() {
+    if (!drag) return null;
+    const d = drag; drag = null;
+    clearTimeout(d.t);
+    window.removeEventListener('pointermove', dragMove);
+    window.removeEventListener('pointerup', dragUp);
+    window.removeEventListener('pointercancel', dragCancel);
+    if (d.ghost) d.ghost.remove();
+    d.node.classList.remove('dragging');
+    if (d.over) d.over.classList.remove('dover');
+    return d;
+  }
+  function dragCancel() { const d = dragEnd(); if (d && d.on) { formSig = ''; ui(true); } }
+  function dragUp(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const d = dragEnd();
+    if (!d.on) return;
+    eatClick = performance.now() + 400;
+    const o = d.over;
+    if (o && o.classList.contains('fslot')) { if (d.src.slot) moveSlots(d.src.slot, o.dataset.slot); else putIn(d.src.key, o.dataset.slot); }
+    else if (o && d.src.slot) toBench(d.src.key);
+    formSig = ''; benchSig = ''; ui(true);
+  }
+
   function buildForm(sec) {
     const head = el('div', 'sec-head');
     const h = sec.querySelector('.sec-title'); head.append(h);
-    const auto = btn('mini pf-auto', 'Auto', () => { picked = null; if (live()) { autoPlace(); saveUi(); } });
-    auto.setAttribute('aria-label', 'Place everyone by role');
-    const best = btn('mini pf-best', 'Best line-up', () => { picked = null; openLineup(); });
+    const auto = btn('mini pf-auto', 'Auto', () => { lift = null; if (live()) { autoPlace(); saveUi(); } });
+    auto.setAttribute('aria-label', 'Place everyone in their home slots');
+    const best = btn('mini pf-best', 'Best line-up', () => { lift = null; openLineup(); });
     best.setAttribute('aria-label', 'Show the best line-up for your best zone');
     const btns = el('div', 'pf-btns'); btns.append(auto, best);
     head.append(btns); sec.prepend(head);
-    const grid = el('div', 'pform');
-    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
-    const cells = [];
-    for (let lane = 1; lane < 2; lane++) for (let col = 0; col < 3; col++) {   // F1: one line (lane 1)
-      const b = btn('pf-cell');
-      b.addEventListener('click', () => tapCell(col, lane));
-      grid.append(b); cells.push({ b, col, lane });
+    const row = el('div', 'fslots');
+    const cards = {};
+    for (const slot of FORM_SLOTS) {
+      const c = el('div', 'fslot'); c.tabIndex = 0; c.setAttribute('role', 'button'); c.dataset.slot = slot;
+      c.title = SLOT_TIP[slot];
+      c.addEventListener('click', () => { if (!dragEat()) tapSlot(slot); });
+      c.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); tapSlot(slot); } });
+      dragFrom(c, () => { const k = live() && whoIn(slot); return k ? { slot, key: k } : null; });
+      row.append(c); cards[slot] = c;
     }
-    const hint = el('p', 'note pf-hint');
-    const warn = el('p', 'note warn pf-warn');
+    const hint = el('p', 'note f-hint'); hint.setAttribute('aria-live', 'polite');
+    const warn = el('p', 'note f-warn');
     const why = el('p', 'note lu-why'); why.hidden = true;
     const prev = el('div', 'lu-prev'); prev.hidden = true;
-    sec.append(grid, hint, warn, why, prev);
-    formRefs = { cells, hint, warn, auto, best, why, prev };
+    sec.append(row, warn, hint, why, prev);
+    formRefs = { cards, hint, warn, auto, best, why, prev };
   }
-  function tapCell(col, lane) {
-    const o = occupant(col, lane);
-    if (!picked) { if (o) picked = o; }
-    else if (picked === o) picked = null;
-    else if (canMove(picked, col, lane)) { moveTo(picked, col, lane); picked = null; try { save(); } catch (e) {} }
-    else if (o) picked = o;
-    formSig = ''; ui(true);
+  function fillCard(c, slot) {
+    const k = whoIn(slot), up = !!lift && lift.slot === slot;
+    c.textContent = '';
+    c.className = 'fslot' + (k ? ' occ' : ' empty') + (k === 'hero' ? ' hero' : k ? ' comp' : '') + (up ? ' up' : '') + (lift && !up ? ' drop' : '') + (flash[slot] ? ' flash' : '');
+    const top = el('span', 'fs-slot', SLOT_NAME[slot]);
+    if (k && !offSlot(k)) { const hm = img(iconURL('f_home', '#F2C14E', { 2: '#6B4A2E' }), 'fs-home'); hm.alt = 'home slot'; top.append(hm); }
+    c.append(top);
+    c.removeAttribute('aria-pressed');
+    if (!k) {
+      c.append(el('span', 'fs-empty', 'Empty. Tap a companion below to field them.'));
+      c.setAttribute('aria-label', `${SLOT_NAME[slot]}: empty.${up ? ' Lifted: tap a bench companion to field them here.' : lift ? ' Tap to put them here.' : ''}`);
+      c.setAttribute('aria-pressed', String(up));
+      return;
+    }
+    const pt = el('span', 'fs-pt' + (k !== 'hero' && C(k).rarity === 'legendary' ? ' leg' : '') + (bondsUI && bondsUI.swornAny(k) ? ' sworn' : ''));
+    pt.style.setProperty('--rc', k === 'hero' ? 'var(--ember-deep)' : frameCol(k));
+    pt.append(img(portrait(k)));
+    const role = memberRole(k), cls = heroClass();
+    const roleTxt = k === 'hero' ? (cls ? cls.name : 'Hero') : PTY.ROLE_NAME[role];
+    c.append(pt, el('b', 'fs-nm', nameOf(k)), el('span', 'fs-role r-' + role, roleTxt));
+    const job = typeof slotJob === 'function' ? safe(() => slotJob(k), null) : null;
+    if (job) { const j = el('span', 'fs-job', job.label); j.title = `${job.name}: ${job.text}`; c.append(j); }
+    const off = offSlot(k);
+    if (off) c.append(el('span', 'fs-off', `Out of place -${offPct()}%`));
+    if (k === 'hero') c.append(el('span', 'fs-stay', 'Always in'));
+    else {
+      const on = pinned(k);
+      const lk = btn('fs-lock' + (on ? ' on' : ''), null, e => { e.stopPropagation(); togglePin(k); });
+      lk.append(img(iconURL('f_lock', on ? '#F2C14E' : '#6E6280', { 2: on ? '#C9A040' : '#6E6280', 5: on ? '#2A1E07' : '#1A1420' })));
+      lk.setAttribute('aria-label', on ? `Let the planner move ${first(k)}` : `Keep ${first(k)} in the party`);
+      lk.setAttribute('aria-pressed', String(on));
+      lk.addEventListener('pointerdown', e => e.stopPropagation());
+      c.append(lk);
+    }
+    c.setAttribute('aria-label', `${SLOT_NAME[slot]}: ${k === 'hero' ? 'your hero, ' + S.name : fullName(k)}, ${roleTxt}${job ? ', ' + job.label : ''}${off ? `, out of place` : ', home slot'}${k === 'hero' ? ', always in the party' : ''}${up ? '. Lifted: tap another slot to swap' : ''}.`);
+    c.setAttribute('aria-pressed', String(up));
+  }
+  function hintText() {
+    if (say && performance.now() - sayT < 4000) return say;
+    say = '';
+    if (lift && lift.id) return `Tap a slot to field ${first(lift.id)} there.`;
+    if (lift && lift.slot) {
+      const k = whoIn(lift.slot);
+      return !k ? 'Tap a companion on the bench to field them here.' : k === 'hero' ? 'Tap another slot to swap. Your hero stays in the party.' : 'Tap another slot to swap, or a bench companion to take this slot.';
+    }
+    return 'Tap a slot to move someone, or hold and drag.';
   }
   function updateForm() {
-    const r = formRefs; if (!r) return;
-    const sig = JSON.stringify(cellsNow()) + field().join() + picked + S.name + P().cls + typeof portraitURL;
-    if (sig === formSig) return; formSig = sig;
-    if (picked && picked !== 'hero' && !inField(picked)) picked = null;
-    for (const c of r.cells) {
-      const o = occupant(c.col, c.lane), b = c.b;
-      b.textContent = '';
-      b.className = 'pf-cell' + (o ? ' occ' : '') + (o === 'hero' ? ' hero' : '') + (picked && o === picked ? ' picked' : '') +
-        (picked && picked !== o && !canMove(picked, c.col, c.lane) ? ' dim' : '') + (picked && picked !== o && canMove(picked, c.col, c.lane) ? ' drop' : '');
-      if (o) {
-        b.append(img(portrait(o)), el('span', 'who', o === 'hero' ? S.name : first(o)));
-        if (o !== 'hero') { const d = el('i', 'rp r-' + C(o).role); b.append(d); }
-      }
-      const where = `${SLOT_NAME[FORM_SLOTS[c.col]]} slot`;
-      b.setAttribute('aria-label', o ? `${nameOf(o)}, ${where}${picked === o ? ', picked up' : ''}` : `Empty, ${where}`);
-      b.setAttribute('aria-pressed', String(!!picked && picked === o));
-      b.disabled = !o && !picked;
+    const r = formRefs; if (!r || !live()) return;
+    if (lift && lift.id && (!isRecruited(lift.id) || inField(lift.id))) lift = null;
+    const line = formLine();
+    const sig = JSON.stringify(line.map(x => [x.key, x.off])) + JSON.stringify(lift) + JSON.stringify(P().pin || []) + S.name + P().cls + typeof portraitURL + Object.keys(flash).join() + (bondsUI ? bondsUI.sig() : '') + say;
+    if (sig !== formSig) {
+      formSig = sig;
+      for (const s of FORM_SLOTS) fillCard(r.cards[s], s);
+      const w = formWarning(); putText(r.warn, w); putHidden(r.warn, !w);
     }
-    r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit slot, or tap again to cancel.` : 'Tap someone, then tap a slot to move or swap them.';
-    const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
+    putText(r.hint, drag && drag.on ? r.hint.textContent : hintText());
+    if (say && performance.now() - sayT >= 4000) formSig = '';
+  }
+
+  // ================= the bench (companions not in the party) =================
+  let benchSig = '', benchRefs = null, benchGen = 0, benchBuilt = false;
+  function buildBench(sec) {
+    const grid = el('div', 'fbench');
+    sec.append(grid);
+    benchRefs = { grid };
+  }
+  function updateBench() {
+    const r = benchRefs; if (!r || !live()) return;
+    const ids = rosterList().filter(k => !inField(k));
+    ids.sort((a, b) => (charRec(b).lv - charRec(a).lv) || ROSTER_KEYS.indexOf(a) - ROSTER_KEYS.indexOf(b));
+    const outs = ids.map(k => { const o = outOf(k); return o ? o.id + o.back : ''; });
+    const sig = ids.join() + '|' + outs.join() + '|' + JSON.stringify(lift) + typeof portraitURL + (bondsUI ? bondsUI.sig() : '') + ids.map(k => charRec(k).lv).join();
+    if (sig === benchSig) return; benchSig = sig;
+    r.grid.textContent = '';
+    if (!ids.length) { r.grid.append(el('p', 'note', 'Nobody on the bench. New companions join from the Roster.')); return; }
+    // Tiles build in time-boxed chunks (a portrait can need baking), as the Roster grid does.
+    const gen = ++benchGen, queue = ids.map((k, i) => [k, i]);
+    const chunk = () => {
+      if (gen !== benchGen) return;
+      const t0 = performance.now();
+      do benchTile(...queue.shift()); while (queue.length && performance.now() - t0 < 10);
+      if (queue.length) setTimeout(chunk, 0);
+    };
+    const benchTile = (k, i) => {
+      const c = C(k), out = !!outs[i], up = !!lift && lift.id === k;
+      const t = btn('fb-tile' + (up ? ' up' : '') + (out ? ' out' : '') + (lift && lift.slot ? ' drop' : ''), null, () => { if (!dragEat()) tapBench(k); });
+      const fr = el('span', 'fb-pt' + (c.rarity === 'legendary' ? ' leg' : '') + (bondsUI && bondsUI.swornAny(k) ? ' sworn' : ''));
+      fr.style.setProperty('--rc', frameCol(k));
+      fr.append(img(portrait(k)), el('i', 'rp r-' + c.role));
+      t.append(fr, el('span', 'fb-nm', first(k)), el('span', 'fb-sub', out ? 'Away' : `Lv ${charRec(k).lv} · ${SLOT_NAME[homeSlot(k)]}`));
+      t.setAttribute('aria-label', `${c.name}, ${PTY.ROLE_NAME[c.role]}, level ${charRec(k).lv}, home slot ${SLOT_NAME[homeSlot(k)]}${out ? ', on an expedition' : ''}${up ? '. Lifted: tap a slot to field them' : ''}.`);
+      t.setAttribute('aria-pressed', String(up));
+      if (!out) dragFrom(t, () => ({ key: k }));
+      r.grid.append(t);
+    };
+    // The first build waits for its own task (portraits may bake), so opening the tab stays smooth.
+    if (!benchBuilt) { benchBuilt = true; setTimeout(chunk, 0); } else chunk();
   }
 
   // ================= best line-up (AF, 56d-autofield.js) =================
@@ -31053,11 +31619,11 @@ let openSheet, partySheet;
   }
   function buildComps(box, keys) {
     box.textContent = ''; compRefs = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < fieldMax(); i++) {
       const k = keys[i];
       if (!k) {
         const e = el('div', 'pcard empty');
-        e.append(el('b', null, 'Open place'), el('small', null, 'Tap someone on the bench below to field them.'));
+        e.append(el('b', null, 'Open place'), el('small', null, 'Tap an empty slot above, then a companion on the bench.'));
         box.append(e); continue;
       }
       const c = C(k);
@@ -31115,27 +31681,64 @@ let openSheet, partySheet;
     }
   }
 
-  // ================= synergies =================
-  let synSig = '', synOpen = null;
+  // ================= combos and Kin (formation.md 6.2) =================
+  // A row of chips for the combos and Kin active now (combos steel blue, Kin green), and "See all":
+  // a sheet with all 8 combos and 4 Kin, dim when not active, with the one-line need.
+  const SHAPE = () => (typeof SYNERGIES === 'object' && Array.isArray(SYNERGIES) ? SYNERGIES.filter(d => d.layer === 'combo' || d.layer === 'kin') : []);
+  const LAYER_NAME = { combo: 'Combo', kin: 'Kin' };
+  let synSig = '';
+  const activeShape = () => (fnActive() ? safe(() => fnActive()(), []) : []).filter(s => s.layer === 'combo' || s.layer === 'kin');
+  function comboSheet(id) {
+    const d = SHAPE().find(x => x.id === id); if (!d) return;
+    const a = activeShape().find(x => x.id === id);
+    openSheet(api => {
+      const b = api.body;
+      b.append(el('h2', 'cb-name ' + d.layer, d.name), el('small', 'cb-layer', LAYER_NAME[d.layer] + (a ? ': on' : ': off')));
+      b.append(el('p', 'cb-fx', a ? a.effectText : d.text));
+      b.append(el('p', 'cb-need', 'Needs ' + d.needs.replace(/^./, m => m.toLowerCase()) + '.'));
+      if (d.layer === 'kin') b.append(el('p', 'note', 'Kin with a Common companion is 25% stronger.'));
+    }, { label: d.name, small: true });
+  }
+  function comboList() {
+    const act = {}; for (const s of activeShape()) act[s.id] = s;
+    const st = typeof synergyStatus === 'function' ? synergyStatus : null;
+    openSheet(api => {
+      const b = api.body;
+      b.append(el('h2', 'cb-name', 'Combos and Kin'), el('p', 'note', 'Combos come from who stands where. Kin comes from two companions of one circle.'));
+      for (const layer of ['combo', 'kin']) {
+        const box = el('div', 'cb-all');
+        const list = SHAPE().filter(d => d.layer === layer).sort((x, y) => (!!act[y.id] - !!act[x.id]));
+        for (const d of list) {
+          const on = !!act[d.id];
+          const row = el('div', 'cb-item ' + layer + (on ? ' on' : ''));
+          const top = el('div'); top.append(el('b', null, d.name), el('small', null, on ? 'On' : (st ? safe(() => st(d.id).text, '') : '') || d.needs));
+          row.append(top, el('p', null, on ? act[d.id].effectText : d.text));
+          if (!on && st) row.append(el('small', 'cb-needs', d.needs + '.'));
+          box.append(row);
+        }
+        const s = el('div', 'cs-sec'); s.append(el('h3', 'cs-h', layer === 'combo' ? 'Combos' : 'Kin'), box);
+        b.append(s);
+      }
+    }, { label: 'Combos and Kin' });
+  }
   function updateSyn(sec) {
     const on = !!fnActive();
     putHidden(sec, !on); if (!on) return;
-    const list = synergiesFor(null) || [];
-    const sig = JSON.stringify(list.map(s => [s.id, s.active, s.missing])) + synOpen;
+    const list = activeShape();
+    const sig = list.map(s => s.id + ':' + Math.round((s.strength || 0) * 100)).join();
     if (sig === synSig) return; synSig = sig;
-    const row = sec.querySelector('.syn-row'), det = sec.querySelector('.syn-det');
+    const row = sec.querySelector('.syn-row');
     row.textContent = '';
-    if (!list.length) { row.append(el('p', 'note', 'No synergies yet. Field characters who share a circle or a story.')); det.hidden = true; return; }
+    if (!list.length) row.append(el('p', 'note cb-none', 'No combos in this party. Put a tank in Front and a healer in Back for Lifeline.'));
     for (const s of list) {
-      const b = btn('syn-chip' + (s.active ? ' on' : ''), null, () => { synOpen = synOpen === s.id ? null : s.id; synSig = ''; updateSyn(sec); });
+      const b = btn('syn-chip on cb-chip ' + s.layer, null, () => comboSheet(s.id));
       b.append(el('i'), el('span', null, s.name));
-      if (!s.active) b.append(el('small', null, missingText(s.missing)));
-      b.setAttribute('aria-expanded', String(synOpen === s.id));
+      b.setAttribute('aria-label', `${LAYER_NAME[s.layer]}: ${s.name}, on. Open for details.`);
       row.append(b);
     }
-    const cur = list.find(s => s.id === synOpen);
-    det.hidden = !cur;
-    if (cur) { det.textContent = ''; det.append(el('b', null, cur.name + (cur.active ? '' : ' (inactive)')), el('span', null, ' ' + (cur.text || ''))); if (cur.stageC) det.append(el('small', 'cs-soon', ' with party combat')); }
+    const all = btn('mini cb-all-btn', 'See all', () => comboList());
+    all.setAttribute('aria-label', 'See all combos and Kin');
+    row.append(all);
   }
 
   // ================= roster grid =================
@@ -31172,7 +31775,7 @@ let openSheet, partySheet;
     const leadsById = {}; for (const l of leadList()) leadsById[l.id] = l;
     const rows = ROSTER_KEYS.map((k, i) => {
       const rec = charRec(k);
-      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k), out: rec ? outOf(k) : null };
+      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k), out: rec ? outOf(k) : null, sworn: !!rec && !!bondsUI && bondsUI.swornAny(k) };
     });
     const pw = x => { try { return x.rec ? charDps(x.k) : 0; } catch (e) { return 0; } };
     const shownPre = rows.filter(x => filt === 'all' || C(x.k).role === filt);
@@ -31185,7 +31788,7 @@ let openSheet, partySheet;
       ? rarP(a) - rarP(b) || (!!b.rec - !!a.rec) || (a.rec && b.rec ? b.rec.lv - a.rec.lv : near(b) - near(a)) || a.i - b.i
       : (!!b.rec - !!a.rec) || (a.rec ? by[sortBy](a, b) : near(b) - near(a) || rarP(a) - rarP(b)) || a.i - b.i);
     // Rebuild tiles only when something structural changes; levels update in place so taps are never lost.
-    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag, x.out && x.out.id + x.out.back]))].join('|');
+    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag, x.out && x.out.id + x.out.back, x.sworn]))].join('|');
     for (const x of rows) {
       const t = rosTiles[x.k]; if (!t || !x.rec) continue;
       if (t.lv) setT(t.lv, 'Lv ' + x.rec.lv);
@@ -31214,7 +31817,7 @@ let openSheet, partySheet;
     const r = rosRefs, c = C(x.k);
     const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : '') + (x.out ? ' out' : ''));
     t.style.setProperty('--rc', frameCol(x.k));
-    const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
+    const fr = el('span', 'rt-fr' + (x.sworn ? ' sworn' : '')); fr.append(img(portrait(x.k)));   // the Sworn frame (formation.md 6.3)
     if (x.rec) {
       const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
       fr.append(lv, el('i', 'rp r-' + c.role));
@@ -31265,20 +31868,35 @@ let openSheet, partySheet;
   if (tabBtn) { tabBtn.append(pdot); }
   function updateDot() {
     if (!live()) { pdot.hidden = true; return; }
-    const any = rosterList().some(needsYou);
+    const any = rosterList().some(needsYou) || bondNews();
     putHidden(pdot, !any || S.tab === 'party');
     if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
+  // An unread Bond story (56f) marks the Team view.
+  const bondNews = () => typeof bondUnreadAll === 'function' && safe(() => bondUnreadAll(), 0) > 0;
+  registerView('party', { id: 'team', label: 'Team', order: 10, dot: () => live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
   registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
-  for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
+  for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
   if (tabBtn) tabBtn.addEventListener('click', () => updateDot());
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  registerSection('party', {
+    id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('div', 'syn-sets')); },
+    update: guard('combos', () => {
+      const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
+      if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
+    })
+  });
+  registerSection('party', {
+    id: 'party-bonds', title: 'Bonds', feature: 'synergy', mount(sec) { sec.append(el('div', 'bd-rows')); },
+    update: guard('bonds', () => { if (live() && bondsUI) bondsUI.rows(document.querySelector('#sec-party-bonds .bd-rows')); })
+  });
+  registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
@@ -31286,13 +31904,6 @@ let openSheet, partySheet;
   registerSection('party', {
     id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
-  });
-  registerSection('party', {
-    id: 'party-syn', title: 'Synergies', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det'), el('div', 'syn-sets')); },
-    update: guard('synergies', () => {
-      const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
-      if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
-    })
   });
   registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
   registerSection('party', {

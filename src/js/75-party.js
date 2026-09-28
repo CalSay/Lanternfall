@@ -1,87 +1,279 @@
-// 75-party: the Party tab. Browser-only. Spec: docs/design/party-and-classes.md 7.2.
-// Top to bottom: formation editor, hero card, the 3 fielded companions, synergies, the roster
-// grid (bench and locked), leads. Tapping a card or tile opens the character sheet
-// (75-party-sheet.js). A red dot on the tab marks an unread camp story or a promotion ready.
-// Reads the roster API (56-roster.js); synergies (56b) and leads (56c) only when present.
+// 75-party: the Party tab. Browser-only. Spec: docs/design/formation.md 6 (Team view, plan-3 F4) and
+// party-and-classes.md 7.2. Team view, top to bottom: the three slot cards (Back, Middle, Front) with
+// the Best line-up button (56d, F3 owns its logic and why line) and the one amber warning, combos and
+// Kin chips, Bond rows (75-bonds-ui.js), the bench, the hero card, the fielded companions' cards.
+// Roster view: the roster grid and leads. Tapping a companion card or roster tile opens the character
+// sheet (75-party-sheet.js). A red dot on the tab marks an unread camp or Bond story, or a promotion.
+// Reads the roster API (56-roster.js) and the formation API (56e); synergies (56b) and leads (56c).
 {
   const { safe, live, C, heroClass, heroCol, portrait, frameCol, first, pip, costText, weaponNoun, gearOf, slotTile,
     traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive, outOf, heroTitle } = PTY;
   const RAR_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 };
   const P = () => S.party;
-  const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, 3) : []);
+  const fieldMax = () => (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE.fieldMax) || 2;
+  const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, fieldMax()) : []);
   const setT = (n, t) => { if (n.textContent !== t) n.textContent = t; };
   const saveUi = () => { try { save(); } catch (e) {} ui(true); };
   const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
 
-  // ================= formation =================
-  let picked = null, formSig = '', formRefs = null;
-  const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});
-  const nameOf = k => k === 'hero' ? S.name : C(k).name;
-  const occupant = (col, lane) => Object.keys(cellsNow()).find(k => cellsNow()[k].col === col && cellsNow()[k].lane === lane && (k === 'hero' || inField(k)));
-  // F1 (interim until F4's slot cards): one line of three slots (lane 1); anyone, the hero too, may
-  // stand in any slot. A move is a swap through 56e-formation swapSlots.
-  function canMove(k, col, lane) {
-    const from = cellsNow()[k];
-    return !!from && lane === 1 && from.col !== col;
+  // ================= the three slots (plan-3 F4, formation.md 6.1) =================
+  // Back, Middle and Front, left to right as on the stage. Tap a card to lift it, then tap another
+  // card to swap, or a bench companion to put them in that slot. Or tap a bench companion first, then
+  // a slot. Or hold a card or a bench tile for 150 ms and drag it onto a slot (a companion's card
+  // dropped on the bench goes to the bench). The lock pins a companion (the planner keeps them).
+  // Every change goes through 56e-formation: swapSlots, fieldTo, setPin; benching through benchChar.
+  registerIcons({
+    f_lock: ['............', '....2222....', '...2....2...', '...2....2...', '...2....2...', '..11111111..', '..11111111..', '..11155111..', '..11155111..', '..11111111..', '..11111111..', '............'],
+    f_home: ['............', '.....11.....', '....1111....', '...111111...', '..11111111..', '.1111111111.', '..11111111..', '..111..111..', '..11.22.11..', '..11.22.11..', '..11.22.11..', '............']
+  });
+  const FT_ = () => (typeof FORM_TUNE === 'object' && FORM_TUNE) || { offSlot: 0.1, maxPins: 2 };
+  const offPct = () => Math.round((FT_().offSlot || 0.1) * 100);
+  const SLOT_TIP = { front: 'Front takes the hits.', mid: 'Middle strikes and covers both sides.', back: 'Back is safe from blades. Heal and cast from here.' };
+  const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});   // the planner preview reads it
+  const nameOf = k => k === 'hero' ? 'You' : first(k);
+  const fullName = k => k === 'hero' ? S.name : C(k).name;
+  // lift: null | { slot } (a slot card is lifted) | { id } (a bench companion is lifted)
+  let lift = null, say = '', sayT = 0, formSig = '', formRefs = null, flash = {};
+  const tell = msg => { say = msg; sayT = performance.now(); formSig = ''; };
+  const pinned = k => typeof isPinned === 'function' && isPinned(k);
+  // After a change: save, redraw, and flash the cards that changed (a colour flash, kept in reduced motion).
+  function changed(slots) {
+    const now = performance.now();
+    for (const s of slots) flash[s] = now;
+    lift = null; formSig = ''; benchSig = '';
+    saveUi();
+    setTimeout(() => { flash = {}; formSig = ''; try { updateForm(); } catch (e) {} }, 700);
   }
-  function moveTo(k, col, lane) {
-    if (!canMove(k, col, lane)) return false;
-    return swapSlots(FORM_SLOTS[cellsNow()[k].col], FORM_SLOTS[col]);
+  function moveSlots(a, b) {
+    if (a === b) return false;
+    if (swapSlots(a, b)) { changed([a, b]); return true; }
+    return false;
   }
-  const warning = () => formWarning();
+  function putIn(id, slot) {
+    if (whoIn(slot) === 'hero') { tell(FORM_TEXT.heroStays); lift = null; return false; }
+    const o = outOf(id); if (o) { tell(`${first(id)} is on an expedition. They can join when they are back.`); lift = null; return false; }
+    if (fieldTo(id, slot)) { changed([slot]); return true; }
+    lift = null; formSig = '';
+    return false;
+  }
+  function toBench(k) {
+    if (k === 'hero') { tell(FORM_TEXT.heroStays); return false; }
+    const s = slotOf(k);
+    if (benchChar(k)) { tell(`${first(k)} is on the bench.`); changed(s ? [s] : []); return true; }
+    return false;
+  }
+  function tapSlot(slot) {
+    if (!live()) return;
+    const k = whoIn(slot);
+    if (lift && lift.id) putIn(lift.id, slot);
+    else if (lift && lift.slot === slot) lift = null;
+    else if (lift && lift.slot) moveSlots(lift.slot, slot);
+    else lift = { slot };   // an empty slot lifts too: then a bench companion fills it
+    formSig = ''; benchSig = ''; ui(true);
+  }
+  function tapBench(id) {
+    if (!live()) return;
+    if (lift && lift.slot) {
+      if (whoIn(lift.slot) === 'hero') tell(FORM_TEXT.heroStays);
+      else putIn(id, lift.slot);
+    } else if (lift && lift.id === id) lift = null;
+    else if (outOf(id)) tell(`${first(id)} is on an expedition. They can join when they are back.`);
+    else lift = { id };
+    formSig = ''; benchSig = ''; ui(true);
+  }
+  function togglePin(k) {
+    const on = !pinned(k);
+    if (on && ((P().pin || []).length >= (FT_().maxPins || 2))) { tell(`You can lock ${FT_().maxPins || 2} companions at most.`); ui(true); return; }
+    if (typeof setPin === 'function' && setPin(k, on)) { tell(on ? `${first(k)} stays in the party.` : `The planner can move ${first(k)} again.`); saveUi(); }
+  }
+
+  // ---- drag: hold 150 ms, then drag onto a slot card (or a companion card onto the bench) ----
+  let drag = null, eatClick = 0;
+  const dragEat = () => performance.now() < eatClick;
+  function dragFrom(node, get) {
+    node.addEventListener('pointerdown', e => {
+      if ((e.button || 0) > 0 || drag || e.target.closest('.fs-lock')) return;
+      const src = get(); if (!src) return;
+      drag = { src, node, x: e.clientX, y: e.clientY, on: false, pid: e.pointerId, over: null, ghost: null };
+      drag.t = setTimeout(dragStart, 150);
+      window.addEventListener('pointermove', dragMove);
+      window.addEventListener('pointerup', dragUp);
+      window.addEventListener('pointercancel', dragCancel);
+    });
+    // Once a drag is on, the page must not scroll under the finger.
+    node.addEventListener('touchmove', e => { if (drag && drag.on && e.cancelable) e.preventDefault(); }, { passive: false });
+    node.addEventListener('contextmenu', e => { if (drag) e.preventDefault(); });
+    node.addEventListener('dragstart', e => e.preventDefault());   // no native image drag (it cancels the pointer)
+  }
+  function dragStart() {
+    if (!drag) return;
+    drag.on = true;
+    const g = el('div', 'fdrag'); g.append(img(portrait(drag.src.key)));
+    g.style.transform = `translate(${drag.x - 28}px, ${drag.y - 28}px)`;
+    document.body.append(g); drag.ghost = g;
+    drag.node.classList.add('dragging');
+    lift = null;
+    putText(formRefs.hint, `Drop ${nameOf(drag.src.key) === 'You' ? 'your hero' : nameOf(drag.src.key)} on a slot${drag.src.slot && drag.src.key !== 'hero' ? ', or on the bench' : ''}.`);
+  }
+  function dragMove(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    if (!drag.on) { if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 10) dragCancel(); return; }
+    drag.ghost.style.transform = `translate(${e.clientX - 28}px, ${e.clientY - 28}px)`;
+    const t = document.elementFromPoint(e.clientX, e.clientY);
+    let over = t && (t.closest('.fslot') || t.closest('#sec-party-bench'));
+    if (over && over === drag.node) over = null;
+    if (over && over.id === 'sec-party-bench' && !drag.src.slot) over = null;
+    if (over !== drag.over) { if (drag.over) drag.over.classList.remove('dover'); if (over) over.classList.add('dover'); drag.over = over; }
+  }
+  function dragEnd() {
+    if (!drag) return null;
+    const d = drag; drag = null;
+    clearTimeout(d.t);
+    window.removeEventListener('pointermove', dragMove);
+    window.removeEventListener('pointerup', dragUp);
+    window.removeEventListener('pointercancel', dragCancel);
+    if (d.ghost) d.ghost.remove();
+    d.node.classList.remove('dragging');
+    if (d.over) d.over.classList.remove('dover');
+    return d;
+  }
+  function dragCancel() { const d = dragEnd(); if (d && d.on) { formSig = ''; ui(true); } }
+  function dragUp(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const d = dragEnd();
+    if (!d.on) return;
+    eatClick = performance.now() + 400;
+    const o = d.over;
+    if (o && o.classList.contains('fslot')) { if (d.src.slot) moveSlots(d.src.slot, o.dataset.slot); else putIn(d.src.key, o.dataset.slot); }
+    else if (o && d.src.slot) toBench(d.src.key);
+    formSig = ''; benchSig = ''; ui(true);
+  }
+
   function buildForm(sec) {
     const head = el('div', 'sec-head');
     const h = sec.querySelector('.sec-title'); head.append(h);
-    const auto = btn('mini pf-auto', 'Auto', () => { picked = null; if (live()) { autoPlace(); saveUi(); } });
-    auto.setAttribute('aria-label', 'Place everyone by role');
-    const best = btn('mini pf-best', 'Best line-up', () => { picked = null; openLineup(); });
+    const auto = btn('mini pf-auto', 'Auto', () => { lift = null; if (live()) { autoPlace(); saveUi(); } });
+    auto.setAttribute('aria-label', 'Place everyone in their home slots');
+    const best = btn('mini pf-best', 'Best line-up', () => { lift = null; openLineup(); });
     best.setAttribute('aria-label', 'Show the best line-up for your best zone');
     const btns = el('div', 'pf-btns'); btns.append(auto, best);
     head.append(btns); sec.prepend(head);
-    const grid = el('div', 'pform');
-    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
-    const cells = [];
-    for (let lane = 1; lane < 2; lane++) for (let col = 0; col < 3; col++) {   // F1: one line (lane 1)
-      const b = btn('pf-cell');
-      b.addEventListener('click', () => tapCell(col, lane));
-      grid.append(b); cells.push({ b, col, lane });
+    const row = el('div', 'fslots');
+    const cards = {};
+    for (const slot of FORM_SLOTS) {
+      const c = el('div', 'fslot'); c.tabIndex = 0; c.setAttribute('role', 'button'); c.dataset.slot = slot;
+      c.title = SLOT_TIP[slot];
+      c.addEventListener('click', () => { if (!dragEat()) tapSlot(slot); });
+      c.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); tapSlot(slot); } });
+      dragFrom(c, () => { const k = live() && whoIn(slot); return k ? { slot, key: k } : null; });
+      row.append(c); cards[slot] = c;
     }
-    const hint = el('p', 'note pf-hint');
-    const warn = el('p', 'note warn pf-warn');
+    const hint = el('p', 'note f-hint'); hint.setAttribute('aria-live', 'polite');
+    const warn = el('p', 'note f-warn');
     const why = el('p', 'note lu-why'); why.hidden = true;
     const prev = el('div', 'lu-prev'); prev.hidden = true;
-    sec.append(grid, hint, warn, why, prev);
-    formRefs = { cells, hint, warn, auto, best, why, prev };
+    sec.append(row, warn, hint, why, prev);
+    formRefs = { cards, hint, warn, auto, best, why, prev };
   }
-  function tapCell(col, lane) {
-    const o = occupant(col, lane);
-    if (!picked) { if (o) picked = o; }
-    else if (picked === o) picked = null;
-    else if (canMove(picked, col, lane)) { moveTo(picked, col, lane); picked = null; try { save(); } catch (e) {} }
-    else if (o) picked = o;
-    formSig = ''; ui(true);
+  function fillCard(c, slot) {
+    const k = whoIn(slot), up = !!lift && lift.slot === slot;
+    c.textContent = '';
+    c.className = 'fslot' + (k ? ' occ' : ' empty') + (k === 'hero' ? ' hero' : k ? ' comp' : '') + (up ? ' up' : '') + (lift && !up ? ' drop' : '') + (flash[slot] ? ' flash' : '');
+    const top = el('span', 'fs-slot', SLOT_NAME[slot]);
+    if (k && !offSlot(k)) { const hm = img(iconURL('f_home', '#F2C14E', { 2: '#6B4A2E' }), 'fs-home'); hm.alt = 'home slot'; top.append(hm); }
+    c.append(top);
+    c.removeAttribute('aria-pressed');
+    if (!k) {
+      c.append(el('span', 'fs-empty', 'Empty. Tap a companion below to field them.'));
+      c.setAttribute('aria-label', `${SLOT_NAME[slot]}: empty.${up ? ' Lifted: tap a bench companion to field them here.' : lift ? ' Tap to put them here.' : ''}`);
+      c.setAttribute('aria-pressed', String(up));
+      return;
+    }
+    const pt = el('span', 'fs-pt' + (k !== 'hero' && C(k).rarity === 'legendary' ? ' leg' : '') + (bondsUI && bondsUI.swornAny(k) ? ' sworn' : ''));
+    pt.style.setProperty('--rc', k === 'hero' ? 'var(--ember-deep)' : frameCol(k));
+    pt.append(img(portrait(k)));
+    const role = memberRole(k), cls = heroClass();
+    const roleTxt = k === 'hero' ? (cls ? cls.name : 'Hero') : PTY.ROLE_NAME[role];
+    c.append(pt, el('b', 'fs-nm', nameOf(k)), el('span', 'fs-role r-' + role, roleTxt));
+    const job = typeof slotJob === 'function' ? safe(() => slotJob(k), null) : null;
+    if (job) { const j = el('span', 'fs-job', job.label); j.title = `${job.name}: ${job.text}`; c.append(j); }
+    const off = offSlot(k);
+    if (off) c.append(el('span', 'fs-off', `Out of place -${offPct()}%`));
+    if (k === 'hero') c.append(el('span', 'fs-stay', 'Always in'));
+    else {
+      const on = pinned(k);
+      const lk = btn('fs-lock' + (on ? ' on' : ''), null, e => { e.stopPropagation(); togglePin(k); });
+      lk.append(img(iconURL('f_lock', on ? '#F2C14E' : '#6E6280', { 2: on ? '#C9A040' : '#6E6280', 5: on ? '#2A1E07' : '#1A1420' })));
+      lk.setAttribute('aria-label', on ? `Let the planner move ${first(k)}` : `Keep ${first(k)} in the party`);
+      lk.setAttribute('aria-pressed', String(on));
+      lk.addEventListener('pointerdown', e => e.stopPropagation());
+      c.append(lk);
+    }
+    c.setAttribute('aria-label', `${SLOT_NAME[slot]}: ${k === 'hero' ? 'your hero, ' + S.name : fullName(k)}, ${roleTxt}${job ? ', ' + job.label : ''}${off ? `, out of place` : ', home slot'}${k === 'hero' ? ', always in the party' : ''}${up ? '. Lifted: tap another slot to swap' : ''}.`);
+    c.setAttribute('aria-pressed', String(up));
+  }
+  function hintText() {
+    if (say && performance.now() - sayT < 4000) return say;
+    say = '';
+    if (lift && lift.id) return `Tap a slot to field ${first(lift.id)} there.`;
+    if (lift && lift.slot) {
+      const k = whoIn(lift.slot);
+      return !k ? 'Tap a companion on the bench to field them here.' : k === 'hero' ? 'Tap another slot to swap. Your hero stays in the party.' : 'Tap another slot to swap, or a bench companion to take this slot.';
+    }
+    return 'Tap a slot to move someone, or hold and drag.';
   }
   function updateForm() {
-    const r = formRefs; if (!r) return;
-    const sig = JSON.stringify(cellsNow()) + field().join() + picked + S.name + P().cls + typeof portraitURL;
-    if (sig === formSig) return; formSig = sig;
-    if (picked && picked !== 'hero' && !inField(picked)) picked = null;
-    for (const c of r.cells) {
-      const o = occupant(c.col, c.lane), b = c.b;
-      b.textContent = '';
-      b.className = 'pf-cell' + (o ? ' occ' : '') + (o === 'hero' ? ' hero' : '') + (picked && o === picked ? ' picked' : '') +
-        (picked && picked !== o && !canMove(picked, c.col, c.lane) ? ' dim' : '') + (picked && picked !== o && canMove(picked, c.col, c.lane) ? ' drop' : '');
-      if (o) {
-        b.append(img(portrait(o)), el('span', 'who', o === 'hero' ? S.name : first(o)));
-        if (o !== 'hero') { const d = el('i', 'rp r-' + C(o).role); b.append(d); }
-      }
-      const where = `${SLOT_NAME[FORM_SLOTS[c.col]]} slot`;
-      b.setAttribute('aria-label', o ? `${nameOf(o)}, ${where}${picked === o ? ', picked up' : ''}` : `Empty, ${where}`);
-      b.setAttribute('aria-pressed', String(!!picked && picked === o));
-      b.disabled = !o && !picked;
+    const r = formRefs; if (!r || !live()) return;
+    if (lift && lift.id && (!isRecruited(lift.id) || inField(lift.id))) lift = null;
+    const line = formLine();
+    const sig = JSON.stringify(line.map(x => [x.key, x.off])) + JSON.stringify(lift) + JSON.stringify(P().pin || []) + S.name + P().cls + typeof portraitURL + Object.keys(flash).join() + (bondsUI ? bondsUI.sig() : '') + say;
+    if (sig !== formSig) {
+      formSig = sig;
+      for (const s of FORM_SLOTS) fillCard(r.cards[s], s);
+      const w = formWarning(); putText(r.warn, w); putHidden(r.warn, !w);
     }
-    r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit slot, or tap again to cancel.` : 'Tap someone, then tap a slot to move or swap them.';
-    const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
+    putText(r.hint, drag && drag.on ? r.hint.textContent : hintText());
+    if (say && performance.now() - sayT >= 4000) formSig = '';
+  }
+
+  // ================= the bench (companions not in the party) =================
+  let benchSig = '', benchRefs = null, benchGen = 0, benchBuilt = false;
+  function buildBench(sec) {
+    const grid = el('div', 'fbench');
+    sec.append(grid);
+    benchRefs = { grid };
+  }
+  function updateBench() {
+    const r = benchRefs; if (!r || !live()) return;
+    const ids = rosterList().filter(k => !inField(k));
+    ids.sort((a, b) => (charRec(b).lv - charRec(a).lv) || ROSTER_KEYS.indexOf(a) - ROSTER_KEYS.indexOf(b));
+    const outs = ids.map(k => { const o = outOf(k); return o ? o.id + o.back : ''; });
+    const sig = ids.join() + '|' + outs.join() + '|' + JSON.stringify(lift) + typeof portraitURL + (bondsUI ? bondsUI.sig() : '') + ids.map(k => charRec(k).lv).join();
+    if (sig === benchSig) return; benchSig = sig;
+    r.grid.textContent = '';
+    if (!ids.length) { r.grid.append(el('p', 'note', 'Nobody on the bench. New companions join from the Roster.')); return; }
+    // Tiles build in time-boxed chunks (a portrait can need baking), as the Roster grid does.
+    const gen = ++benchGen, queue = ids.map((k, i) => [k, i]);
+    const chunk = () => {
+      if (gen !== benchGen) return;
+      const t0 = performance.now();
+      do benchTile(...queue.shift()); while (queue.length && performance.now() - t0 < 10);
+      if (queue.length) setTimeout(chunk, 0);
+    };
+    const benchTile = (k, i) => {
+      const c = C(k), out = !!outs[i], up = !!lift && lift.id === k;
+      const t = btn('fb-tile' + (up ? ' up' : '') + (out ? ' out' : '') + (lift && lift.slot ? ' drop' : ''), null, () => { if (!dragEat()) tapBench(k); });
+      const fr = el('span', 'fb-pt' + (c.rarity === 'legendary' ? ' leg' : '') + (bondsUI && bondsUI.swornAny(k) ? ' sworn' : ''));
+      fr.style.setProperty('--rc', frameCol(k));
+      fr.append(img(portrait(k)), el('i', 'rp r-' + c.role));
+      t.append(fr, el('span', 'fb-nm', first(k)), el('span', 'fb-sub', out ? 'Away' : `Lv ${charRec(k).lv} · ${SLOT_NAME[homeSlot(k)]}`));
+      t.setAttribute('aria-label', `${c.name}, ${PTY.ROLE_NAME[c.role]}, level ${charRec(k).lv}, home slot ${SLOT_NAME[homeSlot(k)]}${out ? ', on an expedition' : ''}${up ? '. Lifted: tap a slot to field them' : ''}.`);
+      t.setAttribute('aria-pressed', String(up));
+      if (!out) dragFrom(t, () => ({ key: k }));
+      r.grid.append(t);
+    };
+    // The first build waits for its own task (portraits may bake), so opening the tab stays smooth.
+    if (!benchBuilt) { benchBuilt = true; setTimeout(chunk, 0); } else chunk();
   }
 
   // ================= best line-up (AF, 56d-autofield.js) =================
@@ -243,11 +435,11 @@
   }
   function buildComps(box, keys) {
     box.textContent = ''; compRefs = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < fieldMax(); i++) {
       const k = keys[i];
       if (!k) {
         const e = el('div', 'pcard empty');
-        e.append(el('b', null, 'Open place'), el('small', null, 'Tap someone on the bench below to field them.'));
+        e.append(el('b', null, 'Open place'), el('small', null, 'Tap an empty slot above, then a companion on the bench.'));
         box.append(e); continue;
       }
       const c = C(k);
@@ -305,27 +497,64 @@
     }
   }
 
-  // ================= synergies =================
-  let synSig = '', synOpen = null;
+  // ================= combos and Kin (formation.md 6.2) =================
+  // A row of chips for the combos and Kin active now (combos steel blue, Kin green), and "See all":
+  // a sheet with all 8 combos and 4 Kin, dim when not active, with the one-line need.
+  const SHAPE = () => (typeof SYNERGIES === 'object' && Array.isArray(SYNERGIES) ? SYNERGIES.filter(d => d.layer === 'combo' || d.layer === 'kin') : []);
+  const LAYER_NAME = { combo: 'Combo', kin: 'Kin' };
+  let synSig = '';
+  const activeShape = () => (fnActive() ? safe(() => fnActive()(), []) : []).filter(s => s.layer === 'combo' || s.layer === 'kin');
+  function comboSheet(id) {
+    const d = SHAPE().find(x => x.id === id); if (!d) return;
+    const a = activeShape().find(x => x.id === id);
+    openSheet(api => {
+      const b = api.body;
+      b.append(el('h2', 'cb-name ' + d.layer, d.name), el('small', 'cb-layer', LAYER_NAME[d.layer] + (a ? ': on' : ': off')));
+      b.append(el('p', 'cb-fx', a ? a.effectText : d.text));
+      b.append(el('p', 'cb-need', 'Needs ' + d.needs.replace(/^./, m => m.toLowerCase()) + '.'));
+      if (d.layer === 'kin') b.append(el('p', 'note', 'Kin with a Common companion is 25% stronger.'));
+    }, { label: d.name, small: true });
+  }
+  function comboList() {
+    const act = {}; for (const s of activeShape()) act[s.id] = s;
+    const st = typeof synergyStatus === 'function' ? synergyStatus : null;
+    openSheet(api => {
+      const b = api.body;
+      b.append(el('h2', 'cb-name', 'Combos and Kin'), el('p', 'note', 'Combos come from who stands where. Kin comes from two companions of one circle.'));
+      for (const layer of ['combo', 'kin']) {
+        const box = el('div', 'cb-all');
+        const list = SHAPE().filter(d => d.layer === layer).sort((x, y) => (!!act[y.id] - !!act[x.id]));
+        for (const d of list) {
+          const on = !!act[d.id];
+          const row = el('div', 'cb-item ' + layer + (on ? ' on' : ''));
+          const top = el('div'); top.append(el('b', null, d.name), el('small', null, on ? 'On' : (st ? safe(() => st(d.id).text, '') : '') || d.needs));
+          row.append(top, el('p', null, on ? act[d.id].effectText : d.text));
+          if (!on && st) row.append(el('small', 'cb-needs', d.needs + '.'));
+          box.append(row);
+        }
+        const s = el('div', 'cs-sec'); s.append(el('h3', 'cs-h', layer === 'combo' ? 'Combos' : 'Kin'), box);
+        b.append(s);
+      }
+    }, { label: 'Combos and Kin' });
+  }
   function updateSyn(sec) {
     const on = !!fnActive();
     putHidden(sec, !on); if (!on) return;
-    const list = synergiesFor(null) || [];
-    const sig = JSON.stringify(list.map(s => [s.id, s.active, s.missing])) + synOpen;
+    const list = activeShape();
+    const sig = list.map(s => s.id + ':' + Math.round((s.strength || 0) * 100)).join();
     if (sig === synSig) return; synSig = sig;
-    const row = sec.querySelector('.syn-row'), det = sec.querySelector('.syn-det');
+    const row = sec.querySelector('.syn-row');
     row.textContent = '';
-    if (!list.length) { row.append(el('p', 'note', 'No synergies yet. Field characters who share a circle or a story.')); det.hidden = true; return; }
+    if (!list.length) row.append(el('p', 'note cb-none', 'No combos in this party. Put a tank in Front and a healer in Back for Lifeline.'));
     for (const s of list) {
-      const b = btn('syn-chip' + (s.active ? ' on' : ''), null, () => { synOpen = synOpen === s.id ? null : s.id; synSig = ''; updateSyn(sec); });
+      const b = btn('syn-chip on cb-chip ' + s.layer, null, () => comboSheet(s.id));
       b.append(el('i'), el('span', null, s.name));
-      if (!s.active) b.append(el('small', null, missingText(s.missing)));
-      b.setAttribute('aria-expanded', String(synOpen === s.id));
+      b.setAttribute('aria-label', `${LAYER_NAME[s.layer]}: ${s.name}, on. Open for details.`);
       row.append(b);
     }
-    const cur = list.find(s => s.id === synOpen);
-    det.hidden = !cur;
-    if (cur) { det.textContent = ''; det.append(el('b', null, cur.name + (cur.active ? '' : ' (inactive)')), el('span', null, ' ' + (cur.text || ''))); if (cur.stageC) det.append(el('small', 'cs-soon', ' with party combat')); }
+    const all = btn('mini cb-all-btn', 'See all', () => comboList());
+    all.setAttribute('aria-label', 'See all combos and Kin');
+    row.append(all);
   }
 
   // ================= roster grid =================
@@ -362,7 +591,7 @@
     const leadsById = {}; for (const l of leadList()) leadsById[l.id] = l;
     const rows = ROSTER_KEYS.map((k, i) => {
       const rec = charRec(k);
-      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k), out: rec ? outOf(k) : null };
+      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k), out: rec ? outOf(k) : null, sworn: !!rec && !!bondsUI && bondsUI.swornAny(k) };
     });
     const pw = x => { try { return x.rec ? charDps(x.k) : 0; } catch (e) { return 0; } };
     const shownPre = rows.filter(x => filt === 'all' || C(x.k).role === filt);
@@ -375,7 +604,7 @@
       ? rarP(a) - rarP(b) || (!!b.rec - !!a.rec) || (a.rec && b.rec ? b.rec.lv - a.rec.lv : near(b) - near(a)) || a.i - b.i
       : (!!b.rec - !!a.rec) || (a.rec ? by[sortBy](a, b) : near(b) - near(a) || rarP(a) - rarP(b)) || a.i - b.i);
     // Rebuild tiles only when something structural changes; levels update in place so taps are never lost.
-    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag, x.out && x.out.id + x.out.back]))].join('|');
+    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag, x.out && x.out.id + x.out.back, x.sworn]))].join('|');
     for (const x of rows) {
       const t = rosTiles[x.k]; if (!t || !x.rec) continue;
       if (t.lv) setT(t.lv, 'Lv ' + x.rec.lv);
@@ -404,7 +633,7 @@
     const r = rosRefs, c = C(x.k);
     const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : '') + (x.out ? ' out' : ''));
     t.style.setProperty('--rc', frameCol(x.k));
-    const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
+    const fr = el('span', 'rt-fr' + (x.sworn ? ' sworn' : '')); fr.append(img(portrait(x.k)));   // the Sworn frame (formation.md 6.3)
     if (x.rec) {
       const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
       fr.append(lv, el('i', 'rp r-' + c.role));
@@ -455,20 +684,35 @@
   if (tabBtn) { tabBtn.append(pdot); }
   function updateDot() {
     if (!live()) { pdot.hidden = true; return; }
-    const any = rosterList().some(needsYou);
+    const any = rosterList().some(needsYou) || bondNews();
     putHidden(pdot, !any || S.tab === 'party');
     if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
+  // An unread Bond story (56f) marks the Team view.
+  const bondNews = () => typeof bondUnreadAll === 'function' && safe(() => bondUnreadAll(), 0) > 0;
+  registerView('party', { id: 'team', label: 'Team', order: 10, dot: () => live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
   registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
-  for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead']) on(ev, () => { try { updateDot(); } catch (e) {} });
+  for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
   if (tabBtn) tabBtn.addEventListener('click', () => updateDot());
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  registerSection('party', {
+    id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('div', 'syn-sets')); },
+    update: guard('combos', () => {
+      const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
+      if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
+    })
+  });
+  registerSection('party', {
+    id: 'party-bonds', title: 'Bonds', feature: 'synergy', mount(sec) { sec.append(el('div', 'bd-rows')); },
+    update: guard('bonds', () => { if (live() && bondsUI) bondsUI.rows(document.querySelector('#sec-party-bonds .bd-rows')); })
+  });
+  registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
@@ -476,13 +720,6 @@
   registerSection('party', {
     id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
-  });
-  registerSection('party', {
-    id: 'party-syn', title: 'Synergies', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det'), el('div', 'syn-sets')); },
-    update: guard('synergies', () => {
-      const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
-      if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
-    })
   });
   registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
   registerSection('party', {

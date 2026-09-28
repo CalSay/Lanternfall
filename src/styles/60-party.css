@@ -24,21 +24,8 @@
 .ic.soon { border-style: dashed; box-shadow: none; }
 .ic.s56 { width: 56px; height: 56px; } .ic.s56 img { width: 48px; height: 48px; }
 
-/* formation: Back | Mid | Front, two lanes */
-.pform { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+/* the planner preview's slot heads (60-lineup.css); the slot cards are in 60-formation.css (F4) */
 .pf-h { text-align: center; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
-.pf-cell { position: relative; min-height: 64px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px dashed var(--line-hi); background: var(--well); padding: 4px; font: 600 calc(11px * var(--display-k)) var(--display); color: var(--muted); cursor: pointer; }
-.pf-cell img { width: 32px; height: 32px; image-rendering: pixelated; }
-.pf-cell .who { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pf-cell .rp { top: 4px; left: 4px; }
-.pf-cell:disabled { cursor: default; }
-.pf-cell.occ { border: 2px solid var(--line); background: var(--panel); color: var(--bone); }
-.pf-cell.hero { border-color: var(--ember-deep); }
-.pf-cell.picked { border-color: var(--ember); background: #2e2030; box-shadow: 0 0 0 1px var(--ember), 0 0 12px rgba(255,158,61,.35); }
-.pf-cell.drop { border: 2px dashed var(--ember); color: var(--bone); }
-.pf-cell.dim { opacity: .3; }
-.pf-hint, .pf-warn { font-size: 12.5px; }
-.pf-warn::before { content: "! "; font-weight: 700; }
 
 /* hero and companion cards */
 .pcards { display: grid; gap: 8px; }
