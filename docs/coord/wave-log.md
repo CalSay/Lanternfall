@@ -960,3 +960,18 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   damage pool capped +40%; save key bump to lanternfall.save.v2 (share with S4). File clash fixed:
   21r-data-econ -> 21w-data-econ. Coordinator note: ECON1's Tent curve and WC1's (2 then +1 per build to 10)
   agree in shape; ECON-A adopts ECON1's prices. Owner decisions 1-6 put to the owner.
+- OWNER (going to sleep): coordinator decides open items; "your first thoughts on names probably suck, think
+  about what sounds cool." COORDINATOR DECISIONS:
+  * ECON1 1-6: all yes as recommended.
+  * WC1 O1-O8: yes, except O3: Awakenings open in Region 2 (HQ1's design, Sigil-gated, first Sigils on the
+    Coast); the Pyre Knight milestone power becomes Temper (re-forge a unique to your grade). Lamp House keeps
+    its other roles. Dungeons: all three (reuse the Deepwell engine).
+  * HQ1 D1, D3, D4, D5: yes. D2 late-recruit start level: yes, a fixed floor per region (not XP catch-up;
+    heroes are otherwise useless on arrival), set 10 levels lower than proposed (Coast 15, Emberwaste 40,
+    Pale Reach 65, Gloamvale 90); BAL to confirm. D6 names: deferred to NAME1.
+  * N1b D3/D4/D5: yes (as revised by ECON1). Gatherer extras for R4/R5 dropped (2 per job).
+  * LORE-R45b questions: the Seam yes; Deepwell rematch stretch yes; names deferred to NAME1.
+  * MAT1 extras (essence 6-15, coal/salt/dye): deferred to NAME1.
+  * CB2 D4 local raid fight: yes; D5 Assist parked.
+- LAUNCHED NAME1 (opus): naming quality pass over every new name in the specs; coordinator picks.
+  LAUNCHED S1 (opus): Core 2.0 slice 1 (damage types, statuses, combos, weaknesses; heroes get types).
