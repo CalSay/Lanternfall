@@ -72,6 +72,36 @@ Numbers vary run to run by 10-20% on a busy machine; compare before/after on the
 
 ## Results
 
+### Pass 4 (PERF4)
+
+Same machine, 2026-09-28, shared with other agents. "Base" is `claude/elegant-johnson-m6k00u` at the
+PERF3 merge (plus Constellations), "after" is this pass. Phone: three `--only phone` runs of each build,
+alternated base/after, **median of 3**; desktop: one run each. Lower is better except fps.
+
+| Metric | phone/new base → after | phone/late base → after | desktop/new base → after | desktop/late base → after |
+|---|---|---|---|---|
+| Boot script done (ms) | 1019 → 791 | 1059 → 744 | 297 → 195 | 318 → 173 |
+| First frame (ms) | 1332 → 1083 | 1445 → 1050 | 402 → 269 | 449 → 272 |
+| Fight fps | 34.8 → 52.2 | 31.8 → 48.3 | 60 → 59.7 | 60 → 60 |
+| Fight JS/frame p95 / p99 (ms) | 7.4 / 10.5 → 6.5 / 12.2 | 7.3 / 10.8 → 7.5 / 11.2 | 1.2 / 4.4 → 2.4 / 4.3 | 1.2 / 1.9 → 2.3 / 3.3 |
+| Fight frame gap med / p95 (ms) | 27.6 / 43.9 → 18.1 / 28.4 | 29.9 / 45.8 → 19.7 / 30.7 | 16.7 / 16.9 → 16.7 / 18.9 | 16.7 / 16.9 → 16.7 / 16.9 |
+| Fight long tasks in 20 s | 9 → 0 | 14 → 0 (runs: 0, 2, 0) | 0 → 0 | 0 → 0 |
+| `ui()` p95 (ms) | 3.5 → 3.3 | 3.5 → 3.6 | 0.6 → 0.7 | 0.6 → 0.8 |
+| Tab longest task: Fight / Party / Gather / Craft / Camp (ms) | 0 / 92 / 53 / 101 / 62 → 0 / 82 / 0 / 81 / 0 | 53 / 88 / 51 / 98 / 150 → 0 / 82 / 53 / 113 / 103 | all 0 → 0 / 0 / 0 / 55 / 0 | all 0 → all 0 |
+| Toast burst: longest task (ms) | 0 → 51 | 63 → 60 | 0 → 0 | 0 → 0 |
+| Boss kill: longest task (ms) | 74 → 51 | 158 → 147 | 0 → 0 | 0 → 0 |
+| Heap growth (MB/min) | 0.42 → 0.39 | 0.19 → 0.30 | 0.49 → 0.50 | 0.45 → 0.49 |
+| DOM nodes | 3134 → 3135 | 3646 → 3631 | 3113 → 3114 | 3592 → 3628 |
+| Tap to paint, median (ms) | 151 → 121 | 191 → 137 | 12 → 15 | 13 → 9 |
+| Over budget (each run) | 2 / 2 / 2 → 0 / 0 / 1 | 5 / 5 / 5 → 0 / 1 / 0 | 0 → 1 | 0 → 0 |
+
+Reading it: the base had lost most of pass 3's raster savings (see the first fix in pass 4), so its
+phone fight was back to 32-35 fps. After this pass the phone fight runs at 48-52 fps, the frame gap
+p95 is under the 34 ms budget on both saves, and long tasks while fighting fell from 9-14 to 0-2 per
+20 s. The boot script is 230-310 ms shorter at x4 (first frame 1050-1080 ms), and the Camp tab's first
+open on the late save fell from 150 to about 100 ms. The few misses left were single runs over by a few
+ms (tap to paint 160 once, one 12.1 ms tab JS p95, one 55 ms Craft open on desktop).
+
 ### Pass 3 (PERF3)
 
 Same machine, 2026-09-27/28, shared with other agents (load average 2-17 during the runs). "Base" is
@@ -175,6 +205,57 @@ Where the stage's time went (phone/late, x4, before the fix, turning one piece o
 the in-page hook; median frame gap): everything on 31 ms, no atmosphere 20 ms, no vignette overlay
 22 ms, no fog 28 ms, no lamps 29 ms, nothing drawn 16.7 ms. (That probe ran on an early harness
 without the viewport skeleton, so compare the pieces with each other, not with the table.)
+
+## Fixes, pass 4 (PERF4)
+
+- **The 1:1 scenery path was off (75-deepwell-ui.js, one line).** The Deepwell's `drawScene` wrapper
+  passed on only `(ctx, scene, camX, which)`, dropping `k, ox, oy, bg`, so since the Deepwell merge no
+  plate, no back-layer composite and no backdrop fill was used: every frame scaled all five layers
+  again. In-page, one phone/late frame (draw plus the raster it queues, x4) went from 23-28 ms to
+  10-11 ms with the arguments passed on (back layers 7.0 → 1.2 ms, foreground 2.0 → 0.3 ms). The wrapper
+  now passes every argument (`...rest`); nothing else in that file changed.
+- **60b-baker.js, idle queue.** Two lanes (soon, background). A phone at x4 gets almost no idle periods
+  while fighting, so work ran only from timed-out callbacks, one task per 1.5 s: a scene's plates and
+  atmosphere copies could wait 10-20 s. Now timed-out callbacks come every 250 ms while soon work waits
+  (600 ms for background work) and run tasks for up to 12 ms; a pending long timeout is replaced when
+  soon work arrives. `ART.idleStats()` (also `stageStats().idle`) counts runs, timeouts and the longest task.
+- **63-scenery.js, small steps.** The scene build is a generator (`buildSteps`): the sky, the paint, the
+  ground detail, one step per layer bake, the atmosphere data. `sceneSteps(theme, W, H, hue)` runs it one
+  step per call (5-25 ms each at x4; `sceneFor` finishes a started build, same result). The layer spans
+  (`spans`) take one layer per step and the atmosphere copies (`atmoSteps`) three steps. `warmScene`
+  (62-stage) chains the scene steps, then queues the plate and atmosphere steps (`scenePlates(...,
+  'queue')`). Before, the scene was one 80-200 ms task and the spans one ~100 ms task.
+- **60b-baker.js, enemy frames lazy.** B1 rigs baked all four frames and the flash at once; now idle0
+  bakes at once and the rest on first use or in idle time, like the party.
+- **60b-baker.js, `rasterize`.** Masks and normals come from one arena per call (views instead of four
+  typed arrays per piece: allocation was about a quarter of a bake), with two shared temporaries, and the
+  cast-shadow, section-line and despeckle loops no longer build an array or object per pixel. 12-35%
+  faster warm, more when cold at boot. Every frame of every class, companion, enemy, elder, wyrm and node
+  (392 frames) hashes the same as before.
+- **13-art-enemies.js.** `box` / `elderBox` are worked out on first read (posing every frame of every rig
+  at load was about 65 ms of boot at x4). Same values.
+- **Boot.** 76-create.js draws the four class figures one per task after the first frame (the screen
+  itself opens at once; saves that do not need it never build it). 72-ui-gather.js builds its node rows,
+  pack grid and trophies (about 75 icons) in idle tasks after boot, or all at once on the tab's first
+  update. 90-boot.js works out the away gains and their card in a task right after the first frame (the
+  absence is measured at boot, so the gains are the same; if the page is hidden or closed first they are
+  applied before the save).
+- **70-ui.js, tab first opens.** `setTab` mounts, in registration order, only up to the last section of
+  the view that opens; the rest of the tab mounts in later tasks (`mountRest`, COLD_MS each). The first
+  updates' 30 ms time box now counts the mounts. `scrollTop = 0` is written before the menu changes (the
+  layout is still clean, so it is cheap) instead of after, where it laid the new panel out inside the
+  click (20-40 ms at x4). The click task on Craft / Camp went from 110-135 ms (94-115 ms of it JS) to
+  85-100 ms (about 40 ms JS).
+
+Measured and not done: device-size copies of sprite frames (hotspot 7a): in-page, turning the sprites off
+changed a phone frame's draw plus raster by less than the noise (under 0.5 ms at x4). Cropping the fog
+bands (7b): about 0.2 M px a frame at 1:1, measured about 0.2 ms; not worth the extra draw calls.
+
+Pixels: an in-page check in both builds hashed every scene layer, the back and fore layers drawn at 3
+camera positions and the atmosphere at a fixed T in 8 zones (7 themes): all identical, and the plate path
+equals the scaled path. Screenshots of the create screen and "Choose your path" are identical; the stage
+in 3 zones and the Gather, Craft, Camp and Party menus match apart from live numbers.
+`node tools/sim.mjs --policy mixed --hours 2 --seed 1` is byte-identical.
 
 ## Fixes, pass 3 (PERF3)
 
@@ -310,11 +391,14 @@ Each item: where, why it is slow, the fix. Done items stay listed so the reasoni
    zone clear (the late save's party clears a zone every 20 s or so), the idle-time builds for the next
    zone (scene 30-80 ms at x4, plates and atmosphere 25-45 ms each), and frames of 50-65 ms where the
    canvas hand-off to the compositor (`Commit`, about 16 ms a frame at x4 for the 664 x 1044 canvas)
-   meets a busy frame. What is left, in order of value: (a) the sprites (party and foe, about 0.35 M
-   device px a frame) are still drawn scaled x3 (nearest): device-size copies per frame image, LRU
-   like `glowAt`; (b) the 4 fog bands (0.4 M px a frame at about 5% alpha) could be cropped to their
-   ellipse or merged; (c) split `sceneFor`'s build (about 80 ms at x4) across idle tasks, layer by
-   layer.
+   meets a busy frame. Pass 3 listed (a) sprite device copies, (b) fog cropping, (c) splitting the
+   scene build. **Pass 4:** (c) is done (`buildSteps`), (a) and (b) were measured and dropped (under
+   0.5 ms a frame each). The real cause of the phone/late misses was the Deepwell wrapper switching the
+   1:1 path off, plus the idle queue starving (see Fixes, pass 4); with both fixed phone/late fights at
+   about 48 fps with 0-2 long tasks per 20 s. What is left in a phone frame (x4, in-page): draw plus
+   raster about 10 ms, of which the atmosphere is about 6 ms, most of it the lamp glows ('lighter', 1:1
+   copies of about 180 device px, 10-18 lamps a scene). Next, if needed: fewer or smaller lamp glows
+   per theme (an art call).
 8. **Done (pass 2).** 62-stage.js stage tap: rect cached in the ResizeObserver.
 9. **56-roster.js `compDps` per tick** (left alone to keep the sim byte-identical):
    `fieldCompDps -> sharedMult -> mod() -> activeOmen` runs every frame, about 3 ms per second
@@ -326,8 +410,14 @@ Each item: where, why it is slow, the fix. Done items stay listed so the reasoni
     are never built inside a frame. The kill frame's JS fell from 138-186 ms to 14-26 ms. The
     harness's "boss kill" window also holds `bossUp`, which on the late save jumps to the frontier
     zone (a scene build the player causes by picking a zone, not warmable): that is the 150-180 ms
-    left on phone/late.
-11. **Mostly done (pass 3). First frame on the phone** (1430-1550 → 1130-1280 ms at x4): closed tabs
+    left on phone/late. Pass 4: 140-150 ms (cheaper bakes), just inside budget. To go further,
+    `pickScene` could keep the old scene for a few frames while `sceneSteps` builds the new one (a
+    visible change on a zone jump, so not done).
+11. **Done (pass 4). First frame on the phone** (pass 3 base 1330-1450 → 1050-1080 ms at x4). Pass 4
+    moved the class figures, the Gather rows, the rig boxes and the away gains out of boot and made
+    bakes cheaper. Left in the first frame: the scene build (about 150-220 ms cold at x4) and one idle0
+    bake per party member (25-60 ms each cold); both are needed for that frame. Pass 3 notes:
+    (1430-1550 → 1130-1280 ms at x4): closed tabs
     mount on first open, a character set bakes idle0 only up front, the create screen's previews
     bake idle0 only, and no layer spans, plates or atmosphere copies are built before the first
     frame. Left: the boot script is still about 600 ms at x4. The biggest parts are outside the files
@@ -335,10 +425,17 @@ Each item: where, why it is slow, the fix. Done items stay listed so the reasoni
     shown at load for a new game and for this late save), 72-ui-gather.js at load (about 45 ms),
     13-art-enemies.js (about 65 ms), and `showAwayReport(awayGains(...))` at boot (about 50 ms even
     for a 1 s absence).
-12. **Tab first opens now include the mounts** of that tab's sections (pass 3 moved them out of
-    boot): Forge 90-120 ms and World (Camp) 85-155 ms on phone/late, near the 150 ms budget. If they
-    go over, stagger the mounts like the first updates (keeping registration order) or trim the
-    heaviest mounts (achievements, bestiary, craft stations).
+12. **Done (pass 4). Tab first opens** (pass 3: Forge 90-120 ms, Camp 85-155 ms on phone/late) now
+    mount only the open view's part (in registration order), count the mounts in the first updates'
+    time box, and lay the menu out once (scrollTop). Camp 150 → about 100 ms, Craft 80-120 ms. Left in
+    those tasks: the click's own layout (about 30 ms at x4) and the first rows (the Camp roster board's
+    portraits, when idle time has not baked them yet).
+13. **Idle work must stay small.** A phone at x4 has almost no idle periods while fighting, so the idle
+    queue runs from timed-out callbacks (60b-baker.js). Keep each `idleTask` under about 16 ms at x4 and
+    split bigger builds into steps (a generator works well: `buildSteps`, `spans`, `atmoSteps`).
+14. **Wrappers must pass every argument.** 75-deepwell-ui.js wrapped `drawScene` with fewer arguments
+    and silently switched off the fast path for every player (fixed in pass 4). When wrapping a stage
+    or scenery function, take `(...args)` and pass them all on.
 
 ## Checklist for new code
 
@@ -354,7 +451,9 @@ Each item: where, why it is slow, the fix. Done items stay listed so the reasoni
 - Bake or build big things (scenes, character sets, long lists) with `idleTask` ahead of need; a long
   list the player opens now builds in time-boxed chunks (about 20 ms, then `setTimeout`). Work needed
   within seconds goes to the front of the idle queue: `idleTask(fn, true)`. Keep each idle task under
-  about 12 ms real (50 ms at x4): an idle task that long is still a long task.
+  about 4 ms real (16 ms at x4); split bigger work into steps (a generator, one step per task).
+- When you wrap a stage or scenery function (`drawScene`, `drawAtmosphere`, `draw`), pass every
+  argument on (`...args`): dropping one can switch off a fast path for every player (hotspot 14).
 - Soft glows: draw them with `ANIM.lightAt` / `ANIM.glowAt` (1:1 device-size copies on the stage), not
   a scaled `drawImage` of a 64 px sprite.
 - A section's `mount` runs when its tab first opens, not at load (70-ui.js `mountTab`): keep boot free

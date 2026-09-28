@@ -96,18 +96,17 @@ let resize, animate, draw, stageStats, warmScene;
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
-  // Build the scene for zone z at the stage's size, its device-size plates and its atmosphere copies
-  // in idle time (three tasks, each well under a long task at x4), so entering that zone draws from
-  // caches. sceneFor keys on the stage's logical size (SW x SCH), not the element's CSS size.
-  // Returns false before the first resize.
+  // Build the scene for zone z at the stage's size, then its device-size plates and atmosphere copies,
+  // in idle time and in small steps (each well under a long task at x4: sceneSteps, scenePlates
+  // 'queue' in 63-scenery), so entering that zone draws from caches. sceneFor keys on the stage's
+  // logical size (SW x SCH), not the element's CSS size. Returns false before the first resize.
   warmScene = function (z) {
-    if (!SW || typeof idleTask !== 'function') return false;
+    if (!SW || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return false;
     const th = ZONE_THEME[zoneType(z)], hue = (zoneCycle(z) * 70) % 360, w = SW, h = SCH, k = DPR * ZM;
-    // soon (front of the queue), queued in reverse: the scene, its plates, its atmosphere copies
-    const same = () => typeof scenePlates === 'function' && w === SW && h === SCH && k === DPR * ZM;
-    idleTask(() => { if (same()) scenePlates(sceneFor(th, w, h, hue), k, w, h, 'atmo'); }, true);
-    idleTask(() => { if (same()) scenePlates(sceneFor(th, w, h, hue), k, w, h, 'plates'); }, true);
-    idleTask(() => sceneFor(th, w, h, hue), true);
+    const same = () => w === SW && h === SCH && k === DPR * ZM, step = sceneSteps(th, w, h, hue);
+    // soon (front of the queue): one build step per task, then the plates and atmosphere steps
+    const run = () => { if (!same()) return; const sc = step(); if (sc) scenePlates(sc, k, w, h, 'queue'); else idleTask(run, true); };
+    idleTask(run, true);
     return true;
   };
 
@@ -1033,5 +1032,5 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats() });
+  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }

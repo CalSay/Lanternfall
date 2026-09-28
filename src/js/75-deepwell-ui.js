@@ -43,7 +43,8 @@
     return wellSc;
   };
   const baseScene = drawScene, baseAtmo = drawAtmosphere;
-  drawScene = (ctx, sc, camX, which) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which);
+  // pass every argument on: k, ox, oy and bg switch on the 1:1 device-size path (docs/design/perf.md)
+  drawScene = (ctx, sc, camX, which, ...rest) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which, ...rest);
   drawAtmosphere = (ctx, sc, T_, W, H, camX) => baseAtmo(ctx, arena ? wellFor(sc) : sc, T_, W, H, camX);
 
   // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------

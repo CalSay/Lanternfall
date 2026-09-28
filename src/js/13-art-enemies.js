@@ -92,12 +92,17 @@ const ENEMY_RIGS = {};
   }
   const FRAMES = ['idle0', 'idle1', 'wind', 'strike'];
   function unionBox(rig, v) { let all = []; for (const f of FRAMES) all = all.concat(rig.parts(f, v)); return boxOf(all); }
+  // box / elderBox are worked out on first read (posing every frame of every rig at load was about
+  // 65 ms of boot on a slowed phone); the value is the same, from the rig's parts at that time.
+  function lazyBox(rig, name, v) {
+    Object.defineProperty(rig, name, { configurable: true, enumerable: true, get() { const b = unionBox(rig, v); Object.defineProperty(rig, name, { value: b, writable: true, enumerable: true, configurable: true }); return b; }, set(b) { Object.defineProperty(rig, name, { value: b, writable: true, enumerable: true, configurable: true }); } });
+  }
   function poseOf(src, f) { return Object.assign({}, src.poses[f] || src.poses.idle0); }
   function creature(src, elder) {
     const rig = { name: src.name, anim: src.anim, hover: !!src.hover, b1: 1, src };
     rig.parts = (f, v) => { v = v || {}; const pose = poseOf(src, f), k = kit(src, pose, v); src.draw(k, pose); return k.parts; };
-    rig.box = unionBox(rig, {});
-    if (elder) rig.elderBox = unionBox(rig, { elder: true });
+    lazyBox(rig, 'box', {});
+    if (elder) lazyBox(rig, 'elderBox', { elder: true });
     return rig;
   }
   // Humanoid: the character kit (facing right), then mirrored and scaled.
@@ -112,7 +117,7 @@ const ENEMY_RIGS = {};
       for (const p of k.parts) p.s = flipScale(p.s, k.S, true);
       return k.parts;
     };
-    rig.box = unionBox(rig, {}); rig.elderBox = unionBox(rig, { elder: true });
+    lazyBox(rig, 'box', {}); lazyBox(rig, 'elderBox', { elder: true });
     return rig;
   }
 

@@ -1,16 +1,23 @@
 // 90-boot: page lifecycle, boot sequence, timers and the frame loop. Browser-only.
 
 let lastFrame = performance.now();
+// Boot's away gains (see boot below), applied once: after the first frame, or before a save if the
+// page is hidden or closed first.
+let bootAway = null;
+function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { save(); flush(); }
+  if (document.hidden) { bootAwayNow(); save(); flush(); }
   else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
-addEventListener('pagehide', save);
+addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
 // ================= boot =================
 resize();
 updatePortrait();
-showAwayReport(awayGains((Date.now() - S.last) / 1000));
+// The away gains and their card are worked out in a task of their own right after the first frame
+// (about 50-120 ms at x4 CPU: other systems' catch-up, the card's Next Up line), so the stage shows
+// first. The absence is measured now; the gains are the same.
+bootAway = (Date.now() - S.last) / 1000;
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();
@@ -34,7 +41,7 @@ setInterval(pushPresence, 3000);
 // size, with its device-size plates: warmScene in 62-stage) and foes (and this zone's boss) in idle
 // time, ahead of background bakes. sceneFor, the plates and enemyFrames cache them, so clearing the
 // zone does not stall a frame with a scene build and fresh bakes.
-let warmKey = '', warmT = 0;
+let warmKey = '', warmT = 0, bootAwayT = 0;
 function warmNextZone() {
   if (typeof idleTask !== 'function' || target() !== 'mob' || S.zone !== S.maxZone || !(fightBoss || bossReady())) return;
   const st = $('stage'), w = st.clientWidth, h = st.clientHeight, z = S.zone + 1, key = z + ':' + w + 'x' + h + ':' + (window.devicePixelRatio || 1);
@@ -56,6 +63,7 @@ function frame(now) {
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
   warmT -= dt; if (warmT <= 0) { warmT = 1; warmNextZone(); }
+  if (bootAway != null && !bootAwayT) bootAwayT = setTimeout(bootAwayNow, 0);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

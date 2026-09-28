@@ -44,6 +44,18 @@ const ART = (() => {
     if (s.t === 'p') { let c = false; const p = s.pts; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) { const xi = p[i], yi = p[i + 1], xj = p[j], yj = p[j + 1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
     return false;
   }
+  // Scratch memory for rasterize: a new typed array per piece (4 of them, 50-100 pieces a figure) was
+  // a quarter of a bake. Each call carves its pieces' masks and normals out of one arena (views, reset
+  // per call: a piece's mask is only read during the same call, by the pieces it clips) and shares two
+  // temporaries. Same numbers, same pixels.
+  let arM = new Uint8Array(1 << 15), arN = new Float32Array(3 << 15), arOff = 0, tmpD = new Float32Array(1 << 12), tmpH = new Float32Array(1 << 12);
+  function arena(n) {
+    if (arOff + n > arM.length) { const sz = Math.max(arM.length * 2, n * 4); arM = new Uint8Array(sz); arN = new Float32Array(sz * 3); arOff = 0; }
+    const m = arM.subarray(arOff, arOff + n), N = arN.subarray(arOff * 3, (arOff + n) * 3);
+    arOff += n; m.fill(0);
+    return [m, N];
+  }
+  const scratch = (a, n) => a.length >= n ? a : new Float32Array(Math.max(n, a.length * 2));
   // parts: [{ z, ord, m: material, s: shape (art px, feet at 0,0), o: options }] -> image data at art px.
   // Returns { W, H, ox, oy, data: Uint8ClampedArray RGBA, lights: [{ x, y (from feet, art px), rgb, r, pulse, n }] }
   function rasterize(parts, opt = {}) {
@@ -55,11 +67,12 @@ const ART = (() => {
     const list = parts.slice().sort((a, b) => a.z - b.z || a.ord - b.ord);
     list.forEach((p, i) => { p.rank = i; p.ramp = rampFor(p.m); });
     const lights = [];
+    arOff = 0;
     for (const p of list) {
       const s = p.s; const [a, b, c, d] = shapeBox(s);
       const x0 = Math.max(0, Math.floor(a + ox) - 1), y0 = Math.max(0, Math.floor(b + oy) - 1), x1 = Math.min(W - 1, Math.ceil(c + ox) + 1), y1 = Math.min(H - 1, Math.ceil(d + oy) + 1);
       if (x1 < x0 || y1 < y0) { p.r = null; continue; }
-      const w = x1 - x0 + 1, h = y1 - y0 + 1, mk = new Uint8Array(w * h), NN = new Float32Array(w * h * 3);
+      const w = x1 - x0 + 1, h = y1 - y0 + 1, [mk, NN] = arena(w * h);
       const analytic = (s.t === 'e' || s.t === 'c') && !p.o.flat;
       const cl = p.o.clip && p.o.clip.r;
       const qx = s.t === 'q' ? Math.round(s.x + ox) : 0, qy = s.t === 'q' ? Math.round(s.y + oy) : 0;
@@ -81,12 +94,12 @@ const ART = (() => {
           for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = j * w + i; if (!mk[k]) continue; const ci = x0 + i - cl.x0, cj = y0 + j - cl.y0, ck = (cj * cl.w + ci) * 3; NN[k * 3] = cl.N[ck]; NN[k * 3 + 1] = cl.N[ck + 1]; NN[k * 3 + 2] = cl.N[ck + 2]; }
         } else {
           // bevel: distance to the piece's edge -> a rounded height field -> normals
-          const Dt = new Float32Array(w * h), BIG = 1e6;
+          const Dt = tmpD = scratch(tmpD, w * h), BIG = 1e6;
           for (let k = 0; k < w * h; k++) Dt[k] = mk[k] ? BIG : 0;
           const at = (i, j) => (i < 0 || j < 0 || i >= w || j >= h) ? 0 : Dt[j * w + i];
           for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = j * w + i; if (!mk[k]) continue; Dt[k] = Math.min(Dt[k], at(i - 1, j) + 1, at(i, j - 1) + 1, at(i - 1, j - 1) + 1.414, at(i + 1, j - 1) + 1.414); }
           for (let j = h - 1; j >= 0; j--) for (let i = w - 1; i >= 0; i--) { const k = j * w + i; if (!mk[k]) continue; Dt[k] = Math.min(Dt[k], at(i + 1, j) + 1, at(i, j + 1) + 1, at(i + 1, j + 1) + 1.414, at(i - 1, j + 1) + 1.414); }
-          const Rb = BEV * (p.o.bev || 1), Hh = new Float32Array(w * h);
+          const Rb = BEV * (p.o.bev || 1), Hh = tmpH = scratch(tmpH, w * h); Hh.fill(0, 0, w * h);
           for (let k = 0; k < w * h; k++) { if (!mk[k]) continue; const dd = Math.min(Dt[k] - .5, Rb); Hh[k] = Math.sqrt(Math.max(0, Rb * Rb - (Rb - dd) * (Rb - dd))); }
           const hv = (i, j) => (i < 0 || j < 0 || i >= w || j >= h) ? 0 : Hh[j * w + i];
           for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = j * w + i; if (!mk[k]) continue; const gx = (hv(i + 1, j) - hv(i - 1, j)) / 2, gy = (hv(i, j + 1) - hv(i, j - 1)) / 2; const n = norm3(-gx, -gy, 1); NN[k * 3] = n[0]; NN[k * 3 + 1] = n[1]; NN[k * 3 + 2] = n[2]; }
@@ -109,26 +122,43 @@ const ART = (() => {
     // cast shadow: one step darker directly under (and down-right of) a piece that sits on top
     const t2 = tone.slice();
     const sameG = (a, b) => a.o.g && a.o.g === b.o.g;
+    const casts = (A, B) => !B.o.ns && !B.o.nl && !sameG(A, B) && B.s.t !== 'q';
     for (let y = 1; y < H; y++) for (let x = 1; x < W; x++) {
       const i = y * W + x, a = pid[i]; if (a < 0) continue; const A = list[a]; if (A.ramp.flat) continue;
-      for (const j of [i - W, i - W - 1]) { const b = pid[j]; if (b > a) { const B = list[b]; if (!B.o.ns && !B.o.nl && !sameG(A, B) && B.s.t !== 'q') { t2[i] = Math.min(2, tone[i] + 1); break; } } }
+      // the piece directly above, else the one up-left (no array per pixel: this runs cold at boot)
+      const b1 = pid[i - W], b2 = pid[i - W - 1];
+      if ((b1 > a && casts(A, list[b1])) || (b2 > a && casts(A, list[b2]))) t2[i] = Math.min(2, tone[i] + 1);
     }
     // section lines: where a piece sits on top of another, the pixel underneath takes the
     // under-piece's line colour (a dark of its own material). This is what separates sections.
     const line = new Uint8Array(N);
+    // does the neighbour piece b (a later piece) cut a section line into piece a?
+    const cuts = (A, a, b) => {
+      if (!(b > a)) return false;
+      const B = list[b];
+      if (B.o.nl || sameG(A, B)) return false;
+      return !(B.m.hex === A.m.hex && B.m.kind === A.m.kind && !B.o.sep);
+    };
     if (!opt.noLines) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x, a = pid[i]; if (a < 0) continue; const A = list[a]; if (A.o.nlu) continue;
-      const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1];
-      for (const j of nb) { if (j < 0) continue; const b = pid[j]; if (b > a) { const B = list[b]; if (B.o.nl || sameG(A, B)) continue; if (B.m.hex === A.m.hex && B.m.kind === A.m.kind && !B.o.sep) continue; line[i] = 1; break; } }
+      if ((x > 0 && cuts(A, a, pid[i - 1])) || (x < W - 1 && cuts(A, a, pid[i + 1])) || (y > 0 && cuts(A, a, pid[i - W])) || (y < H - 1 && cuts(A, a, pid[i + W]))) line[i] = 1;
     }
     const out = new Array(N);
     for (let i = 0; i < N; i++) if (pid[i] >= 0) { const A = list[pid[i]]; out[i] = line[i] ? A.ramp.line : A.ramp.c[t2[i]]; }
     // despeckle: a pixel with no same-coloured neighbour (8-way) takes the most common 4-way neighbour colour
     for (let pass = 0; pass < 2; pass++) for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
       const i = y * W + x; if (pid[i] < 0) continue; const A = list[pid[i]]; if (A.ramp.flat || A.s.t === 'q') continue;
-      let same = 0; for (const j of [i - 1, i + 1, i - W, i + W, i - W - 1, i - W + 1, i + W - 1, i + W + 1]) if (out[j] === out[i]) { same = 1; break; }
-      if (same) continue; const cnt = {}; let best = null, bc = 0;
-      for (const j of [i - 1, i + 1, i - W, i + W]) { if (pid[j] < 0 || list[pid[j]].ramp.flat) continue; const c2 = out[j]; cnt[c2] = (cnt[c2] || 0) + 1; if (cnt[c2] > bc) { bc = cnt[c2]; best = c2; } }
+      const o = out[i];
+      if (out[i - 1] === o || out[i + 1] === o || out[i - W] === o || out[i + W] === o || out[i - W - 1] === o || out[i - W + 1] === o || out[i + W - 1] === o || out[i + W + 1] === o) continue;
+      // the most common 4-way neighbour colour (left, right, up, down; the first to reach the top count wins)
+      let best = null, bc = 0;
+      for (let k = 0; k < 4; k++) {
+        const j = k === 0 ? i - 1 : k === 1 ? i + 1 : k === 2 ? i - W : i + W;
+        if (pid[j] < 0 || list[pid[j]].ramp.flat) continue;
+        const c2 = out[j]; let n = 1;
+        for (let q = 0; q < k; q++) { const jq = q === 0 ? i - 1 : q === 1 ? i + 1 : i - W; if (out[jq] === c2 && !(pid[jq] < 0 || list[pid[jq]].ramp.flat)) n++; }
+        if (n > bc) { bc = n; best = c2; }
+      }
       if (best && bc >= 2) out[i] = best;
     }
     // ink outline, 1 art px, 4-way
@@ -207,31 +237,47 @@ const ART = (() => {
   // that bake on first use. queueRest() also queues them to bake while the page is idle. So a new
   // party member, foe or zone costs one or two frames of baking in the frame that needs it, not five
   // or six, and a portrait costs one.
-  const idleQ = [];
-  let idleArmed = false;
+  // Two lanes: `soon` work (needed within seconds: the next zone's scene, a new party's frames) runs
+  // before background work (roster portraits). A busy phone gets few idle periods (a frame at x4 CPU
+  // leaves under 4 ms), so most work runs from timed-out callbacks: those come every SOON_MS while
+  // soon work waits (BG_MS otherwise) and run tasks for up to TIMED_MS, so the queue keeps moving
+  // without one long task. Keep each task small (about 4 ms real, 16 ms at x4): split big builds.
+  const idleQ = [], idleSoon = [];
+  const SOON_MS = 250, BG_MS = 600, TIMED_MS = 12;
+  const idleStat = { ran: 0, timedOut: 0, maxMs: 0 };
+  let idleArmed = false, idleId = 0, idleWait = 0;
   function idleRun(dl) {
-    idleArmed = false;
-    const t0 = now();
+    idleArmed = false; idleId = 0;
+    const t0 = now(), timed = !dl || !dl.timeRemaining || dl.didTimeout;
+    if (timed) idleStat.timedOut++;
     let n = 0;
-    while (idleQ.length) {
-      const left = dl && dl.timeRemaining ? dl.timeRemaining() : 12 - (now() - t0);
-      if (left < 4 && !(n === 0 && (!dl || dl.didTimeout))) break; // a timed-out callback still does one task
+    while (idleSoon.length || idleQ.length) {
+      const left = timed ? TIMED_MS - (now() - t0) : dl.timeRemaining();
+      if (left < 4 && !(n === 0 && timed)) break; // a timed-out callback still does one task
       n++;
-      const fn = idleQ.shift();
+      const fn = idleSoon.length ? idleSoon.shift() : idleQ.shift();
+      const t1 = now();
       try { fn(); } catch (e) { console.error('[lanternfall] idle bake', e); }
+      idleStat.ran++; idleStat.maxMs = Math.max(idleStat.maxMs, now() - t1);
     }
-    if (idleQ.length) idleArm();
+    if (idleSoon.length || idleQ.length) idleArm();
   }
   function idleArm() {
-    if (idleArmed) return; idleArmed = true;
-    if (typeof requestIdleCallback === 'function') requestIdleCallback(idleRun, { timeout: 1500 });
+    const wait = idleSoon.length ? SOON_MS : BG_MS;
+    if (idleArmed) {
+      // armed with the long timeout and soon work arrived: ask again with the short one
+      if (wait >= idleWait || !idleId || typeof cancelIdleCallback !== 'function') return;
+      cancelIdleCallback(idleId); idleArmed = false;
+    }
+    idleArmed = true; idleWait = wait;
+    if (typeof requestIdleCallback === 'function') idleId = requestIdleCallback(idleRun, { timeout: wait });
     else setTimeout(idleRun, 80);
   }
   // idleTask(fn, soon): run fn when the page is idle (small tasks; a few per idle period, in order).
-  // soon: put it at the front of the queue (work needed in the next few seconds, like the next zone's
-  // scene, goes before background bakes such as roster portraits). A busy page gets few idle periods
-  // (a timed-out callback runs one task), so the order matters.
-  function idleTask(fn, soon) { if (soon) idleQ.unshift(fn); else idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
+  // soon: put it at the front of the soon lane (work needed in the next few seconds, like the next
+  // zone's scene, goes before background bakes such as roster portraits; the last queued runs first).
+  function idleTask(fn, soon) { if (soon) idleSoon.unshift(fn); else idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
+  const idleStats = () => ({ soon: idleSoon.length, bg: idleQ.length, ran: idleStat.ran, timedOut: idleStat.timedOut, maxMs: Math.round(idleStat.maxMs) });
   function lazySet(names, nowNames, bakeOne) {
     const set = {};
     Object.defineProperty(set, '_queued', { value: false, writable: true, enumerable: false });
@@ -426,10 +472,10 @@ const ART = (() => {
     const t0 = now();
     let rig = typeof src[key] === 'function' ? src[key](variant) : src[key];
     if (rig && rig.b1) { // B1 rigs (13-art-enemies.js): kit pieces at art px, already posed
-      const set = {};
-      for (const f of ['idle0', 'idle1', 'wind', 'strike']) { set[f] = toCanvas(rasterize(rig.parts(f, variant && typeof variant === 'object' ? variant : {}))); stats.bakes++; }
-      set.hit = flash(set.idle0);
-      set.ms = now() - t0; stats.ms += set.ms;
+      // idle0 now; idle1, wind, strike and hit on first use or when idle (lazySet), like the party
+      const v = variant && typeof variant === 'object' ? variant : {};
+      const set = queueRest(lazySet(['idle0', 'idle1', 'wind', 'strike'], ['idle0'], f => { const t1 = now(), fr = toCanvas(rasterize(rig.parts(f, v))); stats.bakes++; stats.ms += now() - t1; return fr; }));
+      set.ms = now() - t0;
       stats.last['enemy:' + key] = Math.round(set.ms * 10) / 10;
       return cachePut(ck, set);
     }
@@ -483,7 +529,7 @@ const ART = (() => {
 
   const bakeStats = () => ({ bakes: stats.bakes, totalMs: Math.round(stats.ms), perSet: Object.assign({}, stats.last), cached: setCache.size });
 
-  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, ready, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
+  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, idleStats, ready, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
 })();
 const { charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview, charLightPass, enemyFrames, bakeStats } = ART;
 const bake = ART.bake, bakeSet = ART.bakeSet, idleTask = ART.idleTask;
