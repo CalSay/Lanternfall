@@ -54,7 +54,7 @@ const ENEMY_TUNE = {
   slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, reassemble: 0.2,
   heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2, dodgeX: 0.5,
   beetleEvery: 6, golemX: 6, cloudBossX: 1.5, batDiveEvery: 12, batDiveX: 2, bonesEvery: 15, bonesAdds: 2, addHp: 0.08,
-  splitAt: 0.5, splitHp: 0.12, wraithEvery: 10, wraithHeal: 0.2, firstHeavy: 4, first2: 6
+  splitAt: 0.5, splitHp: 0.12, wraithEvery: 12, wraithHeal: 0.1, firstHeavy: 4, first2: 6   // (Elder Wraith: spec 20% every 10s; every region boss is a Wraith, so it is softer)
 };
 
 var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossStart, nextWindIn, resolveParry, cbTelegraph;
@@ -79,6 +79,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     CB_STATS.tele++;
     START_EV.kind = kind; START_EV.dur = TELE.dur; START_EV.target = TELE.target; START_EV.foe = f;
     emit('telegraphStart', START_EV);
+    // The first wind-up a player sees explains the parry once (S.combat.tip).
+    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast('The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
   }
   function endTele(result, by) {
     RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || '';

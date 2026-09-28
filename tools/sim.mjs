@@ -577,7 +577,7 @@ if (E('partyCombatOn()')) {
     // T6: the offline holdable zone (highest zone that holds, up to maxZone + 20) of the field vs the
     // same field without its tank or its support (swapped for another damage dealer at the same level).
     const h = fork(t2Snap, 6);
-    const hold = () => h.eval('(() => { let b = 0; for (let z = 1; z <= S.maxZone + 20; z++) if (partyHoldEstimate(z, { one: true }).holds) b = z; return b; })()');
+    const hold = () => h.eval('(() => { let b = 0; for (let z = 1; z <= S.maxZone + 20; z++) if (partyHoldEstimate(z, { one: true, sustain: true }).holds) b = z; return b; })()');
     const swap = (role, to) => h.eval(`(() => { const f = S.party.field.slice(), i = f.findIndex(k => ROSTER[k].role === ${JSON.stringify(role)}); if (i < 0) return null; const r = charRec(f[i]); if (!isRecruited(${JSON.stringify(to)})) unlockChar(${JSON.stringify(to)}, 'sim', true); Object.assign(charRec(${JSON.stringify(to)}), { lv: r.lv, rank: r.rank }); f[i] = ${JSON.stringify(to)}; setField(f); return f.join(); })()`);
     const f0 = h.eval('S.party.field.slice()'), base = hold();
     const damager = h.eval(`['kestrel', 'bram', 'isolde', 'pip', 'wren'].find(k => !S.party.field.includes(k))`);
@@ -732,9 +732,11 @@ async function runTargets() {
     L('warden', 'hesketh,wren,pip', '--t5', '1', '--t8', '1'), L('lightkeeper', 'tobin,hesketh,elowen'), L('warden', 'wren,kestrel,isolde'), L('lanternmage', 'aldric,pip,oriel'),
     L('lanternmage', 'tobin,hesketh,wren', '--t6', '1'),
     run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', ...pass]),
-    run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', '--active', '1', ...pass])
+    run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', '--active', '1', ...pass]),
+    // T18: each class with its starter only, idle, fighting only (the fight policy buys hero upgrades, no crafting)
+    ...classes.map(c => run(['--policy', 'fight', '--roster', 'off', '--hours', '0.5', '--class', c, '--every', '600', '--t11', '0', ...pass]))
   ]);
-  const [bal, attr, glass, cast, lmBal, idle4, active4] = combatRuns;
+  const [bal, attr, glass, cast, lmBal, idle4, active4, ...starter] = combatRuns;
   const num = (s, re) => { const m = s.match(re); return m ? +m[1] : NaN; };
   const ok = b => b ? 'PASS' : 'FAIL';
   const inR = (v, [a, b]) => v >= a && v <= b;
@@ -794,8 +796,8 @@ async function runTargets() {
   res.push([ok(t13 >= 85), 'T13 the tank holds aggro (enemy-seconds on a tank), balanced line-up: >= 85%', `${t13}%`]);
   const t14 = num(cont[3], /T14 companion damage (\d+)%/);
   res.push([ok(t14 >= 90 && res[2][0] === 'PASS'), 'T14 Lightkeeper-led party: companions deal >= 90% of the damage, and T3 passes', `${t14}%`]);
-  const t18 = cont.map(o => [num(o, /toZone5=([\d.]+)m/), num(o, /before zone 5 (\d+)/)]);
-  res.push([ok(t18.every(([m, w]) => inR(m, [6, 12]) && w === 0)), 'T18 each class with its starter, idle: zone 5 in 6-12 min, no wipes', classes.map((c, i) => `${c} ${t18[i][0]}m ${t18[i][1]} wipes`).join(', ')]);
+  const t18 = starter.map(o => [num(o, /toZone5=([\d.]+)m/), num(o, /before zone 5 (\d+)/)]);
+  res.push([ok(t18.every(([m, w]) => inR(m, [6, 12]) && w === 0)), 'T18 each class with its starter only, idle (fighting, hero upgrades, no crafting): zone 5 in 6-12 min, no wipes', classes.map((c, i) => `${c} ${t18[i][0]}m ${t18[i][1]} wipes`).join(', ')]);
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
   console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} targets pass`);
   for (const [i, c] of classes.entries()) console.log(`curve (${c}): ` + js[i].rows.filter(r => r.day <= 10 || r.day % 5 === 0).map(r => `d${r.day} ${r.zone}`).join(' '));

@@ -56,20 +56,20 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const T = {
     on: 1,
     // packs (4.1): 3 foes; the pack totals packHp / packGold of one old foe (spec: 0.4 each = 1.2)
-    packSize: 3, packHp: 1, packGold: 1, mixP: 0.72,
+    packSize: 3, packHp: 1.2, packGold: 1.2, mixP: 0.72,
     eliteFrom: 15, eliteP: 0.2, eliteHp: 2, eliteGold: 2,
     // foe attack per hit = atk x mobHp(z) (spec: 1.2 x 1.55^(z-1) = 0.12 x mobHp; tuned to this game's
     // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold
     atk: 0.006, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 2.5, bossSpd: 0.6,
     armourX: 0.85,                       // physical hits on armoured foes (Rattlebones, Golems; spec 0.5, softened for class parity, T3)
-    aoeOther: 0.5, lmSplash: 0.25,       // caster hits on the other foes; the Lanternmage's splash
+    aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     hp: { tank: 12, striker: 5, caster: 4, support: 6 },
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
     heroHp: { warden: 12, lanternmage: 4, ranger: 5, lightkeeper: 6 },
     armour: { tank: 20, striker: 0, caster: 0, support: 10 }, heroArmour: { warden: 30, lanternmage: 0, ranger: 0, lightkeeper: 10 },
     aldricArmour: 20, braced: 10, redMax: 0.6,
     wardenTankHp: 0.4, wardenTankArmour: 20, wardenDr: 0.1, wardenThreat: 6,
-    lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 1.2,
+    lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 0.8,   // heal: a support heals 0.8 x power a second (spec 1.2; T6 wants a support worth 2-4 zones of hold)
     cover: 0.15, backRanged: 0.2,
     regen: 0.005, packHealF: 0.1, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
     threat: { tank: 4, striker: 1, caster: 1.2, support: 0.5 }, healThreat: 0.5, opening: 10, switchX: 1.2,
@@ -80,7 +80,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     cdMin: 0.5,                          // cooldown reductions stop at -50%
     fieldSupport: 2,                     // autoField (56-roster): 2 a support when the party cannot hold its max zone without one, 1 always, 0 never
     bossGate: 1, bossWait: 600,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s)
-    refresh: 0.25, pushEvery: 5, holdSecs: 120, estSafety: 1.25, estEff: 1, awayRate: 0.7, autoCast: 1.05,
+    refresh: 0.25, pushEvery: 5, holdSecs: 120, estSafety: 1.25, estEff: 1, awayRate: 0.75, autoCast: 1.05,
     // kit numbers (3.2, 3.5)
     guardDr: 0.4, guardT: 4, trustStep: 0.01, trustMax: 0.2, mend: 0.25, warmCap: 0.2, longRoute: 0.2,
     beacon: 0.2, beaconLamp: 0.3, beaconSh: 0.1, burnBack: 0.1, keeper: 0.15, sturdy: 0.1,
@@ -101,7 +101,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
     tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0 };
 
-  registerState('combat', { on: 1, back: 0 });
+  registerState('combat', { on: 1, back: 0, tip: 0 });
 
   // Haste gear (K11): the hero's ability comes back sooner too (capped at -30% in gear()).
   addModifier('abilityCd', () => partyCombatOn() ? 1 - gear().haste / 100 : 1);
@@ -596,6 +596,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (lead && lead.boss && alive(lead) && typeof nextWindIn === 'function' && nextWindIn() < u.cdMax * 0.6) return false;
       return true;
     }
+    // Grenna's Earthshatter stuns: she spends it on a healer's channel (a Marsh Wraith, the Elder Wraith's
+    // green wind-up) before she thinks of taunting.
+    if (id === 'grenna') {
+      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t && t.kind === 'heal') return true; }
+      for (const f of foes) if (alive(f) && f.chanT > 0) return true;
+    }
     if (id === 'isolde') { const th = execTh(u); for (const f of foes) if (alive(f) && f.hp / f.max < th) return true; return u.cd < -2; }
     // Tanks taunt when a foe is on a non-tank ally (never off another tank, e.g. a Warden hero), or to save themselves.
     if (u.role === 'tank') { for (const f of foes) if (alive(f) && f.tgt >= 0 && U[f.tgt] && U[f.tgt].role !== 'tank') return true; return u.hp / u.maxHp < 0.5; }
@@ -1075,7 +1081,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (ttd < packSecs) lost += (i === 0 ? heroD * heroPhys : u.dps * (u.role === 'caster' ? 1 : physX)) * (1 - ttd / packSecs);
       }
       if (lost > 0) { const D2 = Math.max(D * 0.1, D - lost * T.estEff); packSecs = packHp / D2 + T.respawn; }
-      holds = holds && packSecs - T.respawn <= PACE.farmSecs * T.packHp;
+      // opts.sustain: sustain only (T6 compares line-ups by what they survive, not by how fast they kill)
+      if (!o.sustain) holds = holds && packSecs - T.respawn <= PACE.farmSecs * T.packHp;
       if (holds || o.one) {
         const z0 = S.zone; S.zone = z;   // gold bonuses read the current zone (mastery stars)
         let g = mobGold(z) * T.packGold;

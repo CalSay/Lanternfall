@@ -96,8 +96,8 @@ try {
   assert(g4.eval('isRecruited("tobin") && S.party.field[0] === "tobin" && S.comp.every(n => n === 0)'), 'starter granted and fielded first');
   for (let i = 0; i < 20; i++) g4.fn.tick(0.1);
   assert(g4.eval('castAbility()') && g4.eval('S.party.abilityCd === HERO_CLASSES.ranger.ability.cd') && !g4.eval('castAbility()'), 'ability cast starts cooldown');
-  g4.fn.playerTap({ x: 0.6, y: 0.5 });
-  assert(g4.eval('mob.markUntil > 0'), 'class tap marks the mob');
+  const tapped = g4.eval('(() => { const m = mob; playerTap({ x: 0.6, y: 0.5 }); return m.markUntil > 0; })()');   // (a pack foe may die to the tap: check the one tapped)
+  assert(tapped, 'class tap marks the mob');
   assert(!g4.errors.length, 'no party handler errors' + (g4.errors.length ? ': ' + g4.errors[0] : ''));
 } catch (e) { fail('smoke crashed: ' + (e.stack || e)); }
 

@@ -17,9 +17,9 @@
 const HERO_CLASSES = {
   warden: {
     name: 'Warden', role: 'tank', row: 'front', pitch: 'Stand in front. Nothing gets past.',
-    how: 'Tap a foe for a heavy hit. Each hit adds a guard stack: +3% damage for 10s, up to 5.',
+    how: 'Tap a foe for a heavy hit. It turns on you, and each hit adds a guard stack: +3% damage for 10s, up to 5.',
     tapName: 'Heavy hit',
-    ability: { name: 'Shield Wall', desc: 'Your party deals 30% more damage for 6s, and the boss timer stops for 3s.', cd: 30 },
+    ability: { name: 'Shield Wall', desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.', cd: 30 },
     aura: 'Tanks in your party get +40% health and +20 armour.'
   },
   lanternmage: {
@@ -38,9 +38,9 @@ const HERO_CLASSES = {
   },
   lightkeeper: {
     name: 'Lightkeeper', role: 'support', row: 'back', pitch: 'Keep them standing.',
-    how: 'You hit softly, but your companions deal the damage you give up. Tap to bless them: +20% damage for 6s, up to 3 times.',
+    how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
     tapName: 'Blessing',
-    ability: { name: 'Rally Hymn', desc: 'Your party deals 40% more damage for 8s.', cd: 40 },
+    ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
     aura: 'Supports in your party heal 40% more. All companions deal 10% more damage.'
   }
 };

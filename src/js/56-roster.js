@@ -541,7 +541,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // BAL1: a kill is worth (seconds a normal foe of that zone takes the party) / xpSecs kills of XP,
   // at most xpWorthMax. So XP follows time spent fighting: farming an easy zone for fast kills
   // earns no more than pushing at the front, and a hard zone no less.
-  const killWorth = (z, dps) => T.xpSecs > 0 && dps > 0 ? Math.min(T.xpWorthMax, mobHp(z) / dps / T.xpSecs) : 1;
+  // Stage C: a kill event is a pack (COMBAT_TUNE.packHp of one foe), so it is worth that much more.
+  const killWorth = (z, dps) => T.xpSecs > 0 && dps > 0 ? Math.min(T.xpWorthMax * packX(), mobHp(z) * packX() / dps / T.xpSecs) : 1;
+  const packX = () => combatOn() && typeof COMBAT_TUNE === "object" && COMBAT_TUNE ? COMBAT_TUNE.packHp : 1;
   const giveField = (n, z, quiet, dps) => {
     if (!rosterLive()) return [];
     const w = killWorth(z, dps != null ? dps : totalDps());
