@@ -1,5 +1,9 @@
 # World map: art study (MAP0)
 
+> **MAP1 update (2026-09-28): the owner picked a hybrid.** It uses A's map, C's night and landmarks,
+> and the mood "light in the dark". See [Hybrid H](#hybrid-h-light-in-the-dark-map1) at the end.
+> UX-W1 builds H.
+
 Status: options for the owner (2026-09-28). This is a study only: nothing in `src/` changed.
 It comes before UX-W1 to W3 (plan-4.md 6.4: "The map must be designed well").
 
@@ -231,3 +235,152 @@ B1 look, so I would keep its "coloured only where lit" idea rather than the parc
 `13d-art-world.js` (`WORLD_MAP` rows become terrace ground lines). Share the lamp and lantern
 pieces with `63-scenery.js`. Draw the Coast's 7 zone vignettes. Add the checks from ux-overhaul
 7.10: one `WORLD_MAP` block per region, 5 rows, pins 48 px apart, and a plate 180 art px wide.
+
+## Hybrid H: light in the dark (MAP1)
+
+![H screen](img/map/map-h-screen.png) ![H full](img/map/map-h-full.png)
+
+| File | What it shows |
+|---|---|
+| `img/map/map-h-screen.png` | 360 x 740 (DPR 2), the Hollow on the mid save (zone 17) |
+| `img/map/map-h-full.png` | The whole scroll on the late save (zone 38): the Hollow lit, the Coast reached, Beyond locked with the raid pin |
+| `img/map/map-h-closeups.png` | Every landmark at 3x in its own pool of light, the palette-swap ramps, and one band slice of each of the 5 regions (lit, then locked) |
+| `img/map/map-h-strip.png` | Band II (zones 8-14) with no lamps, 3 lamps and all 7 lamps lit |
+
+Prototype: `prototypes/map-study/style-h.js`. Open `index.html?style=H&view=screen|full|sheet|strip`.
+It borrows A's terrain stamps and C's landmarks through `STYLE_A.parts` and `STYLE_C.parts`.
+`node prototypes/map-study/shots.mjs --only h-screen,h-full,h-closeups,h-strip --fonts <dir>`
+re-renders the PNGs.
+
+**Pitch:** A's top-down 16-bit overworld, at night. It keeps the forests, Lantern Hill's cliff with its
+stairs and waterfall, the stream and its plank bridges, the marsh pond, the graves and barrows, and the
+winding road with one lamp per zone. C's landmarks stand on it: the Tavern, Hollow's Rest, the Deepwell,
+the Great Lantern, the Almanac post, the raid pin, You and the team. Every lit lamp and lit landmark
+throws a small warm pool of light that falls off fast. Outside the pools the land is deep shadow, only
+silhouettes, and fireflies drift there. As you progress, more pools light up along the road.
+
+### Layout
+
+- **Hollow plate 180 x 324 art px** (A was 300). The top 120 px is the camp tier. Lantern Hill and
+  the Great Lantern are top right, above the cliff. The Tavern, Hollow's Rest and the Almanac post
+  stand on the clearing, and the Deepwell sits under the cliff. C's bigger landmarks need this
+  room. Every label fits at 360 px, and no two labels touch. The road then runs 5 rows, 40 art px
+  apart (`rows 134 174 214 254 294`), with the lamps on the upper edge of each row.
+- **Coast plate 180 x 262** (A was 236). The extra 26 px puts Saltreach Light (the Coast's Great
+  Lantern) on its rock under row X, clear of the band flags and zone labels. **Beyond** stays 84.
+- **Road lamp:** C's hook lamp, cut down to 8 x 12 art px (plus outline) so it stands in a top-down
+  row. The glass hangs from the tip of the arm.
+- **Pins** are C's sprites with C's label style (a dark chip with a lamplight underline). Dark places
+  (the cold Great Lantern, Saltreach Light, the locked gate) are drawn in the dusk palette with a cold
+  grey underline, so each one reads as a goal in the dark. Teams out stand on their band's road at the
+  sixth lamp. You stands on your zone's lamp.
+
+### Palette
+
+- **Ground** (painted, then relit): A's palette. Grass `#6E9E52 #4C7E40 #35613A #22442E`, hill
+  `#5A8C48` with a `#86B864` lip, road `#A48558` with edge `#6A5034`, earth `#A08458 / #8A7048`, water
+  `#24587A #2E6A84 #4A8AA0`, stone `#B8B0C2 #88809C #5C5474 #3A3450`. The Coast: grass `#5E8A5A`, sea
+  `#1E4E6A`, shingle `#B0A488`, road `#A89878`. Beyond: ash `#4A4048`, cracks `#B8442E`.
+- **Landmarks:** C's palette, unchanged (roof `#C8563E`, canvas `#E8DCB8`, lamp glass `#FFF3C4 #FFD27A
+  #FF9E3D`, dead glass `#4A5064`).
+- **The four lights:** each painted colour `c` is swapped for one of four palette entries.
+
+| Level | Name | Formula |
+|---|---|---|
+| 0 | shadow | desaturate 66%, mix 74% toward `#050816` |
+| 1 | dusk | desaturate 45%, mix 48% toward `#0A1024` |
+| 2 | lamplit | desaturate 25%, multiply by the tint mixed 45% to white, then mix 10% toward the tint |
+| 3 | flame | mix 10% toward white, then 24% toward the tint |
+
+- **Tints:** levels 2 and 3 take the tint of the light that wins the pixel. Road lamp `#FFBA60`, camp
+  fire `#FF9A48`, Deepwell `#6FD0E8`, raid `#FF6B3D`, lit Great Lantern `#FFD27A`. The painted colour
+  itself never shows, because the whole map is night.
+- **Fixed pixels** ignore the light: lit lamp glass, a few moonlit crests on the sea (`#1C2C44`), faint
+  lava cracks in Beyond (`#5A1A14`), and the Long Stair's crystals.
+
+### The light model
+
+- **One pool per light.** A pool is an ellipse on the ground, squashed to about 0.72 of its width.
+  Its strength is `I = a * (1 - q)^2`, where `q` is the distance divided by the radius. The square
+  makes the light fall off fast, so most of the radius is a dim tail. Each pixel keeps its strongest
+  light (the max, not the sum) and that light's tint.
+- **Four levels, dithered seams.** `I` plus a 4 x 4 Bayer offset (amplitude 0.14) is cut at 0.12
+  (dusk), 0.34 (lamplit) and 0.62 (flame). The seams are 1-2 px of SNES-style dither, not gradients.
+- **Radii** (art px, x by y; double them for CSS px):
+
+| Light | Radius | Strength | Reads as |
+|---|---|---|---|
+| Road lamp (lit) | 19 x 14, at the lamp's foot | 1 | Flame 4 px, lamplit about 8 x 6, dusk out to 12 x 9. Lamps are 20 px apart, so their dusk edges join and a lit row reads as a string of warm pools |
+| Frontier (the first dark lamp) | 40 x 22, shifted 10 px ahead along the road | capped at 0.27 (dusk only) | The next stretch shows as shapes. This keeps MAP0's tweak: the land just past the last lamp reads a little |
+| Hollow's Rest fire (the Hearth, always lit) | 50 x 32 | 1.25 | the camp clearing |
+| Tavern windows | 26 x 17 | 0.95 | its yard |
+| Deepwell | 24 x 17, blue | 1 | a cold blue pool |
+| Almanac lamp | 15 x 11 | 0.9 | a small pool at the camp gate |
+| Great Lantern, lit | 62 x 46, gold | 1.15 | The hill. **An ambient of 0.2 also lifts the whole region to dusk** |
+| Raid pin | 38 x 26, red | 1.15 | a red pool on the black Beyond plate |
+| Locked gate | 26 x 20 | capped at 0.27 | shows where the road ends |
+
+- **Glow:** a small, smooth layer with `screen` blending, baked once at art size, as in C but toned
+  down. Lamp glass glows 9 art px. C's landmark glows are cut to 62-80% of their MAP0 size, so the
+  light stays a pool and never becomes a haze.
+- **Fireflies and motes:** DOM sprites (2 x 2 CSS px, one art px). They are placed at bake time and
+  only where `I < 0.1`, at least 8 px from any light and 16 px from each other. The Hollow has 14 (mostly
+  fireflies), the Coast 9 (fireflies and sea motes) and Beyond 7 (embers). They drift on CSS
+  `transform` keyframes (7-12 s) and blink with `steps(2)`. Under `prefers-reduced-motion` they stay
+  still (no animation, fixed opacity). Each region has its own kind: fireflies, motes, embers, snow or
+  crystal sparks.
+
+![strip](img/map/map-h-strip.png)
+
+### Performance plan
+
+Nothing runs per frame except the firefly sprites, and those animate on the compositor only.
+
+- **Bake per plate:** paint the ground into a `Uint8Array` of **palette indices**, as in MAP0's plan
+  (about 60 colours per region). Then bake the **light plate**: a `Uint8Array` of levels 0-3 with the
+  Bayer dither baked in, and a `Uint8Array` of tint ids. Each light walks only its bounding box (a
+  road lamp is 38 x 28, about 1,100 px). A pixel's colour is one lookup,
+  `PAL[region][level][tint][index]`. The tables are small: shadow and dusk, plus lamplit and flame
+  for each tint, about 60 x (2 + 2 x 5) = 720 RGBA entries. One `putImageData` writes the plate.
+- **Memory:** the index plate is 180 x 324 = 58 KB, the level and tint plates are 58 KB each, and the
+  RGBA canvas is 233 KB. The Hollow is about 0.4 MB with its glow layer; 3 plates are about 1 MB.
+- **A new max zone** lights one lamp. Recompute the light plate only inside that lamp's box and the
+  old and new frontier boxes (3 boxes, about 3,500 px), then `putImageData` the dirty rectangle. There
+  is no full repaint. Lighting a Great Lantern or reaching a region repaints that plate in an
+  `idleTask`.
+- **Study bake times** (desktop, hex strings, unoptimised): Hollow 40-60 ms, Coast 19-29 ms, Beyond
+  6-9 ms. That is already 2-3x faster than MAP0's A and C, because each light touches only its box.
+  The indexed version fits the ux-overhaul 7.12 budget of 4 ms desktop / 16 ms phone.
+- **Fireflies:** at most 14 per plate, animating only `transform` and `opacity` (no layout, no paint).
+  Pause them with `animation-play-state: paused` while the World menu is closed, and on plates scrolled
+  out of view (one `IntersectionObserver`). DOM: 14 motes plus about 20 pins, flags and labels is 34
+  nodes, under the budget of 40 per region. If a low-end phone drops frames, fall back to 6 per plate.
+- **Sprites:** the landmarks are C's fixed pixel maps, baked once with the plates. The road lamp is 2
+  small sprites (lit and dark), stamped after the relight and shaded per pixel from the light plate.
+
+### How it carries to 5 regions
+
+A new region adds only numbers and a palette, as in ux-overhaul 7.10. The light model stays the same.
+
+- **Ground:** A's tile palette and 2-3 stamps per region. The Coast has sea, shingle and pines; the
+  Emberwaste ash, cracks and dead trees; the Pale Reach snow and frosted pines; the Long Stair cave
+  floor and crystals.
+- **Lamp tint:** warm `#FFBA60` in the Hollow, `#FFC890` on the Coast, a hotter `#FF8A50` in the
+  Emberwaste, pale `#FFE0B0` on the Pale Reach and crystal violet `#C8A0FF` on the Long Stair.
+- **One set of fixed pixels** per region, so its dark is never plain black: sea crests, lava cracks,
+  frost glints or crystals.
+- **One mote kind:** fireflies, sea motes, embers, snow or crystal sparks.
+- **Locked (Next or Beyond):** all shadow. Only the frontier's dusk glow shows, around the chained
+  gate, plus the raid's red pool if its foe lives there.
+
+The bottom row of `map-h-closeups.png` shows all five regions, lit and locked.
+
+### Weak points and notes for UX-W1
+
+- Dark lamps show as strong black silhouettes on the Coast, where whole rows are unlit. If that
+  looks heavy, draw dark lamps one step lighter (a dusk outline) or drop their arm.
+- The shadow palette keeps a trace of green and blue so tree canopies still read. A darker shadow
+  would be spookier, but it would hide the geography that A was picked for.
+- The camp tier makes the Hollow 24 art px (48 CSS px) taller. The late-save scroll is about 1,440 px (MAP0 A: about 1,390).
+- While you fight at your max zone, the frontier glow sits under the You marker. That is on purpose:
+  the hero's lantern lights the road ahead.

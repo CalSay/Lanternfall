@@ -372,7 +372,7 @@ const STYLE_H = (() => {
       const crop = new Spr(W, h); for (let y = 0; y < h; y++) for (let x = 0; x < W; x++) crop.c[y * W + x] = res.plate.c[(y + y0) * W + x];
       const glow = res.glowLights.filter(l => l.y > y0 - 6 && l.y < y1).map(l => Object.assign({}, l, { y: l.y - y0 }));
       const ms = res.motes.filter(m => m.y > y0 && m.y < y1 - 2).map(m => Object.assign({}, m, { y: m.y - y0 }));
-      const f = $('figure', 'strip'); f.append($('figcaption', '', n + (n === 1 ? ' lamp lit' : ' lamps lit')), compose(crop, glow, [], ms, Z)); wrap.append(f);
+      const f = $('figure', 'strip'); f.append($('figcaption', '', n === 0 ? 'No lamps lit' : n === 7 ? 'All 7 lamps lit' : n + ' lamps lit'), compose(crop, glow, [], ms, Z)); wrap.append(f);
     }
   }
 
