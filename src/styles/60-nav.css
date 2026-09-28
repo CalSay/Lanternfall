@@ -1,0 +1,78 @@
+/* 60-nav: global navigation (UX-A, 75-nav-ui.js; docs/design/ux-overhaul.md 4): the activity pill
+   in the header (two variants, NAV_TUNE.pillReplacesName), the Switch button on the control row,
+   the quick switcher sheet, and the fade when a swipe changes the view. */
+
+/* ---- header: the XP bar becomes a 3 px line along the bottom edge ---- */
+.top.nav-pill, .top.nav-line { position: relative; }
+.top.nav-pill .who > .bar, .top.nav-line .who > .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border: 0; background: #0B0810; }
+.top.nav-pill .who > .bar > i, .top.nav-line .who > .bar > i { box-shadow: none; }
+
+/* ---- the pill ---- */
+.act-pill { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; height: 36px; padding: 0 8px 0 7px; background: var(--panel-2); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 0 #0B0810; color: var(--bone); cursor: pointer; text-align: left; }
+.act-pill .ap-ic { flex: none; width: 18px; height: 18px; image-rendering: pixelated; }
+.act-pill .ap-tx { flex: 1; min-width: 0; font: 600 calc(14px * var(--display-k))/1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-pill .ap-chev { flex: none; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--muted); }
+.act-pill.gather { border-color: var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel-2) 70%); }
+.act-pill.gather .ap-tx { color: #FFE7A8; }
+.act-pill.raid { border-color: #8E2A2A; }
+.act-pill.deep { border-color: #4F77B8; }
+.act-pill.full { border-color: var(--hp); background: linear-gradient(90deg, rgba(224,82,79,.18), var(--panel-2) 70%); }
+.act-pill.full .ap-tx { color: #FFB4A8; }
+.act-pill:active { transform: translateY(1px); }
+
+/* variant A (default): the pill replaces the name */
+.top.nav-pill .hname { display: none; }
+.top.nav-pill .who { display: flex; align-items: center; }
+.top.nav-pill .act-pill { max-width: 420px; }
+
+/* variant B: the name stays, the pill is a smaller second line under it (header stays 48 px) */
+.top.nav-line .who { gap: 3px; }
+.top.nav-line .hname { font-size: calc(15px * var(--display-k)); }
+.top.nav-line .act-pill { position: relative; height: 19px; gap: 5px; padding: 0 6px 0 5px; box-shadow: none; }
+.top.nav-line .act-pill::after { content: ""; position: absolute; inset: -9px -4px -8px; }   /* 36 px hit area */
+.top.nav-line .act-pill .ap-ic { width: 12px; height: 12px; }
+.top.nav-line .act-pill .ap-tx { font-size: calc(11px * var(--display-k)); }
+.top.nav-line .act-pill .ap-chev { border-left-width: 3px; border-right-width: 3px; border-top-width: 4px; }
+
+/* ---- control row: the Gather button names its skill, and Switch ---- */
+.modeseg button[data-act="gather"] { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.modeseg .mode-ic { width: 14px; height: 14px; image-rendering: pixelated; }
+.ctrl-switch { flex: none; margin-right: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 0 #0B0810; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
+.ctrl-switch .nvs-chev { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--muted); }
+@media (max-width: 380px) { .ctrl { gap: 6px; } .ctrl-switch { padding: 0 8px; } .modeseg .mode-ic { display: none; } }
+
+/* ---- the quick switcher ---- */
+.nv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: -4px 0 10px; }
+.nv-title { margin: 0; font: 600 calc(18px * var(--display-k))/1.1 var(--display); }
+.nv-hint { font-size: 12px; color: var(--muted); }
+.nv-list { margin-bottom: 12px; }
+.nv-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; cursor: pointer; }
+.nv-row + .nv-row { border-top: 1px solid var(--line); }
+.nv-row.here { cursor: default; box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
+.nv-row.off { cursor: default; opacity: .5; }
+.ic.nv-ic { width: 40px; height: 40px; }
+.ic.nv-ic img { width: 24px; height: 24px; }
+.nv-body { min-width: 0; }
+.nv-t { font: 600 calc(14px * var(--display-k))/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nv-row.here .nv-t { color: var(--gold); }
+.nv-m { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nv-act { min-width: 64px; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
+.nv-act.fight { background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 var(--ember-deep); }
+.nv-act.here { background: transparent; border-color: transparent; box-shadow: none; color: var(--gold); cursor: default; }
+.nv-act:disabled:not(.here) { opacity: .5; cursor: default; }
+.nv-rh { margin: 0 0 8px; }
+.nv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.nv-chip { min-height: 36px; padding: 0 10px; background: var(--panel); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
+.nv-links { display: flex; justify-content: space-between; gap: 8px; }
+.nv-link { min-height: 44px; padding: 0 6px; background: none; border: 0; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--muted); cursor: pointer; }
+.nv-link:hover { color: var(--gold); }
+
+/* ---- a swipe changes the view: 120 ms fade and slide ---- */
+.panels.nv-in-r { animation: nvInR .12s ease-out; }
+.panels.nv-in-l { animation: nvInL .12s ease-out; }
+@keyframes nvInR { from { opacity: .35; transform: translateX(14px); } }
+@keyframes nvInL { from { opacity: .35; transform: translateX(-14px); } }
+@media (prefers-reduced-motion: reduce) { .panels.nv-in-r, .panels.nv-in-l { animation: none; } .act-pill:active { transform: none; } }
+
+/* ---- toasts that lead somewhere (go): a chevron at the right edge ---- */
+.toast .go { margin-left: auto; padding-left: 6px; font: 700 16px/1 var(--body); color: var(--gold); }

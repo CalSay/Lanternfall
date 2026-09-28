@@ -20,6 +20,7 @@
     let spec = g.go;
     try { if (typeof spec === 'function') spec = spec(); if (spec && spec.fn) spec.fn(); }
     catch (e) { console.error('[lanternfall] goal go failed', g.id, e); return; }
+    if (spec && spec.act) { followGo(spec); return; }   // UX-A: an activity target switches (70-ui followGo)
     if (!spec || !spec.tab) { ui(true); return; }
     setTab(spec.view || spec.tab, spec.sel);   // setTab picks the view that holds sel
     const target = spec.sel ? document.querySelector(spec.sel) : null;

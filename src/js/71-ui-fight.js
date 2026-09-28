@@ -95,9 +95,10 @@ function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
-    putText(G.title, S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering');
-    putText(G.desc, 'Switch to Fight above the tabs to clear zones and earn gold and essence.');
-    putText(gq, 'Party'); putText(gp, 'Fight'); putDisabled(gb, false);
+    // UX-A copy: the heroes rest at the Hearth while the Lanternbearer gathers.
+    putText(G.title, S.activity === 'raid' ? 'You are at the raid' : 'You are gathering');
+    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : 'Your heroes rest at the Hearth. Fight here to clear zones and earn gold and essence.');
+    putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
     putText(G.desc, `${Math.ceil(bossTime)} seconds left. Tap fast.`);

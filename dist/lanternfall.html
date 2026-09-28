@@ -1736,55 +1736,90 @@ span.cf-d { font-weight: 600; }
   .fslots { gap: 6px; }
   .fbench { gap: 8px 4px; }
 }
-/* 60-gathering: the Gather tab (72-ui-gather.js): skill cards, the status strip, node rows, the Pack. */
-#skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-#skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
-#skillCards .skill .sn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 420px) {
-  #skillCards { gap: 6px; }
-  #skillCards .skill { padding: 8px 6px 8px 8px; }
-  #skillCards .skill .sn { letter-spacing: 0; font-size: 10px; text-transform: none; }
-  #skillCards .skill .sn img { display: none; }
-}
-.gat-sub { font: 600 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px 2px; }
+/* 60-gathering: the Gather tab's skill views (72-ui-gather.js, UX-A GX1; ux-overhaul.md 6.1):
+   the Now card, the skill line, Best for you, node rows with a held/cap bar, folds, and the
+   "where to get it" sheet. */
+.gx-view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.gx-view .sec { gap: 6px; }
+.gx-head .note { font-size: 12px; }
 
-/* ---- status strip: where the party works, the Glint, home ground ---- */
-.gat-now { display: grid; gap: 3px; padding: 7px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--line-hi); }
-.gat-now.on { border-left-color: var(--gold); }
-.gn-what { font: 600 calc(14px * var(--display-k))/1.2 var(--display); color: var(--muted); }
-.gat-now.on .gn-what { color: var(--gold); }
-.gn-glint { font-size: 12.5px; color: var(--muted); }
-.gn-glint[hidden] { display: none; }
-.gn-glint.lit { color: #FFE58A; font-weight: 600; text-shadow: 0 0 8px rgba(255,243,196,.6); animation: gn-pulse .6s ease-in-out infinite alternate; }
-.gn-home { font-size: 12.5px; color: #F2E6B0; }
-@keyframes gn-pulse { to { opacity: .6; } }
-@media (prefers-reduced-motion: reduce) { .gn-glint.lit { animation: none; } }
+/* ---- small chips (not tappable): Now, Home, Full, Right tool ---- */
+.gx-chip { flex: none; display: inline-block; padding: 1px 6px; font: 600 11.5px/1.45 var(--body); color: var(--muted); border: 1px solid var(--line-hi); background: var(--well); white-space: nowrap; }
+.gx-chip.hi { color: var(--gold); border-color: #8A6A28; }
+.gx-chip.good { color: var(--xp); border-color: #3B6A37; }
+.gx-chip.warn { color: #FF9A8E; border-color: #7A3434; }
+.gx-chip.gx-note { color: #CFE3FF; border-color: #3E5A80; }
+
+/* ---- the Now card ---- */
+.gx-now { display: grid; gap: 7px; padding: 10px; background: var(--panel); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.gx-now.on { border-color: #9A7A30; background: linear-gradient(180deg, rgba(242,193,78,.09), var(--panel) 65%); }
+.gx-now.on.full { border-color: #8A3A3A; background: linear-gradient(180deg, rgba(224,82,79,.1), var(--panel) 65%); }
+.gx-now-top { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ic.gx-nic img { width: 26px; height: 26px; }
+.gx-now-name { display: flex; align-items: center; gap: 8px; min-width: 0; font: 600 calc(16px * var(--display-k))/1.15 var(--display); }
+.gx-now-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-now:not(.on) .gx-now-name .nm { white-space: normal; }
+.gx-now-rate { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+.gx-now-held { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--bone); font-variant-numeric: tabular-nums; margin-bottom: -3px; }
+.gx-now-held span:last-child { color: var(--muted); }
+.gx-now.full .gx-now-held span:last-child { color: #FF9A8E; font-weight: 600; }
+.gx-nbar { display: block; height: 8px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
+.gx-nbar b { display: block; height: 100%; width: 0; background: var(--gold); box-shadow: inset 0 2px 0 rgba(255,255,255,.25); transition: width .2s; }
+.gx-now.full .gx-nbar b { background: var(--hp); }
+.gx-now-full { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font: 600 13px/1.3 var(--body); color: #F6D8D0; }
+.gx-now-full > span { flex: 1 1 160px; min-width: 0; }
+.gx-now-full .mini { min-height: 40px; }
+.gx-spill.on { border-color: var(--gold); color: var(--gold); }
+.gx-now-rest { font-size: 12px; color: var(--muted); }
+.gx-now-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gx-go { margin-left: auto; min-height: 44px; padding: 0 14px; background: var(--ember); color: #1A1420; border: 2px solid #0B0810; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep), 0 2px 0 #0B0810; font: 600 calc(15px * var(--display-k)) var(--display); cursor: pointer; }
+.gx-go:active { transform: translateY(1px); }
+/* the tool chip (75-tools-ui) */
+.gx-tool { display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%; min-height: 36px; padding: 0 8px 0 6px; background: var(--well); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
+.gx-tool img { width: 18px; height: 18px; flex: none; image-rendering: pixelated; }
+.gx-tool-tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-tool.rough { color: var(--muted); }
+.gx-tool.rar-uncommon { color: var(--r-uncommon); }
+.gx-tool.rar-rare { color: var(--r-rare); }
+.gx-tool.rar-epic { color: var(--r-epic); }
+.gx-tool.rar-legendary { color: var(--r-legendary); }
+.gx-tool.master { border-color: var(--gold); }
+/* on another skill's view: one line */
+.gx-strip { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--gold); font-size: 13px; color: var(--bone); }
+
+/* ---- the view switcher: each skill's level and a thin XP bar (gxLabels) ---- */
+.vseg button.has-xp { padding-bottom: 5px; }
+.vseg button .vxp { position: absolute; left: 12%; right: 12%; bottom: 7px; height: 3px; background: #0B0810; overflow: hidden; pointer-events: none; }
+.vseg button .vxp b { display: block; height: 100%; width: 0; background: var(--xp); }
 
 /* ---- node rows ---- */
-.gat-list { margin-top: 2px; }
-.gat-node { min-height: 52px; padding: 4px 6px 4px 8px; gap: 10px; }
-.gat-node .ic { width: 40px; height: 40px; }
-.gat-node .ic img { width: 26px; height: 26px; margin-top: -6px; }
+.gx-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; cursor: pointer; }
+.gx-row + .gx-row { border-top: 1px solid var(--line); }
+.gx-row.here { cursor: default; box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
+.gx-row.locked { cursor: default; opacity: .55; }
+.ic.gx-ic img { width: 26px; height: 26px; margin-top: -6px; }
 .gt-tier { position: absolute; left: 0; right: 0; bottom: 0; font: 600 calc(9.5px * var(--display-k))/1.25 var(--display); text-align: center; color: var(--bone); background: #0B0810D9; }
-.gat-node .row-name { font-size: 15px; flex-wrap: nowrap; align-items: center; gap: 6px; }
-.gat-node .row-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gt-home { flex: none; padding: 0 4px; font: 600 10px/1.5 var(--body); letter-spacing: .06em; text-transform: uppercase; color: #1A1420; background: #F2E6B0; }
-.gt-home[hidden] { display: none; }
-.gat-node .row-desc { margin-top: 1px; font-size: 12.5px; }
-.gt-held { font-size: 12px; color: var(--bone); font-variant-numeric: tabular-nums; }
-.gt-held[hidden] { display: none; }
-.gat-node .buy { min-width: 72px; min-height: 44px; padding: 4px 8px; }
-.gat-list > .row.active { box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
-.gat-node.active .nm { color: var(--gold); }
-.buy.work.here:disabled { background: transparent; color: var(--gold); border-color: var(--gold); box-shadow: none; }
-.gat-list > .row.locked { opacity: .55; }
+.gx-body { min-width: 0; }
+.gx-name { display: flex; align-items: center; gap: 6px; min-width: 0; font: 600 calc(14px * var(--display-k))/1.2 var(--display); }
+.gx-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-row.here .gx-name .nm { color: var(--gold); }
+.gx-meta { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; font-variant-numeric: tabular-nums; }
+.gx-bar { display: block; height: 4px; margin-top: 4px; background: var(--well); overflow: hidden; }
+.gx-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+.gx-row.full .gx-bar b { background: var(--hp); }
+.gx-act { min-width: 64px; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
+.gx-act.best { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E, 0 2px 0 #0B0810; }
+.gx-act.here { background: transparent; border-color: transparent; box-shadow: none; color: var(--gold); cursor: default; }
+.gx-act:disabled:not(.here) { color: var(--muted); cursor: default; box-shadow: none; }
 
-/* ---- Pack ---- */
-.mats button.mat { font: inherit; color: var(--bone); cursor: pointer; min-height: 48px; }
-.mats button.mat:active { transform: translateY(1px); }
-.mats button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
-.mats .mat.none { opacity: .5; }
-.gat-tro .mat .mn { font-size: 10px; }
+/* ---- folds: lower tiers, empty families, trophies ---- */
+.gx-fold { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 44px; padding: 8px 12px; background: transparent; border: 1px dashed var(--line-hi); font: 500 13px var(--body); color: var(--muted); text-align: left; cursor: pointer; }
+.gx-fold-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gx-fold-r { flex: none; font-weight: 600; color: var(--bone); }
+.gx-fold-r::after { content: " ▾"; }
+.gx-fold.open .gx-fold-r::after { content: " ▴"; }
+
+/* ---- where to get it (sheet) ---- */
 .gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
 .ic.gw-ic { width: 56px; height: 56px; }
 .ic.gw-ic img { width: 40px; height: 40px; }
@@ -2092,6 +2127,84 @@ span.cf-d { font-weight: 600; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
 .ms-pips i { width: 8px; height: 8px; background: var(--well); border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 1px #0B0810; }
 .ms-pips i.on { background: var(--gold); border-color: #8A6A1E; box-shadow: 0 0 4px rgba(242,193,78,.5); }
+/* 60-nav: global navigation (UX-A, 75-nav-ui.js; docs/design/ux-overhaul.md 4): the activity pill
+   in the header (two variants, NAV_TUNE.pillReplacesName), the Switch button on the control row,
+   the quick switcher sheet, and the fade when a swipe changes the view. */
+
+/* ---- header: the XP bar becomes a 3 px line along the bottom edge ---- */
+.top.nav-pill, .top.nav-line { position: relative; }
+.top.nav-pill .who > .bar, .top.nav-line .who > .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border: 0; background: #0B0810; }
+.top.nav-pill .who > .bar > i, .top.nav-line .who > .bar > i { box-shadow: none; }
+
+/* ---- the pill ---- */
+.act-pill { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; height: 36px; padding: 0 8px 0 7px; background: var(--panel-2); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 0 #0B0810; color: var(--bone); cursor: pointer; text-align: left; }
+.act-pill .ap-ic { flex: none; width: 18px; height: 18px; image-rendering: pixelated; }
+.act-pill .ap-tx { flex: 1; min-width: 0; font: 600 calc(14px * var(--display-k))/1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-pill .ap-chev { flex: none; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--muted); }
+.act-pill.gather { border-color: var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel-2) 70%); }
+.act-pill.gather .ap-tx { color: #FFE7A8; }
+.act-pill.raid { border-color: #8E2A2A; }
+.act-pill.deep { border-color: #4F77B8; }
+.act-pill.full { border-color: var(--hp); background: linear-gradient(90deg, rgba(224,82,79,.18), var(--panel-2) 70%); }
+.act-pill.full .ap-tx { color: #FFB4A8; }
+.act-pill:active { transform: translateY(1px); }
+
+/* variant A (default): the pill replaces the name */
+.top.nav-pill .hname { display: none; }
+.top.nav-pill .who { display: flex; align-items: center; }
+.top.nav-pill .act-pill { max-width: 420px; }
+
+/* variant B: the name stays, the pill is a smaller second line under it (header stays 48 px) */
+.top.nav-line .who { gap: 3px; }
+.top.nav-line .hname { font-size: calc(15px * var(--display-k)); }
+.top.nav-line .act-pill { position: relative; height: 19px; gap: 5px; padding: 0 6px 0 5px; box-shadow: none; }
+.top.nav-line .act-pill::after { content: ""; position: absolute; inset: -9px -4px -8px; }   /* 36 px hit area */
+.top.nav-line .act-pill .ap-ic { width: 12px; height: 12px; }
+.top.nav-line .act-pill .ap-tx { font-size: calc(11px * var(--display-k)); }
+.top.nav-line .act-pill .ap-chev { border-left-width: 3px; border-right-width: 3px; border-top-width: 4px; }
+
+/* ---- control row: the Gather button names its skill, and Switch ---- */
+.modeseg button[data-act="gather"] { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.modeseg .mode-ic { width: 14px; height: 14px; image-rendering: pixelated; }
+.ctrl-switch { flex: none; margin-right: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 0 #0B0810; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
+.ctrl-switch .nvs-chev { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--muted); }
+@media (max-width: 380px) { .ctrl { gap: 6px; } .ctrl-switch { padding: 0 8px; } .modeseg .mode-ic { display: none; } }
+
+/* ---- the quick switcher ---- */
+.nv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: -4px 0 10px; }
+.nv-title { margin: 0; font: 600 calc(18px * var(--display-k))/1.1 var(--display); }
+.nv-hint { font-size: 12px; color: var(--muted); }
+.nv-list { margin-bottom: 12px; }
+.nv-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; cursor: pointer; }
+.nv-row + .nv-row { border-top: 1px solid var(--line); }
+.nv-row.here { cursor: default; box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
+.nv-row.off { cursor: default; opacity: .5; }
+.ic.nv-ic { width: 40px; height: 40px; }
+.ic.nv-ic img { width: 24px; height: 24px; }
+.nv-body { min-width: 0; }
+.nv-t { font: 600 calc(14px * var(--display-k))/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nv-row.here .nv-t { color: var(--gold); }
+.nv-m { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nv-act { min-width: 64px; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--bone); cursor: pointer; }
+.nv-act.fight { background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 var(--ember-deep); }
+.nv-act.here { background: transparent; border-color: transparent; box-shadow: none; color: var(--gold); cursor: default; }
+.nv-act:disabled:not(.here) { opacity: .5; cursor: default; }
+.nv-rh { margin: 0 0 8px; }
+.nv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.nv-chip { min-height: 36px; padding: 0 10px; background: var(--panel); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
+.nv-links { display: flex; justify-content: space-between; gap: 8px; }
+.nv-link { min-height: 44px; padding: 0 6px; background: none; border: 0; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--muted); cursor: pointer; }
+.nv-link:hover { color: var(--gold); }
+
+/* ---- a swipe changes the view: 120 ms fade and slide ---- */
+.panels.nv-in-r { animation: nvInR .12s ease-out; }
+.panels.nv-in-l { animation: nvInL .12s ease-out; }
+@keyframes nvInR { from { opacity: .35; transform: translateX(14px); } }
+@keyframes nvInL { from { opacity: .35; transform: translateX(-14px); } }
+@media (prefers-reduced-motion: reduce) { .panels.nv-in-r, .panels.nv-in-l { animation: none; } .act-pill:active { transform: none; } }
+
+/* ---- toasts that lead somewhere (go): a chevron at the right edge ---- */
+.toast .go { margin-left: auto; padding-left: 6px; font: 700 16px/1 var(--body); color: var(--gold); }
 /* 60-onboard: the guide's hint (75-onboard-ui.js) and "new" marks on tabs and views.
    The layer never takes taps except the small dismiss button: play goes on under it. */
 .ob-layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
@@ -2489,42 +2602,40 @@ span.cf-d { font-weight: 600; }
   .st-card { grid-template-columns: minmax(0, 1fr); }
   .st-cbtn { justify-self: end; min-width: 132px; }
 }
-/* 60-store: the Storehouse in the Gather tab (75-store-ui.js, task H3). */
-.st-sec { margin: 0; }
-.st-sec[hidden] { display: none; }
-.st-chip { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; padding: 8px 10px; background: rgba(224,82,79,.1); border: 1px solid #6A3040; border-left: 3px solid var(--hp); }
-.st-chip.over { background: rgba(242,169,59,.1); border-color: #6A5030; border-left-color: #F2A93B; }
-.st-ic img { width: 24px; height: 24px; image-rendering: pixelated; display: block; }
-.st-txt { font: 600 13.5px/1.3 var(--body); color: #F6D8D0; }
-.st-chip.over .st-txt { color: #F7E2B8; }
-.st-acts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
-.st-acts .mini { min-height: 40px; }
-.st-acts .mini[hidden] { display: none; }
-.st-spill.on { border-color: var(--gold); color: var(--gold); }
+/* 60-store: the Storehouse view in the Gather tab (75-store-ui.js; H3, rebuilt by UX-A GX1). */
+.sh-view { gap: 12px; }
+.sh-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.sh-card-tx { min-width: 0; }
+.sh-title { margin: 0; font: 600 calc(17px * var(--display-k))/1.15 var(--display); }
+.sh-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.sh-up { flex: none; min-height: 44px; }
 
-/* node rows: "Oak 300/300" */
-.gt-held.st-warn { color: #F2A93B; }
-.gt-held.st-full { color: #FF8A80; font-weight: 600; }
-.gt-held.st-over { color: #F2A93B; font-weight: 600; }
+/* filter chips: one row, sideways scroll */
+.sh-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.sh-chips::-webkit-scrollbar { display: none; }
+.sh-fchip { flex: none; min-height: 36px; padding: 0 10px; background: var(--panel); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
+.sh-fchip.on { border-color: var(--gold); color: var(--gold); background: rgba(242,193,78,.08); }
 
-/* pack cells: a cap line and a thin bar */
-.mat .st-cap { font: 500 10px/1 var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
-.mat .st-cap[hidden], .mat .st-bar[hidden] { display: none; }
-.mat .st-bar { display: block; width: 100%; height: 3px; background: #0B0810; margin: 1px 0; }
-.mat .st-bar b { display: block; height: 100%; width: 0; background: #6E8A5A; }
-.mat.st-warn .st-bar b { background: #F2A93B; }
-.mat.st-full { border-color: #8A3A3A; }
-.mat.st-full .st-bar b { background: var(--hp); }
-.mat.st-full .st-cap { color: #FF8A80; font-weight: 600; }
-.mat.st-over .mc { color: #F2A93B; }
-.mat.st-over .st-bar b { background: #F2A93B; }
-.mat.st-over .st-cap { color: #F2A93B; font-weight: 600; }
+.sh-fams { display: grid; gap: 12px; }
+.sh-fam { gap: 6px; }
+.sh-fam .note { font-size: 12px; }
 
-/* pack summary */
-.st-sumrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.st-sum { margin: 0; min-width: 0; }
-.st-sumrow .mini { flex: none; min-height: 40px; }
-.st-sumrow .mini[hidden] { display: none; }
+/* cells: count, name, held/cap bar */
+button.mat { font: inherit; color: var(--bone); cursor: pointer; min-height: 52px; }
+button.mat:active { transform: translateY(1px); }
+button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
+.mat.none { opacity: .5; }
+.gat-tro .mat .mn { font-size: 10px; }
+.mat .sh-bar { display: block; width: 100%; height: 3px; background: #0B0810; margin: 2px 0 0; }
+.mat .sh-bar[hidden] { display: none; }
+.mat .sh-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+.mat.sh-warn .sh-bar b { background: #F2A93B; }
+.mat.sh-full { border-color: #8A3A3A; }
+.mat.sh-full .sh-bar b { background: var(--hp); }
+.mat.sh-full .mc { color: #FF8A80; }
+.mat.sh-over .mc { color: #F2A93B; }
+.mat.sh-over .sh-bar b { background: #F2A93B; }
+.sh-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* 60-story: the story on the stage and in its sheet (75-story-ui.js, LORE3). */
 
 /* ---- the stage caption: arrival banner and elder lines, in the open sky mid-stage ---- */
@@ -2606,35 +2717,17 @@ span.cf-d { font-weight: 600; }
   .sty-cap, .sty-chip { transition: none; animation: none; }
   .sty-cap.in, .sty-chip.in { animation: none; }
 }
-/* 60-tools: the tool card on the Gather tab and the Mastery box on a tool's item sheet (75-tools-ui.js, H2). */
-.tl-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "ic body" "btns btns"; gap: 6px 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); }
-.tl-card.master { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(242,193,78,.35); }
-.tl-ic { grid-area: ic; width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
-.tl-ic img { width: 30px; height: 30px; }
-.tl-body { grid-area: body; min-width: 0; display: grid; gap: 3px; }
-.tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
-.tl-name { font: 600 calc(15px * var(--display-k))/1.2 var(--display); color: var(--bone); }
-.tl-name.rough { color: var(--muted); }
-.tl-name.rar-uncommon { color: var(--r-uncommon); }
-.tl-name.rar-rare { color: var(--r-rare); }
-.tl-name.rar-epic { color: var(--r-epic); }
-.tl-name.rar-legendary { color: var(--r-legendary); }
-.tl-card.master .tl-name { color: var(--gold); }
-.tl-tag { font: 600 11px/1.4 var(--body); color: var(--muted); }
-.tl-tag.on { color: var(--xp); }
-.tl-tag[hidden] { display: none; }
-.tl-lines { font-size: 12.5px; color: var(--bone); }
+/* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
+   The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
 .tl-mlabel { font-weight: 600; color: var(--gold); }
 .tl-mleft { color: var(--muted); }
 .tl-bar { height: 6px; }
 .tl-bar > i { background: var(--gold); }
-.tl-perk { font-size: 12px; color: var(--muted); }
-.tl-btns { grid-area: btns; display: flex; gap: 8px; }
-.tl-btn { flex: 0 0 auto; min-width: 88px; min-height: 40px; padding: 4px 8px; font: 600 13px var(--body); color: var(--bone); background: var(--panel); border: 1px solid var(--line-hi); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-btn { flex: 0 0 auto; min-width: 88px; min-height: 44px; padding: 4px 10px; font: 600 13px var(--body); color: var(--bone); background: var(--panel); border: 1px solid var(--line-hi); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-btn:hover { border-color: var(--gold); }
-.tl-btn[hidden] { display: none; }
 .tl-make { flex: 1 1 0; color: #1A1420; background: var(--gold); border-color: var(--gold); }
+.tl-better { width: 100%; margin-top: 8px; }
 .tl-box .tl-mrow { margin-top: 0; }
 .tl-perks { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12.5px; }
 .tl-perks li { color: var(--muted); opacity: .7; }
@@ -2740,7 +2833,7 @@ span.cf-d { font-weight: 600; }
     <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
       <button data-act="fight" aria-pressed="true">Fight</button>
       <button data-act="gather" aria-pressed="false">Gather</button>
-      <button data-act="raid" aria-pressed="false">Raid</button>
+      <!-- UX-A (ux-overhaul.md 4.3, approved): Raid left the control row; it is in the quick switcher (online) -->
     </div>
     <div class="zstep" id="zStep">
       <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
@@ -2793,24 +2886,8 @@ span.cf-d { font-weight: 600; }
     <!-- Party (filled by 75-party.js) -->
     <section class="panel" id="p-party" hidden></section>
 
-    <!-- Gather -->
-    <section class="panel" id="p-gat" hidden>
-      <div class="skills" id="skillCards" data-view="mine wood forage"></div>
-      <div class="sec" data-view="mine">
-        <h2 class="sec-title">Mining</h2>
-        <div id="oreRows" class="sec"></div>
-      </div>
-      <div class="sec" data-view="wood">
-        <h2 class="sec-title">Woodcutting</h2>
-        <div id="woodRows" class="sec"></div>
-      </div>
-      <p class="note gat-how" data-view="mine wood forage">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
-      <div class="sec" data-view="pack">
-        <h2 class="sec-title">Your pack</h2>
-        <div class="mats" id="matGrid"></div>
-        <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
-      </div>
-    </section>
+    <!-- Gather: the skill views and the Storehouse are built by 72-ui-gather.js and 75-store-ui.js (UX-A, GX1) -->
+    <section class="panel" id="p-gat" hidden></section>
 
     <!-- Forge -->
     <section class="panel" id="p-forge" hidden>
@@ -10858,7 +10935,7 @@ var forgeGoalPicks = 0;
     pct: () => { const b = skillNext(); return b ? b.p : null; },
     label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv, b.k) - b.s.xp))} XP to level ${b.s.lv + 1}` + (skillNextReq(b.k) === b.s.lv + 1 ? `, which opens tier ${skillTopTier(b.k) + 1}` : '') : ''; },
     icon: () => { const b = skillNext(); return { ic: SKILL_IC[b ? b.k : 'mine'] || SKILL_IC.mine }; },
-    go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
+    go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', view: b.k }; }   // UX-A: the skill's own Gather view
   });
 
   // Craft: the next tier of an item the hero can wear (class kinds via CRAFT_FITS/fits; a
@@ -11893,6 +11970,220 @@ const masteryApi = {};
   addModifier('dmg', () => (1 + 0.1 * starsFor(zoneKills(S.zone))) * (1 + 0.01 * totalStars()));
   addModifier('gold', () => 1 + 0.1 * starsFor(zoneKills(S.zone)));
   for (const k in BESTIARY_PERKS) addModifier(BESTIARY_PERKS[k].mod, () => 1 + perkBonus(k));
+}
+
+// ---- src/js/55-nav.js ----
+// 55-nav: global navigation (task UX-A, docs/design/ux-overhaul.md 4 and 6.1): what the player is
+// doing now, the last node per gathering skill, recent places, "Best for you" and the one switch
+// call every place uses. UI: 75-nav-ui.js (the activity pill, the quick switcher, swipes between
+// views) and 72-ui-gather.js (the Gather views).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Exposed names:
+//   NAV_TUNE             knobs; NAV_TUNE.pillReplacesName is the header flag (spec 9.3): true = the
+//                        pill takes the name's place, false = the name stays and the pill is a
+//                        smaller second line under it
+//   NAV_SKILLS, NAV_FAMS { skill: [families] }, NAV_VERB { family: 'Mine' | 'Chop' | 'Cut' | 'Pick' }
+//   navSkillOpen(sk)     the skill's Gather view shows and the switcher lists it (a cold Hearth
+//                        shows Mining only once the fire is lit; Foraging with its feature)
+//   navSkills()          the open skills, in tab order
+//   navLast(sk)          { kind, t }: the node this skill resumes (its last node, else its best open one)
+//   navNow()             { act, skill, kind, t, zone, floor, text, icon, full }: the pill's facts
+//   navRate(kind, t)     units a minute on that node now (before taps and the Glint)
+//   navFullIn(kind, t)   seconds until the cell is full (0 full, Infinity: no cap or no income)
+//   navRecent()          up to NAV_TUNE.recentShow places not already listed by the switcher:
+//                        { k: 'node', kind, t } | { k: 'boss', z } | { k: 'deep', floor }
+//   bestNodes(sk)        up to 2 { kind, t, why }: the highest open tier, then home ground, then
+//                        what the next camp build waits on; never the node you work, never a full cell
+//   navGo(place) -> bool switch: { act: 'fight', zone? } | { act: 'gather', skill?, node? { kind, t } }
+//                        | { act: 'raid' } | { act: 'deep' } (resume a paused run)
+// Events: navGo { place, ok } after every navGo (75-nav-ui closes menus and sheets in portrait).
+// Save: registerState('nav', { v: 1, last: { mine, wood, forage }, recent: [] }).
+//   last[skill]: { kind, t } or null (filled from S.node on load). recent: newest first, at most
+//   NAV_TUNE.recentKeep of { kind, t } (a node left) and { z } (a zone boss that beat you).
+//   S.node keeps its meaning: the node worked now.
+
+const NAV_TUNE = {
+  pillReplacesName: true,   // header variant (spec 9.3; owner: the pill replaces the name). false = name kept, pill as a second line
+  recentKeep: 6,            // places kept in the save
+  recentShow: 3,            // chips in the switcher
+  needEvery: 2000           // ms between "what the next build waits on" scans
+};
+const NAV_SKILLS = ['mine', 'wood', 'forage'];
+const NAV_FAMS = { mine: ['ore', 'crystal'], wood: ['wood'], forage: ['fibre', 'herb'] };
+const NAV_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
+const NAV_NOUN = { ore: 'ore', crystal: 'crystal', wood: 'wood', fibre: 'fibre', herb: 'herbs' };
+let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bestNodes, navGo;
+{
+  registerState('nav', { v: 1, last: { mine: null, wood: null, forage: null }, recent: [] });
+  const N = () => {
+    const n = S.nav || (S.nav = { v: 1, last: {}, recent: [] });
+    if (!n.last || typeof n.last !== 'object') n.last = {};
+    if (!Array.isArray(n.recent)) n.recent = [];
+    return n;
+  };
+  const famsOf = sk => NAV_FAMS[sk] || [];
+  const validNode = nd => !!nd && typeof nd === 'object' && !!CRAFT_NODES[nd.kind] && nd.t >= 1 && nd.t <= 5 && (nd.t | 0) === nd.t;
+  const nodeOpen = nd => validNode(nd) && skillTierOpen(skillOf(nd.kind), nd.t);
+  const same = (a, b) => !!a && !!b && a.kind === b.kind && a.t === b.t;
+  const gathering = () => S.activity === 'gather';
+  const coldUnlit = () => typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
+  const feat = id => typeof isUnlocked !== 'function' || isUnlocked(id);
+
+  navSkillOpen = sk => {
+    if (!NAV_FAMS[sk]) return false;
+    if (gathering() && skillOf(S.node.kind) === sk) return true;   // the skill you work always shows
+    if (sk === 'forage') return feat('forage');
+    if (!feat('gather')) return false;
+    return sk !== 'mine' || !coldUnlit();
+  };
+  navSkills = () => NAV_SKILLS.filter(navSkillOpen);
+
+  navLast = sk => {
+    const fams = famsOf(sk); if (!fams.length) return null;
+    if (gathering() && skillOf(S.node.kind) === sk && validNode(S.node)) return { kind: S.node.kind, t: S.node.t };
+    const l = N().last[sk];
+    if (nodeOpen(l) && fams.includes(l.kind)) return { kind: l.kind, t: l.t };
+    if (skillOf(S.node.kind) === sk && nodeOpen(S.node)) return { kind: S.node.kind, t: S.node.t };
+    return { kind: fams[0], t: skillTopTier(sk) };
+  };
+
+  navRate = (kind, t) => 60 / nodeTime(kind, t) * nodeYieldAvg(kind) * mod('yield:' + kind);
+  navFullIn = (kind, t) => {
+    const cap = typeof storeCap === 'function' ? storeCap(kind, t) : Infinity;
+    if (!Number.isFinite(cap)) return Infinity;
+    const h = S.mats[kind][t - 1] || 0; if (h >= cap) return 0;
+    const r = navRate(kind, t); return r > 0 ? (cap - h) / r * 60 : Infinity;
+  };
+
+  const deepLive = () => typeof deepActive === 'function' && deepActive();
+  const deepRun = () => typeof DW === 'object' && DW && typeof DW.run === 'function' ? DW.run() : null;
+  navNow = () => {
+    if (deepLive()) { const r = deepRun(); const f = r ? r.floor : 1; return { act: 'deep', floor: f, text: `Deepwell · Floor ${f}`, icon: 'deep', full: false }; }
+    if (S.activity === 'raid') return { act: 'raid', text: `Raiding · ${online.world && online.world.name ? online.world.name : 'the world boss'}`, icon: 'raid', full: false };
+    if (gathering() && validNode(S.node)) {
+      const { kind, t } = S.node, sk = skillOf(kind);
+      const full = typeof stashFull === 'function' && stashFull(kind, t);
+      return { act: 'gather', skill: sk, kind, t, text: `${SKILL[sk]} · ${NODE_NAMES[kind][t - 1]}` + (full ? ' · full' : ''), icon: sk, full };
+    }
+    return { act: 'fight', zone: S.zone, text: `Fighting · Zone ${S.zone}`, icon: 'fight', full: false };
+  };
+
+  // ---- recent places ----
+  const pushRecent = p => {
+    const r = N().recent, key = x => x.z ? 'z' + x.z : x.kind + x.t;
+    const k = key(p);
+    for (let i = r.length - 1; i >= 0; i--) if (!r[i] || key(r[i]) === k) r.splice(i, 1);
+    r.unshift(p);
+    if (r.length > NAV_TUNE.recentKeep) r.length = NAV_TUNE.recentKeep;
+  };
+  navRecent = () => {
+    const out = [], listed = [];
+    for (const sk of navSkills()) listed.push(navLast(sk));
+    if (gathering()) listed.push(S.node);
+    const r = deepRun();
+    if (r && r.paused) out.push({ k: 'deep', floor: r.floor });
+    for (const p of N().recent) {
+      if (out.length >= NAV_TUNE.recentShow) break;
+      if (!p || typeof p !== 'object') continue;
+      if (p.z) { if (p.z === S.maxZone && p.z >= 1) out.push({ k: 'boss', z: p.z }); continue; }   // a boss you have since beaten drops off
+      if (!nodeOpen(p) || !navSkillOpen(skillOf(p.kind)) || listed.some(l => same(l, p))) continue;
+      out.push({ k: 'node', kind: p.kind, t: p.t });
+    }
+    return out.slice(0, NAV_TUNE.recentShow);
+  };
+
+  // Watch S.node (setNode, the Storehouse's Switch and Spillover, the cold Hearth all replace the
+  // object): remember it as its skill's last node and file the node left as a recent place.
+  // A loaded save (a new S) starts clean: its node fills its skill's slot if empty, nothing is filed.
+  let seenS = null, seenNode = null;
+  const fillLast = () => {
+    if (!validNode(S.node)) return;
+    const sk = skillOf(S.node.kind), n = N();
+    if (NAV_FAMS[sk] && !validNode(n.last[sk])) n.last[sk] = { kind: S.node.kind, t: S.node.t };
+  };
+  const watch = () => {
+    if (seenS !== S) { seenS = S; seenNode = S.node; fillLast(); return; }
+    if (S.node === seenNode) return;
+    const prev = seenNode; seenNode = S.node;
+    if (!validNode(S.node)) return;
+    const sk = skillOf(S.node.kind), n = N();
+    if (NAV_FAMS[sk]) n.last[sk] = { kind: S.node.kind, t: S.node.t };
+    if (prev && validNode(prev) && !same(prev, S.node)) pushRecent({ kind: prev.kind, t: prev.t });
+  };
+  onTick(watch);
+  fillLast();
+  on('bossFail', ({ zone }) => { if (zone >= 1) pushRecent({ z: zone }); });
+
+  // ---- Best for you ----
+  // What the next camp build waits on (its first short material this skill gathers at an open tier).
+  let needAt = -1e9, needFor = null, needS = null;
+  const campNeeds = () => {
+    const now = Date.now();
+    if (needS === S && now - needAt < NAV_TUNE.needEvery) return needFor;
+    needAt = now; needS = S; needFor = [];
+    try {
+      if (typeof campOpen !== 'function' || !campOpen() || typeof campList !== 'function') return needFor;
+      for (const id of campList()) {
+        if (typeof campPending === 'function' && campPending(id)) continue;
+        const to = campLevel(id) + 1, c = campCost(id, to); if (!c || !c.mats) continue;
+        const b = CAMP_B[id];
+        for (const [f, t, n] of c.mats) if (CRAFT_NODES[f] && (S.mats[f][t - 1] || 0) < n) needFor.push({ kind: f, t, why: `for the ${b ? b.n : 'camp'} Lv ${to}` });
+      }
+    } catch (e) { needFor = []; }
+    return needFor;
+  };
+  bestNodes = sk => {
+    const fams = famsOf(sk); if (!fams.length) return [];
+    const top = skillTopTier(sk), out = [];
+    const add = (kind, t, why) => {
+      if (out.length >= 2 || !fams.includes(kind) || t > top || t < 1) return;
+      if (gathering() && same(S.node, { kind, t })) return;
+      if (typeof stashFull === 'function' && stashFull(kind, t)) return;
+      if (out.some(o => same(o, { kind, t }))) return;
+      out.push({ kind, t, why });
+    };
+    const rarest = f => `rarest ${NAV_NOUN[f]} you can ${NAV_VERB[f].toLowerCase()}`;
+    add(fams[0], top, rarest(fams[0]));
+    const home = typeof homeFamily === 'function' ? homeFamily() : null, hb = home && typeof homeBonus === 'function' ? homeBonus(home) : 0;
+    if (home && hb > 0) add(home, top, `Home +${Math.round(hb * 100)}%`);
+    for (const nd of campNeeds()) add(nd.kind, nd.t, nd.why);
+    for (const f of fams.slice(1)) add(f, top, rarest(f));
+    return out;
+  };
+
+  // ---- the switch ----
+  navGo = place => {
+    let ok = false;
+    try { ok = go(place || {}); } catch (e) { console.error('[lanternfall] navGo failed', e); ok = false; }
+    emit('navGo', { place: place || {}, ok });
+    return ok;
+  };
+  function go(p) {
+    if (p.act === 'deep') {
+      if (deepLive()) return true;
+      const r = deepRun(); return !!(r && r.paused && DW.resume());
+    }
+    if (deepLive()) { toast('Climb out of the Deepwell first.', 'raid', null, 'normal'); return false; }
+    if (p.act === 'raid') { setActivity('raid'); return S.activity === 'raid'; }
+    if (p.act === 'fight') {
+      const z = p.zone | 0;
+      setActivity('fight');
+      if (S.activity === 'fight' && z >= 1 && z <= S.maxZone && z !== S.zone) setZone(z);
+      return S.activity === 'fight';
+    }
+    if (p.act === 'gather') {
+      const nd = p.node && validNode(p.node) ? p.node : navLast(p.skill || skillOf(S.node.kind));
+      if (!nodeOpen(nd)) return false;
+      const moved = !same(S.node, nd);
+      if (moved && !setNode(nd.kind, nd.t)) return false;
+      if (S.activity !== 'gather') setActivity('gather');
+      else if (moved) toast(`You move to the ${NODE_NAMES[nd.kind][nd.t - 1]}.`, 'good', null, 'low');
+      watch();
+      return S.activity === 'gather';
+    }
+    return false;
+  }
 }
 
 // ---- src/js/55-onboard.js ----
@@ -27513,11 +27804,13 @@ function fillToast(t, msg, url) {
   if (url) t.append(img(url));
   t.append(el('span', 'tx', msg));
   if (t._more) t.append(el('span', 'more', '+' + t._more));
+  if (t._tap && !t._news) t.append(el('span', 'go', '›'));
   t._msg = msg;
 }
-function makeToast(msg, kind, url, p) {
-  const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : ''));
+function makeToast(msg, kind, url, p, go) {
+  const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : '') + (go ? ' has-go' : ''));
   t._p = p; t._kind = kind; t._more = 0;
+  if (go) t._tap = () => followGo(go);   // UX-A (ux-overhaul.md 4.6): a toast with go follows it on a tap
   t.setAttribute('role', 'status');
   fillToast(t, msg, url);
   // Tap to dismiss; swipe sideways to fling it away.
@@ -27536,7 +27829,7 @@ function makeToast(msg, kind, url, p) {
 // The stage box's height, kept by a ResizeObserver so a toast never reads layout.
 let stageBoxH = 0;
 try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offsetHeight; }).observe($('stageBox')); } catch (e) { stageBoxH = 999; }
-function showToast(msg, kind, icon, prio) {
+function showToast(msg, kind, icon, prio, go) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
   if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
@@ -27557,16 +27850,29 @@ function showToast(msg, kind, icon, prio) {
     if (p < 2) {
       const into = normals[normals.length - 1];
       notes.unread++; bellUpdate(true);
-      if (into) { into._more++; into.className = 'toast ' + (kind || ''); fillToast(into, msg, url); armToast(into); }
+      if (into) { into._more++; into._tap = go ? () => followGo(go) : null; into.className = 'toast ' + (kind || '') + (go ? ' has-go' : ''); fillToast(into, msg, url); armToast(into); }
       return;
     }
     // high: make room by retiring the oldest normal toasts first, then the oldest high ones
     const order = normals.concat(live.filter(t => t._p === 2));
     for (let i = 0; i <= live.length - room; i++) { const out = order[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
   }
-  const t = makeToast(msg, kind, url, p);
+  const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
+}
+// UX-A (ux-overhaul.md 4.6): one target shape for toasts, Next Up and away lines. go is
+// { tab, view, sel, fn } (open that menu view, scroll to sel) or an activity target
+// { act: 'fight', zone } / { act: 'gather', node: { kind, t } | skill } / { act: 'raid' | 'deep' }
+// (switch through navGo, 55-nav.js; closes menus in portrait), or a fn returning one.
+function followGo(go) {
+  try {
+    if (typeof go === 'function') go = go();
+    if (!go) return;
+    if (go.fn) go.fn();
+    if (go.act) { navGo(Object.assign({ close: true }, go)); return; }
+    if (go.tab || go.view) setTab(go.view || go.tab, go.sel);
+  } catch (e) { console.error('[lanternfall] go failed', e); }
 }
 // ---- What's new ----
 // Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
@@ -27766,13 +28072,15 @@ function saveUiPrefs() { try { localStorage.setItem(UI_KEY, JSON.stringify(uiPre
 //   and on the tab while that view is not open. Sections join a view with registerSection's `view`.
 //   feature (optional): a 55-onboard.js feature id; the view (and a tab with no view left) stays
 //   hidden until isUnlocked(feature).
-function registerView(tabId, { id, label, order = 50, dot, feature } = {}) {
+//   show (optional, UX-A): () -> bool, cheap; false leaves the view out of the switcher for now
+//   (Gather's Mining view on a cold Hearth before the fire, 72-ui-gather.js).
+function registerView(tabId, { id, label, order = 50, dot, feature, show } = {}) {
   tabId = TAB_ALIAS[tabId] || tabId;
   if (!id) throw new Error('registerView: needs an id');
   const list = VIEWS[tabId] || (VIEWS[tabId] = []);
   let v = list.find(x => x.id === id);
-  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; if (feature) v.feature = feature; }
-  else { v = { id, label: label || id, order, dot: dot || null, feature: feature || null }; list.push(v); }
+  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; if (feature) v.feature = feature; if (show) v.show = show; }
+  else { v = { id, label: label || id, order, dot: dot || null, feature: feature || null, show: show || null }; list.push(v); }
   list.sort((a, b) => a.order - b.order);
   if (!VIEW_OF[id] && !TAB_IDS.includes(id)) VIEW_OF[id] = tabId;
   if (S.tab === tabId) { buildViewSeg(tabId); applyView(tabId); }
@@ -27790,7 +28098,7 @@ registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'rost
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
 registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });
-registerView('gat', { id: 'pack', label: 'Pack', order: 40, feature: 'gather' });
+registerView('gat', { id: 'pack', label: 'Storehouse', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
 registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' });
 registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
 registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });
@@ -27802,7 +28110,7 @@ registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' })
 
 function viewsOf(t) { return VIEWS[t] || []; }
 // The views the player can see now (locked ones are left out of the switcher).
-function shownViews(t) { return viewsOf(t).filter(v => featOk(v.feature)); }
+function shownViews(t) { return viewsOf(t).filter(v => featOk(v.feature) && (!v.show || safeDot(v.show))); }
 function curView(t) {
   const all = viewsOf(t), list = shownViews(t), want = uiPrefs.views[t];
   return (list.find(v => v.id === want) || list[0] || all[0] || { id: '' }).id;
@@ -28011,6 +28319,9 @@ function putToggle(e, c, on_) { on_ = !!on_; if (e.classList.contains(c) !== on_
 const viewOpen = (t, v) => S.tab === t && curView(t) === v;
 
 let uiTimer = 0, slowTick = 0, lastPct = 100, trailRaf = 0;
+// UX-A: header parts owned by feature UI (75-nav-ui's activity pill) update here: uiHooks.push(fn(force)).
+// Keep them to write-on-change text updates; they run with every ui() call.
+const uiHooks = [];
 // Static HUD nodes, looked up once.
 const hudEl = {};
 for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint']) hudEl[id] = $(id);
@@ -28078,6 +28389,7 @@ function ui(force) {
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
   putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
+  for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
   if (viewOpen('adv', 'upgrades')) uiFight();
@@ -28226,7 +28538,7 @@ function registerTab({ id, label, icon, mount, update, hidden }) {
 }
 
 // ================= core event wiring =================
-on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio));
+on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio, t.go));
 on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
@@ -28331,9 +28643,10 @@ function uiFight() {
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
   const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
-    putText(G.title, S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering');
-    putText(G.desc, 'Switch to Fight above the tabs to clear zones and earn gold and essence.');
-    putText(gq, 'Party'); putText(gp, 'Fight'); putDisabled(gb, false);
+    // UX-A copy: the heroes rest at the Hearth while the Lanternbearer gathers.
+    putText(G.title, S.activity === 'raid' ? 'You are at the raid' : 'You are gathering');
+    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : 'Your heroes rest at the Hearth. Fight here to clear zones and earn gold and essence.');
+    putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
     putText(G.desc, `${Math.ceil(bossTime)} seconds left. Tap fast.`);
@@ -28380,71 +28693,51 @@ function uiFight() {
 }
 
 // ---- src/js/72-ui-gather.js ----
-// 72-ui-gather: the Gather tab (skills, nodes for every family, home ground, pack, trophies).
-// Node views: a status strip (where the party works, the Glint, home ground), then compact node
-// rows. Pack: every material is a button that opens "where to get it".
+// 72-ui-gather: the Gather tab's skill views (GX1, docs/design/ux-overhaul.md 6.1). Browser-only.
+// Rules and picks live in core: 55-nav.js (navLast, bestNodes, navRate, navFullIn, navGo),
+// 55-store.js (caps, Switch, Spillover), 55-tools.js (the tool). The Storehouse view is
+// 75-store-ui.js; the tool chip and its sheet are 75-tools-ui.js; the pill and the quick switcher
+// are 75-nav-ui.js.
+//
+// Each skill view (Mining, Wood, Foraging), top to bottom:
+//   1. the Now card: on the skill you work, the node, a minute / an hour, held vs cap, time to full,
+//      the tool chip and Back to fight (full: Switch and Spillover). On another skill's view it is a
+//      one-line strip; while fighting or raiding, one line and "Gather here".
+//   2. the skill line: level and the next tier (every skill's level and XP bar sit on the view
+//      switcher, gxLabels).
+//   3. Best for you: up to 2 rows (bestNodes).
+//   4. one list per family (Veins, Geodes, ...): the top two open tiers and the next locked one;
+//      lower tiers fold into one line. A row is one tap: the whole row moves you there.
+// Rows and cards are built once per view (on its first show) and updated in place (put* helpers).
+//
+// Hook for other systems (N1's Hands at nodes):
+//   registerGatherRowNote(fn(kind, t) -> string | null) -> remove()   a short chip on a node row
+//   (e.g. "2 Hands"); keep fn cheap, it runs about 5x a second while that view shows.
+// Also exposed: whereSheet(fam, t) (the "where to get it" sheet), gxNum(n) (short numbers),
+// GX_VIEW { skill: view id } and gatherSkillOfView(view).
 
-// ================= Gather panel =================
-const skillCards = ['mine', 'wood', 'forage'].map(k => {
-  const c = el('div', 'skill');
-  const sn = el('span', 'sn');
-  const ic = k === 'mine' ? iconURL('pick', '#A9B1BD') : k === 'wood' ? iconURL('axe', '#A9B1BD') : iconURL(...craftIcon('sickle', 1));
-  sn.append(img(ic), el('span', null, SKILL[k]));
-  const sl = el('span', 'sl'); const bar = el('div', 'bar'); const bi = el('i'); bar.append(bi);
-  c.append(sn, sl, bar); $('skillCards').append(c);
-  return { k, lv: sl, bar: bi };
-});
+const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage' };
+const gatherSkillOfView = v => NAV_SKILLS.includes(v) ? v : null;
+const GX_ICON = {
+  mine: () => iconURL('pick', '#A9B1BD'),
+  wood: () => iconURL('axe', '#A9B1BD'),
+  forage: () => iconURL(...craftIcon('sickle', 1))
+};
+// "70", "5.34K", "40K"
+const gxNum = n => n < 1000 ? String(Math.floor(Math.max(0, n))) : fmt(n).replace(/\.(\d*?)0+(?=\D*$)/, (m, d) => d ? '.' + d : '');
+const gxHeld = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t); return Number.isFinite(cap) ? `${gxNum(h)} / ${gxNum(cap)}` : `${gxNum(h)} held`; };
+const gxFill = (k, t) => { const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t); return Number.isFinite(cap) && cap > 0 ? Math.min(1, h / cap) : 0; };
+const gxPerMin = r => r >= 100 ? gxNum(r) : r >= 10 ? String(Math.round(r)) : r.toFixed(1);
+const GX_ROW_NOTES = [];
+function registerGatherRowNote(fn) { GX_ROW_NOTES.push(fn); return () => { const i = GX_ROW_NOTES.indexOf(fn); if (i >= 0) GX_ROW_NOTES.splice(i, 1); }; }
 
-// Status strip on the node views (70-ui sub-views): where the party works, the Glint, home ground.
-const gNow = {};
-{
-  const box = el('div', 'gat-now'); box.dataset.view = 'mine wood forage';
-  gNow.box = box;
-  gNow.what = el('div', 'gn-what'); gNow.glint = el('div', 'gn-glint'); gNow.home = el('div', 'gn-home');
-  box.append(gNow.what, gNow.glint, gNow.home);
-  $('skillCards').after(box);
-}
-const homeNote = gNow.home;
+// Views: Mining shows only once it can be used (a cold Hearth: after the fire), so a new game
+// opens Gather on Wood. The Pack view is the Storehouse (id 'pack' kept for saved UI prefs).
+registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather', show: () => navSkillOpen('mine') });
+on('hearthLit', () => { if (S.tab === 'gat') { buildViewSeg('gat'); applyView('gat'); ui(true); } });
 
-// Foraging section, built here so shell.html stays as it is.
-{
-  const sec = el('div', 'sec'); sec.dataset.view = 'forage';
-  sec.append(el('h2', 'sec-title', SKILL.forage), Object.assign(el('div', 'sec'), { id: 'forageRows' }));
-  $('woodRows').parentElement.after(sec);  // before the how-to note, which ends each node view
-}
-const NODE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
-const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 'forageRows', herb: 'forageRows' };
-const nodeRows = {};
-function goNode(kind, t) {
-  if (!setNode(kind, t)) return false;
-  if (S.activity !== 'gather') setActivity('gather'); else { toast(`You move to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
-  return true;
-}
-// Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
-// the Go button. The node the party works shows as "Here" with a gold frame.
-// The rows, the pack grid and the trophies (about 75 icons) are built in idle time after boot, one
-// part per task, or all at once when the tab first updates (gatherBuild), not at load.
-function buildNodeRows(kind) {
-  const box = $(NODE_BOX[kind]);
-  if (kind !== 'wood') box.append(el('div', 'gat-sub', CRAFT_NODES[kind].row)); // Veins / Geodes, Fibre patches / Herb beds
-  const list = el('div', 'sec dz-list gat-list'); box.append(list);
-  nodeRows[kind] = [];
-  for (let t = 1; t <= 5; t++) {
-    const r = makeRow(list, NODE_NAMES[kind][t - 1], false, matIcon(kind, t));
-    r.row.classList.add('gat-node');
-    r.ic.append(el('span', 'gt-tier', 'T' + t));
-    r.home = el('span', 'gt-home', 'Home'); r.home.hidden = true; r.nm.after(r.home);
-    r.held = el('div', 'gt-held'); r.desc.after(r.held);
-    r.own.remove();
-    r.btn.classList.add('work');
-    r.btn.addEventListener('click', () => goNode(kind, t));
-    nodeRows[kind].push(r);
-  }
-}
-
-// Pack: every family by tier, then trophies.
-// Every material is a button: a tap opens "where to get it" (55-gathering whereToGet), with a Go
-// button to the node when a skill gathers it.
+// ---- the "where to get it" sheet (Storehouse cells, costs) ----
+const NODE_VERB = NAV_VERB;
 const NODE_VIEW_OF = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage' };
 function whereSheet(k, t) {
   if (typeof openSheet !== 'function') return;
@@ -28462,103 +28755,265 @@ function whereSheet(k, t) {
       const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
       const b = el('button', 'big horn gw-go', here ? 'You work here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
       b.type = 'button'; b.disabled = !open || here;
-      b.addEventListener('click', () => { if (goNode(k, t)) { api.close(); setTab(NODE_VIEW_OF[k]); } });
+      b.addEventListener('click', () => { api.close(true); navGo({ act: 'gather', node: { kind: k, t }, close: true }); });
       api.foot.append(b);
     } else {
       const b = el('button', 'big forge gw-go', 'Go fight'); b.type = 'button';
-      b.addEventListener('click', () => { if (S.activity !== 'fight') setActivity('fight'); api.close(); closeMenu(); });
+      b.addEventListener('click', () => { api.close(true); navGo({ act: 'fight', close: true }); });
       api.foot.append(b);
     }
   }, { label: 'Where to get ' + matName(k, t), small: true });
 }
-const matCells = {};
-function buildMatGrid() {
-  for (const k of CRAFT_FAMILIES) {
-    const row = el('div', 'mat-row'); matCells[k] = [];
-    for (let t = 1; t <= 5; t++) {
-      const c = el('button', 'mat'); c.type = 'button';
-      c.setAttribute('aria-label', `${matName(k, t)}: where to get it`);
-      const n = el('span', 'mc', '0');
-      c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
-      c.addEventListener('click', () => whereSheet(k, t));
-      row.append(c); matCells[k].push({ c, n });
-    }
-    $('matGrid').append(row);
-  }
-}
-const trophyCells = [];
-function buildTrophies() {
-  const row = el('div', 'mat-row gat-tro');
-  CRAFT_TROPHIES.forEach((tr, i) => {
-    const c = el('div', 'mat'); c.title = `${tr.n}: from champions and zone bosses (zone ${CRAFT_TROPHY_SRC.firstBossFrom} on).`;
-    const n = el('span', 'mc', '0');
-    c.append(img(iconURL(...craftIcon('tro_' + TYPES[i].key))), n, el('div', 'mn', tr.n.split(' ')[1] || tr.n));
-    row.append(c); trophyCells.push({ c, n });
-  });
-  $('matGrid').append(el('div', 'gat-sub', 'Trophies'), row);
-  $('matGrid').nextElementSibling.textContent = 'Tap a material to see where to get it. Hide and essence drop from monsters while you fight. Champions and zone bosses leave Trophies.';
-}
-// The parts in page order; each runs once.
-const gatherParts = GATHER_KINDS.map(kind => () => buildNodeRows(kind)).concat(buildMatGrid, buildTrophies);
-let gatherDone = 0;
-function gatherStep() { if (gatherDone < gatherParts.length) gatherParts[gatherDone++](); }
-function gatherBuild() { while (gatherDone < gatherParts.length) gatherStep(); }
-if (typeof idleTask === 'function') for (let i = 0; i < gatherParts.length; i++) idleTask(gatherStep);
-else gatherBuild();
 
-// Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
-// switch calls ui(true), so a view is fresh as soon as it shows).
-const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
-// 'Working: Copper Vein with your Copper Pickaxe. Your party rests at the Hearth: ...' (G1: 11c toolFor, 55-rested restNote)
-function gatherLine() {
-  const tool = typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
-  return `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}${tool ? ` with your ${tool.name}` : ''}.` + (typeof restNote === 'function' ? restNote() : '');
+// ---- building blocks ----
+const gxBtn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+// A node row: icon with its tier, name and one chip, one meta line, a 4 px held/cap bar, one button.
+function gxRow(list, kind, t) {
+  const row = el('div', 'gx-row'); row.dataset.kind = kind; row.dataset.t = t;
+  const ic = el('div', 'ic gx-ic'); ic.append(img(matIcon(kind, t)), el('span', 'gt-tier', 'T' + t));
+  const body = el('div', 'gx-body');
+  const nm = el('div', 'gx-name'), name = el('span', 'nm', NODE_NAMES[kind][t - 1]), chip = el('span', 'gx-chip'), note = el('span', 'gx-chip gx-note');
+  chip.hidden = true; note.hidden = true;
+  nm.append(name, chip, note);
+  const meta = el('div', 'gx-meta'), bar = el('i', 'gx-bar'), fill = el('b'); bar.append(fill);
+  body.append(nm, meta, bar);
+  const btn = gxBtn('gx-act', NODE_VERB[kind]);
+  row.append(ic, body, btn);
+  const r = { row, ic, chip, note, meta, fill, btn, kind, t, name };
+  const go = () => {
+    if (r.locked || r.here) return;
+    navGo({ act: 'gather', node: { kind, t }, close: S.activity !== 'gather' });
+  };
+  row.addEventListener('click', e => { if (e.target !== btn) go(); });
+  btn.addEventListener('click', go);
+  list.append(row);
+  return r;
 }
-function uiGather() {
-  gatherBuild();
-  const view = curView('gat'), nodeView = view !== 'pack';
-  if (nodeView) {
-    for (const c of skillCards) {
-      const sk = S.skills[c.k];
-      putText(c.lv, 'Lv ' + sk.lv);
-      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv, c.k) * 100) + '%');
-    }
-    const home = homeFamily(), hb = homeBonus(home);
-    putText(homeNote, `Home ground: ${MAT[home].n} +${Math.round(hb * 100)}% in ${zoneName(S.zone)}.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars there: +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
-    const gathering = S.activity === 'gather', g = gathering ? glint() : null;
-    putText(gNow.what, gathering ? gatherLine() : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
-    putToggle(gNow.box, 'on', gathering);
-    putHidden(gNow.glint, !gathering);
-    if (gathering) {
-      putText(gNow.glint, g.on ? `Glint! Tap the stage now for extra (${Math.ceil(g.left)}s)` : 'Glint: now and then the node sparkles. Tap it then for extra.');
-      putToggle(gNow.glint, 'lit', g.on);
-    }
+// Update a row. opts: { best, why } for Best for you rows.
+function gxRowUpdate(r, opts) {
+  const { kind, t } = r, sk = skillOf(kind), open = skillTierOpen(sk, t), req = skillReq(sk, t);
+  const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
+  const full = open && typeof stashFull === 'function' && stashFull(kind, t);
+  r.locked = !open; r.here = here;
+  putToggle(r.row, 'locked', !open);
+  putToggle(r.row, 'here', here);
+  putToggle(r.row, 'full', !!full);
+  putToggle(r.ic, 'ghost', !open);
+  const hk = open ? homeBonus(kind) : 0;
+  let chip = '', cc = '';
+  if (full) { chip = 'Full'; cc = 'warn'; }
+  else if (hk) { chip = `Home +${Math.round(hk * 100)}%`; cc = 'hi'; }
+  putHidden(r.chip, !chip); putText(r.chip, chip); putClass(r.chip, 'gx-chip' + (cc ? ' ' + cc : ''));
+  let note = '';
+  for (const f of GX_ROW_NOTES) { try { const n = f(kind, t); if (n) { note = String(n); break; } } catch (e) {} }
+  putHidden(r.note, !note); if (note) putText(r.note, note);
+  if (open) {
+    const rate = gxPerMin(navRate(kind, t));
+    putText(r.meta, opts && opts.why && !/^Home/.test(opts.why) ? `${rate} a min · ${opts.why}` : `${rate} a min · ${gxHeld(kind, t)}`);   // Home: the chip says it
+  } else putText(r.meta, `Needs ${SKILL[sk]} ${req}`);
+  putHidden(r.fill.parentNode, !open);
+  if (open) putStyle(r.fill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
+  putText(r.btn, here ? 'Here' : open ? NODE_VERB[kind] : `Lv ${req}`);
+  putClass(r.btn, 'gx-act' + (here ? ' here' : opts && opts.best ? ' best' : ''));
+  putDisabled(r.btn, !open || here);
+  putAttr(r.btn, 'aria-label', here ? `You work at the ${NODE_NAMES[kind][t - 1]}` : open ? `${NODE_VERB[kind]} at the ${NODE_NAMES[kind][t - 1]}` : `${NODE_NAMES[kind][t - 1]}: needs ${SKILL[sk]} ${req}`);
+}
+const gxHead = (title, note) => {
+  const h = el('div', 'sec-head gx-head'), t = el('h2', 'sec-title', title), n = el('span', 'note gx-hnote', note || '');
+  h.append(t, n); return { h, t, n };
+};
+
+// ---- one skill view ----
+const GX = {};   // skill -> refs, built on the view's first show
+function gxBuild(sk) {
+  const panel = $('p-gat'), view = el('div', 'gx-view'); view.dataset.view = GX_VIEW[sk];
+  const R = { sk, view, fams: {} };
+  // 1. the Now card (three states share it)
+  const card = el('div', 'gx-now'), top = el('div', 'gx-now-top');
+  R.nic = el('div', 'ic gx-nic'); R.nimg = img(GX_ICON[sk]()); R.nic.append(R.nimg);
+  const nb = el('div', 'gx-now-body');
+  const nt = el('div', 'gx-now-name'); R.nname = el('span', 'nm'); R.nchip = el('span', 'gx-chip hi', 'Now'); nt.append(R.nname, R.nchip);
+  R.nrate = el('div', 'gx-now-rate');
+  nb.append(nt, R.nrate); top.append(R.nic, nb);
+  R.nheld = el('div', 'gx-now-held'); R.nhl = el('span'); R.nhr = el('span'); R.nheld.append(R.nhl, R.nhr);
+  R.nbar = el('i', 'gx-nbar'); R.nfill = el('b'); R.nbar.append(R.nfill);
+  R.nfull = el('div', 'gx-now-full'); R.nfullTx = el('span'); R.nsw = gxBtn('mini', 'Switch'); R.nsp = gxBtn('mini gx-spill', 'Spillover');
+  R.nsw.addEventListener('click', () => { if (storeSwitch()) ui(true); });
+  R.nsp.addEventListener('click', () => { storeSpill(!S.store.spill); ui(true); });
+  R.nfull.append(R.nfullTx, R.nsw, R.nsp);
+  R.nrest = el('div', 'gx-now-rest');
+  const foot = el('div', 'gx-now-foot');
+  R.tool = typeof toolsUI === 'object' && toolsUI ? toolsUI.chip(sk) : el('span');
+  R.right = el('span', 'gx-chip');
+  R.nact = gxBtn('gx-go', 'Back to fight');
+  R.nact.addEventListener('click', () => {
+    if (R.state === 'here') navGo({ act: 'fight', close: true });
+    else navGo({ act: 'gather', skill: sk, close: true });
+  });
+  foot.append(R.tool, R.right, R.nact);
+  card.append(top, R.nheld, R.nbar, R.nfull, R.nrest, foot);
+  R.card = card;
+  // the strip on another skill's view
+  R.strip = el('div', 'gx-strip');
+  // 2. the skill line
+  const sl = el('div', 'sec gx-skill'); sl.id = 'gxSkill-' + sk;
+  const sh = gxHead(SKILL[sk]); R.slT = sh.t; R.slN = sh.n;
+  sl.append(sh.h);   // the XP bar is on the view switcher (gxLabels)
+  // 3. Best for you
+  const bs = el('div', 'sec gx-best'); const bh = gxHead('Best for you');
+  R.bestList = el('div', 'dz-list gx-list'); bs.append(bh.h, R.bestList);
+  R.best = []; R.bestSec = bs;
+  // 4. families
+  const famBox = el('div', 'gx-fams');
+  NAV_FAMS[sk].forEach((fam, i) => {
+    const s = el('div', 'sec gx-fam'), h = gxHead(CRAFT_NODES[fam].row, i === 0 ? 'held / cap' : '');
+    const list = el('div', 'dz-list gx-list');
+    const rows = [];
+    for (let t = 1; t <= 5; t++) rows.push(gxRow(list, fam, t));
+    const fold = gxBtn('gx-fold'); fold.setAttribute('aria-expanded', 'false');
+    const fl = el('span', 'gx-fold-l'), fr = el('span', 'gx-fold-r'); fold.append(fl, fr);
+    const F = { sec: s, rows, fold, fl, fr, open: false };
+    fold.addEventListener('click', () => { F.open = !F.open; putAttr(fold, 'aria-expanded', String(F.open)); gxUpdate(sk); });
+    s.append(h.h, list, fold);
+    famBox.append(s);
+    R.fams[fam] = F;
+  });
+  view.append(card, R.strip, sl, bs, famBox);
+  panel.append(view);
+  applyView('gat');
+  GX[sk] = R;
+  return R;
+}
+
+// The Now card: here / another skill / fighting or raiding.
+function gxNow(R) {
+  const sk = R.sk, act = S.activity, gathering = act === 'gather', nsk = gathering ? skillOf(S.node.kind) : null;
+  const deep = typeof deepActive === 'function' && deepActive();
+  const state = deep ? 'away' : gathering && nsk === sk ? 'here' : gathering ? 'other' : 'away';
+  R.state = state;
+  putHidden(R.card, state === 'other');
+  putHidden(R.strip, state !== 'other');
+  putToggle(R.card, 'on', state === 'here');
+  if (state === 'other') {
+    putText(R.strip, `You are ${SKILL[nsk].toLowerCase()} at the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Tap a node to move here.`);
+    return;
   }
-  for (const kind of GATHER_KINDS) {
-    if (NODE_VIEW[NODE_BOX[kind]] !== view) continue;
-    const sk = skillOf(kind), top = skillTopTier(sk), ym = mod('yield:' + kind), hk = homeBonus(kind);
-    nodeRows[kind].forEach((r, i) => {
-      const t = i + 1, req = skillReq(sk, t), open = t <= top;
-      const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
-      const prevOpen = t - 1 <= top;
-      putHidden(r.row, !open && !prevOpen);
-      putToggle(r.row, 'locked', !open);
-      putToggle(r.row, 'active', here);
-      putToggle(r.ic, 'ghost', !open);
-      putHidden(r.home, !(open && hk)); if (hk) putText(r.home, `Home +${Math.round(hk * 100)}%`);
-      putText(r.held, open ? storeHeld(kind, t) : ''); if (open) storeLvl(r.held, kind, t);   // H3: "Oak 300/300" (75-store-ui)
-      putHidden(r.held, !open);
-      const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
-      putText(r.desc, open ? `${per.toFixed(1)}s a swing · ${fmt(60 / per * yieldAvg)}/min` : `Needs ${SKILL[skillOf(kind)]} ${req}`);
-      putText(r.qty, here ? 'Working' : open ? NODE_VERB[kind] : 'Locked');
-      putText(r.price || (r.price = r.btn.querySelector('.price')), here ? 'Here' : open ? 'Go' : `Lv ${req}`);
-      putToggle(r.btn, 'here', here);
-      putDisabled(r.btn, !open || here);
+  const here = state === 'here';
+  for (const n of [R.nheld, R.nbar, R.tool, R.right]) putHidden(n, !here);
+  if (!here) putHidden(R.nrest, true);
+  putHidden(R.nchip, !here);
+  putHidden(R.nact, deep);
+  if (!here) {
+    putHidden(R.nfull, true);
+    const last = navLast(sk);
+    putAttr(R.nimg, 'src', matIcon(last.kind, last.t));
+    putText(R.nname, deep ? 'You are in the Deepwell.' : act === 'raid' ? 'You are at the raid.' : `You are fighting in Zone ${S.zone}.`);
+    putText(R.nrate, deep ? 'Climb out to gather again.' : `Gather here: the ${NODE_NAMES[last.kind][last.t - 1]}, ${gxPerMin(navRate(last.kind, last.t))} a min.`);
+    putText(R.nact, 'Gather here');
+    putClass(R.nact, 'gx-go gather');
+    return;
+  }
+  const { kind, t } = S.node, rate = navRate(kind, t);
+  putAttr(R.nimg, 'src', matIcon(kind, t));
+  putText(R.nname, NODE_NAMES[kind][t - 1]);
+  putText(R.nrate, `${gxPerMin(rate)} a minute · ${rate * 60 < 1e5 ? storeNum(Math.round(rate * 60)) : gxNum(rate * 60)} an hour`);
+  const cap = storeCap(kind, t), fin = Number.isFinite(cap), h = S.mats[kind][t - 1] || 0;
+  putText(R.nhl, `${MAT[kind].short[t - 1]} ${gxHeld(kind, t)}`);
+  const left = navFullIn(kind, t), full = fin && h >= cap;
+  putText(R.nhr, !fin ? '' : full ? (h > cap ? 'Over the cap' : 'Full') : Number.isFinite(left) ? `Full in ${fmtTime(left).replace(/ \d+s$/, '')}` : '');
+  putStyle(R.nfill, 'width', (gxFill(kind, t) * 100).toFixed(1) + '%');
+  putToggle(R.card, 'full', full);
+  // Storehouse full: Switch (the next node of this skill with room) and Spillover (Storehouse Lv 3).
+  putHidden(R.nfull, !full);
+  if (full) {
+    putText(R.nfullTx, `Storehouse full. ${SKILL[sk]} XP still counts.`);
+    const nx = storeNextNode(kind);
+    putHidden(R.nsw, !nx);
+    if (nx) putAttr(R.nsw, 'aria-label', `Switch to the ${NODE_NAMES[nx.kind][nx.t - 1]}`);
+    const lv3 = storeLevel() >= STORE_TUNE.spill;
+    putHidden(R.nsp, !lv3);
+    if (lv3) { putText(R.nsp, S.store.spill ? 'Spillover on' : 'Spillover off'); putToggle(R.nsp, 'on', !!S.store.spill); putAttr(R.nsp, 'aria-pressed', String(!!S.store.spill)); }
+  }
+  // The heroes rest at the Hearth while the Lanternbearer gathers (G1, 55-rested).
+  // A new game has no heroes yet: no line.
+  const heroes = !!(S.party && Array.isArray(S.party.field) && S.party.field.length);
+  const rest = heroes && typeof restNote === 'function' ? restNote().trim() : '';
+  putHidden(R.nrest, !heroes);
+  if (heroes) putText(R.nrest, rest ? rest.replace('Your party rests at the Hearth', 'Your heroes rest at the Hearth') : 'Your heroes rest at the Hearth while you gather.');
+  if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
+  const e = equippedTool(sk), on_ = TOOL_TUNE.on, right = e.tier >= t;
+  putHidden(R.right, !on_);
+  if (on_) {
+    putText(R.right, right ? 'Right tool' : `Wrong tool: -${Math.round((1 - 1 / (1 + TOOL_TUNE.right)) * 100)}%`);
+    putClass(R.right, 'gx-chip ' + (right ? 'good' : 'warn'));
+    putAttr(R.right, 'title', right ? `Tier ${e.tier} tool on a tier ${t} node: +${Math.round(TOOL_TUNE.right * 100)}% speed` : `A tier ${t} tool or better works ${Math.round(TOOL_TUNE.right * 100)}% faster here`);
+  }
+  putText(R.nact, 'Back to fight');
+  putClass(R.nact, 'gx-go');
+}
+
+function gxUpdate(sk) {
+  const R = GX[sk] || gxBuild(sk);
+  gxNow(R);
+  // skill line
+  const s = S.skills[sk], next = skillNextReq(sk);
+  putText(R.slT, `${SKILL[sk]} Lv ${s.lv}`);
+  putText(R.slN, next ? `Next tier: Lv ${next}` : 'Every tier open');
+  // Best for you
+  const best = bestNodes(sk);
+  putHidden(R.bestSec, !best.length);
+  best.forEach((b, i) => {
+    let r = R.best[i];
+    if (!r || r.kind !== b.kind || r.t !== b.t) {
+      const nr = gxRow(el('div'), b.kind, b.t);
+      if (r) r.row.replaceWith(nr.row); else R.bestList.append(nr.row);
+      R.best[i] = r = nr;
+    }
+    gxRowUpdate(r, { best: true, why: b.why });
+  });
+  while (R.best.length > best.length) R.best.pop().row.remove();
+  // families: the top two open tiers, the next locked one; lower tiers fold (the node you work never does)
+  const top = skillTopTier(sk);
+  for (const fam of NAV_FAMS[sk]) {
+    const F = R.fams[fam], low = [];
+    F.rows.forEach(r => {
+      const t = r.t, here = S.activity === 'gather' && S.node.kind === fam && S.node.t === t;
+      const folded = t < top - 1 && !here;
+      if (folded) low.push(r);
+      const show = t <= top + 1 && (!folded || F.open);
+      putHidden(r.row, !show);
+      if (show) gxRowUpdate(r);
     });
+    putHidden(F.fold, !low.length);
+    if (low.length) {
+      putText(F.fl, low.map(r => NODE_NAMES[fam][r.t - 1]).join(', '));
+      putText(F.fr, F.open ? 'Hide' : `${low.length} lower tier${low.length > 1 ? 's' : ''}`);
+      putToggle(F.fold, 'open', F.open);
+    }
   }
-  if (view !== 'pack') return;
-  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, v < 1e5 ? storeNum(v) : fmt(v)); putToggle(c, 'none', !v); storeCell(c, k, i + 1, v); });
-  trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
+}
+
+// The view switcher carries every skill's level and a thin XP bar ("Mining 52 · Wood 47 ·
+// Foraging 1 · Storehouse"; owner: levels above the lists, no skill cards). The Pack is the Storehouse.
+function gxLabels() {
+  for (const b of $('viewSeg').children) {
+    const v = b.dataset.view, sk = gatherSkillOfView(v);
+    const tn = b.firstChild; if (!tn || tn.nodeType !== 3) continue;
+    const want = sk ? `${sk === 'wood' ? 'Wood' : SKILL[sk]} ${S.skills[sk].lv}` : v === 'pack' ? 'Storehouse' : null;
+    if (want && tn.nodeValue !== want) tn.nodeValue = want;
+    if (!sk) continue;
+    if (!b._xp) { const x = el('i', 'vxp'), f = el('b'); x.append(f); b.append(x); b.classList.add('has-xp'); b._xp = f; }
+    const s = S.skills[sk];
+    putStyle(b._xp, 'width', Math.min(100, s.xp / skillNeed(s.lv, sk) * 100).toFixed(1) + '%');
+    putAttr(b, 'aria-label', `${SKILL[sk]} level ${s.lv}`);
+  }
+}
+// Writes go through the put* guards (70-ui.js), and only the open view updates (a view switch calls
+// ui(true), so a view is fresh as soon as it shows).
+function uiGather() {
+  gxLabels();
+  const sk = gatherSkillOfView(curView('gat'));
+  if (sk) gxUpdate(sk);
 }
 
 // ---- src/js/73-ui-forge.js ----
@@ -32553,6 +33008,7 @@ let deedsUI = null;
     let spec = g.go;
     try { if (typeof spec === 'function') spec = spec(); if (spec && spec.fn) spec.fn(); }
     catch (e) { console.error('[lanternfall] goal go failed', g.id, e); return; }
+    if (spec && spec.act) { followGo(spec); return; }   // UX-A: an activity target switches (70-ui followGo)
     if (!spec || !spec.tab) { ui(true); return; }
     setTab(spec.view || spec.tab, spec.sel);   // setTab picks the view that holds sel
     const target = spec.sel ? document.querySelector(spec.sel) : null;
@@ -33432,6 +33888,218 @@ let legendUI = null;
       }
     }
   });
+}
+
+// ---- src/js/75-nav-ui.js ----
+// 75-nav-ui: global navigation in the browser (task UX-A, docs/design/ux-overhaul.md 4.1-4.5).
+// Rules and state: 55-nav.js. Browser-only.
+//   - The activity pill in the header ("Mining · Copper Vein", "Fighting · Zone 37"), visible over
+//     every menu. Gold edge while gathering, red when the cell you work is full. Tap: the quick
+//     switcher. NAV_TUNE.pillReplacesName picks the header variant (spec 9.3): true = the pill takes
+//     the name's place (the XP bar becomes a 3 px line along the header's bottom edge); false = the
+//     name stays and the pill is a smaller second line under it. The pill updates from ui()
+//     (uiHooks) and writes only when its text changes: nothing runs per frame.
+//   - The quick switcher (a small sheet): Fight at your zone, each open skill's last node, up to 3
+//     recent places, "All nodes ›" and "Raid ›" (online only). One tap switches the activity and
+//     closes the sheet and any open menu (portrait); on wide screens the menu stays and updates.
+//   - The control row (4.3): [Fight · Z37] [Mining] [Switch]. Fight names the zone while you do something
+//     else, the Gather button the skill it resumes, Switch opens the switcher. Raid left the row (approved):
+//     the switcher has a Raid row online.
+//   - Swipe sideways on a menu's content: the next or previous view of that tab (56 px, or a flick
+//     over 0.4 px/ms; never from [data-noswipe], sliders, the star map, drag slots or sideways scrollers).
+//   - navGo { close: true } (55-nav) closes sheets and menus here.
+// Exposed: navUI { openSwitcher(), pill }
+
+let navUI = null;
+{
+  const ICON_OF = {
+    fight: () => iconURL('sword', '#A9B1BD'),
+    mine: () => iconURL('pick', '#D08A4E'),
+    wood: () => iconURL('axe', '#A9B1BD'),
+    forage: () => iconURL(...craftIcon('sickle', 1)),
+    raid: () => iconURL('banner', '#E0524F'),
+    deep: () => iconURL('flame', '#7FB2FF', { 5: '#CFE3FF', 7: '#FFFFFF' })
+  };
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+
+  // ---------------- the pill ----------------
+  const top = document.querySelector('.top'), who = top.querySelector('.who');
+  const pill = btn('act-pill'); pill.id = 'actPill';
+  pill.setAttribute('aria-haspopup', 'dialog');
+  const pIc = img(ICON_OF.fight(), 'px ap-ic'), pTx = el('span', 'ap-tx', 'Fighting'), pCh = el('span', 'ap-chev');
+  pCh.setAttribute('aria-hidden', 'true');
+  pill.append(pIc, pTx, pCh);
+  $('hName').after(pill);
+  top.classList.add(NAV_TUNE.pillReplacesName ? 'nav-pill' : 'nav-line');
+  pill.addEventListener('click', () => openSwitcher());
+  let pSig = '', pIcon = '';
+  function updatePill() {
+    const n = navNow(), sig = n.text + '|' + n.act + '|' + (n.full ? 1 : 0);
+    if (sig === pSig) return;
+    pSig = sig;
+    putText(pTx, n.text);
+    if (n.icon !== pIcon) { pIcon = n.icon; pIc.src = (ICON_OF[n.icon] || ICON_OF.fight)(); }
+    putClass(pill, 'act-pill ' + n.act + (n.full ? ' full' : ''));
+    putAttr(pill, 'aria-label', `${n.text}. Switch activity`);
+  }
+  uiHooks.push(updatePill);
+
+  // ---------------- the control row ----------------
+  const gBtn = document.querySelector('#modeSeg button[data-act="gather"]');
+  const gIc = img(ICON_OF.mine(), 'px mode-ic'), gTx = el('span', 'mode-tx', 'Gather');
+  gBtn.textContent = ''; gBtn.append(gIc, gTx);
+  const sw = btn('ctrl-switch'); sw.id = 'switchBtn';
+  sw.append(el('span', 'nvs-tx', 'Switch'), el('span', 'nvs-chev'));
+  sw.setAttribute('aria-haspopup', 'dialog'); sw.setAttribute('aria-label', 'Switch activity');
+  $('modeSeg').after(sw);
+  sw.addEventListener('click', () => openSwitcher());
+  let gSk = '';
+  uiHooks.push(() => {
+    // A cold Hearth before the fire keeps "Gather" (the guide says "Tap Gather").
+    const cold = typeof hearthCold === 'function' && hearthCold() && typeof hearthLit === 'function' && !hearthLit();
+    const sk = cold ? 'gather' : skillOf(S.node.kind);
+    if (sk !== gSk) {
+      gSk = sk;
+      gIc.src = (ICON_OF[sk] || ICON_OF[skillOf(S.node.kind)] || ICON_OF.mine)();
+      gTx.textContent = sk === 'wood' ? 'Wood' : SKILL[sk] || 'Gather';
+      gBtn.setAttribute('aria-label', `Gather: ${SKILL[sk] || ''}`.trim());
+    }
+    // Fight names the zone it goes back to while you do something else (the stepper shows it while you fight).
+    putText(fBtn, S.activity === 'fight' ? 'Fight' : `Fight · Z${S.zone}`);
+    // Nothing to switch to yet (a new game's first fights): the button waits, as the mode buttons do.
+    putHidden(sw, !navSkills().length && S.activity === 'fight');
+  });
+  const fBtn = document.querySelector('#modeSeg button[data-act="fight"]');
+
+  // ---------------- closing on a switch ----------------
+  function closeSheets() { for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click(); }
+  on('navGo', ({ place, ok }) => {
+    if (ok && place && place.close) { closeSheets(); closeMenu(); }
+    ui(true);
+  });
+
+  // ---------------- the quick switcher ----------------
+  const shortTime = s => fmtTime(s).replace(/ \d+s$/, '').replace(/ 0m$/, '');
+  function row(list, { icon, title, meta, here, label, cls, go, off }) {
+    const r = el('div', 'nv-row' + (here ? ' here' : '') + (off ? ' off' : ''));
+    const ic = el('div', 'ic nv-ic'); ic.append(img(icon));
+    const body = el('div', 'nv-body'); body.append(el('div', 'nv-t', title), el('div', 'nv-m', meta));
+    const b = btn('nv-act' + (here ? ' here' : cls ? ' ' + cls : ''), here ? 'Here' : label);
+    b.disabled = !!(here || off);
+    r.append(ic, body, b);
+    const pick = () => { if (!here && !off) go(); };
+    r.addEventListener('click', e => { if (e.target !== b) pick(); });
+    b.addEventListener('click', pick);
+    list.append(r);
+    return r;
+  }
+  function openSwitcher() {
+    if (typeof openSheet !== 'function') return;
+    openSheet(api => {
+      api.sheet.classList.add('nv-sheet');
+      const pickGo = place => { api.close(true); navGo(Object.assign({ close: true }, place)); };
+      const head = el('div', 'nv-head');
+      head.append(el('h2', 'nv-title', 'Switch activity'), el('span', 'nv-hint', isWide() ? '' : 'Menus close when you pick'));
+      const list = el('div', 'dz-list nv-list');
+      const now = navNow(), deep = now.act === 'deep';
+      if (deep) row(list, { icon: ICON_OF.deep(), title: `Deepwell · Floor ${now.floor}`, meta: 'Now · climb out to switch', here: true });
+      if (S.activity === 'raid') row(list, { icon: ICON_OF.raid(), title: now.text, meta: 'Now', here: true });
+      const fighting = S.activity === 'fight' && !deep;
+      row(list, {
+        icon: ICON_OF.fight(), title: `Fight · Zone ${S.zone}`, off: deep,
+        meta: `${zoneName(S.zone)} · ` + (fighting ? 'Now' : S.zone === S.maxZone ? `${S.kills} / 10 foes to the boss` : 'cleared'),
+        here: fighting, label: 'Fight', cls: 'fight', go: () => pickGo({ act: 'fight' })
+      });
+      for (const sk of navSkills()) {
+        const here = S.activity === 'gather' && skillOf(S.node.kind) === sk;
+        const nd = here ? S.node : navLast(sk), { kind, t } = nd;
+        const left = here ? navFullIn(kind, t) : Infinity, full = typeof stashFull === 'function' && stashFull(kind, t);
+        row(list, {
+          icon: matIcon(kind, t), title: `${SKILL[sk]} · ${NODE_NAMES[kind][t - 1]}`, off: deep,
+          meta: (here ? 'Now' : 'Last node') + ` · ${gxHeld(kind, t)}` + (full ? ' · full' : here && Number.isFinite(left) ? ` · full in ${shortTime(left)}` : ''),
+          here, label: NAV_VERB[kind], go: () => pickGo({ act: 'gather', node: { kind, t } })
+        });
+      }
+      // The raid (online only; Raid left the control row): march from here.
+      const raidOk = online.ready && online.canWrite && (typeof isUnlocked !== 'function' || isUnlocked('raid'));
+      if (raidOk && S.activity !== 'raid') row(list, { icon: ICON_OF.raid(), title: `Raid · ${online.world && online.world.name ? online.world.name : 'the world boss'}`, off: deep, meta: 'Every raider fights the same boss', label: 'March', go: () => pickGo({ act: 'raid' }) });
+      api.body.append(head, list);
+      const rec = deep ? [] : navRecent();
+      if (rec.length) {
+        const rh = el('h3', 'sec-title nv-rh', 'Recent'), chips = el('div', 'nv-chips');
+        for (const p of rec) {
+          const label = p.k === 'node' ? NODE_NAMES[p.kind][p.t - 1] : p.k === 'boss' ? `Zone ${p.z} boss` : `Deepwell · Floor ${p.floor}`;
+          const c = btn('nv-chip', label);
+          c.addEventListener('click', () => pickGo(p.k === 'node' ? { act: 'gather', node: { kind: p.kind, t: p.t } } : p.k === 'boss' ? { act: 'fight', zone: p.z } : { act: 'deep' }));
+          chips.append(c);
+        }
+        api.body.append(rh, chips);
+      }
+      const links = el('div', 'nv-links');
+      const skNow = S.activity === 'gather' ? skillOf(S.node.kind) : navSkills()[0];
+      if (skNow) {
+        const all = btn('nv-link', 'All nodes ›');
+        all.addEventListener('click', () => { api.close(true); setTab(GX_VIEW[skNow] || 'gat'); });
+        links.append(all);
+      }
+      if (VIEW_OF.map) {   // the World map (task W1) once it exists
+        const mp = btn('nv-link', 'Map ›');
+        mp.addEventListener('click', () => { api.close(true); setTab('map'); });
+        links.append(mp);
+      }
+      if (online.ready && typeof isUnlocked === 'function' && isUnlocked('raid')) {
+        const rd = btn('nv-link', 'Raid ›');
+        rd.addEventListener('click', () => { api.close(true); setTab('raid'); });
+        links.append(rd);
+      }
+      if (links.children.length) api.body.append(links);
+    }, { small: true, label: 'Switch activity' });
+  }
+
+  // ---------------- swipe between views ----------------
+  {
+    const panels = $('panels');
+    const NO = '[data-noswipe], svg, canvas, input, textarea, select, .fslot, .fb-tile, .st-svg, .dd-chips, .ex-filters, .sh-chips';
+    const noSwipe = tg => {
+      if (!tg || !tg.closest) return true;
+      if (tg.closest(NO)) return true;
+      for (let n = tg; n && n !== panels; n = n.parentElement) {
+        if (n.scrollWidth > n.clientWidth + 1) { const ox = getComputedStyle(n).overflowX; if (ox === 'auto' || ox === 'scroll') return true; }
+      }
+      return false;
+    };
+    let sx = 0, sy = 0, st = 0, armed = false;
+    panels.addEventListener('touchstart', e => {
+      armed = false;
+      if (e.touches.length !== 1 || !S.tab || shownViews(S.tab).length < 2 || noSwipe(e.target)) return;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = performance.now(); armed = true;
+    }, { passive: true });
+    panels.addEventListener('touchcancel', () => { armed = false; }, { passive: true });
+    panels.addEventListener('touchend', e => {
+      if (!armed) return; armed = false;
+      const t = e.changedTouches[0]; if (!t) return;
+      const dx = t.clientX - sx, dy = t.clientY - sy, ax = Math.abs(dx), dt = Math.max(1, performance.now() - st);
+      if (ax <= 1.5 * Math.abs(dy)) return;
+      if (ax < 56 && !(ax >= 24 && ax / dt > 0.4)) return;
+      swipeView(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  }
+  function swipeView(dir) {
+    const t = S.tab; if (!t) return false;
+    const list = shownViews(t), i = list.findIndex(v => v.id === curView(t)), j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return false;
+    setView(t, list[j].id);
+    if (!reduced) {
+      const p = $('panels');
+      p.classList.remove('nv-in-l', 'nv-in-r');
+      void p.offsetWidth;   // restart the 120 ms fade (a swipe is a rare, player-made event)
+      p.classList.add(dir > 0 ? 'nv-in-r' : 'nv-in-l');
+      clearTimeout(swipeView.tm); swipeView.tm = setTimeout(() => p.classList.remove('nv-in-l', 'nv-in-r'), 160);
+    }
+    return true;
+  }
+
+  navUI = { openSwitcher, pill, swipeView };
 }
 
 // ---- src/js/75-onboard-ui.js ----
@@ -35577,59 +36245,34 @@ let openSheet, partySheet;
 }
 
 // ---- src/js/75-store-ui.js ----
-// 75-store-ui: the Storehouse in the Gather tab (task H3, docs/design/hearth-and-hands.md 4.4).
-// Browser-only; the rules live in 55-store.js. The Storehouse's own card is the Camp's building
-// list (75-camp-ui.js); its icon is registered here.
-//   - Node views: a "Storehouse full" chip under the status strip, with Switch (the next node of the
-//     same skill that is not full) and, from Lv 3, the Spillover toggle.
-//   - Node rows and pack cells: "Oak 300/300", amber from 90%, red and "Full" at the cap, amber
-//     "Over" above it (72-ui-gather.js calls storeHeld / storeCell / storePackLine).
-//   - Pack view: one line with the level and the caps.
-//   - Salvage: storeSalvageNote(preview, t) for the Craft tab's in-page ask.
+// 75-store-ui: the Storehouse view in the Gather tab (task H3, rebuilt by UX-A GX1:
+// docs/design/ux-overhaul.md 6.2). Browser-only; the rules live in 55-store.js. The Storehouse's
+// building row is the Camp's list (75-camp-ui.js); its icon is registered here.
+//   - The view (id 'pack', label "Storehouse"): a top card (level, what it holds, Upgrade ›),
+//     filter chips (All and each family with something in it, Fought, Trophies), families as rows of
+//     5 cells with a held/cap bar in each, empty families folded into one line, trophies folded.
+//     A cell opens "where to get it" (72-ui-gather whereSheet).
+//   - The "Storehouse full" warning lives on the Now card and the header pill (72-ui-gather, 75-nav-ui).
+//   - storeStage (the stage's held line), storePackLine (the where-to-get sheet), storeSalvageNote
+//     (the Craft tab's salvage ask), STORE_ICON (the Camp row).
 
 registerIcons({
   b_store: ['............', '.6666666666.', '.6111111116.', '.6155555516.', '.6111111116.', '.6666666666.', '.6111111116.', '.6111771116.', '.6111771116.', '.6111111116.', '.6666666666.', '............']
 });
 const STORE_ICON = () => iconURL('b_store', '#8C6A43', { 6: '#4A3220', 5: '#B08A5A', 7: '#F2C14E' });
 
-// "Oak 300/300" (the node rows' held line). No cap (sim --store 0): "Oak 300 held".
-function storeHeld(k, t) {
-  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t), nm = MAT[k].short[t - 1];
-  if (!Number.isFinite(cap)) return `${nm} ${storeNum(h)} held`;
-  return `${nm} ${storeNum(h)}/${storeNum(cap)}` + (h > cap ? ' · Over the cap' : h >= cap ? ' · Full' : '');
-}
-function storeLvl(e, k, t) {
-  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
-  putToggle(e, 'st-warn', h >= cap * STORE_TUNE.warn && h < cap);
-  putToggle(e, 'st-full', h >= cap && h > 0 && h <= cap);
-  putToggle(e, 'st-over', h > cap);
-}
-// The stage's held line: "640/1,000 in pack", "1,000/1,000 · Full".
+// The stage's held line: "640/1,000 stored", "1,000/1,000 · Full".
 function storeStage(k, t) {
   const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
-  if (!Number.isFinite(cap)) return `${fmt(h)} in pack`;
+  if (!Number.isFinite(cap)) return `${fmt(h)} stored`;
   const n = h < 1e5 ? storeNum(h) : fmt(h), c = cap < 1e5 ? storeNum(cap) : fmt(cap);
-  return `${n}/${c} ` + (h > cap ? '· Over the cap' : h >= cap ? '· Full' : 'in pack');
-}
-// A pack cell: a cap line and a thin bar under the count.
-function storeCell(c, k, t, v) {
-  if (!c._st) {
-    const cap = el('span', 'st-cap'), bar = el('i', 'st-bar'), fill = el('b'); bar.append(fill);
-    c.querySelector('.mc').after(cap, bar);
-    c._st = { cap, fill };
-  }
-  const cap = storeCap(k, t), fin = Number.isFinite(cap);
-  putHidden(c._st.cap, !fin); putHidden(c._st.fill.parentNode, !fin);
-  if (!fin) return;
-  putText(c._st.cap, v > cap ? 'Over' : v >= cap ? 'Full' : '/' + (cap >= 1e4 ? storeNum(cap / 1000) + 'K' : storeNum(cap)));   // "/25K" fits a pack cell at 360px
-  putStyle(c._st.fill, 'width', Math.min(100, v / cap * 100) + '%');
-  storeLvl(c, k, t);
+  return `${n}/${c} ` + (h > cap ? '· Over the cap' : h >= cap ? '· Full' : 'stored');
 }
 // The "where to get it" sheet's first line.
 function storePackLine(k, t) {
   const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
-  if (!Number.isFinite(cap)) return `${storeNum(h)} in your pack · Tier ${t}`;
-  return `${storeNum(h)}/${storeNum(cap)} in your pack · Tier ${t}` + (h > cap ? `. Over the cap: spend below ${storeNum(cap)} to gather more.` : h >= cap ? '. Storehouse full.' : '');
+  if (!Number.isFinite(cap)) return `${storeNum(h)} in the Storehouse · Tier ${t}`;
+  return `${storeNum(h)} / ${storeNum(cap)} in the Storehouse · Tier ${t}` + (h > cap ? `. Over the cap: spend below ${storeNum(cap)} to gather more.` : h >= cap ? '. Full.' : '');
 }
 // Salvage: "Only 5 of 8 Copper Ore fit. Salvage anyway?" (preview: { fam: n } at tier t), or ''.
 function storeSalvageNote(preview, t) {
@@ -35641,61 +36284,127 @@ function storeSalvageNote(preview, t) {
 
 {
   const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
-  // ---- the full chip on the node views ----
-  let chip = null;
-  registerSection('gat', {
-    id: 'store-chip', view: 'mine wood forage',
-    mount(sec) {
-      sec.classList.add('st-sec');
-      if (typeof gNow === 'object' && gNow.box) gNow.box.after(sec);
-      chip = { box: el('div', 'st-chip'), txt: el('div', 'st-txt'), acts: el('div', 'st-acts') };
-      const ic = el('span', 'st-ic'); ic.append(img(STORE_ICON()));
-      chip.sw = btn('mini go', 'Switch');
-      chip.sw.addEventListener('click', () => { storeSwitch(); ui(true); });
-      chip.sp = btn('mini st-spill', 'Spillover');
-      chip.sp.addEventListener('click', () => { storeSpill(!S.store.spill); ui(true); });
-      chip.acts.append(chip.sw, chip.sp);
-      chip.box.append(ic, chip.txt, chip.acts);
-      sec.append(chip.box);
-    },
-    update() {
-      const sec = chip.box.parentNode;
-      const on = S.activity === 'gather', k = S.node.kind, t = S.node.t;
-      const full = on && stashFull(k, t), lv3 = storeLevel() >= STORE_TUNE.spill;
-      putHidden(sec, !full);
-      if (!full) return;
-      const over = stashOver(k, t);
-      putText(chip.txt, over ? `${matName(k, t)}: ${storeWhy(k, t)} ${SKILL[skillOf(k)]} XP still counts.`
-        : `Storehouse full: ${matName(k, t)}. ${SKILL[skillOf(k)]} XP still counts.`);
-      putToggle(chip.box, 'over', over);
-      const nx = storeNextNode(k);
-      putHidden(chip.sw, !nx);
-      if (nx) putAttr(chip.sw, 'aria-label', `Switch to the ${NODE_NAMES[nx.kind][nx.t - 1]}`);
-      putHidden(chip.sp, !lv3);
-      if (lv3) { putText(chip.sp, S.store.spill ? 'Spillover on' : 'Spillover off'); putToggle(chip.sp, 'on', !!S.store.spill); putAttr(chip.sp, 'aria-pressed', String(!!S.store.spill)); }
-    }
-  });
+  const FOUGHT = f => !GATHER_KINDS.includes(f);                     // hide, essence (and later fish, pearls)
+  const famNote = f => {
+    if (FOUGHT(f)) return 'from fights';
+    const sk = skillOf(f); return `${SKILL[sk]} ${S.skills[sk].lv}`;
+  };
+  const any = f => (S.mats[f] || []).some(n => n > 0);
+  const FILTERS = [['all', 'All'], ...CRAFT_FAMILIES.filter(f => !FOUGHT(f)).map(f => [f, MAT[f].n]), ['fought', 'Fought'], ['troph', 'Trophies']];
+  let V = null, filter = 'all', showEmpty = false, showTro = false;
 
-  // ---- the pack view: level and caps ----
-  let sum = null;
-  registerSection('gat', {
-    id: 'store-sum', view: 'pack',
-    mount(sec) {
-      sec.classList.add('st-sec');
-      // inside the Pack's own block, which already shows only on the pack view
-      const grid = $('matGrid'); if (grid) { grid.before(sec); delete sec.dataset.view; sec.classList.remove('off-view'); }
-      sum = { p: el('p', 'note st-sum'), go: btn('mini go', 'Storehouse') };
-      sum.go.addEventListener('click', () => setTab('world', '#camp-b-store'));
-      const row = el('div', 'st-sumrow'); row.append(sum.p, sum.go);
-      sec.append(row);
-    },
-    update() {
-      const lv = storeLevel(), g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv);
-      if (!Number.isFinite(g)) { putText(sum.p, 'No limits on materials.'); putHidden(sum.go, true); return; }
-      const n = storeFullCells().length;
-      putText(sum.p, (lv ? `Storehouse Lv ${lv}: holds ${storeNum(g)} of each, ${storeNum(h)} hide and essence.` : `Your packs hold ${storeNum(g)} of each, ${storeNum(h)} hide and essence.`) + (n ? ` ${n === 1 ? '1 pile is' : n + ' piles are'} full.` : ''));
-      putHidden(sum.go, !(typeof campOpen === 'function' && campOpen()));
+  function cell(f, t) {
+    const c = btn('mat sh-cell');
+    c.setAttribute('aria-label', `${matName(f, t)}: where to get it`);
+    const n = el('span', 'mc', '0'), cap = el('span', 'sh-cap'), bar = el('i', 'sh-bar'), fill = el('b'); bar.append(fill);
+    c.append(n, el('div', 'mn', MAT[f].short[t - 1]), bar);
+    c.addEventListener('click', () => whereSheet(f, t));
+    return { c, n, cap, fill, f, t };
+  }
+  function build(sec) {
+    V = { fams: {}, chips: {} };
+    // top card
+    const card = el('div', 'sh-card');
+    const tx = el('div', 'sh-card-tx');
+    V.title = el('h3', 'sh-title'); V.sub = el('div', 'sh-sub');
+    tx.append(V.title, V.sub);
+    V.up = btn('mini sh-up', 'Upgrade ›');
+    V.up.addEventListener('click', () => setTab('world', '#camp-b-store'));
+    card.append(tx, V.up);
+    // filter chips (one row, sideways scroll, no view swipe)
+    const chips = el('div', 'sh-chips'); chips.dataset.noswipe = '';
+    for (const [id, label] of FILTERS) {
+      const b = btn('sh-fchip', label); b.setAttribute('aria-pressed', String(id === filter));
+      b.addEventListener('click', () => { filter = id; ui(true); });
+      chips.append(b); V.chips[id] = b;
     }
+    // families
+    const fams = el('div', 'sh-fams');
+    for (const f of CRAFT_FAMILIES) {
+      const s = el('div', 'sec sh-fam'), h = el('div', 'sec-head'), tt = el('h2', 'sec-title', MAT[f].n), nt = el('span', 'note');
+      h.append(tt, nt);
+      const row = el('div', 'mat-row sh-row'), cells = [];
+      for (let t = 1; t <= 5; t++) { const x = cell(f, t); row.append(x.c); cells.push(x); }
+      s.append(h, row); fams.append(s);
+      V.fams[f] = { s, nt, cells };
+    }
+    // the empty families, folded into one line
+    V.empty = btn('gx-fold sh-empty'); V.emptyL = el('span', 'gx-fold-l'); V.emptyR = el('span', 'gx-fold-r'); V.empty.append(V.emptyL, V.emptyR);
+    V.empty.addEventListener('click', () => { showEmpty = !showEmpty; ui(true); });
+    // trophies, folded
+    V.tro = btn('gx-fold sh-tro'); V.troL = el('span', 'gx-fold-l'); V.troR = el('span', 'gx-fold-r'); V.tro.append(V.troL, V.troR);
+    V.tro.addEventListener('click', () => { showTro = !showTro; ui(true); });
+    V.troRow = el('div', 'mat-row sh-row gat-tro'); V.troCells = [];
+    CRAFT_TROPHIES.forEach((tr, i) => {
+      const c = el('div', 'mat'); c.title = `${tr.n}: from champions and zone bosses (zone ${CRAFT_TROPHY_SRC.firstBossFrom} on).`;
+      const n = el('span', 'mc', '0');
+      c.append(img(iconURL(...craftIcon('tro_' + TYPES[i].key))), n, el('div', 'mn', tr.n.split(' ')[1] || tr.n));
+      V.troRow.append(c); V.troCells.push({ c, n });
+    });
+    const note = el('p', 'note', 'Tap a material to see where it comes from.');
+    sec.append(card, chips, fams, V.empty, V.tro, V.troRow, note);
+    // icons last: 35 cells, only on the view's first show
+    for (const f of CRAFT_FAMILIES) for (const x of V.fams[f].cells) x.c.prepend(img(matIcon(f, x.t)));
+  }
+  function update() {
+    // top card
+    const lv = storeLevel(), g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv), fin = Number.isFinite(g);
+    putText(V.title, lv ? `Storehouse Lv ${lv}` : 'Storehouse');
+    const nFull = fin ? storeFullCells().length : 0;
+    putText(V.sub, !fin ? 'No limits on materials.' : (lv ? '' : 'Not built yet. ') + `Holds ${gxNum(g)} of each. Hide and essence ${gxNum(h)}.` + (nFull ? ` ${nFull === 1 ? '1 pile is' : nFull + ' piles are'} full.` : ''));
+    const camp = typeof campOpen === 'function' && campOpen();
+    putHidden(V.up, !fin || !camp);
+    putText(V.up, lv ? 'Upgrade ›' : 'Build ›');
+    // chips: All, every family with something in it, Fought, Trophies (when there are any)
+    const troN = (S.craft.troph || []).filter(n => n > 0).length;
+    for (const [id] of FILTERS) {
+      const has = id === 'all' ? true : id === 'fought' ? CRAFT_FAMILIES.some(f => FOUGHT(f) && any(f)) : id === 'troph' ? troN > 0 : any(id);
+      putHidden(V.chips[id], !has && filter !== id);
+      putAttr(V.chips[id], 'aria-pressed', String(filter === id));
+      putToggle(V.chips[id], 'on', filter === id);
+    }
+    // families
+    const empty = [];
+    for (const f of CRAFT_FAMILIES) {
+      const F = V.fams[f], has = any(f);
+      const inFilter = filter === 'all' || filter === f || (filter === 'fought' && FOUGHT(f));
+      if (!has && inFilter && filter === 'all') empty.push(f);
+      const show = inFilter && filter !== 'troph' && (has || showEmpty || filter !== 'all');
+      putHidden(F.s, !show);
+      if (!show) continue;
+      putText(F.nt, famNote(f));
+      for (const x of F.cells) {
+        const v = S.mats[f][x.t - 1] || 0, cap = storeCap(f, x.t), cf = Number.isFinite(cap);
+        putText(x.n, gxNum(v));
+        putToggle(x.c, 'none', !v);
+        putHidden(x.fill.parentNode, !cf);
+        if (cf) putStyle(x.fill, 'width', Math.min(100, v / cap * 100).toFixed(1) + '%');
+        putToggle(x.c, 'sh-warn', cf && v >= cap * STORE_TUNE.warn && v < cap);
+        putToggle(x.c, 'sh-full', cf && v >= cap && v > 0 && v <= cap);
+        putToggle(x.c, 'sh-over', cf && v > cap);
+        putAttr(x.c, 'title', cf ? `${matName(f, x.t)}: ${storeNum(v)} / ${storeNum(cap)}` : `${matName(f, x.t)}: ${storeNum(v)}`);
+      }
+    }
+    putHidden(V.empty, !empty.length);
+    if (empty.length) {
+      const names = empty.map(f => MAT[f].n.toLowerCase()), s = names.join(', ');
+      putText(V.emptyL, `${s[0].toUpperCase()}${s.slice(1)}: none yet`);
+      putText(V.emptyR, showEmpty ? 'Hide' : 'Show');
+      putToggle(V.empty, 'open', showEmpty);
+    }
+    // trophies
+    const troShow = filter === 'troph' || filter === 'all';
+    putHidden(V.tro, !troShow || filter === 'troph');
+    putText(V.troL, `Trophies: ${troN} of ${CRAFT_TROPHIES.length} kinds`);
+    putText(V.troR, showTro ? 'Hide' : 'Show');
+    putToggle(V.tro, 'open', showTro);
+    putHidden(V.troRow, !(filter === 'troph' || (troShow && showTro)));
+    V.troCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, gxNum(v)); putToggle(c, 'none', !v); });
+  }
+  registerSection('gat', {
+    id: 'store', view: 'pack',
+    mount(sec) { sec.classList.add('sh-view'); },
+    update() { if (!V) build($('sec-store')); update(); }
   });
 }
 
@@ -35901,29 +36610,27 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
 }
 
 // ---- src/js/75-tools-ui.js ----
-// 75-tools-ui: the tool card on the Gather tab's node views, and the Mastery box on a tool's item
-// sheet (task H2; docs/design/hearth-and-hands.md 2.4, 3 and 11). Browser-only. Rules: 55-tools.js.
+// 75-tools-ui: the tool chip on the Gather view's Now card, the rough tool's sheet, and the Mastery
+// box on a tool's item sheet (task H2, reshaped by UX-A GX1: docs/design/ux-overhaul.md 6.1).
+// Browser-only. Rules: 55-tools.js.
 //
-// The card sits under the status strip (72-ui-gather gNow) on the Mining, Woodcutting and Foraging
-// views and shows that view's tool: its name (the rough tool when the slot is empty), the three
-// lines, the right-tool tag for the node being worked, the mastery bar with the next perk, and two
-// buttons: Change (the Craft tab's picker for that position) and Make (the best tier worth making,
-// opened on the Craft tab's recipe list).
+// The chip is one row inside the Now card (72-ui-gather.js): the tool's icon and name in its
+// rarity colour, with its mastery level. A tap opens the tool's item sheet (75-craft-ui, which
+// appends itemBox: the mastery bar, perks and "Make better"), or for the rough tool (an empty slot)
+// a small sheet with the mastery box and Make (or Change). The Now card shows Right tool / Wrong tool.
 //
-// Exposed: toolsUI { itemBox(item) -> element | null }   75-craft-ui's item sheet appends it.
+// Exposed: toolsUI { chip(skill) -> button, chipUpdate(button, skill), open(skill),
+//                    masteryBox(kind) -> element, itemBox(item) -> element | null }
 
 let toolsUI = null;
 {
-  const VIEW_SKILL = { mine: 'mine', wood: 'wood', forage: 'forage' };
   const ROUGH_IC = {
     pick: () => iconURL('pick', '#8E8A84', { 6: '#6B4A2E' }),
     axe: () => iconURL('axe', '#8E8A84', { 6: '#6B4A2E' }),
     sickle: () => { const c = craftIcon('sickle', 1); return iconURL(c[0], '#DCD3C2', Object.assign({}, c[2], { 1: '#DCD3C2', 2: '#A89F8E', 3: '#F2ECDF' })); }
   };
   const minsTxt = s => { const m = Math.ceil(s / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60 ? (m % 60) + ' min' : ''}`.trim() : `${m} min`; };
-  const lineTxt = it => itemLines(it).slice(0, 3).map(([s, v]) => craftFmtLine(s, v)).join(' · ');
   const craftOpen = () => typeof isUnlocked !== 'function' || isUnlocked('craft');
-  const nextPerk = kind => toolPerks(kind).find(p => !p.on) || null;
   const masteryTxt = (kind, m) => m.max ? `${TOOL_KINDS[kind].n} mastered` : `${TOOL_KINDS[kind].n} mastery ${m.lv}`;
   const leftTxt = m => m.max ? 'Every perk is yours.' : `${minsTxt(m.left)} of gathering to level ${m.lv + 1}.`;
   function makeTool(kind, t) {
@@ -35932,80 +36639,77 @@ let toolsUI = null;
     setTab('make');
   }
 
-  // ---------------- the Gather card ----------------
-  const R = {};
-  const sec = registerSection('gat', {
-    id: 'tool', view: 'mine wood forage',
-    mount(s) {
-      const card = el('div', 'tl-card');
-      const ic = el('div', 'ic tl-ic'); R.img = img(ROUGH_IC.pick()); ic.append(R.img);
-      const body = el('div', 'tl-body');
-      const head = el('div', 'tl-head');
-      R.name = el('span', 'tl-name'); R.tag = el('span', 'tl-tag');
-      head.append(R.name, R.tag);
-      R.lines = el('div', 'tl-lines');
-      const mrow = el('div', 'tl-mrow');
-      R.mlabel = el('span', 'tl-mlabel'); R.mleft = el('span', 'tl-mleft');
-      mrow.append(R.mlabel, R.mleft);
-      const bar = el('div', 'bar tl-bar'); R.bar = el('i'); bar.append(R.bar);
-      R.perk = el('div', 'tl-perk');
-      body.append(head, R.lines, mrow, bar, R.perk);
-      const btns = el('div', 'tl-btns');
-      R.change = el('button', 'tl-btn', 'Change'); R.change.type = 'button';
-      R.change.addEventListener('click', () => { const k = R.kind; if (k && craftUI) craftUI.pick('hero', TOOL_KINDS[k].pos); });
-      R.make = el('button', 'tl-btn tl-make', 'Make'); R.make.type = 'button';
-      R.make.addEventListener('click', () => { if (R.best) makeTool(R.best.kind, R.best.t); });
-      btns.append(R.change, R.make);
-      card.append(ic, body, btns);
-      s.append(card);
-      R.card = card;
-    },
-    update() {
-      if (!R.card) return;
-      const skill = VIEW_SKILL[curView('gat')]; if (!skill) return;
-      const kind = toolOf(skill), e = equippedTool(skill), it = e.item, m = toolMastery(kind);
-      R.kind = kind;
-      putAttr(R.img, 'src', it ? itemIcon(it.slot, it.t, it.u) : ROUGH_IC[kind]());
-      putText(R.name, toolName(skill));
-      putClass(R.name, 'tl-name' + (it ? ' rar-' + (it.u || it.lr ? 'legendary' : it.r) : ' rough'));
-      putToggle(R.card, 'master', m.max);
-      putText(R.lines, it ? lineTxt(it) : `Base speed. Make a ${TOOL_KINDS[kind].n} at the Workbench.`);
-      // Right tool: against the node being worked, when it is this skill's.
-      const here = S.activity === 'gather' && skillOf(S.node.kind) === skill ? S.node.t : 0;
-      const right = here && e.tier >= here;
-      const pct = Math.round(TOOL_TUNE.right * 100);
-      putText(R.tag, !TOOL_TUNE.on ? '' : right ? `✓ Right tool: +${pct}% speed` : here ? `Right tool: tier ${here} or better for +${pct}% speed` : e.tier ? `Right tool on tiers 1-${e.tier}: +${pct}% speed` : '');
-      putToggle(R.tag, 'on', !!right);
-      putHidden(R.tag, !R.tag.textContent);
-      putText(R.mlabel, masteryTxt(kind, m));
-      putText(R.mleft, m.max ? '' : leftTxt(m));
-      putStyle(R.bar, 'width', (m.pct * 100).toFixed(1) + '%');
-      const np = nextPerk(kind);
-      putText(R.perk, np ? `Lv ${np.lv}: ${np.txt}` : 'Master: every perk is on.');
-      putHidden(R.change, !craftUI || !craftOpen());
-      const best = craftOpen() ? toolBest(skill) : null;
-      R.best = best && best.t > best.cur ? best : null;
-      putHidden(R.make, !R.best);
-      if (R.best) putText(R.make, `Make ${kindName(kind, R.best.t)}`);
-    }
-  });
-  // Under the status strip, above the node rows.
-  if (typeof gNow === 'object' && gNow.box) gNow.box.after(sec);
+  // ---------------- the chip ----------------
+  const toolIcon = skill => { const it = equippedTool(skill).item; return it ? itemIcon(it.slot, it.t, it.u) : ROUGH_IC[toolOf(skill)](); };
+  const rarCls = it => it ? ' rar-' + (it.u || it.lr ? 'legendary' : it.r) : ' rough';
+  function chip(skill) {
+    const b = el('button', 'gx-tool'); b.type = 'button'; b._skill = skill;
+    b._img = img(toolIcon(skill)); b._tx = el('span', 'gx-tool-tx');
+    b.append(b._img, b._tx);
+    b.addEventListener('click', () => openTool(b._skill));
+    return b;
+  }
+  function chipUpdate(b, skill) {
+    b._skill = skill;
+    const it = equippedTool(skill).item, m = toolMastery(toolOf(skill));
+    putAttr(b._img, 'src', toolIcon(skill));
+    putText(b._tx, toolName(skill).replace(/ \(rough\)$/, ''));
+    putClass(b, 'gx-tool' + rarCls(it) + (m.max ? ' master' : ''));
+    putAttr(b, 'aria-label', `${toolName(skill)}, ${masteryTxt(toolOf(skill), m).toLowerCase()}: details`);
+  }
 
-  // ---------------- the item sheet's Mastery box ----------------
+  // The best tool worth making now (null when the Workbench cannot do better yet).
+  const bestMake = skill => { const best = craftOpen() ? toolBest(skill) : null; return best && best.t > best.cur ? best : null; };
+  function makeBtn(skill, before) {
+    const kind = toolOf(skill), best = bestMake(skill); if (!best) return null;
+    const b = el('button', 'tl-btn tl-make', `Make ${kindName(kind, best.t)}`); b.type = 'button';
+    b.addEventListener('click', () => { if (before) before(); makeTool(best.kind, best.t); });
+    return b;
+  }
+  function openTool(skill) {
+    const it = equippedTool(skill).item;
+    if (it && craftUI && typeof craftUI.openItem === 'function') { craftUI.openItem(it.id); return; }
+    if (typeof openSheet !== 'function') return;
+    const kind = toolOf(skill);
+    openSheet(api => {
+      const head = el('div', 'gw-head'), ic = el('div', 'ic gw-ic'); ic.append(img(ROUGH_IC[kind]()));
+      const tx = el('div');
+      tx.append(el('h2', 'gw-name', toolName(skill).replace(/ \(rough\)$/, '')), el('small', 'gw-have', `Your rough tool: base speed. Make a ${TOOL_KINDS[kind].n} at the Workbench.`));
+      head.append(ic, tx);
+      api.body.append(head, masteryBox(kind));
+      const mk = makeBtn(skill, () => api.close(true));
+      if (mk) api.foot.append(mk);
+      else if (craftUI && craftOpen()) {
+        const ch = el('button', 'tl-btn', 'Change'); ch.type = 'button';
+        ch.addEventListener('click', () => { api.close(true); craftUI.pick('hero', TOOL_KINDS[kind].pos); });
+        api.foot.append(ch);
+      }
+    }, { small: true, label: toolName(skill) });
+  }
+
+  // ---------------- the Mastery box ----------------
+  function masteryBox(kind) {
+    const m = toolMastery(kind);
+    const box = el('div', 'cf-ss tl-box' + (m.max ? ' master' : ''));
+    box.append(el('h4', null, 'Mastery'));
+    const mrow = el('div', 'tl-mrow');
+    mrow.append(el('span', 'tl-mlabel', masteryTxt(kind, m)), el('span', 'tl-mleft', m.max ? '' : leftTxt(m)));
+    const bar = el('div', 'bar tl-bar'), bi = el('i'); bi.style.width = (m.pct * 100).toFixed(1) + '%'; bar.append(bi);
+    const list = el('ul', 'tl-perks');
+    for (const p of toolPerks(kind)) { const li = el('li', p.on ? 'on' : '', `Lv ${p.lv}: ${p.txt}`); list.append(li); }
+    list.prepend(el('li', 'on', `Each level: +${Math.round(TOOL_TUNE.spdPer * 100)}% ${SKILL[TOOL_KINDS[kind].skill].toLowerCase()} speed (now +${Math.round(TOOL_TUNE.spdPer * 100 * m.lv)}%)`));
+    box.append(mrow, bar, list, el('p', 'note', `Mastery belongs to every ${TOOL_KINDS[kind].n} you use, so a better one keeps it.`));
+    return box;
+  }
+
   toolsUI = {
+    chip, chipUpdate, open: openTool, masteryBox,
+    // The item sheet's Mastery box (75-craft-ui appends it), with "Make better" when the Workbench can.
     itemBox(it) {
       const d = itemKind(it); if (!d || !d.tool || !TOOL_KINDS[it.slot]) return null;
-      const kind = it.slot, m = toolMastery(kind);
-      const box = el('div', 'cf-ss tl-box' + (m.max ? ' master' : ''));
-      box.append(el('h4', null, 'Mastery'));
-      const mrow = el('div', 'tl-mrow');
-      mrow.append(el('span', 'tl-mlabel', masteryTxt(kind, m)), el('span', 'tl-mleft', m.max ? '' : leftTxt(m)));
-      const bar = el('div', 'bar tl-bar'), bi = el('i'); bi.style.width = (m.pct * 100).toFixed(1) + '%'; bar.append(bi);
-      const list = el('ul', 'tl-perks');
-      for (const p of toolPerks(kind)) { const li = el('li', p.on ? 'on' : '', `Lv ${p.lv}: ${p.txt}`); list.append(li); }
-      list.prepend(el('li', 'on', `Each level: +${Math.round(TOOL_TUNE.spdPer * 100)}% ${SKILL[TOOL_KINDS[kind].skill].toLowerCase()} speed (now +${Math.round(TOOL_TUNE.spdPer * 100 * m.lv)}%)`));
-      box.append(mrow, bar, list, el('p', 'note', `Mastery belongs to every ${TOOL_KINDS[kind].n} you use, so a better one keeps it.`));
+      const box = masteryBox(it.slot);
+      const mk = makeBtn(TOOL_KINDS[it.slot].skill, () => { const x = document.querySelector('.bsheet-x'); if (x) x.click(); });
+      if (mk) { mk.textContent = `Make better: ${kindName(it.slot, bestMake(TOOL_KINDS[it.slot].skill).t)} ›`; mk.classList.add('tl-better'); box.append(mk); }
       return box;
     }
   };
