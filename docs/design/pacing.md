@@ -415,3 +415,137 @@ are empty (P3 needs Region 3 power: ranks past 7, tier 6).
 - `AF_TUNE.bossTank` (35%) stays: with bosses at their Stage C size a Front tank still matters
   for the heavy hit.
 - Save compatibility: no stored field is added, renamed or lowered; only formulas change.
+
+## 12. GP1: gathering and crafting skill pace (2026-09-28)
+
+Owner (2026-09-28): "The resource gathering levelling is too fast... the next tier up only being 4
+levels away is too fast." Earlier: a slower pace overall. Knobs: `SKILL_TUNE` in `src/js/20-data.js`
+(one table). Measure with `node tools/sim.mjs --report skills [--days 30] [--focus 200]`; try values
+with `--eval "SKILL_TUNE.nodeReq[3] = 60"`.
+
+### 12.1 The knobs (before -> after)
+
+| Knob (`SKILL_TUNE`) | Before | After | Reads it |
+|---|---|---|---|
+| `nodeReq` (gathering tier gates, `NODE_REQ`) | 1 / 8 / 18 / 30 / 45 (gaps 7, 10, 12, 15) | 1 / 14 / 30 / 64 / 112 (gaps 13, 16, 34, 48) | `skillTopTier`, `skillTierOpen` (40-rules) |
+| `stationReq` (crafting tier gates, `SMITH_REQ`, `CRAFT_STATION_REQ`) | 1 / 4 / 9 / 16 / 25 (gaps 3, 5, 7, 9) | 1 / 10 / 22 / 36 / 54 (gaps 9, 12, 14, 18) | the same; `stationTierOpen` (55-crafting) |
+| `gatherNeed` (XP for the next gathering level) | 25 x 1.12^(lv-1) | 10 x lv^2.2 | `skillNeed(lv, k)` |
+| `craftNeed` (the same for the 4 stations) | 25 x 1.12^(lv-1) | 7 x lv^0.5 x 1.04^(lv-1) | `skillNeed(lv, k)` |
+| `nodeXp` (XP a swing at a tier-t node) | 6 x t^1.6 (6/18/35/55/79) | 7 x t (7/14/21/28/35) | `nodeXp`, `nodeXpFor` |
+| `spdPerLv` (gathering speed per level) | +2% | +2% (unchanged: old saves gather exactly as fast as before) | `nodeTime` |
+
+Why these shapes. A power curve (`lv^2.2`) instead of the old exponential: with an exponential curve
+and tier XP that jumps x2-3 at each new node, the level gaps between tiers shrink at the top (no
+exponential fit gave widening gaps with tier 2 near an hour). The flatter tier XP (`7 x t`) keeps
+the jump at a new node a treat (x2 at tier 2, x1.2 by tier 5) instead of a skip past the next gate.
+Crafting uses a gentle curve that counts crafts: a player who crafts and upgrades one set per tier
+opens the next tier (about 8 tier-1 crafts for tier 2, a tier-2 set with upgrades for tier 3). The
+small exponential tail (1.04) stops a heavy re-roller's level (and so its rarity odds,
+`rarityWeights`) from running away: 4M XP is level ~180, not ~1000.
+
+### 12.2 Focused skill time (`--report skills`, part A)
+
+Hours of one gathering skill's own time, fresh save, always at the best open node. "Tooled" gets a
+Common tool of each tier the moment it opens; "rough" never has one; "away" gathers only through
+`awayGains` in 4h trips (the node is picked when the trip starts). Tool mastery counts. Mining,
+Woodcutting and Foraging read the same (one curve).
+
+| Mode | Tier 2 | Tier 3 | Tier 4 | Tier 5 | Level at 10m / 30m / 1h / 3h / 10h | Longest level gap, first 30 min |
+|---|---|---|---|---|---|---|
+| Before, tooled | 1m | 3m | 7m | 18m | 37 / 52 / 61 / 73 / 85 | 2m |
+| Before, rough | 2m | 4m | 10m | 30m | 30 / 44 / 53 / 65 / 77 | 2m |
+| Before, away (4h trips) | 4h | 4h | 4h | 4h | (all at the end of the first trip) | - |
+| After, tooled | 50m | 5.2h | 30h | 105h | 8 / 11 / 15 / 24 / 40 | 7m |
+| After, rough | 1.1h | 7.2h | 46h | 182h | 7 / 10 / 13 / 21 / 34 | 7m |
+| After, away (4h trips) | 4h | 12h | 52h | 188h | - | - |
+
+Levels still come often early: 8 levels in the first 10 minutes, 11 by 30 minutes (one every 2-3
+minutes, never more than 7), then they slow: about 20 minutes a level just before tier 3, an hour
+before tier 4, 1.5-2 hours before tier 5 (focused, tooled).
+
+### 12.3 Normal play (`--report skills --days 21`, part B)
+
+The day each skill opens tiers 2 / 3 / 4 / 5 (day 0.3 = install at 08:00 on day 1; `-` = not within
+the run), seed 1, the `--days` check-in policy with its away gathering.
+
+Before (all 7 skills opened every tier in the first 1-3 days):
+
+| Class | Mining | Woodcutting | Foraging | Smithing | Woodcraft | Tailoring | Enchanting |
+|---|---|---|---|---|---|---|---|
+| Warden | 0.3/0.3/0.4/1.3 | 0.3/0.4/0.5/0.5 | 0.3/0.4/0.8/1.8 | 0.3/0.3/0.4/0.5 | 0.4/0.4/0.8/1.3 | - | 0.4/1.3/1.3/- |
+| Lanternmage | 0.3/0.4/0.5/0.5 | 0.3/0.3/0.8/2.3 | 0.3/0.3/0.4/1.5 | 0.3/0.3/-/- | 0.3/0.3/0.8/- | 0.3/0.3/0.8/1.3 | 0.3/0.4/0.8/- |
+| Ranger | 0.3/0.5/0.5/0.5 | 0.4/0.4/0.8/1.5 | 0.3/0.4/0.8/2.3 | 0.4/0.4/0.5/1.8 | 0.4/0.4/0.8/1.8 | 0.4/0.4/1.3/1.8 | 0.6/1.3/1.8/- |
+| Lightkeeper | 0.3/0.4/0.8/2.3 | 0.4/0.6/1.3/2.5 | 0.3/0.3/0.5/0.5 | 0.3/0.4/0.8/2.3 | 0.6/1.3/2.5/2.8 | 0.3/0.3/0.4/1.3 | 0.6/1.6/2.3/- |
+
+(The before run was 3 days long; Mining was level 86-89 on day 3.)
+
+After:
+
+| Class | Mining | Woodcutting | Foraging | Smithing | Woodcraft | Tailoring | Enchanting |
+|---|---|---|---|---|---|---|---|
+| Warden | 0.5/2.5/6.5/16.5 | 1.5/3.5/9.5/15.5 | 4.5/4.5/-/- | 0.3/0.8/1.5/2.3 | 0.8/2.8/5.3/10.5 | - | 1.5/3.5/8.5/- |
+| Lanternmage | 1.5/2.8/8.5/13.5 | 0.5/2.5/5.5/14.5 | 9.5/9.5/-/- | 0.3/0.6/0.8/2.3 | 0.3/1.6/2.8/4.5 | 1.3/1.5/4.3/4.3 | 0.5/2.8/3.5/8.6 |
+| Ranger | 12.5/12.5/14.5/20.5 | 0.5/2.5/6.5/19.5 | 1.5/2.8/10.5/- | 0.3/0.6/1.3/3.3 | 0.3/1.6/1.8/3.3 | 0.5/1.6/2.8/2.8 | 0.5/2.5/3.5/- |
+| Lightkeeper | 0.5/4.5/6.5/17.3 | 2.5/4.8/12.5/16.5 | 1.5/3.5/8.5/- | 0.3/0.6/1.5/2.5 | 0.6/4.5/5.8/14.3 | 0.8/1.6/3.5/4.8 | 2.5/5.3/11.5/- |
+
+Gathering levels on days 1 / 3 / 7 / 14 / 21 (the class's main skill): Mining (Warden) 25 / 39 / 66 /
+98 / 143; Woodcutting (Lanternmage) 25 / 43 / 71 / 103 / 151. Before, Mining was 71 on day 1 and
+about 104 on day 21 (Lanternmage, old build); by day 21 the new curve is past the old level, so late
+gathering speed is not lower than before, only reached later.
+
+Against the targets (the skill a class gathers most; the policy spends 2-2.5 h a day on it, most of
+it away): tier 2 on the first away trip (day 0.5-1.5; 50 min of focused, tooled play, target 45-60
+min), tier 3 on day 2.5-3.5 (target 2-3), tier 4 on day 5.5-9.5 (target 6-8), tier 5 on day 13.5-17.3
+(target 14-20). A skill the class rarely needs lags (the Ranger mines little: Mining tier 2 on day
+12.5), which is fine: it opens when that player starts to use it.
+
+Crafting: the stations a class crafts at open tier t a little before its gathering skills do
+(Smithing tier 5 on day 2.3-3.3, Woodcraft and Tailoring for the Lanternmage and Ranger on day
+2.8-4.5), because the sim re-rolls and upgrades a lot (smithing reaches level 60 on day 3). Materials
+of tier t only come from gathering tier t (or a rare find), so the gathering gates pace the gear; a
+station gate matters for a player who crafts one set per tier, and for a station a class seldom uses
+(the Warden's Enchanting tier 4 on day 8.5). The heavy crafter's levels are about as fast as before
+(Smithing 67 on day 3, 55 before), so rarity odds did not jump.
+
+### 12.4 Save rule (55-skillpace.js)
+
+Players keep their skill levels and XP. A save that predates GP1 stores, once, the highest tier the
+old gates gave each skill (`S.skillPace.hw`), and every gate reads max(the new rule, that mark):
+`skillTopTier(k)`, `skillTierOpen(k, t)`, `stationTierOpen(kind, t)`. A new game keeps nothing. One
+What's new line tells a player who keeps a tier above the new gates. `tools/check.mjs` (skill pace)
+proves no fixture loses a node tier, a recipe tier, an Enchanting tier or an item, through a save
+and load and a later `loadSave()`. The fixtures keep: save-v2, save-a-v1 and save-mid-v2
+Woodcutting and Smithing tier 2; save-v2-late Mining, Woodcutting and Smithing tier 5.
+
+### 12.5 Targets (`--targets`, seed 1): before -> after
+
+17/20 -> 17/20, the same three misses as before GP1.
+
+| Target | Before | After |
+|---|---|---|
+| T1 30m/1h/2h | 8/11/19, 8/11/17, 9/11/18, 7/11/18 | 8/10/16, 8/11/16, 9/11/16, 9/11/17 (gear tiers later: 2h zones 1-3 lower, still in band) |
+| T2 3h | 24/23/22/23 | 21/19/21/20 |
+| T3 | 0.93-1.01 | 0.99-1.04 |
+| T4 | 29% | 31% |
+| T16 (FAIL before and after) | Epic d2.3-4.3, Legendary d17.3-23.5 | Epic d2.8-4.8, Legendary d16.8-23.8 |
+| D1 (FAIL, accepted in BAL1) | 19-20 | 17-19 |
+| P1 (FAIL before and after) | day 6.3-8.3 | day 6.3-8.3 |
+| P2 | day 22.3-35.3 | day 22.8-33.8 |
+| P4 | 1-2 | 2 |
+| C1 camp full | day 21-24 | day 23-30 (the Ranger and Lightkeeper wait on tier-4/5 camp materials) |
+| T5-T14, T18 | pass | pass |
+
+Tried and dropped: `nodeXp` 6 x t (T1 Lightkeeper 2h zone 14), craft curve base 10 (T4 37%: early
+Smithing levels feed rarity, and the idle run fell behind), `nodeReq[3]` 58 (tier 4 on day 4.5),
+exponential gathering curves (the gaps shrink at the top).
+
+### 12.6 Sim changes
+
+- `--report skills` (parts A and B above; `--focus H`, `--days N`, `--json 1`).
+- The `--days` JSON carries `skTier` (the day each skill opened each tier), `skGather` (live and
+  away seconds per gathering skill) and skill levels per day.
+- A station too low for the next set piece now gathers for its training craft one tier down (a
+  player would; before GP1 the gates were too low for it to matter). Without it the Lanternmage never
+  foraged and Tailoring stayed at tier 1 for three weeks.
+- P4: a gathering tier that opens counts as a meaningful upgrade (new nodes), like a gear tier.
+- The policy gates on `skillTierOpen` / `skillTopTier` instead of `NODE_REQ` levels.

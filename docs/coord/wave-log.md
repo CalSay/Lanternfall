@@ -445,3 +445,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   as later optional Hands; the Voice is a 5-phase final boss at the bottom of the Deepwell (8.7). Its spec
   task is renamed DV (D7 is the hearth spec). Writing tasks LORE2, LORE4, LORE5 are unblocked (weekday
   light mode: one at a time).
+- GP1 merged (owner: gathering tiers came too fast). SKILL_TUNE in 20-data: NODE_REQ 1/14/30/64/112,
+  SMITH_REQ 1/10/22/36/54, gathering skillNeed 10 x lv^2.2, crafting its own curve, nodeXp 7 x t.
+  Focused time to tier (tooled): 50m / 5.2h / 30h / 105h (was 1m / 3m / 7m / 18m). Normal play: tier 3 day
+  2.5-3.5, tier 4 day 5.5-9.5, tier 5 day 13.5-17. Old saves keep every tier they had (55-skillpace.js).
+  --targets 17/20 (P1 misses Warden/Ranger at day 8.3 vs 4-8; T16, D1 as before). Heavy crafters still open
+  station tiers early (sim re-rolls a lot); revisit in BAL3. Coordinator resolved conflicts with H1
+  (55-crafting: the station-built gate AND the tier rule; check.mjs What's new filters).

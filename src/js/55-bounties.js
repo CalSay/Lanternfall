@@ -9,7 +9,7 @@
   // k === null means the slot is empty and refills at `wait` (ms timestamp).
   registerState('bounties', { slots: [], claimed: 0, seq: 0 });
 
-  const btyTopTier = kind => { const lv = S.skills[kind === 'ore' ? 'mine' : 'wood'].lv; let t = 1; for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1; return t; };
+  const btyTopTier = kind => skillTopTier(kind === 'ore' ? 'mine' : 'wood');
   const btyScale = () => 1 + Math.floor(S.maxZone / 10) * 0.25;
   const btyRound = n => Math.max(1, Math.round(n / 5) * 5);
 
