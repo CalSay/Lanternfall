@@ -461,3 +461,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   and goals spec (tiered tracks across every system, big lifetime numbers, near-miss nudges, titles and
   small capped bonuses, a trophy wall at camp, story-driven chapter goals; old 23 kept by id with their
   bonuses). Then AC2 core, AC3 UI.
+- OWNER INPUT for AC1: the friend loves REALLY HARD achievements with cool rewards: titles and accessories.
+  AC1 must include a top tier of rare, long-haul feats (weeks to months) whose rewards are visible
+  cosmetics drawn on the hero in B1 style (capes, hats, lantern skins and flame colours, auras, a small
+  companion critter), plus rare titles shown on the hero card and in the tavern/raid name line (display
+  only; the online data shape does not change). Show rarity (how few reach it is local-only; no online
+  stats). Every cosmetic is earned, never sold, and never gives power.
