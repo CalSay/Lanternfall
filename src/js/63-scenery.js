@@ -12,16 +12,21 @@
 //     scene.lights = [{ x, y, r, rgb, a, f, layer, kind }]: every lit lamp. x, y in stage CSS px at
 //       camX = 0 (draw at x - camX * f), r = glow radius in CSS px, rgb = 'r,g,b', layer = index
 //       into layers. drawAtmosphere already draws their glows; the list is there for extra effects.
-//   drawScene(ctx, scene, camX, which = 'back')   which: 'back' (sky..ground) | 'fg' (foreground) | 'all'
-//     ctx must be in CSS px units (e.g. setTransform(DPR,...)) with imageSmoothingEnabled = false.
-//     camX in CSS px, keep within +-16.
+//   drawScene(ctx, scene, camX, which = 'back', k, ox, oy, bg)   which: 'back' (sky..ground) | 'fg' | 'all'
+//     ctx must be in CSS px units (setTransform(k, 0, 0, k, ox, oy)) with imageSmoothingEnabled = false.
+//     camX in CSS px, keep within +-16. k, ox, oy: that transform (device px per CSS px, whole-px
+//     translation), for the 1:1 path below; bg: the backdrop colour where the sky does not reach.
 //   drawAtmosphere(ctx, scene, T, W, H, camX = 0)   T in seconds; draws on top of everything.
+//   scenePlates(scene, k, W, H, part)   build the device-size copies now (idle-time warm-ups).
 //
-// Per frame: 5 drawImage calls for the layers, 1-2 cached glow sprites per lamp (about 10-18
-// lamps), a few fog blobs and particles, and one vignette. The fog and vignette are drawn 1:1 from
-// device-resolution copies (no per-frame scaling; see atmoDev). No gradients are made per frame.
-// Flicker is static under prefers-reduced-motion.
-let drawScene, drawAtmosphere;
+// Per frame (phone, software canvas: raster is most of the frame, docs/design/perf.md): the back
+// layers are one 1:1 copy of a composite that is rebuilt only when a layer moves a whole pixel; the
+// foreground is copied 1:1, run by run, from its device-size plate (only where it has pixels); 1-2
+// glow sprites per lamp (about 10-18 lamps, 1:1 device-size copies via ANIM.glowAt), a few fog blobs
+// and particles, and the vignette (1:1, only where it is not clear). Until a scene's copies are built
+// (idle time after a scene change) its layers, fog and vignette are drawn scaled. No gradients are
+// made per frame. Flicker is static under prefers-reduced-motion.
+let drawScene, drawAtmosphere, scenePlates;
 function sceneFor() { return null; } // replaced below
 {
   const PX = 2, M = 24, MA = M / PX;
@@ -714,6 +719,142 @@ function sceneFor() { return null; } // replaced below
     };
   }
 
+  // ---------- what each layer really draws ----------
+  // For each layer: bands of rows ([y, h, x0, x1, x0, x1, ...] in art px) holding the column runs
+  // with a pixel that can show, and the row range the bands use (y0..y1). A back layer's pixel cannot
+  // show where a later back layer is opaque over the whole stretch the parallax can move it across
+  // (camX within +-CAM_MAX: layers i and j drift apart by up to CAM_MAX * |fj - fi| CSS px). opaque:
+  // every pixel inside the runs is opaque. Drawing only these runs gives the same pixels as drawing the
+  // whole layer: the rest is either empty or painted over later in the same frame.
+  const BAND = 8, GAP = 4, CAM_MAX = 16;
+  function spans(layers, alphas, w, h) {
+    const n = layers.length, N = w * h;
+    const cover = new Uint8Array(N);              // pixels hidden behind a later back layer (built back to front)
+    const opq = new Uint8Array(N), ero = new Uint8Array(w);
+    for (let i = n - 1; i >= 0; i--) {
+      const ly = layers[i], a = alphas[i], mask = new Uint8Array(N);
+      for (let q = 0; q < N; q++) mask[q] = a[q * 4 + 3] && !(cover[q] && !ly.fg) ? 1 : 0;
+      const { bands, y0, y1 } = bandsOf(mask, w, h, 0);
+      let opaque = bands.length > 0;
+      for (const b of bands) for (let r = 2; r < b.length && opaque; r += 2) {
+        for (let y = b[0]; y < b[0] + b[1] && opaque; y++) for (let x = b[r], p = (y * w + x) * 4 + 3; x < b[r + 1]; x++, p += 4) if (a[p] !== 255) { opaque = false; break; }
+      }
+      ly.bands = bands; ly.y0 = y0; ly.y1 = y1; ly.opaque = opaque;
+      if (ly.fg || i === 0) continue;
+      // this layer's opaque pixels, eroded by how far it can drift from the layers under it (the worst
+      // case: the sky), hide those layers' pixels
+      const m = Math.ceil((CAM_MAX * Math.abs(ly.f - layers[0].f) + 1) / PX) + 1;
+      for (let y = 0; y < h; y++) {
+        const row = y * w;
+        for (let x = 0; x < w; x++) opq[row + x] = a[(row + x) * 4 + 3] === 255 ? 1 : 0;
+        // ero[x] = 1 when opq is 1 on x-m..x+m (inside the layer)
+        let run = 0;
+        ero.fill(0);
+        for (let x = 0; x < w; x++) { run = opq[row + x] ? run + 1 : 0; if (run >= 2 * m + 1) ero[x - m] = 1; }
+        for (let x = 0; x < w; x++) if (ero[x]) cover[row + x] = 1;
+      }
+    }
+  }
+  // Bands of up to BAND rows over mask (w x h, 1 = draw this pixel) with the column runs holding any
+  // pixel; runs closer than GAP merge, and a band with the same runs as the one just above joins it.
+  // dil: also count pixels up to dil rows and columns away (for an image that is later scaled with
+  // smoothing, which spreads each pixel into its neighbours). Bands never overlap.
+  function bandsOf(mask, w, h, dil) {
+    const col = new Uint8Array(w), bands = [], rowAny = new Uint8Array(h);
+    for (let y = 0; y < h; y++) for (let x = 0, q = y * w; x < w; x++, q++) if (mask[q]) { rowAny[y] = 1; break; }
+    const has = y => { for (let yy = Math.max(0, y - dil); yy <= Math.min(h - 1, y + dil); yy++) if (rowAny[yy]) return true; return false; };
+    let y = 0, y0 = h, y1 = 0;
+    while (y < h) {
+      if (!has(y)) { y++; continue; }
+      let yb = y;
+      while (yb < h && yb - y < BAND && has(yb)) yb++;
+      col.fill(0);
+      for (let yy = Math.max(0, y - dil); yy < Math.min(h, yb + dil); yy++) {
+        for (let x = 0, q = yy * w; x < w; x++, q++) if (mask[q]) { for (let d = Math.max(0, x - dil); d <= Math.min(w - 1, x + dil); d++) col[d] = 1; }
+      }
+      const runs = [];
+      for (let x = 0; x < w;) {
+        if (!col[x]) { x++; continue; }
+        let e = x; while (e < w && col[e]) e++;
+        if (runs.length && x - runs[runs.length - 1] < GAP) runs[runs.length - 1] = e; else runs.push(x, e);
+        x = e;
+      }
+      const last = bands[bands.length - 1];
+      if (last && last[0] + last[1] === y && last.length === runs.length + 2 && runs.every((v, k) => v === last[k + 2])) last[1] += yb - y;
+      else bands.push([y, yb - y, ...runs]);
+      y0 = Math.min(y0, y); y1 = Math.max(y1, yb);
+      y = yb;
+    }
+    return { bands, y0, y1: Math.max(y0, y1) };
+  }
+
+  // Device-resolution copies of a scene's layers ("plates"): only the bands' runs, scaled once (nearest)
+  // to s = PX * k device px per art px and packed (bands stacked, columns cropped to the layer's runs),
+  // so a frame copies them 1:1 at whole device pixels instead of scaling 5 layers over the stage. A
+  // plate is never built inside a frame: a miss queues it for idle time (at the front of the queue) and
+  // that frame draws the layers scaled, as before. Two slots: the scene on screen and the next zone's
+  // (built ahead, see warmScene in 62-stage). About 1-4 MB per scene on a phone.
+  const plateSlots = [], plateWork = new Map();
+  // still the cached scene for its key (not evicted), without building one
+  const live = scene => cache.get(scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue) === scene;
+  // One step of building a scene's plates: first the spans, then one layer per step (each is a scaled
+  // draw of up to a few M device px on a big screen, so one step per idle task keeps tasks short).
+  // Returns the finished plates after the last step.
+  function plateStep(w) {
+    const { scene, s } = w, L = scene.layers;
+    if (!L[0].bands) {
+      const cw = L[0].c.width, ch = L[0].c.height;
+      spans(L, L.map(ly => ly.c.getContext('2d').getImageData(0, 0, cw, ch).data), cw, ch);
+      return null;
+    }
+    const ly = L[w.layers.length];
+    let x0 = Infinity, x1 = 0, rows = 0;
+    for (const b of ly.bands) { rows += b[1]; x0 = Math.min(x0, b[2]); x1 = Math.max(x1, b[b.length - 1]); }
+    if (!rows) w.layers.push(null);
+    else {
+      const c = mkCanvas((x1 - x0) * s, rows * s), g = c.getContext('2d', { alpha: !ly.opaque }), py = [];
+      g.imageSmoothingEnabled = false;
+      let y = 0;
+      for (const b of ly.bands) {
+        py.push(y);
+        for (let r = 2; r < b.length; r += 2) g.drawImage(ly.c, b[r], b[0], b[r + 1] - b[r], b[1], (b[r] - x0) * s, y * s, (b[r + 1] - b[r]) * s, b[1] * s);
+        y += b[1];
+      }
+      w.layers.push({ c, x0, py });
+    }
+    if (w.layers.length < L.length) return null;
+    const p = { scene, k: w.k, s, layers: w.layers };
+    plateSlots.unshift(p); if (plateSlots.length > 2) plateSlots.pop();
+    return p;
+  }
+  // now: build on a miss, all steps at once; otherwise a miss queues the steps for idle time (at the
+  // front of the queue, one per task) and returns null.
+  function platesFor(scene, k, now) {
+    for (const p of plateSlots) if (p.scene === scene && p.k === k) return p;
+    if (!Number.isInteger((scene.PX || 1) * k)) return null;
+    const key = scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue + '|' + k;
+    let w = plateWork.get(key);
+    if (!w || w.scene !== scene) { w = { scene, k, s: (scene.PX || 1) * k, layers: [], queued: false }; plateWork.set(key, w); }
+    if (now || typeof idleTask !== 'function') { let p = null; while (!p) p = plateStep(w); plateWork.delete(key); return p; }
+    if (!w.queued) {
+      w.queued = true;
+      const step = () => {
+        if (plateWork.get(key) !== w) return;
+        if (!live(scene)) { plateWork.delete(key); return; }
+        if (plateStep(w)) plateWork.delete(key); else idleTask(step, true);
+      };
+      idleTask(step, true);
+    }
+    return null;
+  }
+  // scenePlates(scene, k, W, H, part): for idle-time warm-ups. part 'plates': queue the scene's plates
+  // (built step by step in later idle tasks); 'atmo': build its atmosphere copies for a stage W x H
+  // CSS px now; neither: both, now. Nothing is rebuilt when cached.
+  scenePlates = function (scene, k, W, H, part) {
+    if (part !== 'atmo') platesFor(scene, k, part !== 'plates');   // 'plates': queued step by step
+    if (part !== 'plates' && W && H) atmoDev(scene, k, W, H, true);
+  };
+
   // ---------- cached glow sprites (shared) ----------
   const glowCache = new Map();
   // kind 0: fog (soft), 1: lamp pool (D: .55 centre, .2 at a third), 2: hot core
@@ -751,13 +892,62 @@ function sceneFor() { return null; } // replaced below
     return sc;
   };
 
-  drawScene = function (ctx, scene, camX, which) {
+  // Copy layer i's runs 1:1 from its plate to g (identity transform), the layer's left edge at device
+  // x X and its top at device y Y0; runs outside cw x ch are skipped.
+  function blitLayer(g, pl, ly, i, X, Y0, cw, ch) {
+    const P = pl.layers[i], s = pl.s; if (!P) return;
+    const c = P.c, bands = ly.bands, ox = P.x0 * s;
+    for (let j = 0; j < bands.length; j++) {
+      const b = bands[j], Y = Y0 + b[0] * s, hh = b[1] * s, sy = P.py[j] * s;
+      if (Y >= ch || Y + hh <= 0) continue;
+      for (let r = 2; r < b.length; r += 2) {
+        const x0 = b[r] * s, ww = b[r + 1] * s - x0;
+        if (X + x0 >= cw || X + x0 + ww <= 0) continue;
+        g.drawImage(c, x0 - ox, sy, ww, hh, X + x0, Y, ww, hh);
+      }
+    }
+  }
+  // The back layers composed once into one opaque canvas (the stage plus a margin for the screen
+  // shake), recomposed only when a layer's whole-pixel offset changes (the camera sway moves the
+  // ground about 1.4 px a second, so most frames reuse it) or the scene, size or backdrop changes.
+  const comp = { c: null, g: null, pl: null, bg: '', xs: [] };
+  // k, ox, oy (optional): device px per CSS px and the ctx's device translation (whole px). With them,
+  // the layers are copied 1:1 from their plates, run by run, and with bg (the backdrop colour) too the
+  // back layers come from the composite. Off whole device pixels, a layer is drawn scaled from its art
+  // canvas, as before. bg is filled wherever the sky does not reach (a shake moves it up or down, or it
+  // ends short of the canvas's last device pixels).
+  drawScene = function (ctx, scene, camX, which, k, ox, oy, bg) {
     camX = camX || 0; which = which || 'back';
-    const px = scene.PX || 1;
-    for (const ly of scene.layers) {
+    const px = scene.PX || 1, L = scene.layers, cw = ctx.canvas.width, ch = ctx.canvas.height;
+    const pl = k && Number.isInteger(ox) && Number.isInteger(oy) ? platesFor(scene, k) : null;
+    const m = Math.ceil(4 * k);
+    if (which === 'back' && bg && pl && Number.isInteger(k) && Math.abs(ox) <= m && Math.abs(oy) <= m) {
+      const W2 = cw + 2 * m, H2 = ch + 2 * m;
+      let dirty = comp.pl !== pl || comp.bg !== bg;
+      if (!comp.c || comp.c.width !== W2 || comp.c.height !== H2) { comp.c = mkCanvas(W2, H2); comp.g = comp.c.getContext('2d', { alpha: false }); dirty = true; }
+      for (let i = 0; i < L.length; i++) { if (L[i].fg) continue; const xl = Math.round(-scene.M - camX * L[i].f); if (comp.xs[i] !== xl) { comp.xs[i] = xl; dirty = true; } }
+      if (dirty) {
+        const g = comp.g;
+        g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.imageSmoothingEnabled = false;
+        g.fillStyle = bg; g.fillRect(0, 0, W2, H2);
+        for (let i = 0; i < L.length; i++) if (!L[i].fg) blitLayer(g, pl, L[i], i, m + comp.xs[i] * k, m, W2, H2);
+        comp.pl = pl; comp.bg = bg;
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(comp.c, ox - m, oy - m);
+      ctx.setTransform(k, 0, 0, k, ox, oy);
+      return;
+    }
+    if (which !== 'fg' && bg && (oy || L[0].c.height * px * (k || 1) < ch)) { ctx.fillStyle = bg; ctx.fillRect(-4, -4, cw / (k || 1) + 8, ch / (k || 1) + 8); }
+    for (let i = 0; i < L.length; i++) {
+      const ly = L[i];
       if (which === 'back' && ly.fg) continue;
       if (which === 'fg' && !ly.fg) continue;
-      ctx.drawImage(ly.c, Math.round(-scene.M - camX * ly.f), 0, ly.c.width * px, ly.c.height * px);
+      const xl = Math.round(-scene.M - camX * ly.f), X = ox + xl * k;
+      if (!pl || !Number.isInteger(X)) { ctx.drawImage(ly.c, xl, 0, ly.c.width * px, ly.c.height * px); continue; }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      blitLayer(ctx, pl, ly, i, X, oy, cw, ch);
+      ctx.setTransform(k, 0, 0, k, ox, oy);
     }
   };
 
@@ -765,14 +955,37 @@ function sceneFor() { return null; } // replaced below
   // The overlay is stored at half size and the fog at 64 px; scaling them every frame (bilinear, full
   // stage) was most of the stage's raster time on phones. One slot: rebuilt when the scene, size or
   // pixel ratio changes (a zone change), which costs one scaled draw each.
-  let dev = null;
-  function atmoDev(ctx, scene, W, H) {
-    let d = 1; try { d = ctx.getTransform().a || 1; } catch (e) {}
-    if (dev && dev.scene === scene && dev.d === d && dev.W === W && dev.H === H) return dev;
+  // Two slots (the scene on screen and the next zone's). Like the plates, a miss inside a frame queues
+  // the build for idle time and returns null (that frame draws the fog and vignette scaled).
+  const devSlots = [], devWait = new Set();
+  function atmoDev(scene, d, W, H, now) {
+    for (const v of devSlots) if (v.scene === scene && v.d === d && v.W === W && v.H === H) return v;
+    if (!now && typeof idleTask === 'function') {
+      const key = scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue + '|' + d + '|' + W + 'x' + H;
+      if (!devWait.has(key)) { devWait.add(key); idleTask(() => { devWait.delete(key); if (live(scene)) atmoDev(scene, d, W, H, true); }, true); }
+      return null;
+    }
     const mk = (src, w, h) => { const c = mkCanvas(Math.round(w * d), Math.round(h * d)), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(src, 0, 0, c.width, c.height); return c; };
     const fg = glow(scene.fog.rgb, 0), fog = [];
     for (let i = 0; i < 4; i++) fog.push(mk(fg, W * (0.7 + 0.15 * i), 18 + i * 6));
-    dev = { scene, d, W, H, ov: mk(scene.light.overlay, W, H), fog };
+    const ov = mk(scene.light.overlay, W, H), src = scene.light.overlay;
+    // where the overlay has any pixel (its middle is clear), found once per scene
+    if (scene.light.ovBands === undefined) {
+      scene.light.ovBands = null;
+      try { const a = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, m = new Uint8Array(src.width * src.height); for (let q = 0; q < m.length; q++) m[q] = a[q * 4 + 3] ? 1 : 0; scene.light.ovBands = bandsOf(m, src.width, src.height, 1).bands; } catch (e) {}
+    }
+    // the overlay's bands in device px of ov: rows split at the same rounded edges, so bands never overlap
+    const fx = ov.width / src.width, fy = ov.height / src.height, ovRuns = [];
+    for (const b of scene.light.ovBands || [[0, src.height, 0, src.width]]) {
+      const Y0 = Math.round(b[0] * fy), Y1 = Math.min(ov.height, Math.round((b[0] + b[1]) * fy));
+      if (Y1 <= Y0) continue;
+      for (let r = 2; r < b.length; r += 2) {
+        const X0 = Math.max(0, Math.floor(b[r] * fx)), X1 = Math.min(ov.width, Math.ceil(b[r + 1] * fx));
+        if (X1 > X0) ovRuns.push(X0, Y0, X1 - X0, Y1 - Y0);
+      }
+    }
+    const dev = { scene, d, W, H, ov, ovRuns, fog };
+    devSlots.unshift(dev); if (devSlots.length > 2) devSlots.pop();
     return dev;
   }
 
@@ -789,10 +1002,11 @@ function sceneFor() { return null; } // replaced below
     ctx.globalCompositeOperation = 'source-over';
     // fog bands: wide soft blobs drifting along the ground, one higher and fainter.
     // Drawn 1:1 from device-resolution copies (atmoDev) at whole device pixels: no per-frame scaling.
-    const dv = atmoDev(ctx, scene, W, H), d = dv.d, fa = scene.fog.a;
-    ctx.imageSmoothingEnabled = false;
+    // Until the copies are built (idle time, after a scene change), drawn scaled.
+    const tr = ctx.getTransform(), d = tr.a || 1, dv = atmoDev(scene, d, W, H), fa = scene.fog.a;
+    ctx.imageSmoothingEnabled = !dv;
     for (let i = 0; i < 4; i++) {
-      const bw = W * (0.7 + 0.15 * i), bh = 18 + i * 6, band = dv.fog[i], dw = band.width / d, dh = band.height / d;
+      const bw = W * (0.7 + 0.15 * i), bh = 18 + i * 6, band = dv ? dv.fog[i] : glow(scene.fog.rgb, 0), dw = dv ? band.width / d : bw, dh = dv ? band.height / d : bh;
       const x = Math.round((((t * (4 + i * 2.5) + i * W * 0.45) % (W + bw)) - bw - camX * 0.8) * d) / d;
       const y = Math.round(((i === 3 ? GY - 50 : GY - 8 + i * 6) - bh / 2) * d) / d;
       ctx.globalAlpha = fa * (i === 3 ? 0.6 : 1);
@@ -802,7 +1016,8 @@ function sceneFor() { return null; } // replaced below
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'lighter';
     const L = scene.light;
-    if (L.moon) { const m = L.moon, rr = m.r * 4.5; ctx.globalAlpha = 0.2; ctx.drawImage(glow(m.rgb, 0), m.x - scene.M - camX * 0.05 - rr, m.y - rr, rr * 2, rr * 2); }
+    // glows go through ANIM.glowAt: 1:1 device-size copies when the stage has set a view
+    if (L.moon) { const m = L.moon; ANIM.glowAt(ctx, glow(m.rgb, 0), m.x - scene.M - camX * 0.05, m.y, m.r * 4.5, 0.2); }
     if (L.shafts) {
       const sp = shaft();
       for (let i = 0; i < 4; i++) { ctx.globalAlpha = 0.06 + 0.03 * Math.sin(t * 0.4 + i * 1.7); ctx.drawImage(sp, W * (0.08 + i * 0.26) - camX * 0.3, -4, W * 0.18, GY + 8); }
@@ -811,12 +1026,16 @@ function sceneFor() { return null; } // replaced below
     for (const lp of L.lamps) {
       const fl = flickAt(lp, T), x = lp.x - camX * lp.f, rr = lp.r * fl;
       if (x + rr < 0 || x - rr > W) continue;
-      ctx.globalAlpha = Math.min(1, lp.a * fl * 1.3); ctx.drawImage(glow(lp.rgb, 1), x - rr, lp.y - rr, rr * 2, rr * 2);
-      if (lp.core) { const cr = 5 + lp.r * 0.12; ctx.globalAlpha = 0.45 * lp.core * fl; ctx.drawImage(glow(lp.rgb, 2), x - cr, lp.y - cr, cr * 2, cr * 2); }
+      ANIM.glowAt(ctx, glow(lp.rgb, 1), x, lp.y, rr, lp.a * fl * 1.3);
+      if (lp.core) ANIM.glowAt(ctx, glow(lp.rgb, 2), x, lp.y, 5 + lp.r * 0.12, 0.45 * lp.core * fl);
     }
     // ambient particles: stateless, positions are a function of time
     const A = scene.amb, spr = glow(A.rgb, 2), W2 = W + 40;
     const wrap = (v, m) => ((v % m) + m) % m;
+    // every particle of a type has a glow (drawn 'lighter', and so is its dot) or none ('source-over')
+    const glowy = !(A.type === 'ash' || A.type === 'dust' || A.type === 'leaf');
+    ctx.globalCompositeOperation = glowy ? 'lighter' : 'source-over';
+    ctx.fillStyle = A.fill || (A.fill = `rgb(${A.rgb})`);
     for (const p of A.parts) {
       let x, y, a = 1, sz = 2 * p.sz, g = 6;
       switch (A.type) {
@@ -838,15 +1057,13 @@ function sceneFor() { return null; } // replaced below
       }
       if (A.type !== 'drip') x -= camX * 0.9;
       if (a <= 0.02) continue;
-      if (g) { ctx.globalAlpha = a * 0.35; ctx.drawImage(spr, x - g, y - g, g * 2, g * 2); }
+      if (g) ANIM.glowAt(ctx, spr, x, y, g, a * 0.35);
       ctx.globalAlpha = a;
-      ctx.globalCompositeOperation = g ? 'lighter' : 'source-over';
-      ctx.fillStyle = `rgb(${A.rgb})`;
       if (A.type === 'leaf') ctx.fillRect(Math.round(x), Math.round(y), Math.sin(t * 3 + p.ph) > 0 ? 4 : 2, 2);
       else if (A.type === 'drip' && y < GY) ctx.fillRect(x - sz / 2, y, sz, sz * 2);
       else ctx.fillRect(Math.round(x - sz / 2), Math.round(y - sz / 2), sz, sz);
-      ctx.globalCompositeOperation = 'lighter';
     }
+    ctx.globalCompositeOperation = 'lighter';
     // moths and fireflies drawn to the lanterns
     if (A.moths) {
       const ms = glow('255,220,150', 2);
@@ -860,8 +1077,15 @@ function sceneFor() { return null; } // replaced below
     }
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(dv.ov, 0, 0, dv.ov.width / d, dv.ov.height / d);
+    // the vignette, 1:1 and only where it has any pixel (its middle is clear)
+    ctx.imageSmoothingEnabled = !dv;
+    if (!dv) ctx.drawImage(L.overlay, 0, 0, W, H);
+    else if (tr.d === d && Number.isInteger(tr.e) && Number.isInteger(tr.f)) {
+      const R = dv.ovRuns;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      for (let i = 0; i < R.length; i += 4) ctx.drawImage(dv.ov, R[i], R[i + 1], R[i + 2], R[i + 3], R[i] + tr.e, R[i + 1] + tr.f, R[i + 2], R[i + 3]);
+      ctx.setTransform(tr);
+    } else ctx.drawImage(dv.ov, 0, 0, dv.ov.width / d, dv.ov.height / d);
     ctx.imageSmoothingEnabled = smooth;
   };
 }

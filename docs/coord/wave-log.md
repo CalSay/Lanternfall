@@ -265,3 +265,10 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   implement the keystone flags (starKeystone(id), STAR_KS). Until then Dawnbringer is too strong, Pack
   Leader has no cost, Sanctuary Hymn has no upside, and Glass Lantern lacks its Flare bonus. Forwarded
   to Stage C. Coordinator fix: onboarding treated a feature unlocked at play time 0 as locked (!= null).
+- PERF3 merged: packed 1:1 scene plates and cached glows (phone/new fight 31 -> 55 fps, 0 long tasks;
+  phone/late 26 -> 42 fps), a prewarm that now actually hits (the kill frame drops from about 150ms to
+  about 20ms), and lazy tab mounts (first frame about 1.1-1.3s). phone/new and desktop are within
+  budget; phone/late still over (fight frame-gap p95 about 40ms, the scene build on a player zone jump,
+  Camp first open up to 154ms). CONTRACT CHANGE: a section's mount() now runs on its tab's first open;
+  keep on() handlers outside mount. Coordinator resolved a 70-ui.js conflict (lazy mounts + onboarding
+  `feature`) and smoke-tested every tab (no errors).
