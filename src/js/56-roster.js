@@ -100,6 +100,7 @@ var rstReady = false;
 function rosterLive() {
   if (!rstReady) return false;
   rstEnsure();
+  if (typeof formEnsure === 'function') formEnsure();   // F1: the party of three (56e-formation.js)
   return !!(S.party && S.party.rv >= 1);
 }
 
@@ -133,7 +134,8 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
                                          //   Starlit, zone 36, walled Region 1 at level 125, and Radiant walled day 1 at level 75)
-    storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3
+    storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3,
+    fieldMax: 2                          // (F1, formation.md) companions in the party: the hero is the third (was 3)
   };
   ROSTER_TUNE = T;
   const RST_DEF = {
@@ -233,7 +235,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   charMod = id => { let m = 1; for (const f of CHAR_MODS) m *= f(id); return m; };
   const modDps = (id, r) => rawDps(id, r) * charMod(id);
   charDps = id => { const r = charRec(id); return r ? modDps(id, r) * sharedMult() : 0; };
-  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, 3);
+  // migN: the B3 migration below still picks and levels a field of 3 (old saves keep their levels);
+  // 56e-formation then keeps the best 2 of them.
+  let migN = 0;
+  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
   const fieldRaw = keys => (keys || fieldKeys()).reduce((a, k) => a + rawDps(k, charRec(k)), 0);
   fieldCompDps = () => { const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
   supportBuff = () => {
@@ -245,31 +250,19 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // The old per-count maths (read-only use of S.comp), for the no-loss check.
   const oldRaw = () => COMPS.reduce((a, c, i) => a + c.dps * Math.pow(2, Math.floor((S.comp[i] || 0) / 25)) * (S.comp[i] || 0), 0);
   oldCompDps = () => oldRaw() * sharedMult();
-  rosterNoLoss = () => { const old = oldRaw(), now = fieldRaw(); return { old, now, ratio: old > 0 ? now / old : 1 }; };
+  // B3's check: the field it picked (F1: the old field of 3, kept in S.party.formOld once the party is three).
+  rosterNoLoss = () => { const fo = P().formOld, old = oldRaw(), now = fieldRaw(fo && Array.isArray(fo.field) ? fo.field.filter(isRecruited) : null); return { old, now, ratio: old > 0 ? now / old : 1 }; };
 
   // ---------------- field and cells ----------------
-  const heroCol = () => { const c = P().cls && HERO_CLASSES[P().cls]; return c ? { front: 2, mid: 1, back: 0 }[c.row] : 2; };
-  const defCol = (id, hasTank) => {
-    const c = R(id), col = ROLE_STATS[c.role].col;
-    return c.role === 'striker' && !c.ranged && !hasTank ? 2 : col;
-  };
+  // F1: one member per slot (col 0 Back, 1 Middle, 2 Front), lane 1. 56e-formation.js placeSlots
+  // owns the rule (keep current slots when free, else home, else the nearest free slot toward
+  // Middle); this fallback only runs while that file has not loaded (the B3 migration at load).
   function placeCells(keep) {
-    const old = P().cells || {}, field = fieldKeys(), cells = {}, used = {};
-    const hasTank = field.some(k => R(k).role === 'tank');
-    const free = (col, lane) => !used[col + ':' + lane];
-    const take = (key, col, lane) => { cells[key] = { col, lane }; used[col + ':' + lane] = 1; };
-    const members = ['hero'].concat(field);
-    const rest = [];
-    for (const k of members) {
-      const c = keep && old[k];
-      if (c && (k !== 'hero' || c.col === heroCol()) && c.col >= 0 && c.col <= 2 && (c.lane === 0 || c.lane === 1) && free(c.col, c.lane)) take(k, c.col, c.lane);
-      else rest.push(k);
-    }
-    for (const k of rest) {
-      const col = k === 'hero' ? heroCol() : defCol(k, hasTank);
-      const order = [col, col === 1 ? 2 : 1, col === 0 ? 2 : 0];
-      let done = false;
-      for (const c of order) { for (const lane of [1, 0]) if (!done && free(c, lane)) { take(k, c, lane); done = true; } }
+    if (typeof placeSlots === 'function') { placeSlots(keep); return; }
+    const cells = {}, used = {};
+    for (const k of ['hero'].concat(fieldKeys())) {
+      const want = k === 'hero' ? 2 : ROLE_STATS[R(k).role].col;
+      for (const c of [want, 1, 2, 0]) if (!used[c]) { cells[k] = { col: c, lane: 1 }; used[c] = 1; break; }
     }
     P().cells = cells;   // a new object: the stage watches identity
   }
@@ -278,7 +271,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   setField = ids => {
     const f = [];
-    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < 3) f.push(id);
+    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < T.fieldMax) f.push(id);
     P().field = f;       // a new array: the stage watches identity
     placeCells(true);
     emit('fieldChange', { field: f });
@@ -288,7 +281,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     if (!isRecruited(id) || onExped(id)) return false;
     const f = fieldKeys().filter(k => k !== id);
     const i = replaceId ? f.indexOf(replaceId) : -1;
-    if (i >= 0) f[i] = id; else if (f.length < 3) f.push(id); else return false;
+    if (i >= 0) f[i] = id; else if (f.length < T.fieldMax) f.push(id); else return false;
     P().autoField = false;
     setField(f); return true;
   };
@@ -312,11 +305,12 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     try { return partyHoldEstimate(S.maxZone, { one: true }).holds; } catch (e) { return true; } finally { p.field = f0; p.cells = c0; }
   }
   const supMode = () => !combatOn() ? 0 : (typeof COMBAT_TUNE === 'object' && COMBAT_TUNE ? COMBAT_TUNE.fieldSupport : 2);
-  function bestThree(by) {
+  function bestThree(by, n) {
+    n = n || T.fieldMax;
     const score = k => by === 'now' ? rawValue(k, charRec(k)) : potential(k);
     const all = rosterList().filter(k => !onExped(k)).sort((a, b) => score(b) - score(a));
     const tank = all.find(k => R(k).role === 'tank');
-    const fill = (f, list) => { for (const k of list) if (f.length < 3 && !f.includes(k)) f.push(k); return f; };
+    const fill = (f, list) => { for (const k of list) if (f.length < n && !f.includes(k)) f.push(k); return f; };
     const mode = supMode();
     // Before party combat: a tank, then the strongest.
     if (!mode) return fill(tank ? [tank] : [], all);
@@ -341,7 +335,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   function fieldIfBetter(id) {
     const f = fieldKeys();
     if (f.includes(id)) return;
-    if (f.length < 3) { setField(f.concat(id)); return; }
+    if (f.length < T.fieldMax) { setField(f.concat(id)); return; }
     // Peers: tanks replace tanks; with party combat supports replace supports, and a first support
     // takes the weakest damage dealer's place (the party needs a healer more than a third hitter).
     const kind = k => R(k).role === 'tank' ? 't' : R(k).role === 'support' && combatOn() ? 's' : 'd';
@@ -354,8 +348,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   }
   // Called by 55-party (partyRefreshField) once the roster is live.
   rosterSyncField = force => {
+    if (typeof formEnsure === 'function') formEnsure();   // an old field of 3 is migrated first, never cut blind
     const f = P().field || [];
-    if (force || f.some(k => !isRecruited(k)) || !P().cells || !P().cells.hero) setField(f);
+    if (force || f.length > T.fieldMax || f.some(k => !isRecruited(k)) || !P().cells || !P().cells.hero) setField(f);
   };
 
   // ---------------- recruiting ----------------
@@ -413,7 +408,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const f = fieldKeys();
     if (source === 'starter') setField([id].concat(f.filter(k => k !== id)));
     else if (P().autoField) fieldIfBetter(id);
-    else if (f.length < 3) setField(f.concat(id));
+    else if (f.length < T.fieldMax) setField(f.concat(id));
     emit('recruit', { id, source: source || 'progress' });
     return true;
   };
@@ -482,7 +477,8 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
       const rt = !isRecruited(id) && readyRoute(id);
       if (rt && rt.source === 'progress') { const c = costOf(rt); if (!c.gold && !c.ess) recs()[id] = newRec(1, 0, 'progress'); }
     }
-    const pickField = () => { P().field = bestThree('now'); };
+    migN = 3;   // B3 levels old saves against their old field of 3 (see fieldKeys)
+    const pickField = () => { P().field = bestThree('now', 3); };
     pickField();
     const old = oldRaw(), lo = old, hi = old * T.noLossMax;
     let steps = 0;
@@ -524,9 +520,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
       for (let g = 0; g < 2000 && fieldRaw() < lo; g++, steps++) { migrated.forEach(k => step(charRec(k), 1)); pickField(); }
     }
     // Milestones already passed unlock silently; their stories stay unread (seen = 0).
-    placeCells(false);
-    p.rv = 1;
     const now = fieldRaw();
+    migN = 0;
+    placeCells(false);   // cells for the first 2; 56e-formation's migration re-picks the best 2 of the 3
+    p.rv = 1;
     emit('rosterMigrated', { old, now, ratio: old > 0 ? now / old : 1, steps });
     return true;
   };

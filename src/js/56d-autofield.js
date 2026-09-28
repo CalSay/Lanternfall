@@ -63,41 +63,15 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
   const foeKey = z => { try { const t = TYPES[zoneType(z)]; return t ? t.key : ''; } catch (e) { return ''; } };
 
   // ---------------- cells (reach rules) ----------------
-  // Default: as 56-roster placeCells (tank Front, melee strikers Front without a tank, else the role
-  // column), lanes filled lower first. pre: cells already taken { key: { col, lane } }; ban: 'col:lane' kept empty.
-  function placeAll(field, pre, ban) {
-    const cells = Object.assign({}, pre || {}), used = {};
-    for (const k in cells) used[cells[k].col + ':' + cells[k].lane] = 1;
-    if (ban) used[ban] = 1;
-    const hasTank = field.some(k => R(k).role === 'tank');
-    const want = k => {
-      if (k === 'hero') return heroColOf();
-      const c = R(k), col = ROLE_STATS[c.role].col;
-      return c.role === 'striker' && !c.ranged && !hasTank ? 2 : col;
-    };
-    for (const k of ['hero'].concat(field)) {
-      if (cells[k]) continue;
-      const col = want(k), order = k === 'hero' ? [col] : [col, col === 1 ? 2 : 1, col === 0 ? 2 : 0];
-      let done = false;
-      for (const c of order) for (const lane of [1, 0]) if (!done && !used[c + ':' + lane]) { cells[k] = { col: c, lane }; used[c + ':' + lane] = 1; done = true; }
-    }
-    return cells;
-  }
-  // Shield and Hearth: a tank in Front and a support right behind it in the same lane.
+  // F1 (interim until F3's planner v3): one member per slot, from 56e-formation slotsFor (home slots,
+  // else the nearest free slot toward Middle). pre: cells already taken { key: { col } }.
+  const placeAll = (field, pre) => slotsFor(['hero'].concat(field), pre, null);
+  // Shield and Hearth: a tank in Front and a support right behind it (the Middle).
   function hearthCells(field) {
     const all = ['hero'].concat(field);
     const tank = all.find(k => roleOf(k) === 'tank'), sup = all.find(k => roleOf(k) === 'support');
     if (!tank || !sup) return [];
-    const hc = heroColOf(), out = [];
-    if (tank === 'hero' && hc !== 2) return [];
-    for (const lane of [1, 0]) {
-      const pre = { [tank]: { col: 2, lane } };
-      let ban = null;
-      if (sup === 'hero') { if (hc === 1) pre.hero = { col: 1, lane }; else { pre.hero = { col: 0, lane }; ban = '1:' + lane; } }
-      else pre[sup] = { col: 1, lane };
-      out.push(placeAll(field, pre, ban));
-    }
-    return out;
+    return [placeAll(field, { [tank]: { col: 2 }, [sup]: { col: 1 } })];
   }
 
   // ---------------- one field ----------------
@@ -123,7 +97,7 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
       let behF = 1;
       if (fk === 'bat' && field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2)) behF += T.behBonus;
       if (fk === 'wraith' && field.some(k => STUNS[k])) behF += T.behBonus;
-      const frontTank = (roleOf('hero') === 'tank' && heroColOf() === 2) || field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2);
+      const frontTank = (roleOf('hero') === 'tank' && cells.hero && cells.hero.col === 2) || field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2);
       if (bossNow && !frontTank) behF *= 1 - T.bossTank;
       // push: damage, x zoneX for each zone short of z the field holds (a zone is about 1.55x the foe
       // HP), so a field that holds more zones wins unless it is far weaker. farm: gold per second there.
@@ -161,9 +135,11 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
     for (const role of ['tank', 'striker', 'caster', 'support']) out.push(...all.filter(k => R(k).role === role).sort((a, b) => value(b) - value(a)).slice(0, T.perRole));
     return out;
   }
+  // F1: fields of ROSTER_TUNE.fieldMax (2): the hero is the third member.
   function combos(list) {
-    const n = list.length, out = [];
-    if (n <= 3) return [list.slice()];
+    const n = list.length, out = [], m = ROSTER_TUNE.fieldMax || 2;
+    if (n <= m) return [list.slice()];
+    if (m === 2) { for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) out.push([list[a], list[b]]); return out; }
     for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) out.push([list[a], list[b], list[c]]);
     return out;
   }

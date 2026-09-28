@@ -193,7 +193,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.thX = (cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
       u.melee = cls === 'warden'; u.ranged = !u.melee;
       u.dps = 0; u.spd = aps();
-      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) : 0;
+      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') : 0;   // F1: Out of place heals less
       u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
       u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
       u.cdMax = 0;
@@ -216,7 +216,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (lv >= 50) hx *= 1 + 0.25 * Math.floor((lv - 25) / 25);
         if (p && p.cls === 'lightkeeper') hx *= 1 + T.lkAura;
       }
-      u.heal = role === 'support' ? T.heal * u.hpP * hx : 0;
+      u.heal = role === 'support' ? T.heal * u.hpP * hx * offSlotMult(key) : 0;   // F1: Out of place heals less (damage: charMod)
       u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
       u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
       if (key === 'maren') { maxHp *= 1 + T.sturdy; if (lv >= 10) { let n = 0; for (const k of fieldIds()) if (k !== 'maren' && OATH[k]) n++; if (p && p.cls === null) n += 0; maxHp *= 1 + T.keeper * n; } }
@@ -232,7 +232,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // class auras and party-wide shapes
     // The Warden's aura (Oathsworn doubles it: +80% HP, +40 armour).
     if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { const k = ks('oathsworn') ? 2 : 1; maxHp *= 1 + T.wardenTankHp * k; u.armour += T.wardenTankArmour * k; }
-    if (role === 'tank' && u.col === 2) u.armour += T.braced;
+    if (u.col === 2) u.armour += role === 'tank' ? T.braced : FORM_TUNE.bracedAll;   // F1: Braced is for anyone in Front
     if (upHas('elowen') || has('elowen')) maxHp *= 1 + T.lastLight;
     if (role === 'tank' && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
     u.healIn = (has('elowen') ? 1 + T.lastLight : 1) * (synFlags.hearthTank === key ? 1 + T.hearthHeal : 1) * (setOnC('mend') ? 1.3 : 1);
@@ -701,10 +701,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emit('unitAbility', CAST_EV);
   }
   const healMul = u => u.heal > 0 && u.hpP > 0 ? u.heal / (T.heal * u.hpP) : 1;
-  // Adjacent (4.2): same lane next column, or same column other lane.
+  // Adjacent (F1, formation.md 1.1): the next slot. The Middle touches both: the more hurt one.
   function adjacent(u) {
-    for (let i = 0; i < nU; i++) { const x = U[i]; if (x === u || x.down) continue; if ((x.lane === u.lane && Math.abs(x.col - u.col) === 1) || (x.col === u.col && x.lane !== u.lane)) return x; }
-    return null;
+    let b = null;
+    for (let i = 0; i < nU; i++) { const x = U[i]; if (x === u || x.down || Math.abs(x.col - u.col) !== 1) continue; if (!b || x.hp / x.maxHp < b.hp / b.maxHp) b = x; }
+    return b;
   }
   // Per-unit timers and specialities that tick.
   function specialTick(u, dt) {
@@ -811,8 +812,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && f.slowT > 0 && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
-    // Cover: a tank in Front covers the ally right behind it (same lane).
-    if (u.role !== 'tank' && u.col < 2) { for (let i = 0; i < nU; i++) { const x = U[i]; if (!x.down && x.role === 'tank' && x.col === 2 && x.lane === u.lane) { dr *= 1 - T.cover; break; } } }
+    // Cover (F1, formation.md 1.1): a tank in Front covers the Middle (cover), a tank in the Middle the Back (bulwark).
+    if (u.col < 2 && coverOf(u, U, nU)) dr *= 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark);
     if (kind === 'burn' && has('caedmon')) dr = 0;
     a *= dr;
     let blocked = false;
@@ -846,7 +847,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emit('unitHit', HIT_EV);
     return a;
   };
-  const isAdj = (a, b) => (a.lane === b.lane && Math.abs(a.col - b.col) === 1) || (a.col === b.col && a.lane !== b.lane);
+  const isAdj = (a, b) => Math.abs(a.col - b.col) === 1;   // F1: adjacent = the next slot
+  // The standing tank one slot in front of u (it covers u), or null.
+  function coverOf(u, list, n) { for (let i = 0; i < n; i++) { const x = list[i]; if (x !== u && !x.down && x.role === 'tank' && x.col === u.col + 1) return x; } return null; }
   function knockOut(u) {
     u.hp = 0; u.down = true; u.sh = 0; packDown = true; ST.kos++;
     for (const f of foes) { f.th[u.i] = 0; if (f.tgt === u.i) f.tgt = -1; }
@@ -1039,19 +1042,21 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   ];
   const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
     vesper: () => 2 * (T.verseMend + T.verseWard) };
-  const thrRate = (u, i) => (i === 0 ? heroDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
+  const thrRate = (u, i) => (i === 0 ? heroCombatDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
   const EST_T = [null, null];
   partyHoldEstimate = (zMax, opts) => {
     if (!(zMax >= 1)) zMax = Math.max(1, S.maxZone || 1);   // no zone: from the best zone down (the Watchtower hint)
     const o = opts || {}, n = estUnits();
     const hero = EST[0];
-    const heroD = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
+    const heroD = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
     let compPhys = 0, compMagic = 0, heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
     for (let i = 1; i < n; i++) {
       const u = EST[i];
       if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else if (u.role === 'support') compMagic += u.dps; else compPhys += u.dps;
     }
-    for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; }
+    let dc = 3;   // F1: divers go for the Back, else the Middle (59b pickDive)
+    for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; if (EST[i].col < dc) dc = EST[i].col; }
+    if (dc > 1) dc = -1;
     // BAL2: support abilities heal a share of the target's max HP per cast (Mend, Call to Arms, Sanctuary,
     // Verse), and the Lightkeeper's auto-cast Rally Hymn heals everyone: a share of max HP a second.
     let abHeal = 0;
@@ -1066,7 +1071,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
-    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1);
+    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *
+      (u.col < 2 && coverOf(u, EST, n) ? 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark) : 1);   // F1 cover and bulwark
     EST_T[0] = front; EST_T[1] = top === front ? null : top;
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
@@ -1085,7 +1091,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       let holds = true, worst = 99, incMax = 0;
       for (let k = 0; k < 2; k++) {
         const u = EST_T[k]; if (!u) continue;
-        let inc = spread + pois * u.maxHp + w('dive') * atk * (u.col === 0 ? 1 : 0), share = 0;
+        let inc = spread + pois * u.maxHp + w('dive') * atk * (u.col === dc ? 1 : 0), share = 0;
         if (u === front) { inc += alive * atk * T.spd * dmgX * (1 - rng) * (1 - red(u.armour)) * drOf(u); share += 1 - rng; }
         if (u === top) { inc += alive * atk * T.spd * dmgX * rng * (1 - red(u.armour)) * drOf(u) * (u.col === 0 ? 1 - T.backRanged : 1); share += rng; }
         // healing follows the damage: a support heals whoever is hit, in proportion
@@ -1133,7 +1139,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (readyZone !== z) { readyZone = z; readyFor = clock; }
     if (clock - readyFor >= T.bossWait) return true;
     const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1;
-    let D = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);
+    let D = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);   // F1: the hero's floor and trio
     for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' ? 1 : phys);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
     return D * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;   // BAL2: estEff tunes the away estimate only

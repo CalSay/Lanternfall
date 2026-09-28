@@ -7053,7 +7053,9 @@ function strike(amount, color, big, at, label) {
 function heroSwing(base, tap, at) {
   const hawk = typeof hawkCrit === 'function' && hawkCrit();   // Hawk Eye (Constellations): a foe's first hit crits
   const crit = Math.random() < critChance() || hawk;
-  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
+  // F1 (56e-formation heroStand): in party combat the hero's hits on foes rise to its damage floor x trio.
+  const stand = target() === 'mob' && typeof heroStand === 'function' ? heroStand(tap) : 1;
+  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1) * stand;
   strikeSrc = 'hero';
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
@@ -9830,7 +9832,7 @@ const HERO_CLASSES = {
     how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
     tapName: 'Blessing',
     ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
-    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 10% more damage.'
+    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.'
   }
 };
 
@@ -9873,7 +9875,7 @@ let unitHp, unitCd, bossTelegraph;
     embersMax: 5, flare: 20, flarePerEmber: 0.3,
     markT: 8, mark: 1.25, markCrit: 1.5,
     volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
-    bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.1, lkShare: 1,
+    bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.25, lkShare: 1,   // (F1, formation.md 4.4) lkAura was 1.1: a support is half the field now
     wall: 1.3, wallT: 6, wallPause: 3, hymn: 1.4, hymnT: 8,
     autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCd: 0, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
   };
@@ -9907,13 +9909,11 @@ let unitHp, unitCd, bossTelegraph;
   function charKey(slot) {
     return slot === 0 && P().newGame && P().cls === 'lightkeeper' ? 'bram' : COMP_CHAR_KEYS[slot];
   }
+  // Before the roster (Stage A saves, while 56-roster loads): one member per slot, lane 1 (F1).
   function placeCells() {
     const cells = {}, used = {};
     const put = (key, col) => {
-      for (const c of [col, col === 2 ? 1 : col === 0 ? 1 : 0, col === 2 ? 0 : 2]) {
-        const n = used[c] || 0;
-        if (n < 2) { cells[key] = { col: c, lane: n }; used[c] = n + 1; return; }
-      }
+      for (const c of [col, 1, col === 2 ? 0 : 2]) if (!used[c]) { cells[key] = { col: c, lane: 1 }; used[c] = 1; return; }
     };
     const c = cls();
     put('hero', c ? { front: 2, mid: 1, back: 0 }[HERO_CLASSES[c].row] : 2);
@@ -10505,6 +10505,7 @@ var rstReady = false;
 function rosterLive() {
   if (!rstReady) return false;
   rstEnsure();
+  if (typeof formEnsure === 'function') formEnsure();   // F1: the party of three (56e-formation.js)
   return !!(S.party && S.party.rv >= 1);
 }
 
@@ -10538,7 +10539,8 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
                                          //   Starlit, zone 36, walled Region 1 at level 125, and Radiant walled day 1 at level 75)
-    storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3
+    storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3,
+    fieldMax: 2                          // (F1, formation.md) companions in the party: the hero is the third (was 3)
   };
   ROSTER_TUNE = T;
   const RST_DEF = {
@@ -10638,7 +10640,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   charMod = id => { let m = 1; for (const f of CHAR_MODS) m *= f(id); return m; };
   const modDps = (id, r) => rawDps(id, r) * charMod(id);
   charDps = id => { const r = charRec(id); return r ? modDps(id, r) * sharedMult() : 0; };
-  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, 3);
+  // migN: the B3 migration below still picks and levels a field of 3 (old saves keep their levels);
+  // 56e-formation then keeps the best 2 of them.
+  let migN = 0;
+  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
   const fieldRaw = keys => (keys || fieldKeys()).reduce((a, k) => a + rawDps(k, charRec(k)), 0);
   fieldCompDps = () => { const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
   supportBuff = () => {
@@ -10650,31 +10655,19 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // The old per-count maths (read-only use of S.comp), for the no-loss check.
   const oldRaw = () => COMPS.reduce((a, c, i) => a + c.dps * Math.pow(2, Math.floor((S.comp[i] || 0) / 25)) * (S.comp[i] || 0), 0);
   oldCompDps = () => oldRaw() * sharedMult();
-  rosterNoLoss = () => { const old = oldRaw(), now = fieldRaw(); return { old, now, ratio: old > 0 ? now / old : 1 }; };
+  // B3's check: the field it picked (F1: the old field of 3, kept in S.party.formOld once the party is three).
+  rosterNoLoss = () => { const fo = P().formOld, old = oldRaw(), now = fieldRaw(fo && Array.isArray(fo.field) ? fo.field.filter(isRecruited) : null); return { old, now, ratio: old > 0 ? now / old : 1 }; };
 
   // ---------------- field and cells ----------------
-  const heroCol = () => { const c = P().cls && HERO_CLASSES[P().cls]; return c ? { front: 2, mid: 1, back: 0 }[c.row] : 2; };
-  const defCol = (id, hasTank) => {
-    const c = R(id), col = ROLE_STATS[c.role].col;
-    return c.role === 'striker' && !c.ranged && !hasTank ? 2 : col;
-  };
+  // F1: one member per slot (col 0 Back, 1 Middle, 2 Front), lane 1. 56e-formation.js placeSlots
+  // owns the rule (keep current slots when free, else home, else the nearest free slot toward
+  // Middle); this fallback only runs while that file has not loaded (the B3 migration at load).
   function placeCells(keep) {
-    const old = P().cells || {}, field = fieldKeys(), cells = {}, used = {};
-    const hasTank = field.some(k => R(k).role === 'tank');
-    const free = (col, lane) => !used[col + ':' + lane];
-    const take = (key, col, lane) => { cells[key] = { col, lane }; used[col + ':' + lane] = 1; };
-    const members = ['hero'].concat(field);
-    const rest = [];
-    for (const k of members) {
-      const c = keep && old[k];
-      if (c && (k !== 'hero' || c.col === heroCol()) && c.col >= 0 && c.col <= 2 && (c.lane === 0 || c.lane === 1) && free(c.col, c.lane)) take(k, c.col, c.lane);
-      else rest.push(k);
-    }
-    for (const k of rest) {
-      const col = k === 'hero' ? heroCol() : defCol(k, hasTank);
-      const order = [col, col === 1 ? 2 : 1, col === 0 ? 2 : 0];
-      let done = false;
-      for (const c of order) { for (const lane of [1, 0]) if (!done && free(c, lane)) { take(k, c, lane); done = true; } }
+    if (typeof placeSlots === 'function') { placeSlots(keep); return; }
+    const cells = {}, used = {};
+    for (const k of ['hero'].concat(fieldKeys())) {
+      const want = k === 'hero' ? 2 : ROLE_STATS[R(k).role].col;
+      for (const c of [want, 1, 2, 0]) if (!used[c]) { cells[k] = { col: c, lane: 1 }; used[c] = 1; break; }
     }
     P().cells = cells;   // a new object: the stage watches identity
   }
@@ -10683,7 +10676,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   setField = ids => {
     const f = [];
-    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < 3) f.push(id);
+    for (const id of ids || []) if (isRecruited(id) && !onExped(id) && !f.includes(id) && f.length < T.fieldMax) f.push(id);
     P().field = f;       // a new array: the stage watches identity
     placeCells(true);
     emit('fieldChange', { field: f });
@@ -10693,7 +10686,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     if (!isRecruited(id) || onExped(id)) return false;
     const f = fieldKeys().filter(k => k !== id);
     const i = replaceId ? f.indexOf(replaceId) : -1;
-    if (i >= 0) f[i] = id; else if (f.length < 3) f.push(id); else return false;
+    if (i >= 0) f[i] = id; else if (f.length < T.fieldMax) f.push(id); else return false;
     P().autoField = false;
     setField(f); return true;
   };
@@ -10717,11 +10710,12 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     try { return partyHoldEstimate(S.maxZone, { one: true }).holds; } catch (e) { return true; } finally { p.field = f0; p.cells = c0; }
   }
   const supMode = () => !combatOn() ? 0 : (typeof COMBAT_TUNE === 'object' && COMBAT_TUNE ? COMBAT_TUNE.fieldSupport : 2);
-  function bestThree(by) {
+  function bestThree(by, n) {
+    n = n || T.fieldMax;
     const score = k => by === 'now' ? rawValue(k, charRec(k)) : potential(k);
     const all = rosterList().filter(k => !onExped(k)).sort((a, b) => score(b) - score(a));
     const tank = all.find(k => R(k).role === 'tank');
-    const fill = (f, list) => { for (const k of list) if (f.length < 3 && !f.includes(k)) f.push(k); return f; };
+    const fill = (f, list) => { for (const k of list) if (f.length < n && !f.includes(k)) f.push(k); return f; };
     const mode = supMode();
     // Before party combat: a tank, then the strongest.
     if (!mode) return fill(tank ? [tank] : [], all);
@@ -10746,7 +10740,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   function fieldIfBetter(id) {
     const f = fieldKeys();
     if (f.includes(id)) return;
-    if (f.length < 3) { setField(f.concat(id)); return; }
+    if (f.length < T.fieldMax) { setField(f.concat(id)); return; }
     // Peers: tanks replace tanks; with party combat supports replace supports, and a first support
     // takes the weakest damage dealer's place (the party needs a healer more than a third hitter).
     const kind = k => R(k).role === 'tank' ? 't' : R(k).role === 'support' && combatOn() ? 's' : 'd';
@@ -10759,8 +10753,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   }
   // Called by 55-party (partyRefreshField) once the roster is live.
   rosterSyncField = force => {
+    if (typeof formEnsure === 'function') formEnsure();   // an old field of 3 is migrated first, never cut blind
     const f = P().field || [];
-    if (force || f.some(k => !isRecruited(k)) || !P().cells || !P().cells.hero) setField(f);
+    if (force || f.length > T.fieldMax || f.some(k => !isRecruited(k)) || !P().cells || !P().cells.hero) setField(f);
   };
 
   // ---------------- recruiting ----------------
@@ -10818,7 +10813,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const f = fieldKeys();
     if (source === 'starter') setField([id].concat(f.filter(k => k !== id)));
     else if (P().autoField) fieldIfBetter(id);
-    else if (f.length < 3) setField(f.concat(id));
+    else if (f.length < T.fieldMax) setField(f.concat(id));
     emit('recruit', { id, source: source || 'progress' });
     return true;
   };
@@ -10887,7 +10882,8 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
       const rt = !isRecruited(id) && readyRoute(id);
       if (rt && rt.source === 'progress') { const c = costOf(rt); if (!c.gold && !c.ess) recs()[id] = newRec(1, 0, 'progress'); }
     }
-    const pickField = () => { P().field = bestThree('now'); };
+    migN = 3;   // B3 levels old saves against their old field of 3 (see fieldKeys)
+    const pickField = () => { P().field = bestThree('now', 3); };
     pickField();
     const old = oldRaw(), lo = old, hi = old * T.noLossMax;
     let steps = 0;
@@ -10929,9 +10925,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
       for (let g = 0; g < 2000 && fieldRaw() < lo; g++, steps++) { migrated.forEach(k => step(charRec(k), 1)); pickField(); }
     }
     // Milestones already passed unlock silently; their stories stay unread (seen = 0).
-    placeCells(false);
-    p.rv = 1;
     const now = fieldRaw();
+    migN = 0;
+    placeCells(false);   // cells for the first 2; 56e-formation's migration re-picks the best 2 of the 3
+    p.rv = 1;
     emit('rosterMigrated', { old, now, ratio: old > 0 ? now / old : 1, steps });
     return true;
   };
@@ -11992,41 +11989,15 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
   const foeKey = z => { try { const t = TYPES[zoneType(z)]; return t ? t.key : ''; } catch (e) { return ''; } };
 
   // ---------------- cells (reach rules) ----------------
-  // Default: as 56-roster placeCells (tank Front, melee strikers Front without a tank, else the role
-  // column), lanes filled lower first. pre: cells already taken { key: { col, lane } }; ban: 'col:lane' kept empty.
-  function placeAll(field, pre, ban) {
-    const cells = Object.assign({}, pre || {}), used = {};
-    for (const k in cells) used[cells[k].col + ':' + cells[k].lane] = 1;
-    if (ban) used[ban] = 1;
-    const hasTank = field.some(k => R(k).role === 'tank');
-    const want = k => {
-      if (k === 'hero') return heroColOf();
-      const c = R(k), col = ROLE_STATS[c.role].col;
-      return c.role === 'striker' && !c.ranged && !hasTank ? 2 : col;
-    };
-    for (const k of ['hero'].concat(field)) {
-      if (cells[k]) continue;
-      const col = want(k), order = k === 'hero' ? [col] : [col, col === 1 ? 2 : 1, col === 0 ? 2 : 0];
-      let done = false;
-      for (const c of order) for (const lane of [1, 0]) if (!done && !used[c + ':' + lane]) { cells[k] = { col: c, lane }; used[c + ':' + lane] = 1; done = true; }
-    }
-    return cells;
-  }
-  // Shield and Hearth: a tank in Front and a support right behind it in the same lane.
+  // F1 (interim until F3's planner v3): one member per slot, from 56e-formation slotsFor (home slots,
+  // else the nearest free slot toward Middle). pre: cells already taken { key: { col } }.
+  const placeAll = (field, pre) => slotsFor(['hero'].concat(field), pre, null);
+  // Shield and Hearth: a tank in Front and a support right behind it (the Middle).
   function hearthCells(field) {
     const all = ['hero'].concat(field);
     const tank = all.find(k => roleOf(k) === 'tank'), sup = all.find(k => roleOf(k) === 'support');
     if (!tank || !sup) return [];
-    const hc = heroColOf(), out = [];
-    if (tank === 'hero' && hc !== 2) return [];
-    for (const lane of [1, 0]) {
-      const pre = { [tank]: { col: 2, lane } };
-      let ban = null;
-      if (sup === 'hero') { if (hc === 1) pre.hero = { col: 1, lane }; else { pre.hero = { col: 0, lane }; ban = '1:' + lane; } }
-      else pre[sup] = { col: 1, lane };
-      out.push(placeAll(field, pre, ban));
-    }
-    return out;
+    return [placeAll(field, { [tank]: { col: 2 }, [sup]: { col: 1 } })];
   }
 
   // ---------------- one field ----------------
@@ -12052,7 +12023,7 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
       let behF = 1;
       if (fk === 'bat' && field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2)) behF += T.behBonus;
       if (fk === 'wraith' && field.some(k => STUNS[k])) behF += T.behBonus;
-      const frontTank = (roleOf('hero') === 'tank' && heroColOf() === 2) || field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2);
+      const frontTank = (roleOf('hero') === 'tank' && cells.hero && cells.hero.col === 2) || field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2);
       if (bossNow && !frontTank) behF *= 1 - T.bossTank;
       // push: damage, x zoneX for each zone short of z the field holds (a zone is about 1.55x the foe
       // HP), so a field that holds more zones wins unless it is far weaker. farm: gold per second there.
@@ -12090,9 +12061,11 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
     for (const role of ['tank', 'striker', 'caster', 'support']) out.push(...all.filter(k => R(k).role === role).sort((a, b) => value(b) - value(a)).slice(0, T.perRole));
     return out;
   }
+  // F1: fields of ROSTER_TUNE.fieldMax (2): the hero is the third member.
   function combos(list) {
-    const n = list.length, out = [];
-    if (n <= 3) return [list.slice()];
+    const n = list.length, out = [], m = ROSTER_TUNE.fieldMax || 2;
+    if (n <= m) return [list.slice()];
+    if (m === 2) { for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) out.push([list[a], list[b]]); return out; }
     for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) out.push([list[a], list[b], list[c]]);
     return out;
   }
@@ -12209,6 +12182,382 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
     }
     return f;
   };
+}
+
+// ---- src/js/56e-formation.js ----
+// 56e-formation: the party of three (plan-3 task F1). The hero and up to 2 companions stand in
+// one line of three slots, Back, Middle and Front (left to right on the stage). Where someone
+// stands decides who melee foes reach, who covers whom and who divers go for.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Spec: docs/design/formation.md sections 1, 3 and 4 (F1). F2 (combos, Kin, Bonds), F3 (planner v3)
+// and F4 (the Party UI) build on the API below.
+//
+// Save (all under S.party; field and cells keep their names and meaning):
+//   field  [ids]                    the fielded companions, at most 2 (ROSTER_TUNE.fieldMax)
+//   cells  { key: { col, lane } }   'hero' and each fielded id; one member per col (0 Back, 1 Middle,
+//                                   2 Front); lane is always 1 now (old values are never read)
+//   formV  0 | 1                    formation version: 0 = not migrated yet, the migration sets 1
+//   pin    [ids]                    companions the player pinned (F3's planner keeps them; F4's lock)
+//   formOld null | { field, cells } the party of 3 as it stood before the migration (F2 seeds Bonds
+//                                   from it; nothing else reads it)
+//
+// Exposed names:
+//   data     FORM_SLOTS ['back', 'mid', 'front'] (index = col; spec 'SLOTS', renamed: 20-data owns SLOTS), SLOT_COL { back: 0, mid: 1, front: 2 },
+//            SLOT_NAME { back: 'Back', mid: 'Middle', front: 'Front' }, HOME_SLOT { id: slot },
+//            CLASS_HOME { cls: slot }, FORM_TUNE (every formation knob, spec 7), FORM_TEXT (copy)
+//   read     homeSlot(key) -> slot        key: 'hero' or a character id (no class yet: Front, as a Warden)
+//            slotOf(key) -> slot | null   null = not in the party
+//            whoIn(slot) -> key | null
+//            offSlot(key) -> bool         in the party, outside the home slot
+//            adjacentKeys(key) -> [keys]  the members in the next slots (the Middle touches both)
+//            formLine() -> [{ slot, col, key, home, off }] x 3, Back to Front (key null = empty)
+//            formWarning() -> ''          the one amber line (spec 1.3), most serious first
+//   change   setSlots({ front, mid, back }) -> bool   keys or null; the hero must be one of them;
+//                                   sets field and cells together, one fieldChange
+//            swapSlots(a, b) -> bool      slot names; the hero moves too; an empty slot is a move
+//            fieldTo(id, slot) -> bool    a bench companion takes the slot, whoever stood there goes
+//                                   to the bench; refused on the hero's slot (FORM_TEXT.heroStays).
+//                                   A fielded id just swaps. Clears S.party.autoField (a manual pick)
+//            placeSlots(keep) -> cells    re-place the hero and field (keep: current slots when free,
+//                                   else home, else the nearest free slot toward Middle; a newcomer's
+//                                   home beats someone standing there off-home). No event
+//            slotsFor(keys, pre, cur) -> cells   the same rule as a pure function (the planner):
+//                                   keys in priority order, pre { key: col | {col} } fixed, cur cells to keep
+//   power    trioMult()                   party damage x (FORM_TUNE.trioX ramped over zones 8-12); never HP
+//            heroFloorDps()               the hero's damage floor (spec 4.2), before trio
+//            heroCombatDps()              max(heroDps, floor) x trio x Out of place: the hero's party-combat damage
+//            heroStand(tap) -> >= ~1      heroCombatDps / heroDps: 50-sim heroSwing multiplies the
+//                                   hero's hits on foes by it (taps by 1 + (x - 1) x tapStand)
+//            offSlotMult(key)             1 - FORM_TUNE.offSlot out of place, else 1 (damage and healing)
+//   save     formNoLoss() -> { before, after, ratio, old, field } | null   this save's migration: party
+//                                   damage (hero + companions) under the old rules vs the new (T9, C9)
+//            formEnsure(arm)              runs the migration once per save (56-roster rosterLive() calls
+//                                   it; 59b-enemies arms it once the combat estimate exists)
+//
+// Events: fieldChange { field } (existing, once per change); formMigrated { old, field, benched,
+//         cells, oldCells, before, after } (once, when an old save becomes a party of three; 'whatsNew' follows on
+//         the first tick).
+// Hooks used: addCharModifier (trio and Out of place on companion damage, 56-roster), on('classChosen')
+//   (the hero walks to the class home), on('fieldChange') (repairs cells that break one per slot,
+//   e.g. from the old two-lane grid until F4 replaces it).
+//
+// In combat (59-combat): melee foes reach the front-most standing member; a tank in Front covers
+// the Middle (COMBAT_TUNE.cover), a tank in the Middle covers the Back (FORM_TUNE.bulwark), and
+// such a tank takes the first hit of a dive on the member it covers (59b); anyone in Front gets
+// +FORM_TUNE.bracedAll armour; adjacency is the next slot; Out of place costs offSlot of damage
+// and healing. Slot jobs, combos, Kin and Bonds are F2 (56b / 56f).
+
+const FORM_SLOTS = ['back', 'mid', 'front'];
+const SLOT_COL = { back: 0, mid: 1, front: 2 };
+const SLOT_NAME = { back: 'Back', mid: 'Middle', front: 'Front' };
+// Spec 1.2: 6 Front, 7 Middle, 5 Back.
+const HOME_SLOT = {
+  tobin: 'front', maren: 'front', aldric: 'front', grenna: 'front', caedmon: 'front', bram: 'front',
+  wren: 'mid', kestrel: 'mid', isolde: 'mid', corvin: 'mid', thessaly: 'mid', anselm: 'mid', vesper: 'mid',
+  hesketh: 'back', elowen: 'back', pip: 'back', oriel: 'back', morwen: 'back'
+};
+const CLASS_HOME = { warden: 'front', ranger: 'mid', lanternmage: 'back', lightkeeper: 'back' };
+const FORM_TEXT = {
+  heroStays: "Your hero stays in the party. Pick a companion's slot.",
+  noFront: 'Nobody in Front. Foes will hit your Middle.',
+  noFront2: 'Nobody in Front or Middle. Foes will hit your Back.',
+  healerFront: 'Your healer is in Front.',
+  whatsNew: 'Your party is now three: you and two companions, in Front, Middle and Back.'
+};
+// Knobs (spec 7). F1 reads offSlot, bulwark, bracedAll, heroFloor, tapStand, trio*; the rest are
+// here so F2 / F3 / BAL3 tune one table.
+const FORM_TUNE = {
+  offSlot: 0.10, bulwark: 0.10, bracedAll: 10,
+  job: { tank: { front: 0.25, mid: 0, back: 0 }, striker: { front: 0.10, mid: 0.10, back: 0.15 },
+    caster: { front: 0.05, mid: 0.15, back: 0.10 }, support: { front: 0.10, mid: 0.10, back: 0.10 } },
+  synCap: 0.40, drCap: 0.20,
+  bondH: [0.5, 3, 12, 36, 150], bondX: [0.5, 0.75, 1, 1.15, 1.3],
+  bondAway: 0.75, bondCamp: 0.5, bondExped: 1, oldFriend: 1.5,
+  seedActive: 12, seedStrong: 36, seedPerLv: 0.1,
+  heroFloor: { warden: 1.0, ranger: 0.7, lanternmage: 1.0, lightkeeper: 0 }, tapStand: 1,
+  trioX: 1.35, trioFrom: 8, trioTo: 12,
+  bossW: 0.35, bossWHard: 0.6, hyst: 0.06, dwell: 300, deep: 4, maxEst: 32, maxPins: 2
+};
+// var: 56-roster (rosterLive, placeCells), 50-sim (heroSwing) and 59-combat ask for these by typeof.
+var formEnsure, placeSlots, slotsFor, heroStand, heroCombatDps, heroFloorDps, trioMult, offSlotMult;
+let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWarning, setSlots, swapSlots, fieldTo;
+
+{
+  const T = FORM_TUNE;
+  const FORM_DEF = { formV: 0, pin: [], formOld: null };
+  fillDefaults(STATE_DEFAULTS.party, FORM_DEF);
+
+  const P = () => S.party;
+  const R = id => ROSTER[id];
+  const max = () => (ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2;
+  const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
+  const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
+  const clsOf = () => { const p = P(); return p && p.cls && HERO_CLASSES[p.cls] ? p.cls : null; };
+  const CLS_ROLE = { warden: 'tank', ranger: 'striker', lanternmage: 'caster', lightkeeper: 'support' };
+  const roleOf = k => k === 'hero' ? CLS_ROLE[clsOf() || 'warden'] : (R(k) ? R(k).role : 'striker');
+  const fieldIds = () => ((P() && P().field) || []).filter(k => R(k) && isRecruited(k)).slice(0, max());
+  const members = () => ['hero'].concat(fieldIds());
+  const nameOf = k => {
+    if (k === 'hero') return 'You';
+    const n = R(k).name, w = n.split(' ');
+    return ['Ser', 'Saint', 'Old', 'Brother'].includes(w[0]) ? n : w[0];
+  };
+  const colOf = v => v == null ? -1 : typeof v === 'number' ? v : v.col;
+  const okCol = c => c === 0 || c === 1 || c === 2;
+
+  // ---------------- homes and reads ----------------
+  homeSlot = key => key === 'hero' ? CLASS_HOME[clsOf() || 'warden'] : HOME_SLOT[key] || ({ tank: 'front', striker: 'mid', caster: 'back', support: 'back' })[roleOf(key)] || 'mid';
+  // Slot preference: home, then the nearest free slot toward Middle (from the Middle: Front for
+  // tanks and strikers, Back for casters and supports).
+  const order = k => {
+    const h = SLOT_COL[homeSlot(k)];
+    if (h === 2) return [2, 1, 0];
+    if (h === 0) return [0, 1, 2];
+    const r = roleOf(k);
+    return r === 'caster' || r === 'support' ? [1, 0, 2] : [1, 2, 0];
+  };
+  // Keeping current slots: members already at home stay; then newcomers (no current slot) take their
+  // home when it is free; then the others keep their current slot when free; the rest go by order().
+  // So a recruit stepping in finds its home unless someone stands there at home already.
+  slotsFor = (keys, pre, cur) => {
+    const cells = {}, used = [false, false, false];
+    const take = (k, c) => { cells[k] = { col: c, lane: 1 }; used[c] = true; };
+    const list = (keys || []).filter((k, i, a) => a.indexOf(k) === i);
+    if (pre) for (const k of list) { const c = colOf(pre[k]); if (okCol(c) && !used[c]) take(k, c); }
+    if (cur) {
+      const at = k => { const c = colOf(cur[k]); return okCol(c) ? c : -1; };
+      for (const k of list) if (!cells[k] && at(k) === SLOT_COL[homeSlot(k)] && !used[at(k)]) take(k, at(k));
+      for (const k of list) { const h = SLOT_COL[homeSlot(k)]; if (!cells[k] && at(k) < 0 && !used[h]) take(k, h); }
+      for (const k of list) if (!cells[k] && at(k) >= 0 && !used[at(k)]) take(k, at(k));
+    }
+    for (const k of list) { if (cells[k]) continue; for (const c of order(k)) if (!used[c]) { take(k, c); break; } }
+    return cells;   // a 4th key and beyond gets no cell
+  };
+  placeSlots = keep => { const p = P(); p.cells = slotsFor(members(), null, keep ? p.cells : null); return p.cells; };
+  slotOf = key => {
+    const p = P(); if (!p) return null;
+    if (key !== 'hero' && !fieldIds().includes(key)) return null;
+    const c = p.cells && p.cells[key];
+    return c && okCol(c.col) ? FORM_SLOTS[c.col] : null;
+  };
+  whoIn = slot => { for (const k of members()) if (slotOf(k) === slot) return k; return null; };
+  offSlot = key => { const s = slotOf(key); return !!s && s !== homeSlot(key); };
+  offSlotMult = key => combatOn() && !legacy && offSlot(key) ? 1 - T.offSlot : 1;
+  adjacentKeys = key => {
+    const s = slotOf(key); if (!s) return [];
+    const c = SLOT_COL[s], out = [];
+    for (const k of members()) { const t = slotOf(k); if (k !== key && t && Math.abs(SLOT_COL[t] - c) === 1) out.push(k); }
+    return out;
+  };
+  formLine = () => FORM_SLOTS.map((slot, col) => { const key = whoIn(slot); return { slot, col, key, home: key ? homeSlot(key) : null, off: key ? offSlot(key) : false }; });
+  formWarning = () => {
+    const f = whoIn('front'), m = whoIn('mid');
+    if (!f && fieldIds().length) return m ? FORM_TEXT.noFront : FORM_TEXT.noFront2;
+    if (f && roleOf(f) === 'support') return FORM_TEXT.healerFront;
+    for (const k of members()) if (offSlot(k)) return k === 'hero' ? `You are out of place and fight ${Math.round(T.offSlot * 100)}% worse there.` : `${nameOf(k)} is out of place and fights ${Math.round(T.offSlot * 100)}% worse there.`;
+    return '';
+  };
+
+  // ---------------- changes ----------------
+  let repairing = false;
+  const commit = (field, cells) => {
+    const p = P();
+    p.field = field.slice();   // new objects: the stage watches identity
+    p.cells = cells;
+    lastGood = colsOf(cells);
+    emit('fieldChange', { field: p.field });
+    return true;
+  };
+  setSlots = spec => {
+    if (!rosterLive() || !spec) return false;
+    const keys = {}, seen = [];
+    for (const s of FORM_SLOTS) {
+      const k = spec[s] || null; if (!k) continue;
+      if (seen.includes(k)) return false;
+      if (k !== 'hero' && (!R(k) || !isRecruited(k) || onExped(k))) return false;
+      seen.push(k); keys[k] = SLOT_COL[s];
+    }
+    if (!seen.includes('hero') || seen.length - 1 > max()) return false;
+    const old = fieldIds(), ids = seen.filter(k => k !== 'hero');
+    ids.sort((a, b) => (old.includes(a) ? old.indexOf(a) : 9) - (old.includes(b) ? old.indexOf(b) : 9));
+    const cells = {};
+    for (const k of seen) cells[k] = { col: keys[k], lane: 1 };
+    return commit(ids, cells);
+  };
+  swapSlots = (a, b) => {
+    if (!rosterLive() || !(a in SLOT_COL) || !(b in SLOT_COL) || a === b) return false;
+    const ka = whoIn(a), kb = whoIn(b);
+    if (!ka && !kb) return false;
+    const cells = {};
+    for (const k of members()) { const s = slotOf(k); cells[k] = { col: k === ka ? SLOT_COL[b] : k === kb ? SLOT_COL[a] : SLOT_COL[s], lane: 1 }; }
+    return commit(fieldIds(), cells);
+  };
+  fieldTo = (id, slot) => {
+    if (!rosterLive() || !(slot in SLOT_COL) || !R(id) || !isRecruited(id) || onExped(id)) return false;
+    const cur = slotOf(id);
+    if (cur) return cur === slot ? false : swapSlots(cur, slot);
+    const occ = whoIn(slot);
+    if (occ === 'hero') return false;   // FORM_TEXT.heroStays
+    let f = fieldIds();
+    if (occ) f = f.map(k => k === occ ? id : k);
+    else if (f.length < max()) f.push(id);
+    else return false;
+    const cells = {};
+    for (const k of ['hero'].concat(f)) cells[k] = k === id ? { col: SLOT_COL[slot], lane: 1 } : { col: P().cells[k].col, lane: 1 };
+    P().autoField = false;
+    return commit(f, cells);
+  };
+
+  // ---------------- one member per slot ----------------
+  // The old grid (75-party, until F4) can drop a member into the second lane of a used column.
+  // Whoever moved keeps the new slot; whoever stood there takes the mover's old one (a swap).
+  let lastGood = null, goodFor = null;
+  const colsOf = cells => { const o = {}; for (const k in cells) o[k] = cells[k].col; return o; };
+  function repair() {
+    const p = P(); if (!p || !(p.formV >= 1)) return false;
+    if (goodFor !== S) { goodFor = S; lastGood = null; }
+    const keys = members(), cells = p.cells || {}, used = {};
+    let bad = keys.length > 3 || Object.keys(cells).some(k => k !== 'hero' && !keys.includes(k));
+    for (const k of keys) { const c = cells[k]; if (!c || !okCol(c.col) || c.lane !== 1 || used[c.col]) bad = true; else used[c.col] = 1; }
+    if (!bad) { lastGood = colsOf(cells); return false; }
+    const pre = {};
+    if (lastGood) for (const k of keys) { const c = cells[k]; if (c && okCol(c.col) && lastGood[k] !== c.col && !Object.values(pre).includes(c.col)) pre[k] = c.col; }
+    const fixed = slotsFor(keys, pre, lastGood || cells);
+    p.cells = fixed; lastGood = colsOf(fixed);
+    return true;
+  }
+  on('fieldChange', () => {
+    if (repairing || !rstReady || !rosterLive()) return;
+    if (!repair()) return;
+    repairing = true;
+    try { emit('fieldChange', { field: P().field }); } finally { repairing = false; }
+  });
+  // Choose your path: the hero walks to the class home (a swap when someone stands there). On the
+  // first choice, companions then step into their own homes when those are free (the starter).
+  on('classChosen', ({ from }) => {
+    if (!rstReady || !rosterLive()) return;
+    const home = homeSlot('hero'), cur = slotOf('hero'), keys = members();
+    const cols = {};
+    for (const k of keys) { const s = slotOf(k); cols[k] = s ? SLOT_COL[s] : -1; }
+    if (cur !== home) {
+      const occ = whoIn(home);
+      if (occ) cols[occ] = cur ? SLOT_COL[cur] : -1;
+      cols.hero = SLOT_COL[home];
+    }
+    if (from == null) for (const k of keys) {
+      if (k === 'hero' || cols[k] === SLOT_COL[homeSlot(k)]) continue;
+      const h = SLOT_COL[homeSlot(k)];
+      if (!keys.some(o => cols[o] === h)) cols[k] = h;
+    }
+    const cells = slotsFor(keys, cols, null);
+    commit(fieldIds(), cells);
+  });
+
+  // ---------------- power (spec 4.2, 4.3) ----------------
+  const ROLE_D = { tank: 0.5, striker: 1.82, caster: 1.0, support: 0 };
+  let legacy = false;   // true while the migration measures the old party of 3 (no trio, floor or slots)
+  trioMult = () => {
+    if (!combatOn() || legacy) return 1;
+    const span = T.trioTo - T.trioFrom, z = S.maxZone || 1;
+    const r = span > 0 ? Math.max(0, Math.min(1, (z - T.trioFrom) / span)) : z >= T.trioTo ? 1 : 0;
+    return 1 + (T.trioX - 1) * r;
+  };
+  heroFloorDps = () => {
+    if (!combatOn() || legacy || !rosterLive()) return 0;
+    const cls = clsOf() || 'warden', fl = T.heroFloor[cls] || 0, f = fieldIds();
+    if (!(fl > 0) || !f.length) return 0;
+    let sum = 0; for (const k of f) sum += charPow(k);
+    return fl * (sum / f.length) * (ROLE_D[CLS_ROLE[cls]] || 0);
+  };
+  heroCombatDps = () => {
+    const d = heroDps();
+    if (!combatOn()) return d;
+    return Math.max(d, heroFloorDps()) * trioMult() * offSlotMult('hero');
+  };
+  heroStand = tap => {
+    if (!combatOn()) return 1;
+    const d = heroDps(), s = d > 0 ? heroCombatDps() / d : 1;
+    return tap ? 1 + (s - 1) * T.tapStand : s;
+  };
+  // Companions: trio and Out of place on damage (charDps, fieldCompDps, supports' Smite). HP and
+  // healing read charPow, which this does not touch; 59-combat applies Out of place to healing.
+  addCharModifier(id => combatOn() ? trioMult() * offSlotMult(id) : 1);
+
+  // ---------------- migration (spec 3.2) ----------------
+  // Old saves: hero + 3 becomes hero + 2. Nobody leaves the roster; the best 2 of the old field
+  // stay (the planner, else a tank, a support, then value); the third waits on the bench.
+  const valueOf = k => { const s = ROLE_STATS[R(k).role]; return charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1))); };
+  function fallbackPick(old) {
+    const hr = roleOf('hero'), out = [];
+    const best = list => list.slice().sort((a, b) => valueOf(b) - valueOf(a))[0];
+    const tank = best(old.filter(k => R(k).role === 'tank'));
+    if (hr !== 'tank' && tank) out.push(tank);
+    const sup = best(old.filter(k => R(k).role === 'support'));
+    if (hr !== 'support' && sup && out.length < max()) out.push(sup);
+    for (const k of old.slice().sort((a, b) => valueOf(b) - valueOf(a))) if (out.length < max() && !out.includes(k)) out.push(k);
+    return old.filter(k => out.includes(k));
+  }
+  let news = null, newsFor = null, noLoss = null, noLossFor = null;
+  // Party damage (hero + companions) with the old rules and the old field of 3, and with the new.
+  const partyDmg = ids => { let d = heroCombatDps(); for (const k of ids) d += charDps(k); return d; };
+  function migrate() {
+    const p = P();
+    const old = (p.field || []).filter(k => R(k) && isRecruited(k)).slice(0, 3);
+    const oldCells = JSON.parse(JSON.stringify(p.cells || {}));
+    legacy = true;
+    let before = 0;
+    try { before = partyDmg(old); } finally { legacy = false; }
+    let keep = old.slice(), cells = null;
+    if (old.length > max()) {
+      try {
+        const b = typeof bestLineup === 'function' ? bestLineup({ goal: 'push', by: 'now', filter: old.slice() }) : null;
+        if (b && b.field.length === max() && b.field.every(k => old.includes(k))) { keep = b.field.slice(); cells = b.cells; }
+      } catch (e) {}
+      if (keep.length > max()) { keep = fallbackPick(old); cells = null; }
+    }
+    const keys = ['hero'].concat(keep);
+    p.field = keep;
+    p.cells = slotsFor(keys, cells, null);
+    p.formOld = { field: old, cells: oldCells };
+    p.formV = 1;
+    lastGood = colsOf(p.cells); goodFor = S;
+    const benched = old.filter(k => !keep.includes(k));
+    const after = partyDmg(keep);
+    noLoss = { before, after, ratio: before > 0 ? after / before : 1, old: old.slice(), field: keep.slice() }; noLossFor = S;
+    if (rosterList().length) {
+      news = FORM_TEXT.whatsNew + (benched.length ? ` ${benched.map(nameOf).join(' and ')} waits on the bench, with every level kept.` : '');
+      newsFor = S;
+    }
+    emit('formMigrated', { old, field: p.field.slice(), benched, cells: p.cells, oldCells, before, after });
+    emit('fieldChange', { field: p.field });
+  }
+  let armed = false, formFor = null, busy = false;
+  formEnsure = arm => {
+    if (arm) armed = true;
+    if (!armed || busy || formFor === S || !rstReady || !S || !S.party) return;
+    if (!(S.party.rv >= 1)) return;   // the roster migration (56-roster) runs first
+    formFor = S;
+    fillDefaults(S.party, FORM_DEF);
+    busy = true;
+    try {
+      if (!(S.party.formV >= 1)) migrate();
+      else {
+        // An old caller or a stored snapshot may hold 3: keep the first 2 and re-place.
+        const f = (S.party.field || []).filter(k => R(k) && isRecruited(k));
+        if (f.length > max() || f.length !== (S.party.field || []).length) { S.party.field = f.slice(0, max()); placeSlots(true); }
+        else if (!S.party.cells || !S.party.cells.hero) placeSlots(true);
+        repair();
+      }
+    } finally { busy = false; }
+  };
+  // The last migration's party damage, before (old rules, field of 3) and after (T9 / C9), or null.
+  formNoLoss = () => noLossFor === S ? noLoss : null;
+  // What's new goes out on the first tick (the bell listens from 70-ui, which loads later).
+  onTick(() => {
+    if (!news) return;
+    if (newsFor === S) emit('whatsNew', { msg: news, icon: { ic: ['banner', '#F2C14E'] }, first: true });
+    news = null; newsFor = null;
+  });
 }
 
 // ---- src/js/57-camp.js ----
@@ -15458,7 +15807,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.thX = (cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
       u.melee = cls === 'warden'; u.ranged = !u.melee;
       u.dps = 0; u.spd = aps();
-      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) : 0;
+      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') : 0;   // F1: Out of place heals less
       u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
       u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
       u.cdMax = 0;
@@ -15481,7 +15830,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (lv >= 50) hx *= 1 + 0.25 * Math.floor((lv - 25) / 25);
         if (p && p.cls === 'lightkeeper') hx *= 1 + T.lkAura;
       }
-      u.heal = role === 'support' ? T.heal * u.hpP * hx : 0;
+      u.heal = role === 'support' ? T.heal * u.hpP * hx * offSlotMult(key) : 0;   // F1: Out of place heals less (damage: charMod)
       u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
       u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
       if (key === 'maren') { maxHp *= 1 + T.sturdy; if (lv >= 10) { let n = 0; for (const k of fieldIds()) if (k !== 'maren' && OATH[k]) n++; if (p && p.cls === null) n += 0; maxHp *= 1 + T.keeper * n; } }
@@ -15497,7 +15846,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // class auras and party-wide shapes
     // The Warden's aura (Oathsworn doubles it: +80% HP, +40 armour).
     if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { const k = ks('oathsworn') ? 2 : 1; maxHp *= 1 + T.wardenTankHp * k; u.armour += T.wardenTankArmour * k; }
-    if (role === 'tank' && u.col === 2) u.armour += T.braced;
+    if (u.col === 2) u.armour += role === 'tank' ? T.braced : FORM_TUNE.bracedAll;   // F1: Braced is for anyone in Front
     if (upHas('elowen') || has('elowen')) maxHp *= 1 + T.lastLight;
     if (role === 'tank' && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
     u.healIn = (has('elowen') ? 1 + T.lastLight : 1) * (synFlags.hearthTank === key ? 1 + T.hearthHeal : 1) * (setOnC('mend') ? 1.3 : 1);
@@ -15966,10 +16315,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emit('unitAbility', CAST_EV);
   }
   const healMul = u => u.heal > 0 && u.hpP > 0 ? u.heal / (T.heal * u.hpP) : 1;
-  // Adjacent (4.2): same lane next column, or same column other lane.
+  // Adjacent (F1, formation.md 1.1): the next slot. The Middle touches both: the more hurt one.
   function adjacent(u) {
-    for (let i = 0; i < nU; i++) { const x = U[i]; if (x === u || x.down) continue; if ((x.lane === u.lane && Math.abs(x.col - u.col) === 1) || (x.col === u.col && x.lane !== u.lane)) return x; }
-    return null;
+    let b = null;
+    for (let i = 0; i < nU; i++) { const x = U[i]; if (x === u || x.down || Math.abs(x.col - u.col) !== 1) continue; if (!b || x.hp / x.maxHp < b.hp / b.maxHp) b = x; }
+    return b;
   }
   // Per-unit timers and specialities that tick.
   function specialTick(u, dt) {
@@ -16076,8 +16426,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && f.slowT > 0 && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
-    // Cover: a tank in Front covers the ally right behind it (same lane).
-    if (u.role !== 'tank' && u.col < 2) { for (let i = 0; i < nU; i++) { const x = U[i]; if (!x.down && x.role === 'tank' && x.col === 2 && x.lane === u.lane) { dr *= 1 - T.cover; break; } } }
+    // Cover (F1, formation.md 1.1): a tank in Front covers the Middle (cover), a tank in the Middle the Back (bulwark).
+    if (u.col < 2 && coverOf(u, U, nU)) dr *= 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark);
     if (kind === 'burn' && has('caedmon')) dr = 0;
     a *= dr;
     let blocked = false;
@@ -16111,7 +16461,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emit('unitHit', HIT_EV);
     return a;
   };
-  const isAdj = (a, b) => (a.lane === b.lane && Math.abs(a.col - b.col) === 1) || (a.col === b.col && a.lane !== b.lane);
+  const isAdj = (a, b) => Math.abs(a.col - b.col) === 1;   // F1: adjacent = the next slot
+  // The standing tank one slot in front of u (it covers u), or null.
+  function coverOf(u, list, n) { for (let i = 0; i < n; i++) { const x = list[i]; if (x !== u && !x.down && x.role === 'tank' && x.col === u.col + 1) return x; } return null; }
   function knockOut(u) {
     u.hp = 0; u.down = true; u.sh = 0; packDown = true; ST.kos++;
     for (const f of foes) { f.th[u.i] = 0; if (f.tgt === u.i) f.tgt = -1; }
@@ -16304,19 +16656,21 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   ];
   const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
     vesper: () => 2 * (T.verseMend + T.verseWard) };
-  const thrRate = (u, i) => (i === 0 ? heroDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
+  const thrRate = (u, i) => (i === 0 ? heroCombatDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
   const EST_T = [null, null];
   partyHoldEstimate = (zMax, opts) => {
     if (!(zMax >= 1)) zMax = Math.max(1, S.maxZone || 1);   // no zone: from the best zone down (the Watchtower hint)
     const o = opts || {}, n = estUnits();
     const hero = EST[0];
-    const heroD = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
+    const heroD = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
     let compPhys = 0, compMagic = 0, heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
     for (let i = 1; i < n; i++) {
       const u = EST[i];
       if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else if (u.role === 'support') compMagic += u.dps; else compPhys += u.dps;
     }
-    for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; }
+    let dc = 3;   // F1: divers go for the Back, else the Middle (59b pickDive)
+    for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; if (EST[i].col < dc) dc = EST[i].col; }
+    if (dc > 1) dc = -1;
     // BAL2: support abilities heal a share of the target's max HP per cast (Mend, Call to Arms, Sanctuary,
     // Verse), and the Lightkeeper's auto-cast Rally Hymn heals everyone: a share of max HP a second.
     let abHeal = 0;
@@ -16331,7 +16685,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
-    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1);
+    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *
+      (u.col < 2 && coverOf(u, EST, n) ? 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark) : 1);   // F1 cover and bulwark
     EST_T[0] = front; EST_T[1] = top === front ? null : top;
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
@@ -16350,7 +16705,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       let holds = true, worst = 99, incMax = 0;
       for (let k = 0; k < 2; k++) {
         const u = EST_T[k]; if (!u) continue;
-        let inc = spread + pois * u.maxHp + w('dive') * atk * (u.col === 0 ? 1 : 0), share = 0;
+        let inc = spread + pois * u.maxHp + w('dive') * atk * (u.col === dc ? 1 : 0), share = 0;
         if (u === front) { inc += alive * atk * T.spd * dmgX * (1 - rng) * (1 - red(u.armour)) * drOf(u); share += 1 - rng; }
         if (u === top) { inc += alive * atk * T.spd * dmgX * rng * (1 - red(u.armour)) * drOf(u) * (u.col === 0 ? 1 - T.backRanged : 1); share += rng; }
         // healing follows the damage: a support heals whoever is hit, in proportion
@@ -16398,7 +16753,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (readyZone !== z) { readyZone = z; readyFor = clock; }
     if (clock - readyFor >= T.bossWait) return true;
     const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1;
-    let D = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);
+    let D = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);   // F1: the hero's floor and trio
     for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' ? 1 : phys);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
     return D * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;   // BAL2: estEff tunes the away estimate only
@@ -16548,8 +16903,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     }
     if (f.diveT > 0 && f.first) {
       f.first = 0;
-      // Cover: a tank in Front takes the first hit of a dive on the ally right behind it.
-      for (const x of units()) if (x.live && !x.down && x.role === 'tank' && x.col === 2 && x.lane === u.lane && x !== u) { cbHitUnit(x, f.atk * (f.diveX || 1), 'dive', f); return true; }
+      // Cover (F1): the tank one slot in front of the dive target (Front covers the Middle, the Middle the Back) takes the first hit.
+      for (const x of units()) if (x.live && !x.down && x.role === 'tank' && x.col === u.col + 1 && x !== u) { cbHitUnit(x, f.atk * (f.diveX || 1), 'dive', f); return true; }
       cbHitUnit(u, f.atk * (f.diveX || 1), 'dive', f);
       return true;
     }
@@ -16669,6 +17024,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return true;
   };
 }
+// F1: the combat estimate exists now, so the formation migration (56e) can use the planner.
+if (typeof formEnsure === 'function') formEnsure(true);
 
 // ---- src/js/60-gfx.js ----
 // 60-gfx: browser-only helpers shared by render and UI: DOM shortcuts, reduced-motion
@@ -17746,10 +18103,13 @@ let resize, animate, draw, stageStats, warmScene;
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
+    // F1 (formation.md 1.1): a party of three stands in one line; the Middle stands a little higher
+    // so the three HP bars do not overlap (drawing only).
+    const midY = cols.length === 3 && !hasUp ? Math.max(4, Math.round(laneY * 0.45)) : 0;
     for (const a of order) {
       const i = cols.indexOf(a.col);
       a.hx = Math.round(x1 - (cols.length - 1 - i) * D) - (a.lane === 0 ? laneX : 0);
-      a.hy = GY - (a.lane === 0 ? laneY : 0);
+      a.hy = GY - (a.lane === 0 ? laneY : 0) - (a.col === 1 ? midY : 0);
     }
     // On a narrow logical stage (tall portrait at a high zoom) a wide sprite at the back can run off
     // the left edge: pull the ranks in toward the front column until every sprite shows whole.
@@ -26141,10 +26501,10 @@ let openSheet, partySheet;
       row.append(b);
       foot.append(el('small', 'cs-cost', 'On an expedition. Field them when they are back.'));
     } else {
-      const f = (S.party.field || []).slice(0, 3);
-      const b = el('button', 'mini go cs-act', f.length < 3 ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
+      const fm = ROSTER_TUNE.fieldMax || 3, f = (S.party.field || []).slice(0, fm);   // F1: 2 companions (F4 redoes this sheet)
+      const b = el('button', 'mini go cs-act', f.length < fm ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
       b.addEventListener('click', () => {
-        if (f.length < 3) { if (fieldChar(k)) { save(); ui(true); partySheet.refresh(true); } return; }
+        if (f.length < fm) { if (fieldChar(k)) { save(); ui(true); partySheet.refresh(true); } return; }
         swapOpen = !swapOpen; partySheet.refresh(true);
       });
       row.append(b);
