@@ -1,9 +1,10 @@
 // map-study/page.js: lays out the phone screen, the whole-map scroll and the close-up sheets for one
-// style (MAP0 scratch). Query: ?style=A|B|C&view=screen|full|sheet|debug, or ?view=overview.
+// style (MAP0 scratch). Query: ?style=A|B|C|H&view=screen|full|sheet|debug, or ?view=overview.
+// MAP1 adds style H (the hybrid) and ?style=H&view=strip (lit vs unlit).
 'use strict';
 (() => {
   const Q = new URLSearchParams(location.search);
-  const STY = { A: typeof STYLE_A !== 'undefined' && STYLE_A, B: typeof STYLE_B !== 'undefined' && STYLE_B, C: typeof STYLE_C !== 'undefined' && STYLE_C };
+  const STY = { A: typeof STYLE_A !== 'undefined' && STYLE_A, B: typeof STYLE_B !== 'undefined' && STYLE_B, C: typeof STYLE_C !== 'undefined' && STYLE_C, H: typeof STYLE_H !== 'undefined' && STYLE_H };
   const view = Q.get('view') || 'screen', st = STY[Q.get('style') || 'A'];
   const $ = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const app = document.getElementById('app');
@@ -87,6 +88,8 @@
       if (p.dot) el.append($('i', 'dot'));
       box.append(el);
     }
+    // fireflies and motes (style H): a few DOM sprites in the dark, CSS drift only
+    for (const m of res.motes || []) { const e = $('i', 'mote ' + m.k + ' p' + m.p); e.style.left = m.x * Z + 'px'; e.style.top = m.y * Z + 'px'; e.style.animationDelay = m.d + 's, ' + (m.d / 3).toFixed(2) + 's'; box.append(e); }
     // band flags and zone ranges
     for (const f of res.flags || []) {
       const el = $('div', 'flag' + (f.open ? '' : ' shut'));
@@ -134,6 +137,7 @@
 
   function sheet() {
     const wrap = $('div', 'sheet'); app.append(wrap);
+    if (st.sheetView) return st.sheetView(wrap, $, PORTRAIT);
     const hd = $('div', 'sh-head'); hd.append($('h1', '', `${st.key}. ${st.name}`), $('p', '', st.pitch + ' Close-ups at 3x (1 art px = 3 CSS px).')); wrap.append(hd);
     const grid = $('div', 'sh-grid'); wrap.append(grid);
     for (const it of st.sheet(PORTRAIT)) {
@@ -180,6 +184,7 @@
     const row = $('div', 'ov-row'); wrap.append(row);
     for (const k of ['A', 'B', 'C']) { const s = STY[k]; const f = $('figure'); const im = $('img'); im.src = `../../docs/design/img/map/map-${k.toLowerCase()}-screen.png`; f.append(im, $('figcaption', '', `${k}. ${s.name}`), $('p', '', s.pitch)); row.append(f); }
   } else if (view === 'sheet') sheet();
+  else if (view === 'strip') { const wrap = $('div', 'sheet strips'); app.append(wrap); st.stripView(wrap, $); }
   else if (view === 'debug') debug();
   else screen(save, view === 'full');
   // keep every label chip inside its plate (a pin near the edge)
