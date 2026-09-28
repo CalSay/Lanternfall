@@ -729,3 +729,14 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   volume mixer), sound and music, hero quests (per-hero chains unlocking top Bonds and hero evolutions),
   fishing + the Kitchen, challenge modes (boss rush, Oath replays, weekly Deepwell trial), a shareable camp
   card. Guilds/bigger social stay post-launch.
+- OWNER on 1.0 system ideas: (1) TACTICS for heroes: yes ("tower defense vibes"), after the combat overhaul
+  makes combat substantial. (2) ELITE TRAITS: yes, part of the combat overhaul (special boss fights).
+  (3) Lantern network: NO. (4) Factions/reputation: maybe, needs a world-map/areas overhaul; not before the
+  World map exists. (5) Trade caravans: fold into EXPEDITIONS (trade routes). (6) GEMS, owner's design:
+  crafted weapons/armour have gem slots (otherwise base stats only); uniques come pre-socketed with gems a
+  little better than a crafted item of the same rarity could get; gatherers can have +5%-style gem-find
+  perks; active gathering finds more; gems come from mines (the Mining geodes line fits); bosses are
+  encrusted with signature gems that give powers and always drop that gem type. Gems may tie into
+  monetisation later (coordinator note: keep sold gems cosmetic or convenience, never exclusive power).
+  (7) HERO FATIGUE: yes, but tuned so rotating heroes never slows progression (frame it as losing a rested
+  bonus, recovery at camp, away time counts as rest).
