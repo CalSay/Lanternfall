@@ -498,3 +498,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Waiting on the owner to link CalSay/Lanternfall, branch claude/elegant-johnson-m6k00u, in Netlify. Then
   every push (only after a merge passes build + check) deploys automatically.
 - Merged claude/trusting-hopper-5v9927 (the owner's crash-fix session): its Almanac fix replaces the coordinator's (an early probe never caches the day's Omen), bounties skip the Omen bonus at load, plus a regression test. That branch is now redundant.
+- F1 merged: 56e-formation.js (FORM_SLOTS back/mid/front, homeSlot/slotOf/whoIn/offSlot/adjacentKeys,
+  setSlots/swapSlots/fieldTo/setPin, trioMult 1 -> 1.35 over zones 8-12 (damage only), heroFloorDps /
+  heroCombatDps, offSlotMult 0.9, cover 15%/10%, Front +10 armour, divers go for the Back), migration to a
+  field of 2 (+ hero) with S.party.formV/pin/formOld, fixture save-v3-four.json. KNOWN REGRESSION until
+  F2/F3/BAL3: --targets 12/20 (was 16): T3, P1, P2 (Lightkeeper stuck at zone 36 days 10-40), P4, T12 fail;
+  C9 power ratio 0.75-1.37 across fixtures. Accepted to unblock F2/F3/F4; BAL3 retunes trioX, trioFrom
+  and the hero floor. F2 also owns: 56b hearth -> "support in Back", legendary markMax 10 -> 8.
