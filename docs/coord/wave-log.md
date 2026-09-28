@@ -916,3 +916,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Tavern hire board with rarity, make the 18 named gatherers the special applicants (their story routes put
   them on the board), add upkeep (rarity x level, paid daily incl. offline; unpaid = they stop working, never
   leave or lose levels), tents cap from 2. WC1 told: Tents are the housing building (2 at start, ~10 by R5).
+- OWNER confirmed: unpaid gatherers stop working until paid (never leave, never lose levels).
