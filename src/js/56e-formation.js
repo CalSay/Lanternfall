@@ -3,62 +3,85 @@
 // stands decides who melee foes reach, who covers whom and who divers go for.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/formation.md sections 1, 3 and 4 (F1). F2 (combos, Kin, Bonds), F3 (planner v3)
-// and F4 (the Party UI) build on the API below.
+// and F4 (the Party UI) build on the API below; it is also listed in docs/ARCHITECTURE.md.
 //
-// Save (all under S.party; field and cells keep their names and meaning):
+// Save (all under S.party; field and cells keep their names and meaning; defaults merge through
+// STATE_DEFAULTS.party, the registerState('party') defaults, so every old save gets them):
 //   field  [ids]                    the fielded companions, at most 2 (ROSTER_TUNE.fieldMax)
 //   cells  { key: { col, lane } }   'hero' and each fielded id; one member per col (0 Back, 1 Middle,
 //                                   2 Front); lane is always 1 now (old values are never read)
 //   formV  0 | 1                    formation version: 0 = not migrated yet, the migration sets 1
-//   pin    [ids]                    companions the player pinned (F3's planner keeps them; F4's lock)
+//   pin    [ids]                    companions the player pinned, at most FORM_TUNE.maxPins
+//                                   (F3's planner keeps them; F4 draws the lock)
 //   formOld null | { field, cells } the party of 3 as it stood before the migration (F2 seeds Bonds
-//                                   from it; nothing else reads it)
+//                                   from it, spec 3.3; nothing else reads it). null on new games
 //
 // Exposed names:
-//   data     FORM_SLOTS ['back', 'mid', 'front'] (index = col; spec 'SLOTS', renamed: 20-data owns SLOTS), SLOT_COL { back: 0, mid: 1, front: 2 },
-//            SLOT_NAME { back: 'Back', mid: 'Middle', front: 'Front' }, HOME_SLOT { id: slot },
-//            CLASS_HOME { cls: slot }, FORM_TUNE (every formation knob, spec 7), FORM_TEXT (copy)
+//   data     FORM_SLOTS ['back', 'mid', 'front'] (index = col; the spec's SLOTS, renamed: 20-data owns
+//            SLOTS), SLOT_COL { back: 0, mid: 1, front: 2 }, SLOT_NAME { back: 'Back', mid: 'Middle',
+//            front: 'Front' }, HOME_SLOT { id: slot } (spec 1.2), CLASS_HOME { cls: slot },
+//            FORM_TUNE (every formation knob, spec 7; F2/F3/BAL3 read and tune the same table),
+//            FORM_TEXT (copy: heroStays, noFront, noFront2, healerFront, whatsNew)
 //   read     homeSlot(key) -> slot        key: 'hero' or a character id (no class yet: Front, as a Warden)
 //            slotOf(key) -> slot | null   null = not in the party
 //            whoIn(slot) -> key | null
 //            offSlot(key) -> bool         in the party, outside the home slot
 //            adjacentKeys(key) -> [keys]  the members in the next slots (the Middle touches both)
+//            formMembers() -> ['hero', ...ids]   the party, hero first
+//            memberRole(key) -> role      tank | striker | caster | support (the hero: its class role;
+//                                   no class yet: tank, as a Warden). Slot jobs and combos read this
 //            formLine() -> [{ slot, col, key, home, off }] x 3, Back to Front (key null = empty)
 //            formWarning() -> ''          the one amber line (spec 1.3), most serious first
+//            isPinned(id) -> bool
 //   change   setSlots({ front, mid, back }) -> bool   keys or null; the hero must be one of them;
 //                                   sets field and cells together, one fieldChange
 //            swapSlots(a, b) -> bool      slot names; the hero moves too; an empty slot is a move
 //            fieldTo(id, slot) -> bool    a bench companion takes the slot, whoever stood there goes
-//                                   to the bench; refused on the hero's slot (FORM_TEXT.heroStays).
+//                                   to the bench; refused on the hero's slot (show FORM_TEXT.heroStays).
 //                                   A fielded id just swaps. Clears S.party.autoField (a manual pick)
+//            setPin(id, on) -> bool       at most FORM_TUNE.maxPins; emits formPin { id, on, pin }
 //            placeSlots(keep) -> cells    re-place the hero and field (keep: current slots when free,
 //                                   else home, else the nearest free slot toward Middle; a newcomer's
 //                                   home beats someone standing there off-home). No event
 //            slotsFor(keys, pre, cur) -> cells   the same rule as a pure function (the planner):
 //                                   keys in priority order, pre { key: col | {col} } fixed, cur cells to keep
+//            setField(ids) (56-roster) still works: keeps the first 2 and calls placeSlots(true)
 //   power    trioMult()                   party damage x (FORM_TUNE.trioX ramped over zones 8-12); never HP
 //            heroFloorDps()               the hero's damage floor (spec 4.2), before trio
-//            heroCombatDps()              max(heroDps, floor) x trio x Out of place: the hero's party-combat damage
+//            heroCombatDps()              max(heroDps, floor) x trio x Out of place: the hero's party-combat
+//                                   damage (the hold estimate and boss gate in 59-combat use it)
 //            heroStand(tap) -> >= ~1      heroCombatDps / heroDps: 50-sim heroSwing multiplies the
 //                                   hero's hits on foes by it (taps by 1 + (x - 1) x tapStand)
 //            offSlotMult(key)             1 - FORM_TUNE.offSlot out of place, else 1 (damage and healing)
+//            All of these read the current S.party.field/cells, so a planner that swaps them in for a
+//            measurement (56d measure) scores slots, Out of place, trio and the floor for free.
 //   save     formNoLoss() -> { before, after, ratio, old, field } | null   this save's migration: party
 //                                   damage (hero + companions) under the old rules vs the new (T9, C9)
 //            formEnsure(arm)              runs the migration once per save (56-roster rosterLive() calls
 //                                   it; 59b-enemies arms it once the combat estimate exists)
 //
-// Events: fieldChange { field } (existing, once per change); formMigrated { old, field, benched,
-//         cells, oldCells, before, after } (once, when an old save becomes a party of three; 'whatsNew' follows on
-//         the first tick).
+// Events: fieldChange { field } (existing, once per change); formPin { id, on, pin };
+//         formMigrated { old, field, benched, cells, oldCells, before, after } (once, when an old save
+//         becomes a party of three, on the first roster read after load (before the first tick):
+//         listeners registered at file load see it; the 'whatsNew' line follows on the first tick).
 // Hooks used: addCharModifier (trio and Out of place on companion damage, 56-roster), on('classChosen')
 //   (the hero walks to the class home), on('fieldChange') (repairs cells that break one per slot,
-//   e.g. from the old two-lane grid until F4 replaces it).
+//   e.g. an old snapshot or a stale caller).
 //
 // In combat (59-combat): melee foes reach the front-most standing member; a tank in Front covers
 // the Middle (COMBAT_TUNE.cover), a tank in the Middle covers the Back (FORM_TUNE.bulwark), and
 // such a tank takes the first hit of a dive on the member it covers (59b); anyone in Front gets
 // +FORM_TUNE.bracedAll armour; adjacency is the next slot; Out of place costs offSlot of damage
 // and healing. Slot jobs, combos, Kin and Bonds are F2 (56b / 56f).
+//
+// Left for the next tasks:
+//   F2  slot jobs (FORM_TUNE.job) from memberRole x slotOf; combos, Kin, Bonds; Lifeline moves from
+//       "support right behind the tank" (56b 'hearth', still the old rule) to "support in Back";
+//       Bond seeds from S.party.formOld; formQuick(trio) for F3; the second What's new line (Bonds).
+//   F3  pair x order search over slotsFor placements, pins (S.party.pin, formPin), hysteresis; the
+//       v2 planner (56d) runs on pairs of companions until then.
+//   F4  slot cards over this API (swapSlots / fieldTo / setPin / formWarning / FORM_TEXT); 75-party's
+//       grid is an interim one-line version of the old 3 x 2 grid.
 
 const FORM_SLOTS = ['back', 'mid', 'front'];
 const SLOT_COL = { back: 0, mid: 1, front: 2 };
@@ -93,7 +116,8 @@ const FORM_TUNE = {
 };
 // var: 56-roster (rosterLive, placeCells), 50-sim (heroSwing) and 59-combat ask for these by typeof.
 var formEnsure, placeSlots, slotsFor, heroStand, heroCombatDps, heroFloorDps, trioMult, offSlotMult;
-let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWarning, setSlots, swapSlots, fieldTo;
+let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWarning, setSlots, swapSlots, fieldTo,
+  formMembers, memberRole, isPinned, setPin;
 
 {
   const T = FORM_TUNE;
@@ -110,6 +134,8 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const roleOf = k => k === 'hero' ? CLS_ROLE[clsOf() || 'warden'] : (R(k) ? R(k).role : 'striker');
   const fieldIds = () => ((P() && P().field) || []).filter(k => R(k) && isRecruited(k)).slice(0, max());
   const members = () => ['hero'].concat(fieldIds());
+  formMembers = members;
+  memberRole = k => roleOf(k);
   const nameOf = k => {
     if (k === 'hero') return 'You';
     const n = R(k).name, w = n.split(' ');
@@ -147,11 +173,16 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
     return cells;   // a 4th key and beyond gets no cell
   };
   placeSlots = keep => { const p = P(); p.cells = slotsFor(members(), null, keep ? p.cells : null); return p.cells; };
+  // Cached per save, field and cells object (every writer replaces them: the stage watches identity
+  // too), so charMod (Out of place) stays cheap in the frame loop.
+  const sc = { S: null, f: null, c: null, n: -1, m: null };
   slotOf = key => {
     const p = P(); if (!p) return null;
-    if (key !== 'hero' && !fieldIds().includes(key)) return null;
-    const c = p.cells && p.cells[key];
-    return c && okCol(c.col) ? FORM_SLOTS[c.col] : null;
+    if (sc.S !== S || sc.f !== p.field || sc.c !== p.cells || sc.n !== (p.field ? p.field.length : -1)) {
+      sc.S = S; sc.f = p.field; sc.c = p.cells; sc.n = p.field ? p.field.length : -1; sc.m = {};
+      for (const k of members()) { const c = p.cells && p.cells[k]; sc.m[k] = c && okCol(c.col) ? FORM_SLOTS[c.col] : null; }
+    }
+    return sc.m[key] || null;
   };
   whoIn = slot => { for (const k of members()) if (slotOf(k) === slot) return k; return null; };
   offSlot = key => { const s = slotOf(key); return !!s && s !== homeSlot(key); };
@@ -266,6 +297,19 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
     commit(fieldIds(), cells);
   });
 
+  // ---------------- pins (spec 5.5; F3 keeps them, F4 draws the lock) ----------------
+  isPinned = id => { const p = P(); return !!(p && Array.isArray(p.pin) && p.pin.includes(id)); };
+  setPin = (id, on) => {
+    const p = P(); if (!p || !R(id) || !isRecruited(id)) return false;
+    if (!Array.isArray(p.pin)) p.pin = [];
+    const has = p.pin.includes(id);
+    if (!!on === has) return false;
+    if (on && p.pin.length >= T.maxPins) return false;
+    p.pin = on ? p.pin.concat(id) : p.pin.filter(k => k !== id);   // a new array
+    emit('formPin', { id, on: !!on, pin: p.pin.slice() });
+    return true;
+  };
+
   // ---------------- power (spec 4.2, 4.3) ----------------
   const ROLE_D = { tank: 0.5, striker: 1.82, caster: 1.0, support: 0 };
   let legacy = false;   // true while the migration measures the old party of 3 (no trio, floor or slots)
@@ -320,29 +364,31 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
     legacy = true;
     let before = 0;
     try { before = partyDmg(old); } finally { legacy = false; }
-    let keep = old.slice(), cells = null;
+    let keep = old.slice();
     if (old.length > max()) {
       try {
         const b = typeof bestLineup === 'function' ? bestLineup({ goal: 'push', by: 'now', filter: old.slice() }) : null;
-        if (b && b.field.length === max() && b.field.every(k => old.includes(k))) { keep = b.field.slice(); cells = b.cells; }
+        if (b && b.field.length === max() && b.field.every(k => old.includes(k))) keep = b.field.slice();
       } catch (e) {}
-      if (keep.length > max()) { keep = fallbackPick(old); cells = null; }
+      if (keep.length > max()) keep = fallbackPick(old);
     }
+    // Slots: home slots (spec 1.2), clashes toward the Middle. The v2 planner's cells predate home
+    // slots, so only its pick of who stays is used (F3's planner v3 places by slot).
     const keys = ['hero'].concat(keep);
     p.field = keep;
-    p.cells = slotsFor(keys, cells, null);
+    p.cells = slotsFor(keys, null, null);
     p.formOld = { field: old, cells: oldCells };
     p.formV = 1;
     lastGood = colsOf(p.cells); goodFor = S;
     const benched = old.filter(k => !keep.includes(k));
-    const after = partyDmg(keep);
-    noLoss = { before, after, ratio: before > 0 ? after / before : 1, old: old.slice(), field: keep.slice() }; noLossFor = S;
     if (rosterList().length) {
       news = FORM_TEXT.whatsNew + (benched.length ? ` ${benched.map(nameOf).join(' and ')} waits on the bench, with every level kept.` : '');
       newsFor = S;
     }
+    emit('fieldChange', { field: p.field });   // first: synergies and caches follow the new field
+    const after = partyDmg(keep);
+    noLoss = { before, after, ratio: before > 0 ? after / before : 1, old: old.slice(), field: keep.slice() }; noLossFor = S;
     emit('formMigrated', { old, field: p.field.slice(), benched, cells: p.cells, oldCells, before, after });
-    emit('fieldChange', { field: p.field });
   }
   let armed = false, formFor = null, busy = false;
   formEnsure = arm => {

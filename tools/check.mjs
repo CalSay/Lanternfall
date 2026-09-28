@@ -1792,13 +1792,13 @@ try {
     assert(ok0 && o.eval('S.deepCombat.tip === 0'), `${f}: gets S.deepCombat { tip: 0 } and keeps it on a round trip`);
     errs.push(...o.errors);
   }
-  // A Ranger (not a tank) with Tobin (tank), Hesketh (support) and Wren (striker) on the late save.
+  // A Ranger (not a tank) with Tobin (tank) and Wren (striker) on the late save (F1: the hero is the third).
   const setup = (seed, storage) => {
     const g = loadCore({ seed, storage: storage || memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
     if (!storage) {
       E('chooseClass("ranger"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth)');
       E('for (const id of ["tobin", "hesketh", "wren"]) if (!charRec(id)) unlockChar(id, "test", true)');
-      E('S.party.autoField = false; setField(["tobin", "hesketh", "wren"])');
+      E('S.party.autoField = false; setField(["tobin", "wren"])');
     }
     E('COMBAT_TUNE.regen = 0');
     ticks(g, 30);
@@ -2706,8 +2706,9 @@ try {
   assert(E('legendSetTier("oath")') === 4 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(b5.cap - 0.70) < 1e-9 && !b5.hit && b5.scale === 1 && Math.abs(bannerPart() - (1 + E('legendVal("banner", "dmg", 5)') * 2)) < 1e-9,
     `legend core: two sets at once (Oath 4 + Hedgefolk 2); a rank V build under its +70% cap runs unscaled (raw +${(100 * b5.raw).toFixed(1)}%)`);
   // F1: with 2 fielded companions the hero's two pieces join the Oath set and Aldric carries the Knucklebone
-  // (an Oath-marked trinket), so rank I still runs over its cap
-  E(`S.legend.book.tidewall = 1; S.legend.book.banner = 1; S.legend.book.knucklebone = 1; itemById(${wb}).cm = 1; itemById(${gh}).cm = 1; itemById(${tk}).cm = 1; equipChar("aldric", ${tk}, "trk"); gearDirty()`);
+  // (an Oath-marked trinket), Maren's shield holds Mossguard and the blade carries the Anvil (a bigger power than
+  // Tidewall), so rank I still runs over its cap
+  E(`S.legend.book.anvil = 1; S.legend.book.banner = 1; S.legend.book.knucklebone = 1; S.legend.book.mossguard = 1; itemById(${wb}).lg = "anvil"; itemById(${wb}).cm = 1; itemById(${gh}).cm = 1; itemById(${tk}).cm = 1; equipChar("aldric", ${tk}, "trk"); itemById(charRec("maren").wpn).lg = "mossguard"; gearDirty()`);
   const bu = JSON.parse(E('JSON.stringify(legendBudget())'));
   const party = bannerPart(), exp = 1 + E('legendVal("banner", "dmg", 1)') * 2 * bu.scale;
   assert(bu.raw > bu.cap && bu.capped === bu.cap && Math.abs(bu.cap - 0.30) < 1e-9 && bu.rank === 1 && bu.scale < 1 && bu.hit && Math.abs(party - exp) < 1e-9,
@@ -2824,6 +2825,167 @@ try {
       `autoField() applies the planner's pick and cells (${pick.field.join(', ')}: "${pick.why}")`);
   }
 } catch (e) { fail('line-up planner crashed: ' + (e.stack || e)); }
+
+// ---- formation: a party of three (56e-formation.js, plan-3 task F1; formation.md 1, 3, 4; checks C1-C4, C6-C9) ----
+console.log('formation');
+try {
+  const FORM_FIX = ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-v3-four.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
+  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
+  const REC_KEYS = ['lv', 'rank', 'xp', 'wpn', 'trk', 'seen', 'src'];
+  const recsOf = g => { const rec = J(g, 'S.party.rec || {}'), o = {}; for (const k of Object.keys(rec).sort()) o[k] = Object.fromEntries(REC_KEYS.map(x => [x, rec[k][x]])); return o; };
+  const errs = [];
+  // the new fixture is what it says: a chosen class, a field of 3 with gear on all three, a converted synergy active
+  const four = JSON.parse(rawOf('save-v3-four.json'));
+  assert(four.party && four.party.cls && four.party.rv === 1 && !four.party.formV && four.party.field.length === 3 &&
+    four.party.field.every(k => four.party.rec[k] && four.party.rec[k].wpn != null && four.party.rec[k].trk != null) &&
+    ['aldric', 'elowen'].every(k => four.party.field.includes(k)),
+  `save-v3-four.json: a ${four.party.cls}, a field of 3 (${four.party.field.join(', ')}) with gear on all three, The Old Oath active`);
+  const T9 = [];
+  for (const f of FORM_FIX) {
+    const raw = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    const news = []; g.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) news.push(w.msg); });
+    ticks(g, 20);
+    const E = s => g.eval(s);
+    // C1: loads without errors or bad numbers
+    const bad = badNumbers(J(g, 'S'));
+    assert(!g.errors.length && !bad.length && E('S.party.formV') === 1, `C1 ${f}: loads as a party of three without errors` + (g.errors.length ? ': ' + g.errors[0] : bad.length ? ': ' + bad[0] : ''));
+    // C2: nobody leaves the roster; every record is kept. For a save the roster migration (B3) already
+    // ran on, against the file; otherwise against the same load with the party of three already set.
+    // (both loads untouched by play: rosterLive() runs the migrations, no tick)
+    let ref;
+    if (raw.party && raw.party.rv >= 1) ref = { list: Object.keys(raw.party.rec).filter(k => raw.party.rec[k]).sort(), rec: (() => { const o = {}; for (const k of Object.keys(raw.party.rec).sort()) o[k] = Object.fromEntries(REC_KEYS.map(x => [x, raw.party.rec[k][x]])); return o; })() };
+    else {
+      const r2 = JSON.parse(JSON.stringify(raw)); r2.party = Object.assign({}, r2.party || {}, { formV: 1 });
+      const h = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(r2) }) }); h.eval('rosterLive()');
+      ref = { list: J(h, 'rosterList()').slice().sort(), rec: recsOf(h) };
+      errs.push(...h.errors);
+    }
+    const g0 = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }); g0.eval('rosterLive()');
+    const list = J(g0, 'rosterList()').slice().sort(), d = deepDiff(ref.rec, recsOf(g0));
+    assert(g0.eval('S.party.formV') === 1, `${f}: the migration runs on the first roster read, before any tick`);
+    errs.push(...g0.errors);
+    assert(list.join() === ref.list.join() && !d, `C2 ${f}: all ${list.length} companions kept with level, rank, XP, gear, stories and source` + (d ? ': ' + d : ''));
+    // C3: at most 2 fielded, both from the old field; one member per slot; formV 1
+    const p = J(g, 'S.party'), old = (p.formOld && p.formOld.field) || [];
+    const keys = ['hero'].concat(p.field), cols = keys.map(k => p.cells[k] && p.cells[k].col);
+    assert(p.field.length <= 2 && p.field.every(k => old.includes(k)) && new Set(cols).size === keys.length && cols.every(c => c === 0 || c === 1 || c === 2) &&
+      keys.every(k => p.cells[k].lane === 1) && Object.keys(p.cells).length === keys.length && p.formV === 1 && Array.isArray(p.pin) && !p.pin.length,
+    `C3 ${f}: fields ${p.field.join(', ') || 'nobody'} of the old ${old.join(', ')}; ${keys.map(k => `${k} ${['Back', 'Middle', 'Front'][p.cells[k].col]}`).join(', ')}`);
+    // C8: one What's new line, naming who waits on the bench
+    const benched = old.filter(k => !p.field.includes(k));
+    assert(news.length === 1 && (!benched.length || /waits on the bench, with every level kept/.test(news[0])), `C8 ${f}: one What's new line: "${news[0]}"`);
+    // C9 / T9: party damage (hero combat damage + field) after vs before
+    const nl = J(g, 'formNoLoss()');
+    if (nl) T9.push({ f, z: raw.maxZone, ...nl });
+    // C4: save, load, save: the party and S.bond (F2) are identical, and no second What's new
+    E('save()');
+    const g2 = loadCore({ seed: 62, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    const n2 = []; g2.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) n2.push(w.msg); });
+    ticks(g2, 20);
+    const pick = x => ({ field: x.field, cells: x.cells, pin: x.pin, formV: x.formV, formOld: x.formOld });
+    const d4 = deepDiff(pick(p), pick(J(g2, 'S.party'))) || deepDiff(J(g, 'S.bond || null'), J(g2, 'S.bond || null'));
+    assert(!d4 && !n2.length && !g2.errors.length, `C4 ${f}: save and load keep the party as it is (field, cells, pin), no second migration` + (d4 ? ': ' + d4 : ''));
+    errs.push(...g.errors, ...g2.errors);
+  }
+  // C9: the ratio. The band (0.90-1.30, T9) is BAL3's to tune: saves below FORM_TUNE.trioFrom get no trio
+  // bonus yet and lose their third companion's damage. Hard floor: nobody loses more than a third.
+  for (const r of T9) console.log(`       INFO C9 T9 ${r.f} (zone ${r.z}): party damage ${r.ratio.toFixed(2)} (${r.old.join(',')} -> ${r.field.join(',')}; band 0.90-1.30: ${r.ratio >= 0.9 && r.ratio <= 1.3 ? 'in' : 'MISS, BAL3'})`);
+  assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.5),
+    `C9 party damage after vs before the migration stays within 0.70-1.50 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
+  // C6: a new game: the starter and the hero in their homes; one recruit fills the third slot
+  {
+    const g = loadCore({ seed: 63 }), E = s => g.eval(s);
+    const news = []; g.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) news.push(w.msg); });
+    ticks(g, 5);
+    E('chooseClass("warden")'); ticks(g, 5);
+    const st = E('S.party.field[0]');
+    assert(E('S.party.formV') === 1 && E('S.party.field.length') === 1 && E(`slotOf("hero") === "front" && slotOf("${st}") === homeSlot("${st}")`),
+      `C6 a new Warden game: formV 1, ${st} in the ${E(`slotOf("${st}")`)} and the hero in Front`);
+    E('unlockChar("pip", "test", true)'); ticks(g, 2);
+    const line = J(g, 'formLine()');
+    assert(E('S.party.field.length') === 2 && line.every(x => x.key) && E('slotOf("pip")') === 'back', `C6 after one recruit, 3 members in 3 slots: ${line.map(x => `${x.slot} ${x.key}`).join(', ')}`);
+    assert(!news.length, 'C8 a new game gets no What\'s new line');
+    // the class home: another new game, a Lanternmage (Back) with Tobin (Front)
+    const h = loadCore({ seed: 64 }); ticks(h, 5); h.eval('chooseClass("lanternmage")'); ticks(h, 2);
+    assert(h.eval('slotOf("hero")') === 'back' && h.eval('slotOf(S.party.field[0])') === 'front', `a new Lanternmage stands in Back, the starter (${h.eval('S.party.field[0]')}) in Front`);
+    errs.push(...g.errors, ...h.errors);
+  }
+  // C7: setField keeps 2; swapSlots moves the hero; fieldTo on the hero's slot is refused
+  {
+    const g = loadCore({ seed: 65 }), E = s => g.eval(s);
+    ticks(g, 3); E('chooseClass("ranger"); ["tobin", "wren", "hesketh", "pip", "bram"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false');
+    E('setField(["tobin", "hesketh", "pip"])');
+    assert(E('S.party.field.join()') === 'tobin,hesketh' && E('Object.keys(S.party.cells).sort().join()') === 'hero,hesketh,tobin', 'C7 setField with 3 ids keeps the first 2');
+    assert(E('slotOf("hero")') === 'mid' && E('slotOf("tobin")') === 'front' && E('slotOf("hesketh")') === 'back', 'placeSlots: everyone at home (Ranger Middle, Tobin Front, Hesketh Back)');
+    let ev = 0; g.fn.on('fieldChange', () => ev++);
+    assert(E('swapSlots("mid", "front")') && E('slotOf("hero")') === 'front' && E('slotOf("tobin")') === 'mid' && ev === 1, 'C7 swapSlots moves the hero (one fieldChange)');
+    assert(E('offSlot("hero") && offSlot("tobin") && !offSlot("hesketh")') && /out of place/.test(E('formWarning()')), `Out of place: both moved members; the warning: "${E('formWarning()')}"`);
+    const heroSlot = E('slotOf("hero")');
+    assert(!E(`fieldTo("wren", "${heroSlot}")`) && E('slotOf("hero")') === heroSlot && !E('S.party.field.includes("wren")'), 'C7 fieldTo on the hero\'s slot is refused; the hero stays');
+    assert(E('fieldTo("wren", "back")') && E('S.party.field.includes("wren") && !S.party.field.includes("hesketh")') && E('slotOf("wren")') === 'back' && E('S.party.autoField') === false, 'fieldTo: Wren takes the Back, Hesketh goes to the bench');
+    assert(E('fieldTo("wren", "mid")') && E('slotOf("wren")') === 'mid' && E('slotOf("tobin")') === 'back', 'fieldTo a fielded companion swaps slots');
+    assert(E('setSlots({ front: "bram", mid: "hero", back: "pip" })') && E('S.party.field.slice().sort().join()') === 'bram,pip' && E('whoIn("front")') === 'bram', 'setSlots sets field and cells together');
+    assert(!E('setSlots({ front: "bram", mid: "tobin", back: "pip" })') && !E('setSlots({ front: "bram", mid: "hero", back: "bram" })'), 'setSlots refuses a party without the hero, or someone twice');
+    assert(E('adjacentKeys("hero").sort().join()') === 'bram,pip' && E('adjacentKeys("pip").join()') === 'hero', 'adjacency: the Middle touches both sides, the Back only the Middle');
+    // old two-lane cells (the grid, a stored snapshot) are repaired to one member per slot
+    E('S.party.cells = { hero: { col: 1, lane: 1 }, bram: { col: 2, lane: 1 }, pip: { col: 2, lane: 0 } }; emit("fieldChange", { field: S.party.field })');
+    const c = J(g, 'S.party.cells');
+    assert(new Set(Object.values(c).map(x => x.col)).size === 3 && Object.values(c).every(x => x.lane === 1) && c.pip.col === 2, `a second member dropped on a used slot swaps into it (${Object.entries(c).map(([k, x]) => k + ' ' + x.col).join(', ')})`);
+    // the class home on a class change: the hero walks there, whoever stood there swaps
+    E('setSlots({ front: "bram", mid: "hero", back: "pip" }); chooseClass("lanternmage")');
+    assert(E('slotOf("hero")') === 'back' && E('slotOf("pip")') === 'mid' && E('slotOf("bram")') === 'front', 'a class change: the hero walks to the new class home (Back), Pip swaps to the Middle');
+    errs.push(...g.errors);
+  }
+  // combat: reach, cover, bulwark, Braced, dives, Out of place, the hero floor and the trio ramp
+  {
+    const g = loadCore({ seed: 66 }), E = s => g.eval(s);
+    ticks(g, 3);
+    E('almanac.force("none"); chooseClass("ranger"); ["tobin", "hesketh", "wren"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 30; charRec(k).rank = 1; }); S.party.autoField = false; S.auto = false; S.L = 30; S.blade = 30; S.maxZone = 12; setZone(10)');
+    const place = spec => { E(`setSlots(${JSON.stringify(spec)})`); ticks(g, 1); };   // fieldChange refreshes the units on the next tick
+    const hit = (key, kind) => E(`(() => { const u = cbUnitByKey("${key}"); u.hp = u.maxHp; u.sh = 0; u.down = false; u.drT = 0; const a = cbHitUnit(u, u.maxHp * 0.1, "${kind || 'poison'}", null); u.hp = u.maxHp; return a / u.maxHp; })()`);
+    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
+    const coverOn = hit('hero'), bulOff = hit('hesketh');
+    place({ front: 'hero', mid: 'tobin', back: 'hesketh' });
+    const bulOn = hit('hesketh');
+    place({ front: 'hesketh', mid: 'hero', back: 'tobin' });
+    const coverOff = hit('hero');
+    assert(Math.abs(coverOn / coverOff - (1 - E('COMBAT_TUNE.cover'))) < 0.01 && Math.abs(bulOn / bulOff - (1 - E('FORM_TUNE.bulwark'))) < 0.01,
+      `cover: a tank in Front covers the Middle (x${(coverOn / coverOff).toFixed(2)}), a tank in the Middle covers the Back (x${(bulOn / bulOff).toFixed(2)})`);
+    place({ front: 'hero', mid: 'tobin', back: 'hesketh' });
+    const aF = E('cbUnitByKey("hero").armour');
+    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
+    const aM = E('cbUnitByKey("hero").armour');
+    assert(aF - aM === E('FORM_TUNE.bracedAll'), `Braced: anyone in Front gets +${aF - aM} armour`);
+    // reach: melee foes reach the front-most standing member only
+    E('combatFoes().forEach(f => { f.ranged = false; f.diveT = 0; f.forceT = 0; f.tgt = -1; })'); ticks(g, 3);
+    const tg = E('combatFoes().filter(f => !f.dead && f.hp > 0 && !f.ranged && f.tgt >= 0).map(f => combatUnits()[f.tgt].key).join()');
+    assert(tg && tg.split(',').every(k => k === 'tobin'), `melee foes hit the Front member (${tg})`);
+    // Out of place: 10% less damage and healing
+    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
+    const hHome = E('cbUnitByKey("hesketh").heal'), dHome = E('charDps("hesketh")');
+    place({ front: 'tobin', mid: 'hesketh', back: 'hero' });
+    const hOff = E('cbUnitByKey("hesketh").heal'), dOff = E('charDps("hesketh")');
+    assert(Math.abs(hOff / hHome - 0.9) < 1e-6 && Math.abs(dOff / dHome - 0.9) < 1e-6 && E('offSlotMult("hero")') === 0.9, `Out of place: Hesketh heals x${(hOff / hHome).toFixed(2)} and hits x${(dOff / dHome).toFixed(2)} in the Middle`);
+    // the trio ramp over zones 8-12 (damage only)
+    const trio = z => E(`(() => { const m = S.maxZone; S.maxZone = ${z}; const t = trioMult(); S.maxZone = m; return t; })()`);
+    assert(trio(5) === 1 && trio(8) === 1 && Math.abs(trio(10) - 1.175) < 1e-9 && Math.abs(trio(12) - 1.35) < 1e-9 && Math.abs(trio(40) - 1.35) < 1e-9, 'trioX ramps 1 -> 1.35 over zones 8-12');
+    const hp0 = E('cbUnitByKey("tobin").maxHp'); E('S.maxZone = 5'); ticks(g, 2); const hp1 = E('cbUnitByKey("tobin").maxHp'); E('S.maxZone = 12'); ticks(g, 2);
+    assert(Math.abs(hp0 / hp1 - 1) < 1e-9, 'trioX never touches HP');
+    // the hero's floor: a Ranger with strong companions and a weak blade hits at the floor
+    place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
+    E('["tobin", "hesketh"].forEach(k => { charRec(k).lv = 120; charRec(k).rank = 4; }); S.L = 1; S.blade = 1');
+    const fl = E('heroFloorDps()'), hd = E('heroDps()'), st = E('heroStand()');
+    assert(fl > hd && Math.abs(E('heroCombatDps()') - fl * E('trioMult()')) / fl < 1e-9 && Math.abs(st - fl * E('trioMult()') / hd) / st < 1e-9 && E('heroStand(true)') === st,
+      `the hero's floor: a Ranger at ${E('fmt(heroDps())')} dps fights at ${E('fmt(heroCombatDps())')} (heroStand x${st.toFixed(1)}, taps too)`);
+    E('chooseClass("lightkeeper")');
+    assert(E('heroFloorDps()') === 0 && E('HERO_CLASSES.lightkeeper.aura').includes('25%'), 'the Lightkeeper has no floor; its Blessing aura says 25%');
+    errs.push(...g.errors);
+  }
+  assert(!errs.length, 'no formation errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('formation crashed: ' + (e.stack || e)); }
 
 // ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
 console.log('regions and the Great Lantern');
@@ -3218,7 +3380,7 @@ try {
     const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
     raw.skills = Object.assign({}, raw.skills, { mine: { lv: 8, xp: 0 }, smith: { lv: 4, xp: 0 } }); delete raw.skillPace;
     const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-    const tell = []; h.fn.on('whatsNew', w => { if (!/^Your stations were already built/.test(w.msg)) tell.push(w.msg); });   // H1's line has its own section
+    const tell = []; h.fn.on('whatsNew', w => { if (!/^(Your stations were already built|Your party is now three)/.test(w.msg)) tell.push(w.msg); });   // H1's and F1's lines have their own sections
     for (let i = 0; i < 3; i++) h.fn.tick(0.1);
     assert(h.eval('skillTierOpen("mine", 2) && setNode("ore", 2) && stationTierOpen("warblade", 2) && S.skillPace.hw.mine === 2 && S.skillPace.hw.smith === 2'), 'an old save at Mining 8 / Smithing 4 keeps the Iron Vein and tier-2 Forge recipes');
     assert(tell.length === 1 && /stays open/.test(tell[0]), 'one What\'s new line tells the player: ' + tell[0]);

@@ -41,11 +41,12 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-hearth.js | core | the cold Hearth start and building each station (hearth-and-hands.md 1, H1): a new game (no `S.camp`, no progress) starts cold (`hearthCold()`): unlit fire, stations Lv 0, gathering the Oak Grove; `hearthLight()` (8 Oak: Hearth 1, camp open, emits `campOpen`/`hearthLit`), plot rules `HEARTH_PLOT` / `hearthPlotOpen(id)` (57-camp `campList`), Lv 1 station rows `HEARTH_TUNE.first` / `hearthFirst(id)` (57-camp `campCost`), the craft gate `hearthStationWhy(st)` (55-crafting: "Build the Workbench first.", cold saves only), `hearthNext()` (sim policy), `hearthWarm()` (tools: the old warm start), the warm saves' What's new line, the Map Room Next Up goal; state `S.hearth`. Stage art: 63d-scenery-camp.js (the fire, Hesketh, plot stakes, the `#hearthFire` button) through 62-stage's `stageDeco(ctx, phase, v)` hook |
 | 55-skillpace.js | core | the save rule for the slower skill pace (GP1, pacing.md 12): a save that predates GP1 keeps every tier the old gates gave its levels (`S.skillPace.hw`, set once per loaded save; a new game keeps nothing); `skillKept(k)`, `skillPaceInfo()`, one What's new line. The gates themselves: `SKILL_TUNE` (20-data: `NODE_REQ`, `SMITH_REQ`, XP curves, `nodeXp`, speed per level) and `skillTopTier(k)`, `skillTierOpen(k, t)`, `skillReq(k, t)`, `skillNextReq(k)`, `skillNeed(lv, k)` (40-rules); `stationTierOpen(kind, t)` (55-crafting). Gate on these, never on `S.skills[k].lv >= NODE_REQ[t - 1]` |
 | 55-legend.js | core | legendary powers and circle sets (docs/design/legendaries.md, L2): the Lantern Book (`legendKnown`, `legendEchoes`, `legendEchoCap`), drops (`legendDrop(rank, source, opts)`, owed rolls `legendOwe`/`legendPayOwed`), actions with `legendCanX` checks (`legendLearn`, `legendInscribe`, `legendMark`, `legendSigil`), limits (`legendHeroCheck` for the in-page "Take off X?" ask, `legendCanWear`), reads (`legendActive`, `legendSets`, `legendSetTier`, `legendBudget` / `legendScale` = the runtime cap, `legendV`, `legendItemState`, `legendCardLines`, `legendBest`), `bonus('lg:<id>')`, Next Up goals; state `S.legend` (item fields `lg`, `lr`, `cm`). Data: 21c-data-legend.js; icons: 11b-art-legend.js; UI: 75-legend-ui.js (the Craft tab's Powers view, feature `powers`; `legendUI` helpers for the item sheet and the Party tab) |
-| 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
+| 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells (`setField` keeps `ROSTER_TUNE.fieldMax` 2 companions and places them with 56e `placeSlots`), `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
-| 56d-autofield.js | core | the line-up planner (AF): scores fields of 3 with the hold estimate, synergies, roles, cells and the zone's foes; `bestLineup({ zone, goal: 'push' \| 'farm', filter, by })` -> `{ field, cells, score, why, parts }` (cached per roster/zone change), `lineupScore(field, opts)`, `applyLineup(res)`; `autoField()` (56-roster) uses it; UI: the Best line-up button and why line on Party > Team (75-party.js). No save fields |
+| 56e-formation.js | core | the party of three (plan-3 F1, docs/design/formation.md): the hero and 2 companions in one line of slots Back / Middle / Front (`S.party.cells[key].col` 0 / 1 / 2, `lane` 1); homes (`HOME_SLOT`, `CLASS_HOME`), Out of place, the hero floor and `trioX`, the migration of old parties of 3 (`S.party.formV`, `formOld`), pins (`S.party.pin`); knobs `FORM_TUNE`. API below ("Formation") |
+| 56d-autofield.js | core | the line-up planner (AF): scores fields of 2 companions (F1; the hero is the third) with the hold estimate, synergies, roles, cells and the zone's foes; `bestLineup({ zone, goal: 'push' \| 'farm', filter, by })` -> `{ field, cells, score, why, parts }` (cached per roster/zone change), `lineupScore(field, opts)`, `applyLineup(res)`; `autoField()` (56-roster) uses it; UI: the Best line-up button and why line on Party > Team (75-party.js). No save fields |
 | 57c-codex.js | core | the Codex and Lantern Light (docs/design/codex.md): pages read from other systems' state, recorders for what nothing else keeps, Light (only rises), milestones, capped Page Seal bonuses, the Blessing gate; `codexPages()`, `codexLight()`, `codexBonus(key)`, `codexHas(id)`, `codexTitle()` (state in `S.codex`; UI: 75-codex-ui.js, a sheet opened from the Journal card, the Library and `emit('codexOpen', { page })`) |
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
 | 59-combat.js | core | party combat (Stage C): packs of 3 foes, party HP/armour/shields, threat and reach, healing, crowd control, knock-outs, wipes (retreat one zone, push back), the hold estimate for away gains and auto-push; `partyCombatOn()`, `combatTick`, `cbSpawn`, `cbStrike`, `combatUnits()`, `combatFoes()`, `partyHoldEstimate(z)`, `partyHolds(z)`, `cbBossReady()`, knobs `COMBAT_TUNE`, counters `CB_STATS` (state in `S.combat`) |
@@ -100,6 +101,21 @@ addBonus(key, fn) -> remove()   // fn() returns a number; bonus(key) = sum of al
 deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; weeks start Monday
 ```
 Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMod(id)` is the product.
+
+Formation (56e-formation.js, plan-3 F1; full list at the top of the file). F2, F3 and F4 build on it:
+```js
+FORM_SLOTS ['back', 'mid', 'front'] (index = col), SLOT_COL, SLOT_NAME, HOME_SLOT, CLASS_HOME, FORM_TUNE, FORM_TEXT
+homeSlot(key) / slotOf(key) / whoIn(slot) / offSlot(key) / adjacentKeys(key)   // key: 'hero' or a character id
+formMembers() -> ['hero', ...ids]; memberRole(key) -> role; formLine() -> [{ slot, col, key, home, off }] x 3; formWarning() -> ''
+setSlots({ front, mid, back }) / swapSlots(a, b) / fieldTo(id, slot) -> bool   // one fieldChange each; the hero is never benched
+setPin(id, on) / isPinned(id)                                                  // at most FORM_TUNE.maxPins; event formPin
+placeSlots(keep) -> cells; slotsFor(keys, pre, cur) -> cells                  // the placement rule (pure form for planners)
+trioMult(), heroFloorDps(), heroCombatDps(), heroStand(tap), offSlotMult(key)  // party-combat damage
+formNoLoss() -> { before, after, ratio, old, field } | null                   // this save's migration (T9)
+```
+Everything reads the current `S.party.field` / `cells`, so a planner that swaps them in to measure a line-up
+scores slots, Out of place, `trioX` and the hero floor for free. Save: `field` (at most 2) and `cells` keep
+their meaning; `formV`, `pin`, `formOld` merge into `S.party` through its registered defaults.
 
 Bonus keys: `awayHours` (added to the away cap), `find:<skill>` (rare find points), `glint:<skill>` (Glint seconds).
 Extra modifier keys: `skillXp:<skill>` (per-skill XP), `yield:<family>` (harvest and away yield per material family),
@@ -203,6 +219,7 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `drill` | `{ id, lv, quiet }` (every 5 levels between promotions: power x `ROSTER_TUNE.stepX`) |
 | `promote` | `{ id, rank }` |
 | `fieldChange` | `{ field }` |
+| `formPin` / `formMigrated` | `{ id, on, pin }` / `{ old, field, benched, cells, oldCells, before, after }` (56e: a pin changed; an old party of 3 became hero + 2, once per save) |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
 | `crafted` | `{ item, kind, t }` (item null for the Star Chart) |
 | `upgraded` / `reforged` | `{ item }` / `{ item, idx, line }` |
@@ -243,7 +260,8 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 
 Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fields with
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
-keep loading without loss. `S.tab` is the open menu's tab, or `''` on the game view (portrait).
+keep loading without loss, and so must every fixture in `tests/fixtures/` (`save-v3-four.json`: a
+chosen class and a full old field of 3 with gear, for the F1 party-of-three migration). `S.tab` is the open menu's tab, or `''` on the game view (portrait).
 `S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
 `S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
 (last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
