@@ -308,3 +308,9 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
 - 02:5x UTC: the account usage limit stopped all three agents (Stage C, PERF4, L2); it reset at 03:50.
   At 04:39 all three were resumed with their context and uncommitted work intact (Stage C had 4 commits
   plus WIP, PERF4 12 changed files). Nothing was lost.
+- PERF4 merged: a two-lane idle queue that runs even when busy, scene builds in small steps, lazy enemy
+  bakes, a 12-35% faster rasterize, a lighter boot (away gains after the first frame), and staggered
+  mounts. Found and fixed: the Deepwell's drawScene wrapper dropped arguments and silently disabled
+  PERF3's fast path for everyone (perf.md rule 14: wrappers must pass every argument). Phone medians:
+  fight 52/48 fps, 0 long tasks, first frame about 1.05-1.08s; almost everything within budget (the boss
+  zone jump on late saves sits at the edge).

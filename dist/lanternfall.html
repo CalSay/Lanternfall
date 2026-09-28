@@ -4075,12 +4075,17 @@ const ENEMY_RIGS = {};
   }
   const FRAMES = ['idle0', 'idle1', 'wind', 'strike'];
   function unionBox(rig, v) { let all = []; for (const f of FRAMES) all = all.concat(rig.parts(f, v)); return boxOf(all); }
+  // box / elderBox are worked out on first read (posing every frame of every rig at load was about
+  // 65 ms of boot on a slowed phone); the value is the same, from the rig's parts at that time.
+  function lazyBox(rig, name, v) {
+    Object.defineProperty(rig, name, { configurable: true, enumerable: true, get() { const b = unionBox(rig, v); Object.defineProperty(rig, name, { value: b, writable: true, enumerable: true, configurable: true }); return b; }, set(b) { Object.defineProperty(rig, name, { value: b, writable: true, enumerable: true, configurable: true }); } });
+  }
   function poseOf(src, f) { return Object.assign({}, src.poses[f] || src.poses.idle0); }
   function creature(src, elder) {
     const rig = { name: src.name, anim: src.anim, hover: !!src.hover, b1: 1, src };
     rig.parts = (f, v) => { v = v || {}; const pose = poseOf(src, f), k = kit(src, pose, v); src.draw(k, pose); return k.parts; };
-    rig.box = unionBox(rig, {});
-    if (elder) rig.elderBox = unionBox(rig, { elder: true });
+    lazyBox(rig, 'box', {});
+    if (elder) lazyBox(rig, 'elderBox', { elder: true });
     return rig;
   }
   // Humanoid: the character kit (facing right), then mirrored and scaled.
@@ -4095,7 +4100,7 @@ const ENEMY_RIGS = {};
       for (const p of k.parts) p.s = flipScale(p.s, k.S, true);
       return k.parts;
     };
-    rig.box = unionBox(rig, {}); rig.elderBox = unionBox(rig, { elder: true });
+    lazyBox(rig, 'box', {}); lazyBox(rig, 'elderBox', { elder: true });
     return rig;
   }
 
@@ -13883,6 +13888,18 @@ const ART = (() => {
     if (s.t === 'p') { let c = false; const p = s.pts; for (let i = 0, j = p.length - 2; i < p.length; j = i, i += 2) { const xi = p[i], yi = p[i + 1], xj = p[j], yj = p[j + 1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
     return false;
   }
+  // Scratch memory for rasterize: a new typed array per piece (4 of them, 50-100 pieces a figure) was
+  // a quarter of a bake. Each call carves its pieces' masks and normals out of one arena (views, reset
+  // per call: a piece's mask is only read during the same call, by the pieces it clips) and shares two
+  // temporaries. Same numbers, same pixels.
+  let arM = new Uint8Array(1 << 15), arN = new Float32Array(3 << 15), arOff = 0, tmpD = new Float32Array(1 << 12), tmpH = new Float32Array(1 << 12);
+  function arena(n) {
+    if (arOff + n > arM.length) { const sz = Math.max(arM.length * 2, n * 4); arM = new Uint8Array(sz); arN = new Float32Array(sz * 3); arOff = 0; }
+    const m = arM.subarray(arOff, arOff + n), N = arN.subarray(arOff * 3, (arOff + n) * 3);
+    arOff += n; m.fill(0);
+    return [m, N];
+  }
+  const scratch = (a, n) => a.length >= n ? a : new Float32Array(Math.max(n, a.length * 2));
   // parts: [{ z, ord, m: material, s: shape (art px, feet at 0,0), o: options }] -> image data at art px.
   // Returns { W, H, ox, oy, data: Uint8ClampedArray RGBA, lights: [{ x, y (from feet, art px), rgb, r, pulse, n }] }
   function rasterize(parts, opt = {}) {
@@ -13894,11 +13911,12 @@ const ART = (() => {
     const list = parts.slice().sort((a, b) => a.z - b.z || a.ord - b.ord);
     list.forEach((p, i) => { p.rank = i; p.ramp = rampFor(p.m); });
     const lights = [];
+    arOff = 0;
     for (const p of list) {
       const s = p.s; const [a, b, c, d] = shapeBox(s);
       const x0 = Math.max(0, Math.floor(a + ox) - 1), y0 = Math.max(0, Math.floor(b + oy) - 1), x1 = Math.min(W - 1, Math.ceil(c + ox) + 1), y1 = Math.min(H - 1, Math.ceil(d + oy) + 1);
       if (x1 < x0 || y1 < y0) { p.r = null; continue; }
-      const w = x1 - x0 + 1, h = y1 - y0 + 1, mk = new Uint8Array(w * h), NN = new Float32Array(w * h * 3);
+      const w = x1 - x0 + 1, h = y1 - y0 + 1, [mk, NN] = arena(w * h);
       const analytic = (s.t === 'e' || s.t === 'c') && !p.o.flat;
       const cl = p.o.clip && p.o.clip.r;
       const qx = s.t === 'q' ? Math.round(s.x + ox) : 0, qy = s.t === 'q' ? Math.round(s.y + oy) : 0;
@@ -13920,12 +13938,12 @@ const ART = (() => {
           for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = j * w + i; if (!mk[k]) continue; const ci = x0 + i - cl.x0, cj = y0 + j - cl.y0, ck = (cj * cl.w + ci) * 3; NN[k * 3] = cl.N[ck]; NN[k * 3 + 1] = cl.N[ck + 1]; NN[k * 3 + 2] = cl.N[ck + 2]; }
         } else {
           // bevel: distance to the piece's edge -> a rounded height field -> normals
-          const Dt = new Float32Array(w * h), BIG = 1e6;
+          const Dt = tmpD = scratch(tmpD, w * h), BIG = 1e6;
           for (let k = 0; k < w * h; k++) Dt[k] = mk[k] ? BIG : 0;
           const at = (i, j) => (i < 0 || j < 0 || i >= w || j >= h) ? 0 : Dt[j * w + i];
           for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = j * w + i; if (!mk[k]) continue; Dt[k] = Math.min(Dt[k], at(i - 1, j) + 1, at(i, j - 1) + 1, at(i - 1, j - 1) + 1.414, at(i + 1, j - 1) + 1.414); }
           for (let j = h - 1; j >= 0; j--) for (let i = w - 1; i >= 0; i--) { const k = j * w + i; if (!mk[k]) continue; Dt[k] = Math.min(Dt[k], at(i + 1, j) + 1, at(i, j + 1) + 1, at(i + 1, j + 1) + 1.414, at(i - 1, j + 1) + 1.414); }
-          const Rb = BEV * (p.o.bev || 1), Hh = new Float32Array(w * h);
+          const Rb = BEV * (p.o.bev || 1), Hh = tmpH = scratch(tmpH, w * h); Hh.fill(0, 0, w * h);
           for (let k = 0; k < w * h; k++) { if (!mk[k]) continue; const dd = Math.min(Dt[k] - .5, Rb); Hh[k] = Math.sqrt(Math.max(0, Rb * Rb - (Rb - dd) * (Rb - dd))); }
           const hv = (i, j) => (i < 0 || j < 0 || i >= w || j >= h) ? 0 : Hh[j * w + i];
           for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = j * w + i; if (!mk[k]) continue; const gx = (hv(i + 1, j) - hv(i - 1, j)) / 2, gy = (hv(i, j + 1) - hv(i, j - 1)) / 2; const n = norm3(-gx, -gy, 1); NN[k * 3] = n[0]; NN[k * 3 + 1] = n[1]; NN[k * 3 + 2] = n[2]; }
@@ -13948,26 +13966,43 @@ const ART = (() => {
     // cast shadow: one step darker directly under (and down-right of) a piece that sits on top
     const t2 = tone.slice();
     const sameG = (a, b) => a.o.g && a.o.g === b.o.g;
+    const casts = (A, B) => !B.o.ns && !B.o.nl && !sameG(A, B) && B.s.t !== 'q';
     for (let y = 1; y < H; y++) for (let x = 1; x < W; x++) {
       const i = y * W + x, a = pid[i]; if (a < 0) continue; const A = list[a]; if (A.ramp.flat) continue;
-      for (const j of [i - W, i - W - 1]) { const b = pid[j]; if (b > a) { const B = list[b]; if (!B.o.ns && !B.o.nl && !sameG(A, B) && B.s.t !== 'q') { t2[i] = Math.min(2, tone[i] + 1); break; } } }
+      // the piece directly above, else the one up-left (no array per pixel: this runs cold at boot)
+      const b1 = pid[i - W], b2 = pid[i - W - 1];
+      if ((b1 > a && casts(A, list[b1])) || (b2 > a && casts(A, list[b2]))) t2[i] = Math.min(2, tone[i] + 1);
     }
     // section lines: where a piece sits on top of another, the pixel underneath takes the
     // under-piece's line colour (a dark of its own material). This is what separates sections.
     const line = new Uint8Array(N);
+    // does the neighbour piece b (a later piece) cut a section line into piece a?
+    const cuts = (A, a, b) => {
+      if (!(b > a)) return false;
+      const B = list[b];
+      if (B.o.nl || sameG(A, B)) return false;
+      return !(B.m.hex === A.m.hex && B.m.kind === A.m.kind && !B.o.sep);
+    };
     if (!opt.noLines) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x, a = pid[i]; if (a < 0) continue; const A = list[a]; if (A.o.nlu) continue;
-      const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1];
-      for (const j of nb) { if (j < 0) continue; const b = pid[j]; if (b > a) { const B = list[b]; if (B.o.nl || sameG(A, B)) continue; if (B.m.hex === A.m.hex && B.m.kind === A.m.kind && !B.o.sep) continue; line[i] = 1; break; } }
+      if ((x > 0 && cuts(A, a, pid[i - 1])) || (x < W - 1 && cuts(A, a, pid[i + 1])) || (y > 0 && cuts(A, a, pid[i - W])) || (y < H - 1 && cuts(A, a, pid[i + W]))) line[i] = 1;
     }
     const out = new Array(N);
     for (let i = 0; i < N; i++) if (pid[i] >= 0) { const A = list[pid[i]]; out[i] = line[i] ? A.ramp.line : A.ramp.c[t2[i]]; }
     // despeckle: a pixel with no same-coloured neighbour (8-way) takes the most common 4-way neighbour colour
     for (let pass = 0; pass < 2; pass++) for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
       const i = y * W + x; if (pid[i] < 0) continue; const A = list[pid[i]]; if (A.ramp.flat || A.s.t === 'q') continue;
-      let same = 0; for (const j of [i - 1, i + 1, i - W, i + W, i - W - 1, i - W + 1, i + W - 1, i + W + 1]) if (out[j] === out[i]) { same = 1; break; }
-      if (same) continue; const cnt = {}; let best = null, bc = 0;
-      for (const j of [i - 1, i + 1, i - W, i + W]) { if (pid[j] < 0 || list[pid[j]].ramp.flat) continue; const c2 = out[j]; cnt[c2] = (cnt[c2] || 0) + 1; if (cnt[c2] > bc) { bc = cnt[c2]; best = c2; } }
+      const o = out[i];
+      if (out[i - 1] === o || out[i + 1] === o || out[i - W] === o || out[i + W] === o || out[i - W - 1] === o || out[i - W + 1] === o || out[i + W - 1] === o || out[i + W + 1] === o) continue;
+      // the most common 4-way neighbour colour (left, right, up, down; the first to reach the top count wins)
+      let best = null, bc = 0;
+      for (let k = 0; k < 4; k++) {
+        const j = k === 0 ? i - 1 : k === 1 ? i + 1 : k === 2 ? i - W : i + W;
+        if (pid[j] < 0 || list[pid[j]].ramp.flat) continue;
+        const c2 = out[j]; let n = 1;
+        for (let q = 0; q < k; q++) { const jq = q === 0 ? i - 1 : q === 1 ? i + 1 : i - W; if (out[jq] === c2 && !(pid[jq] < 0 || list[pid[jq]].ramp.flat)) n++; }
+        if (n > bc) { bc = n; best = c2; }
+      }
       if (best && bc >= 2) out[i] = best;
     }
     // ink outline, 1 art px, 4-way
@@ -14046,31 +14081,47 @@ const ART = (() => {
   // that bake on first use. queueRest() also queues them to bake while the page is idle. So a new
   // party member, foe or zone costs one or two frames of baking in the frame that needs it, not five
   // or six, and a portrait costs one.
-  const idleQ = [];
-  let idleArmed = false;
+  // Two lanes: `soon` work (needed within seconds: the next zone's scene, a new party's frames) runs
+  // before background work (roster portraits). A busy phone gets few idle periods (a frame at x4 CPU
+  // leaves under 4 ms), so most work runs from timed-out callbacks: those come every SOON_MS while
+  // soon work waits (BG_MS otherwise) and run tasks for up to TIMED_MS, so the queue keeps moving
+  // without one long task. Keep each task small (about 4 ms real, 16 ms at x4): split big builds.
+  const idleQ = [], idleSoon = [];
+  const SOON_MS = 250, BG_MS = 600, TIMED_MS = 12;
+  const idleStat = { ran: 0, timedOut: 0, maxMs: 0 };
+  let idleArmed = false, idleId = 0, idleWait = 0;
   function idleRun(dl) {
-    idleArmed = false;
-    const t0 = now();
+    idleArmed = false; idleId = 0;
+    const t0 = now(), timed = !dl || !dl.timeRemaining || dl.didTimeout;
+    if (timed) idleStat.timedOut++;
     let n = 0;
-    while (idleQ.length) {
-      const left = dl && dl.timeRemaining ? dl.timeRemaining() : 12 - (now() - t0);
-      if (left < 4 && !(n === 0 && (!dl || dl.didTimeout))) break; // a timed-out callback still does one task
+    while (idleSoon.length || idleQ.length) {
+      const left = timed ? TIMED_MS - (now() - t0) : dl.timeRemaining();
+      if (left < 4 && !(n === 0 && timed)) break; // a timed-out callback still does one task
       n++;
-      const fn = idleQ.shift();
+      const fn = idleSoon.length ? idleSoon.shift() : idleQ.shift();
+      const t1 = now();
       try { fn(); } catch (e) { console.error('[lanternfall] idle bake', e); }
+      idleStat.ran++; idleStat.maxMs = Math.max(idleStat.maxMs, now() - t1);
     }
-    if (idleQ.length) idleArm();
+    if (idleSoon.length || idleQ.length) idleArm();
   }
   function idleArm() {
-    if (idleArmed) return; idleArmed = true;
-    if (typeof requestIdleCallback === 'function') requestIdleCallback(idleRun, { timeout: 1500 });
+    const wait = idleSoon.length ? SOON_MS : BG_MS;
+    if (idleArmed) {
+      // armed with the long timeout and soon work arrived: ask again with the short one
+      if (wait >= idleWait || !idleId || typeof cancelIdleCallback !== 'function') return;
+      cancelIdleCallback(idleId); idleArmed = false;
+    }
+    idleArmed = true; idleWait = wait;
+    if (typeof requestIdleCallback === 'function') idleId = requestIdleCallback(idleRun, { timeout: wait });
     else setTimeout(idleRun, 80);
   }
   // idleTask(fn, soon): run fn when the page is idle (small tasks; a few per idle period, in order).
-  // soon: put it at the front of the queue (work needed in the next few seconds, like the next zone's
-  // scene, goes before background bakes such as roster portraits). A busy page gets few idle periods
-  // (a timed-out callback runs one task), so the order matters.
-  function idleTask(fn, soon) { if (soon) idleQ.unshift(fn); else idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
+  // soon: put it at the front of the soon lane (work needed in the next few seconds, like the next
+  // zone's scene, goes before background bakes such as roster portraits; the last queued runs first).
+  function idleTask(fn, soon) { if (soon) idleSoon.unshift(fn); else idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
+  const idleStats = () => ({ soon: idleSoon.length, bg: idleQ.length, ran: idleStat.ran, timedOut: idleStat.timedOut, maxMs: Math.round(idleStat.maxMs) });
   function lazySet(names, nowNames, bakeOne) {
     const set = {};
     Object.defineProperty(set, '_queued', { value: false, writable: true, enumerable: false });
@@ -14265,10 +14316,10 @@ const ART = (() => {
     const t0 = now();
     let rig = typeof src[key] === 'function' ? src[key](variant) : src[key];
     if (rig && rig.b1) { // B1 rigs (13-art-enemies.js): kit pieces at art px, already posed
-      const set = {};
-      for (const f of ['idle0', 'idle1', 'wind', 'strike']) { set[f] = toCanvas(rasterize(rig.parts(f, variant && typeof variant === 'object' ? variant : {}))); stats.bakes++; }
-      set.hit = flash(set.idle0);
-      set.ms = now() - t0; stats.ms += set.ms;
+      // idle0 now; idle1, wind, strike and hit on first use or when idle (lazySet), like the party
+      const v = variant && typeof variant === 'object' ? variant : {};
+      const set = queueRest(lazySet(['idle0', 'idle1', 'wind', 'strike'], ['idle0'], f => { const t1 = now(), fr = toCanvas(rasterize(rig.parts(f, v))); stats.bakes++; stats.ms += now() - t1; return fr; }));
+      set.ms = now() - t0;
       stats.last['enemy:' + key] = Math.round(set.ms * 10) / 10;
       return cachePut(ck, set);
     }
@@ -14322,7 +14373,7 @@ const ART = (() => {
 
   const bakeStats = () => ({ bakes: stats.bakes, totalMs: Math.round(stats.ms), perSet: Object.assign({}, stats.last), cached: setCache.size });
 
-  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, ready, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
+  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, idleStats, ready, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
 })();
 const { charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview, charLightPass, enemyFrames, bakeStats } = ART;
 const bake = ART.bake, bakeSet = ART.bakeSet, idleTask = ART.idleTask;
@@ -14657,18 +14708,17 @@ let resize, animate, draw, stageStats, warmScene;
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
-  // Build the scene for zone z at the stage's size, its device-size plates and its atmosphere copies
-  // in idle time (three tasks, each well under a long task at x4), so entering that zone draws from
-  // caches. sceneFor keys on the stage's logical size (SW x SCH), not the element's CSS size.
-  // Returns false before the first resize.
+  // Build the scene for zone z at the stage's size, then its device-size plates and atmosphere copies,
+  // in idle time and in small steps (each well under a long task at x4: sceneSteps, scenePlates
+  // 'queue' in 63-scenery), so entering that zone draws from caches. sceneFor keys on the stage's
+  // logical size (SW x SCH), not the element's CSS size. Returns false before the first resize.
   warmScene = function (z) {
-    if (!SW || typeof idleTask !== 'function') return false;
+    if (!SW || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return false;
     const th = ZONE_THEME[zoneType(z)], hue = (zoneCycle(z) * 70) % 360, w = SW, h = SCH, k = DPR * ZM;
-    // soon (front of the queue), queued in reverse: the scene, its plates, its atmosphere copies
-    const same = () => typeof scenePlates === 'function' && w === SW && h === SCH && k === DPR * ZM;
-    idleTask(() => { if (same()) scenePlates(sceneFor(th, w, h, hue), k, w, h, 'atmo'); }, true);
-    idleTask(() => { if (same()) scenePlates(sceneFor(th, w, h, hue), k, w, h, 'plates'); }, true);
-    idleTask(() => sceneFor(th, w, h, hue), true);
+    const same = () => w === SW && h === SCH && k === DPR * ZM, step = sceneSteps(th, w, h, hue);
+    // soon (front of the queue): one build step per task, then the plates and atmosphere steps
+    const run = () => { if (!same()) return; const sc = step(); if (sc) scenePlates(sc, k, w, h, 'queue'); else idleTask(run, true); };
+    idleTask(run, true);
     return true;
   };
 
@@ -15594,7 +15644,7 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats() });
+  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }
 
 // ---- src/js/63-scenery.js ----
@@ -15617,7 +15667,9 @@ let resize, animate, draw, stageStats, warmScene;
 //     camX in CSS px, keep within +-16. k, ox, oy: that transform (device px per CSS px, whole-px
 //     translation), for the 1:1 path below; bg: the backdrop colour where the sky does not reach.
 //   drawAtmosphere(ctx, scene, T, W, H, camX = 0)   T in seconds; draws on top of everything.
-//   scenePlates(scene, k, W, H, part)   build the device-size copies now (idle-time warm-ups).
+//   scenePlates(scene, k, W, H, part)   build the device-size copies now (idle-time warm-ups);
+//     part 'queue': queue them for idle time in small steps.
+//   sceneSteps(theme, W, H, hue) -> step()   sceneFor in small steps: step() returns the scene when done.
 //
 // Per frame (phone, software canvas: raster is most of the frame, docs/design/perf.md): the back
 // layers are one 1:1 copy of a composite that is rebuilt only when a layer moves a whole pixel; the
@@ -15626,7 +15678,7 @@ let resize, animate, draw, stageStats, warmScene;
 // and particles, and the vignette (1:1, only where it is not clear). Until a scene's copies are built
 // (idle time after a scene change) its layers, fog and vignette are drawn scaled. No gradients are
 // made per frame. Flicker is static under prefers-reduced-motion.
-let drawScene, drawAtmosphere, scenePlates;
+let drawScene, drawAtmosphere, scenePlates, sceneSteps;
 function sceneFor() { return null; } // replaced below
 {
   const PX = 2, M = 24, MA = M / PX;
@@ -15791,7 +15843,9 @@ function sceneFor() { return null; } // replaced below
 
   const cache = new Map();
 
-  function build(theme, W, H, hue) {
+  // The build is a generator: each yield ends a step (about 5-15 ms at x4 CPU), so an idle-time
+  // warm-up can spread it over several small tasks (sceneSteps); sceneFor runs it to the end.
+  function* buildSteps(theme, W, H, hue) {
     const th = TH[theme] || TH.forest;
     const Wa = Math.ceil(W / PX), Ha = Math.ceil(H / PX), LW = Wa + 2 * MA;
     const GY = Math.round(H * 0.8), G = Math.floor(GY / PX);
@@ -15903,6 +15957,7 @@ function sceneFor() { return null; } // replaced below
         sd[o] = c[0]; sd[o + 1] = c[1]; sd[o + 2] = c[2]; sd[o + 3] = 255;
       }
     }
+    yield;
     if (th.stars) {
       const s1 = flat(blend([255, 244, 220], skyC[0], 0.2)), s2 = flat(blend(C('#8FA8B0'), skyC[0], 0.45));
       for (let i = 0; i < LW / 5; i++) sky.px(r() * LW, r() * G * 0.45, r() < 0.25 ? s1 : s2);
@@ -15917,6 +15972,7 @@ function sceneFor() { return null; } // replaced below
       moon = { x: mx * PX, y: my * PX, r: mr * PX, rgb: mc.join(',') };
     }
 
+    yield;
     // ---- far layer helpers ----
     const s = [r() * 10, r() * 10, r() * 10];
     const ridgeY = (x, base, amp) => base + Math.sin(x * 0.042 + s[0]) * amp + Math.sin(x * 0.11 + s[1]) * amp * 0.45 + Math.sin(x * 0.018 + s[2]) * amp * 1.2;
@@ -16248,6 +16304,7 @@ function sceneFor() { return null; } // replaced below
       }
     }
 
+    yield;
     // ---- ground detail common to all: lip tufts, specks ----
     const grassy = theme === 'forest' || theme === 'woods' || theme === 'barrow' || theme === 'bone' || theme === 'fungal';
     for (let x = 0; x < LW; x++) {
@@ -16286,13 +16343,13 @@ function sceneFor() { return null; } // replaced below
     const ink = (hex, t) => blend(ramp(C(hex))[3], [8, 5, 12], t);
     const bake = (L, base, ol, nol) => { const c = mkCanvas(LW, Ha), g = c.getContext('2d'), img = base || new ImageData(LW, Ha); shade(L, mats, img, ol, nol); g.putImageData(img, 0, 0); return c; };
     const midInk = ink(th.mid || th.far, 0.55);
-    const layers = [
-      { c: bake(sky, skyImg, null, 1), f: PAR[0] },
-      { c: bake(far, null, null, 1), f: PAR[1] },
-      { c: bake(mid, null, midInk), f: PAR[2] },
-      { c: bake(gnd), f: PAR[3] },
-      { c: bake(fg, null, [10, 6, 14]), f: PAR[4], fg: true }
-    ];
+    yield;
+    const layers = [];
+    layers.push({ c: bake(sky, skyImg, null, 1), f: PAR[0] }); yield;
+    layers.push({ c: bake(far, null, null, 1), f: PAR[1] }); yield;
+    layers.push({ c: bake(mid, null, midInk), f: PAR[2] }); yield;
+    layers.push({ c: bake(gnd), f: PAR[3] }); yield;
+    layers.push({ c: bake(fg, null, [10, 6, 14]), f: PAR[4], fg: true }); yield;
 
     // ---- atmosphere data ----
     const [type, ambHex, n] = th.amb;
@@ -16327,12 +16384,15 @@ function sceneFor() { return null; } // replaced below
   // every pixel inside the runs is opaque. Drawing only these runs gives the same pixels as drawing the
   // whole layer: the rest is either empty or painted over later in the same frame.
   const BAND = 8, GAP = 4, CAM_MAX = 16;
-  function spans(layers, alphas, w, h) {
+  // A generator: one layer per step (alphaOf(i) reads that layer's pixels), so the plate build can
+  // spread it over idle tasks. Layer 0 (the sky) gets its bands last.
+  function* spans(layers, alphaOf, w, h) {
     const n = layers.length, N = w * h;
     const cover = new Uint8Array(N);              // pixels hidden behind a later back layer (built back to front)
     const opq = new Uint8Array(N), ero = new Uint8Array(w);
     for (let i = n - 1; i >= 0; i--) {
-      const ly = layers[i], a = alphas[i], mask = new Uint8Array(N);
+      if (i < n - 1) yield;
+      const ly = layers[i], a = alphaOf(i), mask = new Uint8Array(N);
       for (let q = 0; q < N; q++) mask[q] = a[q * 4 + 3] && !(cover[q] && !ly.fg) ? 1 : 0;
       const { bands, y0, y1 } = bandsOf(mask, w, h, 0);
       let opaque = bands.length > 0;
@@ -16404,7 +16464,8 @@ function sceneFor() { return null; } // replaced below
     const { scene, s } = w, L = scene.layers;
     if (!L[0].bands) {
       const cw = L[0].c.width, ch = L[0].c.height;
-      spans(L, L.map(ly => ly.c.getContext('2d').getImageData(0, 0, cw, ch).data), cw, ch);
+      if (!w.sp) w.sp = spans(L, i => L[i].c.getContext('2d').getImageData(0, 0, cw, ch).data, cw, ch);
+      if (w.sp.next().done) w.sp = null;
       return null;
     }
     const ly = L[w.layers.length];
@@ -16451,6 +16512,7 @@ function sceneFor() { return null; } // replaced below
   // (built step by step in later idle tasks); 'atmo': build its atmosphere copies for a stage W x H
   // CSS px now; neither: both, now. Nothing is rebuilt when cached.
   scenePlates = function (scene, k, W, H, part) {
+    if (part === 'queue') { platesFor(scene, k); if (W && H) atmoDev(scene, k, W, H); return; }   // both, step by step
     if (part !== 'atmo') platesFor(scene, k, part !== 'plates');   // 'plates': queued step by step
     if (part !== 'plates' && W && H) atmoDev(scene, k, W, H, true);
   };
@@ -16480,16 +16542,41 @@ function sceneFor() { return null; } // replaced below
     return shaftSprite;
   }
 
+  function build(theme, W, H, hue) { const it = buildSteps(theme, W, H, hue); for (;;) { const r = it.next(); if (r.done) return r.value; } }
+  const sceneKey = (theme, W, H, hue) => theme + '|' + W + 'x' + H + '|' + hue;
+  const normArgs = (W, H, hue) => [Math.max(1, Math.round(W)), Math.max(1, Math.round(H)), ((Math.round(hue || 0) % 360) + 360) % 360];
+  // Builds started by sceneSteps and not finished yet (key -> generator). sceneFor finishes one.
+  const building = new Map();
   sceneFor = function (theme, W, H, hue) {
-    W = Math.max(1, Math.round(W)); H = Math.max(1, Math.round(H)); hue = ((Math.round(hue || 0) % 360) + 360) % 360;
-    const key = theme + '|' + W + 'x' + H + '|' + hue;
+    [W, H, hue] = normArgs(W, H, hue);
+    const key = sceneKey(theme, W, H, hue);
     let sc = cache.get(key);
     if (!sc) {
-      sc = build(theme, W, H, hue);
+      const it = building.get(key);
+      if (it) { building.delete(key); for (;;) { const r = it.next(); if (r.done) { sc = r.value; break; } } }
+      else sc = build(theme, W, H, hue);
       cache.set(key, sc);
       if (cache.size > 8) cache.delete(cache.keys().next().value);
     } else { cache.delete(key); cache.set(key, sc); }
     return sc;
+  };
+  // sceneSteps(theme, W, H, hue) -> step(): the same build in small steps (idle-time warm-ups). Each
+  // step() call runs one step and returns the scene once it is built (and cached), null until then.
+  // The scene is the same as sceneFor's: the steps run the same code in the same order.
+  sceneSteps = function (theme, W, H, hue) {
+    [W, H, hue] = normArgs(W, H, hue);
+    const key = sceneKey(theme, W, H, hue);
+    return () => {
+      if (cache.has(key)) return sceneFor(theme, W, H, hue);
+      let it = building.get(key);
+      if (!it) { it = buildSteps(theme, W, H, hue); building.set(key, it); if (building.size > 3) building.delete(building.keys().next().value); }
+      const r = it.next();
+      if (!r.done) return null;
+      building.delete(key);
+      cache.set(key, r.value);
+      if (cache.size > 8) cache.delete(cache.keys().next().value);
+      return r.value;
+    };
   };
 
   // Copy layer i's runs 1:1 from its plate to g (identity transform), the layer's left edge at device
@@ -16557,23 +16644,44 @@ function sceneFor() { return null; } // replaced below
   // pixel ratio changes (a zone change), which costs one scaled draw each.
   // Two slots (the scene on screen and the next zone's). Like the plates, a miss inside a frame queues
   // the build for idle time and returns null (that frame draws the fog and vignette scaled).
-  const devSlots = [], devWait = new Set();
+  // The build is a generator (a step for the overlay's bands, the fog, the overlay copy), so the idle
+  // path spreads it over small tasks; `now` runs it to the end (sharing a started build).
+  const devSlots = [], devWork = new Map();
   function atmoDev(scene, d, W, H, now) {
     for (const v of devSlots) if (v.scene === scene && v.d === d && v.W === W && v.H === H) return v;
+    const key = scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue + '|' + d + '|' + W + 'x' + H;
+    let w = devWork.get(key);
+    if (!w || w.scene !== scene) { w = { scene, it: atmoSteps(scene, d, W, H), queued: false }; devWork.set(key, w); }
     if (!now && typeof idleTask === 'function') {
-      const key = scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue + '|' + d + '|' + W + 'x' + H;
-      if (!devWait.has(key)) { devWait.add(key); idleTask(() => { devWait.delete(key); if (live(scene)) atmoDev(scene, d, W, H, true); }, true); }
+      if (!w.queued) {
+        w.queued = true;
+        const step = () => {
+          if (devWork.get(key) !== w) return;
+          if (!live(scene)) { devWork.delete(key); return; }
+          if (w.it.next().done) devWork.delete(key); else idleTask(step, true);
+        };
+        idleTask(step, true);
+      }
       return null;
     }
+    let r; do r = w.it.next(); while (!r.done);
+    devWork.delete(key);
+    for (const v of devSlots) if (v.scene === scene && v.d === d && v.W === W && v.H === H) return v;
+    return null;
+  }
+  function* atmoSteps(scene, d, W, H) {
     const mk = (src, w, h) => { const c = mkCanvas(Math.round(w * d), Math.round(h * d)), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(src, 0, 0, c.width, c.height); return c; };
-    const fg = glow(scene.fog.rgb, 0), fog = [];
-    for (let i = 0; i < 4; i++) fog.push(mk(fg, W * (0.7 + 0.15 * i), 18 + i * 6));
-    const ov = mk(scene.light.overlay, W, H), src = scene.light.overlay;
+    const src = scene.light.overlay;
     // where the overlay has any pixel (its middle is clear), found once per scene
     if (scene.light.ovBands === undefined) {
       scene.light.ovBands = null;
       try { const a = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, m = new Uint8Array(src.width * src.height); for (let q = 0; q < m.length; q++) m[q] = a[q * 4 + 3] ? 1 : 0; scene.light.ovBands = bandsOf(m, src.width, src.height, 1).bands; } catch (e) {}
+      yield;
     }
+    const fg = glow(scene.fog.rgb, 0), fog = [];
+    for (let i = 0; i < 4; i++) fog.push(mk(fg, W * (0.7 + 0.15 * i), 18 + i * 6));
+    yield;
+    const ov = mk(src, W, H);
     // the overlay's bands in device px of ov: rows split at the same rounded edges, so bands never overlap
     const fx = ov.width / src.width, fy = ov.height / src.height, ovRuns = [];
     for (const b of scene.light.ovBands || [[0, src.height, 0, src.width]]) {
@@ -17108,7 +17216,16 @@ function setTab(t, sel) {
   let view = null;
   if (!TAB_IDS.includes(t) && (VIEW_OF[t] || TAB_ALIAS[t])) { view = t; t = VIEW_OF[t] || TAB_ALIAS[t]; }
   if (!TAB_IDS.includes(t)) t = 'adv';
-  mountTab(t);
+  coldT0 = performance.now();   // the first updates' time box (ui) counts the mounts too
+  // Back to the top before anything changes: writing scrollTop needs the layout, which is still
+  // clean here (cheap); after the panel is built it would lay the whole menu out inside this task.
+  let reset = false;
+  if (!sel) {
+    const nv = view && viewsOf(t).some(x => x.id === view) ? view : curView(t);
+    if (S.tab !== t || nv !== curView(t)) { $('panels').scrollTop = 0; reset = true; }
+  }
+  // with sel, everything of the tab now (sel may be in any view); else the open view's part first
+  if (sel) mountTab(t); else mountSoon(t, view);
   const find = () => sel ? (typeof sel === 'string' ? document.querySelector(sel) : sel) : null;
   let target = find();
   // Sections build some rows in update(), and only the open view updates: build the whole tab once.
@@ -17127,8 +17244,10 @@ function setTab(t, sel) {
   renderMenu(t); applyView(t);
   if (t === 'forge') $('forgeDot').hidden = true;
   if (t === 'world') $('raidDot').hidden = true;
-  if (was !== t || curView(t) !== wasView) $('panels').scrollTop = 0;
+  const top = was !== t || curView(t) !== wasView;
   ui(true); viewDots();
+  coldT0 = 0;
+  if (top && !reset) $('panels').scrollTop = 0;
   emit('menuView', { tab: t, view: curView(t) });
   if (target && target.offsetParent !== null) scrollMenuTo(target);
 }
@@ -17292,11 +17411,11 @@ function ui(force) {
   if (viewOpen('world', 'tav') && (force || slowTick <= 0)) uiTavern();
   // Sections update while their tab's menu is open and their view is showing (Journal: while the bell sheet shows it).
   // A section's first update builds its rows; past COLD_MS in this call, the rest wait for warmSections.
-  const t0 = performance.now();
+  const t0 = coldT0 || performance.now();
   let cold = false;
   for (const sec of SECTIONS) {
     if (!secShows(sec)) continue;
-    if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
+    if (!sec.mounted) mountTo(sec);
     if (!sec.update) continue;
     if (!sec.warm && performance.now() - t0 > COLD_MS) { cold = true; continue; }
     runSection(sec, force);
@@ -17309,14 +17428,14 @@ function secShows(sec) {
   return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
 }
 function runSection(sec, force) {
-  if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
+  if (!sec.mounted) mountTo(sec);
   try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); }
   sec.warm = true;
 }
 // A tab's first open builds all of its sections: staggered over a few tasks (top first) so no single
 // task stalls the game (docs/design/perf.md). Each task builds sections for up to COLD_MS.
 const COLD_MS = 30;
-let coldTimer = 0;
+let coldTimer = 0, coldT0 = 0;
 function warmSections() {
   coldTimer = 0;
   const t0 = performance.now();
@@ -17349,8 +17468,44 @@ function mountSec(sec) {
   sec.mounted = true;
   try { sec.mount(sec.el); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' mount failed', e); }
 }
+const tabOfSec = sec => sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab;
 function mountTab(t) {
-  for (const sec of SECTIONS) if (!sec.mounted && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) mountSec(sec);
+  for (const sec of SECTIONS) if (!sec.mounted && tabOfSec(sec) === t) mountSec(sec);
+}
+// Mount sec and every section of its tab registered before it (a mount may place its section
+// relative to the others, so a tab's sections always mount in registration order).
+function mountTo(sec) {
+  const t = tabOfSec(sec);
+  for (const s of SECTIONS) { if (!s.mounted && tabOfSec(s) === t) mountSec(s); if (s === sec) return; }
+}
+// A tab's first open: mount (in order) up to the last section of the view that will show, now; the
+// rest of the tab mounts in later tasks, COLD_MS each (docs/design/perf.md, hotspot 12).
+const mountPend = new Set();
+let mountTimer = 0;
+// the views a section shows in: those of its top-level node in the tab's panel
+function secInView(t, s, v) {
+  const panel = $('p-' + t); let n = s.el;
+  if (!panel || !panel.contains(n)) return true;
+  while (n.parentNode !== panel) n = n.parentNode;
+  const vs = viewList(t, n);
+  return vs.includes('*') || vs.includes(v);
+}
+function mountSoon(t, view) {
+  const v = view && viewsOf(t).some(x => x.id === view) ? view : curView(t);
+  let last = null;
+  for (const s of SECTIONS) if (!s.mounted && tabOfSec(s) === t && secInView(t, s, v)) last = s;
+  if (last) mountTo(last);
+  if (SECTIONS.some(s => !s.mounted && tabOfSec(s) === t)) { mountPend.add(t); if (!mountTimer) mountTimer = setTimeout(mountRest, 0); }
+}
+function mountRest() {
+  mountTimer = 0;
+  const t0 = performance.now();
+  for (const s of SECTIONS) {
+    if (s.mounted || !mountPend.has(tabOfSec(s))) continue;
+    if (performance.now() - t0 > COLD_MS) { mountTimer = setTimeout(mountRest, 0); return; }
+    mountSec(s);
+  }
+  mountPend.clear();
 }
 function registerSection(tabId, { id, title, view, mount, update, feature }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
@@ -17585,7 +17740,9 @@ function goNode(kind, t) {
 }
 // Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
 // the Go button. The node the party works shows as "Here" with a gold frame.
-for (const kind of GATHER_KINDS) {
+// The rows, the pack grid and the trophies (about 75 icons) are built in idle time after boot, one
+// part per task, or all at once when the tab first updates (gatherBuild), not at load.
+function buildNodeRows(kind) {
   const box = $(NODE_BOX[kind]);
   if (kind !== 'wood') box.append(el('div', 'gat-sub', CRAFT_NODES[kind].row)); // Veins / Geodes, Fibre patches / Herb beds
   const list = el('div', 'sec dz-list gat-list'); box.append(list);
@@ -17633,20 +17790,22 @@ function whereSheet(k, t) {
   }, { label: 'Where to get ' + matName(k, t), small: true });
 }
 const matCells = {};
-for (const k of CRAFT_FAMILIES) {
-  const row = el('div', 'mat-row'); matCells[k] = [];
-  for (let t = 1; t <= 5; t++) {
-    const c = el('button', 'mat'); c.type = 'button';
-    c.setAttribute('aria-label', `${matName(k, t)}: where to get it`);
-    const n = el('span', 'mc', '0');
-    c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
-    c.addEventListener('click', () => whereSheet(k, t));
-    row.append(c); matCells[k].push({ c, n });
+function buildMatGrid() {
+  for (const k of CRAFT_FAMILIES) {
+    const row = el('div', 'mat-row'); matCells[k] = [];
+    for (let t = 1; t <= 5; t++) {
+      const c = el('button', 'mat'); c.type = 'button';
+      c.setAttribute('aria-label', `${matName(k, t)}: where to get it`);
+      const n = el('span', 'mc', '0');
+      c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
+      c.addEventListener('click', () => whereSheet(k, t));
+      row.append(c); matCells[k].push({ c, n });
+    }
+    $('matGrid').append(row);
   }
-  $('matGrid').append(row);
 }
 const trophyCells = [];
-{
+function buildTrophies() {
   const row = el('div', 'mat-row gat-tro');
   CRAFT_TROPHIES.forEach((tr, i) => {
     const c = el('div', 'mat'); c.title = `${tr.n}: from champions and zone bosses (zone ${CRAFT_TROPHY_SRC.firstBossFrom} on).`;
@@ -17657,11 +17816,19 @@ const trophyCells = [];
   $('matGrid').append(el('div', 'gat-sub', 'Trophies'), row);
   $('matGrid').nextElementSibling.textContent = 'Tap a material to see where to get it. Hide and essence drop from monsters while you fight. Champions and zone bosses leave Trophies.';
 }
+// The parts in page order; each runs once.
+const gatherParts = GATHER_KINDS.map(kind => () => buildNodeRows(kind)).concat(buildMatGrid, buildTrophies);
+let gatherDone = 0;
+function gatherStep() { if (gatherDone < gatherParts.length) gatherParts[gatherDone++](); }
+function gatherBuild() { while (gatherDone < gatherParts.length) gatherStep(); }
+if (typeof idleTask === 'function') for (let i = 0; i < gatherParts.length; i++) idleTask(gatherStep);
+else gatherBuild();
 
 // Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
 // switch calls ui(true), so a view is fresh as soon as it shows).
 const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
 function uiGather() {
+  gatherBuild();
   const view = curView('gat'), nodeView = view !== 'pack';
   if (nodeView) {
     for (const c of skillCards) {
@@ -19945,7 +20112,8 @@ let craftUI = null;
     return wellSc;
   };
   const baseScene = drawScene, baseAtmo = drawAtmosphere;
-  drawScene = (ctx, sc, camX, which) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which);
+  // pass every argument on: k, ox, oy and bg switch on the 1:1 device-size path (docs/design/perf.md)
+  drawScene = (ctx, sc, camX, which, ...rest) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which, ...rest);
   drawAtmosphere = (ctx, sc, T_, W, H, camX) => baseAtmo(ctx, arena ? wellFor(sc) : sc, T_, W, H, camX);
 
   // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------
@@ -22718,6 +22886,7 @@ document.addEventListener('click', e => {
     const warn = el('p', 'create-warn', 'This choice is for good. Only a rare Mirror of Embers, dropped by bosses deep in the world, lets you change it.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero class');
     const keys = ORDER.filter(k => C[k]).concat(Object.keys(C).filter(k => !ORDER.includes(k)));
+    const figs = [];
     const btns = keys.map(k => {
       const c = C[k];
       const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k;
@@ -22740,9 +22909,20 @@ document.addEventListener('click', e => {
         const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
       });
       cards.append(b);
-      try { drawPreview(cv, k); } catch (e) { console.error('[lanternfall] preview', e); }
+      cv.width = 56; cv.height = 100;
+      figs.push([cv, k]);
       return b;
     });
+    // Each class figure bakes a character (tens of ms on a slow phone): draw them after the first
+    // frame, one per task, in card order, so the screen and the stage show at once.
+    const figQueue = figs.slice(), built = root;
+    const nextFig = () => {
+      if (root !== built || !figQueue.length) return;
+      const [cv, k] = figQueue.shift();
+      try { drawPreview(cv, k); } catch (e) { console.error('[lanternfall] preview', e); }
+      if (figQueue.length) setTimeout(nextFig, 0);
+    };
+    requestAnimationFrame(() => setTimeout(nextFig, 0));
     function select(k) {
       pick = k;
       for (const b of btns) {
@@ -22919,16 +23099,23 @@ on('activity', () => pushPresence());
 // 90-boot: page lifecycle, boot sequence, timers and the frame loop. Browser-only.
 
 let lastFrame = performance.now();
+// Boot's away gains (see boot below), applied once: after the first frame, or before a save if the
+// page is hidden or closed first.
+let bootAway = null;
+function bootAwayNow() { if (bootAway == null) return; const secs = bootAway; bootAway = null; showAwayReport(awayGains(secs)); }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { save(); flush(); }
+  if (document.hidden) { bootAwayNow(); save(); flush(); }
   else { const secs = (Date.now() - S.last) / 1000; if (secs > 30) showAwayReport(awayGains(secs)); S.last = Date.now(); lastFrame = performance.now(); }
 });
-addEventListener('pagehide', save);
+addEventListener('pagehide', () => { bootAwayNow(); save(); });
 
 // ================= boot =================
 resize();
 updatePortrait();
-showAwayReport(awayGains((Date.now() - S.last) / 1000));
+// The away gains and their card are worked out in a task of their own right after the first frame
+// (about 50-120 ms at x4 CPU: other systems' catch-up, the card's Next Up line), so the stage shows
+// first. The absence is measured now; the gains are the same.
+bootAway = (Date.now() - S.last) / 1000;
 S.last = Date.now();
 if (S.hintDone) $('hint').style.opacity = 0;
 spawn();
@@ -22952,7 +23139,7 @@ setInterval(pushPresence, 3000);
 // size, with its device-size plates: warmScene in 62-stage) and foes (and this zone's boss) in idle
 // time, ahead of background bakes. sceneFor, the plates and enemyFrames cache them, so clearing the
 // zone does not stall a frame with a scene build and fresh bakes.
-let warmKey = '', warmT = 0;
+let warmKey = '', warmT = 0, bootAwayT = 0;
 function warmNextZone() {
   if (typeof idleTask !== 'function' || target() !== 'mob' || S.zone !== S.maxZone || !(fightBoss || bossReady())) return;
   const st = $('stage'), w = st.clientWidth, h = st.clientHeight, z = S.zone + 1, key = z + ':' + w + 'x' + h + ':' + (window.devicePixelRatio || 1);
@@ -22974,6 +23161,7 @@ function frame(now) {
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
   warmT -= dt; if (warmT <= 0) { warmT = 1; warmNextZone(); }
+  if (bootAway != null && !bootAwayT) bootAwayT = setTimeout(bootAwayNow, 0);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
