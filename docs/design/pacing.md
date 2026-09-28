@@ -89,8 +89,9 @@ Now (`ROSTER_TUNE`):
 - `killWorth`: a kill gives (seconds a normal foe of that zone takes the party) / `xpSecs` (5)
   kills' worth, at most `xpWorthMax` (8). XP therefore follows time spent fighting. Farming an easy
   zone for fast kills earns no more than pushing at the front, and a wall zone no less.
-- A character behind the party still counts up to the party level (`catchGap` 18): a new recruit
-  catches up in minutes (T11).
+- ~~A character behind the party still counts up to the party level (`catchGap` 18): a new recruit
+  catches up in minutes (T11).~~ Removed by CU1 (section 13): a hero behind the party earns the XP
+  of its own level.
 - Away XP (`offlineXp` 1, was 0.75) is given in 40 steps, so its price follows the levels gained
   while away (one lump priced at the starting level bought only a few levels).
 - At the level cap XP banks up to `bankLv` 25 levels (was 1), spent the moment you promote: a long

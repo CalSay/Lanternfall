@@ -4284,21 +4284,24 @@ console.log('formation follow-ups');
 try {
   const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
   const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
-  // 1. party level = the top 2 (the field), the bench keeps up, and the planner's potential values recruits
+  // 1. party level = the top 2 (the field), the bench earns no XP (owner), and the planner scores recruits at their real level (CU1)
   {
     const g = loadCore({ seed: 71 }), E = s => g.eval(s);
     E('chooseClass("lanternmage")');
     E('["tobin", "wren", "kestrel", "oriel"].forEach(k => unlockChar(k, "test", true)); ["tobin", "wren"].forEach(k => { charRec(k).lv = 200; charRec(k).rank = 7; }); S.party.autoField = false; setField(["tobin", "wren"]); S.auto = false');
     assert(E('partyLevel()') === 200, `partyLevel() averages the top ${E('ROSTER_TUNE.fieldMax')} companions (the field), not 3: ${E('partyLevel()')} with two at 200 and two recruits at 1`);
+    // CU1 (owner, 2026-09-28: no rapid catch-up, "maxing out all heroes shouldn't be spoonfed"): a recruit
+    // takes days to level, so the planner's 'potential' scores it at its real level. F5 wanted the opposite
+    // (a level-1 Kestrel or Oriel over the level-200 pair), which assumed catch-up in minutes.
     const pot = JSON.parse(E('JSON.stringify(bestLineup({ by: "potential", zone: 70 }))'));
-    assert(pot && pot.field.some(k => k === 'kestrel' || k === 'oriel'), `the planner's potential fields a recruit over a level-200 Common pair (${pot && pot.field.join(', ')})`);
+    assert(pot && pot.field.slice().sort().join() === 'tobin,wren', `CU1 the planner keeps a level-200 Common pair over level-1 recruits (${pot && pot.field.join(', ')})`);
     // XP follows time spent fighting (killWorth), so the field fights at a zone it holds, not one it one-shots
     E('["tobin", "wren"].forEach(k => { charRec(k).lv = 40; charRec(k).rank = 1; }); S.maxZone = 60; S.maxZone = (() => { let b = 1; for (let z = 1; z <= 60; z++) if (partyHoldEstimate(z, { one: true }).holds) b = z; return b; })(); setActivity("fight"); setZone(S.maxZone)');
     let loud = 0; g.fn.on('charLevel', e => { if (!e.quiet && (e.id === 'kestrel' || e.id === 'oriel')) loud++; });
     const f0 = E('charRec("tobin").lv');
     secs(g, 120);
     const kl = E('charRec("kestrel").lv'), ol = E('charRec("oriel").lv');
-    // Owner (2026-09-28): the bench earns no XP (benchXp 0); recruits catch up once fielded.
+    // Owner (2026-09-28): the bench earns no XP (benchXp 0).
     assert((E('ROSTER_TUNE.benchXp') > 0 ? kl > 1 && ol > 1 : kl === 1 && ol === 1) && !loud && !g.errors.length && E('S.party.field.join()') === 'tobin,wren',
       `benched companions earn ${E('ROSTER_TUNE.benchXp') * 100}% of the kill XP, quietly: Kestrel L${kl}, Oriel L${ol} after 2 min on the bench at zone ${E('S.zone')} (Tobin L${f0} -> L${E('charRec("tobin").lv')})` + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
@@ -4345,16 +4348,40 @@ try {
     E('["kestrel", "oriel"].forEach(k => isRecruited(k) || unlockChar(k, "test", true)); S.party.autoField = false; setSlots({ front: "hero", mid: "kestrel", back: "oriel" })');
     secs(g, 0.1);
     const cells = E('JSON.stringify(S.party.cells)');
-    const held = knob => { E(`COMBAT_TUNE.heroRealHp = ${knob}`); const r = JSON.parse(E(`JSON.stringify(lineupScore(["kestrel", "oriel"], { cells: ${cells}, zone: 39, by: "potential" }))`)); return r.held; };
-    const old = held(0), now = held(1);
+    const held = (knob, by) => { E(`COMBAT_TUNE.heroRealHp = ${knob}`); const r = JSON.parse(E(`JSON.stringify(lineupScore(["kestrel", "oriel"], { cells: ${cells}, zone: 39, by: "${by}" }))`)); return r.held; };
+    // CU1: 'potential' no longer lifts levels (no catch-up), so it rates the party as 'now' does, and afRealPow stays null
+    const old = held(0, 'potential'), pot = held(1, 'potential'), now = held(1, 'now');
     // live: the same party with its companions caught up (levels as the planner lifts them) and the hero as it is
     const hp = E('(() => { const h0 = partyHoldEstimate(33, { one: true }).heroHp, pl = Math.floor(partyLevel()), sv = ["kestrel", "oriel"].map(k => [charRec(k).lv, charRec(k).rank]); const real = {}; ["kestrel", "oriel"].forEach(k => { real[k] = charPow(k); const r = charRec(k); r.rank = Math.min(7, Math.floor((pl - 1) / 25)); r.lv = Math.min(pl, levelCap(r.rank)); }); const up = partyHoldEstimate(33, { one: true }).heroHp; afRealPow = real; const fixed = partyHoldEstimate(33, { one: true }).heroHp; afRealPow = null; ["kestrel", "oriel"].forEach((k, i) => { charRec(k).lv = sv[i][0]; charRec(k).rank = sv[i][1]; }); return [h0, up, fixed]; })()');
-    assert(E('S.party.cls') === null && Math.abs(hp[2] / hp[0] - 1) < 1e-9 && hp[1] > hp[0] * 1.5 && now < old && now <= 35,
-      `F5 a class-less hero in Front with Kestrel and Oriel (late fixture): potential rated to hold zone ${now} (was ${old}); the hero's HP stays ${(hp[0] / 1e6).toFixed(1)}M when the companions are lifted (was ${(hp[1] / 1e6).toFixed(1)}M)`);
+    assert(E('S.party.cls') === null && Math.abs(hp[2] / hp[0] - 1) < 1e-9 && hp[1] > hp[0] * 1.5 && pot === now && old === now && E('afRealPow') === null,
+      `F5 a class-less hero in Front with Kestrel and Oriel (late fixture): potential rates the real levels, zone ${pot} (now ${now}; F5 lifted them and rated 34); the hero's HP stays ${(hp[0] / 1e6).toFixed(1)}M when the companions are lifted (was ${(hp[1] / 1e6).toFixed(1)}M)`);
     E('COMBAT_TUNE.heroRealHp = 1');
     assert(!g.errors.length, 'F5 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
 } catch (e) { fail('formation follow-ups crashed: ' + (e.stack || e)); }
+
+// ---- CU1: no rapid catch-up XP for heroes (owner, 2026-09-28: "They shouldn't have rapid catch-up XP
+// either. We could have an achievement for maxing out all heroes and that shouldn't be spoonfed.") ----
+console.log('no catch-up (CU1)');
+try {
+  const g = loadCore({ seed: 74 }), E = s => g.eval(s);
+  E('chooseClass("lanternmage")');
+  E('["kestrel", "wren"].forEach(k => unlockChar(k, "test", true)); charRec("tobin").lv = 30; charRec("tobin").rank = 1; charRec("kestrel").lv = 25; S.party.autoField = false; setField(["tobin", "kestrel"]); S.auto = false; S.maxZone = 30; S.zone = 30');
+  const T = E('ROSTER_TUNE');
+  assert(!['catchGap', 'catchStep', 'catchMax', 'catchPromo'].some(k => k in T) && E('catchUpBonus("kestrel")') === 0, 'CU1 the catch-up knobs are gone and catchUpBonus() is 0');
+  // the same kill, the same field: a benched level-200 hero lifts the party level; the fielded recruit's XP must not change
+  const xpOf = () => { const x0 = E('charRec("kestrel").xp'); E('emit("kill", { mob: { boss: false, hp: 1, max: 1 }, zone: 30 })'); return E('charRec("kestrel").xp') - x0; };
+  const lo = [E('partyLevel()'), xpOf(), E('JSON.stringify(promoteCost("kestrel"))')];
+  E('charRec("wren").lv = 200; charRec("wren").rank = 7; charRec("kestrel").xp = 0');
+  const hi = [E('partyLevel()'), xpOf(), E('JSON.stringify(promoteCost("kestrel"))')];
+  assert(hi[0] > lo[0] + 50 && lo[1] > 0 && Math.abs(hi[1] / lo[1] - 1) < 1e-9 && hi[2] === lo[2],
+    `CU1 a hero far behind the party earns the XP of its own level and pays the full promotion (party L${lo[0]} -> L${hi[0]}: XP a kill ${lo[1].toFixed(1)} -> ${hi[1].toFixed(1)}, promotion ${lo[2]} -> ${hi[2]})`);
+  // the natural rule stays: per kill, par counts at most gapMax above the hero (at most xpWorthMax x packHp kills' worth)
+  E('charRec("kestrel").lv = 1; charRec("kestrel").rank = 0; charRec("kestrel").xp = 0');
+  const x1 = xpOf(), cap1 = E('cxpNeed(1 + ROSTER_TUNE.gapMax) / ROSTER_TUNE.killsPerLv * ROSTER_TUNE.xpWorthMax * COMBAT_TUNE.packHp'), need1 = E('cxpNeed(1)');
+  assert(x1 > 0 && x1 <= cap1 * (1 + 1e-9) && x1 < need1 * 0.5, `CU1 a level-1 recruit at zone 30 earns the XP of par at its level + ${T.gapMax}: one slow kill is ${(x1 / need1).toFixed(3)} of a level (cap ${(cap1 / need1).toFixed(3)})`);
+  assert(!g.errors.length, 'CU1 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('no catch-up crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

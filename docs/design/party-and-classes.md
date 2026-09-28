@@ -339,7 +339,7 @@ party gets +10% max HP and +10% healing received.
   fielded members 20 kills' worth. At a character's par level (`3 x zone`) that is about 40
   enemies (13 packs) per level; characters below par level much faster, above par slower.
 - XP to next level: `cxpNeed(lv) = 10 * 1.12^(lv-1)`.
-- **Catch-up bonus:** party level = average of the 3 highest companion levels on the roster. A
+- **Catch-up bonus (removed by CU1, owner 2026-09-28: a hero behind the party earns the XP of its own level; see pacing.md 13):** party level = average of the 3 highest companion levels on the roster. A
   fielded character `d` levels below it earns `+min(100%, 20% x d)` XP (+100% at 5+ behind,
   tapering to 0). With the par curve above, a new level-1 recruit fielded at zone 20 reaches the
   party in about 170 enemies (about 5 minutes of fighting).
@@ -930,7 +930,7 @@ of wind-ups) and `--offline-check`.
 | T8 | Offline estimate vs simulated 1h of fighting (gold) | within +-15% |
 | T9 | Migration of both fixtures: field damage vs old `compDps()` | >= 1.00, <= 1.30 |
 | T10 | Top companion hits a level cap (promotion due) at least once per 20 min before 2h | yes |
-| T11 | A new level-1 recruit fielded at zone 20 reaches party level - 5 | within 5-10 min |
+| T11 | (CU1, owner 2026-09-28: no rapid catch-up; see pacing.md 13) Levelling a new hero takes real play: a level-1 recruit fielded at zone 20 reaches party level - 5; a hero recruited on day 3 (normal play) reaches the pair's level | >= 60 min; 1-5 days of being fielded |
 | T12 | Each niche line-up in 4.13 reaches zone 20 | within 1.5x of balanced |
 | T13 | Tank holds aggro (enemy-seconds on the tank / total), balanced party at par | >= 85% |
 | T14 | Lightkeeper-led party: share of party damage from companions | >= 90%, and T3 still passes |
