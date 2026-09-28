@@ -423,3 +423,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   no hourly check-ins; only answer the owner. Weekends: full speed (any usage left is fair game). The
   current batch (G2, H3, F1, GP1, H1) finishes now, on the tail of this week's allowance; then pause until
   the weekend.
+- USAGE RULE REVISED (owner, UK time, BST): weekdays are LIGHT, not off: at most one agent at a time, small
+  contained tasks, check-ins at 09:38, 13:38, 17:38 and 21:38 Mon-Fri (trigger trig_01Hmtoxf9F4T3FVAQFC94RMj).
+  Weekends are FULL SPEED: up to 5 agents, hourly check-ins Sat-Sun (trig_01CmvFeTWLdv9v9sL5jeoSTC). The
+  weekly allowance resets Monday 16:00 UK time. Big tasks (BAL3, multi-agent waves) wait for the weekend.
