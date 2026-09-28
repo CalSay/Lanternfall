@@ -834,3 +834,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (recommend level 35 + the Region 1 boss beaten, not 60), D3 a one-off free switch within 10 minutes of
   choosing, D5 the six titles. For HER: 2 poison heroes and a physical support needed; CHAR1 gets the
   choice-card copy, visual notes and hero reaction lines; RG1 handles Priest/Warlock gear lines.
+- LORE-R45 merged: docs/design/regions-4-5.md + lore.md. Region 4 THE PALE REACH (over the pass past the
+  Emberwaste, Kestrel's homeland, candlelit whites; Starfall gathering -> Starshard buff items; boss "the
+  Star-Fallen", working name). Region 5 THE LONG STAIR (the Deepwell continued down to the Bottom of the
+  Stair; Wellglass buff items, the last grade; no Listener or Great Lantern per canon: a "Last Landing" beat).
+  Season 1 ending: the Voice is driven back, not destroyed; reveal line "There were lamps before this one."
+  (lore.md 8.6-8.8). New grade names 6-15 (grade-9 renamed Wyrmsteel). ASKED THE OWNER: the Star-Fallen's
+  name, the Last Landing beat, Deepwell vs Region 5 content, the material-name batch, an optional Whiteout
+  hazard for Region 4. RG1 launched (opus).
