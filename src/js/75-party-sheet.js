@@ -418,10 +418,10 @@ let openSheet, partySheet;
       row.append(b);
       foot.append(el('small', 'cs-cost', 'On an expedition. Field them when they are back.'));
     } else {
-      const f = (S.party.field || []).slice(0, 3);
-      const b = el('button', 'mini go cs-act', f.length < 3 ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
+      const fm = ROSTER_TUNE.fieldMax || 3, f = (S.party.field || []).slice(0, fm);   // F1: 2 companions (F4 redoes this sheet)
+      const b = el('button', 'mini go cs-act', f.length < fm ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
       b.addEventListener('click', () => {
-        if (f.length < 3) { if (fieldChar(k)) { save(); ui(true); partySheet.refresh(true); } return; }
+        if (f.length < fm) { if (fieldChar(k)) { save(); ui(true); partySheet.refresh(true); } return; }
         swapOpen = !swapOpen; partySheet.refresh(true);
       });
       row.append(b);

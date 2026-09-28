@@ -140,8 +140,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     }
     if (f.diveT > 0 && f.first) {
       f.first = 0;
-      // Cover: a tank in Front takes the first hit of a dive on the ally right behind it.
-      for (const x of units()) if (x.live && !x.down && x.role === 'tank' && x.col === 2 && x.lane === u.lane && x !== u) { cbHitUnit(x, f.atk * (f.diveX || 1), 'dive', f); return true; }
+      // Cover (F1): the tank one slot in front of the dive target (Front covers the Middle, the Middle the Back) takes the first hit.
+      for (const x of units()) if (x.live && !x.down && x.role === 'tank' && x.col === u.col + 1 && x !== u) { cbHitUnit(x, f.atk * (f.diveX || 1), 'dive', f); return true; }
       cbHitUnit(u, f.atk * (f.diveX || 1), 'dive', f);
       return true;
     }
@@ -261,3 +261,5 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return true;
   };
 }
+// F1: the combat estimate exists now, so the formation migration (56e) can use the planner.
+if (typeof formEnsure === 'function') formEnsure(true);

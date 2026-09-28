@@ -265,10 +265,13 @@ let resize, animate, draw, stageStats, warmScene;
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
+    // F1 (formation.md 1.1): a party of three stands in one line; the Middle stands a little higher
+    // so the three HP bars do not overlap (drawing only).
+    const midY = cols.length === 3 && !hasUp ? Math.max(4, Math.round(laneY * 0.45)) : 0;
     for (const a of order) {
       const i = cols.indexOf(a.col);
       a.hx = Math.round(x1 - (cols.length - 1 - i) * D) - (a.lane === 0 ? laneX : 0);
-      a.hy = GY - (a.lane === 0 ? laneY : 0);
+      a.hy = GY - (a.lane === 0 ? laneY : 0) - (a.col === 1 ? midY : 0);
     }
     // On a narrow logical stage (tall portrait at a high zoom) a wide sprite at the back can run off
     // the left edge: pull the ranks in toward the front column until every sprite shows whole.
