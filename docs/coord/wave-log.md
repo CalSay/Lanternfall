@@ -615,3 +615,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   real level, redefine T11/T18 to "levelling a new hero is an investment", keep P1/P2/P4 passing without
   needing recruits; the Full Company Feat stays months away.
 - Bench XP off: --targets confirms no stall (P2 PASS, P4 PASS). Fails: T1, T16, D1, P1, T6, T8, T11 (catch-up target, being redefined by CU1), T12, T18: all BAL3/CU1 territory.
+- OWNER: cap the number of gatherers (Hands) and let the cap grow late game; expand resources with production
+  chains, e.g. copper ore needs smelting into ingots, which needs coal, so a Hand can be a coal miner.
+  Today: beds above the Tavern cap Hands at 1-5 (+1 at Hearth 8, max 6); crafting uses raw materials.
+  QUEUED K13 "production chains" spec (after N1 merges): secondary resources (coal, sand/flux, resin, dye,
+  salt...), refining stations (Smelter: ore + coal -> ingots; Sawmill: logs -> planks; Loom: fibre -> cloth;
+  Tannery: hide -> leather; still: herbs -> tinctures), timed refining that suits idle play, Hands as refiners
+  as well as gatherers, a bed cap that grows with a Bunkhouse/Tavern and late-game regions, Storehouse effects
+  (refined goods are denser), recipes moving from raw to refined from tier 2 up (tier 1 stays simple for the
+  first ten minutes), migration so no save loses items or recipes, and 360px UI.
