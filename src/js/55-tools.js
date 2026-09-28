@@ -35,7 +35,7 @@
 //
 // Events: listens 'harvest' (rare finds), 'awayBegin' / 'away' (away mastery, the away line).
 // Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
-// Credit site for H3: rare finds credit S.mats in `credit` below (a flow, like gathering).
+// Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
 // Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
 //   m[kind] = [level, seconds into the level]. finds: rare finds made (lifetime units).
 
@@ -82,7 +82,7 @@ function toolRight(skill, t) {
   const need = lv => TOOL_TUNE.masteryMins * lv * 60;
   const lvOf = kind => TOOL_KINDS[kind] ? rec(kind)[0] : 1;
   const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
-  const credit = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };   // H3: route through stashAdd (a flow)
+  const credit = (fam, t, n) => n > 0 ? stashAdd(fam, t, n, 'flow', true) : 0;   // H3: a flow, up to the Storehouse cap (55-store)
   const icOf = kind => kind === 'sickle' ? { ic: craftIcon('sickle', 1) } : { ic: [kind, '#F2C14E'] };
 
   toolOf = skill => TOOL_OF_SKILL[skill] || null;
@@ -171,6 +171,7 @@ function toolRight(skill, t) {
     else for (let i = 0; i < n; i++) if (Math.random() < ch) finds++;
     if (!finds) return;
     const up = t < 5 ? t + 1 : 5, got = credit(kind, up, finds * (t < 5 ? 1 : TOOL_TUNE.top));
+    if (!got) return;   // H3: that pile is full
     T().finds = (T().finds || 0) + got;
     if (!away) addFloat(`Rare find! +${got} ${matName(kind, up)}`, MAT[kind].col[up - 1], true, 0.66, 0.22);
     emit('rareFind', { kind, t: up, n: got, away: !!away });

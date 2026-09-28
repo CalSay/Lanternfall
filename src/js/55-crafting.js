@@ -229,11 +229,12 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     // BAL1: units made by breaking down cannot be broken down again (1 tier-5 unit used to
     // chain into 16 tier-1 units). Spending uses the other units first.
     if (!up && have - brokeN(fam, fromT) < take) return no(`${matName(fam, fromT)} made by breaking down cannot be broken down again.`, x);
+    if (stashRoom(fam, tt) < rule.give) return no(`Storehouse full: ${matName(fam, tt)}.`, x);   // H3: the whole result must fit
     return yes(x);
   };
   transmute = (fam, fromT, to, toT) => {
     const c = canTransmute(fam, fromT, to, toT); if (!c.ok) return false;
-    S.mats[fam][fromT - 1] -= c.take; S.mats[fam][c.toT - 1] += c.give;
+    S.mats[fam][fromT - 1] -= c.take; stashAdd(fam, c.toT, c.give, 'preview');
     if (c.toT < fromT) { const b = brokeRow(fam); b[c.toT - 1] = brokeN(fam, c.toT) + c.give; }
     if (c.toT > fromT) gainStation('ench', CRAFT_XP.transmute(c.toT)); // no XP for breaking down (1 -> 2 would farm XP)
     toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] }, 'low');
@@ -245,7 +246,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   // ---- salvage: a chance of an essence for affixed items (51-actions salvageGive calls this) ----
   craftSalvageBonus = it => {
     const n = Array.isArray(it.a) ? it.a.length : 0;
-    if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) S.mats.ess[it.t - 1] += 1;
+    if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) stashAdd('ess', it.t, 1, 'preview');
   };
 
   // ---- companion gear: one wearer per item ----

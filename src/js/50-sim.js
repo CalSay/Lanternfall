@@ -107,7 +107,7 @@ function killPack(m, g) {
   let ess = m.boss ? 3 : 0;
   const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
   if (Math.random() < gear().essExtra) ess++;
-  if (ess) { S.mats.ess[tier - 1] += ess; addFloat(`+${ess} ${MAT.ess.short[tier - 1]} Essence`, MAT.ess.col[tier - 1], false, 0.68, 0.2); }
+  if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
@@ -205,9 +205,9 @@ function harvest() {
   let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
   // Yield modifiers (Omens, home ground) round by chance, so +25% means +25% on average.
   const y = n * mod('yield:' + kind), fr = y % 1;
-  S.mats[kind][t - 1] += n = Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0));
-  gainSkill(skillOf(kind), nodeXpFor(kind, t));
-  addFloat(`+${n} ${matName(kind, t)}`, MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
+  n = stashAdd(kind, t, Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0)), 'flow');   // H3: up to the Storehouse cap
+  gainSkill(skillOf(kind), nodeXpFor(kind, t));   // skill XP counts when full
+  addFloat(n ? `+${n} ${matName(kind, t)}` : 'Full', MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
   burst(0.68, 0.6, MAT[kind].col[t - 1], 12, 0.9);
   emit('harvest', { kind, t, n });
 }
@@ -239,9 +239,9 @@ function awayBase(r) {
       gainSkill(skillOf(kind), swings * nodeXpFor(kind, tier), true);
     }
     got = Math.floor(got);
-    S.mats[kind][tier - 1] += got;
+    got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
-    r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
+    if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
   }
@@ -260,8 +260,8 @@ function awayBase(r) {
   // the highest zone the party holds (at most S.zone) and its pack rate; away play earns awayRate of it.
   const est = pc ? partyHoldEstimate(S.zone) : null, z = pc ? est.zone : farmableZone(S.zone, baseDps);
   const kills = pc ? t * est.packsPerSec * COMBAT_TUNE.awayRate * boost : baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
-  const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = Math.floor(kills * essChance());
-  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
+  const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = stashAdd('ess', tier, Math.floor(kills * essChance()), 'flow', true);
+  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills);
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
   if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });

@@ -71,7 +71,7 @@ function whereSheet(k, t) {
     const head = el('div', 'gw-head'), ic = el('div', 'ic gw-ic');
     ic.append(img(matIcon(k, t)));
     const tx = el('div');
-    tx.append(el('h2', 'gw-name', matName(k, t)), el('small', 'gw-have', `${fmt(S.mats[k][t - 1] || 0)} in your pack · Tier ${t}`));
+    tx.append(el('h2', 'gw-name', matName(k, t)), el('small', 'gw-have', storePackLine(k, t)));
     head.append(ic, tx);
     const w = whereToGet(k, t), i = w.indexOf(': ');
     api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
@@ -164,7 +164,7 @@ function uiGather() {
       putToggle(r.row, 'active', here);
       putToggle(r.ic, 'ghost', !open);
       putHidden(r.home, !(open && hk)); if (hk) putText(r.home, `Home +${Math.round(hk * 100)}%`);
-      putText(r.held, open ? `${fmt(S.mats[kind][i])} held` : '');
+      putText(r.held, open ? storeHeld(kind, t) : ''); if (open) storeLvl(r.held, kind, t);   // H3: "Oak 300/300" (75-store-ui)
       putHidden(r.held, !open);
       const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
       putText(r.desc, open ? `${per.toFixed(1)}s a swing · ${fmt(60 / per * yieldAvg)}/min` : `Needs ${SKILL[skillOf(kind)]} ${req}`);
@@ -175,6 +175,6 @@ function uiGather() {
     });
   }
   if (view !== 'pack') return;
-  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
+  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, v < 1e5 ? storeNum(v) : fmt(v)); putToggle(c, 'none', !v); storeCell(c, k, i + 1, v); });
   trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
 }

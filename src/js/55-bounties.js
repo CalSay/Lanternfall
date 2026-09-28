@@ -81,8 +81,9 @@
   function claimBounty(i) {
     const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
     const r = bountyReward(b);
+    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { toast(stashNeed([[r.kind, r.t, r.n]]), 'raid', { mat: [r.kind, r.t] }, 'normal'); return null; }   // H3: a parcel waits
     if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; }
-    else S.mats[r.kind][r.t - 1] += r.n;
+    else stashAdd(r.kind, r.t, r.n, 'parcel');
     S.bounties.claimed++;
     S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
     const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };

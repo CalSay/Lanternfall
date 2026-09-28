@@ -2487,6 +2487,42 @@ span.cf-d { font-weight: 600; }
   .st-card { grid-template-columns: minmax(0, 1fr); }
   .st-cbtn { justify-self: end; min-width: 132px; }
 }
+/* 60-store: the Storehouse in the Gather tab (75-store-ui.js, task H3). */
+.st-sec { margin: 0; }
+.st-sec[hidden] { display: none; }
+.st-chip { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; padding: 8px 10px; background: rgba(224,82,79,.1); border: 1px solid #6A3040; border-left: 3px solid var(--hp); }
+.st-chip.over { background: rgba(242,169,59,.1); border-color: #6A5030; border-left-color: #F2A93B; }
+.st-ic img { width: 24px; height: 24px; image-rendering: pixelated; display: block; }
+.st-txt { font: 600 13.5px/1.3 var(--body); color: #F6D8D0; }
+.st-chip.over .st-txt { color: #F7E2B8; }
+.st-acts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+.st-acts .mini { min-height: 40px; }
+.st-acts .mini[hidden] { display: none; }
+.st-spill.on { border-color: var(--gold); color: var(--gold); }
+
+/* node rows: "Oak 300/300" */
+.gt-held.st-warn { color: #F2A93B; }
+.gt-held.st-full { color: #FF8A80; font-weight: 600; }
+.gt-held.st-over { color: #F2A93B; font-weight: 600; }
+
+/* pack cells: a cap line and a thin bar */
+.mat .st-cap { font: 500 10px/1 var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.mat .st-cap[hidden], .mat .st-bar[hidden] { display: none; }
+.mat .st-bar { display: block; width: 100%; height: 3px; background: #0B0810; margin: 1px 0; }
+.mat .st-bar b { display: block; height: 100%; width: 0; background: #6E8A5A; }
+.mat.st-warn .st-bar b { background: #F2A93B; }
+.mat.st-full { border-color: #8A3A3A; }
+.mat.st-full .st-bar b { background: var(--hp); }
+.mat.st-full .st-cap { color: #FF8A80; font-weight: 600; }
+.mat.st-over .mc { color: #F2A93B; }
+.mat.st-over .st-bar b { background: #F2A93B; }
+.mat.st-over .st-cap { color: #F2A93B; font-weight: 600; }
+
+/* pack summary */
+.st-sumrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.st-sum { margin: 0; min-width: 0; }
+.st-sumrow .mini { flex: none; min-height: 40px; }
+.st-sumrow .mini[hidden] { display: none; }
 /* 60-story: the story on the stage and in its sheet (75-story-ui.js, LORE3). */
 
 /* ---- the stage caption: arrival banner and elder lines, in the open sky mid-stage ---- */
@@ -8941,7 +8977,7 @@ function killPack(m, g) {
   let ess = m.boss ? 3 : 0;
   const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
   if (Math.random() < gear().essExtra) ess++;
-  if (ess) { S.mats.ess[tier - 1] += ess; addFloat(`+${ess} ${MAT.ess.short[tier - 1]} Essence`, MAT.ess.col[tier - 1], false, 0.68, 0.2); }
+  if (ess) { const got = stashAdd('ess', tier, ess, 'flow', true); addFloat(got ? `+${got} ${MAT.ess.short[tier - 1]} Essence` : 'Full', MAT.ess.col[tier - 1], false, 0.68, 0.2); }   // H3: capped by the Storehouse
   if (m.boss) {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
@@ -9039,9 +9075,9 @@ function harvest() {
   let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
   // Yield modifiers (Omens, home ground) round by chance, so +25% means +25% on average.
   const y = n * mod('yield:' + kind), fr = y % 1;
-  S.mats[kind][t - 1] += n = Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0));
-  gainSkill(skillOf(kind), nodeXpFor(kind, t));
-  addFloat(`+${n} ${matName(kind, t)}`, MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
+  n = stashAdd(kind, t, Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0)), 'flow');   // H3: up to the Storehouse cap
+  gainSkill(skillOf(kind), nodeXpFor(kind, t));   // skill XP counts when full
+  addFloat(n ? `+${n} ${matName(kind, t)}` : 'Full', MAT[kind].col[t - 1], n > 1, 0.68, 0.34);
   burst(0.68, 0.6, MAT[kind].col[t - 1], 12, 0.9);
   emit('harvest', { kind, t, n });
 }
@@ -9073,9 +9109,9 @@ function awayBase(r) {
       gainSkill(skillOf(kind), swings * nodeXpFor(kind, tier), true);
     }
     got = Math.floor(got);
-    S.mats[kind][tier - 1] += got;
+    got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
-    r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
+    if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
     r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
   }
@@ -9094,8 +9130,8 @@ function awayBase(r) {
   // the highest zone the party holds (at most S.zone) and its pack rate; away play earns awayRate of it.
   const est = pc ? partyHoldEstimate(S.zone) : null, z = pc ? est.zone : farmableZone(S.zone, baseDps);
   const kills = pc ? t * est.packsPerSec * COMBAT_TUNE.awayRate * boost : baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
-  const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = Math.floor(kills * essChance());
-  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
+  const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = stashAdd('ess', tier, Math.floor(kills * essChance()), 'flow', true);
+  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills);
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
   if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
@@ -9129,8 +9165,9 @@ function dropUnique(key, t) {
 }
 
 function salvageGive(it) {
-  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage'));
-  if (it.u) S.mats.ess[it.t - 1] += 10;
+  // H3: 'preview', what fits the Storehouse (the salvage sheet shows it first)
+  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) stashAdd(k, it.t, Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage')), 'preview');
+  if (it.u) stashAdd('ess', it.t, 10, 'preview');
   craftSalvageBonus(it); // 55-crafting: affixed items may give an essence
 }
 // One wearer per item: take it off the hero and every companion. Returns how many it left.
@@ -9595,8 +9632,10 @@ let OMENS, WEEKLY_GOALS;
     return { mats, marks: AL_NEEDS.Deepwell() ? (tier === 'steady' ? 40 : 20) : 0 };
   }
   const rewardText = rw => rw.mats.map(m => `${fmt(m.n)} ${matName(m.k, m.t)}`).join(', ') + (rw.marks ? `, ${rw.marks} Depth Marks` : '');
-  function pay(rw) {
-    for (const m of rw.mats) S.mats[m.k][m.t - 1] += m.n;
+  // H3: a claim waits until the reward fits; the week-end auto-claim is a gift (it cannot wait).
+  const rwLines = rw => rw.mats.map(m => [m.k, m.t, m.n]);
+  function pay(rw, gift) {
+    for (const m of rw.mats) stashAdd(m.k, m.t, m.n, gift ? 'gift' : 'parcel');
     if (rw.marks && S.deep) S.deep.marks = (S.deep.marks || 0) + rw.marks;
   }
   // Claims goal i. quiet: the week-end auto-claim (no toast). Returns the reward text or null.
@@ -9604,11 +9643,12 @@ let OMENS, WEEKLY_GOALS;
     const a = A(), g = a.goals[i];
     if (!g || !g.done || g.claimed) return null;
     const rw = rewardFor(g.tier);
-    pay(rw); g.claimed = true;
+    if (!quiet && !stashFits(rwLines(rw))) { toast(stashNeed(rwLines(rw)), 'raid', null, 'normal'); return null; }
+    pay(rw, quiet); g.claimed = true;
     let txt = rewardText(rw);
     const n = a.goals.filter(x => x.claimed).length;
     if (n === 3) { a.stamps++; txt += '. Almanac Stamp earned'; }
-    if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
+    if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }, true); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
     if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null, 'normal'); save(); }
     emit('weeklyClaim', { k: g.k, quiet: !!quiet });
     return txt;
@@ -9825,8 +9865,9 @@ let OMENS, WEEKLY_GOALS;
   function claimBounty(i) {
     const b = S.bounties.slots[i]; if (!b || !b.k || b.have < b.need) return null;
     const r = bountyReward(b);
+    if (r.kind !== 'gold' && !stashFits([[r.kind, r.t, r.n]])) { toast(stashNeed([[r.kind, r.t, r.n]]), 'raid', { mat: [r.kind, r.t] }, 'normal'); return null; }   // H3: a parcel waits
     if (r.kind === 'gold') { S.gold += r.n; S.totalGold += r.n; }
-    else S.mats[r.kind][r.t - 1] += r.n;
+    else stashAdd(r.kind, r.t, r.n, 'parcel');
     S.bounties.claimed++;
     S.bounties.slots[i] = { k: null, wait: Date.now() + BTY_WAIT, rr: b.rr || 0 };
     const icon = r.kind === 'gold' ? { ic: ['coin', '#F2C14E'] } : { mat: [r.kind, r.t] };
@@ -10080,11 +10121,12 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
     // BAL1: units made by breaking down cannot be broken down again (1 tier-5 unit used to
     // chain into 16 tier-1 units). Spending uses the other units first.
     if (!up && have - brokeN(fam, fromT) < take) return no(`${matName(fam, fromT)} made by breaking down cannot be broken down again.`, x);
+    if (stashRoom(fam, tt) < rule.give) return no(`Storehouse full: ${matName(fam, tt)}.`, x);   // H3: the whole result must fit
     return yes(x);
   };
   transmute = (fam, fromT, to, toT) => {
     const c = canTransmute(fam, fromT, to, toT); if (!c.ok) return false;
-    S.mats[fam][fromT - 1] -= c.take; S.mats[fam][c.toT - 1] += c.give;
+    S.mats[fam][fromT - 1] -= c.take; stashAdd(fam, c.toT, c.give, 'preview');
     if (c.toT < fromT) { const b = brokeRow(fam); b[c.toT - 1] = brokeN(fam, c.toT) + c.give; }
     if (c.toT > fromT) gainStation('ench', CRAFT_XP.transmute(c.toT)); // no XP for breaking down (1 -> 2 would farm XP)
     toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] }, 'low');
@@ -10096,7 +10138,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   // ---- salvage: a chance of an essence for affixed items (51-actions salvageGive calls this) ----
   craftSalvageBonus = it => {
     const n = Array.isArray(it.a) ? it.a.length : 0;
-    if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) S.mats.ess[it.t - 1] += 1;
+    if (n && Math.random() < Math.min(1, SALVAGE_ESS * n)) stashAdd('ess', it.t, 1, 'preview');
   };
 
   // ---- companion gear: one wearer per item ----
@@ -10240,7 +10282,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   const stars = z => masteryApi.starsFor(masteryApi.zoneKills(z));
   // Whole units from an expected amount: the fraction rounds up by chance.
   const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
-  const give = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };
+  const give = (fam, t, n) => n > 0 ? stashAdd(fam, t, n, 'flow', true) : 0;   // H3: fight drops stop at the Storehouse cap
 
   // ---------------- home ground ----------------
   homeFamily = (z = S.zone) => zoneHome(z);
@@ -10363,7 +10405,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     }
     if (!G.next) G.next = nextGlint();
     G.next -= dt * (1 + bonus('glintRate'));
-    if (G.next <= 0) {
+    if (G.next <= 0 && stashFull(S.node.kind, S.node.t)) G.next = nextGlint();   // H3: no Glint on a full pile
+    else if (G.next <= 0) {
       G.left = CRAFT_GLINT.window + bonus('glint:' + skillOf(S.node.kind)); G.spark = 0;   // H2: tool mastery 10
       addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
       emit('glint', { on: true });
@@ -10372,7 +10415,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   tapGlint = () => {
     if (!(G.left > 0) || target() !== 'node') return 0;
     const { kind, t } = S.node;
-    const n = give(kind, t, Math.max(1, roll(CRAFT_GLINT.units * mod('yield:' + kind))));
+    const n = stashAdd(kind, t, Math.max(1, roll(CRAFT_GLINT.units * mod('yield:' + kind))), 'flow');   // H3
     endGlint();
     addFloat(`Glint +${n} ${matName(kind, t)}`, '#FFF3C4', true, 0.68, 0.26);
     burst(0.66, 0.5, '#FFF3C4', 14, 0.9);
@@ -12535,6 +12578,314 @@ const statsApi = {};
   });
 }
 
+// ---- src/js/55-store.js ----
+// 55-store: the Storehouse and material caps (docs/design/hearth-and-hands.md 4, task H3).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Owner rule: the Storehouse limits what you can HOLD, from every source, active gathering
+// included. Gathering skill XP keeps counting when a pile is full. Old saves never lose items:
+// a pile above its cap keeps every unit and only stops growing until it is spent below the cap.
+//
+// Every material cell (family, tier) has a cap: STORE_TUNE.caps[level] x the family's group
+// factor x tierMult[tier]. Families outside STORE_TUNE.group (Trophies are not in S.mats) have
+// no cap. The Storehouse is a camp building (57-camp.js CAMP_B.store, level S.camp.b.store,
+// Lv 0 = "your packs", max 8); its cost rows, Hearth gates and effect lines live here.
+//
+// Every credit goes through stashAdd(fam, t, n, how), which returns what it added:
+//   'flow'    continuous income (gathering live and away, the Glint, fight essence, signature and
+//             champion drops): adds up to the cap, the rest is not made. One low toast per cell
+//             per fill (quiet = true: none, for fight drops).
+//   'parcel'  a lump that waits (bounties, the Almanac board, the trader, expedition hauls): adds
+//             all of it or nothing (0). Callers check stashFits(lines) first for many lines.
+//   'preview' a lump the player saw before acting (salvage, transmute): adds what fits.
+//   'gift'    refunds and one-time rewards: always lands, even above the cap.
+// Spending stays a raw subtraction.
+//
+// Exposed names:
+//   data  STORE_TUNE, STORE_HREQ, STORE_COST, STORE_STATS (runtime counters for tools/sim.mjs), storeNum(n)
+//   read  storeLevel(), storeCap(fam, t), storeCapAt(fam, t, lv), stashRoom(fam, t),
+//         stashFull(fam, t), stashOver(fam, t), stashFits(lines), stashNeed(lines) -> '' | text,
+//         stashPreview(lines) -> [[fam, t, n, fit]], storeLevelFor(mats) -> lv, storeOverAt(mats, lv),
+//         storeNextNode(kind) -> { kind, t } | null, storeSpillOn(), storeFullCells(),
+//         storeEffects(lv), storeCampCost(to, campGold), storeWhy(fam, t) (player text at the cap)
+//   act   stashAdd(fam, t, n, how, quiet), storeSwitch() -> bool, storeSpill(on) -> bool,
+//         storeMigrate() (57-camp calls it after registerState('camp'); also once per loaded save),
+//         storeAwayGather(kind, tier, got, r) -> units added (50-sim's away gather branch)
+// Events: storeFull and storeCap { fam, t } (a flow hit the cap, once per fill; storeCap is the name 58-deeds reads), storeSpill { from, to } (Spillover moved on).
+// Save: registerState('store', { v, mig: { lv, at, over }, spill, said }). mig: what the migration
+//   gave (at = 0: not run yet); spill: Spillover on (Lv 3); said: cells already toasted this fill.
+
+// The cap table (owner, 2026-09-28: "an idle game: the Storehouse should scale up quite quickly;
+// meaningful, not ridiculous, never so small it's only worth idling for 10 minutes").
+// Rules: (1) Lv 1, built about minute 5-12 of a new game, holds a full 8 h away session at the best
+// tier then; (2) each later level holds a full away session (the away cap it can have by then) on the
+// best node the pacing expects at that level, so a full away session never overflows the cell you
+// gather; (3) the cap still matters in active play (tapping about doubles the rate); (4) builds are
+// quick early, slow later (STORE_COST); (5) round numbers.
+// STORE_TUNE.pace[L] is that reference player at Storehouse level L (from tools/sim.mjs --days runs:
+// skill levels, Hearth, Watchtower by day; see hearth-and-hands.md 4.2): away hours h, node tier t at
+// skill level lv, the tier-t tool of rarity r at +p, tool mastery m, Hearth hl. check.mjs ('store',
+// HS19) runs 8 h and h hours of away gathering for every gathered family at each row and asserts the
+// haul fits caps[L]. Rates (units an hour, away, from that check): see the doc table.
+const STORE_TUNE = {
+  on: 1,                   // 0: no caps at all (tools/sim.mjs --store 0)
+  caps: [5000, 40000, 50000, 100000, 200000, 300000, 750000, 1250000, 2500000],   // gathered cap by level 0..8
+  group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5 },
+  tierMult: [1, 1, 1, 1, 1],
+  // h: the away cap the player can have at Hearth L (4 h + Watchtower 2 h a level, Watchtower Lv w
+  // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up. The rest is the upper
+  // edge of the sim's four classes on the day they reach Hearth L (--store 0 --days 30).
+  pace: [null,
+    { h: 8, t: 1, lv: 25, tool: [1, 'rare', 3], m: 3, hl: 1 },
+    { h: 8, t: 2, lv: 40, tool: [2, 'rare', 3], m: 10, hl: 2 },
+    { h: 10, t: 3, lv: 50, tool: [3, 'rare', 6], m: 15, hl: 3 },
+    { h: 12, t: 3, lv: 74, tool: [3, 'epic', 10], m: 19, hl: 4 },
+    { h: 14, t: 4, lv: 90, tool: [4, 'rare', 10], m: 20, hl: 5 },
+    { h: 16, t: 4, lv: 110, tool: [5, 'rare', 10], m: 20, hl: 6 },
+    { h: 20, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
+    { h: 24, t: 5, lv: 210, tool: [5, 'epic', 10], m: 20, hl: 8 }],
+  spill: 3,                // Spillover opens at this level
+  goldPerLv: 60,           // gold = campGold(Hearth zone, goldPerLv x level); none at Lv 1
+  warn: 0.9,               // the pouch bar turns amber from here
+  fullMins: 10             // Next Up suggests the next level after this many minutes with a full cell
+};
+const STORE_HREQ = [1, 2, 3, 4, 5, 6, 7, 8];
+// Level rows 1..8: materials [family, tier, n], Trophies (any type), build timer (seconds). Quick and
+// cheap early (owner rule 4: 90 s, 10 min, 30 min), slower later (up to a day). Lv 1 is H1's row
+// (HEARTH_TUNE.first.store, the same numbers), which 57-camp's campCost reads first.
+const STORE_COST = [
+  { mats: [['wood', 1, 30], ['ore', 1, 20]], troph: 0, secs: 90 },
+  { mats: [['wood', 1, 80], ['ore', 1, 60], ['fibre', 1, 30]], troph: 0, secs: 600 },
+  { mats: [['wood', 2, 90], ['ore', 2, 70], ['fibre', 2, 40]], troph: 0, secs: 1800 },
+  { mats: [['wood', 3, 100], ['ore', 3, 80], ['fibre', 3, 50]], troph: 0, secs: 2 * 3600 },
+  { mats: [['wood', 3, 150], ['ore', 3, 120], ['hide', 3, 40]], troph: 1, secs: 6 * 3600 },
+  { mats: [['wood', 4, 150], ['ore', 4, 120], ['fibre', 4, 60]], troph: 2, secs: 12 * 3600 },
+  { mats: [['wood', 4, 220], ['ore', 4, 180], ['crystal', 4, 60]], troph: 3, secs: 18 * 3600 },
+  { mats: [['wood', 5, 250], ['ore', 5, 200], ['fibre', 5, 80]], troph: 4, secs: 24 * 3600 }
+];
+// Runtime counters (not saved): tools/sim.mjs reads them for HS7 (time at the cap).
+// byLv[level] = { rate, hrs, t, haul }: the fastest away gather seen at that level (units an hour before
+// the cap, its away hours, node tier, the whole haul) - the numbers the cap table is checked against.
+const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, lost: {}, byLv: {}, log: [] };
+// Whole numbers with commas ("10,000"): caps read exactly, not as "10.0K".
+const storeNum = n => Number.isFinite(n) && Math.abs(n) < 1e7 ? String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : fmt(n);
+
+let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
+  storeLevelFor, storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
+  stashAdd, storeSwitch, storeSpill, storeMigrate, storeAwayGather;
+
+{
+  const T = STORE_TUNE;
+  registerState('store', { v: 1, mig: { lv: 0, at: 0, over: [] }, spill: 0, said: {} });
+  const ST = () => S.store;
+  const key = (f, t) => f + ':' + t;
+  const have = (f, t) => (S.mats[f] && S.mats[f][t - 1]) || 0;
+  const name = (f, t) => matName(f, t);
+
+  // ---------------- caps ----------------
+  storeLevel = () => Math.max(0, Math.min(T.caps.length - 1, (S.camp && S.camp.b && S.camp.b.store) | 0));
+  storeCapAt = (f, t, lv) => {
+    const g = T.group[f];
+    if (!T.on || g == null) return Infinity;
+    return Math.floor(T.caps[Math.max(0, Math.min(T.caps.length - 1, lv | 0))] * g * (T.tierMult[t - 1] || 1));
+  };
+  storeCap = (f, t) => storeCapAt(f, t, storeLevel());
+  stashRoom = (f, t) => Math.max(0, storeCap(f, t) - have(f, t));
+  stashFull = (f, t) => have(f, t) >= storeCap(f, t);
+  stashOver = (f, t) => have(f, t) > storeCap(f, t);
+  // lines: [[fam, t, n]] (repeats add up). True when every cell has room for all of it.
+  const sumLines = lines => {
+    const m = new Map();
+    for (const [f, t, n] of lines || []) if (n > 0) { const k = key(f, t); const x = m.get(k); if (x) x[2] += n; else m.set(k, [f, t, n]); }
+    return [...m.values()];
+  };
+  stashFits = lines => sumLines(lines).every(([f, t, n]) => n <= stashRoom(f, t));
+  stashNeed = lines => {
+    const x = sumLines(lines).find(([f, t, n]) => n > stashRoom(f, t));
+    return x ? `Storehouse full. Needs room for ${storeNum(x[2])} ${name(x[0], x[1])}.` : '';
+  };
+  stashPreview = lines => sumLines(lines).map(([f, t, n]) => [f, t, n, Math.min(n, stashRoom(f, t))]);
+  storeWhy = (f, t) => stashOver(f, t) ? `Over the cap. Spend below ${storeNum(storeCap(f, t))} to gather more.` : `Storehouse full: ${name(f, t)}.`;
+  const capped = () => Object.keys(S.mats).filter(f => T.group[f] != null && Array.isArray(S.mats[f]));
+  storeFullCells = () => {
+    const out = [];
+    for (const f of capped()) for (let t = 1; t <= 5; t++) if (have(f, t) > 0 && stashFull(f, t)) out.push([f, t]);
+    return out;
+  };
+
+  // ---------------- levels for a pile (migration, sim) ----------------
+  storeOverAt = (mats, lv) => {
+    const out = [];
+    for (const [f, a] of Object.entries(mats || {})) {
+      if (T.group[f] == null || !Array.isArray(a)) continue;
+      a.forEach((n, i) => { if ((n || 0) > storeCapAt(f, i + 1, lv)) out.push([f, i + 1]); });
+    }
+    return out;
+  };
+  storeLevelFor = mats => {
+    for (let lv = 0; lv < T.caps.length; lv++) if (!storeOverAt(mats, lv).length) return lv;
+    return T.caps.length - 1;
+  };
+
+  // ---------------- credits ----------------
+  const said = () => ST().said || (ST().said = {});
+  function blocked(f, t, lost, how, quiet) {
+    STORE_STATS.lost[f] = (STORE_STATS.lost[f] || 0) + lost;
+    if (how !== 'flow') return;
+    const k = key(f, t);
+    if (said()[k]) return;
+    said()[k] = 1;
+    emit('storeFull', { fam: f, t });
+    emit('storeCap', { fam: f, t });   // 58-deeds (AC2) counts these for the Pack Rat secret
+    if (!quiet) toast(`Storehouse full: ${name(f, t)}.`, 'raid', { mat: [f, t] }, 'low');
+  }
+  stashAdd = (f, t, n, how = 'flow', quiet = false) => {
+    n = Math.floor(n);
+    if (!(n > 0) || !S.mats[f] || !(t >= 1 && t <= 5)) return 0;
+    const a = S.mats[f], h = a[t - 1] || 0;
+    if (how === 'gift') { a[t - 1] = h + n; return n; }
+    const room = stashRoom(f, t);
+    if (how === 'parcel') { if (n > room) return 0; a[t - 1] = h + n; return n; }
+    const add = Math.min(n, room);
+    if (add > 0) a[t - 1] = h + add;
+    if (add < n) blocked(f, t, n - add, how, quiet);
+    return add;
+  };
+
+  // ---------------- Spillover and switching nodes ----------------
+  storeSpillOn = () => !!ST().spill && storeLevel() >= T.spill;
+  storeSpill = on => { if (storeLevel() < T.spill) return false; ST().spill = on ? 1 : 0; save(); return true; };
+  // The next unlocked node of the same skill whose pile is not full, highest tier first.
+  storeNextNode = (kind = S.node.kind) => {
+    const sk = skillOf(kind);
+    const kinds = (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']).filter(k => skillOf(k) === sk);
+    const opts = [];
+    for (let t = 5; t >= 1; t--) for (const k of kinds) if (skillTierOpen(sk, t) && !stashFull(k, t)) opts.push({ kind: k, t });
+    // the same family first at each tier (a Copper miner moves to Iron before Quartz)
+    opts.sort((a, b) => b.t - a.t || (a.kind === kind ? -1 : b.kind === kind ? 1 : 0));
+    return opts[0] || null;
+  };
+  storeSwitch = () => {
+    const from = { kind: S.node.kind, t: S.node.t }, n = storeNextNode(from.kind);
+    if (!n || !setNode(n.kind, n.t)) return false;
+    emit('storeSpill', { from, to: n });
+    toast(`${name(from.kind, from.t)} is full. Your hero moves on to the ${NODE_NAMES[n.kind][n.t - 1]}.`, 'good', { mat: [n.kind, n.t] }, 'low');
+    return true;
+  };
+
+  // ---------------- away gathering (50-sim awayBase calls this) ----------------
+  // Credits the away haul as a flow. With Spillover, the time left after the pile fills moves on to
+  // the next node of the same skill (the hero ends there). Skill XP was counted by the caller.
+  const perSec = (k, t) => nodeYieldAvg(k) * mod('yield:' + k) / nodeTime(k, t);
+  storeAwayGather = (kind, tier, got, r) => {
+    got = Math.floor(got);
+    if (r && r.t >= 3600) {
+      const lv = storeLevel(), b = STORE_STATS.byLv[lv] || (STORE_STATS.byLv[lv] = { rate: 0, hrs: 0, t: 0, haul: 0 });
+      const rate = got / (r.t / 3600);
+      if (rate > b.rate) { b.rate = Math.round(rate); b.t = tier; }
+      b.hrs = Math.max(b.hrs, r.t / 3600); b.haul = Math.max(b.haul, got);
+      const sk = skillOf(kind), eq = typeof equippedTool === 'function' ? equippedTool(sk) : null, it = eq && eq.item;
+      STORE_STATS.log.push([lv, Math.round(rate), +(r.t / 3600).toFixed(1), tier, got, (S.camp && S.camp.b && S.camp.b.hearth) | 0, S.skills[sk].lv,
+        it ? `${it.t}${String(it.r)[0]}+${it.plus || 0}` : '-', typeof toolMastery === 'function' && eq && eq.kind ? toolMastery(eq.kind).lv : 0, kind]);
+    }
+    const add = stashAdd(kind, tier, got, 'flow', true);
+    let left = got - add, secs = left > 0 ? left / Math.max(1e-9, perSec(kind, tier)) : 0;
+    const spill = [];
+    for (let guard = 0; guard < 10 && left > 0 && storeSpillOn(); guard++) {
+      const nx = storeNextNode(S.node.kind); if (!nx) break;
+      const from = { kind: S.node.kind, t: S.node.t };
+      if (!setNode(nx.kind, nx.t)) break;
+      emit('storeSpill', { from, to: nx, away: true });
+      const u = Math.floor(secs * perSec(nx.kind, nx.t)), a2 = stashAdd(nx.kind, nx.t, u, 'flow', true);
+      if (a2 > 0) { spill.push([nx.kind, nx.t, a2]); emit('harvest', { kind: nx.kind, t: nx.t, n: a2, away: true }); }
+      if (!(u > 0)) { left = 0; break; }
+      left = u - a2; secs = left / Math.max(1e-9, perSec(nx.kind, nx.t));
+    }
+    const lostShare = got > 0 ? Math.max(0, Math.min(1, left / got)) : 0;
+    STORE_STATS.awaySecs += r ? r.t : 0; STORE_STATS.awayFullSecs += (r ? r.t : 0) * lostShare;
+    // The report lines follow the base line (the 'away' phase runs after 50-sim's awayBase).
+    awayLines = spill.map(([k, t, n]) => ({ icon: { mat: [k, t] }, txt: `+${storeNum(n)} ${name(k, t)}`, sub: 'Spillover moved on' }));
+    const k2 = spill.length ? S.node.kind : kind, t2 = spill.length ? S.node.t : tier;   // where the hero ended
+    if (left > 0) awayLines.push({ icon: { mat: [k2, t2] }, txt: `Storehouse full: ${name(k2, t2)}`, sub: `${SKILL[skillOf(kind)]} XP still counted` });
+    return add;
+  };
+  let awayLines = [];
+  on('away', r => { if (awayLines.length && r && r.lines) r.lines.push(...awayLines); awayLines = []; });
+
+  // ---------------- the camp building (57-camp.js CAMP_B.store) ----------------
+  storeCampCost = (to, campGold) => {
+    const r = STORE_COST[to - 1]; if (!r) return null;
+    const z = typeof CAMP_HZ !== 'undefined' ? CAMP_HZ[STORE_HREQ[to - 1] - 1] : 5;
+    return { gold: to <= 1 ? 0 : campGold(z, T.goldPerLv * to), mats: r.mats.map(m => m.slice()), troph: r.troph ? [['any', r.troph]] : [], secs: r.secs };
+  };
+  storeEffects = lv => {
+    const g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv);
+    if (!(lv > 0)) return [`Your packs hold ${storeNum(g)} of each`, `${storeNum(h)} hide and essence`];
+    return [`Holds ${storeNum(g)} of each material`, `${storeNum(h)} hide and essence`].concat(lv >= T.spill ? ['Spillover: move on when a pile is full'] : []);
+  };
+
+  // ---------------- migration (spec 4.7) ----------------
+  // A save with progress gets the lowest level that holds every pile (at least 1), ignoring the
+  // Hearth gate. If none does, Lv 8 and the piles above it stay over the cap. S.mats is untouched.
+  let note = null;
+  const progress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || capped().some(f => S.mats[f].some(n => n > 0));
+  storeMigrate = () => {
+    if (!S.camp || !S.camp.b || ST().mig.at) return 0;
+    if (!progress()) { ST().mig = { lv: 0, at: Date.now(), over: [] }; return 0; }
+    const lv = Math.max(1, storeLevelFor(S.mats));
+    S.camp.b.store = Math.max(S.camp.b.store | 0, lv);
+    const over = storeOverAt(S.mats, S.camp.b.store);
+    ST().mig = { lv: S.camp.b.store, at: Date.now(), over };
+    note = { lv: S.camp.b.store, over };
+    return lv;
+  };
+  function sayMigration() {
+    if (!note) return;
+    const { lv, over } = note; note = null;
+    // a save that has not reached the camp yet meets the Storehouse there (no notice now)
+    if (!(typeof campOpen === 'function' && campOpen()) && !(typeof CAMP_TUNE === 'object' && S.maxZone >= CAMP_TUNE.openZone)) return;
+    const ic = { ic: ['anvil', '#B08A5A'] };
+    emit('whatsNew', { msg: `Your camp has a Storehouse now, at level ${lv}. It holds up to ${storeNum(storeCapAt('ore', 1, lv))} of each material.`, icon: ic });
+    for (const [f, t] of over) emit('whatsNew', { msg: `${name(f, t)} is over the cap. You keep all of it. Spend below ${storeNum(storeCapAt(f, t, lv))} to gain more.`, icon: { mat: [f, t] } });
+  }
+
+  // ---------------- each second ----------------
+  let initFor = null, acc = 0, fullSecs = 0, fullLv = -1;
+  onTick(dt => {
+    if (initFor !== S) { initFor = S; storeMigrate(); fullSecs = 0; }
+    acc += dt; if (acc < 1) return; acc -= 1; if (acc > 1) acc = 0;
+    sayMigration();
+    // a cell below its cap again may toast on its next fill
+    const sd = said();
+    for (const k of Object.keys(sd)) { const [f, t] = k.split(':'); if (!stashFull(f, +t)) delete sd[k]; }
+    if (fullLv !== storeLevel()) { fullLv = storeLevel(); fullSecs = 0; }
+    const tg = target();
+    if (tg === 'node') {
+      const { kind, t } = S.node, full = stashFull(kind, t);
+      STORE_STATS.gatherSecs++; if (full) STORE_STATS.fullSecs++;
+      if (full && storeSpillOn()) storeSwitch();
+    }
+    if ((tg === 'node' && stashFull(S.node.kind, S.node.t)) || Object.keys(sd).length) fullSecs++;
+  });
+
+  // ---------------- Next Up ----------------
+  const nextLv = () => { const l = storeLevel(); return l < STORE_COST.length ? l + 1 : 0; };
+  registerGoal({
+    id: 'store-up', sys: 'camp', prio: 2, icon: { ic: ['anvil', '#B08A5A'] },
+    label: () => { const to = nextLv(); return to ? `Storehouse Lv ${to}: holds ${storeNum(storeCapAt('ore', 1, to))} of each` : ''; },
+    pct: () => {
+      if (fullSecs < T.fullMins * 60 || !nextLv() || typeof campCan !== 'function' || !campOpen()) return 0;
+      const c = campCan('store');
+      if (c.ok) return 1;
+      if (c.need || c.busy || c.max) return 0;
+      let p = 1;
+      for (const [f, t, n] of (c.cost && c.cost.mats) || []) p = Math.min(p, have(f, t) / n);
+      return Math.max(0.05, Math.min(0.95, 0.95 * p));
+    },
+    go: { tab: 'world', sel: '#camp-b-store' }
+  });
+}
+
 // ---- src/js/55-story.js ----
 // 55-story: the story core (task LORE3; docs/design/lore.md 9 and 10). Which arrival line, story
 // beat and elder line is due, once per save. CORE FILE: no DOM. UI: 75-story-ui.js.
@@ -12780,7 +13131,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
 //
 // Events: listens 'harvest' (rare finds), 'awayBegin' / 'away' (away mastery, the away line).
 // Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
-// Credit site for H3: rare finds credit S.mats in `credit` below (a flow, like gathering).
+// Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
 // Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
 //   m[kind] = [level, seconds into the level]. finds: rare finds made (lifetime units).
 
@@ -12827,7 +13178,7 @@ function toolRight(skill, t) {
   const need = lv => TOOL_TUNE.masteryMins * lv * 60;
   const lvOf = kind => TOOL_KINDS[kind] ? rec(kind)[0] : 1;
   const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
-  const credit = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };   // H3: route through stashAdd (a flow)
+  const credit = (fam, t, n) => n > 0 ? stashAdd(fam, t, n, 'flow', true) : 0;   // H3: a flow, up to the Storehouse cap (55-store)
   const icOf = kind => kind === 'sickle' ? { ic: craftIcon('sickle', 1) } : { ic: [kind, '#F2C14E'] };
 
   toolOf = skill => TOOL_OF_SKILL[skill] || null;
@@ -12916,6 +13267,7 @@ function toolRight(skill, t) {
     else for (let i = 0; i < n; i++) if (Math.random() < ch) finds++;
     if (!finds) return;
     const up = t < 5 ? t + 1 : 5, got = credit(kind, up, finds * (t < 5 ? 1 : TOOL_TUNE.top));
+    if (!got) return;   // H3: that pile is full
     T().finds = (T().finds || 0) + got;
     if (!away) addFloat(`Rare find! +${got} ${matName(kind, up)}`, MAT[kind].col[up - 1], true, 0.66, 0.22);
     emit('rareFind', { kind, t: up, n: got, away: !!away });
@@ -14756,7 +15108,8 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   };
   buyTrade = () => {
     const o = visitorToday(); if (o.kind !== 'trade' || o.done || S.gold < o.cost.gold) return false;
-    S.gold -= o.cost.gold; S.mats.ess[o.trade.t - 1] += o.trade.n; dayState().bought = true;
+    if (!stashFits([['ess', o.trade.t, o.trade.n]])) { toast(stashNeed([['ess', o.trade.t, o.trade.n]]), 'raid', { mat: ['ess', o.trade.t] }, 'normal'); return false; }   // H3: a parcel waits
+    S.gold -= o.cost.gold; stashAdd('ess', o.trade.t, o.trade.n, 'parcel'); dayState().bought = true;
     toast(`The trader sells you ${o.trade.n} ${ess(o.trade.t)}.`, 'loot', { mat: ['ess', o.trade.t] }, 'normal');
     save();
     return true;
@@ -16244,6 +16597,8 @@ const CAMP_B = {
   loom: { n: 'Loom', max: 5, pre: 1, fam: { fibre: 30, hide: 15 }, tro: 3, skill: 'loom' },
   ench: { n: "Enchanter's Table", max: 5, pre: 1, fam: { crystal: 25, ess: 20 }, tro: 6, skill: 'ench' },
   tavern: { n: 'Tavern', max: 5, pre: 1, fam: { wood: 30, herb: 15 }, tro: 1 },
+  // H3 (55-store.js): its own cost rows, Hearth gates and effect lines; max 8.
+  store: { n: 'Storehouse', max: 8, opens: 1, hreq: STORE_HREQ, cost: storeCampCost, fx: storeEffects },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
   maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped },
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
@@ -16281,13 +16636,14 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 {
   registerState('camp', {
     v: 1, open: false,
-    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 },
+    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0, store: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
   // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
   if (typeof welcomeApply === 'function') welcomeApply();
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
   if (typeof hearthApply === 'function') hearthApply();
+  if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -16307,6 +16663,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const hearthNeed = (id, to) => {
     if (id === 'hearth') return 0;
     if (id === 'shrine') return CAMP_SHRINE_HREQ[to - 1] || 99;
+    if (B(id).hreq) return B(id).hreq[to - 1] || 99;
     return Math.max(CAMP_HREQ[to - 1] || 99, B(id).opens || 1);
   };
   const row = (id, to) => id === 'shrine' ? to + 2 : to;   // cost row 1..5 (the Shrine uses rows 3-5)
@@ -16334,6 +16691,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
     const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
     if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
+    if (d.cost) return d.cost(to, campGold);
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
     const c = liveCost(campGold(zRef, T.goldPerLv * to), mats, d.tro, T.troph[r - 1], r);
@@ -16354,7 +16712,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
   const pay = (c, sign) => {
     S.gold -= sign * c.gold;
-    for (const [f, t, n] of c.mats) S.mats[f][t - 1] += -sign * n;
+    for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
     // Trophies of "any" type: take from the biggest pile first; refunds go to the first type paid.
     for (const [i, n] of c.troph) {
       const tr = S.craft.troph;
@@ -16510,8 +16868,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Companion XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
-    if (!(l > 0)) return id === 'hearth' ? ['No camp yet'] : ['Not built'];
     const d = B(id);
+    if (d && d.fx) return d.fx(l);
+    if (!(l > 0)) return id === 'hearth' ? ['No camp yet'] : ['Not built'];
     if (id === 'hearth') return [`+${3 * l}% away gains`].concat(l >= 5 ? ['2 builders'] : []);
     if (d.skill) {
       const out = l === 1 ? [`${SKILL[d.skill]} station`] : [`${SKILL[d.skill]} XP +${Math.round(STN_XP[l] * 100)}%`];
@@ -16819,7 +17178,7 @@ const EXPED_LORE = {
 
 let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, ePow, expedR, expedGrade, expedPreview,
   expedBest, expedCan, expedOut, expedRumour, expedLoreFound, expedSend, expedCollect, expedCollectAll, expedRecall,
-  expedRepeat, expedCatchUp, expedHaulText;
+  expedRepeat, expedCatchUp, expedHaulText, expedRoom;   // expedRoom(i): "" or why the haul waits (H3)
 
 {
   registerState('exped', { v: 1, slots: [], done: {}, lore: {}, court: 0, keep: {}, log: [], seq: 0 });
@@ -17034,7 +17393,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
   const loreTitles = (band, before) => (EXPED_LORE[band] || []).filter((_, i) => (X().lore[loreKey(band, i)] || 0) >= 4 && !before.includes(i));
   function payOut(s, pay, opts) {
     const d = RT(s.r), haul = { mats: [], troph: [], ren: 0, ks: 0, lore: [], keep: [], tok: null, xp: 0 };
-    const addMat = (f, t, n) => { if (!(n > 0)) return; S.mats[f][t - 1] += n; const h = haul.mats.find(x => x[0] === f && x[1] === t); if (h) h[2] += n; else haul.mats.push([f, t, n]); };
+    const addMat = (f, t, n) => { if (!(n > 0)) return; stashAdd(f, t, n, 'gift'); const h = haul.mats.find(x => x[0] === f && x[1] === t); if (h) h[2] += n; else haul.mats.push([f, t, n]); };
     const addTro = (i, n) => { if (!(n > 0)) return; addTrophy(i, n, 'exped'); const h = haul.troph.find(x => x[0] === i); if (h) h[1] += n; else haul.troph.push([i, n]); };
     const k = opts.frac == null ? 1 : opts.frac;
     for (const [f, t, n] of pay.mats) addMat(f, t, Math.floor(n * k));
@@ -17077,6 +17436,9 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     for (const id of s.team) { const n = (pay.xp[id] || 0) * (opts.xpFrac == null ? 1 : opts.xpFrac); if (n > 0 && isRecruited(id)) haul.xp += giveXp(id, n); }
     return haul;
   }
+  // H3: a haul is a parcel. It lands only when every line fits the Storehouse; until then the run waits.
+  const haulLines = (s, k) => k == null ? s.pay.mats.concat(s.pay.bonus.mats) : s.pay.mats.map(([f, t, n]) => [f, t, Math.floor(n * k)]);
+  expedRoom = i => { const s = X().slots[i]; return !s || !s.pay ? '' : stashNeed(haulLines(s)); };
   function finishRun(s, opts) {
     const haul = payOut(s, s.pay, opts);
     X().done[s.r] = (X().done[s.r] || 0) + 1;
@@ -17094,6 +17456,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     for (let guard = 0; guard < 100 && s.end <= now(); guard++) {
       const again = s.repOn && repeatOn() && s.rep + 1 < T.repMax;
       if (!again && !auto) break;   // open game: the run waits for Collect
+      if (!stashFits(haulLines(s))) break;   // H3: Storehouse full; the run waits (Repeat pauses)
       out.push(finishRun(s, { auto: true, at: s.end }));
       s.rep++;
       if (!again) { X().slots.splice(X().slots.indexOf(s), 1); break; }
@@ -17108,6 +17471,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
   };
   expedCollect = i => {
     const s = X().slots[i]; if (!s || s.end > now()) return null;
+    if (!stashFits(haulLines(s))) { toast(`The team is back. ${stashNeed(haulLines(s))}`, 'raid', null, 'normal'); return null; }
     const rec = finishRun(s, {});
     X().slots.splice(i, 1);
     toast(`${RT(s.r).n}: the team is back (${rec.grade}).`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');
@@ -17120,6 +17484,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     const s = X().slots[i]; if (!s) return null;
     if (s.end <= now()) return expedCollect(i);
     const frac = Math.max(0, Math.min(1, (now() - s.start) / (s.end - s.start)));
+    if (!stashFits(haulLines(s, frac * 0.5))) { toast(stashNeed(haulLines(s, frac * 0.5)), 'raid', null, 'normal'); return null; }   // H3
     const rec = finishRun(s, { frac: frac * 0.5, xpFrac: frac, recall: true });
     X().slots.splice(i, 1);
     save();
@@ -27468,7 +27833,7 @@ function ui(force) {
     putText(H.zName, NODE_NAMES[kind][t - 1]);
     putText(H.zSub, `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`);
     putText(H.mName, matName(kind, t));
-    putText(H.mHp, `${fmt(S.mats[kind][t - 1])} in pack`);
+    putText(H.mHp, storeStage(kind, t));   // H3: "640/1,000 in pack" (75-store-ui)
     const sp = Math.min(100, sk.xp / skillNeed(sk.lv, skillOf(kind)) * 100);
     setHp(sp);
     putStyle(H.mBar, 'background', 'var(--gold)');
@@ -27868,7 +28233,7 @@ function whereSheet(k, t) {
     const head = el('div', 'gw-head'), ic = el('div', 'ic gw-ic');
     ic.append(img(matIcon(k, t)));
     const tx = el('div');
-    tx.append(el('h2', 'gw-name', matName(k, t)), el('small', 'gw-have', `${fmt(S.mats[k][t - 1] || 0)} in your pack · Tier ${t}`));
+    tx.append(el('h2', 'gw-name', matName(k, t)), el('small', 'gw-have', storePackLine(k, t)));
     head.append(ic, tx);
     const w = whereToGet(k, t), i = w.indexOf(': ');
     api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
@@ -27961,7 +28326,7 @@ function uiGather() {
       putToggle(r.row, 'active', here);
       putToggle(r.ic, 'ghost', !open);
       putHidden(r.home, !(open && hk)); if (hk) putText(r.home, `Home +${Math.round(hk * 100)}%`);
-      putText(r.held, open ? `${fmt(S.mats[kind][i])} held` : '');
+      putText(r.held, open ? storeHeld(kind, t) : ''); if (open) storeLvl(r.held, kind, t);   // H3: "Oak 300/300" (75-store-ui)
       putHidden(r.held, !open);
       const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
       putText(r.desc, open ? `${per.toFixed(1)}s a swing · ${fmt(60 / per * yieldAvg)}/min` : `Needs ${SKILL[skillOf(kind)]} ${req}`);
@@ -27972,7 +28337,7 @@ function uiGather() {
     });
   }
   if (view !== 'pack') return;
-  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
+  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, v < 1e5 ? storeNum(v) : fmt(v)); putToggle(c, 'none', !v); storeCell(c, k, i + 1, v); });
   trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
 }
 
@@ -28320,13 +28685,14 @@ async function uiTavern() {
         setCls(r.tier, 'om-tier ' + g.tier);
         setTxt(r.own, g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`);
         setW(r.bar, Math.min(100, g.have / g.need * 100));
-        setTxt(r.desc, g.claimed ? 'Reward collected.' : 'Reward: ' + almanac.rewardText(almanac.reward(g)));
+        const rw = almanac.reward(g), room = g.done && !g.claimed ? stashNeed(rw.mats.map(m => [m.k, m.t, m.n])) : '';   // H3: waits until it fits
+        setTxt(r.desc, g.claimed ? 'Reward collected.' : room || 'Reward: ' + almanac.rewardText(rw));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
         r.sw.hidden = g.done || A.swaps <= 0;
         r.btn.hidden = !g.done || g.claimed;
-        r.btn.disabled = !g.done || g.claimed;
+        r.btn.disabled = !g.done || g.claimed || !!room;
         setTxt(r.qty, 'Done');
         setTxt(r.btn.querySelector('.price'), 'Claim');
       });
@@ -28815,13 +29181,14 @@ let bondsUI = null;
         const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
         r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
         r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
-        r.desc.textContent = 'Reward: ' + rew.txt;
+        const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
+        r.desc.textContent = room || 'Reward: ' + rew.txt;
         r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
         const url = BTY_IC[b.k](); setIc(r.ic, url);
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = !done; r.qty.textContent = done ? 'Done' : 'Bounty';
+        r.btn.disabled = !done || !!room; r.qty.textContent = done ? 'Done' : 'Bounty';
         r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
       });
     }
@@ -28862,7 +29229,8 @@ let bondsUI = null;
     tavern: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
     library: () => iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' }),
     maproom: () => iconURL('b_map', '#E0524F', { 5: '#EFE6D6', 6: '#8C6A43' }),
-    shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' })
+    shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' }),
+    store: () => STORE_ICON()   // 75-store-ui (H3)
   };
   const icon = id => (ICONS[id] || ICONS.hearth)();
   // Deepwell decorations bought with Marks (DEEP_SHOP kind 'decor', owned in S.deep.cos). The Camp is
@@ -30281,6 +30649,7 @@ let craftUI = null;
       const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t);
       chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = s.textContent.replace(/^[^/]*\//, '+'); });
       sv.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good. You get back about:`), chips);
+      const room = storeSalvageNote(salvagePreview(it), it.t); if (room) sv.append(el('p', 'note warn', room));   // H3: the Storehouse cap
       const r = el('div', 'cf-wear');
       const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
       const no = el('button', 'big cf-act cf-keep', 'Keep it'); no.type = 'button';
@@ -31732,7 +32101,7 @@ let deedsUI = null;
   // ---------------- slots out now ----------------
   function drawSlots(n) {
     const sl = S.exped.slots, rep = safe(() => campMapRoom().repeat, false);
-    const sig = JSON.stringify([n, rep, sl.map(s => [s.r, s.team, s.grade, s.repOn, s.rep, s.end <= Date.now(), left(s)]), [...Array(sl.length)].map((_, i) => isArmed('recall' + i))]);
+    const sig = JSON.stringify([n, rep, sl.map((s, i) => [s.r, s.team, s.grade, s.repOn, s.rep, s.end <= Date.now(), left(s), s.end <= Date.now() && !!expedRoom(i)]), [...Array(sl.length)].map((_, i) => isArmed('recall' + i))]);
     if (sig !== sigSlots) {
       sigSlots = sig; slotBox.textContent = '';
       sl.forEach((s, i) => {
@@ -31744,7 +32113,7 @@ let deedsUI = null;
         const nm = el('div', 'ex-nm'); nm.append(el('span', null, R(s.r).n)); const gr = el('b', 'ex-g', G.n); gr.style.color = G.col; nm.append(gr);
         const bar = el('div', 'bar'), fill = el('i'); bar.append(fill); fill.dataset.slot = i;
         const foot = el('div', 'ex-foot');
-        const sub = el('div', 'ex-sub', back ? 'Back!' : `${left(s)} left${s.repOn ? ` · run ${s.rep + 1}/${EXPED_TUNE.repMax}` : ` · ${s.h}h trip`}`);
+        const sub = el('div', 'ex-sub', back ? (expedRoom(i) ? 'Back. Storehouse full: collect when you have room.' : 'Back!') : `${left(s)} left${s.repOn ? ` · run ${s.rep + 1}/${EXPED_TUNE.repMax}` : ` · ${s.h}h trip`}`);
         const acts = el('div', 'ex-acts');
         foot.append(sub, acts);
         mid.append(nm, bar, foot);
@@ -34985,6 +35354,129 @@ let openSheet, partySheet;
   }
 }
 
+// ---- src/js/75-store-ui.js ----
+// 75-store-ui: the Storehouse in the Gather tab (task H3, docs/design/hearth-and-hands.md 4.4).
+// Browser-only; the rules live in 55-store.js. The Storehouse's own card is the Camp's building
+// list (75-camp-ui.js); its icon is registered here.
+//   - Node views: a "Storehouse full" chip under the status strip, with Switch (the next node of the
+//     same skill that is not full) and, from Lv 3, the Spillover toggle.
+//   - Node rows and pack cells: "Oak 300/300", amber from 90%, red and "Full" at the cap, amber
+//     "Over" above it (72-ui-gather.js calls storeHeld / storeCell / storePackLine).
+//   - Pack view: one line with the level and the caps.
+//   - Salvage: storeSalvageNote(preview, t) for the Craft tab's in-page ask.
+
+registerIcons({
+  b_store: ['............', '.6666666666.', '.6111111116.', '.6155555516.', '.6111111116.', '.6666666666.', '.6111111116.', '.6111771116.', '.6111771116.', '.6111111116.', '.6666666666.', '............']
+});
+const STORE_ICON = () => iconURL('b_store', '#8C6A43', { 6: '#4A3220', 5: '#B08A5A', 7: '#F2C14E' });
+
+// "Oak 300/300" (the node rows' held line). No cap (sim --store 0): "Oak 300 held".
+function storeHeld(k, t) {
+  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t), nm = MAT[k].short[t - 1];
+  if (!Number.isFinite(cap)) return `${nm} ${storeNum(h)} held`;
+  return `${nm} ${storeNum(h)}/${storeNum(cap)}` + (h > cap ? ' · Over the cap' : h >= cap ? ' · Full' : '');
+}
+function storeLvl(e, k, t) {
+  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
+  putToggle(e, 'st-warn', h >= cap * STORE_TUNE.warn && h < cap);
+  putToggle(e, 'st-full', h >= cap && h > 0 && h <= cap);
+  putToggle(e, 'st-over', h > cap);
+}
+// The stage's held line: "640/1,000 in pack", "1,000/1,000 · Full".
+function storeStage(k, t) {
+  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
+  if (!Number.isFinite(cap)) return `${fmt(h)} in pack`;
+  const n = h < 1e5 ? storeNum(h) : fmt(h), c = cap < 1e5 ? storeNum(cap) : fmt(cap);
+  return `${n}/${c} ` + (h > cap ? '· Over the cap' : h >= cap ? '· Full' : 'in pack');
+}
+// A pack cell: a cap line and a thin bar under the count.
+function storeCell(c, k, t, v) {
+  if (!c._st) {
+    const cap = el('span', 'st-cap'), bar = el('i', 'st-bar'), fill = el('b'); bar.append(fill);
+    c.querySelector('.mc').after(cap, bar);
+    c._st = { cap, fill };
+  }
+  const cap = storeCap(k, t), fin = Number.isFinite(cap);
+  putHidden(c._st.cap, !fin); putHidden(c._st.fill.parentNode, !fin);
+  if (!fin) return;
+  putText(c._st.cap, v > cap ? 'Over' : v >= cap ? 'Full' : '/' + (cap >= 1e4 ? storeNum(cap / 1000) + 'K' : storeNum(cap)));   // "/25K" fits a pack cell at 360px
+  putStyle(c._st.fill, 'width', Math.min(100, v / cap * 100) + '%');
+  storeLvl(c, k, t);
+}
+// The "where to get it" sheet's first line.
+function storePackLine(k, t) {
+  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
+  if (!Number.isFinite(cap)) return `${storeNum(h)} in your pack · Tier ${t}`;
+  return `${storeNum(h)}/${storeNum(cap)} in your pack · Tier ${t}` + (h > cap ? `. Over the cap: spend below ${storeNum(cap)} to gather more.` : h >= cap ? '. Storehouse full.' : '');
+}
+// Salvage: "Only 5 of 8 Copper Ore fit. Salvage anyway?" (preview: { fam: n } at tier t), or ''.
+function storeSalvageNote(preview, t) {
+  const lines = Object.entries(preview || {}).map(([f, n]) => [f, t, n]);
+  const short = stashPreview(lines).filter(([, , n, fit]) => fit < n);
+  if (!short.length) return '';
+  return short.map(([f, tt, n, fit]) => `Only ${storeNum(fit)} of ${storeNum(n)} ${matName(f, tt)} fit.`).join(' ') + ' The rest is lost. Salvage anyway?';
+}
+
+{
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+  // ---- the full chip on the node views ----
+  let chip = null;
+  registerSection('gat', {
+    id: 'store-chip', view: 'mine wood forage',
+    mount(sec) {
+      sec.classList.add('st-sec');
+      if (typeof gNow === 'object' && gNow.box) gNow.box.after(sec);
+      chip = { box: el('div', 'st-chip'), txt: el('div', 'st-txt'), acts: el('div', 'st-acts') };
+      const ic = el('span', 'st-ic'); ic.append(img(STORE_ICON()));
+      chip.sw = btn('mini go', 'Switch');
+      chip.sw.addEventListener('click', () => { storeSwitch(); ui(true); });
+      chip.sp = btn('mini st-spill', 'Spillover');
+      chip.sp.addEventListener('click', () => { storeSpill(!S.store.spill); ui(true); });
+      chip.acts.append(chip.sw, chip.sp);
+      chip.box.append(ic, chip.txt, chip.acts);
+      sec.append(chip.box);
+    },
+    update() {
+      const sec = chip.box.parentNode;
+      const on = S.activity === 'gather', k = S.node.kind, t = S.node.t;
+      const full = on && stashFull(k, t), lv3 = storeLevel() >= STORE_TUNE.spill;
+      putHidden(sec, !full);
+      if (!full) return;
+      const over = stashOver(k, t);
+      putText(chip.txt, over ? `${matName(k, t)}: ${storeWhy(k, t)} ${SKILL[skillOf(k)]} XP still counts.`
+        : `Storehouse full: ${matName(k, t)}. ${SKILL[skillOf(k)]} XP still counts.`);
+      putToggle(chip.box, 'over', over);
+      const nx = storeNextNode(k);
+      putHidden(chip.sw, !nx);
+      if (nx) putAttr(chip.sw, 'aria-label', `Switch to the ${NODE_NAMES[nx.kind][nx.t - 1]}`);
+      putHidden(chip.sp, !lv3);
+      if (lv3) { putText(chip.sp, S.store.spill ? 'Spillover on' : 'Spillover off'); putToggle(chip.sp, 'on', !!S.store.spill); putAttr(chip.sp, 'aria-pressed', String(!!S.store.spill)); }
+    }
+  });
+
+  // ---- the pack view: level and caps ----
+  let sum = null;
+  registerSection('gat', {
+    id: 'store-sum', view: 'pack',
+    mount(sec) {
+      sec.classList.add('st-sec');
+      // inside the Pack's own block, which already shows only on the pack view
+      const grid = $('matGrid'); if (grid) { grid.before(sec); delete sec.dataset.view; sec.classList.remove('off-view'); }
+      sum = { p: el('p', 'note st-sum'), go: btn('mini go', 'Storehouse') };
+      sum.go.addEventListener('click', () => setTab('world', '#camp-b-store'));
+      const row = el('div', 'st-sumrow'); row.append(sum.p, sum.go);
+      sec.append(row);
+    },
+    update() {
+      const lv = storeLevel(), g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv);
+      if (!Number.isFinite(g)) { putText(sum.p, 'No limits on materials.'); putHidden(sum.go, true); return; }
+      const n = storeFullCells().length;
+      putText(sum.p, (lv ? `Storehouse Lv ${lv}: holds ${storeNum(g)} of each, ${storeNum(h)} hide and essence.` : `Your packs hold ${storeNum(g)} of each, ${storeNum(h)} hide and essence.`) + (n ? ` ${n === 1 ? '1 pile is' : n + ' piles are'} full.` : ''));
+      putHidden(sum.go, !(typeof campOpen === 'function' && campOpen()));
+    }
+  });
+}
+
 // ---- src/js/75-story-ui.js ----
 // 75-story-ui: how the story reaches the player (task LORE3; lore.md 9). Browser-only; logic in
 // 55-story.js. Small and skippable; nothing here blocks play.
@@ -35385,8 +35877,9 @@ let toolsUI = null;
         V.btn.disabled = v.done || !canRecruit(v.id);
       } else if (v.kind === 'trade') {
         V.btn.hidden = false;
-        V.btn.textContent = v.done ? 'Sold out' : 'Buy';
-        V.btn.disabled = v.done || S.gold < c.gold;
+        const room = v.done ? '' : stashNeed([['ess', v.trade.t, v.trade.n]]);   // H3: the essence must fit
+        V.btn.textContent = v.done ? 'Sold out' : room ? 'Storehouse full' : 'Buy';
+        V.btn.disabled = v.done || S.gold < c.gold || !!room;
       } else V.btn.hidden = true;
       const nx = v.next;
       const turn = `The next visitor arrives in ${fmtTime(untilMidnight())}.`;

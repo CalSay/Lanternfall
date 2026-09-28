@@ -30,7 +30,8 @@
     tavern: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }),
     library: () => iconURL('b_book', '#5A7AB8', { 5: '#EFE6D6' }),
     maproom: () => iconURL('b_map', '#E0524F', { 5: '#EFE6D6', 6: '#8C6A43' }),
-    shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' })
+    shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' }),
+    store: () => STORE_ICON()   // 75-store-ui (H3)
   };
   const icon = id => (ICONS[id] || ICONS.hearth)();
   // Deepwell decorations bought with Marks (DEEP_SHOP kind 'decor', owned in S.deep.cos). The Camp is

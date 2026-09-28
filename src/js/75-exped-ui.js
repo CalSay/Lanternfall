@@ -91,7 +91,7 @@
   // ---------------- slots out now ----------------
   function drawSlots(n) {
     const sl = S.exped.slots, rep = safe(() => campMapRoom().repeat, false);
-    const sig = JSON.stringify([n, rep, sl.map(s => [s.r, s.team, s.grade, s.repOn, s.rep, s.end <= Date.now(), left(s)]), [...Array(sl.length)].map((_, i) => isArmed('recall' + i))]);
+    const sig = JSON.stringify([n, rep, sl.map((s, i) => [s.r, s.team, s.grade, s.repOn, s.rep, s.end <= Date.now(), left(s), s.end <= Date.now() && !!expedRoom(i)]), [...Array(sl.length)].map((_, i) => isArmed('recall' + i))]);
     if (sig !== sigSlots) {
       sigSlots = sig; slotBox.textContent = '';
       sl.forEach((s, i) => {
@@ -103,7 +103,7 @@
         const nm = el('div', 'ex-nm'); nm.append(el('span', null, R(s.r).n)); const gr = el('b', 'ex-g', G.n); gr.style.color = G.col; nm.append(gr);
         const bar = el('div', 'bar'), fill = el('i'); bar.append(fill); fill.dataset.slot = i;
         const foot = el('div', 'ex-foot');
-        const sub = el('div', 'ex-sub', back ? 'Back!' : `${left(s)} left${s.repOn ? ` · run ${s.rep + 1}/${EXPED_TUNE.repMax}` : ` · ${s.h}h trip`}`);
+        const sub = el('div', 'ex-sub', back ? (expedRoom(i) ? 'Back. Storehouse full: collect when you have room.' : 'Back!') : `${left(s)} left${s.repOn ? ` · run ${s.rep + 1}/${EXPED_TUNE.repMax}` : ` · ${s.h}h trip`}`);
         const acts = el('div', 'ex-acts');
         foot.append(sub, acts);
         mid.append(nm, bar, foot);

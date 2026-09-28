@@ -21,8 +21,9 @@ function dropUnique(key, t) {
 }
 
 function salvageGive(it) {
-  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) S.mats[k][it.t - 1] += Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage'));
-  if (it.u) S.mats.ess[it.t - 1] += 10;
+  // H3: 'preview', what fits the Storehouse (the salvage sheet shows it first)
+  for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) stashAdd(k, it.t, Math.floor(n * (1 + 0.5 * (it.t - 1)) * 0.4 * (1 + it.plus * 0.3) * mod('salvage')), 'preview');
+  if (it.u) stashAdd('ess', it.t, 10, 'preview');
   craftSalvageBonus(it); // 55-crafting: affixed items may give an essence
 }
 // One wearer per item: take it off the hero and every companion. Returns how many it left.

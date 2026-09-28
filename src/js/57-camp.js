@@ -88,6 +88,8 @@ const CAMP_B = {
   loom: { n: 'Loom', max: 5, pre: 1, fam: { fibre: 30, hide: 15 }, tro: 3, skill: 'loom' },
   ench: { n: "Enchanter's Table", max: 5, pre: 1, fam: { crystal: 25, ess: 20 }, tro: 6, skill: 'ench' },
   tavern: { n: 'Tavern', max: 5, pre: 1, fam: { wood: 30, herb: 15 }, tro: 1 },
+  // H3 (55-store.js): its own cost rows, Hearth gates and effect lines; max 8.
+  store: { n: 'Storehouse', max: 8, opens: 1, hreq: STORE_HREQ, cost: storeCampCost, fx: storeEffects },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
   maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped },
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
@@ -125,13 +127,14 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 {
   registerState('camp', {
     v: 1, open: false,
-    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 },
+    b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0, store: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
   // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
   if (typeof welcomeApply === 'function') welcomeApply();
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
   if (typeof hearthApply === 'function') hearthApply();
+  if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -151,6 +154,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const hearthNeed = (id, to) => {
     if (id === 'hearth') return 0;
     if (id === 'shrine') return CAMP_SHRINE_HREQ[to - 1] || 99;
+    if (B(id).hreq) return B(id).hreq[to - 1] || 99;
     return Math.max(CAMP_HREQ[to - 1] || 99, B(id).opens || 1);
   };
   const row = (id, to) => id === 'shrine' ? to + 2 : to;   // cost row 1..5 (the Shrine uses rows 3-5)
@@ -178,6 +182,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
     const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
     if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
+    if (d.cost) return d.cost(to, campGold);
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
     const c = liveCost(campGold(zRef, T.goldPerLv * to), mats, d.tro, T.troph[r - 1], r);
@@ -198,7 +203,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
   const pay = (c, sign) => {
     S.gold -= sign * c.gold;
-    for (const [f, t, n] of c.mats) S.mats[f][t - 1] += -sign * n;
+    for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
     // Trophies of "any" type: take from the biggest pile first; refunds go to the first type paid.
     for (const [i, n] of c.troph) {
       const tr = S.craft.troph;
@@ -354,8 +359,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Companion XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
-    if (!(l > 0)) return id === 'hearth' ? ['No camp yet'] : ['Not built'];
     const d = B(id);
+    if (d && d.fx) return d.fx(l);
+    if (!(l > 0)) return id === 'hearth' ? ['No camp yet'] : ['Not built'];
     if (id === 'hearth') return [`+${3 * l}% away gains`].concat(l >= 5 ? ['2 builders'] : []);
     if (d.skill) {
       const out = l === 1 ? [`${SKILL[d.skill]} station`] : [`${SKILL[d.skill]} XP +${Math.round(STN_XP[l] * 100)}%`];

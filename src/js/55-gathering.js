@@ -41,7 +41,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   const stars = z => masteryApi.starsFor(masteryApi.zoneKills(z));
   // Whole units from an expected amount: the fraction rounds up by chance.
   const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
-  const give = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };
+  const give = (fam, t, n) => n > 0 ? stashAdd(fam, t, n, 'flow', true) : 0;   // H3: fight drops stop at the Storehouse cap
 
   // ---------------- home ground ----------------
   homeFamily = (z = S.zone) => zoneHome(z);
@@ -164,7 +164,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     }
     if (!G.next) G.next = nextGlint();
     G.next -= dt * (1 + bonus('glintRate'));
-    if (G.next <= 0) {
+    if (G.next <= 0 && stashFull(S.node.kind, S.node.t)) G.next = nextGlint();   // H3: no Glint on a full pile
+    else if (G.next <= 0) {
       G.left = CRAFT_GLINT.window + bonus('glint:' + skillOf(S.node.kind)); G.spark = 0;   // H2: tool mastery 10
       addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
       emit('glint', { on: true });
@@ -173,7 +174,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   tapGlint = () => {
     if (!(G.left > 0) || target() !== 'node') return 0;
     const { kind, t } = S.node;
-    const n = give(kind, t, Math.max(1, roll(CRAFT_GLINT.units * mod('yield:' + kind))));
+    const n = stashAdd(kind, t, Math.max(1, roll(CRAFT_GLINT.units * mod('yield:' + kind))), 'flow');   // H3
     endGlint();
     addFloat(`Glint +${n} ${matName(kind, t)}`, '#FFF3C4', true, 0.68, 0.26);
     burst(0.66, 0.5, '#FFF3C4', 14, 0.9);
