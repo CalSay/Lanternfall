@@ -530,3 +530,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (16 chars, 3 words) kept by the coordinator as the capstone. AP6: the nudge never shows because the sim
   keeps 3 Ready goals (unspent star points); AC3 should give the nudge a reserved row. Owner confirmed fonts
   G+3: Handjet + Barlow Semi Condensed (FONT1 told).
+- FONT1 merged: Handjet (--display, x1.2 via --display-k across 196 rules; stage text TXT_K 1.15, re-bakes when the font loads) and Barlow Semi Condensed (--body). No new clipping vs Pixelify; Barlow wraps less than Plex. Perf overlaps base under heavy load. Follow-up: check variable weights on the live page.
