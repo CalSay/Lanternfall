@@ -1006,10 +1006,8 @@ span.cf-d { font-weight: 600; }
    the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
 :root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
 
-/* ---- in a run: swap the zone line and the control row ---- */
+/* ---- in a run: the control row swaps for the boon strip (62-stage hides the zone line and boss timer) ---- */
 .dw-hud, .dw-row { display: none; }
-.app.deep-run .hud-zone { visibility: hidden; }
-.app.deep-run #tWrap { display: none !important; }
 .app.deep-run .ctrl { display: none; }
 .app.deep-run .dw-row { display: flex; }
 .app.deep-run .dw-hud { display: flex; }
@@ -16976,6 +16974,9 @@ const ANIM = (() => {
 // B1) on integer positions with smoothing off, then smooth lantern lighting and effects on top. Turns core events
 // (float, burst, shake, lunge, classTap, ability, ...) into short-lived visual state.
 // Browser-only. Pools and glow sprites live in 61-anim.js.
+// Deepwell: while a run is live (arena === DEEP_ARENA) the stage draws the 'well' scene, well foes
+// (mob.deep) in a cold palette by depth, and hides the zone line and boss timer. The hero's lantern
+// colour and trail come from S.deep.eq (Marks shop cosmetics) everywhere.
 //
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
@@ -17062,12 +17063,31 @@ let resize, animate, draw, stageStats, warmScene;
     readHud();
     scene = null; layoutDirty = true; foe.key = '';
   };
+  // A Deepwell run is live: the arena (57d) replaces the zone's foes. The stage then shows the well
+  // (63-scenery 'well'), cold foes, and no zone line or boss timer (the run's own HUD sits there).
+  const hudZone = document.querySelector('.hud-zone'), hudTimer = $('tWrap');
+  let deepHud = false;
+  const deepOn = () => typeof DEEP_ARENA !== 'undefined' && !!arena && arena === DEEP_ARENA && target() === 'mob';
   function pickScene() {
     const tg = target(); let th, hue = 0;
     if (tg === 'world') th = 'raid';
+    else if (deepOn()) th = 'well';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
     else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
+  }
+  // The well's scene (a Deepwell run) is built when the player opens the Deepwell view (or has a
+  // paused run), in idle time and small steps like warmScene, so a dive does not build it inside a
+  // frame and nobody else pays for it. Plates are left to the run's first frames (two plate slots:
+  // the zone on screen and the next zone keep theirs).
+  let wellWarm = '';
+  function warmWell() {
+    const key = SW + 'x' + SCH;
+    if (!SW || wellWarm === key || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return;
+    if (!(S.deep && S.deep.run) && !(typeof viewOpen === 'function' && viewOpen('adv', 'deep'))) return;
+    wellWarm = key;
+    const step = sceneSteps('well', SW, SCH, 0), run = () => { if (wellWarm === key && !step()) idleTask(run); };
+    idleTask(run);
   }
   // Build the scene for zone z at the stage's size, then its device-size plates and atmosphere copies,
   // in idle time and in small steps (each well under a long task at x4: sceneSteps, scenePlates
@@ -17195,8 +17215,11 @@ let resize, animate, draw, stageStats, warmScene;
       if (mob === foe.m && foe.key) return;
       foe.m = mob;
       const type = mob.key.replace(/\d+$/, '');
-      key = 'm' + type + (mob.boss ? 'E' : '') + zoneCycle(S.zone);
-      fr = enemyFrames(type, { elder: !!mob.boss, hue: (zoneCycle(S.zone) * 70) % 360 });
+      if (mob.deep) { const b = coldBand(mob.floor); key = 'd' + type + (mob.boss ? 'E' : '') + b; fr = coldFrames(type, !!mob.boss, b); }
+      else {
+        key = 'm' + type + (mob.boss ? 'E' : '') + zoneCycle(S.zone);
+        fr = enemyFrames(type, { elder: !!mob.boss, hue: (zoneCycle(S.zone) * 70) % 360 });
+      }
       const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
       foe.anim = rig && rig.anim || 'lunge'; foe.hover = !!(rig && rig.hover);
       foe.st = 0; foe.next = 1.5 + Math.random() * 3; markLeft = 0; lastEmbers = 0;
@@ -17207,6 +17230,59 @@ let resize, animate, draw, stageStats, warmScene;
     layoutDirty = true;
     foe.key = key; foe.fr = fr; foe.m = null; foe.st = 0; foe.next = 2 + Math.random() * 3;
     foe.anim = tg === 'world' ? 'breath' : 'shake'; foe.hover = false;
+  }
+  // Well foes (mob.deep) wear a cold palette: every hue is folded into a 70-degree band of teal to
+  // indigo (so neighbouring pieces keep different hues), colours are muted, the ink turns blue-black
+  // and bright glowing pixels (eyes, cores) burn ice-white. Deeper floors sit colder: the band moves
+  // from teal (floors 1-7) toward indigo (22+). A recoloured copy of the baked frames, made lazily per
+  // frame like the base set (an art-size pass of a few thousand pixels, then one 2x scale).
+  const coldBand = f => Math.max(0, Math.min(3, Math.floor(((f | 0) - 1) / 7)));
+  const COLD_H0 = [172, 186, 200, 214], COLD_SPAN = 70, COLD_INK = [11, 14, 26];
+  function coldPx(d, band) {
+    const h0 = COLD_H0[band];
+    for (let i = 0; i < d.length; i += 4) {
+      if (!d[i + 3]) continue;
+      const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+      if (mx < 0.13) { d[i] = COLD_INK[0]; d[i + 1] = COLD_INK[1]; d[i + 2] = COLD_INK[2]; continue; }
+      let h = 0, sat = 0;
+      if (mx !== mn) { const dd = mx - mn; sat = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn); h = (mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4) * 60; }
+      let H, Sa, L;
+      if (l > 0.78 && sat > 0.5) { H = 188; Sa = 0.85; L = Math.max(l, 0.82); }            // glows: ice-white
+      else { H = h0 + ((h + 20) % 360) / 360 * COLD_SPAN; Sa = sat * 0.6 + 0.1; L = l * 0.9 + 0.03 - band * 0.012; }
+      const q = L < 0.5 ? L * (1 + Sa) : L + Sa - L * Sa, p = 2 * L - q, hk = H / 360;
+      const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+      d[i] = Math.round(f(hk + 1 / 3) * 255); d[i + 1] = Math.round(f(hk) * 255); d[i + 2] = Math.round(f(hk - 1 / 3) * 255);
+    }
+  }
+  const coldRgb = (rgb, band) => { const v = rgb.split(',').map(Number), d = new Uint8ClampedArray([v[0], v[1], v[2], 255]); coldPx(d, band); return d[0] + ',' + d[1] + ',' + d[2]; };
+  function chill(f, band) {
+    if (!f || !f.art) return f;
+    const a = f.art, w = a.width, h = a.height, img = a.getContext('2d').getImageData(0, 0, w, h);
+    coldPx(img.data, band);
+    const art = document.createElement('canvas'); art.width = w; art.height = h; art.getContext('2d').putImageData(img, 0, 0);
+    const c = document.createElement('canvas'); c.width = f.c.width; c.height = f.c.height;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(art, 0, 0, c.width, c.height);
+    return Object.assign({}, f, { c, art, lights: f.lights.map(l => Object.assign({}, l, { rgb: coldRgb(l.rgb, band) })) });
+  }
+  const coldSets = new Map();
+  function coldFrames(type, elder, band) {
+    const k = type + (elder ? 'E' : '') + band;
+    let set = coldSets.get(k);
+    if (set) { coldSets.delete(k); coldSets.set(k, set); return set; }
+    const base = enemyFrames(type, { elder, hue: 0 });
+    if (!base) return null;
+    set = {};
+    // same lazy shape as the baker's sets (ART.ready reads the getters): a frame is made on first use
+    // or in idle time; the hit flash is the base set's (white either way)
+    for (const n of Object.keys(base)) Object.defineProperty(set, n, {
+      configurable: true, enumerable: true,
+      get() { const v = n === 'hit' ? base.hit : chill(base[n], band); Object.defineProperty(set, n, { value: v, writable: true, enumerable: true, configurable: true }); return v; }
+    });
+    void set.idle0;
+    if (typeof idleTask === 'function') for (const n of ['idle1', 'wind', 'strike', 'hit']) if (n in set) idleTask(() => void set[n], true);
+    coldSets.set(k, set);
+    if (coldSets.size > 12) coldSets.delete(coldSets.keys().next().value);
+    return set;
   }
   function foeGeom() {
     const f = foe.fr && foe.fr.idle0;
@@ -17338,7 +17414,15 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); readLooks(); warmWell(); }
+    // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
+    // 70-ui keeps writing tWrap.hidden underneath)
+    const dOn = deepOn();
+    if (dOn !== deepHud) {
+      deepHud = dOn;
+      if (hudZone) hudZone.style.visibility = dOn ? 'hidden' : '';
+      if (hudTimer) hudTimer.style.display = dOn ? 'none' : '';
+    }
     refreshFoe(); foeGeom();
     if (layoutDirty) layout();
     if (wyrmHit > 0) wyrmHit -= dt;
@@ -17375,6 +17459,7 @@ let resize, animate, draw, stageStats, warmScene;
       blessMote -= dt;
       if (blessMote <= 0) { blessMote = 0.45; for (const a of comps) A.part(a.hx + (Math.random() - 0.5) * 12, a.hy - 10 - Math.random() * 30, 0, -14, 0.9, '#F2C14E', 0, 1, 3); }
     }
+    if (look.trail && hero._f) stepTrail(dt);
     A.step(dt);
     if (hudOn()) stepHud(dt);
     abilityTimer -= dt;
@@ -17412,40 +17497,77 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.drawImage(a.lane === 0 && !a.flash ? dimOf(f.c) : f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
     a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
   }
+  // ================= the hero's looks (Deepwell cosmetics, S.deep.eq) =================
+  // lantern: the colour of the hero's own light (its brightest glow), the key light over the party
+  // and the pool on the ground. trail: small particles shed behind the hero (Motes rise, Embers
+  // flicker up, Frost falls), a few a second, more while dashing. Read once a second; nothing is
+  // drawn or made when none is equipped. Under prefers-reduced-motion the trail sparkles in place.
+  const look = { id: '', lamp: null, key: null, pool: null, trail: null, t: 0 };
+  const mixRgb = (hex, w, k) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255]; return c.map((v, i) => Math.round(v + (w[i] - v) * k)).join(','); };
+  function readLooks() {
+    const eq = S.deep && S.deep.eq, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : null;
+    const ln = eq && eq.lantern && shop && shop[eq.lantern], tr = eq && eq.trail && shop && shop[eq.trail];
+    const id = (ln ? ln.id : '') + '|' + (tr ? tr.id : '');
+    if (id === look.id) return;
+    look.id = id;
+    look.lamp = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.15) : null;
+    look.key = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.1) : null;
+    look.pool = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.2) : null;
+    look.trail = tr && tr.col ? { kind: tr.id, col: tr.col, alt: tr.id === 't_embers' ? '#FFD27A' : tr.id === 't_frost' ? '#9FD8FF' : '#DFFBFF' } : null;
+  }
+  // the hero's lantern: its brightest light (largest glow radius)
+  function heroLamp(f) { let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l; return best; }
+  function stepTrail(dt) {
+    const tr = look.trail, f = hero._f, moving = Math.abs(hero.dx) > 2;
+    look.t -= dt * (moving ? 2.5 : 1);
+    if (look.t > 0) return;
+    const kind = tr.kind, lamp = heroLamp(f);
+    look.t = kind === 't_embers' ? 0.13 : kind === 't_frost' ? 0.16 : 0.18;
+    if (reduced) look.t *= 3;
+    const cx = hero._x + f.ox, top = hero._y, h = f.oy, col = Math.random() < 0.35 ? tr.alt : tr.col, m = reduced ? 0 : 1;
+    if (kind === 't_embers') {
+      const x = lamp ? hero._x + lamp.x : cx, y = lamp ? hero._y + lamp.y : top + h * 0.5;
+      A.part(x + (Math.random() - 0.5) * 6, y + (Math.random() - 0.5) * 4, m * (-8 - Math.random() * 10), m * (-14 - Math.random() * 12), 0.8 + Math.random() * 0.4, col, m * -12, 1, 4, 0.6);
+    } else if (kind === 't_frost') {
+      A.part(cx - 4 - Math.random() * 12, top + h * (0.15 + Math.random() * 0.4), m * (-6 - Math.random() * 6), m * (4 + Math.random() * 5), 1.4 + Math.random() * 0.5, col, m * 5, Math.random() < 0.3 ? 2 : 1, 3, 0.4);
+    } else {
+      A.part(cx - 2 - Math.random() * 12, top + h * (0.45 + Math.random() * 0.5), m * (-5 - Math.random() * 6), m * (-7 - Math.random() * 7), 1.3 + Math.random() * 0.5, col, 0, Math.random() < 0.3 ? 2 : 1, 5, 0.3);
+    }
+  }
   // Lantern lighting (style study, direction D on a B1 stage): every emissive piece of a sprite
   // glows (radius from the baker, in CSS px), and the hero's lantern throws a warm key light over
   // the party and a pool on the ground. Sprites themselves are never recoloured.
   function lightsOf(a) {
     const f = a._f; if (!f || !f.lights.length) return;
-    const fl = flick();
+    const fl = flick(), lamp = a === hero && look.lamp ? heroLamp(f) : null;
     for (const l of f.lights) {
       const pulse = l.pulse && !reduced ? 0.85 + 0.25 * Math.sin(T * 4 + a.ph) : 1;
       const r = (l.r ? Math.min(40, l.r * 0.8) : Math.min(Math.max(8, l.size * 3), 16) * 1.6) * fl * pulse;
       const x = a._x + l.x, y = a._y + l.y;
-      A.lightAt(ctx, l.rgb, x, y, r, 0.5 * a.alpha);
-      A.lightAt(ctx, '255,250,230', x, y, Math.max(3, r * 0.22), 0.35 * a.alpha);
+      A.lightAt(ctx, l === lamp ? look.lamp : l.rgb, x, y, r, 0.5 * a.alpha);
+      A.lightAt(ctx, l === lamp ? look.pool : '255,250,230', x, y, Math.max(3, r * 0.22), 0.35 * a.alpha);
     }
   }
   function keyLight() {
     const f = hero._f; if (!f) return;
-    let best = null; for (const l of f.lights) if (!best || (l.r || 0) > (best.r || 0)) best = l;
+    const best = heroLamp(f);
     const fl = flick();
     const x = best ? hero._x + best.x : hero._x + f.ox, y = best ? hero._y + best.y : GY - 30;
     // Warm key light over the party. Its radius flickers; it is drawn from device-size copies (glowAt),
     // so the flicker is snapped to 8 steps to keep that to 8 copies (about 0.6 MB each on a phone).
     const fq = reduced ? fl : 0.6 + Math.round((fl - 0.6) / 0.4 * 7) / 7 * 0.4;
-    A.lightAt(ctx, '255,176,96', x, y, 115 * fq, 0.2);
+    A.lightAt(ctx, look.key || '255,176,96', x, y, 115 * fq, 0.2);
     // pool on the ground: a fixed size, so it is scaled once to device pixels and copied 1:1
-    const K = DPR * ZM, p = poolSprite(K);
+    const K = DPR * ZM, p = poolSprite(K, look.pool || '255,190,110');
     ctx.globalAlpha = 0.34 * fl; ctx.drawImage(p, Math.round((x - 80) * K) / K, Math.round((GY - 10) * K) / K, p.width / K, p.height / K);
     ctx.globalAlpha = 1;
   }
   let poolDev = null;
-  function poolSprite(K) {
-    if (poolDev && poolDev.K === K) return poolDev.c;
+  function poolSprite(K, rgb) {
+    if (poolDev && poolDev.K === K && poolDev.rgb === rgb) return poolDev.c;
     const c = document.createElement('canvas'); c.width = Math.round(160 * K); c.height = Math.round(20 * K);
-    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(A.glow('255,190,110'), 0, 0, c.width, c.height);
-    poolDev = { K, c };
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(A.glow(rgb), 0, 0, c.width, c.height);
+    poolDev = { K, rgb, c };
     return c;
   }
   const foeFrame = () => {
@@ -17502,7 +17624,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (alive || (mob && mob.dead < 0.3)) shadowAt(foe.x - cam, Math.max(12, foe.w * 0.42), 0.55);
       if ((tg === 'mob' && mob && (mob.boss || mob.champ) && !mob.dead) || raid) {
         ctx.globalCompositeOperation = 'lighter';
-        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
+        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : mob.deep ? '110,170,255' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
         ctx.globalCompositeOperation = 'source-over';
       }
     }
@@ -18016,7 +18138,7 @@ let resize, animate, draw, stageStats, warmScene;
 // Lanterns are the world's heartbeat: every theme has its own lamps, and each lit lamp casts a
 // baked, banded light pool into the pixels plus a soft device-resolution glow that flickers.
 //
-//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid
+//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid|well (the Deepwell)
 //     scene = { layers: [{ c, f, fg }], fog, amb, light, lights, W, H, GY, M, PX, theme, hue }
 //     Layers are drawn at PX = 2 CSS px per art px, (W + 2*M) CSS px wide (M = 24 px parallax margin),
 //     cached per (theme, W, H, hue). GY is the ground line (feet), in CSS px.
@@ -18197,7 +18319,11 @@ function sceneFor() { return null; } // replaced below
     woods: { sky: ['#10201A', '#1C3426', '#2C4A34', '#3E6446'], far: '#244232', far2: '#2A4A36', leaf: '#2E5E36', leaf2: '#27502F', bark: '#553E2C', iron: '#3A3444',
       gnd: '#264A2A', lip: '#508A42', path: '#5E4A32', amb: ['leaf', '#6FBE5E', 12], fog: ['#CFE8B0', 0.05], shafts: 1 },
     raid: { sky: ['#0C0306', '#240A10', '#46141A', '#6A2022'], far: '#2E0E14', far2: '#381218', rock: '#3A1E26', stone: '#5A3A3A', iron: '#2A1C22', moon: '#FF9E3D',
-      gnd: '#24100E', lip: '#5A2A22', path: '#3A1E1C', stars: 1, amb: ['ember', '#FF9E3D', 28], fog: ['#FF6A3D', 0.07] }
+      gnd: '#24100E', lip: '#5A2A22', path: '#3A1E1C', stars: 1, amb: ['ember', '#FF9E3D', 28], fog: ['#FF6A3D', 0.07] },
+    // The Deepwell (a live run): a stone shaft, cold and wet, warm old lanterns, a pale glow far below.
+    well: { sky: ['#05070C', '#080C14', '#0B121C', '#0E2029'], far: '#19212D', far2: '#1D2633', stone: '#46546A', stone2: '#3A4658', wood: '#5A4232', iron: '#2A2C38',
+      rope: '#9A8260', moss: '#3E6E62', water: '#A8D8F0', deep: '#6FD0E8',
+      gnd: '#222A36', lip: '#5C6C84', path: '#3A4454', amb: ['drip', '#A8D8F0', 10], amb2: ['rise', '#7FE0EC', 10], fog: ['#5F9FC0', 0.08] }
   };
   // light colours (lantern flame is never hue-shifted: it is the same light in every land)
   const FLAME = [255, 186, 96], FLAME_HOT = [255, 236, 170], FLAME_OUT = [232, 110, 48];
@@ -18232,11 +18358,11 @@ function sceneFor() { return null; } // replaced below
     function light(L, x, y, rr, o) {
       o = o || {};
       const rgb = o.rgb || FLAME, li = LAY.indexOf(L), a = o.a ?? 0.5;
-      lamps.push({ x: (x + 0.5) * PX, y: (y + 0.5) * PX, r: rr, rgb: rgb.join(','), a, f: PAR[li], layer: li, core: o.core ?? 1, ph: r() * 6.283, kind: o.kind || 'lamp', flick: o.flick ?? 1 });
+      if (!o.bakeOnly) lamps.push({ x: (x + 0.5) * PX, y: (y + 0.5) * PX, r: rr, rgb: rgb.join(','), a, f: PAR[li], layer: li, core: o.core ?? 1, ph: r() * 6.283, kind: o.kind || 'lamp', flick: o.flick ?? 1 });
       const pa = o.pool ?? (li === 1 ? 0.25 : 0.32);
       if (pa > 0) L.pools.push({ x: x + 0.5, y: y + 0.5, rx: rr / PX * (o.px ?? 0.75), ry: rr / PX * (o.py ?? 0.7), rgb, a: pa });
       if (o.gnd) gnd.pools.push({ x: x + 0.5 + (o.gx || 0), y: G + 2, rx: o.gnd, ry: Math.max(3, o.gnd * 0.28), rgb, a: 0.3 });
-      if (li === 2 && (o.kind || 'lamp') === 'lamp' && motes.length < 8 && r() < 0.7) motes.push(lamps[lamps.length - 1]);
+      if (!o.bakeOnly && li === 2 && (o.kind || 'lamp') === 'lamp' && motes.length < 8 && r() < 0.7) motes.push(lamps[lamps.length - 1]);
     }
     // shared prop materials (created lazily per build)
     const iron = mat(th.iron || '#3A3444'), ironL = flat(ramp(C(th.iron || '#3A3444'))[3], { nl: 0 });
@@ -18663,6 +18789,102 @@ function sceneFor() { return null; } // replaced below
         }
         break;
       }
+      // ================= The Deepwell: a stone shaft, old lanterns on the walls, a glow far below =================
+      // Far: the shaft's far wall (courses of stone, narrower where the wall curves away) with a stair
+      // cut into it. Mid: the near walls framing the stage, a beam with a pulley, a rope down to a
+      // hooked lantern, a ladder, wall lanterns (two dead). Ground: a stone landing whose edge drops
+      // into the dark; the light far below is pale and cold, the lanterns warm. 10 lit lamps.
+      case 'well': {
+        const deep = C(th.deep), wet = flat(blend(C(th.water), C(th.stone2), 0.45), { nl: 1 });
+        // -- far wall --
+        // courses 4 art px tall; stones narrow toward the sides, where the round wall turns away
+        const fb = [matS(hz(th.far, 0.4)), matS(hz(th.far2, 0.36)), matS(hz(th.far, 0.52))], mortar = flat(hz(th.far, 0.75, 0.5), { nl: 1 });
+        far.rect(0, 0, LW, G, mortar);
+        for (let y = 0, row = 0; y < G; y += 4, row++) {
+          let x = -((row * 5) % 8);
+          while (x < LW) {
+            const u = (x - LW / 2) / (LW / 2), w = Math.max(3, Math.round(9 * (1 - 0.5 * u * u) + r() * 3));
+            far.rect(x + 1, y + 1, w - 1, 3, fb[r() < 0.5 ? 0 : r() < 0.6 ? 1 : 2]);
+            x += w;
+          }
+        }
+        // a stair cut into the far wall, two flights, with two small lamps
+        // steps: a lit tread, the block, and its shadow on the wall below
+        const stepM = matS(hz(th.stone, 0.34)), stepD = flat(hz(th.far, 0.9, 0.5), { nl: 1 });
+        const flight = (x0, y0, n, dir) => { for (let i = 0; i < n; i++) { const x = Math.round(x0 + dir * i * 5), y = Math.round(y0 + i * 3); far.rect(x, y + 3, 6, 3, stepD); far.rect(x, y, 6, 3, stepM); } };
+        const f1 = Math.max(5, Math.round(Wa * 0.1)), f2 = Math.max(6, Math.round(Wa * 0.13)), y1 = Math.round(Ha * 0.16), y2 = y1 + f1 * 3 + 18;
+        flight(X(0.97), y1, f1, -1);
+        flight(X(0.1), y2, f2, 1);
+        const stepLamp = (x, y) => { x = Math.round(x); y = Math.round(y); far.rect(x, y - 4, 1, 4, stepD); far.rect(x - 1, y - 6, 3, 2, glass); far.px(x, y - 6, hot); light(far, x, y - 5, 10, { core: 0.5, a: 0.55, pool: 0.22 }); };
+        const k1 = Math.round(f1 * 0.6), k2 = Math.round(f2 * 0.65);
+        stepLamp(X(0.97) - 5 * k1 + 3, y1 + 3 * k1);
+        stepLamp(X(0.1) + 5 * k2 + 3, y2 + 3 * k2);
+        // the glow from far below lights the bottom of the far wall (cold, steady)
+        // (baked bands only: a soft glow this big costs too much raster per frame on a phone)
+        for (const fx of [0.25, 0.72]) light(far, X(fx), G + 4, 70, { rgb: deep, a: 0.22, core: 0, flick: 0, pool: 0.3, px: 1.1, py: 0.5, kind: 'deep', bakeOnly: 1 });
+        // -- mid: the near walls --
+        const st = mat(desat(C(th.stone), 0.85), 'vol', { sep: 1 }), st2 = mat(desat(C(th.stone2), 0.85), 'vol', { sep: 1 });
+        const wallRows = (x0, x1, left) => {
+          for (let y = -2, row = 0; y <= G; y += 6, row++) {
+            const edge = Math.round((left ? x1 : x0) + (r() - 0.5) * 4);
+            let x = left ? x0 - (row % 2 ? 4 : 0) : edge;
+            const xe = left ? edge : x1;
+            while (x < xe) { const w = Math.min(7 + ((r() * 5) | 0), xe - x); mid.rect(x, y, w, Math.min(6, G + 1 - y), r() < 0.55 ? st : st2); x += w; }
+          }
+        };
+        wallRows(0, X(0.065), true); wallRows(X(0.935), LW, false);
+        // wet streaks down the walls, glow moss at their feet
+        for (const [x0, x1] of [[X(0.0), X(0.05)], [X(0.95), X(1.0)]]) for (let k = 0; k < 3; k++) { const x = Math.round(x0 + r() * (x1 - x0)), y = Math.round(Ha * (0.15 + r() * 0.4)), l = 6 + r() * 14; mid.rect(x, y, 1, l, wet); drips.push({ x: (x + 0.5) * PX, y: (y + l) * PX, f: 0.5 }); }
+        const mossM = mat(th.moss, 'vol', { sep: 1 }), glint = flat(blend(deep, [255, 255, 255], 0.3), { nl: 1 });
+        for (const [fx, w] of [[0.05, 6], [0.95, 5]]) { const x = X(fx); mid.oval(x, G, w, 3, mossM, 'top'); for (let k = 0; k < 3; k++) mid.px(x - w + 2 + r() * (w * 2 - 3), G - 1 - r() * 2, glint); }
+        // the beam across the shaft, a pulley, and a rope down to a hooked lantern
+        const wood = mat(desat(C(th.wood), 0.85), 'vol', { wide: 1 }), beamY = Math.round(Ha * 0.1);
+        mid.grp(() => { mid.rect(0, beamY, LW, 3, wood); });
+        for (const [fx, d] of [[0.065, 1], [0.935, -1]]) { const x = Math.round(X(fx)); mid.grp(() => { mid.poly(d > 0 ? [x - 2, beamY + 3, x + 5, beamY + 3, x - 2, beamY + 9] : [x + 2, beamY + 3, x - 5, beamY + 3, x + 2, beamY + 9], wood); }); }
+        const px0 = Math.round(X(0.6)), ropeL = flat(C(th.rope), { nl: 1 }), ropeD = flat(ramp(C(th.rope))[2], { nl: 1 });
+        mid.oval(px0, beamY + 5, 3, 3, iron); mid.px(px0, beamY + 5, ironL); mid.rect(px0, beamY + 3, 1, 2, iron);
+        const hookY = Math.round(Ha * 0.33);
+        for (let y = beamY + 6; y < hookY; y++) mid.px(px0 + 3, y, (y >> 1) & 1 ? ropeL : ropeD);
+        mid.px(px0 + 2, hookY, ironL); mid.px(px0 + 3, hookY, ironL); mid.px(px0 + 2, hookY - 1, ironL);
+        lantern(mid, px0 + 3, hookY + 2, { r: 36 });
+        // the rope's other end, short and frayed
+        { const ye = Math.round(Ha * 0.2); for (let y = beamY + 6; y < ye; y++) mid.px(px0 - 3, y, (y >> 1) & 1 ? ropeD : ropeL); mid.px(px0 - 4, ye, ropeD); mid.px(px0 - 2, ye, ropeD); }
+        // a ladder against the left wall, down from the beam to the landing
+        { const lx = Math.round(X(0.1)); mid.grp(() => { mid.rect(lx, beamY + 3, 1, G - beamY - 2, wood); mid.rect(lx + 6, beamY + 3, 1, G - beamY - 2, wood); for (let y = beamY + 7; y < G - 1; y += 5) mid.rect(lx + 1, y, 5, 1, wood); }); }
+        // lanterns on iron brackets; two are old and dead
+        const bracket = (x, y, dir, o) => { x = Math.round(x); y = Math.round(y); mid.rect(dir > 0 ? x : x - 4, y, 5, 1, iron); mid.px(x, y + 1, iron); lantern(mid, x + dir * 4, y + 1, o); };
+        bracket(X(0.065), G - 34, 1, { r: 32, gnd: 12 });
+        bracket(X(0.935), G - 38, -1, { r: 32, gnd: 12 });
+        bracket(X(0.935), Math.round(Ha * 0.27), -1, { r: 24, pool: 0.25 });
+        bracket(X(0.065), Math.round(Ha * 0.26), 1, { lit: false, broken: 1 });
+        hang(mid, X(0.3), beamY + 3, 9, { lit: false });
+        hang(mid, X(0.84), beamY + 3, 6, { r: 28 });
+        for (const fx of [0.2, 0.42, 0.7]) drips.push({ x: (X(fx) + 0.5) * PX, y: (beamY + 3) * PX, f: 0.5 });
+        // -- ground: the landing, its edge, and the shaft falling away below --
+        const face = mat(desat(C(th.stone2), 0.8), 'vol', { sep: 1 }), joint = flat(ramp(C(th.path))[3], { nl: 1 });
+        gnd.grp(() => gnd.rect(0, pathTop, LW, pathBot - pathTop, pathM));
+        for (let x = 3 + r() * 6; x < LW; x += 9 + r() * 7) gnd.rect(Math.round(x), pathTop + 1, 1, pathBot - pathTop - 1, joint);
+        for (let row = 0; row < 2; row++) { let x = row ? -5 : 0; while (x < LW) { const w = 8 + ((r() * 6) | 0); gnd.rect(x, pathBot + row * 4, w, 4, face); x += w; } }
+        const vTop = pathBot + 8;
+        if (vTop < Ha) {
+          // the void: bands from near black to a pale cold glow at the bottom, checkered at each edge
+          const n = 5, cols = [], dark = C(th.sky[0]);
+          for (let b = 0; b <= n; b++) cols.push(flat(blend(dark, blend(deep, C(th.far), 0.4), Math.pow(b / n, 1.4) * 0.8), { nl: 1 }));
+          const pc = gnd.np();
+          for (let y = vTop; y < Ha; y++) {
+            const q = (y - vTop) / Math.max(1, Ha - 1 - vTop) * n, b = Math.floor(q), fq = q - b;
+            for (let x = 0; x < LW; x++) gnd.put(x, y, cols[Math.min(n, b + (fq > 0.7 && ((x + y) & 1) ? 1 : 0))], pc);
+          }
+          // rock teeth under the ledge
+          for (let x = r() * 5; x < LW; x += 5 + r() * 9) gnd.tri(x, vTop, 2 + r() * 4, 1 + r() * 1.5, face, true);
+          // a rope ladder down into the dark
+          const lx = Math.round(X(0.66)), rb = Math.min(Ha, vTop + 30);
+          for (let y = vTop - 1; y < rb; y++) { gnd.px(lx, y, ropeD); gnd.px(lx + 5, y, ropeD); if ((y - vTop) % 4 === 2) gnd.rect(lx + 1, y, 4, 1, ropeL); }
+          light(gnd, X(0.45), Ha + 6, 90, { rgb: deep, a: 0.34, core: 0, flick: 0, pool: 0.5, px: 1.6, py: 0.45, kind: 'deep', bakeOnly: 1 });
+          light(gnd, X(0.45), Ha, 48, { rgb: deep, a: 0.3, core: 0, flick: 0, pool: 0, kind: 'deep' });
+        }
+        break;
+      }
     }
 
     yield;
@@ -18673,7 +18895,7 @@ function sceneFor() { return null; } // replaced below
       else if (!grassy && theme !== 'marsh' && r() < 0.12) gnd.px(x, gTop - 1, lipD);
     }
     const speck = flat(ramp(C(th.gnd))[0]), speckD = flat(ramp(C(th.gnd))[3]);
-    for (let i = 0; i < LW / 6; i++) { const y = pathBot + 2 + r() * (Ha - pathBot - 2); gnd.px(r() * LW, y, r() < 0.5 ? speck : speckD); }
+    if (theme !== 'well') for (let i = 0; i < LW / 6; i++) { const y = pathBot + 2 + r() * (Ha - pathBot - 2); gnd.px(r() * LW, y, r() < 0.5 ? speck : speckD); }
 
     // ---- foreground (f 1.35): corners and the bottom strip only ----
     const fgC = blend(C(th.gnd), [6, 4, 10], 0.5), fgId = mat(fgC, 'vol', { sep: 1 }), fgT = flat(ramp(fgC)[3]);
@@ -18696,6 +18918,13 @@ function sceneFor() { return null; } // replaced below
       case 'bone': case 'barrow': tuft(X(-0.01), 5, 7); tuft(X(0.95), 5, 6);
         if (theme === 'bone') { const x = Math.round(X(0.965)), b = flat(blend(C(th.bone), fgC, 0.5), { nl: 0 }); fg.rect(x, Ha - 4, 4, 3, b); fg.rect(x + 1, Ha - 1, 2, 1, b); fg.px(x + 1, Ha - 3, fgT); fg.px(x + 2, Ha - 3, fgT); }
         break;
+      case 'well': { // rubble at the bottom corners, an old chain and a dead lantern top left
+        fg.oval(X(-0.02) + 3, Ha + 1, 8, 5, fgId, 'top'); fg.oval(X(-0.02) + 11, Ha + 1, 3, 2, fgId, 'top'); fg.oval(X(0.99), Ha + 1, 7, 4, fgId, 'top');
+        const cx = Math.round(X(-0.02)) + 7, cl = Math.round(Ha * 0.16);
+        for (let y = 0; y < cl; y++) fg.px(cx, y, y % 3 === 2 ? fgT : iron);
+        lantern(fg, cx, cl + 1, { lit: false });
+        break;
+      }
       case 'quarry': case 'raid': fg.oval(X(-0.02) + 3, Ha + 1, 9, 5, fgId, 'top'); fg.oval(X(-0.02) + 13, Ha + 1, 4, 3, fgId, 'top'); fg.oval(X(0.98), Ha + 1, 8, 4, fgId, 'top'); break;
       default: tuft(X(0), 4, 5); tuft(X(0.95), 4, 5);
     }
@@ -18719,20 +18948,27 @@ function sceneFor() { return null; } // replaced below
     const parts = [];
     for (let i = 0; i < n; i++) parts.push({ x: pr() * (W + 40) - 20, y: pr(), sp: 0.6 + pr() * 0.8, ph: pr() * 6.283, sz: 0.6 + pr() * 0.8, d: drips.length ? drips[i % drips.length] : null, per: 1.6 + pr() * 2.4 });
     const moths = motes.map(lp => ({ lp, ph: pr() * 6.283, rx: 6 + pr() * 8, ry: 4 + pr() * 5, sp: 0.6 + pr() * 0.6 }));
+    // a second particle kind (the well: drips and motes rising from below)
+    let amb2 = null;
+    if (th.amb2) {
+      const [t2, hex2, n2] = th.amb2, parts2 = [];
+      for (let i = 0; i < n2; i++) parts2.push({ x: pr() * (W + 40) - 20, y: pr(), sp: 0.6 + pr() * 0.8, ph: pr() * 6.283, sz: 0.6 + pr() * 0.8, d: null, per: 1.6 + pr() * 2.4 });
+      amb2 = { type: t2, rgb: C(hex2).join(','), parts: parts2, moths: null };
+    }
     const fog = { rgb: C(th.fog[0]).join(','), a: th.fog[1], y: GY - 6 };
     // overlay: vignette plus a theme tint, pre-rendered small and stretched when drawn
     const ov = mkCanvas(Math.ceil(W / 2), Math.ceil(H / 2)), og = ov.getContext('2d'), ow = ov.width, oh = ov.height;
     const vg = og.createRadialGradient(ow * 0.5, oh * 0.56, oh * 0.4, ow * 0.5, oh * 0.56, ow * 0.8);
     vg.addColorStop(0, 'rgba(6,4,12,0)'); vg.addColorStop(1, 'rgba(6,4,12,.5)');
     og.fillStyle = vg; og.fillRect(0, 0, ow, oh);
-    const tint = { raid: ['255,90,40', 0.14, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.22, 0], mine: ['10,8,14', 0.18, 0], fungal: ['200,90,200', 0.05, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
+    const tint = { well: ['4,8,18', 0.34, 0], raid: ['255,90,40', 0.14, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.22, 0], mine: ['10,8,14', 0.18, 0], fungal: ['200,90,200', 0.05, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
     if (tint) { const lg = og.createLinearGradient(0, 0, 0, oh); const [c, a, bottom] = tint; lg.addColorStop(bottom ? 0.4 : 0, `rgba(${c},${bottom ? 0 : a})`); lg.addColorStop(bottom ? 1 : 0.45, `rgba(${c},${bottom ? a : 0})`); og.fillStyle = lg; og.fillRect(0, 0, ow, oh); }
 
     // public light list: stage CSS px at camX = 0
     for (const lp of lamps) lp.x -= M;
     return {
       theme, hue, W, H, GY, M, PX, layers, lights: lamps,
-      fog, amb: { type, rgb: ambRgb, parts, moths },
+      fog, amb: { type, rgb: ambRgb, parts, moths }, amb2,
       light: { moon, lamps, shafts: !!th.shafts, overlay: ov }
     };
   }
@@ -19063,6 +19299,44 @@ function sceneFor() { return null; } // replaced below
     ? 0.86 + 0.08 * Math.sin(T * 11 + lp.ph) + 0.06 * Math.sin(T * 17.3 + lp.ph * 2)
     : 0.92 + 0.05 * Math.sin(T * 5.1 + lp.ph) + 0.03 * Math.sin(T * 12.7 + lp.ph * 3);
 
+  // Ambient particles of one kind (scene.amb, and scene.amb2 for a theme with a second kind).
+  function drawAmb(ctx, scene, A, t, W, H, GY, camX) {
+    const spr = glow(A.rgb, 2), W2 = W + 40;
+    const wrap = (v, m) => ((v % m) + m) % m;
+    // every particle of a type has a glow (drawn 'lighter', and so is its dot) or none ('source-over')
+    const glowy = !(A.type === 'ash' || A.type === 'dust' || A.type === 'leaf');
+    ctx.globalCompositeOperation = glowy ? 'lighter' : 'source-over';
+    ctx.fillStyle = A.fill || (A.fill = `rgb(${A.rgb})`);
+    for (const p of A.parts) {
+      let x, y, a = 1, sz = 2 * p.sz, g = 6;
+      switch (A.type) {
+        case 'firefly': x = p.x + Math.sin(t * 0.3 * p.sp + p.ph) * 22; y = GY - 20 - p.y * (GY * 0.5) + Math.sin(t * 0.5 + p.ph * 2) * 8; a = REDUCED ? 0.7 : 0.5 + 0.5 * Math.sin(t * 2.2 * p.sp + p.ph); g = 9; sz = 2; break;
+        case 'drip': {
+          if (!p.d) continue;
+          const c = wrap(t + p.ph, p.per), sx = p.d.x - scene.M - camX * p.d.f;
+          x = sx; if (c < 0.8) { y = p.d.y + 1; a = c / 0.8; sz = 1.5; } else { y = p.d.y + 0.5 * 300 * (c - 0.8) ** 2; if (y > GY) { const q = Math.min(1, (y - GY) / 30); y = GY; a = 1 - q; sz = 1.5 + q * 2; } }
+          g = 5; break;
+        }
+        case 'ash': x = wrap(p.x + t * 5 * p.sp, W2) - 20; y = wrap(p.y * H + t * 4 * p.sp, H); x += Math.sin(t + p.ph) * 3; a = 0.6; g = 0; sz = 2; break;
+        case 'mote': x = p.x + Math.sin(t * 0.4 + p.ph) * 10; y = GY + 4 - wrap(p.y * GY + t * 3 * p.sp, GY * 0.8); a = Math.min(1, (GY + 4 - y) / 20) * (0.6 + 0.4 * Math.sin(t * 1.5 + p.ph)); g = 7; sz = 2; break;
+        case 'spore': x = p.x + Math.sin(t * 0.8 * p.sp + p.ph) * 8; y = GY - wrap(p.y * GY + t * 5 * p.sp, GY); a = Math.min(1, (GY - y) / 20) * 0.8; g = 6; sz = 2; break;
+        case 'dust': x = wrap(p.x + t * 6 * p.sp, W2) - 20; y = GY * (0.35 + 0.6 * p.y) + Math.sin(t * 0.7 + p.ph) * 4; a = 0.4; g = 0; sz = 2; break;
+        case 'wisp': x = wrap(p.x + t * 3 * p.sp + Math.sin(t * 0.3 + p.ph) * 20, W2) - 20; y = GY - 10 - p.y * 50 + Math.sin(t * 0.9 + p.ph) * 6; a = 0.5 + 0.5 * Math.sin(t * 0.8 + p.ph); g = 14; sz = 2; break;
+        case 'ember': x = p.x + Math.sin(t * 1.4 * p.sp + p.ph) * 6; y = GY + 6 - wrap(p.y * H + t * 22 * p.sp, H); a = Math.min(1, (GY + 6 - y) / 30, y / 40) * (0.7 + 0.3 * Math.sin(t * 9 + p.ph)); g = 6; sz = 2; break;
+        case 'rise': x = p.x + Math.sin(t * 0.5 * p.sp + p.ph) * 7; y = H - wrap(p.y * H + t * 7 * p.sp, H * 0.85); a = Math.min(1, (H - y) / 30, (y - H * 0.15) / 40) * (0.55 + 0.35 * Math.sin(t * 1.7 + p.ph)); g = 6; sz = 2; break;
+        case 'leaf': x = wrap(p.x + t * 5 * p.sp + Math.sin(t * 1.3 + p.ph) * 10, W2) - 20; y = wrap(p.y * H + t * 10 * p.sp, GY + 10); a = 0.85; g = 0; sz = 2; break;
+        default: continue;
+      }
+      if (A.type !== 'drip') x -= camX * 0.9;
+      if (a <= 0.02) continue;
+      if (g) ANIM.glowAt(ctx, spr, x, y, g, a * 0.35);
+      ctx.globalAlpha = a;
+      if (A.type === 'leaf') ctx.fillRect(Math.round(x), Math.round(y), Math.sin(t * 3 + p.ph) > 0 ? 4 : 2, 2);
+      else if (A.type === 'drip' && y < GY) ctx.fillRect(x - sz / 2, y, sz, sz * 2);
+      else ctx.fillRect(Math.round(x - sz / 2), Math.round(y - sz / 2), sz, sz);
+    }
+  }
+
   drawAtmosphere = function (ctx, scene, T, W, H, camX) {
     camX = camX || 0; W = W || scene.W; H = H || scene.H;
     const t = REDUCED ? 0 : T, GY = scene.GY * H / scene.H;
@@ -19099,39 +19373,9 @@ function sceneFor() { return null; } // replaced below
       if (lp.core) ANIM.glowAt(ctx, glow(lp.rgb, 2), x, lp.y, 5 + lp.r * 0.12, 0.45 * lp.core * fl);
     }
     // ambient particles: stateless, positions are a function of time
-    const A = scene.amb, spr = glow(A.rgb, 2), W2 = W + 40;
-    const wrap = (v, m) => ((v % m) + m) % m;
-    // every particle of a type has a glow (drawn 'lighter', and so is its dot) or none ('source-over')
-    const glowy = !(A.type === 'ash' || A.type === 'dust' || A.type === 'leaf');
-    ctx.globalCompositeOperation = glowy ? 'lighter' : 'source-over';
-    ctx.fillStyle = A.fill || (A.fill = `rgb(${A.rgb})`);
-    for (const p of A.parts) {
-      let x, y, a = 1, sz = 2 * p.sz, g = 6;
-      switch (A.type) {
-        case 'firefly': x = p.x + Math.sin(t * 0.3 * p.sp + p.ph) * 22; y = GY - 20 - p.y * (GY * 0.5) + Math.sin(t * 0.5 + p.ph * 2) * 8; a = REDUCED ? 0.7 : 0.5 + 0.5 * Math.sin(t * 2.2 * p.sp + p.ph); g = 9; sz = 2; break;
-        case 'drip': {
-          if (!p.d) continue;
-          const c = wrap(t + p.ph, p.per), sx = p.d.x - scene.M - camX * p.d.f;
-          x = sx; if (c < 0.8) { y = p.d.y + 1; a = c / 0.8; sz = 1.5; } else { y = p.d.y + 0.5 * 300 * (c - 0.8) ** 2; if (y > GY) { const q = Math.min(1, (y - GY) / 30); y = GY; a = 1 - q; sz = 1.5 + q * 2; } }
-          g = 5; break;
-        }
-        case 'ash': x = wrap(p.x + t * 5 * p.sp, W2) - 20; y = wrap(p.y * H + t * 4 * p.sp, H); x += Math.sin(t + p.ph) * 3; a = 0.6; g = 0; sz = 2; break;
-        case 'mote': x = p.x + Math.sin(t * 0.4 + p.ph) * 10; y = GY + 4 - wrap(p.y * GY + t * 3 * p.sp, GY * 0.8); a = Math.min(1, (GY + 4 - y) / 20) * (0.6 + 0.4 * Math.sin(t * 1.5 + p.ph)); g = 7; sz = 2; break;
-        case 'spore': x = p.x + Math.sin(t * 0.8 * p.sp + p.ph) * 8; y = GY - wrap(p.y * GY + t * 5 * p.sp, GY); a = Math.min(1, (GY - y) / 20) * 0.8; g = 6; sz = 2; break;
-        case 'dust': x = wrap(p.x + t * 6 * p.sp, W2) - 20; y = GY * (0.35 + 0.6 * p.y) + Math.sin(t * 0.7 + p.ph) * 4; a = 0.4; g = 0; sz = 2; break;
-        case 'wisp': x = wrap(p.x + t * 3 * p.sp + Math.sin(t * 0.3 + p.ph) * 20, W2) - 20; y = GY - 10 - p.y * 50 + Math.sin(t * 0.9 + p.ph) * 6; a = 0.5 + 0.5 * Math.sin(t * 0.8 + p.ph); g = 14; sz = 2; break;
-        case 'ember': x = p.x + Math.sin(t * 1.4 * p.sp + p.ph) * 6; y = GY + 6 - wrap(p.y * H + t * 22 * p.sp, H); a = Math.min(1, (GY + 6 - y) / 30, y / 40) * (0.7 + 0.3 * Math.sin(t * 9 + p.ph)); g = 6; sz = 2; break;
-        case 'leaf': x = wrap(p.x + t * 5 * p.sp + Math.sin(t * 1.3 + p.ph) * 10, W2) - 20; y = wrap(p.y * H + t * 10 * p.sp, GY + 10); a = 0.85; g = 0; sz = 2; break;
-        default: continue;
-      }
-      if (A.type !== 'drip') x -= camX * 0.9;
-      if (a <= 0.02) continue;
-      if (g) ANIM.glowAt(ctx, spr, x, y, g, a * 0.35);
-      ctx.globalAlpha = a;
-      if (A.type === 'leaf') ctx.fillRect(Math.round(x), Math.round(y), Math.sin(t * 3 + p.ph) > 0 ? 4 : 2, 2);
-      else if (A.type === 'drip' && y < GY) ctx.fillRect(x - sz / 2, y, sz, sz * 2);
-      else ctx.fillRect(Math.round(x - sz / 2), Math.round(y - sz / 2), sz, sz);
-    }
+    const A = scene.amb;
+    drawAmb(ctx, scene, A, t, W, H, GY, camX);
+    if (scene.amb2) drawAmb(ctx, scene, scene.amb2, t, W, H, GY, camX);
     ctx.globalCompositeOperation = 'lighter';
     // moths and fireflies drawn to the lanterns
     if (A.moths) {
@@ -20904,7 +21148,15 @@ let showAwayReport;
     b_tower: ['..1.1.1.1...', '..1111111...', '...12221....', '...12521....', '...12221....', '...12221....', '...12221....', '..1122211...', '..1222221...', '..1222221...', '.666666666..', '............'],
     b_book: ['............', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2155555512.', '.2111111112.', '.2157777512.', '.2111111112.', '.2222222222.', '............'],
     b_map: ['............', '.6666666666.', '.6555555556.', '.6515555156.', '.6551551556.', '.6555115556.', '.6555515516.', '.6551555556.', '.6515555756.', '.6555555556.', '.6666666666.', '............'],
-    b_bell: ['.....66.....', '....1111....', '...111111...', '...115111...', '...115111...', '..11111111..', '..11111111..', '.1111111111.', '.2222222222.', '.....77.....', '............', '............']
+    b_bell: ['.....66.....', '....1111....', '...111111...', '...115111...', '...115111...', '..11111111..', '..11111111..', '.1111111111.', '.2222222222.', '.....77.....', '............', '............'],
+    // Deepwell camp decorations (S.deep.cos), shown on the Hearth card
+    dc_crystal: ['............', '.....1......', '....151.....', '....151.....', '.1..151..1..', '151.151.151.', '151.151.151.', '1511151.151.', '1511151.1511', '111111111111', '.2222222222.', '............'],
+    dc_moss: ['............', '............', '....3.......', '...111..3...', '..11311111..', '.1111113111.', '.1311111111.', '111111131111', '266666666662', '.2666666662.', '..22222222..', '............'],
+    dc_wlamp: ['............', '66..........', '..66........', '...6666.....', '...6..6666..', '...6.....666', '..222....6..', '..272...222.', '..252...272.', '..272...252.', '..222...272.', '.........222'],
+    dc_skull: ['............', '...7.7.7....', '...77777....', '..1111111...', '.111111111..', '.112111211..', '.122111221..', '.111121111..', '..1111111...', '...15151....', '...11111....', '............'],
+    dc_arch: ['............', '....1111....', '...1....1...', '..1......1..', '..2......2..', '.1........1.', '.1........1.', '.2........2.', '.1........1.', '.1........1.', '666......666', '666......666'],
+    dc_brazier: ['.....3......', '....353.....', '...35553.3..', '...355553...', '..33555533..', '.1111111111.', '.2111111112.', '..21111112..', '....2112....', '.....11.....', '...222222...', '............'],
+    dc_bridge: ['............', '1..........1', '11........11', '1.1......1.1', '1..11..11..1', '1....11....1', '666666666666', '6.6.6.6.6.6.', '............', '............', '............', '............']
   });
   const FIRE = { 5: '#FFF3C4', 7: '#FFB347' };
   const ICONS = {
@@ -20920,6 +21172,15 @@ let showAwayReport;
     shrine: () => iconURL('b_bell', '#9FD8C9', { 6: '#6B4A2E' })
   };
   const icon = id => (ICONS[id] || ICONS.hearth)();
+  // Deepwell decorations bought with Marks (DEEP_SHOP kind 'decor', owned in S.deep.cos). The Camp is
+  // a list today, so they show as small icons on the Hearth card; the drawn camp scene (camp.md 4,
+  // future work) should place them in the camp itself.
+  const DECO_IC = {
+    d_crystal: () => iconURL('dc_crystal', '#7FB2FF', { 2: '#3F5F9A' }), d_moss: () => iconURL('dc_moss', '#3E8A6E', { 3: '#9FF0D8', 6: '#5A5A66', 2: '#2E3A40' }),
+    d_wlamp: () => iconURL('dc_wlamp', '#FFD27A', { 2: '#3A3444', 6: '#9A8260', 5: '#FFF3C4' }), d_skull: () => iconURL('dc_skull', '#D8D0C0', { 2: '#2A2230' }),
+    d_arch: () => iconURL('dc_arch', '#9AA0B4', { 2: '#5A6070', 6: '#5A5A66' }), d_brazier: () => iconURL('dc_brazier', '#4A5064', { 3: '#7FB2FF', 5: '#EAF6FF', 2: '#2A2E3A' }),
+    d_bridge: () => iconURL('dc_bridge', '#B89A6A'), d_bell: () => iconURL('b_bell', '#4F8A7A', { 5: '#9FD8C9', 6: '#2E4A44', 7: '#8C7A4A' })
+  };
   const famIcon = (f, t) => ['ore', 'wood', 'ess'].includes(f) ? matIcon(f, t) : iconURL(...craftIcon('mat_' + f, t));
   const trophyIcon = i => iconURL(...craftIcon('tro_' + TYPES[i === 'any' ? 5 : i].key, 1));
   const shortName = (f, t) => MAT[f].short[t - 1];
@@ -21002,6 +21263,21 @@ let showAwayReport;
     };
   }
 
+  // The Hearth card's decoration row: rebuilt only when the owned set changes.
+  function updDeco() {
+    const cos = S.deep && S.deep.cos, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : {};
+    const ids = cos ? Object.keys(DECO_IC).filter(id => cos[id] && shop[id]) : [];
+    const sig = ids.join();
+    if (sig === H.decoSig) return;
+    H.decoSig = sig; H.deco.textContent = ''; putHidden(H.deco, !ids.length);
+    if (!ids.length) return;
+    H.deco.append(el('span', null, 'From the Deepwell:'));
+    for (const id of ids) {
+      const i = img(DECO_IC[id]()); i.style.cssText = 'width:24px;height:24px';
+      i.title = shop[id].n; i.alt = shop[id].n; H.deco.append(i);
+    }
+  }
+
   // ---------------- the camp part ----------------
   let head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
   registerSection('camp', {
@@ -21024,7 +21300,10 @@ let showAwayReport;
       // The cost: one summary line ("Cost: 2 of 5 ready"); the chips open on a tap.
       H.cost = el('div', 'ch-cost'); H.costT = el('span', 'ch-cost-t'); H.cost.append(H.costT);
       H.dz = disclose(hearthCard, H.cost, () => ui(true)); H.cost.append(H.dz.chev);
-      hearthCard.append(top, H.next, H.cost, H.costs, H.timer.el, H.act.el);
+      // Deepwell decorations: a row of small icons, only when the player owns any
+      H.deco = el('div', 'ch-deco'); H.deco.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12.5px;color:var(--muted)';
+      H.deco.hidden = true; H.decoSig = '';
+      hearthCard.append(top, H.deco, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
       sec.append(head, closed, hearthCard, buildersBox);
     },
@@ -21056,6 +21335,7 @@ let showAwayReport;
       }
       H.timer.set(pend); H.act.set(c, pend);
       putToggle(hearthCard, 'new', S.camp.news.some(x => x.id === 'hearth'));
+      updDeco();
       // builders
       const rows = [], n = campBuilders(), all = campBuilds();
       for (let b = 0; b < n; b++) {
@@ -22466,11 +22746,9 @@ let craftUI = null;
 //   - In a run: an Oil bar and the floor over the stage (in place of the zone name), a boon strip in
 //     place of the control row, and a full-screen choice sheet for each draft and Quiet Landing.
 //   - Run end: a card with the floor, Marks and what the party earned up top while you were below.
-//   - The stage shows the well: drawScene / drawAtmosphere (63-scenery) are wrapped to draw a cold
-//     cave scene while a run is live (no 62-stage edit). The stage owner can later add a real
-//     `well` theme and hide the zone name (see the branch report).
-// Per frame: nothing when no run is live (one boolean check in each scenery wrapper). The HUD
-// updates 5 times a second, writing only what changed.
+//   - The stage itself (62-stage) draws the well scene, cold foes and hides the zone line and the
+//     boss timer while a run is live; this file only adds the run HUD over it.
+// Per frame: nothing. The HUD updates 5 times a second, writing only what changed.
 {
   const setTxt = (e, t) => { if (e && e.textContent !== t) e.textContent = t; };
   const setCls = (e, c, on) => { if (e && e.classList.contains(c) !== !!on) e.classList.toggle(c, !!on); };
@@ -22495,20 +22773,6 @@ let craftUI = null;
   const OIL_IC = () => pxURL('lantern', '#FF9E3D', { 5: '#FFF3C4' });
   const MARK_IC = () => iconURL('orb', '#7FB2FF', { 7: '#3F8FA8' });
   const markChip = n => { const s = el('span', 'dw-marks'); s.append(img(MARK_IC()), el('b', null, fmt(n))); return s; };
-
-  // ---------------- the stage: the well's scene while a run is live ----------------
-  // A cold, hue-shifted cave until the scenery owner adds THEMES.well. sceneFor caches it by size.
-  const WELL_THEME = 'cave', WELL_HUE = 330;
-  let wellSc = null;
-  const wellFor = sc => {
-    if (!sc) return sc;
-    if (!wellSc || wellSc.W !== sc.W || wellSc.H !== sc.H) wellSc = sceneFor(WELL_THEME, sc.W, sc.H, WELL_HUE);
-    return wellSc;
-  };
-  const baseScene = drawScene, baseAtmo = drawAtmosphere;
-  // pass every argument on: k, ox, oy and bg switch on the 1:1 device-size path (docs/design/perf.md)
-  drawScene = (ctx, sc, camX, which, ...rest) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which, ...rest);
-  drawAtmosphere = (ctx, sc, T_, W, H, camX) => baseAtmo(ctx, arena ? wellFor(sc) : sc, T_, W, H, camX);
 
   // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------
   const app = $('app'), box = $('stageBox');

@@ -335,3 +335,8 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   feature, so it stays hidden on old saves until then). --r-legendary is now #FF8A3D. Also fixed: the
   hero card showed off-hand/body as "coming soon" even when worn. L3 should mark combat-only powers
   "with party combat" until wired.
+- Deepwell visuals merged: the `well` theme (stone shaft, stair, rope and pulley, ladder, lanterns on
+  brackets, a cold glow below, drips and rising motes via the packed-plate path; bakeOnly glows), the
+  stage natively hides the zone HUD during runs, cold recoloured well foes (colder every 7 floors), and
+  Deepwell decorations as icons on the Hearth card. Coordinator ACCEPTS lantern colour/trail showing
+  everywhere (a bought cosmetic should show). Perf within noise.
