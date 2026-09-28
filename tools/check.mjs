@@ -2469,5 +2469,103 @@ try {
     'legend core: owed rolls are paid once a source exists (a class chosen), the Oath core\'s too');
 } catch (e) { fail('legendary core crashed: ' + (e.stack || e)); }
 
+// ---- the line-up planner (56d-autofield.js, plan-2 task AF) ----
+console.log('line-up planner');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const mk = (seed, cls, list, hl) => {
+    const g = loadCore({ seed }), E = s => g.eval(s);
+    E('almanac.force("none")');
+    if (cls) E(`chooseClass(${JSON.stringify(cls)})`);
+    E(`(() => { for (const [id, lv] of ${JSON.stringify(list)}) { unlockChar(id, 'test', true); charRec(id).lv = lv; charRec(id).rank = Math.min(7, Math.floor((lv - 1) / 25)); } S.party.autoField = false; S.auto = false; S.L = ${hl}; S.blade = ${hl}; S.maxZone = 90; })()`);
+    return { g, E, J: s => JSON.parse(E(`JSON.stringify(${s})`)) };
+  };
+  // legal: recruited, not away, unique, at most 3, passes the filter; cells for the hero and each
+  // member, one per cell, inside the grid, the hero in its class column; a why line
+  const legal = (E, b, pass) => E(`(() => { const b = ${JSON.stringify(b)}, pass = ${pass || '() => true'};
+    const hc = S.party.cls ? { front: 2, mid: 1, back: 0 }[HERO_CLASSES[S.party.cls].row] : 2;
+    if (!b || !Array.isArray(b.field) || b.field.length > 3 || new Set(b.field).size !== b.field.length) return 'field shape';
+    if (!b.field.every(k => isRecruited(k) && !(typeof expedOut === 'function' && expedOut(k)) && pass(k))) return 'member not allowed';
+    const keys = Object.keys(b.cells).sort().join(), want = ['hero'].concat(b.field).sort().join();
+    if (keys !== want) return 'cells ' + keys + ' vs ' + want;
+    const used = new Set(Object.values(b.cells).map(c => c.col + ':' + c.lane));
+    if (used.size !== keys.split(',').length || Object.values(b.cells).some(c => !(c.col >= 0 && c.col <= 2 && (c.lane === 0 || c.lane === 1)))) return 'cells overlap or off the grid';
+    if (b.cells.hero.col !== hc) return 'hero off its column';
+    if (!(typeof b.why === 'string' && b.why.length > 3) || !Number.isFinite(b.score)) return 'no why or score';
+    return ''; })()`);
+  // every class, a full roster, 8 zones and both goals; the late fixture as it loads
+  {
+    const all = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+    const bad = [], whys = new Set();
+    let n = 0, ms = 0;
+    for (const cls of all) {
+      const { E, J } = mk(40 + all.indexOf(cls), cls, [], 60);
+      E('ROSTER_KEYS.forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 20 + 7 * (i % 9); charRec(k).rank = Math.floor((charRec(k).lv - 1) / 25); })');
+      for (const z of [1, 8, 15, 22, 29, 36, 43, 60]) for (const goal of ['push', 'farm']) {
+        const t = Date.now(); const b = J(`bestLineup({ zone: ${z}, goal: '${goal}' })`); ms = Math.max(ms, Date.now() - t); n++;
+        const why = legal(E, b); if (why) bad.push(`${cls} z${z} ${goal}: ${why}`);
+        whys.add(b.why);
+        if (b.parts.cand > 12) bad.push(`${cls}: ${b.parts.cand} candidates (bounded at 12)`);
+      }
+      const t = Date.now(); for (let i = 0; i < 20; i++) E('bestLineup({ zone: 36 })');
+      const hit = (Date.now() - t) / 20;
+      if (hit > 20) bad.push(`${cls}: a cached plan took ${hit.toFixed(1)} ms`);
+    }
+    assert(!bad.length, `bestLineup: ${n} plans (4 classes x 8 zones x push/farm, 18 recruits) are legal, bounded (at most 12 candidates, slowest ${ms} ms) and explain themselves` + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
+    console.log('       e.g. ' + [...whys].slice(0, 4).map(w => `"${w}"`).join(', '));
+    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) });
+    for (let i = 0; i < 10; i++) h.fn.tick(0.1);
+    const b = JSON.parse(h.eval('JSON.stringify(bestLineup())'));
+    const w = legal(s => h.eval(s), b);
+    assert(!w && !h.errors.length && b.parts.current && b.parts.gain >= 0.999, `save-v2-late.json: a legal plan ("${b.why}"), at least as good as the field it loads with (x${b.parts.gain && b.parts.gain.toFixed(2)})` + (w ? ': ' + w : ''));
+  }
+  // an active synergy wins when damage is close (within its tie-break), not against a big gap
+  {
+    const { E, J } = mk(51, 'ranger', [['wren', 120], ['aldric', 120], ['kestrel', 60], ['isolde', 60]], 90);
+    E('globalThis.__afm = 1; addCharModifier(id => id === "isolde" ? globalThis.__afm : 1)');
+    const dps = (f, m) => { E(`globalThis.__afm = ${m}`); return J(`lineupScore(${JSON.stringify(f)}, { zone: 5 })`).dps; };
+    const syn = ['wren', 'aldric', 'kestrel'], plain = ['wren', 'aldric', 'isolde'];
+    const at = r => { let lo = 0.01, hi = 100; for (let i = 0; i < 60; i++) { const m = Math.sqrt(lo * hi); if (dps(plain, m) < dps(syn, m) * r) lo = m; else hi = m; } return Math.sqrt(lo * hi); };
+    const m1 = at(1.01), m2 = at(1.3);
+    E(`globalThis.__afm = ${m1}`); const b1 = J(`bestLineup({ zone: 5, filter: k => ${JSON.stringify(syn.concat('isolde'))}.includes(k) })`);
+    E(`globalThis.__afm = ${m2}`); const b2 = J(`bestLineup({ zone: 5, filter: k => ${JSON.stringify(syn.concat('isolde'))}.includes(k) })`);
+    assert(b1.field.slice().sort().join() === syn.slice().sort().join() && /Mark and Leap/.test(b1.why) && b2.field.includes('isolde'),
+      `with 1% less damage, Mark and Leap wins ("${b1.why}"); with 30% less it does not (${b2.field.join(', ')})`);
+  }
+  // a tank comes in when the hold estimate says the zone does not hold without one
+  {
+    const { E, J } = mk(52, 'lanternmage', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
+    let found = null;
+    for (let z = 10; z <= 80 && !found; z++) {
+      const a = J(`bestLineup({ zone: ${z} })`), b = J(`bestLineup({ zone: ${z}, filter: k => ROSTER[k].role !== 'tank' })`);
+      if (a.parts.holds && !b.parts.holds) found = { z, a, b };
+    }
+    assert(found && found.a.field.includes('tobin') && /a tank for the/.test(found.a.why) && found.a.cells.tobin.col === 2,
+      found ? `zone ${found.z}: no field without a tank holds, so Tobin takes the Front ("${found.a.why}")` : 'no zone where a tank is needed (expected one in 10-80)');
+    const early = J('bestLineup({ zone: 10 })');
+    assert(!early.field.includes('tobin') && early.parts.holds, `zone 10 holds without a tank, so the planner fields damage (${early.field.join(', ')})`);
+  }
+  // filters and expeditions; autoField uses the planner (by potential)
+  {
+    const { g, E, J } = mk(53, 'warden', [['tobin', 60], ['wren', 60], ['pip', 60], ['maren', 60], ['aldric', 60], ['anselm', 60], ['elowen', 60], ['kestrel', 60], ['oriel', 60], ['hesketh', 60]], 60);
+    const oath = J("bestLineup({ zone: 20, filter: { circle: 'oath' } })");
+    const arr = J("bestLineup({ zone: 20, filter: ['wren', 'pip'] })");
+    const fn = J("bestLineup({ zone: 20, filter: k => ROSTER[k].role !== 'striker', key: 'nostrike' })");
+    assert(!legal(E, oath, "k => ROSTER[k].circle === 'oath'") && oath.field.length === 3 && !legal(E, arr, "k => ['wren','pip'].includes(k)") && arr.field.length === 2 && !legal(E, fn, "k => ROSTER[k].role !== 'striker'"),
+      `filters: circle-only (${oath.field.join(', ')}: "${oath.why}"), a list, a function`);
+    const best = J('bestLineup({ zone: 20 })').field;
+    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.maxZone = 36');
+    const away = best[0];
+    E(`setField(S.party.field.filter(k => k !== '${away}'))`);
+    const sent = E(`!!expedSend('r1a', ['${away}'], 1)`);
+    const after = J('bestLineup({ zone: 20 })');
+    assert(sent && E(`!!expedOut('${away}')`) && !after.field.includes(away) && !legal(E, after), `a character out on an expedition (${away}) is never picked (${after.field.join(', ')})`);
+    E('S.party.autoField = true; setField(["hesketh"])'); E('autoField()');
+    const pick = J('bestLineup({ by: "potential" })');
+    assert(E('S.party.field.slice().sort().join()') === pick.field.slice().sort().join() && E('JSON.stringify(S.party.cells)') === JSON.stringify(pick.cells) && !g.errors.length,
+      `autoField() applies the planner's pick and cells (${pick.field.join(', ')}: "${pick.why}")`);
+  }
+} catch (e) { fail('line-up planner crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

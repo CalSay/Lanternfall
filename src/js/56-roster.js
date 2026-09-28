@@ -329,7 +329,11 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const B = fill(fill(tank ? [tank, sup] : [sup], dmg), all);
     return mode === 1 || !holdsWith(A) ? B : A;
   }
-  autoField = by => setField(bestThree(by || 'potential'));
+  // AF (56d-autofield.js): the line-up planner (synergies, roles, cells, the zone's foes) when present.
+  autoField = by => {
+    if (typeof bestLineup === 'function') { try { const b = bestLineup({ by: by || 'potential' }); if (b && b.field.length) return applyLineup(b); } catch (e) {} }
+    return setField(bestThree(by || 'potential'));
+  };
   // A new recruit steps in when the field has room, or when they will out-damage a member
   // of the same kind (a tank replaces the weakest tank, anyone else the weakest non-tank).
   // Nobody else moves, so a recruit never reshuffles the bench.
