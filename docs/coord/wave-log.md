@@ -236,3 +236,14 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   adds only about 3%: add a Deepwell-only damage or drain upgrade); stage owner adds a real `well` theme,
   hides the zone HUD natively, a cold foe palette, lantern colour/trail from S.deep.eq, and camp
   decorations from S.deep.cos. Note: runs set S.activity = 'fight' and restore it on exit.
+- BAL1 merged (the owner's slower pace). --targets: 8/9 pass. T1 warden 9/11/16; Region 1 boss day
+  5.3-7.3; Region 2 boss day 28-32; recruits: first 17-25m, Rare 1.5-2h, Epic day 2.3-2.8, Legendary
+  day 15-17. Damage flattened (companion x1.06/level, promotion x1.5, blade x1.5 per 25, hero +4%/level,
+  gear 10/22/42/75/130). Synergies at full strength with truthful texts (the best line-up is about 2.5x a
+  random one). Class parity 0.86-1.09. Drills every 5 levels (x1.1). Transmute-down no longer chains.
+  55-pace.js falls back to a farmable zone. Camp re-costed (first build 17-36m, full camp day 21-24).
+  Companion XP now tracks time fighting (banks up to 25 levels at cap).
+  Coordinator decisions: ACCEPT D1 at about 18-19 (target 20-26; the owner wants slower, and every lever
+  broke another band). Follow-ups: autoField ignores synergies; the Warden aura gives no damage until
+  Stage C; Region 3 needs new power (plan 2); the Ranger camp sim doesn't refarm Soft Hide.
+- Next: Stage C party combat (unblocked now).

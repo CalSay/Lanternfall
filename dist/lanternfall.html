@@ -4236,7 +4236,8 @@ const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
 const NODE_SKILL = { ore: 'mine', wood: 'wood' };
 const skillOf = kind => NODE_SKILL[kind] || 'wood';
 
-const TIER_POW = [0, 10, 28, 70, 160, 360];
+// BAL1 (owner: "damage ramps too fast"): gear tiers step x2.2 / x1.9 / x1.8 / x1.7 (was 10, 28, 70, 160, 360).
+const TIER_POW = [0, 10, 22, 42, 75, 130];
 const RAR = { common: { n: 'Common', m: 1 }, uncommon: { n: 'Uncommon', m: 1.35 }, rare: { n: 'Rare', m: 1.8 }, epic: { n: 'Epic', m: 2.5 }, legendary: { n: 'Unique', m: 3.2 } };
 const SLOTS = [
   { id: 'weapon', n: 'Weapon', noun: 'Sword', prefix: 'ore', icon: 'sword' },
@@ -4282,7 +4283,7 @@ const COMPS = [
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
 const HERO_UPS = [
-  { id: 'blade', name: 'Blade', base: 10, r: 1.14, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, doubles every 25.` },
+  { id: 'blade', name: 'Blade', base: 10, r: 1.18, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
   { id: 'swift', name: 'Swiftness', base: 50, r: 1.6, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
   { id: 'fortune', name: 'Fortune', base: 100, r: 1.35, ic: ['coin', '#F2C14E'], desc: () => `x${goldMult().toFixed(2)} gold from every kill.` }
 ];
@@ -4956,40 +4957,57 @@ function rollRarity(lv) {
 // merges and check with `node tools/sim.mjs --targets` (or try values with --pace k=v).
 // Before M6 the game had no bend: mob HP 40 x 1.42^(z-1) everywhere, boss x8, Starlit
 // essence from zone 25 and one companion XP curve, so Region 1 fell in about 3 hours.
+// BAL1 (owner, 2026-09-27: "the pace still feels far too quick ... damage ramps so fast"): the
+// whole curve is about 3x slower (T1 zones 6-9 / 10-13 / 15-19 at 30m / 1h / 2h, Region 1 boss
+// on day 4-8, Region 2 boss in weeks 3-6). Companion levels now come from time spent fighting
+// (56-roster.js ROSTER_TUNE gapMax, xpSecs), so the zone curve past the first half hour is set by
+// the companion XP curve below, and the HP curve only has to match the power per level.
 const PACE = {
   hp0: 40,                  // zone 1 mob HP (unchanged)
-  hpGrowth: 1.48,           // mob HP x per zone up to the bend (was 1.42; brings T1 back into band after B7)
-  bend: 30,                 // zones past the bend grow by hpLate instead
-  hpLate: 1.29,             // mob HP x per zone past zone 30 (was 1.42). Slower growth, because
-                            //   late time is paced by companion XP; it keeps the Region 2 boss
-                            //   below the level-200 roster cap with a few zones to spare
+  hpEarly: 1.95, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+  hpGrowth: 1.46,           // (BAL1, M6 1.48) mob HP x per zone from `early` to the bend
+  bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
+  hpLate: 1.22,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
+                            //   about 2 companion levels a zone, so Region 2 is paced by their XP
+                            //   and the level-200 roster cap lands just past the Region 2 boss
   bossHp: 8,                // zone boss HP x a normal mob (unchanged)
   region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
-  regionStep: [5, 2.5],     // mob HP x this from each region's last zone on (x5 from zone 35,
-                            //   x2.5 more from 70; the last value repeats). The step stays, so
-                            //   the zones after a region boss are no easier than the boss
+  regionStep: [1.7, 1.2],   // (BAL1, was 5 / 2.5) mob HP x this from each region's last zone on
+                            //   (x1.7 from zone 35, x1.2 more from 70; the last value repeats). The
+                            //   step stays, so the zones after a region boss are no easier
   regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
-  compLv: 90,               // companion levels past compLv need more XP...
-  compXp: 1.2,              //   ...x1.2 per level past it (level 95: x2.5, 100: x6.2)...
-  compXpMax: 80,            //   ...up to x80 from level 114 on: the Region 2 plateau (days, not hours)
-  essTier: [1, 7, 13, 19, 36], // first zone of each essence tier (was every 6 zones, so Starlit
-                            //   (tier 5) began at 25). Starlit is now Region 2's essence
-  heroAwayXp: 0.5           // hero XP while away, as a share of the away kills' XP (was 0)
+  compLv: 80,               // (BAL1, was 90) companion levels past compLv need more XP...
+  compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 90: x3, 100: x9.6)...
+  compXpMax: 200,           //   ...(BAL1, was 80) up to x200 from level 127 on: Region 2 is a few levels a day
+  essTier: [1, 7, 13, 19, 42], // (BAL1: Starlit from 42, was 36) first zone of each essence tier (M6: every 6 zones, so Starlit
+                            //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
+  heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
+  // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
+  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25)
+  heroLv: 0.04,             // hero damage + heroLv per hero level (was +5%)
+  // BAL1: idle income never stalls. A normal foe that takes longer than farmSecs to kill means
+  // the zone cannot be farmed: auto-progress (and the away gains) use the highest zone that can.
+  farmSecs: 20
 };
-// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv, so the first
-// two hours keep their numbers.
+// Companion XP need multiplier by level (56-roster.js cxpNeed). 1 up to compLv (about the end of day 1).
 const paceXp = lv => lv > PACE.compLv ? Math.min(PACE.compXpMax, Math.pow(PACE.compXp, lv - PACE.compLv)) : 1;
+// The highest zone <= maxZ whose normal foe dies within PACE.farmSecs at this dps (zone 1 at worst).
+function farmableZone(maxZ, dps) {
+  let z = Math.max(1, Math.floor(maxZ));
+  while (z > 1 && !(dps > 0 && mobHp(z) / dps <= PACE.farmSecs)) z--;
+  return z;
+}
 const isRegionBoss = z => z % PACE.region === 0;
 const bossHpMult = z => PACE.bossHp * (isRegionBoss(z) ? PACE.regionBoss : 1);
 // The region steps a zone has passed, multiplied.
 const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (let r = 1; r <= Math.floor(z / PACE.region); r++) m *= st[Math.min(r, st.length) - 1]; return m; };
 
 // ================= formulas =================
-const lvlMult = () => 1 + 0.05 * (S.L - 1);
+const lvlMult = () => 1 + PACE.heroLv * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
 const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + gear().gold / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(2, Math.floor(S.blade / 25)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
+const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
 const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
@@ -5001,7 +5019,7 @@ const compDps = () => rosterLive() ? fieldCompDps() : COMPS.reduce((a, c, i) => 
 const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return heroAtk() * aps() * (nc === 1 ? 1 + cc * (critMult() - 1) : nc * (1 - cc) + cc * critMult()); };
 const totalDps = () => heroDps() + compDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
-const mobHp = z => PACE.hp0 * Math.pow(PACE.hpGrowth, Math.min(z, PACE.bend) - 1) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
+const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
 const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
@@ -5405,7 +5423,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits 5% harder.`, 'good', null, 'high');
+    toast(`Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, 'good', null, 'high');
   }
 }
 function gainSkill(k, n, quiet) {
@@ -5524,16 +5542,17 @@ function awayBase(r) {
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
-  const baseDps = dps / boost;
-  const kills = baseDps > 0 ? t / (mobHp(S.zone) / baseDps + 0.45) * 0.75 * boost : 0;
-  const gold = kills * mobGold(S.zone), tier = zoneTier(S.zone), ess = Math.floor(kills * essChance());
+  // The best zone the party can farm, at most S.zone (BAL1: a zone it cannot clear earns nothing).
+  const baseDps = dps / boost, z = farmableZone(S.zone, baseDps);
+  const kills = baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
+  const gold = kills * mobGold(z), tier = zoneTier(z), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
-  if (kills > 0) gainXp(kills * Math.ceil(1.5 * S.zone) * PACE.heroAwayXp, true);
+  if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
-  emit('awayKills', { kills, zone: S.zone, lines: r.lines });
-  r.note = `Your party kept fighting in ${zoneName(S.zone)}.`;
+  emit('awayKills', { kills, zone: z, lines: r.lines });
+  r.note = `Your party kept fighting in ${zoneName(z)}.`;
   return r;
 }
 
@@ -6313,7 +6332,8 @@ let OMENS, WEEKLY_GOALS;
 //     Swords/Helms and the hero's gear of another class into the new class's kinds (same id,
 //     tier, rarity, +N, lines). Anything that still does not fit goes back to the bag.
 //
-// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart }).
+// Save: registerState('craft', { v, troph[7], tonic, tonics, jobs, champ, starChart, tmd }).
+//   tmd: { fam: [n x 5] } units made by transmuting down (they cannot be broken down again; BAL1).
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
@@ -6322,7 +6342,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   drinkTonic, tonicActive, craftSalvageBonus;
 
 {
-  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0 });
+  registerState('craft', { v: 1, troph: [0, 0, 0, 0, 0, 0, 0], tonic: null, tonics: {}, jobs: [], champ: 0, starChart: 0, tmd: {} });
   const C = () => S.craft;
   const STAR = { t: 3, mats: { crystal: 40, ess: 20 }, troph: [[6, 1]], st: 'ench' };
   const SALVAGE_ESS = 0.2; // chance per affix line of 1 extra essence (at most 1)
@@ -6456,6 +6476,9 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   };
 
   // ---- Transmute (within one family) ----
+  // S.craft.tmd[fam][t - 1]: units of that pile that came from breaking down (never more than the pile).
+  const brokeRow = fam => { const m = C().tmd || (C().tmd = {}); return m[fam] || (m[fam] = [0, 0, 0, 0, 0]); };
+  const brokeN = (fam, t) => Math.min(S.mats[fam][t - 1] || 0, ((C().tmd || {})[fam] || [])[t - 1] || 0);
   const resolveT = (fam, fromT, to, toT) => {
     if (typeof to === 'number') return to;
     if (to === 'up' || to === 'down') return to === 'up' ? fromT + 1 : fromT - 1;
@@ -6472,11 +6495,15 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (up && S.skills.ench.lv < CRAFT_STATION_REQ[tt - 1]) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
     const have = S.mats[fam][fromT - 1];
     if (have < take) return no(`${take - have} more ${matName(fam, fromT)}`, x);
+    // BAL1: units made by breaking down cannot be broken down again (1 tier-5 unit used to
+    // chain into 16 tier-1 units). Spending uses the other units first.
+    if (!up && have - brokeN(fam, fromT) < take) return no(`${matName(fam, fromT)} made by breaking down cannot be broken down again.`, x);
     return yes(x);
   };
   transmute = (fam, fromT, to, toT) => {
     const c = canTransmute(fam, fromT, to, toT); if (!c.ok) return false;
     S.mats[fam][fromT - 1] -= c.take; S.mats[fam][c.toT - 1] += c.give;
+    if (c.toT < fromT) { const b = brokeRow(fam); b[c.toT - 1] = brokeN(fam, c.toT) + c.give; }
     if (c.toT > fromT) gainStation('ench', CRAFT_XP.transmute(c.toT)); // no XP for breaking down (1 -> 2 would farm XP)
     toast(`Transmuted ${c.take} ${matName(fam, fromT)} into ${c.give} ${matName(fam, c.toT)}.`, 'good', { mat: [fam, c.toT] }, 'low');
     emit('transmuted', { fam, fromT, toT: c.toT, take: c.take, give: c.give });
@@ -6816,6 +6843,8 @@ function registerGoal(g) {
   return () => { const j = GOALS.indexOf(rec); if (j >= 0) GOALS.splice(j, 1); };
 }
 let topGoals;
+// Counts Next Up craft picks, so the Craft tab refocuses the recipe even when it is the same one.
+var forgeGoalPicks = 0;
 
 {
   // Save field: min = the strip is collapsed to one line (75-goals-ui.js); picked = the player
@@ -7010,37 +7039,44 @@ let topGoals;
     go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
   });
 
-  // Forge: the best recipe one tier above the player's best equipped gear. Weapon and head are
-  // the class kinds (no class: none; the legacy Sword and Helm are no longer made).
-  const forgeKinds = () => {
-    const cls = heroWho();
-    return SLOTS.map(sl => sl.id === 'weapon' || sl.id === 'helm' ? (cls === 'any' ? null : ((CRAFT_FITS[sl.id] || {})[cls] || [])[0] || null) : sl.id).filter(Boolean);
+  // Craft: the next tier of an item the hero can wear (class kinds via CRAFT_FITS/fits; a
+  // classed hero never sees the legacy Sword or Helm, as in the Craft tab), closest to done.
+  // Go opens the Craft tab with that recipe focused (75-craft-ui reads S.fSlot / S.fTier).
+  const kindsFor = pos => {
+    const row = CRAFT_FITS[pos] || {}, who = heroWho();
+    const own = who !== 'any' ? row[who] || [] : [];
+    const list = own.length ? own : row.any || [];
+    return list.filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, "hero"));
   };
   const forgeNext = () => {
-    let top = 0;
-    for (const sl of SLOTS) { const it = equipped(sl.id); if (it && it.t > top) top = it.t; }
-    const t = Math.min(5, top + 1);
-    if (top >= 5) return null;
     let best = null;
-    for (const k of forgeKinds()) {
-      const lv = typeof stationLevel === 'function' ? stationLevel(k) : S.skills.smith.lv;
-      if (lv < CRAFT_STATION_REQ[t - 1]) continue;
-      const cost = craftCost(k, t), ks = Object.keys(cost);
-      const p = ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], cost[k])), 0) / ks.length;
-      if (!best || p > best.p) best = { slot: k, t, cost, p };
+    const zt = zoneTier(S.maxZone);
+    for (const pos of CRAFT_HERO_POS) {
+      const cur = equipped(pos);
+      for (const kind of kindsFor(pos)) {
+        const have = cur && (cur.slot === kind || cur.u) ? cur.t : 0;
+        const t = have + 1;
+        if (t > Math.min(5, zt)) continue;
+        const c = canCraft(kind, t);
+        if (!c.cost || c.lv < c.need) continue;
+        const ks = Object.keys(c.cost.mats);
+        const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
+        const score = p + (pos === 'weapon' ? 0.02 : 0);
+        if (!best || score > best.score) best = { kind, t, cost: c.cost.mats, p, score };
+      }
     }
     return best;
   };
   registerGoal({
     id: 'forge', sys: 'forge',
     pct: () => { const b = forgeNext(); return b ? b.p : null; },
-    label: () => { const b = forgeNext(); if (!b) return ''; const nm = itemName({ slot: b.slot, t: b.t, plus: 0 });
+    label: () => { const b = forgeNext(); if (!b) return ''; const nm = kindName(b.kind, b.t);
       const a = /^[AEIOU]/.test(nm) ? 'an' : 'a';
       if (b.p >= 1) return `Craft ${a} ${nm}: you have the materials`;
       const k = Object.keys(b.cost).find(k => S.mats[k][b.t - 1] < b.cost[k]);
-      return `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}`; },
-    icon: () => { const b = forgeNext(); return b ? { item: { slot: b.slot, t: b.t } } : null; },
-    go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.slot; S.fTier = b.t; } } }
+      return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}` : `Craft ${a} ${nm}`; },
+    icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
+    go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
   });
 }
 
@@ -7101,6 +7137,49 @@ const masteryApi = {};
   addModifier('dmg', () => (1 + 0.1 * starsFor(zoneKills(S.zone))) * (1 + 0.01 * totalStars()));
   addModifier('gold', () => 1 + 0.1 * starsFor(zoneKills(S.zone)));
   for (const k in BESTIARY_PERKS) addModifier(BESTIARY_PERKS[k].mod, () => 1 + perkBonus(k));
+}
+
+// ---- src/js/55-pace.js ----
+// 55-pace: idle income never stalls (task BAL1, item 6).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Old saves meet much more mob HP after the M6/BAL1 pacing (zone 35 has x10 its old HP), so a
+// party parked at its max zone could take minutes per foe and earn next to nothing. With
+// auto-progress on and the party fighting, when a normal foe of the current zone would take
+// longer than PACE.farmSecs (40-rules.js) to kill, the party falls back to the highest zone it
+// can farm (farmableZone), with one plain toast. It climbs back one zone at a time while the next
+// zone is easy again (a foe in half of farmSecs), up to where it fell from. awayGains farms the
+// same way (50-sim.js awayBase uses farmableZone).
+//
+// Save: registerState('pace', { fell: 0 }). fell = the zone the party fell back from (0 = none).
+
+let paceCheck;
+
+{
+  registerState('pace', { fell: 0 });
+  const P = () => S.pace;
+  const foeSecs = (z, dps) => dps > 0 ? mobHp(z) * mod('foeHp') / dps : Infinity;
+  // Returns the zone moved to, or 0 when nothing changed.
+  paceCheck = () => {
+    if (!S.auto || S.activity !== 'fight' || fightBoss) return 0;
+    const dps = totalDps();
+    if (foeSecs(S.zone, dps) > PACE.farmSecs) {
+      const z = farmableZone(S.zone, dps / mod('foeHp'));
+      if (z >= S.zone) return 0;
+      P().fell = Math.max(P().fell || 0, S.zone);
+      setZone(z);
+      toast(`Your party fell back to Zone ${z} to keep earning.`, 'good', null, 'normal');
+      return z;
+    }
+    const fell = P().fell || 0;
+    if (!fell) return 0;
+    if (S.zone >= Math.min(fell, S.maxZone)) { P().fell = 0; return 0; }
+    if (foeSecs(S.zone + 1, dps) <= PACE.farmSecs / 2) { setZone(S.zone + 1); if (S.zone >= Math.min(fell, S.maxZone)) P().fell = 0; return S.zone; }
+    return 0;
+  };
+  // First tick after a load, then every 3 seconds.
+  let acc = 3;
+  onTick(dt => { acc += dt; if (acc < 3) return; acc = 0; paceCheck(); });
 }
 
 // ---- src/js/55-party.js ----
@@ -7632,15 +7711,15 @@ const statsApi = {};
 //   state    rosterLive(), charRec(id), isRecruited(id), rosterList()
 //   power    charPow(id), charDps(id), fieldCompDps(), supportBuff(), rosterSlotDps(i),
 //            oldCompDps(), rosterNoLoss(), addCharModifier(fn(id) -> mult) -> remove(), charMod(id)
-//   levels   levelCap(rank), cxpNeed(lv), cxpGain(z), partyLevel(), catchUpBonus(id), addCharXp(id, xp)
-//   recruit  unlockChar(id, source), addRecruitRoute(id, route), recruitCost(id), canRecruit(id),
+//   levels   levelCap(rank), drillsAt(lv), isDrillLv(lv), rankXTxt(), cxpNeed(lv), cxpGain(z), partyLevel(), catchUpBonus(id), addCharXp(id, xp)
+//   recruit  foesGold(z, k), routeGold(route), unlockChar(id, source), addRecruitRoute(id, route), recruitCost(id), canRecruit(id),
 //            recruit(id), recruitHow(id)
 //   promote  promoteCost(id), canPromote(id), promoteChar(id)
 //   field    setField(ids), fieldChar(id, replaceId), benchChar(id), autoField(), autoPlace(), rosterSyncField(force)
 //   stories  storyState(id), markStoriesRead(id)
 //   save     migrateParty()
 //
-// Events: recruit {id, source}, charLevel {id, lv, quiet}, milestone {id, lv, quiet},
+// Events: recruit {id, source}, charLevel {id, lv, quiet}, milestone {id, lv, quiet}, drill {id, lv, quiet},
 //         promote {id, rank}, fieldChange {field}, rosterMigrated {old, now, ratio, steps}.
 // Listens: kill (XP, boss x5), bountyDone (20 kills' worth), zoneClear (free joins),
 //          awayKills (offline XP, 75% of the estimated kills; hook in awayGains). Modifier key
@@ -7661,8 +7740,19 @@ const statsApi = {};
 // fraction of the other companions' damage for the UI.
 //
 // Decisions the spec left open (see the knobs in T): costs that name an essence tier accept
-// higher tiers too; XP per kill treats the zone's par level as at most 18 above the character;
-// promotion gold is 60 (spec 500) x mobGold(cap / 3); Kestrel costs 30K (spec 150K).
+// higher tiers too; Kestrel costs 30K (spec 150K; BAL1: 200 foes' worth at zone 18).
+//
+// BAL1 (owner: "party members are far too easy to get ... damage ramps so fast"):
+//   - Levels come from time spent fighting: XP per kill counts the zone's par level at most
+//     gapMax (4) above the character (was 18) and scales with how long the foe takes (killWorth),
+//     so pushing zones no longer drags companions up 3 levels a zone. Behind the party, a
+//     character still counts up to the party level (catchGap 18), so recruits catch up fast.
+//   - Power: growth 1.06 a level (was 1.08), x1.5 a rank (was x2), and a drill every 5 levels
+//     between promotions (x1.1 each, 'drill' event), so a roster step is due every 10-20 minutes early (T10).
+//   - Promotions cost promoGold x (rank + 1) foes of your max zone (was 60 x mobGold(cap / 3)),
+//     essence of tier rank (at most 4); a character a whole rank behind the party pays a quarter.
+//   - At the level cap XP banks up to 25 levels (was 1), spent the moment you promote.
+//   - Recruit gates moved later (T16); progress-route gold is in foes' worth (route.kills).
 
 const CHAR_RARITY = {
   common: { n: 'Common', m: 1, col: '#A9B1BD' },
@@ -7678,25 +7768,27 @@ const ROLE_STATS = {
   support: { n: 'Support', dps: 0, heal: 1.2, hp: 6, armour: 10, spd: 1.0, threat: 0.5, col: 0 }
 };
 // route.type: starter | progress | quest | renown | token | bestiary | achievement | tavern | craft.
+// `how` is only a fallback: recruitHow(id) builds the line from the tuned route (BAL1), so it
+// names no numbers that could go stale.
 // Only 'progress' routes are live in this task; other routes are wired by B7 with addRecruitRoute().
 const ROSTER = {
-  tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', rarity: 'common', role: 'tank', circle: 'hedgefolk', idx: 0, route: { type: 'progress', zone: 3, gold: 0 }, how: 'Reach zone 3. He joins for free.' },
-  wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', idx: 1, route: { type: 'progress', zone: 2, gold: 120 }, how: 'Reach zone 2, then 120 gold.' },
-  hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', idx: -1, route: { type: 'progress', zone: 3, gold: 0 }, how: 'Beat the Batwing Caves boss (zone 2). He joins for free.' },
-  pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', idx: 2, route: { type: 'progress', zone: 4, gold: 1100 }, how: 'Reach zone 4, then 1.1K gold.' },
-  bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring 60 Oak Logs to his camp.' },
-  maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring 20 Glowing Essence to the Barrow Lamp.' },
-  aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn 15 Renown on the bounty board, then 25K gold.' },
-  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 12, gold: 30000 }, how: 'Reach zone 12, then 30K gold.' },
+  tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', rarity: 'common', role: 'tank', circle: 'hedgefolk', idx: 0, route: { type: 'progress', zone: 8, kills: 0 }, how: 'Reach zone 8. He joins for free.' },
+  wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', idx: 1, route: { type: 'progress', zone: 8, kills: 30 }, how: 'Reach zone 8, then pay her in gold.' },
+  hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', idx: -1, route: { type: 'progress', zone: 11, kills: 0 }, how: 'Reach zone 11. He joins for free.' },
+  pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', idx: 2, route: { type: 'progress', zone: 12, kills: 60 }, how: 'Reach zone 12, then pay him in gold.' },
+  bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Oak Logs to his camp.' },
+  maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
+  aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
+  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 18, kills: 200 }, how: 'Reach zone 18, then pay her in gold.' },
   thessaly: { name: 'Thessaly Gloam', title: 'the Bog Seer', rarity: 'rare', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'bestiary' }, how: 'Finish the Marsh Wraith page in the bestiary.' },
-  anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 6. 60K gold and 20 Glowing Essence.' },
+  anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern. Hire him with gold and Essence.' },
   grenna: { name: 'Grenna Holt', title: 'the Stonebreaker', rarity: 'epic', role: 'tank', circle: 'wayfarers', idx: -1, route: { type: 'token' }, how: "Win a Stonebreaker's Token from Quarry Ruins bosses." },
-  isolde: { name: 'Isolde Marrow', title: 'the Duskblade', rarity: 'epic', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'token' }, how: 'Win a Dusk Contract from any zone boss from zone 16.' },
+  isolde: { name: 'Isolde Marrow', title: 'the Duskblade', rarity: 'epic', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'token' }, how: 'Win a Dusk Contract from zone bosses.' },
   oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', idx: 5, route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
-  morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat the Fungal Deep II boss (zone 12) with no support in your party.' },
-  vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 18. 20M gold and 30 Radiant Essence.' },
-  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 48: 2T gold and 20 Blazing Essence.' },
-  caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with 80 Renown.' },
+  morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat a Fungal Deep boss with no support in your party.' },
+  vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern. Hire her with gold and Essence, or earn Renown.' },
+  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest: relight the chapel with gold and Essence.' },
+  caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with enough Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
 const ROSTER_KEYS = Object.keys(ROSTER);
@@ -7712,7 +7804,7 @@ function rosterLive() {
   return !!(S.party && S.party.rv >= 1);
 }
 
-let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, fieldCompDps, supportBuff, rosterSlotDps,
+let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rosterList, charPow, charDps, fieldCompDps, supportBuff, rosterSlotDps,
   oldCompDps, rosterNoLoss, levelCap, cxpNeed, cxpGain, partyLevel, catchUpBonus, addCharXp, unlockChar,
   addRecruitRoute, recruitCost, canRecruit, recruit, recruitHow, promoteCost, canPromote, promoteChar,
   setField, fieldChar, benchChar, autoField, autoPlace, rosterSyncField, storyState, markStoriesRead, migrateParty;
@@ -7720,13 +7812,27 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 {
   // Tuning knobs. Sim-tuned values are marked (sim); the rest come from the spec.
   const T = {
-    base: 7, growth: 1.08,               // (sim) pow = base * rarity * growth^(lv-1) * 2^rank * ...
+    base: 7, growth: 1.06,               // (BAL1) was 1.08               // (sim) pow = base * rarity * growth^(lv-1) * rankX^rank * stepX^drills * ...
+    rankX: 1.5,                          // (BAL1) power x per promotion (rank); was x2
+    // BAL1 (T10): a drill every stepEvery levels between promotions (levels 5, 10, 15, 20, then
+    // 30, 35...; the 25s are promotions) gives power x stepX. Fielded companions level together,
+    // so promotions cluster every 25 levels; drills put a smaller step between them.
+    stepEvery: 5, stepX: 1.1,
     supEq: 1.2,                          // support party buff, worth supEq x its power (3.6 heal rate)
-    xpBase: 10, xpR: 1.12, par: 3, killsPerLv: 40, bossXp: 5, bountyKills: 20,
-    gapMax: 18,                          // (sim) XP per kill counts the zone's par level at most gapMax above the character
-    catchStep: 0.2, catchMax: 1, commonXp: 1.5, offlineXp: 0.75,
-    promoGold: 60, promoEss: 10,         // (sim) promoGold: spec 500; gold = promoGold x mobGold(cap / 3)
-    commonPromo: 0.5, maxRank: 7,
+    xpBase: 10, xpR: 1.12, par: 6, killsPerLv: 40, bossXp: 5, bountyKills: 20,
+    // XP per kill counts the zone's par level (par x zone) at most gapMax above the character.
+    // BAL1: gapMax 18 -> 4 and par 3 -> 6, so levels come from kills (about 25 a level) instead of
+    // racing to 3 x the zone: companion power grows with play time, not with each zone pushed.
+    // A character behind the party level still counts up to the party level (at most catchGap
+    // above itself), so new recruits catch up in minutes (T11).
+    gapMax: 4, catchGap: 18,
+    xpSecs: 5, xpWorthMax: 8,            // (BAL1) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
+    catchStep: 0.2, catchMax: 1, commonXp: 1.5, offlineXp: 1,   // (BAL1) offlineXp was 0.75
+    promoGold: 60, promoEss: 10,         // (BAL1) gold = promoGold x (rank + 1) foes of your max zone (was promoGold x mobGold(cap / 3): levels no longer track zones)
+    commonPromo: 0.5, catchPromo: 0.25, maxRank: 7,
+    bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
+    promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
+                                         //   Starlit, zone 36, walled Region 1 at level 125, and Radiant walled day 1 at level 75)
     storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3
   };
   ROSTER_TUNE = T;
@@ -7747,7 +7853,14 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   rosterList = () => ROSTER_KEYS.filter(isRecruited);
 
   // ---------------- levels ----------------
+  // Gold worth k normal foes of zone z (before gold bonuses), rounded up to 2 significant digits.
+  foesGold = (z, k) => { if (!(k > 0)) return 0; const x = k * 0.05 * mobHp(z), m = Math.pow(10, Math.max(0, Math.floor(Math.log10(x)) - 1)); return Math.ceil(x / m) * m; };
   levelCap = rank => 25 * (rank + 1);
+  // Drills passed by level lv (every stepEvery levels, not counting the promotion levels).
+  drillsAt = lv => Math.floor(lv / T.stepEvery) - Math.floor(lv / 25);
+  isDrillLv = lv => lv % T.stepEvery === 0 && lv % 25 !== 0;
+  const pctTxt = x => `${Math.round((x - 1) * 100)}%`;
+  rankXTxt = () => 'x' + (Math.round(T.rankX * 100) / 100);
   // paceXp (40-rules PACE, M6) raises the need past level PACE.compLv; XP per kill does not
   // include it, so late levels take more kills. It is 1 up to compLv (the first two hours).
   const cxpBase = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
@@ -7762,27 +7875,33 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     const r = charRec(id); if (!r) return 0;
     return Math.min(T.catchMax, T.catchStep * Math.max(0, partyLevel() - r.lv));
   };
-  // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax.
-  const gainFor = (id, z) => { const r = charRec(id); return Math.min(cxpGain(z), cxpBase(r.lv + T.gapMax) / T.killsPerLv); };
+  // XP per kill for this character: cxpGain(z), with par capped at lv + gapMax (or at the party
+  // level, up to lv + catchGap, for a character behind the party).
+  const gainFor = (id, z) => { const r = charRec(id), ref = Math.max(r.lv + T.gapMax, Math.min(partyLevel(), r.lv + T.catchGap)); return Math.min(cxpGain(z), cxpBase(ref) / T.killsPerLv); };
   const xpMult = id => (R(id).rarity === 'common' ? T.commonXp : 1) * (1 + catchUpBonus(id)) * mod('compXp');
 
   function levelUp(id, r, quiet) {
     r.lv++;
     emit('charLevel', { id, lv: r.lv, quiet: !!quiet });
+    const drill = T.stepX !== 1 && isDrillLv(r.lv);
+    const dTxt = drill ? ` Training pays off: +${pctTxt(T.stepX)} damage.` : '';
+    if (drill) emit('drill', { id, lv: r.lv, quiet: !!quiet });
     if (T.milestones.includes(r.lv) || (r.lv > 25 && r.lv % 25 === 0)) {
       emit('milestone', { id, lv: r.lv, quiet: !!quiet });
-      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}. A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.`, 'good', null, T.storyLv.includes(r.lv) ? 'normal' : 'low');
-    }
+      if (!quiet) toast(T.storyLv.includes(r.lv) ? `${R(id).name} reached level ${r.lv}.${dTxt} A new camp story is ready.` : `${R(id).name} reached level ${r.lv}.${dTxt}`, 'good', null, T.storyLv.includes(r.lv) ? 'normal' : 'low');
+    } else if (drill && !quiet) toast(`${R(id).name} reached level ${r.lv}.${dTxt}`, 'good', null, 'low');
   }
-  // Adds raw XP (multipliers already applied). Levels up to the rank cap; at the cap XP
-  // banks up to one level's worth. Returns the number of levels gained.
+  // Adds raw XP (multipliers already applied). Levels up to the rank cap; at the cap XP banks up
+  // to T.bankLv levels' worth (BAL1, was one level), spent the moment the character is promoted,
+  // so a long time away is not lost behind a cap. Returns the number of levels gained.
+  bankXp = lv => { let n = 0; for (let i = 0; i < Math.max(1, T.bankLv); i++) n += cxpNeed(lv + i); return n; };
   function giveXp(id, n, quiet) {
     const r = charRec(id); if (!r || !(n > 0)) return 0;
     const lv0 = r.lv;
     r.xp += n;
     for (let g = 0; g < 1000; g++) {
       const need = cxpNeed(r.lv);
-      if (r.lv >= levelCap(r.rank)) { r.xp = Math.min(r.xp, need); break; }
+      if (r.lv >= levelCap(r.rank)) { r.xp = Math.min(r.xp, bankXp(r.lv)); break; }
       if (r.xp < need) break;
       r.xp -= need; levelUp(id, r, quiet);
     }
@@ -7797,7 +7916,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   // "Damage", Attack and Spell power affixes; Tome healing counts for a support's buff).
   const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
-  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(2, r.rank) * (1 + wpnPct(id, r) / 100);
+  const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(T.rankX, r.rank) * Math.pow(T.stepX, drillsAt(r.lv)) * (1 + wpnPct(id, r) / 100);
   const roleMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };
@@ -7917,10 +8036,15 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     (ROUTES[id] = ROUTES[id] || []).push(route);
     return () => { const l = ROUTES[id], i = l.indexOf(route); if (i >= 0) l.splice(i, 1); };
   };
+  // Progress routes: reach rt.zone, then gold worth rt.kills foes of that zone (so the price follows
+  // the PACE curve). The how line is built from the tuned values.
+  const shortName = id => { const p = R(id).name.split(' '); return ['Ser', 'Saint', 'Old', 'Brother'].includes(p[0]) ? R(id).name : p[0]; };
+  routeGold = rt => rt.gold != null ? rt.gold : foesGold(rt.zone, rt.kills || 0);
   for (const id of ROSTER_KEYS) {
     const rt = R(id).route;
     if (rt.type !== 'progress') continue;
-    addRecruitRoute(id, { source: 'progress', ready: () => S.maxZone >= rt.zone, cost: () => ({ gold: rt.gold }), how: () => R(id).how });
+    addRecruitRoute(id, { source: 'progress', ready: () => S.maxZone >= rt.zone, cost: () => ({ gold: routeGold(rt) }),
+      how: () => routeGold(rt) ? `Reach zone ${rt.zone}, then ${fmt(routeGold(rt))} gold.` : `Reach zone ${rt.zone}. ${shortName(id)} joins for free.` });
   }
   const readyRoute = id => (ROUTES[id] || []).find(r => { try { return r.ready(); } catch (e) { return false; } }) || null;
   const costOf = rt => { const c = rt && rt.cost ? rt.cost() : null; return { gold: (c && c.gold) || 0, ess: (c && c.ess) || null }; };
@@ -7972,13 +8096,15 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   }
 
   // ---------------- promotions ----------------
-  const promoMult = id => R(id).rarity === 'common' ? T.commonPromo : 1;
+  // BAL1: a character a whole rank behind the party (a new recruit catching up) pays catchPromo of the price.
+  const behind = id => { const r = charRec(id); return r && Math.floor((partyLevel() - 1) / 25) > r.rank; };
+  const promoMult = id => (R(id).rarity === 'common' ? T.commonPromo : 1) * (behind(id) ? T.catchPromo : 1);
   promoteCost = id => {
     const r = charRec(id); if (!r || r.rank >= T.maxRank) return null;
     const m = promoMult(id);
     return {
-      gold: Math.ceil(T.promoGold * mobGold(Math.ceil(levelCap(r.rank) / 3)) * m),
-      ess: [Math.min(5, r.rank + 1), Math.ceil(T.promoEss * (r.rank + 1) * m)]
+      gold: Math.ceil(foesGold(S.maxZone, T.promoGold * (r.rank + 1)) * m),
+      ess: [Math.max(1, Math.min(T.promoTierMax, r.rank + 1 - T.promoTierLag)), Math.ceil(T.promoEss * (r.rank + 1) * m)]
     };
   };
   canPromote = id => { const r = charRec(id), c = promoteCost(id); return !!(r && c && r.lv >= levelCap(r.rank) && affordable(c)); };
@@ -7987,7 +8113,7 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
     const r = charRec(id);
     pay(promoteCost(id));
     r.rank++;
-    toast(`${R(id).name} is promoted. Damage x2, level cap ${levelCap(r.rank)}.`, 'good', null, 'high');
+    toast(`${R(id).name} is promoted. Damage ${rankXTxt()}, level cap ${levelCap(r.rank)}.`, 'good', null, 'high');
     emit('promote', { id, rank: r.rank });
     giveXp(id, 0.000001);  // spend banked XP
     return true;
@@ -8086,9 +8212,14 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 
   // ---------------- XP from use ----------------
   // n kills' worth of XP at zone z for every fielded character.
-  const giveField = (n, z, quiet) => {
+  // BAL1: a kill is worth (seconds a normal foe of that zone takes the party) / xpSecs kills of XP,
+  // at most xpWorthMax. So XP follows time spent fighting: farming an easy zone for fast kills
+  // earns no more than pushing at the front, and a hard zone no less.
+  const killWorth = (z, dps) => T.xpSecs > 0 && dps > 0 ? Math.min(T.xpWorthMax, mobHp(z) / dps / T.xpSecs) : 1;
+  const giveField = (n, z, quiet, dps) => {
     if (!rosterLive()) return [];
-    return fieldKeys().map(k => [k, giveXp(k, n * gainFor(k, z) * xpMult(k), quiet)]);
+    const w = killWorth(z, dps != null ? dps : totalDps());
+    return fieldKeys().map(k => [k, giveXp(k, n * w * gainFor(k, z) * xpMult(k), quiet)]);
   };
   on('kill', ({ mob: m, zone }) => giveField(m && m.boss ? T.bossXp : 1, zone));
   on('bountyDone', () => giveField(T.bountyKills, S.zone));
@@ -8096,7 +8227,11 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
   // Offline: 75% of the XP of the estimated kills (hook in awayGains' fight branch).
   on('awayKills', ({ kills, zone, lines }) => {
     if (!(kills > 0)) return;
-    for (const [k, n] of giveField(kills * T.offlineXp, zone, true))
+    // In steps (BAL1), so XP per kill follows the levels gained while away, as in live play (one
+    // lump priced at the starting level bought only a few levels however long the absence).
+    const dps = compDps() + heroDps() * 0.5, steps = 40, got = {};
+    for (let i = 0; i < steps; i++) for (const [k, n] of giveField(kills * T.offlineXp / steps, zone, true, dps)) got[k] = (got[k] || 0) + n;
+    for (const [k, n] of Object.entries(got))
       if (n > 0 && Array.isArray(lines)) lines.push({ icon: { ic: ['mug', '#F2C14E'] }, txt: `${R(k).name.split(' ')[0]} +${n} level${n > 1 ? 's' : ''} (Lv ${charRec(k).lv})` });
   });
   onTick(dt => {
@@ -8163,10 +8298,11 @@ let ROSTER_TUNE, addCharModifier, charMod, rstEnsure, charRec, isRecruited, rost
 // |  taunts, slows, stuns, peel,    |                                                     |                                 |
 // |  parry window, burn immunity    |                                                     |                                 |
 //
-// Scale: T.today (0.1) is the share of every bonus above that applies before party combat.
-// B1's power (ROSTER_TUNE.base) was tuned with no synergies and T1 has almost no headroom
-// (a flat +10% damage moves the 2h zone by 1 to 5), so today's effects are scaled down
-// while the texts keep the design numbers. Stage C should retune base power and raise it.
+// Scale: T.today is the share of every bonus above that applies before party combat. B2 shipped
+// 0.1 (texts showed the design numbers, so synergies read 10x stronger than they were). BAL1 set
+// it to 1 after the pacing retune made room, so the numbers in the texts are the ones you get.
+// If it is ever lowered again, the texts follow: shownText() scales every bonus percentage by
+// today (and an active synergy's by its strength); thresholds such as "below 50% HP" stay.
 // T.on = 0 turns everything off (sim comparisons).
 //
 // Synergy strength = 1 x 1.25 if a Common is a member (Common Cause) x 1.5 if any member has
@@ -8317,7 +8453,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
 {
   const T = {
     on: 1,                                              // 0 turns every effect off (sim comparisons)
-    today: 0.1,                                         // (sim) share of each bonus that applies today
+    today: 1,                                           // (BAL1, was 0.1) share of each bonus that applies today: full, so every text is the real number
     commonCause: 0.25, bond: 0.5, bondLv: 25,
     abShare: 0.2, aoeEff: 0.5, lowUp: 0.5, cdMax: 0.5, otherCritX: 2,
     honed: 0.15, seasoned: 0.25,                        // Epic/Legendary L10 ability power; +25% per 25 levels past 25
@@ -8336,7 +8472,9 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
     shieldBash: 1, hollowCut: 1,
     // synergies
     hedgeSpeed: 0.15, hedgeGold: 0.1, kindleStar: 0.3, dusk: 0.25, duskExec: 0.1,
-    bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, wayXp: 0.1, wayCd: 0.1
+    bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, wayXp: 0.1, wayCd: 0.1,
+    // hero class auras (BAL1): the damage parts of HERO_CLASSES[cls].aura
+    auras: 1, auraCaster: 0.3, auraCrit: 0.1, auraCritX: 0.5
   };
   SYN_TUNE = T;
   // Signature ability names, for the generated kit lines.
@@ -8586,6 +8724,17 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // T.today scales every bonus to what applies before party combat (see the header).
   const dp = m => 1 + (m - 1) * T.today;
   addCharModifier(id => live() ? dp(charMult(id)) : 1);
+  // Hero class auras (55-party HERO_CLASSES[cls].aura; BAL1: their texts promised damage that was
+  // never applied). Lanternmage: casters +30% attack. Ranger: strikers +10% crit chance and +50%
+  // crit damage (x3 -> x3.5). Warden and Lightkeeper: health and healing wait for party combat
+  // (the Lightkeeper's +10% for all companions lives in 55-party).
+  const auraMult = id => {
+    const c = hasCls(), role = R(id) && R(id).role;
+    if (c === 'lanternmage' && role === 'caster') return 1 + T.auraCaster;
+    if (c === 'ranger' && role === 'striker') { const s = ROLE_STATS.striker; return (1 + (s.crit + T.auraCrit) * (s.critX + T.auraCritX - 1)) / (1 + s.crit * (s.critX - 1)); }
+    return 1;
+  };
+  addCharModifier(id => live() && T.auras ? auraMult(id) : 1);
   addModifier('dmg', () => { if (!live()) return 1; const { a } = cur(); return dp(a.party) * dp(a.hero); });
   addModifier('party', () => { if (!live()) return 1; return 1 / dp(cur().a.hero); });
   addModifier('gold', () => live() ? dp(cur().a.gold) : 1);
@@ -8601,13 +8750,17 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // ---------------- queries ----------------
   const nameOf = k => k === 'hero' ? 'your hero' : first(k);
   const listText = l => l.length <= 1 ? (l[0] || '') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1];
-  const todayOf = d => d.parts.filter(p => p.stage !== 'C').map(p => p.text).join(' ') || null;
+  // A bonus percentage times k, rounded; "50% HP" / "10% of max HP" (thresholds, sizes) stay.
+  const scalePct = (txt, k) => Math.abs(k - 1) < 1e-9 ? txt : txt.replace(/(\d+(?:\.\d+)?)%(?! HP| of)/g, (m, n) => `${Math.round(n * k)}%`);
+  const partText = (p, k) => p.stage === 'C' ? p.text : scalePct(p.text, k * T.today);
+  const shownText = (d, k = 1) => d.parts.map(p => partText(p, k)).join(' ');
+  const todayOf = (d, k = 1) => d.parts.filter(p => p.stage !== 'C').map(p => partText(p, k)).join(' ') || null;
 
   activeSynergies = () => {
     if (!live()) return [];
     return cur().syn.map(({ d, r, s }) => ({
-      id: d.id, name: d.name, members: r.members.slice(), effectText: d.text, strength: s,
-      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d)
+      id: d.id, name: d.name, members: r.members.slice(), effectText: shownText(d, s), strength: s,
+      stageC: d.parts.some(p => p.stage === 'C'), todayText: todayOf(d, s)
     }));
   };
 
@@ -8633,7 +8786,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   charTraits = id => {
     if (!R(id)) return [];
     const lv = lvOf(id);
-    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.text, lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
+    return kitOf(id).map(e => ({ kind: e.kind, name: e.name, text: e.stage === 'C' ? e.text : scalePct(e.text, T.today), lv: e.lv, active: lv > 0 && lv >= e.lv, stageC: e.stage === 'C' }));
   };
 
   synergyMods = () => {
@@ -8703,31 +8856,35 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
 // Sim-tuned against T16 (marked (sim) below; spec values in the comments): with the spec's
 // gates the first Epic landed at 6-20 min (Grenna's 8% at zone 6, Morwen at zone 12).
 
+// BAL1 (owner: "party members are far too easy to get"): T16 is now first recruit 15-30 min,
+// first Rare 1.5-3h, first Epic day 2-4, first Legendary week 2-3. Gold prices are in foes' worth
+// (kills x a normal foe's gold at zone `zone`, or at `from`; foesGold in 56-roster.js), so they
+// follow the PACE curve. Every how line reads these values.
 const UNLOCK_TUNE = {
   renownBounty: 1, renownElite: 3,
-  aldric: { renown: 15, gold: 25000 },
-  vesperRenown: 60,
-  caedmon: { renown: 80, zone: 35 }, wyrmRenown: 5,
+  aldric: { renown: 25, zone: 16, kills: 150 },   // (BAL1) was 15 Renown + 25K gold
+  vesperRenown: 90,                              // (BAL1) was 60
+  caedmon: { renown: 250, zone: 35 }, wyrmRenown: 5, // (BAL1) was 80 Renown
   quests: {
-    bram: { from: 3, wood: [1, 60] },
-    maren: { from: 4, ess: [2, 40] },            // (sim) spec 20: Maren landed at 9-16 min (T16 Rare 15-40)
-    elowen: { from: 48, gold: 2e12, ess: [4, 20] },   // (sim, M6) spec zone 28 + 150M: first Legendary landed at ~2h (T16 wants 6-12h)
+    bram: { from: 10, wood: [1, 80] },            // (BAL1) was zone 3, 60 logs
+    maren: { from: 16, ess: [3, 30] },           // (BAL1) was zone 4 + 40 Glowing (spec 20 Glowing)
+    elowen: { from: 54, kills: 3000, ess: [4, 20] },  // (BAL1) spec zone 28 + 150M; M6 zone 48 + 2T gold
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {
     grenna: { name: "Stonebreaker's Token", base: 0.08, step: 0.08, pity: 12, zoneType: 5, from: 27 },   // (sim) spec: every Quarry Ruins boss
-    isolde: { name: 'Dusk Contract', base: 0.10, step: 0.10, pity: 10, from: 30 }                         // (sim) spec from zone 16
+    isolde: { name: 'Dusk Contract', base: 0.10, step: 0.10, pity: 10, from: 29 }                         // (sim) spec from zone 16
   },
   thessaly: { type: 'wraith', tier: 3 },
   corvin: { bosses: 150, tier: 2, creditMax: 50 },
   rotation: ['anselm', 'kestrel', 'vesper', 'thessaly', 'anselm', 'grenna', 'vesper'],
-  visitorFrom: 6,
-  visitors: {
-    anselm: { from: 6, gold: 60000, ess: [2, 20] },
-    vesper: { from: 18, gold: 20e6, ess: [3, 30] },
-    kestrel: { from: 6, gold: 30000 * 3 },
-    thessaly: { from: 6, gold: 60000 * 3, ess: [2, 20] },
-    grenna: { from: 18, gold: 4e6 * 5, ess: [3, 30] }
+  visitorFrom: 16,                               // (BAL1) was 6
+  visitors: {                                    // gold: kills x a foe of zone `from`
+    anselm: { from: 16, kills: 300, ess: [3, 20] },
+    vesper: { from: 31, kills: 500, ess: [4, 30] },
+    kestrel: { from: 16, kills: 600 },
+    thessaly: { from: 16, kills: 900, ess: [3, 20] },
+    grenna: { from: 31, kills: 1500, ess: [4, 30] }
   },
   trade: { n: 10, goldKills: 150 }
 };
@@ -8757,6 +8914,8 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   const clamp01 = x => Math.max(0, Math.min(1, x || 0));
   const bossesBeaten = () => (S.stats ? S.stats.bosses : Math.max(0, S.maxZone - 1));
   const ess = t => MAT.ess.short[t - 1] + ' Essence';
+  // Gold of a tune entry: an explicit gold, or kills x a foe of its zone (or `from`).
+  const goldOf = x => x.gold != null ? x.gold : foesGold(x.zone || x.from, x.kills || 0);
   const costTxt = c => [c.gold ? fmt(c.gold) + ' gold' : '', c.ess ? `${c.ess[1]} ${ess(c.ess[0])}` : ''].filter(Boolean).join(' + ');
   // Materials from tier t up (the named tier is spent first), like the roster's essence costs.
   const have = (k, t) => { let n = 0; for (let i = t - 1; i < 5; i++) n += S.mats[k][i] || 0; return n; };
@@ -8813,7 +8972,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
     const need = [];
     if (q.wood) need.push({ k: 'wood', t: q.wood[0], n: q.wood[1], have: have('wood', q.wood[0]) });
     if (q.ess) need.push({ k: 'ess', t: q.ess[0], n: q.ess[1], have: have('ess', q.ess[0]) });
-    return { need, gold: q.gold || 0, from: q.from, open: S.maxZone >= q.from, done: isRecruited(id) };
+    return { need, gold: goldOf(q) || 0, from: q.from, open: S.maxZone >= q.from, done: isRecruited(id) };
   };
   const itemsReady = id => { const q = questInfo(id); return !!q && q.open && q.need.every(x => x.k === 'ess' || x.have >= x.n); };
 
@@ -8875,7 +9034,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   };
   const visitorCost = id => {
     const v = T.visitors[id];
-    return { gold: v.gold, ess: v.ess || null };
+    return { gold: goldOf(v), ess: v.ess || null };
   };
 
   // ---------------- routes ----------------
@@ -8894,16 +9053,16 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
     how: () => `Quest "The Barrow Lamp": bring ${q.maren.ess[1]} ${ess(q.maren.ess[0])} (${Math.min(have('ess', q.maren.ess[0]), q.maren.ess[1])}/${q.maren.ess[1]}, from zone ${q.maren.from}).`
   });
   route('elowen', {
-    source: 'quest', ready: () => S.maxZone >= q.elowen.from, cost: () => ({ gold: q.elowen.gold, ess: q.elowen.ess }),
-    how: () => `Quest "Relight the Chapel" at zone ${q.elowen.from}: ${fmt(q.elowen.gold)} gold and ${q.elowen.ess[1]} ${ess(q.elowen.ess[0])}.`
+    source: 'quest', ready: () => S.maxZone >= q.elowen.from, cost: () => ({ gold: goldOf(q.elowen), ess: q.elowen.ess }),
+    how: () => `Quest "Relight the Chapel" at zone ${q.elowen.from}: ${fmt(goldOf(q.elowen))} gold and ${q.elowen.ess[1]} ${ess(q.elowen.ess[0])}.`
   });
   route('morwen', {
     source: 'quest', ready: () => !!U().quests.morwen, cost: () => ({ gold: 0 }),
     how: () => `Beat the ${zoneName(q.morwen.zone)} boss (zone ${q.morwen.zone}) with no support in your party.`
   }, true);
   route('aldric', {
-    source: 'renown', ready: () => U().renown >= T.aldric.renown, cost: () => ({ gold: T.aldric.gold }),
-    how: () => `Renown ${Math.min(U().renown, T.aldric.renown)}/${T.aldric.renown} on the bounty board, then ${fmt(T.aldric.gold)} gold.`
+    source: 'renown', ready: () => U().renown >= T.aldric.renown, cost: () => ({ gold: goldOf(T.aldric) }),
+    how: () => `Renown ${Math.min(U().renown, T.aldric.renown)}/${T.aldric.renown} on the bounty board, then ${fmt(goldOf(T.aldric))} gold.`
   });
   route('caedmon', {
     source: 'renown', ready: () => caedmonRenown() >= T.caedmon.renown && S.maxZone > T.caedmon.zone, cost: () => ({ gold: 0 }),
@@ -8929,7 +9088,11 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   }, true);
   route('oriel', {
     source: 'craft', ready: () => !!U().starChart, cost: () => ({ gold: 0 }),
-    how: () => "Craft a Star Chart at the Enchanter's Table (40 Mithril-tier Crystal, 20 Radiant Essence, 1 Wraith Veil). The table is not built yet."
+    how: () => {
+      const c = canCraft('starChart'), m = c.cost.mats, t = 3;
+      const parts = Object.entries(m).map(([k, n]) => `${n} ${matName(k, t)}`).concat((c.cost.troph || []).map(([i, n]) => `${n} ${CRAFT_TROPHIES[i].n}`));
+      return `Craft a Star Chart at the Enchanter's Table (Enchanting ${c.need}): ${parts.join(', ')}.`;
+    }
   }, true);
   route('vesper', {
     source: 'tavern', ready: () => visiting('vesper'), cost: () => visitorCost('vesper'),
@@ -8977,7 +9140,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
     },
     aldric: () => {
       const r = U().renown, n = T.aldric.renown;
-      return r < n ? { src: 'renown', pct: 0.8 * r / n, how: `Renown ${r}/${n}` } : { src: 'renown', pct: 0.8 + 0.2 * partPct(S.gold, T.aldric.gold), how: `Renown ${n}/${n}. ${fmt(T.aldric.gold)} gold to hire.`, action: recruitAct('aldric', 'Recruit') };
+      return r < n ? { src: 'renown', pct: 0.8 * r / n, how: `Renown ${r}/${n}` } : { src: 'renown', pct: 0.8 + 0.2 * partPct(S.gold, goldOf(T.aldric)), how: `Renown ${n}/${n}. ${fmt(goldOf(T.aldric))} gold to hire.`, action: recruitAct('aldric', 'Recruit') };
     },
     vesper: () => ({ src: 'renown', pct: clamp01(U().renown / T.vesperRenown), how: `Renown ${Math.min(U().renown, T.vesperRenown)}/${T.vesperRenown}, or hire her at the Tavern` }),
     caedmon: () => {
@@ -9067,8 +9230,8 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
 
 const CAMP_TUNE = {
   openZone: 5,              // camp opens at this max zone (Hearth 1 is free)
-  goldPerLv: 600,           // building gold = goldPerLv x L foes' worth at the gate zone
-  mult: [1, 1.5, 2, 3, 4],  // material multiplier by row (building level)
+  goldPerLv: 60,            // (BAL1, was 600) building gold = goldPerLv x L foes' worth at the gate zone
+  mult: [0.6, 1.5, 2, 3, 4], // material multiplier by row (building level); (BAL1) row 1 was 1: the first build lands in the first 10-20 min
   troph: [0, 0, 0, 1, 2],   // trophies by row
   secs: [180, 3600, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row
   shrineSecs: [6 * 3600, 16 * 3600, 30 * 3600],
@@ -16329,11 +16492,11 @@ let craftUI = null;
     const cls = S.party && S.party.cls;
     st8.st = { warden: 'forge', lanternmage: 'bench', ranger: 'bench', lightkeeper: 'loom' }[cls] || 'forge';
     for (const s of STATION_KEYS) st8.tier[s] = openTier(s);
-    st8.pick = S.fSlot + ':' + S.fTier;
+    st8.pick = S.fSlot + ':' + S.fTier + ':0';
   }
   // "Next up" goals set S.fSlot / S.fTier and open this tab: jump to that recipe.
   function syncGoalPick() {
-    const key = S.fSlot + ':' + S.fTier; if (key === st8.pick) return;
+    const key = S.fSlot + ':' + S.fTier + ':' + forgeGoalPicks; if (key === st8.pick) return;
     st8.pick = key;
     let k = S.fSlot; const d = CRAFT_KINDS[k]; if (!d) return;
     if (d.legacy) { const row = CRAFT_FITS[d.pos] || {}; const w = heroWho(); k = (row[w] && row[w][0]) || k; }
@@ -16571,7 +16734,7 @@ let craftUI = null;
     id: 'craft-ench', title: "Enchanter's Table",
     mount(sec) {
       const card = el('div', 'card cf-tm');
-      card.append(el('h3', null, 'Transmute'), el('p', 'note', 'Trade within one material. 4 of a tier make 1 of the next. 1 makes 2 of the tier below.'));
+      card.append(el('h3', null, 'Transmute'), el('p', 'note', 'Trade within one material. 4 of a tier make 1 of the next. 1 makes 2 of the tier below, once: what you break down cannot be broken down again.'));
       const fams = el('div', 'cf-fams'); fams.setAttribute('aria-label', 'Material');
       for (const f of CRAFT_FAMILIES) {
         const b = el('button', 'cf-fam'); b.type = 'button'; b.dataset.f = f; b.setAttribute('aria-label', MAT[f].n);
@@ -16603,7 +16766,7 @@ let craftUI = null;
       putHidden(ench.sec, st8.st !== 'ench');
       if (ench.sec.hidden) return;
       const { fam, t } = st8.tm, have = S.mats[fam], f = K6.transmute(), lv = lvOf('ench');
-      const sig = [fam, t, have.join(), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
+      const sig = [fam, t, have.join(), JSON.stringify((S.craft && S.craft.tmd) || {}), lv, !!f, typeof craftStarChart, S.party && S.party.unlock && S.party.unlock.starChart].join('|');
       if (!force && (sig === ench.sig || busy())) return;
       ench.sig = sig;
       ench.fams.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === fam)));
@@ -16620,8 +16783,9 @@ let craftUI = null;
       ench.dnB.textContent = t > 1 ? `${D.take} ${nm(t)} → ${D.give} ${nm(t - 1)}` : 'Lowest tier';
       const upReq = t < 5 ? CRAFT_STATION_REQ[t] : 0;
       ench.upB.disabled = !f || t >= 5 || have[t - 1] < U.take || lv < upReq;
-      ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take;
-      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : t < 5 && lv < upReq ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : '';
+      const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
+      ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
+      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : t < 5 && lv < upReq ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
       // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.party && S.party.unlock && S.party.unlock.starChart);
       ench.star.hidden = !(sc && !CRAFT_KINDS.starchart);
@@ -18340,7 +18504,7 @@ let openSheet, partySheet;
       b.disabled = !canPromote(k);
       b.addEventListener('click', () => { if (promoteChar(k)) { save(); ui(true); partySheet.refresh(true); } });
       row.append(b);
-      if (x.atCap) foot.append(el('small', 'cs-cost', `Also ${fmt(pc.ess[1])} ${essName(pc.ess[0])} or better. Damage x2, level cap +25.`));
+      if (x.atCap) foot.append(el('small', 'cs-cost', `Also ${fmt(pc.ess[1])} ${essName(pc.ess[0])} or better. Damage ${rankXTxt()}, level cap +25.`));
     }
     if (inField(k)) {
       const b = el('button', 'mini cs-act', 'Bench'); b.type = 'button';
