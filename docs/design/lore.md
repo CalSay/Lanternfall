@@ -5,7 +5,10 @@ the world. I'd like there to be a reason for us fighting these monsters." Revise
 task LORE1b for the owner's feedback (2026-09-28): the dark exists to destroy light, not to crave
 it; the story ends in a real final boss fight against the Voice; the hero is the child Elowen's
 spark was lit for; Region 3's Listener is the knight who agreed where Caedmon refused; Bram's
-family comes home later as Hands. Docs only; no code.
+family comes home later as Hands. Revised again the same day as task LORE-R45, for the owner's
+decision that Season 1 is five regions and ends with the **first** confrontation with the Voice
+(the party wins, the Voice retreats deeper, a reveal sets up Season 2): sections 8.5-8.8 rework the
+ending into a Season 1 arc, and section 11 marks exactly what changed. Docs only; no code.
 
 This file is the single source of truth for the world's story. It builds on everything already
 written in the game (Appendix A lists those facts) and contradicts none of it. Where old lines
@@ -39,8 +42,9 @@ lit and gives a little of the land back.
 **The long mystery.** What waits at the end of the Lantern Road? The player learns it in layers
 over weeks and months: who put the lights out (a Voice, not a storm), where the stolen light went
 (the Emberwaste burns with it), why your lamp still holds (it was lit for you), and at last what
-the Voice is, and where. It is closer to home than anyone thinks, and at the end you go down and
-fight it (8.6, 8.7).
+the Voice is, and where. It is closer to home than anyone thinks, and at the end of Season 1 you go
+down and fight it for the first time: you win, and it retreats deeper, taking the last of the
+mystery with it (8.6-8.8). Season 2 finishes the job.
 
 **The heart of it, in one line:** *a light is safest when it is given away.* Light kept for no one
 can be stolen. Light lit for someone cannot. The dark can smother it, but it can never take it.
@@ -315,8 +319,8 @@ dark to smother it. Beat it, and the region can hold light again.
 | The Hollow | The Listener (Elder Marsh Wraith) | It followed the first green wisp and never came back out of the marsh |
 | The Sunken Coast | The Drowned Keeper (Silas) | He said yes to the Voice's promise |
 | The Emberwaste | The Pyre Knight (decided, 8.3) | He agreed to guard the fire for the Voice, where Caedmon refused |
-| The Pale Reach | open (Region 4 spec) | - |
-| The Long Stair | none: the Voice itself waits at the bottom (8.7) | It is not a Listener. It is what they listen to |
+| The Pale Reach | The Star-Fallen (working name; LORE-R45 draft, regions-4-5.md 1.6) | The one who jumped first to hold the Frostgate, and did not come back up |
+| The Long Stair | none: the Voice itself waits at the bottom (8.7) | It is not a Listener. It is what they listen to. Season 1's climax; it survives the fight and goes deeper (8.6-8.8) |
 
 ### 4.5 The Deepwell
 
@@ -613,19 +617,21 @@ region is for.
   It was always down."** The Voice was never in the Emberwaste. The Emberwaste was where it kept
   what it took. The Voice card's "it came from inland" was only an echo off the hoard.
 
-### 8.4 Beyond: the Pale Reach and the road home (months 3 and later)
+### 8.4 The Pale Reach and the Long Stair: Season 1's last two regions
 
-Loose on purpose; later specs decide.
+Drafted at region-spec rigour in [regions-4-5.md](regions-4-5.md) (task LORE-R45); this section
+stays as the short version writers reach for first.
 
 - **Region 4, the Pale Reach**: over the mountain pass, where Kestrel came from. Snow, white storms,
   the Pale Tyrant's home. People there never had lanterns; they lived by starlight and by giving
   each other light (a whole region built on rule 3). Kestrel's spear-name belongs to someone from
-  here "who jumped first".
+  here "who jumped first": that person is the region's Listener (4.4), and Region 4 is where Kestrel
+  learns it.
 - **Region 5, the Long Stair**: the Lantern Road loops back to where it began. The last region is
   down the Deepwell, past Maud's Lantern and the Climber's landing, below the Old Light's spring,
   to the bottom of the stair. Its zones are the stair itself: landings no one has walked, where the
   dark is thickest and every foe is something the Voice kept close. There is no Listener and no
-  Great Lantern at its end. There is the Voice, and the last fight (8.7).
+  Great Lantern at its end. There is the Voice, and the fight that closes Season 1 (8.6-8.8).
 
 ### 8.5 The mystery ladder
 
@@ -639,7 +645,8 @@ What the player knows, and when. Never let text run ahead of this table.
 | Weeks 5-8 | Four great foes, one voice. It came from the Emberwaste. A thing has climbed the stair under your camp for a thousand years, reaching for what glows. | Pinnacles, the Voice card, Deep Lore |
 | Months 2-3 | The Emberwaste is where the stolen light went. A given light cannot be called, only smothered. The lights can go home. "It was always down." | Region 3, Pip's last page, Bonds, the Pyre Knight |
 | Months 3+ | Elowen's choice in full. Your lamp was lit for you, on the Fall night. The Voice wants every lamp out, and the spring below your camp most of all. It cannot come up past the spring. You will have to go down. | Elowen's Bonds and later stories, Region 4 |
-| The end | What the Voice is (8.6). You fight it at the bottom of the stair and win (8.7). The lights come home. | The last region, the last fight |
+| The end of Season 1 | What the Voice is (8.6). You fight it at the bottom of the stair and win the first real clash. It is not destroyed: it retreats deeper than the stair has ever gone, and something it says or leaves behind on the way down opens the next question. The lights it held come home regardless (8.6). | Region 5, the fight that closes Season 1 |
+| Season 2 (2.0) | What the Voice's retreat opened, and what waits past it. | 8.8, later tasks |
 
 Clues already planted that point to the end (keep them; do not explain them early): "It is not the
 moon pulling it now" (Hallam). "The light at the bottom is not fire. It is older than fire. It is
@@ -654,7 +661,14 @@ steps are the Climber's, sent up to put the spring out. Thessaly's lantern-holde
 last step. Anselm's dusk is the last one. The Lurelight's warm water and the Climber's "let her
 rest" are the dark's one offer: stop tending, and go out. Hesketh's line is the last line.
 
-### 8.6 The ending (sealed: coordinator, owner and end-game writers only)
+### 8.6 The Season 1 ending (sealed: coordinator, owner and end-game writers only)
+
+**Owner decision (LORE-R45, 2026-09-28): Season 1 ends with the first confrontation with the
+Voice, not its defeat.** The party fights it at the bottom of the stair and wins that fight; the
+Voice retreats deeper than the stair has ever gone, and a reveal on the way down sets up Season 2.
+This section replaces the earlier "you fight it, and you win, full stop" reading of LORE1b (marked
+in section 11). Everything below that does not concern the ending itself — what the Voice is, what
+it did, where it is, why the hero can go down past the spring — stays exactly as first written.
 
 **What the Voice is.** Before the first lantern, the land was dark all the way up. Then the small
 folk cut the stair, found the Old Light, and carried it up in the first lantern. Every lamp lit from
@@ -683,38 +697,65 @@ hands and songs. The end of the Lantern Road is the place you came back to every
 can go below the spring and stay lit. Yours was lit for you, and by the Long Stair it carries every
 lamp you lit behind it. Maud's Lantern marks the last landing. You go on past it.
 
-**How it ends: you fight it, and you win.** The last fight is a real boss fight (8.7): five phases,
-four of them shapes the Voice wore on the road, then the Voice itself. Victory is earned the way
-every pinnacle is: by answering what it throws. It cannot be talked down or tricked, and nobody
-tries. Beaten, the dark goes out of it as it goes out of any moss slime: **it is only night again.**
+**How Season 1 ends: you fight it, and you win the fight, not the war.** The last fight of the
+season is a real boss fight (8.7): five phases, four of them shapes the Voice wore on the road,
+then the Voice itself. Victory is earned the way every pinnacle is: by answering what it throws. It
+cannot be talked down or tricked, and nobody tries. Beaten, the dark does not go out of it the way
+it goes out of a moss slime. It has no shape to lose: it only ever wore one, the way it wore the
+King's court and the voice in the fire. At full defeat it lets the borrowed shape go, and what is
+left of it — the dark itself, not a body — pours away from the party, down through a crack in the
+stair no lamp has ever lit, and is gone from sight. **It is driven back. It is not destroyed.** The
+game never promised the second; only the first.
+
+**The reveal, on the way down.** As the last of it goes, it speaks once more, in its own voice, not
+a borrowed one, for the only time in the story. It does not gloat and it does not beg; it says one
+true thing, plainly, the way the dark says everything: **"There were lamps before this one."** Then
+it is gone below where the stair has ever reached. The line means exactly what it says, and no
+writer should explain it further in Season 1 text: some lantern, somewhere, held against this same
+dark before the Old Light was ever found, and lost. It is the seed of Season 2 (8.8), not a puzzle
+Season 1 answers.
 
 **After the win (the warm beat: one card and a few lines, only after the fight is over).**
 
-1. The dark at the bottom of the stair thins to plain night. Something rises past you: every light
-   the Voice still held. Silas's lens, the drowned lamps of Saltreach, the lamps the Lantern Eater
-   swallowed. They go up the stair, out of the well, and home over the land.
-2. At Hollow's Rest every lamp brightens at once. Anselm rings Patience: the last toll, the last
-   dusk of the long dusk. ("He will know the dusk it is for.")
+1. The dark at the bottom of the stair thins to plain night, for now. Something rises past the
+   party: every light the Voice still held. Silas's lens, the drowned lamps of Saltreach, the lamps
+   the Lantern Eater swallowed. They go up the stair, out of the well, and home over the land. This
+   part is not undone by the retreat: held light freed stays freed (rule 5 was never about the
+   Voice's survival, only about where the light was kept).
+2. At Hollow's Rest every lamp brightens at once. Anselm rings Patience: the last toll of the long
+   dusk that has not ended before now. ("He will know the dusk it is for.")
 3. Thessaly's vision was this: the one holding a lantern high on the dark road, with the dark
    stepping back, was you, on the last step.
 4. Vesper finishes her verse. Oriel's stars stop sending bad news and go back to gossip. Elowen
    turns her spark up, for the first time in ten years.
-5. The last line of the story, spoken by Hesketh at the fire: "Every road needs a place to come
-   back to." The player has heard it before, and it means more the second time.
+5. The last line of Season 1, spoken by Hesketh at the fire: "Every road needs a place to come
+   back to." The player has heard it before, and it means more the second time. It is not the last
+   line of the whole story; it is the last line of this chapter of it.
 
 **What stays true after.** Night still comes. Dark still pools in low places, and things that sit in
-it too long still stand up, so the zones refill. But nothing is sending them any more: the dark has
-no voice and no plan now, only habit. The lamps still need lighting every dusk, which is the game's
-reason to go on. The last fight stays open as a rematch (8.7): the dark gathers at the bottom of
-the stair again, slowly, and a lamp-bearer goes down and breaks it again.
+it too long still stand up, so the zones refill. The dark above ground has no voice and no plan now,
+only habit, so ordinary play is exactly as safe and as warm as the old ending promised: relighting
+never stops mattering, and nothing already won is undone. But at the bottom of the stair, the crack
+the Voice went down through does not close. **The last fight stays open as a rematch** (8.7, kept
+from the earlier design, now literal instead of a game-system nicety): the dark gathers there again,
+slowly, and a lamp-bearer can go down and drive it back again, the same fight, for as long as Season
+2 is not yet the story being told. Rematches never surprise the player with new stakes; the retreat
+already happened once, for real, in the story that counts.
 
-**Why this ending suits the game.** The owner asked for a proper boss fight, and the story earns
-one: every region teaches one piece of it, and the last fight tests them all. No resets, nothing
-lost. The game's rule (you never lose what you earned) and the story's rule (a given light cannot
-be taken) meet at the bottom of the stair: the Voice's song fails on your lamp, and you win with it
-lit.
+**Why this ending suits the game and the owner's decision.** The owner asked for five full regions
+in Season 1 and a story that keeps going past it. A total, permanent defeat of the dark that was
+here first would leave nowhere for Season 2 to stand; a retreat earns the same catharsis (a real
+fight, answered honestly, won) without spending the story's biggest secret before the sequel exists.
+No resets, nothing lost: the game's rule (you never lose what you earned) and the story's rule (a
+given light cannot be taken) still meet at the bottom of the stair exactly as before. Only the scale
+of the win changes, from "the war is over" to "the first real battle of it is."
 
-### 8.7 The last fight: the Voice (design outline, sealed)
+### 8.7 The Season 1 finale: the Voice (design outline, sealed)
+
+The fight that ends Season 1. Winning it drives the Voice off (8.6); it is not a kill, and no line
+in this section should say otherwise. Everything below is unchanged from the original design: same
+numbers to tune, same phases, same mechanics. Only the outcome text (8.6) and the reward copy below
+changed for the Season 1 arc.
 
 An outline at the rigour of [pinnacles.md](pinnacles.md), for a later spec task (**DV The Voice**,
 section 10) to turn into numbers. Every pinnacle rule applies unless this says otherwise: each
@@ -790,14 +831,46 @@ not kneel. Not now either." Caedmon at phase 3: "I know this fire." Morwen at ph
 Climber). Elowen at phase 5: "Turn it up. It cannot take it." Hesketh at phase 5: "Keep walking.
 I've got you."
 
-**Rewards (capped systems only, as pinnacles.md 7).** First win: the title **"Lit the Last Lamp"**,
-the lantern colour **Dawn**, the kill card and the warm beat (8.6), a Codex entry. Rematches: Vows,
-best times, Echoes of the four pinnacle powers, and the `legendDrop(5, ...)` roll at the pinnacle
-rate. No new power, stat or currency. The Voice never appears in the world raid or any online data.
+**Rewards (capped systems only, as pinnacles.md 7).** First win: the title **"Lit the Last Lamp"**
+(it names the lights freed, 8.6, not the Voice's end), the lantern colour **Dawn**, the victory card
+and the warm beat (8.6), a Codex entry. Rematches: Vows, best times, Echoes of the four pinnacle
+powers, and the `legendDrop(5, ...)` roll at the pinnacle rate. No new power, stat or currency. The
+Voice never appears in the world raid or any online data.
 
-**Left for DV.** Numbers and the anchor, Vow meanings, the rig and palette, the kill card's words
-(with LORE13), and whether the rematch joins the Boss of the Week (recommended: no; it stays a thing
-you choose).
+**Left for DV.** Numbers and the anchor, Vow meanings, the rig and palette, the victory card's words
+including the reveal line ("There were lamps before this one.", 8.6) and how the retreat reads on
+screen (with LORE13), and whether the rematch joins the Boss of the Week (recommended: no; it stays
+a thing you choose).
+
+### 8.8 Season 2: the direction (sketch only, task LORE-R45)
+
+Not a spec. This is deliberately short: Season 2 is a later release (plan-4.md 12), and Season 1's
+writers should not build toward specifics that a Season 2 designer has not yet chosen. What follows
+is direction, not content, kept here so nobody invents a contradicting one in the meantime.
+
+- **The question Season 1 ends on:** "There were lamps before this one" (8.6). Somewhere, at some
+  time before the Old Light was ever found under Hollow's Rest, someone else held a lantern against
+  this same dark, and lost. Season 2 is about finding out who, and whether it can go differently
+  this time.
+- **Where the Voice goes:** through the crack at the Bottom of the Stair, into dark below anywhere
+  the stair or the Deepwell ever reached. Season 2's places are not necessarily more of Lanternfall:
+  the loop the Lantern Road closes at the end of Season 1 (2.1) suggests the next stretch of road is
+  not on the loop at all.
+- **What does not change:** the rules of light (2.3) stay the rules. Whatever Season 2 adds, it is
+  bound by the same physics the whole story is built on: a given light cannot be called, only
+  smothered; held light can be freed; the dark hates light and hardly notices people. A Season 2
+  that breaks these rules to raise the stakes would cost the story more than it gains.
+- **What carries over:** everything the hero, the companions and the camp earned in Season 1. No
+  resets, per the game's own rule and the story's. The second evolution tier and hero branching
+  (plan-4.md 12) are gameplay hooks a Season 2 story can lean on, not requirements it must serve.
+- **Tone stays the tone (section 1).** A darker season is not a grimmer one. The dark that was here
+  first has been pushed back once; Season 2 is the story of pushing it back for good, and it should
+  feel like the second half of the same warm, hopeful, slightly melancholy story, not a swerve into
+  a different one.
+
+Left for a later task: the reveal's specifics (who held the earlier lantern, and what happened to
+them), Season 2's regions and their place on or off the loop, and whether the Voice is alone down
+there or was always answering to something else.
 
 ---
 
@@ -935,14 +1008,14 @@ under its limit), commits on its branch, and does not push. Data files load in N
 | **LORE10** The Emberwaste story | Arrivals, beats, the Pyre Knight's barks and his rival lines with Caedmon, the Great Lantern III card, Pip's last page, Caedmon's camp story "The Brother Who Stayed" and his table, the "always down" line | new `src/js/21l-stories-ember.js` | per D4 | **D4** (Region 3 spec takes 8.3 as its story input) |
 | **LORE11** Lanternborn stories | The Sworn-to-Lanternborn stories (6.3) | per D5 | per D5 | **D5** |
 | **LORE12** Festival story | The Lantern Festival: "Light a lamp for someone" (rule 3 as a holiday: midwinter, the longest night, everyone lights a lamp for one person) | per LF1 | per LF1 | **LF1** |
-| **LORE13** The last fight's words | The Region 5 arrivals and beats, the Voice's barks per phase (borrowed voices: court, song, fire, climber, then its own), the companion lines (8.7), first-use hints, the kill card and the warm beat (8.6), Hesketh's last line | new `src/js/21m-stories-voice.js` | per DV | **DV** |
+| **LORE13** The Season 1 finale's words | The Region 5 arrivals and beats, the Voice's barks per phase (borrowed voices: court, song, fire, climber, then its own), the companion lines (8.7), first-use hints, the victory card (including the reveal line) and the warm beat (8.6), Hesketh's last line of the chapter | new `src/js/21m-stories-voice.js` | per DV | **DV** |
 
 Spec tasks this bible now asks for (not writing tasks; listed so the plan has them):
 
 | Task | Work | Waits for |
 |---|---|---|
 | **DV** The Voice (spec) | Turn 8.7 into a full pinnacle-style spec: numbers, anchor, Vows, rig, arena, UI, sim targets, save state (a new `S.voice` or rows in `S.pin`; never a repurposed field), build tasks | The Region 5 spec, and PB1-PB5 built (it reuses the pinnacle scheduler and UI) |
-| **Region 4 and 5 specs** | The Pale Reach and the Long Stair (8.4) | D4 |
+| **Region 4 and 5 specs** | The Pale Reach and the Long Stair, built from LORE-R45's draft (8.4, regions-4-5.md) | D4, and the owner's sign-off on regions-4-5.md section 5 |
 
 Order: LORE2, LORE4 and LORE5 can run now, in parallel (separate files). LORE3 after LORE2. LORE6,
 LORE7 and LORE8 follow their code tasks. LORE8b after the Hands and the Coast. LORE10-13 follow
@@ -1016,9 +1089,26 @@ Added by LORE1b (the dark destroys light; the last fight):
 says Pip's route is "Reach zone 12, then pay **him** in gold". Pip is "she" everywhere else. Change
 "him" to "her".
 
+Added by LORE-R45 (Season 1 is five regions; it ends with the first confrontation with the Voice):
+
+24. **"You fight it at the bottom of the stair and win" (8.6, as first written by LORE1b).** Reworked:
+    the win is real, but it is a retreat, not a destruction. The Voice was never given a body to lose
+    (8.6); it wears borrowed shapes and, beaten, lets the current one go and withdraws below anywhere
+    the stair has reached. Every warm-beat line about freed lights, brightening lamps and Hesketh's
+    last line of the chapter (8.6) still plays exactly as written; only "it is only night again" (the
+    old close) is replaced with the reveal line ("There were lamps before this one.") and an explicit
+    "driven back, not destroyed."
+25. **"The last fight stays open as a rematch" (8.6, as first written).** This line already hedged
+    toward the dark not truly being gone. LORE-R45 keeps the sentence and makes it literal: the
+    retreat it now describes is the same retreat the Season 1 ending needs, not a separate idea.
+26. **Region 4's Listener and Region 5's shape.** Both were placeholders ("open (Region 4 spec)" and a
+    one-line sketch in the old 8.4). LORE-R45 (regions-4-5.md) fills them: the Region 4 Listener is
+    the person on Kestrel's spear, "the Star-Fallen" (working name); Region 5 keeps its stated design
+    (no Listener, no Great Lantern) and gets a smaller chapter-end beat, the Last Landing, instead.
+
 ---
 
-## 12. Questions for the owner (all answered 2026-09-28)
+## 12. Questions for the owner (all answered 2026-09-28, LORE-R45's decisions added 2026-09-28)
 
 0. **Why we fight** (owner's feedback, not a LORE1 question). "Wouldn't it make sense for the
    darkness in the creatures to exist to DESTROY the light rather than just being attracted to
@@ -1036,9 +1126,19 @@ says Pip's route is "Reach zone 12, then pay **him** in gold". Pip is "she" ever
 4. **Bram's family as a later, optional Hand.** The owner deferred to the writer. **Decided: yes,
    later.** The Hollises arrive as Hands once Bram is recruited and the Coast is lit, with no Bond
    gate so nobody misses them; a Close Bond adds one story (7.2, LORE8b).
+5. **Season 1's scope and ending (owner decision, LORE-R45, 2026-09-28).** Season 1 is five regions,
+   fully fleshed out, and the story continues in Season 2. Season 1 ends with the first confrontation
+   with the Voice at the bottom of the Deepwell: the party wins that fight, the Voice retreats deeper,
+   and a reveal sets up Season 2. **Answered: yes**, exactly as stated. Written into 8.6-8.8; the
+   original full-victory ending (LORE1b) is superseded, not deleted (canon note 24).
 
-No questions are open. DV may raise its own (for example, whether the rematch joins the Boss of the
-Week).
+Open, for LORE-R45 and later tasks (not blocking; see regions-4-5.md section 5 for the full list):
+
+- Region 4's Listener's actual name (a placeholder, "the Star-Fallen", stands in for it).
+- Region 5's chapter-end beat, the Last Landing: confirm it, or choose a different small close.
+- Season 2's specifics (8.8): deliberately left open until a Season 2 task exists.
+
+DV may also raise its own questions (for example, whether the rematch joins the Boss of the Week).
 
 ---
 
@@ -1089,7 +1189,9 @@ Week).
 | **Embers** | Freed light scattered when a great foe falls; the raid's currency |
 | **Lantern Light** (the Codex score) | How much of the land you have relit and remembered. Only goes up |
 | **Omens** | Signs in the sky and the land, one a day, as the world wakes up |
-| **the Pale Reach** | Beyond the mountain pass; Region 4 (proposal) |
+| **the Pale Reach** | Beyond the mountain pass; Region 4. Built on rule 3: its people always lived by given light |
+| **the Long Stair** | Region 5: the Deepwell continued past every landing known, down to the Bottom of the Stair |
+| **the Star-Fallen** (working name) | Region 4's Listener; the one who jumped first to hold the Frostgate |
 
 ---
 
