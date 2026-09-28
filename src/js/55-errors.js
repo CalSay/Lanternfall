@@ -1,12 +1,16 @@
 // 55-errors: error capture for playtester feedback. Ring buffer of recent uncaught errors
-// and unhandled promise rejections, stored in localStorage under lanternfall.errors.v1.
+// and unhandled promise rejections, stored in S.errors (persisted when save() is called).
 // Must never throw. Reads cheaply available state (zone, activity) when an error occurs.
+// Calls save() after capture (throttled: at most once per 10s) so a crash-then-reload keeps the error.
 // CORE FILE: no DOM, no window, no localStorage access (use storage adapter).
 
 registerState('errors', { list: [], next: 0 });
 
 // Max errors to keep in the ring buffer.
 const ERROR_CAP = 20;
+
+// Track last save time to throttle saves after error capture.
+let lastSaveTime = 0;
 
 // Capture an error: message, source file/line, time, and cheap state (zone, activity if available).
 // Called from the error handler and must never throw.
@@ -25,6 +29,13 @@ function captureError(msg, source, lineno, colno) {
     e.list[e.next] = err;
     e.next = n;
     if (e.list.length > ERROR_CAP) e.list = e.list.slice(-ERROR_CAP);
+
+    // Throttled save: at most once per 10 seconds, so crash-then-reload keeps the error
+    const now = Date.now();
+    if (typeof save === 'function' && now - lastSaveTime >= 10000) {
+      lastSaveTime = now;
+      try { save(); } catch (e) {}
+    }
   } catch (e) {
     // Silently fail - we must not throw from an error handler
   }

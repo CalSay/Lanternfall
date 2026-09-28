@@ -1,6 +1,29 @@
 // 75-feedback-ui: "Send feedback" panel in the Journal. Records playtester reports
-// with uncaught errors, progress state, screen info.
+// with uncaught errors, progress state, screen info. Installs global error handlers.
 {
+  // Install error handlers early, wrapped in try/catch so they never crash the page
+  try {
+    window.addEventListener('error', (e) => {
+      try {
+        if (typeof captureError === 'function') {
+          captureError(e.message || String(e), e.filename || '', e.lineno || 0, e.colno || 0);
+        }
+      } catch (err) {}
+    });
+  } catch (e) {}
+
+  try {
+    window.addEventListener('unhandledrejection', (e) => {
+      try {
+        if (typeof captureError === 'function') {
+          const reason = e.reason || {};
+          const msg = reason.message || String(reason);
+          captureError(msg, '', 0, 0);
+        }
+      } catch (err) {}
+    });
+  } catch (e) {}
+
   let feedbackOpen = false;
   const feedbackState = { note: '' };
 
