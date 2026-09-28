@@ -795,3 +795,12 @@ S1 (types and statuses) is built from sections 1-3 and 6.1-6.3. It is the first 
 | Date | Change | By | Signed off |
 |---|---|---|---|
 | 2026-09-28 | First version | CORE-G | - |
+| 2026-09-28 | **Proposed (CL1, classes-2.md 8.2-1):** 2.2 Mage row: base type `fire` (was `frost`); Warlock adds dark fire (type `fire`) and Curse; "Base Mage keeps Chill" becomes "keeps Burn" (Chill comes from the Trapper and frost heroes). Formalises the coordinator's 2026-09-28 decision | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-2):** 2.3 exception: the Warlock's Curse detonations and Hex Nova treat "resists fire" as neutral ("Dark Turned"); weakness still counts | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-3):** 4.1 the Priest's `ab2` is Rally Hymn (`hymn`), not Sanctuary (Elowen's signature) | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-4):** 4.4 ability shape: optional `var: { [evoId]: { type, fx, name } }`; new verbs `meter`, `trap`, `detonate`; `consume` takes a class meter id; per-fx options `{ perStack, base, ramp, hits, over, spread, to, v }` | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-5):** 1.3/3.1 class meters (Grit, Fury, Bulwark, Embers, Blessing) are not statuses; each feeds one named bucket-T buff whose value follows the meter | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-6):** 1.3 bucket Y: class and evolution auras sit with slot jobs, outside the +40% cap (as `HERO_CLASSES[].aura` today) | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-7):** 4.5 Tactics conditions `stacks` (status id, n) and `meter` (meter id, n or %) | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-8):** 7.1 glossary adds Grit, Fury, Bulwark, Blessing, Trap and "the Proving" (the evolution trial; "Trial" is the Deepwell's weekly Trial) | CL1 | pending |
+| 2026-09-28 | **Proposed (CL1, 8.2-9):** 8.2 `S.cls` final shape per classes-2.md 3.5 (adds `proven`, `free`, `at`, `auto`, `mig`, `from`; `trials` entries `{ n, won, best }`) | CL1 | pending |
