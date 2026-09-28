@@ -22,8 +22,8 @@ let campPaintFire = null;
   const box = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w * P, h * P); };
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const lit = () => typeof hearthLit === 'function' && hearthLit();
-  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood';
-  const showing = tg => cold() && atGrove(tg);
+  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood' && S.node.t === 1;   // the Oak Grove only
+  const showing = tg => typeof hearthScene === 'function' && hearthScene() && atGrove(tg);
 
   // ---- the fire: base centre (x, y = the ground line) ----
   function paintFire(g, x, y, on, t) {

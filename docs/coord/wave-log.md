@@ -653,3 +653,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   camp and so on from it; enter zone dungeons and find the zone raid from the world map; start expeditions
   from the map. UX2b launched to revise ux-overhaul.md's IA around a World map (it absorbs the Camp tab,
   the Deepwell, Raid, expeditions and the plan-2 Lantern Road map idea).
+- OWNER: a campfire showed in the woods. Cause: 63d/63c drew the opening camp scene (fire, Hesketh, plots) on
+  EVERY wood node for any save that started cold (hearthCold stays set). Coordinator fix: new hearthScene()
+  = a cold-start save before the fire is lit or before the Forge stands; only at the Oak Grove (wood t1).
+- OWNER: hint pop-ups jump around when the screen moves. QUEUED HINT1 (onboarding/tip bubbles: dock them to a
+  fixed band instead of tracking moving targets; reposition only on real layout changes, no jitter).
+- OWNER: skill levels should sit above the resource tabs. UX-A told: the Gather sub-tabs carry the level
+  ("Mining 52") with a thin XP bar under each, so all skills show at once above the lists.

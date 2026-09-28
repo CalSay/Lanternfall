@@ -63,7 +63,7 @@ const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
 // Decor plots on the camp panorama (hearth-and-hands.md 6.4; N2 draws them): no cost, no timer, no perk.
 // The panorama is 1,024 art px wide with p13, the Trophy Wall, at x 990 where the road enters camp.
 const HEARTH_PLOT_AT = { wall: { plot: 'p13', x: 990, decor: 1, n: 'Trophy Wall' } }, HEARTH_PANO_W = 1024;
-let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
   hearthApply, hearthWarm, HEARTH_PLOT;
 
 {
@@ -81,8 +81,11 @@ let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, 
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
-  hearthCold = () => !!Hs().cold;
+  hearthCold = () => !!Hs().cold;   // a save that started cold (stays set)
   hearthLit = () => !hearthCold() || !!Hs().lit;
+  // The opening camp scene (fire, Hesketh, plot stakes) belongs to the Oak Grove only until the first
+  // stations stand (owner: a campfire in the woods later made no sense). After the Forge, woods are woods.
+  hearthScene = () => hearthCold() && (!Hs().lit || lv('forge') < 1);
 
   hearthApply = () => {
     if (!coldStart || !S.camp || !S.camp.b) return;
