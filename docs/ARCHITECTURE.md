@@ -130,10 +130,11 @@ registerView('forge', { id: 'salvage', label: 'Salvage', order: 25, dot: () => b
 Static markup in `src/shell.html` joins a view with `data-view="id"` on the panel's direct child
 (`"*"` = every view, or a space-separated list). Sections only update while their view shows, so rows
 built in `update()` may not exist yet; `setTab(tab, sel)` builds them once before it looks for `sel`.
-`mount(sec)` does not run at load: it runs when the section's tab first opens (every section of that
-tab at once, in registration order; `log` sections when the Journal first shows). The section's own
-element exists from registration. Keep event handlers (`on(...)`) outside `mount`, and never rely on
-nodes that `mount` builds before the tab has opened.
+`mount(sec)` does not run at load: it runs when the section's tab first opens, always in registration
+order within the tab: the sections up to the last one of the view that opens mount at once, the rest
+of the tab in the next tasks (`log` sections when the Journal first shows; `setTab(tab, sel)` mounts
+the whole tab at once). The section's own element exists from registration. Keep event handlers
+(`on(...)`) outside `mount`, and never rely on nodes that `mount` builds before the tab has opened.
 
 ```js
 registerAwayLine(fn(r)) -> remove()   // add lines to the "While you were away" card (55-stats.js)

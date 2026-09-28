@@ -415,7 +415,16 @@ function setTab(t, sel) {
   let view = null;
   if (!TAB_IDS.includes(t) && (VIEW_OF[t] || TAB_ALIAS[t])) { view = t; t = VIEW_OF[t] || TAB_ALIAS[t]; }
   if (!TAB_IDS.includes(t)) t = 'adv';
-  mountTab(t);
+  coldT0 = performance.now();   // the first updates' time box (ui) counts the mounts too
+  // Back to the top before anything changes: writing scrollTop needs the layout, which is still
+  // clean here (cheap); after the panel is built it would lay the whole menu out inside this task.
+  let reset = false;
+  if (!sel) {
+    const nv = view && viewsOf(t).some(x => x.id === view) ? view : curView(t);
+    if (S.tab !== t || nv !== curView(t)) { $('panels').scrollTop = 0; reset = true; }
+  }
+  // with sel, everything of the tab now (sel may be in any view); else the open view's part first
+  if (sel) mountTab(t); else mountSoon(t, view);
   const find = () => sel ? (typeof sel === 'string' ? document.querySelector(sel) : sel) : null;
   let target = find();
   // Sections build some rows in update(), and only the open view updates: build the whole tab once.
@@ -434,8 +443,10 @@ function setTab(t, sel) {
   renderMenu(t); applyView(t);
   if (t === 'forge') $('forgeDot').hidden = true;
   if (t === 'world') $('raidDot').hidden = true;
-  if (was !== t || curView(t) !== wasView) $('panels').scrollTop = 0;
+  const top = was !== t || curView(t) !== wasView;
   ui(true); viewDots();
+  coldT0 = 0;
+  if (top && !reset) $('panels').scrollTop = 0;
   emit('menuView', { tab: t, view: curView(t) });
   if (target && target.offsetParent !== null) scrollMenuTo(target);
 }
@@ -599,11 +610,11 @@ function ui(force) {
   if (viewOpen('world', 'tav') && (force || slowTick <= 0)) uiTavern();
   // Sections update while their tab's menu is open and their view is showing (Journal: while the bell sheet shows it).
   // A section's first update builds its rows; past COLD_MS in this call, the rest wait for warmSections.
-  const t0 = performance.now();
+  const t0 = coldT0 || performance.now();
   let cold = false;
   for (const sec of SECTIONS) {
     if (!secShows(sec)) continue;
-    if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
+    if (!sec.mounted) mountTo(sec);
     if (!sec.update) continue;
     if (!sec.warm && performance.now() - t0 > COLD_MS) { cold = true; continue; }
     runSection(sec, force);
@@ -616,14 +627,14 @@ function secShows(sec) {
   return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
 }
 function runSection(sec, force) {
-  if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
+  if (!sec.mounted) mountTo(sec);
   try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); }
   sec.warm = true;
 }
 // A tab's first open builds all of its sections: staggered over a few tasks (top first) so no single
 // task stalls the game (docs/design/perf.md). Each task builds sections for up to COLD_MS.
 const COLD_MS = 30;
-let coldTimer = 0;
+let coldTimer = 0, coldT0 = 0;
 function warmSections() {
   coldTimer = 0;
   const t0 = performance.now();
@@ -656,8 +667,44 @@ function mountSec(sec) {
   sec.mounted = true;
   try { sec.mount(sec.el); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' mount failed', e); }
 }
+const tabOfSec = sec => sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab;
 function mountTab(t) {
-  for (const sec of SECTIONS) if (!sec.mounted && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) mountSec(sec);
+  for (const sec of SECTIONS) if (!sec.mounted && tabOfSec(sec) === t) mountSec(sec);
+}
+// Mount sec and every section of its tab registered before it (a mount may place its section
+// relative to the others, so a tab's sections always mount in registration order).
+function mountTo(sec) {
+  const t = tabOfSec(sec);
+  for (const s of SECTIONS) { if (!s.mounted && tabOfSec(s) === t) mountSec(s); if (s === sec) return; }
+}
+// A tab's first open: mount (in order) up to the last section of the view that will show, now; the
+// rest of the tab mounts in later tasks, COLD_MS each (docs/design/perf.md, hotspot 12).
+const mountPend = new Set();
+let mountTimer = 0;
+// the views a section shows in: those of its top-level node in the tab's panel
+function secInView(t, s, v) {
+  const panel = $('p-' + t); let n = s.el;
+  if (!panel || !panel.contains(n)) return true;
+  while (n.parentNode !== panel) n = n.parentNode;
+  const vs = viewList(t, n);
+  return vs.includes('*') || vs.includes(v);
+}
+function mountSoon(t, view) {
+  const v = view && viewsOf(t).some(x => x.id === view) ? view : curView(t);
+  let last = null;
+  for (const s of SECTIONS) if (!s.mounted && tabOfSec(s) === t && secInView(t, s, v)) last = s;
+  if (last) mountTo(last);
+  if (SECTIONS.some(s => !s.mounted && tabOfSec(s) === t)) { mountPend.add(t); if (!mountTimer) mountTimer = setTimeout(mountRest, 0); }
+}
+function mountRest() {
+  mountTimer = 0;
+  const t0 = performance.now();
+  for (const s of SECTIONS) {
+    if (s.mounted || !mountPend.has(tabOfSec(s))) continue;
+    if (performance.now() - t0 > COLD_MS) { mountTimer = setTimeout(mountRest, 0); return; }
+    mountSec(s);
+  }
+  mountPend.clear();
 }
 function registerSection(tabId, { id, title, view, mount, update, feature }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);

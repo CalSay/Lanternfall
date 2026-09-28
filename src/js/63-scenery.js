@@ -17,7 +17,9 @@
 //     camX in CSS px, keep within +-16. k, ox, oy: that transform (device px per CSS px, whole-px
 //     translation), for the 1:1 path below; bg: the backdrop colour where the sky does not reach.
 //   drawAtmosphere(ctx, scene, T, W, H, camX = 0)   T in seconds; draws on top of everything.
-//   scenePlates(scene, k, W, H, part)   build the device-size copies now (idle-time warm-ups).
+//   scenePlates(scene, k, W, H, part)   build the device-size copies now (idle-time warm-ups);
+//     part 'queue': queue them for idle time in small steps.
+//   sceneSteps(theme, W, H, hue) -> step()   sceneFor in small steps: step() returns the scene when done.
 //
 // Per frame (phone, software canvas: raster is most of the frame, docs/design/perf.md): the back
 // layers are one 1:1 copy of a composite that is rebuilt only when a layer moves a whole pixel; the
@@ -26,7 +28,7 @@
 // and particles, and the vignette (1:1, only where it is not clear). Until a scene's copies are built
 // (idle time after a scene change) its layers, fog and vignette are drawn scaled. No gradients are
 // made per frame. Flicker is static under prefers-reduced-motion.
-let drawScene, drawAtmosphere, scenePlates;
+let drawScene, drawAtmosphere, scenePlates, sceneSteps;
 function sceneFor() { return null; } // replaced below
 {
   const PX = 2, M = 24, MA = M / PX;
@@ -191,7 +193,9 @@ function sceneFor() { return null; } // replaced below
 
   const cache = new Map();
 
-  function build(theme, W, H, hue) {
+  // The build is a generator: each yield ends a step (about 5-15 ms at x4 CPU), so an idle-time
+  // warm-up can spread it over several small tasks (sceneSteps); sceneFor runs it to the end.
+  function* buildSteps(theme, W, H, hue) {
     const th = TH[theme] || TH.forest;
     const Wa = Math.ceil(W / PX), Ha = Math.ceil(H / PX), LW = Wa + 2 * MA;
     const GY = Math.round(H * 0.8), G = Math.floor(GY / PX);
@@ -303,6 +307,7 @@ function sceneFor() { return null; } // replaced below
         sd[o] = c[0]; sd[o + 1] = c[1]; sd[o + 2] = c[2]; sd[o + 3] = 255;
       }
     }
+    yield;
     if (th.stars) {
       const s1 = flat(blend([255, 244, 220], skyC[0], 0.2)), s2 = flat(blend(C('#8FA8B0'), skyC[0], 0.45));
       for (let i = 0; i < LW / 5; i++) sky.px(r() * LW, r() * G * 0.45, r() < 0.25 ? s1 : s2);
@@ -317,6 +322,7 @@ function sceneFor() { return null; } // replaced below
       moon = { x: mx * PX, y: my * PX, r: mr * PX, rgb: mc.join(',') };
     }
 
+    yield;
     // ---- far layer helpers ----
     const s = [r() * 10, r() * 10, r() * 10];
     const ridgeY = (x, base, amp) => base + Math.sin(x * 0.042 + s[0]) * amp + Math.sin(x * 0.11 + s[1]) * amp * 0.45 + Math.sin(x * 0.018 + s[2]) * amp * 1.2;
@@ -648,6 +654,7 @@ function sceneFor() { return null; } // replaced below
       }
     }
 
+    yield;
     // ---- ground detail common to all: lip tufts, specks ----
     const grassy = theme === 'forest' || theme === 'woods' || theme === 'barrow' || theme === 'bone' || theme === 'fungal';
     for (let x = 0; x < LW; x++) {
@@ -686,13 +693,13 @@ function sceneFor() { return null; } // replaced below
     const ink = (hex, t) => blend(ramp(C(hex))[3], [8, 5, 12], t);
     const bake = (L, base, ol, nol) => { const c = mkCanvas(LW, Ha), g = c.getContext('2d'), img = base || new ImageData(LW, Ha); shade(L, mats, img, ol, nol); g.putImageData(img, 0, 0); return c; };
     const midInk = ink(th.mid || th.far, 0.55);
-    const layers = [
-      { c: bake(sky, skyImg, null, 1), f: PAR[0] },
-      { c: bake(far, null, null, 1), f: PAR[1] },
-      { c: bake(mid, null, midInk), f: PAR[2] },
-      { c: bake(gnd), f: PAR[3] },
-      { c: bake(fg, null, [10, 6, 14]), f: PAR[4], fg: true }
-    ];
+    yield;
+    const layers = [];
+    layers.push({ c: bake(sky, skyImg, null, 1), f: PAR[0] }); yield;
+    layers.push({ c: bake(far, null, null, 1), f: PAR[1] }); yield;
+    layers.push({ c: bake(mid, null, midInk), f: PAR[2] }); yield;
+    layers.push({ c: bake(gnd), f: PAR[3] }); yield;
+    layers.push({ c: bake(fg, null, [10, 6, 14]), f: PAR[4], fg: true }); yield;
 
     // ---- atmosphere data ----
     const [type, ambHex, n] = th.amb;
@@ -727,12 +734,15 @@ function sceneFor() { return null; } // replaced below
   // every pixel inside the runs is opaque. Drawing only these runs gives the same pixels as drawing the
   // whole layer: the rest is either empty or painted over later in the same frame.
   const BAND = 8, GAP = 4, CAM_MAX = 16;
-  function spans(layers, alphas, w, h) {
+  // A generator: one layer per step (alphaOf(i) reads that layer's pixels), so the plate build can
+  // spread it over idle tasks. Layer 0 (the sky) gets its bands last.
+  function* spans(layers, alphaOf, w, h) {
     const n = layers.length, N = w * h;
     const cover = new Uint8Array(N);              // pixels hidden behind a later back layer (built back to front)
     const opq = new Uint8Array(N), ero = new Uint8Array(w);
     for (let i = n - 1; i >= 0; i--) {
-      const ly = layers[i], a = alphas[i], mask = new Uint8Array(N);
+      if (i < n - 1) yield;
+      const ly = layers[i], a = alphaOf(i), mask = new Uint8Array(N);
       for (let q = 0; q < N; q++) mask[q] = a[q * 4 + 3] && !(cover[q] && !ly.fg) ? 1 : 0;
       const { bands, y0, y1 } = bandsOf(mask, w, h, 0);
       let opaque = bands.length > 0;
@@ -804,7 +814,8 @@ function sceneFor() { return null; } // replaced below
     const { scene, s } = w, L = scene.layers;
     if (!L[0].bands) {
       const cw = L[0].c.width, ch = L[0].c.height;
-      spans(L, L.map(ly => ly.c.getContext('2d').getImageData(0, 0, cw, ch).data), cw, ch);
+      if (!w.sp) w.sp = spans(L, i => L[i].c.getContext('2d').getImageData(0, 0, cw, ch).data, cw, ch);
+      if (w.sp.next().done) w.sp = null;
       return null;
     }
     const ly = L[w.layers.length];
@@ -851,6 +862,7 @@ function sceneFor() { return null; } // replaced below
   // (built step by step in later idle tasks); 'atmo': build its atmosphere copies for a stage W x H
   // CSS px now; neither: both, now. Nothing is rebuilt when cached.
   scenePlates = function (scene, k, W, H, part) {
+    if (part === 'queue') { platesFor(scene, k); if (W && H) atmoDev(scene, k, W, H); return; }   // both, step by step
     if (part !== 'atmo') platesFor(scene, k, part !== 'plates');   // 'plates': queued step by step
     if (part !== 'plates' && W && H) atmoDev(scene, k, W, H, true);
   };
@@ -880,16 +892,41 @@ function sceneFor() { return null; } // replaced below
     return shaftSprite;
   }
 
+  function build(theme, W, H, hue) { const it = buildSteps(theme, W, H, hue); for (;;) { const r = it.next(); if (r.done) return r.value; } }
+  const sceneKey = (theme, W, H, hue) => theme + '|' + W + 'x' + H + '|' + hue;
+  const normArgs = (W, H, hue) => [Math.max(1, Math.round(W)), Math.max(1, Math.round(H)), ((Math.round(hue || 0) % 360) + 360) % 360];
+  // Builds started by sceneSteps and not finished yet (key -> generator). sceneFor finishes one.
+  const building = new Map();
   sceneFor = function (theme, W, H, hue) {
-    W = Math.max(1, Math.round(W)); H = Math.max(1, Math.round(H)); hue = ((Math.round(hue || 0) % 360) + 360) % 360;
-    const key = theme + '|' + W + 'x' + H + '|' + hue;
+    [W, H, hue] = normArgs(W, H, hue);
+    const key = sceneKey(theme, W, H, hue);
     let sc = cache.get(key);
     if (!sc) {
-      sc = build(theme, W, H, hue);
+      const it = building.get(key);
+      if (it) { building.delete(key); for (;;) { const r = it.next(); if (r.done) { sc = r.value; break; } } }
+      else sc = build(theme, W, H, hue);
       cache.set(key, sc);
       if (cache.size > 8) cache.delete(cache.keys().next().value);
     } else { cache.delete(key); cache.set(key, sc); }
     return sc;
+  };
+  // sceneSteps(theme, W, H, hue) -> step(): the same build in small steps (idle-time warm-ups). Each
+  // step() call runs one step and returns the scene once it is built (and cached), null until then.
+  // The scene is the same as sceneFor's: the steps run the same code in the same order.
+  sceneSteps = function (theme, W, H, hue) {
+    [W, H, hue] = normArgs(W, H, hue);
+    const key = sceneKey(theme, W, H, hue);
+    return () => {
+      if (cache.has(key)) return sceneFor(theme, W, H, hue);
+      let it = building.get(key);
+      if (!it) { it = buildSteps(theme, W, H, hue); building.set(key, it); if (building.size > 3) building.delete(building.keys().next().value); }
+      const r = it.next();
+      if (!r.done) return null;
+      building.delete(key);
+      cache.set(key, r.value);
+      if (cache.size > 8) cache.delete(cache.keys().next().value);
+      return r.value;
+    };
   };
 
   // Copy layer i's runs 1:1 from its plate to g (identity transform), the layer's left edge at device
@@ -957,23 +994,44 @@ function sceneFor() { return null; } // replaced below
   // pixel ratio changes (a zone change), which costs one scaled draw each.
   // Two slots (the scene on screen and the next zone's). Like the plates, a miss inside a frame queues
   // the build for idle time and returns null (that frame draws the fog and vignette scaled).
-  const devSlots = [], devWait = new Set();
+  // The build is a generator (a step for the overlay's bands, the fog, the overlay copy), so the idle
+  // path spreads it over small tasks; `now` runs it to the end (sharing a started build).
+  const devSlots = [], devWork = new Map();
   function atmoDev(scene, d, W, H, now) {
     for (const v of devSlots) if (v.scene === scene && v.d === d && v.W === W && v.H === H) return v;
+    const key = scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue + '|' + d + '|' + W + 'x' + H;
+    let w = devWork.get(key);
+    if (!w || w.scene !== scene) { w = { scene, it: atmoSteps(scene, d, W, H), queued: false }; devWork.set(key, w); }
     if (!now && typeof idleTask === 'function') {
-      const key = scene.theme + '|' + scene.W + 'x' + scene.H + '|' + scene.hue + '|' + d + '|' + W + 'x' + H;
-      if (!devWait.has(key)) { devWait.add(key); idleTask(() => { devWait.delete(key); if (live(scene)) atmoDev(scene, d, W, H, true); }, true); }
+      if (!w.queued) {
+        w.queued = true;
+        const step = () => {
+          if (devWork.get(key) !== w) return;
+          if (!live(scene)) { devWork.delete(key); return; }
+          if (w.it.next().done) devWork.delete(key); else idleTask(step, true);
+        };
+        idleTask(step, true);
+      }
       return null;
     }
+    let r; do r = w.it.next(); while (!r.done);
+    devWork.delete(key);
+    for (const v of devSlots) if (v.scene === scene && v.d === d && v.W === W && v.H === H) return v;
+    return null;
+  }
+  function* atmoSteps(scene, d, W, H) {
     const mk = (src, w, h) => { const c = mkCanvas(Math.round(w * d), Math.round(h * d)), g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(src, 0, 0, c.width, c.height); return c; };
-    const fg = glow(scene.fog.rgb, 0), fog = [];
-    for (let i = 0; i < 4; i++) fog.push(mk(fg, W * (0.7 + 0.15 * i), 18 + i * 6));
-    const ov = mk(scene.light.overlay, W, H), src = scene.light.overlay;
+    const src = scene.light.overlay;
     // where the overlay has any pixel (its middle is clear), found once per scene
     if (scene.light.ovBands === undefined) {
       scene.light.ovBands = null;
       try { const a = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, m = new Uint8Array(src.width * src.height); for (let q = 0; q < m.length; q++) m[q] = a[q * 4 + 3] ? 1 : 0; scene.light.ovBands = bandsOf(m, src.width, src.height, 1).bands; } catch (e) {}
+      yield;
     }
+    const fg = glow(scene.fog.rgb, 0), fog = [];
+    for (let i = 0; i < 4; i++) fog.push(mk(fg, W * (0.7 + 0.15 * i), 18 + i * 6));
+    yield;
+    const ov = mk(src, W, H);
     // the overlay's bands in device px of ov: rows split at the same rounded edges, so bands never overlap
     const fx = ov.width / src.width, fy = ov.height / src.height, ovRuns = [];
     for (const b of scene.light.ovBands || [[0, src.height, 0, src.width]]) {

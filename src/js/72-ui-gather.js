@@ -40,7 +40,9 @@ function goNode(kind, t) {
 }
 // Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
 // the Go button. The node the party works shows as "Here" with a gold frame.
-for (const kind of GATHER_KINDS) {
+// The rows, the pack grid and the trophies (about 75 icons) are built in idle time after boot, one
+// part per task, or all at once when the tab first updates (gatherBuild), not at load.
+function buildNodeRows(kind) {
   const box = $(NODE_BOX[kind]);
   if (kind !== 'wood') box.append(el('div', 'gat-sub', CRAFT_NODES[kind].row)); // Veins / Geodes, Fibre patches / Herb beds
   const list = el('div', 'sec dz-list gat-list'); box.append(list);
@@ -88,20 +90,22 @@ function whereSheet(k, t) {
   }, { label: 'Where to get ' + matName(k, t), small: true });
 }
 const matCells = {};
-for (const k of CRAFT_FAMILIES) {
-  const row = el('div', 'mat-row'); matCells[k] = [];
-  for (let t = 1; t <= 5; t++) {
-    const c = el('button', 'mat'); c.type = 'button';
-    c.setAttribute('aria-label', `${matName(k, t)}: where to get it`);
-    const n = el('span', 'mc', '0');
-    c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
-    c.addEventListener('click', () => whereSheet(k, t));
-    row.append(c); matCells[k].push({ c, n });
+function buildMatGrid() {
+  for (const k of CRAFT_FAMILIES) {
+    const row = el('div', 'mat-row'); matCells[k] = [];
+    for (let t = 1; t <= 5; t++) {
+      const c = el('button', 'mat'); c.type = 'button';
+      c.setAttribute('aria-label', `${matName(k, t)}: where to get it`);
+      const n = el('span', 'mc', '0');
+      c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
+      c.addEventListener('click', () => whereSheet(k, t));
+      row.append(c); matCells[k].push({ c, n });
+    }
+    $('matGrid').append(row);
   }
-  $('matGrid').append(row);
 }
 const trophyCells = [];
-{
+function buildTrophies() {
   const row = el('div', 'mat-row gat-tro');
   CRAFT_TROPHIES.forEach((tr, i) => {
     const c = el('div', 'mat'); c.title = `${tr.n}: from champions and zone bosses (zone ${CRAFT_TROPHY_SRC.firstBossFrom} on).`;
@@ -112,11 +116,19 @@ const trophyCells = [];
   $('matGrid').append(el('div', 'gat-sub', 'Trophies'), row);
   $('matGrid').nextElementSibling.textContent = 'Tap a material to see where to get it. Hide and essence drop from monsters while you fight. Champions and zone bosses leave Trophies.';
 }
+// The parts in page order; each runs once.
+const gatherParts = GATHER_KINDS.map(kind => () => buildNodeRows(kind)).concat(buildMatGrid, buildTrophies);
+let gatherDone = 0;
+function gatherStep() { if (gatherDone < gatherParts.length) gatherParts[gatherDone++](); }
+function gatherBuild() { while (gatherDone < gatherParts.length) gatherStep(); }
+if (typeof idleTask === 'function') for (let i = 0; i < gatherParts.length; i++) idleTask(gatherStep);
+else gatherBuild();
 
 // Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
 // switch calls ui(true), so a view is fresh as soon as it shows).
 const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
 function uiGather() {
+  gatherBuild();
   const view = curView('gat'), nodeView = view !== 'pack';
   if (nodeView) {
     for (const c of skillCards) {

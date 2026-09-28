@@ -58,6 +58,7 @@
     const warn = el('p', 'create-warn', 'This choice is for good. Only a rare Mirror of Embers, dropped by bosses deep in the world, lets you change it.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero class');
     const keys = ORDER.filter(k => C[k]).concat(Object.keys(C).filter(k => !ORDER.includes(k)));
+    const figs = [];
     const btns = keys.map(k => {
       const c = C[k];
       const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k;
@@ -80,9 +81,20 @@
         const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
       });
       cards.append(b);
-      try { drawPreview(cv, k); } catch (e) { console.error('[lanternfall] preview', e); }
+      cv.width = 56; cv.height = 100;
+      figs.push([cv, k]);
       return b;
     });
+    // Each class figure bakes a character (tens of ms on a slow phone): draw them after the first
+    // frame, one per task, in card order, so the screen and the stage show at once.
+    const figQueue = figs.slice(), built = root;
+    const nextFig = () => {
+      if (root !== built || !figQueue.length) return;
+      const [cv, k] = figQueue.shift();
+      try { drawPreview(cv, k); } catch (e) { console.error('[lanternfall] preview', e); }
+      if (figQueue.length) setTimeout(nextFig, 0);
+    };
+    requestAnimationFrame(() => setTimeout(nextFig, 0));
     function select(k) {
       pick = k;
       for (const b of btns) {
