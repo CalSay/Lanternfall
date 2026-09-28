@@ -917,3 +917,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   them on the board), add upkeep (rarity x level, paid daily incl. offline; unpaid = they stop working, never
   leave or lose levels), tents cap from 2. WC1 told: Tents are the housing building (2 at start, ~10 by R5).
 - OWNER confirmed: unpaid gatherers stop working until paid (never leave, never lose levels).
+- OWNER: gold income scales massively (Hearth Lv 2 costs 1M+), so wages must scale with time too. RULE for N1c:
+  upkeep (and hire price) is priced in "minutes of your own fighting gold" at your best zone, like today's
+  hire price foesGold(S.maxZone, k): daily wage = foesGold(S.maxZone, base x rarity x level factor), recomputed
+  as maxZone rises. Target: a full crew costs ~10-20% of a day's fighting gold, so gatherers stay a real
+  choice at every stage. Hire price uses the same measure.
