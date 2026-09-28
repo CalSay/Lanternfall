@@ -556,3 +556,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   3. A "Now gathering" card (node, per hour, held vs cap, time to full, Stop, Back to fight); only the current
      skill with its next-tier bar; the tool card as a one-row chip; compact tap-to-go rows with a held/cap
      bar; "Best for you"; lower tiers folded; copy fixed; Pack becomes the Storehouse view.
+- AC3 merged (committed by the coordinator with the owner's explicit approval: the agent's permission
+  checks stopped responding before its commit). 75-deeds-ui.js (hidden tab `deeds`: Deeds, Tracks, Feats,
+  Looks), the Feat card, title picker, 75-stats-ui.js stats wall with Letters|Scientific, registerTab hidden,
+  registerGoal `reserve: 1` (nudge row), deeds.wear() fix for the Deepwell l_moon id clash. Build + check
+  pass after the merge. Follow-ups: A/B perf; AP6 may overshoot 20-60% now; the "top pair" stats tile guesses
+  S.bond.t keys (F2 is merged: verify); hide has no lifetime counter. AC4 hooks: lookIconURL, looksPreview;
+  AC5: featTrophyURL.
