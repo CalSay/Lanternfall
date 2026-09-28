@@ -290,4 +290,4 @@ const LEG_SETS = {
 
 // ---------------- 7 the Codex page ----------------
 // Counts the 39 powers here; the 4 pinnacle powers score on the pinnacle page (21d PIN_CODEX).
-const LEG_CODEX = { learn: 2, rank: 1, powers: 39, total: 234, title: 'Lorekeeper of Flames', hint: 'Oath elders, level 3+' };
+const LEG_CODEX = { learn: 2, rank: 1, powers: 39, total: 234, title: 'Flamekeeper', hint: 'Oath elders, level 3+' };

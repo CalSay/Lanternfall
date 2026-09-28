@@ -290,23 +290,23 @@ Each Feat gives **100 points**, a **title**, an **accessory** (section 4.3) and 
 
 | # | id | Feat | Needs | About | Rarity | Title | Accessory |
 |---|---|---|---|---|---|---|---|
-| 1 | `f_lamps` | Every Lamp Lit | All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages | 3-6 months | Epic | Keeper of the Hollow | Critter: **Mossling** |
-| 2 | `f_watch` | The Long Watch | 2,000 hours of light (played plus away) | about 3 months daily | Rare | the Long Watch | Lantern: **Watch Lamp** |
-| 3 | `f_company` | The Full Company | All 18 companions at Lanternborn rank | 3-5 months | Epic | Captain of Lanterns | Cape: **Company Cape** |
-| 4 | `f_trades` | Master of Every Trade | All 7 skills at level 200 and all 3 tools at mastery 20 | 2-4 months | Epic | Master of Trades | Hat: **Artisan's Cap** |
+| 1 | `f_lamps` | Every Lamp Lit | All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages | 3-6 months | Epic | Hollowwarden | Critter: **Mossling** |
+| 2 | `f_watch` | The Long Watch | 2,000 hours of light (played plus away) | about 3 months daily | Rare | the Watchful | Lantern: **Watch Lamp** |
+| 3 | `f_company` | The Full Company | All 18 companions at Lanternborn rank | 3-5 months | Epic | the Captain | Cape: **Company Cape** |
+| 4 | `f_trades` | Master of Every Trade | All 7 skills at level 200 and all 3 tools at mastery 20 | 2-4 months | Epic | Masterhand | Hat: **Artisan's Cap** |
 | 5 | `f_deep` | Wellborn | Reach Deepwell floor 75 | skill, months | Legendary | Wellborn | Lantern: **Well Lamp** |
-| 6 | `f_trials` | A Year Below | 52 Trial Seals (any weeks, gaps cost nothing) | a year or more | Legendary | Keeper of the Stair | Hat: **Well-Warden's Hood** |
-| 7 | `f_stamps` | Every Week Counts | 52 Almanac Stamps (any weeks) | a year or more | Legendary | Almanac-Wise | Critter: **Lampmoth** |
+| 6 | `f_trials` | A Year Below | 52 Trial Seals (any weeks, gaps cost nothing) | a year or more | Legendary | Stairwarden | Hat: **Well-Warden's Hood** |
+| 7 | `f_stamps` | Every Week Counts | 52 Almanac Stamps (any weeks) | a year or more | Legendary | Omenwise | Critter: **Lampmoth** |
 | 8 | `f_parry` | The Unmoved | 25,000 parries | months of active play | Epic | the Unmoved | Aura: **Steel Ring** |
 | 9 | `f_hit` | Thunderclap | One hit of 1Sx damage | late Region 2 build | Epic | Thunderhand | Flame: **Storm White** |
-| 10 | `f_gold` | Dragon's Hoard | 1Sp gold earned | 3-5 months | Epic | Wyrm-Rich | Flame: **Coin Gold** |
-| 11 | `f_raid` | Wyrmfall | 100 raid bosses felled | months (shared) | Epic | Wyrmfeller | Cape: **Wyrmscale Mantle** |
-| 12 | `f_champs` | Bane of Champions | 10,000 champions defeated | about 10 months | Legendary | Bane of Champions | Aura: **Ember Halo** |
-| 13 | `f_perfect` | Flawless Planner | 1,000 Perfect expeditions and all 12 keepsakes | 4-8 months | Epic | Flawless Planner | Critter: **Road Fox** |
+| 10 | `f_gold` | Dragon's Hoard | 1Sp gold earned | 3-5 months | Epic | Goldwyrm | Flame: **Coin Gold** |
+| 11 | `f_raid` | Wyrmfall | 100 raid bosses felled | months (shared) | Epic | Wyrmslayer | Cape: **Wyrmscale Mantle** |
+| 12 | `f_champs` | Bane of Champions | 10,000 champions defeated | about 10 months | Legendary | Championbane | Aura: **Ember Halo** |
+| 13 | `f_perfect` | Flawless Planner | 1,000 Perfect expeditions and all 12 keepsakes | 4-8 months | Epic | Pathmaster | Critter: **Road Fox** |
 | 14 | `f_book` | Every Legend Known | All 39 powers in the Lantern Book, 10 of them at rank V | months (needs Oaths) | Legendary | Lorebearer | Lantern: **Book Lantern** |
 | 15 | `f_stars` | Stars in Every Sky | 36 star points spent on each of the 4 class maps | months (4 classes) | Legendary | Starwright | Aura: **Star Ring** |
-| 16 | `f_sworn` | All Sworn | All 21 Bonds at Sworn | months (F2) | Epic | Heart of the Company | Aura: **Bond Light** |
-| 17 | `f_town` | Warden of Hollow's Rest | Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level | 2-3 months (N1, K12) | Rare | Warden of Hollow's Rest | Critter: **Hearth Cat** |
+| 16 | `f_sworn` | All Sworn | All 21 Bonds at Sworn | months (F2) | Epic | Heartsworn | Aura: **Bond Light** |
+| 17 | `f_town` | Warden of Hollow's Rest | Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level | 2-3 months (N1, K12) | Rare | the Steward | Critter: **Hearth Cat** |
 | 18 | `f_stock` | Quartermaster | Every gathered and fought material cell full at Storehouse 8, at the same moment | weeks of planning (H3) | Epic | Quartermaster | Lantern: **Brass Storelamp** |
 | 19 | `f_tides` | Tidewalker | 5,000 tide turns fielded and all 7 Coast elders at Oath 10 | months (R2, O1) | Epic | Tidewalker | Critter: **Lantern Crab** |
 | 20 | `f_oaths` | Oathbound | An Oath Seal at 20+ on all 14 zone types | months (O1) | Legendary | Oathbound | Hat: **Oathkeeper's Circlet** |
@@ -331,21 +331,21 @@ found 3 secrets. 15 points and a title each. No power.
 
 | # | id | Secret | Riddle | How it is detected | Title | Extra |
 |---|---|---|---|---|---|---|
-| 1 | `s_night` | Night Owl | "The fire burns low. You don't." | 10 minutes of fighting between 02:00 and 04:00 device time | the Night Owl | Hat: **Nightcap** |
-| 2 | `s_wisp` | A Wisp Followed You Home | "Hesketh said not to follow them. He never said they couldn't follow you." | 10 minutes in a Wraithmarsh zone between 21:00 and 05:00 | Wisp-Friend | Critter: **Gold Wisp** |
+| 1 | `s_night` | Night Owl | "The fire burns low. You don't." | 10 minutes of fighting between 02:00 and 04:00 device time | Nightowl | Hat: **Nightcap** |
+| 2 | `s_wisp` | A Wisp Followed You Home | "Hesketh said not to follow them. He never said they couldn't follow you." | 10 minutes in a Wraithmarsh zone between 21:00 and 05:00 | Wispfriend | Critter: **Gold Wisp** |
 | 3 | `s_name` | Namesake | "What's in a name? Ask a friend." | Rename your hero to a companion's name | Namesake | |
-| 4 | `s_fire` | Sit a While | "Some evenings you just sit." | The camp scene open for 5 minutes with no taps | Fireside | |
-| 5 | `s_bare` | Bare-Knuckled | "Who needs a sword?" | Beat a zone boss with no hero weapon equipped | Bare-Knuckled | |
-| 6 | `s_alone` | Last Lamp Standing | "Two down. One lamp left." | Beat a zone boss while only the hero stands | Last Lamp Standing | |
+| 4 | `s_fire` | Sit a While | "Some evenings you just sit." | The camp scene open for 5 minutes with no taps | Firesitter | |
+| 5 | `s_bare` | Bare-Knuckled | "Who needs a sword?" | Beat a zone boss with no hero weapon equipped | Barefist | |
+| 6 | `s_alone` | Last Lamp Standing | "Two down. One lamp left." | Beat a zone boss while only the hero stands | Lone Lamp | |
 | 7 | `s_wrong` | All the Wrong Places | "Everyone out of place, and it worked." | Beat a zone boss with all three off their home slots (F1) | Contrarian | |
-| 8 | `s_close` | Just in Time | "The sand was nearly out." | Beat a boss with under 1 second on its timer | Just in Time | |
+| 8 | `s_close` | Just in Time | "The sand was nearly out." | Beat a boss with under 1 second on its timer | Clutch | |
 | 9 | `s_over` | Overkill | "It was already beaten. You made sure." | One hit for 1,000x the foe's max HP | Overkill | |
 | 10 | `s_drum` | Drummer | "Tap like rain on a roof." | 300 taps in one minute | Drummer | |
-| 11 | `s_streak` | Hot Streak | "Ten in a row. Every one a crit." | 10 hero crits in a row | Hot Streak | |
-| 12 | `s_oil` | Last Drop | "Out of the Well with nothing to spare." | Leave a Deepwell run with under 1 s of Oil | Last Drop | |
-| 13 | `s_late` | Fashionably Late | "They waited a week. They didn't mind." | Collect an expedition 7 days after it came back | Fashionably Late | |
-| 14 | `s_rat` | Pack Rat | "Full. Full again. Full again." | Hit a Storehouse cap 100 times (H3) | Pack Rat | |
-| 15 | `s_crowd` | Shoulder to Shoulder | "Four lamps under one wyrm." | Be in the raid while 3 or more others in the room are raiding (reads room presence only) | Shoulder to Shoulder | |
+| 11 | `s_streak` | Hot Streak | "Ten in a row. Every one a crit." | 10 hero crits in a row | the Lucky | |
+| 12 | `s_oil` | Last Drop | "Out of the Well with nothing to spare." | Leave a Deepwell run with under 1 s of Oil | Lastdrop | |
+| 13 | `s_late` | Fashionably Late | "They waited a week. They didn't mind." | Collect an expedition 7 days after it came back | the Tardy | |
+| 14 | `s_rat` | Pack Rat | "Full. Full again. Full again." | Hit a Storehouse cap 100 times (H3) | Packrat | |
+| 15 | `s_crowd` | Shoulder to Shoulder | "Four lamps under one wyrm." | Be in the raid while 3 or more others in the room are raiding (reads room presence only) | Shieldmate | |
 | 16 | `s_dare` | Daredevil | "Seven days, seven Dares." | Take the Dare on every day of one week | Daredevil | |
 
 - Secrets 7 and 14 wait for F1 and H3. `s_crowd` only reads `online.peers` presence; it sends and
@@ -375,29 +375,33 @@ The ladder (automatic, a toast and a "New" dot on the menu):
 
 | Points | Reward | About (normal play) |
 |---|---|---|
-| 100 | Title "Up and Doing" | hour 1-3 |
+| 100 | Title "Greenhorn" | hour 1-3 |
 | 250 | The **Trophy Wall** stage 1 opens at camp (section 6) | day 1 |
 | 500 | Bronze portrait frame | day 2-4 |
-| 1,000 | Title "Deed-Keeper"; the wall stage 2 | week 1-2 |
-| 2,500 | Silver portrait frame; title "Hero of the Road" | month 1-2 |
+| 1,000 | Title "Adventurer"; the wall stage 2 | week 1-2 |
+| 2,500 | Silver portrait frame; title "the Hero" | month 1-2 |
 | 3,500 | The wall stage 3 | month 2-3 |
 | 5,000 | Cape: **Starlit Cape** | month 5-6 |
-| 6,500 | Gold portrait frame; title "Living Legend" | month 8-10 |
-| 8,000 | **Everflame frame** (a thin flame edge); title "Beacon" | a year or more |
+| 6,500 | Gold portrait frame; title "the Legend" | month 8-10 |
+| 8,000 | **Everflame frame** (a thin flame edge); title "the Beacon" | a year or more |
 
 Portrait frames share the header portrait's frame slot with the pinnacle frame (pinnacles.md 7.3).
 The player picks one in the Looks view; the default is the best one owned.
 
 ### 4.2 Titles
 
+**Style (owner, 2026-09-28): a title is what people would call you.** One or two words, at most 14
+characters, read after the hero's name: "Wren the Unmoved", "Wren, Wyrmslayer". No phrases or sentences.
+The same rule covers every title in the game (Codex, Deepwell shop, pinnacles, legendaries).
+
 | Source | Titles |
 |---|---|
-| Groups at Gold (12) | Seasoned Blade, Roadworn, Well-Off, Handy, Journeyman, Homemaker, Good Company, Wayfarer, Stair-Sure, Stargazer, Well-Read, Raider |
-| Groups at Everflame (12) | Terror of the Dark, Walker of the Long Road, Hoard-Keeper, Master Gatherer, Master Crafter, Keeper of the Hearth, Friend of Every Circle, Pathfinder, Deepborn, Lantern-Sage, Keeper of Days, Wyrmbane |
+| Groups at Gold (12) | Bladehand, Roadworn, the Wealthy, Stonehand, Journeyman, Housewright, Goodfellow, Wayfarer, Stairwalker, Stargazer, Bookworm, Raider |
+| Groups at Everflame (12) | Darkbane, Farwalker, Hoardlord, Wildmaster, Forgemaster, Hearthwarden, the Beloved, Pathfinder, Deepborn, the Sage, Daykeeper, Wyrmbane |
 | Feats (21) | section 3 |
 | Secrets (16) | section 3.1 |
-| Chapters (2 now, 1 per later region) | Hollow's Light, Tide-Lit |
-| The points ladder (5) | Up and Doing, Deed-Keeper, Hero of the Road, Living Legend, Beacon |
+| Chapters (2 now, 1 per later region) | Hollowlight, Tidelit |
+| The points ladder (5) | Greenhorn, Adventurer, the Hero, the Legend, the Beacon |
 | **Total** | **12 + 12 + 21 + 16 + 2 + 5 = 68** |
 
 - **One chosen title for the whole game.** The pick stays in `S.codex.title`, the existing "chosen
@@ -658,7 +662,7 @@ still work?
 | 6 | Find the Listener | zone 35 (beat `listener`) | One wraith does not tend the others. It listens. |
 | 7 | Relight the Great Lantern | first kill of the zone 35 boss | While it listens, no lamp in the Hollow will hold. |
 
-Done: title **Hollow's Light**, the **Hollow Cloak**, a pennant on the wall, 25 points.
+Done: title **Hollowlight**, the **Hollow Cloak**, a pennant on the wall, 25 points.
 
 **Chapter 2: Where the Light Went** (the Sunken Coast). Question: where did the light go?
 
@@ -672,7 +676,7 @@ Done: title **Hollow's Light**, the **Hollow Cloak**, a pennant on the wall, 25 
 | 6 | Face the Drowned Keeper | zone 70 reached | He carried the lens down into the sea. Bring it back up. |
 | 7 | Relight the Great Lantern of the Coast | first kill of the zone 70 boss | The lens comes back up. Far inland, something glows red. |
 
-Done: title **Tide-Lit**, the **Tide Cloak**, a pennant, 25 points. Chapter 2 appears only when the
+Done: title **Tidelit**, the **Tide Cloak**, a pennant, 25 points. Chapter 2 appears only when the
 Coast (R2) is in the build.
 
 **Chapter 3** (the Emberwaste) is written by LORE10 after D4, in the same shape: "Can the stolen

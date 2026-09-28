@@ -1736,7 +1736,7 @@ try {
   let bought = 0; for (let i = 0; i < 80; i++) { const id = E('(DW.shop().find(r => r.can) || {}).id'); if (!id) break; if (E(`DW.buy("${id}")`)) bought++; }
   assert(bought > 30 && E('S.deep.lore.breath') === 5 && E('S.deep.pages') === 10 && !E('DW.buy("nope")'), `bought all ${bought} shop rows`);
   assert(E('totalDps()') === dA && E('goldMult()') === gA, 'a full Deep Lore changes nothing outside the Deepwell (dps, gold)');
-  assert(E('codexTitles().some(t => t.id === "dt_walker" && t.got)') && E('codexSetTitle("dt_walker") && codexTitle() === "Well-walker"'), 'bought titles are picked in the Codex');
+  assert(E('codexTitles().some(t => t.id === "dt_walker" && t.got)') && E('codexSetTitle("dt_walker") && codexTitle() === "Wellwalker"'), 'bought titles are picked in the Codex');
   E('codexRefresh(true)');
   assert(!E('codexPage("deepwell").locked') && E('codexPage("deepwell").tiles.filter(t => t.grp === "Deep Lore").every(t => t.got)'), 'the Codex Deepwell page opens and shows the bought Lore pages');
   E('DW.start(false)'); assert(Math.abs(E('DW.run().oil') - Math.min(150, 60 + 50 + E('bonus("deepOil")'))) < 1e-9 && E('DW.run().rr') >= 4 && E('DW.run().ban') === 2 && E('DW.oilMax()') === 150, 'Deep Lore works below: Oil, rerolls, banish, Deep Pockets');

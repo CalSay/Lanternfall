@@ -163,7 +163,7 @@ const DEEP_SHOP = {};
   for (const [id, n, c] of dec) S_(id, 'look', n, c, () => 'Camp decoration', { kind: 'decor' });
   const tr = [['t_motes', 'Mote trail', '#9BE3F0'], ['t_embers', 'Ember trail', '#FF9E3D'], ['t_frost', 'Frost trail', '#DFF6FF']];
   for (const [id, n, col] of tr) S_(id, 'look', n, 600, () => 'A trail behind your hero on the stage', { kind: 'trail', col });
-  const ti = [['dt_walker', 'Well-walker', 100], ['dt_sipper', 'Oil-sipper', 150], ['dt_diver', 'Deep Diver', 250], ['dt_lightless', 'Lightless', 400], ['dt_keeper', 'Keeper of the Well', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
+  const ti = [['dt_walker', 'Wellwalker', 100], ['dt_sipper', 'Oilsipper', 150], ['dt_diver', 'Deepdiver', 250], ['dt_lightless', 'the Lightless', 400], ['dt_keeper', 'Wellwarden', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
   for (const [id, n, c, floor] of ti) S_(id, 'title', n, c, () => 'A title for your hero (pick it in the Codex)', { floor: floor || 0 });
   S_('pages', 'page', 'Deep Lore page', 100, k => `Page ${k} of 10`, { max: 10 });
 }

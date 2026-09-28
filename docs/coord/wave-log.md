@@ -481,3 +481,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   AC2 launched.
 - OWNER: the top achievement tier is EVERFLAME, not Lantern (Bronze, Silver, Gold, Everflame; stars after
   it). achievements.md updated; AC2 told. The accessory slot named "Lantern" and Feat names are unchanged.
+- OWNER: titles must be short epithets "a person would be known by" (1-2 words, <= 14 chars, read after the
+  name: "Wren the Unmoved", "Wren, Wyrmslayer"). Coordinator renamed display text only (ids unchanged, saves
+  safe) in 57c-codex.js (milestones and page titles), 57d-deepwell.js (shop titles), 21c-data-legend.js,
+  21e-stories-pinnacle.js (title list), and every title in achievements.md (style rule in 4.2). AC2 told.
