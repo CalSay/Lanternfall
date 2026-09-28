@@ -254,3 +254,7 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   Follow-up: check.mjs has date-dependent tests (today's Omen changed Reforge prices); pin the Omen for
   the whole check run so a new day never breaks CI. Small targets left: Omen Go (36px), synergy chips
   (36px), the Expeditions section.
+- Onboarding merged (55-onboard.js FEATURES table, isUnlocked(id), `feature` on views/sections; a
+  10-step hint guide; old saves see everything). A new game unlocks something every 1-2 min early; the
+  first recruit lands at about 22 min. The first boss falls at 0:35-1:00, which is zone-1 difficulty (a
+  pacing note, not a bug). "Skip tips" / "Show every tab now" live in the Journal.
