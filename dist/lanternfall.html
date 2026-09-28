@@ -19911,7 +19911,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
-    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? foe.left + foe.w : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -21844,7 +21844,7 @@ function registerSceneTheme(name, def) { SCENE_EXT[name] = def; }
 // pollen) is 63-scenery's particle kinds, static under prefers-reduced-motion.
 //
 // The nodes are drawn live on top (they change): 3-5 nodes of the picked kind and tier in two lanes
-// (the back lane a little higher and dimmer). The worked node is the stage's own foe sprite (62-stage
+// (the back lane a little higher and dimmer), plus one or two further off at half size. The worked node is the stage's own foe sprite (62-stage
 // asks gatherSpot for its place); the rest are drawn here. While S.gProg builds, the worked node
 // shows cracks (rock), a notch (tree) or cuts (plants). A finished gather (the 'harvest' event)
 // leaves it spent (an empty vein, a stump, stubble) and it grows back over REGROW s; the next full
@@ -21856,10 +21856,11 @@ function registerSceneTheme(name, def) { SCENE_EXT[name] = def; }
 //   gatherTheme(kind) -> scene theme       gatherSpot(SW, GY) -> { x, y } the worked node's feet
 //   gatherHeroX(x) -> x                    the hero's x while it walks to its node (x: where it stands)
 //   gatherWalking() -> bool                the hero is walking between nodes
+//   gatherRight(x) -> x                    the worked row's right edge (the cold Hearth's plots stand past it)
 //   gatherDraw(ctx, scene, cam, part, s)   part 'back': piles, shadows and the other nodes (before the
 //                                          worked node); 'front': nodes in front of it, its cracks, the
 //                                          Glint and node lights. s: the stage's foe record (dX, dY, dF)
-let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
+let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight;
 {
   const THEME = { ore: 'gmine', crystal: 'gglade', wood: 'gwoods', fibre: 'gmeadow', herb: 'gmeadow' };
   gatherTheme = kind => THEME[kind] || (skillOf(kind) === 'mine' ? 'gmine' : 'gwoods');
@@ -22034,9 +22035,8 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     for (let i = 0; i < LW / 8; i++) gnd.px(r() * LW, pathBot + 2 + r() * (Ha - pathBot - 3), [fl1, fl2, fl3][i % 3]);
     const stumpM = mat('#6A4A30', 'vol', { wide: 1 }), stumpT = flat('#C8A070', { nl: 0 }), stumpR = flat('#9A7650', { nl: 0 });
     for (const [fx, w] of [[0.38, 7], [0.74, 5], [0.58, 4]]) { const x = Math.round(X(fx)), y = pathBot + 8 + Math.round(r() * 4); gnd.grp(() => gnd.rect(x - (w >> 1), y - 3, w, 4, stumpM)); gnd.rect(x - (w >> 1), y - 4, w, 1, stumpT); gnd.px(x, y - 4, stumpR); }
-    // the woodpile (stakes baked; the logs are drawn live: out.pile)
-    const px = Math.round(X(0.15)), pb = pathBot + 10, stake = mat('#5A4030');
-    gnd.rect(px - 13, pb - 17, 2, 18, stake); gnd.rect(px + 12, pb - 17, 2, 18, stake);
+    // the woodpile (drawn live with its stakes: out.pile; at the cold Hearth it moves aside for the fire)
+    const px = Math.round(X(0.15)), pb = pathBot + 10;
     A.out.pile = { kind: 'logs', x: (px + 0.5) * PX - M, y: pb * PX };
   }
   function fgWoods(A) {
@@ -22160,10 +22160,9 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
   // Where the worked node can stand: the hero stands on its left with the tool's strike reaching
   // NODE_HIT of the way into the node's box (62-stage heroHome, G1; the same fractions), and the hero
   // must stay on the stage (its feet HERO_MIN px in). So the nodes the hero works fill the stage from
-  // there to the right edge; at least MIN_SEEN nodes show, the extra ones in the back lane on the left
-  // (not worked: more of the seam, the grove or the bed).
+  // there to the right edge; smaller ones further off (not worked) make 3-5 in all.
   const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
-  const HERO_MIN = 26, REACH = 66, MIN_SEEN = 3;
+  const HERO_MIN = 26, REACH = 66;
   function heroReach() {
     try {
       const f = charFrames(TOOL_ART.gatherSpec(heroSpec(), toolFor(skillOf(G.kind))));
@@ -22177,38 +22176,54 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
   const ease = q => q < 0 ? 0 : q > 1 ? 1 : q * q * (3 - 2 * q);
   const frames = () => enemyFrames('node:' + G.kind, { tier: G.t });
 
+  let seenT = -1, seenSW = 0, seenGY = 0;
   function ensure(SW, GY) {
+    if (T === seenT && SW === seenSW && GY === seenGY) return;   // called a few times a frame: once is enough
+    seenT = T; seenSW = SW; seenGY = GY;
     const kind = S.node.kind, t = S.node.t;
     // the hero's real reach, once its strike frame is baked (until then an estimate)
     if (!G.reach && kind === G.kind && T > G.reachT + 1) { G.reachT = T; const r = heroReach(); if (r) { G.reach = r; G.key = ''; } }
-    const key = kind + t + '|' + SW + '|' + GY;
+    const cold = kind === 'wood' && typeof hearthCold === 'function' && !!hearthCold();
+    const key = kind + t + '|' + SW + '|' + GY + '|' + cold;
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
     if (!again) { G.reach = 0; G.reachT = -9; }
-    G.key = key; G.kind = kind; G.t = t; G.fam = FAM[kind] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY;
-    G.lift = Math.max(10, Math.min(28, Math.round(GY * 0.075)));
+    G.key = key; G.kind = kind; G.t = t; G.fam = FAM[kind] || 'tree'; G.fr = frames(); G.SW = SW; G.GY = GY; G.cold = cold;
+    // the back lane stands a little behind the path's front edge (not in the air over the scenery)
+    G.lift = Math.max(8, Math.min(12, Math.round(GY * 0.04)));
     const f = G.fr && G.fr.idle0, w = f ? f.c.width : 60, ox = f ? f.ox : 30, rx = w - ox;
-    const xa = Math.round(HERO_MIN + (G.reach || REACH) - w * (NODE_HIT[kind] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), SW - 6 - rx);
+    // at the cold Hearth (63d) the station plots take the stage's right edge: keep it clear
+    // (and the hero stands clear of the fire and Hesketh, at the left)
+    const xa = Math.round((cold ? Math.max(HERO_MIN, SW * 0.3) : HERO_MIN) + (G.reach || REACH) - w * (NODE_HIT[kind] ?? 0.15) + ox), xb = Math.min(Math.round(SW * 0.9), cold ? SW - rx - 30 : Math.round(SW - rx * 0.75));
     const gap = Math.max(24, Math.round(w * 0.42)), nMax = SW < 270 ? 3 : SW < 400 ? 4 : 5;
-    const nw = Math.max(1, Math.min(nMax, Math.floor(Math.max(0, xb - xa) / gap) + 1)), nd = Math.max(0, MIN_SEEN - nw);
+    const nw = xb - xa < 10 ? 1 : Math.max(2, Math.min(nMax, Math.floor((xb - xa) / gap) + 1));   // two at least: the hero walks
+    // Worked nodes: the front and back lanes in turn (the last in front). Then smaller ones further off
+    // (the art at 1x, hazed: young trees, a low outcrop, a small patch), so 3-5 always show: first in the
+    // open ground left of the worked row (behind the hero), then in the row's gaps. Never over the fire.
     const list = [];
-    // extra nodes at the back on the left, then the worked ones, back and front lanes in turn (the last in front)
-    for (let i = 0; i < nd; i++) list.push({ x: Math.max(ox + 4, Math.round(xa - gap * (nd - i) * 0.9)), lane: 0, deco: true });
     for (let i = 0; i < nw; i++) list.push({ x: nw > 1 ? Math.round(xa + (xb - xa) * i / (nw - 1)) : Math.max(xa, xb), lane: (nw - 1 - i) % 2 ? 0 : 1 });
+    const nDeep = Math.max(1, (SW < 270 ? 4 : 5) - nw), spots = [], half = Math.round(w * 0.25), x0 = cold ? Math.round(SW * 0.36) + half : Math.round(half * 0.5);
+    for (let x = x0; x <= xa - Math.round(gap * 1.1); x += Math.max(30, Math.round(w * 0.5))) spots.push(x);
+    for (let i = 1; i < nw; i += 2) if (list[i].x - list[i - 1].x >= w * 0.5) spots.push(Math.round((list[i - 1].x + list[i].x) / 2));
+    if (!spots.length) spots.push(Math.min(SW - half - 4, xb + Math.round(gap * 0.8)));
+    for (let i = Math.min(nDeep, spots.length) - 1; i >= 0; i--) list.unshift({ x: spots[i], lane: 0, deco: true, deep: true });
+    const nd = list.length - nw;
     const old = again && G.nodes.length === list.length ? G.nodes : null;
     G.nodes = list.map((q, i) => {
       const o = old && old[i];
-      return Object.assign(q, { y: GY - (q.lane ? 0 : G.lift), st: o ? o.st : 'full', g: o ? o.g : 0, hits: o ? o.hits : 0, rg: o ? o.rg : REGROW * 2, ph: i * 1.7 });
+      return Object.assign(q, { y: GY - (q.deep ? G.lift + 3 : q.lane ? 0 : G.lift), st: o ? o.st : 'full', g: o ? o.g : 0, hits: o ? o.hits : 0, rg: o ? o.rg : REGROW * 2, ph: i * 1.7 });
     });
     if (!old) {
       G.cur = nd; G.pile = again ? G.pile : 0; G.snap = !again;
       // a node already growing back: the place has been worked before
       if (nw >= 3) { const k = G.nodes.length - 1; G.nodes[k].st = 'gone'; G.nodes[k].g = 0.45; }
+      else if (nd >= 2) { G.nodes[0].st = 'gone'; G.nodes[0].g = 0.55; }
     }
     G.stage = 0;
   }
-  on('sceneReset', () => { G.key = ''; G.kind = ''; G.walk = null; G.snap = true; });
+  on('sceneReset', () => { seenT = -1; G.key = ''; G.kind = ''; G.walk = null; G.snap = true; });
 
+  gatherRight = x => { let r = x; const f = G.fr && G.fr.idle0; if (f) for (const nd of G.nodes) if (!nd.deep) r = Math.max(r, nd.x + f.c.width - f.ox); return r; };
   gatherSpot = (SW, GY) => { ensure(SW, GY); const nd = G.nodes[G.cur]; return nd || { x: Math.round(SW * 0.68), y: GY }; };
 
   // The hero walks from node to node (snaps under reduced motion or when the scene changes).
@@ -22237,8 +22252,8 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     G.pile = Math.min(PILE_MAX[pileKind()] || 6, G.pile + 1);
     if (++nd.hits < cap) { chipFx(nd); return; }
     nd.st = 'gone'; nd.g = 0; nd.hits = 0;
-    // grows back in about the time the other nodes take to work through
-    nd.rg = Math.max(REGROW, Math.min(40, (n - 1) * cap * unitT() * 0.8));
+    // grows back in about half the time the other nodes take to work through
+    nd.rg = Math.max(REGROW, Math.min(30, (n - 1) * cap * unitT() * 0.5));
     spentFx(nd);
     let next = -1;
     for (let k = 1; k < n && next < 0; k++) { const j = (G.cur + k) % n; if (N[j].st === 'full' && !N[j].deco) next = j; }
@@ -22324,7 +22339,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
         }
       }
       g.putImageData(out, 0, 0);
-      sp = { c: up2(c), ox: f.ox, oy: f.oy };
+      sp = { c: up2(c), ox: f.ox, oy: f.oy, art: c, artOx: f.artOx, artOy: f.artOy };
     }
     spentSets.set(fr, sp);
     return sp;
@@ -22384,13 +22399,20 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     if (!d) { d = document.createElement('canvas'); d.width = c.width; d.height = c.height; const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(14,9,24,0.3)'; g.fillRect(0, 0, d.width, d.height); dimmed.set(c, d); }
     return d;
   }
+  // the far-off nodes: the 1x art, darker and hazed
+  const deeped = new WeakMap();
+  function deepOf(c) {
+    let d = deeped.get(c);
+    if (!d) { d = document.createElement('canvas'); d.width = c.width; d.height = c.height; const g = d.getContext('2d'); g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(16,12,28,0.42)'; g.fillRect(0, 0, d.width, d.height); deeped.set(c, d); }
+    return d;
+  }
 
   // ---------------- piles: the cart's load, the woodpile, the basket, the crate ----------------
   const pileCache = new Map();
   function pileSprite(kind, n) {
     const col = kind === 'logs' ? craftTierCol('wood', G.t) : nodeColor(), key = kind + '|' + n + '|' + col;
     let c = pileCache.get(key); if (c) return c;
-    const W = 30, H = 22, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const W = kind === 'logs' ? 32 : 30, H = 22, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const g = cv.getContext('2d');
     const P = (x, y, hex) => { g.fillStyle = hex; g.fillRect(x, y, 1, 1); };
     const shade = (hex, k) => { const v = parseInt(hex.slice(1), 16), f = c2 => Math.max(0, Math.min(255, Math.round(c2 * k))); return `rgb(${f(v >> 16 & 255)},${f(v >> 8 & 255)},${f(v & 255)})`; };
@@ -22398,6 +22420,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     if (kind === 'logs') {
       // log ends stacked in rows of 5, 4, 3, 2, 1 between the stakes
       const ringL = '#E2C08A', ringD = '#B08A58';
+      for (const sx of [cx - 13, cx + 12]) for (let y = H - 18; y < H; y++) { P(sx - 1, y, ink); P(sx, y, y === H - 18 ? ink : '#7A5A3A'); P(sx + 1, y, y === H - 18 ? ink : '#5A4030'); P(sx + 2, y, ink); }
       let k = 0;
       for (let row = 0; row < 5 && k < n; row++) for (let i = 0; i < 5 - row && k < n; i++, k++) {
         const x = cx - 12 + i * 5 + row * 2.5, y = H - 5 - row * 4;
@@ -22456,22 +22479,25 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     const fr = G.fr; if (!fr) return null;
     return !REDUCED && ((T * 1.3 + nd.ph) % 2) >= 1 && ART.ready(fr, 'idle1') ? fr.idle1 : fr.idle0;
   }
+  // a node's image: its frame (the worked row; the back lane dimmed) or the 1x art, hazed (further off)
+  const img = (nd, f) => nd.deep ? { c: deepOf(f.art), ox: f.artOx, oy: f.artOy } : { c: nd.lane === 0 ? dimOf(f.c) : f.c, ox: f.ox, oy: f.oy };
   function drawNode(ctx, nd, cam) {
     const fr = G.fr; if (!fr) return;
-    const x = nd.x - cam, y = nd.y, back = nd.lane === 0;
-    if (nd.st === 'full') { const f = frameOf(nd); ctx.drawImage(back ? dimOf(f.c) : f.c, Math.round(x - f.ox), Math.round(y - f.oy)); return; }
+    const x = nd.x - cam, y = nd.y;
+    const put = (m, a) => { if (a !== undefined) ctx.globalAlpha = a; ctx.drawImage(m.c, Math.round(x - m.ox), Math.round(y - m.oy)); ctx.globalAlpha = 1; };
+    if (nd.st === 'full') { put(img(nd, frameOf(nd))); return; }
     const sp = spentOf(fr), f = fr.idle0, g = nd.g;
     if (G.fam === 'rock') {
-      if (sp) ctx.drawImage(back ? dimOf(sp.c) : sp.c, Math.round(x - sp.ox), Math.round(y - sp.oy));
+      if (sp) put(img(nd, sp));
       // the vein fills back in
       const a = REDUCED ? (g > 0.66 ? 0.66 : g > 0.33 ? 0.33 : 0) : Math.pow(Math.max(0, (g - 0.3) / 0.7), 1.4);
-      if (a > 0.02) { ctx.globalAlpha = a; ctx.drawImage(back ? dimOf(f.c) : f.c, Math.round(x - f.ox), Math.round(y - f.oy)); ctx.globalAlpha = 1; }
+      if (a > 0.02) put(img(nd, f), a);
       return;
     }
     // trees and plants grow from the stump or stubble
     const q = REDUCED ? Math.floor(g * 3) / 3 : g, s = Math.round((0.2 + 0.8 * ease((q - 0.12) / 0.88)) * 16) / 16;
-    if (sp && (q < 0.55 || G.fam === 'plant')) ctx.drawImage(back ? dimOf(sp.c) : sp.c, Math.round(x - sp.ox), Math.round(y - sp.oy));
-    if (q > 0.12) { const c = back ? dimOf(f.c) : f.c; ctx.drawImage(c, Math.round(x - f.ox * s), Math.round(y - f.oy * s), Math.round(c.width * s), Math.round(c.height * s)); }
+    if (sp && (q < 0.55 || G.fam === 'plant')) put(img(nd, sp));
+    if (q > 0.12) { const m = img(nd, f); ctx.drawImage(m.c, Math.round(x - m.ox * s), Math.round(y - m.oy * s), Math.round(m.c.width * s), Math.round(m.c.height * s)); }
   }
   function shadow(ctx, x, y, w, a) {
     ctx.globalAlpha = a; ctx.drawImage(ANIM.glow('0,0,0'), x - w, y - 3, w * 2, 7); ctx.globalAlpha = 1;
@@ -22484,7 +22510,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
       step();
       // shadows under the other nodes
       ctx.imageSmoothingEnabled = true;
-      for (const nd of N) if (nd !== cur) shadow(ctx, nd.x - cam, nd.y, Math.max(12, f0.c.width * 0.36) * (nd.st === 'full' ? 1 : 0.7), nd.lane ? 0.5 : 0.35);
+      for (const nd of N) if (nd !== cur) shadow(ctx, nd.x - cam, nd.y, Math.max(12, f0.c.width * 0.36) * (nd.st === 'full' ? 1 : 0.7) * (nd.deep ? 0.5 : 1), nd.lane ? 0.5 : nd.deep ? 0.3 : 0.35);
       ctx.imageSmoothingEnabled = false;
       for (const nd of N) if (nd !== cur && (nd.lane === 0 || cur.lane === 1)) drawNode(ctx, nd, cam);
       ctx.imageSmoothingEnabled = smooth;
@@ -22495,7 +22521,11 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     if (cur.lane === 0) for (const nd of N) if (nd !== cur && nd.lane === 1) drawNode(ctx, nd, cam);
     // the load: cart, woodpile, basket or crate, in the floor band (the ground layer: parallax 1)
     const pl = scene && scene.ext && scene.ext.pile;
-    if (pl) { const kind = pl.kind, spr = pileSprite(kind, G.pile + (kind === 'logs' ? 2 : 0)); ctx.drawImage(spr, Math.round(pl.x - cam - spr.ox), Math.round(pl.y - spr.oy)); }
+    if (pl) {
+      const kind = pl.kind, spr = pileSprite(kind, G.pile + (kind === 'logs' ? 2 : 0));
+      const x = G.cold ? G.SW - 58 : pl.x, y = G.cold ? pl.y + 10 : pl.y;
+      ctx.drawImage(spr, Math.round(x - cam - spr.ox), Math.round(y - spr.oy));
+    }
     const f = s && s.dF;
     const lp = lifeProg();
     if (f && f.art && lp > 0.05) {
@@ -22521,7 +22551,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw;
     }
     // the other full nodes' own lights (tier glows), two each at most, softer at the back
     for (const nd of N) {
-      if (nd === cur || nd.st !== 'full') continue;
+      if (nd === cur || nd.st !== 'full' || nd.deep) continue;
       const L = f0.lights; if (!L || !L.length) continue;
       const x0 = nd.x - cam - f0.ox, y0 = nd.y - f0.oy;
       for (let i = 0; i < 1; i++) { const l = L[i]; ANIM.lightAt(ctx, l.rgb, x0 + l.x, y0 + l.y, Math.min(Math.max(8, l.size * 3), 20) * 1.3, nd.lane ? 0.26 : 0.18); }
