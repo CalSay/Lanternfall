@@ -303,16 +303,31 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     const r = charRec(k), lv = Math.max(r.lv, Math.floor(partyLevel()));
     return rawValue(k, { lv, rank: Math.max(r.rank, Math.floor((lv - 1) / 25)), wpn: r.wpn });
   }
+  // Stage C (party combat, 59-combat.js): would this field hold the max zone (closed-form estimate)?
+  function holdsWith(f) {
+    if (typeof partyHoldEstimate !== 'function' || !combatOn()) return true;
+    const p = P(), f0 = p.field, c0 = p.cells;
+    p.field = f; placeCells(false);
+    try { return partyHoldEstimate(S.maxZone, { one: true }).holds; } catch (e) { return true; } finally { p.field = f0; p.cells = c0; }
+  }
+  const supMode = () => !combatOn() ? 0 : (typeof COMBAT_TUNE === 'object' && COMBAT_TUNE ? COMBAT_TUNE.fieldSupport : 2);
   function bestThree(by) {
     const score = k => by === 'now' ? rawValue(k, charRec(k)) : potential(k);
     const all = rosterList().filter(k => !onExped(k)).sort((a, b) => score(b) - score(a));
     const tank = all.find(k => R(k).role === 'tank');
-    const f = tank ? [tank] : [];
-    // Stage C: a support keeps the party standing (tank + support + damage, spec 4.13).
-    const sup = combatOn() && all.find(k => R(k).role === 'support');
-    if (sup) f.push(sup);
-    for (const k of all) if (f.length < 3 && !f.includes(k)) f.push(k);
-    return f;
+    const fill = (f, list) => { for (const k of list) if (f.length < 3 && !f.includes(k)) f.push(k); return f; };
+    const mode = supMode();
+    // Before party combat: a tank, then the strongest.
+    if (!mode) return fill(tank ? [tank] : [], all);
+    // Party combat: supports heal and deal no damage. A tank, then the strongest damage dealers; a
+    // support takes the third place when the party could not hold the max zone without one
+    // (fieldSupport 2, the default) or always (1). Spec 4.13: tank + support + damage is the default.
+    const dmg = all.filter(k => R(k).role !== 'support');
+    const sup = all.find(k => R(k).role === 'support');
+    const A = fill(fill(tank ? [tank] : [], dmg), all);
+    if (!sup || A.includes(sup)) return A;
+    const B = fill(fill(tank ? [tank, sup] : [sup], dmg), all);
+    return mode === 1 || !holdsWith(A) ? B : A;
   }
   autoField = by => setField(bestThree(by || 'potential'));
   // A new recruit steps in when the field has room, or when they will out-damage a member
@@ -326,7 +341,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     // takes the weakest damage dealer's place (the party needs a healer more than a third hitter).
     const kind = k => R(k).role === 'tank' ? 't' : R(k).role === 'support' && combatOn() ? 's' : 'd';
     let peers = f.filter(k => kind(k) === kind(id));
-    if (!peers.length && kind(id) === 's') peers = f.filter(k => kind(k) === 'd');
+    if (!peers.length && kind(id) === 's' && (supMode() === 1 || !holdsWith(f))) peers = f.filter(k => kind(k) === 'd');
     if (!peers.length) return;
     if (kind(id) === 's' && peers.every(k => kind(k) === 'd')) { setField(f.map(k => k === peers.sort((a, b) => potential(a) - potential(b))[0] ? id : k)); return; }
     const weakest = peers.sort((a, b) => potential(a) - potential(b))[0];

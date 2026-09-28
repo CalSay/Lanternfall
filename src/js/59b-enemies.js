@@ -146,7 +146,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return false;
   };
   onFoeDeath = (f, src, kind) => {
-    if (f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn') {
+    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn') {
       f.again = true; f.hp = f.max * E.reassemble; f.hit = 0.2;
       return true;
     }

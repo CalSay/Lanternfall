@@ -92,6 +92,20 @@ if (args.evalfile) E((await import('node:fs')).readFileSync(String(args.evalfile
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);
 if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
+// --combat k=v,...: COMBAT_TUNE knobs (59-combat.js); --enemy k=v,...: ENEMY_TUNE (59b-enemies.js).
+// Nested knobs use dots (hp.tank=10). applyKnobs also runs on the forks (T5, T6, T8, T11).
+function applyKnobs(h) {
+  if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
+  if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); h.eval(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
+  if (args.syn !== undefined) h.eval(`SYN_TUNE.today = ${+args.syn}`);
+  for (const [flag, obj] of [['combat', 'COMBAT_TUNE'], ['enemy', 'ENEMY_TUNE']]) if (args[flag]) for (const kv of String(args[flag]).split(',')) { const [k, v] = kv.split('='); h.eval(`${obj}.${k} = ${+v}`); }
+  if (args.eval) h.eval(String(args.eval));
+}
+for (const [flag, obj] of [['combat', 'COMBAT_TUNE'], ['enemy', 'ENEMY_TUNE']]) if (args[flag]) for (const kv of String(args[flag]).split(',')) { const [k, v] = kv.split('='); E(`${obj}.${k} = ${+v}`); }
+// --lineup a,b,c: recruit these characters now (level 1, catching up as usual) and keep them fielded
+// (autoField off). The niche line-ups of spec 4.13 (T12) and the balanced one (T5, T6, T8, T13).
+const lineup = args.lineup ? String(args.lineup).split(',') : null;
+if (lineup) E(`(() => { for (const id of ${JSON.stringify(lineup)}) unlockChar(id, 'sim', true); S.party.autoField = false; setField(${JSON.stringify(lineup)}); })()`);
 
 // Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
 function buyBest() {
@@ -127,7 +141,7 @@ function rosterStep(E) {
   if (args.bounties !== "0") E(`S.bounties.slots.forEach((b, i) => { if (b && b.k && b.have >= b.need) BOUNTY_API.claim(i); else if (b && b.k === 'tap' && ${!active}) BOUNTY_API.reroll(i); })`);
   for (const id of E('ROSTER_KEYS')) if (E(`canRecruit(${JSON.stringify(id)})`)) E(`recruit(${JSON.stringify(id)})`);
   // Morwen: bench supports while the zone 12 boss is next.
-  if (E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("S.party.autoField = false; setField(S.party.field.filter(k => ROSTER[k].role !== 'support'))"); }
+  if (!lineup && E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("S.party.autoField = false; setField(S.party.field.filter(k => ROSTER[k].role !== 'support'))"); }
   else if (rosterStep.benched) { rosterStep.benched = false; E('S.party.autoField = true'); }
   let gold = 0, ess = null;
   for (const id of E('rosterList()')) if (E(`canPromote(${JSON.stringify(id)})`)) E(`promoteChar(${JSON.stringify(id)})`);
@@ -430,6 +444,12 @@ let firstJoin = null;   // first recruit after the class starter (T16)
 fn.on('recruit', ({ id, source }) => { const r = E(`ROSTER[${JSON.stringify(id)}].rarity`); recruits.push(`${id}@${(t / 60).toFixed(0)}m(${source})`); if (source !== 'starter' && firstJoin === null) firstJoin = { t, id }; if (firstRar[r] === undefined) { firstRar[r] = t; firstId[r] = id; } });
 let t11 = null, t11Snap = null;
 let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
+// Party combat (Stage C): wipes (and those before zone 5, T18), the first attempt at each zone boss (T7).
+const wipeAt = [], firstTry = {};
+fn.on('wipe', w => { if (!w.arena) wipeAt.push(t); });
+fn.on('bossFail', ({ zone }) => { if (!(zone in firstTry)) firstTry[zone] = 0; });
+fn.on('zoneClear', ({ zone }) => { if (!(zone in firstTry)) firstTry[zone] = 1; });
+let t2Snap = null;   // the save at 2h (T5, T6, T8 forks)
 const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; if (zone + 1 === 20 && doT11 && !t11Snap) t11Snap = E('JSON.stringify(S)'); });
 const dt = 0.1, total = hours * 3600;
 let t = 0, nextLine = 0;
@@ -451,7 +471,7 @@ function playSecond(sec) {
     if (b && b !== 'station') { craftStats.blocks[b] = (craftStats.blocks[b] || 0) + 1; craftStats.blockMin++; }
   }
   if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
-  if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15')) fn.challenge(); }
+  if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15 && cbBossReady()')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
     if (active) {
       if (k % 5 === 0) fn.playerTap({ x: 0.66, y: 0.5 });
@@ -465,6 +485,9 @@ function playSecond(sec) {
 if (days) { runDays(); process.exit(0); }
 for (let sec = 0; sec < total; sec++) {
   if (sec >= nextLine && args.debug && cls) console.log('   craft', E('JSON.stringify(S.equip)'), [1, 2, 3, 4, 5].map(t => JSON.stringify(fn.canCraft(classKind('weapon'), t).why + ' / ' + fn.canCraft('weapon', t).why)).join(' '), E('JSON.stringify(S.mats)'));
+  if (sec === 7200 && (args.t5 || args.t6 || args.t8)) t2Snap = E('JSON.stringify(S)');
+  // --snap MIN:path writes the save at that minute (debugging).
+  if (args.snap && sec === Math.round(parseFloat(String(args.snap).split(':')[0]) * 60)) (await import('node:fs')).writeFileSync(String(args.snap).split(':')[1], E('JSON.stringify(S)'));
   if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("[S.blade, S.swift, S.fortune, S.L].join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
   playSecond(sec);
 }
@@ -523,6 +546,47 @@ if (cls && policy === "mixed") {
   console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
 }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
+// Party combat report (T7, T13, T14, T18) and the forks at 2h (T5, T6, T8).
+if (E('partyCombatOn()')) {
+  const st = E('CB_STATS'), ft = Object.values(firstTry), z5 = reached[5];
+  const pct = x => (100 * x).toFixed(0) + '%';
+  console.log(`combat: wipes ${wipeAt.length} (${(wipeAt.length / (total / 3600)).toFixed(2)}/h), before zone 5 ${wipeAt.filter(x => z5 === undefined || x < z5).length} | toZone5=${z5 !== undefined ? (z5 / 60).toFixed(1) + 'm' : '-'} | T13 tank share ${pct(st.tankSecs / Math.max(1e-9, st.enemySecs))} | T14 companion damage ${pct(st.compDmg / Math.max(1e-9, st.compDmg + st.heroDmg))} | T7 first boss tries ${ft.filter(x => x).length}/${ft.length} (${pct(ft.filter(x => x).length / Math.max(1, ft.length))}) | kos ${st.kos} telegraphs ${st.tele} parries ${st.parries} heavy hits ${st.hitByHeavy} abilities ${st.abilities} pushes ${st.pushes}`);
+  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set('lanternfall.save.v1', snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
+  if (t2Snap && args.t5) {
+    // T5: an hour of farming at maxZone - 2 with the same field (auto off): wipes.
+    const h = fork(t2Snap, 5), w = [];
+    h.fn.on('wipe', x => { if (!x.arena) w.push(x); });
+    h.eval('S.auto = false; S.party.autoField = false; S.activity = "fight"; setZone(Math.max(1, S.maxZone - 2))');
+    for (let i = 0; i < 36000; i++) h.fn.tick(0.1);
+    console.log(`T5 farming zone ${h.eval('S.maxZone') - 2} for 1h: ${w.length} wipes (want 0) | ${h.eval('cbDebug()')}`);
+  }
+  if (t2Snap && args.t8) {
+    // T8: the closed-form estimate (live rate, before the away share) vs an hour of live fighting at
+    // the zone the estimate picks. XP is off in the fork so both see the same party.
+    const h = fork(t2Snap, 8);
+    h.eval('addBonus("masteryMult", () => -1); addModifier("compXp", () => 0); addModifier("xp", () => 0); S.auto = false; S.party.autoField = false; S.activity = "fight"');
+    const z8 = h.eval('partyHoldEstimate(S.maxZone).zone'); h.eval(`setZone(${z8})`);
+    const est = h.eval('(() => { const e = partyHoldEstimate(S.zone, { one: true }); return { zone: e.zone, gps: e.goldPerSec, pps: e.packsPerSec }; })()');
+    h.eval(`setZone(${est.zone})`);
+    let gold = 0, packs = 0; h.fn.on('kill', ({ gold: gg, mob }) => { if (!mob.boss) { gold += gg; packs++; } });
+    for (let i = 0; i < 36000; i++) h.fn.tick(0.1);
+    if (args.debug) console.log("   T8 gold/pack est", fmt(est.gps / est.pps), "live", fmt(gold / packs), "mobGold", fmt(h.eval("mobGold(S.zone)")), "goldMult", h.eval("goldMult()").toFixed(2));
+    console.log(`T8 offline estimate vs 1h live at zone ${est.zone}: estimate ${fmt(est.gps * 3600)} gold, live ${fmt(gold)} (ratio ${(est.gps * 3600 / Math.max(1, gold)).toFixed(2)}, want 0.85-1.15; packs ${Math.round(est.pps * 3600)} vs ${packs}) | ${h.eval('cbDebug()')}`);
+  }
+  if (t2Snap && args.t6) {
+    // T6: the offline holdable zone (highest zone that holds, up to maxZone + 20) of the field vs the
+    // same field without its tank or its support (swapped for another damage dealer at the same level).
+    const h = fork(t2Snap, 6);
+    const hold = () => h.eval('(() => { let b = 0; for (let z = 1; z <= S.maxZone + 20; z++) if (partyHoldEstimate(z, { one: true }).holds) b = z; return b; })()');
+    const swap = (role, to) => h.eval(`(() => { const f = S.party.field.slice(), i = f.findIndex(k => ROSTER[k].role === ${JSON.stringify(role)}); if (i < 0) return null; const r = charRec(f[i]); if (!isRecruited(${JSON.stringify(to)})) unlockChar(${JSON.stringify(to)}, 'sim', true); Object.assign(charRec(${JSON.stringify(to)}), { lv: r.lv, rank: r.rank }); f[i] = ${JSON.stringify(to)}; setField(f); return f.join(); })()`);
+    const f0 = h.eval('S.party.field.slice()'), base = hold();
+    const damager = h.eval(`['kestrel', 'bram', 'isolde', 'pip', 'wren'].find(k => !S.party.field.includes(k))`);
+    const noTank = swap('tank', damager), zt = hold();
+    h.eval(`setField(${JSON.stringify(f0)})`);
+    const noSup = swap('support', damager), zs = hold();
+    console.log(`T6 holdable zone: ${f0.join()} ${base}, no tank (${noTank}) ${zt} (${base - zt} lower), no support (${noSup}) ${zs} (${base - zs} lower); want 2-4 lower`);
+  }
+}
 if (args.debug) console.log(E('JSON.stringify(rosterList().map(k => [k, promoteCost(k), canPromote(k)]))'), E('JSON.stringify(S.mats.ess)'), E('S.gold'));
 
 // ================= --days N: normal play over days =================
@@ -651,7 +715,7 @@ function runDays() {
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 45);
   // T3 averages three seeds (one seed swings a class by +-10%); the rest read the first seed.
@@ -661,6 +725,16 @@ async function runTargets() {
     Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass]))),
     Promise.all([1, 2].flatMap(k => classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...passNoSeed, '--seed', String(seed0 + k)]))))
   ]);
+  // Party combat (Stage C): the line-ups of spec 4.13 (T12; the balanced one also runs T5, T7, T8, T13),
+  // a balanced Lanternmage party for T6 (its tank and support can be swapped out), and active vs idle (T4).
+  const L = (c, ids, ...more) => run(['--policy', 'mixed', '--hours', '4', '--class', c, '--lineup', ids, '--every', '600', ...more, ...pass]);
+  const combatRuns = await Promise.all([
+    L('warden', 'hesketh,wren,pip', '--t5', '1', '--t8', '1'), L('lightkeeper', 'tobin,hesketh,elowen'), L('warden', 'wren,kestrel,isolde'), L('lanternmage', 'aldric,pip,oriel'),
+    L('lanternmage', 'tobin,hesketh,wren', '--t6', '1'),
+    run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', ...pass]),
+    run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', '--active', '1', ...pass])
+  ]);
+  const [bal, attr, glass, cast, lmBal, idle4, active4] = combatRuns;
   const num = (s, re) => { const m = s.match(re); return m ? +m[1] : NaN; };
   const ok = b => b ? 'PASS' : 'FAIL';
   const inR = (v, [a, b]) => v >= a && v <= b;
@@ -695,6 +769,33 @@ async function runTargets() {
   res.push(['INFO', 'P3 Region 3 boss (needs Region 3 power: ranks past 7, tier 6)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${!Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
   res.push([ok(js.every(j => j.toR2.gapCi <= P.emptyRun)), `P4 before the Region 2 boss: <= ${P.emptyRun} empty check-ins in a row`, classes.map((c, i) => `${c} ${js[i].toR2.gapCi} (longest ${Math.round(js[i].toR2.gapAct / 60)} active min)`).join(', ')]);
   res.push(['INFO', 'C1 Camp: first build 10-20 min after install, full camp over several weeks', classes.map((c, i) => { const j = js[i]; const at = d => j.campRows[d - 1] !== undefined ? j.campRows[d - 1] : '-'; return `${c} first ${j.campFirst ? j.campFirst.min.toFixed(0) + 'm ' + j.campFirst.id : '-'}, d7 ${at(7)}/${j.campMax}, d14 ${at(14)}, d30 ${at(30)}, full ${j.campFull ? 'day ' + j.campFull : '-'}`; }).join('; ')]);
+  // ---- party combat targets (docs/design/party-and-classes.md 9) ----
+  const z20 = o => num(o, /toZone20=([\d.]+)m/);
+  const t4i = z20(idle4), t4a = z20(active4), faster = 1 - t4a / t4i;
+  res.push([ok(inR(faster, [0.2, 0.35])), 'T4 active vs idle (warden, time to zone 20): active 20-35% faster', `idle ${f0(t4i)}m, active ${f0(t4a)}m (${Number.isFinite(faster) ? Math.round(100 * faster) + '% faster' : '-'})`]);
+  const t5 = num(bal, /T5 farming zone \d+ for 1h: (\d+) wipes/);
+  res.push([ok(t5 === 0), 'T5 wipes per hour farming at maxZone - 2, balanced line-up (Warden, Hesketh, Wren, Pip): 0', (bal.match(/T5 [^|]*/) || ['-'])[0].trim()]);
+  const t6t = num(lmBal, /no tank \([^)]*\) \d+ \((-?\d+) lower\)/), t6s = num(lmBal, /no support \([^)]*\) \d+ \((-?\d+) lower\)/);
+  res.push([ok(inR(t6t, [2, 4]) && inR(t6s, [2, 4])), 'T6 offline holdable zone: no tank / no support vs balanced (Lanternmage, Tobin, Hesketh, Wren): 2-4 lower', (lmBal.match(/T6 holdable zone: (.*); want/) || [, '-'])[1]]);
+  const t7 = num(bal, /T7 first boss tries \d+\/\d+ \((\d+)%\)/);
+  res.push([ok(inR(t7, [40, 70])), 'T7 first boss attempt success, idle, balanced line-up: 40-70%', (bal.match(/T7 first boss tries [^|]*/) || ['-'])[0].trim()]);
+  const t8 = num(bal, /T8 [^(]*\(ratio ([\d.]+)/);
+  res.push([ok(inR(t8, [0.85, 1.15])), 'T8 offline estimate (live rate, before the away share) vs 1h of simulated fighting (gold): within 15%', (bal.match(/T8 offline estimate vs 1h live at zone \d+: [^|]*/) || ['-'])[0].trim()]);
+  {
+    const fs = await import('node:fs'), path = await import('node:path'), { memoryStorage } = await import('./lib/core.mjs');
+    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ 'lanternfall.save.v1': fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
+    res.push([ok(t9.every(([, r]) => inR(r, [1, 1.3]))), 'T9 migration of both fixtures: field damage vs old compDps() in 1.00-1.30', t9.map(([f, r]) => `${f} ${r.toFixed(2)}`).join(', ')]);
+  }
+  const t11 = num(cont[0], /T11 \w+ L1 -> L\d+ \(target [\d.]+\) in ([\d.]+)m/);
+  res.push([ok(inR(t11, [5, 10])), 'T11 a level-1 recruit fielded at zone 20 reaches party level - 5 in 5-10 min', (cont[0].match(/T11 (.*) \(want/) || [, '-'])[1]]);
+  const t12 = [attr, glass, cast].map(o => z20(o) / z20(bal)), t12n = ['attrition (Lightkeeper, Tobin, Hesketh, Elowen)', 'glass cannon (Warden, Wren, Kestrel, Isolde)', 'caster (Lanternmage, Aldric, Pip, Oriel)'];
+  res.push([ok(t12.every(v => v <= 1.5)), 'T12 each niche line-up reaches zone 20 within 1.5x of balanced', `balanced ${f0(z20(bal))}m; ` + t12n.map((n, i) => `${n} ${f0(z20([attr, glass, cast][i]))}m (${Number.isFinite(t12[i]) ? t12[i].toFixed(2) : '-'})`).join(', ')]);
+  const t13 = num(bal, /T13 tank share (\d+)%/);
+  res.push([ok(t13 >= 85), 'T13 the tank holds aggro (enemy-seconds on a tank), balanced line-up: >= 85%', `${t13}%`]);
+  const t14 = num(cont[3], /T14 companion damage (\d+)%/);
+  res.push([ok(t14 >= 90 && res[2][0] === 'PASS'), 'T14 Lightkeeper-led party: companions deal >= 90% of the damage, and T3 passes', `${t14}%`]);
+  const t18 = cont.map(o => [num(o, /toZone5=([\d.]+)m/), num(o, /before zone 5 (\d+)/)]);
+  res.push([ok(t18.every(([m, w]) => inR(m, [6, 12]) && w === 0)), 'T18 each class with its starter, idle: zone 5 in 6-12 min, no wipes', classes.map((c, i) => `${c} ${t18[i][0]}m ${t18[i][1]} wipes`).join(', ')]);
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
   console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} targets pass`);
   for (const [i, c] of classes.entries()) console.log(`curve (${c}): ` + js[i].rows.filter(r => r.day <= 10 || r.day % 5 === 0).map(r => `d${r.day} ${r.zone}`).join(' '));
@@ -704,5 +805,5 @@ async function runTargets() {
     const rj = j.rec;
     console.log(`  ${c.padEnd(11)} ${f0(tJoin[i])}m ${id(/T16 first recruit [\d.]+m \((\w+)\)/)} | ${f1(tRare[i] / 60)}h ${id(/first Rare [\d.]+[mh] \((\w+)\)/)} | day ${rj.epic ? rj.epic.day.toFixed(1) + ' ' + rj.epic.id : '-'} | day ${rj.legendary ? rj.legendary.day.toFixed(1) + ' ' + rj.legendary.id : '-'}`);
   }
-  if (cont.concat(dys).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
+  if (cont.concat(dys, combatRuns).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
 }

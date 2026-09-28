@@ -206,6 +206,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
 {
   const T = {
     on: 1,                                              // 0 turns every effect off (sim comparisons)
+    real: 0,                                            // Stage C: 1 = Mark and Cleave as real hits in party combat; 0 keeps the averages (pace-neutral: a mark on a third-of-a-foe dies with it)
     today: 1,                                           // (BAL1, was 0.1) share of each bonus that applies today: full, so every text is the real number
     commonCause: 0.25, bond: 0.5, bondLv: 25,
     abShare: 0.2, aoeEff: 0.5, lowUp: 0.5, cdMax: 0.5, otherCritX: 2,
@@ -325,7 +326,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   const FX = {
     wren: {
       // Stage C: the mark is real (59-combat.js: the marked foe takes +20% from strikers and loses its armour).
-      Marked: (c, a) => { if (!combatOn()) a.role('striker', 1 + T.marked * markUp(c)); },
+      Marked: (c, a) => { if (!realFx()) a.role('striker', 1 + T.marked * markUp(c)); },
       Echo: (c, a, id) => a.comp(id, 1 + markUp(c) * ROLE_STATS.striker.crit * T.echo / (1 + ROLE_STATS.striker.crit * (ROLE_STATS.striker.critX - 1))),
       'Aimed Shot': (c, a, id) => a.ab(id, T.aoeEff)
     },
@@ -335,7 +336,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
     },
     bram: {
       // Stage C: real hits on a second front-row foe (59-combat.js).
-      Cleave: (c, a, id) => { if (!combatOn()) a.comp(id, 1 + T.cleave * T.aoeEff); },
+      Cleave: (c, a, id) => { if (!realFx()) a.comp(id, 1 + T.cleave * T.aoeEff); },
       'Felling Blow': (c, a, id) => a.ab(id, T.aoeEff)
     },
     aldric: { 'Shield Bash': (c, a, id) => a.ab(id, T.shieldBash * T.aoeEff) },
@@ -403,7 +404,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
         a.ab('isolde', (execVal(Math.min(1, th0 + T.duskExec * s)) - execVal(th0)) / execVal(T.execTh));
       }
     },
-    hunting: (c, a, s) => { if (!combatOn()) a.comp('bram', 1 + markUp(c) * T.cleave * T.aoeEff * s); },
+    hunting: (c, a, s) => { if (!realFx()) a.comp('bram', 1 + markUp(c) * T.cleave * T.aoeEff * s); },
     waxkindle: (c, a, s) => a.comp('pip', 1 + T.waxPip * s),
     oldenemies: (c, a, s) => { a.comp('corvin', 1 + T.oldEnemies * s); a.comp('aldric', 1 + T.oldEnemies * s); },
     wayfarers: (c, a, s) => { a.compXp *= 1 + T.wayXp * s; a.cdAll(T.wayCd * s); }
@@ -452,7 +453,7 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
     const p = P(), f = p && p.field;
     let lvs = '';
     if (f) for (const k of f) lvs += lvOf(k) + ',';
-    const co = combatOn();
+    const co = combatOn() + ':' + T.real;
     if (cache && cache.S === S && cache.f === f && cache.cells === p.cells && cache.cls === p.cls && cache.lvs === lvs && cache.co === co) return cache.v;
     cache = { S, f, cells: p.cells, cls: p.cls, lvs, co, v: evaluate() };
     return cache.v;
@@ -461,6 +462,8 @@ let SYN_TUNE, activeSynergies, synergyStatus, charTraits, synergyMods;
   // Stage C: party combat (59-combat.js) runs the 'C' effects for real, so they are live too.
   const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
   const waits = p => p.stage === 'C' && !combatOn();
+  // real: 1 = Mark and Cleave are real hits in party combat (59-combat.js); 0 keeps the averages.
+  const realFx = () => combatOn() && !!T.real;
 
   // One companion's multiplier: flat bonuses x crit x ability share (supports have no damage ability).
   function charMult(id) {

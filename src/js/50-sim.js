@@ -180,13 +180,13 @@ function tick(dt) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
       if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()))) { emit('lunge'); heroSwing(heroAtk(), false); }
     }
-    if (tg === 'mob' && mob && mob.boss && !mob.dead && !arena) {
+    if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
       bossTime -= dt;
       if (bossTime <= 0) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
     if (mob && mob.dead && !pc) mob.dead += dt;
     if (mob && !pc) mob.born += dt;
-    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (!arena && S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
+    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (!arena && S.auto && bossReady() && totalDps() > failDps * 1.15 && cbBossReady()) fightBoss = true; spawn(); } }
     if (!mob) spawn();
     if (mob && mob.hit > 0) mob.hit -= dt;
   }
