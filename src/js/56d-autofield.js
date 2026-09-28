@@ -28,7 +28,8 @@
 // When the party changes on its own (spec 5.4): autoPlan(reason) runs on events only (recruit,
 // promotion, drill, every 5 levels of a fielded member, a new zone, a fall-back, a failed boss, an
 // expedition leaving or coming back, a class change, a pin change, and "stuck": stuckT seconds of
-// fighting with no kill and a member down, which also weighs a tank as after a boss knock-out). An automatic change needs a
+// fighting with no kill and a member knocked out in that time (F5: members get up mid-pack now), which also weighs a tank
+// as after a boss knock-out). An automatic change needs a
 // gain of FORM_TUNE.hyst (6%) and FORM_TUNE.dwell (300 s of game time) since the last one; ties
 // keep the current party; no return within flipT (10 min), and none for badT (30 min) to a line-up
 // the packs knocked out. At once: an empty place someone can fill, a pinned companion off the
@@ -77,6 +78,9 @@
 
 // var: 56-roster (earlier in the load) asks for autoPlan and bestLineup by typeof.
 var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, autoPlanInfo;
+// F5: while a 'potential' measurement lifts levels, { id: charPow at the real level } (59-combat reads it
+// for the hero's HP); null otherwise.
+var afRealPow = null;
 
 {
   const T = {
@@ -243,14 +247,17 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
   // 'potential': levels once caught up to the party level and promoted to match (as 56-roster).
   function withLevels(by, ids, fn) {
     if (by !== 'potential') return fn();
-    const pl = Math.floor(partyLevel()), saved = [];
+    const pl = Math.floor(partyLevel()), saved = [], real = {};
     for (const k of ids) {
       const r = charRec(k); if (!r) continue;
       const lv = Math.max(r.lv, pl);
-      saved.push([r, r.lv, r.rank]);
+      saved.push([r, r.lv, r.rank]); real[k] = charPow(k);
       r.rank = Math.max(r.rank, Math.min(7, Math.floor((lv - 1) / 25))); r.lv = Math.min(lv, levelCap(r.rank));
     }
-    try { return fn(); } finally { for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
+    // F5: the hold estimate gives the hero its HP at the companions' real power (59-combat readPartyP):
+    // companions catch up in minutes, the hero's HP would only follow them
+    const prev = afRealPow; afRealPow = real;
+    try { return fn(); } finally { afRealPow = prev; for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
   }
   const value = k => charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : ROLE_STATS[R(k).role].dps * (1 + (ROLE_STATS[R(k).role].crit || 0) * ((ROLE_STATS[R(k).role].critX || 1) - 1)));
   const pinsOf = (o, pass) => {
@@ -542,15 +549,19 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
   // Stuck: the party fights on with members down and kills nothing (the hero outlasts the pack but
   // cannot finish it). The fight showed the line-up does not hold here: plan now, with a tank weighed
   // as after a boss knock-out.
-  let sinceKill = 0;
-  on('kill', () => { sinceKill = 0; });
-  const anyDown = () => typeof cbUnitHp === 'function' && curField().some(k => { const h = cbUnitHp(k); return !!(h && h.down); });
+  // F5: members now get up mid-pack (59-combat getUp), so "a member down" means down at any time since
+  // the last kill, not only at the moment the timer runs out.
+  let sinceKill = 0, downSeen = false;
+  on('kill', () => { sinceKill = 0; downSeen = false; });
+  on('unitDown', () => { downSeen = true; });
+  on('wipe', () => { sinceKill = 0; downSeen = false; });
+  const anyDown = () => downSeen || (typeof cbUnitHp === 'function' && curField().some(k => { const h = cbUnitHp(k); return !!(h && h.down); }));
   onTick(dt => {
     // (the dwell clock and boss state are not tied to the S object: tools swap S in and out to try things)
     AP.clock += dt;
     if (S.activity === 'fight' && combatOn() && !arena && P() && P().autoField) {
       sinceKill += dt;
-      if (sinceKill >= T.stuckT) { sinceKill = 0; if (anyDown()) { wipeZone = S.zone; stuckZone = S.zone; due('stuck'); AP.checked = false; } }
+      if (sinceKill >= T.stuckT) { sinceKill = 0; if (anyDown()) { wipeZone = S.zone; stuckZone = S.zone; due('stuck'); AP.checked = false; } downSeen = false; }
     } else sinceKill = 0;
     if (!AP.pending || AP.job) return;
     if (AP.checked && (AP.clock - AP.lastAt < F('dwell') || AP.clock < AP.flipHold)) return;   // looked already: wait out the dwell

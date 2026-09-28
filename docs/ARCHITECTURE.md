@@ -255,9 +255,9 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `bondLevel` / `bondStory` | `{ id, lv, prev, quiet, story: 0 \| 1 \| 2, sworn }` (56f: a Bond reached a level; quiet for seeds and away) / `{ id, i }` (a Bond story read) |
 | `packSpawn` | `{ foes }` (59-combat: a new pack, or a boss and its adds; `mob` is the foe the stage shows) |
 | `unitHit` / `unitHeal` | `{ key, amount, kind, foe, blocked, shield }` / `{ key, amount, shield }` (party member hit or healed; kind hit, ranged, heavy, cloud, slam, dive, poison, burn) |
-| `unitDown` / `unitUp` / `unitAbility` | `{ key }` / `{ key, hp }` / `{ key, id }` (knocked out; stands up between packs or after a wipe; a companion's signature ability) |
+| `unitDown` / `unitUp` / `unitAbility` | `{ key }` / `{ key, hp }` / `{ key, id }` (knocked out; stands up between packs, after `COMBAT_TUNE.getUp` s mid-pack (F5; not in boss fights or the Deepwell) or after a wipe; a companion's signature ability) |
 | `foeDown` | `{ mob, src }` (one foe of the pack died; `kill` fires once per pack) |
-| `wipe` | `{ zone, to, boss, arena }` (every member down: retreat one zone, a failed boss attempt, or a Deepwell pause) |
+| `wipe` | `{ zone, to, boss, arena, stall }` (every member down: retreat one zone, a failed boss attempt, or a Deepwell pause; `stall` (F5): a pack not finished in `COMBAT_TUNE.stallT` s, the same retreat) |
 | `telegraphStart` / `telegraphResolve` | `{ kind, dur, target, foe }` / `{ kind, result, by }` (59b: boss wind-ups; kind heavy, cloud, dive, heal; result parry, dodge, hit, interrupt, heal) |
 | `hearthLit` | `{ quiet }` (55-hearth: a cold save's fire is lit; `campOpen { quiet: false }` fires first) |
 | `unlock` / `onboardStep` | `{ id, tab, view, quiet }` (a feature opened; id `'*'` = all) / `{ id }` (a guide step done), 55-onboard |

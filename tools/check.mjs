@@ -1394,7 +1394,9 @@ try {
     const away = fresh(31); setup(away, kind); const b = away.eval(`S.mats.${kind}[1]`); away.fn.awayGains(3600); const awayN = away.eval(`S.mats.${kind}[1]`) - b;
     assert(Math.abs(awayN / liveN - 1) <= 0.15, `offline ${kind} 1h within 15% of live (${awayN} vs ${liveN})`);
   }
-  const fsetup = h => h.eval('PACE.farmSecs = 1e9; S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
+  // F5: a hero who holds zone 4 (a lone level-1 hero wiped ~30 times an hour there, so ~33 kills made the rate noise;
+  // seed 43 failed before F5 too)
+  const fsetup = h => h.eval('S.blade = 25; PACE.farmSecs = 1e9; S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
   const live = fresh(41); fsetup(live); const lk = live.eval('S.totalKills'); run(3600, live);
   const liveRate = live.eval('S.mats.hide[0]') / (live.eval('S.totalKills') - lk);
   const away = fresh(41); fsetup(away); const ak = away.eval('S.totalKills'); const r = away.fn.awayGains(3600);
@@ -4241,4 +4243,81 @@ try {
 } catch (e) { fail('store crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
+// ---- F5: formation follow-ups (party level of 2, bench XP, no combat soft-lock, the hero's real HP in the hold estimate) ----
+console.log('formation follow-ups');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
+  // 1. party level = the top 2 (the field), the bench keeps up, and the planner's potential values recruits
+  {
+    const g = loadCore({ seed: 71 }), E = s => g.eval(s);
+    E('chooseClass("lanternmage")');
+    E('["tobin", "wren", "kestrel", "oriel"].forEach(k => unlockChar(k, "test", true)); ["tobin", "wren"].forEach(k => { charRec(k).lv = 200; charRec(k).rank = 7; }); S.party.autoField = false; setField(["tobin", "wren"]); S.auto = false');
+    assert(E('partyLevel()') === 200, `partyLevel() averages the top ${E('ROSTER_TUNE.fieldMax')} companions (the field), not 3: ${E('partyLevel()')} with two at 200 and two recruits at 1`);
+    const pot = JSON.parse(E('JSON.stringify(bestLineup({ by: "potential", zone: 70 }))'));
+    assert(pot && pot.field.some(k => k === 'kestrel' || k === 'oriel'), `the planner's potential fields a recruit over a level-200 Common pair (${pot && pot.field.join(', ')})`);
+    // XP follows time spent fighting (killWorth), so the field fights at a zone it holds, not one it one-shots
+    E('["tobin", "wren"].forEach(k => { charRec(k).lv = 40; charRec(k).rank = 1; }); S.maxZone = 60; S.maxZone = (() => { let b = 1; for (let z = 1; z <= 60; z++) if (partyHoldEstimate(z, { one: true }).holds) b = z; return b; })(); setActivity("fight"); setZone(S.maxZone)');
+    let loud = 0; g.fn.on('charLevel', e => { if (!e.quiet && (e.id === 'kestrel' || e.id === 'oriel')) loud++; });
+    const f0 = E('charRec("tobin").lv');
+    secs(g, 120);
+    const kl = E('charRec("kestrel").lv'), ol = E('charRec("oriel").lv');
+    assert(kl > 1 && ol > 1 && !loud && !g.errors.length && E('S.party.field.join()') === 'tobin,wren',
+      `benched companions earn ${E('ROSTER_TUNE.benchXp') * 100}% of the kill XP, quietly: Kestrel L${kl}, Oriel L${ol} after 2 min on the bench at zone ${E('S.zone')} (Tobin L${f0} -> L${E('charRec("tobin").lv')})` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 2. no soft-lock: a knocked-out companion gets up mid-pack; a pack nobody can finish counts as a wipe
+  {
+    const g = loadCore({ seed: 72 }), E = s => g.eval(s);
+    E('almanac.force("none"); chooseClass("lightkeeper")');
+    E('["wren", "pip"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 40; charRec(k).rank = 1; }); S.party.autoField = false; setField(["wren", "pip"]); S.auto = false; S.L = 40; S.blade = 40');
+    E('S.maxZone = 7; setActivity("fight"); setZone(7)');   // below zone 8: nobody joins on their own
+    secs(g, 0.5);
+    // the pack cannot be killed and hits nothing; the healer hero outlasts it with both companions down
+    const lock = 'combatFoes().forEach(f => { f.hp = f.max = 1e30; f.atk = 0; })';
+    E(lock);
+    const ev = []; g.fn.on('unitUp', e => ev.push(e.key)); g.fn.on('wipe', e => ev.push('wipe:' + e.stall + ':' + e.to));
+    E('["wren", "pip"].forEach(k => cbHitUnit(cbUnitByKey(k), 1e40, "poison", null))');
+    const down = E('cbUnitByKey("wren").down && cbUnitByKey("pip").down && !cbUnitByKey("hero").down');
+    secs(g, E('COMBAT_TUNE.getUp') + 1);
+    assert(down && ev.includes('wren') && ev.includes('pip') && E('!cbUnitByKey("wren").down && cbUnitByKey("wren").hp > 0'),
+      `F5 a companion knocked out while the healer hero stands gets up after ${E('COMBAT_TUNE.getUp')} s (unitUp: ${ev.join(', ')})`);
+    E('["wren", "pip"].forEach(k => cbHitUnit(cbUnitByKey(k), 1e40, "poison", null))');
+    const frontTank = () => JSON.parse(E('JSON.stringify(bestLineup({ zone: 8, filter: k => ROSTER[k].role !== "tank" }))')).score;
+    const ft0 = frontTank();
+    E('S.party.autoField = true');   // the stuck rule is the planner's (Auto line-up on); it may change the field
+    secs(g, E('AF_TUNE.stuckT') + 1);
+    const ft1 = frontTank();
+    assert(ft1 < ft0 * 0.6, `F5 the planner's stuck rule still fires when the members got up again: no kill in ${E('AF_TUNE.stuckT')} s with a knock-out weighs a Front tank as after a boss knock-out (a tankless push scores x${(ft1 / ft0).toFixed(2)})`);
+    E(lock);
+    secs(g, E('COMBAT_TUNE.stallT'));
+    const w = ev.find(x => x.startsWith('wipe:'));
+    assert(w === 'wipe:true:6' && E('CB_STATS.stalls') >= 1 && !g.errors.length,
+      `F5 a pack the party cannot finish in ${E('COMBAT_TUNE.stallT')} s counts as a wipe: the party falls back from zone 7 to 6 (${w})` + (g.errors.length ? ': ' + g.errors[0] : ''));
+    secs(g, E('COMBAT_TUNE.wipeT') + 1);
+    assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns');
+    // not in a boss fight: the boss timer ends those
+    E('S.party.autoField = false; S.maxZone = 8; setZone(7); challenge()'); secs(g, 0.2);
+    E('combatFoes().forEach(f => { f.atk = 0; }); globalThis.__k = S.party.field[0]; cbHitUnit(cbUnitByKey(__k), 1e40, "poison", null)');
+    secs(g, E('COMBAT_TUNE.getUp') + 1);
+    assert(E('fightBoss') && E('cbUnitByKey(__k).down'), 'F5 no getting up in a boss fight (the boss timer ends it)');
+  }
+  // 3. the hold estimate gives the hero its real HP when the planner measures at potential levels
+  {
+    const g = loadCore({ seed: 73, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
+    E('almanac.force("none")');
+    E('["kestrel", "oriel"].forEach(k => isRecruited(k) || unlockChar(k, "test", true)); S.party.autoField = false; setSlots({ front: "hero", mid: "kestrel", back: "oriel" })');
+    secs(g, 0.1);
+    const cells = E('JSON.stringify(S.party.cells)');
+    const held = knob => { E(`COMBAT_TUNE.heroRealHp = ${knob}`); const r = JSON.parse(E(`JSON.stringify(lineupScore(["kestrel", "oriel"], { cells: ${cells}, zone: 39, by: "potential" }))`)); return r.held; };
+    const old = held(0), now = held(1);
+    // live: the same party with its companions caught up (levels as the planner lifts them) and the hero as it is
+    const hp = E('(() => { const h0 = partyHoldEstimate(33, { one: true }).heroHp, pl = Math.floor(partyLevel()), sv = ["kestrel", "oriel"].map(k => [charRec(k).lv, charRec(k).rank]); const real = {}; ["kestrel", "oriel"].forEach(k => { real[k] = charPow(k); const r = charRec(k); r.rank = Math.min(7, Math.floor((pl - 1) / 25)); r.lv = Math.min(pl, levelCap(r.rank)); }); const up = partyHoldEstimate(33, { one: true }).heroHp; afRealPow = real; const fixed = partyHoldEstimate(33, { one: true }).heroHp; afRealPow = null; ["kestrel", "oriel"].forEach((k, i) => { charRec(k).lv = sv[i][0]; charRec(k).rank = sv[i][1]; }); return [h0, up, fixed]; })()');
+    assert(E('S.party.cls') === null && Math.abs(hp[2] / hp[0] - 1) < 1e-9 && hp[1] > hp[0] * 1.5 && now < old && now <= 35,
+      `F5 a class-less hero in Front with Kestrel and Oriel (late fixture): potential rated to hold zone ${now} (was ${old}); the hero's HP stays ${(hp[0] / 1e6).toFixed(1)}M when the companions are lifted (was ${(hp[1] / 1e6).toFixed(1)}M)`);
+    E('COMBAT_TUNE.heroRealHp = 1');
+    assert(!g.errors.length, 'F5 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+} catch (e) { fail('formation follow-ups crashed: ' + (e.stack || e)); }
+
+console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
