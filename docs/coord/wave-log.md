@@ -320,3 +320,12 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   charged until Region 2 adds them; the coast-elder grant is for Region 2/O1 to call. L3 (combat) and
   L4 (UI) needs are listed in its report: L4 launched now; L3 after Stage C. ARCHITECTURE.md still needs
   the 55-legend row and events (L4 adds them).
+- STAGE C merged (59-combat.js, 59b-enemies.js): packs of 3, HP/armour/shields, reach, threat,
+  healing, CC, KO/revive, wipe -> retreat one zone and push back, zone-type behaviours, elites from
+  zone 15, boss telegraphs with tap parries, partyHoldEstimate() driving away gains/fall-back/hints,
+  live combat gear stats, partyCombatOn() (Deepwell [C] boons now in the pool), Constellation knobs and
+  keystones wired. --targets 12/20. Coordinator calls: ACCEPT T4 (35% vs a 20-35% band, a rounding
+  miss). T11/T18/D1/P4 go to BAL2 (BAL1 tuning). T6 (no-tank line-ups still hold) and T12 (attrition line-up
+  too slow) are REAL role-design gaps: BAL2 must make tanks and supports matter (COMBAT_TUNE hp/atk/heal).
+  C4 (stage visuals for packs, threat, heals, KO, telegraph colours) waits for the Deepwell-visuals agent
+  to release 62-stage/61-anim. Save: S.combat {on, back, tip}.
