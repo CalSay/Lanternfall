@@ -521,3 +521,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   the Deepwell).
 - OWNER: some numbers and letters in the font don't look right. Font picker published (https://claude.ai/artifact/2cekhj1fcR1iiujUjPSDcw): pixel font A Pixelify Sans (now) vs Silkscreen, Jersey 10, Tiny5, DotGothic16, VT323, Handjet; reading font 1 IBM Plex Sans Condensed (now) vs Sofia Sans Condensed, Barlow Semi Condensed. Waiting on the owner's pick; the swap is a small task (--display/--body in 10-base.css, the shell's font link, fontPx in 62-stage.js, then fix any clipped widths).
 - OWNER picked Handjet (G) as the pixel font; reading font 1 (IBM Plex Sans Condensed) or 3 (Barlow Semi Condensed), leaning 3. FONT1 launched (Handjet, body font a one-line switch, default Barlow until confirmed). The font page has a G+1 vs G+3 pairing section. Ran 5 agents briefly (AC2, H3, F2, F3, FONT1): FONT1 is small and owner-requested.
+- AC2 merged cleanly: 23-data-deeds.js, 58-deeds.js (92 tracks with 15 dormant until their systems land,
+  21 Feats, 16 secrets, points and ladder, capped bonuses <= x1.092 party damage, local titles a_*, looks
+  state with wearGet, the Codex bridge by wrapping, setNumFormat letters/scientific, registerGoal cap:1).
+  f_hit recalibrated to 2T before launch. AP 3/8 (sim skips Deepwell/expeditions/raid tracks). --targets
+  16/20: P1 Lanternmage 9.8 days because the sim earns ~12 Gold crafting tiers by day 8 (skillXp bonuses):
+  BAL3 raises crafting Gold thresholds or fixes the sim's craft policy. AD1 exception: "the Last Lantern"
+  (16 chars, 3 words) kept by the coordinator as the capstone. AP6: the nudge never shows because the sim
+  keeps 3 Ready goals (unspent star points); AC3 should give the nudge a reserved row. Owner confirmed fonts
+  G+3: Handjet + Barlow Semi Condensed (FONT1 told).
