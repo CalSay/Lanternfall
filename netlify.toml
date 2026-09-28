@@ -1,5 +1,11 @@
-# Netlify (the testers' web build, https://lanternfall.netlify.app). Netlify builds on every push to the
-# linked branch: tools/site.mjs wraps the committed dist/lanternfall.html into site/ (no npm install).
+# Netlify (the testers' web build, https://lanternfall.netlify.app). tools/site.mjs wraps the committed
+# dist/lanternfall.html into site/ (no npm install).
+#
+# Deploys are rationed (owner, 2026-09-28): Netlify skips every push unless the newest commit message
+# contains "[deploy]". The coordinator adds it at most four times a day (the 09:38, 13:38, 17:38 and 21:38
+# UK check-ins), and only when something new has merged since the last deploy.
+# `ignore` exits 0 to skip the build and 1 to build.
 [build]
   command = "node tools/site.mjs site"
   publish = "site"
+  ignore = "git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"

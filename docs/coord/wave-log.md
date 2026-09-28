@@ -644,3 +644,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - AC5 merged: 63e-scenery-wall.js (Trophy Wall card on the Camp view: 4 stages, 21 Feat trophies, pennants,
   12 group medals, the worn critter asleep by the fire, day/dusk/night; featTrophyURL; trophyWall.paint for
   the future camp panorama at plot p13). Coordinator kept both check sections (store, wall).
+- OWNER: relax the Netlify deploys: four times a day (or at the end of the 5-hour usage cycles; the
+  coordinator cannot see those, so fixed times). netlify.toml now has `ignore`: Netlify skips any push whose
+  newest commit message lacks "[deploy]". DEPLOY RULE: only at the 09:38, 13:38, 17:38 and 21:38 UK check-ins
+  (weekday and weekend), and only if something merged since the last deploy: put "[deploy]" in that check-in's
+  wave-log commit message. Never add "[deploy]" at other times.
+- OWNER: a WORLD tab for everything that isn't basic gameplay (fighting and gathering): pick the Tavern,
+  camp and so on from it; enter zone dungeons and find the zone raid from the world map; start expeditions
+  from the map. UX2b launched to revise ux-overhaul.md's IA around a World map (it absorbs the Camp tab,
+  the Deepwell, Raid, expeditions and the plan-2 Lantern Road map idea).
