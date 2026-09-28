@@ -695,3 +695,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
     style studies (ICON0).
   - haiku: small mechanical, low-risk jobs (narrow text swaps, lookups).
   Review merges as usual; if a sonnet/haiku task misses edge cases, re-route that kind of task to opus.
+- OWNER (2026-09-28): art commissions and monetisation wait until the game is ready for initial launch
+  (fix art only if something is hideous). Monetisation direction noted for later: fair model (a free + paid
+  battle pass, a membership with capped convenience perks: longer away time, faster builds, an extra builder,
+  camp skin/effects; skins; never exclusive power; no claw-backs); needs accounts + server-side purchase
+  checks; the vision's fairness pillar gets rewritten then.
+- VERSION 1.0 (owner): four regions fully fleshed out with complex mechanics, 32 heroes (18 today), and
+  "2*" different gatherers per resource type (clarifying the number). Queued: a Road to 1.0 roadmap
+  (plan-4) that maps every remaining task to that target.
