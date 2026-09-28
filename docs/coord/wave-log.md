@@ -880,3 +880,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   no need to keep saves. CLAUDE.md save rule relaxed until 1.0: a breaking change bumps the save key and
   starts fresh instead of migrating. Late-game test saves on request. MAT1 queued after RG1 and LORE-R45b land
   (they touch the same docs).
+- MERGED RG1 (docs/design/gear-2.md; 9 "Proposed (RG1)" rows in core-2 section 10). Coordinator notes:
+  (1) under the relaxed save rule, gear-2's migration section (keep-highest-grade, padded arrays, kept old
+  recipes) can be simplified at build time to a save-key bump where that is cheaper; (2) file numbers: CB2 uses
+  59g/59h-bosses/59i/59j, RG1 uses 59h-uniq-combat, CL1 59e-class-combat vs legendaries 59e-legend-combat:
+  distinct names, fine, but S-slice briefs must list exact files. Owner decisions O1-O13 put to the owner.
