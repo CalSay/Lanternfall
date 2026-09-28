@@ -1878,5 +1878,31 @@ try {
   assert(!errs.length, 'no welcome errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('welcome crashed: ' + (e.stack || e)); }
 
+// ---- coast writing (21b-stories-coast.js): every entry there, non-empty, inside UI limits ----
+console.log('coast writing');
+try {
+  const g = loadCore(), E = x => g.eval(x);
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const arr = E('COAST_ARRIVAL'), story = E('COAST_STORY'), keep = E('KEEPER_LINES'), lore = E('COAST_LORE');
+  const bty = E('COAST_BOUNTY_TEXT'), omen = E('COAST_OMEN_TEXT');
+  assert(arr.length === 7 && arr.every(s => str(s, 80)) && str(E('COAST_ARRIVAL_BOSS'), 80), 'coast: 7 arrival lines and the boss arrival, each under 80 chars');
+  const beatBad = story.filter(b => !str(b.title, 40) || !str(b.text, 420) || sents(b.text) < 2 || sents(b.text) > 5 || !str(b.note, 80)
+    || (b.head !== undefined && !str(b.head, 60)) || (b.say && !Object.values(b.say).every(s => str(s, 60))));
+  assert(story.length === 6 && !beatBad.length && story[0].head && story[5].head && story[5].say.caedmon && story[3].say.thessaly,
+    'coast: beats 0-5, text 2-5 sentences, notes, Great Lantern heads, character lines' + (beatBad.length ? ': ' + beatBad[0].id : ''));
+  const kKeys = ['intro', 'swing', 'beam', 'undertow', 'bell', 'feed', 'rocks', 'win', 'fall', 'rematch'];
+  const kBad = kKeys.filter(k => !Array.isArray(keep[k]) || !keep[k].length || !keep[k].every(s => str(s, 59)));
+  assert(!kBad.length, 'coast: Keeper lines for every moment, barks under 60 chars' + (kBad.length ? ': ' + kBad.join(', ') : ''));
+  const pages = [6, 7, 8, 9, 10].flatMap(b => lore[b] || []);
+  const lBad = pages.filter(p => !str(p.title, 32) || !str(p.text, 420) || sents(p.text) < 2 || sents(p.text) > 5 || !['keeper', 'hallam', 'found'].includes(p.by));
+  assert(pages.length === 10 && [6, 7, 8, 9, 10].every(b => lore[b].length === 2) && !lBad.length && new Set(pages.map(p => p.title)).size === 10,
+    'coast: 10 Lore pages (2 per band VI-X), unique titles, 2-5 sentences' + (lBad.length ? ': ' + lBad[0].title : ''));
+  const bOk = ['crab', 'pearl', 'beam'].every(k => typeof bty[k] === 'function' && str(bty[k]({ need: 40 }), 40) && str(bty[k]({ need: 1 }), 40) && bty[k]({ need: 40 }).includes('40'));
+  assert(bOk, 'coast: 3 bounty texts (one and many) under 40 chars');
+  const oOk = ['springTide', 'calmSea', 'pearlMoon'].every(k => omen[k] && str(omen[k].n, 24) && str(omen[k].fx, 60) && str(omen[k].say, 60));
+  assert(oOk, 'coast: 3 Omen texts (name, effect, line) inside limits');
+} catch (e) { fail('coast writing crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
