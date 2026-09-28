@@ -406,3 +406,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   D8 Deep Edge +20%/rank). Median depth 19, runs 7-8 min. Follow-ups queued: Overflow boon is dead in packs
   (rework); the arena wipe animation plays behind the run-end card (62-stage); Deep Lore total 10,070 Marks
   (retune in BAL3); run length below the 8-15 min target (BAL3). Perf phone/late noisy on a busy machine.
+- H2 merged: 55-tools.js / 75-tools-ui.js (tools at the Workbench, rough tools = empty slot, rare finds, +25%
+  right tool, mastery 1-20 per kind). Coordinator wired G1's stage toolFor to equippedTool (rough draws as a
+  plain tier 1; the rod falls back to the art rule until the Coast). Accepted: +1% per mastery level from Lv 1;
+  find cap 8% on the item plus the Lv 5 point.
+- OWNER: gathering levels come too fast; "the next tier up only 4 levels away is too fast". Today NODE_REQ
+  [1,8,18,30,45], SMITH_REQ [1,4,9,16,25], skillNeed 25 x 1.12^(lv-1). GP1 launched to re-pace skill tiers.
