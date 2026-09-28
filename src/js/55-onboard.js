@@ -46,6 +46,7 @@ const FEATURES = [
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8', when: () => O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
+  { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));

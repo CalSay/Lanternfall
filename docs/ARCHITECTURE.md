@@ -40,6 +40,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 57c-codex.js | core | the Codex and Lantern Light (docs/design/codex.md): pages read from other systems' state, recorders for what nothing else keeps, Light (only rises), milestones, capped Page Seal bonuses, the Blessing gate; `codexPages()`, `codexLight()`, `codexBonus(key)`, `codexHas(id)`, `codexTitle()` (state in `S.codex`; UI: 75-codex-ui.js, a sheet opened from the Journal card, the Library and `emit('codexOpen', { page })`) |
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
+| 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -91,6 +92,7 @@ Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMo
 
 Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
 `yield:<family>` (harvest and away yield per material family).
+Constellation hooks (57e-constellations.js): `bonus('tune:<knob>')` also carries lit stars (always on, not only in a Deepwell run); `bonus('ks:<id>') > 0` / `starKeystone(id)` flag new combat behaviour for 55-party.js to read, with its numbers in `STAR_KS` (ids: unbroken, crush, challenger, bastion, oathsworn, twinSpark, slowBurn, wildfire, overflow, everburn, glass, storm, nextMark, pack, quickdraw, hawk, deadeye, rain, dawn, sanctuary, martyr, ages). Knobs 55-party.js reads today: `STAR_TUNE_ROUTED`.
 Deepwell hooks: `arena` (50-sim: while set, `arena.spawn()` supplies foes and `arena.onKill(mob, overkill)` takes their deaths; no gold, XP, `kill` event or boss timer), `mod('abilityCd')` and `bonus('tune:<knob>')` (55-party.js class knobs: embersMax, guardMax, markT, blessMax, mark, emberPerTap, guard, blessT, volleyHits, charges, keepEmbers, hymnFloor; 1 / 0 outside a Deepwell run).
 Almanac hooks (55-almanac.js): modifiers `foeHp`, `bossHp` (spawn), `uniqueChance` (boss unique roll),
 `nonCrit` (hero non-crit hits), `rareW` (Rare/Epic forge weights), `salvage`, `bountyPay`; bonuses
@@ -199,6 +201,7 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `codexLight` / `codexPage` / `codexMilestone` | `{ light, gain }` / `{ id, kind: 'half'\|'seal' }` / `{ at, rewards }` (57c-codex) |
+| `starLit` / `starUnlit` / `starReset` / `starLayout` | 57e-constellations: `{ cls, id }` / `{ cls, id }` / `{ cls, n }` / `{ cls, i }` |
 | `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` |
 | `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
 | `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
