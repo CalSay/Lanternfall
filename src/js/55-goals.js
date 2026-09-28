@@ -41,6 +41,7 @@ var forgeGoalPicks = 0;
 
   const val = v => typeof v === 'function' ? v() : v;
   function evalGoal(g) {
+    if (!goalGate(g)) return null;   // 55-onboard.js: the goal's system is not unlocked yet
     let p;
     try { p = +g.pct(); } catch (e) { return null; }
     if (!(p > 0)) return null;

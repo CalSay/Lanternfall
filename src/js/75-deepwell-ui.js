@@ -292,7 +292,7 @@
   const closeMenuIfTall = () => { if (typeof isWide === 'function' && !isWide() && S.tab) closeMenu(); };
 
   // ---------------- Fight tab: the Deepwell view ----------------
-  registerView('adv', { id: 'deep', label: 'Deepwell', order: 40, dot: () => { const d = S.deep; return !!d && ((d.run && d.run.paused) || (deepUnlocked() && !d.runs && !d.run)); } });
+  registerView('adv', { id: 'deep', label: 'Deepwell', order: 40, feature: 'deep', dot: () => { const d = S.deep; return !!d && ((d.run && d.run.paused) || (deepUnlocked() && !d.runs && !d.run)); } });
 
   // Entrance card
   let ent = null, entSig = '';

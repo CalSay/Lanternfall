@@ -169,6 +169,8 @@ async function runScenario(browser, base, { dev, save }) {
   }
   // A new game starts with no gold; give it some so the upgrade button can be tapped.
   if (save === 'new') await page.evaluate(() => { const S = window.__lf.S(); S.gold = Math.max(S.gold, 1e6); });
+  // A new game shows its tabs one by one (55-onboard.js); open them all so every tab is measured.
+  if (save === 'new') await page.evaluate(() => { try { window.__lf.x('onboardUnlockAll()'); } catch (e) {} });
   await page.evaluate(() => window.__lf.setTab('adv'));
 
   const now = () => page.evaluate(() => performance.now());
