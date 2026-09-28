@@ -784,3 +784,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Tannery: YES. (2) 1.0 length depends on how fun and replayable the loop is; players must stay committed
   (coordinator proposal sent: story to the Voice in ~2-3 months of normal play, completion goals 6-9 months).
   (1), (4), (6) explained to the owner in plainer terms; awaiting answers.
+- OWNER: (1) YES to designing classes, gear and combat together, with several agents on it (glossary first,
+  then CL1/RG1/CB2 in parallel), built in slices. (2) 1.0 = a COMPLETE SEASON 1; the story continues in
+  Season 2 (the 2.0 release). Coordinator note: lore.md's ending must be split into a Season 1 arc that
+  resolves plus a hook for Season 2 (question to the owner: does the Voice fight close Season 1 or wait for a
+  later season?). (4) Hero AWAKENINGS: yes (heroes keep their character; one Awakening each for 1.0).
+  (6) Uniques are boss drops themed to the boss type (owner likes this); keep the merge simple: each boss has
+  a themed unique carrying a power, duplicates (Echoes) upgrade it, the Lantern Book collects them.
