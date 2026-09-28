@@ -975,3 +975,13 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   * CB2 D4 local raid fight: yes; D5 Assist parked.
 - LAUNCHED NAME1 (opus): naming quality pass over every new name in the specs; coordinator picks.
   LAUNCHED S1 (opus): Core 2.0 slice 1 (damage types, statuses, combos, weaknesses; heroes get types).
+- MERGED NAME1 (docs/design/names.md: 153 kept, 93 replaced). COORDINATOR DECISION (owner delegated): adopt
+  every "best pick" in names.md, including the Top 10 and the next five: Loveday Penrow, Davy Ashby, Beatrix
+  Fairweather, keep Lanternmage/Lightkeeper as class names, no "Keen" (plain crit damage; Loaded Die), the
+  Balefire (was Beacon), Circle Crest + Cinder Sigil, Starscar/Starpit/Stardigger, the Fenmother (Hollow
+  Shroud), Merewight/Coldhearth/the Hearthless/the Stillwood/Stillwalker, Ser Durand, Constance Wray, Pascoe,
+  "Ser Oswin, Who Came Back", brightening essence names. Conflicts: Solveig raises the Balefire ("Wick" is the
+  village's name for her); the Pyre Knight's helm stays buried (lore wins): gear-2 unique swaps to another
+  Pyre Knight piece. QUEUED NAME2 (sonnet, docs now): apply names.md across all specs + fix stale names
+  (Star-Fallen, Long Stair, Listener, Drowned Keeper). Code renames (LORE-C1 + Circle Crest + HANDS_FIRST pool)
+  after S1 merges.
