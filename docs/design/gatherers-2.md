@@ -517,7 +517,7 @@ refined goods in well under one away session (gear-2 E4).
 ### 9.1 Data (`src/js/21p-data-gatherers.js`, data only)
 
 ```js
-GATHER_TUNE = {                 // Changed (ECON1): shares, board, queue; fees, hire and Tents are ECON data (21r-data-econ.js)
+GATHER_TUNE = {                 // Changed (ECON1): shares, board, queue; fees, hire and Tents are ECON data (21w-data-econ.js)
   on: 1,                        // 0: N1's rules only (tools/sim.mjs --named 0)
   share: [0.10, 0.11, 0.12, 0.13, 0.14], perLv: 0.03,   // by rarity, x(1 + perLv x (lv - 1)): x1.57 at Lv 20
   odds: [0.52, 0.30, 0.13, 0.05], pity: [8, 25, 90],   // random applicants Common..Epic; pity[2]: Word on the Road
@@ -714,7 +714,7 @@ shift's fee per gatherer in reserve).
 
 File numbers were checked against `src/js` and every file name the design docs reserve: `21p`, `21q` and
 `57h` are free. Nothing here uses 59e, 59g, 59h, 59i or 59j. **Changed (ECON1):** fees, hire prices and Tent
-rows come from `src/js/21r-data-econ.js` (ECON-A, economy-2 11); N3a needs ECON-A first.
+rows come from `src/js/21w-data-econ.js` (ECON-A, economy-2 11); N3a needs ECON-A first.
 
 | Task | Work | Owns (new files) | Small edits in | Needs |
 |---|---|---|---|---|

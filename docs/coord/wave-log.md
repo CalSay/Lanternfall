@@ -953,3 +953,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   both times 3 agents were running. Suspect a timing/perf check under load. Next failure: save the output.
 - FILE-NAME CLASHES fixed by the coordinator: TR1 trade 57g -> 57k-trade (K12 keeps 57g-kitchen; EV1 has 57j);
   WC1 21r-data-camp2 -> 21u-data-camp2 and 21s-camp-words -> 21v-camp-words (HQ1 keeps 21r/21s/21t).
+- MERGED ECON1 (docs/design/economy-2.md; gatherers-2.md revised, "Changed (ECON1)"). Gold per foe =
+  GOLD_BASE[r] x (1 + 0.05 (z - z0)), bases [5,17,60,210,735]; Hearth Lv 2 1.38M -> 9,000; Blade 5 x 1.05^n;
+  shift fees by grade (2,000 at grade 1 .. 110K at grade 15, 4 h shifts, queue 2); hire fees by rarity; Tents
+  2 free then 23K..2.3M (3/5/7/9/10 by region); gear gold line capped +30%; other gold sources -> "Keen" crit
+  damage pool capped +40%; save key bump to lanternfall.save.v2 (share with S4). File clash fixed:
+  21r-data-econ -> 21w-data-econ. Coordinator note: ECON1's Tent curve and WC1's (2 then +1 per build to 10)
+  agree in shape; ECON-A adopts ECON1's prices. Owner decisions 1-6 put to the owner.
