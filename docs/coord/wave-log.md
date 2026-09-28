@@ -774,3 +774,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   clearly stronger than its base, and change how the game plays. MORE MATERIAL TIERS so crafting stays
   meaningful (coordinator recommends 3 per region, 15 in all, with old tiers mapped without loss; RG1 decides).
 - OWNER: the six evolutions are the FIRST evolution tier; a second tier of subclasses comes in a post-1.0 version (design CL1 so a second tier can branch from each evolution later: save fields, UI and trees must allow it).
+- Road to 1.0 written by the coordinator: docs/design/plan-4.md (every owner decision to 2026-09-28, in phases A-F, plus fixes, post-1.0 and open questions). RD1 now keeps it current instead of writing it.
