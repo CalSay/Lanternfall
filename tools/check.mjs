@@ -4298,7 +4298,8 @@ try {
     const f0 = E('charRec("tobin").lv');
     secs(g, 120);
     const kl = E('charRec("kestrel").lv'), ol = E('charRec("oriel").lv');
-    assert(kl > 1 && ol > 1 && !loud && !g.errors.length && E('S.party.field.join()') === 'tobin,wren',
+    // Owner (2026-09-28): the bench earns no XP (benchXp 0); recruits catch up once fielded.
+    assert((E('ROSTER_TUNE.benchXp') > 0 ? kl > 1 && ol > 1 : kl === 1 && ol === 1) && !loud && !g.errors.length && E('S.party.field.join()') === 'tobin,wren',
       `benched companions earn ${E('ROSTER_TUNE.benchXp') * 100}% of the kill XP, quietly: Kestrel L${kl}, Oriel L${ol} after 2 min on the bench at zone ${E('S.zone')} (Tobin L${f0} -> L${E('charRec("tobin").lv')})` + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
   // 2. no soft-lock: a knocked-out companion gets up mid-pack; a pack nobody can finish counts as a wipe

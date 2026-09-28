@@ -13753,7 +13753,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     fieldMax: 2,                         // (F1, formation.md) companions in the party: the hero is the third (was 3)
     // (F5) benched companions earn benchXp of a fielded member's kill XP (quietly; catch-up applies), so the
     // bench does not freeze at level 1 while the field climbs (the Lanternmage stalled at the zone 70 boss)
-    benchXp: 0.25
+    benchXp: 0                           // (owner, 2026-09-28) the bench earns no XP; a fielded recruit catches up (catchGap/catchMax); F5 had 0.25
   };
   ROSTER_TUNE = T;
   const RST_DEF = {

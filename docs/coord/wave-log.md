@@ -603,3 +603,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   favourite items; the auto-salvage filter from the vision (by rarity/tier/"worse than worn"); a display
   rack for uniques and legendaries in the camp scene; sort and filter. Fits UX2's Craft/Camp structure, so it
   follows the UX2 spec. Also noted for the Storehouse: Trophies may want their own shelf later.
+- OWNER: benched party members get no XP. benchXp 0.25 -> 0 (56-roster.js); check updated; recruits catch up
+  once fielded (catchGap/catchMax); expeditions still give their XP. --targets re-run to confirm no stall.
+- OWNER: rename in player-facing copy: companions -> HEROES; the player's own character -> the LANTERNBEARER
+  (owner's pick over "Leader"/"You"); the group is still "the party" (you + two heroes). Display text only:
+  code ids, save fields and events keep their names. QUEUED NM1 copy pass across all UI, toasts, story, lore
+  and docs (watch 360px widths; "Hero level" -> "Lanternbearer level" or "Level"; companion XP -> hero XP).
+  Run it before UX2's build phases so new screens use the new words.
