@@ -875,3 +875,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   buff-item families; display names only (ids stay, saves safe). Coordinator draft ladder sent to the owner.
   LORE-R45b and RG1 told not to lock new material names. Owner to confirm the draft and whether today's
   grade 1-5 display names (Mithril at grade 3, Starsteel, Emberite) may be relabelled.
+- OWNER: material ladder approved except Yeti Hide (grade 12 hide -> Behemoth Hide). Relabelling grades 1-5
+  approved (Silver at 3, Mithril at 5, Starsteel dropped). SAVES: the only player is the owner (plus testers);
+  no need to keep saves. CLAUDE.md save rule relaxed until 1.0: a breaking change bumps the save key and
+  starts fresh instead of migrating. Late-game test saves on request. MAT1 queued after RG1 and LORE-R45b land
+  (they touch the same docs).

@@ -20,9 +20,11 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
 - `alert`/`confirm`/`prompt` do nothing in the viewer. Build confirmations in-page.
 - `localStorage` holds the single-player save under key `lanternfall.save.v1`. Always
   wrap storage access in try/catch.
-- Save compatibility is sacred: players have live saves. New state fields need defaults in
-  `fresh()` and must merge into old saves without loss. Never rename or repurpose an
-  existing save field.
+- Saves until 1.0 (owner decision 2026-09-28): the only players are the owner and testers, and the
+  owner accepts a wipe. Prefer clean new state over complex migrations. If a change would break old
+  saves, bump the save key (e.g. `lanternfall.save.v2`) so the game starts fresh instead of loading
+  broken state; never ship code that crashes on an old save. New state fields still need defaults in
+  `fresh()`. The coordinator sets up late-game test saves on request.
 - Works at 360px wide. Respects `prefers-reduced-motion`.
 
 ## Shared online data (do not change shape without coordinator sign-off)
