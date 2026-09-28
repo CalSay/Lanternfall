@@ -812,3 +812,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   items live in the Storehouse (a Buff Items page); enchant 100% at a level RG1 sets. CB2: its questions are
   its own (auto-cast efficiency, swarm HP, interrupt limits, the boss timer vs the kill target).
 - CL1 launched (opus). Running: MAP0, HINT1, CL1. Next when a slot frees: CB2 (opus), then LORE-R45 (sonnet), then RG1 (opus).
+- MAP0 merged: docs/design/map-study.md + docs/design/img/map/ (A Dusk overworld, B Lampwright's chart, C Lamplit terraces; the artist recommends C with two tweaks; A runner-up). Prototype in prototypes/map-study/. OWNER PICKS. CB2 launched (opus).
+- HINT1 merged: the onboarding hint no longer repositions on every poll; it docks in the toast band
+  (--toast-h), reposition only on real layout events; build + check pass.
+- CONTAINER RESTART (evening 2026-09-28): CL1 and CB2 agents stopped. CL1 had a near-complete classes-2.md
+  (all 8 sections + appendix): saved as WIP 4c46d90 on its branch; relaunched to finish from it. CB2 had
+  no work yet: relaunched fresh.
