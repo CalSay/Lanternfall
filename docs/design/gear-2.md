@@ -798,3 +798,179 @@ every cost is free). With Pearls as buff items:
   ("This uses 1 Rare Lantern Pearl. [Use it] [Pick others]").
 - `55-legend`'s `pearlHave` / `pearlPay` read `S.buff` through one helper in the S5 core; 21c's `LEG_COST`
   numbers are unchanged.
+
+---
+
+## 6. Uniques 2.0 and the Lantern Book
+
+### 6.1 What a unique is now
+
+| | Rule |
+|---|---|
+| Source | One **boss type** each (owner: "a spore boss drops a poison-spreading item"): the elders of one foe family in a region, or the region's boss. 6 a region, **30 for Season 1** |
+| Item | `{ id, slot, t, r: 'rare', plus, u }` as today. `slot` is its position kind: `weapon`, `helm`, `charm` (today's unique kinds) and two new position kinds, `off` and `body` (not craftable, like `weapon` and `helm`); hero pieces use `wpn` / `trk` kinds `uwpn` and `trinket` |
+| Fits | **Every class** at its position (today's rule for weapon and head uniques). A hero piece fits any hero |
+| Base lines | The wearer's own weight kind at that position (a Warrior's unique body piece has Plate lines, a Mage's has Robe lines; a hero weapon has the wearer's role weapon lines). Read at wear time, so a class change never needs a retool |
+| Power | `itemPower` uses `UNIQ_TUNE.pow` 1.8 (Rare) as today; grade = the kill zone's `zoneGrade` |
+| Fixed lines | Regions 2-5: 2 affix lines fixed per unique (`q` 0.5). Region 1: 3 (it has no buff family to lock) |
+| Sockets | Regions 2-5: **one locked socket** with the boss's signature family at the wearer's version, Uncommon, strength **1.10** (core-2), plus **one open socket**. Region 1: one open socket |
+| Power | **One power** (6.2), ranked I-V in the Lantern Book (`S.legend.book`), raised by Echoes (6.4) |
+| Limit | Counts toward the Lanternbearer's **2 powers** and a hero's **1** (legendaries.md 2.3), whether the power is a unique's or an inscribed Oath power |
+
+**Raw stats band** (core-2: 90-110% of a Rare crafted item of the same grade with a full-strength socket;
+owner: uniques weaker on stats, stronger on effect). With the open socket holding a Rare buff item at 100%:
+
+```
+crafted Rare  = base + 3 affix lines (0.51 p)         + 1 socket (Rare, 1.00)       = 3.08 T
+unique, R2-5  = base + 2 fixed lines (0.34 p)         + locked (Uncommon, 1.10) + open (Rare, 1.00) = 3.07 T  (99.7%)
+unique, R1    = base + 3 fixed lines (0.51 p)         + open (Rare, 1.00)          = 3.08 T  (100%)
+(T = TIER_POW at the grade; base = 1.0 p on a weapon; p = 1.8 T)
+```
+
+A crafted Epic (about 3.9 T) or Legendary beats every unique on stats, so **the unique wins on its power**.
+The locked socket is the "about 10% better than crafted" of plan-4: that one socket runs at 110%.
+`tools/check.mjs` asserts the band for every unique at every grade and position.
+
+### 6.2 The thirty
+
+Each power is a data row appended to `LEG_POWERS` (`src: 'uniq'`, `fits` = the unique's id, so it never
+inscribes elsewhere) with `p1` / `p5` inside the legend budget (core-2 5.5: bucket A, +30/+45/+70% for the
+best build at ranks I/III/V). Values read "rank I (rank V)"; ranks II-IV are the straight line. Foe families
+are core-2 2.3's; Region 3's come from lore.md 8.3's zone list and wait for its spec (D4) to confirm.
+Item names are **working** (item names, not material names; the owner approves the list, O8).
+
+**Region 1, the Hollow** (grades 1-3; no locked socket)
+
+| # | Unique (position) | Dropped by | Power: rank I (V) | p1 / p5 | Needs |
+|---|---|---|---|---|---|
+| 1 | **Rotbloom Mantle** (body) | Moss Slime and Spore Cap elders (plant) | **Spreading Rot.** Every 4th hit you land applies 1 Venom (2). When a foe with Venom dies, half its stacks jump to the nearest foe | 5 / 10% | S1 |
+| 2 | **Duskwing Knot** (hero trinket) | Cave Bat and Barrow Beetle elders (beast) | **Swarm Sense.** The wearer's signature also strikes 2 more foes in the pack for 30% (60%) | 4 / 8% | - |
+| 3 | **Gravewarden Helm** (head) | Rattlebones elders (undead) | **Not Yet.** Once every 60 s (40 s), a hit that would down a party member leaves them at 1 HP and Marks the attacker for 8 s | 4 / 8% | S1 |
+| 4 | **Quarryheart Buckler** (off-hand) | Quarry Golem elders (construct) | **Rockfall.** Your heavy hits fill 50% (100%) more stagger. While a foe is Staggered, the party takes 15% (25%) less damage | 5 / 10% | S6 (before it: heavy hits on a Reeling foe deal +25% (+50%)) |
+| 5 | **Marshlight Charm** (charm) | Marsh Wraith elders, cycles I-IV (spirit) | **Will-o'-the-Wisp.** Each ability you use leaves a wisp for 6 s that hits the focus foe for 0.2 P (0.4 P) holy a second. At most 2 wisps | 5 / 10% | S1 |
+| 6 | **The Listener's Lamp** (weapon) | The Listener (zone 35) | **Heard in the Dark.** When a foe starts a cast or a heavy warning, your next hit within 2 s deals x2 (x3) and fills 10 stagger. Once every 8 s (5 s) | 6 / 12% | heavy warnings today; casts S6 |
+
+**Region 2, the Sunken Coast** (grades 4-6; locked Pearl). Three names come from region-2.md 6, whose coast
+uniques were never built; their effects there are replaced by these.
+
+| # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
+|---|---|---|---|---|---|---|
+| 7 | **Shingleguard** (head) | Shinglecrab and Stormgull elders (beast) | `pearl_h` | **Shell Up.** Below 50% HP you shut in: take 30% (45%) less damage for 4 s. Once every 20 s (12 s) | 4 / 8% | - |
+| 8 | **Wreckers' Lamp** (weapon) | Drowned Deckhand and Brine Witch elders (drowned) | `pearl_m` | **Undertow.** Every 10 s (6 s) your next hit interrupts a cast and Marks the foe (+20% (+25%)) for 6 s | 5 / 10% | S1; casts S6 |
+| 9 | **Jellylight Charm** (charm) | Lanternjelly elders (drowned) | `pearl_l` | **Chain Light.** Every 5th hit chains to 2 (3) more foes for 0.6 P (1.2 P) of the hit's type. A Chilled foe passes it on once more | 5 / 10% | S1 |
+| 10 | **Kelpwrap** (body) | Kelp Strangler elders (plant) | `pearl_m` | **Bind.** Every 12 s (8 s) your hit Roots the focus foe for 2 s; it takes +10% (+20%) from you while Rooted. A boss takes 10 (20) stagger instead | 5 / 10% | S1; stagger S6 |
+| 11 | **Coral Aegis** (hero weapon) | Coral Warden elders (construct) | `pearl_h` | **Reef Wall.** The wearer's signature also shields the party for 5% (10%) max HP; while that shield holds, physical hits on its owner reflect 20% (40%) | 4 / 8% | - |
+| 12 | **The Keeper's Lens** (off-hand) | The Drowned Keeper (zone 70) | `pearl_l` | **Green Beam.** Every 3rd ability you use fires a beam down the enemy column with the most foes: 4 P (8 P) holy, and it Marks them | 6 / 12% | S1 |
+
+**Region 3, the Emberwaste** (grades 7-9; locked `glass`)
+
+| # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
+|---|---|---|---|---|---|---|
+| 13 | **Cinderhound Collar** (charm) | Cinder Hound and Ash Moth elders (beast) | `glass_m` | **Cinder Pack.** Your crits apply Burn. A Burn you apply spreads to 1 (2) extra foe when its foe dies | 5 / 10% | S1 |
+| 14 | **Ashwalker's Shroud** (body) | Ashwalker elders (ember) | `glass_h` | **Walk Out.** Once every 30 s (20 s), when you drop below 30% HP you are cleansed of everything harmful and shielded for 15% (25%) max HP | 4 / 8% | S1 |
+| 15 | **Slagglass Bulwark** (off-hand) | Glasswalker and Slagback elders (construct) | `glass_h` | **Fused.** Blocked hits store 50% (100%) of their damage; your next heavy hit lets it out as fire on the whole pack | 5 / 10% | S1 |
+| 16 | **Wyrmling Tooth** (weapon) | Wyrmling elders (ember, the Wyrm's brood) | `glass_m` | **Brood.** +5% (+10%) damage to a foe for each different status on it, up to 4 | 6 / 12% | S1 |
+| 17 | **Kept Light** (hero trinket) | Kept Light elders (ember) | `glass_l` | **Somewhere to Go.** When a foe the wearer damaged dies, the lowest-HP ally heals 3% (6%) max HP | 3 / 6% | - |
+| 18 | **The Pyre Knight's Helm** (head) | The Pyre Knight | `glass_l` | **Kept Flame.** Your Burns do not run out while you keep hitting their foe, and each Burn tick you deal adds 1% (2%) to your next ability, up to 30% (60%) | 6 / 12% | S1 |
+
+**Region 4, the Pale Reach** (grades 10-12; locked `star`)
+
+| # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
+|---|---|---|---|---|---|---|
+| 19 | **Rimewolf Pelt** (body) | Rimewolf and Stormpeak elders (beast) | `star_m` | **Drive Them Apart.** +20% (+40%) damage to a foe alone in its column | 5 / 10% | - |
+| 20 | **Skyfallen Aegis** (off-hand) | Skyfallen elders; the Starfall Crater's last boss at double chance (construct) | `star_h` | **Falling Star.** Every 15 s (10 s) a shard falls on the focus foe: 3 P (6 P) of your base type, and 20 stagger | 5 / 10% | stagger S6 |
+| 21 | **Wraithfrost Hood** (head) | Ice Wraith elders (spirit) | `star_l` | **Drain the Cold.** Your hits on a Chilled foe heal you 1% (2%) max HP. Each Shatter you cause refills 10% (20%) of your ability charge | 5 / 10% | S1 |
+| 22 | **Sill-Candle** (charm) | Palefolk elders (pale) | `star_l` | **Hand to Hand.** Your heals and shields also give their target +10% (+20%) damage for 4 s. At the start of a boss fight each hero gets a shield of 10% (20%) max HP | 5 / 10% | - |
+| 23 | **Icewisp Lantern** (hero weapon) | Icewisp elders (pale) | `star_m` | **Swarmlight.** Against swarms the wearer's hits chain to 1 (2) more foe for 50% | 4 / 8% | S6 packs |
+| 24 | **The Gatekeeper's Spear** (weapon) | The Star-Fallen (name pending, regions-4-5.md 5.1) | `star_h` | **Hold the Gate.** In the Front slot you Taunt for 2 s every 10 s (6 s); each hit you take gives the party +3% (+6%) damage for 6 s, up to 5 stacks | 6 / 12% | S1 |
+
+**Region 5, the Long Stair** (grades 13-15; locked `well`)
+
+| # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
+|---|---|---|---|---|---|---|
+| 25 | **Bluefire Charm** (charm) | Blueflame Wisp elders (deep) | `well_l` | **Fire Turns Blue.** 30% (60%) of your Burn damage lands again as holy | 5 / 10% | S1 |
+| 26 | **Landing-Watch Cloak** (body) | Landing Watcher and Hollow Reacher elders (deep) | `well_h` | **Still Until Approached.** After 4 s without being hit, your next hit deals +50% (+100%) and Stuns for 1 s | 5 / 10% | S1 |
+| 27 | **Worn-Step Buckler** (off-hand) | Stairwalker elders (construct) | `well_h` | **A Thousand Years.** Each hit you take gives Guard: 1% (2%) less damage taken, up to 10 stacks; one falls away each second after 5 s unhit | 4 / 8% | - |
+| 28 | **Delver's Lamp** (head) | The Delved elders (undead) | `well_m` | **Pick Marks.** Your hits leave a mark; at 5 marks the foe takes 2 P (4 P) physical that ignores armour, and 15 stagger | 5 / 10% | stagger S6 |
+| 29 | **Springwater Phial** (hero trinket) | Spring-Touched elders (spirit) | `well_l` | **Near the Spring.** The wearer's heals are 20% (40%) stronger on allies below half HP; its cleanses also heal 5% (10%) max HP | 4 / 8% | S1 |
+| 30 | **The First Lamp** (weapon) | The Voice, at the Bottom of the Stair | `well_l` | **There Were Lamps Before.** Your other power works one rank higher (at most V), and your abilities deal +10% (+20%) | 6 / 12% | - |
+
+- **Coverage:** 5 hero pieces (one a region), 25 Lanternbearer pieces spread over the five positions (5
+  each). Every power works for every class, and each class has at least one per region that plays into its
+  verb: the Warrior's heavy hits (Rockfall, Fused, Hold the Gate), the Ranger's hits and marks (Spreading
+  Rot, Drive Them Apart, Pick Marks), the Mage's Burns and abilities (Kept Flame, Fire Turns Blue, Green
+  Beam), supports' heals (Hand to Hand, Near the Spring).
+- **Before S6:** powers marked S6 run with the fallback written in their row, or without the stagger part.
+  The card says "Stagger comes with the boss update" until then (CL1 does the same for Finishers).
+- Region 5 uniques assume the zone list of regions-4-5.md 2.5; if the Deepwell and the Long Stair merge
+  (its open question 3), the Deepwell's deep floors drop them too.
+
+### 6.3 Drops
+
+| Source | Not in your Book yet | Already in your Book |
+|---|---|---|
+| An elder of the unique's family, in its region | 15% a kill (`UNIQ_TUNE.first`); **pity:** the 4th family elder you beat without it always drops it | An **Echo**: 12% a kill (`UNIQ2_TUNE.echo`) |
+| The region boss | 50% on a kill; pity on the 3rd | Echo 30% |
+| The Voice | The First Lamp on the first win, always | Echo 30% |
+| Active kill (core-2 6.6: 3+ parries, dodges or interrupts) | x2 chance | x2 chance |
+| The Deepwell, deep floors (a pity path, core-2: "the Deepwell drops them") | - | 1 Echo of a random unique you own, once a run past floor 20 |
+
+- **Grade:** the kill zone's `zoneGrade` (a Listener unique is grade 3).
+- **A unique always lands**, even in a full bag (today a full bag salvages the drop, `addItem`): uniques go
+  over the bag limit by one and the bag shows "51 / 50: make room".
+- **You lost it?** If the Book knows a unique but you no longer have the item (salvaged), its next drop is
+  the item again, at the Book's rank, instead of an Echo. Nothing is ever gone for good.
+- `S.found[u]` records the highest grade found, as today; the Trophy Wall and the Codex read it.
+
+### 6.4 Echoes and ranks
+
+- An Echo is an extra copy of a unique you already have; it goes straight into the Book (no item).
+  **2 Echoes raise the rank by one** for uniques (`UNIQ2_TUNE.echoPerRank`; Oath powers keep 3), so rank V
+  takes 8.
+- **Rank cap:** `min(5, 1 + Great Lanterns relit)`. A Hollow unique found at zone 20 stays at rank I until
+  the Hollow's Great Lantern burns; one found in Region 5 can reach V at once. Echoes past the cap are kept
+  and apply when the cap rises (no dead drops).
+- The Book holds the rank; the item reads it (legendaries.md 2.2). Tempering or re-finding the item never
+  touches the rank.
+- Toasts: first find `high` ("Unique! Rotbloom Mantle: Spreading Rot"), Echo `normal` ("Echo: Spreading
+  Rot 1 / 2"), rank up `high`.
+
+### 6.5 Temper: bringing a unique forward
+
+A unique drops at its region's grades, so a favourite power would sit on stale stats by the next region.
+**Temper** (at the station of the wearer's weight: Forge, Workbench or Loom; charms and trinkets at the
+Enchanter's Table) raises a unique's grade to any open grade:
+
+- Cost: 2 x the recipe of the wearer's weight kind at that position and the new grade (refined from grade
+  4), plus gold `foesGold(S.maxZone, 50)`. Station XP as a craft of that grade.
+- Keeps everything else: id, +N, the power and its rank, fixed lines (re-valued at the new grade), sockets
+  and their buff items (valued up to `famTop`).
+- This keeps "crafting never becomes pointless" true for uniques too: the unique is found once and forged
+  forward.
+
+### 6.6 The Lantern Book
+
+One collection, in the Craft tab's **Powers** view (legendaries.md 7), renamed **Lantern Book**:
+
+| Page | What | Shown when unknown |
+|---|---|---|
+| **Uniques** | 30 slots, a row of 6 per region: icon, name, power, rank pips I-V, Echoes "1 / 2", worn or not | A silhouette and "Dropped by: plant elders of the Hollow" (regions not reached: "Beyond the Coast") |
+| **Powers** | The 39 Oath powers and 4 pinnacle powers, as today (learn, inscribe) | As today |
+| **Classic** | The 13 uniques from before Gear 2.0, with their original effect | A silhouette and where they drop now (6.7) |
+
+- Codex: 2 Light per unique found, +1 per rank above I (the legendaries rule), a page Seal at 30.
+- The Lanternbearer's card shows "Powers 2 / 2" counting uniques and inscriptions together.
+
+### 6.7 Migration: nothing lost
+
+| What a save has | After S5 |
+|---|---|
+| **The 13 classic uniques** (`UNIQ`, `S.found`) | Kept: id, slot, grade, +N and effect for ever. They gain **one open socket**. They carry no power, so they do not count toward the power limit. The 7 zone-elder ones **drop from the Deepwell's floor bosses** from S5 (today's `UNIQ_TUNE` rates) instead of from elders, so new players can still get them; the 6 raid ones keep dropping from the raid, unchanged (the online layer is not touched) |
+| **Legendary items and learned powers** (`lg`, `lr`, `cm`, `S.legend.book`, `.echo`) | Unchanged: learn and inscribe work as today; their Book page is "Powers" |
+| **Pinnacle powers** | Unchanged (they stay pinnacle drops) |
+| **The 2-power limit** | Now counts uniques too. A save that wears 2 inscribed items and later equips a unique gets the in-page ask ("You carry 2 powers. Take off X?"), never a silent removal |
+| **The 7 coast uniques of region-2.md 6** | Never built; replaced by uniques 7-12 |
+| **Companion uniques** (party spec 5.3) | Already powers (legendaries.md 3.5); unchanged |
+
+The budget cap (legendaries.md 6) now sums unique powers with the rest, at the same caps; `legendBest`
+tries unique pairs too.
