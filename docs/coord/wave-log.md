@@ -305,3 +305,6 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   clamped to the cap for the player's highest rank, and the UI shows "capped" when a build hits it.
   Sets stay valuable through their non-damage effects and by letting weaker powers reach the cap.
   L6's sim verifies L4/L5. Pick one legendary colour: use #FF8A3D and update --r-legendary.
+- 02:5x UTC: the account usage limit stopped all three agents (Stage C, PERF4, L2); it reset at 03:50.
+  At 04:39 all three were resumed with their context and uncommitted work intact (Stage C had 4 commits
+  plus WIP, PERF4 12 changed files). Nothing was lost.
