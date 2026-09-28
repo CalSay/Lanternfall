@@ -1,36 +1,34 @@
-/* 60-store: the Storehouse in the Gather tab (75-store-ui.js, task H3). */
-.st-sec { margin: 0; }
-.st-sec[hidden] { display: none; }
-.st-chip { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; padding: 8px 10px; background: rgba(224,82,79,.1); border: 1px solid #6A3040; border-left: 3px solid var(--hp); }
-.st-chip.over { background: rgba(242,169,59,.1); border-color: #6A5030; border-left-color: #F2A93B; }
-.st-ic img { width: 24px; height: 24px; image-rendering: pixelated; display: block; }
-.st-txt { font: 600 13.5px/1.3 var(--body); color: #F6D8D0; }
-.st-chip.over .st-txt { color: #F7E2B8; }
-.st-acts { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
-.st-acts .mini { min-height: 40px; }
-.st-acts .mini[hidden] { display: none; }
-.st-spill.on { border-color: var(--gold); color: var(--gold); }
+/* 60-store: the Storehouse view in the Gather tab (75-store-ui.js; H3, rebuilt by UX-A GX1). */
+.sh-view { gap: 12px; }
+.sh-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line-hi); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.sh-card-tx { min-width: 0; }
+.sh-title { margin: 0; font: 600 calc(17px * var(--display-k))/1.15 var(--display); }
+.sh-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.sh-up { flex: none; min-height: 44px; }
 
-/* node rows: "Oak 300/300" */
-.gt-held.st-warn { color: #F2A93B; }
-.gt-held.st-full { color: #FF8A80; font-weight: 600; }
-.gt-held.st-over { color: #F2A93B; font-weight: 600; }
+/* filter chips: one row, sideways scroll */
+.sh-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.sh-chips::-webkit-scrollbar { display: none; }
+.sh-fchip { flex: none; min-height: 36px; padding: 0 10px; background: var(--panel); border: 1px solid var(--line-hi); font: 600 12.5px var(--body); color: var(--bone); cursor: pointer; }
+.sh-fchip.on { border-color: var(--gold); color: var(--gold); background: rgba(242,193,78,.08); }
 
-/* pack cells: a cap line and a thin bar */
-.mat .st-cap { font: 500 10px/1 var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
-.mat .st-cap[hidden], .mat .st-bar[hidden] { display: none; }
-.mat .st-bar { display: block; width: 100%; height: 3px; background: #0B0810; margin: 1px 0; }
-.mat .st-bar b { display: block; height: 100%; width: 0; background: #6E8A5A; }
-.mat.st-warn .st-bar b { background: #F2A93B; }
-.mat.st-full { border-color: #8A3A3A; }
-.mat.st-full .st-bar b { background: var(--hp); }
-.mat.st-full .st-cap { color: #FF8A80; font-weight: 600; }
-.mat.st-over .mc { color: #F2A93B; }
-.mat.st-over .st-bar b { background: #F2A93B; }
-.mat.st-over .st-cap { color: #F2A93B; font-weight: 600; }
+.sh-fams { display: grid; gap: 12px; }
+.sh-fam { gap: 6px; }
+.sh-fam .note { font-size: 12px; }
 
-/* pack summary */
-.st-sumrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.st-sum { margin: 0; min-width: 0; }
-.st-sumrow .mini { flex: none; min-height: 40px; }
-.st-sumrow .mini[hidden] { display: none; }
+/* cells: count, name, held/cap bar */
+button.mat { font: inherit; color: var(--bone); cursor: pointer; min-height: 52px; }
+button.mat:active { transform: translateY(1px); }
+button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
+.mat.none { opacity: .5; }
+.gat-tro .mat .mn { font-size: 10px; }
+.mat .sh-bar { display: block; width: 100%; height: 3px; background: #0B0810; margin: 2px 0 0; }
+.mat .sh-bar[hidden] { display: none; }
+.mat .sh-bar b { display: block; height: 100%; width: 0; background: var(--gold); }
+.mat.sh-warn .sh-bar b { background: #F2A93B; }
+.mat.sh-full { border-color: #8A3A3A; }
+.mat.sh-full .sh-bar b { background: var(--hp); }
+.mat.sh-full .mc { color: #FF8A80; }
+.mat.sh-over .mc { color: #F2A93B; }
+.mat.sh-over .sh-bar b { background: #F2A93B; }
+.sh-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }

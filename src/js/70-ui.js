@@ -38,11 +38,13 @@ function fillToast(t, msg, url) {
   if (url) t.append(img(url));
   t.append(el('span', 'tx', msg));
   if (t._more) t.append(el('span', 'more', '+' + t._more));
+  if (t._tap && !t._news) t.append(el('span', 'go', '›'));
   t._msg = msg;
 }
-function makeToast(msg, kind, url, p) {
-  const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : ''));
+function makeToast(msg, kind, url, p, go) {
+  const t = el('div', 'toast ' + (kind || '') + (p === 2 ? ' hi' : '') + (go ? ' has-go' : ''));
   t._p = p; t._kind = kind; t._more = 0;
+  if (go) t._tap = () => followGo(go);   // UX-A (ux-overhaul.md 4.6): a toast with go follows it on a tap
   t.setAttribute('role', 'status');
   fillToast(t, msg, url);
   // Tap to dismiss; swipe sideways to fling it away.
@@ -61,7 +63,7 @@ function makeToast(msg, kind, url, p) {
 // The stage box's height, kept by a ResizeObserver so a toast never reads layout.
 let stageBoxH = 0;
 try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offsetHeight; }).observe($('stageBox')); } catch (e) { stageBoxH = 999; }
-function showToast(msg, kind, icon, prio) {
+function showToast(msg, kind, icon, prio, go) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
   if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
@@ -82,16 +84,29 @@ function showToast(msg, kind, icon, prio) {
     if (p < 2) {
       const into = normals[normals.length - 1];
       notes.unread++; bellUpdate(true);
-      if (into) { into._more++; into.className = 'toast ' + (kind || ''); fillToast(into, msg, url); armToast(into); }
+      if (into) { into._more++; into._tap = go ? () => followGo(go) : null; into.className = 'toast ' + (kind || '') + (go ? ' has-go' : ''); fillToast(into, msg, url); armToast(into); }
       return;
     }
     // high: make room by retiring the oldest normal toasts first, then the oldest high ones
     const order = normals.concat(live.filter(t => t._p === 2));
     for (let i = 0; i <= live.length - room; i++) { const out = order[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
   }
-  const t = makeToast(msg, kind, url, p);
+  const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
+}
+// UX-A (ux-overhaul.md 4.6): one target shape for toasts, Next Up and away lines. go is
+// { tab, view, sel, fn } (open that menu view, scroll to sel) or an activity target
+// { act: 'fight', zone } / { act: 'gather', node: { kind, t } | skill } / { act: 'raid' | 'deep' }
+// (switch through navGo, 55-nav.js; closes menus in portrait), or a fn returning one.
+function followGo(go) {
+  try {
+    if (typeof go === 'function') go = go();
+    if (!go) return;
+    if (go.fn) go.fn();
+    if (go.act) { navGo(Object.assign({ close: true }, go)); return; }
+    if (go.tab || go.view) setTab(go.view || go.tab, go.sel);
+  } catch (e) { console.error('[lanternfall] go failed', e); }
 }
 // ---- What's new ----
 // Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
@@ -291,13 +306,15 @@ function saveUiPrefs() { try { localStorage.setItem(UI_KEY, JSON.stringify(uiPre
 //   and on the tab while that view is not open. Sections join a view with registerSection's `view`.
 //   feature (optional): a 55-onboard.js feature id; the view (and a tab with no view left) stays
 //   hidden until isUnlocked(feature).
-function registerView(tabId, { id, label, order = 50, dot, feature } = {}) {
+//   show (optional, UX-A): () -> bool, cheap; false leaves the view out of the switcher for now
+//   (Gather's Mining view on a cold Hearth before the fire, 72-ui-gather.js).
+function registerView(tabId, { id, label, order = 50, dot, feature, show } = {}) {
   tabId = TAB_ALIAS[tabId] || tabId;
   if (!id) throw new Error('registerView: needs an id');
   const list = VIEWS[tabId] || (VIEWS[tabId] = []);
   let v = list.find(x => x.id === id);
-  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; if (feature) v.feature = feature; }
-  else { v = { id, label: label || id, order, dot: dot || null, feature: feature || null }; list.push(v); }
+  if (v) { if (label) v.label = label; v.order = order; if (dot) v.dot = dot; if (feature) v.feature = feature; if (show) v.show = show; }
+  else { v = { id, label: label || id, order, dot: dot || null, feature: feature || null, show: show || null }; list.push(v); }
   list.sort((a, b) => a.order - b.order);
   if (!VIEW_OF[id] && !TAB_IDS.includes(id)) VIEW_OF[id] = tabId;
   if (S.tab === tabId) { buildViewSeg(tabId); applyView(tabId); }
@@ -315,7 +332,7 @@ registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'rost
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
 registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });
-registerView('gat', { id: 'pack', label: 'Pack', order: 40, feature: 'gather' });
+registerView('gat', { id: 'pack', label: 'Storehouse', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
 registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' });
 registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
 registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });
@@ -327,7 +344,7 @@ registerView('world', { id: 'raid', label: 'Raid', order: 40, feature: 'raid' })
 
 function viewsOf(t) { return VIEWS[t] || []; }
 // The views the player can see now (locked ones are left out of the switcher).
-function shownViews(t) { return viewsOf(t).filter(v => featOk(v.feature)); }
+function shownViews(t) { return viewsOf(t).filter(v => featOk(v.feature) && (!v.show || safeDot(v.show))); }
 function curView(t) {
   const all = viewsOf(t), list = shownViews(t), want = uiPrefs.views[t];
   return (list.find(v => v.id === want) || list[0] || all[0] || { id: '' }).id;
@@ -536,6 +553,9 @@ function putToggle(e, c, on_) { on_ = !!on_; if (e.classList.contains(c) !== on_
 const viewOpen = (t, v) => S.tab === t && curView(t) === v;
 
 let uiTimer = 0, slowTick = 0, lastPct = 100, trailRaf = 0;
+// UX-A: header parts owned by feature UI (75-nav-ui's activity pill) update here: uiHooks.push(fn(force)).
+// Keep them to write-on-change text updates; they run with every ui() call.
+const uiHooks = [];
 // Static HUD nodes, looked up once.
 const hudEl = {};
 for (const id of ['hName', 'hLvl', 'xpFill', 'gold', 'embers', 'zName', 'zSub', 'mName', 'mHp', 'mBar', 'mTrail', 'tWrap', 'tBar', 'zStep', 'zNum', 'zPrev', 'zNext', 'statNums', 'sDps', 'sTap', 'hint']) hudEl[id] = $(id);
@@ -603,6 +623,7 @@ function ui(force) {
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
   putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
+  for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
   if (viewOpen('adv', 'upgrades')) uiFight();
@@ -751,7 +772,7 @@ function registerTab({ id, label, icon, mount, update, hidden }) {
 }
 
 // ================= core event wiring =================
-on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio));
+on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio, t.go));
 on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));

@@ -672,3 +672,16 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   WIP on their branches (relaunch from worktree-agent-a4c131b5aff330e50 / -a470a57b3ab7f632b); told N1, CU1
   and UX-A to commit checkpoints now and finish lean. No new launches until the owner says; the weekday
   check-in is merge-only until then.
+- N1 merged: 21f-data-hands.js, 57f-hands.js (hire at the Tavern, beds in the Bunkhouse camp building, 1-5
+  +1 at Hearth 8, data-driven cap; 10-24.75% of the hero's live rate; 2-8 h shifts; parcels into the
+  Storehouse; own RNG; no harvest, no skill XP, no mastery; Tam; old saves at Hearth 2+ get Bunkhouse 1).
+  HS9/HS11/HS12 miss because the sim reaches Hearth 2 on day 2-3 (spec ~1 h): BAL3. N2/N3 (art, UI) next.
+- CU1 merged: rapid catch-up removed; the planner scores real levels; T11 redefined (pacing.md 13).
+  CONSEQUENCE: P2 fails (Lanternmage/Ranger stall at zone 69-70 with their first Common pair at the cap), P4
+  fails for 3 classes. Owner/coordinator decision needed for BAL3 (options in pacing.md 13: retune Region 2
+  for a capped Common pair; make players invest in a better hero for Region 2; a small far-behind rule).
+  Full Company Feat now ~6-7 months (text says 3-5).
+- UX-A merged: 55-nav.js (S.nav), 75-nav-ui.js, 60-nav.css (activity pill replacing the name, quick
+  switcher, swipe between views), Gather rebuilt (Now card, level tabs with XP bars, Best for you, compact
+  rows, lower tiers folded), Storehouse view, tool sheet, Raid button removed from the control row.
+  NAV_TUNE.pillReplacesName = true. Perf needs one quiet re-run.

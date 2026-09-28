@@ -233,7 +233,7 @@ var forgeGoalPicks = 0;
     pct: () => { const b = skillNext(); return b ? b.p : null; },
     label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv, b.k) - b.s.xp))} XP to level ${b.s.lv + 1}` + (skillNextReq(b.k) === b.s.lv + 1 ? `, which opens tier ${skillTopTier(b.k) + 1}` : '') : ''; },
     icon: () => { const b = skillNext(); return { ic: SKILL_IC[b ? b.k : 'mine'] || SKILL_IC.mine }; },
-    go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
+    go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', view: b.k }; }   // UX-A: the skill's own Gather view
   });
 
   // Craft: the next tier of an item the hero can wear (class kinds via CRAFT_FITS/fits; a

@@ -4610,6 +4610,155 @@ try {
   assert(x1 > 0 && x1 <= cap1 * (1 + 1e-9) && x1 < need1 * 0.5, `CU1 a level-1 recruit at zone 30 earns the XP of par at its level + ${T.gapMax}: one slow kill is ${(x1 / need1).toFixed(3)} of a level (cap ${(cap1 / need1).toFixed(3)})`);
   assert(!g.errors.length, 'CU1 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('no catch-up crashed: ' + (e.stack || e)); }
+// ---- UX-A: global navigation (55-nav.js, 75-nav-ui.js) and the Gather rebuild (72-ui-gather.js) ----
+console.log('nav');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
+  // 1. S.nav defaults on every fixture; the save's node fills its skill's last node; nothing else is lost
+  for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json')).sort()) {
+    const old = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
+    const nav = JSON.parse(E('JSON.stringify(S.nav)'));
+    const sk = E('skillOf(S.node.kind)');
+    const cur = JSON.parse(E('JSON.stringify(S)')); delete cur.party; const o2 = Object.assign({}, old); delete o2.party;   // the party's own migrations (F1) are checked in their sections
+    const d = subsetDiff(o2, cur);
+    assert(nav && nav.v === 1 && Array.isArray(nav.recent) && nav.recent.length === 0 && nav.last && ['mine', 'wood', 'forage'].every(k => k in nav.last)
+      && (!nav.last[sk] || (nav.last[sk].kind === old.node.kind && nav.last[sk].t === old.node.t)) && !d && !g.errors.length,
+      `${f}: S.nav defaults (last ${JSON.stringify(nav.last)}), the save's node (${old.node && old.node.kind} T${old.node && old.node.t}) is its skill's last node, no field lost` + (d ? ': ' + d : '') + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 2. switching, last node per skill, recent places, the save round trip
+  {
+    const store = memoryStorage({ [KEY]: rawOf('save-v3-four.json') });
+    const g = loadCore({ seed: 6, storage: store }), E = s => g.eval(s);
+    E('S.onboard.all = 1');
+    const ev = []; g.fn.on('navGo', e => ev.push(e));
+    E('setActivity("fight")'); secs(g, 0.2);
+    const skills = E('navSkills().join()');
+    assert(skills === 'mine,wood,forage', `a late save lists every open skill in the switcher (${skills})`);
+    assert(E('navGo({ act: "gather", node: { kind: "ore", t: 3 }, close: true })') && E('S.activity') === 'gather' && E('S.node.kind + S.node.t') === 'ore3' && ev.length === 1 && ev[0].ok && ev[0].place.close,
+      'navGo gather: the activity and the node change, navGo { place, ok } fires with close (the UI closes menus on it)');
+    secs(g, 0.2);
+    assert(E('navGo({ act: "gather", skill: "wood" })') && E('S.node.kind') === 'wood', `navGo by skill resumes that skill's last node (${E('S.node.kind + S.node.t')})`);
+    secs(g, 0.2);
+    const last = JSON.parse(E('JSON.stringify(navLast("mine"))'));
+    assert(last.kind === 'ore' && last.t === 3 && E('S.nav.last.mine.t') === 3, 'Mining remembers its last node (Mithril Seam) while you chop');
+    assert(E('navRecent().some(p => p.k === "node" && p.kind === "ore" && p.t === 3)') === false, 'a node the switcher already lists (a skill\'s last node) is not repeated under Recent');
+    E('navGo({ act: "gather", node: { kind: "ore", t: 2 } })'); secs(g, 0.2); E('navGo({ act: "gather", node: { kind: "ore", t: 4 } })'); secs(g, 0.2);
+    const rec = JSON.parse(E('JSON.stringify(navRecent())'));
+    assert(rec.some(p => p.k === 'node' && p.kind === 'ore' && p.t === 2) && rec.length <= E('NAV_TUNE.recentShow'), `nodes you left show under Recent (${rec.map(p => p.kind + p.t).join(', ')})`);
+    assert(E('navGo({ act: "fight" })') && E('S.activity') === 'fight' && E('navNow().text') === `Fighting · Zone ${E('S.zone')}`, `navGo fight: the pill reads "${E('navNow().text')}"`);
+    g.fn.emit('bossFail', { zone: E('S.maxZone'), dps: 1 });
+    assert(E('navRecent().some(p => p.k === "boss" && p.z === S.maxZone)'), 'a failed boss shows as a Recent place ("Zone N boss")');
+    E('navGo({ act: "gather", node: { kind: "ore", t: 4 } })');
+    assert(E('navNow().text') === 'Mining · Starsteel Crater' && E('navNow().act') === 'gather', `the pill while mining: "${E('navNow().text')}"`);
+    E('S.mats.ore[3] = storeCap("ore", 4)');
+    assert(E('navNow().full') === true && / · full$/.test(E('navNow().text')) && E('navFullIn("ore", 4)') === 0, 'a full cell turns the pill red ("· full")');
+    E('S.mats.ore[3] = 0');
+    assert(E('navFullIn("ore", 4) > 0 && Number.isFinite(navFullIn("ore", 4)) && navRate("ore", 4) > 0'), `time to full: ${Math.round(E('navFullIn("ore", 4)') / 60)} min at ${E('navRate("ore", 4)').toFixed(1)} a minute`);
+    // Best for you: up to 2, open, never the node you work, never a full cell
+    const best = JSON.parse(E('JSON.stringify(bestNodes("mine"))'));
+    assert(best.length >= 1 && best.length <= 2 && best.every(b => E(`skillTierOpen("mine", ${b.t})`) && !(b.kind === 'ore' && b.t === 4) && b.why) && best[0].t === E('skillTopTier("mine")'),
+      `Best for you: ${best.map(b => `${b.kind} T${b.t} (${b.why})`).join('; ')}`);
+    E('S.mats.ore[4] = storeCap("ore", 5)');
+    assert(!JSON.parse(E('JSON.stringify(bestNodes("mine"))')).some(b => b.kind === 'ore' && b.t === 5), 'a full cell is never "best for you"');
+    // save round trip
+    E('save()');
+    const saved = JSON.parse(store.get(KEY)).nav;
+    const g2 = loadCore({ seed: 7, storage: store }), E2 = s => g2.eval(s);
+    assert(JSON.stringify(E2('S.nav')) === JSON.stringify(saved) && saved.last.mine.kind === 'ore' && saved.recent.length >= 1, `S.nav survives a save and load (${JSON.stringify(saved.last)}, ${saved.recent.length} recent)`);
+    // a bad or stale entry never breaks it
+    E2('S.nav.last.wood = { kind: "wood", t: 9 }; S.nav.recent.push(null, { kind: "zz", t: 1 }, 5)');
+    assert(E2('navLast("wood").t') >= 1 && E2('navLast("wood").t') <= 5 && Array.isArray(JSON.parse(E2('JSON.stringify(navRecent())'))) && !g2.errors.length, 'stale or broken nav entries are ignored');
+    assert(!g.errors.length, 'nav: no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 3. a new game (cold Hearth): only Woodcutting until the fire is lit; the switcher hides locked skills
+  {
+    const g = loadCore({ seed: 8, cold: true }), E = s => g.eval(s);
+    assert(E('hearthCold() && !hearthLit()') && E('navSkills().join()') === 'wood' && E('navSkillOpen("mine")') === false && E('navSkillOpen("forage")') === false,
+      `cold Hearth: the switcher and Gather show only Woodcutting (${E('navSkills().join()')}), Gather opens on the Oak Grove`);
+    E('S.mats.wood[0] = 50; hearthLight()'); secs(g, 2);
+    assert(E('hearthLit()') && E('navSkills().join()') === 'mine,wood', `after the fire: Mining opens too (${E('navSkills().join()')})`);
+    assert(!g.errors.length, 'cold nav: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // 4. a Deepwell run holds the activity: navGo refuses, the pill says so
+  {
+    const g = loadCore({ seed: 9, storage: memoryStorage({ [KEY]: rawOf('save-v3-four.json') }) }), E = s => g.eval(s);
+    E('S.maxZone = Math.max(S.maxZone, 25); S.camp.b.hearth = Math.max(S.camp.b.hearth || 0, 3)');
+    if (E('deepUnlocked()') && E('DW.start(false)')) {
+      assert(E('navNow().act') === 'deep' && /^Deepwell · Floor \d+$/.test(E('navNow().text')) && E('navGo({ act: "gather", skill: "wood" })') === false && E('S.activity') === 'fight',
+        `while a Deepwell run is live the pill reads "${E('navNow().text')}" and switching waits`);
+    } else ok('Deepwell not open on this fixture (skipped)');
+  }
+  // 5. the browser side, from source (the smoke run below drives it in Chromium when it is there)
+  {
+    const src = f => fs.readFileSync(path.join(ROOT, 'src', ...f.split('/')), 'utf8');
+    const nav = src('js/75-nav-ui.js'), ui = src('js/70-ui.js'), gat = src('js/72-ui-gather.js'), shell = src('shell.html');
+    assert(/on\('navGo'[\s\S]{0,200}closeMenu\(\)/.test(nav) && /uiHooks\.push\(updatePill\)/.test(nav) && /NAV_TUNE\.pillReplacesName/.test(nav), '75-nav-ui: the pill updates through uiHooks, navGo { close } closes menus, the header flag picks the variant');
+    assert(/const uiHooks = \[\]/.test(ui) && /for \(const f of uiHooks\) f\(force\)/.test(ui) && /function followGo\(/.test(ui) && /label: 'Storehouse'/.test(ui) && /id: 'pack'/.test(ui), '70-ui: uiHooks, followGo (toast go), the Pack view is labelled Storehouse (id kept)');
+    assert(/show: \(\) => navSkillOpen\('mine'\)/.test(gat) && /registerGatherRowNote/.test(gat) && !/lays down their swords/.test(gat + shell), '72-ui-gather: Mining shows once open, the Hands hook is there, the stale "lays down their swords" copy is gone');
+    assert(/<section class="panel" id="p-gat" hidden><\/section>/.test(shell), 'shell: the Gather panel is built by script');
+    if (fs.existsSync(distFile)) {
+      const html = fs.readFileSync(distFile, 'utf8');
+      assert(html.includes('act-pill') && html.includes('function openSwitcher') && html.includes("registerSection('gat', {\n    id: 'store'"), 'dist carries the pill, the switcher and the Storehouse view');
+    }
+  }
+  // 6. in Chromium (when Playwright and /opt/pw-browsers are here): switching from inside a menu
+  await (async () => {
+    let pw = null;
+    try {
+      const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+      for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+    } catch (e) {}
+    const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+    if (!pw || !exe || !fs.existsSync(distFile)) { ok('nav (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      await ctx.addInitScript(([key, raw]) => {
+        if (sessionStorage.getItem('nav-seeded')) return; sessionStorage.setItem('nav-seeded', '1');
+        const o = JSON.parse(raw); o.last = Date.now(); o.activity = 'gather'; o.node = { kind: 'ore', t: 4 }; localStorage.setItem(key, JSON.stringify(o));
+      }, [KEY, rawOf('save-v3-four.json')]);
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await X(`setTab('make')`); await page.waitForTimeout(300);
+      const pill0 = await page.textContent('#actPill');
+      await page.click('#actPill'); await page.waitForTimeout(250);
+      const rows = await page.$$eval('.nv-sheet .nv-row', rs => rs.map(r => r.textContent));
+      await page.click('.nv-sheet .nv-row:nth-child(3) .nv-act');   // Woodcutting: Chop
+      await page.waitForTimeout(300);
+      const after = JSON.parse(await X(`JSON.stringify({ tab: S.tab, act: S.activity, kind: S.node.kind, sheet: !!document.querySelector('.bsheet-ov'), pill: document.getElementById('actPill').textContent, open: document.getElementById('app').classList.contains('menu-open') })`));
+      assert(/^Mining · Starsteel Crater/.test(pill0) && rows.length === 4 && after.tab === '' && !after.open && !after.sheet && after.act === 'gather' && after.kind === 'wood' && /^Woodcutting · /.test(after.pill),
+        `browser: from inside the Craft menu the pill opens the switcher (${rows.length} rows); Chop switches to ${after.pill}, closes the sheet and the menu`);
+      await X(`setTab('mine')`); await page.waitForTimeout(300);
+      const strip = await page.textContent('.gx-view:not(.off-view) .gx-strip');
+      await page.click('.gx-view:not(.off-view) .gx-fam .gx-row[data-kind="ore"][data-t="4"]');   // a row: one tap moves you there
+      await page.waitForTimeout(300);
+      const back = JSON.parse(await X(`JSON.stringify({ tab: S.tab, act: S.activity, node: S.node, last: S.nav.last.wood })`));
+      assert(/^You are woodcutting at the /.test(strip) && back.act === 'gather' && back.node.kind === 'ore' && back.node.t === 4 && back.last && back.last.kind === 'wood' && back.tab === 'gat',
+        'browser: on the Mining view while chopping, a one-line strip; tapping the Starsteel Crater row moves you there and keeps the menu open (Wood keeps its own last node)');
+      await X(`setTab('mine')`); await page.waitForTimeout(300);
+      await page.click('.gx-view:not(.off-view) .gx-now .gx-go');   // Back to fight
+      await page.waitForTimeout(300);
+      assert(await X('S.activity') === 'fight' && await X('S.tab') === '', 'browser: Back to fight fights at your zone and closes the menu');
+      const sw = await page.evaluate(() => {
+        window.__t.x(`setTab('mine')`);
+        const p = document.getElementById('panels'), tg = p.querySelector('.gx-view:not(.off-view) .sec-title') || p;
+        const mk = (type, x, y) => { const t = new Touch({ identifier: 1, target: tg, clientX: x, clientY: y }); tg.dispatchEvent(new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true })); };
+        mk('touchstart', 300, 400); mk('touchend', 200, 404);
+        return window.__t.x('curView("gat")');
+      });
+      assert(sw === 'wood', `browser: a sideways swipe moves Mining -> ${sw}`);
+      assert(!errs.length, 'browser: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('nav crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

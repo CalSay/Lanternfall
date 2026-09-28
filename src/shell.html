@@ -45,7 +45,7 @@
     <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
       <button data-act="fight" aria-pressed="true">Fight</button>
       <button data-act="gather" aria-pressed="false">Gather</button>
-      <button data-act="raid" aria-pressed="false">Raid</button>
+      <!-- UX-A (ux-overhaul.md 4.3, approved): Raid left the control row; it is in the quick switcher (online) -->
     </div>
     <div class="zstep" id="zStep">
       <button class="navbtn" id="zPrev" aria-label="Previous zone">&lsaquo;</button>
@@ -98,24 +98,8 @@
     <!-- Party (filled by 75-party.js) -->
     <section class="panel" id="p-party" hidden></section>
 
-    <!-- Gather -->
-    <section class="panel" id="p-gat" hidden>
-      <div class="skills" id="skillCards" data-view="mine wood forage"></div>
-      <div class="sec" data-view="mine">
-        <h2 class="sec-title">Mining</h2>
-        <div id="oreRows" class="sec"></div>
-      </div>
-      <div class="sec" data-view="wood">
-        <h2 class="sec-title">Woodcutting</h2>
-        <div id="woodRows" class="sec"></div>
-      </div>
-      <p class="note gat-how" data-view="mine wood forage">While gathering, your party lays down their swords. No gold or monster kills, but every swing fills your pack. Tap the stage to work faster.</p>
-      <div class="sec" data-view="pack">
-        <h2 class="sec-title">Your pack</h2>
-        <div class="mats" id="matGrid"></div>
-        <p class="note">Essence drops from monsters while you fight. Higher zones drop rarer essence.</p>
-      </div>
-    </section>
+    <!-- Gather: the skill views and the Storehouse are built by 72-ui-gather.js and 75-store-ui.js (UX-A, GX1) -->
+    <section class="panel" id="p-gat" hidden></section>
 
     <!-- Forge -->
     <section class="panel" id="p-forge" hidden>

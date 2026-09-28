@@ -1,32 +1,14 @@
-/* 60-tools: the tool card on the Gather tab and the Mastery box on a tool's item sheet (75-tools-ui.js, H2). */
-.tl-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "ic body" "btns btns"; gap: 6px 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); }
-.tl-card.master { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(242,193,78,.35); }
-.tl-ic { grid-area: ic; width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
-.tl-ic img { width: 30px; height: 30px; }
-.tl-body { grid-area: body; min-width: 0; display: grid; gap: 3px; }
-.tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
-.tl-name { font: 600 calc(15px * var(--display-k))/1.2 var(--display); color: var(--bone); }
-.tl-name.rough { color: var(--muted); }
-.tl-name.rar-uncommon { color: var(--r-uncommon); }
-.tl-name.rar-rare { color: var(--r-rare); }
-.tl-name.rar-epic { color: var(--r-epic); }
-.tl-name.rar-legendary { color: var(--r-legendary); }
-.tl-card.master .tl-name { color: var(--gold); }
-.tl-tag { font: 600 11px/1.4 var(--body); color: var(--muted); }
-.tl-tag.on { color: var(--xp); }
-.tl-tag[hidden] { display: none; }
-.tl-lines { font-size: 12.5px; color: var(--bone); }
+/* 60-tools: the Mastery box on a tool's item sheet and the rough tool's sheet (75-tools-ui.js, H2).
+   The tool chip on the Gather view's Now card is styled in 60-gathering.css (.gx-tool). */
 .tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
 .tl-mlabel { font-weight: 600; color: var(--gold); }
 .tl-mleft { color: var(--muted); }
 .tl-bar { height: 6px; }
 .tl-bar > i { background: var(--gold); }
-.tl-perk { font-size: 12px; color: var(--muted); }
-.tl-btns { grid-area: btns; display: flex; gap: 8px; }
-.tl-btn { flex: 0 0 auto; min-width: 88px; min-height: 40px; padding: 4px 8px; font: 600 13px var(--body); color: var(--bone); background: var(--panel); border: 1px solid var(--line-hi); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-btn { flex: 0 0 auto; min-width: 88px; min-height: 44px; padding: 4px 10px; font: 600 13px var(--body); color: var(--bone); background: var(--panel); border: 1px solid var(--line-hi); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-btn:hover { border-color: var(--gold); }
-.tl-btn[hidden] { display: none; }
 .tl-make { flex: 1 1 0; color: #1A1420; background: var(--gold); border-color: var(--gold); }
+.tl-better { width: 100%; margin-top: 8px; }
 .tl-box .tl-mrow { margin-top: 0; }
 .tl-perks { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12.5px; }
 .tl-perks li { color: var(--muted); opacity: .7; }
