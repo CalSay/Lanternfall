@@ -82,16 +82,21 @@
   on('activity', () => { if (S.activity === 'raid') onboardReveal('raid'); if (S.activity === 'gather') onboardReveal('gather'); });
 
   // ---------------- the guide: one hint at a time ----------------
+  // The ring (marks the target) is a viewport-fixed overlay, same as before. The bubble is its own
+  // element, docked exactly where placeToasts docks toasts: inside #stageBox on the game view,
+  // inside #app (just above the tab bar) over a menu. Same parent, same coordinate space, so the
+  // hint reads as one system with toasts and the two are pushed apart by --toast-h (70-ui.js),
+  // never stacked on top of one another. HINT1.
   const layer = el('div', 'ob-layer'); layer.setAttribute('aria-live', 'polite');
   const ring = el('div', 'ob-ring' + (reduced ? ' still' : ''));
-  const bub = el('div', 'ob-bub'); bub.setAttribute('role', 'note');
+  layer.append(ring);
+  layer.hidden = true;
+  document.body.append(layer);
+  const bub = el('div', 'ob-bub'); bub.setAttribute('role', 'note'); bub.hidden = true;
   const arrow = el('i', 'ob-arrow');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
   bub.append(arrow, txt, x);
-  layer.append(ring, bub);
-  layer.hidden = true;
-  document.body.append(layer);
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   const chip = $('nuChip');
@@ -155,8 +160,17 @@
 
   const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; cur = null; lastKey = ''; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; }
+  // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
+  // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
+  // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
+  // the actual placement (`place`) runs only when the step's target or text changes, or a real
+  // layout event fires (resize, a menu opening or closing) via `dirty`. The band itself (60-onboard.css
+  // .ob-bub) is CSS-docked, not JS-positioned, so it never needs to move at all once shown.
+  let dirty = true, lastTab = S.tab;
+  function invalidate() { dirty = true; }
   function tick() {
+    if (S.tab !== lastTab) { lastTab = S.tab; dirty = true; }
     let step = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
@@ -166,35 +180,40 @@
     cur = step;
     place(spec);
   }
+  let lastNode = null;
   function place(spec) {
-    const r = spec.node.getBoundingClientRect(), vh = innerHeight;
-    const app = $('app').getBoundingClientRect();
-    // the marker: a ring around the node, or a round mark at a point inside it
+    const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;
+    if (layer.hidden) layer.hidden = false;
+    if (bub.hidden) bub.hidden = false;
+    if (key !== lastKey) {
+      lastKey = key; txt.textContent = spec.text;
+      bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); }
+    }
+    if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
+    dirty = false; lastNode = spec.node;
+    // the marker: a ring around the node, or a round mark at a point inside it (never a filled
+    // shape, so it never covers the node/foe underneath)
+    const r = spec.node.getBoundingClientRect();
     let rx, ry, rw, rh;
     if (spec.at) { const d = 58; rx = r.left + r.width * spec.at[0] - d / 2; ry = r.top + r.height * spec.at[1] - d / 2; rw = rh = d; }
     else { rx = r.left - 4; ry = r.top - 4; rw = r.width + 8; rh = r.height + 8; }
     ring.classList.toggle('dot', !!(spec.at || spec.round));
     putStyle(ring, 'transform', `translate(${Math.round(rx)}px, ${Math.round(ry)}px)`);
     putStyle(ring, 'width', Math.round(rw) + 'px'); putStyle(ring, 'height', Math.round(rh) + 'px');
-    if (txt.textContent !== spec.text) txt.textContent = spec.text;
-    const key = spec.text;
-    if (key !== lastKey) { lastKey = key; bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
-    if (layer.hidden) layer.hidden = false;
-    // the sentence: below the marker if it fits, else above; kept inside the app column
-    const bw = Math.min(300, app.width - 24), bh = bub.offsetHeight || 48;
-    const cx = rx + rw / 2;
-    const fitsBelow = ry + rh + 12 + bh < vh - 8, fitsAbove = ry - 12 - bh > 8;
-    const below = spec.side === 'up' && fitsAbove ? false : spec.side === 'down' && fitsBelow ? true : fitsBelow && ry + rh / 2 < vh * 0.55;
-    const left = Math.max(app.left + 12, Math.min(app.right - 12 - bw, cx - bw / 2));
-    const top = below ? ry + rh + 12 : Math.max(8, ry - 12 - bh);
-    putStyle(bub, 'width', bw + 'px');
-    putStyle(bub, 'transform', `translate(${Math.round(left)}px, ${Math.round(top)}px)`);
-    bub.classList.toggle('up', !below);
-    putStyle(arrow, 'left', Math.round(Math.max(12, Math.min(bw - 12, cx - left))) + 'px');
+    // the sentence: docked exactly where placeToasts docks toasts (70-ui.js) - inside #stageBox on
+    // the game view, inside #app over a menu - so it reads as one system with the toast stack and
+    // the two never overlap (60-onboard.css .ob-bub, --toast-h). Only the parent and the arrow's
+    // up/down direction ever change; the CSS position within that parent is fixed.
+    const over = !!S.tab && !isWide();
+    const home = over ? $('app') : $('stageBox');
+    if (bub.parentNode !== home) home.append(bub);
+    bub.classList.toggle('over-menu', over);
+    bub.classList.toggle('up', !!spec.node.closest('.tabs'));   // the tab bar sits below the band
   }
   setInterval(tick, 250);
-  addEventListener('resize', () => { lastKey = ''; tick(); });
+  addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
+  on('menuView', invalidate);
 
   // ---------------- Journal: Tips ----------------
   registerSection('log', {

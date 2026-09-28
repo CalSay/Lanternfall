@@ -63,6 +63,10 @@ function makeToast(msg, kind, url, p, go) {
 // The stage box's height, kept by a ResizeObserver so a toast never reads layout.
 let stageBoxH = 0;
 try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offsetHeight; }).observe($('stageBox')); } catch (e) { stageBoxH = 999; }
+// HINT1: publish the live toast stack's height as --toast-h so the onboarding hint (75-onboard-ui.js)
+// can dock its band just above/below the toasts without polling layout itself; keeps the two from
+// ever overlapping regardless of how many toasts are stacked.
+try { new ResizeObserver(es => { for (const e of es) document.documentElement.style.setProperty('--toast-h', e.target.children.length ? (e.target.offsetHeight + 6) + 'px' : '0px'); }).observe($('toasts')); } catch (e) {}
 function showToast(msg, kind, icon, prio, go) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}

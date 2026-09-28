@@ -2220,6 +2220,77 @@ try {
   assert(!errs.length, 'no onboarding errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('onboarding crashed: ' + (e.stack || e)); }
 
+// ---- HINT1: the guide's hint stays put (docs/design/onboarding.md, "one hint at a time") ----
+// The hint used to re-read its target's pixel position and re-place itself every 250ms, so it
+// jumped around whenever the stage moved under it. It must now (a) never recompute a placement on
+// the plain poll, only on a real target/text/layout change, and (b) sit in a fixed CSS band that
+// does not move with the target at all.
+console.log('onboarding hint placement (HINT1)');
+try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-onboard-ui.js'), 'utf8');
+  assert(/setInterval\(tick, 250\)/.test(src), 'still polls for the active step');
+  assert(/if \(!changed\) return;/.test(src), 'place() skips the reposition when nothing real changed (no per-frame follow)');
+  assert(!/setInterval\(place/.test(src), 'place() itself is never put on its own interval');
+  const css = fs.readFileSync(path.join(ROOT, 'src', 'styles', '60-onboard.css'), 'utf8');
+  assert(/\.ob-bub\s*\{[^}]*position:\s*absolute/.test(css), 'the hint bubble is docked (a fixed offset within its parent), not translated to the target every tick');
+  assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
+  ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
+  // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) { ok('onboarding hint (browser): Playwright or Chromium not here, skipped'); }
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.waitForSelector('.ob-bub', { state: 'attached', timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(300);   // let the one-time "pop" entrance animation (60-onboard.css) settle
+      const rect = () => page.$eval('.ob-bub', b => { const r = b.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y) }; }).catch(() => null);
+      const toastH = () => page.$eval(':root', h => getComputedStyle(h).getPropertyValue('--toast-h'));
+      let r0 = await rect(), th0 = await toastH();
+      assert(r0 && r0.x > 0, `browser: the guide shows a hint bubble docked with a real gutter, not at the viewport edge (${JSON.stringify(r0)})`);
+      // let several 250ms polls of real play pass (the stage keeps animating, a fight ticks along)
+      // with no resize and no menu change: the band must not follow any of it. The one thing allowed
+      // to move it is the toast stack changing height (--toast-h, so the two never overlap) - a real,
+      // occasional layout change, not a per-frame one.
+      for (let i = 0; i < 6; i++) {
+        await page.waitForTimeout(260);
+        const r = await rect(), th = await toastH();
+        if (th === th0) assert(r && r.x === r0.x && r.y === r0.y, `browser: the hint band does not move while the stage animates under it (${JSON.stringify(r0)} -> ${JSON.stringify(r)}, --toast-h unchanged)`);
+        r0 = r; th0 = th;
+      }
+      // it stays in its band: fixed, near the stage HUD, not floating out at the target
+      const box = await page.$eval('.ob-bub', b => { const s = getComputedStyle(b); return { position: s.position, top: s.top === 'auto' ? null : parseFloat(s.top) }; });
+      assert(box.position === 'absolute' && box.top !== null && box.top < 120, `browser: docked near the stage HUD, not floating at the target (${JSON.stringify(box)})`);
+      // the over-menu band (used once a menu covers the stage) sits just above the tab bar, the
+      // same slot placeToasts uses for toasts (50-overlays.css .toasts.over-menu), so the hint
+      // and the toast stack are in the same corner but never overlap
+      const tabsH = await page.$eval('.tabs', t => t.getBoundingClientRect().height);
+      const boxes = await page.$eval('.ob-bub', b => {
+        const before = getComputedStyle(b).bottom;
+        b.classList.add('over-menu');
+        const after = getComputedStyle(b).bottom;
+        b.classList.remove('over-menu');
+        return { before, after: parseFloat(after) };
+      });
+      assert(boxes.before !== boxes.after && boxes.after >= tabsH, `browser: the over-menu band sits above the tab bar (bottom ${boxes.after}px, tabs ${tabsH}px; was ${boxes.before})`);
+      assert(!errs.length, 'browser: no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('onboarding hint placement crashed: ' + (e.stack || e)); }
+
 // ---- constellations: the talent star map (57e-constellations.js) ----
 console.log('constellations');
 try {
