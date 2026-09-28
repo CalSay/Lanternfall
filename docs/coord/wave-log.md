@@ -632,3 +632,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Q4 answered (bench XP 0 shipped). ASKED THE OWNER: 9.1 Raid under Fight (UI only, online-layer file),
   9.2 rename box to the Journal, 9.3 the pill replaces the name in the header (UX-A ships "name kept" by flag).
   UX-A launched.
+- OWNER: Hands should live at camp with us -> beds come from a new camp building, the Bunkhouse (hire at the
+  Tavern); N1 told (data-driven bed cap so it can grow late game).
+- OWNER deferred the open questions to the relevant designers' recommendations. Coordinator decisions:
+  UX2 9.1 Raid moves under Fight (UI only, no online data change; done in UX-E); 9.2 the rename box moves to
+  the Journal's Lanternbearer card (UX-B); 9.3 the activity pill replaces the name in the header (UX-A told,
+  flag kept). LORE9 (raid flavour lines in 74-ui-raid.js, display only) approved on the same basis.
+  K13 production chains: the Lanternbearer CAN gather secondary resources (coal, dye, salt) so the game is
+  playable without Hands, but they are low-value for the hero and ideal Hand jobs; refining runs in the
+  background at stations (timed), worked faster by Hand refiners.
