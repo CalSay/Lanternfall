@@ -749,3 +749,13 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   gems, Workbench carves totems, Loom weaves charms); bosses carry a signature piece of one family and always
   drop it; Resonance: a matching gem + totem + charm of one element gives a set bonus; each gatherer pair has a
   finder for its family.
+- OWNER (big direction): sockets and gear must be CLASS-SPECIFIC, leading to a RESOURCE OVERHAUL around
+  armour weights: HEAVY (tanks) centres on mining/metal; MEDIUM (warriors, archers) on wood and leather;
+  LIGHT (mages, priests) on cloth and enchantments; all three interact in each other's builds; socket items
+  (gems etc.) come from gathering in each region. Owner floated: the Priest (Lightkeeper) becomes a subclass
+  of the Mage. Coordinator proposal (awaiting confirmation): three base classes by weight (Heavy Warden,
+  Medium Ranger, Light Lanternmage), each with evolutions; Medium can evolve into a melee warrior or an
+  archer; Light into fire, frost or the Lightkeeper (holy/priest); existing Lightkeeper saves migrate to Light
+  with the Lightkeeper evolution already chosen (nothing lost). Two linked specs: CL1 (classes, evolutions,
+  damage types) and RG1 (resources by weight, production chains K13, cross-weight recipes, socket families
+  by weight and region, crafted slots vs uniques 2.0).
