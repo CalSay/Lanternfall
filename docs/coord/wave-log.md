@@ -740,3 +740,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   monetisation later (coordinator note: keep sold gems cosmetic or convenience, never exclusive power).
   (7) HERO FATIGUE: yes, but tuned so rotating heroes never slows progression (frame it as losing a rested
   bonus, recovery at camp, away time counts as rest).
+- OWNER: sockets must not be mining-only; every gathering skill should feed something like gems (idea:
+  totems made by "the gods"). Coordinator proposal (awaiting the owner's reaction): SOCKETS 2.0: Mining ->
+  Gems (weapon slots: power and the Classes 2.0 damage types), Woodcutting -> Heartwood Totems carved in the
+  likeness of the Hollow's old hearth-spirits (armour slots: resistances, thorns, regen), Foraging -> woven
+  Charms of fibre and herbs (trinket slots: utility, statuses, gold/XP), Fishing (Coast) -> Pearls (rare,
+  flexible, any slot or upgrading another socket); worked at existing stations (Enchanter's Table cuts
+  gems, Workbench carves totems, Loom weaves charms); bosses carry a signature piece of one family and always
+  drop it; Resonance: a matching gem + totem + charm of one element gives a set bonus; each gatherer pair has a
+  finder for its family.
