@@ -13865,7 +13865,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 //         owned() -> [card], setProgress() -> [{ id, n, have, on }], trialRule(week?), trialInfo(),
 //         shop(cat) -> [row], nextLore() -> row | null
 //   act   start(trial) -> bool, resume() -> bool, pick(id), reroll(), banish(id), skip(),
-//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id)
+//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id),
+//         fall() (a party wipe ends the run; 59c-deepwell-combat.js calls it)
+// Party combat rules below (packs, HP carried, wipes, Elder telegraphs, the [C] boons, the Guard and
+//   Mend sets, the Deep Edge Lore) live in 59c-deepwell-combat.js.
 // Events: deepStart { trial }, deepFloorStart { floor, kind }, deepKill { mob, floor },
 //   deepFloor { floor, kind, trial, refund } (the Almanac counts it), deepOffer { kind },
 //   deepPick { id, rank }, deepOil { oil } (Oil ran low: under 15s, once a floor),
@@ -14093,6 +14096,7 @@ let DEEP_ARENA = null;
     if (r.boons.glass) x -= 4;
     if (kind === 'boss') x += DEEP_BOONS.sconce.v * rank('sconce');
     if (r.boons.relight && r.ft < DEEP_BOONS.relight.v) x *= 2;
+    x += bonus('deepRefund');   // 59c-deepwell-combat: +5s with party combat
     if (ruleOf(r) === 'drought') x *= 0.5;
     return Math.max(0, x);
   }
@@ -14183,7 +14187,7 @@ let DEEP_ARENA = null;
     for (const s of now) if (!was.includes(s) && !quiet) toast(`Set bonus: ${DEEP_SETS[s].fx}.`, 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
     emit('deepPick', { id, rank: r.boons[id] });
   }
-  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => !DEEP_SETS[s].c && setOn(s));
+  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => (!DEEP_SETS[s].c || deepStageC()) && setOn(s));
 
   // After a draft or a Landing: the queued extra draft, or the next floor.
   function next() {
@@ -14344,7 +14348,7 @@ let DEEP_ARENA = null;
     const mul = (ruleOf(r) === 'steep' ? 1.5 : 1) * mod('deepMarks');
     return Math.round((r.marks + pb) * mul) + r.bonus;
   }
-  // reason: oil | leave | abandon | closed
+  // reason: oil | wipe (59c-deepwell-combat: the party fell) | leave | abandon | closed
   function end(reason) {
     const r = R(); if (!r) return null;
     const d = D(), oldBest = r.trial ? d.trial.best : d.best;
@@ -14689,6 +14693,7 @@ let DEEP_ARENA = null;
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
     start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }
   };
@@ -15276,7 +15281,8 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 //   state   partyCombatOn(), combatUnits() -> the 4 party unit records (read only),
 //           combatFoes() -> the live foe list (read only; `mob` is the one the stage shows)
 //   loop    combatTick(dt), cbSpawn(boss) (50-sim spawn), cbStrike(amount, src, at, label, color, big)
-//           (50-sim strike), cbHeroUp(), cbPush() (auto-push check)
+//           (50-sim strike), cbHeroUp(), cbPush() (auto-push check), cbArena(mob) (a Deepwell pack),
+//           cbRestore(clear) (the party whole, the arena pack set aside: 59c-deepwell-combat.js)
 //   hooks   cbUnitHp(key), cbUnitCd(key) (55-party unitHp / unitCd read them)
 //   helpers cbHitUnit(u, amount, kind, foe), cbHealUnit(u, amount, from), cbShield(u, amount, cap),
 //           cbDamageFoe(f, amount, src, kind), cbUnitByKey(key), cbTaunt(u, foes, secs),
@@ -15316,7 +15322,7 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 // var: other files (56-roster at load, 55-party) may ask before this file has run.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbUnitCd, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
-  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady;
+  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady, cbRestore;
 
 {
   const T = {
@@ -15604,20 +15610,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emitPack();
     return mob;
   };
-  // Deepwell arena: its single foe becomes a pack of one (Oil stays the run's health).
+  // Deepwell arena: its foe becomes a pack (m.pack: the floor's foes, 59c-deepwell-combat.js; else a pack of one).
   cbArena = m => { if (m && !m.th) adoptArena(m); };
   function adoptArena(m) {
+    const list = Array.isArray(m.pack) && m.pack.length ? m.pack.slice(0, FOE_MAX) : [m];
+    if (!list.includes(m)) list.unshift(m);
+    for (const x of list) adoptFoe(x);
+    foes = list; sortFoes(); lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
+    refreshUnits(false);
+    if (m.boss) bossStart(m);
+    openThreat();
+    showFoe();
+    emitPack();
+  }
+  function adoptFoe(m) {
     const t = TYPES.findIndex(x => x.key === m.type), b = FOE_BEH[m.type] || FOE_BEH.slime;
     const base = m.max / (m.boss ? 8 : m.champ ? 3 : 1);
     Object.assign(m, { ti: Math.max(0, t), row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: T.atk * base * (m.boss ? T.bossAtk : b.atk),
       spd: m.boss ? T.bossSpd : T.spd * b.spd, swing: 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, stunT: 0, slowT: 0, slowV: 0, knockT: 0,
       burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: m.champ ? 2 : 1, elite: !!m.champ, bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, split: false, chanT: 0, hits: 0, again: false, first: 0,
       z: S.zone, adds: false, gone: false });
-    foes = [m]; lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
-    refreshUnits(false);
-    if (m.boss) bossStart(m);
-    openThreat();
-    emitPack();
   }
   const PACK_EV = { foes: null };
   function emitPack() { PACK_EV.foes = foes; emit('packSpawn', PACK_EV); }
@@ -16098,7 +16110,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (u.ashenT > 0) u.hp = 1;
       else if (u.id === 'tobin' && u.lv >= 10 && !u.stubborn) { u.stubborn = true; u.hp = 1; }
       else if (u.id === 'caedmon' && !u.vow) { u.vow = true; u.hp = 1; u.ashenT = T.vowT; cbTaunt(u, foes, T.vowT); }
-      else if (boon('life') && !u.lifeline) { u.lifeline = true; u.hp = 1; }
+      else if (boon('life') && !u.lifeline && (typeof dcLifeline !== 'function' || dcLifeline(u))) { u.lifeline = true; u.hp = 1; }
       else knockOut(u);
     } else if (u.hp < u.maxHp * T.interceptAt) {
       const al = upHas('aldric');
@@ -16150,7 +16162,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone;
     WIPE_EV.zone = z; WIPE_EV.boss = !!fightBoss; WIPE_EV.arena = !!inArena;
     wipeT = T.wipeT; wipeBoss = !!fightBoss;
-    if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); toast('Your party fell. They stand up again in a moment.', 'raid', null, 'normal'); return; }
+    if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
       toast('Your party fell to the zone boss. Grow stronger and try again.', 'raid');
@@ -16173,6 +16185,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) return;
     spawn();
   }
+  // The party whole again (59c-deepwell-combat: a Deepwell run starts or ends). clear: the arena's foes
+  // are set aside too (a wipe ends the run with the pack still standing).
+  cbRestore = clear => {
+    wipeT = 0;
+    if (clear) { for (const f of foes) { if (typeof onFoeDown === 'function') onFoeDown(f); f.gone = true; f.hp = 0; f.dead = f.dead || 0.001; } foes = []; lead = null; inArena = false; }
+    for (let i = 0; i < nU; i++) { const u = U[i], was = u.down; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.lifeline = false; if (was) { UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); } }
+  };
   let backZone = 0, backAt = 0, backWipes = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
@@ -16668,6 +16687,171 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     TELE.res = 'dodge';
     return true;
   };
+}
+
+// ---- src/js/59c-deepwell-combat.js ----
+// 59c-deepwell-combat: the Deepwell on party combat (plan-2 W6, plan-3 W6b; deepwell.md 8.2).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// With party combat on (partyCombatOn()), a Deepwell run changes like this:
+//  - Packs: each fight floor is one pack, all of its foes at once (normal: 3 foes, elite: the elite
+//    and a normal foe, boss: the Deep Elder, which keeps its Elder telegraphs and adds from 59b).
+//    Floor HP, First Strike and the cold palette come from 57d's own spawn, one foe at a time.
+//  - Party HP carries from floor to floor. Clearing a pack stands the fallen up and heals as in the
+//    main game (COMBAT_TUNE.revive, packHealF); a cleared floor heals floorHeal more, a Quiet Landing
+//    landingHeal. A saved run resumes a floor with the HP it began with (run.hpAt), like its Oil.
+//  - A wipe (every fielded member down) ends the run: reason 'wipe', the floors cleared count and pay.
+//  - Oil stays: refunds are refund seconds higher, and a parried Elder wind-up gives parryOil back.
+//  - The [C] boons: Thorn Plate, Iron Wall, Deep Ward, Mending Light, Wildfire, Duelist and Quick
+//    Parry are wired in 59-combat.js / 59b-enemies.js; here: Taunt Drill for a hero who is not a
+//    Warden (the front tank taunts), and Lifeline's once-a-floor limit (dcLifeline). The Guard set
+//    (tanks take 25% less) and the Mend set (healing +30%) are read in 59-combat.js.
+//  - Deep Edge (D8): a Deep Lore upgrade, damage while below, off in the Trial.
+// Everything reads "the fielded party" from combatUnits() (u.live): no fixed party size.
+//
+// Exposed: DEEP_COMBAT_TUNE (knobs), deepCombatOn(), dcLifeline(u) (59-combat), DWC { hpAt(), tune }.
+// Save: registerState('deepCombat', { tip: 0 }) (the one-time tip); run.hpAt (inside S.deep.run:
+//   unit key -> HP fraction when the floor began; missing = full).
+
+const DEEP_COMBAT_TUNE = {
+  atk: 1,             // foe attack below, x the 59-combat arena attack (COMBAT_TUNE.atk x the foe's floor HP)
+  floorHeal: 0.1,     // a cleared floor heals this share of max HP, on top of the pack heal (packHealF 0.15): 25% in all
+  landingHeal: 0.6,   // a Quiet Landing heals this share of max HP
+  refund: 5,          // Oil refunds this many seconds higher (HP is run health too now)
+  parryOil: 2,        // Oil back for each parried (or Shield Wall-blocked) Elder wind-up
+  tauntT: 2,          // Taunt Drill: seconds a class tap makes the front tank taunt (a Warden hero: 59-combat)
+  lifeSaves: 1,       // Lifeline: saves a floor, for the whole party
+  edge: 0.2,          // Deep Edge (D8): damage below per rank. Full Deep Lore vs none: about +20% depth (D8 band 15-25%)
+  edgeCost: [150, 400, 800, 1400]   // 2,750 Marks: Deep Lore 7,320 -> 10,070
+};
+
+let deepCombatOn, dcLifeline, DWC;
+
+{
+  const T = DEEP_COMBAT_TUNE;
+  registerState('deepCombat', { tip: 0 });
+  const R = () => (typeof DW === 'object' && DW ? DW.run() : null);
+  deepCombatOn = () => typeof deepActive === 'function' && deepActive() && partyCombatOn();
+  const units = () => (typeof combatUnits === 'function' ? combatUnits() : []);
+  const foes0 = () => { const f = typeof combatFoes === 'function' ? combatFoes() : null; return f && f.length ? f[0] : null; };
+
+  // ---------------- packs: the whole floor at once ----------------
+  const baseSpawn = DEEP_ARENA.spawn, baseKill = DEEP_ARENA.onKill;
+  DEEP_ARENA.spawn = function () {
+    if (!partyCombatOn()) return baseSpawn.call(this);
+    const r = R();
+    if (!r || r.phase !== 'fight') return null;
+    if (mob && mob.deep && !mob.dead && mob.run === r.id) return mob;
+    const n = DW.floorFoes(r.floor).length;
+    if (!n) return null;
+    const pack = [];
+    for (let i = 0; i < n; i++) { r.foeI = i; const m = baseSpawn.call(this); if (m) pack.push(m); }
+    r.foeI = 0;
+    if (!pack.length) return null;
+    const lead = pack.find(m => m.boss) || pack[0];
+    lead.pack = pack;
+    return lead;
+  };
+  // One pack is the floor: its clear is the floor's last kill.
+  DEEP_ARENA.onKill = function (m, over) {
+    const r = R();
+    if (partyCombatOn() && r && m && m.deep) r.foeI = Math.max(r.foeI, DW.floorFoes(r.floor).length - 1);
+    return baseKill.call(this, m, over);
+  };
+
+  // ---------------- HP carried between floors ----------------
+  let lifeLeft = T.lifeSaves, packFor = '';
+  dcLifeline = () => { if (!deepCombatOn() || lifeLeft <= 0) return false; lifeLeft--; return true; };
+  function snapshot(r) {
+    const o = {};
+    for (const u of units()) if (u.live) o[u.key] = u.down ? 0 : Math.round(1e4 * u.hp / Math.max(1e-9, u.maxHp)) / 1e4;
+    r.hpAt = o;
+  }
+  function healAll(frac) {
+    for (const u of units()) {
+      if (!u.live) continue;
+      if (u.down) { u.down = false; u.hp = 0; }
+      if (typeof cbHealUnit === 'function') cbHealUnit(u, u.maxHp * frac, null);
+      else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * frac);
+    }
+  }
+  // A new deep pack: its attack, and the party's HP from when the floor began (the same state in a
+  // normal descent; after a reload, the HP the floor was saved with).
+  on('packSpawn', p => {
+    const list = p.foes, lead = list && list[0];
+    if (!lead || !lead.deep) return;
+    for (const f of list) if (f.deep && !f.dcA) { f.dcA = 1; f.atk *= T.atk; }
+    const r = R(); if (!r) return;
+    const k = r.id + ':' + r.floor;
+    if (packFor === k) return;
+    packFor = k; lifeLeft = T.lifeSaves;
+    const at = r.hpAt || {};
+    for (const u of units()) {
+      if (!u.live) continue;
+      const f = typeof at[u.key] === 'number' ? Math.max(0.05, Math.min(1, at[u.key])) : 1;
+      u.down = false; u.hp = u.maxHp * f;
+    }
+  });
+  on('deepFloor', ({ kind }) => {
+    if (!deepCombatOn()) return;
+    const r = R(); if (!r) return;
+    healAll(kind === 'landing' ? T.landingHeal : T.floorHeal);
+    snapshot(r);
+  });
+  on('deepFloorStart', () => {
+    lifeLeft = T.lifeSaves;
+    if (!partyCombatOn() || S.deepCombat.tip) return;
+    S.deepCombat.tip = 1;
+    toast("Your party's health carries from floor to floor. Each floor you clear heals a little. If everyone falls, the run ends.", 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
+  });
+  // Going below or coming back up (57d emits sceneReset in both): the party is whole, and the pack
+  // of the world just left is set aside (no zone foe under the arena, no well foe in the zone).
+  let below = false;
+  on('sceneReset', () => {
+    const now = typeof deepActive === 'function' && deepActive();
+    if (now === below) return;
+    below = now;
+    if (!partyCombatOn() || typeof cbRestore !== 'function') return;
+    const f = foes0();
+    cbRestore(!!f && (now ? !f.deep : !!f.deep));
+  });
+
+  // ---------------- a wipe ends the run ----------------
+  let fell = false;
+  on('wipe', p => { if (p.arena && deepCombatOn()) fell = true; });
+  onTick(() => {
+    if (!fell) return;
+    fell = false;
+    if (deepCombatOn()) DW.fall();
+  });
+
+  // ---------------- Oil: parries ----------------
+  on('telegraphResolve', p => {
+    if (p.result !== 'parry' || !deepCombatOn()) return;
+    const r = R(), f = foes0();
+    if (!r || r.phase !== 'fight' || !f || !f.deep) return;
+    r.oil = Math.min(DW.oilMax(), r.oil + T.parryOil);
+  });
+  addBonus('deepRefund', () => partyCombatOn() && R() ? T.refund : 0);
+
+  // ---------------- Taunt Drill for every class ----------------
+  on('classTap', p => {
+    if (!deepCombatOn() || p.kind === 'parry' || p.cls === 'warden') return;
+    const r = R(); if (!r || !r.boons.taunt || !mob || mob.dead || !mob.deep) return;
+    let tank = null;
+    for (const u of units()) if (u.live && !u.down && u.role === 'tank' && (!tank || u.col > tank.col)) tank = u;
+    if (tank && typeof cbTaunt === 'function') cbTaunt(tank, [mob], T.tauntT * (p.auto ? 0.5 : 1));
+  });
+
+  // ---------------- D8: Deep Edge, a below-only damage Lore ----------------
+  DEEP_SHOP.edge = { id: 'edge', cat: 'lore', n: 'Deep Edge', cost: T.edgeCost, fx: k => `+${Math.round(100 * T.edge * k)}% damage while below` };
+  addModifier('dmg', () => {
+    if (typeof deepActive !== 'function' || !deepActive()) return 1;
+    const r = R(), k = r && !r.trial ? S.deep.lore.edge || 0 : 0;
+    return 1 + T.edge * k;
+  });
+
+  DWC = { hpAt: () => { const r = R(); return r ? r.hpAt || null : null; }, tune: T };
 }
 
 // ---- src/js/60-gfx.js ----
@@ -24121,7 +24305,7 @@ let craftUI = null;
     const o = mkOverlay('dw-end in', 'Your run is over');
     const s = o.inner;
     const head = el('div', 'dw-dhead'); const tt = el('div', 'dw-dtitle');
-    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
+    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', wipe: 'Your party fell. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
     tt.append(el('div', 'dw-eye', x.trial ? `This week's Trial: ${DW.trialRule(x.week).n}` : 'The Deepwell'), el('h2', null, `Floor ${x.floor}`), el('div', 'dw-dsub', why));
     head.append(tt); s.append(head);
     const kv = el('dl', 'kv dw-kv');
