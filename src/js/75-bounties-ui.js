@@ -36,13 +36,14 @@
         const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
         r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
         r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
-        r.desc.textContent = 'Reward: ' + rew.txt;
+        const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
+        r.desc.textContent = room || 'Reward: ' + rew.txt;
         r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
         const url = BTY_IC[b.k](); setIc(r.ic, url);
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = !done; r.qty.textContent = done ? 'Done' : 'Bounty';
+        r.btn.disabled = !done || !!room; r.qty.textContent = done ? 'Done' : 'Bounty';
         r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
       });
     }

@@ -408,7 +408,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
   };
   expedCollect = i => {
     const s = X().slots[i]; if (!s || s.end > now()) return null;
-    if (!stashFits(haulLines(s))) { toast(`Back. Storehouse full: collect when you have room. ${stashNeed(haulLines(s))}`, 'raid', null, 'normal'); return null; }
+    if (!stashFits(haulLines(s))) { toast(`The team is back. ${stashNeed(haulLines(s))}`, 'raid', null, 'normal'); return null; }
     const rec = finishRun(s, {});
     X().slots.splice(i, 1);
     toast(`${RT(s.r).n}: the team is back (${rec.grade}).`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');

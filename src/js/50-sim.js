@@ -10,7 +10,7 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Your party rests at the Hearth.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
   toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
@@ -21,7 +21,7 @@ function setZone(z) {
 // Pick the gathering node. Returns false if the skill level is too low. Does not
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
-  if (S.skills[skillOf(kind)].lv < NODE_REQ[t - 1]) return false;
+  if (!skillTierOpen(skillOf(kind), t)) return false;
   S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
   return true;
 }
@@ -132,19 +132,22 @@ function gainXp(n, quiet) {
 }
 function gainSkill(k, n, quiet) {
   const sk = S.skills[k]; sk.xp += n * mod('skillXp') * mod('skillXp:' + k);
-  while (sk.xp >= skillNeed(sk.lv)) {
-    sk.xp -= skillNeed(sk.lv); sk.lv++;
+  while (sk.xp >= skillNeed(sk.lv, k)) {
+    const top0 = skillTopTier(k);
+    sk.xp -= skillNeed(sk.lv, k); sk.lv++;
     emit('skillUp', { k, lv: sk.lv, quiet: !!quiet });
     if (quiet) continue;
     const stn = Object.values(CRAFT_STATIONS).find(x => x.skill === k);
-    const req = stn ? CRAFT_STATION_REQ : NODE_REQ, t = req.indexOf(sk.lv);
+    const t = skillTopTier(k) > top0 ? skillTopTier(k) - 1 : -1;   // GP1: a tier the save already had open is no news
     let extra = '';
     if (t > 0) {
       const open = Object.keys(NODE_NAMES).filter(kind => skillOf(kind) === k).map(kind => NODE_NAMES[kind][t]);
       extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : open.length ? ` The ${open.join(' and the ')} ${open.length > 1 ? 'are' : 'is'} open to you.` : '';
     }
+    const next = skillNextReq(k), tell = !!extra;
+    if (!extra && next) extra = ` Next tier at level ${next}.`;
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, extra ? 'normal' : 'low');
+    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, tell ? 'normal' : 'low');
   }
 }
 
@@ -237,7 +240,7 @@ function awayBase(r) {
     got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
-    r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
+    r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
   }
   const dps = (compDps() + heroDps() * 0.5) * boost;

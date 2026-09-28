@@ -57,7 +57,7 @@ function forgeItem(slot, t) {
   if (!RECIPE[slot]) return craftItem(slot, t);
   if (CRAFT_KINDS[slot].legacy) return null;
   const cost = craftCost(slot, t);
-  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || bagFull()) return null;
+  if (!skillTierOpen('smith', t) || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);
   const r = rollRarity();
   const it = newItem(slot, t, r);

@@ -71,7 +71,7 @@ class spends 25 to 45% of its time gathering.
 | Woodcutting | `wood` (exists) | Groves (wood) | Axe | `2.6 x (1 + 0.3(t-1))` |
 | Foraging (new) | `forage` | **Fibre patches, Herb beds** | Sickle (new) | fibre x0.9, herb x1.0 |
 
-- Node unlock levels stay `NODE_REQ = [1, 8, 18, 30, 45]` for every row.
+- Node unlock levels are `NODE_REQ` for every row (GP1, 2026-09-28: `[1, 14, 30, 58, 112]`, was `[1, 8, 18, 30, 45]`; the knobs are `SKILL_TUNE` in 20-data.js, see [pacing.md](pacing.md) 12).
 - The existing `nodeTime`, `nodeXp` and double-yield rules apply to every family. The Pickaxe
   covers veins and geodes, and the Sickle covers both Foraging rows. Crystal XP is x1.25.
 - Node names:
@@ -170,7 +170,7 @@ suggestion (open question 2) gives them work:
 
 There are 4 stations, each with one crafting skill. Stations are **filters in the Craft tab**,
 not separate screens (section 6). Every station uses the tier gate
-`STATION_REQ = [1, 4, 9, 16, 25]`, the same as today's `SMITH_REQ`.
+`STATION_REQ`, the same as `SMITH_REQ` (GP1: `[1, 10, 22, 36, 54]`, was `[1, 4, 9, 16, 25]`; pacing.md 12).
 
 | Station | Skill (save key) | Makes | Mainly serves |
 |---|---|---|---|

@@ -210,15 +210,15 @@ const PIN_COUNTER_TEXT = {
 const PIN_TITLES = {
   unkneeling: { n: 'the Unkneeling', how: 'Beat the Hollow King.' },
   lurebreaker: { n: 'Lurebreaker', how: 'Beat the Lurelight.' },
-  heldRoad: { n: 'Held the Road', how: 'Beat the First Fire.' },
+  heldRoad: { n: 'Roadholder', how: 'Beat the First Fire.' },
   maudsHeir: { n: 'Maud\'s Heir', how: 'Beat the Climber.' },
   uncrowned: { n: 'Uncrowned', how: 'Beat the Hollow King at Vow 30.' },
   undrowned: { n: 'the Undrowned', how: 'Beat the Lurelight at Vow 30.' },
-  hourKept: { n: 'the Hour Kept', how: 'Beat the First Fire at Vow 30.' },
-  lightBelow: { n: 'the Light Below', how: 'Beat the Climber at Vow 30.' },
-  pinnacle: { n: 'Pinnacle', how: 'Beat all four pinnacle bosses.' },
-  lampbearerFour: { n: 'Lampbearer of the Four', how: 'Beat all four at Vow 20.' },
-  againstDark: { n: 'Against the Dark', how: 'Beat all four at Vow 30.' },
+  hourKept: { n: 'Hourkeeper', how: 'Beat the First Fire at Vow 30.' },
+  lightBelow: { n: 'Deeplight', how: 'Beat the Climber at Vow 30.' },
+  pinnacle: { n: 'the Peerless', how: 'Beat all four pinnacle bosses.' },
+  lampbearerFour: { n: 'the Fourfold', how: 'Beat all four at Vow 20.' },
+  againstDark: { n: 'Darkbreaker', how: 'Beat all four at Vow 30.' },
   lampbearer: { n: 'Lampbearer', how: 'Fill the Pinnacles page of the Codex.' }
 };
 

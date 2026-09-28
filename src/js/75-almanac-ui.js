@@ -202,13 +202,14 @@
         setCls(r.tier, 'om-tier ' + g.tier);
         setTxt(r.own, g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`);
         setW(r.bar, Math.min(100, g.have / g.need * 100));
-        setTxt(r.desc, g.claimed ? 'Reward collected.' : 'Reward: ' + almanac.rewardText(almanac.reward(g)));
+        const rw = almanac.reward(g), room = g.done && !g.claimed ? stashNeed(rw.mats.map(m => [m.k, m.t, m.n])) : '';   // H3: waits until it fits
+        setTxt(r.desc, g.claimed ? 'Reward collected.' : room || 'Reward: ' + almanac.rewardText(rw));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
         r.sw.hidden = g.done || A.swaps <= 0;
         r.btn.hidden = !g.done || g.claimed;
-        r.btn.disabled = !g.done || g.claimed;
+        r.btn.disabled = !g.done || g.claimed || !!room;
         setTxt(r.qty, 'Done');
         setTxt(r.btn.querySelector('.price'), 'Claim');
       });

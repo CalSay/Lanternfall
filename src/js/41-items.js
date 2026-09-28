@@ -54,7 +54,7 @@
 // gear() keys: the old ones, unchanged and in the same order, then every other CRAFT_STATS
 // key. Stage C made the combat stats live (hp, armour, threat, block, pierce, area, control,
 // heal, ward, haste: 59-combat.js reads them; they keep their caps, flagged combat: true).
-// aspd, forageSpd and forageDbl stay live:false and only aggregate; their total caps are applied
+// aspd stays live:false and only aggregates (forageSpd/forageDbl and the H2 *Find lines are live); their total caps are applied
 // in gear(). The old live stats are never capped here (old gear already goes past crit 35;
 // critChance() caps at 75%).
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
@@ -140,8 +140,9 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
       case 'weapon': return [['might', p]];
       case 'helm': return [['crit', Math.min(35, p * 0.12)], ['critMult', p / 200], ['armour', p * 0.1]];
       case 'charm': return [['gold', p * 0.8], ['ess', p * 0.3]];
-      case 'pick': return [['mineSpd', p * 0.6], ['oreDbl', Math.min(60, p * 0.1)]];
-      case 'axe': return [['woodSpd', p * 0.6], ['woodDbl', Math.min(60, p * 0.1)]];
+      // H2: old tools gain the rare find line (a new stat; the old two lines are unchanged).
+      case 'pick': return [['mineSpd', p * 0.6], ['oreDbl', Math.min(60, p * 0.1)], craftBaseLines('pick', p)[2]];
+      case 'axe': return [['woodSpd', p * 0.6], ['woodDbl', Math.min(60, p * 0.1)], craftBaseLines('axe', p)[2]];
     }
     return [];
   };

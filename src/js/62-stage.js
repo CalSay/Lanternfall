@@ -10,13 +10,17 @@
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
+// Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
+// pass) or 'light' (additive lights). v = { cam, SW, SH, GY, T, tg, nodeR } (reused; nodeR: the gather node's right
+// edge, camera-free). 63d-scenery-camp: the cold Hearth.
+let stageDeco = null;
 let resize, animate, draw, stageStats, warmScene;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
-  let guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
@@ -209,12 +213,25 @@ let resize, animate, draw, stageStats, warmScene;
   const hero = mkActor('hero');
   let comps = [], order = [], ghosts = [], front = hero, lastField = null, lastCells = null, heroKey = '', checkT = 0, layoutDirty = true;
 
+  // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
+  // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
+  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
   function refreshHero(force) {
-    const spec = heroSpec(), k = JSON.stringify(spec);
+    const tool = gatherTool(), spec = tool ? TOOL_ART.gatherSpec(heroSpec(), tool) : heroSpec(), k = JSON.stringify(spec);
     if (!force && k === heroKey && hero.fr) return;
     heroKey = k; hero.fr = charFrames(spec);
     const hk = HERO_KIND[spec.cls] || HERO_KIND.warden;
     hero.kind = hk[0]; hero.pcol = hk[1] || '#fff'; hero.role = HERO_ROLE[spec.cls] || 'tank';
+  }
+  // While the Gather menu is open, bake each tool's first frame in idle time (background), so picking
+  // a node shows the hero with its tool at once; the other frames follow through queueRest.
+  let toolsWarm = '';
+  function warmTools() {
+    if (S.tab !== 'gat' || target() === 'node' || typeof toolFor !== 'function' || typeof idleTask !== 'function') return;
+    const base = heroSpec(), specs = ['mine', 'wood', 'forage'].map(toolFor).filter(Boolean).map(t => TOOL_ART.gatherSpec(base, t)), k = JSON.stringify(specs);
+    if (k === toolsWarm) return;
+    toolsWarm = k;
+    for (const sp of specs) idleTask(() => { const set = charFrames(sp, true); if (set) idleTask(() => void set.strike); });   // strike: where the hero stands
   }
   function refreshParty() {
     const p = S.party || {};
@@ -231,7 +248,7 @@ let resize, animate, draw, stageStats, warmScene;
   function layout() {
     layoutDirty = false;
     const cells = (S.party && S.party.cells) || {}, used = {};
-    order = [hero].concat(comps);
+    order = target() === 'node' ? [hero] : [hero].concat(comps);
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
@@ -536,7 +553,16 @@ let resize, animate, draw, stageStats, warmScene;
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
 
   // ================= attacks =================
-  const heroHome = () => target() === 'node' ? foe.left - 4 - (hero.fr ? hero.fr.idle0.c.width - hero.fr.idle0.ox : 14) : hero.hx;
+  // Gathering (G1): the hero stands so the tool's swing lands on the node: the strike frame's front edge
+  // reaches NODE_HIT of the way into the node's box (a tree: its trunk). Until that frame is baked, the
+  // idle frame's front edge stops short of the node, as before.
+  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
+  const heroHome = () => {
+    if (target() !== 'node') return hero.hx;
+    const f = hero.fr; if (!f) return foe.left - 18;
+    if (!ART.ready(f, 'strike')) return foe.left - 4 - (f.idle0.c.width - f.idle0.ox);
+    return Math.max(16, Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15)) - (rightEdge(f.strike) - f.strike.ox));
+  };
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
   // front-most foe: melee reaches the enemy Front) and back; arc: a leap with a 16 px apex (Kestrel).
   // Reduced motion: the dash is an instant swap with a one-frame flash.
@@ -747,11 +773,12 @@ let resize, animate, draw, stageStats, warmScene;
     A.clear(); solo.key = ''; packList = null; wallT = hymnT = volleyT = 0;
     for (const a of order) { a.go = 0; a.goT = 0; a.mv = 0; a.kb = 0; a.castTo = null; }
     for (const n of nums) n.on = false;
+    if (hero.fr) refreshHero(false);   // a new gather node may need another tool
   });
   on('gear', () => refreshHero(true));
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
-  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; });
+  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; if (hero.fr) refreshHero(false); });
 
   on('classTap', p => {
     attack(hero);
@@ -884,7 +911,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); warmTools(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
     // 70-ui keeps writing tWrap.hidden underneath)
     const dOn = deepOn();
@@ -923,6 +950,8 @@ let resize, animate, draw, stageStats, warmScene;
       buffPoll = 0.2; guardN = 0; blessN = 0; let mk = 0, hs = 0;
       for (const b of partyBuffs() || []) { if (b.id === 'guard') guardN = b.stacks; else if (b.id === 'bless') blessN = b.stacks; else if (b.id === 'mark') mk = b.left; else if (b.id === 'wall') wallT = Math.max(wallT, b.left); else if (b.id === 'hymn') hymnT = Math.max(hymnT, b.left); else if (b.id === 'haste') hs = b.left; }
       markLeft = mk; hasteLeft = hs;
+      const wr = typeof wellRested === 'function' ? wellRested() : null;
+      restF = wr && wr.on ? Math.min(1, wr.left / wr.max) : 0;
     }
     if (mob && !mob.dead && target() === 'mob') lastEmbers = mob.embers | 0;
     if (volleyT > 0) {
@@ -1131,6 +1160,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
 
   let drawMs = 0;
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0 };
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -1145,6 +1175,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? foe.left + foe.w : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -1190,6 +1221,7 @@ let resize, animate, draw, stageStats, warmScene;
     for (const a of order) if (a.slash > 0) drawSlash(a, cam);
     ctx.globalCompositeOperation = 'lighter';
     keyLight();
+    if (stageDeco) stageDeco(ctx, 'light', dv);
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';
@@ -1389,9 +1421,10 @@ let resize, animate, draw, stageStats, warmScene;
     haste: ['L.L..', '.L.L.', '..L.L', '.L.L.', 'L.L..'],
     mark: ['LL.LL', 'L...L', '..l..', 'L...L', 'LL.LL'],
     ember: ['..o..', '.oy..', '.oyo.', 'oywyo', '.oyo.'],
-    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..']
+    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..'],
+    rest: ['.bbb.', 'bb..w', 'b....', 'bb...', '.bbb.']   // Well Rested (55-rested.js): a crescent moon
   };
-  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A' };
+  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A', rest: '#DCE8FF' };
   const icons = {};
   function icon(id) {
     let c = icons[id];
@@ -1585,7 +1618,7 @@ let resize, animate, draw, stageStats, warmScene;
     }
     const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
-    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0;
+    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0 || restF > 0;
     const showT = fight && targetsOn() && partyCombatOn();
     if (showT) drawThreatLines(X, Y, cam);
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
@@ -1603,6 +1636,7 @@ let resize, animate, draw, stageStats, warmScene;
         if (wallT > 0) pushChip('wall', 0, Math.min(1, wallT / 6));
         if (hymnT > 0) pushChip('hymn', 0, Math.min(1, hymnT / 8));
         if (hasteLeft > 0) pushChip('haste', 0, Math.min(1, hasteLeft / 10));
+        if (restF > 0) pushChip('rest', 0, restF);
         chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
       }
       // a foe just left a tank for this member: an eye by its bar

@@ -62,12 +62,12 @@ const CODEX_MILESTONES = [
   { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
   { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Saved: the camp builders take it once they read this bonus.' }] },
   { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: Keeper of the Codex', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
+  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: the Chronicler', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Saved: the Almanac will show it in a later update.' }] },
   { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Saved: arrives with hero cosmetics.' }] },
   { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', later: 'Saved: works when the Deepwell opens.' }] },
-  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: Lanternfall', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
+  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: the Everlit', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
   { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Saved: shows once the camp scene shows decorations.' }] }
 ];
 
@@ -104,7 +104,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 
   // ---------------- 1. Bestiary: 7 types x (4 tiers x2, Elder x3, champion x2) ----------------
   page('bestiary', {
-    n: 'Bestiary', bless: 'blade', seal: { key: 'dmg', v: 0.02, txt: '+2% damage' }, title: 'Monster Scholar', pic: 'mob',
+    n: 'Bestiary', bless: 'blade', seal: { key: 'dmg', v: 0.02, txt: '+2% damage' }, title: 'Monsterwise', pic: 'mob',
     tiles: x => TYPES.map((t, i) => {
       const kills = (S.mastery && S.mastery.types[t.key]) || 0, tier = masteryApi.tierFor(kills);
       const elder = S.maxZone > i + 1 ? 1 : 0, champ = R().champ[t.key] ? 1 : 0;
@@ -135,7 +135,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 3. Uniques: 13 hero uniques (the 6 companion uniques became legendary powers: page 16) ----------------
   page('uniques', {
-    n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'Curator of Wonders', pic: 'item',
+    n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
       const u = UNIQ[k], got = S.found[k] ? 1 : 0;
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
@@ -167,7 +167,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 5. Companions: 18 recruited x5; ranks Veteran/Captain/Champion x1; 14 synergies x2 ----------------
   const live = () => typeof rosterLive === 'function' && rosterLive();
   page('companions', {
-    n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Friend to All', pic: 'char',
+    n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Kindheart', pic: 'char',
     tiles: x => {
       const on = live(), out = [];
       for (const id of ROSTER_KEYS) {
@@ -219,7 +219,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 8. Camp: every building level (Hearth 10, 8 buildings x5, Shrine 3) ----------------
   page('camp', {
-    n: 'Camp', bless: 'hearth', seal: { key: 'buildTime', v: 0.03, txt: 'Builds 3% faster' }, title: 'Master Builder', pic: 'rows',
+    n: 'Camp', bless: 'hearth', seal: { key: 'buildTime', v: 0.03, txt: 'Builds 3% faster' }, title: 'Masterbuilder', pic: 'rows',
     show: () => typeof CAMP_B === 'object',
     tiles: x => {
       const open = typeof campOpen === 'function' && campOpen();
@@ -255,12 +255,12 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 10. Deepwell (locked until the Deepwell exists) ----------------
   page('deepwell', {
-    n: 'Deepwell', bless: 'deep', seal: { key: null, bonus: 'deepOil', v: 5, txt: '+5s starting Oil (Deepwell only)' }, title: 'Well-read', pic: 'rows',
+    n: 'Deepwell', bless: 'deep', seal: { key: null, bonus: 'deepOil', v: 5, txt: '+5s starting Oil (Deepwell only)' }, title: 'Wellsage', pic: 'rows',
     show: () => !!S.deep, lockTxt: 'Opens with the Deepwell.', tiles: () => []
   });
   // ---------------- 11. Seals: Almanac Stamps (Trial Seals join with the Deepwell) ----------------
   page('seals', {
-    n: 'Seals', seal: { key: null, txt: '' }, title: 'The Faithful', pic: 'rows',
+    n: 'Seals', seal: { key: null, txt: '' }, title: 'the Faithful', pic: 'rows',
     show: () => !!S.almanac,
     tiles: x => {
       const n = Math.min(52, S.almanac.stamps | 0);
@@ -271,7 +271,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 12. Omens: Omens seen; Dares taken ----------------
   const omenOk = o => o.needs !== 'Deepwell' || (typeof deepUnlocked === 'function' ? deepUnlocked() : !!S.deep);
   page('omens', {
-    n: 'Omens', seal: { key: null, txt: '' }, title: 'Omen-reader', pic: 'rows',
+    n: 'Omens', seal: { key: null, txt: '' }, title: 'Omenreader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
     tiles: x => {
       const out = [];
@@ -290,7 +290,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 13. Achievements x2 ----------------
   page('achievements', {
-    n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'Accomplished', pic: 'rows',
+    n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'the Accomplished', pic: 'rows',
     show: () => typeof ACH_API === 'object',
     tiles: x => ACH_API.list.map(a => {
       const got = S.achievements.got[a.id] ? 1 : 0;
@@ -299,7 +299,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 14. Wardrobe (locked until the Deepwell shop exists) ----------------
   page('wardrobe', {
-    n: 'Wardrobe', seal: { key: null, txt: '' }, title: 'Well Dressed', pic: 'rows',
+    n: 'Wardrobe', seal: { key: null, txt: '' }, title: 'the Dapper', pic: 'rows',
     show: () => !!(S.deep && S.deep.cos), lockTxt: 'Opens with the Deepwell shop.', tiles: () => []
   });
 

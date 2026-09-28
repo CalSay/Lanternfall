@@ -93,7 +93,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
   stashFits = lines => sumLines(lines).every(([f, t, n]) => n <= stashRoom(f, t));
   stashNeed = lines => {
     const x = sumLines(lines).find(([f, t, n]) => n > stashRoom(f, t));
-    return x ? `Needs room for ${storeNum(x[2])} ${name(x[0], x[1])}. Storehouse full.` : '';
+    return x ? `Storehouse full. Needs room for ${storeNum(x[2])} ${name(x[0], x[1])}.` : '';
   };
   stashPreview = lines => sumLines(lines).map(([f, t, n]) => [f, t, n, Math.min(n, stashRoom(f, t))]);
   storeWhy = (f, t) => stashOver(f, t) ? `Over the cap. Spend below ${storeNum(storeCap(f, t))} to gather more.` : `Storehouse full: ${name(f, t)}.`;
@@ -147,10 +147,10 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
   storeSpill = on => { if (storeLevel() < T.spill) return false; ST().spill = on ? 1 : 0; save(); return true; };
   // The next unlocked node of the same skill whose pile is not full, highest tier first.
   storeNextNode = (kind = S.node.kind) => {
-    const sk = skillOf(kind), lv = S.skills[sk].lv;
+    const sk = skillOf(kind);
     const kinds = (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']).filter(k => skillOf(k) === sk);
     const opts = [];
-    for (let t = 5; t >= 1; t--) for (const k of kinds) if (lv >= NODE_REQ[t - 1] && !stashFull(k, t)) opts.push({ kind: k, t });
+    for (let t = 5; t >= 1; t--) for (const k of kinds) if (skillTierOpen(sk, t) && !stashFull(k, t)) opts.push({ kind: k, t });
     // the same family first at each tier (a Copper miner moves to Iron before Quartz)
     opts.sort((a, b) => b.t - a.t || (a.kind === kind ? -1 : b.kind === kind ? 1 : 0));
     return opts[0] || null;
@@ -186,7 +186,8 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     STORE_STATS.awaySecs += r ? r.t : 0; STORE_STATS.awayFullSecs += (r ? r.t : 0) * lostShare;
     // The report lines follow the base line (the 'away' phase runs after 50-sim's awayBase).
     awayLines = spill.map(([k, t, n]) => ({ icon: { mat: [k, t] }, txt: `+${storeNum(n)} ${name(k, t)}`, sub: 'Spillover moved on' }));
-    if (left > 0) awayLines.push({ icon: { mat: [kind, tier] }, txt: `Storehouse full: ${name(kind, tier)}`, sub: `${SKILL[skillOf(kind)]} XP still counted` });
+    const k2 = spill.length ? S.node.kind : kind, t2 = spill.length ? S.node.t : tier;   // where the hero ended
+    if (left > 0) awayLines.push({ icon: { mat: [k2, t2] }, txt: `Storehouse full: ${name(k2, t2)}`, sub: `${SKILL[skillOf(kind)]} XP still counted` });
     return add;
   };
   let awayLines = [];

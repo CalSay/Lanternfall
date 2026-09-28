@@ -25,6 +25,13 @@ function storeLvl(e, k, t) {
   putToggle(e, 'st-full', h >= cap && h > 0 && h <= cap);
   putToggle(e, 'st-over', h > cap);
 }
+// The stage's held line: "640/1,000 in pack", "1,000/1,000 · Full".
+function storeStage(k, t) {
+  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
+  if (!Number.isFinite(cap)) return `${fmt(h)} in pack`;
+  const n = h < 1e5 ? storeNum(h) : fmt(h), c = cap < 1e5 ? storeNum(cap) : fmt(cap);
+  return `${n}/${c} ` + (h > cap ? '· Over the cap' : h >= cap ? '· Full' : 'in pack');
+}
 // A pack cell: a cap line and a thin bar under the count.
 function storeCell(c, k, t, v) {
   if (!c._st) {

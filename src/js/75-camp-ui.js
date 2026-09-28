@@ -141,7 +141,7 @@
   }
 
   // ---------------- the camp part ----------------
-  let head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
   registerSection('camp', {
     id: 'camp', title: null,
     mount(sec) {
@@ -151,7 +151,9 @@
       closed = el('div', 'card camp-closed');
       closedTxt = el('p', 'note');
       const bar = el('div', 'bar'); closedBar = el('i'); bar.append(closedBar);
-      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar);
+      lightBtn = btn('big cb-go', 'Light the fire · 8 Oak'); lightBtn.hidden = true;
+      lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
+      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
       const top = el('div', 'ch-top'), ic = el('div', 'ic ch-ic'); ic.append(img(icon('hearth')));
       const who = el('div', 'ch-who');
@@ -173,6 +175,16 @@
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
+        // H1: a cold Hearth waits for its fire (8 Oak Log), not for a zone.
+        const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
+        putHidden(lightBtn, !cold);
+        if (cold) {
+          const have = Math.min(8, S.mats.wood[0] || 0);
+          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Oak Log to light it. You have ${have}.`);
+          putStyle(closedBar, 'width', have / 8 * 100 + '%');
+          putDisabled(lightBtn, !hc.ok);
+          return;
+        }
         setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
@@ -286,7 +298,9 @@
     mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },
     update() {
       const sec = listBox.parentNode; putHidden(sec, !campOpen()); if (!campOpen()) return;
-      const ids = campList().filter(x => x !== 'hearth');
+      let ids = campList().filter(x => x !== 'hearth');
+      // H1: on a cold Hearth the stations still to build lead the list, in build order.
+      if (typeof hearthCold === 'function' && hearthCold()) { const k = id => { const i = HEARTH_CHAIN.indexOf(id); return i >= 0 && campLevel(id) < 1 ? i : 99; }; ids = ids.slice().sort((a, b) => k(a) - k(b)); }
       const sig = ids.join();
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
       for (const id of ids) {
@@ -356,7 +370,9 @@
       putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
-      setTxt(rosNote, list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.');
+      // The queued Map Room hint (plan-3 wave 2): until it is built, say what it is for.
+      const map = CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs()) && campLevel('maproom') < 1 ? ' Build the Map Room (Hearth 2) to send companions on expeditions.' : '';
+      setTxt(rosNote, (list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.') + map);
       const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
       if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
       // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open

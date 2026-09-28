@@ -211,7 +211,7 @@ var forgeGoalPicks = 0;
     let best = null;
     for (const k of Object.keys(SKILL)) {
       const s = S.skills[k]; if (!s) continue;
-      const p = Math.min(0.99, s.xp / skillNeed(s.lv));
+      const p = Math.min(0.99, s.xp / skillNeed(s.lv, k));
       if (!best || p > best.p) best = { k, s, p };
     }
     return best;
@@ -220,7 +220,7 @@ var forgeGoalPicks = 0;
   registerGoal({
     id: 'skill', sys: 'skill', prio: -1,
     pct: () => { const b = skillNext(); return b ? b.p : null; },
-    label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv) - b.s.xp))} XP to level ${b.s.lv + 1}` : ''; },
+    label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv, b.k) - b.s.xp))} XP to level ${b.s.lv + 1}` + (skillNextReq(b.k) === b.s.lv + 1 ? `, which opens tier ${skillTopTier(b.k) + 1}` : '') : ''; },
     icon: () => { const b = skillNext(); return { ic: SKILL_IC[b ? b.k : 'mine'] || SKILL_IC.mine }; },
     go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
   });
@@ -244,7 +244,7 @@ var forgeGoalPicks = 0;
         const t = have + 1;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
-        if (!c.cost || c.lv < c.need) continue;
+        if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);

@@ -32,7 +32,10 @@
 //         owned() -> [card], setProgress() -> [{ id, n, have, on }], trialRule(week?), trialInfo(),
 //         shop(cat) -> [row], nextLore() -> row | null
 //   act   start(trial) -> bool, resume() -> bool, pick(id), reroll(), banish(id), skip(),
-//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id)
+//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id),
+//         fall() (a party wipe ends the run; 59c-deepwell-combat.js calls it)
+// Party combat rules below (packs, HP carried, wipes, Elder telegraphs, the [C] boons, the Guard and
+//   Mend sets, the Deep Edge Lore) live in 59c-deepwell-combat.js.
 // Events: deepStart { trial }, deepFloorStart { floor, kind }, deepKill { mob, floor },
 //   deepFloor { floor, kind, trial, refund } (the Almanac counts it), deepOffer { kind },
 //   deepPick { id, rank }, deepOil { oil } (Oil ran low: under 15s, once a floor),
@@ -160,7 +163,7 @@ const DEEP_SHOP = {};
   for (const [id, n, c] of dec) S_(id, 'look', n, c, () => 'Camp decoration', { kind: 'decor' });
   const tr = [['t_motes', 'Mote trail', '#9BE3F0'], ['t_embers', 'Ember trail', '#FF9E3D'], ['t_frost', 'Frost trail', '#DFF6FF']];
   for (const [id, n, col] of tr) S_(id, 'look', n, 600, () => 'A trail behind your hero on the stage', { kind: 'trail', col });
-  const ti = [['dt_walker', 'Well-walker', 100], ['dt_sipper', 'Oil-sipper', 150], ['dt_diver', 'Deep Diver', 250], ['dt_lightless', 'Lightless', 400], ['dt_keeper', 'Keeper of the Well', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
+  const ti = [['dt_walker', 'Wellwalker', 100], ['dt_sipper', 'Oilsipper', 150], ['dt_diver', 'Deepdiver', 250], ['dt_lightless', 'the Lightless', 400], ['dt_keeper', 'Wellwarden', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
   for (const [id, n, c, floor] of ti) S_(id, 'title', n, c, () => 'A title for your hero (pick it in the Codex)', { floor: floor || 0 });
   S_('pages', 'page', 'Deep Lore page', 100, k => `Page ${k} of 10`, { max: 10 });
 }
@@ -260,6 +263,7 @@ let DEEP_ARENA = null;
     if (r.boons.glass) x -= 4;
     if (kind === 'boss') x += DEEP_BOONS.sconce.v * rank('sconce');
     if (r.boons.relight && r.ft < DEEP_BOONS.relight.v) x *= 2;
+    x += bonus('deepRefund');   // 59c-deepwell-combat: +5s with party combat
     if (ruleOf(r) === 'drought') x *= 0.5;
     return Math.max(0, x);
   }
@@ -350,7 +354,7 @@ let DEEP_ARENA = null;
     for (const s of now) if (!was.includes(s) && !quiet) toast(`Set bonus: ${DEEP_SETS[s].fx}.`, 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
     emit('deepPick', { id, rank: r.boons[id] });
   }
-  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => !DEEP_SETS[s].c && setOn(s));
+  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => (!DEEP_SETS[s].c || deepStageC()) && setOn(s));
 
   // After a draft or a Landing: the queued extra draft, or the next floor.
   function next() {
@@ -511,7 +515,7 @@ let DEEP_ARENA = null;
     const mul = (ruleOf(r) === 'steep' ? 1.5 : 1) * mod('deepMarks');
     return Math.round((r.marks + pb) * mul) + r.bonus;
   }
-  // reason: oil | leave | abandon | closed
+  // reason: oil | wipe (59c-deepwell-combat: the party fell) | leave | abandon | closed
   function end(reason) {
     const r = R(); if (!r) return null;
     const d = D(), oldBest = r.trial ? d.trial.best : d.best;
@@ -856,6 +860,7 @@ let DEEP_ARENA = null;
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
     start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }
   };

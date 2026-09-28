@@ -1416,6 +1416,16 @@ span.cf-d { font-weight: 600; }
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+/* 63d-scenery-camp (H1): the cold Hearth's fire button over the stage. Centred on the fire. */
+.hearth-fire { position: absolute; width: 56px; height: 56px; margin: -40px 0 0 -28px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; z-index: 3; touch-action: manipulation; }
+.hearth-fire[hidden] { display: none; }
+.hearth-fire::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 2px dashed rgba(239,230,214,.35); }
+.hearth-fire.ready::before { border: 2px solid #FFB347; box-shadow: 0 0 12px rgba(255,179,71,.55); animation: hf-pulse 1.4s ease-in-out infinite; }
+.hearth-fire:focus-visible { outline: 2px solid #FFF3C4; outline-offset: 2px; }
+.hf-tag { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 2px); white-space: nowrap; font: 600 11px var(--display); letter-spacing: .04em; color: #EFE6D6; background: rgba(11,8,16,.82); border: 1px solid #0B0810; padding: 1px 6px; text-shadow: 0 1px 0 #000; }
+.hearth-fire.ready .hf-tag { color: #0B0810; background: #FFB347; }
+@keyframes hf-pulse { 50% { box-shadow: 0 0 20px rgba(255,179,71,.85); } }
+@media (prefers-reduced-motion: reduce) { .hearth-fire.ready::before { animation: none; } }
 /* 60-lantern: the Great Lantern card and the Lantern Road strip (75-lantern-ui.js). */
 
 /* ---- the Great Lantern card ---- */
@@ -2084,6 +2094,41 @@ span.cf-d { font-weight: 600; }
 .st-sum { margin: 0; min-width: 0; }
 .st-sumrow .mini { flex: none; min-height: 40px; }
 .st-sumrow .mini[hidden] { display: none; }
+/* 60-tools: the tool card on the Gather tab and the Mastery box on a tool's item sheet (75-tools-ui.js, H2). */
+.tl-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "ic body" "btns btns"; gap: 6px 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); }
+.tl-card.master { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(242,193,78,.35); }
+.tl-ic { grid-area: ic; width: 44px; height: 44px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
+.tl-ic img { width: 30px; height: 30px; }
+.tl-body { grid-area: body; min-width: 0; display: grid; gap: 3px; }
+.tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.tl-name { font: 600 15px/1.2 var(--display); color: var(--bone); }
+.tl-name.rough { color: var(--muted); }
+.tl-name.rar-uncommon { color: var(--r-uncommon); }
+.tl-name.rar-rare { color: var(--r-rare); }
+.tl-name.rar-epic { color: var(--r-epic); }
+.tl-name.rar-legendary { color: var(--r-legendary); }
+.tl-card.master .tl-name { color: var(--gold); }
+.tl-tag { font: 600 11px/1.4 var(--body); color: var(--muted); }
+.tl-tag.on { color: var(--xp); }
+.tl-tag[hidden] { display: none; }
+.tl-lines { font-size: 12.5px; color: var(--bone); }
+.tl-mrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; margin-top: 2px; font-size: 12px; }
+.tl-mlabel { font-weight: 600; color: var(--gold); }
+.tl-mleft { color: var(--muted); }
+.tl-bar { height: 6px; }
+.tl-bar > i { background: var(--gold); }
+.tl-perk { font-size: 12px; color: var(--muted); }
+.tl-btns { grid-area: btns; display: flex; gap: 8px; }
+.tl-btn { flex: 0 0 auto; min-width: 88px; min-height: 40px; padding: 4px 8px; font: 600 13px var(--body); color: var(--bone); background: var(--panel); border: 1px solid var(--line-hi); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-btn:hover { border-color: var(--gold); }
+.tl-btn[hidden] { display: none; }
+.tl-make { flex: 1 1 0; color: #1A1420; background: var(--gold); border-color: var(--gold); }
+.tl-box .tl-mrow { margin-top: 0; }
+.tl-perks { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12.5px; }
+.tl-perks li { color: var(--muted); opacity: .7; }
+.tl-perks li.on { color: var(--bone); opacity: 1; }
+.tl-perks li.on::before { content: "✓ "; color: var(--xp); }
+.tl-box.master h4 { color: var(--gold); }
 /* 60-unlocks: the Tavern visitor card and the joining moment overlay (75-unlocks-ui.js). */
 
 /* ---- Tavern visitor ---- */
@@ -2837,6 +2882,178 @@ function sigilIcon(c) {
 }
 
 registerIcons(SIGIL_ICONS);
+
+// ---- src/js/11c-art-tools.js ----
+// 11c-art-tools: gathering tools in B1 (task G1, plan-3 ask 1): the pickaxe (Mining), the woodaxe
+// (Woodcutting), the sickle (Foraging: herbs and fibre) and the fishing rod (the Coast, later).
+// DATA and pure maths only: no DOM at load or at call time. Loads in Node too.
+// Rules: docs/design/art-direction.md (B1). This file loads BEFORE the kit (12a-art-body.js), so AK
+// is read only at call time.
+//
+// While the hero gathers, the stage (62-stage.js) bakes the hero from a gather spec: the class
+// outfit without its weapon and off-hand, holding the tool in the front hand, with a swing that
+// reads as mining, chopping or cutting (its own wind / strike poses, registered into AK.ANIMS).
+// Tools are tinted by tier with the ore palette (AK.FAM.ore: Copper, Iron, Mithril, Starsteel,
+// Emberite); handles use the wood palette of the same tier. Rarity adds trim and glow as for gear.
+//
+// Exposed names:
+//   toolFor(skill) -> { k: 'pick'|'axe'|'sickle'|'rod', t: 1-5, r: 0-3, name } | null
+//       The tool the hero uses for a gathering skill ('mine' | 'wood' | 'forage' | 'fish'). Today
+//       it is only visual: the tier follows the skill level (the node tier it has reached,
+//       NODE_REQ). A `let`: plan-3 H2 (tools as items) replaces it with the crafted tool.
+//   TOOL_ART.gatherSpec(heroSpec, tool) -> a hero spec for the baker (60b) with the tool in hand:
+//       { cls, skin, hair, gear: { head, body, charm }, tool: { k, t, r } } (weapon and off-hand
+//       dropped, so the bake cache keys on class + look + tool + tier only)
+//   TOOL_ART.gatherDef(classDef, tool) -> the class outfit that holds the tool (cached per class,
+//       tool and tier); the baker (60b resolve) uses it when a spec has `tool`
+//   TOOL_ART.draw(k, kind, mats) -> adds the tool's pieces to a kit (held in the front hand)
+//   TOOL_ART.KINDS, TOOL_ART.SKILL_TOOL (skill -> kind), TOOL_ART.name(kind, t)
+
+let toolFor;
+const TOOL_ART = (() => {
+  const SKILL_TOOL = { mine: 'pick', wood: 'axe', forage: 'sickle', fish: 'rod' };
+  const TIER_NAMES = ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'];
+  // Per tool: its name, how it rests in the hand (tilt: clockwise from upright, radians) and its
+  // swing. Poses use the kit's pose values (12a POSE0): rF / rB swing the arms at the shoulder
+  // (positive = back and up), wF turns the tool at the wrist, lean, bob (crouch), dx (step in).
+  // The tool's angle is tilt + wF + rF + lean: about 1.6 points it straight ahead.
+  //   pick:   overhead, then down in front at knee height (a vein low on the rock face)
+  //   axe:    overhead, then level at chest height (a trunk)
+  //   sickle: low: a crouch and a forward sweep (herbs and fibre on the ground)
+  //   rod:    back over the shoulder, then a cast forward
+  const KINDS = {
+    pick: { name: 'Pickaxe', tilt: 1.0,
+      wind: { rF: 2.75, wF: .15, rB: 2.2, lean: -.14 },
+      strike: { rF: -.85, wF: 1.55, rB: -.55, lean: .26, bob: 1, dx: 2 } },
+    axe: { name: 'Woodaxe', tilt: .9,
+      wind: { rF: 2.4, wF: .4, rB: 1.8, lean: -.12 },
+      strike: { rF: -1.25, wF: 1.95, rB: -.9, lean: .18, dx: 2 } },
+    sickle: { name: 'Sickle', tilt: .5,
+      wind: { rF: 1.05, wF: -.25, rB: .35, lean: .06, bob: 1 },
+      strike: { rF: -1.15, wF: 1.35, rB: -.5, lean: .32, bob: 2, dx: 3 } },
+    rod: { name: 'Fishing Rod', tilt: .5,
+      wind: { rF: .9, wF: -1.95, rB: .2, lean: -.1 },
+      strike: { rF: -1.1, wF: 1.45, rB: -.3, lean: .1, dx: 1 } }
+  };
+  const name = (kind, t) => `${TIER_NAMES[Math.max(1, Math.min(5, t | 0 || 1)) - 1]} ${(KINDS[kind] || KINDS.pick).name}`;
+
+  // ---------------- the tool pieces (held-item frame: origin at the hand, -y along the tool) ----------------
+  // mats: AK.gearMats({ fam: 'ore', fam2: 'wood' }, t, r): P metal of the tier, D darker, Q the
+  // handle (wood of the tier), R trim (gold from Rare), G glow (Epic), silver (a whetted edge).
+  function items(k, kind, w) {
+    const { m, P, R, E, arcPts } = AK, U = k.U, H = k.H;
+    const band = w.r >= 1 ? w.R : w.D;
+    if (kind === 'pick') {
+      // ash handle, iron collar, a curved head: the long point leads (+x), a short one trails
+      const L = H * .44, hw = H * .2, y = -L;
+      return [
+        [w.Q, R(-U(.75), y + U(1), U(1.5), L + U(2.8))],
+        [w.P, P(-hw * .78, y + U(2.2), -hw * .5, y - U(.3), 0, y - U(1.5), hw * .55, y - U(.6), hw * 1.05, y + U(2.8), hw * .5, y + U(.9), 0, y + U(.7), -hw * .45, y + U(1.2)), { bev: .7 }],
+        [band, R(-U(1.2), y - U(1.1), U(2.4), U(2.6)), { sep: 1 }],
+        w.G ? [w.G, R(hw * .35, y - U(.2), U(2.2), U(.8)), { nl: 1, lr: 8, pulse: w.pulse }] : null
+      ];
+    }
+    if (kind === 'axe') {
+      // a long haft, a socket, a flared blade on the leading side with a bright whetted edge
+      const L = H * .42, y = -L;
+      const blade = [w.P, P(U(1), y - U(.4), U(3.6), y - U(1.9), U(5.6), y - U(2.9), U(6.3), y + U(1), U(5.6), y + U(4.6), U(3.6), y + U(3.4), U(1), y + U(2.4)), { bev: .7 }];
+      return [
+        [w.Q, R(-U(.8), y - U(.6), U(1.6), L + U(3.2))],
+        blade,
+        [w.silver, P(U(5.1), y - U(2.5), U(6.3), y - U(2.9), U(6.9), y + U(1), U(6.3), y + U(4.6), U(5.1), y + U(4.1), U(5.6), y + U(1)), { nl: 1 }],
+        [band, R(-U(1.5), y - U(.9), U(3), U(3.4)), { sep: 1 }],
+        [w.D, R(-U(2.8), y - U(.3), U(1.4), U(2.2))],
+        w.G ? [w.G, R(U(3), y + U(.4), U(1.6), U(.9)), { nl: 1, lr: 8, pulse: w.pulse }] : null
+      ];
+    }
+    if (kind === 'sickle') {
+      // a short grip and a hooked crescent blade curling forward
+      const hl = H * .15, ro = H * .17, cx = ro * .72, cy = -hl - ro * .2;
+      const outer = arcPts(cx, cy, ro, ro * 1.05, Math.PI * 1.02, Math.PI * 2.16, 10);
+      const inner = arcPts(cx + ro * .12, cy + ro * .14, ro * .66, ro * .7, Math.PI * 2.08, Math.PI * 1.1, 8);
+      return [
+        [w.P, P(outer, inner), { bev: .6 }],
+        [w.Q, R(-U(.9), -hl, U(1.8), hl + U(2.4))],
+        [band, R(-U(1.2), -hl - U(.6), U(2.4), U(1.4)), { sep: 1 }],
+        w.G ? [w.G, R(cx - U(.5), cy - ro * .98, U(1.2), U(.8)), { nl: 1, lr: 7, pulse: w.pulse }] : null
+      ];
+    }
+    // rod: a long thin rod, a cork grip, a small reel, a line with a float at the tip
+    const L = H * .8, y = -L, cork = m('#C89A62', 'wood'), line = m('#E8DEC8', 'flat');
+    return [
+      [w.Q, P(-U(.6), U(2), U(.6), U(2), U(.35), y, -U(.35), y)],
+      [cork, R(-U(.9), -U(2.4), U(1.8), U(4.8)), { sep: 1 }],
+      [w.P, E(U(1.6), U(.6), U(1.2), U(1.2)), { sep: 1 }],
+      [band, R(-U(.8), y - U(.4), U(1.6), U(1.2))],
+      [line, R(U(.2), y + U(.4), U(.6), U(7)), { nl: 1 }],
+      [m('#E0524F', 'cloth'), E(U(.5), y + U(8), U(1), U(1.2)), { sep: 1 }],
+      w.G ? [w.G, R(-U(.4), y + U(3), U(.8), U(1.6)), { nl: 1, lr: 7, pulse: w.pulse }] : null
+    ];
+  }
+  // Under the front hand (the fist closes over the grip) and over the body: z 5.95.
+  function draw(k, kind, w) {
+    const def = KINDS[kind] || KINDS.pick;
+    return k.held(5.95, 'F', def.tilt, items(k, kind, w));
+  }
+  // A hero without a lit piece (the Lightkeeper's light is the censer) carries a hip lantern while
+  // gathering, so the key light and the lantern glow still come from the hero (12b's hipLantern).
+  function hipLantern(k) {
+    const { m, R } = AK, x = -k.hipW * .95, d = m('#4E4452', 'metal'), lamp = m('#FFD27A', 'glow', { light: '#FFC070' });
+    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)));
+    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)));
+    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1 });
+    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)));
+  }
+
+  // ---------------- the gathering outfit ----------------
+  let animsOn = false;
+  function ensureAnims() {
+    if (animsOn) return;
+    animsOn = true;
+    for (const kind in KINDS) AK.ANIMS['tool_' + kind] = { wind: KINDS[kind].wind, strike: KINDS[kind].strike };
+  }
+  const mats = tool => AK.gearMats({ fam: 'ore', fam2: 'wood' }, tool.t, tool.r || 0);
+  const defs = new Map();
+  // The class outfit holding the tool: same body and look, the class's own build with no weapon or
+  // off-hand (resolve drops them), then the tool. `this` stays the derived def, so the outfit's own
+  // fields (eye, slots) read through to the class.
+  function gatherDef(def, tool) {
+    const kind = KINDS[tool.k] ? tool.k : 'pick', t = Math.max(1, Math.min(5, tool.t | 0 || 1)), r = Math.max(0, Math.min(3, tool.r | 0));
+    const key = (def.name || '?') + '|' + kind + '|' + t + '|' + r;
+    let d = defs.get(key);
+    if (d) return d;
+    ensureAnims();
+    const w = mats({ t, r });
+    d = Object.create(def);
+    d.anim = 'tool_' + kind;
+    d.build = function (k, g, look) {
+      def.build.call(this, k, g, look);
+      if (!k.parts.some(p => p.m.kind === 'glow' && !p.o.nolight)) hipLantern(k);
+      draw(k, kind, w);
+    };
+    defs.set(key, d);
+    return d;
+  }
+  function gatherSpec(spec, tool) {
+    const g = (spec && spec.gear) || {}, gear = {};
+    for (const s of ['head', 'body', 'charm']) if (g[s]) gear[s] = g[s];
+    const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };
+    if (spec && spec.skin != null) out.skin = spec.skin;
+    if (spec && spec.hair != null) out.hair = spec.hair;
+    return out;
+  }
+  return { KINDS, SKILL_TOOL, TIER_NAMES, name, items, draw, gatherDef, gatherSpec, mats };
+})();
+
+// The hero's tool for a gathering skill. Visual only for now: the tier is the node tier the skill
+// level has reached (NODE_REQ, 20-data). Plan-3 H2 replaces this with the crafted, equipped tool.
+toolFor = skill => {
+  const k = TOOL_ART.SKILL_TOOL[skill]; if (!k) return null;
+  const sk = typeof S !== 'undefined' && S && S.skills && S.skills[skill], lv = sk ? sk.lv | 0 : 1;
+  let t = 1;
+  if (typeof NODE_REQ !== 'undefined') for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1;
+  return { k, t, r: 0, name: TOOL_ART.name(k, t) };
+};
 
 // ---- src/js/12a-art-body.js ----
 // 12a-art-body: the B1 character kit (16-bit, about 4 heads, 35 art px tall, drawn at 2x).
@@ -4843,8 +5060,22 @@ const MAT = {
 };
 const matName = (k, t) => `${MAT[k].short[t - 1]} ${MAT[k].unit}`;
 const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starsteel Crater', 'Emberite Heart'], wood: ['Oak Grove', 'Yew Thicket', 'Ironbark Stand', 'Ghostwood Hollow', 'Lanternwood Grove'] };
-const NODE_REQ = [1, 8, 18, 30, 45];
-const SMITH_REQ = [1, 4, 9, 16, 25];
+// GP1 skill pace (owner 2026-09-28: "the next tier up only being 4 levels away is too fast"), one
+// table for every skill knob; docs/design/pacing.md 12 has the targets and the measured times.
+// Try values with node tools/sim.mjs --report skills --eval "SKILL_TUNE.x = ...".
+const SKILL_TUNE = {
+  nodeReq: [1, 14, 30, 64, 112],      // gathering level that opens node tier 1-5 (NODE_REQ)
+  stationReq: [1, 10, 22, 36, 54],    // crafting level that opens item tier 1-5 at a station (SMITH_REQ, CRAFT_STATION_REQ)
+  gatherNeed: [10, 2.2, 1],           // XP from gathering level lv to lv + 1: a x lv^b x c^(lv - 1) (skillNeed)
+  craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
+  craftSkills: ['smith', 'bench', 'loom', 'ench'],
+  nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
+  spdPerLv: 0.02,                     // gathering speed per level above 1 (nodeTime)
+  // The gates before GP1. A save loaded under GP1 keeps every tier these opened for it (55-skillpace).
+  oldNodeReq: [1, 8, 18, 30, 45], oldStationReq: [1, 4, 9, 16, 25]
+};
+const NODE_REQ = SKILL_TUNE.nodeReq;
+const SMITH_REQ = SKILL_TUNE.stationReq;
 const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
 // Gathering skill per node kind. Later data files (21-data-craft) add kinds to this table
 // and to NODE_NAMES; unknown kinds fall back to 'wood', as before.
@@ -5030,7 +5261,7 @@ const CRAFT_XP = {
 // ================= positions =================
 const CRAFT_POS = {
   weapon: { n: 'Weapon' }, off: { n: 'Off-hand' }, helm: { n: 'Head' }, body: { n: 'Body' },
-  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Axe' }, sickle: { n: 'Sickle' },
+  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Woodaxe' }, sickle: { n: 'Sickle' },
   wpn: { n: 'Weapon', comp: true }, trk: { n: 'Trinket', comp: true }
 };
 const CRAFT_HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
@@ -5063,9 +5294,13 @@ const CRAFT_STATS = {
   oreDbl: { n: 'Double ore', f: '{v}% double ore', dp: 0, live: true, gear: 'oreDbl' },
   woodSpd: { n: 'Chopping speed', f: '+{v}% chopping speed', live: true, gear: 'woodSpd' },
   woodDbl: { n: 'Double logs', f: '{v}% double logs', dp: 0, live: true, gear: 'woodDbl' },
-  forageSpd: { n: 'Foraging speed', f: '+{v}% foraging speed' },
-  forageDbl: { n: 'Double yield', f: '{v}% double fibre and herbs', dp: 0 },
-  gather: { n: 'Gathering speed', f: '+{v}% gathering speed', live: true, gear: 'gather' }
+  forageSpd: { n: 'Foraging speed', f: '+{v}% foraging speed', live: true },
+  forageDbl: { n: 'Double yield', f: '{v}% double fibre and herbs', dp: 0, live: true },
+  gather: { n: 'Gathering speed', f: '+{v}% gathering speed', live: true, gear: 'gather' },
+  // H2 (hearth-and-hands.md 2.2): each unit gathered may bring 1 of the next tier (55-tools.js).
+  oreFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
+  woodFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
+  forageFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true }
 };
 function craftFmtLine(stat, v) {
   const s = CRAFT_STATS[stat];
@@ -5098,9 +5333,11 @@ const CRAFT_KINDS = {
   vestments: { noun: 'Vestments', pos: 'body', st: 'loom', rec: { fibre: 7, herb: 2, ess: 2 }, pre: 'fibre', base: [['hp', 1]], role: 'support', cls: 'lightkeeper' },
   trinket: { noun: 'Trinket', comp: 'trk', st: 'ench', rec: { crystal: 2, herb: 2, ess: 2 }, pre: 'crystal', base: [['hp', 0.6], ['haste', 0.05, 25]], role: 'any' },
   charm: { noun: 'Charm', pos: 'charm', st: 'ench', rec: RECIPE.charm, pre: 'ess', base: [['gold', 0.8], ['ess', 0.3]], ic: 'charm' },
-  pick: { noun: 'Pickaxe', pos: 'pick', st: 'forge', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60]], tool: true, ic: 'pick' },
-  axe: { noun: 'Axe', pos: 'axe', st: 'bench', rec: RECIPE.axe, pre: 'ore', base: [['woodSpd', 0.6], ['woodDbl', 0.1, 60]], tool: true, ic: 'axe' },
-  sickle: { noun: 'Sickle', pos: 'sickle', st: 'forge', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['forageSpd', 0.6], ['forageDbl', 0.1, 60]], tool: true },
+  // Tools (H2, hearth-and-hands.md 2): all at the Workbench, gated on max(Woodcraft, Smithing)
+  // (55-crafting stationLevel). Lines: speed, double yield, rare find (per-line caps 60 and 8).
+  pick: { noun: 'Pickaxe', pos: 'pick', st: 'bench', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60], ['oreFind', 0.012, 8]], tool: true, ic: 'pick' },
+  axe: { noun: 'Woodaxe', pos: 'axe', st: 'bench', rec: RECIPE.axe, pre: 'ore', base: [['woodSpd', 0.6], ['woodDbl', 0.1, 60], ['woodFind', 0.012, 8]], tool: true, ic: 'axe' },
+  sickle: { noun: 'Sickle', pos: 'sickle', st: 'bench', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['forageSpd', 0.6], ['forageDbl', 0.1, 60], ['forageFind', 0.012, 8]], tool: true },
   weapon: { noun: 'Sword', pos: 'weapon', st: 'forge', rec: RECIPE.weapon, pre: 'ore', base: [['might', 1]], legacy: true, ic: 'sword' },
   helm: { noun: 'Helm', pos: 'helm', st: 'forge', rec: RECIPE.helm, pre: 'ore', base: [['crit', 0.12, 35], ['critMult', 0.005], ['armour', 0.1]], legacy: true, ic: 'helm' }
 };
@@ -5871,7 +6108,7 @@ const LEG_SETS = {
 
 // ---------------- 7 the Codex page ----------------
 // Counts the 39 powers here; the 4 pinnacle powers score on the pinnacle page (21d PIN_CODEX).
-const LEG_CODEX = { learn: 2, rank: 1, powers: 39, total: 234, title: 'Lorekeeper of Flames', hint: 'Oath elders, level 3+' };
+const LEG_CODEX = { learn: 2, rank: 1, powers: 39, total: 234, title: 'Flamekeeper', hint: 'Oath elders, level 3+' };
 
 // ---- src/js/21d-data-pinnacle.js ----
 // 21d-data-pinnacle: the data for the four pinnacle bosses (docs/design/pinnacles.md, task PB0).
@@ -6424,15 +6661,15 @@ const PIN_COUNTER_TEXT = {
 const PIN_TITLES = {
   unkneeling: { n: 'the Unkneeling', how: 'Beat the Hollow King.' },
   lurebreaker: { n: 'Lurebreaker', how: 'Beat the Lurelight.' },
-  heldRoad: { n: 'Held the Road', how: 'Beat the First Fire.' },
+  heldRoad: { n: 'Roadholder', how: 'Beat the First Fire.' },
   maudsHeir: { n: 'Maud\'s Heir', how: 'Beat the Climber.' },
   uncrowned: { n: 'Uncrowned', how: 'Beat the Hollow King at Vow 30.' },
   undrowned: { n: 'the Undrowned', how: 'Beat the Lurelight at Vow 30.' },
-  hourKept: { n: 'the Hour Kept', how: 'Beat the First Fire at Vow 30.' },
-  lightBelow: { n: 'the Light Below', how: 'Beat the Climber at Vow 30.' },
-  pinnacle: { n: 'Pinnacle', how: 'Beat all four pinnacle bosses.' },
-  lampbearerFour: { n: 'Lampbearer of the Four', how: 'Beat all four at Vow 20.' },
-  againstDark: { n: 'Against the Dark', how: 'Beat all four at Vow 30.' },
+  hourKept: { n: 'Hourkeeper', how: 'Beat the First Fire at Vow 30.' },
+  lightBelow: { n: 'Deeplight', how: 'Beat the Climber at Vow 30.' },
+  pinnacle: { n: 'the Peerless', how: 'Beat all four pinnacle bosses.' },
+  lampbearerFour: { n: 'the Fourfold', how: 'Beat all four at Vow 20.' },
+  againstDark: { n: 'Darkbreaker', how: 'Beat all four at Vow 30.' },
   lampbearer: { n: 'Lampbearer', how: 'Fill the Pinnacles page of the Codex.' }
 };
 
@@ -6462,6 +6699,203 @@ const PIN_UI_TEXT = {
   newBest: (t, v) => `New best: ${t} at Vow ${v}`,
   sealGot: 'A Pinnacle Seal for the Week\'s Oath.',
   frame: 'Pinnacle frame'
+};
+
+// ---- src/js/21h-lore-hollow.js ----
+// 21h-lore-hollow: the writing for Region 1, the Hollow, plus the bestiary, elder and world raid
+// lines for every foe (task LORE2; the story bible is docs/design/lore.md, sections 4, 8.1 and 9).
+// Core, data only (no DOM, no state); loads in Node too. LORE3 (55-story.js, 75-story-ui.js)
+// reads it; nothing here runs on its own. Shapes follow 21b-stories-coast.js, so one reader
+// handles both regions (HOLLOW_ARRIVAL ~ COAST_ARRIVAL, HOLLOW_STORY ~ COAST_STORY).
+//
+// Exposed names:
+//   HOLLOW_ARRIVAL[place]  -> one-line arrival notice for Hollow place 0-6 (zonePlace(z)), in cycle order:
+//                             Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep,
+//                             Quarry Ruins, Wraithmarsh
+//   HOLLOW_ARRIVAL_BOSS    -> the arrival notice for zone 35 (Wraithmarsh V, the Listener)
+//   HOLLOW_STORY[i]        -> beat i (0-3, lore.md 8.1 and 9.4): { id, at, title, text, note, say? }
+//                             at: the zone whose first arrival plays it. text: the card (2-5 sentences).
+//                             note: the one-line bell notice for saves already past it. say:
+//                             { characterKey: line } spoken only if recruited. Great Lantern I itself
+//                             is COAST_STORY[0] (21b); its Hesketh line is HOLLOW_LANTERN_SAY.
+//   HOLLOW_LANTERN_SAY     -> { hesketh: line }: the `say` for the Great Lantern I card (COAST_STORY[0])
+//   LORE_BESTIARY[key]     -> { name, region, foe, elder, champ }: one line each for the type, its
+//                             Elder and its champion, for the 14 foe types. Keys: the TYPES keys for
+//                             the Hollow (slime bat bones beetle spore golem wraith); for the Sunken
+//                             Coast the keys R2-1 should give its types (crab gull deckhand kelp jelly
+//                             witch coral). `name` is the type's display name, so a reader can match
+//                             TYPES[i].name if the coast keys end up different. region: 'hollow' | 'coast'.
+//   LORE_ELDERS[key]       -> { name, intro, fall }: narration (elders do not talk). intro plays the
+//                             first time a boss of that type appears; fall on its first kill. Same
+//                             14 keys, plus `listener` (the Hollow's zone 35 boss, lore.md 4.2), which
+//                             also has `line`, its bestiary line. The Drowned Keeper's lines are
+//                             KEEPER_LINES (21b).
+//   RAID_LORE[bossName]    -> one flavour line per world raid foe, keyed by the BOSSES names
+//                             (20-data.js). Client text only: it never touches world/boss or raiders.
+//
+// Length limits (fit a 360px card at the game's body size; lore.md section 1):
+//   LORE_LIMITS below. Arrival, elder and note lines are 80 characters (two lines on a toast or bell
+//   row at 360px); bestiary and raid lines 90 (a Codex tile's sub line wraps to at most 3 lines);
+//   say lines under 60 (a bark bubble); titles 40; beat cards 420 characters, 2-5 sentences.
+// Words: the dark hunts, snuffs, smothers, drowns, buries and chokes lamps. Foes come at your light,
+// for your lamp, to put it out. Never "drawn to", "hungry for", "aching for" or "wants the light"
+// (lore.md 9.5; LORE_BANNED is the list tools/check.mjs enforces).
+
+const LORE_LIMITS = { arrival: 80, note: 80, title: 40, text: 420, say: 59, elder: 80, bestiary: 90, raid: 90 };
+const LORE_BANNED = [
+  /\bdrawn to\b/i, /\bhunger(s|ing)? for\b/i, /\bhungry for\b/i, /\bach(e|es|ing) for\b/i, /\bcrav(e|es|ed|ing)\b/i,
+  /\byearn/i, /\blong(s|ed|ing)? for\b/i, /\bwant(s|ed|ing)? (the |your |its |a |every )?(light|lamp|flame|glow)/i,
+  /\blov(e|es|ed|ing) (the |your )?(light|lamp|flame)/i, /\blike a moth\b/i
+];
+
+const HOLLOW_ARRIVAL = [
+  'Mossy Hollow. Home is dark behind you. The moss is moving.',
+  'Batwing Caves. Something big hangs from the roof, listening.',
+  'The Bonefield. Its lamps kept the dead asleep. The lamps are out.',
+  'Beetle Barrows. The old kings sleep here. Their beetles do not.',
+  'Fungal Deep. This was a garden. The spores took it in one night.',
+  'Quarry Ruins. The stone stood up and walked. Some of it still does.',
+  'Wraithmarsh. Green lights drift over the water. Do not follow them.'
+];
+const HOLLOW_ARRIVAL_BOSS = 'Wraithmarsh V. One wraith here does not tend the others. It listens.';
+
+const HOLLOW_STORY = [
+  { id: 'wisps', at: 7, title: 'Wisps',
+    text: 'Small green lights drift over the Wraithmarsh. Hesketh pulls you back from the edge. "Don\'t follow them. That\'s how the marsh got its people."',
+    note: 'Green lights drift over the marsh. Hesketh says not to follow them.',
+    say: { thessaly: 'My village followed lights like those. Long ago.' } },
+  { id: 'crowns', at: 14, title: 'Crowns',
+    text: 'Every elder you have beaten wore a crown. Nobody made them. Hesketh turns one over in his hands. "The dark makes kings of whatever listens longest."',
+    note: 'Every elder wears a crown. Hesketh does not like it.',
+    say: { aldric: 'The Order crowned no one. Remember that.' } },
+  { id: 'chapel', at: 28, title: 'The Chapel on the Hill',
+    text: 'On the hill above the road stands a dark chapel. One candle burns inside, very low, and does not go out. Someone is keeping it.',
+    note: 'A candle burns in the dark chapel on the hill.',
+    say: { anselm: 'I rang the dusk bell in that chapel. Every night.' } },
+  { id: 'listener', at: 35, title: 'The Listener',
+    text: 'At the heart of the marsh, one wraith does not tend the others. It stands still, head tilted, as if someone far away is talking. While it listens, no lamp in the Hollow will hold.',
+    note: 'One wraith in the marsh is listening to something far away.',
+    say: { wren: 'The caves sang my name like that. I never answered.' } }
+];
+const HOLLOW_LANTERN_SAY = { hesketh: 'Forty years I lit the small ones. Never this one.' };
+
+const LORE_BESTIARY = {
+  // the Hollow (TYPES keys)
+  slime: { name: 'Moss Slime', region: 'hollow',
+    foe: 'Pond moss the dark soaked through. It creeps over lamps and smothers them.',
+    elder: 'The oldest moss in the Hollow, crowned. Beaten, it is only moss again.',
+    champ: 'The biggest slime the moss can make. The dark sends it when the small ones fail.' },
+  bat: { name: 'Cave Bat', region: 'hollow',
+    foe: 'The Batwing bats ate fruit once. Now the dark sends them to snuff the weakest light.',
+    elder: 'A Bat Queen. Wren left her fruit for years, until the dark took her.',
+    champ: 'Wings like a cloak. It dives at the smallest flame and seldom misses.' },
+  bones: { name: 'Rattlebones', region: 'hollow',
+    foe: 'The Bonefield\'s lamps kept its dead asleep. The dark put them out. The dead got up.',
+    elder: 'A captain of the old battle. He still calls the dead to stand, now against every lamp.',
+    champ: 'The last of an old king\'s guard. Only fire lays it down for good.' },
+  beetle: { name: 'Barrow Beetle', region: 'hollow',
+    foe: 'Beetles from the old kings\' barrows, fat on the dark. They bury lamps like the dead.',
+    elder: 'Its shell is carved like a barrow door. It goes for the one who holds the line.',
+    champ: 'A beetle the size of a cart. It shoves barrow dirt over every lamp it finds.' },
+  spore: { name: 'Spore Cap', region: 'hollow',
+    foe: 'The spores took Morwen\'s garden in one night. Their dust chokes any flame.',
+    elder: 'The whole garden, standing up. Its spore cloud fills the air.',
+    champ: 'A cap as tall as a door. Its dust hangs in the air long after it falls.' },
+  golem: { name: 'Quarry Golem', region: 'hollow',
+    foe: 'The dark woke the quarry, and the stone stood up. It walks at your light to crush it.',
+    elder: 'The quarry\'s heart. Grenna says it was the first stone they ever cut.',
+    champ: 'Cut from the deepest seam. Stone only knows weight, and this one has plenty.' },
+  wraith: { name: 'Marsh Wraith', region: 'hollow',
+    foe: 'People who followed green lights into the marsh. Now they lure lamps in and drown them.',
+    elder: 'Each Elder Wraith listens. The one at the heart of the marsh listens hardest.',
+    champ: 'It was a keeper once. It still keeps the others going, for the dark now.' },
+  // the Sunken Coast (the keys R2-1 should use; see the header)
+  crab: { name: 'Shinglecrab', region: 'coast',
+    foe: 'Shore crabs with shells grown thick in the dark. They pinch out any lamp on the shingle.',
+    elder: 'It shuts itself in and waits for the tide, like the sea does.',
+    champ: 'Its shell is crusted like an old hull. The tide itself seems to carry it in.' },
+  gull: { name: 'Stormgull', region: 'coast',
+    foe: 'The gulls learned to take more than fish. They dive at anything that shines.',
+    elder: 'It brings the squall with it and strips every shield bare.',
+    champ: 'A gull as wide as a sail. It snatches shields the way the others snatch fish.' },
+  deckhand: { name: 'Drowned Deckhand', region: 'coast',
+    foe: 'Sailors who steered for the green light. They drag lamps down to the wrecks.',
+    elder: 'The Bosun. He rings the ship\'s bell, and his crew still comes.',
+    champ: 'The first mate. He still gives orders, and the drowned still obey.' },
+  kelp: { name: 'Kelp Strangler', region: 'coast',
+    foe: 'An eel as long as a boat, grown in the kelp. It holds the strong one still.',
+    elder: 'It holds two at once now.',
+    champ: 'Old as the reef. It has wrapped round more boats than Hallam can count.' },
+  jelly: { name: 'Lanternjelly', region: 'coast',
+    foe: 'Each one carries a drop of stolen light. Burst it, and the light is free.',
+    elder: 'So full of green light it splits in three.',
+    champ: 'So bright the fish keep clear of it. Burst it, and the lagoon shines gold.' },
+  witch: { name: 'Brine Witch', region: 'coast',
+    foe: 'Saltreach\'s wise women. They asked the water to spare the village. It kept them.',
+    elder: 'She hexes the healers first, then mends herself.',
+    champ: 'The eldest of them. She still counts the drowned houses, one by one.' },
+  coral: { name: 'Coral Warden', region: 'coast',
+    foe: 'The Coral Nave\'s stone guards, grown over with coral. They still guard the pews.',
+    elder: 'It raises a reef wall around itself.',
+    champ: 'The altar\'s own guard. Coral has grown over its eyes, but it keeps its post.' }
+};
+
+const LORE_ELDERS = {
+  slime: { name: 'Elder Moss Slime',
+    intro: 'The oldest moss in the Hollow, crowned. It creeps at your lamp.',
+    fall: 'It is only moss again. The crown rolls into the grass.' },
+  bat: { name: 'Elder Cave Bat',
+    intro: 'A Bat Queen drops from the roof, straight at your light.',
+    fall: 'She flaps off, small again. She does not come back.' },
+  bones: { name: 'Elder Rattlebones',
+    intro: 'A captain of the old battle stands. He calls his dead to put out your lamp.',
+    fall: 'The captain lies down with his men. This time they all sleep.' },
+  beetle: { name: 'Elder Barrow Beetle',
+    intro: 'Its shell is carved like a barrow door. It comes for whoever stands in front.',
+    fall: 'The shell cracks open. Inside is only an old beetle, and dust.' },
+  spore: { name: 'Elder Spore Cap',
+    intro: 'The whole garden stands up. Its spores choke the air around your flame.',
+    fall: 'The spores settle. Something green pushes up through the dust.' },
+  golem: { name: 'Elder Quarry Golem',
+    intro: 'The quarry\'s heart walks out of the rock, straight at your light.',
+    fall: 'It sits down in the dust, and it is only stone again.' },
+  wraith: { name: 'Elder Marsh Wraith',
+    intro: 'An Elder Wraith rises from the reeds and gathers the others to it.',
+    fall: 'It sinks into the water, quiet at last. The marsh smells of rain.' },
+  listener: { name: 'The Listener',
+    intro: 'It stops listening, and turns to your lamp.',
+    fall: 'It goes quiet. Far away, something stops talking.',
+    line: 'The first wraith to hear a voice in the dark. While it listens, no lamp here holds.' },
+  crab: { name: 'Elder Shinglecrab',
+    intro: 'A crab as big as a rowing boat. It shuts its shell and waits, like the sea.',
+    fall: 'The great shell opens and stays open. Only the tide comes and goes.' },
+  gull: { name: 'Elder Stormgull',
+    intro: 'The squall comes in on its wings. It tears at every shield you hold.',
+    fall: 'The wind drops. For a moment the gulls are only gulls again.' },
+  deckhand: { name: 'The Bosun',
+    intro: 'The Bosun rings his bell, and his drowned crew comes up the beach.',
+    fall: 'The bell goes quiet. The Bosun sits down on the sand like a tired man.' },
+  kelp: { name: 'Elder Kelp Strangler',
+    intro: 'A Kelp Strangler as long as a ship. It reaches for two of you at once.',
+    fall: 'It lets go and sinks back into the weed. The water clears.' },
+  jelly: { name: 'Elder Lanternjelly',
+    intro: 'A Lanternjelly swollen with green light. It shudders, and splits in three.',
+    fall: 'It bursts, and the light inside goes up gold and free.' },
+  witch: { name: 'Elder Brine Witch',
+    intro: 'An old Brine Witch rises from the street. She hexes your healers first.',
+    fall: 'The water lets her go. She looks up at the sky, and she is gone.' },
+  coral: { name: 'Elder Coral Warden',
+    intro: 'The oldest Coral Warden raises a reef wall and steps out to snuff your lamp.',
+    fall: 'The coral cracks. Under it stands a stone guard, still at its post.' }
+};
+
+const RAID_LORE = {
+  'The Ashen Wyrm': 'Stolen light fell on the Lea and burned, and the fire grew wings. It keeps coming back.',
+  'The Hollow King': 'The King\'s armour, walking out of the barrows. The crown it wears is only for the road.',
+  'The Mire Colossus': 'The Wraithmarsh, standing up. It is the water that drowned Thessaly\'s village.',
+  'The Glass Hydra': 'Sea glass and old lamp lenses, grown into a serpent. Each head holds a stolen light.',
+  'The Lantern Eater': 'It swallows lamps whole, a village at a time, and leaves the road dark behind it.',
+  'The Pale Tyrant': 'It came down from the mountain pass in a white storm. Kestrel will not look at it.'
 };
 
 // ---- src/js/22-data-regions.js ----
@@ -6716,7 +7150,24 @@ const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
-const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));
+// Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
+// curve for a station skill; without k it is the gathering curve.
+const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
+const skillNeed = (lv, k) => { const c = skillCurve(k); return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1)); };
+// A tier is open when the level reaches its gate, or when the save had it open before GP1
+// (skillKept, 55-skillpace: the old gates' high-water mark). Gathering skills use NODE_REQ,
+// crafting skills CRAFT_STATION_REQ (= SMITH_REQ).
+let skillKept = k => 0;
+const skillReqs = k => SKILL_TUNE.craftSkills.includes(k) ? SMITH_REQ : NODE_REQ;
+const skillReq = (k, t) => skillReqs(k)[t - 1];
+function skillTopTier(k) {
+  const sk = S.skills[k], lv = sk ? sk.lv : 1, req = skillReqs(k);
+  let t = 1; for (let i = 1; i < req.length; i++) if (lv >= req[i]) t = i + 1;
+  return Math.max(t, Math.min(req.length, skillKept(k) || 0));
+}
+const skillTierOpen = (k, t) => t <= skillTopTier(k);
+// The level that opens the next tier, or 0 when every tier is open.
+const skillNextReq = k => { const t = skillTopTier(k), req = skillReqs(k); return t < req.length ? req[t] : 0; };
 const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
 // Gathering per node kind (K5): the kind's tool (CRAFT_NODES[kind].tool) sets the speed, double
 // yield and extra-unit stats; craftNodeBase has the per-kind time (crystal x1.25, fibre x0.9).
@@ -6727,11 +7178,12 @@ const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
   const g = gear(), lv = S.skills[skillOf(kind)].lv;
   const spd = g[nodeTool(kind)[0]] + g.gather;
-  return craftNodeBase(nodeKind(kind), t) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
+  // H2 (55-tools): 'gatherSpeed:<skill>' carries tool mastery; toolRight() the right-tool bonus for tier t.
+  return craftNodeBase(nodeKind(kind), t) / ((1 + SKILL_TUNE.spdPerLv * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed') / mod('gatherSpeed:' + skillOf(kind)) / toolRight(skillOf(kind), t);
 }
 // Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
 function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }
-const nodeXp = t => Math.round(6 * Math.pow(t, 1.6));
+const nodeXp = t => Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(t, SKILL_TUNE.nodeXp[1]));
 const nodeXpFor = (kind, t) => nodeXp(t) * CRAFT_NODES[nodeKind(kind)].xp; // crystal x1.25
 
 const bulkCost = (base, r, owned, n) => base * Math.pow(r, owned) * (Math.pow(r, n) - 1) / (r - 1);
@@ -6810,7 +7262,7 @@ const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 // gear() keys: the old ones, unchanged and in the same order, then every other CRAFT_STATS
 // key. Stage C made the combat stats live (hp, armour, threat, block, pierce, area, control,
 // heal, ward, haste: 59-combat.js reads them; they keep their caps, flagged combat: true).
-// aspd, forageSpd and forageDbl stay live:false and only aggregate; their total caps are applied
+// aspd stays live:false and only aggregates (forageSpd/forageDbl and the H2 *Find lines are live); their total caps are applied
 // in gear(). The old live stats are never capped here (old gear already goes past crit 35;
 // critChance() caps at 75%).
 // 'attack' feeds heroAtk() (40-rules). 'spell' is exposed through spellMult().
@@ -6896,8 +7348,9 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
       case 'weapon': return [['might', p]];
       case 'helm': return [['crit', Math.min(35, p * 0.12)], ['critMult', p / 200], ['armour', p * 0.1]];
       case 'charm': return [['gold', p * 0.8], ['ess', p * 0.3]];
-      case 'pick': return [['mineSpd', p * 0.6], ['oreDbl', Math.min(60, p * 0.1)]];
-      case 'axe': return [['woodSpd', p * 0.6], ['woodDbl', Math.min(60, p * 0.1)]];
+      // H2: old tools gain the rare find line (a new stat; the old two lines are unchanged).
+      case 'pick': return [['mineSpd', p * 0.6], ['oreDbl', Math.min(60, p * 0.1)], craftBaseLines('pick', p)[2]];
+      case 'axe': return [['woodSpd', p * 0.6], ['woodDbl', Math.min(60, p * 0.1)], craftBaseLines('axe', p)[2]];
     }
     return [];
   };
@@ -7028,7 +7481,7 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Your party rests at the Hearth.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
   toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
@@ -7039,7 +7492,7 @@ function setZone(z) {
 // Pick the gathering node. Returns false if the skill level is too low. Does not
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
-  if (S.skills[skillOf(kind)].lv < NODE_REQ[t - 1]) return false;
+  if (!skillTierOpen(skillOf(kind), t)) return false;
   S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
   return true;
 }
@@ -7150,19 +7603,22 @@ function gainXp(n, quiet) {
 }
 function gainSkill(k, n, quiet) {
   const sk = S.skills[k]; sk.xp += n * mod('skillXp') * mod('skillXp:' + k);
-  while (sk.xp >= skillNeed(sk.lv)) {
-    sk.xp -= skillNeed(sk.lv); sk.lv++;
+  while (sk.xp >= skillNeed(sk.lv, k)) {
+    const top0 = skillTopTier(k);
+    sk.xp -= skillNeed(sk.lv, k); sk.lv++;
     emit('skillUp', { k, lv: sk.lv, quiet: !!quiet });
     if (quiet) continue;
     const stn = Object.values(CRAFT_STATIONS).find(x => x.skill === k);
-    const req = stn ? CRAFT_STATION_REQ : NODE_REQ, t = req.indexOf(sk.lv);
+    const t = skillTopTier(k) > top0 ? skillTopTier(k) - 1 : -1;   // GP1: a tier the save already had open is no news
     let extra = '';
     if (t > 0) {
       const open = Object.keys(NODE_NAMES).filter(kind => skillOf(kind) === k).map(kind => NODE_NAMES[kind][t]);
       extra = k === 'smith' ? ` You can now forge ${MAT.ore.short[t]} gear.` : stn ? ` You can now make tier ${t + 1} gear at the ${stn.n}.` : open.length ? ` The ${open.join(' and the ')} ${open.length > 1 ? 'are' : 'is'} open to you.` : '';
     }
+    const next = skillNextReq(k), tell = !!extra;
+    if (!extra && next) extra = ` Next tier at level ${next}.`;
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, extra ? 'normal' : 'low');
+    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, tell ? 'normal' : 'low');
   }
 }
 
@@ -7255,7 +7711,7 @@ function awayBase(r) {
     got = storeAwayGather(kind, tier, got, r);   // H3: up to the cap; Spillover moves on (55-store)
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     if (got > 0) r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
-    r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
+    r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
   }
   const dps = (compDps() + heroDps() * 0.5) * boost;
@@ -7344,7 +7800,7 @@ function forgeItem(slot, t) {
   if (!RECIPE[slot]) return craftItem(slot, t);
   if (CRAFT_KINDS[slot].legacy) return null;
   const cost = craftCost(slot, t);
-  if (S.skills.smith.lv < SMITH_REQ[t - 1] || !hasMats(cost, t) || bagFull()) return null;
+  if (!skillTierOpen('smith', t) || !hasMats(cost, t) || bagFull()) return null;
   payMats(cost, t);
   const r = rollRarity();
   const it = newItem(slot, t, r);
@@ -7464,7 +7920,9 @@ let OMENS, WEEKLY_GOALS;
     Expeditions: () => !!S.exped,
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
-  const needsMet = x => !x.needs || !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]());
+  // A probe of a later file's `let` throws (TDZ) when asked during boot, before that file has run. The
+  // system is in the build, so it counts as met; this keeps the day's Omen the same at boot and after.
+  const needsMet = x => { if (!x.needs) return true; try { return !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]()); } catch (e) { return true; } };
 
   const bossNow = () => awayDay === null && target() === 'mob' && !!mob && !!mob.boss;
 
@@ -7645,7 +8103,7 @@ let OMENS, WEEKLY_GOALS;
   }
 
   // ---------------- "best today" hint ----------------
-  const topTier = kind => { const sk = S.skills[skillOf(kind)]; const lv = sk ? sk.lv : 1; let t = 1; for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1; return t; };
+  const topTier = kind => skillTopTier(skillOf(kind));
   const bestWraith = () => { for (let z = S.maxZone; z >= 1; z--) if (zoneType(z) === 6) return z; return 0; };
   function hintFor(o) {
     const g = o && o.go;
@@ -7923,7 +8381,7 @@ let OMENS, WEEKLY_GOALS;
   // k === null means the slot is empty and refills at `wait` (ms timestamp).
   registerState('bounties', { slots: [], claimed: 0, seq: 0 });
 
-  const btyTopTier = kind => { const lv = S.skills[kind === 'ore' ? 'mine' : 'wood'].lv; let t = 1; for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1; return t; };
+  const btyTopTier = kind => skillTopTier(kind === 'ore' ? 'mine' : 'wood');
   const btyScale = () => 1 + Math.floor(S.maxZone / 10) * 0.25;
   const btyRound = n => Math.max(1, Math.round(n / 5) * 5);
 
@@ -8024,7 +8482,7 @@ let OMENS, WEEKLY_GOALS;
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Spec: docs/design/gathering-and-crafting.md 3, 4 and 9 (K6) with its "Owner decisions"
 // (random affixes, Reforge at the Enchanter's Table, trophies gate +8..+10) and camp.md N4
-// (buildings never gate recipes). Tables: 21-data-craft.js (K1). Items: 41-items.js (K4).
+// (buildings never gate recipes), except a new game's cold Hearth (H1): there a station must be built. Tables: 21-data-craft.js (K1). Items: 41-items.js (K4).
 //
 // Exposed names (the Craft tab, K7, calls these; every action saves and returns falsy when refused):
 //   craftItem(kind, t, opts?) -> item | null     opts: { role } (Trinkets), { mw: trophyIndex }
@@ -8037,6 +8495,7 @@ let OMENS, WEEKLY_GOALS;
 //                                                cost: {mats, gold, troph}; miss: [[fam, n], ...]
 //   stationOf(kind) -> { key, n, skill }         the station that makes a kind
 //   stationLevel(kind) -> level used for the tier gate and rarity (see N4 note below)
+//   stationTierOpen(kind, t) -> bool   the tier gate (GP1: also open when the save kept the tier)
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
@@ -8055,7 +8514,7 @@ let OMENS, WEEKLY_GOALS;
 //   brewTonic(key, t) / drinkTonic(key, t) / tonicActive() -> { key, t, left, v } | null   (K6b)
 //
 // Rules:
-//   - Tier gate: stationLevel(kind) >= CRAFT_STATION_REQ[t - 1]. Kinds that existed before K4
+//   - Tier gate: stationLevel(kind) >= CRAFT_STATION_REQ[t - 1], or a tier kept from before GP1 (stationTierOpen). Kinds that existed before K4
 //     (Charm, Axe) moved to new stations; they gate on the better of that station and Smithing
 //     so no save loses a recipe (camp N4). Their XP goes to the new station.
 //   - Rarity: rollRarity(level of the station), so the Forge odds are exactly as before.
@@ -8071,7 +8530,7 @@ let OMENS, WEEKLY_GOALS;
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
-let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
+let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
   canReforge, transmute, canTransmute, equipChar, unequipChar, trophies, craftStarChart, brewTonic,
   drinkTonic, tonicActive, craftSalvageBonus;
 
@@ -8094,7 +8553,15 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   stationLevel = kind => {
     const st = stationOf(kind); if (!st) return 0;
     const lv = S.skills[st.skill].lv;
-    return RECIPE[kind] && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
+    // Pre-K4 kinds and every tool (H2: the Sickle moved from the Forge) keep the better of Smithing.
+    return (RECIPE[kind] || (CRAFT_KINDS[kind] && CRAFT_KINDS[kind].tool)) && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
+  };
+  // GP1: tier t of a kind is open when stationLevel reaches the gate, or the save kept that tier from
+  // before GP1 (skillTierOpen, 40-rules), on the station's skill or, for kinds that use it, Smithing.
+  stationTierOpen = (kind, t) => {
+    const st = stationOf(kind); if (!st) return false;
+    if (stationLevel(kind) >= CRAFT_STATION_REQ[t - 1] || skillTierOpen(st.skill, t)) return true;
+    return stationLevel(kind) !== S.skills[st.skill].lv && skillTierOpen('smith', t);
   };
   craftXpFor = (skill, n) => {
     const behind = CRAFT_CATCHUP[skill];
@@ -8103,6 +8570,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   };
   const gainStation = (skill, n) => gainSkill(skill, craftXpFor(skill, n));
   const gateWhy = (skill, need) => `Needs ${SKILL[skill]} ${need}`;
+  // H1 (55-hearth): a cold save crafts only at a station it has built. '' = built (every warm save).
+  const unbuilt = st => typeof hearthStationWhy === 'function' ? hearthStationWhy(st) : '';
 
   // ---- materials ----
   const missing = (mats, t) => Object.entries(mats).map(([k, n]) => [k, n - S.mats[k][t - 1]]).filter(([, n]) => n > 0);
@@ -8116,11 +8585,13 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!d) return no('Unknown item.');
     if (d.legacy) return no('Swords and helms are no longer made. Craft your class weapon and head piece.');
     if (!validTier(t)) return no('Unknown tier.');
-    const st = stationOf(kind), lv = stationLevel(kind), need = CRAFT_STATION_REQ[t - 1];
+    const st = stationOf(kind), lv = stationLevel(kind), open = stationTierOpen(kind, t);
+    const need = open ? Math.min(lv, CRAFT_STATION_REQ[t - 1]) : CRAFT_STATION_REQ[t - 1];   // a kept tier needs no more
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
     const x = { cost, lv, need, miss: [] };
-    if (lv < need) return no(gateWhy(st.skill, need), x);
+    if (unbuilt(st.key)) return no(unbuilt(st.key), Object.assign(x, { unbuilt: true }));
+    if (!open) return no(gateWhy(st.skill, need), x);
     if (d.role === 'any' && opts.role != null && !CRAFT_ROLE_POOL[opts.role]) return no('Pick a role for the Trinket.', x);
     if (opts.mw != null) {
       if (!CRAFT_TROPHIES[opts.mw] || !craftTrophyLine(opts.mw, kind, 1)) return no('That Trophy does nothing on this item.', x);
@@ -8191,7 +8662,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const it = itemById(id); if (!it) return no('No such item.');
     if (!Array.isArray(it.a) || !it.a[idx]) return no('Pick a line to reforge.');
     const cost = reforgePrice(it), x = { cost }, need = CRAFT_STATION_REQ[it.t - 1];
-    if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
+    if (unbuilt('ench')) return no(unbuilt('ench'), x);
+    if (!skillTierOpen('ench', it.t)) return no(gateWhy('ench', need), x);
     const miss = missing(cost.mats, it.t);
     if (miss.length) return no(missWhy(miss, it.t), x);
     if (S.gold < cost.gold) return no(`${fmt(cost.gold - S.gold)} more gold`, x);
@@ -8228,7 +8700,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!validTier(fromT) || !validTier(tt) || Math.abs(tt - fromT) !== 1) return no('Transmute moves one tier at a time.');
     const up = tt > fromT, rule = up ? CRAFT_TRANSMUTE.up : CRAFT_TRANSMUTE.down;
     const take = Math.max(1, rule.take - (up ? bonus('transmuteSave') : 0)), x = { take, give: rule.give, toT: tt };
-    if (up && S.skills.ench.lv < CRAFT_STATION_REQ[tt - 1]) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
+    if (unbuilt('ench')) return no(unbuilt('ench'), x);
+    if (up && !skillTierOpen('ench', tt)) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
     const have = S.mats[fam][fromT - 1];
     if (have < take) return no(`${take - have} more ${matName(fam, fromT)}`, x);
     // BAL1: units made by breaking down cannot be broken down again (1 tier-5 unit used to
@@ -8298,7 +8771,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
     if (orielDone()) return no('Oriel already answered your Star Chart.', x);
-    if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
+    if (unbuilt(STAR.st)) return no(unbuilt(STAR.st), x);
+    if (!skillTierOpen('ench', t)) return no(gateWhy('ench', need), x);
     const tmiss = STAR.troph.filter(([i, n]) => (C().troph[i] || 0) < n);
     x.miss = missing(cost.mats, t);
     const parts = [];
@@ -8324,8 +8798,8 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   const tonicV = (key, t) => CRAFT_TONICS[key].v * (1 + CRAFT_TONIC_RULE.scale * (t - 1));
   tonicActive = () => { const a = C().tonic; return a && a.left > 0 && CRAFT_TONICS[a.k] ? { key: a.k, t: a.t, left: a.left, v: tonicV(a.k, a.t) } : null; };
   brewTonic = (key, t) => {
-    const d = CRAFT_TONICS[key]; if (!d || !validTier(t)) return false;
-    if (S.skills.ench.lv < CRAFT_STATION_REQ[t - 1]) return false;
+    const d = CRAFT_TONICS[key]; if (!d || !validTier(t) || unbuilt('ench')) return false;
+    if (!skillTierOpen('ench', t)) return false;
     const m = Object.fromEntries(Object.entries(d.rec).map(([k, n]) => [k, craftScale(n, t)]));
     if (!hasMats(m, t)) return false;
     payMats(m, t);
@@ -8519,7 +8993,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     G.next -= dt * (1 + bonus('glintRate'));
     if (G.next <= 0 && stashFull(S.node.kind, S.node.t)) G.next = nextGlint();   // H3: no Glint on a full pile
     else if (G.next <= 0) {
-      G.left = CRAFT_GLINT.window; G.spark = 0;
+      G.left = CRAFT_GLINT.window + bonus('glint:' + skillOf(S.node.kind)); G.spark = 0;   // H2: tool mastery 10
       addFloat('Glint! Tap it', '#FFF3C4', true, 0.66, 0.3);
       emit('glint', { on: true });
     }
@@ -8543,10 +9017,10 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     if (nk) {
       const home = zoneTypesFor(fam), node = NODE_NAMES[fam][t - 1];
       const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
-      return `${name}: ${SKILL[nk.skill]} ${NODE_REQ[t - 1]}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
+      return `${name}: ${SKILL[nk.skill]} level ${skillReq(nk.skill, t)}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
     }
     const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).sort((a, b) => b[1].p - a[1].p).map(([k]) => TYPES[typeIndex(k)].name + 's');
-    const zt = Math.ceil(t) > 1 ? ` Fight in zone ${(t - 1) * 6 + 1} or higher for this tier.` : '';
+    const zt = Math.ceil(t) > 1 ? ` Fight in zone ${PACE.essTier[t - 1]} or higher for this tier.` : '';
     return fam === 'ess' ? `${name}: every foe can drop it. Marsh Wraiths drop extra.${zt}` : `${name}: fighting only. ${drop.join(', ')} drop it.${zt}`;
   };
 }
@@ -8765,7 +9239,7 @@ var forgeGoalPicks = 0;
     let best = null;
     for (const k of Object.keys(SKILL)) {
       const s = S.skills[k]; if (!s) continue;
-      const p = Math.min(0.99, s.xp / skillNeed(s.lv));
+      const p = Math.min(0.99, s.xp / skillNeed(s.lv, k));
       if (!best || p > best.p) best = { k, s, p };
     }
     return best;
@@ -8774,7 +9248,7 @@ var forgeGoalPicks = 0;
   registerGoal({
     id: 'skill', sys: 'skill', prio: -1,
     pct: () => { const b = skillNext(); return b ? b.p : null; },
-    label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv) - b.s.xp))} XP to level ${b.s.lv + 1}` : ''; },
+    label: () => { const b = skillNext(); return b ? `${SKILL[b.k]}: ${fmt(Math.ceil(skillNeed(b.s.lv, b.k) - b.s.xp))} XP to level ${b.s.lv + 1}` + (skillNextReq(b.k) === b.s.lv + 1 ? `, which opens tier ${skillTopTier(b.k) + 1}` : '') : ''; },
     icon: () => { const b = skillNext(); return { ic: SKILL_IC[b ? b.k : 'mine'] || SKILL_IC.mine }; },
     go: () => { const b = skillNext(); return b && b.k === 'smith' ? { tab: 'forge', sel: '#smithBar' } : { tab: 'gat', sel: '#skillCards' }; }
   });
@@ -8798,7 +9272,7 @@ var forgeGoalPicks = 0;
         const t = have + 1;
         if (t > Math.min(5, zt)) continue;
         const c = canCraft(kind, t);
-        if (!c.cost || c.lv < c.need) continue;
+        if (!c.cost || c.lv < c.need || c.unbuilt) continue;   // unbuilt: a cold save's station (H1)
         const ks = Object.keys(c.cost.mats);
         const p = c.ok ? 1 : Math.min(0.99, ks.reduce((a, k) => a + Math.min(1, need(S.mats[k][t - 1], c.cost.mats[k])), 0) / Math.max(1, ks.length));
         const score = p + (pos === 'weapon' ? 0.02 : 0);
@@ -8817,6 +9291,209 @@ var forgeGoalPicks = 0;
       return k ? `Craft ${a} ${nm}: ${fmt(b.cost[k] - S.mats[k][b.t - 1])} more ${matName(k, b.t)}` : `Craft ${a} ${nm}`; },
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
+  });
+}
+
+// ---- src/js/55-hearth.js ----
+// 55-hearth: the cold Hearth start and building each station (task H1).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Spec: docs/design/hearth-and-hands.md 1 (section 9 decisions accepted, plan-3 D7).
+//
+// Who is cold: a NEW game only. At load, S.camp is undefined and the save has no progress
+// (S.totalKills 0, S.L 1, S.maxZone 1). It gets S.hearth.cold = 1, starts at the unlit fire,
+// gathering the Oak Grove by the fire, with the Forge, Workbench, Loom, Enchanter's Table and
+// Tavern at Lv 0 (plots to build). Every other save is warm and nothing here changes it: its
+// stations stay at Lv 1 (57-camp's defaults), the camp opens at zone 5 as before.
+//
+// Rules (cold saves; knobs in HEARTH_TUNE):
+//   - Fighting is never gated. The fire is the first thing to do, not a wall.
+//   - hearthLight(): pays 8 Oak Log, Hearth 1, the camp opens (campOpen { quiet: false }),
+//     emits hearthLit, and the hero walks out to zone 1 (S.activity = 'fight'). Instant.
+//   - Stations are built on plots. A plot opens by its rule (HEARTH_PLOT); an unopened plot is not
+//     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (no gold, a short
+//     timer) through campCost; Lv 2-5 keep 57-camp's rows.
+//   - Crafting needs the station built (hearthStationWhy, read by 55-crafting): "Build the
+//     Workbench first." Only a cold save can have a station at Lv 0.
+//   - The Storehouse (id 'store') belongs to H3 (55-store.js); this file only opens its plot and
+//     gives its Lv 1 row (spec 1.3). Its behaviour is H3's.
+//
+// Exposed names:
+//   HEARTH_TUNE, HEARTH_CHAIN (station build order), HEARTH_PLOT { id: fn -> bool }
+//   hearthCold() -> bool      this save began at a cold Hearth
+//   hearthLit() -> bool       the fire burns (always true for warm saves)
+//   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
+//   hearthLight() -> bool     light the fire (cold, unlit, 8 Oak)
+//   hearthPlotOpen(id) -> bool   57-camp: is this building's plot open (warm: always)
+//   hearthFirst(id) -> { mats, secs } | null   57-camp: the Lv 1 row of a station
+//   hearthStationWhy(st) -> '' | 'Build the Workbench first.'   (st: CRAFT_STATIONS key)
+//   hearthNext() -> 'hearth' | station id | null   the next thing a player should build (sim policy)
+//   hearthApply()             57-camp calls it right after registerState('camp'): a cold start
+//                             sets the stations to Lv 0 (once, at the first load)
+//   hearthWarm() -> bool      tools only: turn a pristine cold start back into the old warm start
+//                             (check.mjs's older sections, sim --cold 0)
+// Events: emits hearthLit { quiet } and campOpen { quiet }; listens 'crafted' (the guide's tool
+//   step) and the first tick (the one-time What's new line for warm saves).
+// Save: registerState('hearth', { v: 1, cold: 0, lit: 0, said: 0 }).
+//   cold: this save began at a cold Hearth. lit: ms the fire was lit (0 = not; warm saves 0,
+//   never read). said: the warm What's new line was shown.
+
+const HEARTH_TUNE = {
+  on: 1,                               // 0: new games start warm, as before (tools)
+  light: [['wood', 1, 8]],             // the fire: 8 Oak Log
+  // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
+  first: {
+    bench: { mats: [['wood', 1, 20]], secs: 30 },
+    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 60 },
+    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 90 },
+    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 120 },
+    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 180 },
+    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 180 }
+  },
+  near: 0.8,       // the Storehouse plot also opens when any pile reaches 80% of what the packs hold
+  packs: 100,      // what the packs hold before a Storehouse (H3's storeCap wins when it exists)
+  zones: { loom: 5, ench: 6, tavern: 8 }
+};
+const HEARTH_CHAIN = ['bench', 'forge', 'store', 'loom', 'ench', 'tavern'];
+// The stations a cold start leaves unbuilt.
+const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
+let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+  hearthApply, hearthWarm, HEARTH_PLOT;
+
+{
+  // Decide before 57-camp registers S.camp: a new game has no camp field and no progress.
+  const noProgress = () => !(S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
+  const isNew = S.camp === undefined && S.hearth === undefined && noProgress();
+  const hadField = S.hearth !== undefined;
+  registerState('hearth', { v: 1, cold: 0, lit: 0, said: 0 });
+  const Hs = () => S.hearth || (S.hearth = { v: 1, cold: 0, lit: 0, said: 0 });
+  let coldStart = false;
+  if (isNew && HEARTH_TUNE.on) {
+    coldStart = true;
+    Hs().cold = 1;
+    S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0;
+  } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
+
+  const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
+  hearthCold = () => !!Hs().cold;
+  hearthLit = () => !hearthCold() || !!Hs().lit;
+
+  hearthApply = () => {
+    if (!coldStart || !S.camp || !S.camp.b) return;
+    coldStart = false;
+    for (const id of HEARTH_COLD_B) S.camp.b[id] = 0;
+    S.camp.b.hearth = 0; S.camp.open = false;
+  };
+
+  // ---- the fire ----
+  const short = cost => cost.filter(([f, t, n]) => (S.mats[f][t - 1] || 0) < n);
+  hearthCan = () => {
+    const cost = HEARTH_TUNE.light;
+    if (!hearthCold()) return { ok: false, why: 'The fire is already lit.', cost };
+    if (Hs().lit) return { ok: false, why: 'The fire is already lit.', cost, lit: true };
+    const miss = short(cost);
+    if (miss.length) return { ok: false, why: miss.map(([f, t, n]) => `${n - (S.mats[f][t - 1] || 0)} more ${matName(f, t)}`).join(', '), cost, miss };
+    return { ok: true, why: '', cost };
+  };
+  hearthLight = () => {
+    const c = hearthCan(); if (!c.ok) return false;
+    for (const [f, t, n] of c.cost) S.mats[f][t - 1] -= n;
+    Hs().lit = Date.now();
+    S.camp.b.hearth = Math.max(1, lv('hearth'));
+    S.camp.open = true;
+    emit('campOpen', { quiet: false });
+    emit('hearthLit', { quiet: false });
+    toast('The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+    if (S.activity !== 'fight') setActivity('fight');
+    save();
+    return true;
+  };
+
+  // ---- plots ----
+  const packCap = (f, t) => typeof storeCap === 'function' ? storeCap(f, t) : HEARTH_TUNE.packs;
+  const CAPPED = ['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'];
+  const nearFull = () => {
+    for (const f of CAPPED) { const row = S.mats[f]; if (!row) continue; for (let t = 1; t <= row.length; t++) { const c = packCap(f, t); if (c > 0 && Number.isFinite(c) && row[t - 1] >= HEARTH_TUNE.near * c) return true; } }
+    return false;
+  };
+  HEARTH_PLOT = {
+    bench: () => hearthLit(),
+    forge: () => lv('bench') >= 1,
+    store: () => lv('forge') >= 1 || nearFull(),
+    loom: () => S.maxZone >= HEARTH_TUNE.zones.loom,
+    ench: () => S.maxZone >= HEARTH_TUNE.zones.ench,
+    tavern: () => S.maxZone >= HEARTH_TUNE.zones.tavern
+  };
+  hearthPlotOpen = id => {
+    if (!hearthCold() || lv(id) > 0) return true;
+    if (!hearthLit()) return false;               // nothing to build before the fire
+    const f = HEARTH_PLOT[id];
+    return !f || !!f();
+  };
+  hearthFirst = id => HEARTH_TUNE.first[id] || null;
+
+  // ---- crafting gate ----
+  hearthStationWhy = st => {
+    if (!st || !hearthCold() || lv(st) >= 1) return '';
+    const d = typeof CRAFT_STATIONS === 'object' && CRAFT_STATIONS[st];
+    return `Build the ${d ? d.n : 'station'} first.`;
+  };
+
+  // ---- the sim's policy: what to build next ----
+  hearthNext = () => {
+    if (!hearthCold()) return null;
+    if (!hearthLit()) return 'hearth';
+    for (const id of HEARTH_CHAIN) {
+      if (typeof CAMP_B !== 'object' || !CAMP_B[id]) continue;
+      if (lv(id) >= 1) continue;
+      if (typeof campPending === 'function' && campPending(id)) continue;
+      if (hearthPlotOpen(id)) return id;
+    }
+    return null;
+  };
+
+  // ---- tools: undo a pristine cold start ----
+  hearthWarm = () => {
+    if (!hearthCold() || Hs().lit || !noProgress() || !S.camp) return false;
+    Hs().cold = 0; Hs().said = 1;
+    for (const id of HEARTH_COLD_B) S.camp.b[id] = Math.max(1, lv(id));
+    S.activity = 'fight'; S.node = { kind: 'ore', t: 1 }; S.gProg = 0;   // as fresh() has them
+    return true;
+  };
+
+  // ---- the guide's tool step: any tool made ----
+  on('crafted', e => {
+    const d = e && typeof CRAFT_KINDS === 'object' && CRAFT_KINDS[e.kind];
+    if (d && d.tool && hearthCold() && typeof onboardDone === 'function') onboardDone('tool');
+  });
+
+  // ---- one What's new line for an old save (spec 8.2 step 6; H3 adds the Storehouse line) ----
+  let first = true;
+  onTick(() => {
+    if (!first) return; first = false;
+    if (hearthCold() || Hs().said) return;
+    Hs().said = 1;
+    emit('whatsNew', { msg: 'Your stations were already built. Tools now have mastery.', icon: { ic: ['anvil', '#D08A4E'] } });
+  });
+
+  // ---- Next Up: the Map Room (queued hint, plan-3 wave 2) ----
+  const mapAvail = () => typeof CAMP_B === 'object' && CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs());
+  const benched = () => typeof benchList === 'function' ? benchList().length : 0;
+  registerGoal({
+    id: 'maproom', sys: 'maproom', icon: { ic: ['anvil', '#D08A4E'] },
+    label: 'Build the Map Room to send companions on expeditions',
+    pct: () => {
+      if (!mapAvail() || lv('maproom') >= 1 || !(typeof campOpen === 'function' && campOpen()) || !benched()) return 0;
+      if (lv('hearth') < 2) return 0;
+      if (typeof campPending === 'function' && campPending('maproom')) return 0;
+      const c = campCan('maproom');
+      if (c.ok) return 1;
+      if (!c.cost) return 0;
+      let p = 1;
+      if (c.cost.gold > 0) p = Math.min(p, S.gold / c.cost.gold);
+      for (const [f, t, n] of c.cost.mats) p = Math.min(p, (S.mats[f][t - 1] || 0) / n);
+      return Math.max(0.01, Math.min(0.95, p));
+    },
+    go: { tab: 'world', sel: '#camp-b-maproom' }
   });
 }
 
@@ -9637,24 +10314,33 @@ const ONBOARD = { gate: false };
 function goalGate(g) { return !ONBOARD.gate || typeof onboardGoalOk !== 'function' || onboardGoalOk(g); }
 let onboardGoalOk;
 
+// A new game's cold Hearth (55-hearth, H1; hearth-and-hands.md 1.5): Gather from the start, Camp
+// when the fire is lit, Craft when the Workbench is built, the Tavern when it is built. Warm saves
+// keep the old rules.
+const coldH = () => typeof hearthCold === 'function' && hearthCold();
+const campLv = id => typeof campLevel === 'function' ? campLevel(id) : 0;
+const plotOpen = id => typeof CAMP_B === 'object' && !!CAMP_B[id] && typeof hearthPlotOpen === 'function' && hearthPlotOpen(id) && !(typeof campPending === 'function' && campPending(id));
+const oak8 = () => typeof hearthCan === 'function' && hearthCan().ok;
+const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
+
 // FEATURES: one row per thing that unlocks. tab/view say where it lives (for the UI's toast and
 // "new" marks); when() is checked about once a second; `why` is the rule in words (docs and checks).
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + S.fortune > 0 || S.maxZone >= 2 },
-  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down)', when: () => S.maxZone >= 3 },
+  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start', when: () => coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
-  { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5)', when: () => S.maxZone >= 5 || (typeof campOpen === 'function' && campOpen()) },
+  { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
-  { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6', when: () => S.maxZone >= 6 || S.items.length > 0 || craftReady() },
+  { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '8 minutes played or zone 8', when: () => O().t >= 480 || S.maxZone >= 8 },
   { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
   { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
   { id: 'synergy', tab: 'party', view: 'team', name: 'Synergies', why: 'two companions in the party', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
-  { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8', when: () => O().t >= 840 || S.maxZone >= 8 },
+  { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
   { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
@@ -9669,16 +10355,24 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
 // GUIDE_STEPS: in order of priority; the first step not done whose when() holds is shown.
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
+// Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
+// tab:world and tab:forge are done from the start (chop, light and tool replace them).
 const GUIDE_STEPS = [
-  { id: 'tap', when: () => true, done: () => O().taps >= 3 || S.totalKills >= 25 },
+  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
+  { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
   { id: 'ability', when: () => stepDone('tap') && abilityOk(), done: () => O().casts >= 1 },
   { id: 'boss', when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', when: () => S.gold >= cheapestUp(), done: () => S.blade + S.swift + S.fortune > 0 },
   { id: 'tab:party', when: () => isUnlocked('party'), done: () => !!O().seen.party },
+  { id: 'bench', when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campLv('bench') >= 1 },
+  { id: 'tool', when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
   { id: 'nextup', when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 2, done: () => false },
-  { id: 'tab:gat', when: () => isUnlocked('gather'), done: () => !!O().seen.gat },
-  { id: 'tab:world', when: () => isUnlocked('camp'), done: () => !!O().seen.world },
-  { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => !!O().seen.forge },
+  { id: 'forge', when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campLv('forge') >= 1 },
+  { id: 'store', when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campLv('store') >= 1 },
+  { id: 'tab:gat', when: () => isUnlocked('gather'), done: () => coldH() || !!O().seen.gat },
+  { id: 'tab:world', when: () => isUnlocked('camp'), done: () => coldH() || !!O().seen.world },
+  { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => coldH() || !!O().seen.forge },
   { id: 'recruit', when: () => !!O().rec || recruitable(), done: () => !!O().rec && !!O().seen.partyAfterRec }
 ];
 
@@ -9761,7 +10455,8 @@ function craftReady() {
   onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
-  on('tap', e => { if (!O().all || !guideOver()) O().taps++; });
+  // A cold save's chops (taps on the tree) do not count toward "tap a foe".
+  on('tap', e => { if (e && e.node && coldH()) return; if (!O().all || !guideOver()) O().taps++; });
   on('ability', e => { if (!e || !e.auto) O().casts++; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
@@ -10218,6 +10913,138 @@ let unitHp, unitCd, bossTelegraph;
   ensureInit();
 }
 
+// ---- src/js/55-rested.js ----
+// 55-rested: Well Rested (plan-3 ask 2, task G1). The hero gathers alone: while you gather, the
+// fielded companions rest at the Hearth and bank Well Rested, a damage bonus for the first minutes
+// of the next fight.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules (knobs in REST_TUNE):
+//   - Gathering with at least one companion fielded banks `rate` seconds of Well Rested per second,
+//     up to `cap` seconds (0.5 and 180: 6 minutes of gathering fill it).
+//   - While it lasts, fighting (a zone, not a Deepwell run or the raid) deals +`dmg` damage (the
+//     'dmg' modifier: the whole party, hero included), and it runs down one second per second of
+//     fighting. The raid and the Deepwell neither use it nor run it down.
+//   - Away: gathering banks it as live play does; fighting runs it down, and away kills never count
+//     it (the modifier is off during the away phase, so away gains are never inflated).
+//
+// Save: S.rested = { left } (seconds banked). registerState: old saves get { left: 0 }.
+// Exposed names: REST_TUNE, wellRested() -> { on, left, max, dmg } (a reused object; on = the bonus
+//   applies right now), restParty() -> true when someone is fielded to rest, restNote() -> the Gather
+//   tab's line (' Your party rests at the Hearth: ...', or '' with nobody fielded).
+// Events: 'activity' (toast on the way to a fight), 'awayBegin' / 'away' / 'awayEnd'.
+
+const REST_TUNE = { rate: 0.5, cap: 180, dmg: 0.1, toastMin: 10 };
+let wellRested, restParty, restNote;
+{
+  registerState('rested', { left: 0 });
+  // read each time (a reset or an import replaces S); a damaged field starts over empty
+  const R = () => S.rested && typeof S.rested === 'object' ? S.rested : (S.rested = { left: 0 });
+  let inAway = false, awayGain = 0, lineOn = false;
+  restParty = () => {
+    if (typeof rosterLive === 'function' && rosterLive()) return ((S.party && S.party.field) || []).some(k => typeof isRecruited === 'function' && isRecruited(k));
+    return Array.isArray(S.comp) && S.comp.some(n => n > 0);
+  };
+  const fighting = () => target() === 'mob' && !arena;
+  const active = () => !inAway && R().left > 0 && fighting();
+  const clamp = v => Math.max(0, Math.min(REST_TUNE.cap, Number.isFinite(v) ? v : 0));
+  const W = { on: false, left: 0, max: REST_TUNE.cap, dmg: REST_TUNE.dmg };
+  wellRested = () => { W.on = active(); W.left = R().left; W.max = REST_TUNE.cap; W.dmg = REST_TUNE.dmg; return W; };
+  const pct = () => Math.round(REST_TUNE.dmg * 100);
+  const dur = s => s >= 60 ? `${Math.round(s / 60)} min` : `${Math.max(1, Math.round(s))} s`;
+
+  // The Gather tab's status line: ' Your party rests at the Hearth: +10% damage for 2m 30s in your next fight.'
+  restNote = () => !restParty() ? '' : R().left >= 1 ? ` Your party rests at the Hearth: +${pct()}% damage for ${fmtTime(R().left)} in your next fight${R().left >= REST_TUNE.cap ? ' (full)' : ''}.` : ' Your party rests at the Hearth.';
+
+  addModifier('dmg', () => active() ? 1 + REST_TUNE.dmg : 1);
+  onTick(dt => {
+    if (S.activity === 'gather') { if (R().left < REST_TUNE.cap && restParty()) R().left = clamp(R().left + dt * REST_TUNE.rate); }
+    else if (R().left > 0 && fighting()) R().left = clamp(R().left - dt);
+  });
+  on('activity', ({ activity }) => {
+    if (activity === 'fight' && R().left >= REST_TUNE.toastMin)
+      toast(`Well Rested: +${pct()}% damage for ${dur(R().left)}.`, 'good', { ic: ['mug', '#F2C14E'] }, 'normal');
+  });
+
+  // ---------------- away ----------------
+  on('awayBegin', () => {
+    inAway = true; awayGain = 0;
+    if (!lineOn && typeof registerAwayLine === 'function') { lineOn = true; registerAwayLine(awayLine); }
+  });
+  on('away', r => {
+    const t = r && r.t > 0 ? r.t : 0, before = R().left;
+    if (S.activity === 'gather') { if (restParty()) R().left = clamp(R().left + t * REST_TUNE.rate); }
+    else if (S.activity === 'fight' && !arena) R().left = clamp(R().left - t);
+    awayGain = R().left - before;
+  });
+  on('awayEnd', () => { inAway = false; });
+  function awayLine() {
+    const g = awayGain; awayGain = 0;
+    if (!(g >= 1) || S.activity !== 'gather') return null;
+    return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'Your party rested at the Hearth' };
+  }
+}
+
+// ---- src/js/55-skillpace.js ----
+// 55-skillpace: the save rule for the slower skill pace (task GP1).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// GP1 moved the tier gates (SKILL_TUNE in 20-data.js: NODE_REQ, SMITH_REQ) and slowed levels.
+// Players keep their skill levels and XP, and every tier they could already gather or craft at stays
+// open: a save that predates GP1 stores, per skill, the highest tier the OLD gates gave its level
+// (the high-water mark). skillTopTier (40-rules) gates on max(the new rule, that mark).
+//
+//   skillKept(k) -> tier kept from before GP1 (0 when none)   (assigned here; declared in 40-rules)
+//   skillPaceInfo() -> { v, hw, at, kept }   kept: [[skill, tier kept, tier the new gates give]]
+//
+// Save: registerState('skillPace', { v: 0, hw: {}, at: 0, said: 0 }).
+//   v: 1 once this save has been looked at (a new game is marked at once, with nothing kept).
+//   hw: { skill: tier } from the old gates. at: ms the mark was set. said: the What's new line shown.
+// Runs once per loaded save (S is replaced by loadSave()): at load, and on the first tick after.
+let skillPaceInfo;
+{
+  registerState('skillPace', { v: 0, hw: {}, at: 0, said: 0 });
+  const SKILLS = ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'];
+  const P = () => {
+    if (!S.skillPace || typeof S.skillPace !== 'object') S.skillPace = { v: 0, hw: {}, at: 0, said: 0 };
+    if (!S.skillPace.hw || typeof S.skillPace.hw !== 'object') S.skillPace.hw = {};
+    return S.skillPace;
+  };
+  const oldTop = k => {
+    const req = SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.oldStationReq : SKILL_TUNE.oldNodeReq;
+    const lv = (S.skills[k] && S.skills[k].lv) || 1;
+    return req.filter(r => lv >= r).length;
+  };
+  const newTop = k => { const req = skillReqs(k), lv = (S.skills[k] && S.skills[k].lv) || 1; return req.filter(r => lv >= r).length; };
+  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (Array.isArray(S.items) && S.items.length > 0)
+    || SKILLS.some(k => S.skills[k] && (S.skills[k].lv > 1 || S.skills[k].xp > 0));
+  let seenFor = null;
+  const ensure = () => {
+    if (seenFor === S) return;
+    seenFor = S;
+    const p = P();
+    if (p.v >= 1) return;
+    p.v = 1;
+    if (!hasProgress()) return;   // a new game: nothing to keep
+    for (const k of SKILLS) { const t = oldTop(k); if (t > 1) p.hw[k] = Math.max(p.hw[k] | 0, t); }
+    p.at = Date.now();
+  };
+  skillKept = k => { ensure(); const h = P().hw[k]; return h > 0 ? h : 0; };
+  skillPaceInfo = () => {
+    ensure(); const p = P();
+    return { v: p.v, hw: Object.assign({}, p.hw), at: p.at, kept: SKILLS.filter(k => (p.hw[k] | 0) > newTop(k)).map(k => [k, p.hw[k], newTop(k)]) };
+  };
+  ensure();
+  // One What's new line for a save that keeps a tier its level would not open now.
+  onTick(() => {
+    ensure();
+    const p = P();
+    if (p.said || !p.at) return;
+    p.said = 1;
+    if (skillPaceInfo().kept.length) emit('whatsNew', { msg: 'Skills now level more slowly, and new tiers open later. Every node and recipe tier you had open stays open.', icon: { ic: ['pick', '#F2C14E'] } });
+  });
+}
+
 // ---- src/js/55-stats.js ----
 // 55-stats: lifetime counters for the Journal and the "While you were away" report data.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
@@ -10422,7 +11249,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
   stashFits = lines => sumLines(lines).every(([f, t, n]) => n <= stashRoom(f, t));
   stashNeed = lines => {
     const x = sumLines(lines).find(([f, t, n]) => n > stashRoom(f, t));
-    return x ? `Needs room for ${storeNum(x[2])} ${name(x[0], x[1])}. Storehouse full.` : '';
+    return x ? `Storehouse full. Needs room for ${storeNum(x[2])} ${name(x[0], x[1])}.` : '';
   };
   stashPreview = lines => sumLines(lines).map(([f, t, n]) => [f, t, n, Math.min(n, stashRoom(f, t))]);
   storeWhy = (f, t) => stashOver(f, t) ? `Over the cap. Spend below ${storeNum(storeCap(f, t))} to gather more.` : `Storehouse full: ${name(f, t)}.`;
@@ -10476,10 +11303,10 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
   storeSpill = on => { if (storeLevel() < T.spill) return false; ST().spill = on ? 1 : 0; save(); return true; };
   // The next unlocked node of the same skill whose pile is not full, highest tier first.
   storeNextNode = (kind = S.node.kind) => {
-    const sk = skillOf(kind), lv = S.skills[sk].lv;
+    const sk = skillOf(kind);
     const kinds = (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']).filter(k => skillOf(k) === sk);
     const opts = [];
-    for (let t = 5; t >= 1; t--) for (const k of kinds) if (lv >= NODE_REQ[t - 1] && !stashFull(k, t)) opts.push({ kind: k, t });
+    for (let t = 5; t >= 1; t--) for (const k of kinds) if (skillTierOpen(sk, t) && !stashFull(k, t)) opts.push({ kind: k, t });
     // the same family first at each tier (a Copper miner moves to Iron before Quartz)
     opts.sort((a, b) => b.t - a.t || (a.kind === kind ? -1 : b.kind === kind ? 1 : 0));
     return opts[0] || null;
@@ -10515,7 +11342,8 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     STORE_STATS.awaySecs += r ? r.t : 0; STORE_STATS.awayFullSecs += (r ? r.t : 0) * lostShare;
     // The report lines follow the base line (the 'away' phase runs after 50-sim's awayBase).
     awayLines = spill.map(([k, t, n]) => ({ icon: { mat: [k, t] }, txt: `+${storeNum(n)} ${name(k, t)}`, sub: 'Spillover moved on' }));
-    if (left > 0) awayLines.push({ icon: { mat: [kind, tier] }, txt: `Storehouse full: ${name(kind, tier)}`, sub: `${SKILL[skillOf(kind)]} XP still counted` });
+    const k2 = spill.length ? S.node.kind : kind, t2 = spill.length ? S.node.t : tier;   // where the hero ended
+    if (left > 0) awayLines.push({ icon: { mat: [k2, t2] }, txt: `Storehouse full: ${name(k2, t2)}`, sub: `${SKILL[skillOf(kind)]} XP still counted` });
     return add;
   };
   let awayLines = [];
@@ -10593,6 +11421,223 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     },
     go: { tab: 'world', sel: '#camp-b-store' }
   });
+}
+
+// ---- src/js/55-tools.js ----
+// 55-tools: tools as items and tool mastery (task H2).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Spec: docs/design/hearth-and-hands.md 2 and 3 (decisions 1-5 accepted). Tables: 21-data-craft.js
+// (CRAFT_KINDS pick/axe/sickle at the Workbench, the *Find stat lines). Item lines: 41-items.js.
+//
+// Rules:
+//   - Tools are the items in the hero's pick / axe / sickle positions. An empty slot is the rough
+//     tool (Stone Pick, Flint Hatchet, Bone Sickle): tier 0, base rate, not an item.
+//   - Right tool: +TOOL_TUNE.right speed while the tool's tier >= the node's tier (a bonus, never a
+//     gate). nodeTime (40-rules) divides by toolRight(skill, t).
+//   - Rare find: each unit gathered (live, Glint and away) has find% to bring 1 unit of the next
+//     tier of that family (2 more of tier 5 on a tier-5 node). The chance is the tool's *Find line
+//     (per-line cap 8) plus the mastery Lv 5 point (bonus 'find:<skill>').
+//   - Mastery belongs to the tool KIND (decision 2): XP = seconds spent gathering with that skill,
+//     live and away, rough tool included, whatever the Storehouse says. Lv 1-20, masteryMins x lv
+//     minutes a level. Perks: +1% speed a level ('gatherSpeed:<skill>'), Lv 5 +1 find point,
+//     Lv 10 Glint +1 s ('glint:<skill>'), Lv 15 +5% yield ('yield:<fam>'), Lv 20 Master (the name,
+//     a gold edge, and toolHandsMult(skill) = 1.1 for Hands on that skill).
+//   - TOOL_TUNE.on = 0 turns right tool, mastery perks and rare finds off (the sim's --tools 0).
+//     Mastery XP still counts.
+//
+// Exposed names:
+//   TOOL_TUNE, TOOL_KINDS { kind: { skill, n, rough, find, pos } }, TOOL_OF_SKILL { skill: kind }
+//   toolOf(skill) -> kind ('pick' | 'axe' | 'sickle'; the Coast adds 'rod')
+//   equippedTool(skill) -> { kind, tier, item }   tier 0 = the rough tool (G1's toolFor reads this)
+//   toolLook(skill) -> { kind, tier, col, glow }  head colour (MAT.ore.col, null = stone) and glow
+//   toolName(skill) -> "Stone Pick (rough)" | "Copper Pickaxe" | "Master Copper Pickaxe"
+//   toolRight(skill, t) -> speed multiplier (1 or 1 + right) for a node of tier t
+//   toolFind(skill) -> rare find chance 0..1
+//   toolMastery(kind) -> { lv, secs, need, max, pct, left }  left: seconds to the next level
+//   toolMasteryAdd(kind, secs) -> levels gained (quiet: no toasts)
+//   toolPerks(kind) -> [{ lv, txt, on }]
+//   toolHandsMult(skill) -> 1.1 at mastery 20, else 1 (for N1's Hands)
+//   toolBest(skill) -> { kind, t, cur, ok, why }  the best tool tier worth making now (sim policy)
+//
+// Events: listens 'harvest' (rare finds), 'awayBegin' / 'away' (away mastery, the away line).
+// Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
+// Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
+// Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
+//   m[kind] = [level, seconds into the level]. finds: rare finds made (lifetime units).
+
+const TOOL_TUNE = {
+  on: 1,
+  right: 0.25,        // right tool: +25% speed
+  findPer: 0.012,     // rare find per point of item power (the data line uses it via CRAFT_KINDS)
+  findCap: 8,         // rare find line cap (%)
+  top: 2,             // a find on a tier-5 node brings this many more tier-5 units
+  masteryMins: 5,     // minutes to the next level = masteryMins x level
+  masteryMax: 20,
+  spdPer: 0.01,       // +1% gathering speed per mastery level (+20% at Lv 20)
+  findLv: 5, findPts: 1,
+  glintLv: 10, glintSecs: 1,
+  yieldLv: 15, yieldPct: 0.05,
+  handsMult: 1.1      // Lv 20: Hands on that skill gather +10%
+};
+const TOOL_KINDS = {
+  pick: { skill: 'mine', n: 'Pickaxe', rough: 'Stone Pick', find: 'oreFind', pos: 'pick' },
+  axe: { skill: 'wood', n: 'Woodaxe', rough: 'Flint Hatchet', find: 'woodFind', pos: 'axe' },
+  sickle: { skill: 'forage', n: 'Sickle', rough: 'Bone Sickle', find: 'forageFind', pos: 'sickle' }
+};
+const TOOL_OF_SKILL = { mine: 'pick', wood: 'axe', forage: 'sickle' };
+let toolOf, equippedTool, toolLook, toolName, toolFind, toolMastery, toolMasteryAdd, toolPerks,
+  toolHandsMult, toolBest;
+// Hoisted so nodeTime (40-rules) can call it whatever the load order (1 until this file has run,
+// and for skills with no tool).
+var toolsReady = false;
+function toolRight(skill, t) {
+  if (!toolsReady || !TOOL_TUNE.on || !TOOL_OF_SKILL[skill]) return 1;
+  const e = equippedTool(skill);
+  return e.tier > 0 && e.tier >= t ? 1 + TOOL_TUNE.right : 1;
+}
+
+{
+  registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 });
+  const T = () => S.tools;
+  const rec = kind => {
+    const m = T().m; let r = m[kind];
+    if (!Array.isArray(r) || !(r[0] >= 1)) r = m[kind] = [1, 0];
+    return r;
+  };
+  const famsOf = skill => GATHER_KINDS.filter(f => skillOf(f) === skill);
+  const need = lv => TOOL_TUNE.masteryMins * lv * 60;
+  const lvOf = kind => TOOL_KINDS[kind] ? rec(kind)[0] : 1;
+  const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };
+  const credit = (fam, t, n) => n > 0 ? stashAdd(fam, t, n, 'flow', true) : 0;   // H3: a flow, up to the Storehouse cap (55-store)
+  const icOf = kind => kind === 'sickle' ? { ic: craftIcon('sickle', 1) } : { ic: [kind, '#F2C14E'] };
+
+  toolOf = skill => TOOL_OF_SKILL[skill] || null;
+  equippedTool = skill => {
+    const kind = toolOf(skill); if (!kind) return { kind: null, tier: 0, item: null };
+    const it = itemById(S.equip[TOOL_KINDS[kind].pos]);
+    return it && fits(it, TOOL_KINDS[kind].pos) ? { kind, tier: it.t, item: it } : { kind, tier: 0, item: null };
+  };
+  toolLook = skill => {
+    const e = equippedTool(skill), it = e.item;
+    return { kind: e.kind, tier: e.tier, col: e.tier ? MAT.ore.col[e.tier - 1] : null,
+      glow: !!(it && (it.u || it.lr || it.r === 'epic' || it.r === 'legendary')), master: lvOf(e.kind) >= TOOL_TUNE.masteryMax };
+  };
+  // G1's stage art (11c toolFor) now draws the equipped tool; the rough tool draws as tier 1 plain.
+  if (typeof toolFor !== 'undefined') { const artTool = toolFor; toolFor = skill => {
+    const e = equippedTool(skill); if (!e.kind) return artTool(skill);   // the rod until the Coast adds it
+    const RR = { common: 0, uncommon: 1, rare: 1, epic: 2, legendary: 3 }, it = e.item;
+    return { k: e.kind, t: Math.max(1, e.tier), r: it ? (it.u || it.lr ? 3 : RR[it.r] || 0) : 0, name: toolName(skill) };
+  }; }
+  toolName = skill => {
+    const e = equippedTool(skill); if (!e.kind) return '';
+    if (!e.item) return `${TOOL_KINDS[e.kind].rough} (rough)`;
+    return (lvOf(e.kind) >= TOOL_TUNE.masteryMax ? 'Master ' : '') + itemName(e.item);
+  };
+  toolFind = skill => {
+    const kind = toolOf(skill); if (!kind || !TOOL_TUNE.on) return 0;
+    const line = Math.min(TOOL_TUNE.findCap, gear()[TOOL_KINDS[kind].find] || 0);
+    return Math.max(0, (line + bonus('find:' + skill)) / 100);
+  };
+
+  // ---------------- mastery ----------------
+  toolMastery = kind => {
+    const r = rec(kind), max = TOOL_TUNE.masteryMax, lv = Math.min(max, r[0]);
+    const n = lv >= max ? 0 : need(lv), secs = lv >= max ? 0 : Math.min(r[1], n);
+    return { lv, secs, need: n, max: lv >= max, pct: lv >= max ? 1 : secs / n, left: lv >= max ? 0 : n - secs };
+  };
+  const PERK_TXT = kind => ({
+    [TOOL_TUNE.findLv]: `Rare find +${TOOL_TUNE.findPts} point`,
+    [TOOL_TUNE.glintLv]: `The Glint lasts ${TOOL_TUNE.glintSecs} s longer`,
+    [TOOL_TUNE.yieldLv]: `+${Math.round(TOOL_TUNE.yieldPct * 100)}% yield`,
+    [TOOL_TUNE.masteryMax]: `Master: Hands gathering with a ${TOOL_KINDS[kind].n} get +${Math.round((TOOL_TUNE.handsMult - 1) * 100)}%`
+  });
+  toolPerks = kind => {
+    const lv = lvOf(kind), t = PERK_TXT(kind);
+    return Object.keys(t).map(Number).sort((a, b) => a - b).map(l => ({ lv: l, txt: t[l], on: lv >= l }));
+  };
+  toolMasteryAdd = (kind, secs, quiet = true) => {
+    if (!TOOL_KINDS[kind] || !(secs > 0)) return 0;
+    const r = rec(kind), max = TOOL_TUNE.masteryMax;
+    if (r[0] >= max) return 0;
+    r[1] += secs;
+    let up = 0;
+    while (r[0] < max && r[1] >= need(r[0])) { r[1] -= need(r[0]); r[0]++; up++; }
+    if (r[0] >= max) r[1] = 0;
+    if (up) {
+      const lv = r[0], perk = PERK_TXT(kind)[lv], n = TOOL_KINDS[kind].n;
+      if (!quiet) toast(lv >= max ? `${n} mastered! ${perk.replace(/^Master: /, '')}.` : `${n} mastery ${lv}.` + (perk ? ` ${perk}.` : ''), 'good', icOf(kind), perk ? 'normal' : 'low');
+      emit('toolMastery', { kind, lv, quiet });
+    }
+    return up;
+  };
+  // Live: every tick spent gathering (any node of the skill), full Storehouse or not.
+  let acc = 0;
+  onTick(dt => {
+    if (target() !== 'node') return;
+    const kind = toolOf(skillOf(S.node.kind)); if (!kind) return;
+    acc += dt;
+    if (acc >= 1) { toolMasteryAdd(kind, acc, false); acc = 0; }
+  });
+  toolHandsMult = skill => TOOL_TUNE.on && toolOf(skill) && lvOf(toolOf(skill)) >= TOOL_TUNE.masteryMax ? TOOL_TUNE.handsMult : 1;
+
+  // Perks as modifiers and bonuses (read by nodeTime, harvest, the Glint and toolFind).
+  for (const [skill, kind] of Object.entries(TOOL_OF_SKILL)) {
+    addModifier('gatherSpeed:' + skill, () => TOOL_TUNE.on ? 1 + TOOL_TUNE.spdPer * lvOf(kind) : 1);
+    addBonus('find:' + skill, () => TOOL_TUNE.on && lvOf(kind) >= TOOL_TUNE.findLv ? TOOL_TUNE.findPts : 0);
+    addBonus('glint:' + skill, () => TOOL_TUNE.on && lvOf(kind) >= TOOL_TUNE.glintLv ? TOOL_TUNE.glintSecs : 0);
+    for (const fam of famsOf(skill)) addModifier('yield:' + fam, () => TOOL_TUNE.on && lvOf(kind) >= TOOL_TUNE.yieldLv ? 1 + TOOL_TUNE.yieldPct : 1);
+  }
+
+  // ---------------- rare finds ----------------
+  on('harvest', ({ kind, t, n, away }) => {
+    if (!TOOL_TUNE.on || !CRAFT_NODES[kind] || !(n > 0) || !(t >= 1 && t <= 5)) return;
+    const ch = toolFind(skillOf(kind)); if (!(ch > 0)) return;
+    let finds = 0;
+    if (away) finds = roll(n * ch);
+    else for (let i = 0; i < n; i++) if (Math.random() < ch) finds++;
+    if (!finds) return;
+    const up = t < 5 ? t + 1 : 5, got = credit(kind, up, finds * (t < 5 ? 1 : TOOL_TUNE.top));
+    if (!got) return;   // H3: that pile is full
+    T().finds = (T().finds || 0) + got;
+    if (!away) addFloat(`Rare find! +${got} ${matName(kind, up)}`, MAT[kind].col[up - 1], true, 0.66, 0.22);
+    emit('rareFind', { kind, t: up, n: got, away: !!away });
+  });
+
+  // ---------------- away ----------------
+  let before = null, lineOn = false;
+  on('awayBegin', () => {
+    before = Object.fromEntries(Object.keys(TOOL_KINDS).map(k => [k, lvOf(k)]));
+    if (!lineOn && typeof registerAwayLine === 'function') { lineOn = true; registerAwayLine(awayLine); }
+  });
+  on('away', r => {
+    if (S.activity !== 'gather' || !(r.t > 0)) return;
+    toolMasteryAdd(toolOf(skillOf(S.node.kind)), r.t, true);
+  });
+  function awayLine() {
+    if (!before) return null;
+    const out = [];
+    for (const k of Object.keys(TOOL_KINDS)) {
+      const lv = lvOf(k), d = lv - (before[k] || lv);
+      if (d > 0) out.push({ icon: icOf(k), txt: `${TOOL_KINDS[k].n} mastery ${lv} (+${d})`, sub: lv >= TOOL_TUNE.masteryMax ? 'Mastered' : 'Tool mastery' });
+    }
+    before = null;
+    return out;
+  }
+
+  // ---------------- the sim's policy helper ----------------
+  // The best tier worth making now: the highest tier the Workbench allows (max of Woodcraft and
+  // Smithing) and the skill has a node open for. ok: it is better than the one held and affordable.
+  toolBest = skill => {
+    const kind = toolOf(skill); if (!kind) return null;
+    let t = 0;
+    for (let i = 1; i <= 5; i++) if (stationTierOpen(kind, i) && skillTierOpen(skill, i)) t = i;
+    const cur = equippedTool(skill).tier;
+    if (!t) return { kind, t: 0, cur, ok: false, why: 'Nothing to make yet.' };
+    if (cur >= t) return { kind, t, cur, ok: false, why: 'Your tool is already that tier.' };
+    const c = canCraft(kind, t);
+    return { kind, t, cur, ok: !!c.ok, why: c.why };
+  };
+  toolsReady = true;
 }
 
 // ---- src/js/55-welcome.js ----
@@ -10791,7 +11836,7 @@ const ROSTER = {
   tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', rarity: 'common', role: 'tank', circle: 'hedgefolk', idx: 0, route: { type: 'progress', zone: 8, kills: 0 }, how: 'Reach zone 8. He joins for free.' },
   wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', idx: 1, route: { type: 'progress', zone: 8, kills: 30 }, how: 'Reach zone 8, then pay her in gold.' },
   hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', idx: -1, route: { type: 'progress', zone: 11, kills: 0 }, how: 'Reach zone 11. He joins for free.' },
-  pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', idx: 2, route: { type: 'progress', zone: 12, kills: 60 }, how: 'Reach zone 12, then pay him in gold.' },
+  pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', idx: 2, route: { type: 'progress', zone: 12, kills: 60 }, how: 'Reach zone 12, then pay her in gold.' },
   bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Oak Logs to his camp.' },
   maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
   aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
@@ -12535,7 +13580,7 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
 // Costs are paid when a build is started or queued; a queued build starts the moment the
 // one ahead of it finishes (offline too). Cancel refunds 100% before a build starts, 50% after.
 // Stations (Forge, Workbench, Loom, Enchanter's Table) and the Tavern start at Lv 1 for every
-// save; their levels add perks only. Only play shortens builds (mod('buildTime'): the Builder's
+// save except a new game's cold Hearth (55-hearth, H1: it builds them on plots); their levels add perks only. Only play shortens builds (mod('buildTime'): the Builder's
 // Moon Omen, the Hearth Blessing, a Codex Seal later). Nothing is for sale.
 //
 // Exposed names:
@@ -12659,6 +13704,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
   // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
   if (typeof welcomeApply === 'function') welcomeApply();
+  // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
+  if (typeof hearthApply === 'function') hearthApply();
   if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
   const C = () => S.camp;
   const T = CAMP_TUNE;
@@ -12670,7 +13717,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   campOpen = () => !!C().open;
   campBuilders = () => 1 + (lv('hearth') >= 5 ? 1 : 0) + Math.max(0, Math.floor(bonus('builders')));
   campMaxLevel = id => B(id) ? B(id).max : 0;
-  const shown = id => { const d = B(id); return !!d && (!d.needs || !!d.needs()); };
+  // H1: a cold save lists a building once its plot opens (hearthPlotOpen; warm saves: always).
+  const shown = id => { const d = B(id); return !!d && (!d.needs || !!d.needs()) && (typeof hearthPlotOpen !== 'function' || hearthPlotOpen(id)); };
   campList = () => CAMP_IDS.filter(shown);
 
   // ---------------- gates ----------------
@@ -12703,6 +13751,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       c.secs = h.secs;
       return c;
     }
+    // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
+    const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
+    if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
     if (d.cost) return d.cost(to, campGold);
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
@@ -12754,7 +13805,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 
   campCan = id => {
     const d = B(id); if (!d) return { ok: false, why: 'Unknown building.' };
-    if (!campOpen()) return { ok: false, why: `Reach zone ${T.openZone} to make camp.` };
+    if (!campOpen()) return { ok: false, why: S.hearth && S.hearth.cold ? 'Light the fire first.' : `Reach zone ${T.openZone} to make camp.` };
     if (!shown(id)) return { ok: false, why: 'Not open yet.' };
     const to = lv(id) + 1;
     if (to > d.max) return { ok: false, why: 'Fully built.', to, max: true };
@@ -12831,7 +13882,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   let firstCheck = true, acc = 1;
   onTick(dt => {
     acc += dt; if (acc < 1) return; acc = 0;
-    if (!C().open && S.maxZone >= T.openZone) openCamp(firstCheck);
+    if (!C().open && S.maxZone >= T.openZone && !(S.hearth && S.hearth.cold)) openCamp(firstCheck);   // H1: a cold save opens it by lighting the fire
     firstCheck = false;
     if (builds().length) campCatchUp(now());
   });
@@ -13481,7 +14532,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
   };
   expedCollect = i => {
     const s = X().slots[i]; if (!s || s.end > now()) return null;
-    if (!stashFits(haulLines(s))) { toast(`Back. Storehouse full: collect when you have room. ${stashNeed(haulLines(s))}`, 'raid', null, 'normal'); return null; }
+    if (!stashFits(haulLines(s))) { toast(`The team is back. ${stashNeed(haulLines(s))}`, 'raid', null, 'normal'); return null; }
     const rec = finishRun(s, {});
     X().slots.splice(i, 1);
     toast(`${RT(s.r).n}: the team is back (${rec.grade}).`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');
@@ -13651,12 +14702,12 @@ const CODEX_MILESTONES = [
   { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
   { at: 400, rw: [{ id: 'queue1', kind: 'qol', n: '+1 queued build', txt: 'Line up one more build per builder.', later: 'Saved: the camp builders take it once they read this bonus.' }] },
   { at: 450, rw: [{ id: 'c_motes', kind: 'cosmetic', n: 'Hero trail: Lantern Motes', later: 'Saved: arrives with hero cosmetics.' }] },
-  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: Keeper of the Codex', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
+  { at: 500, rw: [{ id: 't_keeper', kind: 'title', n: 'Title: the Chronicler', live: true }, { id: 'd_lectern', kind: 'cosmetic', n: 'Camp decoration: Codex Lectern', later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 600, rw: [{ id: 'forecast', kind: 'qol', n: 'Almanac forecast: 3 days ahead', later: 'Saved: the Almanac will show it in a later update.' }] },
   { at: 700, rw: [{ id: 'c_star', kind: 'cosmetic', n: 'Lantern colour: Starlight', later: 'Saved: arrives with hero cosmetics.' }] },
   { at: 800, rw: [{ id: 't_lightbringer', kind: 'title', n: 'Title: Lightbringer', live: true }, { id: 'd_flame', kind: 'cosmetic', n: "The Hearth's flame burns white-gold", later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 900, rw: [{ id: 'deepreroll', kind: 'qol', n: 'Deepwell: +1 reroll per run', later: 'Saved: works when the Deepwell opens.' }] },
-  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: Lanternfall', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
+  { at: 1000, rw: [{ id: 't_lanternfall', kind: 'title', n: 'Title: the Everlit', live: true }, { id: 'c_crown', kind: 'cosmetic', n: 'Hero cosmetic: the Lantern Crown', later: 'Saved: arrives with hero cosmetics.' }] },
   { at: 1100, rw: [{ id: 'd_lantern', kind: 'cosmetic', n: 'A replica Great Lantern above camp', later: 'Saved: shows once the camp scene shows decorations.' }] }
 ];
 
@@ -13693,7 +14744,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 
   // ---------------- 1. Bestiary: 7 types x (4 tiers x2, Elder x3, champion x2) ----------------
   page('bestiary', {
-    n: 'Bestiary', bless: 'blade', seal: { key: 'dmg', v: 0.02, txt: '+2% damage' }, title: 'Monster Scholar', pic: 'mob',
+    n: 'Bestiary', bless: 'blade', seal: { key: 'dmg', v: 0.02, txt: '+2% damage' }, title: 'Monsterwise', pic: 'mob',
     tiles: x => TYPES.map((t, i) => {
       const kills = (S.mastery && S.mastery.types[t.key]) || 0, tier = masteryApi.tierFor(kills);
       const elder = S.maxZone > i + 1 ? 1 : 0, champ = R().champ[t.key] ? 1 : 0;
@@ -13724,7 +14775,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 3. Uniques: 13 hero uniques (the 6 companion uniques became legendary powers: page 16) ----------------
   page('uniques', {
-    n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'Curator of Wonders', pic: 'item',
+    n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'the Curator', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
       const u = UNIQ[k], got = S.found[k] ? 1 : 0;
       return { key: k, n: u.name, got, max: 1, pts: got * 10, ptsMax: 10, item: { slot: u.slot, t: S.found[k] || 1, u: k },
@@ -13756,7 +14807,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 5. Companions: 18 recruited x5; ranks Veteran/Captain/Champion x1; 14 synergies x2 ----------------
   const live = () => typeof rosterLive === 'function' && rosterLive();
   page('companions', {
-    n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Friend to All', pic: 'char',
+    n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Kindheart', pic: 'char',
     tiles: x => {
       const on = live(), out = [];
       for (const id of ROSTER_KEYS) {
@@ -13808,7 +14859,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 8. Camp: every building level (Hearth 10, 8 buildings x5, Shrine 3) ----------------
   page('camp', {
-    n: 'Camp', bless: 'hearth', seal: { key: 'buildTime', v: 0.03, txt: 'Builds 3% faster' }, title: 'Master Builder', pic: 'rows',
+    n: 'Camp', bless: 'hearth', seal: { key: 'buildTime', v: 0.03, txt: 'Builds 3% faster' }, title: 'Masterbuilder', pic: 'rows',
     show: () => typeof CAMP_B === 'object',
     tiles: x => {
       const open = typeof campOpen === 'function' && campOpen();
@@ -13844,12 +14895,12 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 10. Deepwell (locked until the Deepwell exists) ----------------
   page('deepwell', {
-    n: 'Deepwell', bless: 'deep', seal: { key: null, bonus: 'deepOil', v: 5, txt: '+5s starting Oil (Deepwell only)' }, title: 'Well-read', pic: 'rows',
+    n: 'Deepwell', bless: 'deep', seal: { key: null, bonus: 'deepOil', v: 5, txt: '+5s starting Oil (Deepwell only)' }, title: 'Wellsage', pic: 'rows',
     show: () => !!S.deep, lockTxt: 'Opens with the Deepwell.', tiles: () => []
   });
   // ---------------- 11. Seals: Almanac Stamps (Trial Seals join with the Deepwell) ----------------
   page('seals', {
-    n: 'Seals', seal: { key: null, txt: '' }, title: 'The Faithful', pic: 'rows',
+    n: 'Seals', seal: { key: null, txt: '' }, title: 'the Faithful', pic: 'rows',
     show: () => !!S.almanac,
     tiles: x => {
       const n = Math.min(52, S.almanac.stamps | 0);
@@ -13860,7 +14911,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 12. Omens: Omens seen; Dares taken ----------------
   const omenOk = o => o.needs !== 'Deepwell' || (typeof deepUnlocked === 'function' ? deepUnlocked() : !!S.deep);
   page('omens', {
-    n: 'Omens', seal: { key: null, txt: '' }, title: 'Omen-reader', pic: 'rows',
+    n: 'Omens', seal: { key: null, txt: '' }, title: 'Omenreader', pic: 'rows',
     show: () => !!S.almanac && Array.isArray(OMENS),
     tiles: x => {
       const out = [];
@@ -13879,7 +14930,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 13. Achievements x2 ----------------
   page('achievements', {
-    n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'Accomplished', pic: 'rows',
+    n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'the Accomplished', pic: 'rows',
     show: () => typeof ACH_API === 'object',
     tiles: x => ACH_API.list.map(a => {
       const got = S.achievements.got[a.id] ? 1 : 0;
@@ -13888,7 +14939,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 14. Wardrobe (locked until the Deepwell shop exists) ----------------
   page('wardrobe', {
-    n: 'Wardrobe', seal: { key: null, txt: '' }, title: 'Well Dressed', pic: 'rows',
+    n: 'Wardrobe', seal: { key: null, txt: '' }, title: 'the Dapper', pic: 'rows',
     show: () => !!(S.deep && S.deep.cos), lockTxt: 'Opens with the Deepwell shop.', tiles: () => []
   });
 
@@ -14190,7 +15241,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 //         owned() -> [card], setProgress() -> [{ id, n, have, on }], trialRule(week?), trialInfo(),
 //         shop(cat) -> [row], nextLore() -> row | null
 //   act   start(trial) -> bool, resume() -> bool, pick(id), reroll(), banish(id), skip(),
-//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id)
+//         landing(choice), climbOut(), abandon(), buy(id) -> bool, setFav(id), equip(slot, id),
+//         fall() (a party wipe ends the run; 59c-deepwell-combat.js calls it)
+// Party combat rules below (packs, HP carried, wipes, Elder telegraphs, the [C] boons, the Guard and
+//   Mend sets, the Deep Edge Lore) live in 59c-deepwell-combat.js.
 // Events: deepStart { trial }, deepFloorStart { floor, kind }, deepKill { mob, floor },
 //   deepFloor { floor, kind, trial, refund } (the Almanac counts it), deepOffer { kind },
 //   deepPick { id, rank }, deepOil { oil } (Oil ran low: under 15s, once a floor),
@@ -14318,7 +15372,7 @@ const DEEP_SHOP = {};
   for (const [id, n, c] of dec) S_(id, 'look', n, c, () => 'Camp decoration', { kind: 'decor' });
   const tr = [['t_motes', 'Mote trail', '#9BE3F0'], ['t_embers', 'Ember trail', '#FF9E3D'], ['t_frost', 'Frost trail', '#DFF6FF']];
   for (const [id, n, col] of tr) S_(id, 'look', n, 600, () => 'A trail behind your hero on the stage', { kind: 'trail', col });
-  const ti = [['dt_walker', 'Well-walker', 100], ['dt_sipper', 'Oil-sipper', 150], ['dt_diver', 'Deep Diver', 250], ['dt_lightless', 'Lightless', 400], ['dt_keeper', 'Keeper of the Well', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
+  const ti = [['dt_walker', 'Wellwalker', 100], ['dt_sipper', 'Oilsipper', 150], ['dt_diver', 'Deepdiver', 250], ['dt_lightless', 'the Lightless', 400], ['dt_keeper', 'Wellwarden', 500], ['dt_bottom', 'the Bottomless', 800, 50]];
   for (const [id, n, c, floor] of ti) S_(id, 'title', n, c, () => 'A title for your hero (pick it in the Codex)', { floor: floor || 0 });
   S_('pages', 'page', 'Deep Lore page', 100, k => `Page ${k} of 10`, { max: 10 });
 }
@@ -14418,6 +15472,7 @@ let DEEP_ARENA = null;
     if (r.boons.glass) x -= 4;
     if (kind === 'boss') x += DEEP_BOONS.sconce.v * rank('sconce');
     if (r.boons.relight && r.ft < DEEP_BOONS.relight.v) x *= 2;
+    x += bonus('deepRefund');   // 59c-deepwell-combat: +5s with party combat
     if (ruleOf(r) === 'drought') x *= 0.5;
     return Math.max(0, x);
   }
@@ -14508,7 +15563,7 @@ let DEEP_ARENA = null;
     for (const s of now) if (!was.includes(s) && !quiet) toast(`Set bonus: ${DEEP_SETS[s].fx}.`, 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
     emit('deepPick', { id, rank: r.boons[id] });
   }
-  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => !DEEP_SETS[s].c && setOn(s));
+  const setsOnList = () => Object.keys(DEEP_SETS).filter(s => (!DEEP_SETS[s].c || deepStageC()) && setOn(s));
 
   // After a draft or a Landing: the queued extra draft, or the next floor.
   function next() {
@@ -14669,7 +15724,7 @@ let DEEP_ARENA = null;
     const mul = (ruleOf(r) === 'steep' ? 1.5 : 1) * mod('deepMarks');
     return Math.round((r.marks + pb) * mul) + r.bonus;
   }
-  // reason: oil | leave | abandon | closed
+  // reason: oil | wipe (59c-deepwell-combat: the party fell) | leave | abandon | closed
   function end(reason) {
     const r = R(); if (!r) return null;
     const d = D(), oldBest = r.trial ? d.trial.best : d.best;
@@ -15014,6 +16069,7 @@ let DEEP_ARENA = null;
     floorKind: (f, r) => floorKind(f, r), oilMax: r => oilMax(r), oil: () => { const r = R(); return r ? r.oil : 0; }, drainRate, refundFor: k => refundFor(k), marksNow,
     offerView, card, owned, setProgress, trialRule, trialInfo, shop, shopRow, nextLore, favChoices,
     start, resume, pick, reroll, banish, skip, landing, climbOut, abandon, buy, setFav, equip,
+    fall: () => deepActive() && R().phase === 'fight' ? end('wipe') : null,   // the party wiped (59c-deepwell-combat)
     foeHp: (f, mul) => R() ? foeHp(R(), f, mul || 1) : 0, floorFoes: f => R() ? floorFoes(R(), f) : [],
     _init: () => { initFor = null; ensureInit(); }
   };
@@ -15601,7 +16657,8 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 //   state   partyCombatOn(), combatUnits() -> the 4 party unit records (read only),
 //           combatFoes() -> the live foe list (read only; `mob` is the one the stage shows)
 //   loop    combatTick(dt), cbSpawn(boss) (50-sim spawn), cbStrike(amount, src, at, label, color, big)
-//           (50-sim strike), cbHeroUp(), cbPush() (auto-push check)
+//           (50-sim strike), cbHeroUp(), cbPush() (auto-push check), cbArena(mob) (a Deepwell pack),
+//           cbRestore(clear) (the party whole, the arena pack set aside: 59c-deepwell-combat.js)
 //   hooks   cbUnitHp(key), cbUnitCd(key) (55-party unitHp / unitCd read them)
 //   helpers cbHitUnit(u, amount, kind, foe), cbHealUnit(u, amount, from), cbShield(u, amount, cap),
 //           cbDamageFoe(f, amount, src, kind), cbUnitByKey(key), cbTaunt(u, foes, secs),
@@ -15641,7 +16698,7 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 // var: other files (56-roster at load, 55-party) may ask before this file has run.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbUnitCd, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
-  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady;
+  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady, cbRestore;
 
 {
   const T = {
@@ -15929,20 +16986,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emitPack();
     return mob;
   };
-  // Deepwell arena: its single foe becomes a pack of one (Oil stays the run's health).
+  // Deepwell arena: its foe becomes a pack (m.pack: the floor's foes, 59c-deepwell-combat.js; else a pack of one).
   cbArena = m => { if (m && !m.th) adoptArena(m); };
   function adoptArena(m) {
+    const list = Array.isArray(m.pack) && m.pack.length ? m.pack.slice(0, FOE_MAX) : [m];
+    if (!list.includes(m)) list.unshift(m);
+    for (const x of list) adoptFoe(x);
+    foes = list; sortFoes(); lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
+    refreshUnits(false);
+    if (m.boss) bossStart(m);
+    openThreat();
+    showFoe();
+    emitPack();
+  }
+  function adoptFoe(m) {
     const t = TYPES.findIndex(x => x.key === m.type), b = FOE_BEH[m.type] || FOE_BEH.slime;
     const base = m.max / (m.boss ? 8 : m.champ ? 3 : 1);
     Object.assign(m, { ti: Math.max(0, t), row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: T.atk * base * (m.boss ? T.bossAtk : b.atk),
       spd: m.boss ? T.bossSpd : T.spd * b.spd, swing: 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, stunT: 0, slowT: 0, slowV: 0, knockT: 0,
       burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: m.champ ? 2 : 1, elite: !!m.champ, bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, split: false, chanT: 0, hits: 0, again: false, first: 0,
       z: S.zone, adds: false, gone: false });
-    foes = [m]; lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
-    refreshUnits(false);
-    if (m.boss) bossStart(m);
-    openThreat();
-    emitPack();
   }
   const PACK_EV = { foes: null };
   function emitPack() { PACK_EV.foes = foes; emit('packSpawn', PACK_EV); }
@@ -16423,7 +17486,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (u.ashenT > 0) u.hp = 1;
       else if (u.id === 'tobin' && u.lv >= 10 && !u.stubborn) { u.stubborn = true; u.hp = 1; }
       else if (u.id === 'caedmon' && !u.vow) { u.vow = true; u.hp = 1; u.ashenT = T.vowT; cbTaunt(u, foes, T.vowT); }
-      else if (boon('life') && !u.lifeline) { u.lifeline = true; u.hp = 1; }
+      else if (boon('life') && !u.lifeline && (typeof dcLifeline !== 'function' || dcLifeline(u))) { u.lifeline = true; u.hp = 1; }
       else knockOut(u);
     } else if (u.hp < u.maxHp * T.interceptAt) {
       const al = upHas('aldric');
@@ -16475,7 +17538,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone;
     WIPE_EV.zone = z; WIPE_EV.boss = !!fightBoss; WIPE_EV.arena = !!inArena;
     wipeT = T.wipeT; wipeBoss = !!fightBoss;
-    if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); toast('Your party fell. They stand up again in a moment.', 'raid', null, 'normal'); return; }
+    if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
       toast('Your party fell to the zone boss. Grow stronger and try again.', 'raid');
@@ -16498,6 +17561,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) return;
     spawn();
   }
+  // The party whole again (59c-deepwell-combat: a Deepwell run starts or ends). clear: the arena's foes
+  // are set aside too (a wipe ends the run with the pack still standing).
+  cbRestore = clear => {
+    wipeT = 0;
+    if (clear) { for (const f of foes) { if (typeof onFoeDown === 'function') onFoeDown(f); f.gone = true; f.hp = 0; f.dead = f.dead || 0.001; } foes = []; lead = null; inArena = false; }
+    for (let i = 0; i < nU; i++) { const u = U[i], was = u.down; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.lifeline = false; if (was) { UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); } }
+  };
   let backZone = 0, backAt = 0, backWipes = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
@@ -16995,6 +18065,171 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   };
 }
 
+// ---- src/js/59c-deepwell-combat.js ----
+// 59c-deepwell-combat: the Deepwell on party combat (plan-2 W6, plan-3 W6b; deepwell.md 8.2).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// With party combat on (partyCombatOn()), a Deepwell run changes like this:
+//  - Packs: each fight floor is one pack, all of its foes at once (normal: 3 foes, elite: the elite
+//    and a normal foe, boss: the Deep Elder, which keeps its Elder telegraphs and adds from 59b).
+//    Floor HP, First Strike and the cold palette come from 57d's own spawn, one foe at a time.
+//  - Party HP carries from floor to floor. Clearing a pack stands the fallen up and heals as in the
+//    main game (COMBAT_TUNE.revive, packHealF); a cleared floor heals floorHeal more, a Quiet Landing
+//    landingHeal. A saved run resumes a floor with the HP it began with (run.hpAt), like its Oil.
+//  - A wipe (every fielded member down) ends the run: reason 'wipe', the floors cleared count and pay.
+//  - Oil stays: refunds are refund seconds higher, and a parried Elder wind-up gives parryOil back.
+//  - The [C] boons: Thorn Plate, Iron Wall, Deep Ward, Mending Light, Wildfire, Duelist and Quick
+//    Parry are wired in 59-combat.js / 59b-enemies.js; here: Taunt Drill for a hero who is not a
+//    Warden (the front tank taunts), and Lifeline's once-a-floor limit (dcLifeline). The Guard set
+//    (tanks take 25% less) and the Mend set (healing +30%) are read in 59-combat.js.
+//  - Deep Edge (D8): a Deep Lore upgrade, damage while below, off in the Trial.
+// Everything reads "the fielded party" from combatUnits() (u.live): no fixed party size.
+//
+// Exposed: DEEP_COMBAT_TUNE (knobs), deepCombatOn(), dcLifeline(u) (59-combat), DWC { hpAt(), tune }.
+// Save: registerState('deepCombat', { tip: 0 }) (the one-time tip); run.hpAt (inside S.deep.run:
+//   unit key -> HP fraction when the floor began; missing = full).
+
+const DEEP_COMBAT_TUNE = {
+  atk: 1,             // foe attack below, x the 59-combat arena attack (COMBAT_TUNE.atk x the foe's floor HP)
+  floorHeal: 0.1,     // a cleared floor heals this share of max HP, on top of the pack heal (packHealF 0.15): 25% in all
+  landingHeal: 0.6,   // a Quiet Landing heals this share of max HP
+  refund: 5,          // Oil refunds this many seconds higher (HP is run health too now)
+  parryOil: 2,        // Oil back for each parried (or Shield Wall-blocked) Elder wind-up
+  tauntT: 2,          // Taunt Drill: seconds a class tap makes the front tank taunt (a Warden hero: 59-combat)
+  lifeSaves: 1,       // Lifeline: saves a floor, for the whole party
+  edge: 0.2,          // Deep Edge (D8): damage below per rank. Full Deep Lore vs none: about +20% depth (D8 band 15-25%)
+  edgeCost: [150, 400, 800, 1400]   // 2,750 Marks: Deep Lore 7,320 -> 10,070
+};
+
+let deepCombatOn, dcLifeline, DWC;
+
+{
+  const T = DEEP_COMBAT_TUNE;
+  registerState('deepCombat', { tip: 0 });
+  const R = () => (typeof DW === 'object' && DW ? DW.run() : null);
+  deepCombatOn = () => typeof deepActive === 'function' && deepActive() && partyCombatOn();
+  const units = () => (typeof combatUnits === 'function' ? combatUnits() : []);
+  const foes0 = () => { const f = typeof combatFoes === 'function' ? combatFoes() : null; return f && f.length ? f[0] : null; };
+
+  // ---------------- packs: the whole floor at once ----------------
+  const baseSpawn = DEEP_ARENA.spawn, baseKill = DEEP_ARENA.onKill;
+  DEEP_ARENA.spawn = function () {
+    if (!partyCombatOn()) return baseSpawn.call(this);
+    const r = R();
+    if (!r || r.phase !== 'fight') return null;
+    if (mob && mob.deep && !mob.dead && mob.run === r.id) return mob;
+    const n = DW.floorFoes(r.floor).length;
+    if (!n) return null;
+    const pack = [];
+    for (let i = 0; i < n; i++) { r.foeI = i; const m = baseSpawn.call(this); if (m) pack.push(m); }
+    r.foeI = 0;
+    if (!pack.length) return null;
+    const lead = pack.find(m => m.boss) || pack[0];
+    lead.pack = pack;
+    return lead;
+  };
+  // One pack is the floor: its clear is the floor's last kill.
+  DEEP_ARENA.onKill = function (m, over) {
+    const r = R();
+    if (partyCombatOn() && r && m && m.deep) r.foeI = Math.max(r.foeI, DW.floorFoes(r.floor).length - 1);
+    return baseKill.call(this, m, over);
+  };
+
+  // ---------------- HP carried between floors ----------------
+  let lifeLeft = T.lifeSaves, packFor = '';
+  dcLifeline = () => { if (!deepCombatOn() || lifeLeft <= 0) return false; lifeLeft--; return true; };
+  function snapshot(r) {
+    const o = {};
+    for (const u of units()) if (u.live) o[u.key] = u.down ? 0 : Math.round(1e4 * u.hp / Math.max(1e-9, u.maxHp)) / 1e4;
+    r.hpAt = o;
+  }
+  function healAll(frac) {
+    for (const u of units()) {
+      if (!u.live) continue;
+      if (u.down) { u.down = false; u.hp = 0; }
+      if (typeof cbHealUnit === 'function') cbHealUnit(u, u.maxHp * frac, null);
+      else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * frac);
+    }
+  }
+  // A new deep pack: its attack, and the party's HP from when the floor began (the same state in a
+  // normal descent; after a reload, the HP the floor was saved with).
+  on('packSpawn', p => {
+    const list = p.foes, lead = list && list[0];
+    if (!lead || !lead.deep) return;
+    for (const f of list) if (f.deep && !f.dcA) { f.dcA = 1; f.atk *= T.atk; }
+    const r = R(); if (!r) return;
+    const k = r.id + ':' + r.floor;
+    if (packFor === k) return;
+    packFor = k; lifeLeft = T.lifeSaves;
+    const at = r.hpAt || {};
+    for (const u of units()) {
+      if (!u.live) continue;
+      const f = typeof at[u.key] === 'number' ? Math.max(0.05, Math.min(1, at[u.key])) : 1;
+      u.down = false; u.hp = u.maxHp * f;
+    }
+  });
+  on('deepFloor', ({ kind }) => {
+    if (!deepCombatOn()) return;
+    const r = R(); if (!r) return;
+    healAll(kind === 'landing' ? T.landingHeal : T.floorHeal);
+    snapshot(r);
+  });
+  on('deepFloorStart', () => {
+    lifeLeft = T.lifeSaves;
+    if (!partyCombatOn() || S.deepCombat.tip) return;
+    S.deepCombat.tip = 1;
+    toast("Your party's health carries from floor to floor. Each floor you clear heals a little. If everyone falls, the run ends.", 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
+  });
+  // Going below or coming back up (57d emits sceneReset in both): the party is whole, and the pack
+  // of the world just left is set aside (no zone foe under the arena, no well foe in the zone).
+  let below = false;
+  on('sceneReset', () => {
+    const now = typeof deepActive === 'function' && deepActive();
+    if (now === below) return;
+    below = now;
+    if (!partyCombatOn() || typeof cbRestore !== 'function') return;
+    const f = foes0();
+    cbRestore(!!f && (now ? !f.deep : !!f.deep));
+  });
+
+  // ---------------- a wipe ends the run ----------------
+  let fell = false;
+  on('wipe', p => { if (p.arena && deepCombatOn()) fell = true; });
+  onTick(() => {
+    if (!fell) return;
+    fell = false;
+    if (deepCombatOn()) DW.fall();
+  });
+
+  // ---------------- Oil: parries ----------------
+  on('telegraphResolve', p => {
+    if (p.result !== 'parry' || !deepCombatOn()) return;
+    const r = R(), f = foes0();
+    if (!r || r.phase !== 'fight' || !f || !f.deep) return;
+    r.oil = Math.min(DW.oilMax(), r.oil + T.parryOil);
+  });
+  addBonus('deepRefund', () => partyCombatOn() && R() ? T.refund : 0);
+
+  // ---------------- Taunt Drill for every class ----------------
+  on('classTap', p => {
+    if (!deepCombatOn() || p.kind === 'parry' || p.cls === 'warden') return;
+    const r = R(); if (!r || !r.boons.taunt || !mob || mob.dead || !mob.deep) return;
+    let tank = null;
+    for (const u of units()) if (u.live && !u.down && u.role === 'tank' && (!tank || u.col > tank.col)) tank = u;
+    if (tank && typeof cbTaunt === 'function') cbTaunt(tank, [mob], T.tauntT * (p.auto ? 0.5 : 1));
+  });
+
+  // ---------------- D8: Deep Edge, a below-only damage Lore ----------------
+  DEEP_SHOP.edge = { id: 'edge', cat: 'lore', n: 'Deep Edge', cost: T.edgeCost, fx: k => `+${Math.round(100 * T.edge * k)}% damage while below` };
+  addModifier('dmg', () => {
+    if (typeof deepActive !== 'function' || !deepActive()) return 1;
+    const r = R(), k = r && !r.trial ? S.deep.lore.edge || 0 : 0;
+    return 1 + T.edge * k;
+  });
+
+  DWC = { hpAt: () => { const r = R(); return r ? r.hpAt || null : null; }, tune: T };
+}
+
 // ---- src/js/60-gfx.js ----
 // 60-gfx: browser-only helpers shared by render and UI: DOM shortcuts, reduced-motion
 // flag, canvas sprite rendering, icon data URLs.
@@ -17072,6 +18307,7 @@ function iconOf(spec) {
 // Character specs (plain JSON, hashable):
 //   hero:      { cls, skin: 0-2 | '#hex', hair: 0-3 | '#hex', gear: { weapon|off|head|body|charm: { t: 1-5, r: 0-3, glow?: '#hex' } } }
 //   companion: { comp: key, t?: 1-5, r?: 0-3 }   (t / r override the role weapon's tier and rarity)
+//   gathering: a hero spec with tool: { k: 'pick'|'axe'|'sickle'|'rod', t, r } (TOOL_ART.gatherSpec, 11c)
 
 const ART = (() => {
   const PX = 2;
@@ -17255,9 +18491,11 @@ const ART = (() => {
       const w = gearMats(wp, spec.t || wp.t, spec.r != null ? spec.r : wp.r, wp.glow);
       return { def, kind: 'comp', w };
     }
-    const def = CLASSES[spec.cls] || CLASSES.warden;
+    // a gathering tool in hand (spec.tool, 11c-art-tools.js): the class outfit without weapon or off-hand
+    const tool = spec.tool && typeof TOOL_ART !== 'undefined' ? spec.tool : null;
+    const def = tool ? TOOL_ART.gatherDef(CLASSES[spec.cls] || CLASSES.warden, tool) : CLASSES[spec.cls] || CLASSES.warden;
     const gs = spec.gear || {}, g = {};
-    for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = gs[s]; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
+    for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = !tool || (s !== 'weapon' && s !== 'off') ? gs[s] : null; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
     const look = { skin: m(colOf(spec.skin == null ? 0 : spec.skin, SKINS), 'skin'), hair: m(colOf(spec.hair == null ? 0 : spec.hair, HAIRS), 'hair') };
     return { def, kind: 'hero', g, look };
   }
@@ -17833,13 +19071,17 @@ const ANIM = (() => {
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
+// Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
+// pass) or 'light' (additive lights). v = { cam, SW, SH, GY, T, tg, nodeR } (reused; nodeR: the gather node's right
+// edge, camera-free). 63d-scenery-camp: the cold Hearth.
+let stageDeco = null;
 let resize, animate, draw, stageStats, warmScene;
 {
   const A = ANIM;
   // ================= visual state (driven by core events) =================
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
-  let guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
@@ -18032,12 +19274,25 @@ let resize, animate, draw, stageStats, warmScene;
   const hero = mkActor('hero');
   let comps = [], order = [], ghosts = [], front = hero, lastField = null, lastCells = null, heroKey = '', checkT = 0, layoutDirty = true;
 
+  // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
+  // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
+  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
   function refreshHero(force) {
-    const spec = heroSpec(), k = JSON.stringify(spec);
+    const tool = gatherTool(), spec = tool ? TOOL_ART.gatherSpec(heroSpec(), tool) : heroSpec(), k = JSON.stringify(spec);
     if (!force && k === heroKey && hero.fr) return;
     heroKey = k; hero.fr = charFrames(spec);
     const hk = HERO_KIND[spec.cls] || HERO_KIND.warden;
     hero.kind = hk[0]; hero.pcol = hk[1] || '#fff'; hero.role = HERO_ROLE[spec.cls] || 'tank';
+  }
+  // While the Gather menu is open, bake each tool's first frame in idle time (background), so picking
+  // a node shows the hero with its tool at once; the other frames follow through queueRest.
+  let toolsWarm = '';
+  function warmTools() {
+    if (S.tab !== 'gat' || target() === 'node' || typeof toolFor !== 'function' || typeof idleTask !== 'function') return;
+    const base = heroSpec(), specs = ['mine', 'wood', 'forage'].map(toolFor).filter(Boolean).map(t => TOOL_ART.gatherSpec(base, t)), k = JSON.stringify(specs);
+    if (k === toolsWarm) return;
+    toolsWarm = k;
+    for (const sp of specs) idleTask(() => { const set = charFrames(sp, true); if (set) idleTask(() => void set.strike); });   // strike: where the hero stands
   }
   function refreshParty() {
     const p = S.party || {};
@@ -18054,7 +19309,7 @@ let resize, animate, draw, stageStats, warmScene;
   function layout() {
     layoutDirty = false;
     const cells = (S.party && S.party.cells) || {}, used = {};
-    order = [hero].concat(comps);
+    order = target() === 'node' ? [hero] : [hero].concat(comps);
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
@@ -18359,7 +19614,16 @@ let resize, animate, draw, stageStats, warmScene;
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
 
   // ================= attacks =================
-  const heroHome = () => target() === 'node' ? foe.left - 4 - (hero.fr ? hero.fr.idle0.c.width - hero.fr.idle0.ox : 14) : hero.hx;
+  // Gathering (G1): the hero stands so the tool's swing lands on the node: the strike frame's front edge
+  // reaches NODE_HIT of the way into the node's box (a tree: its trunk). Until that frame is baked, the
+  // idle frame's front edge stops short of the node, as before.
+  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
+  const heroHome = () => {
+    if (target() !== 'node') return hero.hx;
+    const f = hero.fr; if (!f) return foe.left - 18;
+    if (!ART.ready(f, 'strike')) return foe.left - 4 - (f.idle0.c.width - f.idle0.ox);
+    return Math.max(16, Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15)) - (rightEdge(f.strike) - f.strike.ox));
+  };
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
   // front-most foe: melee reaches the enemy Front) and back; arc: a leap with a 16 px apex (Kestrel).
   // Reduced motion: the dash is an instant swap with a one-frame flash.
@@ -18570,11 +19834,12 @@ let resize, animate, draw, stageStats, warmScene;
     A.clear(); solo.key = ''; packList = null; wallT = hymnT = volleyT = 0;
     for (const a of order) { a.go = 0; a.goT = 0; a.mv = 0; a.kb = 0; a.castTo = null; }
     for (const n of nums) n.on = false;
+    if (hero.fr) refreshHero(false);   // a new gather node may need another tool
   });
   on('gear', () => refreshHero(true));
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
-  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; });
+  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; if (hero.fr) refreshHero(false); });
 
   on('classTap', p => {
     attack(hero);
@@ -18707,7 +19972,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); warmTools(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
     // 70-ui keeps writing tWrap.hidden underneath)
     const dOn = deepOn();
@@ -18746,6 +20011,8 @@ let resize, animate, draw, stageStats, warmScene;
       buffPoll = 0.2; guardN = 0; blessN = 0; let mk = 0, hs = 0;
       for (const b of partyBuffs() || []) { if (b.id === 'guard') guardN = b.stacks; else if (b.id === 'bless') blessN = b.stacks; else if (b.id === 'mark') mk = b.left; else if (b.id === 'wall') wallT = Math.max(wallT, b.left); else if (b.id === 'hymn') hymnT = Math.max(hymnT, b.left); else if (b.id === 'haste') hs = b.left; }
       markLeft = mk; hasteLeft = hs;
+      const wr = typeof wellRested === 'function' ? wellRested() : null;
+      restF = wr && wr.on ? Math.min(1, wr.left / wr.max) : 0;
     }
     if (mob && !mob.dead && target() === 'mob') lastEmbers = mob.embers | 0;
     if (volleyT > 0) {
@@ -18954,6 +20221,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
 
   let drawMs = 0;
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0 };
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -18968,6 +20236,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? foe.left + foe.w : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -19013,6 +20282,7 @@ let resize, animate, draw, stageStats, warmScene;
     for (const a of order) if (a.slash > 0) drawSlash(a, cam);
     ctx.globalCompositeOperation = 'lighter';
     keyLight();
+    if (stageDeco) stageDeco(ctx, 'light', dv);
     for (const a of order) lightsOf(a);
     if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';
@@ -19212,9 +20482,10 @@ let resize, animate, draw, stageStats, warmScene;
     haste: ['L.L..', '.L.L.', '..L.L', '.L.L.', 'L.L..'],
     mark: ['LL.LL', 'L...L', '..l..', 'L...L', 'LL.LL'],
     ember: ['..o..', '.oy..', '.oyo.', 'oywyo', '.oyo.'],
-    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..']
+    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..'],
+    rest: ['.bbb.', 'bb..w', 'b....', 'bb...', '.bbb.']   // Well Rested (55-rested.js): a crescent moon
   };
-  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A' };
+  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A', rest: '#DCE8FF' };
   const icons = {};
   function icon(id) {
     let c = icons[id];
@@ -19408,7 +20679,7 @@ let resize, animate, draw, stageStats, warmScene;
     }
     const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
-    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0;
+    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0 || restF > 0;
     const showT = fight && targetsOn() && partyCombatOn();
     if (showT) drawThreatLines(X, Y, cam);
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
@@ -19426,6 +20697,7 @@ let resize, animate, draw, stageStats, warmScene;
         if (wallT > 0) pushChip('wall', 0, Math.min(1, wallT / 6));
         if (hymnT > 0) pushChip('hymn', 0, Math.min(1, hymnT / 8));
         if (hasteLeft > 0) pushChip('haste', 0, Math.min(1, hasteLeft / 10));
+        if (restF > 0) pushChip('rest', 0, restF);
         chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
       }
       // a foe just left a tank for this member: an eye by its bar
@@ -20873,6 +22145,163 @@ function sceneFor() { return null; } // replaced below
   };
 }
 
+// ---- src/js/63d-scenery-camp.js ----
+// 63d-scenery-camp: the cold Hearth on the stage (task H1, hearth-and-hands.md 1.2). Browser-only.
+// A new game (55-hearth: hearthCold()) opens in the grove by the fire: a ring of stones and a dead
+// fire, Old Hesketh with his lamp out, and the oak the hero chops (the gather node). It is night in
+// the scene until the fire is lit. Stakes mark the station plots that are open; a built station
+// shows as a small piece of camp beside the fire. Drawn through 62-stage's stageDeco hook while a
+// cold save gathers wood; warm saves never see it.
+//
+// The fire is a button (#hearthFire) over the stage while it can be lit: a tap lights it (the
+// guide's "Tap the fire to light it." points here). Taps on it never reach the stage (no chop).
+// Reduced motion: no flicker, no smoke drift, Hesketh stands still.
+//
+// N2 (the camp scene) may share paintFire below with its own panorama.
+{
+  const P = 2;   // CSS px per art px (as the scenery and the sprites)
+  const COL = {
+    st: '#8C8494', stM: '#6B6275', stD: '#3A3444', log: '#7A5434', logD: '#4A3220', ash: '#2A2230',
+    f1: '#E0524F', f2: '#FF9E3D', f3: '#FFD27A', f4: '#FFF3C4', smoke: 'rgba(170,160,190,',
+    post: '#8C6A43', postD: '#4A3220', tag: '#EFE6D6', ink: '#0B0810', iron: '#5A5A66', ironD: '#34303C'
+  };
+  const box = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w * P, h * P); };
+  const cold = () => typeof hearthCold === 'function' && hearthCold();
+  const lit = () => typeof hearthLit === 'function' && hearthLit();
+  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood';
+  const showing = tg => cold() && atGrove(tg);
+
+  // ---- the fire: base centre (x, y = the ground line) ----
+  function paintFire(g, x, y, on, t) {
+    const X = a => x + a * P, Y = a => y + a * P;
+    // back stones, logs, front stones
+    for (const [a, c] of [[-6, COL.stM], [-2, COL.stD], [2, COL.stM]]) box(g, X(a), Y(-5), 3, 2, c);
+    box(g, X(-5), Y(-4), 10, 2, COL.ash);
+    box(g, X(-5), Y(-5), 9, 2, on ? COL.log : COL.logD); box(g, X(-4), Y(-5), 7, 1, on ? '#9A6A42' : COL.log);
+    box(g, X(-3), Y(-7), 2, 3, COL.logD); box(g, X(1), Y(-7), 2, 3, COL.logD);
+    if (on) {
+      const f = reduced ? 0 : Math.floor(t * 9) % 3, hs = [[6, 8, 5], [7, 6, 6], [5, 7, 8]][f];
+      box(g, X(-3), Y(-5 - hs[0]), 2, hs[0], COL.f2); box(g, X(-1), Y(-5 - hs[1]), 3, hs[1], COL.f2); box(g, X(2), Y(-5 - hs[2]), 2, hs[2], COL.f2);
+      box(g, X(-2), Y(-4 - hs[0]), 1, hs[0] - 2, COL.f3); box(g, X(0), Y(-4 - hs[1]), 1, hs[1] - 1, COL.f3); box(g, X(2), Y(-4 - hs[2]), 1, hs[2] - 2, COL.f3);
+      box(g, X(0), Y(-7), 1, 2, COL.f4); box(g, X(-4), Y(-6), 8, 1, COL.f1);
+    } else {
+      // a thread of smoke from the dead fire
+      for (let i = 0; i < 5; i++) {
+        const k = reduced ? i / 5 : ((t * 0.35 + i / 5) % 1), sx = X(Math.sin(k * 6 + i) * 1.5), sy = Y(-7 - k * 20);
+        g.fillStyle = COL.smoke + (0.35 * (1 - k)).toFixed(2) + ')'; g.fillRect(Math.round(sx), Math.round(sy), P, P);
+      }
+    }
+    for (const [a, c] of [[-7, COL.st], [-4, COL.stM], [-1, COL.st], [2, COL.stM], [5, COL.st]]) { box(g, X(a), Y(-2), 3, 2, c); box(g, X(a), Y(-2), 3, 1, a % 2 ? COL.st : '#A8A0B0'); }
+    box(g, X(-7), Y(0), 15, 1, 'rgba(11,8,16,.45)');
+  }
+  // A plot stake with a tag (an open plot), or the station itself (built).
+  function paintPlot(g, id, x, y, built) {
+    const X = a => x + a * P, Y = a => y + a * P;
+    if (!built) {
+      box(g, X(0), Y(-9), 1, 9, COL.post); box(g, X(1), Y(-9), 1, 9, COL.postD);
+      box(g, X(-2), Y(-8), 6, 3, COL.ink); box(g, X(-2), Y(-8), 5, 2, COL.tag); box(g, X(-1), Y(-7), 3, 1, '#B8AE9A');
+      return;
+    }
+    if (id === 'bench') {   // a workbench: top, legs, a saw
+      box(g, X(-5), Y(-7), 11, 2, COL.log); box(g, X(-5), Y(-7), 11, 1, '#9A6A42');
+      box(g, X(-4), Y(-5), 1, 5, COL.logD); box(g, X(4), Y(-5), 1, 5, COL.logD); box(g, X(-4), Y(-3), 9, 1, COL.logD);
+      box(g, X(-1), Y(-9), 4, 2, COL.iron);
+    } else if (id === 'forge') {   // an anvil on a stump, a warm coal bed behind
+      box(g, X(-6), Y(-6), 4, 6, COL.stD); box(g, X(-5), Y(-7), 2, 1, COL.f1);
+      box(g, X(-1), Y(-3), 5, 3, COL.logD); box(g, X(-2), Y(-6), 7, 2, COL.iron); box(g, X(-3), Y(-6), 2, 1, COL.iron); box(g, X(0), Y(-4), 3, 1, COL.ironD);
+    } else if (id === 'store') {   // a crate and a sack
+      box(g, X(-4), Y(-8), 8, 8, COL.log); box(g, X(-4), Y(-8), 8, 1, '#9A6A42'); box(g, X(-4), Y(-4), 8, 1, COL.logD); box(g, X(-1), Y(-8), 1, 8, COL.logD);
+      box(g, X(4), Y(-5), 4, 5, '#B8A078'); box(g, X(5), Y(-6), 2, 1, '#8C7A5A');
+    } else {
+      box(g, X(-3), Y(-6), 7, 6, COL.stM); box(g, X(-3), Y(-6), 7, 1, COL.st);
+    }
+  }
+  // Where things stand: the fire and Hesketh left of the hero (who stands at about 0.3-0.45 of the
+  // width, by the oak); the station plots from the right edge inward, in build order, CSS px apart
+  // (on a phone the oak's canopy may hang over the last one; the ground pieces stay clear).
+  const FIRE_X = 0.17, HES_DX = -24, PLOT_GAP = 22;
+  const PLOTS = ['bench', 'forge', 'store'];
+  const lv = id => typeof campLevel === 'function' ? campLevel(id) : 0;
+  const plotOpen = id => typeof CAMP_B === 'object' && !!CAMP_B[id] && typeof hearthPlotOpen === 'function' && hearthPlotOpen(id);
+
+  // Hesketh's frames bake once, in idle time.
+  let hes = null, hesAsked = false;
+  function hesFrames() {
+    if (hes || hesAsked || typeof charFrames !== 'function' || typeof companionSpec !== 'function') return hes;
+    hesAsked = true;
+    const bake = () => { try { hes = charFrames(companionSpec('hesketh')); } catch (e) { console.error('[lanternfall] hearth: Hesketh', e); } };
+    if (typeof idleTask === 'function') idleTask(bake, true); else bake();
+    return hes;
+  }
+  const at = { x: 0, y: 0, SW: 1, SH: 1, on: false };   // the fire on screen, for the button
+
+  stageDeco = (g, phase, v) => {
+    if (!showing(v.tg)) { at.on = false; return; }
+    const on = lit(), fx = Math.round(v.SW * FIRE_X) - v.cam, gy = v.GY;
+    if (phase === 'back') {
+      if (!on) { g.fillStyle = 'rgba(6,5,16,.42)'; g.fillRect(-4, -4, v.SW + 8, v.SH + 8); }   // night until the fire is lit
+      let px = Math.min(Math.round(v.SW) - 16, Math.round(v.nodeR) + 14 + 2 * PLOT_GAP);
+      for (const id of PLOTS) {
+        const built = lv(id) >= 1;
+        if (!built && !plotOpen(id)) continue;
+        paintPlot(g, id, Math.min(px, v.SW - 16) - v.cam, gy - 1, built); px -= PLOT_GAP;
+      }
+      const H = hesFrames();
+      if (H && H.idle0) {
+        const f = !reduced && H.idle1 && Math.floor(v.T * 1.6) % 2 ? H.idle1 : H.idle0;
+        g.drawImage(f.c, Math.round(fx + HES_DX - f.ox), Math.round(gy - f.oy));
+      }
+      paintFire(g, fx, gy, on, v.T);
+      at.x = fx + v.cam; at.y = gy - 8; at.SW = v.SW; at.SH = v.SH; at.on = true;
+      return;
+    }
+    // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
+    if (!on) return;
+    const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
+    ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
+    ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);
+    const H = hes;
+    if (H && H.idle0 && H.idle0.lights) for (const l of H.idle0.lights) ANIM.lightAt(g, l.rgb, Math.round(fx + HES_DX - H.idle0.ox) + l.x, Math.round(gy - H.idle0.oy) + l.y, l.r || 14, 0.5);
+  };
+
+  // ---- the fire button: over the fire while it can be lit ----
+  const stageEl = $('stage');
+  const fire = el('button', 'hearth-fire'); fire.type = 'button'; fire.id = 'hearthFire'; fire.hidden = true;
+  const tag = el('span', 'hf-tag'); fire.append(tag);
+  stageEl.append(fire);
+  fire.addEventListener('pointerdown', e => e.stopPropagation());   // not a chop
+  fire.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!hearthLight()) { const c = hearthCan(); if (c.why && !c.lit) toast(`Chop more Oak first: ${c.why}.`, 'bad', { mat: ['wood', 1] }, 'normal'); return; }
+    ui(true);
+  });
+  let lastSig = '';
+  function place() {
+    const show = at.on && cold() && !lit() && S.activity === 'gather';
+    if (fire.hidden === show) fire.hidden = !show;
+    if (!show) return;
+    const c = hearthCan(), have = Math.min(8, S.mats.wood[0] || 0);
+    const sig = `${Math.round(at.x)}|${at.y}|${at.SW}|${at.SH}|${c.ok}|${have}`;
+    if (sig === lastSig) return; lastSig = sig;
+    putStyle(fire, 'left', (at.x / at.SW * 100).toFixed(2) + '%');
+    putStyle(fire, 'top', (at.y / at.SH * 100).toFixed(2) + '%');
+    putToggle(fire, 'ready', c.ok);
+    putText(tag, c.ok ? 'Light' : `${have}/8 Oak`);
+    putAttr(fire, 'aria-label', c.ok ? 'Light the fire (8 Oak Log)' : `The fire needs 8 Oak Log. You have ${have}.`);
+  }
+  setInterval(place, 200);
+
+  // ---- words: the opening card (the stage hint is 70-ui's: 'Tap to work faster') ----
+  const opening = () => {
+    if (!cold() || lit()) return;
+    toast('Old Hesketh\'s lamp has gone out. "Wood first. Then we talk."', 'good', { mat: ['wood', 1] }, 'high');
+  };
+  on('createDone', ({ mode } = {}) => { if (mode === 'new') opening(); });
+  // A reload before the fire is lit (the class is already chosen): the card again.
+  setTimeout(() => { if (S.party && S.party.chosen) opening(); }, 600);
+  on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
+}
+
 // ---- src/js/70-ui.js ----
 // 70-ui: shared UI plumbing: toasts, row builders, header, tabs, the ui() refresh,
 // and the section/tab registries for feature UI (75-*.js). Browser-only.
@@ -21452,8 +22881,8 @@ function ui(force) {
     putText(H.zName, NODE_NAMES[kind][t - 1]);
     putText(H.zSub, `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`);
     putText(H.mName, matName(kind, t));
-    putText(H.mHp, `${fmt(S.mats[kind][t - 1])} ${stashFull(kind, t) ? '· Storehouse full' : 'in pack'}`);   // H3
-    const sp = Math.min(100, sk.xp / skillNeed(sk.lv) * 100);
+    putText(H.mHp, storeStage(kind, t));   // H3: "640/1,000 in pack" (75-store-ui)
+    const sp = Math.min(100, sk.xp / skillNeed(sk.lv, skillOf(kind)) * 100);
     setHp(sp);
     putStyle(H.mBar, 'background', 'var(--gold)');
     putHidden(H.tWrap, true);
@@ -21810,7 +23239,7 @@ const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 
 const nodeRows = {};
 function goNode(kind, t) {
   if (!setNode(kind, t)) return false;
-  if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
+  if (S.activity !== 'gather') setActivity('gather'); else { toast(`You move to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
   return true;
 }
 // Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
@@ -21851,9 +23280,9 @@ function whereSheet(k, t) {
     const w = whereToGet(k, t), i = w.indexOf(': ');
     api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
     if (GATHER_KINDS.includes(k)) {
-      const sk = skillOf(k), req = NODE_REQ[t - 1], open = S.skills[sk].lv >= req;
+      const sk = skillOf(k), req = skillReq(sk, t), open = skillTierOpen(sk, t);
       const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
-      const b = el('button', 'big horn gw-go', here ? 'Your party works here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
+      const b = el('button', 'big horn gw-go', here ? 'You work here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
       b.type = 'button'; b.disabled = !open || here;
       b.addEventListener('click', () => { if (goNode(k, t)) { api.close(); setTab(NODE_VIEW_OF[k]); } });
       api.foot.append(b);
@@ -21902,6 +23331,11 @@ else gatherBuild();
 // Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
 // switch calls ui(true), so a view is fresh as soon as it shows).
 const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
+// 'Working: Copper Vein with your Copper Pickaxe. Your party rests at the Hearth: ...' (G1: 11c toolFor, 55-rested restNote)
+function gatherLine() {
+  const tool = typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
+  return `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}${tool ? ` with your ${tool.name}` : ''}.` + (typeof restNote === 'function' ? restNote() : '');
+}
 function uiGather() {
   gatherBuild();
   const view = curView('gat'), nodeView = view !== 'pack';
@@ -21909,12 +23343,12 @@ function uiGather() {
     for (const c of skillCards) {
       const sk = S.skills[c.k];
       putText(c.lv, 'Lv ' + sk.lv);
-      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
+      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv, c.k) * 100) + '%');
     }
     const home = homeFamily(), hb = homeBonus(home);
     putText(homeNote, `Home ground: ${MAT[home].n} +${Math.round(hb * 100)}% in ${zoneName(S.zone)}.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars there: +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
     const gathering = S.activity === 'gather', g = gathering ? glint() : null;
-    putText(gNow.what, gathering ? `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}` : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
+    putText(gNow.what, gathering ? gatherLine() : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
     putToggle(gNow.box, 'on', gathering);
     putHidden(gNow.glint, !gathering);
     if (gathering) {
@@ -21924,11 +23358,11 @@ function uiGather() {
   }
   for (const kind of GATHER_KINDS) {
     if (NODE_VIEW[NODE_BOX[kind]] !== view) continue;
-    const lv = S.skills[skillOf(kind)].lv, ym = mod('yield:' + kind), hk = homeBonus(kind);
+    const sk = skillOf(kind), top = skillTopTier(sk), ym = mod('yield:' + kind), hk = homeBonus(kind);
     nodeRows[kind].forEach((r, i) => {
-      const t = i + 1, req = NODE_REQ[i], open = lv >= req;
+      const t = i + 1, req = skillReq(sk, t), open = t <= top;
       const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
-      const prevOpen = i === 0 || lv >= NODE_REQ[i - 1];
+      const prevOpen = t - 1 <= top;
       putHidden(r.row, !open && !prevOpen);
       putToggle(r.row, 'locked', !open);
       putToggle(r.row, 'active', here);
@@ -21945,7 +23379,7 @@ function uiGather() {
     });
   }
   if (view !== 'pack') return;
-  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); storeCell(c, k, i + 1, v); });
+  for (const k of CRAFT_FAMILIES) matCells[k].forEach(({ c, n }, i) => { const v = S.mats[k][i] || 0; putText(n, v < 1e5 ? storeNum(v) : fmt(v)); putToggle(c, 'none', !v); storeCell(c, k, i + 1, v); });
   trophyCells.forEach(({ c, n }, i) => { const v = S.craft.troph[i] || 0; putText(n, fmt(v)); putToggle(c, 'none', !v); });
 }
 
@@ -22293,13 +23727,14 @@ async function uiTavern() {
         setCls(r.tier, 'om-tier ' + g.tier);
         setTxt(r.own, g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`);
         setW(r.bar, Math.min(100, g.have / g.need * 100));
-        setTxt(r.desc, g.claimed ? 'Reward collected.' : 'Reward: ' + almanac.rewardText(almanac.reward(g)));
+        const rw = almanac.reward(g), room = g.done && !g.claimed ? stashNeed(rw.mats.map(m => [m.k, m.t, m.n])) : '';   // H3: waits until it fits
+        setTxt(r.desc, g.claimed ? 'Reward collected.' : room || 'Reward: ' + almanac.rewardText(rw));
         setIc(r.ic, iconOf({ ic: almanac.goalIcon(g) }));
         r.row.classList.toggle('active', g.done && !g.claimed);
         r.row.classList.toggle('claimed', g.claimed);
         r.sw.hidden = g.done || A.swaps <= 0;
         r.btn.hidden = !g.done || g.claimed;
-        r.btn.disabled = !g.done || g.claimed;
+        r.btn.disabled = !g.done || g.claimed || !!room;
         setTxt(r.qty, 'Done');
         setTxt(r.btn.querySelector('.price'), 'Claim');
       });
@@ -22559,13 +23994,14 @@ let showAwayReport;
         const done = b.have >= b.need, rew = BOUNTY_API.reward(b);
         r.row.classList.remove('locked'); r.row.classList.toggle('active', done);
         r.nm.textContent = BOUNTY_API.text(b); r.own.textContent = `${fmt(b.have)}/${fmt(b.need)}`;
-        r.desc.textContent = 'Reward: ' + rew.txt;
+        const room = done && rew.kind !== 'gold' ? stashNeed([[rew.kind, rew.t, rew.n]]) : '';   // H3: a reward waits until it fits
+        r.desc.textContent = room || 'Reward: ' + rew.txt;
         r.bar.style.width = Math.min(100, b.have / b.need * 100) + '%';
         const url = BTY_IC[b.k](); setIc(r.ic, url);
         const rrLeft = (b.rr || 0) - now;
         r.rr.hidden = done; r.rr.disabled = rrLeft > 0;
         r.rr.textContent = rrLeft > 0 ? `Swap in ${fmtTime(rrLeft / 1000)}` : 'Swap (free)';
-        r.btn.disabled = !done; r.qty.textContent = done ? 'Done' : 'Bounty';
+        r.btn.disabled = !done || !!room; r.qty.textContent = done ? 'Done' : 'Bounty';
         r.btn.querySelector('.price').textContent = done ? 'Claim' : Math.floor(b.have / b.need * 100) + '%';
       });
     }
@@ -22750,7 +24186,7 @@ let showAwayReport;
   }
 
   // ---------------- the camp part ----------------
-  let head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
   registerSection('camp', {
     id: 'camp', title: null,
     mount(sec) {
@@ -22760,7 +24196,9 @@ let showAwayReport;
       closed = el('div', 'card camp-closed');
       closedTxt = el('p', 'note');
       const bar = el('div', 'bar'); closedBar = el('i'); bar.append(closedBar);
-      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar);
+      lightBtn = btn('big cb-go', 'Light the fire · 8 Oak'); lightBtn.hidden = true;
+      lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
+      closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
       const top = el('div', 'ch-top'), ic = el('div', 'ic ch-ic'); ic.append(img(icon('hearth')));
       const who = el('div', 'ch-who');
@@ -22782,6 +24220,16 @@ let showAwayReport;
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
+        // H1: a cold Hearth waits for its fire (8 Oak Log), not for a zone.
+        const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
+        putHidden(lightBtn, !cold);
+        if (cold) {
+          const have = Math.min(8, S.mats.wood[0] || 0);
+          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Oak Log to light it. You have ${have}.`);
+          putStyle(closedBar, 'width', have / 8 * 100 + '%');
+          putDisabled(lightBtn, !hc.ok);
+          return;
+        }
         setTxt(closedTxt, `Old Hesketh is looking for a place to rest. Reach zone ${CAMP_TUNE.openZone} and he makes camp. You are at zone ${S.maxZone}.`);
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
@@ -22895,7 +24343,9 @@ let showAwayReport;
     mount(sec) { listBox = el('div', 'cb-list'); sec.append(listBox); },
     update() {
       const sec = listBox.parentNode; putHidden(sec, !campOpen()); if (!campOpen()) return;
-      const ids = campList().filter(x => x !== 'hearth');
+      let ids = campList().filter(x => x !== 'hearth');
+      // H1: on a cold Hearth the stations still to build lead the list, in build order.
+      if (typeof hearthCold === 'function' && hearthCold()) { const k = id => { const i = HEARTH_CHAIN.indexOf(id); return i >= 0 && campLevel(id) < 1 ? i : 99; }; ids = ids.slice().sort((a, b) => k(a) - k(b)); }
       const sig = ids.join();
       if (sig !== listSig) { listSig = sig; listBox.textContent = ''; for (const id of ids) { if (!cards.has(id)) cards.set(id, card(id)); listBox.append(cards.get(id).w); } }
       for (const id of ids) {
@@ -22965,7 +24415,9 @@ let showAwayReport;
       putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
-      setTxt(rosNote, list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.');
+      // The queued Map Room hint (plan-3 wave 2): until it is built, say what it is for.
+      const map = CAMP_B.maproom && (!CAMP_B.maproom.needs || CAMP_B.maproom.needs()) && campLevel('maproom') < 1 ? ' Build the Map Room (Hearth 2) to send companions on expeditions.' : '';
+      setTxt(rosNote, (list.length ? 'Companions on the bench live at camp. Each one is in one place at a time.' : 'Everyone on your roster is in the party. Benched companions rest here.') + map);
       const sig = JSON.stringify(list.map(x => [x.id, x.r.lv, x.s.status, x.s.label, x.s.sub || '', benchSends(x.id).map(s => s.ok)]));
       if (sig === rosSig) return; rosSig = sig; rosBox.textContent = '';
       // Rows are built in time-boxed chunks (a portrait can need baking), so the Camp tab's first open
@@ -23473,9 +24925,7 @@ let craftUI = null;
   // ---------------- UI state (memory only) ----------------
   const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'all', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
   const openTier = st => {
-    const lv = lvOf(skillOfSt(st)); let t = 1;
-    for (let i = 1; i <= 5; i++) if (lv >= CRAFT_STATION_REQ[i - 1]) t = i;
-    return t;
+    return skillTopTier(skillOfSt(st));
   };
   function initState() {
     if (st8.st) return;
@@ -23498,7 +24948,7 @@ let craftUI = null;
   const mwFor = k => (st8.mw != null && craftTrophyLine(st8.mw, k, 1) ? st8.mw : null);
   function localCan(k, t) {
     const d = CRAFT_KINDS[k], sk = skillOfSt(d.st), req = CRAFT_STATION_REQ[t - 1];
-    if (lvOf(sk) < req) return { ok: false, why: `Needs ${SKILL[sk]} Lv ${req}` };
+    if (!stationTierOpen(k, t)) return { ok: false, why: `Needs ${SKILL[sk]} Lv ${req}` };
     if (bagFull()) return { ok: false, why: 'Your bag is full' };
     if (!hasMats(kindCost(k, t), t)) return { ok: false, why: 'Not enough materials' };
     return { ok: true, why: '' };
@@ -23548,11 +24998,11 @@ let craftUI = null;
         const e = stEls[s], sk = S.skills[skillOfSt(s)] || { lv: 1, xp: 0 };
         putAttr(e.b, 'aria-pressed', String(st8.st === s));
         putText(e.lv, `Lv ${sk.lv}`);
-        putStyle(e.fill, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
+        putStyle(e.fill, 'width', Math.min(100, sk.xp / skillNeed(sk.lv, skillOfSt(s)) * 100) + '%');
       }
       const sk = skillOfSt(st8.st), s = S.skills[sk] || { lv: 1, xp: 0 };
-      const next = CRAFT_STATION_REQ.find(r => r > s.lv);
-      putText(stEls.info, `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.'));
+      const next = skillNextReq(sk);
+      putText(stEls.info, `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv, sk))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.'));
     }
   });
 
@@ -23647,10 +25097,10 @@ let craftUI = null;
     },
     update(force) {
       initState();
-      const st = st8.st, t = st8.tier[st] || 1, lv = lvOf(skillOfSt(st));
+      const st = st8.st, t = st8.tier[st] || 1;
       for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
       for (const b of rec.tiers.children) {
-        const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = lv >= req;
+        const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = skillTierOpen(skillOfSt(st), i);
         putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
@@ -23772,10 +25222,11 @@ let craftUI = null;
       ench.upB.textContent = t < 5 ? `${U.take} ${nm(t)} → ${U.give} ${nm(t + 1)}` : 'Top tier';
       ench.dnB.textContent = t > 1 ? `${D.take} ${nm(t)} → ${D.give} ${nm(t - 1)}` : 'Lowest tier';
       const upReq = t < 5 ? CRAFT_STATION_REQ[t] : 0;
-      ench.upB.disabled = !f || t >= 5 || have[t - 1] < U.take || lv < upReq;
+      const upShut = t < 5 && !skillTierOpen('ench', t + 1);
+      ench.upB.disabled = !f || t >= 5 || have[t - 1] < U.take || upShut;
       const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
       ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
-      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : t < 5 && lv < upReq ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
+      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
       // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.party && S.party.unlock && S.party.unlock.starChart);
       ench.star.hidden = !(sc && !CRAFT_KINDS.starchart);
@@ -23957,6 +25408,8 @@ let craftUI = null;
     const lgb = LG() ? safe(() => LG().itemBoxes(it, sheet, renderItem), []) : [];   // Learn (top), Inscribe, Mark
     body.append(...lgb.filter(b => b.dataset.top));
     body.append(secBox('What it does', lines));
+    const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
+    if (tlb) body.append(tlb);
     if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
     body.append(...lgb.filter(b => !b.dataset.top));
 
@@ -24058,7 +25511,7 @@ let craftUI = null;
   }
   function reforgeBox(it) {
     const box = el('div', 'cf-rf');
-    const f = K6.reforge(), cost = safe(() => reforgeCost(it), null), req = CRAFT_STATION_REQ[it.t - 1], lv = lvOf('ench');
+    const f = K6.reforge(), cost = safe(() => reforgeCost(it), null), req = CRAFT_STATION_REQ[it.t - 1];
     box.append(el('p', 'note', `At the Enchanter's Table. Pick one bonus line to reroll. Rarity and power stay.${it.rf ? ` Reforged ${it.rf} time${it.rf > 1 ? 's' : ''}: the price grows each time.` : ''}`));
     const opts = el('div', 'cf-rfo'); opts.setAttribute('role', 'radiogroup');
     const parts = splitLines(it).filter(L => L.g === 'affix');
@@ -24070,7 +25523,7 @@ let craftUI = null;
     }
     box.append(opts);
     if (cost) { const chips = el('div', 'costs'); costChips(chips, cost.mats, it.t, cost.gold); box.append(chips); }
-    const ok = f && cost && sheet.sel >= 0 && lv >= req && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
+    const ok = f && cost && sheet.sel >= 0 && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
     const armed = sheet.arm === 'reforge';
     const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : armed ? 'Tap again to reforge' : 'Reforge this line'); b.type = 'button';
     b.disabled = !ok;
@@ -24083,7 +25536,7 @@ let craftUI = null;
     box.append(b);
     if (armed) { const c = el('button', 'mini', 'Cancel'); c.type = 'button'; c.addEventListener('click', () => { sheet.arm = null; renderItem(); }); box.append(c); }
     if (!f) box.append(el('p', 'note', 'Reforge opens with the next crafting update.'));
-    else if (lv < req) box.append(el('p', 'note warn', `Needs Enchanting Lv ${req} for a tier ${it.t} item.`));
+    else if (!skillTierOpen('ench', it.t)) box.append(el('p', 'note warn', `Needs Enchanting Lv ${req} for a tier ${it.t} item.`));
     return box;
   }
   function giveList(it) {
@@ -24448,7 +25901,7 @@ let craftUI = null;
     const o = mkOverlay('dw-end in', 'Your run is over');
     const s = o.inner;
     const head = el('div', 'dw-dhead'); const tt = el('div', 'dw-dtitle');
-    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
+    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', wipe: 'Your party fell. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
     tt.append(el('div', 'dw-eye', x.trial ? `This week's Trial: ${DW.trialRule(x.week).n}` : 'The Deepwell'), el('h2', null, `Floor ${x.floor}`), el('div', 'dw-dsub', why));
     head.append(tt); s.append(head);
     const kv = el('dl', 'kv dw-kv');
@@ -25886,7 +27339,7 @@ let legendUI = null;
   const OPEN_TXT = {
     party: 'New tab: Party. See who fights beside you.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
-    camp: 'You made camp. A new tab: Camp.',
+    camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
     nextup: 'Next Up shows your best next goal.',
     bounties: 'New on the Fight tab: Bounties.',
@@ -25953,8 +27406,30 @@ let legendUI = null;
     return { node: n, text: words[2] };
   }
   // step id -> () => { node, text, at?: [fx, fy] (a point inside node) } | null
+  // The cold Hearth (H1): the fire's button lives on the stage (63d-scenery-camp.js).
+  const cold = () => typeof hearthCold === 'function' && hearthCold();
+  const atGrove = () => target() === 'node' && S.node.kind === 'wood';
+  const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
   const STEP_UI = {
-    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: 'Tap the foe to strike.' } : null,
+    chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
+    light: () => {
+      if (!onGame()) return null;
+      const f = $('hearthFire');
+      if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
+      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Oak for the fire.' };
+      return null;
+    },
+    bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
+    tool: () => {
+      if (S.tab !== 'forge') return { node: q('.tab[data-tab="forge"]'), text: 'The Workbench is built. Open Craft.' };
+      if (curView('forge') !== 'make') return { node: q('#viewSeg button[data-view="make"]'), text: 'Open Make.' };
+      const st = q('.cf-st[data-st="bench"]');
+      if (st && st.getAttribute('aria-pressed') !== 'true') return { node: st, text: 'Tap the Workbench.' };
+      return { node: q('#sec-craft-recipes .cf-rec[data-kind="pick"] .cf-go'), side: 'up', text: 'Make a Copper Pickaxe.' };
+    },
+    forge: () => campPath('forge', ['Open Camp to build the Forge.', 'Open Camp.', 'Build the Forge for your weapon.']),
+    store: () => campPath('store', ['Your packs are nearly full. Open Camp.', 'Open Camp.', 'Your packs are nearly full. Build a Storehouse.']),
+    tap: () => onGame() && target() === 'mob' ? { node: $('stage'), at: [0.78, 0.7], text: cold() ? 'The road is dark. Tap a foe to strike.' : 'Tap the foe to strike.' } : null,
     ability: () => {
       const n = q('#stage .abil'), a = typeof abilityInfo === 'function' ? abilityInfo() : null;
       return onGame() && a ? { node: n, round: true, text: `${a.name} is ready. Tap it.` } : null;
@@ -27553,6 +29028,13 @@ function storeLvl(e, k, t) {
   putToggle(e, 'st-full', h >= cap && h > 0 && h <= cap);
   putToggle(e, 'st-over', h > cap);
 }
+// The stage's held line: "640/1,000 in pack", "1,000/1,000 · Full".
+function storeStage(k, t) {
+  const h = S.mats[k][t - 1] || 0, cap = storeCap(k, t);
+  if (!Number.isFinite(cap)) return `${fmt(h)} in pack`;
+  const n = h < 1e5 ? storeNum(h) : fmt(h), c = cap < 1e5 ? storeNum(cap) : fmt(cap);
+  return `${n}/${c} ` + (h > cap ? '· Over the cap' : h >= cap ? '· Full' : 'in pack');
+}
 // A pack cell: a cap line and a thin bar under the count.
 function storeCell(c, k, t, v) {
   if (!c._st) {
@@ -27635,10 +29117,121 @@ function storeSalvageNote(preview, t) {
       const lv = storeLevel(), g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv);
       if (!Number.isFinite(g)) { putText(sum.p, 'No limits on materials.'); putHidden(sum.go, true); return; }
       const n = storeFullCells().length;
-      putText(sum.p, (lv ? `Storehouse Lv ${lv}: holds ${storeNum(g)} of each, ${storeNum(h)} hide and essence.` : `Your packs hold ${storeNum(g)} of each, ${storeNum(h)} hide and essence.`) + (n ? ` ${n} full.` : ''));
+      putText(sum.p, (lv ? `Storehouse Lv ${lv}: holds ${storeNum(g)} of each, ${storeNum(h)} hide and essence.` : `Your packs hold ${storeNum(g)} of each, ${storeNum(h)} hide and essence.`) + (n ? ` ${n === 1 ? '1 pile is' : n + ' piles are'} full.` : ''));
       putHidden(sum.go, !(typeof campOpen === 'function' && campOpen()));
     }
   });
+}
+
+// ---- src/js/75-tools-ui.js ----
+// 75-tools-ui: the tool card on the Gather tab's node views, and the Mastery box on a tool's item
+// sheet (task H2; docs/design/hearth-and-hands.md 2.4, 3 and 11). Browser-only. Rules: 55-tools.js.
+//
+// The card sits under the status strip (72-ui-gather gNow) on the Mining, Woodcutting and Foraging
+// views and shows that view's tool: its name (the rough tool when the slot is empty), the three
+// lines, the right-tool tag for the node being worked, the mastery bar with the next perk, and two
+// buttons: Change (the Craft tab's picker for that position) and Make (the best tier worth making,
+// opened on the Craft tab's recipe list).
+//
+// Exposed: toolsUI { itemBox(item) -> element | null }   75-craft-ui's item sheet appends it.
+
+let toolsUI = null;
+{
+  const VIEW_SKILL = { mine: 'mine', wood: 'wood', forage: 'forage' };
+  const ROUGH_IC = {
+    pick: () => iconURL('pick', '#8E8A84', { 6: '#6B4A2E' }),
+    axe: () => iconURL('axe', '#8E8A84', { 6: '#6B4A2E' }),
+    sickle: () => { const c = craftIcon('sickle', 1); return iconURL(c[0], '#DCD3C2', Object.assign({}, c[2], { 1: '#DCD3C2', 2: '#A89F8E', 3: '#F2ECDF' })); }
+  };
+  const minsTxt = s => { const m = Math.ceil(s / 60); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60 ? (m % 60) + ' min' : ''}`.trim() : `${m} min`; };
+  const lineTxt = it => itemLines(it).slice(0, 3).map(([s, v]) => craftFmtLine(s, v)).join(' · ');
+  const craftOpen = () => typeof isUnlocked !== 'function' || isUnlocked('craft');
+  const nextPerk = kind => toolPerks(kind).find(p => !p.on) || null;
+  const masteryTxt = (kind, m) => m.max ? `${TOOL_KINDS[kind].n} mastered` : `${TOOL_KINDS[kind].n} mastery ${m.lv}`;
+  const leftTxt = m => m.max ? 'Every perk is yours.' : `${minsTxt(m.left)} of gathering to level ${m.lv + 1}.`;
+  function makeTool(kind, t) {
+    S.fSlot = kind; S.fTier = t;
+    if (typeof forgeGoalPicks === 'number') forgeGoalPicks++;
+    setTab('make');
+  }
+
+  // ---------------- the Gather card ----------------
+  const R = {};
+  const sec = registerSection('gat', {
+    id: 'tool', view: 'mine wood forage',
+    mount(s) {
+      const card = el('div', 'tl-card');
+      const ic = el('div', 'ic tl-ic'); R.img = img(ROUGH_IC.pick()); ic.append(R.img);
+      const body = el('div', 'tl-body');
+      const head = el('div', 'tl-head');
+      R.name = el('span', 'tl-name'); R.tag = el('span', 'tl-tag');
+      head.append(R.name, R.tag);
+      R.lines = el('div', 'tl-lines');
+      const mrow = el('div', 'tl-mrow');
+      R.mlabel = el('span', 'tl-mlabel'); R.mleft = el('span', 'tl-mleft');
+      mrow.append(R.mlabel, R.mleft);
+      const bar = el('div', 'bar tl-bar'); R.bar = el('i'); bar.append(R.bar);
+      R.perk = el('div', 'tl-perk');
+      body.append(head, R.lines, mrow, bar, R.perk);
+      const btns = el('div', 'tl-btns');
+      R.change = el('button', 'tl-btn', 'Change'); R.change.type = 'button';
+      R.change.addEventListener('click', () => { const k = R.kind; if (k && craftUI) craftUI.pick('hero', TOOL_KINDS[k].pos); });
+      R.make = el('button', 'tl-btn tl-make', 'Make'); R.make.type = 'button';
+      R.make.addEventListener('click', () => { if (R.best) makeTool(R.best.kind, R.best.t); });
+      btns.append(R.change, R.make);
+      card.append(ic, body, btns);
+      s.append(card);
+      R.card = card;
+    },
+    update() {
+      if (!R.card) return;
+      const skill = VIEW_SKILL[curView('gat')]; if (!skill) return;
+      const kind = toolOf(skill), e = equippedTool(skill), it = e.item, m = toolMastery(kind);
+      R.kind = kind;
+      putAttr(R.img, 'src', it ? itemIcon(it.slot, it.t, it.u) : ROUGH_IC[kind]());
+      putText(R.name, toolName(skill));
+      putClass(R.name, 'tl-name' + (it ? ' rar-' + (it.u || it.lr ? 'legendary' : it.r) : ' rough'));
+      putToggle(R.card, 'master', m.max);
+      putText(R.lines, it ? lineTxt(it) : `Base speed. Make a ${TOOL_KINDS[kind].n} at the Workbench.`);
+      // Right tool: against the node being worked, when it is this skill's.
+      const here = S.activity === 'gather' && skillOf(S.node.kind) === skill ? S.node.t : 0;
+      const right = here && e.tier >= here;
+      const pct = Math.round(TOOL_TUNE.right * 100);
+      putText(R.tag, !TOOL_TUNE.on ? '' : right ? `✓ Right tool: +${pct}% speed` : here ? `Right tool: tier ${here} or better for +${pct}% speed` : e.tier ? `Right tool on tiers 1-${e.tier}: +${pct}% speed` : '');
+      putToggle(R.tag, 'on', !!right);
+      putHidden(R.tag, !R.tag.textContent);
+      putText(R.mlabel, masteryTxt(kind, m));
+      putText(R.mleft, m.max ? '' : leftTxt(m));
+      putStyle(R.bar, 'width', (m.pct * 100).toFixed(1) + '%');
+      const np = nextPerk(kind);
+      putText(R.perk, np ? `Lv ${np.lv}: ${np.txt}` : 'Master: every perk is on.');
+      putHidden(R.change, !craftUI || !craftOpen());
+      const best = craftOpen() ? toolBest(skill) : null;
+      R.best = best && best.t > best.cur ? best : null;
+      putHidden(R.make, !R.best);
+      if (R.best) putText(R.make, `Make ${kindName(kind, R.best.t)}`);
+    }
+  });
+  // Under the status strip, above the node rows.
+  if (typeof gNow === 'object' && gNow.box) gNow.box.after(sec);
+
+  // ---------------- the item sheet's Mastery box ----------------
+  toolsUI = {
+    itemBox(it) {
+      const d = itemKind(it); if (!d || !d.tool || !TOOL_KINDS[it.slot]) return null;
+      const kind = it.slot, m = toolMastery(kind);
+      const box = el('div', 'cf-ss tl-box' + (m.max ? ' master' : ''));
+      box.append(el('h4', null, 'Mastery'));
+      const mrow = el('div', 'tl-mrow');
+      mrow.append(el('span', 'tl-mlabel', masteryTxt(kind, m)), el('span', 'tl-mleft', m.max ? '' : leftTxt(m)));
+      const bar = el('div', 'bar tl-bar'), bi = el('i'); bi.style.width = (m.pct * 100).toFixed(1) + '%'; bar.append(bi);
+      const list = el('ul', 'tl-perks');
+      for (const p of toolPerks(kind)) { const li = el('li', p.on ? 'on' : '', `Lv ${p.lv}: ${p.txt}`); list.append(li); }
+      list.prepend(el('li', 'on', `Each level: +${Math.round(TOOL_TUNE.spdPer * 100)}% ${SKILL[TOOL_KINDS[kind].skill].toLowerCase()} speed (now +${Math.round(TOOL_TUNE.spdPer * 100 * m.lv)}%)`));
+      box.append(mrow, bar, list, el('p', 'note', `Mastery belongs to every ${TOOL_KINDS[kind].n} you use, so a better one keeps it.`));
+      return box;
+    }
+  };
 }
 
 // ---- src/js/75-unlocks-ui.js ----
@@ -27729,8 +29322,9 @@ function storeSalvageNote(preview, t) {
         V.btn.disabled = v.done || !canRecruit(v.id);
       } else if (v.kind === 'trade') {
         V.btn.hidden = false;
-        V.btn.textContent = v.done ? 'Sold out' : 'Buy';
-        V.btn.disabled = v.done || S.gold < c.gold;
+        const room = v.done ? '' : stashNeed([['ess', v.trade.t, v.trade.n]]);   // H3: the essence must fit
+        V.btn.textContent = v.done ? 'Sold out' : room ? 'Storehouse full' : 'Buy';
+        V.btn.disabled = v.done || S.gold < c.gold || !!room;
       } else V.btn.hidden = true;
       const nx = v.next;
       const turn = `The next visitor arrives in ${fmtTime(untilMidnight())}.`;

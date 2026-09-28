@@ -390,3 +390,102 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   free starter; applicants every 8h (max 3 waiting); off-skill half share; Spiced Broth +5% within +15% camp
   cap; the rod covers Tide Pools (R2 decides); cold start = no progress and no S.camp. Wave 2 merge order:
   H2, H1, H3. The Map Room hint goes with H1.
+- D6 formation.md merged. Coordinator accepts all section-9 recommendations: hero floor; damage-only trioX
+  1.35 phased in over zones 8-12; old named synergies become Bonds (old saves seeded to level 3/4); circle
+  synergies become 2-companion Kin (Hedgefolk gold +5%); migration keeps the planner's best 2 and never pulls
+  from the bench; the 12 new Bonds; lanes dropped (cells keep lane: 1). World raid: raiders.dps keeps its
+  formula and shape; late values read about 10% lower. That is a value drift, not a shape change, so it is
+  accepted without touching the online layer. The festival is renamed LF1 (F1 is the formation core).
+  Wave 2 formation: F1 first; F2, F3, F4 in parallel once F1's API is in; then BAL3.
+- G1 merged: 11c-art-tools.js (pickaxe, woodaxe, sickle, rod by tier; own swings), toolFor(skill) is a `let`
+  for H2 to repoint at equippedTool; the hero gathers alone; 55-rested.js Well Rested (REST_TUNE rate 0.5,
+  cap 180s, +10% dmg, zone fights only). NODE_HIT strike fractions in 62-stage heroHome (G2 told).
+  Perf noisy, no regression read.
+- W6b merged: 59c-deepwell-combat.js (a floor is one pack, HP carried with 25% per cleared floor, a wipe
+  ends the run, Oil +5s refunds and +2s per parried wind-up, Taunt Drill any class, Lifeline once per floor,
+  D8 Deep Edge +20%/rank). Median depth 19, runs 7-8 min. Follow-ups queued: Overflow boon is dead in packs
+  (rework); the arena wipe animation plays behind the run-end card (62-stage); Deep Lore total 10,070 Marks
+  (retune in BAL3); run length below the 8-15 min target (BAL3). Perf phone/late noisy on a busy machine.
+- H2 merged: 55-tools.js / 75-tools-ui.js (tools at the Workbench, rough tools = empty slot, rare finds, +25%
+  right tool, mastery 1-20 per kind). Coordinator wired G1's stage toolFor to equippedTool (rough draws as a
+  plain tier 1; the rod falls back to the art rule until the Coast). Accepted: +1% per mastery level from Lv 1;
+  find cap 8% on the item plus the Lv 5 point.
+- OWNER: gathering levels come too fast; "the next tier up only 4 levels away is too fast". Today NODE_REQ
+  [1,8,18,30,45], SMITH_REQ [1,4,9,16,25], skillNeed 25 x 1.12^(lv-1). GP1 launched to re-pace skill tiers.
+- LORE1 lore.md merged (story bible: the Lanternfall, monsters are the land soaked by the dark and drawn to
+  the light, "a light lit for someone cannot be stolen", Elowen's sparks explain other players, the mystery
+  ladder, the sealed ending in 8.6). Fixed Pip's pronoun in 56-roster.js. WRITING TASKS (LORE2-12) ON HOLD
+  until the owner steers the premise and answers section 12's four questions.
+- OWNER STANDING ORDER: pause all progress when the owner's weekly usage reaches 90%. The coordinator cannot
+  read the usage meter; the owner will say "pause". On "pause": launch nothing new, let running agents finish
+  and merge (or stop them if asked), disable the hourly trigger, push, and report.
+- OWNER USAGE RULE (2026-09-28): the owner uses Claude for work during the week. Weekdays: no new agents,
+  no hourly check-ins; only answer the owner. Weekends: full speed (any usage left is fair game). The
+  current batch (G2, H3, F1, GP1, H1) finishes now, on the tail of this week's allowance; then pause until
+  the weekend.
+- USAGE RULE REVISED (owner, UK time, BST): weekdays are LIGHT, not off: at most one agent at a time, small
+  contained tasks, check-ins at 09:38, 13:38, 17:38 and 21:38 Mon-Fri (trigger trig_01Hmtoxf9F4T3FVAQFC94RMj).
+  Weekends are FULL SPEED: up to 5 agents, hourly check-ins Sat-Sun (trig_01CmvFeTWLdv9v9sL5jeoSTC). The
+  weekly allowance resets Monday 16:00 UK time. Big tasks (BAL3, multi-agent waves) wait for the weekend.
+- H1 merged: 55-hearth.js, 63d-scenery-camp.js (new games start at a cold fire: 8 Oak lights it at ~0:16;
+  Workbench 2:19, first tool 3:00, Forge 5:08; stations Lv 0 for new games only; old saves untouched, one
+  What's new line); the Map Room Next Up goal and Roster line; sim --cold (default 1); perf new-game lights
+  the fire first. --targets 17/20 (P1 now passes; T6 no-support 5 lower vs 2-4, likely noise; T16, D1 as
+  before). Follow-ups: Hesketh partly cut off at 360px; station stakes crowd the oak; new-game Camp tab
+  12.6ms vs 12 budget.
+- Coordinator fix: 55-almanac.js needsMet probed later files' `let`s during boot (TDZ throw:
+  "Cannot access 'craftItem' before initialization", date-dependent). Probes that throw now count as met.
+- Owner asked to reset their preview progress. The preview copy now uses its own save key
+  (sed: lanternfall.save.v1 -> lanternfall.preview.r1; bump r1 -> r2 to reset again). Future republishes
+  must keep the swap: sed -e '1s#<title>Lanternfall</title>#<title>Lanternfall Preview</title>#'
+  -e 's#lanternfall\.save\.v1#lanternfall.preview.r1#' dist/lanternfall.html > <preview path>.
+- LORE1b merged: the dark hunts and smothers light (the Voice wants the land wholly dark); "a light lit for
+  someone cannot be stolen" kept (smothered, never taken); the hero is the child Elowen's spark was lit for;
+  Region 3 Listener = the Pyre Knight (Ser Hadric), Caedmon's shield-brother; the Hollises (Bram's family)
+  as later optional Hands; the Voice is a 5-phase final boss at the bottom of the Deepwell (8.7). Its spec
+  task is renamed DV (D7 is the hearth spec). Writing tasks LORE2, LORE4, LORE5 are unblocked (weekday
+  light mode: one at a time).
+- GP1 merged (owner: gathering tiers came too fast). SKILL_TUNE in 20-data: NODE_REQ 1/14/30/64/112,
+  SMITH_REQ 1/10/22/36/54, gathering skillNeed 10 x lv^2.2, crafting its own curve, nodeXp 7 x t.
+  Focused time to tier (tooled): 50m / 5.2h / 30h / 105h (was 1m / 3m / 7m / 18m). Normal play: tier 3 day
+  2.5-3.5, tier 4 day 5.5-9.5, tier 5 day 13.5-17. Old saves keep every tier they had (55-skillpace.js).
+  --targets 17/20 (P1 misses Warden/Ranger at day 8.3 vs 4-8; T16, D1 as before). Heavy crafters still open
+  station tiers early (sim re-rolls a lot); revisit in BAL3. Coordinator resolved conflicts with H1
+  (55-crafting: the station-built gate AND the tier rule; check.mjs What's new filters).
+- USAGE RULE RAISED (owner, 2026-09-28: only 2% of weekly usage moved): weekdays now allow up to 4 agents
+  at once (the weekday check-ins stay at 09:38, 13:38, 17:38, 21:38). BAL3 still waits for the weekend.
+  LORE2 launched (4 running: G2, H3, F1, LORE2).
+- OWNER INPUT (a friend who loves idle games): achievements and goals are what bring him back ("numbers
+  going up"). Today: 23 achievements from the original game (56-achievements.js, none for newer systems),
+  Next Up (25 goals), Codex milestones, the weekly board, bounties. QUEUED next free slot: AC1 achievements
+  and goals spec (tiered tracks across every system, big lifetime numbers, near-miss nudges, titles and
+  small capped bonuses, a trophy wall at camp, story-driven chapter goals; old 23 kept by id with their
+  bonuses). Then AC2 core, AC3 UI.
+- OWNER INPUT for AC1: the friend loves REALLY HARD achievements with cool rewards: titles and accessories.
+  AC1 must include a top tier of rare, long-haul feats (weeks to months) whose rewards are visible
+  cosmetics drawn on the hero in B1 style (capes, hats, lantern skins and flame colours, auras, a small
+  companion critter), plus rare titles shown on the hero card and in the tavern/raid name line (display
+  only; the online data shape does not change). Show rarity (how few reach it is local-only; no online
+  stats). Every cosmetic is earned, never sold, and never gives power.
+- LORE2 merged: 21h-lore-hollow.js (Hollow arrivals and 4 beats, 14 bestiary entries incl. the Coast's,
+  15 elders incl. the Listener, 6 raid lines as client data only, LORE_LIMITS, LORE_BANNED). NOTE for R2-1:
+  coast foe keys must be crab, gull, deckhand, kelp, jelly, witch, coral, or add bestiary entries under the
+  chosen keys (check.mjs fails otherwise). LORE3 (delivery code) is next in the lore line. AC1 launched.
+- AC1 achievements.md merged: 92 tracks (368 tiers), 22 Classic kept, 16 secrets, 21 Feats (hard tier,
+  title + accessory each; capstone "Lanternfall"), 68 titles, 36 accessories, points ladder, chapters 1-2,
+  bonus caps (at most +9.2% party damage, nothing on day 1). Coordinator accepts section 14 items 1, 2, 4-9;
+  decides O2 yes (hats hide helms, with a Show helm switch), O3 yes (endless stars, points only), O4 yes
+  only for clock secrets that never pressure (no streaks, no "log in at"). ASKED THE OWNER: O1 (an optional
+  `title` id in raiders/<userId> and room presence so others see titles) and item 10 (your own title on your
+  own Tavern row: online-layer UI file, no data change). Until then titles show locally only.
+  AC2 launched.
+- OWNER: the top achievement tier is EVERFLAME, not Lantern (Bronze, Silver, Gold, Everflame; stars after
+  it). achievements.md updated; AC2 told. The accessory slot named "Lantern" and Feat names are unchanged.
+- OWNER: titles must be short epithets "a person would be known by" (1-2 words, <= 14 chars, read after the
+  name: "Wren the Unmoved", "Wren, Wyrmslayer"). Coordinator renamed display text only (ids unchanged, saves
+  safe) in 57c-codex.js (milestones and page titles), 57d-deepwell.js (shop titles), 21c-data-legend.js,
+  21e-stories-pinnacle.js (title list), and every title in achievements.md (style rule in 4.2). AC2 told.
+- INCIDENT: the owner's interrupt at ~09:30 UTC stopped G2, H3 and F1; the coordinator did not notice and
+  reported them as running until 13:00. Their WIP was committed on their old branches (518bf66, eea113e,
+  8f27ee1) and, on the owner's go-ahead, three new agents resumed from it (4 running: G2, H3, F1, AC2).
+  RULE: before any status report, verify agents with ListAgents; after any owner interrupt, check at once.

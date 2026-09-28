@@ -85,8 +85,9 @@
         V.btn.disabled = v.done || !canRecruit(v.id);
       } else if (v.kind === 'trade') {
         V.btn.hidden = false;
-        V.btn.textContent = v.done ? 'Sold out' : 'Buy';
-        V.btn.disabled = v.done || S.gold < c.gold;
+        const room = v.done ? '' : stashNeed([['ess', v.trade.t, v.trade.n]]);   // H3: the essence must fit
+        V.btn.textContent = v.done ? 'Sold out' : room ? 'Storehouse full' : 'Buy';
+        V.btn.disabled = v.done || S.gold < c.gold || !!room;
       } else V.btn.hidden = true;
       const nx = v.next;
       const turn = `The next visitor arrives in ${fmtTime(untilMidnight())}.`;
