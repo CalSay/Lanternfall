@@ -307,6 +307,19 @@ FEE_FOES = [400, 240, 171, 133, 120]      FEE_STEP = [1, 1.1, 1.2]      rounded 
 - `FEE_FOES` is set so that a full crew running all day (6 shifts each) costs **about 1.15x an idle player's
   fighting income at the region's first zones, and about 0.6x by its boss** (section 8, EC3). Region 1 is
   the tutorial: 0.55-0.65 throughout.
+  The worked numbers (full crew = every Tent the region opens; early = Lv 1 at the region's lowest grade,
+  late = Lv 10 at its top grade; income from 2.2):
+
+  | Region | Crew | Full crew all day / idle income, early | late | Normal play (3 shifts a day) / normal income, early | late | Active (5 a day) / active income, early | late |
+  |---|---|---|---|---|---|---|---|
+  | 1 Hollow | 2, then 3 | 0.55 | 0.62 | 0.22 | 0.25 | 0.26 | 0.30 |
+  | 2 Coast | 5 | 1.15 | 0.63 | 0.46 | 0.25 | 0.55 | 0.30 |
+  | 3 Emberwaste | 7 | 1.11 | 0.65 | 0.44 | 0.26 | 0.53 | 0.31 |
+  | 4 Pale Reach | 9 | 1.14 | 0.63 | 0.46 | 0.25 | 0.54 | 0.30 |
+  | 5 Gloamvale | 10 | 1.14 | 0.60 | 0.46 | 0.24 | 0.54 | 0.29 |
+
+  So early in a region, sending everyone every time takes about half of a normal player's gold, with Tents,
+  the Hearth and Blade asking for the rest; by the boss it is a quarter.
 - **Tam's first three shifts are free** (he is family), so the first send never waits on gold.
 - **Free for the Lanternbearer's own nodes?** No: a gatherer's fee is the same wherever they work. Gathering
   yourself is always free; that is the choice.
