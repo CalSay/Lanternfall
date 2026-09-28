@@ -485,3 +485,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   name: "Wren the Unmoved", "Wren, Wyrmslayer"). Coordinator renamed display text only (ids unchanged, saves
   safe) in 57c-codex.js (milestones and page titles), 57d-deepwell.js (shop titles), 21c-data-legend.js,
   21e-stories-pinnacle.js (title list), and every title in achievements.md (style rule in 4.2). AC2 told.
+- INCIDENT: the owner's interrupt at ~09:30 UTC stopped G2, H3 and F1; the coordinator did not notice and
+  reported them as running until 13:00. Their WIP was committed on their old branches (518bf66, eea113e,
+  8f27ee1) and, on the owner's go-ahead, three new agents resumed from it (4 running: G2, H3, F1, AC2).
+  RULE: before any status report, verify agents with ListAgents; after any owner interrupt, check at once.
