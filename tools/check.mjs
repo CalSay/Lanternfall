@@ -4038,5 +4038,67 @@ try {
   assert(!b.errors.length, 'looks (browser side): no errors' + (b.errors.length ? ': ' + b.errors[0] : ''));
 } catch (e) { fail('looks crashed: ' + (e.stack || e)); }
 
+// ---- wall: the Trophy Wall at camp (63e-scenery-wall.js; achievements.md 6, AC5) ----
+console.log('wall');
+try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const stub = `
+    const __n = { rects: 0 };
+    const __ctx = () => ({ fillRect() { __n.rects++; }, drawImage() {}, save() {}, restore() {}, setTransform() {}, createRadialGradient: () => ({ addColorStop() {} }) });
+    const document = { createElement: () => ({ width: 0, height: 0, getContext: __ctx, toDataURL: () => 'data:image/png;base64,AA' }) };
+  `;
+  const w = loadCoreRaw({ seed: 5, prelude: stub, files: coreFiles().concat(['63e-scenery-wall.js']) });
+  const W = s => w.eval(s);
+  for (let i = 0; i < 30; i++) w.fn.tick(0.1);
+  const art = W(`(() => {
+    const TW = trophyWall, bad = [], seen = new Set(), hex = c => /^#[0-9A-F]{6}$/i.test(c);
+    for (const f of DEED_FEATS) {
+      const m = TW.TROPHY[f.id];
+      if (!m) { bad.push(f.id + ' no trophy'); continue; }
+      if (m.length !== 12 || m.some(r => r.length !== 12)) bad.push(f.id + ' not 12 x 12');
+      const body = m.join('').replace(/\\./g, '').length;
+      if (body < 24) bad.push(f.id + ' too small (' + body + ')');
+      if (m[0] !== '............' || m[11] !== '............' || m.some(r => r[0] !== '.' || r[11] !== '.')) bad.push(f.id + ' touches the edge (no room for the outline)');
+      const px = TW.trophyPx(f.id);
+      if (!px.every(([x, y, c]) => x >= 0 && y >= 0 && x < 12 && y < 12 && hex(c))) bad.push(f.id + ' pixels');
+      if (!px.some(p => p[2] === '#120B18')) bad.push(f.id + ' no ink outline');
+      const k = m.join(); if (seen.has(k)) bad.push(f.id + ' same as another'); seen.add(k);
+    }
+    const its = [{ kind: 'ch', id: 'ch1' }, { kind: 'ch', id: 'ch2' }].concat(DEED_GROUPS.map(g => ({ kind: 'grp', id: g.id, lv: 1 })), DEED_GROUPS.map(g => ({ kind: 'grp', id: g.id, lv: 2 })));
+    for (const it of its) for (const f of [0, 1]) { const px = TW.itemPx(it, f); if (!px.length || !px.every(([x, y, c]) => x >= 0 && y >= 0 && x < 12 && y < 12 && hex(c))) bad.push(it.kind + ':' + it.id + ' pixels'); }
+    const p0 = JSON.stringify(TW.itemPx({ kind: 'ch', id: 'ch1' }, 0)), p1 = JSON.stringify(TW.itemPx({ kind: 'ch', id: 'ch1' }, 1));
+    const urls = DEED_FEATS.filter(f => !/^data:image/.test(featTrophyURL(f.id))).map(f => f.id);
+    return { bad, stir: p0 !== p1, urls, none: featTrophyURL('nope') === '', hooks: [0, 1, 2, 3].map(TW.hooks) };
+  })()`);
+  assert(!art.bad.length, 'wall: 21 Feat trophies (12 x 12, B1 tones, ink outline, each its own), pennants and 12 group medals at Gold and Everflame' + (art.bad.length ? ': ' + art.bad.slice(0, 6).join('; ') : ''));
+  assert(art.stir && !art.urls.length && art.none, "wall: pennants stir in 2 frames; featTrophyURL gives every Feat's trophy (AC3's hook), '' for an unknown id" + (art.urls.length ? ': ' + art.urls.join(', ') : ''));
+  assert(JSON.stringify(art.hooks) === '[0,4,8,12]', `wall: 4, 8 and 12 hooks at stages 1-3 (${art.hooks.join(', ')})`);
+
+  // stages follow the points ladder; p13 opens with the wall on any save
+  assert(W('deeds.points() < 250 && deeds.wallStage() === 0 && trophyWall.items().length === 0 && !hearthPlotOpen("wall")'), 'wall: under 250 points the plot is dark and nothing hangs');
+  W('(() => { const t = Date.now(); S.deeds.feat.f_parry = 1; S.deeds.at.f_parry = t - 3e6; S.deeds.feat.f_gold = 1; S.deeds.at.f_gold = t - 2e6; S.deeds.feat.f_watch = 1; S.deeds.at.f_watch = t - 1e6; S.deeds.ch.ch1 = 7; S.deeds.grp.combat = 1; deeds._rebuild(); deeds.check(true, false); })()');
+  const st1 = W('({ st: deeds.wallStage(), pts: deeds.points(), open: hearthPlotOpen("wall"), items: trophyWall.items().map(x => x.id) })');
+  assert(st1.st === 1 && st1.open && JSON.stringify(st1.items) === '["f_watch","f_gold","f_parry","ch1"]', `wall: ${st1.pts} points opens stage 1 and plot p13; 4 hooks hold the newest Feat first, then chapters, then medals (${st1.items.join(', ')}; stage ${st1.st})`);
+  W('deeds.pin(["combat", "f_parry", "f_all"])');
+  const pinned = W('trophyWall.items(3).map(x => x.id + (x.lv || ""))');
+  assert(JSON.stringify(pinned) === '["combat1","f_parry","f_watch","f_gold","ch1"]', `wall: pins hang first (unearned pins skipped), then the automatic order (${pinned.join(', ')})`);
+  W('for (const f of DEED_FEATS) { S.deeds.feat[f.id] = 1; S.deeds.at[f.id] = S.deeds.at[f.id] || 1; } for (const g of DEED_GROUPS) S.deeds.grp[g.id] = 2');
+  assert(W('trophyWall.items(3).length === 12 && trophyWall.items(2).length === 8 && trophyWall.items(1).length === 4 && trophyWall.earned().length === 21 + 1 + 12'), 'wall: a full wall holds 12; the rest wait for a pin');
+  const pr = W(`(() => { const out = []; const c = document.createElement('canvas').getContext('2d');
+    for (const st of [0, 1, 2, 3]) { const n0 = __n.rects; trophyWall.paint(c, 60, 70, 2, 0, { stage: st, items: trophyWall.items(st), f: 1, lit: true, star: true }); out.push(__n.rects - n0); }
+    return out; })()`);
+  assert(pr.every(n => n > 4) && pr[3] > pr[1], `wall: every stage paints (${pr.join(' / ')} rects)`);
+  assert(!w.errors.length, 'wall: no errors' + (w.errors.length ? ': ' + w.errors[0] : ''));
+
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  const src = rd('js/63e-scenery-wall.js');
+  assert(/registerSection\('camp', \{ id: 'camp-wall'[^\n]*trophyWall\.mount/.test(rd('js/75-camp-ui.js')) && /campPaintFire = paintFire/.test(rd('js/63d-scenery-camp.js')),
+    'wall: the Camp view carries the Trophy Wall card (75-camp-ui); it shares the camp fire painter (63d)');
+  assert(W('HEARTH_PLOT_AT.wall.plot === "p13" && HEARTH_PLOT_AT.wall.x === 990 && HEARTH_PANO_W === 1024 && typeof HEARTH_PLOT.wall === "function"'),
+    'wall: plot p13 at x 990 on a 1,024 art px panorama (55-hearth)');
+  assert(/red\(\)/.test(src) && /idleTask\(run, true\)/.test(src) && /deedsUI\.open\(view\)/.test(src) && !/registerState/.test(src) && !/localStorage/.test(src),
+    'wall: reduced motion holds one frame; plates bake in idle time; a tap opens Feats; no new save field');
+} catch (e) { fail('wall crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
