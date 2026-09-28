@@ -96,6 +96,12 @@ When the three running tasks (C4 combat visuals, BAL2 balance, R0 regions) are m
 any new tasks. Build, check, republish the preview, and show the owner the latest version with a short
 summary. Resume only when the owner says so.
 
+## Queued for after the pause (owner feedback)
+
+- Expeditions feel locked with no explanation: until the Map Room exists, the Roster board (and the
+  bench sheet) should say "Build the Map Room (Hearth 2) to send companions on expeditions", with a Go
+  to the building. Consider a Next Up goal for it once Hearth 2 is reached.
+
 ## Waiting on the owner
 
 - Late-game direction for plan 2 (asked 2026-09-27): which of these to prioritise? Region 2 with new
