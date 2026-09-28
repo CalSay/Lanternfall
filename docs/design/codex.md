@@ -28,7 +28,7 @@ Design rules:
 |---|---|---|---|---|---|---|
 | 1 | **Bestiary** | 7 monster types x 4 tiers; 7 Elders (first kill of each zone type's boss); 7 champions (one of each type) | 2; 3; 2 | 91 | `S.mastery.types`, `S.maxZone`, champion kills | derived; derived; recorded |
 | 2 | **Zones** | 35 zones x 5 mastery stars | 1 | 175 | `S.mastery.zones` | derived |
-| 3 | **Uniques** | 13 hero uniques, 6 companion uniques | 5 | 95 | `S.found`, B4's found list | derived |
+| 3 | **Uniques** | 13 hero uniques (the 6 companion uniques became legendary powers, page 16 Legendaries: legendaries.md 7) | 5 | 65 | `S.found` | derived |
 | 4 | **Armoury** | 13 affix stats (HP plus 3 per role) x 5 tiers seen; 7 Masterwork lines | 1; 2 | 79 | `itemAdded` | recorded |
 | 5 | **Companions** | 18 recruited; 3 ranks each (Veteran, Captain, Champion); 14 synergies switched on | 5; 1; 2 | 172 | `S.party.rec`, B2 | derived; derived; recorded |
 | 6 | **Stories** | 54 camp stories read; 18 joining moments | 1 | 72 | `S.party.rec[id].seen` | derived |
@@ -40,6 +40,7 @@ Design rules:
 | 12 | **Omens** | 35 Omens seen; 7 Dares taken | 1 | 42 | `S.almanac.seen`, Dares | derived; recorded |
 | 13 | **Achievements** | 22 achievements (more as they are added) | 2 | 44 | `S.achievements.got` | derived |
 | 14 | **Wardrobe** | Cosmetics bought or found: 17 from the Deepwell (more from festivals) | 1 | 17 | `S.deep.cos` | derived |
+| 16 | **Legendaries** | 39 legendary powers learned into the Lantern Book (24 class, 15 companion); opens with the first legendary power | 2 each, +1 per rank above I | 234 | `S.legend.book` | derived |
 | | **Region 1 total** | | | **1,105** | | |
 
 - A page for a system that is not in the game yet is hidden, and its Light is not counted.

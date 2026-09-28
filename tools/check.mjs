@@ -1889,7 +1889,7 @@ try {
     const g = loadCore({ storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8') }) });
     const E = s => g.eval(s);
     E('ONBOARD.gate = true');
-    assert(E('S.onboard.all && !S.onboard.tips && FEATURES.every(x => isUnlocked(x.id)) && onboardStep() === null && GUIDE_STEPS.every(x => S.onboard.done[x.id])'),
+    assert(E('S.onboard.all && !S.onboard.tips && FEATURES.every(x => x.late || isUnlocked(x.id)) && onboardStep() === null && GUIDE_STEPS.every(x => S.onboard.done[x.id])'),
       `${f}: every feature open, no tips`);
     assert(E('topGoals(60, { sticky: false }).length') === E('(ONBOARD.gate = false, topGoals(60, { sticky: false }).length)'), `${f}: Next Up hides nothing`);
     errs.push(...g.errors);
@@ -1938,7 +1938,10 @@ try {
   // the guide ends; skip and "show every tab" work
   assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
   E('onboardTips(true); onboardUnlockAll()');
-  assert(E('S.onboard.all && FEATURES.every(x => isUnlocked(x.id))'), 'Show every tab: everything opens');
+  assert(E('S.onboard.all && FEATURES.every(x => x.late || isUnlocked(x.id))'), 'Show every tab: everything opens');
+  assert(E('!isUnlocked("powers")'), 'a late feature (Powers) stays hidden after "Show every tab" until its rule holds');
+  E('S.legend.sig[2] = 1'); for (let i = 0; i < 12; i++) g.fn.tick(0.1);
+  assert(E('isUnlocked("powers")'), 'Powers opens with a first Circle Sigil, also on an all-open save');
   assert(E('GOALS.every(x => goalGate(x))'), 'Next Up shows every system again once it is open');
   assert(E('(onboardReveal("deep"), true)'), 'reveal after all is harmless');
   errs.push(...g.errors);

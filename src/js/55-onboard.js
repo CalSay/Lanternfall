@@ -47,7 +47,12 @@ const FEATURES = [
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
   { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
-  { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) }
+  { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
+  // late: a system that arrives after the guide. It stays gated on old saves (S.onboard.all) and after
+  // "Show every tab" until its own rule holds, so nobody sees an empty view.
+  // Powers: the first legendary power, or a first Circle Sigil (Sigils are spent in the same view).
+  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Sigil', late: true,
+    when: () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length || (S.legend.sig || []).some(n => n > 0))) }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
@@ -98,7 +103,7 @@ function craftReady() {
   registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
-  isUnlocked = id => !id || O().all || !FEATURE_OF[id] || O().got[id] != null;
+  isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
   function unlock(id, quiet) {
     const f = FEATURE_OF[id]; if (!f || isUnlocked(id)) return false;
     O().got[id] = Math.round(O().t);
@@ -114,13 +119,13 @@ function craftReady() {
   // Check every rule now; returns the ids that unlocked. The tick hook calls it about once a second.
   onboardCheck = () => {
     const out = [];
-    if (O().all) return out;
     for (const f of FEATURES) {
+      if (O().all && !f.late) continue;
       if (O().got[f.id] != null) continue;
       let ok = false; try { ok = !!f.when(); } catch (e) {}
       if (ok && unlock(f.id)) out.push(f.id);
     }
-    if (FEATURES.every(f => O().got[f.id] != null)) O().all = true;
+    if (!O().all && FEATURES.every(f => f.late || O().got[f.id] != null)) O().all = true;
     return out;
   };
 
@@ -149,8 +154,14 @@ function craftReady() {
   on('ability', e => { if (!e || !e.auto) O().casts++; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
+  let lateAcc = 0;
+  const lateOpen = () => FEATURES.every(f => !f.late || O().got[f.id] != null);
   onTick(dt => {
-    if (O().all) return;
+    if (O().all) {   // only late features are left to check (about once a second)
+      lateAcc += dt; if (lateAcc < 1) return; lateAcc = 0;
+      if (!lateOpen()) onboardCheck();
+      return;
+    }
     O().t += dt;
     acc += dt; if (acc < 1) return; acc = 0;
     onboardCheck();
