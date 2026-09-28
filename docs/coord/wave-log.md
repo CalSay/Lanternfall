@@ -288,3 +288,8 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   notice for old saves (emit('whatsNew', ...)), 44px targets (Omen, weekly board, synergy chips,
   Expeditions), the Omen pinned for the whole check run, and 55-welcome.js (old saves without a camp get
   the Hearth up to what their zone allows, free, once; save-v2-late gets Hearth 8 with 2 builders).
+- R2-6 Coast writing merged (21b-stories-coast.js: COAST_ARRIVAL, COAST_STORY beats 0-5 with notes, head
+  and say lines, KEEPER_LINES, COAST_LORE bands VI-X, COAST_BOUNTY_TEXT {crab, pearl, beam},
+  COAST_OMEN_TEXT {springTide, calmSea, pearlMoon}). Canon: the Keeper is Silas Penrow, writing to Old
+  Hallam. R2-3/R2-7 must use these keys. The PB4 writer should know the Keeper's name and the light
+  Lurelight foreshadowing. The Codex must settle the "Letters from the Coast" title clash.
