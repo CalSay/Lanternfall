@@ -842,3 +842,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (lore.md 8.6-8.8). New grade names 6-15 (grade-9 renamed Wyrmsteel). ASKED THE OWNER: the Star-Fallen's
   name, the Last Landing beat, Deepwell vs Region 5 content, the material-name batch, an optional Whiteout
   hazard for Region 4. RG1 launched (opus).
+- OWNER: (1) the Proving opens once the Region 1 boss is DEFEATED (a milestone; no level-60 gate); and every
+  region boss should bring a big moment like it (coordinator proposing a milestone per region boss).
+  (2) the one-time free switch within 10 minutes: yes. (3) the Warlock's title "the Lamp-Thief" contradicts
+  the lore (we are the ones keeping lamps): rename (options sent to the owner). The other five titles stand.
