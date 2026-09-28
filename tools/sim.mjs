@@ -63,6 +63,7 @@ const cls = args.class || null, active = !!args.active && args.active !== '0';
 const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0';
 
 if (args.targets) { await runTargets(); process.exit(0); }
+if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
 Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
@@ -198,6 +199,9 @@ const CLASS_POS = ['weapon', 'off', 'helm', 'body'];
 const HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
 const classKind = pos => cls ? E(`((CRAFT_FITS[${JSON.stringify(pos)}] || {})[${JSON.stringify(cls)}] || [])[0] || null`) : null;
 const isClassItem = (it, pos) => !!it && it.slot === classKind(pos);
+// GP1: skills and the tier each has open (skillTopTier, 40-rules; the old level rule before GP1).
+const SKILL_KEYS = ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'];
+const topTierOf = k => E(`typeof skillTopTier === 'function' ? skillTopTier(${JSON.stringify(k)}) : (['mine', 'wood', 'forage'].includes(${JSON.stringify(k)}) ? NODE_REQ : CRAFT_STATION_REQ).filter(r => S.skills[${JSON.stringify(k)}].lv >= r).length`);
 // The class set of G1/G2 also counts the Charm, so the craft policy gathers for it too.
 const SET_POS = CLASS_POS.concat("charm");
 const setKind = pos => pos === "charm" ? "charm" : classKind(pos);
@@ -321,14 +325,17 @@ function blockingNode() {
     for (const pos of SET_POS) {
       const cur = fn.equipped(pos), kind = setKind(pos);
       if (cur && (cur.t > t || (cur.t === t && (isSetItem(cur, pos) || cur.u)))) continue;
-      const c = fn.canCraft(kind, t);
-      if (c.lv < c.need) continue;
+      let c = fn.canCraft(kind, t);
+      // GP1: the station is too low for this tier: gather for the training craft one tier down
+      // (forgeGear crafts it when nextBlock() says 'station'), as a player would.
+      let u = t;
+      if (c.lv < c.need) { if (t < 2) continue; u = t - 1; c = fn.canCraft(kind, u); if (c.lv < c.need || c.ok) continue; }
       // Gatherable shortfalls only (Hide and Essence come from fighting, K5).
       const miss = (c.miss || []).filter(([m]) => E(`!!CRAFT_NODES[${JSON.stringify(m)}]`)).sort((a, b) => b[1] - a[1]);
       for (const [m] of miss) {
-        if (E(`S.skills[skillOf(${JSON.stringify(m)})].lv >= NODE_REQ[${t - 1}]`)) return [m, t];
+        if (E(`skillTierOpen(skillOf(${JSON.stringify(m)}), ${u})`)) return [m, u];
         // Skill too low for this tier (e.g. Foraging on an old save): train it on the best open node.
-        const top = E(`NODE_REQ.filter(r => S.skills[skillOf(${JSON.stringify(m)})].lv >= r).length`);
+        const top = E(`skillTopTier(skillOf(${JSON.stringify(m)}))`);
         if (top >= 1) return [m, top];
       }
     }
@@ -424,7 +431,7 @@ function campNode() {
   for (const id of CAMP_ORDER) {
     const c = E(`campCan(${JSON.stringify(id)})`);
     if (c.ok || c.max || c.busy || c.full || c.need || !c.cost) continue;
-    for (const [f, tt, n] of c.cost.mats) if (E(`!!CRAFT_NODES[${JSON.stringify(f)}] && S.mats.${f}[${tt - 1}] < ${n}`) && E(`S.skills[skillOf(${JSON.stringify(f)})].lv >= NODE_REQ[${tt - 1}]`)) return [f, tt];
+    for (const [f, tt, n] of c.cost.mats) if (E(`!!CRAFT_NODES[${JSON.stringify(f)}] && S.mats.${f}[${tt - 1}] < ${n}`) && E(`skillTierOpen(skillOf(${JSON.stringify(f)}), ${tt})`)) return [f, tt];
   }
   return null;
 }
@@ -643,6 +650,12 @@ function runDays() {
   // BAL1: drills (a +10% step every 5 levels between promotions) and finished Camp builds count too.
   fn.on('drill', ({ id, lv }) => mark('drill', `${id}${lv}`));
   fn.on('campBuilt', ({ id, lv }) => mark('camp', `${id}${lv}`));
+  // GP1 (--report skills): the wall day each skill opens each tier, and gathering time per skill.
+  const skTier = {}, skGather = {};
+  // GP1: a gathering tier that opens (new nodes) is a meaningful upgrade too, now that tiers take days.
+  const skStamp = () => { for (const k of SKILL_KEYS) { const top = topTierOf(k), a = skTier[k] || (skTier[k] = [0]); while (a.length < top) { a.push(+(wall / H / 24).toFixed(2)); if (['mine', 'wood', 'forage'].includes(k)) mark('skill', k + a.length); } } };
+  fn.on('skillUp', skStamp);
+  const skAdd = (k, part, s) => { const o = skGather[k] || (skGather[k] = { live: 0, away: 0 }); o[part] += s; };
   const slotTier = {};
   const checkTiers = () => { for (const s of HERO_POS) { const it = fn.equipped(s); if (it && it.t > (slotTier[s] || 0)) { slotTier[s] = it.t; mark('tier', `${s}${it.t}`); } } };
   const topTier = () => Math.max(0, ...SLOTS.map(s => { const it = fn.equipped(s); return it ? it.t : 0; }));
@@ -669,7 +682,9 @@ function runDays() {
         // Away until this session: the game's closed-form gains, then the clock jumps.
         const gap = start - wall;
         wall = start; ci = sIdx; syncClock();
-        fn.awayGains(gap);
+        const r = fn.awayGains(gap);
+        if (E('S.activity') === 'gather') skAdd(E('skillOf(S.node.kind)'), 'away', r.t);
+        skStamp();
         awayN++;
       }
       ci = sIdx; syncClock();
@@ -677,6 +692,7 @@ function runDays() {
       withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
       for (let sec = 0; sec < len; sec++) {
         playSecond(sec); wall++; act++;
+        if (E('S.activity') === 'gather') skAdd(E('skillOf(S.node.kind)'), 'live', 1);
         if (sec % 60 === 0) checkTiers();
       }
       checkTiers();
@@ -692,6 +708,7 @@ function runDays() {
     const campMax = E('typeof campList === "function" ? campList().reduce((a, id) => a + campMaxLevel(id), 0) : 0');
     if (campStats.full === null && campMax && campLv >= campMax) campStats.full = d;
     const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
+    r.sk = Object.fromEntries(SKILL_KEYS.map(k => [k, E(`S.skills.${k}.lv`)]));
     rows.push(r);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
     // --snapday D:path writes the save at the end of day D (debugging).
@@ -726,7 +743,7 @@ function runDays() {
   console.log(`recruits: ${['join', 'rare', 'epic', 'legendary'].map(k => `${k} ${rec[k] ? (rec[k].day * 24 < 3 ? (rec[k].day * 1440 - 480).toFixed(0) + 'm' : 'day ' + rec[k].day.toFixed(1)) + ' (' + rec[k].id + ')' : '-'}`).join(', ')} | all: ${recruits.join(' ')}`);
   const campFirst = campStats.first ? { min: (campStats.first.t) / 60, id: campStats.first.id } : null;
   console.log(`camp: first build ${campFirst ? campFirst.min.toFixed(0) + ' min after install (' + campFirst.id + ')' : '-'}, full camp ${campStats.full ? 'day ' + campStats.full : '-'}, levels by day ${rows.filter(r => [1, 3, 7, 14, 21, 30, 45].includes(r.day)).map(r => `d${r.day} ${r.camp}/${r.campMax}`).join(' ')}`);
-  if (args.json) console.log('JSON ' + JSON.stringify({ rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl })), bossAt, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
+  if (args.json) console.log('JSON ' + JSON.stringify({ rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk })), bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -840,4 +857,71 @@ async function runTargets() {
     console.log(`  ${c.padEnd(11)} ${f0(tJoin[i])}m ${id(/T16 first recruit [\d.]+m \((\w+)\)/)} | ${f1(tRare[i] / 60)}h ${id(/first Rare [\d.]+[mh] \((\w+)\)/)} | day ${rj.epic ? rj.epic.day.toFixed(1) + ' ' + rj.epic.id : '-'} | day ${rj.legendary ? rj.legendary.day.toFixed(1) + ' ' + rj.legendary.id : '-'}`);
   }
   if (cont.concat(dys, combatRuns).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
+}
+
+// ================= --report skills: gathering and crafting skill pace (GP1) =================
+// Part A, focused: one gathering skill worked alone on a fresh save, always at its best open node,
+//   in hours of that skill's own time to each tier and to levels. "tooled" equips a Common tool of
+//   each tier the moment it opens (a player who keeps the Workbench busy), "rough" never has a tool,
+//   "away" gathers only through the game's awayGains in 4h trips (rough tool; the node is picked when the trip starts). Mastery counts.
+//   --focus H: hours per run (default 200).
+// Part B, normal play: the --days check-in policy (default 30 days), each class: the day each
+//   gathering and crafting skill opens each tier, and the live / away hours spent per gathering skill.
+async function runSkillsReport() {
+  const focusH = +(args.focus || 200);
+  const KINDS = { mine: 'ore', wood: 'wood', forage: 'herb' };
+  const hh = s => s == null ? '-' : s < 3600 ? (s / 60).toFixed(0) + 'm' : (s / 3600).toFixed(1) + 'h';
+  const focus = (skill, mode) => {
+    const h = loadCore({ seed }); applyKnobs(h);
+    return h.eval(`(() => {
+      const kind = ${JSON.stringify(KINDS[skill])}, sk = ${JSON.stringify(skill)}, mode = ${JSON.stringify(mode)}, tool = toolOf(sk);
+      const top = () => typeof skillTopTier === 'function' ? skillTopTier(sk) : NODE_REQ.filter(r => S.skills[sk].lv >= r).length;
+      const out = { tier: [0], lv: {} };
+      let t = 0, tier = 0;
+      const pick = () => {
+        const nt = top();
+        if (nt !== tier && mode === 'tooled') { const it = newItem(tool, nt, 'common'); addItem(it); equipItem(it.id, TOOL_KINDS[tool].pos); gearDirty(); }
+        tier = nt; setNode(kind, tier); S.activity = 'gather';
+        while (out.tier.length < tier) out.tier.push(t);
+      };
+      pick();
+      const cap = ${focusH} * 3600;
+      while (t < cap) {
+        const lv0 = S.skills[sk].lv;
+        if (mode === 'away') { const r = awayGains(4 * 3600); t += r.t; }
+        else { const dt = nodeTime(kind, tier); t += dt; toolMasteryAdd(tool, dt); gainSkill(sk, nodeXpFor(kind, tier), true); }
+        for (let l = lv0 + 1; l <= S.skills[sk].lv; l++) out.lv[l] = t;
+        if (S.skills[sk].lv !== lv0) pick();
+      }
+      out.end = S.skills[sk].lv; out.mastery = S.tools.m[tool][0];
+      return out;
+    })()`);
+  };
+  console.log(`GP1 skill pace report (seed ${seed})`);
+  console.log(`\nA. Focused: hours of one gathering skill's own time to each tier (${focusH}h runs)`);
+  console.log('skill   mode    tier2  tier3  tier4  tier5 | level at 10m/30m/1h/3h/10h/30h | longest level gap in the first 30m');
+  const focusRes = {};
+  for (const skill of Object.keys(KINDS)) for (const mode of ['tooled', 'rough', 'away']) {
+    const o = focus(skill, mode); focusRes[skill + ':' + mode] = o;
+    const lvAt = s => { let l = 1; for (const [k, v] of Object.entries(o.lv)) if (v <= s) l = Math.max(l, +k); return l; };
+    const lvs = Object.values(o.lv).sort((a, b) => a - b);
+    let gap = 0, prev = 0; for (const v of lvs) { gap = Math.max(gap, Math.min(v, 1800) - prev); if (v > 1800) break; prev = v; }
+    console.log(`${skill.padEnd(7)} ${mode.padEnd(6)} ${[1, 2, 3, 4].map(i => hh(o.tier[i]).padStart(6)).join(' ')} | ${[600, 1800, 3600, 10800, 36000, 108000].map(lvAt).join('/')} | ${mode === 'away' ? '-' : hh(gap)} (end Lv ${o.end}, mastery ${o.mastery})`);
+  }
+  // Part B
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'tools'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'], nDays = +(args.days || 30), SKILL_KEYS = ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'];
+  const outs = await Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass])));
+  const js = outs.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
+  const dd = x => x == null ? '-' : x.toFixed(1);
+  console.log(`\nB. Normal play (--days ${nDays}, check-ins 8,13,19): the day each skill opens tiers 2/3/4/5 (day 0.3 = install at 08:00 on day 1)`);
+  console.log('class        ' + SKILL_KEYS.map(k => k.padEnd(19)).join(' '));
+  js.forEach((j, i) => console.log(classes[i].padEnd(12) + ' ' + SKILL_KEYS.map(k => [1, 2, 3, 4].map(t => dd((j.skTier[k] || [])[t])).join('/').padEnd(19)).join(' ')));
+  const DAYS = [1, 3, 7, 14, 21, 30].filter(d => d <= nDays);
+  console.log(`\nGathering time per skill over the run (live h + away h), and levels on days ${DAYS.join('/')}:`);
+  js.forEach((j, i) => console.log(classes[i].padEnd(12) + ' ' + ['mine', 'wood', 'forage'].map(k => { const gg = j.skGather[k] || { live: 0, away: 0 }; return `${k} ${(gg.live / 3600).toFixed(1)}+${(gg.away / 3600).toFixed(0)}h`; }).join(', ')
+    + ' | ' + SKILL_KEYS.map(k => k + ' ' + DAYS.map(d => (j.rows[d - 1] && j.rows[d - 1].sk) ? j.rows[d - 1].sk[k] : '-').join('/')).join(' ')));
+  if (args.json) console.log('JSON ' + JSON.stringify({ focus: focusRes, days: js.map((j, i) => ({ cls: classes[i], skTier: j.skTier, skGather: j.skGather, rows: j.rows })) }));
 }

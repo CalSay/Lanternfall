@@ -189,10 +189,10 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     if (nk) {
       const home = zoneTypesFor(fam), node = NODE_NAMES[fam][t - 1];
       const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).map(([k]) => TYPES[typeIndex(k)].name);
-      return `${name}: ${SKILL[nk.skill]} ${NODE_REQ[t - 1]}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
+      return `${name}: ${SKILL[nk.skill]} level ${skillReq(nk.skill, t)}, ${node}.` + (home.length ? ` +25% while camped in ${home.join(' or ')}.` : '') + (drop.length ? ` ${drop.join(' and ')} drop a few.` : '');
     }
     const drop = Object.entries(CRAFT_SIG_DROPS).filter(([, d]) => d.fam === fam).sort((a, b) => b[1].p - a[1].p).map(([k]) => TYPES[typeIndex(k)].name + 's');
-    const zt = Math.ceil(t) > 1 ? ` Fight in zone ${(t - 1) * 6 + 1} or higher for this tier.` : '';
+    const zt = Math.ceil(t) > 1 ? ` Fight in zone ${PACE.essTier[t - 1]} or higher for this tier.` : '';
     return fam === 'ess' ? `${name}: every foe can drop it. Marsh Wraiths drop extra.${zt}` : `${name}: fighting only. ${drop.join(', ')} drop it.${zt}`;
   };
 }

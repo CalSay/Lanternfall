@@ -850,10 +850,11 @@ try {
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
   assert(why0 === '7 more Flax Fibre, 1 more Quartz Shard, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
-  assert(E('canCraft("robe", 2).why') === 'Needs Tailoring 4' && E('craftItem("robe", 2)') === null, 'station tier gate: Needs Tailoring 4');
-  assert(E('canCraft("charm", 3).why') === 'Needs Enchanting 9', "Charm gates on the Enchanter's Table...");
-  E('S.skills.smith.lv = 9');
-  assert(E('canCraft("charm", 3).why') !== 'Needs Enchanting 9', '...or Smithing, so old saves keep the recipe (camp N4)');
+  const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
+  assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
+  assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
+  E(`S.skills.smith.lv = ${RQ(3)}`);
+  assert(E('canCraft("charm", 3).why') !== `Needs Enchanting ${RQ(3)}`, '...or Smithing, so old saves keep the recipe (camp N4)');
   E('S.skills.smith.lv = 1');
   // pays exactly, rolls affixes, station XP, events
   E('for (const k of CRAFT_FAMILIES) S.mats[k] = [200, 200, 200, 200, 200]');
@@ -863,9 +864,10 @@ try {
   const paid = Object.fromEntries(Object.keys(m0).map(k => [k, m0[k][0] - m1[k][0]]).filter(([, n]) => n));
   assert(it && it.slot === 'robe' && Array.isArray(it.a) && it.a.length >= 1 && E('S.items.length') === n0 + 1, `craftItem makes a Robe with ${it && it.a.length} affix line(s)`);
   assert(JSON.stringify(paid) === JSON.stringify({ ess: 2, crystal: 1, fibre: 7, herb: 1 }), `craft pays the recipe exactly (${JSON.stringify(paid)})`);
-  assert(E('S.skills.loom.xp') === 20 && E('globalThis.__crafted.join()') === 'robe:1', 'Tailoring XP 20 (no catch-up when level) and a crafted event');
+  assert(E('(() => { let x = S.skills.loom.xp; for (let l = 1; l < S.skills.loom.lv; l++) x += skillNeed(l, "loom"); return x; })()') === 20 && E('globalThis.__crafted.join()') === 'robe:1', 'Tailoring XP 20 (no catch-up when level) and a crafted event');
   E('S.skills.smith.lv = 10; S.skills.loom.lv = 1; S.skills.loom.xp = 0'); E('craftItem("mitre", 1)');
-  assert(E('craftXpFor("loom", 20)') === 40 && E('S.skills.loom.lv') === 2 && E('S.skills.loom.xp') === 40 - 25, 'catch-up: x2 XP while below Smithing');
+  const lx = E('(() => { let lv = 1, xp = 40; while (xp >= skillNeed(lv, "loom")) { xp -= skillNeed(lv, "loom"); lv++; } return [lv, xp]; })()');
+  assert(E('craftXpFor("loom", 20)') === 40 && E('S.skills.loom.lv') === lx[0] && E('S.skills.loom.xp') === lx[1], 'catch-up: x2 XP while below Smithing');
   const tk = E('craftItem("trinket", 1, { role: "caster" })');
   assert(tk && tk.ro === 'caster' && tk.a.every(([id]) => ['spell', 'area', 'control', 'hp'].includes(id)), 'Trinket rolls from the chosen role');
   assert(E('!!forgeItem("staff", 1)') && E('S.items[S.items.length - 1].slot') === 'staff', 'forgeItem delegates new kinds to craftItem');
@@ -897,11 +899,11 @@ try {
   assert(new Set(a.map(l => l[0])).size === a.length, 'a reforged line never duplicates a stat');
   assert(E(`canReforge(${staff.id}, 0).cost.gold`) === 225, 'the next Reforge costs more');
   E('S.items.push(newItem("staff", 2, "rare"))');
-  assert(E('canReforge(S.items[S.items.length - 1].id, 0).why') === 'Needs Enchanting 4', 'Reforge needs Enchanting for the tier');
+  assert(E('canReforge(S.items[S.items.length - 1].id, 0).why') === `Needs Enchanting ${RQ(2)}`, 'Reforge needs Enchanting for the tier');
   // Transmute
   E('S.skills.ench.lv = 1; S.mats.ore = [8, 0, 0, 0, 0]');
-  assert(E('canTransmute("ore", 1, "ore").why') === 'Needs Enchanting 4' && !E('transmute("ore", 1, 2)'), 'Transmute up needs Enchanting for the new tier');
-  E('S.skills.ench.lv = 4');
+  assert(E('canTransmute("ore", 1, "ore").why') === `Needs Enchanting ${RQ(2)}` && !E('transmute("ore", 1, 2)'), 'Transmute up needs Enchanting for the new tier');
+  E(`S.skills.ench.lv = ${RQ(2)}`);
   assert(E('transmute("ore", 1, "ore")') && E('JSON.stringify(S.mats.ore)') === '[4,1,0,0,0]', 'Transmute up: 4 Copper -> 1 Iron');
   assert(E('transmute("ore", 2, "down")') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute down: 1 Iron -> 2 Copper');
   assert(!E('transmute("ore", 1, "wood")') && !E('transmute("hide", 5, 6)') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute never crosses families or goes past tier 5');
@@ -948,9 +950,9 @@ try {
   assert(E('JSON.stringify(gear())') === gear0 && g.fn.heroDps() >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${g.fn.heroDps().toFixed(1)})`);
   assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
-  E('S.skills.ench.lv = 8');
-  assert(E('canCraft("starChart", 3).why') === 'Needs Enchanting 9', 'Star Chart needs Enchanting 9');
-  E('S.skills.ench.lv = 9; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]');
+  E(`S.skills.ench.lv = ${RQ(3) - 1}`);
+  assert(E('canCraft("starChart", 3).why') === `Needs Enchanting ${RQ(3)}`, `Star Chart needs Enchanting ${RQ(3)}`);
+  E(`S.skills.ench.lv = ${RQ(3)}; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
   assert(E('canCraft("starChart", 3).why') === '1 more Wraith Veil', 'Star Chart needs a Wraith Veil');
   E('S.craft.troph[6] = 1');
   assert(E('!!craftItem("starChart", 3)') && E('S.party.unlock.starChart') === true && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Oriel's route");
@@ -1270,7 +1272,9 @@ try {
   for (let i = 0; i < 400; i++) E('spawn(); kill()');
   const hide = E('S.mats.hide[0]'), rate = hide / (E('S.totalKills') - k0);
   const expect = E('0.72 * CRAFT_SIG_DROPS.beetle.p + 0.28 * CRAFT_SIG_DROPS.spore.p * 0') ;
-  assert(rate > expect * 0.7 && rate < expect * 1.6, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
+  // GP1: the upper bound was 1.6x; 400 kills earn mastery stars (+10% each) and packs of 3 land near
+  // 0.40/kill on most seeds (0.39-0.43 on seeds 1-3, 21, 22), so a new random stream tipped it over.
+  assert(rate > expect * 0.7 && rate < expect * 1.9, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
   // home ground
   E('S.zone = 2; S.mastery.zones[2] = 0');
   assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Crystal +25% (home ground), Ore +0%');
@@ -1367,9 +1371,9 @@ try {
     E('TOOL_TUNE.on = 1');
     assert(Math.abs(off / E('nodeTime("ore", 1)') - 1.25 * 1.01) < 1e-9, 'TOOL_TUNE.on = 0 restores the old node maths (right tool and mastery speed off)');
     // Sickle moved from the Forge: Woodcraft XP, gate on max(Woodcraft, Smithing)
-    E('S.skills.smith.lv = 10; S.skills.bench.lv = 1; S.skills.bench.xp = 0; S.skills.smith.xp = 0; S.mats.ore[2] = 99; S.mats.wood[2] = 99');
+    E('S.skills.smith.lv = CRAFT_STATION_REQ[2]; S.skills.bench.lv = 1; S.skills.bench.xp = 0; S.skills.smith.xp = 0; S.mats.ore[2] = 99; S.mats.wood[2] = 99');
     const sk = E('!!craftItem("sickle", 3)');
-    assert(sk && E('S.skills.bench.xp + S.skills.bench.lv') > 1 && E('S.skills.smith.xp') === 0 && E('stationLevel("sickle")') === 10, 'a Sickle made at the Workbench: tier 3 with Smithing 10, Woodcraft XP only');
+    assert(sk && E('S.skills.bench.xp + S.skills.bench.lv') > 1 && E('S.skills.smith.xp') === 0 && E('stationLevel("sickle")') === E('CRAFT_STATION_REQ[2]'), `a Sickle made at the Workbench: tier 3 with Smithing ${E('CRAFT_STATION_REQ[2]')}, Woodcraft XP only`);
     // mastery: seconds spent gathering, even when nothing is credited (a full Storehouse)
     E('S.equip.pick = null; gearDirty(); setNode("ore", 1); setActivity("gather")');
     const m0 = E('S.mats.ore[0]');
@@ -2251,7 +2255,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^The Great Lantern/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section
+    g.fn.on('whatsNew', w => { if (!/^The Great Lantern|^Skills now level more slowly/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the skill pace line: GP1's
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -2929,6 +2933,83 @@ try {
   assert(a0.gold > 0 && Math.abs(a1.gold - a0.gold) < 1e-6 * a0.gold && a1.left === 0 && !a0.errs && !a1.errs, `away fighting: the same gold with or without Well Rested (${Math.round(a0.gold)}), and it is used up`);
   assert(!g.errors.length, 'no Well Rested errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('tools and Well Rested crashed: ' + (e.stack || e)); }
+
+// ---- skill pace (GP1): slower levels, wider tier gates; no save loses a tier, recipe or item ----
+console.log('skill pace (GP1)');
+try {
+  const g = loadCore({ seed: 7 });
+  const E = s => g.eval(s);
+  assert(E('NODE_REQ === SKILL_TUNE.nodeReq && SMITH_REQ === SKILL_TUNE.stationReq && CRAFT_STATION_REQ === SMITH_REQ'), 'the gates are the SKILL_TUNE table (NODE_REQ, SMITH_REQ, CRAFT_STATION_REQ)');
+  const gaps = r => r.slice(1).map((v, i) => v - r[i]);
+  const ng = gaps(E('NODE_REQ')), sg = gaps(E('SMITH_REQ'));
+  assert(ng.every((d, i) => i === 0 || d > ng[i - 1]) && sg.every((d, i) => i === 0 || d > sg[i - 1]) && ng[0] > 4 && sg[0] > 4,
+    `the gaps between tiers widen: gathering ${E('NODE_REQ').join('/')} (gaps ${ng.join('/')}), crafting ${E('SMITH_REQ').join('/')} (gaps ${sg.join('/')})`);
+  assert(E('(() => { const f = (c, l) => Math.floor(c[0] * Math.pow(l, c[1]) * Math.pow(c[2] || 1, l - 1)); return [1, 10, 60].every(l => skillNeed(l) === f(SKILL_TUNE.gatherNeed, l) && skillNeed(l, "smith") === f(SKILL_TUNE.craftNeed, l) && skillNeed(l, "mine") === skillNeed(l)); })()'), 'skillNeed reads SKILL_TUNE (gathering and crafting curves)');
+  assert(E('nodeXp(3) === Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(3, SKILL_TUNE.nodeXp[1]))'), 'nodeXp reads SKILL_TUNE');
+  // A new game keeps nothing: the new gates alone decide.
+  assert(E('S.skillPace.v === 1 && Object.keys(S.skillPace.hw).length === 0'), 'a new game is marked at once and keeps no old tier');
+  E('S.skills.mine.lv = NODE_REQ[1] - 1');
+  assert(!E('skillTierOpen("mine", 2)') && !E('setNode("ore", 2)'), `new game: Mining ${E('NODE_REQ[1] - 1')} cannot work the Iron Vein`);
+  E('S.skills.mine.lv = NODE_REQ[1]');
+  assert(E('skillTierOpen("mine", 2) && setNode("ore", 2) && skillTopTier("mine") === 2 && skillNextReq("mine") === NODE_REQ[2]'), `new game: Mining ${E('NODE_REQ[1]')} opens it; next tier at ${E('NODE_REQ[2]')}`);
+  E('S.skills.smith.lv = SMITH_REQ[1] - 1');
+  assert(/^Needs Smithing \d+$/.test(E('canCraft("warblade", 2).why')) && E('canCraft("warblade", 2).why') === `Needs Smithing ${E('SMITH_REQ[1]')}`, 'new game: a tier-2 recipe below the gate says "' + E('canCraft("warblade", 2).why') + '"');
+  // Player text reads the tables, not literals.
+  assert(E('whereToGet("ore", 3)').includes(`Mining level ${E('NODE_REQ[2]')}`) && E('whereToGet("ess", 5)').includes(`zone ${E('PACE.essTier[4]')}`), 'where-to-get text reads NODE_REQ and PACE.essTier: ' + E('whereToGet("ore", 3)'));
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+  E('S.skills.mine.lv = NODE_REQ[2] - 1; S.skills.mine.xp = 0; gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
+  assert(toasts.some(m => m.includes(`Mining level ${E('NODE_REQ[2]')}.`) && m.includes('Mithril Seam')), 'the level-up that opens a tier names it: ' + toasts[toasts.length - 1]);
+  E('gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
+  assert(toasts[toasts.length - 1].includes(`Next tier at level ${E('NODE_REQ[3]')}.`), 'other level-ups name the next gate: ' + toasts[toasts.length - 1]);
+  assert(!g.errors.length, 'no errors (new game)' + (g.errors.length ? ': ' + g.errors[0] : ''));
+
+  // Every fixture: levels and XP unchanged, every tier the OLD gates opened stays open, items kept.
+  const OLD_NODE = [1, 8, 18, 30, 45], OLD_STN = [1, 4, 9, 16, 25];
+  const oldTop = (req, lv) => req.filter(r => lv >= r).length;
+  for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json'))) {
+    const rawText = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), raw = JSON.parse(rawText);
+    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: rawText }) });
+    const H = s => h.eval(s);
+    const lvOf = k => (raw.skills && raw.skills[k] && raw.skills[k].lv) || 1;
+    const same = Object.entries(raw.skills || {}).every(([k, v]) => H(`S.skills.${k}.lv`) === v.lv && H(`S.skills.${k}.xp`) === v.xp);
+    const lost = [];
+    // gathering: every node kind and tier
+    for (const kind of H('GATHER_KINDS')) {
+      const sk = H(`skillOf(${JSON.stringify(kind)})`);
+      for (let t = 1; t <= 5; t++) if (oldTop(OLD_NODE, lvOf(sk)) >= t && !H(`skillTierOpen(${JSON.stringify(sk)}, ${t}) && setNode(${JSON.stringify(kind)}, ${t})`)) lost.push(`${kind}${t}`);
+    }
+    // crafting: every kind at every tier its station (or Smithing, for kinds that use it) opened
+    for (const kind of H('Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy)')) {
+      const lv = H(`stationLevel(${JSON.stringify(kind)})`);   // levels are unchanged, so this is the level the old gate read
+      for (let t = 1; t <= 5; t++) if (oldTop(OLD_STN, lv) >= t && (!H(`stationTierOpen(${JSON.stringify(kind)}, ${t})`) || /^Needs /.test(H(`canCraft(${JSON.stringify(kind)}, ${t}).why`)))) lost.push(`${kind}${t}`);
+    }
+    // Enchanting: transmute up, reforge and tonics at every tier it opened
+    for (let t = 1; t <= 5; t++) if (oldTop(OLD_STN, lvOf('ench')) >= t && !H(`skillTierOpen('ench', ${t})`)) lost.push('ench' + t);
+    const ids = x => JSON.stringify((x.items || []).map(it => [it.id, it.slot, it.t, it.r, it.plus || 0]).sort());
+    const itemsKept = ids(raw) === ids(JSON.parse(H('JSON.stringify(S)'))) && JSON.stringify(raw.equip || {}) === JSON.stringify(Object.fromEntries(Object.entries(H('S.equip')).filter(([k]) => raw.equip && k in raw.equip)));
+    const kept = H('skillPaceInfo().kept').map(([k, a, b]) => `${k} ${b}->${a}`).join(', ');
+    assert(same && !lost.length && itemsKept && !h.errors.length, `${f}: skill levels and XP unchanged, no tier, recipe or item lost` + (kept ? ` (kept above the new gates: ${kept})` : ' (the new gates already open every old tier)') + (lost.length ? ' LOST ' + lost.join(' ') : '') + (h.errors.length ? ' ' + h.errors[0] : ''));
+    // round trip and a later load (the sim's --from-save path) keep the mark
+    h.eval('save(); loadSave()');
+    const stillOpen = Object.keys(raw.skills || {}).every(k => H(`skillTopTier(${JSON.stringify(k)})`) >= oldTop(H('SKILL_TUNE.craftSkills').includes(k) ? OLD_STN : OLD_NODE, lvOf(k)));
+    const h2 = loadCore({ seed: 3 }); h2.storage.set(KEY, rawText); h2.eval('loadSave()');
+    const late = Object.keys(raw.skills || {}).every(k => h2.eval(`skillTopTier(${JSON.stringify(k)})`) >= oldTop(h2.eval('SKILL_TUNE.craftSkills').includes(k) ? OLD_STN : OLD_NODE, lvOf(k)));
+    assert(stillOpen && late && H('S.skillPace.v') === 1, `${f}: the kept tiers survive a save and load, and a save loaded later in a session`);
+  }
+  // A synthetic old save right at the old gates: Mining 8 and Smithing 4 keep tier 2 under the new gates.
+  {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
+    raw.skills = Object.assign({}, raw.skills, { mine: { lv: 8, xp: 0 }, smith: { lv: 4, xp: 0 } }); delete raw.skillPace;
+    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    const tell = []; h.fn.on('whatsNew', w => tell.push(w.msg));
+    for (let i = 0; i < 3; i++) h.fn.tick(0.1);
+    assert(h.eval('skillTierOpen("mine", 2) && setNode("ore", 2) && stationTierOpen("warblade", 2) && S.skillPace.hw.mine === 2 && S.skillPace.hw.smith === 2'), 'an old save at Mining 8 / Smithing 4 keeps the Iron Vein and tier-2 Forge recipes');
+    assert(tell.length === 1 && /stays open/.test(tell[0]), 'one What\'s new line tells the player: ' + tell[0]);
+    h.eval('S.skills.mine.xp = 0'); const t0 = []; h.fn.on('toast', t => t0.push(t.msg));
+    h.eval('gainSkill("mine", skillNeed(8, "mine"))');
+    assert(h.eval('S.skills.mine.lv') === 9 && !t0.some(m => /is open to you/.test(m)), 'a kept tier is not announced again at the next level-up');
+  }
+} catch (e) { fail('skill pace crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

@@ -17,6 +17,7 @@
 //                                                cost: {mats, gold, troph}; miss: [[fam, n], ...]
 //   stationOf(kind) -> { key, n, skill }         the station that makes a kind
 //   stationLevel(kind) -> level used for the tier gate and rarity (see N4 note below)
+//   stationTierOpen(kind, t) -> bool   the tier gate (GP1: also open when the save kept the tier)
 //   craftXpFor(skill, n) -> n with the catch-up multiplier applied (x2 while behind)
 //   upgradeItem(id, trophIdx?) -> bool           +1 (max +10); +8..+10 each pay 1 Trophy
 //   canUpgrade(id) -> { ok, why, cost }          (the most plentiful Trophy unless trophIdx)
@@ -35,7 +36,7 @@
 //   brewTonic(key, t) / drinkTonic(key, t) / tonicActive() -> { key, t, left, v } | null   (K6b)
 //
 // Rules:
-//   - Tier gate: stationLevel(kind) >= CRAFT_STATION_REQ[t - 1]. Kinds that existed before K4
+//   - Tier gate: stationLevel(kind) >= CRAFT_STATION_REQ[t - 1], or a tier kept from before GP1 (stationTierOpen). Kinds that existed before K4
 //     (Charm, Axe) moved to new stations; they gate on the better of that station and Smithing
 //     so no save loses a recipe (camp N4). Their XP goes to the new station.
 //   - Rarity: rollRarity(level of the station), so the Forge odds are exactly as before.
@@ -51,7 +52,7 @@
 //   troph: Trophy counts by zone type (CRAFT_TROPHIES order). tonic: { k, t, left } active.
 //   tonics: { 'key:t': count } the pouch. jobs, champ: K5/K10. starChart: Star Charts made.
 
-let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
+let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, upgradeItem, canUpgrade, reforgeItem,
   canReforge, transmute, canTransmute, equipChar, unequipChar, trophies, craftStarChart, brewTonic,
   drinkTonic, tonicActive, craftSalvageBonus;
 
@@ -77,6 +78,13 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     // Pre-K4 kinds and every tool (H2: the Sickle moved from the Forge) keep the better of Smithing.
     return (RECIPE[kind] || (CRAFT_KINDS[kind] && CRAFT_KINDS[kind].tool)) && st.skill !== 'smith' ? Math.max(lv, S.skills.smith.lv) : lv;
   };
+  // GP1: tier t of a kind is open when stationLevel reaches the gate, or the save kept that tier from
+  // before GP1 (skillTierOpen, 40-rules), on the station's skill or, for kinds that use it, Smithing.
+  stationTierOpen = (kind, t) => {
+    const st = stationOf(kind); if (!st) return false;
+    if (stationLevel(kind) >= CRAFT_STATION_REQ[t - 1] || skillTierOpen(st.skill, t)) return true;
+    return stationLevel(kind) !== S.skills[st.skill].lv && skillTierOpen('smith', t);
+  };
   craftXpFor = (skill, n) => {
     const behind = CRAFT_CATCHUP[skill];
     const m = Array.isArray(behind) && S.skills[skill].lv < Math.max(...behind.map(k => S.skills[k].lv)) ? CRAFT_CATCHUP.mult : 1;
@@ -97,11 +105,12 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!d) return no('Unknown item.');
     if (d.legacy) return no('Swords and helms are no longer made. Craft your class weapon and head piece.');
     if (!validTier(t)) return no('Unknown tier.');
-    const st = stationOf(kind), lv = stationLevel(kind), need = CRAFT_STATION_REQ[t - 1];
+    const st = stationOf(kind), lv = stationLevel(kind), open = stationTierOpen(kind, t);
+    const need = open ? Math.min(lv, CRAFT_STATION_REQ[t - 1]) : CRAFT_STATION_REQ[t - 1];   // a kept tier needs no more
     const cost = splitCost(craftRecipe(kind, t));
     if (opts.mw != null) cost.troph = [[opts.mw, 1]];
     const x = { cost, lv, need, miss: [] };
-    if (lv < need) return no(gateWhy(st.skill, need), x);
+    if (!open) return no(gateWhy(st.skill, need), x);
     if (d.role === 'any' && opts.role != null && !CRAFT_ROLE_POOL[opts.role]) return no('Pick a role for the Trinket.', x);
     if (opts.mw != null) {
       if (!CRAFT_TROPHIES[opts.mw] || !craftTrophyLine(opts.mw, kind, 1)) return no('That Trophy does nothing on this item.', x);
@@ -172,7 +181,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const it = itemById(id); if (!it) return no('No such item.');
     if (!Array.isArray(it.a) || !it.a[idx]) return no('Pick a line to reforge.');
     const cost = reforgePrice(it), x = { cost }, need = CRAFT_STATION_REQ[it.t - 1];
-    if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
+    if (!skillTierOpen('ench', it.t)) return no(gateWhy('ench', need), x);
     const miss = missing(cost.mats, it.t);
     if (miss.length) return no(missWhy(miss, it.t), x);
     if (S.gold < cost.gold) return no(`${fmt(cost.gold - S.gold)} more gold`, x);
@@ -209,7 +218,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     if (!validTier(fromT) || !validTier(tt) || Math.abs(tt - fromT) !== 1) return no('Transmute moves one tier at a time.');
     const up = tt > fromT, rule = up ? CRAFT_TRANSMUTE.up : CRAFT_TRANSMUTE.down;
     const take = Math.max(1, rule.take - (up ? bonus('transmuteSave') : 0)), x = { take, give: rule.give, toT: tt };
-    if (up && S.skills.ench.lv < CRAFT_STATION_REQ[tt - 1]) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
+    if (up && !skillTierOpen('ench', tt)) return no(gateWhy('ench', CRAFT_STATION_REQ[tt - 1]), x);
     const have = S.mats[fam][fromT - 1];
     if (have < take) return no(`${take - have} more ${matName(fam, fromT)}`, x);
     // BAL1: units made by breaking down cannot be broken down again (1 tier-5 unit used to
@@ -278,7 +287,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
     const t = STAR.t, need = CRAFT_STATION_REQ[t - 1], cost = { mats: STAR.mats, gold: 0, troph: STAR.troph };
     const x = { cost, lv: S.skills.ench.lv, need, miss: [] };
     if (orielDone()) return no('Oriel already answered your Star Chart.', x);
-    if (S.skills.ench.lv < need) return no(gateWhy('ench', need), x);
+    if (!skillTierOpen('ench', t)) return no(gateWhy('ench', need), x);
     const tmiss = STAR.troph.filter(([i, n]) => (C().troph[i] || 0) < n);
     x.miss = missing(cost.mats, t);
     const parts = [];
@@ -305,7 +314,7 @@ let craftItem, canCraft, stationOf, stationLevel, craftXpFor, upgradeItem, canUp
   tonicActive = () => { const a = C().tonic; return a && a.left > 0 && CRAFT_TONICS[a.k] ? { key: a.k, t: a.t, left: a.left, v: tonicV(a.k, a.t) } : null; };
   brewTonic = (key, t) => {
     const d = CRAFT_TONICS[key]; if (!d || !validTier(t)) return false;
-    if (S.skills.ench.lv < CRAFT_STATION_REQ[t - 1]) return false;
+    if (!skillTierOpen('ench', t)) return false;
     const m = Object.fromEntries(Object.entries(d.rec).map(([k, n]) => [k, craftScale(n, t)]));
     if (!hasMats(m, t)) return false;
     payMats(m, t);

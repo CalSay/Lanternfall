@@ -215,7 +215,7 @@ let OMENS, WEEKLY_GOALS;
   }
 
   // ---------------- "best today" hint ----------------
-  const topTier = kind => { const sk = S.skills[skillOf(kind)]; const lv = sk ? sk.lv : 1; let t = 1; for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1; return t; };
+  const topTier = kind => skillTopTier(skillOf(kind));
   const bestWraith = () => { for (let z = S.maxZone; z >= 1; z--) if (zoneType(z) === 6) return z; return 0; };
   function hintFor(o) {
     const g = o && o.go;

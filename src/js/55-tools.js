@@ -202,9 +202,8 @@ function toolRight(skill, t) {
   // Smithing) and the skill has a node open for. ok: it is better than the one held and affordable.
   toolBest = skill => {
     const kind = toolOf(skill); if (!kind) return null;
-    const slv = stationLevel(kind), glv = S.skills[skill].lv;
     let t = 0;
-    for (let i = 1; i <= 5; i++) if (slv >= CRAFT_STATION_REQ[i - 1] && glv >= NODE_REQ[i - 1]) t = i;
+    for (let i = 1; i <= 5; i++) if (stationTierOpen(kind, i) && skillTierOpen(skill, i)) t = i;
     const cur = equippedTool(skill).tier;
     if (!t) return { kind, t: 0, cur, ok: false, why: 'Nothing to make yet.' };
     if (cur >= t) return { kind, t, cur, ok: false, why: 'Your tool is already that tier.' };
