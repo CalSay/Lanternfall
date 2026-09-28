@@ -13,7 +13,7 @@
 /* ---- status strip: where the party works, the Glint, home ground ---- */
 .gat-now { display: grid; gap: 3px; padding: 7px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--line-hi); }
 .gat-now.on { border-left-color: var(--gold); }
-.gn-what { font: 600 14px/1.2 var(--display); color: var(--muted); }
+.gn-what { font: 600 calc(14px * var(--display-k))/1.2 var(--display); color: var(--muted); }
 .gat-now.on .gn-what { color: var(--gold); }
 .gn-glint { font-size: 12.5px; color: var(--muted); }
 .gn-glint[hidden] { display: none; }
@@ -27,7 +27,7 @@
 .gat-node { min-height: 52px; padding: 4px 6px 4px 8px; gap: 10px; }
 .gat-node .ic { width: 40px; height: 40px; }
 .gat-node .ic img { width: 26px; height: 26px; margin-top: -6px; }
-.gt-tier { position: absolute; left: 0; right: 0; bottom: 0; font: 600 9.5px/1.25 var(--display); text-align: center; color: var(--bone); background: #0B0810D9; }
+.gt-tier { position: absolute; left: 0; right: 0; bottom: 0; font: 600 calc(9.5px * var(--display-k))/1.25 var(--display); text-align: center; color: var(--bone); background: #0B0810D9; }
 .gat-node .row-name { font-size: 15px; flex-wrap: nowrap; align-items: center; gap: 6px; }
 .gat-node .row-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gt-home { flex: none; padding: 0 4px; font: 600 10px/1.5 var(--body); letter-spacing: .06em; text-transform: uppercase; color: #1A1420; background: #F2E6B0; }
@@ -50,7 +50,7 @@
 .gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
 .ic.gw-ic { width: 56px; height: 56px; }
 .ic.gw-ic img { width: 40px; height: 40px; }
-.gw-name { margin: 0; font: 600 20px/1.1 var(--display); }
+.gw-name { margin: 0; font: 600 calc(20px * var(--display-k))/1.1 var(--display); }
 .gw-have { color: var(--muted); font-size: 13px; }
 .gw-where { margin: -6px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--bone); }
 .gw-go { min-height: 48px; }

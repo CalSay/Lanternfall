@@ -11,7 +11,7 @@
 .gl-lamp.on .gl-lit { opacity: 1; }
 .gl-lamp.on .gl-dark { opacity: 0; transition: opacity .5s; }
 .gl-lamp.on .gl-rays { opacity: 1; transform: scale(1); animation: gl-turn 24s linear 1s infinite; }
-.gl-head { margin: 0; font: 700 22px/1.15 var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--lc) 40%, transparent); }
+.gl-head { margin: 0; font: 700 calc(22px * var(--display-k))/1.15 var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--lc) 40%, transparent); }
 .gl-text { margin: 0; font-size: 14px; line-height: 1.45; color: var(--bone); text-align: left; }
 .gl-rw { list-style: none; margin: 2px 0 0; padding: 8px 10px; width: 100%; box-sizing: border-box; display: grid; gap: 6px; background: var(--well); border: 1px solid var(--line); text-align: left; }
 .gl-rw li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #F2E6B0; }
@@ -43,7 +43,7 @@
 .gl-link.on { background: color-mix(in srgb, var(--gold) 55%, var(--line)); }
 
 /* ---- the Lantern Road sheet ---- */
-.gl-sh-title { margin: 0 0 4px; font: 700 20px var(--display); color: var(--bone); }
+.gl-sh-title { margin: 0 0 4px; font: 700 calc(20px * var(--display-k)) var(--display); color: var(--bone); }
 .gl-sh-list { display: grid; gap: 8px; margin-top: 10px; }
 .gl-sh-row { --lc: var(--gold); display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
 .gl-sh-row.lit { border-color: color-mix(in srgb, var(--lc) 55%, var(--line)); }

@@ -16,7 +16,7 @@ Reference build: `prototypes/characters.html` (the rig, the layer system and the
   device resolution with gradients, never pixelated. Light is the mood: warm lantern-lit dark
   fantasy, not grimdark.
 - **Parallax backgrounds.** 4 to 5 pixel layers per zone (sky, far, mid, ground, foreground).
-- **Font and UI.** Pixelify Sans for display, IBM Plex Sans Condensed for body. Panels keep the
+- **Font and UI.** Handjet for display (was Pixelify Sans until FONT1), Barlow Semi Condensed for body. Panels keep the
   current plum and ember palette.
 
 ## 2. Palette and material ramps

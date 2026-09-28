@@ -27,8 +27,10 @@ let resize, animate, draw, stageStats, warmScene;
   // A fixed pool of NF records (C4: no allocation per number); when all are busy the one closest to
   // fading out gives way. ax: the shown foe's x when the text was raised (texts over a pack stay over
   // the foe they belong to while the next one steps up).
-  const FONTS = new Map();
-  const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Pixelify Sans", monospace`; FONTS.set(s, f); } return f; };
+  // Handjet (the display font, --display) reads small for its px size: TXT_K scales stage text up
+  // (about 26 -> 30 CSS px on a crit). Texts baked before the web font arrives are rebaked once it loads.
+  const FONTS = new Map(), TXT_K = 1.15;
+  const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Handjet", "Arial Narrow", monospace`; FONTS.set(s, f); } return f; };
   const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
   for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0 });
   function pushFloat(txt, color, big, x, y) {
@@ -74,6 +76,9 @@ let resize, animate, draw, stageStats, warmScene;
     if (pop === 1) ctx.drawImage(r.cv, Math.round((x - r.bw / 2) * K) / K, Math.round((y - r.by) * K) / K, r.bw, r.bh);
     else ctx.drawImage(r.cv, x - r.bw * pop / 2, y - r.by * pop, r.bw * pop, r.bh * pop);
   }
+  try {
+    document.fonts.load(fontPx(16)).then(() => { for (const r of floats) r.wz = 0; for (const r of nums) r.wz = 0; }, () => {});
+  } catch (e) {}
   const C_HURT = '#FF8A7A', C_POISON = '#B6E86A', C_HEAL = '#7EE07A', C_SHIELD = '#F4F7FF', C_GOLD = '#F2C14E';
   function pushNum(a, txt, col, big, glyph) {
     let row = 0, free = null, old = null;
@@ -1281,12 +1286,12 @@ let resize, animate, draw, stageStats, warmScene;
     for (const f of floats) {
       if (!f.on) continue;
       const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
-      const base = (f.big ? 21 : 15) * tz;
+      const base = (f.big ? 21 : 15) * tz * TXT_K;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
       const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, fTop + 2)) : lo + band * 0.5;
-      const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz);
+      const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz * TXT_K);
       const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
       const al = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
       if (al <= 0) continue;
@@ -1301,9 +1306,9 @@ let resize, animate, draw, stageStats, warmScene;
       if (!n.on) continue;
       const a = n.a; if (!a || !a.fr) { n.on = false; continue; }
       const age = 1.1 - n.life, pop = !reduced && age < 0.08 ? 1.3 - age * 3.75 : 1;
-      const base = (n.big ? 17 : 13) * tz, f0 = a.fr.idle0;
+      const base = (n.big ? 17 : 13) * tz * TXT_K, f0 = a.fr.idle0;
       const headY = a.hy - f0.oy + headTop(f0) - (hud ? 8 : 2);
-      const yr = headY - n.row * 15 * tz - (reduced ? 0 : age * 14 * tz), y = Math.max(top + base * 0.5, yr);
+      const yr = headY - n.row * 15 * tz * TXT_K - (reduced ? 0 : age * 14 * tz), y = Math.max(top + base * 0.5, yr);
       const al = Math.max(0, Math.min(1, n.life * 2.5)) * actorA(a);
       if (al <= 0.01) continue;
       if (n.wz !== base || n.k !== K) { bakeText(n, n.txt, n.col, base, 3.5 * tz, n.glyph); n.wz = base; }
