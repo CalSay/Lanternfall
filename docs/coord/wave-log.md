@@ -452,3 +452,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   --targets 17/20 (P1 misses Warden/Ranger at day 8.3 vs 4-8; T16, D1 as before). Heavy crafters still open
   station tiers early (sim re-rolls a lot); revisit in BAL3. Coordinator resolved conflicts with H1
   (55-crafting: the station-built gate AND the tier rule; check.mjs What's new filters).
+- USAGE RULE RAISED (owner, 2026-09-28: only 2% of weekly usage moved): weekdays now allow up to 4 agents
+  at once (the weekday check-ins stay at 09:38, 13:38, 17:38, 21:38). BAL3 still waits for the weekend.
+  LORE2 launched (4 running: G2, H3, F1, LORE2).
