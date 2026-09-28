@@ -5,7 +5,7 @@
 // Reads the roster API (56-roster.js); synergies (56b) and leads (56c) only when present.
 {
   const { safe, live, C, heroClass, heroCol, portrait, frameCol, first, pip, costText, weaponNoun, gearOf, slotTile,
-    traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive } = PTY;
+    traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive, outOf, heroTitle } = PTY;
   const RAR_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 };
   const P = () => S.party;
   const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, 3) : []);
@@ -107,12 +107,13 @@
     const pt = el('div', 'pt big'); pt.append(img(portrait('hero')));
     const who = el('div', 'pc-who');
     const nm = el('b', null, S.name);
+    const ctl = el('small', 'pc-ctitle'); ctl.hidden = true;   // the Codex title (57c), when the player picked one
     const sub = el('small');
     const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
-    who.append(nm, sub, tags);
+    who.append(nm, ctl, sub, tags);
     top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
-    const refs = { card, nm, sub };
+    const refs = { card, nm, sub, ctl };
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
@@ -145,6 +146,7 @@
     if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(box); }
     const r = heroRefs;
     setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
+    const ct = heroTitle(); setT(r.ctl, ct); putHidden(r.ctl, !ct);
     if (r.cdBar) {
       const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
       putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
@@ -279,7 +281,7 @@
     const leadsById = {}; for (const l of leadList()) leadsById[l.id] = l;
     const rows = ROSTER_KEYS.map((k, i) => {
       const rec = charRec(k);
-      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k) };
+      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k), out: rec ? outOf(k) : null };
     });
     const pw = x => { try { return x.rec ? charDps(x.k) : 0; } catch (e) { return 0; } };
     const shownPre = rows.filter(x => filt === 'all' || C(x.k).role === filt);
@@ -292,8 +294,12 @@
       ? rarP(a) - rarP(b) || (!!b.rec - !!a.rec) || (a.rec && b.rec ? b.rec.lv - a.rec.lv : near(b) - near(a)) || a.i - b.i
       : (!!b.rec - !!a.rec) || (a.rec ? by[sortBy](a, b) : near(b) - near(a) || rarP(a) - rarP(b)) || a.i - b.i);
     // Rebuild tiles only when something structural changes; levels update in place so taps are never lost.
-    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
-    for (const x of rows) { const t = rosTiles[x.k]; if (t && t.lv && x.rec) { const v = 'Lv ' + x.rec.lv; if (t.lv.textContent !== v) t.lv.textContent = v; } }
+    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag, x.out && x.out.id + x.out.back]))].join('|');
+    for (const x of rows) {
+      const t = rosTiles[x.k]; if (!t || !x.rec) continue;
+      if (t.lv) setT(t.lv, 'Lv ' + x.rec.lv);
+      if (t.out && x.out) setT(t.out, x.out.txt);     // "Out: Route, 3h 12m" counts down in place
+    }
     if (sig === rosSig) return; rosSig = sig; rosTiles = {};
     r.cnt.textContent = `${rows.filter(x => x.rec).length}/${rows.length}`;
     r.sort.forEach((b, i) => b.setAttribute('aria-pressed', String(SORTS[i] === sortBy)));
@@ -315,18 +321,20 @@
   let rosGen = 0;
   function addTile(x) {
     const r = rosRefs, c = C(x.k);
-    const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
+    const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : '') + (x.out ? ' out' : ''));
     t.style.setProperty('--rc', frameCol(x.k));
     const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
     if (x.rec) {
       const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
       fr.append(lv, el('i', 'rp r-' + c.role));
       if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
+      else if (x.out) fr.append(el('span', 'rt-in rt-away', 'Away'));
       if (x.flag) fr.append(el('span', 'ndot'));
     } else fr.append(el('i', 'rp r-' + c.role));
     t.append(fr, el('span', 'rt-nm', first(x.k)));
+    if (x.out) { const o = el('span', 'rt-how rt-out', x.out.txt); rosTiles[x.k].out = o; t.append(o); }
     if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
-    t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
+    t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : x.out ? `, ${x.out.txt}` : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
     t.addEventListener('click', () => partySheet.open(x.k));
     r.grid.append(t);
   }

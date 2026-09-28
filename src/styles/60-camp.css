@@ -30,22 +30,31 @@
 .bld-q[hidden], .bld-row .bar[hidden] { display: none; }
 
 /* ---- building cards ---- */
-.cb-list { display: grid; gap: 6px; }
-.cb { background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
-.cb.locked { opacity: .6; }
-.cb.busy { border-color: #5A4430; }
-.cb.new { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(242,193,78,.35), 0 2px 0 #0B0810, 0 0 16px rgba(242,193,78,.25); }
-.cb-row { width: 100%; min-height: 56px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 10px; background: none; border: 0; text-align: left; cursor: pointer; }
-.cb-row .ic { width: 40px; height: 40px; }
-.cb-row .ic img { width: 30px; height: 30px; }
+/* one joined list: rows split by thin rules; state shows as a left bar (busy: ember, new: gold) */
+.cb-list { display: grid; gap: 0; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.cb { position: relative; }
+.cb + .cb { border-top: 1px solid var(--line); }
+.cb.locked .cb-row { opacity: .6; }
+.cb.busy { box-shadow: inset 3px 0 0 var(--ember); }
+.cb.new { box-shadow: inset 3px 0 0 var(--gold); background: rgba(242,193,78,.07); }
+.cb.open { background: rgba(255,255,255,.025); }
+.cb-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 3px 5px 3px 0; min-height: 50px; }
+.cb-hit { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 9px; align-items: center; align-self: stretch; padding-left: 8px; min-width: 0; }
+.cb-hit .ic { width: 36px; height: 36px; }
+.cb-hit .ic img { width: 28px; height: 28px; }
 .cb-mid { min-width: 0; }
-.cb-nm { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font: 600 16px/1.15 var(--display); }
-.cb-lv { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; }
-.cb-line { font-size: 13px; color: var(--muted); margin-top: 1px; overflow-wrap: anywhere; }
+.cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 15px/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.cb-nm > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cb-lv { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; flex: none; }
+.cb-line { font-size: 12.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb.busy .cb-line { color: var(--ember); }
-.cb-dot { width: 10px; height: 10px; background: var(--xp); border: 2px solid #0B0810; box-shadow: 0 0 8px rgba(111,203,106,.6); }
-.cb-dot[hidden] { display: none; }
-.cb-body { display: grid; gap: 8px; padding: 0 10px 10px; }
+.cb.can .cb-line { color: var(--xp); }
+.cb.open .cb-line { white-space: normal; }
+.cb-quick { min-width: 84px; min-height: 44px; padding: 4px 8px; }
+.cb-quick[hidden] { display: none; }
+.cb-quick.armed { background: var(--gold); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 #A77B1E; }
+.cb-quick .price { font-size: 14px; }
+.cb-body { display: grid; gap: 8px; padding: 2px 10px 10px; }
 .cb-body[hidden] { display: none; }
 .cb-fx { display: grid; gap: 3px; }
 .cb-fxrow { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; padding: 5px 8px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
@@ -87,20 +96,28 @@
 
 /* ---- Roster board ---- */
 .ros-list { display: grid; gap: 6px; }
-.ros-row { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 6px 8px; min-height: 56px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
-.ros-pt { width: 44px; height: 44px; grid-row: span 2; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; }
+.ros-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 6px 4px 0; min-height: 52px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.ros-hit { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 9px; align-items: center; align-self: stretch; padding-left: 6px; min-width: 0; cursor: pointer; }
+.ros-hit:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ros-pt { width: 40px; height: 40px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; }
 .ros-pt.r-rare { border-color: var(--r-rare); }
 .ros-pt.r-epic { border-color: var(--r-epic); }
 .ros-pt.r-legendary { border-color: var(--r-legendary); }
 .ros-pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .ros-body { min-width: 0; }
-.ros-nm { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font: 600 15px/1.15 var(--display); }
-.ros-nm small { font: 500 12px var(--body); color: var(--muted); }
-.ros-st { font-size: 13px; color: #9FD8C9; }
+.ros-nm { display: flex; gap: 6px; align-items: baseline; font: 600 14.5px/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.ros-nm > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ros-nm small { font: 500 11.5px var(--body); color: var(--muted); flex: none; }
+.ros-st { font-size: 12.5px; color: #9FD8C9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ros-row.job .ros-st { color: var(--gold); }
 .ros-row.exped .ros-st { color: var(--r-rare); }
-.ros-acts { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; }
-.ros-acts .mini { min-height: 36px; }
+.ros-acts { display: flex; gap: 6px; }
+.ros-acts .mini { min-height: 44px; min-width: 56px; }
+
+/* ---- Hearth cost: a summary line, the chips behind a tap ---- */
+.ch-cost { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 8px; background: var(--well); border: 1px solid var(--line); font: 600 13.5px var(--display); color: var(--xp); }
+.ch-cost.short { color: #FFB27A; }
+.ch-cost[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .bld-row .bar > i, .cb-timer .bar > i { transition: none; }

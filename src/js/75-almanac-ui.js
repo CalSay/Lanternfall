@@ -158,18 +158,23 @@
       ok.addEventListener('click', () => { almanac.clearAuto(); ui(true); });
       al.auto.append(al.autoTx, ok);
       wk.append(al.auto);
-      al.list = el('div', 'sec');
+      al.list = el('div', 'sec dz-list om-list');
       wk.append(al.list);
       al.foot = el('p', 'note om-foot');
       wk.append(al.foot);
       sec.append(wk);
 
       for (let i = 0; i < 5; i++) {
+        // Compact goal card: the goal, its tier and progress, and one button (Claim or Swap). A tap
+        // on the card shows the reward.
         const r = makeRow(al.list, '', false, iconURL('banner', '#F2C14E'));
         r.row.classList.add('om-goal');
-        const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.desc.before(bar); r.bar = bar.firstChild;
-        r.tier = el('span', 'om-tier'); r.nm.after(r.tier);
-        const sw = el('button', 'om-swap', 'Swap'); r.row.append(sw); r.sw = sw;
+        const meta = el('div', 'om-meta');
+        r.tier = el('span', 'om-tier'); meta.append(r.tier, r.own);
+        const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.bar = bar.firstChild;
+        r.desc.before(meta, bar);
+        const d = disclose(r.row, r.desc.parentElement, null, [r.ic]); meta.append(d.chev);
+        const sw = el('button', 'om-swap', 'Swap'); sw.type = 'button'; r.row.append(sw); r.sw = sw;
         r.btn.addEventListener('click', () => { if (almanac.claim(i)) ui(true); });
         sw.addEventListener('click', () => { if (almanac.swap(i)) ui(true); });
         rows.push(r);
@@ -192,6 +197,7 @@
         const r = rows[i]; if (!r) return;
         r.row.hidden = false;
         setTxt(r.nm, almanac.goalText(g));
+        putAttr(r.desc.parentElement, 'aria-label', `${almanac.goalText(g)}: show the reward`);
         setTxt(r.tier, g.tier === 'steady' ? 'Steady' : 'Easy');
         setCls(r.tier, 'om-tier ' + g.tier);
         setTxt(r.own, g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`);

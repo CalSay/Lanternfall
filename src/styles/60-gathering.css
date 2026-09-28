@@ -1,4 +1,4 @@
-/* 60-gathering: small additions to the Gather tab for K5 (K8 redoes the tab). */
+/* 60-gathering: the Gather tab (72-ui-gather.js): skill cards, the status strip, node rows, the Pack. */
 #skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
 #skillCards .skill .sn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8,7 +8,49 @@
   #skillCards .skill .sn { letter-spacing: 0; font-size: 10px; text-transform: none; }
   #skillCards .skill .sn img { display: none; }
 }
-.gat-home { color: #F2E6B0; }
 .gat-sub { font: 600 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px 2px; }
+
+/* ---- status strip: where the party works, the Glint, home ground ---- */
+.gat-now { display: grid; gap: 3px; padding: 7px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--line-hi); }
+.gat-now.on { border-left-color: var(--gold); }
+.gn-what { font: 600 14px/1.2 var(--display); color: var(--muted); }
+.gat-now.on .gn-what { color: var(--gold); }
+.gn-glint { font-size: 12.5px; color: var(--muted); }
+.gn-glint[hidden] { display: none; }
+.gn-glint.lit { color: #FFE58A; font-weight: 600; text-shadow: 0 0 8px rgba(255,243,196,.6); animation: gn-pulse .6s ease-in-out infinite alternate; }
+.gn-home { font-size: 12.5px; color: #F2E6B0; }
+@keyframes gn-pulse { to { opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { .gn-glint.lit { animation: none; } }
+
+/* ---- node rows ---- */
+.gat-list { margin-top: 2px; }
+.gat-node { min-height: 52px; padding: 4px 6px 4px 8px; gap: 10px; }
+.gat-node .ic { width: 40px; height: 40px; }
+.gat-node .ic img { width: 26px; height: 26px; margin-top: -6px; }
+.gt-tier { position: absolute; left: 0; right: 0; bottom: 0; font: 600 9.5px/1.25 var(--display); text-align: center; color: var(--bone); background: #0B0810D9; }
+.gat-node .row-name { font-size: 15px; flex-wrap: nowrap; align-items: center; gap: 6px; }
+.gat-node .row-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gt-home { flex: none; padding: 0 4px; font: 600 10px/1.5 var(--body); letter-spacing: .06em; text-transform: uppercase; color: #1A1420; background: #F2E6B0; }
+.gt-home[hidden] { display: none; }
+.gat-node .row-desc { margin-top: 1px; font-size: 12.5px; }
+.gt-held { font-size: 12px; color: var(--bone); font-variant-numeric: tabular-nums; }
+.gt-held[hidden] { display: none; }
+.gat-node .buy { min-width: 72px; min-height: 44px; padding: 4px 8px; }
+.gat-list > .row.active { box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
+.gat-node.active .nm { color: var(--gold); }
+.buy.work.here:disabled { background: transparent; color: var(--gold); border-color: var(--gold); box-shadow: none; }
+.gat-list > .row.locked { opacity: .55; }
+
+/* ---- Pack ---- */
+.mats button.mat { font: inherit; color: var(--bone); cursor: pointer; min-height: 48px; }
+.mats button.mat:active { transform: translateY(1px); }
+.mats button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
 .mats .mat.none { opacity: .5; }
 .gat-tro .mat .mn { font-size: 10px; }
+.gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
+.ic.gw-ic { width: 56px; height: 56px; }
+.ic.gw-ic img { width: 40px; height: 40px; }
+.gw-name { margin: 0; font: 600 20px/1.1 var(--display); }
+.gw-have { color: var(--muted); font-size: 13px; }
+.gw-where { margin: -6px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--bone); }
+.gw-go { min-height: 48px; }

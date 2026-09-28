@@ -78,3 +78,16 @@
 .om-bar .om-nm { font-size: 14px; }
 .om-bar .om-nm::before { content: "Omen · "; color: var(--arcane); font-size: 12px; letter-spacing: .04em; }
 .om-bar .om-fx { font-size: 12px; }
+
+/* compact goal cards (progressive disclosure): goal, tier, progress, one button; the reward on a tap */
+.om-list .om-goal { min-height: 56px; padding: 5px 6px 5px 8px; gap: 10px; }
+.om-goal .ic { width: 36px; height: 36px; cursor: pointer; }
+.om-goal .dz-hit { align-self: stretch; display: grid; align-content: center; min-width: 0; }
+.om-goal .row-name { font-size: 14.5px; line-height: 1.2; }
+.om-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; font: 500 12px var(--body); color: var(--muted); }
+.om-meta .own { font: 600 12px var(--body); color: var(--bone); font-variant-numeric: tabular-nums; }
+.om-meta .dz-chev { margin-left: auto; }
+.om-goal .om-gbar { margin-top: 4px; }
+.om-goal .row-desc { display: none; margin-top: 5px; }
+.om-goal.open .row-desc { display: block; }
+.om-goal .buy { min-width: 64px; padding: 4px 8px; }

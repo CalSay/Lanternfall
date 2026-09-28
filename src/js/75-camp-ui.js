@@ -45,6 +45,14 @@
     for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
   }
   const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
+  // How many of a cost's parts the player already has: { have, all }.
+  function costCount(c) {
+    let have = 0, all = 0;
+    if (c.gold) { all++; if (S.gold >= c.gold) have++; }
+    for (const [f, t, n] of c.mats) { all++; if ((S.mats[f][t - 1] || 0) >= n) have++; }
+    for (const [i, n] of c.troph) { all++; const tr = S.craft.troph; if ((i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0) >= n) have++; }
+    return { have, all };
+  }
 
   // ---------------- confirm buttons (in-page, no confirm()) ----------------
   // First tap arms the button for 4 seconds; the second tap acts.
@@ -69,9 +77,10 @@
   }
 
   // The action area of a card: Build / Queue / Confirm, or Cancel for a pending build.
-  function actions(id) {
-    const box = el('div', 'cb-act'), go = btn('big cb-go'), cancel = btn('mini warn cb-cancel'), why = el('p', 'note cb-why');
-    box.append(why, go, cancel);
+  // quick: the building cards' compact row button (it lives in the row, not in this box).
+  function actions(id, quick) {
+    const box = el('div', 'cb-act'), go = quick ? quick.b : btn('big cb-go'), cancel = btn('mini warn cb-cancel'), why = el('p', 'note cb-why');
+    if (quick) box.append(why, cancel); else box.append(why, go, cancel);
     go.addEventListener('click', () => {
       const c = campCan(id); if (!c.ok) return;
       if (!isArmed('b:' + id)) { arm('b:' + id); return; }
@@ -87,11 +96,12 @@
         putHidden(go, !!pend || done || !!c.need); putHidden(cancel, !pend);
         if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
-          const verb = c.queue ? 'Queue' : 'Build';
-          setTxt(go, isArmed('b:' + id) ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
-          putDisabled(go, !c.ok); putToggle(go, 'armed', isArmed('b:' + id));
+          const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
+          if (quick) { setTxt(quick.q, `Lv ${c.to} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Sure?' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} Lv ${c.to}` : `${verb} Lv ${c.to}, ${dur(c.dur / 1000)}`); }
+          else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
+          putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
-        const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? 'Not enough yet.' : c.why);
+        const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? '' : c.why);
         setTxt(why, w); putHidden(why, !w);
       }
     };
@@ -116,7 +126,10 @@
       who.append(H.name, H.lv, H.fx); top.append(ic, who);
       H.next = el('div', 'ch-next'); H.nextT = el('div', 'ch-next-t'); H.nextO = el('div', 'ch-next-o'); H.next.append(H.nextT, H.nextO);
       H.costs = el('div', 'costs cb-costs'); H.timer = timer(); H.act = actions('hearth');
-      hearthCard.append(top, H.next, H.costs, H.timer.el, H.act.el);
+      // The cost: one summary line ("Cost: 2 of 5 ready"); the chips open on a tap.
+      H.cost = el('div', 'ch-cost'); H.costT = el('span', 'ch-cost-t'); H.cost.append(H.costT);
+      H.dz = disclose(hearthCard, H.cost, () => ui(true)); H.cost.append(H.dz.chev);
+      hearthCard.append(top, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
       sec.append(head, closed, hearthCard, buildersBox);
     },
@@ -130,7 +143,7 @@
       }
       const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
       setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
-      setTxt(H.lv, `Hearth ${l}/10 · ${campBuilders()} builder${campBuilders() > 1 ? 's' : ''}`);
+      setTxt(H.lv, `Hearth ${l}/10`);
       setTxt(H.fx, campEffects('hearth', l).join(' · '));
       putHidden(H.next, !nx);
       if (nx) {
@@ -138,8 +151,14 @@
         setTxt(H.nextT, `Next: Hearth ${nx.to}${rename}` + (S.maxZone < nx.zone ? ` (needs zone ${nx.zone})` : ''));
         setTxt(H.nextO, nx.opens.length ? 'Opens ' + nx.opens.join(', ') + '.' : `+3% away gains.`);
       }
-      putHidden(H.costs, !!pend || !!c.max);
-      if (!pend && !c.max && c.cost) chips(H.costs, c.cost);
+      const showCost = !pend && !c.max && !!c.cost;
+      putHidden(H.cost, !showCost); putHidden(H.costs, !showCost || !H.dz.open);
+      if (showCost) {
+        const n = costCount(c.cost);
+        setTxt(H.costT, n.have === n.all ? 'Cost: all ready' : `Cost: ${n.have} of ${n.all} ready`);
+        putToggle(H.cost, 'short', n.have < n.all);
+        if (H.dz.open) chips(H.costs, c.cost);
+      }
       H.timer.set(pend); H.act.set(c, pend);
       putToggle(hearthCard, 'new', S.camp.news.some(x => x.id === 'hearth'));
       // builders
@@ -177,20 +196,25 @@
   const openCards = new Set();
   const cards = new Map();
   let listBox, listSig = '';
+  // One row per building: icon, name, level, state or timer, and the Build/Queue button. A tap on the
+  // row opens the effects now -> next, the cost chips, Cancel and the building's own actions.
   function card(id) {
     const d = CAMP_B[id], w = el('div', 'cb'); w.id = 'camp-b-' + id;
-    const row = btn('cb-row'); row.setAttribute('aria-expanded', 'false');
+    const row = el('div', 'cb-row'), hit = el('div', 'cb-hit');
     const ic = el('div', 'ic'); ic.append(img(icon(id)));
     const mid = el('div', 'cb-mid'), nm = el('div', 'cb-nm'), lvl = el('span', 'cb-lv'), line = el('div', 'cb-line');
     nm.append(el('span', null, d.n), lvl); mid.append(nm, line);
-    const dot = el('span', 'cb-dot'); dot.hidden = true;
-    row.append(ic, mid, dot);
+    hit.append(ic, mid);
+    const qb = btn('buy cb-quick'), q = el('span', 'qty'), p = el('span', 'price'); qb.append(q, p);
+    row.append(hit, qb);
     const body = el('div', 'cb-body'); body.hidden = true;
-    const table = el('div', 'cb-fx'), costs = el('div', 'costs cb-costs'), extra = el('div', 'cb-extra'), tm = timer(), act = actions(id);
+    const table = el('div', 'cb-fx'), costs = el('div', 'costs cb-costs'), extra = el('div', 'cb-extra'), tm = timer(), act = actions(id, { b: qb, q, p });
     body.append(table, costs, tm.el, act.el, extra);
     w.append(row, body);
-    row.addEventListener('click', () => { if (openCards.has(id)) openCards.delete(id); else openCards.add(id); ui(true); });
-    return { w, row, lvl, line, dot, body, table, costs, extra, tm, act, fxSig: '', exSig: '' };
+    const dz = disclose(w, hit, on => { if (on) openCards.add(id); else openCards.delete(id); ui(true); });
+    nm.append(dz.chev);
+    hit.setAttribute('aria-label', `${d.n}: show details`);
+    return { w, row, hit, dz, qb, lvl, line, body, table, costs, extra, tm, act, fxSig: '', exSig: '' };
   }
   function effectsTable(k, id, l) {
     const max = CAMP_B[id].max, sig = id + l + max;
@@ -231,16 +255,21 @@
       for (const id of ids) {
         const k = cards.get(id), l = campLevel(id), max = CAMP_B[id].max, c = campCan(id), pend = campPending(id), isOpen = openCards.has(id);
         setTxt(k.lvl, l ? `Lv ${l}/${max}` : 'Not built');
+        // The row's one line: what is happening now, or what stops the next level.
         const line = pend ? `Building Lv ${pend.to} · ${pend.start ? dur(left(pend)) : 'queued'}`
-          : c.max ? campEffects(id, l).join(' · ')
-          : `Lv ${c.to}: ${campEffects(id, c.to).filter(x => !campEffects(id, l).includes(x)).join(' · ') || campEffects(id, c.to)[0]}` + (c.need ? ` · needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}` : '');
+          : c.max ? 'Fully built'
+          : c.need ? `Lv ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
+          : c.ok ? (c.queue ? 'Ready to queue' : 'Ready to build')
+          : c.miss ? `Lv ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;
         setTxt(k.line, line);
-        putHidden(k.dot, !c.ok || !!pend);
+        putHidden(k.qb, !!pend || !!c.max || !!c.need);
         putToggle(k.w, 'locked', !!c.need && !l);
         putToggle(k.w, 'busy', !!pend);
+        putToggle(k.w, 'can', c.ok && !pend);
         putToggle(k.w, 'new', S.camp.news.some(x => x.id === id));
-        putAttr(k.row, 'aria-expanded', String(isOpen)); putHidden(k.body, !isOpen);
-        if (!isOpen) continue;
+        if (k.dz.open !== isOpen) { k.dz.open = isOpen; putToggle(k.w, 'open', isOpen); putAttr(k.hit, 'aria-expanded', String(isOpen)); }   // opened from elsewhere (campGoto)
+        putHidden(k.body, !isOpen);
+        if (!isOpen) { if (!pend && !c.max && !c.need) k.act.set(c, pend); continue; }
         effectsTable(k, id, l);
         putHidden(k.costs, !!pend || !!c.max || !c.cost);
         if (!k.costs.hidden) chips(k.costs, c.cost);
@@ -306,18 +335,23 @@
     }
   });
   let rosGen = 0;
+  // One compact row: portrait, name, status (a tap opens the character sheet), then the actions.
   function rosRow(x) {
     const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
+    const hit = el('div', 'ros-hit'); hit.setAttribute('role', 'button'); hit.tabIndex = 0;
+    hit.setAttribute('aria-label', `${c.name}, open character sheet`);
     const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
     const body = el('div', 'ros-body');
     const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
     const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
-    body.append(nm, st);
+    body.append(nm, st); hit.append(pt, body);
+    const open = () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } };
+    hit.addEventListener('click', open);
+    hit.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === hit) { e.preventDefault(); open(); } });
     const acts = el('div', 'ros-acts');
     if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
     for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
-    const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
-    row.append(pt, body, acts);
+    row.append(hit, acts);
     rosBox.append(row);
   }
 
