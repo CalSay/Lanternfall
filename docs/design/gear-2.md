@@ -267,3 +267,185 @@ Region 1 pacing effect: grade 4 used to drop from zone 19. Gear lines at grade 3
 x0.56 on the weapon's damage line; with the rest of the party's damage that is roughly one zone at the
 Listener (zone HP grows x1.48 a zone). BAL3 checks P1 (day 5-8) after S4 and trims Region 1's zone HP from
 zone 19 on if it slips.
+
+---
+
+## 2. Gear by weight
+
+### 2.1 Weights, kinds and who wears them
+
+The kinds already in `CRAFT_KINDS` fit the three weights, so **no kind id changes**: only their recipes
+(2.3) and base lines (2.4) get a Gear 2.0 version, used by items crafted after S4 (`rv: 2`).
+
+| Position | Heavy (`heavy`) | Medium (`medium`) | Light (`light`) | Any |
+|---|---|---|---|---|
+| Weapon | Warblade | Bow | Staff, Censer | - |
+| Off-hand | Shield | Quiver | Lantern, Tome | - |
+| Head | Greathelm | Hood | Circlet, Mitre | - |
+| Body | Plate | Leathers | Robe, Vestments | - |
+| Charm | - | - | - | Charm |
+| Tools | - | - | - | Pickaxe, Woodaxe, Sickle (Rod on the Coast) |
+| Hero weapon (`wpn`) | Shield (tank) | Bow (striker) | Staff (caster), Tome (support) | - |
+| Hero trinket (`trk`) | - | - | - | Trinket |
+
+- **Who wears what** (core-2 5.1): the Lanternbearer wears its class's weight in weapon, off-hand, head and
+  body, whatever its evolution. Warrior, Reaver, Warden: heavy. Ranger, Venomstalker, Trapper: medium.
+  Mage, Warlock, Priest: light. Heroes wear by role in their two positions: tank heavy, striker medium,
+  caster and support light.
+- **Light kinds for any Mage** (classes-2.md 7.2, C5): Staff, Lantern, Circlet and Robe (today's
+  Lanternmage kinds) and Censer, Tome, Mitre and Vestments (today's Lightkeeper kinds) are all light kinds,
+  and **any Mage wears both sets**. They differ in look and in their default line set (2.2): Staff, Lantern,
+  Circlet, Robe lean to casting; Censer, Tome, Mitre, Vestments lean to healing. `CRAFT_FITS` reads the
+  weight (`KIND_W[kind]`) through `lbClass()` instead of the legacy class key; `cls` stays on each kind as
+  data so `retoolItems()` and legend `fits` keep working. No migrated item stops fitting.
+- **A class change** (Mirror of Embers) retools as `retoolItems()` does today: same id, grade, rarity, +N,
+  lines, and the sockets' buff items turn into the new weight's version of the same family, rarity and
+  strength (4.4).
+- **The legacy Sword and Helm** stay non-craftable, as today.
+
+### 2.2 Line sets: one weight, two roles
+
+Each weight is worn by two evolution roles (classes-2.md 0): heavy by tanks (Warrior, Warden) and a
+striker (Reaver); medium by strikers (Ranger, Venomstalker) and a caster (Trapper); light by casters (Mage,
+Warlock) and a support (Priest). So a Gear 2.0 craft asks one question at the bench: **"Lines for"**, with
+the weight's two roles. The default is the Lanternbearer's role now (`lbRole()`); hero kinds default to
+their role. The choice is stored on the item (`ls`) and Reforge keeps using it.
+
+| Line set | Affix pool (rolled lines, all different) | Who it serves |
+|---|---|---|
+| `tank` | armour, block, threat, one resist (holy, poison, fire or frost), stagger | Warrior, Warden, tank heroes |
+| `striker` | attack, crit (with crit damage), pierce, attack speed, the wearer's type power | Reaver, Ranger, Venomstalker, striker heroes |
+| `caster` | ability power, area, control, status power, the wearer's type power | Mage, Warlock, Trapper, caster heroes |
+| `support` | healing, ward, haste, holy power | Priest, support heroes |
+| any | max HP | everyone |
+
+- **Type power** is fixed when the line rolls and stored as its stat id (`['pwFire', 0.62]`), so a class
+  change never moves it: the Lanternbearer's current type (base or the evolution's added type: Reaver fire,
+  Warden holy, Venomstalker poison, Trapper frost or poison, Warlock fire, Priest holy); for hero kinds, a
+  type picked at the bench from the types of heroes of that role (classes-2.md 5.1).
+- This answers C5 in the pool itself: Priest pieces lean to healing, ward and holy power; Warlock pieces to
+  ability power, status power, fire power and area.
+- **New affix ids** (all core-2 stats, `CRAFT_AFFIXES` rows): `aspd` (0.2 a point), `stPow` (1), `stag`
+  (0.1), `pwPhys` `pwHoly` `pwPoison` `pwFire` `pwFrost` (1), `resHoly` `resPoison` `resFire` `resFrost`
+  (0.4). Existing ids keep their rates. Line counts by rarity are unchanged (1 / 2 / 3 / 4 / 4, +1 with
+  Masterwork), and so is the roll (`CRAFT_AFFIX_ROLL` 0.12-0.22 of the line's power).
+- Items made before S4 keep their pools (Reforge on an old item rolls from its old pool, as today).
+
+### 2.3 Recipe shapes
+
+Tier-1 amounts; grade g costs `craftScale(n, g)` as today. **Grades 1-3** take these raw. **From grade 4**
+the main and second families are taken refined, at half the count rounded up (Ore 7 becomes Ingot 4),
+and the accents stay raw.
+
+| Weight | Kind | Main (about 70%) | Second (about 30%) | Accents |
+|---|---|---|---|---|
+| Heavy | Warblade | Ore 7 | Hide 2 | Fibre 1 (grip), Essence 2 |
+| | Shield | Ore 6 | Hide 3 | Wood 1, Essence 1 |
+| | Greathelm | Ore 5 | Hide 2 | Fibre 1 (padding), Essence 1 |
+| | Plate | Ore 7 | Hide 3 | Fibre 1 (padding), Essence 1 |
+| Medium | Bow | Wood 7 | Hide 2 | Ore 1 (arrowheads), Essence 2 |
+| | Quiver | Wood 5 | Hide 3 | Ore 1, Essence 1 |
+| | Hood | Wood 5 | Hide 2 | Ore 1 (buckle), Essence 1 |
+| | Leathers | Wood 6 | Hide 3 | Ore 1, Essence 1 |
+| Light | Staff | Wood 5 | Fibre 3 | Crystal 1, Essence 2 |
+| | Censer | Wood 4 | Fibre 3 | Ore 1 (clasp), Herbs 1, Essence 2 |
+| | Lantern | Fibre 5 | Wood 2 | Crystal 2, Essence 1 |
+| | Tome | Fibre 6 | Wood 2 | Herbs 1, Essence 1 |
+| | Circlet | Fibre 5 | Wood 1 | Crystal 2, Essence 1 |
+| | Mitre | Fibre 6 | Wood 1 | Herbs 1, Essence 1 |
+| | Robe | Fibre 7 | Wood 2 | Crystal 1, Essence 2 |
+| | Vestments | Fibre 7 | Wood 2 | Herbs 1, Essence 2 |
+| Any | Charm | Crystal 3 | Herbs 1 | Essence 4 |
+| Any | Trinket | Crystal 2 | Herbs 2 | Essence 2 (unchanged) |
+| Tools | Pickaxe, Woodaxe, Sickle | unchanged (ore and wood; from grade 4, Ingots and Planks at half) | | |
+
+- **Shares, per set of four:** heavy metal 25 : leather 10 (71%); medium wood 23 : leather 10 (70%); light
+  cloth 20-22 : wood 10-11 (65-69%). **The light weapon leads with wood** (a staff is mostly wood); the
+  owner's 70 / 30 holds across the set, not in every single piece (owner decision O1).
+- **Every gathering line matters to every class:** ore is an accent in medium and light gear and a tool
+  metal; fibre pads heavy gear; wood is in every light piece; crystal and herbs are in charms, trinkets and
+  light accents; hide is in everything heavy and medium.
+- **Example**, a grade-6 Plate: Coralsteel Ingot `craftScale(4, 6)` = 14, Coral Leather `craftScale(2, 6)`
+  = 7, Tideweave Fibre 4, Gleaming Essence 4. Raw behind it: 28 Coralsteel Ore, 14 Sea Coal, 14 Coral
+  Hide, 7 Sea Salt.
+- **Upgrades and salvage** use the item's own recipe version (`rv`): Gear 2.0 items upgrade with refined
+  materials from grade 4 (`0.6 x recipe x (plus + 1)`, gold as today); pre-S4 items keep their raw recipe
+  for ever (1.8). Salvage gives back 40% of the item's own recipe, refined if it was refined.
+- **Transmute** works on raw and secondary families only (refined goods are made, not traded up).
+
+### 2.4 Stat budgets per grade
+
+**Two kinds of lines.**
+
+| Kind | Stats | Scales with |
+|---|---|---|
+| **Power lines** (output multipliers, no cap) | `might`, `attack`, `spell`, `heal`, `hp`, `pw*`, `stPow` | item power `p` (x1.65 a grade from grade 6, core-2 5.2) |
+| **Rating lines** (a cap, a flat rating, or an economy or tool line) | `armour`, `block`, `threat`, `crit`, `critMult`, `aspd`, `haste`, `area`, `control`, `pierce`, `ward`, `stag`, `res*`, `gold`, `ess`, every gathering line | **line power** `lp` |
+
+```
+Pc(g) = TIER_POW[min(g, 5)] x (1 + 0.04 x max(0, g - 5))     // 10, 22, 42, 75, 130, then +4% a grade
+lp    = Pc(t) x rarity x (1 + 0.15 x plus)                     // equals p for grades 1-5
+```
+
+For grades 1-5, `lp` equals `p`, so **no item that exists today changes by a decimal**. From grade 6 a
+rating line gains 4% a grade instead of 65%: caps stay goals, armour stays a real choice, and tool speed
+(and so the Storehouse and the Hands) stays in scale. This rule is a proposed core-2 change (9.2-1).
+
+| Grade | `TIER_POW` | `Pc` | Rare weapon, damage line (`might` = 1.0 p) | Epic +10 weapon | Rare medium helm crit (0.05 lp) | Socket budget, Rare buff at 100%, power / rating |
+|---|---|---|---|---|---|---|
+| 1 | 10 | 10 | +18% | +63% | 0.9% | - (Region 1 has none) |
+| 3 | 42 | 42 | +76% | +263% | 3.8% | - |
+| 4 | 75 | 75 | +135% | +469% | 6.8% | 27 / 27 |
+| 5 | 130 | 130 | +234% | +813% | 11.7% | 47 / 47 |
+| 6 | 215 | 135 | +387% | +1,344% | 12.2% | 77 / 49 |
+| 9 | 965 | 151 | +1,737% | +6,031% | 13.6% | 347 / 54 |
+| 12 | 4,330 | 166 | +7,794% | +27,063% | 15.0% | 1,559 / 60 |
+| 15 | 19,455 | 182 | +35,019% | +121,594% | 16.4% | 7,004 / 66 |
+
+(Without line power the same crit line would read +1,751% at grade 15, fifty times its cap. The socket budget
+is core-2's `0.20 x power(min(g, famTop)) x rarity x strength`, with `Pc` for rating lines; 5.2 turns it
+into lines.)
+
+**Base lines, Gear 2.0** (x `p` for power lines, x `lp` for rating lines; caps as core-2 1.1):
+
+| Position | Heavy | Medium | Light |
+|---|---|---|---|
+| Weapon | damage 1.0; block 0.02 | damage 1.0; attack speed 0.02 | damage 1.0; ability power 0.3 |
+| Off-hand | HP 0.8; block 0.04 | crit 0.10; attack speed 0.02 | Lantern: ability power 0.8. Tome: healing 0.8 |
+| Head | HP 0.5; armour 0.06 | HP 0.4; crit 0.05 | Circlet: HP 0.4, ability power 0.2. Mitre: HP 0.4, ward 0.03 |
+| Body | HP 1.0; armour 0.12 | HP 0.8; armour 0.05 | Robe: HP 0.6, ability power 0.4. Vestments: HP 0.6, healing 0.4 |
+| Charm | gold 0.8; essence 0.3 (today's lines, on `lp`) | | |
+| Trinket | HP 0.6; haste 0.05 (cap 25; today's, haste on `lp`) | | |
+| Tools | speed 0.6; double yield 0.1 (cap 60); rare find 0.012 (cap 8) (today's, on `lp`) | | |
+
+- **The damage line is the same for every weight** (`might` 1.0 p on the weapon, as today), so class
+  parity (classes-2.md 6) does not move with gear. Weights differ in the second line: heavy blocks and
+  holds, medium swings faster and crits, light casts and heals.
+- **Armour check:** a heavy helm and body at grade 5, Rare +5 (`lp` 409) give about 74 armour; with the
+  Warrior's base 30 that is 104, a 51% physical cut, under the 60% cap. At grade 15 Rare +5 (`lp` 573) it is
+  about 133 with the base (57%); only Legendary +10 pieces reach the cap.
+- **Parity check (sim, S4):** a Rare +5 set of each weight at grades 3, 6, 9, 12 and 15 gives each class
+  within 5% of the median party power at the push zone (the CP targets in classes-2.md 6.1).
+
+### 2.5 Crafted slots, rarities and sockets
+
+| Rarity | Power x | Affix lines | Sockets (Lanternbearer pieces) | Hero `wpn` | Hero `trk` | Crafting odds at station level 36 / 80 / 140 |
+|---|---|---|---|---|---|---|
+| Common | 1 | 1 | 0 | 0 | 0 | 21.5% / 6.3% / 4.2% |
+| Uncommon | 1.35 | 2 | 1 | 1 | 1 | 37.0 / 34.4 / 29.5 |
+| Rare | 1.8 | 3 | 1 | 1 | 1 | 29.4 / 39.1 / 42.1 |
+| Epic | 2.5 | 4 | 2 | 2 | 1 | 11.6 / 17.2 / 19.5 |
+| Legendary | 3.2 | 4 | 3 | 2 | 1 | 0.5 / 3.1 / 4.6 |
+
+- **Crafted Legendary** (core-2 5.3): from Region 2, `rarityWeights` gains
+  `legendary: region >= 2 ? max(0, (lv - 30) x 0.08) x mod('rareW') : 0`. The other weights are unchanged,
+  so Region 1 odds are exactly today's. `RAR.legendary.n` reads **"Legendary"**; a unique is known by
+  `it.u` and shows "Unique".
+- **Sockets are derived** from rarity and position, never stored as a count: every existing item gains
+  its sockets (empty) when S5 lands. Tools and the legacy Sword and Helm have none. Charms use the
+  Lanternbearer column. Oath Legendary items (Epic power with `lg`) have 2.
+- **Region 1:** sockets show on the card as empty rings with "Opens on the Sunken Coast" until Enchanting
+  unlocks (4.2). They are a reason to keep a good Region 1 piece.
+- **Crafted slots in all:** the Lanternbearer has 5 socket-bearing positions (up to 3 each) and each hero 2
+  (up to 2 + 1). A party in Legendary gear has 21 sockets; a typical Region 2 party (Rare and Epic) has
+  about 11.
