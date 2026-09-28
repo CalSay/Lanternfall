@@ -501,7 +501,7 @@ try {
   }
 } catch (e) { fail('retool crashed: ' + (e.stack || e)); }
 
-// ---- 7. synergies, kits, Common Cause and Bond (56b-synergy.js, B2) ----
+// ---- 7. synergies in three layers: slot jobs, combos and Kin, Bonds (56b-synergy.js; B2, rebuilt by plan-3 F2, formation.md 2) ----
 console.log('synergy');
 try {
   const g = loadCore({ seed: 6 });
@@ -513,45 +513,74 @@ try {
   const act = () => E('activeSynergies()');
   const syn = id => act().find(s => s.id === id) || null;
   E('ROSTER_KEYS.forEach(k => { charRec(k).lv = 1; })');
-  // line-ups (F1: the hero and 2 companions; F2 rebuilds these rules as combos, Kin and Bonds)
-  field(['tobin', 'wren', 'pip']);
-  assert(E('S.party.field.join()') === 'tobin,wren' && syn('hedgefolk') && syn('hedgefolk').members.length === 2 && !syn('kindlestar'), 'setField keeps the first 2: Hedgefolk x2 active, Kindle and Starfall not');
-  field(['pip', 'oriel']);
-  assert(syn('kindlestar') && !syn('dusk') && !syn('hedgefolk'), 'Pip + Oriel: Kindle and Starfall');
-  field(['oriel', 'kestrel']);
-  assert(syn('dusk') && !syn('kindlestar'), 'Oriel + Kestrel: Dusk Company');
-  field(['corvin', 'aldric']);
-  assert(syn('oldenemies') && !syn('oldoath'), 'Corvin + Aldric: Old Enemies');
-  field(['aldric', 'elowen']);
-  assert(syn('oldoath') && !syn('chosen'), 'Aldric + Elowen: The Old Oath; no Chosen for a Warden');
-  assert(E('synergyStatus("chosen").text') === 'needs a Lanternmage hero', `Chosen status: ${E('synergyStatus("chosen").text')}`);
-  field(['wren', 'bram']);
-  assert(syn('hunting') && syn('hedgefolk'), 'Wren + Bram: Hunting Party, Hedgefolk x2');
-  assert(/A third Hedgefolk/.test(E('synergyStatus("hedgefolk").text')), 'Hedgefolk x2 asks for a third');
-  field(['wren', 'kestrel']);
-  assert(syn('markleap'), 'Wren + Kestrel: Mark and Leap');
-  // Shield and Hearth reads the cells: tank in Front, support next behind it (one member per slot, F1)
-  field(['tobin', 'hesketh']);
-  E('setSlots({ front: "tobin", mid: "hesketh", back: "hero" })');
-  assert(syn('hearth') && !syn('hearth').stageC && syn('hearth').members.join() === 'tobin,hesketh', 'Shield and Hearth: Tobin in Front, Hesketh right behind; live with party combat');
-  E('setSlots({ front: "tobin", mid: "hero", back: "hesketh" })');
-  assert(!syn('hearth') && E('synergyStatus("hearth").text') === 'needs a support right behind your tank', 'Shield and Hearth off when someone else stands between');
-  // Common Cause and Bond
-  field(['kestrel', 'oriel']);
-  assert(syn('dusk') && syn('dusk').strength === 1, 'Dusk Company (Rare + Epic, below 25): strength 1');
-  const d1 = E('synergyMods().party');
-  lv(['kestrel'], 25); field(['kestrel', 'oriel']);
-  assert(syn('dusk').strength === 1.5, 'Bond at level 25: strength 1.5');
-  const d2 = E('synergyMods().party');
-  assert(Math.abs((d2 - 1) / (d1 - 1) - 1.5) < 1e-9, `Bond scales the effect by 1.5 (${d1.toFixed(4)} -> ${d2.toFixed(4)})`);
+  // the list: 8 combos, 4 Kin, 21 Bonds; the 14 old ids first, in their old order (the Codex keeps one tile each)
+  const OLD14 = ['hearth', 'hedgefolk', 'oldoath', 'lampward', 'kindlestar', 'markleap', 'dusk', 'chosen', 'hunting', 'bellsong', 'waxkindle', 'mirelamp', 'oldenemies', 'wayfarers'];
+  const layers = E('(() => { const n = { combo: 0, kin: 0, bond: 0 }; for (const s of SYNERGIES) n[s.layer]++; return n; })()');
+  assert(E('SYNERGIES.length') === 33 && layers.combo === 8 && layers.kin === 4 && layers.bond === 21 && E('SYNERGIES.slice(0, 14).map(s => s.id).join()') === OLD14.join() &&
+    E('SYNERGIES.every(s => s.name && s.needs && s.text && synergyStatus(s.id) && synergyStatus(s.id).text && (s.layer !== "bond" || (s.pair.length === 2 && s.stories.length === 2)))'),
+  `33 entries (${layers.combo} combos, ${layers.kin} Kin, ${layers.bond} Bonds), old ids first, each with a need, a text and a status line`);
+  assert(E('ROSTER_KEYS.every(k => SYNERGIES.some(s => s.layer === "bond" && s.pair.includes(k)))') && E('["warden", "ranger", "lanternmage", "lightkeeper"].every(c => SYNERGIES.filter(s => s.cls === c).length === 2)'),
+    'every companion has a Bond; every class has 2 hero Bonds');
+  // Kin: two companions of one circle (Common Cause: +25% with a Common)
   field(['tobin', 'wren']);
-  assert(syn('hedgefolk').strength === 1.25, 'Common Cause: Hedgefolk strength 1.25');
-  lv(['tobin', 'wren'], 25); field(['tobin', 'wren']);
-  assert(syn('hedgefolk').strength === 1.875, 'Common Cause x Bond: 1.875 (Bond counts once)');
-  field(['corvin', 'aldric']);
-  assert(syn('oldenemies').strength === 1.5, 'Legendary Bond from level 1');
+  assert(syn('hedgefolk') && syn('hedgefolk').members.length === 2 && syn('hedgefolk').strength === 1.25 && syn('hedgefolk').layer === 'kin', 'Tobin + Wren: Hedgefolk (Kin), 25% stronger with Commons');
+  assert(Math.abs(E('synergyMods().gold') - (1 + 0.05 * 1.25)) < 1e-9, `Hedgefolk gold is +5% with 2 (x${E('synergyMods().gold').toFixed(4)}, Common Cause included)`);
+  field(['oriel', 'kestrel']);
+  assert(syn('dusk') && syn('dusk').strength === 1, 'Oriel + Kestrel: Dusk Company (Rare + Epic: strength 1)');
+  field(['maren', 'aldric']);
+  assert(syn('oathkin') && E('synUnit("hero").dr') < 1, `Maren + Aldric: The Oath (Kin): the party takes less (hero x${E('synUnit("hero").dr').toFixed(3)})`);
+  // Bonds: off until level 1 (Met), then bondX of the level, x Common Cause
+  field(['pip', 'oriel']);
+  assert(!syn('kindlestar') && /^Not yet\. 30m 0s more together to Met\.$/.test(E('synergyStatus("kindlestar").text')), `a Bond at level 0 is off: "${E('synergyStatus("kindlestar").text')}"`);
+  const st = [];
+  for (const n of [1, 2, 3, 4, 5]) { E(`bondSet("kindlestar", ${n})`); st.push(syn('kindlestar') ? syn('kindlestar').strength : 0); }
+  assert(st.map(x => x.toFixed(4)).join() === [0.5, 0.75, 1, 1.15, 1.3].map(x => (x * 1.25).toFixed(4)).join() && syn('kindlestar').lv === 5 && syn('kindlestar').layer === 'bond',
+    `Pip + Oriel: Kindle and Starfall by level: ${st.map(x => x.toFixed(3)).join(', ')} (bondX x Common Cause)`);
+  // old named synergies do not get weaker for old saves: level 3 (the seed of an active pair) = the old strength (1 x Common Cause)
+  const weak = [];
+  for (const id of OLD14.filter(i => E(`SYNERGIES.find(s => s.id === "${i}").layer`) === 'bond')) {
+    const d = E(`SYNERGIES.find(s => s.id === "${id}")`), comps = d.pair.filter(k => k !== 'hero');
+    if (d.cls) E(`S.party.cls = "${d.cls}"`); else E('S.party.cls = "warden"');
+    field(comps.length === 2 ? comps : comps.concat(comps[0] === 'wren' ? 'tobin' : 'wren'));
+    E(`bondSet("${id}", 3)`);
+    const cc = comps.some(k => E(`ROSTER.${k}.rarity`) === 'common') ? 1.25 : 1, s = syn(id);
+    if (!s || Math.abs(s.strength - cc) > 1e-9) weak.push(`${id} ${s ? s.strength : 'off'} vs ${cc}`);
+  }
+  E('S.party.cls = "warden"');
+  assert(!weak.length, 'the 9 old named pairs and Lantern\'s Chosen at level 3 have exactly their old strength (1 x Common Cause)' + (weak.length ? ': ' + weak.join('; ') : ''));
+  field(['aldric', 'elowen']);
+  assert(E('synergyStatus("chosen").text') === 'needs a Lanternmage hero', `Chosen for a Warden: "${E('synergyStatus("chosen").text')}"`);
+  // combos read roles and slots; the hero counts as its class role
+  field(['tobin', 'hesketh']);
+  E('setSlots({ front: "tobin", mid: "hero", back: "hesketh" })');
+  assert(syn('hearth') && syn('hearth').name === 'Lifeline' && syn('hearth').members.join() === 'tobin,hesketh' && Math.abs(E('synUnit("tobin").healIn') - 1.2) < 1e-9 && E('synUnit("tobin").dr') < 1,
+    `Lifeline: Tobin in Front, Hesketh in Back (tank healed x${E('synUnit("tobin").healIn')}, takes x${E('synUnit("tobin").dr').toFixed(2)})`);
+  E('setSlots({ front: "tobin", mid: "hesketh", back: "hero" })');
+  assert(!syn('hearth') && E('synergyStatus("hearth").text') === 'needs a support in Back', `Lifeline off with the support in the Middle: "${E('synergyStatus("hearth").text')}"`);
+  E('setSlots({ front: "hero", mid: "tobin", back: "hesketh" })');
+  assert(syn('hearth') && syn('hearth').members.join() === 'hero,hesketh' && syn('twowalls') && E('synParty().diveTaunt') === 'tobin', 'a Warden in Front: Lifeline with Hesketh, Two Walls with Tobin (Tobin taunts the first diver)');
+  field(['wren', 'pip']);
+  E('setSlots({ front: "hero", mid: "wren", back: "pip" })');
+  assert(['anvil', 'killbox', 'crossfire'].every(syn) && E('synUnit("pip").ctrl') > 1, 'Warden, Wren, Pip at home: Hammer and Anvil, Kill Box, Crossfire (3 combos at most)');
+  // slot jobs: 12 names; a member's job follows its slot; Out of place and jobs are outside the caps
+  const jobs = E('(() => { const o = []; for (const r in SLOT_JOBS) for (const s in SLOT_JOBS[r]) o.push(SLOT_JOBS[r][s].name); return o; })()');
+  assert(jobs.length === 12 && new Set(jobs).size === 12, `12 slot jobs: ${jobs.join(', ')}`);
+  assert(E('slotJob("hero").label') === 'Threat +25%' && E('slotJob("wren").label') === 'Crit +10%' && E('slotJob("pip").label') === 'Splash +10%' && Math.abs(E('synUnit("hero").th') - 1.25 * 1.1) < 1e-9,
+    `jobs: ${['hero', 'wren', 'pip'].map(k => E(`slotJob("${k}").name + " (" + slotJob("${k}").label + ")"`)).join(', ')}; the Warden's threat x${E('synUnit("hero").th').toFixed(3)} with Hammer and Anvil`);
+  field(['hesketh', 'wren']); E('setSlots({ front: "hesketh", mid: "wren", back: "hero" })');
+  assert(Math.abs(E('synUnit("hesketh").hp') - 1.1) < 1e-9 && E('slotJob("hesketh").name') === 'Stand Firm', 'a support in Front: Stand Firm, +10% max HP');
+  // the caps (2.5): combos, Kin and Bonds add at most +40% to one member's damage, and at most 20% damage reduction
+  field(['tobin', 'wren']); E('setSlots({ front: "tobin", mid: "wren", back: "hero" })');
+  // a new cells object: the evaluation is cached per field and cells (a tune change alone does not refresh it)
+  const capOf = () => E('(() => { const bust = () => { S.party.cells = Object.assign({}, S.party.cells); }; bust(); const on = charDps("wren"); const a = SYN_TUNE.anvil; SYN_TUNE.anvil = 0; SYN_TUNE.hedgeSpeed = 0; bust(); const off = charDps("wren"); SYN_TUNE.anvil = a; SYN_TUNE.hedgeSpeed = 0.15; bust(); return on / off; })()');
+  const r0 = capOf(); E('SYN_TUNE.anvil = 3'); const r1 = capOf(); E('SYN_TUNE.anvil = 0.1');
+  assert(r0 > 1 && r0 < 1.4 && Math.abs(r1 - 1.4) < 1e-6, `synCap: Wren's layer bonus x${r0.toFixed(3)} today; with Hammer and Anvil at +300% it stops near x1.4 (x${r1.toFixed(3)})`);
+  E('SYN_TUNE.twoWallsDr = 0.9'); field(['tobin', 'aldric']); E('setSlots({ front: "tobin", mid: "aldric", back: "hero" })');
+  assert(Math.abs(E('synUnit("hero").dr') - 0.8) < 1e-9, `drCap: Two Walls at 90% still leaves x${E('synUnit("hero").dr')} (20% at most)`);
+  E('SYN_TUNE.twoWallsDr = 0.08');
   // removing a member deactivates and removes the effect
   E('ROSTER_KEYS.forEach(k => { charRec(k).lv = 30; })');
+  E('bondSet("kindlestar", 3); bondSet("waxkindle", 3)');
   const ev = []; g.fn.on('synergyChange', p => ev.push(p));
   field(['pip', 'oriel']);
   const om = E('synergyMods().char.oriel'), cd = g.fn.compDps();
@@ -559,13 +588,14 @@ try {
   field(['pip', 'morwen']);
   assert(syn('waxkindle') && !syn('kindlestar'), 'Pip + Morwen: Wax and Kindle');
   field(['tobin', 'oriel']);
-  assert(!syn('kindlestar') && !syn('waxkindle') && E('synergyMods().char.oriel') < om && ev.some(p => p.lost.includes('waxkindle')), 'benching Pip ends his synergies and emits synergyChange');
+  assert(!syn('kindlestar') && !syn('waxkindle') && E('synergyMods().char.oriel') < om && ev.some(p => p.lost.includes('waxkindle')), 'benching Pip ends his Bonds and emits synergyChange');
   assert(E('synergyMods().char.tobin') >= 1 && E('synergyMods().char.pip') === undefined, 'benched characters get no multiplier');
   // synergies only add: compDps with effects >= without
   field(['pip', 'oriel']);
   const on = g.fn.compDps(); E('SYN_TUNE.on = 0'); const offD = g.fn.compDps(); E('SYN_TUNE.on = 1');
   assert(Math.abs(on / cd - 1) < 1e-9 && on > offD, `effects add damage (x${(on / offD).toFixed(3)}); switching off restores the base`);
-  // no NaN: every character at levels 1 / 25 / 100, in varied line-ups, for every class
+  // no NaN: every character at levels 1 / 25 / 100, in varied line-ups, for every class, every Bond at Sworn
+  E('BOND_IDS.forEach(id => bondSet(id, 5))');
   const bad = [];
   for (const cls of ['warden', 'lanternmage', 'ranger', 'lightkeeper']) {
     E(`S.party.cls = ${JSON.stringify(cls)}`);
@@ -574,23 +604,22 @@ try {
       const keys = E('ROSTER_KEYS');
       keys.forEach((k, i) => {
         field([k, keys[(i + 5) % 18], keys[(i + 11) % 18]]);
-        const v = E(`[charDps(${JSON.stringify(k)}), compDps(), totalDps(), goldMult(), critChance(), mod('compXp')]`);
-        // Stage C: supports deal no damage (they heal), so their charDps is 0 and an all-support field has no compDps.
+        const v = E(`[charDps(${JSON.stringify(k)}), compDps(), totalDps(), goldMult(), critChance(), mod('compXp'), mod('abilityCd'), synUnit('hero').dr, synUnit(${JSON.stringify(k)}).healIn]`);
         const sup = E(`ROSTER[${JSON.stringify(k)}].role === 'support'`), allSup = E(`S.party.field.every(x => ROSTER[x].role === 'support')`);
         if (!v.every((x, j) => Number.isFinite(x) && (x > 0 || (j === 0 && sup) || (j === 1 && allSup)))) bad.push(`${cls} ${k} L${n}: ${v.join(',')}`);
       });
     }
   }
-  assert(!bad.length, 'charDps finite for all 18 at levels 1/25/100' + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
-  // kit data for the UI
-  const kit = E(`ROSTER_KEYS.map(k => { const t = charTraits(k); return [k, t.length, t.some(x => x.kind === 'speciality'), t.some(x => x.kind === 'bond'), t.every(x => x.text && x.name && typeof x.active === 'boolean' && typeof x.stageC === 'boolean')]; })`);
-  assert(kit.every(([, n, sp, bd, okT]) => n >= 4 && sp && bd && okT), 'every character has a speciality, a bond and well-formed traits');
+  assert(!bad.length, 'charDps finite for all 18 at levels 1/25/100, every class, every Bond at Sworn' + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
+  // kit data for the UI; the L25 milestone is Old Friend
+  const kit = E(`ROSTER_KEYS.map(k => { const t = charTraits(k); return [k, t.length, t.some(x => x.kind === 'speciality'), t.some(x => x.kind === 'bond' && x.name === 'Old Friend' && /Bonds grow 50% faster/.test(x.text)), t.every(x => x.text && x.name && typeof x.active === 'boolean' && typeof x.stageC === 'boolean')]; })`);
+  assert(kit.every(([, n, sp, bd, okT]) => n >= 4 && sp && bd && okT), 'every character has a speciality, Old Friend ("Bonds grow 50% faster") and well-formed traits');
   assert(E("['kestrel','maren','aldric','thessaly','anselm'].every(k => charTraits(k).some(t => t.kind === 'trait')) && ['elowen','caedmon','corvin'].every(k => charTraits(k).some(t => t.kind === 'aura'))"), 'Rares have a trait, Legendaries an aura');
-  assert(E('SYNERGIES.length === 14 && SYNERGIES.every(s => synergyStatus(s.id) && synergyStatus(s.id).text)'), '14 synergies, each with a status line');
+  E('S.party.cls = "warden"');
   field(['pip', 'tobin']);
   assert(E('synergyStatus("markleap").text') === 'needs Wren and Kestrel' && E('synergyStatus("dusk").text') === 'needs 2 more Dusk Company', `missing text (${E('synergyStatus("markleap").text')} / ${E('synergyStatus("dusk").text')})`);
-  field(['wren', 'kestrel']);
-  assert(E('synergyStatus("markleap").text') === 'Active, 88% stronger.', `active text (${E('synergyStatus("markleap").text')})`);
+  field(['wren', 'kestrel']); E('bondSet("markleap", 3)');
+  assert(E('synergyStatus("markleap").text') === 'Active. Trusted: 125% strength.', `active text (${E('synergyStatus("markleap").text')})`);
   assert(!g.errors.length, 'no synergy handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('synergy crashed: ' + (e.stack || e)); }
 
@@ -960,14 +989,15 @@ try {
   const helm = E('(() => { const it = newItem("helm", 1, "common"); S.items.push(it); return it.id; })()');
   assert(!E(`equipItem(${helm}, 'helm')`), 'a classed hero cannot equip a legacy Helm');
   E(`S.equip.helm = ${helm}; gearDirty()`);   // as an old save wears it
-  const cnt = E('S.items.length'), ids0 = E('S.items.map(i => i.id).join()'), gear0 = E('JSON.stringify(gear())'), hd0 = g.fn.heroDps();
+  const cnt = E('S.items.length'), ids0 = E('S.items.map(i => i.id).join()'), gear0 = E('JSON.stringify(gear())'), hd0 = E('(() => { SYN_TUNE.on = 0; const d = heroDps(); SYN_TUNE.on = 1; return d; })()');   // F2: slot jobs and combos follow the class; gear is what this compares
   const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
   E('S.party.mirrors = 1; useMirror(); chooseClass("warden")');
   const sl = id => E(`itemById(${id}).slot`);
   assert(E(`S.equip.weapon === ${up} && S.equip.off === ${lan} && S.equip.helm === ${helm}`) && sl(up) === 'warblade' && sl(lan) === 'shield' && sl(helm) === 'greathelm' && sl(hood) === 'greathelm' && sl(bow) === 'bow',
     `class change retools: Staff -> Warblade, Lantern -> Shield, old Helm -> Greathelm (worn), bag Hood -> Greathelm, bag Bow (companion kind) kept (${[up, lan, helm, hood, bow].map(sl).join(',')})`);
   assert(E('S.items.length') === cnt && E('S.items.map(i => i.id).join()') === ids0 && E(`itemById(${up}).rt === "staff" && itemById(${helm}).rt === "helm" && itemById(${up}).plus === 4`), 'class change: same ids, count, +N; rt keeps the original kind');
-  assert(E('JSON.stringify(gear())') === gear0 && g.fn.heroDps() >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${g.fn.heroDps().toFixed(1)})`);
+  const hd1 = E('(() => { SYN_TUNE.on = 0; const d = heroDps(); SYN_TUNE.on = 1; return d; })()');
+  assert(E('JSON.stringify(gear())') === gear0 && hd1 >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${hd1.toFixed(1)}, synergies aside)`);
   assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
   E(`S.skills.ench.lv = ${RQ(3) - 1}`);
@@ -2302,7 +2332,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built|Skills now level more slowly|Your party is now three)/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth'); the skill pace line: GP1's; the party of three: F1's ('formation')
+    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built|Skills now level more slowly|Your party is now three|Pairs who fight side by side|Your old friends kept)/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth'); the skill pace line: GP1's; the party of three: F1's ('formation'); Bonds: F2's ('bonds')
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -2603,7 +2633,7 @@ try {
   // costs and limits (5, 2.3, 4.1, 7)
   const C = E('LEG_COST'), T = E('LEG_TUNE'), CX = E('LEG_CODEX');
   assert([1, 2, 3, 4, 5].map(r => C.inscribe.pearls(r)).join() === '4,6,8,10,12' && C.inscribe.ess === 5 && C.inscribe.goldFoes === 100 && C.mark.sigil === 1 && C.mark.pearls === 2
-    && T.heroMax === 2 && T.compMax === 1 && T.markMax === heroPos.length + 2 * 3 && T.echoPerRank === 3
+    && T.heroMax === 2 && T.compMax === 1 && T.markMax === heroPos.length + 2 * 2 && T.echoPerRank === 3
     && CX.powers === ids.length - PI.length && CX.total === CX.powers * (CX.learn + CX.rank * 4),
     'legend: Inscribe 2 + 2 x rank Pearls, 5 Essence, 100 foes\' gold; Mark 1 Sigil + 2 Pearls; 2 hero powers, 1 a companion, 10 marks; Codex 234 Light');
 
@@ -2809,6 +2839,7 @@ try {
   // an active synergy wins when damage is close (within its tie-break), not against a big gap
   {
     const { E, J } = mk(51, 'ranger', [['wren', 120], ['aldric', 120], ['kestrel', 60], ['isolde', 60]], 90);
+    E('bondSet("markleap", 3)');   // F2: Mark and Leap is a Bond, on from level 1 (level 3 = its old strength)
     E('globalThis.__afm = 1; addCharModifier(id => id === "isolde" ? globalThis.__afm : 1)');
     const dps = (f, m) => { E(`globalThis.__afm = ${m}`); return J(`lineupScore(${JSON.stringify(f)}, { zone: 5 })`).dps; };
     const syn = ['wren', 'kestrel'], plain = ['wren', 'isolde'];   // F1: pairs (the Ranger hero is the third)
@@ -2969,17 +3000,19 @@ try {
     E('save()');
     const g2 = loadCore({ seed: 62, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
     const n2 = []; g2.fn.on('whatsNew', w => { if (/^Your party is now three/.test(w.msg)) n2.push(w.msg); });
+    const bond2 = J(g2, 'S.bond || null');   // F2: as loaded (Bonds grow while the party fights, so before any tick)
     ticks(g2, 20);
     const pick = x => ({ field: x.field, cells: x.cells, pin: x.pin, formV: x.formV, formOld: x.formOld });
-    const d4 = deepDiff(pick(p), pick(J(g2, 'S.party'))) || deepDiff(J(g, 'S.bond || null'), J(g2, 'S.bond || null'));
+    const d4 = deepDiff(pick(p), pick(J(g2, 'S.party'))) || deepDiff(J(g, 'S.bond || null'), bond2);
     assert(!d4 && !n2.length && !g2.errors.length, `C4 ${f}: save and load keep the party as it is (field, cells, pin), no second migration` + (d4 ? ': ' + d4 : ''));
     errs.push(...g.errors, ...g2.errors);
   }
   // C9: the ratio. The band (0.90-1.30, T9) is BAL3's to tune: saves below FORM_TUNE.trioFrom get no trio
   // bonus yet and lose their third companion's damage. Hard floor: nobody loses more than a third.
   for (const r of T9) console.log(`       INFO C9 T9 ${r.f} (zone ${r.z}): party damage ${r.ratio.toFixed(2)} (${r.old.join(',')} -> ${r.field.join(',')}; band 0.90-1.30: ${r.ratio >= 0.9 && r.ratio <= 1.3 ? 'in' : 'MISS, BAL3'})`);
-  assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.5),
-    `C9 party damage after vs before the migration stays within 0.70-1.50 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
+  // F2: slot jobs, combos and seeded Bonds add on top of the trio (up to +40% per member, 2.5); the upper bound is 1.6 until BAL3.
+  assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.6),
+    `C9 party damage after vs before the migration stays within 0.70-1.60 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
   // C6: a new game: the starter and the hero in their homes; one recruit fills the third slot
   {
     const g = loadCore({ seed: 63 }), E = s => g.eval(s);
@@ -3050,9 +3083,9 @@ try {
     assert(tg && tg.split(',').every(k => k === 'tobin'), `melee foes hit the Front member (${tg})`);
     // Out of place: 10% less damage and healing
     place({ front: 'tobin', mid: 'hero', back: 'hesketh' });
-    const hHome = E('cbUnitByKey("hesketh").heal'), dHome = E('charDps("hesketh")');
+    const hHome = E('cbUnitByKey("hesketh").heal / cbUnitByKey("hesketh").hpP'), dHome = E('charDps("hesketh")');   // F2: per HP power (the hero's slot job moves the party's power)
     place({ front: 'tobin', mid: 'hesketh', back: 'hero' });
-    const hOff = E('cbUnitByKey("hesketh").heal'), dOff = E('charDps("hesketh")');
+    const hOff = E('cbUnitByKey("hesketh").heal / cbUnitByKey("hesketh").hpP'), dOff = E('charDps("hesketh")');
     assert(Math.abs(hOff / hHome - 0.9) < 1e-6 && Math.abs(dOff / dHome - 0.9) < 1e-6 && E('offSlotMult("hero")') === 0.9, `Out of place: Hesketh heals x${(hOff / hHome).toFixed(2)} and hits x${(dOff / dHome).toFixed(2)} in the Middle`);
     // the trio ramp over zones 8-12 (damage only)
     const trio = z => E(`(() => { const m = S.maxZone; S.maxZone = ${z}; const t = trioMult(); S.maxZone = m; return t; })()`);
@@ -3071,6 +3104,148 @@ try {
   }
   assert(!errs.length, 'no formation errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('formation crashed: ' + (e.stack || e)); }
+
+// ---- Bonds: time together, levels, growth, seeds, stories (56f-bonds.js, 21f-stories-bonds.js; plan-3 F2, formation.md 2.3, 3.3, check C5) ----
+console.log('bonds');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
+  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
+  const HR = 3600, errs = [];
+  // levels, events and copy
+  {
+    const g = loadCore({ seed: 71 }), E = s => g.eval(s);
+    ticks(g, 3);
+    E('chooseClass("warden"); ["tobin", "bram", "wren", "aldric", "elowen"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false; S.activity = "fight"');
+    assert(E('S.bond.v') === 1 && E('Object.keys(S.bond.t).length') === 0 && E('BOND_IDS.length') === 21, 'a new game: S.bond v 1, nothing seeded, 21 Bonds');
+    const lvs = []; g.fn.on('bondLevel', e => lvs.push(e));
+    const at = [];
+    for (const h of [0.49, 0.5, 2.99, 3, 11.99, 12, 35.99, 36, 149.99, 150, 400]) { E(`S.bond.t.mossy = ${h * HR}`); at.push(E('bondLevel("mossy")')); }
+    assert(at.join() === '0,1,1,2,2,3,3,4,4,5,5', `levels at 0.5h / 3h / 12h / 36h / 150h: ${at.join(', ')}`);
+    E('S.bond.t.mossy = 0; S.bond.lv = {}');
+    E(`bondAdd("mossy", ${0.5 * HR}, false)`); E(`bondAdd("mossy", ${2.5 * HR}, false)`); E(`bondAdd("mossy", ${150 * HR}, false)`);
+    assert(lvs.map(e => e.lv).join() === '1,2,5' && lvs[1].story === 1 && lvs[2].sworn && lvs[2].prev === 2, `bondLevel fires once per level reached (${lvs.map(e => e.lv).join(', ')}; Friends opens story 1, Sworn flags sworn)`);
+    const tx = [1, 2, 3, 5].map(n => J(g, `bondText("mossy", ${n})`));
+    assert(tx[0].msg === 'Tobin and Bram met. Mossy Hollow is on.' && tx[0].prio === 'low' && tx[2].msg === 'Tobin and Bram grew closer. Mossy Hollow is now Trusted.' && tx[3].msg === 'Tobin and Bram are Sworn.' && tx[3].prio === 'high' && J(g, 'bondText("sword", 1)').msg === 'You and Tobin met. The Borrowed Sword is on.',
+      `toast copy: "${tx[0].msg}" / "${tx[1].msg}" / "${tx[3].msg}"`);
+    assert(E('swornOf("tobin").join()') === 'mossy' && E('bondsOf("tobin").join()') === 'mossy,sword' && E('bondsOf("hero").join()') === 'sword,banner' && E('bondsOf("hero", true).length') === 8,
+      'swornOf, bondsOf (the hero\'s Bonds are its class\'s, or all 8)');
+    const c = J(g, 'bondCounts()');
+    assert(c.total === 21 && c.sworn === 1 && c.met === 1 && c.maxLv === 5 && c.byLv[0] === 20, `bondCounts() for achievements: ${JSON.stringify(c)}`);
+    // growth: live, only while both are in the party; benching pauses, never resets
+    E('S.bond.t = {}; S.bond.lv = {}; setSlots({ front: "hero", mid: "bram", back: "tobin" })');
+    ticks(g, 100);
+    const t1 = { sword: E('bondTime("sword")'), mossy: E('bondTime("mossy")'), hunting: E('bondTime("hunting")') };
+    assert(Math.abs(t1.sword - 10) < 0.05 && Math.abs(t1.mossy - 10) < 0.05 && t1.hunting === 0 && E('partyBonds().join()') === 'mossy,sword', `fighting 10 s: The Borrowed Sword and Mossy Hollow +10 s; Hunting Party (Wren benched) 0 (${JSON.stringify(t1)})`);
+    E('setSlots({ front: "hero", mid: "wren", back: "tobin" })'); ticks(g, 50);
+    assert(Math.abs(E('bondTime("mossy")') - t1.mossy) < 1e-9 && Math.abs(E('bondTime("sword")') - 15) < 0.05, 'benching Bram pauses Mossy Hollow; the time is kept');
+    E('S.activity = "gather"'); const s0 = E('bondTime("sword")');
+    E('setSlots({ front: "hero", mid: "bram", back: "tobin" })'); const m0 = E('bondTime("mossy")'); ticks(g, 100);
+    assert(Math.abs(E('bondTime("mossy")') - m0 - 10 * E('FORM_TUNE.bondCamp')) < 0.05 && Math.abs(E('bondTime("sword")') - s0) < 1e-9, 'at the Hearth while the hero gathers: companion pairs x0.5, hero pairs pause');
+    E('S.activity = "fight"; charRec("tobin").lv = 25'); const m1 = E('bondTime("mossy")'); ticks(g, 100);
+    assert(Math.abs(E('bondTime("mossy")') - m1 - 10 * 1.5) < 0.05 && E('bondOldFriend("mossy")') && E('bondInfo("mossy").rate') === 1.5, 'Old Friend (Tobin L25): Mossy Hollow grows x1.5, once per Bond');
+    // away: the fight branch at bondAway
+    const a0 = E('bondTime("sword")'); E(`awayGains(${2 * HR})`);
+    assert(Math.abs(E('bondTime("sword")') - a0 - 2 * HR * E('FORM_TUNE.bondAway') * 1.5) < 1, `away 2 h fighting: +${((E('bondTime("sword")') - a0) / HR).toFixed(2)} h (x${E('FORM_TUNE.bondAway')}, Old Friend x1.5)`);
+    // expeditions: companion pairs on one team grow for the time out
+    const e0 = E('bondTime("oldoath")'); E(`emit('expedBack', { r: 'r1a', team: ['aldric', 'elowen'], secs: ${4 * HR}, auto: true })`);
+    assert(Math.abs(E('bondTime("oldoath")') - e0 - 4 * HR * 1.5) < 1e-6, 'an expedition team (Aldric, Elowen) grows The Old Oath for its 4 h out (Old Friend: Elowen is Legendary)');
+    // stories: titles from SYNERGIES; locked until the level; no text = "Story coming soon" (nothing to read)
+    const stp = J(g, 'bondStories("hunting")');
+    assert(stp.length === 2 && stp[0].title === 'Bats and Birches' && stp[1].title === 'The Winter Larder' && !stp[0].open && stp[0].lv === 2 && stp[1].lv === 4, 'Hunting Party stories: titles, story 1 at Friends, story 2 at Close');
+    E('bondSet("hunting", 4)');
+    assert(!E('bondRead("hunting", 0)') && E('bondUnread("hunting")') === 0 && E('bondSworn("hunting")') === null, 'no text yet: nothing to read, no dot');
+    E('BOND_STORIES.hunting = [{ title: "Bats and Birches", text: "One." }, { title: "The Winter Larder", text: "Two." }]; BOND_SWORN.hunting = "Three."');
+    assert(E('bondUnread("hunting")') === 2 && !E('bondRead("hunting", 1)') && E('bondRead("hunting", 0)') && E('bondRead("hunting", 1)') && !E('bondRead("hunting", 1)') && E('S.bond.seen.hunting') === 2 && E('bondUnread("hunting")') === 0,
+      'with text: two unread (the dot), read in order, once each (S.bond.seen)');
+    assert(E('bondSworn("hunting")') === null && (E('bondSet("hunting", 5)'), E('bondSworn("hunting")')) === 'Three.' && E('swornOf("wren").includes("hunting")'), 'the Sworn line shows at Sworn; swornOf feeds D5');
+    E('delete BOND_STORIES.hunting; delete BOND_SWORN.hunting');
+    errs.push(...g.errors);
+  }
+  // C5: seeds for old saves, from the old field; a new game gets none; one What's new pair of lines
+  {
+    const FIX = ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-v3-four.json'];
+    for (const f of FIX) {
+      const raw = JSON.parse(rawOf(f));
+      const g = loadCore({ seed: 72, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+      const news = []; g.fn.on('whatsNew', w => { if (/Bonds/.test(w.msg)) news.push(w.msg); });
+      const quiet = []; g.fn.on('bondLevel', e => quiet.push(e));
+      ticks(g, 5);
+      const b = J(g, 'S.bond'), old = J(g, 'S.party.formOld && S.party.formOld.field') || [], cls = J(g, 'S.party.cls');
+      const max = Math.max(0, ...Object.values(b.t));
+      assert(b.v === 1 && max <= 36 * HR + 5 && !g.errors.length, `C5 ${f}: seeded once (v 1); no Bond above 36 h (${(max / HR).toFixed(1)} h); ${Object.keys(b.t).length} Bonds seeded`);
+      const conv = J(g, `SYNERGIES.filter(s => s.layer === 'bond' && ${JSON.stringify(['oldoath', 'lampward', 'kindlestar', 'markleap', 'hunting', 'bellsong', 'waxkindle', 'mirelamp', 'oldenemies', 'chosen'])}.includes(s.id)).map(s => ({ id: s.id, pair: s.pair, cls: s.cls || null }))`);
+      const active = conv.filter(d => d.pair.every(k => k === 'hero' ? cls === d.cls : old.includes(k)));
+      for (const d of active) {
+        const s = J(g, `(() => { const r = { t: bondTime("${d.id}"), lv: bondLevel("${d.id}") }; return r; })()`);
+        const strong = d.pair.some(k => k !== 'hero' && (J(g, `ROSTER.${k}.rarity`) === 'legendary' || J(g, `charRec("${k}").lv`) >= 25));
+        assert(s.t >= 12 * HR && s.lv >= 3 && (!strong || s.lv === 4), `C5 ${f}: ${d.id} was active in the old field: ${(s.t / HR).toFixed(0)} h, ${J(g, `BOND_LV_NAME[${s.lv}]`)}${strong ? ' (it had the L25 Bond strength)' : ''}`);
+      }
+      assert(news.length === (J(g, 'rosterList().length') ? (Object.values(b.t).some(t => t >= 0.5 * HR) ? 2 : 1) : 0) && quiet.every(e => e.quiet) && Object.keys(b.lv).every(id => b.lv[id] === J(g, `bondLevel("${id}")`)),
+        `${f}: What's new: ${news.map(m => `"${m}"`).join(' + ') || 'none'}; seeded levels announced quietly`);
+      // not weaker: every converted pair active in the old field that is still together keeps its old strength (1 x Common Cause) or more
+      const now = J(g, 'activeSynergies()').filter(a => active.some(d => d.id === a.id));
+      assert(now.every(a => a.strength >= (a.members.some(k => k !== 'hero' && J(g, `ROSTER.${k}.rarity`) === 'common') ? 1.25 : 1) - 1e-9), `${f}: converted pairs still fielded are at least as strong as before (${now.map(a => `${a.id} ${a.strength}`).join(', ') || 'none still fielded'})`);
+      errs.push(...g.errors);
+    }
+    const n = loadCore({ seed: 73 }); const nn = []; n.fn.on('whatsNew', w => { if (/Bonds/.test(w.msg)) nn.push(w.msg); }); ticks(n, 5); n.eval('S.L = 5; S.maxZone = 9'); ticks(n, 5);
+    assert(n.eval('S.bond.v') === 1 && n.eval('Object.keys(S.bond.t).filter(k => S.bond.t[k] > 1).length') === 0 && !nn.length, 'C5 a new game: nothing seeded, no Bond line');
+  }
+  // formQuick (F3's quick score): pure, finite, reads combos, Bonds and Out of place
+  {
+    const g = loadCore({ seed: 74 }), E = s => g.eval(s);
+    ticks(g, 3);
+    E('chooseClass("warden"); ["tobin", "wren", "hesketh", "pip", "bram", "kestrel", "oriel", "aldric", "elowen", "maren", "anselm", "corvin"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 40; }); S.party.autoField = false; S.maxZone = 20; S.L = 30');
+    const s0 = E('JSON.stringify(S)');
+    const home = J(g, 'formQuick({ front: "hero", mid: "wren", back: "hesketh" })'), away = J(g, 'formQuick({ front: "hesketh", mid: "wren", back: "hero" })');
+    assert(E('JSON.stringify(S)') === s0 && home.d > 0 && home.st > 0 && Number.isFinite(home.d) && home.front && home.sup && !away.front && home.syn.some(x => x.id === 'hearth') && home.syn.some(x => x.id === 'anvil'),
+      `formQuick: pure; Warden, Wren, Hesketh at home: d ${home.d.toExponential(2)}, st ${home.st.toExponential(2)}, ${home.syn.map(x => x.id).join(' + ')}`);
+    assert(away.d < home.d, `out of place and without Lifeline or Hammer and Anvil the same trio scores less (x${(away.d / home.d).toFixed(2)})`);
+    const b0 = J(g, 'formQuick({ front: "tobin", mid: "hero", back: "bram" })'); E('bondSet("mossy", 5)'); const b5 = J(g, 'formQuick({ front: "tobin", mid: "hero", back: "bram" })');
+    assert(b5.d > b0.d && b5.syn.some(x => x.id === 'mossy' && x.lv === 5), `a Sworn Mossy Hollow raises the score (x${(b5.d / b0.d).toFixed(3)})`);
+    const cast = J(g, 'formQuick({ front: "hero", mid: "kestrel", back: "oriel" })');
+    assert(cast.d > cast.st, 'a caster adds splash to pack damage, not to single-target damage');
+    // speed: a planner's 66 pairs x 6 orders
+    const ids = ['tobin', 'wren', 'hesketh', 'pip', 'bram', 'kestrel', 'oriel', 'aldric', 'elowen', 'maren', 'anselm', 'corvin'];
+    const ms = E(`(() => { const ids = ${JSON.stringify(ids)}, P = [['front','mid','back'],['front','back','mid'],['mid','front','back'],['mid','back','front'],['back','front','mid'],['back','mid','front']];
+      let best = Infinity;
+      for (let r = 0; r < 5; r++) {
+        const t = Date.now(), q = formQuickPrep();
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) for (const o of P) { const tr = {}; tr[o[0]] = 'hero'; tr[o[1]] = ids[i]; tr[o[2]] = ids[j]; formQuick(tr, q); }
+        best = Math.min(best, Date.now() - t);
+      }
+      return best; })()`);
+    console.log(`       INFO formQuick: 66 pairs x 6 orders (one formQuickPrep) in ${ms.toFixed(1)} ms (Node, best of 5)`);
+    assert(ms < 40, `formQuick with a prep is cheap enough for the planner's quick pass (${ms.toFixed(1)} ms for 396; the same numbers with or without the prep)`);
+    const q1 = J(g, 'formQuick({ front: "hero", mid: "wren", back: "hesketh" }, formQuickPrep())');
+    assert(Math.abs(q1.d / home.d - 1) < 1e-9, 'a prep gives the same score as a fresh read');
+    errs.push(...g.errors);
+  }
+  // combat: Rearguard takes dives meant for an ally; Two Lights stand allies up at 45%
+  {
+    const g = loadCore({ seed: 75 }), E = s => g.eval(s);
+    ticks(g, 3);
+    E('almanac.force("none"); chooseClass("ranger"); ["tobin", "hesketh", "anselm"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 30; }); S.party.autoField = false; S.auto = false; S.maxZone = 12; setZone(10)');
+    E('setSlots({ front: "hero", mid: "hesketh", back: "tobin" })'); ticks(g, 2);
+    const hp = E(`(() => { const f = combatFoes().find(x => x.hp > 0); const m = cbUnitByKey("hesketh"), t = cbUnitByKey("tobin"); m.hp = m.maxHp; t.hp = t.maxHp; f.diveT = 2; f.first = 1; onFoeAttack(f, m); f.diveT = 0; return [m.hp / m.maxHp, t.hp / t.maxHp]; })()`);
+    assert(hp[0] === 1 && hp[1] < 1, `Rearguard: a dive on Hesketh hits Tobin in Back instead (${hp.map(x => x.toFixed(3)).join(' / ')})`);
+    E('setSlots({ front: "hero", mid: "anselm", back: "hesketh" })'); ticks(g, 2);
+    assert(E('synParty().revive') === 0.45 && E('activeSynergies().some(a => a.id === "twolights")'), 'Two Lights (Anselm, Hesketh): allies stand up at 45%');
+    errs.push(...g.errors);
+  }
+  // Bond writing (LORE7 fills 21f): every entry names a Bond, keeps the canon titles, has text and one Sworn sentence
+  {
+    const g = loadCore({ seed: 76 });
+    const bad = J(g, `(() => { const out = [];
+      for (const id of Object.keys(BOND_STORIES)) { const d = SYNERGIES.find(s => s.id === id && s.layer === 'bond'), e = BOND_STORIES[id];
+        if (!d) { out.push(id + ': not a Bond'); continue; }
+        if (!Array.isArray(e) || e.length !== 2 || e.some((x, i) => !x || x.title !== d.stories[i] || !(typeof x.text === 'string' && x.text.trim().length > 20))) out.push(id + ': two stories with the canon titles and text'); }
+      for (const id of Object.keys(BOND_SWORN)) { const l = BOND_SWORN[id]; if (!BOND_IDS.includes(id) || !(typeof l === 'string' && l.trim().length > 5 && l.length < 200)) out.push(id + ': Sworn line'); }
+      return out; })()`);
+    assert(!bad.length, `21f-stories-bonds.js: ${J(g, 'Object.keys(BOND_STORIES).length')} of 21 Bonds written, ${J(g, 'Object.keys(BOND_SWORN).length')} Sworn lines; every entry well-formed` + (bad.length ? ': ' + bad.slice(0, 3).join('; ') : ''));
+  }
+  assert(!errs.length, 'no Bond errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('bonds crashed: ' + (e.stack || e)); }
 
 // ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
 console.log('regions and the Great Lantern');
@@ -3465,7 +3640,7 @@ try {
     const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
     raw.skills = Object.assign({}, raw.skills, { mine: { lv: 8, xp: 0 }, smith: { lv: 4, xp: 0 } }); delete raw.skillPace;
     const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-    const tell = []; h.fn.on('whatsNew', w => { if (!/^(Your stations were already built|Your party is now three)/.test(w.msg)) tell.push(w.msg); });   // H1's and F1's lines have their own sections
+    const tell = []; h.fn.on('whatsNew', w => { if (!/^(Your stations were already built|Your party is now three|Pairs who fight side by side|Your old friends kept)/.test(w.msg)) tell.push(w.msg); });   // H1's, F1's and F2's lines have their own sections
     for (let i = 0; i < 3; i++) h.fn.tick(0.1);
     assert(h.eval('skillTierOpen("mine", 2) && setNode("ore", 2) && stationTierOpen("warblade", 2) && S.skillPace.hw.mine === 2 && S.skillPace.hw.smith === 2'), 'an old save at Mining 8 / Smithing 4 keeps the Iron Vein and tier-2 Forge recipes');
     assert(tell.length === 1 && /stays open/.test(tell[0]), 'one What\'s new line tells the player: ' + tell[0]);
@@ -3474,6 +3649,173 @@ try {
     assert(h.eval('S.skills.mine.lv') === 9 && !t0.some(m => /is open to you/.test(m)), 'a kept tier is not announced again at the next level-up');
   }
 } catch (e) { fail('skill pace crashed: ' + (e.stack || e)); }
+
+// ---- deeds: achievements core (23-data-deeds.js, 58-deeds.js; achievements.md 11, AD1-AD8) ----
+console.log('deeds');
+try {
+  const FIX = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json'));
+  const fixText = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const g = loadCore({ seed: 5 });
+  const E = s => g.eval(s);
+  // AD1 data
+  const D = E('({ tracks: DEED_TRACKS, feats: DEED_FEATS, secrets: DEED_SECRETS, looks: DEED_LOOKS, groups: DEED_GROUPS, ladder: DEED_LADDER, chapters: DEED_CHAPTERS, cap: DEED_CAP, slots: DEED_SLOTS })');
+  const uniq = a => new Set(a).size === a.length;
+  const titles = E('deeds.titles()');
+  assert(uniq(D.tracks.map(t => t.id)) && uniq(D.feats.map(f => f.id)) && uniq(D.secrets.map(s => s.id)) && uniq(D.looks.map(l => l.id)) && uniq(titles.map(t => t.id)) && uniq(D.groups.map(x => x.id)),
+    `AD1 ids unique: ${D.tracks.length} tracks, ${D.feats.length} Feats, ${D.secrets.length} secrets, ${D.looks.length} looks, ${D.groups.length} groups`);
+  assert(D.tracks.length === 92 && D.feats.length === 21 && D.secrets.length === 16 && D.looks.filter(l => l.slot !== 'frame').length === 36 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 12, 'AD1 counts: 92 tracks, 21 Feats, 16 secrets, 36 accessories and 4 frames, 12 groups');
+  const bad = D.tracks.filter(t => !(t.need.length === 4 && t.need.every((v, i) => i === 0 || v > t.need[i - 1]) && t.need[0] > 0) || !t.g || !D.groups.some(x => x.id === t.g) || (t.bonus && !(t.bonus in D.cap)));
+  assert(!bad.length, 'AD1 every track rises tier to tier, sits in a group, and feeds a capped key' + (bad.length ? ': ' + bad.map(t => t.id).join(', ') : ''));
+  // every look has exactly one source, and that source names it back
+  const giv = {}; const give = (id, src) => { (giv[id] = giv[id] || []).push(src); };
+  D.groups.forEach(x => x.look && give(x.look, 'grp:' + x.id)); D.feats.forEach(f => f.look && give(f.look, 'feat:' + f.id)); D.secrets.forEach(s => s.look && give(s.look, 'sec:' + s.id));
+  D.ladder.forEach(m => m.look && give(m.look, 'pts:' + m.at)); D.chapters.forEach(c => c.look && give(c.look, 'ch:' + c.id));
+  const lookBad = D.looks.filter(l => !giv[l.id] || giv[l.id].length !== 1 || giv[l.id][0] !== l.src || !D.slots.includes(l.slot) || Object.keys(l).some(k => !['id', 'slot', 'n', 'src'].includes(k)));
+  const dangling = Object.keys(giv).filter(id => !D.looks.some(l => l.id === id));
+  assert(!lookBad.length && !dangling.length, 'AD1 every reward id resolves; every look has exactly one source and carries no modifier' + (lookBad.length || dangling.length ? ': ' + lookBad.map(l => l.id).concat(dangling).join(', ') : ''));
+  // "the Last Lantern" (the capstone Feat) is kept by name (coordinator, 2026-09-28): the one exception.
+  const EXC = ['the Last Lantern'];
+  const long = titles.filter(t => !EXC.includes(t.n) && (t.n.length > 14 || t.n.trim().split(/\s+/).length > 2));
+  assert(!long.length && titles.filter(t => /^a_(g|e)_/.test(t.id)).length === 24 && D.feats.every(f => f.title) && D.secrets.every(s => s.title),
+    `AD1 titles are short epithets (<= 14 characters, <= 2 words): ${titles.length} listed now` + (long.length ? '; too long: ' + long.map(t => t.n).join(', ') : ''));
+  const allTitles = D.groups.flatMap(x => [x.gold, x.ever]).concat(D.feats.map(f => f.title), D.secrets.map(s => s.title), D.chapters.map(c => c.title), D.ladder.filter(m => m.title).map(m => m.title));
+  const tooLong = allTitles.filter(n => !EXC.includes(n) && (n.length > 14 || n.split(' ').length > 2));
+  assert(allTitles.length === 68 && !tooLong.length, `AD1 all 68 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
+  const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
+  // F2 (Bonds) is merged, so 'bonds' and 'together' are live; the rest wait for their systems.
+  assert(live.length === 79 && hidden.sort().join() === ['fish', 'g_fish', 'g_pearl', 'handhrs', 'hands', 'lanterns', 'meals', 'oath', 'oathseals', 'pinkills', 'store', 'tides', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
+  E('S.store = { v: 1 }; S.bond = { v: 1, t: { a: 36000 }, lv: { a: 3 } }');
+  assert(E('deeds.track("store").live && deeds.track("bonds").live && deeds._cur("together") === 10 && deeds._cur("bonds") === 3'), 'a runtime probe lights a waiting track up when its save field appears (S.store, S.bond)');
+  E('delete S.store; delete S.bond');
+  assert(E('(() => { try { return deeds.tracks().length === 77; } catch (e) { return false; } })()'), 'probes of later systems never throw');
+
+  // AD7 numbers
+  const oldFmt = n => { const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc']; if (!isFinite(n)) return '∞'; if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n)); let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; } return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i]; };
+  const vals = [0, 0.5, 7.25, 9.99, 999, 999.9, 1000, 1234, 99999, 999999, 4.2e16, 9.9999e35, 1e35, 123456789012, Infinity];
+  for (let e = 0; e < 36; e += 0.37) vals.push(Math.pow(10, e) * 1.2345);
+  const diff = vals.filter(v => v < 1e36 && E(`fmt(${v})`) !== oldFmt(v));
+  assert(!diff.length && E('fmt(4.2e16)') === '42.0Qa' && E('fmt(1e36)') === '1.00aa' && E('fmt(1e39)') === '1.00ab' && E('fmt(1e114)') === '1.00ba', `AD7 letters: every value below 1e36 prints as before; 1e36 = ${E('fmt(1e36)')}, 1e39 = ${E('fmt(1e39)')}, 1e114 = ${E('fmt(1e114)')}` + (diff.length ? ' DIFF ' + diff.join(',') : ''));
+  E('deeds.setNum("sci")');
+  assert(E('fmt(4.2e16)') === '4.20e16' && E('fmt(12345)') === '1.23e4' && E('fmt(999)') === '999' && E('fmt(1e33)') === '1.00e33' && E('fmt(9.999e20)') === '1.00e21' && E('S.settings.num') === 'sci', `AD7 scientific: 4.2e16 = ${E('fmt(4.2e16)')}, 12,345 = ${E('fmt(12345)')}`);
+  E('deeds.setNum("letters")');
+  assert(E('fmt(4.2e16)') === '42.0Qa', 'AD7 the switch goes back to letters');
+
+  // AD4 caps: every tier forced on (and 30 stars on every star track)
+  E('for (const t of DEED_TRACKS) S.deeds.tier[t.id] = t.star ? 34 : 4; deeds._rebuild()');
+  const caps = E('deeds.caps()');
+  const over = caps.filter(c => c.v > c.cap + 1e-12);
+  const party = E('(1 + deedBonus("dmg")) * (1 + deedBonus("party"))');
+  assert(!over.length && party <= 1.092 + 1e-9 && E('deedBonus("dmg")') === 0.05 && caps.find(c => c.key === 'dmg').raw > 0.05,
+    `AD4 with every tier on, each key stays at its cap (dmg raw ${(caps.find(c => c.key === 'dmg').raw * 100).toFixed(1)}% -> 5%); party damage from deeds x${party.toFixed(4)} <= 1.092`);
+  const m0 = E('mod("dmg")'); E('DEED_TUNE.bonusOn = 0'); const m1 = E('mod("dmg")'); E('DEED_TUNE.bonusOn = 1');
+  assert(Math.abs(m0 / m1 - 1.05) < 1e-9 && E('bonus("deepOil")') >= 8 && E('mod("buildTime")') <= 0.97 + 1e-9, `AD4 the cap holds at runtime: mod("dmg") x${(m0 / m1).toFixed(4)} from deeds; deepOil ${E('deedBonus("deepOil")')}s`);
+  E('S.deeds.tier = {}; deeds._rebuild()');
+  assert(E('deeds.caps().every(c => c.v === 0)'), 'no tier, no bonus (Bronze and Silver pay points only)');
+
+  // goals: cap 1 (55-goals)
+  E('registerGoal({ id: "zz1", sys: "zz", cap: 1, prio: 5, pct: () => 0.99, label: "a" }); registerGoal({ id: "zz2", sys: "zz", cap: 1, prio: 5, pct: () => 0.98, label: "b" })');
+  const tg = E('topGoals(3, { sticky: false }).map(x => x.sys)');
+  assert(tg.filter(s => s === 'zz').length === 1 && E('topGoals(3, { sticky: false }).every(x => !("cap" in x))'), `registerGoal cap: 1 takes one row at most (${tg.join(', ')})`);
+  E('GOALS.splice(GOALS.findIndex(x => x.id === "zz1"), 1); GOALS.splice(GOALS.findIndex(x => x.id === "zz2"), 1)');
+
+  // counters, events, secrets on a new game
+  const h = loadCore({ seed: 9 });
+  const H = s => h.eval(s);
+  for (let i = 0; i < 30; i++) h.fn.tick(0.1);
+  assert(H('S.deeds.init > 0 && deeds.points() === 0 && Object.keys(S.deeds.tier).length === 0'), 'a new game runs the same first-load path with nothing to grant');
+  H('emit("harvest", { kind: "ore", t: 2, n: 7 }); emit("harvest", { kind: "herb", t: 1, n: 3, glint: true }); emit("weeklyClaim", { k: "x" }); emit("raidReward", { embers: 4 }); emit("trophy", { i: 0, n: 2 }); emit("upgraded", { item: { r: "rare", t: 1 } }); emit("expedBack", { r: "x", g: 3, auto: true })');
+  H('CB_STATS.parries += 3; CB_STATS.heroDmg += 500; CB_STATS.maxHit = 2e6');
+  for (let i = 0; i < 11; i++) h.fn.tick(0.1);
+  assert(H('S.deeds.g.ore[1] === 7 && S.deeds.g.herb[0] === 3 && S.deeds.n.glint === 1 && S.deeds.n.weekly === 1 && S.deeds.n.embers === 4 && S.deeds.n.troph >= 2 && S.deeds.n.up === 1 && S.deeds.rec.fine === 2 && S.deeds.n.perfect === 1'), 'event counters: harvest by family and tier, Glints, weekly goals, Embers, Trophies, upgrades, best craft, Perfect grades');
+  assert(H('S.deeds.n.parry >= 3 && S.deeds.n.dmg >= 500 && S.deeds.rec.hit === 2e6 && deeds.track("bighit").tier === 1'), `combat counters are read as CB_STATS deltas once a second; the biggest hit is a record (Heavy Hand ${H('deeds.track("bighit").tier')}; ${H('JSON.stringify([S.deeds.n.parry, S.deeds.n.dmg, S.deeds.rec.hit, CB_STATS.maxHit])')})`);
+  H('Object.keys(CB_STATS).forEach(k => CB_STATS[k] = 0)'); const p0 = H('S.deeds.n.parry'); h.fn.tick(1.0); h.fn.tick(0.05);
+  assert(H('S.deeds.n.parry') === p0, 'a CB_STATS reset never subtracts from a counter');
+  const tl = []; h.fn.on('toast', t => tl.push(t.msg));
+  H('S.name = "Wren"'); for (let i = 0; i < 11; i++) h.fn.tick(0.1);
+  for (let i = 0; i < 300; i++) h.fn.emit('tap', { node: false });
+  assert(H('S.deeds.sec.s_name === 1 && S.deeds.sec.s_drum === 1 && deeds.points() >= 30') && tl.some(m => /^Secret found: Namesake/.test(m)), 'secrets: Namesake (a companion\'s name), Drummer (300 taps in a minute), 15 points each, one toast');
+  const sc = H('deeds.secrets()');
+  assert(sc.filter(s => !s.got).every(s => !s.n && !s.title) && sc.find(s => s.id === 's_name').n === 'Namesake', 'unfound secrets keep their names hidden');
+  assert(H('codexTitles().some(t => t.id === "a_s_name" && t.got) && codexSetTitle("a_s_name") && codexTitle() === "Namesake" && !codexSetTitle("a_f_parry")'), 'deeds titles join the Codex picker (S.codex.title); unearned ones cannot be picked');
+  // near-miss goal: 90% of a tier, one row, hides after a tier (a new game with no tier yet)
+  const k = loadCore({ seed: 11 }); for (let i = 0; i < 30; i++) k.fn.tick(0.1);
+  const K = s => k.eval(s);
+  K('S.totalKills = 950; S.deeds.follow = null');
+  const nearNow = K('deeds.near(3).map(x => x.label)');
+  assert(nearNow.some(l => /^50 foes to Slayer I$/.test(l)), `near tiers read plainly: ${nearNow.slice(0, 2).join('; ')}`);
+  const shown = K('topGoals(3, { sticky: false }).filter(x => x.id === "deeds-near").map(x => x.label + " " + x.pct.toFixed(2))');
+  K('S.totalKills = 1000; deeds.check(true, false); S.totalKills = 9500');
+  const hid = !K('topGoals(3, { sticky: false }).some(x => x.id === "deeds-near")') && K('deeds.near(3).some(x => x.id === "slayer")');
+  assert(shown.length === 1 && hid, `Next Up shows one nudge (${shown[0]}), capped below Ready; it hides for 3 minutes after a tier`);
+  // Feats and the Codex bridge
+  const light0 = H('codexRefresh(true)');
+  H('S.deeds.n.parry = 25000'); H('deeds.check(true, false)');
+  assert(H('S.deeds.feat.f_parry === 1 && deeds.owned("a_steel") && deeds.wear("aura", "a_steel") && wearGet("aura") === "a_steel"'), 'a Feat gives its look; it can be worn (wearGet)');
+  assert(H('codexRefresh(true)') >= light0 + 6 && H('codexPage("achievements").tiles.some(t => t.key === "f_parry")') && H('codexPage("wardrobe") && !codexPage("wardrobe").locked'), `Codex bridge: the Feat tile (5 Light) and the Wardrobe entry (1 Light): ${light0} -> ${H('codexLight()')}`);
+  assert(!H('deeds.wear("aura", "a_star")') && !H('deeds.wear("hat", "a_steel")') && H('deeds.wear("aura", null) && wearGet("aura") === null'), 'looks: only owned, in their own slot; None always');
+  H('S.deep.cos.l_amber = 1; S.deep.eq.lantern = "l_amber"');
+  assert(H('wearGet("flame") === "l_amber"') && H('typeof DEEP_SHOP.l_amber !== "object" || deeds.wear("flame", "l_amber")'), 'the Flame slot falls back to the Deepwell lantern colour (S.deep.eq keeps its meaning)');
+  assert(!h.errors.length, 'no errors (deeds on a new game)' + (h.errors.length ? ': ' + h.errors[0] : ''));
+
+  // AD2, AD3, AD6 on every fixture
+  const ACH0 = [['zone10', 10, 'gold', 0.02], ['zone25', 25, 'dmg', 0.03], ['zone50', 50, 'gold', 0.05], ['lv20', 20, 'xp', 0.03], ['lv50', 50, 'dmg', 0.03], ['kill1k', 1000, 'gold', 0.02],
+    ['kill25k', 25000, 'dmg', 0.03], ['kill100k', 100000, 'gold', 0.03], ['gold1m', 1e6, 'gold', 0.02], ['gold1b', 1e9, 'gold', 0.03], ['mine25', 25, 'gatherSpeed', 0.03], ['wood25', 25, 'gatherSpeed', 0.03],
+    ['smith25', 25, 'skillXp', 0.03], ['forge1', 1, 'skillXp', 0.02], ['forge25', 25, 'skillXp', 0.03], ['epic', 1, 'crit', 0.03], ['uniq1', 1, 'essence', 0.03], ['uniq3', 3, 'essence', 0.05],
+    ['uniq7', 7, 'dmg', 0.05], ['party', 7, 'party', 0.03], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'gold', 0.03]];
+  assert(JSON.stringify(E('ACH_API.list.map(a => [a.id, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('ACH_API.list.map(a => ACH_API.bonusText(a)).join("|")').split('|').length === 22,
+    'AD2 the Classic 22: ids, thresholds and bonuses unchanged');
+  const noDeeds = (await import('./lib/core.mjs')).coreFiles().filter(f => !/^(23-data-deeds|58-deeds)\.js$/.test(f));
+  const achSums = h2 => h2.eval('(() => { const s = {}; for (const a of ACH_API.list) if (S.achievements.got[a.id]) s[a.bonus[0]] = (s[a.bonus[0]] || 0) + a.bonus[1]; return JSON.stringify(s); })()');
+  const expect = { 'save-v2-late.json': ['slayer:2', 'zones:2', 'level:2', 'gold:1', 'mine:2', 'wood:2'] };
+  for (const f of FIX) {
+    const raw = fixText(f);
+    const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }), files: noDeeds });
+    const atLoad = JSON.parse(a.eval('JSON.stringify(S)')), atLoadB = JSON.parse(b.eval('JSON.stringify(S)'));
+    delete atLoad.deeds; atLoad.last = atLoadB.last;
+    const lines = []; a.fn.on('whatsNew', w => lines.push(w.msg)); a.fn.on('toast', t => lines.push(t.msg));
+    let fresh = null;   // computed the moment the first-load credit lands
+    a.fn.on('deedsInit', () => { fresh = a.eval('DEED_TRACKS.filter(t => deeds.track(t.id).live && deeds._tierOf(t.id, deeds._cur(t.id)) !== (S.deeds.tier[t.id] || 0)).map(t => t.id)'); });
+    for (let i = 0; i < 15; i++) { a.fn.tick(0.1); b.fn.tick(0.1); }
+    assert(achSums(a) === achSums(b), `AD2 ${f}: Classic sums match the build without deeds ${achSums(a)}`);
+    for (let i = 0; i < 15; i++) a.fn.tick(0.1);
+    const A = s => a.eval(s);
+    const deedLines = lines.filter(m => /deeds so far|achievement points|\((Bronze|Silver|Gold|Everflame)\)|^Feat:|Everflame ★|every track at/.test(m));
+    const tiers = A('S.deeds.tier');
+    const want = expect[f] || [];
+    const missing = want.filter(x => { const [id, k] = x.split(':'); return (tiers[id] || 0) !== +k; });
+    assert(A('S.deeds.init > 0') && fresh && !fresh.length && deedLines.length === 1 && /^Your deeds so far: \d+ tiers?, [\d,]+ points\. See Achievements\./.test(deedLines[0]) && !A('Object.keys(S.deeds.sec).length') && !missing.length && (f !== 'save-v2-late.json' || !A('Object.keys(S.deeds.feat).length')),
+      `AD3 ${f}: tiers granted equal a fresh computation, one line ("${deedLines[0]}"), no secret retro` + (want.length ? `, earns ${want.join(' ')} and no Feat` : '') + (!fresh || fresh.length ? ' MISMATCH ' + (fresh || ['no init']).join(' ') : '') + (missing.length ? ' MISSING ' + missing.join(' ') : '') + (deedLines.length !== 1 ? ' LINES ' + deedLines.join(' | ') : ''));
+    // second load: nothing granted, no line; AD6 round trip
+    A('save()'); const snap = A('JSON.stringify(S)');
+    const c = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: a.storage.get(KEY) }) });
+    const again = []; c.fn.on('deedTier', x => again.push(x.id)); c.fn.on('deedsInit', () => again.push('init')); c.fn.on('whatsNew', w => { if (/deeds so far/.test(w.msg)) again.push('line'); });
+    const back = JSON.parse(c.eval('JSON.stringify(S)'));
+    const rt = deepDiff(JSON.parse(snap), back), old = Object.keys(JSON.parse(raw)).map(k => deepDiff(atLoadB[k], atLoad[k], k)).find(Boolean) || null;   // the save's own fields load as they do without deeds
+    c.eval('S.activity = "gather"'); for (let i = 0; i < 30; i++) c.fn.tick(0.1);
+    assert(!again.length, `AD3 ${f}: a second load grants nothing` + (again.length ? ': ' + again.join(' ') : ''));
+    assert(!rt && !old && back.deeds && back.deeds.init > 0, `AD6 ${f}: save and load round-trip with S.deeds; the save's own fields load exactly as they do without deeds` + (rt ? ' RT ' + rt : '') + (old ? ' OLD ' + old : ''));
+    assert(!a.errors.length && !c.errors.length, `${f}: no errors` + (a.errors.length ? ': ' + a.errors[0] : c.errors.length ? ': ' + c.errors[0] : ''));
+  }
+
+  // AD5 online: the raiders body and presence keys are unchanged
+  const on = fs.readFileSync(path.join(ROOT, 'src', 'js', '80-online.js'), 'utf8');
+  const lit = re => { const m = on.match(re); return m ? m[1] : null; };
+  const body = lit(/const body = (\{[^}]*\});/), pres = lit(/const p = (\{ hero[^}]*\});/);
+  const stubKeys = src => Object.keys(new Function('S', 'gear', 'totalDps', `return ${src};`)({ name: 'x', L: 1, maxZone: 1, wyrms: 0, raid: { gen: 0, dmg: 0 }, zone: 1, activity: 'fight' }, () => ({ score: 1 }), () => 1)).join();
+  assert(body && pres && stubKeys(body) === 'name,L,maxZone,wyrms,gear,dps,gen,dmg' && stubKeys(pres) === 'hero,lvl,zone,act,raiding' && !/deeds|title/i.test(on),
+    `AD5 online shapes unchanged: raiders {${body ? stubKeys(body) : '?'}}, presence {${pres ? stubKeys(pres) : '?'}}; 80-online.js never reads deeds or titles`);
+
+  // AD8 cost: one round-robin pass on the late fixture
+  {
+    const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: fixText('save-v2-late.json') }) });
+    for (let i = 0; i < 30; i++) a.fn.tick(0.1);
+    a.eval('deeds.check(false, true)');
+    const n = 2000, t0 = process.hrtime.bigint();
+    a.eval(`for (let i = 0; i < ${n}; i++) deeds.check(false, true)`);
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6 / n;
+    assert(ms < 0.2, `AD8 one deedsCheck pass (a quarter of the tracks) takes ${ms.toFixed(3)} ms on the late fixture (< 0.2)`);
+  }
+} catch (e) { fail('deeds crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

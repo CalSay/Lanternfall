@@ -45,6 +45,8 @@
 //   BAL2: a Camp build short only of a fight-only material (Soft Hide) walks back to farm it every
 //   other fight cycle (--farm 0 turns it off). --snapday D:path writes the save at the end of day D.
 //   --targets --days 60 runs the targets on 60 days (the 60-day report in pacing.md 11).
+// --report deeds [--days 60] [--classes a,b]: the achievements targets AP1-AP8 (achievements.md 10),
+//   every class with and without the deeds bonuses (AC2).
 // --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
 //   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
 //   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
@@ -65,6 +67,7 @@ const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0'
 
 if (args.targets) { await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
+if (args.report === 'deeds') { await runDeedsReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
 Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
@@ -729,6 +732,18 @@ function runDays() {
   const out = a => console.log(a.map((x, i) => i < w.length ? String(x).padStart(w[i]) : ' ' + x).join(' '));
   out(['day', 'zone', 'lvl', 'gold/h', 'tier', 'mine/wood/smith', 'bored', 'companions']);
   const rows = [];
+  // AC2 (--report deeds): tiers by wall day, Feats, the near-miss nudge's share of Next Up rows.
+  const hasDeeds = E('typeof deeds === "object"');
+  const dd = { tierDay: {}, everDay: {}, feats: {}, perDay: {}, near: [], v7: {} };
+  if (hasDeeds) {
+    fn.on('deedTier', ({ id, tier }) => {
+      const day = wall / H / 24, d = Math.max(1, Math.ceil(day));
+      dd.perDay[d] = (dd.perDay[d] || 0) + 1;
+      if (dd.tierDay[id] === undefined) dd.tierDay[id] = +day.toFixed(2);
+      if (tier >= 4 && dd.everDay[id] === undefined) dd.everDay[id] = +day.toFixed(2);
+    });
+    fn.on('deedFeat', ({ id }) => { dd.feats[id] = +(wall / H / 24).toFixed(2); });
+  }
   let gold0 = E('S.totalGold'), sIdx = 0, awayN = 0;
   // The game is installed at the first check-in (BAL1: the old loop gave a new game 8h of away gains first).
   wall = sessions.length ? sessions[0][0] : 0;
@@ -748,8 +763,10 @@ function runDays() {
       ci = sIdx; syncClock();
       // Back in the game: spend what the away time brought, then play.
       withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear); checkTiers();
+      if (hasDeeds) { const tg = E('topGoals(3, { sticky: false }).map(x => x.sys)'); dd.near.push([tg.filter(x => x === 'deeds').length, tg.length]); }
       for (let sec = 0; sec < len; sec++) {
         playSecond(sec); wall++; act++;
+        if (hasDeeds && (sec === (len >> 1) || sec === len - 1)) { const tg = E('topGoals(3, { sticky: false }).map(x => x.sys)'); dd.near.push([tg.filter(x => x === 'deeds').length, tg.length]); }
         if (E('S.activity') === 'gather') skAdd(E('skillOf(S.node.kind)'), 'live', 1);
         if (sec % 60 === 0) checkTiers();
       }
@@ -767,6 +784,10 @@ function runDays() {
     if (campStats.full === null && campMax && campLv >= campMax) campStats.full = d;
     const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
     r.sk = Object.fromEntries(SKILL_KEYS.map(k => [k, E(`S.skills.${k}.lv`)]));
+    if (hasDeeds) {
+      r.deeds = E('({ pts: deeds.points(), tiers: Object.values(S.deeds.tier).reduce((a, k) => a + k, 0), feats: Object.keys(S.deeds.feat).length, dmg: deedBonus("dmg"), party: deedBonus("party"), xp: deedBonus("xp"), gold: deedBonus("gold"), hit: S.deeds.rec.hit, totalGold: S.totalGold })');
+      if (d === 7) dd.v7 = E('Object.fromEntries(deeds.tracks().map(t => [t.id, t.v]))');
+    }
     rows.push(r);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
     // --snapday D:path writes the save at the end of day D (debugging).
@@ -801,7 +822,7 @@ function runDays() {
   console.log(`recruits: ${['join', 'rare', 'epic', 'legendary'].map(k => `${k} ${rec[k] ? (rec[k].day * 24 < 3 ? (rec[k].day * 1440 - 480).toFixed(0) + 'm' : 'day ' + rec[k].day.toFixed(1)) + ' (' + rec[k].id + ')' : '-'}`).join(', ')} | all: ${recruits.join(' ')}`);
   const campFirst = campStats.first ? { min: (campStats.first.t) / 60, id: campStats.first.id } : null;
   console.log(`camp: first build ${campFirst ? campFirst.min.toFixed(0) + ' min after install (' + campFirst.id + ')' : '-'}, full camp ${campStats.full ? 'day ' + campStats.full : '-'}, levels by day ${rows.filter(r => [1, 3, 7, 14, 21, 30, 45].includes(r.day)).map(r => `d${r.day} ${r.camp}/${r.campMax}`).join(' ')}`);
-  if (args.json) console.log('JSON ' + JSON.stringify({ rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk })), bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
+  if (args.json) console.log('JSON ' + JSON.stringify({ rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -918,6 +939,78 @@ async function runTargets() {
     console.log(`  ${c.padEnd(11)} ${f0(tJoin[i])}m ${id(/T16 first recruit [\d.]+m \((\w+)\)/)} | ${f1(tRare[i] / 60)}h ${id(/first Rare [\d.]+[mh] \((\w+)\)/)} | day ${rj.epic ? rj.epic.day.toFixed(1) + ' ' + rj.epic.id : '-'} | day ${rj.legendary ? rj.legendary.day.toFixed(1) + ' ' + rj.legendary.id : '-'}`);
   }
   if (cont.concat(dys, combatRuns).some(o => /errors: \d+/.test(o))) console.log('WARN  game errors in a run (run it alone to see them)');
+}
+
+// ================= --report deeds: achievements balance targets (achievements.md 10, AC2) =================
+// Runs every class for --days (default 60) of normal play, with and without the deeds bonuses
+// (DEED_TUNE.bonusOn = 0), and prints PASS/FAIL for AP1-AP8. The sim does not run the Deepwell,
+// expeditions or the raid, so AP7 skips those groups and any track whose number is still 0 on day 7
+// (a system this policy does not use).
+async function runDeedsReport() {
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'camp', 'combat', 'enemy'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const classes = String(args.classes || 'warden,lanternmage,ranger,lightkeeper').split(','), nDays = +(args.days || 60);
+  const ev = args.eval ? String(args.eval) : '';
+  const jobs = classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass, ...(ev ? ['--eval', ev] : [])]))
+    .concat(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass, '--eval', ['DEED_TUNE.bonusOn = 0'].concat(ev ? [ev] : []).join('; ')])));
+  const outs = await Promise.all(jobs);
+  const js = outs.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
+  const on = js.slice(0, classes.length), off = js.slice(classes.length);
+  const ok = b => b ? 'PASS' : 'FAIL', inR = (v, [a, b]) => v >= a && v <= b, res = [];
+  const at = (j, d) => (j.rows[Math.min(d, j.rows.length) - 1] || {}).deeds || {};
+  const pc = v => ((v || 0) * 100).toFixed(1) + '%';
+  const fx = v => Number.isFinite(v) ? v.toFixed(2) : '-';
+  // AP1 points at day 1 / 7 / 30 / 60
+  const B1 = [[1, [200, 400]], [7, [800, 1300]], [30, [2000, 3000]], [60, [3000, 4200]]].filter(([d]) => d <= nDays);
+  res.push([ok(on.every(j => B1.every(([d, b]) => inR(at(j, d).pts, b)))), `AP1 points at day ${B1.map(x => x[0]).join(' / ')} in ${B1.map(x => x[1].join('-')).join(' / ')}`,
+    classes.map((c, i) => `${c} ${B1.map(([d]) => at(on[i], d).pts).join('/')}`).join(', ')]);
+  // AP2 tiers per day, days 7-30: at least one on 80% of days
+  const ap2 = on.map(j => { let hit = 0, n = 0; for (let d = 7; d <= Math.min(30, nDays); d++) { n++; if ((j.deeds.perDay[d] || 0) > 0) hit++; } return n ? hit / n : 0; });
+  res.push([ok(ap2.every(v => v >= 0.8)), 'AP2 at least one tier a day on 80% of days 7-30', classes.map((c, i) => `${c} ${Math.round(ap2[i] * 100)}%`).join(', ')]);
+  // AP3 bonus at day 1 / 7 / 30
+  const ap3 = on.map(j => [at(j, 1), at(j, 7), at(j, 30)]);
+  res.push([ok(ap3.every(([a, b, c]) => !a.dmg && !a.party && b.dmg <= 0.01 && c.dmg <= 0.03 && c.party <= 0.02)), 'AP3 deeds bonus (dmg/party): day 1 none, day 7 <= +1% dmg, day 30 <= +3% dmg and +2% party',
+    classes.map((c, i) => `${c} ${ap3[i].map(x => `${pc(x.dmg)}/${pc(x.party)}`).join(' ')}`).join(', ')]);
+  // AP4 region boss days with and without the bonuses
+  const bday = (j, z) => j.bossAt[z] === undefined ? Infinity : j.bossAt[z] / 24;
+  const sh = (i, z) => bday(off[i], z) - bday(on[i], z);
+  res.push([ok(classes.every((c, i) => Math.abs(sh(i, 35)) < 0.3 && ((!Number.isFinite(bday(on[i], 70)) && !Number.isFinite(bday(off[i], 70))) || Math.abs(sh(i, 70)) < 0.5))),
+    'AP4 region boss days with vs without deeds bonuses: P1 shifts < 0.3 days, P2 < 0.5 days',
+    classes.map((c, i) => `${c} P1 ${fx(bday(on[i], 35))} vs ${fx(bday(off[i], 35))}, P2 ${fx(bday(on[i], 70))} vs ${fx(bday(off[i], 70))}`).join('; ')]);
+  // AP5 Feats: none before day 14, at most 2 by day 60
+  const ap5 = on.map(j => Object.entries(j.deeds.feats));
+  res.push([ok(ap5.every(l => l.every(([, d]) => d >= 14) && l.filter(([, d]) => d <= 60).length <= 2)), 'AP5 Feats: none before day 14, at most 2 by day 60',
+    classes.map((c, i) => `${c} ${ap5[i].length ? ap5[i].map(([id, d]) => id + '@' + d).join(' ') : 'none'}`).join(', ')]);
+  // AP6 near-miss share of Next Up rows (sampled at each check-in)
+  const ap6 = on.map(j => { const n = j.deeds.near.length, shown = j.deeds.near.filter(([k]) => k > 0).length, max = Math.max(0, ...j.deeds.near.map(([k]) => k)); return { share: n ? shown / n : 0, max }; });
+  res.push([ok(ap6.every(x => x.max <= 1 && inR(x.share, [0.2, 0.6]))), 'AP6 the nudge takes at most 1 of 3 rows, shown at 20-60% of Next Up samples (start, middle and end of each check-in)',
+    classes.map((c, i) => `${c} ${Math.round(ap6[i].share * 100)}% (max ${ap6[i].max} row)`).join(', ')]);
+  // AP7 every live track the player uses reaches Bronze within 7 days
+  const SKIP = ['exped', 'deep', 'raid'];
+  const used = (j, id) => !SKIP.includes(j.deeds.groups[id]) && (j.deeds.v7[id] || 0) > 0;
+  const ap7 = on.map(j => j.deeds.live.filter(id => used(j, id) && !(j.deeds.tierDay[id] <= 7)));
+  const unused = on.map(j => j.deeds.live.filter(id => !SKIP.includes(j.deeds.groups[id]) && !used(j, id)));
+  res.push([ok(ap7.every(l => !l.length)), 'AP7 every live track reaches Bronze within 7 days (tracks the sim uses; no Deepwell, expeditions or raid)',
+    classes.map((c, i) => `${c} ${ap7[i].length ? 'late: ' + ap7[i].map(id => `${id}@${on[i].deeds.tierDay[id] === undefined ? '-' : on[i].deeds.tierDay[id]}`).join(' ') : 'all'}`).join('; ') + ` | unused by day 7 (${classes[0]}): ${unused[0].join(' ') || '-'}`]);
+  // AP8 Everflame tiers: none before day 7; the median live Everflame tier between day 30 and 120
+  const ap8 = on.map(j => {
+    const days = j.deeds.live.map(id => j.deeds.everDay[id]).filter(d => d !== undefined).sort((a, b) => a - b);
+    const n = j.deeds.live.length, med = days.length >= Math.ceil(n / 2) ? days[Math.ceil(n / 2) - 1] : Infinity;
+    return { first: days.length ? days[0] : Infinity, n: days.length, of: n, med };
+  });
+  res.push([ok(ap8.every(x => x.first >= 7 && (Number.isFinite(x.med) ? inR(x.med, [30, 120]) : nDays < 120))),
+    `AP8 Everflame: none before day 7; the median live Everflame tier lands on day 30-120${nDays < 120 ? ` (a ${nDays}-day run shows only that it is past day ${nDays})` : ''}`,
+    classes.map((c, i) => `${c} first ${fx(ap8[i].first)}, ${ap8[i].n}/${ap8[i].of} by day ${nDays}, median ${Number.isFinite(ap8[i].med) ? fx(ap8[i].med) : '> ' + nDays}`).join('; ')]);
+  for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
+  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.length} deeds targets pass`);
+  // Calibration: the biggest hit and lifetime gold at the end (f_hit sits ~10x the day-60 hit; f_gold two x1,000 steps past Hoard IV).
+  const eN = n => !Number.isFinite(n) ? String(n) : n < 1e3 ? String(Math.round(n)) : n.toExponential(2);
+  for (const [i, c] of classes.entries()) { const l = at(on[i], nDays); console.log(`  ${c.padEnd(11)} day ${nDays}: ${l.pts} points, ${l.tiers} tiers, ${l.feats} Feats, biggest hit ${eN(l.hit)}, gold ${eN(l.totalGold)}, bonus dmg ${pc(l.dmg)} party ${pc(l.party)} xp ${pc(l.xp)} gold ${pc(l.gold)}`); }
+  const j0 = on[0];
+  console.log(`  Bronze / Everflame day per track (${classes[0]}): ` + j0.deeds.live.map(id => `${id} ${j0.deeds.tierDay[id] === undefined ? '-' : j0.deeds.tierDay[id]}/${j0.deeds.everDay[id] === undefined ? '-' : j0.deeds.everDay[id]}`).join(', '));
+  console.log(`  points by day (${classes[0]}): ` + j0.rows.filter(r => r.day <= 10 || r.day % 5 === 0).map(r => `d${r.day} ${r.deeds ? r.deeds.pts : '-'}`).join(' '));
+  if (js.some(j => j.errors)) console.log('WARN  game errors in a run (run it alone to see them)');
 }
 
 // ================= --report skills: gathering and crafting skill pace (GP1) =================

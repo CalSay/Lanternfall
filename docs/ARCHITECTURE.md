@@ -23,6 +23,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 60b-baker.js | browser | B1 baker: `charFrames`, `enemyFrames`, `portraitURL`, `drawCharPreview`, lights |
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
 | 22-data-regions.js | core (data) | the Lantern Road's regions (region-2.md 2.2): `REGIONS` (the Hollow 1-35, the Sunken Coast 36-70; per region its 7 types as TYPES indices, names, themes, uniques, home grounds, hue rule, boss), `ROAD_BEYOND`, `regionOf`/`regionIdx`/`regionById`, `zoneNextType`, `zoneTheme`, `zoneHue`, `zoneUnique`, `zoneHome`, `regionBossZone`, `lanternsLitAt`. `zonePlace`/`zoneCycle`/`zoneType`/`zoneName` (40-rules) read it. Region 2's own data plugs in through `REGION_COAST` (22-data-coast.js); until then the coast reuses the Hollow's foes under its own names |
+| 23-data-deeds.js | core (data) | achievements data (docs/design/achievements.md, AC2): `DEED_TRACKS` (92 tracks, tiers Bronze/Silver/Gold/Everflame, stars), `DEED_GROUPS`, `DEED_FEATS`, `DEED_SECRETS`, `DEED_LOOKS` (36 accessories + 4 frames), `DEED_LADDER`, `DEED_CHAPTERS`, `DEED_CAP` (the hard bonus cap per key), `DEED_TUNE` |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
 | 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
@@ -42,10 +43,11 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-skillpace.js | core | the save rule for the slower skill pace (GP1, pacing.md 12): a save that predates GP1 keeps every tier the old gates gave its levels (`S.skillPace.hw`, set once per loaded save; a new game keeps nothing); `skillKept(k)`, `skillPaceInfo()`, one What's new line. The gates themselves: `SKILL_TUNE` (20-data: `NODE_REQ`, `SMITH_REQ`, XP curves, `nodeXp`, speed per level) and `skillTopTier(k)`, `skillTierOpen(k, t)`, `skillReq(k, t)`, `skillNextReq(k)`, `skillNeed(lv, k)` (40-rules); `stationTierOpen(kind, t)` (55-crafting). Gate on these, never on `S.skills[k].lv >= NODE_REQ[t - 1]` |
 | 55-legend.js | core | legendary powers and circle sets (docs/design/legendaries.md, L2): the Lantern Book (`legendKnown`, `legendEchoes`, `legendEchoCap`), drops (`legendDrop(rank, source, opts)`, owed rolls `legendOwe`/`legendPayOwed`), actions with `legendCanX` checks (`legendLearn`, `legendInscribe`, `legendMark`, `legendSigil`), limits (`legendHeroCheck` for the in-page "Take off X?" ask, `legendCanWear`), reads (`legendActive`, `legendSets`, `legendSetTier`, `legendBudget` / `legendScale` = the runtime cap, `legendV`, `legendItemState`, `legendCardLines`, `legendBest`), `bonus('lg:<id>')`, Next Up goals; state `S.legend` (item fields `lg`, `lr`, `cm`). Data: 21c-data-legend.js; icons: 11b-art-legend.js; UI: 75-legend-ui.js (the Craft tab's Powers view, feature `powers`; `legendUI` helpers for the item sheet and the Party tab) |
 | 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells (`setField` keeps `ROSTER_TUNE.fieldMax` 2 companions and places them with 56e `placeSlots`), `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
-| 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
+| 56b-synergy.js | core | specialities, traits, passives, Legend auras; the three synergy layers of the party of three (plan-3 F2, formation.md 2): 12 slot jobs (`SLOT_JOBS`, `slotJob(key)`), 8 combos and 4 Kin, 21 Bonds (all in `SYNERGIES` with `layer`), Common Cause, the caps (`FORM_TUNE.synCap`/`drCap`); `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` (the L25 milestone is Old Friend), `synUnit(key)`/`synParty()` (59-combat), `formQuick(trio, prep)`/`formQuickPrep()` (F3's quick score); knobs `SYN_TUNE` |
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 56e-formation.js | core | the party of three (plan-3 F1, docs/design/formation.md): the hero and 2 companions in one line of slots Back / Middle / Front (`S.party.cells[key].col` 0 / 1 / 2, `lane` 1); homes (`HOME_SLOT`, `CLASS_HOME`), Out of place, the hero floor and `trioX`, the migration of old parties of 3 (`S.party.formV`, `formOld`), pins (`S.party.pin`); knobs `FORM_TUNE`. API below ("Formation") |
+| 56f-bonds.js | core | Bonds (plan-3 F2, formation.md 2.3, 3.3): time together (`S.bond`), levels Met..Sworn (`FORM_TUNE.bondH`/`bondX`), growth live / away / at the Hearth / on expeditions, Old Friend, seeds for old saves, stories (`bondStories`, `bondRead`; text in 21f-stories-bonds.js, LORE7), `swornOf(id)` (D5), `bondInfo`, `bondCounts` (AC2), `bondText` (toast copy for F4). API at the top of the file |
 | 56d-autofield.js | core | the line-up planner v3 (plan-3 F3, formation.md 5): 2 companions and a slot for each of the three (the hero too); pair x slot-order quick score (F2 `formQuick` when present), at most `FORM_TUNE.maxEst` hold estimates; push = pack^(1-w) x boss^w (single-target, `bossW` / `bossWHard`) x hold x Front tank; pins (`S.party.pin`) kept. `bestLineup({ zone, goal, filter, by, pin, bossW })` -> `{ field, cells, score, why, parts }` (cached), `bestLineupLater(opts, cb)` (idle steps), `lineupScore`, `applyLineup(res)` (one `setSlots`); `autoPlan(reason, opts)` -> `{ changed, res, wait }`: event-driven automatic changes with `hyst` 6%, `dwell` 300 s and no return within 10 min; `autoPlanInfo()`; event `autoPlan { reason, from, to, cells, why, gain }`. `autoField()` and `fieldIfBetter` (56-roster) go through `autoPlan`; the sim polls `autoPlan('poll')`. No save fields |
 | 57c-codex.js | core | the Codex and Lantern Light (docs/design/codex.md): pages read from other systems' state, recorders for what nothing else keeps, Light (only rises), milestones, capped Page Seal bonuses, the Blessing gate; `codexPages()`, `codexLight()`, `codexBonus(key)`, `codexHas(id)`, `codexTitle()` (state in `S.codex`; UI: 75-codex-ui.js, a sheet opened from the Journal card, the Library and `emit('codexOpen', { page })`) |
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
@@ -53,6 +55,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 59b-enemies.js | core | foe behaviours by zone type (dives, archers, bruisers, spore clouds, slams, healers), elites, boss mechanics and telegraphs, parry/dodge (`resolveParry(source)`, `cbTelegraph()`), knobs `ENEMY_TUNE`, data `FOE_BEH` |
 | 59c-deepwell-combat.js | core | the Deepwell on party combat (deepwell.md 8.2 and 15, plan-3 W6b): a floor is one pack (wraps `DEEP_ARENA.spawn`/`onKill`), party HP carried between floors (`run.hpAt`), a wipe ends the run (`DW.fall()`, reason `wipe`), Oil refunds +5s and parries give Oil, Taunt Drill for every class, Lifeline once a floor (`dcLifeline`), the Deep Edge Lore (D8); knobs `DEEP_COMBAT_TUNE`, `deepCombatOn()`, `DWC` (state in `S.deepCombat`: the one-time tip). 59-combat hooks: `cbArena` adopts `mob.pack`, `cbRestore(clear)` |
 | 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
+| 58-deeds.js | core | achievements core (AC2): tracks read the save or new counters (`S.deeds.n/g/rec`, combat as `CB_STATS` deltas once a second), a quarter of the tracks checked per second, groups, Feats, secrets, points and ladder, capped Gold/Everflame bonuses (`deedBonus(key)`), titles joined to `codexTitles()` (ids `a_*`), looks and `wearGet(slot)`, the `deeds-near` Next Up goal, away lines, old-save credit (one What's new line); waiting tracks light up by runtime probes (`S.store`, `S.hands`, `S.kitchen`, `S.bond`, `S.oath`, `S.pin`, `REGIONS[1].plugged`); API `deeds` (header of the file); state `S.deeds` |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -112,6 +115,16 @@ setPin(id, on) / isPinned(id)                                                  /
 placeSlots(keep) -> cells; slotsFor(keys, pre, cur) -> cells                  // the placement rule (pure form for planners)
 trioMult(), heroFloorDps(), heroCombatDps(), heroStand(tap), offSlotMult(key)  // party-combat damage
 formNoLoss() -> { before, after, ratio, old, field } | null                   // this save's migration (T9)
+```
+Synergies and Bonds (56b, 56f; plan-3 F2):
+```js
+SYNERGIES [{ id, name, layer: 'combo' | 'kin' | 'bond', needs, text, parts, need, circle, pair, cls, stories }]   // 14 old ids first
+slotJob(key) -> { role, slot, name, label, text }; SLOT_JOBS[role][slot]; BOND_LV_NAME ['Not yet', 'Met', ... 'Sworn']
+activeSynergies() -> [{ id, name, layer, lv, members, effectText, strength }]; synergyStatus(id) -> { active, layer, lv, missing, text }
+synUnit(key) -> { dr, hp, heal, healIn, th, cd, ctrl, area }; synParty() -> { revive, diveTaunt }   // 59-combat / 59b
+formQuickPrep() -> prep; formQuick({ front, mid, back }, prep) -> { d, st, front, sup, syn }        // F3: pure, ~13 us a call
+bondLevel(id) / bondTime(id) / bondToNext(id) / bondInfo(id) / bondsOf(key, all) / partyBonds() / bondCounts()
+bondStories(id) / bondRead(id, i) / bondUnread(id) / bondSworn(id) / swornOf(charId) / bondText(id, lv) / bondSet(id, lv)
 ```
 Everything reads the current `S.party.field` / `cells`, so a planner that swaps them in to measure a line-up
 scores slots, Out of place, `trioX` and the hero floor for free. Save: `field` (at most 2) and `cells` keep
@@ -184,6 +197,7 @@ topGoals(n = 3) -> [{ id, sys, label, pct, ready, go, icon }]       // cached ~0
 `view` when there is no `sel`, scrolls to `sel` and flashes it) or a fn
 returning one. `icon` is a toast icon spec, or `{ mob: typeKey }` / `{ char: rosterId }`.
 `prio` (default 0) breaks ties and orders ready goals. Register from your own 55-*.js file.
+`cap: 1` (optional): the diversity pass never takes a second goal from that `sys` (the deeds nudge, the story chapter).
 ```js
 registerGoal({ id: 'camp-build', sys: 'camp', label: () => `${B.name}: ready to build`,
   pct: () => campBuildPct(), go: { tab: 'world', sel: '#sec-camp' }, icon: { ic: ['anvil', '#F2C14E'] } });
@@ -227,7 +241,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `charGear` | `{ id, pos, item }` (a companion's wpn/trk changed; item null when unequipped) |
 | `classChosen` | `{ cls, from }` (from: the class left, null on the first choice) |
 | `retooled` | `{ legacy: { weapon, helm }, swap, from }` (41-items `retoolItems`: old gear became class gear) |
-| `synergyChange` | `{ active, gained, lost }` (after a field change) |
+| `synergyChange` | `{ active, gained, lost }` (after a field change or a Bond level change) |
+| `bondLevel` / `bondStory` | `{ id, lv, prev, quiet, story: 0 \| 1 \| 2, sworn }` (56f: a Bond reached a level; quiet for seeds and away) / `{ id, i }` (a Bond story read) |
 | `packSpawn` | `{ foes }` (59-combat: a new pack, or a boss and its adds; `mob` is the foe the stage shows) |
 | `unitHit` / `unitHeal` | `{ key, amount, kind, foe, blocked, shield }` / `{ key, amount, shield }` (party member hit or healed; kind hit, ranged, heavy, cloud, slam, dive, poison, burn) |
 | `unitDown` / `unitUp` / `unitAbility` | `{ key }` / `{ key, hp }` / `{ key, id }` (knocked out; stands up between packs or after a wipe; a companion's signature ability) |
@@ -245,11 +260,15 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `codexLight` / `codexPage` / `codexMilestone` | `{ light, gain }` / `{ id, kind: 'half'\|'seal' }` / `{ at, rewards }` (57c-codex) |
+| `deedTier` / `deedGroup` / `deedFeat` / `deedSecret` | 58-deeds: `{ id, tier, quiet }` / `{ id, lv, quiet }` (1 Gold, 2 Everflame) / `{ id, quiet }` / `{ id }` |
+| `deedPoints` / `deedMilestone` / `deedLook` / `deedChapter` / `deedsInit` | `{ pts, gain }` / `{ at }` / `{ slot, id }` (worn look changed; slot `helm` = the Show helm switch) / `{ id, step, quiet }` / `{ tiers, pts }` |
+| `deedsOpen` (listened, UI) | `{ view: 'deeds'\|'tracks'\|'feats'\|'looks', id }`: open the Achievements menu (the nudge's Go, away lines) |
+| `meal` / `tideTurn` / `storeCap` (listened) | 58-deeds counts them for Well Fed, Tide-Turner and the Pack Rat secret (K12, R2, H3 emit them) |
 | `starLit` / `starUnlit` / `starReset` / `starLayout` | 57e-constellations: `{ cls, id }` / `{ cls, id }` / `{ cls, n }` / `{ cls, i }` |
 | `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` (`summary.reason`: oil, wipe, leave, abandon, closed). With party combat `deepKill` fires once per floor (the pack) |
 | `legendDrop` / `legendLearn` / `legendRank` | 55-legend: `{ id, rank, kind: 'item'\|'echo'\|'rankUp'\|'book', source, item }` / `{ id, rank, echo, up }` / `{ id, rank }` |
 | `legendInscribe` / `legendMark` / `legendSigil` / `legendChange` | 55-legend: `{ id, item }` / `{ item, circle }` / `{ circle, n, source }` / none (anything the active-build cache reads changed) |
-| `expedBack` circles (listened) | 55-legend reads `{ g, circles, recall }` for Circle Sigils |
+| `expedBack` circles (listened) | 55-legend reads `{ g, circles, recall }` for Circle Sigils; 56f reads `{ team, secs }` (time out together) for Bonds |
 | `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
 | `greatLantern` | `{ n, region, zone, name, head, text, note, quiet, rewards }` (55-lantern: a region boss's first kill; `quiet` = an old save's catch-up, shown as a bell line; listeners push `{ txt, ic }` onto `rewards` for the card, e.g. 57e's star points) |
 | `whatsNew` | `{ msg, icon, first }`: a line in the bell's one "What's new" notice (70-ui; `first` puts it at the top). Toasts raised in the first 2.5 s of play fold into it too (old-save catch-ups) |
@@ -262,7 +281,10 @@ Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fie
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
 keep loading without loss, and so must every fixture in `tests/fixtures/` (`save-v3-four.json`: a
 chosen class and a full old field of 3 with gear, for the F1 party-of-three migration). `S.tab` is the open menu's tab, or `''` on the game view (portrait).
+`S.bond` (56f, plan-3 F2): `{ v, t: { id: seconds together }, lv: { id: level announced }, seen: { id: stories read } }`.
 `S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
+`S.settings.num` ('letters' | 'sci'; missing = letters): `fmt` reads it through `setNumFormat` (00-util;
+58-deeds syncs it, `deeds.setNum(v)` switches). Letters past Dc go on aa, ab, ...; below 1e36 `fmt` is unchanged.
 `S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
 (last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
 

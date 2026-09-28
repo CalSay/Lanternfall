@@ -30,7 +30,8 @@
 // expedition leaving or coming back, a class change, a pin change, and "stuck": stuckT seconds of
 // fighting with no kill and a member down, which also weighs a tank as after a boss knock-out). An automatic change needs a
 // gain of FORM_TUNE.hyst (6%) and FORM_TUNE.dwell (300 s of game time) since the last one; ties
-// keep the current party. At once: an empty place someone can fill, a pinned companion off the
+// keep the current party; no return within flipT (10 min), and none for badT (30 min) to a line-up
+// the packs knocked out. At once: an empty place someone can fill, a pinned companion off the
 // field, the party no longer holds the zone it fell back to, or a recruit beats a member by the old
 // fieldIfBetter rule (56-roster passes opts.now).
 //
@@ -62,9 +63,11 @@
 //   autoPlanInfo() -> { on, pending, planning, dwellLeft, last: { at, reason, from, to, why, gain } | null, changes }
 //   AF_TUNE (knobs; bossW, bossWHard, hyst, dwell, deep, maxEst, maxPins are read from FORM_TUNE)
 // Events: autoPlan { reason, from: [ids], to: [ids], cells, why, gain } after an automatic change.
-// Hooks: formQuick(trio) (F2, probed with typeof): trio = { front, mid, back } ('hero', ids or
-//   null) -> { d, st, front, sup } (pack and single-target damage, a pure function); without it,
-//   or when it throws or returns a non-number, the closed form above runs.
+// Hooks: formQuick(trio, prep) and formQuickPrep() (F2, 56b; probed with typeof): trio = { front, mid,
+//   back } ('hero', ids or null) -> { d, st, front, sup, syn } (pack and single-target damage with slot
+//   jobs, combos, Kin and Bonds; pure); prep is built once per search. Without them, or when one
+//   throws or returns a non-number, the closed form above runs. The full score keeps its own
+//   single-target read (boss armour, Execute, Hollow Cut, Mark), which formQuick leaves out.
 //
 // Cost: an uncached search is ~66 quick measurements plus at most maxEst estimates; a cached plan
 // re-measures itself and the field you have now (two estimates). The cache key holds the roster
@@ -91,6 +94,7 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
     markX: 1.08,          // the Ranger hero's Mark on its own hits on the boss
     nowGain: 0.001,       // an urgent re-plan still has to be better at all
     flipT: 600,           // no automatic return to the line-up it left within 10 min (FT7), unless urgent
+    badT: 1800,           // a line-up the packs knocked out (a wipe or stuck re-plan left it) is not picked again on its own for 30 min
     stuckSpan: 5,         // after a stuck fight (stuckT), a tank weighs as after a knock-out for 5 zones
     stuckT: 60,           // fighting this long with no kill and a member down: the party is stuck (counts as knocked out)
     stepUnits: 8, estUnits: 3   // idle steps: work per step (a quick = 1, an estimate = estUnits)
@@ -170,14 +174,16 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
   // ---------------- quick score (one pair, every order) ----------------
   let fq = true;   // formQuick usable (off after it throws or returns a non-number)
   const blend = (d, st, ft, ctx) => ctx.goal === 'farm' ? d : Math.pow(Math.max(d, 1e-12), 1 - ctx.w) * Math.pow(Math.max(st, 1e-12), ctx.w) * (ctx.boss && !ft ? 1 - ctx.tankPen : 1);
-  function quickPair(f, ctx) {
+  function quickPair(f, ctx, job) {
     const places = placements(['hero'].concat(f)), home = homeCells(f), out = [];
     if (fq && typeof formQuick === 'function') {
       try {
+        // F2's prep holds the trio-independent reads; built once per search, inside its level mode
+        if (job && job.prep === undefined) job.prep = typeof formQuickPrep === 'function' ? formQuickPrep() : null;
         for (const cells of places) {
           const trio = { front: null, mid: null, back: null };
           for (const k in cells) trio[COLS[cells[k].col]] = k;
-          const r = formQuick(trio);
+          const r = formQuick(trio, job && job.prep || undefined);
           if (!r || !Number.isFinite(r.d) || !Number.isFinite(r.st)) throw new Error('formQuick');
           out.push({ cells, q: blend(r.d, r.st, frontTankOf(cells), ctx) });
         }
@@ -325,7 +331,7 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
     const { ctx, pins, f0, c0, curKey, cnt, list } = job;
     const groups = {};
     for (const f of pairs(list, pins)) {
-      const { out, home } = quickPair(f, ctx);
+      const { out, home } = quickPair(f, ctx, job);
       cnt.nq += out.length;
       let best = null;
       for (const x of out) if (!best || x.q > best.q) best = x;
@@ -374,7 +380,7 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
     if (cacheFor !== S) { cache = new Map(); cacheFor = S; }
     const sig = typeof o.filter !== 'function' || o.key ? sigOf(o, ctx, by, pins) : null;
     const f0 = curField(), c0 = (P() && P().cells) || {};
-    const job = { o, by, ctx, pass, pins, sig, f0, c0, curKey: cellKey(f0, c0), cnt: { est: 0, nq: 0 }, ids: f0.slice(), S, res: sig ? cache.get(sig) || null : null, fresh: false };
+    const job = { prep: undefined, o, by, ctx, pass, pins, sig, f0, c0, curKey: cellKey(f0, c0), cnt: { est: 0, nq: 0 }, ids: f0.slice(), S, res: sig ? cache.get(sig) || null : null, fresh: false };
     if (!job.res) { job.list = candidates(pass, pins); job.ids = job.list.concat(f0.filter(k => !job.list.includes(k))); job.it = search(job); job.fresh = true; }
     return job;
   }
@@ -461,7 +467,7 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
   // ---------------- automatic changes (spec 5.4) ----------------
   // clock: game seconds since load (ticks), for the dwell. In memory: after a load the first due
   // plan may change the party at once.
-  const AP = { clock: 0, lastAt: -1e9, last: null, pending: null, checked: false, job: null, changes: 0, flipHold: 0 };
+  const AP = { clock: 0, lastAt: -1e9, last: null, pending: null, checked: false, job: null, changes: 0, flipHold: 0, bad: [] };
   const hasBench = f => rosterList().some(k => !f.includes(k) && !onExped(k));
   // After a fall-back: does the party you have now hold the zone it fell back to? (one estimate)
   const holdsHere = () => { try { return typeof partyHoldEstimate !== 'function' || partyHoldEstimate(S.zone, { one: true }).holds; } catch (e) { return true; } };
@@ -473,8 +479,11 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
     const enough = must || (gain != null && gain >= 1 + (now ? T.nowGain : F('hyst'))) || (gain == null && b.field.length > 0);
     if (!enough) return { changed: false, res: b, wait: 'gain' };
     const back = AP.last && AP.clock - AP.last.at < T.flipT && sameSet(b.field, AP.last.from) && sameSet(f, AP.last.to);
+    const bad = AP.bad.some(x => x.until > AP.clock && sameSet(x.field, b.field));
+    if (bad && !must) return { changed: false, res: b, wait: 'gain' };
     if (back && !must && !now) { AP.pending = reason; AP.checked = true; AP.flipHold = AP.last.at + T.flipT; return { changed: false, res: b, wait: 'dwell' }; }
     applyLineup(b);
+    if (reason === 'wipe' || reason === 'stuck') { AP.bad = AP.bad.filter(x => x.until > AP.clock); AP.bad.push({ field: f.slice(), until: AP.clock + T.badT }); }
     AP.lastAt = AP.clock; AP.changes++;
     AP.last = { at: AP.clock, reason, from: f.slice(), to: b.field.slice(), why: b.why, gain };
     emit('autoPlan', { reason, from: f.slice(), to: b.field.slice(), cells: b.cells, why: b.why, gain });

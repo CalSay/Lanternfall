@@ -11,7 +11,7 @@
 .om-tx { display: grid; min-width: 0; line-height: 1.15; }
 .om-eye { font: 600 10.5px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--arcane); }
 
-.om-nm { font: 600 16px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.om-nm { font: 600 calc(16px * var(--display-k))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .om-fx.dare { color: #FF9A8E; }
 .om-fx { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .om-chip { padding: 2px 6px; font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; color: var(--muted); background: var(--well); border: 1px solid var(--line-hi); }
@@ -35,7 +35,7 @@
 .om-box { width: 18px; height: 18px; margin-top: 1px; background: var(--well); border: 2px solid #9A5060; box-shadow: inset 0 0 0 2px #0B0810; }
 .om-dare.on .om-box { background: var(--hp); border-color: #FFB3A8; }
 .om-dare-tx { display: grid; gap: 2px; }
-.om-dare-tx b { font: 600 15px var(--display); color: #FF9A8E; }
+.om-dare-tx b { font: 600 calc(15px * var(--display-k)) var(--display); color: #FF9A8E; }
 .om-dare-fx { font-size: 12.5px; color: var(--muted); }
 .om-tmr { margin: 0; font-size: 12.5px; color: var(--muted); }
 .om-board { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; }

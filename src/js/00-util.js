@@ -3,11 +3,19 @@
 
 // ================= numbers =================
 const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+// Number format (achievements.md 5.1): 'letters' (default) or 'sci', set from S.settings.num by
+// setNumFormat (58-deeds at load and on change). Letters past Dc go on aa, ab, ... az, ba, ...
+let NUM_FMT = 'letters';
+const setNumFormat = v => (NUM_FMT = v === 'sci' ? 'sci' : 'letters');
+const sufAt = i => i < SUF.length ? SUF[i] : String.fromCharCode(97 + Math.floor((i - SUF.length) / 26) % 26, 97 + (i - SUF.length) % 26);
 function fmt(n) {
   if (!isFinite(n)) return '∞';
   if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n));
-  let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; }
-  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i];
+  if (NUM_FMT === 'sci') { let e = Math.floor(Math.log10(n)), m = n / Math.pow(10, e); if (m < 1) { m *= 10; e--; } if (m >= 9.995) { m /= 10; e++; } return m.toFixed(2) + 'e' + e; }
+  let i = 0;
+  if (n < 1e36) while (n >= 1000) { n /= 1000; i++; }   // (the old loop, kept exact below 1e36)
+  else { i = Math.floor(Math.log10(n) / 3); n /= Math.pow(10, 3 * i); if (n >= 999.9999999) { n /= 1000; i++; } else if (n < 0.9999999) { n *= 1000; i--; } }
+  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + sufAt(i);
 }
 function fmtTime(s) { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}h ${m}m` : m ? `${m}m ${s % 60}s` : `${s}s`; }
 const roman = n => ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][n - 1] || String(n);

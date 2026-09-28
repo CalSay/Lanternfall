@@ -510,3 +510,31 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   walks between them, gatherRight(x) keeps H1's plots clear. Perf level with the old single node within
   noise (machine load 28-36). Follow-ups: far nodes crowd at 360px; cold-Hearth third stake under a canopy;
   the Hearth tip covers part of the cold scene.
+- OWNER (class balance): a damage class has built-in progress; playing a tank or support should buff the
+  party instead. Today: the Warden's aura only helps OTHER tanks (+40% HP, +20 armour; with 2 companions
+  there often is none), so a Warden hero adds no offence; the Lightkeeper gives companions +25% damage.
+  BAL3 brief: "leader auras" that turn defence into party offence: Warden "Hold the Line" (while the Warden
+  stands in Front and holds threat, the other two deal +X% and the Front takes the hits), Lightkeeper
+  Blessing scaled so a support hero lifts the party as much as a striker hero adds; strikers/casters keep
+  personal damage. New PARITY target: all four classes within 1 zone of each other at 2h, day 1 and day 7,
+  and within 15% on days to the Region 1 and 2 bosses; tanks/supports stay best on walls (bosses, pinnacles,
+  the Deepwell).
+- OWNER: some numbers and letters in the font don't look right. Font picker published (https://claude.ai/artifact/2cekhj1fcR1iiujUjPSDcw): pixel font A Pixelify Sans (now) vs Silkscreen, Jersey 10, Tiny5, DotGothic16, VT323, Handjet; reading font 1 IBM Plex Sans Condensed (now) vs Sofia Sans Condensed, Barlow Semi Condensed. Waiting on the owner's pick; the swap is a small task (--display/--body in 10-base.css, the shell's font link, fontPx in 62-stage.js, then fix any clipped widths).
+- OWNER picked Handjet (G) as the pixel font; reading font 1 (IBM Plex Sans Condensed) or 3 (Barlow Semi Condensed), leaning 3. FONT1 launched (Handjet, body font a one-line switch, default Barlow until confirmed). The font page has a G+1 vs G+3 pairing section. Ran 5 agents briefly (AC2, H3, F2, F3, FONT1): FONT1 is small and owner-requested.
+- AC2 merged cleanly: 23-data-deeds.js, 58-deeds.js (92 tracks with 15 dormant until their systems land,
+  21 Feats, 16 secrets, points and ladder, capped bonuses <= x1.092 party damage, local titles a_*, looks
+  state with wearGet, the Codex bridge by wrapping, setNumFormat letters/scientific, registerGoal cap:1).
+  f_hit recalibrated to 2T before launch. AP 3/8 (sim skips Deepwell/expeditions/raid tracks). --targets
+  16/20: P1 Lanternmage 9.8 days because the sim earns ~12 Gold crafting tiers by day 8 (skillXp bonuses):
+  BAL3 raises crafting Gold thresholds or fixes the sim's craft policy. AD1 exception: "the Last Lantern"
+  (16 chars, 3 words) kept by the coordinator as the capstone. AP6: the nudge never shows because the sim
+  keeps 3 Ready goals (unspent star points); AC3 should give the nudge a reserved row. Owner confirmed fonts
+  G+3: Handjet + Barlow Semi Condensed (FONT1 told).
+- FONT1 merged: Handjet (--display, x1.2 via --display-k across 196 rules; stage text TXT_K 1.15, re-bakes when the font loads) and Barlow Semi Condensed (--body). No new clipping vs Pixelify; Barlow wraps less than Plex. Perf overlaps base under heavy load. Follow-up: check variable weights on the live page.
+- F2 merged: 56b rewritten (12 slot jobs, 8 combos incl. Lifeline = tank Front + support Back, 4 Kin, 21
+  Bonds; 33 SYNERGIES with `layer`; caps +40% dmg/member, 20% DR), 56f-bonds.js (S.bond, levels 0.5/3/12/
+  36/150h, 50-130%), 21f-stories-bonds.js shape for LORE7, markMax 8. Accepted: L25 pairs 150% -> 115%
+  (spec 9.1.3); away gathering grows companion Bonds at Hearth x away rate. --targets: P1 and P2 now PASS
+  (Lightkeeper fixed), T1/T3/T14/T18 fail (Ranger fast, Lightkeeper 1.19): BAL3. Coordinator updated the
+  AC2 dormant-track check (bonds/together live now: 79 live). Next: F4 Party UI; F3 is running with
+  formQuick available.

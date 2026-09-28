@@ -105,7 +105,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   COMBAT_TUNE = T;
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
-    tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0 };
+    tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
+    crits: 0, maxHit: 0, maxOver: 0, heroHits: 0 };   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
+  on('crit', () => { ST.crits++; });
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
 
@@ -165,16 +167,16 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   // ---------------- per-unit stats ----------------
   // Fills u from the current field; keeps hp as a fraction of max when max changes.
-  const synFlags = { hearthTank: null, hedge3: false, oldoath: false, lampward: false, chosen: false, mirelamp: false, oldenemies: false, markleap: false, hunting: false, dusk: false, bellsong: false, wayfarers: false };
+  // F2 (56b): a flag is the entry's strength (0 = off; Bonds 0.5-1.3 x Common Cause), so Bond levers scale.
+  // Per-member numbers from slot jobs, combos, Kin and Bonds come from synUnit(key) in statUnit.
+  const synFlags = { oldoath: 0, lampward: 0, chosen: 0, mirelamp: 0, oldenemies: 0, markleap: 0, hunting: 0, dusk: 0, bellsong: 0, wayfarers: 0,
+    quarry: 0, lasttwo: 0, sword: 0, twobows: 0, unlit: 0, candles: 0 };
+  const SX0 = { dr: 1, hp: 1, heal: 1, healIn: 1, th: 1, cd: 0, ctrl: 1, area: 0 };
+  const sxOf = key => (typeof synUnit === 'function' && synUnit(key)) || SX0;
   function readSyn() {
-    synFlags.hearthTank = null;
     const act = typeof activeSynergies === 'function' ? activeSynergies() : [];
-    for (const k in synFlags) if (k !== 'hearthTank') synFlags[k] = false;
-    for (const a of act) {
-      if (a.id === 'hearth') synFlags.hearthTank = a.members[0];
-      else if (a.id === 'hedgefolk') synFlags.hedge3 = a.members.length >= 3;
-      else if (a.id in synFlags) synFlags[a.id] = true;
-    }
+    for (const k in synFlags) synFlags[k] = 0;
+    for (const a of act) if (a.id in synFlags) synFlags[a.id] = a.strength || 0;
   }
   function statUnit(u, key, keepHp) {
     const p = S.party, cells = (p && p.cells) || {}, cell = cells[key] || { col: key === 'hero' ? 2 : 1, lane: 0 };
@@ -223,20 +225,23 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (key === 'maren') { maxHp *= 1 + T.sturdy; if (lv >= 10) { let n = 0; for (const k of fieldIds()) if (k !== 'maren' && OATH[k]) n++; if (p && p.cls === null) n += 0; maxHp *= 1 + T.keeper * n; } }
       // cooldown: Encore (Vesper), Wayfarers, the Lightkeeper's Blessing, Haste gear, Low Flame and The Old Oath
       let base = T.abCd[key] || 12;
-      if (key === 'elowen') base -= T.lowFlame + (synFlags.oldoath ? T.oathCd : 0);
+      if (key === 'elowen') base -= T.lowFlame + T.oathCd * synFlags.oldoath + SYN_TUNE.candlesCd * synFlags.candles;
       let cut = g.haste / 100 + (upHas('vesper') && key !== 'vesper' || key === 'vesper' ? 0.1 : 0);
-      if (synFlags.wayfarers) cut += 0.1;
+      cut += SYN_TUNE.wayCd * synFlags.wayfarers + sxOf(key).cd;   // F2: Wayfarers (Kin), Warded Casting
       if (p && p.cls === 'lightkeeper') cut += T.lkCd;
       u.cdMax = Math.max(1, base * (1 - Math.min(T.cdMin, cut)));
     }
     u.role = role;
+    // F2 (56b synUnit): slot jobs, combos, Kin and Bonds on this member (damage is in charDps / heroDps)
+    const sx = sxOf(key);
+    maxHp *= sx.hp; u.thX *= sx.th; u.heal *= sx.heal; u.ctrl *= sx.ctrl; u.area += sx.area; u.synDr = sx.dr;
     // class auras and party-wide shapes
     // The Warden's aura (Oathsworn doubles it: +80% HP, +40 armour).
     if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { const k = ks('oathsworn') ? 2 : 1; maxHp *= 1 + T.wardenTankHp * k; u.armour += T.wardenTankArmour * k; }
     if (u.col === 2) u.armour += role === 'tank' ? T.braced : FORM_TUNE.bracedAll;   // F1: Braced is for anyone in Front
     if (upHas('elowen') || has('elowen')) maxHp *= 1 + T.lastLight;
     if (role === 'tank' && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
-    u.healIn = (has('elowen') ? 1 + T.lastLight : 1) * (synFlags.hearthTank === key ? 1 + T.hearthHeal : 1) * (setOnC('mend') ? 1.3 : 1);
+    u.healIn = (has('elowen') ? 1 + T.lastLight : 1) * sx.healIn * (setOnC('mend') ? 1.3 : 1);   // F2: Lifeline, Two Lights
     if (!(maxHp > 0) || !Number.isFinite(maxHp)) maxHp = 1;
     if (keepHp && u.maxHp > 0) { const f = u.hp / u.maxHp; u.maxHp = maxHp; u.hp = u.down ? 0 : Math.max(0, Math.min(maxHp, f * maxHp)); }
     else { u.maxHp = maxHp; u.hp = maxHp; }
@@ -423,6 +428,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
     if (src >= 0 && U[src] && U[src].role === 'striker' && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
+    if (a > ST.maxHit) ST.maxHit = a; if (f.max > 0 && a > ST.maxOver * f.max) ST.maxOver = a / f.max;   // AC2 records
     if (src >= 0 && U[src]) {
       const u = U[src];
       f.th[src] += a * u.thX;
@@ -468,6 +474,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
   cbStrike = (amount, src, at, label, color, big) => {
+    if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
     const hero = U[0];
     let f = mob && alive(mob) ? mob : focusFoe();
@@ -553,7 +560,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const over = a - got;
     if (over > 0 && from) {
       let cap = from.ward;
-      if (from.id === 'hesketh') cap = Math.max(cap, (t.id === 'maren' && synFlags.lampward) ? 10 : T.warmCap);
+      if (from.id === 'hesketh') cap = Math.max(cap, (t.id === 'maren' && synFlags.lampward > 0) ? 10 : T.warmCap);
       if (boon('dward')) cap = Math.max(cap, 0.2);
       if (cap > 0) sh = cbShield(t, over, cap);
     }
@@ -624,7 +631,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.role === 'tank') { for (const f of foes) if (alive(f) && f.tgt >= 0 && U[f.tgt] && U[f.tgt].role !== 'tank') return true; return u.hp / u.maxHp < 0.5; }
     return true;
   }
-  const execTh = u => (u.lv >= 20 ? T.execTh20 : T.execTh) + (synFlags.dusk ? T.duskExec : 0);
+  const execTh = u => (u.lv >= 20 ? T.execTh20 : T.execTh) + T.duskExec * synFlags.dusk;
   const reach = u => { const l = []; for (const f of foes) if (alive(f) && (f.ranged || canReach(f, u))) l.push(f); return l; };
   const CAST_EV = { key: '', id: '', name: '' };
   function castAbility_(u) {
@@ -636,15 +643,15 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       case 'tobin': {
         cbTaunt(u, reach(u), T.tauntT); u.drV = Math.max(u.drV, T.guardDr); u.drT = T.guardT;
         if (u.lv >= 20) { const a = adjacent(u); if (a) { a.drV = Math.max(a.drV, T.guardDr); a.drT = T.guardT; } }
-        if (synFlags.hedge3) for (let i = 0; i < nU; i++) { const x = U[i]; if (x.id && HEDGE(x.id)) cbShield(x, x.maxHp * T.hedgeSh, T.hedgeSh); }
+        if (synFlags.sword && U[0] && !U[0].down && U[0] !== u) { U[0].drV = Math.max(U[0].drV, T.guardDr * Math.min(1, synFlags.sword)); U[0].drT = T.guardT; }   // The Borrowed Sword
         break;
       }
-      case 'wren': { const f = f0; hitOne(f, 1); if (f) { f.markT = (synFlags.hunting ? 8 : 5) * u.ctrl; } if (u.lv >= 20) { const o = foes.find(x => x !== f && alive(x)); hitOne(o, 0.5); } break; }
-      case 'hesketh': { const a = lowestAlly(); if (a) cbHealUnit(a, a.maxHp * T.mend * healMul(u), u); if (u.lv >= 20) { const b = lowestAlly(a); if (b) cbHealUnit(b, b.maxHp * T.mend * healMul(u), u); } break; }
+      case 'wren': { const f = f0; hitOne(f, 1); if (f) { f.markT = (5 + 3 * synFlags.hunting) * u.ctrl; } if (u.lv >= 20) { const o = foes.find(x => x !== f && alive(x)); hitOne(o, 0.5); } break; }
+      case 'hesketh': { const mx = 1 + SYN_TUNE.unlitMend * synFlags.unlit, a = lowestAlly(); if (a) cbHealUnit(a, a.maxHp * T.mend * mx * healMul(u), u); if (u.lv >= 20) { const b = lowestAlly(a); if (b) cbHealUnit(b, b.maxHp * T.mend * mx * healMul(u), u); } break; }
       case 'pip': { hitAll(1, 'magic'); for (const f of foes) burn(f, u.dps * 0.2, T.burnT * u.ctrl); break; }
       case 'bram': { const f = meleeTarget(f0); hitOne(f, 1); if (u.lv >= 10 && f) knock(f, 1 * u.ctrl); if (u.lv >= 20) for (const o of foes) if (o !== f && alive(o) && f && o.row === f.row) hitOne(o, 0.5); break; }
       case 'maren': {
-        cbTaunt(u, foes, 4); cbHealUnit(u, u.maxHp * (synFlags.lampward ? T.beaconLamp : T.beacon), u);
+        cbTaunt(u, foes, 4); cbHealUnit(u, u.maxHp * T.beacon * (1 + (T.beaconLamp / T.beacon - 1) * synFlags.lampward), u);
         if (u.lv >= 20) shieldAll(T.beaconSh);
         break;
       }
@@ -659,7 +666,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         let f = null; for (const x of foes) if (alive(x) && isDiver(x) && (x.diveT > 0 || x.row < 2)) { f = x; break; }
         if (synFlags.markleap) for (const x of foes) if (alive(x) && x.markT > 0) { f = x; break; }
         f = f || f0;
-        hitOne(f, synFlags.markleap ? 1.5 : 1); if (u.lv >= 20) hitOne(f, 1);
+        hitOne(f, 1 + 0.5 * synFlags.markleap); if (u.lv >= 20) hitOne(f, 1);
         for (const x of foes) knock(x, T.leapKnock * u.ctrl);
         u.untarg = T.leapUntarg;
         break;
@@ -724,10 +731,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     if (u.id === 'vesper') {
       u.verseT += dt;
-      if (u.verseT >= T.verseP / 3) {
+      if (u.verseT >= (T.verseP - SYN_TUNE.quarryVerse * synFlags.quarry) / 3) {   // The Quarry Song: every 5s, not 6
         u.verseT = 0; u.verse = (u.verse + 1) % 3;
-        const m = synFlags.bellsong ? 1.5 : 1;
-        if (u.verse === 1) shieldAll(T.verseWard * m);
+        const m = 1 + SYN_TUNE.bellsong * synFlags.bellsong;
+        if (u.verse === 1) { shieldAll(T.verseWard * m); const gr = synFlags.quarry && upHas('grenna'); if (gr) cbShield(gr, gr.maxHp * T.verseWard * m * SYN_TUNE.quarryWard * synFlags.quarry, T.verseWard * m * (1 + SYN_TUNE.quarryWard * synFlags.quarry)); }
         else if (u.verse === 2) healAll(T.verseMend * m * healMul(u), u);
       }
     }
@@ -814,7 +821,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.drT > 0) dr *= 1 - u.drV;
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
-    if (synFlags.hearthTank === u.key) dr *= 1 - T.hearthDr;
+    dr *= u.synDr || 1;   // F2: combos, Kin and Bonds (Lifeline, Two Walls, The Oath, ...; capped in 56b)
     if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && f.slowT > 0 && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
@@ -831,7 +838,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // reflects and burns back
     if (f && alive(f)) {
       let back = 0;
-      if (u.id === 'maren' || u.id === 'caedmon') back += (a + sh) * T.burnBack * (u.id === 'maren' && synFlags.mirelamp && f.slowT > 0 ? 2 : 1);
+      if (u.id === 'maren' || u.id === 'caedmon') back += (a + sh) * T.burnBack * (u.id === 'maren' && f.slowT > 0 ? 1 + synFlags.mirelamp : 1);
       if (u.reflT > 0) back += (a + sh) * T.pyre;
       if (u.role === 'tank' && boon('thorn')) back += (a + sh) * 0.3;
       if (back > 0) { carry = false; cbDamageFoe(f, back, u.i, 'burn'); carry = true; }
@@ -840,14 +847,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.hp <= 0) {
       if (u.ashenT > 0) u.hp = 1;
       else if (u.id === 'tobin' && u.lv >= 10 && !u.stubborn) { u.stubborn = true; u.hp = 1; }
-      else if (u.id === 'caedmon' && !u.vow) { u.vow = true; u.hp = 1; u.ashenT = T.vowT; cbTaunt(u, foes, T.vowT); }
+      else if (u.id === 'caedmon' && !u.vow) { u.vow = true; u.hp = 1; u.ashenT = T.vowT; cbTaunt(u, foes, T.vowT); if (synFlags.lasttwo && upHas('elowen')) healAll(SYN_TUNE.lastTwoHeal * synFlags.lasttwo, upHas('elowen')); }   // The Last Two
       else if (boon('life') && !u.lifeline && (typeof dcLifeline !== 'function' || dcLifeline(u))) { u.lifeline = true; u.hp = 1; }
       else knockOut(u);
     } else if (u.hp < u.maxHp * T.interceptAt) {
       const al = upHas('aldric');
       if (al && al !== u && !(al.icUsed & (1 << u.i)) && (u.col >= 1 || synFlags.oldenemies && u.id === 'corvin' || isAdj(al, u))) {
         al.icUsed |= 1 << u.i; al.icFor = u.i; al.icLeft = T.intercept;
-        if (synFlags.oldoath) cbHealUnit(u, u.maxHp * T.oathHeal, al);
+        if (synFlags.oldoath) cbHealUnit(u, u.maxHp * T.oathHeal * synFlags.oldoath, al);
       }
     }
     HIT_EV.key = u.key; HIT_EV.amount = a; HIT_EV.kind = kind; HIT_EV.foe = f; HIT_EV.blocked = blocked; HIT_EV.shield = sh;
@@ -875,7 +882,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const vigil = upHas('elowen');
     for (let i = 0; i < nU; i++) {
       const u = U[i];
-      if (u.down) standUp(u, vigil ? T.reviveVigil : T.revive);
+      if (u.down) standUp(u, vigil ? T.reviveVigil : Math.max(T.revive, typeof synParty === 'function' ? synParty().revive : 0));   // F2: Two Lights
       else u.hp = Math.min(u.maxHp, u.hp + u.maxHp * T.packHealF * (vigil ? 2 : 1));
       if (u.id === 'tobin') u.trust = packDown ? 0 : Math.min(T.trustMax, u.trust + T.trustStep);
       u.stubborn = false; u.vow = false; u.icUsed = 0; u.icLeft = 0; u.icFor = -1; u.fight = 0;
@@ -983,7 +990,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.cls === 'lightkeeper' && ks('sanctuary') && typeof partyHymnOn === 'function' && partyHymnOn()) for (let i = 0; i < nU; i++) if (!U[i].down) cbHealUnit(U[i], U[i].maxHp * 0.05 * dt, u);
     if (u.heal > 0) {
       u.healT -= dt;
-      if (u.healT <= 0) { u.healT += 1; const t = lowestAlly(); if (t && t.hp < t.maxHp) cbHealUnit(t, u.heal, u); }
+      if (u.healT <= 0) { u.healT += 1; const t = lowestAlly(); if (t && t.hp < t.maxHp) { cbHealUnit(t, u.heal, u); if (synFlags.unlit) { const k = SYN_TUNE.unlitShield * synFlags.unlit; cbShield(t, t.maxHp * k, k); } } }   // The Unlit Road
     }
   }
 
@@ -992,9 +999,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbWallOn = () => wallUntil > clock;
   on('ability', ({ cls }) => {
     if (!partyCombatOn() || !nU) return;
-    if (cls === 'warden') { wallUntil = clock + T.wallT; if (typeof resolveParry === 'function') resolveParry('wall'); }
-    else if (cls === 'lightkeeper') { healAll(T.hymnHeal, U[0]); for (let i = 1; i < nU; i++) if (U[i].cdMax) U[i].cd -= U[i].cdMax * T.hymnCd; }
-    else if (cls === 'lanternmage' && synFlags.chosen) { let n = 0; for (const f of foes) if (alive(f)) n++; healAll(T.chosenHeal * n, U[0]); }
+    if (cls === 'warden') { wallUntil = clock + T.wallT + bonus('tune:wallT'); if (typeof resolveParry === 'function') resolveParry('wall'); }   // tune:wallT: The Banner (56b)
+    else if (cls === 'lightkeeper') {
+      healAll(T.hymnHeal, U[0]); for (let i = 1; i < nU; i++) if (U[i].cdMax) U[i].cd -= U[i].cdMax * T.hymnCd;
+      if (synFlags.candles) for (let i = 0; i < nU; i++) if (!U[i].down) { U[i].hotT = SYN_TUNE.candlesT; U[i].hotV = SYN_TUNE.candlesHot * synFlags.candles; }   // Two Candles
+    }
+    else if (cls === 'lanternmage' && synFlags.chosen) { let n = 0; for (const f of foes) if (alive(f)) n++; healAll(T.chosenHeal * synFlags.chosen * n, U[0]); }
   });
   on('classTap', ({ cls, kind, auto }) => {
     if (!partyCombatOn() || !nU || kind === 'parry') return;
@@ -1003,7 +1013,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (ks('challenger')) { cbTaunt(U[0], foes, 2); challUntil = clock + 2; }   // Challenger: taps taunt every foe for 2s
     }
     else if (cls === 'lightkeeper') { const t = lowestAlly(); if (t && t.hp / t.maxHp < (auto ? 0.6 : 1)) cbHealUnit(t, t.maxHp * T.lkTap * (auto ? 0.5 : 1), U[0]); }
-    else if (cls === 'ranger' && mob && alive(mob)) mob.focusT = 8;
+    else if (cls === 'ranger' && mob && alive(mob)) { mob.focusT = 8; if (synFlags.twobows) mob.markT = Math.max(mob.markT, 8 * Math.min(1, synFlags.twobows)); }   // Two Bows
   });
   on('deepFloor', () => { const m = boon('mend'); if (m && nU) healAll(0.1 * m, null); for (let i = 0; i < nU; i++) U[i].lifeline = false; });
   on('fieldChange', () => { refreshT = 0; });
@@ -1054,7 +1064,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     { dmg: 1, ranged: 1, arm: 0, aoe: 0.8 / 6, heal: 0, dive: 0, pois: 1 }, { dmg: 2.5 * 0.5 * 1.33, ranged: 0, arm: 1, aoe: 0, heal: 0, dive: 0 },
     { dmg: 1, ranged: 1, arm: 0, aoe: 0, heal: 0.15, dive: 0 }
   ];
-  const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
+  const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1) * (1 + SYN_TUNE.unlitMend * synFlags.unlit), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
     vesper: () => 2 * (T.verseMend + T.verseWard) };
   const thrRate = (u, i) => (i === 0 ? heroCombatDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
   const EST_T = [null, null];
@@ -1085,7 +1095,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
-    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *
+    const drOf = u => dr0 * (u.synDr || 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *   // F2: synergy damage reduction
       (u.col < 2 && coverOf(u, EST, n) ? 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark) : 1);   // F1 cover and bulwark
     EST_T[0] = front; EST_T[1] = top === front ? null : top;
     let best = null;

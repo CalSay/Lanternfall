@@ -12,7 +12,7 @@
 .ob-bub.pop { animation: obIn .22s ease-out; }
 @keyframes obIn { from { opacity: 0; margin-top: 6px; } }
 .ob-txt { flex: 1; min-width: 0; }
-.ob-x { pointer-events: auto; flex: none; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 20px/1 var(--display); cursor: pointer; }
+.ob-x { pointer-events: auto; flex: none; width: 36px; height: 36px; background: none; border: 0; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); cursor: pointer; }
 .ob-x:hover, .ob-x:focus-visible { color: var(--bone); }
 .ob-arrow { position: absolute; top: -8px; width: 12px; height: 12px; margin-left: -6px; background: #1A1422; border-left: 2px solid var(--gold); border-top: 2px solid var(--gold); transform: rotate(45deg); }
 .ob-bub.up .ob-arrow { top: auto; bottom: -8px; transform: rotate(225deg); }
@@ -20,10 +20,10 @@
 .sec.f-off { display: none !important; }
 /* new tab / new view: a gold mark until first opened */
 .tab.is-new img { opacity: 1; filter: drop-shadow(0 0 5px rgba(242,193,78,.8)); }
-.tab.is-new::after { content: 'New'; position: absolute; top: 3px; left: calc(50% + 6px); padding: 1px 3px; font: 600 9px/1 var(--display); color: #2A1E07; background: var(--gold); }
+.tab.is-new::after { content: 'New'; position: absolute; top: 3px; left: calc(50% + 6px); padding: 1px 3px; font: 600 calc(9px * var(--display-k))/1 var(--display); color: #2A1E07; background: var(--gold); }
 .vseg button.is-new::after { content: ''; position: absolute; top: 6px; left: 6px; width: 6px; height: 6px; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 /* Journal: Tips */
 .ob-trow { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 .ob-trow .note { margin: 6px 0; }
-.ob-tbtn { flex: none; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--bone); font: 600 13px var(--display); cursor: pointer; }
+.ob-tbtn { flex: none; min-height: 44px; padding: 0 12px; background: var(--panel-2); border: 2px solid #0B0810; color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .ob-ring { animation: none; } .ob-bub.pop { animation: none; } }

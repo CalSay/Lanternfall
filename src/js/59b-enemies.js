@@ -95,6 +95,18 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (!b) for (const u of units()) { if (!u.live || u.down || u.col === 2) continue; const x = u.hp / u.maxHp; if (x < v) { v = x; b = u; } }
     return b;
   }
+  // Two Walls (56b synParty().diveTaunt): once per pack, the Middle tank taunts the first foe that would dive.
+  let twPack = null;
+  on('packSpawn', () => { twPack = null; });
+  function twoWalls(f) {
+    const k = typeof synParty === 'function' ? synParty().diveTaunt : null;
+    if (!k || twPack === 'used') return false;
+    const t = typeof cbUnitByKey === 'function' ? cbUnitByKey(k) : null;
+    if (!t || t.down || typeof cbTaunt !== 'function') return false;
+    twPack = 'used';
+    cbTaunt(t, [f], COMBAT_TUNE.tauntT);
+    return true;
+  }
   endDive = f => { f.diveT = 0; f.diveU = -1; f.diveX = 1; f.bt = 0; };
   function mostHurtFoe() { let b = null, v = 1; for (const o of combatFoes()) if (alive(o) && o.hp / o.max < v) { v = o.hp / o.max; b = o; } return b; }
 
@@ -106,6 +118,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
       if (f.diveT > 0) { f.diveT -= dt; if (f.diveT <= 0) endDive(f); }
       else if (f.bt >= E.diveEvery) {
         const u = pickDive();
+        if (u && twoWalls(f)) { f.bt = 0; return false; }   // F2 Two Walls: the Middle tank taunts the pack's first diver
         if (u) { const two = f.z >= E.diveFrom; f.diveU = u.i; f.diveT = (two ? E.diveT2 : E.diveT); f.diveX = (two ? E.diveX2 : 1) * f.bx; f.first = 1; f.swing = Math.min(f.swing, 0.3); }
         f.bt = 0;
       }
@@ -138,6 +151,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         return true;
       }
     }
+    // F2 Rearguard (a tank in Back, formation.md 2.1): it takes every dive hit meant for an ally.
+    if (f.diveT > 0) { const rg = units().find(x => x.live && !x.down && x.role === 'tank' && x.col === 0 && x !== u); if (rg) { f.first = 0; cbHitUnit(rg, f.atk * (f.diveX || 1), 'dive', f); return true; } }
     if (f.diveT > 0 && f.first) {
       f.first = 0;
       // Cover (F1): the tank one slot in front of the dive target (Front covers the Middle, the Middle the Back) takes the first hit.
