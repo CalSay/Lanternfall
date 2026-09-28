@@ -563,3 +563,13 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   pass after the merge. Follow-ups: A/B perf; AP6 may overshoot 20-60% now; the "top pair" stats tile guesses
   S.bond.t keys (F2 is merged: verify); hide has no lifetime counter. AC4 hooks: lookIconURL, looksPreview;
   AC5: featTrophyURL.
+- F4 merged: Party screen (three slot cards Back/Middle/Front with slot jobs and Out of place chips, tap and
+  drag swaps, bench, combos/Kin chips and See all, Bond rows and Bond sheet, Sworn frames, bondLevel toasts,
+  "Old Friend", 75-bonds-ui.js, 60-formation.css). Also renamed the onboarding feature to "Combos and Bonds".
+- F3 merged: planner v3 (pair x order search via formQuick, push score with boss blend w 0.35/0.6, Front-tank
+  rule and a "stuck" rule, autoPlan with event-only re-plans, 6% gain, 300 s dwell, no return within 10 min,
+  pins; bestLineupLater in idle steps; sim --lineup takes 2 companions with slots). --targets 9/20 (T3, T14
+  now pass; T4, T6 fail). SERIOUS: the Lanternmage stalls at the zone 70 boss: benched companions earn no XP
+  and partyLevel() still averages the top 3 companions with a field of 2. Also found: a combat soft-lock
+  (companions stay down forever while a healer hero survives: no kill, no wipe); the hold estimate overrates
+  a hero in Front. F5 launched for these before BAL3.
