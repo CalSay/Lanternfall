@@ -106,7 +106,7 @@ armour (physical) answer it.
 
 | Region (zones) | Pack damage at the farm zone, recommended line-up | Hit types (share of pack damage) | Boss: unprepared party falls in | Boss timer (Enrage) |
 |---|---|---|---|---|
-| **1 The Hollow** (1-35) | 6-10% party HP per pack (easeZone under 12) | physical 70%, poison 20% (Spore Cap, Slime), frost 10% (Wraith) | 38-42 s (the gentle end of the band; it is the first boss wall) | 45 s; the Listener 60 s |
+| **1 The Hollow** (1-35) | 6-12% party HP per pack (softer under zone 12) | physical 70%, poison 20% (Spore Cap, Slime), frost 10% (Wraith) | 36-40 s (the gentle end of the band: the first boss walls) | 45 s; the Listener 60 s |
 | **2 The Sunken Coast** (36-70) | 8-14% | physical 50%, frost 35% (sea: Deckhand, Kelp, Witch), poison 15% (Jelly) | 33-38 s | 45 s; the Drowned Keeper 60 s |
 | **3 The Emberwaste** (71-105) | 10-16% | fire 55%, physical 45% | 32-36 s | 45 s; the Pyre Knight 60 s |
 | **4 The Pale Reach** (106-140) | 12-18% | frost 55%, physical 30%, holy 15% (LORE-R45 confirms) | 30-35 s | 45 s; region boss 60 s |
@@ -244,7 +244,7 @@ foe (data fields `FOE_BEH[k].size`, `.fam`, `.dt`; the last is proposed in 8.2-4
 | Coral Warden | Coast | `brute` | 3 | `construct` | phys | Front | - |
 
 - **Every region has 2 brutes, 3 normal and 2 swarm types** as the guide for LORE-R45's Regions 3-5 foe lists
-  (the Hollow has 1 swarm: the bats; the wisps and rats of later regions fill the gap). Swarms are small,
+  (the Hollow has 4 normal types and 1 swarm, the bats; the Coast fits the guide). Swarms are small,
   quick things: bats, gulls, jellies, rats, wisps, embers, moths.
 - **Normal packs are 5 or 6** by type (the table), fixed per type so a zone always looks the same.
   Swarms are 8-10: 8 by default, 9 for the bats, 10 only for Region 4-5 swarms.
@@ -697,7 +697,7 @@ identity mechanic is today's second mechanic, now with a proper warning.
 
 | Phase | New mechanic | Warning | Effect | Answers |
 |---|---|---|---|---|
-| 1. It Listens (100-66%) | **Cold Hand** (heavy, 8 s) and **Listen** | `heavy`; `sig`, 2.5 s, every 16 s | Listen, if it lands: every timed buff on the party ends (Empower, Keen, Shield Wall...) and the party is **Hushed** (deals 20% less for 5 s) | parry; interrupt with an ability, an `interrupt` hero, a stun |
+| 1. It Listens (100-66%) | **Cold Hand** (heavy, 8 s) and **Listen** | `heavy`; `sig`, 2.5 s, every 16 s | Listen, if it lands: every timed buff on the party ends (Empower, Keen, Shield Wall...) and every member is **Marked** for 5 s (takes +20%: core-2 3.1, no new status) | parry; interrupt with an ability, an `interrupt` hero, a stun |
 | 2. It Calls (66-33%) | **Echoes** | `summon`, 2 s, every 20 s | 2 Marsh Wraiths (6% HP each, healers) | interrupt; area; focus the healers (Mark) |
 | 3. The Voice Answers (under 33%) | **Whisper** | `zone`, every 10 s, 2 slots | 2.5x frost to each member in the patch; the stage darkens a step (a cached dim plate) | dodge; frost resist; a formation that keeps one slot clear |
 | Phase changes | **It stops listening** | `hard`, 1.5 s | nothing (it turns to your lamp) | - |
@@ -772,7 +772,7 @@ Section 6.2 has the raid's rules (shared phases, a local party, no change to the
 | 2 The Hollow King | **Kneel** (`sig`, 2 s, 16 s: stuns every member 2 s) | frost | `pearl_h` |
 | 3 The Mire Colossus | **Mire Spawn** (`summon`, 2 s, 16 s: 3 mire slimes) | poison | `pearl_m` |
 | 4 The Glass Hydra | **Shard Rain** (`line`, 12 s: 1.2x and Chill) | frost | `pearl_l` |
-| 5 The Lantern Eater | **Swallow the Light** (`sig`, 2.5 s, 18 s: ends every timed buff; Hushed 5 s) | fire | `glass_m` |
+| 5 The Lantern Eater | **Swallow the Light** (`sig`, 2.5 s, 18 s: ends every timed buff; the party is Marked 5 s) | fire | `glass_m` |
 | 6 The Pale Tyrant | **Pale Roar** (`hard`, 2 s, 20 s: Chill on every member 4 s) | frost | `r4_h` (Region 4's family; `pearl_h` until it exists) |
 
 The generation's rig shows its signature item in the chest (the wyrm rig gets the `gem` anchor; its palette per
@@ -985,8 +985,8 @@ What an idle party does today stays, plus four small defaults (none needs a sett
 | 8.2-11 | 3.1 | **Keen** goes on each member who stepped out of the patch | One tap moves the whole party out; Keen on the Lanternbearer only would read as a bug |
 | 8.2-12 | 5.4 | Signature item exceptions: **Hollow bosses** carry a heart-light, not a buff item (Region 1 has no family); **Deep Elders** drop at most one a run (D2, D3) | Core-2 5.4 says "bosses always drop" and "Region 1 has none"; deepwell.md rule 4 |
 
-`armourX` 0.8 (1.1) is inside core-2's 15-25% range and needs no line. CL1's lines 8.2-4 (the ability shape,
-`var`) and 8.2-7 (`stacks`, `meter`) touch this spec only through Tactics; nothing here conflicts with them.
+`armourX` 0.8 (1.1) is inside core-2's 15-25% range and needs no line. CL1's own proposals (classes-2.md 8.2-4, the ability shape
+and `var`; classes-2.md 8.2-7, `stacks` and `meter`) touch this spec only through Tactics; nothing here conflicts with them. The lines are also entered in core-2 section 10 as "proposed (CB2)".
 
 ### 8.3 Build split and file ownership
 
