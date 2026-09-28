@@ -416,3 +416,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   the light, "a light lit for someone cannot be stolen", Elowen's sparks explain other players, the mystery
   ladder, the sealed ending in 8.6). Fixed Pip's pronoun in 56-roster.js. WRITING TASKS (LORE2-12) ON HOLD
   until the owner steers the premise and answers section 12's four questions.
+- OWNER STANDING ORDER: pause all progress when the owner's weekly usage reaches 90%. The coordinator cannot
+  read the usage meter; the owner will say "pause". On "pause": launch nothing new, let running agents finish
+  and merge (or stop them if asked), disable the hourly trigger, push, and report.
