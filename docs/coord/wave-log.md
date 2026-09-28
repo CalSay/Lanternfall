@@ -812,3 +812,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   items live in the Storehouse (a Buff Items page); enchant 100% at a level RG1 sets. CB2: its questions are
   its own (auto-cast efficiency, swarm HP, interrupt limits, the boss timer vs the kill target).
 - CL1 launched (opus). Running: MAP0, HINT1, CL1. Next when a slot frees: CB2 (opus), then LORE-R45 (sonnet), then RG1 (opus).
+- MAP0 merged: docs/design/map-study.md + docs/design/img/map/ (A Dusk overworld, B Lampwright's chart, C Lamplit terraces; the artist recommends C with two tweaks; A runner-up). Prototype in prototypes/map-study/. OWNER PICKS. CB2 launched (opus).
