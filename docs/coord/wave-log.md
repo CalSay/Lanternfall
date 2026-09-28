@@ -933,3 +933,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   outputs to be repriced by ECON1.
 - OWNER: gatherers hang around visibly in the camp; tap one to talk, then send them on a job tied to their
   profession (pick resource and grade, see the fee). Sent to WC1 (camp panorama/UI); part of ECON1/N1c too.
+- OWNER: camp grows by horizontal scrolling (swipe to pan), with an overview zoom as a secondary view. Sent to WC1.
