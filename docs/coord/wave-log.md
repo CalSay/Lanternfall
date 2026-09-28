@@ -903,3 +903,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - OWNER: gems vs buff items could confuse. COORDINATOR: buff items become SIGILS (Tide/Ember/Frost/Gloam Sigil
   families, items "<boss> Sigil"; own bag tab and icon style, sockets only); the crystal family shows as GEMS,
   mined from Geodes (id `crystal` kept). Sent to MAT1. O4 50% salvage loss and O6 Still benched confirmed.
+- MERGED N1b (docs/design/gatherers-2.md): 9 jobs x 2 named gatherers (Steady/Lucky tempers), 3x4 trees,
+  beds cap the working crew (10 by Region 5), all free recruit routes. COORDINATOR FIXES after MAT1 lands:
+  "Gem-seeker" finds buff items -> rename the job to Sigil-seeker (gems come from Miners' geodes); Rook's
+  "Crystal" -> Gems. D6 (extra R4/R5 gem-seeker pairs, 22 total) pending owner; coordinator leans no (owner
+  said 2 per job): make Fenn/Wick, Corrin/Sable, Haldor/Nessa camp people or milestone arrivals instead.
+  Owner decisions D1-D6 put to the owner. BAL3 notes: share curve 10-30% (GT5); Sigil supply check.
