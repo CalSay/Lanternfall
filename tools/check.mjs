@@ -225,10 +225,12 @@ try {
     const f0 = g.eval('S.party.field.join()');
     g.eval('S.gold = 1e15; S.mats.ess = [999, 999, 999, 999, 999]; promoteChar(S.party.field[0])');
     const fp = g.eval('S.party.field.join()');
+    const plan = g.eval('JSON.stringify(bestLineup({ by: "potential" }).field.slice().sort())');
     g.eval('unlockChar("thessaly", "test", true)');
-    // A recruit may take the place of the weakest member of its kind; nobody else moves.
-    const a = f0.split(','), b = g.eval('S.party.field.slice()'), moved = a.filter((k, i) => b[i] !== k);
-    assert(fp === f0 && moved.length <= 1 && b.every((k, i) => k === a[i] || k === 'thessaly') && !b.includes('elowen'), `late save: promote keeps the field, a recruit swaps at most one member (${f0} -> ${b.join()})`);
+    // F3: a recruit re-plans through the planner (autoPlan): the field stays, or becomes the planner's pick.
+    const a = f0.split(','), b = g.eval('S.party.field.slice()');
+    const stays = b.join() === f0, planned = JSON.stringify(b.slice().sort()) === g.eval('JSON.stringify(bestLineup({ by: "potential" }).field.slice().sort())');
+    assert(fp === f0 && (stays || planned) && !b.includes('elowen'), `late save: promote keeps the field; a recruit leaves it or applies the planner's pick (${f0} -> ${b.join()}; plan before the recruit ${plan})`);
   }
   // spec example: save-v2.json -> Tobin rank 1 lv 25+, Wren 14+, Pip 6+, Hesketh 1
   {
@@ -267,8 +269,10 @@ try {
     const d0 = E('charPow("wren")'); E('charRec("wren").rank = 2'); const d1 = E('charPow("wren")');
     assert(Math.abs(d1 / d0 - E('ROSTER_TUNE.rankX')) < 1e-9, `a rank multiplies power by ROSTER_TUNE.rankX (x${E('ROSTER_TUNE.rankX')})`);
     E('S.activity = "fight"; S.zone = S.maxZone');
-    const before = E('charRec("tobin").lv'), res = g.fn.awayGains(3600);
-    assert(E('charRec("tobin").lv') > before && res.lines.some(l => /Tobin/.test(l.txt)), `offline XP for the field (Tobin L${before} -> L${E('charRec("tobin").lv')})`);
+    // F3: the planner may field Hesketh over Tobin (the Warden hero is the tank): the first fielded companion
+    const fk = E('S.party.field.find(k => k !== "wren") || S.party.field[0]'), fnm = E(`ROSTER[${JSON.stringify(fk)}].name.split(' ')[0]`);
+    const before = E(`charRec(${JSON.stringify(fk)}).lv`), res = g.fn.awayGains(3600);
+    assert(E(`charRec(${JSON.stringify(fk)}).lv`) > before && res.lines.some(l => l.txt.includes(fnm)), `offline XP for the field (${fnm} L${before} -> L${E(`charRec(${JSON.stringify(fk)}).lv`)})`);
     assert(E('supportBuff()') >= 0 && Number.isFinite(g.fn.totalDps()), 'support buff finite');
     assert(E('!canRecruit("oriel") && recruitCost("oriel") === null && recruitHow("oriel").length > 0'), 'non-progress routes stay locked with a how line');
     let off = null; E('S.maxZone = 30');
@@ -773,7 +777,7 @@ try {
     E(`S.gold = ${eg} + 5e7; S.mats.ess = [0, 0, 0, 0, 0]; S.mats.ess[${ee[0] - 1}] = ${ee[1] + 5}`);
     assert(eg > 0 && E('recruit("elowen")') && E('S.gold') === 5e7 && E(`S.mats.ess[${ee[0] - 1}]`) === 5 && E('recruitHow("elowen")').includes(E(`fmt(${eg})`)), `Elowen: ${E(`fmt(${eg})`)} gold + ${ee[1]} tier-${ee[0]} Essence handed in at zone ${E('UNLOCK_TUNE.quests.elowen.from')}`);
     const mz = E('UNLOCK_TUNE.quests.morwen.zone');
-    E(`S.maxZone = ${mz + 1}; unlockChar("hesketh", "test", true); setField(["hesketh", "bram"])`);
+    E(`S.maxZone = ${mz + 1}; unlockChar("hesketh", "test", true); S.party.autoField = false; setField(["hesketh", "bram"])`);   // F3: the planner would re-plan on the boss kills
     bossKill(E, mz); tick(11);
     assert(!E('isRecruited("morwen")'), 'Morwen: no join with a support fielded');
     E('setField(["bram"])'); bossKill(E, mz - 7); tick(11);
@@ -2846,32 +2850,75 @@ try {
     assert(b1.field.slice().sort().join() === syn.slice().sort().join() && /Mark and Leap/.test(b1.why) && b2.field.includes('isolde'),
       `with 1% less damage, Mark and Leap wins ("${b1.why}"); with 30% less it does not (${b2.field.join(', ')})`);
   }
-  // a tank comes in when the hold estimate says the zone does not hold without one
+  // a tank comes in when the hold estimate says the zone does not hold without one. F3: the hero may stand
+  // in any slot, and a high-level Lanternmage or Ranger hero holds the Front for packs; a Lightkeeper cannot.
   {
-    const { E, J } = mk(52, 'lanternmage', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
+    const { E, J } = mk(52, 'lightkeeper', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
     let found = null;
     for (let z = 10; z <= 80 && !found; z++) {
       const a = J(`bestLineup({ zone: ${z}, boss: false })`), b = J(`bestLineup({ zone: ${z}, boss: false, filter: k => ROSTER[k].role !== 'tank' })`);
       if (a.parts.holds && !b.parts.holds) found = { z, a, b };
     }
-    // F2: combos and slot jobs lift the no-tank line-ups' damage (Crossfire, Skirmisher), and planner v2 scores damage
-    // x1.55 per zone short, so it can prefer a line-up one zone short to a tank. The combat rule still holds (a tank
-    // line-up holds a zone no line-up without one holds); F3's planner v3 (hysteresis, boss blend) owns the pick.
-    let need = null;
-    for (let z = 10; z <= 80 && !need && !found; z++) {
-      const t = J(`lineupScore(['tobin', 'oriel'], { zone: ${z} })`), b = J(`bestLineup({ zone: ${z}, boss: false, filter: k => ROSTER[k].role !== 'tank' })`);
-      if (t.holds && !b.parts.holds) need = { z, b };
-    }
-    if (found) assert(found.a.field.includes('tobin') && /a tank for the/i.test(found.a.why) && found.a.cells.tobin.col === 2, `zone ${found.z}: no field without a tank holds, so Tobin takes the Front ("${found.a.why}")`);
-    else {
-      assert(need, need ? `zone ${need.z}: Tobin and Oriel hold it and no line-up without a tank does` : 'no zone where a tank is needed (expected one in 10-80)');
-      console.log(`       INFO zone ${need && need.z}: planner v2 picks ${need && J(`bestLineup({ zone: ${need.z}, boss: false })`).field.join(', ')} (damage first); F3 weighs holding the zone`);
-    }
+    assert(found && found.a.field.includes('tobin') && /a tank for the/i.test(found.a.why) && found.a.cells.tobin.col === 2,
+      found ? `zone ${found.z}: no field without a tank holds, so Tobin takes the Front ("${found.a.why}")` : 'no zone where a tank is needed (expected one in 10-80)');
+  }
+  // F3 (formation.md 5.3): the boss blend and the boss tank rule. Packs at zone 10 hold without a tank; the
+  // boss weight is 35% (60% at a region boss or after a failed attempt); once the zone boss has knocked a
+  // tankless party out, a tank takes the Front for it.
+  {
+    const { E, J } = mk(52, 'lanternmage', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
     const early = J('bestLineup({ zone: 10, boss: false })'), boss = J('bestLineup({ zone: 10 })');
-    assert(!early.field.includes('tobin') && early.parts.holds, `zone 10 packs hold without a tank, so the planner fields damage (${early.field.join(', ')})`);
-    // F1: with 2 companions a tank costs half the party's damage, and planner v2's boss rule (bossTank) no longer
-    // buys one at zone 10. F3's boss blend (formation.md 5.3) owns this; until then it is reported, not asserted.
-    console.log(`       INFO pushing past the zone 10 boss, the v2 planner fields ${boss.field.join(', ')} ("${boss.why}"); F3 weighs the boss`);
+    assert(!early.field.includes('tobin') && early.parts.holds && boss.parts.bossW === E('FORM_TUNE.bossW') && !boss.parts.hard && boss.parts.st > 0,
+      `zone 10: packs hold without a tank (${early.field.join(', ')}); the boss push weighs single-target damage at ${boss.parts.bossW} (${boss.field.join(', ')}: "${boss.why}")`);
+    E('emit("bossFail", { zone: 10, dps: 1 })');
+    const fail = J('bestLineup({ zone: 10 })');
+    E('emit("wipe", { zone: 10, to: 10, boss: true, arena: false })');
+    const wiped = J('bestLineup({ zone: 10 })');
+    assert(fail.parts.hard && fail.parts.bossW === E('FORM_TUNE.bossWHard') && J('bestLineup({ zone: 36 })').parts.hard && wiped.field.includes('tobin') && wiped.cells.tobin.col === 2 && /a tank for the boss/i.test(wiped.why),
+      `after a failed attempt the boss weighs ${fail.parts.bossW} (also at the region boss); after the boss knocks the party out, Tobin takes the Front ("${wiped.why}")`);
+    E('emit("zoneClear", { zone: 10 })');
+    assert(!J('bestLineup({ zone: 10 })').parts.hard, 'a zone clear resets the boss state');
+    // pins: every plan keeps them, at most 2; a pinned companion off the field comes in at once
+    E('setPin("pip", true)');
+    const p1 = ['push', 'farm'].flatMap(goal => [10, 25, 40].map(z => J(`bestLineup({ zone: ${z}, goal: '${goal}' })`)));
+    E('setPin("wren", true)'); const p2 = J('bestLineup({ zone: 25 })');
+    E('S.party.autoField = true; S.party.field = ["kestrel", "oriel"]; placeSlots(false)');
+    const r = J('autoPlan("pin")');
+    const kept = E('S.party.field.slice().sort().join()');
+    E('setPin("wren", false); setPin("pip", false)');
+    const free = J('bestLineup({ zone: 25 })');
+    assert(p1.every(b => b.field.includes('pip') && b.parts.pins.includes('pip')) && p2.field.slice().sort().join() === 'pip,wren' && r && r.changed && kept === 'pip,wren' && !free.parts.pins.length,
+      `pins: Pip stays in ${p1.length} plans; with Wren pinned too the plan is Pip and Wren; autoPlan fields both at once (${kept}); unpinned plans are free (${free.field.join(', ')})`);
+  }
+  // FT7 (formation.md 4.6, 5.4): no flapping. Two hours of play with Auto line-up on and auto-push, on a
+  // new game (recruits and promotions as they come) and on the late fixture: at most 2 automatic changes an
+  // hour outside recruits, and never A -> B -> A within 10 minutes.
+  for (const [name, mkG] of [['new Ranger game', () => { const g = loadCore({ seed: 61 }); g.eval('chooseClass("ranger")'); return g; }],
+    ['save-v2-late.json', () => loadCore({ seed: 62, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) })]]) {
+    const g = mkG(), E = s => g.eval(s);
+    E('S.party.autoField = true; S.auto = true; S.activity = "fight"');
+    const ch = [];
+    let t = 0;
+    g.fn.on('autoPlan', e => ch.push({ t, from: e.from.slice().sort().join(), to: e.to.slice().sort().join(), reason: e.reason }));
+    const z0 = E('S.maxZone');
+    for (let m = 0; m < 120; m++) {
+      E('S.gold += 2e3 * Math.pow(1.35, S.maxZone); ROSTER_KEYS.forEach(k => { if (canRecruit(k)) recruit(k); if (canPromote(k)) promoteChar(k); })');
+      if (E('bossReady()')) g.fn.challenge();
+      for (let i = 0; i < 600; i++) { g.fn.tick(0.1); t += 0.1; }
+    }
+    const auto = ch.filter(c => c.reason !== 'recruit' && c.reason !== 'call');
+    const flips = ch.filter((c, i) => ch.slice(0, i).some(d => d.from === c.to && d.to === c.from && c.t - d.t < 600));
+    const perH = auto.length / 2;
+    assert(perH <= 2 && !flips.length && !g.errors.length,
+      `FT7 no flapping, ${name}: ${ch.length} automatic changes in 2h (${auto.length} outside recruits, ${perH.toFixed(1)}/h), ${flips.length} flips within 10 min (zone ${z0} -> ${E('S.maxZone')}, ${E('rosterList().length')} recruited)` + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // FT9: bounded work: at most 12 candidates, 396 quick placements and FORM_TUNE.maxEst estimates per search
+  {
+    const { E, J } = mk(54, 'warden', [], 60);
+    E('ROSTER_KEYS.forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 30 + 5 * (i % 7); })');
+    const bs = [10, 30, 50].flatMap(z => ['push', 'farm'].map(goal => J(`bestLineup({ zone: ${z}, goal: '${goal}', filter: k => true })`)));
+    const mx = bs.reduce((a, b) => Math.max(a, b.parts.est), 0), mq = bs.reduce((a, b) => Math.max(a, b.parts.placements), 0);
+    assert(mx <= E('FORM_TUNE.maxEst') && mq <= 396 && bs.every(b => b.parts.cand <= 12), `FT9 bounded: at most ${mx} estimates (cap ${E('FORM_TUNE.maxEst')}) and ${mq} quick placements per search`);
   }
   // filters and expeditions; autoField uses the planner (by potential)
   {

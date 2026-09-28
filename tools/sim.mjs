@@ -16,7 +16,8 @@
 //   --active: taps the stage every 0.5s and casts the class ability on cooldown.
 //             Without it, the game's own idle auto-play and auto-cast run.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
-//             possible (saving gold for it first), keep the best 3 fielded (the game's autoField).
+//             possible (saving gold for it first); the game's own planner (56d autoPlan, F3) keeps
+//             the best 2 fielded, re-planning on events with its 6% margin and 300 s dwell.
 //   --omen <id>|none: fix the daily Omen (default: the device date's Omen).
 //   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 20).
 //   --day N: device day the run starts on (days since 2026-01-01; default 277, a Monday, so
@@ -116,10 +117,24 @@ function applyKnobs(h) {
   if (args.eval) h.eval(String(args.eval));
 }
 for (const [flag, obj] of [['combat', 'COMBAT_TUNE'], ['enemy', 'ENEMY_TUNE']]) if (args[flag]) for (const kv of String(args[flag]).split(',')) { const [k, v] = kv.split('='); E(`${obj}.${k} = ${+v}`); }
-// --lineup a,b,c: recruit these characters now (level 1, catching up as usual) and keep them fielded
-// (autoField off). The niche line-ups of spec 4.13 (T12) and the balanced one (T5, T6, T8, T13).
-const lineup = args.lineup ? String(args.lineup).split(',') : null;
-if (lineup) E(`(() => { for (const id of ${JSON.stringify(lineup)}) unlockChar(id, 'sim', true); S.party.autoField = false; setField(${JSON.stringify(lineup)}); })()`);
+// --lineup a,b: recruit these 2 companions now (level 1, catching up as usual) and keep them fielded
+// (autoField off); the hero is the third. Optional slots (formation.md 4.6): --lineup tobin@front,hesketh@back
+// (hero@mid places the hero too; unplaced members take the free slots by the placement rule).
+// The niche trios of T12 and the balanced one (T5, T6, T8, T13).
+const lineupRaw = args.lineup ? String(args.lineup).split(',').map(x => x.trim()).filter(Boolean) : null;
+if (lineupRaw && lineupRaw.filter(x => !x.startsWith('hero')).length > 2) { console.error('--lineup takes at most 2 companions (the hero is the third): ' + args.lineup); process.exit(1); }
+const lineup = lineupRaw ? lineupRaw.map(x => x.split('@')[0]).filter(k => k !== 'hero') : null;
+const lineupSlots = lineupRaw ? Object.fromEntries(lineupRaw.filter(x => x.includes('@')).map(x => x.split('@'))) : {};
+const fieldLineup = h => h.eval(`(() => { const ids = ${JSON.stringify(lineup)}, at = ${JSON.stringify(lineupSlots)};
+  for (const id of ids) unlockChar(id, 'sim', true);
+  S.party.autoField = false; setField(ids);
+  if (!Object.keys(at).length) return;
+  const pre = {}; for (const k in at) if (k === 'hero' || ids.includes(k)) pre[k] = SLOT_COL[at[k]];
+  const cells = slotsFor(['hero'].concat(ids), pre, null), spec = { back: null, mid: null, front: null };
+  for (const k in cells) spec[FORM_SLOTS[cells[k].col]] = k;
+  if (!setSlots(spec)) throw new Error('--lineup: slots refused ' + JSON.stringify(spec));
+})()`);
+if (lineup) fieldLineup(g);
 
 // Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
 function buyBest() {
@@ -157,10 +172,11 @@ function rosterStep(E) {
   // Morwen: bench supports while the zone 12 boss is next.
   // BAL2: a player fills the empty place with the best non-support (the planner), not a party of two.
   if (!lineup && E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("(() => { S.party.autoField = false; const b = typeof bestLineup === 'function' ? bestLineup({ by: 'potential', filter: k => ROSTER[k].role !== 'support', key: 'nosup' }) : null; if (b && b.field.length) applyLineup(b); else setField(S.party.field.filter(k => ROSTER[k].role !== 'support')); })()"); }
-  else if (rosterStep.benched) { rosterStep.benched = false; E('S.party.autoField = true'); }
+  else if (rosterStep.benched) { rosterStep.benched = false; E("S.party.autoField = true; typeof autoPlan === 'function' && autoPlan('on')"); }
   let gold = 0, ess = null;
   for (const id of E('rosterList()')) if (E(`canPromote(${JSON.stringify(id)})`)) E(`promoteChar(${JSON.stringify(id)})`);
-  if (E('S.party.autoField')) E('autoField()');   // field the best 3 (tank first, by potential)
+  // F3: the game's entry point. Events (recruit, promotion, zone, boss, ...) make a plan due; 'poll' runs it.
+  if (E('S.party.autoField')) E("typeof autoPlan === 'function' ? autoPlan('poll') : autoField()");
   for (const id of E('rosterList()')) {
     const q = JSON.stringify(id);
     const c = E(`(() => { const r = charRec(${q}), c = promoteCost(${q}); return r && c && r.lv >= levelCap(r.rank) && S.party.field.includes(${q}) ? c : null; })()`);
@@ -490,6 +506,9 @@ fn.on('charLevel', ({ id, lv }) => { if (lv >= E(`levelCap(charRec(${JSON.string
 const firstId = {};
 if (args.debug) fn.on("token", p => console.log("   token", Math.round(t / 60) + "m", JSON.stringify(p), "zone", E("S.zone")));
 let firstJoin = null;   // first recruit after the class starter (T16)
+// FT7 (F3): automatic field changes by the planner (56d autoPlan) and flips (A -> B -> A within 10 min).
+const planCh = [];
+fn.on('autoPlan', e => planCh.push({ t, from: e.from.slice().sort().join(), to: e.to.slice().sort().join(), reason: e.reason, gain: e.gain, why: e.why, z: E('S.maxZone') }));
 fn.on('recruit', ({ id, source }) => { const r = E(`ROSTER[${JSON.stringify(id)}].rarity`); recruits.push(`${id}@${(t / 60).toFixed(0)}m(${source})`); if (source !== 'starter' && firstJoin === null) firstJoin = { t, id }; if (firstRar[r] === undefined) { firstRar[r] = t; firstId[r] = id; } });
 let t11 = null, t11Snap = null;
 let bossTries = 0, casts = 0; fn.on('bossFail', () => bossTries++); fn.on('ability', () => casts++);
@@ -586,6 +605,11 @@ if (t11Snap) {
 }
 const zAt = s => { let z = 1; for (const [k, v] of Object.entries(reached)) if (v <= s && +k > z) z = +k; return z; };
 console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} @3h=${zAt(10800)} end=${E('S.maxZone')} toZone15=${reached[15] ? (reached[15] / 60).toFixed(1) + 'm' : '-'} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
+{
+  const out = planCh.filter(c => c.reason !== 'recruit' && c.reason !== 'call' && c.reason !== 'on');
+  const flips = planCh.filter((c, i) => planCh.slice(0, i).some(d => d.from === c.to && d.to === c.from && c.t - d.t < 600));
+  console.log(`FT7 planner: ${planCh.length} automatic field changes (${(out.length / (total / 3600)).toFixed(2)}/h outside recruits; want <= 2), flips within 10 min ${flips.length} (want 0)` + (args.debug ? ' | ' + planCh.map(c => `${(c.t / 60).toFixed(0)}m z${c.z} ${c.reason} ${c.from}->${c.to} x${c.gain ? c.gain.toFixed(2) : '-'} "${c.why}"`).join('; ') : ''));
+}
 if (campStats.lit !== undefined) console.log(`hearth: lit ${campStats.lit}s | stations Lv 1 at ${['bench', 'forge', 'store', 'loom', 'ench', 'tavern'].map(id => `${id} ${campStats.st[id] !== undefined ? (campStats.st[id] / 60).toFixed(1) + 'm' : '-'}`).join(', ')}`);
 console.log(`zones: ${Object.entries(reached).map(([z, s]) => `${z}@${(s / 60).toFixed(0)}m`).join(" ")}`);
 if (E('rosterLive()')) {
@@ -652,11 +676,11 @@ if (E('partyCombatOn()')) {
     // same field without its tank or its support (swapped for another damage dealer at the same level).
     const h = fork(t2Snap, 6);
     const hold = () => h.eval('(() => { let b = 0; for (let z = 1; z <= S.maxZone + 20; z++) if (partyHoldEstimate(z, { one: true, sustain: true }).holds) b = z; return b; })()');
-    const swap = (role, to) => h.eval(`(() => { const f = S.party.field.slice(), i = f.findIndex(k => ROSTER[k].role === ${JSON.stringify(role)}); if (i < 0) return null; const r = charRec(f[i]); if (!isRecruited(${JSON.stringify(to)})) unlockChar(${JSON.stringify(to)}, 'sim', true); Object.assign(charRec(${JSON.stringify(to)}), { lv: r.lv, rank: r.rank }); f[i] = ${JSON.stringify(to)}; setField(f); return f.join(); })()`);
-    const f0 = h.eval('S.party.field.slice()'), base = hold();
-    const damager = h.eval(`['kestrel', 'bram', 'isolde', 'pip', 'wren'].find(k => !S.party.field.includes(k))`);
+    const swap = (role, to) => h.eval(`(() => { const f = S.party.field.slice(), i = f.findIndex(k => ROSTER[k].role === ${JSON.stringify(role)}); if (i < 0) return null; const r = charRec(f[i]); if (!isRecruited(${JSON.stringify(to)})) unlockChar(${JSON.stringify(to)}, 'sim', true); Object.assign(charRec(${JSON.stringify(to)}), { lv: r.lv, rank: r.rank }); const c = JSON.parse(JSON.stringify(S.party.cells)); c[${JSON.stringify(to)}] = c[f[i]]; delete c[f[i]]; f[i] = ${JSON.stringify(to)}; setField(f); S.party.cells = c; emit('fieldChange', { field: S.party.field }); return f.join(); })()`);
+    const f0 = h.eval('S.party.field.slice()'), c0 = h.eval('JSON.stringify(S.party.cells)'), base = hold();   // F3: Wren takes the tank's or the support's place (spec 4.6)
+    const damager = h.eval(`['wren', 'kestrel', 'bram', 'isolde', 'pip'].find(k => !S.party.field.includes(k))`);
     const noTank = swap('tank', damager), zt = hold();
-    h.eval(`setField(${JSON.stringify(f0)})`);
+    h.eval(`setField(${JSON.stringify(f0)}); S.party.cells = ${c0}; emit('fieldChange', { field: S.party.field })`);
     const noSup = swap('support', damager), zs = hold();
     console.log(`T6 holdable zone: ${f0.join()} ${base}, no tank (${noTank}) ${zt} (${base - zt} lower), no support (${noSup}) ${zs} (${base - zs} lower); want 2-4 lower`);
   }
@@ -833,8 +857,11 @@ async function runTargets() {
   // a balanced Lanternmage party for T6 (its tank and support can be swapped out), and active vs idle (T4).
   const L = (c, ids, ...more) => run(['--policy', 'mixed', '--hours', '4', '--class', c, '--lineup', ids, '--every', '600', ...more, ...pass]);
   const combatRuns = await Promise.all([
-    L('warden', 'hesketh,wren,pip', '--t5', '1', '--t8', '1'), L('lightkeeper', 'tobin,hesketh,elowen'), L('warden', 'wren,kestrel,isolde'), L('lanternmage', 'aldric,pip,oriel'),
-    L('lanternmage', 'tobin,hesketh,wren', '--t6', '1'),
+    // F3: trios of formation.md 4.6 (the hero is the third): balanced Warden (F), Wren (M), Hesketh (B);
+    // attrition Tobin (F), Elowen (M), Lightkeeper (B); glass Warden (F), Kestrel (M), Wren (B); caster
+    // Aldric (F), Oriel (M), Lanternmage (B); T6 Tobin (F), Anselm (M), Lanternmage (B)
+    L('warden', 'hero@front,wren@mid,hesketh@back', '--t5', '1', '--t8', '1'), L('lightkeeper', 'tobin@front,elowen@mid,hero@back'), L('warden', 'hero@front,kestrel@mid,wren@back'), L('lanternmage', 'aldric@front,oriel@mid,hero@back'),
+    L('lanternmage', 'tobin@front,anselm@mid,hero@back', '--t6', '1'),
     run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', ...pass]),
     run(['--policy', 'mixed', '--hours', '4', '--class', 'warden', '--every', '600', '--t11', '0', '--active', '1', ...pass]),
     // T18: each class with its starter only, idle, fighting only (the fight policy buys hero upgrades, no crafting)
@@ -880,9 +907,9 @@ async function runTargets() {
   const t4i = z20(idle4), t4a = z20(active4), faster = 1 - t4a / t4i;
   res.push([ok(inR(faster, [0.2, 0.35])), 'T4 active vs idle (warden, time to zone 20): active 20-35% faster', `idle ${f0(t4i)}m, active ${f0(t4a)}m (${Number.isFinite(faster) ? Math.round(100 * faster) + '% faster' : '-'})`]);
   const t5 = num(bal, /T5 farming zone \d+ for 1h: (\d+) wipes/);
-  res.push([ok(t5 === 0), 'T5 wipes per hour farming at maxZone - 2, balanced line-up (Warden, Hesketh, Wren, Pip): 0', (bal.match(/T5 [^|]*/) || ['-'])[0].trim()]);
+  res.push([ok(t5 === 0), 'T5 wipes per hour farming at maxZone - 2, balanced trio (Warden F, Wren M, Hesketh B): 0', (bal.match(/T5 [^|]*/) || ['-'])[0].trim()]);
   const t6t = num(lmBal, /no tank \([^)]*\) \d+ \((-?\d+) lower\)/), t6s = num(lmBal, /no support \([^)]*\) \d+ \((-?\d+) lower\)/);
-  res.push([ok(inR(t6t, [2, 4]) && inR(t6s, [2, 4])), 'T6 offline holdable zone: no tank / no support vs balanced (Lanternmage, Tobin, Hesketh, Wren): 2-4 lower', (lmBal.match(/T6 holdable zone: (.*); want/) || [, '-'])[1]]);
+  res.push([ok(inR(t6t, [2, 4]) && inR(t6s, [2, 4])), 'T6 offline holdable zone: no tank / no support vs balanced (Tobin F, Anselm M, Lanternmage B): 2-4 lower', (lmBal.match(/T6 holdable zone: (.*); want/) || [, '-'])[1]]);
   const t7 = num(bal, /T7 first boss tries \d+\/\d+ \((\d+)%\)/);
   res.push([ok(inR(t7, [40, 70])), 'T7 first boss attempt success, idle, balanced line-up: 40-70%', (bal.match(/T7 first boss tries [^|]*/) || ['-'])[0].trim()]);
   const t8 = num(bal, /T8 [^(]*\(ratio ([\d.]+)/);
@@ -894,7 +921,7 @@ async function runTargets() {
   }
   const t11 = num(cont[0], /T11 \w+ L1 -> L\d+ \(target [\d.]+\) in ([\d.]+)m/);
   res.push([ok(inR(t11, [5, 10])), 'T11 a level-1 recruit fielded at zone 20 reaches party level - 5 in 5-10 min', (cont[0].match(/T11 (.*) \(want/) || [, '-'])[1]]);
-  const t12 = [attr, glass, cast].map(o => z20(o) / z20(bal)), t12n = ['attrition (Lightkeeper, Tobin, Hesketh, Elowen)', 'glass cannon (Warden, Wren, Kestrel, Isolde)', 'caster (Lanternmage, Aldric, Pip, Oriel)'];
+  const t12 = [attr, glass, cast].map(o => z20(o) / z20(bal)), t12n = ['attrition (Tobin F, Elowen M, Lightkeeper B)', 'glass cannon (Warden F, Kestrel M, Wren B)', 'caster (Aldric F, Oriel M, Lanternmage B)'];
   res.push([ok(t12.every(v => v <= 1.5)), 'T12 each niche line-up reaches zone 20 within 1.5x of balanced', `balanced ${f0(z20(bal))}m; ` + t12n.map((n, i) => `${n} ${f0(z20([attr, glass, cast][i]))}m (${Number.isFinite(t12[i]) ? t12[i].toFixed(2) : '-'})`).join(', ')]);
   const t13 = num(bal, /T13 tank share (\d+)%/);
   res.push([ok(t13 >= 85), 'T13 the tank holds aggro (enemy-seconds on a tank), balanced line-up: >= 85%', `${t13}%`]);
