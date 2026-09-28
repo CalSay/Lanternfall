@@ -2326,6 +2326,50 @@ try {
   assert(oOk, 'coast: 3 Omen texts (name, effect, line) inside limits');
 } catch (e) { fail('coast writing crashed: ' + (e.stack || e)); }
 
+// ---- Hollow writing (21h-lore-hollow.js, LORE2; lore.md 4, 8.1, 9): every foe and elder has its lines, limits, verbs ----
+console.log('hollow writing');
+try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21h-lore-hollow.js'), 'utf8');
+  assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), 'hollow: 21h-lore-hollow.js is data only (no DOM, no state)');
+  const g = loadCore(), E = x => g.eval(x);
+  const L = E('LORE_LIMITS'), roster = E('ROSTER_KEYS');
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const sayOk = say => !say || Object.entries(say).every(([k, s]) => roster.includes(k) && str(s, L.say));
+  const arr = E('HOLLOW_ARRIVAL');
+  assert(arr.length === 7 && arr.every(s => str(s, L.arrival)) && str(E('HOLLOW_ARRIVAL_BOSS'), L.arrival)
+    && arr.every((s, i) => s.startsWith(E(`ZONES[${i}]`))), `hollow: 7 arrival lines (one per place, named first) and the zone 35 line, each ${L.arrival} chars or less`);
+  const story = E('HOLLOW_STORY');
+  const beatBad = story.filter(b => !str(b.id, 20) || !(b.at >= 1 && b.at <= 35) || !str(b.title, L.title) || !str(b.text, L.text)
+    || sents(b.text) < 2 || sents(b.text) > 5 || !str(b.note, L.note) || !sayOk(b.say));
+  assert(story.length === 4 && story.map(b => b.id).join() === 'wisps,crowns,chapel,listener' && story.every((b, i) => !i || b.at > story[i - 1].at) && !beatBad.length,
+    'hollow: beats wisps, crowns, chapel, listener in zone order; cards 2-5 sentences, notes, say lines by real characters' + (beatBad.length ? ': ' + beatBad[0].id : ''));
+  assert(sayOk(E('HOLLOW_LANTERN_SAY')) && str(E('HOLLOW_LANTERN_SAY.hesketh'), L.say), 'hollow: Hesketh\'s line for the Great Lantern I card');
+  // Every Hollow foe family: the TYPES the Hollow uses, the behaviours (59b FOE_BEH) and the rigs (13 ENEMY_RIGS, not the wyrm or nodes)
+  const hollowKeys = E('REGIONS[0].types.map(i => TYPES[i].key)');
+  const fams = [...new Set([...hollowKeys, ...E('Object.keys(FOE_BEH)'), ...E('Object.keys(ENEMY_RIGS).filter(k => k !== "wyrm" && !k.startsWith("node:"))'), ...E('TYPES.map(t => t.key)')])];
+  const B = E('LORE_BESTIARY'), EL = E('LORE_ELDERS'), names = E('Object.fromEntries(TYPES.map(t => [t.key, t.name]))');
+  const bBad = fams.filter(k => !B[k] || !['foe', 'elder', 'champ'].every(p => str(B[k][p], L.bestiary)) || (names[k] && B[k].name !== names[k]));
+  const eBad = fams.filter(k => !EL[k] || !str(EL[k].name, 32) || !str(EL[k].intro, L.elder) || !str(EL[k].fall, L.elder));
+  assert(fams.length >= 7 && !bBad.length, `hollow: every foe family (${fams.length}: ${fams.join(' ')}) has bestiary lines for the foe, its Elder and its champion, ${L.bestiary} chars or less` + (bBad.length ? ': missing or long ' + bBad.join(', ') : ''));
+  assert(!eBad.length, `hollow: every foe family's Elder has an intro and a fall line, ${L.elder} chars or less` + (eBad.length ? ': ' + eBad.join(', ') : ''));
+  const all = Object.values(B), coast = all.filter(b => b.region === 'coast');
+  const cBad = Object.keys(EL).filter(k => k !== 'listener' && !B[k]).concat(Object.keys(B).filter(k => !EL[k]));
+  assert(all.length === 14 && all.filter(b => b.region === 'hollow').length === 7 && coast.length === 7 && !cBad.length
+    && all.every(b => ['foe', 'elder', 'champ'].every(p => str(b[p], L.bestiary))), 'hollow: 14 bestiary entries (7 Hollow, 7 Coast), each with its Elder\'s lines' + (cBad.length ? ': ' + cBad[0] : ''));
+  const ls = EL.listener || {};
+  assert(str(ls.name, 32) && str(ls.intro, L.elder) && str(ls.fall, L.elder) && str(ls.line, L.bestiary), 'hollow: the Listener (zone 35) has its name, intro, fall and bestiary line');
+  const R = E('RAID_LORE'), bosses = E('BOSSES');
+  assert(bosses.every(n => str(R[n], L.raid)) && Object.keys(R).length === bosses.length, `hollow: a raid line for each of the ${bosses.length} great foes, ${L.raid} chars or less`);
+  // The verbs of the dark (lore.md 9.5): nothing is drawn to, hungry for or aching for light
+  const lines = [];
+  const walk = v => { if (typeof v === 'string') lines.push(v); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  ['HOLLOW_ARRIVAL', 'HOLLOW_ARRIVAL_BOSS', 'HOLLOW_STORY', 'HOLLOW_LANTERN_SAY', 'LORE_BESTIARY', 'LORE_ELDERS', 'RAID_LORE'].forEach(n => walk(E(n)));
+  const banned = E('LORE_BANNED'), hits = lines.filter(s => banned.some(re => re.test(s)));
+  const probe = ['It is drawn to your lamp.', 'It aches for light.', 'It wants the light.', 'Hungry for flame.'].every(s => banned.some(re => re.test(s)));
+  assert(lines.length > 60 && probe && !hits.length, `hollow: none of ${lines.length} lines uses a banned verb of the dark` + (hits.length ? ': ' + hits[0] : ''));
+} catch (e) { fail('hollow writing crashed: ' + (e.stack || e)); }
+
 // ---- pinnacle data and writing (21d-data-pinnacle.js, 21e-stories-pinnacle.js; pinnacles.md 3-7, PN11) ----
 console.log('pinnacle data');
 try {
