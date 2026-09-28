@@ -12,6 +12,11 @@
 // 60b-baker.js turns the pieces into pixels: 3 tones per material, section lines, cast shadow,
 // despeckle, ink outline, face stamps.
 //
+// Achievement looks (AC4, 12g-art-accessories.js): AK.applyAcc(k, acc) runs after a hero's build
+// (60b). Tags an outfit may set on a piece: acc: 'back' (its own cape or cloak: skipped under a worn
+// cape), 'lamp' / 'glass' (the hero's lantern frame and glass), 'flame' (another light that takes the
+// Flame colour); k.lamp = { at: 'hip', x } | { at: 'held', side, z, s, glass } says where the lantern hangs.
+//
 // Registries filled by the outfit files (12b heroes, 12c-12f companions by circle):
 //   AK.CLASSES[key] = { name, hs, ws, hd?, armW?, handS?, aF, aB, anim, slots: { weapon|off|head|body|charm: { fam, fam2?, dye?, dyeAmt? } }, build(k, g, look) }
 //   AK.CHARS[key]   = { name, circle, hs, ws, ..., anim, wpn: { fam, fam2?, t, r, glow? }, build(k, w) }
@@ -272,12 +277,13 @@ const AK = (() => {
     return b;
   }
   // A small hanging lantern, as held items (use with k.held). s: size (art px); frame, glass mats.
+  // acc tags (AC4 looks, 12g applyAcc): 'lamp' = the lantern's frame, 'glass' = its glass.
   function lanternItems(s, frame, glass, o = {}) {
     return [
-      [frame, R(-.4, -.5, .8, s * .5)],
-      [frame, P(-s * .55, s * .45, s * .55, s * .45, s * .4, s * .2, -s * .4, s * .2)],
-      [glass, R(-s * .42, s * .45, s * .84, s * 1.05), { lr: o.lr || 20, pulse: o.pulse !== false }],
-      [frame, R(-s * .55, s * 1.5, s * 1.1, 1.1)]
+      [frame, R(-.4, -.5, .8, s * .5), { acc: 'lamp' }],
+      [frame, P(-s * .55, s * .45, s * .55, s * .45, s * .4, s * .2, -s * .4, s * .2), { acc: 'lamp' }],
+      [glass, R(-s * .42, s * .45, s * .84, s * 1.05), { lr: o.lr || 20, pulse: o.pulse !== false, acc: 'glass' }],
+      [frame, R(-s * .55, s * 1.5, s * 1.1, 1.1), { acc: 'lamp' }]
     ];
   }
 

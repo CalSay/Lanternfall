@@ -3853,5 +3853,87 @@ try {
   assert(!g.errors.length, 'F4 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('party ui crashed: ' + (e.stack || e)); }
 
+// ---- looks: achievement accessories on the hero (12g, 13b, 64-looks; achievements.md 4.3, AC4) ----
+console.log('looks');
+try {
+  const g = loadCore({ seed: 7 }), E = s => g.eval(s);
+  const r = E(`(() => {
+    const LA = LOOK_ART, bad = [], miss = [], out = { miss, bad };
+    const has = l => l.slot === 'cape' ? LA.CAPES[l.id] : l.slot === 'hat' ? LA.HATS[l.id] : l.slot === 'lamp' ? LA.LAMPS[l.id] : l.slot === 'flame' ? LA.FLAMES[l.id]
+      : l.slot === 'aura' ? LA.AURAS[l.id] : l.slot === 'critter' ? CRITTER_ART[l.id] : l.slot === 'frame' ? LA.FRAMES[l.id] : null;
+    for (const l of DEED_LOOKS) if (!has(l)) miss.push(l.id);
+    out.looks = DEED_LOOKS.length;
+    const num = s => s.t === 'p' ? s.pts.every(Number.isFinite) : [s.cx, s.cy, s.x1, s.y1, s.x2, s.y2, s.x, s.y, s.rx, s.ry, s.r1, s.r2].filter(v => v !== undefined).every(Number.isFinite);
+    const poses = [{}, { bob: 1 }, AK.DOWN].concat(Object.values(AK.ANIMS).flatMap(a => [a.wind, a.strike]));
+    const look = { skin: AK.m(AK.SKINS[0], 'skin'), hair: AK.m(AK.HAIRS[0], 'hair') };
+    let builds = 0; const tags = {};
+    for (const cls in AK.CLASSES) {
+      const def = AK.CLASSES[cls];
+      for (const l of DEED_LOOKS) {
+        if (!['cape', 'hat', 'lamp', 'flame'].includes(l.slot)) continue;
+        const acc = lookAcc({ [l.slot]: l.id }); if (!acc) { bad.push(cls + ':' + l.id + ' no acc'); continue; }
+        for (const bare of [0, 1]) for (const pose of poses) {
+          const gg = {}; for (const s in def.slots) gg[s] = bare ? null : AK.gearMats(def.slots[s], 3, 1);
+          const k = AK.makeKit(def, pose); def.build(k, gg, look); AK.applyAcc(k, acc); builds++;
+          if (!k.parts.every(p => p.m && p.m.hex && num(p.s))) bad.push(cls + ':' + l.id + ' bad numbers');
+          const mine = k.parts.filter(p => p.o.look);
+          if (l.slot !== 'flame' && !mine.length) bad.push(cls + ':' + l.id + ' no pieces');
+          if (l.slot === 'cape' && k.parts.some(p => p.o.acc === 'back')) bad.push(cls + ':' + l.id + ' back piece kept');
+          if (l.slot === 'lamp' && k.parts.some(p => (p.o.acc === 'glass' || p.o.acc === 'lamp') && !p.o.look)) bad.push(cls + ':' + l.id + ' old lantern kept');
+          if (l.slot === 'hat' && pose === poses[0]) { const top = Math.min(...mine.map(p => p.s.t === 'q' ? p.s.y : p.s.t === 'e' ? p.s.cy - p.s.ry : AK.shapeBox(p.s)[1])); if (top < k.top - 5.01) bad.push(cls + ':' + l.id + ' hat too tall ' + (k.top - top).toFixed(1)); }
+          if (l.slot === 'flame' && !bare && !k.parts.some(p => (p.o.acc === 'glass' || p.o.acc === 'flame') && p.m.hex === acc.fl)) bad.push(cls + ':' + l.id + ' flame not on the glass');
+          tags[l.slot] = (tags[l.slot] || 0) + 1;
+        }
+      }
+    }
+    out.builds = builds;
+    // critters: every frame builds, 8-12 art px tall
+    for (const id in CRITTER_ART) for (const f of CRITTER_ART[id].frames) {
+      const ps = CRITTER_ART[id].parts(f); if (!ps.length || !ps.every(p => num(p.s))) bad.push(id + ':' + f + ' bad');
+      const b = ps.map(p => AK.shapeBox(p.s)), h = Math.max(...b.map(x => x[3])) - Math.min(...b.map(x => x[1]));
+      if (f === 'idle0' && (h < 7 || h > 13.5)) bad.push(id + ' height ' + h.toFixed(1));
+    }
+    // auras: every frame's pixels sit in the 32 x 12 box
+    for (const id in LA.AURAS) for (let f = 0; f < LA.AURAS[id].n; f++) for (const o of [{}, { flash: 1 }, { open: 3 }, { cols: ['#FF0000'] }]) {
+      const px = LA.auraPx(id, f, o); if (!px.length || !px.every(([x, y, c]) => x >= 0 && y >= 0 && x < 32 && y < 12 && /^#[0-9A-F]{6}$/i.test(c))) bad.push(id + ':' + f + ' pixels');
+    }
+    // hats hide helms unless Show helm is on; the Deepwell's l_moon is a colour in the Flame slot, a lantern in the Lamp slot
+    out.hatHide = !!lookAcc({ hat: 'h_straw', helm: 0 }).hat && !lookAcc({ hat: 'h_straw', helm: 1 });
+    out.moon = lookAcc({ flame: 'l_moon' }).fl === DEEP_SHOP.l_moon.col && lookAcc({ lamp: 'l_moon' }).lamp === 'l_moon' && !lookAcc({ lamp: 'l_moon' }).fl;
+    out.none = lookAcc({}) === null && lookAcc({ cape: 'nope', flame: 'l_blue_x' }) === null;
+    out.noPower = !DEED_LOOKS.some(l => l.bonus || l.mod || l.key);
+    return out;
+  })()`);
+  assert(!r.miss.length, `every look has art (${r.looks} looks)` + (r.miss.length ? ': missing ' + r.miss.join(', ') : ''));
+  assert(!r.bad.length, `looks: capes, hats, lanterns and flames build on every class, bare and geared, in every pose (${r.builds} builds); critters and auras build; no bad numbers` + (r.bad.length ? ': ' + [...new Set(r.bad)].slice(0, 6).join('; ') : ''));
+  assert(r.hatHide, 'looks: a hat is worn only while Show helm is off');
+  assert(r.moon, "looks: 'l_moon' reads as the Deepwell colour in the Flame slot and as the Moon Paper Lantern in the Lamp slot");
+  assert(r.none && r.noPower, 'looks: nothing worn gives no acc; no look carries a bonus');
+  assert(!g.errors.length, 'looks: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+
+  // The browser side in Node with a stub canvas: the baker's hat rule, the preview hook, the icons.
+  const { coreFiles } = await import('./lib/core.mjs');
+  const stub = `
+    const __draws = { n: 0 };
+    const __ctx = () => ({ drawImage() { __draws.n++; }, putImageData() {}, fillRect() {}, clearRect() {}, save() {}, restore() {}, scale() {}, setTransform() {},
+      createRadialGradient: () => ({ addColorStop() {} }), getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4).fill(255) }) });
+    const document = { createElement: () => ({ width: 0, height: 0, getContext: __ctx, toDataURL: () => 'data:image/png;base64,AA', classList: { add() {} } }), getElementById: () => null };
+    class ImageData { constructor(d, w, h) { this.data = d; this.width = w; this.height = h; } }
+    const setTimeout = () => 0;
+  `;
+  const b = loadCoreRaw({ seed: 3, prelude: stub, files: coreFiles().concat(['60b-baker.js', '64-looks.js']) });
+  const B = s => b.eval(s);
+  B('almanac.force("none")');
+  const rs = B(`(() => { const r = ART.resolve({ cls: 'warden', gear: { weapon: { t: 2, r: 0 }, head: { t: 2, r: 1 } }, acc: { hat: 'h_night' } }), r2 = ART.resolve({ cls: 'warden', gear: { head: { t: 2, r: 1 } } }); return !r.g.head && !!r2.g.head; })()`);
+  assert(rs, 'looks: the baker drops the helm under a worn hat (drawing only) and keeps it without one');
+  const pv = B(`(() => { const cv = document.createElement('canvas'); cv.width = 96; cv.height = 132; const n0 = __draws.n;
+    const ok = looksPreview(cv, { cape: 'c_tally', hat: 'h_circlet', lamp: 'l_book', flame: 'fl_coin', aura: 'a_star', critter: 'cr_cat', helm: 0 }, 1.5);
+    const icons = DEED_LOOKS.filter(l => !/^data:image/.test(lookIconURL(l.id, l.slot))).map(l => l.id);
+    const spec = heroSpec(); return { ok, drew: __draws.n - n0, icons, deep: /^data:image/.test(lookIconURL('l_moon', 'flame')), trail: lookIconURL('t_motes', 'trail') === '' }; })()`);
+  assert(pv.ok === true && pv.drew >= 2, `looks: the preview hook draws the dressed hero (${pv.drew} draws)`);
+  assert(!pv.icons.length && pv.deep && pv.trail, 'looks: every look has a tile icon; Deepwell colours get a flame icon; trails keep the UI icon' + (pv.icons.length ? ': ' + pv.icons.join(', ') : ''));
+  assert(!b.errors.length, 'looks (browser side): no errors' + (b.errors.length ? ': ' + b.errors[0] : ''));
+} catch (e) { fail('looks crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

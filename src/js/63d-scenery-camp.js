@@ -108,7 +108,7 @@
       return;
     }
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
-    if (!on) return;
+    if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
     ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
     ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);

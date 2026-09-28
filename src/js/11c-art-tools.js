@@ -113,10 +113,11 @@ const TOOL_ART = (() => {
   // gathering, so the key light and the lantern glow still come from the hero (12b's hipLantern).
   function hipLantern(k) {
     const { m, R } = AK, x = -k.hipW * .95, d = m('#4E4452', 'metal'), lamp = m('#FFD27A', 'glow', { light: '#FFC070' });
-    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)));
-    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)));
-    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1 });
-    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)));
+    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)), { acc: 'lamp' });
+    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)), { acc: 'lamp' });
+    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1, acc: 'glass' });
+    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)), { acc: 'lamp' });
+    k.lamp = { at: 'hip', x };   // AC4 looks (12g) swap or tint it
   }
 
   // ---------------- the gathering outfit ----------------
@@ -154,6 +155,7 @@ const TOOL_ART = (() => {
     const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };
     if (spec && spec.skin != null) out.skin = spec.skin;
     if (spec && spec.hair != null) out.hair = spec.hair;
+    if (spec && spec.acc) out.acc = spec.acc;   // achievement looks (AC4)
     return out;
   }
   return { KINDS, SKILL_TOOL, TIER_NAMES, name, items, draw, gatherDef, gatherSpec, mats };

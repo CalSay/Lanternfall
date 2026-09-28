@@ -9,7 +9,7 @@
 //
 // Exposed: deedsUI { open(view, id), heroRow(), featCard(id), chapterSlot() -> el | null }
 // Hooks for later tasks (probed with typeof, all optional):
-//   AC4  lookIconURL(id) -> URL (a look's icon), looksPreview(canvas, wear) -> bool (draws the dressed hero)
+//   AC4  lookIconURL(id, slot) -> URL (a look's icon), looksPreview(canvas, wear, zoom) -> bool (draws the dressed hero)
 //   AC5  featTrophyURL(id) -> URL (a Feat's trophy)
 //   AC6  the chapter card goes in deedsUI.chapterSlot() (the Deeds view, under the points)
 // Titles stay local: they are read with codexTitle()/codexTitles() and never sent online.
@@ -54,7 +54,7 @@ let deedsUI = null;
   const deepItem = id => (typeof DEEP_SHOP === 'object' && DEEP_SHOP[id]) || null;
   const lookCol = (slot, id) => LOOK_COL[id] || (deepItem(id) && deepItem(id).col) || SLOT_COL[slot] || '#F2C14E';
   const lookIcon = (slot, id) => {
-    if (id && typeof lookIconURL === 'function') { const u = safe(() => lookIconURL(id), ''); if (u) return u; }
+    if (id && typeof lookIconURL === 'function') { const u = safe(() => lookIconURL(id, slot), ''); if (u) return u; }
     const ic = ICON[SLOT_IC[slot]] ? SLOT_IC[slot] : 'charm';
     return iconURL(ic, lookCol(slot, id));
   };

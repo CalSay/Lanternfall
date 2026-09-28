@@ -2073,6 +2073,16 @@ span.cf-d { font-weight: 600; }
 .lu-stats { margin: 0; font-size: 12.5px; }
 .lu-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .lu-row .lu-use { flex: 1 1 auto; }
+/* 60-looks: achievement looks (AC4, 64-looks.js). The header portrait's frame, and the Looks
+   plate's CSS aura hidden once looksPreview draws the real one on the canvas. */
+.portrait.lk-fr { border-color: var(--lk-c); box-shadow: 0 0 0 1px var(--lk-lo), inset 0 0 0 1px var(--lk-hi), inset 0 0 0 3px #0B0810, 0 0 10px rgba(255,158,61,.16); }
+/* the Everflame edge: a flame glow that breathes (opacity only, so the compositor does it) */
+.portrait.lk-ever::after { content: ''; position: absolute; inset: -3px; pointer-events: none; box-shadow: 0 -2px 7px 1px rgba(255,158,61,.75), 0 0 3px rgba(255,208,122,.6); animation: lkEver 1.6s ease-in-out infinite alternate; }
+@keyframes lkEver { from { opacity: .45; } to { opacity: 1; } }
+.lk-drawn > .dd-aura { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .portrait.lk-ever::after { animation: none; opacity: .8; }
+}
 /* 60-mastery: zone mastery pips and bestiary rows */
 .row.ms-row { grid-template-columns: auto 1fr; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
@@ -3388,10 +3398,11 @@ const TOOL_ART = (() => {
   // gathering, so the key light and the lantern glow still come from the hero (12b's hipLantern).
   function hipLantern(k) {
     const { m, R } = AK, x = -k.hipW * .95, d = m('#4E4452', 'metal'), lamp = m('#FFD27A', 'glow', { light: '#FFC070' });
-    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)));
-    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)));
-    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1 });
-    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)));
+    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)), { acc: 'lamp' });
+    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)), { acc: 'lamp' });
+    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1, acc: 'glass' });
+    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)), { acc: 'lamp' });
+    k.lamp = { at: 'hip', x };   // AC4 looks (12g) swap or tint it
   }
 
   // ---------------- the gathering outfit ----------------
@@ -3429,6 +3440,7 @@ const TOOL_ART = (() => {
     const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };
     if (spec && spec.skin != null) out.skin = spec.skin;
     if (spec && spec.hair != null) out.hair = spec.hair;
+    if (spec && spec.acc) out.acc = spec.acc;   // achievement looks (AC4)
     return out;
   }
   return { KINDS, SKILL_TOOL, TIER_NAMES, name, items, draw, gatherDef, gatherSpec, mats };
@@ -3458,6 +3470,11 @@ toolFor = skill => {
 // adds pieces in a held item's frame (origin at the hand, -y along the item).
 // 60b-baker.js turns the pieces into pixels: 3 tones per material, section lines, cast shadow,
 // despeckle, ink outline, face stamps.
+//
+// Achievement looks (AC4, 12g-art-accessories.js): AK.applyAcc(k, acc) runs after a hero's build
+// (60b). Tags an outfit may set on a piece: acc: 'back' (its own cape or cloak: skipped under a worn
+// cape), 'lamp' / 'glass' (the hero's lantern frame and glass), 'flame' (another light that takes the
+// Flame colour); k.lamp = { at: 'hip', x } | { at: 'held', side, z, s, glass } says where the lantern hangs.
 //
 // Registries filled by the outfit files (12b heroes, 12c-12f companions by circle):
 //   AK.CLASSES[key] = { name, hs, ws, hd?, armW?, handS?, aF, aB, anim, slots: { weapon|off|head|body|charm: { fam, fam2?, dye?, dyeAmt? } }, build(k, g, look) }
@@ -3719,12 +3736,13 @@ const AK = (() => {
     return b;
   }
   // A small hanging lantern, as held items (use with k.held). s: size (art px); frame, glass mats.
+  // acc tags (AC4 looks, 12g applyAcc): 'lamp' = the lantern's frame, 'glass' = its glass.
   function lanternItems(s, frame, glass, o = {}) {
     return [
-      [frame, R(-.4, -.5, .8, s * .5)],
-      [frame, P(-s * .55, s * .45, s * .55, s * .45, s * .4, s * .2, -s * .4, s * .2)],
-      [glass, R(-s * .42, s * .45, s * .84, s * 1.05), { lr: o.lr || 20, pulse: o.pulse !== false }],
-      [frame, R(-s * .55, s * 1.5, s * 1.1, 1.1)]
+      [frame, R(-.4, -.5, .8, s * .5), { acc: 'lamp' }],
+      [frame, P(-s * .55, s * .45, s * .55, s * .45, s * .4, s * .2, -s * .4, s * .2), { acc: 'lamp' }],
+      [glass, R(-s * .42, s * .45, s * .84, s * 1.05), { lr: o.lr || 20, pulse: o.pulse !== false, acc: 'glass' }],
+      [frame, R(-s * .55, s * 1.5, s * 1.1, 1.1), { acc: 'lamp' }]
     ];
   }
 
@@ -3773,12 +3791,14 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
     k.add(3.86, 'up', c.C, Q(Math.round(x - .5), Math.round(y), 1, 1), { nl: 1, lr: 6 });
   }
   // A lantern on the hip (the hero always carries one unless it is in hand).
+  // acc tags and k.lamp: the Lantern and Flame looks (12g) swap or tint it.
   function hipLantern(k, x) {
     const d = m('#4E4452', 'metal'), lamp = m('#FFD27A', 'glow', { light: '#FFC070' });
-    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)));
-    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)));
-    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1 });
-    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)));
+    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)), { acc: 'lamp' });
+    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)), { acc: 'lamp' });
+    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1, acc: 'glass' });
+    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)), { acc: 'lamp' });
+    k.lamp = { at: 'hip', x };
   }
 
   // ---------------- Warden: knight with warblade and heater shield ----------------
@@ -3882,8 +3902,9 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
       // lantern hanging from the back hand
       if (o) {
         const items = lanternItems(k.H * .1, o.Q, o.L, { lr: 22 });
-        if (o.r >= 1) items.push([o.R, R(-k.H * .055, k.H * .045 - .2, k.H * .11, .9)]);
+        if (o.r >= 1) items.push([o.R, R(-k.H * .055, k.H * .045 - .2, k.H * .11, .9), { acc: 'lamp' }]);
         k.held(5, 'B', 0, items);
+        k.lamp = { at: 'held', side: 'B', z: 5, s: k.H * .1, glass: o.L };
       }
       // front arm and staff
       arm(k, 'F', robe, L.skin, { bell: robe, bellTrim: gold });
@@ -3906,7 +3927,7 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
       const u = k.u, b = g.body, w = g.weapon, o = g.off, hd = g.head, po = k.pose;
       const green = m('#3E7A3E'), greenD = m('#2C5230'), jerk = b ? b.P : m('#8A6440', 'leather'), lea = m('#5E3E26', 'leather'), tr = m('#4A4038'), boot = m('#5A3C28', 'leather'), cream = m('#D8C8A0'), trim = trimOf(b);
       // cloak behind (green), falling to the knee
-      k.add(.2, 'up', greenD, P(-k.sw * .9, k.shY, k.sw * .4, k.shY, -k.hipW * .3, k.hiY * .35, -k.hipW * 1.5, k.hiY * .25, -k.hipW * 1.9, k.hiY * .55, -k.sw * 1.1, k.waY), { bev: 1 });
+      k.add(.2, 'up', greenD, P(-k.sw * .9, k.shY, k.sw * .4, k.shY, -k.hipW * .3, k.hiY * .35, -k.hipW * 1.5, k.hiY * .25, -k.hipW * 1.9, k.hiY * .55, -k.sw * 1.1, k.waY), { bev: 1, acc: 'back' });
       legs(k, tr, boot, { cuff: lea });
       arm(k, 'B', green, m('#6E4A30', 'leather'), { bracer: lea });
       // green tunic, leather jerkin laced up the front, belt with a pouch
@@ -4002,7 +4023,7 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
           [ch, R(-.35, 0, .7, drop), { nl: 1 }],
           [w.r >= 1 ? w.R : w.D, P(-cr * .7, drop, cr * .7, drop, cr * .45, drop - 1, -cr * .45, drop - 1)],
           [w.P, E(0, drop + cr * .9, cr, cr * .9), { bev: .8 }],
-          [coal, R(-cr * .6, drop + .6, cr * 1.2, .9), { lr: 14, pulse: 1 }],
+          [coal, R(-cr * .6, drop + .6, cr * 1.2, .9), { lr: 14, pulse: 1, acc: 'flame' }],
           w.G ? [w.G, Q(0, drop + cr * .9, 1, 1), { nl: 1, lr: 8 }] : null
         ]);
       }
@@ -4841,6 +4862,387 @@ const RIG = { COMPANIONS: AK.CHARS, CLASSES: AK.CLASSES, FAM: AK.FAM, SKINS: AK.
     } };
 }
 
+// ---- src/js/12g-art-accessories.js ----
+// 12g-art-accessories: the achievement looks drawn on the hero (docs/design/achievements.md 4.3, task AC4).
+// DATA and pure maths only: no DOM (loads in Node). B1 rules: docs/design/art-direction.md.
+//
+// Capes, hats and lantern skins are kit pieces added to the hero after the class build
+// (AK.applyAcc(k, acc), called by 60b-baker's buildParts), so they get the baker's 3 tones, section
+// lines and ink outline, and bake once per wear change (the acc joins the spec hash). Flames tint
+// the lantern glass. Auras and portrait frames are data here; 64-looks.js draws them.
+//
+//   acc = { cape, hat, lamp, fl: '#hex' }   (lookAcc(wear?) builds it from wearGet or a wear map;
+//                                            a hat is left out while Show helm is on)
+//   Cape: z 0.3 bone up, from the shoulders to the calf; replaces pieces tagged acc: 'back'.
+//         A collar over the back shoulder (z 3.72) and a clasp at the throat (z 3.95).
+//         Hem swings 1 art px on the bob and strike frames.
+//   Hat:  z 4.55 bone head, at most 5 art px above k.top; the baker drops the helm (g.head = null).
+//   Lamp: replaces the pieces tagged acc: 'lamp'/'glass' where k.lamp says the lantern hangs
+//         (hip or held); a class with no lantern (Lightkeeper) gets one at the hip.
+//   Flame: the glass colour (pieces tagged 'glass' or 'flame') and, in 62-stage, the hero's light.
+//
+// Exposed: LOOK_ART { CAPES, HATS, LAMPS, FLAMES, AURAS, FRAMES, CIRCLE_COL, lampItems(id, s, glass),
+//   auraPx(id, f, o), flameCol(id), ids() }, lookAcc(wear?), lookFlameCol(id), AK.applyAcc(k, acc).
+// Every piece carries o.look = 1 (64-looks renders the pieces alone for tile icons).
+
+let lookAcc, lookFlameCol;
+const LOOK_ART = (() => {
+  const { m, mix, lift, E, P, C, R, Q, arcPts, rrect, mapShape } = AK;
+  const TAG = o => Object.assign({ look: 1 }, o || {});
+  const put = (k, z, bone, mat, s, o) => k.add(z, bone, mat, s, TAG(o));
+  const GOLD = m('#E4B44A', 'metal'), BRASS = m('#C4924A', 'metal'), IRON = m('#5A5464', 'metal');
+  const glowM = hex => m(hex, 'glow', { light: hex });
+  // The four circles (the Company Cape, Bond Light when a partner has no colour of its own).
+  const CIRCLE_COL = { hedgefolk: '#5E9A48', oath: '#E2C25A', dusk: '#7A52B8', wayfarers: '#3E82C4' };
+
+  // ================= capes =================
+  // The cape's outline from the shoulders to the calf, flaring back (the hero faces right, so the
+  // back edge is what shows). sway: the hem trails 1 art px on moving frames.
+  function capeShape(k) {
+    const po = k.pose, sw = po.bob || po.dx > 0 || po.lean > .1 ? -1 : 0;
+    const hem = k.hiY * .4, u = k.u;
+    return P(-k.sw * 1.0, k.shY - .6, k.sw * .5, k.shY - .5, k.sw * .3, k.waY, k.hipW * .3 + sw * .5, hem,
+      -k.hipW * .7 + sw, hem + .7, -k.hipW * 1.8 + sw, hem + .5, -k.hipW * 2.8 + sw, hem - .6,
+      -k.hipW * 2.45 + sw * .5, k.hiY * .7, -k.sw * 1.62, k.waY + 1 * u, -k.sw * 1.42, k.shY + 1.6);
+  }
+  // Bands and marks are placed in the part of the cape that shows behind the body.
+  const hemY = k => k.hiY * .4;
+  function capeBase(k, mat, o) {
+    const cp = put(k, .3, 'up', mat, capeShape(k), { bev: 1.2 });
+    put(k, 3.72, 'up', o.collar || mat, P(-k.sw * 1.05, k.shY - .6, k.hx + 1.2, k.shY - 1, k.hx + 1.7, k.shY + .9, -k.sw * .85, k.shY + 1.7), { bev: .8, sep: 1 });
+    return cp;
+  }
+  const clasp = (k, mat, o) => put(k, 3.95, 'up', mat, E(k.hx + 1.4, k.shY + .5, 1.1, 1.1), Object.assign({ sep: 1 }, o || {}));
+  const hemBand = (k, cp, mat, h, o) => put(k, .31, 'up', mat, R(-30, hemY(k) - h + (k.pose.bob ? .3 : 0), 60, h + 2), Object.assign({ clip: cp }, o || {}));
+  const CAPES = {
+    c_hollow: { col: '#4E7E3A', draw(k) {   // moss-green wool, a small lantern-shaped clasp
+      const wool = m('#4E7E3A'), cp = capeBase(k, wool, { collar: m('#3E6A30') });
+      put(k, .305, 'up', m('#5E9046'), R(-30, k.waY + 1, 60, 1.2), { clip: cp, nl: 1 });   // a woven stripe
+      hemBand(k, cp, m('#3A5E2C'), 1.3);
+      put(k, 3.95, 'up', GOLD, R(k.hx + .6, k.shY - .6, 1.8, 2.8), { sep: 1 });
+      put(k, 3.96, 'up', glowM('#FFD27A'), Q(Math.round(k.hx + 1), Math.round(k.shY + .2), 1, 1), { nl: 1, nolight: 1 });
+    } },
+    c_tide: { col: '#6E8290', draw(k) {   // sea-grey oilcloth, a pearl clasp, a salt-white hem
+      const oil = m('#6E8290', 'leather'), cp = capeBase(k, oil, { collar: m('#5A6C7A', 'leather') });
+      hemBand(k, cp, m('#E6EEF0'), 1.6, { sep: 1 });
+      put(k, .306, 'up', m('#8FA4B0', 'leather'), R(-30, k.hiY * .85, 60, 1), { clip: cp, nl: 1 });   // a sheen line
+      clasp(k, m('#F0EAF4', 'gem'));
+    } },
+    c_tally: { col: '#3A3446', draw(k) {   // near-black, its hem stitched with rows of gold tally marks
+      const blk = m('#3A3446'), cp = capeBase(k, blk, { collar: m('#2A2634') });
+      const gold = m('#F2C14E', 'flat'), y0 = Math.round(hemY(k) - 3.4 + (k.pose.bob ? .3 : 0)), sw = k.pose.bob || k.pose.dx > 0 || k.pose.lean > .1 ? -1 : 0;
+      for (let row = 0; row < 2; row++) {
+        const y = y0 - row * 3, x0 = Math.round(-k.hipW * 2.45 + sw + row);
+        for (let i = 0; i < 3; i++) put(k, .32, 'up', gold, Q(x0 + i * 2, y, 1, 2), { clip: cp, nl: 1 });
+      }
+      put(k, .32, 'up', gold, R(-30, hemY(k) - .9 + (k.pose.bob ? .3 : 0), 60, .9), { clip: cp, nl: 1 });
+      clasp(k, GOLD);
+    } },
+    c_company: { col: '#3E82C4', draw(k) {   // quartered in the four circle colours
+      const cp = capeBase(k, m(CIRCLE_COL.hedgefolk), { collar: m('#8A6440', 'leather') });
+      const xs = -k.hipW * 1.75, ys = k.waY + 1;
+      put(k, .31, 'up', m(CIRCLE_COL.oath), R(xs, -40, 30, 40 + ys), { clip: cp });
+      put(k, .31, 'up', m(CIRCLE_COL.dusk), R(-30, ys, 30 + xs, 30), { clip: cp });
+      put(k, .31, 'up', m(CIRCLE_COL.wayfarers), R(xs, ys, 30, 30), { clip: cp });
+      clasp(k, GOLD);
+    } },
+    c_wyrm: { col: '#A8502E', draw(k) {   // overlapping red-bronze scales, darker at the hem
+      const sc = m('#A8502E', 'leather'), cp = capeBase(k, sc, { collar: m('#7E3A24', 'leather') });
+      const dk = m('#6E2E22', 'flat'), sw = k.pose.bob || k.pose.dx > 0 || k.pose.lean > .1 ? -1 : 0;
+      // scale edges: little arcs in rows, offset each row
+      for (let r = 0; r < 6; r++) {
+        const y = Math.round(k.shY + 3 + r * 3.2), off = r % 2 ? 1 : 0;
+        for (let x = -13 + off; x < 4; x += 3) put(k, .32, 'up', dk, Q(x + (r > 3 ? sw : 0), y, 2, 1), { clip: cp, nl: 1 });
+      }
+      hemBand(k, cp, m('#6A2A20', 'leather'), 2.2);
+      clasp(k, m('#E0B040', 'metal'));
+    } },
+    c_starlit: { col: '#22307A', draw(k) {   // deep blue, 6 single-pixel stars that twinkle one at a time
+      const blue = m('#22307A'), cp = capeBase(k, blue, { collar: m('#1A2462') });
+      hemBand(k, cp, m('#2E3E92'), 1.1);
+      const po = k.pose, tw = po.bob ? 1 : po.dx ? 3 : po.lean ? 4 : 0, sw = po.bob || po.dx > 0 || po.lean > .1 ? -1 : 0;
+      const stars = [[-1.4, .3], [-1.95, .5], [-1.55, .7], [-2.4, .88], [-1.7, .96], [-1.35, .55]];
+      stars.forEach(([fx, fy], i) => {
+        const y = Math.round(k.shY + (hemY(k) - k.shY) * fy), x = Math.round(k.hipW * fx + (fy > .8 ? sw : 0));
+        put(k, .33, 'up', m(i === tw ? '#FFFFFF' : '#C8D4FF', 'flat'), Q(x, y, 1, 1), { clip: cp, nl: 1 });
+        if (i === tw) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) put(k, .325, 'up', m('#8A9CE8', 'flat'), Q(x + dx, y + dy, 1, 1), { clip: cp, nl: 1 });
+      });
+      clasp(k, m('#E8ECFF', 'gem'));
+    } }
+  };
+
+  // ================= hats =================
+  // Relative to the head: hx, hy, hw, hh, top. z 4.55 over the hair; nothing above top - 5.
+  const HATS = {
+    h_straw: { col: '#E2C474', draw(k) {   // wide, pale straw, a sprig of herb
+      const { hx, hw, top } = k, straw = m('#E2C474', 'wood'), band = m('#8A5230', 'leather');
+      const cr = put(k, 4.55, 'head', straw, rrect(hx - hw * .8, top - 1.8, hw * 1.6, 4.6, 1.5), { bev: .9 });
+      put(k, 4.551, 'head', band, R(hx - hw, top + 1, hw * 2, 1.3), { clip: cr });
+      put(k, 4.56, 'head', straw, E(hx + .2, top + 2.9, hw * 1.8, 1.3), { sep: 1, bev: .6 });
+      put(k, 4.565, 'head', m('#5EA844', 'flat'), Q(Math.round(hx - hw * .55), Math.round(top - 1.2), 1, 3), { nl: 1 });
+      put(k, 4.565, 'head', m('#8ED060', 'flat'), Q(Math.round(hx - hw * .55) - 1, Math.round(top - 2), 1, 2), { nl: 1 });
+      put(k, 4.565, 'head', m('#F4F0D0', 'flat'), Q(Math.round(hx - hw * .55) - 1, Math.round(top - 3), 1, 1), { nl: 1 });
+    } },
+    h_wayfarer: { col: '#6A4A30', draw(k) {   // wide brim, a feather
+      const { hx, hw, top } = k, felt = m('#6A4A30', 'leather'), band = m('#2E2430', 'leather');
+      put(k, 4.54, 'head', m('#D84A3A'), P(hx - hw * .45, top + .6, hx - hw * .9, top - 2.2, hx - hw * 1.55, top - 4.4, hx - hw * 1.25, top - 1.8, hx - hw * .75, top + 1.2), { sep: 1 });
+      put(k, 4.541, 'head', m('#F2E8D4', 'flat'), Q(Math.round(hx - hw * 1.5), Math.round(top - 4.2), 1, 2), { nl: 1 });
+      const cr = put(k, 4.55, 'head', felt, P(hx - hw * .82, top + 2.2, hx - hw * .78, top - 1.2, hx - hw * .2, top - 2.4, hx + hw * .15, top - 1.6, hx + hw * .62, top - 2.2, hx + hw * .86, top + 2), { bev: .9 });
+      put(k, 4.551, 'head', band, R(hx - hw, top + .4, hw * 2, 1.3), { clip: cr });
+      put(k, 4.56, 'head', felt, P(hx - hw * 1.75, top + 2.8, hx + hw * 1.3, top + 1.2, hx + hw * 1.95, top + 1.6, hx + hw * 1.6, top + 3, hx - hw * 1.5, top + 4), { sep: 1, bev: .6 });
+    } },
+    h_artisan: { col: '#8A5A36', draw(k) {   // leather cap with a brass lens flipped up
+      const { hx, hw, top } = k, lea = m('#8A5A36', 'leather');
+      put(k, 4.55, 'head', lea, P(arcPts(hx - .2, top + 3, hw * 1.04, 4.4, Math.PI, Math.PI * 2, 12)), { bev: .9 });
+      put(k, 4.56, 'head', m('#5A3A26', 'leather'), P(hx + hw * .55, top + 2.1, hx + hw * 1.8, top + 2.5, hx + hw * 1.7, top + 3.5, hx + hw * .5, top + 3.3), { sep: 1 });
+      put(k, 4.565, 'head', m('#3A2A24', 'leather'), R(hx - hw * .9, top + .2, hw * 1.7, 1), { nl: 1 });
+      put(k, 4.57, 'head', BRASS, E(hx + hw * .1, top - .2, 1.9, 1.8), { sep: 1 });
+      put(k, 4.575, 'head', m('#A8E8F0', 'gem'), E(hx + hw * .1, top - .2, 1, .95), { sep: 1 });
+      put(k, 4.568, 'head', BRASS, E(hx - hw * .55, top - .1, 1.5, 1.6), { sep: 1 });
+    } },
+    h_warden: { col: '#2C4C92', draw(k) {   // a deep blue hood with a small lamp badge
+      const { hx, hy, hw, hh, u } = k, blue = m('#2C4C92');
+      const ox = hx - hw * .12, oy = hy - hh * .02, orx = hw * 1.28, ory = hh * 1.24;
+      const ix = hx + hw * .32, iy = hy + hh * .18, irx = hw * .8, iry = hh * .84;
+      put(k, .35, 'up', blue, P(ox - orx * .9, oy + ory * .3, ox - orx * .2, oy + ory * .8, k.sw * .3, k.shY + 2 * u, -k.sw * .2, k.shY + (k.waY - k.shY) * .5, -k.sw * 1.05, k.shY + (k.waY - k.shY) * .45), { g: 'lkhood' });
+      const ring = put(k, 4.55, 'head', blue, P(arcPts(ox, oy, orx, ory, 0, Math.PI * 2, 22), arcPts(ix, iy, irx, iry, Math.PI * 2, 0, 18)), { bev: 1.2, g: 'lkhood' });
+      put(k, 4.552, 'head', m('#4A6CB8'), P(arcPts(ix, iy, irx + 1, iry + 1, 0, Math.PI * 2, 18), arcPts(ix, iy, irx, iry, Math.PI * 2, 0, 18)), { clip: ring });
+      const bx = Math.round(ox - orx * .45), by = Math.round(oy - ory * .25);
+      put(k, 4.56, 'head', GOLD, R(bx - 1, by - 1, 3, 3), { sep: 1 });
+      put(k, 4.565, 'head', glowM('#FFD27A'), Q(bx, by, 1, 1), { nl: 1, lr: 5 });
+    } },
+    h_night: { col: '#3E5AB0', draw(k) {   // a floppy striped cap with a bobble
+      const { hx, hw, top } = k, blue = m('#3E5AB0'), cream = m('#EAE0C8');
+      const cap = put(k, 4.55, 'head', blue, P(hx - hw * .98, top + 2.6, hx + hw * .98, top + 2.4, hx + hw * .7, top - 1, hx + hw * .1, top - 2.6, hx - hw * .8, top - 2.4, hx - hw * 1.55, top - .6, hx - hw * 2.0, top + 2.6, hx - hw * 1.55, top + 3, hx - hw * 1.2, top + .8), { bev: .9 });
+      put(k, 4.551, 'head', cream, P(hx - hw * 2.2, top + .2, hx + hw, top - 1.6, hx + hw, top - .5, hx - hw * 2.2, top + 1.3), { clip: cap });
+      put(k, 4.556, 'head', cream, R(hx - hw * 1.1, top + 1.5, hw * 2.2, 1.4), { clip: cap, sep: 1 });
+      put(k, 4.56, 'head', m('#F4F0E4'), E(hx - hw * 1.8, top + 3.6, 1.5, 1.5), { sep: 1 });
+    } },
+    h_circlet: { col: '#E4B44A', draw(k) {   // a thin gold band with one flame gem
+      const { hx, hy, hw, hh } = k, y = hy - hh * .56;
+      put(k, 4.55, 'head', GOLD, P(hx - hw * 1.0, y + .4, hx + hw * .2, y - .3, hx + hw * .98, y - .1, hx + hw * .98, y + 1, hx + hw * .2, y + .8, hx - hw * 1.0, y + 1.5), { sep: 1 });
+      put(k, 4.56, 'head', GOLD, P(hx + hw * .5, y - 2.4, hx + hw * .95, y + .2, hx + hw * .05, y + .2), { sep: 1 });
+      put(k, 4.565, 'head', glowM('#FF8A3A'), E(hx + hw * .5, y - .5, .95, 1.2), { nl: 1, lr: 8, pulse: 1 });
+    } }
+  };
+
+  // ================= lanterns =================
+  // items(s, glass) -> [[mat, shape, opt]] in the held frame: origin at the hand (the hang point),
+  // +y down; s is the size (3-4 art px). glass: the glass material (a Flame, the gear's, or the
+  // lamp's own). Pieces are tagged acc 'lamp' / 'glass' like the class lanterns.
+  const Lp = (mat, s, o) => [mat, s, TAG(Object.assign({ acc: 'lamp' }, o || {}))];
+  const Lg = (mat, s, o) => [mat, s, TAG(Object.assign({ acc: 'glass', lr: 20, pulse: 1 }, o || {}))];
+  const paper = g => glowM(mix(g.hex, '#FFF4DC', .45));
+  const LAMPS = {
+    l_gilded: { col: '#E4B44A', items: (s, g) => [   // gold frame, round glass
+      Lp(GOLD, R(-.4, -.6, .8, s * .5)),
+      Lp(GOLD, P(arcPts(0, s * .6, s * .5, s * .45, Math.PI, Math.PI * 2, 6))),
+      Lg(g, E(0, s * 1.05, s * .58, s * .55)),
+      Lp(GOLD, R(-.4, s * .55, .8, s * 1.05), { nl: 1 }),
+      Lp(GOLD, P(-s * .45, s * 1.5, s * .45, s * 1.5, s * .25, s * 1.85, -s * .25, s * 1.85))
+    ] },
+    l_tinker: { col: '#C4924A', items: (s, g) => {   // brass with two small gears
+      const st = m('#8C8C9C', 'metal'), hub = m('#2A2430', 'flat');
+      return [
+        Lp(BRASS, R(-.4, -.6, .8, s * .4)),
+        Lp(BRASS, R(-s * .5, s * .15, s, s * .35)),
+        Lg(g, R(-s * .4, s * .5, s * .8, s * .95)),
+        Lp(BRASS, R(-s * .55, s * 1.45, s * 1.1, 1.1)),
+        Lp(st, E(s * .62, s * .75, 1.35, 1.35), { sep: 1 }),
+        Lp(st, Q(Math.round(s * .62) + 1, Math.round(s * .75) - 2, 1, 1)), Lp(st, Q(Math.round(s * .62) + 1, Math.round(s * .75) + 1, 1, 1)),
+        Lp(hub, Q(Math.round(s * .62 - .5), Math.round(s * .75 - .5), 1, 1), { nl: 1 }),
+        Lp(st, E(-s * .6, s * 1.25, 1.05, 1.05), { sep: 1 }),
+        Lp(hub, Q(Math.round(-s * .6 - .5), Math.round(s * 1.25 - .5), 1, 1), { nl: 1 })
+      ];
+    } },
+    l_moon: { col: '#EFE4C8', items: (s, g) => {   // a round paper lantern with a painted moon
+      const red = m('#B83A3A'), ink = m('#34407E', 'flat'), cy = Math.round(s * 1.0);
+      return [
+        Lp(m('#3A2A24', 'flat'), R(-.3, -.6, .6, s * .45)),
+        Lp(red, R(-s * .38, s * .12, s * .76, s * .3)),
+        Lg(paper(g), E(0, s * 1.0, s * .72, s * .66), { lr: 22 }),
+        Lp(ink, Q(-1, cy - 1, 1, 3), { nl: 1 }), Lp(ink, Q(0, cy - 2, 1, 1), { nl: 1 }), Lp(ink, Q(0, cy + 2, 1, 1), { nl: 1 }),
+        Lp(red, R(-s * .38, s * 1.6, s * .76, s * .32))
+      ];
+    } },
+    l_watch: { col: '#5A5464', items: (s, g) => [   // a tall iron night-watch lantern with a hood
+      Lp(IRON, R(-.4, -.6, .8, s * .4)),
+      Lp(IRON, P(-s * .75, s * .5, 0, -.1, s * .75, s * .5, s * .55, s * .62, -s * .55, s * .62)),
+      Lg(g, R(-s * .34, s * .55, s * .68, s * 1.6)),
+      Lp(m('#2E2A36', 'flat'), R(-.35, s * .6, .7, s * 1.5), { nl: 1 }),
+      Lp(IRON, R(-s * .5, s * 2.1, s, 1.2))
+    ] },
+    l_well: { col: '#8FF0D8', glass: '#8FF0D8', items: (s, g) => {   // a caged miner's lamp, blue-green glass
+      const bar = m('#3A3444', 'flat');
+      return [
+        Lp(IRON, R(-.4, -.6, .8, s * .35)),
+        Lp(IRON, P(arcPts(0, s * .45, s * .45, s * .32, Math.PI, Math.PI * 2, 6))),
+        Lg(g, E(0, s * 1.0, s * .52, s * .62)),
+        Lp(bar, R(-1.2, s * .5, .7, s * 1.05), { nl: 1 }), Lp(bar, R(.6, s * .5, .7, s * 1.05), { nl: 1 }),
+        Lp(bar, R(-s * .55, s * .95, s * 1.1, .7), { nl: 1 }),
+        Lp(IRON, R(-s * .55, s * 1.52, s * 1.1, 1.1))
+      ];
+    } },
+    l_book: { col: '#7A2E34', items: (s, g) => [   // a small bound book, light through the pages
+      Lp(m('#3A2A24', 'flat'), R(-.3, -.6, .6, s * .45)),
+      Lp(m('#7A2E34', 'leather'), rrect(-s * .62, s * .22, s * 1.24, s * 1.4, .5), { bev: .6 }),
+      Lg(paper(g), R(-s * .2, s * .34, s * .7, s * 1.16), { lr: 18 }),
+      Lp(GOLD, R(-s * .62, s * .22, 1, s * 1.4)),
+      Lp(m('#C8A058', 'flat'), R(-s * .2, s * .9, s * .7, .6), { nl: 1 })
+    ] },
+    l_store: { col: '#C8A050', items: (s, g) => {   // a square brass lamp with a handle, a shopkeeper's
+      const br = m('#C8A050', 'metal');
+      return [
+        Lp(br, P(arcPts(0, s * .38, s * .5, s * .55, Math.PI, Math.PI * 2, 7), arcPts(0, s * .38, s * .5 - .8, s * .55 - .8, Math.PI * 2, Math.PI, 7))),
+        Lp(br, R(-s * .62, s * .32, s * 1.24, 1)),
+        Lg(g, R(-s * .52, s * .6, s * 1.04, s * 1.0)),
+        Lp(m('#6A4E26', 'flat'), R(-.3, s * .6, .6, s * 1.0), { nl: 1 }),
+        Lp(br, R(-s * .62, s * 1.58, s * 1.24, 1.1))
+      ];
+    } }
+  };
+  const lampItems = (id, s, glass) => LAMPS[id] ? LAMPS[id].items(s, glass || glowM(LAMPS[id].glass || '#FFD27A')) : [];
+
+  // ================= flames =================
+  const FLAMES = { fl_moon: '#CFE0FF', fl_rose: '#FF8A70', fl_kin: '#FFB38A', fl_storm: '#E8F4FF', fl_coin: '#FFD23F' };
+  // A Flame look or a Deepwell lantern colour (DEEP_SHOP first: its 'l_moon' shares an id with a Lantern look).
+  function flameCol(id) {
+    if (!id) return null;
+    const d = typeof DEEP_SHOP === 'object' && DEEP_SHOP ? DEEP_SHOP[id] : null;
+    if (d && d.kind === 'lantern') return d.col || null;
+    return FLAMES[id] || null;
+  }
+
+  // ================= apply to a built hero =================
+  const DEF_GLASS = glowM('#FFD27A');
+  function applyAcc(k, a) {
+    if (!a) return k;
+    const fl = a.fl ? m(a.fl, 'glow', { light: a.fl }) : null;
+    if (a.cape && CAPES[a.cape]) { k.parts = k.parts.filter(p => p.o.acc !== 'back'); CAPES[a.cape].draw(k); }
+    if (a.hat && HATS[a.hat]) HATS[a.hat].draw(k);
+    const L = a.lamp && LAMPS[a.lamp];
+    if (L) {
+      const lp = k.lamp || { at: 'hip', x: -k.hipW * .95 };
+      const old = k.parts.find(p => p.o.acc === 'glass');
+      k.parts = k.parts.filter(p => p.o.acc !== 'lamp' && p.o.acc !== 'glass');
+      const glass = fl || (L.glass ? glowM(L.glass) : null) || lp.glass || (old && old.m) || DEF_GLASS;
+      if (lp.at === 'held') k.held(lp.z || 5, lp.side || 'B', 0, L.items(lp.s * 1.2, glass));
+      else {
+        const X = Math.min(lp.x, -k.hipW * 1.2), Y = k.waY + .5;   // at the back hip's edge, so it shows
+        L.items(3.7, glass).forEach(([mat, s, o], i) => k.add(3.41 + i * .002, 'up', mat, mapShape(s, (x, y) => [X + x, Y + y], 0), o));
+      }
+    }
+    if (fl) for (const p of k.parts) if (p.o.acc === 'glass' || p.o.acc === 'flame') p.m = fl;
+    return k;
+  }
+  AK.applyAcc = applyAcc;
+
+  // ================= auras (drawn on the stage by 64-looks, not baked on the hero) =================
+  // auraPx(id, f, o) -> [[x, y, '#hex'], ...] art px of frame f in a W x H box (default 32 x 12, the
+  // ring centre at (W/2, cy)). o: { W, H, rx, ry, cy, cols (Bond Light), open (Lantern Bloom 0-3), flash }.
+  // Frames loop: AURAS[id].n frames at AURAS[id].fps.
+  const AURAS = {
+    a_ember: { n: 6, fps: 6, col: '#FF9E3D', glow: '255,150,60' },
+    a_steel: { n: 1, fps: 1, col: '#C9D1DB', glow: '200,215,235' },
+    a_star: { n: 12, fps: 3, col: '#B89CFF', glow: '185,156,255' },
+    a_bond: { n: 12, fps: 3, col: '#FF8AB0', glow: '255,160,190' },
+    a_bloom: { n: 1, fps: 1, col: '#F2C14E', glow: '242,193,78' },
+    a_stair: { n: 8, fps: 5, col: '#7FE0D0', glow: '120,230,210' }
+  };
+  function ringPts(cx, cy, rx, ry) {   // the ellipse's pixels, each once, with its angle
+    const out = [], seen = new Set(), n = Math.ceil((rx + ry) * 5);
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * rx - .5), y = Math.round(cy + Math.sin(a) * ry - .5), key = x * 999 + y;
+      if (!seen.has(key)) { seen.add(key); out.push([x, y, a]); }
+    }
+    return out;
+  }
+  function auraPx(id, f, o = {}) {
+    const W = o.W || 32, H = o.H || 12, rx = o.rx || 13, ry = o.ry || 3, cx = W / 2, cy = o.cy || 8, px = [];
+    const pt = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) px.push([x, y, c]); };
+    const ring = (c0, c1, every) => ringPts(cx, cy, rx, ry).forEach(([x, y, a], i) => { if (!every || i % every === 0) pt(x, y, Math.sin(a) > 0 ? c0 : c1); });
+    switch (id) {
+      case 'a_ember': {   // orange sparks drifting up in a ring
+        ring('#E0602A', '#8A3A22');
+        for (let i = 0; i < 8; i++) {
+          const a = i / 8 * Math.PI * 2 + .4, ph = (f + i * 2.3) % 6 / 6, x = cx + Math.cos(a) * rx * .9, y = cy + Math.sin(a) * ry - ph * (cy + 1);
+          pt(x, y, ph < .5 ? '#FFD27A' : '#FF9E3D'); if (ph < .3) pt(x, y + 1, '#E0602A');
+        }
+        break;
+      }
+      case 'a_steel': {   // a thin silver ring; flashes on a parry
+        if (o.flash) { ring('#FFFFFF', '#DCE6F2'); for (const [dx, dy] of [[-rx - 1, 0], [rx + 1, 0], [0, -ry - 2], [0, ry + 1]]) pt(cx + dx - .5, cy + dy - .5, '#FFFFFF'); }
+        else ring('#C9D1DB', '#6E7888');
+        break;
+      }
+      case 'a_star': {   // a slow ring of tiny stars
+        ring('#5A4A8A', '#3A3060', 2);
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5 + f / 12 / 5) * Math.PI * 2, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, c = i % 2 ? '#FFF2B8' : '#D8C8FF';
+          pt(x, y, c); if (Math.sin(a) > 0) { pt(x - 1, y, '#9A84E0'); pt(x + 1, y, '#9A84E0'); pt(x, y - 1, '#9A84E0'); }
+        }
+        break;
+      }
+      case 'a_bond': {   // small motes in the colours of the hero's Bond partners
+        const cols = o.cols && o.cols.length ? o.cols : ['#FF8AB0', '#FFD27A'];
+        ring('#7A4A66', '#4A2E44', 3);
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6 + f / 12 / 6) * Math.PI * 2, x = cx + Math.cos(a) * (rx - 1), y = cy + Math.sin(a) * ry - 2 - (i % 2) * 2 - Math.sin(f / 12 * Math.PI * 2 + i) * 1;
+          const c = cols[i % cols.length]; pt(x, y, c); pt(x + 1, y, c);
+        }
+        break;
+      }
+      case 'a_bloom': {   // a gold glow that opens like a flower when the hero wins a boss fight
+        const open = o.open || 0;
+        ring('#F2C14E', '#A87A2A');
+        const petals = 6;
+        for (let i = 0; i < petals; i++) {
+          const a = i / petals * Math.PI * 2 + Math.PI / 6, r0 = rx * (.55 + .12 * open), c = i % 2 ? '#FFE08A' : '#F2C14E';
+          const x = cx + Math.cos(a) * r0, y = cy + Math.sin(a) * (ry * .6), lift = open * 1.3;
+          for (let j = 0; j <= 1 + open; j++) pt(x + Math.cos(a) * j * 1.2, y - lift * (j / (1 + open)) + Math.sin(a) * j * .4, j ? c : '#FFF4C8');
+        }
+        break;
+      }
+      case 'a_stair': {   // a faint blue-green light rising from the ground
+        ring('#4AB8A8', '#2A6A66');
+        for (let i = 0; i < 7; i++) {
+          const x = cx - rx + 2 + i * (rx * 2 - 4) / 6, ph = (f + i * 3) % 8 / 8, y0 = cy + Math.sin(i * 1.7) * ry * .6, len = 2 + (i % 3);
+          for (let j = 0; j < len; j++) pt(x, y0 - ph * (cy - 1) - j, j ? '#4AB8A8' : '#AEF6E6');
+        }
+        break;
+      }
+    }
+    return px;
+  }
+
+  // ================= portrait frames (64-looks paints them round the header portrait) =================
+  const FRAMES = {
+    fr_bronze: { col: '#C07A45', hi: '#E8A870', lo: '#6A3E22' },
+    fr_silver: { col: '#C9D1DB', hi: '#F2F6FA', lo: '#6E7888' },
+    fr_gold: { col: '#F2C14E', hi: '#FFE9A8', lo: '#8A6420' },
+    fr_ever: { col: '#FF9E3D', hi: '#FFE08A', lo: '#A8401E', flame: 1 }
+  };
+
+  // ================= the wear map -> acc =================
+  // wear: { cape, hat, lamp, flame, helm } (look ids; flame may be a Deepwell lantern colour).
+  // Omitted: read the save through wearGet (58-deeds). Returns null when nothing shows on the hero.
+  lookAcc = w => {
+    if (!w) {
+      if (typeof wearGet !== 'function' || typeof S === 'undefined' || !S || !S.deeds) return null;
+      w = { cape: wearGet('cape'), hat: wearGet('hat'), lamp: wearGet('lamp'), flame: wearGet('flame'), helm: wearGet('helm') };
+    }
+    const a = {};
+    if (w.cape && CAPES[w.cape]) a.cape = w.cape;
+    if (w.hat && HATS[w.hat] && !w.helm) a.hat = w.hat;
+    if (w.lamp && LAMPS[w.lamp]) a.lamp = w.lamp;
+    const fc = flameCol(w.flame); if (fc) a.fl = fc;
+    return a.cape || a.hat || a.lamp || a.fl ? a : null;
+  };
+  lookFlameCol = flameCol;
+  const ids = () => [].concat(Object.keys(CAPES), Object.keys(HATS), Object.keys(LAMPS), Object.keys(FLAMES), Object.keys(AURAS), Object.keys(FRAMES));
+  return { CAPES, HATS, LAMPS, FLAMES, AURAS, FRAMES, CIRCLE_COL, lampItems, auraPx, flameCol, applyAcc, ids, glowM };
+})();
+
 // ---- src/js/13-art-enemies.js ----
 // 13-art-enemies: B1 monsters, elders (zone bosses), the raid wyrm and the ore and wood nodes.
 // Data plus pure maths only (no DOM, no canvas): it loads in Node. 60b-baker.js bakes a rig with
@@ -5410,6 +5812,164 @@ const ENEMY_RIGS = {};
   // Crafting nodes (11-art-craft.js) use the same creature format.
   if (typeof CRAFT_NODE_RIGS !== 'undefined') for (const key in CRAFT_NODE_RIGS) ENEMY_RIGS[key] = tierRig(CRAFT_NODE_RIGS[key]);
 }
+
+// ---- src/js/13b-art-critters.js ----
+// 13b-art-critters: the small critters that follow the hero (docs/design/achievements.md 4.3, task AC4).
+// DATA and pure maths only: no DOM (loads in Node). Drawn in B1 with kit shapes (12a) and baked by
+// 60b's rasterize (3 tones, section lines, ink outline) in 64-looks.js, at 2 CSS px per art px.
+//
+// Lore (lore.md 9.5): each one is an ordinary animal or a thing the dark has left, so each is on the
+// lamp's side. None is ever a combat target or counted in the camp's character budget.
+//
+// CRITTER_ART[id] = { n, fly, parts(frame) -> [{ z, ord, m, s, o }] }
+//   Frames: idle0, idle1 (sitting, a breath or a wag), hop0, hop1 (moving: a crouch and a hop, or a
+//   trot), sleep. Facing right, feet at (0, 0), 8-12 art px tall. fly: hovers (the Lampmoth circles
+//   the hero's lantern, the Gold Wisp floats by the shoulder); its feet are the hover point.
+const CRITTER_ART = (() => {
+  const { m, E, P, C, R, Q } = AK;
+  const FRAMES = ['idle0', 'idle1', 'hop0', 'hop1', 'sleep'];
+  function kit() {
+    const k = { parts: [], ord: 0 };
+    k.add = (z, mat, s, o) => { const p = { z, ord: k.ord++, m: mat, s, o: o || {} }; k.parts.push(p); return p; };
+    return k;
+  }
+  const eyeM = m('#1A1420', 'flat');
+  const eyes = (k, pts, sleep) => { for (const [x, y] of pts) k.add(9, eyeM, sleep ? Q(x, y + 1, 1, 1) : Q(x, y, 1, 2), { nl: 1 }); };
+
+  const DEFS = {
+    // A small moss slime, round, with one leaf. "Beaten, it is only moss again."
+    cr_moss: { n: 'Mossling', parts(f) {
+      const k = kit(), moss = m('#6EA048', 'slime'), dk = m('#3E6A2E', 'flat');
+      const sq = { idle0: 0, idle1: 1, hop0: 2, hop1: -1, sleep: 1.5 }[f] || 0, dy = f === 'hop1' ? -3 : 0;
+      const rx = 4.4 * (1 + sq * .08), ry = 3.5 * (1 - sq * .1), cy = -ry + dy;
+      k.add(1, moss, E(0, cy, rx, ry), { bev: 1 });
+      for (const [x, y] of [[-3, 1], [-1, -1], [-2, 2]]) k.add(2, dk, Q(x, Math.round(cy + y), 1, 1), { nl: 1 });
+      eyes(k, [[1, Math.round(cy - .8)], [3, Math.round(cy - .8)]], f === 'sleep');
+      const top = cy - ry;
+      k.add(3, m('#4A7A30', 'flat'), Q(0, Math.round(top - 1), 1, 1.5), { nl: 1 });
+      k.add(3, m('#9ED060'), P(.2, top - .6, 3, top - 2.6, 2, top - 3.4, -.4, top - 1.6), { sep: 1 });
+      return k.parts;
+    } },
+    // A pale moth that circles the lantern, never touching it.
+    cr_moth: { n: 'Lampmoth', fly: 1, parts(f) {
+      const k = kit(), wing = m('#ECE4CC'), wingB = m('#CFC4A6'), body = m('#8A7658', 'leather'), spot = m('#B89C6A', 'flat');
+      const up = f !== 'idle1' && f !== 'hop1';
+      // back wing, body, front wing: two rounded wings over a small furry body
+      if (up) k.add(1, wingB, E(-1.6, -6.6, 2.2, 2.8, -.5), { bev: .6 });
+      else k.add(1, wingB, E(-2, -2.4, 2.6, 1.8, .4), { bev: .6 });
+      k.add(2, body, E(0, -3.6, 2.4, 1.3), { bev: .8 });
+      k.add(2.1, m('#D8CCB0'), E(2.2, -4, 1.2, 1.1), { sep: 1 });
+      if (up) k.add(3, wing, E(.2, -7, 2.4, 3, .35), { bev: .6, sep: 1 });
+      else k.add(3, wing, E(-.4, -2, 2.8, 1.9, -.3), { bev: .6, sep: 1 });
+      k.add(4, spot, up ? Q(0, -8, 1, 1) : Q(-1, -2, 1, 1), { nl: 1 });
+      k.add(4, m('#6A5A40', 'flat'), Q(3, -6, 1, 1), { nl: 1 }); k.add(4, m('#6A5A40', 'flat'), Q(4, -7, 1, 1), { nl: 1 });
+      eyes(k, [[3, -5]], f === 'sleep');
+      return k.parts;
+    } },
+    // A small red fox that trots.
+    cr_fox: { n: 'Road Fox', parts(f) {
+      const k = kit(), red = m('#C8602E'), cream = m('#F0E8DC'), dk = m('#3A2A24', 'leather');
+      if (f === 'sleep') {   // curled up, tail over the nose
+        k.add(1, red, E(-.5, -2.4, 4.6, 2.4), { bev: 1 });
+        k.add(2, red, E(3, -2.6, 2.2, 1.8), { sep: 1 });
+        k.add(2.1, red, P(1.6, -4, 2.2, -6, 3.2, -4.2), { sep: 1 });
+        k.add(3, red, C(-4, -1, 1.4, 3.5, -1, 1.2), { sep: 1 });
+        k.add(3.1, cream, E(4.6, -1.1, 1.3, 1), { sep: 1 });
+        eyes(k, [[3, -3]], true);
+        return k.parts;
+      }
+      const hop = f === 'hop0' || f === 'hop1', dy = f === 'hop1' ? -1.5 : 0, wag = f === 'idle1' ? -1 : 0;
+      const legX = f === 'hop0' ? [-4.2, -1.4, 1.4, 4.2] : f === 'hop1' ? [-2.8, -2, 2, 2.8] : [-3, -2, 2, 3];
+      k.add(1, red, P(-3, -5.2 + dy, -7.2, -7.2 + dy + wag, -9, -5.8 + dy + wag, -8, -3.8 + dy, -4, -3.6 + dy), { bev: .8 });
+      k.add(1.1, cream, E(-8.2, -6.2 + dy + wag, 1.4, 1.2), { sep: 1 });
+      legX.forEach((x, i) => k.add(i % 3 ? 2.2 : 1.8, dk, C(x * .8, -2.8 + dy, .7, x, hop && f === 'hop1' ? -1 + dy : 0, .6)));
+      const body = k.add(2, red, E(-.4, -4.3 + dy, 4, 2.2), { bev: 1 });
+      k.add(2.05, cream, E(.4, -2.8 + dy, 2.8, 1), { clip: body });
+      const hy = -6.4 + dy + (hop ? .3 : 0);
+      k.add(3, red, P(2.6, hy - 1.2, 3.2, hy - 3.8, 4.2, hy - 1.6), { sep: 1 });
+      k.add(3.05, red, P(3.8, hy - 1.4, 5, hy - 3.9, 5.4, hy - 1.2), { sep: 1 });
+      k.add(3.1, red, E(3.9, hy, 2.3, 1.9), { sep: 1 });
+      k.add(3.2, cream, P(5, hy - .2, 7.6, hy + .6, 5.4, hy + 1.6, 4.2, hy + 1.2), { sep: 1 });
+      k.add(3.3, eyeM, Q(7, Math.round(hy), 1, 1), { nl: 1 });
+      k.add(3.3, m('#1A1420', 'flat'), Q(3, Math.round(hy - 4), 1, 1), { nl: 1 });
+      eyes(k, [[4, Math.round(hy - 1)]], false);
+      return k.parts;
+    } },
+    // A ginger cat.
+    cr_cat: { n: 'Hearth Cat', parts(f) {
+      const k = kit(), gin = m('#D8883A'), str = m('#A85A26', 'flat'), cream = m('#F2E2C4');
+      if (f === 'sleep') {   // a loaf, tail round the paws
+        k.add(1, gin, E(0, -2.8, 4.4, 2.8), { bev: 1 });
+        k.add(2, gin, E(3.2, -3, 2.2, 2), { sep: 1 });
+        k.add(2.1, gin, P(2, -4.4, 2.4, -6.4, 3.4, -4.8), { sep: 1 }); k.add(2.1, gin, P(3.6, -4.8, 4.8, -6.4, 5, -4.2), { sep: 1 });
+        k.add(3, gin, C(-4, -.8, 1, 3, -.6, .9), { sep: 1 });
+        for (const x of [-3, -1, 1]) k.add(2.5, str, Q(x, -5, 1, 1), { nl: 1 });
+        eyes(k, [[3, -4], [5, -4]], true);
+        return k.parts;
+      }
+      if (f === 'hop0' || f === 'hop1') {   // walking
+        const dy = f === 'hop1' ? -1 : 0, lx = f === 'hop0' ? [-3.8, -1.6, 1.6, 3.8] : [-2.6, -2, 2, 2.6];
+        k.add(1, gin, C(-3.6, -4.4 + dy, .9, -5.8, -9 + dy, .8), { sep: 1 });
+        lx.forEach((x, i) => k.add(i % 3 ? 2.2 : 1.8, gin, C(x * .8, -3 + dy, .8, x, 0, .7), { sep: 1 }));
+        k.add(2, gin, E(-.3, -4.4 + dy, 4, 2.1), { bev: 1 });
+        for (const x of [-2, 0]) k.add(2.3, str, Q(x, Math.round(-6 + dy), 1, 2), { nl: 1 });
+        const hy = -6.6 + dy;
+        k.add(3, gin, P(2.4, hy - 1.4, 2.8, hy - 3.6, 3.8, hy - 1.8), { sep: 1 }); k.add(3, gin, P(4, hy - 1.8, 5.2, hy - 3.6, 5.4, hy - 1.2), { sep: 1 });
+        k.add(3.1, gin, E(4, hy, 2.3, 2), { sep: 1 });
+        k.add(3.2, cream, E(5.4, hy + .9, 1.1, .8), { nl: 1 });
+        eyes(k, [[4, Math.round(hy - 1)], [6, Math.round(hy - 1)]], false);
+        return k.parts;
+      }
+      // sitting
+      const t = f === 'idle1' ? 1 : 0;
+      k.add(1, gin, C(-3, -1, 1, -5.4, -4.4, .9), { sep: 1 });
+      k.add(1.1, gin, C(-5.4, -4.4, .9, -5 + t, -7 + t * .4, .8), { sep: 1 });
+      k.add(2, gin, E(-1.2, -2.4, 3, 2.4), { bev: 1 });
+      const body = k.add(2.1, gin, E(.2, -4.2, 2.6, 3.4), { bev: 1, sep: 1 });
+      k.add(2.15, cream, E(1.6, -3.6, 1.2, 2.4), { clip: body });
+      for (const [x, y] of [[-1, -6], [-2, -4], [-1, -2]]) k.add(2.3, str, Q(x, y, 2, 1), { nl: 1 });
+      k.add(2.4, gin, C(1.8, -3.5, .8, 2.2, 0, .8), { sep: 1 });
+      const hy = -8.6;
+      k.add(3, gin, P(0, hy - 1.2, .3, hy - 3.6, 1.6, hy - 1.8), { sep: 1 }); k.add(3, gin, P(2, hy - 1.8, 3.4, hy - 3.8, 3.8, hy - 1.2), { sep: 1 });
+      k.add(3.1, gin, E(1.8, hy, 2.6, 2.2), { sep: 1 });
+      k.add(3.15, str, Q(1, Math.round(hy - 2), 2, 1), { nl: 1 });
+      k.add(3.2, cream, E(3.2, hy + 1, 1.2, .8), { nl: 1 });
+      eyes(k, [[2, Math.round(hy - 1)], [4, Math.round(hy - 1)]], false);
+      return k.parts;
+    } },
+    // A Wraithmarsh wisp that followed you home, gold now, not green.
+    cr_wisp: { n: 'Gold Wisp', fly: 1, parts(f) {
+      const k = kit(), outer = m('#F2A82A', 'glow', { light: '#FFB040' }), core = m('#FFE890', 'glow', { light: '#FFD060' });
+      const w = f === 'idle1' || f === 'hop1' ? 1 : 0;
+      // a teardrop of flame: round below, licking up and back into two tips
+      k.add(1, outer, P(-2.9, -2.6, -2.2, -5.4, -3.6 - w, -8.6, -1, -6.2, .2, -9.4 + w, 1.4, -5.6, 2.8, -3.4, 2.2, -.8, 0, 0, -2, -.8), { lr: 12, pulse: 1 });
+      k.add(2, core, E(0, -3, 1.7, 1.9), { nl: 1, nolight: 1 });
+      if (f === 'sleep') k.add(3, eyeM, Q(0, -3, 2, 1), { nl: 1 });
+      else { k.add(3, eyeM, Q(0, -4, 1, 1), { nl: 1 }); k.add(3, eyeM, Q(2, -4, 1, 1), { nl: 1 }); }
+      return k.parts;
+    } },
+    // A hermit crab with a tiny lantern for a shell.
+    cr_crab: { n: 'Lantern Crab', parts(f) {
+      const k = kit(), shell = m('#D0603A'), dk = m('#7A3220', 'flat'), brass = m('#B8883E', 'metal'), glass = m('#FFD27A', 'glow', { light: '#FFC070' });
+      const sh = f === 'hop0' ? 1 : f === 'hop1' ? -1 : 0, up = f === 'idle1' ? 1 : 0;
+      for (let i = 0; i < 4; i++) k.add(1, dk, Q(-3 + i * 2 + (i % 2 ? sh : -sh), -1, 1, 1), { nl: 1 });
+      // the lantern it lives in, sitting on its back
+      k.add(1.5, brass, R(-2.6, -10.6, 1, 1.6));
+      k.add(1.6, brass, P(-5.4, -8.6, .2, -8.6, -.8, -9.8, -4.4, -9.8));
+      k.add(1.7, glass, R(-4.8, -8.6, 4.4, 4), { lr: 12, pulse: 1 });
+      k.add(1.75, brass, R(-2.9, -8.6, .8, 4), { nl: 1 });
+      k.add(1.8, brass, R(-5.4, -4.8, 5.6, 1.2));
+      k.add(2, shell, E(.8, -2.6, 3.6, 2.2), { bev: 1 });
+      k.add(2.2, dk, Q(3, -6 - up, 1, 2), { nl: 1 });
+      eyes(k, [[3, -7 - up]], f === 'sleep');
+      k.add(3, shell, E(4.6 + up * .3, -3 - up * 1.4, 1.7, 1.4), { sep: 1 });
+      k.add(3.1, shell, P(5.4 + up * .3, -4.2 - up * 1.4, 7.2 + up * .3, -5 - up * 1.4, 6.6 + up * .3, -3.2 - up * 1.4), { sep: 1 });
+      return k.parts;
+    } }
+  };
+  for (const id in DEFS) DEFS[id].frames = FRAMES;
+  return DEFS;
+})();
 
 // ---- src/js/20-data.js ----
 // 20-data: content tables. Pure data (plus a few pure lookups); no DOM.
@@ -20973,6 +21533,8 @@ function iconOf(spec) {
 //   hero:      { cls, skin: 0-2 | '#hex', hair: 0-3 | '#hex', gear: { weapon|off|head|body|charm: { t: 1-5, r: 0-3, glow?: '#hex' } } }
 //   companion: { comp: key, t?: 1-5, r?: 0-3 }   (t / r override the role weapon's tier and rarity)
 //   gathering: a hero spec with tool: { k: 'pick'|'axe'|'sickle'|'rod', t, r } (TOOL_ART.gatherSpec, 11c)
+//   looks (AC4): acc: { cape, hat, lamp, fl: '#hex' } (lookAcc(), 12g) joins the hash; a hat hides the helm
+//     (g.head = null for drawing only) and AK.applyAcc(k, acc) adds the pieces after the class build.
 
 const ART = (() => {
   const PX = 2;
@@ -21162,7 +21724,8 @@ const ART = (() => {
     const gs = spec.gear || {}, g = {};
     for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = !tool || (s !== 'weapon' && s !== 'off') ? gs[s] : null; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
     const look = { skin: m(colOf(spec.skin == null ? 0 : spec.skin, SKINS), 'skin'), hair: m(colOf(spec.hair == null ? 0 : spec.hair, HAIRS), 'hair') };
-    return { def, kind: 'hero', g, look };
+    const acc = spec.acc || null; if (acc && acc.hat) g.head = null;   // a worn hat hides the helm (its stats stay)
+    return { def, kind: 'hero', g, look, acc };
   }
   function framePose(def, f) {
     const pose = {};
@@ -21175,6 +21738,7 @@ const ART = (() => {
   function buildParts(rs, pose) {
     const k = makeKit(rs.def, pose);
     if (rs.kind === 'comp') rs.def.build(k, rs.w); else rs.def.build(k, rs.g, rs.look);
+    if (rs.acc && AK.applyAcc) AK.applyAcc(k, rs.acc);
     let parts = k.parts;
     if (pose.fall) { // lay the figure on the ground
       let y1 = -1e9; for (const p of parts) y1 = Math.max(y1, shapeBox(p.s)[3]);
@@ -21314,6 +21878,7 @@ const ART = (() => {
     const spec = { cls, gear };
     if (party.skin != null) spec.skin = party.skin;
     if (party.hair != null) spec.hair = party.hair;
+    const acc = typeof lookAcc === 'function' ? lookAcc() : null; if (acc) spec.acc = acc;
     return spec;
   }
   // Creation screen: the class in its base look (tier 1 Common weapon, off-hand, head and body).
@@ -21731,14 +22296,17 @@ const ANIM = (() => {
 // Browser-only. Pools and glow sprites live in 61-anim.js.
 // Deepwell: while a run is live (arena === DEEP_ARENA) the stage draws the 'well' scene, well foes
 // (mob.deep) in a cold palette by depth, and hides the zone line and boss timer. The hero's lantern
-// colour and trail come from S.deep.eq (Marks shop cosmetics) everywhere.
+// colour and trail come from wearGet('flame'/'trail') everywhere (58-deeds: an achievement Flame, else
+// the Marks shop's S.deep.eq; the colour through lookFlameCol, 12g).
 //
 // Globals used by other files: T (seconds, advanced by 90-boot), resize(), animate(dt), draw().
 
 let T = 0;
 // Extra stage art: stageDeco(ctx, phase, v), phase 'back' (after the scenery, before the actors, pixel
-// pass) or 'light' (additive lights). v = { cam, SW, SH, GY, T, tg, nodeR } (reused; nodeR: the gather node's right
-// edge, camera-free). 63d-scenery-camp: the cold Hearth.
+// pass), 'front' (after the actors, pixel pass) or 'light' (additive lights); ignore other phases.
+// v = { cam, SW, SH, GY, T, tg, nodeR, hx, hy, hl, hd, hf, hX, hY } (reused; nodeR: the gather node's right
+// edge, camera-free; hx the hero's feet x (camera-free), hy its ground line, hl its lane, hd down, hf the
+// frame drawn last, hX/hY where it was drawn). 63d-scenery-camp: the cold Hearth; 64-looks chains it (auras, critters).
 let stageDeco = null;
 let resize, animate, draw, stageStats, warmScene;
 {
@@ -22772,14 +23340,16 @@ let resize, animate, draw, stageStats, warmScene;
   const look = { id: '', lamp: null, key: null, pool: null, trail: null, t: 0 };
   const mixRgb = (hex, w, k) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255]; return c.map((v, i) => Math.round(v + (w[i] - v) * k)).join(','); };
   function readLooks() {
-    const eq = S.deep && S.deep.eq, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : null;
-    const ln = eq && eq.lantern && shop && shop[eq.lantern], tr = eq && eq.trail && shop && shop[eq.trail];
-    const id = (ln ? ln.id : '') + '|' + (tr ? tr.id : '');
+    const eq = S.deep && S.deep.eq, shop = typeof DEEP_SHOP !== 'undefined' ? DEEP_SHOP : null, wg = typeof wearGet === 'function';
+    const fid = wg ? wearGet('flame') : eq && eq.lantern, tid = wg ? wearGet('trail') : eq && eq.trail;
+    const col = typeof lookFlameCol === 'function' ? lookFlameCol(fid) : fid && shop && shop[fid] ? shop[fid].col : null;
+    const tr = tid && shop && shop[tid] && shop[tid].kind === 'trail' ? shop[tid] : null;
+    const id = (col || '') + '|' + (tr ? tr.id : '');
     if (id === look.id) return;
     look.id = id;
-    look.lamp = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.15) : null;
-    look.key = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.1) : null;
-    look.pool = ln && ln.col ? mixRgb(ln.col, [255, 255, 255], 0.2) : null;
+    look.lamp = col ? mixRgb(col, [255, 255, 255], 0.15) : null;
+    look.key = col ? mixRgb(col, [255, 255, 255], 0.1) : null;
+    look.pool = col ? mixRgb(col, [255, 255, 255], 0.2) : null;
     look.trail = tr && tr.col ? { kind: tr.id, col: tr.col, alt: tr.id === 't_embers' ? '#FFD27A' : tr.id === 't_frost' ? '#9FD8FF' : '#DFFBFF' } : null;
   }
   // the hero's lantern: its brightest light (largest glow radius)
@@ -22896,7 +23466,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
 
   let drawMs = 0;
-  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0 };
+  const DECO_V = { cam: 0, SW: 0, SH: 0, GY: 0, T: 0, tg: '', nodeR: 0, hx: 0, hy: 0, hl: 1, hd: false, hf: null, hX: 0, hY: 0 };
   draw = function () {
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
@@ -22911,7 +23481,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
-    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
+    const dv = DECO_V; if (stageDeco) { dv.cam = cam; dv.SW = SW; dv.SH = SH; dv.GY = GY; dv.T = T; dv.tg = tg; dv.nodeR = gath && foe.fr ? (typeof gatherRight === 'function' ? gatherRight(foe.left + foe.w) : foe.left + foe.w) : SW * 0.8; dv.hx = hero.fr ? ax(hero) : null; dv.hy = hero.hy; dv.hl = hero.lane; dv.hd = hero.down; dv.hf = hero._f; dv.hX = hero._x; dv.hY = hero._y; ctx.imageSmoothingEnabled = false; stageDeco(ctx, 'back', dv); }
 
     // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
@@ -22943,6 +23513,7 @@ let resize, animate, draw, stageStats, warmScene;
       if (typeof gatherDraw === 'function') gatherDraw(ctx, scene, cam, 'front', solo);
     }
     for (const a of order) drawActor(a, cam);
+    if (stageDeco) stageDeco(ctx, 'front', dv);
     if (fight) for (let i = 0; i < packN; i++) if (slots[i].dv > 0) drawFoe(slots[i], cam, tele);
     ctx.globalAlpha = 1;
     // hero guard pips (Warden), when the HUD (which shows them as a chip) is off
@@ -25691,7 +26262,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
       return;
     }
     // 'light': additive glows (the flame, Hesketh's lamp once the fire burns)
-    if (!on) return;
+    if (phase !== 'light' || !on) return;
     const fl = reduced ? 0 : Math.sin(v.T * 7) * 0.05 + Math.sin(v.T * 13 + 1) * 0.03;
     ANIM.lightAt(g, '255,150,70', fx, gy - 12, 78, 0.5 + fl);
     ANIM.lightAt(g, '255,236,170', fx, gy - 10, 22, 0.55 + fl);
@@ -25735,6 +26306,291 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
   // A reload before the fire is lit (the class is already chosen): the card again.
   setTimeout(() => { if (S.party && S.party.chosen) opening(); }, 600);
   on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
+}
+
+// ---- src/js/64-looks.js ----
+// 64-looks: the achievement looks in the browser (docs/design/achievements.md 4.3, task AC4).
+// Art: 12g-art-accessories.js (capes, hats, lanterns, flames, auras, frames), 13b-art-critters.js.
+//
+// - The hero: heroSpec() (60b) carries lookAcc() (12g), so capes, hats, lantern skins and the Flame
+//   bake into the hero's frames through the normal baker, once per wear change (a deedLook pre-bakes
+//   the new set in idle time; the stage's once-a-second refresh then finds it cached). Hats hide
+//   the helm unless Show helm is on. 62-stage reads the Flame for the hero's light (lookFlameCol).
+// - The stage (62-stage stageDeco, chained after 63d's): the aura's ground ring ('back', under the
+//   actors) and its faint glow ('light'); the critter a step behind the hero on the floor just in front
+//   of the party's line, drawn after the actors ('front') so the party never hides it (the Lampmoth passes behind half the time). Cached sprites only: aura frames and critter frames
+//   bake with idleTask when the wear changes; nothing is drawn or made per frame for an empty slot.
+//   Reduced motion: the aura holds its first frame with no pulse, the critter sits still beside the hero.
+// - The header portrait: its frame (bronze, silver, gold, the Everflame edge) as CSS (60-looks.css).
+// - Hooks for 75-deeds-ui: lookIconURL(id, slot) -> a 48 x 48 icon URL ('' = use the UI's own),
+//   looksPreview(canvas, wear, zoom) -> true once it has drawn the dressed hero (and the aura).
+// - lookCritterDraw(g, x, y, frame): draws the worn critter's frame ('sleep' by a fire) for a later
+//   scene (the camp panorama), feet at (x, y); false until its frames are baked.
+let lookIconURL, looksPreview, lookCritterDraw;
+{
+  const LA = LOOK_ART, PX = ART.PX;
+  const red = () => typeof reduced !== 'undefined' && reduced;
+  const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] looks', e); return d; } };
+  const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const wg = s => (typeof wearGet === 'function' ? safe(() => wearGet(s), null) : null);
+
+  // ================= sprites =================
+  // Pixels [x, y, '#hex'] at art px -> a canvas at `sc` CSS px per art px.
+  function pxCanvas(px, W, H, sc) {
+    const c = mk(W * sc, H * sc), g = c.getContext('2d');
+    for (const [x, y, col] of px) { g.fillStyle = col; g.fillRect(x * sc, y * sc, sc, sc); }
+    return c;
+  }
+  // Aura frames: one small canvas per frame (and per variant: the Steel flash, the Bloom's opening,
+  // the Bond colours). Baked in idle time; the stage draws a frame only once it exists.
+  const auraCache = new Map();
+  const auraKey = (id, f, o) => id + ':' + f + ':' + (o.flash ? 1 : 0) + ':' + (o.open || 0) + ':' + (o.cols ? o.cols.join('') : '');
+  const auraGet = (id, f, o) => auraCache.get(auraKey(id, f, o)) || null;
+  function auraBake(id, f, o) {
+    const k = auraKey(id, f, o); let c = auraCache.get(k);
+    if (!c) { c = pxCanvas(LA.auraPx(id, f, o), 32, 12, PX); auraCache.set(k, c); if (auraCache.size > 96) auraCache.delete(auraCache.keys().next().value); }
+    return c;
+  }
+  function auraQueue(id, cols) {
+    const A = LA.AURAS[id]; if (!A) return;
+    const o = { cols };
+    for (let f = 0; f < A.n; f++) idleTask(() => auraBake(id, f, o), true);
+    if (id === 'a_steel') idleTask(() => auraBake(id, 0, { flash: 1 }));
+    if (id === 'a_bloom') for (let n = 1; n <= 3; n++) idleTask(() => auraBake(id, 0, { open: n }));
+  }
+  // Critter frames: baked by 60b's rasterizer at 2x, like the party.
+  const critCache = new Map();
+  function critBake(id) {
+    let set = critCache.get(id); if (set) return set;
+    const def = CRITTER_ART[id]; if (!def) return null;
+    set = {};
+    for (const f of def.frames) set[f] = ART.toCanvas(ART.rasterize(def.parts(f)));
+    critCache.set(id, set);
+    return set;
+  }
+
+  // ================= what is worn (read on a deedLook, and every 2 s) =================
+  const cur = { aura: null, critter: null, cols: null, at: -9 };
+  function bondCols() {
+    const out = [];
+    safe(() => {
+      if (typeof bondsOf !== 'function' || typeof bondLevel !== 'function' || typeof ROSTER !== 'object') return;
+      for (const id of bondsOf('hero')) {
+        if (bondLevel(id) < 1 || typeof bondInfo !== 'function') continue;
+        const b = bondInfo(id); if (!b || !b.pair) continue;
+        for (const k of b.pair) { const r = ROSTER[k]; const c = r && LA.CIRCLE_COL[r.circle]; if (c && !out.includes(c)) out.push(c); }
+      }
+    }, null);
+    return out.length ? out.slice(0, 4) : null;
+  }
+  function readWear(T) {
+    cur.at = T;
+    const au = wg('aura'), cr = wg('critter');
+    const cols = au === 'a_bond' ? bondCols() : null;
+    if (au !== cur.aura || String(cols) !== String(cur.cols)) { cur.aura = LA.AURAS[au] ? au : null; cur.cols = cols; if (cur.aura) auraQueue(cur.aura, cols); }
+    if (cr !== cur.critter) { cur.critter = CRITTER_ART[cr] ? cr : null; if (cur.critter && !critCache.has(cur.critter)) { const id = cur.critter; idleTask(() => critBake(id), true); } }
+  }
+
+  // ================= the stage =================
+  const st = { x: null, y: 0, lastT: 0, hopT: 0, poke: 0, flashT: 0, bloomT: 0, moving: false, fr: 'idle0', front: false, fx: 0, fy: 0 };
+  on('telegraphResolve', p => { if (p && p.result === 'parry' && cur.aura === 'a_steel') st.flashT = 0.35; });
+  on('kill', p => { if (p && p.mob && p.mob.boss && cur.aura === 'a_bloom') st.bloomT = 2.4; });
+  function auraFrame(T) {
+    const id = cur.aura, A = LA.AURAS[id], o = { cols: cur.cols };
+    if (id === 'a_steel' && st.flashT > 0) return auraGet(id, 0, { flash: 1 }) || auraGet(id, 0, o);
+    if (id === 'a_bloom' && st.bloomT > 0) {
+      const t = 2.4 - st.bloomT, open = Math.max(0, Math.min(3, Math.round(t < .45 ? t / .45 * 3 : st.bloomT < .6 ? st.bloomT / .6 * 3 : 3)));
+      return (open && auraGet(id, 0, { open })) || auraGet(id, 0, o);
+    }
+    const f = red() ? 0 : Math.floor(T * A.fps) % A.n;
+    return auraGet(id, f, o) || auraGet(id, 0, o);
+  }
+  // The critter's place and frame, once per frame (in the first phase that runs).
+  function stepCritter(v, dt) {
+    const def = CRITTER_ART[cur.critter], hx = v.hx - v.cam, base = Math.max(12, hx - 20);
+    if (def.fly) {
+      if (cur.critter === 'cr_moth') {   // circles the lantern, never touching it
+        const f = v.hf, l = f && f.lights && f.lights.length ? f.lights.reduce((a, b) => (b.r || 0) > (a.r || 0) ? b : a) : null;
+        const lx = l ? v.hX + l.x : hx - 8, ly = l ? v.hY + l.y : v.hy - 30, an = red() ? 3.6 : v.T * 1.7;
+        st.fx = lx + Math.cos(an) * 12; st.fy = ly + Math.sin(an) * 5 + 4; st.front = Math.sin(an) > 0;
+        st.fr = red() ? 'idle0' : Math.floor(v.T * 9) % 2 ? 'idle1' : 'idle0';
+      } else {   // the wisp floats by the hero's back shoulder
+        const b = red() ? 0 : Math.sin(v.T * 2.1) * 2;
+        st.fx = Math.max(10, hx - 18); st.fy = v.hy - 44 + b; st.front = false;
+        st.fr = red() ? 'idle0' : Math.floor(v.T * 3) % 2 ? 'idle1' : 'idle0';
+      }
+      return;
+    }
+    let tx = base;
+    if (v.tg === 'node' && !red()) {   // pokes around behind the hero at a gather node
+      st.poke += dt; const ph = Math.floor(st.poke / 3.2) % 3;
+      tx = Math.max(12, hx - (ph === 1 ? 46 : ph === 2 ? 34 : 20));
+    }
+    if (red() || st.x == null || Math.abs(tx - st.x) > 160) st.x = tx;
+    const d = tx - st.x;
+    st.x += Math.max(-70 * dt, Math.min(70 * dt, d * Math.min(1, dt * 5)));
+    const moving = Math.abs(d) > 2 && !red();
+    st.hopT = moving ? st.hopT + dt : 0;
+    st.fr = moving ? (Math.floor(st.hopT * 7) % 2 ? 'hop1' : 'hop0') : (!red() && (v.T * .7 % 2) > 1.7 ? 'idle1' : 'idle0');
+    st.fx = st.x; st.fy = Math.min(v.SH - 2, Math.max(v.hy, v.GY) + 12); st.front = true;   // on the floor just in front of the party's line
+  }
+  function drawCritter(g) {
+    const set = critCache.get(cur.critter); if (!set) return;
+    const f = set[st.fr] || set.idle0;
+    g.drawImage(f.c, Math.round(st.fx - f.ox), Math.round(st.fy - f.oy));
+  }
+  function looksDeco(g, phase, v) {
+    if (v.T - cur.at > 2 || v.T < cur.at) readWear(v.T);
+    if (!cur.aura && !cur.critter) return;
+    if (v.hx == null || v.hd) return;   // no hero on this stage, or the hero is down
+    const hx = v.hx - v.cam, dim = v.hl === 0 ? .7 : 1;
+    if (phase === 'back') {
+      const dt = Math.max(0, Math.min(.1, v.T - st.lastT)); st.lastT = v.T;
+      st.flashT = Math.max(0, st.flashT - dt); st.bloomT = Math.max(0, st.bloomT - dt);
+      if (cur.aura) {
+        const c = auraFrame(v.T);
+        if (c) {
+          const pulse = red() ? 1 : .8 + .2 * Math.sin(v.T * 1.4);
+          g.globalAlpha = dim * pulse; g.drawImage(c, Math.round(hx) - 32, Math.round(v.hy) - 15); g.globalAlpha = 1;
+        }
+      }
+      if (cur.critter && CRITTER_ART[cur.critter]) { stepCritter(v, dt); if (!st.front) drawCritter(g); }
+      return;
+    }
+    if (phase === 'front') { if (cur.critter && st.front) drawCritter(g); return; }
+    if (phase === 'light') {
+      if (cur.aura) {
+        const A = LA.AURAS[cur.aura], boost = cur.aura === 'a_bloom' && st.bloomT > 0 ? 2.2 : cur.aura === 'a_steel' && st.flashT > 0 ? 2 : 1;
+        ANIM.lightAt(g, A.glow, hx, v.hy - 18, 30, .13 * boost * dim);
+      }
+      if (cur.critter === 'cr_wisp') ANIM.lightAt(g, '255,200,72', st.fx, st.fy - 4, 14, .45);
+      else if (cur.critter === 'cr_crab') ANIM.lightAt(g, '255,192,112', st.fx - 3, st.fy - 6, 10, .4);
+    }
+  }
+  if (typeof stageDeco !== 'undefined') {
+    const prev = stageDeco;
+    // Chained: 63d's cold Hearth (and any earlier hook) keeps its 'back' and 'light' phases.
+    stageDeco = (g, phase, v) => {
+      if (prev && phase !== 'front') prev(g, phase, v);
+      try { looksDeco(g, phase, v); } catch (e) { console.error('[lanternfall] looks stage', e); }
+    };
+  }
+  lookCritterDraw = (g, x, y, frame) => {
+    const set = cur.critter && critCache.get(cur.critter); if (!set) return false;
+    const f = set[frame] || set.idle0; g.drawImage(f.c, Math.round(x - f.ox), Math.round(y - f.oy));
+    return true;
+  };
+
+  // ================= the header portrait's frame =================
+  function applyFrame() {
+    const img = document.getElementById('portrait'), p = img && img.parentElement; if (!p) return;
+    const id = wg('frame'), F = id && LA.FRAMES[id];
+    p.classList.toggle('lk-fr', !!F); p.classList.toggle('lk-ever', !!(F && F.flame));
+    if (F) { p.style.setProperty('--lk-c', F.col); p.style.setProperty('--lk-hi', F.hi); p.style.setProperty('--lk-lo', F.lo); }
+  }
+  on('deedLook', ({ slot } = {}) => {
+    readWear(cur.at);
+    if (slot === 'frame') { applyFrame(); return; }
+    if (slot === 'aura' || slot === 'critter' || slot === 'trail') return;
+    // cape, hat, helm, lamp, flame: the hero's frames change. Bake idle0 in idle time (the stage
+    // picks the cached set up on its next refresh), then the portrait.
+    idleTask(() => { safe(() => charFrames(heroSpec()), null); if (typeof updatePortrait === 'function') safe(() => updatePortrait(), null); }, true);
+  });
+  on('deedsInit', () => applyFrame());
+  on('deedMilestone', () => applyFrame());
+  safe(applyFrame, null);
+
+  // ================= icons for the Looks view =================
+  const ICON = 48, iconCache = new Map();
+  // Put a 1x art canvas into a 48 x 48 icon at the largest whole scale that fits.
+  function crop(art) {   // trim the rasterizer's empty margin
+    const d = art.getContext('2d').getImageData(0, 0, art.width, art.height).data;
+    let x0 = art.width, y0 = art.height, x1 = -1, y1 = -1;
+    for (let y = 0; y < art.height; y++) for (let x = 0; x < art.width; x++) if (d[(y * art.width + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return art;
+    const c = mk(x1 - x0 + 1, y1 - y0 + 1); c.getContext('2d').drawImage(art, -x0, -y0);
+    return c;
+  }
+  function fitIcon(art, maxSc) {
+    art = crop(art);
+    const c = mk(ICON, ICON), g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    const sc = Math.max(1, Math.min(maxSc || 6, Math.floor(ICON / Math.max(art.width, art.height))));
+    g.drawImage(art, Math.floor((ICON - art.width * sc) / 2), Math.floor((ICON - art.height * sc) / 2), art.width * sc, art.height * sc);
+    return c;
+  }
+  const artOf = parts => ART.toCanvas(ART.rasterize(parts)).art;
+  const FLAME_MAP = ['.....11.....', '....1221....', '....1221....', '...122221...', '...122221...', '..12233221..', '..12333321..', '.1223333221.', '.1233333321.', '.1233333321.', '..12333321..', '...111111...'];
+  function mapIcon(rows, cols) {
+    const px = []; rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (cols[r[x]]) px.push([x, y, cols[r[x]]]); });
+    return pxCanvas(px, rows[0].length, rows.length, 4);
+  }
+  function flameIcon(col) {
+    return mapIcon(FLAME_MAP, { 1: AK.mix(col, '#120B18', .62), 2: col, 3: AK.mix(col, '#FFFFFF', .62) });
+  }
+  function frameIcon(F) {
+    const rows = ['111111111111', '122222222221', '123333333321', '123......321', '123......321', '123......321', '123......321', '123......321', '123......321', '123333333321', '122222222221', '111111111111'];
+    if (F.flame) { rows[0] = '1.4..4..4..1'.replace(/\./g, '1'); }
+    return mapIcon(rows, { 1: F.lo, 2: F.col, 3: F.hi, 4: '#FFE08A' });
+  }
+  function kitFor(fn) {
+    const k = AK.makeKit(AK.CLASSES.warden, {});
+    fn(k);
+    return k;
+  }
+  function bust(fn) {   // a bare head in the hero's skin and hair, wearing the hat
+    const party = typeof S === 'object' && S && S.party || {};
+    const skin = AK.m(typeof party.skin === 'string' ? party.skin : AK.SKINS[party.skin | 0] || AK.SKINS[0], 'skin');
+    const hair = AK.m(typeof party.hair === 'string' ? party.hair : AK.HAIRS[party.hair | 0] || AK.HAIRS[0], 'hair');
+    return kitFor(k => { AK.head(k, skin, { noNeck: 1 }); AK.face(k, { eye: '#3A2A22' }); AK.hairShort(k, hair); fn(k); }).parts;
+  }
+  function iconCanvas(id, slot) {
+    if (slot === 'trail') return null;
+    if (slot === 'flame' || (!slot && LA.FLAMES[id])) { const col = LA.flameCol(id); return col ? flameIcon(col) : null; }
+    if (LA.CAPES[id]) return fitIcon(artOf(kitFor(k => LA.CAPES[id].draw(k)).parts.filter(p => p.o.look)));
+    if (LA.HATS[id]) return fitIcon(artOf(bust(k => LA.HATS[id].draw(k))));
+    if (LA.LAMPS[id]) return fitIcon(artOf(LA.lampItems(id, 3.6).map(([mm, s, o], i) => ({ z: 1 + i * .01, ord: i, m: mm, s, o }))), 5);
+    if (LA.AURAS[id]) {
+      const c = mk(ICON, ICON), g = c.getContext('2d');
+      const o = { W: 24, H: 14, rx: 10, ry: 3.6, cy: 9, open: id === 'a_bloom' ? 3 : 0, cols: id === 'a_bond' ? ['#FF8AB0', '#7FE0D0', '#F2C14E'] : null };
+      g.drawImage(pxCanvas(LA.auraPx(id, 2, o), 24, 14, 2), 0, 10);
+      return c;
+    }
+    if (CRITTER_ART[id]) return fitIcon(artOf(CRITTER_ART[id].parts('idle0')));
+    if (LA.FRAMES[id]) return frameIcon(LA.FRAMES[id]);
+    return null;
+  }
+  lookIconURL = (id, slot) => {
+    if (!id) return '';
+    const key = (slot || '') + ':' + id;
+    if (iconCache.has(key)) return iconCache.get(key);
+    const c = safe(() => iconCanvas(id, slot), null);
+    let url = ''; if (c) try { url = c.toDataURL(); } catch (e) { url = ''; }
+    iconCache.set(key, url);
+    return url;
+  };
+
+  // ================= the dressed hero for the Looks view and the Feat card =================
+  // wear: { cape, hat, lamp, flame, aura, critter, frame, helm } (look ids). Draws the hero in those
+  // looks (idle0, baked like the stage hero) with the aura's ring at its feet, lit by its lantern.
+  looksPreview = (cv, wear, zoom) => {
+    if (!cv || typeof heroSpec !== 'function') return false;
+    const spec = heroSpec(); delete spec.acc;
+    const acc = lookAcc(wear || {}); if (acc) spec.acc = acc;
+    const set = charFrames(spec, true); if (!set || !set.idle0) return false;
+    const f = set.idle0, z = zoom || 1, g = cv.getContext('2d');
+    g.clearRect(0, 0, cv.width, cv.height); g.imageSmoothingEnabled = false;
+    const au = wear && LA.AURAS[wear.aura] ? wear.aura : null;
+    const feet = Math.round(cv.height - (au ? 5 : 3) * PX * z);
+    if (au) {
+      const cols = au === 'a_bond' ? bondCols() : null, c = auraBake(au, 0, { cols });
+      g.globalAlpha = .9; g.drawImage(c, Math.round(cv.width / 2 - c.width * z / 2), Math.round(feet - 15 * z), c.width * z, c.height * z); g.globalAlpha = 1;
+    }
+    const x = Math.round(cv.width / 2 - f.ox * z), y = Math.round(feet - f.oy * z);
+    g.drawImage(f.c, x, y, f.c.width * z, f.c.height * z);
+    if (typeof charLightPass === 'function') charLightPass(g, f.lights.map(l => ({ x: x + l.x * z, y: y + l.y * z, rgb: l.rgb, pulse: l.pulse, size: l.size * z, r: l.r })), 0, z);
+    const p = cv.parentElement; if (p && p.classList) p.classList.add('lk-drawn');
+    return true;
+  };
 }
 
 // ---- src/js/70-ui.js ----
@@ -29312,7 +30168,7 @@ let craftUI = null;
 //
 // Exposed: deedsUI { open(view, id), heroRow(), featCard(id), chapterSlot() -> el | null }
 // Hooks for later tasks (probed with typeof, all optional):
-//   AC4  lookIconURL(id) -> URL (a look's icon), looksPreview(canvas, wear) -> bool (draws the dressed hero)
+//   AC4  lookIconURL(id, slot) -> URL (a look's icon), looksPreview(canvas, wear, zoom) -> bool (draws the dressed hero)
 //   AC5  featTrophyURL(id) -> URL (a Feat's trophy)
 //   AC6  the chapter card goes in deedsUI.chapterSlot() (the Deeds view, under the points)
 // Titles stay local: they are read with codexTitle()/codexTitles() and never sent online.
@@ -29357,7 +30213,7 @@ let deedsUI = null;
   const deepItem = id => (typeof DEEP_SHOP === 'object' && DEEP_SHOP[id]) || null;
   const lookCol = (slot, id) => LOOK_COL[id] || (deepItem(id) && deepItem(id).col) || SLOT_COL[slot] || '#F2C14E';
   const lookIcon = (slot, id) => {
-    if (id && typeof lookIconURL === 'function') { const u = safe(() => lookIconURL(id), ''); if (u) return u; }
+    if (id && typeof lookIconURL === 'function') { const u = safe(() => lookIconURL(id, slot), ''); if (u) return u; }
     const ic = ICON[SLOT_IC[slot]] ? SLOT_IC[slot] : 'charm';
     return iconURL(ic, lookCol(slot, id));
   };
