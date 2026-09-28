@@ -137,7 +137,7 @@ playable characters: looks, personality, backstories tied to the lore, and how h
 |---|---|---|
 | Warrior | metal | leather |
 | Ranger | wood | leather |
-| Mage | wood | cloth |
+| Mage | cloth | wood |
 
 The main family makes up about 70% of a recipe, the second about 30%, and small accents cross over. Every
 gathering line matters a bit to every class and a lot to one.

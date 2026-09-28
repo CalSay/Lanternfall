@@ -800,3 +800,14 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - plan-4.md rewritten as the full Season 1 scope (owner: the build map had compressed the combat and resource overhauls): every discussed item, grouped, with its task ID; build-map.md keeps the order.
 - OWNER: smaller models, more enemies per pack (today max 3). Added to plan-4 2.10 / CB2: variable pack sizes (3 brutes, 5-6 normal, 8-10 swarms), zoom step for big packs, smaller swarm sprites, bars only on focus/elites/bosses plus one pack bar, perf budget with 10 foes.
 - STEADY MODE (owner, 2026-09-28 evening, after the reset): work steadily across each 5-hour window without tanking the weekly allowance: at most 3 agents at once. Session 1 started: CORE-G (opus), MAP0 (opus), HINT1 (sonnet). Next as slots free: CL1 + CB2 (after CORE-G), LORE-R45 (sonnet), then RG1.
+- CORE-G merged: docs/design/core-2.md (the shared rulebook). Coordinator decisions: "reactions" is the
+  player word for Blight/Shatter/Judgement (combo stays the Party term); Mage gear = cloth main, wood second
+  (plan-4 fixed); the parry's vulnerability is "Reeling" in copy; the `warden` id is reused for the Warrior
+  evolution via the migration map. Q13: MERGE fatigue into the existing Rested system (one per-hero Rested
+  meter; resting at the Hearth while the Lanternbearer gathers fills it; save key `rested` extended with
+  defaults). Q14: yes. Guidance to the specs: CL1: the Mage's base type is FIRE (today's Embers, the lantern
+  flame), Warlock adds dark/curses, Priest holy; Ranger Focus becomes the standard Mark unless CL1 shows a
+  reason; hero types and the +35% split are CL1's. RG1: keep today's material names for existing materials
+  (no relabelling), new names only for new grades, rename the draft grade that clashes with Emberite; buff
+  items live in the Storehouse (a Buff Items page); enchant 100% at a level RG1 sets. CB2: its questions are
+  its own (auto-cast efficiency, swarm HP, interrupt limits, the boss timer vs the kill target).
