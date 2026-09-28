@@ -397,3 +397,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   formula and shape; late values read about 10% lower. That is a value drift, not a shape change, so it is
   accepted without touching the online layer. The festival is renamed LF1 (F1 is the formation core).
   Wave 2 formation: F1 first; F2, F3, F4 in parallel once F1's API is in; then BAL3.
+- G1 merged: 11c-art-tools.js (pickaxe, woodaxe, sickle, rod by tier; own swings), toolFor(skill) is a `let`
+  for H2 to repoint at equippedTool; the hero gathers alone; 55-rested.js Well Rested (REST_TUNE rate 0.5,
+  cap 180s, +10% dmg, zone fights only). NODE_HIT strike fractions in 62-stage heroHome (G2 told).
+  Perf noisy, no regression read.
