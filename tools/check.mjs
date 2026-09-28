@@ -1600,7 +1600,8 @@ try {
   let oLast = o0 - 2;
   while (E('DW.run().phase') === 'fight' && guard++ < 10) { oLast = E('DW.run().oil'); E('mob.hp = 1; strike(10, "#fff")'); ticks(g, 6); }
   assert(E('DW.run().phase') === 'draft' && E('DW.run().top') === 1 && E('DW.run().floor') === 2, 'three kills clear floor 1 and open the draft');
-  assert(Math.abs(E('DW.run().oil') - (oLast + 15)) < 1, 'a normal floor refunds 15s of Oil');
+  const rf = E('DW.refundFor("normal")');
+  assert(Math.abs(E('DW.run().oil') - (oLast + rf)) < 1 && rf === 15 + E('DEEP_COMBAT_TUNE.refund'), `a normal floor refunds ${rf}s of Oil (15s, +5s with party combat)`);
   const offer = E('DW.offerView().cards.map(c => c.id)');
   assert(offer.length === 3 && new Set(offer).size === 3, `the draft offers 3 different boons (${offer.join(', ')})`);
   assert(E('DW.reroll()') && E('DW.run().rr') === 0 && !E('DW.reroll()'), 'one reroll a run; then none');
@@ -1667,6 +1668,102 @@ try {
   errs.push(...tA.errors, ...tB.errors, ...pg.errors);
   assert(!errs.length, 'no deepwell errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('deepwell crashed: ' + (e.stack || e)); }
+
+// ---- the Deepwell on party combat (59c-deepwell-combat.js; plan-2 W6, plan-3 W6b; deepwell.md 8.2) ----
+console.log('deepwell combat');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
+  const errs = [];
+  for (const f of FIX) {
+    const o = loadCore({ seed: 41, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+    const ok0 = o.eval('S.deepCombat.tip === 0 && Object.keys(S.deepCombat).join() === "tip" && S.deep.run === null');
+    o.eval('save(); loadSave()');
+    assert(ok0 && o.eval('S.deepCombat.tip === 0'), `${f}: gets S.deepCombat { tip: 0 } and keeps it on a round trip`);
+    errs.push(...o.errors);
+  }
+  // A Ranger (not a tank) with Tobin (tank), Hesketh (support) and Wren (striker) on the late save.
+  const setup = (seed, storage) => {
+    const g = loadCore({ seed, storage: storage || memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
+    if (!storage) {
+      E('chooseClass("ranger"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth)');
+      E('for (const id of ["tobin", "hesketh", "wren"]) if (!charRec(id)) unlockChar(id, "test", true)');
+      E('S.party.autoField = false; setField(["tobin", "hesketh", "wren"])');
+    }
+    E('COMBAT_TUNE.regen = 0');
+    ticks(g, 30);
+    return { g, E };
+  };
+  const clearPack = E => E('combatFoes().forEach(f => { for (let i = 0; i < 3 && f.hp > 0 && !f.dead; i++) cbDamageFoe(f, f.hp + 1, -1, "magic"); })');
+  const heroF = E => E('cbUnitByKey("hero").hp / cbUnitByKey("hero").maxHp');
+  const { g, E } = setup(42);
+  const up = () => E('combatUnits().filter(u => u.live).length');
+  assert(E('DW.start(false)') && E('DW.run().floor === 1 && DW.floorKind(1) === "normal"'), 'a run starts on floor 1');
+  assert(E('combatFoes().filter(f => f.deep && !f.dead && f.hp > 0).length') === 3 && E('combatFoes().every(f => f.deep && f.run === DW.run().id)'), 'a normal floor is one pack: its 3 foes fight at once');
+  assert(up() >= 2 && E('S.deepCombat.tip') === 1, `the fielded party fights below (${up()} members); the HP tip shows once`);
+  // HP carries: the hero at 50%, the floor cleared: the pack heal and the floor heal, no more
+  E('combatFoes().forEach(f => f.atk = 0); cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp * 0.5');
+  clearPack(E); ticks(g, 2);
+  const hf = heroF(E), expHf = 0.5 + E('COMBAT_TUNE.packHealF') + E('DEEP_COMBAT_TUNE.floorHeal');
+  assert(E('DW.run().phase') === 'draft' && Math.abs(hf - expHf) < 0.01, `a cleared floor heals a little: hero 50% -> ${(100 * hf).toFixed(0)}% (${(100 * expHf).toFixed(0)}% expected)`);
+  assert(Math.abs(E('DWC.hpAt().hero') - hf) < 0.001, 'the run keeps the HP each member starts the next floor with');
+  E('DW.pick(DW.offerView().cards[0].id)');
+  const hf2 = heroF(E);
+  assert(E('DW.run().floor') === 2 && E('mob.deep && mob.floor === 2') && Math.abs(hf2 - hf) < 0.01, `HP carries into floor 2 (hero ${(100 * hf2).toFixed(0)}%, not refilled)`);
+  // a reload mid-floor: the floor restarts with the HP (and Oil) it began with
+  E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.2; }); save()');
+  const r2 = setup(43, memoryStorage({ [KEY]: g.storage.get(KEY) }));
+  r2.E('chooseClass("ranger")');
+  assert(r2.E('DW.resume()') && r2.E('mob.deep && mob.floor === 2'), 'resume: floor 2 restarts');
+  const hf3 = heroF(r2.E);
+  assert(Math.abs(hf3 - hf) < 0.02, `resume: the hero starts floor 2 at ${(100 * hf3).toFixed(0)}% (as saved when the floor began)`);
+  errs.push(...r2.g.errors);
+  // Oil: refunds are higher; a parry gives Oil back
+  assert(E('DW.refundFor("boss")') === 35 + E('DEEP_COMBAT_TUNE.refund'), 'Oil refunds are 5s higher with party combat');
+  // the [C] boons
+  const B = s => E('DW.run().boons.' + s);
+  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); ticks(g, 3);
+  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, 'Iron Wall II: tanks +40% max HP, others unchanged');
+  const hitTank = () => E('(() => { const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const a = cbHitUnit(u, u.maxHp * 0.01, "poison", null); u.hp = u.maxHp; return a; })()');
+  const t0 = hitTank(); B('thorn = 1'); B('taunt = 1'); ticks(g, 1);
+  assert(E('DW.setProgress().find(s => s.id === "guard").on') && Math.abs(hitTank() / t0 - 0.75) < 0.01, 'the Guard set (Thorn Plate, Iron Wall, Taunt Drill): tanks take 25% less');
+  const thorn = E('(() => { const f = combatFoes().find(x => !x.dead && x.hp > 0); const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const h0 = f.hp; cbHitUnit(u, u.maxHp * 0.01, "poison", f); u.hp = u.maxHp; return h0 - f.hp; })()');
+  assert(thorn > 0, 'Thorn Plate: a tank hurts the foe that hits it');
+  E('mob.forceU = -1; mob.forceT = 0; mob.ranged = true; classTap({ target: "mob" })');
+  assert(E('mob.forceU === cbUnitByKey("tobin").i && mob.forceT > 0.5'), 'Taunt Drill: a Ranger\'s tap makes the front tank taunt');
+  const hi0 = E('cbUnitByKey("hero").healIn'); B('dward = 1'); B('mend = 1'); B('life = 1'); ticks(g, 3);
+  assert(E('DW.setProgress().find(s => s.id === "mend").on') && Math.abs(E('cbUnitByKey("hero").healIn') / hi0 - 1.3) < 0.01, 'the Mend set (Deep Ward, Mending Light, Lifeline): healing +30%');
+  E('cbHitUnit(cbUnitByKey("hero"), 1e300, "poison", null)');
+  assert(!E('cbUnitByKey("hero").down') && E('cbUnitByKey("hero").hp') === 1, 'Lifeline: a member who would fall stays at 1 HP');
+  E('cbHitUnit(cbUnitByKey("wren"), 1e300, "poison", null)');
+  assert(E('cbUnitByKey("wren").down'), 'Lifeline: once a floor for the whole party');
+  // Deep Edge (D8): damage below only
+  const dm0 = E('mod("dmg")'); E('S.deep.lore.edge = 4');
+  assert(Math.abs(E('mod("dmg")') / dm0 - 1.8) < 1e-6 && E('DW.shop("lore").some(r => r.id === "edge" && r.max === 4)'), 'Deep Edge IV: +80% damage below; sold in the Deep Lore shop');
+  // a wipe ends the run: the floors cleared count and pay; the party stands up whole above
+  const top = E('DW.run().top'), marks = E('DW.marksNow()'), m0 = E('S.deep.marks');
+  E('for (let i = 0; i < 4; i++) combatUnits().forEach(u => { if (u.live && !u.down) { u.lifeline = true; cbHitUnit(u, 1e300, "poison", null); } })');
+  ticks(g, 2);
+  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")');
+  assert(E('S.deep.last.floor') === top && E('S.deep.best') >= top && E('S.deep.marks') - m0 === marks, `the run's depth counts: floor ${top}, ${marks} Depth Marks paid`);
+  assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().every(f => !f.deep)') && E('mod("dmg")') < dm0 * 1.0001, 'back above: the party is whole, no well foe is left, boons and Deep Edge are off');
+  assert(E('S.activity') === 'fight' && E('!!mob && !mob.deep'), 'the zone fight resumes');
+  // Elder floors: the Deep Elder winds up its telegraphs; a parry gives Oil back
+  E('S.deep.lore.edge = 0'); E('DW.start(false)'); ticks(g, 1);
+  E('combatFoes().forEach(f => f.atk = 0)'); clearPack(E); ticks(g, 2);
+  E('DW.run().floor = 5; DW.run().oil = 100; DW.pick(DW.offerView().cards[0].id)');
+  let tele = null; g.fn.on('telegraphStart', p => { if (!tele) tele = { kind: p.kind, deep: !!(p.foe && p.foe.deep) }; });
+  E('combatFoes().forEach(f => f.atk = 0)');
+  let guard = 0; while (!E('cbTelegraph() && cbTelegraph().left <= cbTelegraph().win - 0.05') && guard++ < 150) ticks(g, 1);
+  assert(E('mob.deep && mob.boss && DW.run().floor === 5') && tele && tele.deep, `floor 5: a Deep Elder, and it winds up a telegraph (${tele && tele.kind})`);
+  const oilP = E('DW.run().oil'); E('resolveParry("tap")');
+  assert(Math.abs(E('DW.run().oil') - Math.min(E('DW.oilMax()'), oilP + E('DEEP_COMBAT_TUNE.parryOil'))) < 1e-9, 'parrying the Elder gives 2s of Oil back');
+  E('DW.run().oil = 0.05'); ticks(g, 3);
+  assert(E('S.deep.run === null && S.deep.last.reason === "oil" && !cbTelegraph()'), 'Oil still ends a run; no Elder telegraph is left above');
+  errs.push(...g.errors);
+  assert(!errs.length, 'no deepwell combat errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('deepwell combat crashed: ' + (e.stack || e)); }
 
 // ---- party combat (59-combat.js, 59b-enemies.js; Stage C tasks C1, C2, C3) ----
 console.log('combat');

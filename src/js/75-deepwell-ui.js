@@ -233,7 +233,7 @@
     const o = mkOverlay('dw-end in', 'Your run is over');
     const s = o.inner;
     const head = el('div', 'dw-dhead'); const tt = el('div', 'dw-dtitle');
-    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
+    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', wipe: 'Your party fell. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
     tt.append(el('div', 'dw-eye', x.trial ? `This week's Trial: ${DW.trialRule(x.week).n}` : 'The Deepwell'), el('h2', null, `Floor ${x.floor}`), el('div', 'dw-dsub', why));
     head.append(tt); s.append(head);
     const kv = el('dl', 'kv dw-kv');
