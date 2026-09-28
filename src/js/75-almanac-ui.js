@@ -139,7 +139,8 @@
       al.eye = el('div', 'om-eye');
       al.nm = el('h3');
       al.fx = el('div', 'om-cfx');
-      ht.append(al.eye, al.nm, al.fx);
+      al.say = el('p', 'note om-say');
+      ht.append(al.eye, al.nm, al.fx, al.say);
       head.append(ic, ht);
       al.det = omenDetails(false);
       card.append(head, al.det.root);
@@ -187,6 +188,7 @@
       setTxt(al.eye, `Today · ${almanac.catName(o.cat)} Omen`);
       setTxt(al.nm, o.n);
       setTxt(al.fx, o.fx + '.');
+      setTxt(al.say, typeof omenLine === 'function' ? omenLine(o.id, on) : '');
       al.det.update(force);
 
       const dl = almanac.daysLeft();
