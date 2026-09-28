@@ -97,7 +97,7 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
     badT: 1800,           // a line-up the packs knocked out (a wipe or stuck re-plan left it) is not picked again on its own for 30 min
     stuckSpan: 5,         // after a stuck fight (stuckT), a tank weighs as after a knock-out for 5 zones
     stuckT: 60,           // fighting this long with no kill and a member down: the party is stuck (counts as knocked out)
-    stepUnits: 8, estUnits: 3   // idle steps: work per step (a quick = 1, an estimate = estUnits)
+    stepUnits: 4, estUnits: 3   // idle steps: work per step (a quick = 1, an estimate = estUnits)
   };
   AF_TUNE = T;
   const FT = { bossW: 0.35, bossWHard: 0.6, hyst: 0.06, dwell: 300, deep: 4, maxEst: 32, maxPins: 2, offSlot: 0.1 };
