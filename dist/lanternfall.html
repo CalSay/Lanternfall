@@ -2802,6 +2802,178 @@ function sigilIcon(c) {
 
 registerIcons(SIGIL_ICONS);
 
+// ---- src/js/11c-art-tools.js ----
+// 11c-art-tools: gathering tools in B1 (task G1, plan-3 ask 1): the pickaxe (Mining), the woodaxe
+// (Woodcutting), the sickle (Foraging: herbs and fibre) and the fishing rod (the Coast, later).
+// DATA and pure maths only: no DOM at load or at call time. Loads in Node too.
+// Rules: docs/design/art-direction.md (B1). This file loads BEFORE the kit (12a-art-body.js), so AK
+// is read only at call time.
+//
+// While the hero gathers, the stage (62-stage.js) bakes the hero from a gather spec: the class
+// outfit without its weapon and off-hand, holding the tool in the front hand, with a swing that
+// reads as mining, chopping or cutting (its own wind / strike poses, registered into AK.ANIMS).
+// Tools are tinted by tier with the ore palette (AK.FAM.ore: Copper, Iron, Mithril, Starsteel,
+// Emberite); handles use the wood palette of the same tier. Rarity adds trim and glow as for gear.
+//
+// Exposed names:
+//   toolFor(skill) -> { k: 'pick'|'axe'|'sickle'|'rod', t: 1-5, r: 0-3, name } | null
+//       The tool the hero uses for a gathering skill ('mine' | 'wood' | 'forage' | 'fish'). Today
+//       it is only visual: the tier follows the skill level (the node tier it has reached,
+//       NODE_REQ). A `let`: plan-3 H2 (tools as items) replaces it with the crafted tool.
+//   TOOL_ART.gatherSpec(heroSpec, tool) -> a hero spec for the baker (60b) with the tool in hand:
+//       { cls, skin, hair, gear: { head, body, charm }, tool: { k, t, r } } (weapon and off-hand
+//       dropped, so the bake cache keys on class + look + tool + tier only)
+//   TOOL_ART.gatherDef(classDef, tool) -> the class outfit that holds the tool (cached per class,
+//       tool and tier); the baker (60b resolve) uses it when a spec has `tool`
+//   TOOL_ART.draw(k, kind, mats) -> adds the tool's pieces to a kit (held in the front hand)
+//   TOOL_ART.KINDS, TOOL_ART.SKILL_TOOL (skill -> kind), TOOL_ART.name(kind, t)
+
+let toolFor;
+const TOOL_ART = (() => {
+  const SKILL_TOOL = { mine: 'pick', wood: 'axe', forage: 'sickle', fish: 'rod' };
+  const TIER_NAMES = ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'];
+  // Per tool: its name, how it rests in the hand (tilt: clockwise from upright, radians) and its
+  // swing. Poses use the kit's pose values (12a POSE0): rF / rB swing the arms at the shoulder
+  // (positive = back and up), wF turns the tool at the wrist, lean, bob (crouch), dx (step in).
+  // The tool's angle is tilt + wF + rF + lean: about 1.6 points it straight ahead.
+  //   pick:   overhead, then down in front at knee height (a vein low on the rock face)
+  //   axe:    overhead, then level at chest height (a trunk)
+  //   sickle: low: a crouch and a forward sweep (herbs and fibre on the ground)
+  //   rod:    back over the shoulder, then a cast forward
+  const KINDS = {
+    pick: { name: 'Pickaxe', tilt: 1.0,
+      wind: { rF: 2.75, wF: .15, rB: 2.2, lean: -.14 },
+      strike: { rF: -.85, wF: 1.55, rB: -.55, lean: .26, bob: 1, dx: 2 } },
+    axe: { name: 'Woodaxe', tilt: .9,
+      wind: { rF: 2.4, wF: .4, rB: 1.8, lean: -.12 },
+      strike: { rF: -1.25, wF: 1.95, rB: -.9, lean: .18, dx: 2 } },
+    sickle: { name: 'Sickle', tilt: .5,
+      wind: { rF: 1.05, wF: -.25, rB: .35, lean: .06, bob: 1 },
+      strike: { rF: -1.15, wF: 1.35, rB: -.5, lean: .32, bob: 2, dx: 3 } },
+    rod: { name: 'Fishing Rod', tilt: .5,
+      wind: { rF: .9, wF: -1.95, rB: .2, lean: -.1 },
+      strike: { rF: -1.1, wF: 1.45, rB: -.3, lean: .1, dx: 1 } }
+  };
+  const name = (kind, t) => `${TIER_NAMES[Math.max(1, Math.min(5, t | 0 || 1)) - 1]} ${(KINDS[kind] || KINDS.pick).name}`;
+
+  // ---------------- the tool pieces (held-item frame: origin at the hand, -y along the tool) ----------------
+  // mats: AK.gearMats({ fam: 'ore', fam2: 'wood' }, t, r): P metal of the tier, D darker, Q the
+  // handle (wood of the tier), R trim (gold from Rare), G glow (Epic), silver (a whetted edge).
+  function items(k, kind, w) {
+    const { m, P, R, E, arcPts } = AK, U = k.U, H = k.H;
+    const band = w.r >= 1 ? w.R : w.D;
+    if (kind === 'pick') {
+      // ash handle, iron collar, a curved head: the long point leads (+x), a short one trails
+      const L = H * .44, hw = H * .2, y = -L;
+      return [
+        [w.Q, R(-U(.75), y + U(1), U(1.5), L + U(2.8))],
+        [w.P, P(-hw * .78, y + U(2.2), -hw * .5, y - U(.3), 0, y - U(1.5), hw * .55, y - U(.6), hw * 1.05, y + U(2.8), hw * .5, y + U(.9), 0, y + U(.7), -hw * .45, y + U(1.2)), { bev: .7 }],
+        [band, R(-U(1.2), y - U(1.1), U(2.4), U(2.6)), { sep: 1 }],
+        w.G ? [w.G, R(hw * .35, y - U(.2), U(2.2), U(.8)), { nl: 1, lr: 8, pulse: w.pulse }] : null
+      ];
+    }
+    if (kind === 'axe') {
+      // a long haft, a socket, a flared blade on the leading side with a bright whetted edge
+      const L = H * .42, y = -L;
+      const blade = [w.P, P(U(1), y - U(.4), U(3.6), y - U(1.9), U(5.6), y - U(2.9), U(6.3), y + U(1), U(5.6), y + U(4.6), U(3.6), y + U(3.4), U(1), y + U(2.4)), { bev: .7 }];
+      return [
+        [w.Q, R(-U(.8), y - U(.6), U(1.6), L + U(3.2))],
+        blade,
+        [w.silver, P(U(5.1), y - U(2.5), U(6.3), y - U(2.9), U(6.9), y + U(1), U(6.3), y + U(4.6), U(5.1), y + U(4.1), U(5.6), y + U(1)), { nl: 1 }],
+        [band, R(-U(1.5), y - U(.9), U(3), U(3.4)), { sep: 1 }],
+        [w.D, R(-U(2.8), y - U(.3), U(1.4), U(2.2))],
+        w.G ? [w.G, R(U(3), y + U(.4), U(1.6), U(.9)), { nl: 1, lr: 8, pulse: w.pulse }] : null
+      ];
+    }
+    if (kind === 'sickle') {
+      // a short grip and a hooked crescent blade curling forward
+      const hl = H * .15, ro = H * .17, cx = ro * .72, cy = -hl - ro * .2;
+      const outer = arcPts(cx, cy, ro, ro * 1.05, Math.PI * 1.02, Math.PI * 2.16, 10);
+      const inner = arcPts(cx + ro * .12, cy + ro * .14, ro * .66, ro * .7, Math.PI * 2.08, Math.PI * 1.1, 8);
+      return [
+        [w.P, P(outer, inner), { bev: .6 }],
+        [w.Q, R(-U(.9), -hl, U(1.8), hl + U(2.4))],
+        [band, R(-U(1.2), -hl - U(.6), U(2.4), U(1.4)), { sep: 1 }],
+        w.G ? [w.G, R(cx - U(.5), cy - ro * .98, U(1.2), U(.8)), { nl: 1, lr: 7, pulse: w.pulse }] : null
+      ];
+    }
+    // rod: a long thin rod, a cork grip, a small reel, a line with a float at the tip
+    const L = H * .8, y = -L, cork = m('#C89A62', 'wood'), line = m('#E8DEC8', 'flat');
+    return [
+      [w.Q, P(-U(.6), U(2), U(.6), U(2), U(.35), y, -U(.35), y)],
+      [cork, R(-U(.9), -U(2.4), U(1.8), U(4.8)), { sep: 1 }],
+      [w.P, E(U(1.6), U(.6), U(1.2), U(1.2)), { sep: 1 }],
+      [band, R(-U(.8), y - U(.4), U(1.6), U(1.2))],
+      [line, R(U(.2), y + U(.4), U(.6), U(7)), { nl: 1 }],
+      [m('#E0524F', 'cloth'), E(U(.5), y + U(8), U(1), U(1.2)), { sep: 1 }],
+      w.G ? [w.G, R(-U(.4), y + U(3), U(.8), U(1.6)), { nl: 1, lr: 7, pulse: w.pulse }] : null
+    ];
+  }
+  // Under the front hand (the fist closes over the grip) and over the body: z 5.95.
+  function draw(k, kind, w) {
+    const def = KINDS[kind] || KINDS.pick;
+    return k.held(5.95, 'F', def.tilt, items(k, kind, w));
+  }
+  // A hero without a lit piece (the Lightkeeper's light is the censer) carries a hip lantern while
+  // gathering, so the key light and the lantern glow still come from the hero (12b's hipLantern).
+  function hipLantern(k) {
+    const { m, R } = AK, x = -k.hipW * .95, d = m('#4E4452', 'metal'), lamp = m('#FFD27A', 'glow', { light: '#FFC070' });
+    k.add(3.41, 'up', d, R(x - k.U(.4), k.waY + k.U(1.2), k.U(.8), k.U(1.6)));
+    k.add(3.42, 'up', d, R(x - k.U(1.4), k.waY + k.U(2.8), k.U(2.8), k.U(1)));
+    k.add(3.43, 'up', lamp, R(x - k.U(1.2), k.waY + k.U(3.6), k.U(2.4), k.U(3)), { lr: 16, pulse: 1 });
+    k.add(3.44, 'up', d, R(x - k.U(1.4), k.waY + k.U(6.4), k.U(2.8), k.U(.9)));
+  }
+
+  // ---------------- the gathering outfit ----------------
+  let animsOn = false;
+  function ensureAnims() {
+    if (animsOn) return;
+    animsOn = true;
+    for (const kind in KINDS) AK.ANIMS['tool_' + kind] = { wind: KINDS[kind].wind, strike: KINDS[kind].strike };
+  }
+  const mats = tool => AK.gearMats({ fam: 'ore', fam2: 'wood' }, tool.t, tool.r || 0);
+  const defs = new Map();
+  // The class outfit holding the tool: same body and look, the class's own build with no weapon or
+  // off-hand (resolve drops them), then the tool. `this` stays the derived def, so the outfit's own
+  // fields (eye, slots) read through to the class.
+  function gatherDef(def, tool) {
+    const kind = KINDS[tool.k] ? tool.k : 'pick', t = Math.max(1, Math.min(5, tool.t | 0 || 1)), r = Math.max(0, Math.min(3, tool.r | 0));
+    const key = (def.name || '?') + '|' + kind + '|' + t + '|' + r;
+    let d = defs.get(key);
+    if (d) return d;
+    ensureAnims();
+    const w = mats({ t, r });
+    d = Object.create(def);
+    d.anim = 'tool_' + kind;
+    d.build = function (k, g, look) {
+      def.build.call(this, k, g, look);
+      if (!k.parts.some(p => p.m.kind === 'glow' && !p.o.nolight)) hipLantern(k);
+      draw(k, kind, w);
+    };
+    defs.set(key, d);
+    return d;
+  }
+  function gatherSpec(spec, tool) {
+    const g = (spec && spec.gear) || {}, gear = {};
+    for (const s of ['head', 'body', 'charm']) if (g[s]) gear[s] = g[s];
+    const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };
+    if (spec && spec.skin != null) out.skin = spec.skin;
+    if (spec && spec.hair != null) out.hair = spec.hair;
+    return out;
+  }
+  return { KINDS, SKILL_TOOL, TIER_NAMES, name, items, draw, gatherDef, gatherSpec, mats };
+})();
+
+// The hero's tool for a gathering skill. Visual only for now: the tier is the node tier the skill
+// level has reached (NODE_REQ, 20-data). Plan-3 H2 replaces this with the crafted, equipped tool.
+toolFor = skill => {
+  const k = TOOL_ART.SKILL_TOOL[skill]; if (!k) return null;
+  const sk = typeof S !== 'undefined' && S && S.skills && S.skills[skill], lv = sk ? sk.lv | 0 : 1;
+  let t = 1;
+  if (typeof NODE_REQ !== 'undefined') for (let i = 0; i < NODE_REQ.length; i++) if (lv >= NODE_REQ[i]) t = i + 1;
+  return { k, t, r: 0, name: TOOL_ART.name(k, t) };
+};
+
 // ---- src/js/12a-art-body.js ----
 // 12a-art-body: the B1 character kit (16-bit, about 4 heads, 35 art px tall, drawn at 2x).
 // DATA and pure maths only: no DOM at load or at call time. Loads in Node too.
@@ -6992,7 +7164,7 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `Your party heads to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Your party rests at the Hearth.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
   toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
@@ -7219,7 +7391,7 @@ function awayBase(r) {
     S.mats[kind][tier - 1] += got;
     if (got > 0) emit('harvest', { kind, t: tier, n: got, away: true });
     r.lines.push({ icon: { mat: [kind, tier] }, txt: `+${fmt(got)} ${matName(kind, tier)}` });
-    r.note = `Your party kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
+    r.note = `You kept working the ${NODE_NAMES[kind][tier - 1]}. ${SKILL[skillOf(kind)]} is now level ${S.skills[skillOf(kind)].lv}.`;
     return r;
   }
   const dps = (compDps() + heroDps() * 0.5) * boost;
@@ -10173,6 +10345,78 @@ let unitHp, unitCd, bossTelegraph;
   });
 
   ensureInit();
+}
+
+// ---- src/js/55-rested.js ----
+// 55-rested: Well Rested (plan-3 ask 2, task G1). The hero gathers alone: while you gather, the
+// fielded companions rest at the Hearth and bank Well Rested, a damage bonus for the first minutes
+// of the next fight.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules (knobs in REST_TUNE):
+//   - Gathering with at least one companion fielded banks `rate` seconds of Well Rested per second,
+//     up to `cap` seconds (0.5 and 180: 6 minutes of gathering fill it).
+//   - While it lasts, fighting (a zone, not a Deepwell run or the raid) deals +`dmg` damage (the
+//     'dmg' modifier: the whole party, hero included), and it runs down one second per second of
+//     fighting. The raid and the Deepwell neither use it nor run it down.
+//   - Away: gathering banks it as live play does; fighting runs it down, and away kills never count
+//     it (the modifier is off during the away phase, so away gains are never inflated).
+//
+// Save: S.rested = { left } (seconds banked). registerState: old saves get { left: 0 }.
+// Exposed names: REST_TUNE, wellRested() -> { on, left, max, dmg } (a reused object; on = the bonus
+//   applies right now), restParty() -> true when someone is fielded to rest, restNote() -> the Gather
+//   tab's line (' Your party rests at the Hearth: ...', or '' with nobody fielded).
+// Events: 'activity' (toast on the way to a fight), 'awayBegin' / 'away' / 'awayEnd'.
+
+const REST_TUNE = { rate: 0.5, cap: 180, dmg: 0.1, toastMin: 10 };
+let wellRested, restParty, restNote;
+{
+  registerState('rested', { left: 0 });
+  // read each time (a reset or an import replaces S); a damaged field starts over empty
+  const R = () => S.rested && typeof S.rested === 'object' ? S.rested : (S.rested = { left: 0 });
+  let inAway = false, awayGain = 0, lineOn = false;
+  restParty = () => {
+    if (typeof rosterLive === 'function' && rosterLive()) return ((S.party && S.party.field) || []).some(k => typeof isRecruited === 'function' && isRecruited(k));
+    return Array.isArray(S.comp) && S.comp.some(n => n > 0);
+  };
+  const fighting = () => target() === 'mob' && !arena;
+  const active = () => !inAway && R().left > 0 && fighting();
+  const clamp = v => Math.max(0, Math.min(REST_TUNE.cap, Number.isFinite(v) ? v : 0));
+  const W = { on: false, left: 0, max: REST_TUNE.cap, dmg: REST_TUNE.dmg };
+  wellRested = () => { W.on = active(); W.left = R().left; W.max = REST_TUNE.cap; W.dmg = REST_TUNE.dmg; return W; };
+  const pct = () => Math.round(REST_TUNE.dmg * 100);
+  const dur = s => s >= 60 ? `${Math.round(s / 60)} min` : `${Math.max(1, Math.round(s))} s`;
+
+  // The Gather tab's status line: ' Your party rests at the Hearth: +10% damage for 2m 30s in your next fight.'
+  restNote = () => !restParty() ? '' : R().left >= 1 ? ` Your party rests at the Hearth: +${pct()}% damage for ${fmtTime(R().left)} in your next fight${R().left >= REST_TUNE.cap ? ' (full)' : ''}.` : ' Your party rests at the Hearth.';
+
+  addModifier('dmg', () => active() ? 1 + REST_TUNE.dmg : 1);
+  onTick(dt => {
+    if (S.activity === 'gather') { if (R().left < REST_TUNE.cap && restParty()) R().left = clamp(R().left + dt * REST_TUNE.rate); }
+    else if (R().left > 0 && fighting()) R().left = clamp(R().left - dt);
+  });
+  on('activity', ({ activity }) => {
+    if (activity === 'fight' && R().left >= REST_TUNE.toastMin)
+      toast(`Well Rested: +${pct()}% damage for ${dur(R().left)}.`, 'good', { ic: ['mug', '#F2C14E'] }, 'normal');
+  });
+
+  // ---------------- away ----------------
+  on('awayBegin', () => {
+    inAway = true; awayGain = 0;
+    if (!lineOn && typeof registerAwayLine === 'function') { lineOn = true; registerAwayLine(awayLine); }
+  });
+  on('away', r => {
+    const t = r && r.t > 0 ? r.t : 0, before = R().left;
+    if (S.activity === 'gather') { if (restParty()) R().left = clamp(R().left + t * REST_TUNE.rate); }
+    else if (S.activity === 'fight' && !arena) R().left = clamp(R().left - t);
+    awayGain = R().left - before;
+  });
+  on('awayEnd', () => { inAway = false; });
+  function awayLine() {
+    const g = awayGain; awayGain = 0;
+    if (!(g >= 1) || S.activity !== 'gather') return null;
+    return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'Your party rested at the Hearth' };
+  }
 }
 
 // ---- src/js/55-stats.js ----
@@ -16747,6 +16991,7 @@ function iconOf(spec) {
 // Character specs (plain JSON, hashable):
 //   hero:      { cls, skin: 0-2 | '#hex', hair: 0-3 | '#hex', gear: { weapon|off|head|body|charm: { t: 1-5, r: 0-3, glow?: '#hex' } } }
 //   companion: { comp: key, t?: 1-5, r?: 0-3 }   (t / r override the role weapon's tier and rarity)
+//   gathering: a hero spec with tool: { k: 'pick'|'axe'|'sickle'|'rod', t, r } (TOOL_ART.gatherSpec, 11c)
 
 const ART = (() => {
   const PX = 2;
@@ -16930,9 +17175,11 @@ const ART = (() => {
       const w = gearMats(wp, spec.t || wp.t, spec.r != null ? spec.r : wp.r, wp.glow);
       return { def, kind: 'comp', w };
     }
-    const def = CLASSES[spec.cls] || CLASSES.warden;
+    // a gathering tool in hand (spec.tool, 11c-art-tools.js): the class outfit without weapon or off-hand
+    const tool = spec.tool && typeof TOOL_ART !== 'undefined' ? spec.tool : null;
+    const def = tool ? TOOL_ART.gatherDef(CLASSES[spec.cls] || CLASSES.warden, tool) : CLASSES[spec.cls] || CLASSES.warden;
     const gs = spec.gear || {}, g = {};
-    for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = gs[s]; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
+    for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = !tool || (s !== 'weapon' && s !== 'off') ? gs[s] : null; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
     const look = { skin: m(colOf(spec.skin == null ? 0 : spec.skin, SKINS), 'skin'), hair: m(colOf(spec.hair == null ? 0 : spec.hair, HAIRS), 'hair') };
     return { def, kind: 'hero', g, look };
   }
@@ -17514,7 +17761,7 @@ let resize, animate, draw, stageStats, warmScene;
   // ================= visual state (driven by core events) =================
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
-  let guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
@@ -17707,12 +17954,25 @@ let resize, animate, draw, stageStats, warmScene;
   const hero = mkActor('hero');
   let comps = [], order = [], ghosts = [], front = hero, lastField = null, lastCells = null, heroKey = '', checkT = 0, layoutDirty = true;
 
+  // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
+  // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
+  const gatherTool = () => target() === 'node' && typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
   function refreshHero(force) {
-    const spec = heroSpec(), k = JSON.stringify(spec);
+    const tool = gatherTool(), spec = tool ? TOOL_ART.gatherSpec(heroSpec(), tool) : heroSpec(), k = JSON.stringify(spec);
     if (!force && k === heroKey && hero.fr) return;
     heroKey = k; hero.fr = charFrames(spec);
     const hk = HERO_KIND[spec.cls] || HERO_KIND.warden;
     hero.kind = hk[0]; hero.pcol = hk[1] || '#fff'; hero.role = HERO_ROLE[spec.cls] || 'tank';
+  }
+  // While the Gather menu is open, bake each tool's first frame in idle time (background), so picking
+  // a node shows the hero with its tool at once; the other frames follow through queueRest.
+  let toolsWarm = '';
+  function warmTools() {
+    if (S.tab !== 'gat' || target() === 'node' || typeof toolFor !== 'function' || typeof idleTask !== 'function') return;
+    const base = heroSpec(), specs = ['mine', 'wood', 'forage'].map(toolFor).filter(Boolean).map(t => TOOL_ART.gatherSpec(base, t)), k = JSON.stringify(specs);
+    if (k === toolsWarm) return;
+    toolsWarm = k;
+    for (const sp of specs) idleTask(() => { const set = charFrames(sp, true); if (set) idleTask(() => void set.strike); });   // strike: where the hero stands
   }
   function refreshParty() {
     const p = S.party || {};
@@ -17729,7 +17989,7 @@ let resize, animate, draw, stageStats, warmScene;
   function layout() {
     layoutDirty = false;
     const cells = (S.party && S.party.cells) || {}, used = {};
-    order = [hero].concat(comps);
+    order = target() === 'node' ? [hero] : [hero].concat(comps);
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
@@ -18034,7 +18294,16 @@ let resize, animate, draw, stageStats, warmScene;
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
 
   // ================= attacks =================
-  const heroHome = () => target() === 'node' ? foe.left - 4 - (hero.fr ? hero.fr.idle0.c.width - hero.fr.idle0.ox : 14) : hero.hx;
+  // Gathering (G1): the hero stands so the tool's swing lands on the node: the strike frame's front edge
+  // reaches NODE_HIT of the way into the node's box (a tree: its trunk). Until that frame is baked, the
+  // idle frame's front edge stops short of the node, as before.
+  const NODE_HIT = { ore: 0.12, crystal: 0.12, wood: 0.4, fibre: 0.2, herb: 0.2 };
+  const heroHome = () => {
+    if (target() !== 'node') return hero.hx;
+    const f = hero.fr; if (!f) return foe.left - 18;
+    if (!ART.ready(f, 'strike')) return foe.left - 4 - (f.idle0.c.width - f.idle0.ox);
+    return Math.max(16, Math.round(foe.left + foe.w * (NODE_HIT[S.node.kind] ?? 0.15)) - (rightEdge(f.strike) - f.strike.ox));
+  };
   // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
   // front-most foe: melee reaches the enemy Front) and back; arc: a leap with a 16 px apex (Kestrel).
   // Reduced motion: the dash is an instant swap with a one-frame flash.
@@ -18245,11 +18514,12 @@ let resize, animate, draw, stageStats, warmScene;
     A.clear(); solo.key = ''; packList = null; wallT = hymnT = volleyT = 0;
     for (const a of order) { a.go = 0; a.goT = 0; a.mv = 0; a.kb = 0; a.castTo = null; }
     for (const n of nums) n.on = false;
+    if (hero.fr) refreshHero(false);   // a new gather node may need another tool
   });
   on('gear', () => refreshHero(true));
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
-  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; });
+  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; if (hero.fr) refreshHero(false); });
 
   on('classTap', p => {
     attack(hero);
@@ -18382,7 +18652,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); warmTools(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
     // 70-ui keeps writing tWrap.hidden underneath)
     const dOn = deepOn();
@@ -18421,6 +18691,8 @@ let resize, animate, draw, stageStats, warmScene;
       buffPoll = 0.2; guardN = 0; blessN = 0; let mk = 0, hs = 0;
       for (const b of partyBuffs() || []) { if (b.id === 'guard') guardN = b.stacks; else if (b.id === 'bless') blessN = b.stacks; else if (b.id === 'mark') mk = b.left; else if (b.id === 'wall') wallT = Math.max(wallT, b.left); else if (b.id === 'hymn') hymnT = Math.max(hymnT, b.left); else if (b.id === 'haste') hs = b.left; }
       markLeft = mk; hasteLeft = hs;
+      const wr = typeof wellRested === 'function' ? wellRested() : null;
+      restF = wr && wr.on ? Math.min(1, wr.left / wr.max) : 0;
     }
     if (mob && !mob.dead && target() === 'mob') lastEmbers = mob.embers | 0;
     if (volleyT > 0) {
@@ -18887,9 +19159,10 @@ let resize, animate, draw, stageStats, warmScene;
     haste: ['L.L..', '.L.L.', '..L.L', '.L.L.', 'L.L..'],
     mark: ['LL.LL', 'L...L', '..l..', 'L...L', 'LL.LL'],
     ember: ['..o..', '.oy..', '.oyo.', 'oywyo', '.oyo.'],
-    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..']
+    glint: ['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..'],
+    rest: ['.bbb.', 'bb..w', 'b....', 'bb...', '.bbb.']   // Well Rested (55-rested.js): a crescent moon
   };
-  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A' };
+  const ICOL = { guard: '#7FA6F0', wall: '#F2C14E', bless: '#F2C14E', hymn: '#F2C14E', haste: '#7ED36A', mark: '#7ED36A', ember: '#FF9E3D', glint: '#FFD27A', rest: '#DCE8FF' };
   const icons = {};
   function icon(id) {
     let c = icons[id];
@@ -19083,7 +19356,7 @@ let resize, animate, draw, stageStats, warmScene;
     }
     const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
-    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0;
+    const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0 || restF > 0;
     const showT = fight && targetsOn() && partyCombatOn();
     if (showT) drawThreatLines(X, Y, cam);
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
@@ -19101,6 +19374,7 @@ let resize, animate, draw, stageStats, warmScene;
         if (wallT > 0) pushChip('wall', 0, Math.min(1, wallT / 6));
         if (hymnT > 0) pushChip('hymn', 0, Math.min(1, hymnT / 8));
         if (hasteLeft > 0) pushChip('haste', 0, Math.min(1, hasteLeft / 10));
+        if (restF > 0) pushChip('rest', 0, restF);
         chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
       }
       // a foe just left a tank for this member: an eye by its bar
@@ -21485,7 +21759,7 @@ const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 
 const nodeRows = {};
 function goNode(kind, t) {
   if (!setNode(kind, t)) return false;
-  if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
+  if (S.activity !== 'gather') setActivity('gather'); else { toast(`You move to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
   return true;
 }
 // Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
@@ -21528,7 +21802,7 @@ function whereSheet(k, t) {
     if (GATHER_KINDS.includes(k)) {
       const sk = skillOf(k), req = NODE_REQ[t - 1], open = S.skills[sk].lv >= req;
       const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
-      const b = el('button', 'big horn gw-go', here ? 'Your party works here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
+      const b = el('button', 'big horn gw-go', here ? 'You work here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
       b.type = 'button'; b.disabled = !open || here;
       b.addEventListener('click', () => { if (goNode(k, t)) { api.close(); setTab(NODE_VIEW_OF[k]); } });
       api.foot.append(b);
@@ -21577,6 +21851,11 @@ else gatherBuild();
 // Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
 // switch calls ui(true), so a view is fresh as soon as it shows).
 const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
+// 'Working: Copper Vein with your Copper Pickaxe. Your party rests at the Hearth: ...' (G1: 11c toolFor, 55-rested restNote)
+function gatherLine() {
+  const tool = typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
+  return `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}${tool ? ` with your ${tool.name}` : ''}.` + (typeof restNote === 'function' ? restNote() : '');
+}
 function uiGather() {
   gatherBuild();
   const view = curView('gat'), nodeView = view !== 'pack';
@@ -21589,7 +21868,7 @@ function uiGather() {
     const home = homeFamily(), hb = homeBonus(home);
     putText(homeNote, `Home ground: ${MAT[home].n} +${Math.round(hb * 100)}% in ${zoneName(S.zone)}.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars there: +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
     const gathering = S.activity === 'gather', g = gathering ? glint() : null;
-    putText(gNow.what, gathering ? `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}` : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
+    putText(gNow.what, gathering ? gatherLine() : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
     putToggle(gNow.box, 'on', gathering);
     putHidden(gNow.glint, !gathering);
     if (gathering) {
