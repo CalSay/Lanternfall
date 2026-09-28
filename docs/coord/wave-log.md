@@ -796,3 +796,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   reworked to that (writer task). Also: a SECONDARY UPDATE after Core 2.0 redesigns and fleshes out the
   playable characters (the three base classes and six evolutions as characters: looks, personality,
   backstory tied to the lore, how the heroes react to each).
+- Build map written: docs/design/build-map.md (task list with dependencies, models and sizes; ~35 sessions to Season 1; gap found: full building catalogue, camp scene, map growth across 5 regions/outposts -> new WC1 World and Camp 2.0 spec).
