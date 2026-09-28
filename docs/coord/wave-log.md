@@ -818,3 +818,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - CONTAINER RESTART (evening 2026-09-28): CL1 and CB2 agents stopped. CL1 had a near-complete classes-2.md
   (all 8 sections + appendix): saved as WIP 4c46d90 on its branch; relaunched to finish from it. CB2 had
   no work yet: relaunched fresh.
+- OWNER MAP PICK: a HYBRID. A's layout (the top-down 16-bit overworld: geography, forests, cliff, stream,
+  paths) with C's lighting and ambience and C's icons/landmarks. Mood: light in the dark: small warm pools of
+  light that fall off fast (like fireflies and lamps), everything outside them dark and a little spooky;
+  fireflies/motes drifting. Lit progress = pools of light along the road; the unlit land stays in deep
+  shadow (silhouettes only). UX-W1 builds this; MAP0's artist notes (palette-index baking, lamp-box palette
+  swaps, no per-frame work except a few cheap firefly sprites) apply. A short MAP1 refine study (one screen +
+  closeups of the hybrid) comes first so the owner can confirm before W1.
