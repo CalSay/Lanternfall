@@ -293,3 +293,7 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   COAST_OMEN_TEXT {springTide, calmSea, pearlMoon}). Canon: the Keeper is Silas Penrow, writing to Old
   Hallam. R2-3/R2-7 must use these keys. The PB4 writer should know the Keeper's name and the light
   Lurelight foreshadowing. The Codex must settle the "Letters from the Coast" title clash.
+- PB0 + PB4 merged (21d-data-pinnacle.js, 21e-stories-pinnacle.js; checked for fairness caps and
+  timings). Coordinator accepts its gap fills: Lure Song charm 3s, Ash Fall 8s, riders capped, Weight
+  of the Crown at most 1 stack/2s, 8 named Oath sets (levels 10-14) for Boss of the Week, and PIN_POWERS
+  living in 21d until 21c-data-legend.js exists (L1 imports them).
