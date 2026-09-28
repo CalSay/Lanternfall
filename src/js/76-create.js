@@ -51,7 +51,7 @@
     const inner = el('div', 'create-in');
     const h = el('h1', null, mode === 'new' ? 'Who carries the lantern?' : mode === 'mirror' ? 'The mirror shows another path' : 'Choose your path'); h.id = 'createTitle';
     const lede = el('p', 'create-lede', mode === 'new'
-      ? 'You carry the last lantern. Pick who you are, then name yourself.'
+      ? 'You carry one of the last lanterns. Pick who you are, then name yourself.'
       : mode === 'mirror'
         ? 'Pick a new class. Your level, gear and upgrades stay with you.'
         : 'Heroes now have classes. Warden fights like you always have, so one tap keeps things as they are.');

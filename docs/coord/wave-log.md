@@ -530,3 +530,46 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (16 chars, 3 words) kept by the coordinator as the capstone. AP6: the nudge never shows because the sim
   keeps 3 Ready goals (unspent star points); AC3 should give the nudge a reserved row. Owner confirmed fonts
   G+3: Handjet + Barlow Semi Condensed (FONT1 told).
+- FONT1 merged: Handjet (--display, x1.2 via --display-k across 196 rules; stage text TXT_K 1.15, re-bakes when the font loads) and Barlow Semi Condensed (--body). No new clipping vs Pixelify; Barlow wraps less than Plex. Perf overlaps base under heavy load. Follow-up: check variable weights on the live page.
+- F2 merged: 56b rewritten (12 slot jobs, 8 combos incl. Lifeline = tank Front + support Back, 4 Kin, 21
+  Bonds; 33 SYNERGIES with `layer`; caps +40% dmg/member, 20% DR), 56f-bonds.js (S.bond, levels 0.5/3/12/
+  36/150h, 50-130%), 21f-stories-bonds.js shape for LORE7, markMax 8. Accepted: L25 pairs 150% -> 115%
+  (spec 9.1.3); away gathering grows companion Bonds at Hearth x away rate. --targets: P1 and P2 now PASS
+  (Lightkeeper fixed), T1/T3/T14/T18 fail (Ranger fast, Lightkeeper 1.19): BAL3. Coordinator updated the
+  AC2 dormant-track check (bonds/together live now: 79 live). Next: F4 Party UI; F3 is running with
+  formQuick available.
+- OWNER: the Storehouse must scale up quickly (idle game): never 'only worth idling 10 minutes', meaningful but not ridiculous. H3 told to re-derive caps from real rates: Lv 1 holds a full 8 h away session of the best open node; later levels keep pace with the away cap (up to 24 h) and tiers; active play fills a cell in ~1-3 h; upgrades quick early. Spec table (100..10,000) was far too small.
+- OWNER: gathering menus need work; switching should be fluid; fight <-> gather takes too many steps (back
+  to the main screen first). Then: "a general look at overhauling the menus might be wise, down the line".
+  Coordinator review at 360x740: about 2/3 of the Gather tab is header before the first node; stale copy
+  "Your party is fighting"; nothing marks the current or best node; a wall of identical "MINE Go" buttons; no
+  Stop / Back to fight; held without caps.
+  PLAN: UX2 menu overhaul spec (docs only: audit every tab, view and sheet at 360px; information
+  architecture; global navigation incl. the activity pill + quick switcher; patterns for lists, cards,
+  headers, sheets, toasts; per-screen wireframes; a phased build plan). Launch it once the Storehouse, Party
+  screen and achievements screen have merged so the audit covers them. GX1 (the gather rework and quick
+  switcher) becomes UX2's first build task. GX1 brief so far:
+  1. An activity pill in the header, visible inside full-screen menus, showing what you're doing ("Fighting
+     · Zone 37" / "Mining · Copper Vein"); tap: a quick sheet with Fight (your zone), each skill's last node
+     and recent nodes; one tap switches and closes menus.
+  2. Remember the last node per skill; swipe between Mining / Wood / Foraging.
+  3. A "Now gathering" card (node, per hour, held vs cap, time to full, Stop, Back to fight); only the current
+     skill with its next-tier bar; the tool card as a one-row chip; compact tap-to-go rows with a held/cap
+     bar; "Best for you"; lower tiers folded; copy fixed; Pack becomes the Storehouse view.
+- AC3 merged (committed by the coordinator with the owner's explicit approval: the agent's permission
+  checks stopped responding before its commit). 75-deeds-ui.js (hidden tab `deeds`: Deeds, Tracks, Feats,
+  Looks), the Feat card, title picker, 75-stats-ui.js stats wall with Letters|Scientific, registerTab hidden,
+  registerGoal `reserve: 1` (nudge row), deeds.wear() fix for the Deepwell l_moon id clash. Build + check
+  pass after the merge. Follow-ups: A/B perf; AP6 may overshoot 20-60% now; the "top pair" stats tile guesses
+  S.bond.t keys (F2 is merged: verify); hide has no lifetime counter. AC4 hooks: lookIconURL, looksPreview;
+  AC5: featTrophyURL.
+- F4 merged: Party screen (three slot cards Back/Middle/Front with slot jobs and Out of place chips, tap and
+  drag swaps, bench, combos/Kin chips and See all, Bond rows and Bond sheet, Sworn frames, bondLevel toasts,
+  "Old Friend", 75-bonds-ui.js, 60-formation.css). Also renamed the onboarding feature to "Combos and Bonds".
+- F3 merged: planner v3 (pair x order search via formQuick, push score with boss blend w 0.35/0.6, Front-tank
+  rule and a "stuck" rule, autoPlan with event-only re-plans, 6% gain, 300 s dwell, no return within 10 min,
+  pins; bestLineupLater in idle steps; sim --lineup takes 2 companions with slots). --targets 9/20 (T3, T14
+  now pass; T4, T6 fail). SERIOUS: the Lanternmage stalls at the zone 70 boss: benched companions earn no XP
+  and partyLevel() still averages the top 3 companions with a field of 2. Also found: a combat soft-lock
+  (companions stay down forever while a healer hero survives: no kill, no wipe); the hold estimate overrates
+  a hero in Front. F5 launched for these before BAL3.

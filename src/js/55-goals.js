@@ -16,6 +16,8 @@
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
 //   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
+//   reserve optional 1: when the goal has something to show it keeps one row of its own (n >= 3), taking
+//          the place of the lowest other pick, so Ready goals cannot crowd it out (the deeds nudge, AP6)
 // topGoals(n = 3, { now, sticky = true }) -> [{ id, sys, label, pct, ready, go, icon }]
 //   Ready goals first, then the highest pct. Cached for 450 ms. Sticky: goals already shown
 //   keep their place unless a newcomer is clearly closer (no flicker between close values).
@@ -50,7 +52,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -75,13 +77,21 @@ var forgeGoalPicks = 0;
         pick.push(e); count[e.sys] = (count[e.sys] || 0) + 1;
       }
     }
+    // reserve: one row for a reserved goal left out (the lowest-scored other pick makes room)
+    if (n >= 3 && !pick.some(e => e.reserve)) {
+      const r = all.find(e => e.reserve && !pick.includes(e));
+      if (r) {
+        if (pick.length < n) pick.push(r);
+        else { let lo = -1; pick.forEach((e, i) => { if (lo < 0 || e.score < pick[lo].score) lo = i; }); pick[lo] = r; }
+      }
+    }
     // order: ready first, then by score; shown goals keep their old order unless clearly passed
     pick.sort((a, b) => {
       if (a.ready !== b.ready) return a.ready ? -1 : 1;
       if (a.was >= 0 && b.was >= 0 && Math.abs(a.score - b.score) < STICK) return a.was - b.was;
       return b.score - a.score;
     });
-    const list = pick.map(({ score, was, cap: _c, ...e }) => e);
+    const list = pick.map(({ score, was, cap: _c, reserve: _r, ...e }) => e);
     if (sticky) { shown = list.map(e => e.id); cache.clear(); cache.set(n, { at: now, list }); }
     return list;
   };

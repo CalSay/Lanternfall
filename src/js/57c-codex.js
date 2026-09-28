@@ -30,7 +30,7 @@
 //
 // Events emitted: codexLight { light, gain }, codexPage { id, kind: 'half' | 'seal' },
 //   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
-// Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, harvest,
+// Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, bondLevel, harvest,
 //   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, expedBack, omen,
 //   weeklyClaim, achievement, zoneClear, loot, transmuted, crafted.
 // Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
@@ -115,7 +115,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       } else if (!elder) hint = x.exact ? `Beat the ${ZONES[i]} boss (zone ${i + 1}).` : 'A boss guards this page.';
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
-        sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key };
+        sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
+        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Listener
+        lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
     })
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
@@ -164,7 +166,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       return out;
     }
   });
-  // ---------------- 5. Companions: 18 recruited x5; ranks Veteran/Captain/Champion x1; 14 synergies x2 ----------------
+  // ---------------- 5. Companions: 18 recruited x5; ranks Veteran/Captain/Champion x1; 12 combos and Kin x2, 21 Bonds x1 per level ----------------
   const live = () => typeof rosterLive === 'function' && rosterLive();
   page('companions', {
     n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Kindheart', pic: 'char',
@@ -176,10 +178,15 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
           sub: r ? `${ROSTER_RANKS[r.rank | 0]} · Lv ${r.lv}` : '',
           hint: !r ? (x.exact ? ROSTER[id].how : 'Someone may join you.') : rk < 3 ? `Promote ${first(id)} to ${ROSTER_RANKS[rk + 1]}.` : '' });
       }
+      // F2 (formation.md 2): combos and Kin once seen; Bonds by level (1 Met ... 5 Sworn), at least 1 once seen.
+      const GRP = { combo: 'Combos', kin: 'Kin', bond: 'Bonds' };
       for (const s of SYNERGIES) {
-        const got = R().syn[s.id] ? 1 : 0;
-        out.push({ key: 's_' + s.id, n: s.name, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Synergies', syn: s.id,
-          sub: got ? s.parts.map(p => p.text).join(' ') : '', hint: got ? '' : x.exact ? `Field: ${s.needs}.` : 'Try new friends side by side.' });
+        const seen = R().syn[s.id] ? 1 : 0, bond = s.layer === 'bond';
+        const lv = bond && on && typeof bondLevel === 'function' ? safe(() => bondLevel(s.id), 0) : 0;
+        const got = bond ? Math.max(seen, lv) : seen, max = bond ? 5 : 1;
+        out.push({ key: 's_' + s.id, n: s.name, got, max, pts: got * (bond ? 2 : 4), ptsMax: bond ? 10 : 4, grp: GRP[s.layer] || 'Synergies', syn: s.id,
+          sub: got ? (bond && lv ? `${BOND_LV_NAME[lv]} · ` : '') + s.parts.map(p => p.text).join(' ') : '',
+          hint: got >= max ? '' : bond && got ? 'Keep them side by side.' : x.exact ? `Field: ${s.needs}.` : 'Try new friends side by side.' });
       }
       return out;
     }
@@ -371,7 +378,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('synergyChange', ({ gained }) => { for (const id of gained || []) R().syn[id] = 1; dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'legendDrop', 'legendLearn', 'legendRank'])
+  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'legendDrop', 'legendLearn', 'legendRank', 'bondLevel'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------

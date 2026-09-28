@@ -9,8 +9,8 @@
 .nu-cbody { min-width: 0; display: grid; gap: 1px; }
 .nu-eye { font: 600 10px/1.1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .nu-chip .nu-lbl { font: 500 13.5px/1.2 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.nu-cst { font: 600 13px/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
-.nu-more { font: 600 11px/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
+.nu-cst { font: 600 calc(13px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.nu-more { font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--muted); }
 .nu-more:empty { display: none; }
 .nu-more.hot { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
 .nu-chip .nu-chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(2px) rotate(-135deg); }
@@ -35,7 +35,7 @@
 .nu-row.ready .nu-bar > i { background: var(--xp); }
 .nu-go { min-width: 58px; min-height: 44px; padding: 3px 8px; display: grid; justify-items: center; align-content: center; gap: 0; cursor: pointer; border: 2px solid #0B0810; background: var(--panel-2); color: var(--bone); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -3px 0 #1a1420; }
 .nu-go .nu-st { font: 600 10px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
-.nu-go .nu-gol { font: 600 15px/1.1 var(--display); }
+.nu-go .nu-gol { font: 600 calc(15px * var(--display-k))/1.1 var(--display); }
 .nu-row.ready .nu-go { background: var(--ember); color: #1A1420; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 var(--ember-deep); }
 .nu-row.ready .nu-go .nu-st { color: #1A1420; opacity: .75; }
 .nu-go:active { transform: translateY(2px); }

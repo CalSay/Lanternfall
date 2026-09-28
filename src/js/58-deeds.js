@@ -758,7 +758,7 @@ let deeds, deedBonus, wearGet;
     return nearList()[0] || null;
   };
   registerGoal({
-    id: 'deeds-near', sys: 'deeds', cap: 1, prio: -1,
+    id: 'deeds-near', sys: 'deeds', cap: 1, reserve: 1, prio: -1,
     pct: () => { const x = nudgePick(); return x ? Math.max(0.01, Math.min(T.nearMax, x.pct)) : null; },
     label: () => { const x = nudgePick(); return x ? x.label : ''; },
     icon: () => { const x = nudgePick(), t = x && TR[x.id], g = t && GR[t.g]; return { ic: g ? g.ic : ['banner', '#F2C14E'] }; },
@@ -812,8 +812,8 @@ let deeds, deedBonus, wearGet;
     if (id == null) {
       if (slot === 'flame' || slot === 'trail') { w[slot] = null; if (S.deep && S.deep.eq) S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = null; }
       else w[slot] = slot === 'frame' ? 'none' : null;
-    } else if (LK[id]) {
-      if (LK[id].slot !== slot || !owned(id)) return false;
+    } else if (LK[id] && LK[id].slot === slot) {   // (an id in another slot may still be a Deepwell colour: 'l_moon')
+      if (!owned(id)) return false;
       w[slot] = id;
     } else if ((slot === 'flame' || slot === 'trail') && deepCos(slot === 'flame' ? 'lantern' : 'trail', id)) {
       w[slot] = null; S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = id;   // the Deepwell's own meaning, unchanged

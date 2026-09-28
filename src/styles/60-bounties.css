@@ -9,7 +9,7 @@
 .ach.got { opacity: 1; border-color: var(--gold); }
 .ach .ic { width: 32px; height: 32px; }
 .ach .ic img { width: 22px; height: 22px; }
-.ach-nm { font: 600 14px/1.1 var(--display); }
+.ach-nm { font: 600 calc(14px * var(--display-k))/1.1 var(--display); }
 .ach-desc { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .ach-fx { font-size: 12px; color: var(--r-legendary); }
 .ach .bar { height: 4px; margin-top: 3px; }

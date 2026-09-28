@@ -3,7 +3,7 @@
 //
 // The first kill of a region boss (REGIONS[i].z1, 22-data-regions.js) relights that region's Great
 // Lantern, once per save:
-//   emit('greatLantern', { n, region, zone, name, head, text, note, quiet, rewards })
+//   emit('greatLantern', { n, region, zone, name, head, text, note, quiet, rewards, say })
 //     n: 1 for the Hollow, 2 for the Coast. head/text/note: COAST_STORY[region.beat] (21b-stories-coast).
 //     quiet: true for a save that was already past the boss before this system existed (it gets one
 //       bell line through emit('whatsNew') instead of the card).
@@ -28,7 +28,9 @@ let lanternSync, lanternRoad;
       n: i + 1, region: r.id, zone: r.z1, name: r.lantern,
       head: (beat && beat.head) || `${r.lantern} burns again.`,
       text: (beat && beat.text) || '', note: (beat && beat.note) || '',
-      quiet: !!quiet, rewards: []
+      quiet: !!quiet, rewards: [],
+      // say: [{ id, name, line }] from recruited characters (the beat's own, plus Hesketh's for the Hollow: LORE3)
+      say: typeof storySay === 'function' ? storySay(Object.assign({}, beat && beat.say, !i && typeof HOLLOW_LANTERN_SAY === 'object' ? HOLLOW_LANTERN_SAY : null)) : []
     };
     emit('greatLantern', e);
     if (quiet) {
