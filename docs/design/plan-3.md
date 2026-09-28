@@ -75,7 +75,7 @@ O1-O4, L3, L6. Oath line-up rules use slots.
 PB1-PB3, PB5, the Lantern Road map, drawn cosmetics, D4 (the Region 3 spec).
 
 ### Wave 7: owner-gated
-F1 the Lantern Festival: it must land before December, so it may start in parallel with wave 5 or 6.
+LF1 the Lantern Festival: it must land before December, so it may start in parallel with wave 5 or 6.
 D5 the companion endgame, now built on Bonds.
 
 ## 5. Rules for every wave

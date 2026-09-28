@@ -390,3 +390,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   free starter; applicants every 8h (max 3 waiting); off-skill half share; Spiced Broth +5% within +15% camp
   cap; the rod covers Tide Pools (R2 decides); cold start = no progress and no S.camp. Wave 2 merge order:
   H2, H1, H3. The Map Room hint goes with H1.
+- D6 formation.md merged. Coordinator accepts all section-9 recommendations: hero floor; damage-only trioX
+  1.35 phased in over zones 8-12; old named synergies become Bonds (old saves seeded to level 3/4); circle
+  synergies become 2-companion Kin (Hedgefolk gold +5%); migration keeps the planner's best 2 and never pulls
+  from the bench; the 12 new Bonds; lanes dropped (cells keep lane: 1). World raid: raiders.dps keeps its
+  formula and shape; late values read about 10% lower. That is a value drift, not a shape change, so it is
+  accepted without touching the online layer. The festival is renamed LF1 (F1 is the formation core).
+  Wave 2 formation: F1 first; F2, F3, F4 in parallel once F1's API is in; then BAL3.
