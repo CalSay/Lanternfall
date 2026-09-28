@@ -769,3 +769,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   ENCHANTING is the method of applying the buff items (socket items) to gear. Buff items unlock in REGION 2.
   RESOURCES ARE GATED BY REGION (coordinator: natural fit = material tier N from region N across 5 regions;
   balance around it; existing saves keep every material/item they hold even if above their region).
+- OWNER: evolution names: Warrior -> Reaver (damage) / Warden (utility); Ranger -> Venomstalker (damage over
+  time) / Trapper (utility); Mage -> Warlock (damage) / Priest (utility). Each evolution must feel special and
+  clearly stronger than its base, and change how the game plays. MORE MATERIAL TIERS so crafting stays
+  meaningful (coordinator recommends 3 per region, 15 in all, with old tiers mapped without loss; RG1 decides).
