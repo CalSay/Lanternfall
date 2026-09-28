@@ -765,3 +765,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   earlier idea: poison); Mage -> Priest (utility: holy, heals) or Warlock (damage). Existing saves migrate
   without loss (Warden -> Warrior with the Warden evolution granted; Ranger -> Ranger; Lanternmage -> Mage;
   Lightkeeper -> Mage with Priest granted). Names proposed to the owner; CL1 briefs from this.
+- OWNER (gear 2.0): Warrior gear = metals + leather; Ranger = wood + leather; Mage = wood + cloth.
+  ENCHANTING is the method of applying the buff items (socket items) to gear. Buff items unlock in REGION 2.
+  RESOURCES ARE GATED BY REGION (coordinator: natural fit = material tier N from region N across 5 regions;
+  balance around it; existing saves keep every material/item they hold even if above their region).
