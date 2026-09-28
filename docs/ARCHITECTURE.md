@@ -41,6 +41,8 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
 | 57c-codex.js | core | the Codex and Lantern Light (docs/design/codex.md): pages read from other systems' state, recorders for what nothing else keeps, Light (only rises), milestones, capped Page Seal bonuses, the Blessing gate; `codexPages()`, `codexLight()`, `codexBonus(key)`, `codexHas(id)`, `codexTitle()` (state in `S.codex`; UI: 75-codex-ui.js, a sheet opened from the Journal card, the Library and `emit('codexOpen', { page })`) |
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
+| 59-combat.js | core | party combat (Stage C): packs of 3 foes, party HP/armour/shields, threat and reach, healing, crowd control, knock-outs, wipes (retreat one zone, push back), the hold estimate for away gains and auto-push; `partyCombatOn()`, `combatTick`, `cbSpawn`, `cbStrike`, `combatUnits()`, `combatFoes()`, `partyHoldEstimate(z)`, `partyHolds(z)`, `cbBossReady()`, knobs `COMBAT_TUNE`, counters `CB_STATS` (state in `S.combat`) |
+| 59b-enemies.js | core | foe behaviours by zone type (dives, archers, bruisers, spore clouds, slams, healers), elites, boss mechanics and telegraphs, parry/dodge (`resolveParry(source)`, `cbTelegraph()`), knobs `ENEMY_TUNE`, data `FOE_BEH` |
 | 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
@@ -199,8 +201,16 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `classChosen` | `{ cls, from }` (from: the class left, null on the first choice) |
 | `retooled` | `{ legacy: { weapon, helm }, swap, from }` (41-items `retoolItems`: old gear became class gear) |
 | `synergyChange` | `{ active, gained, lost }` (after a field change) |
+| `packSpawn` | `{ foes }` (59-combat: a new pack, or a boss and its adds; `mob` is the foe the stage shows) |
+| `unitHit` / `unitHeal` | `{ key, amount, kind, foe, blocked, shield }` / `{ key, amount, shield }` (party member hit or healed; kind hit, ranged, heavy, cloud, slam, dive, poison, burn) |
+| `unitDown` / `unitUp` / `unitAbility` | `{ key }` / `{ key, hp }` / `{ key, id }` (knocked out; stands up between packs or after a wipe; a companion's signature ability) |
+| `foeDown` | `{ mob, src }` (one foe of the pack died; `kill` fires once per pack) |
+| `wipe` | `{ zone, to, boss, arena }` (every member down: retreat one zone, a failed boss attempt, or a Deepwell pause) |
+| `telegraphStart` / `telegraphResolve` | `{ kind, dur, target, foe }` / `{ kind, result, by }` (59b: boss wind-ups; kind heavy, cloud, dive, heal; result parry, dodge, hit, interrupt, heal) |
 | `unlock` / `onboardStep` | `{ id, tab, view, quiet }` (a feature opened; id `'*'` = all) / `{ id }` (a guide step done), 55-onboard |
 | `menuView` / `createDone` (UI) | `{ tab, view }` (70-ui: a menu view shows) / `{ mode }` (76-create closed) |
+
+Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: copy what you keep.
 
 | `renown` | `{ n, total, source }` |
 | `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
@@ -229,7 +239,8 @@ node tools/build.mjs                         # build dist/lanternfall.html
 node tools/check.mjs                         # dist syntax + headless smoke test + save migration
 node tools/sim.mjs --policy mixed --hours 2 --seed 1   # balance timeline (policy fight|mixed, --every MIN)
 node tools/sim.mjs --days 30 --class warden          # normal play over days (check-ins + away gains), docs/design/pacing.md
-node tools/sim.mjs --targets                          # PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md) and the recruit table; retune with --pace/--tune/--unlock k=v
+node tools/sim.mjs --targets                          # PASS/FAIL for T1-T18, D1, P1-P4 (docs/design/pacing.md, party-and-classes.md 9) and the recruit table; retune with --pace/--tune/--unlock/--combat/--enemy k=v
+node tools/sim.mjs --class warden --lineup hesketh,wren,pip --t5 1 --t6 1 --t8 1   # a fixed line-up; party combat forks at 2h (T5 wipes, T6 hold zones, T8 offline vs live)
 node tools/perf.mjs --quick                  # frame, load, tap and memory benchmark vs the budget (docs/design/perf.md)
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
 ```

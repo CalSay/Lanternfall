@@ -34,7 +34,9 @@ let partyAcc = 0, partyTick = 0;
 let arena = null;
 
 function spawn() {
-  if (arena) { const m = arena.spawn(); if (m) mob = m; return; }
+  if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
+  // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
+  if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = Math.max(5, 30 + bonus('bossTime')); return; }
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
@@ -54,20 +56,26 @@ const addFloat = (txt, color, big, x, y) => emit('float', { txt, color, big, x, 
 const burst = (x, y, color, n, spd) => emit('burst', { x, y, color, n, spd });
 
 // at: optional {x, y} stage position for the damage number (taps); label overrides its text.
+// strikeSrc: 'hero' while heroSwing strikes, else 'party' (party combat credits threat and damage by it).
+let strikeSrc = 'party';
 function strike(amount, color, big, at, label) {
   const tg = target();
   if (tg === 'world') { addRaidDmg(amount); addFloat(label || fmt(amount), color, big, at ? at.x : 0.72 + (Math.random() - 0.5) * 0.14, at ? at.y : 0.38); emit('wyrmHit'); burst(0.7, 0.5, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5); return; }
-  if (tg !== 'mob' || !mob || mob.dead) return;
+  if (tg !== 'mob' || !mob || mob.dead) { if (tg === 'mob' && partyCombatOn()) cbStrike(amount, strikeSrc, at, label, color, big); return; }
+  if (partyCombatOn()) { cbStrike(amount, strikeSrc, at, label, color, big); return; }
   mob.hp -= amount; mob.hit = 0.08;
   addFloat(label || fmt(amount), color, big, at ? at.x : undefined, at ? at.y : undefined);
   burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   if (mob.hp <= 0) kill();
 }
 function heroSwing(base, tap, at) {
-  const crit = Math.random() < critChance();
+  const hawk = typeof hawkCrit === 'function' && hawkCrit();   // Hawk Eye (Constellations): a foe's first hit crits
+  const crit = Math.random() < critChance() || hawk;
   const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
+  strikeSrc = 'hero';
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
+  strikeSrc = 'party';
   return { crit, dmg };
 }
 // A player tap on the stage. at = {x, y} stage fractions for the damage number.
@@ -83,16 +91,22 @@ function tapNode() {
 function kill() {
   if (arena && mob.deep) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
   mob.hp = 0; mob.dead = 0.001;
-  const g = mob.gold, z = S.zone, tier = zoneTier(z);
+  const g = mob.gold;
   S.gold += g; S.totalGold += g; S.totalKills++;
   addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
   burst(0.68, 0.62, mob.pal[1] || mob.pal[5] || mob.pal[3], 14);
-  gainXp(mob.xp);
-  let ess = mob.boss ? 3 : 0;
+  killPack(mob, g);
+}
+// The rewards of a kill after its gold: XP, essence, the boss and zone clear, 'kill'. Party combat
+// (59-combat.js) calls it once per pack with the lead foe and the pack's gold (paid per foe).
+function killPack(m, g) {
+  const z = S.zone, tier = zoneTier(z);
+  gainXp(m.xp);
+  let ess = m.boss ? 3 : 0;
   const ch = essChance(); ess += Math.floor(ch) + (Math.random() < ch % 1 ? 1 : 0);
   if (Math.random() < gear().essExtra) ess++;
   if (ess) { S.mats.ess[tier - 1] += ess; addFloat(`+${ess} ${MAT.ess.short[tier - 1]} Essence`, MAT.ess.col[tier - 1], false, 0.68, 0.2); }
-  if (mob.boss) {
+  if (m.boss) {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
@@ -102,7 +116,7 @@ function kill() {
   } else if (S.zone === S.maxZone) {
     S.kills = Math.min(10, S.kills + 1);
   }
-  emit('kill', { mob, zone: z, gold: g, ess, tier });
+  emit('kill', { mob: m, zone: z, gold: g, ess, tier });
   respawn = 0.45;
 }
 
@@ -152,7 +166,10 @@ function tick(dt) {
     heroTimer -= dt;
     if (heroTimer <= 0) { heroTimer = 0.6; emit('lunge'); }
   } else {
-    const pd = compDps() * (tg === 'world' ? raidMult() : 1);
+    // Party combat (59-combat.js): companions, foes, HP, healing and deaths; the hero still swings below.
+    const pc = tg === 'mob' && partyCombatOn();
+    if (pc) combatTick(dt);
+    const pd = pc ? 0 : compDps() * (tg === 'world' ? raidMult() : 1);
     if (pd > 0) {
       if (tg === 'world') addRaidDmg(pd * dt);
       else if (mob && !mob.dead) { mob.hp -= pd * dt; if (mob.hp <= 0) kill(); }
@@ -162,15 +179,15 @@ function tick(dt) {
     heroTimer -= dt;
     if (heroTimer <= 0) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
-      if (tg === 'world' || (mob && !mob.dead)) { emit('lunge'); heroSwing(heroAtk(), false); }
+      if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()))) { emit('lunge'); heroSwing(heroAtk(), false); }
     }
-    if (tg === 'mob' && mob && mob.boss && !mob.dead && !arena) {
+    if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
       bossTime -= dt;
       if (bossTime <= 0) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
-    if (mob && mob.dead) mob.dead += dt;
-    if (mob) mob.born += dt;
-    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (!arena && S.auto && bossReady() && totalDps() > failDps * 1.15) fightBoss = true; spawn(); } }
+    if (mob && mob.dead && !pc) mob.dead += dt;
+    if (mob && !pc) mob.born += dt;
+    if (respawn > 0) { respawn -= dt; if (respawn <= 0) { if (!arena && S.auto && bossReady() && totalDps() > failDps * 1.15 && cbBossReady()) fightBoss = true; spawn(); } }
     if (!mob) spawn();
     if (mob && mob.hit > 0) mob.hit -= dt;
   }
@@ -233,15 +250,18 @@ function awayBase(r) {
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
   // The best zone the party can farm, at most S.zone (BAL1: a zone it cannot clear earns nothing).
-  const baseDps = dps / boost, z = farmableZone(S.zone, baseDps);
-  const kills = baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
-  const gold = kills * mobGold(z), tier = zoneTier(z), ess = Math.floor(kills * essChance());
+  const baseDps = dps / boost, pc = partyCombatOn();
+  // Party combat (C3): the closed-form hold estimate (59-combat.js partyHoldEstimate, spec 4.11) picks
+  // the highest zone the party holds (at most S.zone) and its pack rate; away play earns awayRate of it.
+  const est = pc ? partyHoldEstimate(S.zone) : null, z = pc ? est.zone : farmableZone(S.zone, baseDps);
+  const kills = pc ? t * est.packsPerSec * COMBAT_TUNE.awayRate * boost : baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
+  const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = Math.floor(kills * essChance());
   S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
   if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: z, lines: r.lines });
-  r.note = `Your party kept fighting in ${zoneName(z)}.`;
+  r.note = pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
   return r;
 }

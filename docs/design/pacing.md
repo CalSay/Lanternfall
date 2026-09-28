@@ -223,3 +223,49 @@ earning nothing. Recruits already on the roster stay.
 | Empty check-ins in Region 2 | `hpLate` down with `compXpMax` down (more zones and levels a day) |
 | Recruits | `ROSTER` route `zone`/`kills`, `UNLOCK_TUNE` (`from`, `kills`, Renown) |
 | More away hours (Watchtower, Codex) | companion XP is mostly away XP: raise `compXpMax` |
+
+## 10. Stage C: party combat (2026-09-28)
+
+Party combat (59-combat.js, 59b-enemies.js) is on for every save. Knobs: `COMBAT_TUNE` (59-combat),
+`ENEMY_TUNE` (59b); try them with `--combat k=v` / `--enemy k=v`. `--targets` now also runs the party
+combat targets (party-and-classes.md 9: T4-T9, T11-T14, T18) with fixed line-ups (`--lineup ids`).
+
+### How the pace was kept
+
+- **Damage stays anchored to today's formulas.** A companion swings at its role speed for
+  `charDps x (1 - abF) / speed`; its signature ability, on a real cooldown, deals the rest as a burst
+  (`charDps x abF x cooldown`), so average damage is unchanged whatever the cooldown. The hero keeps
+  `heroSwing`. Overkill on one pack foe carries to the next (a pack is one old foe split three ways).
+- **A pack is one old foe for the economy.** Pack HP and gold are `packHp` / `packGold` (1.2, spec) of
+  one foe; `kill` fires once per pack (bounties, drops, bestiary, companion XP keep their pace);
+  `S.kills` and `S.totalKills` count packs. Companion XP per kill is x`packHp` (56-roster `killWorth`).
+- **Supports heal instead of the damage stand-in** (`supEq` is gone from damage; it still ranks them
+  for autoField). autoField fields a support only when the party could not hold its max zone without
+  one (`fieldSupport` 2), so early parties keep their damage.
+- **Survival scales with the party**: HP and heals use the geometric mean of a member's power and the
+  party's average (`hpPow`, clamp 0.15-6x), so the zone curve (set by damage) and survival stay in step.
+
+### Knobs (spec -> tuned)
+
+| Knob | Spec | Tuned | Why |
+|---|---|---|---|
+| `atk` (foe hit, x mobHp) | 0.12 | 0.006, softer below zone 12 (`easeZone`, `easePow` 1.5) | this game's mobHp curve is not 1.55^z; tuned so the push zone holds (T5 0 wipes) and a party without a support wipes a zone or two higher |
+| `armourX` (physical vs armoured) | 0.5 | 0.85 | 0.5 cost physical classes 20-40% to zone 15 (T3) |
+| `lmSplash` (Lanternmage splash) | 0.5 | 0.15 | 0.5 made the Lanternmage 0.73 of the median (T3) |
+| `packHp` / `packGold` | 1.2 | 1.2 | one foe (1.0) ran T2 to 25 |
+| `heal` (support heal / s, x power) | 1.2 | 0.8 | T6: a support worth 2-4 zones of hold |
+| `estSafety` | - | 1.25 | the hold estimate keeps headroom for elite and spore-heavy packs |
+| `awayRate` (away share of the estimate) | 0.75 | 0.75 | same as before (P2 30-34) |
+| `bossGate` / `bossWait` | - | 1 / 600s | auto-challenge only when the boss would die in the timer (T7 54%, was 22-33%) |
+| `SYN_TUNE.real` | - | 0 | Mark and Cleave as real hits cost 10-20% pace (a mark on a third of a foe dies with it); the averages stay until C4 shows packs |
+| Elder Wraith heal (`wraithHeal`, `wraithEvery`) | 20% / 10s | 10% / 12s | every region boss (35, 70) is a Wraith; 20% pushed P1 past day 8 |
+| Boss timer | 45s | 30s (unchanged) | 45s would move every boss earlier |
+
+### What the sim shows (`--targets`, seed 1, after the Stage C merge)
+
+T1 9/12/18 (all four classes), T2 22-24, T3 0.92-1.13, T10 10-12m, P1 day 5.3-7.3, P2 day 28-34,
+T5 0 wipes, T7 54%, T8 0.89, T9 1.13 / 1.30, T13 100%, T14 99%. Misses: D1 18-19 (accepted in BAL1),
+P4 Warden 4 (BAL1 had Lightkeeper 5; noisy by a check-in), T16 Lanternmage Epic day 4.3 (band 2-4),
+T4 35% (edge of 20-35), T6 no-tank 0 zones lower (no-support 3), T11 25 min (BAL1's slower catch-up),
+T12 attrition line-up does not reach zone 20 in 4h, T18 zone 5 in 3.7-5 min (the BAL1 early curve is
+faster than the spec's 6-12). See the Stage C report for the follow-ups.
