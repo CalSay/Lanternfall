@@ -14,11 +14,12 @@
 //
 // Exposed names:
 //   bestLineup(opts) -> { field, cells, score, why, parts } | null (no roster yet)
-//     opts.zone    zone to plan for (default: your best zone for 'push', the current zone for 'farm')
+//     opts.zone    zone to plan for (default: the next zone past your best for 'push', the current zone for 'farm')
 //     opts.goal    'push' (default: hold the zone, most damage) | 'farm' (most gold per second)
 //     opts.filter  fn(id) -> bool | [ids] | { circle } | { role } (e.g. circle-only for the Oaths)
 //     opts.key     cache key for a function filter (without it a function filter is not cached)
 //     opts.by      'now' (default: today's levels) | 'potential' (levels once caught up; autoField)
+//     opts.boss    push only: count the zone boss (default true: a Front tank for its heavy hit)
 //     parts: { zone, goal, dps, holds, margin, goldPerSec, synergies: [{ id, name, strength }],
 //              reasons: [text], foe, current: { score, dps, holds } | null, gain, same, cand }
 //   lineupScore(field, opts) -> { score, dps, holds, margin, goldPerSec, cells, synergies } (checks, UI)
@@ -38,9 +39,11 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
     synBonus: 0.03,       // tie-break per active synergy, x its strength (Common Cause, Bond)
     synMax: 0.08,         // at most +8%: a synergy wins when damage is close, never against a big gap
     behBonus: 0.03,       // foe behaviours the estimate does not model (a Front tank vs divers, a stun vs Wraith healers)
-    failBase: 0.2, failMargin: 0.3,   // a field that does not hold keeps 20-50% of its score (by sustain)
+    bossTank: 0.35,       // push: a field with no tank in Front scores 35% less (the zone boss's heavy hit; the
+                          //   estimate models packs only; without this, lightkeeper runs stalled at a boss)
+    zoneX: 1.55,          // push: a field's score drops by this for each zone short of the target it holds
     farmFail: 0.1,        // farming: a field that does not hold is worth a tenth
-    needGap: 0.05,        // when nothing holds, a role is a reason when the best field without it has 5% less sustain
+    needGap: 0.05,        // (unused since held zones decide the reasons)
     hearthTop: 4,         // Hearth cells are tried for this many of the best fields
     deep: 6,              // fields per make-up (with or without a tank, a support) that get the full estimate
     lvStep: 5             // cache: levels in steps of 5
@@ -98,15 +101,19 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
   }
 
   // ---------------- one field ----------------
+  let bossNow = false;   // set per call: push plans also face the zone boss (see T.bossTank)
   // Scores a field with cells: the hold estimate at zone z, today's synergies, the zone's foes.
   function measure(field, cells, z, goal) {
     const p = P(), f0 = p.field, c0 = p.cells;
     p.field = field.slice(); p.cells = cells;
     try {
-      let dps = 0, holds = true, margin = 99, gps = 0;
+      // The estimate scans z down to z - 10 and reports the highest zone this field holds.
+      let dps = 0, holds = true, margin = 99, gps = 0, held = z;
       if (typeof partyHoldEstimate === 'function') {
-        const e = partyHoldEstimate(z, { one: true });
-        dps = e.dps; holds = !!e.holds; margin = e.margin; gps = e.goldPerSec;
+        const e = partyHoldEstimate(z);
+        dps = e.dps; margin = e.margin; gps = e.goldPerSec;
+        held = e.holds && e.zone >= z - 10 ? e.zone : z - 11;
+        holds = held >= z;
       } else {
         dps = heroDps() + field.reduce((a, k) => a + charDps(k), 0); gps = dps;
       }
@@ -116,11 +123,14 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
       let behF = 1;
       if (fk === 'bat' && field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2)) behF += T.behBonus;
       if (fk === 'wraith' && field.some(k => STUNS[k])) behF += T.behBonus;
-      const m = Math.max(0, Math.min(1, margin));
+      const frontTank = (roleOf('hero') === 'tank' && heroColOf() === 2) || field.some(k => R(k).role === 'tank' && cells[k] && cells[k].col === 2);
+      if (bossNow && !frontTank) behF *= 1 - T.bossTank;
+      // push: damage, x zoneX for each zone short of z the field holds (a zone is about 1.55x the foe
+      // HP), so a field that holds more zones wins unless it is far weaker. farm: gold per second there.
       const base = goal === 'farm' ? gps : dps;
-      const holdF = holds ? 1 : goal === 'farm' ? T.farmFail : T.failBase + T.failMargin * m;
+      const holdF = goal === 'farm' ? (holds ? 1 : T.farmFail) : Math.pow(T.zoneX, held - z);
       const score = Number.isFinite(base) ? base * holdF * synF * behF : 0;
-      return { field: field.slice(), cells, score, dps, holds, margin, goldPerSec: gps, synergies: syn };
+      return { field: field.slice(), cells, score, dps, holds, held, margin, goldPerSec: gps, synergies: syn };
     } finally { p.field = f0; p.cells = c0; }
   }
 
@@ -188,11 +198,13 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
       const s = lacking(test); if (s == null) return;
       const w = evals.find(e => e.score === s && !e.field.some(test));
       // a reason only when the hold estimate says so: without it the zone does not hold (or holds much worse)
-      if (w && ((!w.holds && best.holds) || (!best.holds && w.margin < best.margin * (1 - T.needGap)))) out.push(text);
+      if (w && (w.held < best.held || (!w.holds && best.holds))) out.push(text);
     };
     need(k => R(k).role === 'tank', 'tank');
     need(k => R(k).role === 'support', 'healer');
     if (out.length) out.splice(0, out.length, `a ${out.join(' and a ')} for the ${foes}`);
+    // a tank the packs do not need, fielded for the boss's heavy hit
+    else if (bossNow && best.field.some(k => R(k).role === 'tank') && roleOf('hero') !== 'tank' && lacking(k => R(k).role === 'tank') != null) out.push('a tank for the boss');
     if (fk === 'bones' || fk === 'golem') need(k => R(k).role === 'caster', 'a caster for the armour');
     if (fk === 'wraith') need(k => !!STUNS[k], 'a stun for the healers');
     return out.slice(0, 2);
@@ -210,15 +222,16 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
   let cache = new Map(), cacheFor = null;
   function sigOf(o, z, goal, by) {
     const step = Math.max(1, T.lvStep);
-    let s = [heroCls(), z, goal, by, o.key || (typeof o.filter === 'function' ? '' : JSON.stringify(o.filter || null)), S.L, Math.floor((S.blade || 0) / 10)].join('|') + '|';
+    let s = [heroCls(), z, goal, by, bossNow, o.key || (typeof o.filter === 'function' ? '' : JSON.stringify(o.filter || null)), S.L, Math.floor((S.blade || 0) / 10)].join('|') + '|';
     for (const k of rosterList()) { const r = charRec(k); s += k + Math.floor(r.lv / step) + '.' + r.rank + '.' + r.wpn + '.' + r.trk + (onExped(k) ? 'x' : '') + ','; }
     return s;
   }
   bestLineup = opts => {
     if (!(typeof rosterLive === 'function' && rosterLive())) return null;
     const o = opts || {}, goal = o.goal === 'farm' ? 'farm' : 'push', by = o.by === 'potential' ? 'potential' : 'now';
-    const z = Math.max(1, Math.floor(o.zone || (goal === 'farm' ? S.zone : S.maxZone) || 1));
+    const z = Math.max(1, Math.floor(o.zone || (goal === 'farm' ? S.zone : (S.maxZone || 0) + 1) || 1));
     const cacheable = typeof o.filter !== 'function' || !!o.key;
+    bossNow = goal === 'push' && o.boss !== false;
     if (cacheFor !== S) { cache = new Map(); cacheFor = S; }
     const sig = cacheable ? sigOf(o, z, goal, by) : null;
     let res = sig ? cache.get(sig) : null;
@@ -243,18 +256,19 @@ let AF_TUNE, bestLineup, lineupScore, applyLineup;
     const f0 = (P().field || []).filter(k => isRecruited(k)).slice(0, 3), c0 = P().cells || {};
     const same = sameSet(f0, b.field) && sameCells(c0, b.cells, ['hero'].concat(b.field));
     let current = null;
-    if (same) current = { score: b.score, dps: b.dps, holds: b.holds };
-    else try { const m = withLevels(by, f0, () => measure(f0, c0, z, goal)); current = { score: m.score, dps: m.dps, holds: m.holds }; } catch (e) {}
+    if (same) current = { score: b.score, dps: b.dps, holds: b.holds, held: b.held };
+    else try { const m = withLevels(by, f0, () => measure(f0, c0, z, goal)); current = { score: m.score, dps: m.dps, holds: m.holds, held: m.held }; } catch (e) {}
     return {
       field: b.field.slice(), cells: JSON.parse(JSON.stringify(b.cells)), score: b.score, why: whyLine(b, res.rs, goal),
-      parts: { zone: z, goal, by, dps: b.dps, holds: b.holds, margin: b.margin, goldPerSec: b.goldPerSec, synergies: b.synergies.slice(), reasons: res.rs.slice(),
+      parts: { zone: z, goal, by, dps: b.dps, holds: b.holds, held: b.held, margin: b.margin, goldPerSec: b.goldPerSec, synergies: b.synergies.slice(), reasons: res.rs.slice(),
         foe: foeKey(z), current, gain: current && current.score > 0 ? b.score / current.score : null, same, cand: res.cand }
     };
   };
   lineupScore = (field, opts) => {
     const o = opts || {}, goal = o.goal === 'farm' ? 'farm' : 'push';
-    const z = Math.max(1, Math.floor(o.zone || (goal === 'farm' ? S.zone : S.maxZone) || 1));
+    const z = Math.max(1, Math.floor(o.zone || (goal === 'farm' ? S.zone : (S.maxZone || 0) + 1) || 1));
     const f = (field || []).filter(k => isRecruited(k)).slice(0, 3);
+    bossNow = goal === 'push' && o.boss !== false;
     return withLevels(o.by, f, () => measure(f, o.cells || placeAll(f), z, goal));
   };
   applyLineup = res => {

@@ -107,11 +107,20 @@
   // hold) and applies it only on "Use this line-up". Planned at most every few seconds, cached by 56d.
   let luRes = null, luT = -1e9, luOpen = false, luSig = '', luField = null, luCells = null;
   const luOk = () => typeof bestLineup === 'function' && live() && rosterList().length >= 1;
-  const luPlan = force => {
-    const t = performance.now();
-    if (!force && luRes && t - luT < 5000) return luRes;
-    luT = t;
+  // Background refreshes run in their own task (never inside a ui() pass, so opening the tab stays
+  // smooth); a tap on the button or a manual move plans at once.
+  let luQueued = false;
+  const luRun = () => {
+    luT = performance.now();
     try { luRes = bestLineup({ goal: 'push' }); } catch (e) { luRes = null; console.error('[lanternfall] bestLineup', e); }
+    return luRes;
+  };
+  const luPlan = force => {
+    if (force) return luRun();
+    if ((!luRes || performance.now() - luT >= 5000) && !luQueued) {
+      luQueued = true;
+      setTimeout(() => { luQueued = false; if (formRefs && formRefs.why.isConnected) { luRun(); luSig = ''; try { updateWhy(); } catch (e) {} } }, 60);
+    }
     return luRes;
   };
   const pctTxt = g => { const p = Math.round((g - 1) * 100); return p > 0 ? `+${p}%` : `${p}%`; };
@@ -119,13 +128,14 @@
     const r = formRefs; if (!r) return;
     putHidden(r.best, !luOk());
     if (!luOk()) { r.why.hidden = true; r.prev.hidden = true; return; }
-    const moved = luField !== P().field || luCells !== P().cells;   // a manual move: plan again now
+    const moved = !!luRes && (luField !== P().field || luCells !== P().cells);   // a manual move: plan again now (the pick is cached, so this is cheap)
     luField = P().field; luCells = P().cells;
     const b = luPlan(moved);
     if (!b) { r.why.hidden = true; return; }
     // The gain in the words of the preview: damage when yours holds too, else the hold itself.
     const g = b.parts.gain, cur = b.parts.current;
-    const more = !g || g <= 1.005 || !cur ? '' : cur.holds || !b.parts.holds ? ` ${pctTxt(b.parts.dps / Math.max(1e-9, cur.dps))} damage over yours.` : ` Yours cannot hold zone ${b.parts.zone}.`;
+    const dz = cur ? (b.parts.held || 0) - (cur.held || 0) : 0;
+    const more = !g || g <= 1.005 || !cur ? '' : dz >= 10 ? ' Yours cannot hold these zones.' : dz > 0 ? ` It holds ${dz} more zone${dz === 1 ? '' : 's'} than yours.` : b.parts.dps > cur.dps * 1.005 ? ` ${pctTxt(b.parts.dps / Math.max(1e-9, cur.dps))} damage over yours.` : '';
     const t = b.parts.same ? `Best line-up: ${b.why}. You have it.` : `Best line-up: ${b.why}.` + more;
     setT(r.why, t); r.why.hidden = false;
     putToggle(r.best, 'go', !b.parts.same && !!g && g > 1.02);
@@ -145,7 +155,7 @@
     const now = field(), sig = JSON.stringify([b.field, b.cells, b.why, now, cellsNow(), Math.round((b.parts.gain || 0) * 100)]);
     if (sig === luSig) return; luSig = sig;
     box.textContent = ''; box.hidden = false;
-    box.append(el('b', 'lu-t', `Best line-up for zone ${b.parts.zone}`), el('p', 'lu-line', b.why + '.'));
+    box.append(el('b', 'lu-t', `Best line-up to push zone ${b.parts.zone}`), el('p', 'lu-line', b.why + '.'));
     const ins = b.field.filter(k => !now.includes(k)), outs = now.filter(k => !b.field.includes(k));
     const ch = el('div', 'lu-ch');
     if (b.parts.same) ch.append(el('span', 'lu-same', 'Your line-up is already the best one.'));
@@ -168,7 +178,7 @@
     const p = b.parts, cur = p.current;
     const stats = el('p', 'note lu-stats');
     stats.textContent = (cur && !p.same ? `Damage ${fmt(cur.dps)} → ${fmt(p.dps)}` + (p.gain ? ` (${pctTxt(p.dps / Math.max(1e-9, cur.dps))})` : '') + '. ' : '') +
-      (p.holds ? `Holds zone ${p.zone}.` : `Cannot hold zone ${p.zone} yet. This is the toughest three.`);
+      (p.holds ? `Holds zone ${p.zone}.` : p.held >= 1 ? `Holds zone ${p.held}, not ${p.zone} yet.` : `Cannot hold zone ${p.zone} yet.`);
     box.append(stats);
     const row = el('div', 'lu-row');
     const use = btn('mini go lu-use', 'Use this line-up', () => { if (live() && typeof applyLineup === 'function') { applyLineup(b); luOpen = false; box.hidden = true; putAttr(r.best, 'aria-expanded', 'false'); luPlan(true); formSig = ''; saveUi(); } });

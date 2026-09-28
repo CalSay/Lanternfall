@@ -2537,13 +2537,14 @@ try {
     const { E, J } = mk(52, 'lanternmage', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
     let found = null;
     for (let z = 10; z <= 80 && !found; z++) {
-      const a = J(`bestLineup({ zone: ${z} })`), b = J(`bestLineup({ zone: ${z}, filter: k => ROSTER[k].role !== 'tank' })`);
+      const a = J(`bestLineup({ zone: ${z}, boss: false })`), b = J(`bestLineup({ zone: ${z}, boss: false, filter: k => ROSTER[k].role !== 'tank' })`);
       if (a.parts.holds && !b.parts.holds) found = { z, a, b };
     }
     assert(found && found.a.field.includes('tobin') && /a tank for the/.test(found.a.why) && found.a.cells.tobin.col === 2,
       found ? `zone ${found.z}: no field without a tank holds, so Tobin takes the Front ("${found.a.why}")` : 'no zone where a tank is needed (expected one in 10-80)');
-    const early = J('bestLineup({ zone: 10 })');
-    assert(!early.field.includes('tobin') && early.parts.holds, `zone 10 holds without a tank, so the planner fields damage (${early.field.join(', ')})`);
+    const early = J('bestLineup({ zone: 10, boss: false })'), boss = J('bestLineup({ zone: 10 })');
+    assert(!early.field.includes('tobin') && early.parts.holds, `zone 10 packs hold without a tank, so the planner fields damage (${early.field.join(', ')})`);
+    assert(boss.field.includes('tobin') && boss.cells.tobin.col === 2 && /a tank for the boss/.test(boss.why), `pushing past the zone boss, a tank takes the Front ("${boss.why}")`);
   }
   // filters and expeditions; autoField uses the planner (by potential)
   {
