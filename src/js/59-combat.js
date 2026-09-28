@@ -23,7 +23,8 @@
 // their role speed; a swing deals charDps x (1 - abF) / speed (their average damage today, so
 // pacing keeps its curve) and the signature ability, cast on its own cooldown, deals the rest as
 // a burst (charDps x abF x cooldown) plus its real effect (taunt, heal, stun, slow, shield...).
-// Supports deal no damage: they heal (1.2 x power per second). The hero keeps its own swings
+// Supports heal (heal x power per second) and Smite the focus foe for their charDps (BAL2:
+// ROSTER_TUNE.supDps x power, magic). Tanks take tankDr less damage. The hero keeps its own swings
 // (50-sim heroSwing), routed here by cbStrike. Foes pick the highest-threat member they can
 // reach and switch only past +20%. Physical hits on armoured foes deal armourX.
 //
@@ -59,19 +60,23 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     packSize: 3, packHp: 1.2, packGold: 1.2, mixP: 0.72,
     eliteFrom: 15, eliteP: 0.2, eliteHp: 2, eliteGold: 2,
     // foe attack per hit = atk x mobHp(z) (spec: 1.2 x 1.55^(z-1) = 0.12 x mobHp; tuned to this game's
-    // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold
-    atk: 0.006, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 2.5, bossSpd: 0.6,
+    // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold.
+    // BAL2: atk 0.006 -> 0.025 (sustain binds near the push zone, so a missing tank or healer costs 2-4 zones,
+    // T6); bossAtk 2.5 -> 0.75 keeps a boss's hits (and 4x heavy hits) near their Stage C size
+    atk: 0.025, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 0.75, bossSpd: 0.6,
     armourX: 0.85,                       // physical hits on armoured foes (Rattlebones, Golems; spec 0.5, softened for class parity, T3)
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     hp: { tank: 12, striker: 5, caster: 4, support: 6 },
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
     heroHp: { warden: 12, lanternmage: 4, ranger: 5, lightkeeper: 6 },
     armour: { tank: 20, striker: 0, caster: 0, support: 10 }, heroArmour: { warden: 30, lanternmage: 0, ranger: 0, lightkeeper: 10 },
-    aldricArmour: 20, braced: 10, redMax: 0.6, tankDr: 0,
+    aldricArmour: 20, braced: 10, redMax: 0.6, tankDr: 0.4,   // (BAL2) tankDr: tanks take 40% less (no-tank line-ups hold 2-4 zones lower)
     wardenTankHp: 0.4, wardenTankArmour: 20, wardenDr: 0.1, wardenThreat: 6,
     lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 0.8,   // heal: a support heals 0.8 x power a second (spec 1.2; T6 wants a support worth 2-4 zones of hold)
+    // (BAL2) packHealF 0.1 -> 0.15 (no-support line-ups 4-5 -> 3-4 zones lower); estSafety 1.25 -> 1 and support
+    // ability heals counted (the estimate walled pushes the live party held); estEff 1 -> 1.08 (T8; away only)
     cover: 0.15, backRanged: 0.2,
-    regen: 0.005, packHealF: 0.1, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
+    regen: 0.005, packHealF: 0.15, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
     threat: { tank: 4, striker: 1, caster: 1.2, support: 0.5 }, healThreat: 0.5, opening: 10, switchX: 1.2,
     tauntT: 3, tauntX: 1.2, shieldT: 6,
     abF: 1 / 6,                          // share of a companion's damage its ability deals (SYN_TUNE.abShare 0.2 of 1.2)
@@ -80,7 +85,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     cdMin: 0.5,                          // cooldown reductions stop at -50%
     fieldSupport: 2,                     // autoField (56-roster): 2 a support when the party cannot hold its max zone without one, 1 always, 0 never
     bossGate: 1, bossWait: 600,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s)
-    refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1.25, estEff: 1, awayRate: 0.75, autoCast: 1.05,
+    refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1, estEff: 1.08, awayRate: 0.75, autoCast: 1.05,
     // kit numbers (3.2, 3.5)
     guardDr: 0.4, guardT: 4, trustStep: 0.01, trustMax: 0.2, mend: 0.25, warmCap: 0.2, longRoute: 0.2,
     beacon: 0.2, beaconLamp: 0.3, beaconSh: 0.1, burnBack: 0.1, keeper: 0.15, sturdy: 0.1,
@@ -103,6 +108,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
 
+  // BAL2: the Lightkeeper's aura (supports heal 40% more) also makes their Smite 40% stronger, so a
+  // party of healers still kills (the attrition line-up of spec 4.13, T12).
+  if (typeof addCharModifier === 'function') addCharModifier(id => partyCombatOn() && S.party && S.party.cls === 'lightkeeper' && ROSTER[id] && ROSTER[id].role === 'support' ? 1 + T.lkAura : 1);
   // Haste gear (K11): the hero's ability comes back sooner too (capped at -30% in gear()).
   addModifier('abilityCd', () => partyCombatOn() ? 1 - gear().haste / 100 : 1);
 
@@ -1084,7 +1092,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         const sus = (heal * Math.min(1, share) + abHeal * u.maxHp) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
         const net = inc * T.estSafety - sus;   // estSafety: headroom for bad packs (elites, three spore clouds at once)
         if (!(net <= 0 || u.maxHp / net >= T.holdSecs)) holds = false;
-        worst = Math.min(worst, inc > 0 ? sus / inc : 99); incMax = Math.max(incMax, inc); if (o.dbg) o.dbg.push([u.key, inc.toExponential(2), sus.toExponential(2), u.maxHp.toExponential(2), share.toFixed(2)].join(" "));   // DBGTMP
+        worst = Math.min(worst, inc > 0 ? sus / inc : 99); incMax = Math.max(incMax, inc);
       }
       // The rest of the party only meets the spread (spore clouds): a member it knocks out is down for
       // the rest of each pack (they stand up between packs), so its damage is lost for that share.
@@ -1128,6 +1136,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let D = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);
     for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' ? 1 : phys);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
-    return D * T.estEff * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;
+    return D * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;   // BAL2: estEff tunes the away estimate only
   };
 }

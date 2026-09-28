@@ -41,11 +41,15 @@
 //   --session 15 --first 60 change the check-in policy. Prints one row per day. The game is
 //   installed at the first check-in (BAL1: before, a new game got 8h of away gains first).
 //   Reports first recruits by rarity, Camp progress and (--debug 1) the zone timeline.
+//   BAL2: a Camp build short only of a fight-only material (Soft Hide) walks back to farm it every
+//   other fight cycle (--farm 0 turns it off). --snapday D:path writes the save at the end of day D.
+//   --targets --days 60 runs the targets on 60 days (the 60-day report in pacing.md 11).
 // --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
 //   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
 //   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
 //   --eval/--camp pass through.
 import { loadCore } from './lib/core.mjs';
+import { writeFileSync } from 'node:fs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
   if (x.startsWith('--')) a.push([x.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
@@ -141,7 +145,8 @@ function rosterStep(E) {
   if (args.bounties !== "0") E(`S.bounties.slots.forEach((b, i) => { if (b && b.k && b.have >= b.need) BOUNTY_API.claim(i); else if (b && b.k === 'tap' && ${!active}) BOUNTY_API.reroll(i); })`);
   for (const id of E('ROSTER_KEYS')) if (E(`canRecruit(${JSON.stringify(id)})`)) E(`recruit(${JSON.stringify(id)})`);
   // Morwen: bench supports while the zone 12 boss is next.
-  if (!lineup && E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("S.party.autoField = false; setField(S.party.field.filter(k => ROSTER[k].role !== 'support'))"); }
+  // BAL2: a player fills the empty place with the best non-support (the planner), not a party of two.
+  if (!lineup && E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("(() => { S.party.autoField = false; const b = typeof bestLineup === 'function' ? bestLineup({ by: 'potential', filter: k => ROSTER[k].role !== 'support', key: 'nosup' }) : null; if (b && b.field.length) applyLineup(b); else setField(S.party.field.filter(k => ROSTER[k].role !== 'support')); })()"); }
   else if (rosterStep.benched) { rosterStep.benched = false; E('S.party.autoField = true'); }
   let gold = 0, ess = null;
   for (const id of E('rosterList()')) if (E(`canPromote(${JSON.stringify(id)})`)) E(`promoteChar(${JSON.stringify(id)})`);
@@ -686,6 +691,8 @@ function runDays() {
     const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
     rows.push(r);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
+    // --snapday D:path writes the save at the end of day D (debugging).
+    if (args.snapday && d === parseInt(String(args.snapday).split(':')[0], 10)) writeFileSync(String(args.snapday).split(':')[1], E('JSON.stringify(S)'));
   }
   // Boredom: the longest stretch without a meaningful upgrade, in active minutes and in
   // check-ins (a check-in is empty when nothing meaningful happened during it).

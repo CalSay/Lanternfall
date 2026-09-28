@@ -1,9 +1,10 @@
-# The Lantern Road: pacing (M6, retuned by BAL1)
+# The Lantern Road: pacing (M6, retuned by BAL1 and BAL2)
 
-Status: BAL1 (the slower pace the owner asked for) on top of M6. Owners of the knobs: `PACE` in
+Status: BAL2 (roles matter in party combat, section 11) on top of BAL1 (the slower pace the owner
+asked for) and M6. Owners of the knobs: `PACE` in
 `src/js/40-rules.js`, `ROSTER_TUNE` in `56-roster.js`, `UNLOCK_TUNE` in `56c-unlocks.js`,
 `CAMP_TUNE` in `57-camp.js`, `SYN_TUNE` in `56b-synergy.js`. Check with
-`node tools/sim.mjs --targets` (about 2.5 minutes). Try values without editing with
+`node tools/sim.mjs --targets` (about 6 minutes on 4 cores; `--days 60` for the 60-day report). Try values without editing with
 `--pace k=v`, `--tune k=v`, `--unlock path=v`, `--syn v` or `--eval "code"`.
 
 ## 1. The owner's direction (2026-09-27)
@@ -269,3 +270,148 @@ P4 Warden 4 (BAL1 had Lightkeeper 5; noisy by a check-in), T16 Lanternmage Epic 
 T4 35% (edge of 20-35), T6 no-tank 0 zones lower (no-support 3), T11 25 min (BAL1's slower catch-up),
 T12 attrition line-up does not reach zone 20 in 4h, T18 zone 5 in 3.7-5 min (the BAL1 early curve is
 faster than the spec's 6-12). See the Stage C report for the follow-ups.
+
+## 11. BAL2: balance after party combat (2026-09-28)
+
+Goal (plan-2 wave 1, coordinator): roles must matter (T6, T12) without making balanced play harder;
+keep T1-T3, T10, P1, P2 passing; fix T16, P4, T11, T18; the sim's Ranger walks back for Soft Hide
+(C1); a 60-day report. Tuned on the merged build with the line-up planner (56d-autofield.js) on.
+
+### What changed in the model
+
+- **Foes hit harder** (`COMBAT_TUNE.atk` 0.006 -> 0.025, a quarter of the spec's 0.12). Sustain now
+  binds a zone or two above the push zone, so a missing tank or healer costs zones: a balanced
+  party holds about 2 zones past its push zone, a no-tank one 1 below, a no-support one 2 below.
+  Bosses keep their Stage C size (`bossAtk` 2.5 -> 0.75: at 2.5 x 0.025 the heavy hit one-shot
+  squishies and the Lightkeeper stalled at zone 41 with every companion down).
+- **Tanks shrug off hits** (`tankDr` 0.4, new): a tank takes 40% less on top of its armour. With
+  healing absolute (a support heals x its power), a striker in front was almost as good as a tank;
+  now a tank's effective HP is about 3x a striker's.
+- **Supports Smite** (`ROSTER_TUNE.supDps` 0 -> 0.7): a support hits the focus foe for 0.7 x its
+  power a second (magic; a striker deals about 1.8 x). It is part of `charDps`, so `totalDps`, the
+  boss gate, the estimate and the raid all see it. Healers still heal first; the Smite is extra.
+- **The Lightkeeper's aura** ("Supports in your party heal 40% more") now also makes their Smite
+  40% stronger (a char modifier in 59-combat, `lkAura`); the aura text says so. The attrition
+  line-up (Lightkeeper, Tobin, Hesketh, Elowen) kills fast enough to reach zone 20.
+- **Between packs** a member heals 15% of max HP (`packHealF` 0.1 -> 0.15): no-support line-ups
+  held 5 zones lower on some saves (spec 2-4).
+- **The hold estimate** (59-combat) counts support ability heals (Mend, Call to Arms, Sanctuary,
+  Verse, the Lightkeeper's auto-cast Rally Hymn) as a share of the target's max HP per cooldown,
+  and its safety margin is gone (`estSafety` 1.25 -> 1): with the harder foes it walled pushes the
+  live party held (live damage taken and healing matched the estimate within 10-20% on probes at
+  zones 9-72). `estEff` 1 -> 1.08 (T8 read 0.81-0.87 after the planner merge); the boss gate
+  (`cbBossReady`) no longer uses `estEff`, so auto-challenge timing is unchanged.
+- **Push retry after a wipe** (`pushRetry` 60 s, new): the party climbs back when the estimate says
+  it holds, or tries again after 60 s (doubling with each wipe at that zone, up to 8 min). Before,
+  a pessimistic estimate could park a party a zone below its best for 15 minutes.
+- **Early zones** are harder and zone 12 on is unchanged (`hp0` 40 -> 80, `hpEarly` 1.95 -> 1.83):
+  zone 5 takes 6-8 minutes with the starter (T18; was 3.7-5.1).
+- **Catch-up** (`catchGap` 18 -> 35, `catchStep` 0.2 -> 0.6, `catchMax` 1 -> 3): a level-1 recruit
+  reaches party level - 5 in 7-9 minutes (T11; was 25).
+- **The runaway at 2-3h** (T2: the planner fields Wren, Bram and Kestrel's Hunting Party the moment
+  Kestrel joins, and catch-up makes her strong in minutes): `xpSecs` 5 -> 5.5, `hpGrowth` 1.46 -> 1.48,
+  `compLv` 80 -> 75, Kestrel's route zone 18 + 200 foes -> zone 20 + 300 foes.
+- **Region 2** (`compXpMax` 200 -> 250, `regionStep` [1.7, 1.2] -> [1.7, 1.1]): levels past 124 cost a
+  little more; the zone 70 boss needs 9% less, so a caster-heavy party at the level-200 cap is not
+  walled there for ever (the Lanternmage sat at zone 70 from day 22 to day 45 in one run).
+- **Recruit timing** (T16, calendar-sensitive): Vesper visits from zone 30 (was 31: the slowest
+  class missed her first visit by one zone, Epic on day 4.3-5.3), Grenna visits from 33 (was 31)
+  and the Dusk Contract rolls from zone 31 (was 29) (the fastest class got an Epic on day 1.8),
+  Elowen's quest from zone 57 (was 54; Legendary on day 12.3-13.8).
+
+### Knobs (before -> after)
+
+| Knob | Before | After |
+|---|---|---|
+| `COMBAT_TUNE.atk` | 0.006 | 0.025 |
+| `COMBAT_TUNE.bossAtk` | 2.5 | 0.75 |
+| `COMBAT_TUNE.tankDr` | - | 0.4 |
+| `COMBAT_TUNE.packHealF` | 0.1 | 0.15 |
+| `COMBAT_TUNE.estSafety` | 1.25 | 1 |
+| `COMBAT_TUNE.estEff` | 1 (also in the boss gate) | 1.08 (estimate only) |
+| `COMBAT_TUNE.pushRetry` | - | 60 s (x2 per wipe, at most x8) |
+| Support ability heals in the estimate | no | yes (`AB_HEAL`) |
+| `ROSTER_TUNE.supDps` | - (supports 0) | 0.7 |
+| Lightkeeper aura on supports | heal x1.4 | heal and Smite x1.4 |
+| `ROSTER_TUNE.catchGap` / `catchStep` / `catchMax` | 18 / 0.2 / 1 | 35 / 0.6 / 3 |
+| `ROSTER_TUNE.xpSecs` | 5 | 5.5 |
+| Kestrel's route | zone 18 + 200 foes | zone 20 + 300 foes |
+| `PACE.hp0` / `hpEarly` | 40 / 1.95 | 80 / 1.83 (zone 12 HP unchanged) |
+| `PACE.hpGrowth` | 1.46 | 1.48 |
+| `PACE.compLv` | 80 | 75 |
+| `PACE.compXpMax` | 200 | 250 |
+| `PACE.regionStep` | [1.7, 1.2] | [1.7, 1.1] |
+| `UNLOCK_TUNE.visitors.vesper.from` | 31 | 30 |
+| `UNLOCK_TUNE.visitors.grenna.from` | 31 | 33 |
+| `UNLOCK_TUNE.tokens.isolde.from` | 29 | 31 |
+| `UNLOCK_TUNE.quests.elowen.from` | 54 | 57 |
+
+Tried and dropped: `atk` 0.035 (continuous runs 20-30% slower), `bossAtk` 1.5 (Region 2 boss wipes
+caster parties at the level cap), `supDps` 0.5 (attrition 1.38-1.64 x balanced) and 0.8, Elder Wraith
+heal 5% (Region 1 boss on day 3.3-3.8), `hpGrowth` 1.5 and `xpSecs` 6 (T2 unchanged, T1 2h at 14-16),
+a Lanternmage hero with more HP or armour (no change: the hero is about 1% of party damage by day 8).
+
+### Sim changes (tools/sim.mjs)
+
+- **C1**: a Camp build short only of a fight-only material (Soft Hide for the Map Room) walks back
+  to the zone of that tier that drops it best, every other fight cycle. The Ranger's camp is full on
+  day 20-22 (was 48 of 53, never full).
+- The Morwen quest bench (no support for the zone 33 boss) now fields the planner's best
+  non-support line-up; before it left a party of two, which wiped 170 times over 8 days once foes hit
+  harder.
+- `--snapday D:path` writes the save at the end of day D (debugging); `--targets --days 60` runs
+  the targets on 60 days of normal play.
+- Checks: the Hesketh check now wants a soft Smite (damage above 0, below Wren's) instead of none.
+
+### Targets before -> after (`--targets`, seed 1)
+
+| Target | Before (Stage C build) | After |
+|---|---|---|
+| T1 | 9/11-12/18 each | 9/11/19, 8/11/19, 9/11/17, 8/12/18 |
+| T2 | 24 / 22 / 22 / 24 | 24 / 24 / 21 / 23 |
+| T3 | 0.92-1.13 | 0.97-1.02 |
+| T4 | 35% (FAIL) | 23% |
+| T5 (wipes at maxZone - 2) | 0 (zone 16) | 0 (zone 17) |
+| T6 (no tank / no support) | 0 / 3 lower (FAIL) | 3 / 4 lower |
+| T7 | 54% | 45% |
+| T8 | 0.89 | 0.96 |
+| T11 | 24.7 min (FAIL) | 8.6 min |
+| T12 attrition / glass / caster | attrition never reached zone 20 (FAIL) / 0.93 / 0.85 | 1.20 / 0.87 / 0.92 |
+| T13 | 100% | 100% |
+| T14 | 99% | 99% |
+| T16 | LM Epic day 4.3 (FAIL) | first 20-28m, Rare 1.7-1.9h, Epic day 2.3-2.8, Legendary day 15.3-19.8 |
+| T18 | 3.7-5.1 min (FAIL) | 6.3-8.2 min, 0 wipes |
+| D1 | 18-19 (FAIL, accepted) | 17-19 (FAIL, accepted) |
+| P1 | day 5.3-7.3 | day 5.3-7.3 |
+| P2 | day 28-34 | day 21.3-28.3 |
+| P4 | Warden 4 (FAIL) | 1-3 |
+| Total | 12/20 | 19/20 |
+
+Seed 2 reads 16/20: D1, T4 38%, and the Lanternmage at P1 day 9.3 with its first Epic on day 5.3.
+The Lanternmage is the laggard in normal play: the planner scores push line-ups by pack damage,
+where casters' splash counts, and fields Morwen, Pip and a healer; the zone 35 boss is single
+target, so the party is 20-30% short of it for a day or two. The fix belongs in the planner (weigh
+single-target damage when a zone boss is next), not in the pace.
+
+### 60 days of normal play (`--days 60`, seed 1)
+
+| Class | d1 | d3 | d7 | d14 | d21 | d28 | d35 | d60 | Region 1 / 2 boss | Camp full |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Warden | 19 | 30 | 35 | 49 | 59 | 70 | 74 | 75 | day 7.3 / 28.3 | day 23 |
+| Lanternmage | 18 | 31 | 37 | 53 | 70 | 75 | 75 | 75 | day 6.3 / 21.3 | day 20 |
+| Ranger | 17 | 30 | 35 | 51 | 59 | 69 | 73 | 73 | day 7.3 / 28.3 | day 22 |
+| Lightkeeper | 19 | 35 | 40 | 49 | 59 | 69 | 73 | 73 | day 5.3 / 28.3 | day 21 |
+
+Every class hits the level-200 roster cap at zone 73-75 around day 30-35; after that most check-ins
+are empty (P3 needs Region 3 power: ranks past 7, tier 6).
+
+### Open items
+
+- The planner's boss blind spot above (the Lanternmage, P1 and its Epic on some seeds).
+- T4 reads 23-38% by seed (band 20-35%): active parries and Shield Wall count for more now that
+  foes hit harder.
+- The planner's field flaps between two line-ups every few seconds in continuous runs (for
+  example Wren, Bram, Anselm and Wren, Bram, Pip); each switch rebuilds the units.
+- `AF_TUNE.bossTank` (35%) stays: with bosses at their Stage C size a Front tank still matters
+  for the heavy hit.
+- Save compatibility: no stored field is added, renamed or lowered; only formulas change.

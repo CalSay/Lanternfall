@@ -45,7 +45,7 @@
 //   - Levels come from time spent fighting: XP per kill counts the zone's par level at most
 //     gapMax (4) above the character (was 18) and scales with how long the foe takes (killWorth),
 //     so pushing zones no longer drags companions up 3 levels a zone. Behind the party, a
-//     character still counts up to the party level (catchGap 18), so recruits catch up fast.
+//     character still counts up to the party level (catchGap 35, BAL2), so recruits catch up fast.
 //   - Power: growth 1.06 a level (was 1.08), x1.5 a rank (was x2), and a drill every 5 levels
 //     between promotions (x1.1 each, 'drill' event), so a roster step is due every 10-20 minutes early (T10).
 //   - Promotions cost promoGold x (rank + 1) foes of your max zone (was 60 x mobGold(cap / 3)),
@@ -78,7 +78,7 @@ const ROSTER = {
   bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Oak Logs to his camp.' },
   maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
   aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
-  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 18, kills: 200 }, how: 'Reach zone 18, then pay her in gold.' },
+  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 20, kills: 300 }, how: 'Reach zone 20, then pay her in gold.' },
   thessaly: { name: 'Thessaly Gloam', title: 'the Bog Seer', rarity: 'rare', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'bestiary' }, how: 'Finish the Marsh Wraith page in the bestiary.' },
   anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern. Hire him with gold and Essence.' },
   grenna: { name: 'Grenna Holt', title: 'the Stonebreaker', rarity: 'epic', role: 'tank', circle: 'wayfarers', idx: -1, route: { type: 'token' }, how: "Win a Stonebreaker's Token from Quarry Ruins bosses." },
@@ -118,16 +118,16 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     // so promotions cluster every 25 levels; drills put a smaller step between them.
     stepEvery: 5, stepX: 1.1,
     supEq: 1.2,                          // support party buff, worth supEq x its power (3.6 heal rate)
-    supDps: 0.5,                         // (BAL2) party combat: a support also strikes (Smite) for supDps x its power (was 0)
+    supDps: 0.7,                         // (BAL2) party combat: a support also strikes (Smite) for supDps x its power (was 0)
     xpBase: 10, xpR: 1.12, par: 6, killsPerLv: 40, bossXp: 5, bountyKills: 20,
     // XP per kill counts the zone's par level (par x zone) at most gapMax above the character.
     // BAL1: gapMax 18 -> 4 and par 3 -> 6, so levels come from kills (about 25 a level) instead of
     // racing to 3 x the zone: companion power grows with play time, not with each zone pushed.
     // A character behind the party level still counts up to the party level (at most catchGap
     // above itself), so new recruits catch up in minutes (T11).
-    gapMax: 4, catchGap: 18,
-    xpSecs: 5, xpWorthMax: 8,            // (BAL1) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
-    catchStep: 0.2, catchMax: 1, commonXp: 1.5, offlineXp: 1,   // (BAL1) offlineXp was 0.75
+    gapMax: 4, catchGap: 35,             // (BAL2) catchGap was 18: a recruit reached party level - 5 in 25 min (T11 wants 5-10)
+    xpSecs: 5.5, xpWorthMax: 8,          // (BAL1 5, BAL2 5.5) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
+    catchStep: 0.6, catchMax: 3, commonXp: 1.5, offlineXp: 1,   // (BAL1) offlineXp was 0.75; (BAL2) catchStep 0.2 -> 0.6, catchMax 1 -> 3
     promoGold: 60, promoEss: 10,         // (BAL1) gold = promoGold x (rank + 1) foes of your max zone (was promoGold x mobGold(cap / 3): levels no longer track zones)
     commonPromo: 0.5, catchPromo: 0.25, maxRank: 7,
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)

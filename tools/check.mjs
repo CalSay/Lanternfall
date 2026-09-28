@@ -1712,7 +1712,9 @@ try {
     const st = E('CB_STATS'), share = st.tankSecs / Math.max(1e-9, st.enemySecs);
     assert(share >= 0.85, `threat: the tank holds ${(100 * share).toFixed(0)}% of foe attention at par (T13, want >= 85%)`);
     const hes = E('cbUnitByKey("hesketh")');
-    assert(st.healed > 0 && hes.healed > 0 && hes.dmg === 0, `Hesketh heals (${E('fmt(cbUnitByKey("hesketh").healed)')} HP in 3 min) and deals no damage`);
+    // BAL2: supports also Smite for ROSTER_TUNE.supDps x power, well below a striker.
+    const wrenDmg = E('cbUnitByKey("wren").dmg');
+    assert(st.healed > 0 && hes.healed > 0 && hes.dmg > 0 && hes.dmg < wrenDmg, `Hesketh heals (${E('fmt(cbUnitByKey("hesketh").healed)')} HP in 3 min) and Smites softly (${E('fmt(cbUnitByKey("hesketh").dmg)')} damage, Wren ${E(`fmt(${wrenDmg})`)})`);
     assert(st.wipes === 0 && st.packs > 10, `no wipe at the zone it holds (${st.packs} packs, ${st.kos} knock-outs)`);
     errs.push(...g.errors);
   }
