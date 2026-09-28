@@ -5,7 +5,7 @@
 .tl-ic img { width: 30px; height: 30px; }
 .tl-body { grid-area: body; min-width: 0; display: grid; gap: 3px; }
 .tl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
-.tl-name { font: 600 15px/1.2 var(--display); color: var(--bone); }
+.tl-name { font: 600 calc(15px * var(--display-k))/1.2 var(--display); color: var(--bone); }
 .tl-name.rough { color: var(--muted); }
 .tl-name.rar-uncommon { color: var(--r-uncommon); }
 .tl-name.rar-rare { color: var(--r-rare); }

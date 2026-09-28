@@ -95,7 +95,7 @@ document.addEventListener('click', e => {
   const st = document.getElementById('stage'); if (!st) return;
   const css = document.createElement('style');
   css.textContent = `.sfx-btn{position:absolute;right:6px;bottom:6px;z-index:5;width:28px;height:28px;padding:0;
-    border:2px solid var(--line-hi);background:var(--well);color:var(--bone);font:12px/1 var(--display);
+    border:2px solid var(--line-hi);background:var(--well);color:var(--bone);font: calc(12px * var(--display-k))/1 var(--display);
     image-rendering:pixelated;cursor:pointer;opacity:.8}.sfx-btn:hover{opacity:1}.sfx-btn.off{color:var(--muted)}`;
   document.head.append(css);
   const b = document.createElement('button');

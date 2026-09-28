@@ -10,11 +10,11 @@
 .ch-top { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; }
 .ch-ic { width: 52px; height: 52px; }
 .ch-ic img { width: 42px; height: 42px; }
-.ch-name { font: 700 22px/1.05 var(--display); text-shadow: 0 2px 0 #0B0810; }
+.ch-name { font: 700 calc(22px * var(--display-k))/1.05 var(--display); text-shadow: 0 2px 0 #0B0810; }
 .ch-lv { font-size: 12.5px; color: var(--muted); letter-spacing: .03em; }
 .ch-fx { font-size: 13.5px; color: #F2E6B0; }
 .ch-next { padding: 7px 9px; background: var(--well); border: 1px solid var(--line); }
-.ch-next-t { font: 600 14px var(--display); color: var(--gold); }
+.ch-next-t { font: 600 calc(14px * var(--display-k)) var(--display); color: var(--gold); }
 .ch-next-o { font-size: 13px; color: var(--bone); }
 
 /* ---- builders ---- */
@@ -24,7 +24,7 @@
 .bld-row .ic img { width: 28px; height: 28px; }
 .bld-row.idle { border-style: dashed; opacity: .85; }
 .bld-body { min-width: 0; display: grid; gap: 3px; }
-.bld-t { font: 600 14px/1.2 var(--display); overflow-wrap: anywhere; }
+.bld-t { font: 600 calc(14px * var(--display-k))/1.2 var(--display); overflow-wrap: anywhere; }
 .bld-row .bar > i, .cb-timer .bar > i { background: var(--ember); }
 .bld-q { font-size: 12px; color: var(--muted); }
 .bld-q[hidden], .bld-row .bar[hidden] { display: none; }
@@ -43,7 +43,7 @@
 .cb-hit .ic { width: 36px; height: 36px; }
 .cb-hit .ic img { width: 28px; height: 28px; }
 .cb-mid { min-width: 0; }
-.cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 15px/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 calc(15px * var(--display-k))/1.15 var(--display); white-space: nowrap; min-width: 0; }
 .cb-nm > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .cb-lv { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; flex: none; }
 .cb-line { font-size: 12.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -58,7 +58,7 @@
 .cb-body[hidden] { display: none; }
 .cb-fx { display: grid; gap: 3px; }
 .cb-fxrow { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; padding: 5px 8px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
-.cb-fxrow b { font: 600 12px var(--display); color: var(--muted); }
+.cb-fxrow b { font: 600 calc(12px * var(--display-k)) var(--display); color: var(--muted); }
 .cb-fxrow.now b { color: var(--bone); }
 .cb-fxrow.next { border-color: #4A5A38; }
 .cb-fxrow.next b { color: var(--xp); }
@@ -88,7 +88,7 @@
 /* ---- Blessings ---- */
 .bless-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .bless { display: grid; gap: 2px; min-height: 52px; padding: 7px 9px; text-align: left; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; cursor: pointer; }
-.bless b { font: 600 15px var(--display); }
+.bless b { font: 600 calc(15px * var(--display-k)) var(--display); }
 .bless span { font-size: 12.5px; color: var(--muted); }
 .bless.on { border-color: #9FD8C9; background: linear-gradient(180deg, rgba(159,216,201,.14), var(--panel)); box-shadow: 0 0 12px rgba(159,216,201,.2), 0 2px 0 #0B0810; }
 .bless.on span { color: var(--bone); }
@@ -105,7 +105,7 @@
 .ros-pt.r-legendary { border-color: var(--r-legendary); }
 .ros-pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .ros-body { min-width: 0; }
-.ros-nm { display: flex; gap: 6px; align-items: baseline; font: 600 14.5px/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.ros-nm { display: flex; gap: 6px; align-items: baseline; font: 600 calc(14.5px * var(--display-k))/1.15 var(--display); white-space: nowrap; min-width: 0; }
 .ros-nm > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .ros-nm small { font: 500 11.5px var(--body); color: var(--muted); flex: none; }
 .ros-st { font-size: 12.5px; color: #9FD8C9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -115,7 +115,7 @@
 .ros-acts .mini { min-height: 44px; min-width: 56px; }
 
 /* ---- Hearth cost: a summary line, the chips behind a tap ---- */
-.ch-cost { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 8px; background: var(--well); border: 1px solid var(--line); font: 600 13.5px var(--display); color: var(--xp); }
+.ch-cost { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 8px; background: var(--well); border: 1px solid var(--line); font: 600 calc(13.5px * var(--display-k)) var(--display); color: var(--xp); }
 .ch-cost.short { color: #FFB27A; }
 .ch-cost[hidden] { display: none; }
 

@@ -9,7 +9,7 @@
 .toast .tx { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
 .toast.hi .tx, .toast.loot .tx { -webkit-line-clamp: 2; }
 .toast img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
-.toast .more { flex: none; font: 600 11px/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); }
+.toast .more { flex: none; font: 600 calc(11px * var(--display-k))/1 var(--display); padding: 3px 5px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); }
 .toast.ember { border-left-color: var(--arcane); }
 .toast.raid { border-left-color: var(--hp); }
 .toast.good { border-left-color: var(--xp); }
@@ -28,7 +28,7 @@
 .nlog-row.loot, .nlog-row.hi { border-left-color: var(--gold); font-weight: 600; }
 .nlog-row.new { background: #1E1626; }
 .nlog-row.low { color: #D8CFE3; }
-.nlog-h { margin: 0; font: 600 20px/1.1 var(--display); }
+.nlog-h { margin: 0; font: 600 calc(20px * var(--display-k))/1.1 var(--display); }
 .nlog-empty { padding: 20px 0; text-align: center; }
 
 .modal { position: fixed; inset: 0; background: rgba(10,7,14,.82); display: grid; place-items: center; padding: 16px; z-index: 30; }
