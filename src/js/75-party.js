@@ -51,7 +51,10 @@
     const h = sec.querySelector('.sec-title'); head.append(h);
     const auto = btn('mini pf-auto', 'Auto', () => { picked = null; if (live()) { autoPlace(); saveUi(); } });
     auto.setAttribute('aria-label', 'Place everyone by role');
-    head.append(auto); sec.prepend(head);
+    const best = btn('mini pf-best', 'Best line-up', () => { picked = null; openLineup(); });
+    best.setAttribute('aria-label', 'Show the best line-up for your best zone');
+    const btns = el('div', 'pf-btns'); btns.append(auto, best);
+    head.append(btns); sec.prepend(head);
     const grid = el('div', 'pform');
     for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
     const cells = [];
@@ -62,8 +65,10 @@
     }
     const hint = el('p', 'note pf-hint');
     const warn = el('p', 'note warn pf-warn');
-    sec.append(grid, hint, warn);
-    formRefs = { cells, hint, warn, auto };
+    const why = el('p', 'note lu-why'); why.hidden = true;
+    const prev = el('div', 'lu-prev'); prev.hidden = true;
+    sec.append(grid, hint, warn, why, prev);
+    formRefs = { cells, hint, warn, auto, best, why, prev };
   }
   function tapCell(col, lane) {
     const o = occupant(col, lane);
@@ -94,6 +99,92 @@
     }
     r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit cell${picked === 'hero' ? ' in your class row' : ''}, or tap again to cancel.` : 'Tap someone, then tap a cell to move or swap them.';
     const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
+  }
+
+  // ================= best line-up (AF, 56d-autofield.js) =================
+  // The line under the formation explains the best line-up for your best zone in one line; the
+  // button opens a preview of the change (who comes in, who goes out, the new places, damage and
+  // hold) and applies it only on "Use this line-up". Planned at most every few seconds, cached by 56d.
+  let luRes = null, luT = -1e9, luOpen = false, luSig = '', luField = null, luCells = null;
+  const luOk = () => typeof bestLineup === 'function' && live() && rosterList().length >= 1;
+  // Background refreshes run in their own task (never inside a ui() pass, so opening the tab stays
+  // smooth); a tap on the button or a manual move plans at once.
+  let luQueued = false;
+  const luRun = () => {
+    luT = performance.now();
+    try { luRes = bestLineup({ goal: 'push' }); } catch (e) { luRes = null; console.error('[lanternfall] bestLineup', e); }
+    return luRes;
+  };
+  const luPlan = force => {
+    if (force) return luRun();
+    if ((!luRes || performance.now() - luT >= 5000) && !luQueued) {
+      luQueued = true;
+      setTimeout(() => { luQueued = false; if (formRefs && formRefs.why.isConnected) { luRun(); luSig = ''; try { updateWhy(); } catch (e) {} } }, 60);
+    }
+    return luRes;
+  };
+  const pctTxt = g => { const p = Math.round((g - 1) * 100); return p > 0 ? `+${p}%` : `${p}%`; };
+  function updateWhy() {
+    const r = formRefs; if (!r) return;
+    putHidden(r.best, !luOk());
+    if (!luOk()) { r.why.hidden = true; r.prev.hidden = true; return; }
+    const moved = !!luRes && (luField !== P().field || luCells !== P().cells);   // a manual move: plan again now (the pick is cached, so this is cheap)
+    luField = P().field; luCells = P().cells;
+    const b = luPlan(moved);
+    if (!b) { r.why.hidden = true; return; }
+    // The gain in the words of the preview: damage when yours holds too, else the hold itself.
+    const g = b.parts.gain, cur = b.parts.current;
+    const dz = cur ? (b.parts.held || 0) - (cur.held || 0) : 0;
+    const more = !g || g <= 1.005 || !cur ? '' : dz >= 10 ? ' Yours cannot hold these zones.' : dz > 0 ? ` It holds ${dz} more zone${dz === 1 ? '' : 's'} than yours.` : b.parts.dps > cur.dps * 1.005 ? ` ${pctTxt(b.parts.dps / Math.max(1e-9, cur.dps))} damage over yours.` : '';
+    const t = b.parts.same ? `Best line-up: ${b.why}. You have it.` : `Best line-up: ${b.why}.` + more;
+    setT(r.why, t); r.why.hidden = false;
+    putToggle(r.best, 'go', !b.parts.same && !!g && g > 1.02);
+    if (luOpen) renderPrev(b);
+  }
+  function openLineup() {
+    luOpen = !luOpen;
+    if (luOpen) luPlan(true);
+    luSig = '';
+    const r = formRefs; if (!r) return;
+    r.prev.hidden = !luOpen;
+    putAttr(r.best, 'aria-expanded', String(luOpen));
+    if (luOpen && luRes) renderPrev(luRes);
+  }
+  function renderPrev(b) {
+    const r = formRefs, box = r.prev;
+    const now = field(), sig = JSON.stringify([b.field, b.cells, b.why, now, cellsNow(), Math.round((b.parts.gain || 0) * 100)]);
+    if (sig === luSig) return; luSig = sig;
+    box.textContent = ''; box.hidden = false;
+    box.append(el('b', 'lu-t', `Best line-up to push zone ${b.parts.zone}`), el('p', 'lu-line', b.why + '.'));
+    const ins = b.field.filter(k => !now.includes(k)), outs = now.filter(k => !b.field.includes(k));
+    const ch = el('div', 'lu-ch');
+    if (b.parts.same) ch.append(el('span', 'lu-same', 'Your line-up is already the best one.'));
+    else if (!ins.length && !outs.length) ch.append(el('span', 'lu-same', 'Same three, new places.'));
+    for (const k of ins) { const c = el('span', 'lu-chip in'); c.append(img(portrait(k)), el('span', null, 'In: ' + first(k))); ch.append(c); }
+    for (const k of outs) { const c = el('span', 'lu-chip out'); c.append(img(portrait(k)), el('span', null, 'Out: ' + first(k))); ch.append(c); }
+    box.append(ch);
+    // The new formation, Back | Mid | Front.
+    const grid = el('div', 'lu-grid'); grid.setAttribute('aria-label', 'New places');
+    for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
+    const at = (col, lane) => Object.keys(b.cells).find(k => b.cells[k].col === col && b.cells[k].lane === lane);
+    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+      const o = at(col, lane), was = o && cellsNow()[o];
+      const moved = o && (!was || was.col !== col || was.lane !== lane || (o !== 'hero' && !now.includes(o)));
+      const d = el('div', 'lu-cell' + (o ? ' occ' : '') + (moved ? ' new' : ''));
+      if (o) { d.append(img(portrait(o)), el('span', null, o === 'hero' ? S.name : first(o))); if (o !== 'hero') d.append(el('i', 'rp r-' + C(o).role)); }
+      grid.append(d);
+    }
+    box.append(grid);
+    const p = b.parts, cur = p.current;
+    const stats = el('p', 'note lu-stats');
+    stats.textContent = (cur && !p.same ? `Damage ${fmt(cur.dps)} → ${fmt(p.dps)}` + (p.gain ? ` (${pctTxt(p.dps / Math.max(1e-9, cur.dps))})` : '') + '. ' : '') +
+      (p.holds ? `Holds zone ${p.zone}.` : p.held >= 1 ? `Holds zone ${p.held}, not ${p.zone} yet.` : `Cannot hold zone ${p.zone} yet.`);
+    box.append(stats);
+    const row = el('div', 'lu-row');
+    const use = btn('mini go lu-use', 'Use this line-up', () => { if (live() && typeof applyLineup === 'function') { applyLineup(b); luOpen = false; box.hidden = true; putAttr(r.best, 'aria-expanded', 'false'); luPlan(true); formSig = ''; saveUi(); } });
+    use.disabled = !!p.same;
+    const keep = btn('mini lu-keep', 'Keep mine', () => { luOpen = false; box.hidden = true; putAttr(r.best, 'aria-expanded', 'false'); });
+    row.append(use, keep); box.append(row);
   }
 
   // ================= hero card =================
@@ -394,7 +485,7 @@
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', updateForm) });
+  registerSection('party', { id: 'party-form', title: 'Formation', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
