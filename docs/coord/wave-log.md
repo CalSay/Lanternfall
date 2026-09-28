@@ -893,3 +893,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   rows 3-4 powers (Trade Routes, a Tactics slot) are unconfirmed against plan-4 order: WC1/build-map to settle.
   Code follow-up LORE-C1 (rename Listener strings etc., list in regions-4-5.md end) queued. Owner questions:
   the Seam, the Deepwell rematch stretch, names Rowan/Haldor/Nessa.
+- MERGED FB1 (55-errors.js ring buffer in S.errors, 75-feedback-ui.js "Send feedback" in the Journal stats
+  view, 60-feedback.css). First hand-back had no error listeners; sent back, fixed (window error +
+  unhandledrejection, throttled save after capture, wrap checks). Running: N1b (opus), MAT1 (sonnet).
