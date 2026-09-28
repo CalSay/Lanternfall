@@ -322,7 +322,8 @@ never lifts and the tide runs black. His lines and the coast beats are already w
 (`21b-stories-coast.js`; see the LORE-R45b changes note at the end of regions-4-5.md for the lines a
 code task should look at).
 
-**Lantern Pearls.** Pearls that grew around drops of light the sea swallowed. Freed light, which is
+**Tide Sigils** (MAT1, materials.md 7: buff items are Sigils, never named like a gem or a stone — "Pearl"
+is now only the grade-4 gem). What grew around drops of light the sea swallowed. Freed light, which is
 why rank 8 (Lanternlit) is paid in them.
 
 ### 4.4 Region bosses are Shrouds
@@ -508,7 +509,7 @@ for someone cannot be stolen** (rule 3). When a Bond reaches **Sworn**, each of 
 a flame lit for the other. That is what **Lanternborn** means (rank 7, and the companion endgame D5
 builds on Sworn Bonds): a companion who can carry a light of their own, given by a friend.
 **Lanternlit** (rank 8, after the Coast) is the next step: the flame burns in them, fed by the freed
-light in Lantern Pearls. It pays off once more at the end: in the last fight the Voice's song cannot
+light in Tide Sigils. It pays off once more at the end: in the last fight the Voice's song cannot
 charm a companion who is Sworn to someone in the party (8.7). A bonus, never a need.
 
 Bond story guidance for LORE7: story 1 (Friends) is a small shared moment; story 2 (Close) is a
@@ -1323,7 +1324,7 @@ DV may also raise its own questions (for example, whether the rematch joins the 
 | **the Pyre Knight** | Region 3's Shroud: the knight who agreed where Caedmon refused, and is now what holds the Lea's stolen light captive |
 | **the Hollises** | Bram's family, who come home later as Hands |
 | **the Sunken Coast / Saltreach** | Region 2 / its drowned village and lighthouse |
-| **Lantern Pearls** | Pearls grown round drops of swallowed light |
+| **Tide Sigils** | Sigils grown round drops of swallowed light (MAT1: "Pearl" is now only the grade-4 gem) |
 | **the Lea / the Emberwaste** | The green plain the stolen lights fell on / what it became |
 | **Emberlea** | The village on the Lea's edge. Caedmon held its road for one hour |
 | **the Ashen Wyrm** | The fire that grew wings on the Fall night. The world raid's first great foe |
@@ -1465,8 +1466,8 @@ Quarry Song (Vesper wrote the song about the quarry that woke) and The Last Two 
 - Trophies: Moss Heart, Bat Fang, Grave Knuckle, Beetle Horn, Spore Crown, Golem Core, Wraith Veil.
 - Zone uniques: Sproutblade, Echo Cowl, Rattlebone Charm, Carapace Pick, Sporeheart, Golemfist,
   Wisp Axe.
-- Materials' top tiers: Emberite, Lanternwood, Starlit Essence, Emberglass, Gloamsilk, Lantern
-  Lily, Ember Hide.
+- Materials' grade-5 tier (MAT1, materials.md 1): Mithril (ore), Ash (wood), Starlit Essence, Aquamarine
+  (gem), Silk (cloth), Mandrake (herb), Bearhide.
 - Expedition Lore titles (text not yet written): The First Lamp, Moss and Memory, Wings in the Dark,
   The Bonefield Bells, A Road Relit; Barrow Songs, The Spore Gardener, Stone That Walks, The Old
   Muster, Silk and Salt; Reeds That Whisper, The Night Shift, A Dusk Contract, The Crossing,
