@@ -9,7 +9,9 @@
 // guide's "Tap the fire to light it." points here). Taps on it never reach the stage (no chop).
 // Reduced motion: no flicker, no smoke drift, Hesketh stands still.
 //
-// N2 (the camp scene) may share paintFire below with its own panorama.
+// N2 (the camp scene) may share paintFire below with its own panorama: campPaintFire(g, x, y, on, t)
+// (CSS px at 2 per art px). AC5's Trophy Wall card (63e) draws the camp fire with it.
+let campPaintFire = null;
 {
   const P = 2;   // CSS px per art px (as the scenery and the sprites)
   const COL = {
@@ -20,8 +22,8 @@
   const box = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w * P, h * P); };
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const lit = () => typeof hearthLit === 'function' && hearthLit();
-  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood';
-  const showing = tg => cold() && atGrove(tg);
+  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood' && S.node.t === 1;   // the Oak Grove only
+  const showing = tg => typeof hearthScene === 'function' && hearthScene() && atGrove(tg);
 
   // ---- the fire: base centre (x, y = the ground line) ----
   function paintFire(g, x, y, on, t) {
@@ -46,6 +48,7 @@
     for (const [a, c] of [[-7, COL.st], [-4, COL.stM], [-1, COL.st], [2, COL.stM], [5, COL.st]]) { box(g, X(a), Y(-2), 3, 2, c); box(g, X(a), Y(-2), 3, 1, a % 2 ? COL.st : '#A8A0B0'); }
     box(g, X(-7), Y(0), 15, 1, 'rgba(11,8,16,.45)');
   }
+  campPaintFire = paintFire;
   // A plot stake with a tag (an open plot), or the station itself (built).
   function paintPlot(g, id, x, y, built) {
     const X = a => x + a * P, Y = a => y + a * P;

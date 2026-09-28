@@ -632,3 +632,37 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Q4 answered (bench XP 0 shipped). ASKED THE OWNER: 9.1 Raid under Fight (UI only, online-layer file),
   9.2 rename box to the Journal, 9.3 the pill replaces the name in the header (UX-A ships "name kept" by flag).
   UX-A launched.
+- OWNER: Hands should live at camp with us -> beds come from a new camp building, the Bunkhouse (hire at the
+  Tavern); N1 told (data-driven bed cap so it can grow late game).
+- OWNER deferred the open questions to the relevant designers' recommendations. Coordinator decisions:
+  UX2 9.1 Raid moves under Fight (UI only, no online data change; done in UX-E); 9.2 the rename box moves to
+  the Journal's Lanternbearer card (UX-B); 9.3 the activity pill replaces the name in the header (UX-A told,
+  flag kept). LORE9 (raid flavour lines in 74-ui-raid.js, display only) approved on the same basis.
+  K13 production chains: the Lanternbearer CAN gather secondary resources (coal, dye, salt) so the game is
+  playable without Hands, but they are low-value for the hero and ideal Hand jobs; refining runs in the
+  background at stations (timed), worked faster by Hand refiners.
+- AC5 merged: 63e-scenery-wall.js (Trophy Wall card on the Camp view: 4 stages, 21 Feat trophies, pennants,
+  12 group medals, the worn critter asleep by the fire, day/dusk/night; featTrophyURL; trophyWall.paint for
+  the future camp panorama at plot p13). Coordinator kept both check sections (store, wall).
+- OWNER: relax the Netlify deploys: four times a day (or at the end of the 5-hour usage cycles; the
+  coordinator cannot see those, so fixed times). netlify.toml now has `ignore`: Netlify skips any push whose
+  newest commit message lacks "[deploy]". DEPLOY RULE: only at the 09:38, 13:38, 17:38 and 21:38 UK check-ins
+  (weekday and weekend), and only if something merged since the last deploy: put "[deploy]" in that check-in's
+  wave-log commit message. Never add "[deploy]" at other times.
+- OWNER: a WORLD tab for everything that isn't basic gameplay (fighting and gathering): pick the Tavern,
+  camp and so on from it; enter zone dungeons and find the zone raid from the world map; start expeditions
+  from the map. UX2b launched to revise ux-overhaul.md's IA around a World map (it absorbs the Camp tab,
+  the Deepwell, Raid, expeditions and the plan-2 Lantern Road map idea).
+- OWNER: a campfire showed in the woods. Cause: 63d/63c drew the opening camp scene (fire, Hesketh, plots) on
+  EVERY wood node for any save that started cold (hearthCold stays set). Coordinator fix: new hearthScene()
+  = a cold-start save before the fire is lit or before the Forge stands; only at the Oak Grove (wood t1).
+- OWNER: hint pop-ups jump around when the screen moves. QUEUED HINT1 (onboarding/tip bubbles: dock them to a
+  fixed band instead of tracking moving targets; reposition only on real layout changes, no jitter).
+- OWNER: skill levels should sit above the resource tabs. UX-A told: the Gather sub-tabs carry the level
+  ("Mining 52") with a thin XP bar under each, so all skills show at once above the lists.
+- UX2b merged: bottom tabs Fight · Gather · Party · Craft · World (world id kept); World = a vertical map strip
+  (regions stacked, road rows of lamps per band, Hollow's Rest place view, Tavern sheet, Deepwell place,
+  raid pin, Almanac post, Great Lanterns, band sheets to travel, expedition bar); 9 small sprites; no per-frame
+  work. Phases: A, B, then W1 (shell + map + registerPlace; absorbs plan-2 RD), W2 (Rest/Tavern/Almanac),
+  W3 (Deepwell/raid/expeditions), D, E, F, then G. Coordinator decisions on 10: raid pin in the foe's home
+  region; UX-A does not reorder the tab bar (W1 does); the Tavern is a sheet.

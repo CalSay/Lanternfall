@@ -21,7 +21,8 @@
 //     gives its Lv 1 row (spec 1.3). Its behaviour is H3's.
 //
 // Exposed names:
-//   HEARTH_TUNE, HEARTH_CHAIN (station build order), HEARTH_PLOT { id: fn -> bool }
+//   HEARTH_TUNE, HEARTH_CHAIN (station build order), HEARTH_PLOT { id: fn -> bool } (also decor plot p13 'wall',
+//     the Trophy Wall: HEARTH_PLOT_AT, HEARTH_PANO_W; hearthPlotOpen('wall') follows it on every save)
 //   hearthCold() -> bool      this save began at a cold Hearth
 //   hearthLit() -> bool       the fire burns (always true for warm saves)
 //   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
@@ -59,7 +60,10 @@ const HEARTH_TUNE = {
 const HEARTH_CHAIN = ['bench', 'forge', 'store', 'loom', 'ench', 'tavern'];
 // The stations a cold start leaves unbuilt.
 const HEARTH_COLD_B = ['forge', 'bench', 'loom', 'ench', 'tavern'];
-let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
+// Decor plots on the camp panorama (hearth-and-hands.md 6.4; N2 draws them): no cost, no timer, no perk.
+// The panorama is 1,024 art px wide with p13, the Trophy Wall, at x 990 where the road enters camp.
+const HEARTH_PLOT_AT = { wall: { plot: 'p13', x: 990, decor: 1, n: 'Trophy Wall' } }, HEARTH_PANO_W = 1024;
+let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, hearthStationWhy, hearthNext,
   hearthApply, hearthWarm, HEARTH_PLOT;
 
 {
@@ -77,8 +81,11 @@ let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, 
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
-  hearthCold = () => !!Hs().cold;
+  hearthCold = () => !!Hs().cold;   // a save that started cold (stays set)
   hearthLit = () => !hearthCold() || !!Hs().lit;
+  // The opening camp scene (fire, Hesketh, plot stakes) belongs to the Oak Grove only until the first
+  // stations stand (owner: a campfire in the woods later made no sense). After the Forge, woods are woods.
+  hearthScene = () => hearthCold() && (!Hs().lit || lv('forge') < 1);
 
   hearthApply = () => {
     if (!coldStart || !S.camp || !S.camp.b) return;
@@ -124,9 +131,12 @@ let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, 
     store: () => lv('forge') >= 1 || nearFull(),
     loom: () => S.maxZone >= HEARTH_TUNE.zones.loom,
     ench: () => S.maxZone >= HEARTH_TUNE.zones.ench,
-    tavern: () => S.maxZone >= HEARTH_TUNE.zones.tavern
+    tavern: () => S.maxZone >= HEARTH_TUNE.zones.tavern,
+    // p13, a decor plot (AC5, achievements.md 6): the Trophy Wall opens at 250 achievement points, warm or cold
+    wall: () => { try { return deeds.wallStage() >= 1; } catch (e) { return false; } }
   };
   hearthPlotOpen = id => {
+    if (HEARTH_PLOT_AT[id] && HEARTH_PLOT_AT[id].decor) return !!HEARTH_PLOT[id]();
     if (!hearthCold() || lv(id) > 0) return true;
     if (!hearthLit()) return false;               // nothing to build before the fire
     const f = HEARTH_PLOT[id];

@@ -349,7 +349,7 @@ let gatherTheme, gatherSpot, gatherHeroX, gatherWalking, gatherDraw, gatherRight
     const kind = S.node.kind, t = S.node.t;
     // the hero's real reach, once its strike frame is baked (until then an estimate)
     if (!G.reach && kind === G.kind && T > G.reachT + 1) { G.reachT = T; const r = heroReach(); if (r) { G.reach = r; G.key = ''; } }
-    const cold = kind === 'wood' && typeof hearthCold === 'function' && !!hearthCold();
+    const cold = kind === 'wood' && t === 1 && typeof hearthScene === 'function' && !!hearthScene();   // the opening camp scene only
     const key = kind + t + '|' + SW + '|' + GY + '|' + cold;
     if (key === G.key) return;
     const again = G.kind === kind && G.t === t;
