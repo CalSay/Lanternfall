@@ -177,3 +177,10 @@ oaths.md and legendaries.md. The play-test found that the game stops after the R
 5. Owner-gated: the first festival and the companion endgame.
 The coordinator accepted the designer's recommendations (the owner delegated these calls); the owner can
 still redirect.
+
+## Plan 3 (2026-09-28)
+
+The owner's play-test asks are in [plan-3.md](plan-3.md): a party of 3 with the hero (Front, Middle, Back)
+and synergies rebuilt around slots, roles and Bonds; a cold Hearth start where you build each station; tools
+and immersive gathering scenes; a Storehouse; and Hands, townsfolk who gather for you. The rest of plan 2
+(the Coast, Oaths, legendary powers, pinnacles) follows, built on the new party.

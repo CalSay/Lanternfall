@@ -376,3 +376,9 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   lags on seed 2); planner field flapping; the Warden T2 surge at 2-3h; the day-30-35 roster cap plateau
   (Region 3 power, plan 2).
 - PAUSED as the owner asked: all three tasks (C4, R0, BAL2) are merged. No new agents until the owner resumes.
+## Plan 3 (started 2026-09-28)
+The owner resumed with seven asks (tools shown, solo gathering, gathering scenes, a party of 3 with the hero
+as Front/Middle/Back, a cold Hearth start with stations you build, NPC gatherers, a Storehouse). Owner
+decisions: the hero is one of the three; the Storehouse caps what you HOLD from every source, active
+gathering included, but skill XP keeps counting. The remainder of plan 2 is folded in, in build order:
+see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
