@@ -219,7 +219,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
       return;
     }
     if (res === 'parry') { resolve('parry', 'tap'); return; }
-    if (typeof cbWallOn === 'function' && cbWallOn() && kind !== 'dive') { resolve('parry', 'wall'); return; }
+    if (typeof cbWallOn === 'function' && cbWallOn() && wallBlocks()) { resolve('parry', 'wall'); return; }
     const x = res === 'dodge' ? E.dodgeX : 1;
     if (res === 'dodge') CB_STATS.dodges++;
     CB_STATS.hitByHeavy++;
@@ -245,9 +245,12 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     endTele(kind === 'heal' ? 'interrupt' : result, by);
     if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
   }
+  // Shield Wall blocks a heavy hit (or the Elder Spore's cloud) aimed at the hero; with Lantern Bastion
+  // (a crown keystone) on anyone.
+  const wallBlocks = () => (TELE.kind === 'heavy' || TELE.kind === 'cloud') && (TELE.kind === 'cloud' || TELE.target === 'hero' || bonus('ks:bastion') > 0);
   resolveParry = source => {
     if (!TELE.on || !TELE.foe || !alive(TELE.foe)) return false;
-    if (source === 'wall') { if (TELE.kind !== 'dive' && TELE.kind !== 'heal') { resolve('parry', 'wall'); return true; } return false; }
+    if (source === 'wall') { if (wallBlocks()) { resolve('parry', 'wall'); return true; } return false; }
     if (source === 'bash') { resolve(TELE.kind === 'heal' ? 'interrupt' : 'parry', 'bash'); return true; }
     // the class tap: inside the window = parry, earlier = dodge (a later tap can still parry)
     if (TELE.kind === 'heal') { resolve('interrupt', 'tap'); return true; }

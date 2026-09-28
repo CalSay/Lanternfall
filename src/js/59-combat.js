@@ -150,6 +150,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     return false;
   };
   const lvOf = id => { const r = charRec(id); return r ? r.lv : 0; };
+  // Constellation keystones (57e-constellations.js STAR_KS): bonus('ks:<id>') > 0.
+  const ks = id => bonus('ks:' + id) > 0;
+  let emberBurn = 0, challUntil = -1;
 
   // ---------------- per-unit stats ----------------
   // Fills u from the current field; keeps hp as a fraction of max when max changes.
@@ -176,6 +179,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.hpP = hpPow(u.pow);
       maxHp = T.heroHp[cls] * u.hpP * (1 + g.hp / 100);
       u.armour = T.heroArmour[cls] + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
+      // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
+      if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
+      emberBurn = cls === 'lanternmage' ? heroAtk() * (ks('everburn') ? STAR_KS.everburn.perEmber : ks('slowBurn') ? STAR_KS.slowBurn.perEmber : 0) : 0;
       u.thX = (cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
       u.melee = cls === 'warden'; u.ranged = !u.melee;
       u.dps = 0; u.spd = aps();
@@ -216,7 +222,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     u.role = role;
     // class auras and party-wide shapes
-    if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { maxHp *= 1 + T.wardenTankHp; u.armour += T.wardenTankArmour; }
+    // The Warden's aura (Oathsworn doubles it: +80% HP, +40 armour).
+    if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { const k = ks('oathsworn') ? 2 : 1; maxHp *= 1 + T.wardenTankHp * k; u.armour += T.wardenTankArmour * k; }
     if (role === 'tank' && u.col === 2) u.armour += T.braced;
     if (upHas('elowen') || has('elowen')) maxHp *= 1 + T.lastLight;
     if (role === 'tank' && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
@@ -425,6 +432,15 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (g > 0) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
     }
     burst(0.68, 0.62, f.pal[1] || f.pal[5] || f.pal[3], 10);
+    // Wildfire (a keystone): Embers spread to every foe in the pack at half the count. Deepwell Wildfire:
+    // Embers and burns jump to the next foe.
+    if ((f.embers > 0 || f.burnT > 0) && (ks('wildfire') || boon('wild'))) {
+      const cap = 5 + bonus('tune:embersMax');
+      if (ks('wildfire') && f.embers > 0) { for (const o of foes) if (o !== f && alive(o)) o.embers = Math.min(cap, (o.embers || 0) + Math.ceil(f.embers / 2)); }
+      else { const o = focusFoe(); if (o && o !== f) { if (f.embers > 0) o.embers = Math.min(cap, (o.embers || 0) + f.embers); if (f.burnT > 0) burn(o, f.burnDps, f.burnT); } }
+    }
+    // Next in Line (a notable): when a marked foe dies, the next foe starts marked for 4s.
+    if (ks('nextMark') && typeof partyClock === 'function' && f.markUntil > partyClock()) { const o = focusFoe(); if (o && o !== f && !(o.markUntil > partyClock())) { o.markUntil = partyClock() + STAR_KS.nextMark.secs; o.markV = f.markV; } }
     FOE_EV.mob = f; FOE_EV.src = src >= 0 && U[src] ? U[src].key : '';
     emit('foeDown', FOE_EV);
     if (typeof onFoeDown === 'function') onFoeDown(f, src);
@@ -449,7 +465,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const d = cbDamageFoe(f, amount, idx, kind);
     if (isHero && hero && hero.cls === 'lanternmage') {
       const sp = (T.lmSplash + hero.area) * amount;
-      carry = false;
+      carry = ks('overflow');   // Overkill (a notable): the splash's overkill carries too
       for (const o of foes) if (o !== f && alive(o)) cbDamageFoe(o, sp, 0, 'magic');
       carry = true;
     }
@@ -729,6 +745,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.dead) { f.dead += dt; return; }
     f.born += dt; if (f.hit > 0) f.hit -= dt;
     if (f.burnT > 0) { f.burnT -= dt; carry = false; cbDamageFoe(f, f.burnDps * dt, -1, 'burn'); carry = true; if (!alive(f)) return; }
+    if (emberBurn > 0 && f.embers > 0) { carry = false; cbDamageFoe(f, f.embers * emberBurn * dt, 0, 'burn'); carry = true; if (!alive(f)) return; }
     if (f.markT > 0) f.markT -= dt;
     if (f.focusT > 0) f.focusT -= dt;
     if (f.vulnT > 0) f.vulnT -= dt;
@@ -769,6 +786,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (S.party && S.party.cls === 'warden') dr *= 1 - T.wardenDr;
     if (has('caedmon')) dr *= 1 - T.unburnt;
     if (wallUntil > clock) dr *= 1 - T.wall;
+    if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
     if (u.drT > 0) dr *= 1 - u.drV;
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
@@ -923,6 +941,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   function heroTick(u, dt) {
     u.fight += dt;
+    // Sanctuary Hymn: while Rally Hymn is up it heals the party 5% of max HP a second.
+    if (u.cls === 'lightkeeper' && ks('sanctuary') && typeof partyHymnOn === 'function' && partyHymnOn()) for (let i = 0; i < nU; i++) if (!U[i].down) cbHealUnit(U[i], U[i].maxHp * 0.05 * dt, u);
     if (u.heal > 0) {
       u.healT -= dt;
       if (u.healT <= 0) { u.healT += 1; const t = lowestAlly(); if (t && t.hp < t.maxHp) cbHealUnit(t, u.heal, u); }
@@ -940,7 +960,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   });
   on('classTap', ({ cls, kind, auto }) => {
     if (!partyCombatOn() || !nU || kind === 'parry') return;
-    if (cls === 'warden' && mob && alive(mob)) cbTaunt(U[0], [mob], (T.wardenTaunt + (boon('taunt') ? 2 : 0)) * (auto ? 0.5 : 1));
+    if (cls === 'warden' && mob && alive(mob)) {
+      cbTaunt(U[0], [mob], (T.wardenTaunt + (boon('taunt') ? 2 : 0)) * (auto ? 0.5 : 1));
+      if (ks('challenger')) { cbTaunt(U[0], foes, 2); challUntil = clock + 2; }   // Challenger: taps taunt every foe for 2s
+    }
     else if (cls === 'lightkeeper') { const t = lowestAlly(); if (t && t.hp / t.maxHp < (auto ? 0.6 : 1)) cbHealUnit(t, t.maxHp * T.lkTap * (auto ? 0.5 : 1), U[0]); }
     else if (cls === 'ranger' && mob && alive(mob)) mob.focusT = 8;
   });

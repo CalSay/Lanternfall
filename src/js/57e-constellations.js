@@ -32,8 +32,9 @@
 //         multiplies them; check.mjs keeps the best build under the pace caps.
 
 const STAR_TUNE = { every: 3, lanternPts: 4, lanternZone: 35, keyMax: 2, armKeyNeed: 5, crownBridges: 3, crownArm: 3, nameMax: 12 };
-// Knobs 55-party.js reads through tn()/bonus() today; stars on other knobs are data until it does.
-const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'embersMax', 'markT', 'mark', 'volleyHits', 'blessT', 'blessMax', 'emberPerTap', 'charges', 'keepEmbers', 'hymnFloor'];
+// Knobs 55-party.js reads through tn()/bonus() (Stage C routed them all; ks flags live in 55-party.js and 59-combat.js).
+const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'guardT', 'wall', 'wallT', 'wallPause', 'embersMax', 'emberPerTap', 'flare', 'flarePerEmber', 'keepEmbers',
+  'markT', 'mark', 'volleyHits', 'hasteT', 'blessT', 'blessMax', 'bless', 'hymn', 'hymnT', 'hymnFloor', 'lkShare', 'lkAura', 'autoEff', 'autoCd', 'charges'];
 // Numbers the combat code should use for each ks flag (the text on the star says the same).
 const STAR_KS = {
   unbroken: { holdSecs: 3 },                  // guard stacks never fall off while a heavy hit lands at least every 3s

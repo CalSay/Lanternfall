@@ -55,6 +55,9 @@ const CHAR_ROLE = {
 };
 
 let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField;
+// Stage C / Constellations helpers: heroGuardN() live guard stacks, partyHymnOn() Rally Hymn up,
+// partyClock() this file's clock (mob.markUntil is on it), hawkCrit() the Hawk Eye first-hit crit.
+let heroGuardN, partyHymnOn, partyClock, hawkCrit;
 // Stage HUD hooks (read by 62-stage.js about 10 times a second; Stage C combat fills them in).
 //   unitHp(key)     -> { hp, max, shield } | null   key: 'hero' or a character key. Party HP is not
 //                      simulated yet, so every unit is full. null = draw no bar.
@@ -83,7 +86,7 @@ let unitHp, unitCd, bossTelegraph;
     volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
     bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.1, lkShare: 1,
     wall: 1.3, wallT: 6, wallPause: 3, hymn: 1.4, hymnT: 8,
-    autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
+    autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCd: 0, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
   };
 
   // ---- runtime (not saved) ----
@@ -95,6 +98,9 @@ let unitHp, unitCd, bossTelegraph;
   // Deepwell boons (57d-deepwell.js) tune the knobs below through bonus('tune:<knob>') and
   // mod('abilityCd'); both are 0 / 1 outside a Deepwell run. spare: extra ability charges held.
   const tn = k => T[k] + bonus('tune:' + k);
+  // Constellation keystones and notables (57e-constellations.js STAR_KS): bonus('ks:<id>') > 0.
+  const ks = id => bonus('ks:' + id) > 0;
+  let heavyN = 0, tapN = 0, rainLeft = 0, rainNext = 0, agesT = 0;
   const abCd = c => HERO_CLASSES[c].ability.cd * mod('abilityCd');
   let spare = 0, spareT = 0;
 
@@ -194,16 +200,19 @@ let unitHp, unitCd, bossTelegraph;
     if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
     const auto = !!(opts && opts.auto);
     const ab = HERO_CLASSES[c].ability;
-    if (c === 'warden') { wallUntil = clock + T.wallT; pauseUntil = clock + T.wallPause; emit('shake', 0.2); }
+    // Lantern Bastion: the Wall stops the boss timer for its whole length.
+    if (c === 'warden') { wallUntil = clock + tn('wallT'); pauseUntil = clock + (ks('bastion') ? tn('wallT') : tn('wallPause')); emit('shake', 0.2); }
     else if (c === 'lanternmage') {
       const world = target() === 'world';
       const n = world ? worldEmbers : (mob.embers || 0);
       if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
-      heroSwing(heroAtk() * T.flare * (1 + T.flarePerEmber * n), false);
+      heroSwing(heroAtk() * tn('flare') * (1 + tn('flarePerEmber') * n), false);
+      // Everburn: Flare plants 2 new Embers after it goes off.
+      if (ks('everburn')) { const em = tn('embersMax'), k = STAR_KS.everburn.plant; if (world) worldEmbers = Math.min(em, worldEmbers + k); else if (mob) mob.embers = Math.min(em, (mob.embers || 0) + k); }
       emit('shake', 0.3);
     }
-    else if (c === 'ranger') { volleyLeft = tn('volleyHits'); volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + T.hasteT; }
-    else if (c === 'lightkeeper') { hymnUntil = clock + (bonus('tune:hymnFloor') > 0 ? 1e9 : T.hymnT); }
+    else if (c === 'ranger') { volleyLeft = tn('volleyHits'); volleyNext = clock; volleyEff = 1; hasteUntil = clock + T.volleyT + tn('hasteT'); }
+    else if (c === 'lightkeeper') { hymnUntil = clock + (bonus('tune:hymnFloor') > 0 ? 1e9 : tn('hymnT')); }
     if (p.abilityCd > 0) spare--; else p.abilityCd = abCd(c);
     readyFor = 0;
     emit('ability', { cls: c, name: ab.name, auto });
@@ -246,7 +255,7 @@ let unitHp, unitCd, bossTelegraph;
   classTap = function (opts) {
     ensureInit();
     const o = opts || {}, tg = o.target || target(), at = o.at, auto = !!o.auto;
-    const eff = auto ? T.autoEff : 1;
+    const eff = auto ? tn('autoEff') : 1;
     if (!auto) lastTap = clock;
     if (tg === 'node') { tapNode(); emit('classTap', { cls: cls(), kind: 'gather', target: tg, auto }); return; }
     const c = cls();
@@ -256,17 +265,37 @@ let unitHp, unitCd, bossTelegraph;
     if (tg === 'mob' && !(mob && !mob.dead)) return;
     let kind = 'strike';
     const m = tg === 'mob' ? mob : null;
-    if (c === 'warden') { kind = 'heavy'; pushStack(guard, tn('guard') * eff, T.guardT, tn('guardMax')); }
+    let tapX = 1;
+    if (c === 'warden') {
+      kind = 'heavy'; heavyN++;
+      // Unbroken: while heavy hits land at least every 3s, the stacks never fall off.
+      if (ks('unbroken')) { const hold = clock + STAR_KS.unbroken.holdSecs; for (const g of guard) if (g.until < hold) g.until = hold; }
+      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'));
+      if (ks('crush') && heavyN % STAR_KS.crush.every === 0) tapX = STAR_KS.crush.mult;   // Crushing Blow
+      if (ks('bastion') && P().abilityCd > 0) P().abilityCd = Math.max(0, P().abilityCd - STAR_KS.bastion.cdPerHeavy);
+    }
     else if (c === 'lanternmage') {
       kind = 'ember';
-      const em = tn('embersMax'), per = 1 + bonus('tune:emberPerTap');
+      const em = tn('embersMax'), per = 1 + bonus('tune:emberPerTap') + (ks('twinSpark') && Math.random() < STAR_KS.twinSpark.chance ? 1 : 0);
       if (m) m.embers = Math.min(em, (m.embers || 0) + per); else worldEmbers = Math.min(em, worldEmbers + per);
     }
-    else if (c === 'ranger') { kind = 'mark'; if (m) { const mk = tn('mark'); m.markUntil = clock + tn('markT'); m.markV = auto ? 1 + (mk - 1) * T.autoEff : mk; } }
-    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, T.bless * eff, tn('blessT'), tn('blessMax')); }
-    const r = heroSwing(heroAtk() * T.tapMul[c] * eff, true, at);
+    else if (c === 'ranger') {
+      kind = 'mark';
+      if (m) {
+        const mk = tn('mark');
+        // Deadeye: one mark at a time, and it lasts until its foe dies.
+        if (ks('deadeye')) { if (typeof combatFoes === 'function') for (const f of combatFoes()) if (f !== m) f.markUntil = 0; m.markUntil = clock + 1e6; }
+        else m.markUntil = clock + tn('markT');
+        m.markV = auto ? 1 + (mk - 1) * tn('autoEff') : mk;
+      }
+    }
+    else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
+    const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX, true, at);
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
-    if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * T.lkShare, '#B58CFF', false);
+    if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * tn('lkShare'), '#B58CFF', false);
+    // Rain of Arrows: every 10th tap fires a free volley.
+    tapN++;
+    if (ks('rain') && tapN % STAR_KS.rain.every === 0) { rainLeft += STAR_KS.rain.arrows; if (rainNext < clock) rainNext = clock; }
     emit('classTap', { cls: c, kind, target: tg, auto });
   };
 
@@ -275,8 +304,8 @@ let unitHp, unitCd, bossTelegraph;
   addModifier('dmg', () => {
     const c = cls(); if (!c) return 1;
     let m = T.heroMul[c] * (1 + stackSum(guard));
-    if (wallUntil > clock) m *= T.wall;
-    if (hymnUntil > clock) m *= T.hymn;
+    if (wallUntil > clock) m *= tn('wall');
+    if (hymnUntil > clock) m *= tn('hymn');
     if (marked()) m *= mob.markV || T.mark;
     return m;
   });
@@ -288,15 +317,22 @@ let unitHp, unitCd, bossTelegraph;
     let m = (1 / T.heroMul[c]) * (1 + stackSum(bless));
     if (hasteUntil > clock) m *= T.haste;
     if (c !== 'lightkeeper' || lkBusy) return m;
-    m *= T.lkAura;
+    m *= tn('lkAura');
     lkBusy = true;
     try {
-      const cd = compDps(), lost = heroDps() * (1 / T.heroMul[c] - 1) * T.lkShare;
+      const cd = compDps(), lost = heroDps() * (1 / T.heroMul[c] - 1) * tn('lkShare');
       if (cd > 0) m *= 1 + lost / cd;
     } finally { lkBusy = false; }
     return m;
   });
-  addModifier('crit', () => cls() === 'ranger' && marked() ? T.markCrit : 1);
+  // Pack Leader: the Ranger loses its own crit bonus on marked foes. Deadeye: crits on the mark deal double.
+  addModifier('crit', () => cls() === 'ranger' && marked() && !ks('pack') ? T.markCrit : 1);
+  addModifier('critDmg', () => cls() === 'ranger' && marked() && ks('deadeye') ? STAR_KS.deadeye.critMult : 1);
+  heroGuardN = () => { let n = 0; for (const g of guard) if (g.until > clock) n++; return n; };
+  partyHymnOn = () => hymnUntil > clock;
+  partyClock = () => clock;
+  // Hawk Eye: the hero's first hit on each foe always crits (50-sim heroSwing asks once per swing).
+  hawkCrit = () => { if (!ks('hawk') || cls() !== 'ranger' || target() !== 'mob' || !mob || mob.dead || mob.hawk) return false; mob.hawk = 1; return true; };
 
   // ---- tick: cooldowns, auto-cast, auto-play, volley, boss-timer pause ----
   onTick(dt => {
@@ -311,12 +347,22 @@ let unitHp, unitCd, bossTelegraph;
     const extra = bonus('tune:charges');
     if (spare > extra) spare = extra;
     if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
-    // Auto-cast at half rate: it waits one extra cooldown after the ability is ready.
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c)) castAbility({ auto: true });
+    // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
+    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd'))) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
-      if (canHit()) heroSwing(heroAtk() * T.volleyAtk * volleyEff, false);
+      if (canHit()) heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false);   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
     }
+    if (rainLeft > 0 && clock >= rainNext) {
+      if (canHit()) heroSwing(heroAtk() * STAR_KS.rain.atk, false);
+      rainLeft--; rainNext = clock + T.volleyT / T.volleyHits;
+    }
+    // Lamp of Ages: while the Hymn is up Blessings do not fade, and it adds one every 2s.
+    if (c === 'lightkeeper' && ks('ages') && hymnUntil > clock) {
+      for (const b of bless) if (b.until < clock + 0.5) b.until = clock + 0.5;
+      agesT += dt;
+      if (agesT >= STAR_KS.ages.blessEvery) { agesT = 0; pushStack(bless, tn('bless'), tn('blessT'), tn('blessMax')); }
+    } else agesT = 0;
     if (pauseUntil > clock && fightBoss && mob && mob.boss && !mob.dead) bossTime += dt;
     // Idle auto-play: a half-strength class tap every 2s after 4s without a tap.
     if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead) {
@@ -332,7 +378,7 @@ let unitHp, unitCd, bossTelegraph;
     toast('The boss dropped a Mirror of Embers. Use it to change your class.', 'good', null, 'high');
     emit('mirrorDrop', { mirrors: P().mirrors });
   });
-  on('deepFloor', () => { if (hymnUntil > clock + T.hymnT) hymnUntil = clock; });
+  on('deepFloor', () => { if (hymnUntil > clock + tn('hymnT')) hymnUntil = clock; });
   on('zoneClear', ({ zone }) => {
     if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
   });

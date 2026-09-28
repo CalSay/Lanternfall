@@ -69,7 +69,8 @@ function strike(amount, color, big, at, label) {
   if (mob.hp <= 0) kill();
 }
 function heroSwing(base, tap, at) {
-  const crit = Math.random() < critChance();
+  const hawk = typeof hawkCrit === 'function' && hawkCrit();   // Hawk Eye (Constellations): a foe's first hit crits
+  const crit = Math.random() < critChance() || hawk;
   const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
   strikeSrc = 'hero';
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);

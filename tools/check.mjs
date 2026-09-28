@@ -1825,6 +1825,45 @@ try {
     errs.push(...g.errors, ...h.g.errors);
   }
 
+  // Constellations (57e) in combat: every class knob goes through tn(), keystone flags do what STAR_KS says
+  {
+    const src = loadCore({ seed: 1 }).source;
+    const knobs = ['guardT', 'wallT', 'wallPause', 'wall', 'flare', 'flarePerEmber', 'hasteT', 'bless', 'hymn', 'hymnT', 'lkShare', 'lkAura', 'autoEff', 'autoCd'];
+    const miss = knobs.filter(k => !src.includes(`tn('${k}')`));
+    assert(!miss.length, 'every star knob is read through tn() in 55-party.js' + (miss.length ? ': missing ' + miss.join(', ') : ''));
+    // Lantern Flare reads tune:flare
+    const lm = party(101, 'lanternmage', ['tobin', 'hesketh', 'wren'], 20);
+    lm.E('S.maxZone = 10; setZone(10); Math.random = () => 0.99'); secs(lm.g, 1);
+    const flare = () => lm.E('(() => { const m = mob; m.hp = m.max = 1e12; m.embers = 0; S.party.abilityCd = 0; castAbility(); return 1e12 - m.hp; })()');
+    const f0 = flare(); lm.E('addBonus("tune:flare", () => 20)'); const f1 = flare();
+    assert(f1 / f0 > 1.9 && f1 / f0 < 2.1, `Lantern Flare reads the flare knob (x${(f1 / f0).toFixed(2)} with +20)`);
+    // Wildfire: Embers spread to every other foe at half the count when their foe dies
+    lm.E('setZone(10); addBonus("ks:wildfire", () => 1)'); secs(lm.g, 0.1);
+    const spread = lm.E('(() => { const fs = combatFoes().filter(f => !f.dead); if (fs.length < 3) return null; fs.forEach(f => f.embers = 0); fs[0].embers = 4; cbDamageFoe(fs[0], fs[0].hp, 0, "magic"); return fs.slice(1).map(f => f.embers).join(); })()');
+    assert(spread === '2,2', `Wildfire: a foe with 4 Embers dies, the other two get 2 each (${spread})`);
+    // Pack Leader: the Ranger loses its own crit bonus on marked foes
+    const rg = party(102, 'ranger', ['tobin', 'hesketh', 'wren'], 20);
+    rg.E('S.maxZone = 10; setZone(10)'); secs(rg.g, 1);
+    rg.E('classTap({ target: "mob" })');
+    const c0 = rg.E('mod("crit")'); rg.E('addBonus("ks:pack", () => 1)'); const c1 = rg.E('mod("crit")');
+    assert(c1 < c0, `Pack Leader: no crit bonus on the marked foe (crit x${c0.toFixed(2)} -> x${c1.toFixed(2)})`);
+    // Unbroken: each guard stack gives 2 armour
+    const wd = party(103, 'warden', ['tobin', 'hesketh', 'wren'], 20);
+    wd.E('S.maxZone = 10; setZone(10)'); secs(wd.g, 1);
+    for (let i = 0; i < 5; i++) wd.E('classTap({ target: "mob" })');
+    const a0 = wd.E('cbUnitByKey("hero").armour'); wd.E('addBonus("ks:unbroken", () => 1)'); secs(wd.g, 0.3);
+    const a1 = wd.E('cbUnitByKey("hero").armour'), n = wd.E('heroGuardN()');
+    assert(n >= 1 && Math.abs(a1 - a0 - 2 * n) < 1e-6, `Unbroken: ${n} guard stacks give ${a1 - a0} armour`);
+    // Sanctuary Hymn: the Hymn heals 5% of max HP a second
+    const lk = party(104, 'lightkeeper', ['tobin', 'bram', 'wren'], 20);
+    lk.E('S.maxZone = 10; setZone(10); addBonus("ks:sanctuary", () => 1); COMBAT_TUNE.regen = 0; COMBAT_TUNE.atk = 0'); secs(lk.g, 1);
+    lk.E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.5; }); S.party.abilityCd = 0; castAbility()');
+    lk.E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.5; })'); secs(lk.g, 1);
+    const hp = lk.E('cbUnitByKey("wren").hp / cbUnitByKey("wren").maxHp');
+    assert(hp >= 0.54, `Sanctuary Hymn heals about 5% a second while the Hymn is up (Wren 50% -> ${(100 * hp).toFixed(0)}% in 1s)`);
+    errs.push(...lm.g.errors, ...rg.g.errors, ...wd.g.errors, ...lk.g.errors);
+  }
+
   // Deepwell: the [C] boons join the pool now
   {
     const g = loadCore({ seed: 1 });
