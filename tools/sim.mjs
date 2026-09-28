@@ -19,7 +19,7 @@
 //             possible (saving gold for it first); the game's own planner (56d autoPlan, F3) keeps
 //             the best 2 fielded, re-planning on events with its 6% margin and 300 s dwell.
 //   --omen <id>|none: fix the daily Omen (default: the device date's Omen).
-//   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 20; CU1: the lower bound, >= 60 min).
+//   --t11 0: skip the T11 fork (a level-1 recruit fielded at zone 15; CU1: the lower bound, >= 60 min).
 //   --train D (with --days): CU1's T11. At the first check-in after day D, recruit a level-1 hero
 //             (the first non-tank, non-support not recruited yet), turn Auto line-up off and field it
 //             in place of the lower-level member; report the day it reaches the pair's level then.
@@ -574,7 +574,7 @@ fn.on('wipe', w => { if (!w.arena) wipeAt.push(t); });
 fn.on('bossFail', ({ zone }) => { if (!(zone in firstTry)) firstTry[zone] = 0; });
 fn.on('zoneClear', ({ zone }) => { if (!(zone in firstTry)) firstTry[zone] = 1; });
 let t2Snap = null;   // the save at 2h (T5, T6, T8 forks)
-const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; if (zone + 1 === 20 && doT11 && !t11Snap) t11Snap = E('JSON.stringify(S)'); });
+const reached = {}; fn.on('zoneClear', ({ zone }) => { if (!reached[zone + 1]) reached[zone + 1] = t; if (zone + 1 === 15 && doT11 && !t11Snap) t11Snap = E('JSON.stringify(S)'); });
 const dt = 0.1, total = hours * 3600;
 let t = 0, nextLine = 0;
 // One second of active play under the policy. sec = seconds into the session (drives the
@@ -642,7 +642,7 @@ for (let sec = 0; sec < total; sec++) {
 }
 line(total);
 
-// T11: fork the zone-20 save, recruit a level-1 character, field it, and time how long it
+// T11: fork the zone-15 save (CU1: was zone 20, which the 3h runs no longer reach), recruit a level-1 character, field it, and time how long it
 // takes to reach party level - 5 (fighting at the same zone, same policy, no pushing).
 // CU1 (owner: no rapid catch-up): this is now the lower bound, at least 60 min; the fork stops at 90.
 if (t11Snap) {
@@ -679,7 +679,7 @@ if (E('rosterLive()')) {
   console.log(`roster: ${E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')")} | field ${E('S.party.field.join()')} | partyLv ${E('partyLevel().toFixed(1)')}`);
   console.log(`recruits: ${recruits.join(' ')}`);
   console.log(`T10 roster steps (promotion due or drill) before 2h: ${before2h.length} at [${before2h.map(mins).join(',')}]m, longest gap ${mins(gap)}m (want <= 30m, from the first step)`);
-  console.log(`T11 ${t11 ? `${t11.id} L1 -> L${t11.lv} (target ${t11.target.toFixed(1)}) in ${t11.min >= 90 ? '90+' : t11.min.toFixed(1)}m (want >= 60m, CU1)` : 'n/a (zone 20 not reached)'}`);
+  console.log(`T11 ${t11 ? `${t11.id} L1 -> L${t11.lv} (target ${t11.target.toFixed(1)}) in ${t11.min >= 90 ? '90+' : t11.min.toFixed(1)}m (want >= 60m, CU1)` : 'n/a (zone 15 not reached)'}`);
   console.log(`T16 first recruit ${firstJoin ? mins(firstJoin.t) + 'm (' + firstJoin.id + ')' : '-'} (want 15-30m) / first Rare ${fr('rare')} (want 1.5-3h) / Epic ${fr('epic')} (want day 2-4) / Legendary ${fr('legendary')} (want week 2-3)`);
   console.log(`unlocks: Renown ${E('renown()')} (bounties ${E('S.bounties.claimed')}), tokens ${E('JSON.stringify(S.party.unlock.tokens)')}, bosses ${E('S.stats.bosses')}, wraiths ${E('masteryApi.typeKills("wraith")')}`);
   console.log(`leads: ${E("leads().map(l => l.id + ' ' + Math.round(l.pct * 100) + '%').join(', ')")}`);
@@ -917,7 +917,7 @@ function runDays() {
 //   T2  3h continuous mixed play, every class: max zone <= 24
 //   T3  class parity: each class reaches zone 15 within 0.85-1.15 x the median time
 //   T10 a roster step (a promotion comes due, or a drill) at least every 30 min before 2h
-//   T11 (CU1, owner: no rapid catch-up) levelling a new hero takes real play: at zone 20 a level-1
+//   T11 (CU1, owner: no rapid catch-up) levelling a new hero takes real play: at zone 15 a level-1
 //       recruit needs >= 60 min to reach party level - 5 (continuous); a hero recruited on day 3
 //       reaches the pair's level in 1-5 days of being fielded (normal play, --train 3)
 //   T16 recruits: first after the starter 15-30 min, first Rare 1.5-3h (continuous play);
@@ -1023,12 +1023,12 @@ async function runTargets() {
   }
   // CU1 (owner, 2026-09-28: no rapid catch-up; "an achievement for maxing out all heroes shouldn't be
   // spoonfed"): levelling a new hero is an investment. Was: party level - 5 in 5-10 min at zone 20.
-  // Now: at zone 20 (continuous) a level-1 recruit needs >= 60 min to reach party level - 5, and a hero
+  // Now: at zone 15 (continuous) a level-1 recruit needs >= 60 min to reach party level - 5, and a hero
   // recruited on day 3 (normal play) reaches the pair's level then in 1-5 days of being fielded.
   const t11 = cont.map(o => { const m = o.match(/T11 \w+ L1 -> L\d+ \(target [\d.]+\) in (90\+|[\d.]+)m/); return m ? (m[1] === '90+' ? 90 : +m[1]) : NaN; });
   const tr = trains.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)).train);
   const trDays = tr.map(x => x && x.at !== null ? x.at - x.from : Infinity);
-  res.push([ok(t11.every(m => m >= 60) && trDays.every(d => inR(d, [1, 5]))), 'T11 levelling a new hero takes real play: at zone 20 a level-1 recruit needs >= 60 min to reach party level - 5; a hero recruited on day 3 reaches the pair\'s level in 1-5 days of being fielded',
+  res.push([ok(t11.every(m => m >= 60) && trDays.every(d => inR(d, [1, 5]))), 'T11 levelling a new hero takes real play: at zone 15 a level-1 recruit needs >= 60 min to reach party level - 5; a hero recruited on day 3 reaches the pair\'s level in 1-5 days of being fielded',
     classes.map((c, i) => `${c} ${t11[i] >= 90 ? '90+' : f0(t11[i])}m / ${tr[i] ? `${tr[i].id} to L${tr[i].target.toFixed(0)} in ${Number.isFinite(trDays[i]) ? trDays[i].toFixed(1) + 'd' : 'over ' + (trainDays - tr[i].from).toFixed(1) + 'd'}` : '-'}`).join(', ')]);
   const t12 = [attr, glass, cast].map(o => z20(o) / z20(bal)), t12n = ['attrition (Tobin F, Elowen M, Lightkeeper B)', 'glass cannon (Warden F, Kestrel M, Wren B)', 'caster (Aldric F, Oriel M, Lanternmage B)'];
   res.push([ok(t12.every(v => v <= 1.5)), 'T12 each niche line-up reaches zone 20 within 1.5x of balanced', `balanced ${f0(z20(bal))}m; ` + t12n.map((n, i) => `${n} ${f0(z20([attr, glass, cast][i]))}m (${Number.isFinite(t12[i]) ? t12[i].toFixed(2) : '-'})`).join(', ')]);
