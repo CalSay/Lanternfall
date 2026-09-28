@@ -419,3 +419,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - OWNER STANDING ORDER: pause all progress when the owner's weekly usage reaches 90%. The coordinator cannot
   read the usage meter; the owner will say "pause". On "pause": launch nothing new, let running agents finish
   and merge (or stop them if asked), disable the hourly trigger, push, and report.
+- OWNER USAGE RULE (2026-09-28): the owner uses Claude for work during the week. Weekdays: no new agents,
+  no hourly check-ins; only answer the owner. Weekends: full speed (any usage left is fair game). The
+  current batch (G2, H3, F1, GP1, H1) finishes now, on the tail of this week's allowance; then pause until
+  the weekend.
