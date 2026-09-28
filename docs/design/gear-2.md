@@ -1082,3 +1082,145 @@ weapons, then armour; Salvage Runes only for Rare or better), `--uniq2` (wear th
    worth their cost:** the cost is flat and small; the buff item is the price, and heroes deal most damage.
 8. **Buff items live in the Storehouse**, on a **Buff Items** page, as uncapped counts (coordinator decided;
    5.6). Gear lives in the Armoury.
+
+---
+
+## 9. Save, decisions, core-2 changes and the build split
+
+### 9.1 Save state (all new fields optional; missing means none)
+
+| Where | Field | Meaning | Slice |
+|---|---|---|---|
+| `S.mats` | every family 15 long; new `coal` `salt` `dye` (5 long, by region), `ingot` `plank` `leather` `cloth` `tinct` (15) | Padded, never truncated (1.8) | S4 |
+| `S.gear2` | `{ v, kept, mig: { at, from }, refine: { [station]: [{ g, n, done, t0 }] }, rune, stats }` | Kept grade, the migration record, the queues, Salvage Runes, counters | S4 (rune: S5) |
+| items | `rv` | 2 = Gear 2.0 recipe and base lines; missing = today's (K4) | S4 |
+| items | `ls` | Line set role (`tank` `striker` `caster` `support`) | S4 |
+| items | `so` | Open sockets `[[buffId, rarity, strength], ...]` (core-2 8.2) | S5 |
+| `S.buff` | `{ v, pearl_h: [5 counts], ..., well_l: [...] }` | Buff items held (core-2 8.2 plus `v`) | S5 |
+| `S.legend` | `book`, `echo` (existing) take unique power ids (`u_*`); new `uniq: { pity: { [u]: n } }` | Ranks, Echoes, pity counters | S5 |
+| `S.found` | unique ids (existing shape: id -> highest grade) | The collection | S5 |
+| Hands | `role`: `gather` (default), `refine`, `hunt`; the job gains `st` (station) or `z` (zone) | 57f's planned field | S4 |
+| Map Room slots, `S.trade` | 7.2 | | TR1 |
+
+Nothing is renamed or repurposed. `it.t` keeps "tier by power" with a range of 1-15 (core-2 8.1). Runtime
+refining progress inside a unit, find-roll timers and the weekly demand lists are derived, not saved.
+
+### 9.2 Proposed core-2 changes (added to core-2 section 10 as "proposed", pending sign-off)
+
+1. **5.2, line power:** rating lines (every capped or flat-rating stat, economy and tool lines) scale with
+   `lp = Pc(t) x rarity x (1 + 0.15 plus)`, `Pc(g) = TIER_POW[min(g, 5)] x (1 + 0.04 max(0, g - 5))`. Power
+   lines keep `p`. Grades 1-5 unchanged to the decimal. Without it, caps saturate by grade 6 and tool speed
+   runs away (2.4).
+2. **5.4, the socket budget** uses `Pc` for rating lines (the same rule), and each buff id has **two fixed
+   lines**, 60% and 40% of the budget, at the affix rates (5.2).
+3. **5.4, family ids:** `r4` -> `star`, `r5` -> `well` (LORE-R45's ids); display names wait for MAT1.
+4. **5.4, version lines:** `h` takes the resist of the type the region's foes deal; `l` takes the power of
+   the type the region's foes are weak to (so the Pale Reach's light line is fire power, not frost).
+5. **5.4, drops:** "Bosses always drop their signature buff item" applies to elders on every kill and to
+   region bosses (2 on the first kill); finds are timed rolls, not per unit (5.4).
+6. **5.5, uniques:** Region 1 uniques have no locked socket and carry a third fixed line; the locked socket
+   is data (not saved) and takes the wearer's version; a unique's base lines follow the wearer's weight;
+   uniques ignore the bag limit by one.
+7. **5.5, Echoes for uniques:** 2 a rank (Oath powers keep 3); rank cap `min(5, 1 + Great Lanterns
+   relit)`, with Echoes past the cap banked.
+8. **5.3:** crafted Legendary weight `max(0, (lv - 30) x 0.08)` from Region 2 (inside RG1's range; logged
+   for the record).
+9. **8.2:** new keys `S.gear2`, `S.trade`; item fields `rv`, `ls`; `S.legend.uniq`; `S.mats` new families.
+
+### 9.3 Decisions for the owner
+
+- **O1. 70 / 30 across a set, not in every piece.** A staff is mostly wood, so the light weapon leads with
+  wood while the light set is about two thirds cloth. Recommended: **yes**.
+- **O2. Grade 4 moves to Region 2.** Region 1 tops out at grade 3 (today grade 4 drops from zone 19).
+  Saves keep every grade they had and keep farming it (1.8). About one zone of power at the Listener, which
+  BAL3 gives back. Recommended: **yes** (it is what "gated by region" means).
+- **O3. Enchanting reaches 100% at level 80** (about mid Region 3), from 70%, with a cheap **Tune** to
+  re-set a buff item at your new strength. Recommended: **yes**.
+- **O4. Salvaging a socketed item breaks its buff items** unless you spend Salvage Runes (the sheet asks;
+  auto-salvage never touches them). Recommended: **yes**, it is the owner's removal rule applied evenly.
+- **O5. The Matched set:** +10% on buff lines when a character's 3+ filled sockets are all one family.
+  Recommended: **yes** (small, no new screen).
+- **O6. The Still** (herbs into Tinctures for Tonics and Salvage Runes). Recommended: **yes** as a small
+  Herb sink; it can be cut without touching anything else.
+- **O7. Uniques by boss type:** each region's 6 are its elder families plus its region boss (the owner's
+  "spore boss drops a poison-spreading item"), with a pity count. Recommended: **yes**.
+- **O8. The list of 30** (6.2): names and powers. Recommended: approve as a set; rename freely (names are
+  display data).
+- **O9. The 13 classic uniques stay for ever** with one new socket; the 7 zone ones move to the Deepwell's
+  floor bosses so new players can still find them. Recommended: **yes**.
+- **O10. Temper:** re-forge a unique up to your current grade for 2 crafts' materials. Recommended: **yes**,
+  or a favourite power is stuck on old stats.
+- **O11. Unique ranks:** 2 Echoes a rank, capped by Great Lanterns relit. Recommended: **yes**.
+- **O12. Trade towns and returns** (7.1): Mossy Hollow, Hallam's Landing, New Emberlea, the Silent Village,
+  Hollow's Rest; goods are Common and Uncommon buff items, Salvage Runes, Trophies. Recommended: **yes**.
+- **O13. Hunting is a Hand job only;** the Lanternbearer still gets hide from fighting (the 2026-09-27
+  decision stands). Recommended: **yes**.
+
+### 9.4 For the coordinator and the other specs
+
+- **C1 (core-2):** sign off 9.2-1 to 9.2-9; CL1 and CB2 re-read 1, 4 and 5.
+- **C2 (MAT1):** the name ladder (1.2 lists what it must cover and the code's name shape).
+- **C3 (WC1, BT1):** the Tannery (a new building and plot), the Smelter as the Forge's branch, the Saw at
+  the Workbench, the Still at the Enchanter's Table; refining queues in the building trees (+1, +2 orders,
+  speed nodes, capped like damage nodes); re-cost Region 1 rows that ask grades 4-5 (1.8); a Storehouse
+  Lv 9-10 only if HS19 fails at grades 6-15; trade towns on the map (7.1).
+- **C4 (N1b, N3):** the jobs of 3.5 (Coal-digger, Salter, Weaver-gatherer with dye, Hunter, Gem-seeker,
+  the refiner role), the Lucky +5% a roll, finder tree nodes, the `role` field.
+- **C5 (CB2):** each region's damage type for the heavy resist line (5.1); the active-kill rule feeds +1
+  buff item and x2 unique chances; elder families (`fam`) decide which unique an elder drops; the S6 hooks
+  the powers marked S6 need (stagger fill, cast starts).
+- **C6 (R2, the Coast build):** Pearls are buff items (no `S.mats.pearl`, no `pl`); Tide Pools and Fishing
+  are the Pearl node; Tidefast and Shellbreaker become the Pearl's region traits; uniques 7-12 replace
+  region-2.md 6; rank 8 costs 25 Pearls of any rarity; Region 2's secondary nodes and gatherers.
+- **C7 (R3-R5 specs):** each region's traits for its family (5.5), its zone ranges (1.4), and the elder
+  families behind uniques 13-30.
+- **C8 (UX-F):** the Armoury item sheet's sockets row, the Lantern Book pages, the Storehouse's region
+  grouping and Buff Items page, the station queue sheet.
+- **C9 (online layer):** raid uniques are untouched. Raid Echoes or raid Uniques 2.0 would be an
+  online-layer task for later.
+- **C10 (BAL3):** E1-E13 and the sim flags (8.2).
+
+### 9.5 Build split
+
+Every slice runs `node tools/build.mjs`, `node tools/check.mjs` and `node tools/perf.mjs --quick`. Region 1
+play stays exactly as today at load (check: every fixture's `gear()`, `heroDps()` and `totalDps()` are
+identical before and after each slice).
+
+**S4: weights, tiers, chains, migration** (Opus, L; after RG1, N3 and S2 for `lbClass` / `lbRole`)
+
+| File | Owner | What |
+|---|---|---|
+| `src/js/21g-data-gear2.js` (new, data only) | S4 | `GRADES` (15 rows: region, `GRADE_Z`, `nodeReq`, `stationReq`), `Pc()`, `KIND_W`, `GEAR2_REC` (2.3), `GEAR2_BASE` (2.4), `GEAR2_SETS` and the new `CRAFT_AFFIXES` rows (2.2), `REFINE` chains and `REFINE_TUNE` (3), secondary families and nodes (1.3, 1.6), `MAT` rows padded to 15 with MAT1 placeholder names, `NODE_NAMES` 6-15, Storehouse groups, the Legendary weight knob, `GEAR2_TUNE` |
+| `src/js/55-gear2.js` (new, core) | S4 | `registerState('gear2')`, the migration (1.8), `gradeOpen`, `zoneGrade`, `dropGrade`, refining queues (tick, away in closed form, pause at the cap, cancel), secondary nodes, Hand refiner and hunter hooks, the Coast arrival gift, Next Up goals |
+| `src/js/75-refine-ui.js`, `src/styles/60-refine.css` (new) | S4 | Station queue sheet, order picker, refiner chips |
+| `src/js/20-data.js`, `src/js/30-state.js`, `src/js/40-rules.js` | S4 (small edits) | `TIER_POW` to 15; `SKILL_TUNE` rows from `GRADES`; `fresh().mats` 15 long plus new families; `zoneTier` -> `dropGrade`; the Legendary weight |
+| `src/js/41-items.js`, `src/js/55-crafting.js`, `src/js/51-actions.js` | S4 (small edits) | rv2 base lines on `lp`; fits by weight; line sets; grades 1-15; rv2 and kept-raw recipes; refined costs; salvage by `rv`; Transmute gate |
+| `src/js/55-gathering.js`, `src/js/55-store.js`, `src/js/55-skillpace.js`, `src/js/55-tools.js`, `src/js/57b-expeditions.js` | S4 (small edits) | Secondary rows and drop grades; groups and 15-long `tierMult`; kept grades; tool lines on `lp`; band grades |
+| `src/js/57f-hands.js` | N1b/N3 owner (small edit with S4) | `role`: refine, hunt |
+| `src/js/57-camp.js` | WC1/BT1 owner (small edit) | The Tannery row and plot |
+| `src/js/72-ui-gather.js`, `src/js/75-store-ui.js`, `src/js/75-craft-ui.js` | UX-F owner (small edits with S4) | Secondary rows; the region-grouped pouch; "Lines for", refined costs, the "Old recipe" line |
+| `tools/sim.mjs`, `tools/check.mjs`, `tests/fixtures/save-v4-gear2.json` | S4 | `--gear2`, refining policy, GP2 report; check section "gear2": each fixture migrates once (idempotent), arrays padded, kept grades, `lp == p` for grades 1-5, dps identical at load, HS8 and HS19 at 15 grades |
+
+**S5: enchanting, buff items, Uniques 2.0** (Opus, L; after S4 and S1; S6 parts behind flags)
+
+| File | Owner | What |
+|---|---|---|
+| `src/js/21k-data-enchant.js` (new, data only) | S5 | `BUFF_FAMS`, `BUFF_ITEMS` (12 ids: family, version, lines), `ENCH_TUNE` (strength curve, costs, Tune, Salvage Rune recipe, find rolls, rarity tables, Matched set), region traits |
+| `src/js/21n-data-uniq2.js` (new, data only) | S5 | `UNIQ2` (30 rows: position, region, families, locked version, fixed lines, power id), `UNIQ2_TUNE`, the 30 power rows pushed into `LEG_POWERS` (`src: 'uniq'`) |
+| `src/js/55-enchant.js` (new, core) | S5 | `registerState('buff')`; Set, Tune, Take out, runes; socket lines for 41-items; finds (gathering rolls, elders, region bosses, champions, elites, expeditions); the Pearl cost helper for 55-legend; retool conversion; region traits |
+| `src/js/55-uniques.js` (new, core) | S5 | Drops, pity and Echoes, rank caps, the Deepwell Echo, Temper, classic uniques to the Deepwell, the full-bag rule, `S.found` |
+| `src/js/59h-uniq-combat.js` (new) | S5 | The 30 powers on S1's statuses and Stage C events; S6 parts behind a flag with the fallbacks of 6.2 |
+| `src/js/75-enchant-ui.js`, `src/styles/60-enchant.css` (new) | S5 | Sockets row, Set sheet, socket sheet, Buff Items page, Temper sheet |
+| `src/js/41-items.js`, `src/js/55-legend.js`, `src/js/51-actions.js`, `src/js/55-crafting.js` | S5 (small edits) | Socket lines; unique base lines by the wearer's weight and the `off` / `body` / `uwpn` kinds; unique powers in the Book, limit and budget, `legendBest`; `dropUnique` to the new path; salvage with runes |
+| `src/js/22-data-regions.js`, `src/js/57d-deepwell.js`, `src/js/57c-codex.js`, `src/js/75-legend-ui.js`, `src/js/75-store-ui.js`, `src/js/11b-art-legend.js` | S5 (small edits, with their owners) | Region unique lists by family; classic drops and Echoes; Light for uniques; Lantern Book pages; Buff Items page mount; 42 icon specs (recoloured existing ones) |
+| `tools/sim.mjs`, `tools/check.mjs` | S5 | `--settings`, `--uniq2`, E5-E9; check: the raw band (E8), socket counts by rarity, `S.buff` merge, removal rules, Pearl cost mapping, the power limit with uniques, no dps change at load |
+
+**TR1: trade routes** (Sonnet, M; after S4 and UX-W3)
+
+| File | Owner | What |
+|---|---|---|
+| `src/js/21o-data-trade.js` (new, data only), `src/js/57g-trade.js` (new, core) | TR1 | Towns, weekly demand, prices, returns, `S.trade` |
+| `src/js/57b-expeditions.js`, `src/js/75-exped-ui.js` | TR1 (small edits) | The trade route kind and its send sheet |
+
+Parallel safety: S4 and S5 are in sequence (S5 reads S4's grades and weights). TR1 can run beside S5; they
+share only `21g` (read-only). MAT1 can land any time: names are data in `MAT` and the S5 data files.
