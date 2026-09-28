@@ -498,6 +498,7 @@ let openSheet, partySheet;
     const hl = el('div', 'cs-xpline'); const lvb = el('b', null, 'Lv ' + S.L); const hn = el('small', 'cs-xpnote');
     hl.append(lvb, hn); hb.append(hl, bar); body.append(hb);
     refs.heroXp = fill; refs.heroXpTxt = hn;
+    if (typeof deedsUI === 'object' && deedsUI) body.append(safe(() => deedsUI.heroRow(), ''));   // Achievements · 2,140 points › (75-deeds-ui)
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));

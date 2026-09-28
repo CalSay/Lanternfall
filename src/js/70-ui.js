@@ -274,6 +274,7 @@ const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
 const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const TAB_HIDDEN = new Set(), TAB_ICON = {};   // registerTab({ hidden: true }): menus with no tab button, and their header icons
 const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
 const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
 const WIDE_Q = '(min-aspect-ratio: 1/1) and (min-width: 600px)';
@@ -404,8 +405,8 @@ function renderMenu(t) {
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
   if (open) {
     $('menuTitle').textContent = TAB_TITLE[t] || t;
-    const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc');
-    mi.hidden = !ti; if (ti && mi.getAttribute('src') !== ti.getAttribute('src')) mi.src = ti.src;
+    const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc'), src = ti ? ti.getAttribute('src') : TAB_ICON[t];
+    mi.hidden = !src; if (src && mi.getAttribute('src') !== src) mi.src = src;
   }
   placeToasts();
 }
@@ -436,7 +437,7 @@ function setTab(t, sel) {
     if (v && !featOk(v.feature)) onboardReveal(v.feature);
   }
   const was = S.tab, wasView = curView(t);
-  S.tab = t; uiPrefs.tab = t;
+  S.tab = t; if (!TAB_HIDDEN.has(t)) uiPrefs.tab = t;   // a hidden tab's menu is never the one reopened at boot
   if (view) uiPrefs.views[t] = view;
   saveUiPrefs();
   if (was !== t) buildViewSeg(t);
@@ -462,7 +463,8 @@ function closeMenu() {
 // Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
 function initMenus() {
   menusReady = true;
-  const last = TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : TAB_IDS.includes(S.tab) ? S.tab : 'adv';
+  const ok = t => TAB_IDS.includes(t) && !TAB_HIDDEN.has(t);
+  const last = ok(uiPrefs.tab) ? uiPrefs.tab : ok(S.tab) ? S.tab : 'adv';
   S.tab = '';
   if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
 }
@@ -724,17 +726,23 @@ function registerSection(tabId, { id, title, view, mount, update, feature }) {
   if (mount && menusReady && (secShows(rec) || SECTIONS.some(s => s !== rec && s.mounted && s.mount && s.tab === tabId))) mountSec(rec);
   return sec;
 }
-// registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
+// registerTab({ id, label, icon, mount(panel), update(force), hidden }): a whole new tab. Tabs are
 // tight at 360px wide, so prefer registerSection. icon is a URL or icon spec.
-function registerTab({ id, label, icon, mount, update }) {
+// hidden: true = a full-screen menu with no button on the tab bar (the Achievements menu): open it
+// with setTab(id) or one of its view ids; it keeps the title row, the view switcher, close and swipe.
+function registerTab({ id, label, icon, mount, update, hidden }) {
   if (TAB_IDS.includes(id) || TAB_ALIAS[id]) throw new Error('registerTab: tab exists ' + id);
-  const b = el('button', 'tab', label);
-  b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
-  const url = iconOf(icon); if (url) b.prepend(img(url));
-  b.addEventListener('click', () => tabClick(id));
-  const nav = document.querySelector('.tabs'); nav.append(b);
-  TAB_IDS.push(id); TAB_TITLE[id] = label;
-  nav.style.gridTemplateColumns = 'repeat(' + TAB_IDS.length + ', 1fr)';
+  const url = iconOf(icon);
+  if (hidden) { TAB_HIDDEN.add(id); TAB_ICON[id] = url || ''; TAB_IDS.push(id); TAB_TITLE[id] = label; }
+  else {
+    const b = el('button', 'tab', label);
+    b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
+    if (url) b.prepend(img(url));
+    b.addEventListener('click', () => tabClick(id));
+    const nav = document.querySelector('.tabs'); nav.append(b);
+    TAB_IDS.push(id); TAB_TITLE[id] = label;
+    nav.style.gridTemplateColumns = 'repeat(' + (TAB_IDS.length - TAB_HIDDEN.size) + ', 1fr)';
+  }
   const panel = el('section', 'panel'); panel.id = 'p-' + id; panel.hidden = true;
   $('panels').append(panel);
   if (mount) mount(panel);
