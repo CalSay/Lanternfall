@@ -900,3 +900,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   weapon metal+wood; Ranger armour leather+cloth, weapon wood+metal; Mage armour cloth+leather, weapon
   wood+gem; ~70/30 per item), O4 (50% chance per socketed buff item to be lost on salvage; Salvage Rune = 0%),
   O6 (the Still benched until after 1.0). O11 lukewarm. Recorded at the end of gear-2.md.
+- OWNER: gems vs buff items could confuse. COORDINATOR: buff items become SIGILS (Tide/Ember/Frost/Gloam Sigil
+  families, items "<boss> Sigil"; own bag tab and icon style, sockets only); the crystal family shows as GEMS,
+  mined from Geodes (id `crystal` kept). Sent to MAT1. O4 50% salvage loss and O6 Still benched confirmed.
