@@ -2381,11 +2381,19 @@ span.cf-d { font-weight: 600; }
 
 // ================= numbers =================
 const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+// Number format (achievements.md 5.1): 'letters' (default) or 'sci', set from S.settings.num by
+// setNumFormat (58-deeds at load and on change). Letters past Dc go on aa, ab, ... az, ba, ...
+let NUM_FMT = 'letters';
+const setNumFormat = v => (NUM_FMT = v === 'sci' ? 'sci' : 'letters');
+const sufAt = i => i < SUF.length ? SUF[i] : String.fromCharCode(97 + Math.floor((i - SUF.length) / 26) % 26, 97 + (i - SUF.length) % 26);
 function fmt(n) {
   if (!isFinite(n)) return '∞';
   if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n));
-  let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; }
-  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i];
+  if (NUM_FMT === 'sci') { let e = Math.floor(Math.log10(n)), m = n / Math.pow(10, e); if (m < 1) { m *= 10; e--; } if (m >= 9.995) { m /= 10; e++; } return m.toFixed(2) + 'e' + e; }
+  let i = 0;
+  if (n < 1e36) while (n >= 1000) { n /= 1000; i++; }   // (the old loop, kept exact below 1e36)
+  else { i = Math.floor(Math.log10(n) / 3); n /= Math.pow(10, 3 * i); if (n >= 999.9999999) { n /= 1000; i++; } else if (n < 0.9999999) { n *= 1000; i--; } }
+  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + sufAt(i);
 }
 function fmtTime(s) { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}h ${m}m` : m ? `${m}m ${s % 60}s` : `${s}s`; }
 const roman = n => ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][n - 1] || String(n);
@@ -6931,6 +6939,312 @@ const zoneHome = z => regionOf(z).home[zonePlace(z)];
 const regionBossZone = z => REGIONS.some(r => r.z1 === z);
 const lanternsLitAt = maxZone => { let n = 0; for (const r of REGIONS) if ((maxZone || 1) > r.z1) n++; return n; };
 
+// ---- src/js/23-data-deeds.js ----
+// 23-data-deeds: achievement data (docs/design/achievements.md, task AC2). Data only: no S, no DOM.
+// The core that reads the save, counts, grants and pays is 58-deeds.js. Player text follows the
+// house voice; titles are short epithets (one or two words, at most 14 characters).
+//
+// Words: a TRACK counts one thing and has 4 TIERS (Bronze, Silver, Gold, Everflame), then endless
+// STARS on counting tracks. A FEAT is the hard tier (title + look). A SECRET is hidden until done.
+// Every tier, Feat, secret and chapter step adds POINTS; the points LADDER gives titles, frames, a
+// cape and the Trophy Wall stages. Only Gold and Everflame tiers pay a small bonus, capped per key
+// forever by DEED_CAP (section 4.4).
+//
+//   DEED_TIERS           tier keys and names, index 0..3 = tier 1..4
+//   DEED_PTS             points per tier / star / group / Classic / Feat / secret / chapter
+//   DEED_BONUS           +0.5% at Gold and +0.5% more at Everflame (deepOil: 1 s each)
+//   DEED_CAP             the hard cap per bonus key (all regions, forever)
+//   DEED_KEY_TXT         bonus key -> player words ("damage")
+//   DEED_GROUPS          12 groups: { id, n, ic, gold (title), ever (title), look (id at Everflame) }
+//   DEED_TRACKS          92 tracks: { id, g, n, what, need[4], star, bonus, src, wait, kind, u, more, steps, lock }
+//                          star: { x } (each star is x more) | { add } | null. kind: 'count' (default),
+//                          'level' (a value that only rises), 'ladder' (1..4 steps), 'record' (a best).
+//                          u: [one, many] nudge noun. more: noun for "X IV: 38Qa more gold".
+//                          wait: the task that must merge before the track shows (58 probes it).
+//                          lock: { tier: text } tiers that open with later content.
+//   DEED_FEATS           21 Feats: { id, n, needs, about, rar, title, look, wait, pts }
+//   DEED_SECRETS         16 secrets: { id, n, riddle, how, title, look, wait }
+//   DEED_LOOKS           36 accessories + 4 frames: { id, slot, n, src }  src: 'feat:id' | 'grp:id' |
+//                          'sec:id' | 'ch:id' | 'pts:N'. No look carries a modifier (AD1).
+//   DEED_SLOTS           the Looks slots in order (trail is the Deepwell's; frame the portrait's)
+//   DEED_LADDER          points milestones: { at, title, look, wall }
+//   DEED_CHAPTERS        chapter rewards (AC6 owns the steps): { id, n, title, look, steps, wait }
+//   DEED_TUNE            cadence and quiet rules
+const DEED_TIERS = [
+  { k: 'bronze', n: 'Bronze', col: '#C07A45' },
+  { k: 'silver', n: 'Silver', col: '#C9D1DB' },
+  { k: 'gold', n: 'Gold', col: '#F2C14E' },
+  { k: 'everflame', n: 'Everflame', col: '#FF9E3D' }
+];
+const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, classic: 10, feat: 100, capstone: 250, secret: 15, chStep: 5, chDone: 25 };
+const DEED_BONUS = { gold: 0.005, everflame: 0.005, deepOil: 1 };
+const DEED_CAP = {
+  dmg: 0.05, party: 0.04, tap: 0.01, xp: 0.04, gold: 0.03, essence: 0.01, uniqueChance: 0.01, offline: 0.04,
+  bountyPay: 0.03, buildTime: 0.03, compXp: 0.04, expHaul: 0.04, raid: 0.03, skillXp: 0.04,
+  'skillXp:smith': 0.01, 'skillXp:bench': 0.01, 'skillXp:loom': 0.01, 'skillXp:ench': 0.01,
+  gatherSpeed: 0.03, 'gatherSpeed:mine': 0.02, 'gatherSpeed:wood': 0.02, 'gatherSpeed:forage': 0.02, 'gatherSpeed:fish': 0.02,
+  'yield:ore': 0.01, 'yield:crystal': 0.01, 'yield:wood': 0.01, 'yield:fibre': 0.01, 'yield:herb': 0.01, 'yield:pearl': 0.01, 'yield:fish': 0.01,
+  deepOil: 8
+};
+const DEED_KEY_TXT = {
+  dmg: 'damage', party: 'party damage', tap: 'tap damage', xp: 'hero XP', gold: 'gold', essence: 'essence chance',
+  uniqueChance: 'unique drops', offline: 'away gains', bountyPay: 'bounty rewards', buildTime: 'faster builds',
+  compXp: 'companion XP', expHaul: 'expedition haul', raid: 'raid damage', skillXp: 'skill XP',
+  'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
+  gatherSpeed: 'gathering speed', 'gatherSpeed:mine': 'Mining speed', 'gatherSpeed:wood': 'Woodcutting speed',
+  'gatherSpeed:forage': 'Foraging speed', 'gatherSpeed:fish': 'Fishing speed',
+  'yield:ore': 'Ore', 'yield:crystal': 'Crystal', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
+  'yield:pearl': 'Pearls', 'yield:fish': 'Fish', deepOil: 'starting Oil in the Deepwell'
+};
+
+const DEED_GROUPS = [
+  { id: 'combat', n: 'Combat', ic: ['sword', '#E0524F'], gold: 'Bladehand', ever: 'Darkbane', look: 'c_tally' },
+  { id: 'road', n: 'The Road', ic: ['boot', '#C9A26B'], gold: 'Roadworn', ever: 'Farwalker', look: 'fl_moon' },
+  { id: 'wealth', n: 'Wealth and Loot', ic: ['coin', '#F2C14E'], gold: 'the Wealthy', ever: 'Hoardlord', look: 'l_gilded' },
+  { id: 'gather', n: 'Gathering', ic: ['pick', '#D08A4E'], gold: 'Stonehand', ever: 'Wildmaster', look: 'h_straw' },
+  { id: 'craft', n: 'Crafting', ic: ['anvil', '#A9B1BD'], gold: 'Journeyman', ever: 'Forgemaster', look: 'l_tinker' },
+  { id: 'camp', n: 'Camp', ic: ['flame', '#FF9E3D'], gold: 'Housewright', ever: 'Hearthwarden', look: 'fl_rose' },
+  { id: 'comp', n: 'Companions', ic: ['mug', '#C98B4E'], gold: 'Goodfellow', ever: 'the Beloved', look: 'fl_kin' },
+  { id: 'exped', n: 'Expeditions', ic: ['boot', '#7FB2FF'], gold: 'Wayfarer', ever: 'Pathfinder', look: 'h_wayfarer' },
+  { id: 'deep', n: 'The Deepwell', ic: ['orb', '#7FB2FF'], gold: 'Stairwalker', ever: 'Deepborn', look: 'a_stair' },
+  { id: 'stars', n: 'Stars and Legends', ic: ['constel', '#B89CFF'], gold: 'Stargazer', ever: 'the Sage', look: null },
+  { id: 'codex', n: 'Codex and Almanac', ic: ['banner', '#F2C14E'], gold: 'Bookworm', ever: 'Daykeeper', look: 'l_moon' },
+  { id: 'raid', n: 'The Raid', ic: ['heart', '#E0524F'], gold: 'Raider', ever: 'Wyrmbane', look: null }
+];
+
+// Helpers for the table below (data shorthand only).
+const X10 = { x: 10 }, X1K = { x: 1000 };
+const DEED_TRACKS = [
+  // ---- 2.1 Combat ----
+  { id: 'slayer', g: 'combat', n: 'Slayer', what: 'Foes defeated (a pack is one)', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'dmg', src: 'save', u: ['foe', 'foes'] },
+  { id: 'champs', g: 'combat', n: 'Champion Hunter', what: 'Champions defeated', need: [10, 100, 1e3, 2500], star: X10, bonus: 'dmg', src: 'save', u: ['champion', 'champions'] },
+  { id: 'bosses', g: 'combat', n: 'Bossbane', what: 'Bosses beaten, of any kind', need: [10, 50, 250, 1e3], star: X10, bonus: 'dmg', src: 'save', u: ['boss', 'bosses'] },
+  { id: 'crits', g: 'combat', n: 'Critical Mass', what: 'Critical hits', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'dmg', src: 'new', u: ['crit', 'crits'] },
+  { id: 'bighit', g: 'combat', n: 'Heavy Hand', what: 'Biggest single hit', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'dmg', src: 'new', kind: 'record', more: 'damage in one hit' },
+  { id: 'damage', g: 'combat', n: 'Lantern Fury', what: 'Damage dealt by the party, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'dmg', src: 'new', more: 'damage' },
+  { id: 'parry', g: 'combat', n: 'Parry!', what: 'Parries', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'dmg', src: 'new', u: ['parry', 'parries'] },
+  { id: 'intr', g: 'combat', n: 'Not Today', what: 'Interrupts', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'party', src: 'new', u: ['interrupt', 'interrupts'] },
+  { id: 'abil', g: 'combat', n: 'Signature Moves', what: 'Abilities used by the party', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'party', src: 'new', u: ['ability', 'abilities'] },
+  { id: 'taps', g: 'combat', n: 'Tap Tap Tap', what: 'Taps on the stage', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'tap', src: 'save', u: ['tap', 'taps'] },
+  // ---- 2.2 The Road ----
+  { id: 'zones', g: 'road', n: 'Roadwalker', what: 'Best zone', need: [10, 35, 70, 105], star: { add: 35 }, bonus: 'xp', src: 'save', kind: 'level', u: ['zone', 'zones'], lock: { 4: 'Opens with the Emberwaste' } },
+  { id: 'level', g: 'road', n: 'Hero', what: 'Hero level', need: [10, 25, 50, 75], star: { add: 25 }, bonus: 'xp', src: 'save', kind: 'level', u: ['hero level', 'hero levels'] },
+  { id: 'survey', g: 'road', n: 'Surveyor', what: 'Zone mastery stars', need: [35, 100, 175, 350], star: null, bonus: 'xp', src: 'derived', u: ['mastery star', 'mastery stars'] },
+  { id: 'naturalist', g: 'road', n: 'Naturalist', what: 'Bestiary pages (kinds x tiers)', need: [7, 14, 28, 56], star: null, bonus: 'xp', src: 'derived', u: ['bestiary page', 'bestiary pages'], lock: { 4: 'Opens with the Coast' } },
+  { id: 'crowns', g: 'road', n: 'Crownbreaker', what: 'Elder kinds beaten, and the Great Lantern bosses', need: [3, 7, 15, 22], star: null, bonus: 'xp', src: 'derived', u: ['elder', 'elders'], lock: { 3: 'Opens with the Coast', 4: 'Opens with the Emberwaste' } },
+  { id: 'light', g: 'road', n: 'Hours of Light', what: 'Hours played and away', need: [10, 100, 500, 2e3], star: X10, bonus: 'offline', src: 'save', u: ['hour', 'hours'] },
+  // ---- 2.3 Wealth and loot ----
+  { id: 'gold', g: 'wealth', n: 'Hoard', what: 'Gold earned, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'gold', src: 'save', more: 'gold' },
+  { id: 'essence', g: 'wealth', n: 'Essence Keeper', what: 'Essence gained, all tiers', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'essence', src: 'new', u: ['essence', 'essence'] },
+  { id: 'curator', g: 'wealth', n: 'Curator', what: 'Kinds of unique found', need: [3, 7, 10, 13], star: null, bonus: 'uniqueChance', src: 'save', u: ['unique', 'uniques'] },
+  { id: 'trophies', g: 'wealth', n: 'Trophy Case', what: 'Trophies earned', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gold', src: 'new', u: ['Trophy', 'Trophies'] },
+  // ---- 2.4 Gathering ----
+  { id: 'mine', g: 'gather', n: 'Miner', what: 'Mining level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:mine', src: 'save', kind: 'level', u: ['Mining level', 'Mining levels'] },
+  { id: 'wood', g: 'gather', n: 'Woodcutter', what: 'Woodcutting level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:wood', src: 'save', kind: 'level', u: ['Woodcutting level', 'Woodcutting levels'] },
+  { id: 'forage', g: 'gather', n: 'Forager', what: 'Foraging level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:forage', src: 'save', kind: 'level', u: ['Foraging level', 'Foraging levels'] },
+  { id: 'g_ore', g: 'gather', n: 'Ore', what: 'Ore gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:ore', src: 'new', u: ['Ore', 'Ore'] },
+  { id: 'g_crystal', g: 'gather', n: 'Crystal', what: 'Crystal gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Crystal', 'Crystal'] },
+  { id: 'g_wood', g: 'gather', n: 'Timber', what: 'Wood gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:wood', src: 'new', u: ['Wood', 'Wood'] },
+  { id: 'g_fibre', g: 'gather', n: 'Fibre', what: 'Fibre gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:fibre', src: 'new', u: ['Fibre', 'Fibre'] },
+  { id: 'g_herb', g: 'gather', n: 'Herbs', what: 'Herbs gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:herb', src: 'new', u: ['Herb', 'Herbs'] },
+  { id: 's_mine', g: 'gather', n: 'Deep Seams', what: 'Mining units by tier', need: [1, 2, 3, 4], star: null, bonus: 'gatherSpeed:mine', src: 'new', kind: 'ladder', skill: 'mine',
+    steps: ['1,000 tier 2 units', '1,000 tier 3 units', '1,000 tier 4 units', '10,000 tier 5 units'] },
+  { id: 's_wood', g: 'gather', n: 'Old Growth', what: 'Woodcutting units by tier', need: [1, 2, 3, 4], star: null, bonus: 'gatherSpeed:wood', src: 'new', kind: 'ladder', skill: 'wood',
+    steps: ['1,000 tier 2 units', '1,000 tier 3 units', '1,000 tier 4 units', '10,000 tier 5 units'] },
+  { id: 's_forage', g: 'gather', n: 'Rare Blooms', what: 'Foraging units by tier', need: [1, 2, 3, 4], star: null, bonus: 'gatherSpeed:forage', src: 'new', kind: 'ladder', skill: 'forage',
+    steps: ['1,000 tier 2 units', '1,000 tier 3 units', '1,000 tier 4 units', '10,000 tier 5 units'] },
+  { id: 'finds', g: 'gather', n: 'Lucky Strike', what: 'Rare finds', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'gatherSpeed', src: 'save', u: ['rare find', 'rare finds'] },
+  { id: 'glint', g: 'gather', n: 'Glint Chaser', what: 'Glints tapped', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gatherSpeed', src: 'new', u: ['Glint', 'Glints'] },
+  { id: 'tools', g: 'gather', n: 'Toolwise', what: 'Tool mastery levels, all tools', need: [10, 30, 50, 60], star: { add: 20 }, bonus: 'gatherSpeed', src: 'save', kind: 'level', u: ['mastery level', 'mastery levels'] },
+  // ---- 2.5 Crafting ----
+  { id: 'smith', g: 'craft', n: 'Smith', what: 'Smithing level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:smith', src: 'save', kind: 'level', u: ['Smithing level', 'Smithing levels'] },
+  { id: 'bench', g: 'craft', n: 'Woodwright', what: 'Woodcraft level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:bench', src: 'save', kind: 'level', u: ['Woodcraft level', 'Woodcraft levels'] },
+  { id: 'loom', g: 'craft', n: 'Weaver', what: 'Tailoring level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:loom', src: 'save', kind: 'level', u: ['Tailoring level', 'Tailoring levels'] },
+  { id: 'ench', g: 'craft', n: 'Enchanter', what: 'Enchanting level', need: [10, 22, 54, 150], star: null, bonus: 'skillXp:ench', src: 'save', kind: 'level', u: ['Enchanting level', 'Enchanting levels'] },
+  { id: 'made', g: 'craft', n: 'Maker', what: 'Items crafted', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'skillXp', src: 'save', u: ['craft', 'crafts'] },
+  { id: 'fine', g: 'craft', n: 'Fine Work', what: 'Best craft', need: [1, 2, 3, 4], star: null, bonus: 'skillXp', src: 'derived', kind: 'ladder',
+    steps: ['an Uncommon', 'a Rare', 'an Epic', 'an Epic tier 5 at +10'] },
+  { id: 'honed', g: 'craft', n: 'Honed', what: 'Upgrades (+1 each)', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'skillXp', src: 'new', u: ['upgrade', 'upgrades'] },
+  { id: 'reforge', g: 'craft', n: 'Second Thoughts', what: 'Reforges', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'skillXp', src: 'new', u: ['reforge', 'reforges'] },
+  { id: 'alchemy', g: 'craft', n: 'Alchemist', what: 'Transmutes', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'skillXp', src: 'new', u: ['transmute', 'transmutes'] },
+  // ---- 2.6 Camp, the Storehouse and Hands ----
+  { id: 'hearth', g: 'camp', n: 'Hearthkeeper', what: 'Hearth level', need: [2, 5, 8, 10], star: null, bonus: 'buildTime', src: 'save', kind: 'level', u: ['Hearth level', 'Hearth levels'] },
+  { id: 'builder', g: 'camp', n: 'Builder', what: 'Building levels, all buildings', need: [10, 25, 40, 53], star: null, bonus: 'buildTime', src: 'save', kind: 'level', u: ['building level', 'building levels'] },
+  { id: 'store', g: 'camp', n: 'Storehouse', what: 'Storehouse level', need: [2, 4, 6, 8], star: null, bonus: 'buildTime', src: 'save', kind: 'level', wait: 'H3', u: ['Storehouse level', 'Storehouse levels'] },
+  { id: 'stock', g: 'camp', n: 'Well Stocked', what: 'Materials held at once, all cells', need: [1e3, 1e4, 1e5, 2.5e5], star: null, bonus: 'gold', src: 'derived', u: ['material', 'materials'], lock: { 4: 'Opens with the Storehouse' } },
+  { id: 'hands', g: 'camp', n: 'Many Hands', what: 'Hands hired, lifetime', need: [1, 5, 15, 40], star: null, bonus: 'offline', src: 'save', wait: 'N1', u: ['Hand', 'Hands'] },
+  { id: 'handhrs', g: 'camp', n: 'Hard Work', what: 'Hours worked by Hands', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'offline', src: 'save', wait: 'N1', u: ['hour', 'hours'] },
+  { id: 'meals', g: 'camp', n: 'Well Fed', what: 'Meals cooked', need: [10, 100, 500, 2e3], star: X10, bonus: 'offline', src: 'new', wait: 'K12', u: ['meal', 'meals'] },
+  // ---- 2.7 Companions, Bonds and the formation ----
+  { id: 'recruits', g: 'comp', n: 'Full Table', what: 'Companions recruited', need: [3, 7, 12, 18], star: null, bonus: 'compXp', src: 'save', kind: 'level', u: ['companion', 'companions'] },
+  { id: 'promos', g: 'comp', n: 'Promoted', what: 'Ranks earned, whole roster', need: [5, 20, 50, 100], star: null, bonus: 'compXp', src: 'derived', kind: 'level', u: ['rank', 'ranks'] },
+  { id: 'toprank', g: 'comp', n: 'Top Rank', what: 'Highest rank in the roster', need: [1, 3, 5, 7], star: null, bonus: 'compXp', src: 'derived', kind: 'ladder',
+    steps: ['a Veteran', 'a Champion', 'a Legend', 'a Lanternborn'] },
+  { id: 'complv', g: 'comp', n: 'Seasoned Company', what: 'Companion levels, whole roster', need: [100, 500, 1500, 3e3], star: null, bonus: 'compXp', src: 'derived', kind: 'level', u: ['companion level', 'companion levels'] },
+  { id: 'stories', g: 'comp', n: 'Around the Fire', what: 'Camp stories heard', need: [10, 25, 40, 54], star: null, bonus: 'offline', src: 'derived', kind: 'level', u: ['story', 'stories'] },
+  { id: 'bonds', g: 'comp', n: 'Kindred', what: 'Bond levels, all 21 Bonds', need: [5, 20, 50, 80], star: null, bonus: 'party', src: 'save', kind: 'level', wait: 'F2', u: ['Bond level', 'Bond levels'] },
+  { id: 'together', g: 'comp', n: 'Side by Side', what: 'Hours fielded together, all pairs', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'party', src: 'save', wait: 'F2', u: ['hour', 'hours'] },
+  { id: 'front', g: 'comp', n: 'Hold the Line', what: 'Damage the party took', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'party', src: 'new', more: 'damage taken' },
+  { id: 'mend', g: 'comp', n: 'Mender', what: 'Healing and shields given', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'party', src: 'new', more: 'healing' },
+  // ---- 2.8 Expeditions ----
+  { id: 'exped', g: 'exped', n: 'Out and Back', what: 'Expeditions returned', need: [10, 100, 500, 2e3], star: X10, bonus: 'expHaul', src: 'save', u: ['expedition', 'expeditions'] },
+  { id: 'perfect', g: 'exped', n: 'Perfect Planning', what: 'Perfect grades', need: [5, 50, 250, 1e3], star: X10, bonus: 'expHaul', src: 'new', u: ['Perfect expedition', 'Perfect expeditions'] },
+  { id: 'lorepages', g: 'exped', n: 'Pages from the Road', what: 'Lore pages found', need: [5, 12, 20, 28], star: null, bonus: 'expHaul', src: 'save', kind: 'level', u: ['Lore page', 'Lore pages'] },
+  { id: 'keeps', g: 'exped', n: 'Keepsakes', what: 'Keepsakes found', need: [3, 6, 9, 12], star: null, bonus: 'expHaul', src: 'save', kind: 'level', u: ['keepsake', 'keepsakes'] },
+  // ---- 2.9 The Deepwell ----
+  { id: 'depth', g: 'deep', n: 'Downward', what: 'Deepest floor', need: [10, 25, 40, 60], star: { add: 20 }, bonus: 'deepOil', src: 'save', kind: 'level', u: ['floor', 'floors'] },
+  { id: 'floors', g: 'deep', n: 'Stairwalker', what: 'Floors cleared, lifetime', need: [50, 250, 1e3, 4e3], star: X10, bonus: 'deepOil', src: 'save', u: ['floor', 'floors'] },
+  { id: 'marks', g: 'deep', n: 'Well Paid', what: 'Depth Marks earned', need: [500, 2500, 1e4, 2.5e4], star: X10, bonus: 'deepOil', src: 'save', u: ['Depth Mark', 'Depth Marks'] },
+  { id: 'boons', g: 'deep', n: 'Pick of the Well', what: 'Different boons picked', need: [10, 25, 40, 46], star: null, bonus: 'deepOil', src: 'save', kind: 'level', u: ['boon', 'boons'] },
+  { id: 'trial', g: 'deep', n: 'Trialgoer', what: 'Trial Seals (weeks at floor 15+)', need: [1, 5, 15, 30], star: null, bonus: 'deepOil', src: 'save', kind: 'level', u: ['Trial Seal', 'Trial Seals'] },
+  // ---- 2.10 Stars and legends (no bonus: these systems have their own caps) ----
+  { id: 'starmap', g: 'stars', n: 'Stargazer', what: 'Star points spent on your best class map', need: [6, 15, 26, 36], star: null, bonus: null, src: 'derived', kind: 'level', u: ['star point', 'star points'] },
+  { id: 'keystones', g: 'stars', n: 'Keystones', what: 'Different keystones ever lit', need: [1, 3, 6, 10], star: null, bonus: null, src: 'new', kind: 'level', u: ['keystone', 'keystones'] },
+  { id: 'book', g: 'stars', n: 'The Lantern Book', what: 'Legendary powers learned', need: [1, 10, 25, 39], star: { add: 4 }, bonus: null, src: 'save', kind: 'level', u: ['power', 'powers'] },
+  { id: 'ranks', g: 'stars', n: 'Rank Up', what: 'Power ranks, all powers', need: [5, 25, 75, 150], star: null, bonus: null, src: 'derived', kind: 'level', u: ['power rank', 'power ranks'] },
+  { id: 'sets', g: 'stars', n: 'Circle Sets', what: 'Best circle set worn', need: [1, 2, 3, 4], star: null, bonus: null, src: 'new', kind: 'ladder',
+    steps: ['2 pieces of a set', '4 pieces of a set', '6 pieces of a set', '6 pieces of every circle'] },
+  // ---- 2.11 The Codex, the Almanac and bounties ----
+  { id: 'lanternlight', g: 'codex', n: 'Lantern Light', what: 'Lantern Light', need: [100, 300, 600, 1e3], star: { add: 500 }, bonus: 'offline', src: 'derived', kind: 'level', u: ['Light', 'Light'] },
+  { id: 'pageseals', g: 'codex', n: 'Page Seals', what: 'Codex pages completed', need: [1, 4, 8, 14], star: null, bonus: 'offline', src: 'save', kind: 'level', u: ['Codex page', 'Codex pages'] },
+  { id: 'omens', g: 'codex', n: 'Weatherwise', what: 'Omens seen', need: [7, 14, 28, 35], star: null, bonus: 'offline', src: 'save', kind: 'level', u: ['Omen', 'Omens'] },
+  { id: 'dares', g: 'codex', n: 'Daring', what: 'Dares taken', need: [1, 10, 50, 200], star: X10, bonus: 'bountyPay', src: 'new', u: ['Dare', 'Dares'] },
+  { id: 'weekly', g: 'codex', n: 'The Weekly Board', what: 'Weekly goals claimed', need: [10, 50, 130, 260], star: X10, bonus: 'bountyPay', src: 'new', u: ['weekly goal', 'weekly goals'] },
+  { id: 'stamps', g: 'codex', n: 'Stamped', what: 'Almanac Stamps', need: [1, 5, 20, 40], star: null, bonus: 'offline', src: 'save', kind: 'level', u: ['Stamp', 'Stamps'] },
+  { id: 'wanted', g: 'codex', n: 'Wanted', what: 'Bounties claimed', need: [10, 50, 250, 1e3], star: X10, bonus: 'bountyPay', src: 'save', u: ['bounty', 'bounties'] },
+  // ---- 2.12 The raid, read only ----
+  { id: 'wyrms', g: 'raid', n: 'Wyrmslayer', what: 'Raid bosses felled', need: [1, 5, 20, 50], star: X10, bonus: 'raid', src: 'save', u: ['raid boss', 'raid bosses'] },
+  { id: 'raiddmg', g: 'raid', n: 'Raid Fury', what: 'Raid damage dealt, lifetime', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'raid', src: 'save', more: 'raid damage' },
+  { id: 'embers', g: 'raid', n: 'Ember-Rich', what: 'Embers earned', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'raid', src: 'new', u: ['Ember', 'Embers'] },
+  // ---- 2.13 Later regions and systems (hidden until their task merges) ----
+  { id: 'tides', g: 'comp', n: 'Tide-Turner', what: 'Tide turns weathered with the party fielded', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'party', src: 'new', wait: 'R2', u: ['tide turn', 'tide turns'] },
+  { id: 'g_pearl', g: 'gather', n: 'Pearls', what: 'Pearls gathered', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'yield:pearl', src: 'new', wait: 'R2', u: ['Pearl', 'Pearls'] },
+  { id: 'fish', g: 'gather', n: 'Angler', what: 'Fishing level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:fish', src: 'save', kind: 'level', wait: 'R2', u: ['Fishing level', 'Fishing levels'] },
+  { id: 'g_fish', g: 'gather', n: 'Catch of the Day', what: 'Fish caught', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'yield:fish', src: 'new', wait: 'R2', u: ['fish', 'fish'] },
+  { id: 'oath', g: 'combat', n: 'Oathkeeper', what: 'Highest Oath kept', need: [5, 10, 20, 30], star: null, bonus: 'dmg', src: 'save', kind: 'level', wait: 'O1', u: ['Oath level', 'Oath levels'] },
+  { id: 'oathseals', g: 'combat', n: 'Oath Seals', what: 'Zone kinds with an Oath Seal at 10+', need: [3, 7, 10, 14], star: null, bonus: 'dmg', src: 'save', kind: 'level', wait: 'O1', u: ['Oath Seal', 'Oath Seals'] },
+  { id: 'pinkills', g: 'combat', n: 'Pinnacle Hunter', what: 'Pinnacle kills', need: [1, 10, 100, 500], star: X10, bonus: 'dmg', src: 'save', wait: 'PB1', u: ['pinnacle kill', 'pinnacle kills'] },
+  { id: 'vow', g: 'combat', n: 'Vowed', what: 'Highest Vow level killed', need: [5, 10, 20, 30], star: null, bonus: 'dmg', src: 'save', kind: 'level', wait: 'PB1', u: ['Vow level', 'Vow levels'] },
+  { id: 'lanterns', g: 'road', n: 'Great Lanterns', what: 'Great Lanterns relit', need: [1, 2, 3, 4], star: { add: 1 }, bonus: 'xp', src: 'save', kind: 'level', wait: 'R3', u: ['Great Lantern', 'Great Lanterns'] }
+];
+
+const DEED_FEATS = [
+  { id: 'f_lamps', n: 'Every Lamp Lit', needs: 'All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages', about: '3-6 months', rar: 'epic', title: 'Hollowwarden', look: 'cr_moss' },
+  { id: 'f_watch', n: 'The Long Watch', needs: '2,000 hours of light (played and away)', about: 'about 3 months', rar: 'rare', title: 'the Watchful', look: 'l_watch' },
+  { id: 'f_company', n: 'The Full Company', needs: 'Every companion at Lanternborn rank', about: '3-5 months', rar: 'epic', title: 'the Captain', look: 'c_company' },
+  { id: 'f_trades', n: 'Master of Every Trade', needs: 'All 7 skills at level 200 and all 3 tools at mastery 20', about: '2-4 months', rar: 'epic', title: 'Masterhand', look: 'h_artisan' },
+  { id: 'f_deep', n: 'Wellborn', needs: 'Reach Deepwell floor 75', about: 'skill, months', rar: 'legendary', title: 'Wellborn', look: 'l_well' },
+  { id: 'f_trials', n: 'A Year Below', needs: '52 Trial Seals (any weeks; gaps cost nothing)', about: 'a year or more', rar: 'legendary', title: 'Stairwarden', look: 'h_warden' },
+  { id: 'f_stamps', n: 'Every Week Counts', needs: '52 Almanac Stamps (any weeks)', about: 'a year or more', rar: 'legendary', title: 'Omenwise', look: 'cr_moth' },
+  { id: 'f_parry', n: 'The Unmoved', needs: '25,000 parries', about: 'months of active play', rar: 'epic', title: 'the Unmoved', look: 'a_steel' },
+  { id: 'f_hit', n: 'Thunderclap', needs: 'One hit of 2T damage', about: 'late Region 2 build', rar: 'epic', title: 'Thunderhand', look: 'fl_storm', need: 2e12 },
+  { id: 'f_gold', n: "Dragon's Hoard", needs: '1Sp gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 1e24 },
+  { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
+  { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
+  { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox' },
+  { id: 'f_book', n: 'Every Legend Known', needs: 'Every power in the Lantern Book, 10 of them at rank V', about: 'months', rar: 'legendary', title: 'Lorebearer', look: 'l_book' },
+  { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 4 class maps', about: 'months (4 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
+  { id: 'f_sworn', n: 'All Sworn', needs: 'All 21 Bonds at Sworn', about: 'months', rar: 'epic', title: 'Heartsworn', look: 'a_bond', wait: 'F2' },
+  { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
+  { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
+  { id: 'f_tides', n: 'Tidewalker', needs: '5,000 tide turns fielded and all 7 Coast elders at Oath 10', about: 'months', rar: 'epic', title: 'Tidewalker', look: 'cr_crab', wait: 'R2O1' },
+  { id: 'f_oaths', n: 'Oathbound', needs: 'An Oath Seal at 20+ on all 14 zone kinds', about: 'months', rar: 'legendary', title: 'Oathbound', look: 'h_circlet', wait: 'O1' },
+  { id: 'f_all', n: 'Lanternfall', needs: 'Every other Feat in the game', about: 'a year or more', rar: 'legendary', title: 'the Last Lantern', look: 'a_bloom', pts: 250 }
+];
+
+const DEED_SECRETS = [
+  { id: 's_night', n: 'Night Owl', riddle: "The fire burns low. You don't.", how: '10 minutes of fighting between 02:00 and 04:00', title: 'Nightowl', look: 'h_night' },
+  { id: 's_wisp', n: 'A Wisp Followed You Home', riddle: "Hesketh said not to follow them. He never said they couldn't follow you.", how: '10 minutes in a Wraithmarsh zone between 21:00 and 05:00', title: 'Wispfriend', look: 'cr_wisp' },
+  { id: 's_name', n: 'Namesake', riddle: "What's in a name? Ask a friend.", how: "Rename your hero to a companion's name", title: 'Namesake' },
+  { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
+  { id: 's_bare', n: 'Bare-Knuckled', riddle: 'Who needs a sword?', how: 'Beat a zone boss with no hero weapon', title: 'Barefist' },
+  { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Two down. One lamp left.', how: 'Beat a zone boss while only the hero stands', title: 'Lone Lamp' },
+  { id: 's_wrong', n: 'All the Wrong Places', riddle: 'Everyone out of place, and it worked.', how: 'Beat a zone boss with all three off their home slots', title: 'Contrarian', wait: 'F1' },
+  { id: 's_close', n: 'Just in Time', riddle: 'The sand was nearly out.', how: 'Beat a boss with under 1 second on its timer', title: 'Clutch' },
+  { id: 's_over', n: 'Overkill', riddle: 'It was already beaten. You made sure.', how: "One hit for 1,000x the foe's max health", title: 'Overkill' },
+  { id: 's_drum', n: 'Drummer', riddle: 'Tap like rain on a roof.', how: '300 taps in one minute', title: 'Drummer' },
+  { id: 's_streak', n: 'Hot Streak', riddle: 'Ten in a row. Every one a crit.', how: '10 hero crits in a row', title: 'the Lucky' },
+  { id: 's_oil', n: 'Last Drop', riddle: 'Out of the Well with nothing to spare.', how: 'Leave a Deepwell run with under 1s of Oil', title: 'Lastdrop' },
+  { id: 's_late', n: 'Fashionably Late', riddle: "They waited a week. They didn't mind.", how: 'Collect an expedition 7 days after it came back', title: 'the Tardy' },
+  { id: 's_rat', n: 'Pack Rat', riddle: 'Full. Full again. Full again.', how: 'Hit a Storehouse cap 100 times', title: 'Packrat', wait: 'H3' },
+  { id: 's_crowd', n: 'Shoulder to Shoulder', riddle: 'Four lamps under one wyrm.', how: 'Raid while 3 or more others in the room are raiding', title: 'Shieldmate' },
+  { id: 's_dare', n: 'Daredevil', riddle: 'Seven days, seven Dares.', how: 'Take the Dare on every day of one week', title: 'Daredevil' }
+];
+
+const DEED_SLOTS = ['cape', 'hat', 'lamp', 'flame', 'aura', 'critter', 'trail', 'frame'];
+const DEED_SLOT_TXT = { cape: 'Cape', hat: 'Hat', lamp: 'Lantern', flame: 'Flame', aura: 'Aura', critter: 'Critter', trail: 'Trail', frame: 'Frame' };
+const DEED_LOOKS = [
+  { id: 'c_hollow', slot: 'cape', n: 'Hollow Cloak', src: 'ch:ch1' },
+  { id: 'c_tide', slot: 'cape', n: 'Tide Cloak', src: 'ch:ch2' },
+  { id: 'c_tally', slot: 'cape', n: 'Tally Cloak', src: 'grp:combat' },
+  { id: 'c_company', slot: 'cape', n: 'Company Cape', src: 'feat:f_company' },
+  { id: 'c_wyrm', slot: 'cape', n: 'Wyrmscale Mantle', src: 'feat:f_raid' },
+  { id: 'c_starlit', slot: 'cape', n: 'Starlit Cape', src: 'pts:5000' },
+  { id: 'h_straw', slot: 'hat', n: "Forager's Straw Hat", src: 'grp:gather' },
+  { id: 'h_wayfarer', slot: 'hat', n: "Wayfarer's Hat", src: 'grp:exped' },
+  { id: 'h_artisan', slot: 'hat', n: "Artisan's Cap", src: 'feat:f_trades' },
+  { id: 'h_warden', slot: 'hat', n: "Well-Warden's Hood", src: 'feat:f_trials' },
+  { id: 'h_night', slot: 'hat', n: 'Nightcap', src: 'sec:s_night' },
+  { id: 'h_circlet', slot: 'hat', n: "Oathkeeper's Circlet", src: 'feat:f_oaths' },
+  { id: 'l_gilded', slot: 'lamp', n: 'Gilded Lamp', src: 'grp:wealth' },
+  { id: 'l_tinker', slot: 'lamp', n: "Tinker's Lamp", src: 'grp:craft' },
+  { id: 'l_moon', slot: 'lamp', n: 'Moon Paper Lantern', src: 'grp:codex' },
+  { id: 'l_watch', slot: 'lamp', n: 'Watch Lamp', src: 'feat:f_watch' },
+  { id: 'l_well', slot: 'lamp', n: 'Well Lamp', src: 'feat:f_deep' },
+  { id: 'l_book', slot: 'lamp', n: 'Book Lantern', src: 'feat:f_book' },
+  { id: 'l_store', slot: 'lamp', n: 'Brass Storelamp', src: 'feat:f_stock' },
+  { id: 'fl_moon', slot: 'flame', n: 'Moonflame', src: 'grp:road' },
+  { id: 'fl_rose', slot: 'flame', n: 'Hearth Rose', src: 'grp:camp' },
+  { id: 'fl_kin', slot: 'flame', n: 'Kinfire', src: 'grp:comp' },
+  { id: 'fl_storm', slot: 'flame', n: 'Storm White', src: 'feat:f_hit' },
+  { id: 'fl_coin', slot: 'flame', n: 'Coin Gold', src: 'feat:f_gold' },
+  { id: 'a_ember', slot: 'aura', n: 'Ember Halo', src: 'feat:f_champs' },
+  { id: 'a_steel', slot: 'aura', n: 'Steel Ring', src: 'feat:f_parry' },
+  { id: 'a_star', slot: 'aura', n: 'Star Ring', src: 'feat:f_stars' },
+  { id: 'a_bond', slot: 'aura', n: 'Bond Light', src: 'feat:f_sworn' },
+  { id: 'a_bloom', slot: 'aura', n: 'Lantern Bloom', src: 'feat:f_all' },
+  { id: 'a_stair', slot: 'aura', n: 'Stair Glow', src: 'grp:deep' },
+  { id: 'cr_moss', slot: 'critter', n: 'Mossling', src: 'feat:f_lamps' },
+  { id: 'cr_moth', slot: 'critter', n: 'Lampmoth', src: 'feat:f_stamps' },
+  { id: 'cr_fox', slot: 'critter', n: 'Road Fox', src: 'feat:f_perfect' },
+  { id: 'cr_cat', slot: 'critter', n: 'Hearth Cat', src: 'feat:f_town' },
+  { id: 'cr_wisp', slot: 'critter', n: 'Gold Wisp', src: 'sec:s_wisp' },
+  { id: 'cr_crab', slot: 'critter', n: 'Lantern Crab', src: 'feat:f_tides' },
+  { id: 'fr_bronze', slot: 'frame', n: 'Bronze frame', src: 'pts:500' },
+  { id: 'fr_silver', slot: 'frame', n: 'Silver frame', src: 'pts:2500' },
+  { id: 'fr_gold', slot: 'frame', n: 'Gold frame', src: 'pts:6500' },
+  { id: 'fr_ever', slot: 'frame', n: 'Everflame frame', src: 'pts:8000' }
+];
+
+const DEED_LADDER = [
+  { at: 100, title: 'Greenhorn' },
+  { at: 250, wall: 1 },
+  { at: 500, look: 'fr_bronze' },
+  { at: 1000, title: 'Adventurer', wall: 2 },
+  { at: 2500, title: 'the Hero', look: 'fr_silver' },
+  { at: 3500, wall: 3 },
+  { at: 5000, look: 'c_starlit' },
+  { at: 6500, title: 'the Legend', look: 'fr_gold' },
+  { at: 8000, title: 'the Beacon', look: 'fr_ever' }
+];
+
+// AC6 fills the steps (21n-story-chapters.js) and grants them through deeds.chapterStep().
+const DEED_CHAPTERS = [
+  { id: 'ch1', n: 'The Last Lamp', title: 'Hollowlight', look: 'c_hollow', steps: 7 },
+  { id: 'ch2', n: 'Where the Light Went', title: 'Tidelit', look: 'c_tide', steps: 7, wait: 'R2' }
+];
+const DEED_RARITY = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+
+// every: seconds between checks; parts: the tracks are checked a quarter per check (round robin).
+// quiet: seconds the near-miss goal hides after any tier. near: the nudge shows at 90% of a tier.
+// featToast: a Feat raises a high toast too (AC3's Feat card can switch it off).
+// secretAfterDays / secretAfterFound: riddles show after 30 days of play or 3 secrets found.
+// initAfter: tick seconds before the first-load credit (after the Classic check at 1 s and the Codex at 2 s).
+// bonusOn: 0 switches every deeds bonus off (tools/sim.mjs AP4 compares with and without).
+const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, near: 0.9, nearMax: 0.97, featToast: 1, secretAfterDays: 30, secretAfterFound: 3,
+  nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: 300, streak: 10,
+  overX: 1000, lateMs: 7 * 864e5, ratHits: 100, crowd: 3, oddZone: 10 };
+
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load/migrate, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
@@ -9000,6 +9314,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 //   icon   optional toast-style icon spec or fn() -> spec ({ ic: [name, colour] }, { mat: [k, t] },
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
+//   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
 // topGoals(n = 3, { now, sticky = true }) -> [{ id, sys, label, pct, ready, go, icon }]
 //   Ready goals first, then the highest pct. Cached for 450 ms. Sticky: goals already shown
 //   keep their place unless a newcomer is clearly closer (no flicker between close values).
@@ -9034,7 +9349,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -9055,7 +9370,7 @@ var forgeGoalPicks = 0;
     for (let cap = 1; cap <= PER_SYS && pick.length < n; cap++) {
       for (const e of all) {
         if (pick.length >= n) break;
-        if (pick.includes(e) || (count[e.sys] || 0) >= cap) continue;
+        if (pick.includes(e) || (count[e.sys] || 0) >= (e.cap ? Math.min(cap, e.cap) : cap)) continue;   // cap: 1 = one row at most
         pick.push(e); count[e.sys] = (count[e.sys] || 0) + 1;
       }
     }
@@ -9065,7 +9380,7 @@ var forgeGoalPicks = 0;
       if (a.was >= 0 && b.was >= 0 && Math.abs(a.score - b.score) < STICK) return a.was - b.was;
       return b.score - a.score;
     });
-    const list = pick.map(({ score, was, ...e }) => e);
+    const list = pick.map(({ score, was, cap: _c, ...e }) => e);
     if (sticky) { shown = list.map(e => e.id); cache.clear(); cache.set(n, { at: now, list }); }
     return list;
   };
@@ -16316,6 +16631,911 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   ensure();
 }
 
+// ---- src/js/58-deeds.js ----
+// 58-deeds: achievements core (docs/design/achievements.md, task AC2). Data: 23-data-deeds.js.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Tracks read numbers the save already keeps wherever one exists; new counters live in S.deeds.n,
+// S.deeds.g and S.deeds.rec and only rise. Tiers are checked once a second, a quarter of the tracks
+// per check (each track every 4 s). Tiers never go down. Only Gold and Everflame tiers pay a bonus,
+// capped per key by DEED_CAP (deedBonus). Feats, secrets, points, groups and chapters give no power.
+// The Classic 22 stay in 56-achievements.js (their ids, needs and bonuses are untouched); they count
+// 10 points each here. Titles join codexTitles() (ids 'a_...', chosen in S.codex.title, local only).
+// Nothing here reads or writes the online layer except s_crowd, which only reads online.peers.
+//
+// Tracks that wait on unmerged systems are defined but hidden; a runtime probe lights them up when
+// their save field appears (H3 S.store, N1 S.hands, K12 S.kitchen, F2 S.bond, O1 S.oath, PB1 S.pin,
+// R2 REGIONS[1].plugged, F1 offSlot). A later system can also hand its exact number over with
+// deeds.source(trackId, fn) and its events with deeds.count(key, n).
+//
+// API (for AC3 UI, AC4 looks, AC5 the Trophy Wall, AC6 chapters):
+//   deedBonus(key) -> capped bonus (fraction; seconds for deepOil)      wearGet(slot) -> look id | null
+//   deeds.tracks(group?) -> [row]   row: { id, g, n, what, tier, v, next, need, pct, left, label, live, lock,
+//                                           stars, bonus, bonusTxt, since, kind, steps }
+//   deeds.track(id), deeds.tierName(tier) ("Gold", "Everflame ★3"), deeds.tierLabel(id, tier) ("Slayer III")
+//   deeds.groups() -> [{ id, n, ic, lv (0/1/2), gold, ever, look, tracks, atGold, atEver, fresh }]
+//   deeds.feats() -> [{ id, n, needs, about, rar, rarTxt, title, look, got, at, parts: [{ n, have, need }], pct, live, pts }]
+//   deeds.secrets() -> [{ id, got, at, n, riddle, title, look, live }]   (n and riddle only when shown)
+//   deeds.points(), deeds.ladder() -> [{ at, title, look, wall, got }], deeds.next() -> next ladder row | null
+//   deeds.wallStage() -> 0..3, deeds.wall() -> pinned ids, deeds.pin(ids) (at most 12)
+//   deeds.looks(slot?) -> [{ id, slot, n, src, srcTxt, got }], deeds.owned(id), deeds.wear(slot, id) -> bool,
+//     deeds.showHelm(on) (hats hide helms unless on), deeds.frame() -> worn portrait frame id | null
+//   deeds.near(n) -> near tiers [{ id, label, pct }], deeds.follow(id | null), deeds.nudge(on)
+//   deeds.recent(n) -> [{ key, kind, id, tier, at, txt }], deeds.isNew(), deeds.seen()
+//   deeds.chapterStep(chId, step, { quiet }) -> bool (AC6), deeds.chapter(chId) -> { step, done }
+//   deeds.count(key, n) (counters: boss, meal, tides, ...), deeds.source(trackId, fn), deeds.check(full, quiet)
+//   deeds.caps() -> [{ key, raw, cap, v }], deeds.setNum('letters' | 'sci'), deeds.stats() (stats wall numbers)
+// Events: deedTier { id, tier, quiet }, deedGroup { id, lv, quiet }, deedFeat { id, quiet }, deedSecret { id },
+//   deedPoints { pts, gain }, deedMilestone { at }, deedLook { slot, id }, deedChapter { id, step }, deedsInit { tiers, pts }.
+//   Listened (UI): deedsOpen { view, id } is emitted by the Next Up goal's Go.
+// Save: registerState('deeds', spec 8.1) plus rec.c6 (circles worn at 6 pieces) and last (time of the last tier).
+
+let deeds, deedBonus, wearGet;
+{
+  registerState('deeds', {
+    v: 1, init: 0, tier: {}, at: {}, feat: {}, sec: {}, ch: {}, grp: {}, mil: {},
+    n: { crit: 0, parry: 0, dodge: 0, intr: 0, abil: 0, dmg: 0, taken: 0, heal: 0, boss: 0, ess: 0, troph: 0, glint: 0,
+      up: 0, ref: 0, trans: 0, meal: 0, perfect: 0, dare: 0, weekly: 0, embers: 0, tides: 0 },
+    g: {},
+    rec: { hit: 0, hitZ: 0, hitAt: 0, fine: 0, set: 0, ks: {}, c6: {} },
+    since: {}, sx: {}, pts: 0, seen: 0, last: 0,
+    wear: { cape: null, hat: null, lamp: null, flame: null, aura: null, critter: null, trail: null, frame: null, helm: 0 },
+    wall: [], follow: null, nudge: 1
+  });
+  const T = DEED_TUNE;
+  const DS = () => S.deeds;
+  const N = () => DS().n;
+  const now = () => Date.now();
+  const num = v => typeof v === 'number' && isFinite(v) ? v : 0;
+  const safe = (fn, d) => { try { return fn(); } catch (e) { return d; } };
+  const keys = o => o && typeof o === 'object' ? Object.keys(o).length : 0;
+  const TR = {}; for (const t of DEED_TRACKS) TR[t.id] = t;
+  const GR = {}; for (const g of DEED_GROUPS) GR[g.id] = g;
+  const FE = {}; for (const f of DEED_FEATS) FE[f.id] = f;
+  const SE = {}; for (const s of DEED_SECRETS) SE[s.id] = s;
+  const LK = {}; for (const l of DEED_LOOKS) LK[l.id] = l;
+  const CH = {}; for (const c of DEED_CHAPTERS) CH[c.id] = c;
+  const GATHER = ['ore', 'crystal', 'wood', 'fibre', 'herb', 'pearl', 'fish'];
+
+  // ---------------- waiting systems: runtime probes (a later file's `let` throws in its TDZ: safe) ----------------
+  const WAIT = {
+    H3: () => !!S.store && typeof S.store === 'object',
+    N1: () => !!S.hands && typeof S.hands === 'object',
+    K12: () => !!S.kitchen && typeof S.kitchen === 'object',
+    N1K12: () => WAIT.N1() && WAIT.K12(),
+    F1: () => typeof offSlot === 'function',
+    F2: () => !!S.bond && typeof S.bond === 'object',
+    R2: () => !!(REGIONS[1] && REGIONS[1].plugged),
+    R3: () => REGIONS.length >= 3,
+    O1: () => !!S.oath && typeof S.oath === 'object',
+    PB1: () => !!S.pin && typeof S.pin === 'object',
+    R2O1: () => WAIT.R2() && WAIT.O1()
+  };
+  const waitOk = w => !w || safe(() => !!WAIT[w](), false);
+  // Tiers that open with later content (lock text in the data).
+  const LOCK_OPEN = {
+    'zones:4': () => REGIONS.length >= 3,
+    'naturalist:4': () => WAIT.R2(),
+    'crowns:3': () => WAIT.R2(),
+    'crowns:4': () => REGIONS.length >= 3,
+    'stock:4': () => WAIT.H3()
+  };
+  const lockTxt = (t, tier) => {
+    if (!t.lock) return '';
+    for (let k = Math.min(tier, 4); k >= 1; k--) {
+      const l = t.lock[k]; if (l && !safe(() => !!LOCK_OPEN[t.id + ':' + k](), false)) return l;
+    }
+    return '';
+  };
+
+  // ---------------- small readers ----------------
+  const sumArr = a => { let s = 0; if (Array.isArray(a)) for (let i = 0; i < a.length; i++) s += num(a[i]); return s; };
+  const sumVals = o => { let s = 0; if (o && typeof o === 'object') for (const k in o) s += num(o[k]); return s; };
+  const gRow = fam => { const g = DS().g; if (!Array.isArray(g[fam])) g[fam] = [0, 0, 0, 0, 0]; return g[fam]; };
+  const sumG = fam => sumArr(DS().g[fam]);
+  const skillLv = k => S.skills[k] ? num(S.skills[k].lv) : 0;
+  const roster = () => (typeof rosterLive === 'function' && rosterLive() ? rosterList() : []);
+  const recOf = id => charRec(id) || {};
+  const campLv = id => typeof campLevel === 'function' && S.camp ? num(campLevel(id)) : 0;
+  const lightHours = () => S.stats ? (num(S.stats.played) + num(S.stats.away)) / 3600 : 0;
+  const sealFloor = () => typeof DEEP_TUNE === 'object' ? DEEP_TUNE.sealFloor : 15;
+  const trialSeals = () => { const h = S.deep && S.deep.trial && S.deep.trial.hist; let n = 0; if (h) for (const k in h) if (num(h[k]) >= sealFloor()) n++; return n; };
+  const zoneStars = z => masteryApi.starsFor(num(S.mastery.zones[z]));
+  const hollowZones = () => REGIONS[0].z1;
+  function elders() {
+    // Elder kinds beaten: each distinct zone kind whose boss has fallen (a zone below maxZone), plus
+    // each Great Lantern boss (the Listener, the Keeper). The placeholder Coast reuses the Hollow's kinds.
+    let mask = 0, n = 0;
+    const top = Math.min(S.maxZone - 1, REGIONS[REGIONS.length - 1].z1);
+    for (let z = 1; z <= top; z++) { const ti = zoneType(z); if (ti < 31 && !(mask & (1 << ti))) { mask |= 1 << ti; n++; } }
+    return n + lanternsLitAt(S.maxZone);
+  }
+  const pagesOf = keysList => { let n = 0; for (const k of keysList) n += masteryApi.tierFor(num(S.mastery.types[k])); return n; };
+  const allTypeKeys = () => TYPES.map(t => t.key);
+  const hollowTypeKeys = () => REGIONS[0].types.map(i => TYPES[i].key);
+  const starBest = cls => {
+    const m = starMap(cls), r = S.stars && S.stars.maps && S.stars.maps[cls];
+    if (!m || !r || !Array.isArray(r.layouts)) return 0;
+    let best = 0;
+    for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
+    return best;
+  };
+  const starClasses = () => Object.keys(STAR_MAPS);
+  const bookIds = () => (typeof LEG_CLASS_IDS === 'object' ? Object.values(LEG_CLASS_IDS).flat().concat(LEG_COMP_IDS) : []);
+  const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
+  const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
+  const seamLadder = skill => { let k = 0; if (skillUnits(skill, 2) >= 1e3) k = 1; else return 0; if (skillUnits(skill, 3) >= 1e3) k = 2; else return k; if (skillUnits(skill, 4) >= 1e3) k = 3; else return k; if (skillUnits(skill, 5) >= 1e4) k = 4; return k; };
+  const relicSpent = () => { let s = 0; for (const u of RELICS) { const lv = num(S.relic[u.id]); for (let i = 0; i < lv; i++) s += u.base * Math.pow(u.r, i); } return s; };
+  const fineOf = it => {
+    if (!it || it.u || it.lg) return 0;
+    const r = it.r === 'epic' || it.r === 'legendary' ? 3 : it.r === 'rare' ? 2 : it.r === 'uncommon' ? 1 : 0;
+    return r >= 3 && num(it.t) >= 5 && num(it.plus) >= 10 ? 4 : r;
+  };
+  const handsInfo = () => {
+    const h = S.hands || {}, f = safe(() => typeof handsStats === 'function' ? handsStats() : null, null);
+    return { hired: f ? num(f.hired) : Math.max(num(h.hired), Array.isArray(h.list) ? h.list.length : 0), hours: f ? num(f.hours) : num(h.hrs) };
+  };
+
+  // cur(track) -> the number its tiers read. A later system can replace it with deeds.source(id, fn).
+  const SRC = {};
+  const CUR = {
+    slayer: () => S.totalKills, champs: () => num(S.craft && S.craft.champ), bosses: () => num(S.stats && S.stats.bosses) + N().boss,
+    crits: () => N().crit, bighit: () => DS().rec.hit, damage: () => N().dmg, parry: () => N().parry, intr: () => N().intr,
+    abil: () => N().abil, taps: () => num(S.stats && S.stats.taps),
+    zones: () => S.maxZone, level: () => S.L, survey: () => masteryApi.totalStars(), naturalist: () => pagesOf(allTypeKeys()),
+    crowns: elders, light: lightHours,
+    gold: () => S.totalGold, essence: () => N().ess, curator: () => keys(S.found), trophies: () => N().troph,
+    mine: () => skillLv('mine'), wood: () => skillLv('wood'), forage: () => skillLv('forage'),
+    g_ore: () => sumG('ore'), g_crystal: () => sumG('crystal'), g_wood: () => sumG('wood'), g_fibre: () => sumG('fibre'), g_herb: () => sumG('herb'),
+    s_mine: () => seamLadder('mine'), s_wood: () => seamLadder('wood'), s_forage: () => seamLadder('forage'),
+    finds: () => num(S.tools && S.tools.finds), glint: () => N().glint,
+    tools: () => { const m = S.tools && S.tools.m; let s = 0; if (m) for (const k in m) s += Array.isArray(m[k]) ? num(m[k][0]) : 0; return s; },
+    smith: () => skillLv('smith'), bench: () => skillLv('bench'), loom: () => skillLv('loom'), ench: () => skillLv('ench'),
+    made: () => num(S.achievements && S.achievements.forged), fine: () => DS().rec.fine,
+    honed: () => N().up, reforge: () => N().ref, alchemy: () => N().trans,
+    hearth: () => campLv('hearth'),
+    builder: () => typeof campList === 'function' && S.camp ? campList().reduce((a, id) => a + campLv(id), 0) : 0,
+    store: () => num(S.camp && S.camp.b && S.camp.b.store),
+    stock: () => { let s = 0; for (const k in S.mats) s += sumArr(S.mats[k]); return s; },
+    hands: () => handsInfo().hired, handhrs: () => handsInfo().hours, meals: () => N().meal,
+    recruits: () => roster().length,
+    promos: () => roster().reduce((a, id) => a + num(recOf(id).rank), 0),
+    toprank: () => tiersByLadder(roster().reduce((a, id) => Math.max(a, num(recOf(id).rank)), 0)),
+    complv: () => roster().reduce((a, id) => a + num(recOf(id).lv), 0),
+    stories: () => roster().reduce((a, id) => a + num(recOf(id).seen), 0),
+    bonds: () => { let s = 0; const lv = S.bond && S.bond.lv; if (lv) for (const k in lv) s += Math.min(5, num(lv[k])); return s; },
+    together: () => sumVals(S.bond && S.bond.t) / 3600,
+    front: () => N().taken, mend: () => N().heal,
+    exped: () => sumVals(S.exped && S.exped.done), perfect: () => N().perfect,
+    lorepages: () => { const l = S.exped && S.exped.lore; let n = 0; if (l) for (const k in l) if (num(l[k]) >= 4) n++; return n; },
+    keeps: () => keys(S.exped && S.exped.keep),
+    depth: () => num(S.deep && S.deep.best), floors: () => num(S.deep && S.deep.floors), marks: () => num(S.deep && S.deep.marksTotal),
+    boons: () => keys(S.deep && S.deep.seen), trial: trialSeals,
+    starmap: () => starClasses().reduce((a, c) => Math.max(a, starBest(c)), 0), keystones: () => keys(DS().rec.ks),
+    book: () => { const b = S.legend && S.legend.book; let n = 0; if (b) for (const k in b) if (num(b[k]) > 0) n++; return n; },
+    ranks: () => sumVals(S.legend && S.legend.book), sets: () => DS().rec.set,
+    lanternlight: () => typeof codexLight === 'function' ? num(codexLight()) : 0, pageseals: () => keys(S.codex && S.codex.seal),
+    omens: () => keys(S.almanac && S.almanac.seen), dares: () => N().dare, weekly: () => N().weekly,
+    stamps: () => num(S.almanac && S.almanac.stamps), wanted: () => num(S.bounties && S.bounties.claimed),
+    wyrms: () => num(S.wyrms), raiddmg: () => num(S.stats && S.stats.raidDmg), embers: () => N().embers,
+    tides: () => N().tides, g_pearl: () => sumG('pearl'), fish: () => skillLv('fish'), g_fish: () => sumG('fish'),
+    oath: () => num(S.oath && S.oath.maxL),
+    oathseals: () => { const b = S.oath && S.oath.best; let n = 0; if (b) for (const k in b) if (num(b[k]) >= 10) n++; return n; },
+    pinkills: () => sumVals(S.pin && S.pin.kills),
+    vow: () => { const t = S.pin && S.pin.top; let m = 0; if (t) for (const k in t) m = Math.max(m, num(t[k])); return m; },
+    lanterns: () => lanternsLitAt(S.maxZone)
+  };
+  const cur = t => safe(() => num(SRC[t.id] ? SRC[t.id]() : CUR[t.id]()), 0);
+
+  // ---------------- tiers ----------------
+  const MAX_STARS = 60;
+  const needAt = (t, k) => {
+    if (k <= 4) return t.need[k - 1];
+    if (!t.star) return Infinity;
+    return t.star.x ? t.need[3] * Math.pow(t.star.x, k - 4) : t.need[3] + t.star.add * (k - 4);
+  };
+  // The tier a value reaches (0..4, then 4 + stars), stopping at the first locked tier.
+  function tierOf(t, v) {
+    let k = 0;
+    const top = t.star ? 4 + MAX_STARS : 4;
+    while (k < top && v >= needAt(t, k + 1) && !lockTxt(t, k + 1)) k++;
+    return k;
+  }
+  const tierOfId = id => num(DS().tier[id]);
+  const tierName = k => k <= 0 ? '' : k <= 4 ? DEED_TIERS[k - 1].n : `Everflame ★${k - 4}`;
+  const tierLabel = (id, k) => { const t = TR[id]; return !t ? '' : k <= 4 ? `${t.n} ${roman(k)}` : `${t.n} ★${k - 4}`; };
+  const trackLive = t => waitOk(t.wait);
+  const bonusTxt = (t, k) => {
+    if (!t.bonus || (k !== 3 && k !== 4)) return '';
+    if (t.bonus === 'deepOil') return `+${DEED_BONUS.deepOil}s ${DEED_KEY_TXT.deepOil}`;
+    const v = k === 3 ? DEED_BONUS.gold : DEED_BONUS.everflame;
+    return `+${(v * 100).toFixed(1)}%${k === 4 ? ' more' : ''} ${DEED_KEY_TXT[t.bonus] || t.bonus}`;
+  };
+
+  // ---------------- bonuses (only Gold and Everflame; capped) ----------------
+  const BSUM = {};
+  for (const k in DEED_CAP) BSUM[k] = 0;
+  function rebuildBonus() {
+    for (const k in BSUM) BSUM[k] = 0;
+    const tier = DS().tier;
+    for (const t of DEED_TRACKS) {
+      if (!t.bonus) continue;
+      const k = num(tier[t.id]);
+      if (k >= 3) BSUM[t.bonus] += t.bonus === 'deepOil' ? DEED_BONUS.deepOil : DEED_BONUS.gold;
+      if (k >= 4) BSUM[t.bonus] += t.bonus === 'deepOil' ? DEED_BONUS.deepOil : DEED_BONUS.everflame;
+    }
+  }
+  deedBonus = key => T.bonusOn === 0 ? 0 : Math.min(DEED_CAP[key] != null ? DEED_CAP[key] : 0, BSUM[key] || 0);
+  for (const k of Object.keys(DEED_CAP)) {
+    if (k === 'deepOil') addBonus(k, () => deedBonus(k));
+    else if (k === 'buildTime') addModifier(k, () => 1 - deedBonus(k));
+    else addModifier(k, () => 1 + deedBonus(k));
+  }
+
+  // ---------------- points ----------------
+  const tierPts = k => { let p = 0; for (let i = 1; i <= Math.min(4, k); i++) p += DEED_PTS.tier[i - 1]; return p + Math.max(0, k - 4) * DEED_PTS.star; };
+  let ptsCache = -1;
+  function pointsNow() {
+    if (ptsCache >= 0) return ptsCache;
+    const d = DS(); let p = 0;
+    for (const id in d.tier) if (TR[id]) p += tierPts(num(d.tier[id]));
+    for (const id in d.grp) p += (num(d.grp[id]) >= 1 ? DEED_PTS.grpGold : 0) + (num(d.grp[id]) >= 2 ? DEED_PTS.grpEver : 0);
+    for (const id in d.feat) if (FE[id]) p += FE[id].pts || DEED_PTS.feat;
+    for (const id in d.sec) if (SE[id]) p += DEED_PTS.secret;
+    for (const id in d.ch) if (CH[id]) { const s = Math.min(CH[id].steps, num(d.ch[id])); p += s * DEED_PTS.chStep + (s >= CH[id].steps ? DEED_PTS.chDone : 0); }
+    const got = S.achievements && S.achievements.got;
+    if (got && typeof ACH_API === 'object') for (const a of ACH_API.list) if (got[a.id]) p += DEED_PTS.classic;
+    return (ptsCache = p);
+  }
+  const dirtyPts = () => { ptsCache = -1; };
+  // A Classic achievement adds 10 points (the ladder may move).
+  on('achievement', () => { dirtyPts(); if (!DS().init) return; const own = !pend; if (own) pend = []; afterPoints(false); if (own) flushToasts(); });
+
+  // ---------------- looks, titles ----------------
+  const srcTxt = src => {
+    const [k, id] = src.split(':');
+    if (k === 'feat') return `Feat: ${FE[id] ? FE[id].n : id}`;
+    if (k === 'grp') return `${GR[id] ? GR[id].n : id} at Everflame`;
+    if (k === 'sec') return 'A secret';
+    if (k === 'ch') return `Chapter: ${CH[id] ? CH[id].n : id}`;
+    if (k === 'pts') return `${Number(id).toLocaleString('en-US')} points`;
+    return src;
+  };
+  const chDone = id => CH[id] && num(DS().ch[id]) >= CH[id].steps;
+  const owned = id => {
+    const l = LK[id]; if (!l) return false;
+    const [k, x] = l.src.split(':'), d = DS();
+    if (k === 'feat') return !!d.feat[x];
+    if (k === 'grp') return num(d.grp[x]) >= 2;
+    if (k === 'sec') return !!d.sec[x];
+    if (k === 'ch') return chDone(x);
+    if (k === 'pts') return !!d.mil[x];
+    return false;
+  };
+  const lookLive = l => {
+    const [k, x] = l.src.split(':');
+    if (k === 'feat') return waitOk(FE[x] && FE[x].wait);
+    if (k === 'sec') return waitOk(SE[x] && SE[x].wait);
+    if (k === 'ch') return waitOk(CH[x] && CH[x].wait);
+    return true;
+  };
+  function titleList() {
+    const d = DS(), out = [];
+    for (const g of DEED_GROUPS) {
+      out.push({ id: 'a_g_' + g.id, n: g.gold, src: `${g.n} at Gold`, got: num(d.grp[g.id]) >= 1, at: d.at['g:' + g.id + ':1'] || 0 });
+      out.push({ id: 'a_e_' + g.id, n: g.ever, src: `${g.n} at Everflame`, got: num(d.grp[g.id]) >= 2, at: d.at['g:' + g.id + ':2'] || 0 });
+    }
+    for (const f of DEED_FEATS) if (waitOk(f.wait) || d.feat[f.id]) out.push({ id: 'a_' + f.id, n: f.title, src: `Feat: ${f.n}`, got: !!d.feat[f.id], at: d.at[f.id] || 0 });
+    for (const s of DEED_SECRETS) if (d.sec[s.id]) out.push({ id: 'a_' + s.id, n: s.title, src: `Secret: ${s.n}`, got: true, at: d.at[s.id] || 0 });
+    for (const c of DEED_CHAPTERS) if (waitOk(c.wait) || chDone(c.id)) out.push({ id: 'a_' + c.id, n: c.title, src: `Chapter: ${c.n}`, got: chDone(c.id), at: d.at[c.id + ':' + c.steps] || 0 });
+    for (const m of DEED_LADDER) if (m.title) out.push({ id: 'a_p' + m.at, n: m.title, src: `${m.at.toLocaleString('en-US')} points`, got: !!d.mil[m.at], at: d.at['m' + m.at] || 0 });
+    return out;
+  }
+  if (typeof codexTitles === 'function') {
+    const base = codexTitles;
+    codexTitles = () => base().concat(titleList().map(t => ({ id: t.id, n: t.n, src: t.src, got: t.got })));
+  }
+
+  // ---------------- grants ----------------
+  let pend = null;          // toasts gathered during one pass (folded at its end)
+  let lastTierAt = -1e15;   // time (ms) of the last live tier: the near-miss goal hides a while (wall time, so a closed game counts)
+  let clock = 0;            // seconds of ticks since load (runtime only)
+  const toastQ = (msg, prio, icon) => { if (pend) pend.push({ msg, prio, icon }); };
+  const PRIO = { low: 0, normal: 1, high: 2 };
+  function flushToasts() {
+    const p = pend; pend = null;
+    if (!p || !p.length) return;
+    // Tiers fold: "Slayer III and 2 more"; the rest (groups, Feats, milestones) each have their own line.
+    const tiers = p.filter(x => x.tier), rest = p.filter(x => !x.tier);
+    if (tiers.length) {
+      tiers.sort((a, b) => PRIO[b.prio] - PRIO[a.prio]);
+      const top = tiers[0], more = tiers.length - 1;
+      toast(more ? `${top.short} and ${more} more.` : top.msg, 'good', top.icon, top.prio);
+    }
+    for (const x of rest) toast(x.msg, 'good', x.icon, x.prio);
+  }
+  function grantTier(t, k, quiet) {
+    const d = DS(), from = num(d.tier[t.id]);
+    if (k <= from) return 0;
+    d.tier[t.id] = k;
+    const tm = now();
+    for (let i = from + 1; i <= k; i++) d.at[t.id + ':' + i] = tm;
+    d.last = tm; if (!quiet) lastTierAt = tm;   // (away and first-load credit do not hide the nudge)
+    if ((from < 3 && k >= 3) || (from < 4 && k >= 4)) rebuildBonus();
+    dirtyPts();
+    if (!quiet && pend) {
+      const g = GR[t.g], col = DEED_TIERS[Math.min(4, k) - 1].col;
+      const bt = bonusTxt(t, Math.min(4, k)), lab = tierLabel(t.id, k);
+      const msg = k <= 4 ? `${lab} (${tierName(k)}).${bt && k >= 3 && from < k ? ' ' + bt + '.' : ''}` : `${t.n}: ${tierName(k)}.`;
+      pend.push({ tier: true, msg, short: lab, prio: k === 1 ? 'low' : k <= 3 ? 'normal' : 'high', icon: { ic: [g ? g.ic[0] : 'banner', col] } });
+    }
+    emit('deedTier', { id: t.id, tier: k, quiet: !!quiet });
+    return k - from;
+  }
+  function checkGroups(quiet) {
+    const d = DS(); let n = 0;
+    for (const g of DEED_GROUPS) {
+      const list = DEED_TRACKS.filter(t => t.g === g.id && trackLive(t));
+      if (!list.length) continue;
+      const at = k => list.every(t => num(d.tier[t.id]) >= k || !!lockTxt(t, k));
+      const lv = at(4) ? 2 : at(3) ? 1 : 0, was = num(d.grp[g.id]);
+      if (lv <= was) continue;
+      d.grp[g.id] = lv; n++;
+      for (let i = was + 1; i <= lv; i++) d.at['g:' + g.id + ':' + i] = now();
+      dirtyPts();
+      if (!quiet) {
+        const look = lv >= 2 && g.look ? LK[g.look] : null;
+        toastQ(`${g.n}: every track at ${lv >= 2 ? 'Everflame' : 'Gold'}. New title: ${lv >= 2 ? g.ever : g.gold}.${look ? ' New look: ' + look.n + '.' : ''}`, 'high', { ic: [g.ic[0], lv >= 2 ? DEED_TIERS[3].col : DEED_TIERS[2].col] });
+      }
+      emit('deedGroup', { id: g.id, lv, quiet: !!quiet });
+    }
+    return n;
+  }
+
+  // ---------------- Feats ----------------
+  const P = (n, have, need) => ({ n, have: num(have), need });
+  const FEAT_PARTS = {
+    f_lamps: () => {
+      let st = 0; for (let z = 1; z <= hollowZones(); z++) st += zoneStars(z);
+      return [P('Zone stars', st, hollowZones() * 5), P('Bestiary pages', pagesOf(hollowTypeKeys()), hollowTypeKeys().length * BESTIARY_TIERS.length)];
+    },
+    f_watch: () => [P('Hours of light', Math.floor(lightHours()), 2000)],
+    f_company: () => [P('At Lanternborn', roster().filter(id => num(recOf(id).rank) >= 7).length, ROSTER_KEYS.length)],
+    f_trades: () => [P('Skills at 200', ['mine', 'wood', 'forage', 'smith', 'bench', 'loom', 'ench'].filter(k => skillLv(k) >= 200).length, 7),
+      P('Tools at 20', ['pick', 'axe', 'sickle'].filter(k => S.tools && S.tools.m && S.tools.m[k] && num(S.tools.m[k][0]) >= 20).length, 3)],
+    f_deep: () => [P('Deepest floor', num(S.deep && S.deep.best), 75)],
+    f_trials: () => [P('Trial Seals', trialSeals(), 52)],
+    f_stamps: () => [P('Almanac Stamps', num(S.almanac && S.almanac.stamps), 52)],
+    f_parry: () => [P('Parries', N().parry, 25000)],
+    f_hit: () => [P('Biggest hit', DS().rec.hit, FE.f_hit.need)],
+    f_gold: () => [P('Gold earned', S.totalGold, FE.f_gold.need)],
+    f_raid: () => [P('Raid bosses', num(S.wyrms), 100)],
+    f_champs: () => [P('Champions', num(S.craft && S.craft.champ), 10000)],
+    f_perfect: () => [P('Perfect expeditions', N().perfect, 1000), P('Keepsakes', keys(S.exped && S.exped.keep), typeof EXPED_KEEPSAKES === 'object' ? keys(EXPED_KEEPSAKES) : 12)],
+    f_book: () => { const b = (S.legend && S.legend.book) || {}, ids = bookIds();
+      return [P('Powers learned', ids.filter(id => num(b[id]) > 0).length, ids.length), P('At rank V', ids.filter(id => num(b[id]) >= 5).length, 10)]; },
+    f_stars: () => [P('Class maps at 36', starClasses().filter(c => starBest(c) >= 36).length, starClasses().length)],
+    f_sworn: () => { const lv = (S.bond && S.bond.lv) || {}; let n = 0; for (const k in lv) if (num(lv[k]) >= 5) n++; return [P('Sworn Bonds', n, 21)]; },
+    f_town: () => {
+      const list = typeof campList === 'function' ? campList() : [], h = S.hands || {}, hl = Array.isArray(h.list) ? h.list : [];
+      return [P('Buildings at the top', list.filter(id => campLv(id) >= campMaxLevel(id)).length, list.length), P('Hands housed', hl.length, 6),
+        P('A Legendary Hand', hl.some(x => x && x.r === 'legendary') ? 1 : 0, 1), P('Kitchen', campLv('kitchen'), Math.max(1, safe(() => campMaxLevel('kitchen'), 1)))];
+    },
+    f_stock: () => {
+      let full = 0, all = 0;
+      if (typeof storeCap === 'function') for (const f of CRAFT_FAMILIES) for (let t = 1; t <= 5; t++) { const c = safe(() => storeCap(f, t), 0); if (!(c > 0)) continue; all++; if (num(S.mats[f] && S.mats[f][t - 1]) >= c) full++; }
+      return [P('Storehouse level', num(S.camp && S.camp.b && S.camp.b.store), 8), P('Full cells', full, Math.max(1, all))];
+    },
+    f_tides: () => { const b = (S.oath && S.oath.best) || {}, ks = REGIONS[1] ? REGIONS[1].types.map(i => TYPES[i] && TYPES[i].key) : [];
+      return [P('Tide turns', N().tides, 5000), P('Coast elders at Oath 10', ks.filter(k => num(b[k]) >= 10).length, 7)]; },
+    f_oaths: () => { const b = (S.oath && S.oath.best) || {}; let n = 0; for (const k in b) if (num(b[k]) >= 20) n++; return [P('Oath Seals at 20+', n, 14)]; },
+    f_all: () => { const others = DEED_FEATS.filter(f => f.id !== 'f_all' && waitOk(f.wait)); return [P('Feats', others.filter(f => DS().feat[f.id]).length, others.length)]; }
+  };
+  const featParts = f => safe(() => FEAT_PARTS[f.id](), []);
+  const featDone = parts => parts.length > 0 && parts.every(p => p.have >= p.need);
+  function grantFeat(f, quiet) {
+    const d = DS(); if (d.feat[f.id]) return false;
+    d.feat[f.id] = 1; d.at[f.id] = now(); dirtyPts();
+    if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }); }
+    emit('deedFeat', { id: f.id, quiet: !!quiet });
+    if (typeof codexRefresh === 'function' && d.init) safe(() => codexRefresh(true, !!quiet), 0);
+    return true;
+  }
+  function checkFeats(quiet, part) {
+    let n = 0;
+    DEED_FEATS.forEach((f, i) => {
+      if (f.id === 'f_all' || DS().feat[f.id] || (part != null && i % T.parts !== part) || !waitOk(f.wait)) return;
+      if (featDone(featParts(f)) && grantFeat(f, quiet)) n++;
+    });
+    const cap = FE.f_all;
+    if (!DS().feat.f_all && featDone(featParts(cap)) && grantFeat(cap, quiet)) n++;
+    return n;
+  }
+
+  // ---------------- secrets ----------------
+  function grantSecret(id) {
+    const d = DS(), s = SE[id];
+    if (!s || d.sec[id] || !d.init || !waitOk(s.wait)) return false;
+    d.sec[id] = 1; d.at[id] = now(); dirtyPts();
+    toast(`Secret found: ${s.n}. New title: ${s.title}.${s.look && LK[s.look] ? ' New look: ' + LK[s.look].n + '.' : ''}`, 'good', { ic: ['orb', '#B89CFF'] }, 'normal');
+    emit('deedSecret', { id });
+    const own = !pend; if (own) pend = [];
+    afterPoints(false);
+    if (own) flushToasts();
+    save();
+    return true;
+  }
+
+  // ---------------- points ladder ----------------
+  function afterPoints(quiet) {
+    const d = DS(), p = pointsNow(), gain = p - num(d.pts);
+    for (const m of DEED_LADDER) {
+      if (p < m.at || d.mil[m.at]) continue;
+      d.mil[m.at] = 1; d.at['m' + m.at] = now();
+      if (!quiet) {
+        const bits = [];
+        if (m.title) bits.push(`title ${m.title}`);
+        if (m.look && LK[m.look]) bits.push(LK[m.look].n);
+        if (m.wall) bits.push(m.wall === 1 ? 'the Trophy Wall opens at camp' : 'the Trophy Wall grows');
+        toastQ(`${m.at.toLocaleString('en-US')} achievement points: ${bits.join(', ')}.`, 'normal', { ic: ['banner', '#F2C14E'] });
+      }
+      emit('deedMilestone', { at: m.at });
+    }
+    if (gain !== 0) { d.pts = p; emit('deedPoints', { pts: p, gain }); }
+  }
+
+  // ---------------- the check pass ----------------
+  let part = 0;
+  // part: a quarter of the tracks (round robin); null = every track. Returns tiers granted.
+  function checkTracks(p, quiet) {
+    let n = 0;
+    for (let i = 0; i < DEED_TRACKS.length; i++) {
+      if (p != null && i % T.parts !== p) continue;
+      const t = DEED_TRACKS[i];
+      if (!trackLive(t)) continue;
+      const k = tierOf(t, cur(t));
+      if (k > num(DS().tier[t.id])) n += grantTier(t, k, quiet);
+    }
+    return n;
+  }
+  function pass(full, quiet) {
+    if (!quiet) pend = [];
+    const p = full ? null : part;
+    if (!full) part = (part + 1) % T.parts;
+    const n = checkTracks(p, quiet);
+    let g = 0; if (n || full || p === 0) g = checkGroups(quiet);
+    const f = checkFeats(quiet, full ? null : p);
+    if (n || g || f || full) afterPoints(quiet);
+    if (!quiet) flushToasts(); else pend = null;
+    return { tiers: n, groups: g, feats: f };
+  }
+
+  // ---------------- counters: combat deltas, records ----------------
+  const CBK = [['parries', 'parry'], ['dodges', 'dodge'], ['interrupts', 'intr'], ['abilities', 'abil'], ['taken', 'taken'], ['crits', 'crit']];
+  const cbLast = { parries: 0, dodges: 0, interrupts: 0, abilities: 0, taken: 0, crits: 0, dmg: 0, heal: 0 };
+  let cbInit = false;
+  const delta = (k, v) => { const l = cbLast[k]; cbLast[k] = v; return v >= l ? v - l : v; };   // a reset (checks) counts from 0
+  function readCombat() {
+    const st = typeof CB_STATS === 'object' && CB_STATS ? CB_STATS : null; if (!st) return;
+    const dmg = num(st.heroDmg) + num(st.compDmg), heal = num(st.healed) + num(st.shielded);
+    if (!cbInit) { cbInit = true; for (const [k] of CBK) cbLast[k] = num(st[k]); cbLast.dmg = dmg; cbLast.heal = heal; }
+    const n = N();
+    for (const [k, key] of CBK) n[key] += delta(k, num(st[k]));
+    n.dmg += delta('dmg', dmg); n.heal += delta('heal', heal);
+    const hit = num(st.maxHit);
+    if (hit > 0) {
+      const r = DS().rec;
+      if (hit > r.hit) { r.hit = hit; r.hitZ = S.zone; r.hitAt = now(); }
+      st.maxHit = 0;
+    }
+    if (num(st.maxOver) >= T.overX) grantSecret('s_over');
+    st.maxOver = 0;
+  }
+
+  // ---------------- events ----------------
+  let inAway = false;
+  on('harvest', ({ kind, t, n, glint }) => {
+    if (!GATHER.includes(kind) || !(t >= 1 && t <= 5)) return;
+    const row = gRow(kind); row[t - 1] += num(n);
+    if (glint) N().glint++;
+  });
+  on('kill', ({ mob, ess }) => {
+    N().ess += num(ess);
+    if (!mob || !mob.boss || inAway || !DS().init) return;
+    // zone boss secrets (live play only)
+    if (typeof fightBoss !== 'undefined' && num(bossTime) < 1) grantSecret('s_close');
+    // (from zone 10: every new game beats its first bosses before it has a weapon or a full party)
+    if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
+    const U = safe(() => combatUnits(), null);
+    if (U && U[0] && U[0].live && !U[0].down) {
+      let others = 0, up = 0; for (let i = 1; i < U.length; i++) if (U[i].live) { others++; if (!U[i].down) up++; }
+      if (others >= 2 && up === 0 && S.zone >= T.oddZone) grantSecret('s_alone');
+    }
+    if (waitOk('F1')) {
+      const f = S.party && Array.isArray(S.party.field) ? S.party.field : [];
+      if (f.length >= 3 && f.every(id => safe(() => !!offSlot(id), false))) grantSecret('s_wrong');
+    }
+  });
+  on('deepFloor', ({ kind }) => { if (kind === 'boss') N().boss++; });
+  on('trophy', ({ n }) => { N().troph += n == null ? 1 : num(n); });
+  on('upgraded', ({ item }) => { N().up++; const f = fineOf(item); if (f > DS().rec.fine) DS().rec.fine = f; });
+  on('crafted', ({ item }) => { const f = fineOf(item); if (f > DS().rec.fine) DS().rec.fine = f; });
+  on('reforged', () => { N().ref++; });
+  on('transmuted', () => { N().trans++; });
+  on('weeklyClaim', () => { N().weekly++; });
+  on('raidReward', ({ embers }) => { N().embers += num(embers); });
+  on('meal', () => { N().meal++; });
+  on('tideTurn', () => { N().tides++; });
+  on('storeCap', () => { const sx = DS().sx; sx.rat = num(sx.rat) + 1; if (sx.rat >= T.ratHits) grantSecret('s_rat'); });
+  const markKeys = () => {
+    const ks = DS().rec.ks;
+    for (const c of starClasses()) {
+      const m = starMap(c), r = S.stars && S.stars.maps && S.stars.maps[c];
+      if (!m || !r || !Array.isArray(r.layouts)) continue;
+      for (const l of r.layouts) for (const id of (l && l.lit) || []) { const s = m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) ks[c + ':' + id] = 1; }
+    }
+  };
+  on('starLit', ({ cls, id }) => { const m = safe(() => starMap(cls), null), s = m && m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) DS().rec.ks[cls + ':' + id] = 1; });
+  const markSets = () => {
+    const sets = safe(() => legendSets(), null); if (!sets || !sets.tier) return;
+    const r = DS().rec; let best = 0;
+    for (const c in sets.tier) { const v = num(sets.tier[c]); best = Math.max(best, v >= 6 ? 3 : v >= 4 ? 2 : v >= 2 ? 1 : 0); if (v >= 6) r.c6[c] = 1; }
+    if (typeof LEG_CIRCLES === 'object' && LEG_CIRCLES.every(c => r.c6[c])) best = 4;
+    if (best > r.set) r.set = best;
+  };
+  on('legendChange', markSets);
+  on('expedBack', p => {
+    if (p && p.g === 3) N().perfect++;
+    if (!p || p.auto || p.recall || !DS().init) return;
+    const s = safe(() => S.exped.slots.find(x => x && x.r === p.r && x.end <= now()), null);
+    if (s && now() - s.end >= T.lateMs) grantSecret('s_late');
+  });
+  let oilSeen = Infinity;
+  on('deepEnd', ({ summary }) => { if (summary && summary.reason === 'leave' && oilSeen < 1) grantSecret('s_oil'); oilSeen = Infinity; });
+  // Hot Streak: a hero crit right after the last one (59-combat counts hero strikes in CB_STATS.heroHits).
+  let streak = 0, hitsAfter = -1;
+  on('crit', () => {   // (the count itself is CB_STATS.crits, read as a delta)
+    const st = typeof CB_STATS === 'object' && CB_STATS; if (!st || !partyCombatOn()) { streak = 0; return; }
+    const h = num(st.heroHits);
+    streak = hitsAfter >= 0 && h - hitsAfter === 1 ? streak + 1 : 1;
+    hitsAfter = h + (safe(() => gear().echo, 0) > 0 ? 1 : 0);
+    if (streak >= T.streak) grantSecret('s_streak');
+  });
+  // Drummer: taps in the last 60 seconds of tick time (60 one-second buckets, no allocation).
+  const drum = new Uint16Array(60); let drumSum = 0, drumSec = 0;
+  let campSince = -1, lastView = '';
+  on('tap', () => {
+    const b = drumSec % 60; drum[b]++; drumSum++;
+    if (drumSum >= T.drumTaps) grantSecret('s_drum');
+    if (campSince >= 0) campSince = clock;
+  });
+  on('menuView', ({ view }) => { lastView = view || ''; campSince = lastView === 'camp' ? clock : -1; });
+
+  // Per-second secrets and polls.
+  let lastName = null, dareSeen = -1;
+  const nameHit = () => {
+    const nm = String(S.name || '').trim().toLowerCase(); if (!nm) return false;
+    for (const id of ROSTER_KEYS) {
+      const full = String(ROSTER[id].name).toLowerCase(), first = full.replace(/^(old|ser|brother|saint) /, '').split(' ')[0];
+      if (nm === full || nm === first) return true;
+    }
+    return false;
+  };
+  function secondPolls() {
+    const d = DS(), sx = d.sx;
+    // drum window
+    drumSec++; const b = drumSec % 60; drumSum -= drum[b]; drum[b] = 0;
+    if (!d.init) return;
+    // Dares: one per day taken (the Almanac's toggle), and a full week of them (Daredevil)
+    const dr = S.almanac && S.almanac.dare;
+    if (dr && dr.on && dr.day !== dareSeen && num(dr.day) !== num(sx.dareDay)) {
+      dareSeen = dr.day; sx.dareDay = dr.day; N().dare++;
+      const wk = Math.floor((num(dr.day) + 3) / 7), bit = 1 << (((num(dr.day) + 3) % 7 + 7) % 7);
+      if (sx.dareWk !== wk) { sx.dareWk = wk; sx.dareMask = 0; }
+      sx.dareMask = num(sx.dareMask) | bit;
+      if (sx.dareMask === 127) grantSecret('s_dare');
+    }
+    if (S.name !== lastName) { lastName = S.name; if (nameHit()) grantSecret('s_name'); }
+    const hr = new Date(now()).getHours(), live = !inAway;
+    if (live && S.activity === 'fight' && typeof target === 'function' && target() === 'mob') {
+      if (hr >= T.nightFrom && hr < T.nightTo) { sx.night = num(sx.night) + 1; if (sx.night >= T.nightSecs) grantSecret('s_night'); }
+      const ti = safe(() => zoneType(S.zone), -1);
+      if (TYPES[ti] && TYPES[ti].key === 'wraith' && (hr >= T.wispFrom || hr < T.wispTo)) { sx.wisp = num(sx.wisp) + 1; if (sx.wisp >= T.wispSecs) grantSecret('s_wisp'); }
+    }
+    if (S.tab && lastView === 'camp' && campSince >= 0 && clock - campSince >= T.fireSecs) grantSecret('s_fire');
+    if (!S.tab) campSince = lastView === 'camp' ? -1 : campSince;
+    if (S.activity === 'raid' && online && Array.isArray(online.peers)) {
+      let n = 0; for (const p of online.peers) { const x = p && (p.data || p.presence || p); if (x && x.raiding) n++; }
+      if (n >= T.crowd) grantSecret('s_crowd');
+    }
+    const run = S.deep && S.deep.run; oilSeen = run ? num(run.oil) : oilSeen;
+  }
+
+  // ---------------- first load: old saves get full credit, quietly ----------------
+  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (Array.isArray(S.items) && S.items.length > 0);
+  function seed() {
+    const d = DS(), n = d.n;
+    for (const f of GATHER) { const m = S.mats[f]; if (!Array.isArray(m)) continue; const row = gRow(f); for (let t = 0; t < 5; t++) row[t] = Math.max(num(row[t]), Math.floor(num(m[t]))); }
+    n.ess = Math.max(n.ess, sumArr(S.mats.ess));
+    n.troph = Math.max(n.troph, sumArr(S.craft && S.craft.troph));
+    n.embers = Math.max(n.embers, num(S.embers) + safe(relicSpent, 0));
+    n.perfect = Math.max(n.perfect, ((S.exped && S.exped.log) || []).filter(x => x && x.grade === 'Perfect').length);
+    n.dare = Math.max(n.dare, keys(S.codex && S.codex.rec && S.codex.rec.dare));
+    n.weekly = Math.max(n.weekly, num(S.almanac && S.almanac.stamps) * 3);
+    safe(markKeys, 0); safe(markSets, 0);
+    for (const it of S.items || []) { const f = fineOf(it); if (f > d.rec.fine) d.rec.fine = f; }
+    if (hasProgress()) {
+      const tm = now();
+      for (const k of ['crit', 'parry', 'dodge', 'intr', 'abil', 'dmg', 'taken', 'heal', 'hit', 'g', 'ess', 'troph', 'glint', 'up', 'ref', 'trans', 'embers', 'perfect', 'dare', 'weekly', 'boss'])
+        if (!d.since[k]) d.since[k] = tm;
+    }
+    const dr = S.almanac && S.almanac.dare; if (dr && dr.on) { d.sx.dareDay = dr.day; dareSeen = dr.day; }
+  }
+  function init() {
+    const d = DS();
+    if (d.init) return null;
+    dirtyPts();
+    seed();
+    const before = pointsNow();
+    const res = pass(true, true);
+    const feats = DEED_FEATS.filter(f => d.feat[f.id]), looks = DEED_LOOKS.filter(l => owned(l.id));
+    d.init = now();
+    const tiers = Object.keys(d.tier).reduce((a, id) => a + num(d.tier[id]), 0), pts = pointsNow();
+    if (hasProgress() && (tiers > 0 || pts > 0)) {
+      const ch = Object.keys(d.ch).reduce((a, id) => a + num(d.ch[id]), 0);
+      let msg = `Your deeds so far: ${tiers} tier${tiers === 1 ? '' : 's'}${ch ? `, ${ch} chapter step${ch === 1 ? '' : 's'}` : ''}, ${pts.toLocaleString('en-US')} points. See Achievements.`;
+      if (feats.length || looks.length) msg += ` New looks: ${looks.map(l => l.n).join(', ')}.`;
+      emit('whatsNew', { msg, icon: { ic: ['banner', '#F2C14E'] } });
+    }
+    emit('deedsInit', { tiers, pts, gain: pts - before, res });
+    save();
+    return { tiers, pts };
+  }
+
+  // ---------------- per-S runtime (loadSave() replaces S) ----------------
+  let seenFor = null, lastNum;
+  function ensure() {
+    if (seenFor === S) return;
+    seenFor = S;
+    const d = DS();
+    if (!d.rec.c6 || typeof d.rec.c6 !== 'object') d.rec.c6 = {};
+    if (!d.rec.ks || typeof d.rec.ks !== 'object') d.rec.ks = {};
+    for (const k of Object.keys(d.g)) if (!Array.isArray(d.g[k])) delete d.g[k];
+    rebuildBonus(); dirtyPts(); cbInit = false; streak = 0; hitsAfter = -1; lastName = S.name; dareSeen = -1;
+    lastNum = undefined;
+  }
+  ensure();
+  const syncNum = () => { const v = S.settings && S.settings.num; if (v !== lastNum) { lastNum = v; setNumFormat(v); } };
+  syncNum();
+
+  // ---------------- the tick ----------------
+  let acc = 0;
+  onTick(dt => {
+    clock += dt; acc += dt;
+    if (acc < T.every) return;
+    acc = 0;
+    ensure(); syncNum();
+    readCombat();
+    secondPolls();
+    if (!DS().init) { if (clock >= T.initAfter) init(); return; }
+    pass(false, false);
+  });
+
+  // ---------------- away ----------------
+  let awaySnap = null;
+  on('awayBegin', () => { inAway = true; awaySnap = DS().init ? { tier: Object.assign({}, DS().tier), pts: pointsNow(), feat: Object.assign({}, DS().feat), grp: Object.assign({}, DS().grp) } : null; });
+  on('awayEnd', () => { inAway = false; });
+  registerAwayLine(r => {
+    // Essence that arrived while away (no kill events): the report's diff.
+    for (const m of r.mats || []) if (m.k === 'ess') N().ess += num(m.n);
+    const s = awaySnap; awaySnap = null;
+    if (!s) return null;
+    ensure();
+    pass(true, true);
+    const d = DS(), got = [];
+    for (const t of DEED_TRACKS) { const k = num(d.tier[t.id]); if (k > num(s.tier[t.id])) got.push(tierLabel(t.id, k)); }
+    const feats = DEED_FEATS.filter(f => d.feat[f.id] && !s.feat[f.id]);
+    const gain = pointsNow() - s.pts;
+    if (!got.length && !feats.length && gain <= 0) return null;
+    const bits = got.slice(0, 3).concat(got.length > 3 ? [`${got.length - 3} more`] : []);
+    const lines = [];
+    for (const f of feats) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `Feat: ${f.n}`, sub: `New title: ${f.title}.`, group: 'Achievements', go: () => emit('deedsOpen', { view: 'feats', id: f.id }) });
+    if (bits.length || gain > 0) lines.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: bits.length ? bits.join(', ') : 'Achievement points', sub: `+${gain} points.`, group: 'Achievements', go: () => emit('deedsOpen', { view: 'deeds' }) });
+    return lines;
+  });
+
+  // ---------------- views for the UI ----------------
+  function trackRow(t) {
+    const k = tierOfId(t.id), v = cur(t), nk = k + 1;
+    const lock = lockTxt(t, nk), maxed = (!t.star && k >= 4) || !!lock;
+    const from = k ? needAt(t, k) : 0, to = maxed ? needAt(t, Math.max(1, k)) : needAt(t, nk);
+    const pct = maxed ? 1 : Math.max(0, Math.min(1, t.kind === 'ladder' || t.kind === 'record' ? v / to : (v - from) / Math.max(1e-9, to - from)));
+    return { id: t.id, g: t.g, n: t.n, what: t.what, kind: t.kind || 'count', tier: k, v, next: maxed ? 0 : nk, need: to, pct, left: maxed ? 0 : Math.max(0, to - v),
+      label: maxed ? '' : nudgeLabel(t, nk, v, to), live: trackLive(t), lock, stars: Math.max(0, k - 4), steps: t.steps || null,
+      bonus: t.bonus, bonusTxt: [bonusTxt(t, 3), bonusTxt(t, 4)].filter(Boolean), since: DS().since[sinceKey(t)] || 0, wait: t.wait || null,
+      needs: [1, 2, 3, 4].map(i => needAt(t, i)) };
+  }
+  const SINCE = { crits: 'crit', parry: 'parry', intr: 'intr', abil: 'abil', damage: 'dmg', front: 'taken', mend: 'heal', bighit: 'hit', essence: 'ess', trophies: 'troph', glint: 'glint',
+    honed: 'up', reforge: 'ref', alchemy: 'trans', embers: 'embers', perfect: 'perfect', dares: 'dare', weekly: 'weekly', g_ore: 'g', g_crystal: 'g', g_wood: 'g', g_fibre: 'g', g_herb: 'g',
+    s_mine: 'g', s_wood: 'g', s_forage: 'g' };
+  const sinceKey = t => SINCE[t.id] || '';
+  const fmtLeft = (t, n) => (t.kind === 'level' || t.kind === 'ladder' || n < 1e5 ? Math.ceil(n).toLocaleString('en-US') : fmt(n));
+  function nudgeLabel(t, k, v, to) {
+    const left = Math.max(0, to - v), tl = k <= 4 ? roman(k) : `★${k - 4}`;
+    if (t.kind === 'ladder') return `${t.n} ${tl}: ${t.steps ? t.steps[Math.min(3, k - 1)] : ''}`;
+    if (t.more) return `${t.n} ${tl}: ${fmt(Math.max(1, left))} more ${t.more}`;
+    const c = Math.max(1, Math.ceil(left)), u = t.u || ['', ''];
+    return `${fmtLeft(t, c)} ${c === 1 ? u[0] : u[1]} to ${t.n} ${tl}`;
+  }
+
+  // near-miss nudge (Next Up), cached 2 s
+  let nearCache = { at: -1e9, list: [] };
+  function nearList() {
+    if (clock - nearCache.at < 2 && nearCache.at <= clock) return nearCache.list;
+    const out = [];
+    for (const t of DEED_TRACKS) {
+      if (t.kind === 'ladder' || t.kind === 'record' || !trackLive(t)) continue;
+      const k = tierOfId(t.id), nk = k + 1;
+      if ((!t.star && k >= 4) || lockTxt(t, nk)) continue;
+      const v = cur(t), from = k ? needAt(t, k) : 0, to = needAt(t, nk), pct = (v - from) / Math.max(1e-9, to - from);
+      if (pct >= T.near && pct < 1) out.push({ id: t.id, label: nudgeLabel(t, nk, v, to), pct, g: t.g });
+    }
+    out.sort((a, b) => b.pct - a.pct);
+    nearCache = { at: clock, list: out };
+    return out;
+  }
+  const nudgePick = () => {
+    const d = DS();
+    if (!d.init || !d.nudge || now() - lastTierAt < T.quiet * 1000) return null;
+    if ((typeof fightBoss !== 'undefined' && fightBoss) || safe(() => deepActive(), false)) return null;
+    if (d.follow && TR[d.follow] && trackLive(TR[d.follow])) { const r = trackRow(TR[d.follow]); if (r.next && !r.lock) return { id: r.id, label: r.label, pct: r.pct }; }
+    return nearList()[0] || null;
+  };
+  registerGoal({
+    id: 'deeds-near', sys: 'deeds', cap: 1, prio: -1,
+    pct: () => { const x = nudgePick(); return x ? Math.max(0.01, Math.min(T.nearMax, x.pct)) : null; },
+    label: () => { const x = nudgePick(); return x ? x.label : ''; },
+    icon: () => { const x = nudgePick(), t = x && TR[x.id], g = t && GR[t.g]; return { ic: g ? g.ic : ['banner', '#F2C14E'] }; },
+    go: () => { const x = nudgePick(); return { fn: () => emit('deedsOpen', { view: 'tracks', id: x ? x.id : null }) }; }
+  });
+
+  // ---------------- Codex bridge: Feats on the Achievements page, looks on the Wardrobe ----------------
+  // A Feat tile is worth 5 Light once earned (its max counts only then, so the page's half and Seal
+  // gates stay where CX1 put them). Each look is one Wardrobe entry (1 Light).
+  if (typeof CODEX_PAGES === 'object') {
+    const A = CODEX_PAGES.achievements;
+    if (A && typeof A.tiles === 'function') {
+      const base = A.tiles;
+      A.tiles = x => base(x).concat(DEED_FEATS.filter(f => DS().feat[f.id]).map(f => ({ key: f.id, n: f.n, got: 1, max: 1, pts: 10, ptsMax: 10,
+        ic: ['banner', '#F2C14E'], grp: 'Feats', sub: `Title: ${f.title}.`, hint: '' })));
+    }
+    const W = CODEX_PAGES.wardrobe;
+    if (W) {
+      const base = W.tiles, baseShow = W.show;
+      const any = () => DEED_LOOKS.some(l => l.slot !== 'frame' && owned(l.id));
+      W.show = () => safe(() => (baseShow ? !!baseShow() : false), false) || any();
+      W.tiles = x => {
+        const out = safe(() => (baseShow ? !!baseShow() : false), false) && typeof base === 'function' ? base(x) : [];
+        for (const l of DEED_LOOKS) if (l.slot !== 'frame' && lookLive(l)) {
+          const got = owned(l.id) ? 1 : 0;
+          out.push({ key: l.id, n: l.n, got, max: 1, pts: got * 2, ptsMax: 2, grp: `Achievement ${DEED_SLOT_TXT[l.slot].toLowerCase()}s`, sub: got ? 'Wear it in Achievements, Looks.' : '', hint: got ? '' : srcTxt(l.src) + '.' });
+        }
+        return out;
+      };
+    }
+  }
+
+  // ---------------- wear ----------------
+  const deepCos = (kind, id) => typeof DEEP_SHOP === 'object' && DEEP_SHOP[id] && DEEP_SHOP[id].kind === kind && S.deep && S.deep.cos && S.deep.cos[id];
+  wearGet = slot => {
+    const w = DS().wear;
+    if (slot === 'helm') return w.helm ? 1 : 0;
+    if (slot === 'flame') return (w.flame && owned(w.flame) ? w.flame : null) || (S.deep && S.deep.eq && S.deep.eq.lantern) || null;
+    if (slot === 'trail') return (w.trail && owned(w.trail) ? w.trail : null) || (S.deep && S.deep.eq && S.deep.eq.trail) || null;
+    if (slot === 'frame') {
+      if (w.frame === 'none') return null;
+      if (w.frame && (owned(w.frame) || w.frame === 'pin')) return w.frame;
+      const own = DEED_LOOKS.filter(l => l.slot === 'frame' && owned(l.id));
+      return own.length ? own[own.length - 1].id : null;
+    }
+    const id = w[slot]; return id && owned(id) ? id : null;
+  };
+  function wear(slot, id) {
+    const w = DS().wear;
+    if (!DEED_SLOTS.includes(slot)) return false;
+    if (id == null) {
+      if (slot === 'flame' || slot === 'trail') { w[slot] = null; if (S.deep && S.deep.eq) S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = null; }
+      else w[slot] = slot === 'frame' ? 'none' : null;
+    } else if (LK[id]) {
+      if (LK[id].slot !== slot || !owned(id)) return false;
+      w[slot] = id;
+    } else if ((slot === 'flame' || slot === 'trail') && deepCos(slot === 'flame' ? 'lantern' : 'trail', id)) {
+      w[slot] = null; S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = id;   // the Deepwell's own meaning, unchanged
+    } else if (slot === 'frame' && id === 'pin') w.frame = 'pin';   // the pinnacle frame (PB1), when it exists
+    else return false;
+    emit('deedLook', { slot, id: id == null ? null : id });
+    save();
+    return true;
+  }
+
+  // ---------------- public API ----------------
+  deeds = {
+    tracks: g => DEED_TRACKS.filter(t => (!g || t.g === g) && trackLive(t)).map(trackRow),
+    track: id => TR[id] ? trackRow(TR[id]) : null,
+    tierName, tierLabel,
+    groups: () => DEED_GROUPS.map(g => {
+      const list = DEED_TRACKS.filter(t => t.g === g.id && trackLive(t)), lv = num(DS().grp[g.id]);
+      const at = k => list.filter(t => tierOfId(t.id) >= k || !!lockTxt(t, k)).length;
+      return { id: g.id, n: g.n, ic: g.ic, lv, gold: g.gold, ever: g.ever, look: g.look, tracks: list.length, atGold: at(3), atEver: at(4),
+        fresh: lv >= 1 && at(lv >= 2 ? 4 : 3) < list.length ? list.length - at(lv >= 2 ? 4 : 3) : 0 };
+    }).filter(g => g.tracks > 0),
+    feats: () => DEED_FEATS.filter(f => waitOk(f.wait) || DS().feat[f.id]).map(f => {
+      const parts = featParts(f), got = !!DS().feat[f.id];
+      const pct = parts.length ? parts.reduce((a, p) => a + Math.min(1, p.need ? p.have / p.need : 1), 0) / parts.length : 0;
+      return { id: f.id, n: f.n, needs: f.needs, about: f.about, rar: f.rar, rarTxt: DEED_RARITY[f.rar], title: f.title, look: f.look, got, at: DS().at[f.id] || 0, parts, pct: got ? 1 : pct, live: waitOk(f.wait), pts: f.pts || DEED_PTS.feat };
+    }),
+    secrets: () => {
+      const d = DS(), found = keys(d.sec), days = S.stats ? (num(S.stats.played) + num(S.stats.away)) / 86400 : 0;
+      const hint = found >= T.secretAfterFound || (d.init && now() - d.init >= T.secretAfterDays * 864e5) || days >= T.secretAfterDays;
+      return DEED_SECRETS.filter(s => waitOk(s.wait) || d.sec[s.id]).map(s => {
+        const got = !!d.sec[s.id];
+        return { id: s.id, got, at: d.at[s.id] || 0, n: got ? s.n : '', riddle: got || hint ? s.riddle : '', how: got ? s.how : '', title: got ? s.title : '', look: got ? s.look || null : null, live: waitOk(s.wait) };
+      });
+    },
+    points: () => pointsNow(),
+    ladder: () => DEED_LADDER.map(m => Object.assign({ got: !!DS().mil[m.at] }, m)),
+    next: () => DEED_LADDER.find(m => !DS().mil[m.at]) || null,
+    wallStage: () => DEED_LADDER.reduce((a, m) => m.wall && DS().mil[m.at] ? Math.max(a, m.wall) : a, 0),
+    wall: () => DS().wall.slice(),
+    pin: ids => { DS().wall = (Array.isArray(ids) ? ids : []).filter(id => FE[id] || CH[id] || GR[id]).slice(0, 12); save(); return DS().wall.slice(); },
+    looks: slot => DEED_LOOKS.filter(l => (!slot || l.slot === slot) && (lookLive(l) || owned(l.id))).map(l => ({ id: l.id, slot: l.slot, n: l.n, src: l.src, srcTxt: srcTxt(l.src), got: owned(l.id) })),
+    owned, wear, wearGet: s => wearGet(s),
+    showHelm: on => { DS().wear.helm = on ? 1 : 0; emit('deedLook', { slot: 'helm', id: DS().wear.helm }); save(); return DS().wear.helm; },
+    frame: () => wearGet('frame'),
+    near: (n = 3) => nearList().slice(0, n),
+    follow: id => { DS().follow = id && TR[id] ? id : null; nearCache.at = -1e9; save(); return DS().follow; },
+    nudge: on => { DS().nudge = on ? 1 : 0; save(); return DS().nudge; },
+    recent: (n = 5) => {
+      const d = DS(), out = [];
+      for (const k in d.at) {
+        const at = d.at[k], m = /^([a-z_0-9]+):(\d+)$/.exec(k);
+        if (m && TR[m[1]]) out.push({ key: k, kind: 'tier', id: m[1], tier: +m[2], at, txt: tierLabel(m[1], +m[2]) });
+        else if (FE[k]) out.push({ key: k, kind: 'feat', id: k, at, txt: FE[k].n });
+        else if (SE[k]) out.push({ key: k, kind: 'secret', id: k, at, txt: SE[k].n });
+      }
+      out.sort((a, b) => b.at - a.at || b.tier - a.tier);
+      return out.slice(0, n);
+    },
+    isNew: () => pointsNow() > num(DS().seen),
+    seen: () => { DS().seen = pointsNow(); },
+    chapterStep: (id, step, opts) => {
+      const c = CH[id], d = DS(); if (!c || !waitOk(c.wait)) return false;
+      step = Math.max(0, Math.min(c.steps, step | 0));
+      const was = num(d.ch[id]); if (step <= was) return false;
+      d.ch[id] = step; for (let i = was + 1; i <= step; i++) d.at[id + ':' + i] = now();
+      dirtyPts();
+      emit('deedChapter', { id, step, quiet: !!(opts && opts.quiet) });
+      const q = !!(opts && opts.quiet);
+      if (!q) pend = [];
+      afterPoints(q);
+      if (!q) flushToasts();
+      save();
+      return true;
+    },
+    chapter: id => ({ step: num(DS().ch[id]), done: chDone(id) }),
+    count: (key, n = 1) => { if (key in N()) N()[key] += num(n); },
+    source: (id, fn) => { if (TR[id] && typeof fn === 'function') SRC[id] = fn; },
+    check: (full, quiet) => { ensure(); if (!DS().init) return init(); return pass(!!full, !!quiet); },
+    init: () => { ensure(); return init(); },
+    caps: () => Object.keys(DEED_CAP).map(k => ({ key: k, raw: BSUM[k] || 0, cap: DEED_CAP[k], v: deedBonus(k) })),
+    titles: () => titleList(),
+    setNum: v => { if (!S.settings || typeof S.settings !== 'object') S.settings = {}; S.settings.num = v === 'sci' ? 'sci' : 'letters'; syncNum(); save(); return S.settings.num; },
+    num: () => (S.settings && S.settings.num) === 'sci' ? 'sci' : 'letters',
+    stats: () => ({ n: Object.assign({}, N()), g: JSON.parse(JSON.stringify(DS().g)), rec: Object.assign({}, DS().rec), since: Object.assign({}, DS().since), light: lightHours() }),
+    _cur: id => TR[id] ? cur(TR[id]) : 0, _tierOf: (id, v) => TR[id] ? tierOf(TR[id], v) : 0, _rebuild: () => { rebuildBonus(); dirtyPts(); }, _clock: () => clock
+  };
+}
+
 // ---- src/js/59-combat.js ----
 // 59-combat: party combat (Stage C, task C1 + C3). Packs of foes with HP and threat tables, a
 // party with HP, armour, formation reach, healing, shields, crowd control, knock-outs, wipes
@@ -16424,7 +17644,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   COMBAT_TUNE = T;
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
-    tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0 };
+    tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
+    crits: 0, maxHit: 0, maxOver: 0, heroHits: 0 };   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
+  on('crit', () => { ST.crits++; });
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
 
@@ -16742,6 +17964,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
     if (src >= 0 && U[src] && U[src].role === 'striker' && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
+    if (a > ST.maxHit) ST.maxHit = a; if (f.max > 0 && a > ST.maxOver * f.max) ST.maxOver = a / f.max;   // AC2 records
     if (src >= 0 && U[src]) {
       const u = U[src];
       f.th[src] += a * u.thX;
@@ -16787,6 +18010,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
   cbStrike = (amount, src, at, label, color, big) => {
+    if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
     const hero = U[0];
     let f = mob && alive(mob) ? mob : focusFoe();

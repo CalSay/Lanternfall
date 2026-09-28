@@ -105,7 +105,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   COMBAT_TUNE = T;
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
-    tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0 };
+    tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
+    crits: 0, maxHit: 0, maxOver: 0, heroHits: 0 };   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
+  on('crit', () => { ST.crits++; });
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
 
@@ -423,6 +425,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
     if (src >= 0 && U[src] && U[src].role === 'striker' && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
+    if (a > ST.maxHit) ST.maxHit = a; if (f.max > 0 && a > ST.maxOver * f.max) ST.maxOver = a / f.max;   // AC2 records
     if (src >= 0 && U[src]) {
       const u = U[src];
       f.th[src] += a * u.thX;
@@ -468,6 +471,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
   cbStrike = (amount, src, at, label, color, big) => {
+    if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
     const hero = U[0];
     let f = mob && alive(mob) ? mob : focusFoe();

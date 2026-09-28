@@ -3214,5 +3214,171 @@ try {
   }
 } catch (e) { fail('skill pace crashed: ' + (e.stack || e)); }
 
+// ---- deeds: achievements core (23-data-deeds.js, 58-deeds.js; achievements.md 11, AD1-AD8) ----
+console.log('deeds');
+try {
+  const FIX = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json'));
+  const fixText = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const g = loadCore({ seed: 5 });
+  const E = s => g.eval(s);
+  // AD1 data
+  const D = E('({ tracks: DEED_TRACKS, feats: DEED_FEATS, secrets: DEED_SECRETS, looks: DEED_LOOKS, groups: DEED_GROUPS, ladder: DEED_LADDER, chapters: DEED_CHAPTERS, cap: DEED_CAP, slots: DEED_SLOTS })');
+  const uniq = a => new Set(a).size === a.length;
+  const titles = E('deeds.titles()');
+  assert(uniq(D.tracks.map(t => t.id)) && uniq(D.feats.map(f => f.id)) && uniq(D.secrets.map(s => s.id)) && uniq(D.looks.map(l => l.id)) && uniq(titles.map(t => t.id)) && uniq(D.groups.map(x => x.id)),
+    `AD1 ids unique: ${D.tracks.length} tracks, ${D.feats.length} Feats, ${D.secrets.length} secrets, ${D.looks.length} looks, ${D.groups.length} groups`);
+  assert(D.tracks.length === 92 && D.feats.length === 21 && D.secrets.length === 16 && D.looks.filter(l => l.slot !== 'frame').length === 36 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 12, 'AD1 counts: 92 tracks, 21 Feats, 16 secrets, 36 accessories and 4 frames, 12 groups');
+  const bad = D.tracks.filter(t => !(t.need.length === 4 && t.need.every((v, i) => i === 0 || v > t.need[i - 1]) && t.need[0] > 0) || !t.g || !D.groups.some(x => x.id === t.g) || (t.bonus && !(t.bonus in D.cap)));
+  assert(!bad.length, 'AD1 every track rises tier to tier, sits in a group, and feeds a capped key' + (bad.length ? ': ' + bad.map(t => t.id).join(', ') : ''));
+  // every look has exactly one source, and that source names it back
+  const giv = {}; const give = (id, src) => { (giv[id] = giv[id] || []).push(src); };
+  D.groups.forEach(x => x.look && give(x.look, 'grp:' + x.id)); D.feats.forEach(f => f.look && give(f.look, 'feat:' + f.id)); D.secrets.forEach(s => s.look && give(s.look, 'sec:' + s.id));
+  D.ladder.forEach(m => m.look && give(m.look, 'pts:' + m.at)); D.chapters.forEach(c => c.look && give(c.look, 'ch:' + c.id));
+  const lookBad = D.looks.filter(l => !giv[l.id] || giv[l.id].length !== 1 || giv[l.id][0] !== l.src || !D.slots.includes(l.slot) || Object.keys(l).some(k => !['id', 'slot', 'n', 'src'].includes(k)));
+  const dangling = Object.keys(giv).filter(id => !D.looks.some(l => l.id === id));
+  assert(!lookBad.length && !dangling.length, 'AD1 every reward id resolves; every look has exactly one source and carries no modifier' + (lookBad.length || dangling.length ? ': ' + lookBad.map(l => l.id).concat(dangling).join(', ') : ''));
+  // "the Last Lantern" (the capstone Feat) is kept by name (coordinator, 2026-09-28): the one exception.
+  const EXC = ['the Last Lantern'];
+  const long = titles.filter(t => !EXC.includes(t.n) && (t.n.length > 14 || t.n.trim().split(/\s+/).length > 2));
+  assert(!long.length && titles.filter(t => /^a_(g|e)_/.test(t.id)).length === 24 && D.feats.every(f => f.title) && D.secrets.every(s => s.title),
+    `AD1 titles are short epithets (<= 14 characters, <= 2 words): ${titles.length} listed now` + (long.length ? '; too long: ' + long.map(t => t.n).join(', ') : ''));
+  const allTitles = D.groups.flatMap(x => [x.gold, x.ever]).concat(D.feats.map(f => f.title), D.secrets.map(s => s.title), D.chapters.map(c => c.title), D.ladder.filter(m => m.title).map(m => m.title));
+  const tooLong = allTitles.filter(n => !EXC.includes(n) && (n.length > 14 || n.split(' ').length > 2));
+  assert(allTitles.length === 68 && !tooLong.length, `AD1 all 68 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
+  const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
+  assert(live.length === 77 && hidden.sort().join() === ['bonds', 'fish', 'g_fish', 'g_pearl', 'handhrs', 'hands', 'lanterns', 'meals', 'oath', 'oathseals', 'pinkills', 'store', 'tides', 'together', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
+  E('S.store = { v: 1 }; S.bond = { v: 1, t: { a: 36000 }, lv: { a: 3 } }');
+  assert(E('deeds.track("store").live && deeds.track("bonds").live && deeds._cur("together") === 10 && deeds._cur("bonds") === 3'), 'a runtime probe lights a waiting track up when its save field appears (S.store, S.bond)');
+  E('delete S.store; delete S.bond');
+  assert(E('(() => { try { return deeds.tracks().length === 77; } catch (e) { return false; } })()'), 'probes of later systems never throw');
+
+  // AD7 numbers
+  const oldFmt = n => { const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc']; if (!isFinite(n)) return '∞'; if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n)); let i = 0; while (n >= 1000 && i < SUF.length - 1) { n /= 1000; i++; } return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.floor(n)) + SUF[i]; };
+  const vals = [0, 0.5, 7.25, 9.99, 999, 999.9, 1000, 1234, 99999, 999999, 4.2e16, 9.9999e35, 1e35, 123456789012, Infinity];
+  for (let e = 0; e < 36; e += 0.37) vals.push(Math.pow(10, e) * 1.2345);
+  const diff = vals.filter(v => v < 1e36 && E(`fmt(${v})`) !== oldFmt(v));
+  assert(!diff.length && E('fmt(4.2e16)') === '42.0Qa' && E('fmt(1e36)') === '1.00aa' && E('fmt(1e39)') === '1.00ab' && E('fmt(1e114)') === '1.00ba', `AD7 letters: every value below 1e36 prints as before; 1e36 = ${E('fmt(1e36)')}, 1e39 = ${E('fmt(1e39)')}, 1e114 = ${E('fmt(1e114)')}` + (diff.length ? ' DIFF ' + diff.join(',') : ''));
+  E('deeds.setNum("sci")');
+  assert(E('fmt(4.2e16)') === '4.20e16' && E('fmt(12345)') === '1.23e4' && E('fmt(999)') === '999' && E('fmt(1e33)') === '1.00e33' && E('fmt(9.999e20)') === '1.00e21' && E('S.settings.num') === 'sci', `AD7 scientific: 4.2e16 = ${E('fmt(4.2e16)')}, 12,345 = ${E('fmt(12345)')}`);
+  E('deeds.setNum("letters")');
+  assert(E('fmt(4.2e16)') === '42.0Qa', 'AD7 the switch goes back to letters');
+
+  // AD4 caps: every tier forced on (and 30 stars on every star track)
+  E('for (const t of DEED_TRACKS) S.deeds.tier[t.id] = t.star ? 34 : 4; deeds._rebuild()');
+  const caps = E('deeds.caps()');
+  const over = caps.filter(c => c.v > c.cap + 1e-12);
+  const party = E('(1 + deedBonus("dmg")) * (1 + deedBonus("party"))');
+  assert(!over.length && party <= 1.092 + 1e-9 && E('deedBonus("dmg")') === 0.05 && caps.find(c => c.key === 'dmg').raw > 0.05,
+    `AD4 with every tier on, each key stays at its cap (dmg raw ${(caps.find(c => c.key === 'dmg').raw * 100).toFixed(1)}% -> 5%); party damage from deeds x${party.toFixed(4)} <= 1.092`);
+  const m0 = E('mod("dmg")'); E('DEED_TUNE.bonusOn = 0'); const m1 = E('mod("dmg")'); E('DEED_TUNE.bonusOn = 1');
+  assert(Math.abs(m0 / m1 - 1.05) < 1e-9 && E('bonus("deepOil")') >= 8 && E('mod("buildTime")') <= 0.97 + 1e-9, `AD4 the cap holds at runtime: mod("dmg") x${(m0 / m1).toFixed(4)} from deeds; deepOil ${E('deedBonus("deepOil")')}s`);
+  E('S.deeds.tier = {}; deeds._rebuild()');
+  assert(E('deeds.caps().every(c => c.v === 0)'), 'no tier, no bonus (Bronze and Silver pay points only)');
+
+  // goals: cap 1 (55-goals)
+  E('registerGoal({ id: "zz1", sys: "zz", cap: 1, prio: 5, pct: () => 0.99, label: "a" }); registerGoal({ id: "zz2", sys: "zz", cap: 1, prio: 5, pct: () => 0.98, label: "b" })');
+  const tg = E('topGoals(3, { sticky: false }).map(x => x.sys)');
+  assert(tg.filter(s => s === 'zz').length === 1 && E('topGoals(3, { sticky: false }).every(x => !("cap" in x))'), `registerGoal cap: 1 takes one row at most (${tg.join(', ')})`);
+  E('GOALS.splice(GOALS.findIndex(x => x.id === "zz1"), 1); GOALS.splice(GOALS.findIndex(x => x.id === "zz2"), 1)');
+
+  // counters, events, secrets on a new game
+  const h = loadCore({ seed: 9 });
+  const H = s => h.eval(s);
+  for (let i = 0; i < 30; i++) h.fn.tick(0.1);
+  assert(H('S.deeds.init > 0 && deeds.points() === 0 && Object.keys(S.deeds.tier).length === 0'), 'a new game runs the same first-load path with nothing to grant');
+  H('emit("harvest", { kind: "ore", t: 2, n: 7 }); emit("harvest", { kind: "herb", t: 1, n: 3, glint: true }); emit("weeklyClaim", { k: "x" }); emit("raidReward", { embers: 4 }); emit("trophy", { i: 0, n: 2 }); emit("upgraded", { item: { r: "rare", t: 1 } }); emit("expedBack", { r: "x", g: 3, auto: true })');
+  H('CB_STATS.parries += 3; CB_STATS.heroDmg += 500; CB_STATS.maxHit = 2e6');
+  for (let i = 0; i < 11; i++) h.fn.tick(0.1);
+  assert(H('S.deeds.g.ore[1] === 7 && S.deeds.g.herb[0] === 3 && S.deeds.n.glint === 1 && S.deeds.n.weekly === 1 && S.deeds.n.embers === 4 && S.deeds.n.troph >= 2 && S.deeds.n.up === 1 && S.deeds.rec.fine === 2 && S.deeds.n.perfect === 1'), 'event counters: harvest by family and tier, Glints, weekly goals, Embers, Trophies, upgrades, best craft, Perfect grades');
+  assert(H('S.deeds.n.parry >= 3 && S.deeds.n.dmg >= 500 && S.deeds.rec.hit === 2e6 && deeds.track("bighit").tier === 1'), `combat counters are read as CB_STATS deltas once a second; the biggest hit is a record (Heavy Hand ${H('deeds.track("bighit").tier')}; ${H('JSON.stringify([S.deeds.n.parry, S.deeds.n.dmg, S.deeds.rec.hit, CB_STATS.maxHit])')})`);
+  H('Object.keys(CB_STATS).forEach(k => CB_STATS[k] = 0)'); const p0 = H('S.deeds.n.parry'); h.fn.tick(1.0); h.fn.tick(0.05);
+  assert(H('S.deeds.n.parry') === p0, 'a CB_STATS reset never subtracts from a counter');
+  const tl = []; h.fn.on('toast', t => tl.push(t.msg));
+  H('S.name = "Wren"'); for (let i = 0; i < 11; i++) h.fn.tick(0.1);
+  for (let i = 0; i < 300; i++) h.fn.emit('tap', { node: false });
+  assert(H('S.deeds.sec.s_name === 1 && S.deeds.sec.s_drum === 1 && deeds.points() >= 30') && tl.some(m => /^Secret found: Namesake/.test(m)), 'secrets: Namesake (a companion\'s name), Drummer (300 taps in a minute), 15 points each, one toast');
+  const sc = H('deeds.secrets()');
+  assert(sc.filter(s => !s.got).every(s => !s.n && !s.title) && sc.find(s => s.id === 's_name').n === 'Namesake', 'unfound secrets keep their names hidden');
+  assert(H('codexTitles().some(t => t.id === "a_s_name" && t.got) && codexSetTitle("a_s_name") && codexTitle() === "Namesake" && !codexSetTitle("a_f_parry")'), 'deeds titles join the Codex picker (S.codex.title); unearned ones cannot be picked');
+  // near-miss goal: 90% of a tier, one row, hides after a tier (a new game with no tier yet)
+  const k = loadCore({ seed: 11 }); for (let i = 0; i < 30; i++) k.fn.tick(0.1);
+  const K = s => k.eval(s);
+  K('S.totalKills = 950; S.deeds.follow = null');
+  const nearNow = K('deeds.near(3).map(x => x.label)');
+  assert(nearNow.some(l => /^50 foes to Slayer I$/.test(l)), `near tiers read plainly: ${nearNow.slice(0, 2).join('; ')}`);
+  const shown = K('topGoals(3, { sticky: false }).filter(x => x.id === "deeds-near").map(x => x.label + " " + x.pct.toFixed(2))');
+  K('S.totalKills = 1000; deeds.check(true, false); S.totalKills = 9500');
+  const hid = !K('topGoals(3, { sticky: false }).some(x => x.id === "deeds-near")') && K('deeds.near(3).some(x => x.id === "slayer")');
+  assert(shown.length === 1 && hid, `Next Up shows one nudge (${shown[0]}), capped below Ready; it hides for 3 minutes after a tier`);
+  // Feats and the Codex bridge
+  const light0 = H('codexRefresh(true)');
+  H('S.deeds.n.parry = 25000'); H('deeds.check(true, false)');
+  assert(H('S.deeds.feat.f_parry === 1 && deeds.owned("a_steel") && deeds.wear("aura", "a_steel") && wearGet("aura") === "a_steel"'), 'a Feat gives its look; it can be worn (wearGet)');
+  assert(H('codexRefresh(true)') >= light0 + 6 && H('codexPage("achievements").tiles.some(t => t.key === "f_parry")') && H('codexPage("wardrobe") && !codexPage("wardrobe").locked'), `Codex bridge: the Feat tile (5 Light) and the Wardrobe entry (1 Light): ${light0} -> ${H('codexLight()')}`);
+  assert(!H('deeds.wear("aura", "a_star")') && !H('deeds.wear("hat", "a_steel")') && H('deeds.wear("aura", null) && wearGet("aura") === null'), 'looks: only owned, in their own slot; None always');
+  H('S.deep.cos.l_amber = 1; S.deep.eq.lantern = "l_amber"');
+  assert(H('wearGet("flame") === "l_amber"') && H('typeof DEEP_SHOP.l_amber !== "object" || deeds.wear("flame", "l_amber")'), 'the Flame slot falls back to the Deepwell lantern colour (S.deep.eq keeps its meaning)');
+  assert(!h.errors.length, 'no errors (deeds on a new game)' + (h.errors.length ? ': ' + h.errors[0] : ''));
+
+  // AD2, AD3, AD6 on every fixture
+  const ACH0 = [['zone10', 10, 'gold', 0.02], ['zone25', 25, 'dmg', 0.03], ['zone50', 50, 'gold', 0.05], ['lv20', 20, 'xp', 0.03], ['lv50', 50, 'dmg', 0.03], ['kill1k', 1000, 'gold', 0.02],
+    ['kill25k', 25000, 'dmg', 0.03], ['kill100k', 100000, 'gold', 0.03], ['gold1m', 1e6, 'gold', 0.02], ['gold1b', 1e9, 'gold', 0.03], ['mine25', 25, 'gatherSpeed', 0.03], ['wood25', 25, 'gatherSpeed', 0.03],
+    ['smith25', 25, 'skillXp', 0.03], ['forge1', 1, 'skillXp', 0.02], ['forge25', 25, 'skillXp', 0.03], ['epic', 1, 'crit', 0.03], ['uniq1', 1, 'essence', 0.03], ['uniq3', 3, 'essence', 0.05],
+    ['uniq7', 7, 'dmg', 0.05], ['party', 7, 'party', 0.03], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'gold', 0.03]];
+  assert(JSON.stringify(E('ACH_API.list.map(a => [a.id, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('ACH_API.list.map(a => ACH_API.bonusText(a)).join("|")').split('|').length === 22,
+    'AD2 the Classic 22: ids, thresholds and bonuses unchanged');
+  const noDeeds = (await import('./lib/core.mjs')).coreFiles().filter(f => !/^(23-data-deeds|58-deeds)\.js$/.test(f));
+  const achSums = h2 => h2.eval('(() => { const s = {}; for (const a of ACH_API.list) if (S.achievements.got[a.id]) s[a.bonus[0]] = (s[a.bonus[0]] || 0) + a.bonus[1]; return JSON.stringify(s); })()');
+  const expect = { 'save-v2-late.json': ['slayer:2', 'zones:2', 'level:2', 'gold:1', 'mine:2', 'wood:2'] };
+  for (const f of FIX) {
+    const raw = fixText(f);
+    const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }), files: noDeeds });
+    const atLoad = JSON.parse(a.eval('JSON.stringify(S)')), atLoadB = JSON.parse(b.eval('JSON.stringify(S)'));
+    delete atLoad.deeds; atLoad.last = atLoadB.last;
+    const lines = []; a.fn.on('whatsNew', w => lines.push(w.msg)); a.fn.on('toast', t => lines.push(t.msg));
+    let fresh = null;   // computed the moment the first-load credit lands
+    a.fn.on('deedsInit', () => { fresh = a.eval('DEED_TRACKS.filter(t => deeds.track(t.id).live && deeds._tierOf(t.id, deeds._cur(t.id)) !== (S.deeds.tier[t.id] || 0)).map(t => t.id)'); });
+    for (let i = 0; i < 15; i++) { a.fn.tick(0.1); b.fn.tick(0.1); }
+    assert(achSums(a) === achSums(b), `AD2 ${f}: Classic sums match the build without deeds ${achSums(a)}`);
+    for (let i = 0; i < 15; i++) a.fn.tick(0.1);
+    const A = s => a.eval(s);
+    const deedLines = lines.filter(m => /deeds so far|achievement points|\((Bronze|Silver|Gold|Everflame)\)|^Feat:|Everflame ★|every track at/.test(m));
+    const tiers = A('S.deeds.tier');
+    const want = expect[f] || [];
+    const missing = want.filter(x => { const [id, k] = x.split(':'); return (tiers[id] || 0) !== +k; });
+    assert(A('S.deeds.init > 0') && fresh && !fresh.length && deedLines.length === 1 && /^Your deeds so far: \d+ tiers?, [\d,]+ points\. See Achievements\./.test(deedLines[0]) && !A('Object.keys(S.deeds.sec).length') && !missing.length && (f !== 'save-v2-late.json' || !A('Object.keys(S.deeds.feat).length')),
+      `AD3 ${f}: tiers granted equal a fresh computation, one line ("${deedLines[0]}"), no secret retro` + (want.length ? `, earns ${want.join(' ')} and no Feat` : '') + (!fresh || fresh.length ? ' MISMATCH ' + (fresh || ['no init']).join(' ') : '') + (missing.length ? ' MISSING ' + missing.join(' ') : '') + (deedLines.length !== 1 ? ' LINES ' + deedLines.join(' | ') : ''));
+    // second load: nothing granted, no line; AD6 round trip
+    A('save()'); const snap = A('JSON.stringify(S)');
+    const c = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: a.storage.get(KEY) }) });
+    const again = []; c.fn.on('deedTier', x => again.push(x.id)); c.fn.on('deedsInit', () => again.push('init')); c.fn.on('whatsNew', w => { if (/deeds so far/.test(w.msg)) again.push('line'); });
+    const back = JSON.parse(c.eval('JSON.stringify(S)'));
+    const rt = deepDiff(JSON.parse(snap), back), old = Object.keys(JSON.parse(raw)).map(k => deepDiff(atLoadB[k], atLoad[k], k)).find(Boolean) || null;   // the save's own fields load as they do without deeds
+    c.eval('S.activity = "gather"'); for (let i = 0; i < 30; i++) c.fn.tick(0.1);
+    assert(!again.length, `AD3 ${f}: a second load grants nothing` + (again.length ? ': ' + again.join(' ') : ''));
+    assert(!rt && !old && back.deeds && back.deeds.init > 0, `AD6 ${f}: save and load round-trip with S.deeds; the save's own fields load exactly as they do without deeds` + (rt ? ' RT ' + rt : '') + (old ? ' OLD ' + old : ''));
+    assert(!a.errors.length && !c.errors.length, `${f}: no errors` + (a.errors.length ? ': ' + a.errors[0] : c.errors.length ? ': ' + c.errors[0] : ''));
+  }
+
+  // AD5 online: the raiders body and presence keys are unchanged
+  const on = fs.readFileSync(path.join(ROOT, 'src', 'js', '80-online.js'), 'utf8');
+  const lit = re => { const m = on.match(re); return m ? m[1] : null; };
+  const body = lit(/const body = (\{[^}]*\});/), pres = lit(/const p = (\{ hero[^}]*\});/);
+  const stubKeys = src => Object.keys(new Function('S', 'gear', 'totalDps', `return ${src};`)({ name: 'x', L: 1, maxZone: 1, wyrms: 0, raid: { gen: 0, dmg: 0 }, zone: 1, activity: 'fight' }, () => ({ score: 1 }), () => 1)).join();
+  assert(body && pres && stubKeys(body) === 'name,L,maxZone,wyrms,gear,dps,gen,dmg' && stubKeys(pres) === 'hero,lvl,zone,act,raiding' && !/deeds|title/i.test(on),
+    `AD5 online shapes unchanged: raiders {${body ? stubKeys(body) : '?'}}, presence {${pres ? stubKeys(pres) : '?'}}; 80-online.js never reads deeds or titles`);
+
+  // AD8 cost: one round-robin pass on the late fixture
+  {
+    const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: fixText('save-v2-late.json') }) });
+    for (let i = 0; i < 30; i++) a.fn.tick(0.1);
+    a.eval('deeds.check(false, true)');
+    const n = 2000, t0 = process.hrtime.bigint();
+    a.eval(`for (let i = 0; i < ${n}; i++) deeds.check(false, true)`);
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6 / n;
+    assert(ms < 0.2, `AD8 one deedsCheck pass (a quarter of the tracks) takes ${ms.toFixed(3)} ms on the late fixture (< 0.2)`);
+  }
+} catch (e) { fail('deeds crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
