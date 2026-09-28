@@ -2446,6 +2446,42 @@ try {
   assert(lines.length > 60 && probe && !hits.length, `hollow: none of ${lines.length} lines uses a banned verb of the dark` + (hits.length ? ': ' + hits[0] : ''));
 } catch (e) { fail('hollow writing crashed: ' + (e.stack || e)); }
 
+// ---- expedition and Omen writing (21i-lore-exped.js LORE4, 21j-lore-omens.js LORE5; lore.md 1, 8.5, 9.6) ----
+console.log('expedition and omen writing');
+try {
+  for (const f of ['21i-lore-exped.js', '21j-lore-omens.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8');
+    assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), `lore: ${f} is data only (no DOM, no state)`);
+  }
+  const g = loadCore(), E = x => g.eval(x);
+  const L = E('LORE_LIMITS'), banned = E('LORE_BANNED');
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const clean = s => !banned.some(re => re.test(s)) && !/\bthe Voice\b/.test(s);
+  // Expedition Lore pages: every EXPED_LORE title has its text, in order
+  const titles = E('EXPED_LORE'), T = E('EXPED_LORE_TEXT');
+  const want = Object.entries(titles).flatMap(([b, ts]) => ts.map((t, i) => [b, i, t]));
+  const pBad = want.filter(([b, i, t]) => { const p = T[b] && T[b][i]; return !p || p.title !== t || !str(p.text, L.page) || sents(p.text) < 2 || sents(p.text) > 4 || !clean(p.text); });
+  const extra = Object.entries(T).some(([b, ps]) => !titles[b] || ps.length !== titles[b].length);
+  assert(L.page > 0 && want.length === 28 && !pBad.length && !extra,
+    `lore: all ${want.length} expedition Lore pages have text (titles match, 2-4 sentences, ${L.page} chars or less, no banned words)` + (pBad.length ? ': ' + pBad[0][2] : ''));
+  // Keepsakes: one line each
+  const K = E('EXPED_KEEPSAKES'), KT = E('EXPED_KEEP_TEXT');
+  const kBad = Object.keys(K).filter(r => !str(KT[r], L.keep) || !clean(KT[r]));
+  assert(L.keep > 0 && Object.keys(K).length === 12 && !kBad.length && Object.keys(KT).length === Object.keys(K).length,
+    `lore: all 12 Keepsakes have a line, ${L.keep} chars or less` + (kBad.length ? ': ' + K[kBad[0]] : ''));
+  // Omens and Dares: one line each, keyed by Omen id
+  const O = E('OMENS'), OL = E('OMEN_LINES'), DL = E('DARE_LINES');
+  const oBad = O.filter(o => !str(OL[o.id], L.omen) || !clean(OL[o.id]));
+  const dares = O.filter(o => o.dare), dBad = dares.filter(o => !str(DL[o.id], L.omen) || !clean(DL[o.id]));
+  assert(L.omen > 0 && L.omen < 60 && O.length === 35 && !oBad.length && Object.keys(OL).every(k => O.some(o => o.id === k)),
+    `lore: all ${O.length} Omens have a line, ${L.omen} chars or less` + (oBad.length ? ': ' + oBad[0].n : ''));
+  assert(dares.length === 7 && !dBad.length && Object.keys(DL).length === dares.length,
+    `lore: all ${dares.length} Dares have a line, ${L.omen} chars or less` + (dBad.length ? ': ' + dBad[0].dare.n : ''));
+  assert(E('omenLine("goldRain", false)') === OL.goldRain && E('omenLine("goldRain", true)') === DL.goldRain && E('omenLine("longNight", true)') === OL.longNight
+    && E('omenLine("calmSea")') === E('COAST_OMEN_TEXT.calmSea.say') && E('omenLine("nope")') === '', 'lore: omenLine picks the Dare line while it is taken, falls back to the Omen and the coast lines');
+} catch (e) { fail('expedition and omen writing crashed: ' + (e.stack || e)); }
+
 // ---- pinnacle data and writing (21d-data-pinnacle.js, 21e-stories-pinnacle.js; pinnacles.md 3-7, PN11) ----
 console.log('pinnacle data');
 try {

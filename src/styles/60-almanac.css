@@ -49,6 +49,8 @@
 .ic.om-big img { width: 40px; height: 40px; }
 .om-card .om-eye { margin-bottom: 2px; }
 .om-cfx { font-size: 14px; color: var(--bone); margin-top: 2px; }
+.om-say { margin-top: 3px; }
+.om-say:empty { display: none; }
 .om-auto { display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.4); }
 .om-auto[hidden] { display: none; }
 .om-auto .note { color: #F2E6B0; }

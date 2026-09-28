@@ -247,7 +247,8 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
         EXPED_LORE[band].forEach((t, i) => {
           const q = (S.exped.lore && S.exped.lore[`${band}-${i}`]) || 0, got = q >= 4 ? 1 : 0;
           const bn = band === 'court' ? 'The Hollow Court' : EXPED_BANDS[band].n;
-          out.push({ key: `l_${band}_${i}`, n: t, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Lore pages', q,
+          const lt = got && typeof EXPED_LORE_TEXT === 'object' && EXPED_LORE_TEXT[band] && EXPED_LORE_TEXT[band][i];
+          out.push({ key: `l_${band}_${i}`, n: t, got, max: 1, pts: got * 4, ptsMax: 4, grp: 'Lore pages', q, lore: lt ? [lt.text] : [],
             sub: got ? bn : q ? `${q} of 4 quarters found` : '',
             hint: got ? '' : x.exact ? (band === 'court' ? 'Run The Hollow Court with Aldric.' : `Lore routes in ${bn}. Long runs find more.`) : 'Somewhere on the road.' });
         });
@@ -255,6 +256,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       for (const r of Object.keys(EXPED_KEEPSAKES)) {
         const got = S.exped.keep && S.exped.keep[r] ? 1 : 0;
         out.push({ key: 'k_' + r, n: EXPED_KEEPSAKES[r], got, max: 1, pts: got * 2, ptsMax: 2, grp: 'Keepsakes',
+          lore: got && typeof EXPED_KEEP_TEXT === 'object' && EXPED_KEEP_TEXT[r] ? [EXPED_KEEP_TEXT[r]] : [],
           hint: got ? '' : x.exact ? `A bonus find on ${EXPED_ROUTES[r].n}. Great grades roll more.` : 'Found on an expedition.' });
       }
       return out;
