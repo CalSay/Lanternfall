@@ -3770,5 +3770,41 @@ try {
   }
 } catch (e) { fail('deeds crashed: ' + (e.stack || e)); }
 
+// ---- the Party UI for the party of three (75-party.js, 75-bonds-ui.js, 60-formation.css; plan-3 F4, formation.md 6) ----
+// The UI runs in the browser only: these check its sources, the dist, and the core calls it makes.
+console.log('party ui (F4)');
+try {
+  const src = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  const party = src('js/75-party.js'), sheet = src('js/75-party-sheet.js'), bonds = src('js/75-bonds-ui.js'), css = src('styles/60-formation.css');
+  assert(/n: 'Old Friend'/.test(sheet) && !/n: 'Bond' \}/.test(sheet), 'F4 the L25 milestone reads "Old Friend" (the word Bond now means the pair)');
+  assert(['swapSlots(', 'fieldTo(', 'setPin(', 'formWarning()', 'slotJob(', 'FORM_TEXT.heroStays', 'benchChar('].every(s => party.includes(s)) && !/pf-cell|function tapCell/.test(party),
+    'F4 slot cards change the party only through the 56e API (swapSlots, fieldTo, setPin, benchChar); the interim grid is gone');
+  assert(["id: 'party-form'", "id: 'party-syn'", "id: 'party-bonds'", "id: 'party-bench'"].every(s => party.includes(s)), 'F4 Team view sections: slots, combos, Bonds, bench');
+  assert(/on\('bondLevel'/.test(bonds) && /bondText\(/.test(bonds) && /ev\.quiet/.test(bonds) && bonds.includes('Story coming soon'), 'F4 Bond toasts use bondText and skip quiet levels; unwritten stories say "Story coming soon"');
+  const badFont = css.split('\n').filter(l => /font:[^;]*var\(--display\)/.test(l) && !/var\(--display-k\)/.test(l));
+  assert(!badFont.length, 'F4 display text sizes scale with --display-k (FONT1)' + (badFont.length ? ': ' + badFont[0].trim().slice(0, 80) : ''));
+  const motion = css.replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/g, '');
+  assert(!/(^|[\s;{])(transition|transform):/.test(motion), 'F4 lift and drag motion only under prefers-reduced-motion: no-preference (the colour flash stays)');
+  const dist = fs.readFileSync(path.join(ROOT, 'dist', 'lanternfall.html'), 'utf8');
+  assert(dist.includes('sec-party-bench') || dist.includes("'party-bench'"), 'F4 is in the dist');
+
+  // The core calls the slot cards make, on a new Warden with two companions.
+  const g = loadCore({ seed: 11 });
+  const E = s => g.eval(s);
+  E('chooseClass("warden", "Ash")'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+  E('S.maxZone = 40; ["wren", "hesketh", "bram"].forEach(k => unlockChar(k, "progress", true)); setSlots({ front: "hero", mid: "wren", back: "hesketh" })');
+  assert(E('whoIn("front") === "hero" && whoIn("mid") === "wren" && whoIn("back") === "hesketh"'), 'F4 the three slots read Back / Middle / Front');
+  assert(E('!fieldTo("bram", "front") && whoIn("front") === "hero"'), 'F4 a bench companion cannot take the hero\'s slot (the card shows FORM_TEXT.heroStays)');
+  assert(E('swapSlots("mid", "front") && whoIn("mid") === "hero" && whoIn("front") === "wren"'), 'F4 tap-to-swap moves the hero too');
+  assert(E('fieldTo("bram", "back") && whoIn("back") === "bram" && !S.party.field.includes("hesketh")'), 'F4 bench-to-slot: the one there goes to the bench');
+  assert(E('!!formWarning()') && E('offSlot("hero") && offSlot("wren")'), `F4 Out of place shows one warning ("${E('formWarning()')}")`);
+  assert(E('setPin("wren", true) && isPinned("wren") && setPin("wren", false) && !isPinned("wren")'), 'F4 the lock pins and unpins');
+  assert(E('!!slotJob("bram") && slotJob("bram").label === "Hits divers" && slotJob("hero").label.startsWith("Covers")'), 'F4 slot job lines (Overwatch, Bulwark)');
+  const t1 = E('JSON.stringify(bondText("hunting", 1))'), t2 = E('JSON.stringify(bondText("hunting", 2))'), t5 = E('JSON.stringify(bondText("hunting", 5))');
+  assert(/"prio":"low"/.test(t1) && /"prio":"normal"/.test(t2) && /"prio":"high"/.test(t5) && /Sworn/.test(t5), 'F4 Bond toast copy and priorities: Met low, Friends normal, Sworn high');
+  assert(E('partyBonds().includes("hunting") && bondInfo("hunting").next.name === "Met"'), 'F4 the Bond rows list the pairs in the party (Wren and Bram), with the next level');
+  assert(!g.errors.length, 'F4 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('party ui crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

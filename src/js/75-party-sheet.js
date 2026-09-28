@@ -35,7 +35,7 @@ let openSheet, partySheet;
     { id: 'head', old: 'helm', n: 'Head' }, { id: 'body', n: 'Body' }, { id: 'charm', old: 'charm', n: 'Charm' }
   ];
   const MILESTONES = [
-    { lv: 5, n: 'Story' }, { lv: 10, n: 'Passive' }, { lv: 15, n: 'Story' }, { lv: 20, n: 'Ability' }, { lv: 25, n: 'Bond' }
+    { lv: 5, n: 'Story' }, { lv: 10, n: 'Passive' }, { lv: 15, n: 'Story' }, { lv: 20, n: 'Ability' }, { lv: 25, n: 'Old Friend' }
   ];
 
   const safe = (fn, dflt) => { try { const v = fn(); return v == null ? dflt : v; } catch (e) { console.error('[lanternfall] party', e); return dflt; } };
@@ -304,18 +304,22 @@ let openSheet, partySheet;
     return section('Kit', ul);
   }
   function synSection(k) {
-    const list = synergiesFor(k);
-    if (!list) return null;
+    const all = synergiesFor(k);
+    if (!all) return null;
+    // F4: Bonds have their own section (75-bonds-ui); an inactive entry shows its effect, not its need twice.
+    const defOf = id => (Array.isArray(SYNERGIES) && SYNERGIES.find(d => d.id === id)) || {};
+    const list = all.filter(s => defOf(s.id).layer !== 'bond');
     const box = el('div', 'cs-syns');
-    if (!list.length) box.append(el('p', 'note', 'No synergies with this party yet.'));
+    if (!list.length) box.append(el('p', 'note', 'No combos or Kin with this party yet.'));
     for (const s of list) {
       const d = el('div', 'cs-syn' + (s.active ? ' on' : ''));
       const top = el('div'); top.append(el('b', null, s.name), el('small', null, s.active ? 'Active' : missingText(s.missing) || 'Inactive'));
       d.append(top);
-      if (s.text) d.append(el('p', null, s.text));
+      const tx = s.active ? s.text : defOf(s.id).text || '';
+      if (tx) d.append(el('p', null, tx));
       box.append(d);
     }
-    return section('Synergies', box);
+    return section('Combos and Kin', box);
   }
   function milestoneTrack(k) {
     const r = charRec(k);
@@ -389,7 +393,7 @@ let openSheet, partySheet;
     g.append(b,
       statBox('HP', '-', 'with party combat'),
       statBox('Armour', '-', 'with party combat'),
-      statBox('Row', inField(k) && cell ? COL_NAME[cell.col] : 'Bench', inField(k) && cell ? (cell.lane ? 'lower lane' : 'upper lane') : ''));
+      statBox('Slot', inField(k) && cell ? SLOT_NAME[FORM_SLOTS[cell.col]] : 'Bench', inField(k) && cell ? (offSlot(k) ? 'out of place' : 'home') : `home: ${SLOT_NAME[homeSlot(k)]}`));
     return section('Stats', g);
   }
 
@@ -454,6 +458,7 @@ let openSheet, partySheet;
     body.append(statsSection(k), gearSection(k));
     const kit = kitSection(k); if (kit) body.append(kit);
     const syn = synSection(k); if (syn) body.append(syn);
+    const bd = bondsUI && safe(() => bondsUI.charSection(k), null); if (bd) body.append(bd);   // F4: this character's Bonds
     body.append(milestoneTrack(k));
     const st = storiesSection(k); if (st) body.append(st);
     actions(k);
@@ -538,11 +543,13 @@ let openSheet, partySheet;
       });
       mir.append(b);
     }
+    const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     body.append(section('Class change', mir));
     sheet.foot.textContent = '';
   }
 
-  const sigOf = k => {
+  const sigOf = k => (bondsUI ? bondsUI.sig() + '|' : '') + sigOf0(k);   // F4: a Bond level or story read redraws
+  const sigOf0 = k => {
     if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));

@@ -51,7 +51,7 @@
     almanac: "New on the Camp tab: the Almanac. Check today's Omen.",
     roster: 'New on the Party tab: Roster. See who could join you.',
     exped: 'Expeditions are open on the Camp tab.',
-    synergy: 'Synergies: some companions fight better together. See the Party tab.',
+    synergy: 'Where each one stands matters. Put a tank in Front and a healer in Back for Lifeline.',
     uniques: 'New on the Craft tab: Uniques.',
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. Find it in the Journal (the bell).',
