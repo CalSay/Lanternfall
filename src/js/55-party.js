@@ -41,7 +41,7 @@ const HERO_CLASSES = {
     how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
     tapName: 'Blessing',
     ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
-    aura: 'Supports in your party heal 40% more. All companions deal 10% more damage.'
+    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 10% more damage.'
   }
 };
 

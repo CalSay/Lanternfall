@@ -41,11 +41,15 @@
 //   --session 15 --first 60 change the check-in policy. Prints one row per day. The game is
 //   installed at the first check-in (BAL1: before, a new game got 8h of away gains first).
 //   Reports first recruits by rarity, Camp progress and (--debug 1) the zone timeline.
+//   BAL2: a Camp build short only of a fight-only material (Soft Hide) walks back to farm it every
+//   other fight cycle (--farm 0 turns it off). --snapday D:path writes the save at the end of day D.
+//   --targets --days 60 runs the targets on 60 days (the 60-day report in pacing.md 11).
 // --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
 //   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
 //   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
 //   --eval/--camp pass through.
 import { loadCore } from './lib/core.mjs';
+import { writeFileSync } from 'node:fs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
   if (x.startsWith('--')) a.push([x.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
@@ -141,7 +145,8 @@ function rosterStep(E) {
   if (args.bounties !== "0") E(`S.bounties.slots.forEach((b, i) => { if (b && b.k && b.have >= b.need) BOUNTY_API.claim(i); else if (b && b.k === 'tap' && ${!active}) BOUNTY_API.reroll(i); })`);
   for (const id of E('ROSTER_KEYS')) if (E(`canRecruit(${JSON.stringify(id)})`)) E(`recruit(${JSON.stringify(id)})`);
   // Morwen: bench supports while the zone 12 boss is next.
-  if (!lineup && E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("S.party.autoField = false; setField(S.party.field.filter(k => ROSTER[k].role !== 'support'))"); }
+  // BAL2: a player fills the empty place with the best non-support (the planner), not a party of two.
+  if (!lineup && E("!isRecruited('morwen') && S.maxZone === UNLOCK_TUNE.quests.morwen.zone")) { rosterStep.benched = true; E("(() => { S.party.autoField = false; const b = typeof bestLineup === 'function' ? bestLineup({ by: 'potential', filter: k => ROSTER[k].role !== 'support', key: 'nosup' }) : null; if (b && b.field.length) applyLineup(b); else setField(S.party.field.filter(k => ROSTER[k].role !== 'support')); })()"); }
   else if (rosterStep.benched) { rosterStep.benched = false; E('S.party.autoField = true'); }
   let gold = 0, ess = null;
   for (const id of E('rosterList()')) if (E(`canPromote(${JSON.stringify(id)})`)) E(`promoteChar(${JSON.stringify(id)})`);
@@ -351,6 +356,28 @@ function farmZone() {
   }
   return null;
 }
+// BAL2 (C1): a Camp build short only of a fight-only material (Soft Hide for the Map Room) walks
+// back to the zone of that tier that drops it best, every other fight cycle (a player would; the
+// Ranger's gear eats every Hide, so its Map Room waited forever). --farm 0 turns it off.
+let campFarmTurn = 0;
+function campFarmZone() {
+  if (args.farm === '0' || args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return null;
+  for (const id of CAMP_ORDER) {
+    const c = E(`campCan(${JSON.stringify(id)})`);
+    if (c.ok || c.max || c.busy || c.full || c.need || !c.cost) continue;
+    for (const [f, tt, n] of c.cost.mats) {
+      if (E(`!!CRAFT_NODES[${JSON.stringify(f)}] || S.mats.${f}[${tt - 1}] >= ${n}`)) continue;
+      let best = null, bestV = -1;
+      for (let z = 1; z <= E('S.maxZone') - 1; z++) {
+        if (fn.zoneTier(z) !== tt) continue;
+        const v = E(`(() => { const zt = zoneType(${z}), p = k => { const d = CRAFT_SIG_DROPS[TYPES[k].key]; return d && d.fam === ${JSON.stringify(f)} ? d.p : 0; }; return 0.72 * p(zt) + 0.28 * p((zt + 1) % 7); })()`);
+        if (v > 0 && v >= bestV) { bestV = v; best = z; }
+      }
+      if (best) return best;
+    }
+  }
+  return null;
+}
 // G6: the family the next class craft waits on (largest shortfall), or 'station' / null.
 function nextBlock() {
   nextBlock.station = null;
@@ -460,8 +487,8 @@ function playSecond(sec) {
     // With --class the first gather trip comes at 5 min (fight 5, gather 5, then fight 10 / gather 5),
     // like a player who goes for the first class set; the share stays one third.
     const phase = (Math.floor(sec / 60) + (cls ? 5 : 0)) % 15;
-    if (phase === 0) fn.setActivity('fight');
-    if (phase < 10 && cls) { const fz = farmZone() || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
+    if (phase === 0) { fn.setActivity('fight'); campFarmTurn++; }
+    if (phase < 10 && cls) { const fz = farmZone() || (campFarmTurn % 2 === 0 && campFarmZone()) || E('S.maxZone'); if (E('S.zone') !== fz) fn.setZone(fz); if (fz < E('S.maxZone')) craftStats.farm++; }
     if (phase === 10) { bestNode(); fn.setActivity('gather'); }
     else if (phase > 10 && bestNode.camp) { const cn = campNode(); if (cn && (E('S.node.kind') !== cn[0] || E('S.node.t') !== cn[1])) fn.setNode(cn[0], cn[1]); }
     else if (phase > 10 && cls && !bestNode.camp) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
@@ -664,6 +691,8 @@ function runDays() {
     const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
     rows.push(r);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
+    // --snapday D:path writes the save at the end of day D (debugging).
+    if (args.snapday && d === parseInt(String(args.snapday).split(':')[0], 10)) writeFileSync(String(args.snapday).split(':')[1], E('JSON.stringify(S)'));
   }
   // Boredom: the longest stretch without a meaningful upgrade, in active minutes and in
   // check-ins (a check-in is empty when nothing meaningful happened during it).
