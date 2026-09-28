@@ -67,3 +67,7 @@
 .hud-btn.off { opacity: .6; }
 .hud-btn canvas { width: 14px; height: 14px; image-rendering: pixelated; }
 .stage.tall .hud-btn { right: 6px; bottom: 38px; }
+/* "Show targets" (62-stage, C4): left of the bars button; above it on tall stages */
+.hud-btn.tgt-btn { right: 70px; }
+.hud-btn.tgt-btn[hidden] { display: none; }
+.stage.tall .hud-btn.tgt-btn { right: 6px; bottom: 70px; }

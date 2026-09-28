@@ -47,9 +47,9 @@ function warmNextZone() {
   const st = $('stage'), w = st.clientWidth, h = st.clientHeight, z = S.zone + 1, key = z + ':' + w + 'x' + h + ':' + (window.devicePixelRatio || 1);
   if (!w || !h || key === warmKey) return;
   warmKey = key;
-  const hueOf = zz => (zoneCycle(zz) * 70) % 360;
+  const hueOf = zoneHue;
   // soon: ahead of background bakes (queued in reverse, so the scene runs first, then the foes)
-  for (const ti of [(zoneType(z) + 1) % 7, zoneType(z)]) idleTask(() => enemyFrames(TYPES[ti].key, { elder: false, hue: hueOf(z) }), true);
+  for (const ti of [zoneNextType(z), zoneType(z)]) idleTask(() => enemyFrames(TYPES[ti].key, { elder: false, hue: hueOf(z) }), true);
   idleTask(() => enemyFrames(TYPES[zoneType(S.zone)].key, { elder: true, hue: hueOf(S.zone) }), true);
   if (!warmScene(z)) warmKey = '';
 }

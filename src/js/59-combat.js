@@ -293,7 +293,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function mkFoe(ti, hp, gold, xp, z, boss, name, cyc) {
     const t = TYPES[ti], b = FOE_BEH[t.key] || FOE_BEH.slime;
     return {
-      key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss: !!boss, hp, max: hp,
+      key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss: !!boss, hp, max: hp,
       name, gold, xp, hit: 0, dead: 0, born: 0,
       ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk), spd: boss ? T.bossSpd : T.spd * b.spd,
       swing: 0.6 + Math.random() * 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
@@ -314,7 +314,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     } else {
       const n = T.packSize, tot = mobHp(z) * T.packHp * mod('foeHp');
       for (let i = 0; i < n; i++) {
-        const ti = Math.random() < T.mixP ? zt : (zt + 1) % 7;
+        const ti = Math.random() < T.mixP ? zt : zoneNextType(z);
         const hp = tot / n * (0.9 + Math.random() * 0.2);
         const f = mkFoe(ti, hp, mobGold(z) * T.packGold / n, 0, z, false, TYPES[ti].name, cyc);
         foes.push(f);
@@ -1071,7 +1071,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
     for (let z = zMax; z >= lo; z--) {
-      const b = BEH_EST[zoneType(z)], mix = BEH_EST[(zoneType(z) + 1) % 7], w = k => T.mixP * b[k] + (1 - T.mixP) * mix[k];
+      const b = BEH_EST[zoneType(z)], mix = BEH_EST[zoneNextType(z)], w = k => T.mixP * b[k] + (1 - T.mixP) * mix[k];
       const physX = 1 - w('arm') * (1 - T.armourX), fheal = w('heal');
       const heroPhys = hero.cls === 'lanternmage' ? 1 : physX;
       const D = (heroD * heroPhys + compPhys * physX + compMagic) * T.estEff;

@@ -93,7 +93,7 @@ const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc
 function uiFight() {
   for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
-  const uq = UNIQ[ZONE_UNIQ[zoneType(S.zone)]].name;
+  const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
     putText(G.title, S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering');
     putText(G.desc, 'Switch to Fight above the tabs to clear zones and earn gold and essence.');

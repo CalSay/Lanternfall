@@ -22,6 +22,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 13-art-enemies.js | core (data) | enemy, boss, wyrm and gather-node rigs |
 | 60b-baker.js | browser | B1 baker: `charFrames`, `enemyFrames`, `portraitURL`, `drawCharPreview`, lights |
 | 20-data.js | core | constants: zones, mats, slots, uniques, companions, upgrades, relics |
+| 22-data-regions.js | core (data) | the Lantern Road's regions (region-2.md 2.2): `REGIONS` (the Hollow 1-35, the Sunken Coast 36-70; per region its 7 types as TYPES indices, names, themes, uniques, home grounds, hue rule, boss), `ROAD_BEYOND`, `regionOf`/`regionIdx`/`regionById`, `zoneNextType`, `zoneTheme`, `zoneHue`, `zoneUnique`, `zoneHome`, `regionBossZone`, `lanternsLitAt`. `zonePlace`/`zoneCycle`/`zoneType`/`zoneName` (40-rules) read it. Region 2's own data plugs in through `REGION_COAST` (22-data-coast.js); until then the coast reuses the Hollow's foes under its own names |
 | 30-state.js | core | save `S`, `fresh()`, `loadSave()`, `save()`, `registerState`, `online` runtime state |
 | 40-rules.js | core | formulas: gear, dps, gold, xp, costs, node times |
 | 41-items.js | core | items core (K4): kinds, `fits()`, `itemStats()`/`itemLines()`, 8 hero positions (`gearCalc` behind `gear()`), `charGear(id)`, affix rolls, Reforge maths, bag rule |
@@ -32,6 +33,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js); the craft goal sets `S.fSlot`/`S.fTier` and bumps `forgeGoalPicks` so the Craft tab focuses that recipe |
 | 55-onboard.js | core | the guided first ten minutes (docs/design/onboarding.md): `FEATURES` unlock table, `isUnlocked(id)`, `onboardReveal`, `onboardUnlockAll`, the guide (`GUIDE_STEPS`, `onboardStep`, `onboardDone`, `onboardTips`), `goalGate` for Next Up (on only in the browser); state `S.onboard` (old saves: all open). UI: 75-onboard-ui.js. Views and sections declare `feature: id` in `registerView`/`registerSection` |
 | 55-welcome.js | core | the one-time live-save welcome (plan-2 D3): a save with progress and no `S.camp` gets the Hearth its max zone allows (`CAMP_HZ`), free, once; `welcomeApply()` (57-camp calls it after registering `camp`), `welcomeNote()` (the camp's opening notice, then null), `welcomeInfo()`; state `S.welcome` |
+| 55-lantern.js | core | the Great Lantern moments (region-2.md 8, task R0): a region boss's first kill emits `greatLantern` once per save (a save already past it gets one bell line instead); `lanternSync()`, `lanternRoad()`; state `S.lantern` (`lit` = time relit per region). UI: 75-lantern-ui.js (the full-screen card, the Lantern Road strip on the Camp view and its sheet) |
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
@@ -225,6 +227,7 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `legendInscribe` / `legendMark` / `legendSigil` / `legendChange` | 55-legend: `{ id, item }` / `{ item, circle }` / `{ circle, n, source }` / none (anything the active-build cache reads changed) |
 | `expedBack` circles (listened) | 55-legend reads `{ g, circles, recall }` for Circle Sigils |
 | `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
+| `greatLantern` | `{ n, region, zone, name, head, text, note, quiet, rewards }` (55-lantern: a region boss's first kill; `quiet` = an old save's catch-up, shown as a bell line; listeners push `{ txt, ic }` onto `rewards` for the card, e.g. 57e's star points) |
 | `whatsNew` | `{ msg, icon, first }`: a line in the bell's one "What's new" notice (70-ui; `first` puts it at the top). Toasts raised in the first 2.5 s of play fold into it too (old-save catch-ups) |
 | `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |
 | visual only | `float {txt,color,big,x,y}`, `burst {x,y,color,n,spd}`, `shake amount`, `lunge`, `nodeHit`, `wyrmHit`, `sceneReset` |
@@ -234,6 +237,7 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fields with
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
 keep loading without loss. `S.tab` is the open menu's tab, or `''` on the game view (portrait).
+`S.settings.hud` / `S.settings.targets` (62-stage: battle bars, "Show targets"; missing = on).
 `S.nextUp` (min, picked) belonged to the old Fight-tab strip and is kept unused. UI conveniences
 (last tab, last view per tab) live in `localStorage` key `lanternfall.ui.v1`, outside the save.
 

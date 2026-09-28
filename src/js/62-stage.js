@@ -20,17 +20,66 @@ let resize, animate, draw, stageStats, warmScene;
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
-  const floats = [];
+  // A fixed pool of NF records (C4: no allocation per number); when all are busy the one closest to
+  // fading out gives way. ax: the shown foe's x when the text was raised (texts over a pack stay over
+  // the foe they belong to while the next one steps up).
+  const FONTS = new Map();
+  const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Pixelify Sans", monospace`; FONTS.set(s, f); } return f; };
+  const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
+  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0 });
   function pushFloat(txt, color, big, x, y) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
-    const busy = [0, 0, 0, 0]; let oldest = null;
-    for (const f of floats) if (f.row >= 0 && Math.abs(f.x - fx) < 0.3 && f.life > 0.1) { busy[f.row] = 1; if (!oldest || f.life < oldest.life) oldest = f; }
-    let row = busy.indexOf(0);
+    BUSY.fill(0); let oldest = null, free = null, last = null;
+    for (const f of floats) {
+      if (!f.on) { if (!free) free = f; continue; }
+      if (!last || f.life < last.life) last = f;
+      if (f.row >= 0 && Math.abs(f.x - fx) < 0.3 && f.life > 0.1) { BUSY[f.row] = 1; if (!oldest || f.life < oldest.life) oldest = f; }
+    }
+    let row = BUSY.indexOf(0);
     if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
-    floats.push({ txt, color, big, life: 0.95, x: fx, y: y ?? 0.42, row, off: row });
-    if (floats.length > 24) floats.shift();
+    const f = free || last;
+    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0;
+    f.ax = foe && foe.fr ? foe.x : SW * 0.7;
+  }
+  // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
+  // gathers its numbers for a moment (DoT ticks and heal-over-time come every core tick) and shows one
+  // number per kind; a pool of NN records, stacked upward per member.
+  const NN = 16, nums = [];
+  for (let i = 0; i < NN; i++) nums.push({ on: false, txt: '', col: '', a: null, life: 0, big: false, glyph: 0, row: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0 });
+  // Text sprites: each text is drawn once (outline, fill, the shield glyph) at device size into its
+  // record's own canvas; frames only copy it (scaled during the first pop), so a screen of numbers
+  // costs a few drawImage calls, not a stroke and a fill of text each. Rebaked on a zoom change.
+  function bakeText(r, txt, col, size, lw, glyph) {
+    const K = DPR * ZM, px = Math.max(6, Math.round(size * K)), l = Math.max(1, Math.round(lw * K));
+    const c = r.cv || (r.cv = document.createElement('canvas'));
+    let g = c.getContext('2d'); g.font = fontPx(px);
+    const tw = Math.ceil(g.measureText(txt).width), gw = glyph ? Math.round(px * 0.7) : 0, gap = glyph ? Math.round(px * 0.12) : 0;
+    const w = tw + gw + gap + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } else g.clearRect(0, 0, w, h);
+    g = c.getContext('2d'); g.font = fontPx(px); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
+    const bx = l + 2 + gw + gap, by = Math.round(l + px);
+    g.lineWidth = l; g.strokeStyle = '#0B0810'; g.strokeText(txt, bx, by); g.fillStyle = col; g.fillText(txt, bx, by);
+    if (gw) { g.imageSmoothingEnabled = false; g.drawImage(icon('shield'), l + 2, Math.round(by - gw * 0.95), gw, gw); }
+    r.k = K; r.bw = w / K; r.bh = h / K; r.by = by / K;
+  }
+  // x: the centre, y: the baseline (logical px); whole device px when not popping.
+  function drawText(r, x, y, pop) {
+    const K = r.k;
+    if (pop === 1) ctx.drawImage(r.cv, Math.round((x - r.bw / 2) * K) / K, Math.round((y - r.by) * K) / K, r.bw, r.bh);
+    else ctx.drawImage(r.cv, x - r.bw * pop / 2, y - r.by * pop, r.bw * pop, r.bh * pop);
+  }
+  const C_HURT = '#FF8A7A', C_POISON = '#B6E86A', C_HEAL = '#7EE07A', C_SHIELD = '#F4F7FF', C_GOLD = '#F2C14E';
+  function pushNum(a, txt, col, big, glyph) {
+    let row = 0, free = null, old = null;
+    for (const n of nums) {
+      if (!n.on) { if (!free) free = n; continue; }
+      if (n.a === a && n.life > 0.55) row = Math.max(row, n.row + 1);
+      if (!old || n.life < old.life) old = n;
+    }
+    const n = free || old;
+    n.on = true; n.txt = txt; n.col = col; n.a = a; n.life = 1.1; n.big = !!big; n.glyph = glyph | 0; n.row = Math.min(3, row); n.wz = 0;
   }
 
   // ================= canvas and scene =================
@@ -90,7 +139,7 @@ let resize, animate, draw, stageStats, warmScene;
     tall = h - GY * ZM >= 76; stageEl.classList.toggle('tall', tall);
     laneY = Math.max(12, Math.min(tall ? 40 : 26, Math.round(SH * (tall ? 0.1 : 0.085))));
     readHud();
-    scene = null; layoutDirty = true; foe.key = '';
+    scene = null; layoutDirty = true; solo.key = ''; packDirty = true;
   };
   // A Deepwell run is live: the arena (57d) replaces the zone's foes. The stage then shows the well
   // (63-scenery 'well'), cold foes, and no zone line or boss timer (the run's own HUD sits there).
@@ -102,7 +151,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (tg === 'world') th = 'raid';
     else if (deepOn()) th = 'well';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
-    else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
+    else { th = zoneTheme(S.zone); hue = zoneHue(S.zone); }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
   // The well's scene (a Deepwell run) is built when the player opens the Deepwell view (or has a
@@ -124,7 +173,7 @@ let resize, animate, draw, stageStats, warmScene;
   // logical size (SW x SCH), not the element's CSS size. Returns false before the first resize.
   warmScene = function (z) {
     if (!SW || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return false;
-    const th = ZONE_THEME[zoneType(z)], hue = (zoneCycle(z) * 70) % 360, w = SW, h = SCH, k = DPR * ZM;
+    const th = zoneTheme(z), hue = zoneHue(z), w = SW, h = SCH, k = DPR * ZM;
     const same = () => w === SW && h === SCH && k === DPR * ZM, step = sceneSteps(th, w, h, hue);
     // soon (front of the queue): one build step per task, then the plates and atmosphere steps
     const run = () => { if (!same()) return; const sc = step(); if (sc) scenePlates(sc, k, w, h, 'queue'); else idleTask(run, true); };
@@ -140,8 +189,23 @@ let resize, animate, draw, stageStats, warmScene;
     elowen: ['mote', '#F2C14E'], hesketh: ['mote', '#FFD27A']
   };
   const HERO_KIND = { warden: [''], ranger: ['arrow', '#8FD46A'], lanternmage: ['bolt', '#FF9E3D'], lightkeeper: ['mote', '#F2C14E'] };
+  const HERO_ROLE = { warden: 'tank', lanternmage: 'caster', ranger: 'striker', lightkeeper: 'support' };
+  // Characters not in CH_KIND attack the way their role does.
+  const ROLE_KIND = { tank: [''], striker: [''], caster: ['bolt', '#C8C0FF'], support: ['mote', '#FFD27A'] };
+  const kindOf = key => {
+    if (CH_KIND[key]) return CH_KIND[key];
+    const R = typeof ROSTER !== 'undefined' && ROSTER[key];
+    if (!R) return CH_KIND.tobin;
+    return R.role === 'striker' && R.ranged ? ['arrow', '#8FD46A'] : ROLE_KIND[R.role] || CH_KIND.tobin;
+  };
   const WIND = 0.14, STRIKE = 0.12, REC = 0.2;
-  const mkActor = key => ({ key, fr: null, kind: '', pcol: '#fff', col: 0, lane: 0, hx: 0, hy: 0, dx: 0, dash: 0, st: 0, t: 0, pending: 0, flash: 0, slash: 0, ph: Math.random() * 2, alpha: 1 });
+  // Motion (C4, party-and-classes.md 7.5): dash (a.dash, toward a foe), a step (a.go: a taunt step or
+  // a tank's intercept, eased; a.goT holds it), a knockback slide (a.kb), the wipe's retreat (rtX, rtA),
+  // knock-outs (a.down: the grey down pose, no bar) and the stand-up flash (a.upT). Numbers gather in
+  // bD (hits), bC (DoT, heals, shields) before they show (flushNums).
+  const mkActor = key => ({ key, fr: null, kind: '', pcol: '#fff', col: 0, lane: 0, hx: 0, hy: 0, dx: 0, dash: 0, st: 0, t: 0, pending: 0, flash: 0, slash: 0, ph: Math.random() * 2, alpha: 1,
+    role: '', aim: null, arc: 0, dy: 0, castTo: null, go: 0, goT: 0, mv: 0, kb: 0, down: false, upT: 0, eye: 0, fcd: 0,
+    bD: 0, bBig: false, bBlk: false, bT: -1, bDot: 0, bH: 0, bS: 0, bC: -1, _x: 0, _y: 0, _f: null });
   const hero = mkActor('hero');
   let comps = [], order = [], ghosts = [], front = hero, lastField = null, lastCells = null, heroKey = '', checkT = 0, layoutDirty = true;
 
@@ -150,7 +214,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!force && k === heroKey && hero.fr) return;
     heroKey = k; hero.fr = charFrames(spec);
     const hk = HERO_KIND[spec.cls] || HERO_KIND.warden;
-    hero.kind = hk[0]; hero.pcol = hk[1] || '#fff';
+    hero.kind = hk[0]; hero.pcol = hk[1] || '#fff'; hero.role = HERO_ROLE[spec.cls] || 'tank';
   }
   function refreshParty() {
     const p = S.party || {};
@@ -158,7 +222,8 @@ let resize, animate, draw, stageStats, warmScene;
     comps = (p.field || []).map(key => {
       const a = comps.find(c => c.key === key) || mkActor(key);
       if (!a.fr) a.fr = charFrames(companionSpec(key));
-      const k = CH_KIND[key] || CH_KIND.tobin; a.kind = k[0]; a.pcol = k[1] || '#fff';
+      const k = kindOf(key); a.kind = k[0]; a.pcol = k[1] || '#fff';
+      a.role = (typeof ROSTER !== 'undefined' && ROSTER[key] && ROSTER[key].role) || 'striker';
       return a;
     });
     layoutDirty = true;
@@ -178,8 +243,8 @@ let resize, animate, draw, stageStats, warmScene;
     // (the upper lane's half-column step counts toward the room, so nobody leaves the left edge)
     // The front column stands at PARTY_X1 (a little less on narrow stages), and further back when a
     // big foe (an elder, the wyrm, a tree node) would stand on it: its right edge stops 8 px into the foe's box.
-    const hf = hero.fr && hero.fr.idle0, reach = foe.fr ? foe.left + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16) : 1e9;
-    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * 0.38, Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
+    const hf = hero.fr && hero.fr.idle0, fl = frontLeft(), reach = fl != null ? fl + 8 - (hf ? Math.min(24, hf.c.width - hf.ox) : 16) : 1e9;
+    const cols = [...new Set(order.map(a => a.col))].sort((a, b) => a - b), x1 = Math.round(Math.max(SW * (packN > 1 && !packBoss && target() === 'mob' ? 0.36 : 0.38), Math.min(reach, SW * (SW < 250 ? PARTY_X1 - 0.03 : PARTY_X1))));
     const room = x1 - Math.max(22, SW * PARTY_X0), hasUp = order.some(a => a.lane === 0);
     const D = Math.min(COL_MAX, room / Math.max(1, cols.length - 1 + (hasUp ? 0.46 : 0)));
     const laneX = Math.round(Math.max(16, D * 0.46));
@@ -216,6 +281,22 @@ let resize, animate, draw, stageStats, warmScene;
     }
     return e;
   }
+  // Last opaque column + 1 (cached per canvas): the sprite's real right edge.
+  const rightEdges = new WeakMap();
+  function rightEdge(f) {
+    let e = rightEdges.get(f.c);
+    if (e === undefined) {
+      e = f.c.width;
+      try {
+        const c = f.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let x = c.width - 1;
+        for (; x >= 0; x--) { let hit = false; for (let y = 0; y < c.height; y++) if (d[(y * c.width + x) * 4 + 3] > 40) { hit = true; break; } if (hit) break; }
+        e = x >= 0 ? x + 1 : c.width;
+      } catch (er) { e = f.c.width; }
+      rightEdges.set(f.c, e);
+    }
+    return e;
+  }
   function refreshGhosts() {
     const want = target() === 'world' ? online.peers.filter(p => !p.sameTab && p.kind === 'viewer' && p.presence && (p.presence.act === 'raid' || p.presence.raiding)).length : 0;
     const n = Math.min(3, want);
@@ -225,10 +306,32 @@ let resize, animate, draw, stageStats, warmScene;
     layoutDirty = true;
   }
 
-  // ================= the foe (mob, wyrm or gather node) =================
-  const foe = { m: null, key: '', fr: null, anim: 'lunge', hover: false, st: 0, t: 0, next: 3, dx: 0, x: 0, cy: 0, left: 0, top: 0, w: 0, h: 0 };
+  // ================= the foes (a pack, a boss and its adds, the wyrm or a gather node) =================
+  // One record per foe on screen. The wyrm and gather nodes use `solo`; a fight binds a slot to each
+  // foe of the pack (combatFoes(), 59-combat) by list position (a pack's list only grows: boss adds).
+  // `foe` is the record of the foe the core shows (`mob`): taps, floats, class effects and the boss
+  // telegraph go there. Geometry (party-and-classes.md 7.4): 3 columns (Front at 0.62 of the width,
+  // Mid, Back at 0.89) x 2 lanes (the upper one a little higher and further back, drawn first). A foe
+  // takes its row's column (Front: slimes, beetles, golems; Mid: bats, bones; Back: spores, wraiths),
+  // then that column's upper lane, then the next column back. A lone foe (the Deepwell, party combat
+  // off) stands where the single foe always stood; a boss too, with its adds in front of it.
+  // Per-slot motion: a bat's dive (dv 0..1: a leap over the front line to its target and back), a
+  // knockback slide (kb) and lunges (dx) toward its target; fl: a one-frame flash (reduced motion).
+  const mkFoeV = () => ({ m: null, key: '', fr: null, anim: 'lunge', hover: false, st: 0, t: 0, next: 3, dx: 0, x: 0, gy: 0, cy: 0, left: 0, top: 0, w: 0, h: 0,
+    hx: 0, hy: 0, lane: 1, jx: 0, jy: 0, dv: 0, dvOn: false, dvA: null, kb: 0, kn: 0, fl: 0, hfc: 0, red: 0, lastTgt: -1, lastRole: '',
+    hm: null, hpF: null, trail: 1, dX: 0, dY: 0, dF: null });
+  const solo = mkFoeV();
+  let foe = solo;
+  const NSLOT = 6, slots = [], drawOrd = [], ONE = [null];
+  for (let i = 0; i < NSLOT; i++) slots.push(mkFoeV());
+  let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
+  const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
+  const soloX = () => Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0)));
   function refreshFoe() {
     const tg = target();
+    if (tg === 'mob') { syncPack(); return; }
+    if (packN) { packN = 0; packList = null; for (const s of slots) bindSlot(s, null); }
+    foe = solo;
     let key, fr = null;
     if (tg === 'world') {
       const gen = (online.world && online.world.gen) || 1, bx = (ENEMY_RIGS.wyrm && ENEMY_RIGS.wyrm.box) || [-36, -70, 60, 0];
@@ -236,29 +339,117 @@ let resize, animate, draw, stageStats, warmScene;
       const s = Math.max(0.5, Math.min(1.1, Math.floor(Math.min(SW * 0.56 / bw, (GY - hudB - 4) / bh) * 10) / 10));
       key = 'w' + gen + ':' + s;
       if (key !== foe.key) fr = enemyFrames('wyrm', { gen, hue: Math.floor((gen - 1) / 6) * 60 % 360, S: s });
-    } else if (tg === 'node') {
+    } else {
       key = 'n' + S.node.kind + S.node.t;
       if (key !== foe.key) fr = enemyFrames('node:' + S.node.kind, { tier: S.node.t });
-    } else {
-      if (!mob) { foe.fr = null; foe.key = ''; return; }
-      if (mob === foe.m && foe.key) return;
-      foe.m = mob;
-      const type = mob.key.replace(/\d+$/, '');
-      if (mob.deep) { const b = coldBand(mob.floor); key = 'd' + type + (mob.boss ? 'E' : '') + b; fr = coldFrames(type, !!mob.boss, b); }
-      else {
-        key = 'm' + type + (mob.boss ? 'E' : '') + zoneCycle(S.zone);
-        fr = enemyFrames(type, { elder: !!mob.boss, hue: (zoneCycle(S.zone) * 70) % 360 });
-      }
-      const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
-      foe.anim = rig && rig.anim || 'lunge'; foe.hover = !!(rig && rig.hover);
-      foe.st = 0; foe.next = 1.5 + Math.random() * 3; markLeft = 0; lastEmbers = 0;
-      if (key !== foe.key) layoutDirty = true;
-      foe.key = key; foe.fr = fr; return;
     }
     if (key === foe.key) return;
     layoutDirty = true;
     foe.key = key; foe.fr = fr; foe.m = null; foe.st = 0; foe.next = 2 + Math.random() * 3;
     foe.anim = tg === 'world' ? 'breath' : 'shake'; foe.hover = false;
+  }
+  // Bind the slots to the core's foe list (a new pack: all of them; boss adds: the new ones).
+  function syncPack() {
+    if (!mob) { if (packN) { packN = 0; packList = null; for (const s of slots) bindSlot(s, null); } foe = slots[0]; return; }
+    const list = typeof combatFoes === 'function' && partyCombatOn() ? combatFoes() : null;
+    let L = list && list.indexOf(mob) >= 0 ? list : null;
+    if (!L) { if (ONE[0] !== mob) { ONE[0] = mob; packList = null; } L = ONE; }
+    if (L !== packList || L.length !== packN) {
+      const n = Math.min(NSLOT, L.length), all = L !== packList;
+      for (let i = 0; i < NSLOT; i++) if (all || i >= packN) bindSlot(slots[i], i < n ? L[i] : null);
+      packList = L; packN = n; packDirty = true;
+    }
+    if (packDirty) placePack();
+    let s = slots[0];
+    for (let i = 0; i < packN; i++) if (slots[i].m === mob) { s = slots[i]; break; }
+    if (s !== foe) { foe = s; markLeft = 0; lastEmbers = 0; }
+  }
+  function bindSlot(s, m) {
+    s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
+    s.red = 0; s.lastTgt = -1; s.lastRole = ''; s.hm = null; s.hpF = null; s.trail = 1; s.dF = null;
+    if (!m) { s.fr = null; s.key = ''; return; }
+    const type = m.key.replace(/\d+$/, '');
+    let key, fr;
+    if (m.deep) { const b = coldBand(m.floor); key = 'd' + type + (m.boss ? 'E' : '') + b; fr = coldFrames(type, !!m.boss, b); }
+    else { key = 'm' + type + (m.boss ? 'E' : '') + zoneHue(S.zone); fr = enemyFrames(type, { elder: !!m.boss, hue: zoneHue(S.zone) }); }
+    const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
+    s.anim = rig && rig.anim || 'lunge'; s.hover = !!(rig && rig.hover);
+    s.next = 1.5 + Math.random() * 3; s.key = key; s.fr = fr;
+  }
+  // Home positions of the bound slots (on a new pack, new adds, or a resize).
+  const CELL_TRY = [0, 1, 2, -1, -2];
+  function placePack() {
+    packDirty = false;
+    const n = packN;
+    let lead = null;
+    for (let i = 0; i < n; i++) if (slots[i].m && slots[i].m.boss) { lead = slots[i]; break; }
+    packBoss = !!lead;
+    const x0 = Math.round(SW * 0.6), x2 = Math.round(SW * 0.92);   // geomOf keeps each foe's right edge on the stage
+    const cx1 = Math.round((x0 + x2) / 2), lx = Math.round(Math.max(6, (x2 - x0) * 0.24)), ly = Math.max(8, Math.round(laneY * 0.7));
+    colX0 = x0; drawOrd.length = 0;
+    if (n <= 1 || lead) {
+      lead = lead || slots[0];
+      lead.hx = soloX(); lead.hy = GY; lead.lane = 1;
+      drawOrd.push(slots.indexOf(lead));
+      const f = lead.fr && lead.fr.idle0, left = Math.min(lead.hx, SW - 6 - (f ? f.c.width - f.ox : 15) - foePad()) - (f ? f.ox : 15);
+      let k = 0;
+      for (let i = 0; i < n; i++) { const s = slots[i]; if (s === lead) continue; s.lane = 1; s.hy = GY; s.hx = Math.round(left + 14 + 17 * k); k++; drawOrd.push(i); }
+    } else if (n <= 3) {
+      // a pack of 2-3 (sorted front row first): one column each, front to back, so every foe reads;
+      // the middle one of three stands in the upper lane (a staggered line, bars at two heights).
+      // The back foe's real right edge stays on the stage; on a narrow stage the front column moves
+      // left (to half the width) before the columns close up past G px.
+      // (a wide back foe, a bat's wing, may run a little past the edge: 25% of its reach)
+      const back = slots[n - 1], bf = back.fr && back.fr.idle0, G = 26;
+      const xb = Math.min(x2, SW - 6 - Math.round((bf ? rightEdge(bf) - bf.ox : 20) * 0.75) - foePad());
+      const xf = Math.max(Math.round(SW * 0.5), Math.min(x0, xb - 2 * G)), xm = Math.round((xf + xb) / 2);
+      colX0 = xf;
+      for (let i = 0; i < n; i++) {
+        const s = slots[i], c = n === 2 ? i * 2 : i;
+        s.lane = n === 3 && i === 1 ? 0 : 1;
+        s.hx = c === 0 ? xf : c === 1 ? xm : xb; s.hy = GY - (s.lane ? 0 : ly);
+        drawOrd.push(i);
+      }
+      drawOrd.sort((a, b) => slots[a].lane - slots[b].lane || slots[b].hx - slots[a].hx);
+    } else {
+      let used = 0;
+      for (let i = 0; i < n; i++) {
+        const s = slots[i], pc = 2 - Math.max(0, Math.min(2, s.m && s.m.row != null ? s.m.row : 2));
+        let cell = -1;
+        for (const d of CELL_TRY) {
+          const c = pc + d; if (c < 0 || c > 2) continue;
+          if (!(used & (1 << (c * 2 + 1)))) { cell = c * 2 + 1; break; }
+          if (!(used & (1 << (c * 2)))) { cell = c * 2; break; }
+        }
+        if (cell < 0) cell = 1;
+        used |= 1 << cell;
+        const c = cell >> 1; s.lane = cell & 1;
+        s.hx = (c === 0 ? x0 : c === 1 ? cx1 : x2) + (s.lane ? 0 : lx); s.hy = GY - (s.lane ? 0 : ly);
+        drawOrd.push(i);
+      }
+      // upper lane first, then back to front
+      drawOrd.sort((a, b) => slots[a].lane - slots[b].lane || slots[b].hx - slots[a].hx);
+    }
+    const fl = frontLeft();
+    if (fl !== lastFL) { lastFL = fl; layoutDirty = true; }
+  }
+  // Where the party's front column must stop: the pack's front column, or the lone foe's left edge.
+  function frontLeft() {
+    if (target() === 'mob' && packN > 1 && !packBoss) {
+      // the real left edge (first opaque column) of the front foes, snapped to 6 px so the party
+      // only moves when a pack of a different shape comes
+      let l = colX0 - 18;
+      for (let i = 0; i < packN; i++) {
+        const s = slots[i], f = s.fr && s.fr.idle0;
+        if (!f || s.hx > colX0 + 4) continue;
+        l = Math.min(l, Math.min(s.hx, SW - 6 - (f.c.width - f.ox) - foePad()) - f.ox + leftEdge(f) - 10);
+      }
+      return Math.floor(l / 6) * 6;
+    }
+    const s = target() === 'mob' ? (packN ? slots[drawOrd[0]] : null) : solo;
+    if (!s || !s.fr) return null;
+    const f = s.fr.idle0;
+    return Math.min(s.hx || soloX(), SW - 6 - (f.c.width - f.ox) - foePad()) - f.ox;
   }
   // Well foes (mob.deep) wear a cold palette: every hue is folded into a 70-degree band of teal to
   // indigo (so neighbouring pieces keep different hues), colours are muted, the ink turns blue-black
@@ -313,88 +504,236 @@ let resize, animate, draw, stageStats, warmScene;
     if (coldSets.size > 12) coldSets.delete(coldSets.keys().next().value);
     return set;
   }
-  function foeGeom() {
-    const f = foe.fr && foe.fr.idle0;
-    foe.x = Math.round(SW * (target() === 'node' ? 0.68 : FOE_X[0][0] + (SW < 250 ? 0.03 : 0)));
-    // on short stages the ability button stands over the right edge of the scene: keep the foe clear of it
-    if (!f) { foe.w = 30; foe.h = 30; } else { foe.w = f.c.width; foe.h = f.oy; foe.x = Math.min(foe.x, SW - 6 - (f.c.width - f.ox) - (tall || target() === 'node' ? 0 : Math.round(50 / ZM))); }
-    foe.left = foe.x - (f ? f.ox : 15); foe.top = GY - foe.h; foe.cy = GY - Math.round(foe.h * 0.5);
+  // Per-frame geometry of a record from its home (hx, hy) and motion (jx, jy): x, gy (its ground
+  // line), left, top, cy, w, h. On short stages the ability button stands over the right edge of the
+  // scene: the foe keeps clear of it.
+  function geomOf(s) {
+    const f = s.fr && s.fr.idle0;
+    s.w = f ? f.c.width : 30; s.h = f ? f.oy : 30;
+    const rx = s === solo ? f && f.c.width - f.ox : f && (packN > 1 && !packBoss ? Math.round((rightEdge(f) - f.ox) * 0.75) : rightEdge(f) - f.ox);
+    const hx = f ? Math.min(s.hx, SW - 6 - rx - foePad()) : s.hx;
+    s.x = Math.round(hx + s.jx); s.gy = Math.round(s.hy + s.jy);
+    s.left = s.x - (f ? f.ox : 15); s.top = s.gy - s.h; s.cy = s.gy - Math.round(s.h * 0.5);
   }
+  function foeGeom() {
+    if (target() !== 'mob') { solo.hx = soloX(); solo.hy = GY; geomOf(solo); return; }
+    if (!packN) { foe.fr = null; return; }
+    for (let i = 0; i < packN; i++) geomOf(slots[i]);
+  }
+  // A living foe of the pack (a slot bound to a foe that is not dead or gone).
+  const slotLive = s => !!(s && s.m && !s.m.dead && !s.m.gone && s.fr);
+  // The front-most living foe (melee strikers dash to it), else the shown foe.
+  function frontSlot() {
+    if (target() !== 'mob') return foe;
+    let b = null;
+    for (let i = 0; i < packN; i++) { const s = slots[i]; if (slotLive(s) && s.dv === 0 && (!b || s.left < b.left)) b = s; }
+    return b || foe;
+  }
+  const slotOf = m => { for (let i = 0; i < packN; i++) if (slots[i].m === m) return slots[i]; return null; };
+  const actorOf = key => { for (const a of order) if (a.key === key) return a; return null; };
+  const unitKey = i => { const U = typeof combatUnits === 'function' ? combatUnits() : null; return U && i >= 0 && U[i] && U[i].live ? U[i].key : null; };
+  const ax = a => (a === hero ? heroHome() : a.hx) + a.dx;
   const foeAlive = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
 
   // ================= attacks =================
   const heroHome = () => target() === 'node' ? foe.left - 4 - (hero.fr ? hero.fr.idle0.c.width - hero.fr.idle0.ox : 14) : hero.hx;
-  function attack(a) {
-    if (!a || !a.fr) return;
+  // attack(a, aim, arc): a swing (wind, strike, recover). Melee dashes to its foe (aim, else the
+  // front-most foe: melee reaches the enemy Front) and back; arc: a leap with a 16 px apex (Kestrel).
+  // Reduced motion: the dash is an instant swap with a one-frame flash.
+  function attack(a, aim, arc) {
+    if (!a || !a.fr || a.down) return;
     if (a.st === 1 || a.st === 2) { a.pending = 1; return; }
-    a.st = 1; a.t = 0; a.dash = 0;
-    if (!a.kind && target() !== 'node' && foeAlive()) {
-      const f = a.fr.idle0, reach = foe.left + (target() === 'world' ? 30 : 4) - (f.c.width - f.ox);
-      a.dash = Math.max(0, reach - a.hx);
+    a.st = 1; a.t = 0; a.dash = 0; a.arc = arc ? 1 : 0; a.aim = aim || null;
+    if (!a.kind && !a.castTo && target() !== 'node' && foeAlive()) {
+      const t = aim && aim.fr ? aim : frontSlot(), f = a.fr.idle0, reach = t.left + (target() === 'world' ? 30 : 4) - (f.c.width - f.ox);
+      a.dash = Math.max(0, reach - a.hx - Math.round(a.mv));
+      if (reduced && a.dash) a.flash = Math.max(a.flash, 0.017);
     }
   }
-  const handX = a => (a === hero ? heroHome() : a.hx) + a.dx + 10, handY = a => a.hy - 44;
+  // A support's cast on an ally t: the cast pose, then a mote that lands in green motes on t.
+  function castOn(a, t) {
+    if (!a || !a.fr || a.down || a.st) { healMotes(t); return; }
+    a.castTo = t; attack(a);
+  }
+  function healMotes(t) {
+    if (!t) return;
+    const x = ax(t), y = t.hy;
+    for (let i = 0; i < 8; i++) A.part(x + (Math.random() - 0.5) * 16, y - 4 - Math.random() * 34, 0, reduced ? -6 : -16 - Math.random() * 16, 0.7 + Math.random() * 0.3, i % 3 ? '#7EE07A' : '#DFFBD0', 0, 1, 4);
+  }
+  const handX = a => ax(a) + 10, handY = a => a.hy - 44;
+  const sparkW = (x, y) => A.burstPx(x, y, '#FFFFFF', 3, 30);
   function fire(a) {
     const tg = target();
     if (tg === 'node') {
       if (a === hero) { nodeShake = 0.12; const cx = foe.left + 6, cy = GY - 14; for (let i = 0; i < 5; i++) A.part(cx, cy, 20 + Math.random() * 50, -40 - Math.random() * 60, 0.5 + Math.random() * 0.3, nodeColor(), 260, Math.random() < 0.4 ? 2 : 1); }
       return;
     }
+    if (a.castTo) {
+      const t = a.castTo; a.castTo = null;
+      if (t === a) { healMotes(a); return; }
+      A.proj('mote', handX(a), handY(a) - 6, ax(t), t.hy - 34, 0.32, '#9FE8A0', 10, () => healMotes(t));
+      return;
+    }
     if (!foeAlive()) return;
-    const tx = foe.x + (Math.random() - 0.5) * foe.w * 0.3, ty = foe.cy + (Math.random() - 0.5) * foe.h * 0.3;
-    if (!a.kind) { a.slash = 0.16; A.burstPx(foe.left + 6, ty, '#FFF3C4', 4, 40); return; }
+    const s = a.aim && (tg !== 'mob' || slotLive(a.aim)) ? a.aim : a.kind ? foe : frontSlot();
+    const tx = s.x + (Math.random() - 0.5) * s.w * 0.3, ty = s.cy + (Math.random() - 0.5) * s.h * 0.3;
+    if (!a.kind) { a.slash = 0.16; A.burstPx(s.left + 6, ty, '#FFF3C4', 4, 40); return; }
     const sx = handX(a), sy = handY(a), col = a.pcol;
     if (a.kind === 'arrow') A.proj('arrow', sx, sy, tx, ty, 0.2, col, 6, (x, y) => A.burstPx(x, y, '#E8DCC0', 3, 30));
-    else if (a.kind === 'bolt') A.proj('bolt', sx, sy - 4, tx, ty, 0.28, col, 0, (x, y) => { A.burstPx(x, y, col, 6, 45, 60, 4); A.ring(x, y, 2, 11, 0.3, col, 1, 1); });
+    else if (a.kind === 'bolt') A.proj('bolt', sx, sy - 4, tx, ty, 0.28, col, 0, (x, y) => { A.burstPx(x, y, col, 6, 45, 60, 4); A.ring(x, y, 2, 11, 0.3, col, 1, 1); if (a.role === 'caster') splash(s, col); });
     else A.proj('mote', sx, sy - 6, tx, ty, 0.36, col, 14, (x, y) => A.burstPx(x, y, col, 5, 30, 0, 4));
+  }
+  // Caster hits land on the whole pack (a smaller burst on every other living foe).
+  function splash(s, col) {
+    if (target() !== 'mob') return;
+    for (let i = 0; i < packN; i++) { const o = slots[i]; if (o !== s && slotLive(o)) A.burstPx(o.x, o.cy, col, 3, 30, 60, 3); }
   }
   function stepActor(a, dt) {
     if (a.flash > 0) a.flash -= dt;
     if (a.slash > 0) a.slash -= dt;
-    if (!a.st) { a.dx = 0; return; }
+    if (a.upT > 0) a.upT -= dt;
+    if (a.eye > 0) a.eye -= dt;
+    if (a.fcd > 0) a.fcd -= dt;
+    // the step (a taunt, a tank's intercept): eased over about 200 ms; reduced motion snaps with a flash
+    if (a.goT > 0) { a.goT -= dt; if (a.goT <= 0) a.go = 0; }
+    if (a.mv !== a.go) {
+      if (reduced) { a.mv = a.go; a.flash = Math.max(a.flash, 0.017); }
+      else { a.mv += (a.go - a.mv) * Math.min(1, dt * 14); if (Math.abs(a.go - a.mv) < 0.5) a.mv = a.go; }
+    }
+    // knockback: slides 6 px back over 150 ms, then eases home (none under reduced motion)
+    let kx = 0;
+    if (a.kb > 0) { a.kb -= dt; const t = 0.35 - Math.max(0, a.kb); kx = reduced ? 0 : -Math.round(6 * (t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.2))); }
+    const base = Math.round(a.mv) + kx + (a.alpha === 1 ? rtX : 0);
+    a.dy = 0;
+    if (!a.st) { a.dx = base; return; }
     a.t += dt;
     if (a.st === 1 && a.t >= WIND) { a.st = 2; a.t = 0; fire(a); }
-    else if (a.st === 2 && a.t >= STRIKE) { a.st = 3; a.t = 0; }
+    else if (a.st === 2 && a.t >= STRIKE) { a.st = 3; a.t = 0; if (reduced && a.dash) a.flash = Math.max(a.flash, 0.017); }
     else if (a.st === 3 && a.t >= REC) { a.st = 0; a.t = 0; if (a.pending) { a.pending = 0; attack(a); } }
-    if (!a.dash) a.dx = 0;
-    else if (reduced) a.dx = a.st === 1 || a.st === 2 ? a.dash : 0;
-    else { const u = Math.min(1, a.t / (a.st === 1 ? WIND : a.st === 3 ? REC : 1)); a.dx = Math.round(a.st === 1 ? a.dash * (1 - (1 - u) * (1 - u)) : a.st === 2 ? a.dash : a.dash * (1 - u) * (1 - u)); }
+    let d = 0;
+    if (a.dash && a.st) {
+      if (reduced) d = a.st === 1 || a.st === 2 ? a.dash : 0;
+      else {
+        const u = Math.min(1, a.t / (a.st === 1 ? WIND : a.st === 3 ? REC : 1));
+        d = Math.round(a.st === 1 ? a.dash * (1 - (1 - u) * (1 - u)) : a.st === 2 ? a.dash : a.dash * (1 - u) * (1 - u));
+        if (a.arc && a.st !== 2) a.dy = -Math.round(64 * u * (1 - u));
+      }
+    }
+    a.dx = base + d;
   }
-  // Companions attack in a staggered rhythm: every party-damage float, half of them swing.
+  // Companions attack in a staggered rhythm: every party-damage float, half of them swing. Supports
+  // deal no damage: they cast when they heal (unitHeal).
   function partyPulse() {
     partyN++;
-    comps.forEach((a, i) => { if ((i + partyN) % 2 === 0) A.after(0.05 + i * 0.14, () => attack(a)); });
+    comps.forEach((a, i) => { if (a.role !== 'support' && !a.down && (i + partyN) % 2 === 0) A.after(0.05 + i * 0.14, () => attack(a)); });
     ghosts.forEach((a, i) => { if ((i + partyN) % 3 === 0) A.after(0.1 + i * 0.2, () => attack(a)); });
   }
 
-  // Foe's own visual attacks (monsters do no damage yet: this is for life only).
-  function foeAttack() {
-    const tg = target(), fx = foe.x, fy = foe.cy;
-    const tx = (front === hero ? heroHome() : front.hx) + 4, ty = front.hy - 30;
+  // Foe attacks without party combat (the wyrm, or combat off): for life only, at the front member.
+  function foeAttack(s) {
+    const fx = s.x, fy = s.cy;
+    const tx = ax(front) + 4, ty = front.hy - 30;
     const hitFront = () => { front.flash = 0.08; A.burstPx(tx, ty, '#FFFFFF', 3, 30); };
-    switch (foe.anim) {
-      case 'lunge': case 'slam': A.after(0.08, hitFront); if (foe.anim === 'slam') for (let i = 0; i < 8; i++) A.part(foe.left + Math.random() * foe.w, GY - 1, (Math.random() - 0.5) * 60, -20 - Math.random() * 30, 0.5, '#9C8F7A', 120, 1); break;
-      case 'shoot': A.proj('arrow', foe.left + 4, fy - 6, tx, ty, 0.3, '#B8B0A0', 8, hitFront); break;
-      case 'cast': A.proj('spore', foe.left + 4, foe.top + 10, tx, ty, 0.5, '#B6F09A', 12, hitFront); break;
-      case 'heal': A.ring(fx, GY - 2, 4, foe.w * 0.6, 0.6, '#9FE8B0', 0.35, 1.5); for (let i = 0; i < 6; i++) A.part(fx + (Math.random() - 0.5) * foe.w * 0.6, fy + 10, 0, -20 - Math.random() * 20, 0.8, '#B6F09A', 0, 1, 3); break;
-      case 'breath': for (let i = 0; i < 18; i++) A.part(foe.left + 12, fy - 10, -80 - Math.random() * 90, (Math.random() - 0.3) * 40, 0.5 + Math.random() * 0.3, i % 3 ? '#FF9E3D' : '#FFD27A', 20, 2, 5, 0.5); A.after(0.35, hitFront); break;
+    switch (s.anim) {
+      case 'lunge': case 'slam': A.after(0.08, hitFront); if (s.anim === 'slam') for (let i = 0; i < 8; i++) A.part(s.left + Math.random() * s.w, s.gy - 1, (Math.random() - 0.5) * 60, -20 - Math.random() * 30, 0.5, '#9C8F7A', 120, 1); break;
+      case 'shoot': A.proj('arrow', s.left + 4, fy - 6, tx, ty, 0.3, '#B8B0A0', 8, hitFront); break;
+      case 'cast': A.proj('spore', s.left + 4, s.top + 10, tx, ty, 0.5, '#B6F09A', 12, hitFront); break;
+      case 'heal': A.ring(fx, s.gy - 2, 4, s.w * 0.6, 0.6, '#9FE8B0', 0.35, 1.5); for (let i = 0; i < 6; i++) A.part(fx + (Math.random() - 0.5) * s.w * 0.6, fy + 10, 0, -20 - Math.random() * 20, 0.8, '#B6F09A', 0, 1, 3); break;
+      case 'breath': for (let i = 0; i < 18; i++) A.part(s.left + 12, fy - 10, -80 - Math.random() * 90, (Math.random() - 0.3) * 40, 0.5 + Math.random() * 0.3, i % 3 ? '#FF9E3D' : '#FFD27A', 20, 2, 5, 0.5); A.after(0.35, hitFront); break;
     }
   }
-  function stepFoe(dt) {
-    const tg = target();
-    if (tg === 'node' || !foeAlive() || (mob && tg === 'mob' && mob.born < 0.6)) { foe.st = 0; foe.dx = 0; return; }
-    if (!foe.st) { foe.next -= dt; if (foe.next <= 0) { foe.st = 1; foe.t = 0; } foe.dx = 0; return; }
-    foe.t += dt;
-    if (foe.st === 1 && foe.t >= 0.35) { foe.st = 2; foe.t = 0; foeAttack(); }
-    else if (foe.st === 2 && foe.t >= 0.22) { foe.st = 0; foe.next = (tg === 'world' ? 4 : 2.8) + Math.random() * 2.5; }
-    foe.dx = foe.st === 2 && (foe.anim === 'lunge' || foe.anim === 'slam') && !reduced ? -Math.round(12 * Math.sin(Math.PI * Math.min(1, foe.t / 0.22))) : 0;
+  // A foe's real hit on a member (unitHit): its strike pose and a lunge, a shot, spores or a slam.
+  function foeStrike(s, a, kind) {
+    if (!s || !s.fr || !a) return;
+    const tx = ax(a) + 4, ty = a.hy - 30;
+    if (s.st !== 2) { s.st = 2; s.t = 0; }
+    // the white hit flash: every big hit, else at most every 0.6 s (a tank under three foes would strobe)
+    const big = kind === 'heavy' || kind === 'slam' || kind === 'dive';
+    if (big || !(a.fcd > 0)) { a.flash = Math.max(a.flash, 0.08); a.fcd = 0.6; }
+    if (kind === 'ranged') {
+      const spore = s.anim === 'cast' || s.anim === 'heal';
+      A.proj(spore ? 'spore' : 'arrow', s.left + 4, s.cy - 6, tx, ty, spore ? 0.4 : 0.3, spore ? '#B6F09A' : '#B8B0A0', spore ? 10 : 6, sparkW);
+    } else if (kind === 'cloud') {
+      for (let i = 0; i < 6; i++) A.part(tx + (Math.random() - 0.5) * 20, ty + (Math.random() - 0.3) * 24, (Math.random() - 0.5) * 12, -6 - Math.random() * 8, 0.8 + Math.random() * 0.4, i % 2 ? '#A8C890' : '#C8C2D4', 0, 2, 4, 0.5);
+    } else {
+      A.burstPx(tx, ty, kind === 'heavy' ? '#FFD27A' : '#FFFFFF', kind === 'heavy' ? 8 : 3, kind === 'heavy' ? 60 : 30);
+      if (kind === 'slam') for (let i = 0; i < 8; i++) A.part(s.left + Math.random() * s.w * 0.6, s.gy - 1, (Math.random() - 0.7) * 60, -20 - Math.random() * 30, 0.5, '#9C8F7A', 120, 1);
+    }
+    if (kind === 'heavy' || kind === 'slam' || kind === 'dive') a.kb = 0.35;
   }
-
+  // The wyrm (and a foe without party combat) attacks on its own timer; a pack's foes attack when the core says so.
+  function stepFoe(s, dt, timed) {
+    const tg = target();
+    if (s.fl > 0) s.fl -= dt;
+    if (tg === 'node' || !foeAlive() || (tg === 'mob' && (!s.m || s.m.dead || s.m.born < 0.6))) { s.st = 0; s.dx = 0; return; }
+    if (!s.st) {
+      if (timed) { s.next -= dt; if (s.next <= 0) { s.st = 1; s.t = 0; } }
+      s.dx = 0; return;
+    }
+    s.t += dt;
+    if (s.st === 1 && s.t >= 0.35) { s.st = 2; s.t = 0; foeAttack(s); }
+    else if (s.st === 2 && s.t >= 0.22) { s.st = 0; s.next = (tg === 'world' ? 4 : 2.8) + Math.random() * 2.5; }
+    s.dx = s.st === 2 && (s.anim === 'lunge' || s.anim === 'slam') && !reduced ? -Math.round(12 * Math.sin(Math.PI * Math.min(1, s.t / 0.22))) : 0;
+  }
+  // Pack motion and threat, per foe: a bat's dive (a 400 ms leap with a 16 px apex over the front line,
+  // landing 12 px in front of its target; back when the dive ends), a knockback slide (the foe's
+  // knockT rises: 6 px back over 150 ms), and its target (a foe that leaves a tank turns its pip red
+  // for 1 s and flashes an eye over its new target).
+  function stepSlot(s, dt) {
+    const m = s.m, live = slotLive(s);
+    // the white hit flash: on a hit, at most every 0.3 s (a pack takes hits from the whole party)
+    if (s.hfc > 0) s.hfc -= dt;
+    if (live && m.hit > 0 && !(s.hfc > 0)) { s.fl = Math.max(s.fl, 0.07); s.hfc = 0.3; }
+    const tA = live && m.diveT > 0 && m.diveU >= 0 ? actorOf(unitKey(m.diveU)) : null;
+    if (tA && !tA.down) { if (!s.dvOn) { s.dvOn = true; diveStart(tA); } s.dvA = tA; }
+    else s.dvOn = false;
+    const want = s.dvOn ? 1 : 0;
+    if (s.dv !== want) {
+      if (reduced) { s.dv = want; s.fl = 0.017; }
+      else s.dv = want ? Math.min(1, s.dv + dt / 0.4) : Math.max(0, s.dv - dt / 0.4);
+    }
+    let jx = 0, jy = 0;
+    if (s.dv > 0 && s.dvA && s.fr) {
+      const a = s.dvA, home = s.x - s.jx;
+      const lx = ax(a) + 12 + Math.round(s.w * 0.3), u = s.dv, e = u * u * (3 - 2 * u);
+      jx = (lx - home) * e; jy = (a.hy - s.hy) * e - (reduced ? 0 : 64 * u * (1 - u));
+    } else if (s.dv === 0) s.dvA = null;
+    if (live && m.knockT > s.kn + 0.05 && !reduced) s.kb = 0.35;
+    s.kn = live ? m.knockT : 0;
+    if (s.kb > 0) { s.kb -= dt; const t = 0.35 - Math.max(0, s.kb); jx += 6 * (t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.2)); }
+    s.jx = Math.round(jx); s.jy = Math.round(jy);
+    if (s.red > 0) s.red -= dt;
+    if (live && m.tgt !== s.lastTgt) {
+      const a = m.tgt >= 0 ? actorOf(unitKey(m.tgt)) : null;
+      if (a) {
+        if (s.lastRole === 'tank' && a.role !== 'tank' && !a.down) { s.red = 1; a.eye = 1; }
+        s.lastRole = a.role;
+      }
+      s.lastTgt = m.tgt;
+    }
+  }
+  // A diver leaves the line: the nearest standing tank steps back beside its target, taunts, and
+  // returns after 2 s (a blue ring marks the target).
+  function diveStart(t) {
+    A.ring(ax(t), t.hy - 2, 4, 18, 0.45, '#8FB8FF', 0.35, 1.5);
+    let tank = null, best = 1e9;
+    for (const a of order) {
+      if (a === t || a.role !== 'tank' || a.down || a.alpha < 1 || a.hx <= t.hx) continue;
+      const v = (a.lane === t.lane ? 0 : 1000) + a.hx - t.hx;
+      if (v < best) { best = v; tank = a; }
+    }
+    if (!tank) return;
+    tank.go = Math.min(0, t.hx + 18 - tank.hx); tank.goT = 2;
+  }
   // ================= events =================
   on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
-    // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it.
-    const onFoe = b.x > 0.55, x = onFoe ? foe.x + (b.x - 0.67) * SW : b.x * SW, y = onFoe ? foe.cy + (b.y - 0.6) * SH * 0.5 : b.y * SH;
+    // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
+    // pack: the foe that died this instant, its dead timer just set, else the shown foe).
+    const onFoe = b.x > 0.55;
+    let s = foe;
+    if (onFoe && target() === 'mob') for (let i = 0; i < packN; i++) { const q = slots[i]; if (q.m && q.m.dead > 0 && q.m.dead < 0.002 && !q.m.gone) { s = q; break; } }
+    const x = onFoe ? s.x + (b.x - 0.67) * SW * (packN > 1 ? 0.4 : 1) : b.x * SW, y = onFoe ? s.cy + (b.y - 0.6) * SH * 0.5 : b.y * SH;
     A.burstPx(x, y, b.color || '#FFFFFF', Math.min(16, b.n || 4), (b.spd || 0.7) * 70);
   });
   on('shake', amt => { shake = reduced ? 0 : amt; });
@@ -404,11 +743,15 @@ let resize, animate, draw, stageStats, warmScene;
   on('levelup', () => { ringT = 0.8; });
   on('skillUp', p => { if (!p.quiet && p.k !== 'smith') ringT = 0.8; });
   on('loot', () => { beamT = 1.6; });
-  on('sceneReset', () => { A.clear(); foe.key = ''; wallT = hymnT = volleyT = 0; });
+  on('sceneReset', () => {
+    A.clear(); solo.key = ''; packList = null; wallT = hymnT = volleyT = 0;
+    for (const a of order) { a.go = 0; a.goT = 0; a.mv = 0; a.kb = 0; a.castTo = null; }
+    for (const n of nums) n.on = false;
+  });
   on('gear', () => refreshHero(true));
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
-  on('activity', () => { layoutDirty = true; foe.key = ''; });
+  on('activity', () => { layoutDirty = true; solo.key = ''; packList = null; });
 
   on('classTap', p => {
     attack(hero);
@@ -431,9 +774,107 @@ let resize, animate, draw, stageStats, warmScene;
       for (let i = 0; i < 3; i++) A.ring(foe.x, foe.cy, 4, 40 + i * 22, 0.55, i ? '#FF9E3D' : '#FFF3C4', 1, 2, i * 0.08);
       for (let i = 0; i < n; i++) { const an = T * 2 + i * 6.283 / n; A.burstPx(foe.x + Math.cos(an) * foe.w * 0.4, foe.cy + Math.sin(an) * 8, '#FF9E3D', 8, 70, 60, 5); }
       A.burstPx(foe.x, foe.cy, '#FFD27A', 14, 90, 80, 5);
+      splash(foe, '#FF9E3D');
     }
     else if (c === 'ranger') { volleyT = 2.1; volleyNext = 0; }
     else if (c === 'lightkeeper') { hymnT = 8; }
+  });
+
+  // ---- party combat (59-combat, 59b-enemies). Payloads are reused objects: nothing is kept. ----
+  // Numbers gather per member: hits for 0.2 s (heavy ones show at once), damage over time, heals
+  // and shields for 0.7 s, then flushNums shows one number per kind.
+  on('unitHit', p => {
+    const a = actorOf(p.key); if (!a) return;
+    const dot = p.kind === 'poison' || p.kind === 'burn';
+    if (p.amount > 0) {
+      if (dot) { a.bDot += p.amount; if (a.bC < 0) a.bC = 0; }
+      else { a.bD += p.amount; if (a.bT < 0) a.bT = 0; if (p.kind === 'heavy' || p.kind === 'slam' || p.kind === 'dive') { a.bBig = true; a.bT = Math.max(a.bT, 0.2); } }
+    }
+    if (p.blocked) { a.bBlk = true; if (a.bT < 0) a.bT = 0; }
+    if (!dot && p.foe && target() === 'mob') foeStrike(slotOf(p.foe), a, p.kind);
+    if (p.kind === 'heavy' && !reduced) shake = Math.max(shake, 0.18);
+  });
+  on('unitHeal', p => {
+    const a = actorOf(p.key); if (!a) return;
+    a.bH += p.amount; a.bS += p.shield; if (a.bC < 0) a.bC = 0;
+  });
+  function flushNums(a, hits) {
+    if (hits) {
+      if (a.bBlk) pushNum(a, 'BLOCK', C_GOLD, false, 0);
+      if (a.bD >= 0.5) pushNum(a, '-' + fmt(Math.round(a.bD)), C_HURT, a.bBig, 0);
+      a.bD = 0; a.bBig = false; a.bBlk = false; a.bT = -1;
+      return;
+    }
+    if (a.bDot >= 0.5) pushNum(a, '-' + fmt(Math.round(a.bDot)), C_POISON, false, 0);
+    if (a.bH >= 0.5) { pushNum(a, '+' + fmt(Math.round(a.bH)), C_HEAL, false, 0); healFx(a); }
+    if (a.bS >= 0.5) pushNum(a, '+' + fmt(Math.round(a.bS)), C_SHIELD, false, 1);
+    a.bDot = 0; a.bH = 0; a.bS = 0; a.bC = -1;
+  }
+  // A heal shows as a cast by a standing support (the first idle one, not the one healed), else motes.
+  // (unitHeal carries no healer: the core could add `from` for an exact caster.)
+  function healFx(t) {
+    let h = null;
+    for (const a of order) if (a.role === 'support' && a !== t && !a.down && a.alpha === 1 && !a.st) { h = a; break; }
+    if (h) castOn(h, t); else healMotes(t);
+  }
+  on('unitDown', p => {
+    const a = actorOf(p.key); if (!a) return;
+    a.down = true; a.st = 0; a.dash = 0; a.pending = 0; a.go = 0; a.goT = 0; a.castTo = null;
+    if (!a.flash) a.flash = 0.08;
+    A.burstPx(ax(a), a.hy - 16, '#B8B0C8', 6, 30);
+  });
+  on('unitUp', p => {
+    const a = actorOf(p.key);
+    if (a && a.down) { a.down = false; a.upT = 0.3; A.burstPx(ax(a), a.hy - 20, '#FFE08A', 6, 30, 0, 3); }
+    if (rt.on && rt.t > 0.5) { rt.on = false; rt.back = rt.arena ? 0 : 0.6; }
+  });
+  // Taunts step 8 px toward the foes; casters burst on the pack; Kestrel leaps; supports cast.
+  const TAUNTS = { tobin: 1, maren: 1, grenna: 1, caedmon: 1 };
+  on('unitAbility', p => {
+    const a = actorOf(p.key); if (!a || a.down || target() !== 'mob') return;
+    const id = p.id;
+    if (TAUNTS[id]) { if (!(a.goT > 0 && a.go < 0)) { a.go = 8; a.goT = 0.6; } A.ring(ax(a) + 4, a.hy - 2, 4, 22, 0.45, '#8FB8FF', 0.35, 1.5); attack(a); }
+    else if (id === 'kestrel') attack(a, foe, true);
+    else if (a.role === 'support') { A.ring(partyMid(), GY - 2, 8, 70, 0.5, '#9FE8A0', 0.3, 1.5); castOn(a, a); }
+    else if (a.role === 'caster') { attack(a); for (let i = 0; i < packN; i++) { const s = slots[i]; if (slotLive(s)) A.ring(s.x, s.cy, 3, 16, 0.4, a.pcol, 1, 1.5, 0.25); } }
+    else attack(a, id === 'isolde' || id === 'corvin' ? foe : null);
+  });
+  // A wipe: the party lies down, then falls back (fades and walks off to the left) under a dimmed
+  // stage; when they stand up they walk back in. A Deepwell pause keeps them in place.
+  const rt = { on: false, t: 0, arena: false, back: 0 };
+  let rtX = 0, rtA = 1, dimA = 0;
+  on('wipe', p => {
+    rt.on = true; rt.t = 0; rt.arena = !!p.arena; rt.back = 0;
+    pushFloat(p.arena ? 'Party down' : 'Fall back!', '#FF9A8A', true, 0.3, 0.3);
+  });
+  function stepRetreat(dt) {
+    if (rt.on) {
+      rt.t += dt;
+      if (rt.t > 9) { rt.on = false; rt.back = rt.arena ? 0 : 0.6; }
+      const u = Math.max(0, Math.min(1, (rt.t - 0.9) / 0.8));
+      rtX = rt.arena || reduced ? 0 : -Math.round(60 * u * u); rtA = rt.arena ? 1 : 1 - u; dimA = Math.min(0.32, rt.t * 0.4);
+    } else if (rt.back > 0) {
+      rt.back -= dt;
+      const u = Math.max(0, rt.back / 0.6);
+      rtX = reduced ? 0 : -Math.round(50 * u * u); rtA = 1 - u; dimA = 0.32 * u;
+    } else { rtX = 0; rtA = 1; dimA = 0; }
+  }
+  // Boss wind-ups: under reduced motion the ring does not run, so the start flashes the stage once.
+  const TELE_RGB = { heavy: '224,82,79', dive: '79,134,224', heal: '79,184,96', cloud: '160,154,176', shell: '160,154,176' };
+  on('telegraphStart', p => { if (reduced) { flashA = 0.16; flashRgb = TELE_RGB[p.kind] || TELE_RGB.heavy; } });
+  on('telegraphResolve', p => {
+    if (target() !== 'mob') return;
+    let s = foe;
+    for (let i = 0; i < packN; i++) if (slots[i].m && slots[i].m.boss) { s = slots[i]; break; }
+    if (!s.fr) return;
+    const r = Math.max(s.w, s.h) * 0.55;
+    if (p.result === 'parry') {
+      pushFloat(p.by === 'wall' ? 'BLOCK' : 'PARRY', C_GOLD, true, 0.7);
+      A.ring(s.x, s.cy, 4, r, 0.4, C_GOLD, 1, 2); A.burstPx(s.x, s.cy, '#FFE08A', 10, 70, 60, 4);
+      if (reduced) { flashA = 0.14; flashRgb = '242,193,78'; }
+    } else if (p.result === 'dodge') pushFloat('DODGE', C_GOLD, false, 0.7);
+    else if (p.result === 'interrupt' && p.by !== 'kill') { pushFloat('STOPPED', C_GOLD, true, 0.7); A.ring(s.x, s.cy, 4, r, 0.4, '#FFE08A', 1, 2); }
+    else if (p.result === 'heal') for (let i = 0; i < 10; i++) A.part(s.x + (Math.random() - 0.5) * s.w * 0.6, s.cy + 10, 0, reduced ? -6 : -20 - Math.random() * 20, 0.9, '#7EE07A', 0, 1, 3);
   });
 
   function partyMid() { let a = 1e9, b = -1e9; for (const u of order) { if (u.alpha < 1) continue; a = Math.min(a, u.hx); b = Math.max(b, u.hx); } return a > b ? SW * 0.2 : (a + b) / 2; }
@@ -443,7 +884,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) return;
     if (S.party && (S.party.field !== lastField || S.party.cells !== lastCells)) refreshParty();
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); readLooks(); warmWell(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
     // 70-ui keeps writing tWrap.hidden underneath)
     const dOn = deepOn();
@@ -464,10 +905,18 @@ let resize, animate, draw, stageStats, warmScene;
     if (hymnT > 0) hymnT -= dt;
     if (markLeft > 0) markLeft -= dt;
     if (hasteLeft > 0) hasteLeft -= dt;
-    for (const f of floats) f.life -= dt;
-    while (floats.length && floats[0].life <= 0) floats.shift();
-    for (const a of order) stepActor(a, dt);
-    stepFoe(dt);
+    for (const f of floats) if (f.on && (f.life -= dt) <= 0) f.on = false;
+    for (const n of nums) if (n.on && (n.life -= dt) <= 0) n.on = false;
+    stepRetreat(dt);
+    for (const a of order) {
+      stepActor(a, dt);
+      if (a.bT >= 0 && (a.bT += dt) >= 0.2) flushNums(a, true);
+      if (a.bC >= 0 && (a.bC += dt) >= 0.7) flushNums(a, false);
+    }
+    if (target() === 'mob') {
+      const timed = packList === ONE;   // no party combat: the lone foe attacks on its own timer
+      for (let i = 0; i < packN; i++) { stepFoe(slots[i], dt, timed); stepSlot(slots[i], dt); }
+    } else stepFoe(solo, dt, true);
     // buffs from 55-party (polled, it allocates)
     buffPoll -= dt;
     if (buffPoll <= 0 && typeof partyBuffs === 'function') {
@@ -480,7 +929,9 @@ let resize, animate, draw, stageStats, warmScene;
       volleyT -= dt; volleyNext -= dt;
       while (volleyNext <= 0 && volleyT > 0.3) {
         volleyNext += 0.09;
-        const tx = foe.x + (Math.random() - 0.5) * foe.w * 0.8, ty = GY - 4 - Math.random() * foe.h * 0.7;
+        let s = foe;
+        if (packN > 1) { const q = slots[(Math.random() * packN) | 0]; if (slotLive(q)) s = q; }
+        const tx = s.x + (Math.random() - 0.5) * s.w * 0.8, ty = s.gy - 4 - Math.random() * s.h * 0.7;
         A.proj('rain', tx - 50 - Math.random() * 20, -10, tx, ty, 0.3, '#8FD46A', 0, (x, y) => A.burstPx(x, y, '#E8DCC0', 2, 30));
       }
     }
@@ -499,7 +950,8 @@ let resize, animate, draw, stageStats, warmScene;
   const flick = () => reduced ? 0.9 : 0.8 + 0.2 * Math.sin(T * 13) * Math.sin(T * 7.3);
   function frameOf(a) {
     const f = a.fr; if (!f) return null;
-    if (a.flash > 0) return f.hit;
+    if (a.down) return f.down || f.idle0;
+    if (a.flash > 0 || a.upT > 0.2) return f.hit;
     if (a.st === 1) return f.wind;
     if (a.st === 2) return f.strike;
     // idle1 bakes in idle time (60b): until then the idle bob holds idle0 instead of baking in a frame
@@ -519,12 +971,33 @@ let resize, animate, draw, stageStats, warmScene;
     }
     return d;
   }
+  // A knocked-out member lies in its down pose, grey (cached copies).
+  const greyed = new WeakMap();
+  function greyOf(c) {
+    let d = greyed.get(c);
+    if (!d) {
+      d = document.createElement('canvas'); d.width = c.width; d.height = c.height;
+      const g = d.getContext('2d'); g.drawImage(c, 0, 0);
+      try {
+        const img = g.getImageData(0, 0, d.width, d.height), p = img.data;
+        for (let i = 0; i < p.length; i += 4) { if (!p[i + 3]) continue; const l = (p[i] * 0.3 + p[i + 1] * 0.59 + p[i + 2] * 0.11) * 0.72; p[i] = l + 30; p[i + 1] = l + 28; p[i + 2] = l + 40; }
+        g.putImageData(img, 0, 0);
+      } catch (e) { g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(90,86,100,0.8)'; g.fillRect(0, 0, d.width, d.height); }
+      greyed.set(c, d);
+    }
+    return d;
+  }
+  const actorA = a => a.alpha < 1 ? a.alpha : rtA;
   function drawActor(a, cam) {
     const f = frameOf(a); if (!f) return;
-    const hx = (a === hero ? heroHome() : a.hx) + a.dx - cam;
-    ctx.globalAlpha = a.alpha;
-    ctx.drawImage(a.lane === 0 && !a.flash ? dimOf(f.c) : f.c, Math.round(hx - f.ox), Math.round(a.hy - f.oy));
-    a._x = Math.round(hx - f.ox); a._y = Math.round(a.hy - f.oy); a._f = f;
+    const hx = ax(a) - cam, al = actorA(a);
+    if (al <= 0.01) { a._f = null; return; }
+    ctx.globalAlpha = al;
+    const c = a.down ? greyOf(f.c) : a.lane === 0 && !a.flash && !(a.upT > 0.2) ? dimOf(f.c) : f.c;
+    // a member lying down is longer than it stands: keep the whole body on the stage
+    const x0 = a.down ? Math.max(Math.round(hx - f.ox), 2 - leftEdge(f)) : Math.round(hx - f.ox);
+    ctx.drawImage(c, x0, Math.round(a.hy + a.dy - f.oy));
+    a._x = x0; a._y = Math.round(a.hy + a.dy - f.oy); a._f = a.down ? null : f;
   }
   // ================= the hero's looks (Deepwell cosmetics, S.deep.eq) =================
   // lantern: the colour of the hero's own light (its brightest glow), the key light over the party
@@ -599,35 +1072,62 @@ let resize, animate, draw, stageStats, warmScene;
     poolDev = { K, rgb, c };
     return c;
   }
-  const foeFrame = () => {
-    const f = foe.fr; if (!f) return null;
-    const tg = target();
-    if ((tg === 'mob' && mob && mob.hit > 0) || (tg === 'world' && wyrmHit > 0)) return f.hit;
+  // The frame a foe shows: its hit flash, the wind-up while its telegraph (or a Marsh Wraith's heal
+  // channel) runs, its strike, else the idle bob (each foe on its own beat).
+  function foeFrame(s, tele) {
+    const f = s.fr; if (!f) return null;
+    const tg = target(), m = s.m;
+    if (s.fl > 0) return tg === 'mob' && s.fl > 0.02 ? f.idle0 : f.hit;   // a pack foe's hit flash is an overlay on idle0 (drawFoe)
+    if (tg === 'world' && wyrmHit > 0) return f.hit;
     if (tg === 'node') return nodeShake > 0 ? f.strike : f.idle0;
-    if (foe.st === 1) return f.wind;
-    if (foe.st === 2) return f.strike;
-    return !reduced && (T * 1.6 % 2) >= 1 && ART.ready(f, 'idle1') ? f.idle1 : f.idle0;
-  };
-  const foeD = { x: 0, y: 0, f: null };
-  function drawFoe(cam) {
-    const f = foeFrame(); foeD.f = null; if (!f) return;
-    const tg = target();
-    let x = foe.x + foe.dx - cam, y = GY, alpha = 1, sy = 1;
-    if (tg === 'mob' && mob) {
-      if (mob.hit > 0) x += 2;
-      if (mob.dead) { alpha = Math.max(0, 1 - mob.dead / 0.4); y += Math.round(mob.dead * 30); }
-      else if (mob.born < 0.15) { sy = 0.4 + 0.6 * (mob.born / 0.15); alpha = Math.min(1, mob.born / 0.1 + 0.3); }
-      if (foe.hover && !reduced) y += Math.round(Math.sin(T * 3) * 2);
+    if (m && tg === 'mob' && !m.dead && ((tele && tele.foe === m) || m.chanT > 0)) return f.wind;
+    if (s.st === 1) return f.wind;
+    if (s.st === 2) return f.strike;
+    return !reduced && ((T * 1.6 + (s.hx & 7) * 0.25) % 2) >= 1 && ART.ready(f, 'idle1') ? f.idle1 : f.idle0;
+  }
+  function drawFoe(s, cam, tele) {
+    const f = foeFrame(s, tele); s.dF = null; if (!f) return;
+    const tg = target(), m = tg === 'mob' ? s.m : null;
+    let x = s.x + s.dx - cam, y = s.gy, alpha = 1, sy = 1;
+    if (m) {
+      if (s.fl > 0.02) x += 2;
+      if (m.dead) { alpha = Math.max(0, 1 - m.dead / 0.4); y += Math.round(m.dead * 30); }
+      else if (m.born < 0.15) { sy = 0.4 + 0.6 * (m.born / 0.15); alpha = Math.min(1, m.born / 0.1 + 0.3); }
+      if (s.hover && !reduced) y += Math.round(Math.sin(T * 3 + (s.hx & 7)) * 2);
     } else if (tg === 'node' && nodeShake > 0 && !reduced) x += Math.round((Math.random() - 0.5) * 3);
     else if (tg === 'world' && !reduced) y += Math.round(Math.sin(T * 1.6) * 2);
     if (alpha <= 0) return;
-    const dx = Math.round(x - f.ox), h = f.c.height;
+    const dx = Math.round(x - f.ox), h = f.c.height, c = s.lane === 0 && f !== s.fr.hit ? dimOf(f.c) : f.c;
     ctx.globalAlpha = alpha;
-    if (mob && mob.dead && tg === 'mob') { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, GY + 2); ctx.clip(); ctx.drawImage(f.c, dx, Math.round(y - f.oy)); ctx.restore(); }
-    else if (sy < 1) ctx.drawImage(f.c, dx, Math.round(y - f.oy * sy), f.c.width, Math.round(h * sy));
-    else ctx.drawImage(f.c, dx, Math.round(y - f.oy));
+    if (m && m.dead) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SW, s.gy + 2); ctx.clip(); ctx.drawImage(c, dx, Math.round(y - f.oy)); ctx.restore(); }
+    else if (sy < 1) ctx.drawImage(c, dx, Math.round(y - f.oy * sy), f.c.width, Math.round(h * sy));
+    else ctx.drawImage(c, dx, Math.round(y - f.oy));
+    // hit: a half-strength white flash over the frame (a pack takes hits from the whole party; a full
+    // white silhouette each time would hide the foe)
+    if (m && !m.dead && s.fl > 0.02 && sy === 1) { ctx.globalAlpha = 0.55 * alpha; ctx.drawImage(s.fr.hit.c, dx, Math.round(y - f.oy)); }
+    // stunned: three sparks circle over its head (still under reduced motion)
+    if (m && !m.dead && m.stunT > 0) {
+      const hy = Math.round(y - f.oy + headTop(s.fr.idle0)) - 4, cx = Math.round(x), r = Math.max(6, Math.round(s.w * 0.18));
+      for (let i = 0; i < 3; i++) {
+        const an = (reduced ? 0 : T * 5) + i * 2.094;
+        ctx.fillStyle = i ? '#FFE08A' : '#FFF6E0'; ctx.fillRect(Math.round(cx + Math.cos(an) * r) - 1, Math.round(hy + Math.sin(an) * 2), 2, 2);
+      }
+    }
     ctx.globalAlpha = 1;
-    foeD.x = dx; foeD.y = Math.round(y - f.oy); foeD.f = sy < 1 ? null : f;
+    s.dX = dx; s.dY = Math.round(y - f.oy); s.dF = sy < 1 ? null : f;
+  }
+  // Foe lights (eyes, cores), and a glow in the telegraph colour pulsing at 4 Hz on a winding-up foe.
+  function foeLights(s, tele) {
+    const f = s.dF; if (!f) return;
+    const fl = flick(), a = s.m && s.m.dead ? 0 : 1;
+    if (!a) return;
+    for (const l of f.lights) A.lightAt(ctx, l.rgb, s.dX + l.x, s.dY + l.y, Math.min(Math.max(8, l.size * 3), 20) * fl * 1.4, 0.3);
+    const m = s.m;
+    if (m && ((tele && tele.foe === m) || m.chanT > 0)) {
+      const kind = tele && tele.foe === m ? tele.kind : 'heal', rgb = TELE_RGB[kind] || TELE_RGB.heavy;
+      const p = reduced ? 0.6 : 0.4 + 0.4 * (0.5 + 0.5 * Math.sin(T * 25.1));
+      A.lightAt(ctx, rgb, s.x, s.cy, Math.max(s.w, s.h) * 0.75, 0.45 * p);
+    }
   }
 
   let drawMs = 0;
@@ -635,10 +1135,10 @@ let resize, animate, draw, stageStats, warmScene;
     if (!SW) { resize(); if (!SW) return; }
     const t0 = performance.now();
     pickScene();
-    const tg = target(), raid = tg === 'world', gath = tg === 'node';
+    const tg = target(), raid = tg === 'world', gath = tg === 'node', fight = tg === 'mob';
     const camF = reduced ? 0 : Math.sin(T * 0.23) * 5 + Math.sin(T * 0.09 + 1) * 3, cam = Math.round(camF);
     const sx = shake > 0 ? Math.round((Math.random() - 0.5) * 6) : 0, sy = shake > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
-    const K = DPR * ZM;
+    const K = DPR * ZM, tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     ctx.setTransform(K, 0, 0, K, sx * K, sy * K);
     A.devView(K, sx * K, sy * K);
     ctx.imageSmoothingEnabled = false;
@@ -646,31 +1146,36 @@ let resize, animate, draw, stageStats, warmScene;
     // The backdrop (#0B0810) shows only where the sky does not reach: drawScene fills it.
     drawScene(ctx, scene, camF, 'back', K, sx * K, sy * K, '#0B0810');
 
-    // smooth under-layer: shadows, boss aura
+    // smooth under-layer: shadows, boss, champion and elite auras
     ctx.imageSmoothingEnabled = true;
-    const alive = !(tg === 'mob' && (!mob || mob.dead));
-    if (foe.fr) {
-      if (alive || (mob && mob.dead < 0.3)) shadowAt(foe.x - cam, Math.max(12, foe.w * 0.42), 0.55);
-      if ((tg === 'mob' && mob && (mob.boss || mob.champ) && !mob.dead) || raid) {
+    const nF = fight ? packN : 1;
+    for (let i = 0; i < nF; i++) {
+      const s = fight ? slots[i] : solo, m = fight ? s.m : null;
+      if (!s.fr || (fight && (!m || (m.dead && m.dead >= 0.3)))) continue;
+      shadowAt(s.x + s.dx - cam, Math.max(12, s.w * 0.42), s.lane === 0 ? 0.4 : 0.55, s.gy);
+      if ((m && (m.boss || m.champ || m.elite) && !m.dead) || raid) {
         ctx.globalCompositeOperation = 'lighter';
-        A.lightAt(ctx, raid ? '255,90,60' : mob.champ ? '255,200,80' : mob.deep ? '110,170,255' : '255,80,80', foe.x - cam, foe.cy, Math.max(foe.w, foe.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
+        A.lightAt(ctx, raid ? '255,90,60' : m.champ ? '255,200,80' : m.deep ? '110,170,255' : m.elite && !m.boss ? '200,120,255' : '255,80,80', s.x - cam, s.cy, Math.max(s.w, s.h) * 0.8, 0.22 + 0.08 * Math.sin(T * 3));
         ctx.globalCompositeOperation = 'source-over';
       }
     }
-    for (const a of order) shadowAt((a === hero ? heroHome() : a.hx) + a.dx - cam, a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * a.alpha, a.hy);
+    for (const a of order) { const al = actorA(a); if (al > 0.01) shadowAt(ax(a) - cam, a.down ? 16 : a.lane === 0 ? 11 : 13, (a.lane === 0 ? 0.35 : 0.5) * al, a.hy); }
     // Shield Wall dome (back half)
     if (wallT > 0 && !gath) drawDome(cam, false);
     ctx.globalAlpha = 1;
 
-    // pixel pass: foe, party (upper lane first), projectiles
+    // pixel pass: foes (upper lane first, back to front), party (upper lane first), foes that
+    // dived over the line (in front of the party), projectiles
     ctx.imageSmoothingEnabled = false;
-    drawFoe(cam);
+    if (fight) { for (const i of drawOrd) if (i < packN && slots[i].dv === 0) drawFoe(slots[i], cam, tele); }
+    else drawFoe(solo, cam, null);
     if (gath && foe.fr) {
       const pw = Math.round(foe.w * 0.7), px0 = Math.round(foe.x - cam - pw / 2);
       ctx.fillStyle = '#0B0810'; ctx.fillRect(px0 - 1, GY + 5, pw + 2, 3);
       ctx.fillStyle = nodeColor(); ctx.fillRect(px0, GY + 6, Math.round(pw * Math.min(1, S.gProg)), 1);
     }
     for (const a of order) drawActor(a, cam);
+    if (fight) for (let i = 0; i < packN; i++) if (slots[i].dv > 0) drawFoe(slots[i], cam, tele);
     ctx.globalAlpha = 1;
     // hero guard pips (Warden), when the HUD (which shows them as a chip) is off
     if (guardN > 0 && hero._f && !hudOn()) {
@@ -686,7 +1191,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalCompositeOperation = 'lighter';
     keyLight();
     for (const a of order) lightsOf(a);
-    if (foeD.f) { const f = foeD.f, fl = flick(); for (const l of f.lights) A.lightAt(ctx, l.rgb, foeD.x + l.x, foeD.y + l.y, Math.min(Math.max(8, l.size * 3), 20) * fl * 1.4, 0.3); }
+    if (fight) { for (let i = 0; i < packN; i++) foeLights(slots[i], tele); } else foeLights(solo, null);
     ctx.globalCompositeOperation = 'source-over';
     drawAtmosphere(ctx, scene, T, SW, SCH, camF);
 
@@ -694,11 +1199,14 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.imageSmoothingEnabled = true;
     if (wallT > 0 && !gath) drawDome(cam, true);
     if (hymnT > 0 && !gath) drawHymn(cam);
-    if (tg === 'mob' && mob && !mob.dead) {
-      const n = mob.embers | 0;
-      if (n) drawEmbers(n, cam);
-      if (markLeft > 0) drawReticle(cam);
-    } else if (raid && markLeft > 0) drawReticle(cam);
+    if (fight) {
+      for (let i = 0; i < packN; i++) {
+        const s = slots[i]; if (!slotLive(s)) continue;
+        const n = s.m.embers | 0;
+        if (n) drawEmbers(s, n, cam);
+        if ((s === foe && markLeft > 0) || s.m.markT > 0) drawReticle(s, cam, s === foe && markLeft > 0 ? markLeft : s.m.markT);
+      }
+    } else if (raid && markLeft > 0) drawReticle(foe, cam, markLeft);
     A.drawRings(ctx);
     if (hudOn()) drawTeleRing(cam);
     A.drawParts(ctx);
@@ -718,6 +1226,8 @@ let resize, animate, draw, stageStats, warmScene;
     }
     if (raid && Date.now() < rallyUntil) { ctx.fillStyle = '#F2C14E'; ctx.globalAlpha = 0.07 + 0.04 * Math.sin(T * 6); ctx.fillRect(0, 0, SW, SH); ctx.globalAlpha = 1; }
     if (flashA > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, flashA); ctx.fillStyle = `rgb(${flashRgb})`; ctx.fillRect(-4, -4, SW + 8, SH + 8); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
+    // a wipe dims the stage while the party falls back
+    if (dimA > 0.01) { ctx.globalAlpha = dimA; ctx.fillStyle = '#0B0810'; ctx.fillRect(-4, -4, SW + 8, SH + 8); ctx.globalAlpha = 1; }
 
     // combat HUD (device px), then back to logical px for the floating text
     const hud = hudOn();
@@ -731,21 +1241,36 @@ let resize, animate, draw, stageStats, warmScene;
     const tz = Math.min(ZM, 1.35) / ZM, top = Math.max(hudB + 4, SH * 0.16), band = Math.max(20, GY - 6 - top);
     const xr = SW - (target() === 'node' || tall ? 4 : 60 / ZM), fTop = hud ? Math.min(foe.top, hudFoeTop) : foe.top;
     for (const f of floats) {
+      if (!f.on) continue;
       const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
-      const base = (f.big ? 21 : 15) * tz, size = Math.max(6, Math.round(base * pop));
+      const base = (f.big ? 21 : 15) * tz;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
       const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, fTop + 2)) : lo + band * 0.5;
       const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz);
       const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
-      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
-      if (ctx.globalAlpha <= 0) continue;
-      ctx.font = `700 ${size}px "Pixelify Sans", monospace`;
-      const hw = ctx.measureText(f.txt).width / 2 + 4, x = Math.max(hw, Math.min(xr - hw, f.x * SW));
-      ctx.lineWidth = 4 * tz; ctx.strokeStyle = '#0B0810';
-      ctx.strokeText(f.txt, x, y);
-      ctx.fillStyle = f.color; ctx.fillText(f.txt, x, y);
+      const al = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
+      if (al <= 0) continue;
+      if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0); f.wz = base; }
+      // over a pack, a text stays over the foe it was raised on (its x then) as the next steps up
+      const fx = onFoe && packN > 1 ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
+      const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
+      ctx.globalAlpha = al; drawText(f, x, y, pop);
+    }
+    // party numbers: over each member's head, stacked upward, rising a little and fading
+    for (const n of nums) {
+      if (!n.on) continue;
+      const a = n.a; if (!a || !a.fr) { n.on = false; continue; }
+      const age = 1.1 - n.life, pop = !reduced && age < 0.08 ? 1.3 - age * 3.75 : 1;
+      const base = (n.big ? 17 : 13) * tz, f0 = a.fr.idle0;
+      const headY = a.hy - f0.oy + headTop(f0) - (hud ? 8 : 2);
+      const yr = headY - n.row * 15 * tz - (reduced ? 0 : age * 14 * tz), y = Math.max(top + base * 0.5, yr);
+      const al = Math.max(0, Math.min(1, n.life * 2.5)) * actorA(a);
+      if (al <= 0.01) continue;
+      if (n.wz !== base || n.k !== K) { bakeText(n, n.txt, n.col, base, 3.5 * tz, n.glyph); n.wz = base; }
+      const hw = n.bw * pop / 2, x = Math.max(hw, Math.min(SW - hw, ax(a) - cam + 2));
+      ctx.globalAlpha = al; drawText(n, x, y, pop);
     }
     ctx.globalAlpha = 1;
     if (hud) drawBang();
@@ -795,24 +1320,24 @@ let resize, animate, draw, stageStats, warmScene;
     }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
-  function drawEmbers(n, cam) {
-    const rx = Math.max(14, foe.w * 0.45);
+  function drawEmbers(s, n, cam) {
+    const rx = Math.max(14, s.w * 0.45);
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < n; i++) {
-      const an = (reduced ? 0 : T * 2) + i * 6.283 / n, x = foe.x - cam + Math.cos(an) * rx, y = foe.cy + Math.sin(an) * 7;
+      const an = (reduced ? 0 : T * 2) + i * 6.283 / n, x = s.x - cam + Math.cos(an) * rx, y = s.cy + Math.sin(an) * 7;
       A.lightAt(ctx, '255,158,61', x, y, 9, 0.8);
     }
     ctx.globalCompositeOperation = 'source-over';
     for (let i = 0; i < n; i++) {
-      const an = (reduced ? 0 : T * 2) + i * 6.283 / n, x = Math.round(foe.x - cam + Math.cos(an) * rx), y = Math.round(foe.cy + Math.sin(an) * 7);
+      const an = (reduced ? 0 : T * 2) + i * 6.283 / n, x = Math.round(s.x - cam + Math.cos(an) * rx), y = Math.round(s.cy + Math.sin(an) * 7);
       ctx.fillStyle = '#FFF3C4'; ctx.fillRect(x - 1, y - 1, 2, 2);
     }
   }
-  function drawReticle(cam) {
-    const x = foe.x - cam, y = foe.cy, r = Math.max(14, Math.min(foe.w, foe.h) * 0.5), rot = reduced ? 0 : T * 1.2;
-    const a = Math.min(1, markLeft) * (reduced ? 0.9 : 0.75 + 0.25 * Math.sin(T * 6));
+  function drawReticle(s, cam, left) {
+    const x = s.x - cam, y = s.cy, r = Math.max(14, Math.min(s.w, s.h) * 0.5), rot = reduced ? 0 : T * 1.2;
+    const a = Math.min(1, left) * (reduced ? 0.9 : 0.75 + 0.25 * Math.sin(T * 6));
     ctx.strokeStyle = '#9CE06A'; ctx.lineWidth = 1.5; ctx.globalAlpha = a;
-    for (let i = 0; i < 4; i++) { const s = rot + i * Math.PI / 2; ctx.beginPath(); ctx.arc(x, y, r, s, s + 0.7); ctx.stroke(); }
+    for (let i = 0; i < 4; i++) { const q = rot + i * Math.PI / 2; ctx.beginPath(); ctx.arc(x, y, r, q, q + 0.7); ctx.stroke(); }
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x - r - 5, y); ctx.lineTo(x - r + 4, y); ctx.moveTo(x + r - 4, y); ctx.lineTo(x + r + 5, y);
     ctx.moveTo(x, y - r - 5); ctx.lineTo(x, y - r + 4); ctx.moveTo(x, y + r - 4); ctx.lineTo(x, y + r + 5); ctx.stroke();
@@ -847,8 +1372,16 @@ let resize, animate, draw, stageStats, warmScene;
     return c;
   }
   // 5x5 status icons.
-  const IP = { b: '#DCE8FF', B: '#7FA6F0', g: '#FFE08A', G: '#D9A03A', w: '#FFF6E0', o: '#FF9E3D', y: '#FFD27A', l: '#C8F59A', L: '#7ED36A' };
+  const IP = { b: '#DCE8FF', B: '#7FA6F0', g: '#FFE08A', G: '#D9A03A', w: '#FFF6E0', o: '#FF9E3D', y: '#FFD27A', l: '#C8F59A', L: '#7ED36A',
+    r: '#FF6B5E', R: '#A8302A', s: '#F4F7FF', S: '#A9B6D6', k: '#0B0810', v: '#D8B8FF', V: '#8A4FC9' };
   const IMAP = {
+    // C4: the shield glyph on shield numbers, the eye over a member a foe just turned on (it left a
+    // tank), the champion's crown and the elite's mark by their HP bars, the healer's "+" channel
+    shield: ['sssss', 'sSSSs', 'sSsSs', '.sSs.', '..s..'],
+    eye: ['.rrr.', 'rwkwr', 'rkkkr', 'rwkwr', '.rrr.'],
+    crown: ['g.g.g', 'ggggg', 'gGyGg', 'ggggg', '.....'],
+    elite: ['..v..', '.vVv.', 'vVwVv', '.vVv.', '..v..'],
+    heal: ['.LLL.', 'LLlLL', 'LlllL', 'LLlLL', '.LLL.'],
     guard: ['bbbbb', 'bBBBb', 'bBbBb', '.bBb.', '..b..'],
     wall: ['ggggg', 'gGGGg', 'gGwGg', '.gGg.', '..g..'],
     bless: ['..g..', '.gyg.', 'gywyg', '.gyg.', '..g..'],
@@ -891,7 +1424,11 @@ let resize, animate, draw, stageStats, warmScene;
       if (a.alpha < 1) { a.hpT = -1; a.cdF = -1; continue; }
       const h = typeof unitHp === 'function' ? unitHp(a.key) : null;
       if (!h || !(h.max > 0)) a.hpT = -1;
-      else { a.hpT = Math.max(0, Math.min(1, h.hp / h.max)); a.shT = Math.max(0, Math.min(1, (h.shield || 0) / h.max)); }
+      else {
+        a.hpT = Math.max(0, Math.min(1, h.hp / h.max)); a.shT = Math.max(0, Math.min(1, (h.shield || 0) / h.max));
+        // the core's own state wins (a missed event, a class change, a reload)
+        if (!!h.down !== a.down) { a.down = !!h.down; if (a.down) { a.st = 0; a.dash = 0; a.go = 0; } }
+      }
       const c = typeof unitCd === 'function' ? unitCd(a.key) : null;
       a.cdF = c && c.max > 0 ? Math.max(0, Math.min(1, 1 - c.t / c.max)) : -1;
     }
@@ -912,13 +1449,16 @@ let resize, animate, draw, stageStats, warmScene;
       a.shF = (a.shF || 0) + ((a.shT || 0) - (a.shF || 0)) * (reduced ? 1 : Math.min(1, dt * 10));
     }
     if (glintT > 0) glintT -= dt;
-    const m = target() === 'mob' && mob && !mob.dead ? mob : null;
-    if (m !== foe.hm) { foe.hm = m; foe.hpF = null; foe.trail = 1; }
-    if (m) easeBar(foe, Math.max(0, Math.min(1, m.hp / m.max)), dt);
+    if (target() !== 'mob') return;
+    for (let i = 0; i < packN; i++) {
+      const s = slots[i], m = slotLive(s) ? s.m : null;
+      if (m !== s.hm) { s.hm = m; s.hpF = null; s.trail = 1; }
+      if (m) easeBar(s, Math.max(0, Math.min(1, m.hp / m.max)), dt);
+    }
   }
   // HP bar at device X, Y (top-left), inner width w. Party: green > 50%, amber > 25%, red below;
-  // the shield is a white segment after the fill. Foes: red (champions orange with a gold edge).
-  // gauge >= 0 adds the ability gauge under the bar (blue while charging, gold when ready).
+  // the shield is a white segment after the fill. Foes: red (champions orange with a gold edge,
+  // elites a violet edge). gauge >= 0 adds the ability gauge under the bar (blue while charging, gold when ready).
   const HP_COL = [['#7ED36A', '#C8F59A', '#3F8A3A'], ['#F2C14E', '#FFE08A', '#A77B1E'], ['#E0524F', '#FF9A8A', '#8E2A2A']];
   const FOE_COL = ['#E0524F', '#FF9A8A', '#8E2A2A'], CHAMP_COL = ['#F29B3E', '#FFD08A', '#9A5A1E'];
   const gaugeH = () => U + Math.max(1, U >> 1);
@@ -954,6 +1494,11 @@ let resize, animate, draw, stageStats, warmScene;
     if (frac >= 0) { ctx.fillStyle = ICOL[id]; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
     return w;
   }
+  // A 5x5 icon on a dark plate (7x7 HUD px), top-left at X, Y.
+  function badge(X, Y, id) {
+    ctx.fillStyle = HK; ctx.fillRect(X, Y, 7 * U, 7 * U);
+    ctx.drawImage(icon(id), X + U, Y + U, 5 * U, 5 * U);
+  }
   // Chips queue up (pooled records), then chipRow draws them centred on X (or starting at X when
   // left is set) with their bottom at Y, and returns the row height (0 when empty).
   const chipList = [], chipPool = [];
@@ -970,9 +1515,11 @@ let resize, animate, draw, stageStats, warmScene;
     chipList.length = 0;
     return h;
   }
-  // Boss telegraph: a "!" plate (red heavy hit, blue dive, green heal) with a pointer, bottom at Yb.
+  // Telegraphs: a "!" plate with a pointer, bottom at Yb, in the colour of what comes: red a heavy
+  // hit, blue a dive (over the targeted ally), green a heal channel, grey a cloud or a shell.
   // s: its pixel size (2U; U on short stages where the full size would run under the header).
-  const TELE = { heavy: ['#E0524F', '#FF9A8A', '#8E2A2A'], cloud: ['#E0524F', '#FF9A8A', '#8E2A2A'], dive: ['#4F86E0', '#9CC4FF', '#27488E'], heal: ['#4FB860', '#A8F0A0', '#2A7A3A'] };
+  const TELE_GREY = ['#8C8798', '#D2CCDC', '#4A4656'];
+  const TELE = { heavy: ['#E0524F', '#FF9A8A', '#8E2A2A'], cloud: TELE_GREY, shell: TELE_GREY, dive: ['#4F86E0', '#9CC4FF', '#27488E'], heal: ['#4FB860', '#A8F0A0', '#2A7A3A'] };
   // drawHud only places the marker (bangAt); drawBang paints it after the floating text, on top.
   const bangQ = { on: false, X: 0, Yb: 0, kind: '', s: 0 };
   function bangAt(X, Yb, kind, s) { s = s || 2 * U; bangQ.on = true; bangQ.X = X; bangQ.Yb = Yb; bangQ.kind = kind; bangQ.s = s; return 13 * s; }
@@ -994,6 +1541,32 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.fillStyle = '#FFF6E0'; ctx.fillRect(x + 3 * s - e, y + 2 * s, s + 2 * e, 5 * s); ctx.fillRect(x + 3 * s - e, y + 8 * s, s + 2 * e, s + e);
     return h + 2 * s;
   }
+  // Threat (7.4): each foe's target, in the colour of that member's role (tank blue, striker green,
+  // caster violet, support gold): a pip by the foe's bar and a faint dotted line to the target. A foe
+  // that leaves a tank shows red for 1 s. Setting "Show targets": S.settings.targets (missing = on).
+  const targetsOn = () => !(S.settings && S.settings.targets === false);
+  const ROLE_COL = { tank: '#6A93FF', striker: '#63C96F', caster: '#B47BFF', support: '#F2C14E' }, THREAT_RED = '#FF4A4A';
+  const DASH = [2, 4], NO_DASH = [];
+  let dashU = 0;
+  function threatOf(s) {
+    const m = s.m;
+    if (!slotLive(s) || m.tgt < 0 || m.born < 0.3 || m.stunT > 0) return null;
+    const a = actorOf(unitKey(m.tgt));
+    return a && !a.down && a.fr && actorA(a) > 0.5 ? a : null;
+  }
+  function drawThreatLines(X, Y, cam) {
+    // one logical px wide, dots of one logical px every three (device px: K = DPR x zoom)
+    const K = DPR * ZM, w = Math.max(1, Math.round(K * 0.8));
+    if (dashU !== K) { dashU = K; DASH[0] = Math.max(1, Math.round(K)); DASH[1] = Math.max(2, Math.round(2 * K)); }
+    ctx.setLineDash(DASH); ctx.lineWidth = w;
+    for (let i = 0; i < packN; i++) {
+      const s = slots[i], a = threatOf(s); if (!a) continue;
+      const red = s.red > 0;
+      ctx.globalAlpha = red ? 0.9 : 0.55; ctx.strokeStyle = red ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker;
+      ctx.beginPath(); ctx.moveTo(X(s.left + 6 - cam), Y(s.cy)); ctx.lineTo(X(ax(a) + 10 - cam), Y(a.hy - 30)); ctx.stroke();
+    }
+    ctx.setLineDash(NO_DASH); ctx.globalAlpha = 1;
+  }
   function drawHud(cam, ox, oy) {
     const K = DPR * ZM, X = x => Math.round((x + ox) * K), Y = y => Math.round((y + oy) * K);
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -1010,14 +1583,17 @@ let resize, animate, draw, stageStats, warmScene;
       }
       return;
     }
-    const tele = typeof bossTelegraph === 'function' ? bossTelegraph() : null;
+    const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
     const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0;
+    const showT = fight && targetsOn() && partyCombatOn();
+    if (showT) drawThreatLines(X, Y, cam);
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
-    // (toward the foe: above it they would cover the face of an ally in the upper lane)
+    // (toward the foe: above it they would cover the face of an ally in the upper lane). Knocked-out
+    // members and a party falling back show none.
     for (const a of order) {
-      if (a.alpha < 1 || !a.fr || !(a.hpT >= 0)) continue;
-      const f = a.fr.idle0, cx = X((a === hero ? heroHome() : a.hx) + a.dx - cam);
+      if (a.alpha < 1 || !a.fr || !(a.hpT >= 0) || a.down || rtA < 0.5) continue;
+      const f = a.fr.idle0, cx = X(ax(a) - cam);
       const bh = 4 * U + (a.cdF >= 0 ? gaugeH() : 0);
       const y = Math.max(minY + (a === hero && heroChips ? 4 * U : 0), Y(a.hy - f.oy + headTop(f)) - gap - bh);
       bar(cx - (bw >> 1) - U, y, bw, a.hpF == null ? a.hpT : a.hpF, a.trail || 0, a.shF || 0, a.hpT > 0.5 ? HP_COL[0] : a.hpT > 0.25 ? HP_COL[1] : HP_COL[2], a.cdF);
@@ -1029,34 +1605,50 @@ let resize, animate, draw, stageStats, warmScene;
         if (hasteLeft > 0) pushChip('haste', 0, Math.min(1, hasteLeft / 10));
         chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
       }
+      // a foe just left a tank for this member: an eye by its bar
+      if (a.eye > 0 && showT && (reduced || (T * 5 % 1) < 0.7)) badge(cx - (bw >> 1) - 9 * U, y - U, 'eye');
       if (tele && tele.kind === 'dive' && tele.target === a.key) bangAt(cx, y, 'dive');
     }
-    // foe: HP bar (not for bosses: their HP is in the header), its chips, then the telegraph
-    if (!foe.fr || !foeAlive()) return;
-    const boss = tg === 'world' || !!(mob && mob.boss), cx = X(foe.x - cam);
-    let y = Y(GY - foe.h + headTop(foe.fr.idle0)) - gap;
-    if (!boss && mob && foe.hpF != null) {
-      const fw = Math.max(14 * U, Math.min(24 * U, Math.round(foe.w * 0.5 * K / U) * U));
+    if (!fight) { hudFoeTop = foe.top; return; }
+    for (let i = 0; i < packN; i++) {
+      const s = slots[i], top = foeHud(s, X, Y, cam, minY, tele, showT);
+      if (s === foe && top != null) hudFoeTop = Math.min(foe.top, top / K - oy);
+    }
+  }
+  // One foe's HUD (device px): its HP bar (not for bosses: their HP is in the header) with a crown
+  // (champion) or a mark (elite), its threat pip, its chips (Focus, Embers), a green "+" while a
+  // Marsh Wraith channels its heal, and the boss "!". Returns the top of what it drew.
+  function foeHud(s, X, Y, cam, minY, tele, showT) {
+    if (!slotLive(s) || s.m.born < 0.1) return null;
+    const m = s.m, K = DPR * ZM, cx = X(s.x - cam);
+    let y = Y(s.gy - s.h + headTop(s.fr.idle0)) - 2 * U;
+    const a = showT ? threatOf(s) : null, pipCol = a ? (s.red > 0 ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker) : null;
+    if (!m.boss && s.hpF != null) {
+      const fw = packN > 1 ? Math.max(10 * U, Math.min(16 * U, Math.round(s.w * 0.45 * K / U) * U)) : Math.max(14 * U, Math.min(24 * U, Math.round(s.w * 0.5 * K / U) * U));
       y = Math.max(minY, y - 4 * U);
-      bar(cx - (fw >> 1) - U, y, fw, foe.hpF, foe.trail, 0, mob.champ ? CHAMP_COL : FOE_COL, -1, mob.champ ? '#F2C14E' : null);
+      const x0 = cx - (fw >> 1) - U;
+      bar(x0, y, fw, s.hpF, s.trail, 0, m.champ ? CHAMP_COL : FOE_COL, -1, m.champ ? '#F2C14E' : m.elite ? '#B58CFF' : null);
+      if (m.champ || m.elite) badge(x0 - 7 * U, y - (U >> 1), m.champ ? 'crown' : 'elite');
+      if (pipCol) { const px = x0 + fw + 2 * U + U; ctx.fillStyle = HK; ctx.fillRect(px, y - (U >> 1), 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(px + U, y + (U >> 1), 3 * U, 3 * U); }
+    } else if (pipCol) {
+      y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U);
     }
-    if (tg === 'mob' && mob) {
-      if (markLeft > 0) pushChip('mark', 0, Math.min(1, markLeft / 8));
-      if (mob.embers | 0) pushChip('ember', mob.embers | 0, -1);
-      const h = chipRow(cx, y - U);
-      if (h) y -= h + U;
-    }
-    if (tele && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
-    hudFoeTop = Math.min(foe.top, y / K - oy);
+    if ((s === foe && markLeft > 0) || m.markT > 0) pushChip('mark', 0, Math.min(1, (s === foe && markLeft > 0 ? markLeft : m.markT) / 8));
+    if (m.embers | 0) pushChip('ember', m.embers | 0, -1);
+    const h = chipRow(cx, y - U);
+    if (h) y -= h + U;
+    if (m.chanT > 0 && !m.boss) { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }
+    if (tele && tele.foe === m && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
+    return y;
   }
   // Wind-up ring for the telegraph (logical px, smooth pass): it shrinks onto the boss (or the
-  // dived ally) as the hit nears. None under reduced motion (the "!" stays).
+  // dived ally) as the hit nears. None under reduced motion (the "!" and a flash stay).
   function drawTeleRing(cam) {
-    if (reduced || typeof bossTelegraph !== 'function' || target() === 'node') return;
+    if (reduced || typeof bossTelegraph !== 'function' || target() !== 'mob') return;
     const t = bossTelegraph(); if (!t || !(t.dur > 0)) return;
-    const u = Math.max(0, Math.min(1, t.left / t.dur)), pal = TELE[t.kind] || TELE.heavy;
-    let x = foe.x - cam, y = foe.cy, r0 = Math.max(foe.w, foe.h) * 0.45;
-    if (t.kind === 'dive') { const a = order.find(o => o.key === t.target); if (!a) return; x = (a === hero ? heroHome() : a.hx) - cam; y = a.hy - 30; r0 = 18; }
+    const u = Math.max(0, Math.min(1, t.left / t.dur)), pal = TELE[t.kind] || TELE.heavy, s = slotOf(t.foe) || foe;
+    let x = s.x - cam, y = s.cy, r0 = Math.max(s.w, s.h) * 0.45;
+    if (t.kind === 'dive') { const a = actorOf(t.target); if (!a) return; x = ax(a) - cam; y = a.hy - 30; r0 = 18; }
     const r = r0 + 40 * u;
     ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = pal[0]; ctx.lineWidth = 2;
     ctx.globalAlpha = 0.3 + 0.6 * (1 - u);
@@ -1118,6 +1710,32 @@ let resize, animate, draw, stageStats, warmScene;
     S.settings.hud = !hudOn(); drawHudBtn(); save();
   });
   drawHudBtn(); stageEl.append(hudBtn);
+  // "Show targets" toggle (S.settings.targets; missing = on), next to the bars button: each foe's
+  // target pip and dotted line. Shown only in a fight with the battle bars on.
+  const tgtBtn = el('button', 'hud-btn tgt-btn'); tgtBtn.type = 'button';
+  const tgtIc = el('canvas'); tgtIc.width = 7; tgtIc.height = 7; tgtBtn.append(tgtIc);
+  let tgtBtnOn = null, tgtShow = null;
+  function drawTgtBtn() {
+    const on_ = tgtBtnOn = targetsOn(), g = tgtIc.getContext('2d');
+    g.clearRect(0, 0, 7, 7);
+    g.fillStyle = on_ ? '#E0524F' : '#6B6275'; g.fillRect(4, 0, 3, 3);
+    g.fillStyle = on_ ? '#6A93FF' : '#6B6275'; g.fillRect(0, 5, 2, 2); g.fillRect(2, 3, 1, 1); g.fillRect(3, 2, 1, 1); g.fillRect(1, 4, 1, 1);
+    tgtBtn.classList.toggle('off', !on_);
+    tgtBtn.title = on_ ? 'Showing who each foe attacks. Tap to hide.' : 'Tap to show who each foe attacks.';
+    tgtBtn.setAttribute('aria-label', 'Show targets'); tgtBtn.setAttribute('aria-pressed', on_ ? 'true' : 'false');
+  }
+  function checkTgtBtn() {
+    const show = hudOn() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
+    if (show !== tgtShow) { tgtShow = show; tgtBtn.hidden = !show; }
+    if (targetsOn() !== tgtBtnOn) drawTgtBtn();
+  }
+  tgtBtn.addEventListener('pointerdown', e => e.stopPropagation());
+  tgtBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!S.settings) return;
+    S.settings.targets = !targetsOn(); drawTgtBtn(); save();
+  });
+  drawTgtBtn(); stageEl.append(tgtBtn);
   let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
   function updateAbilityButton() {
     const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
@@ -1156,5 +1774,5 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
+  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }

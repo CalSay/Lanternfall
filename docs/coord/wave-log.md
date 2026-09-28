@@ -90,6 +90,18 @@ enemy pass, K5/K8 gathering, Camp, Expeditions, Deepwell, Codex, synergy retune 
 - Decisions that belong to the owner (art direction, monetisation, anything irreversible) go under
   "Waiting on the owner" below instead of being guessed.
 
+## PAUSE REQUESTED BY THE OWNER (2026-09-28)
+
+When the three running tasks (C4 combat visuals, BAL2 balance, R0 regions) are merged: do NOT launch
+any new tasks. Build, check, republish the preview, and show the owner the latest version with a short
+summary. Resume only when the owner says so.
+
+## Queued for after the pause (owner feedback)
+
+- Expeditions feel locked with no explanation: until the Map Room exists, the Roster board (and the
+  bench sheet) should say "Build the Map Room (Hearth 2) to send companions on expeditions", with a Go
+  to the building. Consider a Next Up goal for it once Hearth 2 is reached.
+
 ## Waiting on the owner
 
 - Late-game direction for plan 2 (asked 2026-09-27): which of these to prioritise? Region 2 with new
@@ -344,3 +356,16 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   Team view "Best line-up" button with a preview and a why line, e.g. "Hedgefolk, a tank for the
   bruisers. +60% damage over yours."). It shifts pacing: T2 26/24/24/24 (FAIL), P1 4.3-8.8 (FAIL), P2
   22-24, P4 PASS, T4 PASS. BAL2 was told to retune with the planner merged.
+- C4 combat visuals merged: all 3 pack foes with bars (champion crown, elite mark), threat pips and
+  dotted lines with a red "left the tank" flash and a Show targets toggle (S.settings.targets), pooled
+  party numbers (hits, heals, shields, BLOCK/PARRY/DODGE/STOPPED), dashes, Kestrel's leap, bat dives
+  with a tank intercept, casts, heal motes, knockback, KO/stand-up, a wipe "Fall back!" retreat, all
+  telegraph colours, and reduced-motion variants. JS/frame unchanged; frame gap noisy on a busy machine.
+  Follow-ups: unitHeal could carry `from`; pack foes overlap somewhat at 360px.
+- R0 merged: REGIONS (Hollow 1-35, Sunken Coast 36-70 with placeholder types/names until R2-1 plugs
+  REGION_COAST into 22-data-coast.js), region-aware zone functions and readers, 55-lantern.js (S.lantern),
+  the Great Lantern card at the zone 35 boss (a What's new line for old saves), Constellations' +4 points
+  through emit('greatLantern'), and the Lantern Road strip on the Camp view. Coordinator resolved a
+  62-stage.js conflict: kept C4's pack drawing and applied R0's zoneHue for foe sprites. R2-2/R2-3/R2-7
+  notes are in the R0 report (BEH_EST length, coast champion trophies, the Coast card rewards, the Codex
+  zones page).

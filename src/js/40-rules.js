@@ -138,8 +138,10 @@ function plan(base, r, owned, money, cap, amt = S.amt) {
 }
 
 const target = () => S.activity === 'raid' && online.ready ? 'world' : S.activity === 'gather' ? 'node' : 'mob';
-const zoneType = z => (z - 1) % 7;
-const zoneCycle = z => Math.floor((z - 1) / 7);
-const zoneName = z => ZONES[zoneType(z)] + (zoneCycle(z) ? ' ' + roman(zoneCycle(z) + 1) : '');
+// Zones by region (REGIONS, 22-data-regions.js). Zones 1-35 read exactly as the old 7-zone cycle.
+const zonePlace = z => { const r = regionOf(z); return (((z - r.z0) % 7) + 7) % 7; };     // 0-6: place in the region's cycle
+const zoneCycle = z => Math.max(0, Math.floor((z - regionOf(z).z0) / 7));                 // cycle within the region
+const zoneType = z => regionOf(z).types[zonePlace(z)];                                    // GLOBAL index into TYPES
+const zoneName = z => { const r = regionOf(z), c = zoneCycle(z); return z === r.z1 && r.boss.place ? r.boss.place : r.names[zonePlace(z)] + (c ? ' ' + roman(c + 1) : ''); };
 const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
 const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];

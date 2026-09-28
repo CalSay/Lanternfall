@@ -2065,7 +2065,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => news.push(w.msg)); g.fn.on('toast', t => toasts.push(t.msg));
+    g.fn.on('whatsNew', w => { if (!/^The Great Lantern/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -2572,6 +2572,86 @@ try {
       `autoField() applies the planner's pick and cells (${pick.field.join(', ')}: "${pick.why}")`);
   }
 } catch (e) { fail('line-up planner crashed: ' + (e.stack || e)); }
+
+// ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
+console.log('regions and the Great Lantern');
+try {
+  const FIX = ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
+  const watch = g => { const ev = { gl: [], news: [] }; g.fn.on('greatLantern', e => ev.gl.push(JSON.parse(JSON.stringify(e)))); g.fn.on('whatsNew', w => ev.news.push(w.msg)); return ev; };
+  // zone functions: zones 1-35 read exactly as the old 7-zone cycle, with every fixture loaded
+  const OLD = `(() => { const out = []; const T = z => (z - 1) % 7, C = z => Math.floor((z - 1) / 7);
+    for (let z = 1; z <= 35; z++) {
+      const nm = ZONES[T(z)] + (C(z) ? ' ' + roman(C(z) + 1) : '');
+      if (zoneType(z) !== T(z) || zonePlace(z) !== T(z) || zoneCycle(z) !== C(z) || zoneName(z) !== nm || zoneNextType(z) !== (T(z) + 1) % 7
+        || zoneTheme(z) !== ZONE_THEME[T(z)] || zoneHue(z) !== (C(z) * 70) % 360 || zoneUnique(z) !== ZONE_UNIQ[T(z)] || zoneHome(z) !== CRAFT_HOME[T(z)]) out.push(z);
+    }
+    return out; })()`;
+  for (const f of FIX) {
+    const raw = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 61, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    const bad = g.eval(OLD);
+    assert(!bad.length && g.eval('S.maxZone') === raw.maxZone && g.eval('S.zone') === raw.zone && g.eval('JSON.stringify(S.found)') === JSON.stringify(raw.found || {})
+      && g.eval('JSON.stringify(S.mastery && S.mastery.zones || {})') === JSON.stringify(raw.mastery && raw.mastery.zones || {}),
+      `${f}: zone type, place, cycle, name, next type, theme, hue, unique and home ground for zones 1-35 are the old ones${bad.length ? ' (differs at ' + bad.join(', ') + ')' : ''}; zone, max zone, uniques and mastery kept`);
+  }
+  const g = loadCore({ seed: 62 }), E = s => g.eval(s);
+  // region lookup at the seams
+  assert(E('regionOf(1).id') === 'hollow' && E('regionOf(35).id') === 'hollow' && E('regionOf(36).id') === 'coast' && E('regionOf(70).id') === 'coast' && E('regionOf(71).id') === 'coast'
+    && E('zonePlace(36)') === 0 && E('zoneCycle(36)') === 0 && E('zonePlace(70)') === 6 && E('zoneCycle(70)') === 4 && E('zoneCycle(71)') === 5
+    && E('regionBossZone(35) && regionBossZone(70) && !regionBossZone(36)'), 'regions: 35 is the Hollow, 36 and 70 the Coast (place 0 cycle I, place 6 cycle V), 71 stays on the Coast (cycle VI)');
+  // the coast before R2-1 plugs in: the Hollow's types at the same places (the balance stays), its own names
+  const plugged = E('REGIONS[1].plugged');
+  if (!plugged) {
+    assert(E('(() => { for (let z = 36; z <= 90; z++) if (zoneType(z) !== (z - 1) % 7 || zoneNextType(z) !== z % 7 || zoneUnique(z) !== ZONE_UNIQ[(z - 1) % 7]) return false; return true; })()'),
+      'coast placeholder: zones 36-90 keep the Hollow foe types, packs and uniques they had');
+    const names = E('[36, 37, 43, 70, 71].map(zoneName)');
+    assert(names.every(n => n && !/undefined/.test(n) && !E('ZONES').some(h => n.startsWith(h))) && names[0] !== names[1] && /II$/.test(names[2]) && /V$/.test(names[3]) && /VI$/.test(names[4]),
+      `coast placeholder names read as their own places: ${names.join(', ')}`);
+  } else {
+    assert(E('TYPES.length') >= 14 && E('zoneType(36)') >= 7, 'the coast is plugged in (22-data-coast.js): its own types');
+  }
+  // the Great Lantern: fires once, on the first kill of the zone 35 boss
+  const ev = watch(g);
+  E('S.L = 40; S.maxZone = 35; S.zone = 35'); ticks(g, 3);
+  const pts0 = E('starPoints()');
+  assert(E('S.lantern.seen') === 35 && !ev.gl.length && JSON.stringify(E('S.lantern.lit')) === '{}', 'a save at zone 35: no Great Lantern yet');
+  E('S.maxZone++; S.zone++; emit("zoneClear", { zone: 35 })');   // what 50-sim does on the first boss kill
+  ticks(g, 3);
+  const c0 = E('COAST_STORY[0]'), e0 = ev.gl[0] || {};
+  assert(ev.gl.length === 1 && e0.quiet === false && e0.region === 'hollow' && e0.n === 1 && e0.zone === 35 && e0.head === c0.head && e0.text === c0.text && !ev.news.length,
+    `the zone 35 boss's first kill: one Great Lantern card ("${e0.head}"), story beat 0, no bell line`);
+  assert((e0.rewards || []).some(r => r.txt === '+4 star points') && E('starPoints()') === pts0 + 4 && E('greatLanternsLit()') === 1,
+    'constellations: the card lists +4 star points and they are granted (greatLanternsLit 1)');
+  E('S.zone = 35; emit("zoneClear", { zone: 35 }); S.maxZone = 40; S.zone = 40'); ticks(g, 5);
+  const saved = E('save(), 1') && g.storage.get(KEY);
+  const g2 = loadCore({ seed: 63, storage: memoryStorage({ [KEY]: saved }) }), ev2 = watch(g2);
+  ticks(g2, 5);
+  assert(ev.gl.length === 1 && E('starPoints()') === pts0 + 4 && E('S.lantern.lit.hollow') > 0 && !ev2.gl.length && !ev2.news.length && g2.eval('greatLanternsLit()') === 1,
+    'it fires once: not on a rematch, not further on, not after a reload; the points stay +4');
+  E('S.maxZone = 71; S.zone = 71'); ticks(g, 2);
+  assert(ev.gl.length === 2 && ev.gl[1].region === 'coast' && ev.gl[1].n === 2 && ev.gl[1].head === E('COAST_STORY[5].head') && E('greatLanternsLit()') === 2 && !g.errors.length,
+    'the zone 70 boss lights the second (the Coast, beat 5)');
+  // old saves past zone 35: a bell line, not the card; once
+  for (const f of FIX) {
+    const raw = JSON.parse(rawOf(f));
+    const h = loadCore({ seed: 64, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), hv = watch(h);
+    const p0 = h.eval('starPoints()');
+    ticks(h, 30);
+    const past = raw.maxZone > 35;
+    const again = loadCore({ seed: 65, storage: memoryStorage({ [KEY]: (h.eval('save(), 1'), h.storage.get(KEY)) }) }), av = watch(again);
+    ticks(again, 30);
+    assert(past ? hv.gl.length === 1 && hv.gl[0].quiet === true && hv.news.filter(m => m.startsWith(hv.gl[0].head)).length === 1 && !/star points/.test(hv.news.find(m => m.startsWith(hv.gl[0].head)) || '')
+        : !hv.gl.length && !hv.news.some(m => /Great Lantern/.test(m)),
+      past ? `${f} (zone ${raw.maxZone}): one bell line, no card: "${hv.news.find(m => /Great Lantern/.test(m))}"` : `${f} (zone ${raw.maxZone}): nothing yet`);
+    assert(!av.gl.length && !av.news.some(m => /Great Lantern/.test(m)) && h.eval('starPoints()') === p0 && !h.errors.length,
+      `${f}: nothing more after a reload; star points unchanged (${p0})`);
+  }
+  // the Lantern Road
+  const road = E('lanternRoad()');
+  assert(road.length === 3 && road[0].lit && road[1].lit && !road[2].lit && road[2].beyond && road[1].here, 'lanternRoad(): Hollow and Coast lit, the Emberwaste dark beyond, the party on the Coast');
+} catch (e) { fail('regions and the Great Lantern crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

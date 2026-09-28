@@ -202,7 +202,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     for (let i = 0; i < n && list.length < 6; i++) {
       const b = FOE_BEH[type], cyc = zoneCycle(f.z);
       const a = {
-        key: type + cyc, type, rows: SPR[type], pal: shiftPal(TYPES[ti].pal, cyc * 70), boss: false, hp: f.max * share, max: f.max * share,
+        key: type + cyc, type, rows: SPR[type], pal: shiftPal(TYPES[ti].pal, zoneHue(f.z)), boss: false, hp: f.max * share, max: f.max * share,
         name: TYPES[ti].name, gold: 0, xp: 0, hit: 0, dead: 0, born: 0, ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured,
         atk: f.atk / COMBAT_TUNE.bossAtk * b.atk, spd: COMBAT_TUNE.spd * b.spd, swing: 1, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
         stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
