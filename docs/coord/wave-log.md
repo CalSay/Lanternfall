@@ -573,3 +573,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   and partyLevel() still averages the top 3 companions with a field of 2. Also found: a combat soft-lock
   (companions stay down forever while a healer hero survives: no kill, no wipe); the hold estimate overrates
   a hero in Front. F5 launched for these before BAL3.
+- LORE3 merged: 55-story.js, 75-story-ui.js, 60-story.css (arrival banners, elder intro/fall lines, story
+  beat chips and cards with a companion line, Codex Story row with "Catch up on the story" for old saves,
+  bestiary lines, "The Listener" at zone 35, Great Lantern character lines; storyBeat API for the Coast;
+  S.story). Class screen now reads "You carry one of the last lanterns." RAID_LORE unused: needs the owner's
+  sign-off to edit 74-ui-raid.js (online-layer UI, no data change) = LORE9.
