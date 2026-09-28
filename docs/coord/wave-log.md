@@ -283,3 +283,8 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
 See docs/design/plan-2.md. Wave 1 started: D2 pinnacle spec and Q1+D3 quality fixes plus the old-save welcome, now;
 C4, C6, AF, R0 and BAL2 after Stage C lands.
 - D2 pinnacles.md merged (Hollow King, Lurelight, First Fire, the Climber; open after the Drowned Keeper + Oath 15, about day 33-40). Coordinator accepts its recommendations: live-play kills only, an Assist switch (1.5x wind-ups, full rewards), Boss of the Week pays a Seal + stamp only. Section 12 lists hooks Stage C needs in 59-combat/59b-enemies.
+- Q1 + D3 merged: the out-of-reach upgrade hint ("Best spent on recruits now"), the Watchtower hint via
+  partyHoldEstimate (it guessed the return shape: verify when Stage C lands), one "What's new" bell
+  notice for old saves (emit('whatsNew', ...)), 44px targets (Omen, weekly board, synergy chips,
+  Expeditions), the Omen pinned for the whole check run, and 55-welcome.js (old saves without a camp get
+  the Hearth up to what their zone allows, free, once; save-v2-late gets Hearth 8 with 2 builders).

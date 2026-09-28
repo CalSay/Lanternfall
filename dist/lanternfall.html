@@ -394,7 +394,7 @@ button * { pointer-events: none; }
 .om-det { display: grid; gap: 10px; }
 .om-hint { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
 .om-hint-tx { margin: 0; font-size: 14px; color: var(--bone); }
-.om-go { min-width: 64px; min-height: 36px; flex: none; }
+.om-go { min-width: 64px; min-height: 44px; flex: none; }
 .om-go[hidden] { display: none; }
 .om-dare { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; width: 100%; padding: 8px 10px; min-height: 44px; text-align: left; cursor: pointer; background: rgba(224,82,79,.06); border: 2px dashed #6A3040; }
 .om-dare[hidden] { display: none; }
@@ -406,7 +406,7 @@ button * { pointer-events: none; }
 .om-dare-fx { font-size: 12.5px; color: var(--muted); }
 .om-tmr { margin: 0; font-size: 12.5px; color: var(--muted); }
 .om-board { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; }
-.om-board .mini { flex: none; min-height: 36px; }
+.om-board .mini { flex: none; min-height: 44px; }
 
 /* ---- World tab ---- */
 #sec-almanac .world-head { margin-bottom: -6px; }
@@ -1216,7 +1216,7 @@ span.cf-d { font-weight: 600; }
 .ex-slot.back .ex-sub { color: var(--gold); }
 .ex-foot { display: flex; gap: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 2px; }
 .ex-acts { display: flex; gap: 5px; margin-left: auto; }
-.ex-acts .mini { min-height: 40px; padding: 4px 9px; }
+.ex-acts .mini { min-height: 44px; padding: 4px 9px; }
 .ex-acts .mini.on { border-color: var(--xp); color: var(--xp); }
 .ex-acts .mini.armed { background: #3A1E22; }
 .ex-free { min-height: 48px; background: none; border: 2px dashed var(--line-hi); color: var(--muted); font: 600 15px var(--display); cursor: pointer; }
@@ -1225,7 +1225,7 @@ span.cf-d { font-weight: 600; }
 /* ---- filters ---- */
 .ex-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .ex-filters::-webkit-scrollbar { display: none; }
-.ex-chip { flex: none; min-height: 36px; padding: 4px 12px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.ex-chip { flex: none; min-height: 44px; padding: 4px 12px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
 .ex-chip.on { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
 
 /* ---- route cards ---- */
@@ -1249,7 +1249,7 @@ span.cf-d { font-weight: 600; }
 
 /* ---- log ---- */
 .ex-log { background: var(--well); border: 1px solid var(--line); padding: 0 9px; }
-.ex-log summary { min-height: 40px; display: flex; align-items: center; font: 600 13px var(--display); color: var(--muted); cursor: pointer; }
+.ex-log summary { min-height: 44px; display: flex; align-items: center; font: 600 13px var(--display); color: var(--muted); cursor: pointer; }
 .ex-log[open] { padding-bottom: 8px; }
 .ex-lrow { display: grid; gap: 1px; padding: 5px 0; border-top: 1px solid var(--line); }
 .ex-lt { display: flex; justify-content: space-between; gap: 8px; font: 600 13px var(--display); }
@@ -1277,9 +1277,9 @@ span.cf-d { font-weight: 600; }
 .ex-tslot.r-epic { border-color: var(--r-epic); }
 .ex-tslot.r-legendary { border-color: var(--r-legendary); }
 .ex-tslot.picking { outline: 2px solid var(--ember); outline-offset: 1px; }
-.ex-best { justify-self: start; min-height: 40px; }
+.ex-best { justify-self: start; min-height: 44px; }
 .ex-bench { display: grid; gap: 4px; padding: 6px; background: var(--well); border: 1px solid var(--line); }
-.ex-bench > .mini { justify-self: start; min-height: 36px; }
+.ex-bench > .mini { justify-self: start; min-height: 44px; }
 .ex-brow { width: 100%; min-height: 48px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: center; padding: 4px 6px; text-align: left; background: var(--panel); border: 1px solid var(--line); cursor: pointer; }
 .ex-brow.on { border-color: var(--ember); }
 .ex-btxt { min-width: 0; display: grid; }
@@ -1537,7 +1537,7 @@ span.cf-d { font-weight: 600; }
 
 /* synergies */
 .syn-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.syn-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px 4px 8px; background: var(--well); border: 2px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.syn-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 4px 10px 4px 8px; background: var(--well); border: 2px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
 .syn-chip i { width: 8px; height: 8px; background: var(--line-hi); }
 .syn-chip small { font: 500 11.5px var(--body); color: var(--muted); }
 .syn-chip.on { color: var(--bone); border-color: var(--gold); background: linear-gradient(#2e2618, var(--panel)); box-shadow: 0 0 10px rgba(242,193,78,.18); }
@@ -1866,6 +1866,21 @@ span.cf-d { font-weight: 600; }
 @keyframes join-rise { from { transform: translateY(10px) scale(.97); opacity: 0; } }
 .join-ov.still, .join-ov.still .join-card { animation: none; }
 @media (prefers-reduced-motion: reduce) { .join-ov, .join-card { animation: none; } }
+/* 60-welcome: the What's new notice in the bell (70-ui.js) and the Fight > Upgrades "far" hint
+   (71-ui-fight.js). Q1 + D3 (docs/design/plan-2.md). */
+
+/* What's new: one bell row with a short list under its title. */
+.nlog-row.news { align-items: start; border-left-color: var(--gold); }
+.nlog-row.news > span:nth-child(2) { font: 600 15px/1.2 var(--display); color: var(--gold); }
+.nlog-news { grid-column: 1 / -1; display: grid; gap: 6px; margin: 2px 0 0; padding: 0; list-style: none; font-weight: 400; }
+.nlog-news li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; overflow-wrap: anywhere; }
+.nlog-news li.first { color: var(--bone); font-weight: 600; }
+.nlog-news img { width: 20px; height: 20px; image-rendering: pixelated; }
+
+/* Upgrades: the next level costs over 100x your gold. Say where gold does more now. */
+.hu-hint { margin-top: 2px; font: 600 12.5px/1.25 var(--display); color: var(--gold); }
+.hu-hint[hidden] { display: none; }
+.hu-row.far .buy .price { opacity: .6; }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } .modeseg button { padding: 0 9px; min-width: 50px; } .znum { min-width: 50px; } .skill .sn { letter-spacing: .03em; } }
 @media (prefers-reduced-motion: reduce) {
   .toast { animation: none; transition: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; }
@@ -8021,6 +8036,54 @@ const statsApi = {};
   });
 }
 
+// ---- src/js/55-welcome.js ----
+// 55-welcome: a one-time "Welcome back" for live saves that predate the Camp (plan-2 D3; the
+// coordinator said yes to question 2). CORE FILE: must not touch the DOM, window, document,
+// canvas or localStorage.
+//
+// A save with progress and no S.camp when it loads gets its Hearth built up to the level its max
+// zone allows (CAMP_HZ in 57-camp.js), once, for free. Only the Hearth: the other buildings stay
+// as the Camp's defaults leave them, nothing is taken away and no cost is charged. New games and
+// saves that already have a camp get nothing. The Hearth 1 a save gets anyway (zone 5) is not a
+// welcome: only saves whose max zone allows Hearth 2 or more are welcomed.
+//
+//   welcomeApply()   57-camp.js calls it right after registerState('camp'); returns the Hearth
+//                    level it built, or 0.
+//   welcomeNote()    -> { msg, hearth, zone } once, when the camp first opens (57-camp's
+//                    opening notice), then null. The UI shows it at the top of What's new.
+//   welcomeInfo()    -> { hearth, from, zone, at } or null (checks, the Journal).
+// State S.welcome: { v, at (ms, 0 = never welcomed), hearth, from, zone, said }.
+let welcomeApply, welcomeNote, welcomeInfo;
+{
+  // Decide before 57-camp registers S.camp: an old save has progress and no camp field yet.
+  const predates = S.camp === undefined && (S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
+  registerState('welcome', { v: 1, at: 0, hearth: 0, from: 0, zone: 0, said: 0 });
+  const W = () => S.welcome;
+
+  welcomeApply = () => {
+    if (!predates || W().at || !S.camp || !S.camp.b || typeof CAMP_HZ === 'undefined') return 0;
+    const allow = CAMP_HZ.filter(z => S.maxZone >= z).length;
+    const from = S.camp.b.hearth || 0;
+    if (allow < 2 || allow <= from) return 0;
+    S.camp.b.hearth = allow;
+    Object.assign(W(), { at: Date.now(), hearth: allow, from, zone: S.maxZone, said: 0 });
+    return allow;
+  };
+
+  welcomeInfo = () => W().at ? { hearth: W().hearth, from: W().from, zone: W().zone, at: W().at } : null;
+
+  welcomeNote = () => {
+    if (!W().at || W().said) return null;
+    W().said = 1;
+    const h = W().hearth;
+    const extra = h >= 5 ? ' You have two builders now.' : '';
+    return {
+      hearth: h, zone: W().zone,
+      msg: `Welcome back! Old Hesketh made camp and built the Hearth up to level ${h}, as far as zone ${W().zone} allows, at no cost.${extra} The other buildings are yours to build on the Camp tab.`
+    };
+  };
+}
+
 // ---- src/js/56-achievements.js ----
 // 56-achievements: permanent milestones. Each one grants a small bonus through
 // addModifier. Checked once a second against the live state, so old saves unlock what
@@ -9704,6 +9767,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
+  // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
+  if (typeof welcomeApply === 'function') welcomeApply();
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -9866,6 +9931,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
+    const w = typeof welcomeNote === 'function' ? welcomeNote() : null;
+    if (w) { emit('whatsNew', { msg: w.msg, icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, first: true }); return; }
     toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;
@@ -9954,8 +10021,15 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
 
   // ---------------- Watchtower hold hint ----------------
-  // The highest cleared zone where the party kills a foe in 3 seconds or less.
+  // Before party combat: the highest cleared zone where the party kills a foe in 3 seconds or less.
+  // With party combat (Stage C), partyHoldEstimate() decides: a zone number, or { zone }.
   campHoldZone = () => {
+    if (typeof partyHoldEstimate === 'function') {
+      try {
+        const e = partyHoldEstimate(), z = typeof e === 'number' ? e : e && (e.zone != null ? e.zone : e.best);
+        if (z > 0) return Math.max(1, Math.min(S.maxZone, Math.floor(z)));
+      } catch (er) { console.error('[lanternfall] hold estimate', er); }
+    }
     const d = totalDps(); if (!(d > 0)) return 1;
     const z = 1 + Math.floor(Math.log(3 * d / 40) / Math.log(1.42));
     return Math.max(1, Math.min(S.maxZone, z));
@@ -15557,6 +15631,7 @@ function makeToast(msg, kind, url, p) {
   t.addEventListener('pointermove', e => { if (x0 == null) return; dx = e.clientX - x0; t.style.transform = `translateX(${dx}px)`; t.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 160)); });
   const up = () => {
     if (x0 == null) return; x0 = null; t.style.transition = '';
+    if (Math.abs(dx) < 6 && t._tap) { dropToast(t, 'gone'); t._tap(); return; }
     if (Math.abs(dx) > 48 || Math.abs(dx) < 6) { t.style.transform = `translateX(${dx < 0 ? -120 : dx > 6 ? 120 : 0}%)`; dropToast(t, 'gone'); }
     else { t.style.transform = ''; t.style.opacity = ''; armToast(t); }
   };
@@ -15569,6 +15644,7 @@ try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offset
 function showToast(msg, kind, icon, prio) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
+  if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
   notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
   if (notes.log.length > 50) notes.log.length = 50;
   const box = $('toasts');
@@ -15597,6 +15673,60 @@ function showToast(msg, kind, icon, prio) {
   box.appendChild(t);
   armToast(t);
 }
+// ---- What's new ----
+// Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
+// deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
+// instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
+// on the first ticks; the Codex at 2 s). One notice alone pops as usual. Achievements join into
+// one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
+// the list), e.g. the camp welcome (55-welcome.js).
+const NEWS = { open: true, t: 0, lines: [], entry: null };
+function newsEntry(lines) {
+  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
+  if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
+  else {
+    const list = lines.filter(l => l.first).concat(lines.filter(l => !l.first));
+    NEWS.entry = { id: ++notes.seq, msg: `What's new: ${list.length} things since your last visit.`, kind: 'good news', url: (list.find(l => l.url) || {}).url || null, p: 2, at: Date.now(), list };
+    notes.log.unshift(NEWS.entry);
+    if (notes.log.length > 50) notes.log.length = 50;
+  }
+  notes.unread++; bellUpdate(true);
+  newsToast();
+}
+// One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
+function newsToast() {
+  NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  const box = $('toasts');
+  for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
+  // Room as for a high notice: retire the oldest normal toasts first.
+  const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
+  const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
+  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
+  const t = makeToast(`What's new since your last visit. Tap to read.`, 'good', NEWS.entry.url, 2);
+  t._news = true; t._tap = openNoticeLog;
+  box.appendChild(t); armToast(t);
+}
+on('createDone', () => { if (NEWS.wait) newsToast(); });
+function newsFlush() {
+  NEWS.open = false;
+  let lines = NEWS.lines; NEWS.lines = [];
+  // The lines now live in the bell: point them at the Journal directly.
+  for (const l of lines) l.msg = l.msg.replace('Tap the bell, then Journal.', 'See the Journal.').replace('from the bell, then Journal.', 'from the Journal.');
+  const ach = lines.filter(l => /^Achievement: /.test(l.msg));
+  if (ach.length > 1) {
+    const names = ach.map(l => l.msg.slice(13).split('. ')[0]);
+    lines = lines.filter(l => !ach.includes(l));
+    lines.push({ msg: `${ach.length} achievements earned: ${names.join(', ')}. See the Journal.`, url: ach[0].url, kind: 'good', p: 1 });
+  }
+  if (lines.length === 1 && !lines[0].first) { const l = lines[0]; showToast(l.msg, l.kind, l.url, l.p); return; }
+  if (lines.length) newsEntry(lines);
+}
+onTick(dt => { if (NEWS.open && (NEWS.t += dt) >= 2.5) newsFlush(); });
+on('whatsNew', w => {
+  let url = null; try { url = iconOf(w.icon); } catch (e) {}
+  const line = { msg: w.msg, url, kind: 'good', p: 2, first: !!w.first };
+  if (NEWS.open) NEWS.lines.push(line); else newsEntry([line]);
+});
 // The bell sheet has two views: Notices (this visit's log) and the Journal (lifetime stats,
 // registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
 const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
@@ -15625,6 +15755,12 @@ function openNoticeLog() {
       for (const n of notes.log) {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
         r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        if (n.list) {
+          r.firstChild.nextSibling.textContent = "What's new";
+          const ul = el('ul', 'nlog-news');
+          for (const l of n.list) { const li = el('li', l.first ? 'first' : ''); li.append(l.url ? img(l.url) : el('span'), el('span', null, l.msg)); ul.append(li); }
+          r.append(ul);
+        }
         list.append(r);
       }
       box.append(list, el('p', 'note', 'The last 50 notices from this visit.'));
@@ -16187,8 +16323,27 @@ const heroRows = HERO_UPS.map(u => {
   const d = disclose(r.row, r.desc.parentElement, null, [r.ic]);
   r.own.after(d.chev);
   r.desc.parentElement.setAttribute('aria-label', `${u.name}: show details`);
+  r.hint = el('div', 'hu-hint'); r.hint.hidden = true; r.desc.after(r.hint);
   return r;
 });
+// Late game the next level can cost far more than you hold (plan-2 finding 12). Past HU_FAR times
+// your gold (and 100x ten foes' worth) the row says where gold does more now: the gold sink Next Up rates closest (promotions,
+// recruits, the Camp), read from its goals about once a second.
+const HU_FAR = 100;
+const HU_SINKS = [['promote', 'Best spent on promotions now.'], ['recruit', 'Best spent on recruits now.'], ['camp-build', 'Best spent on the Camp now.']];
+let huSinkAt = 0, huSinkTxt = '';
+// Early on a broke hero is not "far": the bar is also 100x ten foes' worth at the frontier.
+const huFloor = () => typeof foesGold === 'function' ? foesGold(S.maxZone, 10) : 1;
+function huSink() {
+  const t = Date.now(); if (t - huSinkAt < 1000 && t >= huSinkAt) return huSinkTxt;
+  huSinkAt = t; let best = null;
+  for (const [id, txt] of HU_SINKS) {
+    const g = typeof GOALS !== 'undefined' && GOALS.find(x => x.id === id); if (!g) continue;
+    let p = 0; try { p = goalGate(g) ? +g.pct() : 0; } catch (e) { p = 0; }
+    if (p > 0 && (!best || p > best.p)) best = { p, txt };
+  }
+  return (huSinkTxt = best ? best.txt : 'Out of reach for now. New zones pay more gold.');
+}
 // Boss gate: the title and the button; the odds and rules open on a tap.
 {
   const g = $('gateTitle').parentElement, row = g.parentElement;
@@ -16249,6 +16404,9 @@ function uiFight() {
     putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');
     setPrice(r.btn, p.cost);
     putDisabled(r.btn, !(p.n > 0 && S.gold >= p.cost));
+    const one = p.n > 0 ? plan(u.base, u.r, S[u.id], S.gold, u.cap, '1').cost : 0, far = one > HU_FAR * Math.max(S.gold, huFloor());
+    putHidden(r.hint, !far); if (far) putText(r.hint, huSink());
+    putToggle(r.row, 'far', far);
   });
   // Once the save is on the roster (56-roster.js), companions live in the Party tab.
   putHidden(G.comp, rosterLive());
