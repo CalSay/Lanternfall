@@ -27,13 +27,18 @@ Owner and coordinator rules this spec obeys:
 4. **Every Shroud's fall gives a sight, a person and a power** (lore.md 4.4a), each genuinely new at that
    point in the game (coordinator fix, section 1).
 5. **The gatherer cap is Tents** (owner, 2026-09-28, overriding gatherers-2 6): 2 at the start, about 10 by
-   Region 5, built with gold and materials. Gatherers are hired with gold and paid a daily upkeep (N1c
-   owns those rules; this spec shows them).
-6. **Words:** buff items are **Sigils** (Tide, Ember, Frost and Gloam Sigils); the crystal family shows as
+   Region 5, built with gold and materials. Gatherers cost a one-off **hire fee** plus a **shift fee** in
+   gold by resource grade, with no daily wage (N1c and ECON1 own those rules; this spec shows them).
+6. **Gold is priced by ECON1.** Gold per kill will step up by region (ECON1). So every gold cost here is
+   written in a relative unit, **R*r* minutes**: minutes of a normal player's fight gold in region *r*
+   (`goldMin(r, m)`, ECON1 defines it). Section 2.9 lists every gold cost in one table.
+7. **The camp scene pans, it does not shrink** (owner): it grows sideways, with two zoom levels at whole
+   pixel scales (2x normal, 1x overview), and hired gatherers live in it as people you can tap.
+8. **Words:** buff items are **Sigils** (Tide, Ember, Frost and Gloam Sigils); the crystal family shows as
    **Gems**, mined from Geodes; the Gem-seeker job is the **Sigil-seeker**. `docs/design/materials.md` does
    not exist on this branch, so materials are named by grade and family only ("grade-4 ore").
-7. **Saves:** until 1.0 the owner accepts a wipe (CLAUDE.md). No heavy migrations; new fields get defaults.
-8. **The online layer does not change shape** (`world/boss`, `raiders/*`, room presence, `rally`,
+9. **Saves:** until 1.0 the owner accepts a wipe (CLAUDE.md). No heavy migrations; new fields get defaults.
+10. **The online layer does not change shape** (`world/boss`, `raiders/*`, room presence, `rally`,
    `52-raid.js`, `80-online.js`). The map only decides where the raid pin is drawn.
 
 Design rules of this spec:
@@ -87,7 +92,7 @@ Notes:
 - **Old saves** past a boss get the person and the building's Lv 1 on load, once, as one bell line
   ("The Rushbys came while you were away. The Tannery stands.") (55-lantern's `quiet` rule).
 - **The leftover LORE-R45 names** (the coordinator leans against extra Sigil-seeker pairs): Wick and Fenn
-  are the Pale Reach's people above; **Haldor and Nessa** keep the Gloamvale's outpost fire (3.6);
+  are the Pale Reach's people above; **Haldor and Nessa** keep the Gloamvale's outpost fire (3.2);
   **Old Corrin**, the retired Deepwell miner, can be the Deepwell's winch-keeper at camp (he arrives when
   the Deepwell opens), and **Sable** "found a way down nobody else had": she guides the party to the
   Deepwell's new stretch after the ending (regions-4-5.md 2.8). HER, R5 and LORE-G keep or drop these.
@@ -141,8 +146,10 @@ is the full range for Season 1; the region gates for Lv 6-10 are in 2.3.
 
 ### 2.2 Costs, Lv 1-5 (kept, with the grade fix)
 
-The formula stays 57-camp's: `gold = campGold(zRef, goldPerLv x L)`, materials from each family in the
-building's `fam` at `ceil(M x mult[L])`, trophies `troph[L]`, timers `secs[L]` (CAMP_TUNE). One fix:
+Materials, trophies and timers keep 57-camp's formula: each family in the building's `fam` at
+`ceil(M x mult[L])`, trophies `troph[L]`, timers `secs[L]` (CAMP_TUNE). **Gold** changes from today's
+`campGold(zRef, goldPerLv x L)` (foes' worth at the gate zone, which inflates) to a relative row in 2.9
+that ECON1 prices. One more fix:
 
 **The grade of a row follows gear-2's region gates.** Today row `L` asks tier `L`, so a Lv 4 building (Hearth
 6, zone 27) asks grade-4 materials, which gear-2 moves to the Coast (zone 36). New rule, one table:
@@ -172,7 +179,7 @@ Hearth (rule 2):
 | 9 | The Pale Reach reached (zone 106) | 10 | 10 | 4 | 48 h |
 | 10 | The Gloamvale reached (zone 141) | 13 | 12 | 5 | 48 h |
 
-- Gold: `campGold(gate zone, goldPerLv x L)` as for rows 1-5.
+- Gold: the row's relative amount in 2.9.
 - **Builders:** 1, 2 from Hearth 5 (today), **3 from the Hearth tree's capstone** (2.8). About 60 builds of
   Lv 6-10 over roughly 75 days at 36-48 h each is about 35 days of work for 3 builders, so a player who
   checks in daily keeps every builder busy without racing.
@@ -204,25 +211,26 @@ Owner, 2026-09-28: the gatherer cap is the number of Tents in camp.
 | Look | A tent's look follows the camp, not the rule: **canvas tents** (Hearth 1-4), **timber cabins** (Hearth 5-9), **stone cottages with a sill lamp** (Hearth 10, or the Emberwaste's shroud lifted). Every tent upgrades at once, free, when the camp does. |
 | Tree | 9 points at 10 tents (2.8): Comfort, Training, Thrift. No node adds a tent: the cap is the Tents you build. |
 
-The curve (starting values; BAL3 tunes against N1c's upkeep):
+The curve (starting values; BAL3 tunes it with N1c's fees). Gold is in the relative unit of rule 6 (2.9):
 
-| Tents | Gate | Cost (gold is `campGold(gate zone, k)`) | Timer | When (normal play) |
-|---|---|---|---|---|
-| 2 | Hands open | Grade-1 wood 30, fibre 15 | 3 min | about hour 1 (zone 10) |
-| 3 | Hearth 4 | k 400; grade-2 wood 80, fibre 40 | 1 h | day 1 |
-| 4 | Hearth 6 | k 800; grade-3 wood 120, hide 40 | 6 h | day 2-4 |
-| 5 | Hearth 8 (the Coast reached) | k 1,200; grade-4 Planks 80, Cloth 40 | 16 h | day 6-9 |
-| 6 | Zone 55 | k 1,600; grade-5 Planks 120, Leather 50 | 24 h | day 14-20 |
-| 7 | The Emberwaste reached | k 2,000; grade-7 Planks 150, Cloth 60 | 30 h | day 36-45 |
-| 8 | Zone 88 | k 2,400; grade-8 Planks 180, Leather 70 | 36 h | day 45-52 |
-| 9 | The Pale Reach reached | k 2,800; grade-10 Planks 220, Cloth 90 | 42 h | day 55-62 |
-| 10 | The Gloamvale reached | k 3,200; grade-13 Planks 260, Leather 100 | 48 h | day 68-75 |
+| Tents | Gate | Gold | Materials | Timer | When (normal play) |
+|---|---|---|---|---|---|
+| 2 | Hands open | none | Grade-1 wood 30, fibre 15 | 3 min | about hour 1 (zone 10) |
+| 3 | Hearth 4 | R1 10 min | Grade-2 wood 80, fibre 40 | 1 h | day 1 |
+| 4 | Hearth 6 | R1 30 min | Grade-3 wood 120, hide 40 | 6 h | day 2-4 |
+| 5 | Hearth 8 (the Coast reached) | R2 45 min | Grade-4 Planks 80, Cloth 40 | 16 h | day 6-9 |
+| 6 | Zone 55 | R2 60 min | Grade-5 Planks 120, Leather 50 | 24 h | day 14-20 |
+| 7 | The Emberwaste reached | R3 60 min | Grade-7 Planks 150, Cloth 60 | 30 h | day 36-45 |
+| 8 | Zone 88 | R3 75 min | Grade-8 Planks 180, Leather 70 | 36 h | day 45-52 |
+| 9 | The Pale Reach reached | R4 75 min | Grade-10 Planks 220, Cloth 90 | 42 h | day 55-62 |
+| 10 | The Gloamvale reached | R5 90 min | Grade-13 Planks 260, Leather 100 | 48 h | day 68-75 |
 
 That is 4 tents at the Hollow's boss, 6 at the Coast's, 8 by the Emberwaste's and 10 in the Gloamvale, the
 curve gatherers-2 6.1 wanted (crew about half of who you have met).
 
-**Upkeep** (N1c owns the numbers and what happens when gold runs short): this spec only places it on screen
-(section 6.3). The Tents' Thrift branch and the Kitchen's Shared Pot node are the camp's two upkeep cuts.
+**Fees** (N1c and ECON1 own the numbers): a gatherer costs a one-off **hire fee** and a **shift fee** each
+time you send them, by the grade of the resource; there is no daily wage. This spec only places the fees on
+screen (6.3). The Tents' Thrift branch and the Kitchen's Shared Pot node are the camp's two fee cuts.
 
 ### 2.6 The Chapel (the Library and the Shrine, merged)
 
@@ -232,7 +240,7 @@ curve gatherers-2 6.1 wanted (crew about half of who you have met).
 | Opens | Hearth 2 (the Library's gate). |
 | Lv 1 | Opens the Codex from camp (as the Library did); gathering XP +5% (the Library's line). |
 | Blessings | **1 slot at Lv 2, 2 slots at Lv 5** (the Shrine's Lv 1 and Lv 3), Blessings 25% stronger at Lv 4 (the Shrine's Lv 2). Unlocking stays with Codex pages (camp.md 2.5). |
-| Hero XP | The Library's companion XP line moves to the Infirmary's Drill branch? No: heroes need it from Region 1, so it stays here: +5% a level after Lv 1, to +20% at Lv 5 (as today). |
+| Hero XP | The Library's hero XP line stays here, because heroes need it from Region 1: +5% a level after Lv 1, to +20% at Lv 5 (as today), and +5% a level on to +45% at Lv 10. |
 | No migration | A save with a Shrine gets `library = max(library, shrine + 1)` once, capped at its Hearth gate, so no Blessing slot is lost. Pre-1.0 the owner accepts a wipe anyway. |
 
 Spots: Pip and Oriel (the roof at night), Elowen, Maren and Anselm (at the bell) (`CAMP_SPOTS`: `shrine`
@@ -245,7 +253,7 @@ and `library` both map to the Chapel).
 | **Tannery** | The Tanning queue (gear-2 3.1-3.3: 2 Hide + 1 salt of the grade's region = 1 Leather, 3 orders). Gil's Hunter shifts count Hide straight into it when you pick "Send to the Tannery". | Queue speed +20% a level (gear-2 3.3's `perLv`), Tailoring XP (+10% a level to +50%), and its tree | "Leather needs a Tannery. Nothing grows in this fog." |
 | **Infirmary** | Heroes at camp or on the bench refill **Rested** 50% faster (S7's meter). A hero back from 8 h+ at rest keeps the "rested" +25% XP for 90 minutes instead of 60. | Refill +10% a level; the tree | "Nobody on this road has been tended in ten years." |
 | **Lamp House** | Awakening happens here: a hero whose quest is done steps in and comes out Awakened (HQ1's ceremony card). | Quest step timers -5% a level; the tree | "The Lea's lights are held. Nothing burns brighter while they are." |
-| **Beacon** | **The call:** once a day, light it to bring the next event now (events otherwise roll 2-4 a day; plan-4 6.7). Secret hint marks you have heard of show on the map. | Lv 2: secret hint marks you have *not* heard of show as faint "?" too. Lv 3: 2 calls a day. Lv 4: an event you call pays +25%. Lv 5: the call also rerolls which event comes, once. No tree (5 levels). | "Every fire up here dies by morning." |
+| **Beacon** | **The call:** once a day, light it to bring the next event now (events otherwise roll 2-4 a day; plan-4 6.7). Secret hint marks you have heard of show on the map. | Gold per 2.9 (G10). Lv 2: secret hint marks you have *not* heard of show as faint "?" too. Lv 3: 2 calls a day. Lv 4: an event you call pays +25%. Lv 5: the call also rerolls which event comes, once. No tree (5 levels). | "Every fire up here dies by morning." |
 
 The Beacon has no tree on purpose: five levels, five lines. It is a service, not a specialisation.
 
@@ -266,17 +274,17 @@ Tree rules (BT1):
 | **Hearth** | +3% away gains a level; 2 builders at 5 | **Welcome:** away gains +4% · Rested fills 25% faster at the fire · away gains +4% · **Homecoming:** the first check-in each day gives 20 min of +25% gold and XP | **Builders:** build timers -5% · Cancel refunds 75% after start (was 50%) · build timers -5% · **A third builder** | **Lantern Hall:** hero XP +5% · Bond time at the fire +25% · hero XP +5% · **The Long Table:** heroes at camp count for Bonds with the fielded party (half rate) |
 | **Workbench** | Woodcraft station; XP +10% a level (to +50%); "Make 5" at 3; Salvage +25% at 5 (today) | **Bowyer:** bow and staff rolls: Rare weight +3 · Epic +1 · Rare +3 · **True Grain:** a crafted weapon's main line +5% | **Carpenter:** building materials -5% (wood only) · build timers -3% · wood costs -5% · **Master Joiner:** one extra queued build per builder | **Sawmill** (from Region 2): Saw speed +20% · a 4th Saw order · Saw speed +20% · **Offcuts:** 1 Plank in 10 comes free |
 | **Forge** | Smithing station; XP +10% a level; Rare odds +10% at 5 (today) | **Weaponsmith:** weapon rolls Rare +3 · Epic +1 · **+3% damage (the Forge's one damage node, counts to the camp cap)** · **Tempered Edge:** Temper (gear-2 6.5) costs 25% less | **Armourer:** armour rolls Rare +3 · Epic +1 · armour lines +3% · **Proof Plate:** upgrades +8 to +10 cost 20% less gold | **Smelter** (from Region 2): Smelter speed +20% · a 4th order · coal -10% an Ingot · **Bloomery:** a 5th order, and Smelter orders keep running 2 h past the away cap |
-| **Storehouse** | Caps by level (H3's table) | **Deep Shelves:** caps +5% · +5% · +5% · **Overflow Shed:** a full cell stores 10% past its cap (flows only) | **Sorting:** Spillover picks the best next node (not the next tier) · the pouch groups by region (UX-F) · parcels wait 2 more days before a reminder · **Quartermaster:** refunds and gifts show what they filled | **Cold Room:** meals in the pantry keep (no loss; today they keep anyway, so: Fish +10% from gatherers) · Sigils page shows find odds · herbs +5% from gatherers · **Salt Store:** secondary resources (coal, salt, dye) have double caps |
+| **Storehouse** | Caps by level (H3's table) | **Deep Shelves:** caps +5% · +5% · +5% · **Overflow Shed:** a full cell stores 10% past its cap (flows only) | **Sorting:** Spillover picks the best next node (not the next tier) · the pouch groups by region (UX-F) · parcels wait 2 more days before a reminder · **Quartermaster:** refunds and gifts show what they filled | **Cold Room:** Fish from gatherers +10% · Sigils page shows find odds · herbs +5% from gatherers · **Salt Store:** secondary resources (coal, salt, dye) have double caps |
 | **Loom** | Tailoring station; XP +10% a level; gathering 10% faster at 5 (today) | **Tailor:** cloth armour rolls Rare +3 · Epic +1 · Rare +3 · **Fine Stitch:** Masterwork lines +20% | **Dyer:** dye -10% a Cloth · weaving speed +20% · dye -10% · **Colourfast:** retool keeps a piece's Sigils at full strength | **Weaver** (from Region 2): weaving speed +20% · a 4th order · weaving speed +20% · **Bolt Room:** 1 Cloth in 10 comes free |
 | **Tannery** | Tanning queue; speed +20% a level; Tailoring XP | **Tanner:** tanning speed +20% · a 4th order · speed +20% · **Pit Row:** a 5th order | **Salter:** salt -10% a Leather · Hunter shifts +10% Hide · salt -10% · **Brine Vat:** Hide from Hunters lands 15% as Leather | **Leatherworker:** leather armour rolls Rare +3 · Epic +1 · leather lines +3% · **Supple Hide:** medium pieces take one more Sigil strength step (+5%) |
 | **Enchanter's Table** | Enchanting station; XP +10% a level; Reforge -20% at 5 (today) | **Setter:** setting costs -20% gold · Tune costs -20% · Sigil strength +2% · **Steady Hand:** setting at Enchanting below 80 counts as 5 levels higher | **Runes:** Salvage Runes cost 20% less · salvage keeps a Sigil 60% (was 50%; owner O4) · runes -20% · **Rune Pouch:** a region boss's first kill gives +2 runes | **Charms:** charm and trinket rolls Rare +3 · Epic +1 · Rare +3 · **Matched Glow:** the Matched set (gear-2 O5) needs 2 filled sockets, not 3. (Reserved 4th branch: the Still, after 1.0) |
 | **Tavern** | The visitor; Rumours at 3; bounties +15% at 4; Renown at 5 (today). Hiring gatherers with gold (N1c) happens here | **Rumours:** one more rumour a day · secret hints come a day sooner · rumours name an event's reward · **Old Stories:** each heard secret hint also marks its region on the map | **Recruiting:** gatherer hire cost -10% · hero visitor stays 72 h · hire cost -10% · **Word Travels:** a gatherer's route (gatherers-2 5) needs half the rumour work | **Trade:** trade prices +5% · +5% · a town's wanted line shows next week's too · **Old Customers:** +5% more, and the first trip each week to a town pays 1 Common Sigil of its region |
-| **Tents** | 2 to 10 tents (2.5) | **Comfort:** shifts +10% longer · Second Wind once more (gatherers-2 D4's max stays 2) · shifts +10% · **Home Cooking:** a gatherer back from a shift sets out again at once if you are away and the Kitchen has a meal on | **Training:** gatherer XP +10% · tree teaching costs -15% · XP +10% · **Old Hands:** Lv 20 gatherers share +2% | **Thrift:** upkeep -5% · -5% · lodgers at the Tavern cost nothing to keep (they never did: so: hire cost -10%) · **Shared Roof:** upkeep -10% more |
+| **Tents** | 2 to 10 tents (2.5) | **Comfort:** shifts +10% longer · Second Wind once more (gatherers-2 D4's max stays 2) · shifts +10% · **Home Cooking:** a gatherer back from a shift sets out again at once if you are away and the Kitchen has a meal on | **Training:** gatherer XP +10% · tree teaching costs -15% · XP +10% · **Old Hands:** Lv 20 gatherers share +2% | **Thrift:** shift fees -5% · -5% · hire fees -10% · **Shared Roof:** shift fees -10% more |
 | **Watchtower** | Away limit +2 h a level to Lv 5 (the 24 h total cap); the hold hint at 2 (today); Lv 6-10 points only | **Long Watch:** away limit +1 h · +1 h · +1 h (all under 24 h) · **Night Watch:** away gains past 12 h are not reduced (Hearth Day stacks) | **Scouts:** expedition grade +1 step on Poor · the hold hint also names the best farm zone · band mastery stars show on the map · **Pathfinder:** expeditions 10% shorter | **Lookout:** an event pin also shows on the activity pill · events in a region you are not in show a dot on its chip · a secret spot glints when you are within one band · **Signal Fire:** the Beacon's call has 1 more use a week |
 | **Map Room** | Expedition slots and lengths (today); trade routes from Lv 2 (gear-2 7) | **Routes:** a 12 h route at Lv 3 (was 5) · Repeat while away at Lv 4 · a 4th slot · **Long Road:** 16 h routes | **Cargo:** trade cargo +25% · +25% · caravans bring 1 Lore page on each town's 3rd trip · **Caravan Guard:** a trade trip never rolls Poor | **Surveyor:** expedition haul +5% · +5% · Sigil-focused routes +1 Sigil on Great · **Old Maps:** the first route to each band gives its mastery star |
-| **Chapel** | Codex; gathering XP +5% a level; Blessings (2.6); hero XP +5% a level after 1 | **Blessings:** Blessings +10% stronger · swap cost free in a boss fight (today: not allowed; this allows it once a day) · +10% · **Two Candles:** a 3rd Blessing slot | **Study:** Codex hints show exact sources · Light +5% · Bestiary pages +10% faster · **Scriptorium:** each Codex seal's bonus +20% | **Bells:** Bond stories unlock at the fire 25% sooner · Anselm's bell wakes the camp: dawn comes an hour earlier in the scene (cosmetic) and Hands set out at dawn +5% · hero XP +5% · **Evensong:** heroes at camp at night fill Rested 25% faster |
+| **Chapel** | Codex; gathering XP +5% a level; Blessings (2.6); hero XP +5% a level after 1 | **Blessings:** Blessings +10% stronger · swap a Blessing once a day during a boss fight (today: never) · +10% · **Two Candles:** a 3rd Blessing slot | **Study:** Codex hints show exact sources · Light +5% · Bestiary pages +10% faster · **Scriptorium:** each Codex seal's bonus +20% | **Bells:** Bond stories unlock at the fire 25% sooner · Anselm's bell wakes the camp: dawn comes an hour earlier in the scene (cosmetic) and Hands set out at dawn +5% · hero XP +5% · **Evensong:** heroes at camp at night fill Rested 25% faster |
 | **Armoury** | Bag 50 + 25 a level (to 300 at Lv 10); gear sets: 1 per character at Lv 1, 2 at 3, 3 at 5 | **Racks:** bag +25 · +25 · +25 · **The Long Wall:** the camp's display rack shows 6 pieces (was 3) | **Sets:** a set for the Deepwell and one for bosses swap by themselves when you go · sets remember Sigils · +1 set per character · **Quick Change:** switching sets is free during a boss's first 5 s | **Care:** auto-salvage filters by Sigil and power · salvage returns +10% · locked items never show in salvage lists · **Keeper's Mark:** auto-salvage keeps one of each unique power's best |
-| **Kitchen** | K12: meals (Lv 1 two recipes, Lv 2 four, Lv 3 6 h meals, Lv 4 cook 5, Lv 5 Leftovers 25%); fish meals from the Coast; Lv 6-10: meals +4% stronger a level | **Pantry:** pantry holds +50% · Leftovers +10% · cook 10 at once · **Larder:** a meal eaten while away lasts its full time from when you come back | **Hearty:** meal effects +10% · Broth's damage counts to the camp cap as before · +10% · **Feast:** one meal a day lasts 12 h | **Shared Pot:** upkeep -5% while a meal is on · Hand's Supper +25% · Forager's Pie +25% · **Mother Ashby's Table:** the Herbalist's Cook signature doubles |
+| **Kitchen** | K12: meals (Lv 1 two recipes, Lv 2 four, Lv 3 6 h meals, Lv 4 cook 5, Lv 5 Leftovers 25%); fish meals from the Coast; Lv 6-10: meals +4% stronger a level | **Pantry:** pantry holds +50% · Leftovers +10% · cook 10 at once · **Larder:** a meal eaten while away lasts its full time from when you come back | **Hearty:** meal effects +10% · Broth's damage counts to the camp cap as before · +10% · **Feast:** one meal a day lasts 12 h | **Shared Pot:** shift fees -5% while a meal is on · Hand's Supper +25% · Forager's Pie +25% · **Mother Ashby's Table:** the Herbalist's Cook signature doubles |
 | **Infirmary** | Rested refill +50% at Lv 1, +10% a level | **Rest:** refill +15% · the Rested bonus holds above 40% (was 50%) · refill +15% · **Deep Sleep:** a hero rested to full keeps it 2 h longer in the field | **Tending:** a hero knocked out stands 1 s sooner (field, not boss fights) · wipes retreat 1 zone less often (stall timer +10%) · stand 1 s sooner · **Field Kit:** once a boss fight, the first knocked-out hero stands at 30% HP | **Drill:** returning rested heroes' XP bonus +10% · +10% · lasts 30 min longer · **Sparring:** the bench's top 2 heroes by level gain Bond time with each other at camp |
 | **Lamp House** | Awakening ceremony; quest step timers -5% a level | **Lampwright:** Awakening costs -10% · -10% · a second Awakening can be in progress · **Bright Wick:** Awakened heroes' signature +5% | **Kindling:** quest steps show their next need on Next Up · a quest step done while away completes on return, not at the next check-in · -10% step timers · **Hearthlight:** the Awakened hero's look gains the Lamp House's glow (cosmetic) and +5% Rested refill | **Glass:** hero lantern looks (achievements' lantern skins) glow at camp at night · a new lantern colour per Awakening (cosmetic) · the Lantern Book shows each hero's quest · **Given Light:** each Awakened hero raises the whole party's hero XP by 1% (to +10%) |
 
@@ -287,6 +295,33 @@ Notes on the table:
 - **The Smelter, Saw and Weaver branches are greyed until Region 2** ("Opens when the Great Lantern of the
   Hollow burns"). A Region 1 player spends points elsewhere, and a free respec later moves them.
 - **The Beacon and the Trophy Wall have no tree.**
+
+### 2.9 Every gold cost in this spec (for ECON1)
+
+**R*r* N min** = N minutes of a normal player's fight gold in region *r* (`goldMin(r, N)`; ECON1 sets the
+income per region). The region is the one the gate sits in. Starting values; ECON1 reprices them to its
+scale and may round. Everything not in this table costs no gold.
+
+| # | Cost | Gold (relative) | Today (for reference) |
+|---|---|---|---|
+| G1 | Hearth 2 / 3 / 4 / 5 | R1 5 / 15 / 30 / 45 min | `CAMP_HEARTH[k]` foes' worth at the gate zone |
+| G2 | Hearth 6 / 7 | R1 60 / 75 min | as above |
+| G3 | Hearth 8 / 9 / 10 | R2 90 / 120 / 150 min | as above |
+| G4 | Any building Lv 1 (cold start stations, `hearthFirst`) | none | none |
+| G5 | Building row 2 / 3 / 4 / 5 | R1 10 / 30 / 60 min; row 5 R2 90 min | `campGold(zRef, 60 x L)` |
+| G6 | Building row 6 / 7 / 8 / 9 / 10 | R2 120 · R3 120 · R3 150 · R4 150 · R5 180 min | new |
+| G7 | The Storehouse's rows (H3, `STORE_COST`) | the same rows as G5-G6 by level; ECON1 checks H3's own table | H3's own formula |
+| G8 | Tents 3-10 | 2.5's column: R1 10, R1 30, R2 45, R2 60, R3 60, R3 75, R4 75, R5 90 min | new |
+| G9 | A milestone building's Lv 1 (the gift) | none | new |
+| G10 | The Beacon Lv 2-5 | R4 60 / 90 / 120 / 150 min | new |
+| G11 | Tree nodes and resets | none (points only; resets are free) | new |
+| G12 | Gatherer hire fee | N1c / ECON1 (shown on the hire card) | N1's hire price |
+| G13 | Gatherer shift fee, by resource grade | N1c / ECON1 (shown on the send sheet) | new |
+| G14 | Beacon call, dungeon entry, outpost sheet, map travel | none | - |
+| G15 | Trade routes, setting and tuning Sigils, Temper, Salvage Runes | gear-2 owns them; ECON1 reprices there | gear-2 |
+
+A building's row gold is the same for every building (only its materials differ), so ECON1 prices 10 rows,
+not 17 x 10.
 
 ---
 
@@ -364,7 +399,7 @@ Region notes:
 
 **When it falls** (55-lantern's `greatLantern` for that region, first kill only):
 
-1. The World map is not open: nothing happens on the map until it is. The next time the World tab opens
+1. If the World map is closed, nothing happens on it until it opens. The next time the World tab opens
    (or at once, if it is open), the plate scrolls to the hole.
 2. **The lift** (1.2 s): a DOM overlay over the hole (a radial `mask-image` from the plate's own dark
    colour) shrinks to nothing on the compositor, and 10 motes of the region's lifted kind rise out of it.
@@ -443,128 +478,164 @@ The Shroud decides which events a region can roll:
 
 ## 4. The camp scene (N2)
 
-### 4.1 The panorama at 360 px
+### 4.1 Scale, size and zoom (owner: pan, do not shrink)
+
+The camp grows **sideways** into a wider scene you pan, never smaller art. It has **two zoom levels, both
+whole-number pixel scales**, so B1's rule (no fractional scales) holds.
 
 | Rule | Value |
 |---|---|
-| Size | **180 art px tall**, width by region (4.2): 1,024 art px in Region 1 (as 55-hearth's `HEARTH_PANO_W`), growing to 1,536 by Region 5 |
-| Scale | **1 art px = 1 CSS px** (camp.md 4.1; whole-number device scale on DPR 2 and 3 phones). The window is the Build view's content width, 328 x 180 at 360 px wide |
-| Ground | Ground line at y 150; buildings 48-120 art px tall stand on it; people stand in front |
-| Moving | Swipe to pan (the view is `data-noswipe`); the **chip strip** (328 x 44) under it jumps to a building (one chip per open plot, a dot when something is ready). Opens centred on the Hearth |
-| Tap | A building highlights and its row in the Build list opens; a person shows a bubble (one line of talk) and a Sheet button |
-| People | Heroes draw with the B1 baker at scale 1 (half their stage size, about 16 x 24); gatherers the same on the townsfolk kit (gatherers-2 12, `12g-art-hands.js`) |
-| Layers (back to front) | sky (by phase) · the skyline sights (4.4) · Lantern Hill with the Great Lantern (behind the Hearth, x 280-440) · far hills · ground · plots · people · the fire · lights (lanterns, windows, the fire's pool) |
+| Art | Drawn at the **stage's art scale**: heroes and gatherers are their normal B1 sprites (about 12-16 x 24-30 art px), buildings 24-60 art px tall, the Trophy Wall its AC5 size (62 x 48). The scene is **96 art px tall**, ground line at y 82 |
+| **Normal: 2x** | 1 art px = 2 CSS px. The window is 328 x 192 CSS at 360 px wide and shows 164 art px of camp (about four buildings). All taps happen here |
+| **Overview: 1x** | 1 art px = 1 CSS px. The window is 328 x 96 CSS (the scene shrinks in height, the list below moves up) and shows 328 art px, a third to a half of the camp. It is for seeing the camp, not for tapping people: a tap on a building or a gatherer in overview **zooms back to 2x centred on it** (a second tap then acts) |
+| Switch | A 44 x 44 button at the scene's top right (a magnifier: "Overview" / "Zoom in"), or a pinch (in to 2x, out to 1x; one step per pinch, never an in-between scale) |
+| Pan | Drag or swipe (the scene is `data-noswipe` for the view swipe). **Edge arrows:** a 32 x 44 chevron at each side jumps one window width. Normal motion: a 200 ms ease; reduced motion: an instant jump, no inertia |
+| **Where you are** | A **mini strip** under the scene, 328 x 24 CSS: the whole camp squeezed to 328 px as simple marks (a 4 x 8 block per building in its roof colour, a dot per gatherer at camp, the fire as a gold dot), with a bright frame for the window. Drag or tap it to jump. It is UI, not pixel art, so its squeeze is allowed |
+| Opens | At 2x, centred on the Hearth (or on what a deep link names). The last position and zoom are kept in `lanternfall.ui.v1` (`panoX`, `panoZ`) |
+| Wide screens | The 531 px menu column shows 265 art px at 2x or 531 at 1x |
+
+Width by region (art px; the town grows east along the road, 4.2):
+
+| Region reached | Width | At 2x (CSS) | At 1x (CSS) | Screens to pan at 2x / 1x (328 px) |
+|---|---|---|---|---|
+| The Hollow | 720 | 1,440 | 720 | 4.4 / 2.2 |
+| The Coast | 832 | 1,664 | 832 | 5.1 / 2.5 |
+| The Emberwaste | 896 | 1,792 | 896 | 5.5 / 2.7 |
+| The Pale Reach | 960 | 1,920 | 960 | 5.9 / 2.9 |
+| The Gloamvale | 992 | 1,984 | 992 | 6.0 / 3.0 |
+
+The new strip at each region's end shows open road and a stake before its building stands, so the width
+never jumps under the player. 55-hearth's `HEARTH_PANO_W` (1,024 today, a placeholder) becomes this table
+(`CAMP_PANO.w`), and the Trophy Wall's x moves to p13 below; 63e paints at any `(cx, gy, k)`, so nothing
+else changes there.
 
 ### 4.2 Plots
 
-Region 1's plots keep hearth-and-hands 6.4's x positions where the code or AC5 already fixed them (p4 the
-Hearth at 360, p13 the Trophy Wall at 990); the rest are re-spread for the new list. New regions extend the
-panorama **east, past the old gate**: the town grows along the road, the Trophy Wall stays where the old
-gate was (a town-square piece now), and the road gate moves out.
-
-| Plot | x | Building | Plot opens |
+| Plot | x (art px) | Building | Plot opens |
 |---|---|---|---|
-| p0 | 24 | The Deepwell (landmark: the well mouth under the cliff) | Hearth 3 and zone 20 |
-| p1 | 90 | Tents (a field of 2-10 tents in two staggered rows, 5 wide, about 130 px) | Hands open |
-| p2 | 190 | Tavern | zone 8 (cold) / built (warm) |
-| p3 | 262 | Watchtower | Hearth 1 |
-| p4 | 360 | **Hearth** | always |
-| p5 | 438 | Workbench | the fire lit |
-| p6 | 506 | Forge | Workbench built |
-| p7 | 574 | Storehouse | Forge built, or a pile near full |
-| p8 | 640 | Loom | zone 5 |
-| p9 | 706 | Enchanter's Table | zone 6 |
-| p10 | 772 | Chapel | Hearth 2 |
-| p11 | 838 | Kitchen | Hearth 3 |
-| p12 | 900 | Map Room | Hearth 2 (with Expeditions) |
-| p12b | 950 | Armoury (with the display rack out front) | Hearth 2 |
-| p13 | 990 | Trophy Wall (AC5; fixed) | 250 achievement points |
-| gate | 1,012 | The Almanac post and the road gate (Region 1) | as today |
-| p14 | 1,080 | Tannery | stake from zone 30; built at the Hollow's fall |
-| p15 | 1,170 | Infirmary | stake from zone 57; built at the Coast's fall |
-| gate | 1,216 | the gate (Region 2) | |
-| p16 | 1,290 | Lamp House | stake from zone 92; built at the Emberwaste's fall |
-| gate | 1,344 | the gate (Region 3) | |
-| p17 | 1,420 | Beacon (on a rise; tall and thin, 24 x 110) | stake from zone 127; built at the Pale Reach's fall |
-| gate | 1,500 | the gate (Region 4 on: the road leaves toward the pass) | |
+| p0 | 18 | The Deepwell (landmark: the well mouth under the cliff) | Hearth 3 and zone 20 |
+| p1 | 70 | **Tents**: a field of 2-10 homes in two staggered rows of 5 (x 30-110) | Hands open |
+| p2 | 138 | Tavern (lodgers on its bench) | zone 8 (cold) / built (warm) |
+| p3 | 180 | Watchtower | Hearth 1 |
+| p4 | 230 | **Hearth** (the fire; Lantern Hill with the Great Lantern behind, x 190-270) | always |
+| p5 | 280 | Workbench (the woodpile) | the fire lit |
+| p6 | 322 | Forge (the Smelter's furnace beside it from Region 2) | Workbench built |
+| p7 | 364 | Storehouse (packs unload at its door) | Forge built, or a pile near full |
+| p8 | 406 | Loom (the dye vat from Region 2) | zone 5 |
+| p9 | 448 | Enchanter's Table | zone 6 |
+| p10 | 492 | Chapel | Hearth 2 |
+| p11 | 536 | Kitchen (its table) | Hearth 3 |
+| p12 | 578 | Map Room | Hearth 2 (with Expeditions) |
+| p12b | 620 | Armoury (the display rack out front) | Hearth 2 |
+| p13 | 668 | Trophy Wall (AC5) | 250 achievement points |
+| gate | 704 | The Almanac post and the road gate (the Hollow) | as today |
+| p14 | 750 | Tannery | stake from zone 30; built at the Hollow's fall |
+| p15 | 794 | Infirmary | stake from zone 57; built at the Coast's fall |
+| gate | 820 | the gate (the Coast) | |
+| p16 | 858 | Lamp House | stake from zone 92; built at the Emberwaste's fall |
+| gate | 884 | the gate (the Emberwaste) | |
+| p17 | 918 | Beacon (on a rise; tall and thin, 14 x 60) | stake from zone 127; built at the Pale Reach's fall |
+| gate | 944-992 | the gate, then the road home (the Pale Reach on) | |
 
-- **Panorama width** `CAMP_PANO_W` by region reached: 1,024 · 1,216 · 1,344 · 1,472 · 1,536. The strip
-  east of the last built plot shows open road, so the width never jumps under the player.
-- An unopened plot is plain ground. An open plot is a stake with a tag (63d's `paintPlot`). A milestone plot
-  shows a **dark stake** (the tag in cold grey) with its Shroud line (2.7) until the fall.
-- Hearth-and-hands 6.4's other spots stay: the fire (room for 6), the woodpile (p5), the Storehouse door
-  (p7), the Kitchen table (p11).
+- An unopened plot is plain ground. An open plot is a stake with a tag (63d's `paintPlot`). A milestone
+  plot shows a **dark stake** (the tag in cold grey) with its Shroud line (2.7) until the fall.
+- **Work spots** (4.5) sit in front of their building, so people spread along the whole camp by profession.
 
 ### 4.3 How buildings look by level
 
-Three stages per building plus scaffold, as camp.md 4.2, extended for levels 6-10:
+Four stages per building plus scaffold (camp.md 4.2, extended for levels 6-10):
 
 | Stage | Levels | Look |
 |---|---|---|
 | 1 | 1-2 | Canvas, a lean-to, rough posts; a tool on a stump |
 | 2 | 3-4 | Timber, a shingle roof, one window |
 | 3 | 5-7 | Stone footing, a hanging lantern, a sign |
-| 4 | 8-10 | Stone and timber, two lanterns, the building's banner in the region colour of the last lifted shroud |
+| 4 | 8-10 | Stone and timber, two lanterns, the building's banner in the colour of the last lifted shroud |
 
 - **The Hearth:** a ring of stones (1-2), a covered hearth with benches (3-5), a timber hall (6-7), the
-  Lantern Hall (8-10). The Lantern Hall's crown changes colour with each lifted shroud: gold (Hollow),
-  sea-gold (Coast), warm white (Emberwaste), silver (Pale Reach), white-gold (the finale).
+  Lantern Hall (8-10). The Lantern Hall's crown changes colour with each lifted shroud: gold (the Hollow),
+  sea-gold (the Coast), warm white (the Emberwaste), silver (the Pale Reach), white-gold (the finale).
 - **Tents:** canvas (Hearth 1-4), timber cabins (Hearth 5-9), stone cottages with a sill lamp (Hearth 10 or
-  the Emberwaste lifted), 2.5. Each home's window lights at dusk when its gatherer is at camp.
-- **Chain fixtures** show on their station from Region 2: a smelting furnace with a chimney beside the Forge,
-  a saw pit by the Workbench, a dye vat by the Loom. Smoke rises while an order runs.
-- **The Armoury's rack** shows your 3 best worn pieces as their item icons (6 with Racks' capstone), baked
-  with the plate when gear changes.
-- **Scaffold** while building: poles, a ladder and one builder figure per busy builder (generic).
-- Building art is 48-120 art px, B1 rules (3 tones lit from the top left, a 1 art px ink outline
-  `#120B18`). About 70 pixel maps in all: 17 buildings x 4 stages, plus tents, fixtures and the rack.
+  the Emberwaste lifted), 2.5. Each home belongs to one crew member; its window lights at dusk while its
+  gatherer is at camp.
+- **Chain fixtures** show from Region 2: a smelting furnace with a chimney beside the Forge, a saw pit by
+  the Workbench, a dye vat by the Loom. Smoke rises while an order runs.
+- **The Armoury's rack** shows your 3 best worn pieces as item icons (6 with the Racks capstone), baked when
+  gear changes.
+- **Scaffold** while building: poles, a ladder and one builder figure per busy builder.
+- B1 rules (3 tones lit from the top left, a 1 art px ink outline `#120B18`). About 75 pixel maps: 17
+  buildings x 4 stages, 3 home styles, fixtures, the rack, the skyline pieces.
 
 ### 4.4 The skyline: each shroud's sight at camp
-
-The panorama's back layer changes once per lifted shroud, so a player at camp sees the road's progress:
 
 | Shroud lifted | Skyline change |
 |---|---|
 | None | A low grey mist band behind the far hills in the morning; the Great Lantern on Lantern Hill dark |
-| The Hollow | The mist goes; the Great Lantern lit on the hill (its glow is the one light that ignores day and night) |
+| The Hollow | The mist goes; the Great Lantern lit on the hill (its glow ignores day and night) |
 | The Coast | A thin strip of sea glints on the far west edge; at dawn two gulls cross (reduced motion: none) |
 | The Emberwaste | The eastern hills, which glowed faintly red at night, show green at dawn |
 | The Pale Reach | Stars at night (fixed pixels); the peaks on the north edge get snow caps |
 | The finale | Every lantern in camp brightens (tint +15% toward white); the Lantern Hall's crown turns white-gold |
 
-### 4.5 Life at camp: gatherers, heroes, critters, day and night
+### 4.5 Gatherers in the scene (owner)
 
-- **Day and night** follow `campClock()` (57f): dawn 06-08, day 08-18, dusk 18-21, night 21-06. Lanterns
-  come on one by one at dusk (reduced motion: at once). The Lantern Hall glows at every hour.
-- **Gatherers at camp** stand at their job's spot by day (gatherers-2 12: the Hunter by the Tannery, the
-  Salter and the Fisher by the Kitchen, the Coal-digger by the Forge, the Sigil-seeker by the Enchanter's
-  Table, the Miner by the Storehouse, the Woodcutter at the woodpile, the Herbalist by the Kitchen, the
-  Weaver by the Loom). A refiner stands at their station with a tool. At night they sit at the fire (6
-  places; the rest are in their tents, with a lit window). Gatherers out on a shift are not drawn; a pack
-  waiting to unload shows at the Storehouse door.
-- **Lodgers** (met, no tent) sit at the Tavern's benches by day and at the fire at night if a place is free.
-- **Resting heroes** at their `CAMP_SPOTS` (updated: `library` and `shrine` to the Chapel). Heroes low on
-  Rested sit at the Infirmary once it stands. At most 8 heroes drawn (camp.md 3.2's priority).
-- **The critter** you wear sleeps by the fire at night and follows the Lanternbearer's spot by day
-  (64-looks `lookCritterDraw`).
-- **Talk:** a tap on a gatherer or hero gives one line (LORE-G's talk lines; heroes' camp chatter). An unread
-  fire story shows a small lantern "!" over the person.
+Hired gatherers **live in the camp scene**: you see them around their home and their work spot, watch them
+walk out on a shift, and see them come back with their haul.
 
-### 4.6 Performance
+| State (`handsStatus`) | Where and how |
+|---|---|
+| **At camp, day** | At their **work spot** in front of their profession's building: Woodcutters at the woodpile (Workbench), Miners at the Storehouse door, Hunters by the Tannery (before it stands, by their home), Herbalists, Salters and Fishers by the Kitchen, Weavers by the Loom, Coal-diggers by the Forge, Sigil-seekers by the Enchanter's Table. Two of one profession stand 24 art px apart. Idle poses, changing every 6-12 s: stand, lean on the tool, sit on a crate, turn to talk to a neighbour (2 frames each) |
+| **At camp, dusk and night** | At the fire (6 places, 3 more on the bench behind) or at their own home's door with its window lit. Pose: sit, warm hands (2 frames) |
+| **Sent on a shift** | Walks from their spot to the east gate (about 30 art px a second), tool on shoulder, and leaves the scene. Their home's window goes dark |
+| **Out** | Not drawn. The mini strip shows no dot for them |
+| **Back with a pack** | Walks in at the gate with a pack (2-frame carry), goes to the Storehouse door and sets the pack down (it stays there until it unloads), then walks to their spot |
+| **Refining** | Stands at their station with a tool, working (2 frames), until the shift ends |
+| **Lodgers** | On the Tavern's bench by day, at the fire at night if a place is free |
 
-- **Bake at art size.** The static layers (sky, skyline, hills, ground, buildings, tents, the rack) bake
-  into one canvas at art size, 1,536 x 180 x 4 B = 1.1 MB at the widest, and draw to the screen canvas with
-  `imageSmoothingEnabled = false` at the device scale (one `drawImage` of the visible slice). Re-bake only
-  when a level, a stage, the phase of day or the gear on the rack changes, in `idleTask` chunks of 256 art
-  px (at most 4 ms desktop / 16 ms phone each), visible chunk first.
-- **Each frame** (only while the Build view shows): the slice, the fire (about 30 rects), at most **14
-  moving figures** (8 heroes, 6 gatherers; the rest are drawn into the bake as sitting figures), smoke, and
-  one cached light layer. About 9 frames a second for idle animation (as 63e); 30 fps while panning.
-  Budget: frame at most 2 ms desktop / 6 ms phone p95 (perf.md).
-- **Reduced motion:** no pan inertia (a chip jumps), idle frames freeze, the fire is a steady glow, no
-  smoke drift, no gulls, no walks.
-- **Memory:** the bake (1.1 MB), the light layer (same size, only lit pixels drawn), baked sprites through
-  the baker's cache. Under 3 MB in all.
+Reduced motion: no walking. A sent gatherer vanishes from the spot; one coming back appears at the
+Storehouse door with the pack; idle poses do not change. Heroes resting at camp keep camp.md 3.2's spots
+(`CAMP_SPOTS`, with `library` and `shrine` now the Chapel; tired heroes at the Infirmary once it stands)
+under the same rules. The critter you wear sleeps by the fire at night (64-looks `lookCritterDraw`).
+
+**Tapping a gatherer** (at 2x) opens the **talk panel** (6.4).
+
+**Tap targets with about 10 gatherers in camp:**
+
+- Each figure has a **44 x 56 CSS hit box** centred on its feet (the sprite itself is about 28 x 56 at 2x).
+  Work spots spread people along the whole camp, so a 2x window (164 art px) rarely holds more than 3-4.
+- Two figures closer than 22 art px (44 CSS) never share a spot: the second takes the next free place at its
+  building, and past two a spot's extra people stand at the fire or at their home.
+- If hit boxes still overlap, the **front-most** (lowest on screen, then nearest the centre) wins, and a
+  long press shows a small chooser of the 2-3 names under the finger.
+- In overview (1x) a tap never opens a panel; it zooms to 2x centred on the tap.
+- **List fallback:** the Work view (6.2) lists every gatherer with the same actions, and a **People** chip
+  at the scene's top left opens a sheet of everyone at camp (gatherers and heroes), each row with Talk and
+  Show (Show pans the scene to them). Screen readers use the list; the canvas is `aria-hidden`.
+
+### 4.6 Day and night
+
+`campClock()` (57f): dawn 06-08, day 08-18, dusk 18-21, night 21-06. Lanterns come on one by one at dusk
+(reduced motion: at once). The Lantern Hall glows at every hour. A tap on a resting hero gives a bubble line
+and a Sheet button; an unread fire story shows a small lantern "!" over the person.
+
+### 4.7 Performance
+
+- **Only the visible slice is drawn.** The static layers (sky, skyline, hills, ground, buildings, homes, the
+  rack, sitting figures) bake into one canvas **at art size** (992 x 96 x 4 B = 0.38 MB at the widest). Each
+  frame draws only the window's slice with one `drawImage`, `imageSmoothingEnabled = false`, at 2 or 1 times
+  the device scale.
+- **Re-bake** only when a level, a stage, the phase of day, a home's owner or the rack changes, in
+  `idleTask` chunks of 128 art px (at most 4 ms desktop / 16 ms phone each), the visible chunk first.
+- **Sprites:** gatherer and hero frames come from the B1 baker (`charFrames`), baked once per person (about
+  14 frames: 4 idle poses x 2, walk 4, carry 2) and cached; 10 gatherers and 8 heroes are about 250 small
+  frames, under 1.5 MB at DPR 3. Only figures inside the slice plus a 16 art px margin are updated and
+  drawn; the rest only advance their timers. At most **14 moving figures** at once (walkers and posers);
+  the rest are drawn into the bake as sitting figures until they move.
+- **Frame rate:** about 9 frames a second for idle animation (as 63e), 30 fps while panning or while someone
+  walks in view, nothing while the Build view is hidden. Budget: at most **2 ms desktop / 6 ms phone** p95 a
+  frame (perf.md), with 10 gatherers and 8 heroes at camp.
+- **Taps** hit-test a list of the visible figures' boxes (about 8 at most), no pixel reads.
+- **Reduced motion:** no pan easing, no walking, idle frames freeze, a steady fire, no smoke drift, no gulls.
 
 ---
 
@@ -593,8 +664,10 @@ The panorama's back layer changes once per lifted shroud, so a player at camp se
 
 ### 6.1 Hollow's Rest (UX-W2, ux-overhaul 7.8, extended)
 
-- **The panorama** (N2) mounts above the chips Build · Work · Blessing. Without N2 the Trophy Wall card stays
-  at the top of Build (as today).
+- **The panorama** (N2) mounts above the chips Build · Work · Blessing: the scene (328 x 192 at 2x, 328 x 96
+  in overview), the zoom button and the People chip on it, the edge arrows, and the mini strip (328 x 24)
+  under it (4.1). Without N2 the Trophy Wall card stays at the top of Build (as today).
+- **A building's icon** on its Build row pans the scene to it (the old chip strip's job).
 - **Build** groups (ux-overhaul 6.14): Ready to build · Waiting on materials · the rest folded, plus
   "Buildings with their own screen" (Storehouse, Armoury, Map Room, Chapel's Codex, Tavern).
 - **A building sheet** (a tap on its row): the level card (now → next line, cost chips, the timer, Build or
@@ -609,22 +682,54 @@ The panorama's back layer changes once per lifted shroud, so a player at camp se
 
 ### 6.2 Work (gatherers-2 10, N3b)
 
-- Header line: **"Crew 4 of 5 tents · Upkeep 1.2K gold a day"** with a Tents link.
-- Crew rows as gatherers-2 10.1; each card shows its gatherer's own upkeep ("Upkeep 300 a day").
+- Header line: **"Crew 4 of 5 tents · 3 out · Shift fees today 720"** with a Tents link.
+- Crew rows as gatherers-2 10.1, each with **Send again · 240 gold** (the fee on the button).
 - Station rows with their queue (the Smelter, the Saw, the Loom's weaving, the Tannery), refiner slots.
 
-### 6.3 Upkeep on screen (N1c owns the rule)
+### 6.3 Fees on screen (N1c and ECON1 own the rule)
 
 | Where | What |
 |---|---|
-| The Tents row and sheet | "4 tents · 4 gatherers · Upkeep 1.2K a day" and the next tent's line |
-| The Work view header | as 6.2 |
-| A gatherer's card and the hire sheet | Their upkeep a day, before you hire ("Hire Rook: 2K now, 300 a day") |
-| The away card | One line in the Hands group: "Paid 1.2K upkeep" |
-| A low-gold warning | When gold on hand is under one day's upkeep: an amber chip on the Work header ("Gold for 0.6 days of upkeep") and a Next Up goal; N1c decides what happens past it |
-| The Tents and Kitchen trees | Thrift and Shared Pot nodes show the saving in gold a day |
+| The talk panel and the send sheet (6.4) | The shift fee for the picked resource and grade, before Send ("Shift fee: 240 gold") |
+| The Tavern's hire card | The hire fee, before you hire ("Hire Rook: 2K gold") |
+| Send again, Send all | The fee on the button; Send all shows the total |
+| The Work view header | Fees paid today |
+| The away card | One line in the Hands group when Second Wind re-sent someone: "Paid 480 in shift fees" |
+| Not enough gold | Send is disabled with the reason ("Needs 240 gold"); nothing is ever taken on credit |
+| The Tents and Kitchen trees | Thrift and Shared Pot show the saving on the next fee |
 
-### 6.4 The World map (UX-W1, UX-W3 and the new tasks)
+### 6.4 The talk panel and "Send on a job" (owner; N3b builds it, N1c sets the fees)
+
+A tap on a gatherer in the scene (or Talk in the list) opens a **bottom sheet** (at most 60% of the screen,
+so the scene stays visible above it):
+
+```
+[portrait]  Nan Tarrow                  Lv 7 · Common
+            Miner · Steady              At camp · by the Storehouse
+ "Quarry dust never leaves your lungs. Good. Means it's still there."
+ [ Send on a job ]            [ Card › ]            ✕
+```
+
+- **The line** is one talk line in their voice (LORE-G), rotating per tap. **Level, rarity and status**
+  as `handsStatus` gives them ("At camp", "Out at the grade-3 vein · back in 1 h 12 m", "Back: pack
+  waiting", "Refining at the Smelter", "Lodging at the Tavern").
+- **Send on a job** is shown only while they are at camp with no pack waiting (otherwise: the reason, and
+  "Unload" when a pack waits). It opens the **job picker, limited to their profession**:
+  - **Resource:** only their job's families (a Woodcutter gets wood only; a Miner ore and Gems; a
+    Weaver-gatherer fibre and, from the Coast, dye; a Hunter a cleared zone; a Sigil-seeker the region
+    nodes; gatherers-2 1). From S4, a second row, **Refine at <their chain's station>**, where their job
+    has one (gatherers-2 1.2).
+  - **Grade:** chips for the open grades of that resource, highest first, each with its node name.
+  - **Shows before Send:** shift length, expected haul ("about 1,900 grade-3 ore"), whether it fits the
+    Storehouse (55-store `stashFits`), and the **shift fee in gold**.
+  - **Send · 240 gold** (the fee on the button; disabled with the reason if gold is short). After Send the
+    sheet closes and the gatherer walks out (4.5).
+- **Card ›** opens the full gatherer card (gatherers-2 10.2: tree, signature, stories).
+- Lodgers get **Swap in** instead of Send (gatherers-2 6), which needs a free home.
+- 360 px: two rows of grade chips at most (44 px tall), the resource row as a segmented control, Send full
+  width at the bottom (48 px).
+
+### 6.5 The World map (UX-W1, UX-W3 and the new tasks)
 
 - The Shroud hole, the lift overlay and the person's walk (3.3).
 - **Outpost pins** and their sheets (3.1). **Town sheet** = the outpost sheet's trade part.
@@ -648,7 +753,7 @@ CAMP2_B = {
   kitchen:   { n: 'Kitchen', max: 10, opens: 3, fam: { wood: 20, herb: 25 }, tro: 4 },   // K12 owns its effects
   tannery:   { n: 'Tannery', max: 10, fam: { hide: 25, wood: 15 }, tro: 3, skill: 'loom', folk: 'rushby', stake: 30 },
   infirmary: { n: 'Infirmary', max: 10, fam: { fibre: 25, herb: 20 }, tro: 6, folk: 'penrow', stake: 57 },
-  lamphouse: { n: 'Lamp House', max: 10, fam: { crystal: 25, ore: 15 }, tro: 6, folk: 'emberlea', stake: 92 },
+  lamphouse: { n: 'Lamp House', max: 10, fam: { crystal: 25, ore: 15 }, tro: 6, folk: 'emberlea', stake: 92 },   // crystal = Gems
   beacon:    { n: 'Beacon', max: 5, fam: { wood: 20, crystal: 20 }, tro: 1, folk: 'wick', stake: 127, noTree: 1 }
 };
 CAMP2_RENAME = { bunk: { n: 'Tents', max: 9 }, library: { n: 'Chapel', max: 10 } };   // shrine retires
@@ -656,7 +761,10 @@ CAMP_GRADE = [1, 1, 2, 3, 4, 5, 7, 8, 10, 13];              // material grade by
 CAMP_LV_GATE = [null, null, null, null, null,                // rows 1-5: CAMP_HREQ as today
   { hearth: 10 }, { region: 2 }, { zone: 88 }, { region: 3 }, { region: 4 }];
 CAMP_ROW6 = { mult: [5, 6, 8, 10, 12], troph: [3, 3, 4, 4, 5], secs: [36, 40, 44, 48, 48] };   // h
-TENTS = [ /* 2.5's rows: { gate, k, mats: [[fam, g, n]], secs } for tents 2..10 */ ];
+CAMP_GOLD = { hearth: [0, 0, [1, 5], [1, 15], [1, 30], [1, 45], [1, 60], [1, 75], [2, 90], [2, 120], [2, 150]],
+  row: [0, 0, [1, 10], [1, 30], [1, 60], [2, 90], [2, 120], [3, 120], [3, 150], [4, 150], [5, 180]],
+  beacon: [0, 0, [4, 60], [4, 90], [4, 120], [4, 150]] };   // [region, minutes]: goldMin(r, m) (2.9; ECON1 prices)
+TENTS = [ /* 2.5's rows: { gate, gold: [region, minutes], mats: [[fam, g, n]], secs } for tents 2..10 */ ];
 CAMP_TREES = {
   forge: [ { id: 'weapon', n: 'Weaponsmith', nodes: [ { id: 'w1', n: 'Rare rolls', txt: 'Weapon rolls: Rare +3', key: 'bonus:rare:forgeW', v: 3 }, /* x4 */ ] },
            { id: 'armour', ... }, { id: 'smelt', n: 'Smelter', region: 2, nodes: [...] } ],
@@ -668,7 +776,7 @@ CAMP_FOLK = {   // the milestone people (section 1)
   emberlea: { region: 'ember', n: 'The Emberlea families', b: 'lamphouse', hand: 'brannoc', power: 'awaken' },
   wick:     { region: 'pale', n: 'Wick', b: 'beacon', power: 'keystone3' }
 };
-CAMP_PANO = { w: [1024, 1216, 1344, 1472, 1536], plots: { /* 4.2 */ } };
+CAMP_PANO = { h: 96, ground: 82, w: [720, 832, 896, 960, 992], zoom: [2, 1], plots: { /* 4.2 */ }, spots: { /* 4.5: work spots by job */ } };
 OUTPOSTS = { coast: { n: "Hallam's Landing", at: [x, y], town: 'landing', dungeon: 'nave' }, /* 3.2 */ };
 SHROUD_MAP = { hollow: { zone: 35, rx: 34, ry: 24, weather: 'fog' }, /* 3.2, 3.3 */ };
 ```
@@ -686,7 +794,7 @@ region task's own data file, the way `REGION_COAST` plugs into `REGIONS`.
 | `S.events` | EV1 owns it; this spec needs `{ cur: { id, region, spot } }` so the map can place the pin | EV1 | |
 | `S.lantern.lit` | unchanged (55-lantern) | - | **A region's shroud is lifted exactly when `S.lantern.lit[region]` is set.** No separate shroud state |
 | `S.stars` | unchanged; `STAR_TUNE.keyMax` reads `2 + bonus('keyMax')`, which WM1 sets to 1 once the Pale Reach's shroud lifts | 57e (small edit) | |
-| `lanternfall.ui.v1` | adds `panoX` (the panorama's last scroll) | N2 | Browser prefs, outside the save |
+| `lanternfall.ui.v1` | adds `panoX` (the panorama's last scroll, art px) and `panoZ` (2 or 1) | N2 | Browser prefs, outside the save |
 
 Nothing online changes. Pre-1.0, if BT1 lands after a save-key bump, the `shrine` read and the tents mapping
 are not needed at all.
@@ -698,7 +806,7 @@ are not needed at all.
 | Id | Target | Value |
 |---|---|---|
 | WC-T1 | Tents at each region's boss (normal play) | 4 · 6 · 8 · 9, and 10 in the Gloamvale (±1) |
-| WC-T2 | Upkeep share of gold income, per region, median player (N1c's curve) | at most 15%; never forces a gatherer home in normal play |
+| WC-T2 | Hire and shift fees as a share of gold income, per region, median player (N1c's and ECON1's curves) | at most 15%; a normal player can always afford to send the whole crew at a check-in |
 | WC-T3 | Building gold share of all gold spent, per region | 15-30% (the rest goes to gear, heroes, trade) |
 | WC-T4 | Builders idle at check-ins after day 3 | under 30% of check-ins with a free builder and nothing affordable |
 | WC-T5 | Tree points by region end (average over buildings) | about 4 · 6 · 8 · 9 · 10 (2.3) |
@@ -708,7 +816,7 @@ are not needed at all.
 | WC-T9 | The Tannery at the Coast | Leather on hand for the first grade-4 medium piece within one check-in of arriving (with gear-2's Coast arrival gift and Gil) |
 | WC-T10 | Trees give identity, not power | the best and worst sensible tree layouts differ by at most 5% in `totalDps()` and 10% in gold an hour |
 | WC-T11 | The Beacon | events a day with the call: 3-5 (2-4 without); never more than 1 waiting |
-| WC-P1 | Panorama frame (perf.mjs `--camp`) | p95 at most 2 ms desktop / 6 ms phone; a re-bake chunk at most 16 ms phone |
+| WC-P1 | Panorama frame (perf.mjs `--camp`, 10 gatherers and 8 heroes at camp, both zoom levels) | p95 at most 2 ms desktop / 6 ms phone; a re-bake chunk at most 16 ms phone; sprite caches under 1.5 MB; a zoom switch under 16 ms to first paint |
 | WC-P2 | Map plate with a Shroud | bake time +1 ms at most per plate; the lift runs on the compositor only |
 | WC-P3 | DOM on the map | outposts, dungeons, events and hint marks keep each region at most 40 nodes (ux-overhaul 7.12) |
 
@@ -719,7 +827,7 @@ Sim hooks: `--camp2 0` (today's camp: no trees, no new buildings), `--trees <pol
 
 ## 9. Build split
 
-File numbers were checked against `src/js` and every file the design docs name: `21r`, `57i`, `55-shroud`,
+File numbers were checked against `src/js` and every file the design docs name: `21r`, `21s`, `57i`, `55-shroud`,
 `63f`, `75-camp-trees-ui`, `75-shroud-ui`, `75-outposts-ui` are free. Nothing here uses 59e, 59g, 59h,
 59i, 59j, 21p, 21q, 57h (reserved), or 57g (K12's kitchen and TR1's trade both name it; the coordinator
 should give one of them another letter). `14-art-camp.js` was reserved by camp.md for exactly this art.
@@ -728,12 +836,13 @@ should give one of them another letter). `14-art-camp.js` was reserved by camp.m
 |---|---|---|---|---|
 | **BT1** Building trees and the catalogue (Sonnet, M) | 21r data (2.1-2.8, 7.1 except the map parts); the new rows merged into `CAMP_B`; the Tents rule and curve; the Chapel merge; region-gated Lv 6-10 and the grade fix; the tree core (points, order, free respec while idle, caps, every node's modifier or bonus); Next Up "a point to spend"; check section `camptree`; sim `--camp2`, `--trees`, WC-T1 to T7, T10 | `src/js/21r-data-camp2.js`, `src/js/57i-camp-trees.js`, `src/js/75-camp-trees-ui.js`, `src/styles/60-camp-trees.css` | `57-camp.js` (merge rows, `CAMP_GRADE`, gates, `bunk`/`library` names, `shrine` read), `21f-data-hands.js` (beds to tents, `hallBeds` 0, `bedMax` 10), `55-hearth.js` (`HEARTH_PLOT` rows p0-p17, `HEARTH_PANO_W` by region), `57e-constellations.js` (`keyMax` reads a bonus), `tools/sim.mjs`, `tools/check.mjs` | WC1, S4 (the chain branches read its queues; before S4 they show locked) |
 | **WM1** Milestones and the Shroud (Sonnet, M) | `CAMP_FOLK`; the person's arrival on `greatLantern` (quiet for old saves); the gift build (Lv 1 free, 10 min, no builder); the power flags (Proving via classes' gate, Lanternlit via rank 8's gate, Awakenings flag for HQ1, `keyMax` +1); arrival cards; the Shroud layer for the map (hole, weather, lift overlay, the walk); `S.folk`; check section `milestones` (each region's person, building and power exactly once; no pin inside a hole) | `src/js/55-shroud.js`, `src/js/75-shroud-ui.js` | `55-lantern.js` (push person and power lines onto `rewards`), `75-world-ui.js` (a `registerMapLight(fn)` hook and a `registerMapLayer(fn)` hook, if UX-W1 has not added them) | UX-W1, BT1 |
-| **UX-W2** Hollow's Rest and the Tavern (as ux-overhaul 8) | Plus: the Build groups with the new rows, region-gate lines, milestone plot rows, the arrival card slot, the Tree tab mount (BT1's UI), Work's upkeep header (6.2, 6.3) | as ux-overhaul 8 | `75-camp-ui.js` | UX-W1, BT1 (for the tree tab; ships without it) |
+| **UX-W2** Hollow's Rest and the Tavern (as ux-overhaul 8) | Plus: the Build groups with the new rows, region-gate lines, milestone plot rows, the arrival card slot, the Tree tab mount (BT1's UI), Work's fee lines (6.2, 6.3) | as ux-overhaul 8 | `75-camp-ui.js` | UX-W1, BT1 (for the tree tab; ships without it) |
 | **UX-W3** (as ux-overhaul 8) plus outposts | Plus: outpost pins and sheets (3.1), town sheets for TR1, the dungeon entrance view shape with a view id per dungeon | `src/js/75-outposts-ui.js` | - | UX-W1 |
-| **N2** Camp panorama and camp life (Sonnet, M) | Section 4: the panorama painter, plots and stages, the skyline, scaffold, day and night, gatherers and heroes at their spots, lodgers, the critter, talk bubbles, the chip strip, the rack, the Trophy Wall through `trophyWall.paint`, the fire through `campPaintFire`, perf (WC-P1) | `src/js/14-art-camp.js` (data: building stages, tents, fixtures, skyline pieces), `src/js/63f-camp-pano.js` (painter, bake, frame), `src/styles/60-camp-pano.css` | `75-camp-ui.js` (mount above the chips), `12g-art-hands.js` (read only) | WC1, N3a (gatherer keys), BT1 (plot list) |
+| **N2** Camp panorama and camp life (Sonnet, M) | Section 4: the panorama painter, plots and stages, the skyline, scaffold, day and night, the two zoom levels, pan, edge arrows and the mini strip, gatherers (spots by job, idle poses, walking out and home with a pack, hit boxes, the long-press chooser) and heroes at their spots, lodgers, the critter, the People list, talk bubbles, the rack, the Trophy Wall through `trophyWall.paint`, the fire through `campPaintFire`, perf (WC-P1) | `src/js/14-art-camp.js` (data: building stages, tents, fixtures, skyline pieces), `src/js/63f-camp-pano.js` (painter, bake, frame), `src/styles/60-camp-pano.css` | `75-camp-ui.js` (mount above the chips), `12g-art-hands.js` (read only) | WC1, N3a (gatherer keys), BT1 (plot list) |
+| **N3b** (gatherers-2 12) plus the talk panel | 6.4: the talk panel and the job picker limited to the profession, fees shown before Send (N1c's numbers), Swap in for lodgers; N2's scene and the People list open it through `campTalk(id)` | N3b's files (`75-hands-ui.js`, `60-hands.css`) | - | N3a, N1c |
 | **EV1** Events and secrets | Its own spec work, using 3.6 and 3.7 for placement and the Shroud rules; the Beacon's call through `eventsCall()` | EV1's files (suggested `src/js/57j-events.js`, `src/js/75-events-ui.js`) | - | UX-W1, WM1 |
 | **R2-R5** each region | Its `OUTPOSTS` and `SHROUD_MAP` rows, its dungeon (the Deepwell engine with the region's foes and hazard), its plate's weather and motes | the region's own files | - | WM1, UX-W3 |
-| **LORE** | lore.md 4.4a updated to section 1.2; arrival lines for the four people; the Shroud lines on the stakes; outpost news lines (about 8 a region); event text with EV1 | `src/js/21q-gatherers-talk.js` is N1b's; camp words go in `src/js/21r-data-camp2.js`'s `CAMP_WORDS` block (one owner at a time) | - | owner sign-off |
+| **LORE** | lore.md 4.4a updated to section 1.2; arrival lines for the four people; the Shroud lines on the stakes; outpost news lines (about 8 a region); event text with EV1 | `src/js/21s-camp-words.js` (new, data only: `CAMP_WORDS`; `21q-gatherers-talk.js` stays N1b's) | - | owner sign-off |
 
 Merge order: BT1 first (data and trees; the camp works without N2), then WM1 and N2 in parallel (WM1's camp
 side needs no art; N2 draws what BT1 lists), then UX-W2's extras. R2 adds the Coast's outpost and the
@@ -750,7 +859,10 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
 | Arrival, the Coast | Mercy Penrow came ashore. She built an Infirmary for tired heroes. Your heroes can now reach Lanternlit. |
 | Arrival, the Emberwaste | The Emberlea families came home. Their lampwrights built the Lamp House. Heroes can now Awaken. |
 | Arrival, the Pale Reach | Wick carried her candle down the pass and lit the Beacon. The stars are back: you can light a third keystone. |
-| Tents row | 4 tents · 4 gatherers · Upkeep 1.2K a day |
+| Tents row | 4 tents · 4 gatherers at work |
+| Send sheet | Send Nan to the grade-3 vein? Shift fee: 240 gold. Back in 2 h. |
+| Talk panel status | Out at the grade-3 vein · back in 1 h 12 m |
+| Overview hint (first time) | Tap anything to zoom back in. |
 | Tree head | Points 3 of 5 |
 | Tree reset, busy | Busy: the Forge is building. Reset when it is done. |
 | Region-gated level | Lv 7 opens in the Emberwaste. |
@@ -787,8 +899,8 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
   nodes and never all of them. A third builder is the Hearth tree's capstone. Recommended: **yes**.
 - **O7. The Tents curve and look:** 2 tents at the start, then 3 (day 1), 4 (the Hollow's boss), 6 (the
   Coast's boss), 8 (the Emberwaste's), 10 (the Gloamvale). Tents turn into cabins at Hearth 5 and stone
-  cottages at Hearth 10, all at once, free. Upkeep shows on the Tents row, the Work header, each gatherer's
-  card and hire sheet, and the away card. Recommended: **yes**.
+  cottages at Hearth 10, all at once, free. Hire and shift fees show before you pay: on the hire card,
+  the talk panel, the send sheet and the Send buttons. Recommended: **yes**.
 - **O8. The Beacon's call:** once a day (twice at Beacon Lv 3), bring the next event to you now. Events
   still wait and never expire. Recommended: **yes**; it gives an eager player more events without making
   anyone who plays less miss one.
