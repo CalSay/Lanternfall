@@ -811,7 +811,7 @@ every cost is free). With Pearls as buff items:
 | Item | `{ id, slot, t, r: 'rare', plus, u }` as today. `slot` is its position kind: `weapon`, `helm`, `charm` (today's unique kinds) and two new position kinds, `off` and `body` (not craftable, like `weapon` and `helm`); hero pieces use `wpn` / `trk` kinds `uwpn` and `trinket` |
 | Fits | **Every class** at its position (today's rule for weapon and head uniques). A hero piece fits any hero |
 | Base lines | The wearer's own weight kind at that position (a Warrior's unique body piece has Plate lines, a Mage's has Robe lines; a hero weapon has the wearer's role weapon lines). Read at wear time, so a class change never needs a retool |
-| Power | `itemPower` uses `UNIQ_TUNE.pow` 1.8 (Rare) as today; grade = the kill zone's `zoneGrade` |
+| Item power | `itemPower` uses `UNIQ_TUNE.pow` 1.8 (Rare) as today; grade = the kill zone's `zoneGrade` |
 | Fixed lines | Regions 2-5: 2 affix lines fixed per unique (`q` 0.5). Region 1: 3 (it has no buff family to lock) |
 | Sockets | Regions 2-5: **one locked socket** with the boss's signature family at the wearer's version, Uncommon, strength **1.10** (core-2), plus **one open socket**. Region 1: one open socket |
 | Power | **One power** (6.2), ranked I-V in the Lantern Book (`S.legend.book`), raised by Echoes (6.4) |
@@ -974,3 +974,111 @@ One collection, in the Craft tab's **Powers** view (legendaries.md 7), renamed *
 
 The budget cap (legendaries.md 6) now sums unique powers with the rest, at the same caps; `legendBest`
 tries unique pairs too.
+
+---
+
+## 7. Trade routes (inside expeditions)
+
+Owner (plan-4 4.12): send surplus to a town in a region you have reached; each town has a weekly demand
+list; prices run 60-160% of base; returns are gold or goods you cannot make. No new screen: a trade route
+is a route in the Map Room (UX-W3 sends it from the World map).
+
+### 7.1 Towns
+
+| Region | Town (working; WC1 places it on the map) | Opens | Trip | Sells (goods you cannot make) |
+|---|---|---|---|---|
+| 1 Hollow | **Mossy Hollow** market (your home village, back in business) | The Great Lantern of the Hollow, Map Room Lv 2 | 2 h | Salvage Runes, Region 1 Trophies |
+| 2 Coast | **Hallam's Landing** (the ferryman's shingle) | The Coast reached | 4 h | Common and Uncommon Pearls, Salvage Runes |
+| 3 Emberwaste | **New Emberlea** (where its people rebuilt) | The Emberwaste reached | 6 h | Common and Uncommon `glass` items, Tinctures |
+| 4 Pale Reach | **The Silent Village** (lit again after the Star-Fallen) | The Star-Fallen beaten | 8 h | Common and Uncommon `star` items, Region 4 Trophies |
+| 5 Long Stair | **Hollow's Rest** itself (the road comes home; Hearth 10: "a town") | The Long Stair reached | 2 h | Common and Uncommon `well` items, Salvage Runes |
+
+### 7.2 A trade trip
+
+- **Send:** a Map Room slot, a town, a team of 1-3 benched heroes (the expedition team factor and grade
+  apply), and up to 3 cargo lines from the Storehouse (family and grade). **Cargo cap:** 5,000 units a team
+  member x (1 + 0.25 x (Map Room level - 1)). The cargo leaves the Storehouse at once.
+- **Price** is fixed at send (like an expedition's grade), shown before you tap Send:
+
+```
+unit base  = foeGold(first zone of the grade) x famW     famW: gathered 0.02, crystal and herbs 0.025,
+                                                          hide 0.03, essence 0.06, secondary 0.01, refined 0.05
+price      = base x demand x team grade x (1 + Tavern Trade branch, up to +15%), clamped to 60-160% of base
+demand     = wanted 130-160% · normal 100% · glut 60-80%
+team grade = Poor 0.9 · Fair 1 · Good 1.05 · Great 1.1 · Perfect 1.15
+```
+
+- **Weekly demand:** each town lists 3 **wanted** lines and 2 **glut** lines from its region's grades and
+  the one before, seeded by the week number and the town (the same for everyone, like the tide). **Next
+  week's list shows from Sunday**, so nothing needs catching (no FOMO). A town never wants what it sells.
+- **Return:** gold by default, or goods from the town's list, chosen at send at a fixed rate in gold (a
+  Common buff item is worth 30 of that region's first-zone foes' gold). Returns are a **parcel** (hearth-and-
+  hands.md 4.3: they wait whole for room). The first trip to each town brings one Lore page.
+- **Why it exists:** a use for full Storehouse cells and old grades (grade-2 wood sells in Mossy Hollow for
+  ever), a little gold, and a second source of a region's Common buff items. It is never required.
+- **Save:** the slot record in `57b` gains `trade: { town, cargo: [[fam, g, n]], want, price }`; weekly
+  lists are derived, not saved. `S.trade = { v: 1, sold: { town: units }, first: { town: 1 } }` for Codex and
+  achievements.
+
+---
+
+## 8. Economy pacing targets and core-2 answers
+
+### 8.1 The calendar these targets assume
+
+From plan-4 1 (the story to the Voice in about 2-3 months of normal play; BAL-F owns the final curve):
+
+| Region | Arrive | Region boss | Grades open (the family a class gathers most) |
+|---|---|---|---|
+| 1 Hollow | day 0 | day 5-8 (P1) | 1 at once, 2 on the first away trip, 3 on day 2.5-3.5 |
+| 2 Coast | day 6-8 | day 21-35 | 4 on arrival (day 7-9), 5 day 13-17, 6 day 20-26 |
+| 3 Emberwaste | about day 30 | day 40-55 | 7 on arrival, 8 about a week in, 9 about two weeks in |
+| 4 Pale Reach | about day 48 | day 58-72 | 10, 11, 12 on the same thirds |
+| 5 Long Stair | about day 65 | the Voice, day 75-90 | 13, 14, 15 on the same thirds |
+
+### 8.2 Targets for the sim (BAL3 after S4 and S5)
+
+| Id | Target | Band |
+|---|---|---|
+| E1 | Region 1 after the grade move (1.8) | P1 day 5-8 and T1-T3 in their bands, every class |
+| E2 | A new grade's weapon | crafted within 1 day of the grade opening (the policy's "weapon first") |
+| E3 | Grades inside a region | 8.1's thirds, within +/- 25% of the region's length |
+| E4 | Refining | never delays a new-grade weapon by more than one check-in; a Rare +5 set of the grade refines within one away session at the station level the save has |
+| E5 | Buff items | first setting within 1 day of reaching the Coast; every Lanternbearer socket filled by mid-region; Rare or better in all of them by each region boss |
+| E6 | Buff supply | 80-110 found a region (60% Uncommon or better), 40-60 used; the Storehouse never runs out of the region's Commons after mid-region |
+| E7 | Uniques | first of a region within 3 days of arrival; 3 of 6 by its boss; 6 of 6 by the next boss; the most-worn one at rank III by the next boss |
+| E8 | Unique raw band | 90-110% of a Rare crafted item with a full socket, every unique, grade and position (check.mjs, static) |
+| E9 | Crafted Legendary | the first by the middle of Region 3 |
+| E10 | Storehouse | HS8 (no cap blocks a cost) and HS19 (a full away session fits) at all 15 grades |
+| E11 | Boredom (P4) | at most 3 empty check-ins in a row in every region. Meaningful now also counts: a new grade's piece, a socket filled or upgraded, a unique or a rank up, a Temper |
+| E12 | Trade | 5-10% of gold income from Region 2 on when the sim trades full cells; 0% needed to hit any other target |
+| E13 | Class parity | a Rare +5 set of each weight within 5% of the median party power (2.4); region boss days within 15% across classes (plan-4 2.9) |
+
+Per region, what "keeping up" looks like (the sim's policy, and what a player sees):
+
+| | Region 1 | Each of Regions 2-5 |
+|---|---|---|
+| Lanternbearer pieces crafted (new grades) | 12 (4 pieces x 3 grades) | 12, plus 1-2 Tempers |
+| Hero pieces (2 heroes x 2) | 12 | 12 |
+| Upgrades | to about +5 on the current grade | to about +5, +8 on the weapon |
+| Buff items set | 0 (none exist) | about 13 a refresh (8 Lanternbearer, 5 heroes), 2-3 refreshes |
+| Refined units made | 0 | 3,000-8,000 (grows with grade) |
+| Uniques found | 3-5 of 6 | 3-5 of 6, plus Echoes on the earlier ones |
+
+**Sim additions** (`tools/sim.mjs`): `--gear2 0|1` (Gear 2.0 recipes and weights; 0 = today's for the
+before/after), a refining policy (queue the next set's refined goods when a grade opens; one refiner per
+chain once Hands allow), `--settings` (set the best fitting buff item; Lanternbearer weapon first, then hero
+weapons, then armour; Salvage Runes only for Rare or better), `--uniq2` (wear the best power pair by `p`),
+`--trade 0|1`, `--report skills --days 90` (GP2: the node gates of 1.4), and E1-E13 in `--targets`.
+
+### 8.3 Answers to core-2's open questions for RG1
+
+5. **The Mage's main family: cloth**, wood second (coordinator decided, 2026-09-28; this file's recipes use
+   it, with the light weapon leading with wood, owner decision O1).
+6. **Names:** today's names are kept for grades 1-5 (coordinator), and every new name waits for **MAT1**
+   (owner, 2026-09-28: real and standard fantasy materials). The grade-9 clash in the roadmap draft goes
+   away with it; the "Emberglass" / "Ember-glass" pair goes to MAT1 (1.2).
+7. **Enchanting 100% at level 80**, rising in a straight line from 70% at level 1 (4.2). **Hero sockets are
+   worth their cost:** the cost is flat and small; the buff item is the price, and heroes deal most damage.
+8. **Buff items live in the Storehouse**, on a **Buff Items** page, as uncapped counts (coordinator decided;
+   5.6). Gear lives in the Armoury.
