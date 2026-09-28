@@ -427,3 +427,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   contained tasks, check-ins at 09:38, 13:38, 17:38 and 21:38 Mon-Fri (trigger trig_01Hmtoxf9F4T3FVAQFC94RMj).
   Weekends are FULL SPEED: up to 5 agents, hourly check-ins Sat-Sun (trig_01CmvFeTWLdv9v9sL5jeoSTC). The
   weekly allowance resets Monday 16:00 UK time. Big tasks (BAL3, multi-agent waves) wait for the weekend.
+- H1 merged: 55-hearth.js, 63d-scenery-camp.js (new games start at a cold fire: 8 Oak lights it at ~0:16;
+  Workbench 2:19, first tool 3:00, Forge 5:08; stations Lv 0 for new games only; old saves untouched, one
+  What's new line); the Map Room Next Up goal and Roster line; sim --cold (default 1); perf new-game lights
+  the fire first. --targets 17/20 (P1 now passes; T6 no-support 5 lower vs 2-4, likely noise; T16, D1 as
+  before). Follow-ups: Hesketh partly cut off at 360px; station stakes crowd the oak; new-game Camp tab
+  12.6ms vs 12 budget.
+- Coordinator fix: 55-almanac.js needsMet probed later files' `let`s during boot (TDZ throw:
+  "Cannot access 'craftItem' before initialization", date-dependent). Probes that throw now count as met.

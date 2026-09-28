@@ -34,7 +34,9 @@ let OMENS, WEEKLY_GOALS;
     Expeditions: () => !!S.exped,
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
-  const needsMet = x => !x.needs || !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]());
+  // A probe of a later file's `let` throws (TDZ) when asked during boot, before that file has run. The
+  // system is in the build, so it counts as met; this keeps the day's Omen the same at boot and after.
+  const needsMet = x => { if (!x.needs) return true; try { return !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]()); } catch (e) { return true; } };
 
   const bossNow = () => awayDay === null && target() === 'mob' && !!mob && !!mob.boss;
 
