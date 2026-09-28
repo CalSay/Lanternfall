@@ -667,3 +667,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   W3 (Deepwell/raid/expeditions), D, E, F, then G. Coordinator decisions on 10: raid pin in the foe's home
   region; UX-A does not reorder the tab bar (W1 does); the Tavern is a sheet.
 - OWNER: the icons look amateurish ('like an 8 year old made them on paint'). Today: 12x12 maps, 2-3 flat colours, no outline or shading. ICON0 style study launched (16 icons in 3 styles vs current, tab bar and list-row mocks; count of all icons; renderer change; recommendation). Owner picks, then ICON1 full redraw.
+- USAGE (owner, evening 2026-09-28): the allowance is nearly spent with 2+ hours to go (the owner has a free
+  reset available). Coordinator: stopped the two newest tasks (ICON0 icon study, HINT1 hints) and saved their
+  WIP on their branches (relaunch from worktree-agent-a4c131b5aff330e50 / -a470a57b3ab7f632b); told N1, CU1
+  and UX-A to commit checkpoints now and finish lean. No new launches until the owner says; the weekday
+  check-in is merge-only until then.
