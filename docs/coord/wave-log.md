@@ -382,3 +382,11 @@ as Front/Middle/Back, a cold Hearth start with stations you build, NPC gatherers
 decisions: the hero is one of the three; the Storehouse caps what you HOLD from every source, active
 gathering included, but skill XP keeps counting. The remainder of plan 2 is folded in, in build order:
 see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
+- D7 hearth-and-hands.md merged. Coordinator accepts all 15 section-9 recommendations: rough tools are the
+  empty slot; mastery per tool kind; no tool affixes; "right tool" is +25%, not a gate; all tools at the
+  Workbench; gifts/refunds may exceed the cap (a softening of the owner's rule for rewards only, noted to
+  the owner); salvage asks in-page before discarding; migration may give Storehouse 8 and lock an over-cap
+  material; Hands REPLACE the never-built bench jobs (told to the owner); Tavern beds, no upkeep, Tam the
+  free starter; applicants every 8h (max 3 waiting); off-skill half share; Spiced Broth +5% within +15% camp
+  cap; the rod covers Tide Pools (R2 decides); cold start = no progress and no S.camp. Wave 2 merge order:
+  H2, H1, H3. The Map Room hint goes with H1.
