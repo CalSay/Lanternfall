@@ -435,3 +435,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   12.6ms vs 12 budget.
 - Coordinator fix: 55-almanac.js needsMet probed later files' `let`s during boot (TDZ throw:
   "Cannot access 'craftItem' before initialization", date-dependent). Probes that throw now count as met.
+- Owner asked to reset their preview progress. The preview copy now uses its own save key
+  (sed: lanternfall.save.v1 -> lanternfall.preview.r1; bump r1 -> r2 to reset again). Future republishes
+  must keep the swap: sed -e '1s#<title>Lanternfall</title>#<title>Lanternfall Preview</title>#'
+  -e 's#lanternfall\.save\.v1#lanternfall.preview.r1#' dist/lanternfall.html > <preview path>.
