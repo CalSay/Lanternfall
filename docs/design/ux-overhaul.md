@@ -13,11 +13,22 @@ Code ids and save fields keep their names (`companion`, `comp`, `rec`, `roster`,
 
 Owner items folded in: the **Armoury**, a new camp building for gear (bigger bag by level, loadouts,
 lock and favourite, an auto-salvage filter, sort and filter, a display rack at camp), separate from the
-Storehouse (materials only). **Benched heroes earn no XP** (F5 gave them 25%; the copy in this spec
-follows the owner's rule, and the core change belongs to BAL3 or a small task).
+Storehouse (materials only). **Benched heroes earn no XP** (shipped after F5; the copy in this spec
+follows it).
+
+**Revision UX2b (2026-09-28): a World tab and map.** Owner: "We might do well to have a WORLD tab where
+we select from Tavern, camp, etc. for anything that isn't basic gameplay (fighting and gathering). From
+the world map we can enter zone dungeons and find the zone raid. We'd start expeditions from the world
+map too." He does not want much more visual design work, so the map is cheap: one baked plate per
+region, the B1 icons, three landmark sprites. This revision replaces the Camp tab with a **World** tab
+that opens on a map of the Lantern Road (3, 7), moves the Deepwell and the raid out of Fight and into the
+World, puts expeditions on the map, folds plan-2's RD (the Lantern Road map) into it, and rewrites the
+build plan (8). Unchanged from UX2: the audit, the activity pill and quick switcher, the Gather rebuild,
+the pattern kit, the Journal via the portrait. Also folded in: the **Bunkhouse** (beds for Hands, a
+camp building; hire at the Tavern) and K13's **production chains** (refining at camp stations).
 
 Contents: 1 audit, 2 top problems, 3 information architecture, 4 global navigation, 5 patterns,
-6 per-screen wireframes, 7 build plan, 8 what must not change.
+6 per-screen wireframes, 7 the World map, 8 build plan, 9 what must not change, 10 open questions.
 
 ---
 
@@ -38,7 +49,8 @@ Taps are counted from the game view. Each tab remembers its last view, so a view
 the last one used, else 2. Every screen passed the no-horizontal-scroll check; there were no console errors.
 
 Images: `img/ux/a-*.png` (late save, 360 wide; `-full` = the whole scroll length), `img/ux/new-*.png`
-(new game), `img/ux/wide-*.png` (1280 x 800, halved), `img/ux/m-*.png` (the mockups in section 6).
+(new game), `img/ux/wide-*.png` (1280 x 800, halved), `img/ux/m-*.png` (the UX2 mockups in section 6),
+`img/ux/w-*.png` (the UX2b World mockups in section 7).
 Also captured, not shown inline: above-the-fold shots of the long views (`a-13-adv-deep`,
 `a-14-party-team`, `a-15-party-roster`, `a-20-gat-pack`, `a-21-forge-make`, `a-23-forge-powers`,
 `a-25-world-camp`), `a-18-gat-wood`, `a-19-gat-forage`, `a-31-deeds-ach-feats`, `a-32-deeds-ach-looks`,
@@ -202,44 +214,89 @@ The menu column is 531 px wide and always open, so the problems are the same: Ga
 
 ### 3.1 Tabs
 
-Keep **five bottom tabs** (five fit at 360 px with thumb reach; a sixth would not). Each tab keeps 2-4
-views. Every system has one home; other places link to it instead of repeating it.
+Five bottom tabs: **Fight · Gather · Party · Craft · World**. Fight and Gather are the basic play (what
+you do now) and sit side by side under the thumb. Party, Craft and World are what you do between. The
+**World** tab replaces the Camp tab and opens on a map (section 7): everything that is not fighting or
+gathering is a place on it. Tab ids stay (`adv`, `gat`, `party`, `forge`, `world`); only the order and
+the label ("Camp" becomes "World") change. Five still fit at 360 px with thumb reach; a sixth would not.
+Each tab keeps 2-4 views, and every system has one home; other places link to it instead of repeating it.
 
 | Tab | Views (first = default) | Changes |
 |---|---|---|
-| **Fight** | Zone · Bounties · Deepwell · Raid | "Upgrades" becomes **Zone**: the zone card (zone, foes to the boss, boss button, zone stepper, auto-boss), the Omen line (links to the Almanac) and your upgrades. Bestiary and zone mastery move to the Codex (the zone card keeps a one-line mastery star count). **Raid moves here from Camp** (it is fighting; needs coordinator sign-off because it touches `p-raid`'s parent, see 8). |
-| **Party** | Team · Heroes · Stars | "Roster" is renamed **Heroes**. Team drops the "Your hero" and "Fighting beside you" cards (the slot cards open the character sheet). The bench shows a single row plus "+N". Heroes merges the locked silhouettes and Leads into one "Who could join" list. The Camp's roster board goes; each hero card says where they are ("At the Library", "Out: Mossy Hollow, 4h"). |
-| **Gather** | Mining · Wood · Foraging · Storehouse | GX1 (section 6.1). "Pack" becomes **Storehouse** (materials only). Each skill view shows only that skill. The Coast's Fishing becomes a fifth skill view: labels shorten to "Mine · Wood · Forage · Fish · Store" (5 x 72 px fits at 360). |
-| **Craft** | Make · Armoury · Powers | "Gear" becomes the **Armoury** (the owner's new building: your gear, the bag, loadouts, lock and favourite, auto-salvage filter, sort and filter; its level sets the bag size). Uniques move to the Codex (the Armoury's unique items still show in the bag). Tool recipes stay in Make (Workbench); Gather's tool chip links there. |
-| **Camp** | Build · Expeditions · Almanac · Tavern | "Camp" view becomes **Build** (Hearth, builders, buildings, blessing). **Expeditions** gets its own view. Raid leaves (to Fight). The Tavern keeps the visitor, who is online and the hall of heroes. Rename moves to the Journal's hero card. |
-| Journal (hidden menu) | Deeds · Tracks · Feats · Codex | Replaces the hidden Achievements menu and the bell's Journal. Opened by **tapping the portrait** in the header (and from toasts and Next Up). Looks open as a sheet from the Deeds hero card; lifetime stats open as a sheet from Deeds ("Lifetime stats ›"). The Codex becomes a view (its home), pages open as sheets. |
-| Bell (sheet) | Notices | Only notices. The Journal tab of the bell sheet goes. |
+| **Fight** | Zone · Bounties | "Upgrades" becomes **Zone**: the zone card (zone, foes to the boss, boss button, zone stepper, auto-boss), the Omen line (links to the Almanac post) and your upgrades. Bestiary and zone mastery move to the Codex (the zone card keeps a one-line mastery star count). **The Deepwell leaves** (to the World). **Raid does not come here**: it stays in the World at its raid site. |
+| **Gather** | Mining · Wood · Foraging · Storehouse | Unchanged from UX2 (GX1, section 6.1). "Pack" becomes **Storehouse** (materials only). The Coast's Fishing becomes a fifth view: "Mine · Wood · Forage · Fish · Store". |
+| **Party** | Team · Heroes · Stars | Unchanged from UX2: "Roster" is **Heroes**; Team drops the repeated hero cards; each hero card says where they are ("At the Library", "Out: Mossy Hollow, 4h"). The Camp's roster board goes. |
+| **Craft** | Make · Armoury · Powers | Unchanged from UX2. The Armoury is built at Hollow's Rest; its screen (your gear, bag, loadouts, lock, salvage filter) lives here. Uniques move to the Codex. |
+| **World** | **Map**, then the places you open from it | New. Opens on the map of the Lantern Road. Places: Hollow's Rest (the camp), the Tavern, the Deepwell, the Almanac post, the raid site, each region's Great Lantern, and one road row per band of 7 zones (travel and expeditions). No view switcher: the head row holds the region chips on the map and "‹ Map" in a place (7.4). |
+| Journal (hidden menu) | Deeds · Tracks · Feats · Codex | Unchanged from UX2. Opened by tapping the portrait. The rename box moves to its Lanternbearer card (decided). |
+| Bell (sheet) | Notices | Only notices. |
 
-Fallback if the Raid move is not signed off: Raid stays in Camp and merges with the Tavern as one
-view, **World** (both are online), so Camp stays at four views: Build · Expeditions · Almanac · World.
+### 3.2 The places on the map
 
-### 3.2 Where each system lives
+| Place | On the map | Opens as | Holds |
+|---|---|---|---|
+| **Hollow's Rest** (the camp) | top of the Hollow, below Lantern Hill | place view `rest` | **Build**: the Hearth, builders and every building (stations, Storehouse, Armoury, Bunkhouse, Watchtower, Map Room, Library, Shrine, Kitchen, K13's refining stations). **Work**: Hands on shifts (beds from the Bunkhouse) and K13's refining queues. **Blessing**: the Shrine. The Storehouse and Armoury rows say "Open ›" and go to their screens in Gather and Craft. |
+| **The Tavern** | beside Hollow's Rest | place sheet | The visitor (hire heroes), the Job board (hire Hands; "Beds 3 of 4" from the Bunkhouse), Rumours (Tavern Lv 3), one online line with "Hall of heroes ›" (view `tav`, online). |
+| **The Deepwell** | beside Hollow's Rest (the old well under the camp) | place view `deep` | The entrance: Normal run, the week's Trial, the Deep Lore shop (a sheet), last run. The Hollow's dungeon. |
+| **The Almanac post** | at the camp gate, on the road | place sheet | The Omen and the weekly goals (today's Almanac view, as a sheet). |
+| **The raid site** | in the region the current great foe roams (7.5) | place view `raid` online, small sheet offline | The world raid card, war horn, relics. Markup and ids unchanged. |
+| **Great Lanterns** | one per region at its end (the Hollow's is on Lantern Hill) | sheet | Today's Lantern Road sheet for one region: the day it was relit, or what lights it. |
+| **Road rows (bands)** | one row of 7 lamps per band | band sheet | The 7 zones as tiles (tap a lit one to fight there; mastery stars; later Oath Seals) and that band's expedition routes (Plan opens the send sheet). |
+| Dungeons (later) | one slot per region | place view | The Deepwell is the Hollow's. A region spec may add one: a pin, a view id and an entrance view in the Deepwell's shape (7.7). |
+| Pinnacles (later) | at their story place | decided by the pinnacle UI task | The map has the slot (a pin in `WORLD_MAP`). |
+
+**Sheet or view.** A place with one job and a short list opens as a **sheet over the map** (the
+Tavern, the Almanac, a Great Lantern, a band, the raid when offline): the map stays in sight and closing
+goes back to it. A place you work in for minutes opens as a **place view** in the World menu (Hollow's
+Rest, the Deepwell, the raid online).
+
+**Decision: the Almanac stays on the map**, as a post at the camp gate, not in the Journal. The Journal
+keeps records (what you did); the Almanac is this week's jobs, and the World tab is where "go and do
+something between fights" lives. Its dot shows on the post and on the World tab. The Omen stays as one
+line on Fight, Zone, linking to the post's sheet.
+
+### 3.3 What moves
+
+| Thing | Was (built) | UX2 planned | Now (UX2b) |
+|---|---|---|---|
+| Deepwell | Fight, Deepwell | Fight, Deepwell | World, the Deepwell pin (view `deep`, same id) |
+| World raid, war horn, relics | Camp, Raid | Fight, Raid | World, the raid site (view `raid`, same id; `p-raid` stays inside `p-world`, so no markup moves) |
+| Hearth, builders, buildings, blessing | Camp, Camp | Camp, Build | World, Hollow's Rest (view `rest`; old id `camp` is an alias) |
+| Expeditions | a Camp section | Camp, Expeditions | The map: the expedition bar, the Routes sheet, road rows and their band sheets. No list view. |
+| Almanac | Camp, Almanac | Camp, Almanac | World, the Almanac post (a sheet; old id `almanac` opens the map and the sheet) |
+| Tavern: visitor, Job board | Camp, Tavern | Camp, Tavern | World, the Tavern sheet |
+| Tavern: who is online, hall of heroes | Camp, Tavern | Camp, Tavern | view `tav` ("Hall of heroes ›" from the Tavern sheet; ids unchanged) |
+| Lantern Road strip and sheet | Camp view header | Camp, Build | The map itself: region chips in the head, Great Lantern pins, lit lamps on the road |
+| Zone travel beyond the stepper | none | none | Band sheets on the map (the stepper stays on Fight, Zone) |
+| Hands (N3) | planned on Camp | planned on Camp | Hire at the Tavern sheet; beds and shifts at Hollow's Rest, Work |
+| Roster board | Camp | gone | gone (Party, Heroes says where each hero is) |
+| Rename your Lanternbearer | Tavern | Journal | Journal, Lanternbearer card |
+
+### 3.4 Where each system lives
 
 | System | Home | Also reachable from (links, not copies) |
 |---|---|---|
-| Zone, boss gate, auto-boss, zone stepper | Fight, Zone | game view control row, quick switcher |
+| Zone, boss gate, auto-boss, zone stepper | Fight, Zone | game view control row, quick switcher, band sheets |
 | Your upgrades (Blade, Swiftness, Fortune) | Fight, Zone | Next Up |
-| Omen | Camp, Almanac | one line on Fight, Zone |
+| Omen | World, Almanac post | one line on Fight, Zone |
 | Bounties | Fight, Bounties | Next Up, toasts |
-| Deepwell (runs, Trial, Marks shop) | Fight, Deepwell (shop as a sheet) | Codex page |
-| World raid, war horn, relics | Fight, Raid | quick switcher (Raid row, online only) |
+| Deepwell (runs, Trial, Marks shop) | World, the Deepwell (shop as a sheet) | quick switcher (while a run is live or paused), Codex page |
+| World raid, war horn, relics | World, the raid site | quick switcher (Raid row, online only), the region chip's red dot |
 | Formation, Bonds, combos and Kin | Party, Team | character sheet |
-| Heroes, recruiting, leads, promotions | Party, Heroes | Tavern visitor, Next Up |
+| Heroes, recruiting, leads, promotions | Party, Heroes | the Tavern's visitor, Next Up |
 | Constellations | Party, Stars | Lanternbearer sheet |
 | Gathering nodes, skills, tools worn, Glint | Gather, skill views | quick switcher, stage |
-| Storehouse (materials, caps, trophies) | Gather, Storehouse | Camp, Build (upgrading it) |
+| Storehouse (materials, caps, trophies) | Gather, Storehouse | Hollow's Rest (upgrading it) |
 | Recipes, stations, tools to make | Craft, Make | tool chip, Next Up |
-| Gear, bag, loadouts, salvage (Armoury) | Craft, Armoury | character sheets, Camp, Build (upgrading it) |
+| Gear, bag, loadouts, salvage (Armoury) | Craft, Armoury | character sheets, Hollow's Rest (upgrading it) |
 | Legendary powers, Lantern Book, circle sets | Craft, Powers | item sheet |
-| Buildings, Hearth, builders, blessings | Camp, Build | Next Up |
-| Expeditions | Camp, Expeditions | hero cards ("Out: ...") |
-| Almanac (Omen, weekly goals) | Camp, Almanac | |
-| Tavern (visitor, online, hall of heroes) | Camp, Tavern | Heroes (visitor lead) |
+| Buildings, Hearth, builders, blessings | World, Hollow's Rest | Next Up, toasts |
+| Hands: beds, shifts; refining (K13) | World, Hollow's Rest, Work | Tavern (hiring), Next Up |
+| Expeditions | World map: expedition bar, Routes sheet, band sheets | hero cards ("Out: ..."), toasts |
+| Almanac (Omen, weekly goals) | World, the Almanac post | Fight, Zone (Omen line) |
+| Tavern (visitor, Job board, Rumours) | World, the Tavern sheet | Party, Heroes (visitor lead) |
+| Who is online, hall of heroes | World, view `tav` | the Tavern sheet's online line |
+| Great Lanterns, the Lantern Road | World map | the Great Lantern card (moment), Codex Story |
 | Achievements, titles, looks | Journal, Deeds / Tracks / Feats | portrait, toasts |
 | Codex, Light, Bestiary, zone mastery, Uniques, story, Lore | Journal, Codex | portrait, toasts |
 | Lifetime stats | Journal, Deeds, "Lifetime stats" sheet | |
@@ -276,7 +333,8 @@ Tap the pill (or the "Switch" button on the control row) to open a small sheet:
    are on says "Here". Buttons use the verb: Mine, Chop, Cut, Pick.
 3. **Recent**: up to 3 chips of recent places not already listed (another node, "Zone 35 boss" when a
    boss attempt failed there, a Deepwell run that is paused).
-4. Footer links: "All nodes ›" (opens Gather on the current skill), "Raid ›" (online only).
+4. Footer links: "All nodes ›" (opens Gather on the current skill), "Map ›" (the World map), "Raid ›"
+   (online only; opens the raid site).
 
 One tap switches the activity **and closes the sheet and any open menu** (portrait), so the player lands
 on the stage and sees the change. On wide screens the menu stays open and updates. A locked skill is
@@ -292,8 +350,8 @@ Keep the row: **[Fight · Z37] [⛏ Mining] [Switch ▾]**. The first button fig
 second resumes the current skill's last node (it shows that skill's icon and name); Switch opens the
 quick switcher. The zone stepper moves into the Fight, Zone card (it is only needed while fighting there)
 and into the stage HUD's zone label as a tap target. Raid leaves the control row (it is in the
-switcher and in Fight, Raid), so offline players stop seeing a dead button. Needs sign-off with the
-Raid move (8).
+switcher and at the raid site on the World map), so offline players stop seeing a dead button
+(approved by the coordinator, 2026-09-28).
 
 ### 4.4 Back and close
 
@@ -312,6 +370,8 @@ Raid move (8).
 
 - A horizontal swipe on a menu's content moves to the next or previous view (Mining ↔ Wood ↔ Foraging ↔
   Storehouse, and in every tab). The Gather order follows the tab order so it matches the GX1 ask.
+- World: the map has no views to swipe to (it is `data-noswipe` and only scrolls); in a place view a
+  right swipe goes back to the map (7.4).
 - Trigger: 56 px, horizontal distance more than 1.5 x vertical, or a flick over 0.4 px/ms. It never
   starts on an element marked `data-noswipe` (the star map, drag-to-swap slots and bench, horizontally
   scrolling chip rows, sliders).
@@ -330,6 +390,12 @@ Raid move (8).
   `go: { act: 'gather', node: { kind, t } }` and `go: { act: 'fight', zone }` switch activity instead
   of opening a menu.
 - Hidden views open on demand (onboarding's safety net stays).
+- **World targets** (UX2b): a place view is an ordinary view id (`go: { tab: 'world', view: 'rest' }`,
+  `'deep'`, `'raid'`). A sheet on the map takes two new optional fields: `go: { tab: 'world', view:
+  'map', place: 'tavern' }` (scroll to the pin, open its sheet) and `go: { tab: 'world', view: 'map',
+  band: 6 }` (scroll to the road row, open its band sheet). Toasts: build finished → `rest`; visitor or
+  Hand applicant → Tavern sheet; weekly goal → Almanac post sheet; expedition back → its band; war
+  horn → `raid`; Great Lantern lit → the map at that lantern (after the card).
 
 ## 5. One set of patterns
 
@@ -364,7 +430,8 @@ One 44 px row: the view switcher and, at its right end, the close button (a down
 The title row goes (the lit tab names the tab, as it already does on short landscape screens). Saves
 64 px of chrome in every menu: the content area at 360 x 740 grows from 528 to 592 px. The grab handle
 stays as a 3 px line above the switcher (it is the swipe-down target). Hidden menus (Journal) show their
-title in place of a lit tab: "Journal" on the left of the switcher row.
+title in place of a lit tab: "Journal" on the left of the switcher row. The World tab uses the same
+row for its region chips on the map and for "‹ Map · <place>" in a place view (7.4).
 
 ### 5.4 View switcher (sub-tabs)
 
@@ -522,6 +589,7 @@ See 4.1-4.3 and `m-switch.png`, `m-game.png`.
 
 - Zone card: "Zone 37 · Sea Caves", foes to the boss with a bar, **Boss** (ember), the zone stepper
   (‹ 36, Best zone 38, 38 ›), auto-boss. While gathering, the card says "You are mining. [Fight here]".
+  A ghost "Map ›" opens the World map at your road row (7.6).
 - The Omen as one row (links to the Almanac).
 - Your upgrades: x1/x10/Max as chips in the section header; rows with a price button. Advice ("the camp
   is the better buy") as meta with a ghost "Camp ›" when it applies.
@@ -536,32 +604,11 @@ See 4.1-4.3 and `m-switch.png`, `m-game.png`.
 ```
 One action per row: Claim when ready, else the row's button is Swap (ghost) and progress is the bar.
 
-### 6.6 Fight, Deepwell
+### 6.6 Deepwell and 6.7 Raid: moved to the World
 
-```
-┌ THE DEEPWELL ───────────────────── 0 Marks ┐
-│ Go down floor by floor. Oil drains while a foe stands. │
-│ [Normal run]              [Trial: Glass Week ›] │
-└──────────────────────────────────────────────┘
-■ THIS WEEK'S TRIAL: Glass Week      7 days left
- Damage x2 · most Oil 60s · best floor -  · seals 0
-■ DEPTH MARKS                          [Shop ›] (sheet with filter chips: Lore, Looks, Titles, Pages)
-■ LAST RUN   floor 12 · 3 boons · 140 Marks
-```
-The Trial shows once; the shop becomes a sheet (no inner tab bar).
-
-### 6.7 Fight, Raid (moved from Camp)
-
-```
-┌ WORLD RAID ── The Glass Hydra ──── ▓▓▓▓▓░░ ┐
-│ Raiders 12 · your damage 810M · share 4%     │
-│ [March to the raid]           [War horn]     │
-└──────────────────────────────────────────────┘
-■ RELICS                         Paid in Embers
- rows: [ic] Warbanner Lv 6  +20% damage a level   [◆ 180]
-```
-Offline: one line "Raids need the game's Claude link and sign-in." replaces the card; relics stay.
-Markup keeps its ids (`p-raid`, `rName`, `marchBtn`, `hornBtn`, `relicRows`) so 80-online is untouched.
+UX2b moves both out of Fight: the Deepwell entrance is a place view on the World map (7.7) and the
+raid is its raid site (7.5). The layouts UX2 drew here (the Trial once, the shop as a sheet, the raid
+card with relics and the offline line) carry over unchanged.
 
 ### 6.8 Party, Team
 
@@ -627,32 +674,25 @@ it at Camp, Build. Save fields for the Armoury belong to its own task.
  rows only for sets with a marked piece worn; the rest fold into one line
 ```
 
-### 6.14 Camp, Build
+### 6.14 World, Hollow's Rest: Build (was Camp, Build)
 
 ![camp build](img/ux/m-camp.png)
 
 - Hearth card (one line of what the next level needs), builders as two chips (free / busy with a timer).
 - Buildings grouped: **Ready to build** (primary Build buttons with the time as meta), **Waiting on
   materials** (dim rows, "2 of 3 costs ready", tap to see the costs), and the rest folded.
-- The Lantern Road strip stays at the top as one line (tap: its sheet).
-- Blessing as one row with "Change ›" (sheet).
-- The Storehouse and the Armoury rows link to their views ("Open ›" next to Build).
+- The Lantern Road strip goes: the World map is the road (7).
+- Blessing moves to its own chip in Hollow's Rest (7.8).
+- The Storehouse and the Armoury rows link to their views ("Open ›" next to Build), in the group
+  "Buildings with their own screen" (7.8).
 - The roster board goes (Heroes shows where each hero is).
 
-### 6.15 Camp, Expeditions
+### 6.15 Expeditions, 6.16 Almanac and Tavern: moved to the World
 
-![expeditions](img/ux/m-exped.png)
-
-- "Out now" rows with a bar and Call back; one ember "Send a team" button.
-- Routes: "Best for your team" and a filter dropdown (Materials, Trophies, Tokens, Lore); the top
-  bands (the two highest you can run) show; lower bands fold per band. Plan opens the send sheet.
-
-### 6.16 Camp, Almanac and Tavern
-
-Almanac: keep (it is already the model: one card, one list, one action a row); "SWAP" becomes a plain
-"Swap"; the weekly goal row's chevron keeps the details.
-Tavern: visitor card, who is online, hall of heroes. Rename moves to the Journal. Offline, the online
-parts collapse to one line.
+Expeditions are sent from the map (7.6): the expedition bar, the Routes sheet and the band sheets
+replace UX2's Expeditions view (`m-exped.png` is superseded by `w-band.png` and `w-send.png`). The
+Almanac is the post's sheet (UX2's layout kept: one card, one list, one action a row; "SWAP" becomes
+"Swap"). The Tavern is a place sheet (7.9); who is online and the hall of heroes stay in view `tav`.
 
 ### 6.17 Journal (hidden menu: Deeds, Tracks, Feats, Codex)
 
@@ -677,9 +717,240 @@ parts collapse to one line.
 | Next Up | Keep; rows may switch activity (4.6). |
 | Notices | Keep; the Journal tab goes. |
 | Combos and Kin, Bond | Merge into "Working together" (tabs as filter chips: Combos, Kin, Bonds). |
-| Story, Lantern Road, expedition send, Inscribe | Keep; title row and footer per 5.11. |
+| Story, expedition send, Inscribe | Keep; title row and footer per 5.11. The send sheet stacks on a band sheet (7.6). |
+| Lantern Road | Becomes one region's Great Lantern sheet, opened from its pin (7.3). |
 
-## 7. Build plan
+## 7. The World map
+
+![world map](img/ux/w-map.png) ![the whole map](img/ux/w-map-full.png)
+
+Mockups: `w-map` (the World tab at 360 x 740, opened at Hollow's Rest), `w-map-full` (the whole
+scroll on the late save: zone 38, the Hollow lit, the Coast reached, the Ashen Wyrm raid live). The art
+in them is the painter below with draft sprites; the art task (UX-W1) finishes the sprites.
+
+### 7.1 Layout at 360 x 740
+
+- **Head row** (44 px, the UX-B menu head): the **region chips**, one per region reached plus the next
+  one (a lantern icon, lit or dark, and a short name: "Hollow", "Coast", "Beyond"), then the close
+  chevron. A tap scrolls to that region's header. The chip of the region with the raid carries a red dot.
+  No title: the lit World tab names the menu.
+- **The map**: one vertical scroll, full bleed (360 px, no gutter). Regions stack in road order, top to
+  bottom. Each is a 34 px section header ("THE HOLLOW · Zones 1-35 · lantern lit") and its **plate**.
+  New regions append at the bottom.
+- **The expedition bar** (56 px), fixed under the map and above the tab bar: "EXPEDITIONS · 1 out · back
+  in 4h · 2 slots free" and one ember button, **Send a team** (7.6). It shows once expeditions open.
+- Room for the map: 740 - 48 header - 44 head - 56 bar - 54 tabs = **538 px**. The whole map on the late
+  save is 1,386 px (2.6 screens).
+- **Opens where you left it** (the scroll is kept in `lanternfall.ui.v1` as `mapY`); the first time, at
+  Hollow's Rest. A deep link scrolls to its target and flashes it.
+- **No pan or zoom.** Decision: a fixed vertical strip. Native scroll is smooth, cheap and accessible,
+  it never fights the swipe-down close or the view swipe, nothing is drawn scaled per frame, a plate is
+  exactly one screen wide so nothing hides sideways, and a new region is just another plate below.
+
+Region states:
+
+| State | Plate | Pins | Header note |
+|---|---|---|---|
+| Reached (your max zone is in or past it) | full colour, lamps lit up to your max zone | all | "lantern lit" or "lantern dark" |
+| Next (the first region not reached) | the same plate painted with the grey palette | dim; a tap says what opens it | "Reach zone 36" |
+| Beyond (a region with no data yet, `ROAD_BEYOND`) | a short dim plate (76 art px): ash specks, the road running out, a dark lantern | the raid pin only, if its foe lives there | "The road ends here" |
+
+### 7.2 A region plate
+
+- Baked once to a small canvas at **art size 180 px wide** (Hollow 300 tall, Coast 266, Beyond 76),
+  shown at 2x (1 art px = 2 CSS px) with `image-rendering: pixelated`. It holds only ground: a four-band
+  colour ramp with a dithered seam, the region's shapes (Lantern Hill and the camp clearing; the sea and
+  its shingle), scattered stamps (7.11), the road and the lamps.
+- **The road** is a snake of 5 rows, **one row per band of 7 zones**, 4 art px wide with a 1 px dark
+  edge. It enters at the top and leaves at the bottom at the x where the next plate's road begins.
+- **Lamps**: one per zone above the road. Lit gold when the zone's boss is beaten (`zone < S.maxZone`),
+  dark grey when not. This is the "visibly relit world" of plan-2 RD: the road lights up as you go. A
+  new max zone repaints one lamp in place (a few `fillRect`s), never the plate.
+- Everything you tap or read is **DOM over the plate** (sharp text, screen readers, 44 px targets):
+  pins, labels, band flags, the zone-range labels, the You marker, teams out.
+- Data, per region, in `WORLD_MAP[regionId]` (13d-art-world.js): `{ H, pal, road, rows: [5 y], xa,
+  xb, shapes, stamps, places: { rest: [x, y], ... }, lantern: [x, y], raid: [x, y], dungeon? }`. The
+  painter is generic; a new region only adds numbers and a palette (7.10).
+
+### 7.3 Pins, flags and the You marker
+
+- A **pin** is a 48 x 48 button centred on its spot: the landmark sprite (24 x 24 at 2x) or an icon
+  (12 x 12 at 2x or 3x), with a label chip under it (body 11.5 px, 600, on a dark chip) and the 8 px
+  ember **dot** when the place has something to act on (5.14: a build done, a visitor or applicant, a
+  goal ready, a raid live, a run paused, a team back).
+- Pins on one plate sit at least 48 px apart (a check). A **locked place** shows dim (55%) with its
+  label; a tap opens a one-line sheet ("The Tavern opens at zone 8."). A place not in the game yet has
+  no pin.
+- **Band flags**: the `banner` icon at the start of each road row with the band numeral and its route
+  count ("VI 2"); grey while the band's routes are locked. The **whole road row** (360 x 44 px) is the
+  tap target for the band sheet; the flag is the cue. Zone ranges ("zones 36-42") label each row.
+- **Teams out**: a small ember banner chip on the row of the route's band with the time left ("4h").
+  When the team is back it says "Back" and gets the dot.
+- **You**: your portrait (24 px) in a gold ring with a "You" tag. On your zone's lamp while fighting; at
+  Hollow's Rest while gathering (nodes and Hands are near the camp); at the Deepwell during a run; at
+  the raid site while raiding. It moves only when the activity or zone changes. Tap: the quick switcher.
+
+### 7.4 Interaction
+
+- **Tap a pin**: its sheet or place view (3.2). **Tap a road row**: its band sheet. **Tap You**: the
+  quick switcher. **Tap a region chip**: scroll to it.
+- **The activity pill and the quick switcher stay in the header** above the map and every place, as on
+  every tab (4.1-4.2). Anything that changes activity (the switcher, a band tile, "Fight here", Enter
+  the Deepwell, March to the raid) closes the World menu in portrait (4.4), so you land on the stage.
+- **Place views** use the head "‹ Map · <place> · ⌄" (44 px) with optional filter chips under it
+  (Hollow's Rest: Build · Work · Blessing). "‹ Map", a right swipe, or a tap on the lit World tab goes
+  back to the map at the same scroll. ⌄ closes the menu. The tab remembers the place you were in, like
+  any tab remembers its view.
+- **Sheets over the map** follow 5.11: 90% at most, ✕, "‹ Back" when stacked (band → send).
+- **Swipe**: the map is `data-noswipe` for the view swipe (4.5); it only scrolls. A swipe down on the
+  head still closes the menu.
+- **Wide (1280 x 800)**: the map stays 360 px wide, centred in the 531 px menu column (the sides show the
+  panel colour); sheets open in the column. **Landscape phone (740 x 360)**: the expedition bar folds into
+  the head as a chip ("1 out ›") so the map keeps about 250 px.
+- **Reduced motion**: jumps do not smooth-scroll, the You marker jumps, no pin glow.
+
+### 7.5 The raid site
+
+- The world raid is one great foe for everyone (`world/boss.name`, which 80-online already holds). The
+  map puts its pin in the **foe's home region**, from a small client table in the World UI (lore.md 4.7):
+  the Hollow King and the Mire Colossus in the Hollow, the Glass Hydra on the Coast, the Ashen Wyrm and
+  the Lantern Eater over the Emberwaste, the Pale Tyrant at the mountain pass (Beyond). A home not
+  reached yet shows on the dim Beyond plate, lit and tappable: raids are open to everyone.
+- The pin: the foe's sprite (the Ashen Wyrm is `SPR.wyrm`; the others use the war-horn icon) and
+  "Raid: the Ashen Wyrm", with the dot while you can hit it. The region chip carries the same dot, so the
+  raid is found from the top of the map, and the quick switcher keeps its Raid row.
+- Tap: the raid view `raid` (unchanged markup: `p-raid`, `rName`, `marchBtn`, `hornBtn`, `relicRows`...).
+  Offline or not signed in: a small sheet, "Raids need the game's Claude link and sign-in.", with the
+  relics below (relics are single-player spending and stay).
+- Each region has a raid spot in `WORLD_MAP`, so a later per-region raid needs only its own online data.
+  That is out of scope and needs coordinator sign-off. **No online change here.**
+
+### 7.6 Expeditions from the map
+
+![band sheet](img/ux/w-band.png) ![send](img/ux/w-send.png)
+
+- **The expedition bar**: "1 out · back in 4h · 2 slots free" and **Send a team**. When a team is back:
+  "Mossy Hollow Rounds is back" and a gold **Collect**. With no free slot: "3 out · next back in 1h" and
+  a ghost **Log**.
+- **Send a team** opens the **Routes sheet**: "Best for your team" (the top 3 routes over all open
+  bands, one row each with Plan) and the line "Or tap a road on the map."
+- **A band sheet** (tap a flag or a road row): "Band VI · Zones 36-42", the region and its mastery stars;
+  **7 zone tiles** (number and stars; yours says "You"; locked ones dim; the boss zone says "boss"): a tap
+  on a lit tile fights there and closes the menu; then **Routes** with need chips green when met and one
+  **Plan** each; a team out on this band shows as a row with Call back.
+- **The send sheet** is today's (length 1h/4h/8h/12h, three team slots with the need each fills, Best
+  team, grade pips, the haul with "fits" or "won't fit" from H3's `stashFits`, **Send · back at 19:40**).
+  It stacks on the band sheet with "‹ Back". After Send both sheets close and the row shows the team.
+- The Map Room stays a building at Hollow's Rest (slots and lengths); its row says "Open ›" to the
+  Routes sheet. Coast routes (bands VI-X) sit on the Coast's rows by the same rule, and so will every
+  later region's.
+
+### 7.7 The Deepwell entrance (`deep`)
+
+![deepwell](img/ux/w-deep.png)
+
+- Head: "‹ Map · The Deepwell · 412 Marks · ⌄".
+- One card with the well sprite: "Go down floor by floor. Oil drains while a foe stands. Climb out
+  between floors. Best floor 27." Buttons **Normal run** (ember) and **Trial ›**. A saved run replaces
+  them with **Resume run · floor 14, Oil 48s**.
+- **This week's Trial** once: one row with Enter. **Depth Marks**: one row, "Deep Lore shop" with
+  Shop › (a sheet with filter chips: Lore, Looks, Titles, Pages). **Last run**: one line. The note
+  "While you are below, your zone waits. Away gains keep coming." (deepwell.md 7).
+- Run end's "Back to camp" becomes "Back to the map". The pill reads "Deepwell · Floor 12" during a run.
+- Later dungeons use the same shape (card with the entrance sprite, the weekly line, the shop row, the
+  last run) under their own view id.
+
+### 7.8 Hollow's Rest (`rest`)
+
+![hollow's rest](img/ux/w-rest.png)
+
+- Head: "‹ Map · Hollow's Rest · ⌄". Filter chips: **Build** · **Work** (with Hands) · **Blessing**
+  (with the Shrine).
+- **Build**: as 6.14 (the Hearth card, builders, Ready to build, Waiting on materials, the rest folded),
+  plus one group **"Buildings with their own screen"**: Storehouse (Gather, Storehouse), Armoury (Craft,
+  Armoury), Map Room (the Routes sheet), Library (Codex), each with "Open ›". The **Bunkhouse** is an
+  ordinary building row ("+1 bed for Hands"). The Trophy Wall card (AC5) stays at the top of Build, and
+  N2's camp panorama, if it is built, mounts above the chips. Neither is needed by this spec.
+- **Work**: Hands on shifts (a row each: the Hand, the node, a bar, Send again), "Beds 3 of 4 · Bunkhouse
+  Lv 2", then K13's refining stations (Smelter, Sawmill, ...) as rows with their queue. Hiring is at the
+  Tavern ("Hire at the Tavern ›").
+- **Blessing**: the Shrine's slots, each with Change ›.
+
+### 7.9 The Tavern (a place sheet)
+
+![tavern](img/ux/w-tavern.png)
+
+- Title row: the tavern sprite, **The Tavern**, "Lv 3 · a new face every 6 hours", ✕.
+- **The visitor** card: portrait, name, rarity and role, time left, Hire.
+- **Job board · Hands** (N3): up to 3 applicants as rows with Hire; the note "Beds 3 of 4".
+- **Rumours** (Tavern Lv 3): one row, "Rumour: Gull Rock · +50% haul today", Plan › (the send sheet).
+- One line: "12 lamp-bearers on the road now." and **Hall of heroes ›** (view `tav`: who is online and
+  the hall, ids unchanged). Offline: "Other lamp-bearers show here when you play from the game's Claude
+  link."
+- No rename box (it is on the Journal's Lanternbearer card).
+
+### 7.10 How new regions append
+
+- A region spec (D4 for the Emberwaste) adds a `WORLD_MAP` block: height, a 4-colour ground ramp, road
+  colours, its shapes (a lake, ash flats), 2-3 stamp ids, the 5 row heights, the lantern and raid spots,
+  and optionally a dungeon (id, spot, one 24 x 24 sprite, a place view in the Deepwell's shape).
+- The plate appends below the last region; the Beyond plate moves down to the next name in the road.
+  Region chips grow by one; at 5 regions they shorten to icons with the name on the lit chip only
+  (5 x 44 px + close fits 360).
+- Expedition bands on the new rows come from the region's band data (as the Coast's VI-X).
+- Checks (`tools/check.mjs`, section `world`): every `REGIONS` entry has a `WORLD_MAP` block; 5 rows per
+  region; pins 48 px apart; every pin opens a view or sheet that exists; the plate is 180 art px wide.
+
+### 7.11 Art plan
+
+The owner asked for little new visual work. The map reuses the B1 icons and the packed-plate idea
+(bake once, copy 1:1), with three landmark sprites.
+
+| Piece | Size (art px) | New or reused | Used as |
+|---|---|---|---|
+| Hollow's Rest `wm_rest` | 24 x 24 | **new**: two tents, the lantern pole, the fire from `b_fire` | pin (2x); Hearth card icon (1x) |
+| The Tavern `wm_tavern` | 24 x 24 | **new**: a house, red roof, lit windows, a mug sign in `mug`'s colours | pin (2x); sheet title (1x) |
+| The Deepwell `wm_well` | 24 x 24 | **new**: a stone well mouth, a winch, a blue glow | pin (2x); entrance card (2x) |
+| Almanac post `wm_sign` | 12 x 12 | **new** (ICON format) | pin (3x) |
+| War horn `wm_horn` | 12 x 12 | **new** (ICON format) | raid pin for foes other than the Wyrm |
+| The Ashen Wyrm | 16 x 16 | reuse `SPR.wyrm` | raid pin (2x) |
+| Great Lanterns | 12 x 14 | reuse `LANTERN` (75-lantern-ui), lit in the region colour or dark | pins (2x), region chips (2x) |
+| Band flags, teams out | 12 x 12 | reuse `banner`: gold open, grey locked, ember out | flags (2x), out chips (1x) |
+| You | 24 CSS px | reuse `portraitURL` | the marker |
+| Trees, rocks | 12 x 12 | reuse `SPR.tree`, `SPR.rock`, recoloured per region | plate stamps |
+| Reeds, waves, graves, embers | 8 x 8 | **new** `wt_reed`, `wt_wave`, `wt_grave`, `wt_ember` | plate stamps |
+| Ground, hill, sea, shingle, road, lamps | code | the painter (`fillRect` only) | plates |
+| Hollow's Rest, Lantern Hall | 24 x 24 | later, optional (Hearth 8+) | not in W1 |
+| A region's dungeon | 24 x 24 | later, one per region spec that has one | pin |
+
+**New for W1: 9 small pixel maps** (3 landmarks, 2 icons, 4 stamps). Palettes:
+the Hollow's ground `#243426 #1F2F23 #1B2A20 #18261D`, road `#6B5A44` edge `#3E3428`; the Coast's ground
+`#26332F #223030 #1E2B2D #1B2629`, sea `#123241` with `#2F6F7F` waves, shingle `#8C8474`, road
+`#7A6E58`; the dim palette (next region and Beyond) `#1E1A20 #1A1619` with ash `#5A2A26`. Lamps: lit
+`#FFD27A` with a `#FFF3C4` core, dark `#4A4E5C`. The region colours come from `REGIONS[i].col`.
+
+### 7.12 Performance budget
+
+On top of perf.md and the UX budget in 8:
+
+- **No per-frame work.** The map has no `requestAnimationFrame`; nothing draws while it is open. The
+  only motion is CSS: the ember dot and a 2-step flicker on the Hollow's Rest fire and the raid pin
+  (`steps(2)`, 1 s), off under `prefers-reduced-motion`; a hidden menu does not animate.
+- **Plates**: painted with `fillRect` at art size into a canvas kept in memory (180 x 300 x 4 B = 216 KB
+  each, 3 plates about 0.6 MB). Paint: at most 4 ms desktop / 16 ms phone per plate, one plate per
+  `idleTask`, queued once the `camp` feature is open (so the first World open never paints). The 2x
+  upscale is CSS (`image-rendering: pixelated`), done by the compositor.
+- **Relight**: a new max zone repaints one lamp (a few `fillRect`s); a region lit or reached repaints
+  that plate in idle time. Nothing else repaints.
+- **DOM**: at most 40 nodes per region and 150 for the whole map; built once on the first open, then
+  updated in place through the `put*` helpers.
+- **First World open** (late save): longest task at most 60 ms phone (the UX budget is 150).
+- **`update(force)`** while the World menu is open: one signature (max zone, lit lanterns, raid name and
+  live flag, expedition slots and returns, dots, activity); writes only when it changes; at most 0.1 ms
+  p95. Closed: nothing.
+- `spriteURL` caches the icons; the landmark sprites bake in idle time with the plates.
+
+## 8. Build plan
 
 Each task: its own worktree and branch, `node tools/build.mjs`, `node tools/check.mjs`, and
 `node tools/perf.mjs --quick` within budget before merge. Screenshots at 360 x 740, 412 x 915,
@@ -689,53 +960,76 @@ honoured. Copy per 5.15.
 Perf budget for every UX task (on top of docs/design/perf.md): `ui()` p95 grows by at most 0.3 ms;
 opening any menu view: longest task <= 50 ms desktop, <= 150 ms phone; a sheet or the switcher: <= 16 ms
 JS to first paint; nothing new runs per frame; DOM writes only through the `put*` helpers; rows are
-built once and updated in place.
+built once and updated in place. The World map adds its own limits (7.12).
+
+UX2b replaces UX2's **UX-C (Camp)** with three **World** tasks (UX-W1..W3) and takes the Deepwell and
+the Raid move out of **UX-E (Fight)**. UX-A, UX-B, UX-D, UX-F and UX-G are unchanged except where noted.
 
 | Phase | Task | Work | Owns | Shared-file edits (small) |
 |---|---|---|---|---|
-| UX-A | **GX1** global nav + Gather | Activity pill and portrait button (4.1), quick switcher (4.2), control row (4.3, without the Raid part until signed off), swipe between views (4.5), toast `go` and activity targets (4.6), `S.nav` state; Gather rebuilt per 6.1-6.2 (Now card, tool chip, compact rows, Best for you, folds, Storehouse view, cold start opens Wood), copy fixes on Gather and the boss gate | new `55-nav.js` (state, `bestNodes(skill)`, recent list), new `75-nav-ui.js`, new `60-nav.css`; `72-ui-gather.js` (rewrite), `75-tools-ui.js` (chip), `75-store-ui.js` (Storehouse view) | `shell.html` (header pill slot, Gather markup), `70-ui.js` (swipe, toast `go`, view label "Storehouse" with the `pack` id kept), `71-ui-fight.js` (gate copy), check.mjs section `nav` |
-| UX-B | Pattern kit + menu head + Journal | Tokens (5.1-5.2) in `10-base.css`; `kit` helpers (`kitRow`, `kitChip`, `kitHead`, `kitFold`, `kitEmpty`) in a new file; the one-row menu head (5.3); the Journal hidden menu (Deeds, Tracks, Feats, Codex), portrait opens it, bell = Notices only, Looks/Stats/Settings sheets | new `74b-kit.js`, new `60-kit.css`; `75-deeds-ui.js`, `75-codex-ui.js`, `75-stats-ui.js` | `70-ui.js` (menu head, bell), `shell.html` (menu head), `10-base.css` (tokens) |
-| UX-C | Camp | Build view (6.14), Expeditions view (6.15), roster board removed, Tavern trimmed (rename moves) | `75-camp-ui.js`, `75-exped-ui.js`, `75-lantern-ui.js`, `60-camp.css`, `60-exped.css` | `70-ui.js` (view list) |
-| UX-D | Party | Team de-dupe (6.8), Heroes view (6.9), Stars header (6.10), Lanternbearer sheet takes the hero card, character sheet stats fix, "Working together" sheet; hero/Lanternbearer copy sweep | `75-party.js`, `75-party-sheet.js`, `75-bonds-ui.js`, `75-stars-ui.js`, `60-party.css`, `60-formation.css` | none |
-| UX-E | Fight | Zone view (6.4), Bounties rows (6.5), Deepwell (6.6), Bestiary and mastery to the Codex; Raid move (6.7) **only with sign-off** | `71-ui-fight.js`, `75-bounties-ui.js`, `75-deepwell-ui.js`, `75-mastery-ui.js`, `75-almanac-ui.js` (Omen row) | `shell.html` (move `p-raid` markup, ids unchanged), `70-ui.js` (view registry) |
-| UX-F | Craft | Make (6.11), Armoury view shell (6.12; the building and its save fields come from the Armoury task), Powers (6.13), Uniques to the Codex | `75-craft-ui.js`, `75-legend-ui.js`, `73-ui-forge.js`, `60-craft.css`, `60-legend.css` | `70-ui.js` (view registry) |
-| UX-G | Polish | Onboarding targets re-pointed (guide steps, `FEATURES` views), new-game states, empty/locked states everywhere (5.13), remaining old font sizes on tokens, wide layout pass, layout.md and ARCHITECTURE.md updated | `75-onboard-ui.js`, `55-onboard.js` (view ids only), docs | small edits where found |
+| UX-A | **GX1** global nav + Gather (running) | Unchanged: the pill and portrait button (4.1), the quick switcher (4.2), the control row (4.3; its Raid button goes, approved), swipe between views (4.5), toast `go` and activity targets (4.6), `S.nav`; Gather per 6.1-6.2 | new `55-nav.js`, `75-nav-ui.js`, `60-nav.css`; `72-ui-gather.js`, `75-tools-ui.js`, `75-store-ui.js` | `shell.html`, `70-ui.js`, `71-ui-fight.js` (gate copy), check.mjs `nav` |
+| UX-B | Pattern kit + menu head + Journal | Unchanged. One addition: `kitHead` takes an optional back target and title ("‹ Map · Hollow's Rest") so World places can use the one head | new `74b-kit.js`, `60-kit.css`; `75-deeds-ui.js`, `75-codex-ui.js`, `75-stats-ui.js` | `70-ui.js` (menu head, bell), `shell.html` (menu head), `10-base.css` (tokens) |
+| UX-W1 | **World shell and map** (absorbs plan-2 RD) | The tab relabelled "World" and the tab order Fight, Gather, Party, Craft, World; the `map` view (7.1-7.4): the plate painter and idle bake, region chips, headers, pins, flags, zone labels, the You marker, the expedition bar slot; **place views** (hidden from the switcher, the "‹ Map" head, right swipe back, remembered place); `registerPlace({ id, region, at, icon, label, open, dot, locked })` so W2 and W3 add their places without touching W1's files; the band sheet's zone tiles (travel, mastery stars) and a hook for later chips (`worldUI.tileChip(z)`, for O2's Oath Seals); the Great Lantern pins opening today's Lantern Road sheet (one region); `mapY` in UI prefs; view aliases `camp` → `rest`, `almanac` → map + post sheet; `go.place` and `go.band`; the 9 new pixel maps (7.11) | new `13d-art-world.js` (sprites, stamps, `WORLD_MAP` for the Hollow and the Coast), new `75-world-ui.js`, new `60-world.css`; `75-lantern-ui.js` (the Camp strip goes; the sheet is reused) | `70-ui.js` (tab label and order, hidden place views, swipe back, `go.place`/`go.band`), `shell.html` (`p-map` inside `p-world`, tab order), check.mjs section `world` |
+| UX-W2 | **Hollow's Rest and the Tavern** | The `rest` place view (7.8: Build per 6.14 plus "Buildings with their own screen", chips Build · Work · Blessing; Work is a section slot `registerSection('rest-work')` that N3 and K13 fill); the roster board removed; the Tavern sheet (7.9: the visitor, a Job board slot for N3, Rumours, the online line); the Almanac as the post's sheet; pins for Hollow's Rest, the Tavern and the Almanac post via `registerPlace` | `75-camp-ui.js`, `75-almanac-ui.js`, `60-camp.css`, `60-almanac.css` | `75-unlocks-ui.js` (the visitor section moves from `tav` to the Tavern sheet), `74-ui-tavern.js` only if the rename form has not moved yet (UX-B moves it) |
+| UX-W3 | **Deepwell, raid and expeditions on the map** | `deep` registered under `world` as a place view (7.7), the shop as a sheet, the Trial once; the raid pin, the foe-home table and the offline sheet (7.5; `74-ui-raid.js` and `80-online.js` untouched, `p-raid` stays in `p-world`); expeditions (7.6): the expedition bar, the Routes sheet, the routes part of the band sheet, the send sheet stacked with ‹ Back, teams out on the rows; the Camp's expedition section removed | `75-deepwell-ui.js`, `75-exped-ui.js`, `60-deepwell.css`, `60-exped.css` | `55-onboard.js` (view ids only: `deep` → `world`, `exped` → `map`, `camp` → `rest`) |
+| UX-D | Party | Unchanged | as UX2 | none |
+| UX-E | Fight | Zone view (6.4), Bounties rows (6.5), Bestiary and mastery to the Codex, the Omen row linking to the Almanac post. **No Deepwell and no Raid** (they are World places now), so no `shell.html` edit | `71-ui-fight.js`, `75-bounties-ui.js`, `75-mastery-ui.js` | `70-ui.js` (view registry) |
+| UX-F | Craft | Unchanged; the Armoury's "Upgrade ›" goes to Hollow's Rest | as UX2 | `70-ui.js` (view registry) |
+| UX-G | Polish | Unchanged, plus: the onboarding guide's `tab:world` copy ("The World: your camp, the Tavern and the road"), FEATURES names ("Camp" → "Hollow's Rest"), layout.md and ARCHITECTURE.md (module map: 13d, 75-world-ui) | `75-onboard-ui.js`, `55-onboard.js` (names, view ids), docs | small edits where found |
 
-Order of pain: A (the owner's ask), then B (every later task builds on the kit and it unhides the
-Journal), C (the 7-screen Camp), D (Team repeats everyone three times), E, F, G. A and B both touch
-`70-ui.js` and `shell.html`: run them one after the other, not together. C, D, E and F own separate
-files and can run in parallel after B (E and F touch `70-ui.js` only to register views).
+**Order.** A, then B, then **W1**, then W2, W3, D, E and F in parallel, then G. W1 must follow B (both
+edit `70-ui.js` and `shell.html`). W2 and W3 share no files: each adds its places through
+`registerPlace`. E no longer touches `shell.html`, because nothing moves under Fight.
 
-Checks to add (`tools/check.mjs`): every view id Next Up, `deedsOpen`, `codexOpen`, toasts and the
+**Plan-2 RD, the Lantern Road map, becomes part of UX-W1.** The map is the Lantern Road: regions,
+Great Lanterns lit or dark, a lamp per zone lit as you pass it, band sheets with each zone's mastery
+stars, and tap to travel. What RD listed and W1 leaves for later: each zone's best Oath Seal on the band
+tiles, added by O2 (Oath UI) through `worldUI.tileChip(z)`. RD's planned files (`75-road-ui.js`,
+`60-road.css`) are not made. The Great Lantern moment card stays in `75-lantern-ui.js`. Plan-2's
+CD ("camp decorations in the camp scene") is not affected. D4 (the Region 3 spec) adds the Emberwaste's
+`WORLD_MAP` block (7.10).
+
+**Checks to add** (`tools/check.mjs`): every view id Next Up, `deedsOpen`, `codexOpen`, toasts and the
 onboarding guide point at still exists; old view ids (`pack`, `gear`, `roster`, `camp`, `upgrades`,
-`bestiary`, `uniques`, `ach-*`) still resolve through aliases; `S.nav` defaults on every fixture;
-the switcher lists only open skills.
+`bestiary`, `uniques`, `almanac`, `ach-*`) resolve through aliases; `deep` resolves under `world`; `S.nav`
+defaults on every fixture; the switcher lists only open skills; section `world`: a `WORLD_MAP` block for
+every region, 5 rows each, pins 48 px apart, every pin's target exists, and the map builds with no
+network or storage access.
 
-## 8. What must not change
+## 9. What must not change
 
 - **Save:** no field renamed or repurposed. `S.node`, `S.activity`, `S.zone`, `S.tab`, `S.party.*`,
   `S.mats`, `S.store`, `S.camp.*` keep their meaning. New state only through `registerState`
-  (`nav` here; the Armoury's own fields in its task). Every fixture in `tests/fixtures/` loads without loss.
-- **UI prefs:** `lanternfall.ui.v1` keeps `{ tab, views, log }`; new keys may be added. Old view ids in
-  it must resolve (aliases), so a returning player lands on the renamed view.
+  (`nav` here; the Armoury's own fields in its task). The World map adds no save state (its scroll is a UI
+  pref). Every fixture in `tests/fixtures/` loads without loss.
+- **UI prefs:** `lanternfall.ui.v1` keeps `{ tab, views, log }`; new keys may be added (`mapY`). Old view
+  ids in it must resolve (aliases), so a returning player lands on the renamed view (`views.world =
+  'camp'` opens Hollow's Rest; `views.adv = 'deep'` falls back to Zone).
 - **Online layer:** `80-online.js`, the `world/boss` and `raiders/<userId>` docs, room presence
   `{hero, lvl, zone, act, raiding}`, topic `rally`, the capabilities. The raid and tavern markup ids
   (`p-raid`, `p-tav`, `online`, `board`, `renameForm`, `nameInput`, `marchBtn`, `hornBtn`, `rName`,
-  `rBar`, `rHp`, `rCount`, `rMine`, `rShare`, `relicRows`) stay; moving `p-raid` under Fight, dropping the
-  control row's Raid button and moving the rename form to the Journal each need coordinator sign-off.
+  `rBar`, `rHp`, `rCount`, `rMine`, `rShare`, `relicRows`) stay. `p-raid` and `p-tav` stay inside
+  `p-world`: UX2b moves nothing under Fight. The raid pin reads the boss name 80-online already holds;
+  no new online reads or writes. Dropping the control row's Raid button and moving the rename form to
+  the Journal are approved (coordinator, 2026-09-28).
 - **APIs:** `setTab(tabOrViewId, sel)`, `closeMenu()`, `registerView`, `registerSection`, `registerTab`,
   `registerGoal` `go`, the `toast` event and `openSheet` keep their signatures (new optional fields only).
-  Tab ids `adv`, `party`, `gat`, `forge`, `world`, `deeds` stay; the Journal reuses the `deeds` hidden tab.
+  Tab ids `adv`, `party`, `gat`, `forge`, `world`, `deeds` stay; the World tab reuses `world` (only its
+  label and place in the bar change); the Journal reuses the `deeds` hidden tab.
 - **Feature ids** in `FEATURES` (onboarding) stay; only the views they open may change.
 - **Sandbox rules:** one HTML file, no `alert`/`confirm`, no History API, `localStorage` in try/catch,
   works at 360 px, respects `prefers-reduced-motion`, tap targets 44 px.
 
-## 9. Open questions for the coordinator
+## 10. Open questions for the coordinator
 
-1. Sign-off to move Raid under Fight and drop Raid from the control row (UI only; no data change). If
-   not, use the World view fallback (3.1).
-2. Sign-off to move the rename form from the Tavern to the Journal hero card (same element and ids).
-3. The name leaves the header for the pill (4.1). If the owner wants the name kept, the pill takes the
-   second line of the name block at 11 px instead (header stays 48 px).
-4. Bench XP: F5 gives benched heroes 25% kill XP; the owner says none. Which rule ships, and when
-   (the Team bench note follows it).
+UX2's four questions are answered (wave log, 2026-09-28): Raid leaves the control row (and now goes to
+the World, not Fight); the rename form moves to the Journal; the pill replaces the name; bench XP is 0.
+
+1. **The raid pin's place.** Recommended: in the great foe's home region (7.5), from lore.md 4.7, so
+   "find the raid" reads as a place on the road. The simpler option is a fixed raid site at Hollow's
+   Rest. Either is UI only.
+2. **Tab order.** This spec puts Gather second (Fight, Gather, Party, Craft, World), since the owner
+   groups fighting and gathering as the basic play. UX-A is running on the old order; W1 changes it.
+   Confirm that UX-A should not reorder the bar itself.
+3. **The Tavern as a sheet.** Recommended (you look, hire and leave). If N3's Job board grows past one
+   screen, the Tavern becomes a place view like Hollow's Rest with no other change (same id, same pin).
