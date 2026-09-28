@@ -723,3 +723,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Plan: (d) = CB2 "active combat 2.0" spec right after CL1 (it builds on CL1's abilities, types and statuses);
   (a) joins N1b (gatherer trees) and a camp spec (building trees); (b) an events/secrets spec; (c) a uniques
   2.0 spec. All go into the Road to 1.0 roadmap in build order.
+- OWNER: VERSION 1.0 = FIVE regions (the Voice, the final boss, at the end of Region 5 as lore.md has it), so
+  1.0 ships a complete story. Also approved for 1.0: a polished first hour, save safety (export/import at
+  least, ideally cloud), an in-game guide/glossary, accessibility (colour-blind-safe damage types, text size,
+  volume mixer), sound and music, hero quests (per-hero chains unlocking top Bonds and hero evolutions),
+  fishing + the Kitchen, challenge modes (boss rush, Oath replays, weekly Deepwell trial), a shareable camp
+  card. Guilds/bigger social stay post-launch.
