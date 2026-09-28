@@ -629,7 +629,7 @@ dark's held fire and turn it on the things that hold it. The Order would have ha
 **Choice card:** "Take the dark's fire. Throw it back." - Your Embers curse what they touch. - Hex Nova
 sets off every curse at once. - Best with a tank and big hitters.
 
-**Title:** the Lamp-Thief. **Role:** caster (Back). **Type:** fire ("dark fire": still the `fire` type,
+**Title:** the Shadowbinder. **Role:** caster (Back). **Type:** fire ("dark fire": still the `fire` type,
 with one rule of its own, Dark Turned).
 
 **Stats:** HP scale 4, `area` +20% (splash 35%), ward 10%. **Evolution line (C): "Warlock's Pact: 10% more
@@ -815,7 +815,7 @@ x1.20. Hold: Priest's Vows (C, heal x1.3), Sanctuary's Regen and overflow shield
 | Idle strength | good | very good | best | very good | good | very good |
 | Best active moment | Rend + Red Harvest in Stagger | Stand Fast on the signature cast | Bloom at 10 in Blight | Snare Field on a full pack | Nova on a full Curse; Unmaking | Sanctuary before the `line` hit |
 | Lamp colour | red-orange | white-gold in the shield | green under glass | small staked lamps | deep red, caged shard | open white-gold |
-| Title | the Red Lamp | the Unmoved | the Quiet Thorn | the Pathfinder | the Lamp-Thief | the Given Light |
+| Title | the Red Lamp | the Unmoved | the Quiet Thorn | the Pathfinder | the Shadowbinder | the Given Light |
 
 Every core-2 6.5 counter is met: Reaver and Warrior (Shielded), Warden (Cursed), Venomstalker (Vampiric),
 Trapper (Enraged, Summoner), Warlock (Frozen, Vampiric), Priest (Cursed).
@@ -1378,7 +1378,7 @@ S1; S2/S3 only apply them.
 - **D4. Migrated Wardens and Lightkeepers below zone 35.** They keep their kit, but the new evolution
   parts run at 60% and the title waits until they pass the Proving. Recommended: yes (it keeps early pace
   fair between old and new saves without taking anything away).
-- **D5. Titles:** the Red Lamp, the Unmoved, the Quiet Thorn, the Pathfinder, the Lamp-Thief, the Given
+- **D5. Titles:** the Red Lamp, the Unmoved, the Quiet Thorn, the Pathfinder, the Shadowbinder, the Given
   Light. They join the title list (`codexTitles()`, ids `c_<evo>`).
 - **D6. The Warlock ignores fire resistance** with its Curses and Hex Nova (Dark Turned). Without it one
   of six paths is weak for a whole region.

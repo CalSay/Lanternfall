@@ -854,3 +854,15 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   tie into the story. The Star-Fallen's name: coordinator decides (with the rework). Material names: owner
   wants to see the list. Whiteout: explained to the owner. Milestones per region boss: "okay, could be better"
   (coordinator reworking). Warlock title: SHADOWBINDER. QUEUED LORE-R45b (next free slot).
+- MERGED MAP1 (world map hybrid H: A's map, C's landmarks and light, night palettes, lamp pools, fireflies;
+  docs/design/map-study.md "Hybrid H", images map-h-*.png). MERGED CB2 (docs/design/combat-2.md; core-2 row
+  kept alongside CL1's). CB2 owner decisions D1-D8 put to the owner. check.mjs failed once after the MAP1
+  merge and passed on re-run with no change (docs-only merge): watch for a flaky timing check.
+- Warlock title -> "the Shadowbinder" (classes-2.md updated). COORDINATOR DECISIONS for LORE-R45b:
+  region bosses are the Voice's SHROUDS (agents who cover a region in dark; no lamp/lantern roles); on the map a
+  boss is a hole the lamp pools cannot reach; its fall lifts the shroud and WE relight. Region 4 boss: the
+  Whitehush (a dark thing that walks in the Whiteout; it killed the comrade named on Kestrel's spear).
+  Voice's line: "Every flame goes out. I can wait." Region 5: new place with its own look (the Gloamvale,
+  under a sky the dark has closed); the Deepwell ties in because the Voice retreats DOWN the Deepwell,
+  under Hollow's Rest (Season 2 hook). Milestones: each boss = a sight (shroud lifts), a person (someone freed
+  comes to camp), a power (a new system). Code still says "Listener" in places: code follow-up after the docs.
