@@ -846,6 +846,7 @@ try {
   E("almanac.force('none')");   // the calendar Omen (e.g. Cheap Reforge) would change the prices below
   E('globalThis.__crafted = []; on("crafted", p => { globalThis.__crafted.push(p.kind + ":" + p.t); })');
   E('chooseClass("lanternmage")');
+  E('S.camp.b.store = 8');   // H3: room for the piles these checks set
   const mats = () => E('JSON.stringify(S.mats)');
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
@@ -1236,7 +1237,7 @@ try {
 // ---- 8. gathering, fight drops, trophies, offline (55-gathering.js, K5) ----
 console.log('gathering');
 try {
-  const fresh = seed => { const g = loadCore({ seed }); g.eval('almanac.force("none")'); return g; };
+  const fresh = seed => { const g = loadCore({ seed }); g.eval('almanac.force("none"); S.camp.b.store = 8'); return g; };   // H3: rates, not caps
   const g = fresh(21), E = s => g.eval(s);
   const run = (secs, h = g) => { for (let t = 0; t < secs; t += 0.1) h.fn.tick(0.1); };
   // every family harvestable at its tier, behind its skill gate
@@ -1351,7 +1352,7 @@ try {
     E('S.maxZone = 36; ["tobin","wren","hesketh","pip","bram","maren","aldric","kestrel","thessaly","anselm","oriel"].forEach((k, i) => { unlockChar(k, "test", true); charRec(k).lv = 20 + 5 * i; })');
     E('S.party.autoField = false; charRec("tobin").lv = charRec("wren").lv = charRec("kestrel").lv = 90');
     E('setField(["tobin","wren","kestrel"])');
-    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.tavern = 1');
+    E('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.tavern = 1; S.camp.b.store = 8');
     return g;
   };
   const g = mk(71), E = s => g.eval(s);
@@ -2065,7 +2066,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^The Great Lantern/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section
+    g.fn.on('whatsNew', w => { if (!/^The Great Lantern|Storehouse/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -2652,6 +2653,160 @@ try {
   const road = E('lanternRoad()');
   assert(road.length === 3 && road[0].lit && road[1].lit && !road[2].lit && road[2].beyond && road[1].here, 'lanternRoad(): Hollow and Coast lit, the Emberwaste dark beyond, the party on the Coast');
 } catch (e) { fail('regions and the Great Lantern crashed: ' + (e.stack || e)); }
+
+// ---- store (H3): the Storehouse and material caps (docs/design/hearth-and-hands.md 4, 7.2 HS8/HS18, 8.3) ----
+console.log('store');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
+  const errs = [];
+  // -- migration: every fixture keeps every item and material; the level that holds its piles --
+  for (const f of FIX) {
+    const old = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 31, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) }), E = s => g.eval(s);
+    const want = E(`storeLevelFor(${JSON.stringify(old.mats)})`);
+    const matsAt = E('JSON.stringify(S.mats)');
+    const itemsSame = () => JSON.stringify(E('S.items').map(i => i.id).sort()) === JSON.stringify((old.items || []).map(i => i.id).sort());
+    const matsSame = m => { const o = JSON.parse(m); return Object.entries(old.mats).every(([k, a]) => a.every((n, i) => o[k][i] === n)); };
+    assert(E('S.camp.b.store') === Math.max(1, want) && E('S.camp.b.store') === 1 && E('S.store.mig.at') > 0 && E('S.store.mig.over.length') === 0,
+      `${f} (zone ${old.maxZone}, largest pile ${Math.max(...Object.values(old.mats).flat())}): Storehouse Lv ${E('S.camp.b.store')} (spec: Lv 1 on every fixture)`);
+    assert(matsSame(matsAt) && itemsSame(), `${f}: S.mats exact and every item kept at load`);
+    ticks(g, 3);
+    const noLoss = Object.entries(old.mats).every(([k, a]) => a.every((n, i) => E(`S.mats.${k}[${i}]`) >= n));
+    assert(noLoss && itemsSame() && E('storeOverAt(S.mats, S.camp.b.store).length') === 0, `${f}: after the first ticks no pile went down, every item kept, every pile fits its cap`);
+    const saved = (E('save(), 1'), g.storage.get(KEY));
+    const g2 = loadCore({ seed: 32, storage: memoryStorage({ [KEY]: saved }) });
+    assert(g2.eval('S.camp.b.store') === E('S.camp.b.store') && JSON.stringify(g2.eval('S.store')) === JSON.stringify(E('S.store')) && g2.eval('JSON.stringify(S.mats)') === E('JSON.stringify(S.mats)'),
+      `${f}: round trip keeps S.store, the level and the piles`);
+    ticks(g2, 2);
+    assert(g2.eval('S.camp.b.store') === E('S.camp.b.store') && g2.eval('S.store.mig.at') === E('S.store.mig.at'), `${f}: the migration runs once (not again after a reload)`);
+    errs.push(...g.errors, ...g2.errors);
+  }
+  // -- a synthetic save with 12,000 Dim Essence: Lv 8 and one over cell, nothing deleted --
+  {
+    const big = JSON.parse(rawOf('save-v2-late.json')); big.mats.ess[0] = 12000; big.mats.wood[2] = 4500;
+    const g = loadCore({ seed: 33, storage: memoryStorage({ [KEY]: JSON.stringify(big) }) }), E = s => g.eval(s);
+    const news = []; g.fn.on('whatsNew', w => news.push(w.msg));
+    assert(E('S.camp.b.store') === 8 && E('S.store.mig.lv') === 8 && JSON.stringify(E('S.store.mig.over')) === '[["ess",1]]' && E('S.mats.ess[0]') === 12000 && E('S.mats.wood[2]') === 4500,
+      `12,000 Dim Essence: Lv 8, one over cell, all 12,000 kept (${JSON.stringify(E('S.store.mig.over'))})`);
+    ticks(g, 2);
+    assert(news.some(m => /Storehouse now, at level 8/.test(m)) && news.some(m => /Dim Essence is over the cap\. You keep all of it\. Spend below 5,000 to gain more\./.test(m)) && news.some(m => /It holds up to 10,000 of each material\./.test(m)), `What's new: "${news.filter(m => /Storehouse|over the cap/.test(m)).join(' / ')}"`);
+    assert(E("stashAdd('ess', 1, 5, 'flow')") === 0 && E('S.mats.ess[0]') === 12000 && E('stashOver("ess", 1)'), 'an over cell gains nothing from a flow');
+    E('S.mats.ess[0] = 4990');
+    assert(E("stashAdd('ess', 1, 50, 'flow')") === 10 && E('S.mats.ess[0]') === 5000, 'spent below the cap: it gains up to the cap again');
+    errs.push(...g.errors);
+  }
+  // -- caps, flows, gifts, previews --
+  const g = loadCore({ seed: 34 }), E = s => g.eval(s);
+  assert(E('storeLevel()') === 0 && E('storeCap("ore", 1)') === 100 && E('storeCap("hide", 3)') === 50 && E('storeCap("ess", 5)') === 50 && E('storeCap("troph", 1)') === Infinity,
+    'a new game: packs hold 100 of each gathered material, 50 hide and essence');
+  E('S.camp.b.store = 3');
+  assert(E('storeCap("wood", 5)') === 1000 && E('storeCap("ess", 2)') === 500, 'Storehouse Lv 3: 1,000 / 500');
+  E('S.mats.ore[0] = 990');
+  assert(E("stashAdd('ore', 1, 25, 'flow')") === 10 && E('S.mats.ore[0]') === 1000, 'a flow adds up to the cap, the rest is not made');
+  assert(E("stashAdd('ore', 1, 25, 'gift')") === 25 && E('S.mats.ore[0]') === 1025, 'a gift always lands, even above the cap');
+  E('S.mats.ore[0] = 995');
+  assert(E("stashAdd('ore', 1, 25, 'parcel')") === 0 && E('S.mats.ore[0]') === 995 && E("stashAdd('ore', 1, 5, 'parcel')") === 5, 'a parcel adds all of it or nothing');
+  assert(E("stashAdd('ore', 1, 25, 'preview')") === 0 && E('S.mats.ore[0]') === 1000, 'a preview adds what fits');
+  // stashAdd never raises a cell above its cap (random flows)
+  E('S.camp.b.store = 1; for (const k of CRAFT_FAMILIES) S.mats[k] = [0, 0, 0, 0, 0]');
+  const over = E(`(() => { const r = rng(7); for (let i = 0; i < 3000; i++) { const f = CRAFT_FAMILIES[Math.floor(r() * CRAFT_FAMILIES.length)], t = 1 + Math.floor(r() * 5); stashAdd(f, t, Math.floor(r() * 40), 'flow'); } return storeOverAt(S.mats, 1).length; })()`);
+  assert(over === 0 && E('storeFullCells().length') > 0, 'random flows never raise a cell above its cap');
+  // live gathering at the cap: the swing counts for skill XP, not for material
+  E('S.mats.ore[0] = 300; setNode("ore", 1); setActivity("gather")');
+  const xp0 = E('S.skills.mine.xp + S.skills.mine.lv * 1e9');
+  ticks(g, 20);
+  assert(E('S.mats.ore[0]') === 300 && E('S.skills.mine.xp + S.skills.mine.lv * 1e9') > xp0, 'gathering a full pile: Mining XP still counts, the pile stays at 300');
+  // away gathering: capped; skill XP still counts
+  E('S.mats.ore[0] = 250; S.store.spill = 0');
+  const lv0 = E('S.skills.mine.xp + S.skills.mine.lv * 1e9');
+  const r1 = E('awayGains(3600)');
+  assert(E('S.mats.ore[0]') === 300 && E('S.skills.mine.xp + S.skills.mine.lv * 1e9') > lv0 && r1.lines.some(l => /Storehouse full: Copper Ore/.test(l.txt)), 'away gathering stops at the cap, XP counts, the card says so');
+  // Spillover (Lv 3): live and away, to the next node of the same skill that is not full
+  E('S.camp.b.store = 3; S.skills.mine.lv = 12; S.mats.ore = [1000, 0, 0, 0, 0]; S.mats.crystal = [0, 0, 0, 0, 0]; setNode("ore", 1)');
+  assert(E('storeSpill(true)') && E('storeNextNode("ore").t') === 2, 'Spillover on at Lv 3; the next node is the highest open tier that is not full');
+  ticks(g, 2);
+  assert(E('S.node.kind === "ore" && S.node.t === 2'), `live Spillover: the hero moves on (now ${E('S.node.kind')} ${E('S.node.t')})`);
+  E('S.mats.ore = [0, 995, 0, 0, 0]; setNode("ore", 2)');
+  const r2 = E('awayGains(4 * 3600)');
+  assert(E('S.mats.ore[1]') === 1000 && E('S.node.kind !== "ore" || S.node.t !== 2') && r2.lines.some(l => /Spillover/.test(l.sub || '')), `away Spillover: the time left goes to ${E('S.node.kind')} ${E('S.node.t')}`);
+  E('S.store.spill = 0; S.camp.b.store = 1; S.skills.mine.lv = 1; setNode("ore", 1); setActivity("fight")');
+  // salvage (preview): what fits; transmute: refused when the result does not fit
+  E('chooseClass("warden"); S.mats.ore = [0, 0, 0, 0, 0]');
+  const it = E('(() => { const it = newItem("warblade", 1, "common"); S.items.push(it); return it; })()');
+  E('S.mats.ore[0] = 299');
+  assert(E(`salvageItem(${it.id})`) && E('S.mats.ore[0]') === 300 && !E(`itemById(${it.id})`), 'salvage (after the in-page ask): only what fits lands');
+  E('S.skills.ench.lv = 20; S.mats.crystal = [300, 300, 0, 0, 0]');
+  assert(!E('canTransmute("crystal", 1, "up").ok') && /Storehouse full/.test(E('canTransmute("crystal", 1, "up").why')) && !E('transmute("crystal", 1, "up")') && E('S.mats.crystal[0]') === 300,
+    `transmute is refused when the result does not fit ("${E('canTransmute("crystal", 1, "up").why')}")`);
+  // parcels wait: a bounty claim at the cap is refused and the bounty stays; the trader too
+  E("S.mats.ore[0] = 290; S.bounties.slots[0] = { k: 'mine', need: 1, have: 1, t: 1, z: 1, rew: 'ore', rewT: 1, rewN: 60, wait: 0, rr: 0 }");
+  const claimed = E('BOUNTY_API.claim(0)');
+  assert(claimed === null && E('S.bounties.slots[0].k') === 'mine' && E('S.mats.ore[0]') === 290, 'a bounty whose reward does not fit waits (claim refused, the bounty keeps its slot)');
+  E('S.mats.ore[0] = 0');
+  assert(E('BOUNTY_API.claim(0)') && E('S.mats.ore[0]') > 0, '...and pays once there is room');
+  // gifts: a cancelled build refunds in full, even above the cap
+  E('S.camp.open = true; S.camp.b.hearth = 1; S.camp.b.store = 0; S.mats.wood[0] = 100; S.mats.ore[0] = 100; S.gold = 1e6');
+  const c1 = E('campCan("store")');
+  assert(c1.ok && c1.cost.gold === 0 && JSON.stringify(c1.cost.mats) === '[["wood",1,30],["ore",1,20]]' && c1.dur === 90000, 'Storehouse Lv 1 (a camp building): 30 Oak Log, 20 Copper Ore, no gold, 90 s');
+  E('campBuild("store"); S.mats.wood[0] = 100');
+  assert(E('campCancel("store")') && E('S.mats.wood[0]') === 115 && E('S.mats.wood[0] > storeCap("wood", 1)'), 'a refund is a gift: it lands above the packs\' cap (half back once started: 100 + 15)');
+  E('campBuild("store")'); E('S.camp.builds[0].end = Date.now() - 1'); ticks(g, 2);
+  assert(E('S.camp.b.store') === 1 && E('storeCap("ore", 1)') === 300 && E('campCan("store").why') === 'Needs Hearth 2 (zone 10)', 'built: Lv 1 holds 300; Lv 2 needs Hearth 2');
+  assert(E('campEffects("store", 3).join(" · ")') === 'Holds 1,000 of each material · 500 hide and essence · Spillover: move on when a pile is full', 'effect lines: ' + E('campEffects("store", 3).join(" · ")'));
+  // expedition hauls wait until every line fits
+  {
+    const h = loadCore({ seed: 35 }), X = s => h.eval(s);
+    const t0 = new Date(2026, 8, 28, 12).getTime(); X(`Date.now = () => ${t0}`);
+    X('S.maxZone = 36; ["tobin","wren","hesketh","pip"].forEach(k => { unlockChar(k, "test", true); charRec(k).lv = 60; }); S.party.autoField = false; setField(["tobin","wren"])');
+    X('S.camp.open = true; S.camp.b.hearth = 8; S.camp.b.maproom = 5; S.camp.b.store = 8');
+    const s = X('expedSend("r3a", ["hesketh", "pip"], 1)');
+    const [f, t] = s.pay.mats[0];
+    X(`S.mats.${f}[${t - 1}] = storeCap("${f}", ${t})`);
+    X(`Date.now = () => ${t0 + 3600e3 + 1000}`);
+    assert(X('expedCollect(0)') === null && X('S.exped.slots.length') === 1 && /Needs room/.test(X('expedRoom(0)')), 'a haul that does not fit waits in its slot (Collect refused)');
+    X('awayGains(10)');
+    assert(X('S.exped.slots.length') === 1, '...also while away');
+    X(`S.mats.${f}[${t - 1}] = 0`);
+    assert(X('expedCollect(0)') && X('S.exped.slots.length') === 0 && X(`S.mats.${f}[${t - 1}]`) > 0, '...and lands when there is room');
+    errs.push(...h.errors);
+  }
+  // -- HS8: every material cost reachable at Hearth H fits Storehouse Lv H (static) --
+  {
+    const bad = E(`(() => {
+      const out = [], cap = (f, t, H) => storeCapAt(f, t, Math.min(8, H));
+      const chk = (H, what, f, t, n) => { if (n > cap(f, t, H)) out.push(\`Hearth \${H}: \${what} needs \${n} \${f}\${t}, cap \${cap(f, t, H)}\`); };
+      for (let H = 0; H <= 10; H++) {
+        const zMax = H === 0 ? CAMP_TUNE.openZone - 1 : H < 10 ? CAMP_HZ[H] - 1 : 70, tMax = zoneTier(zMax);
+        if (H >= 1 && H < 10) for (const [f, t, n] of campCost('hearth', H + 1).mats) chk(H, 'Hearth ' + (H + 1), f, t, n);
+        if (H >= 1) for (const id of CAMP_IDS) {
+          if (id === 'hearth') continue;
+          const d = CAMP_B[id];
+          for (let to = 1; to <= d.max; to++) {
+            const need = id === 'shrine' ? CAMP_SHRINE_HREQ[to - 1] : d.hreq ? d.hreq[to - 1] : Math.max(CAMP_HREQ[to - 1], d.opens || 1);
+            if (need > H) continue;
+            for (const [f, t, n] of campCost(id, to).mats) chk(H, d.n + ' ' + to, f, t, n);
+          }
+        }
+        for (const k of Object.keys(CRAFT_KINDS)) {
+          if (CRAFT_KINDS[k].legacy) continue;
+          for (let t = 1; t <= tMax; t++) {
+            for (const [f, n] of Object.entries(craftRecipe(k, t))) chk(H, k + ' T' + t, f, t, n);
+            for (let p = 0; p < 10; p++) for (const [f, n] of Object.entries(kindUpgradeCost({ slot: k, t, plus: p }).mats)) chk(H, k + ' T' + t + ' +' + (p + 1), f, t, n);
+          }
+        }
+        // promotions: rank r costs 10 x (r + 1) essence (rank 1 by zone 5; the Storehouse Lv 1 holds 150)
+        for (let r = 0; r < 7; r++) if (H >= 1 || r === 0) chk(H, 'promotion ' + (r + 1), 'ess', 1, ROSTER_TUNE.promoEss * (r + 1));
+        if (tMax >= 3) { chk(H, 'Star Chart', 'crystal', 3, 40); chk(H, 'Star Chart', 'ess', 3, 20); }
+      }
+      return out;
+    })()`);
+    assert(!bad.length, 'HS8: every cost reachable at Hearth H fits Storehouse Lv H' + (bad.length ? `: ${bad.length} over, e.g. ${bad.slice(0, 4).join('; ')}` : ''));
+  }
+  errs.push(...g.errors);
+  assert(!errs.length, 'no store errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('store crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

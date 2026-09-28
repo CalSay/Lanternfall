@@ -116,7 +116,7 @@ const EXPED_LORE = {
 
 let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, ePow, expedR, expedGrade, expedPreview,
   expedBest, expedCan, expedOut, expedRumour, expedLoreFound, expedSend, expedCollect, expedCollectAll, expedRecall,
-  expedRepeat, expedCatchUp, expedHaulText;
+  expedRepeat, expedCatchUp, expedHaulText, expedRoom;   // expedRoom(i): "" or why the haul waits (H3)
 
 {
   registerState('exped', { v: 1, slots: [], done: {}, lore: {}, court: 0, keep: {}, log: [], seq: 0 });
@@ -331,7 +331,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
   const loreTitles = (band, before) => (EXPED_LORE[band] || []).filter((_, i) => (X().lore[loreKey(band, i)] || 0) >= 4 && !before.includes(i));
   function payOut(s, pay, opts) {
     const d = RT(s.r), haul = { mats: [], troph: [], ren: 0, ks: 0, lore: [], keep: [], tok: null, xp: 0 };
-    const addMat = (f, t, n) => { if (!(n > 0)) return; S.mats[f][t - 1] += n; const h = haul.mats.find(x => x[0] === f && x[1] === t); if (h) h[2] += n; else haul.mats.push([f, t, n]); };
+    const addMat = (f, t, n) => { if (!(n > 0)) return; stashAdd(f, t, n, 'gift'); const h = haul.mats.find(x => x[0] === f && x[1] === t); if (h) h[2] += n; else haul.mats.push([f, t, n]); };
     const addTro = (i, n) => { if (!(n > 0)) return; addTrophy(i, n, 'exped'); const h = haul.troph.find(x => x[0] === i); if (h) h[1] += n; else haul.troph.push([i, n]); };
     const k = opts.frac == null ? 1 : opts.frac;
     for (const [f, t, n] of pay.mats) addMat(f, t, Math.floor(n * k));
@@ -374,6 +374,9 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     for (const id of s.team) { const n = (pay.xp[id] || 0) * (opts.xpFrac == null ? 1 : opts.xpFrac); if (n > 0 && isRecruited(id)) haul.xp += giveXp(id, n); }
     return haul;
   }
+  // H3: a haul is a parcel. It lands only when every line fits the Storehouse; until then the run waits.
+  const haulLines = (s, k) => k == null ? s.pay.mats.concat(s.pay.bonus.mats) : s.pay.mats.map(([f, t, n]) => [f, t, Math.floor(n * k)]);
+  expedRoom = i => { const s = X().slots[i]; return !s || !s.pay ? '' : stashNeed(haulLines(s)); };
   function finishRun(s, opts) {
     const haul = payOut(s, s.pay, opts);
     X().done[s.r] = (X().done[s.r] || 0) + 1;
@@ -390,6 +393,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     for (let guard = 0; guard < 100 && s.end <= now(); guard++) {
       const again = s.repOn && repeatOn() && s.rep + 1 < T.repMax;
       if (!again && !auto) break;   // open game: the run waits for Collect
+      if (!stashFits(haulLines(s))) break;   // H3: Storehouse full; the run waits (Repeat pauses)
       out.push(finishRun(s, { auto: true, at: s.end }));
       s.rep++;
       if (!again) { X().slots.splice(X().slots.indexOf(s), 1); break; }
@@ -404,6 +408,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
   };
   expedCollect = i => {
     const s = X().slots[i]; if (!s || s.end > now()) return null;
+    if (!stashFits(haulLines(s))) { toast(`Back. Storehouse full: collect when you have room. ${stashNeed(haulLines(s))}`, 'raid', null, 'normal'); return null; }
     const rec = finishRun(s, {});
     X().slots.splice(i, 1);
     toast(`${RT(s.r).n}: the team is back (${rec.grade}).`, 'good', { ic: ['boot', '#6B4A2E'] }, 'low');
@@ -416,6 +421,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
     const s = X().slots[i]; if (!s) return null;
     if (s.end <= now()) return expedCollect(i);
     const frac = Math.max(0, Math.min(1, (now() - s.start) / (s.end - s.start)));
+    if (!stashFits(haulLines(s, frac * 0.5))) { toast(stashNeed(haulLines(s, frac * 0.5)), 'raid', null, 'normal'); return null; }   // H3
     const rec = finishRun(s, { frac: frac * 0.5, xpFrac: frac, recall: true });
     X().slots.splice(i, 1);
     save();

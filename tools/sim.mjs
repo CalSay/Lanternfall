@@ -44,6 +44,10 @@
 //   BAL2: a Camp build short only of a fight-only material (Soft Hide) walks back to farm it every
 //   other fight cycle (--farm 0 turns it off). --snapday D:path writes the save at the end of day D.
 //   --targets --days 60 runs the targets on 60 days (the 60-day report in pacing.md 11).
+// --store 0|1 (H3, hearth-and-hands.md 7.3): Storehouse caps on (1, the default) or none (0). The
+//   policy builds Storehouse levels like other camp builds (CAMP_ORDER), turns Spillover on, and
+//   switches node when the pile it gathers is full. Reports HS4 (Storehouse Lv 1 built) and HS7
+//   (share of gathering time, live and away, spent on a full pile: days 1-3 and 7-21).
 // --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
 //   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
 //   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
@@ -95,10 +99,18 @@ if (args.evalfile) E((await import('node:fs')).readFileSync(String(args.evalfile
 // --unlock path=v,path=v overrides UNLOCK_TUNE knobs (56c-unlocks.js), e.g. quests.morwen.zone=33.
 const unlockTune = h => { if (args.unlock) for (const kv of String(args.unlock).split(',')) { const [k, v] = kv.split('='); h.eval(`UNLOCK_TUNE.${k} = ${+v}`); } };
 unlockTune(g);
+// --store 0|1 (H3): Storehouse caps; the policy keeps Spillover on (it acts from Storehouse Lv 3).
+const storeOn = args.store !== '0';
+if (!storeOn) E('STORE_TUNE.on = 0'); else E('S.store.spill = 1');
+const storeStats = { lv1: null };
+fn.on('campBuilt', ({ id, lv }) => { if (id === 'store' && lv === 1 && storeStats.lv1 === null) storeStats.lv1 = t; });
+// A full pile: move to the next node of the same skill that is not full (a player would).
+const storeFullSwitch = () => { if (storeOn && E('S.activity === "gather" && stashFull(S.node.kind, S.node.t)')) E('storeSwitch()'); };
 if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
 // --combat k=v,...: COMBAT_TUNE knobs (59-combat.js); --enemy k=v,...: ENEMY_TUNE (59b-enemies.js).
 // Nested knobs use dots (hp.tank=10). applyKnobs also runs on the forks (T5, T6, T8, T11).
 function applyKnobs(h) {
+  if (!storeOn) h.eval('STORE_TUNE.on = 0'); else h.eval('S.store.spill = 1');
   if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
   if (args.pace) for (const kv of String(args.pace).split(',')) { const [k, v] = kv.split('='); h.eval(`PACE[${JSON.stringify(k)}] = ${v.includes('/') ? '[' + v.split('/').map(Number).join(',') + ']' : +v}`); }
   if (args.syn !== undefined) h.eval(`SYN_TUNE.today = ${+args.syn}`);
@@ -398,6 +410,7 @@ function nextBlock() {
 // Camp (57-camp.js): like a player, start any build that is affordable, in this order
 // (Watchtower first: it lengthens the away cap). --camp 0 turns it off.
 const CAMP_ORDER = ['watch', 'hearth', 'tavern', 'forge', 'bench', 'loom', 'ench', 'library', 'shrine', 'maproom'];
+if (args.store !== '0') CAMP_ORDER.splice(1, 0, 'store');   // H3: the Storehouse right after the Watchtower
 const campStats = { first: null, builds: 0, full: null };
 function campStep(E) {
   if (args.camp === '0' || !E('typeof campCan === "function" && campOpen()')) return;
@@ -493,6 +506,7 @@ function playSecond(sec) {
     else if (phase > 10 && bestNode.camp) { const cn = campNode(); if (cn && (E('S.node.kind') !== cn[0] || E('S.node.t') !== cn[1])) fn.setNode(cn[0], cn[1]); }
     else if (phase > 10 && cls && !bestNode.camp) { const b = blockingNode(); if (b && (E('S.node.kind') !== b[0] || E('S.node.t') !== b[1]) && fn.setNode(b[0], b[1])) craftStats.gather[b[0]] = (craftStats.gather[b[0]] || 0) + 1; }
     withReserve(E, rosterStep(E), () => campStep(E)); forgeWeapon(); withReserve(E, rosterStep(E), forgeGear);
+    storeFullSwitch();
     craftCheck(sec);
     const b = nextBlock();
     if (b && b !== 'station') { craftStats.blocks[b] = (craftStats.blocks[b] || 0) + 1; craftStats.blockMin++; }
@@ -572,6 +586,7 @@ if (cls && policy === "mixed") {
   console.log(`craft: G9 first Trophy ${m(craftStats.troph)} (want 20-60m) | farm-back ${craftStats.farm} min | trophies ${E('trophies()')} ${E('JSON.stringify(S.craft.troph)')}, champions ${E('S.craft.champ')} | skills mine ${E('S.skills.mine.lv')} wood ${E('S.skills.wood.lv')} forage ${E('S.skills.forage.lv')}`);
   console.log(`craft: pack ${['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'].map(k => k + ' ' + E(`JSON.stringify(S.mats.${k})`)).join(' ')}`);
 }
+if (storeOn) { const st = E('STORE_STATS'); console.log(`store: HS4 Lv 1 built ${storeStats.lv1 === null ? '-' : (storeStats.lv1 / 60).toFixed(1) + 'm'} | level ${E('storeLevel()')} | HS7 live time at cap ${st.gatherSecs ? Math.round(100 * st.fullSecs / st.gatherSecs) : 0}% of ${Math.round(st.gatherSecs / 60)} gather min | lost ${JSON.stringify(Object.fromEntries(Object.entries(st.lost).map(([k, v]) => [k, Math.round(v)])))}`); }
 console.log(`boss fails: ${bossTries}, kills: ${E('S.totalKills')}, items: ${E('S.items.length')}${g.errors.length ? ', errors: ' + g.errors.length : ''}`);
 // Party combat report (T7, T13, T14, T18) and the forks at 2h (T5, T6, T8).
 if (E('partyCombatOn()')) {
@@ -654,7 +669,7 @@ function runDays() {
   const w = [4, 5, 4, 9, 4, 15, 6];
   const out = a => console.log(a.map((x, i) => i < w.length ? String(x).padStart(w[i]) : ' ' + x).join(' '));
   out(['day', 'zone', 'lvl', 'gold/h', 'tier', 'mine/wood/smith', 'bored', 'companions']);
-  const rows = [];
+  const rows = [], storeDays = [];
   let gold0 = E('S.totalGold'), sIdx = 0, awayN = 0;
   // The game is installed at the first check-in (BAL1: the old loop gave a new game 8h of away gains first).
   wall = sessions.length ? sessions[0][0] : 0;
@@ -679,7 +694,7 @@ function runDays() {
       checkTiers();
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
       // Leaving: pick the away activity.
-      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(true); fn.setActivity('gather'); }
+      if (sIdx % checkins.length === 0 && checkins.length > 1) { bestNode(true); fn.setActivity('gather'); storeFullSwitch(); }
       else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
     }
     // Day summary at 24:00 (the away gains for the rest of the night land in the next gap).
@@ -688,6 +703,7 @@ function runDays() {
     const campLv = E('typeof campList === "function" ? campList().reduce((a, id) => a + campLevel(id), 0) : 0');
     const campMax = E('typeof campList === "function" ? campList().reduce((a, id) => a + campMaxLevel(id), 0) : 0');
     if (campStats.full === null && campMax && campLv >= campMax) campStats.full = d;
+    const sst = E('STORE_STATS'); storeDays.push([sst.gatherSecs, sst.fullSecs, sst.awaySecs, sst.awayFullSecs, E('storeLevel()')]);
     const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
     rows.push(r);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
@@ -723,7 +739,11 @@ function runDays() {
   console.log(`recruits: ${['join', 'rare', 'epic', 'legendary'].map(k => `${k} ${rec[k] ? (rec[k].day * 24 < 3 ? (rec[k].day * 1440 - 480).toFixed(0) + 'm' : 'day ' + rec[k].day.toFixed(1)) + ' (' + rec[k].id + ')' : '-'}`).join(', ')} | all: ${recruits.join(' ')}`);
   const campFirst = campStats.first ? { min: (campStats.first.t) / 60, id: campStats.first.id } : null;
   console.log(`camp: first build ${campFirst ? campFirst.min.toFixed(0) + ' min after install (' + campFirst.id + ')' : '-'}, full camp ${campStats.full ? 'day ' + campStats.full : '-'}, levels by day ${rows.filter(r => [1, 3, 7, 14, 21, 30, 45].includes(r.day)).map(r => `d${r.day} ${r.camp}/${r.campMax}`).join(' ')}`);
-  if (args.json) console.log('JSON ' + JSON.stringify({ rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl })), bossAt, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
+  // HS7: share of gathering time (live and away) on a full pile, over a range of days (1-based, inclusive).
+  const atCap = (a, b) => { const x = storeDays[Math.min(b, storeDays.length) - 1], w = a > 1 ? storeDays[a - 2] : [0, 0, 0, 0]; if (!x) return null; const g = x[0] - w[0] + x[2] - w[2], f = x[1] - w[1] + x[3] - w[3]; return g > 0 ? f / g : 0; };
+  const store = storeOn ? { lv1: storeStats.lv1 === null ? null : (storeStats.lv1 + 8 * H - (sessions.length ? sessions[0][0] : 0)) / 60, d13: atCap(1, 3), d721: atCap(7, 21), lv: storeDays.map(x => x[4]) } : null;
+  if (store) console.log(`store: HS4 Lv 1 built ${store.lv1 === null ? '-' : store.lv1.toFixed(0) + ' min after install'} | HS7 time at cap days 1-3 ${store.d13 == null ? '-' : Math.round(100 * store.d13) + '%'}, days 7-21 ${store.d721 == null ? '-' : Math.round(100 * store.d721) + '%'} | level by day ${store.lv.filter((_, i) => [1, 3, 7, 14, 21, 30, 45].includes(i + 1)).map((l, i) => `d${[1, 3, 7, 14, 21, 30, 45][i]} ${l}`).join(' ')}`);
+  if (args.json) console.log('JSON ' + JSON.stringify({ store, rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl })), bossAt, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -744,7 +764,7 @@ function runDays() {
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
-  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'store'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
   const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const nDays = +(args.days || 45);
   // T3 averages three seeds (one seed swings a class by +-10%); the rest read the first seed.
@@ -800,6 +820,16 @@ async function runTargets() {
   res.push(['INFO', 'P3 Region 3 boss (needs Region 3 power: ranks past 7, tier 6)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${!Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
   res.push([ok(js.every(j => j.toR2.gapCi <= P.emptyRun)), `P4 before the Region 2 boss: <= ${P.emptyRun} empty check-ins in a row`, classes.map((c, i) => `${c} ${js[i].toR2.gapCi} (longest ${Math.round(js[i].toR2.gapAct / 60)} active min)`).join(', ')]);
   res.push(['INFO', 'C1 Camp: first build 10-20 min after install, full camp over several weeks', classes.map((c, i) => { const j = js[i]; const at = d => j.campRows[d - 1] !== undefined ? j.campRows[d - 1] : '-'; return `${c} first ${j.campFirst ? j.campFirst.min.toFixed(0) + 'm ' + j.campFirst.id : '-'}, d7 ${at(7)}/${j.campMax}, d14 ${at(14)}, d30 ${at(30)}, full ${j.campFull ? 'day ' + j.campFull : '-'}`; }).join('; ')]);
+  // ---- the Storehouse (H3, hearth-and-hands.md 7.2): HS4, HS7 ----
+  if (args.store !== '0') {
+    const hs4 = cont.map(o => { const m = o.match(/HS4 Lv 1 built ([\d.]+)m/); return m ? +m[1] : Infinity; });
+    // The 5-15 min band assumes H1's cold start (stations built from minute 1); before H1 the camp opens at zone 5: INFO.
+    const cold = loadCore({ seed: 1 }).eval("typeof hearthLight === 'function'");
+    res.push([cold ? ok(hs4.every(v => inR(v, [5, 15]))) : 'INFO', 'HS4 Storehouse Lv 1 built (continuous play) in 5-15 min' + (cold ? '' : ' (INFO until H1: the camp opens at zone 5)'), classes.map((c, i) => `${c} ${f1(hs4[i])}m`).join(', ')]);
+    const pc = x => x == null ? '-' : Math.round(100 * x) + '%';
+    res.push([ok(js.every(j => j.store && j.store.d13 != null && j.store.d13 <= 0.2 && (j.store.d721 == null || j.store.d721 <= 0.35))), 'HS7 time at the cap (share of gathering, live and away): days 1-3 <= 20%, days 7-21 <= 35%',
+      classes.map((c, i) => `${c} ${pc(js[i].store && js[i].store.d13)} / ${pc(js[i].store && js[i].store.d721)} (Lv d7 ${js[i].store ? js[i].store.lv[6] : '-'}, d21 ${js[i].store ? js[i].store.lv[20] : '-'})`).join(', ')]);
+  }
   // ---- party combat targets (docs/design/party-and-classes.md 9) ----
   const z20 = o => num(o, /toZone20=([\d.]+)m/);
   const t4i = z20(idle4), t4a = z20(active4), faster = 1 - t4a / t4i;

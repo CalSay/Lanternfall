@@ -678,6 +678,7 @@ let craftUI = null;
       const chips = el('div', 'costs'); costChips(chips, salvagePreview(it), it.t);
       chips.querySelectorAll('.cost').forEach(c => { c.classList.remove('short'); const s = c.querySelector('span'); s.textContent = s.textContent.replace(/^[^/]*\//, '+'); });
       sv.append(el('p', 'note warn', `Salvage ${itemName(it)}? It is gone for good. You get back about:`), chips);
+      const room = storeSalvageNote(salvagePreview(it), it.t); if (room) sv.append(el('p', 'note warn', room));   // H3: the Storehouse cap
       const r = el('div', 'cf-wear');
       const yes = el('button', 'big cf-act', 'Salvage it'); yes.type = 'button';
       const no = el('button', 'big cf-act cf-keep', 'Keep it'); no.type = 'button';

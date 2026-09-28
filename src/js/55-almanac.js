@@ -332,8 +332,10 @@ let OMENS, WEEKLY_GOALS;
     return { mats, marks: AL_NEEDS.Deepwell() ? (tier === 'steady' ? 40 : 20) : 0 };
   }
   const rewardText = rw => rw.mats.map(m => `${fmt(m.n)} ${matName(m.k, m.t)}`).join(', ') + (rw.marks ? `, ${rw.marks} Depth Marks` : '');
-  function pay(rw) {
-    for (const m of rw.mats) S.mats[m.k][m.t - 1] += m.n;
+  // H3: a claim waits until the reward fits; the week-end auto-claim is a gift (it cannot wait).
+  const rwLines = rw => rw.mats.map(m => [m.k, m.t, m.n]);
+  function pay(rw, gift) {
+    for (const m of rw.mats) stashAdd(m.k, m.t, m.n, gift ? 'gift' : 'parcel');
     if (rw.marks && S.deep) S.deep.marks = (S.deep.marks || 0) + rw.marks;
   }
   // Claims goal i. quiet: the week-end auto-claim (no toast). Returns the reward text or null.
@@ -341,11 +343,12 @@ let OMENS, WEEKLY_GOALS;
     const a = A(), g = a.goals[i];
     if (!g || !g.done || g.claimed) return null;
     const rw = rewardFor(g.tier);
-    pay(rw); g.claimed = true;
+    if (!quiet && !stashFits(rwLines(rw))) { toast(stashNeed(rwLines(rw)), 'raid', null, 'normal'); return null; }
+    pay(rw, quiet); g.claimed = true;
     let txt = rewardText(rw);
     const n = a.goals.filter(x => x.claimed).length;
     if (n === 3) { a.stamps++; txt += '. Almanac Stamp earned'; }
-    if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
+    if (n === 5 && a.goals.length === 5) { const b = crate('small'); pay({ mats: b }, true); a.full++; txt += `. Full board bonus: ${rewardText({ mats: b })}`; }
     if (!quiet) { toast(`Weekly goal claimed: ${txt}.`, 'loot', rw.mats[0] ? { mat: [rw.mats[0].k, rw.mats[0].t] } : null, 'normal'); save(); }
     emit('weeklyClaim', { k: g.k, quiet: !!quiet });
     return txt;
