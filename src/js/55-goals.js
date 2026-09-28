@@ -15,6 +15,7 @@
 //   icon   optional toast-style icon spec or fn() -> spec ({ ic: [name, colour] }, { mat: [k, t] },
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
+//   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
 // topGoals(n = 3, { now, sticky = true }) -> [{ id, sys, label, pct, ready, go, icon }]
 //   Ready goals first, then the highest pct. Cached for 450 ms. Sticky: goals already shown
 //   keep their place unless a newcomer is clearly closer (no flicker between close values).
@@ -49,7 +50,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -70,7 +71,7 @@ var forgeGoalPicks = 0;
     for (let cap = 1; cap <= PER_SYS && pick.length < n; cap++) {
       for (const e of all) {
         if (pick.length >= n) break;
-        if (pick.includes(e) || (count[e.sys] || 0) >= cap) continue;
+        if (pick.includes(e) || (count[e.sys] || 0) >= (e.cap ? Math.min(cap, e.cap) : cap)) continue;   // cap: 1 = one row at most
         pick.push(e); count[e.sys] = (count[e.sys] || 0) + 1;
       }
     }
@@ -80,7 +81,7 @@ var forgeGoalPicks = 0;
       if (a.was >= 0 && b.was >= 0 && Math.abs(a.score - b.score) < STICK) return a.was - b.was;
       return b.score - a.score;
     });
-    const list = pick.map(({ score, was, ...e }) => e);
+    const list = pick.map(({ score, was, cap: _c, ...e }) => e);
     if (sticky) { shown = list.map(e => e.id); cache.clear(); cache.set(n, { at: now, list }); }
     return list;
   };

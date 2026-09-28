@@ -312,25 +312,72 @@ family's group. Tiers share one number, so the pouch reads "340 / 600" in every 
 (`STORE_HREQ = [1, 2, 3, 4, 5, 6, 7, 8]`). Gold is `campGold(CAMP_HZ[H - 1], 60 x L)` as for other
 buildings (none at Lv 1). Trophies are "any type".
 
+**Revised by the owner (2026-09-28, H3):** "It's an idle game: the Storehouse should scale up quite
+quickly. Meaningful, not ridiculous, but never so small it's only worth idling for 10 minutes." The
+first table (100 / 300 / ... / 10,000) was a few minutes of play and is replaced by the one below.
+
 | Lv | Hearth (zone) | Gathered cap | Fought cap | Cost | Trophies | Timer | Perk |
 |---|---|---|---|---|---|---|---|
-| 0 | - | 100 | 50 | - | - | - | "Your packs hold 100 of each" |
-| 1 | 1 (fire) | 300 | 150 | Oak 30, Copper 20 | - | 90 s | - |
-| 2 | 2 (10) | 600 | 300 | Oak 80, Copper 60, Flax 30 | - | 30 m | - |
-| 3 | 3 (14) | 1,000 | 500 | Yew 90, Iron 70, Nettle 40 | - | 2 h | **Spillover** (4.4) |
-| 4 | 4 (18) | 1,600 | 800 | Ironbark 100, Mithril 80, Silkgrass 50 | - | 6 h | - |
-| 5 | 5 (22) | 2,500 | 1,250 | Ironbark 150, Mithril 120, Scaled Hide 40 | 1 | 12 h | - |
-| 6 | 6 (27) | 4,000 | 2,000 | Ghostwood 150, Starsteel 120, Moonsilk 60 | 2 | 18 h | - |
-| 7 | 7 (32) | 6,000 | 3,000 | Ghostwood 220, Starsteel 180, Starglass 60 | 3 | 24 h | - |
-| 8 | 8 (38) | 10,000 | 5,000 | Lanternwood 250, Emberite 200, Gloamsilk 80 | 4 | 30 h | - |
+| 0 | - | 5,000 | 2,500 | - | - | - | "Your packs hold 5,000 of each" |
+| 1 | 1 (fire) | 40,000 | 20,000 | Oak 30, Copper 20 | - | 90 s | - |
+| 2 | 2 (10) | 50,000 | 25,000 | Oak 80, Copper 60, Flax 30 | - | 10 m | - |
+| 3 | 3 (14) | 100,000 | 50,000 | Yew 90, Iron 70, Nettle 40 | - | 30 m | **Spillover** (4.4) |
+| 4 | 4 (18) | 200,000 | 100,000 | Ironbark 100, Mithril 80, Silkgrass 50 | - | 2 h | - |
+| 5 | 5 (22) | 300,000 | 150,000 | Ironbark 150, Mithril 120, Scaled Hide 40 | 1 | 6 h | - |
+| 6 | 6 (27) | 750,000 | 375,000 | Ghostwood 150, Starsteel 120, Moonsilk 60 | 2 | 12 h | - |
+| 7 | 7 (32) | 1,250,000 | 625,000 | Ghostwood 220, Starsteel 180, Starglass 60 | 3 | 18 h | - |
+| 8 | 8 (38) | 2,500,000 | 1,250,000 | Lanternwood 250, Emberite 200, Gloamsilk 80 | 4 | 24 h | - |
+
+How the table is derived (knobs: `STORE_TUNE.caps` and `STORE_TUNE.pace` in 55-store.js):
+
+1. **Rates.** Away gathering per hour is `3600 / nodeTime x nodeYieldAvg x yield mods x offline
+   boost` (40-rules, 50-sim `awayBase`). The tool dominates it: the sim crafts and upgrades tools
+   early (a tier-1 Epic +9 axe by day 2). Measured with `node tools/sim.mjs --days 30 --class <c>
+   --store 0` (the "store: away rate by day" line; units an hour before any cap, all four classes):
+
+   | Day | Hearth | Skill | Tool | Best away rate |
+   |---|---|---|---|---|
+   | 1 | 1 | 25 | T1 Rare/Epic +1..+3 | 3,000-3,500 /h (T1) |
+   | 2-3 | 1-2 | 30-46 | T1-T2 Rare/Epic up to +9 | 3,000-4,400 /h (T1-T3) |
+   | 5-7 | 4 | 57-74 | T3-T4 Rare/Epic +9..+10 | 10,800-16,700 /h (T3) |
+   | 10-14 | 5-8 | 90-112 | T4-T5 Rare/Epic +5..+10 | 18,000-51,000 /h (T4) |
+   | 21-30 | 7-10 | 130-212 | T5 Rare/Epic +10 | 38,000-96,000 /h (T5) |
+
+2. **Away hours.** The away cap is 4 h + 2 h per Watchtower level (Lv 1/2/3/4/5 need Hearth
+   1/2/4/6/8) + 2 h per Hourglass relic, 24 h at most. `pace[L].h` is what a player can have at
+   Hearth L, rounded up: 8, 8, 10, 12, 14, 16, 20, 24 h.
+3. **Rule.** Lv 1 (built about minute 10 of a new game) holds a full 8 h away session at the best
+   tier then; every later level holds a full away session (its hours) on the best node the pacing
+   expects at that Hearth (`pace[L]`: the upper edge of the sim's classes). Rounded up to a round
+   number, and every level more than the last. `check.mjs` HS19 recomputes it from the live
+   formulas at each row (every gathered family, the fastest one counts):
+
+   | Lv | Reference (`pace`) | Away rate | Away session | Cap | Fills away | Fills tapping (~2x) |
+   |---|---|---|---|---|---|---|
+   | 1 | T1, skill 25, T1 Rare +3 axe | 4,031 /h | 8 h = 32,251 | 40,000 | 9.9 h | ~5 h |
+   | 2 | T2, skill 40, T2 Rare +3 | 4,911 /h | 8 h = 39,285 | 50,000 | 10.2 h | ~5 h |
+   | 3 | T3, skill 50, T3 Rare +6 | 7,503 /h | 10 h = 75,031 | 100,000 | 13.3 h | ~7 h |
+   | 4 | T3, skill 74, T3 Epic +10 | 15,133 /h | 12 h = 181,597 | 200,000 | 13.2 h | ~7 h |
+   | 5 | T4, skill 90, T4 Rare +10 | 18,558 /h | 14 h = 259,810 | 300,000 | 16.2 h | ~9 h |
+   | 6 | T4, skill 110, T5 Rare +10 | 38,484 /h | 16 h = 615,745 | 750,000 | 19.5 h | ~12 h |
+   | 7 | T5, skill 135, T5 Epic +10 | 51,863 /h | 20 h = 1,037,261 | 1,250,000 | 24.1 h | ~15 h |
+   | 8 | T5, skill 210, T5 Epic +10 | 74,813 /h | 24 h = 1,795,509 | 2,500,000 | 33.4 h | ~21 h |
+
+4. **Builds.** Quick and cheap early (90 s, 10 min, 30 min), slower later (2 h to a day).
+5. **Packs (Lv 0)** hold 5,000: an hour or two of early gathering, for the few minutes before the
+   Storehouse (its plot opens once the Forge stands, spec 1.3).
+6. **Active play.** Tapping about doubles the live rate (each tap is 0.12 of a swing), so the cell
+   you work fills in about 5 h at Lv 1-2 and 7-20 h later. The owner's "1-3 h of active play" cannot
+   hold together with "a full away session never overflows": away gathering runs at the live rate
+   (times the offline boost), so any cap that holds 8+ h away holds 4+ h of tapping. This table
+   keeps the away rule (the owner's rules 1-2) and leaves the active one loose; the cap still bites
+   on lower-tier cells, on long sessions and on the Glint and rare finds. A tighter active cap would
+   need a slower away rate than live, which is an economy change for the coordinator.
 
 - **Rule: a cap never blocks a cost.** Every single material cost the game can ask at Hearth H (the
   next Hearth, building rows, recipes at +0..+10, Star Chart, promotions, legendary costs, the next
-  Storehouse) fits in the cap of Storehouse Lv H. Largest today: Hearth 10 asks 200 Lanternwood at
-  Hearth 9 (cap 10,000); Hearth 2 asks 120 Oak at Hearth 1 (cap 300). `check.mjs` asserts it
-  statically (HS8).
-- Sanity: tier-1 gathering runs 1,400-2,400 units an hour, so a 300 cap is 8-12 minutes of one
-  node. Costs in that stage are 10-120. The cap bites on the cheap stuff; that is the point.
+  Storehouse) fits in the cap of Storehouse Lv H. `check.mjs` asserts it statically (HS8); with the
+  revised caps it holds with a wide margin (the largest cost is a few hundred units).
 
 ### 4.3 How materials arrive: flows, parcels, gifts
 
@@ -395,12 +442,12 @@ Owner rule, exactly:
    build (`S.store` undefined and the save has progress), `S.camp.b.store` = the lowest level whose
    caps hold every capped cell. The Hearth gate is ignored for this (never take away). A save with
    nothing above 100 still gets **Lv 1** (it predates the packs).
-3. **If no level holds a pile** (a cell above 10,000 gathered or 5,000 fought), the save gets Lv 8
+3. **If no level holds a pile** (a cell above 2,500,000 gathered or 1,250,000 fought), the save gets Lv 8
    and that cell is **over the cap**: it keeps every unit and cannot gain that material until it is
    spent below the cap. `S.store.mig.over` lists those cells for the notice.
 4. One "What's new" line: "Your camp has a Storehouse now, at level 4. It holds up to 1,600 of each
    material." Plus, if any cell is over: "Dim Essence is over the cap. You keep all of it. Spend
-   below 5,000 to gain more."
+   below 1,250,000 to gain more."
 
 Fixtures: `save-v2-late.json` (largest cell 120 Copper) gets Lv 1; all four fixtures get Lv 1.
 
@@ -693,6 +740,10 @@ where materials come from, not how fast zones fall: HS6 holds T1, D1, P1 and P2 
 | HS16 | G1 (first full tier-1 set) with station builds | 10-18 min (was 6-12) |
 | HS17 | Offline 8h vs live 8h, Hands and away gathering with caps | within 15% per family |
 | HS18 | Migration: fixtures load, `S.mats` exact, dps exact, stations Lv >= 1, Storehouse holds every pile | exact |
+| HS19 | (owner, 2026-09-28) At each expected Storehouse level (`STORE_TUNE.pace`), a full away session on the best open node fits the cap | exact (check.mjs 'store') |
+
+HS7 note (H3): with the revised caps HS7 is re-measured by `--targets`; with the first table it read
+about 90%, because a 4-5 h away gather overflows any cap of minutes.
 
 ### 7.3 Sim hooks
 

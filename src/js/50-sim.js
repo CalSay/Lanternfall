@@ -71,7 +71,9 @@ function strike(amount, color, big, at, label) {
 function heroSwing(base, tap, at) {
   const hawk = typeof hawkCrit === 'function' && hawkCrit();   // Hawk Eye (Constellations): a foe's first hit crits
   const crit = Math.random() < critChance() || hawk;
-  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1);
+  // F1 (56e-formation heroStand): in party combat the hero's hits on foes rise to its damage floor x trio.
+  const stand = target() === 'mob' && typeof heroStand === 'function' ? heroStand(tap) : 1;
+  const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1) * stand;
   strikeSrc = 'hero';
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }

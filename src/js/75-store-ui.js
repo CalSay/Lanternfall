@@ -42,7 +42,7 @@ function storeCell(c, k, t, v) {
   const cap = storeCap(k, t), fin = Number.isFinite(cap);
   putHidden(c._st.cap, !fin); putHidden(c._st.fill.parentNode, !fin);
   if (!fin) return;
-  putText(c._st.cap, v > cap ? 'Over' : v >= cap ? 'Full' : '/' + storeNum(cap));
+  putText(c._st.cap, v > cap ? 'Over' : v >= cap ? 'Full' : '/' + (cap >= 1e4 ? storeNum(cap / 1000) + 'K' : storeNum(cap)));   // "/25K" fits a pack cell at 360px
   putStyle(c._st.fill, 'width', Math.min(100, v / cap * 100) + '%');
   storeLvl(c, k, t);
 }

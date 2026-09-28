@@ -18,34 +18,17 @@
   const cellsNow = () => (P().cells && typeof P().cells === 'object' ? P().cells : {});
   const nameOf = k => k === 'hero' ? S.name : C(k).name;
   const occupant = (col, lane) => Object.keys(cellsNow()).find(k => cellsNow()[k].col === col && cellsNow()[k].lane === lane && (k === 'hero' || inField(k)));
-  // The hero stays in their class column; companions may stand anywhere (the warning line says when it is unwise).
+  // F1 (interim until F4's slot cards): one line of three slots (lane 1); anyone, the hero too, may
+  // stand in any slot. A move is a swap through 56e-formation swapSlots.
   function canMove(k, col, lane) {
-    const cells = cellsNow(), from = cells[k]; if (!from) return false;
-    if (k === 'hero' && col !== heroCol()) return false;
-    const o = occupant(col, lane);
-    if (o === 'hero' && from.col !== heroCol()) return false;
-    return true;
+    const from = cellsNow()[k];
+    return !!from && lane === 1 && from.col !== col;
   }
   function moveTo(k, col, lane) {
     if (!canMove(k, col, lane)) return false;
-    const cells = { ...cellsNow() }, o = occupant(col, lane);
-    if (o === k) return false;
-    if (o) cells[o] = { ...cells[k] };
-    cells[k] = { col, lane };
-    P().cells = cells;                 // a new object: the stage watches identity
-    emit('fieldChange', { field: P().field });
-    return true;
+    return swapSlots(FORM_SLOTS[cellsNow()[k].col], FORM_SLOTS[col]);
   }
-  function warning() {
-    const cells = cellsNow(), f = field();
-    const at = k => cells[k] ? cells[k].col : -1;
-    for (const k of f) { const r = C(k).role; if ((r === 'support' || r === 'caster') && at(k) === 2) return `${first(k)} is a ${r} in the Front row. ${r === 'support' ? 'Supports' : 'Casters'} are safer at the back.`; }
-    const front = ['hero'].concat(f).some(k => at(k) === 2);
-    if (!front && f.length) return 'Nobody stands in the Front row to hold the enemy back.';
-    const frontFree = !occupant(2, 0) || !occupant(2, 1);
-    if (frontFree) for (const k of f) if (C(k).role === 'tank' && at(k) !== 2) return `${first(k)} is a tank in the ${COL_NAME[at(k)] || 'wrong'} row. Tanks hold the Front.`;
-    return '';
-  }
+  const warning = () => formWarning();
   function buildForm(sec) {
     const head = el('div', 'sec-head');
     const h = sec.querySelector('.sec-title'); head.append(h);
@@ -58,7 +41,7 @@
     const grid = el('div', 'pform');
     for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
     const cells = [];
-    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+    for (let lane = 1; lane < 2; lane++) for (let col = 0; col < 3; col++) {   // F1: one line (lane 1)
       const b = btn('pf-cell');
       b.addEventListener('click', () => tapCell(col, lane));
       grid.append(b); cells.push({ b, col, lane });
@@ -92,12 +75,12 @@
         b.append(img(portrait(o)), el('span', 'who', o === 'hero' ? S.name : first(o)));
         if (o !== 'hero') { const d = el('i', 'rp r-' + C(o).role); b.append(d); }
       }
-      const where = `${COL_NAME[c.col]} row, ${c.lane ? 'lower' : 'upper'} lane`;
+      const where = `${SLOT_NAME[FORM_SLOTS[c.col]]} slot`;
       b.setAttribute('aria-label', o ? `${nameOf(o)}, ${where}${picked === o ? ', picked up' : ''}` : `Empty, ${where}`);
       b.setAttribute('aria-pressed', String(!!picked && picked === o));
       b.disabled = !o && !picked;
     }
-    r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit cell${picked === 'hero' ? ' in your class row' : ''}, or tap again to cancel.` : 'Tap someone, then tap a cell to move or swap them.';
+    r.hint.textContent = picked ? `Moving ${picked === 'hero' ? S.name : first(picked)}. Tap a lit slot, or tap again to cancel.` : 'Tap someone, then tap a slot to move or swap them.';
     const w = warning(); r.warn.textContent = w; r.warn.hidden = !w;
   }
 
@@ -167,7 +150,7 @@
     const grid = el('div', 'lu-grid'); grid.setAttribute('aria-label', 'New places');
     for (const n of COL_NAME) grid.append(el('div', 'pf-h', n));
     const at = (col, lane) => Object.keys(b.cells).find(k => b.cells[k].col === col && b.cells[k].lane === lane);
-    for (let lane = 0; lane < 2; lane++) for (let col = 0; col < 3; col++) {
+    for (let lane = 1; lane < 2; lane++) for (let col = 0; col < 3; col++) {   // F1: one line (lane 1)
       const o = at(col, lane), was = o && cellsNow()[o];
       const moved = o && (!was || was.col !== col || was.lane !== lane || (o !== 'hero' && !now.includes(o)));
       const d = el('div', 'lu-cell' + (o ? ' occ' : '') + (moved ? ' new' : ''));

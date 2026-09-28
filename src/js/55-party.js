@@ -41,7 +41,7 @@ const HERO_CLASSES = {
     how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
     tapName: 'Blessing',
     ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
-    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 10% more damage.'
+    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.'
   }
 };
 
@@ -84,7 +84,7 @@ let unitHp, unitCd, bossTelegraph;
     embersMax: 5, flare: 20, flarePerEmber: 0.3,
     markT: 8, mark: 1.25, markCrit: 1.5,
     volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
-    bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.1, lkShare: 1,
+    bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.25, lkShare: 1,   // (F1, formation.md 4.4) lkAura was 1.1: a support is half the field now
     wall: 1.3, wallT: 6, wallPause: 3, hymn: 1.4, hymnT: 8,
     autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCd: 0, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
   };
@@ -118,13 +118,11 @@ let unitHp, unitCd, bossTelegraph;
   function charKey(slot) {
     return slot === 0 && P().newGame && P().cls === 'lightkeeper' ? 'bram' : COMP_CHAR_KEYS[slot];
   }
+  // Before the roster (Stage A saves, while 56-roster loads): one member per slot, lane 1 (F1).
   function placeCells() {
     const cells = {}, used = {};
     const put = (key, col) => {
-      for (const c of [col, col === 2 ? 1 : col === 0 ? 1 : 0, col === 2 ? 0 : 2]) {
-        const n = used[c] || 0;
-        if (n < 2) { cells[key] = { col: c, lane: n }; used[c] = n + 1; return; }
-      }
+      for (const c of [col, 1, col === 2 ? 0 : 2]) if (!used[c]) { cells[key] = { col: c, lane: 1 }; used[c] = 1; return; }
     };
     const c = cls();
     put('hero', c ? { front: 2, mid: 1, back: 0 }[HERO_CLASSES[c].row] : 2);

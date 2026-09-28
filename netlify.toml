@@ -1,0 +1,5 @@
+# Netlify (the testers' web build, https://lanternfall.netlify.app). Netlify builds on every push to the
+# linked branch: tools/site.mjs wraps the committed dist/lanternfall.html into site/ (no npm install).
+[build]
+  command = "node tools/site.mjs site"
+  publish = "site"

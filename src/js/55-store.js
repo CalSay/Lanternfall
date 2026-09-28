@@ -30,34 +30,62 @@
 //   act   stashAdd(fam, t, n, how, quiet), storeSwitch() -> bool, storeSpill(on) -> bool,
 //         storeMigrate() (57-camp calls it after registerState('camp'); also once per loaded save),
 //         storeAwayGather(kind, tier, got, r) -> units added (50-sim's away gather branch)
-// Events: storeFull { fam, t } (a flow hit the cap), storeSpill { from, to } (Spillover moved on).
+// Events: storeFull and storeCap { fam, t } (a flow hit the cap, once per fill; storeCap is the name 58-deeds reads), storeSpill { from, to } (Spillover moved on).
 // Save: registerState('store', { v, mig: { lv, at, over }, spill, said }). mig: what the migration
 //   gave (at = 0: not run yet); spill: Spillover on (Lv 3); said: cells already toasted this fill.
 
+// The cap table (owner, 2026-09-28: "an idle game: the Storehouse should scale up quite quickly;
+// meaningful, not ridiculous, never so small it's only worth idling for 10 minutes").
+// Rules: (1) Lv 1, built about minute 5-12 of a new game, holds a full 8 h away session at the best
+// tier then; (2) each later level holds a full away session (the away cap it can have by then) on the
+// best node the pacing expects at that level, so a full away session never overflows the cell you
+// gather; (3) the cap still matters in active play (tapping about doubles the rate); (4) builds are
+// quick early, slow later (STORE_COST); (5) round numbers.
+// STORE_TUNE.pace[L] is that reference player at Storehouse level L (from tools/sim.mjs --days runs:
+// skill levels, Hearth, Watchtower by day; see hearth-and-hands.md 4.2): away hours h, node tier t at
+// skill level lv, the tier-t tool of rarity r at +p, tool mastery m, Hearth hl. check.mjs ('store',
+// HS19) runs 8 h and h hours of away gathering for every gathered family at each row and asserts the
+// haul fits caps[L]. Rates (units an hour, away, from that check): see the doc table.
 const STORE_TUNE = {
   on: 1,                   // 0: no caps at all (tools/sim.mjs --store 0)
-  caps: [100, 300, 600, 1000, 1600, 2500, 4000, 6000, 10000],   // gathered cap by level 0..8
+  caps: [5000, 40000, 50000, 100000, 200000, 300000, 750000, 1250000, 2500000],   // gathered cap by level 0..8
   group: { ore: 1, wood: 1, crystal: 1, fibre: 1, herb: 1, hide: 0.5, ess: 0.5, pearl: 0.5, fish: 0.5 },
   tierMult: [1, 1, 1, 1, 1],
+  // h: the away cap the player can have at Hearth L (4 h + Watchtower 2 h a level, Watchtower Lv w
+  // needs Hearth 1/2/4/6/8, plus Hourglass relics; 24 h at most), rounded up. The rest is the upper
+  // edge of the sim's four classes on the day they reach Hearth L (--store 0 --days 30).
+  pace: [null,
+    { h: 8, t: 1, lv: 25, tool: [1, 'rare', 3], m: 3, hl: 1 },
+    { h: 8, t: 2, lv: 40, tool: [2, 'rare', 3], m: 10, hl: 2 },
+    { h: 10, t: 3, lv: 50, tool: [3, 'rare', 6], m: 15, hl: 3 },
+    { h: 12, t: 3, lv: 74, tool: [3, 'epic', 10], m: 19, hl: 4 },
+    { h: 14, t: 4, lv: 90, tool: [4, 'rare', 10], m: 20, hl: 5 },
+    { h: 16, t: 4, lv: 110, tool: [5, 'rare', 10], m: 20, hl: 6 },
+    { h: 20, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
+    { h: 24, t: 5, lv: 210, tool: [5, 'epic', 10], m: 20, hl: 8 }],
   spill: 3,                // Spillover opens at this level
   goldPerLv: 60,           // gold = campGold(Hearth zone, goldPerLv x level); none at Lv 1
   warn: 0.9,               // the pouch bar turns amber from here
   fullMins: 10             // Next Up suggests the next level after this many minutes with a full cell
 };
 const STORE_HREQ = [1, 2, 3, 4, 5, 6, 7, 8];
-// Level rows 1..8: materials [family, tier, n], Trophies (any type), build timer (seconds).
+// Level rows 1..8: materials [family, tier, n], Trophies (any type), build timer (seconds). Quick and
+// cheap early (owner rule 4: 90 s, 10 min, 30 min), slower later (up to a day). Lv 1 is H1's row
+// (HEARTH_TUNE.first.store, the same numbers), which 57-camp's campCost reads first.
 const STORE_COST = [
   { mats: [['wood', 1, 30], ['ore', 1, 20]], troph: 0, secs: 90 },
-  { mats: [['wood', 1, 80], ['ore', 1, 60], ['fibre', 1, 30]], troph: 0, secs: 1800 },
-  { mats: [['wood', 2, 90], ['ore', 2, 70], ['fibre', 2, 40]], troph: 0, secs: 7200 },
-  { mats: [['wood', 3, 100], ['ore', 3, 80], ['fibre', 3, 50]], troph: 0, secs: 6 * 3600 },
-  { mats: [['wood', 3, 150], ['ore', 3, 120], ['hide', 3, 40]], troph: 1, secs: 12 * 3600 },
-  { mats: [['wood', 4, 150], ['ore', 4, 120], ['fibre', 4, 60]], troph: 2, secs: 18 * 3600 },
-  { mats: [['wood', 4, 220], ['ore', 4, 180], ['crystal', 4, 60]], troph: 3, secs: 24 * 3600 },
-  { mats: [['wood', 5, 250], ['ore', 5, 200], ['fibre', 5, 80]], troph: 4, secs: 30 * 3600 }
+  { mats: [['wood', 1, 80], ['ore', 1, 60], ['fibre', 1, 30]], troph: 0, secs: 600 },
+  { mats: [['wood', 2, 90], ['ore', 2, 70], ['fibre', 2, 40]], troph: 0, secs: 1800 },
+  { mats: [['wood', 3, 100], ['ore', 3, 80], ['fibre', 3, 50]], troph: 0, secs: 2 * 3600 },
+  { mats: [['wood', 3, 150], ['ore', 3, 120], ['hide', 3, 40]], troph: 1, secs: 6 * 3600 },
+  { mats: [['wood', 4, 150], ['ore', 4, 120], ['fibre', 4, 60]], troph: 2, secs: 12 * 3600 },
+  { mats: [['wood', 4, 220], ['ore', 4, 180], ['crystal', 4, 60]], troph: 3, secs: 18 * 3600 },
+  { mats: [['wood', 5, 250], ['ore', 5, 200], ['fibre', 5, 80]], troph: 4, secs: 24 * 3600 }
 ];
 // Runtime counters (not saved): tools/sim.mjs reads them for HS7 (time at the cap).
-const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, lost: {} };
+// byLv[level] = { rate, hrs, t, haul }: the fastest away gather seen at that level (units an hour before
+// the cap, its away hours, node tier, the whole haul) - the numbers the cap table is checked against.
+const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, lost: {}, byLv: {}, log: [] };
 // Whole numbers with commas ("10,000"): caps read exactly, not as "10.0K".
 const storeNum = n => Number.isFinite(n) && Math.abs(n) < 1e7 ? String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : fmt(n);
 
@@ -127,6 +155,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     if (said()[k]) return;
     said()[k] = 1;
     emit('storeFull', { fam: f, t });
+    emit('storeCap', { fam: f, t });   // 58-deeds (AC2) counts these for the Pack Rat secret
     if (!quiet) toast(`Storehouse full: ${name(f, t)}.`, 'raid', { mat: [f, t] }, 'low');
   }
   stashAdd = (f, t, n, how = 'flow', quiet = false) => {
@@ -169,6 +198,15 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
   const perSec = (k, t) => nodeYieldAvg(k) * mod('yield:' + k) / nodeTime(k, t);
   storeAwayGather = (kind, tier, got, r) => {
     got = Math.floor(got);
+    if (r && r.t >= 3600) {
+      const lv = storeLevel(), b = STORE_STATS.byLv[lv] || (STORE_STATS.byLv[lv] = { rate: 0, hrs: 0, t: 0, haul: 0 });
+      const rate = got / (r.t / 3600);
+      if (rate > b.rate) { b.rate = Math.round(rate); b.t = tier; }
+      b.hrs = Math.max(b.hrs, r.t / 3600); b.haul = Math.max(b.haul, got);
+      const sk = skillOf(kind), eq = typeof equippedTool === 'function' ? equippedTool(sk) : null, it = eq && eq.item;
+      STORE_STATS.log.push([lv, Math.round(rate), +(r.t / 3600).toFixed(1), tier, got, (S.camp && S.camp.b && S.camp.b.hearth) | 0, S.skills[sk].lv,
+        it ? `${it.t}${String(it.r)[0]}+${it.plus || 0}` : '-', typeof toolMastery === 'function' && eq && eq.kind ? toolMastery(eq.kind).lv : 0, kind]);
+    }
     const add = stashAdd(kind, tier, got, 'flow', true);
     let left = got - add, secs = left > 0 ? left / Math.max(1e-9, perSec(kind, tier)) : 0;
     const spill = [];
