@@ -780,3 +780,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   follow the [deploy] rule). (4) The festival comes AFTER 1.0.
 - Coordinator review of plan-4: docs/design/roadmap-review.md (Core 2.0 designed as one package then 7 slices; BAL2.5 now, BAL3 per slice; SAVE1 early; accessibility/guide inside Core 2.0; LORE-R45; 1.0 pacing targets; hero Awakenings; filled-out designs for evolutions, damage types, gear/tiers/chains/enchanting/uniques, active combat, gatherer roster, building trees, fatigue, tactics, events, trade routes, hero quests, challenge modes, first hour, sound; 6 owner questions).
 - 21:38 check-in: no agents running; deploy window used for today's merges (first Netlify deploy).
+- OWNER on the review: (3) evolution choice permanent with a costly respec: YES. (5) Hunter gatherer job and a
+  Tannery: YES. (2) 1.0 length depends on how fun and replayable the loop is; players must stay committed
+  (coordinator proposal sent: story to the Voice in ~2-3 months of normal play, completion goals 6-9 months).
+  (1), (4), (6) explained to the owner in plainer terms; awaiting answers.
