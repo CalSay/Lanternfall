@@ -55,7 +55,7 @@ Design rules of this spec:
    throttle, and Hands make it cheap. A player with no Hands still progresses.
 4. **Nothing is lost.** Every material, item, power, unique, rank and recipe a save has today keeps
    working. Old items keep their exact stats; new rules apply to new crafts.
-5. **Plain words.** "Iron Ingot", "Tannery", "Set a Lantern Pearl", "Takes 2 min". Short sentences.
+5. **Plain words.** "Iron Ingot", "Tannery", "Set a Tide Sigil", "Takes 2 min". Short sentences.
 
 ---
 
@@ -87,7 +87,7 @@ Design rules of this spec:
 | Raw, gathered | `ore` | Metal | Ore | 1-15 | Mining veins | Heavy gear, accents (clasps, arrowheads), tools |
 | | `wood` | Wood | Log | 1-15 | Woodcutting groves | Medium gear, Mage weapons and accents, tools |
 | | `fibre` | Fibre | Fibre | 1-15 | Foraging patches | Light gear, padding accents |
-| | `crystal` | Crystal | Shard | 1-15 | Mining geodes | Charms, trinkets, light accents, Salvage Runes |
+| | `crystal` | Gems | Shard | 1-15 | Mining geodes | Charms, trinkets, light accents, Salvage Runes |
 | | `herb` | Herbs | Sprig | 1-15 | Foraging beds | Support accents, Tonics, tinctures |
 | Raw, fought and hunted | `hide` | Hide | Hide | 1-15 | Fight drops; **Hunter** Hands (3.5) | Leather |
 | | `ess` | Essence | Essence | 1-15 | Fight drops only | A little in almost every recipe |
@@ -111,50 +111,50 @@ Design rules of this spec:
 
 ### 1.2 The ladder: all 15 grades
 
-**Names are not set here.** Owner direction (2026-09-28, via the coordinator): material names must be
-real materials and standard fantasy materials (Copper, Iron, Silver, Cobalt, Mithril, Orichalcum,
-Adamantite; Pine, Oak, Yew, Ebony; Linen, Wool, Silk; Leather, Wolfhide, Wyvernhide; Sage, Mandrake;
-Quartz, Amethyst, Sapphire...), not invented compounds. A follow-up task, **MAT1**, sets the final
-15-grade name ladder for every family. This file refers to materials **by grade and family** ("grade-7
-ore", "Region 2 coal") and keeps every id generic, so nothing here depends on a name.
+**MAT1 has landed.** The full 15-grade name ladder for every family, the essence and secondary-resource
+proposals, and the Sigil buff-item names live in **[materials.md](materials.md)**, owner-approved
+2026-09-28 (grades 1-5 relabelled: grade-3 ore is Silver, Mithril moves to grade 5, Starsteel dropped).
+This file still refers to materials **by grade and family** ("grade-7 ore", "Region 2 coal") in its own
+tables below, since the numbers here do not depend on a name; where a name is useful for an example, it
+is materials.md's name, not a placeholder.
 
 | Grade | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Region | Hollow | Hollow | Hollow | Coast | Coast | Coast | Ember | Ember | Ember | Pale | Pale | Pale | Stair | Stair | Stair |
+| Region | Hollow | Hollow | Hollow | Coast | Coast | Coast | Ember | Ember | Ember | Pale | Pale | Pale | Gloam | Gloam | Gloam |
 | Save index (`S.mats[f][g - 1]`) | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
 
-What MAT1 needs from this file:
+What MAT1 named (materials.md), for reference:
 
-- **Families to name, 15 grades each:** ore, wood, fibre, hide, crystal, herb, essence (the refined
-  families reuse these names, below). **Secondary families, one name a region (2-5):** coal, salt, dye.
-  **Buff families, one name a region (2-5):** `pearl`, `glass`, `star`, `well` (5.1).
-- **Grades 1-5 are in live saves.** Their ids and indices never change; a new display name for them is a
-  data-table change with a one-time notice (core-2 5.2, 7.2), so MAT1 may relabel them.
-- **The code's name shape:** `matName(f, g) = MAT[f].short[g - 1] + ' ' + MAT[f].unit` ("Copper Ore",
-  "Soft Hide"). A hide name that already contains the word (Wolfhide) needs `short` = "Wolf" or a
-  per-grade unit.
+- **All seven families, 15 grades each:** ore, wood, fibre (player label "Cloth"), hide, crystal (player
+  label **Gems**), herb, essence (the refined families reuse these names, materials.md 2). **Secondary
+  families, one name a region (2-5):** coal, salt, dye (materials.md 6, owner to approve). **Buff-item
+  families, one name a region (2-5):** `pearl`, `glass`, `star`, `well` (5.1) — player-facing, these are
+  **Sigils**, not gems or glass (materials.md 7-8, coordinator decision): Tide Sigil, Ember Sigil, Frost
+  Sigil, Gloam Sigil.
+- **Grades 1-5 are in live saves**, and under the relaxed save rule (CLAUDE.md) a display-name change
+  needs no migration at all: `S.mats[f][g - 1]` keeps its meaning, ids and indices never moved.
+- **The code's name shape:** `matName(f, g) = MAT[f].short[g - 1] + ' ' + MAT[f].unit` ("Copper Ore"), or
+  just `MAT[f].short[g - 1]` when `unit` is `''` (hide: its names are already complete nouns — "Rawhide",
+  not "Raw Hide").
 - **Refined names reuse the raw name with the refined unit** ("Iron Ingot", "Oak Plank", "Wolfhide
-  Leather", "Silk Cloth", "Sage Tincture"), so MAT1 names 7 families, not 12.
-- **No name may mean two grades or two families** (core-2 5.2). Today's grade-5 crystal "Emberglass" and
-  plan-4's buff family "Ember-glass" are one such pair; MAT1 settles it.
-- Names already in drafts (LORE-R45's grades 6-15 in regions-4-5.md, secondaries such as "Glimmercoal"
-  and "Wellcoal", the buff families "Ember-glass", "Starshard", "Wellglass", and essence 6-15, which had
-  no names) are all **placeholders, MAT1**. Where this file still shows one in an example, read it as
-  "placeholder, MAT1".
+  Leather", "Silk Cloth", "Sage Tincture", materials.md 2).
+- **No name means two grades or two families any more.** Grade-5 crystal is Aquamarine, not Emberglass,
+  so the old "Emberglass" / plan-4 "Ember-glass" clash is gone on both counts: the buff item is renamed
+  to Ember Sigil, and nothing is called Emberglass at all.
 
 ### 1.3 Secondary resources by region
 
 | Region | Coal (Mining) | Salt (Foraging) | Dye (Foraging) | Where (flavour for the region specs) |
 |---|---|---|---|---|
 | 1 Hollow | - | - | - | Region 1 recipes are raw (3.6) |
-| 2 Coast | Region 2 coal | Region 2 salt | Region 2 dye | Coal washed up on the Grey Shingle; salt pans at Low tide; dye from shells in the Coral Nave |
-| 3 Emberwaste | Region 3 coal | Region 3 salt | Region 3 dye | Coal in the Kilns; salt crusts on the Glass Flats; a dye root on the Cinder Road |
-| 4 Pale Reach | Region 4 coal | Region 4 salt | Region 4 dye | regions-4-5.md 1.4 (its draft names are placeholders, MAT1) |
-| 5 Long Stair | Region 5 coal | Region 5 salt | Region 5 dye | regions-4-5.md 2.4 (placeholders, MAT1) |
+| 2 Coast | Sea Coal | Sea Salt | Madder | Coal washed up on the Grey Shingle; salt pans at Low tide; dye from shells in the Coral Nave |
+| 3 Emberwaste | Kiln Coal | Glass Salt | Cinderroot | Coal in the Kilns; salt crusts on the Glass Flats; a dye root on the Cinder Road |
+| 4 Pale Reach | Rime Coal | Rime Salt | Frostbloom | regions-4-5.md 1.4 |
+| 5 Gloamvale | Dead Coal | Grey Salt | Nightbloom | regions-4-5.md 2.4 |
 
-A grade-g recipe uses the secondary of grade g's region: grade-4 ingots take Region 2 coal, grade-9
-ingots take Region 3 coal. Real names fit here well (sea coal, sea salt, madder are real materials); MAT1
-picks them.
+A grade-g recipe uses the secondary of grade g's region: grade-4 ingots take Sea Coal, grade-9 ingots
+take Kiln Coal. These names (materials.md 6) are owner-to-approve, same as essence 6-15 (materials.md 3);
+nothing in this table is built in code yet, so nothing blocks on the approval.
 
 ### 1.4 What gates each grade
 
@@ -177,9 +177,9 @@ A grade is **open** for gathering and crafting when both hold:
 | 10 | Pale Reach | 106 | 235 | 104 |
 | 11 | Pale Reach | 117 | 255 | 112 |
 | 12 | Pale Reach | 129 | 275 | 120 |
-| 13 | Long Stair | 141 | 290 | 127 |
-| 14 | Long Stair | 152 | 305 | 134 |
-| 15 | Long Stair | 164 | 320 | 140 |
+| 13 | Gloamvale | 141 | 290 | 127 |
+| 14 | Gloamvale | 152 | 305 | 134 |
+| 15 | Gloamvale | 164 | 320 | 140 |
 
 - Zones assume 35 zones a region (Region 3 is zones 71-105 per lore.md 8.3; Regions 4-5 follow). The R3-R5
   specs move these rows if their zone counts differ; the rule is "the first zone of the region, then about
@@ -218,7 +218,7 @@ Region 2 they are GP1's tier 4 and 5 days (5.5-9.5, 13.5-17) plus grade 6 around
 | Fibre patches, Herb beds | Foraging | 1-15 | 6-15 "`<material>` Patch", "`<material>` Bed" |
 | **Coal seams** (new) | Mining | one per region, 2-5 | Opens on reaching the region, Mining at the region's first node gate |
 | **Salt pans, Dye plants** (new) | Foraging | one per region, 2-5 | Same rule, Foraging |
-| Region nodes | as the region spec | - | Tide Pools and Fishing (Coast), Glass seams (Emberwaste), Starfall fields (Pale Reach), glass seams below the Ninth Landing (Long Stair) (5.4) |
+| Region nodes | as the region spec | - | Tide Pools and Fishing (Coast), Glass seams (Emberwaste), Starfall fields (Pale Reach), glass seams below the Ninth Landing (Gloamvale) (5.4) |
 
 Secondary nodes are built to be Hand work: **3 units a swing** at 0.8x the time of the region's first-grade
 node, **half the skill XP**, no rare finds, the Glint works. The Lanternbearer can fill a gap by hand; a
@@ -239,7 +239,7 @@ Coal-digger does it better (3.5).
 - **Buff items are counts, not capped** (like Trophies), shown on the Storehouse's **Buff Items** page
   (coordinator decision, 5.6). Salvage Runes and Tinctures show there too.
 - **The pouch view** groups cells by region: the current region's three grades open, older regions
-  collapsed into one row per family ("Hollow: 12K Copper · 8K Iron · 40K Mithril"). 15 x 12 families is
+  collapsed into one row per family ("Hollow: 12K Copper · 8K Iron · 40K Silver"). 15 x 12 families is
   180 cells; only the open region is drawn by default (UX-F owns the screen).
 
 ### 1.8 Migration of today's 5 tiers
@@ -348,16 +348,16 @@ and the accents stay raw.
 | | Quiver | Wood 5 | Hide 3 | Ore 1, Essence 1 |
 | | Hood | Wood 5 | Hide 2 | Ore 1 (buckle), Essence 1 |
 | | Leathers | Wood 6 | Hide 3 | Ore 1, Essence 1 |
-| Light | Staff | Wood 5 | Fibre 3 | Crystal 1, Essence 2 |
+| Light | Staff | Wood 5 | Fibre 3 | Gem 1, Essence 2 |
 | | Censer | Wood 4 | Fibre 3 | Ore 1 (clasp), Herbs 1, Essence 2 |
-| | Lantern | Fibre 5 | Wood 2 | Crystal 2, Essence 1 |
+| | Lantern | Fibre 5 | Wood 2 | Gem 2, Essence 1 |
 | | Tome | Fibre 6 | Wood 2 | Herbs 1, Essence 1 |
-| | Circlet | Fibre 5 | Wood 1 | Crystal 2, Essence 1 |
+| | Circlet | Fibre 5 | Wood 1 | Gem 2, Essence 1 |
 | | Mitre | Fibre 6 | Wood 1 | Herbs 1, Essence 1 |
-| | Robe | Fibre 7 | Wood 2 | Crystal 1, Essence 2 |
+| | Robe | Fibre 7 | Wood 2 | Gem 1, Essence 2 |
 | | Vestments | Fibre 7 | Wood 2 | Herbs 1, Essence 2 |
-| Any | Charm | Crystal 3 | Herbs 1 | Essence 4 |
-| Any | Trinket | Crystal 2 | Herbs 2 | Essence 2 (unchanged) |
+| Any | Charm | Gem 3 | Herbs 1 | Essence 4 |
+| Any | Trinket | Gem 2 | Herbs 2 | Essence 2 (unchanged) |
 | Tools | Pickaxe, Woodaxe, Sickle | unchanged (ore and wood; from grade 4, Ingots and Planks at half) | | |
 
 - **Shares, per set of four:** heavy metal 25 : leather 10 (71%); medium wood 23 : leather 10 (70%); light
@@ -494,7 +494,7 @@ One step each, from Region 2 on. Every output is a family in `S.mats` (1.1).
   ("Storehouse full: `<grade-4 ore>` Ingot. Refining waits."), like a node at its cap. Nothing is lost.
 - **It runs while you are away**, up to the away cap, in closed form (orders run in queue order).
 - A station builds up to Lv 5 on the standard camp rows (WC1/BT1 cost them). The Tannery's Lv 1 costs
-  Region 1 materials so it can stand on arrival: Mithril Ore 60, Ironbark Log 80, Scaled Hide 40, 10 min.
+  Region 1 materials so it can stand on arrival: Silver Ore 60, Oak Log 80, Wolfhide 40, 10 min.
 - **Coast arrival gift** (a gift, lands above the cap): 50 Region 2 coal, 25 salt and 25 dye, so the first
   grade-4 weapon is one short queue away. Next Up: "Smelt your first `<grade-4 ore>` Ingots at the Forge."
 
@@ -606,7 +606,7 @@ has no buff items). The Enchanting skill (`ench`) already exists; this is its ma
 
 | Way | Result |
 |---|---|
-| **Take out** | The buff item breaks (owner rule). In-page ask: "Take out the Rare Lantern Pearl? It will break. [Break it] [Keep it]" |
+| **Take out** | The buff item breaks (owner rule). In-page ask: "Take out the Rare Tide Sigil? It will break. [Break it] [Keep it]" |
 | **Take out with a Salvage Rune** | The buff item goes back to the Storehouse at its rarity. Its strength is set again when you next set it |
 | **Set another over it** | Asks the same question first; never silent |
 | **Salvage the item** | The salvage sheet lists its buff items with a toggle "Use N Salvage Runes to keep them" (on when you hold runes). Without runes they break, and the sheet says so. **Auto-salvage never picks an item with a buff item in it** |
@@ -618,7 +618,7 @@ has no buff items). The Enchanting skill (`ench`) already exists; this is its ma
 
 | Source | Amount |
 |---|---|
-| Craft at the Enchanter's Table | 5 Crystal + 3 Essence of any grade from 4 (you pick the pile; default your highest), + 1 Tincture if the Still exists (else 3 Herbs). 10 Enchanting XP |
+| Craft at the Enchanter's Table | 5 Gems + 3 Essence of any grade from 4 (you pick the pile; default your highest), + 1 Tincture if the Still exists (else 3 Herbs). 10 Enchanting XP |
 | Region boss first kill (Coast onward) | 3 |
 | Bounties, the Almanac board, trade towns (7) | 1-2 as rewards |
 
@@ -633,7 +633,7 @@ items, not worth it for Commons, which is the decision the owner's rule asks for
  <grade-6 ore> Plate +4      Rare · Heavy · Tier 6
  HP +619%   Armour +47
  ...affix lines...
- Sockets  [ ◆ Rare Lantern Pearl 92% ]   [ ◇ empty ]
+ Sockets  [ ◆ Rare Tide Sigil 92% ]   [ ◇ empty ]
           +42% max HP, +7% frost resist    Tap to set
           Tidefast on the Coast
 ```
@@ -643,7 +643,7 @@ items, not worth it for Commons, which is the decision the owner's rule asks for
 ```
  Set a buff item · heavy                        [x]
  Your Enchanting 55: 90% strength
- ── Lantern Pearl ─────────────────────────────────
+ ── Tide Sigil ─────────────────────────────────
  ◆ Rare       ×3   +42% max HP, +7.0% frost resist   [Set]
  ◆ Uncommon   ×7   +31% max HP, +5.3% frost resist   [Set]
  ◆ Common    ×12   +23% max HP, +3.9% frost resist   [Set]
@@ -651,10 +651,10 @@ items, not worth it for Commons, which is the decision the owner's rule asks for
 ```
 
 - Only versions that fit are listed; the lines are the real values at this item's grade and your
-  strength. Families you have none of show one grey row: "Lantern Pearls: fishing and Tide Pools".
+  strength. Families you have none of show one grey row: "Tide Sigils: fishing and Tide Pools".
 - **Tap a filled socket** → a small sheet: its lines, "Set at 92%. Your Enchanting gives 95%."
   **[Tune to 95%: 600 gold]**, **[Take out with a Salvage Rune (you have 4)]**, **[Take out (it breaks)]**.
-- Toasts: "Set a Rare Lantern Pearl in your Plate." (low). Colour is never the only signal: the
+- Toasts: "Set a Rare Tide Sigil in your Plate." (low). Colour is never the only signal: the
   rarity word is always written, and the version shows as a small weight icon plus the word.
 - Reduced motion: no sparkle on setting; the socket fills at once.
 
@@ -670,26 +670,32 @@ core-2's placeholders `r4`, `r5`: change-log line 9.2-3). Buff ids are `<family>
 Each buff id has **two fixed lines**: a main line (60% of the socket budget) and a second line (40%).
 Nothing about a buff item is random except its rarity, so `S.buff` stays a table of counts (core-2 8.2).
 
+**MAT1 (coordinator decision, 2026-09-28): buff items are Sigils, never gems or glass.** The owner's
+concern was a buff item reading like a crafting material (a gem, a stone, glass); the whole category is
+now player-facing **Sigils**, so "Pearl" only ever means the grade-4 gem (materials.md 1, 7-8). Family
+ids (`pearl`, `glass`, `star`, `well`) are unchanged.
+
 | Family | Name | Region | Top grade (`famTop`) | Heavy `_h` | Medium `_m` | Light `_l` |
 |---|---|---|---|---|---|---|
-| `pearl` | **Lantern Pearl** (core-2; plan-4's "Pearls") | Coast | 6 | max HP · frost resist | haste · control | holy power · ward |
-| `glass` | Ember-glass (placeholder, MAT1) | Emberwaste | 9 | armour · fire resist | crit · status power | frost power · ability power |
-| `star` | Starshard (placeholder, MAT1) | Pale Reach | 12 | block · frost resist | attack speed · crit | fire power · healing |
-| `well` | Wellglass (placeholder, MAT1) | Long Stair | 15 | max HP · poison resist | status power · haste | holy power · ability power |
+| `pearl` | **Tide Sigil** | Coast | 6 | max HP · frost resist | haste · control | holy power · ward |
+| `glass` | **Ember Sigil** | Emberwaste | 9 | armour · fire resist | crit · status power | frost power · ability power |
+| `star` | **Frost Sigil** | Pale Reach | 12 | block · frost resist | attack speed · crit | fire power · healing |
+| `well` | **Gloam Sigil** | Gloamvale | 15 | max HP · poison resist | status power · haste | holy power · ability power |
 
-The rest of this file calls them Pearls, `glass`, `star` and `well` items. A pearl is a real material and
-the owner's word; MAT1 names the other three (real gems fit: plan-4 calls them "gems").
+The rest of this file calls them Tide, Ember, Frost and Gloam Sigils. **An individual buff item is named
+`<Boss or theme> Sigil`** (a Shroud's signature drop, 5.4): a Tide/Ember/Frost/Gloam Sigil is the family
+name shown on the Storehouse's Buff Items page and in generic copy, not an item's own name.
 
 - **The heavy resist is the type the region's foes deal**; **the light type power is the type the region's
   foes are weak to** (core-2 2.3 region profiles: the Coast is holy-weak, the Emberwaste rewards frost, the
-  Pale Reach reverses that (fire), the Long Stair rewards holy). CB2 sets each foe's damage type; the
-  working threats are Coast frost (the cold sea), Emberwaste fire, Pale Reach frost, Long Stair poison (the
+  Pale Reach reverses that (fire), the Gloamvale rewards holy). CB2 sets each foe's damage type; the
+  working threats are Coast frost (the cold sea), Emberwaste fire, Pale Reach frost, Gloamvale poison (the
   dark's rot). If CB2 picks another, the resist line follows it. (regions-4-5.md 1.3 gave the `star` light version
   "frost power"; Pale Reach foes resist frost, so this file uses fire power: change-log line 9.2-4.)
 - **Every class wants its region's family**: the Mage's fire is weak in the Emberwaste, but the `glass_l` item
   still gives ability power, and the Warlock's Dark Turned covers the rest (classes-2.md D6).
 - **Names shown to the player:** the family name, the rarity word, and the version as a word and an icon
-  ("Rare Lantern Pearl · for heavy gear"). No invented version names.
+  ("Rare Tide Sigil · for heavy gear"). No invented version names.
 
 ### 5.2 Values
 
@@ -706,17 +712,17 @@ The rates are the affix rates (`CRAFT_AFFIXES`, 2.2), so a socket is worth about
 
 | Example (strength 100%) | Main | Second |
 |---|---|---|
-| Rare Lantern Pearl `_h` in a grade-6 Plate | +46% max HP | +7.8% frost resist |
-| Epic `glass_l` in a grade-9 Staff | +290% frost power | +193% ability power |
-| Common `star_m` in a grade-10 Hood | +3.7% attack speed (rating line: 0.6 x 0.20 x 156 x 0.2) | +1.5% crit |
-| Rare Lantern Pearl `_l` in a grade-9 Robe (old family) | +46% holy power (capped at grade 6) | +7.8% ward |
+| Rare Tide Sigil `_h` in a grade-6 Plate | +46% max HP | +7.8% frost resist |
+| Epic `glass_l` (Ember Sigil) in a grade-9 Staff | +290% frost power | +193% ability power |
+| Common `star_m` (Frost Sigil) in a grade-10 Hood | +3.7% attack speed (rating line: 0.6 x 0.20 x 156 x 0.2) | +1.5% crit |
+| Rare Tide Sigil `_l` in a grade-9 Robe (old family) | +46% holy power (capped at grade 6) | +7.8% ward |
 
-The last row is `famTop` at work: a Pearl still works in Region 3 gear, but a `glass` item of the same rarity
-gives 4.5x the holy-equivalent power line. Rating lines age more gently (Pc grows 4% a grade), so an old
-resist Pearl stays a fair choice where its resist type still matters.
+The last row is `famTop` at work: a Tide Sigil still works in Region 3 gear, but an Ember Sigil of the
+same rarity gives 4.5x the holy-equivalent power line. Rating lines age more gently (Pc grows 4% a
+grade), so an old resist Tide Sigil stays a fair choice where its resist type still matters.
 
-**A heavy set's frost resist:** six Rare `pearl_h` at 100% give about 47%, just under the 50% cap. Resists
-are worth stacking only where a region hits with that type, which is the point.
+**A heavy set's frost resist:** six Rare `pearl_h` (Tide Sigil) at 100% give about 47%, just under the
+50% cap. Resists are worth stacking only where a region hits with that type, which is the point.
 
 ### 5.3 Rarities
 
@@ -737,7 +743,7 @@ one at grade 4 (gathering rates grow; find rates should not).
 
 | Source | Rule | Idle and away | Active |
 |---|---|---|---|
-| **The region's own node** | Tide Pools and Fishing (Coast), Glass seams (Emberwaste, Mining), Starfall fields (Pale Reach, the Mining tab, regions-4-5.md 1.3), glass seams below the Ninth Landing (Long Stair, Mining). One roll every 10 minutes of gathering there | 20% a roll (about 1.2 an hour) | **40%** on screen (core-2: active finds about 2x); a tapped Glint on that node adds a roll |
+| **The region's own node** | Tide Pools and Fishing (Coast), Glass seams (Emberwaste, Mining), Starfall fields (Pale Reach, the Mining tab, regions-4-5.md 1.3), glass seams below the Ninth Landing (Gloamvale, Mining). One roll every 10 minutes of gathering there | 20% a roll (about 1.2 an hour) | **40%** on screen (core-2: active finds about 2x); a tapped Glint on that node adds a roll |
 | **Any other node of the region's grades** | Every gathering skill feeds buff items (owner: not mining-only). One roll every 30 minutes | 4% | 8% |
 | **Gatherer finder perks** | The Lucky gatherer of a pair: **+5% a roll** (owner). Tree nodes (N1b): up to +5% more | - | - |
 | **Gem-seeker Hands** | Work the region's node: rolls every 10 minutes of shift at `20% x share x 2` (Common 4%, Legendary 10%) plus perks | yes | - |
@@ -762,15 +768,15 @@ Inscribe, Mark and rank 8 costs.
 
 | Family | In a weapon | In armour or a trinket | Where it works |
 |---|---|---|---|
-| Lantern Pearl | **Shellbreaker**: physical hits ignore shells and Coral Skin | **Tidefast**: ignores Wading and Soaked | The Coast (region-2.md 3.4, unchanged) |
-| `glass` | R3 spec (a weapon answer to its hazard) | R3 spec (the heat answer) | The Emberwaste |
-| `star` | R4 spec | **Snowsight** if the Whiteout hazard ships (regions-4-5.md 5.5) | The Pale Reach |
-| `well` | R5 spec | R5 spec | The Long Stair |
+| Tide Sigil (`pearl`) | **Shellbreaker**: physical hits ignore shells and Coral Skin | **Tidefast**: ignores Wading and Soaked | The Coast (region-2.md 3.4, unchanged) |
+| Ember Sigil (`glass`) | R3 spec (a weapon answer to its hazard) | R3 spec (the heat answer) | The Emberwaste |
+| Frost Sigil (`star`) | R4 spec | **Snowsight** if the Whiteout hazard ships (regions-4-5.md 5.5) | The Pale Reach |
+| Gloam Sigil (`well`) | R5 spec | R5 spec | The Gloamvale |
 
-  This keeps region-2.md's Pearl settings (Tidefast and Shellbreaker) as they were designed, with Pearls
-  as buff items instead of a separate setting: the `pl` field is never needed.
+  This keeps region-2.md's Pearl settings (Tidefast and Shellbreaker) as they were designed, with Tide
+  Sigils in place of the separate setting: the `pl` field is never needed.
 - **The Matched set** (recommended, owner decision O5): a character whose filled sockets all hold one
-  family, with at least 3 filled, gets +10% on those buff lines ("Matched: Lantern Pearls"). It rewards
+  family, with at least 3 filled, gets +10% on those buff lines ("Matched: Tide Sigils"). It rewards
   committing to a region's family without a new screen. A light rule; it sits in bucket G.
 
 ### 5.6 Where they live
@@ -780,22 +786,23 @@ Inscribe, Mark and rank 8 costs.
   found (with the node's name and whether it is open), and its lines at your current highest grade.
 - `S.buff = { v: 1, pearl_h: [c, u, r, e, l], ..., well_l: [...] }`: core-2 8.2's shape plus `v`.
   **Not capped** (like Trophies): finds are small lumps and never flood.
-- The away card and toasts: "Found a Rare Lantern Pearl" (normal); Commons are grouped ("3 Pearls found").
+- The away card and toasts: "Found a Rare Tide Sigil" (normal); Commons are grouped ("3 Tide Sigils found").
 
-### 5.7 Pearls as a cost (legendaries.md, region-2.md)
+### 5.7 Sigils as a cost (legendaries.md, region-2.md)
 
 Pearls never shipped as a material (`S.mats.pearl`; `pearlLive()` is false, so today the Pearl part of
-every cost is free). With Pearls as buff items:
+every cost is free — that field name is legacy, from before the Sigil rename; it means the Coast's Sigil
+cost). With Sigils as buff items:
 
 | Cost | Was | Now |
 |---|---|---|
-| Inscribe a power | `2 + 2 x rank` Pearls of the item's tier | The same count of **buff items of the family of the item's grade's region** (grades 1-6: Pearls; 7-9: `glass`; 10-12: `star`; 13-15: `well`), any version and rarity |
-| Mark (circle set) | 2 Pearls of the item's tier | 2 buff items, same rule |
-| Rank 8, Lanternlit (region-2.md 8.2) | 25 Lantern Pearls | 25 Lantern Pearls, any version and rarity |
-| Before the Coast is reached | free (Pearls did not exist) | still free (the rule `pearlLive()` expresses, now "the Coast reached") |
+| Inscribe a power | `2 + 2 x rank` Pearls of the item's tier | The same count of **Sigils of the family of the item's grade's region** (grades 1-6: Tide Sigils; 7-9: Ember Sigils; 10-12: Frost Sigils; 13-15: Gloam Sigils), any version and rarity |
+| Mark (circle set) | 2 Pearls of the item's tier | 2 Sigils, same rule |
+| Rank 8, Lanternlit (region-2.md 8.2) | 25 Tide Sigils | 25 Tide Sigils, any version and rarity |
+| Before the Coast is reached | free (Sigils did not exist) | still free (the rule `pearlLive()` expresses, now "the Coast reached") |
 
 - The cost sheet spends **Commons first** and asks before spending a Rare or better
-  ("This uses 1 Rare Lantern Pearl. [Use it] [Pick others]").
+  ("This uses 1 Rare Tide Sigil. [Use it] [Pick others]").
 - `55-legend`'s `pearlHave` / `pearlPay` read `S.buff` through one helper in the S5 core; 21c's `LEG_COST`
   numbers are unchanged.
 
@@ -884,7 +891,7 @@ uniques were never built; their effects there are replaced by these.
 | 23 | **Icewisp Lantern** (hero weapon) | Icewisp elders (pale) | `star_m` | **Swarmlight.** Against swarms the wearer's hits chain to 1 (2) more foe for 50% | 4 / 8% | S6 packs |
 | 24 | **The Gatekeeper's Spear** (weapon) | The Star-Fallen (name pending, regions-4-5.md 5.1) | `star_h` | **Hold the Gate.** In the Front slot you Taunt for 2 s every 10 s (6 s); each hit you take gives the party +3% (+6%) damage for 6 s, up to 5 stacks | 6 / 12% | S1 |
 
-**Region 5, the Long Stair** (grades 13-15; locked `well`)
+**Region 5, the Gloamvale** (grades 13-15; locked `well`)
 
 | # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
 |---|---|---|---|---|---|---|
@@ -902,7 +909,7 @@ uniques were never built; their effects there are replaced by these.
   Beam), supports' heals (Hand to Hand, Near the Spring).
 - **Before S6:** powers marked S6 run with the fallback written in their row, or without the stagger part.
   The card says "Stagger comes with the boss update" until then (CL1 does the same for Finishers).
-- Region 5 uniques assume the zone list of regions-4-5.md 2.5; if the Deepwell and the Long Stair merge
+- Region 5 uniques assume the zone list of regions-4-5.md 2.5; if the Deepwell and the Gloamvale merge
   (its open question 3), the Deepwell's deep floors drop them too.
 
 ### 6.3 Drops
@@ -991,7 +998,7 @@ is a route in the Map Room (UX-W3 sends it from the World map).
 | 2 Coast | **Hallam's Landing** (the ferryman's shingle) | The Coast reached | 4 h | Common and Uncommon Pearls, Salvage Runes |
 | 3 Emberwaste | **New Emberlea** (where its people rebuilt) | The Emberwaste reached | 6 h | Common and Uncommon `glass` items, Tinctures |
 | 4 Pale Reach | **The Silent Village** (lit again after the Star-Fallen) | The Star-Fallen beaten | 8 h | Common and Uncommon `star` items, Region 4 Trophies |
-| 5 Long Stair | **Hollow's Rest** itself (the road comes home; Hearth 10: "a town") | The Long Stair reached | 2 h | Common and Uncommon `well` items, Salvage Runes |
+| 5 Gloamvale | **Hollow's Rest** itself (the road comes home; Hearth 10: "a town") | The Gloamvale reached | 2 h | Common and Uncommon `well` items, Salvage Runes |
 
 ### 7.2 A trade trip
 
@@ -1034,7 +1041,7 @@ From plan-4 1 (the story to the Voice in about 2-3 months of normal play; BAL-F 
 | 2 Coast | day 6-8 | day 21-35 | 4 on arrival (day 7-9), 5 day 13-17, 6 day 20-26 |
 | 3 Emberwaste | about day 30 | day 40-55 | 7 on arrival, 8 about a week in, 9 about two weeks in |
 | 4 Pale Reach | about day 48 | day 58-72 | 10, 11, 12 on the same thirds |
-| 5 Long Stair | about day 65 | the Voice, day 75-90 | 13, 14, 15 on the same thirds |
+| 5 Gloamvale | about day 65 | the Voice, day 75-90 | 13, 14, 15 on the same thirds |
 
 ### 8.2 Targets for the sim (BAL3 after S4 and S5)
 
@@ -1075,9 +1082,11 @@ weapons, then armour; Salvage Runes only for Rare or better), `--uniq2` (wear th
 
 5. **The Mage's main family: cloth**, wood second (coordinator decided, 2026-09-28; this file's recipes use
    it, with the light weapon leading with wood, owner decision O1).
-6. **Names:** today's names are kept for grades 1-5 (coordinator), and every new name waits for **MAT1**
-   (owner, 2026-09-28: real and standard fantasy materials). The grade-9 clash in the roadmap draft goes
-   away with it; the "Emberglass" / "Ember-glass" pair goes to MAT1 (1.2).
+6. **Names:** MAT1 has landed (materials.md; owner, 2026-09-28: real and standard fantasy materials).
+   Grades 1-5 were relabelled (grade-3 ore Silver, Mithril to grade 5, Starsteel dropped). The grade-9
+   clash in the roadmap draft is gone (grade 9 is Dragonsteel); the "Emberglass" / "Ember-glass" pair is
+   resolved by dropping "Emberglass" as a gem name (grade 5 is Aquamarine) and renaming the buff item to
+   Ember Sigil (1.2, 5.1).
 7. **Enchanting 100% at level 80**, rising in a straight line from 70% at level 1 (4.2). **Hero sockets are
    worth their cost:** the cost is flat and small; the buff item is the price, and heroes deal most damage.
 8. **Buff items live in the Storehouse**, on a **Buff Items** page, as uncapped counts (coordinator decided;
