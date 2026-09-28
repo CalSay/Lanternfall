@@ -127,6 +127,8 @@
       road.box.append(n);
     });
   }
+  // bake the strip's lanterns in idle time, so the Camp tab's first open does not pay for them
+  if (typeof idleTask === 'function') idleTask(() => { lanternURL(false); for (const r of REGIONS) lanternURL(true, r.col); lanternURL(true, ROAD_BEYOND.col); });
   registerSection('camp', {
     id: 'lantern-road', title: null,
     mount: roadBuild,
