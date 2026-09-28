@@ -111,9 +111,7 @@ let craftUI = null;
   // ---------------- UI state (memory only) ----------------
   const st8 = { st: null, tier: {}, filt: 'you', mw: null, role: {}, sort: 'power', bfilt: 'all', pick: '', focus: null, fresh: new Set(), tm: { fam: 'ore', t: 1 } };
   const openTier = st => {
-    const lv = lvOf(skillOfSt(st)); let t = 1;
-    for (let i = 1; i <= 5; i++) if (lv >= CRAFT_STATION_REQ[i - 1]) t = i;
-    return t;
+    return skillTopTier(skillOfSt(st));
   };
   function initState() {
     if (st8.st) return;
@@ -136,7 +134,7 @@ let craftUI = null;
   const mwFor = k => (st8.mw != null && craftTrophyLine(st8.mw, k, 1) ? st8.mw : null);
   function localCan(k, t) {
     const d = CRAFT_KINDS[k], sk = skillOfSt(d.st), req = CRAFT_STATION_REQ[t - 1];
-    if (lvOf(sk) < req) return { ok: false, why: `Needs ${SKILL[sk]} Lv ${req}` };
+    if (!stationTierOpen(k, t)) return { ok: false, why: `Needs ${SKILL[sk]} Lv ${req}` };
     if (bagFull()) return { ok: false, why: 'Your bag is full' };
     if (!hasMats(kindCost(k, t), t)) return { ok: false, why: 'Not enough materials' };
     return { ok: true, why: '' };
@@ -186,11 +184,11 @@ let craftUI = null;
         const e = stEls[s], sk = S.skills[skillOfSt(s)] || { lv: 1, xp: 0 };
         putAttr(e.b, 'aria-pressed', String(st8.st === s));
         putText(e.lv, `Lv ${sk.lv}`);
-        putStyle(e.fill, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
+        putStyle(e.fill, 'width', Math.min(100, sk.xp / skillNeed(sk.lv, skillOfSt(s)) * 100) + '%');
       }
       const sk = skillOfSt(st8.st), s = S.skills[sk] || { lv: 1, xp: 0 };
-      const next = CRAFT_STATION_REQ.find(r => r > s.lv);
-      putText(stEls.info, `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.'));
+      const next = skillNextReq(sk);
+      putText(stEls.info, `${CRAFT_STATIONS[st8.st].n}: ${SKILL[sk]} Lv ${s.lv}, ${fmt(s.xp)} / ${fmt(skillNeed(s.lv, sk))} XP.` + (next ? ` Next tier at Lv ${next}.` : ' Every tier is open.'));
     }
   });
 
@@ -285,10 +283,10 @@ let craftUI = null;
     },
     update(force) {
       initState();
-      const st = st8.st, t = st8.tier[st] || 1, lv = lvOf(skillOfSt(st));
+      const st = st8.st, t = st8.tier[st] || 1;
       for (const b of rec.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.filt));
       for (const b of rec.tiers.children) {
-        const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = lv >= req;
+        const i = +b.dataset.t, req = CRAFT_STATION_REQ[i - 1], open = skillTierOpen(skillOfSt(st), i);
         putAttr(b, 'aria-pressed', String(i === t)); putToggle(b, 'locked', !open);
         putText(b.lastChild, open ? MAT[STATION_TIER_FAM[st]].short[i - 1] : `Lv ${req}`);
       }
@@ -410,10 +408,11 @@ let craftUI = null;
       ench.upB.textContent = t < 5 ? `${U.take} ${nm(t)} → ${U.give} ${nm(t + 1)}` : 'Top tier';
       ench.dnB.textContent = t > 1 ? `${D.take} ${nm(t)} → ${D.give} ${nm(t - 1)}` : 'Lowest tier';
       const upReq = t < 5 ? CRAFT_STATION_REQ[t] : 0;
-      ench.upB.disabled = !f || t >= 5 || have[t - 1] < U.take || lv < upReq;
+      const upShut = t < 5 && !skillTierOpen('ench', t + 1);
+      ench.upB.disabled = !f || t >= 5 || have[t - 1] < U.take || upShut;
       const dn = f && t > 1 && have[t - 1] >= D.take ? canTransmute(fam, t, t - 1) : null;
       ench.dnB.disabled = !f || t <= 1 || have[t - 1] < D.take || !(dn && dn.ok);
-      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : t < 5 && lv < upReq ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
+      ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
       // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.party && S.party.unlock && S.party.unlock.starChart);
       ench.star.hidden = !(sc && !CRAFT_KINDS.starchart);
@@ -595,6 +594,8 @@ let craftUI = null;
     const lgb = LG() ? safe(() => LG().itemBoxes(it, sheet, renderItem), []) : [];   // Learn (top), Inscribe, Mark
     body.append(...lgb.filter(b => b.dataset.top));
     body.append(secBox('What it does', lines));
+    const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
+    if (tlb) body.append(tlb);
     if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
     body.append(...lgb.filter(b => !b.dataset.top));
 
@@ -695,7 +696,7 @@ let craftUI = null;
   }
   function reforgeBox(it) {
     const box = el('div', 'cf-rf');
-    const f = K6.reforge(), cost = safe(() => reforgeCost(it), null), req = CRAFT_STATION_REQ[it.t - 1], lv = lvOf('ench');
+    const f = K6.reforge(), cost = safe(() => reforgeCost(it), null), req = CRAFT_STATION_REQ[it.t - 1];
     box.append(el('p', 'note', `At the Enchanter's Table. Pick one bonus line to reroll. Rarity and power stay.${it.rf ? ` Reforged ${it.rf} time${it.rf > 1 ? 's' : ''}: the price grows each time.` : ''}`));
     const opts = el('div', 'cf-rfo'); opts.setAttribute('role', 'radiogroup');
     const parts = splitLines(it).filter(L => L.g === 'affix');
@@ -707,7 +708,7 @@ let craftUI = null;
     }
     box.append(opts);
     if (cost) { const chips = el('div', 'costs'); costChips(chips, cost.mats, it.t, cost.gold); box.append(chips); }
-    const ok = f && cost && sheet.sel >= 0 && lv >= req && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
+    const ok = f && cost && sheet.sel >= 0 && skillTierOpen('ench', it.t) && hasMats(cost.mats, it.t) && S.gold >= cost.gold;
     const armed = sheet.arm === 'reforge';
     const b = el('button', 'big cf-act ' + (armed ? 'cf-arm' : 'forge'), !f ? 'Reforge opens soon' : sheet.sel < 0 ? 'Pick a line to reforge' : armed ? 'Tap again to reforge' : 'Reforge this line'); b.type = 'button';
     b.disabled = !ok;
@@ -720,7 +721,7 @@ let craftUI = null;
     box.append(b);
     if (armed) { const c = el('button', 'mini', 'Cancel'); c.type = 'button'; c.addEventListener('click', () => { sheet.arm = null; renderItem(); }); box.append(c); }
     if (!f) box.append(el('p', 'note', 'Reforge opens with the next crafting update.'));
-    else if (lv < req) box.append(el('p', 'note warn', `Needs Enchanting Lv ${req} for a tier ${it.t} item.`));
+    else if (!skillTierOpen('ench', it.t)) box.append(el('p', 'note warn', `Needs Enchanting Lv ${req} for a tier ${it.t} item.`));
     return box;
   }
   function giveList(it) {

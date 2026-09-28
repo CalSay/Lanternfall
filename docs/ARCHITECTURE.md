@@ -37,6 +37,9 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
+| 55-tools.js | core | tools as items and tool mastery (hearth-and-hands.md 2, H2): rough tool = empty slot (tier 0), right tool (`toolRight(skill, t)`, read by `nodeTime`), rare finds (`toolFind`, on `harvest`), mastery per tool kind (`toolMastery`, `toolMasteryAdd`, `toolPerks`, `toolHandsMult`), `equippedTool(skill)` -> `{ kind, tier, item }`, `toolLook`, `toolName`, `toolBest(skill)` (sim policy), knobs `TOOL_TUNE` (`on: 0` = old rules, sim `--tools 0`); state `S.tools`. UI: 75-tools-ui.js (the Gather card, the item sheet's Mastery box) |
+| 55-hearth.js | core | the cold Hearth start and building each station (hearth-and-hands.md 1, H1): a new game (no `S.camp`, no progress) starts cold (`hearthCold()`): unlit fire, stations Lv 0, gathering the Oak Grove; `hearthLight()` (8 Oak: Hearth 1, camp open, emits `campOpen`/`hearthLit`), plot rules `HEARTH_PLOT` / `hearthPlotOpen(id)` (57-camp `campList`), Lv 1 station rows `HEARTH_TUNE.first` / `hearthFirst(id)` (57-camp `campCost`), the craft gate `hearthStationWhy(st)` (55-crafting: "Build the Workbench first.", cold saves only), `hearthNext()` (sim policy), `hearthWarm()` (tools: the old warm start), the warm saves' What's new line, the Map Room Next Up goal; state `S.hearth`. Stage art: 63d-scenery-camp.js (the fire, Hesketh, plot stakes, the `#hearthFire` button) through 62-stage's `stageDeco(ctx, phase, v)` hook |
+| 55-skillpace.js | core | the save rule for the slower skill pace (GP1, pacing.md 12): a save that predates GP1 keeps every tier the old gates gave its levels (`S.skillPace.hw`, set once per loaded save; a new game keeps nothing); `skillKept(k)`, `skillPaceInfo()`, one What's new line. The gates themselves: `SKILL_TUNE` (20-data: `NODE_REQ`, `SMITH_REQ`, XP curves, `nodeXp`, speed per level) and `skillTopTier(k)`, `skillTierOpen(k, t)`, `skillReq(k, t)`, `skillNextReq(k)`, `skillNeed(lv, k)` (40-rules); `stationTierOpen(kind, t)` (55-crafting). Gate on these, never on `S.skills[k].lv >= NODE_REQ[t - 1]` |
 | 55-legend.js | core | legendary powers and circle sets (docs/design/legendaries.md, L2): the Lantern Book (`legendKnown`, `legendEchoes`, `legendEchoCap`), drops (`legendDrop(rank, source, opts)`, owed rolls `legendOwe`/`legendPayOwed`), actions with `legendCanX` checks (`legendLearn`, `legendInscribe`, `legendMark`, `legendSigil`), limits (`legendHeroCheck` for the in-page "Take off X?" ask, `legendCanWear`), reads (`legendActive`, `legendSets`, `legendSetTier`, `legendBudget` / `legendScale` = the runtime cap, `legendV`, `legendItemState`, `legendCardLines`, `legendBest`), `bonus('lg:<id>')`, Next Up goals; state `S.legend` (item fields `lg`, `lr`, `cm`). Data: 21c-data-legend.js; icons: 11b-art-legend.js; UI: 75-legend-ui.js (the Craft tab's Powers view, feature `powers`; `legendUI` helpers for the item sheet and the Party tab) |
 | 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
@@ -47,6 +50,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
 | 59-combat.js | core | party combat (Stage C): packs of 3 foes, party HP/armour/shields, threat and reach, healing, crowd control, knock-outs, wipes (retreat one zone, push back), the hold estimate for away gains and auto-push; `partyCombatOn()`, `combatTick`, `cbSpawn`, `cbStrike`, `combatUnits()`, `combatFoes()`, `partyHoldEstimate(z)`, `partyHolds(z)`, `cbBossReady()`, knobs `COMBAT_TUNE`, counters `CB_STATS` (state in `S.combat`) |
 | 59b-enemies.js | core | foe behaviours by zone type (dives, archers, bruisers, spore clouds, slams, healers), elites, boss mechanics and telegraphs, parry/dodge (`resolveParry(source)`, `cbTelegraph()`), knobs `ENEMY_TUNE`, data `FOE_BEH` |
+| 59c-deepwell-combat.js | core | the Deepwell on party combat (deepwell.md 8.2 and 15, plan-3 W6b): a floor is one pack (wraps `DEEP_ARENA.spawn`/`onKill`), party HP carried between floors (`run.hpAt`), a wipe ends the run (`DW.fall()`, reason `wipe`), Oil refunds +5s and parries give Oil, Taunt Drill for every class, Lifeline once a floor (`dcLifeline`), the Deep Edge Lore (D8); knobs `DEEP_COMBAT_TUNE`, `deepCombatOn()`, `DWC` (state in `S.deepCombat`: the one-time tip). 59-combat hooks: `cbArena` adopts `mob.pack`, `cbRestore(clear)` |
 | 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
@@ -97,8 +101,9 @@ deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; wee
 ```
 Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMod(id)` is the product.
 
-Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
-`yield:<family>` (harvest and away yield per material family).
+Bonus keys: `awayHours` (added to the away cap), `find:<skill>` (rare find points), `glint:<skill>` (Glint seconds).
+Extra modifier keys: `skillXp:<skill>` (per-skill XP), `yield:<family>` (harvest and away yield per material family),
+`gatherSpeed:<skill>` (node speed for one gathering skill; 55-tools mastery).
 Constellation hooks (57e-constellations.js): `bonus('tune:<knob>')` also carries lit stars (always on, not only in a Deepwell run); `bonus('ks:<id>') > 0` / `starKeystone(id)` flag new combat behaviour for 55-party.js to read, with its numbers in `STAR_KS` (ids: unbroken, crush, challenger, bastion, oathsworn, twinSpark, slowBurn, wildfire, overflow, everburn, glass, storm, nextMark, pack, quickdraw, hawk, deadeye, rain, dawn, sanctuary, martyr, ages). Knobs 55-party.js reads today: `STAR_TUNE_ROUTED`.
 Deepwell hooks: `arena` (50-sim: while set, `arena.spawn()` supplies foes and `arena.onKill(mob, overkill)` takes their deaths; no gold, XP, `kill` event or boss timer), `mod('abilityCd')` and `bonus('tune:<knob>')` (55-party.js class knobs: embersMax, guardMax, markT, blessMax, mark, emberPerTap, guard, blessT, volleyHits, charges, keepEmbers, hymnFloor; 1 / 0 outside a Deepwell run).
 Almanac hooks (55-almanac.js): modifiers `foeHp`, `bossHp` (spawn), `uniqueChance` (boss unique roll),
@@ -180,7 +185,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `bossFail` | `{ zone, dps }` |
 | `levelup` | `{ L }` |
 | `skillUp` | `{ k: 'mine'|'wood'|'smith', lv, quiet }` |
-| `harvest` | `{ kind: 'ore'|'crystal'|'wood'|'fibre'|'herb', t, n, glint? }` |
+| `harvest` | `{ kind: 'ore'|'crystal'|'wood'|'fibre'|'herb', t, n, glint?, away? }` |
+| `rareFind` / `toolMastery` | `{ kind, t, n, away }` (55-tools: next-tier units found) / `{ kind: 'pick'|'axe'|'sickle', lv, quiet }` |
 | `trophy` / `champion` / `glint` | `{ i, n, source }` / `{ mob }` / `{ on }` (55-gathering) |
 | `itemAdded` | `{ item }` |
 | `loot` | `{ item, first, kept }` (unique drop) |
@@ -211,6 +217,7 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `foeDown` | `{ mob, src }` (one foe of the pack died; `kill` fires once per pack) |
 | `wipe` | `{ zone, to, boss, arena }` (every member down: retreat one zone, a failed boss attempt, or a Deepwell pause) |
 | `telegraphStart` / `telegraphResolve` | `{ kind, dur, target, foe }` / `{ kind, result, by }` (59b: boss wind-ups; kind heavy, cloud, dive, heal; result parry, dodge, hit, interrupt, heal) |
+| `hearthLit` | `{ quiet }` (55-hearth: a cold save's fire is lit; `campOpen { quiet: false }` fires first) |
 | `unlock` / `onboardStep` | `{ id, tab, view, quiet }` (a feature opened; id `'*'` = all) / `{ id }` (a guide step done), 55-onboard |
 | `menuView` / `createDone` (UI) | `{ tab, view }` (70-ui: a menu view shows) / `{ mode }` (76-create closed) |
 
@@ -222,7 +229,7 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `codexLight` / `codexPage` / `codexMilestone` | `{ light, gain }` / `{ id, kind: 'half'\|'seal' }` / `{ at, rewards }` (57c-codex) |
 | `starLit` / `starUnlit` / `starReset` / `starLayout` | 57e-constellations: `{ cls, id }` / `{ cls, id }` / `{ cls, n }` / `{ cls, i }` |
-| `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` |
+| `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` (`summary.reason`: oil, wipe, leave, abandon, closed). With party combat `deepKill` fires once per floor (the pack) |
 | `legendDrop` / `legendLearn` / `legendRank` | 55-legend: `{ id, rank, kind: 'item'\|'echo'\|'rankUp'\|'book', source, item }` / `{ id, rank, echo, up }` / `{ id, rank }` |
 | `legendInscribe` / `legendMark` / `legendSigil` / `legendChange` | 55-legend: `{ id, item }` / `{ item, circle }` / `{ circle, n, source }` / none (anything the active-build cache reads changed) |
 | `expedBack` circles (listened) | 55-legend reads `{ g, circles, recall }` for Circle Sigils |
@@ -250,6 +257,7 @@ node tools/sim.mjs --policy mixed --hours 2 --seed 1   # balance timeline (polic
 node tools/sim.mjs --days 30 --class warden          # normal play over days (check-ins + away gains), docs/design/pacing.md
 node tools/sim.mjs --targets                          # PASS/FAIL for T1-T18, D1, P1-P4 (docs/design/pacing.md, party-and-classes.md 9) and the recruit table; retune with --pace/--tune/--unlock/--combat/--enemy k=v
 node tools/sim.mjs --class warden --lineup hesketh,wren,pip --t5 1 --t6 1 --t8 1   # a fixed line-up; party combat forks at 2h (T5 wipes, T6 hold zones, T8 offline vs live)
+node tools/sim.mjs --report skills [--days 30]  # GP1: time to each gathering tier (focused, hours) and the day each skill opens each tier in normal play
 node tools/perf.mjs --quick                  # frame, load, tap and memory benchmark vs the budget (docs/design/perf.md)
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
 ```

@@ -35,8 +35,22 @@ const MAT = {
 };
 const matName = (k, t) => `${MAT[k].short[t - 1]} ${MAT[k].unit}`;
 const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starsteel Crater', 'Emberite Heart'], wood: ['Oak Grove', 'Yew Thicket', 'Ironbark Stand', 'Ghostwood Hollow', 'Lanternwood Grove'] };
-const NODE_REQ = [1, 8, 18, 30, 45];
-const SMITH_REQ = [1, 4, 9, 16, 25];
+// GP1 skill pace (owner 2026-09-28: "the next tier up only being 4 levels away is too fast"), one
+// table for every skill knob; docs/design/pacing.md 12 has the targets and the measured times.
+// Try values with node tools/sim.mjs --report skills --eval "SKILL_TUNE.x = ...".
+const SKILL_TUNE = {
+  nodeReq: [1, 14, 30, 64, 112],      // gathering level that opens node tier 1-5 (NODE_REQ)
+  stationReq: [1, 10, 22, 36, 54],    // crafting level that opens item tier 1-5 at a station (SMITH_REQ, CRAFT_STATION_REQ)
+  gatherNeed: [10, 2.2, 1],           // XP from gathering level lv to lv + 1: a x lv^b x c^(lv - 1) (skillNeed)
+  craftNeed: [7, 0.5, 1.04],          // the same for Smithing, Woodcraft, Tailoring, Enchanting
+  craftSkills: ['smith', 'bench', 'loom', 'ench'],
+  nodeXp: [7, 1],                     // XP a swing at a tier-t node: a x t^b (nodeXp)
+  spdPerLv: 0.02,                     // gathering speed per level above 1 (nodeTime)
+  // The gates before GP1. A save loaded under GP1 keeps every tier these opened for it (55-skillpace).
+  oldNodeReq: [1, 8, 18, 30, 45], oldStationReq: [1, 4, 9, 16, 25]
+};
+const NODE_REQ = SKILL_TUNE.nodeReq;
+const SMITH_REQ = SKILL_TUNE.stationReq;
 const SKILL = { mine: 'Mining', wood: 'Woodcutting', smith: 'Smithing' };
 // Gathering skill per node kind. Later data files (21-data-craft) add kinds to this table
 // and to NODE_NAMES; unknown kinds fall back to 'wood', as before.

@@ -11,7 +11,8 @@
 //   state   partyCombatOn(), combatUnits() -> the 4 party unit records (read only),
 //           combatFoes() -> the live foe list (read only; `mob` is the one the stage shows)
 //   loop    combatTick(dt), cbSpawn(boss) (50-sim spawn), cbStrike(amount, src, at, label, color, big)
-//           (50-sim strike), cbHeroUp(), cbPush() (auto-push check)
+//           (50-sim strike), cbHeroUp(), cbPush() (auto-push check), cbArena(mob) (a Deepwell pack),
+//           cbRestore(clear) (the party whole, the arena pack set aside: 59c-deepwell-combat.js)
 //   hooks   cbUnitHp(key), cbUnitCd(key) (55-party unitHp / unitCd read them)
 //   helpers cbHitUnit(u, amount, kind, foe), cbHealUnit(u, amount, from), cbShield(u, amount, cap),
 //           cbDamageFoe(f, amount, src, kind), cbUnitByKey(key), cbTaunt(u, foes, secs),
@@ -51,7 +52,7 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 // var: other files (56-roster at load, 55-party) may ask before this file has run.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbUnitCd, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
-  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady;
+  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady, cbRestore;
 
 {
   const T = {
@@ -339,20 +340,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emitPack();
     return mob;
   };
-  // Deepwell arena: its single foe becomes a pack of one (Oil stays the run's health).
+  // Deepwell arena: its foe becomes a pack (m.pack: the floor's foes, 59c-deepwell-combat.js; else a pack of one).
   cbArena = m => { if (m && !m.th) adoptArena(m); };
   function adoptArena(m) {
+    const list = Array.isArray(m.pack) && m.pack.length ? m.pack.slice(0, FOE_MAX) : [m];
+    if (!list.includes(m)) list.unshift(m);
+    for (const x of list) adoptFoe(x);
+    foes = list; sortFoes(); lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
+    refreshUnits(false);
+    if (m.boss) bossStart(m);
+    openThreat();
+    showFoe();
+    emitPack();
+  }
+  function adoptFoe(m) {
     const t = TYPES.findIndex(x => x.key === m.type), b = FOE_BEH[m.type] || FOE_BEH.slime;
     const base = m.max / (m.boss ? 8 : m.champ ? 3 : 1);
     Object.assign(m, { ti: Math.max(0, t), row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: T.atk * base * (m.boss ? T.bossAtk : b.atk),
       spd: m.boss ? T.bossSpd : T.spd * b.spd, swing: 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, stunT: 0, slowT: 0, slowV: 0, knockT: 0,
       burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: m.champ ? 2 : 1, elite: !!m.champ, bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, split: false, chanT: 0, hits: 0, again: false, first: 0,
       z: S.zone, adds: false, gone: false });
-    foes = [m]; lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
-    refreshUnits(false);
-    if (m.boss) bossStart(m);
-    openThreat();
-    emitPack();
   }
   const PACK_EV = { foes: null };
   function emitPack() { PACK_EV.foes = foes; emit('packSpawn', PACK_EV); }
@@ -834,7 +841,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (u.ashenT > 0) u.hp = 1;
       else if (u.id === 'tobin' && u.lv >= 10 && !u.stubborn) { u.stubborn = true; u.hp = 1; }
       else if (u.id === 'caedmon' && !u.vow) { u.vow = true; u.hp = 1; u.ashenT = T.vowT; cbTaunt(u, foes, T.vowT); }
-      else if (boon('life') && !u.lifeline) { u.lifeline = true; u.hp = 1; }
+      else if (boon('life') && !u.lifeline && (typeof dcLifeline !== 'function' || dcLifeline(u))) { u.lifeline = true; u.hp = 1; }
       else knockOut(u);
     } else if (u.hp < u.maxHp * T.interceptAt) {
       const al = upHas('aldric');
@@ -888,7 +895,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone;
     WIPE_EV.zone = z; WIPE_EV.boss = !!fightBoss; WIPE_EV.arena = !!inArena;
     wipeT = T.wipeT; wipeBoss = !!fightBoss;
-    if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); toast('Your party fell. They stand up again in a moment.', 'raid', null, 'normal'); return; }
+    if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
       toast('Your party fell to the zone boss. Grow stronger and try again.', 'raid');
@@ -911,6 +918,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) return;
     spawn();
   }
+  // The party whole again (59c-deepwell-combat: a Deepwell run starts or ends). clear: the arena's foes
+  // are set aside too (a wipe ends the run with the pack still standing).
+  cbRestore = clear => {
+    wipeT = 0;
+    if (clear) { for (const f of foes) { if (typeof onFoeDown === 'function') onFoeDown(f); f.gone = true; f.hp = 0; f.dead = f.dead || 0.001; } foes = []; lead = null; inArena = false; }
+    for (let i = 0; i < nU; i++) { const u = U[i], was = u.down; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.lifeline = false; if (was) { UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); } }
+  };
   let backZone = 0, backAt = 0, backWipes = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {

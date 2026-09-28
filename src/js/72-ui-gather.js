@@ -35,7 +35,7 @@ const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 
 const nodeRows = {};
 function goNode(kind, t) {
   if (!setNode(kind, t)) return false;
-  if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
+  if (S.activity !== 'gather') setActivity('gather'); else { toast(`You move to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
   return true;
 }
 // Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
@@ -76,9 +76,9 @@ function whereSheet(k, t) {
     const w = whereToGet(k, t), i = w.indexOf(': ');
     api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
     if (GATHER_KINDS.includes(k)) {
-      const sk = skillOf(k), req = NODE_REQ[t - 1], open = S.skills[sk].lv >= req;
+      const sk = skillOf(k), req = skillReq(sk, t), open = skillTierOpen(sk, t);
       const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
-      const b = el('button', 'big horn gw-go', here ? 'Your party works here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
+      const b = el('button', 'big horn gw-go', here ? 'You work here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
       b.type = 'button'; b.disabled = !open || here;
       b.addEventListener('click', () => { if (goNode(k, t)) { api.close(); setTab(NODE_VIEW_OF[k]); } });
       api.foot.append(b);
@@ -127,6 +127,11 @@ else gatherBuild();
 // Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
 // switch calls ui(true), so a view is fresh as soon as it shows).
 const NODE_VIEW = { oreRows: 'mine', woodRows: 'wood', forageRows: 'forage' };
+// 'Working: Copper Vein with your Copper Pickaxe. Your party rests at the Hearth: ...' (G1: 11c toolFor, 55-rested restNote)
+function gatherLine() {
+  const tool = typeof toolFor === 'function' ? toolFor(skillOf(S.node.kind)) : null;
+  return `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}${tool ? ` with your ${tool.name}` : ''}.` + (typeof restNote === 'function' ? restNote() : '');
+}
 function uiGather() {
   gatherBuild();
   const view = curView('gat'), nodeView = view !== 'pack';
@@ -134,12 +139,12 @@ function uiGather() {
     for (const c of skillCards) {
       const sk = S.skills[c.k];
       putText(c.lv, 'Lv ' + sk.lv);
-      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
+      putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv, c.k) * 100) + '%');
     }
     const home = homeFamily(), hb = homeBonus(home);
     putText(homeNote, `Home ground: ${MAT[home].n} +${Math.round(hb * 100)}% in ${zoneName(S.zone)}.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars there: +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
     const gathering = S.activity === 'gather', g = gathering ? glint() : null;
-    putText(gNow.what, gathering ? `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}` : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
+    putText(gNow.what, gathering ? gatherLine() : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
     putToggle(gNow.box, 'on', gathering);
     putHidden(gNow.glint, !gathering);
     if (gathering) {
@@ -149,11 +154,11 @@ function uiGather() {
   }
   for (const kind of GATHER_KINDS) {
     if (NODE_VIEW[NODE_BOX[kind]] !== view) continue;
-    const lv = S.skills[skillOf(kind)].lv, ym = mod('yield:' + kind), hk = homeBonus(kind);
+    const sk = skillOf(kind), top = skillTopTier(sk), ym = mod('yield:' + kind), hk = homeBonus(kind);
     nodeRows[kind].forEach((r, i) => {
-      const t = i + 1, req = NODE_REQ[i], open = lv >= req;
+      const t = i + 1, req = skillReq(sk, t), open = t <= top;
       const here = S.activity === 'gather' && S.node.kind === kind && S.node.t === t;
-      const prevOpen = i === 0 || lv >= NODE_REQ[i - 1];
+      const prevOpen = t - 1 <= top;
       putHidden(r.row, !open && !prevOpen);
       putToggle(r.row, 'locked', !open);
       putToggle(r.row, 'active', here);

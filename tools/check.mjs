@@ -9,9 +9,13 @@ import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, sub
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
 // changes prices, drops or odds under a check. The Almanac checks restore the calendar with
 // almanac.force(undefined) where they test it.
+// A new game starts at a cold Hearth (55-hearth, H1). Sections written before it play the old warm
+// start (hearthWarm() undoes a pristine cold start; loaded saves are untouched): pass { cold: true }
+// to keep the cold start (the 'cold hearth' section).
 function loadCore(opts) {
   const g = loadCoreRaw(opts);
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
+  if (!(opts && opts.cold)) try { g.eval("typeof hearthWarm === 'function' && hearthWarm()"); } catch (e) {}
   return g;
 }
 
@@ -862,10 +866,11 @@ try {
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
   assert(why0 === '7 more Flax Fibre, 1 more Quartz Shard, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
-  assert(E('canCraft("robe", 2).why') === 'Needs Tailoring 4' && E('craftItem("robe", 2)') === null, 'station tier gate: Needs Tailoring 4');
-  assert(E('canCraft("charm", 3).why') === 'Needs Enchanting 9', "Charm gates on the Enchanter's Table...");
-  E('S.skills.smith.lv = 9');
-  assert(E('canCraft("charm", 3).why') !== 'Needs Enchanting 9', '...or Smithing, so old saves keep the recipe (camp N4)');
+  const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
+  assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
+  assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
+  E(`S.skills.smith.lv = ${RQ(3)}`);
+  assert(E('canCraft("charm", 3).why') !== `Needs Enchanting ${RQ(3)}`, '...or Smithing, so old saves keep the recipe (camp N4)');
   E('S.skills.smith.lv = 1');
   // pays exactly, rolls affixes, station XP, events
   E('for (const k of CRAFT_FAMILIES) S.mats[k] = [200, 200, 200, 200, 200]');
@@ -875,9 +880,10 @@ try {
   const paid = Object.fromEntries(Object.keys(m0).map(k => [k, m0[k][0] - m1[k][0]]).filter(([, n]) => n));
   assert(it && it.slot === 'robe' && Array.isArray(it.a) && it.a.length >= 1 && E('S.items.length') === n0 + 1, `craftItem makes a Robe with ${it && it.a.length} affix line(s)`);
   assert(JSON.stringify(paid) === JSON.stringify({ ess: 2, crystal: 1, fibre: 7, herb: 1 }), `craft pays the recipe exactly (${JSON.stringify(paid)})`);
-  assert(E('S.skills.loom.xp') === 20 && E('globalThis.__crafted.join()') === 'robe:1', 'Tailoring XP 20 (no catch-up when level) and a crafted event');
+  assert(E('(() => { let x = S.skills.loom.xp; for (let l = 1; l < S.skills.loom.lv; l++) x += skillNeed(l, "loom"); return x; })()') === 20 && E('globalThis.__crafted.join()') === 'robe:1', 'Tailoring XP 20 (no catch-up when level) and a crafted event');
   E('S.skills.smith.lv = 10; S.skills.loom.lv = 1; S.skills.loom.xp = 0'); E('craftItem("mitre", 1)');
-  assert(E('craftXpFor("loom", 20)') === 40 && E('S.skills.loom.lv') === 2 && E('S.skills.loom.xp') === 40 - 25, 'catch-up: x2 XP while below Smithing');
+  const lx = E('(() => { let lv = 1, xp = 40; while (xp >= skillNeed(lv, "loom")) { xp -= skillNeed(lv, "loom"); lv++; } return [lv, xp]; })()');
+  assert(E('craftXpFor("loom", 20)') === 40 && E('S.skills.loom.lv') === lx[0] && E('S.skills.loom.xp') === lx[1], 'catch-up: x2 XP while below Smithing');
   const tk = E('craftItem("trinket", 1, { role: "caster" })');
   assert(tk && tk.ro === 'caster' && tk.a.every(([id]) => ['spell', 'area', 'control', 'hp'].includes(id)), 'Trinket rolls from the chosen role');
   assert(E('!!forgeItem("staff", 1)') && E('S.items[S.items.length - 1].slot') === 'staff', 'forgeItem delegates new kinds to craftItem');
@@ -909,11 +915,11 @@ try {
   assert(new Set(a.map(l => l[0])).size === a.length, 'a reforged line never duplicates a stat');
   assert(E(`canReforge(${staff.id}, 0).cost.gold`) === 225, 'the next Reforge costs more');
   E('S.items.push(newItem("staff", 2, "rare"))');
-  assert(E('canReforge(S.items[S.items.length - 1].id, 0).why') === 'Needs Enchanting 4', 'Reforge needs Enchanting for the tier');
+  assert(E('canReforge(S.items[S.items.length - 1].id, 0).why') === `Needs Enchanting ${RQ(2)}`, 'Reforge needs Enchanting for the tier');
   // Transmute
   E('S.skills.ench.lv = 1; S.mats.ore = [8, 0, 0, 0, 0]');
-  assert(E('canTransmute("ore", 1, "ore").why') === 'Needs Enchanting 4' && !E('transmute("ore", 1, 2)'), 'Transmute up needs Enchanting for the new tier');
-  E('S.skills.ench.lv = 4');
+  assert(E('canTransmute("ore", 1, "ore").why') === `Needs Enchanting ${RQ(2)}` && !E('transmute("ore", 1, 2)'), 'Transmute up needs Enchanting for the new tier');
+  E(`S.skills.ench.lv = ${RQ(2)}`);
   assert(E('transmute("ore", 1, "ore")') && E('JSON.stringify(S.mats.ore)') === '[4,1,0,0,0]', 'Transmute up: 4 Copper -> 1 Iron');
   assert(E('transmute("ore", 2, "down")') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute down: 1 Iron -> 2 Copper');
   assert(!E('transmute("ore", 1, "wood")') && !E('transmute("hide", 5, 6)') && E('JSON.stringify(S.mats.ore)') === '[6,0,0,0,0]', 'Transmute never crosses families or goes past tier 5');
@@ -960,9 +966,9 @@ try {
   assert(E('JSON.stringify(gear())') === gear0 && g.fn.heroDps() >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${g.fn.heroDps().toFixed(1)})`);
   assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
-  E('S.skills.ench.lv = 8');
-  assert(E('canCraft("starChart", 3).why') === 'Needs Enchanting 9', 'Star Chart needs Enchanting 9');
-  E('S.skills.ench.lv = 9; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]');
+  E(`S.skills.ench.lv = ${RQ(3) - 1}`);
+  assert(E('canCraft("starChart", 3).why') === `Needs Enchanting ${RQ(3)}`, `Star Chart needs Enchanting ${RQ(3)}`);
+  E(`S.skills.ench.lv = ${RQ(3)}; S.mats.crystal[2] = 40; S.mats.ess[2] = 20; S.craft.troph = [0, 0, 0, 0, 0, 0, 0]`);
   assert(E('canCraft("starChart", 3).why') === '1 more Wraith Veil', 'Star Chart needs a Wraith Veil');
   E('S.craft.troph[6] = 1');
   assert(E('!!craftItem("starChart", 3)') && E('S.party.unlock.starChart') === true && E('S.craft.starChart') === 1 && E('S.mats.crystal[2]') === 0 && E('S.craft.troph[6]') === 0, "Star Chart pays and grants Oriel's route");
@@ -1282,7 +1288,9 @@ try {
   for (let i = 0; i < 400; i++) E('spawn(); kill()');
   const hide = E('S.mats.hide[0]'), rate = hide / (E('S.totalKills') - k0);
   const expect = E('0.72 * CRAFT_SIG_DROPS.beetle.p + 0.28 * CRAFT_SIG_DROPS.spore.p * 0') ;
-  assert(rate > expect * 0.7 && rate < expect * 1.6, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
+  // GP1: the upper bound was 1.6x; 400 kills earn mastery stars (+10% each) and packs of 3 land near
+  // 0.40/kill on most seeds (0.39-0.43 on seeds 1-3, 21, 22), so a new random stream tipped it over.
+  assert(rate > expect * 0.7 && rate < expect * 1.9, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
   // home ground
   E('S.zone = 2; S.mastery.zones[2] = 0');
   assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Crystal +25% (home ground), Ore +0%');
@@ -1339,6 +1347,7 @@ try {
   for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
     const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    go.eval('TOOL_TUNE.on = 0');   // H2 (55-tools) adds right tool and mastery speed on top; off = the K5 maths
     const defaults = go.eval('S.skills.forage.lv === 1 && ["crystal", "fibre", "herb", "hide"].every(k => S.mats[k].length === 5) && S.craft.troph.length === 7');
     const same = ['ore', 'wood', 'ess'].every(k => JSON.stringify(go.eval(`S.mats.${k}`)) === JSON.stringify(old.mats[k]));
     const exact = go.eval(`[1, 2, 3, 4, 5].every(t => {
@@ -1350,6 +1359,94 @@ try {
     assert(defaults && same && exact && !go.errors.length, `${f}: Foraging and new families default in, old materials untouched, ore/wood node maths unchanged`);
   }
 } catch (e) { fail('gathering crashed: ' + (e.stack || e)); }
+
+// ---- tools and tool mastery (55-tools.js, H2; hearth-and-hands.md 2 and 8.3) ----
+console.log('tools');
+try {
+  const fresh = seed => { const g = loadCore({ seed }); g.eval('almanac.force("none")'); return g; };
+  const run = (h, secs) => { for (let t = 0; t < secs; t += 0.1) h.fn.tick(0.1); };
+  const M1 = JSON.stringify({ v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 });
+  {
+    const g = fresh(71), E = s => g.eval(s);
+    // data: every tool at the Workbench with three lines; the Woodaxe noun
+    assert(E('["pick", "axe", "sickle"].every(k => CRAFT_KINDS[k].st === "bench" && CRAFT_KINDS[k].base.length === 3 && CRAFT_KINDS[k].base[2][2] === TOOL_TUNE.findCap)') && E('CRAFT_KINDS.axe.noun') === 'Woodaxe' && E('kindName("axe", 1)') === 'Copper Woodaxe',
+      'Pickaxe, Woodaxe and Sickle are made at the Workbench with speed, double and rare find lines');
+    assert(E('JSON.stringify(equippedTool("mine"))') === '{"kind":"pick","tier":0,"item":null}' && E('toolName("wood")') === 'Flint Hatchet (rough)' && E('toolName("forage")') === 'Bone Sickle (rough)',
+      'an empty slot is the rough tool (tier 0): Stone Pick, Flint Hatchet, Bone Sickle');
+    assert(E('JSON.stringify(S.tools)') === M1, 'a new game starts every tool kind at mastery 1');
+    // the right tool: a tier-matched common Copper Pickaxe vs the rough tool (HS15: +30% to +45%)
+    E('setNode("ore", 1); setActivity("gather")');
+    const rough = E('nodeTime("ore", 1)');
+    const pk = E('(() => { const it = newItem("pick", 1, "common"); addItem(it); equipItem(it.id, "pick"); return it.id; })()');
+    const ratio = rough / E('nodeTime("ore", 1)');
+    assert(pk && E('equippedTool("mine").tier') === 1 && ratio >= 1.3 && ratio <= 1.45 && Math.abs(E('toolRight("mine", 1)') - 1.25) < 1e-12,
+      `right tool: a common Copper Pickaxe mines a Copper vein ${((ratio - 1) * 100).toFixed(1)}% faster than the Stone Pick (HS15)`);
+    assert(E('toolRight("mine", 2)') === 1 && E('toolRight("wood", 1)') === 1, 'no right-tool bonus on a higher-tier node or another skill (a bonus, never a gate)');
+    E('TOOL_TUNE.on = 0');
+    const off = E('nodeTime("ore", 1)');
+    E('TOOL_TUNE.on = 1');
+    assert(Math.abs(off / E('nodeTime("ore", 1)') - 1.25 * 1.01) < 1e-9, 'TOOL_TUNE.on = 0 restores the old node maths (right tool and mastery speed off)');
+    // Sickle moved from the Forge: Woodcraft XP, gate on max(Woodcraft, Smithing)
+    E('S.skills.smith.lv = CRAFT_STATION_REQ[2]; S.skills.bench.lv = 1; S.skills.bench.xp = 0; S.skills.smith.xp = 0; S.mats.ore[2] = 99; S.mats.wood[2] = 99');
+    const sk = E('!!craftItem("sickle", 3)');
+    assert(sk && E('S.skills.bench.xp + S.skills.bench.lv') > 1 && E('S.skills.smith.xp') === 0 && E('stationLevel("sickle")') === E('CRAFT_STATION_REQ[2]'), `a Sickle made at the Workbench: tier 3 with Smithing ${E('CRAFT_STATION_REQ[2]')}, Woodcraft XP only`);
+    // mastery: seconds spent gathering, even when nothing is credited (a full Storehouse)
+    E('S.equip.pick = null; gearDirty(); setNode("ore", 1); setActivity("gather")');
+    const m0 = E('S.mats.ore[0]');
+    E('globalThis.__stop = addModifier("gatherSpeed", () => 1e-9)');
+    run(g, 5 * 60 + 2);
+    assert(E('S.tools.m.pick[0]') === 2 && E('S.mats.ore[0]') === m0, `mastery XP counts with nothing gathered (Pickaxe mastery 2 after 5 min, ${E('Math.round(S.tools.m.pick[1])')} s into it)`);
+    E('globalThis.__stop()');
+    assert(Math.abs(E('mod("gatherSpeed:mine")') - 1.02) < 1e-12 && E('mod("gatherSpeed:wood")') === 1.01, 'mastery speed: +1% a level, on that tool kind only');
+    const r = g.fn.awayGains(3 * 3600);
+    assert(E('S.tools.m.pick[0]') > 2 && r.extra.some(l => /^Pickaxe mastery \d+ \(\+\d+\)$/.test(l.txt)), `away gathering adds mastery 1:1 (Pickaxe mastery ${E('S.tools.m.pick[0]')} after ${r.t / 3600} h) with an away line`);
+    E('toolMasteryAdd("pick", 1e9)');
+    assert(E('JSON.stringify(toolMastery("pick"))') === JSON.stringify({ lv: 20, secs: 0, need: 0, max: true, pct: 1, left: 0 }) && E('Array.from({ length: 19 }, (_, i) => TOOL_TUNE.masteryMins * (i + 1)).reduce((a, b) => a + b)') === 950, 'mastery caps at 20 (950 minutes in all)');
+    // perks
+    E('globalThis.yieldUp = () => { const a = mod("yield:ore"); TOOL_TUNE.on = 0; const b = mod("yield:ore"); TOOL_TUNE.on = 1; return a / b; }; S.tools.m.pick = [4, 0]');
+    const p4 = E('[bonus("find:mine"), bonus("glint:mine"), yieldUp()].join()');
+    E('S.tools.m.pick = [15, 0]');
+    const p15 = E('[bonus("find:mine"), bonus("glint:mine"), Math.round(yieldUp() * 100) / 100, toolHandsMult("mine")].join()');
+    E('S.tools.m.pick = [20, 0]; S.equip.pick = ' + pk + '; gearDirty()');
+    assert(p4 === '0,0,1' && p15 === '1,1,1.05,1' && E('toolHandsMult("mine")') === 1.1 && E('toolName("mine")') === 'Master Copper Pickaxe' && E('toolPerks("pick").every(p => p.on)'),
+      'perks: Lv 5 rare find +1, Lv 10 Glint +1 s, Lv 15 +5% yield, Lv 20 Master (Hands +10%)');
+    // rare finds: 1 of the next tier per find; 2 more of tier 5 on a tier-5 node
+    E(`S.tools.m.pick = [1, 0]; Object.assign(itemById(${pk}), { t: 5, r: "epic", plus: 10 }); gearDirty()`);
+    const ch = E('toolFind("mine")');
+    const a0 = E('S.mats.ore[1]'), c0 = E('S.mats.crystal[1]'), t50 = E('S.mats.ore[4]'), f0 = E('S.tools.finds');
+    E('emit("harvest", { kind: "ore", t: 1, n: 2000, away: true }); emit("harvest", { kind: "crystal", t: 1, n: 2000 }); emit("harvest", { kind: "ore", t: 5, n: 1000, away: true })');
+    const ore2 = E('S.mats.ore[1]') - a0, cr2 = E('S.mats.crystal[1]') - c0, ore5 = E('S.mats.ore[4]') - t50;
+    assert(ch === 0.08 && Math.abs(ore2 - 160) <= 1 && cr2 > 110 && cr2 < 210 && Math.abs(ore5 - 160) <= 2 && E('S.tools.finds') - f0 === ore2 + cr2 + ore5,
+      `rare find 8% (tier 5 Epic +10): +${ore2} Iron from 2000 Copper away, +${cr2} tier-2 crystal live, +${ore5} Emberite on tier 5`);
+    E('TOOL_TUNE.on = 0'); const b = E('S.mats.ore[1]'); E('emit("harvest", { kind: "ore", t: 1, n: 2000, away: true })');
+    assert(E('S.mats.ore[1]') === b, 'TOOL_TUNE.on = 0: no rare finds');
+    E('TOOL_TUNE.on = 1');
+    assert(E('toolBest("mine").cur') === 5 && !E('toolBest("mine").ok') && E('toolBest("wood").t') >= 1, `toolBest: nothing to make over a tier-5 pick; a tier-${E('toolBest("wood").t')} Woodaxe for Woodcutting`);
+    assert(!g.errors.length, 'no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // old saves: mats and dps exact, every tool recipe open at the same tiers, S.tools defaults in, round trip
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    const same = Object.keys(old.mats).every(k => JSON.stringify(E(`S.mats.${k}`)) === JSON.stringify(old.mats[k]));
+    const dps = [g.fn.heroDps(), g.fn.totalDps()];
+    E('TOOL_TUNE.on = 0; gearDirty()');
+    const dpsOff = [g.fn.heroDps(), g.fn.totalDps()];
+    E('TOOL_TUNE.on = 1; gearDirty()');
+    // Before H2: Pickaxe and Sickle at the Forge (Smithing), Woodaxe max(Woodcraft, Smithing).
+    const oldLv = { pick: E('S.skills.smith.lv'), sickle: E('S.skills.smith.lv'), axe: E('Math.max(S.skills.bench.lv, S.skills.smith.lv)') };
+    const gate = Object.entries(oldLv).every(([k, lv]) => [1, 2, 3, 4, 5].every(t => lv < E(`CRAFT_STATION_REQ[${t - 1}]`) || E(`stationLevel("${k}") >= CRAFT_STATION_REQ[${t - 1}]`)));
+    const lines = E(`["pick", "axe"].every(p => { const it = itemById(S.equip[p]); if (!it) return true;
+      const l = itemLines(it), pw = itemPower(it), f = TOOL_KINDS[p].find;
+      return l[2][0] === f && l[2][1] === Math.min(8, pw * 0.012) && gear()[f] === l[2][1]; })`);
+    assert(same && dps[0] === dpsOff[0] && dps[1] === dpsOff[1] && gate && lines,
+      `${f}: materials exact, dps unchanged, every tool recipe open at the same tiers, old tools gain the rare find line` + (E('S.equip.pick') != null ? ` (pick ${E('gear().oreFind').toFixed(2)}%)` : ''));
+    const tools = E('JSON.stringify(S.tools)');
+    g.fn.save();
+    const g2 = loadCore({ storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(!('tools' in old) && tools === M1 && g2.eval('JSON.stringify(S.tools)') === tools && !g.errors.length, `${f}: S.tools defaults in (mastery 1) and survives a round trip`);
+  }
+} catch (e) { fail('tools crashed: ' + (e.stack || e)); }
 
 // ---- expeditions (57b-expeditions.js) ----
 console.log('expeditions');
@@ -1612,7 +1709,8 @@ try {
   let oLast = o0 - 2;
   while (E('DW.run().phase') === 'fight' && guard++ < 10) { oLast = E('DW.run().oil'); E('mob.hp = 1; strike(10, "#fff")'); ticks(g, 6); }
   assert(E('DW.run().phase') === 'draft' && E('DW.run().top') === 1 && E('DW.run().floor') === 2, 'three kills clear floor 1 and open the draft');
-  assert(Math.abs(E('DW.run().oil') - (oLast + 15)) < 1, 'a normal floor refunds 15s of Oil');
+  const rf = E('DW.refundFor("normal")');
+  assert(Math.abs(E('DW.run().oil') - (oLast + rf)) < 1 && rf === 15 + E('DEEP_COMBAT_TUNE.refund'), `a normal floor refunds ${rf}s of Oil (15s, +5s with party combat)`);
   const offer = E('DW.offerView().cards.map(c => c.id)');
   assert(offer.length === 3 && new Set(offer).size === 3, `the draft offers 3 different boons (${offer.join(', ')})`);
   assert(E('DW.reroll()') && E('DW.run().rr') === 0 && !E('DW.reroll()'), 'one reroll a run; then none');
@@ -1650,7 +1748,7 @@ try {
   let bought = 0; for (let i = 0; i < 80; i++) { const id = E('(DW.shop().find(r => r.can) || {}).id'); if (!id) break; if (E(`DW.buy("${id}")`)) bought++; }
   assert(bought > 30 && E('S.deep.lore.breath') === 5 && E('S.deep.pages') === 10 && !E('DW.buy("nope")'), `bought all ${bought} shop rows`);
   assert(E('totalDps()') === dA && E('goldMult()') === gA, 'a full Deep Lore changes nothing outside the Deepwell (dps, gold)');
-  assert(E('codexTitles().some(t => t.id === "dt_walker" && t.got)') && E('codexSetTitle("dt_walker") && codexTitle() === "Well-walker"'), 'bought titles are picked in the Codex');
+  assert(E('codexTitles().some(t => t.id === "dt_walker" && t.got)') && E('codexSetTitle("dt_walker") && codexTitle() === "Wellwalker"'), 'bought titles are picked in the Codex');
   E('codexRefresh(true)');
   assert(!E('codexPage("deepwell").locked') && E('codexPage("deepwell").tiles.filter(t => t.grp === "Deep Lore").every(t => t.got)'), 'the Codex Deepwell page opens and shows the bought Lore pages');
   E('DW.start(false)'); assert(Math.abs(E('DW.run().oil') - Math.min(150, 60 + 50 + E('bonus("deepOil")'))) < 1e-9 && E('DW.run().rr') >= 4 && E('DW.run().ban') === 2 && E('DW.oilMax()') === 150, 'Deep Lore works below: Oil, rerolls, banish, Deep Pockets');
@@ -1679,6 +1777,102 @@ try {
   errs.push(...tA.errors, ...tB.errors, ...pg.errors);
   assert(!errs.length, 'no deepwell errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('deepwell crashed: ' + (e.stack || e)); }
+
+// ---- the Deepwell on party combat (59c-deepwell-combat.js; plan-2 W6, plan-3 W6b; deepwell.md 8.2) ----
+console.log('deepwell combat');
+try {
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n, dt = 0.1) => { for (let i = 0; i < n; i++) g.fn.tick(dt); };
+  const errs = [];
+  for (const f of FIX) {
+    const o = loadCore({ seed: 41, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+    const ok0 = o.eval('S.deepCombat.tip === 0 && Object.keys(S.deepCombat).join() === "tip" && S.deep.run === null');
+    o.eval('save(); loadSave()');
+    assert(ok0 && o.eval('S.deepCombat.tip === 0'), `${f}: gets S.deepCombat { tip: 0 } and keeps it on a round trip`);
+    errs.push(...o.errors);
+  }
+  // A Ranger (not a tank) with Tobin (tank), Hesketh (support) and Wren (striker) on the late save.
+  const setup = (seed, storage) => {
+    const g = loadCore({ seed, storage: storage || memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
+    if (!storage) {
+      E('chooseClass("ranger"); S.camp.b.hearth = Math.max(3, S.camp.b.hearth)');
+      E('for (const id of ["tobin", "hesketh", "wren"]) if (!charRec(id)) unlockChar(id, "test", true)');
+      E('S.party.autoField = false; setField(["tobin", "hesketh", "wren"])');
+    }
+    E('COMBAT_TUNE.regen = 0');
+    ticks(g, 30);
+    return { g, E };
+  };
+  const clearPack = E => E('combatFoes().forEach(f => { for (let i = 0; i < 3 && f.hp > 0 && !f.dead; i++) cbDamageFoe(f, f.hp + 1, -1, "magic"); })');
+  const heroF = E => E('cbUnitByKey("hero").hp / cbUnitByKey("hero").maxHp');
+  const { g, E } = setup(42);
+  const up = () => E('combatUnits().filter(u => u.live).length');
+  assert(E('DW.start(false)') && E('DW.run().floor === 1 && DW.floorKind(1) === "normal"'), 'a run starts on floor 1');
+  assert(E('combatFoes().filter(f => f.deep && !f.dead && f.hp > 0).length') === 3 && E('combatFoes().every(f => f.deep && f.run === DW.run().id)'), 'a normal floor is one pack: its 3 foes fight at once');
+  assert(up() >= 2 && E('S.deepCombat.tip') === 1, `the fielded party fights below (${up()} members); the HP tip shows once`);
+  // HP carries: the hero at 50%, the floor cleared: the pack heal and the floor heal, no more
+  E('combatFoes().forEach(f => f.atk = 0); cbUnitByKey("hero").hp = cbUnitByKey("hero").maxHp * 0.5');
+  clearPack(E); ticks(g, 2);
+  const hf = heroF(E), expHf = 0.5 + E('COMBAT_TUNE.packHealF') + E('DEEP_COMBAT_TUNE.floorHeal');
+  assert(E('DW.run().phase') === 'draft' && Math.abs(hf - expHf) < 0.01, `a cleared floor heals a little: hero 50% -> ${(100 * hf).toFixed(0)}% (${(100 * expHf).toFixed(0)}% expected)`);
+  assert(Math.abs(E('DWC.hpAt().hero') - hf) < 0.001, 'the run keeps the HP each member starts the next floor with');
+  E('DW.pick(DW.offerView().cards[0].id)');
+  const hf2 = heroF(E);
+  assert(E('DW.run().floor') === 2 && E('mob.deep && mob.floor === 2') && Math.abs(hf2 - hf) < 0.01, `HP carries into floor 2 (hero ${(100 * hf2).toFixed(0)}%, not refilled)`);
+  // a reload mid-floor: the floor restarts with the HP (and Oil) it began with
+  E('combatUnits().forEach(u => { if (u.live) u.hp = u.maxHp * 0.2; }); save()');
+  const r2 = setup(43, memoryStorage({ [KEY]: g.storage.get(KEY) }));
+  r2.E('chooseClass("ranger")');
+  assert(r2.E('DW.resume()') && r2.E('mob.deep && mob.floor === 2'), 'resume: floor 2 restarts');
+  const hf3 = heroF(r2.E);
+  assert(Math.abs(hf3 - hf) < 0.02, `resume: the hero starts floor 2 at ${(100 * hf3).toFixed(0)}% (as saved when the floor began)`);
+  errs.push(...r2.g.errors);
+  // Oil: refunds are higher; a parry gives Oil back
+  assert(E('DW.refundFor("boss")') === 35 + E('DEEP_COMBAT_TUNE.refund'), 'Oil refunds are 5s higher with party combat');
+  // the [C] boons
+  const B = s => E('DW.run().boons.' + s);
+  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); ticks(g, 3);
+  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, 'Iron Wall II: tanks +40% max HP, others unchanged');
+  const hitTank = () => E('(() => { const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const a = cbHitUnit(u, u.maxHp * 0.01, "poison", null); u.hp = u.maxHp; return a; })()');
+  const t0 = hitTank(); B('thorn = 1'); B('taunt = 1'); ticks(g, 1);
+  assert(E('DW.setProgress().find(s => s.id === "guard").on') && Math.abs(hitTank() / t0 - 0.75) < 0.01, 'the Guard set (Thorn Plate, Iron Wall, Taunt Drill): tanks take 25% less');
+  const thorn = E('(() => { const f = combatFoes().find(x => !x.dead && x.hp > 0); const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const h0 = f.hp; cbHitUnit(u, u.maxHp * 0.01, "poison", f); u.hp = u.maxHp; return h0 - f.hp; })()');
+  assert(thorn > 0, 'Thorn Plate: a tank hurts the foe that hits it');
+  E('mob.forceU = -1; mob.forceT = 0; mob.ranged = true; classTap({ target: "mob" })');
+  assert(E('mob.forceU === cbUnitByKey("tobin").i && mob.forceT > 0.5'), 'Taunt Drill: a Ranger\'s tap makes the front tank taunt');
+  const hi0 = E('cbUnitByKey("hero").healIn'); B('dward = 1'); B('mend = 1'); B('life = 1'); ticks(g, 3);
+  assert(E('DW.setProgress().find(s => s.id === "mend").on') && Math.abs(E('cbUnitByKey("hero").healIn') / hi0 - 1.3) < 0.01, 'the Mend set (Deep Ward, Mending Light, Lifeline): healing +30%');
+  E('cbHitUnit(cbUnitByKey("hero"), 1e300, "poison", null)');
+  assert(!E('cbUnitByKey("hero").down') && E('cbUnitByKey("hero").hp') === 1, 'Lifeline: a member who would fall stays at 1 HP');
+  E('cbHitUnit(cbUnitByKey("wren"), 1e300, "poison", null)');
+  assert(E('cbUnitByKey("wren").down'), 'Lifeline: once a floor for the whole party');
+  // Deep Edge (D8): damage below only
+  const dm0 = E('mod("dmg")'); E('S.deep.lore.edge = 4');
+  assert(Math.abs(E('mod("dmg")') / dm0 - 1.8) < 1e-6 && E('DW.shop("lore").some(r => r.id === "edge" && r.max === 4)'), 'Deep Edge IV: +80% damage below; sold in the Deep Lore shop');
+  // a wipe ends the run: the floors cleared count and pay; the party stands up whole above
+  const top = E('DW.run().top'), marks = E('DW.marksNow()'), m0 = E('S.deep.marks');
+  E('for (let i = 0; i < 4; i++) combatUnits().forEach(u => { if (u.live && !u.down) { u.lifeline = true; cbHitUnit(u, 1e300, "poison", null); } })');
+  ticks(g, 2);
+  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")');
+  assert(E('S.deep.last.floor') === top && E('S.deep.best') >= top && E('S.deep.marks') - m0 === marks, `the run's depth counts: floor ${top}, ${marks} Depth Marks paid`);
+  assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().every(f => !f.deep)') && E('mod("dmg")') < dm0 * 1.0001, 'back above: the party is whole, no well foe is left, boons and Deep Edge are off');
+  assert(E('S.activity') === 'fight' && E('!!mob && !mob.deep'), 'the zone fight resumes');
+  // Elder floors: the Deep Elder winds up its telegraphs; a parry gives Oil back
+  E('S.deep.lore.edge = 0'); E('DW.start(false)'); ticks(g, 1);
+  E('combatFoes().forEach(f => f.atk = 0)'); clearPack(E); ticks(g, 2);
+  E('DW.run().floor = 5; DW.run().oil = 100; DW.pick(DW.offerView().cards[0].id)');
+  let tele = null; g.fn.on('telegraphStart', p => { if (!tele) tele = { kind: p.kind, deep: !!(p.foe && p.foe.deep) }; });
+  E('combatFoes().forEach(f => f.atk = 0)');
+  let guard = 0; while (!E('cbTelegraph() && cbTelegraph().left <= cbTelegraph().win - 0.05') && guard++ < 150) ticks(g, 1);
+  assert(E('mob.deep && mob.boss && DW.run().floor === 5') && tele && tele.deep, `floor 5: a Deep Elder, and it winds up a telegraph (${tele && tele.kind})`);
+  const oilP = E('DW.run().oil'); E('resolveParry("tap")');
+  assert(Math.abs(E('DW.run().oil') - Math.min(E('DW.oilMax()'), oilP + E('DEEP_COMBAT_TUNE.parryOil'))) < 1e-9, 'parrying the Elder gives 2s of Oil back');
+  E('DW.run().oil = 0.05'); ticks(g, 3);
+  assert(E('S.deep.run === null && S.deep.last.reason === "oil" && !cbTelegraph()'), 'Oil still ends a run; no Elder telegraph is left above');
+  errs.push(...g.errors);
+  assert(!errs.length, 'no deepwell combat errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('deepwell combat crashed: ' + (e.stack || e)); }
 
 // ---- party combat (59-combat.js, 59b-enemies.js; Stage C tasks C1, C2, C3) ----
 console.log('combat');
@@ -2077,7 +2271,7 @@ try {
     const E = s => g.eval(s);
     const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
     const news = [], toasts = [];
-    g.fn.on('whatsNew', w => { if (!/^The Great Lantern|^Your party is now three/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the party of three: F1's
+    g.fn.on('whatsNew', w => { if (!/^(The Great Lantern|Your stations were already built|Skills now level more slowly|Your party is now three)/.test(w.msg)) news.push(w.msg); }); g.fn.on('toast', t => toasts.push(t.msg));   // the Great Lantern line: R0's own section; the stations line: H1's ('cold hearth'); the skill pace line: GP1's; the party of three: F1's ('formation')
     // at load, before any tick: the Hearth only, no cost
     const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
     assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
@@ -2143,6 +2337,50 @@ try {
   const oOk = ['springTide', 'calmSea', 'pearlMoon'].every(k => omen[k] && str(omen[k].n, 24) && str(omen[k].fx, 60) && str(omen[k].say, 60));
   assert(oOk, 'coast: 3 Omen texts (name, effect, line) inside limits');
 } catch (e) { fail('coast writing crashed: ' + (e.stack || e)); }
+
+// ---- Hollow writing (21h-lore-hollow.js, LORE2; lore.md 4, 8.1, 9): every foe and elder has its lines, limits, verbs ----
+console.log('hollow writing');
+try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '21h-lore-hollow.js'), 'utf8');
+  assert(!/\b(document|window|localStorage)\.|\bS\.[a-z]|registerState\(/.test(src.replace(/\/\/.*$/gm, '')), 'hollow: 21h-lore-hollow.js is data only (no DOM, no state)');
+  const g = loadCore(), E = x => g.eval(x);
+  const L = E('LORE_LIMITS'), roster = E('ROSTER_KEYS');
+  const str = (s, max) => typeof s === 'string' && s.trim().length > 0 && s.length <= max;
+  const sents = s => (s.match(/[.!?]+["']?(?=\s|$)/g) || []).length;
+  const sayOk = say => !say || Object.entries(say).every(([k, s]) => roster.includes(k) && str(s, L.say));
+  const arr = E('HOLLOW_ARRIVAL');
+  assert(arr.length === 7 && arr.every(s => str(s, L.arrival)) && str(E('HOLLOW_ARRIVAL_BOSS'), L.arrival)
+    && arr.every((s, i) => s.startsWith(E(`ZONES[${i}]`))), `hollow: 7 arrival lines (one per place, named first) and the zone 35 line, each ${L.arrival} chars or less`);
+  const story = E('HOLLOW_STORY');
+  const beatBad = story.filter(b => !str(b.id, 20) || !(b.at >= 1 && b.at <= 35) || !str(b.title, L.title) || !str(b.text, L.text)
+    || sents(b.text) < 2 || sents(b.text) > 5 || !str(b.note, L.note) || !sayOk(b.say));
+  assert(story.length === 4 && story.map(b => b.id).join() === 'wisps,crowns,chapel,listener' && story.every((b, i) => !i || b.at > story[i - 1].at) && !beatBad.length,
+    'hollow: beats wisps, crowns, chapel, listener in zone order; cards 2-5 sentences, notes, say lines by real characters' + (beatBad.length ? ': ' + beatBad[0].id : ''));
+  assert(sayOk(E('HOLLOW_LANTERN_SAY')) && str(E('HOLLOW_LANTERN_SAY.hesketh'), L.say), 'hollow: Hesketh\'s line for the Great Lantern I card');
+  // Every Hollow foe family: the TYPES the Hollow uses, the behaviours (59b FOE_BEH) and the rigs (13 ENEMY_RIGS, not the wyrm or nodes)
+  const hollowKeys = E('REGIONS[0].types.map(i => TYPES[i].key)');
+  const fams = [...new Set([...hollowKeys, ...E('Object.keys(FOE_BEH)'), ...E('Object.keys(ENEMY_RIGS).filter(k => k !== "wyrm" && !k.startsWith("node:"))'), ...E('TYPES.map(t => t.key)')])];
+  const B = E('LORE_BESTIARY'), EL = E('LORE_ELDERS'), names = E('Object.fromEntries(TYPES.map(t => [t.key, t.name]))');
+  const bBad = fams.filter(k => !B[k] || !['foe', 'elder', 'champ'].every(p => str(B[k][p], L.bestiary)) || (names[k] && B[k].name !== names[k]));
+  const eBad = fams.filter(k => !EL[k] || !str(EL[k].name, 32) || !str(EL[k].intro, L.elder) || !str(EL[k].fall, L.elder));
+  assert(fams.length >= 7 && !bBad.length, `hollow: every foe family (${fams.length}: ${fams.join(' ')}) has bestiary lines for the foe, its Elder and its champion, ${L.bestiary} chars or less` + (bBad.length ? ': missing or long ' + bBad.join(', ') : ''));
+  assert(!eBad.length, `hollow: every foe family's Elder has an intro and a fall line, ${L.elder} chars or less` + (eBad.length ? ': ' + eBad.join(', ') : ''));
+  const all = Object.values(B), coast = all.filter(b => b.region === 'coast');
+  const cBad = Object.keys(EL).filter(k => k !== 'listener' && !B[k]).concat(Object.keys(B).filter(k => !EL[k]));
+  assert(all.length === 14 && all.filter(b => b.region === 'hollow').length === 7 && coast.length === 7 && !cBad.length
+    && all.every(b => ['foe', 'elder', 'champ'].every(p => str(b[p], L.bestiary))), 'hollow: 14 bestiary entries (7 Hollow, 7 Coast), each with its Elder\'s lines' + (cBad.length ? ': ' + cBad[0] : ''));
+  const ls = EL.listener || {};
+  assert(str(ls.name, 32) && str(ls.intro, L.elder) && str(ls.fall, L.elder) && str(ls.line, L.bestiary), 'hollow: the Listener (zone 35) has its name, intro, fall and bestiary line');
+  const R = E('RAID_LORE'), bosses = E('BOSSES');
+  assert(bosses.every(n => str(R[n], L.raid)) && Object.keys(R).length === bosses.length, `hollow: a raid line for each of the ${bosses.length} great foes, ${L.raid} chars or less`);
+  // The verbs of the dark (lore.md 9.5): nothing is drawn to, hungry for or aching for light
+  const lines = [];
+  const walk = v => { if (typeof v === 'string') lines.push(v); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  ['HOLLOW_ARRIVAL', 'HOLLOW_ARRIVAL_BOSS', 'HOLLOW_STORY', 'HOLLOW_LANTERN_SAY', 'LORE_BESTIARY', 'LORE_ELDERS', 'RAID_LORE'].forEach(n => walk(E(n)));
+  const banned = E('LORE_BANNED'), hits = lines.filter(s => banned.some(re => re.test(s)));
+  const probe = ['It is drawn to your lamp.', 'It aches for light.', 'It wants the light.', 'Hungry for flame.'].every(s => banned.some(re => re.test(s)));
+  assert(lines.length > 60 && probe && !hits.length, `hollow: none of ${lines.length} lines uses a banned verb of the dark` + (hits.length ? ': ' + hits[0] : ''));
+} catch (e) { fail('hollow writing crashed: ' + (e.stack || e)); }
 
 // ---- pinnacle data and writing (21d-data-pinnacle.js, 21e-stories-pinnacle.js; pinnacles.md 3-7, PN11) ----
 console.log('pinnacle data');
@@ -2666,6 +2904,329 @@ try {
   const road = E('lanternRoad()');
   assert(road.length === 3 && road[0].lit && road[1].lit && !road[2].lit && road[2].beyond && road[1].here, 'lanternRoad(): Hollow and Coast lit, the Emberwaste dark beyond, the party on the Coast');
 } catch (e) { fail('regions and the Great Lantern crashed: ' + (e.stack || e)); }
+
+// ---- G1: tools in hand and Well Rested (11c-art-tools.js, 55-rested.js; plan-3 asks 1 and 2) ----
+console.log('tools and Well Rested');
+try {
+  const g = loadCore({ seed: 31 }), E = s => g.eval(s);
+  // tools: the right one per skill, tier from the skill level, and every class builds holding each
+  const tf = E(`(() => { S.skills.mine.lv = 1; S.skills.wood.lv = NODE_REQ[2]; S.skills.forage.lv = 99;
+    return ['mine', 'wood', 'forage', 'fish', 'smith'].map(k => toolFor(k)); })()`);
+  // H2: the stage draws the EQUIPPED tool; an empty slot is the rough tool (drawn as tier 1, plain).
+  assert(tf[0].k === 'pick' && tf[0].t >= 1 && /Pick/.test(tf[0].name) && tf[1].k === 'axe' && tf[2].k === 'sickle'
+    && tf[3].k === 'rod' && tf[4] === null, `toolFor: ${tf.slice(0, 4).map(t => t.name).join(', ')}; none for Smithing`);
+  const art = E(`(() => {
+    const bad = [], num = s => s.t === 'p' ? s.pts.every(Number.isFinite) : [s.cx, s.cy, s.x1, s.y1, s.x2, s.y2, s.x, s.y].filter(v => v !== undefined).every(Number.isFinite);
+    let n = 0, lamps = 0;
+    for (const cls in AK.CLASSES) for (const k of Object.keys(TOOL_ART.KINDS)) for (const t of [1, 3, 5]) {
+      const def = TOOL_ART.gatherDef(AK.CLASSES[cls], { k, t, r: t === 5 ? 2 : 0 }), gg = {};
+      for (const s in def.slots) gg[s] = s === 'weapon' || s === 'off' ? null : AK.gearMats(def.slots[s], t, 0);
+      for (const pose of [{}, { bob: 1 }, AK.ANIMS[def.anim].wind, AK.ANIMS[def.anim].strike]) {
+        const kit = AK.makeKit(def, pose); def.build(kit, gg, { skin: AK.m(AK.SKINS[1], 'skin'), hair: AK.m(AK.HAIRS[0], 'hair') }); n++;
+        if (kit.parts.length < 15 || !kit.parts.every(p => p.m && p.m.hex && num(p.s))) bad.push(cls + ':' + k + t);
+        if (kit.parts.some(p => p.m.kind === 'glow' && !p.o.nolight)) lamps++;
+      }
+    }
+    const same = TOOL_ART.gatherDef(AK.CLASSES.warden, { k: 'pick', t: 2 }) === TOOL_ART.gatherDef(AK.CLASSES.warden, { k: 'pick', t: 2, r: 0 });
+    const spec = TOOL_ART.gatherSpec({ cls: 'ranger', skin: 1, gear: { weapon: { t: 3, r: 1 }, off: { t: 1, r: 0 }, head: { t: 2, r: 0 }, body: { t: 1, r: 0 } } }, toolFor('mine'));
+    return { bad: [...new Set(bad)], n, lamps, same, spec };
+  })()`);
+  assert(!art.bad.length && art.n === 4 * 4 * 3 * 4, `every class builds with every tool, tier and swing (${art.n} kits)` + (art.bad.length ? ': ' + art.bad.join(', ') : ''));
+  assert(art.lamps === art.n, 'every gathering hero carries a lit lantern (the Lightkeeper gets a hip lantern)');
+  assert(art.same && !art.spec.gear.weapon && !art.spec.gear.off && art.spec.gear.head && art.spec.tool.k === 'pick' && art.spec.skin === 1, 'gather spec: no weapon or off-hand, keeps the look, one cached outfit per class, tool and tier');
+
+  // Well Rested: state and defaults
+  assert(E('S.rested && S.rested.left === 0 && fresh().rested.left === 0'), 'new game: S.rested = { left: 0 }');
+  for (const f of ['save-v2.json', 'save-v2-late.json']) {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'));
+    const h = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    const d = subsetDiff(raw, JSON.parse(JSON.stringify(h.eval('S'))));
+    assert(!raw.rested && h.eval('S.rested.left === 0 && mod("dmg") > 0') && !d && !h.errors.length, `${f}: old save gets Well Rested { left: 0 }, nothing lost` + (d ? ': ' + d : ''));
+  }
+  {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
+    raw.rested = { left: 77.5, later: 'kept' };
+    const h = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    h.fn.save();
+    const back = JSON.parse(h.storage.get(KEY)).rested;
+    assert(back.left === 77.5 && back.later === 'kept', 'a saved Well Rested (and any later field in it) survives a load and save');
+  }
+
+  // building it: gather with a party fielded; the hero gathers alone, companions do not change
+  E('chooseClass("warden", "Tess"); S.maxZone = 6; S.zone = 5; S.auto = false');
+  const run = secs => { for (let t = 0; t < secs; t += 0.1) g.fn.tick(0.1); };
+  run(20);
+  const field = E('S.party.field.slice()'), lv0 = E('JSON.stringify(S.party.field.map(k => charRec(k).lv))');
+  // the Well Rested share of mod('dmg'): the same moment with nothing banked
+  const restX = () => E('(() => { const a = mod("dmg"), l = S.rested.left; S.rested.left = 0; const b = mod("dmg"); S.rested.left = l; return a / b; })()');
+  E('setNode("ore", 1); setActivity("gather")');
+  run(120);
+  assert(Math.abs(E('S.rested.left') - 60) < 0.5 && E('!wellRested().on') && Math.abs(restX() - 1) < 1e-9, `2 min of gathering banks 1 min (${E('S.rested.left').toFixed(1)} s); no bonus while gathering`);
+  run(600);
+  assert(E('S.rested.left') === E('REST_TUNE.cap') && E('JSON.stringify(S.party.field.map(k => charRec(k).lv))') === lv0 && E('S.party.field.join()') === field.join(), `capped at ${E('REST_TUNE.cap')} s; the party stays fielded, its levels unchanged`);
+  assert(/rests at the Hearth: \+10% damage for 3m 0s in your next fight \(full\)/.test(E('restNote()')), 'Gather tab line: ' + E('restNote()').trim());
+  // using it: a fight gets +10%, and it runs down only while fighting
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+  E('setActivity("fight")');
+  const ratio = restX();
+  assert(Math.abs(ratio - (1 + E('REST_TUNE.dmg'))) < 1e-9 && E('wellRested().on'), `fighting: damage x${ratio.toFixed(2)}`);
+  assert(toasts.some(m => m === 'Well Rested: +10% damage for 3 min.'), 'toast on the way to the fight: ' + toasts.find(m => /Well Rested/.test(m)));
+  run(60);
+  assert(Math.abs(E('S.rested.left') - 120) < 0.5, `a minute of fighting uses a minute (${E('S.rested.left').toFixed(1)} s left)`);
+  run(125);
+  assert(E('S.rested.left') === 0 && E('!wellRested().on'), 'used up after 3 minutes of fighting: damage back to normal');
+  // no party fielded: nothing to bank
+  E('S.party.field = []; setActivity("gather")'); run(60);
+  assert(E('S.rested.left') === 0 && E('restNote()') === '', 'nobody fielded: no Well Rested');
+  E('S.party.field = ' + JSON.stringify(field));
+
+  // away: gathering banks it; away fights never count it and run it down
+  E('setActivity("gather"); S.rested.left = 0');
+  const ore0 = E('S.mats.ore[0]'), r1 = E('awayGains(3600)');
+  assert(E('S.rested.left') === E('REST_TUNE.cap') && E('S.mats.ore[0]') > ore0 && /^You kept working/.test(r1.note), `away gathering: ore +${E('S.mats.ore[0]') - ore0}, Well Rested full; note "${r1.note}"`);
+  const snap = E('JSON.stringify(S)');
+  const awayGold = left => {
+    const h = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: snap }) });
+    h.eval(`S.activity = 'fight'; S.rested.left = ${left}; S.last = Date.now()`);
+    const g0 = h.eval('S.gold'); h.eval('awayGains(1800)');
+    return { gold: h.eval('S.gold') - g0, left: h.eval('S.rested.left'), errs: h.errors.length };
+  };
+  const a0 = awayGold(0), a1 = awayGold(180);
+  assert(a0.gold > 0 && Math.abs(a1.gold - a0.gold) < 1e-6 * a0.gold && a1.left === 0 && !a0.errs && !a1.errs, `away fighting: the same gold with or without Well Rested (${Math.round(a0.gold)}), and it is used up`);
+  assert(!g.errors.length, 'no Well Rested errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('tools and Well Rested crashed: ' + (e.stack || e)); }
+
+// ---- cold hearth (55-hearth.js, H1): a new game starts at an unlit fire and builds each station ----
+console.log('cold hearth');
+try {
+  const errs = [];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const STN = ['forge', 'bench', 'loom', 'ench', 'tavern'];
+  const clock = g => g.eval('Date.__t = Date.now(); Date.now = () => Date.__t');   // camp timers follow the check's clock
+  const tickS = (g, secs) => { for (let i = 0; i < secs * 10; i++) { g.fn.tick(0.1); if (i % 10 === 9) g.eval('Date.__t += 1000'); } };
+  // a new game is cold
+  const g = loadCore({ seed: 21, cold: true }); clock(g);
+  const E = s => g.eval(s);
+  assert(E('S.hearth.cold === 1 && S.hearth.lit === 0 && hearthCold() && !hearthLit()'), 'a new game starts at a cold Hearth');
+  assert(E(`${JSON.stringify(STN)}.every(id => campLevel(id) === 0) && campLevel('hearth') === 0 && !campOpen()`), 'stations and Hearth at 0, no camp yet');
+  assert(E('S.activity === "gather" && S.node.kind === "wood" && S.node.t === 1 && target() === "node"'), 'the hero chops the grove by the fire');
+  assert(E('!campList().includes("bench") && campCan("bench").why === "Light the fire first."'), 'nothing to build before the fire: ' + E('campCan("bench").why'));
+  E('S.mats.ore[0] = 50; S.mats.wood[0] = 50; S.mats.ore[1] = 50');
+  assert(E('canCraft("pick", 1).why') === 'Build the Workbench first.' && !E('craftItem("pick", 1)'), 'crafting refused: "Build the Workbench first."');
+  assert(/Build the Forge first\./.test(E('canCraft(Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].st === "forge" && !CRAFT_KINDS[k].legacy), 1).why')), 'the Forge too');
+  assert(/Build the Enchanter/.test(E('canTransmute("ore", 2, "down").why')) && !E('brewTonic(Object.keys(CRAFT_TONICS)[0], 1)'), "Transmute and Tonics wait for the Enchanter's Table");
+  E('S.mats.ore = [0, 0, 0, 0, 0]; S.mats.wood[0] = 5');
+  assert(!E('hearthLight()') && E('hearthCan().why') === '3 more Oak Log', 'the fire needs 8 Oak Log: ' + E('hearthCan().why'));
+  const ev = []; g.fn.on('campOpen', e => ev.push('campOpen:' + e.quiet)); g.fn.on('hearthLit', () => ev.push('lit'));
+  E('S.mats.wood[0] = 8');
+  assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "fight"'), 'hearthLight(): pays 8 Oak, Hearth 1, the camp opens, the hero walks out to fight');
+  assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
+  assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
+  const c1 = E('campCost("bench", 1)');
+  assert(c1.gold === 0 && JSON.stringify(c1.mats) === '[["wood",1,20]]' && c1.secs === 30, `Workbench Lv 1: 20 Oak, no gold, 30 s (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
+  assert(E('JSON.stringify(campCost("bench", 2))') === E('(() => { const f = hearthFirst; hearthFirst = () => null; try { return JSON.stringify(campCost("bench", 2)); } finally { hearthFirst = f; } })()'), 'Lv 2 keeps the old row');
+  E('S.mats.wood[0] = 20');
+  assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0, 'Workbench building');
+  tickS(g, 31);
+  assert(E('campLevel("bench") === 1 && campList().includes("forge")'), 'Workbench built after 30 s; the Forge plot opens');
+  E('S.mats.ore[0] = 4; S.mats.wood[0] = 4');
+  let toolDone = false; g.fn.on('onboardStep', e => { if (e.id === 'tool') toolDone = true; });
+  assert(E('!!craftItem("pick", 1)') && toolDone, "a Copper Pickaxe made at the Workbench; the guide's tool step is done");
+  E('S.mats.ore[0] = 25; S.mats.wood[0] = 10');
+  assert(E('campBuild("forge")'), 'the Forge building (25 Copper, 10 Oak)'); tickS(g, 61);
+  assert(E('campLevel("forge") === 1 && canCraft(Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].st === "forge" && !CRAFT_KINDS[k].legacy), 1).why !== "Build the Forge first."'), 'Forge built after 60 s: its recipes open');
+  if (E('!!CAMP_B.store')) assert(E('campList().includes("store")'), 'the Storehouse plot opens with the Forge');
+  assert(E('!campList().includes("loom") && !campList().includes("ench") && !campList().includes("tavern")'), "Loom, Enchanter's Table and Tavern plots wait for their zones");
+  E('S.maxZone = 5'); assert(E('campList().includes("loom") && !campList().includes("ench")'), 'zone 5: the Loom plot');
+  E('S.maxZone = 6'); assert(E('campList().includes("ench") && !campList().includes("tavern")'), "zone 6: the Enchanter's Table plot");
+  E('S.maxZone = 8'); assert(E('campList().includes("tavern")'), 'zone 8: the Tavern plot');
+  E('S.maxZone = 1');
+  assert(E('JSON.stringify(campCost("tavern", 1).mats)') === '[["wood",1,40],["herb",1,20]]' && E('campCost("ench", 1).secs') === 180, "Tavern and Enchanter's Table rows as the spec (1.3)");
+  // round trip: a cold save stays cold and keeps what it built
+  g.fn.save();
+  const g2 = loadCore({ seed: 22, cold: true, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+  assert(g2.eval('hearthCold() && hearthLit() && campLevel("bench") === 1 && campLevel("forge") === 1 && campLevel("loom") === 0 && campOpen()'), 'reload: still a cold save, stations as built');
+  // a reload before the fire (no progress yet): not set up twice, still cold
+  const g3 = loadCore({ seed: 23, cold: true }); g3.eval('S.mats.wood[0] = 3; save()');
+  const g4 = loadCore({ seed: 24, cold: true, storage: memoryStorage({ [KEY]: g3.storage.get(KEY) }) });
+  assert(g4.eval('hearthCold() && !hearthLit() && S.mats.wood[0] === 3 && campLevel("bench") === 0 && !campOpen()'), 'reload before the fire: the same cold start');
+  // tools: a pristine cold start warms back (older sections, sim --cold 0); a lit one never does
+  const w = loadCore({ seed: 25 });
+  assert(w.eval(`!hearthCold() && ${JSON.stringify(STN)}.every(id => campLevel(id) === 1) && S.activity === 'fight'`) && !E('hearthWarm()'), 'hearthWarm(): the old warm start (tools only); a lit Hearth stays');
+  w.eval('S.mats.ore[0] = 50; S.mats.wood[0] = 50');
+  assert(w.eval('canCraft("pick", 1).ok'), 'a warm game crafts without building (the gate is for cold saves only)');
+  errs.push(...g.errors, ...g2.errors, ...g3.errors, ...g4.errors, ...w.errors);
+
+  // every fixture is warm: stations Lv 1, recipes and camp rows exactly as before, one What's new line
+  for (const f of ['save-a-v1.json', 'save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const h = loadCore({ seed: 26, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+    const H = s => h.eval(s);
+    const news = []; h.fn.on('whatsNew', x => news.push(x.msg));
+    assert(H(`!hearthCold() && hearthLit() && ${JSON.stringify(STN)}.every(id => campLevel(id) >= 1)`), `${f}: warm, every station built`);
+    const same = H(`(() => {
+      const kinds = Object.keys(CRAFT_KINDS), all = () => JSON.stringify([kinds.map(k => [1, 2, 3, 4, 5].map(t => { const c = canCraft(k, t); return [c.ok, c.why]; })), canTransmute('ore', 2, 'down').why, campList(), campList().map(id => { const c = campCan(id); return [c.ok, c.why, c.cost]; })]);
+      const a = all(), sw = hearthStationWhy, po = hearthPlotOpen, fi = hearthFirst;
+      hearthStationWhy = () => ''; hearthPlotOpen = () => true; hearthFirst = () => null;
+      try { return a === all(); } finally { hearthStationWhy = sw; hearthPlotOpen = po; hearthFirst = fi; }
+    })()`);
+    assert(same, `${f}: every recipe, Transmute and camp row exactly as without the Hearth rules`);
+    const mats0 = JSON.stringify(H('S.mats')), items0 = H('S.items.length');
+    for (let i = 0; i < 20; i++) h.fn.tick(0.1);
+    assert(news.filter(m => /^Your stations were already built/.test(m)).length === 1 && H('S.hearth.said') === 1, `${f}: one What's new line: "${news.find(m => /stations/.test(m))}"`);
+    const m0 = JSON.parse(mats0), m1 = H('S.mats');
+    assert(Object.keys(m0).every(k => m0[k].every((n, i) => m1[k][i] >= n)) && H('S.items.length') >= items0 && H('!GUIDE_STEPS.some(x => ["chop", "light", "bench", "tool", "forge", "store"].includes(x.id) && x.when())'), `${f}: nothing taken, no cold-Hearth tips`);
+    h.fn.save();
+    const h2 = loadCore({ seed: 27, storage: memoryStorage({ [KEY]: h.storage.get(KEY) }) }); const n2 = []; h2.fn.on('whatsNew', x => n2.push(x.msg));
+    for (let i = 0; i < 20; i++) h2.fn.tick(0.1);
+    assert(!n2.some(m => /stations/.test(m)), `${f}: the line shows once`);
+    errs.push(...h.errors, ...h2.errors);
+  }
+
+  // the first ten minutes, driving the core like a new player (warden, mixed play, spec 1.4)
+  {
+    const p = loadCore({ seed: 7, cold: true }); clock(p);
+    const P = s => p.eval(s);
+    P('chooseClass("warden"); ONBOARD.gate = true');
+    const got = {}, marks = {};
+    const now = () => P('Math.round(S.onboard.t)');
+    const mark = k => { if (marks[k] === undefined) marks[k] = now(); };
+    p.fn.on('unlock', e => { if (got[e.id] === undefined) got[e.id] = now(); });
+    p.fn.on('campBuilt', e => mark(e.id + e.lv));
+    p.fn.on('zoneClear', e => mark('zone' + (e.zone + 1)));
+    p.fn.on('crafted', e => { const d = P(`CRAFT_KINDS[${JSON.stringify(e.kind)}] || {}`); if (d.tool) mark('tool'); if (d.pos === 'weapon') mark('weapon'); });
+    const steps = []; p.fn.on('onboardStep', e => steps.push([e.id, now()]));
+    const buy = () => P(`{ let n = 0; for (let k = 0; k < 50; k++) { const c = HERO_UPS.map(u => ({ u, p: plan(u.base, u.r, S[u.id], S.gold, u.cap, '1') })).filter(o => o.p.n > 0 && o.p.cost <= S.gold).sort((a, b) => a.p.cost - b.p.cost)[0]; if (!c) break; buyHero(c.u.id, '1'); n++; } n }`);
+    const weapon = P('Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].pos === "weapon" && !CRAFT_KINDS[k].legacy && fits(k, "weapon", "hero"))');
+    // what the player gathers for: the next station, then the pickaxe, then the class weapon
+    const want = () => P(`(() => {
+      const nx = hearthNext(), need = [];
+      if (campLevel('bench') >= 1 && !S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)) for (const [f, n] of Object.entries(craftRecipe('pick', 1))) if (f !== 'gold') need.push([f, 1, n]);
+      if (nx && nx !== 'hearth') { const c = campCan(nx); if (c.cost && !c.busy) for (const [f, t, n] of c.cost.mats) need.push([f, t, n]); }
+      if (campLevel('forge') >= 1 && !equipped('weapon')) for (const [f, n] of Object.entries(craftRecipe(${JSON.stringify(weapon)}, 1))) if (f !== 'gold') need.push([f, 1, n]);
+      for (const [f, t, n] of need) if (CRAFT_NODES[f] && (S.mats[f][t - 1] || 0) < n && S.skills[skillOf(f)].lv >= NODE_REQ[t - 1]) return [f, t, n];
+      return null;
+    })()`);
+    let firstUp = null, gatherUntil = 0, trip = null;
+    for (let sec = 0; sec < 10 * 60; sec++) {
+      // taps go through the stage as the browser sends them: the 'tap' event, then the strike or the chop
+      if (!P('hearthLit()')) { if (sec % 2 === 0) P('emit("tap", { node: target() === "node" }); playerTap({ x: 0.7, y: 0.5 })'); if (P('hearthCan().ok') && P('hearthLight()')) mark('lit'); }
+      else {
+        if (sec < 120 && sec % 3 === 0) P('emit("tap", { node: target() === "node" }); playerTap({ x: 0.7, y: 0.5 })');
+        if (sec % 20 === 0) P('castAbility()');
+        const nx = P('hearthNext()');
+        if (nx && nx !== 'hearth' && P(`campCan(${JSON.stringify(nx)}).ok`)) P(`campBuild(${JSON.stringify(nx)})`);
+        if (P('campLevel("bench") >= 1 && canCraft("pick", 1).ok && !S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool)')) { const it = P('craftItem("pick", 1)'); if (it) P(`equipItem(${it.id})`); }
+        if (weapon && P(`canCraft(${JSON.stringify(weapon)}, 1).ok && !equipped("weapon")`)) { const it = P(`craftItem(${JSON.stringify(weapon)}, 1)`); if (it) P(`equipItem(${it.id})`); }
+        // after the first boss the player gathers what the next build or recipe waits on, in short trips
+        if (P('S.activity') === 'fight') {
+          if (P('S.maxZone') >= 2 && sec >= gatherUntil) { trip = want(); if (trip && P(`setNode(${JSON.stringify(trip[0])}, ${trip[1]})`)) { P('setActivity("gather")'); gatherUntil = sec + 120; } }
+        } else if (!trip || P(`S.mats.${trip[0]}[${trip[1] - 1}]`) >= trip[2] || sec >= gatherUntil) { trip = null; P('setActivity("fight")'); gatherUntil = sec + 20; }
+      }
+      if (firstUp === null && P('S.gold >= 10')) firstUp = now();
+      // the UI asks for the step to show about 4 times a second; the player follows a tab hint and taps Next Up
+      const st = P('(s => s && s.id)(onboardStep())');
+      if (st && st.startsWith('tab:')) P(`S.onboard.seen[${JSON.stringify(st.slice(4))}] = 1`);
+      if (st === 'nextup') P('onboardDone("nextup")');
+      if (sec % 5 === 0) buy();
+      tickS(p, 1);
+    }
+    const at = k => marks[k] ?? got[k] ?? Infinity;
+    const mmss = t => t === Infinity ? 'never' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    const tl = Object.entries(Object.assign({}, got, marks)).sort((a, b) => a[1] - b[1]);
+    console.log('       timeline: ' + tl.map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
+    console.log('       guide: ' + steps.map(([k, t]) => `${k} ${mmss(t)}`).join(', ') + ` | zone ${P('S.maxZone')} at 10:00`);
+    assert(at('lit') <= 60, `the fire lit under 1:00 (${mmss(at('lit'))})`);
+    assert(firstUp !== null && firstUp < 90, `first upgrade affordable under 1:30 (${mmss(firstUp)})`);
+    assert(at('party') <= 150 && at('nextup') <= 150, `Party and Next Up by 2:30 (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
+    assert(at('gather') <= 1 && at('camp') - at('lit') <= 1 && at('craft') >= at('bench1') && at('craft') <= at('bench1') + 1, `Gather from the start, Camp with the fire, Craft with the Workbench (${mmss(at('camp'))}, ${mmss(at('craft'))})`);
+    assert(at('tool') <= 300, `a tool by 5:00 (${mmss(at('tool'))})`);
+    assert(at('bench1') <= 240 && at('forge1') <= 600, `Workbench by 4:00, Forge by 10:00 (${mmss(at('bench1'))}, ${mmss(at('forge1'))})`);
+    const early = tl.map(x => x[1]).filter(t => t <= 600);
+    let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
+    assert(early.length >= 8 && gap <= 180, `something new at least every 3 minutes in the first 10 (${early.length} events, longest gap ${gap}s)`);
+    const order = steps.map(x => x[0]);
+    assert(order.indexOf('chop') >= 0 && order.indexOf('chop') < order.indexOf('light') && order.indexOf('light') < order.indexOf('tap') && ['tab:gat', 'tab:world', 'tab:forge'].every(id => order.includes(id)), 'guide: chop, then light, then tap a foe; the old tab steps are done for a cold save');
+    assert(order.includes('bench') && order.includes('tool') && order.includes('forge'), 'guide: bench, tool and forge steps done');
+    errs.push(...p.errors);
+  }
+  assert(!errs.length, 'no cold hearth errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('cold hearth crashed: ' + (e.stack || e)); }
+// ---- skill pace (GP1): slower levels, wider tier gates; no save loses a tier, recipe or item ----
+console.log('skill pace (GP1)');
+try {
+  const g = loadCore({ seed: 7 });
+  const E = s => g.eval(s);
+  assert(E('NODE_REQ === SKILL_TUNE.nodeReq && SMITH_REQ === SKILL_TUNE.stationReq && CRAFT_STATION_REQ === SMITH_REQ'), 'the gates are the SKILL_TUNE table (NODE_REQ, SMITH_REQ, CRAFT_STATION_REQ)');
+  const gaps = r => r.slice(1).map((v, i) => v - r[i]);
+  const ng = gaps(E('NODE_REQ')), sg = gaps(E('SMITH_REQ'));
+  assert(ng.every((d, i) => i === 0 || d > ng[i - 1]) && sg.every((d, i) => i === 0 || d > sg[i - 1]) && ng[0] > 4 && sg[0] > 4,
+    `the gaps between tiers widen: gathering ${E('NODE_REQ').join('/')} (gaps ${ng.join('/')}), crafting ${E('SMITH_REQ').join('/')} (gaps ${sg.join('/')})`);
+  assert(E('(() => { const f = (c, l) => Math.floor(c[0] * Math.pow(l, c[1]) * Math.pow(c[2] || 1, l - 1)); return [1, 10, 60].every(l => skillNeed(l) === f(SKILL_TUNE.gatherNeed, l) && skillNeed(l, "smith") === f(SKILL_TUNE.craftNeed, l) && skillNeed(l, "mine") === skillNeed(l)); })()'), 'skillNeed reads SKILL_TUNE (gathering and crafting curves)');
+  assert(E('nodeXp(3) === Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(3, SKILL_TUNE.nodeXp[1]))'), 'nodeXp reads SKILL_TUNE');
+  // A new game keeps nothing: the new gates alone decide.
+  assert(E('S.skillPace.v === 1 && Object.keys(S.skillPace.hw).length === 0'), 'a new game is marked at once and keeps no old tier');
+  E('S.skills.mine.lv = NODE_REQ[1] - 1');
+  assert(!E('skillTierOpen("mine", 2)') && !E('setNode("ore", 2)'), `new game: Mining ${E('NODE_REQ[1] - 1')} cannot work the Iron Vein`);
+  E('S.skills.mine.lv = NODE_REQ[1]');
+  assert(E('skillTierOpen("mine", 2) && setNode("ore", 2) && skillTopTier("mine") === 2 && skillNextReq("mine") === NODE_REQ[2]'), `new game: Mining ${E('NODE_REQ[1]')} opens it; next tier at ${E('NODE_REQ[2]')}`);
+  E('S.skills.smith.lv = SMITH_REQ[1] - 1');
+  assert(/^Needs Smithing \d+$/.test(E('canCraft("warblade", 2).why')) && E('canCraft("warblade", 2).why') === `Needs Smithing ${E('SMITH_REQ[1]')}`, 'new game: a tier-2 recipe below the gate says "' + E('canCraft("warblade", 2).why') + '"');
+  // Player text reads the tables, not literals.
+  assert(E('whereToGet("ore", 3)').includes(`Mining level ${E('NODE_REQ[2]')}`) && E('whereToGet("ess", 5)').includes(`zone ${E('PACE.essTier[4]')}`), 'where-to-get text reads NODE_REQ and PACE.essTier: ' + E('whereToGet("ore", 3)'));
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+  E('S.skills.mine.lv = NODE_REQ[2] - 1; S.skills.mine.xp = 0; gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
+  assert(toasts.some(m => m.includes(`Mining level ${E('NODE_REQ[2]')}.`) && m.includes('Mithril Seam')), 'the level-up that opens a tier names it: ' + toasts[toasts.length - 1]);
+  E('gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
+  assert(toasts[toasts.length - 1].includes(`Next tier at level ${E('NODE_REQ[3]')}.`), 'other level-ups name the next gate: ' + toasts[toasts.length - 1]);
+  assert(!g.errors.length, 'no errors (new game)' + (g.errors.length ? ': ' + g.errors[0] : ''));
+
+  // Every fixture: levels and XP unchanged, every tier the OLD gates opened stays open, items kept.
+  const OLD_NODE = [1, 8, 18, 30, 45], OLD_STN = [1, 4, 9, 16, 25];
+  const oldTop = (req, lv) => req.filter(r => lv >= r).length;
+  for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(x => x.endsWith('.json'))) {
+    const rawText = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), raw = JSON.parse(rawText);
+    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: rawText }) });
+    const H = s => h.eval(s);
+    const lvOf = k => (raw.skills && raw.skills[k] && raw.skills[k].lv) || 1;
+    const same = Object.entries(raw.skills || {}).every(([k, v]) => H(`S.skills.${k}.lv`) === v.lv && H(`S.skills.${k}.xp`) === v.xp);
+    const lost = [];
+    // gathering: every node kind and tier
+    for (const kind of H('GATHER_KINDS')) {
+      const sk = H(`skillOf(${JSON.stringify(kind)})`);
+      for (let t = 1; t <= 5; t++) if (oldTop(OLD_NODE, lvOf(sk)) >= t && !H(`skillTierOpen(${JSON.stringify(sk)}, ${t}) && setNode(${JSON.stringify(kind)}, ${t})`)) lost.push(`${kind}${t}`);
+    }
+    // crafting: every kind at every tier its station (or Smithing, for kinds that use it) opened
+    for (const kind of H('Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy)')) {
+      const lv = H(`stationLevel(${JSON.stringify(kind)})`);   // levels are unchanged, so this is the level the old gate read
+      for (let t = 1; t <= 5; t++) if (oldTop(OLD_STN, lv) >= t && (!H(`stationTierOpen(${JSON.stringify(kind)}, ${t})`) || /^Needs /.test(H(`canCraft(${JSON.stringify(kind)}, ${t}).why`)))) lost.push(`${kind}${t}`);
+    }
+    // Enchanting: transmute up, reforge and tonics at every tier it opened
+    for (let t = 1; t <= 5; t++) if (oldTop(OLD_STN, lvOf('ench')) >= t && !H(`skillTierOpen('ench', ${t})`)) lost.push('ench' + t);
+    const ids = x => JSON.stringify((x.items || []).map(it => [it.id, it.slot, it.t, it.r, it.plus || 0]).sort());
+    const itemsKept = ids(raw) === ids(JSON.parse(H('JSON.stringify(S)'))) && JSON.stringify(raw.equip || {}) === JSON.stringify(Object.fromEntries(Object.entries(H('S.equip')).filter(([k]) => raw.equip && k in raw.equip)));
+    const kept = H('skillPaceInfo().kept').map(([k, a, b]) => `${k} ${b}->${a}`).join(', ');
+    assert(same && !lost.length && itemsKept && !h.errors.length, `${f}: skill levels and XP unchanged, no tier, recipe or item lost` + (kept ? ` (kept above the new gates: ${kept})` : ' (the new gates already open every old tier)') + (lost.length ? ' LOST ' + lost.join(' ') : '') + (h.errors.length ? ' ' + h.errors[0] : ''));
+    // round trip and a later load (the sim's --from-save path) keep the mark
+    h.eval('save(); loadSave()');
+    const stillOpen = Object.keys(raw.skills || {}).every(k => H(`skillTopTier(${JSON.stringify(k)})`) >= oldTop(H('SKILL_TUNE.craftSkills').includes(k) ? OLD_STN : OLD_NODE, lvOf(k)));
+    const h2 = loadCore({ seed: 3 }); h2.storage.set(KEY, rawText); h2.eval('loadSave()');
+    const late = Object.keys(raw.skills || {}).every(k => h2.eval(`skillTopTier(${JSON.stringify(k)})`) >= oldTop(h2.eval('SKILL_TUNE.craftSkills').includes(k) ? OLD_STN : OLD_NODE, lvOf(k)));
+    assert(stillOpen && late && H('S.skillPace.v') === 1, `${f}: the kept tiers survive a save and load, and a save loaded later in a session`);
+  }
+  // A synthetic old save right at the old gates: Mining 8 and Smithing 4 keep tier 2 under the new gates.
+  {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
+    raw.skills = Object.assign({}, raw.skills, { mine: { lv: 8, xp: 0 }, smith: { lv: 4, xp: 0 } }); delete raw.skillPace;
+    const h = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    const tell = []; h.fn.on('whatsNew', w => { if (!/^Your stations were already built/.test(w.msg)) tell.push(w.msg); });   // H1's line has its own section
+    for (let i = 0; i < 3; i++) h.fn.tick(0.1);
+    assert(h.eval('skillTierOpen("mine", 2) && setNode("ore", 2) && stationTierOpen("warblade", 2) && S.skillPace.hw.mine === 2 && S.skillPace.hw.smith === 2'), 'an old save at Mining 8 / Smithing 4 keeps the Iron Vein and tier-2 Forge recipes');
+    assert(tell.length === 1 && /stays open/.test(tell[0]), 'one What\'s new line tells the player: ' + tell[0]);
+    h.eval('S.skills.mine.xp = 0'); const t0 = []; h.fn.on('toast', t => t0.push(t.msg));
+    h.eval('gainSkill("mine", skillNeed(8, "mine"))');
+    assert(h.eval('S.skills.mine.lv') === 9 && !t0.some(m => /is open to you/.test(m)), 'a kept tier is not announced again at the next level-up');
+  }
+} catch (e) { fail('skill pace crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

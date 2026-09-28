@@ -97,3 +97,33 @@ Bounties by 4-5, the rest of the early set by 11, and no gap over 3 minutes in t
 
 Screenshots: `img/onboard-*.png` (360 x 740; `onboard-wide-*` at 1280 x 800 and 915 x 412;
 `onboard-18-old-save` is the late fixture with everything open).
+
+## A cold Hearth (new games since H1)
+
+Since H1 (hearth-and-hands.md 1) a new game opens at an unlit fire (`55-hearth.js`). Warm saves
+(every save made before, all fixtures) keep the tables above; the rows below apply only while
+`hearthCold()` is true.
+
+| Feature | Opens when (cold saves) |
+|---|---|
+| gather | from the start |
+| camp | the fire is lit |
+| craft | the Workbench is built |
+| tavern | the Tavern is built |
+
+| Step | Shows when | Sentence (target) | Done |
+|---|---|---|---|
+| chop | unlit, gathering | Tap the tree to chop faster. (the tree) | 8 Oak, or lit |
+| light | unlit, 8 Oak or zone 2 | Tap the fire to light it. (the fire button) / Tap Gather, then light the fire. | lit |
+| tap | lit, or fighting | The road is dark. Tap a foe to strike. (the foe) | 3 fight taps or 25 kills (chops do not count) |
+| bench | the Workbench plot is open | Build the Workbench. It makes tools. (its card) | Workbench built |
+| tool | the Workbench is built | Open Craft. / Open Make. / Tap the Workbench. / Make a Copper Pickaxe. | any tool made (the `crafted` event) |
+| forge | the Forge plot is open, tool done | Build the Forge for your weapon. (its card) | Forge built |
+| store | the Storehouse plot is open (H3) | Your packs are nearly full. Build a Storehouse. (its card) | Storehouse built |
+
+`tab:gat`, `tab:world` and `tab:forge` are done from the start on a cold save. Measured by the
+`cold hearth` section of `check.mjs` (warden, a player who taps, buys the cheapest upgrade and
+gathers what the next build waits on, in short trips): fire lit 0:16, Next Up 0:31, zone 2 and
+Party 1:12, Workbench 2:19 (Craft tab), first tool 3:00, Forge and first class weapon 5:08, zone 3
+5:16, zone 4 and Bounties 6:55, Almanac 8:01, zone 5 and Foraging 8:29. Screenshots:
+`img/hearth-*.png`.
