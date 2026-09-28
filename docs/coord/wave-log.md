@@ -825,3 +825,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   shadow (silhouettes only). UX-W1 builds this; MAP0's artist notes (palette-index baking, lamp-box palette
   swaps, no per-frame work except a few cheap firefly sprites) apply. A short MAP1 refine study (one screen +
   closeups of the hybrid) comes first so the owner can confirm before W1.
+- CL1 merged: docs/design/classes-2.md (Reaver "the Red Lamp", Warden "the Unmoved", Venomstalker "the Quiet
+  Thorn", Trapper "the Pathfinder", Warlock "the Lamp-Thief", Priest "the Given Light"; the Proving; star maps
+  for 3 classes; hero types; parity; migration; S2/S3 build split). Coordinator signed off core-2 change-log
+  rows 8.2-1..9 and wrote the fatigue-into-Rested row (S.fatigue withdrawn). Coordinator calls: D2 "the
+  Proving" yes; D4 yes (new parts at 60% until the Proving); D6 Dark Turned yes; D7 Saint Elowen's signature
+  shown as "Chapel Light"; D8 Blessing unchanged unless BAL3 needs it. ASKED THE OWNER: D1 evolution gate
+  (recommend level 35 + the Region 1 boss beaten, not 60), D3 a one-off free switch within 10 minutes of
+  choosing, D5 the six titles. For HER: 2 poison heroes and a physical support needed; CHAR1 gets the
+  choice-card copy, visual notes and hero reaction lines; RG1 handles Priest/Warlock gear lines.
