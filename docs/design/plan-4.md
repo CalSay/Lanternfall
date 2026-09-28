@@ -88,6 +88,17 @@ slot jobs, combos, Kin and Bonds.
 classes within 1 zone at 2 h, day 1 and day 7, and within 15% on the days to each region boss.
 Tanks and supports stay best on hard walls: bosses, pinnacles and the Deepwell. (CL1, BAL3)
 
+**2.10 Bigger packs** (owner: reduce model size and allow more enemies; today packs cap at 3). Pack
+sizes vary by foe type: 3 for big brutes, 5-6 for normal packs, 8-10 for swarms of small foes (bats, rats,
+wisps). This makes area damage (Warlock, Trapper, Reaver cleaves, burns and spreads) a real class identity.
+- **Scale:** the stage zooms out a step for big packs instead of shrinking everything. Swarm foes are drawn
+  as smaller sprites so the party stays readable.
+- **Clutter:** only the focused target, elites and bosses show full bars. A pack gets one combined bar.
+  Damage numbers merge per pack.
+- **Perf:** a budget per unit, pooled numbers, and baked sprites. perf.mjs must hold with 10 foes on a
+  mid-range phone.
+- **Balance:** pack HP and damage are spread across the members; the sim retunes. (CB2, S6)
+
 ## 3. Classes 2.0 (CL1 design, then S2 and S3)
 
 **3.1 Three base classes by armour weight** (owner): **Warrior** (heavy), **Ranger** (medium),

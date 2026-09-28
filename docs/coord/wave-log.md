@@ -798,3 +798,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   backstory tied to the lore, how the heroes react to each).
 - Build map written: docs/design/build-map.md (task list with dependencies, models and sizes; ~35 sessions to Season 1; gap found: full building catalogue, camp scene, map growth across 5 regions/outposts -> new WC1 World and Camp 2.0 spec).
 - plan-4.md rewritten as the full Season 1 scope (owner: the build map had compressed the combat and resource overhauls): every discussed item, grouped, with its task ID; build-map.md keeps the order.
+- OWNER: smaller models, more enemies per pack (today max 3). Added to plan-4 2.10 / CB2: variable pack sizes (3 brutes, 5-6 normal, 8-10 swarms), zoom step for big packs, smaller swarm sprites, bars only on focus/elites/bosses plus one pack bar, perf budget with 10 foes.
