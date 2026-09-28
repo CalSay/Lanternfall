@@ -846,3 +846,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   region boss should bring a big moment like it (coordinator proposing a milestone per region boss).
   (2) the one-time free switch within 10 minutes: yes. (3) the Warlock's title "the Lamp-Thief" contradicts
   the lore (we are the ones keeping lamps): rename (options sent to the owner). The other five titles stand.
+- OWNER on LORE-R45: the Voice's reveal line "There were lamps before this one" makes no sense; it should speak
+  of the darkness enduring. Region bosses are AGENTS OF THE DARKNESS: they must not be associated with
+  lanterns (they take light away and shroud the world); rethink the region-boss markers/beats (incl. "the
+  Star-Fallen" as a fallen comrade, the Pyre Knight guarding "the fire", the "Last Landing" at Maud's
+  Lantern). Region 5 is SEPARATE content with its OWN look (not the Deepwell continued); the Deepwell must still
+  tie into the story. The Star-Fallen's name: coordinator decides (with the rework). Material names: owner
+  wants to see the list. Whiteout: explained to the owner. Milestones per region boss: "okay, could be better"
+  (coordinator reworking). Warlock title: SHADOWBINDER. QUEUED LORE-R45b (next free slot).
