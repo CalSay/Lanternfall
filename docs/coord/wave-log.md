@@ -666,3 +666,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   work. Phases: A, B, then W1 (shell + map + registerPlace; absorbs plan-2 RD), W2 (Rest/Tavern/Almanac),
   W3 (Deepwell/raid/expeditions), D, E, F, then G. Coordinator decisions on 10: raid pin in the foe's home
   region; UX-A does not reorder the tab bar (W1 does); the Tavern is a sheet.
+- OWNER: the icons look amateurish ('like an 8 year old made them on paint'). Today: 12x12 maps, 2-3 flat colours, no outline or shading. ICON0 style study launched (16 icons in 3 styles vs current, tab bar and list-row mocks; count of all icons; renderer change; recommendation). Owner picks, then ICON1 full redraw.
