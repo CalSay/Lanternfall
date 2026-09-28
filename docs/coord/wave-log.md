@@ -885,3 +885,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   recipes) can be simplified at build time to a save-key bump where that is cheaper; (2) file numbers: CB2 uses
   59g/59h-bosses/59i/59j, RG1 uses 59h-uniq-combat, CL1 59e-class-combat vs legendaries 59e-legend-combat:
   distinct names, fine, but S-slice briefs must list exact files. Owner decisions O1-O13 put to the owner.
+- MERGED LORE-R45b. Shrouds: the Drowning Dark (Hollow), Silas the Fogbound (Coast), the Pyre Knight
+  (Emberwaste), the Whitehush (Pale Reach; killed Rowan, Kestrel's comrade). Voice: "Every flame goes out. I
+  can wait." Region 5 = the Gloamvale; finale at its Heart; the Voice retreats into the Deepwell under Hollow's
+  Rest (Season 2 hook). Milestone table lore.md 4.4a. COORDINATOR FIXES FOR WC1: row 1's "person" raises the
+  Storehouse, which already exists at ~8 min (H3): WC1 must give the Hollow family a different building;
+  rows 3-4 powers (Trade Routes, a Tactics slot) are unconfirmed against plan-4 order: WC1/build-map to settle.
+  Code follow-up LORE-C1 (rename Listener strings etc., list in regions-4-5.md end) queued. Owner questions:
+  the Seam, the Deepwell rematch stretch, names Rowan/Haldor/Nessa.
