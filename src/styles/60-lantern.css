@@ -1,0 +1,55 @@
+/* 60-lantern: the Great Lantern card and the Lantern Road strip (75-lantern-ui.js). */
+
+/* ---- the Great Lantern card ---- */
+.gl-ov { --lc: var(--gold); position: fixed; inset: 0; z-index: 37; display: grid; place-items: center; padding: 16px; background: radial-gradient(90% 60% at 50% 30%, color-mix(in srgb, var(--lc) 14%, transparent), transparent 70%), rgba(8,6,12,.92); cursor: pointer; animation: gl-fade .4s ease-out; }
+.gl-card { width: min(360px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; display: grid; justify-items: center; gap: 8px; padding: 18px 16px 16px; text-align: center; background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--lc) 20%, transparent), transparent 70%), var(--panel); border: 2px solid var(--lc); box-shadow: 0 4px 0 #0B0810, 0 0 48px color-mix(in srgb, var(--lc) 28%, transparent); animation: gl-rise .45s cubic-bezier(.2,.9,.3,1.2); }
+.gl-eye { font: 600 11px var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lc); }
+.gl-lamp { position: relative; width: 120px; height: 132px; margin: 2px 0; display: grid; place-items: center; }
+.gl-img { grid-area: 1 / 1; width: 84px; height: 98px; image-rendering: pixelated; position: relative; z-index: 1; }
+.gl-lit { opacity: 0; transition: opacity .5s ease-out; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--lc) 70%, transparent)); }
+.gl-rays { position: absolute; inset: -18px; border-radius: 50%; opacity: 0; transform: scale(.4); background: radial-gradient(circle, color-mix(in srgb, var(--lc) 55%, transparent) 0, color-mix(in srgb, var(--lc) 18%, transparent) 38%, transparent 66%), repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--lc) 22%, transparent) 0 6deg, transparent 6deg 30deg); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); transition: opacity .7s ease-out, transform .9s cubic-bezier(.2,.9,.3,1.1); }
+.gl-lamp.on .gl-lit { opacity: 1; }
+.gl-lamp.on .gl-dark { opacity: 0; transition: opacity .5s; }
+.gl-lamp.on .gl-rays { opacity: 1; transform: scale(1); animation: gl-turn 24s linear 1s infinite; }
+.gl-head { margin: 0; font: 700 22px/1.15 var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--lc) 40%, transparent); }
+.gl-text { margin: 0; font-size: 14px; line-height: 1.45; color: var(--bone); text-align: left; }
+.gl-rw { list-style: none; margin: 2px 0 0; padding: 8px 10px; width: 100%; box-sizing: border-box; display: grid; gap: 6px; background: var(--well); border: 1px solid var(--line); text-align: left; }
+.gl-rw li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #F2E6B0; }
+.gl-rw img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
+.gl-next { margin: 0; font-size: 12.5px; color: var(--muted); }
+.gl-go { margin-top: 4px; }
+@keyframes gl-fade { from { opacity: 0; } }
+@keyframes gl-rise { from { transform: translateY(12px) scale(.97); opacity: 0; } }
+@keyframes gl-turn { to { transform: scale(1) rotate(360deg); } }
+.gl-ov.still, .gl-ov.still .gl-card, .gl-ov.still .gl-rays { animation: none; }
+.gl-ov.still .gl-lit, .gl-ov.still .gl-dark, .gl-ov.still .gl-rays { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .gl-ov, .gl-card, .gl-lamp.on .gl-rays { animation: none; }
+  .gl-lit, .gl-dark, .gl-rays { transition: none; }
+}
+
+/* ---- the Lantern Road strip (Camp view, under the header) ---- */
+#sec-lantern-road { margin: 0; }
+.gl-road { display: flex; align-items: center; gap: 4px; width: 100%; margin: 2px 0 8px; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 11px var(--body); cursor: pointer; min-height: 44px; box-sizing: border-box; }
+.gl-road:hover, .gl-road:focus-visible { border-color: var(--gold); }
+.gl-node { --lc: var(--gold); display: flex; align-items: center; gap: 4px; min-width: 0; flex: 0 1 auto; white-space: nowrap; }
+.gl-node img { width: 16px; height: 19px; image-rendering: pixelated; flex: none; }
+.gl-node b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; padding-right: 2px; }
+.gl-node.lit b { color: var(--bone); }
+.gl-node.lit img { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--lc) 70%, transparent)); }
+.gl-node.here b { color: var(--lc); }
+.gl-node.beyond b { font-style: italic; }
+.gl-link { flex: 1 1 8px; min-width: 6px; height: 2px; background: var(--line); }
+.gl-link.on { background: color-mix(in srgb, var(--gold) 55%, var(--line)); }
+
+/* ---- the Lantern Road sheet ---- */
+.gl-sh-title { margin: 0 0 4px; font: 700 20px var(--display); color: var(--bone); }
+.gl-sh-list { display: grid; gap: 8px; margin-top: 10px; }
+.gl-sh-row { --lc: var(--gold); display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.gl-sh-row.lit { border-color: color-mix(in srgb, var(--lc) 55%, var(--line)); }
+.gl-sh-row.here { box-shadow: inset 3px 0 0 var(--lc); }
+.gl-sh-ic img { width: 30px; height: 35px; image-rendering: pixelated; display: block; }
+.gl-sh-row.lit .gl-sh-ic img { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--lc) 70%, transparent)); }
+.gl-sh-n { font-weight: 700; color: var(--bone); font-size: 14px; }
+.gl-sh-sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.gl-sh-here { font-size: 12px; color: var(--lc); margin-top: 2px; }

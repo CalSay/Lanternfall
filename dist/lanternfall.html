@@ -1416,6 +1416,61 @@ span.cf-d { font-weight: 600; }
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+/* 60-lantern: the Great Lantern card and the Lantern Road strip (75-lantern-ui.js). */
+
+/* ---- the Great Lantern card ---- */
+.gl-ov { --lc: var(--gold); position: fixed; inset: 0; z-index: 37; display: grid; place-items: center; padding: 16px; background: radial-gradient(90% 60% at 50% 30%, color-mix(in srgb, var(--lc) 14%, transparent), transparent 70%), rgba(8,6,12,.92); cursor: pointer; animation: gl-fade .4s ease-out; }
+.gl-card { width: min(360px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; display: grid; justify-items: center; gap: 8px; padding: 18px 16px 16px; text-align: center; background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--lc) 20%, transparent), transparent 70%), var(--panel); border: 2px solid var(--lc); box-shadow: 0 4px 0 #0B0810, 0 0 48px color-mix(in srgb, var(--lc) 28%, transparent); animation: gl-rise .45s cubic-bezier(.2,.9,.3,1.2); }
+.gl-eye { font: 600 11px var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--lc); }
+.gl-lamp { position: relative; width: 120px; height: 132px; margin: 2px 0; display: grid; place-items: center; }
+.gl-img { grid-area: 1 / 1; width: 84px; height: 98px; image-rendering: pixelated; position: relative; z-index: 1; }
+.gl-lit { opacity: 0; transition: opacity .5s ease-out; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--lc) 70%, transparent)); }
+.gl-rays { position: absolute; inset: -18px; border-radius: 50%; opacity: 0; transform: scale(.4); background: radial-gradient(circle, color-mix(in srgb, var(--lc) 55%, transparent) 0, color-mix(in srgb, var(--lc) 18%, transparent) 38%, transparent 66%), repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--lc) 22%, transparent) 0 6deg, transparent 6deg 30deg); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); transition: opacity .7s ease-out, transform .9s cubic-bezier(.2,.9,.3,1.1); }
+.gl-lamp.on .gl-lit { opacity: 1; }
+.gl-lamp.on .gl-dark { opacity: 0; transition: opacity .5s; }
+.gl-lamp.on .gl-rays { opacity: 1; transform: scale(1); animation: gl-turn 24s linear 1s infinite; }
+.gl-head { margin: 0; font: 700 22px/1.15 var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--lc) 40%, transparent); }
+.gl-text { margin: 0; font-size: 14px; line-height: 1.45; color: var(--bone); text-align: left; }
+.gl-rw { list-style: none; margin: 2px 0 0; padding: 8px 10px; width: 100%; box-sizing: border-box; display: grid; gap: 6px; background: var(--well); border: 1px solid var(--line); text-align: left; }
+.gl-rw li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #F2E6B0; }
+.gl-rw img { width: 20px; height: 20px; image-rendering: pixelated; flex: none; }
+.gl-next { margin: 0; font-size: 12.5px; color: var(--muted); }
+.gl-go { margin-top: 4px; }
+@keyframes gl-fade { from { opacity: 0; } }
+@keyframes gl-rise { from { transform: translateY(12px) scale(.97); opacity: 0; } }
+@keyframes gl-turn { to { transform: scale(1) rotate(360deg); } }
+.gl-ov.still, .gl-ov.still .gl-card, .gl-ov.still .gl-rays { animation: none; }
+.gl-ov.still .gl-lit, .gl-ov.still .gl-dark, .gl-ov.still .gl-rays { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .gl-ov, .gl-card, .gl-lamp.on .gl-rays { animation: none; }
+  .gl-lit, .gl-dark, .gl-rays { transition: none; }
+}
+
+/* ---- the Lantern Road strip (Camp view, under the header) ---- */
+#sec-lantern-road { margin: 0; }
+.gl-road { display: flex; align-items: center; gap: 4px; width: 100%; margin: 2px 0 8px; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 11px var(--body); cursor: pointer; min-height: 44px; box-sizing: border-box; }
+.gl-road:hover, .gl-road:focus-visible { border-color: var(--gold); }
+.gl-node { --lc: var(--gold); display: flex; align-items: center; gap: 4px; min-width: 0; flex: 0 1 auto; white-space: nowrap; }
+.gl-node img { width: 16px; height: 19px; image-rendering: pixelated; flex: none; }
+.gl-node b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; padding-right: 2px; }
+.gl-node.lit b { color: var(--bone); }
+.gl-node.lit img { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--lc) 70%, transparent)); }
+.gl-node.here b { color: var(--lc); }
+.gl-node.beyond b { font-style: italic; }
+.gl-link { flex: 1 1 8px; min-width: 6px; height: 2px; background: var(--line); }
+.gl-link.on { background: color-mix(in srgb, var(--gold) 55%, var(--line)); }
+
+/* ---- the Lantern Road sheet ---- */
+.gl-sh-title { margin: 0 0 4px; font: 700 20px var(--display); color: var(--bone); }
+.gl-sh-list { display: grid; gap: 8px; margin-top: 10px; }
+.gl-sh-row { --lc: var(--gold); display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.gl-sh-row.lit { border-color: color-mix(in srgb, var(--lc) 55%, var(--line)); }
+.gl-sh-row.here { box-shadow: inset 3px 0 0 var(--lc); }
+.gl-sh-ic img { width: 30px; height: 35px; image-rendering: pixelated; display: block; }
+.gl-sh-row.lit .gl-sh-ic img { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--lc) 70%, transparent)); }
+.gl-sh-n { font-weight: 700; color: var(--bone); font-size: 14px; }
+.gl-sh-sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.gl-sh-here { font-size: 12px; color: var(--lc); margin-top: 2px; }
 /* 60-legend: legendary powers and circle sets (75-legend-ui.js, task L4). One orange: --r-legendary (#FF8A3D). 44px touch targets. */
 .lg-lbl { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .lg-st { display: grid; gap: 2px; min-width: 0; }
@@ -6373,6 +6428,75 @@ const PIN_UI_TEXT = {
   frame: 'Pinnacle frame'
 };
 
+// ---- src/js/22-data-regions.js ----
+// 22-data-regions: the regions of the Lantern Road (docs/design/region-2.md 2.2, plan-2 task R0).
+// Core, data plus pure lookups (no DOM, no S). Loads in Node too.
+//
+// A region is a run of zones with its own 7 zone types, names, scenery themes, uniques, home
+// grounds and hue rule, ending in a region boss whose first kill relights a Great Lantern
+// (55-lantern.js, card in 75-lantern-ui.js). Zones past the last region stay in it (they keep
+// cycling its types) until the next region exists.
+//
+// Exposed:
+//   REGIONS[i]         { id, n, z0, z1, types[7], names[7], themes[7], uniq[7], home[7], hue0, hueStep,
+//                        boss: { zone, name, place }, lantern, beat, col, plugged }
+//                      types: GLOBAL indices into TYPES; the rest are per place in the cycle (0-6).
+//   ROAD_BEYOND        the first dark lantern past the last region (the Lantern Road strip)
+//   regionOf(z)        the region zone z is in (last region whose z0 <= z)
+//   regionIdx(z)       its index in REGIONS
+//   regionById(id)
+//   zoneNextType(z)    the next type in z's region cycle (packs: 72% the zone's type, 28% this one)
+//   zoneTheme(z)       scenery theme key (63-scenery)
+//   zoneHue(z)         hue shift in degrees for zone z's scenery and foes
+//   zoneUnique(z)      the unique its boss can drop (UNIQ id)
+//   zoneHome(z)        its home-ground material family (55-gathering)
+//   regionBossZone(z)  true for a region's last zone (its region boss)
+//   lanternsLitAt(maxZone) number of Great Lanterns relit by a save at that max zone
+// zonePlace, zoneCycle, zoneType and zoneName live in 40-rules.js and read this table.
+//
+// THE SWITCH POINT for region 2 (task R2-1): 22-data-coast.js loads before this file (filename
+// order) and defines
+//   const REGION_COAST = { types, names, themes, uniq, home, hue0, hueStep, boss: { name, place } };
+// with types the TYPES indices it pushed (7-13). Any field it leaves out keeps the placeholder.
+// Until then the coast reuses the Hollow's foes, themes, uniques and home grounds under honest
+// "on the road to the coast" names, so zones 36-70 play exactly as before.
+
+// The coast before its own data exists: the Hollow's types, seen on the way down to the sea.
+const COAST_PLACEHOLDER = {
+  types: [0, 1, 2, 3, 4, 5, 6],
+  names: ['Seamoss Hollow', 'Sea Caves', 'The Saltbones', 'Dune Barrows', 'Brinecap Deep', 'Cliffside Quarry', 'Saltmarsh'],
+  themes: ZONE_THEME, uniq: ZONE_UNIQ, home: CRAFT_HOME,
+  hue0: 200, hueStep: 40,              // a cold, sea-ward shift so the road reads as new ground
+  boss: { name: null, place: null }    // zone 70: the cycle's elder under its cycle name
+};
+const REGIONS = (() => {
+  const plug = typeof REGION_COAST !== 'undefined' && REGION_COAST ? REGION_COAST : null;
+  const coast = Object.assign({}, COAST_PLACEHOLDER, plug || {});
+  coast.boss = Object.assign({}, COAST_PLACEHOLDER.boss, plug && plug.boss || {});
+  return [
+    { id: 'hollow', n: 'the Hollow', z0: 1, z1: 35, types: [0, 1, 2, 3, 4, 5, 6], names: ZONES, themes: ZONE_THEME,
+      uniq: ZONE_UNIQ, home: CRAFT_HOME, hue0: 0, hueStep: 70,
+      boss: { zone: 35, name: null, place: null },       // the Elder of Wraithmarsh V, as always
+      lantern: 'The Great Lantern of the Hollow', beat: 0, col: '#F2C14E', plugged: true },
+    { id: 'coast', n: 'the Sunken Coast', z0: 36, z1: 70, types: coast.types, names: coast.names, themes: coast.themes,
+      uniq: coast.uniq, home: coast.home, hue0: coast.hue0, hueStep: coast.hueStep,
+      boss: { zone: 70, name: coast.boss.name, place: coast.boss.place },
+      lantern: 'The Great Lantern of the Coast', beat: 5, col: '#7FD8C8', plugged: !!plug }
+  ];
+})();
+const ROAD_BEYOND = { id: 'ember', n: 'the Emberwaste', col: '#E0524F' };
+
+const regionIdx = z => { for (let i = REGIONS.length - 1; i > 0; i--) if (z >= REGIONS[i].z0) return i; return 0; };
+const regionOf = z => REGIONS[regionIdx(z)];
+const regionById = id => REGIONS.find(r => r.id === id) || null;
+const zoneNextType = z => { const r = regionOf(z); return r.types[(zonePlace(z) + 1) % 7]; };
+const zoneTheme = z => regionOf(z).themes[zonePlace(z)];
+const zoneHue = z => { if (!(z >= 1)) return 0; const r = regionOf(z); return (r.hue0 + zoneCycle(z) * r.hueStep) % 360; };
+const zoneUnique = z => regionOf(z).uniq[zonePlace(z)];
+const zoneHome = z => regionOf(z).home[zonePlace(z)];
+const regionBossZone = z => REGIONS.some(r => r.z1 === z);
+const lanternsLitAt = maxZone => { let n = 0; for (const r of REGIONS) if ((maxZone || 1) > r.z1) n++; return n; };
+
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load/migrate, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
@@ -6585,9 +6709,11 @@ function plan(base, r, owned, money, cap, amt = S.amt) {
 }
 
 const target = () => S.activity === 'raid' && online.ready ? 'world' : S.activity === 'gather' ? 'node' : 'mob';
-const zoneType = z => (z - 1) % 7;
-const zoneCycle = z => Math.floor((z - 1) / 7);
-const zoneName = z => ZONES[zoneType(z)] + (zoneCycle(z) ? ' ' + roman(zoneCycle(z) + 1) : '');
+// Zones by region (REGIONS, 22-data-regions.js). Zones 1-35 read exactly as the old 7-zone cycle.
+const zonePlace = z => { const r = regionOf(z); return (((z - r.z0) % 7) + 7) % 7; };     // 0-6: place in the region's cycle
+const zoneCycle = z => Math.max(0, Math.floor((z - regionOf(z).z0) / 7));                 // cycle within the region
+const zoneType = z => regionOf(z).types[zonePlace(z)];                                    // GLOBAL index into TYPES
+const zoneName = z => { const r = regionOf(z), c = zoneCycle(z); return z === r.z1 && r.boss.place ? r.boss.place : r.names[zonePlace(z)] + (c ? ' ' + roman(c + 1) : ''); };
 const bossReady = () => S.zone === S.maxZone && S.kills >= 10;
 const nodeColor = () => (MAT[S.node.kind] || MAT.wood).col[S.node.t - 1];
 
@@ -6895,11 +7021,11 @@ function spawn() {
   if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = Math.max(5, 30 + bonus('bossTime')); return; }
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
-  const ti = boss || Math.random() < 0.72 ? zoneType(z) : (zoneType(z) + 1) % 7;
+  const ti = boss || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);
   const t = TYPES[ti];
   const hp = mobHp(z) * (boss ? bossHpMult(z) * mod('bossHp') : (0.9 + Math.random() * 0.2)) * mod('foeHp');
   mob = {
-    key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss, hp, max: hp,
+    key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss, hp, max: hp,
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
@@ -6966,7 +7092,7 @@ function killPack(m, g) {
     const first = S.zone === S.maxZone;
     fightBoss = false; failDps = 0;
     emit('shake', 0.3);
-    const uq = ZONE_UNIQ[zoneType(z)], owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
+    const uq = zoneUnique(z), owned = (S.found[uq] || 0) >= tier ? UNIQ_TUNE.owned : 1;
     if (Math.random() < (first ? UNIQ_TUNE.first : UNIQ_TUNE.again) * owned * mod('uniqueChance')) dropUnique(uq, tier);
     if (first) { S.maxZone++; S.zone++; S.kills = 0; emit('sceneReset'); toast(`${zoneName(z)} is cleared. ${zoneName(z + 1)} lies ahead.`, 'good', null, 'high'); emit('zoneClear', { zone: z }); }
   } else if (S.zone === S.maxZone) {
@@ -8229,8 +8355,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   const give = (fam, t, n) => { if (n > 0) S.mats[fam][t - 1] += n; return n; };
 
   // ---------------- home ground ----------------
-  homeFamily = (z = S.zone) => CRAFT_HOME[zoneType(z)];
-  homeBonus = (fam, z = S.zone) => craftHomeBonus(zoneType(z), fam, stars(z));
+  homeFamily = (z = S.zone) => zoneHome(z);
+  homeBonus = (fam, z = S.zone) => zoneHome(z) !== fam ? 0 : stars(z) >= CRAFT_HOME_BONUS.stars ? CRAFT_HOME_BONUS.starred : CRAFT_HOME_BONUS.base;
   for (const fam of GATHER_KINDS) addModifier('yield:' + fam, () => 1 + homeBonus(fam));
 
   // Foraging catch-up: x2 XP while below the best of Mining and Woodcutting.
@@ -8245,7 +8371,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
   // offline kills in awayBase), so each kill credits its expected drop. Packs: 72% zone type, 28% next.
   awaySigDrops = (kills, z = S.zone) => {
     const out = {}, zt = zoneType(z);
-    for (const [ti, share] of [[zt, 0.72], [(zt + 1) % 7, 0.28]]) {
+    for (const [ti, share] of [[zt, 0.72], [zoneNextType(z), 0.28]]) {
       const type = TYPES[ti].key, d = CRAFT_SIG_DROPS[type]; if (!d) continue;
       out[d.fam] = (out[d.fam] || 0) + kills * share * sigDropChance(type, z);
     }
@@ -8293,7 +8419,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
       toast(`Champion defeated: +${got} ${CRAFT_TROPHIES[i].n}${d ? ` and ${CH.sig} ${matName(d.fam, tier)}` : ''}.`, 'loot', trophyIcon(i));
     }
     if (m.boss && m.firstKill && zone >= SRC.firstBossFrom) {
-      const bi = zoneType(zone), got = addTrophy(bi, roll(SRC.firstBoss * mod('trophy')), 'boss');
+      const bi = zonePlace(zone), got = addTrophy(bi, roll(SRC.firstBoss * mod('trophy')), 'boss');
       if (got) toast(`The boss leaves a trophy: +${got} ${CRAFT_TROPHIES[bi].n}.`, 'loot', trophyIcon(bi));
     }
   });
@@ -8316,7 +8442,7 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
     const champs = roll(champsAway(kills, zone));
     if (champs > 0) {
       S.craft.champ = (S.craft.champ || 0) + champs;
-      addTrophy(zt, champs * (CH.troph + bonus('champTrophy')), 'champion');
+      addTrophy(zonePlace(zone), champs * (CH.troph + bonus('champTrophy')), 'champion');
       const d = CRAFT_SIG_DROPS[TYPES[zt].key];
       if (d) give(d.fam, tier, champs * CH.sig);
     }
@@ -8649,6 +8775,70 @@ var forgeGoalPicks = 0;
     icon: () => { const b = forgeNext(); return b ? { item: { slot: b.kind, t: b.t } } : null; },
     go: { tab: 'forge', sel: '#forgeBtn', fn: () => { const b = forgeNext(); if (b) { S.fSlot = b.kind; S.fTier = b.t; forgeGoalPicks++; } } }
   });
+}
+
+// ---- src/js/55-lantern.js ----
+// 55-lantern: the Great Lantern moments (docs/design/region-2.md 8.1 and 8.3, plan-2 task R0).
+// CORE FILE: no DOM. UI: 75-lantern-ui.js (the full-screen card and the Lantern Road strip).
+//
+// The first kill of a region boss (REGIONS[i].z1, 22-data-regions.js) relights that region's Great
+// Lantern, once per save:
+//   emit('greatLantern', { n, region, zone, name, head, text, note, quiet, rewards })
+//     n: 1 for the Hollow, 2 for the Coast. head/text/note: COAST_STORY[region.beat] (21b-stories-coast).
+//     quiet: true for a save that was already past the boss before this system existed (it gets one
+//       bell line through emit('whatsNew') instead of the card).
+//     rewards: listeners push { txt, ic } lines while the event runs (57e-constellations: the star
+//       points; later the Oaths, rank 8 ...). The card and the bell line list them.
+// The reward itself is never granted here: each system derives its own from S.maxZone or listens.
+//
+// State S.lantern: { v, lit: { regionId: time relit }, seen }. seen = the max zone this system last
+// looked at (0 = never: a save loaded for the first time since R0, so what it passed is quiet).
+//
+// API: lanternSync() (runs on zoneClear and after each tick; cheap when nothing changed),
+//      lanternRoad() -> [{ id, n, name, col, z0, z1, lit, at, reached, here, beyond }]
+
+let lanternSync, lanternRoad;
+{
+  registerState('lantern', { v: 1, lit: {}, seen: 0 });
+  const L = () => S.lantern || (S.lantern = { v: 1, lit: {}, seen: 0 });
+
+  function fire(r, i, quiet) {
+    const beat = (typeof COAST_STORY !== 'undefined' && COAST_STORY[r.beat]) || null;
+    const e = {
+      n: i + 1, region: r.id, zone: r.z1, name: r.lantern,
+      head: (beat && beat.head) || `${r.lantern} burns again.`,
+      text: (beat && beat.text) || '', note: (beat && beat.note) || '',
+      quiet: !!quiet, rewards: []
+    };
+    emit('greatLantern', e);
+    if (quiet) {
+      const extra = e.rewards.map(x => x.txt).filter(Boolean);
+      emit('whatsNew', { msg: [e.head, e.note].concat(extra.length ? [extra.join('. ') + '.'] : []).filter(Boolean).join(' '),
+        icon: { ic: ['orb', r.col, { 7: '#FFF3C4' }] }, first: true });
+    }
+  }
+
+  lanternSync = () => {
+    const l = L(), mz = S.maxZone || 1, old = !l.seen;
+    if (l.seen === mz) return;
+    REGIONS.forEach((r, i) => {
+      if (mz > r.z1 && !l.lit[r.id]) { l.lit[r.id] = Date.now(); fire(r, i, old); }
+    });
+    l.seen = mz;
+  };
+  on('zoneClear', () => lanternSync());
+  onTick(() => { const l = S.lantern; if (!l || l.seen !== S.maxZone) lanternSync(); });
+
+  lanternRoad = () => {
+    const l = L(), mz = S.maxZone || 1, here = regionIdx(S.zone || 1);
+    const out = REGIONS.map((r, i) => ({
+      id: r.id, n: r.n, name: r.lantern, col: r.col, z0: r.z0, z1: r.z1,
+      lit: mz > r.z1, at: l.lit[r.id] || 0, reached: mz >= r.z0, here: i === here, beyond: false
+    }));
+    out.push({ id: ROAD_BEYOND.id, n: ROAD_BEYOND.n, name: 'Beyond: ' + ROAD_BEYOND.n, col: ROAD_BEYOND.col,
+      z0: 0, z1: 0, lit: false, at: 0, reached: false, here: false, beyond: true });
+    return out;
+  };
 }
 
 // ---- src/js/55-legend.js ----
@@ -12910,7 +13100,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
       for (let i = 0; i < pay.bonus.keep; i++) {
         const id = EXPED_KEEPSAKES[s.r] ? s.r : null;
         if (id && !X().keep[id]) { X().keep[id] = 1; haul.keep.push(EXPED_KEEPSAKES[id]); }
-        else addTro(zoneType(EXPED_BANDS[d.b].z0 + (s.seed % 7)), 1);
+        else addTro(zonePlace(EXPED_BANDS[d.b].z0 + (s.seed % 7)), 1);
       }
       // Kingslayer credit (the Hollow Court), capped at 50 in total.
       if (pay.ks > 0) {
@@ -13166,7 +13356,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] codex', e); return d; } };
   const bits = m => { let n = 0; m = m | 0; while (m) { n += m & 1; m >>>= 1; } return n; };
   const first = id => ROSTER[id] ? ROSTER[id].name.replace(/^(Old|Ser|Brother|Saint) /, '').split(' ')[0] : id;
-  const REGION_ZONES = 35;
+  const REGION_ZONES = REGIONS[0].z1;   // the Hollow; coast rows are R2-7's
   const mobKey = m => m && m.key ? String(m.key).replace(/\d+$/, '') : null;
   const tIdx = k => TYPES.findIndex(t => t.key === k);
   const zonesOf = i => { const z = []; for (let n = i + 1; n <= REGION_ZONES && z.length < 3; n += 7) z.push(n); return z; };
@@ -14780,7 +14970,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   const isKey = s => s.kind === 'key' || s.kind === 'crown';
 
   // ---- points ----
-  greatLanternsLit = () => Math.max(0, Math.floor(((S.maxZone || 1) - 1) / T.lanternZone));
+  greatLanternsLit = () => lanternsLitAt(S.maxZone);   // region bosses beaten (22-data-regions)
   starPoints = () => Math.floor((S.L || 1) / T.every) + T.lanternPts * greatLanternsLit();
 
   // ---- state ----
@@ -14990,10 +15180,9 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     if (quiet || L % T.every !== 0 || !starCls() || typeof isUnlocked !== 'function' || !isUnlocked('stars')) return;
     toast(`+1 star point. You have ${starFree()} to spend in Party, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
   });
-  on('zoneClear', ({ zone }) => {
-    if ((zone % T.lanternZone) !== 0) return;
-    toast(`A Great Lantern is lit. +${T.lanternPts} star points.`, 'good', { ic: ['constel', '#F2C14E'] }, 'high');
-  });
+  // The points come from greatLanternsLit(); the Great Lantern card (55-lantern, 75-lantern-ui) says so.
+  // A quiet catch-up (a save already past the boss) has counted them all along: nothing new to list.
+  on('greatLantern', e => { if (e && e.rewards && !e.quiet) e.rewards.push({ txt: `+${T.lanternPts} star points`, ic: ['constel', '#F2C14E'] }); });
 
   // ---- Next Up ----
   // The cheapest star you can light now (points and rules), or null.
@@ -15360,7 +15549,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function mkFoe(ti, hp, gold, xp, z, boss, name, cyc) {
     const t = TYPES[ti], b = FOE_BEH[t.key] || FOE_BEH.slime;
     return {
-      key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, cyc * 70), boss: !!boss, hp, max: hp,
+      key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss: !!boss, hp, max: hp,
       name, gold, xp, hit: 0, dead: 0, born: 0,
       ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk), spd: boss ? T.bossSpd : T.spd * b.spd,
       swing: 0.6 + Math.random() * 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
@@ -15381,7 +15570,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     } else {
       const n = T.packSize, tot = mobHp(z) * T.packHp * mod('foeHp');
       for (let i = 0; i < n; i++) {
-        const ti = Math.random() < T.mixP ? zt : (zt + 1) % 7;
+        const ti = Math.random() < T.mixP ? zt : zoneNextType(z);
         const hp = tot / n * (0.9 + Math.random() * 0.2);
         const f = mkFoe(ti, hp, mobGold(z) * T.packGold / n, 0, z, false, TYPES[ti].name, cyc);
         foes.push(f);
@@ -16124,7 +16313,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
     for (let z = zMax; z >= lo; z--) {
-      const b = BEH_EST[zoneType(z)], mix = BEH_EST[(zoneType(z) + 1) % 7], w = k => T.mixP * b[k] + (1 - T.mixP) * mix[k];
+      const b = BEH_EST[zoneType(z)], mix = BEH_EST[zoneNextType(z)], w = k => T.mixP * b[k] + (1 - T.mixP) * mix[k];
       const physX = 1 - w('arm') * (1 - T.armourX), fheal = w('heal');
       const heroPhys = hero.cls === 'lanternmage' ? 1 : physX;
       const D = (heroD * heroPhys + compPhys * physX + compMagic) * T.estEff;
@@ -16398,7 +16587,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     for (let i = 0; i < n && list.length < 6; i++) {
       const b = FOE_BEH[type], cyc = zoneCycle(f.z);
       const a = {
-        key: type + cyc, type, rows: SPR[type], pal: shiftPal(TYPES[ti].pal, cyc * 70), boss: false, hp: f.max * share, max: f.max * share,
+        key: type + cyc, type, rows: SPR[type], pal: shiftPal(TYPES[ti].pal, zoneHue(f.z)), boss: false, hp: f.max * share, max: f.max * share,
         name: TYPES[ti].name, gold: 0, xp: 0, hit: 0, dead: 0, born: 0, ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured,
         atk: f.atk / COMBAT_TUNE.bossAtk * b.atk, spd: COMBAT_TUNE.spd * b.spd, swing: 1, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
         stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
@@ -17437,7 +17626,7 @@ let resize, animate, draw, stageStats, warmScene;
     if (tg === 'world') th = 'raid';
     else if (deepOn()) th = 'well';
     else if (tg === 'node') th = skillOf(S.node.kind) === 'mine' ? 'mine' : 'woods';
-    else { th = ZONE_THEME[zoneType(S.zone)]; hue = (zoneCycle(S.zone) * 70) % 360; }
+    else { th = zoneTheme(S.zone); hue = zoneHue(S.zone); }
     if (!scene || th !== curTheme || hue !== curHue) { scene = sceneFor(th, SW, SCH, hue); curTheme = th; curHue = hue; }
   }
   // The well's scene (a Deepwell run) is built when the player opens the Deepwell view (or has a
@@ -17459,7 +17648,7 @@ let resize, animate, draw, stageStats, warmScene;
   // logical size (SW x SCH), not the element's CSS size. Returns false before the first resize.
   warmScene = function (z) {
     if (!SW || typeof idleTask !== 'function' || typeof sceneSteps !== 'function') return false;
-    const th = ZONE_THEME[zoneType(z)], hue = (zoneCycle(z) * 70) % 360, w = SW, h = SCH, k = DPR * ZM;
+    const th = zoneTheme(z), hue = zoneHue(z), w = SW, h = SCH, k = DPR * ZM;
     const same = () => w === SW && h === SCH && k === DPR * ZM, step = sceneSteps(th, w, h, hue);
     // soon (front of the queue): one build step per task, then the plates and atmosphere steps
     const run = () => { if (!same()) return; const sc = step(); if (sc) scenePlates(sc, k, w, h, 'queue'); else idleTask(run, true); };
@@ -17657,7 +17846,7 @@ let resize, animate, draw, stageStats, warmScene;
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
     if (m.deep) { const b = coldBand(m.floor); key = 'd' + type + (m.boss ? 'E' : '') + b; fr = coldFrames(type, !!m.boss, b); }
-    else { key = 'm' + type + (m.boss ? 'E' : '') + zoneCycle(S.zone); fr = enemyFrames(type, { elder: !!m.boss, hue: (zoneCycle(S.zone) * 70) % 360 }); }
+    else { key = 'm' + type + (m.boss ? 'E' : '') + zoneHue(S.zone); fr = enemyFrames(type, { elder: !!m.boss, hue: zoneHue(S.zone) }); }
     const rig = typeof ENEMY_RIGS !== 'undefined' && ENEMY_RIGS[type];
     s.anim = rig && rig.anim || 'lunge'; s.hover = !!(rig && rig.hover);
     s.next = 1.5 + Math.random() * 3; s.key = key; s.fr = fr;
@@ -21185,7 +21374,7 @@ const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc
 function uiFight() {
   for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
-  const uq = UNIQ[ZONE_UNIQ[zoneType(S.zone)]].name;
+  const uq = UNIQ[zoneUnique(S.zone)].name;
   if (S.activity !== 'fight') {
     putText(G.title, S.activity === 'raid' ? 'Your party is at the raid' : 'Your party is gathering');
     putText(G.desc, 'Switch to Fight above the tabs to clear zones and earn gold and essence.');
@@ -24523,6 +24712,145 @@ let craftUI = null;
   });
 }
 
+// ---- src/js/75-lantern-ui.js ----
+// 75-lantern-ui: the Great Lantern card and the Lantern Road strip (region-2.md 8.1-8.3, task R0).
+// Browser-only. Logic: 55-lantern.js (emit('greatLantern')), data: 22-data-regions.js.
+//
+// The card: a full-screen moment on a region boss's first kill (not for quiet catch-ups: those are
+// a bell line). The lantern shows dark, then lights with a glow and rays (reduced motion: lit at
+// once). Headline and story from the event (COAST_STORY), then the rewards. One tap continues.
+// The strip: the Camp view's header gains a line of lanterns, one per region and one dark one
+// beyond. A tap opens a sheet with each region, its zones and the day its lantern was relit.
+{
+  // A 12x14 Great Lantern. 6 handle, 4 frame, 3 glass, 1 flame, 5 flame core.
+  const LANTERN = ['....6666....', '...66..66...', '....6666....', '.4444444444.', '..43333334..', '..43311334..', '..43155134..',
+    '..41555514..', '..41555514..', '..43155134..', '..43333334..', '.4444444444.', '...444444...', '....4444....'];
+  const PAL_DARK = { 6: '#4A4E5C', 4: '#2E2A36', 3: '#1C2030', 1: '#262A38', 5: '#30364A' };
+  const palLit = col => ({ 6: '#8C6A43', 4: '#4A3424', 3: mixCol(col, '#FFF3C4', 0.55), 1: col, 5: '#FFF8DA' });
+  function mixCol(a, b, t) {
+    const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), x = p(a), y = p(b);
+    return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+  }
+  const lanternURL = (lit, col) => lit ? spriteURL('gl:lit' + col, LANTERN, palLit(col)) : spriteURL('gl:dark', LANTERN, PAL_DARK);
+
+  // ---------------- the card ----------------
+  const queue = [];
+  let ov = null, lastFocus = null;
+  const blocked = () => !!document.querySelector('.away-ov, #createScreen, .join-ov');
+  function closeCard() {
+    if (!ov) return;
+    ov.remove(); ov = null;
+    if (lastFocus && lastFocus.focus && document.contains(lastFocus)) try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
+    if (queue.length) setTimeout(showNext, reduced ? 0 : 200);
+    ui(true);
+  }
+  function showNext() {
+    if (ov || !queue.length) return;
+    if (blocked()) { setTimeout(showNext, 600); return; }
+    const e = queue.shift(), r = regionById(e.region) || REGIONS[0];
+    lastFocus = document.activeElement;
+    ov = el('div', 'gl-ov' + (reduced ? ' still' : ''));
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'glHead');
+    ov.style.setProperty('--lc', r.col);
+    const card = el('div', 'gl-card');
+    card.append(el('div', 'gl-eye', `Great Lantern ${roman(e.n)} · ${r.n}`));
+    const stage = el('div', 'gl-lamp'), rays = el('div', 'gl-rays'), dark = img(lanternURL(false), 'gl-img gl-dark'), lit = img(lanternURL(true, r.col), 'gl-img gl-lit');
+    stage.append(rays, dark, lit);
+    card.append(stage);
+    const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
+    card.append(h);
+    if (e.text) card.append(el('p', 'gl-text', e.text));
+    if (e.rewards && e.rewards.length) {
+      const list = el('ul', 'gl-rw');
+      for (const x of e.rewards) {
+        const li = el('li');
+        if (x.ic) { try { li.append(img(iconURL(...x.ic))); } catch (err) {} }
+        li.append(el('span', null, x.txt));
+        list.append(li);
+      }
+      card.append(list);
+    }
+    const next = regionOf(e.zone + 1);
+    if (next && next.z0 === e.zone + 1) card.append(el('p', 'gl-next', `The road goes on: ${next.n}, zones ${next.z0} to ${next.z1}.`));
+    const go = el('button', 'big forge gl-go', 'Continue'); go.type = 'button';
+    card.append(go);
+    ov.append(card);
+    ov.addEventListener('click', closeCard);
+    ov.addEventListener('keydown', ev => { if (ev.key === 'Escape' || ev.key === 'Tab') { ev.preventDefault(); if (ev.key === 'Escape') closeCard(); } });
+    document.body.append(ov);
+    // the flourish: dark, then lit (the class starts the CSS; reduced motion shows it lit at once)
+    if (reduced) stage.classList.add('on');
+    else requestAnimationFrame(() => setTimeout(() => { if (stage.isConnected) stage.classList.add('on'); }, 450));
+    go.focus({ preventScroll: true });
+  }
+  on('greatLantern', e => {
+    if (!e || e.quiet) return;
+    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice() });
+    setTimeout(showNext, 0);
+    road.sig = '';
+  });
+
+  // ---------------- the Lantern Road strip ----------------
+  const road = { box: null, sig: '' };
+  const fmtDate = t => { try { return new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+  function roadSheet() {
+    if (typeof openSheet !== 'function') return;
+    openSheet(api => {
+      api.sheet.classList.add('gl-sheet');
+      api.body.append(el('h2', 'gl-sh-title', 'The Lantern Road'),
+        el('p', 'note', 'Each region ends in a Great Lantern. Beat its last boss to light it again.'));
+      const list = el('div', 'gl-sh-list');
+      for (const x of lanternRoad()) {
+        const row = el('div', 'gl-sh-row' + (x.lit ? ' lit' : '') + (x.here ? ' here' : ''));
+        row.style.setProperty('--lc', x.col);
+        const ic = el('div', 'gl-sh-ic'); ic.append(img(lanternURL(x.lit, x.col)));
+        const tx = el('div', 'gl-sh-tx');
+        const name = x.beyond ? `Beyond: ${x.n}` : x.name;
+        const sub = x.beyond ? 'Dark. The road does not reach it yet.'
+          : x.lit ? `Relit${x.at ? ' on ' + fmtDate(x.at) : ''}. Zones ${x.z0} to ${x.z1}.`
+          : x.reached ? `Dark. Beat the zone ${x.z1} boss to light it. You are at zone ${S.maxZone}.`
+          : `Dark. Zones ${x.z0} to ${x.z1}. Reach zone ${x.z0} to walk this far.`;
+        tx.append(el('div', 'gl-sh-n', name), el('div', 'gl-sh-sub', sub));
+        if (x.here) tx.append(el('div', 'gl-sh-here', 'Your party is here'));
+        row.append(ic, tx);
+        list.append(row);
+      }
+      api.body.append(list);
+    }, { label: 'The Lantern Road', small: true });
+  }
+  function roadBuild(sec) {
+    const b = el('button', 'gl-road'); b.type = 'button';
+    b.setAttribute('aria-label', 'The Lantern Road: see each region and its Great Lantern');
+    b.addEventListener('click', roadSheet);
+    road.box = b; road.sig = '';
+    sec.append(b);
+    // sit under the camp's own header ("Hollow's Rest"), above the Hearth
+    const head = document.querySelector('#sec-camp .world-head');
+    if (head) head.after(sec);
+  }
+  function roadUpdate() {
+    if (!road.box) return;
+    const list = lanternRoad(), sig = list.map(x => (x.lit ? 1 : 0) + (x.here ? 'h' : '') + (x.reached ? 'r' : '')).join('|');
+    if (sig === road.sig) return;
+    road.sig = sig;
+    road.box.textContent = '';
+    list.forEach((x, i) => {
+      if (i) road.box.append(el('i', 'gl-link' + (x.reached || x.lit ? ' on' : '')));
+      const n = el('span', 'gl-node' + (x.lit ? ' lit' : '') + (x.here ? ' here' : '') + (x.beyond ? ' beyond' : ''));
+      n.style.setProperty('--lc', x.col);
+      n.append(img(lanternURL(x.lit, x.col)), el('b', null, x.beyond ? 'Beyond' : x.n.replace(/^the /, '')));
+      road.box.append(n);
+    });
+  }
+  // bake the strip's lanterns in idle time, so the Camp tab's first open does not pay for them
+  if (typeof idleTask === 'function') idleTask(() => { lanternURL(false); for (const r of REGIONS) lanternURL(true, r.col); lanternURL(true, ROAD_BEYOND.col); });
+  registerSection('camp', {
+    id: 'lantern-road', title: null,
+    mount: roadBuild,
+    update: roadUpdate
+  });
+}
+
 // ---- src/js/75-legend-ui.js ----
 // 75-legend-ui: legendary powers and circle sets, the UI (docs/design/legendaries.md 7, task L4). Browser-only.
 // Reads the L2 core (55-legend.js) only through its API; every action goes through a legendX/legendCanX pair.
@@ -27423,9 +27751,9 @@ function warmNextZone() {
   const st = $('stage'), w = st.clientWidth, h = st.clientHeight, z = S.zone + 1, key = z + ':' + w + 'x' + h + ':' + (window.devicePixelRatio || 1);
   if (!w || !h || key === warmKey) return;
   warmKey = key;
-  const hueOf = zz => (zoneCycle(zz) * 70) % 360;
+  const hueOf = zoneHue;
   // soon: ahead of background bakes (queued in reverse, so the scene runs first, then the foes)
-  for (const ti of [(zoneType(z) + 1) % 7, zoneType(z)]) idleTask(() => enemyFrames(TYPES[ti].key, { elder: false, hue: hueOf(z) }), true);
+  for (const ti of [zoneNextType(z), zoneType(z)]) idleTask(() => enemyFrames(TYPES[ti].key, { elder: false, hue: hueOf(z) }), true);
   idleTask(() => enemyFrames(TYPES[zoneType(S.zone)].key, { elder: true, hue: hueOf(S.zone) }), true);
   if (!warmScene(z)) warmKey = '';
 }

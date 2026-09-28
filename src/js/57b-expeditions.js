@@ -347,7 +347,7 @@ let expedOpen, expedSlots, expedLengths, expedFree, expedRoutes, expedBandOpen, 
       for (let i = 0; i < pay.bonus.keep; i++) {
         const id = EXPED_KEEPSAKES[s.r] ? s.r : null;
         if (id && !X().keep[id]) { X().keep[id] = 1; haul.keep.push(EXPED_KEEPSAKES[id]); }
-        else addTro(zoneType(EXPED_BANDS[d.b].z0 + (s.seed % 7)), 1);
+        else addTro(zonePlace(EXPED_BANDS[d.b].z0 + (s.seed % 7)), 1);
       }
       // Kingslayer credit (the Hollow Court), capped at 50 in total.
       if (pay.ks > 0) {

@@ -362,3 +362,10 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   with a tank intercept, casts, heal motes, knockback, KO/stand-up, a wipe "Fall back!" retreat, all
   telegraph colours, and reduced-motion variants. JS/frame unchanged; frame gap noisy on a busy machine.
   Follow-ups: unitHeal could carry `from`; pack foes overlap somewhat at 360px.
+- R0 merged: REGIONS (Hollow 1-35, Sunken Coast 36-70 with placeholder types/names until R2-1 plugs
+  REGION_COAST into 22-data-coast.js), region-aware zone functions and readers, 55-lantern.js (S.lantern),
+  the Great Lantern card at the zone 35 boss (a What's new line for old saves), Constellations' +4 points
+  through emit('greatLantern'), and the Lantern Road strip on the Camp view. Coordinator resolved a
+  62-stage.js conflict: kept C4's pack drawing and applied R0's zoneHue for foe sprites. R2-2/R2-3/R2-7
+  notes are in the R0 report (BEH_EST length, coast champion trophies, the Coast card rewards, the Codex
+  zones page).
