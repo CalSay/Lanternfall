@@ -1327,6 +1327,7 @@ try {
   for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
     const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
     const go = loadCore({ storage: memoryStorage({ [KEY]: raw }) });
+    go.eval('TOOL_TUNE.on = 0');   // H2 (55-tools) adds right tool and mastery speed on top; off = the K5 maths
     const defaults = go.eval('S.skills.forage.lv === 1 && ["crystal", "fibre", "herb", "hide"].every(k => S.mats[k].length === 5) && S.craft.troph.length === 7');
     const same = ['ore', 'wood', 'ess'].every(k => JSON.stringify(go.eval(`S.mats.${k}`)) === JSON.stringify(old.mats[k]));
     const exact = go.eval(`[1, 2, 3, 4, 5].every(t => {
@@ -1338,6 +1339,94 @@ try {
     assert(defaults && same && exact && !go.errors.length, `${f}: Foraging and new families default in, old materials untouched, ore/wood node maths unchanged`);
   }
 } catch (e) { fail('gathering crashed: ' + (e.stack || e)); }
+
+// ---- tools and tool mastery (55-tools.js, H2; hearth-and-hands.md 2 and 8.3) ----
+console.log('tools');
+try {
+  const fresh = seed => { const g = loadCore({ seed }); g.eval('almanac.force("none")'); return g; };
+  const run = (h, secs) => { for (let t = 0; t < secs; t += 0.1) h.fn.tick(0.1); };
+  const M1 = JSON.stringify({ v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 });
+  {
+    const g = fresh(71), E = s => g.eval(s);
+    // data: every tool at the Workbench with three lines; the Woodaxe noun
+    assert(E('["pick", "axe", "sickle"].every(k => CRAFT_KINDS[k].st === "bench" && CRAFT_KINDS[k].base.length === 3 && CRAFT_KINDS[k].base[2][2] === TOOL_TUNE.findCap)') && E('CRAFT_KINDS.axe.noun') === 'Woodaxe' && E('kindName("axe", 1)') === 'Copper Woodaxe',
+      'Pickaxe, Woodaxe and Sickle are made at the Workbench with speed, double and rare find lines');
+    assert(E('JSON.stringify(equippedTool("mine"))') === '{"kind":"pick","tier":0,"item":null}' && E('toolName("wood")') === 'Flint Hatchet (rough)' && E('toolName("forage")') === 'Bone Sickle (rough)',
+      'an empty slot is the rough tool (tier 0): Stone Pick, Flint Hatchet, Bone Sickle');
+    assert(E('JSON.stringify(S.tools)') === M1, 'a new game starts every tool kind at mastery 1');
+    // the right tool: a tier-matched common Copper Pickaxe vs the rough tool (HS15: +30% to +45%)
+    E('setNode("ore", 1); setActivity("gather")');
+    const rough = E('nodeTime("ore", 1)');
+    const pk = E('(() => { const it = newItem("pick", 1, "common"); addItem(it); equipItem(it.id, "pick"); return it.id; })()');
+    const ratio = rough / E('nodeTime("ore", 1)');
+    assert(pk && E('equippedTool("mine").tier') === 1 && ratio >= 1.3 && ratio <= 1.45 && Math.abs(E('toolRight("mine", 1)') - 1.25) < 1e-12,
+      `right tool: a common Copper Pickaxe mines a Copper vein ${((ratio - 1) * 100).toFixed(1)}% faster than the Stone Pick (HS15)`);
+    assert(E('toolRight("mine", 2)') === 1 && E('toolRight("wood", 1)') === 1, 'no right-tool bonus on a higher-tier node or another skill (a bonus, never a gate)');
+    E('TOOL_TUNE.on = 0');
+    const off = E('nodeTime("ore", 1)');
+    E('TOOL_TUNE.on = 1');
+    assert(Math.abs(off / E('nodeTime("ore", 1)') - 1.25 * 1.01) < 1e-9, 'TOOL_TUNE.on = 0 restores the old node maths (right tool and mastery speed off)');
+    // Sickle moved from the Forge: Woodcraft XP, gate on max(Woodcraft, Smithing)
+    E('S.skills.smith.lv = 10; S.skills.bench.lv = 1; S.skills.bench.xp = 0; S.skills.smith.xp = 0; S.mats.ore[2] = 99; S.mats.wood[2] = 99');
+    const sk = E('!!craftItem("sickle", 3)');
+    assert(sk && E('S.skills.bench.xp + S.skills.bench.lv') > 1 && E('S.skills.smith.xp') === 0 && E('stationLevel("sickle")') === 10, 'a Sickle made at the Workbench: tier 3 with Smithing 10, Woodcraft XP only');
+    // mastery: seconds spent gathering, even when nothing is credited (a full Storehouse)
+    E('S.equip.pick = null; gearDirty(); setNode("ore", 1); setActivity("gather")');
+    const m0 = E('S.mats.ore[0]');
+    E('globalThis.__stop = addModifier("gatherSpeed", () => 1e-9)');
+    run(g, 5 * 60 + 2);
+    assert(E('S.tools.m.pick[0]') === 2 && E('S.mats.ore[0]') === m0, `mastery XP counts with nothing gathered (Pickaxe mastery 2 after 5 min, ${E('Math.round(S.tools.m.pick[1])')} s into it)`);
+    E('globalThis.__stop()');
+    assert(Math.abs(E('mod("gatherSpeed:mine")') - 1.02) < 1e-12 && E('mod("gatherSpeed:wood")') === 1.01, 'mastery speed: +1% a level, on that tool kind only');
+    const r = g.fn.awayGains(3 * 3600);
+    assert(E('S.tools.m.pick[0]') > 2 && r.extra.some(l => /^Pickaxe mastery \d+ \(\+\d+\)$/.test(l.txt)), `away gathering adds mastery 1:1 (Pickaxe mastery ${E('S.tools.m.pick[0]')} after ${r.t / 3600} h) with an away line`);
+    E('toolMasteryAdd("pick", 1e9)');
+    assert(E('JSON.stringify(toolMastery("pick"))') === JSON.stringify({ lv: 20, secs: 0, need: 0, max: true, pct: 1, left: 0 }) && E('Array.from({ length: 19 }, (_, i) => TOOL_TUNE.masteryMins * (i + 1)).reduce((a, b) => a + b)') === 950, 'mastery caps at 20 (950 minutes in all)');
+    // perks
+    E('globalThis.yieldUp = () => { const a = mod("yield:ore"); TOOL_TUNE.on = 0; const b = mod("yield:ore"); TOOL_TUNE.on = 1; return a / b; }; S.tools.m.pick = [4, 0]');
+    const p4 = E('[bonus("find:mine"), bonus("glint:mine"), yieldUp()].join()');
+    E('S.tools.m.pick = [15, 0]');
+    const p15 = E('[bonus("find:mine"), bonus("glint:mine"), Math.round(yieldUp() * 100) / 100, toolHandsMult("mine")].join()');
+    E('S.tools.m.pick = [20, 0]; S.equip.pick = ' + pk + '; gearDirty()');
+    assert(p4 === '0,0,1' && p15 === '1,1,1.05,1' && E('toolHandsMult("mine")') === 1.1 && E('toolName("mine")') === 'Master Copper Pickaxe' && E('toolPerks("pick").every(p => p.on)'),
+      'perks: Lv 5 rare find +1, Lv 10 Glint +1 s, Lv 15 +5% yield, Lv 20 Master (Hands +10%)');
+    // rare finds: 1 of the next tier per find; 2 more of tier 5 on a tier-5 node
+    E(`S.tools.m.pick = [1, 0]; Object.assign(itemById(${pk}), { t: 5, r: "epic", plus: 10 }); gearDirty()`);
+    const ch = E('toolFind("mine")');
+    const a0 = E('S.mats.ore[1]'), c0 = E('S.mats.crystal[1]'), t50 = E('S.mats.ore[4]'), f0 = E('S.tools.finds');
+    E('emit("harvest", { kind: "ore", t: 1, n: 2000, away: true }); emit("harvest", { kind: "crystal", t: 1, n: 2000 }); emit("harvest", { kind: "ore", t: 5, n: 1000, away: true })');
+    const ore2 = E('S.mats.ore[1]') - a0, cr2 = E('S.mats.crystal[1]') - c0, ore5 = E('S.mats.ore[4]') - t50;
+    assert(ch === 0.08 && Math.abs(ore2 - 160) <= 1 && cr2 > 110 && cr2 < 210 && Math.abs(ore5 - 160) <= 2 && E('S.tools.finds') - f0 === ore2 + cr2 + ore5,
+      `rare find 8% (tier 5 Epic +10): +${ore2} Iron from 2000 Copper away, +${cr2} tier-2 crystal live, +${ore5} Emberite on tier 5`);
+    E('TOOL_TUNE.on = 0'); const b = E('S.mats.ore[1]'); E('emit("harvest", { kind: "ore", t: 1, n: 2000, away: true })');
+    assert(E('S.mats.ore[1]') === b, 'TOOL_TUNE.on = 0: no rare finds');
+    E('TOOL_TUNE.on = 1');
+    assert(E('toolBest("mine").cur') === 5 && !E('toolBest("mine").ok') && E('toolBest("wood").t') >= 1, `toolBest: nothing to make over a tier-5 pick; a tier-${E('toolBest("wood").t')} Woodaxe for Woodcutting`);
+    assert(!g.errors.length, 'no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  }
+  // old saves: mats and dps exact, every tool recipe open at the same tiers, S.tools defaults in, round trip
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'), old = JSON.parse(raw);
+    const g = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    const same = Object.keys(old.mats).every(k => JSON.stringify(E(`S.mats.${k}`)) === JSON.stringify(old.mats[k]));
+    const dps = [g.fn.heroDps(), g.fn.totalDps()];
+    E('TOOL_TUNE.on = 0; gearDirty()');
+    const dpsOff = [g.fn.heroDps(), g.fn.totalDps()];
+    E('TOOL_TUNE.on = 1; gearDirty()');
+    // Before H2: Pickaxe and Sickle at the Forge (Smithing), Woodaxe max(Woodcraft, Smithing).
+    const oldLv = { pick: E('S.skills.smith.lv'), sickle: E('S.skills.smith.lv'), axe: E('Math.max(S.skills.bench.lv, S.skills.smith.lv)') };
+    const gate = Object.entries(oldLv).every(([k, lv]) => [1, 2, 3, 4, 5].every(t => lv < E(`CRAFT_STATION_REQ[${t - 1}]`) || E(`stationLevel("${k}") >= CRAFT_STATION_REQ[${t - 1}]`)));
+    const lines = E(`["pick", "axe"].every(p => { const it = itemById(S.equip[p]); if (!it) return true;
+      const l = itemLines(it), pw = itemPower(it), f = TOOL_KINDS[p].find;
+      return l[2][0] === f && l[2][1] === Math.min(8, pw * 0.012) && gear()[f] === l[2][1]; })`);
+    assert(same && dps[0] === dpsOff[0] && dps[1] === dpsOff[1] && gate && lines,
+      `${f}: materials exact, dps unchanged, every tool recipe open at the same tiers, old tools gain the rare find line` + (E('S.equip.pick') != null ? ` (pick ${E('gear().oreFind').toFixed(2)}%)` : ''));
+    const tools = E('JSON.stringify(S.tools)');
+    g.fn.save();
+    const g2 = loadCore({ storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(!('tools' in old) && tools === M1 && g2.eval('JSON.stringify(S.tools)') === tools && !g.errors.length, `${f}: S.tools defaults in (mastery 1) and survives a round trip`);
+  }
+} catch (e) { fail('tools crashed: ' + (e.stack || e)); }
 
 // ---- expeditions (57b-expeditions.js) ----
 console.log('expeditions');

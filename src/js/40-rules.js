@@ -120,7 +120,8 @@ const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
   const g = gear(), lv = S.skills[skillOf(kind)].lv;
   const spd = g[nodeTool(kind)[0]] + g.gather;
-  return craftNodeBase(nodeKind(kind), t) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
+  // H2 (55-tools): 'gatherSpeed:<skill>' carries tool mastery; toolRight() the right-tool bonus for tier t.
+  return craftNodeBase(nodeKind(kind), t) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed') / mod('gatherSpeed:' + skillOf(kind)) / toolRight(skillOf(kind), t);
 }
 // Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
 function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }

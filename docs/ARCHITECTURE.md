@@ -37,6 +37,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
+| 55-tools.js | core | tools as items and tool mastery (hearth-and-hands.md 2, H2): rough tool = empty slot (tier 0), right tool (`toolRight(skill, t)`, read by `nodeTime`), rare finds (`toolFind`, on `harvest`), mastery per tool kind (`toolMastery`, `toolMasteryAdd`, `toolPerks`, `toolHandsMult`), `equippedTool(skill)` -> `{ kind, tier, item }`, `toolLook`, `toolName`, `toolBest(skill)` (sim policy), knobs `TOOL_TUNE` (`on: 0` = old rules, sim `--tools 0`); state `S.tools`. UI: 75-tools-ui.js (the Gather card, the item sheet's Mastery box) |
 | 55-legend.js | core | legendary powers and circle sets (docs/design/legendaries.md, L2): the Lantern Book (`legendKnown`, `legendEchoes`, `legendEchoCap`), drops (`legendDrop(rank, source, opts)`, owed rolls `legendOwe`/`legendPayOwed`), actions with `legendCanX` checks (`legendLearn`, `legendInscribe`, `legendMark`, `legendSigil`), limits (`legendHeroCheck` for the in-page "Take off X?" ask, `legendCanWear`), reads (`legendActive`, `legendSets`, `legendSetTier`, `legendBudget` / `legendScale` = the runtime cap, `legendV`, `legendItemState`, `legendCardLines`, `legendBest`), `bonus('lg:<id>')`, Next Up goals; state `S.legend` (item fields `lg`, `lr`, `cm`). Data: 21c-data-legend.js; icons: 11b-art-legend.js; UI: 75-legend-ui.js (the Craft tab's Powers view, feature `powers`; `legendUI` helpers for the item sheet and the Party tab) |
 | 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
@@ -98,8 +99,9 @@ deviceDay(now?) / deviceWeek(now?)   // local calendar day since 2026-01-01; wee
 ```
 Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMod(id)` is the product.
 
-Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
-`yield:<family>` (harvest and away yield per material family).
+Bonus keys: `awayHours` (added to the away cap), `find:<skill>` (rare find points), `glint:<skill>` (Glint seconds).
+Extra modifier keys: `skillXp:<skill>` (per-skill XP), `yield:<family>` (harvest and away yield per material family),
+`gatherSpeed:<skill>` (node speed for one gathering skill; 55-tools mastery).
 Constellation hooks (57e-constellations.js): `bonus('tune:<knob>')` also carries lit stars (always on, not only in a Deepwell run); `bonus('ks:<id>') > 0` / `starKeystone(id)` flag new combat behaviour for 55-party.js to read, with its numbers in `STAR_KS` (ids: unbroken, crush, challenger, bastion, oathsworn, twinSpark, slowBurn, wildfire, overflow, everburn, glass, storm, nextMark, pack, quickdraw, hawk, deadeye, rain, dawn, sanctuary, martyr, ages). Knobs 55-party.js reads today: `STAR_TUNE_ROUTED`.
 Deepwell hooks: `arena` (50-sim: while set, `arena.spawn()` supplies foes and `arena.onKill(mob, overkill)` takes their deaths; no gold, XP, `kill` event or boss timer), `mod('abilityCd')` and `bonus('tune:<knob>')` (55-party.js class knobs: embersMax, guardMax, markT, blessMax, mark, emberPerTap, guard, blessT, volleyHits, charges, keepEmbers, hymnFloor; 1 / 0 outside a Deepwell run).
 Almanac hooks (55-almanac.js): modifiers `foeHp`, `bossHp` (spawn), `uniqueChance` (boss unique roll),
@@ -181,7 +183,8 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `bossFail` | `{ zone, dps }` |
 | `levelup` | `{ L }` |
 | `skillUp` | `{ k: 'mine'|'wood'|'smith', lv, quiet }` |
-| `harvest` | `{ kind: 'ore'|'crystal'|'wood'|'fibre'|'herb', t, n, glint? }` |
+| `harvest` | `{ kind: 'ore'|'crystal'|'wood'|'fibre'|'herb', t, n, glint?, away? }` |
+| `rareFind` / `toolMastery` | `{ kind, t, n, away }` (55-tools: next-tier units found) / `{ kind: 'pick'|'axe'|'sickle', lv, quiet }` |
 | `trophy` / `champion` / `glint` | `{ i, n, source }` / `{ mob }` / `{ on }` (55-gathering) |
 | `itemAdded` | `{ item }` |
 | `loot` | `{ item, first, kept }` (unique drop) |
