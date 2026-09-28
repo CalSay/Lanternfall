@@ -2137,5 +2137,114 @@ try {
   assert(!pairBad.length, 'legend: every class has 3+ hero power pairs within 10% of its best pair at rank III (by the estimates)' + (pairBad.length ? ': ' + pairBad[0] : ''));
 } catch (e) { fail('legendary data crashed: ' + (e.stack || e)); }
 
+// ---- legendary powers core (55-legend.js, L2; legendaries.md 2-6, 8; the runtime cap, coordinator decision) ----
+console.log('legendary core');
+try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-legend.js'), 'utf8').replace(/\/\/.*$/gm, '');
+  assert(!/\b(document|window|localStorage)\./.test(src), 'legend core: no DOM');
+  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
+  // old saves: empty Book, defaults merged, identical dps with and without the legend core
+  const noLegend = (await import('./lib/core.mjs')).coreFiles().filter(f => f !== '55-legend.js');
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const a = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ storage: memoryStorage({ [KEY]: raw }), files: noLegend });
+    const L = a.eval('S.legend');
+    assert(L && L.v === 1 && !Object.keys(L.book).length && L.sig.length === 4 && Array.isArray(L.owed) && a.fn.totalDps() === b.fn.totalDps() && a.eval('legendBudget().raw') === 0,
+      `legend core: ${f} loads with an empty Book, defaults merged, the same dps (${a.fn.totalDps().toFixed(1)})`);
+  }
+  const mk = () => {
+    const g = loadCore({ seed: 5 }), E = x => g.eval(x);
+    E('S.party.cls = "warden"; S.maxZone = 40; S.zone = 40; S.gold = 1e15; for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 5000)');
+    E('["tobin","wren","pip","bram","maren","aldric","kestrel","anselm","elowen","caedmon"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false; setField(["maren","aldric","caedmon"])');
+    ticks(g, 1);
+    return g;
+  };
+  const g = mk(), E = x => g.eval(x);
+  // drops, Learn, Echoes
+  const d1 = JSON.parse(E('JSON.stringify(legendDrop(1, "test", { pool: "class", z: 40 }))'));
+  const it1 = d1 && d1.item;
+  assert(d1 && d1.kind === 'item' && it1 && E('LEG_CLASS_IDS.warden').includes(it1.lg) && it1.lr === 1 && it1.r === 'epic' && E(`lgFits({ slot: "${it1.slot}" }, "${it1.lg}")`) && it1.t === E('zoneTier(40)'),
+    `legend core: a new power drops as a wearable Legendary item (${it1 && it1.lg} on a ${it1 && it1.slot}, Epic, rank I, zone tier)`);
+  const id = it1.lg;
+  assert(E(`legendLearn(${it1.id})`) && E(`legendKnown("${id}")`) === 1 && !E(`itemById(${it1.id})`), 'legend core: Learn breaks the item down and puts its power in the Book');
+  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" })`);
+  assert(E(`legendKnown("${id}")`) === 1 && E(`legendEchoes("${id}")`) === 3 && E('legendEchoCap()') === 1, 'legend core: a known power drops as an Echo; with no Oath kept Echoes bank at rank I');
+  E('S.oath = { maxL: 6 }'); ticks(g, 4);
+  assert(E(`legendKnown("${id}")`) === 2 && E(`legendEchoes("${id}")`) === 0 && E('legendEchoCap()') === 3, 'legend core: 3 Echoes rank it up once the cap allows (Oath 6 kept: up to rank III)');
+  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(4, "test", { id: "${id}" })`);
+  assert(E(`legendKnown("${id}")`) === 4 && E(`legendEchoes("${id}")`) === 1, 'legend core: a higher-rank drop sets the rank and keeps the Echoes');
+  // Inscribe: fits, costs
+  E('globalThis.__mk = (kind, t) => { const it = newItem(kind, t || 3, "rare"); S.items.push(it); return it.id; }');
+  E('["tidewall", "anvil", "cadence", "banner"].forEach(p => { S.legend.book[p] = 3; })');
+  const wb = E('__mk("warblade")'), gh = E('__mk("greathelm")'), pl = E('__mk("plate")'), sh = E('__mk("shield")'), bow = E('__mk("bow")');
+  assert(!E(`legendCanInscribe("echostring", ${pl}).ok`) && !E(`legendCanInscribe("huntmoon", ${pl}).ok`) && E(`legendCanInscribe("tidewall", ${pl}).ok`), 'legend core: a power goes only where it fits (a Warden power on Warden gear)');
+  const ess0 = E('S.mats.ess[2]'), gold0 = E('S.gold'), cost = JSON.parse(E(`JSON.stringify(legendCanInscribe("tidewall", ${wb}).cost)`));
+  assert(E(`legendInscribe("tidewall", ${wb})`) && E(`itemById(${wb}).lg`) === 'tidewall' && E('S.mats.ess[2]') === ess0 - 5 && gold0 - E('S.gold') === cost.gold && cost.pearls === 8,
+    'legend core: Inscribe pays Essence and gold (Pearls 2 + 2 x rank once Pearls exist) and writes the power on the crafted item');
+  E(`legendInscribe("anvil", ${gh}); legendInscribe("cadence", ${pl}); legendInscribe("banner", ${sh})`);
+  // limits: 2 hero powers
+  E(`equipItem(${wb}, "weapon"); equipItem(${gh}, "helm")`);
+  assert(E('bonus("lg:tidewall")') === 3 && E('bonus("lg:anvil")') === 3 && E('legendActive().hero.length') === 2, 'legend core: worn powers are active at the Book rank (bonus lg:<id>)');
+  const hc = JSON.parse(E(`JSON.stringify(legendHeroCheck(${pl}, "body"))`));
+  assert(!hc.ok && hc.off != null && /carries 2 legendary powers/.test(hc.why), `legend core: a third power asks first ("${hc.why}")`);
+  E(`equipItem(${pl}, "body")`);
+  assert(E('S.equip.body') === null && E('legendActive().hero.length') === 2 && E('bonus("lg:cadence")') === 0, 'legend core: a third powered item goes back to the bag; the hero keeps 2 powers');
+  E('S.legend.book.tidewall = 5; gearDirty()');
+  assert(E('bonus("lg:tidewall")') === 5, 'legend core: an inscribed item follows the Book rank');
+  // a save edited to 3 keeps the first 2 by position
+  const sv = JSON.parse(E('JSON.stringify(S)')); sv.equip.body = pl;
+  const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(sv) }) }); ticks(g2, 1);
+  assert(g2.eval('S.equip.body') === null && g2.eval('S.equip.weapon') === wb && g2.eval('S.equip.helm') === gh && g2.eval('S.legend.book.tidewall') === 5,
+    'legend core: a save with 3 powers keeps the first 2 by position; the Book survives save and load');
+  // companions: 1 power each, role and wearer rules
+  E(`S.legend.book.echostring = 2; S.legend.book.knucklebone = 2; legendInscribe("echostring", ${bow})`);
+  const tk = E('__mk("trinket")'); E(`legendInscribe("knucklebone", ${tk})`);
+  E('setField(["kestrel","maren","aldric"])');
+  assert(E(`equipChar("kestrel", ${bow}, "wpn")`) && !E(`equipChar("kestrel", ${tk}, "trk")`) && E('bonus("lg:echostring")') === 2 && E('legendWearers("echostring").join()') === 'kestrel',
+    'legend core: a companion carries 1 power (equipChar refuses a second)');
+  assert(E(`legendItemState(itemById(${bow}), "maren").why`).includes('striker'), 'legend core: a companion power on the wrong role is off and says why');
+  // Sigils (expeditions, Bond), Marks, set counting
+  E('emit("expedBack", { g: 3, circles: { hedgefolk: 2, oath: 1 } }); emit("expedBack", { g: 0, circles: { dusk: 2 } }); emit("expedBack", { g: 1, recall: true, circles: { dusk: 2 } })');
+  assert(E('S.legend.sig.join()') === '2,0,0,0', 'legend core: an expedition team of 2+ of one circle brings Sigils (2 on Perfect, none on Fair or a recall)');
+  E('emit("milestone", { id: "pip", lv: 25 }); emit("milestone", { id: "pip", lv: 25 })');
+  assert(E('S.legend.sig[0]') === 4 && E('S.legend.bondCredit.pip') === 1, 'legend core: a first level 25 (Bond) gives 2 Sigils, once');
+  E('S.legend.sig = [20, 20, 20, 20]; for (const k of Object.keys(S.skills)) S.skills[k].lv = 99');
+  const gold1 = E('goldMult()');
+  assert(E('(() => { const c = canCraft("warblade", 2, { cm: 1 }); const it = craftItem("warblade", 2, { cm: 1 }); return c.ok && !!it && it.cm === 1 && S.legend.sig[1] === 19; })()'), 'legend core: Mark at craft takes a Sigil and marks the item');
+  assert(!E(`legendCanMark(${wb}, 9).ok`) && E(`legendMark(${wb}, "hedgefolk") && legendMark(${gh}, 0) && itemById(${wb}).cm === 0`), 'legend core: Mark on the item sheet (1 Sigil of the circle)');
+  assert(E('legendSets().n[0]') === 2 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(E('goldMult()') / gold1 - 1.1) < 1e-9, 'legend core: 2 marked pieces worn switch on the 2-piece set (+10% gold)');
+  const bs = E('__mk("bow")'), bs2 = E('__mk("staff")');
+  E(`legendMark(${bs}, 0); legendMark(${bs2}, 0); legendMark(${sh}, 0)`);
+  E(`setField(["wren","tobin","pip"]); equipChar("wren", ${bs}, "wpn"); equipChar("pip", ${bs2}, "wpn"); equipChar("tobin", ${sh}, "wpn")`);
+  assert(E('legendSets().n[0]') === 5 && E('legendSetTier(0)') === 4, 'legend core: marks worn by fielded companions count (5 pieces: the 4-piece tier)');
+  E('setField(["maren","aldric","caedmon"])');
+  assert(E('legendSets().n[0]') === 2, 'legend core: benched companions\' marks do not count');
+  // the runtime cap: Tidewall + Banner with 3 Oath companions wearing a 6-piece Oath set
+  E('for (const k of ["maren", "aldric", "caedmon"]) { const a = __mk("shield"), b = __mk("trinket"); legendMark(a, "oath"); legendMark(b, "oath"); equipChar(k, a, "wpn"); equipChar(k, b, "trk"); }');
+  E(`itemById(${gh}).lg = "banner"; for (const k of LEG_IDS) S.legend.book[k] = 5; gearDirty()`);
+  const b5 = JSON.parse(E('JSON.stringify(legendBudget())'));
+  // Banner's share of mod('party') (other systems, such as synergies, also feed 'party')
+  const bannerPart = () => { const on = E('mod("party")'); E(`itemById(${gh}).lg = "anvil"; gearDirty()`); const off = E('mod("party")'); E(`itemById(${gh}).lg = "banner"; gearDirty()`); return on / off; };
+  assert(E('legendSetTier("oath")') === 6 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(b5.cap - 0.70) < 1e-9 && !b5.hit && b5.scale === 1 && Math.abs(bannerPart() - (1 + E('legendVal("banner", "dmg", 5)') * 3)) < 1e-9,
+    `legend core: two sets at once (Oath 6 + Hedgefolk 2); a rank V build under its +70% cap runs unscaled (raw +${(100 * b5.raw).toFixed(1)}%)`);
+  E('S.legend.book.tidewall = 1; S.legend.book.banner = 1; gearDirty()');
+  const bu = JSON.parse(E('JSON.stringify(legendBudget())'));
+  const party = bannerPart(), exp = 1 + E('legendVal("banner", "dmg", 1)') * 3 * bu.scale;
+  assert(bu.raw > bu.cap && bu.capped === bu.cap && Math.abs(bu.cap - 0.30) < 1e-9 && bu.rank === 1 && bu.scale < 1 && bu.hit && Math.abs(party - exp) < 1e-9,
+    `legend core: at rank I the budget clamps to +30% (raw +${(100 * bu.raw).toFixed(1)}%, scale ${bu.scale.toFixed(3)}); Banner's party damage is scaled by it`);
+  const lb = [1, 2, 3, 4, 5].map(r => JSON.parse(E(`JSON.stringify(legendBest("warden", ${r}))`)));
+  assert(lb.every(x => x.capped <= x.cap + 1e-12 && x.raw >= x.capped) && [0.30, 0.375, 0.45, 0.575, 0.70].every((c, i) => Math.abs(lb[i].cap - c) < 1e-9),
+    `legend core: legendBest clamps to the cap at every rank (raw ${lb.map(x => '+' + (100 * x.raw).toFixed(0) + '%').join(' / ')})`);
+  // owed rolls: nothing can drop yet -> recorded; paid once a source exists
+  const g3 = loadCore({ seed: 9 }), X = x => g3.eval(x); ticks(g3, 1);
+  X('S.party.cls = null; S.party.rec = {}; S.party.field = []');
+  const r0 = X('legendDrop(2, "oath")');
+  X('S.oath = { owed: [3, { rank: 1, source: "oath" }] }'); ticks(g3, 4);
+  assert(r0 === null && X('S.legend.owed.length') === 1 && X('S.oath.owed.length') === 2 && !Object.keys(X('S.legend.book')).length && !X('S.items.some(i => i.lg)'), 'legend core: a roll with nothing to drop is recorded (S.legend.owed); Oath rolls wait too');
+  X('S.party.cls = "ranger"'); ticks(g3, 4);
+  assert(X('S.legend.owed.length') === 0 && X('S.oath.owed.length') === 0 && X('S.legend.n.drops') === 3,
+    'legend core: owed rolls are paid once a source exists (a class chosen), the Oath core\'s too');
+} catch (e) { fail('legendary core crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
