@@ -412,3 +412,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   find cap 8% on the item plus the Lv 5 point.
 - OWNER: gathering levels come too fast; "the next tier up only 4 levels away is too fast". Today NODE_REQ
   [1,8,18,30,45], SMITH_REQ [1,4,9,16,25], skillNeed 25 x 1.12^(lv-1). GP1 launched to re-pace skill tiers.
+- LORE1 lore.md merged (story bible: the Lanternfall, monsters are the land soaked by the dark and drawn to
+  the light, "a light lit for someone cannot be stolen", Elowen's sparks explain other players, the mystery
+  ladder, the sealed ending in 8.6). Fixed Pip's pronoun in 56-roster.js. WRITING TASKS (LORE2-12) ON HOLD
+  until the owner steers the premise and answers section 12's four questions.
