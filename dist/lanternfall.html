@@ -445,6 +445,19 @@ button * { pointer-events: none; }
 .om-bar .om-nm { font-size: 14px; }
 .om-bar .om-nm::before { content: "Omen · "; color: var(--arcane); font-size: 12px; letter-spacing: .04em; }
 .om-bar .om-fx { font-size: 12px; }
+
+/* compact goal cards (progressive disclosure): goal, tier, progress, one button; the reward on a tap */
+.om-list .om-goal { min-height: 56px; padding: 5px 6px 5px 8px; gap: 10px; }
+.om-goal .ic { width: 36px; height: 36px; cursor: pointer; }
+.om-goal .dz-hit { align-self: stretch; display: grid; align-content: center; min-width: 0; }
+.om-goal .row-name { font-size: 14.5px; line-height: 1.2; }
+.om-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; font: 500 12px var(--body); color: var(--muted); }
+.om-meta .own { font: 600 12px var(--body); color: var(--bone); font-variant-numeric: tabular-nums; }
+.om-meta .dz-chev { margin-left: auto; }
+.om-goal .om-gbar { margin-top: 4px; }
+.om-goal .row-desc { display: none; margin-top: 5px; }
+.om-goal.open .row-desc { display: block; }
+.om-goal .buy { min-width: 64px; padding: 4px 8px; }
 /* 60-away: the "While you were away" card (75-away.js) and the Journal (75-stats-ui.js). */
 
 /* ---- away report ---- */
@@ -578,22 +591,31 @@ button * { pointer-events: none; }
 .bld-q[hidden], .bld-row .bar[hidden] { display: none; }
 
 /* ---- building cards ---- */
-.cb-list { display: grid; gap: 6px; }
-.cb { background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
-.cb.locked { opacity: .6; }
-.cb.busy { border-color: #5A4430; }
-.cb.new { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(242,193,78,.35), 0 2px 0 #0B0810, 0 0 16px rgba(242,193,78,.25); }
-.cb-row { width: 100%; min-height: 56px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 7px 10px; background: none; border: 0; text-align: left; cursor: pointer; }
-.cb-row .ic { width: 40px; height: 40px; }
-.cb-row .ic img { width: 30px; height: 30px; }
+/* one joined list: rows split by thin rules; state shows as a left bar (busy: ember, new: gold) */
+.cb-list { display: grid; gap: 0; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.cb { position: relative; }
+.cb + .cb { border-top: 1px solid var(--line); }
+.cb.locked .cb-row { opacity: .6; }
+.cb.busy { box-shadow: inset 3px 0 0 var(--ember); }
+.cb.new { box-shadow: inset 3px 0 0 var(--gold); background: rgba(242,193,78,.07); }
+.cb.open { background: rgba(255,255,255,.025); }
+.cb-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 3px 5px 3px 0; min-height: 50px; }
+.cb-hit { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 9px; align-items: center; align-self: stretch; padding-left: 8px; min-width: 0; }
+.cb-hit .ic { width: 36px; height: 36px; }
+.cb-hit .ic img { width: 28px; height: 28px; }
 .cb-mid { min-width: 0; }
-.cb-nm { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font: 600 16px/1.15 var(--display); }
-.cb-lv { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; }
-.cb-line { font-size: 13px; color: var(--muted); margin-top: 1px; overflow-wrap: anywhere; }
+.cb-nm { display: flex; gap: 6px; align-items: baseline; font: 600 15px/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.cb-nm > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cb-lv { font: 500 12px var(--body); color: var(--muted); letter-spacing: .04em; flex: none; }
+.cb-line { font-size: 12.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cb.busy .cb-line { color: var(--ember); }
-.cb-dot { width: 10px; height: 10px; background: var(--xp); border: 2px solid #0B0810; box-shadow: 0 0 8px rgba(111,203,106,.6); }
-.cb-dot[hidden] { display: none; }
-.cb-body { display: grid; gap: 8px; padding: 0 10px 10px; }
+.cb.can .cb-line { color: var(--xp); }
+.cb.open .cb-line { white-space: normal; }
+.cb-quick { min-width: 84px; min-height: 44px; padding: 4px 8px; }
+.cb-quick[hidden] { display: none; }
+.cb-quick.armed { background: var(--gold); box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -3px 0 #A77B1E; }
+.cb-quick .price { font-size: 14px; }
+.cb-body { display: grid; gap: 8px; padding: 2px 10px 10px; }
 .cb-body[hidden] { display: none; }
 .cb-fx { display: grid; gap: 3px; }
 .cb-fxrow { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; padding: 5px 8px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
@@ -635,20 +657,28 @@ button * { pointer-events: none; }
 
 /* ---- Roster board ---- */
 .ros-list { display: grid; gap: 6px; }
-.ros-row { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 6px 8px; min-height: 56px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
-.ros-pt { width: 44px; height: 44px; grid-row: span 2; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; }
+.ros-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 6px 4px 0; min-height: 52px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.ros-hit { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 9px; align-items: center; align-self: stretch; padding-left: 6px; min-width: 0; cursor: pointer; }
+.ros-hit:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.ros-pt { width: 40px; height: 40px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--line-hi); overflow: hidden; }
 .ros-pt.r-rare { border-color: var(--r-rare); }
 .ros-pt.r-epic { border-color: var(--r-epic); }
 .ros-pt.r-legendary { border-color: var(--r-legendary); }
 .ros-pt img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .ros-body { min-width: 0; }
-.ros-nm { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font: 600 15px/1.15 var(--display); }
-.ros-nm small { font: 500 12px var(--body); color: var(--muted); }
-.ros-st { font-size: 13px; color: #9FD8C9; }
+.ros-nm { display: flex; gap: 6px; align-items: baseline; font: 600 14.5px/1.15 var(--display); white-space: nowrap; min-width: 0; }
+.ros-nm > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ros-nm small { font: 500 11.5px var(--body); color: var(--muted); flex: none; }
+.ros-st { font-size: 12.5px; color: #9FD8C9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ros-row.job .ros-st { color: var(--gold); }
 .ros-row.exped .ros-st { color: var(--r-rare); }
-.ros-acts { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; }
-.ros-acts .mini { min-height: 36px; }
+.ros-acts { display: flex; gap: 6px; }
+.ros-acts .mini { min-height: 44px; min-width: 56px; }
+
+/* ---- Hearth cost: a summary line, the chips behind a tap ---- */
+.ch-cost { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 8px; background: var(--well); border: 1px solid var(--line); font: 600 13.5px var(--display); color: var(--xp); }
+.ch-cost.short { color: #FFB27A; }
+.ch-cost[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .bld-row .bar > i, .cb-timer .bar > i { transition: none; }
@@ -1129,6 +1159,37 @@ span.cf-d { font-weight: 600; }
 
 /* wide screens: the choice sheet and the run-end card sit in the middle */
 @media (min-width: 600px) and (min-height: 600px) { .dw-draft .dw-sheet, .dw-end .dw-sheet { justify-content: center; } .dw-cards { margin-top: 8px; } .dw-end .dw-dfoot { margin-top: 8px; } }
+/* 60-disclose: compact cards with their details behind a tap (disclose() in 71-ui-fight.js), and the
+   Fight tab's Upgrades rows. docs/design/layout.md rule 5. */
+.dz-hit { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dz-hit:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.dz-chev { display: inline-block; flex: none; width: 7px; height: 7px; margin: 0 4px 3px 4px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; vertical-align: middle; }
+.dz.open .dz-chev { transform: translateY(3px) rotate(-135deg); }
+.dz .dz-more { display: none; }
+.dz.open .dz-more { display: inline; }
+@media (prefers-reduced-motion: reduce) { .dz-chev { transition: none; } }
+
+/* A joined list: one frame, thin rules between rows (saves the gaps and borders of separate cards). */
+.dz-list { gap: 0; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; }
+.dz-list > .row { border: 0; box-shadow: none; background: none; }
+.dz-list > .row + .row { border-top: 1px solid var(--line); }
+
+/* ---- Fight > Upgrades ---- */
+.hu-row { min-height: 52px; padding: 4px 6px 4px 8px; gap: 10px; }
+.hu-row .ic { width: 36px; height: 36px; cursor: pointer; }
+.hu-row .dz-hit { align-self: stretch; display: grid; align-content: center; min-width: 0; }
+.hu-row .row-desc { margin-top: 1px; line-height: 1.3; }
+.hu-row .buy { min-height: 44px; padding: 4px 8px; }
+.gate-row { padding: 6px 6px 6px 10px; }
+.gate-row .dz-hit { align-self: stretch; display: grid; align-content: center; min-width: 0; }
+.gate-row .row-name { font-size: 15px; flex-wrap: nowrap; align-items: center; }
+.gate-row .gt-t { min-width: 0; }
+.gate-row .row-desc { display: none; }
+.gate-row.open .row-desc { display: block; }
+.gate-row .buy { min-height: 44px; padding: 4px 8px; }
+#amtSeg button { min-height: 44px; min-width: 44px; }
+.gate-auto { min-height: 44px; }
+.hu-row:not(.open) .row-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 60-exped: Expeditions in the Camp tab and the send sheet (75-exped-ui.js). */
 
 #sec-exped { gap: 8px; }
@@ -1241,7 +1302,7 @@ span.cf-d { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   .ex-mid .bar > i { transition: none; }
 }
-/* 60-gathering: small additions to the Gather tab for K5 (K8 redoes the tab). */
+/* 60-gathering: the Gather tab (72-ui-gather.js): skill cards, the status strip, node rows, the Pack. */
 #skillCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #skillCards .skill .sn { letter-spacing: .04em; min-width: 0; }
 #skillCards .skill .sn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1251,10 +1312,52 @@ span.cf-d { font-weight: 600; }
   #skillCards .skill .sn { letter-spacing: 0; font-size: 10px; text-transform: none; }
   #skillCards .skill .sn img { display: none; }
 }
-.gat-home { color: #F2E6B0; }
 .gat-sub { font: 600 10.5px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px 2px; }
+
+/* ---- status strip: where the party works, the Glint, home ground ---- */
+.gat-now { display: grid; gap: 3px; padding: 7px 10px; background: var(--well); border: 1px solid var(--line); border-left: 3px solid var(--line-hi); }
+.gat-now.on { border-left-color: var(--gold); }
+.gn-what { font: 600 14px/1.2 var(--display); color: var(--muted); }
+.gat-now.on .gn-what { color: var(--gold); }
+.gn-glint { font-size: 12.5px; color: var(--muted); }
+.gn-glint[hidden] { display: none; }
+.gn-glint.lit { color: #FFE58A; font-weight: 600; text-shadow: 0 0 8px rgba(255,243,196,.6); animation: gn-pulse .6s ease-in-out infinite alternate; }
+.gn-home { font-size: 12.5px; color: #F2E6B0; }
+@keyframes gn-pulse { to { opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { .gn-glint.lit { animation: none; } }
+
+/* ---- node rows ---- */
+.gat-list { margin-top: 2px; }
+.gat-node { min-height: 52px; padding: 4px 6px 4px 8px; gap: 10px; }
+.gat-node .ic { width: 40px; height: 40px; }
+.gat-node .ic img { width: 26px; height: 26px; margin-top: -6px; }
+.gt-tier { position: absolute; left: 0; right: 0; bottom: 0; font: 600 9.5px/1.25 var(--display); text-align: center; color: var(--bone); background: #0B0810D9; }
+.gat-node .row-name { font-size: 15px; flex-wrap: nowrap; align-items: center; gap: 6px; }
+.gat-node .row-name .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gt-home { flex: none; padding: 0 4px; font: 600 10px/1.5 var(--body); letter-spacing: .06em; text-transform: uppercase; color: #1A1420; background: #F2E6B0; }
+.gt-home[hidden] { display: none; }
+.gat-node .row-desc { margin-top: 1px; font-size: 12.5px; }
+.gt-held { font-size: 12px; color: var(--bone); font-variant-numeric: tabular-nums; }
+.gt-held[hidden] { display: none; }
+.gat-node .buy { min-width: 72px; min-height: 44px; padding: 4px 8px; }
+.gat-list > .row.active { box-shadow: inset 3px 0 0 var(--gold); background: linear-gradient(90deg, rgba(242,193,78,.12), transparent 70%); }
+.gat-node.active .nm { color: var(--gold); }
+.buy.work.here:disabled { background: transparent; color: var(--gold); border-color: var(--gold); box-shadow: none; }
+.gat-list > .row.locked { opacity: .55; }
+
+/* ---- Pack ---- */
+.mats button.mat { font: inherit; color: var(--bone); cursor: pointer; min-height: 48px; }
+.mats button.mat:active { transform: translateY(1px); }
+.mats button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
 .mats .mat.none { opacity: .5; }
 .gat-tro .mat .mn { font-size: 10px; }
+.gw-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
+.ic.gw-ic { width: 56px; height: 56px; }
+.ic.gw-ic img { width: 40px; height: 40px; }
+.gw-name { margin: 0; font: 600 20px/1.1 var(--display); }
+.gw-have { color: var(--muted); font-size: 13px; }
+.gw-where { margin: -6px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--bone); }
+.gw-go { min-height: 48px; }
 /* 60-goals: the "Next up" chip on the game view, its list sheet, and Go buttons in the away card */
 
 /* the chip: one slim row, the top goal and its progress along the bottom edge; tap for the list */
@@ -1596,6 +1699,15 @@ span.cf-d { font-weight: 600; }
 }
 @keyframes joinIn { from { opacity: 0; transform: translateY(4px); } }
 @media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 56px 1fr; } .ccard .fig { width: 56px; } }
+
+/* ---- polish: Codex title, expedition status ---- */
+.pc-who > small.pc-ctitle, .cs-ctitle { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.pc-ctitle[hidden] { display: none; }
+.cs-out { margin: 0; padding: 8px 10px; background: rgba(90,122,184,.12); border-left: 3px solid var(--r-rare); font-size: 13.5px; color: var(--bone); }
+.rtile.out .rt-fr img { opacity: .5; }
+.rt-in.rt-away { background: var(--r-rare); color: #0B0810; }
+.rtile .rt-out { color: #9CC1FF; }
+.rtile .rt-out { -webkit-line-clamp: 3; overflow-wrap: anywhere; }
 /* 60-unlocks: the Tavern visitor card and the joining moment overlay (75-unlocks-ui.js). */
 
 /* ---- Tavern visitor ---- */
@@ -14857,12 +14969,57 @@ on('raidReward', () => { $('raidDot').hidden = S.tab === 'world'; });
 // ---- src/js/71-ui-fight.js ----
 // 71-ui-fight: the Fight tab (boss gate, hero upgrades, party) and the zone/mode controls.
 
+// ================= progressive disclosure =================
+// Cards show essentials; details open on a tap (docs/design/layout.md rule 5). `trigger` becomes the
+// tap target (a focusable role=button, never one that holds another button); the row gets 'dz' and,
+// while open, 'open'. Other panels (75-camp-ui, 75-almanac-ui) use this too.
+function disclose(row, trigger, onToggle, extra) {
+  row.classList.add('dz');
+  const chev = el('span', 'dz-chev'); chev.setAttribute('aria-hidden', 'true');
+  trigger.classList.add('dz-hit'); trigger.setAttribute('role', 'button'); trigger.tabIndex = 0; trigger.setAttribute('aria-expanded', 'false');
+  const api = {
+    chev, open: false,
+    set(on) { on = !!on; api.open = on; putToggle(row, 'open', on); putAttr(trigger, 'aria-expanded', String(on)); if (onToggle) onToggle(on); }
+  };
+  const toggle = () => api.set(!api.open);
+  for (const t of [trigger].concat(extra || [])) t.addEventListener('click', toggle);
+  trigger.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === trigger) { e.preventDefault(); toggle(); } });
+  return api;
+}
+// A short line and the rest, split at the first sentence: "Attack 7.51M." | "+2.5 per level, ...".
+function splitDesc(box) {
+  box.textContent = '';
+  const a = el('span', 'dz-sum'), b = el('span', 'dz-more');
+  box.append(a, b);
+  return t => { const i = t.indexOf('. '); putText(a, i < 0 ? t : t.slice(0, i + 1)); putText(b, i < 0 ? '' : ' ' + t.slice(i + 2)); };
+}
+
 // ================= Fight panel =================
+// Hero upgrade rows: icon, name, level, the stat in one line and the buy button. A tap on the row
+// shows the rest of the description.
+$('heroRows').classList.add('dz-list');
 const heroRows = HERO_UPS.map(u => {
   const r = makeRow($('heroRows'), u.name, false, iconURL(...u.ic));
   r.btn.addEventListener('click', () => { if (buyHero(u.id)) ui(true); });
+  r.row.classList.add('hu-row');
+  r.setDesc = splitDesc(r.desc);
+  const d = disclose(r.row, r.desc.parentElement, null, [r.ic]);
+  r.own.after(d.chev);
+  r.desc.parentElement.setAttribute('aria-label', `${u.name}: show details`);
   return r;
 });
+// Boss gate: the title and the button; the odds and rules open on a tap.
+{
+  const g = $('gateTitle').parentElement, row = g.parentElement;
+  row.classList.add('gate-row');
+  const d = disclose(row, g), t = $('gateTitle'), tx = el('span', 'gt-t', t.textContent);
+  t.textContent = ''; t.append(tx, d.chev);
+  g.setAttribute('aria-label', 'Boss gate: show details');
+  // One line for the auto-challenge switch (the shell's copy wrapped to two at 360 px).
+  const lb = $('autoBoss').parentElement, tn = [...lb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+  if (tn) tn.textContent = ' Fight frontier bosses when ready';
+  lb.classList.add('gate-auto');
+}
 const compRows = COMPS.map((c, i) => {
   const pal = { ...HERO_PAL, 1: c.col, 2: c.helm };
   const r = makeRow($('compRows'), c.name, false, spriteURL('comp' + i, SPR.hero, pal), 'portrait-ic');
@@ -14882,7 +15039,7 @@ document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('cl
 // Static nodes, looked up once. Every write goes through the put* guards (70-ui.js): 5 calls a
 // second, and an unchanged value must not make the browser lay the page out again.
 const amtBtns = [...document.querySelectorAll('#amtSeg button')];
-const gateEl = { title: $('gateTitle'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price'), comp: $('compRows').parentElement };
+const gateEl = { title: $('gateTitle').querySelector('.gt-t'), desc: $('gateDesc'), btn: $('gateBtn'), q: $('gateBtn').querySelector('.qty'), p: $('gateBtn').querySelector('.price'), comp: $('compRows').parentElement };
 function uiFight() {
   for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
   const G = gateEl, gb = G.btn, gq = G.q, gp = G.p;
@@ -14896,7 +15053,7 @@ function uiFight() {
     putText(G.desc, `${Math.ceil(bossTime)} seconds left. Tap fast.`);
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
-    putText(G.title, 'Rematch this zone\'s boss');
+    putText(G.title, 'Rematch the zone boss');
     putText(G.desc, `${Math.round(UNIQ_TUNE.again * 100)}% chance to drop ${uq}. You can rematch as often as you like.`);
     putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
@@ -14907,7 +15064,7 @@ function uiFight() {
   HERO_UPS.forEach((u, i) => {
     const r = heroRows[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
     putText(r.own, 'Lv ' + S[u.id]);
-    putText(r.desc, u.desc());
+    r.setDesc(u.desc());
     putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');
     setPrice(r.btn, p.cost);
     putDisabled(r.btn, !(p.n > 0 && S.gold >= p.cost));
@@ -14935,7 +15092,8 @@ function uiFight() {
 
 // ---- src/js/72-ui-gather.js ----
 // 72-ui-gather: the Gather tab (skills, nodes for every family, home ground, pack, trophies).
-// K5 kept this minimal; K8 redoes the tab (pouch, camp).
+// Node views: a status strip (where the party works, the Glint, home ground), then compact node
+// rows. Pack: every material is a button that opens "where to get it".
 
 // ================= Gather panel =================
 const skillCards = ['mine', 'wood', 'forage'].map(k => {
@@ -14948,9 +15106,16 @@ const skillCards = ['mine', 'wood', 'forage'].map(k => {
   return { k, lv: sl, bar: bi };
 });
 
-// Home ground: which family the camp's zone boosts.
-const homeNote = el('p', 'note gat-home'); homeNote.dataset.view = 'mine wood forage'; // the node sub-views (70-ui)
-$('skillCards').after(homeNote);
+// Status strip on the node views (70-ui sub-views): where the party works, the Glint, home ground.
+const gNow = {};
+{
+  const box = el('div', 'gat-now'); box.dataset.view = 'mine wood forage';
+  gNow.box = box;
+  gNow.what = el('div', 'gn-what'); gNow.glint = el('div', 'gn-glint'); gNow.home = el('div', 'gn-home');
+  box.append(gNow.what, gNow.glint, gNow.home);
+  $('skillCards').after(box);
+}
+const homeNote = gNow.home;
 
 // Foraging section, built here so shell.html stays as it is.
 {
@@ -14961,29 +15126,69 @@ $('skillCards').after(homeNote);
 const NODE_VERB = { ore: 'Mine', crystal: 'Mine', wood: 'Chop', fibre: 'Cut', herb: 'Pick' };
 const NODE_BOX = { ore: 'oreRows', crystal: 'oreRows', wood: 'woodRows', fibre: 'forageRows', herb: 'forageRows' };
 const nodeRows = {};
+function goNode(kind, t) {
+  if (!setNode(kind, t)) return false;
+  if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
+  return true;
+}
+// Node rows: icon with its tier, name, home-ground tag, time per swing and rate, amount held, and
+// the Go button. The node the party works shows as "Here" with a gold frame.
 for (const kind of GATHER_KINDS) {
   const box = $(NODE_BOX[kind]);
   if (kind !== 'wood') box.append(el('div', 'gat-sub', CRAFT_NODES[kind].row)); // Veins / Geodes, Fibre patches / Herb beds
+  const list = el('div', 'sec dz-list gat-list'); box.append(list);
   nodeRows[kind] = [];
   for (let t = 1; t <= 5; t++) {
-    const r = makeRow(box, NODE_NAMES[kind][t - 1], false, matIcon(kind, t));
+    const r = makeRow(list, NODE_NAMES[kind][t - 1], false, matIcon(kind, t));
+    r.row.classList.add('gat-node');
+    r.ic.append(el('span', 'gt-tier', 'T' + t));
+    r.home = el('span', 'gt-home', 'Home'); r.home.hidden = true; r.nm.after(r.home);
+    r.held = el('div', 'gt-held'); r.desc.after(r.held);
+    r.own.remove();
     r.btn.classList.add('work');
-    r.btn.addEventListener('click', () => {
-      if (!setNode(kind, t)) return;
-      if (S.activity !== 'gather') setActivity('gather'); else { toast(`Your party moves to the ${NODE_NAMES[kind][t - 1]}.`, 'good', null, 'low'); ui(true); }
-    });
+    r.btn.addEventListener('click', () => goNode(kind, t));
     nodeRows[kind].push(r);
   }
 }
 
 // Pack: every family by tier, then trophies.
+// Every material is a button: a tap opens "where to get it" (55-gathering whereToGet), with a Go
+// button to the node when a skill gathers it.
+const NODE_VIEW_OF = { ore: 'mine', crystal: 'mine', wood: 'wood', fibre: 'forage', herb: 'forage' };
+function whereSheet(k, t) {
+  if (typeof openSheet !== 'function') return;
+  openSheet(api => {
+    api.sheet.classList.add('gw-sheet');
+    const head = el('div', 'gw-head'), ic = el('div', 'ic gw-ic');
+    ic.append(img(matIcon(k, t)));
+    const tx = el('div');
+    tx.append(el('h2', 'gw-name', matName(k, t)), el('small', 'gw-have', `${fmt(S.mats[k][t - 1] || 0)} in your pack · Tier ${t}`));
+    head.append(ic, tx);
+    const w = whereToGet(k, t), i = w.indexOf(': ');
+    api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
+    if (GATHER_KINDS.includes(k)) {
+      const sk = skillOf(k), req = NODE_REQ[t - 1], open = S.skills[sk].lv >= req;
+      const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
+      const b = el('button', 'big horn gw-go', here ? 'Your party works here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
+      b.type = 'button'; b.disabled = !open || here;
+      b.addEventListener('click', () => { if (goNode(k, t)) { api.close(); setTab(NODE_VIEW_OF[k]); } });
+      api.foot.append(b);
+    } else {
+      const b = el('button', 'big forge gw-go', 'Go fight'); b.type = 'button';
+      b.addEventListener('click', () => { if (S.activity !== 'fight') setActivity('fight'); api.close(); closeMenu(); });
+      api.foot.append(b);
+    }
+  }, { label: 'Where to get ' + matName(k, t), small: true });
+}
 const matCells = {};
 for (const k of CRAFT_FAMILIES) {
   const row = el('div', 'mat-row'); matCells[k] = [];
   for (let t = 1; t <= 5; t++) {
-    const c = el('div', 'mat'); c.title = whereToGet(k, t);
+    const c = el('button', 'mat'); c.type = 'button';
+    c.setAttribute('aria-label', `${matName(k, t)}: where to get it`);
     const n = el('span', 'mc', '0');
     c.append(img(matIcon(k, t)), n, el('div', 'mn', MAT[k].short[t - 1]));
+    c.addEventListener('click', () => whereSheet(k, t));
     row.append(c); matCells[k].push({ c, n });
   }
   $('matGrid').append(row);
@@ -14998,7 +15203,7 @@ const trophyCells = [];
     row.append(c); trophyCells.push({ c, n });
   });
   $('matGrid').append(el('div', 'gat-sub', 'Trophies'), row);
-  $('matGrid').nextElementSibling.textContent = 'Hide and essence drop from monsters while you fight. Higher zones drop better tiers. Champions and zone bosses leave Trophies.';
+  $('matGrid').nextElementSibling.textContent = 'Tap a material to see where to get it. Hide and essence drop from monsters while you fight. Champions and zone bosses leave Trophies.';
 }
 
 // Writes go through the put* guards (70-ui.js), and only the open view's rows update (a view
@@ -15013,7 +15218,15 @@ function uiGather() {
       putStyle(c.bar, 'width', Math.min(100, sk.xp / skillNeed(sk.lv) * 100) + '%');
     }
     const home = homeFamily(), hb = homeBonus(home);
-    putText(homeNote, `Camp: ${zoneName(S.zone)}. ${MAT[home].n} gathered here gives +${Math.round(hb * 100)}%.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars here make it +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
+    putText(homeNote, `Home ground: ${MAT[home].n} +${Math.round(hb * 100)}% in ${zoneName(S.zone)}.` + (hb < CRAFT_HOME_BONUS.starred ? ` ${CRAFT_HOME_BONUS.stars} mastery stars there: +${CRAFT_HOME_BONUS.starred * 100}%.` : ''));
+    const gathering = S.activity === 'gather', g = gathering ? glint() : null;
+    putText(gNow.what, gathering ? `Working: ${NODE_NAMES[S.node.kind][S.node.t - 1]}` : S.activity === 'raid' ? 'Your party is at the raid. Pick a node to gather.' : 'Your party is fighting. Pick a node to gather.');
+    putToggle(gNow.box, 'on', gathering);
+    putHidden(gNow.glint, !gathering);
+    if (gathering) {
+      putText(gNow.glint, g.on ? `Glint! Tap the stage now for extra (${Math.ceil(g.left)}s)` : 'Glint: now and then the node sparkles. Tap it then for extra.');
+      putToggle(gNow.glint, 'lit', g.on);
+    }
   }
   for (const kind of GATHER_KINDS) {
     if (NODE_VIEW[NODE_BOX[kind]] !== view) continue;
@@ -15026,11 +15239,14 @@ function uiGather() {
       putToggle(r.row, 'locked', !open);
       putToggle(r.row, 'active', here);
       putToggle(r.ic, 'ghost', !open);
-      putText(r.own, open ? `${fmt(S.mats[kind][i])} held` : `Needs Lv ${req}`);
+      putHidden(r.home, !(open && hk)); if (hk) putText(r.home, `Home +${Math.round(hk * 100)}%`);
+      putText(r.held, open ? `${fmt(S.mats[kind][i])} held` : '');
+      putHidden(r.held, !open);
       const per = nodeTime(kind, t), yieldAvg = nodeYieldAvg(kind) * ym;
-      putText(r.desc, open ? `${per.toFixed(1)}s per swing · ${fmt(60 / per * yieldAvg)} per minute${hk ? ` · home +${Math.round(hk * 100)}%` : ''}` : `Reach ${SKILL[skillOf(kind)]} level ${req} to work here.`);
+      putText(r.desc, open ? `${per.toFixed(1)}s a swing · ${fmt(60 / per * yieldAvg)}/min` : `Needs ${SKILL[skillOf(kind)]} ${req}`);
       putText(r.qty, here ? 'Working' : open ? NODE_VERB[kind] : 'Locked');
-      putText(r.price || (r.price = r.btn.querySelector('.price')), here ? '...' : open ? 'Go' : `Lv ${req}`);
+      putText(r.price || (r.price = r.btn.querySelector('.price')), here ? 'Here' : open ? 'Go' : `Lv ${req}`);
+      putToggle(r.btn, 'here', here);
       putDisabled(r.btn, !open || here);
     });
   }
@@ -15339,18 +15555,23 @@ async function uiTavern() {
       ok.addEventListener('click', () => { almanac.clearAuto(); ui(true); });
       al.auto.append(al.autoTx, ok);
       wk.append(al.auto);
-      al.list = el('div', 'sec');
+      al.list = el('div', 'sec dz-list om-list');
       wk.append(al.list);
       al.foot = el('p', 'note om-foot');
       wk.append(al.foot);
       sec.append(wk);
 
       for (let i = 0; i < 5; i++) {
+        // Compact goal card: the goal, its tier and progress, and one button (Claim or Swap). A tap
+        // on the card shows the reward.
         const r = makeRow(al.list, '', false, iconURL('banner', '#F2C14E'));
         r.row.classList.add('om-goal');
-        const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.desc.before(bar); r.bar = bar.firstChild;
-        r.tier = el('span', 'om-tier'); r.nm.after(r.tier);
-        const sw = el('button', 'om-swap', 'Swap'); r.row.append(sw); r.sw = sw;
+        const meta = el('div', 'om-meta');
+        r.tier = el('span', 'om-tier'); meta.append(r.tier, r.own);
+        const bar = el('div', 'bar om-gbar'); bar.append(el('i')); r.bar = bar.firstChild;
+        r.desc.before(meta, bar);
+        const d = disclose(r.row, r.desc.parentElement, null, [r.ic]); meta.append(d.chev);
+        const sw = el('button', 'om-swap', 'Swap'); sw.type = 'button'; r.row.append(sw); r.sw = sw;
         r.btn.addEventListener('click', () => { if (almanac.claim(i)) ui(true); });
         sw.addEventListener('click', () => { if (almanac.swap(i)) ui(true); });
         rows.push(r);
@@ -15373,6 +15594,7 @@ async function uiTavern() {
         const r = rows[i]; if (!r) return;
         r.row.hidden = false;
         setTxt(r.nm, almanac.goalText(g));
+        putAttr(r.desc.parentElement, 'aria-label', `${almanac.goalText(g)}: show the reward`);
         setTxt(r.tier, g.tier === 'steady' ? 'Steady' : 'Easy');
         setCls(r.tier, 'om-tier ' + g.tier);
         setTxt(r.own, g.claimed ? 'Claimed' : `${almanac.num(g.have)}/${almanac.num(g.need)}`);
@@ -15738,6 +15960,14 @@ let showAwayReport;
     for (const x of items) { const e = el('span', 'cost' + (x.s ? ' short' : '')); e.title = x.n; e.append(img(x.u), el('span', null, x.t)); box.append(e); }
   }
   const setTxt = (e, t) => { if (e.textContent !== t) e.textContent = t; };
+  // How many of a cost's parts the player already has: { have, all }.
+  function costCount(c) {
+    let have = 0, all = 0;
+    if (c.gold) { all++; if (S.gold >= c.gold) have++; }
+    for (const [f, t, n] of c.mats) { all++; if ((S.mats[f][t - 1] || 0) >= n) have++; }
+    for (const [i, n] of c.troph) { all++; const tr = S.craft.troph; if ((i === 'any' ? tr.reduce((a, b) => a + b, 0) : tr[i] || 0) >= n) have++; }
+    return { have, all };
+  }
 
   // ---------------- confirm buttons (in-page, no confirm()) ----------------
   // First tap arms the button for 4 seconds; the second tap acts.
@@ -15762,9 +15992,10 @@ let showAwayReport;
   }
 
   // The action area of a card: Build / Queue / Confirm, or Cancel for a pending build.
-  function actions(id) {
-    const box = el('div', 'cb-act'), go = btn('big cb-go'), cancel = btn('mini warn cb-cancel'), why = el('p', 'note cb-why');
-    box.append(why, go, cancel);
+  // quick: the building cards' compact row button (it lives in the row, not in this box).
+  function actions(id, quick) {
+    const box = el('div', 'cb-act'), go = quick ? quick.b : btn('big cb-go'), cancel = btn('mini warn cb-cancel'), why = el('p', 'note cb-why');
+    if (quick) box.append(why, cancel); else box.append(why, go, cancel);
     go.addEventListener('click', () => {
       const c = campCan(id); if (!c.ok) return;
       if (!isArmed('b:' + id)) { arm('b:' + id); return; }
@@ -15780,11 +16011,12 @@ let showAwayReport;
         putHidden(go, !!pend || done || !!c.need); putHidden(cancel, !pend);
         if (pend) setTxt(cancel, isArmed('c:' + id) ? `Tap again: refund ${pend.start ? 'half' : 'all'} of the cost` : 'Cancel build');
         if (!pend && !done) {
-          const verb = c.queue ? 'Queue' : 'Build';
-          setTxt(go, isArmed('b:' + id) ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
-          putDisabled(go, !c.ok); putToggle(go, 'armed', isArmed('b:' + id));
+          const verb = c.queue ? 'Queue' : 'Build', armd = isArmed('b:' + id);
+          if (quick) { setTxt(quick.q, `Lv ${c.to} · ${dur(c.dur / 1000)}`); setTxt(quick.p, armd ? 'Sure?' : verb); putAttr(go, 'aria-label', armd ? `Tap again to ${verb.toLowerCase()} Lv ${c.to}` : `${verb} Lv ${c.to}, ${dur(c.dur / 1000)}`); }
+          else setTxt(go, armd ? `Tap again to ${verb.toLowerCase()} (${dur(c.dur / 1000)})` : `${verb} ${id === 'hearth' ? 'Hearth' : 'Lv'} ${c.to} · ${dur(c.dur / 1000)}`);
+          putDisabled(go, !c.ok); putToggle(go, 'armed', armd);
         }
-        const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? 'Not enough yet.' : c.why);
+        const w = pend || done ? '' : c.ok ? (c.queue ? 'Your builder is busy. This starts when the current build ends.' : '') : (c.miss ? '' : c.why);
         setTxt(why, w); putHidden(why, !w);
       }
     };
@@ -15809,7 +16041,10 @@ let showAwayReport;
       who.append(H.name, H.lv, H.fx); top.append(ic, who);
       H.next = el('div', 'ch-next'); H.nextT = el('div', 'ch-next-t'); H.nextO = el('div', 'ch-next-o'); H.next.append(H.nextT, H.nextO);
       H.costs = el('div', 'costs cb-costs'); H.timer = timer(); H.act = actions('hearth');
-      hearthCard.append(top, H.next, H.costs, H.timer.el, H.act.el);
+      // The cost: one summary line ("Cost: 2 of 5 ready"); the chips open on a tap.
+      H.cost = el('div', 'ch-cost'); H.costT = el('span', 'ch-cost-t'); H.cost.append(H.costT);
+      H.dz = disclose(hearthCard, H.cost, () => ui(true)); H.cost.append(H.dz.chev);
+      hearthCard.append(top, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
       sec.append(head, closed, hearthCard, buildersBox);
     },
@@ -15823,7 +16058,7 @@ let showAwayReport;
       }
       const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
       setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
-      setTxt(H.lv, `Hearth ${l}/10 · ${campBuilders()} builder${campBuilders() > 1 ? 's' : ''}`);
+      setTxt(H.lv, `Hearth ${l}/10`);
       setTxt(H.fx, campEffects('hearth', l).join(' · '));
       putHidden(H.next, !nx);
       if (nx) {
@@ -15831,8 +16066,14 @@ let showAwayReport;
         setTxt(H.nextT, `Next: Hearth ${nx.to}${rename}` + (S.maxZone < nx.zone ? ` (needs zone ${nx.zone})` : ''));
         setTxt(H.nextO, nx.opens.length ? 'Opens ' + nx.opens.join(', ') + '.' : `+3% away gains.`);
       }
-      putHidden(H.costs, !!pend || !!c.max);
-      if (!pend && !c.max && c.cost) chips(H.costs, c.cost);
+      const showCost = !pend && !c.max && !!c.cost;
+      putHidden(H.cost, !showCost); putHidden(H.costs, !showCost || !H.dz.open);
+      if (showCost) {
+        const n = costCount(c.cost);
+        setTxt(H.costT, n.have === n.all ? 'Cost: all ready' : `Cost: ${n.have} of ${n.all} ready`);
+        putToggle(H.cost, 'short', n.have < n.all);
+        if (H.dz.open) chips(H.costs, c.cost);
+      }
       H.timer.set(pend); H.act.set(c, pend);
       putToggle(hearthCard, 'new', S.camp.news.some(x => x.id === 'hearth'));
       // builders
@@ -15870,20 +16111,25 @@ let showAwayReport;
   const openCards = new Set();
   const cards = new Map();
   let listBox, listSig = '';
+  // One row per building: icon, name, level, state or timer, and the Build/Queue button. A tap on the
+  // row opens the effects now -> next, the cost chips, Cancel and the building's own actions.
   function card(id) {
     const d = CAMP_B[id], w = el('div', 'cb'); w.id = 'camp-b-' + id;
-    const row = btn('cb-row'); row.setAttribute('aria-expanded', 'false');
+    const row = el('div', 'cb-row'), hit = el('div', 'cb-hit');
     const ic = el('div', 'ic'); ic.append(img(icon(id)));
     const mid = el('div', 'cb-mid'), nm = el('div', 'cb-nm'), lvl = el('span', 'cb-lv'), line = el('div', 'cb-line');
     nm.append(el('span', null, d.n), lvl); mid.append(nm, line);
-    const dot = el('span', 'cb-dot'); dot.hidden = true;
-    row.append(ic, mid, dot);
+    hit.append(ic, mid);
+    const qb = btn('buy cb-quick'), q = el('span', 'qty'), p = el('span', 'price'); qb.append(q, p);
+    row.append(hit, qb);
     const body = el('div', 'cb-body'); body.hidden = true;
-    const table = el('div', 'cb-fx'), costs = el('div', 'costs cb-costs'), extra = el('div', 'cb-extra'), tm = timer(), act = actions(id);
+    const table = el('div', 'cb-fx'), costs = el('div', 'costs cb-costs'), extra = el('div', 'cb-extra'), tm = timer(), act = actions(id, { b: qb, q, p });
     body.append(table, costs, tm.el, act.el, extra);
     w.append(row, body);
-    row.addEventListener('click', () => { if (openCards.has(id)) openCards.delete(id); else openCards.add(id); ui(true); });
-    return { w, row, lvl, line, dot, body, table, costs, extra, tm, act, fxSig: '', exSig: '' };
+    const dz = disclose(w, hit, on => { if (on) openCards.add(id); else openCards.delete(id); ui(true); });
+    nm.append(dz.chev);
+    hit.setAttribute('aria-label', `${d.n}: show details`);
+    return { w, row, hit, dz, qb, lvl, line, body, table, costs, extra, tm, act, fxSig: '', exSig: '' };
   }
   function effectsTable(k, id, l) {
     const max = CAMP_B[id].max, sig = id + l + max;
@@ -15924,16 +16170,21 @@ let showAwayReport;
       for (const id of ids) {
         const k = cards.get(id), l = campLevel(id), max = CAMP_B[id].max, c = campCan(id), pend = campPending(id), isOpen = openCards.has(id);
         setTxt(k.lvl, l ? `Lv ${l}/${max}` : 'Not built');
+        // The row's one line: what is happening now, or what stops the next level.
         const line = pend ? `Building Lv ${pend.to} · ${pend.start ? dur(left(pend)) : 'queued'}`
-          : c.max ? campEffects(id, l).join(' · ')
-          : `Lv ${c.to}: ${campEffects(id, c.to).filter(x => !campEffects(id, l).includes(x)).join(' · ') || campEffects(id, c.to)[0]}` + (c.need ? ` · needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}` : '');
+          : c.max ? 'Fully built'
+          : c.need ? `Lv ${c.to} needs ${c.need.hearth ? 'Hearth ' + c.need.hearth : 'zone ' + c.need.zone}`
+          : c.ok ? (c.queue ? 'Ready to queue' : 'Ready to build')
+          : c.miss ? `Lv ${c.to}: ${(o => `${o.have} of ${o.all} costs ready`)(costCount(c.cost))}` : c.why;
         setTxt(k.line, line);
-        putHidden(k.dot, !c.ok || !!pend);
+        putHidden(k.qb, !!pend || !!c.max || !!c.need);
         putToggle(k.w, 'locked', !!c.need && !l);
         putToggle(k.w, 'busy', !!pend);
+        putToggle(k.w, 'can', c.ok && !pend);
         putToggle(k.w, 'new', S.camp.news.some(x => x.id === id));
-        putAttr(k.row, 'aria-expanded', String(isOpen)); putHidden(k.body, !isOpen);
-        if (!isOpen) continue;
+        if (k.dz.open !== isOpen) { k.dz.open = isOpen; putToggle(k.w, 'open', isOpen); putAttr(k.hit, 'aria-expanded', String(isOpen)); }   // opened from elsewhere (campGoto)
+        putHidden(k.body, !isOpen);
+        if (!isOpen) { if (!pend && !c.max && !c.need) k.act.set(c, pend); continue; }
         effectsTable(k, id, l);
         putHidden(k.costs, !!pend || !!c.max || !c.cost);
         if (!k.costs.hidden) chips(k.costs, c.cost);
@@ -15999,18 +16250,23 @@ let showAwayReport;
     }
   });
   let rosGen = 0;
+  // One compact row: portrait, name, status (a tap opens the character sheet), then the actions.
   function rosRow(x) {
     const c = ROSTER[x.id], row = el('div', 'ros-row ' + x.s.status);
+    const hit = el('div', 'ros-hit'); hit.setAttribute('role', 'button'); hit.tabIndex = 0;
+    hit.setAttribute('aria-label', `${c.name}, open character sheet`);
     const pt = el('div', 'ros-pt r-' + c.rarity); pt.append(img(portrait(x.id)));
     const body = el('div', 'ros-body');
     const nm = el('div', 'ros-nm'); nm.append(el('span', null, c.name), el('small', null, `Lv ${x.r.lv} · ${ROLE_STATS[c.role].n}`));
     const st = el('div', 'ros-st', x.s.label + (x.s.sub ? ' · ' + x.s.sub : ''));
-    body.append(nm, st);
+    body.append(nm, st); hit.append(pt, body);
+    const open = () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } };
+    hit.addEventListener('click', open);
+    hit.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === hit) { e.preventDefault(); open(); } });
     const acts = el('div', 'ros-acts');
     if (x.s.action) { const b = btn('mini', x.s.action.label); b.addEventListener('click', () => { x.s.action.fn(); ui(true); }); acts.append(b); }
     for (const s of benchSends(x.id)) { const b = btn('mini go', s.label); b.disabled = !s.ok; if (s.why) b.title = s.why; b.addEventListener('click', () => { s.fn(); ui(true); }); acts.append(b); }
-    const sh = btn('mini', 'Sheet'); sh.addEventListener('click', () => { try { partySheet.open(x.id); } catch (e) { setTab('party'); } }); acts.append(sh);
-    row.append(pt, body, acts);
+    row.append(hit, acts);
     rosBox.append(row);
   }
 
@@ -18258,7 +18514,24 @@ let openSheet, partySheet;
   // Something waiting for the player: an unread story or a promotion they can pay for now.
   const needsYou = k => isRecruited(k) && (safe(() => storyState(k).unread, 0) > 0 || safe(() => canPromote(k), false));
 
+  // Out on an expedition (57b expedOut): { route, back, left: '3h 12m', txt: 'Out: Route, 3h 12m' } or null.
+  const outOf = k => {
+    const sl = typeof expedOut === 'function' ? safe(() => expedOut(k), null) : null; if (!sl) return null;
+    const rt = (typeof EXPED_ROUTES === 'object' && EXPED_ROUTES[sl.r]) || null, route = rt ? rt.n : 'an expedition';
+    const m = Math.ceil((sl.end - Date.now()) / 60000), back = m <= 0;
+    const left = back ? '' : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h` + (m % 60 ? ` ${m % 60}m` : '');
+    return { id: sl.r, route, back, left, txt: `Out: ${route}, ${back ? 'back' : left}` };
+  };
+  // The player's Codex title (57c codexTitle), cached by the chosen title's id.
+  let ctKey, ctVal = '';
+  const heroTitle = () => {
+    const key = S.codex ? S.codex.title : null;
+    if (key !== ctKey) { ctKey = key; ctVal = key && typeof codexTitle === 'function' ? safe(() => codexTitle(), '') : ''; }
+    return ctVal;
+  };
+
   Object.assign(PTY, {
+    outOf, heroTitle,
     ROLE_NAME, CIRCLE_NAME, COL_NAME, HERO_GEAR_NOUN, HERO_SLOTS, safe, live, C, heroClass, heroCol, portrait, rarity, frameCol,
     rarityName, first, pip, essName, costText, weaponNoun, gearOf, itemIc, itemFrame, slotTile, traits, synergiesFor, missingText,
     leadList, leadFor, pctOf, xpInfo, inField, needsYou, fnActive
@@ -18349,7 +18622,8 @@ let openSheet, partySheet;
     const h = el('h2', 'cs-name', k === 'hero' ? S.name : C(k).name); h.id = 'csName';
     t.append(h);
     if (k === 'hero') {
-      const c = heroClass();
+      const c = heroClass(), ct = heroTitle();
+      if (ct) t.append(el('small', 'cs-ctitle', ct));
       t.append(el('small', 'cs-title', c ? `the ${c.name}` : 'the Wanderer'));
       const tags = el('div', 'cs-tags');
       if (c) tags.append(pip(c.role));
@@ -18510,6 +18784,12 @@ let openSheet, partySheet;
       const b = el('button', 'mini cs-act', 'Bench'); b.type = 'button';
       b.addEventListener('click', () => { if (benchChar(k)) { save(); ui(true); partySheet.refresh(true); } });
       row.append(b);
+    } else if (outOf(k)) {
+      // setField/fieldChar refuse someone on an expedition: say why instead of a dead button.
+      const b = el('button', 'mini go cs-act', 'Field'); b.type = 'button'; b.disabled = true;
+      b.title = 'Out on an expedition';
+      row.append(b);
+      foot.append(el('small', 'cs-cost', 'On an expedition. Field them when they are back.'));
     } else {
       const f = (S.party.field || []).slice(0, 3);
       const b = el('button', 'mini go cs-act', f.length < 3 ? 'Field' : swapOpen ? 'Cancel' : 'Field'); b.type = 'button';
@@ -18533,12 +18813,15 @@ let openSheet, partySheet;
     }
   }
 
+  const outLine = o => o.back ? `Back from ${o.route}. Collect them in Camp > Expeditions.` : `Out: ${o.route}, ${o.left} left. They can join the party when they are back.`;
   function buildChar(k) {
     const body = sheet.body; body.textContent = ''; refs = {};
     sheet.sheet.setAttribute('aria-labelledby', 'csName');
     const locked = !isRecruited(k);
     body.append(head(k, locked));
     if (locked) { buildLocked(k); return; }
+    const o = outOf(k);
+    if (o) { const ln = el('p', 'cs-out'); refs.out = { ln, k }; ln.textContent = outLine(o); body.append(ln); }
     body.append(xpBlock(k));
     if (BIOS[k]) body.append(el('p', 'cs-bio', BIOS[k]));
     body.append(statsSection(k), gearSection(k));
@@ -18629,11 +18912,11 @@ let openSheet, partySheet;
   }
 
   const sigOf = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L;
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
     return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
-      JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join()].join('|');
+      JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join(), (o => o ? o.id + o.back : '')(outOf(k))].join('|');
   };
   function render(force) {
     if (!sheet || !who) return;
@@ -18641,6 +18924,7 @@ let openSheet, partySheet;
     if (!force && s === sig) {
       updateXp();
       if (refs.dps && who !== 'hero') putText(refs.dps, fmt(safe(() => charDps(who), 0)));
+      if (refs.out) { const o = outOf(refs.out.k); if (o) putText(refs.out.ln, outLine(o)); }
       if (refs.heroXp) { putStyle(refs.heroXp, 'width', Math.min(100, S.xp / xpNeed() * 100) + '%'); putText(refs.heroXpTxt, `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`); }
       return;
     }
@@ -18664,7 +18948,7 @@ let openSheet, partySheet;
     close() { if (sheet) sheet.close(); },
     isOpen: () => !!sheet
   };
-  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop']) on(ev, () => { if (sheet) partySheet.refresh(); });
+  for (const ev of ['promote', 'fieldChange', 'recruit', 'milestone', 'gear', 'mirrorDrop', 'expedSent', 'expedBack']) on(ev, () => { if (sheet) partySheet.refresh(); });
 }
 
 // ---- src/js/75-party.js ----
@@ -18675,7 +18959,7 @@ let openSheet, partySheet;
 // Reads the roster API (56-roster.js); synergies (56b) and leads (56c) only when present.
 {
   const { safe, live, C, heroClass, heroCol, portrait, frameCol, first, pip, costText, weaponNoun, gearOf, slotTile,
-    traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive } = PTY;
+    traits, synergiesFor, missingText, leadList, pctOf, xpInfo, inField, needsYou, HERO_GEAR_NOUN, HERO_SLOTS, COL_NAME, fnActive, outOf, heroTitle } = PTY;
   const RAR_ORDER = { legendary: 0, epic: 1, rare: 2, common: 3 };
   const P = () => S.party;
   const field = () => (live() && Array.isArray(P().field) ? P().field.filter(isRecruited).slice(0, 3) : []);
@@ -18777,12 +19061,13 @@ let openSheet, partySheet;
     const pt = el('div', 'pt big'); pt.append(img(portrait('hero')));
     const who = el('div', 'pc-who');
     const nm = el('b', null, S.name);
+    const ctl = el('small', 'pc-ctitle'); ctl.hidden = true;   // the Codex title (57c), when the player picked one
     const sub = el('small');
     const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
-    who.append(nm, sub, tags);
+    who.append(nm, ctl, sub, tags);
     top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
-    const refs = { card, nm, sub };
+    const refs = { card, nm, sub, ctl };
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
@@ -18815,6 +19100,7 @@ let openSheet, partySheet;
     if (sig !== heroSig || !heroRefs) { heroSig = sig; buildHero(box); }
     const r = heroRefs;
     setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
+    const ct = heroTitle(); setT(r.ctl, ct); putHidden(r.ctl, !ct);
     if (r.cdBar) {
       const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
       putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
@@ -18949,7 +19235,7 @@ let openSheet, partySheet;
     const leadsById = {}; for (const l of leadList()) leadsById[l.id] = l;
     const rows = ROSTER_KEYS.map((k, i) => {
       const rec = charRec(k);
-      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k) };
+      return { k, i, rec, fielded: inField(k), how: rec ? '' : shortHow(k, leadsById), ready: !rec && !!recruitCost(k), flag: rec && needsYou(k), out: rec ? outOf(k) : null };
     });
     const pw = x => { try { return x.rec ? charDps(x.k) : 0; } catch (e) { return 0; } };
     const shownPre = rows.filter(x => filt === 'all' || C(x.k).role === filt);
@@ -18962,8 +19248,12 @@ let openSheet, partySheet;
       ? rarP(a) - rarP(b) || (!!b.rec - !!a.rec) || (a.rec && b.rec ? b.rec.lv - a.rec.lv : near(b) - near(a)) || a.i - b.i
       : (!!b.rec - !!a.rec) || (a.rec ? by[sortBy](a, b) : near(b) - near(a) || rarP(a) - rarP(b)) || a.i - b.i);
     // Rebuild tiles only when something structural changes; levels update in place so taps are never lost.
-    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag]))].join('|');
-    for (const x of rows) { const t = rosTiles[x.k]; if (t && t.lv && x.rec) { const v = 'Lv ' + x.rec.lv; if (t.lv.textContent !== v) t.lv.textContent = v; } }
+    const sig = [filt, sortBy, typeof portraitURL, shownPre.map(x => x.k).join(), JSON.stringify(rows.map(x => [x.k, !!x.rec, x.rec && x.rec.rank, x.fielded, x.how, x.ready, x.flag, x.out && x.out.id + x.out.back]))].join('|');
+    for (const x of rows) {
+      const t = rosTiles[x.k]; if (!t || !x.rec) continue;
+      if (t.lv) setT(t.lv, 'Lv ' + x.rec.lv);
+      if (t.out && x.out) setT(t.out, x.out.txt);     // "Out: Route, 3h 12m" counts down in place
+    }
     if (sig === rosSig) return; rosSig = sig; rosTiles = {};
     r.cnt.textContent = `${rows.filter(x => x.rec).length}/${rows.length}`;
     r.sort.forEach((b, i) => b.setAttribute('aria-pressed', String(SORTS[i] === sortBy)));
@@ -18985,18 +19275,20 @@ let openSheet, partySheet;
   let rosGen = 0;
   function addTile(x) {
     const r = rosRefs, c = C(x.k);
-    const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : ''));
+    const t = btn('rtile' + (x.rec ? (x.fielded ? ' fielded' : ' bench') : ' locked') + (c.rarity === 'legendary' ? ' leg' : '') + (x.ready ? ' ready' : '') + (x.out ? ' out' : ''));
     t.style.setProperty('--rc', frameCol(x.k));
     const fr = el('span', 'rt-fr'); fr.append(img(portrait(x.k)));
     if (x.rec) {
       const lv = el('span', 'rt-lv', 'Lv ' + x.rec.lv); rosTiles[x.k] = { lv };
       fr.append(lv, el('i', 'rp r-' + c.role));
       if (x.fielded) fr.append(el('span', 'rt-in', 'In party'));
+      else if (x.out) fr.append(el('span', 'rt-in rt-away', 'Away'));
       if (x.flag) fr.append(el('span', 'ndot'));
     } else fr.append(el('i', 'rp r-' + c.role));
     t.append(fr, el('span', 'rt-nm', first(x.k)));
+    if (x.out) { const o = el('span', 'rt-how rt-out', x.out.txt); rosTiles[x.k].out = o; t.append(o); }
     if (!x.rec) { t.append(el('span', 'rt-ti', c.title), el('span', 'rt-how', x.how)); }
-    t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
+    t.setAttribute('aria-label', `${c.name}, ${c.title}. ${PTY.rarityName(x.k)} ${PTY.ROLE_NAME[c.role]}. ` + (x.rec ? `Level ${x.rec.lv}${x.fielded ? ', in the party' : x.out ? `, ${x.out.txt}` : ', on the bench'}.` : `Not recruited. ${recruitHow(x.k)}`));
     t.addEventListener('click', () => partySheet.open(x.k));
     r.grid.append(t);
   }
