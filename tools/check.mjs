@@ -2092,12 +2092,12 @@ try {
   l.eval('S.maxZone = 20; S.zone = 20'); ticks(l, 2);
   assert(l.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'old save below zone 5: no welcome, the camp opens at Hearth 1');
   errs.push(...n.errors, ...c.errors, ...l.errors);
-  // Watchtower hold hint: partyHoldEstimate() when party combat defines it, today's rule otherwise
+  // Watchtower hold hint: partyHoldEstimate() (party combat, 59-combat.js); the stubs below replace it (assignments: it is a var)
   const hz = extra => { const h = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }), extraSource: extra }); return h.eval('campHoldZone()'); };
-  const base = hz('');
-  assert(base >= 1 && base <= 38, `hold hint without party combat: zone ${base} (3-second kills)`);
-  assert(hz('function partyHoldEstimate() { return { zone: 12 }; }') === 12 && hz('function partyHoldEstimate() { return 30.6; }') === 30, 'hold hint reads partyHoldEstimate() ({ zone } or a number)');
-  assert(hz('function partyHoldEstimate() { return 99; }') === 38 && hz('function partyHoldEstimate() { throw new Error("x"); }') === base, 'hold hint: capped at your best zone; falls back if the estimate fails');
+  const base = hz(''), rule = hz('partyHoldEstimate = undefined;');
+  assert(base >= 1 && base <= 38 && rule >= 1 && rule <= 38, `hold hint with party combat: zone ${base}; without it (3-second kills): ${rule}`);
+  assert(hz('partyHoldEstimate = () => ({ zone: 12 });') === 12 && hz('partyHoldEstimate = () => 30.6;') === 30, 'hold hint reads partyHoldEstimate() ({ zone } or a number)');
+  assert(hz('partyHoldEstimate = () => 99;') === 38 && hz('partyHoldEstimate = () => { throw new Error("x"); };') === rule, 'hold hint: capped at your best zone; falls back if the estimate fails');
   assert(!errs.length, 'no welcome errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('welcome crashed: ' + (e.stack || e)); }
 

@@ -1025,6 +1025,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const thrRate = (u, i) => (i === 0 ? heroDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
   const EST_T = [null, null];
   partyHoldEstimate = (zMax, opts) => {
+    if (!(zMax >= 1)) zMax = Math.max(1, S.maxZone || 1);   // no zone: from the best zone down (the Watchtower hint)
     const o = opts || {}, n = estUnits();
     const hero = EST[0];
     const heroD = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
