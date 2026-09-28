@@ -169,7 +169,7 @@ const CRAFT_NODE_RIGS = {
       if (t >= 4) { k.add(4.1, 'tops', Fg, Q(0, -39, 1, 2), { nl: 1, lr: 6 }); k.add(4.1, 'tops', Fg, Q(-9, -35, 1, 2), { nl: 1, lr: 6 }); }
     }
   },
-  // Herb bed: low leafy plants with flower heads; the Lantern Lily glows.
+  // Herb bed: low leafy plants with flower heads; the Mandrake glows.
   'node:herb': {
     name: 'Herb bed', anim: 'shake',
     bones: { base: [0, 0, null], leaves: [0, -6, 'base'] },

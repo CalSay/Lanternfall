@@ -7,8 +7,8 @@
 // While the hero gathers, the stage (62-stage.js) bakes the hero from a gather spec: the class
 // outfit without its weapon and off-hand, holding the tool in the front hand, with a swing that
 // reads as mining, chopping or cutting (its own wind / strike poses, registered into AK.ANIMS).
-// Tools are tinted by tier with the ore palette (AK.FAM.ore: Copper, Iron, Mithril, Starsteel,
-// Emberite); handles use the wood palette of the same tier. Rarity adds trim and glow as for gear.
+// Tools are tinted by tier with the ore palette (AK.FAM.ore: Copper, Iron, Silver, Cobalt,
+// Mithril); handles use the wood palette of the same tier. Rarity adds trim and glow as for gear.
 //
 // Exposed names:
 //   toolFor(skill) -> { k: 'pick'|'axe'|'sickle'|'rod', t: 1-5, r: 0-3, name } | null
@@ -26,7 +26,7 @@
 let toolFor;
 const TOOL_ART = (() => {
   const SKILL_TOOL = { mine: 'pick', wood: 'axe', forage: 'sickle', fish: 'rod' };
-  const TIER_NAMES = ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'];
+  const TIER_NAMES = ['Copper', 'Iron', 'Silver', 'Cobalt', 'Mithril'];
   // Per tool: its name, how it rests in the hand (tilt: clockwise from upright, radians) and its
   // swing. Poses use the kit's pose values (12a POSE0): rF / rB swing the arms at the shoulder
   // (positive = back and up), wF turns the tool at the wrist, lean, bob (crouch), dx (step in).

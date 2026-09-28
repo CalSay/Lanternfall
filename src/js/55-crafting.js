@@ -31,7 +31,7 @@
 //   equipChar(charId, itemId, pos) -> bool       pos 'wpn' | 'trk'; the item leaves any other wearer
 //   unequipChar(charId, pos) -> bool
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
-//   craftStarChart() -> bool                     40 Moonstone Shard (tier-3 Crystal), 20 Radiant
+//   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
 //   brewTonic(key, t) / drinkTonic(key, t) / tonicActive() -> { key, t, left, v } | null   (K6b)
 //

@@ -422,7 +422,7 @@ try {
     assert(E('charGear("tobin").score') === E(`itemPower(itemById(${tk}))`), 'a Staff does not fit a tank companion');
     assert(E(`fits("shield", "wpn", "tank") && fits("shield", "off", "warden") && !fits("shield", "off", "ranger") && !fits("weapon", "weapon", "lightkeeper") && !fits("helm", "helm", "ranger") && fits("weapon", "weapon", "any") && fits("helm", "helm", "any") && fits({ slot: "weapon", t: 1, r: "legendary", plus: 0, u: "sproutblade" }, "weapon", "ranger") && fits({ slot: "helm", t: 1, r: "legendary", plus: 0, u: "echocowl" }, "helm", "warden") && fits("trinket", "trk", "tobin") && !fits("trinket", "weapon", "any")`), 'fits(): class, role, character rules; legacy Sword/Helm only without a class; uniques fit every class');
     assert(E('upgradeCost({ slot: "bow", t: 1, r: "common", plus: 7 }).troph === 1 && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 6 })) && !("troph" in upgradeCost({ slot: "bow", t: 1, r: "common", plus: 10 }))'), 'upgrades to +8, +9 and +10 name a Trophy');
-    assert(E('itemName(newItem("bow", 2, "rare")) === "Yew Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
+    assert(E('itemName(newItem("bow", 2, "rare")) === "Birch Bow" && itemColor("bow", 2) === MAT.wood.col[1] && craftCost("bow", 2).wood === 9'), 'names, colours and costs for new kinds');
     assert(Object.keys(E('newItem("weapon", 1, "common")')).join() === 'id,slot,t,r,plus', 'legacy forge items carry no new fields');
     assert(!g.errors.length, 'no items handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
@@ -899,7 +899,7 @@ try {
   const mats = () => E('JSON.stringify(S.mats)');
   // gates and player-facing reasons
   const why0 = E('canCraft("robe", 1).why');
-  assert(why0 === '7 more Flax Fibre, 1 more Quartz Shard, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
+  assert(why0 === '7 more Hemp Fibre, 1 more Quartz Shard, 1 more Sage Sprig, 2 more Dim Essence', `canCraft names what is missing (${why0})`);
   const RQ = t => E(`CRAFT_STATION_REQ[${t - 1}]`);   // GP1: the gates are SKILL_TUNE.stationReq
   assert(E('canCraft("robe", 2).why') === `Needs Tailoring ${RQ(2)}` && E('craftItem("robe", 2)') === null, `station tier gate: Needs Tailoring ${RQ(2)}`);
   assert(E('canCraft("charm", 3).why') === `Needs Enchanting ${RQ(3)}`, "Charm gates on the Enchanter's Table...");
@@ -1355,7 +1355,7 @@ try {
   assert(rate > expect * 0.7 && rate < expect * 1.9, `Barrow Beetle zone drops Hide on kills (${hide} in 400 kills, ${rate.toFixed(2)}/kill, base ${expect.toFixed(2)} before stars)`);
   // home ground
   E('S.zone = 2; S.mastery.zones[2] = 0');
-  assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Crystal +25% (home ground), Ore +0%');
+  assert(E('homeFamily()') === 'crystal' && E('homeBonus("crystal")') === 0.25 && E('mod("yield:crystal")') === 1.25 && E('homeBonus("ore")') === 0, 'Batwing Caves: Gems +25% (home ground), Ore +0%');
   E('S.mastery.zones[2] = MASTERY_STARS[2]');
   assert(E('homeBonus("crystal")') === 0.5, 'home ground +50% with 3 mastery stars');
   // champions and trophies
@@ -1481,7 +1481,7 @@ try {
     E('emit("harvest", { kind: "ore", t: 1, n: 2000, away: true }); emit("harvest", { kind: "crystal", t: 1, n: 2000 }); emit("harvest", { kind: "ore", t: 5, n: 1000, away: true })');
     const ore2 = E('S.mats.ore[1]') - a0, cr2 = E('S.mats.crystal[1]') - c0, ore5 = E('S.mats.ore[4]') - t50;
     assert(ch === 0.08 && Math.abs(ore2 - 160) <= 1 && cr2 > 110 && cr2 < 210 && Math.abs(ore5 - 160) <= 2 && E('S.tools.finds') - f0 === ore2 + cr2 + ore5,
-      `rare find 8% (tier 5 Epic +10): +${ore2} Iron from 2000 Copper away, +${cr2} tier-2 crystal live, +${ore5} Emberite on tier 5`);
+      `rare find 8% (tier 5 Epic +10): +${ore2} Iron from 2000 Copper away, +${cr2} tier-2 crystal live, +${ore5} Mithril on tier 5`);
     E('TOOL_TUNE.on = 0'); const b = E('S.mats.ore[1]'); E('emit("harvest", { kind: "ore", t: 1, n: 2000, away: true })');
     assert(E('S.mats.ore[1]') === b, 'TOOL_TUNE.on = 0: no rare finds');
     E('TOOL_TUNE.on = 1');
@@ -3548,7 +3548,7 @@ try {
   assert(/Build the Forge first\./.test(E('canCraft(Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].st === "forge" && !CRAFT_KINDS[k].legacy), 1).why')), 'the Forge too');
   assert(/Build the Enchanter/.test(E('canTransmute("ore", 2, "down").why')) && !E('brewTonic(Object.keys(CRAFT_TONICS)[0], 1)'), "Transmute and Tonics wait for the Enchanter's Table");
   E('S.mats.ore = [0, 0, 0, 0, 0]; S.mats.wood[0] = 5');
-  assert(!E('hearthLight()') && E('hearthCan().why') === '3 more Oak Log', 'the fire needs 8 Oak Log: ' + E('hearthCan().why'));
+  assert(!E('hearthLight()') && E('hearthCan().why') === '3 more Pine Log', 'the fire needs 8 Pine Log: ' + E('hearthCan().why'));
   const ev = []; g.fn.on('campOpen', e => ev.push('campOpen:' + e.quiet)); g.fn.on('hearthLit', () => ev.push('lit'));
   E('S.mats.wood[0] = 8');
   assert(E('hearthLight()') && E('S.mats.wood[0]') === 0 && E('S.hearth.lit > 0 && campOpen() && campLevel("hearth") === 1 && S.activity === "fight"'), 'hearthLight(): pays 8 Oak, Hearth 1, the camp opens, the hero walks out to fight');
@@ -3707,7 +3707,7 @@ try {
   assert(E('whereToGet("ore", 3)').includes(`Mining level ${E('NODE_REQ[2]')}`) && E('whereToGet("ess", 5)').includes(`zone ${E('PACE.essTier[4]')}`), 'where-to-get text reads NODE_REQ and PACE.essTier: ' + E('whereToGet("ore", 3)'));
   const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
   E('S.skills.mine.lv = NODE_REQ[2] - 1; S.skills.mine.xp = 0; gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
-  assert(toasts.some(m => m.includes(`Mining level ${E('NODE_REQ[2]')}.`) && m.includes('Mithril Seam')), 'the level-up that opens a tier names it: ' + toasts[toasts.length - 1]);
+  assert(toasts.some(m => m.includes(`Mining level ${E('NODE_REQ[2]')}.`) && m.includes('Silver Seam')), 'the level-up that opens a tier names it: ' + toasts[toasts.length - 1]);
   E('gainSkill("mine", skillNeed(S.skills.mine.lv, "mine"))');
   assert(toasts[toasts.length - 1].includes(`Next tier at level ${E('NODE_REQ[3]')}.`), 'other level-ups name the next gate: ' + toasts[toasts.length - 1]);
   assert(!g.errors.length, 'no errors (new game)' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -4595,9 +4595,9 @@ try {
   };
   {
     const a = shift(true), b = shift(false), c = shift(true);
-    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => /Tam is back from the Oak Grove: \+\d+ Oak Log/.test(l.txt));
+    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => /Tam is back from the Pine Grove: \+\d+ Pine Log/.test(l.txt));
     assert(a.j && Math.abs(a.j.end - a.j.start - 2 * 3600e3) < 1 && a.j.rate > 0, `a Common Lv 1 shift is 2 h, fixed at send (rate ${a.j.rate.toFixed(1)} an hour)`);
-    assert(E('handsList().every(x => !x.job && !x.pack.length)') && E('handsStatus("tam").st') === 'camp' && a.wood > 0, `the shift ends: Tam comes home, the pack unloads (+${a.wood} Oak Log), he waits at camp`);
+    assert(E('handsList().every(x => !x.job && !x.pack.length)') && E('handsStatus("tam").st') === 'camp' && a.wood > 0, `the shift ends: Tam comes home, the pack unloads (+${a.wood} Pine Log), he waits at camp`);
     assert(a.log === b.log && a.wood === b.wood && !!backLine, `the same haul online and through awayGains (${a.log}); the away card: "${backLine ? backLine.txt : '-'}"`);
     assert(a.log === c.log, 'the same seed gives the same haul');
     // (the Journal's away diff, 55-stats, counts every gathered family that grew while away, expedition and Hands' parcels included)
@@ -4713,7 +4713,7 @@ try {
     assert(E('navGo({ act: "gather", skill: "wood" })') && E('S.node.kind') === 'wood', `navGo by skill resumes that skill's last node (${E('S.node.kind + S.node.t')})`);
     secs(g, 0.2);
     const last = JSON.parse(E('JSON.stringify(navLast("mine"))'));
-    assert(last.kind === 'ore' && last.t === 3 && E('S.nav.last.mine.t') === 3, 'Mining remembers its last node (Mithril Seam) while you chop');
+    assert(last.kind === 'ore' && last.t === 3 && E('S.nav.last.mine.t') === 3, 'Mining remembers its last node (Silver Seam) while you chop');
     assert(E('navRecent().some(p => p.k === "node" && p.kind === "ore" && p.t === 3)') === false, 'a node the switcher already lists (a skill\'s last node) is not repeated under Recent');
     E('navGo({ act: "gather", node: { kind: "ore", t: 2 } })'); secs(g, 0.2); E('navGo({ act: "gather", node: { kind: "ore", t: 4 } })'); secs(g, 0.2);
     const rec = JSON.parse(E('JSON.stringify(navRecent())'));
@@ -4722,7 +4722,7 @@ try {
     g.fn.emit('bossFail', { zone: E('S.maxZone'), dps: 1 });
     assert(E('navRecent().some(p => p.k === "boss" && p.z === S.maxZone)'), 'a failed boss shows as a Recent place ("Zone N boss")');
     E('navGo({ act: "gather", node: { kind: "ore", t: 4 } })');
-    assert(E('navNow().text') === 'Mining · Starsteel Crater' && E('navNow().act') === 'gather', `the pill while mining: "${E('navNow().text')}"`);
+    assert(E('navNow().text') === 'Mining · Cobalt Crater' && E('navNow().act') === 'gather', `the pill while mining: "${E('navNow().text')}"`);
     E('S.mats.ore[3] = storeCap("ore", 4)');
     assert(E('navNow().full') === true && / · full$/.test(E('navNow().text')) && E('navFullIn("ore", 4)') === 0, 'a full cell turns the pill red ("· full")');
     E('S.mats.ore[3] = 0');
@@ -4805,7 +4805,7 @@ try {
       await page.click('.nv-sheet .nv-row:nth-child(3) .nv-act');   // Woodcutting: Chop
       await page.waitForTimeout(300);
       const after = JSON.parse(await X(`JSON.stringify({ tab: S.tab, act: S.activity, kind: S.node.kind, sheet: !!document.querySelector('.bsheet-ov'), pill: document.getElementById('actPill').textContent, open: document.getElementById('app').classList.contains('menu-open') })`));
-      assert(/^Mining · Starsteel Crater/.test(pill0) && rows.length === 4 && after.tab === '' && !after.open && !after.sheet && after.act === 'gather' && after.kind === 'wood' && /^Woodcutting · /.test(after.pill),
+      assert(/^Mining · Cobalt Crater/.test(pill0) && rows.length === 4 && after.tab === '' && !after.open && !after.sheet && after.act === 'gather' && after.kind === 'wood' && /^Woodcutting · /.test(after.pill),
         `browser: from inside the Craft menu the pill opens the switcher (${rows.length} rows); Chop switches to ${after.pill}, closes the sheet and the menu`);
       await X(`setTab('mine')`); await page.waitForTimeout(300);
       const strip = await page.textContent('.gx-view:not(.off-view) .gx-strip');
@@ -4813,7 +4813,7 @@ try {
       await page.waitForTimeout(300);
       const back = JSON.parse(await X(`JSON.stringify({ tab: S.tab, act: S.activity, node: S.node, last: S.nav.last.wood })`));
       assert(/^You are woodcutting at the /.test(strip) && back.act === 'gather' && back.node.kind === 'ore' && back.node.t === 4 && back.last && back.last.kind === 'wood' && back.tab === 'gat',
-        'browser: on the Mining view while chopping, a one-line strip; tapping the Starsteel Crater row moves you there and keeps the menu open (Wood keeps its own last node)');
+        'browser: on the Mining view while chopping, a one-line strip; tapping the Cobalt Crater row moves you there and keeps the menu open (Wood keeps its own last node)');
       await X(`setTab('mine')`); await page.waitForTimeout(300);
       await page.click('.gx-view:not(.off-view) .gx-now .gx-go');   // Back to fight
       await page.waitForTimeout(300);

@@ -168,9 +168,11 @@ Skill levels still matter for speed, yield and rare finds. Existing saves keep e
 - Removing a buff item destroys it unless a Salvage Rune is used.
 
 **4.6 Buff items** (owner: class-specific, from gathering in each area; gems for mining, but not
-mining-only).
-- **One family per region:** Pearls on the Coast (fishing, Tide Pools), Ember-glass in the Emberwaste
-  (mining); Regions 4-5 come from LORE-R45.
+mining-only). **MAT1 (coordinator, 2026-09-28): buff items are Sigils**, never named like a gem, a
+stone or glass, so they are never confused with the `crystal` family's Gems (materials.md 7-8).
+- **One family per region:** the **Tide Sigil** on the Coast (fishing, Tide Pools), the **Ember Sigil**
+  in the Emberwaste (mining), the **Frost Sigil** in the Pale Reach (Starfall gathering) and the
+  **Gloam Sigil** in the Gloamvale (regions-4-5.md).
 - **Each family has a version per weight:** heavy (sturdiness, resists), medium (speed, statuses) and light
   (power, casting).
 - Rarities apply. Gatherer finder perks raise find rates (owner: about +5%), and active gathering finds

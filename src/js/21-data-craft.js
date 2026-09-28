@@ -61,11 +61,13 @@
 // keep their exact stats. The spec's Focus field `f` is dropped.
 
 // ================= material families =================
+// MAT1 (2026-09-28): display-name ladder from docs/design/materials.md; ids/indices unchanged.
+// Hide names are already complete nouns (Rawhide, Wolfhide...), so unit is '' (matName, 20-data.js).
 Object.assign(MAT, {
-  crystal: { n: 'Crystal', short: ['Quartz', 'Amber', 'Moonstone', 'Starglass', 'Emberglass'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
-  fibre: { n: 'Fibre', short: ['Flax', 'Nettle', 'Silkgrass', 'Moonsilk', 'Gloamsilk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
-  herb: { n: 'Herbs', short: ['Sage', 'Wormwood', 'Bloodmoss', 'Ghostcap', 'Lantern Lily'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
-  hide: { n: 'Hide', short: ['Soft', 'Tough', 'Scaled', 'Dusk', 'Ember'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: 'Hide' }
+  crystal: { n: 'Gems', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
+  fibre: { n: 'Fibre', short: ['Hemp', 'Linen', 'Wool', 'Cotton', 'Silk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
+  herb: { n: 'Herbs', short: ['Sage', 'Yarrow', 'Foxglove', 'Sea Lavender', 'Mandrake'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
+  hide: { n: 'Hide', short: ['Rawhide', 'Leather', 'Wolfhide', 'Sharkskin', 'Bearhide'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: '' }
 });
 const CRAFT_FAMILIES = ['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'];
 // src: 'gather' (nodes, plus a small fight trickle for crystal/fibre/herb) or 'fight' (never gathered).
@@ -82,9 +84,9 @@ const CRAFT_FAMILY = {
 // ================= gathering nodes =================
 Object.assign(SKILL, { forage: 'Foraging', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
 Object.assign(NODE_NAMES, {
-  crystal: ['Quartz Geode', 'Amber Pocket', 'Moonstone Grotto', 'Starglass Rift', 'Emberglass Heart'],
-  fibre: ['Flax Field', 'Nettle Patch', 'Silkgrass Meadow', 'Moonsilk Web', 'Gloamsilk Hollow'],
-  herb: ['Sage Bed', 'Wormwood Patch', 'Bloodmoss Bank', 'Ghostcap Ring', 'Lantern Lily Pool']
+  crystal: ['Quartz Geode', 'Jasper Pocket', 'Amethyst Grotto', 'Pearl Rift', 'Aquamarine Heart'],
+  fibre: ['Hemp Field', 'Linen Patch', 'Wool Meadow', 'Cotton Web', 'Silk Hollow'],
+  herb: ['Sage Bed', 'Yarrow Patch', 'Foxglove Bank', 'Sea Lavender Ring', 'Mandrake Pool']
 });
 Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage' });
 // time: x base seconds per unit; xp: x nodeXp(t). Unlock levels stay NODE_REQ for every row.
@@ -166,7 +168,7 @@ function craftFmtLine(stat, v) {
 
 // ================= item kinds =================
 // pos: hero position. comp: companion position (shared kinds). st: station. rec: tier-1
-// recipe. pre: family whose tier name prefixes the item name ("Yew Bow"). base: base lines
+// recipe. pre: family whose tier name prefixes the item name ("Birch Bow"). base: base lines
 // [stat, x p, per-line cap]. role: role whose affix pool it rolls. cls: hero class that wears
 // it. legacy: kept for old items (upgrade and salvage work), not shown in the Craft tab.
 // A "might" base line is party-wide Might on the hero, and weaponPct on a companion.

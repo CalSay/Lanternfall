@@ -28,13 +28,18 @@ const THEMES = {
 };
 
 // ================= materials, gear, uniques =================
+// MAT1 (2026-09-28): display-name ladder from docs/design/materials.md. Ids and array indices are
+// unchanged (save-safe); only `short`/`unit` text moved. Grade 3 ore is now Silver (was Mithril);
+// Mithril moved to grade 5 (was Emberite); Starsteel is dropped.
 const MAT = {
-  ore: { n: 'Ore', short: ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'], col: ['#D08A4E', '#A9B1BD', '#7FD6E0', '#C9B8FF', '#FF7A3D'], unit: 'Ore' },
-  wood: { n: 'Wood', short: ['Oak', 'Yew', 'Ironbark', 'Ghostwood', 'Lanternwood'], col: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'], unit: 'Log' },
+  ore: { n: 'Ore', short: ['Copper', 'Iron', 'Silver', 'Cobalt', 'Mithril'], col: ['#D08A4E', '#A9B1BD', '#7FD6E0', '#C9B8FF', '#FF7A3D'], unit: 'Ore' },
+  wood: { n: 'Wood', short: ['Pine', 'Birch', 'Oak', 'Mangrove', 'Ash'], col: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'], unit: 'Log' },
   ess: { n: 'Essence', short: ['Dim', 'Glowing', 'Radiant', 'Blazing', 'Starlit'], col: ['#9A8FB8', '#7FB2FF', '#F2E27A', '#FF8A4D', '#E6D7FF'], unit: 'Essence' }
 };
-const matName = (k, t) => `${MAT[k].short[t - 1]} ${MAT[k].unit}`;
-const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starsteel Crater', 'Emberite Heart'], wood: ['Oak Grove', 'Yew Thicket', 'Ironbark Stand', 'Ghostwood Hollow', 'Lanternwood Grove'] };
+// matName: most families are `<short> <unit>`. A family may set unit: '' and store full names in
+// `short` when the name is already a complete noun (MAT1: the hide family, see 21-data-craft.js).
+const matName = (k, t) => MAT[k].unit ? `${MAT[k].short[t - 1]} ${MAT[k].unit}` : MAT[k].short[t - 1];
+const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Silver Seam', 'Cobalt Crater', 'Mithril Heart'], wood: ['Pine Grove', 'Birch Thicket', 'Oak Stand', 'Mangrove Hollow', 'Ash Grove'] };
 // GP1 skill pace (owner 2026-09-28: "the next tier up only being 4 levels away is too fast"), one
 // table for every skill knob; docs/design/pacing.md 12 has the targets and the measured times.
 // Try values with node tools/sim.mjs --report skills --eval "SKILL_TUNE.x = ...".

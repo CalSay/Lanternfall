@@ -458,11 +458,11 @@ Presets (ids): `boss`, `farm`, `deepwell`.
   its range grows from 5 to 15. Old items keep their power to the decimal. From grade 6 on, x1.65 a grade.
 - `itemPower = TIER_POW[t] x rarity x (1 + 0.15 x plus)` is unchanged. Per-kind base lines keep their
   shares of P (`CRAFT_KINDS` base lines; RG1 revises them per weight).
-- Material names per family and grade are RG1's (roadmap-review 2.3 has a draft). Two constraints:
-  - Today's names at index 1-5 (ore: Copper, Iron, Mithril, Starsteel, Emberite; wood: Oak, Yew,
-    Ironbark, Ghostwood, Lanternwood) either stay, or are relabelled with a one-time notice. The count
-    never changes.
-  - No name may mean two grades (the draft's grade-9 "Emberite" clashes with today's tier-5 ore).
+- Material names per family and grade are set by task **MAT1** (docs/design/materials.md), owner-approved
+  2026-09-28. Grades 1-5 were relabelled (grade-3 ore is now Silver, Mithril moved to grade 5, Starsteel
+  dropped); under the relaxed save rule (CLAUDE.md) that needed no migration, since `S.mats[f][g - 1]`
+  never moved, only the name printed for it. No name means two grades or two families any more: grade 7
+  ore is Emberite (moved up from grade 5), so the old grade-9-vs-grade-5 clash is gone.
 - Old saves keep every material and item, even above their region.
 
 ### 5.3 Rarity and sockets
@@ -483,12 +483,15 @@ Presets (ids): `boss`, `farm`, `deepwell`.
 
 - **One family per region, from Region 2.** Region 1 has none; Enchanting unlocks in Region 2.
 
+Buff items are player-facing **Sigils** (MAT1, materials.md 7-8, coordinator decision 2026-09-28) — never
+named like a gem, a stone or glass, so they are never confused with the `crystal` family's Gems.
+
 | Family id | Name | Region | Found by | Top grade (`famTop`) |
 |---|---|---|---|---|
-| `pearl` | Lantern Pearl | coast | fishing, Tide Pools (active finds more) | 6 |
-| `glass` | Ember-glass | ember | Emberwaste mining | 9 |
-| `r4` | LORE-R45 | 4 | LORE-R45 | 12 |
-| `r5` | LORE-R45 | 5 | LORE-R45 | 15 |
+| `pearl` | Tide Sigil | coast | fishing, Tide Pools (active finds more) | 6 |
+| `glass` | Ember Sigil | ember | Emberwaste mining | 9 |
+| `star` | Frost Sigil | 4 (Pale Reach) | Starfall gathering (regions-4-5.md 1.3) | 12 |
+| `well` | Gloam Sigil | 5 (Gloamvale) | Mining the Flats of No Reflection and the Hush (regions-4-5.md 2.3) | 15 |
 
 - **Three weight versions of each:** buff id `<family>_<w>`, with `w` = `h`, `m` or `l` (`pearl_h`,
   `glass_l`). The version must match the item's weight: heavy on heavy gear, and so on. Charms take any.
@@ -661,7 +664,7 @@ A boss beaten with **3 or more** parries, dodges or interrupts drops **+1 signat
 | **Tier** | How strong gear and materials are, 1 to 15. Each region brings three |
 | **Rarity** | Common, Uncommon, Rare, Epic, Legendary. Higher rarity means more power and more sockets |
 | **Socket** | A space on gear for a buff item |
-| **Buff item** | A gem-like find from a region (Lantern Pearls, Ember-glass) that adds to your gear |
+| **Buff item (Sigil)** | A Sigil find from a region (Tide Sigils, Ember Sigils) that adds to your gear |
 | **Enchanting** | Setting buff items into gear. Higher skill, stronger effect |
 | **Salvage Rune** | Saves a buff item when you take it out |
 | **Unique** | A boss's own item, with a power no crafted item has |
@@ -815,3 +818,4 @@ S1 (types and statuses) is built from sections 1-3 and 6.1-6.3. It is the first 
 | 2026-09-28 | **Proposed (RG1, 9.2-9):** 8.2 new keys `S.gear2`, `S.trade`, `S.legend.uniq`; item fields `rv`, `ls`; new `S.mats` families (coal, salt, dye by region; ingot, plank, leather, cloth, tinct) | RG1 | coordinator |
 | 2026-09-28 | **Coordinator (answers Q13):** fatigue MERGES into the existing Rested system. No `S.fatigue` key: the per-hero Rested meter lives in the existing `S.rested` key (extended with defaults, e.g. `S.rested.m = { [heroId]: 0-100 }`); the Lanternbearer gathering while the party rests at the Hearth fills it. 8.2's `S.fatigue` row is withdrawn. Q14: "reaction" is the player word. | coordinator | coordinator |
 | 2026-09-28 | **Proposed (CB2), combat-2.md 8.2:** (1) Reeling is a vuln entry, +50% in Σ vuln, 2 s; (2) stagger: perfect dodge +10, a unit's heavy hits fill at most 4 a second; (3) telegraph ids `cleanse` and `swap`; `zone` dodge window the last 1.0 s, perfect the last 0.5 s; Scatter is a `zone`; (4) foe data `dt` (hit type) and `quota`; normal pack size fixed per type; swarms `swarmHp` / `swarmPay` 1.25; (5) Finishers take `staggerX`, not `timingX`; (6) Tactics condition `reaction`, action `finish` (80%); (7) a stun on a boss during a `sig` cast stops the cast; (8) hit caps: telegraphed 35%, boss swings 15%, pack swings 10% (swarm 4%), Explosive 20%; (9) the boss timer is an Enrage timer: 45 s / 60 s, HP x1.5 / x2, fail 15 s after; (10) the active reward counts only the player's own parries, `zone`/`slam` dodges and interrupts; (11) Keen on each member who stepped out; (12) no buff item from Hollow bosses; Deep Elders at most one a run (owner D2, D3) | CB2 | pending |
+| 2026-09-28 | **MAT1 landed** (docs/design/materials.md): the full 15-grade material ladder (real/standard fantasy names), resolving 9.2-3's "display names wait for MAT1" and 9.2's grade-9 clash. Grades 1-5 relabelled: ore grade 3 Silver (was Mithril), grade 5 Mithril (was Emberite), Starsteel dropped (owner-approved). **Coordinator (owner concern, gems vs buff items):** buff items are player-facing **Sigils** (Tide/Ember/Frost/Gloam), replacing Lantern Pearl/Ember-glass/Starshard/Wellglass everywhere; the `crystal` family's player-facing label is **Gems** (id unchanged). Essence grades 6-15 and the coal/salt/dye names per region are proposed in materials.md, owner to approve | MAT1 | coordinator |

@@ -3372,7 +3372,7 @@ const CRAFT_NODE_RIGS = {
       if (t >= 4) { k.add(4.1, 'tops', Fg, Q(0, -39, 1, 2), { nl: 1, lr: 6 }); k.add(4.1, 'tops', Fg, Q(-9, -35, 1, 2), { nl: 1, lr: 6 }); }
     }
   },
-  // Herb bed: low leafy plants with flower heads; the Lantern Lily glows.
+  // Herb bed: low leafy plants with flower heads; the Mandrake glows.
   'node:herb': {
     name: 'Herb bed', anim: 'shake',
     bones: { base: [0, 0, null], leaves: [0, -6, 'base'] },
@@ -3515,8 +3515,8 @@ registerIcons(SIGIL_ICONS);
 // While the hero gathers, the stage (62-stage.js) bakes the hero from a gather spec: the class
 // outfit without its weapon and off-hand, holding the tool in the front hand, with a swing that
 // reads as mining, chopping or cutting (its own wind / strike poses, registered into AK.ANIMS).
-// Tools are tinted by tier with the ore palette (AK.FAM.ore: Copper, Iron, Mithril, Starsteel,
-// Emberite); handles use the wood palette of the same tier. Rarity adds trim and glow as for gear.
+// Tools are tinted by tier with the ore palette (AK.FAM.ore: Copper, Iron, Silver, Cobalt,
+// Mithril); handles use the wood palette of the same tier. Rarity adds trim and glow as for gear.
 //
 // Exposed names:
 //   toolFor(skill) -> { k: 'pick'|'axe'|'sickle'|'rod', t: 1-5, r: 0-3, name } | null
@@ -3534,7 +3534,7 @@ registerIcons(SIGIL_ICONS);
 let toolFor;
 const TOOL_ART = (() => {
   const SKILL_TOOL = { mine: 'pick', wood: 'axe', forage: 'sickle', fish: 'rod' };
-  const TIER_NAMES = ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'];
+  const TIER_NAMES = ['Copper', 'Iron', 'Silver', 'Cobalt', 'Mithril'];
   // Per tool: its name, how it rests in the hand (tilt: clockwise from upright, radians) and its
   // swing. Poses use the kit's pose values (12a POSE0): rF / rB swing the arms at the shoulder
   // (positive = back and up), wF turns the tool at the wrist, lean, bob (crouch), dx (step in).
@@ -3737,11 +3737,11 @@ const AK = (() => {
 
   // ================= materials by family and tier (index = tier - 1) =================
   const FAM = {
-    ore: { names: ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'], col: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'], kind: 'metal', glow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'] },
-    wood: { names: ['Oak', 'Yew', 'Ironbark', 'Ghostwood', 'Lanternwood'], col: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'], kind: 'wood', glow: ['#FFD08A', '#FFC08A', '#D8F0B0', '#C8FFF4', '#FFC060'] },
-    crystal: { names: ['Quartz', 'Amber', 'Moonstone', 'Starglass', 'Emberglass'], col: ['#D8D8E6', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], kind: 'gem', glow: ['#FFFFFF', '#FFD080', '#D8E0FF', '#C8FAFF', '#FF9A80'] },
-    fibre: { names: ['Flax', 'Nettle', 'Silkgrass', 'Moonsilk', 'Gloamsilk'], col: ['#C8B890', '#7E9860', '#DCD6B8', '#B8C8E4', '#7A6EAE'], kind: 'cloth', glow: ['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'] },
-    hide: { names: ['Soft', 'Tough', 'Scaled', 'Dusk', 'Ember'], col: ['#A07C5E', '#7E5E3C', '#546E60', '#52445E', '#A83C36'], kind: 'leather', glow: ['#FFD8A8', '#FFC890', '#B0F0D0', '#D8B8FF', '#FF8A6A'] }
+    ore: { names: ['Copper', 'Iron', 'Silver', 'Cobalt', 'Mithril'], col: ['#B8743E', '#9CA4B4', '#86C8D6', '#A99AE0', '#D8643A'], kind: 'metal', glow: ['#FFC080', '#DDEEFF', '#A8F4FF', '#DCCBFF', '#FF9A5A'] },
+    wood: { names: ['Pine', 'Birch', 'Oak', 'Mangrove', 'Ash'], col: ['#8A5E3A', '#6E4432', '#5E5A4A', '#AFC4BE', '#C27A34'], kind: 'wood', glow: ['#FFD08A', '#FFC08A', '#D8F0B0', '#C8FFF4', '#FFC060'] },
+    crystal: { names: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#D8D8E6', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], kind: 'gem', glow: ['#FFFFFF', '#FFD080', '#D8E0FF', '#C8FAFF', '#FF9A80'] },
+    fibre: { names: ['Hemp', 'Linen', 'Wool', 'Cotton', 'Silk'], col: ['#C8B890', '#7E9860', '#DCD6B8', '#B8C8E4', '#7A6EAE'], kind: 'cloth', glow: ['#FFF0C0', '#E0FFB0', '#FFFFE0', '#E0F0FF', '#C8B8FF'] },
+    hide: { names: ['Rawhide', 'Leather', 'Wolfhide', 'Sharkskin', 'Bearhide'], col: ['#A07C5E', '#7E5E3C', '#546E60', '#52445E', '#A83C36'], kind: 'leather', glow: ['#FFD8A8', '#FFC890', '#B0F0D0', '#D8B8FF', '#FF8A6A'] }
   };
   const GOLD = '#E4B44A', SILVER = '#C4C8D4';
   // Gear material set for one item: tier t 1-5, rarity r 0-3 (Common, Rare, Epic, Legendary).
@@ -6225,13 +6225,18 @@ const THEMES = {
 };
 
 // ================= materials, gear, uniques =================
+// MAT1 (2026-09-28): display-name ladder from docs/design/materials.md. Ids and array indices are
+// unchanged (save-safe); only `short`/`unit` text moved. Grade 3 ore is now Silver (was Mithril);
+// Mithril moved to grade 5 (was Emberite); Starsteel is dropped.
 const MAT = {
-  ore: { n: 'Ore', short: ['Copper', 'Iron', 'Mithril', 'Starsteel', 'Emberite'], col: ['#D08A4E', '#A9B1BD', '#7FD6E0', '#C9B8FF', '#FF7A3D'], unit: 'Ore' },
-  wood: { n: 'Wood', short: ['Oak', 'Yew', 'Ironbark', 'Ghostwood', 'Lanternwood'], col: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'], unit: 'Log' },
+  ore: { n: 'Ore', short: ['Copper', 'Iron', 'Silver', 'Cobalt', 'Mithril'], col: ['#D08A4E', '#A9B1BD', '#7FD6E0', '#C9B8FF', '#FF7A3D'], unit: 'Ore' },
+  wood: { n: 'Wood', short: ['Pine', 'Birch', 'Oak', 'Mangrove', 'Ash'], col: ['#5FAE4E', '#2F7D5A', '#8C9A55', '#A9D8D0', '#FFB347'], unit: 'Log' },
   ess: { n: 'Essence', short: ['Dim', 'Glowing', 'Radiant', 'Blazing', 'Starlit'], col: ['#9A8FB8', '#7FB2FF', '#F2E27A', '#FF8A4D', '#E6D7FF'], unit: 'Essence' }
 };
-const matName = (k, t) => `${MAT[k].short[t - 1]} ${MAT[k].unit}`;
-const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Mithril Seam', 'Starsteel Crater', 'Emberite Heart'], wood: ['Oak Grove', 'Yew Thicket', 'Ironbark Stand', 'Ghostwood Hollow', 'Lanternwood Grove'] };
+// matName: most families are `<short> <unit>`. A family may set unit: '' and store full names in
+// `short` when the name is already a complete noun (MAT1: the hide family, see 21-data-craft.js).
+const matName = (k, t) => MAT[k].unit ? `${MAT[k].short[t - 1]} ${MAT[k].unit}` : MAT[k].short[t - 1];
+const NODE_NAMES = { ore: ['Copper Vein', 'Iron Vein', 'Silver Seam', 'Cobalt Crater', 'Mithril Heart'], wood: ['Pine Grove', 'Birch Thicket', 'Oak Stand', 'Mangrove Hollow', 'Ash Grove'] };
 // GP1 skill pace (owner 2026-09-28: "the next tier up only being 4 levels away is too fast"), one
 // table for every skill knob; docs/design/pacing.md 12 has the targets and the measured times.
 // Try values with node tools/sim.mjs --report skills --eval "SKILL_TUNE.x = ...".
@@ -6376,11 +6381,13 @@ const RELICS = [
 // keep their exact stats. The spec's Focus field `f` is dropped.
 
 // ================= material families =================
+// MAT1 (2026-09-28): display-name ladder from docs/design/materials.md; ids/indices unchanged.
+// Hide names are already complete nouns (Rawhide, Wolfhide...), so unit is '' (matName, 20-data.js).
 Object.assign(MAT, {
-  crystal: { n: 'Crystal', short: ['Quartz', 'Amber', 'Moonstone', 'Starglass', 'Emberglass'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
-  fibre: { n: 'Fibre', short: ['Flax', 'Nettle', 'Silkgrass', 'Moonsilk', 'Gloamsilk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
-  herb: { n: 'Herbs', short: ['Sage', 'Wormwood', 'Bloodmoss', 'Ghostcap', 'Lantern Lily'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
-  hide: { n: 'Hide', short: ['Soft', 'Tough', 'Scaled', 'Dusk', 'Ember'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: 'Hide' }
+  crystal: { n: 'Gems', short: ['Quartz', 'Jasper', 'Amethyst', 'Pearl', 'Aquamarine'], col: ['#E8E8F0', '#F2A93B', '#B8C8FF', '#9FE8FF', '#FF6A5A'], unit: 'Shard' },
+  fibre: { n: 'Fibre', short: ['Hemp', 'Linen', 'Wool', 'Cotton', 'Silk'], col: ['#D8C9A0', '#8FA868', '#E6E0C0', '#C9D8F0', '#8A7FB8'], unit: 'Fibre' },
+  herb: { n: 'Herbs', short: ['Sage', 'Yarrow', 'Foxglove', 'Sea Lavender', 'Mandrake'], col: ['#7FB86A', '#A8B89A', '#B84A4A', '#CFE8E0', '#FFD27A'], unit: 'Sprig' },
+  hide: { n: 'Hide', short: ['Rawhide', 'Leather', 'Wolfhide', 'Sharkskin', 'Bearhide'], col: ['#B08A6A', '#8C6A43', '#5E7A6A', '#5A4A6A', '#C9463E'], unit: '' }
 });
 const CRAFT_FAMILIES = ['ore', 'wood', 'crystal', 'fibre', 'herb', 'hide', 'ess'];
 // src: 'gather' (nodes, plus a small fight trickle for crystal/fibre/herb) or 'fight' (never gathered).
@@ -6397,9 +6404,9 @@ const CRAFT_FAMILY = {
 // ================= gathering nodes =================
 Object.assign(SKILL, { forage: 'Foraging', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
 Object.assign(NODE_NAMES, {
-  crystal: ['Quartz Geode', 'Amber Pocket', 'Moonstone Grotto', 'Starglass Rift', 'Emberglass Heart'],
-  fibre: ['Flax Field', 'Nettle Patch', 'Silkgrass Meadow', 'Moonsilk Web', 'Gloamsilk Hollow'],
-  herb: ['Sage Bed', 'Wormwood Patch', 'Bloodmoss Bank', 'Ghostcap Ring', 'Lantern Lily Pool']
+  crystal: ['Quartz Geode', 'Jasper Pocket', 'Amethyst Grotto', 'Pearl Rift', 'Aquamarine Heart'],
+  fibre: ['Hemp Field', 'Linen Patch', 'Wool Meadow', 'Cotton Web', 'Silk Hollow'],
+  herb: ['Sage Bed', 'Yarrow Patch', 'Foxglove Bank', 'Sea Lavender Ring', 'Mandrake Pool']
 });
 Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage' });
 // time: x base seconds per unit; xp: x nodeXp(t). Unlock levels stay NODE_REQ for every row.
@@ -6481,7 +6488,7 @@ function craftFmtLine(stat, v) {
 
 // ================= item kinds =================
 // pos: hero position. comp: companion position (shared kinds). st: station. rec: tier-1
-// recipe. pre: family whose tier name prefixes the item name ("Yew Bow"). base: base lines
+// recipe. pre: family whose tier name prefixes the item name ("Birch Bow"). base: base lines
 // [stat, x p, per-line cap]. role: role whose affix pool it rolls. cls: hero class that wears
 // it. legacy: kept for old items (upgrade and salvage work), not shown in the Craft tab.
 // A "might" base line is party-wide Might on the hero, and weaponPct on a companion.
@@ -8502,7 +8509,7 @@ const DEED_KEY_TXT = {
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
   gatherSpeed: 'gathering speed', 'gatherSpeed:mine': 'Mining speed', 'gatherSpeed:wood': 'Woodcutting speed',
   'gatherSpeed:forage': 'Foraging speed', 'gatherSpeed:fish': 'Fishing speed',
-  'yield:ore': 'Ore', 'yield:crystal': 'Crystal', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
+  'yield:ore': 'Ore', 'yield:crystal': 'Gems', 'yield:wood': 'Wood', 'yield:fibre': 'Fibre', 'yield:herb': 'Herbs',
   'yield:pearl': 'Pearls', 'yield:fish': 'Fish', deepOil: 'starting Oil in the Deepwell'
 };
 
@@ -8552,7 +8559,7 @@ const DEED_TRACKS = [
   { id: 'wood', g: 'gather', n: 'Woodcutter', what: 'Woodcutting level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:wood', src: 'save', kind: 'level', u: ['Woodcutting level', 'Woodcutting levels'] },
   { id: 'forage', g: 'gather', n: 'Forager', what: 'Foraging level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:forage', src: 'save', kind: 'level', u: ['Foraging level', 'Foraging levels'] },
   { id: 'g_ore', g: 'gather', n: 'Ore', what: 'Ore gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:ore', src: 'new', u: ['Ore', 'Ore'] },
-  { id: 'g_crystal', g: 'gather', n: 'Crystal', what: 'Crystal gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Crystal', 'Crystal'] },
+  { id: 'g_crystal', g: 'gather', n: 'Gems', what: 'Gems gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:crystal', src: 'new', u: ['Gem', 'Gems'] },
   { id: 'g_wood', g: 'gather', n: 'Timber', what: 'Wood gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:wood', src: 'new', u: ['Wood', 'Wood'] },
   { id: 'g_fibre', g: 'gather', n: 'Fibre', what: 'Fibre gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:fibre', src: 'new', u: ['Fibre', 'Fibre'] },
   { id: 'g_herb', g: 'gather', n: 'Herbs', what: 'Herbs gathered, all tiers', need: [1e4, 1e5, 1e6, 1e7], star: X10, bonus: 'yield:herb', src: 'new', u: ['Herb', 'Herbs'] },
@@ -10311,7 +10318,7 @@ let OMENS, WEEKLY_GOALS;
 //   equipChar(charId, itemId, pos) -> bool       pos 'wpn' | 'trk'; the item leaves any other wearer
 //   unequipChar(charId, pos) -> bool
 //   trophies() -> total Trophies; S.craft.troph[i] per type (K5 fills them)
-//   craftStarChart() -> bool                     40 Moonstone Shard (tier-3 Crystal), 20 Radiant
+//   craftStarChart() -> bool                     40 Amethyst Shard (tier-3 Crystal), 20 Radiant
 //                                                Essence, 1 Wraith Veil; Enchanting 9; Oriel joins
 //   brewTonic(key, t) / drinkTonic(key, t) / tonicActive() -> { key, t, left, v } | null   (K6b)
 //

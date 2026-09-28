@@ -8,15 +8,16 @@ neither reads as a lamp-keeper or a lantern guardian, replaces Region 5 ("the Lo
 place, **the Gloamvale**, and adds a milestone table for all five region bosses plus the Season 1
 finale. See lore.md 4.4, 4.4a and 8.4-8.8 for the parts of this that also live there.
 
-**Material and buff-item names (coordinator correction, 2026-09-28): superseded by MAT1.** The owner
-wants every material name in the game based on real or standard fantasy materials (Silver, Cobalt,
-Orichalcum, Adamantite, Yew, Ebony, Silk, Wyvernhide, Mandrake, Sapphire), not invented compounds
-like "Coralsteel" or "Cinderwool". Task **MAT1** will rename the whole 15-grade ladder. This doc no
-longer invents grade 13-15 names for the Gloamvale (2.4 says "see MAT1" instead); the grade 10-12
-table for the Pale Reach (1.4), the grade 6-9 fill for Regions 1-3 (section 3), and the full-ladder
-summary (4.1) are kept exactly as LORE-R45 drafted them, but every name in them is **superseded by
-MAT1** and should not be locked into a code task until MAT1 lands. The buff-item family names
-(Starshard, Wellglass) are the same working-draft status.
+**Material and buff-item names: MAT1 has landed.** The owner's rule was real or standard fantasy
+materials (Silver, Cobalt, Orichalcum, Adamantite, Yew, Ebony, Silk, Wyvernhide, Mandrake, Sapphire),
+not invented compounds like "Coralsteel" or "Cinderwool". Task **MAT1** renamed the whole 15-grade
+ladder; it lives in **[materials.md](materials.md)**, and every table below is updated to it: the
+grade 10-12 Pale Reach table (1.4), the grade 13-15 Gloamvale grades (2.4), the grade 6-9 fill for
+Regions 1-3 (section 3) and the full-ladder summary (section 4). The secondary-resource names
+(Glimmercoal, Frostsalt, Frostbloom Dye) are replaced with materials.md 6's names (owner to approve).
+The buff-item families are **Sigils** (coordinator decision, 2026-09-28: never gems, stones or glass):
+Starshard is now the **Frost Sigil** family, and the Gloamvale's family (was "Wellglass") is the
+**Gloam Sigil** family (materials.md 7-8).
 
 It answers the gaps CORE-G (core-2.md 5.2, 5.4) and plan-4.md (sections 1, 4, 6, 8) left for
 LORE-R45: region themes, the signature gathering and buff-item family per region, and the region
@@ -79,24 +80,24 @@ What the player learns here, in order:
    the same thing as Region 4's Shroud. The raid boss is the storm's own shape, out on the pass,
    always returning. The Shroud is what the storm left behind, and it never stopped hunting fire.
 
-### 1.3 Signature gathering and buff-item family: Starshards
+### 1.3 Signature gathering and buff-item family: the Frost Sigil
 
 **The gathering.** Starfall gathering, a new activity unlocked in the Starfall Fields: small bright
 shards of the light that fell here the night of the Fall, half-buried in the snow, cold to the touch
 and warm to the eye. It reads as a new node type (like Tide Pools), not a new skill: it sits on the
-Mining tab, since the shards behave like ore-bright crystal in the hand.
+Mining tab, since the shards behave like ore-bright gems in the hand — but they are not gems: what a
+player finds and sockets is a **Frost Sigil**, never called a shard, a gem or glass (materials.md 7-8).
 
-**The buff-item family** (core-2.md 5.4 table, family id `star`, region `pale`, top grade **12**;
-**names superseded by MAT1**, see the doc header):
+**The buff-item family** (core-2.md 5.4 table, family id `star`, region `pale`, top grade **12**):
 
 | Name | Where found | Notes |
 |---|---|---|
-| **Starshard** (working name, MAT1 may rename) | Starfall gathering (active finds more, as Tide Pools do); a Region 4 boss's signature drop | Cold to hold; it does not melt snow near it |
+| **Frost Sigil** (family name; a found item is named `<theme> Sigil`, e.g. **Whitehush Sigil** for the region boss's signature drop, materials.md 7) | Starfall gathering (active finds more, as Tide Pools do); a Region 4 boss's signature drop | Cold to hold; it does not melt snow near it |
 
 Three weight versions (`h`: armour, hp, block, frost resist; `m`: attack speed, haste, crit, status
 power, control; `l`: spell power, healing, ward, frost power), drawing the core-2.md 5.4 line pools.
 No new mechanic is proposed here (that is CB2/RG1's call); the Pale Reach's own hazard, the Whiteout
-(1.3a), gives Starshard farming a reason to keep going through weather the way Wading does for Tide
+(1.3a), gives Frost Sigil farming a reason to keep going through weather the way Wading does for Tide
 Pools, without needing a second mechanic invented just for this region.
 
 ### 1.3a The Whiteout (player-facing, for LORE2-style copy)
@@ -110,33 +111,27 @@ Player-facing, one line for the almanac or an arrival card: *"The Whiteout rolls
 what you can see. Frost resist keeps you moving. Push through it, and the ground pays better for the
 trouble."*
 
-### 1.4 Material names, grades 10-12 (superseded by MAT1)
+### 1.4 Material names, grades 10-12 (MAT1, materials.md 1)
 
-**These names are the LORE-R45 working draft; task MAT1 renames the whole 15-grade ladder to real or
-standard fantasy material words, per the owner's correction (doc header). Nothing below should be
-locked into a code task before MAT1 lands.** Per core-2.md 5.2, Region 4 owns grades 10-12. Family
-names below extend the existing five-family
-ladder (ore, wood, fibre, hide) plus herb and crystal, which this doc also fills for Regions 1-3
-(section 5). Grade 10 is the Pale Reach's own first tier; nothing here touches grades 1-9.
+Per core-2.md 5.2, Region 4 owns grades 10-12. MAT1's ladder, real and standard fantasy words, replaces
+the LORE-R45 working draft below:
 
 | Family | 10 | 11 | 12 |
 |---|---|---|---|
-| Ore (metal) | Frostiron | Rime-steel | Skysteel |
-| Wood | Frostpine | Whitebark | Starwood |
-| Fibre (cloth) | Frostweave | Snowsilk | Starweave |
-| Hide (leather) | Frosthide | Ridgehide | Starhide |
-| Herb | Snowroot | Rimeblossom | Starflower |
-| Crystal | Rimequartz | Glacierglass | Starglow |
+| Ore | Moonsilver | Starmetal | Arcanite |
+| Wood | Silverbark | Elderwood | Moonwood |
+| Cloth (fibre) | Snowfleece | Moonsilk | Starweave |
+| Hide | Mammoth Hide | Griffon Hide | Behemoth Hide |
+| Herb | Snowdrop | Edelweiss | Starflower |
+| Gem (crystal) | Moonstone | Sapphire | Diamond |
 
-"Sky-", "Star-" and "White-" carry the region's two ideas: the cold (Rime, Frost, White) and the
-fallen light (Sky, Star), so grade 12 items read as "the finest thing this region makes" without
-new jargon.
+"Moon-", "Star-" and "Snow-" carry the region's two ideas: the cold (Snow, Frost) and the fallen light
+(Moon, Star), so grade 12 items still read as "the finest thing this region makes."
 
-**Secondary resources** (production-chain inputs, plan-4.md 4.4): **Glimmercoal** (coal that
-catches a little lantern light, mined from veins near the Starfall craters), **Frostsalt** (rime
-scraped from the Frostgate's ice), **Frostbloom Dye** (a pale flower that only opens at night, used
-for dye). Low value to the hero directly, ideal gatherer and refiner work, matching Region 1-3's
-existing coal/salt/dye role.
+**Secondary resources** (production-chain inputs, plan-4.md 4.4; names per materials.md 6, owner to
+approve): **Rime Coal** (mined from veins near the Starfall craters), **Rime Salt** (scraped from the
+Frostgate's ice), **Frostbloom** (a pale flower that only opens at night, used for dye). Low value to
+the hero directly, ideal gatherer and refiner work, matching Region 1-3's existing coal/salt/dye role.
 
 ### 1.5 The seven zone types
 
@@ -144,7 +139,7 @@ existing coal/salt/dye role.
 |---|---|---|---|---|---|
 | Frostgate Pass | The road's last stretch before the peaks; cairns, wind | Rimewolf (a pack hunter, drives lamps apart) | `beast` | poison | - |
 | Whitepeak Cliffs | Sheer rock and snow, nests in the crags | Stormpeak (a diving bird, like Stormgull but colder) | `beast` | poison | - |
-| The Starfall Fields | Craters, half-buried shards, Starshard gathering | Skyfallen (star-glass grown legs, a construct made from the same fall as the shards) | `construct` | frost | poison |
+| The Starfall Fields | Craters, half-buried shards, Frost Sigil gathering | Skyfallen (star-glass grown legs, a construct made from the same fall as the shards) | `construct` | frost | poison |
 | The Frozen Hollow | Ice caves under the peaks, blue light through the walls | Ice Wraith (holds a lamp's warmth until it drains it) | `spirit` | holy | phys |
 | The Silent Village | Empty houses, unlit sills, candle wax on every door | Palefolk (villagers who gave their light away and faded when the dark buried them; not hostile out of malice, only cold and lost) | `pale` | fire | frost |
 | The Rimewood | A frost forest, branches like glass, the quietest zone in the game | Icewisp (a small drifting light-eater, swarms) | `pale` | fire | frost |
@@ -207,7 +202,7 @@ Reach."**
 
 - **The Starfall Crater** (a solo/party dungeon, Deepwell-shaped): a descent into the biggest crater,
   where the fallen light pooled thickest and the Skyfallen are made. Ends in a Skyfallen elder, not a
-  full pinnacle; a place for Starshard farming and a mid-region power spike, the way the Deepwell
+  full pinnacle; a place for Frost Sigil farming and a mid-region power spike, the way the Deepwell
   serves Region 1.
 - **The world raid already has a hook here** (lore.md 4.7): the Pale Tyrant, "came down from the
   mountain pass in a white storm. Kestrel will not look at it." Region 4's story should make the raid
@@ -276,32 +271,33 @@ here (2.8 says exactly what does change about it, and only after the ending).
 Region 5 does **not** end in a Great Lantern; there is nothing here to relight (lore.md 4.4, 4.4a).
 What it gives the player instead of a Great Lantern is in 2.7.
 
-### 2.3 Signature gathering and buff-item family
+### 2.3 Signature gathering and buff-item family: the Gloam Sigil
 
-**Names superseded by MAT1** (doc header): this section describes the activity and the fantasy, not
-a locked name. The Gloamvale's own gathering resource is mined from the still black water of the
-Flats of No Reflection and the roots of the Hush's dead-grey trees — something that grew here in the
-dark, the same way Starshards are what fell here in the Pale Reach and Lantern Pearls are what the
-sea swallowed on the Coast. It is the last buff-item family in Season 1 (core-2.md 5.4 table, region
-id `gloam`, top grade **15**; family id and item name: **see MAT1**). Three weight versions follow
-the usual core-2.md 5.4 line pools (`h`: armour, hp, block, the region's threat-type resist; `m`:
-attack speed, haste, crit, status power, control; `l`: spell power, healing, ward, holy power, since
-`gloam` foes reward holy, 2.5). RG1 should treat it as the top of the whole ladder, not just this
-region's own.
+MAT1 has named this family (materials.md 7): **the Gloam Sigil**, buff-item family id `well` (RG1's
+formal id; not the `gloam` combat family of 2.5, a different table). The Gloamvale's own gathering
+resource is mined from the still black water of the Flats of No Reflection and the roots of the Hush's
+dead-grey trees — something that grew here in the dark, the same way a Frost Sigil is what fell in the
+Pale Reach and a Tide Sigil is what the sea swallowed on the Coast. It is the last buff-item family in
+Season 1 (core-2.md 5.4 table, top grade **15**). Three weight versions follow the usual core-2.md 5.4
+line pools (`h`: armour, hp, block, the region's threat-type resist; `m`: attack speed, haste, crit,
+status power, control; `l`: spell power, healing, ward, holy power, since `gloam` foes reward holy,
+2.5). RG1 should treat it as the top of the whole ladder, not just this region's own.
 
-### 2.4 Material names, grades 13-15: see MAT1
+### 2.4 Material names, grades 13-15 (MAT1, materials.md 1)
 
-Per core-2.md 5.2, Region 5 owns grades 13-15, the last three grades in the game. **This doc does not
-propose names for them.** The owner wants the whole 15-grade ladder renamed to real or standard
-fantasy material words (Silver, Cobalt, Orichalcum, Adamantite, Yew, Ebony, Silk, Wyvernhide,
-Mandrake, Sapphire are the kind of words meant, not invented compounds); task **MAT1** owns that
-rename end to end, including the last three grades. A later code task should wait on MAT1's names
-rather than inventing its own for the Gloamvale specifically, since these are the grades most likely
-to ship last and easiest to get right the first time.
+Per core-2.md 5.2, Region 5 owns grades 13-15, the last three grades in the game:
 
-**Secondary resources:** the region needs the usual three low-value gatherer-and-refiner inputs (a
-coal-like fuel, a salt, a dye-plant), matching every other region's role for them (1.4, 3); MAT1
-should name these too rather than this doc guessing compounds ahead of it.
+| Family | 13 | 14 | 15 |
+|---|---|---|---|
+| Ore | Darksteel | Aetherium | Voidsteel |
+| Wood | Nightwood | Wraithwood | Heartwood |
+| Cloth (fibre) | Shadowsilk | Voidweave | Dreamweave |
+| Hide | Chimera Hide | Manticore Hide | Nightdrake Hide |
+| Herb | Nightshade | Wolfsbane | Gloamlily |
+| Gem (crystal) | Onyx | Bloodstone | Black Diamond |
+
+**Secondary resources** (materials.md 6, owner to approve): **Dead Coal**, **Grey Salt**, **Nightbloom**
+(dye), matching every other region's coal/salt/dye role (1.4, 3).
 
 ### 2.5 The seven zone types
 
@@ -389,62 +385,49 @@ part of Region 5. What the story adds is smaller and happens only after the Seas
 
 ---
 
-## 3. Material names: filling the Region 1-3 gaps (superseded by MAT1)
+## 3. Material names: filling the Region 1-3 gaps (MAT1, materials.md 1)
 
-**These names are the LORE-R45 working draft; task MAT1 renames the whole 15-grade ladder to real or
-standard fantasy material words, per the owner's correction (doc header). Nothing below should be
-locked into a code task before MAT1 lands.** Core-2.md 5.2 fixes grades 1-15, but the game's data files (12a-art-body.js, 20-data.js, 21-data-craft.js)
-only name grades 1-5 today (Region 1, grades 1-3, plus Region 2's first two grades, 4-5). Region 2's
-third grade (6) and all of Region 3 (7-9) have no names yet. This section fills them, so RG1 has a
-complete ladder to grade 15 without waiting on a second doc, and fixes the grade-9 clash core-2.md
-5.2 flagged.
-
-**Rule followed throughout:** grades 1-5 keep exactly today's names (Copper, Iron, Mithril,
-Starsteel, Emberite for ore; Oak, Yew, Ironbark, Ghostwood, Lanternwood for wood; Quartz, Amber,
-Moonstone, Starglass, Emberglass for crystal; Flax, Nettle, Silkgrass, Moonsilk, Gloamsilk for fibre;
-Soft, Tough, Scaled, Dusk, Ember for hide; Sage, Wormwood, Bloodmoss, Ghostcap, Lantern Lily for
-herb). Nothing below renames an existing material. Only grades 6-9 are new.
+Core-2.md 5.2 fixes grades 1-15; the game's data files (12a-art-body.js, 20-data.js, 21-data-craft.js)
+now name every grade 1-5 material per MAT1's ladder (grade 3 ore is Silver, Mithril moved to grade 5,
+Starsteel dropped). Region 2's third grade (6) and all of Region 3 (7-9), which had no names before
+LORE-R45's draft, take MAT1's names below:
 
 | Family | 6 (Coast, grade 3) | 7 (Ember, grade 1) | 8 (Ember, grade 2) | 9 (Ember, grade 3) |
 |---|---|---|---|---|
-| Ore (metal) | Coralsteel | Cinderore | Ashsteel | Wyrmsteel |
-| Wood | Saltheart | Charwood | Cinderpine | Sunwood |
-| Fibre (cloth) | Tideweave | Cinderwool | Ashsilk | Flameweave |
-| Hide (leather) | Coralhide | Cinderhide | Drakehide | Salamanderhide |
-| Herb | Brinewort | Ashbloom | Cindermint | Sunflare Root |
-| Crystal | Tideglass | Cindergem | Ashglass | Sungem |
+| Ore | Orichalcum | Emberite | Adamantite | Dragonsteel |
+| Wood | Yew | Ironwood | Ebony | Bloodwood |
+| Cloth (fibre) | Sea Silk | Salamander Wool | Spider Silk | Dragonsilk |
+| Hide | Basilisk Hide | Wyvernhide | Drakehide | Dragonhide |
+| Herb | Saffron | Dragon's Blood | Firebloom | Sunpetal |
+| Gem (crystal) | Topaz | Fire Opal | Ruby | Sunstone |
 
-**The grade-9 clash, fixed:** the Emberwaste's finishing ore is **Wyrmsteel**, not Emberite. Today's
-grade-5 Emberite (ore) keeps its name and meaning exactly as it is now; Wyrmsteel is a new name for a
-new, later material, and ties naturally to the region's own boss (the Ashen Wyrm, lore.md 4.7 and the
-Region 3 spec) rather than reusing a name that already belongs to Region 2's endgame ore. No other
-family in this table repeats an existing name.
+**The grade-9 clash is gone.** Today's grade-5 ore is Mithril, not Emberite (MAT1 moved Emberite to
+grade 7, where it fits the Emberwaste); grade 9's finishing ore is **Dragonsteel**, which ties to the
+region's own boss lineage (the Ashen Wyrm, lore.md 4.7) without repeating any other grade's name. LORE-
+R45's original "Wyrmsteel" proposal for grade 9 is dropped in favour of the owner's ladder.
 
 ---
 
 ## 4. Summary tables for the coordinator
 
-### 4.1 Grade ladder, full (core-2.md 5.2 plus this doc; superseded by MAT1)
-
-**Names below are the LORE-R45 working draft, kept for reference only. MAT1 renames the whole ladder;
-do not lock any of these into a code task first.**
+### 4.1 Grade ladder, full (core-2.md 5.2; MAT1 final, materials.md 1)
 
 | Grade | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Region | Hollow | Hollow | Hollow | Coast | Coast | Coast | Ember | Ember | Ember | Pale Reach | Pale Reach | Pale Reach | Gloamvale | Gloamvale | Gloamvale |
-| Ore | Copper | Iron | Mithril | Starsteel | Emberite | Coralsteel | Cinderore | Ashsteel | Wyrmsteel | Frostiron | Rime-steel | Skysteel | see MAT1 | see MAT1 | see MAT1 |
+| Ore | Copper | Iron | Silver | Cobalt | Mithril | Orichalcum | Emberite | Adamantite | Dragonsteel | Moonsilver | Starmetal | Arcanite | Darksteel | Aetherium | Voidsteel |
 
-(The other five families follow the same grade-to-region mapping; see sections 1.4 and 3 for their
-draft rows for grades 1-12, and 2.4 for why grades 13-15 are left to MAT1 rather than drafted here.)
+(The other five families follow the same grade-to-region mapping; see materials.md section 1 for the
+full table, and sections 1.4, 2.4 and 3 above for the region-by-region breakdowns.)
 
 ### 4.2 Buff-item families, full (core-2.md 5.4)
 
-| Family id | Name | Region | Top grade | Found by |
+| Family id | Name (MAT1, materials.md 7) | Region | Top grade | Found by |
 |---|---|---|---|---|
-| `pearl` | Lantern Pearl | Coast | 6 | Fishing, Tide Pools |
-| `glass` | Ember-glass | Emberwaste | 9 | Emberwaste mining |
-| `star` | Starshard (working, MAT1 may rename) | Pale Reach | 12 | Starfall gathering (new node type, Mining tab) |
-| `gloam` | see MAT1 | Gloamvale | 15 | Mining the Flats of No Reflection and the Hush |
+| `pearl` | Tide Sigil | Coast | 6 | Fishing, Tide Pools |
+| `glass` | Ember Sigil | Emberwaste | 9 | Emberwaste mining |
+| `star` | Frost Sigil | Pale Reach | 12 | Starfall gathering (new node type, Mining tab) |
+| `well` | Gloam Sigil | Gloamvale | 15 | Mining the Flats of No Reflection and the Hush |
 
 ---
 
