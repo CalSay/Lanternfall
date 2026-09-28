@@ -356,3 +356,9 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   Team view "Best line-up" button with a preview and a why line, e.g. "Hedgefolk, a tank for the
   bruisers. +60% damage over yours."). It shifts pacing: T2 26/24/24/24 (FAIL), P1 4.3-8.8 (FAIL), P2
   22-24, P4 PASS, T4 PASS. BAL2 was told to retune with the planner merged.
+- C4 combat visuals merged: all 3 pack foes with bars (champion crown, elite mark), threat pips and
+  dotted lines with a red "left the tank" flash and a Show targets toggle (S.settings.targets), pooled
+  party numbers (hits, heals, shields, BLOCK/PARRY/DODGE/STOPPED), dashes, Kestrel's leap, bat dives
+  with a tank intercept, casts, heal motes, knockback, KO/stand-up, a wipe "Fall back!" retreat, all
+  telegraph colours, and reduced-motion variants. JS/frame unchanged; frame gap noisy on a busy machine.
+  Follow-ups: unitHeal could carry `from`; pack foes overlap somewhat at 360px.
