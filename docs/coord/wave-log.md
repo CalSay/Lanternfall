@@ -866,3 +866,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   under a sky the dark has closed); the Deepwell ties in because the Voice retreats DOWN the Deepwell,
   under Hollow's Rest (Season 2 hook). Milestones: each boss = a sight (shroud lifts), a person (someone freed
   comes to camp), a power (a new system). Code still says "Listener" in places: code follow-up after the docs.
+- OWNER on CB2 decisions: D1 Enrage timer YES; D2 no buff items from Hollow bosses YES; D3 Deep Elders max one
+  buff item a run YES; D4 local raid fight "okay..." (accepted, lukewarm: revisit after playtest); D5 Assist
+  timing setting NOT SURE -> PARKED (not built in S6; revisit after playtest); D6 auto-Finisher at 50% YES;
+  D7 swarms 1.25x HP/pay YES; D8 parryable heavy hits for brutes/elites YES.
+- OWNER: material names must be based on real and standard fantasy materials (no invented compounds such as
+  Coralsteel/Cinderwool). NEW TASK MAT1 (sonnet, docs): one 15-grade ladder for all six resources and the
+  buff-item families; display names only (ids stay, saves safe). Coordinator draft ladder sent to the owner.
+  LORE-R45b and RG1 told not to lock new material names. Owner to confirm the draft and whether today's
+  grade 1-5 display names (Mithril at grade 3, Starsteel, Emberite) may be relabelled.
