@@ -909,3 +909,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   "Crystal" -> Gems. D6 (extra R4/R5 gem-seeker pairs, 22 total) pending owner; coordinator leans no (owner
   said 2 per job): make Fenn/Wick, Corrin/Sable, Haldor/Nessa camp people or milestone arrivals instead.
   Owner decisions D1-D6 put to the owner. BAL3 notes: share curve 10-30% (GT5); Sigil supply check.
+- OWNER overrides N1b D1/D2: gatherers are HIRED with gold and paid DAILY UPKEEP in gold that rises as they
+  level; there IS rarity; the cap is the number of TENTS in camp, starting small (2 hires). Note: this is
+  close to what N1 already built (Tavern applicants with rarity odds and pity, gold hire price in
+  21f-data-hands.js); N1b had removed it. QUEUED N1c (opus, next free slot): revise gatherers-2.md to keep the
+  Tavern hire board with rarity, make the 18 named gatherers the special applicants (their story routes put
+  them on the board), add upkeep (rarity x level, paid daily incl. offline; unpaid = they stop working, never
+  leave or lose levels), tents cap from 2. WC1 told: Tents are the housing building (2 at start, ~10 by R5).
