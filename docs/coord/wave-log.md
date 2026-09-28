@@ -510,3 +510,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   walks between them, gatherRight(x) keeps H1's plots clear. Perf level with the old single node within
   noise (machine load 28-36). Follow-ups: far nodes crowd at 360px; cold-Hearth third stake under a canopy;
   the Hearth tip covers part of the cold scene.
+- OWNER (class balance): a damage class has built-in progress; playing a tank or support should buff the
+  party instead. Today: the Warden's aura only helps OTHER tanks (+40% HP, +20 armour; with 2 companions
+  there often is none), so a Warden hero adds no offence; the Lightkeeper gives companions +25% damage.
+  BAL3 brief: "leader auras" that turn defence into party offence: Warden "Hold the Line" (while the Warden
+  stands in Front and holds threat, the other two deal +X% and the Front takes the hits), Lightkeeper
+  Blessing scaled so a support hero lifts the party as much as a striker hero adds; strikers/casters keep
+  personal damage. New PARITY target: all four classes within 1 zone of each other at 2h, day 1 and day 7,
+  and within 15% on days to the Region 1 and 2 bosses; tanks/supports stay best on walls (bosses, pinnacles,
+  the Deepwell).
