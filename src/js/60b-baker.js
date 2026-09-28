@@ -227,8 +227,11 @@ const ART = (() => {
     if (typeof requestIdleCallback === 'function') requestIdleCallback(idleRun, { timeout: 1500 });
     else setTimeout(idleRun, 80);
   }
-  // idleTask(fn): run fn when the page is idle (small tasks; a few per idle period, in order).
-  function idleTask(fn) { idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
+  // idleTask(fn, soon): run fn when the page is idle (small tasks; a few per idle period, in order).
+  // soon: put it at the front of the queue (work needed in the next few seconds, like the next zone's
+  // scene, goes before background bakes such as roster portraits). A busy page gets few idle periods
+  // (a timed-out callback runs one task), so the order matters.
+  function idleTask(fn, soon) { if (soon) idleQ.unshift(fn); else idleQ.push(fn); if (typeof document !== 'undefined') idleArm(); }
   function lazySet(names, nowNames, bakeOne) {
     const set = {};
     Object.defineProperty(set, '_queued', { value: false, writable: true, enumerable: false });
@@ -241,21 +244,29 @@ const ART = (() => {
     for (const f of nowNames) if (names.includes(f)) void set[f];
     return set;
   }
-  // Queue a lazy set's unbaked frames for idle time (once per set).
+  // Queue a lazy set's unbaked frames for idle time (once per set). The frames the stage shows first
+  // (idle1 for the idle bob, then wind, strike and the hit flash) go to the front of the queue.
+  const SOON = ['idle1', 'wind', 'strike', 'hit'];
+  const unbaked = (set, f) => { const d = Object.getOwnPropertyDescriptor(set, f); return !!(d && d.get); };
   function queueRest(set) {
     if (!set || set._queued !== false) return set;
     set._queued = true;
-    for (const f of Object.keys(set)) { const d = Object.getOwnPropertyDescriptor(set, f); if (d && d.get) idleTask(() => void set[f]); }
+    for (const f of Object.keys(set)) if (!SOON.includes(f) && unbaked(set, f)) idleTask(() => void set[f]);
+    for (let i = SOON.length - 1; i >= 0; i--) { const f = SOON[i]; if (unbaked(set, f)) idleTask(() => void set[f], true); }
     return set;
   }
+  // ready(set, f): frame f is baked (reading an unbaked frame bakes it on the spot).
+  const ready = (set, f) => !!set && !unbaked(set, f);
 
   // Bake the named frames of a resolved character. Frames: idle0, idle1, wind, strike, down (+ hit from idle0).
-  // lazy: bake idle0 and idle1 now ('lite': idle0 only), the rest on first use (see lazySet).
+  // lazy: bake idle0 now, the rest on first use or in idle time (see lazySet, queueRest). The stage
+  // shows idle0 in place of idle1 until idle1 is baked, so a new party costs one bake per member.
+  // 'lite' (portraits, previews): the same, and nothing is queued.
   function bakeSet(rs, names, lazy) {
     const t0 = now();
     const list = names || ['idle0', 'idle1', 'wind', 'strike', 'down'];
     let set;
-    if (lazy) set = lazySet(list, lazy === 'lite' ? ['idle0'] : ['idle0', 'idle1'], f => bakeChar(rs, f));
+    if (lazy) set = lazySet(list, ['idle0'], f => bakeChar(rs, f));
     else {
       set = {};
       for (const f of list) set[f] = bakeChar(rs, f);
@@ -359,7 +370,8 @@ const ART = (() => {
   // Draw a character centred with feet near the bottom of the canvas (canvas px), plus its lights.
   // zoom multiplies the stage size (zoom 1 = 2 canvas px per art px, as on the stage).
   function drawCharPreview(canvas, spec, zoom, frame, T) {
-    const set = charFrames(spec); if (!set) return null;
+    // a still preview needs idle0 only: bake just that (lite), not the whole set
+    const set = charFrames(spec, !frame || frame === 'idle0'); if (!set) return null;
     const f = set[frame || 'idle0'] || set.idle0, z = zoom || 1, g = canvas.getContext('2d');
     g.clearRect(0, 0, canvas.width, canvas.height);
     const x = Math.round(canvas.width / 2 - f.ox * z), y = Math.round(canvas.height - 3 * PX * z - f.oy * z);
@@ -471,7 +483,7 @@ const ART = (() => {
 
   const bakeStats = () => ({ bakes: stats.bakes, totalMs: Math.round(stats.ms), perSet: Object.assign({}, stats.last), cached: setCache.size });
 
-  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
+  return { PX, rasterize, toCanvas, bakeSet, bake: bakeChar, idleTask, ready, charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, portraitCanvas, drawCharPreview, charLightPass, enemyFrames, bakeStats, resolve };
 })();
 const { charFrames, heroSpec, classPreviewSpec, companionSpec, portraitURL, drawCharPreview, charLightPass, enemyFrames, bakeStats } = ART;
 const bake = ART.bake, bakeSet = ART.bakeSet, idleTask = ART.idleTask;

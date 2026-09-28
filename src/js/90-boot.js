@@ -30,19 +30,21 @@ setInterval(() => { flush(); maintainBoss(); }, 4000);
 setInterval(pushPresence, 3000);
 
 // ================= warm-up =================
-// While a frontier boss is ready or being fought, build the next zone's scene and foes (and this
-// zone's boss) in idle time. sceneFor and enemyFrames cache them, so clearing the zone does not
-// stall a frame with a scene build and fresh bakes.
+// While a frontier boss is ready or being fought, build the next zone's scene (at the stage's own
+// size, with its device-size plates: warmScene in 62-stage) and foes (and this zone's boss) in idle
+// time, ahead of background bakes. sceneFor, the plates and enemyFrames cache them, so clearing the
+// zone does not stall a frame with a scene build and fresh bakes.
 let warmKey = '', warmT = 0;
 function warmNextZone() {
   if (typeof idleTask !== 'function' || target() !== 'mob' || S.zone !== S.maxZone || !(fightBoss || bossReady())) return;
-  const st = $('stage'), w = st.clientWidth, h = st.clientHeight, z = S.zone + 1, key = z + ':' + w + 'x' + h;
+  const st = $('stage'), w = st.clientWidth, h = st.clientHeight, z = S.zone + 1, key = z + ':' + w + 'x' + h + ':' + (window.devicePixelRatio || 1);
   if (!w || !h || key === warmKey) return;
   warmKey = key;
   const hueOf = zz => (zoneCycle(zz) * 70) % 360;
-  idleTask(() => enemyFrames(TYPES[zoneType(S.zone)].key, { elder: true, hue: hueOf(S.zone) }));
-  idleTask(() => sceneFor(ZONE_THEME[zoneType(z)], w, h, hueOf(z)));
-  for (const ti of [zoneType(z), (zoneType(z) + 1) % 7]) idleTask(() => enemyFrames(TYPES[ti].key, { elder: false, hue: hueOf(z) }));
+  // soon: ahead of background bakes (queued in reverse, so the scene runs first, then the foes)
+  for (const ti of [(zoneType(z) + 1) % 7, zoneType(z)]) idleTask(() => enemyFrames(TYPES[ti].key, { elder: false, hue: hueOf(z) }), true);
+  idleTask(() => enemyFrames(TYPES[zoneType(S.zone)].key, { elder: true, hue: hueOf(S.zone) }), true);
+  if (!warmScene(z)) warmKey = '';
 }
 
 function frame(now) {

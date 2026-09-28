@@ -345,10 +345,11 @@ function setTab(t, sel) {
   let view = null;
   if (!TAB_IDS.includes(t) && (VIEW_OF[t] || TAB_ALIAS[t])) { view = t; t = VIEW_OF[t] || TAB_ALIAS[t]; }
   if (!TAB_IDS.includes(t)) t = 'adv';
+  mountTab(t);
   const find = () => sel ? (typeof sel === 'string' ? document.querySelector(sel) : sel) : null;
   let target = find();
   // Sections build some rows in update(), and only the open view updates: build the whole tab once.
-  if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }
+  if (sel && !target) { for (const sec of SECTIONS) if (sec.update && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) { try { sec.update(true); } catch (e) {} } target = find(); }  // (mountTab ran above)
   const tv = target && viewOfEl(t, target); if (tv) view = tv;
   const was = S.tab, wasView = curView(t);
   S.tab = t; uiPrefs.tab = t;
@@ -373,6 +374,7 @@ function closeMenu() {
 }
 // Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
 function initMenus() {
+  menusReady = true;
   const last = TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : TAB_IDS.includes(S.tab) ? S.tab : 'adv';
   S.tab = '';
   if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
@@ -524,7 +526,9 @@ function ui(force) {
   const t0 = performance.now();
   let cold = false;
   for (const sec of SECTIONS) {
-    if (!sec.update || !secShows(sec)) continue;
+    if (!secShows(sec)) continue;
+    if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
+    if (!sec.update) continue;
     if (!sec.warm && performance.now() - t0 > COLD_MS) { cold = true; continue; }
     runSection(sec, force);
   }
@@ -535,6 +539,7 @@ function secShows(sec) {
   return sec.tab === 'log' ? logView === 'journal' : (sec.tab === S.tab || TAB_ALIAS[sec.tab] === S.tab) && !sec.el.closest('.off-view');
 }
 function runSection(sec, force) {
+  if (!sec.mounted) mountTab(sec.tab === 'log' ? 'log' : TAB_ALIAS[sec.tab] || sec.tab);
   try { sec.update(force); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' update failed', e); }
   sec.warm = true;
 }
@@ -559,9 +564,23 @@ function warmSections() {
 // Appends <div class="sec" id="sec-<id>"><h2 class="sec-title">title</h2>...</div> to the tab's panel.
 // view: the sub-view it shows in (registerView; a new id makes a new view). Without it the section joins
 // the tab's first view. Pick a view; never just append to the end of a busy one (docs/design/layout.md).
-// mount(sec) runs once now; update(force) runs from ui() while its tab and view are open
-// (about 5 times a second, force = true right after player actions).
+// mount(sec) runs once, when its tab (for log: the Journal view) first opens, or now if that tab is
+// open; update(force) runs from ui() while its tab and view are open (about 5 times a second,
+// force = true right after player actions). A mount may move its section within its panel (every
+// section's element is in place from registration) but must not be needed before the tab opens.
 const SECTIONS = [];
+// Sections of closed tabs mount on the tab's first open, all of that tab's at once and in
+// registration order (a mount may place its section relative to the others), so boot does not build
+// panels nobody has opened yet (docs/design/perf.md, hotspot 11).
+let menusReady = false;
+function mountSec(sec) {
+  if (sec.mounted) return;
+  sec.mounted = true;
+  try { sec.mount(sec.el); } catch (e) { console.error('[lanternfall] section ' + sec.id + ' mount failed', e); }
+}
+function mountTab(t) {
+  for (const sec of SECTIONS) if (!sec.mounted && (sec.tab === t || TAB_ALIAS[sec.tab] === t)) mountSec(sec);
+}
 function registerSection(tabId, { id, title, view, mount, update }) {
   const panel = $('p-' + tabId); if (!panel) throw new Error('registerSection: no tab ' + tabId);
   const sec = el('div', 'sec'); sec.id = 'sec-' + id;
@@ -573,8 +592,10 @@ function registerSection(tabId, { id, title, view, mount, update }) {
   }
   panel.append(sec);
   if (tabId !== 'log' && TAB_IDS.includes(tabId) && S.tab === tabId) applyView(tabId);
-  if (mount) mount(sec);
-  SECTIONS.push({ tab: tabId, id, update, el: sec });
+  const rec = { tab: tabId, id, update, el: sec, mount, mounted: !mount };
+  SECTIONS.push(rec);
+  // after boot, a section of an open tab (or of a tab already mounted) mounts at once
+  if (mount && menusReady && (secShows(rec) || SECTIONS.some(s => s !== rec && s.mounted && s.mount && s.tab === tabId))) mountSec(rec);
   return sec;
 }
 // registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
