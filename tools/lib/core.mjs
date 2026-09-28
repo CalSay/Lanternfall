@@ -31,8 +31,9 @@ export function memoryStorage(initial = {}) {
  *   api.storage          the storage adapter in use
  *   api.errors           console.error calls captured from the game (handler failures etc.)
  * seed: if given, Math.random inside the game is replaced by the game's own rng(seed).
+ * prelude: source run before the first game file (e.g. pin Date.now so file-load code sees that day).
  */
-export function loadCore({ seed, storage = memoryStorage(), files = coreFiles(), extraSource = '' } = {}) {
+export function loadCore({ seed, storage = memoryStorage(), files = coreFiles(), extraSource = '', prelude = '' } = {}) {
   const parts = [];
   let src = "(function (__host) {\n'use strict';\n";
   let line = 3;
@@ -41,6 +42,7 @@ export function loadCore({ seed, storage = memoryStorage(), files = coreFiles(),
     src += text.endsWith('\n') ? text : text + '\n';
     line += (text.endsWith('\n') ? text : text + '\n').split('\n').length - 1;
   };
+  if (prelude) pushPart('<prelude>', prelude);
   let injected = false;
   for (const f of files) {
     if (!injected && fileNum(f) >= 5) { pushPart('<node adapters>', 'useStorage(__host.storage);\n'); injected = true; }

@@ -25,6 +25,9 @@ let OMENS, WEEKLY_GOALS;
 {
   // ---------------- systems an Omen or goal can wait for ----------------
   // Each check is a runtime typeof/state probe so this file never needs editing when they merge.
+  // craftItem, unlockTokenRoll and deepUnlocked are `let`s in later files: until those files run,
+  // even `typeof` on them throws (temporal dead zone). Code that runs at file load (a bonus() read)
+  // can reach these probes, so a throw means "not loaded yet" and marks the answer as early.
   const AL_NEEDS = {
     K5: () => !!(S.skills && S.skills.forage),              // foraging arrives with K5 gathering
     K6: () => typeof craftItem === 'function',               // K6 crafting core
@@ -34,7 +37,12 @@ let OMENS, WEEKLY_GOALS;
     Expeditions: () => !!S.exped,
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
-  const needsMet = x => !x.needs || !!(AL_NEEDS[x.needs] && AL_NEEDS[x.needs]());
+  let alEarly = false;       // a probe threw since the flag was last cleared
+  const needsMet = x => {
+    if (!x.needs) return true;
+    const f = AL_NEEDS[x.needs]; if (!f) return false;
+    try { return !!f(); } catch (e) { alEarly = true; return false; }
+  };
 
   const bossNow = () => awayDay === null && target() === 'mob' && !!mob && !!mob.boss;
 
@@ -159,7 +167,12 @@ let OMENS, WEEKLY_GOALS;
     if (forced !== undefined) return forced === 'none' ? null : OMEN_BY[forced] || null;
     const d = awayDay !== null ? awayDay : today();
     const k = d + ':' + S.maxZone + ':' + (S.raid.gen > 0 || S.wyrms > 0) + ':' + Math.floor(Date.now() / 5000);
-    if (actCache.k !== k) actCache = { k, o: omenFor(d) };
+    if (actCache.k !== k) {
+      // A pick made while a later file is still loading may be the fallback; don't keep it.
+      alEarly = false; const o = omenFor(d);
+      if (alEarly) return o;
+      actCache = { k, o };
+    }
     return actCache.o;
   }
   // A Dare is live only on the day it was taken, never while away.
