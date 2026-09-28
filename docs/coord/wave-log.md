@@ -938,3 +938,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Sigils/Gems applied). gatherers-2.md: "Gem-seeker" -> "Seeker" (coordinator). Follow-ups: "Leather
   Leathers" naming for the leathers kind at grade 2 (fix in S4); owner to approve essence 6-15 and the
   coal/salt/dye names. Slot freed -> launching ECON1/N1c.
+- MERGED HQ1 (docs/design/heroes-2.md): quest template (Bond, 1-3 story steps, "the Stand" duo fight),
+  Awakening template (+~20% hero contribution, rank-2 signature, passive, 3rd Tactics slot, title and look;
+  costs incl. one Sigil, so none in the Hollow); roster 18 existing + 14 new = 32 (8 per role); build
+  HER1-HER5, needs S1 and S3 first. Owner decisions D1-D6 put to the owner (D2 start levels checked against
+  the no-catch-up rule). Solveig's quest needs a Beacon (WC1).
