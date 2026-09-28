@@ -369,3 +369,10 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   62-stage.js conflict: kept C4's pack drawing and applied R0's zoneHue for foe sprites. R2-2/R2-3/R2-7
   notes are in the R0 report (BEH_EST length, coast champion trophies, the Coast card rewards, the Codex
   zones page).
+- BAL2 merged: --targets 19/20 on seed 1 (only D1, which was accepted). Roles matter: no tank is 3
+  zones lower, no support 4 lower; attrition reaches zone 20 at 1.20x. Supports Smite; tanks take 40%
+  less; wipes retry the push with backoff; catch-up 8.6 min; T18 6-8 min. Knobs are in pacing.md section 11.
+  Queued follow-ups: the planner should weigh single-target damage when a zone boss is next (Lanternmage
+  lags on seed 2); planner field flapping; the Warden T2 surge at 2-3h; the day-30-35 roster cap plateau
+  (Region 3 power, plan 2).
+- PAUSED as the owner asked: all three tasks (C4, R0, BAL2) are merged. No new agents until the owner resumes.

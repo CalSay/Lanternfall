@@ -6617,22 +6617,22 @@ function rollRarity(lv) {
 // (56-roster.js ROSTER_TUNE gapMax, xpSecs), so the zone curve past the first half hour is set by
 // the companion XP curve below, and the HP curve only has to match the power per level.
 const PACE = {
-  hp0: 40,                  // zone 1 mob HP (unchanged)
-  hpEarly: 1.95, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
-  hpGrowth: 1.46,           // (BAL1, M6 1.48) mob HP x per zone from `early` to the bend
+  hp0: 80,                  // (BAL2, was 40) zone 1 mob HP
+  hpEarly: 1.83, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+  hpGrowth: 1.48,           // (BAL2 1.48, BAL1 1.46, M6 1.48) mob HP x per zone from `early` to the bend
   bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
   hpLate: 1.22,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
                             //   about 2 companion levels a zone, so Region 2 is paced by their XP
                             //   and the level-200 roster cap lands just past the Region 2 boss
   bossHp: 8,                // zone boss HP x a normal mob (unchanged)
   region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
-  regionStep: [1.7, 1.2],   // (BAL1, was 5 / 2.5) mob HP x this from each region's last zone on
-                            //   (x1.7 from zone 35, x1.2 more from 70; the last value repeats). The
+  regionStep: [1.7, 1.1],   // (BAL2 1.7 / 1.1, BAL1 1.7 / 1.2, was 5 / 2.5) mob HP x this from each region's last zone on
+                            //   (x1.7 from zone 35, x1.1 more from 70; the last value repeats). The
                             //   step stays, so the zones after a region boss are no easier
   regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
-  compLv: 80,               // (BAL1, was 90) companion levels past compLv need more XP...
-  compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 90: x3, 100: x9.6)...
-  compXpMax: 200,           //   ...(BAL1, was 80) up to x200 from level 127 on: Region 2 is a few levels a day
+  compLv: 75,               // (BAL2 75, BAL1 80, was 90) companion levels past compLv need more XP...
+  compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 85: x3, 95: x9.6)...
+  compXpMax: 250,           //   ...(BAL2 250, BAL1 200, was 80) up to x250 from level 124 on: Region 2 is a few levels a day
   essTier: [1, 7, 13, 19, 42], // (BAL1: Starlit from 42, was 36) first zone of each essence tier (M6: every 6 zones, so Starlit
                             //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
@@ -9830,7 +9830,7 @@ const HERO_CLASSES = {
     how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
     tapName: 'Blessing',
     ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
-    aura: 'Supports in your party heal 40% more. All companions deal 10% more damage.'
+    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 10% more damage.'
   }
 };
 
@@ -10450,7 +10450,7 @@ let welcomeApply, welcomeNote, welcomeInfo;
 //   - Levels come from time spent fighting: XP per kill counts the zone's par level at most
 //     gapMax (4) above the character (was 18) and scales with how long the foe takes (killWorth),
 //     so pushing zones no longer drags companions up 3 levels a zone. Behind the party, a
-//     character still counts up to the party level (catchGap 18), so recruits catch up fast.
+//     character still counts up to the party level (catchGap 35, BAL2), so recruits catch up fast.
 //   - Power: growth 1.06 a level (was 1.08), x1.5 a rank (was x2), and a drill every 5 levels
 //     between promotions (x1.1 each, 'drill' event), so a roster step is due every 10-20 minutes early (T10).
 //   - Promotions cost promoGold x (rank + 1) foes of your max zone (was 60 x mobGold(cap / 3)),
@@ -10483,7 +10483,7 @@ const ROSTER = {
   bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Oak Logs to his camp.' },
   maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
   aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
-  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 18, kills: 200 }, how: 'Reach zone 18, then pay her in gold.' },
+  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 20, kills: 300 }, how: 'Reach zone 20, then pay her in gold.' },
   thessaly: { name: 'Thessaly Gloam', title: 'the Bog Seer', rarity: 'rare', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'bestiary' }, how: 'Finish the Marsh Wraith page in the bestiary.' },
   anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern. Hire him with gold and Essence.' },
   grenna: { name: 'Grenna Holt', title: 'the Stonebreaker', rarity: 'epic', role: 'tank', circle: 'wayfarers', idx: -1, route: { type: 'token' }, how: "Win a Stonebreaker's Token from Quarry Ruins bosses." },
@@ -10523,15 +10523,16 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     // so promotions cluster every 25 levels; drills put a smaller step between them.
     stepEvery: 5, stepX: 1.1,
     supEq: 1.2,                          // support party buff, worth supEq x its power (3.6 heal rate)
+    supDps: 0.7,                         // (BAL2) party combat: a support also strikes (Smite) for supDps x its power (was 0)
     xpBase: 10, xpR: 1.12, par: 6, killsPerLv: 40, bossXp: 5, bountyKills: 20,
     // XP per kill counts the zone's par level (par x zone) at most gapMax above the character.
     // BAL1: gapMax 18 -> 4 and par 3 -> 6, so levels come from kills (about 25 a level) instead of
     // racing to 3 x the zone: companion power grows with play time, not with each zone pushed.
     // A character behind the party level still counts up to the party level (at most catchGap
     // above itself), so new recruits catch up in minutes (T11).
-    gapMax: 4, catchGap: 18,
-    xpSecs: 5, xpWorthMax: 8,            // (BAL1) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
-    catchStep: 0.2, catchMax: 1, commonXp: 1.5, offlineXp: 1,   // (BAL1) offlineXp was 0.75
+    gapMax: 4, catchGap: 35,             // (BAL2) catchGap was 18: a recruit reached party level - 5 in 25 min (T11 wants 5-10)
+    xpSecs: 5.5, xpWorthMax: 8,          // (BAL1 5, BAL2 5.5) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
+    catchStep: 0.6, catchMax: 3, commonXp: 1.5, offlineXp: 1,   // (BAL1) offlineXp was 0.75; (BAL2) catchStep 0.2 -> 0.6, catchMax 1 -> 3
     promoGold: 60, promoEss: 10,         // (BAL1) gold = promoGold x (rank + 1) foes of your max zone (was promoGold x mobGold(cap / 3): levels no longer track zones)
     commonPromo: 0.5, catchPromo: 0.25, maxRank: 7,
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
@@ -10621,11 +10622,11 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const wpnPct = (id, r) => { if (r.wpn == null && r.trk == null) return 0; const g = charGear(id); return g.might + g.attack + g.spell + g.heal; };
   // Raw power: without the shared party multipliers.
   const rawPow = (id, r) => T.base * CHAR_RARITY[R(id).rarity].m * Math.pow(T.growth, r.lv - 1) * Math.pow(T.rankX, r.rank) * Math.pow(T.stepX, drillsAt(r.lv)) * (1 + wpnPct(id, r) / 100);
-  // Party combat (Stage C, 59-combat.js): supports heal and deal no damage. valueMult keeps the old
+  // Party combat (Stage C, 59-combat.js): supports heal and strike softly (BAL2 supDps). valueMult keeps the old
   // support worth (supEq x power) for ranking (autoField, recruits stepping in).
   const combatOn = () => typeof partyCombatOn === 'function' && partyCombatOn();
   const valueMult = role => { const s = ROLE_STATS[role]; return role === 'support' ? T.supEq : s.dps * (1 + (s.crit || 0) * ((s.critX || 1) - 1)); };
-  const roleMult = role => role === 'support' && combatOn() ? 0 : valueMult(role);
+  const roleMult = role => role === 'support' && combatOn() ? T.supDps : valueMult(role);
   const rawDps = (id, r) => rawPow(id, r) * roleMult(R(id).role);
   const rawValue = (id, r) => rawPow(id, r) * valueMult(R(id).role);
   charPow = id => { const r = charRec(id); return r ? rawPow(id, r) * sharedMult() : 0; };
@@ -11614,12 +11615,12 @@ const UNLOCK_TUNE = {
   quests: {
     bram: { from: 10, wood: [1, 80] },            // (BAL1) was zone 3, 60 logs
     maren: { from: 16, ess: [3, 30] },           // (BAL1) was zone 4 + 40 Glowing (spec 20 Glowing)
-    elowen: { from: 54, kills: 3000, ess: [4, 20] },  // (BAL1) spec zone 28 + 150M; M6 zone 48 + 2T gold
+    elowen: { from: 57, kills: 3000, ess: [4, 20] },  // (BAL2 57, BAL1 54) spec zone 28 + 150M; M6 zone 48 + 2T gold
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {
     grenna: { name: "Stonebreaker's Token", base: 0.08, step: 0.08, pity: 12, zoneType: 5, from: 27 },   // (sim) spec: every Quarry Ruins boss
-    isolde: { name: 'Dusk Contract', base: 0.10, step: 0.10, pity: 10, from: 29 }                         // (sim) spec from zone 16
+    isolde: { name: 'Dusk Contract', base: 0.10, step: 0.10, pity: 10, from: 31 }                         // (sim) spec from zone 16; (BAL2) 31, was 29: a lucky first roll gave the fastest class an Epic on day 1.8
   },
   thessaly: { type: 'wraith', tier: 3 },
   corvin: { bosses: 150, tier: 2, creditMax: 50 },
@@ -11627,10 +11628,10 @@ const UNLOCK_TUNE = {
   visitorFrom: 16,                               // (BAL1) was 6
   visitors: {                                    // gold: kills x a foe of zone `from`
     anselm: { from: 16, kills: 300, ess: [3, 20] },
-    vesper: { from: 31, kills: 500, ess: [4, 30] },
+    vesper: { from: 30, kills: 500, ess: [4, 30] },   // (BAL2) from 31: the slowest class missed her first visit by a zone (T16)
     kestrel: { from: 16, kills: 600 },
     thessaly: { from: 16, kills: 900, ess: [3, 20] },
-    grenna: { from: 31, kills: 1500, ess: [4, 30] }
+    grenna: { from: 33, kills: 1500, ess: [4, 30] }   // (BAL2) from 31: the fastest class hired her (an Epic) on day 1.8 (T16 wants day 2-4)
   },
   trade: { n: 10, goldKills: 150 }
 };
@@ -15287,7 +15288,8 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 // their role speed; a swing deals charDps x (1 - abF) / speed (their average damage today, so
 // pacing keeps its curve) and the signature ability, cast on its own cooldown, deals the rest as
 // a burst (charDps x abF x cooldown) plus its real effect (taunt, heal, stun, slow, shield...).
-// Supports deal no damage: they heal (1.2 x power per second). The hero keeps its own swings
+// Supports heal (heal x power per second) and Smite the focus foe for their charDps (BAL2:
+// ROSTER_TUNE.supDps x power, magic). Tanks take tankDr less damage. The hero keeps its own swings
 // (50-sim heroSwing), routed here by cbStrike. Foes pick the highest-threat member they can
 // reach and switch only past +20%. Physical hits on armoured foes deal armourX.
 //
@@ -15323,19 +15325,23 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     packSize: 3, packHp: 1.2, packGold: 1.2, mixP: 0.72,
     eliteFrom: 15, eliteP: 0.2, eliteHp: 2, eliteGold: 2,
     // foe attack per hit = atk x mobHp(z) (spec: 1.2 x 1.55^(z-1) = 0.12 x mobHp; tuned to this game's
-    // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold
-    atk: 0.006, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 2.5, bossSpd: 0.6,
+    // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold.
+    // BAL2: atk 0.006 -> 0.025 (sustain binds near the push zone, so a missing tank or healer costs 2-4 zones,
+    // T6); bossAtk 2.5 -> 0.75 keeps a boss's hits (and 4x heavy hits) near their Stage C size
+    atk: 0.025, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 0.75, bossSpd: 0.6,
     armourX: 0.85,                       // physical hits on armoured foes (Rattlebones, Golems; spec 0.5, softened for class parity, T3)
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     hp: { tank: 12, striker: 5, caster: 4, support: 6 },
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
     heroHp: { warden: 12, lanternmage: 4, ranger: 5, lightkeeper: 6 },
     armour: { tank: 20, striker: 0, caster: 0, support: 10 }, heroArmour: { warden: 30, lanternmage: 0, ranger: 0, lightkeeper: 10 },
-    aldricArmour: 20, braced: 10, redMax: 0.6,
+    aldricArmour: 20, braced: 10, redMax: 0.6, tankDr: 0.4,   // (BAL2) tankDr: tanks take 40% less (no-tank line-ups hold 2-4 zones lower)
     wardenTankHp: 0.4, wardenTankArmour: 20, wardenDr: 0.1, wardenThreat: 6,
     lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 0.8,   // heal: a support heals 0.8 x power a second (spec 1.2; T6 wants a support worth 2-4 zones of hold)
+    // (BAL2) packHealF 0.1 -> 0.15 (no-support line-ups 4-5 -> 3-4 zones lower); estSafety 1.25 -> 1 and support
+    // ability heals counted (the estimate walled pushes the live party held); estEff 1 -> 1.08 (T8; away only)
     cover: 0.15, backRanged: 0.2,
-    regen: 0.005, packHealF: 0.1, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
+    regen: 0.005, packHealF: 0.15, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
     threat: { tank: 4, striker: 1, caster: 1.2, support: 0.5 }, healThreat: 0.5, opening: 10, switchX: 1.2,
     tauntT: 3, tauntX: 1.2, shieldT: 6,
     abF: 1 / 6,                          // share of a companion's damage its ability deals (SYN_TUNE.abShare 0.2 of 1.2)
@@ -15344,7 +15350,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     cdMin: 0.5,                          // cooldown reductions stop at -50%
     fieldSupport: 2,                     // autoField (56-roster): 2 a support when the party cannot hold its max zone without one, 1 always, 0 never
     bossGate: 1, bossWait: 600,          // auto-challenge when the boss would die within the timer x bossGate (or after bossWait s)
-    refresh: 0.25, pushEvery: 5, holdSecs: 120, estSafety: 1.25, estEff: 1, awayRate: 0.75, autoCast: 1.05,
+    refresh: 0.25, pushEvery: 5, pushRetry: 60, holdSecs: 120, estSafety: 1, estEff: 1.08, awayRate: 0.75, autoCast: 1.05,
     // kit numbers (3.2, 3.5)
     guardDr: 0.4, guardT: 4, trustStep: 0.01, trustMax: 0.2, mend: 0.25, warmCap: 0.2, longRoute: 0.2,
     beacon: 0.2, beaconLamp: 0.3, beaconSh: 0.1, burnBack: 0.1, keeper: 0.15, sturdy: 0.1,
@@ -15367,6 +15373,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
 
+  // BAL2: the Lightkeeper's aura (supports heal 40% more) also makes their Smite 40% stronger, so a
+  // party of healers still kills (the attrition line-up of spec 4.13, T12).
+  if (typeof addCharModifier === 'function') addCharModifier(id => partyCombatOn() && S.party && S.party.cls === 'lightkeeper' && ROSTER[id] && ROSTER[id].role === 'support' ? 1 + T.lkAura : 1);
   // Haste gear (K11): the hero's ability comes back sooner too (capped at -30% in gear()).
   addModifier('abilityCd', () => partyCombatOn() ? 1 - gear().haste / 100 : 1);
 
@@ -15463,7 +15472,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (key === 'aldric') u.armour += T.aldricArmour + (lv >= 10 ? 20 : 0);
       u.thX = T.threat[role] * (1 + g.threat / 100) * (key === 'aldric' ? 1.1 : 1);
       u.melee = role === 'tank' || (role === 'striker' && !R.ranged); u.ranged = !u.melee;
-      u.dps = role === 'support' ? 0 : charDps(key);
+      u.dps = charDps(key);   // BAL2: supports strike too (Smite, ROSTER_TUNE.supDps)
       u.spd = ROLE_STATS[role].spd;
       let hx = 1 + g.heal / 100;
       const innate = R.rarity === 'epic' || R.rarity === 'legendary';
@@ -15740,12 +15749,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // ---------------- party actions ----------------
   function companionTick(u, dt) {
     // basic attack
-    if (u.role !== 'support' && u.dps > 0) {
+    if (u.dps > 0) {
       u.swing -= dt;
       if (u.swing <= 0) {
         u.swing += 1 / u.spd;
-        const hit = u.dps * (1 - T.abF) / u.spd;
-        if (u.role === 'caster') {
+        // supports have no damage ability: their Smite is all of their damage (magic, ignores armour)
+        const hit = u.dps * (u.role === 'support' ? 1 : 1 - T.abF) / u.spd;
+        if (u.role === 'support') { const f = focusFoe(); if (f) cbDamageFoe(f, hit, u.i, 'magic'); }
+        else if (u.role === 'caster') {
           const f = focusFoe(); if (f) {
             cbDamageFoe(f, hit, u.i, 'magic');
             const o = (T.aoeOther + u.area) * hit;
@@ -16061,6 +16072,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
     if (synFlags.hearthTank === u.key) dr *= 1 - T.hearthDr;
+    if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && f.slowT > 0 && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
@@ -16147,6 +16159,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     } else {
       const to = Math.max(1, z - 1);
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
+      backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
       toast('Your party fell back to regroup.', 'raid', null, 'normal');
     }
@@ -16160,12 +16173,15 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) return;
     spawn();
   }
+  let backZone = 0, backAt = 0, backWipes = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
   cbPush = () => {
     const back = S.combat && S.combat.back || 0;
     if (!back || fightBoss || arena || target() !== 'mob') return 0;
     if (S.zone >= Math.min(back, S.maxZone)) { S.combat.back = 0; return 0; }
-    if (!partyHolds(S.zone + 1)) return 0;
+    // BAL2: the estimate is careful, so the party also tries again after pushRetry s (doubling with each
+    // wipe at that zone, up to 8x): a zone it can hold live is never walled by a pessimistic estimate.
+    if (!partyHolds(S.zone + 1) && !(S.zone + 1 === backZone && clock - backAt >= T.pushRetry * Math.min(8, Math.pow(2, backWipes - 1)))) return 0;
     ST.pushes++;
     setZone(S.zone + 1);
     if (S.zone >= Math.min(back, S.maxZone)) S.combat.back = 0;
@@ -16286,6 +16302,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     { dmg: 1, ranged: 1, arm: 0, aoe: 0.8 / 6, heal: 0, dive: 0, pois: 1 }, { dmg: 2.5 * 0.5 * 1.33, ranged: 0, arm: 1, aoe: 0, heal: 0, dive: 0 },
     { dmg: 1, ranged: 1, arm: 0, aoe: 0, heal: 0.15, dive: 0 }
   ];
+  const AB_HEAL = { hesketh: u => T.mend * (u.lv >= 20 ? 1.5 : 1), anselm: () => T.arms, elowen: () => T.sanct + T.sanctHot * T.sanctT,
+    vesper: () => 2 * (T.verseMend + T.verseWard) };
   const thrRate = (u, i) => (i === 0 ? heroDps() : u.dps) * u.thX * (u.role === 'tank' ? 3 : 1) + u.heal * T.healThreat;
   const EST_T = [null, null];
   partyHoldEstimate = (zMax, opts) => {
@@ -16296,9 +16314,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let compPhys = 0, compMagic = 0, heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
     for (let i = 1; i < n; i++) {
       const u = EST[i];
-      if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else compPhys += u.dps;
+      if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else if (u.role === 'support') compMagic += u.dps; else compPhys += u.dps;
     }
     for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; }
+    // BAL2: support abilities heal a share of the target's max HP per cast (Mend, Call to Arms, Sanctuary,
+    // Verse), and the Lightkeeper's auto-cast Rally Hymn heals everyone: a share of max HP a second.
+    let abHeal = 0;
+    for (let i = 1; i < n; i++) { const u = EST[i], f = AB_HEAL[u.id]; if (f && u.cdMax > 0) abHeal += f(u) * healMul(u) / u.cdMax; }
+    if (hero.cls === 'lightkeeper' && S.maxZone >= 10) abHeal += T.hymnHeal / (HERO_CLASSES.lightkeeper.ability.cd * mod('abilityCd') * 2);
     // who gets hit: melee foes the highest-threat member of the front-most column, ranged foes the highest threat overall
     for (let i = 0; i < n; i++) {
       const u = EST[i], tr = thrRate(u, i);
@@ -16308,7 +16331,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
-    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1);
+    const drOf = u => dr0 * (synFlags.hearthTank === u.key ? 1 - T.hearthDr : 1) * (u.role === 'tank' ? 1 - T.tankDr : 1);
     EST_T[0] = front; EST_T[1] = top === front ? null : top;
     let best = null;
     const lo = o.one ? zMax : Math.max(1, zMax - 10);
@@ -16331,7 +16354,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (u === front) { inc += alive * atk * T.spd * dmgX * (1 - rng) * (1 - red(u.armour)) * drOf(u); share += 1 - rng; }
         if (u === top) { inc += alive * atk * T.spd * dmgX * rng * (1 - red(u.armour)) * drOf(u) * (u.col === 0 ? 1 - T.backRanged : 1); share += rng; }
         // healing follows the damage: a support heals whoever is hit, in proportion
-        const sus = heal * Math.min(1, share) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
+        const sus = (heal * Math.min(1, share) + abHeal * u.maxHp) * u.healIn + u.maxHp * (T.regen + T.packHealF / packSecs);
         const net = inc * T.estSafety - sus;   // estSafety: headroom for bad packs (elites, three spore clouds at once)
         if (!(net <= 0 || u.maxHp / net >= T.holdSecs)) holds = false;
         worst = Math.min(worst, inc > 0 ? sus / inc : 99); incMax = Math.max(incMax, inc);
@@ -16376,9 +16399,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (clock - readyFor >= T.bossWait) return true;
     const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1;
     let D = heroDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);
-    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' ? 1 : phys);
+    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' ? 1 : phys);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
-    return D * T.estEff * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;
+    return D * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;   // BAL2: estEff tunes the away estimate only
   };
 }
 
