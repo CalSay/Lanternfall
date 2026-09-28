@@ -29,10 +29,11 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 51-actions.js | core | player actions: forge, equip, salvage, upgrade, buy, hire, relics, loot |
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
-| 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js) |
+| 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js); the craft goal sets `S.fSlot`/`S.fTier` and bumps `forgeGoalPicks` so the Craft tab focuses that recipe |
+| 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
-| 56-roster.js | core | named companions: roster data, levels, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration |
+| 56-roster.js | core | named companions: roster data, levels, drills, promotions, recruiting, field/cells, `compDps()` once `S.party.rv >= 1`, S.comp migration; `foesGold(z, k)` (gold worth k foes of zone z) for prices that follow the PACE curve |
 | 56b-synergy.js | core | specialities, traits, passives, Legend auras, 14 synergies, Common Cause, Bond; `activeSynergies()`, `synergyStatus(id)`, `charTraits(id)` |
 
 | 56c-unlocks.js | core | unlock avenues (B7): quests, Renown, boss tokens with pity, bestiary, Kingslayer, Star Chart, Tavern visitor; `leads()`, `addRenown`, `unlockTokenRoll`, `addTokenProgress`, `grantStarChart`, `visitorToday` (state in `S.party.unlock`) |
@@ -175,6 +176,7 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `recruit` | `{ id, source }` (a character joined the roster) |
 | `charLevel` | `{ id, lv, quiet }` |
 | `milestone` | `{ id, lv, quiet }` (L5/10/15/20/25, then every 25) |
+| `drill` | `{ id, lv, quiet }` (every 5 levels between promotions: power x `ROSTER_TUNE.stepX`) |
 | `promote` | `{ id, rank }` |
 | `fieldChange` | `{ field }` |
 | `rosterMigrated` | `{ old, now, ratio, steps }` |
@@ -208,7 +210,7 @@ node tools/build.mjs                         # build dist/lanternfall.html
 node tools/check.mjs                         # dist syntax + headless smoke test + save migration
 node tools/sim.mjs --policy mixed --hours 2 --seed 1   # balance timeline (policy fight|mixed, --every MIN)
 node tools/sim.mjs --days 30 --class warden          # normal play over days (check-ins + away gains), docs/design/pacing.md
-node tools/sim.mjs --targets                          # PASS/FAIL for T1, T2, T10 and the pacing targets; retune with --pace k=v
+node tools/sim.mjs --targets                          # PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md) and the recruit table; retune with --pace/--tune/--unlock k=v
 node tools/perf.mjs --quick                  # frame, load, tap and memory benchmark vs the budget (docs/design/perf.md)
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")
 ```

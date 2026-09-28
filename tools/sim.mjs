@@ -30,15 +30,21 @@
 //             next class weapon; any is the pre-M6 policy, which often ran for hours with no weapon.
 //   Without --class there is no weapon or head gear (no hero is classless in the game, and the
 //   legacy Sword/Helm are no longer made): only the Charm and tools are forged.
-// Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (level caps hit), T11, T16 (first
-// Rare/Epic/Legendary recruit) and T17 (worst-case token pity).
+// Reports T1 (zones at 30m/1h/2h), T2 (zone at 3h), T10 (roster steps: level caps and drills),
+// T11, T16 (first recruit after the starter, first Rare/Epic/Legendary) and T17 (token pity).
+// Both modes build the Camp like a player (--camp 0 turns it off): any affordable build in
+// CAMP_ORDER, every other gather trip for a build's missing materials, and a break-down at the
+// Enchanter's Table for an old lower-tier material. --campdebug 1 traces the Watchtower.
 //
 // --days N: normal play over N days (check-ins with the real tick, closed-form away gains
 //   between them; see runDays below and docs/design/pacing.md). --checkins 8,13,19
-//   --session 15 --first 60 change the check-in policy. Prints one row per day.
-// --targets: runs every class for 3h continuous and --days (default 30) normal play in
-//   parallel and prints PASS/FAIL for T1, T2, T10 and the pacing targets P1-P4.
-//   --pace/--tune/--unlock/--seed/--bounties/--forge pass through.
+//   --session 15 --first 60 change the check-in policy. Prints one row per day. The game is
+//   installed at the first check-in (BAL1: before, a new game got 8h of away gains first).
+//   Reports first recruits by rarity, Camp progress and (--debug 1) the zone timeline.
+// --targets: runs every class for 3h continuous (3 seeds for T3) and --days (default 45) normal
+//   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
+//   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
+//   --eval/--camp pass through.
 import { loadCore } from './lib/core.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {

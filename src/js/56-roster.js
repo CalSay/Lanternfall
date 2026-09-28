@@ -39,8 +39,19 @@
 // fraction of the other companions' damage for the UI.
 //
 // Decisions the spec left open (see the knobs in T): costs that name an essence tier accept
-// higher tiers too; XP per kill treats the zone's par level as at most 18 above the character;
-// promotion gold is 60 (spec 500) x mobGold(cap / 3); Kestrel costs 30K (spec 150K).
+// higher tiers too; Kestrel costs 30K (spec 150K; BAL1: 200 foes' worth at zone 18).
+//
+// BAL1 (owner: "party members are far too easy to get ... damage ramps so fast"):
+//   - Levels come from time spent fighting: XP per kill counts the zone's par level at most
+//     gapMax (4) above the character (was 18) and scales with how long the foe takes (killWorth),
+//     so pushing zones no longer drags companions up 3 levels a zone. Behind the party, a
+//     character still counts up to the party level (catchGap 18), so recruits catch up fast.
+//   - Power: growth 1.06 a level (was 1.08), x1.5 a rank (was x2), and a drill every 5 levels
+//     between promotions (x1.1 each, 'drill' event), so a roster step is due every 10-20 minutes early (T10).
+//   - Promotions cost promoGold x (rank + 1) foes of your max zone (was 60 x mobGold(cap / 3)),
+//     essence of tier rank (at most 4); a character a whole rank behind the party pays a quarter.
+//   - At the level cap XP banks up to 25 levels (was 1), spent the moment you promote.
+//   - Recruit gates moved later (T16); progress-route gold is in foes' worth (route.kills).
 
 const CHAR_RARITY = {
   common: { n: 'Common', m: 1, col: '#A9B1BD' },
@@ -56,25 +67,27 @@ const ROLE_STATS = {
   support: { n: 'Support', dps: 0, heal: 1.2, hp: 6, armour: 10, spd: 1.0, threat: 0.5, col: 0 }
 };
 // route.type: starter | progress | quest | renown | token | bestiary | achievement | tavern | craft.
+// `how` is only a fallback: recruitHow(id) builds the line from the tuned route (BAL1), so it
+// names no numbers that could go stale.
 // Only 'progress' routes are live in this task; other routes are wired by B7 with addRecruitRoute().
 const ROSTER = {
   tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', rarity: 'common', role: 'tank', circle: 'hedgefolk', idx: 0, route: { type: 'progress', zone: 8, kills: 0 }, how: 'Reach zone 8. He joins for free.' },
   wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', idx: 1, route: { type: 'progress', zone: 8, kills: 30 }, how: 'Reach zone 8, then pay her in gold.' },
   hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', idx: -1, route: { type: 'progress', zone: 11, kills: 0 }, how: 'Reach zone 11. He joins for free.' },
   pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', idx: 2, route: { type: 'progress', zone: 12, kills: 60 }, how: 'Reach zone 12, then pay him in gold.' },
-  bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring 60 Oak Logs to his camp.' },
-  maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring 20 Glowing Essence to the Barrow Lamp.' },
-  aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn 15 Renown on the bounty board, then 25K gold.' },
+  bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Oak Logs to his camp.' },
+  maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
+  aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
   kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 18, kills: 200 }, how: 'Reach zone 18, then pay her in gold.' },
   thessaly: { name: 'Thessaly Gloam', title: 'the Bog Seer', rarity: 'rare', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'bestiary' }, how: 'Finish the Marsh Wraith page in the bestiary.' },
-  anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 6. 60K gold and 20 Glowing Essence.' },
+  anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern. Hire him with gold and Essence.' },
   grenna: { name: 'Grenna Holt', title: 'the Stonebreaker', rarity: 'epic', role: 'tank', circle: 'wayfarers', idx: -1, route: { type: 'token' }, how: "Win a Stonebreaker's Token from Quarry Ruins bosses." },
-  isolde: { name: 'Isolde Marrow', title: 'the Duskblade', rarity: 'epic', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'token' }, how: 'Win a Dusk Contract from any zone boss from zone 16.' },
+  isolde: { name: 'Isolde Marrow', title: 'the Duskblade', rarity: 'epic', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'token' }, how: 'Win a Dusk Contract from zone bosses.' },
   oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', idx: 5, route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
-  morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat the Fungal Deep II boss (zone 12) with no support in your party.' },
-  vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern from zone 18. 20M gold and 30 Radiant Essence.' },
-  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest at zone 48: 2T gold and 20 Blazing Essence.' },
-  caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with 80 Renown.' },
+  morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', idx: -1, route: { type: 'quest' }, how: 'Beat a Fungal Deep boss with no support in your party.' },
+  vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', idx: -1, route: { type: 'tavern' }, how: 'Visits the Tavern. Hire her with gold and Essence, or earn Renown.' },
+  elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', idx: 6, route: { type: 'quest' }, how: 'Quest: relight the chapel with gold and Essence.' },
+  caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with enough Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
 const ROSTER_KEYS = Object.keys(ROSTER);
