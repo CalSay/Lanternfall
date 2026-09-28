@@ -210,7 +210,7 @@ time to fall with endless boss HP, and each mechanic's cost.
 | CX7 | Idle is never punished | idle gold an hour at the farm zone ≥ 97% of HEAD, every class; idle XP an hour ≥ 97% |
 | CX8 | Swarms | area-heavy parties +15-30% gold a second at swarm zones vs normal zones; single-target parties within ±5% |
 | CX9 | No one-shots | no hit above its cap (1.4) in any run; `maxOver` on the party side ≤ 0.35 |
-| CX10 | Active rewards | `good` earns the active bonus (6.6) on ≥ 80% of boss kills; `idle` on 0% |
+| CX10 | Active rewards | `good` earns the active bonus (3.8) on ≥ 80% of boss kills; `idle` on 0% |
 | CX11 | Stagger rhythm on a 45 s zone elder | `idle` 1 Stagger (0-2), `good` 2-3, `perfect` 3-4 |
 | CX12 | Deepwell | idle median floor within ±2 of HEAD; `good` +3 to +6 floors |
 | CX13 | Raid | idle raid damage an hour ≥ HEAD for every class; `good` +15-30% |
@@ -396,3 +396,223 @@ How it stays cheap:
 - **Numbers:** the caps in 2.7.
 - `tools/perf.mjs` gains scenarios `swarm10` and `bossKit` (8.5). Both must pass on HEAD's phone profile
   before S6 merges.
+
+---
+
+## 3. Active mechanics (360 px, one thumb)
+
+### 3.1 The input map
+
+```
++----------------------------------------------+  360 px wide, the Fight view
+| [pack or boss header: name, HP, stagger,     |  the boss header adds a 6 px gold stagger bar and,
+|  cast name + bar, Enrage in 0:31, pips ●●○]  |  while casting, the cast's name and purple bar
+|         [ DODGE  >>  ======|==  ]            |  40 px warning banner, one at a time (pinnacles 3.2)
+|                                              |
+|   party (Back Mid Front)      foes           |  THE STAGE: a tap anywhere here is the contextual
+|                                              |  verb below (at least 240 px tall on a phone)
+|                                   ( ab2 56 ) |  ability 2 (after the evolution), 56 px
+|                                   ( ab1 64 ) |  ability 1, 64 px, bottom right (thumb zone)
++----------------------------------------------+
+```
+
+**One tap, the right verb.** A stage tap resolves in this order (the first that applies):
+
+| # | What is showing | The tap does |
+|---|---|---|
+| 1 | The **Finisher** prompt (a foe is Staggered, 3.4) | the Lanternbearer's Finisher |
+| 2 | A `heavy` warning | in the last 0.8 s: **parry**; earlier: the old half-damage dodge (kept, core-2 6.3) |
+| 3 | A `zone` or `slam` warning | in the dodge window: **dodge** (perfect in the last 0.5 s); earlier: a normal class tap and a small "wait" tick on the banner |
+| 4 | A cast bar on a **normal foe or elite** (`heal`, `summon`) | **interrupts** it (today's rule for the Wraith's heal) |
+| 5 | Anything else | the class tap on the focus foe (CL1's taps) |
+
+The **ability buttons** cast `ab1` and `ab2`. While a boss's `sig` cast bar shows, the button's rim turns
+purple ("interrupt now"); while a Stagger or a reaction window is open on the focus foe it turns gold with a
+ring counting down ("hit now"). A player can learn the whole system from those two colours and the banner.
+
+- Buttons sit in the thumb zone (bottom right), 64 and 56 px, 8 px apart. A setting **Buttons on the left**
+  mirrors them (left thumbs).
+- The stage tap never needs aim: it acts on what is showing, or on the focus foe.
+- Two answer warnings never overlap (pinnacles 3.2: at least 1.0 s apart; a later one waits up to 3 s, then is
+  skipped once). A passive rule (a spore cloud, a Burn) may run alongside; it never needs a tap.
+
+### 3.2 Parry (kept; the result is "Reeling")
+
+| Rule | Value |
+|---|---|
+| Warning | `heavy`: red "!", the shrinking ring, banner "PARRY" |
+| Wind-up | 1.5 s (Maren fielded: +0.4 s lead) |
+| Parry window | the last **0.8 s** (Maren +0.3 s; Deepwell Quick Parry +0.4 s; Maud's Lantern power +0.3 / +0.5 s) |
+| Parry | no damage. The foe is **Reeling** 2 s: it does nothing and takes +50% (a vuln, proposal 8.2-1). **+25 stagger** |
+| Tap earlier | half damage (today's early-tap dodge, kept) |
+| Line-up answers (idle) | Shield Wall (blocks a heavy hit on the Lanternbearer; on anyone with Lantern Bastion), Aldric's Shield Bash, a stun on a normal foe or elite |
+| Where | every boss (cadence per kit, 8 s default); **new:** brute packs and elites from zone 15 get a pack heavy every 12 s (one at a time), inside the pack damage budget (CX1) |
+
+The pack heavy gives idle zones an optional active moment: a parried brute reels, the pack dies a little
+faster. Idle play takes the hit, which is already counted in CX1, so it costs nothing extra.
+
+### 3.3 Dodge
+
+| Rule | Value |
+|---|---|
+| Warnings | `zone`: a hatched patch on the ground under 1-3 party slots, banner "DODGE" with a double chevron `>>`, orange. `slam`: the same on the Front slot only |
+| Wind-up | **1.8 s** (never under 1.2 s, even under Vows or an Enrage) |
+| Dodge window | the last **1.0 s** |
+| Perfect dodge | the last **0.5 s** |
+| Dodge | every member standing in the patch steps out and takes nothing (a 0.2 s sidestep; reduced motion: a snap and a flash) |
+| Perfect dodge | as a dodge, plus **Keen** (20% more damage for 3 s, bucket T, core-2 3.1) on each member who stepped out, and **+10 stagger** on the foe that cast it (proposal 8.2-2) |
+| A tap before the window | a normal class tap; the banner shows a small "wait" tick. No lock-out, no cost |
+| Missed | the kit's hit (usually 2-3x the boss's attack) on each member in the patch, capped at 35% max HP each |
+| Line-up answers (idle) | reductions (Shield Wall, Guard, Stand Fast), shields (Priest, wards, Pearl `ward` lines), resists to the hit's type, a formation that keeps the struck slot empty (the boss sheet shows which slots a kit's zones strike) |
+| Where | bosses (from phase 1 or 2 per kit), Explosive elites (5.1), the Deepwell's and the raid's kits |
+
+- **Spamming does not win the perfect.** The first tap inside the window dodges. A player who taps without
+  looking dodges at about 1.0 s and never gets Keen. Waiting for the last half second is the skill.
+- `line` warnings (every slot: clouds, surges) **cannot** be dodged: they are answered by shields, heals and
+  resists. The Coast's tide **Surge** keeps its region-2 rule (a tap is a Brace that halves it; a brace in
+  the last 0.8 s blocks it) as a `line` with a Brace tap.
+- The pinnacles' **Scatter** is this dodge (8.2-3): the struck cells are the patch; the tap makes the members
+  in them step out. The Scatter button in pinnacles.md 8.3 is no longer needed; the stage tap does it.
+
+### 3.4 The stagger bar and Finishers
+
+**The bar.** Bosses have 100 points, elites 60 (core-2 6.4). The boss's bar is a 6 px gold bar under its HP in
+the header, in 10 segments. An elite's is a 1-HUD-px gold line under its stage bar, shown only once it has
+any fill.
+
+| Fills the bar | Points (core-2 6.4, CB2's picks inside it) |
+|---|---|
+| A **heavy** hit (Warrior taps, `heavy` abilities, any single hit of 3 P or more) | +5; a unit's heavy hits fill **at most 4 a second** in all (so tap speed alone cannot stagger a boss; proposal 8.2-2) |
+| A stun second a boss ignores (a boss is stun-immune, core-2 3.4); on an elite, each stun second it does take | +8 |
+| A **parry** | +25 |
+| An **interrupt** | +15 |
+| A **perfect dodge** | +10 (proposal 8.2-2) |
+| A reaction (Blight, Judgement) / **Shatter** | +10 / +20 |
+| An ability's `stagger` effect | its value (CL1: Shield Wall 10, Snare Field 15, ...) |
+| `stag` (the stat) | +x% to all of the above (cap +50%) |
+
+- After 4 s with no fill the bar drains 5 a second.
+- **Full:** the foe is **Staggered** for **5 s** (elites **3 s**): it does nothing, any warning it was showing is
+  cancelled (not counted as an answer), a cast is stopped, and it takes **x1.5** (`staggerX`). Each later
+  Stagger in the same fight needs 25% more fill (x1.25, x1.5, x1.75, then x2).
+- Look: the boss holds its `wind` pose low, with a gold outline; banner "STAGGERED" and "FINISHER" (below).
+  Reduced motion: the outline and the banner, no pose change.
+
+**Finishers** (core-2 4.1 `fin`; each class's and evolution's Finisher is CL1's data: 6-10 P, tags `heavy`,
+`finisher`).
+
+| Rule | Value |
+|---|---|
+| Prompt | when a Stagger starts: the banner turns gold, "FINISHER" with a star; the Finisher shape pulses on the foe |
+| Fire | the first stage tap during the Stagger (tap priority 1). **One per Stagger**, the Lanternbearer only |
+| Damage | CL1's coef x P, x1.5 for the Stagger (`staggerX`); **not** also x1.25 `timingX` (the Finisher *is* the window; proposal 8.2-5) |
+| Idle | if nobody taps, it fires by itself **2.5 s** into the Stagger at **50%** (the tap `autoEff`) |
+| Tactics (S7) | action `finish` (proposal 8.2-6) fires it at 0.5 s into the Stagger at **80%** |
+| Elites | a Staggered elite gets a Finisher too (3 s window; auto at 1.5 s) |
+| Hook | `emit('finisher', { key, fin, foe, dmg, auto })`: CL1's riders (Hammerfall's knockback, Red Harvest's Bleed cash-in, Dawnbreak's heal) and unique powers read it |
+
+Heroes have no Finisher; their signatures that land during the Stagger get `timingX` like any ability.
+
+**Rhythm target (CX11).** On a 45 s zone elder: idle gets about 1 Stagger (auto-taps, auto-cast `stagger`
+effects, companions' heavy hits, reactions), `good` play 2-3 (parries and perfect dodges add about 3 a
+second), `perfect` 3-4. A Warrior or a Warden party staggers most (heavy taps; CL1's Warden +30% stagger).
+
+### 3.5 Interrupts and cast bars
+
+| Cast kind (telegraph id) | Who casts | Bar | Length |
+|---|---|---|---|
+| `heal` | Marsh Wraith, Brine Witch (self-heal), healer adds | purple bar over the foe, "+" glyph | 1.5 s (High tide Witch 1.0 s: region-2 kept) |
+| `summon` | Summoner elites, bosses calling adds | purple bar, "~" glyph; bosses: the cast's name in the header | 2.0 s |
+| `sig` | a boss's **signature cast** | the header shows the name ("Kneel", "Spore Bloom") and a purple bar | 2.0-2.5 s (never under 1.5 s) |
+| `hard` | a cast that cannot be stopped (phase changes, Enrage, some big moves) | grey bar with a lock glyph | 2.0-3.0 s |
+
+What stops a cast:
+
+| Cast | Stage tap | A Lanternbearer ability that hits the caster | A hero signature | A stun |
+|---|---|---|---|---|
+| `heal`, `summon` on a normal foe or elite | **yes** | yes | if tagged `interrupt` or it stuns | yes |
+| `sig` on a boss | no | **yes** | if tagged `interrupt` | yes: a boss ignores the stun (it fills stagger, core-2 3.4) but the stun still stops the cast (proposal 8.2-7) |
+| `hard` | no | no | no | no |
+
+- **An interrupt** skips the attack, gives **+15 stagger** (bosses and elites), and the caster starts that
+  cast's cadence again from zero.
+- **Every `sig` cast can be interrupted, every time** (Q11, 8.1). The limit is the Lanternbearer's charges:
+  `ab1` 20-40 s and `ab2` 12-30 s against a signature every 14-20 s, so the Lanternbearer alone stops about
+  half of them. Heroes with an `interrupt` signature and stunners cover the rest, and every kit has at least
+  one `hard` cast so interrupts are not the whole answer. Spending a charge on an interrupt instead of
+  holding it for a Stagger is the decision.
+- A missed `sig` costs what its kit row says, inside pinnacles 3.4's caps (one effect of at most 3 s, or at
+  most 8% of the boss's HP healed, or up to 2 adds, or a hit capped at 35%).
+
+### 3.6 Ability timing
+
+- **Windows** (core-2 1.2, 3.5): an ability that lands during a **Stagger** or a **reaction window** (3 s after
+  a reaction on that foe) gets `timingX` **x1.25**; in a Stagger it also gets `staggerX` x1.5 (x1.875 in all).
+  The two windows do not stack with each other.
+- **Showing it:** the ability button's gold rim with a ring that runs down the window's time left; the
+  focus foe's outline flashes gold once when a reaction opens a window.
+- **Holding a charge:** a ready ability waits on its button and does not fill further. Holding costs uptime;
+  x1.875 pays for holding up to about 40% of the cooldown. The button shows "ready" and, if a Stagger is
+  close (bar ≥ 80%), a small gold pip: "a Stagger is coming".
+- **Auto-cast without Tactics** (Q9, 8.1): full power, at the first valid target, as today. One small smart
+  default: if the focus foe's stagger bar is at 90% or more, auto-cast waits **up to 1.5 s** for the Stagger.
+  It never holds longer (holding is what Tactics is for).
+
+### 3.7 Idle, line-up and active, mechanic by mechanic
+
+| Mechanic | Idle (auto-play, no Tactics) | Line-up answer | Active answer | Active edge |
+|---|---|---|---|---|
+| Parry (`heavy`) | takes the hit (capped 35%) | Shield Wall, Bash, stuns | tap in the last 0.8 s | no damage, Reeling 2 s (+50%), +25 stagger |
+| Dodge (`zone`, `slam`) | takes the hit (capped 35%) | reductions, shields, resists, an empty struck slot | tap in the last 1.0 s | no damage; perfect: Keen +20% 3 s, +10 stagger |
+| Stagger | fills from auto-taps, auto-cast `stagger` effects, heroes' heavy hits and stuns, reactions | a Warrior or Warden, stunners, reaction-makers | parries, perfect dodges, interrupts, heavy taps | about 2-3x as many Staggers |
+| Finisher | auto at 2.5 s, 50% | - | tap at once | x2 the idle Finisher, and the full window after it |
+| Interrupt (`heal`, `summon`) | auto-cast and signatures stop some by chance | stunners, `interrupt` heroes, area damage for summons | the stage tap | the heal or the adds never happen |
+| Interrupt (`sig`) | an `interrupt` hero or a stun | Aldric, Grenna, Oriel, Warden's `ab2` (CL1) | an ability during the bar | skips the boss's biggest move; +15 stagger |
+| Ability timing | casts when ready (waits ≤ 1.5 s for a Stagger at 90%+) | - | cast into Stagger or a reaction window | x1.25 (x1.875 in Stagger) |
+
+**Efficiency:** auto-**taps** keep `autoEff` **0.5** (a tap is the active verb); the auto-**Finisher** fires at
+0.5; auto-**cast abilities** are at **full** power (Q9). The active edge comes from timing, never from a
+penalty on idle play.
+
+### 3.8 Active rewards (core-2 6.6)
+
+| Rule | Value |
+|---|---|
+| Who qualifies | a boss (zone elder, region boss, Deep Elder, pinnacle; the raid in 6.2) beaten with **3 or more active answers**: parries, dodges of `zone` / `slam` (perfect or not), interrupts |
+| Counted | only the player's own taps and ability presses. Line-up answers, auto-play and Tactics do not count (they already work idle). The heavy's early half-damage tap does not count. Finishers do not count (every Stagger offers one) |
+| Reward | **+1 signature buff item** (a second roll of the boss's drop, core-2 5.4) and **+50% XP** for that kill |
+| Shown | three small lantern pips in the boss header light as you answer ("●●○"); the win toast adds one line: "Played it well: +1 Lantern Pearl, +50% XP." |
+| Idle | the boss's normal drops, always (its signature buff item always drops, at least Uncommon). Never less than HEAD |
+| Packs | no reward item (idle zones stay idle). Parries, dodges and Keen just make packs die faster |
+
+Counters for deeds and stats (new save key `cb2`, 8.4): parries, dodges, perfect dodges, interrupts,
+Finishers, active boss kills.
+
+### 3.9 Accessibility and reduced motion
+
+- **Assist timing** (a setting, default off; pinnacles.md 14 Q2): every wind-up and cast bar x1.5 and every
+  window with it (parry 1.2 s, dodge 1.5 s, perfect 0.75 s, the Finisher's auto-fire at 3.75 s). **Full
+  rewards.** Pinnacle best times get a small lantern mark.
+- **Every answer is one tap.** No holds, swipes, double taps or precise targets.
+- **Word, shape, colour, sound** for each warning (colours as pinnacles 8.3, the scatter orange now the dodge):
+
+| Warning | Word | Shape | Colour |
+|---|---|---|---|
+| `heavy` | PARRY | "!" and the shrinking ring (reduced motion: the bar only) | red |
+| `zone`, `slam` | DODGE | `>>` and a hatched patch on the ground | orange |
+| `heal`, `summon`, `sig` | INTERRUPT | "~" and the cast bar | purple |
+| `hard` | (the cast's name) | a lock | grey |
+| `line` | BRACE (the Coast's Surge) / the cast's name | a wave `≈` | blue |
+| `dive` | (none: a pip) | a blue "!" over the target | blue |
+| `enrage` | ENRAGE | a flame over the timer | red |
+| Stagger | FINISHER | a star, the gold outline | gold |
+
+- **Reduced motion:** no rings, sidesteps, lunges, shake or marching hatch. Banners appear in place. Wind-ups
+  show only as the banner bar. The Staggered pose does not change (the outline and banner say it). The
+  zoom step (2.5) is already a snap.
+- **Haptics** (a setting, default on where the device has it): a 20 ms buzz when an answer warning starts,
+  10 ms on a success. `navigator.vibrate` inside try/catch; nothing if it is missing.
+- **Screen readers:** the banner is DOM with `aria-live="polite"`: "Parry now", "Dodge", "Interrupt Kneel",
+  "Finisher ready".
+- **Colour-blind:** the words and shapes carry every meaning (check in the three filters and greyscale, as
+  core-2 2.1).
