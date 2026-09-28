@@ -3635,7 +3635,8 @@ try {
   const tooLong = allTitles.filter(n => !EXC.includes(n) && (n.length > 14 || n.split(' ').length > 2));
   assert(allTitles.length === 68 && !tooLong.length, `AD1 all 68 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
   const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
-  assert(live.length === 77 && hidden.sort().join() === ['bonds', 'fish', 'g_fish', 'g_pearl', 'handhrs', 'hands', 'lanterns', 'meals', 'oath', 'oathseals', 'pinkills', 'store', 'tides', 'together', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
+  // F2 (Bonds) is merged, so 'bonds' and 'together' are live; the rest wait for their systems.
+  assert(live.length === 79 && hidden.sort().join() === ['fish', 'g_fish', 'g_pearl', 'handhrs', 'hands', 'lanterns', 'meals', 'oath', 'oathseals', 'pinkills', 'store', 'tides', 'vow'].join(), `waiting tracks are hidden until their system exists: ${live.length} live, hidden ${hidden.join(' ')}`);
   E('S.store = { v: 1 }; S.bond = { v: 1, t: { a: 36000 }, lv: { a: 3 } }');
   assert(E('deeds.track("store").live && deeds.track("bonds").live && deeds._cur("together") === 10 && deeds._cur("bonds") === 3'), 'a runtime probe lights a waiting track up when its save field appears (S.store, S.bond)');
   E('delete S.store; delete S.bond');

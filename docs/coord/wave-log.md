@@ -531,3 +531,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   keeps 3 Ready goals (unspent star points); AC3 should give the nudge a reserved row. Owner confirmed fonts
   G+3: Handjet + Barlow Semi Condensed (FONT1 told).
 - FONT1 merged: Handjet (--display, x1.2 via --display-k across 196 rules; stage text TXT_K 1.15, re-bakes when the font loads) and Barlow Semi Condensed (--body). No new clipping vs Pixelify; Barlow wraps less than Plex. Perf overlaps base under heavy load. Follow-up: check variable weights on the live page.
+- F2 merged: 56b rewritten (12 slot jobs, 8 combos incl. Lifeline = tank Front + support Back, 4 Kin, 21
+  Bonds; 33 SYNERGIES with `layer`; caps +40% dmg/member, 20% DR), 56f-bonds.js (S.bond, levels 0.5/3/12/
+  36/150h, 50-130%), 21f-stories-bonds.js shape for LORE7, markMax 8. Accepted: L25 pairs 150% -> 115%
+  (spec 9.1.3); away gathering grows companion Bonds at Hearth x away rate. --targets: P1 and P2 now PASS
+  (Lightkeeper fixed), T1/T3/T14/T18 fail (Ranger fast, Lightkeeper 1.19): BAL3. Coordinator updated the
+  AC2 dormant-track check (bonds/together live now: 79 live). Next: F4 Party UI; F3 is running with
+  formQuick available.
