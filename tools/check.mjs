@@ -4831,5 +4831,55 @@ try {
   })();
 } catch (e) { fail('nav crashed: ' + (e.stack || e)); }
 
+// ---- 8. error capture (55-errors.js) ----
+console.log('error capture');
+try {
+  const g = loadCore({ seed: 99 });
+  const E = s => g.eval(s);
+  // Check that errors state is registered
+  assert(E('S.errors && typeof S.errors === "object" && Array.isArray(S.errors.list) && typeof S.errors.next === "number"'),
+    'errors state registered with list array and next index');
+
+  // Test 1: three errors captured, errorReport() lists them newest-last
+  const g1 = loadCore({ seed: 102 });
+  g1.eval('captureError("first", "a.js", 1, 0)');
+  g1.eval('captureError("second", "b.js", 2, 0)');
+  g1.eval('captureError("third", "c.js", 3, 0)');
+  const report = g1.eval('errorReport()');
+  const hasFirst = report.includes('first') && report.includes('a.js');
+  const hasSecond = report.includes('second') && report.includes('b.js');
+  const hasThird = report.includes('third') && report.includes('c.js');
+  const firstIdx = report.indexOf('first');
+  const thirdIdx = report.indexOf('third');
+  assert(hasFirst && hasSecond && hasThird && firstIdx < thirdIdx, 'three errors reported newest-last (first -> second -> third)');
+
+  // Test 2: buffer wraps correctly after 25 captures (20 kept, oldest 5 gone)
+  const g2 = loadCore({ seed: 103 });
+  for (let i = 0; i < 25; i++) {
+    g2.eval(`captureError("error ${i}", "test.js", ${i}, 0)`);
+  }
+  const len = g2.eval('S.errors.list.length');
+  assert(len === 20, `ring buffer caps at 20 (has ${len})`);
+  const has0 = g2.eval('S.errors.list.some(e => e && e.msg.includes("error 0"))');
+  const has5 = g2.eval('S.errors.list.some(e => e && e.msg.includes("error 5"))');
+  const has24 = g2.eval('S.errors.list.some(e => e && e.msg.includes("error 24"))');
+  assert(!has0 && has5 && has24, 'wrap: error 0-4 gone, 5-24 kept (newest errors 5-24)');
+
+  // Check that errors survive throwing storage (never throw)
+  const badStorage = {
+    get: key => { throw new Error('storage broken'); },
+    set: (key, val) => { throw new Error('storage broken'); }
+  };
+  const g3 = loadCore({ seed: 104, storage: badStorage });
+  try {
+    g3.eval('captureError("error during broken storage", "test.js", 1, 0)');
+    g3.eval('clearErrors()');
+    assert(true, 'capture and clear never throw even with broken storage');
+  } catch (e) {
+    fail('error capture threw with broken storage: ' + e.message);
+  }
+  assert(!g.errors.length, 'no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('error capture crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

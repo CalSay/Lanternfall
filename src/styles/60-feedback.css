@@ -1,0 +1,10 @@
+/* 60-feedback: Send feedback panel */
+.feedback-panel { display: grid; gap: 10px; padding: 12px; background: var(--well); border: 2px solid var(--line); }
+.feedback-panel label { font: 600 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.feedback-note { background: var(--well); border: 2px solid var(--line); padding: 8px 10px; color: var(--bone); font: 400 14px var(--body); width: 100%; box-sizing: border-box; font-family: inherit; }
+.feedback-note::placeholder { color: var(--muted); }
+.feedback-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.feedback-copy, .feedback-clear { padding: 6px 12px; background: var(--panel); border: 2px solid var(--line); color: var(--bone); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+.feedback-copy:active, .feedback-clear:active { transform: scale(0.98); }
+.feedback-copy { background: var(--gold); color: #1A1420; }
+.feedback-panel .note { font-size: 12px; color: var(--muted); margin: 0; }
