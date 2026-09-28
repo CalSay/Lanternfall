@@ -8,7 +8,7 @@
 // Costs are paid when a build is started or queued; a queued build starts the moment the
 // one ahead of it finishes (offline too). Cancel refunds 100% before a build starts, 50% after.
 // Stations (Forge, Workbench, Loom, Enchanter's Table) and the Tavern start at Lv 1 for every
-// save; their levels add perks only. Only play shortens builds (mod('buildTime'): the Builder's
+// save except a new game's cold Hearth (55-hearth, H1: it builds them on plots); their levels add perks only. Only play shortens builds (mod('buildTime'): the Builder's
 // Moon Omen, the Hearth Blessing, a Codex Seal later). Nothing is for sale.
 //
 // Exposed names:
@@ -130,6 +130,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
   // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
   if (typeof welcomeApply === 'function') welcomeApply();
+  // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
+  if (typeof hearthApply === 'function') hearthApply();
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -140,7 +142,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   campOpen = () => !!C().open;
   campBuilders = () => 1 + (lv('hearth') >= 5 ? 1 : 0) + Math.max(0, Math.floor(bonus('builders')));
   campMaxLevel = id => B(id) ? B(id).max : 0;
-  const shown = id => { const d = B(id); return !!d && (!d.needs || !!d.needs()); };
+  // H1: a cold save lists a building once its plot opens (hearthPlotOpen; warm saves: always).
+  const shown = id => { const d = B(id); return !!d && (!d.needs || !!d.needs()) && (typeof hearthPlotOpen !== 'function' || hearthPlotOpen(id)); };
   campList = () => CAMP_IDS.filter(shown);
 
   // ---------------- gates ----------------
@@ -172,6 +175,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       c.secs = h.secs;
       return c;
     }
+    // H1: Lv 1 of a station has its own row (materials and a short timer, no gold).
+    const f = to === 1 && typeof hearthFirst === 'function' ? hearthFirst(id) : null;
+    if (f) { const c = liveCost(0, f.mats, d.tro, 0, 1); c.secs = f.secs; return c; }
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
     const c = liveCost(campGold(zRef, T.goldPerLv * to), mats, d.tro, T.troph[r - 1], r);
@@ -222,7 +228,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 
   campCan = id => {
     const d = B(id); if (!d) return { ok: false, why: 'Unknown building.' };
-    if (!campOpen()) return { ok: false, why: `Reach zone ${T.openZone} to make camp.` };
+    if (!campOpen()) return { ok: false, why: S.hearth && S.hearth.cold ? 'Light the fire first.' : `Reach zone ${T.openZone} to make camp.` };
     if (!shown(id)) return { ok: false, why: 'Not open yet.' };
     const to = lv(id) + 1;
     if (to > d.max) return { ok: false, why: 'Fully built.', to, max: true };
@@ -299,7 +305,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   let firstCheck = true, acc = 1;
   onTick(dt => {
     acc += dt; if (acc < 1) return; acc = 0;
-    if (!C().open && S.maxZone >= T.openZone) openCamp(firstCheck);
+    if (!C().open && S.maxZone >= T.openZone && !(S.hearth && S.hearth.cold)) openCamp(firstCheck);   // H1: a cold save opens it by lighting the fire
     firstCheck = false;
     if (builds().length) campCatchUp(now());
   });

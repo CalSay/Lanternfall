@@ -502,3 +502,33 @@ Lore 15-25% deeper) is not met; Oil is rarely what ends a run (the boss floors a
 so Oil upgrades add about 1 floor. Rerolls, Banish, Favourite and the Stair help players who plan
 sets, which the harness picker does not. A later balance pass could give Deep Breath a small drain
 cut or add a below-only damage Lore.
+
+## 15. Build notes (W6b, party combat, 2026-09-28)
+
+Built in `src/js/59c-deepwell-combat.js` with small hooks in 57d (`DW.fall()`, `bonus('deepRefund')`,
+the Guard and Mend set toasts), 59-combat (`cbArena` adopts a whole pack, `cbRestore`, the Lifeline
+gate) and the run-end card (reason `wipe`). Knobs are in `DEEP_COMBAT_TUNE`.
+
+Already there from Stage C: the Elder's telegraphs on boss floors (`bossStart` on the arena foe),
+Iron Wall, Thorn Plate, Deep Ward, Mending Light, Wildfire, Duelist, Quick Parry, Taunt Drill for a
+Warden, the Guard set (tanks -25%) and the Mend set (healing +30%). Added here:
+
+| Rule | Value (knob) |
+|---|---|
+| Floors | One pack a floor: normal 3 foes, elite the elite and a normal foe, boss the Deep Elder (and its adds). Floor HP is unchanged, split over the pack |
+| Foe attack | x1 the arena attack (`atk`) |
+| HP carried | Each pack clear: the fallen stand up at 30% and everyone heals 15% (as above ground); a cleared floor heals 10% more (`floorHeal`): 25% in all, as spec 8.2. A Quiet Landing heals 60% (`landingHeal`). A reloaded run restarts the floor with the HP it began with (`run.hpAt`) |
+| Wipe | Ends the run (reason `wipe`); the floors cleared count and pay. Back above the party is whole |
+| Oil | Refunds +5s (`refund`); a parried or Shield Wall-blocked Elder wind-up gives 2s back (`parryOil`) |
+| Taunt Drill | Any class: a tap makes the front tank taunt for 2s (`tauntT`) |
+| Lifeline | Once a floor for the whole party (`lifeSaves`), was once a member |
+| Deep Edge (D8) | New Deep Lore: +20% damage below a rank, 4 ranks, 150 / 400 / 800 / 1,400 Marks (Deep Lore total 10,070). Off in the Trial |
+
+Harness (`save-v2-late.json`, auto-play, greedy picks, 16 runs a class): median floor 19 (18-19 by
+class; HEAD before this task, one foe at a time: 19), 7-8 minutes. Runs end on Oil or a wipe;
+Rangers (no healer of their own) wipe most, Lightkeepers never. Full Deep Lore vs none: median 19 to
+22, mean 18.3 to 21.5 (+17%, D8 met; without Deep Edge it was +0%).
+
+Open: party combat makes runs shallower than the W3 notes (27-29), already on HEAD (Stage C and
+BAL2), so D2 (8-15 minutes) now sits at 7-8. Overflow does nothing new in a pack (overkill already
+carries inside a pack in party combat).

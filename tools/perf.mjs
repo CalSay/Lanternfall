@@ -171,6 +171,9 @@ async function runScenario(browser, base, { dev, save }) {
   if (save === 'new') await page.evaluate(() => { const S = window.__lf.S(); S.gold = Math.max(S.gold, 1e6); });
   // A new game shows its tabs one by one (55-onboard.js); open them all so every tab is measured.
   if (save === 'new') await page.evaluate(() => { try { window.__lf.x('onboardUnlockAll()'); } catch (e) {} });
+  // A new game starts at a cold Hearth (H1): light the fire as a player does in the first half minute,
+  // so the measured fight is the zone-1 fight it walks out to (the grove scene is left behind).
+  if (save === 'new') await page.evaluate(() => { try { window.__lf.x('typeof hearthCold === "function" && hearthCold() && !hearthLit() && (S.mats.wood[0] += 8, hearthLight())'); } catch (e) {} });
   await page.evaluate(() => window.__lf.setTab('adv'));
 
   const now = () => page.evaluate(() => performance.now());

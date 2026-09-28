@@ -109,7 +109,24 @@ const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);
 const essChance = () => 0.25 * (1 + gear().ess / 100) * mod('essence');
 const xpNeed = () => Math.floor(15 * Math.pow(1.3, S.L - 1));
-const skillNeed = lv => Math.floor(25 * Math.pow(1.12, lv - 1));
+// Skill XP and tier gates (GP1, knobs in SKILL_TUNE, 20-data). skillNeed(lv, k): k picks the crafting
+// curve for a station skill; without k it is the gathering curve.
+const skillCurve = k => SKILL_TUNE.craftSkills.includes(k) ? SKILL_TUNE.craftNeed : SKILL_TUNE.gatherNeed;
+const skillNeed = (lv, k) => { const c = skillCurve(k); return Math.floor(c[0] * Math.pow(lv, c[1]) * Math.pow(c[2] || 1, lv - 1)); };
+// A tier is open when the level reaches its gate, or when the save had it open before GP1
+// (skillKept, 55-skillpace: the old gates' high-water mark). Gathering skills use NODE_REQ,
+// crafting skills CRAFT_STATION_REQ (= SMITH_REQ).
+let skillKept = k => 0;
+const skillReqs = k => SKILL_TUNE.craftSkills.includes(k) ? SMITH_REQ : NODE_REQ;
+const skillReq = (k, t) => skillReqs(k)[t - 1];
+function skillTopTier(k) {
+  const sk = S.skills[k], lv = sk ? sk.lv : 1, req = skillReqs(k);
+  let t = 1; for (let i = 1; i < req.length; i++) if (lv >= req[i]) t = i + 1;
+  return Math.max(t, Math.min(req.length, skillKept(k) || 0));
+}
+const skillTierOpen = (k, t) => t <= skillTopTier(k);
+// The level that opens the next tier, or 0 when every tier is open.
+const skillNextReq = k => { const t = skillTopTier(k), req = skillReqs(k); return t < req.length ? req[t] : 0; };
 const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
 // Gathering per node kind (K5): the kind's tool (CRAFT_NODES[kind].tool) sets the speed, double
 // yield and extra-unit stats; craftNodeBase has the per-kind time (crystal x1.25, fibre x0.9).
@@ -120,11 +137,12 @@ const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
   const g = gear(), lv = S.skills[skillOf(kind)].lv;
   const spd = g[nodeTool(kind)[0]] + g.gather;
-  return craftNodeBase(nodeKind(kind), t) / ((1 + 0.02 * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed');
+  // H2 (55-tools): 'gatherSpeed:<skill>' carries tool mastery; toolRight() the right-tool bonus for tier t.
+  return craftNodeBase(nodeKind(kind), t) / ((1 + SKILL_TUNE.spdPerLv * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed') / mod('gatherSpeed:' + skillOf(kind)) / toolRight(skillOf(kind), t);
 }
 // Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
 function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }
-const nodeXp = t => Math.round(6 * Math.pow(t, 1.6));
+const nodeXp = t => Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(t, SKILL_TUNE.nodeXp[1]));
 const nodeXpFor = (kind, t) => nodeXp(t) * CRAFT_NODES[nodeKind(kind)].xp; // crystal x1.25
 
 const bulkCost = (base, r, owned, n) => base * Math.pow(r, owned) * (Math.pow(r, n) - 1) / (r - 1);

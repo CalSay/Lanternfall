@@ -64,6 +64,11 @@ the gather view, so they start at once, alongside the two specs.
 - **N1** Hands core (hire, shifts, returns, levels); **N2** Hands art and camp life (plots, the fire, day and
   night); **N3** Hands UI; **K12** the Kitchen.
 
+### Achievements and goals (owner input, 2026-09-28; runs alongside waves 2-3)
+- **AC1** spec: tiered achievement tracks across every system, big lifetime numbers, near-miss nudges, titles
+  and small capped bonuses, a trophy wall at camp, chapter goals that follow the story (lore.md). The old 23
+  achievements keep their ids and bonuses. **AC2** core, **AC3** UI and the trophy wall.
+
 ### Wave 4: the Sunken Coast (plan 2, wave 2), on the new formation
 R2-1 to R2-5, R2-7, R2-8. Coast foes are designed against Front, Middle and Back. Pearls and fish go to
 the Storehouse; the fishing rod is a tool.

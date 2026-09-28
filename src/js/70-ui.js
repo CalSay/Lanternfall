@@ -577,7 +577,7 @@ function ui(force) {
     putText(H.zSub, `${SKILL[skillOf(kind)]} Lv ${sk.lv} · ${nodeTime(kind, t).toFixed(1)}s per swing`);
     putText(H.mName, matName(kind, t));
     putText(H.mHp, `${fmt(S.mats[kind][t - 1])} in pack`);
-    const sp = Math.min(100, sk.xp / skillNeed(sk.lv) * 100);
+    const sp = Math.min(100, sk.xp / skillNeed(sk.lv, skillOf(kind)) * 100);
     setHp(sp);
     putStyle(H.mBar, 'background', 'var(--gold)');
     putHidden(H.tWrap, true);
