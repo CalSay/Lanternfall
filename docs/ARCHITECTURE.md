@@ -55,6 +55,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 59c-deepwell-combat.js | core | the Deepwell on party combat (deepwell.md 8.2 and 15, plan-3 W6b): a floor is one pack (wraps `DEEP_ARENA.spawn`/`onKill`), party HP carried between floors (`run.hpAt`), a wipe ends the run (`DW.fall()`, reason `wipe`), Oil refunds +5s and parries give Oil, Taunt Drill for every class, Lifeline once a floor (`dcLifeline`), the Deep Edge Lore (D8); knobs `DEEP_COMBAT_TUNE`, `deepCombatOn()`, `DWC` (state in `S.deepCombat`: the one-time tip). 59-combat hooks: `cbArena` adopts `mob.pack`, `cbRestore(clear)` |
 | 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
 | 58-deeds.js | core | achievements core (AC2): tracks read the save or new counters (`S.deeds.n/g/rec`, combat as `CB_STATS` deltas once a second), a quarter of the tracks checked per second, groups, Feats, secrets, points and ladder, capped Gold/Everflame bonuses (`deedBonus(key)`), titles joined to `codexTitles()` (ids `a_*`), looks and `wearGet(slot)`, the `deeds-near` Next Up goal, away lines, old-save credit (one What's new line); waiting tracks light up by runtime probes (`S.store`, `S.hands`, `S.kitchen`, `S.bond`, `S.oath`, `S.pin`, `REGIONS[1].plugged`); API `deeds` (header of the file); state `S.deeds` |
+| 75-deeds-ui.js | browser | the Achievements menu (AC3): hidden tab `deeds`, views `ach-deeds`/`ach-tracks`/`ach-feats`/`ach-looks`, track and Feat sheets, the Feat card (replaces the core's Feat toast), the Everflame portrait ring, toast taps, the title picker (local titles only); `deedsUI { open(view, id), heroRow(), featCard(id), chapterSlot() }`; optional hooks `lookIconURL(id)`, `looksPreview(canvas, wear, zoom)` (AC4), `featTrophyURL(id)` (AC5). 75-stats-ui.js: the Journal's Achievements card, the stats wall and the number switch |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -148,7 +149,9 @@ registerView(tabId, { id, label, order = 50, dot }) -> view   // a sub-view butt
   // dot() -> true: attention dot on the button (and the tab) while that view is not open. Keep it cheap.
 setTab(tabOrViewId, sel?)   // open a menu; a view id ('bounties', 'raid', 'make') opens that view; sel picks the view holding it and scrolls there
 closeMenu()                 // back to the game view (portrait). S.tab is '' while no menu is open
-registerTab({ id, label, icon, mount(panel), update(force) }) -> panel   // a sixth tab: avoid, prefer a view
+registerTab({ id, label, icon, mount(panel), update(force), hidden }) -> panel   // a sixth tab: avoid, prefer a view
+  // hidden: true = a full-screen menu with no tab button (the Achievements menu, id 'deeds'): open it with
+  // setTab(id) or one of its view ids; sections and views register on it like any tab (lazy mount)
 ```
 ```js
 registerSection('adv', { id: 'bounty', title: 'Bounties', view: 'bounties',
@@ -187,6 +190,8 @@ topGoals(n = 3) -> [{ id, sys, label, pct, ready, go, icon }]       // cached ~0
 returning one. `icon` is a toast icon spec, or `{ mob: typeKey }` / `{ char: rosterId }`.
 `prio` (default 0) breaks ties and orders ready goals. Register from your own 55-*.js file.
 `cap: 1` (optional): the diversity pass never takes a second goal from that `sys` (the deeds nudge, the story chapter).
+`reserve: 1` (optional): when the goal has something to show it keeps one of the 3 rows (it replaces the lowest other
+pick), so Ready goals cannot crowd it out (the deeds nudge, AP6). At most one reserved row.
 ```js
 registerGoal({ id: 'camp-build', sys: 'camp', label: () => `${B.name}: ready to build`,
   pct: () => campBuildPct(), go: { tab: 'world', sel: '#sec-camp' }, icon: { ic: ['anvil', '#F2C14E'] } });

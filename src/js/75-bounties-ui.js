@@ -1,4 +1,4 @@
-// 75-bounties-ui: Bounties (Fight tab, Bounties view) and the Achievements grid (bell sheet, Journal view).
+// 75-bounties-ui: Bounties (Fight tab, Bounties view).
 {
   const BTY_IC = {
     kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
@@ -47,38 +47,5 @@
       });
     }
   });
-
-  let achSig = '';
-  const achTiles = [];
-  registerSection('log', {  // the Journal view of the bell sheet (70-ui.js), after the lifetime stats
-    id: 'achievements', title: 'Achievements',
-    mount(sec) {
-      const head = el('p', 'note ach-sum'); sec.append(head);
-      const grid = el('div', 'ach-grid'); sec.append(grid);
-      for (const a of ACH_API.list) {
-        const t = el('div', 'ach');
-        const ic = icTile(iconURL(a.ic, '#F2C14E'));
-        const body = el('div');
-        body.append(el('div', 'ach-nm', a.name), el('div', 'ach-desc', a.desc), el('div', 'ach-fx', ACH_API.bonusText(a)));
-        const bar = el('div', 'bar'); bar.append(el('i')); body.append(bar);
-        t.append(ic, body); grid.append(t);
-        achTiles.push({ a, t, ic, bar: bar.firstChild, desc: body.children[1] });
-      }
-      achTiles.head = head;
-    },
-    update(force) {
-      const got = S.achievements.got;
-      const sig = achTiles.map(x => got[x.a.id] ? 1 : Math.floor(Math.min(1, x.a.cur() / x.a.need) * 50)).join();
-      if (sig === achSig && !force) return; achSig = sig;
-      let n = 0;
-      for (const x of achTiles) {
-        const on = !!got[x.a.id]; if (on) n++;
-        const c = Math.min(x.a.need, x.a.cur());
-        x.t.classList.toggle('got', on);
-        x.bar.style.width = (on ? 100 : c / x.a.need * 100) + '%';
-        x.desc.textContent = x.a.desc + (on ? '' : ` (${fmt(c)}/${fmt(x.a.need)})`);
-      }
-      achTiles.head.textContent = `${n} of ${achTiles.length} earned. Each one gives a permanent bonus.`;
-    }
-  });
+  // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }

@@ -1011,6 +1011,280 @@ span.cf-d { font-weight: 600; }
 .cf-gt b { font: 600 calc(14.5px * var(--display-k))/1.15 var(--display); overflow-wrap: anywhere; }
 .cf-gt small { font-size: 12.5px; color: var(--muted); }
 .cf-ph { margin: 0; font: 600 calc(20px * var(--display-k)) var(--display); }
+/* 60-deeds: the Achievements menu, its sheets, the Feat card (75-deeds-ui.js) and the Journal's stats wall
+   (75-stats-ui.js). Display text is Handjet: every display size is calc(Npx * var(--display-k)). */
+
+.dd-sec { gap: 12px; }
+.dd-eye { font: 600 10.5px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.dd-h { margin: 0; font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.dd-rsub { font-size: 12.5px; line-height: 1.25; color: var(--muted); min-width: 0; }
+.dd-fx { font-size: 12px; color: var(--r-legendary); }
+.dd-chev { color: var(--muted); font: 600 calc(18px * var(--display-k))/1 var(--display); }
+.dd-dot { position: absolute; top: -4px; right: -4px; width: 9px; height: 9px; background: var(--ember); border: 2px solid #0B0810; box-shadow: 0 0 6px rgba(255,158,61,.6); }
+.dd-dot[hidden] { display: none; }
+.dd-bar { display: block; height: 5px; background: var(--well); border: 1px solid #0B0810; overflow: hidden; }
+.dd-bar.thick { height: 8px; }
+.dd-bar > i { display: block; height: 100%; width: 0; background: var(--gold); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+.dd-lamp { position: relative; width: 48px; height: 48px; flex: none; display: grid; place-items: center; background: radial-gradient(circle, rgba(242,193,78,.28), rgba(242,193,78,0) 70%), var(--well); border: 2px solid #6B5320; box-shadow: inset 0 0 0 2px #0B0810, 0 0 14px rgba(242,193,78,.2); }
+.dd-lamp img { width: 30px; height: 30px; image-rendering: pixelated; }
+.dd-lamp.sm { width: 40px; height: 40px; } .dd-lamp.sm img { width: 24px; height: 24px; }
+.dd-lamp.lg { width: 64px; height: 64px; } .dd-lamp.lg img { width: 44px; height: 44px; }
+
+/* ---- Deeds: head, points ---- */
+.dd-head { display: flex; align-items: center; gap: 10px; }
+.dd-who { display: grid; gap: 2px; min-width: 0; }
+.dd-name { font: 700 calc(20px * var(--display-k))/1.05 var(--display); color: var(--bone); text-shadow: 0 2px 0 #0B0810; overflow-wrap: anywhere; }
+.dd-title { font: 600 calc(14px * var(--display-k))/1.1 var(--display); color: var(--gold); }
+.dd-title.none { font: 400 12.5px var(--body); color: var(--muted); }
+.dd-pts { position: relative; display: grid; gap: 5px; width: 100%; min-height: 64px; padding: 8px 30px 8px 10px; text-align: left; cursor: pointer; color: var(--bone); background: linear-gradient(90deg, rgba(242,193,78,.12), var(--panel) 72%); border: 2px solid #5A4A2A; box-shadow: 0 2px 0 #0B0810; }
+.dd-pts .dd-chev { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.dd-ptsrow { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.dd-ptsn { font: 700 calc(26px * var(--display-k))/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(242,193,78,.3); }
+.dd-ptsu { font-size: 13px; color: var(--muted); }
+.dd-next { margin-left: auto; font: 600 calc(13px * var(--display-k)) var(--display); color: var(--muted); white-space: nowrap; }
+.dd-nextrw { font-size: 12.5px; color: #F2E6B0; line-height: 1.25; }
+.dd-chapter:empty { display: none; }
+.dd-block { display: grid; gap: 6px; }
+.dd-list { display: grid; gap: 6px; }
+
+/* rows (near, following, recent) */
+.dd-row, .dd-trow { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 9px; align-items: center; width: 100%; min-height: 56px; padding: 6px 10px 6px 7px; text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.dd-row:hover, .dd-trow:hover { border-color: var(--line-hi); }
+.dd-ric { width: 36px; height: 36px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
+.dd-ric img { width: 24px; height: 24px; image-rendering: pixelated; }
+.dd-rtx { display: grid; gap: 3px; min-width: 0; }
+.dd-rtx > b { font: 600 calc(15px * var(--display-k))/1.1 var(--display); overflow-wrap: anywhere; }
+.dd-follow { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 6px; }
+.dd-follow .dd-row { border-color: #5A4A2A; }
+.dd-x { width: 44px; min-height: 44px; cursor: pointer; background: var(--panel-2); border: 2px solid #0B0810; color: var(--muted); font: 600 calc(20px * var(--display-k))/1 var(--display); box-shadow: 0 2px 0 #0B0810; }
+.dd-recent { display: grid; gap: 4px; }
+.dd-rrow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; width: 100%; min-height: 44px; padding: 4px 8px; text-align: left; cursor: pointer; color: var(--bone); background: none; border: 0; border-bottom: 1px solid var(--line); }
+.dd-rrow img { width: 22px; height: 22px; image-rendering: pixelated; }
+.dd-rrow b { font: 600 calc(14px * var(--display-k))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd-rrow .dd-rsub { white-space: nowrap; }
+.dd-ago { font: 600 calc(12px * var(--display-k)) var(--display); color: var(--muted); min-width: 24px; text-align: right; }
+
+/* switches */
+.dd-switch { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 8px; background: var(--well); border: 1px solid var(--line); }
+.dd-switch > div { display: grid; gap: 1px; min-width: 0; }
+.dd-switch b { font: 600 calc(14px * var(--display-k))/1.1 var(--display); }
+.dd-tog { min-width: 64px; min-height: 44px; cursor: pointer; background: var(--panel-2); border: 2px solid #0B0810; color: var(--muted); font: 600 calc(14px * var(--display-k)) var(--display); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0B0810; }
+.dd-tog.on { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E; }
+
+/* ---- Tracks ---- */
+.dd-chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 6px; margin: 0 -2px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.dd-chip { flex: none; scroll-snap-align: start; display: grid; grid-template-columns: 20px auto; grid-template-rows: auto auto; column-gap: 6px; align-items: center; min-height: 48px; padding: 5px 10px 5px 7px; cursor: pointer; text-align: left; color: var(--muted); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.dd-chip img { grid-row: 1 / 3; width: 20px; height: 20px; image-rendering: pixelated; }
+.dd-chip b { font: 600 calc(14px * var(--display-k))/1.05 var(--display); color: var(--bone); white-space: nowrap; }
+.dd-chip span { font-size: 11.5px; white-space: nowrap; }
+.dd-chip.gold { border-color: #8A6A20; }
+.dd-chip.ever { border-color: var(--ember-deep); }
+.dd-chip.on { background: var(--panel-2); border-color: var(--gold); box-shadow: inset 0 -3px 0 var(--ember), 0 2px 0 #0B0810; }
+.dd-ghead { display: grid; gap: 4px; }
+.dd-gline { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 7px; align-items: start; font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.dd-gline img { width: 18px; height: 18px; image-rendering: pixelated; opacity: .45; filter: grayscale(.8); }
+.dd-gline.got { color: #F2E6B0; }
+.dd-gline.got img { opacity: 1; filter: none; }
+.dd-ttop { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.dd-ttop b { font: 600 calc(15px * var(--display-k))/1.1 var(--display); min-width: 0; overflow-wrap: anywhere; }
+.dd-pipbox { flex: none; }
+.dd-pips { display: flex; align-items: center; gap: 3px; }
+.dd-pip { width: 9px; height: 9px; background: var(--well); border: 1px solid var(--line-hi); transform: rotate(45deg); }
+.dd-pip.on { background: var(--c); border-color: #0B0810; box-shadow: 0 0 4px var(--c); }
+.dd-stars { margin-left: 3px; font: 600 calc(12px * var(--display-k))/1 var(--display); color: var(--ember); }
+.dd-trow.done .dd-bar > i { background: var(--r-legendary); }
+.dd-trow.classic { cursor: default; }
+.dd-trow.classic:not(.done) { opacity: .75; }
+.dd-trow.classic.done { border-color: #6B5320; }
+
+/* ---- sheets ---- */
+.dd-sheet .bsheet-body { gap: 12px; }
+.dd-sh { margin: 0; font: 700 calc(20px * var(--display-k))/1.1 var(--display); }
+.dd-shead { display: flex; align-items: center; gap: 10px; }
+.dd-now { display: grid; gap: 4px; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+.dd-now > span:first-child { font: 600 calc(14px * var(--display-k)) var(--display); color: var(--gold); }
+.dd-now > b { font: 700 calc(22px * var(--display-k))/1.1 var(--display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dd-tiers { display: grid; gap: 4px; }
+.dd-tier { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 9px; align-items: center; min-height: 44px; padding: 4px 8px; background: var(--panel-2); border: 1px solid var(--line); }
+.dd-tier > img { width: 24px; height: 24px; image-rendering: pixelated; filter: grayscale(.9) brightness(.7); }
+.dd-tier.got { border-color: #6B5320; }
+.dd-tier.got > img { filter: none; }
+.dd-tinfo { display: grid; gap: 1px; min-width: 0; }
+.dd-tinfo b { font: 600 calc(14px * var(--display-k))/1.1 var(--display); }
+.dd-tinfo span { font-size: 12.5px; color: var(--muted); }
+.dd-tinfo .dd-fx { color: var(--r-legendary); }
+.dd-tpts { font: 600 calc(12.5px * var(--display-k)) var(--display); color: var(--muted); text-align: right; max-width: 110px; }
+.dd-tier.got .dd-tpts { color: var(--gold); }
+.dd-sfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.dd-sfoot .mini { min-height: 44px; }
+.dd-ladder { display: grid; gap: 4px; }
+.dd-lrow { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 40px; padding: 4px 8px; background: var(--panel-2); border: 1px solid var(--line); font-size: 13px; }
+.dd-lat { font: 600 calc(14px * var(--display-k)) var(--display); color: var(--muted); }
+.dd-lst { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.dd-lrow.got { border-color: #6B5320; }
+.dd-lrow.got .dd-lat, .dd-lrow.got .dd-lst { color: var(--gold); }
+.dd-ptsrc { display: grid; gap: 4px; }
+.dd-kv { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; font-size: 13px; }
+.dd-kv b { font: 600 calc(13px * var(--display-k)) var(--display); color: var(--muted); }
+.dd-needs { margin: 0; font-size: 14px; line-height: 1.4; }
+.dd-sparts { display: grid; gap: 8px; }
+.dd-spart { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; font-size: 13px; }
+.dd-spart b { font: 600 calc(13px * var(--display-k)) var(--display); font-variant-numeric: tabular-nums; }
+.dd-spart .dd-bar { grid-column: 1 / -1; }
+.dd-srw { display: grid; gap: 4px; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); }
+
+/* ---- Feats ---- */
+.dd-fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dd-fcard { --rc: var(--gold); position: relative; display: grid; align-content: start; gap: 6px; min-height: 128px; padding: 7px 8px; text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 0 #0B0810; min-width: 0; }
+.dd-fcard:hover { border-color: var(--line-hi); }
+.dd-fcard.got { border-color: var(--rc); background: radial-gradient(120% 70% at 20% 0%, color-mix(in srgb, var(--rc) 16%, transparent), transparent 70%), var(--panel); }
+.dd-fcard.cap { grid-column: 1 / -1; min-height: 96px; }
+.dd-ftop { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 6px; align-items: start; }
+.dd-tro { width: 32px; height: 32px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--line); }
+.dd-tro img { width: 22px; height: 22px; image-rendering: pixelated; }
+.dd-fcard:not(.got) .dd-tro img { filter: grayscale(1) brightness(.7); }
+.dd-fnm { display: grid; gap: 1px; min-width: 0; }
+.dd-fnm b { font: 600 calc(14px * var(--display-k))/1.05 var(--display); overflow-wrap: anywhere; }
+.dd-rar { font: 600 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--rc); }
+.dd-fparts { display: grid; gap: 2px; }
+.dd-fpl { font-size: 11.5px; color: var(--muted); line-height: 1.2; overflow-wrap: anywhere; }
+.dd-fparts .dd-bar > i { background: var(--rc); }
+.dd-frw { display: flex; align-items: center; gap: 5px; margin-top: auto; font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); color: #F2E6B0; min-width: 0; flex-wrap: wrap; }
+.dd-frw img { width: 16px; height: 16px; image-rendering: pixelated; }
+.dd-fcard:not(.got) .dd-frw { color: var(--muted); }
+.dd-fcard:not(.got) .dd-frw img { filter: grayscale(1) brightness(.6); }
+.dd-pin { font: 600 10px var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 1px 4px; color: #1A1420; background: var(--gold); }
+.dd-sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 6px; }
+.dd-scard { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 8px; align-items: start; padding: 6px 8px 6px 6px; background: repeating-linear-gradient(135deg, var(--panel), var(--panel) 6px, #1B1522 6px, #1B1522 12px); border: 2px solid var(--line); }
+.dd-scard.got { background: var(--panel); border-color: #5B4A78; }
+.dd-scard .dd-rtx b { font-size: calc(14px * var(--display-k)); }
+.dd-scard:not(.got) .dd-rtx b { color: var(--muted); }
+.dd-riddle { font-size: 12.5px; font-style: italic; color: #D9C2FF; line-height: 1.3; }
+
+/* ---- Looks ---- */
+.dd-plate { position: relative; height: 172px; display: grid; place-items: end center; overflow: hidden; background: radial-gradient(60% 50% at 50% 100%, #2A2036, #120E18 70%), #0E0B13; border: 2px solid var(--line-hi); box-shadow: inset 0 0 0 2px #0B0810, 0 3px 0 #0B0810; }
+.dd-glow { --fc: #FFB347; position: absolute; left: 50%; bottom: 30px; width: 180px; height: 150px; transform: translateX(-50%); background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--fc) 34%, transparent), transparent 62%); pointer-events: none; }
+.dd-aura { --ac: #B89CFF; position: absolute; left: 50%; bottom: 20px; width: 96px; height: 20px; transform: translateX(-50%); border-radius: 50%; border: 2px solid color-mix(in srgb, var(--ac) 80%, transparent); box-shadow: 0 0 12px var(--ac), inset 0 0 10px color-mix(in srgb, var(--ac) 50%, transparent); animation: ddAura 3s ease-in-out infinite; }
+.dd-hero { position: relative; width: 96px; height: 132px; margin-bottom: 18px; image-rendering: pixelated; }
+.dd-critter { position: absolute; left: calc(50% + 44px); bottom: 20px; }
+.dd-critter img { width: 24px; height: 24px; image-rendering: pixelated; }
+.dd-pcap { position: absolute; left: 8px; top: 6px; display: grid; gap: 0; max-width: calc(100% - 16px); }
+.dd-pname { font: 700 calc(16px * var(--display-k))/1.05 var(--display); text-shadow: 0 2px 0 #0B0810; overflow-wrap: anywhere; }
+.dd-ptitle { font: 600 calc(13px * var(--display-k))/1.1 var(--display); color: var(--gold); }
+.dd-ptitle.none { color: var(--muted); }
+.dd-slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.dd-slot { position: relative; display: grid; justify-items: center; gap: 2px; min-height: 56px; padding: 4px 2px; cursor: pointer; color: var(--muted); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; font: 600 11.5px/1.1 var(--body); }
+.dd-slot img { width: 28px; height: 28px; image-rendering: pixelated; opacity: .45; filter: grayscale(.9); }
+.dd-slot.worn img { opacity: 1; filter: none; }
+.dd-slot.worn { color: var(--bone); }
+.dd-slot.on { background: var(--panel-2); border-color: var(--gold); box-shadow: inset 0 -3px 0 var(--ember), 0 2px 0 #0B0810; }
+.dd-slothead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dd-slothead b { font: 600 calc(16px * var(--display-k)) var(--display); }
+.dd-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+.dd-tile { position: relative; display: grid; justify-items: center; align-content: start; gap: 3px; min-height: 76px; padding: 6px 3px 5px; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; text-align: center; min-width: 0; }
+.dd-tile.on { border-color: var(--gold); background: radial-gradient(90% 70% at 50% 20%, rgba(242,193,78,.18), transparent 70%), var(--panel-2); }
+.dd-tile.locked { cursor: default; opacity: 1; background: repeating-linear-gradient(135deg, var(--panel), var(--panel) 6px, #1B1522 6px, #1B1522 12px); }
+.dd-tile.locked .dd-tic img { filter: brightness(0); opacity: .55; }
+.dd-tile:disabled { color: var(--muted); }
+.dd-tic { width: 32px; height: 32px; display: grid; place-items: center; }
+.dd-tic img { width: 30px; height: 30px; image-rendering: pixelated; }
+.dd-none { font: 600 calc(22px * var(--display-k))/1 var(--display); color: var(--muted); }
+.dd-tn { font: 600 calc(12.5px * var(--display-k))/1.05 var(--display); overflow-wrap: anywhere; }
+.dd-tsrc { font-size: 10.5px; line-height: 1.15; color: var(--muted); overflow-wrap: anywhere; }
+.dd-th { margin-top: 6px; }
+.dd-tcur { display: grid; gap: 2px; padding: 8px 10px; background: linear-gradient(90deg, rgba(242,193,78,.12), var(--well) 70%); border: 2px solid #5A4A2A; }
+.dd-tcur b { font: 700 calc(17px * var(--display-k))/1.1 var(--display); color: var(--gold); overflow-wrap: anywhere; }
+.dd-tlist { display: grid; gap: 4px; }
+.dd-tgrp { margin-top: 6px; font: 600 11px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.dd-trow2 { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 9px; align-items: center; width: 100%; min-height: 44px; padding: 4px 10px; text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); }
+.dd-trow2 b { font: 600 calc(15px * var(--display-k))/1.1 var(--display); overflow-wrap: anywhere; }
+.dd-trow2 .dd-rsub { text-align: right; max-width: 150px; }
+.dd-tbox { width: 14px; height: 14px; border: 2px solid var(--line-hi); background: var(--well); }
+.dd-trow2.on { border-color: var(--gold); background: var(--panel-2); }
+.dd-trow2.on .dd-tbox { background: var(--gold); border-color: #0B0810; box-shadow: 0 0 6px rgba(242,193,78,.6); }
+.dd-tleft { margin-top: 4px; }
+.dd-tleft summary::after { content: ' ›'; }
+.dd-tleft summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font: 600 calc(14px * var(--display-k)) var(--display); color: var(--muted); }
+.dd-tlock { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 5px 10px; border-bottom: 1px solid var(--line); }
+.dd-tlock b { font: 600 calc(14px * var(--display-k)) var(--display); color: var(--muted); }
+.dd-tlock .dd-rsub { text-align: right; }
+
+/* ---- the hero sheet row (75-party-sheet) ---- */
+.dd-herorow { position: relative; display: grid; grid-template-columns: 24px auto minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; min-height: 48px; padding: 6px 10px; text-align: left; cursor: pointer; color: var(--bone); background: linear-gradient(90deg, rgba(242,193,78,.12), var(--panel-2) 72%); border: 2px solid #5A4A2A; box-shadow: 0 2px 0 #0B0810; }
+.dd-herorow img { width: 24px; height: 24px; image-rendering: pixelated; }
+.dd-herorow b { font: 600 calc(15px * var(--display-k)) var(--display); }
+.dd-herorow > span:not(.dd-chev):not(.dd-dot) { font-size: 13px; color: var(--gold); text-align: right; }
+.dd-herorow .dd-dot { top: 4px; right: 4px; }
+
+/* ---- the Feat card ---- */
+.dd-fc-ov { --rc: var(--gold); position: fixed; inset: 0; z-index: 37; display: grid; place-items: center; padding: 16px; background: rgba(8,6,12,.9); cursor: pointer; opacity: 0; transition: opacity .3s ease-out; }
+.dd-fc-ov.in { opacity: 1; }
+.dd-fc-ov.out { opacity: 0; transition: opacity .18s ease-in; }
+.dd-fc { --rc: var(--gold); position: relative; overflow: hidden; width: min(360px, 100%); min-height: 70vh; min-height: 70dvh; max-height: calc(100dvh - 32px); overflow-y: auto; display: grid; align-content: center; justify-items: center; gap: 8px; padding: 18px 16px 16px; text-align: center; cursor: default; background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--rc) 22%, transparent), transparent 70%), var(--panel); border: 2px solid var(--rc); box-shadow: 0 4px 0 #0B0810, 0 0 48px color-mix(in srgb, var(--rc) 30%, transparent); transform: translateY(12px) scale(.97); transition: transform .45s cubic-bezier(.2,.9,.3,1.2); }
+.dd-fc-ov.in .dd-fc { transform: none; }
+.dd-fc > * { position: relative; }
+.dd-fc-rays { position: absolute !important; left: 50%; top: 24%; width: 320px; height: 320px; margin: -160px 0 0 -160px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, color-mix(in srgb, var(--rc) 40%, transparent) 0, transparent 60%), repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rc) 18%, transparent) 0 6deg, transparent 6deg 30deg); -webkit-mask: radial-gradient(circle, #000 25%, transparent 70%); mask: radial-gradient(circle, #000 25%, transparent 70%); animation: ddTurn 30s linear infinite; }
+.dd-fc .dd-eye { color: var(--rc); letter-spacing: .2em; }
+.dd-fc-stage { display: flex; align-items: flex-end; justify-content: center; gap: 12px; }
+.dd-fc-tro { width: 72px; height: 72px; display: grid; place-items: center; background: var(--well); border: 2px solid var(--rc); box-shadow: 0 0 18px color-mix(in srgb, var(--rc) 40%, transparent); margin-bottom: 18px; }
+.dd-fc-tro img { width: 48px; height: 48px; image-rendering: pixelated; }
+.dd-fc-who { position: relative; display: block; width: 96px; height: 132px; }
+.dd-fc-who .dd-aura { bottom: 2px; }
+.dd-fc-who .dd-glow { bottom: 0; width: 150px; height: 130px; }
+.dd-fc-who .dd-critter { left: auto; right: -26px; bottom: 2px; }
+.dd-fc-hero { position: relative; width: 96px; height: 132px; image-rendering: pixelated; }
+.dd-fc-name { margin: 0; font: 700 calc(26px * var(--display-k))/1.05 var(--display); text-shadow: 0 2px 0 #0B0810, 0 0 14px color-mix(in srgb, var(--rc) 40%, transparent); }
+.dd-fc-took { margin: 0; font-size: 14px; color: var(--muted); }
+.dd-fc-rw { display: grid; gap: 6px; width: 100%; padding: 8px 10px; background: var(--well); border: 1px solid var(--line); text-align: left; }
+.dd-fc-rw span { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #F2E6B0; }
+.dd-fc-rw img { width: 20px; height: 20px; image-rendering: pixelated; }
+.dd-fc-btns { display: flex; gap: 10px; margin-top: 4px; }
+.dd-fc-btns .mini { min-width: 110px; min-height: 48px; font-size: calc(16px * var(--display-k)); }
+.dd-fc-ov.still, .dd-fc-ov.still .dd-fc { transition: opacity .3s; transform: none; }
+.dd-fc-ov.still .dd-fc-rays { animation: none; }
+
+/* ---- the Everflame ring around the header portrait ---- */
+.top .portrait .dd-ring { position: absolute; inset: -4px; border: 2px solid var(--gold); box-shadow: 0 0 10px var(--gold); pointer-events: none; animation: ddRing 1.2s ease-out forwards; }
+.top .portrait .dd-ring.still { animation: none; opacity: .9; }
+@keyframes ddRing { from { transform: scale(.9); opacity: 1; } to { transform: scale(1.9); opacity: 0; } }
+@keyframes ddTurn { to { transform: rotate(360deg); } }
+@keyframes ddAura { 50% { opacity: .65; } }
+@media (prefers-reduced-motion: reduce) {
+  .dd-aura, .dd-fc-rays, .top .portrait .dd-ring { animation: none; }
+  .dd-fc-ov, .dd-fc { transition: opacity .3s; transform: none; }
+}
+
+/* ================= the Journal: Achievements card and stats wall (75-stats-ui) ================= */
+.sw-ach { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; cursor: pointer; background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 72%); border: 2px solid #5A4A2A; box-shadow: 0 2px 0 #0B0810; }
+.sw-atx { display: grid; gap: 3px; min-width: 0; }
+.sw-apts { font: 700 calc(18px * var(--display-k))/1.05 var(--display); color: var(--gold); }
+.sw-asub { font-size: 12.5px; color: var(--muted); line-height: 1.25; }
+.sw-anear { font: 600 calc(12.5px * var(--display-k)) var(--display); color: #F2E6B0; }
+.sw-aopen { position: relative; min-height: 44px; }
+.sw-group { display: grid; gap: 6px; }
+.sw-h { margin: 6px 0 0; font: 600 12px var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.sw-h::before { content: ""; width: 6px; height: 6px; background: var(--ember); box-shadow: 0 0 6px rgba(255,158,61,.6); }
+.sw-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.sw-tile { display: grid; align-content: center; gap: 1px; min-height: 64px; padding: 6px 9px; text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; min-width: 0; }
+.sw-tile.open { border-color: var(--line-hi); background: var(--panel-2); }
+.sw-v { font: 700 calc(19px * var(--display-k))/1.05 var(--display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.sw-v.long { font-size: calc(14px * var(--display-k)); }
+.sw-tile.open .sw-v { color: var(--gold); }
+.sw-l { font-size: 12px; color: var(--muted); line-height: 1.2; }
+.sw-s { font-size: 11px; color: #8A7F96; line-height: 1.2; }
+.sw-mats { display: grid; gap: 2px; padding: 4px; background: var(--well); border: 1px solid var(--line); }
+.sw-mrow { display: grid; grid-template-columns: 68px repeat(5, minmax(0, 1fr)); gap: 2px; align-items: center; }
+.sw-mhead span { font: 600 10.5px var(--body); letter-spacing: .08em; color: var(--muted); text-align: center; }
+.sw-mf { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; }
+.sw-mf img { width: 16px; height: 16px; flex: none; image-rendering: pixelated; }
+.sw-mc { min-height: 32px; padding: 0 1px; cursor: pointer; background: var(--panel); border: 1px solid #0B0810; font: 600 calc(13px * var(--display-k))/1 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw-mc.zero { color: #4E4060 !important; }
+.sw-mc.on { outline: 2px solid var(--gold); outline-offset: -1px; }
+.sw-mcap { font-size: 12px; }
+.sw-num { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; margin-top: 4px; }
+.sw-num > span { font: 600 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.sw-seg { margin: 0; }
+.sw-seg button { min-height: 44px; }
 /* 60-deepwell: the Deepwell (75-deepwell-ui.js): run HUD over the stage, the boon strip in place of
    the control row, the full-screen choice sheet, the run-end card, and the Fight tab's Deepwell view. */
 :root { --deep: #7FB2FF; --deep-dim: #3F6FA8; --deep-bg: #0E1624; --oil: #FF9E3D; }
@@ -9335,6 +9609,8 @@ let homeFamily, homeBonus, sigDropChance, awaySigDrops, champChance, champsAway,
 //          { item }, a URL); the UI also takes { mob: typeKey } and { char: rosterId }
 //   prio   optional number (default 0); breaks ties and orders ready goals (higher first)
 //   cap    optional 1: the diversity pass never takes a second goal from this sys (deeds, story)
+//   reserve optional 1: when the goal has something to show it keeps one row of its own (n >= 3), taking
+//          the place of the lowest other pick, so Ready goals cannot crowd it out (the deeds nudge, AP6)
 // topGoals(n = 3, { now, sticky = true }) -> [{ id, sys, label, pct, ready, go, icon }]
 //   Ready goals first, then the highest pct. Cached for 450 ms. Sticky: goals already shown
 //   keep their place unless a newcomer is clearly closer (no flicker between close values).
@@ -9369,7 +9645,7 @@ var forgeGoalPicks = 0;
     try { label = String(val(g.label) || ''); icon = val(g.icon) || null; } catch (e) { return null; }
     if (!label) return null;
     const ready = p >= 1;
-    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0 };
+    return { id: g.id, sys: g.sys, label, pct: Math.min(1, p), ready, go: g.go || null, icon, prio: +g.prio || 0, cap: +g.cap || 0, reserve: +g.reserve || 0 };
   }
 
   topGoals = function (n = 3, opts) {
@@ -9394,13 +9670,21 @@ var forgeGoalPicks = 0;
         pick.push(e); count[e.sys] = (count[e.sys] || 0) + 1;
       }
     }
+    // reserve: one row for a reserved goal left out (the lowest-scored other pick makes room)
+    if (n >= 3 && !pick.some(e => e.reserve)) {
+      const r = all.find(e => e.reserve && !pick.includes(e));
+      if (r) {
+        if (pick.length < n) pick.push(r);
+        else { let lo = -1; pick.forEach((e, i) => { if (lo < 0 || e.score < pick[lo].score) lo = i; }); pick[lo] = r; }
+      }
+    }
     // order: ready first, then by score; shown goals keep their old order unless clearly passed
     pick.sort((a, b) => {
       if (a.ready !== b.ready) return a.ready ? -1 : 1;
       if (a.was >= 0 && b.was >= 0 && Math.abs(a.score - b.score) < STICK) return a.was - b.was;
       return b.score - a.score;
     });
-    const list = pick.map(({ score, was, cap: _c, ...e }) => e);
+    const list = pick.map(({ score, was, cap: _c, reserve: _r, ...e }) => e);
     if (sticky) { shown = list.map(e => e.id); cache.clear(); cache.set(n, { at: now, list }); }
     return list;
   };
@@ -17805,7 +18089,7 @@ let deeds, deedBonus, wearGet;
     return nearList()[0] || null;
   };
   registerGoal({
-    id: 'deeds-near', sys: 'deeds', cap: 1, prio: -1,
+    id: 'deeds-near', sys: 'deeds', cap: 1, reserve: 1, prio: -1,
     pct: () => { const x = nudgePick(); return x ? Math.max(0.01, Math.min(T.nearMax, x.pct)) : null; },
     label: () => { const x = nudgePick(); return x ? x.label : ''; },
     icon: () => { const x = nudgePick(), t = x && TR[x.id], g = t && GR[t.g]; return { ic: g ? g.ic : ['banner', '#F2C14E'] }; },
@@ -17859,8 +18143,8 @@ let deeds, deedBonus, wearGet;
     if (id == null) {
       if (slot === 'flame' || slot === 'trail') { w[slot] = null; if (S.deep && S.deep.eq) S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = null; }
       else w[slot] = slot === 'frame' ? 'none' : null;
-    } else if (LK[id]) {
-      if (LK[id].slot !== slot || !owned(id)) return false;
+    } else if (LK[id] && LK[id].slot === slot) {   // (an id in another slot may still be a Deepwell colour: 'l_moon')
+      if (!owned(id)) return false;
       w[slot] = id;
     } else if ((slot === 'flame' || slot === 'trail') && deepCos(slot === 'flame' ? 'lantern' : 'trail', id)) {
       w[slot] = null; S.deep.eq[slot === 'flame' ? 'lantern' : 'trail'] = id;   // the Deepwell's own meaning, unchanged
@@ -24667,6 +24951,7 @@ const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
 const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const TAB_HIDDEN = new Set(), TAB_ICON = {};   // registerTab({ hidden: true }): menus with no tab button, and their header icons
 const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
 const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
 const WIDE_Q = '(min-aspect-ratio: 1/1) and (min-width: 600px)';
@@ -24797,8 +25082,8 @@ function renderMenu(t) {
   for (const id of TAB_IDS) $('p-' + id).hidden = id !== t;
   if (open) {
     $('menuTitle').textContent = TAB_TITLE[t] || t;
-    const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc');
-    mi.hidden = !ti; if (ti && mi.getAttribute('src') !== ti.getAttribute('src')) mi.src = ti.src;
+    const ti = document.querySelector(`.tab[data-tab="${t}"] img`), mi = $('menuIc'), src = ti ? ti.getAttribute('src') : TAB_ICON[t];
+    mi.hidden = !src; if (src && mi.getAttribute('src') !== src) mi.src = src;
   }
   placeToasts();
 }
@@ -24829,7 +25114,7 @@ function setTab(t, sel) {
     if (v && !featOk(v.feature)) onboardReveal(v.feature);
   }
   const was = S.tab, wasView = curView(t);
-  S.tab = t; uiPrefs.tab = t;
+  S.tab = t; if (!TAB_HIDDEN.has(t)) uiPrefs.tab = t;   // a hidden tab's menu is never the one reopened at boot
   if (view) uiPrefs.views[t] = view;
   saveUiPrefs();
   if (was !== t) buildViewSeg(t);
@@ -24855,7 +25140,8 @@ function closeMenu() {
 // Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
 function initMenus() {
   menusReady = true;
-  const last = TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : TAB_IDS.includes(S.tab) ? S.tab : 'adv';
+  const ok = t => TAB_IDS.includes(t) && !TAB_HIDDEN.has(t);
+  const last = ok(uiPrefs.tab) ? uiPrefs.tab : ok(S.tab) ? S.tab : 'adv';
   S.tab = '';
   if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
 }
@@ -25117,17 +25403,23 @@ function registerSection(tabId, { id, title, view, mount, update, feature }) {
   if (mount && menusReady && (secShows(rec) || SECTIONS.some(s => s !== rec && s.mounted && s.mount && s.tab === tabId))) mountSec(rec);
   return sec;
 }
-// registerTab({ id, label, icon, mount(panel), update(force) }): a whole new tab. Tabs are
+// registerTab({ id, label, icon, mount(panel), update(force), hidden }): a whole new tab. Tabs are
 // tight at 360px wide, so prefer registerSection. icon is a URL or icon spec.
-function registerTab({ id, label, icon, mount, update }) {
+// hidden: true = a full-screen menu with no button on the tab bar (the Achievements menu): open it
+// with setTab(id) or one of its view ids; it keeps the title row, the view switcher, close and swipe.
+function registerTab({ id, label, icon, mount, update, hidden }) {
   if (TAB_IDS.includes(id) || TAB_ALIAS[id]) throw new Error('registerTab: tab exists ' + id);
-  const b = el('button', 'tab', label);
-  b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
-  const url = iconOf(icon); if (url) b.prepend(img(url));
-  b.addEventListener('click', () => tabClick(id));
-  const nav = document.querySelector('.tabs'); nav.append(b);
-  TAB_IDS.push(id); TAB_TITLE[id] = label;
-  nav.style.gridTemplateColumns = 'repeat(' + TAB_IDS.length + ', 1fr)';
+  const url = iconOf(icon);
+  if (hidden) { TAB_HIDDEN.add(id); TAB_ICON[id] = url || ''; TAB_IDS.push(id); TAB_TITLE[id] = label; }
+  else {
+    const b = el('button', 'tab', label);
+    b.setAttribute('role', 'tab'); b.dataset.tab = id; b.setAttribute('aria-selected', 'false');
+    if (url) b.prepend(img(url));
+    b.addEventListener('click', () => tabClick(id));
+    const nav = document.querySelector('.tabs'); nav.append(b);
+    TAB_IDS.push(id); TAB_TITLE[id] = label;
+    nav.style.gridTemplateColumns = 'repeat(' + (TAB_IDS.length - TAB_HIDDEN.size) + ', 1fr)';
+  }
   const panel = el('section', 'panel'); panel.id = 'p-' + id; panel.hidden = true;
   $('panels').append(panel);
   if (mount) mount(panel);
@@ -26043,7 +26335,7 @@ let showAwayReport;
 }
 
 // ---- src/js/75-bounties-ui.js ----
-// 75-bounties-ui: Bounties (Fight tab, Bounties view) and the Achievements grid (bell sheet, Journal view).
+// 75-bounties-ui: Bounties (Fight tab, Bounties view).
 {
   const BTY_IC = {
     kill: () => iconURL('sword', '#C9C3D6'), mine: () => iconURL('pick', '#9C8F7A'), chop: () => iconURL('axe', '#8C6A43'),
@@ -26092,40 +26384,7 @@ let showAwayReport;
       });
     }
   });
-
-  let achSig = '';
-  const achTiles = [];
-  registerSection('log', {  // the Journal view of the bell sheet (70-ui.js), after the lifetime stats
-    id: 'achievements', title: 'Achievements',
-    mount(sec) {
-      const head = el('p', 'note ach-sum'); sec.append(head);
-      const grid = el('div', 'ach-grid'); sec.append(grid);
-      for (const a of ACH_API.list) {
-        const t = el('div', 'ach');
-        const ic = icTile(iconURL(a.ic, '#F2C14E'));
-        const body = el('div');
-        body.append(el('div', 'ach-nm', a.name), el('div', 'ach-desc', a.desc), el('div', 'ach-fx', ACH_API.bonusText(a)));
-        const bar = el('div', 'bar'); bar.append(el('i')); body.append(bar);
-        t.append(ic, body); grid.append(t);
-        achTiles.push({ a, t, ic, bar: bar.firstChild, desc: body.children[1] });
-      }
-      achTiles.head = head;
-    },
-    update(force) {
-      const got = S.achievements.got;
-      const sig = achTiles.map(x => got[x.a.id] ? 1 : Math.floor(Math.min(1, x.a.cur() / x.a.need) * 50)).join();
-      if (sig === achSig && !force) return; achSig = sig;
-      let n = 0;
-      for (const x of achTiles) {
-        const on = !!got[x.a.id]; if (on) n++;
-        const c = Math.min(x.a.need, x.a.cur());
-        x.t.classList.toggle('got', on);
-        x.bar.style.width = (on ? 100 : c / x.a.need * 100) + '%';
-        x.desc.textContent = x.a.desc + (on ? '' : ` (${fmt(c)}/${fmt(x.a.need)})`);
-      }
-      achTiles.head.textContent = `${n} of ${achTiles.length} earned. Each one gives a permanent bonus.`;
-    }
-  });
+  // The Classic achievements grid moved to the Achievements menu (75-deeds-ui.js, Tracks > Classic).
 }
 
 // ---- src/js/75-camp-ui.js ----
@@ -27747,6 +28006,767 @@ let craftUI = null;
   });
 
   craftUI = { openItem: id => openItem(id), pick: (who, pos) => pick(who, pos) };
+}
+
+// ---- src/js/75-deeds-ui.js ----
+// 75-deeds-ui: the Achievements menu, the Feat card and the other celebrations (docs/design/achievements.md 9,
+// task AC3). Browser-only. Core: 58-deeds.js (the `deeds` API); data: 23-data-deeds.js.
+//
+// The menu is a hidden tab (registerTab hidden: true, 70-ui): no tab button, opened by setTab('ach-deeds'),
+// emit('deedsOpen', { view, id }), the Journal card, the hero sheet row, a Next Up Go or a tap on an
+// achievement toast. Views: Deeds (ach-deeds), Tracks (ach-tracks), Feats (ach-feats), Looks (ach-looks).
+// Every section mounts on the menu's first open and updates only while its view shows (about once a second,
+// rows write on change), so a closed menu costs nothing per frame.
+//
+// Exposed: deedsUI { open(view, id), heroRow(), featCard(id), chapterSlot() -> el | null }
+// Hooks for later tasks (probed with typeof, all optional):
+//   AC4  lookIconURL(id) -> URL (a look's icon), looksPreview(canvas, wear) -> bool (draws the dressed hero)
+//   AC5  featTrophyURL(id) -> URL (a Feat's trophy)
+//   AC6  the chapter card goes in deedsUI.chapterSlot() (the Deeds view, under the points)
+// Titles stay local: they are read with codexTitle()/codexTitles() and never sent online.
+let deedsUI = null;
+{
+  const safe = (fn, d) => { try { const v = fn(); return v == null ? d : v; } catch (e) { console.error('[lanternfall] deeds ui', e); return d; } };
+  const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
+  const exact = n => { n = +n || 0; return Math.abs(n) >= 1e21 ? n.toExponential(5).replace('e+', 'e') : Math.floor(n).toLocaleString('en-US'); };
+  const dateTxt = ms => { try { return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { return ''; } };
+  const dateLong = ms => { try { return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+  const ago = ms => { const s = Math.max(0, (Date.now() - ms) / 1000); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd'; };
+  const pctW = p => (Math.max(0, Math.min(1, +p || 0)) * 100).toFixed(1) + '%';
+  const TIERS = DEED_TIERS;
+  const TR = {}; for (const t of DEED_TRACKS) TR[t.id] = t;
+  const GR = {}; for (const g of DEED_GROUPS) GR[g.id] = g;
+  const FE = {}; for (const f of DEED_FEATS) FE[f.id] = f;
+  const LK = {}; for (const l of DEED_LOOKS) LK[l.id] = l;
+  const RAR_COL = { common: 'var(--r-common)', uncommon: 'var(--r-uncommon)', rare: 'var(--r-rare)', epic: 'var(--r-epic)', legendary: 'var(--r-legendary)' };
+
+  // The Feat card replaces the core's Feat toast (DEED_TUNE.featToast; the card is the big celebration).
+  DEED_TUNE.featToast = 0;
+
+  // ---------------- icons (12 x 12, the ICON format) ----------------
+  if (!ICON.dd_medal) registerIcons({
+    dd_medal: ['..2......2..', '..22....22..', '...22..22...', '....2222....', '....1111....', '...115511...', '..11511111..', '..11111111..', '..11111111..', '...111111...', '....1111....', '............'],
+    dd_cup: ['............', '.1111111111.', '1.11155111.1', '1.11511111.1', '.1.111111.1.', '...111111...', '....1111....', '.....11.....', '.....11.....', '....2222....', '...222222...', '............'],
+    dd_cape: ['............', '...111111...', '..11222211..', '..12111121..', '..11111111..', '.1111111111.', '.1111111111.', '.1111111111.', '111111111111', '111111111111', '1.11.11.11.1', '............'],
+    dd_hat: ['............', '............', '....1111....', '...111111...', '...115111...', '...111111...', '...222222...', '.1111111111.', '111111111111', '............', '............', '............'],
+    dd_aura: ['............', '....1111....', '..11....11..', '.1........1.', '1..........1', '1....55....1', '1....55....1', '1..........1', '.1........1.', '..11....11..', '....1111....', '............'],
+    dd_critter: ['............', '............', '.1...1......', '.11.11......', '.11111......', '.15151...1..', '.11111..11..', '..1111111...', '..1111111...', '..11111.....', '..1.1.1.1...', '............'],
+    dd_trail: ['............', '.........11.', '........1551', '........1551', '......1..11.', '.....151....', '......1.....', '..1.........', '.151........', '..1.........', '............', '............'],
+    dd_frame: ['111111111111', '122222222221', '12........21', '12........21', '12........21', '12........21', '12........21', '12........21', '12........21', '12........21', '122222222221', '111111111111'],
+    dd_lock: ['............', '....1111....', '...1....1...', '...1....1...', '...1....1...', '..22222222..', '..22222222..', '..22211222..', '..22211222..', '..22222222..', '..22222222..', '............']
+  });
+  const CUP = () => iconURL('dd_cup', '#F2C14E');
+  const medal = k => iconURL('dd_medal', TIERS[Math.max(0, Math.min(3, k - 1))].col);
+  const SLOT_IC = { cape: 'dd_cape', hat: 'dd_hat', lamp: 'lantern', flame: 'flame', aura: 'dd_aura', critter: 'dd_critter', trail: 'dd_trail', frame: 'dd_frame' };
+  const SLOT_COL = { cape: '#5F8BE8', hat: '#C9A56A', lamp: '#F2C14E', flame: '#FF9E3D', aura: '#B89CFF', critter: '#D08A4E', trail: '#9BE3F0', frame: '#C9D1DB' };
+  // Placeholder colours for the flames (AC4 owns the real palettes) and the frames.
+  const LOOK_COL = { fl_moon: '#CFE0FF', fl_rose: '#FF8A70', fl_kin: '#FFB38A', fl_storm: '#E8F4FF', fl_coin: '#FFD23F',
+    fr_bronze: '#C07A45', fr_silver: '#C9D1DB', fr_gold: '#F2C14E', fr_ever: '#FF9E3D', a_ember: '#FF9E3D', a_steel: '#C9D1DB', a_star: '#B89CFF', a_bond: '#FF8AB0', a_bloom: '#F2C14E', a_stair: '#7FE0D0' };
+  const deepItem = id => (typeof DEEP_SHOP === 'object' && DEEP_SHOP[id]) || null;
+  const lookCol = (slot, id) => LOOK_COL[id] || (deepItem(id) && deepItem(id).col) || SLOT_COL[slot] || '#F2C14E';
+  const lookIcon = (slot, id) => {
+    if (id && typeof lookIconURL === 'function') { const u = safe(() => lookIconURL(id), ''); if (u) return u; }
+    const ic = ICON[SLOT_IC[slot]] ? SLOT_IC[slot] : 'charm';
+    return iconURL(ic, lookCol(slot, id));
+  };
+  const trophyURL = id => (typeof featTrophyURL === 'function' && safe(() => featTrophyURL(id), '')) || CUP();
+  const groupIc = g => iconURL(...(g && g.ic ? g.ic : ['banner', '#F2C14E']));
+
+  // ---------------- small shared reads ----------------
+  const heroTitleTxt = () => (typeof codexTitle === 'function' ? safe(() => codexTitle(), '') : '');
+  const lightDays = () => S.stats ? ((+S.stats.played || 0) + (+S.stats.away || 0)) / 86400 : 0;
+  const ladderPrev = () => { let p = 0; for (const m of deeds.ladder()) if (m.got) p = m.at; return p; };
+  const ladderTxt = m => {
+    if (!m) return 'Every reward on the ladder is yours.';
+    const bits = [];
+    if (m.title) bits.push(`title ${m.title}`);
+    if (m.look && LK[m.look]) bits.push(LK[m.look].n);
+    if (m.wall) bits.push(m.wall === 1 ? 'the Trophy Wall' : `Trophy Wall stage ${m.wall}`);
+    return bits.join(', ');
+  };
+  // Close any bottom sheet (the bell sheet, a detail sheet) before the menu opens under it.
+  const closeSheets = () => { for (const x of document.querySelectorAll('.bsheet-ov .bsheet-x')) x.click(); };
+
+  // ---------------- the menu: a hidden tab with 4 views ----------------
+  registerTab({ id: 'deeds', label: 'Achievements', icon: { ic: ['dd_cup', '#F2C14E'] }, hidden: true });
+  registerView('deeds', { id: 'ach-deeds', label: 'Deeds', order: 10, dot: () => deeds.isNew() });
+  registerView('deeds', { id: 'ach-tracks', label: 'Tracks', order: 20 });
+  registerView('deeds', { id: 'ach-feats', label: 'Feats', order: 30 });
+  registerView('deeds', { id: 'ach-looks', label: 'Looks', order: 40 });
+  const VIEW_ID = { deeds: 'ach-deeds', tracks: 'ach-tracks', feats: 'ach-feats', looks: 'ach-looks' };
+  let curGroup = 'combat';
+
+  function openAch(view, id) {
+    closeSheets();
+    const v = VIEW_ID[view] || (Object.values(VIEW_ID).includes(view) ? view : 'ach-deeds');
+    let sel = null;
+    if (v === 'ach-tracks' && id) { const t = TR[id]; if (t) { curGroup = t.g; tracksSig = ''; sel = '#ach-tr-' + id; } }
+    if (v === 'ach-feats' && id && FE[id]) sel = '#ach-ft-' + id;
+    setTab(v, sel || undefined);
+    if (sel) {
+      const n = document.querySelector(sel);
+      if (n && n.offsetParent !== null) { n.classList.remove('nu-flash'); void n.offsetWidth; n.classList.add('nu-flash'); setTimeout(() => n.classList.remove('nu-flash'), 1600); }
+    }
+  }
+  on('deedsOpen', p => openAch(p && p.view, p && p.id));
+
+  // ================= Deeds view =================
+  const dv = {};
+  let deedsSig = '', deedsAt = 0;
+  function nearRow(parent) {
+    const r = btn('dd-row');
+    const ic = el('span', 'dd-ric'); const im = img(CUP()); ic.append(im);
+    const tx = el('span', 'dd-rtx'), nm = el('b'), sub = el('span', 'dd-rsub');
+    const bar = el('span', 'dd-bar'), fill = el('i'); bar.append(fill);
+    tx.append(nm, sub, bar);
+    r.append(ic, tx);
+    parent.append(r);
+    const x = { r, im, nm, sub, fill, url: '', id: null };
+    r.addEventListener('click', () => { if (x.id) trackSheet(x.id); });
+    return x;
+  }
+  const setIm = (x, url) => { if (url !== x.url) { x.im.src = url; x.url = url; } };
+  registerSection('deeds', {
+    id: 'ach-deeds', view: 'ach-deeds',
+    mount(sec) {
+      sec.classList.add('dd-sec');
+      // hero, points and the next ladder reward (tap: the whole ladder)
+      const head = el('div', 'dd-head');
+      const lamp = el('span', 'dd-lamp'); lamp.append(img(CUP()));
+      const who = el('div', 'dd-who');
+      dv.name = el('b', 'dd-name'); dv.title = el('span', 'dd-title');
+      who.append(dv.name, dv.title);
+      head.append(lamp, who);
+      const pts = btn('dd-pts'); pts.setAttribute('aria-label', 'Points rewards');
+      dv.pts = el('b', 'dd-ptsn'); dv.ptsU = el('span', 'dd-ptsu', 'points');
+      dv.next = el('span', 'dd-next');
+      const bar = el('span', 'dd-bar thick'), fill = el('i'); bar.append(fill); dv.bar = fill;
+      dv.nextRw = el('span', 'dd-nextrw');
+      const row1 = el('span', 'dd-ptsrow'); row1.append(dv.pts, dv.ptsU, dv.next);
+      pts.append(row1, bar, dv.nextRw, el('span', 'dd-chev', '›'));
+      pts.addEventListener('click', ladderSheet);
+      sec.append(head, pts);
+      // AC6: the chapter card
+      dv.chapter = el('div', 'dd-chapter'); dv.chapter.id = 'ach-chapter';
+      sec.append(dv.chapter);
+      // the followed track
+      dv.followBox = el('div', 'dd-block');
+      dv.followBox.append(el('h3', 'dd-h', 'Following'));
+      const fr = el('div', 'dd-follow');
+      dv.follow = nearRow(fr);
+      dv.unfollow = btn('dd-x', '×', () => { deeds.follow(null); deedsSig = ''; ui(true); });
+      dv.unfollow.setAttribute('aria-label', 'Stop following');
+      fr.append(dv.unfollow);
+      dv.followBox.append(fr);
+      sec.append(dv.followBox);
+      // almost there
+      dv.nearBox = el('div', 'dd-block');
+      dv.nearBox.append(el('h3', 'dd-h', 'Almost there'));
+      dv.nearList = el('div', 'dd-list'); dv.near = [];
+      for (let i = 0; i < 3; i++) dv.near.push(nearRow(dv.nearList));
+      dv.nearNone = el('p', 'note', 'Nothing is close yet. Tracks show here at 90% of their next tier.');
+      dv.nearBox.append(dv.nearList, dv.nearNone);
+      sec.append(dv.nearBox);
+      // recent
+      dv.recentBox = el('div', 'dd-block');
+      dv.recentBox.append(el('h3', 'dd-h', 'Recent'));
+      dv.recent = el('div', 'dd-recent');
+      dv.recentBox.append(dv.recent);
+      sec.append(dv.recentBox);
+      // the Nudges switch (S.deeds.nudge) and a line on how it works
+      const nz = el('div', 'dd-switch');
+      const nzt = el('div'); nzt.append(el('b', null, 'Nudges in Next Up'), el('span', 'dd-rsub', 'One goal at most, when a tier is 90% done.'));
+      dv.nudge = btn('dd-tog', '', () => { deeds.nudge(!S.deeds.nudge); deedsSig = ''; ui(true); });
+      dv.nudge.setAttribute('role', 'switch');
+      nz.append(nzt, dv.nudge);
+      sec.append(nz);
+      sec.append(el('p', 'note', 'Every tier, Feat and secret adds points. Points never go down. Only Gold and Everflame tiers add a small bonus, and each bonus has a cap.'));
+    },
+    update(force) {
+      const t = Date.now(); if (!force && t - deedsAt < 1000) return; deedsAt = t;
+      deeds.seen();
+      const P = deeds.points(), nx = deeds.next(), prev = ladderPrev(), ttl = heroTitleTxt();
+      const fol = S.deeds.follow, fr = fol ? deeds.track(fol) : null;
+      const near = deeds.near(3), rec = deeds.recent(5);
+      const sig = [P, nx && nx.at, ttl, S.name, fol, fr && fr.tier, fr && Math.floor(fr.pct * 200), near.map(x => x.id + Math.floor(x.pct * 200) + x.label).join(), rec.map(r => r.key).join(), S.deeds.nudge, Math.floor(t / 60000)].join('|');
+      if (sig === deedsSig && !force) return; deedsSig = sig;
+      putText(dv.name, S.name);
+      putText(dv.title, ttl ? ttl : 'No title yet. Pick one in Looks.');
+      putToggle(dv.title, 'none', !ttl);
+      putText(dv.pts, P.toLocaleString('en-US'));
+      putText(dv.next, nx ? `next: ${nx.at.toLocaleString('en-US')}` : '');
+      putStyle(dv.bar, 'width', nx ? pctW((P - prev) / Math.max(1, nx.at - prev)) : '100%');
+      putText(dv.nextRw, nx ? `At ${nx.at.toLocaleString('en-US')}: ${ladderTxt(nx)}.` : ladderTxt(null));
+      // following
+      putHidden(dv.followBox, !fr);
+      if (fr) fillTrackRow(dv.follow, fr);
+      // near (the followed track is not repeated)
+      const list = near.filter(x => x.id !== fol);
+      dv.near.forEach((x, i) => {
+        const n = list[i]; putHidden(x.r, !n); if (!n) return;
+        const r = deeds.track(n.id); if (!r) return;
+        fillTrackRow(x, r, n.label);
+      });
+      putHidden(dv.nearNone, list.length > 0);
+      // recent
+      dv.recent.textContent = '';
+      if (!rec.length) dv.recent.append(el('p', 'note', 'Nothing earned yet. Your first tiers land within the hour.'));
+      for (const r of rec) {
+        const row = btn('dd-rrow');
+        let url = CUP(), txt = r.txt, sub = '';
+        if (r.kind === 'tier') {
+          const t = TR[r.id]; url = medal(Math.min(4, r.tier));
+          sub = deeds.tierName(r.tier) + (r.tier === 3 || r.tier === 4 ? ` · ${(t && t.bonus && DEED_KEY_TXT[t.bonus]) ? '+0.5% ' + DEED_KEY_TXT[t.bonus] : 'points'}` : '');
+          row.addEventListener('click', () => trackSheet(r.id));
+        } else if (r.kind === 'feat') { url = trophyURL(r.id); sub = 'Feat'; row.addEventListener('click', () => featSheet(r.id)); }
+        else { url = iconURL('orb', '#B89CFF'); sub = 'Secret'; row.addEventListener('click', () => openAch('feats')); }
+        row.append(img(url), el('b', null, txt), el('span', 'dd-rsub', sub), el('span', 'dd-ago', ago(r.at)));
+        dv.recent.append(row);
+      }
+      putText(dv.nudge, S.deeds.nudge ? 'On' : 'Off');
+      putAttr(dv.nudge, 'aria-checked', String(!!S.deeds.nudge));
+      putToggle(dv.nudge, 'on', !!S.deeds.nudge);
+    }
+  });
+  function fillTrackRow(x, r, label) {
+    const g = GR[r.g];
+    x.id = r.id;
+    setIm(x, g ? groupIc(g) : CUP());
+    putText(x.nm, label || r.label || deeds.tierLabel(r.id, Math.max(1, r.tier)));
+    const nextNm = r.next ? deeds.tierLabel(r.id, r.next) : deeds.tierLabel(r.id, r.tier);
+    putText(x.sub, r.lock ? `${nextNm}: ${r.lock}` : r.next ? `${nextNm} · ${progTxt(r)}` : `${nextNm} · done`);
+    putStyle(x.fill, 'width', pctW(r.pct));
+  }
+  // "81,240 / 100,000" (exact below 100K; letters above)
+  function progTxt(r) {
+    if (r.kind === 'ladder') return `${r.tier} of 4 steps`;
+    const t = TR[r.id], small = r.need < 1e5 && r.v < 1e5;
+    const f = n => (small ? Math.floor(n).toLocaleString('en-US') : fmt(n));
+    if (r.kind === 'record') return `best ${f(r.v)} / ${f(r.need)}`;
+    return `${f(Math.min(r.v, r.need))} / ${f(r.need)}` + (t && t.id === 'light' ? ' h' : '');
+  }
+
+  // ---- the points ladder (a sheet) ----
+  function ladderSheet() {
+    openSheet(api => {
+      api.sheet.classList.add('dd-sheet');
+      api.body.append(el('h2', 'dd-sh', 'Points rewards'));
+      const P = deeds.points();
+      api.body.append(el('p', 'note', `You have ${P.toLocaleString('en-US')} points. Rewards come by themselves when you reach them.`));
+      const list = el('div', 'dd-ladder');
+      for (const m of deeds.ladder()) {
+        const r = el('div', 'dd-lrow' + (m.got ? ' got' : ''));
+        r.append(el('b', 'dd-lat', m.at.toLocaleString('en-US')), el('span', null, ladderTxt(m)[0].toUpperCase() + ladderTxt(m).slice(1)), el('span', 'dd-lst', m.got ? 'Yours' : `${(m.at - P).toLocaleString('en-US')} to go`));
+        list.append(r);
+      }
+      api.body.append(list);
+      const src = el('div', 'dd-ptsrc');
+      const T = DEED_PTS;
+      src.append(el('h3', 'dd-h', 'Where points come from'));
+      for (const [a, b] of [['Tiers', `Bronze ${T.tier[0]}, Silver ${T.tier[1]}, Gold ${T.tier[2]}, Everflame ${T.tier[3]}, each star ${T.star}`], ['Groups', `every track at Gold ${T.grpGold}, at Everflame ${T.grpEver}`],
+        ['Feats', `${T.feat} each (Lanternfall ${T.capstone})`], ['Secrets', `${T.secret} each`], ['Classic', `${T.classic} each`], ['Chapters', `${T.chStep} a step, ${T.chDone} when done`]]) {
+        const r = el('div', 'dd-kv'); r.append(el('b', null, a), el('span', null, b)); src.append(r);
+      }
+      api.body.append(src);
+    }, { small: true, label: 'Points rewards' });
+  }
+
+  // ================= Tracks view =================
+  const tv = { rows: new Map() };
+  let tracksSig = '', tracksAt = 0, chipsSig = '';
+  function pips(r) {
+    const p = el('span', 'dd-pips');
+    for (let k = 1; k <= 4; k++) { const d = el('i', 'dd-pip'); d.style.setProperty('--c', TIERS[k - 1].col); if (r.tier >= k) d.classList.add('on'); p.append(d); }
+    if (r.stars > 0) p.append(el('span', 'dd-stars', '★' + r.stars));
+    return p;
+  }
+  function trackRowEl(r) {
+    const row = btn('dd-trow'); row.id = 'ach-tr-' + r.id;
+    const ic = el('span', 'dd-ric'); ic.append(img(r.tier ? medal(Math.min(4, r.tier)) : groupIc(GR[r.g])));
+    const tx = el('span', 'dd-rtx');
+    const top = el('span', 'dd-ttop'); const nm = el('b', null, r.n); const pp = el('span', 'dd-pipbox');
+    top.append(nm, pp);
+    const sub = el('span', 'dd-rsub'); const bar = el('span', 'dd-bar'), fill = el('i'); bar.append(fill);
+    tx.append(top, sub, bar);
+    row.append(ic, tx);
+    row.addEventListener('click', () => trackSheet(r.id));
+    return { row, ic, pp, sub, fill, sig: '' };
+  }
+  registerSection('deeds', {
+    id: 'ach-tracks', view: 'ach-tracks',
+    mount(sec) {
+      sec.classList.add('dd-sec');
+      tv.chips = el('div', 'dd-chips'); tv.chips.setAttribute('role', 'tablist'); tv.chips.setAttribute('aria-label', 'Track groups');
+      tv.head = el('div', 'dd-ghead');
+      tv.list = el('div', 'dd-list');
+      sec.append(tv.chips, tv.head, tv.list);
+    },
+    update(force) {
+      const t = Date.now(); if (!force && t - tracksAt < 1000) return; tracksAt = t;
+      const groups = deeds.groups();
+      if (curGroup !== 'classic' && !groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : 'classic';
+      // chips
+      const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup + '|' + classicGot();
+      if (csig !== chipsSig) {
+        chipsSig = csig; tv.chips.textContent = '';
+        for (const g of groups) {
+          const c = btn('dd-chip' + (g.id === curGroup ? ' on' : '') + (g.lv >= 2 ? ' ever' : g.lv >= 1 ? ' gold' : ''));
+          c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', String(g.id === curGroup));
+          c.append(img(groupIc(g)), el('b', null, g.n), el('span', null, g.lv >= 2 ? `${g.atEver}/${g.tracks} Everflame` : `${g.atGold}/${g.tracks} Gold`));
+          c.addEventListener('click', () => { curGroup = g.id; tracksSig = ''; chipsSig = ''; runTracks(); });
+          tv.chips.append(c);
+        }
+        const c = btn('dd-chip' + (curGroup === 'classic' ? ' on' : ''));
+        c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', String(curGroup === 'classic'));
+        c.append(img(iconURL('banner', '#F2C14E')), el('b', null, 'Classic'), el('span', null, `${classicGot()}/${ACH_API.list.length}`));
+        c.addEventListener('click', () => { curGroup = 'classic'; tracksSig = ''; chipsSig = ''; runTracks(); });
+        tv.chips.append(c);
+      }
+      if (curGroup === 'classic') return classicUpdate(force);
+      const g = groups.find(x => x.id === curGroup);
+      const rows = deeds.tracks(curGroup);
+      const sig = curGroup + '|' + rows.map(r => r.id).join();
+      if (sig !== tracksSig) {
+        tracksSig = sig; tv.list.textContent = ''; tv.rows.clear(); tv.head.textContent = '';
+        for (const r of rows) { const x = trackRowEl(r); tv.rows.set(r.id, x); tv.list.append(x.row); }
+        groupHead(g);
+      }
+      for (const r of rows) {
+        const x = tv.rows.get(r.id); if (!x) continue;
+        const s = [r.tier, Math.floor(r.pct * 400), r.lock, r.v].join('|');
+        if (s === x.sig) continue; x.sig = s;
+        x.pp.textContent = ''; x.pp.append(pips(r));
+        const ii = x.ic.querySelector('img'), u = r.tier ? medal(Math.min(4, r.tier)) : groupIc(GR[r.g]); if (ii.getAttribute('src') !== u) ii.src = u;
+        const nowNm = r.tier ? deeds.tierLabel(r.id, r.tier) : 'No tier yet';
+        putText(x.sub, r.lock ? `${nowNm} · ${r.lock}` : r.next ? `${nowNm} · ${progTxt(r)}` : `${nowNm} · every tier done`);
+        putStyle(x.fill, 'width', pctW(r.pct));
+        putToggle(x.row, 'done', !r.next || !!r.lock);
+      }
+    }
+  });
+  function runTracks() { const s = SECTIONS.find(x => x.id === 'ach-tracks'); if (s && s.update) s.update(true); }
+  function groupHead(g) {
+    tv.head.textContent = '';
+    if (!g) return;
+    const lk = g.look && LK[g.look];
+    const a = el('div', 'dd-gline' + (g.lv >= 1 ? ' got' : '')); a.append(img(medal(3)), el('span', null, `Every track at Gold: title ${g.gold}, +${DEED_PTS.grpGold} points.`));
+    const b = el('div', 'dd-gline' + (g.lv >= 2 ? ' got' : '')); b.append(img(medal(4)), el('span', null, `Every track at Everflame: title ${g.ever}${lk ? `, the ${lk.n}` : ''}, +${DEED_PTS.grpEver} points.`));
+    tv.head.append(a, b);
+    if (g.fresh) tv.head.append(el('p', 'note', `${g.fresh} new track${g.fresh > 1 ? 's' : ''} to catch up. Your reward stays yours.`));
+  }
+  // ---- the Classic 22 (56-achievements.js, unchanged) ----
+  const classicGot = () => ACH_API.list.filter(a => S.achievements.got[a.id]).length;
+  function classicUpdate(force) {
+    const got = S.achievements.got;
+    const sig = 'classic|' + ACH_API.list.map(a => got[a.id] ? 1 : Math.floor(Math.min(1, safe(() => a.cur(), 0) / a.need) * 50)).join();
+    if (sig === tracksSig && !force) return;
+    tracksSig = sig; tv.list.textContent = ''; tv.rows.clear(); tv.head.textContent = '';
+    tv.head.append(el('p', 'note', `The first achievements. Each gives a small bonus for good and ${DEED_PTS.classic} points.`));
+    for (const a of ACH_API.list) {
+      const on_ = !!got[a.id], c = Math.min(a.need, safe(() => a.cur(), 0));
+      const row = el('div', 'dd-trow classic' + (on_ ? ' done' : ''));
+      const ic = el('span', 'dd-ric'); ic.append(img(iconURL(a.ic, on_ ? '#F2C14E' : '#8A7F96')));
+      const tx = el('span', 'dd-rtx'); const top = el('span', 'dd-ttop'); top.append(el('b', null, a.name), el('span', 'dd-fx', ACH_API.bonusText(a)));
+      const bar = el('span', 'dd-bar'), fill = el('i'); bar.append(fill); fill.style.width = pctW(on_ ? 1 : c / a.need);
+      tx.append(top, el('span', 'dd-rsub', a.desc + (on_ ? (typeof got[a.id] === 'number' && got[a.id] > 1 ? ` · ${dateTxt(got[a.id])}` : ' · done') : ` · ${fmt(c)} / ${fmt(a.need)}`)), bar);
+      row.append(ic, tx); tv.list.append(row);
+    }
+  }
+
+  // ---- a track's detail sheet ----
+  function trackSheet(id) {
+    const t = TR[id]; if (!t) return;
+    openSheet(api => {
+      api.sheet.classList.add('dd-sheet');
+      const draw = () => {
+        const r = deeds.track(id); if (!r) return;
+        api.body.textContent = '';
+        const g = GR[t.g];
+        const head = el('div', 'dd-shead');
+        const ic = el('span', 'dd-lamp'); ic.append(img(r.tier ? medal(Math.min(4, r.tier)) : groupIc(g)));
+        const tx = el('div', 'dd-who'); tx.append(el('span', 'dd-eye', g ? g.n : ''), el('b', 'dd-name', t.n), el('span', 'dd-rsub', t.what));
+        head.append(ic, tx);
+        api.body.append(head);
+        const now = el('div', 'dd-now');
+        now.append(el('span', null, r.tier ? `${deeds.tierLabel(id, r.tier)} · ${deeds.tierName(r.tier)}` : 'No tier yet'),
+          el('b', null, r.kind === 'ladder' ? (r.tier ? t.steps[Math.min(3, r.tier - 1)] : 'None yet') : exact(r.v) + (id === 'light' ? ' hours' : '')));
+        if (r.next && !r.lock) { const bar = el('span', 'dd-bar thick'), f = el('i'); f.style.width = pctW(r.pct); bar.append(f); now.append(bar, el('span', 'dd-rsub', r.label)); }
+        api.body.append(now);
+        const list = el('div', 'dd-tiers');
+        const d = S.deeds;
+        for (let k = 1; k <= 4; k++) {
+          const got = r.tier >= k, at = d.at[id + ':' + k];
+          const row = el('div', 'dd-tier' + (got ? ' got' : ''));
+          const need = r.needs[k - 1];
+          const needTxt = t.kind === 'ladder' ? t.steps[k - 1] : (need < 1e9 ? need.toLocaleString('en-US') : fmt(need));
+          const bt = k === 3 ? r.bonusTxt[0] : k === 4 ? r.bonusTxt[r.bonusTxt.length - 1] : '';
+          const lock = !got && t.lock && t.lock[k] ? t.lock[k] : '';
+          const info = el('span', 'dd-tinfo');
+          info.append(el('b', null, `${roman(k)} · ${TIERS[k - 1].n}`), el('span', null, needTxt));
+          if (bt && (k === 3 || k === 4)) info.append(el('span', 'dd-fx', bt));
+          row.append(img(medal(k)), info, el('span', 'dd-tpts', got ? (at ? dateTxt(at) : 'Yours') : lock ? lock : `+${DEED_PTS.tier[k - 1]} pts`));
+          list.append(row);
+        }
+        api.body.append(list);
+        if (t.star) {
+          const s = t.star.x ? `x${t.star.x.toLocaleString('en-US')}` : `+${t.star.add}`;
+          api.body.append(el('p', 'note', `After Everflame: endless stars, each one ${s} more, ${DEED_PTS.star} points each. Stars add no bonus.` + (r.stars ? ` You have ★${r.stars}.` : '')));
+        }
+        if (!t.bonus) api.body.append(el('p', 'note', 'This track pays points only.'));
+        if (r.since) api.body.append(el('p', 'note', `Counted since ${dateLong(r.since)}. Earlier deeds were not recorded.`));
+        const foot = el('div', 'dd-sfoot');
+        const fol = S.deeds.follow === id;
+        if (r.next && !r.lock) foot.append(btn('mini' + (fol ? '' : ' go'), fol ? 'Stop following' : 'Follow', () => { deeds.follow(fol ? null : id); deedsSig = ''; draw(); }));
+        foot.append(el('span', 'note', fol ? 'Next Up shows this track.' : 'Follow a track to keep it in Next Up.'));
+        api.body.append(foot);
+      };
+      draw();
+    }, { small: true, label: t.n });
+  }
+
+  // ================= Feats view =================
+  const fv = { cards: new Map(), secs: null };
+  let featsSig = '', featsAt = 0;
+  registerSection('deeds', {
+    id: 'ach-feats', view: 'ach-feats',
+    mount(sec) {
+      sec.classList.add('dd-sec');
+      fv.intro = el('p', 'note', 'Feats are the hardest deeds. Each one takes weeks or months and gives a title and a new look. None adds power.');
+      fv.grid = el('div', 'dd-fgrid');
+      fv.sh = el('h3', 'dd-h', 'Secrets');
+      fv.sgrid = el('div', 'dd-sgrid');
+      fv.snote = el('p', 'note');
+      sec.append(fv.intro, fv.grid, fv.sh, fv.snote, fv.sgrid);
+    },
+    update(force) {
+      const t = Date.now(); if (!force && t - featsAt < 2000) return; featsAt = t;
+      const feats = deeds.feats(), secs = deeds.secrets(), wall = deeds.wall();
+      const sig = feats.map(f => f.id + (f.got ? 'g' : '') + Math.floor(f.pct * 200) + f.parts.map(p => p.have).join(':')).join() + '|' + secs.map(s => s.id + (s.got ? 1 : 0) + (s.riddle ? 1 : 0)).join() + '|' + wall.join() + '|' + S.deeds.wear.critter + S.deeds.wear.cape;
+      if (sig === featsSig && !force) return; featsSig = sig;
+      fv.grid.textContent = '';
+      const order = feats.filter(f => f.got).sort((a, b) => b.at - a.at).concat(feats.filter(f => !f.got).sort((a, b) => b.pct - a.pct));
+      for (const f of order) {
+        const c = btn('dd-fcard' + (f.got ? ' got' : '') + (f.id === 'f_all' ? ' cap' : '')); c.id = 'ach-ft-' + f.id;
+        c.style.setProperty('--rc', RAR_COL[f.rar] || 'var(--gold)');
+        const top = el('span', 'dd-ftop');
+        const tro = el('span', 'dd-tro'); tro.append(img(trophyURL(f.id)));
+        const nm = el('span', 'dd-fnm'); nm.append(el('b', null, f.n), el('span', 'dd-rar', f.rarTxt));
+        top.append(tro, nm);
+        c.append(top);
+        const parts = el('span', 'dd-fparts');
+        for (const p of f.parts.slice(0, 2)) {
+          const bar = el('span', 'dd-bar'), fi = el('i'); fi.style.width = pctW(p.need ? p.have / p.need : 1); bar.append(fi);
+          const lab = el('span', 'dd-fpl'); lab.textContent = `${p.n} ${p.have < 1e5 ? Math.floor(Math.min(p.have, p.need)).toLocaleString('en-US') : fmt(Math.min(p.have, p.need))} / ${p.need < 1e5 ? p.need.toLocaleString('en-US') : fmt(p.need)}`;
+          parts.append(lab, bar);
+        }
+        if (f.parts.length > 2) parts.append(el('span', 'dd-fpl', `and ${f.parts.length - 2} more`));
+        c.append(parts);
+        const rw = el('span', 'dd-frw');
+        const lk = LK[f.look];
+        if (lk) rw.append(img(lookIcon(lk.slot, lk.id)));
+        rw.append(el('span', null, f.title));
+        if (wall.includes(f.id)) rw.append(el('span', 'dd-pin', 'Pinned'));
+        c.append(rw);
+        c.addEventListener('click', () => featSheet(f.id));
+        fv.grid.append(c);
+      }
+      // secrets
+      fv.sgrid.textContent = '';
+      const found = secs.filter(s => s.got).length;
+      putText(fv.snote, `${found} of ${secs.length} found. Secrets are odd deeds with hidden names. ` + (secs.some(s => !s.got && s.riddle) ? 'Riddles hint at the rest.' : 'Riddles show after 30 days of play or 3 secrets found.'));
+      for (const s of secs.filter(x => x.got).sort((a, b) => b.at - a.at).concat(secs.filter(x => !x.got))) {
+        const c = el('div', 'dd-scard' + (s.got ? ' got' : ''));
+        const ic = el('span', 'dd-ric'); ic.append(img(s.got ? iconURL('orb', '#B89CFF') : iconURL('dd_lock', '#6E6878')));
+        const tx = el('span', 'dd-rtx');
+        tx.append(el('b', null, s.got ? s.n : 'An odd feat'));
+        if (s.riddle) tx.append(el('span', 'dd-riddle', `"${s.riddle}"`));
+        if (s.got) tx.append(el('span', 'dd-rsub', `${s.how}. Title: ${s.title}${s.look && LK[s.look] ? `. Look: ${LK[s.look].n}` : ''}.`));
+        c.append(ic, tx);
+        fv.sgrid.append(c);
+      }
+    }
+  });
+
+  function featSheet(id) {
+    const f0 = FE[id]; if (!f0) return;
+    openSheet(api => {
+      api.sheet.classList.add('dd-sheet');
+      const draw = () => {
+        const f = deeds.feats().find(x => x.id === id); if (!f) return;
+        api.body.textContent = '';
+        const head = el('div', 'dd-shead');
+        const ic = el('span', 'dd-lamp lg'); ic.append(img(trophyURL(id)));
+        const tx = el('div', 'dd-who');
+        const rar = el('span', 'dd-rar', f.rarTxt); rar.style.color = RAR_COL[f.rar] || '';
+        tx.append(el('span', 'dd-eye', 'Feat'), el('b', 'dd-name', f.n), rar);
+        head.append(ic, tx);
+        api.body.append(head, el('p', 'dd-needs', f.needs + '.'));
+        const parts = el('div', 'dd-sparts');
+        for (const p of f.parts) {
+          const r = el('div', 'dd-spart');
+          const bar = el('span', 'dd-bar thick'), fi = el('i'); fi.style.width = pctW(p.need ? p.have / p.need : 1); bar.append(fi);
+          r.append(el('span', null, p.n), el('b', null, `${exact(Math.min(p.have, p.need))} / ${exact(p.need)}`), bar);
+          parts.append(r);
+        }
+        api.body.append(parts);
+        const lk = LK[f.look];
+        const rw = el('div', 'dd-srw');
+        const t1 = el('div', 'dd-kv'); t1.append(el('b', null, 'Title'), el('span', null, f.title)); rw.append(t1);
+        if (lk) { const t2 = el('div', 'dd-kv'); t2.append(el('b', null, DEED_SLOT_TXT[lk.slot]), el('span', null, lk.n)); rw.append(t2); }
+        const t3 = el('div', 'dd-kv'); t3.append(el('b', null, 'Points'), el('span', null, String(f.pts))); rw.append(t3);
+        const t4 = el('div', 'dd-kv'); t4.append(el('b', null, 'About'), el('span', null, f.about)); rw.append(t4);
+        api.body.append(rw);
+        if (f.got) api.body.append(el('p', 'note', `Earned on ${dateLong(f.at)}.`));
+        const foot = el('div', 'dd-sfoot');
+        if (f.got && lk && deeds.owned(lk.id)) {
+          const worn = deeds.wearGet(lk.slot) === lk.id;
+          foot.append(btn('mini' + (worn ? '' : ' go'), worn ? 'Wearing it' : 'Wear it', () => { if (!worn && deeds.wear(lk.slot, lk.id)) { lookSig = ''; draw(); } }));
+        }
+        const wall = deeds.wall(), pinned = wall.includes(id);
+        if (f.got) foot.append(btn('mini', pinned ? 'Unpin from the wall' : 'Pin to the wall', () => {
+          const w = deeds.wall(); deeds.pin(pinned ? w.filter(x => x !== id) : w.concat(id)); featsSig = ''; draw();
+        }));
+        if (f.got) foot.append(el('span', 'note', pinned ? `Pinned: ${wall.length} of 12.` : 'Your Trophy Wall at camp shows it.'));
+        api.body.append(foot);
+      };
+      draw();
+    }, { small: true, label: f0.n });
+  }
+
+  // ================= Looks view =================
+  const lv = { slot: 'cape' };
+  let lookSig = '', lookAt = 0;
+  // The hero drawn at 3 art px per CSS px on a dark plate, lit by the chosen flame. Plain hero until AC4
+  // provides looksPreview(canvas, wear); the aura and critter show as placeholders.
+  function drawHero(cv, zoom) {
+    const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
+    const wear = {}; for (const s of DEED_SLOTS) wear[s] = deeds.wearGet(s); wear.helm = deeds.wearGet('helm');
+    if (typeof looksPreview === 'function' && safe(() => looksPreview(cv, wear, zoom), false)) return;
+    if (typeof drawCharPreview === 'function' && typeof heroSpec === 'function') { safe(() => drawCharPreview(cv, heroSpec(), zoom), null); return; }
+    const im = sprite('dd-hero', SPR.hero, HERO_PAL), z = Math.max(1, Math.floor(Math.min(cv.width / im.width, cv.height / im.height)));
+    x.drawImage(im, Math.floor((cv.width - im.width * z) / 2), cv.height - im.height * z, im.width * z, im.height * z);
+  }
+  function lookName(slot, id) {
+    if (!id) return 'None';
+    if (LK[id] && LK[id].slot === slot) return LK[id].n;
+    const d = deepItem(id); return d ? d.n : id;
+  }
+  // Tiles for a slot: None, then the achievement looks, then the Deepwell's colours and trails (Flame, Trail).
+  function slotTiles(slot) {
+    const out = [{ id: null, n: 'None', got: true, src: '' }];
+    for (const l of deeds.looks(slot)) out.push({ id: l.id, n: l.n, got: l.got, src: l.srcTxt });
+    if ((slot === 'flame' || slot === 'trail') && typeof DEEP_SHOP === 'object') {
+      const kind = slot === 'flame' ? 'lantern' : 'trail';
+      for (const id in DEEP_SHOP) { const d = DEEP_SHOP[id]; if (d.kind !== kind) continue; out.push({ id, n: d.n, got: !!(S.deep && S.deep.cos && S.deep.cos[id]), src: 'Deepwell shop', deep: true }); }
+    }
+    return out;
+  }
+  registerSection('deeds', {
+    id: 'ach-looks', view: 'ach-looks',
+    mount(sec) {
+      sec.classList.add('dd-sec');
+      const plate = el('div', 'dd-plate');
+      lv.glow = el('span', 'dd-glow'); lv.aura = el('span', 'dd-aura'); lv.critter = el('span', 'dd-critter'); lv.critter.append(img(lookIcon('critter', null)));
+      lv.cv = el('canvas', 'dd-hero'); lv.cv.width = 96; lv.cv.height = 132;
+      lv.pname = el('b', 'dd-pname'); lv.ptitle = el('span', 'dd-ptitle');
+      const cap = el('div', 'dd-pcap'); cap.append(lv.pname, lv.ptitle);
+      plate.append(lv.glow, lv.aura, lv.cv, lv.critter, cap);
+      sec.append(plate);
+      lv.chips = el('div', 'dd-slots'); lv.chips.setAttribute('role', 'tablist'); lv.chips.setAttribute('aria-label', 'Look slots');
+      lv.chip = {};
+      for (const s of DEED_SLOTS) {
+        const c = btn('dd-slot'); c.setAttribute('role', 'tab');
+        const im = img(lookIcon(s, null)); c.append(im, el('span', null, DEED_SLOT_TXT[s]));
+        c.addEventListener('click', () => { lv.slot = s; lookSig = ''; runLooks(); });
+        lv.chip[s] = { c, im, url: '' };
+        lv.chips.append(c);
+      }
+      sec.append(lv.chips);
+      lv.slotHead = el('div', 'dd-slothead');
+      lv.tiles = el('div', 'dd-tiles');
+      lv.helm = el('div', 'dd-switch');
+      const ht = el('div'); ht.append(el('b', null, 'Show helm'), el('span', 'dd-rsub', 'A hat hides your helm. Its stats stay.'));
+      lv.helmBtn = btn('dd-tog', '', () => { deeds.showHelm(!deeds.wearGet('helm')); lookSig = ''; runLooks(); });
+      lv.helmBtn.setAttribute('role', 'switch');
+      lv.helm.append(ht, lv.helmBtn);
+      sec.append(lv.slotHead, lv.tiles, lv.helm);
+      // titles
+      sec.append(el('h3', 'dd-h dd-th', 'Title'));
+      lv.tcur = el('div', 'dd-tcur');
+      lv.tlist = el('div', 'dd-tlist');
+      sec.append(lv.tcur, lv.tlist, el('p', 'note', 'Your title shows on your hero card and here. Only you see it.'));
+    },
+    update(force) {
+      const t = Date.now(); if (!force && t - lookAt < 1000) return; lookAt = t;
+      const wear = DEED_SLOTS.map(s => deeds.wearGet(s)).join() + deeds.wearGet('helm');
+      const owned = DEED_LOOKS.filter(l => deeds.owned(l.id)).length;
+      const tl = typeof codexTitles === 'function' ? safe(() => codexTitles(), []) : [];
+      const sig = [lv.slot, wear, owned, S.name, S.codex && S.codex.title, tl.filter(x => x.got).length, S.party && S.party.cls, JSON.stringify(S.equip), S.deep && S.deep.cos ? Object.keys(S.deep.cos).length : 0].join('|');
+      if (sig === lookSig && !force) return; lookSig = sig;
+      // plate
+      drawHero(lv.cv, 1.5);
+      const fl = deeds.wearGet('flame'), au = deeds.wearGet('aura'), cr = deeds.wearGet('critter');
+      lv.glow.style.setProperty('--fc', fl ? lookCol('flame', fl) : '#FFB347');
+      putHidden(lv.aura, !au); if (au) lv.aura.style.setProperty('--ac', lookCol('aura', au));
+      putHidden(lv.critter, !cr); if (cr) { const u = lookIcon('critter', cr), ci = lv.critter.firstChild; if (ci.getAttribute('src') !== u) ci.src = u; }
+      putText(lv.pname, S.name);
+      const ttl = heroTitleTxt(); putText(lv.ptitle, ttl || 'No title'); putToggle(lv.ptitle, 'none', !ttl);
+      // slot chips
+      for (const s of DEED_SLOTS) {
+        const x = lv.chip[s], id = deeds.wearGet(s);
+        const u = lookIcon(s, id); if (u !== x.url) { x.im.src = u; x.url = u; }
+        putToggle(x.c, 'on', s === lv.slot); putToggle(x.c, 'worn', !!id);
+        putAttr(x.c, 'aria-selected', String(s === lv.slot));
+        putAttr(x.c, 'aria-label', `${DEED_SLOT_TXT[s]}: ${lookName(s, id)}`);
+      }
+      // the chosen slot's tiles
+      const slot = lv.slot, cur = deeds.wearGet(slot), tiles = slotTiles(slot);
+      lv.slotHead.textContent = '';
+      lv.slotHead.append(el('b', null, DEED_SLOT_TXT[slot]), el('span', 'dd-rsub', `${tiles.filter(x => x.got && x.id).length} of ${tiles.length - 1} · wearing ${lookName(slot, cur)}`));
+      lv.tiles.textContent = '';
+      for (const x of tiles) {
+        const on_ = (cur || null) === x.id;
+        const c = btn('dd-tile' + (x.got ? '' : ' locked') + (on_ ? ' on' : ''));
+        const ic = el('span', 'dd-tic');
+        if (x.id) ic.append(img(lookIcon(slot, x.id))); else ic.append(el('span', 'dd-none', '∅'));
+        c.append(ic, el('span', 'dd-tn', x.n));
+        if (!x.got) c.append(el('span', 'dd-tsrc', x.src));
+        c.setAttribute('aria-pressed', String(on_));
+        c.disabled = !x.got;
+        c.addEventListener('click', () => { if (deeds.wear(slot, x.id)) { lookSig = ''; runLooks(); } });
+        lv.tiles.append(c);
+      }
+      putHidden(lv.helm, slot !== 'hat');
+      const helm = !!deeds.wearGet('helm');
+      putText(lv.helmBtn, helm ? 'On' : 'Off'); putToggle(lv.helmBtn, 'on', helm); putAttr(lv.helmBtn, 'aria-checked', String(helm));
+      renderTitles(tl);
+    }
+  });
+  function runLooks() { const s = SECTIONS.find(x => x.id === 'ach-looks'); if (s && s.update) s.update(true); }
+  // The title picker: the chosen one on top, then every earned title grouped by source, newest first.
+  const TITLE_SRC = [['Achievements', t => /^a_/.test(t.id)], ['Deepwell', t => /^dt_/.test(t.id)], ['Pinnacles', t => /pinnacle|vow/i.test(t.src || '')], ['Oaths', t => /oath/i.test(t.src || '')], ['Codex', () => true]];
+  function renderTitles(tl) {
+    const curId = S.codex ? S.codex.title : null, ttl = heroTitleTxt();
+    lv.tcur.textContent = '';
+    lv.tcur.append(el('span', 'dd-eye', 'Now'), el('b', null, ttl ? `${S.name}, ${ttl}` : S.name));
+    lv.tlist.textContent = '';
+    const at = {}; for (const t of deeds.titles()) at[t.id] = t.at || 0;
+    const got = tl.filter(t => t.got);
+    const pick = id => { if (typeof codexSetTitle === 'function' && codexSetTitle(id)) { lookSig = ''; deedsSig = ''; runLooks(); ui(true); } };
+    const row = (id, n, src) => {
+      const b = btn('dd-trow2' + ((curId || null) === id ? ' on' : ''));
+      b.append(el('span', 'dd-tbox'), el('b', null, n), el('span', 'dd-rsub', src));
+      b.setAttribute('aria-pressed', String((curId || null) === id));
+      b.addEventListener('click', () => pick(id));
+      return b;
+    };
+    lv.tlist.append(row(null, 'None', 'No title'));
+    const used = new Set();
+    for (const [name, test] of TITLE_SRC) {
+      const list = got.filter(t => !used.has(t.id) && test(t)).sort((a, b) => (at[b.id] || 0) - (at[a.id] || 0));
+      if (!list.length) continue;
+      lv.tlist.append(el('span', 'dd-tgrp', name));
+      for (const t of list) { used.add(t.id); lv.tlist.append(row(t.id, t.n, t.src)); }
+    }
+    const left = tl.length - got.length;
+    if (left > 0) {
+      const d = el('details', 'dd-tleft');
+      const s = el('summary', null, `${left} more title${left > 1 ? 's' : ''} to earn`);
+      d.append(s);
+      for (const t of tl.filter(x => !x.got)) { const r = el('div', 'dd-tlock'); r.append(el('b', null, t.n), el('span', 'dd-rsub', t.src)); d.append(r); }
+      lv.tlist.append(d);
+    }
+  }
+
+  // ================= the Feat card (the hard tier's celebration) =================
+  const cardQ = [];
+  let cardOpen = false;
+  function featCard(id, kind) {
+    cardQ.push({ id, kind: kind || 'feat' });
+    if (!cardOpen) nextCard();
+  }
+  function nextCard() {
+    const q = cardQ.shift(); if (!q) { cardOpen = false; return; }
+    cardOpen = true;
+    const isCh = q.kind === 'chapter', f = isCh ? null : FE[q.id], ch = isCh ? DEED_CHAPTERS.find(c => c.id === q.id) : null;
+    if (!f && !ch) { nextCard(); return; }
+    const lk = LK[f ? f.look : ch.look];
+    const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
+    const card = el('div', 'dd-fc');
+    if (f) card.style.setProperty('--rc', RAR_COL[f.rar] || 'var(--gold)');
+    card.append(el('span', 'dd-fc-rays'));
+    card.append(el('span', 'dd-eye', f ? 'Feat' : 'Chapter done'));
+    const stage = el('div', 'dd-fc-stage');
+    const tro = el('span', 'dd-fc-tro'); tro.append(img(f ? trophyURL(f.id) : iconURL('banner', '#F2C14E')));
+    const cv = el('canvas', 'dd-fc-hero'); cv.width = 96; cv.height = 132;
+    const who = el('span', 'dd-fc-who');   // the hero with the new look (aura and flame as placeholders until AC4)
+    if (lk && lk.slot === 'aura') { const a = el('span', 'dd-aura'); a.style.setProperty('--ac', lookCol('aura', lk.id)); who.append(a); }
+    if (lk && lk.slot === 'flame') { const g = el('span', 'dd-glow'); g.style.setProperty('--fc', lookCol('flame', lk.id)); who.append(g); }
+    who.append(cv);
+    if (lk && lk.slot === 'critter') { const c = el('span', 'dd-critter'); c.append(img(lookIcon('critter', lk.id))); who.append(c); }
+    stage.append(tro, who);
+    card.append(stage);
+    card.append(el('h2', 'dd-fc-name', f ? f.n : ch.n));
+    if (f) { const r = el('span', 'dd-rar', DEED_RARITY[f.rar]); r.style.color = RAR_COL[f.rar]; card.append(r); }
+    const days = Math.max(1, Math.round(lightDays()));
+    card.append(el('p', 'dd-fc-took', lightDays() < 1 ? 'It took you less than a day.' : `It took you ${days} day${days > 1 ? 's' : ''}.`));
+    const rw = el('div', 'dd-fc-rw');
+    rw.append(el('span', null, `Title: ${f ? f.title : ch.title}`));
+    if (lk) { const s = el('span'); s.append(img(lookIcon(lk.slot, lk.id)), document.createTextNode(`${DEED_SLOT_TXT[lk.slot]}: ${lk.n}`)); rw.append(s); }
+    card.append(rw);
+    const row = el('div', 'dd-fc-btns');
+    const close = () => { if (ov._done) return; ov._done = true; ov.classList.add('out'); setTimeout(() => { ov.remove(); nextCard(); }, reduced ? 0 : 180); };
+    const wearB = btn('mini go', 'Wear it', () => { if (lk) deeds.wear(lk.slot, lk.id); lookSig = ''; close(); });
+    const later = btn('mini', 'Later', close);
+    if (lk && deeds.owned(lk.id)) row.append(wearB);
+    row.append(later);
+    card.append(row);
+    ov.append(card);
+    ov.addEventListener('click', e => { if (e.target === ov) close(); });
+    ov.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } });
+    document.body.append(ov);
+    // the preview wears the new look for a moment (drawn once; AC4's looksPreview reads the wear map)
+    const w = S.deeds.wear, prev = lk ? w[lk.slot] : null;
+    if (lk && lk.slot !== 'frame') w[lk.slot] = lk.id;
+    drawHero(cv, 1.5);
+    if (lk && lk.slot !== 'frame') w[lk.slot] = prev;
+    requestAnimationFrame(() => { ov.classList.add('in'); try { (row.firstChild || later).focus({ preventScroll: true }); } catch (e) {} });
+    if (!reduced) emit('burst', { x: 0.3, y: 0.5, color: '#F2C14E', n: 30, spd: 1.2 });
+  }
+  on('deedFeat', ({ id, quiet }) => { if (!quiet) featCard(id, 'feat'); });
+  on('deedChapter', ({ id, step, quiet }) => { const c = DEED_CHAPTERS.find(x => x.id === id); if (!quiet && c && step >= c.steps) featCard(id, 'chapter'); });
+
+  // ---- Everflame tiers and stars: a gold ring expands once around the header portrait ----
+  on('deedTier', ({ tier, quiet }) => {
+    if (quiet || tier < 4) return;
+    const p = document.querySelector('.top .portrait'); if (!p) return;
+    const r = el('span', 'dd-ring' + (reduced ? ' still' : '')); p.append(r);
+    setTimeout(() => r.remove(), reduced ? 1000 : 1300);
+  });
+
+  // ---- tapping an achievement toast opens the menu ----
+  let armTap = 0;
+  for (const ev of ['deedTier', 'deedGroup', 'deedMilestone']) on(ev, p => { if (p && p.quiet) return; armTap = 1; queueMicrotask(() => { armTap = 0; }); });
+  on('toast', t => {
+    const sec = /^Secret found: /.test(t.msg || '');
+    if (!armTap && !sec) return;
+    const box = $('toasts'); if (!box) return;
+    const n = [...box.children].reverse().find(x => x._msg === t.msg && !x._gone);
+    if (n && !n._tap) n._tap = () => openAch(sec ? 'feats' : 'deeds');
+  });
+
+  // ================= the hero sheet row (75-party-sheet) =================
+  function heroRow() {
+    const b = btn('dd-herorow');
+    b.append(img(CUP()), el('b', null, 'Achievements'), el('span', null, `${deeds.points().toLocaleString('en-US')} points`), el('span', 'dd-chev', '›'));
+    if (deeds.isNew()) b.append(el('span', 'dd-dot'));
+    b.setAttribute('aria-label', `Achievements, ${deeds.points()} points`);
+    b.addEventListener('click', () => openAch('deeds'));
+    return b;
+  }
+
+  deedsUI = { open: openAch, heroRow, featCard: id => featCard(id, 'feat'), chapterSlot: () => dv.chapter || null };
 }
 
 // ---- src/js/75-deepwell-ui.js ----
@@ -30107,6 +31127,7 @@ let openSheet, partySheet;
     const hl = el('div', 'cs-xpline'); const lvb = el('b', null, 'Lv ' + S.L); const hn = el('small', 'cs-xpnote');
     hl.append(lvb, hn); hb.append(hl, bar); body.append(hb);
     refs.heroXp = fill; refs.heroXpTxt = hn;
+    if (typeof deedsUI === 'object' && deedsUI) body.append(safe(() => deedsUI.heroRow(), ''));   // Achievements · 2,140 points › (75-deeds-ui)
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
@@ -30998,8 +32019,12 @@ let openSheet, partySheet;
 }
 
 // ---- src/js/75-stats-ui.js ----
-// 75-stats-ui: the Journal, lifetime stats in the bell sheet (Notices | Journal). Browser-only.
-// Reads S.stats (55-stats.js) and existing save fields; writes nothing.
+// 75-stats-ui: the Journal (bell sheet, Notices | Journal): the Achievements card and the stats wall
+// (docs/design/achievements.md 5 and 9.1, task AC3). Browser-only.
+// Reads S.stats (55-stats.js), the deeds counters (58-deeds: deeds.stats(), deeds.track(id)) and
+// existing save fields; writes nothing but the number format (deeds.setNum -> S.settings.num).
+// Tiles: 2 columns, a big number in the display font, the label under it. Tap a tile for the exact
+// number (and, for records, when and where). The number switch sits at the end of the wall.
 {
   const played = s => {
     s = Math.floor(s);
@@ -31007,29 +32032,167 @@ let openSheet, partySheet;
     return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
   };
   const dateText = ms => { try { return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
+  const shortDate = ms => { try { return new Date(ms).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { return ''; } };
+  const exact = n => { n = +n || 0; return Math.abs(n) >= 1e21 ? n.toExponential(5).replace('e+', 'e') : Math.floor(n).toLocaleString('en-US'); };
+  const safe = (fn, d) => { try { const v = fn(); return v == null ? d : v; } catch (e) { return d; } };
   const ST = () => S.stats;
+  const hasDeeds = () => typeof deeds === 'object' && deeds;
+  // A track's number when the track is in the build (null hides the tile).
+  const T = id => { if (!hasDeeds()) return null; const r = safe(() => deeds.track(id), null); return r && r.live ? r.v : null; };
+  let D = null;   // deeds.stats() for this update
+  const n = k => (D ? +D.n[k] || 0 : null);
+  const since = k => (D && D.since[k]) || 0;
+  const late = () => (ST().late && ST().since ? ST().since : 0);
+  const fineTxt = () => { const r = D ? D.rec.fine : 0; const st = (DEED_TRACKS.find(t => t.id === 'fine') || {}).steps || []; return r ? st[r - 1] : 'None yet'; };
+  // Hours fielded together, and the top pair (F2's Bond time per pair), when F2 is in.
+  const topPair = () => {
+    const t = S.bond && S.bond.t; if (!t || typeof t !== 'object') return '';
+    let best = null, v = 0; for (const k in t) if (+t[k] > v) { v = +t[k]; best = k; }
+    if (!best) return '';
+    const ids = best.split(/[^a-z]+/i).filter(x => typeof ROSTER === 'object' && ROSTER[x]);
+    if (ids.length < 2) return '';
+    const nm = id => ROSTER[id].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0];
+    return `${nm(ids[0])} and ${nm(ids[1])}, ${Math.floor(v / 3600)}h`;
+  };
 
-  // [icon, label, value()]
-  const ROWS = [
-    [() => iconURL('sword', '#A9B1BD'), 'Foes slain', () => fmt(S.totalKills)],
-    [() => iconURL('banner', '#E0524F', { 7: '#FFB347' }), 'Zone bosses beaten', () => fmt(ST().bosses)],
-    [() => iconURL('coin', '#F2C14E'), 'Gold earned', () => fmt(S.totalGold)],
-    [() => iconURL('anvil', '#6E6878'), 'Gear forged', () => fmt(statsApi.forged())],
-    [() => iconURL('charm', '#FF9E3D'), 'Uniques found', () => `${fmt(ST().uniques)}`, () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds`],
-    [() => iconURL('pick', '#D08A4E'), 'Ore and logs gathered', () => fmt(ST().gathered)],
-    [() => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }), 'Raid damage', () => fmt(ST().raidDmg)],
-    [() => iconURL('banner', '#B58CFF', { 7: '#D9C2FF' }), 'Raid bosses felled', () => fmt(S.wyrms)],
-    [() => iconURL('boot', '#A597B4'), 'Taps', () => fmt(ST().taps)],
-    [() => iconURL('glass', '#F2E27A'), 'Time away', () => played(ST().away)]
+  // Tiles: [label, value() -> number | string | null (hidden), opts]. opts: time (seconds), txt (a
+  // string value), sub() (a small line), since() (counted since), rec() (exact view's extra line).
+  const G = [
+    ['Hero', [
+      ['Time away', () => ST().away, { time: 1 }],
+      ['Hours of light', () => (D ? Math.floor(D.light) : null), { sub: () => 'played and away' }],
+      ['Great Lanterns relit', () => (typeof lanternsLitAt === 'function' ? lanternsLitAt(S.maxZone) : null)],
+      ['Achievement points', () => (hasDeeds() ? deeds.points() : null)]
+    ]],
+    ['Combat', [
+      ['Foes defeated', () => S.totalKills],
+      ['Zone bosses', () => ST().bosses],
+      ['All bosses', () => T('bosses'), { sub: () => 'zones, Deepwell and more' }],
+      ['Champions', () => T('champs')],
+      ['Elders beaten', () => T('crowns')],
+      ['Lifetime damage', () => n('dmg'), { since: () => since('dmg') }],
+      ['Biggest hit', () => (D ? D.rec.hit : null), { since: () => since('hit'), rec: () => D && D.rec.hit ? `Zone ${D.rec.hitZ}, ${dateText(D.rec.hitAt)}` : '' }],
+      ['Crits', () => n('crit'), { since: () => since('crit') }],
+      ['Parries', () => n('parry'), { since: () => since('parry') }],
+      ['Dodges', () => n('dodge'), { since: () => since('dodge') }],
+      ['Interrupts', () => n('intr'), { since: () => since('intr') }],
+      ['Abilities used', () => n('abil'), { since: () => since('abil') }],
+      ['Taps', () => ST().taps, { since: late }],
+      ['Damage taken', () => n('taken'), { since: () => since('taken') }],
+      ['Healing and shields', () => n('heal'), { since: () => since('heal') }]
+    ]],
+    ['Loot', [
+      ['Gold earned', () => S.totalGold],
+      ['Essence gained', () => n('ess'), { since: () => since('ess') }],
+      ['Trophies earned', () => n('troph'), { since: () => since('troph') }],
+      ['Uniques found', () => ST().uniques, { sub: () => `${statsApi.uniqueKinds()} of ${statsApi.uniqueTotal()} kinds` }],
+      ['Legendary drops', () => (S.legend && S.legend.n ? +S.legend.n.drops || 0 : null)]
+    ]],
+    ['Materials', [
+      ['Rare finds', () => (S.tools ? +S.tools.finds || 0 : null)],
+      ['Glints tapped', () => n('glint'), { since: () => since('glint') }]
+    ], 'mats'],
+    ['Crafting', [
+      ['Items crafted', () => statsApi.forged()],
+      ['Best craft', () => (D ? fineTxt() : null), { txt: 1 }],
+      ['Upgrades', () => n('up'), { since: () => since('up') }],
+      ['Reforges', () => n('ref'), { since: () => since('ref') }],
+      ['Transmutes', () => n('trans'), { since: () => since('trans') }]
+    ]],
+    ['Camp', [
+      ['Building levels', () => T('builder')],
+      ['Hands hired', () => T('hands')],
+      ['Hours worked by Hands', () => T('handhrs')],
+      ['Meals cooked', () => T('meals')]
+    ]],
+    ['Companions', [
+      ['Recruited', () => T('recruits')],
+      ['Ranks earned', () => T('promos')],
+      ['Companion levels', () => T('complv')],
+      ['Hours fielded together', () => T('together'), { sub: topPair }]
+    ]],
+    ['Expeditions', [
+      ['Returned', () => T('exped')],
+      ['Perfect', () => n('perfect'), { since: () => since('perfect') }],
+      ['Lore pages', () => T('lorepages')],
+      ['Keepsakes', () => T('keeps')]
+    ]],
+    ['Deepwell', [
+      ['Deepest floor', () => (S.deep ? +S.deep.best || 0 : null)],
+      ['Floors cleared', () => (S.deep ? +S.deep.floors || 0 : null)],
+      ['Runs', () => (S.deep ? +S.deep.runs || 0 : null)],
+      ['Depth Marks earned', () => (S.deep ? +S.deep.marksTotal || 0 : null)],
+      ['Best Trial floor', () => { const h = S.deep && S.deep.trial && S.deep.trial.hist; if (!h) return null; let m = +S.deep.trial.best || 0; for (const k in h) m = Math.max(m, +h[k] || 0); return m; }]
+    ]],
+    ['Codex and Almanac', [
+      ['Lantern Light', () => T('lanternlight')],
+      ['Pages completed', () => T('pageseals')],
+      ['Omens seen', () => T('omens')],
+      ['Dares taken', () => n('dare'), { since: () => since('dare') }],
+      ['Weekly goals', () => n('weekly'), { since: () => since('weekly') }],
+      ['Almanac Stamps', () => T('stamps')],
+      ['Bounties claimed', () => (S.bounties ? +S.bounties.claimed || 0 : null)]
+    ]],
+    ['Raid', [
+      ['Raid bosses felled', () => S.wyrms],
+      ['Raid damage', () => ST().raidDmg, { since: late }],
+      ['Embers earned', () => n('embers'), { since: () => since('embers') }]
+    ]]
   ];
+  const FAMS = ['ore', 'crystal', 'wood', 'fibre', 'herb', 'pearl', 'fish'];
 
-  const big = {}, cells = [];
-  let note;
+  const big = {}, tiles = [], ac = {}, mats = {};
+  let note, numBtns = [], matCap, matPick = null, jAt = 0;
+  function tileEl(label, val, o) {
+    const c = el('button', 'sw-tile'); c.type = 'button';
+    const v = el('b', 'sw-v', '0'), l = el('span', 'sw-l', label), s = el('span', 'sw-s');
+    c.append(v, l, s);
+    const x = { c, v, l, s, label, val, o: o || {}, open: false };
+    c.addEventListener('click', () => { x.open = !x.open; paint(x); });
+    return x;
+  }
+  function paint(x) {
+    const raw = safe(x.val, null);
+    putHidden(x.c, raw == null);
+    if (raw == null) return;
+    const o = x.o;
+    putToggle(x.c, 'open', x.open);
+    let v, sub = o.sub ? safe(o.sub, '') : '';
+    if (o.txt) v = String(raw);
+    else if (o.time) v = x.open ? `${exact(raw / 3600)} hours` : played(raw);
+    else v = x.open ? exact(raw) : fmt(raw);
+    putText(x.v, v);
+    putToggle(x.v, 'long', v.length > 12);
+    const sn = o.since ? safe(o.since, 0) : 0;
+    if (x.open && o.rec) sub = safe(o.rec, '') || sub;
+    if (sn) sub = (sub ? sub + ' · ' : '') + `since ${shortDate(sn)}`;
+    putText(x.s, sub); putHidden(x.s, !sub);
+    putAttr(x.c, 'aria-label', `${x.label}: ${o.txt ? raw : o.time ? played(raw) : exact(raw)}${sub ? '. ' + sub : ''}`);
+  }
+  function openAch() { if (typeof deedsUI === 'object' && deedsUI) deedsUI.open('deeds'); }
+
   registerSection('log', {  // the bell sheet's Journal view (70-ui.js)
     id: 'journal',
     mount(sec) {
-      sec.classList.add('panel', 'world-part'); sec.parentNode.prepend(sec);  // stats first, then Achievements
+      sec.classList.add('panel', 'world-part'); sec.parentNode.prepend(sec);  // first; the Codex card goes above it
       sec.append(el('h2', 'world-head', 'Journal'));
+
+      // ---- the Achievements card ----
+      if (hasDeeds()) {
+        const c = el('div', 'sw-ach');
+        const ic = el('span', 'dd-lamp sm'); ic.append(img(iconURL(ICON.dd_cup ? 'dd_cup' : 'banner', '#F2C14E')));
+        const tx = el('div', 'sw-atx');
+        ac.pts = el('b', 'sw-apts'); ac.sub = el('span', 'sw-asub'); ac.near = el('span', 'sw-anear');
+        ac.bar = el('span', 'dd-bar'); ac.fill = el('i'); ac.bar.append(ac.fill);
+        const top = el('span', 'dd-eye', 'Achievements');
+        tx.append(top, ac.pts, ac.sub, ac.bar, ac.near);
+        ac.open = el('button', 'mini go sw-aopen', 'Open'); ac.open.type = 'button';
+        ac.dot = el('span', 'dd-dot'); ac.dot.hidden = true; ac.open.append(ac.dot);
+        ac.open.addEventListener('click', openAch);
+        c.addEventListener('click', e => { if (e.target !== ac.open) openAch(); });
+        c.append(ic, tx, ac.open);
+        sec.append(c);
+      }
 
       const hero = el('div', 'jr-hero');
       for (const [k, label, cls] of [['time', 'Time played', 'time'], ['lvl', 'Hero level', ''], ['zone', 'Best zone', '']]) {
@@ -31040,31 +32203,97 @@ let openSheet, partySheet;
       }
       sec.append(hero);
 
-      const grid = el('div', 'jr-grid');
-      for (const [ic, label, val, sub] of ROWS) {
-        const c = el('div', 'jr-stat');
-        const v = el('span', 'jr-v', '0'), l = el('span', 'jr-l', label);
-        const tx = el('div'); tx.append(v, l);
-        c.append(img(ic()), tx);
-        grid.append(c);
-        cells.push({ v, l, val, sub, label });
+      for (const [gname, list, extra] of G) {
+        const box = el('div', 'sw-group');
+        box.append(el('h3', 'sw-h', gname));
+        if (extra === 'mats') {
+          const grid = el('div', 'sw-mats'); grid.setAttribute('role', 'grid');
+          const hd = el('div', 'sw-mrow sw-mhead'); hd.append(el('span'));
+          for (let t = 1; t <= 5; t++) hd.append(el('span', null, 'T' + t));
+          grid.append(hd);
+          for (const f of FAMS) {
+            const r = el('div', 'sw-mrow'); r.dataset.f = f;
+            const h = el('span', 'sw-mf'); h.append(img(MAT[f] ? matIcon(f, 1) : iconURL('orb', '#9FE8FF')), el('span', null, (MAT[f] && MAT[f].n) || f));
+            r.append(h);
+            const cells = [];
+            for (let t = 1; t <= 5; t++) {
+              const c = el('button', 'sw-mc'); c.type = 'button';
+              c.style.color = typeof craftTierCol === 'function' && MAT[f] ? craftTierCol(f, t) : 'var(--bone)';
+              c.addEventListener('click', () => { matPick = [f, t]; paintMats(); });
+              cells.push(c); r.append(c);
+            }
+            mats[f] = { r, cells };
+            grid.append(r);
+          }
+          matCap = el('p', 'note sw-mcap');
+          box.append(grid, matCap);
+        }
+        const g = el('div', 'sw-grid');
+        for (const [label, val, o] of list) { const x = tileEl(label, val, o); tiles.push(x); g.append(x.c); }
+        box.append(g);
+        sec.append(box);
       }
-      sec.append(grid);
+
+      // ---- the number format (S.settings.num), until a settings sheet exists ----
+      const nf = el('div', 'sw-num');
+      nf.append(el('span', null, 'Numbers'));
+      const seg = el('div', 'vseg sw-seg'); seg.setAttribute('role', 'radiogroup'); seg.setAttribute('aria-label', 'Number format');
+      for (const [v, lab] of [['letters', 'Letters'], ['sci', 'Scientific']]) {
+        const b = el('button', null, lab); b.type = 'button'; b.dataset.v = v; b.setAttribute('role', 'radio');
+        b.addEventListener('click', () => { if (hasDeeds()) deeds.setNum(v); jAt = 0; ui(true); });
+        seg.append(b); numBtns.push(b);
+      }
+      nf.append(seg);
+      sec.append(nf);
       note = el('p', 'note');
       sec.append(note);
     },
-    update() {
+    update(force) {
+      const t = Date.now(); if (!force && t - jAt < 1000) return; jAt = t;
+      D = hasDeeds() ? safe(() => deeds.stats(), null) : null;
       big.time.textContent = played(ST().played);
       big.lvl.textContent = S.L;
       big.zone.textContent = S.maxZone;
-      for (const c of cells) {
-        c.v.textContent = c.val();
-        if (c.sub) c.l.textContent = `${c.label} · ${c.sub()}`;
+      if (ac.pts && hasDeeds()) {
+        const P = deeds.points(), nx = deeds.next(), near = deeds.near(3).length;
+        let prev = 0; for (const m of deeds.ladder()) if (m.got) prev = m.at;
+        putText(ac.pts, `${P.toLocaleString('en-US')} points`);
+        const bits = []; if (nx) { if (nx.title) bits.push(`title ${nx.title}`); if (nx.look && DEED_LOOKS.find(l => l.id === nx.look)) bits.push(DEED_LOOKS.find(l => l.id === nx.look).n); if (nx.wall) bits.push('the Trophy Wall'); }
+        putText(ac.sub, nx ? `Next at ${nx.at.toLocaleString('en-US')}: ${bits.join(', ')}` : 'Every points reward is yours.');
+        putStyle(ac.fill, 'width', nx ? (Math.min(1, (P - prev) / Math.max(1, nx.at - prev)) * 100).toFixed(1) + '%' : '100%');
+        putText(ac.near, near ? `${near} almost there` : ''); putHidden(ac.near, !near);
+        putHidden(ac.dot, !deeds.isNew());
       }
-      const since = ST().late && ST().since ? dateText(ST().since) : '';
-      note.textContent = 'Time played counts only while the game is open.' + (since ? ` Time, taps and gathering were first counted on ${since}.` : '');
+      for (const x of tiles) paint(x);
+      paintMats();
+      const cur = hasDeeds() ? deeds.num() : 'letters';
+      for (const b of numBtns) putAttr(b, 'aria-selected', String(b.dataset.v === cur)), putAttr(b, 'aria-checked', String(b.dataset.v === cur));
+      const s0 = late() ? dateText(late()) : '';
+      note.textContent = 'Time played counts only while the game is open. Tap a number to see all of it.' + (s0 ? ` Time, taps and gathering were first counted on ${s0}.` : '');
     }
   });
+  function paintMats() {
+    if (!D) { for (const f in mats) putHidden(mats[f].r, true); if (matCap) putHidden(matCap, true); return; }
+    for (const f of FAMS) {
+      const m = mats[f]; if (!m) continue;
+      const row = D.g[f], show = f === 'pearl' || f === 'fish' ? Array.isArray(row) && row.some(v => v > 0) : true;
+      putHidden(m.r, !show); if (!show) continue;
+      m.cells.forEach((c, i) => {
+        const v = Array.isArray(row) ? +row[i] || 0 : 0;
+        putText(c, v ? fmt(v) : '·');
+        putToggle(c, 'zero', !v);
+        putToggle(c, 'on', !!(matPick && matPick[0] === f && matPick[1] === i + 1));
+        putAttr(c, 'aria-label', `${(MAT[f] && MAT[f].n) || f} tier ${i + 1}: ${exact(v)} gathered`);
+      });
+    }
+    if (matCap) {
+      putHidden(matCap, false);
+      if (matPick) {
+        const [f, t] = matPick, v = Array.isArray(D.g[f]) ? +D.g[f][t - 1] || 0 : 0;
+        putText(matCap, `${safe(() => matName(f, t), f + ' ' + t)}: ${exact(v)} gathered.` + (D.since.g ? ` Counted since ${shortDate(D.since.g)}; earlier it counts what you held then.` : ''));
+      } else putText(matCap, 'Lifetime units gathered, by tier. Tap a cell for the exact count.');
+    }
+  }
 }
 
 // ---- src/js/75-tools-ui.js ----
