@@ -297,3 +297,11 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   timings). Coordinator accepts its gap fills: Lure Song charm 3s, Ash Fall 8s, riders capped, Weight
   of the Crown at most 1 stack/2s, 8 named Oath sets (levels 10-14) for Boss of the Week, and PIN_POWERS
   living in 21d until 21c-data-legend.js exists (L1 imports them).
+- L1 + L5 merged (21c-data-legend.js: 43 powers incl. the 4 pinnacle ones by reference, 4 circle
+  sets, costs, caps; 11b-art-legend.js: icons, sigils, orange frame). DESIGN ISSUE: the section-6 caps
+  (+30/+45/+70% at rank I/III/V) cannot hold if 6-piece circle sets (+12-18%) stack on top of the
+  powers; the data check passes only with sets counted at 0. COORDINATOR DECISION for L2: enforce the
+  caps at RUNTIME. All legendary power + set damage multipliers are summed into one legend budget and
+  clamped to the cap for the player's highest rank, and the UI shows "capped" when a build hits it.
+  Sets stay valuable through their non-damage effects and by letting weaker powers reach the cap.
+  L6's sim verifies L4/L5. Pick one legendary colour: use #FF8A3D and update --r-legendary.
