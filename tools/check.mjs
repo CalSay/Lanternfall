@@ -3853,5 +3853,109 @@ try {
   assert(!g.errors.length, 'F4 no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('party ui crashed: ' + (e.stack || e)); }
 
+// ---- the story: arrivals, beats, elder lines, bestiary lines (55-story.js, 75-story-ui.js; LORE3, lore.md 9-10) ----
+console.log('story');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, n) => { for (let i = 0; i < n; i++) g.fn.tick(0.1); };
+  const watch = g => {
+    const ev = { arr: [], beat: [], elder: [], news: [] };
+    g.fn.on('storyArrival', e => ev.arr.push(e)); g.fn.on('storyBeat', e => ev.beat.push({ id: e.id, quiet: e.quiet }));
+    g.fn.on('storyElder', e => ev.elder.push({ key: e.key, kind: e.kind, name: e.name, line: e.line, zone: e.zone }));
+    g.fn.on('whatsNew', w => ev.news.push(w.msg));
+    return ev;
+  };
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-story.js'), 'utf8');
+  assert(!/\b(document|window|localStorage)\./.test(src.replace(/\/\/.*$/gm, '')), 'story: 55-story.js is core (no DOM)');
+  // A new game walks the Hollow: zone by zone, fighting, each boss spawned and beaten.
+  const g = loadCore({ seed: 71 }), E = s => g.eval(s), ev = watch(g);
+  assert(E('S.story.v === 1 && typeof S.story.seen === "object" && typeof S.story.read === "object" && JSON.stringify(fresh().story || null) !== undefined'), 'story: S.story registered ({ v: 1, seen, read, init })');
+  E('S.activity = "fight"; S.zone = 1; S.maxZone = 1'); ticks(g, 2);
+  const beatsAt = {};
+  for (let z = 1; z <= 35; z++) {
+    E(`S.zone = ${z}; S.maxZone = ${z}`); ticks(g, 2);
+    beatsAt[z] = ev.beat.length;
+    E('fightBoss = true; spawn()'); ticks(g, 1);
+    if (z === 35) assert(E('mob.name') === 'The Listener' && E('REGIONS[0].boss.name') === 'The Listener', `story: the zone 35 boss shows as "${E('mob.name')}"`);
+    E(`emit('kill', { mob: mob, zone: ${z}, gold: 0, ess: 0, tier: 1 }); fightBoss = false`);
+  }
+  // walk back through old zones: nothing plays again
+  const n0 = ev.arr.length + ev.beat.length + ev.elder.length;
+  for (const z of [3, 7, 14, 1]) { E(`S.zone = ${z}`); ticks(g, 2); E('fightBoss = true; spawn()'); E(`emit('kill', { mob: mob, zone: ${z}, gold: 0, ess: 0, tier: 1 }); fightBoss = false`); }
+  const arrHeads = ev.arr.map(a => a.head), zones = E('ZONES');
+  assert(ev.arr.length === 8 && zones.every((n, i) => arrHeads[i] === n && ev.arr[i].zone === i + 1) && ev.arr[7].zone === 35 && ev.arr.every(a => a.line && a.line.length <= 80),
+    `story: 8 arrival lines, once each (the 7 Hollow places, then zone 35): ${arrHeads.join(', ')}`);
+  const H = E('HOLLOW_STORY');
+  assert(ev.beat.length === 4 && H.every((b, i) => ev.beat[i].id === b.id && !ev.beat[i].quiet && beatsAt[b.at] === i + 1 && beatsAt[b.at - 1] === i),
+    'story: the 4 Hollow beats play once each, as cards, on arriving at their zones (' + H.map(b => `${b.id} @${b.at}`).join(', ') + ')');
+  const keys = ['slime', 'bat', 'bones', 'beetle', 'spore', 'golem', 'wraith', 'listener'];
+  const intro = ev.elder.filter(e => e.kind === 'intro'), fall = ev.elder.filter(e => e.kind === 'fall');
+  assert(keys.every(k => intro.filter(e => e.key === k).length === 1 && fall.filter(e => e.key === k).length === 1)
+    && intro.length === 8 && fall.length === 8 && ev.elder.every(e => e.line === E(`LORE_ELDERS.${e.key}.${e.kind}`)),
+    'story: every Hollow elder and the Listener shows its intro when it first appears and its fall on its first kill, once');
+  assert(ev.arr.length + ev.beat.length + ev.elder.length === n0, 'story: walking back through beaten zones plays nothing again');
+  if (E('REGIONS[1].plugged')) {
+    const coastKeys = E('REGIONS[1].types.map(i => TYPES[i].key)');
+    assert(coastKeys.every(k => E(`!!LORE_ELDERS[${JSON.stringify(k)}]`)), 'story: every coast foe has elder lines (the coast is plugged in)');
+  } else ok('story: the coast is not plugged in yet (R2-1): coast arrivals wait for it; its elders reuse the Hollow types, already seen');
+  assert(E('storyElderKey(70)') === null && E('storyElderKey(35)') === 'listener' && E('storyElderKey(8)') === 'slime', 'story: storyElderKey: zone 8 slime, 35 the Listener, 70 none (the Keeper has his own lines)');
+  // The Great Lantern card: Hesketh's line when he is recruited; the beat joins the story list, read
+  const gl = []; g.fn.on('greatLantern', e => gl.push(e));
+  E('unlockChar("hesketh", "progress", true)');
+  E('S.maxZone = 36; S.zone = 36; emit("zoneClear", { zone: 35 })'); ticks(g, 3);
+  const say = (gl[0] && gl[0].say) || [];
+  assert(gl.length === 1 && say.length === 1 && say[0].id === 'hesketh' && say[0].line === E('HOLLOW_LANTERN_SAY.hesketh') && say[0].short === 'Hesketh',
+    `story: the Great Lantern I card carries Hesketh's line: "${say[0] && say[0].line}"`);
+  const list = E('storyList()');
+  assert(list.map(b => b.id).join() === 'wisps,crowns,chapel,listener,greenLight' && list[4].read && list.slice(0, 4).every(b => !b.read && !b.late), 'story: the list holds the 4 beats (unread until opened) and the Great Lantern beat (read: the card)');
+  E('storyRead("wisps")');
+  assert(E('storyUnread().join()') === 'crowns,chapel,listener' && E('S.story.read.wisps') === 1, 'story: storyRead marks a beat read');
+  // the storyBeat API the Coast tasks use: once, then false; unknown ids false; quiet on request
+  assert(E('storyBeat("ferryman")') === 'card' && E('storyBeat("ferryman")') === false && E('storyBeat("nope")') === false && E('storyBeat("chart", { quiet: true })') === 'quiet'
+    && ev.beat.slice(-2).map(b => `${b.id}:${b.quiet}`).join() === 'ferryman:false,chart:true', 'story: storyBeat(id) plays once ("card", then false), unknown ids are false, { quiet } gives the note');
+  assert(E('storySay({ hesketh: "a", nobody: "b", pip: "c" }).map(x => x.id).join()') === 'hesketh', 'story: storySay keeps recruited characters only');
+  // A beat the save jumped past plays quiet (its note), not as a card
+  const q = loadCore({ seed: 72 }), qv = watch(q);
+  ticks(q, 2); qv.arr.length = 0; q.eval('S.activity = "gather"; S.maxZone = 20; S.zone = 20'); ticks(q, 3);
+  assert(qv.beat.map(b => `${b.id}:${b.quiet}`).join() === 'wisps:true,crowns:true' && !qv.arr.length && !qv.news.length, 'story: a save that got past zones 7 and 14 without fighting there gets the two beats quiet, no arrival');
+  // Old saves: no flood. Everything behind them is filed quietly; missed beats wait as "Catch up on the story".
+  for (const f of ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-v3-four.json']) {
+    const raw = JSON.parse(rawOf(f));
+    const h = loadCore({ seed: 73, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), hv = watch(h);
+    ticks(h, 30);
+    const mz = raw.maxZone, behind = H.filter(b => b.at < mz).map(b => b.id), late = h.eval('storyLate()');
+    const lanternLate = mz > 35 ? ['greenLight'] : [];
+    const storyNews = hv.news.filter(m => /story/i.test(m));
+    const cards = hv.beat.filter(b => !b.quiet);
+    // the zone the save stands in may play its own line (one), never the zones behind it
+    const arrOk = hv.arr.every(a => a.zone >= mz), elderOk = hv.elder.every(e => e.zone >= mz);
+    assert(late.join() === behind.concat(lanternLate).join() && !storyNews.length && cards.every(b => H.find(x => x.id === b.id).at >= mz) && hv.beat.length <= 1 && hv.arr.length <= 1 && arrOk && elderOk,
+      `${f} (zone ${mz}): no flood (${hv.arr.length} arrival, ${hv.beat.length} beat, ${hv.elder.length} elder line); ${late.length} beats wait under "Catch up on the story"`);
+    const again = loadCore({ seed: 74, storage: memoryStorage({ [KEY]: (h.eval('save(), 1'), h.storage.get(KEY)) }) }), av = watch(again);
+    ticks(again, 30);
+    assert(!av.arr.length && !av.beat.length && !av.elder.length && again.eval('storyLate().join()') === late.join() && !h.errors.length && !again.errors.length,
+      `${f}: a reload plays nothing; the catch-up list is kept`);
+  }
+  // The Codex bestiary shows the lines for what is found (tier 1, the Elder, the champion)
+  const c = loadCore({ seed: 75 }), C2 = s => c.eval(s);
+  C2('S.mastery.types.slime = 5; S.maxZone = 1; codexRefresh(true)');
+  const t0 = C2('codexPage("bestiary").tiles[0]');
+  C2('S.mastery.types.bat = 20; S.maxZone = 3; codexRefresh(true)');
+  const tiles = C2('codexPage("bestiary").tiles');
+  const B = C2('LORE_BESTIARY');
+  assert(!t0.lore.length && tiles[1].lore.join('|') === [B.bat.foe, B.bat.elder].join('|') && tiles.every(t => Array.isArray(t.lore)),
+    'story: Codex bestiary tiles show no line before tier 1; the foe line at tier 1, then the Elder line once beaten');
+  C2('S.mastery.types.wraith = 12; S.maxZone = 40; codexRefresh(true)');
+  const w = C2('codexPage("bestiary").tiles[6]');
+  assert(w.lore.includes(B.wraith.foe) && w.lore.includes(B.wraith.elder) && w.lore.includes(C2('LORE_ELDERS.listener.line')), 'story: the Marsh Wraith tile adds the Listener\'s line once zone 35 is beaten');
+  // UI wiring (browser-only files): the pieces are there
+  const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
+  const ui = rd('js/75-story-ui.js'), css = rd('styles/60-story.css'), codexUi = rd('js/75-codex-ui.js'), glUi = rd('js/75-lantern-ui.js');
+  assert(['storyArrival', 'storyElder', 'storyBeat'].every(k => ui.includes(`on('${k}'`)) && codexUi.includes('storyUI.codexRow') && codexUi.includes('t.lore') && glUi.includes('e.say')
+    && /prefers-reduced-motion/.test(css) && /calc\(\d+px \* var\(--display-k\)\)/.test(css), 'story: the UI listens for arrivals, elders and beats; the Codex has the Story row and bestiary lines; the Great Lantern card shows say lines; reduced motion handled');
+  assert(!/You carry the last lantern\./.test(rd('js/76-create.js')), 'story: the class screen says "one of the last lanterns" (lore.md 11.1)');
+  assert(!g.errors.length && !q.errors.length && !c.errors.length, 'story: no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('story crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

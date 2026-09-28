@@ -1911,6 +1911,8 @@ span.cf-d { font-weight: 600; }
 .gl-sh-n { font-weight: 700; color: var(--bone); font-size: 14px; }
 .gl-sh-sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
 .gl-sh-here { font-size: 12px; color: var(--lc); margin-top: 2px; }
+.gl-say { margin: 0; font-size: 13.5px; line-height: 1.4; color: var(--muted); text-align: left; font-style: italic; }
+.gl-say b { color: var(--gold); font-style: normal; font-weight: 600; }
 /* 60-legend: legendary powers and circle sets (75-legend-ui.js, task L4). One orange: --r-legendary (#FF8A3D). 44px touch targets. */
 .lg-lbl { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .lg-st { display: grid; gap: 2px; min-width: 0; }
@@ -2474,6 +2476,87 @@ span.cf-d { font-weight: 600; }
 @media (max-width: 440px) {
   .st-card { grid-template-columns: minmax(0, 1fr); }
   .st-cbtn { justify-self: end; min-width: 132px; }
+}
+/* 60-story: the story on the stage and in its sheet (75-story-ui.js, LORE3). */
+
+/* ---- the stage caption: arrival banner and elder lines, in the open sky mid-stage ---- */
+.sty-cap { position: absolute; z-index: 5; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(320px, calc(100% - 20px));
+  display: grid; justify-items: center; gap: 2px; padding: 8px 18px 9px; text-align: center; cursor: pointer;
+  background: linear-gradient(90deg, rgba(11,8,16,0), rgba(11,8,16,.9) 14%, rgba(11,8,16,.9) 86%, rgba(11,8,16,0));
+  border-top: 1px solid rgba(242,193,78,.45); border-bottom: 1px solid rgba(242,193,78,.45);
+  border-image: linear-gradient(90deg, transparent, rgba(242,193,78,.6), transparent) 1;
+  transition: opacity .25s ease-out, transform .25s ease-out; }
+.sty-cap-h { font: 700 calc(19px * var(--display-k))/1.05 var(--display); color: var(--gold); letter-spacing: .02em; text-shadow: 0 2px 0 #0B0810, 0 0 12px rgba(242,193,78,.35); }
+.sty-cap-l { font: 500 13.5px/1.35 var(--body); color: var(--bone); text-shadow: 0 1px 0 #000; }
+.sty-cap.elder { border-image: linear-gradient(90deg, transparent, rgba(224,82,79,.7), transparent) 1; }
+.sty-cap.elder .sty-cap-h { color: #FF8F7A; font-size: calc(16px * var(--display-k)); text-shadow: 0 2px 0 #0B0810, 0 0 10px rgba(224,82,79,.4); }
+.sty-cap.elder.fall { border-image: linear-gradient(90deg, transparent, rgba(239,230,214,.5), transparent) 1; }
+.sty-cap.elder.fall .sty-cap-h { color: #CFC3DC; text-shadow: 0 2px 0 #0B0810; }
+.sty-cap.elder .sty-cap-l { font-style: italic; }
+.sty-cap.in { animation: sty-in .35s ease-out; }
+.sty-cap.out { opacity: 0; transform: translate(-50%, calc(-50% - 6px)); }
+@keyframes sty-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); } }
+
+/* ---- the story chip: "New story: Wisps. Read" ---- */
+.sty-chip { position: absolute; z-index: 5; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(300px, calc(100% - 20px));
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 6px 8px;
+  text-align: left; cursor: pointer; color: var(--bone); background: #16101DF0; border: 2px solid #6B5320;
+  box-shadow: 0 3px 0 #0B0810, 0 0 16px rgba(242,193,78,.25); transition: opacity .25s ease-out, transform .25s ease-out; }
+.sty-chip.in { animation: sty-in .35s ease-out; }
+.sty-chip.out { opacity: 0; transform: translate(-50%, calc(-50% - 6px)); }
+.sty-chip-ic { width: 24px; height: 24px; image-rendering: pixelated; }
+.sty-chip-tx { display: grid; gap: 1px; min-width: 0; }
+.sty-chip-eye { font: 600 10px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.sty-chip-t { font: 700 calc(15px * var(--display-k))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sty-chip-note { font: 500 12px/1.25 var(--body); color: var(--muted); }
+.sty-chip-go { font: 600 calc(12px * var(--display-k))/1 var(--display); padding: 7px 9px; background: var(--gold); color: #2A1E07; box-shadow: inset 0 -2px 0 #A77B1E; }
+
+/* ---- the beat card (bottom sheet) ---- */
+.sty-sheet .bsheet-body { gap: 12px; }
+.sty-back { justify-self: start; min-height: 36px; padding: 4px 10px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
+.sty-card { display: grid; gap: 8px; padding: 12px 14px 14px; background: radial-gradient(120% 80% at 50% 0%, rgba(242,193,78,.10), rgba(242,193,78,0) 60%), var(--well); border: 2px solid #5A4A2A; box-shadow: inset 0 0 0 2px #0B0810; }
+.sty-eye { font: 600 10.5px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.sty-title { margin: 0; font: 700 calc(22px * var(--display-k))/1.05 var(--display); color: var(--bone); }
+.sty-head { margin: 0; font: 600 14px/1.35 var(--body); color: var(--gold); }
+.sty-text { margin: 0; font: 400 15px/1.5 var(--body); color: var(--bone); }
+.sty-say { margin: 0; font: italic 400 14px/1.4 var(--body); color: var(--muted); }
+.sty-say b { font-style: normal; font-weight: 600; color: var(--gold); }
+.sty-actions { display: flex; gap: 8px; align-items: center; }
+.sty-actions .big { flex: 1; }
+.sty-actions .mini { min-height: 44px; padding: 0 14px; }
+
+/* ---- the story so far ---- */
+.sty-ltitle { margin: 0; font: 700 calc(20px * var(--display-k))/1.1 var(--display); }
+.sty-catch { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 52px; padding: 8px 10px;
+  text-align: left; cursor: pointer; color: var(--bone); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel) 75%); border: 2px solid #8A6A20; box-shadow: 0 2px 0 #0B0810; }
+.sty-catch b { font: 700 calc(15px * var(--display-k))/1.1 var(--display); }
+.sty-rows { display: grid; gap: 6px; }
+.sty-grp { margin: 6px 0 0; font: 600 10.5px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sty-row { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 48px; padding: 6px 10px;
+  text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.sty-row.unread { border-color: #6B5320; }
+.sty-row-ic { width: 22px; height: 22px; image-rendering: pixelated; }
+.sty-row-tx { display: grid; gap: 1px; min-width: 0; }
+.sty-row-tx b { font: 700 calc(14px * var(--display-k))/1.15 var(--display); }
+.sty-row-tx span { font: 400 12.5px/1.3 var(--body); color: var(--muted); }
+.sty-ahead, .sty-empty { margin: 0; }
+
+/* ---- the Codex home row ---- */
+.sty-cx { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; min-height: 48px; padding: 6px 10px;
+  text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.sty-cx.news { border-color: #6B5320; background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); }
+.sty-cx-ic { width: 28px; height: 28px; image-rendering: pixelated; }
+.sty-cx-tx { display: grid; gap: 1px; min-width: 0; }
+.sty-cx-tx b { font: 700 calc(15px * var(--display-k))/1.1 var(--display); }
+.sty-cx-tx span { font: 400 12.5px/1.25 var(--body); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sty-cx-go { font: 600 calc(12px * var(--display-k)) var(--display); padding: 8px 9px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--gold); }
+
+/* ---- Codex bestiary lines (57c-codex tile.lore, shown in the tile's details) ---- */
+.cx-dlore { margin: 0; font: italic 400 13px/1.4 var(--body); color: #D8CFE3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sty-cap, .sty-chip { transition: none; animation: none; }
+  .sty-cap.in, .sty-chip.in { animation: none; }
 }
 /* 60-tools: the tool card on the Gather tab and the Mastery box on a tool's item sheet (75-tools-ui.js, H2). */
 .tl-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: "ic body" "btns btns"; gap: 6px 10px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--line); }
@@ -7360,7 +7443,7 @@ const REGIONS = (() => {
   return [
     { id: 'hollow', n: 'the Hollow', z0: 1, z1: 35, types: [0, 1, 2, 3, 4, 5, 6], names: ZONES, themes: ZONE_THEME,
       uniq: ZONE_UNIQ, home: CRAFT_HOME, hue0: 0, hueStep: 70,
-      boss: { zone: 35, name: null, place: null },       // the Elder of Wraithmarsh V, as always
+      boss: { zone: 35, name: 'The Listener', place: null }, // the Elder of Wraithmarsh V, shown as the Listener (lore.md 4.2; 55-story names the foe)
       lantern: 'The Great Lantern of the Hollow', beat: 0, col: '#F2C14E', plugged: true },
     { id: 'coast', n: 'the Sunken Coast', z0: 36, z1: 70, types: coast.types, names: coast.names, themes: coast.themes,
       uniq: coast.uniq, home: coast.home, hue0: coast.hue0, hueStep: coast.hueStep,
@@ -10242,7 +10325,7 @@ let hearthCold, hearthLit, hearthCan, hearthLight, hearthPlotOpen, hearthFirst, 
 //
 // The first kill of a region boss (REGIONS[i].z1, 22-data-regions.js) relights that region's Great
 // Lantern, once per save:
-//   emit('greatLantern', { n, region, zone, name, head, text, note, quiet, rewards })
+//   emit('greatLantern', { n, region, zone, name, head, text, note, quiet, rewards, say })
 //     n: 1 for the Hollow, 2 for the Coast. head/text/note: COAST_STORY[region.beat] (21b-stories-coast).
 //     quiet: true for a save that was already past the boss before this system existed (it gets one
 //       bell line through emit('whatsNew') instead of the card).
@@ -10267,7 +10350,9 @@ let lanternSync, lanternRoad;
       n: i + 1, region: r.id, zone: r.z1, name: r.lantern,
       head: (beat && beat.head) || `${r.lantern} burns again.`,
       text: (beat && beat.text) || '', note: (beat && beat.note) || '',
-      quiet: !!quiet, rewards: []
+      quiet: !!quiet, rewards: [],
+      // say: [{ id, name, line }] from recruited characters (the beat's own, plus Hesketh's for the Hollow: LORE3)
+      say: typeof storySay === 'function' ? storySay(Object.assign({}, beat && beat.say, !i && typeof HOLLOW_LANTERN_SAY === 'object' ? HOLLOW_LANTERN_SAY : null)) : []
     };
     emit('greatLantern', e);
     if (quiet) {
@@ -11887,6 +11972,213 @@ const statsApi = {};
       catch (e) { console.error('[lanternfall] away line failed', e); }
     }
     r.empty = !(r.kills || r.gold >= 1 || r.xp >= 1 || r.zones.to > r.zones.from || r.bosses || r.raidDmg >= 1 || r.embers || r.mats.length || r.items.length || r.skills.length || r.extra.length);
+  });
+}
+
+// ---- src/js/55-story.js ----
+// 55-story: the story core (task LORE3; docs/design/lore.md 9 and 10). Which arrival line, story
+// beat and elder line is due, once per save. CORE FILE: no DOM. UI: 75-story-ui.js.
+// Words: 21h-lore-hollow.js (the Hollow, bestiary, elders) and 21b-stories-coast.js (the Coast).
+//
+// What plays, and when (all once per save):
+//   Arrival line  the first time the party FIGHTS in a place (a region's place 0-6, and its boss
+//                 zone): HOLLOW_ARRIVAL / HOLLOW_ARRIVAL_BOSS. Coast lines join once the coast
+//                 has its own data (REGIONS[1].plugged, task R2-1).
+//   Story beat    a beat with `at` plays when the party first fights at that zone. A beat without
+//                 `at` (the coast's) plays when its system calls storyBeat(id). A beat the save got
+//                 past without standing there (it jumped) plays quiet: its one-line note.
+//   Elder line    the first time a boss of a type appears (intro) and its first kill (fall). The
+//                 Hollow's zone 35 boss is the Listener (lore.md 4.2), with its own lines.
+//   Great Lantern the card is 55-lantern's; this file only files its beat (COAST_STORY[beat]) in
+//                 the story list so it can be read again, and gives the card its `say` lines.
+// Old saves (S.story new to them): everything already behind them (zones below S.maxZone) is marked
+// seen, quietly, at the first load. Beats behind them go in the list unread, where the Codex offers
+// them as one "Catch up on the story" entry. Nothing pops.
+//
+// API (the Coast tasks use storyBeat rather than a second system):
+//   storyBeat(id, { quiet }) -> 'card' | 'quiet' | false
+//        plays beat `id` once: emits storyBeat { id, beat, quiet }. false when it already played or
+//        the id is unknown. quiet: true for a save already past the moment (the UI shows its note).
+//   storyBeatDef(id) -> { id, region, at, title, text, note, head, say } | null
+//   storyHas(id) -> bool (the beat has played, card or quiet)
+//   storyList() -> [{ id, region, at, title, text, note, say: [{ id, name, short, line }], got, read, late }]
+//        every beat this save has, in story order. late: filed by the old-save catch-up.
+//   storyRead(id) -> marks it read (emits storyRead { id }); storyUnread() -> [ids], storyLate() -> [ids]
+//   storySay(sayMap) -> [{ id, name, short, line }] for the recruited characters in { charKey: line }
+//   storyElderKey(zone) -> LORE_ELDERS key for that zone's boss ('listener' at zone 35) | null
+//   storyBestiary(typeKey, { foe, elder, champ }) -> [lines] the Codex tile shows (57c-codex)
+//   storySync() runs on each tick (cheap when nothing moved) and on zoneClear.
+// Events emitted: storyArrival { key, zone, region, head, line }, storyBeat { id, beat, quiet },
+//   storyElder { key, kind: 'intro' | 'fall', name, line, zone }, storyRead { id }.
+// Listens: spawn (elder intro; the region boss's display name), kill (elder fall), zoneClear,
+//   greatLantern (files the chapter's Great Lantern beat).
+//
+// Save: registerState('story', { v: 1, seen: {}, read: {}, init: 0 }).
+//   seen: 'a:<region>:<place>' | 'a:<region>:boss' (arrival), 'b:<beatId>' (ms it played; negative =
+//   filed by the catch-up), 'ei:<elderKey>' / 'ef:<elderKey>' (elder intro / fall). read: beatId -> 1.
+//   init: 1 once the first-load catch-up ran.
+
+let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyLate, storySay, storyElderKey, storyBestiary, storySync;
+{
+  registerState('story', { v: 1, seen: {}, read: {}, init: 0 });
+  const ST = () => S.story;
+  const H = () => (typeof HOLLOW_STORY !== 'undefined' ? HOLLOW_STORY : []);
+  const C = () => (typeof COAST_STORY !== 'undefined' ? COAST_STORY : []);
+
+  // Every beat, in story order: the Hollow's, then the Coast's (its Great Lantern beats included).
+  let beats = null;
+  const all = () => beats || (beats = [
+    ...H().map(b => Object.assign({ region: 'hollow' }, b)),
+    ...C().map(b => Object.assign({ region: 'coast' }, b))
+  ]);
+  const def = id => all().find(b => b.id === id) || null;
+  storyBeatDef = def;
+
+  // Region story data: arrival lines per place, the boss arrival. Coast only once it has its own foes.
+  const regionText = r => {
+    if (r.id === 'hollow') return { arr: typeof HOLLOW_ARRIVAL !== 'undefined' ? HOLLOW_ARRIVAL : null, boss: typeof HOLLOW_ARRIVAL_BOSS !== 'undefined' ? HOLLOW_ARRIVAL_BOSS : '' };
+    if (r.id === 'coast' && r.plugged) return { arr: typeof COAST_ARRIVAL !== 'undefined' ? COAST_ARRIVAL : null, boss: typeof COAST_ARRIVAL_BOSS !== 'undefined' ? COAST_ARRIVAL_BOSS : '' };
+    return null;
+  };
+  // The arrival key and line for zone z, or null (no line for that zone: not a place's first zone).
+  const arrivalOf = z => {
+    const r = regionOf(z); if (!r || z > r.z1) return null;
+    const tx = regionText(r); if (!tx || !tx.arr) return null;
+    if (z === r.z1) return tx.boss ? { key: `a:${r.id}:boss`, region: r.id, line: tx.boss } : null;
+    const p = z - r.z0; if (p < 0 || p > 6) return null;           // first entry of each place: the first cycle
+    return tx.arr[p] ? { key: `a:${r.id}:${p}`, region: r.id, line: tx.arr[p] } : null;
+  };
+  // "Mossy Hollow. Home is dark behind you." -> head "Mossy Hollow", line "Home is dark behind you."
+  const split = s => { const i = s.indexOf('. '); return i > 0 && i < 32 ? [s.slice(0, i), s.slice(i + 2)] : ['', s]; };
+
+  storyElderKey = z => {
+    if (!(z >= 1) || typeof LORE_ELDERS === 'undefined') return null;
+    const r = regionOf(z);
+    if (r.id === 'hollow' && z === r.z1) return LORE_ELDERS.listener ? 'listener' : null;
+    if (z === r.z1) return null;                                     // other region bosses have their own lines (the Keeper: 21b)
+    const t = TYPES[zoneType(z)];
+    return t && LORE_ELDERS[t.key] ? t.key : null;
+  };
+
+  storySay = say => {
+    const out = [];
+    if (!say) return out;
+    for (const id of Object.keys(say)) {
+      const rec = typeof charRec === 'function' ? charRec(id) : null;
+      if (rec && typeof ROSTER === 'object' && ROSTER[id]) out.push({ id, name: ROSTER[id].name, short: ROSTER[id].name.replace(/^(Old|Ser|Brother|Sister|Saint|Mother) /, '').split(' ')[0], line: say[id] });
+    }
+    return out;
+  };
+
+  storyBestiary = (key, got) => {
+    const b = typeof LORE_BESTIARY !== 'undefined' && LORE_BESTIARY[key];
+    if (!b) return [];
+    const out = [];
+    if (got.foe) out.push(b.foe);
+    if (got.elder) out.push(b.elder);
+    if (got.champ) out.push(b.champ);
+    if (got.listener && typeof LORE_ELDERS !== 'undefined' && LORE_ELDERS.listener && LORE_ELDERS.listener.line) out.push(LORE_ELDERS.listener.line);
+    return out;
+  };
+
+  // ---- the beats ----
+  const seenAt = id => ST().seen['b:' + id];
+  storyHas = id => !!seenAt(id);
+  storyBeat = (id, opts) => {
+    const b = def(id);
+    if (!b || storyHas(id)) return false;
+    const quiet = !!(opts && opts.quiet);
+    ST().seen['b:' + id] = Date.now();
+    emit('storyBeat', { id, beat: b, quiet });
+    return quiet ? 'quiet' : 'card';
+  };
+  storyRead = id => {
+    if (!def(id) || ST().read[id]) return;
+    ST().read[id] = 1;
+    emit('storyRead', { id });
+  };
+  storyList = () => all().filter(b => storyHas(b.id)).map(b => ({
+    id: b.id, region: b.region, at: b.at || 0, title: b.title, text: b.text, note: b.note, head: b.head || '',
+    say: storySay(b.say), got: Math.abs(seenAt(b.id)), read: !!ST().read[b.id], late: seenAt(b.id) < 0
+  }));
+  storyUnread = () => all().filter(b => storyHas(b.id) && !ST().read[b.id]).map(b => b.id);
+  storyLate = () => all().filter(b => seenAt(b.id) < 0 && !ST().read[b.id]).map(b => b.id);
+
+  // ---- the first load: file what an old save already passed, quietly ----
+  function catchUp() {
+    const st = ST(); st.init = 1;
+    const mz = S.maxZone || 1, now = Date.now();
+    for (let z = 1; z < mz; z++) {
+      const a = arrivalOf(z); if (a) st.seen[a.key] = 1;
+      const k = storyElderKey(z); if (k) { st.seen['ei:' + k] = 1; st.seen['ef:' + k] = 1; }
+    }
+    for (const b of all()) if (b.at && b.at < mz && !st.seen['b:' + b.id]) st.seen['b:' + b.id] = -now;
+    // Great Lanterns already lit: their beats go in the list too (the card or its bell line was shown).
+    if (typeof REGIONS !== 'undefined') for (const r of REGIONS) {
+      const b = C()[r.beat];
+      if (b && mz > r.z1 && !st.seen['b:' + b.id]) st.seen['b:' + b.id] = -now;
+    }
+  }
+  const ready = () => { if (!ST().init) catchUp(); };
+
+  // ---- each tick: arrival and beats for where the party stands ----
+  let last = '';
+  storySync = () => {
+    ready();
+    const z = S.zone || 1, mz = S.maxZone || 1, fighting = S.activity === 'fight' && !(typeof arena !== 'undefined' && arena);
+    const sig = z + '|' + mz + '|' + (fighting ? 1 : 0);
+    if (sig === last) return;
+    last = sig;
+    const st = ST();
+    if (fighting) {
+      const a = arrivalOf(z);
+      if (a && !st.seen[a.key]) {
+        st.seen[a.key] = 1;
+        const [head, line] = split(a.line);
+        emit('storyArrival', { key: a.key, zone: z, region: a.region, head: head || zoneName(z), line });
+      }
+    }
+    for (const b of all()) {
+      if (!b.at || storyHas(b.id)) continue;
+      if (fighting && z === b.at) storyBeat(b.id);
+      else if (mz > b.at) storyBeat(b.id, { quiet: true });   // got past it without standing there
+    }
+  };
+  on('zoneClear', () => { last = ''; storySync(); });
+  onTick(() => storySync());
+
+  // ---- elders ----
+  on('spawn', ({ mob, zone }) => {
+    if (!mob || !mob.boss || (typeof arena !== 'undefined' && arena)) return;
+    ready();
+    // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Listener")
+    const r = regionOf(zone);
+    if (zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
+    const k = storyElderKey(zone); if (!k) return;
+    const st = ST();
+    if (st.seen['ei:' + k]) return;
+    st.seen['ei:' + k] = 1;
+    const e = LORE_ELDERS[k];
+    emit('storyElder', { key: k, kind: 'intro', name: mob.name || e.name, line: e.intro, zone });
+  });
+  on('kill', ({ mob, zone }) => {
+    if (!mob || !mob.boss) return;
+    ready();
+    const k = storyElderKey(zone); if (!k) return;
+    const st = ST();
+    if (st.seen['ef:' + k]) return;
+    st.seen['ef:' + k] = 1; st.seen['ei:' + k] = 1;
+    const e = LORE_ELDERS[k];
+    emit('storyElder', { key: k, kind: 'fall', name: mob.name || e.name, line: e.fall, zone });
+  });
+
+  // ---- the Great Lantern: its beat joins the story list (the card itself is 55-lantern's) ----
+  on('greatLantern', e => {
+    const r = regionById(e.region), b = r && C()[r.beat];
+    if (!b || storyHas(b.id)) return;
+    ready();
+    ST().seen['b:' + b.id] = e.quiet ? -Date.now() : Date.now();
+    if (!e.quiet) ST().read[b.id] = 1;   // the card was the reading
   });
 }
 
@@ -16477,7 +16769,9 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       } else if (!elder) hint = x.exact ? `Beat the ${ZONES[i]} boss (zone ${i + 1}).` : 'A boss guards this page.';
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
-        sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key };
+        sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
+        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Listener
+        lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
     })
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
@@ -28252,6 +28546,7 @@ let bondsUI = null;
   }
   function renderHome(a) {
     a.body.append(headBlock(), nextBlock());
+    if (typeof storyUI === 'object' && storyUI.codexRow) { const r = safe(() => storyUI.codexRow(), null); if (r) a.body.append(r); }   // LORE3: the story so far
     const grid = el('div', 'cx-pages');
     const pages = codexPages();
     for (const p of pages.filter(x => !x.locked)) grid.append(pageCard(p));
@@ -28330,6 +28625,7 @@ let bondsUI = null;
     x.addEventListener('click', () => { a.foot.textContent = ''; node.classList.remove('sel'); openTile = null; });
     hd.append(x);
     d.append(hd);
+    for (const l of t.lore || []) d.append(el('p', 'cx-dlore', l));
     if (t.sub) d.append(el('p', 'cx-dsub', t.sub));
     if (t.titles && t.titles.length) d.append(el('p', 'cx-dsub', 'Read: ' + t.titles.join(', ') + '.'));
     if (t.kills != null) d.append(el('p', 'cx-dsub', `${fmt(t.kills)} slain.`));
@@ -30959,6 +31255,7 @@ let deedsUI = null;
     const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
     card.append(h);
     if (e.text) card.append(el('p', 'gl-text', e.text));
+    for (const x of e.say || []) { const q = el('p', 'gl-say'); q.append(el('b', null, (x.short || x.name) + ': '), document.createTextNode(`"${x.line}"`)); card.append(q); }
     if (e.rewards && e.rewards.length) {
       const list = el('ul', 'gl-rw');
       for (const x of e.rewards) {
@@ -30984,7 +31281,7 @@ let deedsUI = null;
   }
   on('greatLantern', e => {
     if (!e || e.quiet) return;
-    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice() });
+    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice(), say: (e.say || []).slice() });
     setTimeout(showNext, 0);
     road.sig = '';
   });
@@ -33832,6 +34129,207 @@ let openSheet, partySheet;
   }
 }
 
+// ---- src/js/75-story-ui.js ----
+// 75-story-ui: how the story reaches the player (task LORE3; lore.md 9). Browser-only; logic in
+// 55-story.js. Small and skippable; nothing here blocks play.
+//
+// On the stage (one caption at a time, in the stage's open sky; a tap dismisses it):
+//   - an arrival banner the first time the party fights in a place: the place name, one line
+//   - an elder line when a boss of a new type appears (intro) and on its first kill (fall)
+//   - a story chip when a beat plays: "New story: Wisps. Read" (tap opens the card; it waits in the
+//     Codex if it goes unread). A quiet beat (a save that got past it) shows its one-line note.
+// Captions wait while a menu covers the stage or a full-screen card is up; arrival and elder lines
+// that could not show within a few seconds are dropped (they belong to the moment), story chips wait.
+// Reduced motion: no slide or fade, the caption just appears and goes.
+// The beat card: a small bottom sheet (title, 2-5 sentences, lines from recruited companions).
+// The Codex home gets a "Story" row (storyUI.codexRow, read by 75-codex-ui): the story so far, and
+// for old saves one "Catch up on the story" entry that reads the missed pages in order.
+// API: storyUI { open(id), list(fromCodex), codexRow() }.
+var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
+{
+  const btn = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+  const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] story ui', e); return d; } };
+  const PAGE_IC = () => iconURL('charm', '#F2E27A');
+  const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .bsheet-ov, .dd-fc-ov, .dw-ov';
+  const covered = () => (!!S.tab && !(typeof isWide === 'function' && isWide())) || !!document.querySelector(BLOCK);
+  const REGION_N = { hollow: 'the Hollow', coast: 'the Sunken Coast' };
+  const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n}` : ''; };
+
+  // ---------------- the stage caption ----------------
+  const queue = [];
+  let cur = null, pumpT = 0;
+  const stageBox = () => document.getElementById('stageBox');
+  function push(item) {
+    item.at = Date.now();
+    // one arrival at a time: a newer place replaces an older one still waiting
+    if (item.kind === 'arrival') for (let i = queue.length - 1; i >= 0; i--) if (queue[i].kind === 'arrival') queue.splice(i, 1);
+    // an elder's line jumps ahead of story chips (it belongs to the fight on screen)
+    if (item.kind !== 'beat') { const i = queue.findIndex(q => q.kind === 'beat'); if (i >= 0) { queue.splice(i, 0, item); pump(); return; } }
+    queue.push(item);
+    pump();
+  }
+  function pump() {
+    clearTimeout(pumpT);
+    if (cur || !queue.length) return;
+    const now = Date.now();
+    for (let i = queue.length - 1; i >= 0; i--) {
+      const q = queue[i];
+      if (q.kind !== 'beat' && (now - q.at > 12000 || (q.zone && q.zone !== S.zone))) queue.splice(i, 1);   // the moment has passed
+    }
+    if (!queue.length) return;
+    if (covered() || !stageBox()) { pumpT = setTimeout(pump, 500); return; }
+    show(queue.shift());
+  }
+  function hide(node, instant) {
+    if (!node || node._gone) return;
+    node._gone = true; clearTimeout(node._t);
+    const done = () => { node.remove(); if (cur === node) cur = null; setTimeout(pump, reduced ? 0 : 250); };
+    if (instant || reduced) done();
+    else { node.classList.add('out'); setTimeout(done, 260); }
+  }
+  function show(item) {
+    const box = stageBox(); if (!box) return;
+    let node;
+    if (item.kind === 'beat') {
+      node = btn('sty-chip' + (item.quiet ? ' quiet' : ''));
+      node.append(img(PAGE_IC(), 'px sty-chip-ic'));
+      const tx = el('span', 'sty-chip-tx');
+      tx.append(el('span', 'sty-chip-eye', 'New story'), el('b', 'sty-chip-t', item.title));
+      if (item.quiet && item.note) tx.append(el('span', 'sty-chip-note', item.note));
+      node.append(tx, el('span', 'sty-chip-go', 'Read'));
+      node.setAttribute('aria-label', `New story: ${item.title}. Read it`);
+      node.addEventListener('click', e => { e.stopPropagation(); hide(node, true); openBeat(item.id); });
+      node._t = setTimeout(() => hide(node), 14000);
+    } else {
+      node = el('div', 'sty-cap ' + item.kind);
+      node.setAttribute('role', 'status');
+      if (item.head) node.append(el('b', 'sty-cap-h', item.head));
+      node.append(el('span', 'sty-cap-l', item.line));
+      node.addEventListener('click', e => { e.stopPropagation(); hide(node); });
+      node._t = setTimeout(() => hide(node), Math.min(7500, 2800 + item.line.length * 45));
+      // an arrival banner goes when the party leaves the place; an elder's intro makes way for its fall
+      node._item = item; node._shown = Date.now();
+      if (item.zone) { const w = setInterval(() => { if (node._gone) clearInterval(w); else if (S.zone !== item.zone) { clearInterval(w); hide(node); } }, 500); }
+    }
+    if (!reduced) node.classList.add('in');
+    cur = node;
+    box.append(node);
+  }
+
+  on('storyArrival', e => push({ kind: 'arrival', head: e.head, line: e.line, zone: e.zone }));
+  on('storyElder', e => {
+    if (e.kind === 'fall') {
+      // a quick kill: the intro still waiting is dropped, one on screen stays a moment and goes
+      for (let i = queue.length - 1; i >= 0; i--) if (queue[i].key === e.key) queue.splice(i, 1);
+      if (cur && cur._item && cur._item.key === e.key) { const n = cur; clearTimeout(n._t); n._t = setTimeout(() => hide(n), Math.max(0, 1800 - (Date.now() - n._shown))); }
+    }
+    push({ kind: 'elder ' + e.kind, key: e.key, head: e.name, line: e.line });
+  });
+  on('storyBeat', e => { const b = e.beat || {}; push({ kind: 'beat', id: e.id, title: b.title, note: b.note, quiet: !!e.quiet }); });
+  on('storyRead', () => { });
+  // a menu opening covers the stage: let the caption finish where it is, the queue waits
+  on('menuView', () => pump());
+
+  // ---------------- the beat card ----------------
+  let fromCodex = false;
+  function openBeat(id, opts) {
+    if (typeof openSheet !== 'function') return;
+    const list = storyList(), b = list.find(x => x.id === id); if (!b) return;
+    const chain = opts && opts.chain;   // catch-up: step through these ids
+    storyRead(id);
+    openSheet(api => {
+      api.sheet.classList.add('sty-sheet');
+      if (fromCodex || chain) {
+        const back = btn('sty-back', '‹ Story'); back.setAttribute('aria-label', 'Back to the story so far');
+        back.addEventListener('click', () => openList(fromCodex));
+        api.body.append(back);
+      }
+      const card = el('article', 'sty-card');
+      const where = [chapterOf(b.region), b.at ? `Zone ${b.at}` : ''].filter(Boolean).join(' · ');
+      if (where) card.append(el('span', 'sty-eye', where));
+      const h = el('h2', 'sty-title', b.title); h.id = 'styTitle';
+      card.append(h);
+      if (b.head) card.append(el('p', 'sty-head', b.head));
+      card.append(el('p', 'sty-text', b.text));
+      for (const x of b.say) { const q = el('p', 'sty-say'); q.append(el('b', null, x.short + ': '), document.createTextNode(`"${x.line}"`)); card.append(q); }
+      api.body.append(card);
+      const row = el('div', 'sty-actions');
+      const next = chain && chain.filter(x => x !== id && storyUnread().includes(x))[0];
+      if (next) {
+        const n = list.find(x => x.id === next);
+        const nb = btn('big forge sty-next', `Next: ${n ? n.title : 'more'}`);
+        nb.addEventListener('click', () => openBeat(next, { chain }));
+        row.append(nb);
+      }
+      const done = btn(next ? 'mini sty-done' : 'big forge sty-done', next ? 'Later' : 'Close');
+      done.addEventListener('click', () => api.close());
+      row.append(done);
+      api.body.append(row);
+      api.sheet.setAttribute('aria-labelledby', 'styTitle');
+    }, { label: b.title, small: true, onClose() { fromCodex = false; } });
+  }
+
+  // ---------------- the story so far (from the Codex) ----------------
+  function openList(codex) {
+    if (typeof openSheet !== 'function') return;
+    openSheet(api => {
+      fromCodex = !!codex;
+      api.sheet.classList.add('sty-sheet');
+      if (codex) {
+        const back = btn('sty-back', '‹ Codex'); back.setAttribute('aria-label', 'Back to the Codex');
+        back.addEventListener('click', () => emit('codexOpen', { page: null }));
+        api.body.append(back);
+      }
+      api.body.append(el('h2', 'sty-ltitle', 'The story so far'));
+      const list = storyList(), late = storyLate();
+      if (late.length) {
+        const c = btn('sty-catch');
+        c.append(img(PAGE_IC(), 'px sty-chip-ic'));
+        const tx = el('span', 'sty-chip-tx');
+        tx.append(el('b', null, 'Catch up on the story'), el('span', 'sty-chip-note', `${late.length} ${late.length > 1 ? 'pages' : 'page'} from before you got here. One tap each.`));
+        c.append(tx, el('span', 'sty-chip-go', 'Read'));
+        c.addEventListener('click', () => { fromCodex = !!codex; openBeat(late[0], { chain: late }); });
+        api.body.append(c);
+      }
+      if (!list.length) api.body.append(el('p', 'note sty-empty', 'The road has only begun. Pages join here as you walk it.'));
+      let region = '';
+      const box = el('div', 'sty-rows');
+      for (const b of list) {
+        if (b.region !== region) { region = b.region; box.append(el('h3', 'sty-grp', chapterOf(region))); }
+        const r = btn('sty-row' + (b.read ? '' : ' unread'));
+        r.append(img(PAGE_IC(), 'px sty-row-ic'));
+        const tx = el('span', 'sty-row-tx');
+        tx.append(el('b', null, b.title), el('span', null, b.note));
+        r.append(tx);
+        if (!b.read) r.append(el('span', 'cx-dot'));
+        r.addEventListener('click', () => { fromCodex = !!codex; openBeat(b.id); });
+        box.append(r);
+      }
+      api.body.append(box);
+      const ahead = STORY_NEXT();
+      if (ahead) api.body.append(el('p', 'note sty-ahead', `The next page waits at zone ${ahead}.`));
+    }, { label: 'The story so far', small: true });
+  }
+  // the next beat with a zone the save has not reached
+  const STORY_NEXT = () => { const b = (typeof HOLLOW_STORY !== 'undefined' ? HOLLOW_STORY : []).find(x => x.at && !storyHas(x.id)); return b ? b.at : 0; };
+
+  // ---------------- the Codex row ----------------
+  function codexRow() {
+    const list = storyList(), unread = list.filter(b => !b.read).length, late = storyLate().length;
+    const r = btn('sty-cx' + (unread ? ' news' : ''));
+    r.append(img(PAGE_IC(), 'px sty-cx-ic'));
+    const tx = el('span', 'sty-cx-tx');
+    tx.append(el('b', null, 'Story'), el('span', null, late ? 'Catch up on the story' : list.length ? `${list.length} ${list.length > 1 ? 'pages' : 'page'}${unread ? `, ${unread} new` : ''}` : 'Pages join as you walk the road'));
+    r.append(tx, el('span', 'sty-cx-go', 'Read'));
+    if (unread) r.append(el('span', 'cx-dot'));
+    r.setAttribute('aria-label', `The story so far${unread ? `, ${unread} unread` : ''}`);
+    r.addEventListener('click', () => openList(true));
+    return r;
+  }
+
+  storyUI = { open: id => openBeat(id), list: codex => openList(!!codex), codexRow };
+}
+
 // ---- src/js/75-tools-ui.js ----
 // 75-tools-ui: the tool card on the Gather tab's node views, and the Mastery box on a tool's item
 // sheet (task H2; docs/design/hearth-and-hands.md 2.4, 3 and 11). Browser-only. Rules: 55-tools.js.
@@ -34253,7 +34751,7 @@ document.addEventListener('click', e => {
     const inner = el('div', 'create-in');
     const h = el('h1', null, mode === 'new' ? 'Who carries the lantern?' : mode === 'mirror' ? 'The mirror shows another path' : 'Choose your path'); h.id = 'createTitle';
     const lede = el('p', 'create-lede', mode === 'new'
-      ? 'You carry the last lantern. Pick who you are, then name yourself.'
+      ? 'You carry one of the last lanterns. Pick who you are, then name yourself.'
       : mode === 'mirror'
         ? 'Pick a new class. Your level, gear and upgrades stay with you.'
         : 'Heroes now have classes. Warden fights like you always have, so one tap keeps things as they are.');

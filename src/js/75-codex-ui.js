@@ -141,6 +141,7 @@
   }
   function renderHome(a) {
     a.body.append(headBlock(), nextBlock());
+    if (typeof storyUI === 'object' && storyUI.codexRow) { const r = safe(() => storyUI.codexRow(), null); if (r) a.body.append(r); }   // LORE3: the story so far
     const grid = el('div', 'cx-pages');
     const pages = codexPages();
     for (const p of pages.filter(x => !x.locked)) grid.append(pageCard(p));
@@ -219,6 +220,7 @@
     x.addEventListener('click', () => { a.foot.textContent = ''; node.classList.remove('sel'); openTile = null; });
     hd.append(x);
     d.append(hd);
+    for (const l of t.lore || []) d.append(el('p', 'cx-dlore', l));
     if (t.sub) d.append(el('p', 'cx-dsub', t.sub));
     if (t.titles && t.titles.length) d.append(el('p', 'cx-dsub', 'Read: ' + t.titles.join(', ') + '.'));
     if (t.kills != null) d.append(el('p', 'cx-dsub', `${fmt(t.kills)} slain.`));
