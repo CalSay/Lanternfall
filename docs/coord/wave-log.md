@@ -685,3 +685,13 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   switcher, swipe between views), Gather rebuilt (Now card, level tabs with XP bars, Best for you, compact
   rows, lower tiers folded), Storehouse view, tool sheet, Raid button removed from the control row.
   NAV_TUNE.pillReplacesName = true. Perf needs one quiet re-run.
+- MODEL ROUTING (owner approved 2026-09-28; the coordinator may adjust if issues appear). Pass `model` on
+  every Agent launch:
+  - opus: hard cross-system engineering and balance (BAL3, formation/planner, K13 production chains, the
+    World map shell UX-W1, anything sim-tuned or with tricky merges).
+  - sonnet: well-specified builds and UI screens (N2/N3 Hands UI and camp art, Armoury screens, HINT1,
+    UX-B..G screens after the kit exists), art from an approved style guide (ICON1 after the owner picks),
+    writing and docs (LORE6-8, bond stories, Hand talk lines, the NM1 heroes/Lanternbearer copy pass),
+    style studies (ICON0).
+  - haiku: small mechanical, low-risk jobs (narrow text swaps, lookups).
+  Review merges as usual; if a sonnet/haiku task misses edge cases, re-route that kind of task to opus.
