@@ -24,7 +24,7 @@
 .ex-slot.back .ex-sub { color: var(--gold); }
 .ex-foot { display: flex; gap: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 2px; }
 .ex-acts { display: flex; gap: 5px; margin-left: auto; }
-.ex-acts .mini { min-height: 40px; padding: 4px 9px; }
+.ex-acts .mini { min-height: 44px; padding: 4px 9px; }
 .ex-acts .mini.on { border-color: var(--xp); color: var(--xp); }
 .ex-acts .mini.armed { background: #3A1E22; }
 .ex-free { min-height: 48px; background: none; border: 2px dashed var(--line-hi); color: var(--muted); font: 600 15px var(--display); cursor: pointer; }
@@ -33,7 +33,7 @@
 /* ---- filters ---- */
 .ex-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .ex-filters::-webkit-scrollbar { display: none; }
-.ex-chip { flex: none; min-height: 36px; padding: 4px 12px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.ex-chip { flex: none; min-height: 44px; padding: 4px 12px; background: var(--well); border: 1px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
 .ex-chip.on { color: #1A1420; background: var(--ember); border-color: var(--ember-deep); }
 
 /* ---- route cards ---- */
@@ -57,7 +57,7 @@
 
 /* ---- log ---- */
 .ex-log { background: var(--well); border: 1px solid var(--line); padding: 0 9px; }
-.ex-log summary { min-height: 40px; display: flex; align-items: center; font: 600 13px var(--display); color: var(--muted); cursor: pointer; }
+.ex-log summary { min-height: 44px; display: flex; align-items: center; font: 600 13px var(--display); color: var(--muted); cursor: pointer; }
 .ex-log[open] { padding-bottom: 8px; }
 .ex-lrow { display: grid; gap: 1px; padding: 5px 0; border-top: 1px solid var(--line); }
 .ex-lt { display: flex; justify-content: space-between; gap: 8px; font: 600 13px var(--display); }
@@ -85,9 +85,9 @@
 .ex-tslot.r-epic { border-color: var(--r-epic); }
 .ex-tslot.r-legendary { border-color: var(--r-legendary); }
 .ex-tslot.picking { outline: 2px solid var(--ember); outline-offset: 1px; }
-.ex-best { justify-self: start; min-height: 40px; }
+.ex-best { justify-self: start; min-height: 44px; }
 .ex-bench { display: grid; gap: 4px; padding: 6px; background: var(--well); border: 1px solid var(--line); }
-.ex-bench > .mini { justify-self: start; min-height: 36px; }
+.ex-bench > .mini { justify-self: start; min-height: 44px; }
 .ex-brow { width: 100%; min-height: 48px; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; align-items: center; padding: 4px 6px; text-align: left; background: var(--panel); border: 1px solid var(--line); cursor: pointer; }
 .ex-brow.on { border-color: var(--ember); }
 .ex-btxt { min-width: 0; display: grid; }

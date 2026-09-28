@@ -4,7 +4,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { ROOT, loadCore, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
+import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
+
+// Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
+// changes prices, drops or odds under a check. The Almanac checks restore the calendar with
+// almanac.force(undefined) where they test it.
+function loadCore(opts) {
+  const g = loadCoreRaw(opts);
+  try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
+  return g;
+}
 
 let failed = 0;
 const ok = msg => console.log('  ok   ' + msg);
@@ -1812,6 +1821,62 @@ try {
   }
   assert(!errs.length, 'no constellation errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('constellations crashed: ' + (e.stack || e)); }
+
+// ---- Q1 quality fixes and the D3 live-save welcome (55-welcome.js) ----
+console.log('welcome');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
+  const DEF = { watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 };
+  const errs = [];
+  // The Omen pin holds for every game this run loads.
+  assert(loadCore({ seed: 3 }).eval('almanac.active() === null'), 'the Omen is pinned to none for the whole check run');
+  for (const f of ['save-v2.json', 'save-a-v1.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const old = JSON.parse(rawOf(f));
+    const g = loadCore({ seed: 8, storage: memoryStorage({ [KEY]: JSON.stringify(old) }) });
+    const E = s => g.eval(s);
+    const allow = E('CAMP_HZ.filter(z => S.maxZone >= z).length'), welcomed = allow >= 2;
+    const news = [], toasts = [];
+    g.fn.on('whatsNew', w => news.push(w.msg)); g.fn.on('toast', t => toasts.push(t.msg));
+    // at load, before any tick: the Hearth only, no cost
+    const same = E('S.gold') === old.gold && JSON.stringify(E('S.mats')) === JSON.stringify(Object.assign(E('fresh().mats'), old.mats));
+    assert(same && E('S.camp.builds.length') === 0 && E(`campLevel("hearth")`) === (welcomed ? allow : 0), `${f} (zone ${old.maxZone}): ${welcomed ? `Hearth built to ${allow}` : 'no welcome (Hearth 1 comes with the camp)'}, nothing charged`);
+    ticks(g, 2);
+    const b = E('S.camp.b');
+    assert(E('S.camp.open') && b.hearth === Math.max(1, allow) && Object.entries(DEF).every(([k, v]) => b[k] === v), `${f}: camp open at Hearth ${b.hearth}; every other building as a new camp has it`);
+    if (welcomed) {
+      assert(E('S.welcome.at') > 0 && E('S.welcome.hearth') === allow && E('S.welcome.zone') === old.maxZone && E('S.welcome.said') === 1, `${f}: welcome recorded and said once`);
+      assert(news.length === 1 && /Welcome back/.test(news[0]) && news[0].includes(`level ${allow}`) && !toasts.some(m => /made camp/.test(m)), `${f}: one What's new line, no second camp notice: "${news[0]}"`);
+    } else assert(E('S.welcome.at') === 0 && !news.length && toasts.some(m => /made camp/.test(m)), `${f}: no welcome; the usual camp notice`);
+    // one time only: reload the saved game
+    g.fn.save();
+    const g2 = loadCore({ seed: 9, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    const n2 = []; g2.fn.on('whatsNew', w => n2.push(w)); ticks(g2, 2);
+    assert(g2.eval('campLevel("hearth")') === Math.max(1, allow) && g2.eval('S.welcome.at') === E('S.welcome.at') && !n2.length && g2.eval('welcomeNote()') === null, `${f}: reload gives no second welcome`);
+    errs.push(...g.errors, ...g2.errors);
+  }
+  // a new game gets nothing, even past zone 38
+  const n = loadCore({ seed: 4 }); n.eval('S.maxZone = 38; S.zone = 38'); ticks(n, 2);
+  assert(n.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'new game: no welcome (the camp opens at Hearth 1)');
+  // a save that already has a camp keeps it as it is
+  const withCamp = JSON.parse(rawOf('save-v2-late.json'));
+  withCamp.camp = { v: 1, open: true, b: { hearth: 2, watch: 1, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 }, builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {} };
+  const c = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(withCamp) }) }); ticks(c, 2);
+  assert(c.eval('S.welcome.at === 0 && campLevel("hearth") === 2 && campLevel("watch") === 1'), 'a save that has a camp: nothing changes (Hearth 2 stays 2)');
+  // an old save still below zone 5 is not welcomed now, and not later when it reaches the camp
+  const low = JSON.parse(rawOf('save-v2.json')); low.maxZone = 3; low.zone = 3;
+  const l = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: JSON.stringify(low) }) }); ticks(l, 1);
+  l.eval('S.maxZone = 20; S.zone = 20'); ticks(l, 2);
+  assert(l.eval('S.welcome.at === 0 && campLevel("hearth") === 1'), 'old save below zone 5: no welcome, the camp opens at Hearth 1');
+  errs.push(...n.errors, ...c.errors, ...l.errors);
+  // Watchtower hold hint: partyHoldEstimate() when party combat defines it, today's rule otherwise
+  const hz = extra => { const h = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }), extraSource: extra }); return h.eval('campHoldZone()'); };
+  const base = hz('');
+  assert(base >= 1 && base <= 38, `hold hint without party combat: zone ${base} (3-second kills)`);
+  assert(hz('function partyHoldEstimate() { return { zone: 12 }; }') === 12 && hz('function partyHoldEstimate() { return 30.6; }') === 30, 'hold hint reads partyHoldEstimate() ({ zone } or a number)');
+  assert(hz('function partyHoldEstimate() { return 99; }') === 38 && hz('function partyHoldEstimate() { throw new Error("x"); }') === base, 'hold hint: capped at your best zone; falls back if the estimate fails');
+  assert(!errs.length, 'no welcome errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('welcome crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
