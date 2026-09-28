@@ -2846,8 +2846,9 @@ try {
   // tools: the right one per skill, tier from the skill level, and every class builds holding each
   const tf = E(`(() => { S.skills.mine.lv = 1; S.skills.wood.lv = NODE_REQ[2]; S.skills.forage.lv = 99;
     return ['mine', 'wood', 'forage', 'fish', 'smith'].map(k => toolFor(k)); })()`);
-  assert(tf[0].k === 'pick' && tf[0].t === 1 && tf[0].name === 'Copper Pickaxe' && tf[1].k === 'axe' && tf[1].t === 3 && tf[1].name === 'Mithril Woodaxe'
-    && tf[2].k === 'sickle' && tf[2].t === 5 && tf[3].k === 'rod' && tf[4] === null, `toolFor: ${tf.slice(0, 4).map(t => t.name).join(', ')}; none for Smithing`);
+  // H2: the stage draws the EQUIPPED tool; an empty slot is the rough tool (drawn as tier 1, plain).
+  assert(tf[0].k === 'pick' && tf[0].t >= 1 && /Pick/.test(tf[0].name) && tf[1].k === 'axe' && tf[2].k === 'sickle'
+    && tf[3].k === 'rod' && tf[4] === null, `toolFor: ${tf.slice(0, 4).map(t => t.name).join(', ')}; none for Smithing`);
   const art = E(`(() => {
     const bad = [], num = s => s.t === 'p' ? s.pts.every(Number.isFinite) : [s.cx, s.cy, s.x1, s.y1, s.x2, s.y2, s.x, s.y].filter(v => v !== undefined).every(Number.isFinite);
     let n = 0, lamps = 0;

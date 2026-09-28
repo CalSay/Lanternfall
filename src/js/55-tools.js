@@ -96,6 +96,12 @@ function toolRight(skill, t) {
     return { kind: e.kind, tier: e.tier, col: e.tier ? MAT.ore.col[e.tier - 1] : null,
       glow: !!(it && (it.u || it.lr || it.r === 'epic' || it.r === 'legendary')), master: lvOf(e.kind) >= TOOL_TUNE.masteryMax };
   };
+  // G1's stage art (11c toolFor) now draws the equipped tool; the rough tool draws as tier 1 plain.
+  if (typeof toolFor !== 'undefined') { const artTool = toolFor; toolFor = skill => {
+    const e = equippedTool(skill); if (!e.kind) return artTool(skill);   // the rod until the Coast adds it
+    const RR = { common: 0, uncommon: 1, rare: 1, epic: 2, legendary: 3 }, it = e.item;
+    return { k: e.kind, t: Math.max(1, e.tier), r: it ? (it.u || it.lr ? 3 : RR[it.r] || 0) : 0, name: toolName(skill) };
+  }; }
   toolName = skill => {
     const e = equippedTool(skill); if (!e.kind) return '';
     if (!e.item) return `${TOOL_KINDS[e.kind].rough} (rough)`;
