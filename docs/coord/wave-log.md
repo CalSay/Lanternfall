@@ -401,3 +401,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   for H2 to repoint at equippedTool; the hero gathers alone; 55-rested.js Well Rested (REST_TUNE rate 0.5,
   cap 180s, +10% dmg, zone fights only). NODE_HIT strike fractions in 62-stage heroHome (G2 told).
   Perf noisy, no regression read.
+- W6b merged: 59c-deepwell-combat.js (a floor is one pack, HP carried with 25% per cleared floor, a wipe
+  ends the run, Oil +5s refunds and +2s per parried wind-up, Taunt Drill any class, Lifeline once per floor,
+  D8 Deep Edge +20%/rank). Median depth 19, runs 7-8 min. Follow-ups queued: Overflow boon is dead in packs
+  (rework); the arena wipe animation plays behind the run-end card (62-stage); Deep Lore total 10,070 Marks
+  (retune in BAL3); run length below the 8-15 min target (BAL3). Perf phone/late noisy on a busy machine.
