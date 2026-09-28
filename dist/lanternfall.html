@@ -23,7 +23,7 @@
   --r-uncommon: #6FCB6A;
   --r-rare: #5FA8FF;
   --r-epic: #B58CFF;
-  --r-legendary: #FF9E3D;
+  --r-legendary: #FF8A3D;   /* one legendary orange: LEG_COL, LEG_FRAME (legendaries.md 1) */
   --display: "Pixelify Sans", "Courier New", monospace;
   --body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
   background: var(--bg);
@@ -239,7 +239,7 @@ button * { pointer-events: none; }
 .ic.f-uncommon { border-color: var(--r-uncommon); }
 .ic.f-rare { border-color: var(--r-rare); box-shadow: inset 0 0 0 2px #0B0810, 0 0 8px rgba(95,168,255,.3); }
 .ic.f-epic { border-color: var(--r-epic); box-shadow: inset 0 0 0 2px #0B0810, 0 0 10px rgba(181,140,255,.4); }
-.ic.f-legendary { border-color: var(--r-legendary); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,158,61,.45); }
+.ic.f-legendary { border-color: var(--r-legendary); box-shadow: inset 0 0 0 2px #0B0810, 0 0 12px rgba(255,138,61,.45); }
 .ic.f-legendary::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,235,190,.35) 50%, transparent 65%); background-size: 250% 100%; animation: shine 2.6s linear infinite; }
 .ic.ghost img { filter: brightness(0); opacity: .45; }
 @keyframes shine { from { background-position: 150% 0; } to { background-position: -100% 0; } }
@@ -298,7 +298,7 @@ button * { pointer-events: none; }
 .slotname { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .iname { font: 600 16px/1.2 var(--display); }
 .rar-common { color: var(--r-common); } .rar-uncommon { color: var(--r-uncommon); } .rar-rare { color: var(--r-rare); } .rar-epic { color: var(--r-epic); } .rar-legendary { color: var(--r-legendary); }
-.row.rb-legendary { border-color: rgba(255,158,61,.55); background: linear-gradient(90deg, rgba(255,158,61,.08), var(--panel) 60%); }
+.row.rb-legendary { border-color: rgba(255,138,61,.55); background: linear-gradient(90deg, rgba(255,138,61,.08), var(--panel) 60%); }
 .delta { font-size: 12px; font-weight: 600; }
 .delta.up { color: var(--xp); } .delta.down { color: var(--muted); }
 
@@ -306,7 +306,7 @@ button * { pointer-events: none; }
 .trophy { background: var(--panel); border: 2px dashed var(--line); padding: 8px; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: center; }
 .trophy .ic { grid-row: span 3; width: 36px; height: 36px; }
 .trophy .ic img { width: 24px; height: 24px; }
-.trophy.found { border-style: solid; border-color: rgba(255,158,61,.45); }
+.trophy.found { border-style: solid; border-color: rgba(255,138,61,.45); }
 .trophy .tn { font: 600 14px var(--display); }
 .trophy .ts { font-size: 12px; color: var(--muted); }
 
@@ -344,7 +344,7 @@ button * { pointer-events: none; }
 .toast.raid { border-left-color: var(--hp); }
 .toast.good { border-left-color: var(--xp); }
 .toast.hi { font: 600 12.5px/1.25 var(--body); border-color: rgba(242,193,78,.55); border-left-color: var(--gold); }
-.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF2, #1A120AF2); font: 600 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810, 0 0 14px rgba(255,158,61,.35); }
+.toast.loot { border-color: var(--r-legendary); border-left-color: var(--r-legendary); background: linear-gradient(90deg, #3A220CF2, #1A120AF2); font: 600 12.5px/1.25 var(--body); box-shadow: 0 2px 0 #0B0810, 0 0 14px rgba(255,138,61,.35); }
 .toast.out { opacity: 0; transform: translateY(-6px); }
 .toast.gone { opacity: 0; }
 @keyframes tin { from { transform: translateY(-8px); opacity: 0; } }
@@ -503,7 +503,7 @@ button * { pointer-events: none; }
 
 .away-items { display: grid; gap: 5px; }
 .away-item { display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 5px; background: var(--well); border: 1px solid var(--line); min-width: 0; }
-.away-item.uniq { border-color: rgba(255,158,61,.5); background: linear-gradient(90deg, rgba(255,158,61,.12), var(--well) 70%); }
+.away-item.uniq { border-color: rgba(255,138,61,.5); background: linear-gradient(90deg, rgba(255,138,61,.12), var(--well) 70%); }
 .away-item .ic { width: 36px; height: 36px; } .away-item .ic img { width: 24px; height: 24px; }
 .away-it { display: grid; min-width: 0; }
 .away-in { font: 600 14px/1.15 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1414,6 +1414,146 @@ span.cf-d { font-weight: 600; }
   .nu-cbar { transition: none; }
   .nu-flash { animation: none; outline: 2px solid var(--gold); outline-offset: 1px; }
 }
+/* 60-legend: legendary powers and circle sets (75-legend-ui.js, task L4). One orange: --r-legendary (#FF8A3D). 44px touch targets. */
+.lg-lbl { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lg-st { display: grid; gap: 2px; min-width: 0; }
+.lg-st b { font: 600 14.5px/1.15 var(--display); overflow-wrap: anywhere; }
+.lg-st small { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.lg-capchip { padding: 2px 8px; font: 600 11.5px/1.5 var(--display); letter-spacing: .06em; text-transform: uppercase; color: #1A1420; background: var(--r-legendary); box-shadow: 0 0 10px rgba(255,138,61,.35); }
+
+/* the framed power icon (LEG_FRAME is drawn into the image) */
+.lg-ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; }
+.lg-ic img { width: 36px; height: 36px; image-rendering: pixelated; image-rendering: crisp-edges; }
+.lg-ic.dim img { filter: brightness(0) invert(.25); opacity: .6; }
+.lg-ic.empty { border: 2px dashed var(--line-hi); background: var(--well); width: 36px; height: 36px; margin: 2px; }
+.lg-li { width: 20px; height: 20px; }
+.lg-pips { display: inline-flex; gap: 2px; flex: none; }
+.lg-pips i { width: 7px; height: 7px; background: var(--line); box-shadow: inset 0 0 0 1px #0B0810; }
+.lg-pips i.on { background: var(--r-legendary); box-shadow: 0 0 4px rgba(255,138,61,.6); }
+
+/* Your powers */
+.lg-build { gap: 8px; padding: 12px; border-color: #5A3A28; background: linear-gradient(180deg, rgba(255,138,61,.08), var(--panel) 60%); }
+.lg-slots { display: grid; gap: 6px; }
+.lg-slot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; min-height: 44px; }
+.lg-slot b { color: var(--r-legendary); }
+.lg-slot.empty .lg-st { font-size: 12.5px; color: var(--muted); }
+.lg-comps { display: grid; gap: 4px; }
+.lg-crow { display: grid; grid-template-columns: 24px auto minmax(0, 1fr); gap: 8px; align-items: center; min-height: 28px; font-size: 13px; }
+.lg-cpt { width: 24px; height: 24px; object-fit: cover; image-rendering: pixelated; background: var(--panel-2); border: 1px solid var(--line-hi); }
+.lg-cn { font: 600 13px var(--display); }
+.lg-cp { color: var(--r-legendary); font: 600 13px var(--display); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-cp.none { color: var(--muted); font-weight: 500; }
+.lg-budget { margin: 0; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+.lg-budget.hit { color: var(--r-legendary); }
+.lg-learn { display: grid; gap: 6px; }
+.lg-learn:empty { display: none; }
+
+/* lists */
+.lg-list { display: grid; gap: 6px; }
+.lg-list.dz-list { gap: 0; }
+.lg-lrow, .lg-pick { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; padding: 8px; background: var(--well); border: 2px solid rgba(255,138,61,.45); }
+.lg-pick { border-color: var(--line); }
+.lg-pick.has { border-color: rgba(255,138,61,.45); }
+.lg-lrow .ic, .lg-pick .ic { cursor: pointer; }
+.lg-lrow .mini, .lg-pick .mini { min-height: 44px; min-width: 64px; }
+.lg-lrow > .costs, .lg-pick > .costs, .lg-why, .lg-ask { grid-column: 1 / -1; }
+.lg-why { font-size: 12.5px; color: #FFB27A; }
+.lg-repl { color: #FFB27A !important; }
+.lg-ask { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); }
+.lg-ask .mini { min-height: 44px; }
+.mini.lg-arm { background: var(--gold); color: #2A1E07; box-shadow: inset 0 2px 0 rgba(255,255,255,.3), inset 0 -2px 0 #A77B1E; }
+
+/* Lantern Book */
+.lg-filt { margin-bottom: 2px; }
+.lg-count { font-variant-numeric: tabular-nums; }
+.lg-book { display: grid; gap: 6px; }
+.lg-gh { margin: 6px 0 0; font: 600 11.5px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.lg-row { display: grid; padding: 4px 8px; }
+.lg-row + .lg-row { border-top: 1px solid var(--line); }
+.lg-hit { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 52px; }
+.lg-rb { display: grid; gap: 3px; min-width: 0; }
+.lg-rt { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.lg-rt b { font: 600 15px/1.15 var(--display); color: var(--r-legendary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-row.unknown .lg-rt b { color: var(--muted); }
+.lg-rs { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.lg-rs .lg-on { color: var(--bone); }
+.lg-rs .act { color: var(--xp); }
+.lg-row .lg-more, .lg-set .lg-more { display: none; }
+.lg-row.open .lg-more, .lg-set.open .lg-more { display: grid; gap: 6px; padding: 2px 0 8px 50px; }
+.lg-set.open .lg-more { padding: 0; }
+.lg-txt { margin: 0; font-size: 14px; line-height: 1.35; color: var(--bone); }
+.lg-inb { justify-self: start; min-height: 44px; }
+
+/* Inscribe sheet */
+.lg-ihead { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.lg-ih { margin: 0; font: 600 20px/1.1 var(--display); color: var(--r-legendary); text-shadow: 0 2px 0 #0B0810; }
+.lg-sheet .bsheet-body { display: grid; gap: 10px; align-content: start; }
+
+/* Circle sets */
+.lg-sigils { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.lg-sig { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 6px; row-gap: 1px; align-items: center; padding: 5px 6px; background: var(--well); border: 2px solid var(--line); min-width: 0; }
+.lg-sig img { width: 22px; height: 22px; image-rendering: pixelated; }
+.lg-sig small { grid-column: 1 / -1; }
+.lg-sig b { font: 600 15px/1 var(--display); font-variant-numeric: tabular-nums; }
+.lg-sig small { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lg-sets { display: grid; gap: 6px; }
+.lg-set { display: grid; gap: 6px; padding: 8px 10px; background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.lg-set.on { border-color: rgba(255,138,61,.6); background: linear-gradient(180deg, rgba(255,138,61,.08), var(--panel) 70%); }
+.lg-set.none { opacity: .8; }
+.lg-sethit { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center; min-height: 44px; }
+.lg-sigic { width: 28px; height: 28px; image-rendering: pixelated; }
+.lg-set.on .lg-st b { color: var(--r-legendary); }
+.lg-tiers { display: flex; gap: 3px; }
+.lg-tier { min-width: 20px; padding: 1px 4px; text-align: center; font: 600 12px/1.4 var(--display); color: var(--muted); background: var(--well); border: 1px solid var(--line); }
+.lg-tier.on { color: #1A1420; background: var(--r-legendary); border-color: #0B0810; }
+.lg-tier.off { border-color: var(--r-legendary); }
+.lg-setbar { height: 5px; background: var(--well); box-shadow: inset 0 0 0 1px #0B0810; position: relative; }
+.lg-setbar > i { display: block; height: 100%; background: var(--r-legendary); }
+.lg-setbar::before, .lg-setbar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 2px; background: #0B0810; }
+.lg-setbar::before { left: 33.3%; } .lg-setbar::after { left: 66.6%; }
+.lg-next { font-size: 12.5px; }
+.lg-tl { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.35; }
+.lg-tl.on { color: var(--bone); }
+.lg-tl.on b { color: var(--r-legendary); }
+
+/* item sheet */
+.lg-lines { display: grid; gap: 4px; }
+.cf-line.g-lg { border-left-color: var(--r-legendary); background: linear-gradient(90deg, rgba(255,138,61,.12), var(--well) 70%); }
+.cf-line.g-lg .cf-lt { font: 500 14px/1.3 var(--body); color: var(--bone); flex: 1 1 0; min-width: 0; }
+.cf-line.g-lg .cf-tag { color: var(--r-legendary); }
+.cf-line.g-lg.off { background: var(--well); }
+.cf-line.g-lg.off .cf-lt { color: var(--muted); }
+.cf-line.g-lg.off .cf-tag { color: #FFB27A; }
+.cf-line.g-lg .lg-sub { font-style: normal; color: #FFB27A; }
+.cf-line.g-lg.mark .cf-tag { color: var(--muted); }
+.lg-ibox { display: grid; gap: 6px; }
+.lg-marks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.lg-mk { min-height: 56px; display: grid; justify-items: center; gap: 1px; padding: 4px 2px; background: var(--well); border: 2px solid var(--line); cursor: pointer; min-width: 0; color: var(--bone); }
+.lg-mk img { width: 22px; height: 22px; image-rendering: pixelated; }
+.lg-mk b { font: 600 13px/1 var(--display); }
+.lg-mk small { font-size: 10.5px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-mk.armed { border-color: var(--r-legendary); background: var(--panel-2); }
+.lg-mk.cur { border-color: var(--gold); }
+.lg-mk:disabled { opacity: .45; cursor: default; }
+.lg-marks + .lg-ask { grid-template-columns: 1fr; }
+
+/* marks on tiles: an inscribed item gets an orange corner, a companion's power slot too */
+.ic.lg-pip::before { content: ""; position: absolute; right: 1px; top: 1px; width: 7px; height: 7px; background: var(--r-legendary); border: 1px solid #0B0810; box-shadow: 0 0 4px rgba(255,138,61,.7); z-index: 1; }
+.ic.lg-pip.lg-offpip::before { background: #6E6080; box-shadow: none; }
+.pc-powers { font: 600 12.5px var(--display); color: var(--r-legendary); margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-powers.none { color: var(--muted); font-weight: 500; }
+.lg-setslbl { align-self: center; font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+.syn-sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.syn-sets:empty { display: none; margin: 0; }
+.syn-chip.lg-schip.on { border-color: var(--r-legendary); background: linear-gradient(#2e2016, var(--panel)); box-shadow: 0 0 10px rgba(255,138,61,.2); }
+.syn-chip.lg-schip.on i { background: var(--r-legendary); box-shadow: 0 0 6px var(--r-legendary); }
+.cs-slot small.cs-power, .cs-power { font-size: 12.5px; color: var(--r-legendary); line-height: 1.3; }
+.cs-slot small.cs-power.off, .cs-power.off { color: #FFB27A; }
+.cf-ask { display: grid; gap: 8px; }
+.cf-askp { grid-column: 1 / -1; }
+.mini.cf-armb { background: var(--gold); color: #2A1E07; }
+.lg-askb { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lg-askb .mini { min-height: 44px; }
 /* 60-mastery: zone mastery pips and bestiary rows */
 .row.ms-row { grid-template-columns: auto 1fr; }
 .ms-pips { display: inline-flex; gap: 3px; align-self: center; }
@@ -9261,7 +9401,12 @@ const FEATURES = [
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
   { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
-  { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) }
+  { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
+  // late: a system that arrives after the guide. It stays gated on old saves (S.onboard.all) and after
+  // "Show every tab" until its own rule holds, so nobody sees an empty view.
+  // Powers: the first legendary power, or a first Circle Sigil (Sigils are spent in the same view).
+  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Sigil', late: true,
+    when: () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length || (S.legend.sig || []).some(n => n > 0))) }
 ];
 const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 
@@ -9312,7 +9457,7 @@ function craftReady() {
   registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
-  isUnlocked = id => !id || O().all || !FEATURE_OF[id] || O().got[id] != null;
+  isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
   function unlock(id, quiet) {
     const f = FEATURE_OF[id]; if (!f || isUnlocked(id)) return false;
     O().got[id] = Math.round(O().t);
@@ -9328,13 +9473,13 @@ function craftReady() {
   // Check every rule now; returns the ids that unlocked. The tick hook calls it about once a second.
   onboardCheck = () => {
     const out = [];
-    if (O().all) return out;
     for (const f of FEATURES) {
+      if (O().all && !f.late) continue;
       if (O().got[f.id] != null) continue;
       let ok = false; try { ok = !!f.when(); } catch (e) {}
       if (ok && unlock(f.id)) out.push(f.id);
     }
-    if (FEATURES.every(f => O().got[f.id] != null)) O().all = true;
+    if (!O().all && FEATURES.every(f => f.late || O().got[f.id] != null)) O().all = true;
     return out;
   };
 
@@ -9363,8 +9508,14 @@ function craftReady() {
   on('ability', e => { if (!e || !e.auto) O().casts++; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
+  let lateAcc = 0;
+  const lateOpen = () => FEATURES.every(f => !f.late || O().got[f.id] != null);
   onTick(dt => {
-    if (O().all) return;
+    if (O().all) {   // only late features are left to check (about once a second)
+      lateAcc += dt; if (lateAcc < 1) return; lateAcc = 0;
+      if (!lateOpen()) onboardCheck();
+      return;
+    }
     O().t += dt;
     acc += dt; if (acc < 1) return; acc = 0;
     onboardCheck();
@@ -12742,7 +12893,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       return out;
     }
   });
-  // ---------------- 3. Uniques: 13 hero uniques (companion uniques join when they exist) ----------------
+  // ---------------- 3. Uniques: 13 hero uniques (the 6 companion uniques became legendary powers: page 16) ----------------
   page('uniques', {
     n: 'Uniques', bless: 'hunt', seal: { key: 'uniqueChance', v: 0.03, txt: 'Uniques drop 3% more often' }, title: 'Curator of Wonders', pic: 'item',
     tiles: x => Object.keys(UNIQ).map(k => {
@@ -12912,6 +13063,25 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     show: () => !!(S.deep && S.deep.cos), lockTxt: 'Opens with the Deepwell shop.', tiles: () => []
   });
 
+  // ---------------- 16. Legendaries: the 39 powers in the Lantern Book (legendaries.md 7) ----------------
+  // 2 Light for a learned power, +1 per rank above I (234 in all). Title only, no power bonus. Opens with
+  // the first legendary drop or Circle Sigil (the Powers view's rule). Pinnacle powers score on their page.
+  const legOpen = () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length));
+  page('legendaries', {
+    n: 'Legendaries', seal: { key: null, txt: '' }, title: LEG_CODEX.title, pic: 'rows',
+    show: legOpen, lockTxt: 'Opens with your first legendary power.',
+    tiles: x => {
+      const out = [], C = LEG_CODEX;
+      const grp = id => { const p = LEG_POWERS[id]; return p.cls && HERO_CLASSES[p.cls] ? HERO_CLASSES[p.cls].name : 'Companions'; };
+      for (const id of LEG_CLASSES.flatMap(c => LEG_CLASS_IDS[c]).concat(LEG_COMP_IDS)) {
+        const p = LEG_POWERS[id], r = S.legend.book[id] | 0, pts = r ? (C.learn + C.rank * (r - 1)) * 2 : 0;
+        out.push({ key: id, n: p.n, got: r ? 1 : 0, max: 1, pts, ptsMax: (C.learn + C.rank * 4) * 2, ic: legendIcon(id), grp: grp(id),
+          sub: r ? `Rank ${roman(r)}. ${legendText(id, r)}` : '', hint: r ? '' : x.exact ? `${C.hint}. ${p.only ? 'Drops once ' + first(p.only) + ' is recruited.' : ''}`.trim() : 'A legendary power.' });
+      }
+      return out;
+    }
+  });
+
   // ---------------- compute and cache ----------------
   let cache = null, dirty = true, acc = 0, sweep = 0;
   const visible = p => !p.show || !!safe(p.show, false);
@@ -12961,7 +13131,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('synergyChange', ({ gained }) => { for (const id of gained || []) R().syn[id] = 1; dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted'])
+  for (const e of ['recruit', 'promote', 'charLevel', 'campBuilt', 'expedBack', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted', 'legendDrop', 'legendLearn', 'legendRank'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------
@@ -21120,7 +21290,8 @@ let showAwayReport;
     companions: () => iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }), stories: () => iconURL('charm', '#B58CFF'),
     materials: () => matIcon('crystal', 3), camp: () => iconURL('flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }),
     lore: () => iconURL('glass', '#F2E27A'), deepwell: () => iconURL('orb', '#7FB2FF'), seals: () => iconURL('coin', '#F2C14E'),
-    omens: () => iconURL('orb', '#B58CFF'), achievements: () => iconURL('banner', '#E0524F', { 7: '#FFB347' }), wardrobe: () => iconURL('helm', '#C9B8FF')
+    omens: () => iconURL('orb', '#B58CFF'), achievements: () => iconURL('banner', '#E0524F', { 7: '#FFB347' }), wardrobe: () => iconURL('helm', '#C9B8FF'),
+    legendaries: () => iconURL(...legendIcon('tidewall'))
   };
   const pct = p => Math.floor(p * 100) + '%';
   // Entries whose names are no secret (a zone, a building, an achievement): shown even while blank.
@@ -21502,7 +21673,9 @@ let craftUI = null;
     else if (typeof portraitURL === 'function') { const u = safe(() => portraitURL(k), ''); if (u) return u; }
     return spriteURL('hero-portrait', SPR.hero, HERO_PAL);
   };
-  const frameOf = it => (it.u ? 'legendary' : it.r);
+  const frameOf = it => (it.u || it.lr ? 'legendary' : it.r);   // it.lr: a Legendary item (55-legend)
+  const LG = () => (typeof legendUI === 'object' && legendUI ? legendUI : null);
+  const lgPip = (tile, it) => { if (it && it.lg && !it.lr) tile.classList.add('lg-pip'); return tile; };
   const posName = pos => (CRAFT_POS[pos] ? CRAFT_POS[pos].n : pos);
   const itemIc = it => safe(() => itemIcon(it.slot, it.t, it.u), iconURL('charm', '#A9B1BD'));
   const kindLabel = k => { const d = CRAFT_KINDS[k]; return d ? d.noun : k; };
@@ -21888,7 +22061,7 @@ let craftUI = null;
       gearEls.sig = '';
     },
     update(force) {
-      const sig = JSON.stringify(S.equip) + S.items.length + heroWho() + S.items.reduce((a, i) => a + i.plus, 0);
+      const sig = JSON.stringify(S.equip) + S.items.length + heroWho() + S.items.reduce((a, i) => a + i.plus + (i.lg || ''), 0);
       if (!force && sig === gearEls.sig) return;
       gearEls.sig = sig;
       const EMPTY_IC = { weapon: 'sword', off: 'banner', helm: 'helm', body: 'plate', charm: 'charm', pick: 'pick', axe: 'axe', sickle: 'sickle' };
@@ -21896,7 +22069,7 @@ let craftUI = null;
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
       for (const p of CRAFT_HERO_POS) {
         const e = gearEls[p], it = itemById(S.equip[p]);
-        if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
+        if (it) { setIc(e.tile, itemIc(it), frameOf(it), it.lg && !it.lr ? 'lg-pip' : null); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
         else {
           const ic = EMPTY_IC[p]; setIc(e.tile, ICON[ic] ? iconURL(ic, '#6E6080') : iconURL('charm', '#6E6080'), null, 'ghost soon');
           e.plus.textContent = ''; e.b.setAttribute('aria-label', `${posName(p)}: empty. Choose gear.`);
@@ -21939,7 +22112,7 @@ let craftUI = null;
       for (const b of bag.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === st8.bfilt));
       for (const b of bag.sort.children) putAttr(b, 'aria-pressed', String(b.dataset.s === st8.sort));
       const w = wearers();
-      const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0)).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
+      const sig = [st8.bfilt, st8.sort, S.items.map(i => i.id + ':' + i.plus + ':' + i.r + ':' + (i.rf || 0) + (i.lg || '')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
       bag.sig = sig;
       let list = S.items.slice();
@@ -21948,12 +22121,12 @@ let craftUI = null;
       list.sort(SORTS[st8.sort]);
       bag.grid.textContent = '';
       for (const it of list) {
-        const b = el('button', 'ic cf-tile f-' + frameOf(it) + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
+        const b = el('button', 'ic cf-tile f-' + frameOf(it) + (it.lg && !it.lr ? ' lg-pip' : '') + (st8.fresh.has(it.id) ? ' fresh' : '')); b.type = 'button';
         b.append(img(itemIc(it)));
         if (it.plus) b.append(el('span', 'cf-plus', '+' + it.plus));
         const wr = w.get(it.id);
         if (wr) { const bd = img(portraitOf(wr.who), 'cf-badge' + (wr.who === 'hero' ? ' hero' : '')); b.append(bd); }
-        b.setAttribute('aria-label', `${itemName(it)}, ${RAR[it.r].n}${wr ? ', worn by ' + (wr.who === 'hero' ? 'you' : firstName(wr.who)) : ''}`);
+        b.setAttribute('aria-label', `${itemName(it)}, ${it.lr ? 'Legendary' : RAR[it.r].n}${it.lg && LEG_POWERS[it.lg] ? ', ' + LEG_POWERS[it.lg].n : ''}${wr ? ', worn by ' + (wr.who === 'hero' ? 'you' : firstName(wr.who)) : ''}`);
         b.addEventListener('click', () => { st8.fresh.delete(it.id); openItem(it.id); });
         bag.grid.append(b);
       }
@@ -21999,10 +22172,10 @@ let craftUI = null;
     const wr = wornBy(it.id);
     // ---- head ----
     const head = el('div', 'cf-ih');
-    const tile = icTile(itemIc(it), frameOf(it)); tile.classList.add('s56');
+    const tile = lgPip(icTile(itemIc(it), frameOf(it)), it); tile.classList.add('s56');
     const who = el('div', 'cf-ihw');
-    who.append(el('h3', 'cf-in rar-' + it.r, itemName(it)));
-    const meta = [RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
+    who.append(el('h3', 'cf-in rar-' + (it.lr ? 'legendary' : it.r), itemName(it)));
+    const meta = [it.lr ? 'Legendary' : RAR[it.r].n, `Tier ${it.t}`, d ? (it.u ? posName(d.pos) : d.noun + (d.legacy ? ' (old style)' : '')) : ''].filter(Boolean).join(' · ');
     who.append(el('div', 'cf-im', meta));
     const fit = [];
     if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
@@ -22027,9 +22200,14 @@ let craftUI = null;
       if (!liveNow) r.append(el('small', 'cf-wait', '(active with party combat)'));
       lines.append(r);
     }
+    const lgl = LG() && safe(() => LG().lines(it), null);   // the power and circle mark lines (55-legend)
+    if (lgl) lines.prepend(lgl);
     if (!lines.children.length) lines.append(el('p', 'note', 'No stats.'));
+    const lgb = LG() ? safe(() => LG().itemBoxes(it, sheet, renderItem), []) : [];   // Learn (top), Inscribe, Mark
+    body.append(...lgb.filter(b => b.dataset.top));
     body.append(secBox('What it does', lines));
     if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
+    body.append(...lgb.filter(b => !b.dataset.top));
 
     // ---- compare ----
     if (d && d.pos && heroFitsIt(it) && !(wr && wr.who === 'hero')) {
@@ -22066,7 +22244,13 @@ let craftUI = null;
       b.addEventListener('click', () => { sheet.mode = sheet.mode === 'give' ? null : 'give'; renderItem(); });
       wear.push(b);
     }
-    if (wear.length) { const r = el('div', 'cf-wear'); r.append(...wear); foot.append(r); }
+    if (sheet.ask && sheet.ask.id === it.id) {   // a third legendary power: ask which comes off (55-legend)
+      const q = el('div', 'cf-ask'); q.append(el('p', 'note warn', sheet.ask.why));
+      const r = el('div', 'cf-wear');
+      const no = el('button', 'big cf-act cf-keep', 'Cancel'); no.type = 'button'; no.addEventListener('click', () => { sheet.ask = null; renderItem(); });
+      const yes = el('button', 'big forge cf-act', 'Take it off'); yes.type = 'button'; yes.addEventListener('click', () => { const a = sheet.ask; sheet.ask = null; equipHero(a.id, a.pos, true); });
+      r.append(no, yes); q.append(r); foot.append(q);
+    } else if (wear.length) { const r = el('div', 'cf-wear'); r.append(...wear); foot.append(r); }
     if (wr && wr.who !== 'hero') {
       const b = el('button', 'mini', `Take it off ${firstName(wr.who)}`); b.type = 'button';
       const f = K6.unequipChar(); b.disabled = !f;
@@ -22166,15 +22350,26 @@ let craftUI = null;
       if (!(cur && cur.id === it.id)) sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
       tx.append(sm);
       const on = wr && wr.who === c;
+      const cw = typeof legendCanWear === 'function' && !on ? safe(() => legendCanWear(c, it, pos), null) : null;   // 1 power per companion
+      if (cw && !cw.ok) tx.append(el('small', 'cf-why', cw.why));
       const b = el('button', 'mini ' + (on ? '' : 'go'), on ? 'Wearing' : 'Give'); b.type = 'button';
-      b.disabled = on || !f;
+      b.disabled = on || !f || !!(cw && !cw.ok);
       b.addEventListener('click', () => { if (act(() => f(c, it.id, pos))) { sheet.mode = null; } renderItem(); });
       row.append(pt, tx, b); box.append(row);
     }
     if (!f) box.append(el('p', 'note', 'Companion gear opens with the next crafting update.'));
     return secBox('Give to', box);
   }
-  function equipHero(id, pos) {
+  // The hero carries 2 legendary powers: a third asks first ("Take off X?"); yes takes X off, then equips.
+  function heroAsk(id, pos, yes) {
+    const hc = typeof legendHeroCheck === 'function' ? safe(() => legendHeroCheck(id, pos), null) : null;
+    if (!hc || hc.ok || hc.off == null) return null;
+    if (yes) { safe(() => unwearItem(hc.off)); return null; }
+    return { id, pos, off: hc.off, why: hc.why };
+  }
+  function equipHero(id, pos, yes) {
+    const ask = heroAsk(id, pos, yes);
+    if (ask) { sheet.ask = ask; renderItem(); return; }
     const wr = wornBy(id), un = K6.unequipChar();
     if (wr && wr.who !== 'hero') { if (!un) return; safe(() => un(wr.who, wr.pos)); }
     act(() => equipItem(id, pos));
@@ -22189,6 +22384,7 @@ let craftUI = null;
     const backFn = back || (!isHero ? () => { if (typeof partySheet === 'object' && partySheet) partySheet.open(who); } : null);
     const api = open(label, backFn, true);
     sheet = { api, id: null, back: backFn, picker: { who, pos } };
+    let pAsk = null;   // the item whose "Take off X?" question shows
     const render = () => {
       if (!sheet || sheet.api !== api || api.closed) return;
       const body = api.body; body.textContent = '';
@@ -22218,11 +22414,12 @@ let craftUI = null;
       }
       for (const it of list) {
         const r = el('div', 'cf-pr');
-        const t = icTile(itemIc(it), frameOf(it));
+        const t = lgPip(icTile(itemIc(it), frameOf(it)), it);
         const tx = el('div', 'cf-gt');
         const dp = itemPower(it) - (now ? itemPower(now) : 0);
         const wr = w.get(it.id);
-        tx.append(el('b', 'rar-' + it.r, itemName(it)));
+        tx.append(el('b', 'rar-' + (it.lr ? 'legendary' : it.r), itemName(it)));
+        if (it.lg && LEG_POWERS[it.lg]) tx.append(el('small', 'rar-legendary', `${LEG_POWERS[it.lg].n} ${roman(safe(() => legendItemRank(it), 1) || 1)}`));
         const sm = el('small', null, (wr ? `${wr.who === 'hero' ? 'You wear it' : firstName(wr.who) + ' wears it'} · ` : ''));
         sm.append(el('span', 'cf-d ' + (dp > 0 ? 'up' : 'dn'), `${dp >= 0 ? '+' : '-'}${fmt(Math.abs(dp))} power`));
         tx.append(sm);
@@ -22231,11 +22428,17 @@ let craftUI = null;
         const b = el('button', 'mini go', isHero ? 'Equip' : 'Give'); b.type = 'button';
         b.disabled = !isHero && !f;
         b.addEventListener('click', () => {
-          if (isHero) { const wr2 = wornBy(it.id), un = K6.unequipChar(); if (wr2 && wr2.who !== 'hero') { if (!un) return; safe(() => un(wr2.who, wr2.pos)); } act(() => equipItem(it.id, pos)); }
+          if (isHero) {
+            const q = heroAsk(it.id, pos, pAsk === it.id);
+            if (q) { pAsk = it.id; render(); return; }
+            pAsk = null;
+            const wr2 = wornBy(it.id), un = K6.unequipChar(); if (wr2 && wr2.who !== 'hero') { if (!un) return; safe(() => un(wr2.who, wr2.pos)); } act(() => equipItem(it.id, pos));
+          }
           else act(() => f(who, it.id, pos));
           render();
         });
         r.append(t, tx, b); body.append(r);
+        if (isHero && pAsk === it.id) { const q = heroAsk(it.id, pos); if (q) { b.textContent = 'Take it off'; b.classList.remove('go'); b.classList.add('cf-armb'); r.append(el('p', 'note warn cf-askp', q.why)); } }
       }
       if (!isHero && !K6.equipChar()) body.append(el('p', 'note', 'Companion gear opens with the next crafting update.'));
     };
@@ -22248,7 +22451,7 @@ let craftUI = null;
   onTick(() => {
     if (!sheet || sheet.api.closed || busy() || Date.now() - sheetAt < 1000) return;
     sheetAt = Date.now();
-    const s = JSON.stringify(S.mats) + S.gold.toFixed(0) + S.items.length + JSON.stringify(S.equip) + troph().join() + (S.skills.ench && S.skills.ench.lv);
+    const s = JSON.stringify(S.mats) + S.gold.toFixed(0) + S.items.length + JSON.stringify(S.equip) + troph().join() + (S.skills.ench && S.skills.ench.lv) + (S.legend ? JSON.stringify(S.legend.book) + S.legend.sig.join() : '');
     if (s === sheetSig) return;
     sheetSig = s;
     if (sheet.picker) { if (sheet.render) safe(() => sheet.render()); } else safe(() => renderItem());
@@ -23123,6 +23326,583 @@ let craftUI = null;
   });
 }
 
+// ---- src/js/75-legend-ui.js ----
+// 75-legend-ui: legendary powers and circle sets, the UI (docs/design/legendaries.md 7, task L4). Browser-only.
+// Reads the L2 core (55-legend.js) only through its API; every action goes through a legendX/legendCanX pair.
+//
+// Craft tab, view 'powers' (feature 'powers': the first legendary power or Circle Sigil, 55-onboard):
+//   Your powers   the hero's 2 slots and each fielded companion's power, the legend budget ("capped"
+//                 chip when legendBudget().hit), and legendary items waiting to be learned (Learn, in-page confirm)
+//   Lantern Book  every power by class / companion (For you / For your party / All): icon, rank pips,
+//                 Echoes, where it is inscribed; a tap shows the text by rank and "Inscribe on..." (a sheet
+//                 that lists fitting crafted items, lgFits, with costs and an in-page confirm)
+//   Circle sets   Sigils by circle, the 4 sets with pieces worn, tiers (2/4/6) and which are on
+// Other files call legendUI (all optional, probed with typeof):
+//   legendUI.icon(id)              -> the power's icon inside the orange legendary frame (data URL, cached)
+//   legendUI.lines(it, who?)       -> a box of the item's power / mark lines (itemLegendLines) or null
+//   legendUI.itemBoxes(it, st, re) -> [elements] for the item sheet: Learn, Inscribe, Mark (st: the sheet
+//                                     state object, it keeps the armed confirm in st.lgArm; re(): re-render)
+//   legendUI.heroLine()            -> { txt, n } "Powers 1/2: Tidewall II" for the hero card, or null
+//   legendUI.setsRow(box)          -> fills a Sets chip row (Party tab Synergies), returns true when shown
+//   legendUI.openInscribe(id)      -> the "Inscribe on..." sheet for a Book power
+// Also: a Powers view dot (a legendary item to learn), and an away-card line for powers found away.
+
+let legendUI = null;
+{
+  const safe = (fn, d) => { try { const v = fn(); return v == null ? d : v; } catch (e) { console.error('[lanternfall] legend ui', e); return d; } };
+  const P = id => LEG_POWERS[id];
+  const rn = r => roman(r);
+  const on0 = () => typeof legendActive === 'function' && !!S.legend;
+  const cls = () => (S.party && S.party.cls) || null;
+  const firstName = k => (k === 'hero' ? 'You' : ROSTER[k] ? ROSTER[k].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0] : k);
+  const circleName = i => LEG_CIRCLE_NAME[LEG_CIRCLES[i]];
+  const SHORT = { hedgefolk: 'Hedgefolk', oath: 'Oath', dusk: 'Dusk', wayfarers: 'Wayfarers' };
+  const shortName = i => SHORT[LEG_CIRCLES[i]] || circleName(i);
+  const cap1 = t => t.charAt(0).toUpperCase() + t.slice(1);
+  const roleName = r => (ROLE_STATS[r] ? ROLE_STATS[r].n : r);
+  const itemIc = it => safe(() => itemIcon(it.slot, it.t, it.u), iconURL('charm', '#A9B1BD'));
+  const frameOf = it => (it.u || it.lr ? 'legendary' : it.r);
+  const btn = (cls_, text, fn) => { const b = el('button', cls_, text); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; };
+  const act = fn => { const r = safe(fn, false); if (r) { save(); ui(true); } return r; };
+  // Rebuilding a list between pointerdown and click would swallow the tap (as in 75-craft-ui).
+  let touchAt = 0;
+  document.addEventListener('pointerdown', () => { touchAt = Date.now(); }, true);
+  const busy = () => Date.now() - touchAt < 1200;
+
+  // ---------------- icons ----------------
+  // A power icon inside LEG_FRAME (16x16 frame round a 12x12 icon), one small canvas per power, cached.
+  const fURL = new Map();
+  function icon(id) {
+    if (fURL.has(id)) return fURL.get(id);
+    const u = safe(() => {
+      const [name, main, extra] = legendIcon(id);
+      const c = document.createElement('canvas'); c.width = 18; c.height = 18;
+      const g = c.getContext('2d');
+      g.drawImage(sprite('legframe', LEG_FRAME.map, { 1: LEG_FRAME.col, 2: LEG_FRAME.lo, 3: LEG_FRAME.hi }), 0, 0);
+      const ic = sprite('u:ic:' + name + main + JSON.stringify(extra || {}), ICON[name], icPal(main, extra));
+      g.drawImage(ic, Math.round((18 - ic.width) / 2), Math.round((18 - ic.height) / 2));
+      return c.toDataURL();
+    }, iconURL('charm', LEG_COL));
+    fURL.set(id, u); return u;
+  }
+  const sigURL = i => safe(() => iconURL(...sigilIcon(i)), iconURL('coin', LEG_COL));
+  const lgTile = (id, dim) => { const d = el('div', 'lg-ic' + (dim ? ' dim' : '')); d.append(img(icon(id))); return d; };
+  function pips(rank) {
+    const w = el('span', 'lg-pips'); w.setAttribute('aria-label', rank ? `Rank ${rn(rank)} of V` : 'Not learned');
+    for (let i = 1; i <= LEG_TUNE.ranks; i++) w.append(el('i', i <= rank ? 'on' : null));
+    return w;
+  }
+
+  // ---------------- lookups ----------------
+  // Who wears what: item id -> { who: 'hero' | rosterId, pos }.
+  function wearers() {
+    const m = new Map();
+    for (const p of CRAFT_HERO_POS) if (S.equip[p] != null) m.set(S.equip[p], { who: 'hero', pos: p });
+    const rec = S.party && S.party.rec;
+    if (rec) for (const [k, r] of Object.entries(rec)) for (const p of CRAFT_COMP_POS) if (r && r[p] != null) m.set(r[p], { who: k, pos: p });
+    return m;
+  }
+  // Where each power is inscribed (crafted items only; legendary drops are listed under Learn).
+  function inscribed() {
+    const w = wearers(), m = {};
+    for (const it of S.items) if (it.lg && !it.lr && P(it.lg)) (m[it.lg] || (m[it.lg] = [])).push({ it, wr: w.get(it.id) || null });
+    for (const k of Object.keys(m)) m[k].sort((a, b) => (!!b.wr - !!a.wr) || itemPower(b.it) - itemPower(a.it));
+    return m;
+  }
+  const toLearn = () => S.items.filter(it => it.lg && it.lr && P(it.lg));
+  const fitsTxt = id => {
+    const p = P(id);
+    if (p.fits === 'hero') return p.cls && HERO_CLASSES[p.cls] ? `${HERO_CLASSES[p.cls].name} weapon, off-hand, head or body` : 'Any hero weapon, off-hand, head or body';
+    if (p.fits === 'trinket') return 'A companion\'s Trinket';
+    return `A ${roleName(p.fits).toLowerCase()}'s weapon` + (p.only && ROSTER[p.only] ? ` (${firstName(p.only)} only)` : '');
+  };
+  const hintTxt = id => {
+    const p = P(id);
+    if (LEG_PIN_IDS.includes(id)) return 'A pinnacle boss guards it.';
+    if (p.only && ROSTER[p.only] && !isRecruited(p.only)) return `Oath elders, level 3+, once ${firstName(p.only)} has joined you.`;
+    return `${LEG_CODEX.hint}.`;
+  };
+  const whereTxt = (id, ins) => {
+    const l = ins[id] || [];
+    if (!l.length) return 'Not inscribed';
+    const a = l[0], who = a.wr ? (a.wr.who === 'hero' ? 'you wear it' : `${firstName(a.wr.who)} wears it`) : 'in your bag';
+    return `On ${itemName(a.it)} (${who})` + (l.length > 1 ? ` +${l.length - 1}` : '');
+  };
+
+  // ================= Craft tab: the Powers view =================
+  registerView('forge', { id: 'powers', label: 'Powers', order: 25, feature: 'powers',
+    dot: () => on0() && S.items.some(it => it.lr && it.lg && !isEquipped(it.id)) });
+
+  // ---------------- Your powers ----------------
+  let B = null;
+  registerSection('forge', {
+    id: 'legend-build', title: 'Your powers', view: 'powers',
+    mount(sec) {
+      const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
+      const cap = el('span', 'lg-capchip', 'Capped'); cap.hidden = true;
+      head.append(cap); sec.prepend(head);
+      const card = el('div', 'card lg-build');
+      const hero = el('div', 'lg-slots');
+      const comp = el('div', 'lg-comps');
+      const budget = el('p', 'lg-budget');
+      card.append(hero, comp, budget);
+      const learn = el('div', 'lg-learn');
+      sec.append(learn, card);
+      B = { cap, hero, comp, budget, learn, sig: '', lsig: '', arm: null };
+    },
+    update(force) {
+      if (!on0()) return;
+      const a = legendActive(), bu = a.budget;
+      putHidden(B.cap, !bu.hit);
+      const pc = x => `+${Math.round(x * 1000) / 10}%`;
+      putText(B.budget, bu.raw <= 0 ? 'Worn powers and sets add to your damage. Inscribe a power on gear you wear.'
+        : bu.hit ? `Your powers are at their cap: ${pc(bu.capped)} damage. They would give ${pc(bu.raw)}; higher ranks raise the cap.`
+          : `Your powers and sets add about ${pc(bu.raw)} damage (cap ${pc(bu.cap)} at rank ${rn(bu.rank)}).`);
+      putToggle(B.budget, 'hit', bu.hit);
+      const field = (S.party && Array.isArray(S.party.field) && typeof rosterLive === 'function' && rosterLive() ? S.party.field.filter(isRecruited).slice(0, 3) : []);
+      const sig = [cls(), a.hero.map(x => x.id + x.rank + x.item.id).join(), a.comp.map(x => x.char + x.id + x.rank).join(), field.join(), JSON.stringify(S.legend.book)].join('|');
+      if (force || sig !== B.sig) {
+        B.sig = sig;
+        B.hero.textContent = '';
+        B.hero.append(el('div', 'lg-lbl', `Hero · ${a.hero.length}/${LEG_TUNE.heroMax}`));
+        for (let i = 0; i < LEG_TUNE.heroMax; i++) {
+          const x = a.hero[i], s = el('div', 'lg-slot' + (x ? '' : ' empty'));
+          if (x) {
+            s.append(lgTile(x.id));
+            const t = el('div', 'lg-st'); t.append(el('b', null, P(x.id).n), el('small', null, `Rank ${rn(x.rank)} · ${itemName(x.item)}`));
+            s.append(t);
+          } else {
+            const e = el('div', 'lg-ic empty'); s.append(e);
+            s.append(el('small', 'lg-st', cls() ? 'Empty. Inscribe a power from your Book on gear you wear.' : 'Choose a class to use hero powers.'));
+          }
+          B.hero.append(s);
+        }
+        if (field.length) {
+          B.comp.hidden = false; B.comp.textContent = '';
+          B.comp.append(el('div', 'lg-lbl', 'Companions · 1 each'));
+          for (const k of field) {
+            const x = a.comp.find(c => c.char === k);
+            const r = el('div', 'lg-crow');
+            r.append(img(safe(() => portraitURL(k), iconURL('mug', '#8C6A43')), 'lg-cpt'));
+            r.append(el('span', 'lg-cn', firstName(k)));
+            r.append(el('span', 'lg-cp' + (x ? '' : ' none'), x ? `${P(x.id).n} ${rn(x.rank)}` : 'No power'));
+            B.comp.append(r);
+          }
+        } else B.comp.hidden = true;
+      }
+      // Legendary items to learn (rebuilt only when that list changes, never under a finger)
+      const L = toLearn(), w = wearers();
+      const lsig = L.map(it => it.id + ':' + legendKnown(it.lg) + ':' + legendEchoes(it.lg) + ':' + (w.get(it.id) ? 1 : 0)).join() + '|' + B.arm;
+      if ((force || !busy()) && lsig !== B.lsig) {
+        B.lsig = lsig; B.learn.textContent = '';
+        if (!L.length) return;
+        B.learn.append(el('div', 'lg-lbl', `To learn · ${L.length}`));
+        const list = el('div', 'lg-list');
+        for (const it of L) list.append(learnRow(it, w.get(it.id), () => { B.lsig = ''; ui(true); }, B));
+        B.learn.append(list);
+      }
+    }
+  });
+  // One legendary item: what learning it does, and Learn with an in-page confirm (arm lives on holder.arm).
+  function learnRow(it, wr, re, holder) {
+    const id = it.lg, known = legendKnown(id), echo = known && it.lr <= known, up = known && it.lr > known;
+    const r = el('div', 'lg-lrow');
+    const t = icTile(itemIc(it), 'legendary'); r.append(t);
+    const tx = el('div', 'lg-st');
+    tx.append(el('b', 'rar-legendary', `${P(id).n} (rank ${rn(it.lr)})`));
+    tx.append(el('small', null, (echo ? `You know it: learning adds an Echo (${Math.min(LEG_TUNE.echoPerRank, legendEchoes(id) + 1)}/${LEG_TUNE.echoPerRank}).`
+      : up ? `Raises it from rank ${rn(known)} to ${rn(it.lr)}.` : 'Learn it to keep it forever.') + (wr ? ` ${wr.who === 'hero' ? 'You wear' : firstName(wr.who) + ' wears'} it now.` : '')));
+    t.addEventListener('click', () => { if (typeof craftUI === 'object' && craftUI) craftUI.openItem(it.id); });
+    r.append(tx);
+    const armed = holder.arm === it.id;
+    const b = btn('mini ' + (armed ? 'lg-arm' : 'go'), armed ? 'Learn it' : 'Learn', () => {
+      if (!armed) { holder.arm = it.id; re(); return; }
+      holder.arm = null;
+      act(() => legendLearn(it.id)); re();
+    });
+    r.append(b);
+    if (armed) {
+      const q = el('div', 'lg-ask');
+      q.append(el('p', 'note warn', `${itemName(it)} breaks down and its salvage comes back. ${P(id).n} goes into your Lantern Book${echo ? ' as an Echo' : ''}. Tap Learn it again to confirm.`));
+      q.append(btn('mini', 'Keep it', () => { holder.arm = null; re(); }));
+      r.append(q);
+    }
+    return r;
+  }
+
+  // ---------------- Lantern Book ----------------
+  let K = null, bookFilt = 'you', openId = null;
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.legend.ui') || '{}'); if (['you', 'party', 'all'].includes(v.f)) bookFilt = v.f; } catch (e) {}
+  const keepUi = () => { try { localStorage.setItem('lanternfall.legend.ui', JSON.stringify({ f: bookFilt })); } catch (e) {} };
+  function bookIds(f) {
+    const c = cls(), known = id => legendKnown(id) > 0;
+    const groups = [];
+    const clsIds = c => (LEG_CLASS_IDS[c] || []);
+    if (f === 'you' || f === 'all') {
+      const order = f === 'all' ? [c].concat(LEG_CLASSES.filter(x => x !== c)).filter(Boolean) : c ? [c] : [];
+      for (const k of order) groups.push({ n: HERO_CLASSES[k] ? HERO_CLASSES[k].name : k, ids: clsIds(k) });
+      const pin = LEG_PIN_IDS.filter(id => P(id) && known(id));
+      if (pin.length) groups.push({ n: 'Pinnacle', ids: pin });
+    }
+    if (f === 'party' || f === 'all') groups.push({ n: 'Companions', ids: LEG_COMP_IDS.slice() });
+    for (const g of groups) g.ids.sort((a, b) => (known(b) - known(a)) || (legendKnown(b) - legendKnown(a)));
+    return groups;
+  }
+  registerSection('forge', {
+    id: 'legend-book', title: 'Lantern Book', view: 'powers',
+    mount(sec) {
+      const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
+      const count = el('span', 'note lg-count'); head.append(count); sec.prepend(head);
+      const filt = el('div', 'seg cf-seg lg-filt'); filt.setAttribute('aria-label', 'Show powers');
+      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']]) {
+        const b = btn(null, n, () => { bookFilt = f; keepUi(); K.sig = ''; ui(true); }); b.dataset.f = f; filt.append(b);
+      }
+      const list = el('div', 'lg-book');
+      sec.append(filt, list);
+      K = { count, filt, list, sig: '' };
+    },
+    update(force) {
+      if (!on0()) return;
+      for (const b of K.filt.children) putAttr(b, 'aria-pressed', String(b.dataset.f === bookFilt));
+      const L = S.legend, a = legendActive();
+      const nKnown = Object.keys(L.book).filter(id => P(id)).length;
+      putText(K.count, `${nKnown} of ${LEG_IDS.length - LEG_PIN_IDS.length} learned`);
+      const ins = inscribed();
+      const sig = [bookFilt, cls(), JSON.stringify(L.book), JSON.stringify(L.echo), legendEchoCap(), openId,
+        Object.entries(ins).map(([k, l]) => k + l.map(x => x.it.id + (x.wr ? x.wr.who : '')).join('.')).join(),
+        a.hero.map(x => x.id).join() + a.comp.map(x => x.id).join()].join('|');
+      if (sig === K.sig || (!force && busy())) return;
+      K.sig = sig;
+      K.list.textContent = '';
+      const groups = bookIds(bookFilt);
+      if (!groups.length) { K.list.append(el('p', 'note', 'Choose a class to find hero powers. Companion powers are under For your party.')); return; }
+      const activeIds = new Set(a.hero.map(x => x.id).concat(a.comp.map(x => x.id)));
+      for (const g of groups) {
+        const n = g.ids.filter(id => legendKnown(id)).length;
+        K.list.append(el('h4', 'lg-gh', `${g.n} · ${n}/${g.ids.length}`));
+        const box = el('div', 'lg-list dz-list');
+        for (const id of g.ids) box.append(bookRow(id, ins, activeIds.has(id)));
+        K.list.append(box);
+      }
+    }
+  });
+  function bookRow(id, ins, active) {
+    const p = P(id), r = legendKnown(id), e = legendEchoes(id);
+    const row = el('div', 'lg-row' + (r ? '' : ' unknown') + (active ? ' active' : ''));
+    const hit = el('div', 'lg-hit');
+    hit.append(lgTile(id, !r));
+    const body = el('div', 'lg-rb');
+    const top = el('div', 'lg-rt'); top.append(el('b', null, p.n), pips(r));
+    body.append(top);
+    const sub = el('small', 'lg-rs');
+    if (r) {
+      const capR = legendEchoCap(), maxed = r >= LEG_TUNE.ranks;
+      const eTxt = maxed ? 'Top rank' : r >= capR && e >= LEG_TUNE.echoPerRank ? `Echoes ${LEG_TUNE.echoPerRank}/${LEG_TUNE.echoPerRank}, waiting` : `Echoes ${e}/${LEG_TUNE.echoPerRank}`;
+      sub.append(el('span', 'lg-echo', eTxt), document.createTextNode(' · '), el('span', (ins[id] ? 'lg-on' : '') + (active ? ' act' : ''), whereTxt(id, ins)));
+    } else sub.textContent = hintTxt(id);
+    body.append(sub);
+    hit.append(body);
+    row.append(hit);
+    const more = el('div', 'lg-more');
+    const dz = disclose(row, hit, o => { openId = o ? id : (openId === id ? null : openId); });
+    hit.append(dz.chev);
+    hit.setAttribute('aria-label', `${p.n}: show details`);
+    const cur = r || 1;
+    more.append(el('p', 'lg-txt', (r ? `Rank ${rn(r)}: ` : 'Rank I: ') + legendText(id, cur)));
+    if (r && r < LEG_TUNE.ranks) more.append(el('p', 'note', `Rank ${rn(r + 1)}: ${legendText(id, r + 1)}`));
+    more.append(el('p', 'note', `Goes on: ${fitsTxt(id)}.`));
+    if (r) {
+      const capR = legendEchoCap();
+      if (r < LEG_TUNE.ranks) more.append(el('p', 'note', r >= capR
+        ? `Echoes are saved for now. Keep a higher Oath and they raise it to rank ${rn(r + 1)}.`
+        : `${LEG_TUNE.echoPerRank - Math.min(e, LEG_TUNE.echoPerRank)} more Echo${LEG_TUNE.echoPerRank - e === 1 ? '' : 'es'} for rank ${rn(r + 1)}. A repeat drop is an Echo.`));
+      for (const x of (ins[id] || []).slice(1)) more.append(el('p', 'note', `Also on ${itemName(x.it)}.`));
+      if (p.fits === 'hero' && p.cls && p.cls !== cls()) more.append(el('p', 'note warn', `Works for a ${HERO_CLASSES[p.cls].name} hero only.`));
+      else more.append(btn('mini go lg-inb', 'Inscribe on...', () => openInscribe(id)));
+    } else more.append(el('p', 'note', `Find it: ${hintTxt(id)}`));
+    row.append(more);
+    if (openId === id) dz.set(true);
+    return row;
+  }
+
+  // ---------------- Inscribe on... (a sheet) ----------------
+  let ins = null;
+  function openInscribe(id) {
+    if (typeof openSheet !== 'function' || !legendKnown(id)) return;
+    const api = openSheet(() => {}, { label: `Inscribe ${P(id).n}`, small: true, onClose: () => { if (ins && ins.api === api) ins = null; } });
+    api.sheet.classList.add('cf-sheet', 'lg-sheet');
+    ins = { api, id, arm: null, sig: '' };
+    renderInscribe();
+  }
+  function costBox(c) {
+    const box = el('div', 'costs');
+    const mats = {}; if (c.pearlLive && c.pearls) mats.pearl = c.pearls; mats.ess = c.ess;
+    safe(() => costChips(box, mats, c.t, c.gold));
+    return box;
+  }
+  function renderInscribe() {
+    if (!ins || ins.api.closed) return;
+    const { api, id } = ins, p = P(id), r = legendKnown(id), body = api.body, top = body.scrollTop;
+    body.textContent = ''; api.foot.textContent = '';
+    const head = el('div', 'lg-ihead');
+    head.append(lgTile(id));
+    const t = el('div', 'lg-st'); t.append(el('h3', 'lg-ih', p.n), el('small', null, `Rank ${rn(r)} · ${fitsTxt(id)}`));
+    head.append(t); body.append(head);
+    body.append(el('p', 'lg-txt', legendText(id, r)));
+    body.append(el('p', 'note', 'Inscribing keeps the item\'s tier, bonus lines, Masterwork and upgrades. One power per item: a new one replaces the old. The power grows with its rank in your Book.'));
+    const w = wearers();
+    const list = S.items.filter(it => !it.lr && !it.u && lgFits(it, id))
+      .sort((a, b) => ((w.get(b.id) ? (w.get(b.id).who === 'hero' ? 2 : 1) : 0) - (w.get(a.id) ? (w.get(a.id).who === 'hero' ? 2 : 1) : 0)) || itemPower(b) - itemPower(a));
+    if (!list.length) {
+      body.append(el('p', 'note warn', `Nothing you made fits. ${p.n} goes on: ${fitsTxt(id).toLowerCase()}. Craft one first.`));
+      body.append(btn('big forge', 'Go to Make', () => { api.close(true); setTab('make'); }));
+    }
+    for (const it of list) {
+      const c = legendCanInscribe(id, it.id), wr = w.get(it.id), armed = ins.arm === it.id;
+      const row = el('div', 'lg-pick' + (it.lg === id ? ' has' : ''));
+      const tile = icTile(itemIc(it), frameOf(it), it.lg ? 'lg-pip' : null); row.append(tile);
+      tile.addEventListener('click', () => { if (typeof craftUI === 'object' && craftUI) craftUI.openItem(it.id); });
+      const tx = el('div', 'lg-st');
+      tx.append(el('b', 'rar-' + it.r, itemName(it)));
+      const bits = [];
+      if (wr) bits.push(wr.who === 'hero' ? 'You wear it' : `${firstName(wr.who)} wears it`);
+      bits.push(`Power ${fmt(itemPower(it))}`);
+      tx.append(el('small', null, bits.join(' · ')));
+      if (it.lg && it.lg !== id && P(it.lg)) tx.append(el('small', 'lg-repl', `Has ${P(it.lg).n}: it would be replaced.`));
+      row.append(tx);
+      const b = btn('mini ' + (armed ? 'lg-arm' : 'go'), it.lg === id ? 'Has it' : armed ? 'Inscribe' : 'Pick', () => {
+        if (!armed) { ins.arm = it.id; renderInscribe(); return; }
+        ins.arm = null;
+        if (act(() => legendInscribe(id, it.id))) { const a = api; ins = null; a.close(); return; }
+        renderInscribe();
+      });
+      b.disabled = !c.ok && !(it.lg === id);
+      if (it.lg === id) b.disabled = true;
+      row.append(b);
+      if (c.cost && it.lg !== id) row.append(costBox(c.cost));
+      if (!c.ok && c.why && it.lg !== id) row.append(el('div', 'lg-why', c.why));
+      if (armed) {
+        const q = el('div', 'lg-ask');
+        q.append(el('p', 'note warn', `Inscribe ${p.n} on ${itemName(it)}?${it.lg && P(it.lg) ? ` ${P(it.lg).n} comes off (it stays in your Book, no refund).` : ''} Tap Inscribe again to confirm.`));
+        q.append(btn('mini', 'Cancel', () => { ins.arm = null; renderInscribe(); }));
+        row.append(q);
+      }
+      body.append(row);
+    }
+    body.scrollTop = top;
+    ins.sig = inscSig();
+  }
+  const inscSig = () => ins ? [JSON.stringify(S.mats.ess), S.gold >= 0 ? Math.floor(Math.log10(S.gold + 1) * 20) : 0, S.items.length, JSON.stringify(S.equip), legendKnown(ins.id)].join('|') : '';
+  let insAt = 0;
+  onTick(() => {
+    if (!ins || ins.api.closed || busy() || Date.now() - insAt < 1000) return;
+    insAt = Date.now();
+    if (inscSig() !== ins.sig) safe(renderInscribe);
+  });
+
+  // ---------------- Circle sets ----------------
+  let Z = null, setOpen = new Set();
+  registerSection('forge', {
+    id: 'legend-sets', title: 'Circle sets', view: 'powers',
+    mount(sec) {
+      const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
+      const cap = el('span', 'lg-capchip', 'Capped'); cap.hidden = true;
+      head.append(cap); sec.prepend(head);
+      const sig = el('div', 'lg-sigils'); sig.setAttribute('aria-label', 'Circle Sigils');
+      const sigEls = LEG_CIRCLES.map((c, i) => {
+        const s = el('div', 'lg-sig'); s.append(img(sigURL(i)));
+        const n = el('b'); const t = el('small', null, shortName(i));
+        s.setAttribute('aria-label', `${circleName(i)} Sigils`);
+        s.append(n, t); sig.append(s); return n;
+      });
+      const list = el('div', 'lg-sets');
+      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Sigil and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Sigils.`);
+      sec.append(sig, list, note);
+      Z = { cap, sigEls, list, sig: '' };
+    },
+    update(force) {
+      if (!on0()) return;
+      const s = legendSets(), bu = legendBudget();
+      putHidden(Z.cap, !bu.hit);
+      Z.sigEls.forEach((n, i) => putText(n, String(S.legend.sig[i] | 0)));
+      const sig = [s.n.join(), JSON.stringify(s.tier), s.active.join(), [...setOpen].join()].join('|');
+      if (sig === Z.sig || (!force && busy())) return;
+      Z.sig = sig; Z.list.textContent = '';
+      LEG_CIRCLES.forEach((c, i) => Z.list.append(setCard(c, i, s)));
+    }
+  });
+  function setCard(c, i, s) {
+    const d = LEG_SETS[c], n = s.n[i], tier = s.tier[c], on = s.active.includes(c);
+    const card = el('div', 'lg-set' + (on ? ' on' : '') + (n ? '' : ' none'));
+    const hit = el('div', 'lg-sethit');
+    hit.append(img(sigURL(i), 'lg-sigic'));
+    const t = el('div', 'lg-st');
+    const nm = el('b', null, d.n);
+    t.append(nm, el('small', null, n ? `${cap1(circleName(i))} · ${n} marked piece${n === 1 ? '' : 's'} worn` : cap1(circleName(i))));
+    hit.append(t);
+    const chips = el('div', 'lg-tiers');
+    for (const k of LEG_TUNE.setTiers) chips.append(el('span', 'lg-tier' + (tier >= k ? ' on' : n >= k ? ' off' : ''), String(k)));
+    hit.append(chips);
+    card.append(hit);
+    const bar = el('div', 'lg-setbar'); const f = el('i'); f.style.width = Math.min(100, n / 6 * 100) + '%'; bar.append(f); card.append(bar);
+    const next = LEG_TUNE.setTiers.find(k => k > n);
+    const more = el('div', 'lg-more');
+    for (const k of LEG_TUNE.setTiers) {
+      const tr = d.tiers[k], ln = el('p', 'lg-tl' + (tier >= k ? ' on' : ''));
+      ln.append(el('b', null, `${k} pieces${tr.n ? ': ' + tr.n : ''}. `), document.createTextNode(tr.txt));
+      more.append(ln);
+    }
+    if (!on && n >= 2) more.append(el('p', 'note warn', 'Two other sets have more pieces worn. Only the 2 biggest sets are on.'));
+    const lead = el('p', 'lg-next note');
+    lead.textContent = on ? (next ? `On. ${next - n} more marked piece${next - n > 1 ? 's' : ''} for the ${next}-piece bonus.` : 'On. Every bonus is on.')
+      : n ? `Needs ${next - n} more marked piece${next - n > 1 ? 's' : ''}.` : 'No marked pieces worn yet.';
+    card.append(lead, more);
+    const dz = disclose(card, hit, o => { if (o) setOpen.add(c); else setOpen.delete(c); });
+    hit.append(dz.chev);
+    hit.setAttribute('aria-label', `${d.n}: show bonuses`);
+    if (setOpen.has(c)) dz.set(true);
+    return card;
+  }
+
+  // ================= item sheet boxes (75-craft-ui calls these) =================
+  // The power and mark lines at the top of an item card.
+  function lines(it, who) {
+    const L = safe(() => itemLegendLines(it, who), []);
+    if (!L.length) return null;
+    const box = el('div', 'lg-lines');
+    for (const x of L) {
+      const r = el('div', 'cf-line g-lg' + (x.on ? '' : ' off') + (x.k === 'mark' ? ' mark' : ''));
+      r.append(img(x.k === 'power' ? icon(x.id) : sigURL(LEG_CIRCLES.indexOf(x.circle)), 'cf-li lg-li'));
+      r.append(el('span', 'cf-lt', x.txt));
+      r.append(el('small', 'cf-tag', x.k === 'power' ? (x.on ? 'Legendary' : 'Off') : 'Circle'));
+      if (x.sub) r.append(el('small', 'cf-wait lg-sub', x.sub));
+      box.append(r);
+    }
+    return box;
+  }
+  const secBox = (title, ...kids) => { const s = el('div', 'cf-ss'); if (title) s.append(el('h4', null, title)); s.append(...kids); return s; };
+  const markable = it => { const d = CRAFT_KINDS[it.slot]; return !!d && !it.u && ((d.cls && LEG_FITS.hero.includes(d.pos)) || d.comp === 'wpn' || d.comp === 'trk'); };
+  function itemBoxes(it, st, re) {
+    const out = [];
+    if (!on0() || !it) return out;
+    const unlocked = typeof isUnlocked !== 'function' || isUnlocked('powers');
+    // Learn
+    if (it.lg && it.lr && P(it.lg)) {
+      const box = el('div', 'lg-ibox');
+      const holder = { get arm() { return st.lgArm === 'learn' ? it.id : null; }, set arm(v) { st.lgArm = v ? 'learn' : null; } };
+      box.append(learnRow(it, wearers().get(it.id), re, holder));
+      const sb = secBox('Lantern Book', box); sb.dataset.top = '1'; out.push(sb);
+    }
+    if (!unlocked) return out;
+    // Inscribe: the Book powers that fit this crafted item
+    if (!it.lr && !it.u) {
+      const fit = Object.keys(S.legend.book).filter(id => P(id) && lgFits(it, id) && legendKnown(id));
+      if (fit.length) {
+        const box = el('div', 'lg-ibox');
+        const cur = it.lg && P(it.lg) ? it.lg : null;
+        if (cur) box.append(el('p', 'note', `It carries ${P(cur).n}. A new power replaces it (no refund).`));
+        for (const id of fit) {
+          if (id === cur) continue;
+          const c = legendCanInscribe(id, it.id), armed = st.lgArm === 'insc:' + id;
+          const r = el('div', 'lg-pick');
+          r.append(lgTile(id));
+          const tx = el('div', 'lg-st'); tx.append(el('b', 'rar-legendary', `${P(id).n} ${rn(legendKnown(id))}`), el('small', null, legendText(id, legendKnown(id))));
+          r.append(tx);
+          const b = btn('mini ' + (armed ? 'lg-arm' : 'go'), armed ? 'Inscribe' : 'Pick', () => {
+            if (!armed) { st.lgArm = 'insc:' + id; re(); return; }
+            st.lgArm = null; act(() => legendInscribe(id, it.id)); re();
+          });
+          b.disabled = !c.ok; r.append(b);
+          if (c.cost) r.append(costBox(c.cost));
+          if (!c.ok && c.why) r.append(el('div', 'lg-why', c.why));
+          if (armed) { const q = el('div', 'lg-ask'); q.append(el('p', 'note warn', `Inscribe ${P(id).n} on this item? Tap Inscribe again to confirm.`), btn('mini', 'Cancel', () => { st.lgArm = null; re(); })); r.append(q); }
+          box.append(r);
+        }
+        if (box.children.length) out.push(secBox('Inscribe a power', box));
+      }
+    }
+    // Mark
+    if (markable(it)) {
+      const box = el('div', 'lg-ibox');
+      const have = S.legend.sig;
+      if (it.cm != null && LEG_CIRCLES[it.cm]) box.append(el('p', 'note', `It carries the ${circleName(it.cm)} mark. A new mark replaces it.`));
+      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Sigil. Expeditions with 2 or more of one circle bring them.'));
+      else {
+        const row = el('div', 'lg-marks');
+        LEG_CIRCLES.forEach((c, i) => {
+          const b = btn('lg-mk' + (st.lgArm === 'mark:' + i ? ' armed' : '') + (it.cm === i ? ' cur' : ''), null, () => { st.lgArm = st.lgArm === 'mark:' + i ? null : 'mark:' + i; re(); });
+          b.append(img(sigURL(i)), el('b', null, String(have[i] | 0)), el('small', null, shortName(i)));
+          b.disabled = it.cm === i || !(have[i] > 0);
+          b.setAttribute('aria-label', `${circleName(i)} mark, ${have[i] | 0} Sigils`);
+          row.append(b);
+        });
+        box.append(row);
+        const m = /^mark:(\d)$/.exec(st.lgArm || '');
+        if (m) {
+          const i = +m[1], c = legendCanMark(it.id, i);
+          const q = el('div', 'lg-ask');
+          const set = LEG_SETS[LEG_CIRCLES[i]];
+          q.append(el('p', 'note', `Counts toward ${set.n}. With 2 pieces worn: ${set.tiers[2].txt}${it.cm != null && it.cm !== i ? ` It replaces the ${circleName(it.cm)} mark.` : ''}`));
+          if (c.cost && c.cost.pearlLive) q.append(costBox({ pearlLive: true, pearls: c.cost.pearls, ess: 0, t: c.cost.t, gold: 0 }));
+          if (!c.ok) q.append(el('div', 'lg-why', c.why));
+          const go = btn('mini go', `Mark it (1 ${shortName(i)} Sigil)`, () => { st.lgArm = null; act(() => legendMark(it.id, i)); re(); });
+          go.disabled = !c.ok;
+          const bs = el('div', 'lg-askb'); bs.append(btn('mini', 'Cancel', () => { st.lgArm = null; re(); }), go); q.append(bs);
+          box.append(q);
+        }
+      }
+      out.push(secBox('Circle mark', box));
+    }
+    return out;
+  }
+
+  // ================= Party tab helpers =================
+  function heroLine() {
+    if (!on0()) return null;
+    const a = legendActive();
+    if (!a.hero.length && !(typeof isUnlocked !== 'function' || isUnlocked('powers'))) return null;
+    return { n: a.hero.length, txt: `Powers ${a.hero.length}/${LEG_TUNE.heroMax}` + (a.hero.length ? ': ' + a.hero.map(x => `${P(x.id).n} ${rn(x.rank)}`).join(', ') : '') };
+  }
+  // Sets chips for the Synergies section: "Hedgefolk 4/6", lit when a tier is on.
+  let rowSig = '';
+  function setsRow(box) {
+    if (!on0()) return false;
+    const s = legendSets();
+    const sig = s.n.join() + JSON.stringify(s.tier);
+    const shown = s.n.some(n => n > 0);
+    if (sig === rowSig && box.childElementCount === (shown ? 1 + s.n.filter(n => n > 0).length : 0)) return shown;
+    rowSig = sig; box.textContent = '';
+    if (!shown) return false;
+    box.append(el('span', 'lg-setslbl', 'Sets'));
+    LEG_CIRCLES.forEach((c, i) => {
+      const n = s.n[i]; if (!n) return;
+      const t = s.tier[c], next = LEG_TUNE.setTiers.find(k => k > n);
+      const b = btn('syn-chip lg-schip' + (t ? ' on' : ''), null, () => setTab('powers', '#sec-legend-sets'));
+      b.append(el('i'), el('span', null, `${shortName(i)} ${Math.min(n, 6)}/6`));
+      if (next && !t) b.append(el('small', null, `needs ${next - n} more marked piece${next - n > 1 ? 's' : ''}`));
+      b.setAttribute('aria-label', `${LEG_SETS[c].n}: ${n} of 6 marked pieces${t ? `, ${t}-piece bonus on` : ''}. Open Circle sets.`);
+      box.append(b);
+    });
+    return true;
+  }
+
+  // ================= away card =================
+  let away = null;
+  on('awayBegin', () => { away = { drops: 0, sig: 0 }; });
+  on('legendDrop', () => { if (away) away.drops++; });
+  on('legendSigil', e => { if (away && e) away.sig += e.n | 0; });
+  on('awayEnd', () => { setTimeout(() => { away = null; }, 0); });
+  if (typeof registerAwayLine === 'function') registerAwayLine(() => {
+    if (!away || !(away.drops || away.sig)) return null;
+    const bits = [];
+    if (away.drops) bits.push(`${away.drops} legendary power${away.drops > 1 ? 's' : ''} found`);
+    if (away.sig) bits.push(`${away.sig} Circle Sigil${away.sig > 1 ? 's' : ''}`);
+    return { icon: { ic: legendIcon('tidewall') }, txt: bits.join(', '), sub: 'See Craft, then Powers' };
+  });
+
+  legendUI = { icon, lines, itemBoxes, heroLine, setsRow, openInscribe };
+}
+
 // ---- src/js/75-mastery-ui.js ----
 // 75-mastery-ui: "Zone mastery" and "Bestiary" sections on the Fight tab.
 {
@@ -23245,7 +24025,8 @@ let craftUI = null;
     tavern: 'New on the Camp tab: the Tavern.',
     codex: 'The Codex is open. Find it in the Journal (the bell).',
     raid: 'The World raid is open on the Camp tab.',
-    deep: 'New on the Fight tab: the Deepwell.'
+    deep: 'New on the Fight tab: the Deepwell.',
+    powers: 'New on the Craft tab: Powers. Learn and inscribe legendary powers.'
   };
   const TAB_FEATURE = { party: 'party', gather: 'gat', camp: 'world', craft: 'forge' };
   on('unlock', ({ id, quiet }) => {
@@ -23764,6 +24545,11 @@ let openSheet, partySheet;
       s.append(slotTile(it, ic, 56));
       const tx = el('div');
       tx.append(el('b', null, it ? itemName(it) : noun), el('small', null, it ? noun : 'Empty. Party gear is coming soon.'));
+      if (it && it.lg && typeof legendItemState === 'function' && LEG_POWERS[it.lg]) {   // a companion's legendary power
+        const st = safe(() => legendItemState(it, k), { on: false, why: '', rank: 1 });
+        tx.append(el('small', 'cs-power' + (st.on ? '' : ' off'), `${LEG_POWERS[it.lg].n} ${roman(st.rank || 1)}: ` + (st.on ? legendText(it.lg, st.rank || 1) : `off. ${st.why}`)));
+        s.firstChild.classList.add('lg-pip'); if (!st.on) s.firstChild.classList.add('lg-offpip');
+      }
       s.append(tx); g.append(s);
       if (typeof craftUI === 'object' && craftUI) { s.classList.add('tap'); s.setAttribute('role', 'button'); s.tabIndex = 0; s.addEventListener('click', () => craftUI.pick(k, which)); if (!it) tx.lastChild.textContent = 'Empty. Tap to choose.'; } // K7 item picker
     }
@@ -23903,14 +24689,17 @@ let openSheet, partySheet;
     const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
     const g = el('div', 'cs-hgear');
     for (const s of HERO_SLOTS) {
-      const it = s.old ? equipped(s.old) : null;
-      const d = el('div', 'cs-hslot' + (s.old ? '' : ' soon'));
-      d.append(it ? slotTile(it, null, 56) : slotTile(null, s.old ? SLOT[s.old].icon : s.id === 'off' ? 'banner' : 'helm', 56));
+      const pos = s.old || s.id, open = pos in S.equip;   // off-hand and body are hero positions since crafting (K4)
+      const it = open ? equipped(pos) : null;
+      const d = el('div', 'cs-hslot' + (open ? '' : ' soon'));
+      d.append(it ? slotTile(it, null, 56) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm', 56));
+      if (it && it.lg && !it.lr) d.firstChild.classList.add('lg-pip');
       d.append(el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : s.old ? 'Empty. Forge one in the Forge tab.' : 'Coming with crafting.';
+      d.title = it ? itemName(it) : open ? 'Empty. Craft one in the Craft tab.' : 'Coming with crafting.';
       g.append(d);
     }
-    body.append(section('Gear', g, el('p', 'note', 'Dashed slots arrive with crafting. Forge the rest in the Forge tab.')));
+    const lgl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;   // "Powers 1/2" (75-legend-ui)
+    body.append(section('Gear', g, lgl ? el('p', 'pc-powers' + (lgl.n ? '' : ' none'), lgl.txt) : '', el('p', 'note', 'Craft gear in the Craft tab.')));
     const n = (S.party && S.party.mirrors) || 0;
     const mir = el('div', 'cs-mirror');
     const mt = el('div'); mt.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? 'Use one to choose a new class. Your level and gear stay.' : 'Bosses from zone 36 sometimes drop one. It lets you change class.'));
@@ -23928,10 +24717,10 @@ let openSheet, partySheet;
   }
 
   const sigOf = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle();
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
-    return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
+    return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, (S.legend ? JSON.stringify(S.legend.book) : '') + ['wpn', 'trk'].map(w => { const it = gearOf(k, w); return it && it.lg ? it.lg : ''; }).join(), inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
       JSON.stringify(safe(() => (synergiesFor(k) || []).map(s => s.id + s.active), [])), (S.party.field || []).join(), (o => o ? o.id + o.back : '')(outOf(k))].join('|');
   };
   function render(force) {
@@ -24097,13 +24886,17 @@ let openSheet, partySheet;
     const gearBox = el('div', 'pc-gear');
     const nouns = HERO_GEAR_NOUN[P().cls] || {};
     for (const s of HERO_SLOTS) {
-      const it = s.old ? equipped(s.old) : null;
-      const d = el('div', 'pc-slot' + (s.old ? '' : ' soon'));
-      d.append(it ? slotTile(it) : slotTile(null, s.old ? SLOT[s.old].icon : s.id === 'off' ? 'banner' : 'helm'), el('small', null, nouns[s.id] || s.n));
-      d.title = it ? itemName(it) : s.old ? 'Empty' : 'Coming with crafting';
+      const pos = s.old || s.id, open = pos in S.equip;   // off-hand and body are hero positions since crafting (K4)
+      const it = open ? equipped(pos) : null;
+      const d = el('div', 'pc-slot' + (open ? '' : ' soon'));
+      const tile = it ? slotTile(it) : slotTile(null, SLOT[pos] ? SLOT[pos].icon : pos === 'body' ? 'plate' : pos === 'off' ? 'banner' : 'helm');
+      if (it && it.lg && !it.lr) tile.classList.add('lg-pip');   // a legendary power (75-legend-ui)
+      d.append(tile, el('small', null, nouns[s.id] || s.n));
+      d.title = it ? itemName(it) : open ? 'Empty' : 'Coming with crafting';
       gearBox.append(d);
     }
     card.append(gearBox);
+    const pw = el('div', 'pc-powers'); pw.hidden = true; card.append(pw); refs.pw = pw;   // "Powers 1/2" (75-legend-ui)
     const open = () => partySheet.openHero();
     card.addEventListener('click', open);
     card.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); open(); } });
@@ -24117,6 +24910,8 @@ let openSheet, partySheet;
     const r = heroRefs;
     setT(r.sub, (c ? c.name : 'Wanderer') + ' · Lv ' + S.L);
     const ct = heroTitle(); setT(r.ctl, ct); putHidden(r.ctl, !ct);
+    const hl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;
+    putHidden(r.pw, !hl); if (hl) { setT(r.pw, hl.txt); putToggle(r.pw, 'none', !hl.n); }
     if (r.cdBar) {
       const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
       putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
@@ -24155,6 +24950,7 @@ let openSheet, partySheet;
       const gear = el('div', 'pc-g2');
       for (const [w, noun, ic] of [['wpn', weaponNoun(k), 'sword'], ['trk', 'Trinket', 'charm']]) {
         const it = gearOf(k, w); const t = slotTile(it, ic); t.title = it ? itemName(it) : `${noun}: coming soon`; gear.append(t);
+        if (it && it.lg && typeof legendItemState === 'function') { t.classList.add('lg-pip'); if (!safe(() => legendItemState(it, k).on, false)) t.classList.add('lg-offpip'); }   // a legendary power
       }
       top.append(pt, who, gear);
       const xr = el('div', 'pc-xrow');
@@ -24174,7 +24970,7 @@ let openSheet, partySheet;
   }
   function updateComps(box) {
     const keys = field();
-    const sig = keys.join(',') + '|' + typeof portraitURL + '|' + keys.map(k => { const r = charRec(k); return r.wpn + ':' + r.trk; }).join() + (fnActive() ? 1 : 0);
+    const sig = keys.join(',') + '|' + typeof portraitURL + '|' + keys.map(k => { const r = charRec(k); return r.wpn + ':' + r.trk; }).join() + (fnActive() ? 1 : 0) + '|' + keys.map(k => ['wpn', 'trk'].map(w => { const it = gearOf(k, w); return it && it.lg ? it.lg : ''; }).join()).join();
     if (sig !== compSig) { compSig = sig; buildComps(box, keys); }
     for (const r of compRefs) {
       const x = xpInfo(r.k); if (!x) continue;
@@ -24367,8 +25163,11 @@ let openSheet, partySheet;
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
   registerSection('party', {
-    id: 'party-syn', title: 'Synergies', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det')); },
-    update: guard('synergies', () => updateSyn(document.getElementById('sec-party-syn')))
+    id: 'party-syn', title: 'Synergies', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('p', 'syn-det'), el('div', 'syn-sets')); },
+    update: guard('synergies', () => {
+      const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
+      if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
+    })
   });
   registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
   registerSection('party', {

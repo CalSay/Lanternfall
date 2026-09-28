@@ -329,3 +329,9 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   too slow) are REAL role-design gaps: BAL2 must make tanks and supports matter (COMBAT_TUNE hp/atk/heal).
   C4 (stage visuals for packs, threat, heals, KO, telegraph colours) waits for the Deepwell-visuals agent
   to release 62-stage/61-anim. Save: S.combat {on, back, tip}.
+- L4 merged: Craft > Powers view (your powers, the Lantern Book, Inscribe sheet, circle sets and Sigils,
+  a Capped chip), item-sheet Learn/Inscribe/Mark, the 2-power "Take off X?" question, Party pips, Sets
+  chips, the Codex Legendaries page (page 16). Powers opens on the first legendary or Sigil (a "late"
+  feature, so it stays hidden on old saves until then). --r-legendary is now #FF8A3D. Also fixed: the
+  hero card showed off-hand/body as "coming soon" even when worn. L3 should mark combat-only powers
+  "with party combat" until wired.
