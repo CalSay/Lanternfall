@@ -20,7 +20,7 @@
 //
 // Events: recruit {id, source}, charLevel {id, lv, quiet}, milestone {id, lv, quiet}, drill {id, lv, quiet},
 //         promote {id, rank}, fieldChange {field}, rosterMigrated {old, now, ratio, steps}.
-// Listens: kill (XP, boss x5), bountyDone (20 kills' worth), zoneClear (free joins),
+// Listens: kill (XP, boss x5; the bench earns ROSTER_TUNE.benchXp of it, F5), bountyDone (20 kills' worth), zoneClear (free joins),
 //          awayKills (offline XP, 75% of the estimated kills; hook in awayGains). Modifier key
 //          'compXp' multiplies companion XP.
 //
@@ -135,7 +135,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
                                          //   Starlit, zone 36, walled Region 1 at level 125, and Radiant walled day 1 at level 75)
     storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3,
-    fieldMax: 2                          // (F1, formation.md) companions in the party: the hero is the third (was 3)
+    fieldMax: 2,                         // (F1, formation.md) companions in the party: the hero is the third (was 3)
+    // (F5) benched companions earn benchXp of a fielded member's kill XP (quietly; catch-up applies), so the
+    // bench does not freeze at level 1 while the field climbs (the Lanternmage stalled at the zone 70 boss)
+    benchXp: 0.25
   };
   ROSTER_TUNE = T;
   const RST_DEF = {
@@ -168,9 +171,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const cxpBase = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
   cxpNeed = lv => cxpBase(lv) * paceXp(lv);
   cxpGain = z => cxpBase(T.par * z) / T.killsPerLv;
-  // Party level: average of the 3 highest companion levels on the roster.
+  // Party level: average of the fieldMax (2) highest companion levels on the roster (F5: was the top 3,
+  // which undervalued recruits' potential once the field became 2).
   partyLevel = () => {
-    const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, 3);
+    const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, Math.max(1, T.fieldMax));
     return l.length ? l.reduce((a, b) => a + b, 0) / l.length : 1;
   };
   catchUpBonus = id => {
@@ -556,8 +560,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const packX = () => combatOn() && typeof COMBAT_TUNE === "object" && COMBAT_TUNE ? COMBAT_TUNE.packHp : 1;
   const giveField = (n, z, quiet, dps) => {
     if (!rosterLive()) return [];
-    const w = killWorth(z, dps != null ? dps : totalDps());
-    return fieldKeys().map(k => [k, giveXp(k, n * w * gainFor(k, z) * xpMult(k), quiet)]);
+    const w = killWorth(z, dps != null ? dps : totalDps()), f = fieldKeys();
+    // F5: the bench (not away on an expedition) earns benchXp of the same XP, quietly (no level toasts).
+    if (T.benchXp > 0) for (const k of rosterList()) if (!f.includes(k) && !onExped(k)) giveXp(k, n * w * T.benchXp * gainFor(k, z) * xpMult(k), true);
+    return f.map(k => [k, giveXp(k, n * w * gainFor(k, z) * xpMult(k), quiet)]);
   };
   on('kill', ({ mob: m, zone }) => giveField(m && m.boss ? T.bossXp : 1, zone));
   on('bountyDone', () => giveField(T.bountyKills, S.zone));

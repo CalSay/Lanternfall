@@ -12248,7 +12248,7 @@ let welcomeApply, welcomeNote, welcomeInfo;
 //
 // Events: recruit {id, source}, charLevel {id, lv, quiet}, milestone {id, lv, quiet}, drill {id, lv, quiet},
 //         promote {id, rank}, fieldChange {field}, rosterMigrated {old, now, ratio, steps}.
-// Listens: kill (XP, boss x5), bountyDone (20 kills' worth), zoneClear (free joins),
+// Listens: kill (XP, boss x5; the bench earns ROSTER_TUNE.benchXp of it, F5), bountyDone (20 kills' worth), zoneClear (free joins),
 //          awayKills (offline XP, 75% of the estimated kills; hook in awayGains). Modifier key
 //          'compXp' multiplies companion XP.
 //
@@ -12363,7 +12363,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
                                          //   Starlit, zone 36, walled Region 1 at level 125, and Radiant walled day 1 at level 75)
     storyLv: [5, 15, 25], milestones: [5, 10, 15, 20, 25], noLossMax: 1.3,
-    fieldMax: 2                          // (F1, formation.md) companions in the party: the hero is the third (was 3)
+    fieldMax: 2,                         // (F1, formation.md) companions in the party: the hero is the third (was 3)
+    // (F5) benched companions earn benchXp of a fielded member's kill XP (quietly; catch-up applies), so the
+    // bench does not freeze at level 1 while the field climbs (the Lanternmage stalled at the zone 70 boss)
+    benchXp: 0.25
   };
   ROSTER_TUNE = T;
   const RST_DEF = {
@@ -12396,9 +12399,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const cxpBase = lv => T.xpBase * Math.pow(T.xpR, lv - 1);
   cxpNeed = lv => cxpBase(lv) * paceXp(lv);
   cxpGain = z => cxpBase(T.par * z) / T.killsPerLv;
-  // Party level: average of the 3 highest companion levels on the roster.
+  // Party level: average of the fieldMax (2) highest companion levels on the roster (F5: was the top 3,
+  // which undervalued recruits' potential once the field became 2).
   partyLevel = () => {
-    const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, 3);
+    const l = rosterList().map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, Math.max(1, T.fieldMax));
     return l.length ? l.reduce((a, b) => a + b, 0) / l.length : 1;
   };
   catchUpBonus = id => {
@@ -12784,8 +12788,10 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   const packX = () => combatOn() && typeof COMBAT_TUNE === "object" && COMBAT_TUNE ? COMBAT_TUNE.packHp : 1;
   const giveField = (n, z, quiet, dps) => {
     if (!rosterLive()) return [];
-    const w = killWorth(z, dps != null ? dps : totalDps());
-    return fieldKeys().map(k => [k, giveXp(k, n * w * gainFor(k, z) * xpMult(k), quiet)]);
+    const w = killWorth(z, dps != null ? dps : totalDps()), f = fieldKeys();
+    // F5: the bench (not away on an expedition) earns benchXp of the same XP, quietly (no level toasts).
+    if (T.benchXp > 0) for (const k of rosterList()) if (!f.includes(k) && !onExped(k)) giveXp(k, n * w * T.benchXp * gainFor(k, z) * xpMult(k), true);
+    return f.map(k => [k, giveXp(k, n * w * gainFor(k, z) * xpMult(k), quiet)]);
   };
   on('kill', ({ mob: m, zone }) => giveField(m && m.boss ? T.bossXp : 1, zone));
   on('bountyDone', () => giveField(T.bountyKills, S.zone));
@@ -14096,7 +14102,8 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
 // When the party changes on its own (spec 5.4): autoPlan(reason) runs on events only (recruit,
 // promotion, drill, every 5 levels of a fielded member, a new zone, a fall-back, a failed boss, an
 // expedition leaving or coming back, a class change, a pin change, and "stuck": stuckT seconds of
-// fighting with no kill and a member down, which also weighs a tank as after a boss knock-out). An automatic change needs a
+// fighting with no kill and a member knocked out in that time (F5: members get up mid-pack now), which also weighs a tank
+// as after a boss knock-out). An automatic change needs a
 // gain of FORM_TUNE.hyst (6%) and FORM_TUNE.dwell (300 s of game time) since the last one; ties
 // keep the current party; no return within flipT (10 min), and none for badT (30 min) to a line-up
 // the packs knocked out. At once: an empty place someone can fill, a pinned companion off the
@@ -14145,6 +14152,9 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
 
 // var: 56-roster (earlier in the load) asks for autoPlan and bestLineup by typeof.
 var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, autoPlanInfo;
+// F5: while a 'potential' measurement lifts levels, { id: charPow at the real level } (59-combat reads it
+// for the hero's HP); null otherwise.
+var afRealPow = null;
 
 {
   const T = {
@@ -14311,14 +14321,17 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
   // 'potential': levels once caught up to the party level and promoted to match (as 56-roster).
   function withLevels(by, ids, fn) {
     if (by !== 'potential') return fn();
-    const pl = Math.floor(partyLevel()), saved = [];
+    const pl = Math.floor(partyLevel()), saved = [], real = {};
     for (const k of ids) {
       const r = charRec(k); if (!r) continue;
       const lv = Math.max(r.lv, pl);
-      saved.push([r, r.lv, r.rank]);
+      saved.push([r, r.lv, r.rank]); real[k] = charPow(k);
       r.rank = Math.max(r.rank, Math.min(7, Math.floor((lv - 1) / 25))); r.lv = Math.min(lv, levelCap(r.rank));
     }
-    try { return fn(); } finally { for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
+    // F5: the hold estimate gives the hero its HP at the companions' real power (59-combat readPartyP):
+    // companions catch up in minutes, the hero's HP would only follow them
+    const prev = afRealPow; afRealPow = real;
+    try { return fn(); } finally { afRealPow = prev; for (const [r, lv, rank] of saved) { r.lv = lv; r.rank = rank; } }
   }
   const value = k => charPow(k) * (R(k).role === 'support' ? ROSTER_TUNE.supEq : ROLE_STATS[R(k).role].dps * (1 + (ROLE_STATS[R(k).role].crit || 0) * ((ROLE_STATS[R(k).role].critX || 1) - 1)));
   const pinsOf = (o, pass) => {
@@ -14610,15 +14623,19 @@ var AF_TUNE, bestLineup, bestLineupLater, lineupScore, applyLineup, autoPlan, au
   // Stuck: the party fights on with members down and kills nothing (the hero outlasts the pack but
   // cannot finish it). The fight showed the line-up does not hold here: plan now, with a tank weighed
   // as after a boss knock-out.
-  let sinceKill = 0;
-  on('kill', () => { sinceKill = 0; });
-  const anyDown = () => typeof cbUnitHp === 'function' && curField().some(k => { const h = cbUnitHp(k); return !!(h && h.down); });
+  // F5: members now get up mid-pack (59-combat getUp), so "a member down" means down at any time since
+  // the last kill, not only at the moment the timer runs out.
+  let sinceKill = 0, downSeen = false;
+  on('kill', () => { sinceKill = 0; downSeen = false; });
+  on('unitDown', () => { downSeen = true; });
+  on('wipe', () => { sinceKill = 0; downSeen = false; });
+  const anyDown = () => downSeen || (typeof cbUnitHp === 'function' && curField().some(k => { const h = cbUnitHp(k); return !!(h && h.down); }));
   onTick(dt => {
     // (the dwell clock and boss state are not tied to the S object: tools swap S in and out to try things)
     AP.clock += dt;
     if (S.activity === 'fight' && combatOn() && !arena && P() && P().autoField) {
       sinceKill += dt;
-      if (sinceKill >= T.stuckT) { sinceKill = 0; if (anyDown()) { wipeZone = S.zone; stuckZone = S.zone; due('stuck'); AP.checked = false; } }
+      if (sinceKill >= T.stuckT) { sinceKill = 0; if (anyDown()) { wipeZone = S.zone; stuckZone = S.zone; due('stuck'); AP.checked = false; } downSeen = false; }
     } else sinceKill = 0;
     if (!AP.pending || AP.job) return;
     if (AP.checked && (AP.clock - AP.lastAt < F('dwell') || AP.clock < AP.flipHold)) return;   // looked already: wait out the dwell
@@ -19296,7 +19313,7 @@ let deeds, deedBonus, wearGet;
 //           cbDamageFoe(f, amount, src, kind), cbUnitByKey(key), cbTaunt(u, foes, secs),
 //           cbStun(f, secs), cbDebug()
 //   offline partyHoldEstimate(zMax, opts) -> { zone, holds, dps, packSecs, packsPerSec, goldPerSec,
-//           tgt, inc, sus, margin }; partyHolds(z) -> bool
+//           tgt, inc, sus, margin, heroHp }; partyHolds(z) -> bool
 //
 // Model (short): each unit keeps HP, shield and a damage-reduction stack. Companions swing at
 // their role speed; a swing deals charDps x (1 - abF) / speed (their average damage today, so
@@ -19312,9 +19329,11 @@ let deeds, deedBonus, wearGet;
 //   unitHit   { key, amount, kind, foe, blocked, shield }   kind: hit | heavy | cloud | slam | dive | poison | burn
 //   unitHeal  { key, amount, shield }         healing done (shield: part that became a shield)
 //   unitDown  { key }                         a member was knocked out
-//   unitUp    { key, hp }                     a downed member stands up (between packs or after a wipe)
+//   unitUp    { key, hp }                     a downed member stands up (between packs, after COMBAT_TUNE.getUp s
+//                                             mid-pack (F5, not in boss fights or the Deepwell), or after a wipe)
 //   foeDown   { mob, src }                    a foe in the pack died (the `kill` event is per pack)
-//   wipe      { zone, to, boss, arena }       every member is down (boss: the attempt failed)
+//   wipe      { zone, to, boss, arena, stall }   every member is down (boss: the attempt failed); stall (F5):
+//                                             the pack was not finished in COMBAT_TUNE.stallT s, the party falls back the same way
 //   telegraphStart / telegraphResolve         59b-enemies.js
 //
 // Economy: a pack is one "foe" for every listener. `kill` fires once per pack (the lead foe,
@@ -19356,6 +19375,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // ability heals counted (the estimate walled pushes the live party held); estEff 1 -> 1.08 (T8; away only)
     cover: 0.15, backRanged: 0.2,
     regen: 0.005, packHealF: 0.15, revive: 0.3, reviveVigil: 0.6, respawn: 0.45, wipeT: 5,
+    // (F5) no soft-lock: a member down getUp s while the pack stands gets up at `revive` HP (not in a boss
+    // fight or the Deepwell); a pack the party has not finished in stallT s counts as a wipe (it falls back)
+    getUp: 15, stallT: 90,
+    heroRealHp: 1,                       // (F5) 1: a planner measurement at potential levels gives the hero its HP at the real ones (readPartyP)
     threat: { tank: 4, striker: 1, caster: 1.2, support: 0.5 }, healThreat: 0.5, opening: 10, switchX: 1.2,
     tauntT: 3, tauntX: 1.2, shieldT: 6,
     abF: 1 / 6,                          // share of a companion's damage its ability deals (SYN_TUNE.abShare 0.2 of 1.2)
@@ -19383,6 +19406,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   };
   COMBAT_TUNE = T;
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
+    getUps: 0, stalls: 0,   // F5: members who got up mid-pack, packs given up (the soft-lock guard)
     tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
     crits: 0, maxHit: 0, maxOver: 0, heroHits: 0 };   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
   on('crit', () => { ST.crits++; });
@@ -19406,7 +19430,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     return {
       i, key: '', id: null, live: false, role: 'tank', cls: null, col: 2, lane: 0, melee: true, ranged: false,
       pow: 0, hpP: 0, maxHp: 1, hp: 1, sh: 0, shT: 0, armour: 0, thX: 1, dps: 0, spd: 1, swing: 0, heal: 0, healT: 0, healX: 1, healIn: 1,
-      down: false, cd: 0, cdMax: 0, cdRate: 1, lv: 1, blockP: 0, ward: 0, pierce: 0, area: 0, ctrl: 1,
+      down: false, downT: 0, cd: 0, cdMax: 0, cdRate: 1, lv: 1, blockP: 0, ward: 0, pierce: 0, area: 0, ctrl: 1,
       drT: 0, drV: 0, untarg: 0, strikeT: 0, trust: 0, stubborn: false, vow: false, ashenT: 0, rock: 0, rockT: 0,
       icLeft: 0, icFor: -1, icUsed: 0, poisonT: 0, poisonDps: 0, reflT: 0, hotT: 0, hotV: 0, fight: 0, lifeline: false,
       dmg: 0, healed: 0, taken: 0, verse: 0, verseT: 0, tollT: 0
@@ -19424,7 +19448,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   combatFoes = () => foes;
   cbUnitByKey = key => { for (let i = 0; i < nU; i++) if (U[i].key === key) return U[i]; return null; };
 
-  const fieldIds = () => (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, 3);
+  const fieldIds = () => (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
   const has = id => { for (let i = 0; i < nU; i++) if (U[i].id === id) return U[i]; return null; };
   const upHas = id => { const u = has(id); return u && !u.down ? u : null; };
   const synOn = id => { try { return typeof synergyStatus === 'function' && synergyStatus(id).active; } catch (e) { return false; } };
@@ -19465,7 +19489,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       role = CLASS_ROLE[cls]; u.cls = cls; u.id = null; u.lv = S.L;
       const g = gear(), hp0 = heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1);
       u.pow = hp0 / T.heroPow;
-      u.hpP = hpPow(u.pow);
+      u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
       maxHp = T.heroHp[cls] * u.hpP * (1 + g.hp / 100);
       u.armour = T.heroArmour[cls] + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
@@ -19529,14 +19553,19 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // power; here a member's HP power is the geometric mean of its own and the party's average, own
   // clamped to 0.15-6x the average). So HP keeps pace with the damage that sets the zone curve (party
   // synergies and the hero's share move it), and a new recruit is weaker but never paper.
-  let partyP = 1;
-  const hpPow = own => partyP * Math.sqrt(Math.max(T.hpClamp[0], Math.min(T.hpClamp[1], own / partyP)));
+  // F5: the hero's HP reads heroP, the party average at the companions' real levels. The planner's
+  // 'potential' (56d withLevels) lifts companion levels for a measurement and lists their real power in
+  // afRealPow; the hero does not catch up with them, so a hero in Front was rated for HP it did not have
+  // (the late fixture: a hero in Front with Kestrel and Oriel rated to hold zone 39, wiped to 33).
+  let partyP = 1, heroP = 1;
+  const hpPow = (own, p) => { p = p || partyP; return p * Math.sqrt(Math.max(T.hpClamp[0], Math.min(T.hpClamp[1], own / p))); };
   function readPartyP(ids) {
-    let sum = 0, n = 0;
-    const cls = S.party && S.party.cls;
-    sum += heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1) / T.heroPow; n++;
-    for (const k of ids) { sum += charPow(k); n++; }
+    let sum = 0, n = 0, real = 0;
+    const cls = S.party && S.party.cls, rp = T.heroRealHp && typeof afRealPow === 'object' && afRealPow ? afRealPow : null;
+    sum += heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1) / T.heroPow; n++; real = sum;
+    for (const k of ids) { const c = charPow(k); sum += c; real += rp && Number.isFinite(rp[k]) ? rp[k] : c; n++; }
     partyP = sum > 0 && Number.isFinite(sum) ? sum / n : 1;
+    heroP = real > 0 && Number.isFinite(real) ? real / n : partyP;
   }
   // Rebuild the unit list when the field, cells or class change; else refresh the stats in place.
   function refreshUnits(force) {
@@ -20143,7 +20172,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // The standing tank one slot in front of u (it covers u), or null.
   function coverOf(u, list, n) { for (let i = 0; i < n; i++) { const x = list[i]; if (x !== u && !x.down && x.role === 'tank' && x.col === u.col + 1) return x; } return null; }
   function knockOut(u) {
-    u.hp = 0; u.down = true; u.sh = 0; packDown = true; ST.kos++;
+    u.hp = 0; u.down = true; u.downT = 0; u.sh = 0; packDown = true; ST.kos++;
     for (const f of foes) { f.th[u.i] = 0; if (f.tgt === u.i) f.tgt = -1; }
     DOWN_EV.key = u.key; emit('unitDown', DOWN_EV);
     let up = 0; for (let i = 0; i < nU; i++) if (!U[i].down) up++;
@@ -20174,11 +20203,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     mob = last;
     killPack(m, m.boss ? m.gold : packGold);
   }
-  const WIPE_EV = { zone: 0, to: 0, boss: false, arena: false };
-  function wipe() {
+  const WIPE_EV = { zone: 0, to: 0, boss: false, arena: false, stall: false };
+  // stall (F5): the pack was not finished in COMBAT_TUNE.stallT; the party falls back as after a wipe.
+  function wipe(stall) {
     ST.wipes++;
     const z = S.zone;
-    WIPE_EV.zone = z; WIPE_EV.boss = !!fightBoss; WIPE_EV.arena = !!inArena;
+    WIPE_EV.zone = z; WIPE_EV.boss = !!fightBoss; WIPE_EV.arena = !!inArena; WIPE_EV.stall = !!stall;
     wipeT = T.wipeT; wipeBoss = !!fightBoss;
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
@@ -20191,7 +20221,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
-      toast('Your party fell back to regroup.', 'raid', null, 'normal');
+      toast(stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;
@@ -20239,10 +20269,15 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (!anyFoe()) { for (const f of foes) if (f.dead) f.dead += dt; return; }
     packT += dt;
     frontC = partyFront();
+    // F5: the soft-lock guard. A pack the party cannot finish (a healer outlasts it with everyone else
+    // down, or foe healers out-heal the damage) counts as a wipe after stallT: the party falls back.
+    if (T.stallT > 0 && packT >= T.stallT && !fightBoss && !inArena) { ST.stalls++; wipe(true); return; }
+    const getUp = T.getUp > 0 && !fightBoss && !inArena;
     // party
     for (let i = 0; i < nU; i++) {
       const u = U[i];
-      if (u.down) continue;
+      // F5: a member down for getUp s gets back up (the unitUp path the stage already draws, no motion needed)
+      if (u.down) { if (getUp && (u.downT += dt) >= T.getUp) { standUp(u, T.revive); ST.getUps++; } continue; }
       if (u.hp < u.maxHp) u.hp = Math.min(u.maxHp, u.hp + u.maxHp * T.regen * dt);
       if (u.shT > 0) { u.shT -= dt; if (u.shT <= 0) u.sh = 0; }
       if (u.drT > 0) u.drT -= dt;
@@ -20322,7 +20357,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // ---------------- closed-form hold estimate (4.11, C3) ----------------
   // For z = zMax down to zMax - 10 (or just z with opts.one): damage rate, who gets hit, incoming
   // damage and sustain; the highest z that holds (and can be farmed) wins. Also drives auto-push.
-  const EST_OUT = { zone: 1, holds: false, dps: 0, packSecs: 0, packsPerSec: 0, goldPerSec: 0, tgt: '', inc: 0, sus: 0, margin: 0 };
+  const EST_OUT = { zone: 1, holds: false, dps: 0, packSecs: 0, packsPerSec: 0, goldPerSec: 0, tgt: '', inc: 0, sus: 0, margin: 0, heroHp: 0 };
   function estUnits() {
     readSyn();
     const ids = fieldIds();
@@ -20423,7 +20458,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         best = EST_OUT;
         best.zone = z; best.holds = holds; best.dps = D; best.packSecs = packSecs; best.packsPerSec = Number.isFinite(packSecs) && packSecs > 0 ? 1 / packSecs : 0;
         best.goldPerSec = best.packsPerSec * g; best.tgt = (front || hero).key; best.inc = incMax; best.sus = heal;
-        best.margin = worst;
+        best.margin = worst; best.heroHp = hero.maxHp;   // F5: the hero's max HP as measured (checks)
         break;
       }
     }

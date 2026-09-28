@@ -485,7 +485,9 @@ them on.
 | `supportBuff()` (UI) | Unchanged | - |
 | Planner rule for supports (`fieldSupport` 2) | Kept: a support only when the party cannot hold without one | A support now costs half the companion damage, so the rule matters more |
 | Companion XP | Per character unchanged; 2 levelers instead of 3 | Roster steps (T10) come about 2/3 as often: 8-12 min gaps become 12-18 min, inside 30 |
-| Catch-up | Unchanged (`partyLevel` = top 3 of the roster) | Swapping pairs is the new normal; catch-up already covers it (T11) |
+| Catch-up | F5: `partyLevel` = top 2 of the roster (the field; was top 3); the bench earns `ROSTER_TUNE.benchXp` (25%) of the kill XP, quietly, catch-up included | Swapping pairs is the new normal. With top 3 and a frozen bench the planner's potential undervalued recruits and the Lanternmage stalled at the zone 70 boss with two Commons at 200 |
+| Knock-outs (F5) | A member down `COMBAT_TUNE.getUp` (15 s) mid-pack gets up at 30% (not in boss fights or the Deepwell); a pack not finished in `stallT` (90 s) counts as a wipe (`wipe.stall`) | A healer hero outlasting a pack with both companions down was a soft-lock: no kill, no wipe |
+| Hold estimate at potential levels (F5) | The hero's HP uses the party power at the companions' real levels (`afRealPow`, `COMBAT_TUNE.heroRealHp`) | The hero does not catch up with them: a hero in Front with Kestrel and Oriel was rated to hold zone 39 on the late fixture and wiped to 33 (now rated 34) |
 | Promotion gold | Unchanged per promotion; fewer promotions per hour | Gold piles up a little: more hero upgrades and forging. P4 watches it |
 | Boredom metric (P4) | A Bond level-up counts as a meaningful upgrade | Bonds are a new stream of steps |
 | Hold estimate (59-combat) | Uses `heroCombatDps`, slot cover and dive rules, the Middle hinge, `offSlot` | T8 |

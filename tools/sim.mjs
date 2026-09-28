@@ -594,7 +594,7 @@ if (t11Snap) {
   h.eval('loadSave(); gearDirty(); spawn(); S.auto = false');
   const newId = h.eval("ROSTER_KEYS.find(k => !isRecruited(k) && ROSTER[k].role !== 'tank' && ROSTER[k].role !== 'support')");
   h.eval(`unlockChar(${JSON.stringify(newId)}, 'test', true); S.party.autoField = false; const f = S.party.field.slice(); fieldChar(${JSON.stringify(newId)}, f[f.length - 1])`);
-  const target = () => h.eval('(() => { const l = rosterList().filter(k => k !== ' + JSON.stringify(newId) + ').map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, 3); return l.reduce((a, b) => a + b, 0) / l.length - 5; })()');
+  const target = () => h.eval('(() => { const l = rosterList().filter(k => k !== ' + JSON.stringify(newId) + ').map(k => charRec(k).lv).sort((a, b) => b - a).slice(0, ROSTER_TUNE.fieldMax); return l.reduce((a, b) => a + b, 0) / l.length - 5; })()');
   let tt = 0;
   for (; tt < 3600; tt++) {
     if (h.eval(`charRec(${JSON.stringify(newId)}).lv`) >= target()) break;
