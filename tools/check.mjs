@@ -1927,7 +1927,9 @@ try {
   E('combatFoes().forEach(f => f.atk = 0)'); clearPack(E); ticks(g, 2);
   E('DW.run().floor = 5; DW.run().oil = 100; DW.pick(DW.offerView().cards[0].id)');
   let tele = null; g.fn.on('telegraphStart', p => { if (!tele) tele = { kind: p.kind, deep: !!(p.foe && p.foe.deep) }; });
-  E('combatFoes().forEach(f => f.atk = 0)');
+  // (S1: Wren's Mark is a +20% Mark status now, so this party kills the Elder about when its first wind-up
+  // opens; a sturdier Elder keeps the check about the telegraph, not the kill speed)
+  E('combatFoes().forEach(f => { f.atk = 0; if (f.boss) { f.max *= 10; f.hp = f.max; } })');
   let guard = 0; while (!E('cbTelegraph() && cbTelegraph().left <= cbTelegraph().win - 0.05') && guard++ < 150) ticks(g, 1);
   assert(E('mob.deep && mob.boss && DW.run().floor === 5') && tele && tele.deep, `floor 5: a Deep Elder, and it winds up a telegraph (${tele && tele.kind})`);
   const oilP = E('DW.run().oil'); E('resolveParry("tap")');

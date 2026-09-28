@@ -48,9 +48,12 @@ const FOE_BEH = {
   golem: { row: 2, atk: 2.5, spd: 0.5, armoured: true },
   wraith: { row: 0, atk: 1, spd: 1, ranged: true }
 };
+// S1 (combat-2 2.1, core-2 6.1): each foe's pack size, members, family and hit type ride along from
+// 21x-data-types FOE_TYPE (FOE_BEH[k].size, .n, .fam, .dt, .quota). Sizes and quotas do nothing until S6.
+for (const k in FOE_BEH) { const r = FOE_TYPE[k]; if (r) Object.assign(FOE_BEH[k], { size: r.size, n: r.n, fam: r.fam, dt: r.dt, quota: r.quota }); }
 const ENEMY_TUNE = {
   diveEvery: 10, diveT: 3, diveT2: 5, diveX2: 2, diveFrom: 8,
-  cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4,
+  cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4, venom: 3,   // S1: the cloud's poison is Venom (venom stacks, poisonT s)
   slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, reassemble: 0.2,
   heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2, dodgeX: 0.5,
   beetleEvery: 6, golemX: 6, cloudBossX: 1.5, batDiveEvery: 12, batDiveX: 2, bonesEvery: 15, bonesAdds: 2, addHp: 0.08,
@@ -116,7 +119,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     const t = f.type;
     if (t === 'bat') {
       if (f.diveT > 0) { f.diveT -= dt; if (f.diveT <= 0) endDive(f); }
-      else if (f.bt >= E.diveEvery) {
+      else if (f.bt >= E.diveEvery && !(f.rootT > 0)) {   // S1: a Rooted foe cannot dive
         const u = pickDive();
         if (u && twoWalls(f)) { f.bt = 0; return false; }   // F2 Two Walls: the Middle tank taunts the pack's first diver
         if (u) { const two = f.z >= E.diveFrom; f.diveU = u.i; f.diveT = (two ? E.diveT2 : E.diveT); f.diveX = (two ? E.diveX2 : 1) * f.bx; f.first = 1; f.swing = Math.min(f.swing, 0.3); }
@@ -128,13 +131,15 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         for (const u of units()) {
           if (!u.live || u.down) continue;
           cbHitUnit(u, f.atk * E.cloud * f.bx, 'cloud', f);
-          if (!u.down) { u.poisonT = E.poisonT; u.poisonDps = Math.max(u.poisonDps, u.maxHp * E.poison * f.bx); }
+          // S1 (core-2 3.1: "the Spore cloud becomes Venom"): 3 stacks for 4 s, about today's 2% max HP a second.
+          // A cloud raises Venom to its stacks (floor) instead of adding, until S6 makes clouds a pack cadence.
+          if (!u.down) stUnitApply(u, 'venom', E.venom * f.bx, { dur: E.poisonT, floor: true });
         }
       }
     } else if (t === 'wraith') {
       if (f.chanT > 0) {
         f.chanT -= dt;
-        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx); f.bt = 0; }
+        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
         return true;
       }
       if (f.bt >= E.healEvery) { const o = mostHurtFoe(); if (o) { f.chanT = E.healChan; return true; } }
@@ -221,7 +226,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         name: TYPES[ti].name, gold: 0, xp: 0, hit: 0, dead: 0, born: 0, ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured,
         atk: f.atk / COMBAT_TUNE.bossAtk * b.atk, spd: COMBAT_TUNE.spd * b.spd, swing: 1, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
         stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
-        bt: 0, diveT: 0, diveU: -1, chanT: 0, hits: 0, again: true, first: 0, z: f.z, adds: true, gone: false
+        bt: 0, diveT: 0, diveU: -1, chanT: 0, hits: 0, again: true, first: 0, z: f.z, adds: true, gone: false,
+        dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false   // S1 (59a)
       };
       for (let k = 0; k < 4; k++) a.th[k] = f.th[k] * 0.5;
       list.push(a);
@@ -231,7 +237,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   function land(f) {
     const kind = TELE.kind, res = TELE.res;
     if (kind === 'heal') {
-      f.hp = Math.min(f.max, f.hp + f.max * E.wraithHeal);
+      f.hp = Math.min(f.max, f.hp + f.max * E.wraithHeal * stHealX(f));   // S1: anti-heal
       endTele('heal', '');
       return;
     }
