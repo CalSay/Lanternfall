@@ -439,3 +439,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   (sed: lanternfall.save.v1 -> lanternfall.preview.r1; bump r1 -> r2 to reset again). Future republishes
   must keep the swap: sed -e '1s#<title>Lanternfall</title>#<title>Lanternfall Preview</title>#'
   -e 's#lanternfall\.save\.v1#lanternfall.preview.r1#' dist/lanternfall.html > <preview path>.
+- LORE1b merged: the dark hunts and smothers light (the Voice wants the land wholly dark); "a light lit for
+  someone cannot be stolen" kept (smothered, never taken); the hero is the child Elowen's spark was lit for;
+  Region 3 Listener = the Pyre Knight (Ser Hadric), Caedmon's shield-brother; the Hollises (Bram's family)
+  as later optional Hands; the Voice is a 5-phase final boss at the bottom of the Deepwell (8.7). Its spec
+  task is renamed DV (D7 is the hearth spec). Writing tasks LORE2, LORE4, LORE5 are unblocked (weekday
+  light mode: one at a time).

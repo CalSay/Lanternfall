@@ -716,7 +716,7 @@ lit.
 
 ### 8.7 The last fight: the Voice (design outline, sealed)
 
-An outline at the rigour of [pinnacles.md](pinnacles.md), for a later spec task (**D7 The Voice**,
+An outline at the rigour of [pinnacles.md](pinnacles.md), for a later spec task (**DV The Voice**,
 section 10) to turn into numbers. Every pinnacle rule applies unless this says otherwise: each
 mechanic has a tap answer and a line-up answer (pinnacles.md 3.2), one player telegraph at a time,
 the fairness caps (3.4), the Lantern touch (3.3), missing costs time and never progress. The party
@@ -735,7 +735,7 @@ that pinnacle's rig in a black palette with a thin rim of stolen light (no new r
 own shape: a tall dark with a hole where a face would be, and many hands (one new rig, about 36 x
 48, baked before the fight like every pinnacle rig).
 
-| Rule | Value (starting values for D7 to tune) |
+| Rule | Value (starting values for DV to tune) |
 |---|---|
 | Timer | 150s. Enrage, "The Long Night", from 125s |
 | Phases | 5: 100-80%, 80-60%, 60-40%, 40-20%, below 20%. Each change: a 1.5s pause, a banner, +20 Lamp |
@@ -795,7 +795,7 @@ the lantern colour **Dawn**, the kill card and the warm beat (8.6), a Codex entr
 best times, Echoes of the four pinnacle powers, and the `legendDrop(5, ...)` roll at the pinnacle
 rate. No new power, stat or currency. The Voice never appears in the world raid or any online data.
 
-**Left for D7.** Numbers and the anchor, Vow meanings, the rig and palette, the kill card's words
+**Left for DV.** Numbers and the anchor, Vow meanings, the rig and palette, the kill card's words
 (with LORE13), and whether the rematch joins the Boss of the Week (recommended: no; it stays a thing
 you choose).
 
@@ -935,13 +935,13 @@ under its limit), commits on its branch, and does not push. Data files load in N
 | **LORE10** The Emberwaste story | Arrivals, beats, the Pyre Knight's barks and his rival lines with Caedmon, the Great Lantern III card, Pip's last page, Caedmon's camp story "The Brother Who Stayed" and his table, the "always down" line | new `src/js/21l-stories-ember.js` | per D4 | **D4** (Region 3 spec takes 8.3 as its story input) |
 | **LORE11** Lanternborn stories | The Sworn-to-Lanternborn stories (6.3) | per D5 | per D5 | **D5** |
 | **LORE12** Festival story | The Lantern Festival: "Light a lamp for someone" (rule 3 as a holiday: midwinter, the longest night, everyone lights a lamp for one person) | per LF1 | per LF1 | **LF1** |
-| **LORE13** The last fight's words | The Region 5 arrivals and beats, the Voice's barks per phase (borrowed voices: court, song, fire, climber, then its own), the companion lines (8.7), first-use hints, the kill card and the warm beat (8.6), Hesketh's last line | new `src/js/21m-stories-voice.js` | per D7 | **D7** |
+| **LORE13** The last fight's words | The Region 5 arrivals and beats, the Voice's barks per phase (borrowed voices: court, song, fire, climber, then its own), the companion lines (8.7), first-use hints, the kill card and the warm beat (8.6), Hesketh's last line | new `src/js/21m-stories-voice.js` | per DV | **DV** |
 
 Spec tasks this bible now asks for (not writing tasks; listed so the plan has them):
 
 | Task | Work | Waits for |
 |---|---|---|
-| **D7** The Voice (spec) | Turn 8.7 into a full pinnacle-style spec: numbers, anchor, Vows, rig, arena, UI, sim targets, save state (a new `S.voice` or rows in `S.pin`; never a repurposed field), build tasks | The Region 5 spec, and PB1-PB5 built (it reuses the pinnacle scheduler and UI) |
+| **DV** The Voice (spec) | Turn 8.7 into a full pinnacle-style spec: numbers, anchor, Vows, rig, arena, UI, sim targets, save state (a new `S.voice` or rows in `S.pin`; never a repurposed field), build tasks | The Region 5 spec, and PB1-PB5 built (it reuses the pinnacle scheduler and UI) |
 | **Region 4 and 5 specs** | The Pale Reach and the Long Stair (8.4) | D4 |
 
 Order: LORE2, LORE4 and LORE5 can run now, in parallel (separate files). LORE3 after LORE2. LORE6,
@@ -1027,7 +1027,7 @@ says Pip's route is "Reach zone 12, then pay **him** in gold". Pip is "she" ever
 1. **The ending.** LORE1 proposed giving the Voice a light instead of fighting it. **Answered: no;
    the owner wants a proper boss fight.** The Voice is the dark that was here first, at the bottom
    of the Deepwell, and the player beats it in a five-phase fight that echoes the four pinnacles
-   (8.6, 8.7). A short warm beat follows the win. Spec task D7.
+   (8.6, 8.7). A short warm beat follows the win. Spec task DV.
 2. **The hero is the child Elowen's spark was lit for, parent unnamed.** **Answered: yes** (owner).
    Written into 5.1.
 3. **Region 3's Listener is a knight who agreed where Caedmon refused.** The owner was unsure; **the
@@ -1037,7 +1037,7 @@ says Pip's route is "Reach zone 12, then pay **him** in gold". Pip is "she" ever
    later.** The Hollises arrive as Hands once Bram is recruited and the Coast is lit, with no Bond
    gate so nobody misses them; a Close Bond adds one story (7.2, LORE8b).
 
-No questions are open. D7 may raise its own (for example, whether the rematch joins the Boss of the
+No questions are open. DV may raise its own (for example, whether the rematch joins the Boss of the
 Week).
 
 ---
