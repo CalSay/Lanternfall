@@ -624,3 +624,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   as well as gatherers, a bed cap that grows with a Bunkhouse/Tavern and late-game regions, Storehouse effects
   (refined goods are denser), recipes moving from raw to refined from tier 2 up (tier 1 stays simple for the
   first ten minutes), migration so no save loses items or recipes, and 360px UI.
+- UX2 ux-overhaul.md merged (63 images incl. 11 mockups): top problems (no in-menu switching, Gather buries
+  nodes 80% down, identical Go rows, stale copy, Camp 7 screens long, duplication, 9 tab bar styles, Journal
+  3 taps deep, no pattern kit, chrome 210/740 px). Tabs: Fight (Zone, Bounties, Deepwell, Raid*), Party (Team,
+  Heroes, Stars), Gather (Mining, Wood, Foraging, Storehouse), Craft (Make, Armoury, Powers), Camp (Build,
+  Expeditions, Almanac, Tavern), Journal via the portrait (Deeds, Tracks, Feats, Codex). Phases UX-A..G.
+  Q4 answered (bench XP 0 shipped). ASKED THE OWNER: 9.1 Raid under Fight (UI only, online-layer file),
+  9.2 rename box to the Journal, 9.3 the pill replaces the name in the header (UX-A ships "name kept" by flag).
+  UX-A launched.
