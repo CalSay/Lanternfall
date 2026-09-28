@@ -539,3 +539,20 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   AC2 dormant-track check (bonds/together live now: 79 live). Next: F4 Party UI; F3 is running with
   formQuick available.
 - OWNER: the Storehouse must scale up quickly (idle game): never 'only worth idling 10 minutes', meaningful but not ridiculous. H3 told to re-derive caps from real rates: Lv 1 holds a full 8 h away session of the best open node; later levels keep pace with the away cap (up to 24 h) and tiers; active play fills a cell in ~1-3 h; upgrades quick early. Spec table (100..10,000) was far too small.
+- OWNER: gathering menus need work; switching should be fluid; fight <-> gather takes too many steps (back
+  to the main screen first). Then: "a general look at overhauling the menus might be wise, down the line".
+  Coordinator review at 360x740: about 2/3 of the Gather tab is header before the first node; stale copy
+  "Your party is fighting"; nothing marks the current or best node; a wall of identical "MINE Go" buttons; no
+  Stop / Back to fight; held without caps.
+  PLAN: UX2 menu overhaul spec (docs only: audit every tab, view and sheet at 360px; information
+  architecture; global navigation incl. the activity pill + quick switcher; patterns for lists, cards,
+  headers, sheets, toasts; per-screen wireframes; a phased build plan). Launch it once the Storehouse, Party
+  screen and achievements screen have merged so the audit covers them. GX1 (the gather rework and quick
+  switcher) becomes UX2's first build task. GX1 brief so far:
+  1. An activity pill in the header, visible inside full-screen menus, showing what you're doing ("Fighting
+     · Zone 37" / "Mining · Copper Vein"); tap: a quick sheet with Fight (your zone), each skill's last node
+     and recent nodes; one tap switches and closes menus.
+  2. Remember the last node per skill; swipe between Mining / Wood / Foraging.
+  3. A "Now gathering" card (node, per hour, held vs cap, time to full, Stop, Back to fight); only the current
+     skill with its next-tier bar; the tool card as a one-row chip; compact tap-to-go rows with a held/cap
+     bar; "Best for you"; lower tiers folded; copy fixed; Pack becomes the Storehouse view.
