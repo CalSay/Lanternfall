@@ -3,11 +3,9 @@
 //   - In a run: an Oil bar and the floor over the stage (in place of the zone name), a boon strip in
 //     place of the control row, and a full-screen choice sheet for each draft and Quiet Landing.
 //   - Run end: a card with the floor, Marks and what the party earned up top while you were below.
-//   - The stage shows the well: drawScene / drawAtmosphere (63-scenery) are wrapped to draw a cold
-//     cave scene while a run is live (no 62-stage edit). The stage owner can later add a real
-//     `well` theme and hide the zone name (see the branch report).
-// Per frame: nothing when no run is live (one boolean check in each scenery wrapper). The HUD
-// updates 5 times a second, writing only what changed.
+//   - The stage itself (62-stage) draws the well scene, cold foes and hides the zone line and the
+//     boss timer while a run is live; this file only adds the run HUD over it.
+// Per frame: nothing. The HUD updates 5 times a second, writing only what changed.
 {
   const setTxt = (e, t) => { if (e && e.textContent !== t) e.textContent = t; };
   const setCls = (e, c, on) => { if (e && e.classList.contains(c) !== !!on) e.classList.toggle(c, !!on); };
@@ -32,20 +30,6 @@
   const OIL_IC = () => pxURL('lantern', '#FF9E3D', { 5: '#FFF3C4' });
   const MARK_IC = () => iconURL('orb', '#7FB2FF', { 7: '#3F8FA8' });
   const markChip = n => { const s = el('span', 'dw-marks'); s.append(img(MARK_IC()), el('b', null, fmt(n))); return s; };
-
-  // ---------------- the stage: the well's scene while a run is live ----------------
-  // A cold, hue-shifted cave until the scenery owner adds THEMES.well. sceneFor caches it by size.
-  const WELL_THEME = 'cave', WELL_HUE = 330;
-  let wellSc = null;
-  const wellFor = sc => {
-    if (!sc) return sc;
-    if (!wellSc || wellSc.W !== sc.W || wellSc.H !== sc.H) wellSc = sceneFor(WELL_THEME, sc.W, sc.H, WELL_HUE);
-    return wellSc;
-  };
-  const baseScene = drawScene, baseAtmo = drawAtmosphere;
-  // pass every argument on: k, ox, oy and bg switch on the 1:1 device-size path (docs/design/perf.md)
-  drawScene = (ctx, sc, camX, which, ...rest) => baseScene(ctx, arena ? wellFor(sc) : sc, camX, which, ...rest);
-  drawAtmosphere = (ctx, sc, T_, W, H, camX) => baseAtmo(ctx, arena ? wellFor(sc) : sc, T_, W, H, camX);
 
   // ---------------- run HUD (over the stage) and the boon strip (in place of the control row) ----------------
   const app = $('app'), box = $('stageBox');

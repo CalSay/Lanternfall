@@ -5,7 +5,7 @@
 // Lanterns are the world's heartbeat: every theme has its own lamps, and each lit lamp casts a
 // baked, banded light pool into the pixels plus a soft device-resolution glow that flickers.
 //
-//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid
+//   sceneFor(theme, W, H, hue) -> scene     theme: forest|cave|bone|barrow|fungal|quarry|marsh|mine|woods|raid|well (the Deepwell)
 //     scene = { layers: [{ c, f, fg }], fog, amb, light, lights, W, H, GY, M, PX, theme, hue }
 //     Layers are drawn at PX = 2 CSS px per art px, (W + 2*M) CSS px wide (M = 24 px parallax margin),
 //     cached per (theme, W, H, hue). GY is the ground line (feet), in CSS px.
@@ -186,7 +186,11 @@ function sceneFor() { return null; } // replaced below
     woods: { sky: ['#10201A', '#1C3426', '#2C4A34', '#3E6446'], far: '#244232', far2: '#2A4A36', leaf: '#2E5E36', leaf2: '#27502F', bark: '#553E2C', iron: '#3A3444',
       gnd: '#264A2A', lip: '#508A42', path: '#5E4A32', amb: ['leaf', '#6FBE5E', 12], fog: ['#CFE8B0', 0.05], shafts: 1 },
     raid: { sky: ['#0C0306', '#240A10', '#46141A', '#6A2022'], far: '#2E0E14', far2: '#381218', rock: '#3A1E26', stone: '#5A3A3A', iron: '#2A1C22', moon: '#FF9E3D',
-      gnd: '#24100E', lip: '#5A2A22', path: '#3A1E1C', stars: 1, amb: ['ember', '#FF9E3D', 28], fog: ['#FF6A3D', 0.07] }
+      gnd: '#24100E', lip: '#5A2A22', path: '#3A1E1C', stars: 1, amb: ['ember', '#FF9E3D', 28], fog: ['#FF6A3D', 0.07] },
+    // The Deepwell (a live run): a stone shaft, cold and wet, warm old lanterns, a pale glow far below.
+    well: { sky: ['#05070C', '#080C14', '#0B121C', '#0E2029'], far: '#19212D', far2: '#1D2633', stone: '#46546A', stone2: '#3A4658', wood: '#5A4232', iron: '#2A2C38',
+      rope: '#9A8260', moss: '#3E6E62', water: '#A8D8F0', deep: '#6FD0E8',
+      gnd: '#222A36', lip: '#5C6C84', path: '#3A4454', amb: ['drip', '#A8D8F0', 10], amb2: ['rise', '#7FE0EC', 10], fog: ['#5F9FC0', 0.08] }
   };
   // light colours (lantern flame is never hue-shifted: it is the same light in every land)
   const FLAME = [255, 186, 96], FLAME_HOT = [255, 236, 170], FLAME_OUT = [232, 110, 48];
@@ -221,11 +225,11 @@ function sceneFor() { return null; } // replaced below
     function light(L, x, y, rr, o) {
       o = o || {};
       const rgb = o.rgb || FLAME, li = LAY.indexOf(L), a = o.a ?? 0.5;
-      lamps.push({ x: (x + 0.5) * PX, y: (y + 0.5) * PX, r: rr, rgb: rgb.join(','), a, f: PAR[li], layer: li, core: o.core ?? 1, ph: r() * 6.283, kind: o.kind || 'lamp', flick: o.flick ?? 1 });
+      if (!o.bakeOnly) lamps.push({ x: (x + 0.5) * PX, y: (y + 0.5) * PX, r: rr, rgb: rgb.join(','), a, f: PAR[li], layer: li, core: o.core ?? 1, ph: r() * 6.283, kind: o.kind || 'lamp', flick: o.flick ?? 1 });
       const pa = o.pool ?? (li === 1 ? 0.25 : 0.32);
       if (pa > 0) L.pools.push({ x: x + 0.5, y: y + 0.5, rx: rr / PX * (o.px ?? 0.75), ry: rr / PX * (o.py ?? 0.7), rgb, a: pa });
       if (o.gnd) gnd.pools.push({ x: x + 0.5 + (o.gx || 0), y: G + 2, rx: o.gnd, ry: Math.max(3, o.gnd * 0.28), rgb, a: 0.3 });
-      if (li === 2 && (o.kind || 'lamp') === 'lamp' && motes.length < 8 && r() < 0.7) motes.push(lamps[lamps.length - 1]);
+      if (!o.bakeOnly && li === 2 && (o.kind || 'lamp') === 'lamp' && motes.length < 8 && r() < 0.7) motes.push(lamps[lamps.length - 1]);
     }
     // shared prop materials (created lazily per build)
     const iron = mat(th.iron || '#3A3444'), ironL = flat(ramp(C(th.iron || '#3A3444'))[3], { nl: 0 });
@@ -652,6 +656,102 @@ function sceneFor() { return null; } // replaced below
         }
         break;
       }
+      // ================= The Deepwell: a stone shaft, old lanterns on the walls, a glow far below =================
+      // Far: the shaft's far wall (courses of stone, narrower where the wall curves away) with a stair
+      // cut into it. Mid: the near walls framing the stage, a beam with a pulley, a rope down to a
+      // hooked lantern, a ladder, wall lanterns (two dead). Ground: a stone landing whose edge drops
+      // into the dark; the light far below is pale and cold, the lanterns warm. 10 lit lamps.
+      case 'well': {
+        const deep = C(th.deep), wet = flat(blend(C(th.water), C(th.stone2), 0.45), { nl: 1 });
+        // -- far wall --
+        // courses 4 art px tall; stones narrow toward the sides, where the round wall turns away
+        const fb = [matS(hz(th.far, 0.4)), matS(hz(th.far2, 0.36)), matS(hz(th.far, 0.52))], mortar = flat(hz(th.far, 0.75, 0.5), { nl: 1 });
+        far.rect(0, 0, LW, G, mortar);
+        for (let y = 0, row = 0; y < G; y += 4, row++) {
+          let x = -((row * 5) % 8);
+          while (x < LW) {
+            const u = (x - LW / 2) / (LW / 2), w = Math.max(3, Math.round(9 * (1 - 0.5 * u * u) + r() * 3));
+            far.rect(x + 1, y + 1, w - 1, 3, fb[r() < 0.5 ? 0 : r() < 0.6 ? 1 : 2]);
+            x += w;
+          }
+        }
+        // a stair cut into the far wall, two flights, with two small lamps
+        // steps: a lit tread, the block, and its shadow on the wall below
+        const stepM = matS(hz(th.stone, 0.34)), stepD = flat(hz(th.far, 0.9, 0.5), { nl: 1 });
+        const flight = (x0, y0, n, dir) => { for (let i = 0; i < n; i++) { const x = Math.round(x0 + dir * i * 5), y = Math.round(y0 + i * 3); far.rect(x, y + 3, 6, 3, stepD); far.rect(x, y, 6, 3, stepM); } };
+        const f1 = Math.max(5, Math.round(Wa * 0.1)), f2 = Math.max(6, Math.round(Wa * 0.13)), y1 = Math.round(Ha * 0.16), y2 = y1 + f1 * 3 + 18;
+        flight(X(0.97), y1, f1, -1);
+        flight(X(0.1), y2, f2, 1);
+        const stepLamp = (x, y) => { x = Math.round(x); y = Math.round(y); far.rect(x, y - 4, 1, 4, stepD); far.rect(x - 1, y - 6, 3, 2, glass); far.px(x, y - 6, hot); light(far, x, y - 5, 10, { core: 0.5, a: 0.55, pool: 0.22 }); };
+        const k1 = Math.round(f1 * 0.6), k2 = Math.round(f2 * 0.65);
+        stepLamp(X(0.97) - 5 * k1 + 3, y1 + 3 * k1);
+        stepLamp(X(0.1) + 5 * k2 + 3, y2 + 3 * k2);
+        // the glow from far below lights the bottom of the far wall (cold, steady)
+        // (baked bands only: a soft glow this big costs too much raster per frame on a phone)
+        for (const fx of [0.25, 0.72]) light(far, X(fx), G + 4, 70, { rgb: deep, a: 0.22, core: 0, flick: 0, pool: 0.3, px: 1.1, py: 0.5, kind: 'deep', bakeOnly: 1 });
+        // -- mid: the near walls --
+        const st = mat(desat(C(th.stone), 0.85), 'vol', { sep: 1 }), st2 = mat(desat(C(th.stone2), 0.85), 'vol', { sep: 1 });
+        const wallRows = (x0, x1, left) => {
+          for (let y = -2, row = 0; y <= G; y += 6, row++) {
+            const edge = Math.round((left ? x1 : x0) + (r() - 0.5) * 4);
+            let x = left ? x0 - (row % 2 ? 4 : 0) : edge;
+            const xe = left ? edge : x1;
+            while (x < xe) { const w = Math.min(7 + ((r() * 5) | 0), xe - x); mid.rect(x, y, w, Math.min(6, G + 1 - y), r() < 0.55 ? st : st2); x += w; }
+          }
+        };
+        wallRows(0, X(0.065), true); wallRows(X(0.935), LW, false);
+        // wet streaks down the walls, glow moss at their feet
+        for (const [x0, x1] of [[X(0.0), X(0.05)], [X(0.95), X(1.0)]]) for (let k = 0; k < 3; k++) { const x = Math.round(x0 + r() * (x1 - x0)), y = Math.round(Ha * (0.15 + r() * 0.4)), l = 6 + r() * 14; mid.rect(x, y, 1, l, wet); drips.push({ x: (x + 0.5) * PX, y: (y + l) * PX, f: 0.5 }); }
+        const mossM = mat(th.moss, 'vol', { sep: 1 }), glint = flat(blend(deep, [255, 255, 255], 0.3), { nl: 1 });
+        for (const [fx, w] of [[0.05, 6], [0.95, 5]]) { const x = X(fx); mid.oval(x, G, w, 3, mossM, 'top'); for (let k = 0; k < 3; k++) mid.px(x - w + 2 + r() * (w * 2 - 3), G - 1 - r() * 2, glint); }
+        // the beam across the shaft, a pulley, and a rope down to a hooked lantern
+        const wood = mat(desat(C(th.wood), 0.85), 'vol', { wide: 1 }), beamY = Math.round(Ha * 0.1);
+        mid.grp(() => { mid.rect(0, beamY, LW, 3, wood); });
+        for (const [fx, d] of [[0.065, 1], [0.935, -1]]) { const x = Math.round(X(fx)); mid.grp(() => { mid.poly(d > 0 ? [x - 2, beamY + 3, x + 5, beamY + 3, x - 2, beamY + 9] : [x + 2, beamY + 3, x - 5, beamY + 3, x + 2, beamY + 9], wood); }); }
+        const px0 = Math.round(X(0.6)), ropeL = flat(C(th.rope), { nl: 1 }), ropeD = flat(ramp(C(th.rope))[2], { nl: 1 });
+        mid.oval(px0, beamY + 5, 3, 3, iron); mid.px(px0, beamY + 5, ironL); mid.rect(px0, beamY + 3, 1, 2, iron);
+        const hookY = Math.round(Ha * 0.33);
+        for (let y = beamY + 6; y < hookY; y++) mid.px(px0 + 3, y, (y >> 1) & 1 ? ropeL : ropeD);
+        mid.px(px0 + 2, hookY, ironL); mid.px(px0 + 3, hookY, ironL); mid.px(px0 + 2, hookY - 1, ironL);
+        lantern(mid, px0 + 3, hookY + 2, { r: 36 });
+        // the rope's other end, short and frayed
+        { const ye = Math.round(Ha * 0.2); for (let y = beamY + 6; y < ye; y++) mid.px(px0 - 3, y, (y >> 1) & 1 ? ropeD : ropeL); mid.px(px0 - 4, ye, ropeD); mid.px(px0 - 2, ye, ropeD); }
+        // a ladder against the left wall, down from the beam to the landing
+        { const lx = Math.round(X(0.1)); mid.grp(() => { mid.rect(lx, beamY + 3, 1, G - beamY - 2, wood); mid.rect(lx + 6, beamY + 3, 1, G - beamY - 2, wood); for (let y = beamY + 7; y < G - 1; y += 5) mid.rect(lx + 1, y, 5, 1, wood); }); }
+        // lanterns on iron brackets; two are old and dead
+        const bracket = (x, y, dir, o) => { x = Math.round(x); y = Math.round(y); mid.rect(dir > 0 ? x : x - 4, y, 5, 1, iron); mid.px(x, y + 1, iron); lantern(mid, x + dir * 4, y + 1, o); };
+        bracket(X(0.065), G - 34, 1, { r: 32, gnd: 12 });
+        bracket(X(0.935), G - 38, -1, { r: 32, gnd: 12 });
+        bracket(X(0.935), Math.round(Ha * 0.27), -1, { r: 24, pool: 0.25 });
+        bracket(X(0.065), Math.round(Ha * 0.26), 1, { lit: false, broken: 1 });
+        hang(mid, X(0.3), beamY + 3, 9, { lit: false });
+        hang(mid, X(0.84), beamY + 3, 6, { r: 28 });
+        for (const fx of [0.2, 0.42, 0.7]) drips.push({ x: (X(fx) + 0.5) * PX, y: (beamY + 3) * PX, f: 0.5 });
+        // -- ground: the landing, its edge, and the shaft falling away below --
+        const face = mat(desat(C(th.stone2), 0.8), 'vol', { sep: 1 }), joint = flat(ramp(C(th.path))[3], { nl: 1 });
+        gnd.grp(() => gnd.rect(0, pathTop, LW, pathBot - pathTop, pathM));
+        for (let x = 3 + r() * 6; x < LW; x += 9 + r() * 7) gnd.rect(Math.round(x), pathTop + 1, 1, pathBot - pathTop - 1, joint);
+        for (let row = 0; row < 2; row++) { let x = row ? -5 : 0; while (x < LW) { const w = 8 + ((r() * 6) | 0); gnd.rect(x, pathBot + row * 4, w, 4, face); x += w; } }
+        const vTop = pathBot + 8;
+        if (vTop < Ha) {
+          // the void: bands from near black to a pale cold glow at the bottom, checkered at each edge
+          const n = 5, cols = [], dark = C(th.sky[0]);
+          for (let b = 0; b <= n; b++) cols.push(flat(blend(dark, blend(deep, C(th.far), 0.4), Math.pow(b / n, 1.4) * 0.8), { nl: 1 }));
+          const pc = gnd.np();
+          for (let y = vTop; y < Ha; y++) {
+            const q = (y - vTop) / Math.max(1, Ha - 1 - vTop) * n, b = Math.floor(q), fq = q - b;
+            for (let x = 0; x < LW; x++) gnd.put(x, y, cols[Math.min(n, b + (fq > 0.7 && ((x + y) & 1) ? 1 : 0))], pc);
+          }
+          // rock teeth under the ledge
+          for (let x = r() * 5; x < LW; x += 5 + r() * 9) gnd.tri(x, vTop, 2 + r() * 4, 1 + r() * 1.5, face, true);
+          // a rope ladder down into the dark
+          const lx = Math.round(X(0.66)), rb = Math.min(Ha, vTop + 30);
+          for (let y = vTop - 1; y < rb; y++) { gnd.px(lx, y, ropeD); gnd.px(lx + 5, y, ropeD); if ((y - vTop) % 4 === 2) gnd.rect(lx + 1, y, 4, 1, ropeL); }
+          light(gnd, X(0.45), Ha + 6, 90, { rgb: deep, a: 0.34, core: 0, flick: 0, pool: 0.5, px: 1.6, py: 0.45, kind: 'deep', bakeOnly: 1 });
+          light(gnd, X(0.45), Ha, 48, { rgb: deep, a: 0.3, core: 0, flick: 0, pool: 0, kind: 'deep' });
+        }
+        break;
+      }
     }
 
     yield;
@@ -662,7 +762,7 @@ function sceneFor() { return null; } // replaced below
       else if (!grassy && theme !== 'marsh' && r() < 0.12) gnd.px(x, gTop - 1, lipD);
     }
     const speck = flat(ramp(C(th.gnd))[0]), speckD = flat(ramp(C(th.gnd))[3]);
-    for (let i = 0; i < LW / 6; i++) { const y = pathBot + 2 + r() * (Ha - pathBot - 2); gnd.px(r() * LW, y, r() < 0.5 ? speck : speckD); }
+    if (theme !== 'well') for (let i = 0; i < LW / 6; i++) { const y = pathBot + 2 + r() * (Ha - pathBot - 2); gnd.px(r() * LW, y, r() < 0.5 ? speck : speckD); }
 
     // ---- foreground (f 1.35): corners and the bottom strip only ----
     const fgC = blend(C(th.gnd), [6, 4, 10], 0.5), fgId = mat(fgC, 'vol', { sep: 1 }), fgT = flat(ramp(fgC)[3]);
@@ -685,6 +785,13 @@ function sceneFor() { return null; } // replaced below
       case 'bone': case 'barrow': tuft(X(-0.01), 5, 7); tuft(X(0.95), 5, 6);
         if (theme === 'bone') { const x = Math.round(X(0.965)), b = flat(blend(C(th.bone), fgC, 0.5), { nl: 0 }); fg.rect(x, Ha - 4, 4, 3, b); fg.rect(x + 1, Ha - 1, 2, 1, b); fg.px(x + 1, Ha - 3, fgT); fg.px(x + 2, Ha - 3, fgT); }
         break;
+      case 'well': { // rubble at the bottom corners, an old chain and a dead lantern top left
+        fg.oval(X(-0.02) + 3, Ha + 1, 8, 5, fgId, 'top'); fg.oval(X(-0.02) + 11, Ha + 1, 3, 2, fgId, 'top'); fg.oval(X(0.99), Ha + 1, 7, 4, fgId, 'top');
+        const cx = Math.round(X(-0.02)) + 7, cl = Math.round(Ha * 0.16);
+        for (let y = 0; y < cl; y++) fg.px(cx, y, y % 3 === 2 ? fgT : iron);
+        lantern(fg, cx, cl + 1, { lit: false });
+        break;
+      }
       case 'quarry': case 'raid': fg.oval(X(-0.02) + 3, Ha + 1, 9, 5, fgId, 'top'); fg.oval(X(-0.02) + 13, Ha + 1, 4, 3, fgId, 'top'); fg.oval(X(0.98), Ha + 1, 8, 4, fgId, 'top'); break;
       default: tuft(X(0), 4, 5); tuft(X(0.95), 4, 5);
     }
@@ -708,20 +815,27 @@ function sceneFor() { return null; } // replaced below
     const parts = [];
     for (let i = 0; i < n; i++) parts.push({ x: pr() * (W + 40) - 20, y: pr(), sp: 0.6 + pr() * 0.8, ph: pr() * 6.283, sz: 0.6 + pr() * 0.8, d: drips.length ? drips[i % drips.length] : null, per: 1.6 + pr() * 2.4 });
     const moths = motes.map(lp => ({ lp, ph: pr() * 6.283, rx: 6 + pr() * 8, ry: 4 + pr() * 5, sp: 0.6 + pr() * 0.6 }));
+    // a second particle kind (the well: drips and motes rising from below)
+    let amb2 = null;
+    if (th.amb2) {
+      const [t2, hex2, n2] = th.amb2, parts2 = [];
+      for (let i = 0; i < n2; i++) parts2.push({ x: pr() * (W + 40) - 20, y: pr(), sp: 0.6 + pr() * 0.8, ph: pr() * 6.283, sz: 0.6 + pr() * 0.8, d: null, per: 1.6 + pr() * 2.4 });
+      amb2 = { type: t2, rgb: C(hex2).join(','), parts: parts2, moths: null };
+    }
     const fog = { rgb: C(th.fog[0]).join(','), a: th.fog[1], y: GY - 6 };
     // overlay: vignette plus a theme tint, pre-rendered small and stretched when drawn
     const ov = mkCanvas(Math.ceil(W / 2), Math.ceil(H / 2)), og = ov.getContext('2d'), ow = ov.width, oh = ov.height;
     const vg = og.createRadialGradient(ow * 0.5, oh * 0.56, oh * 0.4, ow * 0.5, oh * 0.56, ow * 0.8);
     vg.addColorStop(0, 'rgba(6,4,12,0)'); vg.addColorStop(1, 'rgba(6,4,12,.5)');
     og.fillStyle = vg; og.fillRect(0, 0, ow, oh);
-    const tint = { raid: ['255,90,40', 0.14, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.22, 0], mine: ['10,8,14', 0.18, 0], fungal: ['200,90,200', 0.05, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
+    const tint = { well: ['4,8,18', 0.34, 0], raid: ['255,90,40', 0.14, 1], bone: ['160,30,40', 0.08, 0], cave: ['10,8,20', 0.22, 0], mine: ['10,8,14', 0.18, 0], fungal: ['200,90,200', 0.05, 1], marsh: ['150,210,200', 0.05, 1] }[theme];
     if (tint) { const lg = og.createLinearGradient(0, 0, 0, oh); const [c, a, bottom] = tint; lg.addColorStop(bottom ? 0.4 : 0, `rgba(${c},${bottom ? 0 : a})`); lg.addColorStop(bottom ? 1 : 0.45, `rgba(${c},${bottom ? a : 0})`); og.fillStyle = lg; og.fillRect(0, 0, ow, oh); }
 
     // public light list: stage CSS px at camX = 0
     for (const lp of lamps) lp.x -= M;
     return {
       theme, hue, W, H, GY, M, PX, layers, lights: lamps,
-      fog, amb: { type, rgb: ambRgb, parts, moths },
+      fog, amb: { type, rgb: ambRgb, parts, moths }, amb2,
       light: { moon, lamps, shafts: !!th.shafts, overlay: ov }
     };
   }
@@ -1052,6 +1166,44 @@ function sceneFor() { return null; } // replaced below
     ? 0.86 + 0.08 * Math.sin(T * 11 + lp.ph) + 0.06 * Math.sin(T * 17.3 + lp.ph * 2)
     : 0.92 + 0.05 * Math.sin(T * 5.1 + lp.ph) + 0.03 * Math.sin(T * 12.7 + lp.ph * 3);
 
+  // Ambient particles of one kind (scene.amb, and scene.amb2 for a theme with a second kind).
+  function drawAmb(ctx, scene, A, t, W, H, GY, camX) {
+    const spr = glow(A.rgb, 2), W2 = W + 40;
+    const wrap = (v, m) => ((v % m) + m) % m;
+    // every particle of a type has a glow (drawn 'lighter', and so is its dot) or none ('source-over')
+    const glowy = !(A.type === 'ash' || A.type === 'dust' || A.type === 'leaf');
+    ctx.globalCompositeOperation = glowy ? 'lighter' : 'source-over';
+    ctx.fillStyle = A.fill || (A.fill = `rgb(${A.rgb})`);
+    for (const p of A.parts) {
+      let x, y, a = 1, sz = 2 * p.sz, g = 6;
+      switch (A.type) {
+        case 'firefly': x = p.x + Math.sin(t * 0.3 * p.sp + p.ph) * 22; y = GY - 20 - p.y * (GY * 0.5) + Math.sin(t * 0.5 + p.ph * 2) * 8; a = REDUCED ? 0.7 : 0.5 + 0.5 * Math.sin(t * 2.2 * p.sp + p.ph); g = 9; sz = 2; break;
+        case 'drip': {
+          if (!p.d) continue;
+          const c = wrap(t + p.ph, p.per), sx = p.d.x - scene.M - camX * p.d.f;
+          x = sx; if (c < 0.8) { y = p.d.y + 1; a = c / 0.8; sz = 1.5; } else { y = p.d.y + 0.5 * 300 * (c - 0.8) ** 2; if (y > GY) { const q = Math.min(1, (y - GY) / 30); y = GY; a = 1 - q; sz = 1.5 + q * 2; } }
+          g = 5; break;
+        }
+        case 'ash': x = wrap(p.x + t * 5 * p.sp, W2) - 20; y = wrap(p.y * H + t * 4 * p.sp, H); x += Math.sin(t + p.ph) * 3; a = 0.6; g = 0; sz = 2; break;
+        case 'mote': x = p.x + Math.sin(t * 0.4 + p.ph) * 10; y = GY + 4 - wrap(p.y * GY + t * 3 * p.sp, GY * 0.8); a = Math.min(1, (GY + 4 - y) / 20) * (0.6 + 0.4 * Math.sin(t * 1.5 + p.ph)); g = 7; sz = 2; break;
+        case 'spore': x = p.x + Math.sin(t * 0.8 * p.sp + p.ph) * 8; y = GY - wrap(p.y * GY + t * 5 * p.sp, GY); a = Math.min(1, (GY - y) / 20) * 0.8; g = 6; sz = 2; break;
+        case 'dust': x = wrap(p.x + t * 6 * p.sp, W2) - 20; y = GY * (0.35 + 0.6 * p.y) + Math.sin(t * 0.7 + p.ph) * 4; a = 0.4; g = 0; sz = 2; break;
+        case 'wisp': x = wrap(p.x + t * 3 * p.sp + Math.sin(t * 0.3 + p.ph) * 20, W2) - 20; y = GY - 10 - p.y * 50 + Math.sin(t * 0.9 + p.ph) * 6; a = 0.5 + 0.5 * Math.sin(t * 0.8 + p.ph); g = 14; sz = 2; break;
+        case 'ember': x = p.x + Math.sin(t * 1.4 * p.sp + p.ph) * 6; y = GY + 6 - wrap(p.y * H + t * 22 * p.sp, H); a = Math.min(1, (GY + 6 - y) / 30, y / 40) * (0.7 + 0.3 * Math.sin(t * 9 + p.ph)); g = 6; sz = 2; break;
+        case 'rise': x = p.x + Math.sin(t * 0.5 * p.sp + p.ph) * 7; y = H - wrap(p.y * H + t * 7 * p.sp, H * 0.85); a = Math.min(1, (H - y) / 30, (y - H * 0.15) / 40) * (0.55 + 0.35 * Math.sin(t * 1.7 + p.ph)); g = 6; sz = 2; break;
+        case 'leaf': x = wrap(p.x + t * 5 * p.sp + Math.sin(t * 1.3 + p.ph) * 10, W2) - 20; y = wrap(p.y * H + t * 10 * p.sp, GY + 10); a = 0.85; g = 0; sz = 2; break;
+        default: continue;
+      }
+      if (A.type !== 'drip') x -= camX * 0.9;
+      if (a <= 0.02) continue;
+      if (g) ANIM.glowAt(ctx, spr, x, y, g, a * 0.35);
+      ctx.globalAlpha = a;
+      if (A.type === 'leaf') ctx.fillRect(Math.round(x), Math.round(y), Math.sin(t * 3 + p.ph) > 0 ? 4 : 2, 2);
+      else if (A.type === 'drip' && y < GY) ctx.fillRect(x - sz / 2, y, sz, sz * 2);
+      else ctx.fillRect(Math.round(x - sz / 2), Math.round(y - sz / 2), sz, sz);
+    }
+  }
+
   drawAtmosphere = function (ctx, scene, T, W, H, camX) {
     camX = camX || 0; W = W || scene.W; H = H || scene.H;
     const t = REDUCED ? 0 : T, GY = scene.GY * H / scene.H;
@@ -1088,39 +1240,9 @@ function sceneFor() { return null; } // replaced below
       if (lp.core) ANIM.glowAt(ctx, glow(lp.rgb, 2), x, lp.y, 5 + lp.r * 0.12, 0.45 * lp.core * fl);
     }
     // ambient particles: stateless, positions are a function of time
-    const A = scene.amb, spr = glow(A.rgb, 2), W2 = W + 40;
-    const wrap = (v, m) => ((v % m) + m) % m;
-    // every particle of a type has a glow (drawn 'lighter', and so is its dot) or none ('source-over')
-    const glowy = !(A.type === 'ash' || A.type === 'dust' || A.type === 'leaf');
-    ctx.globalCompositeOperation = glowy ? 'lighter' : 'source-over';
-    ctx.fillStyle = A.fill || (A.fill = `rgb(${A.rgb})`);
-    for (const p of A.parts) {
-      let x, y, a = 1, sz = 2 * p.sz, g = 6;
-      switch (A.type) {
-        case 'firefly': x = p.x + Math.sin(t * 0.3 * p.sp + p.ph) * 22; y = GY - 20 - p.y * (GY * 0.5) + Math.sin(t * 0.5 + p.ph * 2) * 8; a = REDUCED ? 0.7 : 0.5 + 0.5 * Math.sin(t * 2.2 * p.sp + p.ph); g = 9; sz = 2; break;
-        case 'drip': {
-          if (!p.d) continue;
-          const c = wrap(t + p.ph, p.per), sx = p.d.x - scene.M - camX * p.d.f;
-          x = sx; if (c < 0.8) { y = p.d.y + 1; a = c / 0.8; sz = 1.5; } else { y = p.d.y + 0.5 * 300 * (c - 0.8) ** 2; if (y > GY) { const q = Math.min(1, (y - GY) / 30); y = GY; a = 1 - q; sz = 1.5 + q * 2; } }
-          g = 5; break;
-        }
-        case 'ash': x = wrap(p.x + t * 5 * p.sp, W2) - 20; y = wrap(p.y * H + t * 4 * p.sp, H); x += Math.sin(t + p.ph) * 3; a = 0.6; g = 0; sz = 2; break;
-        case 'mote': x = p.x + Math.sin(t * 0.4 + p.ph) * 10; y = GY + 4 - wrap(p.y * GY + t * 3 * p.sp, GY * 0.8); a = Math.min(1, (GY + 4 - y) / 20) * (0.6 + 0.4 * Math.sin(t * 1.5 + p.ph)); g = 7; sz = 2; break;
-        case 'spore': x = p.x + Math.sin(t * 0.8 * p.sp + p.ph) * 8; y = GY - wrap(p.y * GY + t * 5 * p.sp, GY); a = Math.min(1, (GY - y) / 20) * 0.8; g = 6; sz = 2; break;
-        case 'dust': x = wrap(p.x + t * 6 * p.sp, W2) - 20; y = GY * (0.35 + 0.6 * p.y) + Math.sin(t * 0.7 + p.ph) * 4; a = 0.4; g = 0; sz = 2; break;
-        case 'wisp': x = wrap(p.x + t * 3 * p.sp + Math.sin(t * 0.3 + p.ph) * 20, W2) - 20; y = GY - 10 - p.y * 50 + Math.sin(t * 0.9 + p.ph) * 6; a = 0.5 + 0.5 * Math.sin(t * 0.8 + p.ph); g = 14; sz = 2; break;
-        case 'ember': x = p.x + Math.sin(t * 1.4 * p.sp + p.ph) * 6; y = GY + 6 - wrap(p.y * H + t * 22 * p.sp, H); a = Math.min(1, (GY + 6 - y) / 30, y / 40) * (0.7 + 0.3 * Math.sin(t * 9 + p.ph)); g = 6; sz = 2; break;
-        case 'leaf': x = wrap(p.x + t * 5 * p.sp + Math.sin(t * 1.3 + p.ph) * 10, W2) - 20; y = wrap(p.y * H + t * 10 * p.sp, GY + 10); a = 0.85; g = 0; sz = 2; break;
-        default: continue;
-      }
-      if (A.type !== 'drip') x -= camX * 0.9;
-      if (a <= 0.02) continue;
-      if (g) ANIM.glowAt(ctx, spr, x, y, g, a * 0.35);
-      ctx.globalAlpha = a;
-      if (A.type === 'leaf') ctx.fillRect(Math.round(x), Math.round(y), Math.sin(t * 3 + p.ph) > 0 ? 4 : 2, 2);
-      else if (A.type === 'drip' && y < GY) ctx.fillRect(x - sz / 2, y, sz, sz * 2);
-      else ctx.fillRect(Math.round(x - sz / 2), Math.round(y - sz / 2), sz, sz);
-    }
+    const A = scene.amb;
+    drawAmb(ctx, scene, A, t, W, H, GY, camX);
+    if (scene.amb2) drawAmb(ctx, scene, scene.amb2, t, W, H, GY, camX);
     ctx.globalCompositeOperation = 'lighter';
     // moths and fireflies drawn to the lanterns
     if (A.moths) {
