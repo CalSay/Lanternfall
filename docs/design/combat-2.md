@@ -216,3 +216,183 @@ time to fall with endless boss HP, and each mechanic's cost.
 | CX13 | Raid | idle raid damage an hour ≥ HEAD for every class; `good` +15-30% |
 | CX14 | Elite traits | an elite with a trait never adds more than 40% to its pack's clear time for an unprepared party, and 10% or less with its counter |
 | CX15 | Performance | section 2.8 |
+
+---
+
+## 2. Packs
+
+### 2.1 Sizes and families per foe
+
+Core-2 6.1 fixes the size ids (`brute` 3, `normal` 5-6, `swarm` 8-10) and 2.3 the families. CB2 places every
+foe (data fields `FOE_BEH[k].size`, `.fam`, `.dt`; the last is proposed in 8.2-4):
+
+| Foe | Region | `size` | Members | `fam` | Hit `dt` | Row | Pack behaviour quota (2.3) |
+|---|---|---|---|---|---|---|---|
+| Moss Slime | Hollow | `normal` | 6 | `plant` | poison | Front | - |
+| Cave Bat | Hollow | `swarm` | 9 | `beast` | phys | Mid | 2 divers at a time |
+| Rattlebones | Hollow | `normal` | 5 | `undead` | phys | Mid | 2 get back up (the rest stay down) |
+| Barrow Beetle | Hollow | `brute` | 3 | `beast` | phys | Front | - |
+| Spore Cap | Hollow | `normal` | 5 | `plant` | poison | Back | 1 spore cloud per 6 s for the pack |
+| Quarry Golem | Hollow | `brute` | 3 | `construct` | phys | Front | unchanged: each Golem slams on its 3rd hit |
+| Marsh Wraith | Hollow | `normal` | 5 | `spirit` | frost | Back | 1 heal channel at a time |
+| Shinglecrab | Coast | `brute` | 3 | `beast` | phys | Front | each shells once, one at a time |
+| Stormgull | Coast | `swarm` | 8 | `beast` | phys | Mid | 2 Snatches at a time |
+| Drowned Deckhand | Coast | `normal` | 5 | `drowned` | frost | Front | 1 Undertow at a time |
+| Kelp Strangler | Coast | `normal` | 5 | `drowned` | phys | Mid | 1 Bind at a time |
+| Lanternjelly | Coast | `swarm` | 8 | `drowned` | poison | Back | 1 Chain Shock per 3 s for the pack |
+| Brine Witch | Coast | `normal` | 5 | `drowned` | frost | Back | 1 Hex channel at a time |
+| Coral Warden | Coast | `brute` | 3 | `construct` | phys | Front | - |
+
+- **Every region has 2 brutes, 3 normal and 2 swarm types** as the guide for LORE-R45's Regions 3-5 foe lists
+  (the Hollow has 1 swarm: the bats; the wisps and rats of later regions fill the gap). Swarms are small,
+  quick things: bats, gulls, jellies, rats, wisps, embers, moths.
+- **Normal packs are 5 or 6** by type (the table), fixed per type so a zone always looks the same.
+  Swarms are 8-10: 8 by default, 9 for the bats, 10 only for Region 4-5 swarms.
+- **Mixed packs** (`mixP` 0.72, today's rule): the pack takes the zone type's size. Up to a third of the
+  members come from the next type of the region cycle, each taking one member's share. A **brute never mixes
+  into a swarm** and a **swarm never mixes into a brute pack** (two size steps apart); in those zones the pack
+  is pure. A brute mixed into a normal pack takes 2 members' shares and counts as 2 members.
+- **Elites:** at most 1 per pack in Regions 1-3; from Region 4, 2 in `normal` and `swarm` packs (core-2 6.1).
+  `eliteP` 0.2 per pack from zone 15 (today); from Region 4 the second elite rolls at 0.1.
+- **Champions** (55-gathering) stay the lead's roll, as today.
+
+### 2.2 Shared pack totals
+
+```
+tot    = mobHp(z) x packHp x mod('foeHp') x (size === 'swarm' ? swarmHp : 1)
+member = tot / n x (0.9 to 1.1) x (brute-in-normal ? 2 : 1)      n = members (a brute-in-normal counts 2)
+gold   = mobGold(z) x packGold x (swarm ? swarmPay : 1) / n      per member (paid on its death, as today)
+xp     = ceil(1.5 x z x packHp) x (swarm ? swarmPay : 1)         on the lead (as today)
+kill   = once per pack (the lead), as today; S.kills and S.totalKills count packs
+```
+
+- **Overkill carries** to the next foe (today's rule), so a single big hit is never wasted on a small foe.
+- **Gold floats merge:** each foe still pays when it dies (so gold ticks up during a pack), but the stage
+  shows one "+123g" per pack at the clear, not one per foe (2.7).
+- **The boss's adds** pay nothing (today) and are not a "pack" for sizing: a boss and its adds are drawn with
+  the boss rules (2.5).
+
+### 2.3 Behaviours in a big pack (quotas)
+
+A behaviour that is fine on one foe in three becomes a wall on six. So behaviours run as **pack cadences**,
+not per member: the pack keeps one timer per behaviour, and each time it fires, one eligible member does it.
+
+| Behaviour | Today (per foe) | 2.0 (per pack) |
+|---|---|---|
+| Dive (Cave Bat, Stormgull Snatch) | every 10 s each | every 5 s, 1 diver; at most **2 diving** at once |
+| Spore cloud | every 6 s each | every 6 s for the pack (1 cloud) at the pack's cloud strength (x1.5 when 3+ Spore Caps stand) |
+| Heal channel (Marsh Wraith) | every 5 s each | 1 channel at a time; the next starts 2 s after the last ends |
+| Reassemble (Rattlebones) | once each | the first 2 that fall get up; the rest stay down |
+| Slam (Quarry Golem) | every 3rd hit each | unchanged (brutes are 3) |
+| Undertow, Bind, Hex, Chain Shock | per foe | 1 at a time for the pack |
+| Shell Up (Shinglecrab) | once each at 50% | once each, one shell at a time |
+
+Quotas are data (`FOE_BEH[k].quota`, CB2's field, no save), so a region can tune them.
+
+### 2.4 Spawn rhythm
+
+- **Arrival:** a new pack walks in from the right edge while the last one's death animation plays (inside
+  today's `respawn` 0.45 s). Members enter in 3 groups 0.15 s apart (front column first), so ten sprites never
+  pop in on one frame. Reduced motion: they appear in place, in the same 3 groups.
+- **First swings** are spread over 0.6-2.0 s (today 0.6-1.4 s), so ten foes never land their first hits on
+  one tick.
+- **Respawn** stays 0.45 s between packs. Pack cadence is unchanged, so gold a minute is unchanged for the
+  same kill speed (CX7).
+- A foe acts only once it has fully arrived (`born` ≥ 0.3 s, as the stage already hides foes under 0.1 s).
+
+### 2.5 The stage: columns, depth and the zoom step
+
+**Columns.** The foe side keeps its Front, Mid and Back columns (`row` 2 / 1 / 0; party reach is formation.md
+1.1, unchanged). A big pack fills them several deep:
+
+| Pack | Layout on the foe side |
+|---|---|
+| 1 (boss) | the boss at its big size; adds stand in front of it, up to 4 |
+| 3 (brutes) | today's 3 slots (`FOE_X` [0.62, 0.76, 0.9]) |
+| 5-6 | 3 columns, 2 deep; each rear rank stands 10 logical px up and 8 px back, drawn first and dimmed 10% (the party's old two-lane look) |
+| 8-10 (swarm) | 3 columns, 3-4 deep, rear ranks up and back as above; small sprites (below) |
+
+Each column's members are ordered by HP so the lowest-HP member stands in front (it is the one melee reaches,
+and the eye goes to it).
+
+**The zoom step.** The stage picks its zoom from a width floor (`pickZoom`, `ZOOM_W` 272 / `ZOOM_WT` 216
+logical px). The floor rises for swarms:
+
+| Pack on the field | Width floor x | On a 360 x 740 phone (DPR 2) |
+|---|---|---|
+| Brutes, normal packs, a boss with up to 2 adds | x1 (today) | zoom 1.5 (240 logical px wide), as today |
+| Swarms, a boss with 3+ adds | **x1.4** | **zoom 1** (360 logical px wide): one step out |
+
+- The step is chosen **per zone** from the zone type's size (and per boss fight from its kit), not per pack,
+  so it never flips between packs of one zone. Mixed packs in a swarm zone stay zoomed out.
+- The change happens at a **zone change or a boss start**, where the scene already resets (`sceneReset`);
+  the new pack walks in at the new zoom. No tween (pixel art must land on whole pixels), no extra rebakes
+  beyond today's zoom-change text rebake.
+- Wide and landscape stages usually need no step (their floor already fits); the rule is the same.
+
+**Swarm sprites are half size.** Swarm foes draw from a **1x bake** (1 art px = 1 logical px) instead of the
+B1 2x bake, so they stay on whole pixels and read as "many small things". At the zoomed-out step on a phone a
+bat is about 12-16 CSS px across and the party members about 70 CSS px tall, so the party stays the thing you
+read first. Elites in a swarm draw from the 2x bake (they stand out by size as well as by their mark).
+
+### 2.6 Bars and chips (less clutter)
+
+| On the field | Bar | Chips |
+|---|---|---|
+| **Focus foe** (the one the party hits, `mob`) | full bar over its head (today's `foeHud`) | its statuses (up to 4 badges, core-2 3.1 shapes, stack digits) |
+| **Elites and champions** | full bar with the violet or gold edge, plus up to 2 **trait badges** (5.1) | statuses, as the focus |
+| **Boss** | its bar in the header (today), plus the **stagger bar** and **cast bar** (3.3, 3.4) | statuses in the header row |
+| **Other pack members** | **no bar** | at most **1** badge each: the most important of Stun, Root, Burn, Curse, Mark (in that order); no timers |
+| **The pack** | **one pack bar** in the foe header: the pack's name and count ("Cave Bats · 6 of 9") and the summed HP | - |
+| **Threat** | a pip only on a foe that is hitting a non-tank (the one that matters); the red "left the tank" flash stays | - |
+
+- The header's pack bar replaces the lead foe's bar (the header shows the focus foe's name when it is an
+  elite or a champion, else the pack's).
+- The "Battle HUD" and "Show targets" settings (today's) still turn the stage bars and pips off.
+- A foe under a Stagger shows a gold outline; a foe casting shows its cast bar (3.4) even when it is not the
+  focus (a cast is always worth seeing).
+
+### 2.7 Damage numbers merge per pack
+
+Today every hit on any foe raises a number (a pool of 24) and each foe's death raises a gold float.
+
+| Number | 2.0 rule |
+|---|---|
+| Hits on the **focus foe** | shown as today, one per hit, with the type icon in front (core-2 2.1) and `▲` / `▼` for weak / resisted; crits bigger with a `!` |
+| Hits, splashes and ticks on **every other foe in the pack** | added into **one pack number** that rises every 0.5 s over the pack's centre, with the icon of the type that dealt the most |
+| Status ticks on the focus foe | merged into one number a second (the status tick is already once a second, core-2 3.1) |
+| Reactions | the name flashes once over the foe ("Shatter!", "Blight", "Judgement") with its number |
+| Gold | one "+123g" at the pack clear |
+| Party side | unchanged (C4 already merges per member and kind) |
+
+- **Caps:** at most **6** foe-side numbers alive at once; the oldest fades first (today's rule). At most
+  **8 new number sprites baked a second** (`bakeText` is the costly part); over that, a number waits for the
+  next pack-number tick.
+- The Lightkeeper's party-strike number (`partyAcc`, every 0.6 s) folds into the pack number.
+
+### 2.8 Performance budget (10 foes on a mid-range phone)
+
+The perf budget (perf.md) does not move. Big packs must fit inside it:
+
+| Metric (phone, x4 CPU, 360 x 740, DPR 2) | Budget | Today's reference |
+|---|---|---|
+| Fight: JS per frame p95 / p99, a swarm of 10 with statuses, Burn spreading and merged numbers | ≤ 8 / 16.7 ms | 6.5 / 12.2 ms with packs of 3 (perf.md) |
+| Extra JS per frame vs a pack of 3 at the same zone | **≤ +1.5 ms** p95 | - |
+| `combatTick` with 10 foes and 3 members (inside the frame) | ≤ 0.8 ms p95 | - |
+| Frame gap p95 | ≤ 34 ms | 28.4 ms |
+| Long tasks: pack arrival, zone change with the zoom step, boss phase change | none over 50 ms | - |
+| Heap growth | < 2 MB a minute (no allocation per hit, per tick or per pack) | - |
+
+How it stays cheap:
+
+- **Pooled foes.** `FOE_MAX` 6 becomes **12**, and foe records are a fixed pool reused pack to pack (today
+  `mkFoe` makes new objects each pack). Threat tables are the pool's `Float64Array(4)`s, zeroed, never remade.
+- **One status tick a second** (core-2 3.1) for every foe at once; per-frame work is only timers.
+- **Pack cadences** (2.3) mean 10 foes run 1-2 behaviour timers, not 10.
+- **Sprites:** swarm 1x bakes are a quarter of the pixels of a 2x bake; every rig is baked lazily and
+  prewarmed with `idleTask` on a zone change (today's path). Dimmed rear ranks use `globalAlpha`, no new
+  bake. At most **2 draws a foe** (body, and one overlay for an elite trait or a Stagger outline).
+- **HUD:** 1 bar (focus) + elites + 1 pack bar, instead of up to 10; badges are cached 5x5 sprites.
+- **Numbers:** the caps in 2.7.
+- `tools/perf.mjs` gains scenarios `swarm10` and `bossKit` (8.5). Both must pass on HEAD's phone profile
+  before S6 merges.
