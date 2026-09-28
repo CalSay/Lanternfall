@@ -51,6 +51,7 @@ function makeToast(msg, kind, url, p) {
   t.addEventListener('pointermove', e => { if (x0 == null) return; dx = e.clientX - x0; t.style.transform = `translateX(${dx}px)`; t.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / 160)); });
   const up = () => {
     if (x0 == null) return; x0 = null; t.style.transition = '';
+    if (Math.abs(dx) < 6 && t._tap) { dropToast(t, 'gone'); t._tap(); return; }
     if (Math.abs(dx) > 48 || Math.abs(dx) < 6) { t.style.transform = `translateX(${dx < 0 ? -120 : dx > 6 ? 120 : 0}%)`; dropToast(t, 'gone'); }
     else { t.style.transform = ''; t.style.opacity = ''; armToast(t); }
   };
@@ -63,6 +64,7 @@ try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offset
 function showToast(msg, kind, icon, prio) {
   const p = notePrio(prio, kind);
   let url = null; try { url = iconOf(icon); } catch (e) {}
+  if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
   notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
   if (notes.log.length > 50) notes.log.length = 50;
   const box = $('toasts');
@@ -91,6 +93,60 @@ function showToast(msg, kind, icon, prio) {
   box.appendChild(t);
   armToast(t);
 }
+// ---- What's new ----
+// Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
+// deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
+// instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
+// on the first ticks; the Codex at 2 s). One notice alone pops as usual. Achievements join into
+// one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
+// the list), e.g. the camp welcome (55-welcome.js).
+const NEWS = { open: true, t: 0, lines: [], entry: null };
+function newsEntry(lines) {
+  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
+  if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
+  else {
+    const list = lines.filter(l => l.first).concat(lines.filter(l => !l.first));
+    NEWS.entry = { id: ++notes.seq, msg: `What's new: ${list.length} things since your last visit.`, kind: 'good news', url: (list.find(l => l.url) || {}).url || null, p: 2, at: Date.now(), list };
+    notes.log.unshift(NEWS.entry);
+    if (notes.log.length > 50) notes.log.length = 50;
+  }
+  notes.unread++; bellUpdate(true);
+  newsToast();
+}
+// One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
+function newsToast() {
+  NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  const box = $('toasts');
+  for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
+  // Room as for a high notice: retire the oldest normal toasts first.
+  const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
+  const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
+  for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
+  const t = makeToast(`What's new since your last visit. Tap to read.`, 'good', NEWS.entry.url, 2);
+  t._news = true; t._tap = openNoticeLog;
+  box.appendChild(t); armToast(t);
+}
+on('createDone', () => { if (NEWS.wait) newsToast(); });
+function newsFlush() {
+  NEWS.open = false;
+  let lines = NEWS.lines; NEWS.lines = [];
+  // The lines now live in the bell: point them at the Journal directly.
+  for (const l of lines) l.msg = l.msg.replace('Tap the bell, then Journal.', 'See the Journal.').replace('from the bell, then Journal.', 'from the Journal.');
+  const ach = lines.filter(l => /^Achievement: /.test(l.msg));
+  if (ach.length > 1) {
+    const names = ach.map(l => l.msg.slice(13).split('. ')[0]);
+    lines = lines.filter(l => !ach.includes(l));
+    lines.push({ msg: `${ach.length} achievements earned: ${names.join(', ')}. See the Journal.`, url: ach[0].url, kind: 'good', p: 1 });
+  }
+  if (lines.length === 1 && !lines[0].first) { const l = lines[0]; showToast(l.msg, l.kind, l.url, l.p); return; }
+  if (lines.length) newsEntry(lines);
+}
+onTick(dt => { if (NEWS.open && (NEWS.t += dt) >= 2.5) newsFlush(); });
+on('whatsNew', w => {
+  let url = null; try { url = iconOf(w.icon); } catch (e) {}
+  const line = { msg: w.msg, url, kind: 'good', p: 2, first: !!w.first };
+  if (NEWS.open) NEWS.lines.push(line); else newsEntry([line]);
+});
 // The bell sheet has two views: Notices (this visit's log) and the Journal (lifetime stats,
 // registerSection('log', ...) in 75-stats-ui.js). The last view is remembered.
 const logPanel = el('section', 'panel'); logPanel.id = 'p-log'; logPanel.hidden = true; $('app').append(logPanel);
@@ -119,6 +175,12 @@ function openNoticeLog() {
       for (const n of notes.log) {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
         r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        if (n.list) {
+          r.firstChild.nextSibling.textContent = "What's new";
+          const ul = el('ul', 'nlog-news');
+          for (const l of n.list) { const li = el('li', l.first ? 'first' : ''); li.append(l.url ? img(l.url) : el('span'), el('span', null, l.msg)); ul.append(li); }
+          r.append(ul);
+        }
         list.append(r);
       }
       box.append(list, el('p', 'note', 'The last 50 notices from this visit.'));

@@ -128,6 +128,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     b: { hearth: 0, watch: 0, forge: 1, bench: 1, loom: 1, ench: 1, tavern: 1, library: 0, maproom: 0, shrine: 0 },
     builds: [], bless: [], news: [], bty: 0, talk: {}, deco: {}
   });
+  // 55-welcome (plan-2 D3): a save that predates the Camp gets the Hearth its max zone allows, once.
+  if (typeof welcomeApply === 'function') welcomeApply();
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -290,6 +292,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (C().open) return;
     C().open = true; C().b.hearth = Math.max(1, lv('hearth'));
     emit('campOpen', { quiet: !!quiet });
+    const w = typeof welcomeNote === 'function' ? welcomeNote() : null;
+    if (w) { emit('whatsNew', { msg: w.msg, icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, first: true }); return; }
     toast(quiet ? 'Old Hesketh has made camp. See the Camp tab.' : 'Old Hesketh sets down his lamp and lights a fire. "Every road needs a place to come back to." See the Camp tab.', 'good', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
   }
   let firstCheck = true, acc = 1;
@@ -378,8 +382,15 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
 
   // ---------------- Watchtower hold hint ----------------
-  // The highest cleared zone where the party kills a foe in 3 seconds or less.
+  // Before party combat: the highest cleared zone where the party kills a foe in 3 seconds or less.
+  // With party combat (Stage C), partyHoldEstimate() decides: a zone number, or { zone }.
   campHoldZone = () => {
+    if (typeof partyHoldEstimate === 'function') {
+      try {
+        const e = partyHoldEstimate(), z = typeof e === 'number' ? e : e && (e.zone != null ? e.zone : e.best);
+        if (z > 0) return Math.max(1, Math.min(S.maxZone, Math.floor(z)));
+      } catch (er) { console.error('[lanternfall] hold estimate', er); }
+    }
     const d = totalDps(); if (!(d > 0)) return 1;
     const z = 1 + Math.floor(Math.log(3 * d / 40) / Math.log(1.42));
     return Math.max(1, Math.min(S.maxZone, z));

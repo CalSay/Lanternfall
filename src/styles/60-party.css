@@ -87,7 +87,7 @@
 
 /* synergies */
 .syn-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.syn-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px 4px 8px; background: var(--well); border: 2px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
+.syn-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 4px 10px 4px 8px; background: var(--well); border: 2px solid var(--line); color: var(--muted); font: 600 13px var(--display); cursor: pointer; }
 .syn-chip i { width: 8px; height: 8px; background: var(--line-hi); }
 .syn-chip small { font: 500 11.5px var(--body); color: var(--muted); }
 .syn-chip.on { color: var(--bone); border-color: var(--gold); background: linear-gradient(#2e2618, var(--panel)); box-shadow: 0 0 10px rgba(242,193,78,.18); }
