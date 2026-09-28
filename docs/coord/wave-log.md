@@ -382,3 +382,22 @@ as Front/Middle/Back, a cold Hearth start with stations you build, NPC gatherers
 decisions: the hero is one of the three; the Storehouse caps what you HOLD from every source, active
 gathering included, but skill XP keeps counting. The remainder of plan 2 is folded in, in build order:
 see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
+- D7 hearth-and-hands.md merged. Coordinator accepts all 15 section-9 recommendations: rough tools are the
+  empty slot; mastery per tool kind; no tool affixes; "right tool" is +25%, not a gate; all tools at the
+  Workbench; gifts/refunds may exceed the cap (a softening of the owner's rule for rewards only, noted to
+  the owner); salvage asks in-page before discarding; migration may give Storehouse 8 and lock an over-cap
+  material; Hands REPLACE the never-built bench jobs (told to the owner); Tavern beds, no upkeep, Tam the
+  free starter; applicants every 8h (max 3 waiting); off-skill half share; Spiced Broth +5% within +15% camp
+  cap; the rod covers Tide Pools (R2 decides); cold start = no progress and no S.camp. Wave 2 merge order:
+  H2, H1, H3. The Map Room hint goes with H1.
+- D6 formation.md merged. Coordinator accepts all section-9 recommendations: hero floor; damage-only trioX
+  1.35 phased in over zones 8-12; old named synergies become Bonds (old saves seeded to level 3/4); circle
+  synergies become 2-companion Kin (Hedgefolk gold +5%); migration keeps the planner's best 2 and never pulls
+  from the bench; the 12 new Bonds; lanes dropped (cells keep lane: 1). World raid: raiders.dps keeps its
+  formula and shape; late values read about 10% lower. That is a value drift, not a shape change, so it is
+  accepted without touching the online layer. The festival is renamed LF1 (F1 is the formation core).
+  Wave 2 formation: F1 first; F2, F3, F4 in parallel once F1's API is in; then BAL3.
+- G1 merged: 11c-art-tools.js (pickaxe, woodaxe, sickle, rod by tier; own swings), toolFor(skill) is a `let`
+  for H2 to repoint at equippedTool; the hero gathers alone; 55-rested.js Well Rested (REST_TUNE rate 0.5,
+  cap 180s, +10% dmg, zone fights only). NODE_HIT strike fractions in 62-stage heroHome (G2 told).
+  Perf noisy, no regression read.

@@ -2653,5 +2653,95 @@ try {
   assert(road.length === 3 && road[0].lit && road[1].lit && !road[2].lit && road[2].beyond && road[1].here, 'lanternRoad(): Hollow and Coast lit, the Emberwaste dark beyond, the party on the Coast');
 } catch (e) { fail('regions and the Great Lantern crashed: ' + (e.stack || e)); }
 
+// ---- G1: tools in hand and Well Rested (11c-art-tools.js, 55-rested.js; plan-3 asks 1 and 2) ----
+console.log('tools and Well Rested');
+try {
+  const g = loadCore({ seed: 31 }), E = s => g.eval(s);
+  // tools: the right one per skill, tier from the skill level, and every class builds holding each
+  const tf = E(`(() => { S.skills.mine.lv = 1; S.skills.wood.lv = NODE_REQ[2]; S.skills.forage.lv = 99;
+    return ['mine', 'wood', 'forage', 'fish', 'smith'].map(k => toolFor(k)); })()`);
+  assert(tf[0].k === 'pick' && tf[0].t === 1 && tf[0].name === 'Copper Pickaxe' && tf[1].k === 'axe' && tf[1].t === 3 && tf[1].name === 'Mithril Woodaxe'
+    && tf[2].k === 'sickle' && tf[2].t === 5 && tf[3].k === 'rod' && tf[4] === null, `toolFor: ${tf.slice(0, 4).map(t => t.name).join(', ')}; none for Smithing`);
+  const art = E(`(() => {
+    const bad = [], num = s => s.t === 'p' ? s.pts.every(Number.isFinite) : [s.cx, s.cy, s.x1, s.y1, s.x2, s.y2, s.x, s.y].filter(v => v !== undefined).every(Number.isFinite);
+    let n = 0, lamps = 0;
+    for (const cls in AK.CLASSES) for (const k of Object.keys(TOOL_ART.KINDS)) for (const t of [1, 3, 5]) {
+      const def = TOOL_ART.gatherDef(AK.CLASSES[cls], { k, t, r: t === 5 ? 2 : 0 }), gg = {};
+      for (const s in def.slots) gg[s] = s === 'weapon' || s === 'off' ? null : AK.gearMats(def.slots[s], t, 0);
+      for (const pose of [{}, { bob: 1 }, AK.ANIMS[def.anim].wind, AK.ANIMS[def.anim].strike]) {
+        const kit = AK.makeKit(def, pose); def.build(kit, gg, { skin: AK.m(AK.SKINS[1], 'skin'), hair: AK.m(AK.HAIRS[0], 'hair') }); n++;
+        if (kit.parts.length < 15 || !kit.parts.every(p => p.m && p.m.hex && num(p.s))) bad.push(cls + ':' + k + t);
+        if (kit.parts.some(p => p.m.kind === 'glow' && !p.o.nolight)) lamps++;
+      }
+    }
+    const same = TOOL_ART.gatherDef(AK.CLASSES.warden, { k: 'pick', t: 2 }) === TOOL_ART.gatherDef(AK.CLASSES.warden, { k: 'pick', t: 2, r: 0 });
+    const spec = TOOL_ART.gatherSpec({ cls: 'ranger', skin: 1, gear: { weapon: { t: 3, r: 1 }, off: { t: 1, r: 0 }, head: { t: 2, r: 0 }, body: { t: 1, r: 0 } } }, toolFor('mine'));
+    return { bad: [...new Set(bad)], n, lamps, same, spec };
+  })()`);
+  assert(!art.bad.length && art.n === 4 * 4 * 3 * 4, `every class builds with every tool, tier and swing (${art.n} kits)` + (art.bad.length ? ': ' + art.bad.join(', ') : ''));
+  assert(art.lamps === art.n, 'every gathering hero carries a lit lantern (the Lightkeeper gets a hip lantern)');
+  assert(art.same && !art.spec.gear.weapon && !art.spec.gear.off && art.spec.gear.head && art.spec.tool.k === 'pick' && art.spec.skin === 1, 'gather spec: no weapon or off-hand, keeps the look, one cached outfit per class, tool and tier');
+
+  // Well Rested: state and defaults
+  assert(E('S.rested && S.rested.left === 0 && fresh().rested.left === 0'), 'new game: S.rested = { left: 0 }');
+  for (const f of ['save-v2.json', 'save-v2-late.json']) {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8'));
+    const h = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    const d = subsetDiff(raw, JSON.parse(JSON.stringify(h.eval('S'))));
+    assert(!raw.rested && h.eval('S.rested.left === 0 && mod("dmg") > 0') && !d && !h.errors.length, `${f}: old save gets Well Rested { left: 0 }, nothing lost` + (d ? ': ' + d : ''));
+  }
+  {
+    const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2.json'), 'utf8'));
+    raw.rested = { left: 77.5, later: 'kept' };
+    const h = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
+    h.fn.save();
+    const back = JSON.parse(h.storage.get(KEY)).rested;
+    assert(back.left === 77.5 && back.later === 'kept', 'a saved Well Rested (and any later field in it) survives a load and save');
+  }
+
+  // building it: gather with a party fielded; the hero gathers alone, companions do not change
+  E('chooseClass("warden", "Tess"); S.maxZone = 6; S.zone = 5; S.auto = false');
+  const run = secs => { for (let t = 0; t < secs; t += 0.1) g.fn.tick(0.1); };
+  run(20);
+  const field = E('S.party.field.slice()'), lv0 = E('JSON.stringify(S.party.field.map(k => charRec(k).lv))');
+  // the Well Rested share of mod('dmg'): the same moment with nothing banked
+  const restX = () => E('(() => { const a = mod("dmg"), l = S.rested.left; S.rested.left = 0; const b = mod("dmg"); S.rested.left = l; return a / b; })()');
+  E('setNode("ore", 1); setActivity("gather")');
+  run(120);
+  assert(Math.abs(E('S.rested.left') - 60) < 0.5 && E('!wellRested().on') && Math.abs(restX() - 1) < 1e-9, `2 min of gathering banks 1 min (${E('S.rested.left').toFixed(1)} s); no bonus while gathering`);
+  run(600);
+  assert(E('S.rested.left') === E('REST_TUNE.cap') && E('JSON.stringify(S.party.field.map(k => charRec(k).lv))') === lv0 && E('S.party.field.join()') === field.join(), `capped at ${E('REST_TUNE.cap')} s; the party stays fielded, its levels unchanged`);
+  assert(/rests at the Hearth: \+10% damage for 3m 0s in your next fight \(full\)/.test(E('restNote()')), 'Gather tab line: ' + E('restNote()').trim());
+  // using it: a fight gets +10%, and it runs down only while fighting
+  const toasts = []; g.fn.on('toast', t => toasts.push(t.msg));
+  E('setActivity("fight")');
+  const ratio = restX();
+  assert(Math.abs(ratio - (1 + E('REST_TUNE.dmg'))) < 1e-9 && E('wellRested().on'), `fighting: damage x${ratio.toFixed(2)}`);
+  assert(toasts.some(m => m === 'Well Rested: +10% damage for 3 min.'), 'toast on the way to the fight: ' + toasts.find(m => /Well Rested/.test(m)));
+  run(60);
+  assert(Math.abs(E('S.rested.left') - 120) < 0.5, `a minute of fighting uses a minute (${E('S.rested.left').toFixed(1)} s left)`);
+  run(125);
+  assert(E('S.rested.left') === 0 && E('!wellRested().on'), 'used up after 3 minutes of fighting: damage back to normal');
+  // no party fielded: nothing to bank
+  E('S.party.field = []; setActivity("gather")'); run(60);
+  assert(E('S.rested.left') === 0 && E('restNote()') === '', 'nobody fielded: no Well Rested');
+  E('S.party.field = ' + JSON.stringify(field));
+
+  // away: gathering banks it; away fights never count it and run it down
+  E('setActivity("gather"); S.rested.left = 0');
+  const ore0 = E('S.mats.ore[0]'), r1 = E('awayGains(3600)');
+  assert(E('S.rested.left') === E('REST_TUNE.cap') && E('S.mats.ore[0]') > ore0 && /^You kept working/.test(r1.note), `away gathering: ore +${E('S.mats.ore[0]') - ore0}, Well Rested full; note "${r1.note}"`);
+  const snap = E('JSON.stringify(S)');
+  const awayGold = left => {
+    const h = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: snap }) });
+    h.eval(`S.activity = 'fight'; S.rested.left = ${left}; S.last = Date.now()`);
+    const g0 = h.eval('S.gold'); h.eval('awayGains(1800)');
+    return { gold: h.eval('S.gold') - g0, left: h.eval('S.rested.left'), errs: h.errors.length };
+  };
+  const a0 = awayGold(0), a1 = awayGold(180);
+  assert(a0.gold > 0 && Math.abs(a1.gold - a0.gold) < 1e-6 * a0.gold && a1.left === 0 && !a0.errs && !a1.errs, `away fighting: the same gold with or without Well Rested (${Math.round(a0.gold)}), and it is used up`);
+  assert(!g.errors.length, 'no Well Rested errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('tools and Well Rested crashed: ' + (e.stack || e)); }
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

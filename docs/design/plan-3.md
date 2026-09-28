@@ -48,7 +48,7 @@ the gather view, so they start at once, alongside the two specs.
 ### Wave 1: specs, plus the quick visible wins (parallel)
 | Task | Work | Owns |
 |---|---|---|
-| **D6** Formation spec | Party of 3 with the hero: slots, home slots, off-slot costs, slot jobs, rebuilt synergies, Bonds, migration from the 4-member field, the planner v3, balance targets (a BAL3 target list), UI sketch at 360 px | `docs/design/formation.md` |
+| **D6** Formation spec | Party of 3 with the hero: slots, home slots, off-slot costs, slot jobs, rebuilt synergies, Bonds, migration from the 4-member field, the planner v3, balance targets (a BAL3 target list), UI sketch at 360 px | [`docs/design/formation.md`](formation.md) |
 | **D7** Hearth and Hands spec | Cold Hearth start, station build chain and costs, tools as items and tool mastery, the Storehouse and caps, Hands (hire, rarity, traits, shifts, returns, camp life), the Kitchen, day and night, plots, migration for old saves, pacing targets | `docs/design/hearth-and-hands.md` |
 | **G1** Solo gathering and tools shown | The hero holds a pickaxe, woodaxe or sickle (by skill) while gathering; the party is not drawn in gather scenes; the party walks home, with a Well Rested buff (spec'd in G1's report, knob in a tune table) | tool sprites in a new `src/js/11c-art-tools.js`; small edits in `62-stage.js`, `55-gathering.js` |
 | **G2** Gathering scenes | Mine, woods and meadow scenes with several nodes, depletion, regrowth and the hero walking between them; lanterns; the Glint shown on a vein | `src/js/63c-scenery-gather.js`; small edits in `63-scenery.js`, `62-stage.js` (node positions) |
@@ -75,7 +75,7 @@ O1-O4, L3, L6. Oath line-up rules use slots.
 PB1-PB3, PB5, the Lantern Road map, drawn cosmetics, D4 (the Region 3 spec).
 
 ### Wave 7: owner-gated
-F1 the Lantern Festival: it must land before December, so it may start in parallel with wave 5 or 6.
+LF1 the Lantern Festival: it must land before December, so it may start in parallel with wave 5 or 6.
 D5 the companion endgame, now built on Bonds.
 
 ## 5. Rules for every wave

@@ -17,6 +17,7 @@
 // Character specs (plain JSON, hashable):
 //   hero:      { cls, skin: 0-2 | '#hex', hair: 0-3 | '#hex', gear: { weapon|off|head|body|charm: { t: 1-5, r: 0-3, glow?: '#hex' } } }
 //   companion: { comp: key, t?: 1-5, r?: 0-3 }   (t / r override the role weapon's tier and rarity)
+//   gathering: a hero spec with tool: { k: 'pick'|'axe'|'sickle'|'rod', t, r } (TOOL_ART.gatherSpec, 11c)
 
 const ART = (() => {
   const PX = 2;
@@ -200,9 +201,11 @@ const ART = (() => {
       const w = gearMats(wp, spec.t || wp.t, spec.r != null ? spec.r : wp.r, wp.glow);
       return { def, kind: 'comp', w };
     }
-    const def = CLASSES[spec.cls] || CLASSES.warden;
+    // a gathering tool in hand (spec.tool, 11c-art-tools.js): the class outfit without weapon or off-hand
+    const tool = spec.tool && typeof TOOL_ART !== 'undefined' ? spec.tool : null;
+    const def = tool ? TOOL_ART.gatherDef(CLASSES[spec.cls] || CLASSES.warden, tool) : CLASSES[spec.cls] || CLASSES.warden;
     const gs = spec.gear || {}, g = {};
-    for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = gs[s]; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
+    for (const s of ['weapon', 'off', 'head', 'body', 'charm']) { const st = !tool || (s !== 'weapon' && s !== 'off') ? gs[s] : null; g[s] = st && st.t ? gearMats(def.slots[s] || { fam: 'ore' }, st.t, st.r, st.glow) : null; }
     const look = { skin: m(colOf(spec.skin == null ? 0 : spec.skin, SKINS), 'skin'), hair: m(colOf(spec.hair == null ? 0 : spec.hair, HAIRS), 'hair') };
     return { def, kind: 'hero', g, look };
   }
