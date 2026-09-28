@@ -896,3 +896,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - MERGED FB1 (55-errors.js ring buffer in S.errors, 75-feedback-ui.js "Send feedback" in the Journal stats
   view, 60-feedback.css). First hand-back had no error listeners; sent back, fixed (window error +
   unhandledrejection, throttled save after capture, wrap checks). Running: N1b (opus), MAT1 (sonnet).
+- OWNER on RG1 9.3: all yes except O1 (reworked: two materials per item by class: Warrior armour metal+leather,
+  weapon metal+wood; Ranger armour leather+cloth, weapon wood+metal; Mage armour cloth+leather, weapon
+  wood+gem; ~70/30 per item), O4 (50% chance per socketed buff item to be lost on salvage; Salvage Rune = 0%),
+  O6 (the Still benched until after 1.0). O11 lukewarm. Recorded at the end of gear-2.md.

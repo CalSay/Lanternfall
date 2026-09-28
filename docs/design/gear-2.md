@@ -1224,3 +1224,23 @@ identical before and after each slice).
 
 Parallel safety: S4 and S5 are in sequence (S5 reads S4's grades and weights). TR1 can run beside S5; they
 share only `21g` (read-only). MAT1 can land any time: names are data in `MAT` and the S5 data files.
+
+## Owner answers to 9.3 (2026-09-28, recorded by the coordinator)
+
+These override anything above that disagrees.
+
+- **O1, recipes: two materials per item, by class.** Every crafted piece takes a main and a second material.
+  | Class line | Armour | Weapon |
+  |---|---|---|
+  | Warrior (Heavy) | metal + leather | metal + wood (the haft) |
+  | Ranger (Medium) | leather + cloth | wood + metal (the heads and fittings) |
+  | Mage (Light) | cloth + leather | wood + gem (a staff with a focus stone) |
+  The main is roughly 70% of the cost and the second 30%, per item. This replaces "70/30 across a set".
+- **O2** grade 4 moves to Region 2: yes. **O3** Enchanting full strength at level 80 plus Tune: yes.
+- **O4, salvaging a socketed item: changed.** Each socketed buff item has a **50% chance to be lost**, rolled
+  per item; the rest return to the bag. A Salvage Rune makes it 0%. (Starting value; BAL can tune it.)
+- **O5** Matched set +10%: yes. **O6 the Still: benched until after 1.0** (no Tinctures in 1.0).
+- **O7** uniques grouped by boss family: yes. **O8** 30 unique names and powers: approved (the coordinator
+  will still show the list before S5 locks it). **O9** classic uniques stay, zone ones to the Deepwell: yes.
+- **O10** Temper: yes. **O11** Echo rank rules: yes (lukewarm; revisit after playtest). **O12** trade towns: yes.
+  **O13** Hunter is a Hand job only: yes.
