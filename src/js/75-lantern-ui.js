@@ -45,6 +45,7 @@
     const h = el('h2', 'gl-head', e.head); h.id = 'glHead';
     card.append(h);
     if (e.text) card.append(el('p', 'gl-text', e.text));
+    for (const x of e.say || []) { const q = el('p', 'gl-say'); q.append(el('b', null, (x.short || x.name) + ': '), document.createTextNode(`"${x.line}"`)); card.append(q); }
     if (e.rewards && e.rewards.length) {
       const list = el('ul', 'gl-rw');
       for (const x of e.rewards) {
@@ -70,7 +71,7 @@
   }
   on('greatLantern', e => {
     if (!e || e.quiet) return;
-    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice() });
+    queue.push({ n: e.n, region: e.region, zone: e.zone, head: e.head, text: e.text, rewards: (e.rewards || []).slice(), say: (e.say || []).slice() });
     setTimeout(showNext, 0);
     road.sig = '';
   });

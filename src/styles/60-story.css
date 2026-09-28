@@ -1,0 +1,81 @@
+/* 60-story: the story on the stage and in its sheet (75-story-ui.js, LORE3). */
+
+/* ---- the stage caption: arrival banner and elder lines, in the open sky mid-stage ---- */
+.sty-cap { position: absolute; z-index: 5; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(320px, calc(100% - 20px));
+  display: grid; justify-items: center; gap: 2px; padding: 8px 18px 9px; text-align: center; cursor: pointer;
+  background: linear-gradient(90deg, rgba(11,8,16,0), rgba(11,8,16,.9) 14%, rgba(11,8,16,.9) 86%, rgba(11,8,16,0));
+  border-top: 1px solid rgba(242,193,78,.45); border-bottom: 1px solid rgba(242,193,78,.45);
+  border-image: linear-gradient(90deg, transparent, rgba(242,193,78,.6), transparent) 1;
+  transition: opacity .25s ease-out, transform .25s ease-out; }
+.sty-cap-h { font: 700 calc(19px * var(--display-k))/1.05 var(--display); color: var(--gold); letter-spacing: .02em; text-shadow: 0 2px 0 #0B0810, 0 0 12px rgba(242,193,78,.35); }
+.sty-cap-l { font: 500 13.5px/1.35 var(--body); color: var(--bone); text-shadow: 0 1px 0 #000; }
+.sty-cap.elder { border-image: linear-gradient(90deg, transparent, rgba(224,82,79,.7), transparent) 1; }
+.sty-cap.elder .sty-cap-h { color: #FF8F7A; font-size: calc(16px * var(--display-k)); text-shadow: 0 2px 0 #0B0810, 0 0 10px rgba(224,82,79,.4); }
+.sty-cap.elder.fall { border-image: linear-gradient(90deg, transparent, rgba(239,230,214,.5), transparent) 1; }
+.sty-cap.elder.fall .sty-cap-h { color: #CFC3DC; text-shadow: 0 2px 0 #0B0810; }
+.sty-cap.elder .sty-cap-l { font-style: italic; }
+.sty-cap.in { animation: sty-in .35s ease-out; }
+.sty-cap.out { opacity: 0; transform: translate(-50%, calc(-50% - 6px)); }
+@keyframes sty-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); } }
+
+/* ---- the story chip: "New story: Wisps. Read" ---- */
+.sty-chip { position: absolute; z-index: 5; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(300px, calc(100% - 20px));
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 44px; padding: 6px 8px;
+  text-align: left; cursor: pointer; color: var(--bone); background: #16101DF0; border: 2px solid #6B5320;
+  box-shadow: 0 3px 0 #0B0810, 0 0 16px rgba(242,193,78,.25); transition: opacity .25s ease-out, transform .25s ease-out; }
+.sty-chip.in { animation: sty-in .35s ease-out; }
+.sty-chip.out { opacity: 0; transform: translate(-50%, calc(-50% - 6px)); }
+.sty-chip-ic { width: 24px; height: 24px; image-rendering: pixelated; }
+.sty-chip-tx { display: grid; gap: 1px; min-width: 0; }
+.sty-chip-eye { font: 600 10px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.sty-chip-t { font: 700 calc(15px * var(--display-k))/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sty-chip-note { font: 500 12px/1.25 var(--body); color: var(--muted); }
+.sty-chip-go { font: 600 calc(12px * var(--display-k))/1 var(--display); padding: 7px 9px; background: var(--gold); color: #2A1E07; box-shadow: inset 0 -2px 0 #A77B1E; }
+
+/* ---- the beat card (bottom sheet) ---- */
+.sty-sheet .bsheet-body { gap: 12px; }
+.sty-back { justify-self: start; min-height: 36px; padding: 4px 10px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--bone); font: 600 calc(13px * var(--display-k)) var(--display); cursor: pointer; }
+.sty-card { display: grid; gap: 8px; padding: 12px 14px 14px; background: radial-gradient(120% 80% at 50% 0%, rgba(242,193,78,.10), rgba(242,193,78,0) 60%), var(--well); border: 2px solid #5A4A2A; box-shadow: inset 0 0 0 2px #0B0810; }
+.sty-eye { font: 600 10.5px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.sty-title { margin: 0; font: 700 calc(22px * var(--display-k))/1.05 var(--display); color: var(--bone); }
+.sty-head { margin: 0; font: 600 14px/1.35 var(--body); color: var(--gold); }
+.sty-text { margin: 0; font: 400 15px/1.5 var(--body); color: var(--bone); }
+.sty-say { margin: 0; font: italic 400 14px/1.4 var(--body); color: var(--muted); }
+.sty-say b { font-style: normal; font-weight: 600; color: var(--gold); }
+.sty-actions { display: flex; gap: 8px; align-items: center; }
+.sty-actions .big { flex: 1; }
+.sty-actions .mini { min-height: 44px; padding: 0 14px; }
+
+/* ---- the story so far ---- */
+.sty-ltitle { margin: 0; font: 700 calc(20px * var(--display-k))/1.1 var(--display); }
+.sty-catch { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 52px; padding: 8px 10px;
+  text-align: left; cursor: pointer; color: var(--bone); background: linear-gradient(90deg, rgba(242,193,78,.14), var(--panel) 75%); border: 2px solid #8A6A20; box-shadow: 0 2px 0 #0B0810; }
+.sty-catch b { font: 700 calc(15px * var(--display-k))/1.1 var(--display); }
+.sty-rows { display: grid; gap: 6px; }
+.sty-grp { margin: 6px 0 0; font: 600 10.5px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sty-row { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 48px; padding: 6px 10px;
+  text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.sty-row.unread { border-color: #6B5320; }
+.sty-row-ic { width: 22px; height: 22px; image-rendering: pixelated; }
+.sty-row-tx { display: grid; gap: 1px; min-width: 0; }
+.sty-row-tx b { font: 700 calc(14px * var(--display-k))/1.15 var(--display); }
+.sty-row-tx span { font: 400 12.5px/1.3 var(--body); color: var(--muted); }
+.sty-ahead, .sty-empty { margin: 0; }
+
+/* ---- the Codex home row ---- */
+.sty-cx { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; min-height: 48px; padding: 6px 10px;
+  text-align: left; cursor: pointer; color: var(--bone); background: var(--panel); border: 2px solid var(--line); box-shadow: 0 2px 0 #0B0810; }
+.sty-cx.news { border-color: #6B5320; background: linear-gradient(90deg, rgba(242,193,78,.10), var(--panel) 70%); }
+.sty-cx-ic { width: 28px; height: 28px; image-rendering: pixelated; }
+.sty-cx-tx { display: grid; gap: 1px; min-width: 0; }
+.sty-cx-tx b { font: 700 calc(15px * var(--display-k))/1.1 var(--display); }
+.sty-cx-tx span { font: 400 12.5px/1.25 var(--body); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sty-cx-go { font: 600 calc(12px * var(--display-k)) var(--display); padding: 8px 9px; background: var(--panel-2); border: 1px solid var(--line-hi); color: var(--gold); }
+
+/* ---- Codex bestiary lines (57c-codex tile.lore, shown in the tile's details) ---- */
+.cx-dlore { margin: 0; font: italic 400 13px/1.4 var(--body); color: #D8CFE3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sty-cap, .sty-chip { transition: none; animation: none; }
+  .sty-cap.in, .sty-chip.in { animation: none; }
+}
