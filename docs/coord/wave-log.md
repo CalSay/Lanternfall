@@ -282,3 +282,4 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
 
 See docs/design/plan-2.md. Wave 1 started: D2 pinnacle spec and Q1+D3 quality fixes plus the old-save welcome, now;
 C4, C6, AF, R0 and BAL2 after Stage C lands.
+- D2 pinnacles.md merged (Hollow King, Lurelight, First Fire, the Climber; open after the Drowned Keeper + Oath 15, about day 33-40). Coordinator accepts its recommendations: live-play kills only, an Assist switch (1.5x wind-ups, full rewards), Boss of the Week pays a Seal + stamp only. Section 12 lists hooks Stage C needs in 59-combat/59b-enemies.
