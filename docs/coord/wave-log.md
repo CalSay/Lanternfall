@@ -922,3 +922,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   hire price foesGold(S.maxZone, k): daily wage = foesGold(S.maxZone, base x rarity x level factor), recomputed
   as maxZone rises. Target: a full crew costs ~10-20% of a day's fighting gold, so gatherers stay a real
   choice at every stage. Hire price uses the same measure.
+- OWNER APPROVED the gold economy change (ECON1, merged with N1c into one opus task, next free slot):
+  (1) no daily wage: hire is a one-off fee; each gatherer SHIFT costs a fixed gold fee by resource grade
+  (level raises fee a little, yield more); (2) gold stops inflating: gold per kill steps up by region with
+  gentle growth inside a region; every gold price (buildings, tents, hires, fees) repriced to that scale;
+  gold is the camp's budget, hero power comes from gear/materials/XP; (3) gold-gain % STAYS on gear as a
+  low-% line you take instead of damage (tune low); gold-gain from upgrades/skills/other sources becomes
+  crit damage, slow ramp, hard cap. Also: rarity, Tavern hire board, named gatherers as special applicants,
+  Tents cap from 2, unpaid = no work (never leave). Save wipe accepted. WC1 told about Tents; tell WC1/RG1
+  outputs to be repriced by ECON1.
