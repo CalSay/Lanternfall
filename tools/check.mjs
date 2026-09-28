@@ -993,6 +993,33 @@ try {
   assert(E('S.bounties.slots[0].have') === 10, 'gathering while away counts');
 } catch (e) { fail('bounties crashed: ' + (e.stack || e)); }
 
+// ---- load on an Omen day with bounty slots to fill (bug: ReferenceError at load) ----
+// Omens that wait for K6, B7 or the Deepwell probe `let`s declared in later files. Loading a save
+// whose bounty slots need filling used to read bonus() at 55-bounties load, reach those probes
+// in their temporal dead zone and throw. The clock is pinned before any file runs (prelude).
+console.log('omen-day load');
+try {
+  const at = d => new Date(2026, 0, 1 + d, 12, 0, 0).getTime();
+  const g = loadCore({ seed: 3 });
+  g.eval('almanac.force(undefined)');
+  const pick = {};
+  for (let d = 0; d < 400; d++) { const n = g.eval(`almanac.scheduled(${d}).needs || ''`); if (['K6', 'B7', 'Deepwell'].includes(n) && pick[n] === undefined) pick[n] = d; }
+  const base = JSON.parse(g.eval('JSON.stringify(S)'));
+  for (const [need, d] of Object.entries(pick)) {
+    const sv = JSON.parse(JSON.stringify(base));
+    sv.bounties.slots = [{ k: null, wait: at(d) + 3600e3 }, { k: null, wait: at(d) - 1 }, null];  // one waiting, one expired, one missing
+    let h, err = '';
+    try { h = loadCoreRaw({ seed: 3, prelude: `Date.now = () => ${at(d)};`, storage: memoryStorage({ [KEY]: JSON.stringify(sv) }) }); }
+    catch (e) { err = e.message; }
+    if (err) { fail(`${need} Omen day ${d}: load throws: ${err}`); continue; }
+    const want = h.eval(`almanac.omenFor(${d}).id`), got = h.eval('almanac.active().id');
+    h.fn.tick(0.1);
+    const filled = h.eval('S.bounties.slots.filter(b => b && b.k).length');
+    assert(got === want && filled >= 2 && !h.errors.length, `${need} Omen day ${d}: loads, plays ${want} as after load (got ${got}), first tick fills ${filled} bounty slots` + (h.errors.length ? ': ' + h.errors[0] : ''));
+  }
+  assert(Object.keys(pick).length === 3, 'found an Omen day for each of K6, B7, Deepwell: ' + JSON.stringify(pick));
+} catch (e) { fail('omen-day load crashed: ' + (e.stack || e)); }
+
 // ---- pacing table (40-rules.js PACE, M6). The balance targets: node tools/sim.mjs --targets ----
 console.log('pacing');
 try {
