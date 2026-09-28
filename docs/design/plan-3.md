@@ -69,6 +69,11 @@ the gather view, so they start at once, alongside the two specs.
   and small capped bonuses, a trophy wall at camp, chapter goals that follow the story (lore.md). The old 23
   achievements keep their ids and bonuses. **AC2** core, **AC3** UI and the trophy wall.
 
+### The Armoury (owner input, 2026-09-28; after the UX2 menu spec)
+- **AR1** a camp building for gear: a bigger bag by level (50 base, nothing lost over cap), gear sets and
+  loadouts for the hero and companions, lock/favourite, the auto-salvage filter, a display rack for uniques
+  and legendaries in the camp scene, sort and filter.
+
 ### Wave 4: the Sunken Coast (plan 2, wave 2), on the new formation
 R2-1 to R2-5, R2-7, R2-8. Coast foes are designed against Front, Middle and Back. Pearls and fish go to
 the Storehouse; the fishing rod is a tool.

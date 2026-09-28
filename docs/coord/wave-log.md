@@ -595,3 +595,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   --targets 15/20 (P1, P2, P4, T4, T6, T11 pass). Bench XP may be strong (L1 -> L19 in 2 min): BAL3.
 - LORE4+5 merged: 21i-lore-exped.js (28 Lore pages, 12 keepsakes), 21j-lore-omens.js (35 Omens, 7 Dares,
   omenLine), shown in the Codex and on the Almanac card.
+- OWNER: the Storehouse should be for materials; gear needs its own building ("an armoury"). Today the
+  Storehouse already covers only S.mats (Trophies and gear are outside it); gear sits in a flat bag of
+  CRAFT_BAG_MAX = 50 unequipped items (bagFull()). QUEUED AR1 "the Armoury" (camp building, spec + build):
+  levels raise the bag (50 base, so old saves are unchanged; an over-cap bag never loses items); gear sets /
+  loadouts per class and per companion (swap in one tap: boss set, Deepwell set, gathering tools); lock and
+  favourite items; the auto-salvage filter from the vision (by rarity/tier/"worse than worn"); a display
+  rack for uniques and legendaries in the camp scene; sort and filter. Fits UX2's Craft/Camp structure, so it
+  follows the UX2 spec. Also noted for the Storehouse: Trophies may want their own shelf later.
