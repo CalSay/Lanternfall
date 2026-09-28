@@ -1,6 +1,6 @@
 # Classes 2.0: three base classes and six evolutions (CL1)
 
-Status: design spec CL1, written 2026-09-28. It fills in the class and evolution kits that the shared
+Status: design spec CL1, written 2026-09-28, finished after a restart (review pass: owner names kept exactly, Sanctuary restored, numbers checked against core-2). It fills in the class and evolution kits that the shared
 rulebook [core-2.md](core-2.md) leaves to CL1 (core-2 9.1): taps, `ab1`, `ab2`, Finishers, passives and
 core mechanics with coefficients; class base stats; the trials; the class migration; star maps per class;
 hero base types (`dt`) and signature statuses; Bonds that react to the class; the Tactics unlock order.
@@ -60,7 +60,7 @@ Design rules of this spec:
 | `ab1` | Shield Wall | Volley | Lantern Flare |
 | Finisher | Hammerfall | Kill Shot | Lanternburst |
 | Damage evolution | **Reaver**: Fury, Bleed, embers; *Rend* | **Venomstalker**: Venom ramp; *Toxic Bloom* | **Warlock**: Curse, dark fire; *Hex Nova* |
-| Utility evolution | **Warden**: Bulwark, holy sparks; *Stand Fast* | **Trapper**: traps, Mark, Root, Chill; *Snare Field* | **Priest**: Given Light, Blessing; *Rally Hymn* |
+| Utility evolution | **Warden**: Bulwark, holy sparks; *Stand Fast* | **Trapper**: traps, Mark, Root, Chill; *Snare Field* | **Priest**: Given Light, Blessing; *Sanctuary* |
 | Evolution role | Reaver: striker (Front); Warden: tank | Venomstalker: striker; Trapper: caster (Middle) | Warlock: caster; Priest: support |
 
 The evolution role is what the formation layer reads (combos, slot jobs, the planner, `heroFloor`). The
@@ -251,6 +251,20 @@ On choosing an evolution the Lanternbearer gets, at once:
 6. **A party role** that the formation layer reads, and **Bonds** that react to it.
 7. **The evolution ring** on the star map (section 4) and **Tactics** rule slot 2 (section 3.6).
 
+**What it keeps.** An evolution keeps everything of its base class that its section does not say it
+*replaces*: the tap (unless a `var` changes it), `ab1`, the base core mechanic, the base passives and the
+base class aura. Its **Stats** line always replaces the base stats. So a Venomstalker still has Keen Eye and Hunters' Company, a Warden still has Grit and
+Shieldmates, a Warlock still plants Embers and has Kindred Sparks. What each evolution replaces:
+
+| Evolution | Replaces |
+|---|---|
+| Reaver | Grit (by Fury), the Warrior's stats, Hammerfall |
+| Warden | the Warrior's stats, Hammerfall |
+| Venomstalker | Kill Shot |
+| Trapper | the Focus Mark value (30%, not 25%), Kill Shot |
+| Warlock | Lanternburst; Lantern Flare gains a Curse (`var`) |
+| Priest | the Ember tap (by Blessing), Lantern Flare (by Rally Hymn, `var`), Embers, Lanternburst |
+
 ### 2.2 The power spike: how it is measured and split (answers core-2 Q4)
 
 **Measure.** "Effective power" is what the sim can see: the push-zone gain of the same save, evolved vs
@@ -276,7 +290,7 @@ because it is only part of the party:
 | Venomstalker | about x1.65 | x1.33 | x1.00 | 1.33 | C x1.10 and status x1.25, Venom ramp (status damage), `ab2` Bloom, Patient Hunter |
 | Trapper | about x1.1 | x1.18 | x1.15 | 1.36 | target side: pack Mark (vuln), Focus Mark 30%; Chill and Root (hold); traps; reactions it enables |
 | Warlock | about x1.8 (packs) | x1.35 | x0.98 | 1.32 | C x1.10 and `area` +20%, Curse (stores 20%, detonates), `ab2` Hex Nova, Held Light charge |
-| Priest | about x0.5 (gives it away) | x1.20 | x1.15 | 1.38 | Given Light (moves own damage to heroes), aura, T Blessing and Rally Hymn, heal and ward (hold) |
+| Priest | about x0.5 (gives it away) | x1.20 | x1.15 | 1.38 | Given Light (moves own damage to heroes), Keeper's Light (Y), T Blessing and Rally Hymn, Sanctuary, heal and ward (hold) |
 
 The biggest single lever is `heroFloor` (formation.md 4.2): the Lanternbearer's damage floor as a share of
 a fielded hero's power in its role. Starting values per evolution:
@@ -307,7 +321,10 @@ physical, adds fire (embers on cleaves).
 (20% less, not 40%: heavy armour, but no longer a shield-bearer). **Evolution line (C): "Reaver's Edge:
 10% more damage."**
 
-**Core mechanic: Fury** (0-100; replaces Grit).
+**Core mechanic: Bloodlust** (the owner's name: hits build Fury, and lower HP hits harder). Two rules:
+Fury and Blood Price.
+
+**Fury** (0-100; replaces Grit).
 - +8 per Heavy hit (auto-taps +4), +3 per hit taken, +15 per Rend, +5 per foe killed.
 - After 3 s with no hit landed or taken it drains 10 a second (so it resets between packs, not mid-fight).
 - **Every 10 Fury: 2% more damage** (named buff "Fury", bucket T, up to 20%).
@@ -315,9 +332,12 @@ physical, adds fire (embers on cleaves).
   enemy Front column** and apply **Burn** to the target. (This is the "embers on cleaves" of core-2 2.2.)
 - **At 100 Fury, Unstoppable:** Stuns and Roots on you fall off and cannot land for 4 s (once per 20 s).
 
-**Bloodlust** (passive). Below 50% HP you deal **20% more damage** (bucket C, conditional) and your hits
-heal you for **4% of the damage they deal** (at most 3% of max HP a second). It is what keeps a Front
-striker standing without a tank.
+**Blood Price.** Below 50% HP you deal **20% more damage** (bucket C, conditional) and your hits heal
+you for **4% of the damage they deal** (at most 3% of max HP a second). It is what keeps a Front striker
+standing without a tank.
+
+**Passives.** Heavy Hands (kept: heavy hits x2 to shields). The Warrior aura Shieldmates is kept: tank
+heroes you field get +40% HP and +20 armour (useful when a tank hero takes Front and the Reaver the Middle).
 
 **`ab2`: Rend.**
 
@@ -338,7 +358,7 @@ column. With Cinder Edge on, Rend is also a fire hit on each foe it touches (Fro
 
 **How play changes.**
 - *Idle:* the Reaver stands in Front, auto-taps and hits taken build Fury to 50-70, Rend fires every
-  14 s, Bloodlust self-heals when it matters. Idle Fury sits lower than active (about +12% vs +20%).
+  14 s, Blood Price self-heals when it matters. Idle Fury sits lower than active (about +12% vs +20%).
 - *Active:* keep Fury at 100 with heavy taps, parry for free Fury (a parry is a hit landed), fire Rend
   into Stagger for x1.5 x1.25, and cash Bleed in with Red Harvest.
 - *What is new:* the Warrior's class becomes a damage class without leaving Front. The party's shape
@@ -347,7 +367,7 @@ column. With Cinder Edge on, Rend is also a fire hit on each foe it touches (Fro
 **Party role and heroes.**
 - Default trio: **Reaver (F), a frost or poison striker/caster (M), a healer (B)**; or a tank hero in
   Front and the Reaver in the Middle (10% off-slot cost) for walls.
-- Shines with: **Hesketh, Elowen** (sustain for a Front striker), **Thessaly, Kestrel, Oriel** (Chill:
+- Shines with: **Hesketh, Elowen** (sustain for a Front striker), **Thessaly, Kestrel** (Chill:
   every Reaver heavy hit becomes a Shatter), **Isolde, Corvin** (Venom + the Reaver's Burn = Blight),
   **Aldric** in the Middle (Intercept covers the Reaver's worst moments).
 - Bonds: The Borrowed Sword (Tobin), The Banner (Aldric) with a Reaver line; new **Two Axes** (Bram).
@@ -361,7 +381,12 @@ two-handed cleaver-axe whose edge glows ember orange above 50 Fury; a torn short
 the hip and burns red-orange, brighter with Fury (reduced motion: a fixed bright lamp, no flicker).
 Silhouette leans forward. Palette: iron, soot, ember orange (#D55E00 family, the fire colour).
 
-**Power spike split:** see 2.2 (C x1.10, T Fury up to x1.20, role floor, `ab2`).
+**Power spike split** (2.2): own damage about x2.6, party damage x1.35, hold x1.00, effective 1.35.
+Own damage: most of it is the role floor (a striker's share instead of a tank's, about x2.0 once the kit
+is counted against it), then Reaver's Edge (C x1.10), Fury (T, about x1.12 idle, x1.20 active) and
+Rend, Bleed and Cinder Edge. Party: the Lanternbearer goes from about a sixth of a Warrior party's damage
+to about two fifths, which is x1.30-1.35 on the party; BAL3 sets `heroFloor.reaver` to land 1.35. Hold
+stays level: half `tankDr` is paid back by Blood Price's self-heal and the healer the trio now fields.
 
 ### 2.4 Warden (Warrior, utility)
 
@@ -405,7 +430,8 @@ blocks and counters).
 ```
 
 At 10 Bulwark: 6 P holy to every foe, a shield on everyone, 30 stagger on the boss. Because it hits every
-foe, **Stand Fast interrupts every cast bar on the field** (core-2 4.4: any Lanternbearer ability that
+foe, **Stand Fast interrupts every cast bar on the field** (inside CB2's limit on boss signature
+interrupts) (core-2 4.4: any Lanternbearer ability that
 hits a caster interrupts it), which makes the Warden an answer to Summoner elites and healers too.
 
 **Finisher: Oathstrike** (`oathstrike`). 8 P holy, `heavy`, `finisher`. Shields the party for 10% of
@@ -438,6 +464,11 @@ interrupts), divers (taunt).
 **Visual identity:** heavier plate than the Warrior, a tall kite shield with the lamp built into its boss
 (white-gold light, #F0E442 holy family), a short mace or blade, a tabard with the Order's old lamp sign.
 Blocks flash a small sun icon (reduced motion: the icon only). Silhouette: square, planted, shield first.
+
+**Power spike split** (2.2): own damage about x1.2, party damage x1.12, hold x1.22, effective 1.37. From:
+Warden's Mail (C, HP x1.25), armour 45 and block 25% (C), Oath of the Order (Y: back-line damage taken
+x0.9, stagger +30%, worth about x1.05 party damage through more x1.5 windows), Stand Fast's Empower (T,
+15% for 6 s in 18: about x1.05), Holy Sparks and Stand Fast's holy damage (about x1.02).
 
 ### 2.5 Venomstalker (Ranger, damage over time)
 
@@ -503,6 +534,13 @@ overall, not 40%. Beasts (the Coast's gulls, bats) are weak to poison.
 **Visual identity:** a hooded long coat in moss and bark greens, a recurve bow with a vial rack on the
 quiver, a lamp shaded under green glass so it throws only a thin light (bluish green #009E73 family).
 Venomed foes show the drop badge with a digit (core-2 2.1). Silhouette: low, hooded, still.
+
+**Passives.** Patient Hunter (above). Kept from the Ranger: Keen Eye, Light Feet, Hunters' Company.
+
+**Power spike split** (2.2): own damage about x1.65, party damage x1.33, hold x1.00, effective 1.33.
+From: Venomstalker's Craft (C x1.10 on everything, x1.25 on status damage), the Venom ramp and Seep
+(status damage, about 30% of its own damage at 10 stacks), Patient Hunter (C, up to x1.20 on a 10-stack
+foe), Toxic Bloom (`ab2`), and the role floor (`heroFloor.venomstalker` 0.75 vs 0.7).
 
 ### 2.6 Trapper (Ranger, utility)
 
@@ -574,6 +612,14 @@ foe freezes and does not blast).
 lamps on the back; each laid trap shows as a small staked lamp in the enemy Front column (frost blue or
 green pip). Palette: sky blue #56B4E9 and bluish green trims on leather. Silhouette: crouched, reaching.
 
+**Passives.** Hunter's Mark (above). Kept from the Ranger: Keen Eye (x1.5 crit on your Marked foe),
+Light Feet, Hunters' Company.
+
+**Power spike split** (2.2): own damage about x1.1, party damage x1.18, hold x1.15, effective 1.36.
+From the target side, not buckets C or T: Focus Mark 30% (vs 25%) and the pack-wide 20% Mark from Snare
+Field (vuln, 8 s in 20: about x1.08 on packs), the reactions it hands the heroes (about x1.06), trap and
+Snare damage (about x1.03); hold from Chill (foes attack 30% slower), Root and Tripwire.
+
 ### 2.7 Warlock (Mage, damage)
 
 **Fantasy.** The dark does not kill lantern light; it holds it, cold green or angry red, and uses it as a
@@ -595,9 +641,13 @@ damage."**
 - Curse follows core-2: no healing; it **stores 20% of all damage the foe takes** (from anyone), and
   detonates at its end as fire to the foe and 50% of it to the rest of the pack (cap 10 P of the
   Warlock). The whole party feeds every Curse.
+- **Creeping Hex** (the owner's "spreading curses"): when a Cursed foe dies, its Curse goes off at once
+  (the stored damage hits the rest of the pack at 50%) and a fresh Curse jumps to the nearest foe without
+  one, up to 3 jumps from the first (the same limit as Burn's spread). On a swarm, one Curse walks the
+  pack.
 - **Held Light:** each Curse that detonates gives Hex Nova and Lantern Flare **10% charge** (at most 30%
   a second). On a big pack, detonations chain into Novas.
-- **Dark Turned:** the Warlock's Curse detonations and Hex Nova treat **"resists fire" as neutral**
+- **Dark Turned** (passive): the Warlock's Curse detonations and Hex Nova treat **"resists fire" as neutral**
   (x1, not x0.6). A weakness to fire still counts. The Emberwaste burns with held light; the Warlock
   turns it back. (Change-log line 8.2-2; without it the Warlock loses Region 3, 35 zones.)
 
@@ -641,45 +691,48 @@ Frozen-armour (fire), Summoner (pack detonations clear the adds).
 cage holding a shard of red held light (the stolen lamp); its own lamp burns a deep red with a dark
 core. Cursed foes wear the cracked-ring badge. Silhouette: tall, narrow, the caged light held out.
 
+**Passives.** Dark Turned and Held Light (above). Kept from the Mage: Lantern Glass (splash, now 35% with
+the Warlock's `area`) and Kindred Sparks.
+
+**Power spike split** (2.2): own damage about x1.8 on packs (about x1.4 on a lone boss), party damage
+x1.35, hold x0.98, effective 1.32. From: Warlock's Pact (C x1.10), `area` +20% (G, splash 15% -> 35%),
+Curse (stores 20% of the whole party's damage: about x1.12 on the party at full uptime), Hex Nova and
+Creeping Hex on packs, Held Light (more Flares and Novas). Hold dips a little (no sustain of its own).
+
 ### 2.8 Priest (Mage, utility)
 
 **Fantasy.** Lightkeepers kept lamps, and people, burning (lore.md 2.4); Elowen was one. The safest
 light is the one you give to someone (lore.md 2.3). The Priest gives theirs away: their own hits soften,
 and the party burns brighter. Their lamp is open, white-gold, carried like a censer.
 
-**Choice card:** "Give your light away." - Your heroes deal the damage you give up. - Rally Hymn heals,
-cleanses and lifts the party. - Best with two damage heroes.
+**Choice card:** "Give your light away." - Your heroes deal the damage you give up. - Sanctuary heals
+the party, turns spare healing into shields and burns the dead. - Best with two damage heroes.
 
-**Title:** the Given Light. **Role:** support (Back). **Type:** holy (the Priest's own hits, taps, Flare
-and abilities).
+**Title:** the Given Light. **Role:** support (Back). **Type:** holy (the Priest's own hits, taps and
+abilities).
 
 **Stats:** HP scale 6, armour 10, ward 30% (overhealing becomes a shield up to 30% max HP; core-2 cap 40%).
 **Evolution line (C): "Priest's Vows: 30% more healing."**
 
 **Core mechanic: Given Light** (today's Lightkeeper rule, kept).
-- **Your own hits deal 60% less** (x0.4). **Your heroes deal the damage you gave up** (today's
-  `heroMul` / `lkShare` transfer, from x0.2 to x0.4 because the Priest also smites).
+- **Your swings and taps deal 60% less** (x0.4). **Your heroes deal the damage you gave up** (today's
+  `heroMul` / `lkShare` transfer, from x0.2 to x0.4 because the Priest also smites). Abilities and the
+  Finisher are not reduced: their coefficients below are what lands.
 - Your hits are **holy**: they trigger Judgement on Marked foes and hit undead, spirits, the drowned and the
-  deep where it hurts.
+  deep where it hurts (core-2 2.3: all four are weak to holy). That is the owner's "smite undead".
 - `heroFloor.priest = 0`: the Priest is exempt from the damage floor, as the Lightkeeper is today.
 
-**Tap: Blessing** (replaces Ember for a Priest; change-log 8.2-4 `var`).
+**Tap: Blessing** (replaces Ember for a Priest; a `var`, change-log 8.2-4).
 - Heals the most hurt ally for **1.0 P**; smites the focus foe for 0.5 P holy.
-- Raises **Blessing** one level (I-III, 6 s from the last tap): **heroes deal 10% / 20% / 30% more**
-  (named buff "Blessing", bucket T). Idle auto-taps raise it every other tap.
+- Raises **Blessing** one level (I-III, 6 s from the last tap): **heroes deal 20% / 40% / 60% more**
+  (named buff "Blessing", bucket T; today's +20% a stack, up to 3, kept so a Lightkeeper loses nothing).
+  Idle auto-taps add it at half strength, as today.
 
-**Keeper's Light** (aura, today's Lightkeeper aura, kept): supports in your party heal 40% more and hit
-40% harder; all heroes deal 25% more. A Priest keeps the Mage aura too (casters +30% attack).
-
-**Lantern Flare becomes Dawnflare** for a Priest (same id, a `var`): holy, counts Blessing levels as
-Embers (up to 3), and heals the party 3% of max HP for each foe it hits (at most 15%). (That was the
-Lantern's Chosen Bond; it is now the Priest's own.)
-
-**`ab2`: Rally Hymn** (the Lightkeeper's ability, kept; not "Sanctuary", which is Elowen's signature:
-change-log 8.2-3).
+**`ab1` for a Priest: Rally Hymn** (`hymn`, the Lightkeeper's ability, kept where a Lightkeeper player
+knows it; a `var` that replaces Lantern Flare in `ab1`).
 
 ```js
-{ id: 'hymn', slot: 'ab2', cls: 'priest', cd: 30, target: 'party', type: 'holy',
+{ id: 'hymn', slot: 'ab1', cls: 'priest', cd: 30, target: 'party', type: 'holy',
   tags: ['heal', 'cleanse'],
   fx: [['heal', 8],                  // 8 P to each member (BAL3 sets it to about 30-40% of a Front
                                      // tank's max HP at the push zone, as today's 40% max-HP heal)
@@ -688,23 +741,48 @@ change-log 8.2-3).
        ['charge', 'sig', 0.25]] }    // every hero's signature +25% charge
 ```
 
-Today: 40% heal, +40% damage for 8 s, cd 40. Core 2.0 moves it into `ab2`'s range (cd 30) and trims the
-Empower to 30% (it now shares bucket T with Blessing).
+Today: 40% heal, +40% damage for 8 s, cd 40. Core 2.0 sets cd 30 and 30% more damage: the same average
+(8 s of 30% every 30 s = 8 s of 40% every 40 s), with more heals and cleanses.
+
+**`ab2`: Sanctuary** (owner-named). The Priest consecrates the ground under the party for 6 s.
+
+```js
+{ id: 'sanctuary', slot: 'ab2', cls: 'priest', cd: 20, target: 'party', type: 'holy',
+  tags: ['heal', 'shield', 'aoe'],
+  fx: [['apply', 'regen', 1, 6, { v: 0.8 }],        // Regen on each member: 0.8 P a tick for 6 s (4.8 P)
+       ['shield', 0, { overflow: 1 }],              // while it lasts, all healing past full HP becomes shield
+                                                     // (up to core-2's 40% cap, not the Priest's 30% ward)
+       ['dmg', 0.6, { hits: 6, over: 6, to: 'pack' }],  // 0.6 P holy to every foe each second (3.6 P)
+       ['stagger', 10]] }
+```
+
+Holy weakness makes Sanctuary a real damage ability against undead, spirits, the drowned and the deep
+(3.6 P x1.5 on every foe). On a Marked pack each tick is a Judgement, so the party heals from its own
+holy damage too. It is the owner's "holy heals that overflow into shields and smite undead" in one button.
+
+Name clash: Elowen's signature is also called Sanctuary today. The owner named the Priest's ability, so
+the Priest keeps it and Elowen's signature is shown as **Chapel Light** (display name only; its id and
+numbers stay). Decision D7.
 
 **Finisher: Dawnbreak** (`dawnbreak`). 7 P holy, `heavy`, `finisher`. Heals the party 3 P each, cleanses
 one harmful status from each member, and sets Blessing to III.
 
+**Passives.** Given Light and **Keeper's Light** (aura, today's Lightkeeper aura, kept): supports in your
+party heal 40% more and hit 40% harder; all heroes deal 25% more. Kept from the Mage: Lantern Glass (your
+holy hits splash 15%) and Kindred Sparks (casters +30% attack).
+
 **How play changes.**
-- *Idle:* Blessing sits at II-III, Rally Hymn fires every 30 s, overheal turns into shields, the heroes
-  hit much harder. The Priest party idles deep because nothing dies.
-- *Active:* keep Blessing at III, hold Rally Hymn for the boss's `line` hit or a Lightless/Curse cleanse,
-  and Dawnbreak a Staggered boss for the whole party's reset.
+- *Idle:* Blessing sits at about II, Rally Hymn fires every 30 s and Sanctuary every 20 s, overheal turns
+  into shields, the heroes hit much harder. The Priest party idles deep because nothing dies.
+- *Active:* keep Blessing at III, drop Sanctuary just before the boss's `line` hit (the shields are up
+  when it lands), hold Rally Hymn for a Curse on an ally (it cleanses two), and Dawnbreak a Staggered
+  boss for the whole party's reset.
 - *What is new:* the Mage stops burning and starts giving. The Lanternbearer's damage is spent through
   the heroes, so hero choice matters more for a Priest than for any other class.
 
 **Party role and heroes (utility lift).**
 - Default trio: **tank (F), a striker (M), Priest (B)**; from Region 2 many Priests field **two damage
-  heroes** and let Rally Hymn and ward carry the sustain.
+  heroes** and let Sanctuary, Rally Hymn and ward carry the sustain.
 - Shines with: **Wren** (Mark + the Priest's holy = Judgement; the party heals from its own damage),
   **Isolde, Kestrel, Corvin, Oriel, Pip, Morwen** (the heroes the gift lands on), **Anselm, Vesper**
   (Two Lights combo; faster signatures).
@@ -713,28 +791,51 @@ one harmful status from each member, and sets Blessing to III.
   within 15% of the Warlock's best on the days to each region boss (CP4).
 
 **Reactions it drives.** Judgement (holy hits on Marked foes). **Elite traits it beats:** Cursed (cleanse
-two, and holy hits strip the aura); healers and Lightless-style hexes (cleanse).
+two, and holy hits strip the aura); Explosive is softened (Sanctuary's shields are up for the blast).
 
 **Visual identity:** light vestments in bone and pale gold, a censer-lamp on a chain (the open lamp,
 white-gold #F0E442 family), a book at the hip. Blessing shows as 1-3 small suns over the party's
-portraits (never colour only). Silhouette: upright, the lamp held out and low.
+portraits (never colour only). Sanctuary draws a soft ring of light under the party (reduced motion: a
+still ring). Silhouette: upright, the lamp held out and low.
+
+**Power spike split** (2.2): own damage about x0.5 (it gives it away), party damage x1.20, hold x1.15,
+effective 1.38. Party: the Mage's own share (about a third) halves, and the heroes' two thirds rise about
+x1.5 (Keeper's Light x1.25 in Y, Blessing about x1.2-1.4 in T, Given Light's transfer), which nets about
+x1.20. Hold: Priest's Vows (C, heal x1.3), Sanctuary's Regen and overflow shields, Rally Hymn, ward 30%.
 
 ### 2.9 The six at a glance
 
 | | Reaver | Warden | Venomstalker | Trapper | Warlock | Priest |
 |---|---|---|---|---|---|---|
 | Meter | Fury 0-100 | Bulwark 0-10 (+ Grit) | Venom on foes | trap charges 2 | Embers, Curses | Blessing I-III |
-| `ab2` (cd) | Rend (14) | Stand Fast (18) | Toxic Bloom (16) | Snare Field (20) | Hex Nova (15) | Rally Hymn (30) |
+| `ab2` (cd) | Rend (14) | Stand Fast (18) | Toxic Bloom (16) | Snare Field (20) | Hex Nova (15) | Sanctuary (20) |
 | Finisher | Red Harvest 8-10 P | Oathstrike 8 P | Heartseeker 8 P | Deadfall 7 P | Unmaking 9 P | Dawnbreak 7 P |
 | Reactions | Shatter, Blight | Judgement, Shatter | Blight | all three | Blight (+ stores all) | Judgement |
-| Beats traits | Shielded, Frozen, Enraged | Cursed, Shielded, Summoner | Vampiric | Enraged, Summoner, Explosive | Vampiric, Frozen, Summoner | Cursed |
+| Beats traits | Shielded, Frozen, Enraged | Cursed, Shielded, Summoner | Vampiric | Enraged, Summoner, Explosive | Vampiric, Frozen, Summoner | Cursed (Explosive, softened) |
 | Idle strength | good | very good | best | very good | good | very good |
-| Best active moment | Rend + Red Harvest in Stagger | Stand Fast on the signature cast | Bloom at 10 in Blight | Snare Field on a full pack | Nova on a full Curse; Unmaking | Hymn on the `line` hit |
+| Best active moment | Rend + Red Harvest in Stagger | Stand Fast on the signature cast | Bloom at 10 in Blight | Snare Field on a full pack | Nova on a full Curse; Unmaking | Sanctuary before the `line` hit |
 | Lamp colour | red-orange | white-gold in the shield | green under glass | small staked lamps | deep red, caged shard | open white-gold |
 | Title | the Red Lamp | the Unmoved | the Quiet Thorn | the Pathfinder | the Lamp-Thief | the Given Light |
 
 Every core-2 6.5 counter is met: Reaver and Warrior (Shielded), Warden (Cursed), Venomstalker (Vampiric),
 Trapper (Enraged, Summoner), Warlock (Frozen, Vampiric), Priest (Cursed).
+
+### 2.10 Room for the second tier (after 1.0)
+
+Nothing in 1.0 fills it, but every piece has a place (core-2 8.3):
+
+- **Ids:** a tier-2 path is `<evo>.<name>` in `S.cls.evo2` (for example `reaver.x`). Each first evolution
+  can branch in two, so the shape stays "damage or utility" one level down.
+- **Ability slot 3** (`ab3`) and its auto-cast flag are in `S.cls.slots` and `S.cls.auto` from S2.
+- **A Proving per evolution:** trial ids `trial.reaver` and so on, in the same `S.cls.trials` map.
+- **Star maps:** ring 2 (`e2s1-e2s8`) sits outside ring 1, with its own keystone that does not count
+  toward the base map's 2.
+- **Class card:** a locked tier-2 row under the evolution ("A second path opens in a later season").
+- **Respec:** the Mirror's cost table has a `t2` row that resets tier 2 only (3.4).
+- **Rule for the kits above:** no evolution uses up its whole design space. Each has one open direction
+  its tier 2 can take (Reaver: fire or blood; Warden: holy wrath or pure wall; Venomstalker: spores or
+  single-target assassin; Trapper: frost or beasts; Warlock: curses or dark fire; Priest: healing or
+  smiting). These are notes for later, not promises in copy.
 
 ---
 
@@ -785,7 +886,8 @@ bats), Volley into a stop. Idle: auto-Focus marks the focus foe, which the stage
 **Mage: The Cursed Wave** (`trial.mage`). Three waves in 60 s: a swarm of 10 bats; 6 Spore Caps whose
 clouds Curse you (no healing, 1.5% of max HP a second while Cursed); 3 Marsh Wraiths that heal each other
 (a `heal` cast bar). Your lamp heals you 3% a second while you are not Cursed. **Pass:** all three waves
-down before your HP runs out. Teaches: Flare into a swarm, Burn spread, interrupting a heal with Flare.
+down before your HP runs out. Teaches: Flare into a swarm, Burn spread, interrupting a heal with Flare. Idle: auto-cast Flare clears the swarm and usually lands on a heal cast by
+chance; the Cursed wave is the idle wall, passed at about 1.25x reference.
 
 ### 3.3 The choice card (full screen)
 
@@ -894,7 +996,8 @@ Conditions and actions every class has from the start: `always`, `bossHp`, `self
 A migrated Warden or Lightkeeper gets its evolution **granted** (section 7). If that save has **not** beaten
 the Listener yet, the evolution is granted but **unproven**: the tap, the core mechanic and `ab2` work (so
 nothing they had is lost), but the evolution line (bucket C), the ring and the title wait until they pass
-the Proving, and the new parts (Bulwark, Stand Fast) run at `CLS_TUNE.unproven` 0.6 strength. Their Proving
+the Proving, and the new parts (a Warden's Bulwark and Stand Fast; a Priest's Sanctuary and Dawnbreak) run at
+`CLS_TUNE.unproven` 0.6 strength. Their Proving
 screen says "Prove what you already are." Passing sets `proven[evo]` and skips the choice card. Saves past
 the Listener are proven at once ("Your road so far is your Proving."). Decision D4.
 
@@ -942,14 +1045,14 @@ points). Needs: 2 lit stars in the ring before a notable, 5 before the keystone.
 |---|---|---|
 | Reaver | **Bloodrage** (`bloodrage`) | Fury never drains below 50 during a fight. You take 10% more damage. |
 | Warden | **Aegis of the Order** (`aegis`) | Stand Fast also shields the party for 20% of its Bulwark damage, and every block anywhere in the party stores Bulwark for you. Stand Fast's cooldown is 30% longer. |
-| Venomstalker | **Lingering Death** (`lingering`) | Your Venom no longer runs out while you keep hitting the foe. Toxic Bloom consumes only half the stacks (and leaves the rest). |
+| Venomstalker | **Lingering Death** (`lingering`) | Toxic Bloom bursts the full stack count but consumes only half (the target keeps the rest, so it is back at 10 sooner). Seep no longer carries Venom when a foe dies. (A boss keystone: better on one foe, worse on swarms.) |
 | Trapper | **Killing Ground** (`killground`) | Trap charges come back every 5 s in boss fights and elite fights. Snare Field no longer Roots (it still Chills and Marks). |
-| Warlock | **Pact of Cinders** (`pactcinder`) | A Curse that detonates Curses the nearest foe without one. You take 10% more damage. |
-| Priest | **Martyr's Light** (`martyr`, kept from the Lightkeeper map) | Your own hits deal half again. Your heroes deal 12% more. |
+| Warlock | **Pact of Cinders** (`pactcinder`) | Every Curse detonation also Burns each foe it hits (Blight with any Venom), and Creeping Hex has no jump limit. You take 10% more damage. |
+| Priest | **Martyr's Light** (`martyr`, kept from the Lightkeeper map) | Your own hits deal half (on top of Given Light). Your heroes deal 12% more. |
 
 Ring minors and notables (one line each; numbers inside the cap):
 
-- **Reaver:** Fury +1 per hit taken (x2); Rend +1 Bleed (notable); Bloodlust at 60% HP (notable); Cinder
+- **Reaver:** Fury +1 per hit taken (x2); Rend +1 Bleed (notable); Blood Price at 60% HP (notable); Cinder
   Edge from 40 Fury; +1.5% damage.
 - **Warden:** block +2% (x2); Holy Spark +0.1 P (notable); Stand Fast Empower +5% (notable); Bulwark cap
   +2; +3% HP.
@@ -957,7 +1060,7 @@ Ring minors and notables (one line each; numbers inside the cap):
   Bloom +0.05 P a stack (notable); status damage +3% (x2).
 - **Trapper:** Spore Pit Venom +1 (x2); Tripwire also Marks (notable); Snare Field +2 s Mark (notable);
   control +5%.
-- **Warlock:** Curse stores 22% (notable); Held Light +2% charge (x2); Hex Nova +0.1 P (notable); area +3%.
+- **Warlock:** Curse detonations +8% (notable); Held Light +2% charge (x2); Hex Nova +0.1 P (notable); area +3%.
 - **Priest** (the Lightkeeper's stars, renamed where needed): Lingering Light (Blessing +1 s), Warm Light
   (Blessing +1.5% per level), Morning Choir (Blessing cap IV, notable), Refrain (Rally Hymn +2 s,
   notable), Gift (heroes +2%).
@@ -1004,7 +1107,7 @@ Weight follows role (core-2 5.1): tank heavy, striker medium, caster and support
 | Old Hesketh | support | light | Back | **holy** | Mend | `shield` | Judgement |
 | Brother Anselm | support | light | Middle | **holy** | Call to Arms | `empower` (+ cleanse at L20) | Judgement |
 | Vesper Lark | support | light | Middle | **holy** | Crescendo | `regen` | Judgement |
-| Saint Elowen | support | light | Back | **holy** | Sanctuary | `regen` (+ cleanse at L20) | Judgement |
+| Saint Elowen | support | light | Back | **holy** | Chapel Light (was Sanctuary, D7) | `regen` (+ cleanse at L20) | Judgement |
 
 Checks against core-2 2.2: physical 5 (Tobin, Aldric, Grenna, Bram, Wren), holy 5, fire 3 (Caedmon, Pip,
 Morwen), frost 3 (Kestrel, Thessaly, Oriel), poison 2 (Isolde, Corvin): every type on at least 2. Every
@@ -1032,11 +1135,11 @@ section 8.3):
 | The Borrowed Sword (`sword`) | Warden + Tobin | any **Warrior** + Tobin | Reaver: Tobin's Guard also covers you while you are below 50% HP. Warden: Tobin's blocks store Bulwark for you. |
 | The Banner (`banner`) | Warden + Aldric | any **Warrior** + Aldric | Shield Wall +1 s (all). Reaver: Aldric's Shield Bash is heavy and Bleeds 1. Warden: Intercept stores Bulwark for you. |
 | The Missing Page (`page`) | Lanternmage + Pip | any **Mage** + Pip | Warlock: Pip's Fireball on a Cursed foe sets its Curse off at once. Priest: your Blessing also counts for Pip's Kindle. |
-| Lantern's Chosen (`chosen`) | Lanternmage + Elowen | **Mage, not Priest** + Elowen | (A Priest has Two Candles; Dawnflare already heals.) Warlock: Sanctuary also cleanses Curses on the party. |
+| Lantern's Chosen (`chosen`) | Lanternmage + Elowen | **Mage, not Priest** + Elowen | (A Priest has Two Candles.) Warlock: Chapel Light also cleanses Curses on the party. |
 | Two Bows (`twobows`) | Ranger + Wren | any **Ranger** + Wren | Venomstalker: Aimed Shot applies 2 Venom. Trapper: Aimed Shot springs a trap under its target. |
 | Asked (`asked`) | Ranger + Corvin | any **Ranger** + Corvin | Venomstalker: Hollow Cut on a foe with 5+ Venom crits. Trapper: Corvin's Shadowstep goes to your Marked foe. |
 | The Unlit Road (`unlit`) | Lightkeeper + Hesketh | **Priest** + Hesketh | (kept: Mend +20%; your heals add a 5% shield) |
-| Two Candles (`candles`) | Lightkeeper + Elowen | **Priest** + Elowen | (kept: Sanctuary 4 s sooner; Rally Hymn heals 3% a second for 5 s) |
+| Two Candles (`candles`) | Lightkeeper + Elowen | **Priest** + Elowen | (kept: Chapel Light 4 s sooner; Rally Hymn heals 3% a second for 5 s) |
 
 **New Bonds, one per evolution that had none** (ids new, 2 camp stories + a Sworn line each for LORE/CHAR1):
 
@@ -1096,8 +1199,9 @@ The sim runs each base class (S2) and each evolution (S3) on seeds 1-3 with the 
 - **Trapper:** the pack-wide 20% Mark (8 s of 20) and a 30% Focus Mark lift every hit; Chill (-30% foe
   attacks) and Root cut incoming; and it gives every hero's hit a reaction (Shatter for heavy hitters,
   Blight for Burn heroes, Judgement for holy heroes). The Trapper's lift grows with the heroes you own.
-- **Priest:** Given Light moves its own damage to the heroes (who scale better), Blessing (up to 30%) and
-  Rally Hymn (30%) are the biggest timed buffs in the game, and ward plus heals free a slot. The
+- **Priest:** Given Light moves its own damage to the heroes (who scale better), Blessing (up to 60%) and
+  Rally Hymn (30%) are the biggest timed buffs in the game, Sanctuary's overflow shields and holy ticks
+  cover the healer slot, and ward plus heals free a slot. The
   Lightkeeper's measured lift today (formation 4.4: 0.94 of old, before the knob) is the floor.
 
 BAL3 reports CP7 per region, and a "lift" line in the sim: party damage and push zone with the
@@ -1135,7 +1239,7 @@ Runs once (`S.cls.v` 0 -> 1, after SAVE1's automatic backup; core-2 8.1-3). Idem
 
 | Part | Warden -> Warrior + Warden | Ranger -> Ranger | Lanternmage -> Mage | Lightkeeper -> Mage + Priest |
 |---|---|---|---|---|
-| Class kit | Heavy hit (Grit), Shield Wall, the Warrior aura; plus Warden (Bulwark, Stand Fast) granted | unchanged (Focus is now a 25% Mark) | unchanged (Flare now also Burns) | Blessing tap, Keeper's Light aura, Rally Hymn (now `ab2`), Given Light; plus Lantern Flare (as Dawnflare) |
+| Class kit | Heavy hit (Grit), Shield Wall, the Warrior aura; plus Warden (Bulwark, Stand Fast) granted | unchanged (Focus is now a 25% Mark) | unchanged (Flare now also Burns) | Blessing tap, Keeper's Light aura, Rally Hymn (in `ab1`, as today), Given Light; plus Sanctuary (`ab2`) and Dawnbreak |
 | Proven? | yes if past zone 35; else unproven (3.7) | Proving open if past zone 35 | Proving open if past zone 35 | yes if past zone 35; else unproven |
 | Star maps | `maps.warden` copied to `maps.warrior` (same build) | kept | `maps.lanternmage` copied to `maps.mage` | points freed; "Suggested layout" for the Mage map and Priest ring |
 | Gear | Warden kinds are Warrior kinds (heavy): no change | Ranger kinds (medium): no change | Lanternmage kinds (light): no change | Lightkeeper kinds (censer, tome, mitre, vestments) become **light kinds any Mage wears**; Priest-leaning lines (heal) stay. RG1 owns the final kind list, with the rule that no migrated item stops fitting |
@@ -1172,7 +1276,7 @@ changed" link opens a short card with the three points that matter for that clas
 2. **The Mage's base type:** **fire** (coordinator, 2026-09-28). The Warlock stands apart with Curse
    (stores and detonates the party's damage), Hex Nova, Held Light and Dark Turned (it ignores fire
    resistance, so it is not locked out of the Emberwaste). Chill leaves the base Mage: it comes from the
-   Trapper and the frost heroes (Kestrel, Thessaly, Oriel's line-ups). Change-log 8.2-1 and 8.2-2.
+   Trapper and the frost heroes (Kestrel, Thessaly). Change-log 8.2-1 and 8.2-2.
 3. **Hero base types:** section 5.1. Every type on 2+, every role with a non-physical hero.
 4. **The +35% spike in buckets:** section 2.2: measured as party effective power (damage x hold), 1.30-1.40
    per evolution; the split per evolution in the table (C evolution lines, T meters, `ab2`, the role floor
@@ -1189,21 +1293,26 @@ reaction windows) as the active bonus. CP9 checks the gap.
    roadmap-review 2.2 follow. (Formalises the coordinator's 2026-09-28 decision.)
 2. **2.3, one class exception:** the Warlock's Curse detonations and Hex Nova treat "resists fire" as
    neutral (Dark Turned). Weakness still counts. Needed for Region 3 parity (CP12).
-3. **4.1, `ab2` names:** the Priest's `ab2` is **Rally Hymn** (`hymn`), not Sanctuary (Elowen's signature
-   is Sanctuary; one name must not mean two abilities). Its named Empower is already in 3.1.
+3. **4.1, `ab1` for the Priest:** the Priest's `ab2` stays **Sanctuary** as core-2 4.1 and the owner say;
+   its `ab1` is Rally Hymn (`hymn`, a `var` replacing Lantern Flare), so migrated Lightkeepers keep their
+   ability in its slot. Elowen's signature (also "Sanctuary" today) is shown as Chapel Light (hero data,
+   not core-2; decision D7).
 4. **4.4, the ability data shape:** (a) an optional `var: { [evoId]: { type, fx, name } }` for an
-   evolution's variant of a base ability or tap (Dawnflare, the Priest's Blessing tap, the Warlock's
+   evolution's variant of a base ability or tap (the Priest's Rally Hymn in `ab1` and Blessing tap, the Warlock's
    cursing Flare); (b) new effect verbs `meter` ([`meter`, id, n]: add to a class meter), `trap`
    ([`trap`, `rearm` | trapId]) and `detonate` ([`detonate`, `curse`, x]: a Curse-ender with a
    multiplier); (c) `consume` also takes a class meter id (`bulwark`, `embers`); (d) optional per-fx
-   options `{ perStack, base, ramp, hits, over, spread, to, v }`.
+   options `{ perStack, base, ramp, hits, over, spread, to, v, overflow }` (`overflow`: healing past
+   full HP becomes shield while the effect lasts, up to the 40% shield cap).
 5. **1.3 and 3.1, class meters:** Grit, Fury, Bulwark, Embers and Blessing are class meters, not
    statuses. Each feeds one named buff in bucket T whose value follows the meter, so the named-buff rule
    holds. Embers are a per-foe counter shown as pips, not a status badge.
 6. **1.3 bucket Y, class auras:** class and evolution auras (Shieldmates, Hunters' Company, Kindred
    Sparks, Keeper's Light, Oath of the Order) sit with the slot jobs, outside the +40% cap, as
    `HERO_CLASSES[].aura` works today.
-7. **4.5 Tactics:** new conditions `stacks` (status id, n) and `meter` (meter id, n or %).
+7. **4.5 Tactics:** new conditions `stacks` (status id, n) and `meter` (meter id, n or %). Meter ids:
+   `grit`, `fury`, `bulwark`, `embers`, `blessing`, `traps` (charges), and `curse` (the focus foe's stored
+   Curse damage as a % of its cap).
 8. **7.1 glossary:** add **Grit, Fury, Bulwark, Blessing, Trap, the Proving**; "Evolution: a new path for
    your class, opened by the Proving at the end of the Hollow".
 9. **8.2, `S.cls`:** the final shape is classes-2.md 3.5 (adds `proven`, `free`, `at`, `auto`, `mig`,
@@ -1243,7 +1352,7 @@ fields unchanged; only the readers change.
 |---|---|---|
 | `src/js/24-data-classes.js` | S3 | `EVO_DEFS` (6: stats, role, aura, meters, title, lamp colour, choice card copy), `ab2`s, evolution Finishers, `var`s, trial data, ring star data |
 | `src/js/55-classes.js` | S3 | the gate, the Proving state, `chooseEvo()`, the respec flow and costs, `proven`, Mirrors from Great Lanterns, Tactics unlock flags |
-| `src/js/59e-class-combat.js` (new, core) | S3 | the evolution mechanics on S1's status engine: Fury, Bloodlust, Cinder Edge; Bulwark, Holy Sparks, stagger aura; Venom ramp, Seep, Patient Hunter; traps, Tripwire; Hex, Held Light, Dark Turned; Given Light, Blessing; Finisher data exposed for S6 |
+| `src/js/59e-class-combat.js` (new, core) | S3 | the evolution mechanics on S1's status engine: Fury, Blood Price, Cinder Edge; Bulwark, Holy Sparks, stagger aura; Venom ramp, Seep, Patient Hunter; traps, Tripwire; Hex, Held Light, Dark Turned; Given Light, Blessing; Finisher data exposed for S6 |
 | `src/js/59f-trials.js` (new, core) | S3 | the three Provings (solo fight setup on the existing combat loop, pass rules, reference scaling) |
 | `src/js/75-class-ui.js`, `src/styles/61-class.css` (new) | S3 | the Proving entry, the choice card (3.3), the confirm, the respec sheet, the ceremony |
 | `src/js/57e-constellations.js` | S3 | the evolution rings (`e1s*`), ring keystone rule |
@@ -1273,6 +1382,12 @@ S1; S2/S3 only apply them.
   Light. They join the title list (`codexTitles()`, ids `c_<evo>`).
 - **D6. The Warlock ignores fire resistance** with its Curses and Hex Nova (Dark Turned). Without it one
   of six paths is weak for a whole region.
+- **D7. Two abilities called Sanctuary.** The owner named the Priest's ability Sanctuary, and Saint
+  Elowen's signature has that name today. Recommended: the Priest keeps **Sanctuary**; Elowen's
+  signature is shown as **Chapel Light** (she relit the chapel; display name only, id and numbers kept).
+  The Priest's `ab1` is Rally Hymn, so migrated Lightkeepers keep the ability they know.
+- **D8. Blessing values.** Kept at today's +20% a level (up to +60% at III) so a Lightkeeper loses nothing
+  when it becomes a Priest. BAL3 may lower it only if the Priest breaks CP4 on the high side.
 
 **For the coordinator**
 
@@ -1284,6 +1399,11 @@ S1; S2/S3 only apply them.
 - **C4.** CHAR1 gets 3.3's choice card copy, 2.x visual notes and the 18 x 6 hero reaction lines.
 - **C5.** RG1: the Lightkeeper's item kinds become light kinds any Mage can wear (7.2); Priest lines lean
   to `heal`, `ward`, `pwHoly`; Warlock to `spell`, `stPow`, `pwFire`, `area`.
+- **C6.** Core-2 8.1-2 and 8.2 still reserve `S.fatigue` and say fatigue must not reuse `S.rested`,
+  but the coordinator's Q13 decision merged fatigue into Rested (one per-hero meter, `rested` extended).
+  CL1 uses neither; S7's owner should update those two lines in core-2's change log.
+- **C7.** Core-2 7.1 says the Proving opens "at the end of the Hollow" only once D1 is settled; if the
+  owner keeps level 60, the glossary line and 3.1 here change together.
 
 ---
 
@@ -1298,12 +1418,13 @@ CLS_TUNE = {
   embers: { max: 5 },
   fury: { heavy: 8, heavyAuto: 4, hit: 3, rend: 15, kill: 5, idleAfter: 3, drain: 10, per10: 0.02,
           cinderAt: 50, cinder: 0.5, stopAt: 100, stopT: 4, stopCd: 20 },
-  bloodlust: { at: 0.5, dmg: 0.2, leech: 0.04, leechCap: 0.03 },
+  bloodPrice: { at: 0.5, dmg: 0.2, leech: 0.04, leechCap: 0.03 },
   bulwark: { max: 10, block: 1, parry: 3, cover: 1, spark: 0.3, drainOut: 1, stag: 0.3, backDr: 0.1 },
   venom: { every: 3, focus: 2, volley: 1, seep: 0.5, seepJumps: 3, perStack: 0.02, perStackMax: 0.2 },
   traps: { charges: 2, back: 10, snare: 1.5, pit: 1.0, pitVenom: 4, bossStag: 24 },
-  hex: { embersToCurse: 3, heldLight: 0.1, heldCap: 0.3, darkTurned: 1 },
-  given: { own: 0.4, share: 1 }, blessing: [0.1, 0.2, 0.3], blessT: 6,
+  given: { own: 0.4, share: 1 }, blessing: [0.2, 0.4, 0.6], blessT: 6, blessIdle: 0.5,
+  sanctuary: { regen: 0.8, t: 6, smite: 0.6 },
+  hex: { embersToCurse: 3, heldLight: 0.1, heldCap: 0.3, darkTurned: 1, creepJumps: 3 },
   heroFloor: { warrior: 1.0, ranger: 0.7, mage: 1.0, reaver: 0.62, warden: 1.0,
                venomstalker: 0.75, trapper: 0.7, warlock: 1.0, priest: 0 }
 };
