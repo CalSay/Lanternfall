@@ -444,8 +444,9 @@ keep the +40% / -20% caps.
 
 Bonds in all: 21 today + 5 from CL1 + 14 here = **40** (80 stories, 40 Sworn lines).
 
-**Reachfolk Kin** (`reachkin`, D3): two Reachfolk in the party: "Hand to Hand: healing on one party
-member also heals the others for 15% of it." (x1.25 with a Common never applies: Reachfolk has none.)
+**Reachfolk Kin** (`reachkin`, D3), the fifth Kin (formation.md 2.2 shape): two Reachfolk in the party:
+"Candle to Candle: healing on one party member also heals the others for 10% of it." (Common Cause never
+applies: Reachfolk has no Common.)
 
 ---
 
@@ -683,5 +684,272 @@ the kind is in brackets for HER. Numbers are starting values for BAL3.
 - **Awakening: the Freed Blade.** **Hollow Cut II:** strikes two foes and puts 4 Venom on each; on a foe
   below 30% HP it strikes twice. **Asked, Answered:** a kill takes 3 s off Hollow Cut, and King's Shadow
   gives +10% crit (was 8%). Look: his own blade, plain, no crest.
+
+#### The 14 new heroes
+
+Each new hero also needs a `CHAR_KIT` row (56b-synergy.js shape): a speciality, a level-10 passive (Rares)
+or an innate passive (Epics and Legendaries), a level-20 signature upgrade, and an aura for Legendaries.
+Signatures follow core-2 4.4 with `slot: 'sig'`, cooldown 8-20 s. Every recruit route has a region
+fallback, so nobody is missed (gatherers-2 5.1's rule).
+
+**19. Cass Penhallow, the Reef Harpooner** · striker (ranged), poison, Wayfarers, Rare · the Coast.
+Cass hunted eels off Saltreach with her brother until the green light took his boat.
+She tips her harpoons in Lanternjelly sting, and she does not miss twice.
+- **Recruit:** the first kill of the Kelp Strangler's Eldest (Kelp Shallows); she comes to the fire for
+  its head, then asks for gold (foes' worth). Fallback: zone 50. Expected day 9-14.
+- **Kit.** *Harpoon* (sig, cd 12, `single`, any row): 1.6 P, 3 Venom, pulls the target one column
+  forward. Speciality *Tide-Wise*: at Low tide her hits ignore shells. L10 *Barbed*: Venom she applies
+  lasts 30% longer. L20: Harpoon also Roots 1 s.
+- **Quest: The Green Light** (Coast)
+  1. Fight beside Thessaly until you trust each other. [`bond drowned 3`]
+  2. Bring 50 grade-5 hide. Eelskin for new lines. [`bring hide g5 50`]
+  3. Beat the Old Eel in the Kelp Shallows at High tide. [`foe kelp q_oldeel tide:high`]
+  4. Win Cass's Stand: *Line and Harpoon* (`hunt`: the Old Eel's mate runs for deep water; it surfaces
+     at 3 buoys). [`stand`]
+- **Awakening: the Reefbreaker.** **Harpoon II:** hits twice, and the pulled foe is Rooted 2 s.
+  **Sting:** her Venom ticks 20% faster on Wading or Soaked foes. Look: a coil of pale line over her
+  shoulder, a jellyfish-glass float.
+
+**20. Merrin Penrow, the Keeper's Daughter** · caster, holy, the Oath, Epic · the Coast.
+Merrin is Silas Penrow's daughter. She stayed ashore the night he carried the lens down.
+She has kept his lamp-oath ever since, word for word, including the line he scratched out.
+- **Recruit:** the Keeper's Letters beat (zone 57), then reach Drowned Saltreach IV (zone 62): she is in
+  the Coral Nave, reading them. Bring 30 grade-5 gems for a small lens; she joins. Fallback: the Coast's
+  Shroud falls. Expected day 18-26.
+- **Kit.** *Lens* (sig, cd 14, `line`): a holy beam, 2.2 P, then Marks every foe it hit for 3 s (the next
+  holy hit sets off Judgement). Innate *Oath Words*: her holy hits ignore 20% of resistance. L20: Lens
+  comes back 2 s sooner after a Judgement.
+- **Quest: Give It to No One** (Coast)
+  1. Fight beside Hesketh until you trust each other. [`bond lightsaw 3`]
+  2. Beat Silas the Fogbound, with Merrin in the party. [`boss 2 field`]
+  3. Bring 40 grade-6 gems. She grinds the lens he should have kept. [`bring crystal g6 40`]
+  4. Win Merrin's Stand: *Saltreach Light* (`keep`: the lighthouse's small lamp, relit from yours; fog
+     wraiths come for it; twist: a Lure cast to interrupt). [`stand`]
+  At step 2 she says one line and fights as normal: no special mechanic. The Shroud is what the dark made
+  of her father, not her father (lore.md 4.3); copy says "the Fogbound", never "Dad".
+- **Awakening: of Saltreach Light.** **Lens II:** hits the line twice. **Give It to No One:** her holy
+  hits cannot be reflected or soaked by shields, and her Marks last 5 s. Look: a small brass lens on a
+  chain; her coat's lining turned to lighthouse white.
+
+**21. Wynn Ashby, the Water-Carrier** · support (physical), Wayfarers, Rare · the Emberwaste.
+Wynn carried water up the Emberlea road for the hour Caedmon held it. He was nine.
+He has carried something for somebody ever since, and he never puts it down first.
+- **Recruit:** Mother Ashby at camp (the Kitchen built) and Emberlea Ruins reached: he is there, digging
+  for the family's hearthstone. Free. Fallback: zone 80. Expected week 6-7.
+- **Kit.** *Bucket Line* (sig, cd 14, `party`): cleanses 1 Burn or Bleed from each ally and shields 8% of
+  max HP. No holy: bandages and water. Speciality *Steady Carry*: allies he shields take 5% less while the
+  shield holds. L10 *Second Bucket*: Bucket Line cleanses 2. L20: the shield is 12%.
+- **Quest: One Hour** (Emberwaste)
+  1. Fight beside Caedmon until you trust each other. [`bond onehour 3`]
+  2. Bring 60 grade-7 wood. Buckets and a well-frame for Emberlea. [`bring wood g7 60`]
+  3. Beat the Ashwalker's Eldest in Emberlea Ruins. [`foe emberlea q_ashneighbour`]
+  4. Win Wynn's Stand: *Water Up the Road* (`keep`: three fires on the road; keep the well-cart whole
+     while Cinder Hounds go for it; twist: a Burn to cleanse on the cart). [`stand`]
+  The Ashwalkers wear the shapes of the families who got out; nobody died here (lore.md 8.3). His line:
+  "That's the Coopers' shape. They're fine. They live by the sea now."
+- **Awakening: of Emberlea.** **Bucket Line II:** cleanses up to 2 statuses each (Curse included) and
+  heals 5%. **Carried:** Steady Carry rises to 10%. Look: a yoke on his shoulders with two small pails.
+
+**22. Ferrin Slake, the Kiln Rat** · striker (melee), poison, Dusk Company, Rare · the Emberwaste.
+Ferrin broke things in the Kilns for the Dusk Company when they still burned for the dark.
+He smells of sulphur, owes everyone money, and is better at his job than he looks.
+- **Recruit:** a **Kiln Tally** token from Kilns elders (base 10%, +10% a miss, pity 10), then gold.
+  Fallback: zone 90. Expected week 7-8.
+- **Kit.** *Sulphur Pot* (sig, cd 12, `splash`): 1.4 P, 3 Venom to the target and 1 to the rest.
+  Speciality *Dirty Work*: +20% damage to Shielded foes. L10 *Fumes*: foes with Venom attack 5% slower.
+  L20: 4 Venom to the target.
+- **Quest: Paid in Full** (Emberwaste)
+  1. Fight beside Isolde until you trust each other. [`bond badco 3`]
+  2. Pay his Kiln debt: 500 foes' worth of gold. [`bring gold 500`]
+  3. Beat the Slagback's Eldest at the Kilns, with Ferrin in the party. [`foe kilns q_slagdebt`]
+  4. Win Ferrin's Stand: *Bank the Kilns* (`hunt`: a Slagback carrying the Kiln key runs for the pyre;
+     twist: a `zone` of slag to dodge). [`stand`]
+- **Awakening: the Paid-Up.** **Sulphur Pot II:** also Burns the target for 3 s (Venom + Burn is Blight,
+  the reaction his Venom already feeds). **Rat's Luck:** his crits add 1 Venom. Look: a clean coat, for
+  once; a brass Kiln key on a string.
+
+**23. Linnet Cole, the Glassblower** · caster, frost, Wayfarers, Epic · the Emberwaste.
+Linnet blew glass on the Lea before the falling lights turned the fields to glass.
+She cools molten things with a breath, and the Glass Flats are the job she never finished.
+- **Recruit:** fill the Glasswalker bestiary page to tier 2: she comes to see who has been breaking her
+  flats. Fallback: zone 92. Expected week 7-9.
+- **Kit.** *Cold Glass* (sig, cd 16, `pack`): 1.1 P frost, Chill 4 s. Innate *Annealing*: heavy hits on
+  foes she Chilled Stagger 15% more. L20: Cold Glass also hits the next pack's Front column when it
+  arrives.
+- **Quest: The Flats** (Emberwaste)
+  1. Fight beside Grenna until you trust each other. [`bond stoneglass 3`]
+  2. Bring 40 grade-8 gems. [`bring crystal g8 40`]
+  3. Beat the Glasswalker's Eldest, with Linnet in the party. [`foe glassflats q_glassjob`]
+  4. Win Linnet's Stand: *Cool It* (`wave`: molten glass that stands up; twist: Chill a Glasswalker before
+     it bursts). [`stand`]
+- **Awakening: of the Glass Flats.** **Cold Glass II:** also raises a glass wall: the party's Front takes
+  20% less for 4 s. **Tempered:** her Chill lasts 25% longer, and Shatter on foes she Chilled deals 30%
+  more. Look: a glassblower's pipe on her back, frosted.
+
+**24. Oswin Hale, the Ash Squire** · tank, physical, the Oath, Epic · the Emberwaste.
+Oswin carried Ser Hadric's shield on the Emberlea road. When his knight said yes to the fire,
+Oswin was told to run, and he ran. He has not put the shield down since.
+- **Recruit:** a Tavern visitor from zone 85 (an ash-grey squire at the corner table); hire with gold
+  and grade-8 Essence. Fallback: the Pyre Knight falls (he comes to the fire unasked). Expected week 8-9.
+- **Kit.** *Shieldbearer* (sig, cd 14, `slot`): covers the Middle ally for 3 s (their hits land on him)
+  and taunts the Front column. Innate *Squire's Habit*: +15% block while an ally below 50% HP is next to
+  him. L20: Shieldbearer lasts 4 s.
+- **Quest: The Squire's Shield** (Emberwaste)
+  1. Fight beside Aldric until you trust each other. [`bond accolade 3`]
+  2. Beat the Pyre Knight, with Oswin in the party. [`boss 3 field`]
+  3. Bring 40 grade-9 ore. A new face for the old shield. [`bring ore g9 40`]
+  4. Win Oswin's Stand: *Don't Run* (`duel`: an ash knight in Hadric's colours, on the same road;
+     twist: its `heavy` swings must be parried, not dodged). [`stand`]
+  At step 2, one line: "You told me to run. I came back." Caedmon's rival fight stays Caedmon's (lore.md
+  8.3); Oswin has no Challenge mechanic.
+- **Awakening: Ser Oswin, the Squire Who Stayed.** Aldric knights him at the Hearth (or you do, if
+  Aldric is not recruited). **Shieldbearer II:** covers both other party members. **Knighted:** +20
+  armour, and his taunt pulls Burns off the ally he covers onto himself. Look: a knight's belt; the shield
+  repainted with a plain lamp.
+
+**25. Hob Tarrow, the Icehouse Man** · tank, frost, Hedgefolk, Rare · the Emberwaste.
+Hob cut ice in the Hollow and sold it east to Emberlea. On the night of the Fall he hid
+forty people in his icehouse. They came out cold, cross and alive.
+- **Recruit:** Nan Tarrow at camp; the Tavern rumour "Nan's brother went east to cut ice"; then reach
+  Cinder Road II. Free. Fallback: zone 85. Expected week 6-8.
+- **Kit.** *Cold Store* (sig, cd 14, `self` and the allies next to him): 15% less damage for 4 s, and
+  foes that hit them are Chilled 3 s. Speciality *Thick Coat*: Burns on him last half as long. L10
+  *Ice Pick*: his hits on Chilled foes are `heavy`. L20: Cold Store also heals him 5%.
+- **Quest: The Icehouse** (Emberwaste)
+  1. Fight beside Grenna until you trust each other. [`bond nansbro 3`]
+  2. Bring 80 grade-8 wood. A new icehouse roof at camp. [`bring wood g8 80`]
+  3. Beat the Cinder Hound's Eldest on the Cinder Road, with Hob in Front. [`foe cinderroad q_houndeldest`]
+  4. Win Hob's Stand: *Forty People* (`hold`: the icehouse door; Cinder Hounds and an Ash Moth swarm;
+     twist: the door heats up if a Burn sits on it for 5 s). [`stand`]
+- **Awakening: the Cold Harbour.** **Cold Store II:** also Chills the whole Front column. **Kept Cold:**
+  Chilled foes deal 10% less to the party. Look: a thick grey coat with frost on the shoulders; ice tongs
+  on his belt.
+
+**26. Orla Fairweather, the Hedge Scholar** · support, holy, Hedgefolk, Legendary · the Emberwaste.
+Orla wrote the book Pip taught herself fire from, then went east to learn if its last chapter was true.
+She tore that chapter out herself. It was true, and she has carried it through the ash ever since.
+- **Recruit:** a milestone arrival. The Pyre Knight falls and the held lights go home; a day later a woman
+  walks in from the Lea with a burnt book. Free. Expected week 9-11 (the Legendary at the region's end,
+  like Caedmon in the Hollow). LORE10 owns the last page's words and may hand it over through her.
+- **Kit.** *Somewhere to Go* (sig, cd 16, `party`): heals 6% of max HP and moves 1 Burn from each ally
+  onto the focus foe. Aura *Footnotes*: the party's statuses on foes last 10% longer. Innate *Margins*:
+  her heals on a cleansed ally are 20% bigger. L20: moves Curse too.
+- **Quest: The Last Chapter** (Pale Reach)
+  1. Fight beside Pip until you are close. [`bond author 4`]
+  2. Reach the Starfall Fields. She wants to see light that fell on a mountain. [`reach starfall`]
+  3. Bring 40 grade-11 fibre. A second edition, bound properly. [`bring fibre g11 40`]
+  4. Win Orla's Stand: *Put It Out Right* (`keep`: a burning lamp-post that must be given somewhere to
+     go, not stamped out; twist: moving its Burn onto a foe is the only cure). [`stand`]
+- **Awakening: Who Wrote It Down.** **Somewhere to Go II:** moves up to 2 statuses from each ally, and
+  moved statuses land on the foe at double stacks. **Second Edition:** her cleanses also shield 5% of max
+  HP. Look: a new book at her hip, the old burnt one inside it.
+
+**27. Eskil Brandt, the Pass Scout** · striker (ranged), poison, Dusk Company, Rare · the Pale Reach.
+Eskil scouted the pass with Rowan and Kestrel for the Dusk Company. He came down the mountain
+the winter Rowan didn't, and he has waited by the cairn every storm since, to learn why.
+- **Recruit:** reach Frostgate Pass II (zone 113), then gold. Fallback: zone 120. Expected week 11-12.
+- **Kit.** *Wolfsbane Arrow* (sig, cd 11, `single`, any row): 1.8 P, 4 Venom; +20% to beasts.
+  Speciality *Tracker*: the first foe of each pack is Marked for 2 s. L10 *Patience*: +10% crit on foes
+  with 5+ Venom. L20: the arrow splits to a second foe.
+- **Quest: The Cairn** (Pale Reach)
+  1. Fight beside Kestrel until you trust each other. [`bond rowan 3`]
+  2. Beat the Rimewolf's Eldest, with Eskil in the party. [`foe frostgate q_packleader`]
+  3. Bring 40 grade-10 hide. Furs for the Silent Village. [`bring hide g10 40`]
+  4. Win Eskil's Stand: *Scout's Run* (`hunt`: a Stormpeak carrying a Dusk Company dispatch; it lands
+     on 3 crags). [`stand`]
+  If Kestrel's step 4 (the Whitehush) is already done, his step lines change to "now we know" versions;
+  they never tell the player how Rowan died before the Whitehush falls.
+- **Awakening: of the Frostgate.** **Wolfsbane Arrow II:** splits to three foes. **Pack Hunter's Bane:**
+  Venom on beasts ramps twice as fast. Look: a wolf-fur collar; a Dusk Company badge, polished.
+
+**28. Brynja Holm, the Doorward** · tank, fire, Reachfolk, Epic · the Pale Reach.
+Brynja stood in the Silent Village's last warm doorway for three nights with a brazier and a door-bar.
+When the brazier finally went out, she carried it down the mountain. It was still warm.
+- **Recruit:** reach the Silent Village; bring 60 grade-10 fibre and 40 grade-10 hide (wicks and tallow
+  for the sill-candles). She joins. Fallback: zone 128. Expected week 12-13.
+- **Kit.** *Brazier* (sig, cd 15, `line`): taunts the Front column; foes that hit her in the next 4 s
+  Burn for 3 s. Innate *Warm Door*: allies next to her cannot be Chilled for more than 2 s. L20: Brazier
+  lasts 6 s.
+- **Quest: The Last Doorway** (Pale Reach)
+  1. Fight beside Tobin until you trust each other. [`bond door 3`]
+  2. Beat the Palefolk's Eldest, with Brynja in Front. [`foe silentvillage q_knocker`]
+  3. Beat the Whitehush. The village can light its sills. [`boss 4`]
+  4. Win Brynja's Stand: *Three Nights* (`hold`: a doorway at night; Palefolk knock, Icewisps swarm;
+     twist: a Whiteout for 10 s). [`stand`]
+- **Awakening: of the Warm Door.** **Brazier II:** also Burns the whole Front column. **Hearth Heat:**
+  the party cannot be Chilled while she stands, and her Burns on `pale` foes last twice as long. Look:
+  the brazier on a chain at her side, glowing.
+
+**29. Inga Fallow, the Starwright** · caster, frost, Dusk Company, Epic · the Pale Reach.
+Inga reads the Starfall craters the way Oriel reads the sky, from underneath.
+The Dusk Company paid her to find the shards before the dark did. She kept finding them.
+- **Recruit:** your first gather in the Starfall Fields: she is already there, charting. Pay grade-10
+  Essence. Fallback: zone 124. Expected week 12-14.
+- **Kit.** *Shardfall* (sig, cd 14, `chain:3`): 1.3 P frost, Chill 3 s. Innate *Crater Sense*: +10%
+  damage to `construct` foes. L20: `chain:4`.
+- **Quest: Where It Fell** (Pale Reach)
+  1. Fight beside Oriel until you trust each other. [`bond twoskies 3`]
+  2. Bring one Frost Sigil. She reads what it holds. [`bring sigil frost 1`]
+  3. Beat the Skyfallen's Eldest in the Starfall Fields, with Inga in the party. [`foe starfall q_skyeldest`]
+  4. Win Inga's Stand: *Catch It* (`wave`: Skyfallen made from one falling shard; twist: a shard falls
+     at 30 s; stand out of its `zone`). [`stand`]
+- **Awakening: of the Starfall.** **Shardfall II:** `chain:5`, and the last hit stuns 1 s. **Cold Light:**
+  any stun on a Chilled foe Shatters it. Look: a star-glass shard set in a ring on her glove.
+
+**30. Ragna Moss, the Lichen-Witch** · caster, poison, Reachfolk, Epic · the Pale Reach.
+Ragna scrapes lichen off the Rimewood's glass branches and boils it into things wolves hate.
+She talks to the snow. The snow, she says, listens better than people.
+- **Recruit:** a **Lichen Bundle** token from Rimewood elders (base 8%, +8% a miss, pity 12), then
+  grade-11 Essence. Fallback: zone 134. Expected week 13-15.
+- **Kit.** *Black Lichen* (sig, cd 16, `pack`): 0.8 P, 2 Venom to every foe; Venom on a foe that dies
+  spreads to one neighbour. Innate *Under Snow*: her Venom does not fall off when a foe is Chilled.
+  L20: 3 Venom.
+- **Quest: What Grows Under Snow** (Pale Reach)
+  1. Fight beside Morwen until you trust each other. [`bond mosswax 3`]
+  2. Bring 60 grade-11 herbs. [`bring herb g11 60`]
+  3. Beat the Icewisp's Eldest in the Rimewood, with Ragna in the party. [`foe rimewood q_wispeldest`]
+  4. Win Ragna's Stand: *The Quiet Wood* (`wave`: Icewisp swarms; twist: they heal each other unless
+     Venomed). [`stand`]
+- **Awakening: of the Rimewood.** **Black Lichen II:** foes at 10 Venom are Rooted 1 s. **Slow Rot:**
+  Venom she spreads on death keeps its full stacks. Look: a lichen-grey shawl with frost-green threads.
+
+**31. Solveig Lund, the Sill-Candle** · support, fire, Reachfolk, Legendary · the Pale Reach.
+For ten winters Solveig kept one candle lit in the Silent Village, for everyone in it, alone.
+She is quiet, practical and very hard to impress.
+- **Recruit:** the Pale Reach's milestone person (lore.md 4.4a). The Whitehush falls, the Whiteout stops,
+  and she comes down to Hollow's Rest with her candle and raises the Beacon at camp (WC1). Free. Expected
+  week 14-16.
+- **Kit.** *Sill-Candle* (sig, cd 14, `ally`): heals 8% of max HP and sets a small flame on them: the
+  next 3 foes that hit them Burn for 3 s. Aura *Hand to Hand*: heals on one party member also heal the
+  others for 10% of it (with Reachfolk Kin, the two add). Innate *Long Night*: her heals are 20% bigger
+  on an ally below 30% HP. L20: the flame lasts for 5 hits.
+- **Quest: One Candle** (Gloamvale)
+  1. Fight beside Elowen until you are close. [`bond candlespark 4`]
+  2. The Beacon at camp reaches level 2. [`camp beacon 2`] (if WC1 names no Beacon: the Hearth at the
+     next level)
+  3. Reach the Last Descent. She lights a candle at the top of the road down. [`reach lastdescent`]
+  4. Win Solveig's Stand: *Ten Winters* (`keep`: one candle on a sill; Palefolk and Hushwalkers; twist:
+     a Whiteout, then a windless hush where only her candle shows). [`stand`]
+- **Awakening: Who Kept the Village.** **Sill-Candle II:** lands on two allies. **One Night More:** once
+  a fight, an ally who would fall stands at 40% HP instead (her flame on them goes out). Look: the candle
+  in a tin holder at her belt, never out.
+
+**32. Aslaug Grey, the Guide** · support, fire, Reachfolk, Epic · the Gloamvale.
+Aslaug guided traders over every pass in the Reach for forty years. She walked down into the
+Gloamvale once, turned back, and has been sorry she turned back ever since.
+- **Recruit:** reach the Last Descent (zone 141): she waits at the top of the switchbacks with a torch lit
+  from Solveig's candle. She joins free if Solveig is at camp, else for gold (so no other hero is needed).
+  Expected month 5. Her quest never goes near the Heart of the Gloamvale or the Voice.
+- **Kit.** *Torch Up* (sig, cd 14, `party`): the party attacks 10% faster for 5 s, and the Front foe
+  Burns 3 s. Innate *Knows the Way*: the party's abilities come back 5% sooner. L20: haste 15%.
+- **Quest: The Road Down** (Gloamvale)
+  1. Fight beside Thessaly until you trust each other. [`bond lastvalley 3`]
+  2. Beat the Gloam Hound's Eldest on the Last Descent, with Aslaug in the party. [`foe lastdescent q_gloamhound`]
+  3. Bring 40 grade-14 wood. Torches for the road. [`bring wood g14 40`]
+  4. Win Aslaug's Stand: *Don't Turn Back* (`keep`: her torch on the switchbacks; the Hush's walkers only
+     move when nobody looks; twist: a cast bar that says "turn back", to interrupt). [`stand`]
+- **Awakening: Who Went Down.** **Torch Up II:** haste 15% for 6 s and the whole Front column Burns.
+  **Torchlight:** foes weak to fire take 10% more from the party while she stands. Look: the torch in a
+  brass cage on a staff; a grey travelling cloak with a gold clasp.
 
 ---
