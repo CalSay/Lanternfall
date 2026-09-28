@@ -489,3 +489,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   reported them as running until 13:00. Their WIP was committed on their old branches (518bf66, eea113e,
   8f27ee1) and, on the owner's go-ahead, three new agents resumed from it (4 running: G2, H3, F1, AC2).
   RULE: before any status report, verify agents with ListAgents; after any owner interrupt, check at once.
+- Owner wants a friend to play-test. builds/lanternfall-test.html: dist wrapped with a doctype, charset and
+  viewport (standards mode, no page errors from file://). Queued: P1 installable web app (PWA build target,
+  hosted link, Export/Import save), host to be chosen by the owner.
