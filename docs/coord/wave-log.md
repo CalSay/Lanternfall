@@ -314,3 +314,9 @@ C4, C6, AF, R0 and BAL2 after Stage C lands.
   PERF3's fast path for everyone (perf.md rule 14: wrappers must pass every argument). Phone medians:
   fight 52/48 fps, 0 long tasks, first frame about 1.05-1.08s; almost everything within budget (the boss
   zone jump on late saves sits at the edge).
+- L2 merged (55-legend.js: Book, drops (an unknown power drops as a wearable/learnable item, a known one
+  becomes an Echo or a rank), Learn/Inscribe/Mark/Sigils, the 2-power hero limit, the runtime cap via
+  legendBudget/legendScale (raw +50-76% clamps to +30/37.5/45/57.5/70%), owed rolls). Pearls are not
+  charged until Region 2 adds them; the coast-elder grant is for Region 2/O1 to call. L3 (combat) and
+  L4 (UI) needs are listed in its report: L4 launched now; L3 after Stage C. ARCHITECTURE.md still needs
+  the 55-legend row and events (L4 adds them).
