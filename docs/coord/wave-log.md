@@ -247,3 +247,21 @@ spacing pass (AR3, 6 uncommitted files left in its worktree). The owner then sai
   broke another band). Follow-ups: autoField ignores synergies; the Warden aura gives no damage until
   Stage C; Region 3 needs new power (plan 2); the Ranger camp sim doesn't refarm Soft Hide.
 - Next: Stage C party combat (unblocked now).
+- UI polish merged: "Away" badges and an "Out: route, 4h" line for expedition characters (their Field
+  button is disabled), the Codex title under the hero name, a shared disclose() helper (tap for details)
+  for hero upgrades, the boss gate, camp buildings, Hearth costs, the Roster board and weekly goals
+  (scroll -14% to -54%), tidier Gather views with a status strip and "where to get it" material sheets.
+  Follow-up: check.mjs has date-dependent tests (today's Omen changed Reforge prices); pin the Omen for
+  the whole check run so a new day never breaks CI. Small targets left: Omen Go (36px), synergy chips
+  (36px), the Expeditions section.
+- Onboarding merged (55-onboard.js FEATURES table, isUnlocked(id), `feature` on views/sections; a
+  10-step hint guide; old saves see everything). A new game unlocks something every 1-2 min early; the
+  first recruit lands at about 22 min. The first boss falls at 0:35-1:00, which is zone-1 difficulty (a
+  pacing note, not a bug). "Skip tips" / "Show every tab now" live in the Journal.
+- Constellations merged (57e: 4 maps x 31 stars, 4 keystones each, max 2 lit, 2 layouts, free reset;
+  the Party > Stars view unlocks at hero level 10). Best builds add about +7/+20/+34% at L20/40/60.
+  Hooks for the combat owner: route the `tune:<knob>` bonuses in 55-party.js through tn() (guardT, wallT,
+  wallPause, wall, flare, flarePerEmber, hasteT, bless, hymn, hymnT, lkShare, lkAura, autoEff, autoCd) and
+  implement the keystone flags (starKeystone(id), STAR_KS). Until then Dawnbringer is too strong, Pack
+  Leader has no cost, Sanctuary Hymn has no upside, and Glass Lantern lacks its Flare bonus. Forwarded
+  to Stage C. Coordinator fix: onboarding treated a feature unlocked at play time 0 as locked (!= null).

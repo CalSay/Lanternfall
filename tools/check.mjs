@@ -1832,6 +1832,170 @@ try {
   }
   assert(!errs.length, 'no combat errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('combat crashed: ' + (e.stack || e)); }
+// ---- onboarding (55-onboard.js): progressive unlocks and the guide ----
+console.log('onboarding');
+try {
+  const errs = [];
+  // old saves: any progress and no S.onboard -> everything open, guide finished
+  for (const f of ['save-a-v1.json', 'save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const g = loadCore({ storage: memoryStorage({ [KEY]: fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8') }) });
+    const E = s => g.eval(s);
+    E('ONBOARD.gate = true');
+    assert(E('S.onboard.all && !S.onboard.tips && FEATURES.every(x => isUnlocked(x.id)) && onboardStep() === null && GUIDE_STEPS.every(x => S.onboard.done[x.id])'),
+      `${f}: every feature open, no tips`);
+    assert(E('topGoals(60, { sticky: false }).length') === E('(ONBOARD.gate = false, topGoals(60, { sticky: false }).length)'), `${f}: Next Up hides nothing`);
+    errs.push(...g.errors);
+  }
+  // a save made after this change keeps its onboarding state
+  {
+    const st = memoryStorage();
+    const g = loadCore({ storage: st });
+    g.eval('chooseClass("warden"); S.onboard.got.party = 30; S.onboard.done.tap = 1; S.maxZone = 3; save()');
+    const g2 = loadCore({ storage: st });
+    assert(g2.eval('!S.onboard.all && S.onboard.got.party === 30 && S.onboard.done.tap === 1 && S.onboard.tips'), 'a new game with progress stays guided after a reload');
+  }
+  // a new game: Fight only, then things open as the player goes
+  const g = loadCore({ seed: 7 });
+  const E = s => g.eval(s);
+  E('chooseClass("warden")');
+  assert(E('!S.onboard.all && S.onboard.tips && FEATURES.every(x => !isUnlocked(x.id)) && isUnlocked(null) && isUnlocked("nope")'), 'new game: every feature starts hidden (unknown ids are open)');
+  E('ONBOARD.gate = true');
+  const shown = () => E('topGoals(60, { sticky: false }).map(x => x.sys)');
+  assert(!shown().some(s => ['bounty', 'bestiary', 'skill', 'forge', 'camp', 'roster'].includes(s)), 'Next Up hides goals of hidden systems: ' + shown().join(','));
+  assert(E('onboardStep().id') === 'tap', 'the guide starts with "tap the foe"');
+  E('emit("tap", {}); emit("tap", {}); emit("tap", {})');
+  assert(E('onboardStep().id') === 'ability', 'three taps -> "your ability"');
+  E('castAbility()');
+  // play like a new player: fight, buy the cheapest upgrade, gather now and then, craft what Next Up offers
+  const got = {}, log = [];
+  g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
+  let firstUp = null;
+  const buy = () => E(`{ let n = 0; for (let k = 0; k < 50; k++) { const c = HERO_UPS.map(u => ({ u, p: plan(u.base, u.r, S[u.id], S.gold, u.cap, '1') })).filter(o => o.p.n > 0 && o.p.cost <= S.gold).sort((a, b) => a.p.cost - b.p.cost)[0]; if (!c) break; buyHero(c.u.id, '1'); n++; } n }`);
+  for (let sec = 0; sec < 12 * 60; sec++) {
+    for (let i = 0; i < 10; i++) g.fn.tick(0.1);
+    if (firstUp === null && E('S.gold >= 10')) firstUp = sec;
+    if (sec % 5 === 0) buy();
+    if (sec > 240 && sec % 150 === 0) { E('S.node = { kind: "ore", t: 1 }; setActivity("gather")'); for (let i = 0; i < 600; i++) g.fn.tick(0.1); E('setActivity("fight")'); }
+  }
+  const at = id => got[id] === undefined ? Infinity : got[id];
+  const mmss = t => t === Infinity ? 'never' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  console.log('       timeline: ' + Object.entries(got).map(([k, t]) => `${k} ${mmss(t)}`).join(', '));
+  assert(firstUp !== null && firstUp < 60, `first upgrade affordable in under a minute (${firstUp}s)`);
+  assert(at('party') < 120 && at('nextup') < 120, `Party and Next Up open in the first 2 minutes (${mmss(at('party'))}, ${mmss(at('nextup'))})`);
+  assert(at('gather') < 240 && at('bounties') < 300, `Gather and Bounties open by 4-5 minutes (${mmss(at('gather'))}, ${mmss(at('bounties'))})`);
+  assert(['camp', 'forage', 'craft', 'bestiary', 'almanac', 'roster'].every(k => at(k) <= 660), 'Camp, Foraging, Craft, Bestiary, Almanac and Roster open by 11 minutes');
+  const early = Object.values(got).filter(t => t <= 600).sort((a, b) => a - b);
+  let gap = early[0] || 0; for (let i = 1; i < early.length; i++) gap = Math.max(gap, early[i] - early[i - 1]);
+  assert(early.length >= 8 && gap <= 180, `something new at least every 3 minutes in the first 10 (${early.length} unlocks, longest gap ${gap}s)`);
+  // the guide ends; skip and "show every tab" work
+  assert(E('onboardTips(false) === false && onboardStep() === null'), 'Skip tips: no hint shows');
+  E('onboardTips(true); onboardUnlockAll()');
+  assert(E('S.onboard.all && FEATURES.every(x => isUnlocked(x.id))'), 'Show every tab: everything opens');
+  assert(E('GOALS.every(x => goalGate(x))'), 'Next Up shows every system again once it is open');
+  assert(E('(onboardReveal("deep"), true)'), 'reveal after all is harmless');
+  errs.push(...g.errors);
+  assert(!errs.length, 'no onboarding errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('onboarding crashed: ' + (e.stack || e)); }
+
+// ---- constellations: the talent star map (57e-constellations.js) ----
+console.log('constellations');
+try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const FIX = ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json', 'save-a-v1.json'];
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const errs = [];
+  // points from hero levels and Great Lanterns
+  const g = loadCore({ seed: 41 }), E = s => g.eval(s);
+  assert(E('JSON.stringify(S.stars)') === '{"v":1,"maps":{},"seen":0}', 'new game: S.stars defaults');
+  const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
+  assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
+  assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
+  assert(E('Object.values(STAR_MAPS).every((_, i) => true) && ["warden","lanternmage","ranger","lightkeeper"].every(c => starMap(c).order.length === 31 && starMap(c).edges.length === 33)'), 'four maps of 31 stars (Hearthstar, 3 arms of 8, 5 ring stars, crown)');
+  assert(E('["warden","lanternmage","ranger","lightkeeper"].every(c => { const m = starMap(c); return Object.values(m.stars).filter(s => s.kind === "key" || s.kind === "crown").length === 4 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44; })'), 'each map: 4 keystones, 44 points to light it all');
+  assert(E('["warden","lanternmage","ranger","lightkeeper"].every(c => { const st = Object.values(starMap(c).stars); for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (Math.hypot(st[i].pos[0] - st[j].pos[0], st[i].pos[1] - st[j].pos[1]) < 44) return false; return true; })'), 'stars sit at least 44 map units apart (clean taps at 360px)');
+  // allocation rules
+  E('chooseClass("warden"); S.L = 30; S.maxZone = 20; S.stars.maps = {}');
+  assert(E('starPoints()') === 10 && E('starFree()') === 10, 'warden at level 30: 10 points');
+  assert(!E('starLight("a0s2")') && E('starCheck("a0s2").why') === 'Light a star next to it first.', 'a star needs a lit neighbour');
+  assert(E('starLight("a0s1") && starLight("a0s2") && starLight("a0s3")') && E('starFree()') === 6, 'lighting spends points (notable = 2)');
+  assert(!E('starUnlight("a0s1")') && /hang from this one/.test(E('starCheck("a0s1").why')), 'cannot unlight a star others hang from');
+  assert(E('starLight("a0s4") && starLight("a0s5") && starLight("a0s8")') && E('starFree()') === 1 && E('starKeysLit()') === 1, 'the cheapest keystone costs 9 (spine 6 + 3)');
+  assert(E('bonus("tune:guardMax")') === 7 && E('bonus("tune:guard")') < 0 && E('starKeystone("unbroken") && bonus("ks:unbroken") === 1'), 'stars feed tune: bonuses and ks: flags');
+  assert(!E('starLight("a1s1") && starLight("a1s2")') || E('starFree()') >= 0, 'never below 0 points');
+  E('starReset()');
+  assert(E('starLayout().lit.length') === 0 && E('starFree()') === 10 && !E('starKeystone("unbroken")') && E('bonus("tune:guardMax")') === 0, 'reset (respec) refunds every point');
+  // modifiers
+  const d0 = E('mod("dmg")'), dps0 = E('totalDps()');
+  E('starLight("a1s1"); starLight("a1s2")');
+  assert(Math.abs(E('mod("dmg")') / d0 - 1.015) < 1e-9 && E('mod("tap")') > 1.049, 'Edge adds +1.5% damage, Heavy Arm +5% taps');
+  assert(E('totalDps()') > dps0, 'dps rises with damage stars');
+  E('starReset()');
+  // keystone limit and the crown's need
+  E('S.L = 120');
+  for (const a of [0, 1, 2]) E(`["a${a}s1","a${a}s2","a${a}s3","a${a}s4","a${a}s5"].forEach(id => starLight(id))`);
+  assert(E('starLight("a0s8") && starLight("a1s8")') && E('starKeysLit()') === 2, 'two keystones lit');
+  assert(!E('starLight("a2s8")') && /^Unlight a keystone first/.test(E('starCheck("a2s8").why')), 'a third keystone: "Unlight a keystone first"');
+  E('starUnlight("a1s8")');
+  assert(/ring stars/.test(E('(starLight("b0"), starCheck("crown").why)')), 'the crown needs 3 ring stars');
+  E('starLight("b1"); starLight("b4")');
+  assert(E('starLight("crown")') && E('starKeysLit()') === 2, 'crown: 3 ring stars and 3 stars in every arm');
+  assert(/needs this star/.test(E('starCheck("b4").why')) || /hang/.test(E('starCheck("b4").why')), 'cannot unlight a ring star the crown needs');
+  assert(!E('starUnlight("a2s3")'), 'cannot drop an arm under the crown\'s need');
+  // oathsworn: hero-only trick leaves companions at x1.1
+  E('starReset(); ["a2s1","a2s2","a2s3","a2s4","a2s5","a2s8"].forEach(id => starLight(id))');
+  const dm = E('mod("dmg")'), dp = E('mod("dmg") * mod("party")');
+  E('starUnlight("a2s8")');
+  assert(Math.abs(dm / E('mod("dmg")') - 0.75) < 1e-9 && Math.abs(dp / E('mod("dmg") * mod("party")') - 1.1) < 1e-9, 'Oathsworn: the hero deals x0.75, companions x1.1 (hero-only trick)');
+  E('starReset()');
+  E('starReset()');
+  // boss fight and Deepwell lock
+  E('fightBoss = true; spawn()');
+  assert(E('starCheck("a0s1").why') === 'Not during a boss fight.' && !E('starReset()') && !E('starUseLayout(1)'), 'no changes during a boss fight');
+  E('fightBoss = false; spawn()');
+  assert(E('starCheck("a0s1").ok'), 'free again after the fight');
+  // layouts
+  E('starLight("a0s1"); starLight("a0s2")');
+  assert(E('starUseLayout(1)') && E('starLayout().lit.length') === 0 && E('starLayout().name') === 'Push', 'switch to the Push layout: empty');
+  E('starLight("a1s1")');
+  assert(E('starRename(1, "  Boss rush forever  ")') && E('starLayout().name') === 'Boss rush fo', 'rename (12 characters)');
+  assert(E('starUseLayout(0)') && E('starLayout().lit.join()') === 'a0s1,a0s2', 'back to Farm: its stars are kept');
+  E('save()');
+  const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starLayouts("warden")[1].lit.join()') === 'a1s1', 'layouts survive save and load');
+  // Mirror of Embers: another class starts empty, warden keeps its map
+  E('S.party.chosen = false; chooseClass("ranger")');
+  assert(E('starLayout().lit.length') === 0 && E('starEffects().m.dmg') === undefined && E('starLayouts("warden")[0].lit.length') === 2, 'changing class keeps each class\'s map');
+  // Next Up
+  E('S.onboard.t = 5; onboardReveal("stars")');
+  const gl = E('(topGoals(60, { sticky: false }).find(x => x.id === "stars") || {}).label');
+  assert(/^You have \d+ star points?$/.test(gl || ''), `Next Up: "${gl}"`);
+  errs.push(...g.errors, ...g2.errors);
+  // old saves: defaults, dps unchanged, the points they earned; broken layouts repaired
+  const noStars = coreFiles().filter(f => !f.startsWith('57e'));
+  for (const f of FIX) {
+    const o = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+    const b = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }), files: noStars });
+    const raw = JSON.parse(rawOf(f)), want = Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35);
+    assert(o.eval('JSON.stringify(S.stars)') === '{"v":1,"maps":{},"seen":0}' && o.eval('starPoints()') === want, `${f}: empty star maps and the ${want} points it earned`);
+    assert(Math.abs(o.eval('totalDps()') / b.eval('totalDps()') - 1) < 1e-12, `${f}: totalDps unchanged`);
+    errs.push(...o.errors);
+  }
+  const bad = JSON.parse(rawOf('save-v2.json'));
+  bad.stars = { v: 1, maps: { warden: { layouts: [{ name: 'X', lit: ['a0s2', 'zzz', 'a0s1', 'a0s1', 'a0s3', 'a0s4'] }], active: 5 }, nope: {} }, seen: 2 };
+  bad.party = Object.assign({}, bad.party || {}, { cls: 'warden', chosen: true });
+  const v = loadCore({ seed: 44, storage: memoryStorage({ [KEY]: JSON.stringify(bad) }) });
+  assert(v.eval('S.stars.maps.warden.layouts.length === 2 && S.stars.maps.warden.active === 0 && S.stars.maps.nope !== undefined'), 'a broken map gets 2 layouts and a valid active one (unknown classes kept)');
+  assert(v.eval('starLayouts("warden")[0].lit.join()') === 'a0s2,a0s1' && v.eval('starSpent("warden") <= starPoints()'), `over-budget layout trimmed from the tips to fit ${v.eval('starPoints()')} points (${v.eval('starLayouts("warden")[0].lit.join()')})`);
+  errs.push(...v.errors.filter(e => !/toast/.test(e)));
+  // power: the best build stays inside the pace caps (docs/design/pacing.md; owner wants a slower game)
+  const out = [];
+  for (const c of ['warden', 'lanternmage', 'ranger', 'lightkeeper']) {
+    const r = [6, 17, 28].map(p => E(`starBest("${c}", ${p}).p`));
+    out.push(`${c} ${r.map(x => '+' + ((x - 1) * 100).toFixed(0) + '%').join('/')}`);
+    assert(r[0] <= 1.15 && r[1] <= 1.25 && r[2] <= 1.35, `best build at 6/17/28 points (L20/L40/L60) within +15/+25/+35%: ${out[out.length - 1]}`);
+  }
+  assert(!errs.length, 'no constellation errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('constellations crashed: ' + (e.stack || e)); }
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

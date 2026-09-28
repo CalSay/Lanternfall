@@ -278,3 +278,12 @@
 }
 @keyframes joinIn { from { opacity: 0; transform: translateY(4px); } }
 @media (max-width: 380px) { .create-in { padding-left: 12px; padding-right: 12px; } .ccard { grid-template-columns: 56px 1fr; } .ccard .fig { width: 56px; } }
+
+/* ---- polish: Codex title, expedition status ---- */
+.pc-who > small.pc-ctitle, .cs-ctitle { font: 600 11px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.pc-ctitle[hidden] { display: none; }
+.cs-out { margin: 0; padding: 8px 10px; background: rgba(90,122,184,.12); border-left: 3px solid var(--r-rare); font-size: 13.5px; color: var(--bone); }
+.rtile.out .rt-fr img { opacity: .5; }
+.rt-in.rt-away { background: var(--r-rare); color: #0B0810; }
+.rtile .rt-out { color: #9CC1FF; }
+.rtile .rt-out { -webkit-line-clamp: 3; overflow-wrap: anywhere; }

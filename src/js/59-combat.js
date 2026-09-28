@@ -40,7 +40,7 @@
 // Economy: a pack is one "foe" for every listener. `kill` fires once per pack (the lead foe,
 // gold = the pack's total); the pack's HP and gold total packHp / packGold of one old foe, so
 // bounties, drops, the bestiary and companion XP keep their pace. S.kills (boss progress)
-// counts packs: 10 packs unlock the boss. S.totalKills counts every foe.
+// counts packs: 10 packs unlock the boss. S.totalKills counts packs too (every kill-count threshold keeps its pace).
 //
 // Save: registerState('combat', { on: 1, back: 0 }). on: party combat is on (every save, old
 // ones merge it in); back: the zone a wipe retreated from (0 = none), for the auto push back.
@@ -420,7 +420,6 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function foeDies(f, src, kind) {
     if (typeof onFoeDeath === 'function' && onFoeDeath(f, src, kind)) return;   // 59b: Rattlebones reassemble
     f.over = -f.hp; f.hp = 0; f.dead = 0.001;
-    S.totalKills++;
     if (!inArena && !f.boss) {
       const g = f.gold; S.gold += g; S.totalGold += g;
       if (g > 0) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
@@ -837,7 +836,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.stubborn = false; u.vow = false; u.icUsed = 0; u.icLeft = 0; u.icFor = -1; u.fight = 0;
     }
     packDown = false;
-    if (inArena) { mob = last; last.hp = -(last.over || 0); S.totalKills--; kill(); return; }
+    if (inArena) { mob = last; last.hp = -(last.over || 0); kill(); return; }
+    S.totalKills++;   // a pack counts as one foe (Foes slain, achievements, the Bestiary unlock)
     // the pack pays as one foe: 50-sim killPack does the rest of the old kill()
     const m = lead || last;
     if (m.boss) { S.gold += m.gold; S.totalGold += m.gold; addFloat('+' + fmt(m.gold) + 'g', '#F2C14E', false, 0.68, 0.3); }

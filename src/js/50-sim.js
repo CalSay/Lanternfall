@@ -255,7 +255,7 @@ function awayBase(r) {
   const est = pc ? partyHoldEstimate(S.zone) : null, z = pc ? est.zone : farmableZone(S.zone, baseDps);
   const kills = pc ? t * est.packsPerSec * COMBAT_TUNE.awayRate * boost : baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = Math.floor(kills * essChance());
-  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills * (pc ? COMBAT_TUNE.packSize : 1)); S.mats.ess[tier - 1] += ess;
+  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); S.mats.ess[tier - 1] += ess;
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
   if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });

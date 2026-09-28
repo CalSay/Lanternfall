@@ -347,3 +347,32 @@ time after Stage A. Wave 4 or 5 both work; wave 5 lets the [C] parts ship with i
 3. **Points only from hero levels and Great Lanterns** (1 per 3 levels, 4 per Lantern). No Codex,
    Deepwell or shop source. Recommended: **yes**. It keeps the tree tied to the adventure and
    keeps the other systems from turning into damage.
+
+---
+
+## 9. As built (S1-S3, 2026-09-28)
+
+Files: `src/js/57e-constellations.js` (data and core, no DOM), `src/js/75-stars-ui.js`,
+`src/styles/60-stars.css`; one FEATURES row in `55-onboard.js` (`stars`, hero level 10). Changes from
+the spec above:
+
+- **Numbers scaled down for the slower pace.** The coordinator's cap for the best build is +15% / +25% /
+  +35% effective damage at hero level 20 / 40 / 60 (6 / 17 / 28 points), not the +60-90% of 3.5. Minors
+  are +1.5% damage, companions +2%, taps +5%, crits 3% more often, crit damage +4%; ring stars +1% /
+  +1.5%; Oathsworn gives companions +10% (hero x0.75), Martyr's Light +12% (hero x0.5), Challenger +20%
+  taps, Afterglow +15%, Finisher +20%, Boss Stalker +6%. Each star carries `p`, the design estimate of
+  its effective damage; `starBest(cls, points)` finds the best legal build and check.mjs keeps it under
+  the caps (today: +7% / +19-20% / +32-35%).
+- **Map shape.** 31 stars on a 380 x 376 map. Each arm is a Y: the spine runs out to star 4 on the axis,
+  then forks: 5 and the keystone curl back on one side, the side branch 6-7 on the other. Ring stars sit
+  34 degrees each side of an arm, at radius 104. Stars are at least 44 map units (39 px on a 360 px
+  phone) apart, and a tap picks the nearest star within reach. A legend under the map shows each arm's
+  direction and lit count.
+- **UI.** A Stars view on the Party tab (not a button on the hero card). A dot marks new unspent points.
+  Next Up: "You have N star points" while a star can be lit. Toasts: the view opening, +1 star point
+  every third level, a Great Lantern.
+- **Wiring for the combat owner.** Stars on knobs that `55-party.js` does not read through `tn()` yet
+  do nothing until it does: guardT, wallT, wallPause, wall, flare, flarePerEmber, autoCd (new: auto-cast
+  waits `(2 + autoCd)` cooldowns), hasteT, bless, hymn, hymnT, lkShare, lkAura, autoEff. Keystone and
+  notable behaviour flags: `bonus('ks:<id>')`, numbers in `STAR_KS`. Done in 57e from events already:
+  Afterglow, Finisher, Boss Stalker, Bash and Challenger's boss-timer part (do not repeat them).

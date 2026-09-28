@@ -30,6 +30,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 52-raid.js | core | world boss damage and rewards |
 | **55-*.js** | core | **feature logic (no DOM)**; 55-stats.js: lifetime counters and the away report data |
 | 55-goals.js | core | "Next Up": `registerGoal`, `topGoals`, the built-in goals (UI: 75-goals-ui.js); the craft goal sets `S.fSlot`/`S.fTier` and bumps `forgeGoalPicks` so the Craft tab focuses that recipe |
+| 55-onboard.js | core | the guided first ten minutes (docs/design/onboarding.md): `FEATURES` unlock table, `isUnlocked(id)`, `onboardReveal`, `onboardUnlockAll`, the guide (`GUIDE_STEPS`, `onboardStep`, `onboardDone`, `onboardTips`), `goalGate` for Next Up (on only in the browser); state `S.onboard` (old saves: all open). UI: 75-onboard-ui.js. Views and sections declare `feature: id` in `registerView`/`registerSection` |
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
@@ -41,6 +42,7 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 57d-deepwell.js | core | the Deepwell (docs/design/deepwell.md): runs, floors, Oil, the boon draft (46 boons, 8 sets), Depth Marks and their shop, the weekly Trial, run save/resume; `DW` API, `deepUnlocked()`, `deepActive()`, data `DEEP_TUNE`/`DEEP_BOONS`/`DEEP_SHOP`/`DEEP_RULES` (state in `S.deep`; UI: 75-deepwell-ui.js, the Fight tab's Deepwell view). Sets the 50-sim `arena` while a run is live |
 | 59-combat.js | core | party combat (Stage C): packs of 3 foes, party HP/armour/shields, threat and reach, healing, crowd control, knock-outs, wipes (retreat one zone, push back), the hold estimate for away gains and auto-push; `partyCombatOn()`, `combatTick`, `cbSpawn`, `cbStrike`, `combatUnits()`, `combatFoes()`, `partyHoldEstimate(z)`, `partyHolds(z)`, `cbBossReady()`, knobs `COMBAT_TUNE`, counters `CB_STATS` (state in `S.combat`) |
 | 59b-enemies.js | core | foe behaviours by zone type (dives, archers, bruisers, spore clouds, slams, healers), elites, boss mechanics and telegraphs, parry/dodge (`resolveParry(source)`, `cbTelegraph()`), knobs `ENEMY_TUNE`, data `FOE_BEH` |
+| 57e-constellations.js | core | Constellations, the per-class star map (docs/design/constellations.md): 4 maps of 31 stars, points (`starPoints()` = L/3 + 4 per Great Lantern), light/unlight/reset, keystone limit (2), 2 layouts per class, the boss/Deepwell lock, load repair; every effect through `addModifier`, `bonus('tune:<knob>')` and `bonus('ks:<id>')` / `starKeystone(id)` (state in `S.stars`; UI: 75-stars-ui.js, the Party tab's Stars view, feature `stars` at hero level 10) |
 | 60-gfx.js, 62-stage.js | browser | `$`/`el` DOM helpers, canvas sprites, stage drawing, visual effects (listen to bus events) |
 | 70-ui.js | browser | layout (docs/design/layout.md): game view, full-screen menus and sub-views (`setTab`, `closeMenu`, `registerView`), toasts and the bell sheet (Notices, Journal), `ui()`, `registerSection`, `registerTab`, write-on-change DOM helpers (`putText`, `putStyle`, `putHidden`, ...; docs/design/perf.md), event wiring |
 | 71..74-ui-*.js | browser | Fight, Gather, Forge panels; Raid and Tavern (the two parts of the World tab) |
@@ -92,6 +94,7 @@ Per-character damage: `addCharModifier(fn(id) -> mult)` in 56-roster.js; `charMo
 
 Bonus keys: `awayHours` (added to the away cap). Extra modifier keys: `skillXp:<skill>` (per-skill XP),
 `yield:<family>` (harvest and away yield per material family).
+Constellation hooks (57e-constellations.js): `bonus('tune:<knob>')` also carries lit stars (always on, not only in a Deepwell run); `bonus('ks:<id>') > 0` / `starKeystone(id)` flag new combat behaviour for 55-party.js to read, with its numbers in `STAR_KS` (ids: unbroken, crush, challenger, bastion, oathsworn, twinSpark, slowBurn, wildfire, overflow, everburn, glass, storm, nextMark, pack, quickdraw, hawk, deadeye, rain, dawn, sanctuary, martyr, ages). Knobs 55-party.js reads today: `STAR_TUNE_ROUTED`.
 Deepwell hooks: `arena` (50-sim: while set, `arena.spawn()` supplies foes and `arena.onKill(mob, overkill)` takes their deaths; no gold, XP, `kill` event or boss timer), `mod('abilityCd')` and `bonus('tune:<knob>')` (55-party.js class knobs: embersMax, guardMax, markT, blessMax, mark, emberPerTap, guard, blessT, volleyHits, charges, keepEmbers, hymnFloor; 1 / 0 outside a Deepwell run).
 Almanac hooks (55-almanac.js): modifiers `foeHp`, `bossHp` (spawn), `uniqueChance` (boss unique roll),
 `nonCrit` (hero non-crit hits), `rareW` (Rare/Epic forge weights), `salvage`, `bountyPay`; bonuses
@@ -198,14 +201,17 @@ and `go()` (a Go button that closes the card first); "Next up" uses both.
 | `foeDown` | `{ mob, src }` (one foe of the pack died; `kill` fires once per pack) |
 | `wipe` | `{ zone, to, boss, arena }` (every member down: retreat one zone, a failed boss attempt, or a Deepwell pause) |
 | `telegraphStart` / `telegraphResolve` | `{ kind, dur, target, foe }` / `{ kind, result, by }` (59b: boss wind-ups; kind heavy, cloud, dive, heal; result parry, dodge, hit, interrupt, heal) |
+| `unlock` / `onboardStep` | `{ id, tab, view, quiet }` (a feature opened; id `'*'` = all) / `{ id }` (a guide step done), 55-onboard |
+| `menuView` / `createDone` (UI) | `{ tab, view }` (70-ui: a menu view shows) / `{ mode }` (76-create closed) |
 
-Party combat payloads (the rows above from `packSpawn` on) are reused objects: copy what you keep.
+Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: copy what you keep.
 
 | `renown` | `{ n, total, source }` |
 | `token` | `{ id, won, chance }` (a Grenna/Isolde token roll) |
 | `visitorHired` | `{ id, day }` |
 | `kingslayerCredit` (listened) | `{ n }`: expedition credit toward Corvin's 150 boss kills, 50 at most |
 | `codexLight` / `codexPage` / `codexMilestone` | `{ light, gain }` / `{ id, kind: 'half'\|'seal' }` / `{ at, rewards }` (57c-codex) |
+| `starLit` / `starUnlit` / `starReset` / `starLayout` | 57e-constellations: `{ cls, id }` / `{ cls, id }` / `{ cls, n }` / `{ cls, i }` |
 | `deepStart` / `deepFloorStart` / `deepKill` / `deepFloor` / `deepOffer` / `deepPick` / `deepEnd` | 57d-deepwell: `{ trial }` / `{ floor, kind }` / `{ mob, floor }` (arena kills: no `kill`) / `{ floor, kind, trial, refund }` / `{ kind }` / `{ id, rank }` / `{ summary, away }` |
 | `codexOpen` (listened, UI) | `{ page }`: open the Codex sheet, on a page or its home (null) |
 | `toast` | `{ msg, kind, icon, prio }` (icon: URL or `{item}`/`{mat}`/`{ic}` spec; prio 'high' \| 'normal' \| 'low', see docs/design/layout.md) |

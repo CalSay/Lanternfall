@@ -302,7 +302,7 @@
   // ---------------- the Journal card (bell sheet, first in the Journal view) ----------------
   let jSig = '', jAt = 0, jr = {};
   registerSection('log', {
-    id: 'codex-card',
+    id: 'codex-card', feature: 'codex',
     mount(sec) {
       sec.classList.add('cx-jsec');
       queueMicrotask(() => sec.parentNode.prepend(sec));   // first in the Journal, above the lifetime stats (which prepend at load)
