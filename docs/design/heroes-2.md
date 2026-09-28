@@ -209,7 +209,7 @@ wood".
 |  First to Stand: Earned Trust goes up to |
 |  30% and survives the first fall.        |
 |  Tactics: a third rule.                  |
-|  Good with: Warden, Priest               |
+|  Good with: anyone who needs a shield    |
 +------------------------------------------+
 |  Cost: 2,000 foes' gold, 30 grade-5      |
 |  Essence, 60 grade-5 ore, 40 grade-5     |
@@ -952,4 +952,248 @@ Gloamvale once, turned back, and has been sorry she turned back ever since.
   **Torchlight:** foes weak to fire take 10% more from the party while she stands. Look: the torch in a
   brass cage on a staff; a grey travelling cloak with a gold clasp.
 
+### 3.6 When things land (normal play, against roadmap-review 1.7)
+
+| Window | Recruits | Awakenings a steady player can reach |
+|---|---|---|
+| Days 5-8 (Region 1 boss) | 16 Hollow heroes on offer | none (quests open at Veteran; Hollow Awakenings need a Tide Sigil) |
+| Weeks 2-5 (the Coast) | Cass, Merrin (+ Elowen, Corvin by timing) | first at day 10-16; 3-6 by the Coast's boss |
+| Weeks 6-10 (the Emberwaste) | Wynn, Hob, Ferrin, Linnet, Oswin, Orla | 8-12 in all |
+| Weeks 11-16 (the Pale Reach) | Eskil, Brynja, Inga, Ragna, Solveig | 14-20 |
+| Months 5-7 (the Gloamvale) | Aslaug | 20-26 |
+| Months 6-9 (completion) | - | all 32 (the Full Company window) |
+
 ---
+
+## 4. Data, save, sim and build
+
+### 4.1 Data shape
+
+Data only, loadable in Node (no DOM). Quest text lives apart from the numbers so writers own their file.
+
+```js
+// 21s-data-quests.js
+const HQ_TUNE = {
+  openRank: 1, awRank: 2,                      // Veteran opens the quest; Captain may Awaken
+  refLv: { 2: 60, 3: 110, 4: 150, 5: 180 },    // the Stand's reference hero level per region (BAL3)
+  idleBand: 1.25,                              // idle passes the Stand at 1.25x reference
+  foeX: 1,                                     // quest-foe strength vs a champion of that zone
+  cost: { gold: 2000, ess: 30, mats: [60, 40], sigil: 1, legendX: 1.5,
+          grade: { 2: 5, 3: 8, 4: 11, 5: 14 },          // the region's middle grade
+          weight: { heavy: ['ore', 'hide'], medium: ['hide', 'wood'], light: ['fibre', 'crystal'] },
+          sigilFam: { 2: 'pearl', 3: 'glass', 4: 'star', 5: 'well' } },  // Tide, Ember, Frost, Gloam Sigils (ids per gear-2)
+  sigRank2: 1.3                                // the default rank-2 coefficient lift (entries may say otherwise)
+};
+const HERO_QUESTS = {
+  tobin: {
+    name: 'The Borrowed Sword', region: 2,
+    steps: [
+      { k: 'bond', id: 'mossy', lv: 3, alt: 'any' },
+      { k: 'reach', z: 36 },
+      { k: 'bring', fam: 'wood', g: 4, n: 50 },
+      { k: 'stand', tpl: 'hold', scene: 'mossy', twist: 'heavy3' }
+    ]
+  },
+  // ... 32 entries. Step kinds and fields: section 1.2.
+  //   foe:   { k: 'foe', place: 'kelp', foe: 'q_oldeel', base: 'kelp', need: 'field', tide: 'high' }
+  //   boss:  { k: 'boss', region: 3, need: 'field' } | { k: 'boss', pin: 'king', need: 'field' }
+  //   bring: { k: 'bring', fam, g, n } | { k: 'bring', gold: 500 } | { k: 'bring', sigil: 'star', n: 1 } | { k: 'bring', token: 'dusk', n: 1 }
+  //   camp:  { k: 'camp', b: 'kitchen', lv: 3, alt: { b: 'hearth', lv: 6 } }
+};
+const AWAKEN = {
+  tobin: {
+    title: 'the Hedge Knight',
+    sig: { rank: 2, fx: [['guard', 2], ['reguard', 0.5]] },   // core-2 4.4 shape; merged over the rank-1 signature
+    pas: { id: 'aw_tobin', name: 'First to Stand', text: 'Earned Trust goes up to 30%, and the first fall in a pack no longer resets it.',
+           knob: { earnedTrustMax: 0.30, trustKeep: 1 } },
+    react: null,                                 // 'blight' | 'shatter' | 'judgement' | null: drives "Good with"
+    look: { trim: '#C9A24A', piece: 'tabard', acc: null }
+  }
+  // ... 32 entries
+};
+// Quest foes: QUEST_FOES[id] = { base: foe rig key, name, line, tint, crown: 1 } (reuse FOE_BEH of `base`).
+```
+
+```js
+// 21r-data-heroes.js: the 14 new heroes, merged into the existing tables by one line each
+const ROSTER_S1 = {
+  cass: { name: 'Cass Penhallow', title: 'the Reef Harpooner', rarity: 'rare', role: 'striker', ranged: true,
+          circle: 'wayfarers', idx: -1, dt: 'poison', home: 'mid',
+          route: { type: 'region', probe: 'elder:kelp', gold: { kills: 900 }, fallback: 50 },
+          how: 'Beat the Kelp Strangler elder, then pay her in gold.' },
+  // ... 14 entries. New route types: 'region' (an elder type, a place, a gather), 'milestone' (a Shroud
+  // falls), 'hand' (a Hand at camp + a place). Existing types (progress, quest, token, bestiary, tavern)
+  // are reused as they are.
+};
+const CHAR_KIT_S1 = { cass: [ /* 56b-synergy CHAR_KIT shape */ ] };
+const CIRCLE_S1 = { reach: { name: 'Reachfolk', kin: 'reachkin' } };
+```
+
+- `ROSTER_S1` entries use today's `ROSTER` fields, plus `dt` and `home` the way S1 adds them to the 18.
+- `Object.assign(ROSTER, ROSTER_S1)` before `ROSTER_KEYS` is built in `56-roster.js`; the same for
+  `CHAR_KIT`, `BIOS`, `JOIN_LINES`, `QUOTES`, `STORIES` and `HOME_SLOT`. New keys only, so no old save sees a
+  changed hero.
+- Text (`21t-stories-quests.js`): `HQ_TEXT[id] = { open, steps: [line x n], done: [line x n], stand:
+  { title, intro }, awaken: { say, story: { title, text } } }`, plus the 14 new heroes' `BIOS`,
+  `JOIN_LINES`, `QUOTES` and 3 `STORIES` each. A missing line shows the step's plain pattern (1.2).
+
+### 4.2 Save
+
+The save key stays **`lanternfall.save.v1`**. This is additive: one new top-level field through
+`registerState`, so nothing migrates and no key bump is needed (the relaxed pre-1.0 save rule is not
+used).
+
+```js
+registerState('hq', {
+  v: 1,
+  st: {},      // { [heroId]: index of the current step; steps.length = all done } (only rises)
+  aw: {},      // { [heroId]: ms } when Awakened; the one field every reader checks (hqAwake(id))
+  stand: {},   // { [heroId]: [tries, won 0|1, best 0-100] }
+  seen: {},    // { [heroId]: 1 } the Awakened story was read
+  news: 0      // 1 once the "Heroes have quests now" line was shown to an old save
+});
+```
+
+- **Ids and counts only** (core-2 8.1-4). Bond, zone, boss, beat and camp progress is read live from
+  their own systems, never copied. A `foe` step is done when `st` moves past it; a `bring` step is paid
+  and moved past in one action.
+- **Never repurposed:** `S.party.unlock.quests` (recruit quests: Bram, Maren, Elowen, Morwen) keeps its
+  meaning. Hero quests live only in `S.hq`. `S.party.rec[id]` is untouched; the title comes from
+  `AWAKEN[id].title` when `S.hq.aw[id]`.
+- **Old saves:** `st` starts empty. On load, each recruited hero at Veteran or higher gets an open quest,
+  and steps already true complete quietly on their first check (1.2). One What's new line: "Your heroes
+  have stories to finish. See Party > Heroes." Nothing is granted for free: the Stand and the Awakening
+  cost are always the player's.
+- **New heroes** are new `ROSTER` keys; `S.party.rec` gains them only when recruited, as today.
+- **Tactics:** S7 reads `hqAwake(id)` to open rule slot 3 (`S.tac` shape unchanged).
+- **Check fixtures:** `tests/fixtures/save-v2.json` and `save-v3-four.json` load with `S.hq` defaults;
+  a new fixture `save-hq-mid.json` (a Coast save with 6 heroes past Veteran, one mid-quest, one Awakened)
+  round-trips unchanged.
+
+### 4.3 Core API (56g-quests.js) and events
+
+```js
+hqInfo(id) -> { open, region, step, steps: [{ k, text, pct, done, go }], ready, awake, cost, missing }
+hqAwake(id) -> bool; hqTitle(id) -> string; hqCount() -> { open, ready, awake }
+hqHandIn(id) -> bool            // the current bring step
+hqStandStart(id) / hqStandEnd(id, { won, pct })   // the Stand runs on 59f-trials.js's solo runner (S3), two units
+hqCanAwaken(id) -> { ok, why }; hqAwaken(id) -> bool   // pays the cost and sets aw[id]
+hqQuestFoe(zone) -> foe spec | null                    // 59b-enemies asks when it builds a pack
+hqSet(id, step) / hqAwakenFree(id)                     // sim and tests only (quiet)
+// Events: hqOpen { id }, hqStep { id, i, quiet }, hqStand { id, won }, awaken { id }
+// Modifiers: addCharModifier for the passives' damage parts; knobs through AWAKEN[id].pas.knob read by 56b.
+// Goal: registerGoal({ id: 'hq', sys: 'hq', cap: 1, ... }) (section 1.7).
+```
+
+### 4.4 Sim targets (tools/sim.mjs, BAL3 band HQ)
+
+| id | Target | How the sim measures it |
+|---|---|---|
+| AW1 | Each Awakening lifts that hero's contribution 15-25% (none above 30%) | Party effective power at the push zone, awakened vs not, the planner's best trio with the hero in it (CL1 2.2 method) |
+| AW2 | Mean Awakening gain per role within 5 points of each other | AW1 averaged by role |
+| AW3 | First Awakening on day 10-16 of normal play; 3-6 by the Coast's boss | `--days 40 --quests auto` |
+| AW4 | All 32 Awakened in months 6-9 of completionist play | `--days 270 --quests all` |
+| AW5 | Each Stand template passes at reference in 1-3 active tries and idle at 1.25x reference, for every base class and evolution (5 templates x 9) | `--stand <tpl> --class <c>` |
+| AW6 | Idle can finish every step (no step needs a tap) | `--quests auto --idle 1` completes every open quest's non-Stand steps; the Stand at 1.25x |
+| AW7 | No quest blocks: every `bond` step's `alt` is reachable with heroes the save owns | static check plus the sim's owned-roster runs |
+| AW8 | New recruits land in their region's window (3.6) | `--targets` recruit table extended to 32 |
+| AW9 | A late recruit (join level per D2) is worth fielding within 2-4 days of normal play, not hours | `--lineup` fork after recruit |
+| AW10 | Probes cost under 0.05 ms a second | `tools/perf.mjs --quick` |
+
+`tools/sim.mjs` flags: `--quests off|auto|all` (auto: hands in and runs Stands when able; all: plus
+fields quest heroes), `--awaken ids|all`, `--stand tpl`, `--report quests` (per hero: opened, each step,
+Awakened day).
+
+### 4.5 Checks (tools/check.mjs, a new "quests" section)
+
+- Every `ROSTER` key has a `HERO_QUESTS` and an `AWAKEN` entry (32 each); 3-5 steps; the last is `stand`.
+- Every step kind is known; every `bond` id exists in `SYNERGIES` and names the quest's hero; every `alt`
+  is `'any'`; every `foe` place and base rig exists; every `bring` family and grade is in range (1-15).
+- Every Awakening has a title, a `sig` with `rank: 2`, a `pas` with id, name and text, and a `look.trim`.
+- Step lines and titles are at most 60 characters; no step names a hero other than its own except in
+  `bond` (the partner).
+- Roles 8/8/8/8; the type counts match 3.3; every hero has at least one Bond.
+- Save: load, save, load is identical with `S.hq`; old fixtures load; `S.party.unlock.quests` unchanged.
+
+### 4.6 Writing load
+
+- 32 quests: an opening line, 3-5 step lines, 3-5 done lines, a Stand title and intro, the Awakening line
+  and the "Awakened" story: about 450 short texts.
+- 14 new heroes: bio (above), join line, quote, 3 camp stories: 84.
+- 14 new Bonds: 28 stories, 14 Sworn lines.
+- Quest foes: about 30 names with one bestiary line each.
+- Split by region, one LORE writer per region, in the house voice (lore.md 1).
+
+### 4.7 Build split (exact files)
+
+Free file numbers checked against `src/js` and every doc on this branch: `21r`, `21s`, `21t`, `56g`, `59k`,
+`12h`, `12i`, `75-quests-ui.js` and `60-quests.css` are unused. Reserved names left alone: `59e`, `59g`,
+`59h`, `59i`, `59j`, `21p`, `21q`, `57h` (and every other name listed in the docs, such as `21g`, `21k`-`21o`,
+`57g`, `59f`).
+
+HER (build-map: "Heroes 19-32 plus Awakenings and hero quests for all 32", XL) splits into five slices. It
+needs **S1** (types, statuses, `dt`), **S3** (the evolutions and `59f-trials.js`'s solo runner, which the
+Stand reuses) and, for its region content, each region's build (R2-R5). Tactics rule slot 3 waits for S7
+(the flag is set from day one).
+
+| Slice | Owner, size | New files | Small edits (extension points) |
+|---|---|---|---|
+| **HER1** Quest core + the 18 heroes' quests | Sonnet (Opus review), L | `src/js/21s-data-quests.js` (`HQ_TUNE`, `HERO_QUESTS`, `AWAKEN`, `QUEST_FOES` for all 32; steps in unbuilt regions carry their region and stay hidden), `src/js/56g-quests.js` (core: `registerState('hq')`, probes, hand-ins, the cost, `hqAwaken`, events, the Next Up goal, the What's new line) | `src/js/59b-enemies.js` (ask `hqQuestFoe(zone)` when a pack is built: one line), `src/js/56b-synergy.js` (Awakening kit rows kind `awakening` from `AWAKEN`; passive knobs), `tools/check.mjs` (section 4.5), `tests/fixtures/save-hq-mid.json` (new) |
+| **HER2** Awakening combat + the Stand | Opus, M | `src/js/59k-awaken-combat.js` (rank-2 signatures and the 32 passives on S1's status engine; the 5 Stand templates and twists as data for `59f-trials.js`) | `src/js/59f-trials.js` (a two-unit mode: one flag), `src/js/56d-autofield.js` (score rank-2 numbers: none if it reads kit data already), `tools/sim.mjs` (flags in 4.4) |
+| **HER3** The 14 new heroes | Sonnet, L | `src/js/21r-data-heroes.js` (`ROSTER_S1`, `CHAR_KIT_S1`, `CIRCLE_S1`, the 14 Bonds' data rows, `reachkin`) | `src/js/56-roster.js` (merge `ROSTER_S1` before `ROSTER_KEYS`: one line; the fallback text for new route types), `src/js/56c-unlocks.js` (the 14 routes, the Kiln Tally and Lichen Bundle tokens, Tavern rotation rows for Oswin), `src/js/56b-synergy.js` (merge `CHAR_KIT_S1`; the Kin row and 14 Bond rows into `SYNERGIES`), `src/js/56e-formation.js` (`HOME_SLOT` for the 14), `src/js/21-stories.js` (merge the new `BIOS`/`JOIN_LINES`/`QUOTES`/`STORIES` from 21t: one line each) |
+| **HER4** Screens | Sonnet, M | `src/js/75-quests-ui.js` (roster chips, the hero sheet's Quest box, the preview sheet, the Awakening card and confirm, the Stand entry and result), `src/styles/60-quests.css` | `src/js/75-party-sheet.js` (a `registerSection` slot for the Quest box: one call), `src/js/75-party.js` (the chip hook on hero rows) |
+| **HER5** Art + words | Sonnet (art), Sonnet (writer) | `src/js/12h-art-heroes-s1.js` (the 14 new outfits on the B1 kit), `src/js/12i-art-awaken.js` (32 overlays: trim and one piece), `src/js/21t-stories-quests.js` (all quest text, the 14 heroes' bios and stories) | `src/js/60b-baker.js` (apply the overlay when `hqAwake(id)`: one line), `src/js/21f-stories-bonds.js` (content for the 14 new Bonds) |
+
+**Order.** HER1 and HER3 can start after S1 (data and core), HER2 after S3, HER4 after HER1, HER5 any
+time after HER3's data. Ship per region: the Hollow's and the Coast's quests with R2, the Emberwaste's
+heroes and quests with R3, and so on. The 14 heroes' **concepts** need the owner's approval first
+(build-map 4).
+
+**For other tasks (small, listed so nobody is surprised):**
+
+- **gatherers-2 / N3:** the Hero routes listen for `hqStep` and `recruit`; Sister Fennel's talk line on
+  Elowen's step 4.
+- **WC1 / BT1:** Solveig raises the Beacon (lore.md 4.4a); her quest reads its level. The Kitchen level 3
+  step (Caedmon) and the icehouse roof (Hob, flavour only) need no new building.
+- **LORE10:** Pip's last page can be handed over by Orla; Caedmon's and Oswin's lines at the Pyre Knight
+  stay one line each (Caedmon keeps the only rival mechanic).
+- **NM1 copy:** recruit lines drop the "Quest:" prefix ("Bring Oak Logs to his camp.") so "quest" means the
+  hero quest only. Fix `56-roster.js`'s "pay him" for Pip (lore.md 11) in the same pass.
+- **CL1 5.1:** the 14 rows of 3.3 extend its table; C3 is met.
+- **AC6 / 58-deeds:** tracks "Awakened 1 / 8 / 16 / 32"; the Full Company Feat reads "every hero
+  Awakened and at the top rank".
+
+---
+
+## 5. Owner decisions
+
+**D1. The roster spread and rarities.** 14 new heroes: 2 on the Coast (Cass, Merrin), 6 in the
+Emberwaste, 5 in the Pale Reach and 1 in the Gloamvale (Aslaug, a Pale Reach guide met at the top of the
+road down, whose quest stays clear of the Voice). Rare 5, Epic 7, Legendary 2 (Orla, Solveig), no new
+Commons. Elowen and Corvin already land in Region 2 by timing; the "2 recruits" rule counts new faces.
+*Recommended: yes, as listed.* (Alternative: move Aslaug to the Pale Reach and have no Region 5 recruit.)
+
+**D2. Late recruits' starting level.** Today every recruit starts at level 1. A hero who joins in the Pale
+Reach at level 1 is weeks from useful. Proposal: new heroes join at a **floor rank for their region**
+(Coast rank 1 at level 25, Emberwaste rank 2 at 50, Pale Reach rank 3 at 75, Gloamvale rank 4 at 100):
+a fixed start, not catch-up XP, and still well below the pair you field. *Recommended: yes* (AW9 tunes it
+to "worth fielding in 2-4 days").
+
+**D3. A fifth circle, Reachfolk.** Solveig, Brynja, Ragna and Aslaug, with the Kin "Candle to Candle"
+(healing on one member heals the others for 10%). Without it, Wayfarers grows to 11 and its Kin fires
+too often. *Recommended: yes.*
+
+**D4. The Awakening cost.** Gold (2,000 foes' worth), 30 Essence of the region's middle grade, two
+materials by the hero's weight (60 + 40), and **one Sigil** of the region's family, consumed. Legendaries
+x1.5. The Sigil is why Hollow heroes Awaken on the Coast, not before. *Recommended: yes.*
+
+**D5. Three new lore ties.** Merrin is **Silas Penrow's daughter** (she fights the Fogbound with one line,
+no special mechanic). Orla **wrote Pip's book** and tore out its last chapter herself (LORE10 may hand
+the page over through her). Oswin was **the Pyre Knight's squire**; Aldric knights him at his Awakening.
+*Recommended: yes to all three* (each is one line in LORE10 or the region beats, and each can be dropped
+alone).
+
+**D6. Names.** The 14 names and titles in 3.3, the 32 Awakened titles, and "**the Stand**" for the fight
+for two at the end of each quest (it is not the Warden's ability Stand Fast; if that reads too close,
+the fallback is "Tobin's Last Step"). *Recommended: approve the list; strike any name you dislike and
+HER swaps it.*
