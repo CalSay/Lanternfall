@@ -1067,3 +1067,13 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Proposal for resume: ART-TEST1 (one hero, e.g. Wren, drawn at ~48 px in this style, idle + attack),
   shown in-game in portrait 360 px and in a landscape mock, so the owner picks the scale and orientation
   before any art or layout work.
+- OWNER shared more promptbase references (scratchpad assets/: ref-chunky-heroes-2.webp, ref-items.png,
+  ref-scenes.png). Heroes: same chunky jewel style on dark navy; class reads (ice mage, hooded shadow caster,
+  scroll witch, hooded swordsman, dwarf axe, green ranger, fire mage, fairy druid, elf archer). Items: 32-48 px
+  icons with a bright rim light, dark outline, one glow colour, sparkle motes (lamp, scroll, crystal, crystal
+  sword, arrow, potion, chest, tree, cat). Scenes: dark navy/teal night scenes lit by saturated glows (rune
+  forest, drowned ruins, rune ice cave, lighthouse coast, tents, sea cave, moonlit ruins, observatory, burning
+  castle): the same "light in the dark" idea as map H. Reference only.
+  ART PLAN for resume (coordinator): ART-STYLE1 writes one style guide from all references; then, cheapest
+  win first: ART-ICON1 (item, material and Sigil icons in this style), ART-TEST1 (one hero at ~48 px, portrait
+  vs landscape mock), then region backdrops (static, baked once).
