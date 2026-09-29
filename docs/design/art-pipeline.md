@@ -98,6 +98,10 @@ rows and columns and breaks outlines. Pip's trial was shrunk this way, so her fi
 - On a landscape phone (about 740 x 360 CSS px) the stage is about 480 x 240 logical px, so a 96 px hero is
   about 40% of the stage height, and a party of three plus a pack of 8-10 fits across.
 
+> **Superseded in part (owner, 2026-09-29, solo-hero pivot, see docs/design/solo-hero.md):** there is no party
+> any more. One hero stands on the left of the road. The party formation and spacing rules in 9, 10 and 10a
+> no longer apply; the enemy size bands, the quiet background, contact shadows and the low foreground still do.
+
 ## 9. Formation and enemy sizes (owner, 2026-09-29)
 
 - The party stands **staggered and overlapping** on the road: the back lane a few pixels higher (further up
