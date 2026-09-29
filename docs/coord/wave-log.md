@@ -1143,3 +1143,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   parts of formation.md, classes-2 (party roles), heroes-2 (recruit into party, Bonds as combat), combat-2
   (party/pack presentation), CB3 lane combat (now for one hero).
   WORK UN-PAUSED for this task only (owner: "let me play test the early game"): SOLO1 (opus) launched.
+
+### 2026-09-29: owner: new hero art in now, background art paused
+- Owner: "Add new hero art. Pause background art." Heroes will look out of scale on the old code-drawn backgrounds; accepted.
+- Owner: parry order is stagger at once, counter lands during the stagger, enemy recovers when the counter ends. Heavy telegraphed attacks come mainly from bosses and elites (sent to SOLO1; solo-hero.md updated).
+- HEROART1 (opus) launched in parallel with SOLO1: new files only (encoded pose data, sprite runtime, build tool) plus one small hook where the stage and camp draw the hero. Merge after SOLO1 and re-apply the hook by hand.
+- Mossy Hollow background art stays in art/ and is not integrated (paused).
