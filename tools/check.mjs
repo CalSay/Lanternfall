@@ -4855,15 +4855,18 @@ try {
     assert(E('TYPE_X.weak === 1.5 && TYPE_X.neutral === 1 && TYPE_X.resist === 0.6'), 'weak x1.5, neutral x1, resists x0.6 (core-2 2.3)');
     assert(E('Object.values(FOE_FAMS).every(r => DMG_TYPES.includes(r.weak) && r.res.length <= 2 && r.res.every(d => DMG_TYPES.includes(d) && d !== r.weak))') && E('Object.keys(FOE_FAMS).join()') === 'beast,plant,undead,spirit,construct,drowned,ember,pale,deep',
       'nine families, each 1 weakness and at most 2 resists, never both (core-2 2.3)');
+    // S1 pick (proposed): the Hollow's foes resist at ST_TUNE.resistHollow until the counters land; the Coast at x0.6
+    const R = E('ST_TUNE.resistHollow');
+    assert(R >= 0.6 && R < 1 && E('typeXKey("witch", "fire")') === 0.6, `Hollow resists at x${R} (S1, pending), the Coast at x0.6`);
     const chart = E('JSON.stringify(Object.keys(FOE_TYPE).map(k => DMG_TYPES.map(d => typeXKey(k, d))))');
-    assert(JSON.parse(chart).every(row => row.every(x => x === 0.6 || x === 1 || x === 1.5)), 'every foe takes x0.6, x1 or x1.5 from every type: nothing is immune');
-    const want = { 'slime,fire': 1.5, 'slime,poison': 0.6, 'bat,poison': 1.5, 'bones,holy': 1.5, 'bones,poison': 0.6, 'beetle,phys': 1, 'spore,fire': 1.5, 'golem,frost': 1.5, 'golem,poison': 0.6,
-      'wraith,holy': 1.5, 'wraith,phys': 0.6, 'deckhand,holy': 1.5, 'deckhand,frost': 0.6, 'witch,fire': 0.6, 'jelly,holy': 1.5, 'crab,poison': 1.5, 'coral,frost': 1.5, 'kelp,phys': 1 };
+    assert(JSON.parse(chart).every(row => row.every(x => x === 0.6 || x === R || x === 1 || x === 1.5)), 'every foe takes a resisted, neutral or weak share from every type: nothing is immune');
+    const want = { 'slime,fire': 1.5, 'slime,poison': R, 'bat,poison': 1.5, 'bones,holy': 1.5, 'bones,poison': R, 'beetle,phys': 1, 'spore,fire': 1.5, 'golem,frost': 1.5, 'golem,poison': R,
+      'wraith,holy': 1.5, 'wraith,phys': R, 'deckhand,holy': 1.5, 'deckhand,frost': 0.6, 'witch,fire': 0.6, 'jelly,holy': 1.5, 'crab,poison': 1.5, 'coral,frost': 1.5, 'kelp,phys': 1 };
     const bad = Object.entries(want).filter(([k, x]) => { const [f, d] = k.split(','); return E(`typeXKey(${JSON.stringify(f)}, ${JSON.stringify(d)})`) !== x; });
     assert(!bad.length, `the chart per foe matches core-2 2.3 (${Object.keys(want).length} spot checks)` + (bad.length ? ': ' + bad.map(b => b[0]).join(' ') : ''));
     assert(E('typeRel("slime", "fire") === 1 && typeRel("slime", "poison") === -1 && typeRel("beetle", "fire") === 0'), 'typeRel: weak 1, resisted -1, neutral 0 (the number marks)');
     // zone 7 is Wraithmarsh I: 72% Wraiths, 28% the next type (Moss Slime, zone 8)
-    assert(near(E('typeZone("phys", 7)'), 0.72 * 0.6 + 0.28 * 1) && near(E('typeZone("fire", 7)'), 0.72 * 1 + 0.28 * 1.5), 'typeZone weighs a zone\'s pack (72% its type, 28% the next)');
+    assert(near(E('typeZone("phys", 7)'), 0.72 * R + 0.28 * 1) && near(E('typeZone("fire", 7)'), 0.72 * 1 + 0.28 * 1.5), 'typeZone weighs a zone\'s pack (72% its type, 28% the next)');
     assert(E('Object.keys(ST_ICONS).length === 8 && Object.keys(STATUS_DEFS).every(id => ST_ICONS[id] && ST_ICONS[id].rows.length === 5 && ST_ICONS[id].rows.every(r => r.length === 5 && [...r].every(c => c === "." || ST_ICONS[id].pal[c])))'),
       'eight harmful statuses, each with a 5x5 badge in its own shape (core-2 3.1)');
     assert(!g.errors.length, 'no type chart errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -4902,7 +4905,7 @@ try {
   {
     const { g, E } = arena(1);   // Mossy Hollow: Moss Slimes (plant: weak fire, resists poison)
     const hit = (dt, kind = 'magic', tags = 0) => E(`(() => { const f = combatFoes().find(x => x.type === 'slime' && !x.dead); return cbDamageFoe(f, 100, -1, ${JSON.stringify(kind)}, ${JSON.stringify(dt)}, ${tags}); })()`);
-    assert(near(hit('fire'), 150) && near(hit('poison'), 60) && near(hit('phys'), 100) && near(hit('holy'), 100), 'a Moss Slime takes fire x1.5, poison x0.6, physical and holy x1');
+    assert(near(hit('fire'), 150) && near(hit('poison'), 100 * E('ST_TUNE.resistHollow')) && near(hit('phys'), 100) && near(hit('holy'), 100), 'a Moss Slime takes fire x1.5, poison at the resist, physical and holy x1');
     E('(() => { const f = combatFoes().find(x => x.type === "slime" && !x.dead); stApply(f, "mark", 1, 0, -1); })()');
     assert(near(hit('phys'), 120) && near(hit('fire'), 180), 'a Marked foe takes +20% from every source (core-2 3.1)');
     E('(() => { const f = combatFoes().find(x => x.type === "slime" && !x.dead); stApply(f, "mark", 1, 0, -1, { v: 0.15 }); })()');

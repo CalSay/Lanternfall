@@ -8386,6 +8386,172 @@ const DARE_LINES = {
 const omenLine = (id, dare) => (dare && DARE_LINES[id]) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';
 
+// ---- src/js/21x-data-types.js ----
+// 21x-data-types: damage types, statuses, reactions, foe families and the per-foe type data
+// (Core 2.0 slice S1; docs/design/core-2.md 2-3 and 6.1, combat-2.md 2.1 and 8.3, classes-2.md 5.1).
+// CORE FILE, data only: no DOM. The engine that reads it is 59a-status.js; the stage draws the icons.
+//
+// Exposed names:
+//   DMG_TYPES            ['phys', 'holy', 'poison', 'fire', 'frost'] (core-2 2.1; ids never change)
+//   DT_INFO[id]          { n, col, icon } icon: 7x7 map ('1' colour, '2' dark, '3' light) for numbers
+//   TYPE_X               { weak: 1.5, neutral: 1, resist: 0.6 } (core-2 2.3)
+//   FOE_FAMS[fam]        { weak, res: [] } the family rows (core-2 2.3)
+//   PACK_SIZES[size]     [min, max] members (core-2 6.1)
+//   FOE_TYPE[key]        { region, name, size, n, fam, dt, row, quota, weak, res } per foe type
+//                        (combat-2 2.1); weak / res are filled from the family at load. 59b merges the
+//                        Hollow rows into FOE_BEH (FOE_BEH[k].size, .fam, .dt). The Coast rows wait for
+//                        R2, whose foe types use these keys.
+//   PACK_TUNE            { swarmHp, swarmPay } (combat-2 1.1, owner D7). Data for S6: packs stay 3 in S1
+//   HERO_DT[id]          { dt, sst } base type and the signature's status for the 18 heroes (classes-2 5.1).
+//                        56-roster merges them into ROSTER[id] (ROSTER[id].dt, .sst)
+//   LB_DT[cls]           the Lanternbearer's base type by class (legacy keys and the S2 base ids)
+//   STATUS_DEFS[id]      the eight harmful statuses on foes (core-2 3.1)
+//   UNIT_STATUS          the same statuses on a party member (core-2 3.1, "Harmful, on the party")
+//   CC_RULES             crowd control on elites and bosses (core-2 3.4)
+//   REACTIONS[id]        Blight, Shatter, Judgement (core-2 3.5; player word "reaction")
+//   ST_TUNE              the engine knobs (tick, caps, windows)
+//   ST_BADGE_ORDER       which statuses show first on the focus foe (combat-2 2.6)
+//   ST_ICONS[id]         5x5 badge maps with their own palette { rows, pal, col } (core-2 3.1 shapes)
+//
+// Numbers are core-2's starting values. Picks S1 had to make (core-2 leaves them open) are marked "S1 pick".
+
+const DMG_TYPES = ['phys', 'holy', 'poison', 'fire', 'frost'];
+
+// Okabe-Ito colours (colour-blind safe) and distinct outlines, so they read in greyscale too.
+const DT_INFO = {
+  phys: { n: 'Physical', col: '#E8E4DA', dark: '#8C8577', light: '#FFFFFF',
+    icon: ['......3', '.....3.', '....1..', '.2.1...', '..1....', '.1.2...', '1......'] },          // blade
+  holy: { n: 'Holy', col: '#F0E442', dark: '#9C9420', light: '#FFFBD0',
+    icon: ['...1...', '.1...1.', '..333..', '1.313.1', '..333..', '.1...1.', '...1...'] },          // sun
+  poison: { n: 'Poison', col: '#009E73', dark: '#00563F', light: '#7FE0C2',
+    icon: ['...1...', '...1...', '..111..', '.11311.', '.13111.', '.11111.', '..222..'] },          // drop
+  fire: { n: 'Fire', col: '#D55E00', dark: '#7A3500', light: '#FFB070',
+    icon: ['.1...1.', '.1.1.1.', '11.1.11', '1113111', '1133311', '.13331.', '..222..'] },          // flame
+  frost: { n: 'Frost', col: '#56B4E9', dark: '#2A6A90', light: '#E4F6FF',
+    icon: ['...1...', '.1.1.1.', '..131..', '1133311', '..131..', '.1.1.1.', '...1...'] }           // flake
+};
+
+const TYPE_X = { weak: 1.5, neutral: 1, resist: 0.6 };
+
+// At most 1 weakness and 2 resistances; nothing is immune (core-2 2.3).
+const FOE_FAMS = {
+  beast: { weak: 'poison', res: [] },
+  plant: { weak: 'fire', res: ['poison'] },
+  undead: { weak: 'holy', res: ['poison'] },
+  spirit: { weak: 'holy', res: ['phys'] },
+  construct: { weak: 'frost', res: ['poison'] },
+  drowned: { weak: 'holy', res: ['frost', 'fire'] },
+  ember: { weak: 'frost', res: ['fire'] },
+  pale: { weak: 'fire', res: ['frost'] },
+  deep: { weak: 'holy', res: [] }
+};
+
+const PACK_SIZES = { brute: [3, 3], normal: [5, 6], swarm: [8, 10] };
+
+// combat-2 2.1. quota: the pack cadence per behaviour (S6 runs them; data now). res: a foe's own extra
+// resist on top of its family row (none of these have one; the Pyre Knight will: fire).
+const FOE_TYPE = {
+  // the Hollow (zones 1-35)
+  slime: { region: 'hollow', name: 'Moss Slime', size: 'normal', n: 6, fam: 'plant', dt: 'poison', row: 2, quota: null },
+  bat: { region: 'hollow', name: 'Cave Bat', size: 'swarm', n: 9, fam: 'beast', dt: 'phys', row: 1, quota: { dive: 2, every: 5 } },
+  bones: { region: 'hollow', name: 'Rattlebones', size: 'normal', n: 5, fam: 'undead', dt: 'phys', row: 1, quota: { rise: 2 } },
+  beetle: { region: 'hollow', name: 'Barrow Beetle', size: 'brute', n: 3, fam: 'beast', dt: 'phys', row: 2, quota: null },
+  spore: { region: 'hollow', name: 'Spore Cap', size: 'normal', n: 5, fam: 'plant', dt: 'poison', row: 0, quota: { cloud: 1, every: 6 } },
+  golem: { region: 'hollow', name: 'Quarry Golem', size: 'brute', n: 3, fam: 'construct', dt: 'phys', row: 2, quota: { slam: 3 } },
+  wraith: { region: 'hollow', name: 'Marsh Wraith', size: 'normal', n: 5, fam: 'spirit', dt: 'frost', row: 0, quota: { heal: 1, gap: 2 } },
+  // the Sunken Coast (zones 36-70; R2 builds these foes under these keys)
+  crab: { region: 'coast', name: 'Shinglecrab', size: 'brute', n: 3, fam: 'beast', dt: 'phys', row: 2, quota: { shell: 1 } },
+  gull: { region: 'coast', name: 'Stormgull', size: 'swarm', n: 8, fam: 'beast', dt: 'phys', row: 1, quota: { dive: 2, every: 5 } },
+  deckhand: { region: 'coast', name: 'Drowned Deckhand', size: 'normal', n: 5, fam: 'drowned', dt: 'frost', row: 2, quota: { undertow: 1 } },
+  kelp: { region: 'coast', name: 'Kelp Strangler', size: 'normal', n: 5, fam: 'drowned', dt: 'phys', row: 1, quota: { bind: 1 } },
+  jelly: { region: 'coast', name: 'Lanternjelly', size: 'swarm', n: 8, fam: 'drowned', dt: 'poison', row: 0, quota: { shock: 1, every: 3 } },
+  witch: { region: 'coast', name: 'Brine Witch', size: 'normal', n: 5, fam: 'drowned', dt: 'frost', row: 0, quota: { hex: 1 } },
+  coral: { region: 'coast', name: 'Coral Warden', size: 'brute', n: 3, fam: 'construct', dt: 'phys', row: 2, quota: null }
+};
+for (const k in FOE_TYPE) {
+  const r = FOE_TYPE[k], fam = FOE_FAMS[r.fam];
+  r.weak = fam ? fam.weak : null;
+  r.res = (fam ? fam.res : []).concat(r.res || []).slice(0, 2);
+}
+
+const PACK_TUNE = { swarmHp: 1.25, swarmPay: 1.25 };
+
+// classes-2 5.1: every type on 2+ heroes, every role with a non-physical hero.
+const HERO_DT = {
+  tobin: { dt: 'phys', sst: 'guard' }, maren: { dt: 'holy', sst: 'taunt' }, aldric: { dt: 'phys', sst: 'stun' },
+  grenna: { dt: 'phys', sst: 'stun' }, caedmon: { dt: 'fire', sst: 'burn' },
+  bram: { dt: 'phys', sst: 'bleed' }, wren: { dt: 'phys', sst: 'mark' }, kestrel: { dt: 'frost', sst: 'chill' },
+  isolde: { dt: 'poison', sst: 'venom' }, corvin: { dt: 'poison', sst: 'venom' },
+  thessaly: { dt: 'frost', sst: 'chill' }, pip: { dt: 'fire', sst: 'burn' }, oriel: { dt: 'frost', sst: 'stun' },
+  morwen: { dt: 'fire', sst: 'burn' },
+  hesketh: { dt: 'holy', sst: 'shield' }, anselm: { dt: 'holy', sst: 'empower' }, vesper: { dt: 'holy', sst: 'regen' },
+  elowen: { dt: 'holy', sst: 'regen' }
+};
+
+// The Lanternbearer (core-2 2.2, change log CL1 8.2-1: the Mage's base type is fire). S1 pick: the legacy
+// Lightkeeper swings holy (it becomes a Mage on the Priest's path, whose light is holy; classes-2 7.1).
+const LB_DT = { warden: 'phys', ranger: 'phys', lanternmage: 'fire', lightkeeper: 'holy', warrior: 'phys', mage: 'fire' };
+
+// core-2 3.1. coef: x P a tick per stack (P = the applier's hit power when applied). dur in seconds.
+// keep: 'stronger' (one per foe, the stronger stays), 'refresh' (one per foe, refreshed), 'stack'.
+const STATUS_DEFS = {
+  bleed: { n: 'Bleed', dt: 'phys', coef: 0.08, dur: 6, max: 5, keep: 'stack', noArmour: 1 },
+  venom: { n: 'Venom', dt: 'poison', coef: 0.04, ramp: 0.1, dur: 8, max: 10, keep: 'stack', antiHealAt: 5 },
+  burn: { n: 'Burn', dt: 'fire', coef: 0.12, dur: 4, max: 1, keep: 'stronger', spread: 2, jumps: 3, spreadMin: 2 },
+  chill: { n: 'Chill', dt: 'frost', slow: 0.3, bossSlow: 0.15, dur: 4, max: 1, keep: 'refresh', cap: 6 },
+  stun: { n: 'Stun', dur: 1, min: 1, maxDur: 3, max: 1, keep: 'none', cap: 3 },
+  root: { n: 'Root', dur: 3, max: 1, keep: 'none', cap: 4 },
+  mark: { n: 'Mark', v: 0.2, vMin: 0.15, vMax: 0.3, dur: 8, max: 1, keep: 'stronger' },
+  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 }
+};
+
+// On a party member: damage over time is a share of the member's max HP a tick (per stack for bleed and
+// venom, venom ramping as on foes); all of it together at most dotCap a tick.
+const UNIT_STATUS = {
+  bleed: { hp: 0.01, max: 5, dur: 6 }, venom: { hp: 0.005, ramp: 0.1, max: 10, dur: 8 }, burn: { hp: 0.02, max: 1, dur: 4 },
+  chill: { slow: 0.3, dur: 4 }, stun: { dur: 1 }, root: { dur: 3 }, mark: { v: 0.2, dur: 8 }, curse: { dur: 4 },
+  dotCap: 0.05
+};
+
+// core-2 3.4. x: duration multiplier (0 = immune). bossStun: stagger filled per second of stun a boss
+// ignores (the stagger bar itself is S6: S1 keeps the count on the foe, f.stag).
+const CC_RULES = {
+  normal: { stun: 1, root: 1, chill: 1 },
+  elite: { stun: 0.5, root: 0.5, chill: 1 },
+  boss: { stun: 0, root: 0, chill: 1 },
+  drWin: 8, bossStun: 8
+};
+
+const REACTIONS = {
+  blight: { n: 'Blight', col: '#7FC23A', stag: 10 },
+  shatter: { n: 'Shatter!', col: '#9CDCFF', x: 2, stag: 20 },
+  judgement: { n: 'Judgement', col: '#FFE680', heal: 0.1, cap: 0.05, stag: 10 }
+};
+
+// tick: the one status beat (s). vulnCap: Σ vuln (core-2 1.2). rxWin / rxX: the reaction window and its
+// timing bonus on abilities. heavyP: a single hit of this many P counts as heavy (core-2 3.5).
+// resistHollow (S1, proposed, pending the coordinator): the Hollow's foes resist at x0.85, not x0.6, until the counters
+// land (the planner's leans S6, evolutions S3, resist and type-power lines S4/S5; BAL3 retunes). At x0.6 an all-physical
+// Ranger party walls at the Elder Wraiths (T3: 175 min to zone 15, one seed never). Coast foes (R2) take TYPE_X.resist.
+const ST_TUNE = { tick: 1, vulnCap: 0.6, rxWin: 3, rxX: 1.25, heavyP: 3, resCap: 0.5, antiHeal: 0.5, resistHollow: 0.85 };
+
+// The focus foe shows up to 4 badges, the most important first (combat-2 2.6 and its "other members" order).
+// Mark is left out here: the stage already draws its own Mark chip (the Ranger's Focus and Mark share it).
+const ST_BADGE_ORDER = ['stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
+
+// 5x5 badge shapes (core-2 3.1): three slashes, a drop, a small flame, a flake, a spiral, a chain link,
+// a crosshair, a cracked ring. Each carries its own palette (the stage's chip draws it on a dark plate).
+const ST_ICONS = {
+  bleed: { col: '#E0524F', pal: { r: '#E0524F', R: '#FF9A8A' }, rows: ['..r.R', '.r.R.', 'r.R.r', '.R.r.', 'R.r..'] },
+  venom: { col: '#009E73', pal: { g: '#009E73', G: '#7FE0C2' }, rows: ['..g..', '.ggg.', 'gGggg', 'ggggg', '.ggg.'] },
+  burn: { col: '#D55E00', pal: { o: '#D55E00', y: '#FFB070' }, rows: ['..o..', '.oo.o', '.oyo.', 'oyyyo', '.ooo.'] },
+  chill: { col: '#56B4E9', pal: { b: '#56B4E9', w: '#E4F6FF' }, rows: ['b.b.b', '.bbb.', 'bbwbb', '.bbb.', 'b.b.b'] },
+  stun: { col: '#F0E442', pal: { y: '#F0E442' }, rows: ['.yyy.', 'y...y', 'y.y.y', 'y.yy.', '.y...'] },
+  root: { col: '#C8B89A', pal: { s: '#C8B89A', S: '#8A7A5E' }, rows: ['ss...', 's.S..', '.sSs.', '..S.s', '...ss'] },
+  mark: { col: '#7ED36A', pal: { l: '#7ED36A', w: '#FFFFFF' }, rows: ['..l..', '.l.l.', 'll.ll', '.l.l.', '..l..'] },
+  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] }
+};
+
 // ---- src/js/22-data-regions.js ----
 // 22-data-regions: the regions of the Lantern Road (docs/design/region-2.md 2.2, plan-2 task R0).
 // Core, data plus pure lookups (no DOM, no S). Loads in Node too.
@@ -12858,6 +13024,7 @@ let unitHp, unitCd, bossTelegraph;
       const world = target() === 'world';
       const n = world ? worldEmbers : (mob.embers || 0);
       if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
+      if (!world && typeof stTagNext === 'function') stTagNext('ab');   // S1: an ability (the reaction window's x1.25)
       heroSwing(heroAtk() * tn('flare') * (1 + tn('flarePerEmber') * n), false);
       // Everburn: Flare plants 2 new Embers after it goes off.
       if (ks('everburn')) { const em = tn('embersMax'), k = STAR_KS.everburn.plant; if (world) worldEmbers = Math.min(em, worldEmbers + k); else if (mob) mob.embers = Math.min(em, (mob.embers || 0) + k); }
@@ -12942,6 +13109,7 @@ let unitHp, unitCd, bossTelegraph;
       }
     }
     else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
+    if (c === 'warden' && tg === 'mob' && typeof stTagNext === 'function') stTagNext('heavy');   // S1: the Heavy hit is heavy (Shatter)
     const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX, true, at);
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
     if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * tn('lkShare'), '#B58CFF', false);
@@ -13002,7 +13170,7 @@ let unitHp, unitCd, bossTelegraph;
     // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
     if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd'))) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
-      if (canHit()) heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false);   // Quickdraw: fewer, harder arrows
+      if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
     }
     if (rainLeft > 0 && clock >= rainNext) {
@@ -14223,6 +14391,8 @@ const ROSTER = {
   caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with enough Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
+// S1 (classes-2 5.1): each hero's base damage type and signature status (21x-data-types HERO_DT): ROSTER[id].dt, .sst
+for (const k in HERO_DT) if (ROSTER[k]) Object.assign(ROSTER[k], HERO_DT[k]);
 const ROSTER_KEYS = Object.keys(ROSTER);
 const ROSTER_RANKS = ['Recruit', 'Veteran', 'Captain', 'Champion', 'Paragon', 'Legend', 'Mythic', 'Lanternborn'];
 const ROSTER_STARTER = { warden: 'wren', lanternmage: 'tobin', ranger: 'tobin', lightkeeper: 'bram' };
@@ -16140,10 +16310,13 @@ var afRealPow = null;
   function memberDmg(field, z) {
     const beh = (typeof FOE_BEH === 'object' && FOE_BEH[foeKey(z)]) || {};
     const ax = num(CT('armourX'), 0.85), ao = num(CT('aoeOther'), 0.5), sp = num(CT('lmSplash'), 0.15), ac = num(CT('autoCast'), 1);
-    const marked = field.includes('wren'), phys = k => beh.armoured && !marked && !T.stPierce[k] ? ax : 1;
+    // S1 (59a): each member's type against the zone's pack (px) and its Elder (sx); armour cuts physical hits only
+    const fk = foeKey(z), dtOf = k => typeof unitType === 'function' ? unitType(k) : 'phys';
+    const tp = k => typeof typeZone === 'function' ? typeZone(dtOf(k), z, num(CT('mixP'), 0.72)) : 1, tb = k => typeof typeXKey === 'function' ? typeXKey(fk, dtOf(k)) : 1;
+    const marked = field.includes('wren'), phys = k => beh.armoured && !marked && !T.stPierce[k] && dtOf(k) === 'phys' ? ax : 1;
     const cls = heroCls() || 'warden', out = [];
-    out.push({ k: 'hero', d: heroCombatDps() * ac, px: cls === 'lanternmage' ? 1 + sp * 0.9 : 1, sx: (cls === 'lanternmage' ? 1 : phys('hero')) * (cls === 'ranger' ? T.markX : 1) });
-    for (const k of field) { const r = R(k).role; out.push({ k, d: charDps(k), px: r === 'caster' ? 1 + ao * 0.9 : 1, sx: (r === 'caster' || r === 'support' ? 1 : phys(k)) * (T.stX[k] || 1) }); }
+    out.push({ k: 'hero', d: heroCombatDps() * ac, px: (cls === 'lanternmage' ? 1 + sp * 0.9 : 1) * tp('hero'), sx: (cls === 'lanternmage' ? 1 : phys('hero')) * (cls === 'ranger' ? T.markX : 1) * tb('hero') });
+    for (const k of field) { const r = R(k).role; out.push({ k, d: charDps(k), px: (r === 'caster' ? 1 + ao * 0.9 : 1) * tp(k), sx: (r === 'caster' || r === 'support' ? 1 : phys(k)) * (T.stX[k] || 1) * tb(k) }); }
     return out;
   }
   const stOf = m => m.reduce((a, x) => a + x.d * x.sx, 0);
@@ -21926,7 +22099,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     unburnt: 0.08, vowT: 5, pyre: 0.3, pyreT: 4, pyreSh: 0.15,
     hearthDr: 0.1, hearthHeal: 0.2, hedgeSh: 0.1, chosenHeal: 0.03,
     wall: 0.6, wallT: 6, hymnHeal: 0.4, hymnCd: 0.5, lkTap: 0.08, wardenTaunt: 3,
-    blockX: 0.5, poison: 0.02, poisonT: 4
+    blockX: 0.5, poison: 0.02, poisonT: 4,
+    // S1 (59a-status): Morwen's Vigil Burn is a strong Burn (P = vigilBurnP x her hit power) so her Burns keep
+    // today's total; statuses and types themselves are core-2's numbers (21x-data-types.js)
+    vigilBurnP: 4.3
   };
   COMBAT_TUNE = T;
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
@@ -21957,7 +22133,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       down: false, downT: 0, cd: 0, cdMax: 0, cdRate: 1, lv: 1, blockP: 0, ward: 0, pierce: 0, area: 0, ctrl: 1,
       drT: 0, drV: 0, untarg: 0, strikeT: 0, trust: 0, stubborn: false, vow: false, ashenT: 0, rock: 0, rockT: 0,
       icLeft: 0, icFor: -1, icUsed: 0, poisonT: 0, poisonDps: 0, reflT: 0, hotT: 0, hotV: 0, fight: 0, lifeline: false,
-      dmg: 0, healed: 0, taken: 0, verse: 0, verseT: 0, tollT: 0
+      dmg: 0, healed: 0, taken: 0, verse: 0, verseT: 0, tollT: 0, dt: 'phys', us: null, jdgAt: -9, jdgGot: 0
     };
   }
   const U = [mkUnit(0), mkUnit(1), mkUnit(2), mkUnit(3)];
@@ -22007,6 +22183,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function statUnit(u, key, keepHp) {
     const p = S.party, cells = (p && p.cells) || {}, cell = cells[key] || { col: key === 'hero' ? 2 : 1, lane: 0 };
     u.key = key; u.live = true; u.col = cell.col; u.lane = cell.lane;
+    u.dt = typeof unitType === 'function' ? unitType(key) : 'phys';   // S1: the unit's base type (59a)
     let maxHp, role;
     if (key === 'hero') {
       const cls = p && p.cls && HERO_CLASSES[p.cls] ? p.cls : 'warden';
@@ -22122,6 +22299,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     u.ashenT = 0; u.rock = 0; u.rockT = 0; u.icLeft = 0; u.icFor = -1; u.icUsed = 0; u.poisonT = 0; u.poisonDps = 0; u.reflT = 0;
     u.hotT = 0; u.hotV = 0; u.fight = 0; u.swing = Math.random() / Math.max(0.1, u.spd || 1); u.healT = 0; u.dmg = 0; u.healed = 0; u.taken = 0;
     u.verse = 0; u.verseT = 0; u.tollT = 0; u.lifeline = false;
+    if (typeof stUnitClear === 'function') stUnitClear(u);
   }
 
   // ---------------- foes ----------------
@@ -22135,7 +22313,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk), spd: boss ? T.bossSpd : T.spd * b.spd,
       swing: 0.6 + Math.random() * 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
       stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
-      bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: false, first: 0, split: false, z, adds: false, gone: false
+      bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: false, first: 0, split: false, z, adds: false, gone: false,
+      dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false   // S1: hit type, statuses (59a)
     };
   }
   // Called by 50-sim spawn() in place of its single foe. Returns the foe the stage shows.
@@ -22195,7 +22374,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     Object.assign(m, { ti: Math.max(0, t), row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: T.atk * base * (m.boss ? T.bossAtk : b.atk),
       spd: m.boss ? T.bossSpd : T.spd * b.spd, swing: 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, stunT: 0, slowT: 0, slowV: 0, knockT: 0,
       burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: m.champ ? 2 : 1, elite: !!m.champ, bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, split: false, chanT: 0, hits: 0, again: false, first: 0,
-      z: S.zone, adds: false, gone: false });
+      z: S.zone, adds: false, gone: false, dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false });
   }
   const PACK_EV = { foes: null };
   function emitPack() { PACK_EV.foes = foes; emit('packSpawn', PACK_EV); }
@@ -22249,16 +22428,22 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const foeIdx = f => foes.indexOf(f);
 
   // ---------------- damage to foes ----------------
-  // src: unit index (0 hero) or -1. kind: 'phys' | 'magic' | 'burn' | 'true'. Returns damage dealt.
+  // src: unit index (0 hero) or -1. kind: 'phys' | 'magic' | 'burn' | 'true' | 'dot' (a status tick: no
+  // armour, no carry). dt (S1): the hit's damage type; missing = the source unit's base type (a 'burn' is
+  // fire). tags: 59a bits (ST_HEAVY, ST_AB, ST_CRIT). Returns damage dealt.
   const FOE_EV = { mob: null, src: '' };
-  cbDamageFoe = (f, amount, src, kind) => {
+  cbDamageFoe = (f, amount, src, kind, dt, tags) => {
     if (!alive(f) || !(amount > 0)) return 0;
     let a = amount;
-    if (f.armoured && kind === 'phys' && !(f.markT > 0)) { const pr = src >= 0 && U[src] ? U[src].pierce : 0; a *= T.armourX + (1 - T.armourX) * pr; }
+    const ty = dt || (kind === 'burn' ? 'fire' : src >= 0 && U[src] ? U[src].dt : '');
+    // armour cuts physical hits only (core-2 1.2); a typed hit from a physical-kind swing passes it
+    if (f.armoured && kind === 'phys' && (!ty || ty === 'phys') && !(f.markT > 0)) { const pr = src >= 0 && U[src] ? U[src].pierce : 0; a *= T.armourX + (1 - T.armourX) * pr; }
+    if (typeof stFoeHit === 'function') a = stFoeHit(f, a, src, kind, ty, tags);   // S1: type, Mark, timing, Shatter
     if (f.vulnT > 0) a *= 1.5;
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
     if (src >= 0 && U[src] && U[src].role === 'striker' && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
+    if (typeof stFoeDealt === 'function') stFoeDealt(f, a, src, ty);   // S1: Curse stores, Judgement heals
     if (a > ST.maxHit) ST.maxHit = a; if (f.max > 0 && a > ST.maxOver * f.max) ST.maxOver = a / f.max;   // AC2 records
     if (src >= 0 && U[src]) {
       const u = U[src];
@@ -22271,7 +22456,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       foeDies(f, src, kind);
       // Overkill carries to the next foe (a pack is one old foe's HP split three ways: no hit is wasted
       // on a small foe). Burns, splashes and AoE shares do not carry (carry = false while they land).
-      if (carry && over > 0 && !f.hp && anyFoe()) { const n = focusFoe(); if (n && n !== f) { carry = false; cbDamageFoe(n, over / (kind === 'phys' && n.armoured && !(n.markT > 0) ? 1 : 1), src, kind); carry = true; } }
+      if (carry && kind !== 'dot' && over > 0 && !f.hp && anyFoe()) { const n = focusFoe(); if (n && n !== f) { carry = false; cbDamageFoe(n, over / Math.max(0.1, typeof typeX === 'function' ? typeX(f, ty) : 1), src, kind, ty); carry = true; } }
     }
     return a;
   };
@@ -22284,12 +22469,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (g > 0) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
     }
     burst(0.68, 0.62, f.pal[1] || f.pal[5] || f.pal[3], 10);
+    if (typeof stFoeDies === 'function') stFoeDies(f);   // S1: Burn spreads (Blight carries Venom), Curse detonates
     // Wildfire (a keystone): Embers spread to every foe in the pack at half the count. Deepwell Wildfire:
     // Embers and burns jump to the next foe.
     if ((f.embers > 0 || f.burnT > 0) && (ks('wildfire') || boon('wild'))) {
       const cap = 5 + bonus('tune:embersMax');
       if (ks('wildfire') && f.embers > 0) { for (const o of foes) if (o !== f && alive(o)) o.embers = Math.min(cap, (o.embers || 0) + Math.ceil(f.embers / 2)); }
-      else { const o = focusFoe(); if (o && o !== f) { if (f.embers > 0) o.embers = Math.min(cap, (o.embers || 0) + f.embers); if (f.burnT > 0) burn(o, f.burnDps, f.burnT); } }
+      else { const o = focusFoe(); if (o && o !== f && f.embers > 0) o.embers = Math.min(cap, (o.embers || 0) + f.embers); }   // Burns spread by themselves now (59a)
     }
     // Next in Line (a notable): when a marked foe dies, the next foe starts marked for 4s.
     if (ks('nextMark') && typeof partyClock === 'function' && f.markUntil > partyClock()) { const o = focusFoe(); if (o && o !== f && !(o.markUntil > partyClock())) { o.markUntil = partyClock() + STAR_KS.nextMark.secs; o.markV = f.markV; } }
@@ -22304,6 +22490,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
+  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0 };   // reused: the stage copies it
   cbStrike = (amount, src, at, label, color, big) => {
     if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
@@ -22314,23 +22501,32 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (!f) return;
     const kind = isHero && hero && hero.cls === 'lanternmage' ? 'magic' : 'phys';
     const idx = isHero ? 0 : -1;
+    // S1: the hit's type (the hero's base type; the Lightkeeper's party share has none) and its tags
+    const ty = isHero && hero ? hero.dt : '', tags = (isHero && typeof stTagNext === 'function' ? stTagNext.take() : 0) | (big ? ST_CRIT : 0);
     // Warden taps taunt their target (a class tap: see the classTap listener).
-    const d = cbDamageFoe(f, amount, idx, kind);
+    const d = cbDamageFoe(f, amount, idx, kind, ty, tags);
+    const rel = ty && typeof ST_LAST === 'object' ? ST_LAST.rel : 0;
     if (isHero && hero && hero.cls === 'lanternmage') {
       const sp = (T.lmSplash + hero.area) * amount;
       carry = ks('overflow');   // Overkill (a notable): the splash's overkill carries too
-      for (const o of foes) if (o !== f && alive(o)) cbDamageFoe(o, sp, 0, 'magic');
+      for (const o of foes) if (o !== f && alive(o)) cbDamageFoe(o, sp, 0, 'magic', ty);
       carry = true;
     }
-    addFloat(label || fmt(d || amount), color, big, at ? at.x : undefined, at ? at.y : undefined);
+    // S1 (core-2 2.1): the number carries its type icon and a weak / resisted mark; a crit ends in "!"
+    FLOAT_EV.txt = label || fmt(d || amount) + (big ? '!' : ''); FLOAT_EV.color = color; FLOAT_EV.big = big;
+    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel;
+    emit('float', FLOAT_EV);
     burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   };
 
   // ---------------- party actions ----------------
   function companionTick(u, dt) {
+    // S1: a Stunned member does nothing; a Chilled one swings and charges 30% slower (59a)
+    if (u.us && stUnitStunned(u)) return;
+    const slowU = u.us ? stUnitSlow(u) : 0;
     // basic attack
     if (u.dps > 0) {
-      u.swing -= dt;
+      u.swing -= dt * (1 - slowU);
       if (u.swing <= 0) {
         u.swing += 1 / u.spd;
         // supports have no damage ability: their Smite is all of their damage (magic, ignores armour)
@@ -22343,14 +22539,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
             carry = false;
             for (const x of foes) if (x !== f && alive(x)) cbDamageFoe(x, o, u.i, 'magic');
             carry = true;
-            if (u.id === 'thessaly') { cbSlow(f, T.mireSlow, T.mireT * (1 + T.thessTrait) * u.ctrl); }
+            if (u.id === 'thessaly') stApply(f, 'chill', 1, 0, u.i, { dur: T.mireT * (1 + T.thessTrait) * u.ctrl });   // S1: her mire is a Chill
           }
         } else {
           let f = u.id === 'corvin' ? lowestFoe() : focusFoe();
           if (u.melee && u.id !== 'corvin') { f = meleeTarget(f); u.strikeT = 0.5; }
-          // Wren's Mark (56b Marked, real here): strikers deal +20% to the marked foe.
-          const mk = f && f.markT > 0 && u.role === 'striker' && SYN_TUNE.real ? 1 + SYN_TUNE.marked : 1;
-          if (f) cbDamageFoe(f, hit * mk, u.i, u.id === 'isolde' && f.hp / f.max < T.execTh ? 'true' : 'phys');
+          // S1: Wren's Mark is the Mark status now (+20% taken from every source, 59a), not a striker bonus.
+          if (f) cbDamageFoe(f, hit, u.i, u.id === 'isolde' && f.hp / f.max < T.execTh ? 'true' : 'phys');
           // Bram's Cleave: a second front-row foe takes 50% (Hunting Party: the whole front row, on the marked foe).
           if (f && u.id === 'bram' && SYN_TUNE.real) { const all = synFlags.hunting && f.markT > 0; for (const o of foes) if (o !== f && alive(o) && o.row === f.row) { cbDamageFoe(o, hit * SYN_TUNE.cleave, u.i, 'phys'); if (!all) break; } }
         }
@@ -22370,7 +22565,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     // signature ability
     if (u.id && u.cdMax > 0) {
-      u.cd -= dt * u.cdRate;
+      u.cd -= dt * u.cdRate * (1 - slowU);
       if (u.cd <= 0 && anyFoe() && abilityReady(u)) { u.cd = u.cdMax; castAbility_(u); }
     }
     specialTick(u, dt);
@@ -22384,6 +22579,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbHealUnit = (t, amount, from) => {
     if (!t || t.down || !(amount > 0)) return 0;
     if (t.ashenT > 0) return 0;   // Caedmon's Cinder Vow: no healing while Ashen
+    if (t.us && stUnitNoHeal(t)) return 0;   // S1: a Cursed member takes no healing
     const a = amount * t.healIn;
     const room = t.maxHp - t.hp, got = Math.min(room, a);
     t.hp += got;
@@ -22417,7 +22613,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   }
   function healAll(frac, from) { for (let i = 0; i < nU; i++) if (!U[i].down) cbHealUnit(U[i], U[i].maxHp * frac, from); }
   function shieldAll(frac) { for (let i = 0; i < nU; i++) if (!U[i].down) cbShield(U[i], U[i].maxHp * frac, frac); }
-  function cleanse(u) { u.poisonT = 0; u.poisonDps = 0; }
+  function cleanse(u) { stCleanse(u, 1); }   // S1: removes the worst harmful status, all its stacks (59a)
 
   // Taunt: threat 120% of the top and a forced target for secs, on foes that can reach u.
   cbTaunt = (u, list, secs) => {
@@ -22430,15 +22626,17 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (f.diveT > 0 && typeof endDive === 'function') endDive(f);
     }
   };
-  cbStun = (f, secs) => {
+  // S1: a stun goes through the status rules (59a): elites half, bosses immune (it fills stagger and still
+  // interrupts a cast), diminishing returns, the 3 s cap. secs already carries the source's `control`.
+  cbStun = (f, secs, src) => {
     if (!alive(f)) return;
-    const d = secs;
-    f.stunT = Math.max(f.stunT, d);
-    if (typeof onFoeStun === 'function') onFoeStun(f);
+    stApply(f, 'stun', 1, 0, src == null ? -1 : src, { dur: secs });
   };
   function cbSlow(f, v, secs) { if (!alive(f)) return; f.slowV = Math.max(f.slowV, v); f.slowT = Math.max(f.slowT, secs); }
   function knock(f, secs) { if (!alive(f)) return; f.knockT = Math.max(f.knockT, secs); if (f.diveT > 0 && typeof endDive === 'function') endDive(f); }
-  function burn(f, dps, secs) { if (!alive(f)) return; f.burnDps = Math.max(f.burnDps, dps); f.burnT = Math.max(f.burnT, secs); }
+  // S1: a Burn status (59a): 0.12 P a tick for 4 s, the stronger stays; P = the applier's hit power.
+  function burn(f, P, u) { if (!alive(f)) return; stApply(f, 'burn', 1, P, u ? u.i : -1); }
+  const hitPow = u => u.dps / Math.max(0.1, u.spd);
   const isDiver = f => f.type === 'bat';
 
   // When should a companion hold its ability? (Aldric keeps Shield Bash for a boss wind-up.)
@@ -22468,8 +22666,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function castAbility_(u) {
     ST.abilities++;
     const id = u.id, burstD = u.dps * T.abF * u.cdMax, f0 = focusFoe();
-    const hitOne = (f, m, kind) => { if (f) { cbDamageFoe(f, burstD * (m || 1), u.i, kind || 'phys'); partyAcc += burstD * (m || 1); } };
-    const hitAll = (m, kind) => { let n = 0; for (const f of foes) if (alive(f)) n++; carry = false; for (const f of foes) if (alive(f)) cbDamageFoe(f, burstD * (m || 1) / Math.max(1, n) * (1 + (n - 1) * 0.5), u.i, kind || 'magic'); carry = true; partyAcc += burstD * (m || 1); };
+    // S1: signature hits are abilities (ST_AB: the reaction window's x1.25); Shield Bash, Earthshatter and
+    // Felling Blow are heavy (Shatter). The type is the hero's own (u.dt).
+    const tg = ST_AB | (id === 'aldric' || id === 'grenna' || id === 'bram' ? ST_HEAVY : 0);
+    const hitOne = (f, m, kind) => { if (f) { cbDamageFoe(f, burstD * (m || 1), u.i, kind || 'phys', '', tg); partyAcc += burstD * (m || 1); } };
+    const hitAll = (m, kind) => { let n = 0; for (const f of foes) if (alive(f)) n++; carry = false; for (const f of foes) if (alive(f)) cbDamageFoe(f, burstD * (m || 1) / Math.max(1, n) * (1 + (n - 1) * 0.5), u.i, kind || 'magic', '', tg); carry = true; partyAcc += burstD * (m || 1); };
     switch (id) {
       case 'tobin': {
         cbTaunt(u, reach(u), T.tauntT); u.drV = Math.max(u.drV, T.guardDr); u.drT = T.guardT;
@@ -22477,10 +22678,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (synFlags.sword && U[0] && !U[0].down && U[0] !== u) { U[0].drV = Math.max(U[0].drV, T.guardDr * Math.min(1, synFlags.sword)); U[0].drT = T.guardT; }   // The Borrowed Sword
         break;
       }
-      case 'wren': { const f = f0; hitOne(f, 1); if (f) { f.markT = (5 + 3 * synFlags.hunting) * u.ctrl; } if (u.lv >= 20) { const o = foes.find(x => x !== f && alive(x)); hitOne(o, 0.5); } break; }
+      case 'wren': { const f = f0; if (f) stApply(f, 'mark', 1, 0, u.i, { dur: (5 + 3 * synFlags.hunting) * u.ctrl }); hitOne(f, 1); if (u.lv >= 20) { const o = foes.find(x => x !== f && alive(x)); hitOne(o, 0.5); } break; }
       case 'hesketh': { const mx = 1 + SYN_TUNE.unlitMend * synFlags.unlit, a = lowestAlly(); if (a) cbHealUnit(a, a.maxHp * T.mend * mx * healMul(u), u); if (u.lv >= 20) { const b = lowestAlly(a); if (b) cbHealUnit(b, b.maxHp * T.mend * mx * healMul(u), u); } break; }
-      case 'pip': { hitAll(1, 'magic'); for (const f of foes) burn(f, u.dps * 0.2, T.burnT * u.ctrl); break; }
-      case 'bram': { const f = meleeTarget(f0); hitOne(f, 1); if (u.lv >= 10 && f) knock(f, 1 * u.ctrl); if (u.lv >= 20) for (const o of foes) if (o !== f && alive(o) && f && o.row === f.row) hitOne(o, 0.5); break; }
+      case 'pip': { hitAll(1, 'magic'); for (const f of foes) burn(f, hitPow(u), u); break; }
+      case 'bram': { const f = meleeTarget(f0); hitOne(f, 1); if (f) stApply(f, 'bleed', 2, hitPow(u), u.i); if (u.lv >= 10 && f) knock(f, 1 * u.ctrl); if (u.lv >= 20) for (const o of foes) if (o !== f && alive(o) && f && o.row === f.row) hitOne(o, 0.5); break; }
       case 'maren': {
         cbTaunt(u, foes, 4); cbHealUnit(u, u.maxHp * T.beacon * (1 + (T.beaconLamp / T.beacon - 1) * synFlags.lampward), u);
         if (u.lv >= 20) shieldAll(T.beaconSh);
@@ -22490,7 +22691,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         const f = (lead && lead.boss && alive(lead)) ? lead : meleeTarget(f0) || f0;
         if (typeof resolveParry === 'function' && f && f.boss) resolveParry('bash');   // before the stun: a bash is a parry, not an interrupt
         if (u.lv >= 20) hitAll(1, 'phys'); else hitOne(f, 1);
-        if (f) cbStun(f, T.bashStun * u.ctrl);
+        if (f) cbStun(f, T.bashStun * u.ctrl, u.i);
         break;
       }
       case 'kestrel': {
@@ -22498,19 +22699,20 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (synFlags.markleap) for (const x of foes) if (alive(x) && x.markT > 0) { f = x; break; }
         f = f || f0;
         hitOne(f, 1 + 0.5 * synFlags.markleap); if (u.lv >= 20) hitOne(f, 1);
+        if (f) stApply(f, 'chill', 1, 0, u.i);   // S1: her Leap Chills the foe she lands on (4 s)
         for (const x of foes) knock(x, T.leapKnock * u.ctrl);
         u.untarg = T.leapUntarg;
         break;
       }
       case 'thessaly': {
-        for (const f of foes) { cbSlow(f, T.sinkSlow, T.sinkT * (1 + T.thessTrait) * u.ctrl); if (f.diveT > 0 && typeof endDive === 'function') endDive(f); if (u.lv >= 20 && isDiver(f)) cbStun(f, T.sinkStun * u.ctrl); }
+        for (const f of foes) { stApply(f, 'chill', 1, 0, u.i, { dur: T.sinkT * (1 + T.thessTrait) * u.ctrl }); if (f.diveT > 0 && typeof endDive === 'function') endDive(f); if (u.lv >= 20 && isDiver(f)) cbStun(f, T.sinkStun * u.ctrl, u.i); }
         hitAll(1, 'magic');
         break;
       }
       case 'anselm': { healAll(T.arms * healMul(u), u); if (u.lv >= 20) for (let i = 0; i < nU; i++) cleanse(U[i]); break; }
       case 'grenna': {
         cbTaunt(u, foes, T.tauntT); const r = frontRow();
-        for (const f of foes) if (alive(f) && (f.row === r || (u.lv >= 20 && f.row === r - 1))) { cbStun(f, T.shatterStun * u.ctrl); }
+        for (const f of foes) if (alive(f) && (f.row === r || (u.lv >= 20 && f.row === r - 1))) { cbStun(f, T.shatterStun * u.ctrl, u.i); }
         hitAll(1, 'phys');
         break;
       }
@@ -22518,11 +22720,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         const th = execTh(u); let f = null; for (const x of foes) if (alive(x) && x.hp / x.max < th) { f = x; break; }
         const tg = f || f0; const hpBefore = tg ? tg.hp : 0;
         hitOne(tg, f ? 2 : 0.6, 'true');
+        if (tg && alive(tg)) stApply(tg, 'venom', 3, hitPow(u), u.i);   // S1: Execute applies 3 Venom
         if (f && tg && tg.hp <= 0 && hpBefore > 0) u.cd = 0.5;   // Unfinished Business
         break;
       }
-      case 'oriel': { hitAll(1, 'magic'); for (const f of foes) { cbSlow(f, T.starSlow, T.starSlowT * u.ctrl); cbStun(f, T.starStun * u.ctrl); } break; }
-      case 'morwen': { for (const f of foes) { burn(f, u.dps * 0.5, T.vigilT * u.ctrl); if (u.lv >= 20) cbSlow(f, T.vigilSlow, T.vigilT * u.ctrl); } hitAll(0.5, 'magic'); break; }
+      case 'oriel': { hitAll(1, 'magic'); for (const f of foes) cbStun(f, T.starStun * u.ctrl, u.i); break; }   // S1: her status is the stun (the slow is dropped, classes-2 5.1)
+      case 'morwen': { for (const f of foes) { burn(f, hitPow(u) * T.vigilBurnP, u); if (u.lv >= 20) cbSlow(f, T.vigilSlow, T.vigilT * u.ctrl); } hitAll(0.5, 'magic'); break; }
       case 'vesper': {
         for (let i = 0; i < nU; i++) { const x = U[i]; if (x.down) continue; cbShield(x, x.maxHp * T.verseWard * 2, T.verseWard * 2); cbHealUnit(x, x.maxHp * T.verseMend * 2 * healMul(u), u); }
         if (u.lv >= 20) { let b = null; for (let i = 0; i < nU; i++) if (U[i].id && U[i] !== u && (!b || U[i].cd > b.cd)) b = U[i]; if (b) b.cd = 0; }
@@ -22536,6 +22739,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       }
       case 'corvin': {
         const f = lowestFoe(); const before = f ? f.hp : 0; hitOne(f, 1.2, 'phys');
+        if (f && alive(f)) stApply(f, 'venom', 3, hitPow(u), u.i);   // S1: Hollow Cut applies 3 Venom
         if (f && f.hp <= 0 && before > 0) u.cd = u.cdMax / 2;
         if (u.lv >= 20) { const g = lowestFoe(); hitOne(g, 0.6, 'phys'); }
         break;
@@ -22606,7 +22810,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function foeTick(f, dt) {
     if (f.dead) { f.dead += dt; return; }
     f.born += dt; if (f.hit > 0) f.hit -= dt;
-    if (f.burnT > 0) { f.burnT -= dt; carry = false; cbDamageFoe(f, f.burnDps * dt, -1, 'burn'); carry = true; if (!alive(f)) return; }
+    // (S1: Burn and every other damage over time tick in 59a stTick, once a second)
     if (emberBurn > 0 && f.embers > 0) { carry = false; cbDamageFoe(f, f.embers * emberBurn * dt, 0, 'burn'); carry = true; if (!alive(f)) return; }
     if (f.markT > 0) f.markT -= dt;
     if (f.focusT > 0) f.focusT -= dt;
@@ -22616,7 +22820,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.stunT > 0) { f.stunT -= dt; return; }
     if (typeof onEnemyTick === 'function' && onEnemyTick(f, dt)) return;   // 59b: behaviours, channels, boss mechanics
     if (f.knockT > 0) { f.knockT -= dt; return; }
-    f.swing -= dt * (1 - f.slowV);
+    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0));   // S1: Chill
     const t = pickTarget(f);
     f.tgt = t;
     if (t >= 0) {
@@ -22641,8 +22845,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (al && al !== u && al.icFor === u.i && al.icLeft > 0) { al.icLeft--; u = al; }
     }
     let a = amount;
-    const area = kind === 'cloud' || kind === 'slam';
-    if (kind !== 'poison' && kind !== 'burn') a *= 1 - red(u.armour);
+    const area = kind === 'cloud' || kind === 'slam', dot = kind === 'poison' || kind === 'burn' || kind === 'bleed';
+    // S1 (core-2 1.4): a foe's hit carries its type: physical meets full armour, a typed hit half the
+    // rating and the member's resist to it (gear res* lines, at most 50%); a Marked member takes more.
+    const ty = f && !dot ? f.dt || 'phys' : '';
+    if (!dot) a *= 1 - red(ty && ty !== 'phys' ? u.armour / 2 : u.armour);
+    if (ty && ty !== 'phys') a *= 1 - resOf(u, ty);
+    if (u.us) a *= 1 + stUnitVuln(u);
     // damage reduction stack
     let dr = 1;
     if (S.party && S.party.cls === 'warden') dr *= 1 - T.wardenDr;
@@ -22655,24 +22864,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     dr *= u.synDr || 1;   // F2: combos, Kin and Bonds (Lifeline, Two Walls, The Oath, ...; capped in 56b)
     if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
-    if (f && f.slowT > 0 && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
+    if (f && (f.slowT > 0 || f.chillT > 0) && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
     // Cover (F1, formation.md 1.1): a tank in Front covers the Middle (cover), a tank in the Middle the Back (bulwark).
     if (u.col < 2 && coverOf(u, U, nU)) dr *= 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark);
     if (kind === 'burn' && has('caedmon')) dr = 0;
     a *= dr;
     let blocked = false;
-    if (u.blockP > 0 && kind !== 'poison' && kind !== 'burn' && Math.random() < u.blockP) { a *= T.blockX; blocked = true; ST.blocked++; }
+    if (u.blockP > 0 && !dot && Math.random() < u.blockP) { a *= T.blockX; blocked = true; ST.blocked++; }
     let sh = 0;
     if (u.sh > 0) { sh = Math.min(u.sh, a); u.sh -= sh; a -= sh; }
     u.hp -= a; u.taken += a + sh; ST.taken += a + sh;
     // reflects and burns back
     if (f && alive(f)) {
       let back = 0;
-      if (u.id === 'maren' || u.id === 'caedmon') back += (a + sh) * T.burnBack * (u.id === 'maren' && f.slowT > 0 ? 1 + synFlags.mirelamp : 1);
+      if (u.id === 'maren' || u.id === 'caedmon') back += (a + sh) * T.burnBack * (u.id === 'maren' && (f.slowT > 0 || f.chillT > 0) ? 1 + synFlags.mirelamp : 1);
       if (u.reflT > 0) back += (a + sh) * T.pyre;
       if (u.role === 'tank' && boon('thorn')) back += (a + sh) * 0.3;
-      if (back > 0) { carry = false; cbDamageFoe(f, back, u.i, 'burn'); carry = true; }
+      // S1: Maren's Lanternlight burns back holy; Caedmon's fire, and his Pyre Guard sets a Burn on the attacker
+      if (back > 0) { carry = false; cbDamageFoe(f, back, u.i, 'burn', u.id === 'maren' ? 'holy' : u.dt); carry = true; }
+      if (u.reflT > 0 && u.id === 'caedmon' && alive(f)) burn(f, hitPow(u), u);
     }
     if (u.id === 'grenna') { u.rock = Math.min(T.rockMax, u.rock + T.rock); u.rockT = T.rockT; }
     if (u.hp <= 0) {
@@ -22693,6 +22904,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     return a;
   };
   const isAdj = (a, b) => Math.abs(a.col - b.col) === 1;   // F1: adjacent = the next slot
+  // S1: a member's resist to a damage type (gear res* lines; none exist before S4/S5, so 0 until then).
+  const RES = { holy: 'resHoly', poison: 'resPoison', fire: 'resFire', frost: 'resFrost' };
+  function resOf(u, ty) {
+    const k = RES[ty]; if (!k) return 0;
+    let g = null; try { g = u.key === 'hero' ? gear() : charGear(u.key); } catch (e) { g = null; }
+    const v = g && g[k] > 0 ? g[k] / 100 : 0;
+    return Math.min(ST_TUNE.resCap, v);
+  }
   // The standing tank one slot in front of u (it covers u), or null.
   function coverOf(u, list, n) { for (let i = 0; i < n; i++) { const x = list[i]; if (x !== u && !x.down && x.role === 'tank' && x.col === u.col + 1) return x; } return null; }
   function knockOut(u) {
@@ -22753,7 +22972,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emit('wipe', WIPE_EV);
   }
   function endWipe() {
-    for (let i = 0; i < nU; i++) { const u = U[i]; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.fight = 0; UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); }
+    for (let i = 0; i < nU; i++) { const u = U[i]; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.fight = 0; stUnitClear(u); UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); }
     if (inArena) return;
     spawn();
   }
@@ -22762,7 +22981,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbRestore = clear => {
     wipeT = 0;
     if (clear) { for (const f of foes) { if (typeof onFoeDown === 'function') onFoeDown(f); f.gone = true; f.hp = 0; f.dead = f.dead || 0.001; } foes = []; lead = null; inArena = false; }
-    for (let i = 0; i < nU; i++) { const u = U[i], was = u.down; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.lifeline = false; if (was) { UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); } }
+    for (let i = 0; i < nU; i++) { const u = U[i], was = u.down; u.down = false; u.hp = u.maxHp; u.sh = 0; u.poisonT = 0; u.lifeline = false; stUnitClear(u); if (was) { UP_EV.key = u.key; UP_EV.hp = u.hp; emit('unitUp', UP_EV); } }
   };
   let backZone = 0, backAt = 0, backWipes = 0;
   // After a wipe the party climbs back one zone at a time, up to where it fell, once it can hold the next zone.
@@ -22817,6 +23036,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (!anyFoe()) return;
     // foes
     for (let i = 0; i < foes.length; i++) foeTick(foes[i], dt);
+    stTick(dt);   // S1: status timers and the one-a-second damage-over-time beat (59a)
+    if (!anyFoe()) return;
     if (!(mob && alive(mob))) showFoe();
     partyTickT += dt;
     if (partyTickT >= 0.6) { if (partyAcc > 0) addFloat(fmt(partyAcc), '#B58CFF', false, 0.76 + (Math.random() - 0.5) * 0.1, 0.55); partyAcc = 0; partyTickT = 0; }
@@ -22850,7 +23071,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (ks('challenger')) { cbTaunt(U[0], foes, 2); challUntil = clock + 2; }   // Challenger: taps taunt every foe for 2s
     }
     else if (cls === 'lightkeeper') { const t = lowestAlly(); if (t && t.hp / t.maxHp < (auto ? 0.6 : 1)) cbHealUnit(t, t.maxHp * T.lkTap * (auto ? 0.5 : 1), U[0]); }
-    else if (cls === 'ranger' && mob && alive(mob)) { mob.focusT = 8; if (synFlags.twobows) mob.markT = Math.max(mob.markT, 8 * Math.min(1, synFlags.twobows)); }   // Two Bows
+    else if (cls === 'ranger' && mob && alive(mob)) { mob.focusT = 8; if (synFlags.twobows) stApply(mob, 'mark', 1, 0, 0, { dur: 8 * Math.min(1, synFlags.twobows) }); }   // Two Bows (S1: a Mark status)
   });
   on('deepFloor', () => { const m = boon('mend'); if (m && nU) healAll(0.1 * m, null); for (let i = 0; i < nU; i++) U[i].lifeline = false; });
   on('fieldChange', () => { refreshT = 0; });
@@ -22910,11 +23131,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const o = opts || {}, n = estUnits();
     const hero = EST[0];
     const heroD = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 + (T.lmSplash + hero.area) * 0.9 : 1);
-    let compPhys = 0, compMagic = 0, heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
-    for (let i = 1; i < n; i++) {
-      const u = EST[i];
-      if (u.role === 'caster') compMagic += u.dps * (1 + (T.aoeOther + u.area) * 0.9); else if (u.role === 'support') compMagic += u.dps; else compPhys += u.dps;
-    }
+    let heal = 0, top = null, topT = -1, front = null, frontT = -1, fc = -1;
+    // S1: each member's damage against the zone's pack, by its type (weak x1.5, resisted x0.6, 59a typeZone);
+    // armour only cuts physical hits. unitD(u, i, z, physX) is one member's damage a second there.
+    const tz = (u, z) => typeof typeZone === 'function' ? typeZone(u.dt, z, T.mixP) : 1;
+    const unitD = (u, i, z, physX) => i === 0 ? heroD * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : physX) * tz(u, z)
+      : u.role === 'caster' ? u.dps * (1 + (T.aoeOther + u.area) * 0.9) * tz(u, z) : u.role === 'support' ? u.dps * tz(u, z) : u.dps * (u.dt === 'phys' ? physX : 1) * tz(u, z);
     let dc = 3;   // F1: divers go for the Back, else the Middle (59b pickDive)
     for (let i = 0; i < n; i++) { heal += EST[i].heal; if (EST[i].col > fc) fc = EST[i].col; if (EST[i].col < dc) dc = EST[i].col; }
     if (dc > 1) dc = -1;
@@ -22940,8 +23162,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     for (let z = zMax; z >= lo; z--) {
       const b = BEH_EST[zoneType(z)], mix = BEH_EST[zoneNextType(z)], w = k => T.mixP * b[k] + (1 - T.mixP) * mix[k];
       const physX = 1 - w('arm') * (1 - T.armourX), fheal = w('heal');
-      const heroPhys = hero.cls === 'lanternmage' ? 1 : physX;
-      const D = (heroD * heroPhys + compPhys * physX + compMagic) * T.estEff;
+      let D = 0;
+      for (let i = 0; i < n; i++) D += unitD(EST[i], i, z, physX);
+      D *= T.estEff;
       const packHp = mobHp(z) * T.packHp * mod('foeHp') * (1 + fheal);
       let packSecs = D > 0 ? packHp / D + T.respawn : Infinity;
       const atk = zoneAtk(z), alive = 1.5, rng = w('ranged'), dmgX = w('dmg');
@@ -22968,7 +23191,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         const u = EST[i]; if (u === front || u === top) continue;
         const net = spread * (u.col === 0 ? 1 - T.backRanged : 1) + u.maxHp * (pois - T.regen);
         const ttd = net > 0 ? u.maxHp / net : Infinity;
-        if (ttd < packSecs) lost += (i === 0 ? heroD * heroPhys : u.dps * (u.role === 'caster' ? 1 : physX)) * (1 - ttd / packSecs);
+        if (ttd < packSecs) lost += unitD(u, i, z, physX) * (1 - ttd / packSecs);
       }
       if (lost > 0) { const D2 = Math.max(D * 0.1, D - lost * T.estEff); packSecs = packHp / D2 + T.respawn; }
       // opts.sustain: sustain only (T6 compares line-ups by what they survive, not by how fast they kill)
@@ -22999,11 +23222,392 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     const z = S.zone, zt = zoneType(z), b = FOE_BEH[TYPES[zt].key] || FOE_BEH.slime;
     if (readyZone !== z) { readyZone = z; readyFor = clock; }
     if (clock - readyFor >= T.bossWait) return true;
-    const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1;
-    let D = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' ? 1 : phys);   // F1: the hero's floor and trio
-    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' ? 1 : phys);
+    const n = estUnits(), hero = EST[0], phys = b.armoured ? T.armourX : 1, key = TYPES[zt].key;
+    // S1: the Elder takes its family's weakness and resists (59a); armour cuts physical hits only
+    const tx = u => typeof typeXKey === 'function' ? typeXKey(key, u.dt) : 1;
+    let D = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : phys) * tx(hero);   // F1: the hero's floor and trio
+    for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' || EST[i].dt !== 'phys' ? 1 : phys) * tx(EST[i]);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
     return D * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;   // BAL2: estEff tunes the away estimate only
+  };
+}
+
+// ---- src/js/59a-status.js ----
+// 59a-status: damage types, statuses and reactions on party combat (Core 2.0 slice S1;
+// docs/design/core-2.md 1.2, 1.4, 2, 3; combat-2.md 8.3). Data: 21x-data-types.js.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// What it does:
+//   - every hit has one type; foes take x1.5 from their weakness and x0.6 from what they resist
+//     (typeX), and hit the party with their own type (res* gear lines and half armour answer it)
+//   - the eight harmful statuses on foes and on party members, with core-2's stacking, caps, durations,
+//     the crowd-control rules for elites and bosses and diminishing returns (3.4)
+//   - one status beat a second for all damage over time (3.1); Burn spreads on death
+//   - the reactions Blight, Shatter and Judgement and their 3 s window (3.5)
+// Runtime state only (on the foe and unit records of 59-combat): nothing here is saved (core-2 8.1-5).
+//
+// Exposed names (59-combat and 59b call these at their extension points; others may read them):
+//   types   typeX(f, dt) -> multiplier on foe f; typeXKey(key, dt); typeRel(key, dt) -> 1 weak | -1 resist | 0;
+//           typeZone(dt, z, mixP) -> the zone's pack-weighted multiplier (hold estimate, planner);
+//           lbType() the Lanternbearer's type; heroType(id); unitType(key) ('hero' or a hero id)
+//   foes    stApply(f, id, stacks, P, src, opts) -> bool   opts { dur, v } (dur before `control`)
+//           stHas(f, id), stStacks(f, id), stLeft(f, id), stSlow(f), stHealX(f) (anti-heal), stVuln(f)
+//           stFoeHit(f, amount, src, kind, dt, tags) -> the amount after type, vuln, timing and Shatter
+//           stFoeDealt(f, dealt, src, dt) (Curse stores, Judgement heals), stFoeDies(f) (Burn spread, Curse)
+//           stBadges(f) -> up to 4 { id, n, f } for the focus foe's chips (a reused list)
+//   party   stUnitApply(u, id, stacks, opts), stUnitClear(u), stCleanse(u, n), stUnitVuln(u),
+//           stUnitNoHeal(u), stUnitSlow(u), stUnitStunned(u)
+//   loop    stTick(dt) (59-combat combatTick, once a frame)
+//   tags    stTagNext(tag) marks the Lanternbearer's next strike ('heavy' | 'ab'); ST_HEAVY, ST_AB, ST_CRIT bits
+//   info    ST_LAST { dt, rel, x } the last foe hit (the stage's typed number), ST_STATS counters
+// Events: reaction { id, foe, amount } (a reaction happened: Blight starts, a Shatter, Judgement opens).
+
+var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
+  stApply, stHas, stStacks, stLeft, stSlow, stHealX, stVuln, stFoeHit, stFoeDealt, stFoeDies, stBadges,
+  stUnitApply, stUnitClear, stCleanse, stUnitVuln, stUnitNoHeal, stUnitSlow, stUnitStunned,
+  stTick, stTagNext, ST_LAST, ST_STATS, ST_HEAVY, ST_AB, ST_CRIT;
+
+{
+  const D = STATUS_DEFS, UD = UNIT_STATUS, K = ST_TUNE;
+  ST_HEAVY = 1; ST_AB = 2; ST_CRIT = 4;
+  ST_LAST = { dt: '', rel: 0, x: 1, shatter: false };
+  ST_STATS = { applied: {}, reactions: { blight: 0, shatter: 0, judgement: 0 }, beats: 0, dot: 0, spread: 0, healed: 0, immune: 0, dr: 0 };
+  for (const id in D) ST_STATS.applied[id] = 0;
+
+  // ---------------- types ----------------
+  // TX[key][dt]: the multiplier for each foe type key (from its family row), built once.
+  const TX = {};
+  const rowFor = key => (typeof FOE_TYPE === 'object' && FOE_TYPE[key]) || null;
+  function txOf(key) {
+    let t = TX[key];
+    if (t) return t;
+    t = TX[key] = {};
+    const r = rowFor(key);
+    const res = r && r.region === 'hollow' && K.resistHollow > 0 ? K.resistHollow : TYPE_X.resist;   // S1 pick, see ST_TUNE
+    for (const d of DMG_TYPES) t[d] = !r ? 1 : r.weak === d ? TYPE_X.weak : r.res.includes(d) ? res : TYPE_X.neutral;
+    return t;
+  }
+  typeXKey = (key, dt) => (dt && txOf(key)[dt]) || 1;
+  typeX = (f, dt) => (f && dt ? typeXKey(f.type, dt) : 1);
+  typeRel = (key, dt) => { const x = typeXKey(key, dt); return x > 1 ? 1 : x < 1 ? -1 : 0; };
+  // The pack a zone sends: its type mixP of the time, the next type in the cycle for the rest.
+  typeZone = (dt, z, mixP) => {
+    if (!dt) return 1;
+    const m = mixP == null ? 0.72 : mixP, a = TYPES[zoneType(z)], b = TYPES[zoneNextType(z)];
+    return m * typeXKey(a && a.key, dt) + (1 - m) * typeXKey(b && b.key, dt);
+  };
+  lbType = () => { const c = S && S.party && S.party.cls; return (c && LB_DT[c]) || 'phys'; };
+  heroType = id => (typeof ROSTER === 'object' && ROSTER[id] && ROSTER[id].dt) || (HERO_DT[id] && HERO_DT[id].dt) || 'phys';
+  unitType = key => (key === 'hero' ? lbType() : heroType(key));
+
+  // ---------------- helpers ----------------
+  const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
+  const units = () => (typeof combatUnits === 'function' ? combatUnits() : []);
+  const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
+  const unitAt = src => { const U = units(); return src >= 0 && U[src] && U[src].live ? U[src] : null; };
+  // A unit's hit power P (core-2 0): the Lanternbearer's attack, a hero's damage a swing.
+  const powOf = u => !u ? 0 : u.key === 'hero' ? heroAtk() : (u.dps || 0) / Math.max(0.1, u.spd || 1);
+  const ccRow = f => (f.boss ? CC_RULES.boss : f.elite || f.champ ? CC_RULES.elite : CC_RULES.normal);
+  const ctrlOf = src => { const u = unitAt(src); return u && u.ctrl > 0 ? Math.min(2, u.ctrl) : 1; };
+  const rec = (f, id) => { const s = f.ss || (f.ss = {}); return s[id] || (s[id] = { n: 0, t: 0, p: 0, v: 0, src: -1, j: 0, st: 0 }); };
+  const peek = (f, id) => (f.ss && f.ss[id]) || null;
+  let clock = 0;
+
+  // ---------------- statuses on foes ----------------
+  // stacks: stacks to add (bleed, venom); P: the applier's hit power now (a snapshot); src: unit index or -1.
+  stApply = (f, id, stacks, P, src, opts) => {
+    const d = D[id];
+    if (!d || !alive(f)) return false;
+    const o = opts || null, n = Math.max(1, stacks | 0);
+    src = src == null ? -1 : src;
+    ST_STATS.applied[id]++;
+    if (id === 'bleed' || id === 'venom') {
+      const r = rec(f, id);
+      if (!(r.t > 0)) { r.n = 0; r.p = 0; }
+      r.n = Math.min(d.max, r.n + n); r.t = (o && o.dur) || d.dur;   // a new stack refreshes all
+      r.p = Math.max(r.p, P || 0); r.src = src;
+      if (id === 'venom') checkBlight(f);
+      return true;
+    }
+    if (id === 'burn') {
+      const r = rec(f, id), p = P || 0;
+      // one per foe: the stronger stays (a weaker one only tops up the time of an equal one)
+      if (r.t > 0 && r.p > p) return false;
+      r.n = 1; r.t = Math.max(r.t > 0 && r.p === p ? r.t : 0, (o && o.dur) || d.dur); r.p = p; r.src = src; r.j = (o && o.j) || 0;
+      f.burnT = r.t;
+      checkBlight(f);
+      return true;
+    }
+    if (id === 'chill') {
+      const x = ccRow(f).chill; if (!(x > 0)) return false;
+      const r = rec(f, id), dur = Math.min(d.cap, (o && o.dur ? o.dur : d.dur * ctrlOf(src)) * x);
+      r.n = 1; r.t = Math.max(r.t, dur); r.v = f.boss ? d.bossSlow : d.slow; r.src = src; r.st = 0;
+      f.chillT = r.t;
+      return true;
+    }
+    if (id === 'stun' || id === 'root') {
+      const x = ccRow(f)[id];
+      let dur = o && o.dur ? o.dur : d.dur * ctrlOf(src);   // a given duration already carries `control`
+      if (!(x > 0)) {
+        // bosses are immune: each second of stun fills stagger instead (the bar is S6: f.stag counts it)
+        ST_STATS.immune++;
+        if (id === 'stun') { f.stag = (f.stag || 0) + CC_RULES.bossStun * Math.min(d.cap, dur); if (typeof onFoeStun === 'function') onFoeStun(f); }
+        return false;
+      }
+      // diminishing returns per foe: a second within drWin lasts half, a third is ignored
+      const r = rec(f, id);
+      if (clock - r.st >= CC_RULES.drWin) r.n = 0;
+      if (r.n >= 2) { ST_STATS.dr++; return false; }
+      dur = Math.min(d.cap, dur * x * (r.n === 1 ? 0.5 : 1));
+      if (r.n === 1) ST_STATS.dr++;
+      r.n++; r.st = clock; r.src = src;
+      if (id === 'stun') {
+        f.stunT = Math.max(f.stunT || 0, dur);
+        if (typeof onFoeStun === 'function') onFoeStun(f);
+      } else {
+        r.t = Math.max(r.t, dur); f.rootT = r.t;
+        if (f.diveT > 0 && typeof endDive === 'function') endDive(f);   // a Root ends a dive
+      }
+      return true;
+    }
+    if (id === 'mark') {
+      const v = Math.max(d.vMin, Math.min(d.vMax, (o && o.v) || d.v)), dur = (o && o.dur) || d.dur;
+      if (f.markT > 0 && (f.mkV || d.v) > v) return false;   // the stronger Mark stays
+      if (!(f.markT > 0)) { const r = rec(f, 'mark'); r.st = 0; }   // a fresh Mark: Judgement may open again
+      const same = f.markT > 0 && f.mkV === v;
+      f.mkV = v; f.markT = same ? Math.max(f.markT, dur) : dur;
+      return true;
+    }
+    if (id === 'curse') {
+      const r = rec(f, id);
+      if (r.t > 0) return false;   // one per foe
+      r.n = 1; r.t = (o && o.dur) || d.dur; r.p = P || 0; r.v = 0; r.src = src;
+      return true;
+    }
+    return false;
+  };
+  stLeft = (f, id) => {
+    if (!f) return 0;
+    if (id === 'stun') return Math.max(0, f.stunT || 0);
+    if (id === 'mark') return Math.max(0, f.markT || 0);
+    const r = peek(f, id); return r && r.t > 0 ? r.t : 0;
+  };
+  stHas = (f, id) => stLeft(f, id) > 0;
+  stStacks = (f, id) => { if (!stHas(f, id)) return 0; const r = peek(f, id); return r ? Math.max(1, r.n) : 1; };
+  // Chill's slow (the foe's swings and casts): 30%, bosses 15%.
+  stSlow = f => { const r = peek(f, 'chill'); return r && r.t > 0 ? r.v : 0; };
+  // Anti-heal (3.2): Curse stops a foe's healing; Venom 5+ halves it; they do not stack (Curse wins).
+  stHealX = f => (stHas(f, 'curse') ? 0 : stStacks(f, 'venom') >= D.venom.antiHealAt ? K.antiHeal : 1);
+  // Σ vuln on the foe (1.2): the Mark status (Reeling stays today's separate x1.5 until S6, 8.2-1).
+  stVuln = f => (f && f.markT > 0 && f.mkV > 0 ? Math.min(K.vulnCap, f.mkV) : 0);
+  // The Lanternbearer's Focus (55-party) is a Mark by another name until S2 moves it here.
+  const marked = f => f.markT > 0 || (typeof partyClock === 'function' && f.markUntil > partyClock());
+
+  // ---------------- reactions ----------------
+  const RX_EV = { id: '', foe: null, amount: 0 };
+  function reaction(f, id, amount) {
+    ST_STATS.reactions[id]++;
+    f.rxT = K.rxWin;
+    if (f.boss || f.elite) f.stag = (f.stag || 0) + (REACTIONS[id].stag || 0);
+    RX_EV.id = id; RX_EV.foe = f; RX_EV.amount = amount || 0;
+    emit('reaction', RX_EV);
+    const m = typeof mob !== 'undefined' ? mob : null;
+    if (f === m && typeof addFloat === 'function') addFloat(REACTIONS[id].n, REACTIONS[id].col, id === 'shatter', 0.7, 0.34);
+  }
+  function checkBlight(f) {
+    const b = peek(f, 'burn'), v = peek(f, 'venom');
+    const on = b && b.t > 0 && v && v.t > 0;
+    if (on && !f.blight) { f.blight = true; reaction(f, 'blight', 0); }
+    else if (!on) f.blight = false;
+  }
+
+  // ---------------- hits on foes ----------------
+  let pending = 0;
+  stTagNext = tag => { pending |= tag === 'heavy' ? ST_HEAVY : tag === 'ab' ? ST_AB : 0; };
+  // 59-combat cbStrike takes the Lanternbearer's pending tags once per strike.
+  stTagNext.take = () => { const t = pending; pending = 0; return t; };
+
+  // The target side (core-2 1.2): type, vuln, timing; Shatter doubles a heavy hit on a Chilled foe.
+  stFoeHit = (f, amount, src, kind, dt, tags) => {
+    let a = amount;
+    const x = dt ? typeX(f, dt) : 1;
+    ST_LAST.dt = dt || ''; ST_LAST.x = x; ST_LAST.rel = x > 1 ? 1 : x < 1 ? -1 : 0; ST_LAST.shatter = false;
+    a *= x;
+    const vu = stVuln(f);
+    if (vu > 0) a *= 1 + vu;
+    const tg = tags | 0;
+    if ((tg & ST_AB) && f.rxT > 0) a *= K.rxX;   // a reaction window (Stagger's window is S6)
+    // heavy: tagged, or a single hit of heavyP x P or more (a crit is not heavy by itself)
+    let heavy = !!(tg & ST_HEAVY);
+    if (!heavy && kind !== 'burn' && kind !== 'dot') {
+      const u = unitAt(src), P = powOf(u);
+      const base = (tg & ST_CRIT) && typeof critMult === 'function' ? amount / Math.max(1, critMult()) : amount;
+      heavy = P > 0 && base >= K.heavyP * P;
+    }
+    if (heavy) {
+      const c = peek(f, 'chill');
+      if (c && c.t > 0) {
+        a *= REACTIONS.shatter.x; c.t = 0; f.chillT = 0; ST_LAST.shatter = true;
+        reaction(f, 'shatter', a);
+      }
+    }
+    return a;
+  };
+  // After the damage landed: Curse stores a share (capped at 10 P of the curser); holy damage on a
+  // Marked foe is Judgement (heals the party 10% of it, at most 5% of each member's max HP a second).
+  stFoeDealt = (f, dealt, src, dt) => {
+    if (!(dealt > 0)) return;
+    const c = peek(f, 'curse');
+    if (c && c.t > 0) c.v = Math.min(D.curse.storeCap * c.p, c.v + dealt * D.curse.store);
+    if (dt === 'holy' && marked(f)) {
+      const mr = rec(f, 'mark');
+      if (!mr.st) { mr.st = 1; reaction(f, 'judgement', dealt); }   // the window opens once per Mark
+      const heal = dealt * REACTIONS.judgement.heal;
+      for (const u of units()) {
+        if (!u.live || u.down || !(u.maxHp > 0)) continue;
+        if (clock - (u.jdgAt || -9) >= 1) { u.jdgAt = clock; u.jdgGot = 0; }
+        const room = u.maxHp * REACTIONS.judgement.cap - (u.jdgGot || 0);
+        const h = Math.min(heal, room);
+        if (h > 0 && typeof cbHealUnit === 'function') { u.jdgGot = (u.jdgGot || 0) + h; ST_STATS.healed += cbHealUnit(u, h, null); }
+      }
+    }
+  };
+  // A foe died: its Burn jumps to the 2 nearest living foes with the time it had left (at least 2 s),
+  // up to 3 jumps from the first; a Blighted foe's jump carries half its Venom. A Curse detonates.
+  const near = [];
+  stFoeDies = f => {
+    if (!f || !f.ss) return;
+    const b = peek(f, 'burn'), list = foes();
+    if (b && b.t > 0 && b.j < D.burn.jumps) {
+      near.length = 0;
+      for (const o of list) if (o !== f && alive(o)) near.push(o);
+      near.sort((p, q) => Math.abs(p.row - f.row) - Math.abs(q.row - f.row));
+      const v = peek(f, 'venom'), carry = f.blight && v && v.t > 0 ? Math.floor(v.n / 2) : 0;
+      for (let i = 0; i < Math.min(D.burn.spread, near.length); i++) {
+        ST_STATS.spread++;
+        stApply(near[i], 'burn', 1, b.p, b.src, { dur: Math.max(D.burn.spreadMin, b.t), j: b.j + 1 });
+        if (carry > 0) stApply(near[i], 'venom', carry, v.p, v.src);
+      }
+      b.t = 0;
+    }
+    const c = peek(f, 'curse');
+    if (c && c.t > 0) { detonate(f, c, true); }
+  };
+  function detonate(f, c, dead) {
+    const amt = c.v; c.t = 0; c.v = 0;
+    if (!(amt > 0) || typeof cbDamageFoe !== 'function') return;
+    if (!dead) cbDamageFoe(f, amt * (1 + stPow(c.src)), c.src, 'dot', 'fire');
+    for (const o of foes()) if (o !== f && alive(o)) cbDamageFoe(o, amt * D.curse.splash * (1 + stPow(c.src)), c.src, 'dot', 'fire');
+  }
+  // Status power and type power from gear lines (core-2 1.1; the lines arrive with S4/S5: 0 until then).
+  const PW = { phys: 'pwPhys', holy: 'pwHoly', poison: 'pwPoison', fire: 'pwFire', frost: 'pwFrost' };
+  function gearOf(src) { const u = unitAt(src); if (!u) return null; try { return u.key === 'hero' ? gear() : charGear(u.key); } catch (e) { return null; } }
+  function stPow(src) { const g = gearOf(src); return g && g.stPow > 0 ? g.stPow / 100 : 0; }
+  function dotX(src, dt) { const g = gearOf(src); if (!g) return 1; return 1 + (g.stPow > 0 ? g.stPow / 100 : 0) + (g[PW[dt]] > 0 ? g[PW[dt]] / 100 : 0); }
+
+  // ---------------- statuses on party members ----------------
+  const urec = (u, id) => { const s = u.us || (u.us = {}); return s[id] || (s[id] = { n: 0, t: 0, v: 0 }); };
+  const upeek = (u, id) => (u.us && u.us[id]) || null;
+  stUnitApply = (u, id, stacks, opts) => {
+    const d = UD[id];
+    if (!d || !u || u.down) return false;
+    const o = opts || null, r = urec(u, id), n = Math.max(1, stacks | 0), dur = (o && o.dur) || d.dur;
+    if (id === 'bleed' || id === 'venom') {
+      if (!(r.t > 0)) r.n = 0;
+      // o.floor: raise to at least n stacks instead of adding (S1: a Spore cloud, until S6's pack cadence)
+      r.n = Math.min(d.max, o && o.floor ? Math.max(r.n, n) : r.n + n); r.t = dur;
+    } else if (id === 'mark') { r.v = Math.max(r.t > 0 ? r.v : 0, (o && o.v) || d.v); r.t = Math.max(r.t, dur); r.n = 1; }
+    else { r.n = 1; r.t = Math.max(r.t, dur); }
+    return true;
+  };
+  stUnitClear = u => { if (u && u.us) for (const k in u.us) { u.us[k].t = 0; u.us[k].n = 0; } };
+  // Cleanse (3.1): removes n harmful statuses (all their stacks), the most harmful first.
+  const CLEANSE_ORDER = ['stun', 'curse', 'venom', 'bleed', 'burn', 'root', 'chill', 'mark'];
+  stCleanse = (u, n) => {
+    if (!u) return 0;
+    let k = 0;
+    if (u.poisonT > 0) { u.poisonT = 0; u.poisonDps = 0; k++; }   // the old spore poison (none are made any more)
+    if (!u.us) return k;
+    for (const id of CLEANSE_ORDER) { if (k >= (n || 1)) break; const r = u.us[id]; if (r && r.t > 0) { r.t = 0; r.n = 0; k++; } }
+    return k;
+  };
+  stUnitVuln = u => { const r = u && upeek(u, 'mark'); return r && r.t > 0 ? Math.min(K.vulnCap, r.v) : 0; };
+  stUnitNoHeal = u => { const r = u && upeek(u, 'curse'); return !!(r && r.t > 0); };
+  stUnitSlow = u => { const r = u && upeek(u, 'chill'); return r && r.t > 0 ? UD.chill.slow : 0; };
+  stUnitStunned = u => { const r = u && upeek(u, 'stun'); return !!(r && r.t > 0); };
+
+  // ---------------- the tick ----------------
+  let beat = 0;
+  function tickFoe(f, dt, doBeat) {
+    const s = f.ss; if (!s) return;
+    const b = s.burn, v = s.venom, bl = s.bleed, c = s.curse;
+    if (doBeat && alive(f) && typeof cbDamageFoe === 'function') {
+      // one number of each DoT per beat; ticks never crit and ignore armour (bleed included)
+      if (bl && bl.t > 0) { ST_STATS.dot++; cbDamageFoe(f, D.bleed.coef * bl.p * bl.n * dotX(bl.src, 'phys'), bl.src, 'dot', 'phys'); }
+      if (alive(f) && v && v.t > 0) venomTick(f, v);
+      if (alive(f) && b && b.t > 0) {
+        ST_STATS.dot++;
+        cbDamageFoe(f, D.burn.coef * b.p * dotX(b.src, 'fire'), b.src, 'burn', 'fire');
+        if (alive(f) && f.blight && v && v.t > 0) venomTick(f, v);   // Blight: each Burn tick also ticks the Venom
+      }
+    }
+    if (bl && bl.t > 0) bl.t -= dt;
+    if (v && v.t > 0) { v.t -= dt; if (v.t <= 0) { v.n = 0; checkBlight(f); } }
+    if (b && b.t > 0) { b.t -= dt; f.burnT = Math.max(0, b.t); if (b.t <= 0) checkBlight(f); }
+    const ch = s.chill; if (ch && ch.t > 0) { ch.t -= dt; f.chillT = Math.max(0, ch.t); }
+    const rt = s.root; if (rt && rt.t > 0) { rt.t -= dt; f.rootT = Math.max(0, rt.t); }
+    if (c && c.t > 0) { c.t -= dt; if (c.t <= 0 && alive(f)) { c.t = 0.001; detonate(f, c, false); } }
+    if (f.rxT > 0) f.rxT -= dt;
+  }
+  function venomTick(f, v) {
+    ST_STATS.dot++;
+    const amt = D.venom.coef * v.p * v.n * (1 + D.venom.ramp * v.n) * dotX(v.src, 'poison');
+    cbDamageFoe(f, amt, v.src, 'dot', 'poison');
+  }
+  function tickUnit(u, dt, doBeat) {
+    const s = u.us; if (!s) return;
+    if (doBeat && !u.down && typeof cbHitUnit === 'function') {
+      const bl = s.bleed, v = s.venom, b = s.burn;
+      let a = 0, w = 0;
+      const pb = bl && bl.t > 0 ? UD.bleed.hp * bl.n : 0;
+      const pv = v && v.t > 0 ? UD.venom.hp * v.n * (1 + UD.venom.ramp * v.n) : 0;
+      const pf = b && b.t > 0 ? UD.burn.hp : 0;
+      a = pb + pv + pf;
+      if (a > 0) {
+        w = Math.min(1, UD.dotCap / a);   // all damage over time on one member: at most 5% max HP a tick
+        if (pv > 0) cbHitUnit(u, u.maxHp * pv * w, 'poison', null);
+        if (pb > 0 && !u.down) cbHitUnit(u, u.maxHp * pb * w, 'bleed', null);
+        if (pf > 0 && !u.down) cbHitUnit(u, u.maxHp * pf * w, 'burn', null);
+      }
+    }
+    for (const k in s) { const r = s[k]; if (r.t > 0) { r.t -= dt; if (r.t <= 0) { r.t = 0; r.n = 0; } } }
+  }
+  stTick = dt => {
+    clock += dt;
+    beat += dt;
+    const doBeat = beat >= K.tick;
+    if (doBeat) { beat -= K.tick; ST_STATS.beats++; }
+    const list = foes();
+    for (let i = 0; i < list.length; i++) { const f = list[i]; if (f && !f.dead) tickFoe(f, dt, doBeat); }
+    const U = units();
+    for (let i = 0; i < U.length; i++) { const u = U[i]; if (u.live) tickUnit(u, dt, doBeat); }
+  };
+
+  // ---------------- the focus foe's badges (combat-2 2.6) ----------------
+  const BADGES = [], BPOOL = [];
+  for (let i = 0; i < 4; i++) BPOOL.push({ id: '', n: 0, f: -1 });
+  stBadges = f => {
+    BADGES.length = 0;
+    if (!f || f.dead) return BADGES;
+    for (const id of ST_BADGE_ORDER) {
+      if (BADGES.length >= 4) break;
+      const left = stLeft(f, id); if (!(left > 0)) continue;
+      const b = BPOOL[BADGES.length], d = D[id];
+      b.id = id; b.n = id === 'bleed' || id === 'venom' ? stStacks(f, id) : 0;
+      b.f = Math.max(0, Math.min(1, left / Math.max(1, id === 'stun' ? d.cap : d.cap || d.dur)));
+      BADGES.push(b);
+    }
+    return BADGES;
   };
 }
 
@@ -23058,9 +23662,12 @@ const FOE_BEH = {
   golem: { row: 2, atk: 2.5, spd: 0.5, armoured: true },
   wraith: { row: 0, atk: 1, spd: 1, ranged: true }
 };
+// S1 (combat-2 2.1, core-2 6.1): each foe's pack size, members, family and hit type ride along from
+// 21x-data-types FOE_TYPE (FOE_BEH[k].size, .n, .fam, .dt, .quota). Sizes and quotas do nothing until S6.
+for (const k in FOE_BEH) { const r = FOE_TYPE[k]; if (r) Object.assign(FOE_BEH[k], { size: r.size, n: r.n, fam: r.fam, dt: r.dt, quota: r.quota }); }
 const ENEMY_TUNE = {
   diveEvery: 10, diveT: 3, diveT2: 5, diveX2: 2, diveFrom: 8,
-  cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4,
+  cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4, venom: 3,   // S1: the cloud's poison is Venom (venom stacks, poisonT s)
   slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, reassemble: 0.2,
   heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2, dodgeX: 0.5,
   beetleEvery: 6, golemX: 6, cloudBossX: 1.5, batDiveEvery: 12, batDiveX: 2, bonesEvery: 15, bonesAdds: 2, addHp: 0.08,
@@ -23126,7 +23733,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     const t = f.type;
     if (t === 'bat') {
       if (f.diveT > 0) { f.diveT -= dt; if (f.diveT <= 0) endDive(f); }
-      else if (f.bt >= E.diveEvery) {
+      else if (f.bt >= E.diveEvery && !(f.rootT > 0)) {   // S1: a Rooted foe cannot dive
         const u = pickDive();
         if (u && twoWalls(f)) { f.bt = 0; return false; }   // F2 Two Walls: the Middle tank taunts the pack's first diver
         if (u) { const two = f.z >= E.diveFrom; f.diveU = u.i; f.diveT = (two ? E.diveT2 : E.diveT); f.diveX = (two ? E.diveX2 : 1) * f.bx; f.first = 1; f.swing = Math.min(f.swing, 0.3); }
@@ -23138,13 +23745,15 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         for (const u of units()) {
           if (!u.live || u.down) continue;
           cbHitUnit(u, f.atk * E.cloud * f.bx, 'cloud', f);
-          if (!u.down) { u.poisonT = E.poisonT; u.poisonDps = Math.max(u.poisonDps, u.maxHp * E.poison * f.bx); }
+          // S1 (core-2 3.1: "the Spore cloud becomes Venom"): 3 stacks for 4 s, about today's 2% max HP a second.
+          // A cloud raises Venom to its stacks (floor) instead of adding, until S6 makes clouds a pack cadence.
+          if (!u.down) stUnitApply(u, 'venom', E.venom * f.bx, { dur: E.poisonT, floor: true });
         }
       }
     } else if (t === 'wraith') {
       if (f.chanT > 0) {
         f.chanT -= dt;
-        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx); f.bt = 0; }
+        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
         return true;
       }
       if (f.bt >= E.healEvery) { const o = mostHurtFoe(); if (o) { f.chanT = E.healChan; return true; } }
@@ -23231,7 +23840,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         name: TYPES[ti].name, gold: 0, xp: 0, hit: 0, dead: 0, born: 0, ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured,
         atk: f.atk / COMBAT_TUNE.bossAtk * b.atk, spd: COMBAT_TUNE.spd * b.spd, swing: 1, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
         stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
-        bt: 0, diveT: 0, diveU: -1, chanT: 0, hits: 0, again: true, first: 0, z: f.z, adds: true, gone: false
+        bt: 0, diveT: 0, diveU: -1, chanT: 0, hits: 0, again: true, first: 0, z: f.z, adds: true, gone: false,
+        dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false   // S1 (59a)
       };
       for (let k = 0; k < 4; k++) a.th[k] = f.th[k] * 0.5;
       list.push(a);
@@ -23241,7 +23851,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   function land(f) {
     const kind = TELE.kind, res = TELE.res;
     if (kind === 'heal') {
-      f.hp = Math.min(f.max, f.hp + f.max * E.wraithHeal);
+      f.hp = Math.min(f.max, f.hp + f.max * E.wraithHeal * stHealX(f));   // S1: anti-heal
       endTele('heal', '');
       return;
     }
@@ -24287,6 +24897,39 @@ const ANIM = (() => {
   return { glow, beam, rgbOf, part, burstPx, proj, ring, after, clear, step, drawParts, drawProj, drawRings, lightAt, glowAt, devView };
 })();
 
+// ---- src/js/61b-type-icons.js ----
+// 61b-type-icons: canvases for the damage type icons and the status badges (Core 2.0 slice S1;
+// docs/design/core-2.md 2.1 and 3.1). Browser-only. Maps and colours: 21x-data-types.js (DT_INFO, ST_ICONS).
+// Exposed (function declarations, so 62-stage can call them whatever the load order):
+//   typeIcon(dt)    -> a 9x9 canvas: the 7x7 type icon with a 1 px dark outline (numbers on the stage)
+//   statusIcon(id)  -> a 5x5 canvas: the status badge in its own colours (the stage's chips add the plate)
+// Shapes differ in outline, so they read without colour (A11Y checks them in the colour-blind filters).
+
+const TYPE_ICONS = {}, STATUS_ICONS = {};
+function typeIcon(dt) {
+  const info = typeof DT_INFO === 'object' && DT_INFO[dt];
+  if (!info) return null;
+  let c = TYPE_ICONS[dt];
+  if (c) return c;
+  c = TYPE_ICONS[dt] = document.createElement('canvas'); c.width = 9; c.height = 9;
+  const g = c.getContext('2d'), pal = { 1: info.col, 2: info.dark, 3: info.light };
+  // the outline: every lit pixel's 8 neighbours in the stage's ink, then the icon on top
+  g.fillStyle = '#0B0810';
+  info.icon.forEach((r, y) => { for (let x = 0; x < 7; x++) if (pal[r[x]]) g.fillRect(x, y, 3, 3); });
+  info.icon.forEach((r, y) => { for (let x = 0; x < 7; x++) if (pal[r[x]]) { g.fillStyle = pal[r[x]]; g.fillRect(x + 1, y + 1, 1, 1); } });
+  return c;
+}
+function statusIcon(id) {
+  const m = typeof ST_ICONS === 'object' && ST_ICONS[id];
+  if (!m) return null;
+  let c = STATUS_ICONS[id];
+  if (c) return c;
+  c = STATUS_ICONS[id] = document.createElement('canvas'); c.width = 5; c.height = 5;
+  const g = c.getContext('2d');
+  m.rows.forEach((r, y) => { for (let x = 0; x < 5; x++) { const col = m.pal[r[x]]; if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); } } });
+  return c;
+}
+
 // ---- src/js/62-stage.js ----
 // 62-stage: the stage canvas. One canvas at device resolution, drawn in CSS px units:
 // pixel art (scenery layers at 1 art px per CSS px; characters and enemies baked by 60b at 2x,
@@ -24325,8 +24968,9 @@ let resize, animate, draw, stageStats, warmScene;
   const FONTS = new Map(), TXT_K = 1.15;
   const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Handjet", "Arial Narrow", monospace`; FONTS.set(s, f); } return f; };
   const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
-  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0 });
-  function pushFloat(txt, color, big, x, y) {
+  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
+  // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
+  function pushFloat(txt, color, big, x, y, dt, rel) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -24339,7 +24983,7 @@ let resize, animate, draw, stageStats, warmScene;
     let row = BUSY.indexOf(0);
     if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
     const f = free || last;
-    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0;
+    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -24350,17 +24994,26 @@ let resize, animate, draw, stageStats, warmScene;
   // Text sprites: each text is drawn once (outline, fill, the shield glyph) at device size into its
   // record's own canvas; frames only copy it (scaled during the first pop), so a screen of numbers
   // costs a few drawImage calls, not a stroke and a fill of text each. Rebaked on a zoom change.
-  function bakeText(r, txt, col, size, lw, glyph) {
+  // S1: dt puts the type icon in front (instead of a glyph); rel 1 / -1 adds a weak / resisted triangle after.
+  function bakeText(r, txt, col, size, lw, glyph, dt, rel) {
     const K = DPR * ZM, px = Math.max(6, Math.round(size * K)), l = Math.max(1, Math.round(lw * K));
     const c = r.cv || (r.cv = document.createElement('canvas'));
     let g = c.getContext('2d'); g.font = fontPx(px);
+    const tIc = dt ? typeIcon(dt) : null; if (tIc) glyph = 1;
     const tw = Math.ceil(g.measureText(txt).width), gw = glyph ? Math.round(px * 0.7) : 0, gap = glyph ? Math.round(px * 0.12) : 0;
-    const w = tw + gw + gap + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
+    const aw = rel ? Math.round(px * 0.5) + gap : 0;
+    const w = tw + gw + gap + aw + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } else g.clearRect(0, 0, w, h);
     g = c.getContext('2d'); g.font = fontPx(px); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
     const bx = l + 2 + gw + gap, by = Math.round(l + px);
     g.lineWidth = l; g.strokeStyle = '#0B0810'; g.strokeText(txt, bx, by); g.fillStyle = col; g.fillText(txt, bx, by);
-    if (gw) { g.imageSmoothingEnabled = false; g.drawImage(icon('shield'), l + 2, Math.round(by - gw * 0.95), gw, gw); }
+    if (gw) { g.imageSmoothingEnabled = false; g.drawImage(tIc || icon('shield'), l + 2, Math.round(by - gw * 0.95), gw, gw); }
+    if (rel) {   // ▲ weak (points up), ▼ resisted (points down): a shape, not only a colour
+      const s = Math.round(px * 0.5), x0 = bx + tw + gap, yb = Math.round(by - px * 0.1), yt = yb - s;
+      g.beginPath();
+      if (rel > 0) { g.moveTo(x0, yb); g.lineTo(x0 + s, yb); g.lineTo(x0 + s / 2, yt); } else { g.moveTo(x0, yt); g.lineTo(x0 + s, yt); g.lineTo(x0 + s / 2, yb); }
+      g.closePath(); g.lineWidth = Math.max(1, l * 0.6); g.strokeStyle = '#0B0810'; g.stroke(); g.fillStyle = rel > 0 ? '#FFE680' : '#B9B2C6'; g.fill();
+    }
     r.k = K; r.bw = w / K; r.bh = h / K; r.by = by / K;
   }
   // x: the centre, y: the baseline (logical px); whole device px when not popping.
@@ -25055,7 +25708,7 @@ let resize, animate, draw, stageStats, warmScene;
     tank.go = Math.min(0, t.hx + 18 - tank.hx); tank.goT = 2;
   }
   // ================= events =================
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -25591,7 +26244,7 @@ let resize, animate, draw, stageStats, warmScene;
       const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
       const al = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
       if (al <= 0) continue;
-      if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0); f.wz = base; }
+      if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0, f.dt, f.rel); f.wz = base; }
       // over a pack, a text stays over the foe it was raised on (its x then) as the next steps up
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
@@ -25738,7 +26391,8 @@ let resize, animate, draw, stageStats, warmScene;
     if (!c) {
       c = icons[id] = document.createElement('canvas'); c.width = 5; c.height = 5;
       const g = c.getContext('2d');
-      IMAP[id].forEach((r, y) => { for (let x = 0; x < 5; x++) if (IP[r[x]]) { g.fillStyle = IP[r[x]]; g.fillRect(x, y, 1, 1); } });
+      if (IMAP[id]) IMAP[id].forEach((r, y) => { for (let x = 0; x < 5; x++) if (IP[r[x]]) { g.fillStyle = IP[r[x]]; g.fillRect(x, y, 1, 1); } });
+      else { const st = statusIcon(id); if (st) g.drawImage(st, 0, 0); }   // S1: status badges (61b, 21x ST_ICONS)
     }
     return c;
   }
@@ -25831,7 +26485,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.fillStyle = HBG; ctx.fillRect(X + e, Y + e, w - 2 * e, h - 2 * e);
     ctx.drawImage(icon(id), X + U, Y + U, 5 * U, 5 * U);
     if (n > 0) ctx.drawImage(glyphs(BONE), Math.min(9, n) * 4, 0, 3, 5, X + 7 * U, Y + U, 3 * U, 5 * U);
-    if (frac >= 0) { ctx.fillStyle = ICOL[id]; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
+    if (frac >= 0) { ctx.fillStyle = ICOL[id] || (ST_ICONS[id] && ST_ICONS[id].col) || '#DCE8FF'; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
     return w;
   }
   // A 5x5 icon on a dark plate (7x7 HUD px), top-left at X, Y.
@@ -25976,6 +26630,8 @@ let resize, animate, draw, stageStats, warmScene;
     }
     if ((s === foe && markLeft > 0) || m.markT > 0) pushChip('mark', 0, Math.min(1, (s === foe && markLeft > 0 ? markLeft : m.markT) / 8));
     if (m.embers | 0) pushChip('ember', m.embers | 0, -1);
+    // S1 (combat-2 2.6): the focus foe's statuses, up to 4 badges with stack digits and time left
+    if (s === foe && typeof stBadges === 'function') for (const b of stBadges(m)) if (chipList.length < 6) pushChip(b.id, b.n, b.f);
     const h = chipRow(cx, y - U);
     if (h) y -= h + U;
     if (m.chanT > 0 && !m.boss) { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }

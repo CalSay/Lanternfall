@@ -48,7 +48,8 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     if (t) return t;
     t = TX[key] = {};
     const r = rowFor(key);
-    for (const d of DMG_TYPES) t[d] = !r ? 1 : r.weak === d ? TYPE_X.weak : r.res.includes(d) ? TYPE_X.resist : TYPE_X.neutral;
+    const res = r && r.region === 'hollow' && K.resistHollow > 0 ? K.resistHollow : TYPE_X.resist;   // S1 pick, see ST_TUNE
+    for (const d of DMG_TYPES) t[d] = !r ? 1 : r.weak === d ? TYPE_X.weak : r.res.includes(d) ? res : TYPE_X.neutral;
     return t;
   }
   typeXKey = (key, dt) => (dt && txOf(key)[dt]) || 1;

@@ -141,7 +141,10 @@ const REACTIONS = {
 
 // tick: the one status beat (s). vulnCap: Σ vuln (core-2 1.2). rxWin / rxX: the reaction window and its
 // timing bonus on abilities. heavyP: a single hit of this many P counts as heavy (core-2 3.5).
-const ST_TUNE = { tick: 1, vulnCap: 0.6, rxWin: 3, rxX: 1.25, heavyP: 3, resCap: 0.5, antiHeal: 0.5 };
+// resistHollow (S1, proposed, pending the coordinator): the Hollow's foes resist at x0.85, not x0.6, until the counters
+// land (the planner's leans S6, evolutions S3, resist and type-power lines S4/S5; BAL3 retunes). At x0.6 an all-physical
+// Ranger party walls at the Elder Wraiths (T3: 175 min to zone 15, one seed never). Coast foes (R2) take TYPE_X.resist.
+const ST_TUNE = { tick: 1, vulnCap: 0.6, rxWin: 3, rxX: 1.25, heavyP: 3, resCap: 0.5, antiHeal: 0.5, resistHollow: 0.85 };
 
 // The focus foe shows up to 4 badges, the most important first (combat-2 2.6 and its "other members" order).
 // Mark is left out here: the stage already draws its own Mark chip (the Ranger's Focus and Mark share it).
