@@ -2839,6 +2839,74 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .hu-hint { margin-top: 2px; font: 600 calc(12.5px * var(--display-k))/1.25 var(--display); color: var(--gold); }
 .hu-hint[hidden] { display: none; }
 .hu-row.far .buy .price { opacity: .6; }
+/* 61-class: Classes 2.0 S3 (75-class-ui.js): the evolution rows on the class card, the Proving banner on the
+   stage, the second ability button and the meter, the choice card, the respec sheet, the evolution ring
+   under the star map, and the lamp flash (off under reduced motion). */
+.cl-row.cl-evo { border-color: var(--evo, var(--gold)); }
+.cl-prove { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--gold); background: var(--well); }
+.cl-prove p { margin: 0; font-size: 13px; line-height: 1.35; color: var(--muted); }
+.cl-prove small { font-size: 12px; color: var(--muted); }
+.cl-prove .cl-go, .cl-row .cl-go { justify-self: start; min-height: 44px; padding: 8px 14px; }
+.cl-rec { color: var(--bone) !important; }
+.cl-ab2 .pc-auto { display: flex; gap: 6px; align-items: center; min-height: 36px; font-size: 13px; color: var(--muted); }
+.cl-cost { font-size: 13px; color: var(--bone); margin: 0; }
+.cl-need { font-size: 12.5px; color: var(--ember, #FF9E3D); margin: 0; }
+.cl-mirror .mini { min-height: 44px; }
+.evo-opt { display: grid; gap: 6px; }
+.evo-opt .mini { justify-self: start; min-height: 44px; padding: 8px 14px; }
+.evo-opt .mini:disabled { opacity: .5; cursor: default; }
+
+/* The Proving on the stage */
+.tr-hud { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 6; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: rgba(11,8,16,.86); border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
+.tr-hud[hidden] { display: none; }
+.tr-top { display: flex; justify-content: space-between; gap: 8px; min-width: 0; grid-column: 1; }
+.tr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); }
+.tr-time { font-variant-numeric: tabular-nums; }
+.tr-goal { grid-column: 1; font-size: 12.5px; color: var(--muted); }
+.tr-bar { grid-column: 1; height: 6px; background: #241a2c; overflow: hidden; }
+.tr-bar i { display: block; height: 100%; background: var(--gold); transform-origin: left; }
+.tr-hold .tr-bar i { background: #FFD27A; }
+.tr-quit { grid-column: 2; grid-row: 1 / span 3; align-self: center; min-height: 44px; }
+
+/* The second ability and the meter */
+.abil.abil2 { right: 64px; border-color: var(--evo, var(--gold)); }
+.abil2 .abil2-ic { font: 700 calc(18px * var(--display-k, 1)) var(--display, inherit); color: var(--evo, var(--bone)); text-shadow: 0 2px 0 #0B0810; }
+.stage.tall .abil.abil2 { right: 110px; }
+.cl-meter { position: absolute; right: 8px; bottom: calc(20% + 64px); display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: rgba(11,8,16,.8); border: 1px solid var(--line); font-size: 12px; color: var(--bone); pointer-events: none; }
+.cl-meter[hidden] { display: none; }
+.cl-mbar { width: 56px; height: 5px; background: #241a2c; overflow: hidden; }
+.cl-mbar i { display: block; height: 100%; background: var(--ember, #FF9E3D); transform-origin: left; }
+.cl-mnum { font-variant-numeric: tabular-nums; }
+.stage.tall .cl-meter { right: 42px; bottom: 76px; }
+
+/* The choice card */
+.evo-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.evo-tab { min-height: 44px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); font: inherit; font-weight: 700; cursor: pointer; }
+.evo-tab.on { border-color: var(--gold); color: var(--gold); }
+.evo-body { display: grid; gap: 8px; padding: 10px; border: 2px solid var(--evo, var(--gold)); background: var(--panel); touch-action: pan-y; }
+.evo-top { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; }
+.evo-fig { width: 56px; height: 100px; image-rendering: pixelated; }
+.evo-body h2 { margin: 0; font-size: 20px; letter-spacing: .04em; color: var(--evo, var(--gold)); }
+.evo-title { font-size: 13px; color: var(--muted); }
+.evo-bul { margin: 0; padding-left: 18px; display: grid; gap: 4px; line-height: 1.35; }
+.evo-line, .evo-good { margin: 0; font-size: 13.5px; line-height: 1.35; }
+.evo-good .own { color: var(--bone); }
+.evo-good .not { color: var(--muted); opacity: .7; }
+.evo-confirm { display: grid; gap: 8px; padding: 10px; border: 2px solid var(--gold); background: var(--well); }
+.evo-confirm[hidden] { display: none; }
+.evo-confirm p { margin: 0; }
+
+/* The evolution ring under the star map */
+.st-ringbox { display: grid; gap: 4px; margin-top: 8px; padding: 8px; border: 1px solid var(--line); background: var(--well); }
+.st-ringbox .note { margin: 0; }
+.st-ring-svg { width: 100%; max-width: 340px; justify-self: center; }
+.st-suggest { justify-self: start; min-height: 44px; }
+
+/* The lamp flash when an evolution is chosen or proven */
+.evo-flash { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at 30% 65%, var(--evo) 0, transparent 55%); opacity: 0; animation: evo-flash 1.3s ease-out; }
+@keyframes evo-flash { 0% { opacity: 0; } 20% { opacity: .75; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .evo-flash { animation: none; display: none; } }
+@media (max-width: 380px) { .evo-top { grid-template-columns: 56px 1fr; } .tr-hud { font-size: 12px; } }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } .modeseg button { padding: 0 9px; min-width: 50px; } .znum { min-width: 50px; } .skill .sn { letter-spacing: .03em; } }
 @media (prefers-reduced-motion: reduce) {
   .toast { animation: none; transition: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; }
@@ -21019,10 +21087,14 @@ const STAR_GEO = {
   slot: [[50, 0], [95, 0], [140, 0], [185, 0], [172, 19], [172, -19], [150, -38], [150, 38]],
   ring: 104, ringOff: 34
 };
+// S3: the evolution ring's own view (75-stars-ui draws it under the map): seven stars on a circle, the keystone
+// in the middle. Needs: RING_NEED ring stars lit before a ring notable / the ring keystone.
+const RING_GEO = { view: [0, 0, 240, 170], cx: 120, cy: 86, r: 66 };
+const RING_NEED = { notable: 2, key: 5 };
 
 let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLayout, starLayouts, starIsLit,
   starCheck, starLight, starUnlight, starReset, starUseLayout, starRename, starLocked, starKeysLit, starKeystone,
-  starEffects, starPowerEst, starBest, starText, starValidate;
+  starEffects, starPowerEst, starBest, starText, starValidate, starRingEvo, starSuggest;
 
 {
   // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
@@ -21035,7 +21107,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   // ---- build each class map once: stars by id, edges, adjacency ----
   const MAPS = {};
   const polar = (deg, r) => { const a = deg * Math.PI / 180; return [Math.round(STAR_GEO.cx + r * Math.cos(a)), Math.round(STAR_GEO.cy + r * Math.sin(a))]; };
-  function build(cls) {
+  function build(cls, evo) {
     const d = STAR_MAPS[cls]; if (!d) return null;
     const stars = {}, order = [], edges = [], adj = {};
     const add = s => { stars[s.id] = s; order.push(s.id); adj[s.id] = []; };
@@ -21061,10 +21133,38 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       link(`a${a}s3`, id);
     }
     link('b0', 'b1'); link('b2', 'b3'); link('b4', 'crown');
-    return { cls, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj };
+    // S3 (classes-2 4.3): the evolution ring, e1s1-e1s8, once the evolution is proven. Seven stars on a circle
+    // and the ring keystone in its middle (linked to the two notables, s3 and s6). e1s1, e1s4 and e1s7 open from
+    // star 5 of arms 1, 2 and 3. Ring positions are in the ring's own view (RING_GEO: drawn under the map).
+    const ev = evo && EVO_DEFS[evo], rEdges = [];
+    if (ev) {
+      ev.ring.forEach(([name, text, fx, p], i) => {
+        const slot = i + 1, kind = slot === 8 ? 'key' : slot === 3 || slot === 6 ? 'notable' : 'minor';
+        const a = -Math.PI / 2 + (i * 2 * Math.PI) / 7;
+        const pos = slot === 8 ? [RING_GEO.cx, RING_GEO.cy] : [Math.round(RING_GEO.cx + RING_GEO.r * Math.cos(a)), Math.round(RING_GEO.cy + RING_GEO.r * Math.sin(a))];
+        add({ id: 'e1s' + slot, name, kind, cost: KIND_COST[kind], text, c: '', fx, p, pos, arm: -2, slot, ring: 1, armName: ev.name + ' ring', evo });
+      });
+      const rl = (a, b) => { rEdges.push([a, b]); adj[a].push(b); adj[b].push(a); };
+      for (let i = 1; i <= 7; i++) rl('e1s' + i, 'e1s' + (i % 7 + 1));
+      rl('e1s8', 'e1s3'); rl('e1s8', 'e1s6');
+      [['e1s1', 'a0s5'], ['e1s4', 'a1s5'], ['e1s7', 'a2s5']].forEach(([r, s]) => { adj[r].push(s); adj[s].push(r); stars[r].entry = s; });
+    }
+    return { cls, evo: ev ? evo : null, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj, ringEdges: rEdges };
   }
-  starMap = cls => cls && STAR_MAPS[cls] ? (MAPS[cls] || (MAPS[cls] = build(cls))) : null;
+  // The evolution whose ring shows on a base map: the current base's proven evolution (55-classes).
+  starRingEvo = cls => {
+    if (typeof lbClass !== 'function' || typeof clsProven !== 'function') return null;
+    const c = lbClass(), map = c.base && CLS_STAR_MAP[CLS_KIT(c.base, null)];
+    return map === cls && c.evo && EVO_DEFS[c.evo] && clsProven() ? c.evo : null;
+  };
+  starMap = cls => {
+    if (!cls || !STAR_MAPS[cls]) return null;
+    const ev = STAR_MAPS[cls].legacy ? null : starRingEvo(cls), k = cls + '|' + (ev || '');
+    return MAPS[k] || (MAPS[k] = build(cls, ev));
+  };
   const isKey = s => s.kind === 'key' || s.kind === 'crown';
+  // A star with a need: an arm keystone, the crown, or a ring notable or keystone (2 and 5 ring stars first).
+  const hasNeed = s => isKey(s) || (s.ring && s.kind === 'notable');
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);   // region bosses beaten (22-data-regions)
@@ -21091,10 +21191,16 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 
   // ---- rules ----
   const litSet = lit => new Set(['hearth', ...lit]);
-  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s)) n++; } return n; }
+  // The ring keystone does not count toward the base map's 2 (classes-2 4.1).
+  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s) && !s.ring) n++; } return n; }
   const armCount = (map, set, a) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.arm === a && s.kind !== 'key') n++; } return n; };
+  const ringCount = (map, set, not) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.ring && id !== not) n++; } return n; };
   // Why a lit keystone's need is not met in this set (null when it is).
   function needWhy(map, s, set) {
+    if (s.ring) {
+      const need = RING_NEED[s.kind] || 0, n = ringCount(map, set, s.id);
+      return n >= need ? null : `Light ${need} ring stars first (${n} of ${need}).`;
+    }
     if (s.kind === 'key') { const n = armCount(map, set, s.arm); return n >= T.armKeyNeed ? null : `Light ${T.armKeyNeed} stars in ${s.armName} first (${n} of ${T.armKeyNeed}).`; }
     if (s.kind === 'crown') {
       let b = 0; for (const id of set) if (map.stars[id] && map.stars[id].kind === 'bridge') b++;
@@ -21126,14 +21232,14 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       set.delete(id);
       let why = null;
       if (!connected(map, set)) why = 'Other lit stars hang from this one. Unlight them first.';
-      else for (const o of set) { const os = map.stars[o]; if (os && isKey(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
+      else for (const o of set) { const os = map.stars[o]; if (os && hasNeed(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
       if (!why && lock) why = lock;
       return { ok: !why, act: 'unlight', why };
     }
     let why = null;
-    if (isKey(s) && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
+    if (isKey(s) && !s.ring && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
     else if (!map.adj[id].some(n => set.has(n))) why = 'Light a star next to it first.';
-    else if (isKey(s)) why = needWhy(map, s, set);
+    else if (hasNeed(s)) why = needWhy(map, s, set);
     if (!why) { const free = starPoints() - spentOf(map, lit); if (free < s.cost) why = `Needs ${s.cost} point${s.cost > 1 ? 's' : ''} (you have ${free}).`; }
     if (!why && lock) why = lock;
     return { ok: !why, act: 'light', why };
@@ -21182,7 +21288,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const before = Array.isArray(l.lit) ? l.lit.length : 0;
     const seen = new Set();
     let lit = (Array.isArray(l.lit) ? l.lit : []).filter(id => typeof id === 'string' && map.stars[id] && id !== 'hearth' && !seen.has(id) && seen.add(id));
-    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (isKey(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
+    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (hasNeed(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
     let guard = 64;
     while (!ok(lit) && guard-- > 0) {
       // drop the latest star whose removal keeps the rest connected (a tip); else the latest one
@@ -21226,6 +21332,23 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'gold', 'offline'];
   const TUNE_KEYS = new Set(), KS_IDS = new Set(Object.keys(STAR_KS));
   for (const c in STAR_MAPS) for (const s of Object.values(starMap(c).stars)) { for (const k in (s.fx.t || {})) TUNE_KEYS.add(k); if (s.fx.ks) KS_IDS.add(s.fx.ks); }
+  for (const e in EVO_DEFS) for (const [, , fx] of EVO_DEFS[e].ring) { for (const k in (fx.t || {})) TUNE_KEYS.add(k); if (fx.ks) KS_IDS.add(fx.ks); }   // S3 rings
+  // S3: an evolution chosen or switched: the ring's stars go dark on every layout of that base map (refunded, 4.4);
+  // a proof or a switch changes which ring shows, so the effects are read again.
+  on('evoChosen', ({ base, from, evo }) => {
+    const m = CLS_STAR_MAP[CLS_KIT(base, null)], r = m && mapRec(m, false);
+    if (r && from !== evo) for (const l of r.layouts) if (l && Array.isArray(l.lit)) l.lit = l.lit.filter(id => !/^e1s/.test(id));
+    bump();
+  });
+  on('evoProven', () => bump());
+  // A Lightkeeper's suggested layout (4.4): the Flare arm, then the Lightkeeper ring, as far as the points go.
+  starSuggest = () => {
+    const cls = starCls(); if (!cls || starLocked()) return 0;
+    let n = 0;
+    for (const id of ['a1s1', 'a1s2', 'a1s3', 'a1s4', 'a1s5', 'e1s4', 'e1s5', 'e1s3', 'e1s6', 'e1s2', 'e1s1', 'e1s7', 'e1s8', 'a1s6', 'a1s7'])
+      if (!starIsLit(id, cls) && starLight(id, cls)) n++;
+    return n;
+  };
   const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
   // Cached per class and layout version: the modifiers below run on every hit and dps read.
   let eff = NONE, effCls, effVer = -1;
@@ -26069,7 +26192,11 @@ const ART = (() => {
     const spec = { cls, gear };
     if (party.skin != null) spec.skin = party.skin;
     if (party.hair != null) spec.hair = party.hair;
-    const acc = typeof lookAcc === 'function' ? lookAcc() : null; if (acc) spec.acc = acc;
+    let acc = typeof lookAcc === 'function' ? lookAcc() : null;
+    // S3: the evolution's lamp colour (classes-2 2.x looks), unless a flame look is worn
+    const ev = typeof evoLamp === 'function' ? evoLamp() : null;
+    if (ev && !(acc && acc.fl)) acc = Object.assign({}, acc || {}, { fl: ev });
+    if (acc) spec.acc = acc;
     return spec;
   }
   // Creation screen: the class in its base look (tier 1 Common weapon, off-hand, head and body).
@@ -33847,6 +33974,307 @@ let bondsUI = null;
   });
 }
 
+// ---- src/js/75-class-ui.js ----
+// 75-class-ui: the evolutions on screen (Classes 2.0 slice S3; classes-2.md 3.1-3.4, 3.7). Browser-only.
+// Core: 55-classes.js (the Proving, chooseEvo, the respec), 59e-class-combat.js (ab2, meters), 59f-trials.js.
+//
+//  - the class card's evolution rows (76-create classUI.rows calls classEvoUI.rows): the path and its parts,
+//    the second ability (ab2) with its auto-cast switch, the Proving (take it, your record), the choice
+//  - the choice card (3.3): full screen, two tabs, a figure (still under reduced motion), an in-page confirm
+//  - the respec sheet (3.4): the Mirror of Embers row (classUI.mirrorRow), both costs shown in full
+//  - the Proving on the stage: a banner with the trial's name, time, goal and progress, and Give up
+//  - the second ability button on the stage (next to the first) and the evolution's meter
+//  - the ceremony: a lamp flash in the new colour (reduced motion: none), the toast comes from the core
+//
+// classEvoUI: { rows(info), mirrorRow(), sig(), openChoice(), openRespec(), closeAll() }
+
+var classEvoUI;
+{
+  const A = CLASS_ABILITIES;
+  const ROLE_NAME = { tank: 'Tank', striker: 'Damage', caster: 'Caster', support: 'Support' };
+  const HOME_NAME = { front: 'Front', mid: 'Middle', back: 'Back' };
+  const heroName = id => (typeof ROSTER === 'object' && ROSTER[id] ? ROSTER[id].name.split(' ')[0] : id);
+  const owned = id => typeof isRecruited === 'function' && isRecruited(id);
+  const safe = (f, d) => { try { return f(); } catch (e) { console.error('[lanternfall] class ui', e); return d; } };
+  const btn = (cls, txt, fn) => { const b = el('button', cls, txt); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); fn(e); }); return b; };
+  const row = (title, sub, text, cls) => {
+    const d = el('div', 'cs-kit1 cl-row' + (cls ? ' ' + cls : ''));
+    const top = el('div', 'cl-top'); top.append(el('b', null, title)); if (sub) top.append(el('small', null, sub));
+    d.append(top);
+    if (text) d.append(el('p', null, text));
+    return d;
+  };
+  const chip = (txt, on) => el('span', 'cl-chip' + (on ? ' on' : ''), (on ? '✓ ' : '') + txt);
+  const closeSheet = () => { if (typeof partySheet === 'object' && partySheet && partySheet.close) safe(() => partySheet.close()); };
+
+  // ---------------- the class card rows ----------------
+  function provingBox(p) {
+    const box = el('div', 'cl-prove');
+    const tr = p.trial;
+    box.append(el('b', null, `The Proving: ${tr.name}`), el('p', null, p.prove ? 'Prove what you already are. ' + tr.text : tr.text), el('p', 'cl-note', tr.how));
+    if (p.n) box.append(el('p', 'cl-rec', `Tries: ${p.n}. Best: ${p.best}%.`));
+    box.append(btn('mini go cl-go', 'Take the Proving', () => { closeSheet(); startProving(); }));
+    box.append(el('small', null, 'Free, and you can try again at once. Your party waits while you fight alone.'));
+    return box;
+  }
+  function rows(info) {
+    const out = [];
+    const d = CLASS_DEFS[info.base], p = info.proving;
+    if (info.evo && EVO_DEFS[info.evo]) {
+      const ev = EVO_DEFS[info.evo], full = info.proven;
+      const r = row(`Path: ${ev.name}`, full ? ev.title : 'Granted', full ? `"${ev.pitch}" ${ev.line.name}: ${ev.line.text}` : `Its new powers work at ${Math.round(CLS_TUNE.unproven * 100)}% until you pass the Proving.`, 'cl-evo');
+      r.style.setProperty('--evo', ev.tint);
+      if (!full) r.append(el('p', 'cl-note', `The title ${ev.title} and the ${ev.name} ring wait for your Proving.`));
+      out.push(r);
+      for (const ps of ev.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
+      const ab = A[ev.ab2], ai = typeof ab2Info === 'function' ? ab2Info() : null;
+      const ar = row(`${ab.name} · every ${ab.cd}s`, 'Second ability', ab.desc, 'cl-ab2');
+      const lb = el('label', 'pc-auto'); const box = el('input'); box.type = 'checkbox'; box.checked = !!(ai && ai.autoOn);
+      box.addEventListener('change', () => { if (typeof ab2Auto === 'function') ab2Auto(box.checked); save(); });
+      lb.append(box, document.createTextNode(` Cast ${ab.name} for me when idle (from zone 10)`));
+      ar.append(lb); out.push(ar);
+      const fin = A[ev.finisher];
+      if (fin) out.push(row(`Finisher: ${fin.name}`, 'with active combat', fin.desc, 'off'));
+      if (p && p.open) out.push(provingBox(p));
+    } else {
+      const names = info.paths.map(x => `${x.name} (${x.kind})`).join(' or ');
+      if (info.choice) {
+        const r = row('Evolution', 'Ready', `You passed the Proving. Choose your path: ${names}. The choice is for good.`, 'cl-evo');
+        r.append(btn('mini go cl-go', 'Choose your path', () => { closeSheet(); openChoice(); }));
+        out.push(r);
+      } else {
+        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const chips = el('div', 'cl-chips');
+        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        r.append(chips);
+        out.push(r);
+        if (p && p.open) out.push(provingBox(p));
+      }
+    }
+    out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+    return out;
+  }
+  const sig = () => {
+    const c = S.cls || {}, ai = typeof ab2Info === 'function' ? ab2Info() : null, p = typeof provingInfo === 'function' ? provingInfo() : null;
+    return [c.evo, JSON.stringify(c.trials || {}), ai ? ai.autoOn : '', p ? p.open + '' + p.choice : '', S.party && S.party.mirrors, c.respec].join('/');
+  };
+
+  // ---------------- the Proving ----------------
+  function startProving() {
+    if (typeof provingStart !== 'function' || !provingStart()) { toast('The Proving cannot start now. Finish what you are doing first.', 'raid'); return; }
+    if (typeof closeMenu === 'function') safe(() => closeMenu());
+  }
+  const stage = $('stage');
+  const hud = el('div', 'tr-hud'); hud.hidden = true; hud.setAttribute('role', 'status');
+  const hTop = el('div', 'tr-top'), hName = el('b', 'tr-name'), hTime = el('span', 'tr-time');
+  hTop.append(hName, hTime);
+  const hGoal = el('div', 'tr-goal'), hBar = el('div', 'tr-bar'), hFill = el('i');
+  hBar.append(hFill);
+  const hQuit = btn('mini tr-quit', 'Give up', () => { if (typeof trialEnd === 'function') trialEnd(false, 'quit'); });
+  hud.append(hTop, hGoal, hBar, hQuit);
+  hud.addEventListener('pointerdown', e => e.stopPropagation());
+  if (stage) stage.append(hud);
+  on('trialStart', () => { putHidden(hud, false); updateHud(); });
+  on('trialEnd', e => {
+    putHidden(hud, true);
+    if (!e || e.kind !== 'proving' || e.won) return;
+    const why = { lamp: 'The lamp went out.', escaped: 'The herald got away.', time: 'Time ran out.', fell: 'You fell.', quit: 'You stepped back.' }[e.reason] || '';
+    toast(`The Proving: not this time. ${why} Best so far: ${Math.max(e.pct, (S.cls.trials[e.id] || {}).best || 0)}%. Try again: it is free.`, 'raid', null, 'high');
+  });
+  function updateHud() {
+    const t = typeof trialInfo === 'function' ? trialInfo() : null;
+    if (!t) { putHidden(hud, true); return; }
+    putHidden(hud, false);
+    putText(hName, t.name); putText(hTime, `${Math.ceil(t.left)}s`); putText(hGoal, t.goal);
+    const f = t.tpl === 'hold' ? t.lamp / Math.max(1, t.lampMax) : Math.max(0, Math.min(1, t.pct / 100));
+    putStyle(hFill, 'transform', `scaleX(${f.toFixed(3)})`);
+    putClass(hud, 'tr-hud tr-' + t.tpl);
+  }
+
+  // ---------------- the second ability button and the meter ----------------
+  const ab2 = el('button', 'abil abil2'); ab2.type = 'button'; ab2.hidden = true;
+  const ab2Ic = el('span', 'abil2-ic'), ab2Cd = el('span', 'cd'), ab2N = el('span', 'n');
+  ab2.append(ab2Ic, ab2Cd, ab2N);
+  ab2.addEventListener('pointerdown', e => e.stopPropagation());
+  ab2.addEventListener('click', e => { e.stopPropagation(); if (!(typeof castAb2 === 'function' && castAb2())) { ab2.classList.remove('nope'); void ab2.offsetWidth; ab2.classList.add('nope'); } });
+  const meter = el('div', 'cl-meter'); meter.hidden = true; meter.setAttribute('aria-live', 'off');
+  const mName = el('b'), mBar = el('span', 'cl-mbar'), mFill = el('i'), mNum = el('span', 'cl-mnum');
+  mBar.append(mFill); meter.append(mName, mBar, mNum);
+  if (stage) stage.append(ab2, meter);
+  let abFor = '';
+  function updateAb2() {
+    const info = typeof ab2Info === 'function' ? ab2Info() : null;
+    const show = !!info && target() === 'mob';
+    putHidden(ab2, !show);
+    if (show) {
+      if (abFor !== info.id) {
+        abFor = info.id;
+        ab2Ic.textContent = info.name.slice(0, 1);
+        ab2.setAttribute('aria-label', `${info.name}: ${info.desc}`); ab2.title = info.name;
+        ab2.style.setProperty('--evo', EVO_DEFS[info.evo].tint);
+      }
+      ab2Cd.style.setProperty('--cd', info.cd ? (info.left / info.cd).toFixed(3) : 0);
+      putText(ab2N, info.left > 0 ? String(Math.ceil(info.left)) : '');
+      putToggle(ab2, 'ready', info.ready); putToggle(ab2, 'auto', info.auto);
+    }
+    const m = show && typeof clsMeter === 'function' ? clsMeter() : null;
+    putHidden(meter, !m);
+    if (m) { putText(mName, m.name); putText(mNum, `${m.v}/${m.max}`); putStyle(mFill, 'transform', `scaleX(${(m.v / Math.max(1, m.max)).toFixed(3)})`); }
+  }
+  uiHooks.push(() => { updateHud(); updateAb2(); });
+
+  // ---------------- a full-screen card (the choice, the respec) ----------------
+  let root = null, lastFocus = null;
+  function openCard(title, build) {
+    closeAll();
+    lastFocus = document.activeElement;
+    root = el('div', 'create evo-card'); root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', title);
+    const inner = el('div', 'create-in');
+    root.append(inner);
+    build(inner);
+    root.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+    document.body.append(root);
+    const f = root.querySelector('button'); if (f) f.focus();
+  }
+  function closeAll() {
+    if (!root) return;
+    root.remove(); root = null;
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
+    ui(true);
+  }
+
+  // The choice card (3.3).
+  function figure(evo) {
+    const cv = el('canvas', 'px evo-fig'); cv.width = 56; cv.height = 100;
+    requestAnimationFrame(() => safe(() => {
+      if (typeof drawCharPreview !== 'function' || typeof classPreviewSpec !== 'function') return;
+      const spec = classPreviewSpec(CLS_KIT(EVO_DEFS[evo].base, evo));
+      spec.acc = { fl: EVO_DEFS[evo].col };
+      drawCharPreview(cv, spec, 1);
+    }));
+    return cv;
+  }
+  function openChoice(pick) {
+    const c = typeof lbClass === 'function' ? lbClass() : null;
+    if (!c || !c.base || !(typeof evoChoice === 'function' && evoChoice())) return;
+    const paths = CLASS_DEFS[c.base].evos;
+    let cur = pick && paths.includes(pick) ? pick : paths[0], armed = false;
+    openCard('Choose your path', inner => {
+      inner.append(el('h1', null, 'You passed the Proving.'), el('p', 'create-lede', 'Choose your path. It is permanent.'));
+      const tabs = el('div', 'seg evo-tabs'); tabs.setAttribute('role', 'tablist');
+      const body = el('div', 'evo-body');
+      const go = el('button', 'big forge create-go'); go.type = 'button';
+      const later = btn('textlink create-back', 'Choose later', closeAll);
+      const confirm = el('div', 'evo-confirm'); confirm.hidden = true;
+      const tabBtns = paths.map(id => { const b = btn('evo-tab', EVO_DEFS[id].name, () => { cur = id; armed = false; draw(); }); b.setAttribute('role', 'tab'); tabs.append(b); return b; });
+      let sx = null;
+      body.addEventListener('pointerdown', e => { sx = e.clientX; });
+      body.addEventListener('pointerup', e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 50) { cur = paths[(paths.indexOf(cur) + (dx < 0 ? 1 : paths.length - 1)) % paths.length]; armed = false; draw(); } });
+      function draw() {
+        const ev = EVO_DEFS[cur], ab = A[ev.ab2];
+        tabBtns.forEach((b, i) => { b.setAttribute('aria-selected', String(paths[i] === cur)); putToggle(b, 'on', paths[i] === cur); });
+        body.textContent = '';
+        body.style.setProperty('--evo', ev.tint);
+        const top = el('div', 'evo-top'); const txt = el('div');
+        txt.append(el('h2', null, ev.name.toUpperCase()), el('div', 'evo-title', ev.title), el('div', 'pitch', `"${ev.pitch}"`));
+        top.append(figure(cur), txt);
+        const ul = el('ul', 'evo-bul'); for (const t of ev.bullets) ul.append(el('li', null, t));
+        const good = el('p', 'evo-good'); good.append(el('b', null, 'Good with: '));
+        const list = ev.good.slice().sort((a, b) => owned(b) - owned(a)).slice(0, 5);
+        list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
+        body.append(top, ul,
+          el('p', 'evo-line', `New ability: ${ab.name}. ${ab.desc}`),
+          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}, in the ${HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
+          good, el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
+          el('p', 'note', `Idle: ${ev.idle} Active: ${ev.active}`));
+        putText(go, `Become a ${ev.name}`);
+        confirm.hidden = true;
+        confirm.textContent = '';
+        confirm.append(el('p', null, `Become a ${ev.name}? This is permanent. You can change it later with a Mirror of Embers and Essence.`));
+        const yes = btn('big forge', `Yes, become a ${ev.name}`, () => {
+          let okd = false;
+          okd = safe(() => chooseEvo(cur), false);
+          try { save(); } catch (e) {}
+          if (okd) { closeAll(); ceremony(cur); if (typeof updatePortrait === 'function') safe(() => updatePortrait()); }
+        });
+        const no = btn('textlink create-back', 'Not yet', () => { confirm.hidden = true; go.hidden = false; });
+        confirm.append(yes, no);
+        go.hidden = false;
+      }
+      go.addEventListener('click', () => { go.hidden = true; confirm.hidden = false; const y = confirm.querySelector('button'); if (y) y.focus(); });
+      inner.append(tabs, body, go, confirm, later);
+      draw();
+    });
+  }
+
+  // The ceremony: the lamp flashes its new colour (reduced motion: nothing moves; the toast says it).
+  function ceremony(evo) {
+    if (reduced || !stage) return;
+    const f = el('div', 'evo-flash'); f.style.setProperty('--evo', EVO_DEFS[evo].col);
+    stage.append(f); setTimeout(() => f.remove(), 1400);
+  }
+  on('provingPassed', () => { setTimeout(() => safe(() => openChoice()), 400); });
+  on('evoProven', ({ evo }) => ceremony(evo));
+
+  // ---------------- the Mirror of Embers (3.4) ----------------
+  const costTxt = c => `${c.mirrors} Mirror${c.mirrors > 1 ? 's' : ''} of Embers and ${fmt(c.ess.n)} ${MAT.ess.short[c.ess.t - 1]} Essence`;
+  function mirrorRow() {
+    const n = (S.party && S.party.mirrors) || 0, c = typeof lbClass === 'function' ? lbClass() : null;
+    const box = el('div', 'cs-mirror cl-mirror');
+    const t = el('div');
+    t.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? `You have ${n} Mirror${n > 1 ? 's' : ''}. Change your path or your class.` : 'Region bosses from the Sunken Coast on, and bosses from zone 36, give them. They let you change your path or class.'));
+    box.append(t);
+    if (c && c.base && typeof respecCost === 'function') box.append(btn('mini go', 'Change', () => { closeSheet(); openRespec(); }));
+    return box;
+  }
+  function openRespec() {
+    const c = typeof lbClass === 'function' ? lbClass() : null;
+    if (!c || !c.base) return;
+    let armed = null;
+    openCard('Mirror of Embers', inner => {
+      const draw = () => {
+        inner.textContent = '';
+        const n = (S.party && S.party.mirrors) || 0;
+        inner.append(el('h1', null, 'The Mirror of Embers'), el('p', 'create-lede', n ? `You have ${n} Mirror${n > 1 ? 's' : ''}.` : 'You have no Mirror of Embers yet.'));
+        const opts = [];
+        if (c.evo && EVO_DEFS[c.evo]) {
+          const other = CLASS_DEFS[c.base].evos.find(e => e !== c.evo), free = typeof clsSwitchInfo === 'function' && clsSwitchInfo().ok;
+          opts.push({ key: 'evo:' + other, title: `Switch path: become a ${EVO_DEFS[other].name}`, what: 'New second ability, Finisher, title and look. Your ring stars go dark and their points come back. Your Proving stays passed.',
+            cost: free ? null : respecCost('evo'), free, run: () => respecEvo(other) });
+        }
+        for (const b of CLASS_BASES) if (b !== c.base) opts.push({ key: 'base:' + b, title: `Change class: become a ${CLASS_DEFS[b].name}`,
+          what: 'Your gear changes to the new class. Each class keeps its own stars. Your path is cleared; if you passed a Proving, you choose the new class\'s path at once.',
+          cost: respecCost('base'), run: () => respecBase(b) });
+        for (const o of opts) {
+          const d = el('div', 'cs-kit1 cl-row evo-opt');
+          d.append(el('b', null, o.title), el('p', null, o.what));
+          if (o.free) d.append(el('p', 'cl-note', 'Free: your one free change, within 10 minutes of choosing.'));
+          else {
+            d.append(el('p', 'cl-cost', `Costs ${costTxt(o.cost)}.` + (o.cost.esc > 1 ? ` (Each change after the first costs more Essence.)` : '')));
+            if (!o.cost.ok) d.append(el('p', 'cl-need', o.cost.why));
+          }
+          const can = o.free || o.cost.ok;
+          const b = btn('mini ' + (armed === o.key ? 'warn' : 'go'), armed === o.key ? 'Tap again to change' : 'Change', () => {
+            if (armed !== o.key) { armed = o.key; draw(); return; }
+            const okd = safe(o.run, false);
+            try { save(); } catch (e) {}
+            closeAll();
+            if (!okd) toast('That change did not go through.', 'raid');
+            else if (typeof updatePortrait === 'function') safe(() => updatePortrait());
+          });
+          b.disabled = !can;
+          d.append(b);
+          inner.append(d);
+        }
+        inner.append(btn('textlink create-back', 'Close', closeAll));
+      };
+      draw();
+    });
+  }
+
+  classEvoUI = { rows: info => safe(() => rows(info), []), mirrorRow: () => safe(mirrorRow, null), sig, openChoice, openRespec, closeAll };
+}
+
 // ---- src/js/75-codex-ui.js ----
 // 75-codex-ui: the Codex sheet (docs/design/codex.md 5). Browser-only; reads 57c-codex.js.
 // Where it lives (docs/design/layout.md): the Camp tab already has 4 views, so the Codex is a
@@ -38591,7 +39019,8 @@ let openSheet, partySheet;
     }
     const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
-    body.append(sw ? section('Class change', sw, mir) : section('Class change', mir));
+    const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
+    body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));
     sheet.foot.textContent = '';
   }
 
@@ -39608,7 +40037,9 @@ let openSheet, partySheet;
     cn.addEventListener('click', () => { R.confirm.hidden = true; });
 
     R.lock = el('p', 'note warn st-lock'); R.lock.hidden = true;
-
+    // S3: a Lightkeeper's stars moved into the Lightkeeper ring; one tap lights the Flare arm and the ring.
+    R.suggest = el('button', 'mini go st-suggest', 'Suggested layout'); R.suggest.type = 'button'; R.suggest.hidden = true;
+    R.suggest.addEventListener('click', () => { if (typeof starSuggest === 'function' && starSuggest()) save(); else flashLock(); refresh(true); });
     R.mode = el('div', 'seg st-mode'); R.mode.setAttribute('role', 'group'); R.mode.setAttribute('aria-label', 'Show as');
     R.modeBtns = ['map', 'list'].map(m => {
       const b = el('button', null, m === 'map' ? 'Map' : 'List'); b.type = 'button';
@@ -39628,7 +40059,7 @@ let openSheet, partySheet;
     R.list = el('div', 'st-list');
     R.none = el('p', 'note', 'Choose a class to see its stars.'); R.none.hidden = true;
     R.sub.append(R.keys, R.mode);
-    sec.append(head, R.sub, bar, R.rename, R.confirm, R.lock, R.mapBox, R.card, R.list, R.how, R.none);
+    sec.append(head, R.sub, bar, R.rename, R.confirm, R.lock, R.suggest, R.mapBox, R.card, R.list, R.how, R.none);
   }
 
   // After a tap on the map, bring the card into view if it is below the fold (the map stays mostly on screen).
@@ -39685,6 +40116,21 @@ let openSheet, partySheet;
     svg.append(eg);
     const ng = sv('g', { class: 'st-nodes' });
     R.nodes = {};
+    // S3: the evolution ring is its own small map under this one (its stars open from star 5 of each arm)
+    let rsvg = null, rng_ = null;
+    if (map.evo) {
+      rsvg = sv('svg', { viewBox: RING_GEO.view.join(' '), class: 'st-svg st-ring-svg', role: 'group', 'aria-label': `${EVO_DEFS[map.evo].name} ring` });
+      rsvg.style.setProperty('--role', EVO_DEFS[map.evo].tint);
+      const rb = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
+      rb.append(sv('circle', { cx: RING_GEO.cx, cy: RING_GEO.cy, r: RING_GEO.r, class: 'st-orbit' }));
+      const re = sv('g', { class: 'st-edges', 'aria-hidden': 'true' });
+      for (const [a, b] of map.ringEdges) {
+        const [x1, y1] = map.stars[a].pos, [x2, y2] = map.stars[b].pos;
+        const ln = sv('line', { x1, y1, x2, y2, class: 'st-edge' }); re.append(ln); R.edges.push({ a, b, ln });
+      }
+      rng_ = sv('g', { class: 'st-nodes' });
+      rsvg.append(rb, re, rng_);
+    }
     for (const id of map.order) {
       const s = map.stars[id], [x, y] = s.pos, r = KIND_R[s.kind];
       const g = sv('g', { class: `st-star k-${s.kind}`, transform: `translate(${x} ${y})`, tabindex: '0', role: 'button', 'data-id': id, 'aria-label': `${s.name}, ${starText(s)}` });
@@ -39699,30 +40145,39 @@ let openSheet, partySheet;
       const lock = sv('g', { class: 'st-lockic', transform: `translate(${r * 0.7} ${-r * 0.9})` });
       lock.append(sv('rect', { x: -4, y: -1, width: 8, height: 6, rx: 1 }), sv('path', { d: 'M-2.5 -1 v-2 a2.5 2.5 0 0 1 5 0 v2', fill: 'none' }));
       g.append(glow, ring, body, lock);
-      ng.append(g);
+      (s.ring ? rng_ : ng).append(g);
       R.nodes[id] = { g, s };
     }
     svg.append(ng);
     // Tap: the nearest star within reach (the map is 336px wide on a phone, so stars are about 40px apart).
-    svg.addEventListener('click', e => {
-      const r = svg.getBoundingClientRect(); if (!r.width) return;
-      const k = vw / r.width, x = vx + (e.clientX - r.left) * k, y = vy + (e.clientY - r.top) * (vh / r.height);
+    const onTap = (box, view, ring) => box.addEventListener('click', e => {
+      const r = box.getBoundingClientRect(); if (!r.width) return;
+      const [bx, by, bw, bh] = view, k = bw / r.width, x = bx + (e.clientX - r.left) * k, y = by + (e.clientY - r.top) * (bh / r.height);
       let best = null, bd = 34 * Math.max(1, k * 0.9);
-      for (const id of map.order) { const [sx, sy] = map.stars[id].pos, d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = id; } }
+      for (const id of map.order) { if (!map.stars[id].ring !== !ring) continue; const [sx, sy] = map.stars[id].pos, d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = id; } }
       if (best) { sel = best; closePanels(); refresh(true); showCard(); }
     });
-    svg.addEventListener('keydown', e => {
+    const onKey = box => box.addEventListener('keydown', e => {
       const id = e.target && e.target.getAttribute && e.target.getAttribute('data-id');
       if (!id || (e.key !== 'Enter' && e.key !== ' ')) return;
       e.preventDefault();
       if (sel === id) act(id); else { sel = id; refresh(true); showCard(); }
     });
+    onTap(svg, STAR_GEO.view, false); onKey(svg);
+    if (rsvg) { onTap(rsvg, RING_GEO.view, true); onKey(rsvg); }
     R.svg = svg;
     // legend: which arm points where, and how many of its stars are lit
     R.legend = el('div', 'st-legend');
     R.legBits = map.armNames.map((n, a) => { const b = el('span', 'st-leg'); b.append(el('i', 'st-arrow', ['↑', '↘', '↙'][a]), el('b', null, n), el('span', 'st-legn')); R.legend.append(b); return b; });
     const rb = el('span', 'st-leg'); rb.append(el('i', 'st-arrow', '○'), el('b', null, 'Ring'), el('span', 'st-legn')); R.legend.append(rb); R.legBits.push(rb);
     R.mapBox.append(svg, R.legend);
+    if (rsvg) {
+      const eb = el('span', 'st-leg'); eb.append(el('i', 'st-arrow', '✦'), el('b', null, EVO_DEFS[map.evo].name), el('span', 'st-legn')); R.legend.append(eb); R.legBits.push(eb);
+      const box = el('div', 'st-ringbox');
+      box.append(el('h4', 'st-gtitle', `${EVO_DEFS[map.evo].name} ring`),
+        el('p', 'note', 'Opens from star 5 of any arm. Its keystone does not count toward your 2.'), rsvg);
+      R.mapBox.append(box);
+    }
   }
 
   // ---- the list view (built once per class) ----
@@ -39756,6 +40211,7 @@ let openSheet, partySheet;
     group('Hearthstar', ['hearth']);
     map.armNames.forEach((n, a) => group(n, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `a${a}s${k}`)));
     group('Crown ring', ['b0', 'b1', 'b2', 'b3', 'b4', 'crown']);
+    if (map.evo) group(`${EVO_DEFS[map.evo].name} ring`, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `e1s${k}`));
   }
 
   // ---- update ----
@@ -39766,8 +40222,9 @@ let openSheet, partySheet;
     for (const n of [R.mode, R.mapBox, R.card, R.list, R.lock]) if (!cls) putHidden(n, true);
     putDisabled(R.renBtn, !cls); putDisabled(R.resetBtn, !cls);
     if (!cls) { putText(R.title, 'Stars'); putText(R.pts, ''); putText(R.keys, ''); R.chipBtns.forEach(b => putHidden(b, true)); return; }
-    if (builtFor !== cls) { builtFor = cls; sel = null; buildMap(cls); buildList(cls); sig = ''; }
-    const map = starMap(cls), lay = starLayout(), lays = starLayouts(), ai = S.stars.maps[cls] ? S.stars.maps[cls].active : 0;
+    const map = starMap(cls), key = cls + '|' + (map.evo || '');   // S3: the evolution ring rebuilds the map
+    if (builtFor !== key) { builtFor = key; sel = null; buildMap(cls); buildList(cls); sig = ''; }
+    const lay = starLayout(), lays = starLayouts(), ai = S.stars.maps[cls] ? S.stars.maps[cls].active : 0;
     const pts = starPoints(), free = starFree(), keys = starKeysLit(), lock = starLocked();
     if (!sel || !map.stars[sel]) {
       // default: the cheapest star you can light, else the Hearthstar
@@ -39785,6 +40242,7 @@ let openSheet, partySheet;
     putToggle(R.keys, 'full', keys >= STAR_TUNE.keyMax);
     R.chipBtns.forEach((b, i) => { putHidden(b, false); putText(b, lays[i].name); putAttr(b, 'aria-pressed', String(i === ai)); putAttr(b, 'title', 'Hold to rename'); });
     putHidden(R.lock, !lock); if (lock) putText(R.lock, lock + ' Your stars stay as they are until it ends.');
+    putHidden(R.suggest, !(map.evo === 'priest' && !lay.lit.length && free > 0));
     putHidden(R.mode, false);
     R.modeBtns.forEach((b, i) => putAttr(b, 'aria-pressed', String((i === 0) === (UI.mode === 'map'))));
     putHidden(R.mapBox, UI.mode !== 'map'); putHidden(R.card, UI.mode !== 'map'); putHidden(R.list, UI.mode !== 'list');
@@ -39803,9 +40261,9 @@ let openSheet, partySheet;
         const n = R.nodes[id], st = state[id];
         svgClass(n.g, `st-star k-${n.s.kind}${st.lit ? ' lit' : st.open ? ' open' : st.near ? ' near' : ' dim'}${st.keyBlocked ? ' kblock' : ''}${sel === id ? ' sel' : ''}`);
       }
-      const cnt = [0, 0, 0, 0];
-      for (const id of lay.lit) { const s = map.stars[id]; if (s) cnt[s.arm >= 0 ? s.arm : 3]++; }
-      R.legBits.forEach((b, i) => putText(b.lastChild, `${cnt[i]}/${i < 3 ? 8 : 6}`));
+      const cnt = [0, 0, 0, 0, 0];
+      for (const id of lay.lit) { const s = map.stars[id]; if (s) cnt[s.ring ? 4 : s.arm >= 0 ? s.arm : 3]++; }
+      R.legBits.forEach((b, i) => putText(b.lastChild, `${cnt[i]}/${i < 3 || i === 4 ? 8 : 6}`));
       for (const e of R.edges) svgClass(e.ln, 'st-edge' + (litSet.has(e.a) && litSet.has(e.b) ? ' lit' : litSet.has(e.a) || litSet.has(e.b) ? ' half' : ''));
       // detail card
       const s = map.stars[sel], st = state[sel], c = sel === 'hearth' ? null : starCheck(sel);
@@ -40887,8 +41345,8 @@ var classUI;
       'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
     lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',
       'Your Proving opens after the Fenmother.'],
-    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing, Rally Hymn and Lightkeeper stars.',
-      'New Lightkeeper powers come in a later update.']
+    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing and Rally Hymn, and gain Sanctuary, a second ability.',
+      'Your Lightkeeper stars moved into the Lightkeeper ring on the Lanternmage map. Their points are free to spend again.']
   };
 
   const classes = () => (typeof CLASS_DEFS === 'object' && CLASS_DEFS && typeof HERO_CLASSES === 'object') ? CLASS_DEFS : null;
@@ -41106,8 +41564,10 @@ var classUI;
       if (!info) return [];
       const d = CLASS_DEFS[info.base], out = [];
       for (const ps of d.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
+      // S3: the evolution rows, the Proving and the choice are 75-class-ui's
+      if (typeof classEvoUI === 'object' && classEvoUI) out.push(...classEvoUI.rows(info));
       // The evolution: granted (a migrated Warden or Lightkeeper), or the two paths and their gate.
-      if (info.evo) {
+      else if (info.evo) {
         const txt = info.evo === 'priest'
           ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
           : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
@@ -41123,7 +41583,7 @@ var classUI;
         if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
         out.push(r);
       }
-      out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+      if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
       if (info.migrated && CHANGED[info.from]) {
         const det = el('details', 'cl-changed');
         det.append(el('summary', null, 'What changed'));
@@ -41144,16 +41604,21 @@ var classUI;
       if (!sw || !sw.ok) return null;
       const m = Math.max(1, Math.ceil(sw.left / 60e3));
       const box = el('div', 'cs-mirror cl-switch');
-      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch class for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
+      // S3: once evolved, the free change switches the path (75-class-ui's sheet), not the class
+      const evo = S.cls && S.cls.evo && typeof classEvoUI === 'object' && classEvoUI;
+      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch ${evo ? 'path' : 'class'} for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
       const b = el('button', 'mini go', 'Switch'); b.type = 'button';
-      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); open('switch'); });
+      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); if (evo) classEvoUI.openRespec(); else open('switch'); });
       box.append(t, b);
       return box;
     },
     sig() {
       const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null, c = S.cls || {};
-      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone].join('/');
+      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone,
+        typeof classEvoUI === 'object' && classEvoUI ? classEvoUI.sig() : ''].join('/');
     },
+    // S3: the Mirror of Embers row (75-class-ui: the respec sheet), or null (the sheet keeps its own)
+    mirrorRow() { return typeof classEvoUI === 'object' && classEvoUI ? classEvoUI.mirrorRow() : null; },
     open
   };
 

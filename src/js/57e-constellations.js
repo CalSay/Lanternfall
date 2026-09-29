@@ -230,10 +230,14 @@ const STAR_GEO = {
   slot: [[50, 0], [95, 0], [140, 0], [185, 0], [172, 19], [172, -19], [150, -38], [150, 38]],
   ring: 104, ringOff: 34
 };
+// S3: the evolution ring's own view (75-stars-ui draws it under the map): seven stars on a circle, the keystone
+// in the middle. Needs: RING_NEED ring stars lit before a ring notable / the ring keystone.
+const RING_GEO = { view: [0, 0, 240, 170], cx: 120, cy: 86, r: 66 };
+const RING_NEED = { notable: 2, key: 5 };
 
 let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLayout, starLayouts, starIsLit,
   starCheck, starLight, starUnlight, starReset, starUseLayout, starRename, starLocked, starKeysLit, starKeystone,
-  starEffects, starPowerEst, starBest, starText, starValidate;
+  starEffects, starPowerEst, starBest, starText, starValidate, starRingEvo, starSuggest;
 
 {
   // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
@@ -246,7 +250,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   // ---- build each class map once: stars by id, edges, adjacency ----
   const MAPS = {};
   const polar = (deg, r) => { const a = deg * Math.PI / 180; return [Math.round(STAR_GEO.cx + r * Math.cos(a)), Math.round(STAR_GEO.cy + r * Math.sin(a))]; };
-  function build(cls) {
+  function build(cls, evo) {
     const d = STAR_MAPS[cls]; if (!d) return null;
     const stars = {}, order = [], edges = [], adj = {};
     const add = s => { stars[s.id] = s; order.push(s.id); adj[s.id] = []; };
@@ -272,10 +276,38 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       link(`a${a}s3`, id);
     }
     link('b0', 'b1'); link('b2', 'b3'); link('b4', 'crown');
-    return { cls, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj };
+    // S3 (classes-2 4.3): the evolution ring, e1s1-e1s8, once the evolution is proven. Seven stars on a circle
+    // and the ring keystone in its middle (linked to the two notables, s3 and s6). e1s1, e1s4 and e1s7 open from
+    // star 5 of arms 1, 2 and 3. Ring positions are in the ring's own view (RING_GEO: drawn under the map).
+    const ev = evo && EVO_DEFS[evo], rEdges = [];
+    if (ev) {
+      ev.ring.forEach(([name, text, fx, p], i) => {
+        const slot = i + 1, kind = slot === 8 ? 'key' : slot === 3 || slot === 6 ? 'notable' : 'minor';
+        const a = -Math.PI / 2 + (i * 2 * Math.PI) / 7;
+        const pos = slot === 8 ? [RING_GEO.cx, RING_GEO.cy] : [Math.round(RING_GEO.cx + RING_GEO.r * Math.cos(a)), Math.round(RING_GEO.cy + RING_GEO.r * Math.sin(a))];
+        add({ id: 'e1s' + slot, name, kind, cost: KIND_COST[kind], text, c: '', fx, p, pos, arm: -2, slot, ring: 1, armName: ev.name + ' ring', evo });
+      });
+      const rl = (a, b) => { rEdges.push([a, b]); adj[a].push(b); adj[b].push(a); };
+      for (let i = 1; i <= 7; i++) rl('e1s' + i, 'e1s' + (i % 7 + 1));
+      rl('e1s8', 'e1s3'); rl('e1s8', 'e1s6');
+      [['e1s1', 'a0s5'], ['e1s4', 'a1s5'], ['e1s7', 'a2s5']].forEach(([r, s]) => { adj[r].push(s); adj[s].push(r); stars[r].entry = s; });
+    }
+    return { cls, evo: ev ? evo : null, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj, ringEdges: rEdges };
   }
-  starMap = cls => cls && STAR_MAPS[cls] ? (MAPS[cls] || (MAPS[cls] = build(cls))) : null;
+  // The evolution whose ring shows on a base map: the current base's proven evolution (55-classes).
+  starRingEvo = cls => {
+    if (typeof lbClass !== 'function' || typeof clsProven !== 'function') return null;
+    const c = lbClass(), map = c.base && CLS_STAR_MAP[CLS_KIT(c.base, null)];
+    return map === cls && c.evo && EVO_DEFS[c.evo] && clsProven() ? c.evo : null;
+  };
+  starMap = cls => {
+    if (!cls || !STAR_MAPS[cls]) return null;
+    const ev = STAR_MAPS[cls].legacy ? null : starRingEvo(cls), k = cls + '|' + (ev || '');
+    return MAPS[k] || (MAPS[k] = build(cls, ev));
+  };
   const isKey = s => s.kind === 'key' || s.kind === 'crown';
+  // A star with a need: an arm keystone, the crown, or a ring notable or keystone (2 and 5 ring stars first).
+  const hasNeed = s => isKey(s) || (s.ring && s.kind === 'notable');
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);   // region bosses beaten (22-data-regions)
@@ -302,10 +334,16 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 
   // ---- rules ----
   const litSet = lit => new Set(['hearth', ...lit]);
-  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s)) n++; } return n; }
+  // The ring keystone does not count toward the base map's 2 (classes-2 4.1).
+  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s) && !s.ring) n++; } return n; }
   const armCount = (map, set, a) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.arm === a && s.kind !== 'key') n++; } return n; };
+  const ringCount = (map, set, not) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.ring && id !== not) n++; } return n; };
   // Why a lit keystone's need is not met in this set (null when it is).
   function needWhy(map, s, set) {
+    if (s.ring) {
+      const need = RING_NEED[s.kind] || 0, n = ringCount(map, set, s.id);
+      return n >= need ? null : `Light ${need} ring stars first (${n} of ${need}).`;
+    }
     if (s.kind === 'key') { const n = armCount(map, set, s.arm); return n >= T.armKeyNeed ? null : `Light ${T.armKeyNeed} stars in ${s.armName} first (${n} of ${T.armKeyNeed}).`; }
     if (s.kind === 'crown') {
       let b = 0; for (const id of set) if (map.stars[id] && map.stars[id].kind === 'bridge') b++;
@@ -337,14 +375,14 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       set.delete(id);
       let why = null;
       if (!connected(map, set)) why = 'Other lit stars hang from this one. Unlight them first.';
-      else for (const o of set) { const os = map.stars[o]; if (os && isKey(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
+      else for (const o of set) { const os = map.stars[o]; if (os && hasNeed(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
       if (!why && lock) why = lock;
       return { ok: !why, act: 'unlight', why };
     }
     let why = null;
-    if (isKey(s) && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
+    if (isKey(s) && !s.ring && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
     else if (!map.adj[id].some(n => set.has(n))) why = 'Light a star next to it first.';
-    else if (isKey(s)) why = needWhy(map, s, set);
+    else if (hasNeed(s)) why = needWhy(map, s, set);
     if (!why) { const free = starPoints() - spentOf(map, lit); if (free < s.cost) why = `Needs ${s.cost} point${s.cost > 1 ? 's' : ''} (you have ${free}).`; }
     if (!why && lock) why = lock;
     return { ok: !why, act: 'light', why };
@@ -393,7 +431,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const before = Array.isArray(l.lit) ? l.lit.length : 0;
     const seen = new Set();
     let lit = (Array.isArray(l.lit) ? l.lit : []).filter(id => typeof id === 'string' && map.stars[id] && id !== 'hearth' && !seen.has(id) && seen.add(id));
-    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (isKey(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
+    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (hasNeed(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
     let guard = 64;
     while (!ok(lit) && guard-- > 0) {
       // drop the latest star whose removal keeps the rest connected (a tip); else the latest one
@@ -437,6 +475,23 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'gold', 'offline'];
   const TUNE_KEYS = new Set(), KS_IDS = new Set(Object.keys(STAR_KS));
   for (const c in STAR_MAPS) for (const s of Object.values(starMap(c).stars)) { for (const k in (s.fx.t || {})) TUNE_KEYS.add(k); if (s.fx.ks) KS_IDS.add(s.fx.ks); }
+  for (const e in EVO_DEFS) for (const [, , fx] of EVO_DEFS[e].ring) { for (const k in (fx.t || {})) TUNE_KEYS.add(k); if (fx.ks) KS_IDS.add(fx.ks); }   // S3 rings
+  // S3: an evolution chosen or switched: the ring's stars go dark on every layout of that base map (refunded, 4.4);
+  // a proof or a switch changes which ring shows, so the effects are read again.
+  on('evoChosen', ({ base, from, evo }) => {
+    const m = CLS_STAR_MAP[CLS_KIT(base, null)], r = m && mapRec(m, false);
+    if (r && from !== evo) for (const l of r.layouts) if (l && Array.isArray(l.lit)) l.lit = l.lit.filter(id => !/^e1s/.test(id));
+    bump();
+  });
+  on('evoProven', () => bump());
+  // A Lightkeeper's suggested layout (4.4): the Flare arm, then the Lightkeeper ring, as far as the points go.
+  starSuggest = () => {
+    const cls = starCls(); if (!cls || starLocked()) return 0;
+    let n = 0;
+    for (const id of ['a1s1', 'a1s2', 'a1s3', 'a1s4', 'a1s5', 'e1s4', 'e1s5', 'e1s3', 'e1s6', 'e1s2', 'e1s1', 'e1s7', 'e1s8', 'a1s6', 'a1s7'])
+      if (!starIsLit(id, cls) && starLight(id, cls)) n++;
+    return n;
+  };
   const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
   // Cached per class and layout version: the modifiers below run on every hit and dps read.
   let eff = NONE, effCls, effVer = -1;

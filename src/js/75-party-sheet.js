@@ -546,7 +546,8 @@ let openSheet, partySheet;
     }
     const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
-    body.append(sw ? section('Class change', sw, mir) : section('Class change', mir));
+    const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
+    body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));
     sheet.foot.textContent = '';
   }
 
