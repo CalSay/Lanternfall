@@ -1155,3 +1155,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Hero quests Hallow one ability (renamed from Awakening): chosen from the hero's signature abilities; bigger effects, often a new colour, about +40% power, -20% cooldown, one bonus by ability shape; movable at the chapel for a cost.
 - 32 heroes for 1.0 (18 in code + 14 in heroes-2). Bonds replaced by an NPC campaign story. Expeditions become gatherer trade runs.
 - Lane combat (enemies walking in) scrapped. Packs stand on the right as today.
+
+### 2026-09-29: SOLO1 + HEROART1 merged, preview v51 (solo-hero playtest)
+- SOLO1 merged: party hidden (dormant behind SOLO_TUNE.on), Wren/Tobin/Pip starters with own levels, 2x3 action bar under the stage (Q/W/E abilities; A Parry, S Dodge, D/Space Attack), parry -> stagger -> counter, Echo Shot / Shield Bash / Fireball, ability picker (hold a slot), first-session guide rewritten (pauses, one step at a time), unique sword Tobin-only, L1 builds 10-45 s. Save key v3.
+- Early pacing (sim): first boss ~1 min, zone 5 ~8-10 min, zone 10 24-32 min. Off: active only ~9% faster than idle; day-1 zone 16-17 (target 20-26); zone 35 boss out of reach without ability trees/stars.
+- HEROART1 merged: hand-drawn Wren/Tobin/Pip on the stage and portrait (+100 KB). Coordinator fixes: HP bar reads the art frame's head; the art's in-flight arrow/bolt skipped (stage projectile only).
+- Rough: old party-era checks test the dormant party build; perf.mjs fails in this container before and after; no gather tool poses; Wren has no kneel/fallen poses.
+- Preview republished (save key preview.r3). UX-C1 (combat screen mock-up, opus) running.
