@@ -2,18 +2,33 @@
 // and the section/tab registries for feature UI (75-*.js). Browser-only.
 // Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
 
-// ================= notices: toasts and the bell log =================
-// Every notice goes to the log (bell, last 50). Priority decides whether it also pops:
-//   high (2): always pops, pushes out an older normal toast.     e.g. level up, zone cleared, unique loot, recruit
-//   normal (1): pops if there is room (2 on screen, 1 on a short stage); otherwise it folds into the newest normal toast
-//               as "+N" and the bell count.                        e.g. boss failed, achievement, rare forge
-//   low (0): log only, bumps the bell count.                      e.g. equipped, salvaged, common forge, skill level
+// ================= notices: toasts, captions and the bell =================
+// W1-B (docs/coord/audit-1.md 3b): every notice takes ONE path, notify(). The NOTICES table
+// (23n-data-notices.js) gives each message a channel: card, pop, bell, log or none. Then:
+//   - a pop shows as a toast (or, for noticeAsk callers, a caption over the stage), at most one per
+//     NOTICE_TUNE.gap seconds of play and NOTICE_TUNE.perMin a minute; never while a guide step shows
+//     (the guide is the only voice) or a full-screen card is up. A pop that cannot show goes to its
+//     rule's `held` channel (the bell by default). A `reply` pop (the answer to a press) always shows.
+//   - bell lines count on the badge; log lines are listed but never counted. Unread lines of one rule
+//     merge into one ("3 levels gained"), so the count stays calm.
 // Toasts sit in the stage box under the HUD. While a full-screen menu covers the game (portrait),
 // they move over the bottom of the menu, just above the tab bar (placeToasts). Tap or swipe one away.
+// notes.stats: the last 400 decisions ({ t, id, ch, msg }; t = seconds of play), read by tools/check.mjs.
 const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
 const NOTE_KIND_PRIO = { loot: 2 };
-const NOTE_MS = [0, 2600, 4200];
-const notes = { log: [], unread: 0, seq: 0 };
+const NOTE_MS = [2600, 3200, 4200];
+const notes = { log: [], unread: 0, seq: 0, seenSeq: 0, clock: 0, pops: [], once: {}, stats: [], waiting: [] };
+// A pop whose rule has `wait` waits for the next free slot (first come, before any caption), then shows;
+// past its wait it goes to its held channel.
+let noteWaitT = 0;
+onTick(dt => {
+  notes.clock += dt;
+  if (!notes.waiting.length || (noteWaitT += dt) < 0.5) return;
+  noteWaitT = 0;
+  const w = notes.waiting[0];
+  if (notes.clock > w.until) { notes.waiting.shift(); notify(w.n, 'late'); }
+  else if (!(guideBusy() || cardUp() || !popRoom())) { notes.waiting.shift(); notify(w.n, 'now'); }
+});
 function notePrio(prio, kind) {
   if (typeof prio === 'number') return Math.max(0, Math.min(2, prio | 0));
   if (prio in NOTE_PRIO) return NOTE_PRIO[prio];
@@ -67,38 +82,100 @@ try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offset
 // can dock its band just above/below the toasts without polling layout itself; keeps the two from
 // ever overlapping regardless of how many toasts are stacked.
 try { new ResizeObserver(es => { for (const e of es) document.documentElement.style.setProperty('--toast-h', e.target.children.length ? (e.target.offsetHeight + 6) + 'px' : '0px'); }).observe($('toasts')); } catch (e) {}
-function showToast(msg, kind, icon, prio, go) {
-  const p = notePrio(prio, kind);
-  let url = null; try { url = iconOf(icon); } catch (e) {}
-  if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
-  notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
-  if (notes.log.length > 50) notes.log.length = 50;
+// The guide shows a step (75-onboard-ui), or the guide is still running at all (tips on, steps left).
+// (A step that pauses the game counts from the moment it is due, before the hint's next 250 ms draw.)
+const guideBusy = () => { try { if (soloGuideWants()) return true; const s = onboardStep(); return !!(s && onboardPaused(s)); } catch (e) { return false; } };
+const guideRuns = () => { try { return !!(S.onboard && S.onboard.tips && GUIDE_STEPS.some(s => !S.onboard.done[s.id])); } catch (e) { return false; } };
+const cardUp = () => !!document.querySelector('.gl-ov, .dd-fc-ov, .away-ov, .join-ov, #createScreen');
+// The pop budget (seconds of play): one per NOTICE_TUNE.gap, NOTICE_TUNE.perMin a minute.
+// A rule may ask for a longer quiet before it (`gap`: the stage captions).
+function popRoom(rule) {
+  const t = notes.clock, P = notes.pops;
+  while (P.length && t - P[0] >= 60) P.shift();
+  return !P.length || (t - P[P.length - 1] >= Math.max(NOTICE_TUNE.gap, (rule && rule.gap) || 0) && P.length < NOTICE_TUNE.perMin);
+}
+// Where a notice goes now: { rule, ch }, ch = card | pop | bell | log | none, or 'held' (a pop that cannot show now).
+function noticeDecide(msg, key, prio, kind, payload) {
+  const rule = noticeRule(msg, key), p = notePrio(prio, kind);
+  let ch = rule ? noticeChannel(rule, msg, payload, { guide: guideRuns() }) : p === 2 ? 'pop' : p === 1 ? 'bell' : 'log';
+  if (rule && rule.once === 'session' && ch !== 'none') { if (notes.once[rule.id]) ch = 'none'; else notes.once[rule.id] = 1; }
+  if (ch === 'pop' && !(rule && rule.reply) && (guideBusy() || cardUp() || !popRoom(rule))) ch = 'held';
+  return { rule, ch };
+}
+function noteStat(rule, ch, msg) {
+  notes.stats.push({ t: Math.round(notes.clock * 10) / 10, id: rule ? rule.id : '?', ch, g: guideBusy() ? 1 : 0, msg: String(msg).slice(0, 90) });
+  if (notes.stats.length > 400) notes.stats.shift();
+}
+// A line in the bell. ch 'bell' counts on the badge; 'log' and 'pop' lines are listed only. Unread lines of
+// one rule and channel merge into one (the rule's merge() words it; otherwise the newest line and a count).
+function noteLog(rule, msg, kind, url, ch) {
+  const id = rule ? rule.id : '', counted = ch === 'bell';
+  const e = id && ch !== 'pop' ? notes.log.find(n => n.rule === id && n.ch === ch && n.id > notes.seenSeq && n.msgs) : null;
+  if (e) {
+    e.msgs.push(msg); if (e.msgs.length > 30) e.msgs.shift();
+    e.n++; e.msg = rule.merge ? rule.merge(e.msgs) : msg; e.more = rule.merge ? 0 : e.n - 1;
+    e.url = url || e.url; e.at = Date.now(); e.id = ++notes.seq;
+    notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e);
+  } else {
+    notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p: ch === 'pop' ? 2 : counted ? 1 : 0, at: Date.now(), rule: id, ch, n: 1, more: 0, msgs: [msg] });
+    if (notes.log.length > 50) notes.log.length = 50;
+    if (counted) notes.unread++;
+  }
+  bellUpdate(counted && !e);
+}
+// The one path for toasts: emit('toast', { msg, kind, icon, prio, go, key, ... }) (toast() in 00-util.js).
+// Returns the channel it took.
+// when: 'now' / 'late' (a waiting pop's turn came, or its wait ran out).
+function notify(n, when) {
+  const msg = n && n.msg;
+  if (!msg) return 'none';
+  const kind = n.kind;
+  let { rule, ch: ch0 } = when === 'now' ? { rule: noticeRule(msg, n.key), ch: 'pop' } : when === 'late' ? { rule: noticeRule(msg, n.key), ch: 'held' } : noticeDecide(msg, n.key, n.prio, kind, n);
+  if (ch0 === 'held' && !when && rule && rule.wait && notes.waiting.length < 4) { notes.waiting.push({ n, until: notes.clock + rule.wait }); return 'wait'; }
+  const ch = ch0 === 'held' ? (rule && rule.held) || 'bell' : ch0;
+  noteStat(rule, ch0 === 'held' ? 'held:' + ch : ch, msg);
+  if (ch === 'none' || ch === 'card') return ch;
+  let url = null; try { url = iconOf(n.icon); } catch (e) {}
+  if (NEWS.open && (ch === 'pop' || ch === 'bell')) { NEWS.lines.push({ msg, url, kind: kind || '', p: ch === 'pop' ? 2 : 1 }); return ch; }
+  if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch); return ch; }
+  if (!(rule && rule.reply)) notes.pops.push(notes.clock);
+  noteLog(rule, msg, kind, url, 'pop');
+  popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go);
+  return 'pop';
+}
+// Stage captions and cards ask here before they show. Returns 'pop' (show it now), 'card', 'wait'
+// (with opts.wait: a pop that cannot show yet; ask again), or the channel it went to instead.
+function noticeAsk(key, msg, opts) {
+  let { rule, ch } = noticeDecide(msg, key, 'normal', '', opts);
+  if (ch === 'pop' && notes.waiting.length) ch = 'held';   // a waiting toast goes first
+  if (ch === 'held' && opts && opts.wait) return 'wait';
+  const out = ch === 'held' ? (rule && rule.held) || 'bell' : ch;
+  noteStat(rule, ch === 'held' ? 'held:' + out : out, msg);
+  if (out === 'pop' && !(rule && rule.reply)) notes.pops.push(notes.clock);
+  if (out !== 'none') noteLog(rule, msg, '', null, out === 'card' ? 'pop' : out);
+  return out;
+}
+// A waiting caption whose moment passed goes where its rule holds it.
+function noticeDrop(key, msg) {
+  const rule = noticeRule(msg, key), out = (rule && rule.held) || 'bell';
+  noteStat(rule, 'held:' + out, msg);
+  if (out !== 'none') noteLog(rule, msg, '', null, out);
+  return out;
+}
+// Draw a pop. A repeat of a toast on screen adds "+1"; a full stack retires its oldest toast.
+function popToast(msg, kind, url, p, go) {
   const box = $('toasts');
   const live = [...box.children].filter(t => !t._gone);
   const same = live.find(t => t._msg === msg);
-  if (p === 0 || (same && p < 2)) {
-    // Repeats and routine notices never pop: they only count on the bell (and on a matching toast).
-    if (same) { same._more++; fillToast(same, msg, url); armToast(same); }
-    notes.unread++; bellUpdate(true); return;
-  }
+  if (same) { same._more++; fillToast(same, msg, url); armToast(same); return; }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
   const room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-  if (live.length >= room) {
-    const normals = live.filter(t => t._p < 2);
-    if (p < 2) {
-      const into = normals[normals.length - 1];
-      notes.unread++; bellUpdate(true);
-      if (into) { into._more++; into._tap = go ? () => followGo(go) : null; into.className = 'toast ' + (kind || '') + (go ? ' has-go' : ''); fillToast(into, msg, url); armToast(into); }
-      return;
-    }
-    // high: make room by retiring the oldest normal toasts first, then the oldest high ones
-    const order = normals.concat(live.filter(t => t._p === 2));
-    for (let i = 0; i <= live.length - room; i++) { const out = order[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
-  }
+  for (let i = 0; i <= live.length - room; i++) { const out = live[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
   const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
 }
+function showToast(msg, kind, icon, prio, go) { return notify({ msg, kind, icon, prio, go }); }
 // UX-A (ux-overhaul.md 4.6): one target shape for toasts, Next Up and away lines. go is
 // { tab, view, sel, fn } (open that menu view, scroll to sel) or an activity target
 // { act: 'fight', zone } / { act: 'gather', node: { kind, t } | skill } / { act: 'raid' | 'deep' }
@@ -116,14 +193,14 @@ function followGo(go) {
 // Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
 // deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
 // instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
-// on the first ticks; the Codex at 2 s). One notice alone pops as usual. Achievements join into
-// one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
-// the list), e.g. the camp welcome (55-welcome.js).
+// on the first ticks; the Codex at 2 s). One notice alone takes its own channel. emit('whatsNew',
+// { msg, icon, first }) adds a line at any time (first: at the top of the list), e.g. the camp welcome
+// (55-welcome.js). The one toast that says so is a pop like any other (W1-B: key 'news').
 const NEWS = { open: true, t: 0, lines: [], entry: null };
 // SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
 if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;
 function newsEntry(lines) {
-  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
+  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null, unread = !!e && e.id > notes.seenSeq;
   if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
   else {
     const list = lines.filter(l => l.first).concat(lines.filter(l => !l.first));
@@ -131,35 +208,33 @@ function newsEntry(lines) {
     notes.log.unshift(NEWS.entry);
     if (notes.log.length > 50) notes.log.length = 50;
   }
-  notes.unread++; bellUpdate(true);
+  if (!unread) { notes.unread++; bellUpdate(true); }
   newsToast();
 }
 // One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
   if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
+  const msg = `What's new since your last visit. Tap to read.`, d = noticeDecide(msg, 'news');
+  noteStat(d.rule, d.ch === 'held' ? 'held:bell' : d.ch, msg);
+  if (d.ch !== 'pop') return;   // the bell line is there already
+  notes.pops.push(notes.clock);
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
   const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
   for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
-  const t = makeToast(`What's new since your last visit. Tap to read.`, 'good', NEWS.entry.url, 2);
+  const t = makeToast(msg, 'good', NEWS.entry.url, 2);
   t._news = true; t._tap = openNoticeLog;
   box.appendChild(t); armToast(t);
 }
 on('createDone', () => { if (NEWS.wait) newsToast(); });
 function newsFlush() {
   NEWS.open = false;
-  let lines = NEWS.lines; NEWS.lines = [];
+  const lines = NEWS.lines; NEWS.lines = [];
   // The lines now live in the bell: point them at the Journal directly.
   for (const l of lines) l.msg = l.msg.replace('Tap the bell, then Journal.', 'See the Journal.').replace('from the bell, then Journal.', 'from the Journal.');
-  const ach = lines.filter(l => /^Achievement: /.test(l.msg));
-  if (ach.length > 1) {
-    const names = ach.map(l => l.msg.slice(13).split('. ')[0]);
-    lines = lines.filter(l => !ach.includes(l));
-    lines.push({ msg: `${ach.length} achievements earned: ${names.join(', ')}. See the Journal.`, url: ach[0].url, kind: 'good', p: 1 });
-  }
   if (lines.length === 1 && !lines[0].first) { const l = lines[0]; showToast(l.msg, l.kind, l.url, l.p); return; }
   if (lines.length) newsEntry(lines);
 }
@@ -196,7 +271,8 @@ function openNoticeLog() {
       const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
       for (const n of notes.log) {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
-        r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        const tx = el('span', null, n.msg); if (n.more) tx.append(el('span', 'more', ' +' + n.more));   // W1-B: merged lines
+        r.append(n.url ? img(n.url) : el('span'), tx, el('span', 'ago', ago(now - n.at)));
         if (n.list) {
           r.firstChild.nextSibling.textContent = "What's new";
           const ul = el('ul', 'nlog-news');
@@ -779,7 +855,7 @@ function registerTab({ id, label, icon, mount, update, hidden }) {
 }
 
 // ================= core event wiring =================
-on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio, t.go));
+on('toast', t => notify(t));
 on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));

@@ -11,8 +11,8 @@ function setActivity(a) {
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
   const solo = soloOn();   // SOLO1: one hero, no party
-  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
-  toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
+  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: solo ? 'You march to the raid. Zone gold pauses while you fight the world boss.' : 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  emit('toast', { key: 'move', msg, kind: a === 'raid' ? 'raid' : 'good', prio: a === 'raid' ? 'normal' : 'low' });   // W1-B: the pill shows it (23n-data-notices)
   emit('activity', { activity: a });
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
@@ -132,7 +132,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, 'good', null, 'high');
+    emit('toast', { key: 'level', msg: `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
   }
 }
 function gainSkill(k, n, quiet) {
@@ -152,7 +152,7 @@ function gainSkill(k, n, quiet) {
     const next = skillNextReq(k), tell = !!extra;
     if (!extra && next) extra = ` Next tier at level ${next}.`;
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, tell ? 'normal' : 'low');
+    emit('toast', { key: 'skill', msg: `${SKILL[k]} level ${sk.lv}.${extra}`, kind: 'good', prio: tell ? 'normal' : 'low' });   // W1-B: only a new tier is news
   }
 }
 

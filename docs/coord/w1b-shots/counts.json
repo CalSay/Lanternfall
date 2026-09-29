@@ -1,0 +1,62 @@
+{
+ "task": "W1-B notification policy",
+ "how": "fresh solo game (Wren), Chromium 360x740, a bot that follows the guide, presses Attack, casts, parries heavy hits and buys upgrades; ~3x speed; minutes are game minutes (seconds of play). Pops = toasts drawn + stage captions shown. Script: session scratchpad measure.mjs (same bot as the check in tools/check.mjs, notices (browser, W1-B)).",
+ "before": {
+  "5 min": {
+   "popsTotal": 40,
+   "toastPops": 30,
+   "stageCaptions": 10,
+   "toastsRaised": 66,
+   "bellUnread": 36,
+   "guideBubbles": 17
+  },
+  "10 min": {
+   "popsTotal": 52,
+   "toastPops": 40,
+   "stageCaptions": 12,
+   "toastsRaised": 84,
+   "bellUnread": 44,
+   "guideBubbles": 19
+  },
+  "30 min": {
+   "popsTotal": 83,
+   "toastPops": 70,
+   "stageCaptions": 13,
+   "toastsRaised": 127,
+   "bellUnread": 57,
+   "guideBubbles": 19
+  },
+  "maxPopsIn20s": 8,
+  "bellMax": 57,
+  "reached": "zone 14, level 24"
+ },
+ "after": {
+  "5 min": {
+   "popsTotal": 6,
+   "toastPops": 3,
+   "stageCaptions": 3,
+   "toastsRaised": 66,
+   "bellUnread": 2,
+   "guideBubbles": 16
+  },
+  "10 min": {
+   "popsTotal": 8,
+   "toastPops": 4,
+   "stageCaptions": 4,
+   "toastsRaised": 88,
+   "bellUnread": 4,
+   "guideBubbles": 18
+  },
+  "30 min": {
+   "popsTotal": 10,
+   "toastPops": 5,
+   "stageCaptions": 5,
+   "toastsRaised": 128,
+   "bellUnread": 5,
+   "guideBubbles": 18
+  },
+  "maxPopsIn20s": "1 (the policy never allows 2 within 20 s; the harness samples captions once a game second)",
+  "bellMax": 5,
+  "reached": "zone 14, level 24"
+ }
+}

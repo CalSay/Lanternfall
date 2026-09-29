@@ -83,22 +83,29 @@ wide screens reopen the last menu.
 
 ## Notices (toasts)
 
-Unchanged rules: `toast(msg, kind, icon, prio)` or `emit('toast', { msg, kind, icon, prio })`.
+W1-B (audit-1 3b): `toast(msg, kind, icon, prio)` or `emit('toast', { key, msg, kind, icon, prio, go })`.
+Every notice takes ONE path (70-ui.js `notify`). The channel comes from ONE table,
+`NOTICES` in src/js/23n-data-notices.js (by `key`, or a pattern on the message); `prio` only matters for a
+message no rule knows (tools/check.mjs fails if a source has no rule).
 
-| Priority | What happens | Use for |
+| Channel | What happens | Examples |
 |---|---|---|
-| high | Always pops; pushes out an older normal toast. 4.2 s (loot 5 s). | Level up, zone cleared, unique loot, recruit or companion joins, promotion, raid boss reward, Star Chart, a legendary forge, a new feature opening |
-| normal | Pops if there is room; otherwise folds into the newest normal toast as "+N" and counts on the bell. 2.6 s. | Boss failed, achievement, bounty done, rare or epic forge, weekly goal, skill level that opens a new tier |
-| low | Log only; counts on the bell. | Anything the player just did and can see (equip, salvage, common forge, upgrade, reforge, transmute, brew, switch mode, build queued), routine skill levels, bestiary steps |
+| card | A full-screen moment its own UI draws. | Great Lantern relit, a Feat |
+| pop | A toast (or a caption over the stage). At most 1 per 20 s and 3 a minute of play (a place title or an elder's line needs 40 s of quiet); never while a guide step shows or a card is up. A pop that cannot show goes to the bell (captions to the bell list); some wait up to their rule's `wait` for the next slot first. A reply to a press ("Chop more Pine Log first") always shows. | A new unique, the Stars unlock, a boss that beat you, a new kind of attack, a place's title the first time, a story page |
+| bell | A quiet line that counts on the bell. Unread lines of one rule merge ("New: Bounties, Foraging."). | New views, Codex milestones, Deeds at Gold, every 25th level |
+| log | Listed in the bell, never counted. | Level ups, zones cleared, the fire lit, Bestiary steps, Deeds Bronze and Silver |
+| none | Dropped: the screen shows it. | "You head to...", Equipped, Salvaged, "Work starts on...", the old achievements |
+
+To tune: change a rule's `ch` in NOTICES (or `NOTICE_TUNE` for the budget). A new message needs a rule.
 
 - On the game view, toasts sit in the stage box under the HP bar, never over the control row or the
   ability button (right 62 px stay clear). At most 2 on a stage 200 px or taller, else 1.
 - While a menu covers the game (portrait), the toast stack moves over the bottom of the menu, just above
   the tab bar, full width, at most 2. Wide screens keep them on the stage (it stays visible).
-- Tap or swipe a toast away. Repeats become "+1". Every notice goes to the bell log (last 50, this visit).
+- Tap or swipe a toast away. Repeats become "+1". Every notice but `none` goes to the bell log (last 50, this visit).
 - **What's new** (Q1): notices raised in the first 2.5 s of play (old-save catch-ups: achievements, Codex
   Light, retooled gear, the camp and its welcome) fold into one bell notice with a short list, and one toast
-  says so (tap it to open the bell; it waits until "Choose your path" closes). A single notice pops as usual.
+  says so (tap it to open the bell; it waits until "Choose your path" closes; a pop like any other). A single notice takes its own channel.
   `emit('whatsNew', { msg, icon, first })` adds a line later.
 
 ## Adding a system: pick a view, never append to a tab's end

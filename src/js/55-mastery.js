@@ -38,7 +38,7 @@ const masteryApi = {};
     m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1) * (1 + bonus('masteryMult'));
     const za = starsFor(m.zones[zone]);
     if (za > zb) {
-      toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
+      emit('toast', { key: 'mastery', msg: `${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] } });   // W1-B: bell list only
     }
     const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
     if (!key || !BESTIARY_PERKS[key]) return;
@@ -47,7 +47,7 @@ const masteryApi = {};
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
-      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good', null, 'low');
+      emit('toast', { key: 'bestiary', msg: `Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, kind: 'good', prio: 'low' });   // W1-B: bell list only
     }
   });
 

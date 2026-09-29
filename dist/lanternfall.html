@@ -9563,6 +9563,171 @@ const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, 
   nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: 300, streak: 10,
   overX: 1000, lateMs: 7 * 864e5, ratHits: 100, crowd: 3, oddZone: 10 };
 
+// ---- src/js/23n-data-notices.js ----
+// 23n-data-notices: the notice policy (task W1-B; docs/coord/audit-1.md 3b). ONE table says where every
+// message the game raises goes. 70-ui.js applies it (notify(): toasts, the bell, stage captions, cards).
+// CORE FILE (pure data and a lookup): no DOM, window or storage.
+//
+// Channels:
+//   card  a full-screen moment its own UI draws (the Great Lantern, a Feat). Rare by nature.
+//   pop   a brief toast, or a caption over the stage. At most 1 per NOTICE_TUNE.gap seconds and
+//         NOTICE_TUNE.perMin a minute, never while a guide step shows (the guide is the only voice)
+//         or a card is up. A pop that cannot show falls to its `held` channel (bell by default).
+//   bell  a quiet line in the bell that counts on its badge. Lines of one rule merge while unread
+//         ("3 zones cleared"), so the count stays small.
+//   log   a line in the bell list that does not count (trivia, or something the player just did).
+//   none  dropped: the screen already shows it.
+// Rule fields: id; ch (a channel, or (msg, n) => channel; n is the emitted payload); match by `key`
+// (emit('toast', { key, msg, ... })), by `re` on the message, or by `test(msg)` (texts that live in
+// data). `site`: a pattern of the call's source, for calls whose message is not a literal (the static
+// check in tools/check.mjs uses it). `reply`: a pop that answers a press the player just made
+// ("Chop more Pine Log first"): it shows at once and does not use the budget. `wait`: seconds a pop may
+// wait for the next free slot (it goes first, before captions) before it is held. `gap`: a longer quiet
+// this pop needs since the last one (the stage captions: they are nice to have, not news). `held`: where a pop
+// goes when it cannot show (default bell). `once`: 'session' (later ones go nowhere). `merge(msgs)`: the
+// text of merged lines (default: the newest line, with a count).
+// A message that matches no rule falls back on its priority: high pops, normal goes to the bell,
+// low to the log. tools/check.mjs holds that every toast source in src/js matches a rule.
+const NOTICE_TUNE = { gap: 20, perMin: 3, arrivalWait: 60, elderWait: 12 };
+const NOTICE_CH = ['card', 'pop', 'bell', 'log', 'none'];
+const noteNum = (m, re) => { const x = re.exec(m); return x ? +x[1] : 0; };
+const NOTICES = [
+  // ---- the story on the stage (75-story-ui) and full-screen cards ----
+  { id: 'caption:arrival', key: 'caption:arrival', ch: 'pop', gap: 40, held: 'log', why: 'the place name, first time only (it waits for a quiet moment)' },
+  { id: 'caption:elder', key: 'caption:elder', ch: 'pop', gap: 40, held: 'log', why: 'a new kind of boss appears; dropped if it cannot show within a few seconds' },
+  { id: 'caption:fall', key: 'caption:fall', ch: 'none', why: 'the boss falling is on screen; its line lives in the Bestiary' },
+  { id: 'caption:beat', key: 'caption:beat', ch: 'pop', held: 'bell', why: 'a story page (the chip waits; the Codex keeps it)' },
+  { id: 'caption:beat-quiet', key: 'caption:beat-quiet', ch: 'log', why: 'a page the player walked past' },
+  { id: 'card:lantern', key: 'card:lantern', ch: 'card', why: 'a Great Lantern relit' },
+  { id: 'card:feat', key: 'card:feat', ch: 'card', why: 'a Feat or a Chapter' },
+  { id: 'news', key: 'news', ch: 'pop', why: "an old save's What's new (never on a new game)" },
+
+  // ---- progress ----
+  { id: 'move', key: 'move', re: /^(You return to |Your party returns to |You head to the |You move to the |You march to the raid|Your party marches to the raid)/,
+    ch: m => /raid/.test(m) ? 'log' : 'none', why: 'the activity pill shows it' },
+  { id: 'zone-clear', re: /is cleared\. .* lies ahead\.$/, ch: 'log', why: 'the next place gets its title caption',
+    merge: ms => `${ms.length} zones cleared. ${ms[ms.length - 1]}` },
+  { id: 'level', key: 'level', re: /^Level \d+\. Your hero hits/, ch: m => noteNum(m, /^Level (\d+)/) % 25 === 0 ? 'bell' : 'log',
+    why: 'the LEVEL UP float says it; every 25th level is a bell line (level 10 pops as the Stars unlock)',
+    merge: ms => `${ms.length} levels gained. Level ${noteNum(ms[ms.length - 1], /^Level (\d+)/)}.` },
+  { id: 'skill', key: 'skill', re: /^\S+ level \d+\./, ch: m => /You can now|open to you/.test(m) ? 'bell' : 'none', why: 'only a new tier is news' },
+  { id: 'boss-fail', re: /^(The zone boss held its ground|The zone boss beat you|Your party fell to the zone boss)/, ch: 'pop', wait: 10, why: 'tells you to grow stronger' },
+  { id: 'fell-back', re: /(fell back a zone|fell back to regroup|couldn't finish the pack)/, ch: 'bell' },
+  { id: 'pace', key: 'pace', re: /back to Zone \d+ to keep earning\.$/, ch: 'bell', once: 'session', why: 'audit 3.14: one line a session' },
+  { id: 'start', re: /picks up the lamp\. The road is dark\.$/, ch: 'log', why: 'the guide speaks first' },
+  { id: 'hero-swap', re: /takes up the lamp\.$/, ch: 'log' },
+
+  // ---- loot and gear ----
+  { id: 'unique', re: /^Unique loot! /, ch: m => /joins your trophy wall/.test(m) ? 'pop' : 'bell', wait: 40, why: 'a new unique pops; a better copy of one you have goes to the bell' },
+  { id: 'star-chart', re: /^You drew a Star Chart/, ch: 'pop', wait: 40 },
+  { id: 'forged', re: /^(Forged|Made) an? /, ch: m => /Legendary/i.test(m) ? 'pop' : /Rare|Epic/i.test(m) ? 'log' : 'none', why: 'the sheet shows what you made' },
+  { id: 'bag-full', re: /^Your bag is full, so /, ch: 'bell' },
+  { id: 'gear-reforged', re: /^Your .* reforged into .* gear\.$/, ch: 'bell' },
+  { id: 'gear-back', re: /(does not fit your new path|do not fit your new path)/, ch: 'bell' },
+  { id: 'champion', re: /^A champion .* appears\./, ch: 'pop', wait: 15, why: 'something to fight now' },
+  { id: 'trophy', re: /^(Champion defeated|The boss leaves a trophy|The raid spoils include)/, ch: 'log' },
+  { id: 'stash-wait', re: /^(Storehouse full\. Needs room|The team is back\. )/, site: /toast\((stashNeed\(|`The team is back\. \$\{stashNeed)/, ch: 'bell' },
+  { id: 'store-full', re: /^Storehouse full: /, ch: 'log', merge: ms => `Storehouse full: ${ms.map(m => m.slice(16, -1)).join(', ')}.` },
+  { id: 'store-move', re: / is full\. Your hero moves on to the /, ch: 'bell' },
+  // things the player just did, and sees happen
+  { id: 'did', ch: 'none', why: 'the player just did it and sees the result',
+    re: /^(Equipped |Salvaged |.* upgraded\.$|Reforged: |Transmuted |.* took the |Brewed a |.*: .* for 20 minutes\.$|You took the Dare|You dropped the Dare|Weekly goal claimed|The trader sells you|.* set out: |.* rises to rank |.*: bought\.$|Every star is dark again|.* is lit\.$|.* now carries |.* carries the .* mark\.$|You walk on as a |Your hero is now known as |You walk the path of the |The Mirror of Embers shows you)/ },
+  { id: 'build', re: /^(Work starts on the |.* Lv .* is next in line\.$)/, ch: 'none', why: 'the camp shows the timer' },
+
+  // ---- the camp, gathering and Hands ----
+  { id: 'fire-lit', re: /^The fire catches\./, ch: 'log', why: 'the fire lights on the stage and the guide goes on' },
+  { id: 'hesketh', re: /^Old Hesketh's lamp has gone out\./, ch: 'pop', held: 'log', why: 'meeting Hesketh (the bell list while the guide speaks)' },
+  { id: 'camp-open', re: /^Old Hesketh (has made camp|sets down his lamp)/, ch: 'bell' },
+  { id: 'hands', re: /^Tam, Hesketh's nephew/, ch: 'bell' },
+  { id: 'hands-small', re: /(applicants? (are|is) waiting at the Tavern|is back from the .*|The pack waits by the Storehouse\.$)/, site: /backText\(e\)/, ch: 'log' },
+  { id: 'tool-mastery', re: /(mastered! | mastery \S+\.)/, ch: m => /mastered!/.test(m) ? 'bell' : 'log' },
+  { id: 'rested', re: /^Well Rested: /, ch: 'bell' },
+
+  // ---- unlocks (75-onboard-ui, 75-stars-ui) ----
+  // While the guide runs it points at each new tab itself, so the tab lines only pop once tips are off.
+  { id: 'unlock-tab', re: /^(New tab: |Next Up shows your best next goal|You made camp\. A new tab)/, ch: (m, n, ctx) => ctx && ctx.guide ? 'log' : 'pop', wait: 30,
+    site: /toast\(OPEN_TXT\[id\]/, why: 'the guide points at the tab' },
+  { id: 'unlock-stars', re: /^New on the Party tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
+  { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'bell',
+    why: 'the tab shows a New mark', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
+  { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
+  { id: 'stars-reset', re: /^Your star map changed/, ch: 'bell' },
+
+  // ---- combat tips ----
+  // The guide teaches Dodge and Parry, so the heavy-hit tips stay quiet; a new kind of attack pops once.
+  { id: 'tip-heavy', re: /^The boss winds up a heavy hit\./, ch: 'log', why: 'the guide and the red ring teach it' },
+  { id: 'active-kill', re: /^Played it well: /, site: /toast\(FIRST\.activeKill/, ch: 'log', merge: ms => `Played it well ${ms.length} times: +50% XP each.` },
+  { id: 'tip', site: /toast\(text, 'raid', null, 'normal'\)/,
+    test: m => typeof BOSS_COPY === 'object' && !!BOSS_COPY.first && Object.values(BOSS_COPY.first).includes(m),
+    ch: m => typeof BOSS_COPY === 'object' && (m === BOSS_COPY.first.heavy || m === BOSS_COPY.first.packHeavy || m === BOSS_COPY.first.stagger) ? 'log' : 'pop', wait: 8, held: 'log', why: 'a new kind of attack, once (it belongs to the moment)' },
+
+  // ---- achievements: Deeds speak; the old achievements (56-achievements) are silent ----
+  { id: 'ach-old', key: 'ach-old', re: /^(Achievement: |\d+ achievements? earned)/, ch: 'none', why: 'merged into Deeds (their bonuses still count)' },
+  { id: 'deed-tier', key: 'deed-tier', wait: 40, ch: (m, n) => (n && n.tier === 4) ? 'pop' : (n && n.tier >= 3) ? 'bell' : 'log', why: 'Bronze and Silver are trivia; Gold and Everflame stars go to the bell; Everflame pops',
+    merge: ms => ms.length > 1 ? `${ms.length} achievement steps: ${ms.map(m => m.replace(/\.$/, '').replace(/ \((Bronze|Silver|Gold|Everflame)\).*$/, ' ($1)')).join(', ')}.` : ms[0] },
+  { id: 'deed-group', key: 'deed-group', wait: 40, ch: (m, n) => n && n.lv >= 2 ? 'pop' : 'bell' },
+  { id: 'deed-feat', key: 'deed-feat', ch: 'pop', why: 'only when there is no Feat card (DEED_TUNE.featToast)' },
+  { id: 'deed-points', key: 'deed-points', site: /key: x\.key \|\| 'deed-points'/, ch: 'bell', why: 'also carries the Deeds queue (group and Feat lines name their own key)' },
+  { id: 'deed-secret', re: /^Secret found: /, ch: 'pop', wait: 40 },
+  { id: 'mastery', key: 'mastery', re: /: mastery star \d of 5\./, ch: 'log', why: 'the zone shows its stars' },
+  { id: 'bestiary', key: 'bestiary', re: /^Bestiary: /, ch: 'log', why: 'the Bestiary view marks it' },
+  { id: 'weekly', re: /^Weekly goal done: /, ch: 'bell' },
+  { id: 'bounty', re: /^Bounty complete! /, ch: 'bell', merge: ms => `${ms.length} bounties complete.` },
+
+  // ---- the Codex (57c) ----
+  { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
+  { id: 'codex-small', key: 'codex-small', re: /^Codex: the .* page is half full\.$/, ch: 'log' },
+  { id: 'codex-past', key: 'codex-past', re: /^Your Codex holds \d+ Lantern Light from your past deeds/, ch: 'bell', why: 'only a save with progress at load (audit 3.4)' },
+
+  // ---- class, party and roster (the party parts are dormant in solo) ----
+  { id: 'class', re: /^(You passed the Proving|You are an? .* now\.|The Fenmother has fallen\. Your Proving|The Proving: not this time)/, ch: 'pop', wait: 40, why: 'a card after Ascension lands (W5-A)' },
+  { id: 'class-migrate', re: /^Classes changed\./, ch: 'bell' },
+  { id: 'joins', re: /(joins your party\.$|will join you\.$| is promoted\. )/, ch: 'pop', wait: 40 },
+  { id: 'mirror', re: /^The boss dropped a Mirror of Embers/, ch: 'pop' },
+  { id: 'party-small', re: /^(Your hero now casts .* alone|.* reached level \S+)/, ch: 'log' },
+  { id: 'bond', site: /toast\(t\.msg, 'good', \{ ic: \['heart'/, ch: 'log', why: 'Bonds leave the game (W3-A)' },
+  { id: 'exped', re: /: the team (is|came) back/, test: m => typeof EXPED_GRADES === 'object' && EXPED_GRADES.some(g => m.includes(` (${g.n}): `)), site: /toast\(`\$\{R\(x\.r\)\.n\} \(/, ch: 'log' },
+
+  // ---- legendary powers (dormant; W2-C removes them) ----
+  { id: 'legend', re: /(^Legendary! | is now rank | is in your Lantern Book )/, ch: 'pop', wait: 40 },
+  { id: 'legend-echo', re: /^Echo of /, ch: 'log' },
+  { id: 'legend-sigil', re: / Sigil.*\.$/, ch: 'log' },
+  { id: 'legend-off', re: /^Your hero carries \d+ legendary powers/, site: /toast\(msg, 'raid', null, 'high'\)/, ch: 'bell' },
+
+  // ---- the Deepwell ----
+  { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your Oil is running low)/,
+    site: /toast\(txt, 'good'/, ch: 'pop', wait: 20, why: 'you are in the Deepwell and it is new' },
+  { id: 'deep', re: /^(Trial Seal earned|That Trial has closed)/, ch: 'bell' },
+  { id: 'deep-small', re: /^(Set bonus: |Trial: floor |Deep Elder beaten)/, ch: 'log' },
+
+  // ---- the world raid (online layer: channel only, nothing about its data changes) ----
+  { id: 'raid-win', re: /has fallen\. You dealt /, ch: 'pop', wait: 40 },
+  { id: 'raid-news', re: /fell to the other heroes\./, ch: 'bell' },
+  { id: 'horn', re: /sounds the war horn!/, ch: 'pop' },
+
+  // ---- answers to a press: they show at once (a reply is never held) ----
+  { id: 'reply', ch: 'pop', reply: 1, site: /toast\(w, 'raid'/,
+    re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/,
+    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() }
+];
+const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
+// The rule for a message (or its key), or null.
+function noticeRule(msg, key) {
+  if (key && NOTICE_BY_KEY[key]) return NOTICE_BY_KEY[key];
+  const m = String(msg || '');
+  for (const r of NOTICES) {
+    if (r.re && r.re.test(m)) return r;
+    if (r.test) { let ok = false; try { ok = !!r.test(m); } catch (e) {} if (ok) return r; }
+  }
+  return null;
+}
+// The rule's own channel for this message (before the guide, the budget or `once`). ctx: { guide }.
+function noticeChannel(rule, msg, payload, ctx) {
+  let ch = rule.ch;
+  if (typeof ch === 'function') { try { ch = ch(String(msg || ''), payload || {}, ctx || {}); } catch (e) { ch = 'bell'; } }
+  return NOTICE_CH.includes(ch) ? ch : 'bell';
+}
+
 // ---- src/js/24-data-classes.js ----
 // 24-data-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 1, 3.5, 4, 7, 8.3 and the appendix).
 // CORE FILE, data only: no DOM. The engine is 55-classes.js (state, migration, lbClass) and 55-party.js
@@ -10560,8 +10725,8 @@ function setActivity(a) {
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
   const solo = soloOn();   // SOLO1: one hero, no party
-  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
-  toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
+  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: solo ? 'You march to the raid. Zone gold pauses while you fight the world boss.' : 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  emit('toast', { key: 'move', msg, kind: a === 'raid' ? 'raid' : 'good', prio: a === 'raid' ? 'normal' : 'low' });   // W1-B: the pill shows it (23n-data-notices)
   emit('activity', { activity: a });
 }
 // Move to another cleared zone (the UI's arrows). Caller refreshes the UI.
@@ -10681,7 +10846,7 @@ function gainXp(n, quiet) {
     S.xp -= xpNeed(); S.L++; emit('levelup', { L: S.L, quiet: !!quiet });
     if (quiet) continue;
     addFloat('LEVEL UP', '#6FCB6A', true, 0.27, 0.3);
-    toast(`Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, 'good', null, 'high');
+    emit('toast', { key: 'level', msg: `Level ${S.L}. Your hero hits ${Math.round(PACE.heroLv * 100)}% harder.`, kind: 'good', prio: 'high', L: S.L });   // W1-B: every 10th level pops
   }
 }
 function gainSkill(k, n, quiet) {
@@ -10701,7 +10866,7 @@ function gainSkill(k, n, quiet) {
     const next = skillNextReq(k), tell = !!extra;
     if (!extra && next) extra = ` Next tier at level ${next}.`;
     if (!stn) addFloat(`${SKILL[k]} ${sk.lv}`, '#F2C14E', true, 0.27, 0.3);
-    toast(`${SKILL[k]} level ${sk.lv}.${extra}`, 'good', null, tell ? 'normal' : 'low');
+    emit('toast', { key: 'skill', msg: `${SKILL[k]} level ${sk.lv}.${extra}`, kind: 'good', prio: tell ? 'normal' : 'low' });   // W1-B: only a new tier is news
   }
 }
 
@@ -13886,7 +14051,7 @@ const masteryApi = {};
     m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1) * (1 + bonus('masteryMult'));
     const za = starsFor(m.zones[zone]);
     if (za > zb) {
-      toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
+      emit('toast', { key: 'mastery', msg: `${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] } });   // W1-B: bell list only
     }
     const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
     if (!key || !BESTIARY_PERKS[key]) return;
@@ -13895,7 +14060,7 @@ const masteryApi = {};
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
-      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good', null, 'low');
+      emit('toast', { key: 'bestiary', msg: `Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, kind: 'good', prio: 'low' });   // W1-B: bell list only
     }
   });
 
@@ -14423,7 +14588,7 @@ let paceCheck;
       if (z >= S.zone) return 0;
       P().fell = Math.max(P().fell || 0, S.zone);
       setZone(z);
-      toast(`${soloOn() ? 'You fell' : 'Your party fell'} back to Zone ${z} to keep earning.`, 'good', null, 'normal');
+      emit('toast', { key: 'pace', msg: `${soloOn() ? 'You fell' : 'Your party fell'} back to Zone ${z} to keep earning.`, kind: 'good', prio: 'normal' });   // W1-B: one line a session (audit 3.14)
       return z;
     }
     const fell = P().fell || 0;
@@ -16033,8 +16198,10 @@ let welcomeApply, welcomeNote, welcomeInfo;
     for (const a of ACH) if (!g[a.id] && a.cur() >= a.need) { g[a.id] = Date.now(); fresh.push(a); }
     if (!fresh.length) return;
     achRebuild();
-    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. Tap the bell, then Journal.`, 'good', { ic: ['banner', '#F2C14E'] });
-    else for (const a of fresh) { toast(`Achievement: ${a.name}. ${achBonusText(a)}.`, 'good', { ic: [a.ic, '#F2C14E'] }); emit('achievement', { id: a.id }); }
+    // W1-B (audit 3.12): Deeds (58-deeds) is the one achievement voice. These still grant their bonuses and
+    // show in the Codex, but their notices go nowhere (23n-data-notices 'ach-old'). Merge them into Deeds later.
+    if (!A().init) emit('toast', { key: 'ach-old', msg: `${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds.`, kind: 'good' });
+    else for (const a of fresh) { emit('toast', { key: 'ach-old', msg: `Achievement: ${a.name}. ${achBonusText(a)}.`, kind: 'good' }); emit('achievement', { id: a.id }); }
     A().init = true;
     save();
   }
@@ -20666,13 +20833,14 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     if (quiet) return out;
     for (const x of out.pages) {
       const P = CODEX_PAGES[x.id];
-      if (x.kind === 'half' && x.p.bless) toast(`Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, 'good', { ic: ['banner', '#F2C14E'] }, 'normal');
-      else if (x.kind === 'half') toast(`Codex: the ${P.n} page is half full.`, 'good', { ic: ['banner', '#F2C14E'] }, 'low');
-      if (x.kind === 'seal') toast(`Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, 'good', { ic: ['banner', '#F2C14E'] }, 'high');
+      // W1-B: channels in 23n-data-notices ('codex': the bell; 'codex-small': the bell list only)
+      if (x.kind === 'half' && x.p.bless) emit('toast', { key: 'codex', msg: `Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal' });
+      else if (x.kind === 'half') emit('toast', { key: 'codex-small', msg: `Codex: the ${P.n} page is half full.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'low' });
+      if (x.kind === 'seal') emit('toast', { key: 'codex', msg: `Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'high' });
       emit('codexPage', { id: x.id, kind: x.kind });
     }
     for (const m of out.miles) {
-      toast(`${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, 'good', { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'normal');
+      emit('toast', { key: 'codex', msg: `${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'normal' });
       emit('codexMilestone', { at: m.at, rewards: m.rw.map(r => r.id) });
     }
     if (out.gain > 0) emit('codexLight', { light, gain: out.gain });
@@ -20699,10 +20867,13 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     CX().mSeen = CODEX_MILESTONES.filter(m => CX().got[m.at]).reduce((a, m) => Math.max(a, m.at), 0);
     CX().init = true;
     cache = c; dirty = false;
-    const past = S.totalKills > 0 || S.maxZone > 1;
+    // audit 3.4 (W1-B): a new game (its guide still young) has no past deeds to report; only a save with
+    // progress from before this build's Codex does. The line goes to the bell (23n-data-notices 'codex-past').
+    const young = !!(S.onboard && !S.onboard.all && (S.onboard.t || 0) < 120);
+    const past = !young && (S.totalKills > 0 || S.maxZone > 1);
     if (past && g.light > 0) {
       const where = typeof campLevel === 'function' && campLevel('library') > 0 ? 'See the Library in camp.' : 'Open it from the bell, then Journal.';
-      toast(`Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, 'good', { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+      emit('toast', { key: 'codex-past', msg: `Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'high' });
     }
     emit('codexInit', { light: g.light });
   }
@@ -23245,19 +23416,20 @@ let deeds, deedBonus, wearGet;
   let pend = null;          // toasts gathered during one pass (folded at its end)
   let lastTierAt = -1e15;   // time (ms) of the last live tier: the near-miss goal hides a while (wall time, so a closed game counts)
   let clock = 0;            // seconds of ticks since load (runtime only)
-  const toastQ = (msg, prio, icon) => { if (pend) pend.push({ msg, prio, icon }); };
-  const PRIO = { low: 0, normal: 1, high: 2 };
+  const toastQ = (msg, prio, icon, key, extra) => { if (pend) pend.push(Object.assign({ msg, prio, icon, key }, extra)); };
   function flushToasts() {
     const p = pend; pend = null;
     if (!p || !p.length) return;
     // Tiers fold: "Slayer III and 2 more"; the rest (groups, Feats, milestones) each have their own line.
     const tiers = p.filter(x => x.tier), rest = p.filter(x => !x.tier);
+    // W1-B: one voice for achievements. The channel comes from the best tier in the pass (23n-data-notices
+    // 'deed-tier': Bronze and Silver go to the bell list, Gold to the bell, Everflame pops).
     if (tiers.length) {
-      tiers.sort((a, b) => PRIO[b.prio] - PRIO[a.prio]);
+      tiers.sort((a, b) => b.k - a.k);
       const top = tiers[0], more = tiers.length - 1;
-      toast(more ? `${top.short} and ${more} more.` : top.msg, 'good', top.icon, top.prio);
+      emit('toast', { key: 'deed-tier', msg: more ? `${top.short} and ${more} more.` : top.msg, kind: 'good', icon: top.icon, prio: top.prio, tier: top.k });
     }
-    for (const x of rest) toast(x.msg, 'good', x.icon, x.prio);
+    for (const x of rest) emit('toast', { key: x.key || 'deed-points', msg: x.msg, kind: 'good', icon: x.icon, prio: x.prio, lv: x.lv });
   }
   function grantTier(t, k, quiet) {
     const d = DS(), from = num(d.tier[t.id]);
@@ -23272,7 +23444,7 @@ let deeds, deedBonus, wearGet;
       const g = GR[t.g], col = DEED_TIERS[Math.min(4, k) - 1].col;
       const bt = bonusTxt(t, Math.min(4, k)), lab = tierLabel(t.id, k);
       const msg = k <= 4 ? `${lab} (${tierName(k)}).${bt && k >= 3 && from < k ? ' ' + bt + '.' : ''}` : `${t.n}: ${tierName(k)}.`;
-      pend.push({ tier: true, msg, short: lab, prio: k === 1 ? 'low' : k <= 3 ? 'normal' : 'high', icon: { ic: [g ? g.ic[0] : 'banner', col] } });
+      pend.push({ tier: true, k, msg, short: lab, prio: k === 1 ? 'low' : k <= 3 ? 'normal' : 'high', icon: { ic: [g ? g.ic[0] : 'banner', col] } });
     }
     emit('deedTier', { id: t.id, tier: k, quiet: !!quiet });
     return k - from;
@@ -23290,7 +23462,7 @@ let deeds, deedBonus, wearGet;
       dirtyPts();
       if (!quiet) {
         const look = lv >= 2 && g.look ? LK[g.look] : null;
-        toastQ(`${g.n}: every track at ${lv >= 2 ? 'Everflame' : 'Gold'}. New title: ${lv >= 2 ? g.ever : g.gold}.${look ? ' New look: ' + look.n + '.' : ''}`, 'high', { ic: [g.ic[0], lv >= 2 ? DEED_TIERS[3].col : DEED_TIERS[2].col] });
+        toastQ(`${g.n}: every track at ${lv >= 2 ? 'Everflame' : 'Gold'}. New title: ${lv >= 2 ? g.ever : g.gold}.${look ? ' New look: ' + look.n + '.' : ''}`, 'high', { ic: [g.ic[0], lv >= 2 ? DEED_TIERS[3].col : DEED_TIERS[2].col] }, 'deed-group', { lv });
       }
       emit('deedGroup', { id: g.id, lv, quiet: !!quiet });
     }
@@ -23341,7 +23513,7 @@ let deeds, deedBonus, wearGet;
   function grantFeat(f, quiet) {
     const d = DS(); if (d.feat[f.id]) return false;
     d.feat[f.id] = 1; d.at[f.id] = now(); dirtyPts();
-    if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }); }
+    if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }, 'deed-feat'); }
     emit('deedFeat', { id: f.id, quiet: !!quiet });
     if (typeof codexRefresh === 'function' && d.init) safe(() => codexRefresh(true, !!quiet), 0);
     return true;
@@ -23382,7 +23554,7 @@ let deeds, deedBonus, wearGet;
         if (m.title) bits.push(`title ${m.title}`);
         if (m.look && LK[m.look]) bits.push(LK[m.look].n);
         if (m.wall) bits.push(m.wall === 1 ? 'the Trophy Wall opens at camp' : 'the Trophy Wall grows');
-        toastQ(`${m.at.toLocaleString('en-US')} achievement points: ${bits.join(', ')}.`, 'normal', { ic: ['banner', '#F2C14E'] });
+        toastQ(`${m.at.toLocaleString('en-US')} achievement points: ${bits.join(', ')}.`, 'normal', { ic: ['banner', '#F2C14E'] }, 'deed-points');
       }
       emit('deedMilestone', { at: m.at });
     }
@@ -34099,18 +34271,33 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
 // and the section/tab registries for feature UI (75-*.js). Browser-only.
 // Per-tab panels live in 71-74; they are shared files, so prefer registerSection().
 
-// ================= notices: toasts and the bell log =================
-// Every notice goes to the log (bell, last 50). Priority decides whether it also pops:
-//   high (2): always pops, pushes out an older normal toast.     e.g. level up, zone cleared, unique loot, recruit
-//   normal (1): pops if there is room (2 on screen, 1 on a short stage); otherwise it folds into the newest normal toast
-//               as "+N" and the bell count.                        e.g. boss failed, achievement, rare forge
-//   low (0): log only, bumps the bell count.                      e.g. equipped, salvaged, common forge, skill level
+// ================= notices: toasts, captions and the bell =================
+// W1-B (docs/coord/audit-1.md 3b): every notice takes ONE path, notify(). The NOTICES table
+// (23n-data-notices.js) gives each message a channel: card, pop, bell, log or none. Then:
+//   - a pop shows as a toast (or, for noticeAsk callers, a caption over the stage), at most one per
+//     NOTICE_TUNE.gap seconds of play and NOTICE_TUNE.perMin a minute; never while a guide step shows
+//     (the guide is the only voice) or a full-screen card is up. A pop that cannot show goes to its
+//     rule's `held` channel (the bell by default). A `reply` pop (the answer to a press) always shows.
+//   - bell lines count on the badge; log lines are listed but never counted. Unread lines of one rule
+//     merge into one ("3 levels gained"), so the count stays calm.
 // Toasts sit in the stage box under the HUD. While a full-screen menu covers the game (portrait),
 // they move over the bottom of the menu, just above the tab bar (placeToasts). Tap or swipe one away.
+// notes.stats: the last 400 decisions ({ t, id, ch, msg }; t = seconds of play), read by tools/check.mjs.
 const NOTE_PRIO = { high: 2, normal: 1, low: 0 };
 const NOTE_KIND_PRIO = { loot: 2 };
-const NOTE_MS = [0, 2600, 4200];
-const notes = { log: [], unread: 0, seq: 0 };
+const NOTE_MS = [2600, 3200, 4200];
+const notes = { log: [], unread: 0, seq: 0, seenSeq: 0, clock: 0, pops: [], once: {}, stats: [], waiting: [] };
+// A pop whose rule has `wait` waits for the next free slot (first come, before any caption), then shows;
+// past its wait it goes to its held channel.
+let noteWaitT = 0;
+onTick(dt => {
+  notes.clock += dt;
+  if (!notes.waiting.length || (noteWaitT += dt) < 0.5) return;
+  noteWaitT = 0;
+  const w = notes.waiting[0];
+  if (notes.clock > w.until) { notes.waiting.shift(); notify(w.n, 'late'); }
+  else if (!(guideBusy() || cardUp() || !popRoom())) { notes.waiting.shift(); notify(w.n, 'now'); }
+});
 function notePrio(prio, kind) {
   if (typeof prio === 'number') return Math.max(0, Math.min(2, prio | 0));
   if (prio in NOTE_PRIO) return NOTE_PRIO[prio];
@@ -34164,38 +34351,100 @@ try { new ResizeObserver(es => { for (const e of es) stageBoxH = e.target.offset
 // can dock its band just above/below the toasts without polling layout itself; keeps the two from
 // ever overlapping regardless of how many toasts are stacked.
 try { new ResizeObserver(es => { for (const e of es) document.documentElement.style.setProperty('--toast-h', e.target.children.length ? (e.target.offsetHeight + 6) + 'px' : '0px'); }).observe($('toasts')); } catch (e) {}
-function showToast(msg, kind, icon, prio, go) {
-  const p = notePrio(prio, kind);
-  let url = null; try { url = iconOf(icon); } catch (e) {}
-  if (NEWS.open && p > 0) { NEWS.lines.push({ msg, url, kind: kind || '', p }); return; }
-  notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p, at: Date.now() });
-  if (notes.log.length > 50) notes.log.length = 50;
+// The guide shows a step (75-onboard-ui), or the guide is still running at all (tips on, steps left).
+// (A step that pauses the game counts from the moment it is due, before the hint's next 250 ms draw.)
+const guideBusy = () => { try { if (soloGuideWants()) return true; const s = onboardStep(); return !!(s && onboardPaused(s)); } catch (e) { return false; } };
+const guideRuns = () => { try { return !!(S.onboard && S.onboard.tips && GUIDE_STEPS.some(s => !S.onboard.done[s.id])); } catch (e) { return false; } };
+const cardUp = () => !!document.querySelector('.gl-ov, .dd-fc-ov, .away-ov, .join-ov, #createScreen');
+// The pop budget (seconds of play): one per NOTICE_TUNE.gap, NOTICE_TUNE.perMin a minute.
+// A rule may ask for a longer quiet before it (`gap`: the stage captions).
+function popRoom(rule) {
+  const t = notes.clock, P = notes.pops;
+  while (P.length && t - P[0] >= 60) P.shift();
+  return !P.length || (t - P[P.length - 1] >= Math.max(NOTICE_TUNE.gap, (rule && rule.gap) || 0) && P.length < NOTICE_TUNE.perMin);
+}
+// Where a notice goes now: { rule, ch }, ch = card | pop | bell | log | none, or 'held' (a pop that cannot show now).
+function noticeDecide(msg, key, prio, kind, payload) {
+  const rule = noticeRule(msg, key), p = notePrio(prio, kind);
+  let ch = rule ? noticeChannel(rule, msg, payload, { guide: guideRuns() }) : p === 2 ? 'pop' : p === 1 ? 'bell' : 'log';
+  if (rule && rule.once === 'session' && ch !== 'none') { if (notes.once[rule.id]) ch = 'none'; else notes.once[rule.id] = 1; }
+  if (ch === 'pop' && !(rule && rule.reply) && (guideBusy() || cardUp() || !popRoom(rule))) ch = 'held';
+  return { rule, ch };
+}
+function noteStat(rule, ch, msg) {
+  notes.stats.push({ t: Math.round(notes.clock * 10) / 10, id: rule ? rule.id : '?', ch, g: guideBusy() ? 1 : 0, msg: String(msg).slice(0, 90) });
+  if (notes.stats.length > 400) notes.stats.shift();
+}
+// A line in the bell. ch 'bell' counts on the badge; 'log' and 'pop' lines are listed only. Unread lines of
+// one rule and channel merge into one (the rule's merge() words it; otherwise the newest line and a count).
+function noteLog(rule, msg, kind, url, ch) {
+  const id = rule ? rule.id : '', counted = ch === 'bell';
+  const e = id && ch !== 'pop' ? notes.log.find(n => n.rule === id && n.ch === ch && n.id > notes.seenSeq && n.msgs) : null;
+  if (e) {
+    e.msgs.push(msg); if (e.msgs.length > 30) e.msgs.shift();
+    e.n++; e.msg = rule.merge ? rule.merge(e.msgs) : msg; e.more = rule.merge ? 0 : e.n - 1;
+    e.url = url || e.url; e.at = Date.now(); e.id = ++notes.seq;
+    notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e);
+  } else {
+    notes.log.unshift({ id: ++notes.seq, msg, kind: kind || '', url, p: ch === 'pop' ? 2 : counted ? 1 : 0, at: Date.now(), rule: id, ch, n: 1, more: 0, msgs: [msg] });
+    if (notes.log.length > 50) notes.log.length = 50;
+    if (counted) notes.unread++;
+  }
+  bellUpdate(counted && !e);
+}
+// The one path for toasts: emit('toast', { msg, kind, icon, prio, go, key, ... }) (toast() in 00-util.js).
+// Returns the channel it took.
+// when: 'now' / 'late' (a waiting pop's turn came, or its wait ran out).
+function notify(n, when) {
+  const msg = n && n.msg;
+  if (!msg) return 'none';
+  const kind = n.kind;
+  let { rule, ch: ch0 } = when === 'now' ? { rule: noticeRule(msg, n.key), ch: 'pop' } : when === 'late' ? { rule: noticeRule(msg, n.key), ch: 'held' } : noticeDecide(msg, n.key, n.prio, kind, n);
+  if (ch0 === 'held' && !when && rule && rule.wait && notes.waiting.length < 4) { notes.waiting.push({ n, until: notes.clock + rule.wait }); return 'wait'; }
+  const ch = ch0 === 'held' ? (rule && rule.held) || 'bell' : ch0;
+  noteStat(rule, ch0 === 'held' ? 'held:' + ch : ch, msg);
+  if (ch === 'none' || ch === 'card') return ch;
+  let url = null; try { url = iconOf(n.icon); } catch (e) {}
+  if (NEWS.open && (ch === 'pop' || ch === 'bell')) { NEWS.lines.push({ msg, url, kind: kind || '', p: ch === 'pop' ? 2 : 1 }); return ch; }
+  if (ch !== 'pop') { noteLog(rule, msg, kind, url, ch); return ch; }
+  if (!(rule && rule.reply)) notes.pops.push(notes.clock);
+  noteLog(rule, msg, kind, url, 'pop');
+  popToast(msg, kind, url, Math.max(1, notePrio(n.prio, kind)), n.go);
+  return 'pop';
+}
+// Stage captions and cards ask here before they show. Returns 'pop' (show it now), 'card', 'wait'
+// (with opts.wait: a pop that cannot show yet; ask again), or the channel it went to instead.
+function noticeAsk(key, msg, opts) {
+  let { rule, ch } = noticeDecide(msg, key, 'normal', '', opts);
+  if (ch === 'pop' && notes.waiting.length) ch = 'held';   // a waiting toast goes first
+  if (ch === 'held' && opts && opts.wait) return 'wait';
+  const out = ch === 'held' ? (rule && rule.held) || 'bell' : ch;
+  noteStat(rule, ch === 'held' ? 'held:' + out : out, msg);
+  if (out === 'pop' && !(rule && rule.reply)) notes.pops.push(notes.clock);
+  if (out !== 'none') noteLog(rule, msg, '', null, out === 'card' ? 'pop' : out);
+  return out;
+}
+// A waiting caption whose moment passed goes where its rule holds it.
+function noticeDrop(key, msg) {
+  const rule = noticeRule(msg, key), out = (rule && rule.held) || 'bell';
+  noteStat(rule, 'held:' + out, msg);
+  if (out !== 'none') noteLog(rule, msg, '', null, out);
+  return out;
+}
+// Draw a pop. A repeat of a toast on screen adds "+1"; a full stack retires its oldest toast.
+function popToast(msg, kind, url, p, go) {
   const box = $('toasts');
   const live = [...box.children].filter(t => !t._gone);
   const same = live.find(t => t._msg === msg);
-  if (p === 0 || (same && p < 2)) {
-    // Repeats and routine notices never pop: they only count on the bell (and on a matching toast).
-    if (same) { same._more++; fillToast(same, msg, url); armToast(same); }
-    notes.unread++; bellUpdate(true); return;
-  }
+  if (same) { same._more++; fillToast(same, msg, url); armToast(same); return; }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
   const room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
-  if (live.length >= room) {
-    const normals = live.filter(t => t._p < 2);
-    if (p < 2) {
-      const into = normals[normals.length - 1];
-      notes.unread++; bellUpdate(true);
-      if (into) { into._more++; into._tap = go ? () => followGo(go) : null; into.className = 'toast ' + (kind || '') + (go ? ' has-go' : ''); fillToast(into, msg, url); armToast(into); }
-      return;
-    }
-    // high: make room by retiring the oldest normal toasts first, then the oldest high ones
-    const order = normals.concat(live.filter(t => t._p === 2));
-    for (let i = 0; i <= live.length - room; i++) { const out = order[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
-  }
+  for (let i = 0; i <= live.length - room; i++) { const out = live[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
   const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
   armToast(t);
 }
+function showToast(msg, kind, icon, prio, go) { return notify({ msg, kind, icon, prio, go }); }
 // UX-A (ux-overhaul.md 4.6): one target shape for toasts, Next Up and away lines. go is
 // { tab, view, sel, fn } (open that menu view, scroll to sel) or an activity target
 // { act: 'fight', zone } / { act: 'gather', node: { kind, t } | skill } / { act: 'raid' | 'deep' }
@@ -34213,14 +34462,14 @@ function followGo(go) {
 // Notices raised while the game loads (old-save catch-ups: achievements and Codex Light from past
 // deeds, retooled gear, the camp and its welcome) fold into ONE bell notice with a short list,
 // instead of a stack of toasts. The window closes after the first 2.5 s of play (the catch-ups run
-// on the first ticks; the Codex at 2 s). One notice alone pops as usual. Achievements join into
-// one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
-// the list), e.g. the camp welcome (55-welcome.js).
+// on the first ticks; the Codex at 2 s). One notice alone takes its own channel. emit('whatsNew',
+// { msg, icon, first }) adds a line at any time (first: at the top of the list), e.g. the camp welcome
+// (55-welcome.js). The one toast that says so is a pop like any other (W1-B: key 'news').
 const NEWS = { open: true, t: 0, lines: [], entry: null };
 // SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
 if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;
 function newsEntry(lines) {
-  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
+  const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null, unread = !!e && e.id > notes.seenSeq;
   if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
   else {
     const list = lines.filter(l => l.first).concat(lines.filter(l => !l.first));
@@ -34228,35 +34477,33 @@ function newsEntry(lines) {
     notes.log.unshift(NEWS.entry);
     if (notes.log.length > 50) notes.log.length = 50;
   }
-  notes.unread++; bellUpdate(true);
+  if (!unread) { notes.unread++; bellUpdate(true); }
   newsToast();
 }
 // One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
   if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
+  const msg = `What's new since your last visit. Tap to read.`, d = noticeDecide(msg, 'news');
+  noteStat(d.rule, d.ch === 'held' ? 'held:bell' : d.ch, msg);
+  if (d.ch !== 'pop') return;   // the bell line is there already
+  notes.pops.push(notes.clock);
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
   const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
   for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
-  const t = makeToast(`What's new since your last visit. Tap to read.`, 'good', NEWS.entry.url, 2);
+  const t = makeToast(msg, 'good', NEWS.entry.url, 2);
   t._news = true; t._tap = openNoticeLog;
   box.appendChild(t); armToast(t);
 }
 on('createDone', () => { if (NEWS.wait) newsToast(); });
 function newsFlush() {
   NEWS.open = false;
-  let lines = NEWS.lines; NEWS.lines = [];
+  const lines = NEWS.lines; NEWS.lines = [];
   // The lines now live in the bell: point them at the Journal directly.
   for (const l of lines) l.msg = l.msg.replace('Tap the bell, then Journal.', 'See the Journal.').replace('from the bell, then Journal.', 'from the Journal.');
-  const ach = lines.filter(l => /^Achievement: /.test(l.msg));
-  if (ach.length > 1) {
-    const names = ach.map(l => l.msg.slice(13).split('. ')[0]);
-    lines = lines.filter(l => !ach.includes(l));
-    lines.push({ msg: `${ach.length} achievements earned: ${names.join(', ')}. See the Journal.`, url: ach[0].url, kind: 'good', p: 1 });
-  }
   if (lines.length === 1 && !lines[0].first) { const l = lines[0]; showToast(l.msg, l.kind, l.url, l.p); return; }
   if (lines.length) newsEntry(lines);
 }
@@ -34293,7 +34540,8 @@ function openNoticeLog() {
       const ago = ms => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : Math.floor(s / 3600) + 'h'; };
       for (const n of notes.log) {
         const r = el('div', 'nlog-row ' + n.kind + (n.p === 2 ? ' hi' : n.p === 0 ? ' low' : '') + (n.id > seenBefore ? ' new' : ''));
-        r.append(n.url ? img(n.url) : el('span'), el('span', null, n.msg), el('span', 'ago', ago(now - n.at)));
+        const tx = el('span', null, n.msg); if (n.more) tx.append(el('span', 'more', ' +' + n.more));   // W1-B: merged lines
+        r.append(n.url ? img(n.url) : el('span'), tx, el('span', 'ago', ago(now - n.at)));
         if (n.list) {
           r.firstChild.nextSibling.textContent = "What's new";
           const ul = el('ul', 'nlog-news');
@@ -34876,7 +35124,7 @@ function registerTab({ id, label, icon, mount, update, hidden }) {
 }
 
 // ================= core event wiring =================
-on('toast', t => showToast(t.msg, t.kind, t.icon, t.prio, t.go));
+on('toast', t => notify(t));
 on('gear', () => updatePortrait());
 on('activity', () => ui(true));
 on('raidUnavailable', () => setTab('raid'));
@@ -38935,6 +39183,7 @@ let deedsUI = null;
     const isCh = q.kind === 'chapter', f = isCh ? null : FE[q.id], ch = isCh ? DEED_CHAPTERS.find(c => c.id === q.id) : null;
     if (!f && !ch) { nextCard(); return; }
     const lk = LK[f ? f.look : ch.look];
+    if (typeof noticeAsk === 'function') noticeAsk('card:feat', f ? `Feat: ${f.n}.` : `Chapter done: ${ch.n}.`);   // W1-B: the card is the one voice (bell list line)
     const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
     const card = el('div', 'dd-fc');
@@ -40049,6 +40298,7 @@ let deedsUI = null;
     if (ov || !queue.length) return;
     if (blocked()) { setTimeout(showNext, 600); return; }
     const e = queue.shift(), r = regionById(e.region) || REGIONS[0];
+    if (typeof noticeAsk === 'function') noticeAsk('card:lantern', e.head);   // W1-B: a card moment (23n-data-notices)
     lastFocus = document.activeElement;
     ov = el('div', 'gl-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'glHead');
@@ -43880,11 +44130,12 @@ function storeSalvageNote(preview, t) {
 //
 // On the stage (one caption at a time, in the stage's open sky; a tap dismisses it):
 //   - an arrival banner the first time the party fights in a place: the place name, one line
-//   - an elder line when a boss of a new type appears (intro) and on its first kill (fall)
+//   - an elder line when a boss of a new type appears (intro). W1-B: its fall line no longer shows.
 //   - a story chip when a beat plays: "New story: Wisps. Read" (tap opens the card; it waits in the
-//     Codex if it goes unread). A quiet beat (a save that got past it) shows its one-line note.
-// Captions wait while a menu covers the stage or a full-screen card is up; arrival and elder lines
-// that could not show within a few seconds are dropped (they belong to the moment), story chips wait.
+//     Codex if it goes unread). A quiet beat (a save that got past it) goes to the bell list only.
+// Captions wait while a menu covers the stage or a full-screen card is up, and ask the notice policy
+// (70-ui noticeAsk) before they show: arrival and elder lines that could not show in time go to the bell
+// (they belong to the moment), story chips wait.
 // Reduced motion: no slide or fade, the caption just appears and goes.
 // The beat card: a small bottom sheet (title, 2-5 sentences, lines from recruited companions).
 // The Codex home gets a "Story" row (storyUI.codexRow, read by 75-codex-ui): the story so far, and
@@ -43905,7 +44156,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   let cur = null, pumpT = 0;
   const stageBox = () => document.getElementById('stageBox');
   function push(item) {
-    item.at = Date.now();
+    item.at = playS();
     // one arrival at a time: a newer place replaces an older one still waiting
     if (item.kind === 'arrival') for (let i = queue.length - 1; i >= 0; i--) if (queue[i].kind === 'arrival') queue.splice(i, 1);
     // an elder's line jumps ahead of story chips (it belongs to the fight on screen)
@@ -43913,17 +44164,31 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     queue.push(item);
     pump();
   }
+  // W1-B: every caption asks the notice policy first (70-ui noticeAsk, 23n-data-notices): the place title
+  // and a new elder's line pop within the pop budget and never while the guide speaks; they wait for a quiet
+  // moment (the title while the hero stays in that zone, up to NOTICE_TUNE.arrivalWait s; an elder's line
+  // NOTICE_TUNE.elderWait s) and then go to the bell. An elder's fall line and a walked-past page never pop.
+  const capKey = q => q.kind === 'arrival' ? 'caption:arrival' : q.kind === 'beat' ? (q.quiet ? 'caption:beat-quiet' : 'caption:beat') : /fall/.test(q.kind) ? 'caption:fall' : 'caption:elder';
+  const capText = q => q.kind === 'beat' ? `New story: ${q.title}.` : `${q.head ? q.head + ': ' : ''}${q.line}`;
+  const playS = () => (typeof notes === 'object' ? notes.clock : Date.now() / 1000);   // seconds of play (70-ui): a paused game waits too
+  const ask = (q, wait) => (typeof noticeAsk === 'function' ? noticeAsk(capKey(q), capText(q), { wait }) : 'pop');
   function pump() {
     clearTimeout(pumpT);
     if (cur || !queue.length) return;
-    const now = Date.now();
+    const now = playS();
     for (let i = queue.length - 1; i >= 0; i--) {
-      const q = queue[i];
-      if (q.kind !== 'beat' && (now - q.at > 12000 || (q.zone && q.zone !== S.zone))) queue.splice(i, 1);   // the moment has passed
+      const q = queue[i], wait = q.kind === 'arrival' ? NOTICE_TUNE.arrivalWait : NOTICE_TUNE.elderWait;
+      if (q.kind !== 'beat' && (now - q.at > wait || (q.zone && q.zone !== S.zone))) {   // the moment has passed
+        queue.splice(i, 1);
+        if (typeof noticeDrop === 'function' && !/fall/.test(q.kind)) noticeDrop(capKey(q), capText(q));
+      }
     }
     if (!queue.length) return;
     if (covered() || !stageBox()) { pumpT = setTimeout(pump, 500); return; }
-    show(queue.shift());
+    const r = ask(queue[0], true);
+    if (r === 'wait') { pumpT = setTimeout(pump, 1000); return; }
+    const q = queue.shift();
+    if (r === 'pop') show(q); else pump();
   }
   function hide(node, instant) {
     if (!node || node._gone) return;

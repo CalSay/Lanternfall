@@ -312,19 +312,20 @@ let deeds, deedBonus, wearGet;
   let pend = null;          // toasts gathered during one pass (folded at its end)
   let lastTierAt = -1e15;   // time (ms) of the last live tier: the near-miss goal hides a while (wall time, so a closed game counts)
   let clock = 0;            // seconds of ticks since load (runtime only)
-  const toastQ = (msg, prio, icon) => { if (pend) pend.push({ msg, prio, icon }); };
-  const PRIO = { low: 0, normal: 1, high: 2 };
+  const toastQ = (msg, prio, icon, key, extra) => { if (pend) pend.push(Object.assign({ msg, prio, icon, key }, extra)); };
   function flushToasts() {
     const p = pend; pend = null;
     if (!p || !p.length) return;
     // Tiers fold: "Slayer III and 2 more"; the rest (groups, Feats, milestones) each have their own line.
     const tiers = p.filter(x => x.tier), rest = p.filter(x => !x.tier);
+    // W1-B: one voice for achievements. The channel comes from the best tier in the pass (23n-data-notices
+    // 'deed-tier': Bronze and Silver go to the bell list, Gold to the bell, Everflame pops).
     if (tiers.length) {
-      tiers.sort((a, b) => PRIO[b.prio] - PRIO[a.prio]);
+      tiers.sort((a, b) => b.k - a.k);
       const top = tiers[0], more = tiers.length - 1;
-      toast(more ? `${top.short} and ${more} more.` : top.msg, 'good', top.icon, top.prio);
+      emit('toast', { key: 'deed-tier', msg: more ? `${top.short} and ${more} more.` : top.msg, kind: 'good', icon: top.icon, prio: top.prio, tier: top.k });
     }
-    for (const x of rest) toast(x.msg, 'good', x.icon, x.prio);
+    for (const x of rest) emit('toast', { key: x.key || 'deed-points', msg: x.msg, kind: 'good', icon: x.icon, prio: x.prio, lv: x.lv });
   }
   function grantTier(t, k, quiet) {
     const d = DS(), from = num(d.tier[t.id]);
@@ -339,7 +340,7 @@ let deeds, deedBonus, wearGet;
       const g = GR[t.g], col = DEED_TIERS[Math.min(4, k) - 1].col;
       const bt = bonusTxt(t, Math.min(4, k)), lab = tierLabel(t.id, k);
       const msg = k <= 4 ? `${lab} (${tierName(k)}).${bt && k >= 3 && from < k ? ' ' + bt + '.' : ''}` : `${t.n}: ${tierName(k)}.`;
-      pend.push({ tier: true, msg, short: lab, prio: k === 1 ? 'low' : k <= 3 ? 'normal' : 'high', icon: { ic: [g ? g.ic[0] : 'banner', col] } });
+      pend.push({ tier: true, k, msg, short: lab, prio: k === 1 ? 'low' : k <= 3 ? 'normal' : 'high', icon: { ic: [g ? g.ic[0] : 'banner', col] } });
     }
     emit('deedTier', { id: t.id, tier: k, quiet: !!quiet });
     return k - from;
@@ -357,7 +358,7 @@ let deeds, deedBonus, wearGet;
       dirtyPts();
       if (!quiet) {
         const look = lv >= 2 && g.look ? LK[g.look] : null;
-        toastQ(`${g.n}: every track at ${lv >= 2 ? 'Everflame' : 'Gold'}. New title: ${lv >= 2 ? g.ever : g.gold}.${look ? ' New look: ' + look.n + '.' : ''}`, 'high', { ic: [g.ic[0], lv >= 2 ? DEED_TIERS[3].col : DEED_TIERS[2].col] });
+        toastQ(`${g.n}: every track at ${lv >= 2 ? 'Everflame' : 'Gold'}. New title: ${lv >= 2 ? g.ever : g.gold}.${look ? ' New look: ' + look.n + '.' : ''}`, 'high', { ic: [g.ic[0], lv >= 2 ? DEED_TIERS[3].col : DEED_TIERS[2].col] }, 'deed-group', { lv });
       }
       emit('deedGroup', { id: g.id, lv, quiet: !!quiet });
     }
@@ -408,7 +409,7 @@ let deeds, deedBonus, wearGet;
   function grantFeat(f, quiet) {
     const d = DS(); if (d.feat[f.id]) return false;
     d.feat[f.id] = 1; d.at[f.id] = now(); dirtyPts();
-    if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }); }
+    if (!quiet && T.featToast) { const l = LK[f.look]; toastQ(`Feat: ${f.n}. New title: ${f.title}.${l ? ' New look: ' + l.n + '.' : ''}`, 'high', { ic: ['banner', '#F2C14E'] }, 'deed-feat'); }
     emit('deedFeat', { id: f.id, quiet: !!quiet });
     if (typeof codexRefresh === 'function' && d.init) safe(() => codexRefresh(true, !!quiet), 0);
     return true;
@@ -449,7 +450,7 @@ let deeds, deedBonus, wearGet;
         if (m.title) bits.push(`title ${m.title}`);
         if (m.look && LK[m.look]) bits.push(LK[m.look].n);
         if (m.wall) bits.push(m.wall === 1 ? 'the Trophy Wall opens at camp' : 'the Trophy Wall grows');
-        toastQ(`${m.at.toLocaleString('en-US')} achievement points: ${bits.join(', ')}.`, 'normal', { ic: ['banner', '#F2C14E'] });
+        toastQ(`${m.at.toLocaleString('en-US')} achievement points: ${bits.join(', ')}.`, 'normal', { ic: ['banner', '#F2C14E'] }, 'deed-points');
       }
       emit('deedMilestone', { at: m.at });
     }
