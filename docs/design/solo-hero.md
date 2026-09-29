@@ -14,7 +14,8 @@ Replaces the party. Owner's reasons: party combat was cluttered on screen, hard 
   - Shown as an **action bar below the stage** (owner, 2026-09-29), like the League of Legends ability bar:
     square framed slots with a pixel icon each, in two rows under the stage: the bottom row is Parry, Dodge,
     Attack (left to right); the top row is Ability 1, 2, 3. The player chooses which unlocked abilities go in
-    the three slots (tap a slot to pick). The ability slots carry art for their ability; the basic three are plainer. Cooldown shown as a dark sweep with the
+    the three slots (tap a slot to pick). The bar sits as low as possible on a phone, just above the bottom tabs, for
+    thumb comfort; Attack is bottom-right because it is the easiest reach. The ability slots carry art for their ability; the basic three are plainer. Cooldown shown as a dark sweep with the
     seconds left. Parry and Dodge glow when a heavy hit is coming. Keyboard labels on desktop.
   - Parry: harder to time. On a success the enemy is staggered at once, your counter attack lands during the stagger, and the enemy recovers when the counter ends.
   - Heavy, telegraphed attacks that need Dodge or Parry come mainly from bosses and elites (owner, 2026-09-29).
