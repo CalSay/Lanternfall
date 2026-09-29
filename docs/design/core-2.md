@@ -169,7 +169,7 @@ Accessibility rules (A11Y, S1):
 |---|---|---|---|---|
 | Warrior | `phys` | **Reaver** | `fire` (embers on cleaves) | Bleed |
 | | | **Warden** | `holy` (procs on blocks and counters) | Taunt, Guard |
-| Ranger | `phys` | **Adder** | `poison` | Venom |
+| Ranger | `phys` | **Venomstalker** | `poison` | Venom |
 | | | **Trapper** | `frost` + `poison` (traps) | Mark, Root, Chill |
 | Lanternmage | `frost` | **Warlock** | `fire` | Burn, Curse |
 | | | **Lightkeeper** | `holy` | Shield, Regen, Cleanse |
@@ -424,7 +424,7 @@ Presets (ids): `boss`, `farm`, `deepwell`.
 | Weight id | Classes | Main family (about 70%) | Second family (about 30%) | Base lines lean to |
 |---|---|---|---|---|
 | `heavy` | Warrior, Reaver, Warden | metal | leather | armour, HP, block, threat |
-| `medium` | Ranger, Adder, Trapper | wood | leather | attack speed, crit, some armour |
+| `medium` | Ranger, Venomstalker, Trapper | wood | leather | attack speed, crit, some armour |
 | `light` | Lanternmage, Warlock, Lightkeeper | cloth | wood | ability power, healing, ward |
 
 - The Lanternbearer wears **its own weight** in the armour positions (`helm`, `body`, `off`). Weapons are
@@ -621,7 +621,7 @@ Existing ids stay (`heavy`, `dive`, `heal`). New ones:
 - Elites roll **1 trait** in Regions 2-3 and **2 traits** from Region 4. Two traits never share a counter.
   Region 1 elites keep today's rules (stronger, no trait).
 - Every damage type counters at least one trait, and so does every evolution: Reaver and Warrior
-  (Shielded), Warden (Cursed), Adder (Leeching), Trapper (Enraged, Summoner), Warlock (Ice-Clad,
+  (Shielded), Warden (Cursed), Venomstalker (Leeching), Trapper (Enraged, Summoner), Warlock (Ice-Clad,
   Leeching), Lightkeeper (Cursed).
 - Champions stay as today (a named strongest-of-kind, Trophies).
 
@@ -680,7 +680,7 @@ A boss beaten with **3 or more** parries, dodges or interrupts drops **+1 signat
 
 - **The Lanternbearer**, capital L, with "the". Never "the hero" or "the player" in copy. **Heroes** are the
   recruits (lower case).
-- **Classes and evolutions** are capitalised: Warrior, Ranger, Lanternmage; Reaver, Warden, Adder, Trapper,
+- **Classes and evolutions** are capitalised: Warrior, Ranger, Lanternmage; Reaver, Warden, Venomstalker, Trapper,
   Warlock, Lightkeeper. "Evolve into a Lightkeeper", "your Warlock".
 - The old class names become lore words for the callings: Wardens hold, Rangers walk, **Lanternmages**
   burn, **Lightkeepers** keep. They are not class names any more (CHAR1 and LORE rework the lines).

@@ -489,3 +489,10 @@ Frost Sigil / Gloam Sigil families and the Loaded Die relic (MAT1/ECON-A, not bu
 ladder (MAT1, not built). `grep`s for `Vampiric`, `Frozen-armour`, `Priest`, `Venomstalker`, `'Mage'`, and
 the Sunken Coast's Region 4/5 unique item strings all came back empty in `src/js` — confirmed nothing
 there needs touching yet.
+
+## Coordinator override (2026-09-29)
+
+Owner-chosen names are never replaced by a naming pass. Restored: the evolution **Venomstalker** (not
+Adder), and the class titles **the Unmoved**, **the Pathfinder** and **the Shadowbinder** (not Holdfast,
+Waylayer, Firethief). The owner named Reaver, Venomstalker and Trapper, approved the class titles, and chose
+Shadowbinder personally.

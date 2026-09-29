@@ -138,7 +138,7 @@ Five types:
 |---|---|---|---|
 | **Physical** | the base | armoured foes | – |
 | **Holy** | Lightkeeper, Warden procs | the Coast's drowned | undead (Bonefield, the Barrow) |
-| **Poison** | Adder, Trapper traps | undead and constructs | beasts |
+| **Poison** | Venomstalker, Trapper traps | undead and constructs | beasts |
 | **Fire** | Warlock, Reaver's embers | the Emberwaste | marsh and plant foes |
 | **Frost** | Lanternmage base, Trapper | – | fire foes |
 

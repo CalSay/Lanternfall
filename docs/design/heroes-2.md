@@ -282,7 +282,7 @@ follows four rules so it fits every class and evolution without 32 x 6 special c
 
    | Hero feeds | Good with |
    |---|---|
-   | Blight (Venom or Burn) | Adder, Warlock, Reaver, Trapper |
+   | Blight (Venom or Burn) | Venomstalker, Warlock, Reaver, Trapper |
    | Shatter (Chill, stun or heavy) | Reaver, Warden, Trapper |
    | Judgement (Mark or holy) | Warden, Lightkeeper, Trapper |
    | none (Tobin: he holds) | every class; the card says "Good with anyone who needs a shield" |

@@ -109,7 +109,7 @@ wisps). This makes area damage (Warlock, Trapper, Reaver cleaves, burns and spre
 | Base | Damage evolution | Utility evolution |
 |---|---|---|
 | Warrior | **Reaver**: Bloodlust (hits build fury, lower HP hits harder); *Rend* causes bleeds | **Warden**: Bulwark (blocked hits store a counter); *Stand Fast* taunts and returns the stored hits |
-| Ranger | **Adder** (damage over time): ramping venom stacks; *Deathcap* bursts them | **Trapper**: traps ahead of packs, marks that make everyone hit harder; *Snare Field* roots a pack |
+| Ranger | **Venomstalker** (damage over time): ramping venom stacks; *Deathcap* bursts them | **Trapper**: traps ahead of packs, marks that make everyone hit harder; *Snare Field* roots a pack |
 | Lanternmage | **Warlock**: spreading curses and dark fire (turning the dark's power on itself); *Witchfire* detonates the curses | **Lightkeeper**: holy heals that overflow into shields and smite undead; *Sanctuary* |
 
 **3.3 Evolution rules:**

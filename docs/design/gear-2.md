@@ -290,7 +290,7 @@ The kinds already in `CRAFT_KINDS` fit the three weights, so **no kind id change
 | Hero trinket (`trk`) | - | - | - | Trinket |
 
 - **Who wears what** (core-2 5.1): the Lanternbearer wears its class's weight in weapon, off-hand, head and
-  body, whatever its evolution. Warrior, Reaver, Warden: heavy. Ranger, Adder, Trapper: medium.
+  body, whatever its evolution. Warrior, Reaver, Warden: heavy. Ranger, Venomstalker, Trapper: medium.
   Lanternmage, Warlock, Lightkeeper: light. Heroes wear by role in their two positions: tank heavy, striker medium,
   caster and support light.
 - **Light kinds for any Lanternmage** (classes-2.md 7.2, C5): Staff, Lantern, Circlet and Robe (today's
@@ -307,7 +307,7 @@ The kinds already in `CRAFT_KINDS` fit the three weights, so **no kind id change
 ### 2.2 Line sets: one weight, two roles
 
 Each weight is worn by two evolution roles (classes-2.md 0): heavy by tanks (Warrior, Warden) and a
-striker (Reaver); medium by strikers (Ranger, Adder) and a caster (Trapper); light by casters (Lanternmage,
+striker (Reaver); medium by strikers (Ranger, Venomstalker) and a caster (Trapper); light by casters (Lanternmage,
 Warlock) and a support (Lightkeeper). So a Gear 2.0 craft asks one question at the bench: **"Lines for"**, with
 the weight's two roles. The default is the Lanternbearer's role now (`lbRole()`); hero kinds default to
 their role. The choice is stored on the item (`ls`) and Reforge keeps using it.
@@ -315,14 +315,14 @@ their role. The choice is stored on the item (`ls`) and Reforge keeps using it.
 | Line set | Affix pool (rolled lines, all different) | Who it serves |
 |---|---|---|
 | `tank` | armour, block, threat, one resist (holy, poison, fire or frost), stagger | Warrior, Warden, tank heroes |
-| `striker` | attack, crit (with crit damage), pierce, attack speed, the wearer's type power | Reaver, Ranger, Adder, striker heroes |
+| `striker` | attack, crit (with crit damage), pierce, attack speed, the wearer's type power | Reaver, Ranger, Venomstalker, striker heroes |
 | `caster` | ability power, area, control, status power, the wearer's type power | Lanternmage, Warlock, Trapper, caster heroes |
 | `support` | healing, ward, haste, holy power | Lightkeeper, support heroes |
 | any | max HP | everyone |
 
 - **Type power** is fixed when the line rolls and stored as its stat id (`['pwFire', 0.62]`), so a class
   change never moves it: the Lanternbearer's current type (base or the evolution's added type: Reaver fire,
-  Warden holy, Adder poison, Trapper frost or poison, Warlock fire, Lightkeeper holy); for hero kinds, a
+  Warden holy, Venomstalker poison, Trapper frost or poison, Warlock fire, Lightkeeper holy); for hero kinds, a
   type picked at the bench from the types of heroes of that role (classes-2.md 5.1).
 - This answers C5 in the pool itself: Lightkeeper pieces lean to healing, ward and holy power; Warlock pieces to
   ability power, status power, fire power and area.

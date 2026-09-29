@@ -23,7 +23,7 @@ How this file relates to core-2:
 Owner rules this spec obeys (plan-4 2.9, 3.1-3.6):
 
 1. **Three base classes by armour weight**: Warrior (heavy), Ranger (medium), Lanternmage (light).
-2. **Two first evolutions each, one damage and one utility**, owner-named: Reaver / Warden, Adder /
+2. **Two first evolutions each, one damage and one utility**, owner-named: Reaver / Warden, Venomstalker /
    Trapper, Warlock / Lightkeeper. Each one feels special, is clearly stronger than its base (about +35%), and
    changes how the game plays, idle and active.
 3. **Utility paths lift the party's progress**, not just its survival. A tank or support is never the
@@ -38,7 +38,7 @@ Design rules of this spec:
 
 1. **One verb per class, one twist per evolution.** The Warrior hits heavy, the Ranger marks, the Lanternmage
    burns. Each evolution bends that verb: the Reaver's heavy hits build Fury, the Warden's blocks store
-   light; the Adder's marks carry Venom, the Trapper's are laid on the ground; the Warlock's Embers
+   light; the Venomstalker's marks carry Venom, the Trapper's are laid on the ground; the Warlock's Embers
    curse, the Lightkeeper's taps bless.
 2. **Idle is a real way to play every kit.** Every mechanic runs on auto-taps and auto-cast. Active play
    wins through timing (Stagger, reaction windows, interrupts, parries), never through a penalty on idle.
@@ -59,9 +59,9 @@ Design rules of this spec:
 | Tap (verb) | **Heavy hit** (Grit) | **Focus** (Mark) | **Ember** (Embers) |
 | `ab1` | Shield Wall | Volley | Lantern Flare |
 | Finisher | Hammerfall | Kill Shot | Lanternburst |
-| Damage evolution | **Reaver**: Fury, Bleed, embers; *Rend* | **Adder**: Venom ramp; *Deathcap* | **Warlock**: Curse, dark fire; *Witchfire* |
+| Damage evolution | **Reaver**: Fury, Bleed, embers; *Rend* | **Venomstalker**: Venom ramp; *Deathcap* | **Warlock**: Curse, dark fire; *Witchfire* |
 | Utility evolution | **Warden**: Bulwark, holy sparks; *Stand Fast* | **Trapper**: traps, Mark, Root, Chill; *Snare Field* | **Lightkeeper**: Given Light, Blessing; *Sanctuary* |
-| Evolution role | Reaver: striker (Front); Warden: tank | Adder: striker; Trapper: caster (Middle) | Warlock: caster; Lightkeeper: support |
+| Evolution role | Reaver: striker (Front); Warden: tank | Venomstalker: striker; Trapper: caster (Middle) | Warlock: caster; Lightkeeper: support |
 
 The evolution role is what the formation layer reads (combos, slot jobs, the planner, `heroFloor`). The
 weight and home slot never change with an evolution.
@@ -253,14 +253,14 @@ On choosing an evolution the Lanternbearer gets, at once:
 
 **What it keeps.** An evolution keeps everything of its base class that its section does not say it
 *replaces*: the tap (unless a `var` changes it), `ab1`, the base core mechanic, the base passives and the
-base class aura. Its **Stats** line always replaces the base stats. So an Adder still has Keen Eye and Hunters' Company, a Warden still has Grit and
+base class aura. Its **Stats** line always replaces the base stats. So an Venomstalker still has Keen Eye and Hunters' Company, a Warden still has Grit and
 Shieldmates, a Warlock still plants Embers and has Kindred Sparks. What each evolution replaces:
 
 | Evolution | Replaces |
 |---|---|
 | Reaver | Grit (by Fury), the Warrior's stats, Hammerfall |
 | Warden | the Warrior's stats, Hammerfall |
-| Adder | Kill Shot |
+| Venomstalker | Kill Shot |
 | Trapper | the Focus Mark value (30%, not 25%), Kill Shot |
 | Warlock | Lanternburst; Lantern Flare gains a Curse (`var`) |
 | Lightkeeper | the Ember tap (by Blessing), Lantern Flare (by Rally Hymn, `var`), Embers, Lanternburst |
@@ -287,7 +287,7 @@ because it is only part of the party:
 |---|---|---|---|---|---|
 | Reaver | about x2.6 | x1.35 | x1.00 | 1.35 | role floor tank -> striker (`heroFloor.reaver`), C x1.10, T Fury up to +20%, `ab2` Rend + Bleed + Cinder Edge |
 | Warden | about x1.2 | x1.12 | x1.22 | 1.37 | C: HP x1.25, armour, block; T: Stand Fast Empower; stagger aura (more Stagger uptime, x1.5); Holy Sparks |
-| Adder | about x1.65 | x1.33 | x1.00 | 1.33 | C x1.10 and status x1.25, Venom ramp (status damage), `ab2` Bloom, Patient Hunter |
+| Venomstalker | about x1.65 | x1.33 | x1.00 | 1.33 | C x1.10 and status x1.25, Venom ramp (status damage), `ab2` Bloom, Patient Hunter |
 | Trapper | about x1.1 | x1.18 | x1.15 | 1.36 | target side: pack Mark (vuln), Focus Mark 30%; Chill and Root (hold); traps; reactions it enables |
 | Warlock | about x1.8 (packs) | x1.35 | x0.98 | 1.32 | C x1.10 and `area` +20%, Curse (stores 20%, detonates), `ab2` Witchfire, Held Light charge |
 | Lightkeeper | about x0.5 (gives it away) | x1.20 | x1.15 | 1.38 | Given Light (moves own damage to heroes), Keeper's Light (Y), T Blessing and Rally Hymn, Sanctuary, heal and ward (hold) |
@@ -301,7 +301,7 @@ heroFloor = { warrior: 1.0, ranger: 0.7, mage: 1.0,
 ROLE_D    = { tank: 0.5, striker: 1.82, caster: 1.0 (x1.45 on packs), support: 0 }   (formation 4.2, unchanged)
 ```
 
-The Reaver's floor is lower than the Adder's because it moves from the tank's 0.5 to the striker's
+The Reaver's floor is lower than the Venomstalker's because it moves from the tank's 0.5 to the striker's
 1.82 (x3.6) and keeps a tank's HP; 0.62 x 1.82 = 1.13 per power is about x2.3 its Warrior floor before
 the kit.
 
@@ -397,7 +397,7 @@ set into the boss of the shield and burns white-gold (holy).
 **Choice card:** "Nothing gets past. Nothing." - Blocked hits are stored as light. - Stand Fast pulls every
 foe onto you and gives the light back. - Your party staggers bosses faster.
 
-**Title:** the Holdfast. **Role:** tank (Hold the Line in Front). **Type:** physical, adds holy (procs on
+**Title:** the Unmoved. **Role:** tank (Hold the Line in Front). **Type:** physical, adds holy (procs on
 blocks and counters).
 
 **Stats** (replace the Warrior's): HP scale 15, armour 45, **block 25%**, threat x8, full `tankDr`.
@@ -470,7 +470,7 @@ Warden's Mail (C, HP x1.25), armour 45 and block 25% (C), Oath of the Order (Y: 
 x0.9, stagger +30%, worth about x1.05 party damage through more x1.5 windows), Stand Fast's Empower (T,
 15% for 6 s in 18: about x1.05), Holy Sparks and Stand Fast's holy damage (about x1.02).
 
-### 2.5 Adder (Ranger, damage over time)
+### 2.5 Venomstalker (Ranger, damage over time)
 
 **Fantasy.** The Ranger who learned from the Spore Garden what the dark learned first: a slow poison
 beats a fast blade. They walk the dark stretches with a shaded lamp, a green glass hood over it, and
@@ -481,7 +481,7 @@ spreads it. - Best with a fire hero (Blight).
 
 **Title:** the Quiet Thorn. **Role:** striker (Middle). **Type:** physical, adds poison.
 
-**Stats:** HP scale 6, armour 10, crit 15%. **Evolution line (C): "Adder's Craft: 10% more damage,
+**Stats:** HP scale 6, armour 10, crit 15%. **Evolution line (C): "Venomstalker's Craft: 10% more damage,
 25% more status damage."** (The status part multiplies Venom ticks and Blight's extra ticks.)
 
 **Core mechanic: Venom ramp.**
@@ -518,16 +518,16 @@ bucket C, conditional on the target).
   swings, so crits matter less and `stPow`, `pwPoison` and Blight matter more.
 
 **Party role and heroes.**
-- Default trio: **tank (F), Adder (M), a Burn caster (B)**: Pip or Morwen for Blight.
+- Default trio: **tank (F), Venomstalker (M), a Burn caster (B)**: Pip or Morwen for Blight.
 - Shines with: **Pip, Morwen, Caedmon** (Burn: Blight makes every Burn tick also tick all 10 Venom
   stacks, the strongest damage-over-time in the game), **Isolde, Corvin** (more Venom, anti-heal), **Maren**
   (a holy tank: the Ranger's Mark + her holy = Judgement).
-- Bonds: Two Bows (Wren) and Asked (Corvin) with Adder lines; new **Same Poison** (Isolde).
+- Bonds: Two Bows (Wren) and Asked (Corvin) with Venomstalker lines; new **Same Poison** (Isolde).
 
 **Reactions it drives.** **Blight** (it is the Blight engine). **Elite traits it beats:** Leeching
 (Venom 5+ halves healing), and it strips healers (Marsh Wraiths, the Brine Witch).
 
-**Weak spot.** Undead, plants and constructs resist poison (core-2 2.3): Region 1 is the Adder's
+**Weak spot.** Undead, plants and constructs resist poison (core-2 2.3): Region 1 is the Venomstalker's
 worst region, and it starts after it. The swings stay physical, so a resisted Venom costs about 15%
 overall, not 40%. Beasts (the Coast's gulls, bats) are weak to poison.
 
@@ -538,7 +538,7 @@ Venomed foes show the drop badge with a digit (core-2 2.1). Silhouette: low, hoo
 **Passives.** Patient Hunter (above). Kept from the Ranger: Keen Eye, Light Feet, Hunters' Company.
 
 **Power spike split** (2.2): own damage about x1.65, party damage x1.33, hold x1.00, effective 1.33.
-From: Adder's Craft (C x1.10 on everything, x1.25 on status damage), the Venom ramp and Seep
+From: Venomstalker's Craft (C x1.10 on everything, x1.25 on status damage), the Venom ramp and Seep
 (status damage, about 30% of its own damage at 10 stacks), Patient Hunter (C, up to x1.20 on a 10-stack
 foe), Deathcap (`ab2`), and the role floor (`heroFloor.venomstalker` 0.75 vs 0.7).
 
@@ -551,7 +551,7 @@ lamps in the ground ahead of the party, and every lamp hides a snare. "Hold the 
 **Choice card:** "The road fights for you." - Traps wait at the front of every pack. - Snare Field roots
 and marks the whole pack. - Best with heavy hitters and fire.
 
-**Title:** the Waylayer. **Role:** caster in the Middle (the Focus slot job: ability +damage; combos
+**Title:** the Pathfinder. **Role:** caster in the Middle (the Focus slot job: ability +damage; combos
 like Kill Box read it as a caster). **Types:** physical, adds frost and poison (traps).
 
 **Stats:** HP scale 7, armour 15, crit 15%. **Evolution line (C): "Trapper's Kit: 30% more control."**
@@ -629,7 +629,7 @@ dark's held fire and turn it on the things that hold it. The Order would have ha
 **Choice card:** "Take the dark's fire. Throw it back." - Your Embers curse what they touch. - Witchfire
 sets off every curse at once. - Best with a tank and big hitters.
 
-**Title:** the Firethief. **Role:** caster (Back). **Type:** fire ("dark fire": still the `fire` type,
+**Title:** the Shadowbinder. **Role:** caster (Back). **Type:** fire ("dark fire": still the `fire` type,
 with one rule of its own, Dark Turned).
 
 **Stats:** HP scale 4, `area` +20% (splash 35%), ward 10%. **Evolution line (C): "Warlock's Pact: 10% more
@@ -805,7 +805,7 @@ x1.20. Hold: Lightkeeper's Vows (C, heal x1.3), Sanctuary's Regen and overflow s
 
 ### 2.9 The six at a glance
 
-| | Reaver | Warden | Adder | Trapper | Warlock | Lightkeeper |
+| | Reaver | Warden | Venomstalker | Trapper | Warlock | Lightkeeper |
 |---|---|---|---|---|---|---|
 | Meter | Fury 0-100 | Bulwark 0-10 (+ Grit) | Venom on foes | trap charges 2 | Embers, Curses | Blessing I-III |
 | `ab2` (cd) | Rend (14) | Stand Fast (18) | Deathcap (16) | Snare Field (20) | Witchfire (15) | Sanctuary (20) |
@@ -815,9 +815,9 @@ x1.20. Hold: Lightkeeper's Vows (C, heal x1.3), Sanctuary's Regen and overflow s
 | Idle strength | good | very good | best | very good | good | very good |
 | Best active moment | Rend + Red Harvest in Stagger | Stand Fast on the signature cast | Bloom at 10 in Blight | Snare Field on a full pack | Nova on a full Curse; Unmaking | Sanctuary before the `line` hit |
 | Lamp colour | red-orange | white-gold in the shield | green under glass | small staked lamps | deep red, caged shard | open white-gold |
-| Title | the Red Lamp | the Holdfast | the Quiet Thorn | the Waylayer | the Firethief | the Given Light |
+| Title | the Red Lamp | the Unmoved | the Quiet Thorn | the Pathfinder | the Shadowbinder | the Given Light |
 
-Every core-2 6.5 counter is met: Reaver and Warrior (Shielded), Warden (Cursed), Adder (Leeching),
+Every core-2 6.5 counter is met: Reaver and Warrior (Shielded), Warden (Cursed), Venomstalker (Leeching),
 Trapper (Enraged, Summoner), Warlock (Ice-Clad, Leeching), Lightkeeper (Cursed).
 
 ### 2.10 Room for the second tier (after 1.0)
@@ -833,7 +833,7 @@ Nothing in 1.0 fills it, but every piece has a place (core-2 8.3):
 - **Class card:** a locked tier-2 row under the evolution ("A second path opens in a later season").
 - **Respec:** the Mirror's cost table has a `t2` row that resets tier 2 only (3.4).
 - **Rule for the kits above:** no evolution uses up its whole design space. Each has one open direction
-  its tier 2 can take (Reaver: fire or blood; Warden: holy wrath or pure wall; Adder: spores or
+  its tier 2 can take (Reaver: fire or blood; Warden: holy wrath or pure wall; Venomstalker: spores or
   single-target assassin; Trapper: frost or beasts; Warlock: curses or dark fire; Lightkeeper: healing or
   smiting). These are notes for later, not promises in copy.
 
@@ -984,7 +984,7 @@ Conditions and actions every class has from the start: `always`, `bossHp`, `self
 | Lanternmage | `packSize` | - | IF `packSize 5` THEN `use ab1` |
 | Reaver | `staggerNear`, `meter` | - | IF `staggerFull` THEN `use ab2` |
 | Warden | `castBar`, `allyHp` | `taunt`, `interrupt` | IF `castBar sig` THEN `use ab2` |
-| Adder | `stacks` | - | IF `stacks venom 10` THEN `use ab2` (else `hold ab2`) |
+| Venomstalker | `stacks` | - | IF `stacks venom 10` THEN `use ab2` (else `hold ab2`) |
 | Trapper | `elite`, `packSize` | `moveTo` | IF `elite summoner` THEN `use ab2` |
 | Warlock | `foeHas`, `meter` | - | IF `meter curse 80` (the focus foe's Curse is 80% full) THEN `use ab2` |
 | Lightkeeper | `allyHas`, `allyHp` | `cleanse` | IF `allyHas curse` THEN `cleanse` |
@@ -1027,7 +1027,7 @@ the Fenmother are proven at once ("Your road so far is your Proving."). Decision
 | Map | Arm 1 (leans) | Arm 2 (leans) | Arm 3 (neutral) | Crown | Built from |
 |---|---|---|---|---|---|
 | **Warrior** "Warrior's Oath" | **Vanguard** (Reaver): taps, damage, crit damage; keystones Crushing Blow (notable), **Challenger** | **Bulwark** (Warden): Grit (was guard), Shield Wall; keystone **Unbroken** | **Oath**: heroes, gold; keystone **Oathsworn** | **Lantern Bastion** | today's Warden map, same positions and ids |
-| **Ranger** "Keen Eye" | **Deadeye** (Adder): crits, Hawk Eye; keystone **Deadeye** | **Hunt** (Trapper): Mark time and value; keystone **Pack Leader** | **Volley**: Volley, haste; keystone **Quickdraw** | **Rain of Arrows** | today's Ranger map, same ids; Mark texts become "Marked foes take +3% more" (vuln, inside +60%) |
+| **Ranger** "Keen Eye" | **Deadeye** (Venomstalker): crits, Hawk Eye; keystone **Deadeye** | **Hunt** (Trapper): Mark time and value; keystone **Pack Leader** | **Volley**: Volley, haste; keystone **Quickdraw** | **Rain of Arrows** | today's Ranger map, same ids; Mark texts become "Marked foes take +3% more" (vuln, inside +60%) |
 | **Lanternmage** "First Spark" | **Kindle** (Warlock): Embers, Burn; keystone **Wildfire** | **Flare**: Flare, auto-cast; keystone **Kindling Storm** | **Glass**: crits, splash; keystone **Glass Lantern** | **Everburn** | today's Lanternmage map, same ids; Slow Burn and Everburn become real Burn (core-2 status) |
 
 The Lightkeeper lean lives in the Lightkeeper ring (it is where the Lightkeeper's stars go). Today's Lightkeeper map
@@ -1045,7 +1045,7 @@ points). Needs: 2 lit stars in the ring before a notable, 5 before the keystone.
 |---|---|---|
 | Reaver | **Bloodrage** (`bloodrage`) | Fury never drains below 50 during a fight. You take 10% more damage. |
 | Warden | **Aegis of the Order** (`aegis`) | Stand Fast also shields the party for 20% of its Bulwark damage, and every block anywhere in the party stores Bulwark for you. Stand Fast's cooldown is 30% longer. |
-| Adder | **Lingering Death** (`lingering`) | Deathcap bursts the full stack count but consumes only half (the target keeps the rest, so it is back at 10 sooner). Seep no longer carries Venom when a foe dies. (A boss keystone: better on one foe, worse on swarms.) |
+| Venomstalker | **Lingering Death** (`lingering`) | Deathcap bursts the full stack count but consumes only half (the target keeps the rest, so it is back at 10 sooner). Seep no longer carries Venom when a foe dies. (A boss keystone: better on one foe, worse on swarms.) |
 | Trapper | **Killing Ground** (`killground`) | Trap charges come back every 5 s in boss fights and elite fights. Snare Field no longer Roots (it still Chills and Marks). |
 | Warlock | **Pact of Cinders** (`pactcinder`) | Every Curse detonation also Burns each foe it hits (Blight with any Venom), and Creeping Hex has no jump limit. You take 10% more damage. |
 | Lightkeeper | **Martyr's Light** (`martyr`, kept from the Lightkeeper map) | Your own hits deal half (on top of Given Light). Your heroes deal 12% more. |
@@ -1056,7 +1056,7 @@ Ring minors and notables (one line each; numbers inside the cap):
   Edge from 40 Fury; +1.5% damage.
 - **Warden:** block +2% (x2); Holy Spark +0.1 P (notable); Stand Fast Empower +5% (notable); Bulwark cap
   +2; +3% HP.
-- **Adder:** Venom every 3rd swing -> every 2nd for Focus-Marked foes (notable); Seep carries 60%;
+- **Venomstalker:** Venom every 3rd swing -> every 2nd for Focus-Marked foes (notable); Seep carries 60%;
   Bloom +0.05 P a stack (notable); status damage +3% (x2).
 - **Trapper:** Spore Pit Venom +1 (x2); Tripwire also Marks (notable); Snare Field +2 s Mark (notable);
   control +5%.
@@ -1136,8 +1136,8 @@ section 8.3):
 | The Banner (`banner`) | Warden + Aldric | any **Warrior** + Aldric | Shield Wall +1 s (all). Reaver: Aldric's Shield Bash is heavy and Bleeds 1. Warden: Intercept stores Bulwark for you. |
 | The Missing Page (`page`) | Lanternmage + Pip | any **Lanternmage** + Pip | Warlock: Pip's Fireball on a Cursed foe sets its Curse off at once. Lightkeeper: your Blessing also counts for Pip's Kindle. |
 | Lantern's Chosen (`chosen`) | Lanternmage + Elowen | **Lanternmage, not Lightkeeper** + Elowen | (A Lightkeeper has Two Candles.) Warlock: Chapel Light also cleanses Curses on the party. |
-| Two Bows (`twobows`) | Ranger + Wren | any **Ranger** + Wren | Adder: Aimed Shot applies 2 Venom. Trapper: Aimed Shot springs a trap under its target. |
-| Asked (`asked`) | Ranger + Corvin | any **Ranger** + Corvin | Adder: Hollow Cut on a foe with 5+ Venom crits. Trapper: Corvin's Shadowstep goes to your Marked foe. |
+| Two Bows (`twobows`) | Ranger + Wren | any **Ranger** + Wren | Venomstalker: Aimed Shot applies 2 Venom. Trapper: Aimed Shot springs a trap under its target. |
+| Asked (`asked`) | Ranger + Corvin | any **Ranger** + Corvin | Venomstalker: Hollow Cut on a foe with 5+ Venom crits. Trapper: Corvin's Shadowstep goes to your Marked foe. |
 | The Unlit Road (`unlit`) | Lightkeeper + Hesketh | **Lightkeeper** + Hesketh | (kept: Mend +20%; your heals add a 5% shield) |
 | Two Candles (`candles`) | Lightkeeper + Elowen | **Lightkeeper** + Elowen | (kept: Chapel Light 4 s sooner; Rally Hymn heals 3% a second for 5 s) |
 
@@ -1147,7 +1147,7 @@ section 8.3):
 |---|---|---|---|---|---|---|
 | `twoaxes` | Two Axes | Reaver + Bram | He taught you to swing an axe in Mossy Hollow, for firewood | After your Rend, Bram's next Felling Blow Bleeds 2 and cleaves the Front column. You both deal 8% more to Bleeding foes | ability rider, char mult | Firewood / The Tree That Fell Wrong |
 | `lampoath` | The Lampwardens' Oath | Warden + Maren | Two lampwardens, one road, the same Oath | When either of you taunts, both gain a shield of 10% of max HP. Your Holy Sparks Mark the attacker (15%, 4 s) | shield, mark | The Words, Said Twice / Give It to No One |
-| `vials` | Same Poison | Adder + Isolde | She knows whose venom you use, and who taught you | Execute works on foes with 5+ Venom at 40% HP, not 30%. Your Venom ticks 25% faster on foes below 30% HP | threshold, tick rate | A Vial Returned / The Contract She Did Not Take |
+| `vials` | Same Poison | Venomstalker + Isolde | She knows whose venom you use, and who taught you | Execute works on foes with 5+ Venom at 40% HP, not 30%. Your Venom ticks 25% faster on foes below 30% HP | threshold, tick rate | A Vial Returned / The Contract She Did Not Take |
 | `bogroad` | The Bog Road | Trapper + Thessaly | She knows where the marsh hides its holes; you put snares in them | Sinking Mire re-arms one trap charge. Chilled foes take 10% more from both of you | trap charge, char mult | Where Not to Step / What the Water Kept |
 | `candlehex` | Candle and Hex | Warlock + Morwen | The candlewitch and the lamp-thief: two ways to steal a flame | Morwen's Burns on a Cursed foe store double in the Curse. Wax Seal bursts set off Curses | curse store, detonation | Wax and Ash / A Flame That Was Not Hers |
 
@@ -1186,7 +1186,7 @@ The sim runs each base class (S2) and each evolution (S3) on seeds 1-3 with the 
 | CP9 | Idle vs active (each evolution, same save, 2 h at the push zone) | active 15-35% more damage; no evolution below 10% (active must matter) or above 45% (idle must be fine) |
 | CP10 | Ability share: abilities, statuses and Finishers as a share of the Lanternbearer's own damage (bosses) | 25-50% for each class and evolution (swings still matter, abilities are not decoration) |
 | CP11 | Counter value: a counter class or hero vs a matched elite trait, time to kill that elite | at least 25% faster than a non-counter at equal power |
-| CP12 | Region fit: each evolution's push rate in each region, vs the average of the 6 | none below 0.85 in any region (Adder in Region 1 is exempt: it starts after it) |
+| CP12 | Region fit: each evolution's push rate in each region, vs the average of the 6 | none below 0.85 in any region (Venomstalker in Region 1 is exempt: it starts after it) |
 | CP13 | Tanks and supports on hard walls (plan-4 2.9): Warden and Lightkeeper vs damage evolutions on bosses, pinnacles and the Deepwell median depth | Warden and Lightkeeper at least equal |
 | CP14 | Migration: each legacy fixture, `totalDps()` and the hold zone after migration vs before | >= 0.97 (nothing felt as lost); Lightkeeper -> Lightkeeper >= 1.0 |
 
@@ -1378,7 +1378,7 @@ S1; S2/S3 only apply them.
 - **D4. Migrated Wardens and Lightkeepers below zone 35.** They keep their kit, but the new evolution
   parts run at 60% and the title waits until they pass the Proving. Recommended: yes (it keeps early pace
   fair between old and new saves without taking anything away).
-- **D5. Titles:** the Red Lamp, the Holdfast, the Quiet Thorn, the Waylayer, the Firethief, the Given
+- **D5. Titles:** the Red Lamp, the Unmoved, the Quiet Thorn, the Pathfinder, the Shadowbinder, the Given
   Light. They join the title list (`codexTitles()`, ids `c_<evo>`).
 - **D6. The Warlock ignores fire resistance** with its Curses and Witchfire (Dark Turned). Without it one
   of six paths is weak for a whole region.

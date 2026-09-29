@@ -515,7 +515,7 @@ LORE-R45 draft) should use the new names instead:
   ownership; it only flags them.
 - No file in `src/` contains "Star-Fallen", "lamps before this one" or "Lamp-Thief" (checked by grep):
   the Star-Fallen and the old reveal line were never wired into code, so there is no in-code string to
-  migrate for those; the Warlock's title was already changed to "the Firethief" in `classes-2.md`
+  migrate for those; the Warlock's title was already changed to "the Shadowbinder" in `classes-2.md`
   ahead of this task and needs no further follow-up here.
 - Any future Region 4/5 build task should read core-2.md 5.2/5.4 and wait on **MAT1** for grade and
   buff-item names rather than using the working names in sections 1.4, 2.3, 2.4, 3 and 4 of this doc.

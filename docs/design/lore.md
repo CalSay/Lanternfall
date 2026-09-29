@@ -1263,7 +1263,7 @@ made no sense, Region 5 read as the Deepwell continued):
    bosses must never read as lamp-keepers, guards or listeners; the reveal line "There were lamps
    before this one" made no sense and should speak of the dark enduring instead; Region 5 must be a
    separate place with its own look, not the Deepwell continued, though the Deepwell should still tie
-   into the story; the Warlock's title becomes "the Firethief" (classes-2.md); the per-region
+   into the story; the Warlock's title becomes "the Shadowbinder" (classes-2.md); the per-region
    milestones were "okay, could be better". **Coordinator decisions, task LORE-R45b, written into
    4.4, 4.4a, 8.4 and 8.6-8.8:** region bosses are Shrouds; the reveal line is "Every flame goes out.
    I can wait."; Region 5 is the Gloamvale, and the Voice's retreat into the Deepwell under Hollow's
