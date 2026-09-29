@@ -985,3 +985,16 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Pyre Knight piece. QUEUED NAME2 (sonnet, docs now): apply names.md across all specs + fix stale names
   (Star-Fallen, Long Stair, Listener, Drowned Keeper). Code renames (LORE-C1 + Circle Crest + HANDS_FIRST pool)
   after S1 merges.
+- MERGED NAME2 (names applied across 23 specs). COORDINATOR OVERRIDE before merge: the naming pass had
+  replaced owner-chosen names; restored Venomstalker (not Adder) and the titles the Unmoved, the Pathfinder,
+  the Shadowbinder (not Holdfast/Waylayer/Firethief). Rule added to names.md: owner-chosen names are never
+  replaced. Accepted NAME2's own calls: Region 4 Seeker pair Sten and Runa (Fenn and Wick dropped); the Pyre
+  Knight's Visor as the Region 3 head unique (helm stays buried). Follow-up: map-study.md's Region 5 art
+  direction still describes caves (pre-Gloamvale) -> ART-R5 later.
+- MERGED S1 (first Core 2.0 code slice): 21x-data-types.js, 59a-status.js, 61b-type-icons.js + small edits.
+  Types, 8 statuses, reactions (Blight, Shatter, Judgement), foe data for Hollow/Coast, all 18 heroes typed,
+  typed numbers and status badges. sim --targets 13/22 -> 12/22 (T3 now fails: Warden fast outlier; T4 now
+  passes). COORDINATOR SIGN-OFF: Hollow resist x0.85 (ST_TUNE.resistHollow) instead of x0.6 until S3-S6
+  counters land; BAL3 retunes. check passes after both merges.
+- NEXT: LORE-C1 (code renames per names.md "Code follow-up") and SAVE1 (export/import only: under the relaxed
+  save rule, no migration backups; import also lets the coordinator hand the owner late-game test saves).
