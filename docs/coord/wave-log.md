@@ -1036,3 +1036,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - MERGED cb2 check fix: idle-gold baseline re-measured on the ECON-A merge (515.2/min; S6 = 99.6%), active
   reward NaN was the test hitting S6's Enrage (check bug). check passes. COMBINED sim --targets after ECON-A +
   S6: 8/22 (was 11). NEXT: BAL3 + BAL-E combined balance pass (opus), before S4/S5.
+- Preview v49 published (active combat + new economy). Preview sed now swaps lanternfall.save.v2 -> lanternfall.preview.r2 (fresh preview save). LAUNCHED BAL3+BAL-E (opus). No [deploy] until BAL3 lands.
