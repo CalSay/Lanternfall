@@ -4,13 +4,13 @@
 //
 // Who is cold: a NEW game only. At load, S.camp is undefined and the save has no progress
 // (S.totalKills 0, S.L 1, S.maxZone 1). It gets S.hearth.cold = 1, starts at the unlit fire,
-// gathering the Oak Grove by the fire, with the Forge, Workbench, Loom, Enchanter's Table and
+// gathering the Pine Grove by the fire, with the Forge, Workbench, Loom, Enchanter's Table and
 // Tavern at Lv 0 (plots to build). Every other save is warm and nothing here changes it: its
 // stations stay at Lv 1 (57-camp's defaults), the camp opens at zone 5 as before.
 //
 // Rules (cold saves; knobs in HEARTH_TUNE):
 //   - Fighting is never gated. The fire is the first thing to do, not a wall.
-//   - hearthLight(): pays 8 Oak Log, Hearth 1, the camp opens (campOpen { quiet: false }),
+//   - hearthLight(): pays 8 Pine Log, Hearth 1, the camp opens (campOpen { quiet: false }),
 //     emits hearthLit, and the hero walks out to zone 1 (S.activity = 'fight'). Instant.
 //   - Stations are built on plots. A plot opens by its rule (HEARTH_PLOT); an unopened plot is not
 //     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (no gold, a short
@@ -26,7 +26,7 @@
 //   hearthCold() -> bool      this save began at a cold Hearth
 //   hearthLit() -> bool       the fire burns (always true for warm saves)
 //   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
-//   hearthLight() -> bool     light the fire (cold, unlit, 8 Oak)
+//   hearthLight() -> bool     light the fire (cold, unlit, 8 Pine Log)
 //   hearthPlotOpen(id) -> bool   57-camp: is this building's plot open (warm: always)
 //   hearthFirst(id) -> { mats, secs } | null   57-camp: the Lv 1 row of a station
 //   hearthStationWhy(st) -> '' | 'Build the Workbench first.'   (st: CRAFT_STATIONS key)
@@ -43,7 +43,7 @@
 
 const HEARTH_TUNE = {
   on: 1,                               // 0: new games start warm, as before (tools)
-  light: [['wood', 1, 8]],             // the fire: 8 Oak Log
+  light: [['wood', 1, 8]],             // the fire: 8 Pine Log
   // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
   first: {
     // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
@@ -78,7 +78,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   if (isNew && HEARTH_TUNE.on) {
     coldStart = true;
     Hs().cold = 1;
-    // SOLO1: the solo hero starts on the road (the guide sends it to the Oak Grove after the first boss)
+    // SOLO1: the solo hero starts on the road (the guide sends it to the Pine Grove after the first boss)
     if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
     else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
@@ -86,7 +86,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
   hearthCold = () => !!Hs().cold;   // a save that started cold (stays set)
   hearthLit = () => !hearthCold() || !!Hs().lit;
-  // The opening camp scene (fire, Hesketh, plot stakes) belongs to the Oak Grove only until the first
+  // The opening camp scene (fire, Hesketh, plot stakes) belongs to the Pine Grove only until the first
   // stations stand (owner: a campfire in the woods later made no sense). After the Forge, woods are woods.
   hearthScene = () => hearthCold() && (!Hs().lit || lv('forge') < 1);
 

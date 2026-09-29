@@ -12,6 +12,8 @@
 // onboardStep() -> step | null the guide step to show now: { id, ...GUIDE_STEPS entry }.
 // onboardDone(id)              mark a guide step done (the UI's "x", or a UI-only action).
 // onboardTips(on)              guide on/off ("Skip tips" in the Journal).
+// onboardNeed(id) -> [{ fam, t, kind, have, n, name }]   what step `id` still waits for in materials ([] = nothing).
+// onboardPaused(step) -> bool  should the game wait while this step shows (see PAUSE RULES below).
 // goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
 //                              Only active once the UI turns it on (ONBOARD.gate), so the Node
 //                              tools see every goal.
@@ -19,7 +21,7 @@
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts, rec }.
 // Old saves (any progress, no S.onboard yet) start with everything unlocked and the guide finished.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -78,12 +80,26 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
 // tab:world and tab:forge are done from the start (chop, light and tool replace them).
 // SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
-// the counter, the first boss, an upgrade, then Gather (Oak for the fire) and camp. `pause`: the game waits while
-// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button.
-// Steps that need time to pass (chop, the build timers) do not pause; build steps complete when the build starts.
+// the counter, the first boss, an upgrade, then Gather (Pine Log for the fire) and camp. `pause`: the game waits while
+// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button;
+// `needs`: the materials a step waits for (no pause, live progress). Build steps complete when the build starts.
 const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
 const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
 const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
+// PAUSE RULES (W1-A; owner: "the game pauses while a tutorial step is open"). A step pauses the game only while it waits
+// for the player to READ or PRESS something right now. A step whose goal needs game time (chop logs, wait for a build,
+// earn gold) never pauses: it has `needs` (the materials it waits for) and shows live progress instead. A press step whose
+// build or recipe is still short of materials has `pauseUnless` (the same list): it does not pause while any is missing,
+// so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
+//   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
+//   boss                                                     pause (Got it)
+//   chop, stock:bench, stock:tool, stock:forge, stock:store  no pause (needs materials: live progress)
+//   bench, tool, forge, store                                pause only once the materials are in hand (pauseUnless)
+//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
+const stockOf = (fam, t, n) => [fam, t, n];
+const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
+const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
+const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
 const SOLO_STEPS = [
   { id: 'attack', pause: 1, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
   { id: 'ability', pause: 1, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
@@ -92,15 +108,21 @@ const SOLO_STEPS = [
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
   { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
-  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'chop', needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
-  { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
-  { id: 'tool', pause: 1, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
-  { id: 'forge', pause: 1, when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
-  { id: 'store', pause: 1, when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', pause: 1, when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
-  { id: 'nextup', pause: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'stock:bench', needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
+  { id: 'bench', pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'stock:tool', needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
+  { id: 'tool', pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || toolMade() },
+  { id: 'stock:forge', needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
+  { id: 'forge', pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'stock:store', needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'store', pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
+  { id: 'nextup', ok: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
+const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 const PARTY_STEPS = [
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
@@ -123,6 +145,16 @@ const GUIDE_STEPS = SOLO_G ? SOLO_STEPS : PARTY_STEPS;
 
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
+// Materials still short: [[fam, tier, n]] -> [{ fam, t, kind, have, n, name }]. kind: the gather node that yields it.
+const matHave = (f, t) => (S.mats && S.mats[f] && S.mats[f][t - 1]) || 0;
+function needShort(mats) {
+  const out = [];
+  for (const [fam, t, n] of mats || []) {
+    const have = matHave(fam, t);
+    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] ? fam : null, have, n, name: matName(fam, t) });
+  }
+  return out;
+}
 const cheapestUp = () => { let c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) c = p.cost; } return c; };
 const abilityOk = () => { try { const a = typeof abilityInfo === 'function' && abilityInfo(); return !!(a && a.ready); } catch (e) { return false; } };
 function recruitable() {
@@ -181,6 +213,11 @@ function craftReady() {
 
   // ---- the guide ----
   onboardTips = on => { O().tips = on === undefined ? !O().tips : !!on; return O().tips; };
+  const stepById = id => GUIDE_STEPS.find(s => s.id === id) || null;
+  onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
+  // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
+  // the materials the action costs (the player could not press it and the clock they need would be stopped).
+  onboardPaused = step => !!(step && step.pause && !onboardNeed(step.id).length);
   onboardDone = id => { if (!O().done[id]) { O().done[id] = 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
   onboardStep = () => {

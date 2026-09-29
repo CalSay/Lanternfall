@@ -151,7 +151,7 @@
       closed = el('div', 'card camp-closed');
       closedTxt = el('p', 'note');
       const bar = el('div', 'bar'); closedBar = el('i'); bar.append(closedBar);
-      lightBtn = btn('big cb-go', 'Light the fire · 8 Oak'); lightBtn.hidden = true;
+      lightBtn = btn('big cb-go', 'Light the fire · 8 Pine Log'); lightBtn.hidden = true;
       lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
       closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
@@ -175,12 +175,12 @@
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
-        // H1: a cold Hearth waits for its fire (8 Oak Log), not for a zone.
+        // H1: a cold Hearth waits for its fire (8 Pine Log), not for a zone.
         const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
         putHidden(lightBtn, !cold);
         if (cold) {
           const have = Math.min(8, S.mats.wood[0] || 0);
-          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Oak Log to light it. You have ${have}.`);
+          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Pine Log to light it. You have ${have}.`);
           putStyle(closedBar, 'width', have / 8 * 100 + '%');
           putDisabled(lightBtn, !hc.ok);
           return;
