@@ -1,18 +1,31 @@
-# Hero accessories register
+# Hero accessories register (crafting and forging)
 
-Every accessory a hero's art shows, recorded as we build each hero (art pipeline: docs/design/art-pipeline.md).
-Use it to keep poses consistent, to decide what gear or looks can swap later (achievement looks, Awakening
-trims), and to know which pieces are drawn by GPT and which are added in code.
+Every item a hero visibly carries in their art becomes a **craftable gear piece** for that hero. Recorded as we
+build each hero (art pipeline: docs/design/art-pipeline.md), so gear follows the art: if Tobin carries a sword,
+Tobin's weapon slot takes a sword.
 
-| Hero | Accessory | Where it shows | Drawn by | Notes |
-|---|---|---|---|---|
-| Wren Hollowmere | Longbow (violet and gold, gem inlays) | Every fight pose; slung on her back at camp | GPT (no string) | Weapon slot. The string is code-drawn |
-| Wren Hollowmere | Quiver with violet fletchings | Over her back shoulder | GPT | |
-| Wren Hollowmere | Bow string | Fight idle, attack | Code | In front of the body, behind the drawing forearm; straight after release |
-| Wren Hollowmere | Arrows | Nocked at full draw; in flight | GPT (nocked), code (flight) | Sound-wave rings on release are code |
-| Wren Hollowmere | Bat companion | Every animation | Code | Flutters in idle, startles on hurt, lands on her in death |
-| Wren Hollowmere | Bat-eared hood with gold crescent emblem | Always | GPT | Signature look |
-| Wren Hollowmere | Magenta scarf | Always | GPT | Joins the hood base to the chest |
-| Wren Hollowmere | Leather chest strap | Camp pose | GPT | Carries the slung bow |
-| Tobin Reed | Borrowed sword, a little too big for him | Every pose | GPT | Story item. Awakening puts it in its own scabbard |
-| Tobin Reed | (rest to record when his poses arrive) | | | |
+Materials follow gear-2's two-material rule (owner, "Owner answers to 9.3"): Ranger-line weapons wood + metal,
+armour leather + cloth; Warrior-line weapons metal + wood, armour metal + leather; Lanternmage-line weapons
+wood + gem, armour cloth + leather. Material names come from docs/design/materials.md.
+
+| Hero | Accessory | Gear slot | Crafted at | Materials (main + second) | Look changes with grade? |
+|---|---|---|---|---|---|
+| Wren Hollowmere | Longbow | Weapon | Workbench | Wood + metal (fittings) | Yes: palette swap on the wood and trim |
+| Wren Hollowmere | Quiver | Off-hand | Tannery / Workbench | Leather + cloth | Yes: leather and fletching colours |
+| Wren Hollowmere | Bat-eared hood | Head | Loom | Cloth + leather | Trim colour only (keeps her silhouette) |
+| Wren Hollowmere | Arrows | None (ammo is free) | - | - | Glow colour could follow the bow's Sigil |
+| Tobin Reed | Borrowed sword, too big for him | Weapon | Forge | Metal + wood (grip) | Yes: blade metal colour. Awakening adds its scabbard |
+| Tobin Reed | (rest to record when his poses arrive) | | | | |
+
+Not craftable (character, not gear): Wren's scarf, chest strap and bat companion.
+
+## Open design points (for S4, the gear build)
+
+1. **Hero gear slots grow to match the art.** Today heroes have 2 positions (`wpn` by role, plus a trinket), and
+   a tank's `wpn` is a Shield. Proposal: a hero's weapon kind is what they carry (Tobin: sword; Wren: bow), and
+   heroes gain the off-hand or head slot when their art shows one (Wren: quiver and hood). This also covers the
+   owner's playtest note that tanks should be able to hold a sword (playtest-1.md, item 6).
+2. **Grade shows on the sprite.** Each hero's palette is locked, so a crafted item's grade can recolour just
+   that item's pixels (e.g. oak to ebony to heartwood on the bow). That's cheap in code and makes upgrades visible.
+3. **Uniques keep their own look.** A boss unique could be a separate GPT-drawn prop that replaces the base
+   item in the sprite. That's decided per unique, and is optional for 1.0.
