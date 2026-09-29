@@ -5773,7 +5773,7 @@ try {
   assert(!bigP.length && tables.blade[260] < 1e8, `EC10 (static) every price under 1e8 (biggest: Tent 10 ${E('fmt(econTentGold(10))')}, Blade Lv 260 ${E(`fmt(${tables.blade[260]})`)})` + (bigP.length ? ': ' + bigP.join('; ') : ''));
   const up = E('HERO_UPS.map(u => [u.id, u.base, u.r, u.cap || 0].join(":")).join()');
   assert(up === `blade:${E('ECON.blade.base')}:${E('ECON.blade.r')}:0,swift:${E('ECON.swift.base')}:${E('ECON.swift.r')}:40,precision:${E('ECON.precision.base')}:${E('ECON.precision.r')}:${E('ECON.precision.cap')}`,
-    `the Lanternbearer's upgrades (BAL3): Blade 6 x 1.05^n, Swiftness 10 x 1.15^n (cap 40), Precision 10,000 x 1.6^n (cap 15), equal to ECON (${up})`);
+    `the Lanternbearer's upgrades (BAL3): Blade 6 x 1.05^n, Swiftness 10 x 1.15^n (cap 40), Precision 15,000 x 1.6^n (cap 15), equal to ECON (${up})`);
   assert(E('RELICS.map(r => r.id).join()') === 'banner,edge,heart,glass' && E('RELICS[1].name') === 'Loaded Die' && E('RELICS[1].cap') === 5 && E('UNIQ.hollowcrown.fx.gold') === 10,
     'the Lucky Coin is the Loaded Die (cap 5), the Crown of Hollows gives +10% gold (raid docs untouched)');
   // No gold-gain source outside gear: every save field maxed, gold stays at the gear cap x the Omen
