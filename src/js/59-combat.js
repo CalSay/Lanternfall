@@ -537,11 +537,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       foeDies(f, src, kind);
       // Overkill carries to the next foe (a pack is one old foe's HP split three ways: no hit is wasted
       // on a small foe). Burns, splashes and AoE shares do not carry (carry = false while they land).
-      if (carry && kind !== 'dot' && over > 0 && !f.hp && anyFoe()) { const n = focusFoe(); if (n && n !== f) { carry = false; cbDamageFoe(n, over / Math.max(0.1, typeof typeX === 'function' ? typeX(f, ty) : 1), src, kind, ty); carry = true; } }
+      // S6-A: the carry chains through small foes (a pack of 9 wastes no more of a big hit than a pack of 3 did)
+      if (carry && kind !== 'dot' && over > 0 && !f.hp && anyFoe() && carryN < FOE_MAX) { const n = focusFoe(); if (n && n !== f) { carryN++; cbDamageFoe(n, over / Math.max(0.1, typeof typeX === 'function' ? typeX(f, ty) : 1), src, kind, ty); carryN--; } }
     }
     return a;
   };
-  let carry = true;
+  let carry = true, carryN = 0;
   function foeDies(f, src, kind) {
     if (typeof onFoeDeath === 'function' && onFoeDeath(f, src, kind)) return;   // 59b: Rattlebones reassemble
     f.over = -f.hp; f.hp = 0; f.dead = 0.001;

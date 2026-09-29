@@ -52,6 +52,8 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
   const bar = f => f && (f.boss || f.elite);
   let clock = 0;
   const N = () => (S.cb2 && S.cb2.n) || (S.cb2.n = { parry: 0, dodge: 0, perfect: 0, intr: 0, fin: 0, act: 0 });
+  // S6-F: the Deepwell's active boons (57d DEEP_BOONS feet, breaker, coup, silence, lward), 0 outside a run
+  const dboon = id => { try { const r = typeof deepActive === 'function' && deepActive() && DW.run(); return r && r.boons ? r.boons[id] || 0 : 0; } catch (e) { return 0; } };
 
   // ---------------- the warning showing (one answer at a time) ----------------
   const W = { on: false, kind: '', id: '', name: '', left: 0, dur: 0, win: 0, perf: 0, foe: null, unit: -1, target: null, slots: 0,
@@ -79,7 +81,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     const minD = W.cast ? T.castMin : T.windMin;
     W.dur = Math.max(minD, spec.dur || (k === 'heavy' ? T.heavyWind + heavyLead() : DODGE[k] ? T.dodgeWind : 2));
     W.left = W.dur;
-    W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin : 0; W.perf = DODGE[k] ? T.perfWin : 0;
+    W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
     const g = clock - lastEnd; if (g < ST.minGap) ST.minGap = g;
@@ -130,7 +132,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     }
     if (DODGE[w.kind] && (res === 'dodge' || res === 'perfect')) { if (w.miss) w.miss(w, res); end(res, 'tap'); return; }
     ST.landed++;
-    const mult = w.kind === 'heavy' && res === 'early' ? T.earlyX : 1;
+    const mult = (w.kind === 'heavy' && res === 'early' ? T.earlyX : 1) * (dboon('lward') ? 0.7 : 1);   // Lamplight Ward
     if (w.land) { try { w.land(w, mult); } catch (e) { console.error('[lanternfall] warning land failed', e); } }
     end(res === 'early' ? 'dodge' : w.cast ? (w.kind === 'heal' ? 'heal' : 'cast') : 'hit', '');
     if (f && alive(f) && f.swing < 0.5) f.swing = 0.5;
@@ -199,7 +201,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
   function answered() { if (bossFoe && alive(bossFoe)) bossAns++; }
 
   // Abilities: the Lanternbearer's ab1 / ab2 stop a cast on the foe (a boss `sig` included); stuns stop casts too.
-  on('ability', p => { if (W.on && canInterrupt('ab')) interrupt('ab', !(p && p.auto)); });
+  on('ability', p => { if (W.on && canInterrupt('ab')) { interrupt('ab', !(p && p.auto)); if (dboon('silence') && S.party) S.party.abilityCd *= 0.7; } });   // Silence: 30% back
   on('ability2', p => { if (W.on && canInterrupt('ab')) interrupt('ab', !(p && p.auto)); });
   // A hero signature tagged interrupt (none yet) or a stun (59a onFoeStun -> 59b -> here through stunned()).
   on('telegraphResolve', p => {
@@ -215,7 +217,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
 
   // ---------------- stagger (3.4) ----------------
   const stagMax = actStagMax = f => (f.boss ? T.stag.boss : T.stag.elite) * Math.min(T.stag.stepMax, 1 + T.stag.step * (f.stgN || 0));
-  const stagX = () => { let x = typeof clsStagX === 'function' ? clsStagX() : 1; try { x *= 1 + Math.min(T.stag.statCap, (gear().stag || 0) / 100); } catch (e) {} return x; };
+  const stagX = () => { let x = typeof clsStagX === 'function' ? clsStagX() : 1; try { x *= 1 + Math.min(T.stag.statCap, (gear().stag || 0) / 100); } catch (e) {} return x * (dboon('breaker') ? 1.3 : 1); };
   actStag = (f, pts, src, why) => { if (!bar(f) || !alive(f) || f.stgT > 0 || !(pts > 0)) return; const v = pts * stagX(); f.stag = (f.stag || 0) + v; f.stagMine = (f.stagMine || 0) + v; ST.fill[why || 'other'] = (ST.fill[why || 'other'] || 0) + v; };
   // A unit's heavy hits fill at most heavyRate points a second in all (proposal 8.2-2: tap speed alone cannot stagger).
   actHeavy = (f, src) => {
@@ -258,12 +260,12 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     const f = FIN.f; FIN.on = false; FIN.f = null;
     const row = typeof clsFinisher === 'function' ? clsFinisher() : null;
     if (!row || !alive(f) || !U0up()) return 0;
-    const P = heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1), eff = auto ? T.fin.autoEff * (1 + (bonus('tune:finAuto') || 0)) : 1;
+    const P = heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1), eff = auto ? (dboon('coup') ? 0.8 : T.fin.autoEff) : 1;
     let coef = 0;
     for (const fx of row.fx) if (fx[0] === 'dmg') coef += fx[1];
     // Red Harvest: +perBleed for each Bleed on the foe, and it uses them up
     if (row.perBleed && typeof stStacks === 'function') { const b = stStacks(f, 'bleed'); coef += row.perBleed * b; if (b && f.ss && f.ss.bleed) { f.ss.bleed.t = 0; f.ss.bleed.n = 0; } }
-    const fx = 1 + (bonus('tune:finX') || 0);   // the Deepwell's Coup de Grace (S6-F)
+    const fx = dboon('coup') ? 1.5 : 1;   // the Deepwell's Coup de Grace (S6-F)
     const kind = row.type === 'phys' ? 'phys' : 'magic';
     const dmg = cbDamageFoe(f, P * coef * eff * fx, 0, kind, row.type, typeof ST_HEAVY === 'number' ? ST_HEAVY : 0);
     riders(row, f, P * eff);

@@ -5720,5 +5720,206 @@ try {
   })();
 } catch (e) { fail('evolutions crashed: ' + (e.stack || e)); }
 
+// ---- S6: active combat, elite traits, boss kits (docs/design/combat-2.md 8.5, the "cb2" section) ----
+console.log('cb2');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const late = seed => { const g = loadCore({ seed, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }); g.eval('for (let i = 0; i < 20; i++) tick(0.1)'); return g; };
+  const errs = [];
+  const g0 = loadCore({ seed: 90 }), D = s => g0.eval(s);
+  // 1. kits: 2-3 phases; each later phase adds exactly one mechanic; core-2 telegraph ids; answers; wind-ups and casts
+  {
+    const TELE = ['heavy', 'dive', 'heal', 'zone', 'slam', 'line', 'sig', 'hard', 'summon', 'hazard', 'enrage', 'challenge', 'cleanse', 'swap'];
+    const bad = D(`(() => { const out = [], TELE = ${JSON.stringify(TELE)};
+      for (const [id, k] of Object.entries(BOSS_KITS)) {
+        const P = k.phases.length + 1;
+        if (P < 2 || P > 3) out.push(id + ': phases ' + P);
+        for (let ph = 2; ph <= P; ph++) { const n = k.mech.filter(m => m.ph === ph && !m.repeat && !m.roar).length; if (n !== 1) out.push(id + ': phase ' + ph + ' adds ' + n); }
+        for (const m of k.mech) {
+          if (!TELE.includes(m.tele)) out.push(id + '.' + m.id + ': telegraph ' + m.tele);
+          if (!m.answer || !m.idle) out.push(id + '.' + m.id + ': no answer or idle answer');
+          const cast = ['sig', 'heal', 'summon', 'hard'].includes(m.tele);
+          if (!(m.wind >= (cast ? 1.5 : 1.2))) out.push(id + '.' + m.id + ': wind ' + m.wind);
+          if (!(m.every > 0) && m.at == null) out.push(id + '.' + m.id + ': no cadence');
+          if (m.x > 0 && !(m.x <= 8)) out.push(id + '.' + m.id + ': x ' + m.x);
+        }
+        if (k.boss && !(k.phases.length >= 2 || k.mech.some(m => m.tele === 'hard'))) out.push(id + ': a region boss needs a hard cast');
+        if (!['heavy', 'zone', 'slam', 'sig', 'heal', 'summon'].filter(t => k.mech.some(m => m.tele === t)).length) out.push(id + ': no answer kind');
+      }
+      return out; })()`);
+    assert(!bad.length, `boss kits: ${D('Object.keys(BOSS_KITS).length')} rows, 2-3 phases, one new mechanic a phase, core-2 telegraph ids, an answer and an idle answer each, wind-ups >= 1.2 s, casts >= 1.5 s, region bosses have a hard cast` + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+    assert(D('["slime","bat","bones","beetle","spore","golem","wraith","fenmother"].every(k => BOSS_KITS[k] && BOSS_KITS[k].region === 0 && !BOSS_KITS[k].sig)'), 'the Hollow\'s seven elders and the Fenmother have kits and carry no buff item (owner D2)');
+    assert(D('COMBAT_TUNE.caps.tele === 0.35 && COMBAT_TUNE.caps.boss === 0.15 && COMBAT_TUNE.caps.pack === 0.1 && COMBAT_TUNE.caps.swarm === 0.04 && COMBAT_TUNE.caps.blast === 0.2'), 'hit caps: telegraphed 35%, boss swings 15%, pack swings 10% (swarm 4%), a blast 20% (combat-2 1.4)');
+  }
+  // 2. traits: core-2's seven; Explosive + Enraged never roll together; Region 1 rolls none; leans name real traits
+  {
+    assert(D('ELITE_ORDER.join()') === 'shielded,vampiric,explosive,summoner,enraged,frozen,cursed' && D('ELITE_ORDER.every(id => ELITE_TRAITS[id] && ELITE_TRAITS[id].first && ELITE_TRAITS[id].badge.length === 5)'), 'elite traits: exactly core-2\'s seven, each with a first-sighting line and a 5x5 badge');
+    assert(D('ELITE_WEIGHTS[0].n === 0 && ELITE_WEIGHTS[0].w.every(v => v === 0) && ELITE_WEIGHTS[1].n === 1 && ELITE_WEIGHTS[3].n === 2'), 'Region 1 elites roll no trait; the Coast 1; the Pale Reach 2');
+    assert(D('[1, 2, 3, 4].every(r => ELITE_LEANS[r].length === 7 && ELITE_LEANS[r].every(p => p.length === 2 && p.every(id => ELITE_TRAITS[id])))'), 'every region\'s 7 zone places lean to two real traits');
+    const pairs = D(`(() => { const seen = {}; const r = Math.random; let x = 1; Math.random = () => { x = (x * 16807) % 2147483647; return x / 2147483647; };
+      for (let i = 0; i < 4000; i++) { const f = { z: 40, max: 100, hp: 100, name: 'Elite X', tr: null }; eliteRollDeep(f, 25); if (f.tr) seen[f.tr.slice().sort().join('+')] = 1; }
+      Math.random = r; return Object.keys(seen); })()`);
+    assert(pairs.length > 5 && !pairs.some(p => p.includes('explosive') && p.includes('enraged')) && pairs.every(p => p.split('+').length === 2), `two traits never share a counter: ${pairs.length} pairs rolled (Deepwell floor 25, equal weights), never Explosive + Enraged`);
+  }
+  // 3. foes: size, family, hit type, members in range
+  {
+    const bad = D('Object.entries(FOE_TYPE).filter(([k, r]) => !PACK_SIZES[r.size] || !FOE_FAMS[r.fam] || !DMG_TYPES.includes(r.dt) || r.n < PACK_SIZES[r.size][0] || r.n > PACK_SIZES[r.size][1]).map(([k]) => k)');
+    assert(!bad.length && D('Object.keys(FOE_BEH).every(k => FOE_BEH[k].size && FOE_BEH[k].n)'), 'every foe type has a size, a family, a hit type and its members in range' + (bad.length ? ': ' + bad.join(', ') : ''));
+  }
+  // 4. pack totals: the members' HP sum to the pack's (x1.25 for swarms), gold to the pack's gold; kill once a pack
+  {
+    const g = loadCore({ seed: 91 }), E = s => g.eval(s);
+    E('chooseClass("warrior"); S.auto = false; S.maxZone = 40');
+    const rows = [];
+    for (const z of [29, 30, 31, 32]) {
+      rows.push(JSON.parse(E(`(() => { const r = Math.random; Math.random = () => 0.5; S.zone = ${z}; fightBoss = false; spawn(); Math.random = r;
+        const L = combatFoes(), sw = cbPack().size === 'swarm', hp = L.reduce((a, f) => a + f.max, 0), gold = L.reduce((a, f) => a + f.gold, 0);
+        return JSON.stringify({ z: ${z}, n: L.length, size: cbPack().size, hp: hp / (mobHp(${z}) * COMBAT_TUNE.packHp * (sw ? COMBAT_TUNE.swarmHp : 1)), gold: gold / (mobGold(${z}) * COMBAT_TUNE.packGold * (sw ? COMBAT_TUNE.swarmPay : 1)) }); })()`)));
+    }
+    assert(rows.every(r => Math.abs(r.hp - 1) < 1e-6 && Math.abs(r.gold - 1) < 1e-6), 'pack totals: members\' HP and gold sum to the pack\'s (swarms x1.25): ' + rows.map(r => `z${r.z} ${r.size} ${r.n}`).join(', '));
+    let kills = 0; g.fn.on('kill', () => kills++);
+    E('S.zone = 30; fightBoss = false; spawn(); combatFoes().forEach(f => { if (!f.dead) cbDamageFoe(f, 1e40, -1, "magic"); })');
+    assert(kills === 1 && E('combatFoes().length') >= 8, `a swarm of ${E('combatFoes().length')} dies as one kill (${kills})`);
+    errs.push(...g.errors);
+  }
+  // 5. caps: 120 s of each Hollow elder against the late fixture, no party hit above 35%
+  {
+    const over = [];
+    for (const z of [29, 30, 31, 32, 33, 34, 35]) {
+      const g = late(92), E = s => g.eval(s);
+      E(`S.auto = false; S.zone = ${z}; S.kills = 10; addModifier('bossHp', () => 1e4); fightBoss = false; challenge(); CB_STATS.partyOver = 0`);
+      for (let i = 0; i < 1200 && E('fightBoss'); i++) g.fn.tick(0.1);
+      over.push([E('mob && mob.kit ? mob.kit.name : TYPES[zoneType(' + z + ')].key'), E('CB_STATS.partyOver')]);
+      errs.push(...g.errors);
+    }
+    assert(over.every(([, v]) => v <= 0.35 + 1e-9), 'no one-shots: 120 s of each Hollow elder, the biggest hit on a member ' + over.map(([k, v]) => `${k.replace(/^Elder /, '')} ${Math.round(100 * v)}%`).join(', '));
+  }
+  // 6. idle is whole (CX7): the late fixture's idle gold a minute at zone 36 >= 97% of HEAD (b486204: 2.509e10, seeds 7-9)
+  {
+    let sum = 0;
+    for (const seed of [7, 8, 9]) {
+      const g = loadCore({ seed, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
+      E("almanac.force('none')"); E('for (let i = 0; i < 20; i++) tick(0.1); S.auto = false; S.zone = 36; fightBoss = false; spawn();');
+      const g0 = E('S.gold'); for (let i = 0; i < 6000; i++) g.fn.tick(0.1);
+      sum += (E('S.gold') - g0) / 10;
+    }
+    const HEAD = 2.509e10, r = sum / 3 / HEAD;
+    assert(r >= 0.97, `idle is whole: idle gold a minute at zone 36, 10 minutes, late fixture: ${(100 * r).toFixed(1)}% of HEAD's (want >= 97%)`);
+  }
+  // 7. no overlap: answer warnings one at a time, at least 1 s apart (50 fights per kit)
+  {
+    const res = [];
+    for (const [z, zone] of [[29, 29], [30, 30], [31, 31], [32, 32], [33, 33], [34, 34], [35, 35], ['fen', 35]]) {
+      const g = late(93), E = s => g.eval(s);
+      E('ACT_STATS.minGap = 99; ACT_STATS.overlap = 0');
+      let n = 0;
+      for (let k = 0; k < 50; k++) {
+        // (every other fight starts the boss at 30% health: its later phases, roars and adds join in)
+        E(`S.auto = false; S.zone = ${zone}; S.maxZone = Math.max(S.maxZone, ${zone}); S.kills = 10; fightBoss = false; challenge(); combatUnits().forEach(u => { u.hp = u.maxHp; }); mob.max = 1e40; mob.hp = mob.max * ${k % 2 ? 0.3 : 1};` + (z === 'fen' ? '' : ' mob.kit = null; mob.kitM = null; kitStart(mob);'));
+        for (let i = 0; i < 80 && E('fightBoss'); i++) g.fn.tick(0.1);
+        n += 1;
+      }
+      res.push([z, E('ACT_STATS.minGap'), E('ACT_STATS.warns')]);
+      errs.push(...g.errors);
+    }
+    assert(res.every(([, gap]) => gap >= 1 - 1e-6) && res.reduce((a, r) => a + r[2], 0) > 200, 'no overlap: in 50 fights per kit, answer warnings one at a time and >= 1.0 s apart (' + res.map(([z, gap, w]) => `${z}: ${w} warnings, gap ${gap.toFixed(2)}`).join('; ') + ')');
+  }
+  // 8. Enrage: bossTime 0 enrages, the fail comes 15 s later, Short Fuse still takes 10 s off
+  {
+    const g = late(94), E = s => g.eval(s);
+    const fails = []; g.fn.on('bossFail', x => fails.push(x));
+    E('S.auto = false; S.zone = 33; S.kills = 10; addModifier("bossHp", () => 1e4); fightBoss = false; challenge(); mob.atk = 0');
+    assert(E('bossTime') === 45 && E('bossTimer(35)') === 60, `the Enrage timer: 45 s for a zone elder, 60 s for a region boss (${E('bossTime')}, ${E('bossTimer(35)')})`);
+    E('bossTime = 0.05'); g.fn.tick(0.1);
+    const enr = E('mob.enr >= 0') && E('fightBoss');
+    for (let i = 0; i < 140; i++) g.fn.tick(0.1);
+    const still = E('fightBoss');
+    for (let i = 0; i < 15; i++) g.fn.tick(0.1);
+    assert(enr && still && !E('fightBoss') && fails.length === 1, 'at 0 the boss enrages; the attempt fails 15 s later (bossFail)');
+    E('addBonus("bossTime", () => -10)');
+    assert(E('bossTimer(33)') === 35 && E('bossTimer(35)') === 50, 'Short Fuse (bossTime -10) still takes 10 s off the Enrage timer');
+    errs.push(...g.errors);
+  }
+  // 9. the active reward: 3 of your own answers on a boss: +50% XP on the kill; idle: none
+  {
+    const run = active => {
+      const g = late(95), E = s => g.eval(s);
+      E('chooseClass("warrior"); S.auto = false; S.zone = 29; S.kills = 10; fightBoss = false; challenge(); mob.atk = 0; mob.hp = mob.max = 1e40');
+      let answers = 0;
+      for (let i = 0; i < 900 && answers < 3; i++) {
+        g.fn.tick(0.1);
+        if (active) { const w = E('(() => { const w = actWarning(); return w ? w.kind + ":" + (w.left <= w.win ? 1 : 0) + ":" + (w.left <= (w.perf || 0) ? 1 : 0) : ""; })()'); if (/^(heavy|zone|slam):1/.test(w)) { const k = E('actTap()'); if (k === 'parry' || k === 'dodge') answers++; } }
+      }
+      const xp0 = E('mob.xp');
+      E('mob.hp = 1; cbDamageFoe(mob, 10, -1, "magic")');
+      const out = { answers, xp: E('mob.xp') / xp0, act: E('S.cb2.n.act'), perfect: E('S.cb2.n.perfect'), fins: E('ACT_STATS.fins') };
+      errs.push(...g.errors);
+      return out;
+    };
+    const a = run(true), i = run(false);
+    assert(a.answers >= 3 && Math.abs(a.xp - 1.5) < 1e-9 && a.act === 1 && i.xp === 1 && i.act === 0, `the active reward: 3 of your own answers give +50% XP on the kill (x${a.xp}, ${a.answers} answers); idle x${i.xp} (buff items wait for S5)`);
+  }
+  // stagger and the Finisher: a full bar Staggers the boss (x1.5, does nothing), the Finisher fires by itself at 50%
+  {
+    const g = late(96), E = s => g.eval(s);
+    E('chooseClass("warrior"); S.auto = false; S.zone = 30; S.kills = 10; fightBoss = false; challenge(); mob.hp = mob.max = 1e40; mob.atk = 0');
+    for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+    E('actStag(mob, 200, 0)'); g.fn.tick(0.1);
+    E('mob.markT = 0; mob.mkV = 0; mob.vulnT = 0; mob.markUntil = 0');
+    const on = E('mob.stgT > 4.5 && mob.stgN === 1'), a = E('cbDamageFoe(mob, 100, -1, "magic", "fire", 0)');
+    const fins = []; g.fn.on('finisher', f => fins.push(Object.assign({}, f)));
+    for (let i = 0; i < 30; i++) g.fn.tick(0.1);
+    assert(on && Math.abs(a / (100 * E('typeXKey(mob.type, "fire")')) - 1.5) < 1e-6 && fins.length === 1 && fins[0].auto && fins[0].fin === 'hammerfall', `a full stagger bar: Staggered 5 s, takes x1.5; the Finisher fires by itself (${fins.map(f => f.fin + (f.auto ? ' auto' : '')).join()})`);
+    E('actStag(mob, 1000, 0)'); g.fn.tick(0.1);
+    assert(E('mob.stgT') === 0 || E('actStagMax(mob)') > 100, 'each later Stagger needs 25% more fill');
+    errs.push(...g.errors);
+  }
+  // elite traits at work
+  {
+    const g = late(97), E = s => g.eval(s);
+    E('S.auto = false; S.zone = 40; fightBoss = false; spawn(); globalThis.__e = combatFoes().find(f => !f.dead); __e.elite = true; __e.tr = null');
+    const clr = '__e.markT = 0; __e.mkV = 0; __e.vulnT = 0; __e.markUntil = 0; __e.ss = null; __e.chillT = 0; __e.rxT = 0; __e.armoured = false';
+    E('__e.tr = ["shielded"]; __e.eshMax = __e.max * 0.3; __e.esh = __e.eshMax; __e.eshT = 0; __e.hp = __e.max; ' + clr);
+    const px = E('typeXKey(__e.type, "phys")');
+    const h0 = E('__e.hp'); E(clr); E('cbDamageFoe(__e, __e.max * 0.1, -1, "magic", "phys", 0)');
+    const sh1 = E('__e.esh / __e.max'), h1 = E('__e.hp');
+    E(clr); E('cbDamageFoe(__e, __e.max * 0.04, -1, "magic", "phys", ST_HEAVY)');
+    const sh2 = E('__e.esh / __e.max');
+    assert(h1 === h0 && Math.abs(sh1 - (0.3 - 0.1 * px)) < 1e-6 && Math.abs(sh2 - (sh1 - 0.08 * px)) < 1e-6, `Shielded: the shield takes the hit first; heavy hits deal x2 to it (${sh1.toFixed(2)} -> ${sh2.toFixed(2)})`);
+    E('__e.tr = ["frozen"]; __e.esh = 0; __e.ice = true; __e.iceN = 0; __e.hp = __e.max; ' + clr);
+    const p1 = E('cbDamageFoe(__e, 100, -1, "magic", "phys", 0)');
+    E('for (let i = 0; i < 3; i++) cbDamageFoe(__e, 1, -1, "magic", "fire", 0)');
+    E(clr); const p2 = E('cbDamageFoe(__e, 100, -1, "magic", "phys", 0)');
+    assert(Math.abs(p2 / p1 - 2) < 1e-6 && !E('__e.ice'), `Ice-Clad: half from physical until 3 fire hits break the ice (${p1.toFixed(0)} -> ${p2.toFixed(0)})`);
+    const warns0 = E('ACT_STATS.warns + ACT_STATS.queued');
+    E('__e.tr = ["explosive"]; __e.chillT = 0; stApply(__e, "chill", 1, 0, -1); cbDamageFoe(__e, 1e40, -1, "magic")');
+    assert(E('ELITE_STATS.fizzles') === 1 && E('ELITE_STATS.blasts') === 0, 'Explosive: killed while Chilled it fizzles, no blast');
+    errs.push(...g.errors);
+  }
+  // 10. save: the cb2 round trip; every fixture loads with it; no runtime combat state in the save
+  {
+    const g = loadCore({ seed: 98 }), E = s => g.eval(s);
+    assert(E('S.cb2 && S.cb2.v === 1 && S.cb2.haptic === 1 && S.cb2.left === 0 && S.cb2.n.parry === 0'), 'S.cb2 { v, haptic, left, seen, n } for a new game');
+    E('S.cb2.n.parry = 4; S.cb2.left = 1; save()');
+    const h = loadCore({ seed: 98, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(h.eval('S.cb2.n.parry === 4 && S.cb2.left === 1'), 'the cb2 counters and settings survive a save and load');
+    const bad = [];
+    for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json'))) {
+      const k = loadCore({ seed: 99, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+      if (!k.eval('S.cb2 && S.cb2.v === 1 && typeof S.cb2.n === "object"') || k.errors.length) bad.push(f);
+      k.eval('for (let i = 0; i < 50; i++) tick(0.1); save()');
+      const saved = JSON.parse(k.storage.get(KEY));
+      if (saved.combat && Object.keys(saved.combat).some(x => !['on', 'back', 'tip'].includes(x))) bad.push(f + ' combat');
+    }
+    assert(!bad.length, 'every fixture loads with S.cb2; stagger, casts, traits and phases stay out of the save' + (bad.length ? ': ' + bad.join(', ') : ''));
+  }
+  // core files: no DOM
+  for (const f of ['59g-active.js', '59h-bosses.js', '59i-elites.js', '21g-data-bosses.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\/\/.*$/gm, '');
+    assert(!/\b(document|window|localStorage|canvas)\b/.test(src), `${f} is a core file: no DOM, window, canvas or storage`);
+  }
+  assert(!errs.length, 'no cb2 errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('cb2 crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
