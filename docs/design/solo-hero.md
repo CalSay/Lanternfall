@@ -52,8 +52,8 @@ subclass branches; the per-hero ability tree hangs off the chosen subclass. The 
 subclass upgrade only (or the upgrade of the base class if you stay).
 
 **Hero quests enhance an ability (owner).** The per-hero Awakening in heroes-2 stays separate from Ascension:
-finishing a hero's quest enhances one of that hero's current abilities. It gets a new name (coordinator
-proposal: **Kindling**, "Pip's Fireball is Kindled"; owner to confirm).
+finishing a hero's quest enhances one of that hero's current abilities. The name is **Hallowed** (owner):
+"Pip's Fireball is Hallowed". Which ability, and how a Hallowed ability differs: see the open question below.
 
 **Bonds become campaign story (owner).** The 21 Bonds, their 42 stories and Sworn lines leave the game.
 In their place, a campaign story told through NPCs around the world map that the player gets to know:
