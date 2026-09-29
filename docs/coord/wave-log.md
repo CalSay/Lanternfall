@@ -1013,3 +1013,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   sim 12/22 -> 12/22, T3 spread better (0.84-1.16). COORDINATOR SIGN-OFF on deviations: S.party.cls stays the
   running kit key (reader pass to lbHas in S3); Shield Wall stays 60/30 until S6; Warrior block as every 10th
   hit. check passes. NEXT: S3 (evolutions, the Proving, second slot, looks, Mirror respec) and SAVE1b.
+- MERGED SAVE1b (Download hidden when framed; copy tip instead).
