@@ -136,7 +136,7 @@ the new rigs' lazy bake. Budget R8: at most +1 ms JS per frame p95 on the phone.
 | **O3** Codex and stats | - | `src/js/57c-codex.js`, `src/js/55-stats.js` |
 | **L1** Powers and sets data | `src/js/21c-data-legend.js` | - |
 | **L2** Legend core: Book, drops, Echoes, Learn, Inscribe, Mark, Sigils, limits, sets | `src/js/55-legend.js` | `src/js/41-items.js`, `src/js/55-crafting.js`, `src/js/57b-expeditions.js` |
-| **L3** Combat powers | `src/js/59e-legend-combat.js` | `src/js/55-party.js`, `src/js/59-combat.js` |
+| **L3** Combat powers | `src/js/59l-legend-combat.js` | `src/js/55-party.js`, `src/js/59-combat.js` |
 | **L4** Legend UI | `src/js/75-legend-ui.js`, `src/styles/60-legend.css` | `src/js/57c-codex.js`, `src/js/75-party.js` |
 | **L5** Icons | `src/js/11b-art-legend.js` | - |
 | **O4 + L6** Sim and checks: `--oath`, `--legend`, O1-O9, L1-L8, caps | `tools/sim.mjs` | `tools/check.mjs` |

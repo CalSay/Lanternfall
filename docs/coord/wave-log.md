@@ -1014,3 +1014,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   running kit key (reader pass to lbHas in S3); Shield Wall stays 60/30 until S6; Warrior block as every 10th
   hit. check passes. NEXT: S3 (evolutions, the Proving, second slot, looks, Mirror respec) and SAVE1b.
 - MERGED SAVE1b (Download hidden when framed; copy tip instead).
+- MERGED S3 (59e-class-combat.js, 59f-trials.js, 75-class-ui.js, 61-class.css + hooks): six evolutions, ab2,
+  the Proving (Fenmother + level 35; solo trials Hold the Bridge / The Running Wraith / The Cursed Wave;
+  reusable runner for HQ1's Stand), choice card, looks, rings, Mirror respec costs. sim 12/22 -> 11/22 (T7 71%
+  vs 40-70% band; within limit; seed noise +-9%). T3 spread 0.91-1.16. Evolution power spread -2..+4 zones at
+  day 30 vs ~+1.5 target: BAL3. COORDINATOR SIGN-OFF on deviations (Proving damage scales with your HP; Trapper
+  damage floor 1.4; mid-trial reload returns to fighting). File name: legendaries L3 moves to 59l-legend-combat
+  (59e now taken by classes). Preview/Netlify: next [deploy] at the 09:38 check-in.
