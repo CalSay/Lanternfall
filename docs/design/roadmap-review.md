@@ -60,7 +60,7 @@ Testers (the owner, his friend) need a way to back up and restore a save before 
 1. **Slice 1: damage types + statuses + enemy weaknesses.** Combat engine plus Region 1 tuning. No class
    changes yet. Heroes get types.
 2. **Slice 2: three base classes + migration.** Warden saves → Warrior (Warden granted), Lanternmage →
-   Mage, Lightkeeper → Mage (Priest granted). The star maps are rebuilt for 3 classes.
+   Lanternmage, Lightkeeper → Lanternmage (Lightkeeper granted). The star maps are rebuilt for 3 classes.
 3. **Slice 3: the six evolutions**, with their trials, abilities, second ability slot and looks.
 4. **Slice 4: gear weights + tiers + production chains** (RG1), with migration of materials and items.
 5. **Slice 5: enchanting + buff items + Uniques 2.0.**
@@ -112,13 +112,13 @@ These are proposals; the owner may want 1.0 shorter.
 
 ### 2.1 Class evolutions: the rules around them (CL1 fills in the classes)
 
-- **When:** the **first evolution trial opens at the Region 1 boss (The Listener)**, level 60 or more. The
+- **When:** the **first evolution trial opens at the Region 1 boss (the Fenmother)**, level 60 or more. The
   end of Region 1 is the natural "act 1" payoff. Region 2 then opens enchanting, so the second act starts
   with two new systems.
 - **The trial:** a solo challenge fight for the Lanternbearer, with no heroes.
   - The Warrior holds a wall of foes for 60 s.
   - The Ranger downs a fleeing champion.
-  - The Mage survives a cursed wave.
+  - The Lanternmage survives a cursed wave.
   - Failing costs nothing. On passing, you choose your branch on a full-screen card that shows both paths
     in action.
 - **Choosing and switching:** the choice is permanent for the save's main class, so it means something.
@@ -137,10 +137,10 @@ Five types:
 | Type | Classes | Who resists | Who is weak |
 |---|---|---|---|
 | **Physical** | the base | armoured foes | – |
-| **Holy** | Priest, Warden procs | the Coast's drowned | undead (Bonefield, the Barrow) |
+| **Holy** | Lightkeeper, Warden procs | the Coast's drowned | undead (Bonefield, the Barrow) |
 | **Poison** | Venomstalker, Trapper traps | undead and constructs | beasts |
 | **Fire** | Warlock, Reaver's embers | the Emberwaste | marsh and plant foes |
-| **Frost** | Mage base, Trapper | – | fire foes |
+| **Frost** | Lanternmage base, Trapper | – | fire foes |
 
 Statuses, each with one clear rule:
 
@@ -184,10 +184,10 @@ Old tiers 1-5 map onto the new tiers without loss. Items keep their power.
 |---|---|---|
 | Warrior | metal | leather |
 | Ranger | wood | leather |
-| Mage | cloth | wood (staves, focus) |
+| Lanternmage | cloth | wood (staves, focus) |
 
 Accents cross over: Warrior gear takes a little cloth padding, Ranger gear a little metal (arrowheads),
-Mage gear a little metal (clasps). Every gathering line matters to every class a bit, and matters a lot to
+Lanternmage gear a little metal (clasps). Every gathering line matters to every class a bit, and matters a lot to
 one.
 
 **Leather** comes from hunting. See 2.5: a new gatherer job, plus fight drops as today.
@@ -253,9 +253,9 @@ All of it is one-thumb and optional. Idle zones stay idle.
 - **Ability timing:** your abilities charge; firing into a stagger or a combo window gives a bonus.
 - **Boss phases:** every boss gets 2-3 phases with one new mechanic each (adds, a wind-up, an arena hazard).
   It also gets a visible **signature buff item** in its body, which drops on the kill.
-- **Elite traits:** one trait by Region 2, two by Region 4. The traits are Shielded, Vampiric, Explosive,
-  Summoner, Enraged, Frozen-armour and Cursed. Each has a counter (holy beats Cursed, fire beats
-  Frozen-armour, and so on).
+- **Elite traits:** one trait by Region 2, two by Region 4. The traits are Shielded, Leeching, Explosive,
+  Summoner, Enraged, Ice-Clad and Cursed. Each has a counter (holy beats Cursed, fire beats
+  Ice-Clad, and so on).
 - **Enemy damage:** bosses can kill an unprepared party in about 30-40 s at their intended power, and
   normal packs about 2-3× today.
 - **Rewards for active play:** a boss killed with active play (3+ dodges or interrupts) drops +1 buff item
@@ -304,7 +304,7 @@ Every building gets **one talent point per building level** (Lv 8 means 8 points
 | Storehouse | Deep Shelves (+cap) | Sorting (auto-spillover, family pages) | Cold Room (herbs and fish keep; K12 meals) |
 | Bunkhouse | Comfort (+rest, shift length) | Training (gatherer XP) | Hearthsongs (gatherer stories, +find at the fire) |
 | Tavern | Rumours (event odds) | Recruiting (applicant speed, hero hire cost) | Trade (expedition trade prices) |
-| Watchtower | Long Watch (+away cap) | Scouts (better expedition grades) | Beacon (event alerts) |
+| Watchtower | Long Watch (+away cap) | Scouts (better expedition grades) | Balefire (event alerts) |
 | Kitchen, Tannery, Enchanter's Table | each on the same pattern | | |
 
 The number of nodes affecting damage is capped, so trees give identity, not raw power.
@@ -409,7 +409,7 @@ The number of nodes affecting damage is capped, so trees give identity, not raw 
   - first Bond chip
   - the Workbench and Forge
   - the Storehouse
-  - the Listener tease
+  - the Fenmother tease
 - One new thing at least every 2 minutes for the first 15 minutes, then every 5 minutes.
 - A tester checklist and a recorded sim run per class.
 

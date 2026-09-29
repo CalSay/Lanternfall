@@ -293,7 +293,8 @@ Wraithmarsh V. Story: the first wraith the marsh ever swallowed, and the one the
 since. It does not hear or listen for anything; it is the reason the Hollow stayed dark at all, the
 hand that drowned the marsh's own lights the night of the Fall and has held that fog over the Hollow
 every night since. While it stands, no relit fire in the Hollow outlasts the morning. Give it a
-display name, **"The Drowning Dark"** (replaces the old working name "The Listener"), through the
+display name, **"The Fenmother"** (the first wraith the marsh ever took; retires the working names
+"The Listener" and "The Drowning Dark"), through the
 existing `REGIONS[0].boss.name` slot (a label, not a save field; task LORE3).
 
 ### 4.3 The Sunken Coast (Region 2)
@@ -345,7 +346,7 @@ don't; the map itself stays dim. (This replaces the old "Listener" concept every
 
 | Region | Shroud | What it does |
 |---|---|---|
-| The Hollow | The Drowning Dark (the Elder Marsh Wraith the Voice claimed, 4.2) | Drowned the Hollow's own scattered lights the night of the Fall; while it stands, no relit fire in the Hollow outlasts the morning |
+| The Hollow | The Fenmother (the Elder Marsh Wraith the Voice claimed, 4.2) | Drowned the Hollow's own scattered lights the night of the Fall; while it stands, no relit fire in the Hollow outlasts the morning |
 | The Sunken Coast | Silas Penrow, the Fogbound (4.3) | Drowned Saltreach Light and wears its own sea-fog; while it stands, the fog never lifts and the tide runs black |
 | The Emberwaste | The Pyre Knight (8.3) | Holds the Lea's fallen lights captive in ash and ember, so the region can neither go fully dark nor ever get its light back |
 | The Pale Reach | The Whitehush (8.4) | Walks inside the Whiteout and snuffs every fire it finds; while it stands, no candle in the Pale Reach outlives one night |
@@ -361,10 +362,10 @@ Season 1 finale, which is not a Shroud but closes the same table.
 
 | Region | Sight | Person | Power |
 |---|---|---|---|
-| The Hollow (The Drowning Dark) | The marsh's fog burns off for good. The Hollow gets its mornings back, the map brightens, and the weather turns clear over the whole region. | A family who has hidden in the marsh's own fog since the Fall comes down to Hollow's Rest and raises the Storehouse. | The Proving opens (the evolution trial, gated on this exact kill; classes-2.md, owner-decided). |
+| The Hollow (The Fenmother) | The marsh's fog burns off for good. The Hollow gets its mornings back, the map brightens, and the weather turns clear over the whole region. | A family who has hidden in the marsh's own fog since the Fall comes down to Hollow's Rest and raises the Storehouse. | The Proving opens (the evolution trial, gated on this exact kill; classes-2.md, owner-decided). |
 | The Sunken Coast (Silas, the Fogbound) | The sea-fog lifts off Saltreach. For the first time in ten years the drowned streets show clear water at low tide, and the coast keeps its own mornings. | Survivors who never made it off the reef come ashore and raise Enchanting at the camp: buff items can finally be set into gear (plan-4.md 4.5, gated on Region 2). | Enchanting unlocks. |
 | The Emberwaste (The Pyre Knight) | The ash cools. Something green grows on the Lea for the first time since the Fall, and the region gets real daylight instead of ember-red gloom. | Families Caedmon got out of Emberlea, freed once the held lights go home (8.3), come back and raise a proper Forge upgrade at the camp. | Trade routes open between reached regions (plan-4.md 4.12; flagged in the LORE-R45b changes note below for the coordinator to confirm against the build order). |
-| The Pale Reach (The Whitehush) | The Whiteout stops forming. True stars show over the Frostgate for the first time in ten winters, and visibility across the region is never halved again. | A Silent Village survivor who kept one candle lit for the whole village, alone, the whole time (1.9's companion hook) comes to Hollow's Rest and raises a Beacon at the camp. | A new Tactics slot opens (flagged for coordinator confirmation against plan-4.md's order, same as row 3). |
+| The Pale Reach (The Whitehush) | The Whiteout stops forming. True stars show over the Frostgate for the first time in ten winters, and visibility across the region is never halved again. | A Silent Village survivor who kept one candle lit for the whole village, alone, the whole time (1.9's companion hook) comes to Hollow's Rest and raises the Balefire at the camp. | A new Tactics slot opens (flagged for coordinator confirmation against plan-4.md's order, same as row 3). |
 | The Season 1 finale (the Voice, not a Shroud) | The dark at the Gloamvale's heart thins to plain night. Every lamp in the land brightens at once, and the long dusk that "has not ended" finally does, for now (8.6). | Not one person: everyone the Voice ever held gets to go home. Vesper finishes her verse; Oriel's stars stop sending bad news; Elowen turns her own spark up (8.6). | No new power, stat or currency (kept as originally designed, 8.7): only a title, a lantern colour and the Season 2 hook (the Voice, now under Hollow's Rest). |
 
 ### 4.5 The Deepwell
@@ -586,7 +587,7 @@ one, and everyone comes to the fire. Night at camp is safe, never scary.
 | Zone 7 | Wisps | Green lights drift over the marsh. Do not follow them. |
 | Zone 14 | Crowns | Elders wear crowns. The dark makes kings of whatever held it longest. |
 | Zone 28 | The chapel on the hill | Someone keeps one candle burning in the dark chapel. (Elowen's quest.) |
-| Zone 35 | The Drowning Dark | One wraith does not tend the others. It never came out of the marsh, and the marsh never dried under it. |
+| Zone 35 | The Fenmother | One wraith does not tend the others. It never came out of the marsh, and the marsh never dried under it. |
 | Great Lantern I | The Green Light (exists) | The valley glows gold. Out at sea, a green light blinks wrong. |
 
 **Chapter end:** the Great Lantern of the Hollow, on Lantern Hill above Hollow's Rest. Hesketh's
@@ -628,7 +629,7 @@ region is for.
   light, standing up), the Kilns (Slagbacks), Wyrmscale Ridge (Wyrmlings, the Wyrm's brood), and the
   Pyre (Kept Lights: stolen lantern lights with legs, still in the shape of their lamps).
 - **The Shroud: the Pyre Knight** (decided by the coordinator, 2026-09-28; D4 names and designs it;
-  working name **Ser Hadric**). A knight of the Order, Caedmon's shield-brother, who stood with him
+  working name **Ser Durand**). A knight of the Order, Caedmon's shield-brother, who stood with him
   on the Emberlea road on the Fall night. The voice in the fire made them both the same offer: give
   it up, and it will never go out. Caedmon refused and walked out of the flame. This knight said
   yes — and the fire took him, not the other way round. He does not keep watch over the pyre the way
@@ -1033,7 +1034,7 @@ After the fire is lit (the existing line, plus one new line that plants rule 3):
 | `wisps` | reach zone 7 | Wisps | Small green lights drift over the Wraithmarsh. Hesketh pulls you back from the edge. "Don't follow them. That's how the marsh got its people." | Green lights drift over the marsh. Hesketh says not to follow them. |
 | `crowns` | reach zone 14 | Crowns | Every elder you have beaten wore a crown. Nobody made them. Hesketh turns one over in his hands. "The dark makes kings of whatever held it longest." | Every elder wears a crown. Hesketh does not like it. |
 | `chapel` | reach zone 28 | The Chapel on the Hill | On the hill above the road stands a dark chapel. One candle burns inside, very low, and does not go out. Someone is keeping it. | A candle burns in the dark chapel on the hill. |
-| `shroud` (was `listener`) | reach zone 35 | The Drowning Dark | At the heart of the marsh, one wraith does not tend the others. It never went back to shore, the night the marsh took it, and the marsh has never let go of it since. While it stands, no relit fire in the Hollow outlasts the morning. | One wraith in the marsh never came out of the water, and the fog never lifts around it. |
+| `shroud` (was `listener`) | reach zone 35 | The Fenmother | At the heart of the marsh, one wraith does not tend the others. It never went back to shore, the night the marsh took it, and the marsh has never let go of it since. While it stands, no relit fire in the Hollow outlasts the morning. | One wraith in the marsh never came out of the water, and the fog never lifts around it. |
 | (Great Lantern I) | zone 35 boss | The Green Light | exists (`COAST_STORY[0]`) | exists |
 
 The chapel beat leads into Elowen's quest, whose joining moment already follows it.
@@ -1047,7 +1048,7 @@ one fall line (its first kill).
   "It is only moss again. The crown rolls into the grass."
 - Elder Cave Bat: intro "A Bat Queen drops from the roof, straight at your light." / fall "She
   flaps off, small again. She does not come back."
-- The Drowning Dark (the Hollow's Shroud): intro "It turns from the water to your light." / fall
+- The Fenmother (the Hollow's Shroud): intro "It turns from the water to your light." / fall
   "The fog lifts off the marsh, and does not come back."
 
 The verbs of the dark, for every writer: it **hunts, snuffs, smothers, drowns, buries, chokes**

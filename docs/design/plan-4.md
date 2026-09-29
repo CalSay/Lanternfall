@@ -44,9 +44,9 @@ Everything works one-handed and is optional; idle zones stay idle.
 
 The Deepwell and the raid get the full boss kit first.
 
-**2.4 Elite traits** (owner: yes). Elites roll traits: Shielded, Vampiric, Explosive on death, Summoner,
-Enraged, Frozen-armour, Cursed. They get 1 trait from Region 2 and 2 traits from Region 4. Each trait has
-a counter (for example holy beats Cursed, fire beats Frozen-armour), so line-up and class choice matter
+**2.4 Elite traits** (owner: yes). Elites roll traits: Shielded, Leeching, Explosive on death, Summoner,
+Enraged, Ice-Clad, Cursed. They get 1 trait from Region 2 and 2 traits from Region 4. Each trait has
+a counter (for example holy beats Cursed, fire beats Ice-Clad), so line-up and class choice matter
 zone by zone. (S6)
 
 **2.5 Damage types and statuses** (owner: evolutions bring holy, poison and so on). The types are
@@ -84,7 +84,7 @@ slot jobs, combos, Kin and Bonds.
   4-5 heroes pays. (S7)
 
 **2.9 Class balance rule** (owner). Playing a tank or support must not be weaker. Utility evolutions
-(Warden, Trapper, Priest) must visibly lift the party's progress, not just survive. Parity target: all
+(Warden, Trapper, Lightkeeper) must visibly lift the party's progress, not just survive. Parity target: all
 classes within 1 zone at 2 h, day 1 and day 7, and within 15% on the days to each region boss.
 Tanks and supports stay best on hard walls: bosses, pinnacles and the Deepwell. (CL1, BAL3)
 
@@ -102,15 +102,15 @@ wisps). This makes area damage (Warlock, Trapper, Reaver cleaves, burns and spre
 ## 3. Classes 2.0 (CL1 design, then S2 and S3)
 
 **3.1 Three base classes by armour weight** (owner): **Warrior** (heavy), **Ranger** (medium),
-**Mage** (light).
+**Lanternmage** (light).
 
 **3.2 First evolutions: damage or utility** (owner-named):
 
 | Base | Damage evolution | Utility evolution |
 |---|---|---|
 | Warrior | **Reaver**: Bloodlust (hits build fury, lower HP hits harder); *Rend* causes bleeds | **Warden**: Bulwark (blocked hits store a counter); *Stand Fast* taunts and returns the stored hits |
-| Ranger | **Venomstalker** (damage over time): ramping venom stacks; *Toxic Bloom* bursts them | **Trapper**: traps ahead of packs, marks that make everyone hit harder; *Snare Field* roots a pack |
-| Mage | **Warlock**: spreading curses and dark fire (turning the dark's power on itself); *Hex Nova* detonates the curses | **Priest**: holy heals that overflow into shields and smite undead; *Sanctuary* |
+| Ranger | **Venomstalker** (damage over time): ramping venom stacks; *Deathcap* bursts them | **Trapper**: traps ahead of packs, marks that make everyone hit harder; *Snare Field* roots a pack |
+| Lanternmage | **Warlock**: spreading curses and dark fire (turning the dark's power on itself); *Witchfire* detonates the curses | **Lightkeeper**: holy heals that overflow into shields and smite undead; *Sanctuary* |
 
 **3.3 Evolution rules:**
 - The trial opens at the **Region 1 boss** (level 60+): a solo challenge for the Lanternbearer.
@@ -124,7 +124,7 @@ wisps). This makes area damage (Warlock, Trapper, Reaver cleaves, burns and spre
 counters, hero types, and Bonds that react to the Lanternbearer's class.
 
 **3.6 Migration:** Warden saves become Warrior with Warden granted, Ranger stays Ranger, Lanternmage becomes
-Mage, and Lightkeeper becomes Mage with Priest granted. Nothing is lost.
+Lanternmage, and Lightkeeper becomes Lanternmage with Lightkeeper granted. Nothing is lost.
 
 **3.7 Characters follow-up (CHAR1):** a secondary update after Core 2.0 redesigns and fleshes out the
 playable characters: looks, personality, backstories tied to the lore, and how heroes react to each class.
@@ -137,7 +137,7 @@ playable characters: looks, personality, backstories tied to the lore, and how h
 |---|---|---|
 | Warrior | metal | leather |
 | Ranger | wood | leather |
-| Mage | cloth | wood |
+| Lanternmage | cloth | wood |
 
 The main family makes up about 70% of a recipe, the second about 30%, and small accents cross over. Every
 gathering line matters a bit to every class and a lot to one.
@@ -170,8 +170,8 @@ Skill levels still matter for speed, yield and rare finds. Existing saves keep e
 **4.6 Buff items** (owner: class-specific, from gathering in each area; gems for mining, but not
 mining-only). **MAT1 (coordinator, 2026-09-28): buff items are Sigils**, never named like a gem, a
 stone or glass, so they are never confused with the `crystal` family's Gems (materials.md 7-8).
-- **One family per region:** the **Tide Sigil** on the Coast (fishing, Tide Pools), the **Ember Sigil**
-  in the Emberwaste (mining), the **Frost Sigil** in the Pale Reach (Starfall gathering) and the
+- **One family per region:** the **Tide Sigil** on the Coast (fishing, Tide Pools), the **Cinder Sigil**
+  in the Emberwaste (mining), the **Frost Sigil** in the Pale Reach (Starscar gathering) and the
   **Gloam Sigil** in the Gloamvale (regions-4-5.md).
 - **Each family has a version per weight:** heavy (sturdiness, resists), medium (speed, statuses) and light
   (power, casting).
@@ -273,9 +273,9 @@ bosses behind odd actions, hinted by Tavern rumours. They tie into the secret ac
 
 - Why we fight (done): the dark hunts and smothers light, and the Voice wants the world dark.
 - The Hollow's story on screen (done). Expedition lore and Omen lines (done).
-- **Region 2, the Sunken Coast** is built on Core 2.0 (tide, foes, elders, the Drowned Keeper, pearls,
+- **Region 2, the Sunken Coast** is built on Core 2.0 (tide, foes, elders, Silas the Fogbound, pearls,
   fishing, the Kitchen).
-- **Region 3, the Emberwaste**, with the Pyre Knight (Ser Hadric) and the Caedmon duel.
+- **Region 3, the Emberwaste**, with the Pyre Knight (Ser Durand) and the Caedmon duel.
 - **Regions 4 and 5** get themes, materials and bosses (LORE-R45, owner approves), then specs and builds.
 - **The Voice finale** closes Season 1.
 - **Writing:**

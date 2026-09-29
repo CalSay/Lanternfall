@@ -36,7 +36,7 @@ Design rules:
 - After the Region 2 boss, the curve flattens (plan-2 1.1). Oaths and legendary powers fill days
   30-45. Pinnacles give days 35-60 four named goals, about one a week (goal G1).
 - Stage C adds heavy hits, dives, heals, adds, taunts, stuns and cleanses, but no single fight
-  asks for all of them. Region bosses have 2 mechanics; the Drowned Keeper has 6 but only one of
+  asks for all of them. Region bosses have 2 mechanics; Silas the Fogbound has 6 but only one of
   them (the Green Beam) asks for a specific answer.
 - The four loose story threads (plan-2 4) have no pay-off: the Hollow King's fall (Corvin), the
   Ashen Wyrm's fire (Caedmon), the voice under the water (the Keeper's letters), and who is at the
@@ -62,7 +62,7 @@ with your best party and bring the light back out.
 5. Win: rewards, a best time, maybe a legendary power. Lose: one line on what beat you and a
    **Try again** button. Either way you go back to your front, which kept farming.
 
-**Unlock:** the Drowned Keeper beaten (`coastLit()`) **and** an Oath of 15 kept (`S.oath.maxL >=
+**Unlock:** Silas the Fogbound beaten (`coastLit()`) **and** an Oath of 15 kept (`S.oath.maxL >=
 15`). Both are needed, as the brief says. Expected on day 33-40 (P2 day 28-32; oaths.md O2 puts Oath
 15 at about day 33-38). All four bosses open together. Their **suggested power** differs (section
 6), so there is a natural order but no gate between them. Old saves use the same rule.
@@ -528,7 +528,7 @@ A weekly highlight, never a lockout and never power.
 - **Next Up** goals: "The Hollow King: your party can win now", "Boss of the Week: the Lurelight".
 - **The Lantern Road** (task RD) shows the four bosses as marks off the road. Tapping one opens its
   sheet.
-- Before the unlock, the section shows one line: "Pinnacles: beat the Drowned Keeper and keep an
+- Before the unlock, the section shows one line: "Pinnacles: beat Silas the Fogbound and keep an
   Oath of 15" with the two parts ticked as you do them (from `coastLit()` and `S.oath.maxL`).
 
 ### 8.2 The boss sheet (90% bottom sheet)

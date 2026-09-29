@@ -398,9 +398,9 @@ everyone you have hired has a Tent and works.
 `goldMult() = (1 + min(30, gear().gold) / 100) x omen`. At most x1.3 from gear; the Gold Rain Omen x1.3 on its
 day (6.3). So income is always within x1.7 of the table in 2.2.
 
-### 6.2 Crit damage from everything else: the Keen pool
+### 6.2 Crit damage from everything else
 
-Every other gold-gain source becomes **crit damage** in one pool, **Keen** (player word: "crit damage").
+Every other gold-gain source becomes **crit damage** in one pool (code id `keen`).
 
 ```
 keen = min(KEEN_CAP, Σ sources)          KEEN_CAP = 0.40 (+40% crit damage)
@@ -414,10 +414,10 @@ crit multiplier x (1 + keen)             every party member: the Lanternbearer t
   Region 3 boss; the cap in Region 5 for a thorough player. The sources below add to about +75%, so the cap
   is reached without every source, and it binds.
 
-| Source (file) | Today (gold) | New (crit damage, into Keen) |
+| Source (file) | Today (gold) | New (crit damage) |
 |---|---|---|
 | **Fortune** upgrade (`HERO_UPS`, 20-data) | +10% gold a level, no cap | **Precision**: +1% a level, cap 15 (+15%); price in 3.3 |
-| **Lucky Coin** relic (`RELICS`, Embers from the raid) | +25% gold a level | **Keen Coin**: +2% a level, cap 5 (+10%); price in Embers unchanged |
+| **Lucky Coin** relic (`RELICS`, Embers from the raid) | +25% gold a level | **Loaded Die**: +2% a level, cap 5 (+10%); price in Embers unchanged |
 | Zone mastery stars (55-mastery) | +10% gold a star in that zone | +1% a star in that zone (max +5%) |
 | Bestiary, Bones perk (55-mastery) | +3 / 6 / 10 / 15% gold | +1 / 2 / 3 / 5% |
 | Shrine Blessing **Coin** (57-camp) | +12% gold x Blessing power | Blessing **Edge**: +6% x Blessing power |
@@ -482,7 +482,7 @@ Blade and Swiftness up to 25% of the check-in's income; Precision; the rest wait
 | EC4 | Normal play, spend split per region (sim ledger) | shifts 25-45%; camp (Hearth, buildings, Storehouse, Tents) 25-40%; Blade, Swiftness and Precision 15-30%; the rest (hires, recruits, promotions, crafting, Sigils) 5-20% |
 | EC5 | Gold always has a use: banked gold after spending at a check-in | under 1 day of income at 90% of check-ins; an affordable purchase or shift at 95% of check-ins |
 | EC6 | Camp pacing | Hearth 2 bought in hours 2-6 of play (normal); the camp's last Region 2 row not before day 30 (today day 24) |
-| EC7 | Keen pool (normal play) | Region 1 boss 6-14%; Region 2 boss 14-24%; Region 3 boss 22-32%; cap not before Region 5 |
+| EC7 | Crit damage pool (normal play) | Region 1 boss 6-14%; Region 2 boss 14-24%; Region 3 boss 22-32%; cap not before Region 5 |
 | EC8 | Gear gold | gear gold never above 30% (static); the Fortune charm's damage cost 5-10% of party dps at grades 3, 6, 9, 12, 15 |
 | EC9 | Pace unchanged | T1-T3, D1, P1, P2 still pass; max zone at days 1, 3, 8, 14, 30 within 10% of today's (Blade repricing) |
 | EC10 | No inflation | `S.gold` and every price under 1e8 through Region 5 (normal); the largest price is Tent 10 or Hearth 10 of its region |
@@ -497,7 +497,7 @@ Blade and Swiftness up to 25% of the check-in's income; Precision; the rest wait
   fight away, bounties, trade), spent by category (shift, hire, tent, camp, upgrade, craft, recruit, other).
 - `--report econ [--days 90]`: per region the income a day by profile, the spend split (EC4), banked gold
   (EC5), the crew ratio (EC3, computed in closed form from the fee table and the measured idle income), the
-  Keen pool at each boss (EC7), and the price of the five biggest purchases.
+  crit damage pool at each boss (EC7), and the price of the five biggest purchases.
 - `check.mjs` section `econ`: EC1, EC8's cap, EC10's static part (every price table under 1e8), fees and hire
   tables equal to `ECON` data, no `mod('gold')` source left except the Omen (a registry probe: with every
   save field maxed, `goldMult() <= 1.3 x 1.8`).
@@ -520,7 +520,7 @@ already `v2` and leaves it).
 | Field | Meaning |
 |---|---|
 | `S.precision` | Precision upgrade level (0-15). `S.fortune` stays in `fresh()` at 0, unused |
-| `S.relic.edge` | Keen Coin relic level (0-5). `S.relic.coin` stays at 0, unused |
+| `S.relic.edge` | Loaded Die relic level (0-5). `S.relic.coin` stays at 0, unused |
 | `S.econ` | `{ v: 1, spent: { shift, hire, tent, camp, up, craft, recruit, other }, earned: { fight, away, bounty, trade, other } }` (the ledger; also the Journal's "Where your gold went") |
 | `S.camp.b.tent` | Tents built (0-10); set to 2 when Hands open |
 | `S.hands.v` | 3 |
@@ -537,9 +537,9 @@ already `v2` and leaves it).
 
 1. **1.1 `gold`:** the economy line `gold` gets a cap: **+30% total from gear**. No other source adds to gold
    except the Gold Rain Omen.
-2. **1.1 `critMult` and 1.3 bucket A:** a new account-wide pool **Keen** (`bonus('keen')`, player word "crit
-   damage") multiplies every party member's crit multiplier by `1 + min(0.40, keen)`. Every former gold-gain
-   source outside gear feeds it (6.2). Hard cap **+40%**.
+2. **1.1 `critMult` and 1.3 bucket A:** a new account-wide crit damage pool (`bonus('keen')`) multiplies every
+   party member's crit multiplier by `1 + min(0.40, keen)`. Every former gold-gain source outside gear feeds
+   it (6.2). Hard cap **+40%**.
 3. **8.2 reserved keys:** `S.econ`, `S.precision`, `S.relic.edge`, `S.camp.b.tent`; save key `v2`, `S.v` 3.
 
 ---
@@ -552,16 +552,16 @@ unused names. Nothing here uses 59e, 59g, 59h, 59i, 59j or 57h.
 
 | Task | Work | Owns (new files) | Small edits in | Needs |
 |---|---|---|---|---|
-| **ECON-A** Gold curve and prices (Opus, M) | `ECON` data (curve, hour rule, every price table, fee and hire tables, Tent rows, Keen sources and cap), the ledger `S.econ`, `foeGoldBase(z)`, `econHours(h, z)`, `keen()` / `keenMult()`, Precision, Keen Coin, the gold-to-Keen conversions, the save-key bump, Next Up goals for Tents; sim `--econ`, `--profile`, `--report econ`, EC1-EC13; check section `econ` | `src/js/21w-data-econ.js`, `src/js/55-econ.js` | `40-rules.js` (`mobGold` on `foeGoldBase`; `goldMult` without Fortune and the relic; `critMult` x `keenMult()`); `20-data.js` (`HERO_UPS` Blade, Swiftness, Precision; `RELICS` Keen Coin; Crown of Hollows); `30-state.js` (`KEY`, `S.v`, `fresh()` fields); `56-roster.js` (`foesGold`, `promoGold`); `57-camp.js` (`CAMP_TUNE` hour rule, `CAMP_HEARTH` hours, Blessing Edge, `CAMP_B.tent`, Bunkhouse retired); `55-store.js` (gold rows); `21-data-craft.js`, `41-items.js` (charm line sets, gold line on `lp` and its cap, gold affix, upgrade and reforge gold); `55-legend.js` (inscribe k, set bonus to Keen); `55-mastery.js`, `57c-codex.js`, `57e-constellations.js`, `56b-synergy.js`, `56-achievements.js`, `23-data-deeds.js`, `58-deeds.js` (sources to Keen, gold thresholds); `59-combat.js` (heroes' crit multiplier x `keenMult()`, one line); `tools/sim.mjs`, `tools/check.mjs`, `tools/perf.mjs` (`KEY`) | - (can start now; lands with or before S4 for one key bump) |
+| **ECON-A** Gold curve and prices (Opus, M) | `ECON` data (curve, hour rule, every price table, fee and hire tables, Tent rows, crit-damage sources and cap), the ledger `S.econ`, `foeGoldBase(z)`, `econHours(h, z)`, `keen()` / `keenMult()`, Precision, the Loaded Die, the gold-to-crit-damage conversions, the save-key bump, Next Up goals for Tents; sim `--econ`, `--profile`, `--report econ`, EC1-EC13; check section `econ` | `src/js/21w-data-econ.js`, `src/js/55-econ.js` | `40-rules.js` (`mobGold` on `foeGoldBase`; `goldMult` without Fortune and the relic; `critMult` x `keenMult()`); `20-data.js` (`HERO_UPS` Blade, Swiftness, Precision; `RELICS` the Loaded Die; Crown of Hollows); `30-state.js` (`KEY`, `S.v`, `fresh()` fields); `56-roster.js` (`foesGold`, `promoGold`); `57-camp.js` (`CAMP_TUNE` hour rule, `CAMP_HEARTH` hours, Blessing Edge, `CAMP_B.tent`, Bunkhouse retired); `55-store.js` (gold rows); `21-data-craft.js`, `41-items.js` (charm line sets, gold line on `lp` and its cap, gold affix, upgrade and reforge gold); `55-legend.js` (inscribe k, set bonus to crit damage); `55-mastery.js`, `57c-codex.js`, `57e-constellations.js`, `56b-synergy.js`, `56-achievements.js`, `23-data-deeds.js`, `58-deeds.js` (sources to crit damage, gold thresholds); `59-combat.js` (heroes' crit multiplier x `keenMult()`, one line); `tools/sim.mjs`, `tools/check.mjs`, `tools/perf.mjs` (`KEY`) | - (can start now; lands with or before S4 for one key bump) |
 | **N3a** Gatherers core, revised (Opus, M) | gatherers-2 as revised: the board (random C-E with pity, named star spots, Word on the Road pity), hire fees, rarity shares, jobs for random applicants, shift fees, queue and refunds, recall, Tam's free shifts, Tents as the cap, the talk-panel data (`handsTalkInfo`, 11.1), plus everything gatherers-2 12 lists for N3a minus lodgers and Swap | `src/js/21p-data-gatherers.js`, `src/js/57h-gatherers.js` (unchanged names) | `57f-hands.js` (fee at send, queue, refunds, `handsBeds()` reads Tents, N1's `hireFoes`/`shiftH` retired), `21f-data-hands.js` (odds, pity, shares) | ECON-A (`21r` tables) |
-| **ECON-B** Gold screens (Sonnet, S) | Journal: "Where your gold went" (the ledger, by region); the Keen sheet (sources, cap bar) from the Party tab's stats; price chips "about 2 h of fighting" on camp and Tent costs; the Precision row in upgrades | `src/js/75-econ-ui.js`, `src/styles/60-econ.css` | `75-stats-ui.js` (mount the ledger card) | ECON-A |
+| **ECON-B** Gold screens (Sonnet, S) | Journal: "Where your gold went" (the ledger, by region); the crit-damage sheet (sources, cap bar) from the Party tab's stats; price chips "about 2 h of fighting" on camp and Tent costs; the Precision row in upgrades | `src/js/75-econ-ui.js`, `src/styles/60-econ.css` | `75-stats-ui.js` (mount the ledger card) | ECON-A |
 | **N3b / WC1** | The Tavern board with star spots and fees, the talk panel and its Send sheet (fee, queue, "Needs x more gold"), Tents on the camp panorama | as gatherers-2 12 (`75-hands-ui.js`, `60-hands.css`) and WC1's files | `74-ui-tavern.js`, `75-camp-ui.js` | N3a |
 | **BAL-E** (Sonnet, S) | Run `--report econ` for the three profiles over 90 days, tune `GOLD_BASE`, `FEE_FOES`, hour rows and the Blade price to EC2-EC13 | - | `21w-data-econ.js` (numbers only) | ECON-A, N3a |
 
 Merge order: ECON-A first (it can ship before N3a: Hands keep N1's rules with the new hire table and fees
 applied by a small `57f` hook, Tents at 2 plus N1's Bunkhouse beds until N3a lands), then N3a, then ECON-B
 and N3b in parallel, then BAL-E. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
-`node tools/perf.mjs --quick`. No per-tick cost is added: prices are table reads; Keen is a cached sum
+`node tools/perf.mjs --quick`. No per-tick cost is added: prices are table reads; crit damage is a cached sum
 refreshed on the events that change its sources.
 
 ### 11.1 Data for the talk panel (WC1/N3 draw it)
@@ -599,7 +599,7 @@ the haul, picks 1-3 shifts, and taps **Send** (`handsSend(id, kind, t, { shifts 
 4. **Blade stays a gold upgrade on a gentler curve** (`5 x 1.05^n`), tuned to reach today's levels on the same
    days. Recommended: **yes** (moving it to XP would redo the Lanternbearer's pacing; this keeps it and caps
    its share at about a quarter of spend).
-5. **Keen: +40% crit damage cap** for every former gold-gain source except gear; Fortune becomes Precision, the
-   Lucky Coin becomes the Keen Coin. Recommended: **yes**.
+5. **Crit damage: +40% cap** for every former gold-gain source except gear; Fortune becomes Precision, the
+   Lucky Coin becomes the Loaded Die. Recommended: **yes**.
 6. **Gold Rain stays a gold day** (+30%) as the one non-gear gold boost. Recommended: **yes** (a day event to
-   plan the crew around; everything permanent became Keen).
+   plan the crew around; everything permanent became crit damage).

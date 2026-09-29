@@ -70,7 +70,7 @@ as a weekly lab.
 
 | # | Goal | Measured by |
 |---|---|---|
-| G1 | A named goal every week from day 7 to day 60: a coast cycle, the Drowned Keeper, an Oath level, a legendary power, a pinnacle boss | the `--days 60` run's goal log |
+| G1 | A named goal every week from day 7 to day 60: a coast cycle, Silas the Fogbound, an Oath level, a legendary power, a pinnacle boss | the `--days 60` run's goal log |
 | G2 | No dead stretch: at most 3 empty check-ins in a row to day 45 for every class, **including after the Region 2 boss** (today 17) | P4, R2, R9, O7 |
 | G3 | Line-ups matter: the tide and the Vows make the best line-up differ by situation, and `autoField` plans for synergies and roles | R3, O-examples, AF targets |
 | G4 | Build variety: 3+ viable hero power pairs per class, 4 circle sets, Constellation keystones with their [C] parts | L4, L5 |
@@ -116,7 +116,7 @@ Order: Stage C, then C4, C6, AF, R0 and Q1 in parallel (separate files), BAL2 la
 | Task | Owns | Small edits in |
 |---|---|---|
 | **R2-1** Coast data | `src/js/22-data-coast.js` | `src/js/30-state.js` (`mats.pearl`) |
-| **R2-2** Tide, 7 foes, 7 elders, the Drowned Keeper, the tide in the hold estimate | `src/js/59d-coast.js` | `src/js/59b-enemies.js` (behaviour registry), `src/js/59-combat.js` (tide multipliers, estimate option) |
+| **R2-2** Tide, 7 foes, 7 elders, Silas the Fogbound, the tide in the hold estimate | `src/js/59d-coast.js` | `src/js/59b-enemies.js` (behaviour registry), `src/js/59-combat.js` (tide multipliers, estimate option) |
 | **R2-3** Pearls, Tide Pools, settings, Tide Chart, beats, the Coast lantern, rank 8 Lanternlit, goals, bounties | `src/js/55-coast.js` | `src/js/55-gathering.js`, `src/js/56-roster.js` (rank cap), `src/js/55-bounties.js` |
 | **R2-4** Coast UI: tide chip and sheet, Tide Chart row, Set a pearl, beat cards | `src/js/75-coast-ui.js`, `src/styles/60-coast.css` | `src/js/62-stage.js` (HUD slot) |
 | **R2-5** Art: 7 foe rigs, the Keeper, the Tide Pool node, icons; `shore`, `wreck`, `drowned`, `lighthouse` themes, the water band, the relit lamps | `src/js/13b-art-coast.js`, `src/js/63b-scenery-coast.js` | `src/js/63-scenery.js` (`registerTheme`) |
@@ -165,7 +165,7 @@ O1 and L2 meet at `legendDrop(rank, source)`; either may merge first (oaths.md 8
 
 - **What:** four hand-made boss fights that use every Stage C mechanic at once (heavy hits,
   row attacks, dives, heals, adds, the tide), each with 3 phases and a 90s timer.
-- **Unlock:** after the Drowned Keeper and an Oath of 15 kept. Always open; no weekly lockout and
+- **Unlock:** after Silas the Fogbound and an Oath of 15 kept. Always open; no weekly lockout and
   no timed rewards.
 - **Pick your pressure:** each pinnacle takes the Oath sheet's Vows (oaths.md), so its difficulty
   climbs with the player.

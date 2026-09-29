@@ -115,7 +115,7 @@ Points per tier: Bronze 5, Silver 10, Gold 20, Everflame 40, each star 10.
 | 12 | `level` | Hero | Hero level | 10 / 25 / 50 / 75 | +25 | save `S.L` | xp | |
 | 13 | `survey` | Surveyor | Zone mastery stars | 35 / 100 / 175 / 350 | - | derived `S.mastery.zones` | xp | |
 | 14 | `naturalist` | Naturalist | Bestiary pages (types x tiers) | 7 / 14 / 28 / 56 | - | derived `S.mastery.types` | xp | IV needs the Coast types |
-| 15 | `crowns` | Crownbreaker | Elder types beaten (first kill of each zone type's boss, per region, plus the Listeners) | 3 / 7 / 15 / 22 | - | derived `S.maxZone` | xp | III and IV need the Coast |
+| 15 | `crowns` | Crownbreaker | Elder types beaten (first kill of each zone type's boss, per region, plus the Shrouds) | 3 / 7 / 15 / 22 | - | derived `S.maxZone` | xp | III and IV need the Coast |
 | 16 | `light` | Hours of Light | Hours counted, played plus away | 10 / 100 / 500 / 2K | x10 | save `S.stats.played + away` | offline | |
 
 ### 2.3 Wealth and loot (4 tracks; bonus `gold`)
@@ -659,8 +659,8 @@ still work?
 | 3 | Reach the Wraithmarsh | zone 7 (beat `wisps`) | Green lights drift over the marsh. Don't follow them. |
 | 4 | Beat a crowned elder | zone 14 reached (beat `crowns`) | The dark makes kings of whatever listens longest. |
 | 5 | Find the chapel on the hill | zone 28 (beat `chapel`) | Someone keeps one candle burning in the dark chapel. |
-| 6 | Find the Listener | zone 35 (beat `listener`) | One wraith does not tend the others. It listens. |
-| 7 | Relight the Great Lantern | first kill of the zone 35 boss | While it listens, no lamp in the Hollow will hold. |
+| 6 | Find the Fenmother | zone 35 (beat `listener`) | One wraith does not tend the others. It never let go. |
+| 7 | Relight the Great Lantern | first kill of the zone 35 boss | While it stands, no lamp in the Hollow will hold. |
 
 Done: title **Hollowlight**, the **Hollow Cloak**, a pennant on the wall, 25 points.
 
@@ -673,7 +673,7 @@ Done: title **Hollowlight**, the **Hollow Cloak**, a pennant on the wall, 25 poi
 | 3 | Learn the tide | Hallam's chart (zone 43), then one High and one Low tide weathered | The sea is pulled by something that is not the moon. |
 | 4 | Reach Saltreach | zone 50 | A drowned village. Its lamps still hang under the water. |
 | 5 | Read the Keeper's letters | zone 57 | A voice promised the Keeper his light would never go out. |
-| 6 | Face the Drowned Keeper | zone 70 reached | He carried the lens down into the sea. Bring it back up. |
+| 6 | Face Silas, the Fogbound | zone 70 reached | He carried the lens down into the sea. Bring it back up. |
 | 7 | Relight the Great Lantern of the Coast | first kill of the zone 70 boss | The lens comes back up. Far inland, something glows red. |
 
 Done: title **Tidelit**, the **Tide Cloak**, a pennant, 25 points. Chapter 2 appears only when the
@@ -828,8 +828,8 @@ ACHIEVEMENTS                                   [v]
 [lantern] 2,140 points            next: 2,500
 [###############-------]  Hero of the Road
 CHAPTER 1 · THE LAST LAMP                  5 of 7  [>]
-  Find the Listener           zone 31 / 35  [####-]
-  "One wraith does not tend the others. It listens."
+  Find the Fenmother          zone 31 / 35  [####-]
+  "One wraith does not tend the others. It never let go."
 FOLLOWING   Slayer IV     812K / 1M   [######-]  [x]
 ALMOST THERE
   [ic] 12 kills to Slayer III             [#######]

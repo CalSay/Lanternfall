@@ -19,7 +19,7 @@ Design rules:
    for the tide is worth 1 to 2 zones, not a wall.
 3. **One new material with a job from day one.** Pearls answer the tide (Tidefast, Shellbreaker).
    Later systems (legendaries, circle sets, rank 8) spend them too.
-4. **The region ends in a moment.** The Drowned Keeper is a real fight with telegraphs, and
+4. **The region ends in a moment.** Silas the Fogbound is a real fight with telegraphs, and
    relighting the Great Lantern is a ceremony with lasting rewards, not a toast.
 5. **Art only where it reads the system:** 7 foes, 1 boss, 4 backgrounds and a water line.
 
@@ -77,7 +77,7 @@ Zones 36-70 are 5 cycles of 7 coast zone types. Zone 70 holds the region boss.
 | 4 | Glimmer Lagoon | 40, 47, 54, 61, 68 | `drowned` (lagoon variant) | Lanternjelly | Crystal | Crystal 20% (sea glass) |
 | 5 | Drowned Saltreach | 41, 48, 55, 62, 69 | `drowned` | Brine Witch | Herbs | Herbs 20% (samphire) |
 | 6 | The Coral Nave | 42, 49, 56, 63 | `drowned` (chapel variant) | Coral Warden | Pearl | Ore 15% (coral) |
-| boss | Saltreach Light | 70 | `lighthouse` | The Drowned Keeper | - | - |
+| boss | Saltreach Light | 70 | `lighthouse` | Silas the Fogbound | - | - |
 
 - Names read like Region 1: "Grey Shingle", "Grey Shingle II" ... (roman numeral per coast cycle).
 - Hue shift per coast cycle is 40 degrees (Region 1 uses 70), so the sea stays sea-coloured.
@@ -135,7 +135,7 @@ tidePhase(t) -> 'high' | 'ebb' | 'low' | 'flood'
 tideNext(t)  -> { phase, at }       // the next change, for the countdown
 ```
 
-- It applies only in coast zones (`regionOf(S.zone).id === 'coast'`) and in the Keeper's fight
+- It applies only in coast zones (`regionOf(S.zone).id === 'coast'`) and in Silas's fight
   (which runs its own fast tide, section 7). Oaths can bring it to Region 1 (oaths.md, *Rising Water*).
 - A 15-minute session always sees a change. A boss attempt can be timed to a tide: an active choice.
 - The HUD shows a **tide chip** on the stage under the zone name: a wave icon and "High tide · 6:12"
@@ -148,7 +148,7 @@ tideNext(t)  -> { phase, at }       // the next change, for the countdown
 | **Wading** (party Front column) | Front-column members deal x0.8 damage (not Tidefast ones) | - | - |
 | **Firm footing** (party Front column) | - | Front-column members deal x1.1 | - |
 | **Damp** (all burns: party and foes) | Burns deal x0.5 | Burns deal x1.25 | x1 |
-| **Soaked** | Every party member in the Front column is Soaked (not Tidefast ones): takes +50% from shocks (Lanternjelly, the Keeper's beam) | nobody | nobody |
+| **Soaked** | Every party member in the Front column is Soaked (not Tidefast ones): takes +50% from shocks (Lanternjelly, Silas's beam) | nobody | nobody |
 | **Shells** | Shinglecrab and Coral Warden are soft (not armoured) | They are armoured (physical hits x `armourX`; Coral Warden x `armourX`^2) unless the hitter has Shellbreaker | as High |
 | **The sea gives** | +5% Pearl chance on every coast kill | **Tide Pools** open (section 5.2) | - |
 | **Surge** | - | - | Every 30s a wave: 1.5s wind-up (a blue "~" at the stage edge), then 6% max HP to every party member and a 1s knockback on every foe. A Warden's Shield Wall, a Lightkeeper ward or the class tap during the wind-up (**Brace**) halves it for everyone; a brace in the last 0.8s blocks it (counts as a parry) |
@@ -327,10 +327,10 @@ New `fx` keys (read in `59d-coast.js` and `55-coast.js`): `lowDmg`, `shellbreak`
 
 ---
 
-## 7. The region boss: the Drowned Keeper
+## 7. The region boss: Silas Penrow, the Fogbound
 
-Zone 70, **Saltreach Light**. The keeper of the lighthouse, an Oath lampwarden who gave the light
-to the sea. He carries the great lens, burning green.
+Zone 70, **Saltreach Light**. An Oath lampwarden who gave his light to the sea. He carries the great
+lens, burning green.
 
 | | Value |
 |---|---|
@@ -365,7 +365,7 @@ stun and a Lightkeeper ward count as parries, so an idle party with the right me
 
 ### 8.1 The moment
 
-On the first kill of the Keeper, `emit('greatLantern', { n: 2, region: 'coast' })`:
+On the first kill of Silas, `emit('greatLantern', { n: 2, region: 'coast' })`:
 
 1. The stage holds on the `lighthouse` scene; the lens climbs to the top of the tower and the
    light turns gold (a 2s light-pool tween on the cached scene, reduced motion: instant).
@@ -414,9 +414,9 @@ band VI's first zones: use 5). Two routes per band:
 | `r9a` | Glimmer Nets | IX | Crystal 50%, Pearl 50% | a Rare or better | a tank |
 | `r9b` | The Drowned Chapel | IX | L, R | an Oath member | a support |
 | `r10a` | The Causeway | X | Pearl 70%, T | an Epic or better | a tank |
-| `r10b` | Letters from the Keeper | X | L (the Keeper's last letters) | Maren or an Oath member | average level 180+ |
+| `r10b` | Letters from the Fogbound | X | L (Silas's last letters) | Maren or an Oath member | average level 180+ |
 
-Lore: 10 pages, "Letters from the Coast" (the keeper's letters and Hallam's notes). Codex Lore +10.
+Lore: 10 pages, "Letters from the Coast" (Silas's letters and Hallam's notes). Codex Lore +10.
 
 ### 9.2 Codex
 
@@ -441,7 +441,7 @@ Weekly board: "Gather 30 Pearls", "Beat 3 coast elders", "Brace 10 Surges".
 
 - Bounties (55-bounties small edit): "Defeat 40 Shinglecrabs", "Gather 20 Pearls", "Parry 3 Green Beams" (zone 70 only after the first attempt).
 - Next Up (`registerGoal` from `55-coast.js`): "Set a pearl: Tidefast for your Front line",
-  "Tide Chart: save a High tide line-up", "The Drowned Keeper: zone 70", "Promote X to Lanternlit".
+  "Tide Chart: save a High tide line-up", "Silas the Fogbound: zone 70", "Promote X to Lanternlit".
 - Onboarding (`FEATURES` row `tide`): the tide chip and a one-time guide step at zone 36:
   "The tide is in. Your Front line wades. Tap the chip to see what it does."
 
@@ -463,7 +463,7 @@ non-fire casters for High, melee and burns for Low), `--settings 0|1` (set pearl
 | R6 | The Keeper | active beats him about 1 day earlier than idle; idle within 2 days of reaching zone 70 |
 | R7 | Offline | 8h away on the coast within +/-15% of the same 8h simulated live |
 | R8 | Performance | coast scenes inside the perf budget; tide cross-fade and water band at most +1 ms JS per frame p95 on the phone |
-| R9 | After the boss | from the Keeper's first kill to day 45: at most 5 empty check-ins in a row (today 17) |
+| R9 | After the boss | from Silas's first kill to day 45: at most 5 empty check-ins in a row (today 17) |
 
 "Meaningful upgrade" (P4) gains: a Pearl setting, a Lanternlit promotion (plus Oath and legendary
 events once those systems ship).
@@ -480,7 +480,7 @@ in 4), `PACE.regionBoss` (1.5 at zone 70, as an array `[1, 1.5]` read per region
 | Piece | Owner file | Notes |
 |---|---|---|
 | 7 foe rigs | `src/js/13b-art-coast.js` | Reuse skeletons: Shinglecrab from the beetle's legs (6 legs, two claws); Stormgull from the bat; Drowned Deckhand and Brine Witch on the character kit like Rattlebones (Brine Witch hovers like the wraith); Kelp Strangler as a new 5-segment eel; Lanternjelly from the slime body plus 4 trailing tentacles (glow material); Coral Warden from the golem with coral growths. Poses: idle0, idle1, wind, strike. Elders use the existing 1.3x crown rule |
-| The Drowned Keeper | same file | Character kit, 1.6x, long coat, lens lantern (glow green, gold variant) |
+| Silas the Fogbound | same file | Character kit, 1.6x, long coat, lens lantern (glow green, gold variant) |
 | Tide Pool node | same file, key `node:pearl` | A rock pool with 5 tier tints, like the other nodes |
 | 4 scenery themes + water band | `src/js/63b-scenery-coast.js` | `shore`, `wreck`, `drowned`, `lighthouse` with variants (2.3); dry and flooded ground bakes; the relit lamp variant |
 | Icons | `13b-art-coast.js` (icon specs) | Pearl x5 tiers (12x12), tide chip (wave up, wave down), setting pip, Shellbreaker, Tidefast |
@@ -539,11 +539,11 @@ before finishing; per-frame and per-tick work stays cheap (docs/design/perf.md).
 |---|---|---|---|
 | R0 Regions and the Great Lantern moment (wave 1) | `src/js/22-data-regions.js`, `src/js/75-lantern-ui.js` | `src/js/40-rules.js` (zoneType, zonePlace, zoneCycle, zoneName), the readers in 12.3, `src/js/57e-constellations.js` (use `emit('greatLantern')` instead of its own toast) | Stage C merged |
 | R2-1 Coast data: 7 types, names, themes keys, `TIDE_TUNE`, `COAST_BEH`, uniques, `MAT.pearl`, nodes, sig drops, routes, Omens data | `src/js/22-data-coast.js` (core, data only) | `src/js/30-state.js` (`mats.pearl`) | R0 |
-| R2-2 Tide and foes: the tide clock, tide rules in combat, 7 behaviours, 7 elders, the Drowned Keeper, the hold estimate's `tide` option | `src/js/59d-coast.js` | `src/js/59b-enemies.js` (a `registerFoeBehaviour(type, hooks)` registry, a few lines), `src/js/59-combat.js` (tide multipliers through `mod('wade')`-style keys and the estimate option) | R2-1, Stage C |
+| R2-2 Tide and foes: the tide clock, tide rules in combat, 7 behaviours, 7 elders, Silas the Fogbound, the hold estimate's `tide` option | `src/js/59d-coast.js` | `src/js/59b-enemies.js` (a `registerFoeBehaviour(type, hooks)` registry, a few lines), `src/js/59-combat.js` (tide multipliers through `mod('wade')`-style keys and the estimate option) | R2-1, Stage C |
 | R2-3 Coast systems: pearls (Tide Pools, drops), settings, Tide Chart, beats, the Coast lantern, rank 8, goals, bounties | `src/js/55-coast.js` | `src/js/55-gathering.js` (node row list), `src/js/56-roster.js` (rank cap reads `bonus('rankMax')`), `src/js/55-bounties.js` (3 kinds) | R2-1 |
 | R2-4 Coast UI: tide chip and sheet, Tide Chart row, Set a pearl, beat cards, Lantern Road strip | `src/js/75-coast-ui.js`, `src/styles/60-coast.css` | `src/js/62-stage.js` (a HUD slot for the tide chip) | R2-3 |
-| R2-5 Art: rigs, the Keeper, node, icons, 4 themes, water band, relit variant | `src/js/13b-art-coast.js`, `src/js/63b-scenery-coast.js` | `src/js/63-scenery.js` (a `registerTheme(key, painter)` hook) | R2-1 |
-| R2-6 Writing: arrival lines, 5 beats, Keeper lines, 10 Lore pages, 3 bounty and Omen texts | `src/js/21b-stories-coast.js` (data) | - | - |
+| R2-5 Art: rigs, Silas, node, icons, 4 themes, water band, relit variant | `src/js/13b-art-coast.js`, `src/js/63b-scenery-coast.js` | `src/js/63-scenery.js` (a `registerTheme(key, painter)` hook) | R2-1 |
+| R2-6 Writing: arrival lines, 5 beats, Silas's lines, 10 Lore pages, 3 bounty and Omen texts | `src/js/21b-stories-coast.js` (data) | - | - |
 | R2-7 Wiring: expeditions bands VI-X, Codex rows, 3 Omens, `FEATURES` row | - | `src/js/57b-expeditions.js`, `src/js/57c-codex.js`, `src/js/55-almanac.js`, `src/js/55-onboard.js` | R2-3 |
 | R2-8 Sim and balance: `--chart`, `--settings`, R1-R9 in `--targets`, fixture `save-v3-coast.json` | `tools/sim.mjs`, `tests/fixtures/save-v3-coast.json` | `tools/check.mjs` (12.4) | R2-2, R2-3 |
 

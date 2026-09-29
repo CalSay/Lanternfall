@@ -131,7 +131,7 @@ Maximum: 3 + 3 + 2 + 4 + 2 + 2 + 2 + 2 + 2 + 2 + 3 + 3 = **30**.
 | **Legendary powers** | Each Oath elder kill at level 3+ rolls: `1% + 0.2% x L` (Oath 10: 3%, Oath 20: 5%, Oath 30: 7%), plus **pity**: +1% per miss, reset on a drop. The first Oath elder at level 3+ always drops one. The power's rank comes from the level band below. Details in [legendaries.md](legendaries.md) |
 | Trophies | An Oath elder at level 5+ gives 1 Trophy (+1 at 15+, +1 at 25+) of the zone's kind (coast: the kind you hold fewest of) |
 | Pearls | An Oath elder gives `1 + floor(L / 5)` Pearls of the zone tier |
-| **Circle Sigils** | An Oath elder at level 8+ gives 1 Circle Sigil of a random fielded companion's circle (legendaries.md 4) |
+| **Circle Crests** | An Oath elder at level 8+ gives 1 Circle Crest of a random fielded companion's circle (legendaries.md 4) |
 | **Oath Seal** | Keeping an Oath records the best level for that **zone type** (7 Hollow types + 7 coast types = 14 Seals). Codex page and titles below |
 | Highest Oath kept | One number, shown on the hero sheet and the Journal; raises the swearable level |
 

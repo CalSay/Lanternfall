@@ -93,7 +93,7 @@ Section 1.4 caps that.
 | hit caps | - | 0.35 / 0.15 / 0.10 | No one-shots (1.4) |
 
 The attack knobs raise damage everywhere at once. What keeps pacing is not softer foes but the new sources of
-survival that S1-S5 bring: armour and resist lines on weighted gear, `ward`, shields, Guard, the Priest and
+survival that S1-S5 bring: armour and resist lines on weighted gear, `ward`, shields, Guard, the Lightkeeper and
 Warden kits, Judgement healing, and type resists against a region's hit type. BAL3's job in S6 is to set `hp`
 (the role HP scales) so a **recommended** line-up holds within one zone of HEAD (target CX2, 1.6), while a
 line-up with no tank or no healer holds clearly lower.
@@ -106,11 +106,11 @@ armour (physical) answer it.
 
 | Region (zones) | Pack damage at the farm zone, recommended line-up | Hit types (share of pack damage) | Boss: unprepared party falls in | Boss timer (Enrage) |
 |---|---|---|---|---|
-| **1 The Hollow** (1-35) | 6-12% party HP per pack (softer under zone 12) | physical 70%, poison 20% (Spore Cap, Slime), frost 10% (Wraith) | 36-40 s (the gentle end of the band: the first boss walls) | 45 s; the Listener 60 s |
-| **2 The Sunken Coast** (36-70) | 8-14% | physical 50%, frost 35% (sea: Deckhand, Kelp, Witch), poison 15% (Jelly) | 33-38 s | 45 s; the Drowned Keeper 60 s |
+| **1 The Hollow** (1-35) | 6-12% party HP per pack (softer under zone 12) | physical 70%, poison 20% (Spore Cap, Slime), frost 10% (Wraith) | 36-40 s (the gentle end of the band: the first boss walls) | 45 s; the Fenmother 60 s |
+| **2 The Sunken Coast** (36-70) | 8-14% | physical 50%, frost 35% (sea: Deckhand, Kelp, Witch), poison 15% (Jelly) | 33-38 s | 45 s; Silas the Fogbound 60 s |
 | **3 The Emberwaste** (71-105) | 10-16% | fire 55%, physical 45% | 32-36 s | 45 s; the Pyre Knight 60 s |
 | **4 The Pale Reach** (106-140) | 12-18% | frost 55%, physical 30%, holy 15% (LORE-R45 confirms) | 30-35 s | 45 s; region boss 60 s |
-| **5 The Long Stair** (141-175) | 12-18% | poison 30%, fire 30%, frost 20%, physical 20% (the deep takes every colour) | 30-34 s | 45 s; region boss 60 s |
+| **5 The Gloamvale** (141-175) | 12-18% | poison 30%, fire 30%, frost 20%, physical 20% (the deep takes every colour) | 30-34 s | 45 s; region boss 60 s |
 
 "Party HP per pack" is the damage a pack deals over its life as a share of the party's summed max HP, after
 armour and reductions, at the zone `partyHoldEstimate` gives. Today it is 2.5-6%; the target is 2-3x. It
@@ -169,7 +169,7 @@ After armour, resists, reductions and block, before shields:
 make the damage meaningless: an unprepared party at gate power would always win at 30 s, just before it
 fell. So:
 
-| Rule | Zone elder | Region boss (the Listener, the Keeper, ...) |
+| Rule | Zone elder | Region boss (the Fenmother, the Fogbound, ...) |
 |---|---|---|
 | Timer | **45 s** | **60 s** (region-2.md 7 already gives the Keeper 60 s) |
 | Boss HP | x1.5 today (`bossHp` 12) | x2 today (`regionBoss` 1.33 on top of `bossHp` 12) |
@@ -463,7 +463,7 @@ faster. Idle play takes the hit, which is already counted in CX1, so it costs no
 | Perfect dodge | as a dodge, plus **Keen** (20% more damage for 3 s, bucket T, core-2 3.1) on each member who stepped out, and **+10 stagger** on the foe that cast it (proposal 8.2-2) |
 | A tap before the window | a normal class tap; the banner shows a small "wait" tick. No lock-out, no cost |
 | Missed | the kit's hit (usually 2-3x the boss's attack) on each member in the patch, capped at 35% max HP each |
-| Line-up answers (idle) | reductions (Shield Wall, Guard, Stand Fast), shields (Priest, wards, Pearl `ward` lines), resists to the hit's type, a formation that keeps the struck slot empty (the boss sheet shows which slots a kit's zones strike) |
+| Line-up answers (idle) | reductions (Shield Wall, Guard, Stand Fast), shields (Lightkeeper, wards, Pearl `ward` lines), resists to the hit's type, a formation that keeps the struck slot empty (the boss sheet shows which slots a kit's zones strike) |
 | Where | bosses (from phase 1 or 2 per kit), Explosive elites (5.1), the Deepwell's and the raid's kits |
 
 - **Spamming does not win the perfect.** The first tap inside the window dodges. A player who taps without
@@ -677,7 +677,7 @@ BOSS_KITS.slime = {
   ] };
 ```
 
-### 4.2 The Hollow: seven elders and the Listener
+### 4.2 The Hollow: seven elders and the Fenmother
 
 Zone elders: 2 phases, 45 s. Their HP and attack follow the zone (today's rule, x1.5 HP for the timer). The
 identity mechanic is today's second mechanic, now with a proper warning.
@@ -692,20 +692,21 @@ identity mechanic is today's second mechanic, now with a proper warning.
 | **Elder Quarry Golem** (construct, phys, armoured) | **Crushing Fist** (heavy, 6x, capped 35%, 8 s) | **Rockfall** (`slam`, 11 s): the Front slot, 3x | parry, dodge; `pierce`, frost (weak) | stone and shatter |
 | **Elder Marsh Wraith** (spirit, frost) | **Cold Touch** (heavy, 8 s). **Mend** (`heal`, 1.5 s, 12 s): heals itself 10% (a tap stops it, today's rule) | **Drown the Light** (`sig`, 2 s, 15 s): Curses the lowest-HP member (no healing, 4 s) | parry, tap, interrupt, cleanse; holy (weak) | cold and silence |
 
-**The Listener** (Region 1 boss, zone 35, the Elder of Wraithmarsh V; `spirit`, hits frost; 60 s, 3 phases).
-"The first wraith to hear a voice in the dark. While it listens, no lamp here holds."
+**The Fenmother** (Region 1 boss, zone 35, the Elder of Wraithmarsh V; `spirit`, hits frost; 60 s, 3 phases).
+"The first wraith the marsh ever swallowed, the one the Voice has worn since. While it stands, no relit fire
+here outlasts the morning."
 
 | Phase | New mechanic | Warning | Effect | Answers |
 |---|---|---|---|---|
-| 1. It Listens (100-66%) | **Cold Hand** (heavy, 8 s) and **Listen** | `heavy`; `sig`, 2.5 s, every 16 s | Listen, if it lands: every timed buff on the party ends (Empower, Keen, Shield Wall...) and every member is **Marked** for 5 s (takes +20%: core-2 3.1, no new status) | parry; interrupt with an ability, an `interrupt` hero, a stun |
+| 1. The Fog Comes (100-66%) | **Cold Hand** (heavy, 8 s) and **Smother** | `heavy`; `sig`, 2.5 s, every 16 s | Smother, if it lands: every timed buff on the party ends (Empower, Keen, Shield Wall...) and every member is **Marked** for 5 s (takes +20%: core-2 3.1, no new status) | parry; interrupt with an ability, an `interrupt` hero, a stun |
 | 2. It Calls (66-33%) | **Echoes** | `summon`, 2 s, every 20 s | 2 Marsh Wraiths (6% HP each, healers) | interrupt; area; focus the healers (Mark) |
 | 3. The Voice Answers (under 33%) | **Whisper** | `zone`, every 10 s, 2 slots | 2.5x frost to each member in the patch; the stage darkens a step (a cached dim plate) | dodge; frost resist; a formation that keeps one slot clear |
-| Phase changes | **It stops listening** | `hard`, 1.5 s | nothing (it turns to your lamp) | - |
+| Phase changes | **It stops smothering** | `hard`, 1.5 s | nothing (it turns to your lamp) | - |
 
 Signature: the heart-light (D2). Theme: "the voice": interrupts and silence. It is the Hollow's exam: all three
 answer kinds, each alone first.
 
-### 4.3 The Sunken Coast: seven elders and the Drowned Keeper
+### 4.3 The Sunken Coast: seven elders and Silas the Fogbound
 
 region-2.md 4.1's second mechanics become the identity; each gets one phase-2 mechanic. The tide still applies
 (region-2 3.2). Region-2's "immune to physical" Reef Wall becomes **physical x0.3** because core-2 2.3 says
@@ -721,7 +722,7 @@ nothing is immune to a damage type.
 | **Elder Brine Witch** (drowned, frost) | **Brine Lash** (heavy, 8 s). **Brine Hex** (passive, 9 s): Curses the top damage dealer (no healing, 4 s; core-2 3.1 names it) | **Brine Renewal** (`sig`, 2 s, 12 s): heals her 8% | `pearl_l` | hex and curse |
 | **Elder Coral Warden** (construct, phys, armoured) | **Coral Crush** (heavy, 5x, 8 s). **Reef Wall** (`hard`, 1.5 s, every 20 s): physical x0.3 for 5 s | **Coral Spikes** (`zone`, 13 s): 2 slots, 2.5x | `pearl_h` | reflect |
 
-**The Drowned Keeper** (zone 70, region boss; `drowned`, hits frost; 60 s; 3 phases; the fight's own fast tide:
+**Silas Penrow, the Fogbound** (zone 70, region boss; `drowned`, hits frost; 60 s; 3 phases; the fight's own fast tide:
 20 s High, 20 s Low, region-2 7). His six mechanics map onto the grammar; formation is a line of three slots now,
 so the Green Beam strikes slots, not columns.
 
@@ -793,7 +794,7 @@ pinnacles.md stays the design of the four fights. Core 2.0 changes only what the
 
 ### 4.7 Regions 3-5
 
-The template applies unchanged. The Pyre Knight (Ser Hadric) and the Caedmon duel use the `challenge` telegraph
+The template applies unchanged. The Pyre Knight (Ser Durand) and the Caedmon duel use the `challenge` telegraph
 (core-2 6.3) for their duel moments; the Region 3 spec writes them. LORE-R45 names Regions 4-5's bosses; each
 region's spec writes seven elders and a region boss in the 4.2 tables' shape, meeting 1.2's type shares.
 
@@ -809,11 +810,11 @@ in `ELITE_TRAITS` (21g) with one small handler (59i).
 | Id | Name | Effect | Counter (core-2) and how it works | Look on the stage | Badge (5x5) |
 |---|---|---|---|---|---|
 | `shielded` | Shielded | Starts with a shield of **30%** of its max HP. **5 s** after it last took damage the shield comes back full | **Heavy hits** deal **x2** to the shield; burst it and keep hitting | a pale blue hexagon rim (a cached overlay per rig size), cracked under 50% | hexagon |
-| `vampiric` | Vampiric | Heals **20%** of the damage it deals (after the party's armour and reductions), at most 3% of its max HP a second | **Curse**: no healing; **Venom 5+**: half (core-2 3.2) | up to 3 red drops rise when it heals | fang |
+| `vampiric` | Leeching | Heals **20%** of the damage it deals (after the party's armour and reductions), at most 3% of its max HP a second | **Curse**: no healing; **Venom 5+**: half (core-2 3.2) | up to 3 red drops rise when it heals | fang |
 | `explosive` | Explosive | On death: a **1.5 s `zone`** patch under the slot it was hitting, then **2x** its attack to each member there (capped **20%**) | **Dodge** it; or kill it while **Chilled**: it freezes and fizzles, no blast | glowing orange cracks; a fuse spark while the patch shows | bomb |
 | `summoner` | Summoner | Every **12 s** a **2 s `summon`** cast: 2 adds of the pack's type, each **8%** of its max HP, no gold or XP; at most 4 of its adds alive | **Interrupt** (the stage tap, an ability, a stun, an `interrupt` hero); area damage for the adds | a purple sigil under its feet while it casts | circle sigil |
 | `enraged` | Enraged | Under **50%** HP it attacks **50% faster** and deals **20% more** | **Chill** turns the rage off while it lasts; burst it past 50% | red steam over it once raging | horns |
-| `frozen` | Frozen-armour | Takes **x0.5** from physical and frost while iced. **3 fire hits** break the ice (Burn ticks and Curse detonations count as hits); it re-forms **8 s** after breaking | **Fire** | a white-blue ice crust (a cached palette variant and rim); gone when broken | flake in a square, with 3 pips |
+| `frozen` | Ice-Clad | Takes **x0.5** from physical and frost while iced. **3 fire hits** break the ice (Burn ticks and Curse detonations count as hits); it re-forms **8 s** after breaking | **Fire** | a white-blue ice crust (a cached palette variant and rim); gone when broken | flake in a square, with 3 pips |
 | `cursed` | Cursed | Its hits **Curse** the member hit (no healing, 4 s, refreshed by each hit) | **Holy** damage on it turns the aura off for **5 s**; **cleanse** lifts the Curse | a violet ring at its feet | cracked ring |
 
 - **First sighting:** the first time a trait appears, one toast: "Shielded elite: heavy hits break its shield
@@ -826,19 +827,19 @@ in `ELITE_TRAITS` (21g) with one small handler (59i).
 
 ### 5.2 Where they roll
 
-| Where | Traits per elite | Elites per pack | Weights: Shielded / Vampiric / Explosive / Summoner / Enraged / Frozen / Cursed |
+| Where | Traits per elite | Elites per pack | Weights: Shielded / Leeching / Explosive / Summoner / Enraged / Ice-Clad / Cursed |
 |---|---|---|---|
 | Region 1 (the Hollow) | **0** (today's elites: x2 HP, behaviour at double strength) | ≤ 1 | - |
 | Region 2 (the Coast) | 1 | ≤ 1 | 25 / 20 / 5 / 20 / 10 / 0 / 20 (drowned foes are holy-weak, so Cursed and its holy counter fit; no Frozen by the sea) |
 | Region 3 (the Emberwaste) | 1 | ≤ 1 | 20 / 10 / 25 / 15 / 25 / 0 / 5 (fire and fury; no ice in a burning land) |
 | Region 4 (the Pale Reach) | **2** | ≤ 2 in `normal` and `swarm` | 15 / 10 / 10 / 15 / 10 / 30 / 10 (Frozen's home: fire is the answer there, core-2 2.3) |
-| Region 5 (the Long Stair) | 2 | ≤ 2 | 15 / 15 / 10 / 15 / 10 / 10 / 25 (the deep curses; holy is the answer) |
+| Region 5 (the Gloamvale) | 2 | ≤ 2 | 15 / 15 / 10 / 15 / 10 / 10 / 25 (the deep curses; holy is the answer) |
 | The Deepwell | 1 from floor 8, 2 from floor 20 | as the floor | equal weights |
 | Pinnacles, the raid | none (bosses have kits instead) | - | - |
 
 **Zone leans.** So a line-up can be built "zone by zone" (plan-4 2.4), each zone of a region's 7-zone cycle
 leans to **two** traits (weight x3). The region data holds `lean[7]` (a pair per zone place). The Bestiary and the
-zone's info line say it: "Elites here are often Vampiric or Shielded." The planner (56d) gives a small score to a
+zone's info line say it: "Elites here are often Leeching or Shielded." The planner (56d) gives a small score to a
 line-up that carries a lean's counter (8.3, S6-C), so idle players get sensible picks too.
 
 ---
@@ -930,7 +931,7 @@ elites: [traits], packN }`. Tactics reads it 4 times a second, never per frame.
 | Preset | Lanternbearer (2 rules) | Heroes (3 rules each, as their kit allows) |
 |---|---|---|
 | `boss` | IF `castBar sig` THEN `interrupt`; IF `staggerFull` THEN `finish` | IF `staggerNear 80` THEN `hold sig`; IF `allyHp 40` THEN `use sig` (healers); IF `telegraph dive` THEN `taunt` (tanks) |
-| `farm` | IF `packSize 5` THEN `use ab1`; IF `elite any` THEN `focus` | IF `packSize 5` THEN `use sig` (area heroes); IF `allyHas curse` THEN `cleanse` (Priest, cleansers) |
+| `farm` | IF `packSize 5` THEN `use ab1`; IF `elite any` THEN `focus` | IF `packSize 5` THEN `use sig` (area heroes); IF `allyHas curse` THEN `cleanse` (Lightkeeper, cleansers) |
 | `deepwell` | IF `telegraph zone` THEN `use ab1` (a shield or Guard ability; else skipped); IF `castBar sig` THEN `interrupt` | IF `allyHp 50` THEN `use sig`; IF `elite summoner` THEN `use sig` (stunners); IF `telegraph dive` THEN `taunt` |
 
 ### 7.4 Auto-play without Tactics
@@ -1010,7 +1011,7 @@ and `var`; classes-2.md 8.2-7, `stacks` and `meter`) touch this spec only throug
 | **S6-E** Stage and fight UI: layout for 12 foes and depth ranks, the zoom step, the bar rules, merged numbers, `zone` patches, cast bars, the stagger outline and bar, trait overlays and badges, gem glints, the Finisher prompt, the banner (DOM, `aria-live`), settings (Assist timing, Haptics, Buttons on the left) | `src/js/13d-art-combat.js` (new: trait overlays, glints, heart-lights, hatch pattern, badges), `src/styles/60-combat2.css` (new) | `src/js/62-stage.js` (layout, zoom floor, HUD rules, numbers), `src/js/60b-baker.js` (the 1x swarm bake), `src/js/71-ui-fight.js` (the header: pack bar, stagger bar, cast name, "Enrage in", active pips), `src/js/70-ui.js` (three settings rows), `src/js/13-art-enemies.js` (`gem` anchors on the rigs) | S6-B | opus (perf-sensitive) |
 | **S6-F** The Deepwell and the raid | `src/js/59j-raid-combat.js` (new, core: the local raid fight, the shared clock, Falter, the stance, the signature grant on `raidReward`) | `src/js/59c-deepwell-combat.js` (Oil for answers, the 4-card draft, trait floors), `src/js/57d-deepwell.js` (5 boon rows, the set, `offers` 4 after an active kill) | S6-C, S6-D | opus |
 | **S6-G** Sim, checks, perf | `tools/sim.mjs` (`--cbtap`, `--cbharness`, CX1-CX14) | `tools/check.mjs` (8.5), `tools/perf.mjs` (`swarm10`, `bossKit`) | all | opus |
-| **S6-H** Writing: first-use hints, trait toasts, the Listener's lines, boss intro and fall lines for new kits, win-toast lines, the Deepwell tip, settings copy | text fields in `src/js/21g-data-bosses.js` (S6-C owns the file; S6-H fills copy fields only) and `src/js/21h-lore-hollow.js` (Listener lines) | - | - | sonnet |
+| **S6-H** Writing: first-use hints, trait toasts, the Fenmother's lines, boss intro and fall lines for new kits, win-toast lines, the Deepwell tip, settings copy | text fields in `src/js/21g-data-bosses.js` (S6-C owns the file; S6-H fills copy fields only) and `src/js/21h-lore-hollow.js` (Fenmother lines) | - | - | sonnet |
 
 - **Untouched:** `52-raid.js`, `80-online.js`, the shared data shapes, the room, the leaderboard.
 - **Reserved names respected:** `59d` (the coast, region-2), `59e` (CL1's class combat), `59f` and `13c`
@@ -1066,7 +1067,7 @@ registerState('cb2', {
 | Scenario | Script | Budget (2.8) |
 |---|---|---|
 | `swarm10` | a swarm zone (10 foes), 30 s of fighting with Burns spreading, statuses, merged numbers, an Explosive elite | JS/frame p95 ≤ 8 ms and ≤ +1.5 ms over the 3-foe baseline; frame gap p95 ≤ 34 ms; no long task on pack arrival or the zoom step; heap < 2 MB a minute |
-| `bossKit` | the Listener: 3 phase changes, a summon, a Stagger and a Finisher, 45 s | frame gap p95 ≤ 34 ms; no long task over 50 ms at a phase change or the Finisher |
+| `bossKit` | the Fenmother: 3 phase changes, a summon, a Stagger and a Finisher, 45 s | frame gap p95 ≤ 34 ms; no long task over 50 ms at a phase change or the Finisher |
 
 ### 8.6 Decisions for the owner
 

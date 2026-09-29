@@ -54,7 +54,7 @@ Screenshots (`img/menus-*.png`): `menus-360-game`, `-fight`, `-party`, `-gather`
 | Fight | Upgrades · Bounties · Bestiary | Omen banner, boss gate, hero upgrades, old companions (before the roster) · bounties · zone mastery, bestiary |
 | Party | Team · Roster | formation, your hero, fighting beside you, synergies · roster grid, leads |
 | Gather | Mining · Wood · Foraging · Pack | skill cards, home ground and a how-to line on each node view · the pack (materials and trophies) |
-| Craft | Make · Gear · Powers · Uniques | stations, recipes, Enchanter's Table · your gear, the bag · legendary powers: your powers, the Lantern Book, circle sets (opens with the first legendary power or Circle Sigil) · unique loot |
+| Craft | Make · Gear · Powers · Uniques | stations, recipes, Enchanter's Table · your gear, the bag · legendary powers: your powers, the Lantern Book, circle sets (opens with the first legendary power or Circle Crest) · unique loot |
 | Camp | Camp · Tavern · Almanac · Raid | camp, buildings, blessings, roster board · visitor, who is online, hall of heroes, rename · today's Omen and the week · world raid, war horn, relics |
 
 The **Journal** (lifetime stats) and **Achievements** moved to the bell: the bell sheet has

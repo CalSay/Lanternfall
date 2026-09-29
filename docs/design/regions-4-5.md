@@ -50,7 +50,7 @@ ever heard it from Elowen.
   No green (that is the coast's colour) and no red (the Emberwaste's). Snow is never pure white on
   screen; it carries a cold blue-grey so lantern gold reads against it.
 - **Landmarks:** the Frostgate (the pass itself, a break in the peaks with the old road's last cairn),
-  the Starfall Fields (a crater basin where fallen light struck the mountain, not the plain, the night
+  the Starscar (a crater basin where fallen light struck the mountain, not the plain, the night
   of the Fall), the Silent Village (empty houses, each with an unlit sill-candle), the Frostgate
   Bastion (the region boss's hold, at the top of the last ridge).
 - **Lantern angle:** every other region's lamps are the Order's, dark until the hero relights them.
@@ -82,7 +82,7 @@ What the player learns here, in order:
 
 ### 1.3 Signature gathering and buff-item family: the Frost Sigil
 
-**The gathering.** Starfall gathering, a new activity unlocked in the Starfall Fields: small bright
+**The gathering.** Starscar gathering, a new activity unlocked in the Starscar: small bright
 shards of the light that fell here the night of the Fall, half-buried in the snow, cold to the touch
 and warm to the eye. It reads as a new node type (like Tide Pools), not a new skill: it sits on the
 Mining tab, since the shards behave like ore-bright gems in the hand — but they are not gems: what a
@@ -92,7 +92,7 @@ player finds and sockets is a **Frost Sigil**, never called a shard, a gem or gl
 
 | Name | Where found | Notes |
 |---|---|---|
-| **Frost Sigil** (family name; a found item is named `<theme> Sigil`, e.g. **Whitehush Sigil** for the region boss's signature drop, materials.md 7) | Starfall gathering (active finds more, as Tide Pools do); a Region 4 boss's signature drop | Cold to hold; it does not melt snow near it |
+| **Frost Sigil** (family name; a found item is named `<theme> Sigil`, e.g. **Whitehush Sigil** for the region boss's signature drop, materials.md 7) | Starscar gathering (active finds more, as Tide Pools do); a Region 4 boss's signature drop | Cold to hold; it does not melt snow near it |
 
 Three weight versions (`h`: armour, hp, block, frost resist; `m`: attack speed, haste, crit, status
 power, control; `l`: spell power, healing, ward, frost power), drawing the core-2.md 5.4 line pools.
@@ -129,8 +129,8 @@ the LORE-R45 working draft below:
 (Moon, Star), so grade 12 items still read as "the finest thing this region makes."
 
 **Secondary resources** (production-chain inputs, plan-4.md 4.4; names per materials.md 6, owner to
-approve): **Rime Coal** (mined from veins near the Starfall craters), **Rime Salt** (scraped from the
-Frostgate's ice), **Frostbloom** (a pale flower that only opens at night, used for dye). Low value to
+approve): **Peat** (cut from veins near the Starscar craters), **Rock Salt** (mined from the
+Frostgate's ice), **Woad** (a pale flower that only opens at night, used for dye). Low value to
 the hero directly, ideal gatherer and refiner work, matching Region 1-3's existing coal/salt/dye role.
 
 ### 1.5 The seven zone types
@@ -138,9 +138,9 @@ the hero directly, ideal gatherer and refiner work, matching Region 1-3's existi
 | Zone type | Theme and look | Foe | Family (`fam`, core-2.md 2.3) | Weak to | Resists |
 |---|---|---|---|---|---|
 | Frostgate Pass | The road's last stretch before the peaks; cairns, wind | Rimewolf (a pack hunter, drives lamps apart) | `beast` | poison | - |
-| Whitepeak Cliffs | Sheer rock and snow, nests in the crags | Stormpeak (a diving bird, like Stormgull but colder) | `beast` | poison | - |
-| The Starfall Fields | Craters, half-buried shards, Frost Sigil gathering | Skyfallen (star-glass grown legs, a construct made from the same fall as the shards) | `construct` | frost | poison |
-| The Frozen Hollow | Ice caves under the peaks, blue light through the walls | Ice Wraith (holds a lamp's warmth until it drains it) | `spirit` | holy | phys |
+| The Eyries | Sheer rock and snow, nests in the crags | Skua (a diving bird, like Stormgull but colder) | `beast` | poison | - |
+| The Starscar | Craters, half-buried shards, Frost Sigil gathering | Star Golem (star-glass grown legs, a construct made from the same fall as the shards) | `construct` | frost | poison |
+| The Blue Caves | Ice caves under the peaks, blue light through the walls | Ice Wraith (holds a lamp's warmth until it drains it) | `spirit` | holy | phys |
 | The Silent Village | Empty houses, unlit sills, candle wax on every door | Palefolk (villagers who gave their light away and faded when the dark buried them; not hostile out of malice, only cold and lost) | `pale` | fire | frost |
 | The Rimewood | A frost forest, branches like glass, the quietest zone in the game | Icewisp (a small drifting light-eater, swarms) | `pale` | fire | frost |
 | Frostgate Bastion | The boss's hold: the last ridge, the Frostgate's far side | boss zone | - | - | - |
@@ -200,8 +200,8 @@ Reach."**
 
 ### 1.8 Dungeon and raid ideas
 
-- **The Starfall Crater** (a solo/party dungeon, Deepwell-shaped): a descent into the biggest crater,
-  where the fallen light pooled thickest and the Skyfallen are made. Ends in a Skyfallen elder, not a
+- **The Starpit** (a solo/party dungeon, Deepwell-shaped): a descent into the biggest crater,
+  where the fallen light pooled thickest and the Star Golem are made. Ends in a Star Golem elder, not a
   full pinnacle; a place for Frost Sigil farming and a mid-region power spike, the way the Deepwell
   serves Region 1.
 - **The world raid already has a hook here** (lore.md 4.7): the Pale Tyrant, "came down from the
@@ -214,10 +214,9 @@ Reach."**
 
 ### 1.9 New hero and gatherer hooks
 
-- **A new gatherer job for Starfall gathering** fits N1b's "two named gatherers per job" pattern
+- **A new gatherer job for Starscar gathering** fits N1b's "two named gatherers per job" pattern
   (plan-4.md 5): a Steady/Lucky pair recruited from the Silent Village's survivors, who know the
-  Starfall Fields better than any outsider. Working names: **Fenn** (Steady) and **Wick** (Lucky) —
-  "Wick" doubles as a small joke that fits the house voice (a candle word, for the lucky one).
+  Starscar better than any outsider. Working names: **Sten** (Steady) and **Runa** (Lucky).
 - **A new companion hook, not required for 1.0:** a survivor from the Silent Village who kept a
   candle lit for the whole village, alone, the way Elowen scattered sparks for a whole land — a small
   mirror of the hero's own origin, at a village scale. Left for HER (plan-4.md 7) to place or drop.
@@ -248,8 +247,8 @@ a shared dungeon.
   the Deepwell is a held breath, the Gloamvale should read as **hushed and used up**: a place light
   gave up on, not a place fighting to keep it.
 - **Landmarks:** the Last Descent (the switchback road down from the Frostgate Bastion, the only way
-  in), the Hush (a windless grey forest where nothing ever rustles), the Flats of No Reflection (the
-  valley floor's still black water, which shows no sky because there is none to show), Emberhearth
+  in), the Stillwood (a windless grey forest where nothing ever rustles), the Blind Mere (the
+  valley floor's still black water, which shows no sky because there is none to show), Coldhearth
   Ruins (an older settlement whose hearths finally went out, generations before the hero's time — a
   quiet warning of what could have happened to the Pale Reach's Silent Village with worse luck), and
   the Heart of the Gloamvale (the Voice's ground, lore.md 8.6-8.7).
@@ -275,7 +274,7 @@ What it gives the player instead of a Great Lantern is in 2.7.
 
 MAT1 has named this family (materials.md 7): **the Gloam Sigil**, buff-item family id `well` (RG1's
 formal id; not the `gloam` combat family of 2.5, a different table). The Gloamvale's own gathering
-resource is mined from the still black water of the Flats of No Reflection and the roots of the Hush's
+resource is mined from the still black water of the Blind Mere and the roots of the Stillwood's
 dead-grey trees — something that grew here in the dark, the same way a Frost Sigil is what fell in the
 Pale Reach and a Tide Sigil is what the sea swallowed on the Coast. It is the last buff-item family in
 Season 1 (core-2.md 5.4 table, top grade **15**). Three weight versions follow the usual core-2.md 5.4
@@ -296,22 +295,22 @@ Per core-2.md 5.2, Region 5 owns grades 13-15, the last three grades in the game
 | Herb | Nightshade | Wolfsbane | Gloamlily |
 | Gem (crystal) | Onyx | Bloodstone | Black Diamond |
 
-**Secondary resources** (materials.md 6, owner to approve): **Dead Coal**, **Grey Salt**, **Nightbloom**
+**Secondary resources** (materials.md 6, owner to approve): **Anthracite**, **Grey Salt**, **Inkcap**
 (dye), matching every other region's coal/salt/dye role (1.4, 3).
 
 ### 2.5 The seven zone types
 
 New zone types built for the Gloamvale's own look (2.1), not reused from the Deepwell's Deep Lore
 pages. `gloam` (weak holy, no resist) is the region's own family, carried by its two emotional-core
-zones (the Hush and Emberhearth Ruins), the same pattern Region 4 used for `pale`.
+zones (the Stillwood and Coldhearth), the same pattern Region 4 used for `pale`.
 
 | Zone type | Theme and look | Foe | Family | Weak to | Resists |
 |---|---|---|---|---|---|
-| The Last Descent | The switchback road down from the Frostgate Bastion; loose scree, a wind that dies as you go lower | Gloam Hound (a pack hunter shaped by the valley's permanent dusk) | `beast` | fire | - |
-| The Hush | A windless grey forest; nothing rustles, nothing sings | Hushwalker (moves only when nothing is looking at it) | `gloam` | holy | phys |
-| The Flats of No Reflection | Still black water that shows no sky, because there has been none to show for longer than anyone has lived | Stillbound (rises without a ripple) | `spirit` | holy | frost |
-| The Long Dusk Fields | Grey farmland, standing crop that never ripened and never rotted either | Fieldwatcher (a shape the dark filled in where a farmhand should stand) | `construct` | frost | poison |
-| Emberhearth Ruins | The remains of a settlement whose hearths finally went out, long before the hero's time | Ash Echo (what is left when even the memory of a fire goes out) | `gloam` | holy | phys |
+| The Last Descent | The switchback road down from the Frostgate Bastion; loose scree, a wind that dies as you go lower | Lurcher (a pack hunter shaped by the valley's permanent dusk) | `beast` | fire | - |
+| The Stillwood | A windless grey forest; nothing rustles, nothing sings | Stillwalker (moves only when nothing is looking at it) | `gloam` | holy | phys |
+| The Blind Mere | Still black water that shows no sky, because there has been none to show for longer than anyone has lived | Merewight (rises without a ripple) | `spirit` | holy | frost |
+| The Long Dusk Fields | Grey farmland, standing crop that never ripened and never rotted either | Scarecrow (a shape the dark filled in where a farmhand should stand) | `construct` | frost | poison |
+| Coldhearth | The remains of a settlement whose hearths finally went out, long before the hero's time | the Hearthless (what is left when even the memory of a fire goes out) | `gloam` | holy | phys |
 | The Closed Orchard | A dead orchard, fruit hanging like stones, never fallen | Orchard Husk (slow, heavy, drops only when struck) | `undead` | holy | poison |
 | The Heart of the Gloamvale | The Voice's ground (lore.md 8.6-8.7) | boss zone: the Voice | - | - | - |
 
@@ -376,7 +375,7 @@ part of Region 5. What the story adds is smaller and happens only after the Seas
 - **A gatherer hook for the Gloamvale's own resource** (2.3), the same shape as every other region's
   (N1b, plan-4.md 5): a Steady/Lucky pair recruited from the Pale Reach's own survivors — the last
   people willing to follow the road this far, since nothing lives in the Gloamvale to recruit from.
-  Working names: **Haldor** (Steady) and **Nessa** (Lucky).
+  Working names: **Haldor** (Steady) and **Liv** (Lucky).
 - **No new companion is proposed for Region 5.** Every open companion thread that pays off this late
   (Elowen, Thessaly, Hesketh, Anselm, Vesper) already has its payoff written into lore.md 8.6, and
   Kestrel's reckoning is Region 4's, not Region 5's (1.6). Adding a brand-new face this close to the
@@ -425,9 +424,9 @@ full table, and sections 1.4, 2.4 and 3 above for the region-by-region breakdown
 | Family id | Name (MAT1, materials.md 7) | Region | Top grade | Found by |
 |---|---|---|---|---|
 | `pearl` | Tide Sigil | Coast | 6 | Fishing, Tide Pools |
-| `glass` | Ember Sigil | Emberwaste | 9 | Emberwaste mining |
-| `star` | Frost Sigil | Pale Reach | 12 | Starfall gathering (new node type, Mining tab) |
-| `well` | Gloam Sigil | Gloamvale | 15 | Mining the Flats of No Reflection and the Hush |
+| `glass` | Cinder Sigil | Emberwaste | 9 | Emberwaste mining |
+| `star` | Frost Sigil | Pale Reach | 12 | Starscar gathering (new node type, Mining tab) |
+| `well` | Gloam Sigil | Gloamvale | 15 | Mining the Blind Mere and the Stillwood |
 
 ---
 
@@ -442,7 +441,7 @@ full table, and sections 1.4, 2.4 and 3 above for the region-by-region breakdown
    landing, opened only after the ending, for the Voice's rematch) is the right size of change**, or
    whether the coordinator wants the Deepwell to stay completely untouched until Season 2 and have
    the rematch live somewhere else (for example, back in the Gloamvale, unlocked after the ending).
-3. **All new character names in this doc** (Rowan, Haldor, Nessa): approve as a set, or flag any that
+3. **All new character names in this doc** (Rowan, Haldor, Liv): approve as a set, or flag any that
    should change. (Material and buff-item names are no longer an open question here — see MAT1.)
 
 ---
@@ -528,4 +527,4 @@ Kept to three; see section 5 above for the full text of each:
 1. Confirm the Gloamvale's chapter-end beat, the Seam, or ask for a different close (section 5.1).
 2. Confirm the size of the Deepwell's Season 1 addition (the rematch's new stretch), or move the
    rematch elsewhere (section 5.2).
-3. Approve the new character names — Rowan, Haldor, Nessa (section 5.3).
+3. Approve the new character names — Rowan, Haldor, Liv (section 5.3).

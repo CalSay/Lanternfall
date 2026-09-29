@@ -27,7 +27,7 @@ How this file relates to core-2:
 
 Owner rules this spec obeys (plan-4 4, the wave log):
 
-1. **Gear by weight.** Warrior = metal + leather, Ranger = wood + leather, Mage = cloth (main) + wood. The
+1. **Gear by weight.** Warrior = metal + leather, Ranger = wood + leather, Lanternmage = cloth (main) + wood. The
    main family is about 70%, the second about 30%, small accents cross over.
 2. **15 tiers, 3 per region, gated by region.** Skill levels still matter for speed, yield and rare finds.
    **Existing saves keep everything**, even above their region.
@@ -85,7 +85,7 @@ Design rules of this spec:
 | Group | Key | Family | Unit | Grades | Source | Used for |
 |---|---|---|---|---|---|---|
 | Raw, gathered | `ore` | Metal | Ore | 1-15 | Mining veins | Heavy gear, accents (clasps, arrowheads), tools |
-| | `wood` | Wood | Log | 1-15 | Woodcutting groves | Medium gear, Mage weapons and accents, tools |
+| | `wood` | Wood | Log | 1-15 | Woodcutting groves | Medium gear, Lanternmage weapons and accents, tools |
 | | `fibre` | Fibre | Fibre | 1-15 | Foraging patches | Light gear, padding accents |
 | | `crystal` | Gems | Shard | 1-15 | Mining geodes | Charms, trinkets, light accents, Salvage Runes |
 | | `herb` | Herbs | Sprig | 1-15 | Foraging beds | Support accents, Tonics, tinctures |
@@ -129,7 +129,7 @@ What MAT1 named (materials.md), for reference:
   label **Gems**), herb, essence (the refined families reuse these names, materials.md 2). **Secondary
   families, one name a region (2-5):** coal, salt, dye (materials.md 6, owner to approve). **Buff-item
   families, one name a region (2-5):** `pearl`, `glass`, `star`, `well` (5.1) — player-facing, these are
-  **Sigils**, not gems or glass (materials.md 7-8, coordinator decision): Tide Sigil, Ember Sigil, Frost
+  **Sigils**, not gems or glass (materials.md 7-8, coordinator decision): Tide Sigil, Cinder Sigil, Frost
   Sigil, Gloam Sigil.
 - **Grades 1-5 are in live saves**, and under the relaxed save rule (CLAUDE.md) a display-name change
   needs no migration at all: `S.mats[f][g - 1]` keeps its meaning, ids and indices never moved.
@@ -140,7 +140,7 @@ What MAT1 named (materials.md), for reference:
   Leather", "Silk Cloth", "Sage Tincture", materials.md 2).
 - **No name means two grades or two families any more.** Grade-5 crystal is Aquamarine, not Emberglass,
   so the old "Emberglass" / plan-4 "Ember-glass" clash is gone on both counts: the buff item is renamed
-  to Ember Sigil, and nothing is called Emberglass at all.
+  to Cinder Sigil, and nothing is called Emberglass at all.
 
 ### 1.3 Secondary resources by region
 
@@ -218,7 +218,7 @@ Region 2 they are GP1's tier 4 and 5 days (5.5-9.5, 13.5-17) plus grade 6 around
 | Fibre patches, Herb beds | Foraging | 1-15 | 6-15 "`<material>` Patch", "`<material>` Bed" |
 | **Coal seams** (new) | Mining | one per region, 2-5 | Opens on reaching the region, Mining at the region's first node gate |
 | **Salt pans, Dye plants** (new) | Foraging | one per region, 2-5 | Same rule, Foraging |
-| Region nodes | as the region spec | - | Tide Pools and Fishing (Coast), Glass seams (Emberwaste), Starfall fields (Pale Reach), glass seams below the Ninth Landing (Gloamvale) (5.4) |
+| Region nodes | as the region spec | - | Tide Pools and Fishing (Coast), Glass seams (Emberwaste), the Starscar (Pale Reach), glass seams below the Ninth Landing (Gloamvale) (5.4) |
 
 Secondary nodes are built to be Hand work: **3 units a swing** at 0.8x the time of the region's first-grade
 node, **half the skill XP**, no rare finds, the Glint works. The Lanternbearer can fill a gap by hand; a
@@ -291,11 +291,11 @@ The kinds already in `CRAFT_KINDS` fit the three weights, so **no kind id change
 
 - **Who wears what** (core-2 5.1): the Lanternbearer wears its class's weight in weapon, off-hand, head and
   body, whatever its evolution. Warrior, Reaver, Warden: heavy. Ranger, Venomstalker, Trapper: medium.
-  Mage, Warlock, Priest: light. Heroes wear by role in their two positions: tank heavy, striker medium,
+  Lanternmage, Warlock, Lightkeeper: light. Heroes wear by role in their two positions: tank heavy, striker medium,
   caster and support light.
-- **Light kinds for any Mage** (classes-2.md 7.2, C5): Staff, Lantern, Circlet and Robe (today's
+- **Light kinds for any Lanternmage** (classes-2.md 7.2, C5): Staff, Lantern, Circlet and Robe (today's
   Lanternmage kinds) and Censer, Tome, Mitre and Vestments (today's Lightkeeper kinds) are all light kinds,
-  and **any Mage wears both sets**. They differ in look and in their default line set (2.2): Staff, Lantern,
+  and **any Lanternmage wears both sets**. They differ in look and in their default line set (2.2): Staff, Lantern,
   Circlet, Robe lean to casting; Censer, Tome, Mitre, Vestments lean to healing. `CRAFT_FITS` reads the
   weight (`KIND_W[kind]`) through `lbClass()` instead of the legacy class key; `cls` stays on each kind as
   data so `retoolItems()` and legend `fits` keep working. No migrated item stops fitting.
@@ -307,8 +307,8 @@ The kinds already in `CRAFT_KINDS` fit the three weights, so **no kind id change
 ### 2.2 Line sets: one weight, two roles
 
 Each weight is worn by two evolution roles (classes-2.md 0): heavy by tanks (Warrior, Warden) and a
-striker (Reaver); medium by strikers (Ranger, Venomstalker) and a caster (Trapper); light by casters (Mage,
-Warlock) and a support (Priest). So a Gear 2.0 craft asks one question at the bench: **"Lines for"**, with
+striker (Reaver); medium by strikers (Ranger, Venomstalker) and a caster (Trapper); light by casters (Lanternmage,
+Warlock) and a support (Lightkeeper). So a Gear 2.0 craft asks one question at the bench: **"Lines for"**, with
 the weight's two roles. The default is the Lanternbearer's role now (`lbRole()`); hero kinds default to
 their role. The choice is stored on the item (`ls`) and Reforge keeps using it.
 
@@ -316,15 +316,15 @@ their role. The choice is stored on the item (`ls`) and Reforge keeps using it.
 |---|---|---|
 | `tank` | armour, block, threat, one resist (holy, poison, fire or frost), stagger | Warrior, Warden, tank heroes |
 | `striker` | attack, crit (with crit damage), pierce, attack speed, the wearer's type power | Reaver, Ranger, Venomstalker, striker heroes |
-| `caster` | ability power, area, control, status power, the wearer's type power | Mage, Warlock, Trapper, caster heroes |
-| `support` | healing, ward, haste, holy power | Priest, support heroes |
+| `caster` | ability power, area, control, status power, the wearer's type power | Lanternmage, Warlock, Trapper, caster heroes |
+| `support` | healing, ward, haste, holy power | Lightkeeper, support heroes |
 | any | max HP | everyone |
 
 - **Type power** is fixed when the line rolls and stored as its stat id (`['pwFire', 0.62]`), so a class
   change never moves it: the Lanternbearer's current type (base or the evolution's added type: Reaver fire,
-  Warden holy, Venomstalker poison, Trapper frost or poison, Warlock fire, Priest holy); for hero kinds, a
+  Warden holy, Venomstalker poison, Trapper frost or poison, Warlock fire, Lightkeeper holy); for hero kinds, a
   type picked at the bench from the types of heroes of that role (classes-2.md 5.1).
-- This answers C5 in the pool itself: Priest pieces lean to healing, ward and holy power; Warlock pieces to
+- This answers C5 in the pool itself: Lightkeeper pieces lean to healing, ward and holy power; Warlock pieces to
   ability power, status power, fire power and area.
 - **New affix ids** (all core-2 stats, `CRAFT_AFFIXES` rows): `aspd` (0.2 a point), `stPow` (1), `stag`
   (0.1), `pwPhys` `pwHoly` `pwPoison` `pwFire` `pwFrost` (1), `resHoly` `resPoison` `resFire` `resFrost`
@@ -678,7 +678,7 @@ ids (`pearl`, `glass`, `star`, `well`) are unchanged.
 | Family | Name | Region | Top grade (`famTop`) | Heavy `_h` | Medium `_m` | Light `_l` |
 |---|---|---|---|---|---|---|
 | `pearl` | **Tide Sigil** | Coast | 6 | max HP · frost resist | haste · control | holy power · ward |
-| `glass` | **Ember Sigil** | Emberwaste | 9 | armour · fire resist | crit · status power | frost power · ability power |
+| `glass` | **Cinder Sigil** | Emberwaste | 9 | armour · fire resist | crit · status power | frost power · ability power |
 | `star` | **Frost Sigil** | Pale Reach | 12 | block · frost resist | attack speed · crit | fire power · healing |
 | `well` | **Gloam Sigil** | Gloamvale | 15 | max HP · poison resist | status power · haste | holy power · ability power |
 
@@ -692,7 +692,7 @@ name shown on the Storehouse's Buff Items page and in generic copy, not an item'
   working threats are Coast frost (the cold sea), Emberwaste fire, Pale Reach frost, Gloamvale poison (the
   dark's rot). If CB2 picks another, the resist line follows it. (regions-4-5.md 1.3 gave the `star` light version
   "frost power"; Pale Reach foes resist frost, so this file uses fire power: change-log line 9.2-4.)
-- **Every class wants its region's family**: the Mage's fire is weak in the Emberwaste, but the `glass_l` item
+- **Every class wants its region's family**: the Lanternmage's fire is weak in the Emberwaste, but the `glass_l` item
   still gives ability power, and the Warlock's Dark Turned covers the rest (classes-2.md D6).
 - **Names shown to the player:** the family name, the rarity word, and the version as a word and an icon
   ("Rare Tide Sigil · for heavy gear"). No invented version names.
@@ -713,11 +713,11 @@ The rates are the affix rates (`CRAFT_AFFIXES`, 2.2), so a socket is worth about
 | Example (strength 100%) | Main | Second |
 |---|---|---|
 | Rare Tide Sigil `_h` in a grade-6 Plate | +46% max HP | +7.8% frost resist |
-| Epic `glass_l` (Ember Sigil) in a grade-9 Staff | +290% frost power | +193% ability power |
+| Epic `glass_l` (Cinder Sigil) in a grade-9 Staff | +290% frost power | +193% ability power |
 | Common `star_m` (Frost Sigil) in a grade-10 Hood | +3.7% attack speed (rating line: 0.6 x 0.20 x 156 x 0.2) | +1.5% crit |
 | Rare Tide Sigil `_l` in a grade-9 Robe (old family) | +46% holy power (capped at grade 6) | +7.8% ward |
 
-The last row is `famTop` at work: a Tide Sigil still works in Region 3 gear, but an Ember Sigil of the
+The last row is `famTop` at work: a Tide Sigil still works in Region 3 gear, but a Cinder Sigil of the
 same rarity gives 4.5x the holy-equivalent power line. Rating lines age more gently (Pc grows 4% a
 grade), so an old resist Tide Sigil stays a fair choice where its resist type still matters.
 
@@ -743,7 +743,7 @@ one at grade 4 (gathering rates grow; find rates should not).
 
 | Source | Rule | Idle and away | Active |
 |---|---|---|---|
-| **The region's own node** | Tide Pools and Fishing (Coast), Glass seams (Emberwaste, Mining), Starfall fields (Pale Reach, the Mining tab, regions-4-5.md 1.3), glass seams below the Ninth Landing (Gloamvale, Mining). One roll every 10 minutes of gathering there | 20% a roll (about 1.2 an hour) | **40%** on screen (core-2: active finds about 2x); a tapped Glint on that node adds a roll |
+| **The region's own node** | Tide Pools and Fishing (Coast), Glass seams (Emberwaste, Mining), the Starscar (Pale Reach, the Mining tab, regions-4-5.md 1.3), glass seams below the Ninth Landing (Gloamvale, Mining). One roll every 10 minutes of gathering there | 20% a roll (about 1.2 an hour) | **40%** on screen (core-2: active finds about 2x); a tapped Glint on that node adds a roll |
 | **Any other node of the region's grades** | Every gathering skill feeds buff items (owner: not mining-only). One roll every 30 minutes | 4% | 8% |
 | **Gatherer finder perks** | The Lucky gatherer of a pair: **+5% a roll** (owner). Tree nodes (N1b): up to +5% more | - | - |
 | **Gem-seeker Hands** | Work the region's node: rolls every 10 minutes of shift at `20% x share x 2` (Common 4%, Legendary 10%) plus perks | yes | - |
@@ -769,7 +769,7 @@ Inscribe, Mark and rank 8 costs.
 | Family | In a weapon | In armour or a trinket | Where it works |
 |---|---|---|---|
 | Tide Sigil (`pearl`) | **Shellbreaker**: physical hits ignore shells and Coral Skin | **Tidefast**: ignores Wading and Soaked | The Coast (region-2.md 3.4, unchanged) |
-| Ember Sigil (`glass`) | R3 spec (a weapon answer to its hazard) | R3 spec (the heat answer) | The Emberwaste |
+| Cinder Sigil (`glass`) | R3 spec (a weapon answer to its hazard) | R3 spec (the heat answer) | The Emberwaste |
 | Frost Sigil (`star`) | R4 spec | **Snowsight** if the Whiteout hazard ships (regions-4-5.md 5.5) | The Pale Reach |
 | Gloam Sigil (`well`) | R5 spec | R5 spec | The Gloamvale |
 
@@ -796,7 +796,7 @@ cost). With Sigils as buff items:
 
 | Cost | Was | Now |
 |---|---|---|
-| Inscribe a power | `2 + 2 x rank` Pearls of the item's tier | The same count of **Sigils of the family of the item's grade's region** (grades 1-6: Tide Sigils; 7-9: Ember Sigils; 10-12: Frost Sigils; 13-15: Gloam Sigils), any version and rarity |
+| Inscribe a power | `2 + 2 x rank` Pearls of the item's tier | The same count of **Sigils of the family of the item's grade's region** (grades 1-6: Tide Sigils; 7-9: Cinder Sigils; 10-12: Frost Sigils; 13-15: Gloam Sigils), any version and rarity |
 | Mark (circle set) | 2 Pearls of the item's tier | 2 Sigils, same rule |
 | Rank 8, Lanternlit (region-2.md 8.2) | 25 Tide Sigils | 25 Tide Sigils, any version and rarity |
 | Before the Coast is reached | free (Sigils did not exist) | still free (the rule `pearlLive()` expresses, now "the Coast reached") |
@@ -817,7 +817,7 @@ cost). With Sigils as buff items:
 | Source | One **boss type** each (owner: "a spore boss drops a poison-spreading item"): the elders of one foe family in a region, or the region's boss. 6 a region, **30 for Season 1** |
 | Item | `{ id, slot, t, r: 'rare', plus, u }` as today. `slot` is its position kind: `weapon`, `helm`, `charm` (today's unique kinds) and two new position kinds, `off` and `body` (not craftable, like `weapon` and `helm`); hero pieces use `wpn` / `trk` kinds `uwpn` and `trinket` |
 | Fits | **Every class** at its position (today's rule for weapon and head uniques). A hero piece fits any hero |
-| Base lines | The wearer's own weight kind at that position (a Warrior's unique body piece has Plate lines, a Mage's has Robe lines; a hero weapon has the wearer's role weapon lines). Read at wear time, so a class change never needs a retool |
+| Base lines | The wearer's own weight kind at that position (a Warrior's unique body piece has Plate lines, a Lanternmage's has Robe lines; a hero weapon has the wearer's role weapon lines). Read at wear time, so a class change never needs a retool |
 | Item power | `itemPower` uses `UNIQ_TUNE.pow` 1.8 (Rare) as today; grade = the kill zone's `zoneGrade` |
 | Fixed lines | Regions 2-5: 2 affix lines fixed per unique (`q` 0.5). Region 1: 3 (it has no buff family to lock) |
 | Sockets | Regions 2-5: **one locked socket** with the boss's signature family at the wearer's version, Uncommon, strength **1.10** (core-2), plus **one open socket**. Region 1: one open socket |
@@ -852,10 +852,10 @@ Item names are **working** (item names, not material names; the owner approves t
 |---|---|---|---|---|---|
 | 1 | **Rotbloom Mantle** (body) | Moss Slime and Spore Cap elders (plant) | **Spreading Rot.** Every 4th hit you land applies 1 Venom (2). When a foe with Venom dies, half its stacks jump to the nearest foe | 5 / 10% | S1 |
 | 2 | **Duskwing Knot** (hero trinket) | Cave Bat and Barrow Beetle elders (beast) | **Swarm Sense.** The wearer's signature also strikes 2 more foes in the pack for 30% (60%) | 4 / 8% | - |
-| 3 | **Gravewarden Helm** (head) | Rattlebones elders (undead) | **Not Yet.** Once every 60 s (40 s), a hit that would down a party member leaves them at 1 HP and Marks the attacker for 8 s | 4 / 8% | S1 |
+| 3 | **Sexton's Helm** (head) | Rattlebones elders (undead) | **Not Yet.** Once every 60 s (40 s), a hit that would down a party member leaves them at 1 HP and Marks the attacker for 8 s | 4 / 8% | S1 |
 | 4 | **Quarryheart Buckler** (off-hand) | Quarry Golem elders (construct) | **Rockfall.** Your heavy hits fill 50% (100%) more stagger. While a foe is Staggered, the party takes 15% (25%) less damage | 5 / 10% | S6 (before it: heavy hits on a Reeling foe deal +25% (+50%)) |
 | 5 | **Marshlight Charm** (charm) | Marsh Wraith elders, cycles I-IV (spirit) | **Will-o'-the-Wisp.** Each ability you use leaves a wisp for 6 s that hits the focus foe for 0.2 P (0.4 P) holy a second. At most 2 wisps | 5 / 10% | S1 |
-| 6 | **The Listener's Lamp** (weapon) | The Listener (zone 35) | **Heard in the Dark.** When a foe starts a cast or a heavy warning, your next hit within 2 s deals x2 (x3) and fills 10 stagger. Once every 8 s (5 s) | 6 / 12% | heavy warnings today; casts S6 |
+| 6 | **Fenmother's Reed** (weapon) | The Fenmother (zone 35) | **Heard in the Dark.** When a foe starts a cast or a heavy warning, your next hit within 2 s deals x2 (x3) and fills 10 stagger. Once every 8 s (5 s) | 6 / 12% | heavy warnings today; casts S6 |
 
 **Region 2, the Sunken Coast** (grades 4-6; locked Pearl). Three names come from region-2.md 6, whose coast
 uniques were never built; their effects there are replaced by these.
@@ -867,45 +867,45 @@ uniques were never built; their effects there are replaced by these.
 | 9 | **Jellylight Charm** (charm) | Lanternjelly elders (drowned) | `pearl_l` | **Chain Light.** Every 5th hit chains to 2 (3) more foes for 0.6 P (1.2 P) of the hit's type. A Chilled foe passes it on once more | 5 / 10% | S1 |
 | 10 | **Kelpwrap** (body) | Kelp Strangler elders (plant) | `pearl_m` | **Bind.** Every 12 s (8 s) your hit Roots the focus foe for 2 s; it takes +10% (+20%) from you while Rooted. A boss takes 10 (20) stagger instead | 5 / 10% | S1; stagger S6 |
 | 11 | **Coral Aegis** (hero weapon) | Coral Warden elders (construct) | `pearl_h` | **Reef Wall.** The wearer's signature also shields the party for 5% (10%) max HP; while that shield holds, physical hits on its owner reflect 20% (40%) | 4 / 8% | - |
-| 12 | **The Keeper's Lens** (off-hand) | The Drowned Keeper (zone 70) | `pearl_l` | **Green Beam.** Every 3rd ability you use fires a beam down the enemy column with the most foes: 4 P (8 P) holy, and it Marks them | 6 / 12% | S1 |
+| 12 | **The Keeper's Lens** (off-hand) | Silas Penrow, the Fogbound (zone 70) | `pearl_l` | **Green Beam.** Every 3rd ability you use fires a beam down the enemy column with the most foes: 4 P (8 P) holy, and it Marks them | 6 / 12% | S1 |
 
 **Region 3, the Emberwaste** (grades 7-9; locked `glass`)
 
 | # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
 |---|---|---|---|---|---|---|
 | 13 | **Cinderhound Collar** (charm) | Cinder Hound and Ash Moth elders (beast) | `glass_m` | **Cinder Pack.** Your crits apply Burn. A Burn you apply spreads to 1 (2) extra foe when its foe dies | 5 / 10% | S1 |
-| 14 | **Ashwalker's Shroud** (body) | Ashwalker elders (ember) | `glass_h` | **Walk Out.** Once every 30 s (20 s), when you drop below 30% HP you are cleansed of everything harmful and shielded for 15% (25%) max HP | 4 / 8% | S1 |
-| 15 | **Slagglass Bulwark** (off-hand) | Glasswalker and Slagback elders (construct) | `glass_h` | **Fused.** Blocked hits store 50% (100%) of their damage; your next heavy hit lets it out as fire on the whole pack | 5 / 10% | S1 |
+| 14 | **Ashwalker's Cloak** (body) | Ashwalker elders (ember) | `glass_h` | **Walk Out.** Once every 30 s (20 s), when you drop below 30% HP you are cleansed of everything harmful and shielded for 15% (25%) max HP | 4 / 8% | S1 |
+| 15 | **Slagglass Shield** (off-hand) | Glasswalker and Slagback elders (construct) | `glass_h` | **Fused.** Blocked hits store 50% (100%) of their damage; your next heavy hit lets it out as fire on the whole pack | 5 / 10% | S1 |
 | 16 | **Wyrmling Tooth** (weapon) | Wyrmling elders (ember, the Wyrm's brood) | `glass_m` | **Brood.** +5% (+10%) damage to a foe for each different status on it, up to 4 | 6 / 12% | S1 |
-| 17 | **Kept Light** (hero trinket) | Kept Light elders (ember) | `glass_l` | **Somewhere to Go.** When a foe the wearer damaged dies, the lowest-HP ally heals 3% (6%) max HP | 3 / 6% | - |
-| 18 | **The Pyre Knight's Helm** (head) | The Pyre Knight | `glass_l` | **Kept Flame.** Your Burns do not run out while you keep hitting their foe, and each Burn tick you deal adds 1% (2%) to your next ability, up to 30% (60%) | 6 / 12% | S1 |
+| 17 | **Homing Light** (hero trinket) | Kept Light elders (ember) | `glass_l` | **Home at Last.** When a foe the wearer damaged dies, the lowest-HP ally heals 3% (6%) max HP | 3 / 6% | - |
+| 18 | **The Pyre Knight's Visor** (head) | The Pyre Knight | `glass_l` | **Kept Flame.** Your Burns do not run out while you keep hitting their foe, and each Burn tick you deal adds 1% (2%) to your next ability, up to 30% (60%) | 6 / 12% | S1 |
 
 **Region 4, the Pale Reach** (grades 10-12; locked `star`)
 
 | # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
 |---|---|---|---|---|---|---|
-| 19 | **Rimewolf Pelt** (body) | Rimewolf and Stormpeak elders (beast) | `star_m` | **Drive Them Apart.** +20% (+40%) damage to a foe alone in its column | 5 / 10% | - |
-| 20 | **Skyfallen Aegis** (off-hand) | Skyfallen elders; the Starfall Crater's last boss at double chance (construct) | `star_h` | **Falling Star.** Every 15 s (10 s) a shard falls on the focus foe: 3 P (6 P) of your base type, and 20 stagger | 5 / 10% | stagger S6 |
+| 19 | **Rimewolf Pelt** (body) | Rimewolf and Skua elders (beast) | `star_m` | **Drive Them Apart.** +20% (+40%) damage to a foe alone in its column | 5 / 10% | - |
+| 20 | **Skyiron Shield** (off-hand) | Star Golem elders; the Starpit's last boss at double chance (construct) | `star_h` | **Falling Star.** Every 15 s (10 s) a shard falls on the focus foe: 3 P (6 P) of your base type, and 20 stagger | 5 / 10% | stagger S6 |
 | 21 | **Wraithfrost Hood** (head) | Ice Wraith elders (spirit) | `star_l` | **Drain the Cold.** Your hits on a Chilled foe heal you 1% (2%) max HP. Each Shatter you cause refills 10% (20%) of your ability charge | 5 / 10% | S1 |
-| 22 | **Sill-Candle** (charm) | Palefolk elders (pale) | `star_l` | **Hand to Hand.** Your heals and shields also give their target +10% (+20%) damage for 4 s. At the start of a boss fight each hero gets a shield of 10% (20%) max HP | 5 / 10% | - |
+| 22 | **Palefolk Candle** (charm) | Palefolk elders (pale) | `star_l` | **Pass It On.** Your heals and shields also give their target +10% (+20%) damage for 4 s. At the start of a boss fight each hero gets a shield of 10% (20%) max HP | 5 / 10% | - |
 | 23 | **Icewisp Lantern** (hero weapon) | Icewisp elders (pale) | `star_m` | **Swarmlight.** Against swarms the wearer's hits chain to 1 (2) more foe for 50% | 4 / 8% | S6 packs |
-| 24 | **The Gatekeeper's Spear** (weapon) | The Star-Fallen (name pending, regions-4-5.md 5.1) | `star_h` | **Hold the Gate.** In the Front slot you Taunt for 2 s every 10 s (6 s); each hit you take gives the party +3% (+6%) damage for 6 s, up to 5 stacks | 6 / 12% | S1 |
+| 24 | **The Frostgate Spear** (weapon) | The Whitehush | `star_h` | **Hold the Gate.** In the Front slot you Taunt for 2 s every 10 s (6 s); each hit you take gives the party +3% (+6%) damage for 6 s, up to 5 stacks | 6 / 12% | S1 |
 
 **Region 5, the Gloamvale** (grades 13-15; locked `well`)
 
 | # | Unique (position) | Dropped by | Locked | Power: rank I (V) | p1 / p5 | Needs |
 |---|---|---|---|---|---|---|
-| 25 | **Bluefire Charm** (charm) | Blueflame Wisp elders (deep) | `well_l` | **Fire Turns Blue.** 30% (60%) of your Burn damage lands again as holy | 5 / 10% | S1 |
-| 26 | **Landing-Watch Cloak** (body) | Landing Watcher and Hollow Reacher elders (deep) | `well_h` | **Still Until Approached.** After 4 s without being hit, your next hit deals +50% (+100%) and Stuns for 1 s | 5 / 10% | S1 |
-| 27 | **Worn-Step Buckler** (off-hand) | Stairwalker elders (construct) | `well_h` | **A Thousand Years.** Each hit you take gives Guard: 1% (2%) less damage taken, up to 10 stacks; one falls away each second after 5 s unhit | 4 / 8% | - |
-| 28 | **Delver's Lamp** (head) | The Delved elders (undead) | `well_m` | **Pick Marks.** Your hits leave a mark; at 5 marks the foe takes 2 P (4 P) physical that ignores armour, and 15 stagger | 5 / 10% | stagger S6 |
-| 29 | **Springwater Phial** (hero trinket) | Spring-Touched elders (spirit) | `well_l` | **Near the Spring.** The wearer's heals are 20% (40%) stronger on allies below half HP; its cleanses also heal 5% (10%) max HP | 4 / 8% | S1 |
-| 30 | **The First Lamp** (weapon) | The Voice, at the Bottom of the Stair | `well_l` | **There Were Lamps Before.** Your other power works one rank higher (at most V), and your abilities deal +10% (+20%) | 6 / 12% | - |
+| 25 | **Coldhearth Charm** (charm) | the Hearthless elders (gloam) | `well_l` | **Fire Turns Blue.** 30% (60%) of your Burn damage lands again as holy | 5 / 10% | S1 |
+| 26 | **Stillwalker's Cloak** (body) | Stillwalker elders (gloam) | `well_h` | **Still Until Approached.** After 4 s without being hit, your next hit deals +50% (+100%) and Stuns for 1 s | 5 / 10% | S1 |
+| 27 | **Deadwood Buckler** (off-hand) | Orchard Husk elders (undead) | `well_h` | **A Thousand Years.** Each hit you take gives Guard: 1% (2%) less damage taken, up to 10 stacks; one falls away each second after 5 s unhit | 4 / 8% | - |
+| 28 | **The Straw Crown** (head) | Scarecrow elders (construct) | `well_m` | **Pick Marks.** Your hits leave a mark; at 5 marks the foe takes 2 P (4 P) physical that ignores armour, and 15 stagger | 5 / 10% | stagger S6 |
+| 29 | **Merewater Phial** (hero trinket) | Merewight elders (spirit) | `well_l` | **Near the Spring.** The wearer's heals are 20% (40%) stronger on allies below half HP; its cleanses also heal 5% (10%) max HP | 4 / 8% | S1 |
+| 30 | **The First Lamp** (weapon) | The Voice, at the Heart of the Gloamvale | `well_l` | **There Were Lamps Before.** Your other power works one rank higher (at most V), and your abilities deal +10% (+20%) | 6 / 12% | - |
 
 - **Coverage:** 5 hero pieces (one a region), 25 Lanternbearer pieces spread over the five positions (5
   each). Every power works for every class, and each class has at least one per region that plays into its
   verb: the Warrior's heavy hits (Rockfall, Fused, Hold the Gate), the Ranger's hits and marks (Spreading
-  Rot, Drive Them Apart, Pick Marks), the Mage's Burns and abilities (Kept Flame, Fire Turns Blue, Green
+  Rot, Drive Them Apart, Pick Marks), the Lanternmage's Burns and abilities (Kept Flame, Fire Turns Blue, Green
   Beam), supports' heals (Hand to Hand, Near the Spring).
 - **Before S6:** powers marked S6 run with the fallback written in their row, or without the stagger part.
   The card says "Stagger comes with the boss update" until then (CL1 does the same for Finishers).
@@ -997,7 +997,7 @@ is a route in the Map Room (UX-W3 sends it from the World map).
 | 1 Hollow | **Mossy Hollow** market (your home village, back in business) | The Great Lantern of the Hollow, Map Room Lv 2 | 2 h | Salvage Runes, Region 1 Trophies |
 | 2 Coast | **Hallam's Landing** (the ferryman's shingle) | The Coast reached | 4 h | Common and Uncommon Pearls, Salvage Runes |
 | 3 Emberwaste | **New Emberlea** (where its people rebuilt) | The Emberwaste reached | 6 h | Common and Uncommon `glass` items, Tinctures |
-| 4 Pale Reach | **The Silent Village** (lit again after the Star-Fallen) | The Star-Fallen beaten | 8 h | Common and Uncommon `star` items, Region 4 Trophies |
+| 4 Pale Reach | **The Silent Village** (lit again after the Whitehush falls) | The Whitehush beaten | 8 h | Common and Uncommon `star` items, Region 4 Trophies |
 | 5 Gloamvale | **Hollow's Rest** itself (the road comes home; Hearth 10: "a town") | The Gloamvale reached | 2 h | Common and Uncommon `well` items, Salvage Runes |
 
 ### 7.2 A trade trip
@@ -1080,13 +1080,13 @@ weapons, then armour; Salvage Runes only for Rare or better), `--uniq2` (wear th
 
 ### 8.3 Answers to core-2's open questions for RG1
 
-5. **The Mage's main family: cloth**, wood second (coordinator decided, 2026-09-28; this file's recipes use
+5. **The Lanternmage's main family: cloth**, wood second (coordinator decided, 2026-09-28; this file's recipes use
    it, with the light weapon leading with wood, owner decision O1).
 6. **Names:** MAT1 has landed (materials.md; owner, 2026-09-28: real and standard fantasy materials).
    Grades 1-5 were relabelled (grade-3 ore Silver, Mithril to grade 5, Starsteel dropped). The grade-9
    clash in the roadmap draft is gone (grade 9 is Dragonsteel); the "Emberglass" / "Ember-glass" pair is
    resolved by dropping "Emberglass" as a gem name (grade 5 is Aquamarine) and renaming the buff item to
-   Ember Sigil (1.2, 5.1).
+   Cinder Sigil (1.2, 5.1).
 7. **Enchanting 100% at level 80**, rising in a straight line from 70% at level 1 (4.2). **Hero sockets are
    worth their cost:** the cost is flat and small; the buff item is the price, and heroes deal most damage.
 8. **Buff items live in the Storehouse**, on a **Buff Items** page, as uncapped counts (coordinator decided;
@@ -1141,7 +1141,7 @@ refining progress inside a unit, find-roll timers and the weekly demand lists ar
 - **O1. 70 / 30 across a set, not in every piece.** A staff is mostly wood, so the light weapon leads with
   wood while the light set is about two thirds cloth. Recommended: **yes**.
 - **O2. Grade 4 moves to Region 2.** Region 1 tops out at grade 3 (today grade 4 drops from zone 19).
-  Saves keep every grade they had and keep farming it (1.8). About one zone of power at the Listener, which
+  Saves keep every grade they had and keep farming it (1.8). About one zone of power at the Fenmother, which
   BAL3 gives back. Recommended: **yes** (it is what "gated by region" means).
 - **O3. Enchanting reaches 100% at level 80** (about mid Region 3), from 70%, with a cheap **Tune** to
   re-set a buff item at your new strength. Recommended: **yes**.
@@ -1243,7 +1243,7 @@ These override anything above that disagrees.
   |---|---|---|
   | Warrior (Heavy) | metal + leather | metal + wood (the haft) |
   | Ranger (Medium) | leather + cloth | wood + metal (the heads and fittings) |
-  | Mage (Light) | cloth + leather | wood + gem (a staff with a focus stone) |
+  | Lanternmage (Light) | cloth + leather | wood + gem (a staff with a focus stone) |
   The main is roughly 70% of the cost and the second 30%, per item. This replaces "70/30 across a set".
 - **O2** grade 4 moves to Region 2: yes. **O3** Enchanting full strength at level 80 plus Tune: yes.
 - **O4, salvaging a socketed item: changed.** Each socketed buff item has a **50% chance to be lost**, rolled

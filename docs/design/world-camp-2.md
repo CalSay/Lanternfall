@@ -64,7 +64,7 @@ Design rules of this spec:
 | 1, the Hollow | The person "raises the Storehouse", which a new game builds in about minute 8 (H3). | The person raises the **Tannery**, the one building that opens at this moment (gear-2 3.2: leather opens with the Great Lantern of the Hollow). |
 | 2, the Coast | "Enchanting unlocks" at the Coast's boss. gear-2 4.2 opens Enchanting **on reaching the Coast** (the Great Lantern of the Hollow), so Tide Sigils from the Coast's elders can be set all through Region 2. At the Coast's boss it would be 3-4 weeks late. | Enchanting stays where gear-2 puts it. The Coast's power is **Lanternlit** (rank 8), which region-2.md 8.2 and gear-2 5.7 already gate on this exact fall. The person raises the **Infirmary**, where tired heroes rest. |
 | 3, the Emberwaste | "Trade routes open between reached regions". gear-2 7.1 (owner O12: yes) opens trade on reaching the Coast (Mossy Hollow, Map Room Lv 2) and each town on reaching its region. And a "Forge upgrade" is not a new building. | The power is **Awakenings** (plan-4 7): the held lights go home and every lamp brightens, so a hero's own light can burn brighter. The person raises the **Lamp House**, where a hero's quest ends in its Awakening. HQ1 confirms (decision O3). |
-| 4, the Pale Reach | "A new Tactics slot". Heroes have 3 rule slots and the Lanternbearer 2 (core-2 4.5), and classes-2 3.6 opens them with Tactics and evolving, not with a region. A fourth slot breaks that shape. | The sight is the stars coming back, so the power is **a third keystone** on the star map (`STAR_TUNE.keyMax` 2 to 3). The person raises the **Beacon**. |
+| 4, the Pale Reach | "A new Tactics slot". Heroes have 3 rule slots and the Lanternbearer 2 (core-2 4.5), and classes-2 3.6 opens them with Tactics and evolving, not with a region. A fourth slot breaks that shape. | The sight is the stars coming back, so the power is **a third keystone** on the star map (`STAR_TUNE.keyMax` 2 to 3). The person raises **the Balefire**. |
 
 The table below replaces lore.md 4.4a's Person and Power columns (the Sight column is kept, with one
 line added for what the map and the camp show). LORE work updates lore.md to match after the owner signs
@@ -74,10 +74,10 @@ off (decision O1).
 
 | Region boss (Shroud) | Sight: on the map | Sight: at camp | Person | Building or service (new at this point) | Power (plan-4 order) |
 |---|---|---|---|---|---|
-| **The Hollow: the Drowning Dark** (zone 35, about day 5-8) | The hole at Wraithmarsh V closes. The marsh fog motes stop; fireflies come back. The Great Lantern on Lantern Hill lights and lifts the whole Hollow plate to dusk. Mossy Hollow's market pin lights. | Morning mist burns off the camp's skyline; the Great Lantern shines on Lantern Hill behind the Hearth. | **The Rushbys**: Gil Rushby, the marsh trapper, and his family, who hid on a reed island in the fog with one shaded lamp. Gil joins as the Hunter (gatherers-2 route 9). | **The Tannery.** The Rushbys raise it: Lv 1 is theirs, free, 10 minutes. The leather chain opens (gear-2 3.2, 3.6). | **The Proving** (the evolution trial, classes-2 3.2; owner: gated on this kill). Reaching the Coast also opens the production chains and Enchanting (gear-2), which show their own cards when first used. |
+| **The Hollow: the Fenmother** (zone 35, about day 5-8) | The hole at Wraithmarsh V closes. The marsh fog motes stop; fireflies come back. The Great Lantern on Lantern Hill lights and lifts the whole Hollow plate to dusk. Mossy Hollow's market pin lights. | Morning mist burns off the camp's skyline; the Great Lantern shines on Lantern Hill behind the Hearth. | **The Rushbys**: Gil Rushby, the marsh trapper, and his family, who hid on a reed island in the fog with one shaded lamp. Gil joins as the Hunter (gatherers-2 route 9). | **The Tannery.** The Rushbys raise it: Lv 1 is theirs, free, 10 minutes. The leather chain opens (gear-2 3.2, 3.6). | **The Proving** (the evolution trial, classes-2 3.2; owner: gated on this kill). Reaching the Coast also opens the production chains and Enchanting (gear-2), which show their own cards when first used. |
 | **The Sunken Coast: Silas Penrow, the Fogbound** (zone 70, about day 21-35) | The Coast's hole closes. The sea-fog band over the plate lifts; Saltreach Light turns from held green to gold. At low tide the drowned streets show as a pale grid under the water. | A glint of sea shows on the far west horizon; gulls pass at dawn. | **Mercy Penrow**, Silas's sister, Saltreach's healer, who stayed on the reef with the survivors for ten years. The Hollises come too, if Bram is recruited (gatherers-2 routes 13 and 16). | **The Infirmary.** Mercy raises it (Lv 1 free, 10 minutes). Heroes rest there: Rested fills faster and rested heroes come back stronger. | **Lanternlit:** heroes promote to rank 8, level cap 225 (region-2.md 8.2; 25 Tide Sigils, gear-2 5.7). The Pinnacles also open here, with an Oath of 15 kept (pinnacles.md 1). |
-| **The Emberwaste: the Pyre Knight** (zone 105, about day 40-55) | Every red (held) lamp glow on the plate lifts off as a mote and drifts west, out of the plate, home. The ash plate warms to its lit palette, and a green fleck grows in the ground ramp. | The eastern hills turn from red glow to green at dawn; the camp's lamps burn a little brighter from now on (a warmer lamp tint). | **The Emberlea families** Caedmon got out on the Fall night, led by the old lampwright **Tamsin Wray**. Brannoc the kiln-hand comes with them (gatherers-2 route 12). | **The Lamp House.** The Emberlea lampwrights raise it (Lv 1 free, 10 minutes). A hero's quest ends here. | **Awakenings** (plan-4 7, HQ1): finishing a hero's quest at the Lamp House Awakens them. |
-| **The Pale Reach: the Whitehush** (zone 140, about day 60-72) | The hole at Frostgate Bastion closes; the Whiteout motes stop. True stars (fixed pixels) show in the plate's sky band. The new Great Lantern stands lit at the Frostgate. The Silent Village's sill-candles light one by one. | Real stars over the camp at night, for the first time; Oriel sits on the Chapel roof to watch them. | **Wick**, the Silent Village's candle-keeper, who kept one candle lit for the whole village, alone, for ten winters (regions-4-5.md 1.9's hook), and **Fenn**, her neighbour. | **The Beacon**, on the rise above the camp. Wick raises it (Lv 1 free, 10 minutes). Once a day it calls a waiting event to you, and its light shows secret hint marks on the map. | **A third keystone** on every star map (`STAR_TUNE.keyMax` 3). "The stars are back." |
+| **The Emberwaste: the Pyre Knight** (zone 105, about day 40-55) | Every red (held) lamp glow on the plate lifts off as a mote and drifts west, out of the plate, home. The ash plate warms to its lit palette, and a green fleck grows in the ground ramp. | The eastern hills turn from red glow to green at dawn; the camp's lamps burn a little brighter from now on (a warmer lamp tint). | **The Emberlea families** Caedmon got out on the Fall night, led by the old lampwright **Constance Wray**. Cobb the kiln-hand comes with them (gatherers-2 route 12). | **The Lamp House.** The Emberlea lampwrights raise it (Lv 1 free, 10 minutes). A hero's quest ends here. | **Awakenings** (plan-4 7, HQ1): finishing a hero's quest at the Lamp House Awakens them. |
+| **The Pale Reach: the Whitehush** (zone 140, about day 60-72) | The hole at Frostgate Bastion closes; the Whiteout motes stop. True stars (fixed pixels) show in the plate's sky band. The new Great Lantern stands lit at the Frostgate. The Silent Village's sill-candles light one by one. | Real stars over the camp at night, for the first time; Oriel sits on the Chapel roof to watch them. | **Solveig**, the Silent Village's candle-keeper, who kept one candle lit for the whole village, alone, for ten winters (heroes-2.md, regions-4-5.md 1.9's hook); the village calls her "Wick." | **The Balefire**, on the rise above the camp. Solveig raises it (Lv 1 free, 10 minutes). Once a day it calls a waiting event to you, and its light shows secret hint marks on the map. | **A third keystone** on every star map (`STAR_TUNE.keyMax` 3). "The stars are back." |
 | **Season 1 finale: the Voice** (the Heart of the Gloamvale; not a Shroud) | The Heart's great hole thins to plain night (dusk level). Every lamp pool on every plate grows 15% at once. | Every lamp in camp brightens; the Lantern Hall's crown burns white-gold. | Everyone the Voice held goes home (lore.md 8.6): Vesper, Oriel, Elowen. | None. | None (lore.md 8.7): a title, a lantern colour, the Season 2 hook. |
 
 Notes:
@@ -85,17 +85,20 @@ Notes:
 - **Why these three buildings.** Each is a home a system needs, arriving the moment the system becomes
   useful: leather is a main material from Region 2 (the Tannery); Region 3's fights hit harder and reward
   rotating heroes (the Infirmary); Awakenings are the last big hero power before the finale (the Lamp
-  House). The Beacon serves events and secrets, which grow richer as more of the map is real.
+  House). The Balefire serves events and secrets, which grow richer as more of the map is real.
 - **The person's building is a gift.** Its Lv 1 costs nothing and takes 10 minutes, whatever the builders
   are doing (it does not use a builder). Its plot showed a stake with a line in the Shroud's voice since
   the region's third band ("Nothing grows here while the fog stands.").
 - **Old saves** past a boss get the person and the building's Lv 1 on load, once, as one bell line
   ("The Rushbys came while you were away. The Tannery stands.") (55-lantern's `quiet` rule).
-- **The leftover LORE-R45 names** (the coordinator leans against extra Sigil-seeker pairs): Wick and Fenn
-  are the Pale Reach's people above; **Haldor and Nessa** keep the Gloamvale's outpost fire (3.2);
-  **Old Corrin**, the retired Deepwell miner, can be the Deepwell's winch-keeper at camp (he arrives when
-  the Deepwell opens), and **Sable** "found a way down nobody else had": she guides the party to the
-  Deepwell's new stretch after the ending (regions-4-5.md 2.8). HER, R5 and LORE-G keep or drop these.
+- **The leftover LORE-R45 names** (the coordinator leans against extra Sigil-seeker pairs): Solveig (the
+  Pale Reach's person above, called "Wick" by the village; the separate Fenn/Wick Seeker pair is renamed
+  Sten and Runa — see regions-4-5.md 1.9 and gatherers-2.md 3.1) is the Pale Reach's person above;
+  **Haldor and Liv** keep the Gloamvale's
+  outpost fire (3.2); **Old Amos**, the retired Deepwell miner, can be the Deepwell's winch-keeper at camp
+  (he arrives when the Deepwell opens), and **Sable** "found a way down nobody else had": she guides the
+  party to the Deepwell's new stretch after the ending (regions-4-5.md 2.8). HER, R5 and LORE-G keep or
+  drop these.
 
 ---
 
@@ -124,7 +127,7 @@ is the full range for Season 1; the region gates for Lv 6-10 are in 2.3.
 | 14 | **Tannery** (`tannery`) | Tanning hides into leather | Stake from zone 30; raised by the Rushbys | 1-10 | New (milestone 1) |
 | 15 | **Infirmary** (`infirmary`) | Tired heroes rest and recover | Stake from zone 57; raised by Mercy Penrow | 1-10 | New (milestone 2) |
 | 16 | **Lamp House** (`lamphouse`) | Heroes Awaken here | Stake from zone 92; raised by the Emberlea families | 1-10 | New (milestone 3) |
-| 17 | **Beacon** (`beacon`) | Calls events; shows secrets | Stake from zone 127; raised by Wick | 1-5 | New (milestone 4) |
+| 17 | **Balefire** (`beacon`) | Calls events; shows secrets | Stake from zone 127; raised by Solveig | 1-5 | New (milestone 4) |
 | - | Trophy Wall (`wall`, decor plot p13) | Your Feats on display | 250 achievement points | 3 stages | Built (AC5); no tree |
 | - | The Deepwell, the Almanac post, Lantern Hill (the Great Lantern), the road gate | Landmarks | As today | - | No levels, no tree |
 
@@ -186,7 +189,7 @@ Hearth (rule 2):
 - **Points by region end** (normal play): Region 1 about 4 a building, Region 2 about 6, Region 3 about 8,
   Region 4 about 9, Region 5 10. Never 12.
 - The Storehouse keeps H3's own rows (Lv 1-8, `STORE_HREQ`, `STORE_COST`); Lv 9-10 are added only if gear-2's
-  HS19 check fails at grades 6-15. The Beacon has 5 levels (2.7). The Tents use 2.5.
+  HS19 check fails at grades 6-15. The Balefire has 5 levels (2.7). The Tents use 2.5.
 
 ### 2.4 The Hearth (kept)
 
@@ -253,9 +256,9 @@ and `library` both map to the Chapel).
 | **Tannery** | The Tanning queue (gear-2 3.1-3.3: 2 Hide + 1 salt of the grade's region = 1 Leather, 3 orders). Gil's Hunter shifts count Hide straight into it when you pick "Send to the Tannery". | Queue speed +20% a level (gear-2 3.3's `perLv`), Tailoring XP (+10% a level to +50%), and its tree | "Leather needs a Tannery. Nothing grows in this fog." |
 | **Infirmary** | Heroes at camp or on the bench refill **Rested** 50% faster (S7's meter). A hero back from 8 h+ at rest keeps the "rested" +25% XP for 90 minutes instead of 60. | Refill +10% a level; the tree | "Nobody on this road has been tended in ten years." |
 | **Lamp House** | Awakening happens here: a hero whose quest is done steps in and comes out Awakened (HQ1's ceremony card). | Quest step timers -5% a level; the tree | "The Lea's lights are held. Nothing burns brighter while they are." |
-| **Beacon** | **The call:** once a day, light it to bring the next event now (events otherwise roll 2-4 a day; plan-4 6.7). Secret hint marks you have heard of show on the map. | Gold per 2.9 (G10). Lv 2: secret hint marks you have *not* heard of show as faint "?" too. Lv 3: 2 calls a day. Lv 4: an event you call pays +25%. Lv 5: the call also rerolls which event comes, once. No tree (5 levels). | "Every fire up here dies by morning." |
+| **Balefire** | **The call:** once a day, light it to bring the next event now (events otherwise roll 2-4 a day; plan-4 6.7). Secret hint marks you have heard of show on the map. | Gold per 2.9 (G10). Lv 2: secret hint marks you have *not* heard of show as faint "?" too. Lv 3: 2 calls a day. Lv 4: an event you call pays +25%. Lv 5: the call also rerolls which event comes, once. No tree (5 levels). | "Every fire up here dies by morning." |
 
-The Beacon has no tree on purpose: five levels, five lines. It is a service, not a specialisation.
+The Balefire has no tree on purpose: five levels, five lines. It is a service, not a specialisation.
 
 ### 2.8 Every building: level lines and trees
 
@@ -276,17 +279,17 @@ Tree rules (BT1):
 | **Forge** | Smithing station; XP +10% a level; Rare odds +10% at 5 (today) | **Weaponsmith:** weapon rolls Rare +3 · Epic +1 · **+3% damage (the Forge's one damage node, counts to the camp cap)** · **Tempered Edge:** Temper (gear-2 6.5) costs 25% less | **Armourer:** armour rolls Rare +3 · Epic +1 · armour lines +3% · **Proof Plate:** upgrades +8 to +10 cost 20% less gold | **Smelter** (from Region 2): Smelter speed +20% · a 4th order · coal -10% an Ingot · **Bloomery:** a 5th order, and Smelter orders keep running 2 h past the away cap |
 | **Storehouse** | Caps by level (H3's table) | **Deep Shelves:** caps +5% · +5% · +5% · **Overflow Shed:** a full cell stores 10% past its cap (flows only) | **Sorting:** Spillover picks the best next node (not the next tier) · the pouch groups by region (UX-F) · parcels wait 2 more days before a reminder · **Quartermaster:** refunds and gifts show what they filled | **Cold Room:** Fish from gatherers +10% · Sigils page shows find odds · herbs +5% from gatherers · **Salt Store:** secondary resources (coal, salt, dye) have double caps |
 | **Loom** | Tailoring station; XP +10% a level; gathering 10% faster at 5 (today) | **Tailor:** cloth armour rolls Rare +3 · Epic +1 · Rare +3 · **Fine Stitch:** Masterwork lines +20% | **Dyer:** dye -10% a Cloth · weaving speed +20% · dye -10% · **Colourfast:** retool keeps a piece's Sigils at full strength | **Weaver** (from Region 2): weaving speed +20% · a 4th order · weaving speed +20% · **Bolt Room:** 1 Cloth in 10 comes free |
-| **Tannery** | Tanning queue; speed +20% a level; Tailoring XP | **Tanner:** tanning speed +20% · a 4th order · speed +20% · **Pit Row:** a 5th order | **Salter:** salt -10% a Leather · Hunter shifts +10% Hide · salt -10% · **Brine Vat:** Hide from Hunters lands 15% as Leather | **Leatherworker:** leather armour rolls Rare +3 · Epic +1 · leather lines +3% · **Supple Hide:** medium pieces take one more Sigil strength step (+5%) |
+| **Tannery** | Tanning queue; speed +20% a level; Tailoring XP | **Tanner:** tanning speed +20% · a 4th order · speed +20% · **Pit Row:** a 5th order | **Brine:** salt -10% a Leather · Hunter shifts +10% Hide · salt -10% · **Brine Vat:** Hide from Hunters lands 15% as Leather | **Leatherworker:** leather armour rolls Rare +3 · Epic +1 · leather lines +3% · **Supple Hide:** medium pieces take one more Sigil strength step (+5%) |
 | **Enchanter's Table** | Enchanting station; XP +10% a level; Reforge -20% at 5 (today) | **Setter:** setting costs -20% gold · Tune costs -20% · Sigil strength +2% · **Steady Hand:** setting at Enchanting below 80 counts as 5 levels higher | **Runes:** Salvage Runes cost 20% less · salvage keeps a Sigil 60% (was 50%; owner O4) · runes -20% · **Rune Pouch:** a region boss's first kill gives +2 runes | **Charms:** charm and trinket rolls Rare +3 · Epic +1 · Rare +3 · **Matched Glow:** the Matched set (gear-2 O5) needs 2 filled sockets, not 3. (Reserved 4th branch: the Still, after 1.0) |
 | **Tavern** | The visitor; Rumours at 3; bounties +15% at 4; Renown at 5 (today). Hiring gatherers with gold (N1c) happens here | **Rumours:** one more rumour a day · secret hints come a day sooner · rumours name an event's reward · **Old Stories:** each heard secret hint also marks its region on the map | **Recruiting:** gatherer hire cost -10% · hero visitor stays 72 h · hire cost -10% · **Word Travels:** a gatherer's route (gatherers-2 5) needs half the rumour work | **Trade:** trade prices +5% · +5% · a town's wanted line shows next week's too · **Old Customers:** +5% more, and the first trip each week to a town pays 1 Common Sigil of its region |
 | **Tents** | 2 to 10 tents (2.5) | **Comfort:** shifts +10% longer · Second Wind once more (gatherers-2 D4's max stays 2) · shifts +10% · **Home Cooking:** a gatherer back from a shift sets out again at once if you are away and the Kitchen has a meal on | **Training:** gatherer XP +10% · tree teaching costs -15% · XP +10% · **Old Hands:** Lv 20 gatherers share +2% | **Thrift:** shift fees -5% · -5% · hire fees -10% · **Shared Roof:** shift fees -10% more |
-| **Watchtower** | Away limit +2 h a level to Lv 5 (the 24 h total cap); the hold hint at 2 (today); Lv 6-10 points only | **Long Watch:** away limit +1 h · +1 h · +1 h (all under 24 h) · **Night Watch:** away gains past 12 h are not reduced (Hearth Day stacks) | **Scouts:** expedition grade +1 step on Poor · the hold hint also names the best farm zone · band mastery stars show on the map · **Pathfinder:** expeditions 10% shorter | **Lookout:** an event pin also shows on the activity pill · events in a region you are not in show a dot on its chip · a secret spot glints when you are within one band · **Signal Fire:** the Beacon's call has 1 more use a week |
+| **Watchtower** | Away limit +2 h a level to Lv 5 (the 24 h total cap); the hold hint at 2 (today); Lv 6-10 points only | **Long Watch:** away limit +1 h · +1 h · +1 h (all under 24 h) · **Night Watch:** away gains past 12 h are not reduced (Hearth Day stacks) | **Scouts:** expedition grade +1 step on Poor · the hold hint also names the best farm zone · band mastery stars show on the map · **Wayfinder:** expeditions 10% shorter | **Lookout:** an event pin also shows on the activity pill · events in a region you are not in show a dot on its chip · a secret spot glints when you are within one band · **Signal Fire:** the Balefire's call has 1 more use a week |
 | **Map Room** | Expedition slots and lengths (today); trade routes from Lv 2 (gear-2 7) | **Routes:** a 12 h route at Lv 3 (was 5) · Repeat while away at Lv 4 · a 4th slot · **Long Road:** 16 h routes | **Cargo:** trade cargo +25% · +25% · caravans bring 1 Lore page on each town's 3rd trip · **Caravan Guard:** a trade trip never rolls Poor | **Surveyor:** expedition haul +5% · +5% · Sigil-focused routes +1 Sigil on Great · **Old Maps:** the first route to each band gives its mastery star |
 | **Chapel** | Codex; gathering XP +5% a level; Blessings (2.6); hero XP +5% a level after 1 | **Blessings:** Blessings +10% stronger · swap a Blessing once a day during a boss fight (today: never) · +10% · **Two Candles:** a 3rd Blessing slot | **Study:** Codex hints show exact sources · Light +5% · Bestiary pages +10% faster · **Scriptorium:** each Codex seal's bonus +20% | **Bells:** Bond stories unlock at the fire 25% sooner · Anselm's bell wakes the camp: dawn comes an hour earlier in the scene (cosmetic) and Hands set out at dawn +5% · hero XP +5% · **Evensong:** heroes at camp at night fill Rested 25% faster |
 | **Armoury** | Bag 50 + 25 a level (to 300 at Lv 10); gear sets: 1 per character at Lv 1, 2 at 3, 3 at 5 | **Racks:** bag +25 · +25 · +25 · **The Long Wall:** the camp's display rack shows 6 pieces (was 3) | **Sets:** a set for the Deepwell and one for bosses swap by themselves when you go · sets remember Sigils · +1 set per character · **Quick Change:** switching sets is free during a boss's first 5 s | **Care:** auto-salvage filters by Sigil and power · salvage returns +10% · locked items never show in salvage lists · **Keeper's Mark:** auto-salvage keeps one of each unique power's best |
 | **Kitchen** | K12: meals (Lv 1 two recipes, Lv 2 four, Lv 3 6 h meals, Lv 4 cook 5, Lv 5 Leftovers 25%); fish meals from the Coast; Lv 6-10: meals +4% stronger a level | **Pantry:** pantry holds +50% · Leftovers +10% · cook 10 at once · **Larder:** a meal eaten while away lasts its full time from when you come back | **Hearty:** meal effects +10% · Broth's damage counts to the camp cap as before · +10% · **Feast:** one meal a day lasts 12 h | **Shared Pot:** shift fees -5% while a meal is on · Hand's Supper +25% · Forager's Pie +25% · **Mother Ashby's Table:** the Herbalist's Cook signature doubles |
 | **Infirmary** | Rested refill +50% at Lv 1, +10% a level | **Rest:** refill +15% · the Rested bonus holds above 40% (was 50%) · refill +15% · **Deep Sleep:** a hero rested to full keeps it 2 h longer in the field | **Tending:** a hero knocked out stands 1 s sooner (field, not boss fights) · wipes retreat 1 zone less often (stall timer +10%) · stand 1 s sooner · **Field Kit:** once a boss fight, the first knocked-out hero stands at 30% HP | **Drill:** returning rested heroes' XP bonus +10% · +10% · lasts 30 min longer · **Sparring:** the bench's top 2 heroes by level gain Bond time with each other at camp |
-| **Lamp House** | Awakening ceremony; quest step timers -5% a level | **Lampwright:** Awakening costs -10% · -10% · a second Awakening can be in progress · **Bright Wick:** Awakened heroes' signature +5% | **Kindling:** quest steps show their next need on Next Up · a quest step done while away completes on return, not at the next check-in · -10% step timers · **Hearthlight:** the Awakened hero's look gains the Lamp House's glow (cosmetic) and +5% Rested refill | **Glass:** hero lantern looks (achievements' lantern skins) glow at camp at night · a new lantern colour per Awakening (cosmetic) · the Lantern Book shows each hero's quest · **Given Light:** each Awakened hero raises the whole party's hero XP by 1% (to +10%) |
+| **Lamp House** | Awakening ceremony; quest step timers -5% a level | **Lampwright:** Awakening costs -10% · -10% · a second Awakening can be in progress · **Bright Wick:** Awakened heroes' signature +5% | **Tinder:** quest steps show their next need on Next Up · a quest step done while away completes on return, not at the next check-in · -10% step timers · **Hearthlight:** the Awakened hero's look gains the Lamp House's glow (cosmetic) and +5% Rested refill | **Glass:** hero lantern looks (achievements' lantern skins) glow at camp at night · a new lantern colour per Awakening (cosmetic) · the Lantern Book shows each hero's quest · **Given Light:** each Awakened hero raises the whole party's hero XP by 1% (to +10%) |
 
 Notes on the table:
 
@@ -294,7 +297,7 @@ Notes on the table:
   Blade Blessing). All three count to `CAMP_DMG_CAP` 0.15.
 - **The Smelter, Saw and Weaver branches are greyed until Region 2** ("Opens when the Great Lantern of the
   Hollow burns"). A Region 1 player spends points elsewhere, and a free respec later moves them.
-- **The Beacon and the Trophy Wall have no tree.**
+- **The Balefire and the Trophy Wall have no tree.**
 
 ### 2.9 Every gold cost in this spec (for ECON1)
 
@@ -313,11 +316,11 @@ scale and may round. Everything not in this table costs no gold.
 | G7 | The Storehouse's rows (H3, `STORE_COST`) | the same rows as G5-G6 by level; ECON1 checks H3's own table | H3's own formula |
 | G8 | Tents 3-10 | 2.5's column: R1 10, R1 30, R2 45, R2 60, R3 60, R3 75, R4 75, R5 90 min | new |
 | G9 | A milestone building's Lv 1 (the gift) | none | new |
-| G10 | The Beacon Lv 2-5 | R4 60 / 90 / 120 / 150 min | new |
+| G10 | The Balefire Lv 2-5 | R4 60 / 90 / 120 / 150 min | new |
 | G11 | Tree nodes and resets | none (points only; resets are free) | new |
 | G12 | Gatherer hire fee | N1c / ECON1 (shown on the hire card) | N1's hire price |
 | G13 | Gatherer shift fee, by resource grade | N1c / ECON1 (shown on the send sheet) | new |
-| G14 | Beacon call, dungeon entry, outpost sheet, map travel | none | - |
+| G14 | Balefire call, dungeon entry, outpost sheet, map travel | none | - |
 | G15 | Trade routes, setting and tuning Sigils, Temper, Salvage Runes | gear-2 owns them; ECON1 reprices there | gear-2 |
 
 A building's row gold is the same for every building (only its materials differ), so ECON1 prices 10 rows,
@@ -359,9 +362,9 @@ work and split the story's home.
 | | The Hollow | The Sunken Coast | The Emberwaste | The Pale Reach | The Gloamvale |
 |---|---|---|---|---|---|
 | Zones | 1-35 | 36-70 | 71-105 | 106-140 | 141-175 |
-| Home or outpost | **Hollow's Rest** (home; the only build queue) | **Hallam's Landing**, the ferryman's shingle, on the Grey Shingle band | **New Emberlea**, on the Lea's western hills where Emberlea's people rebuilt | **Frostgate Cairn** (a camp at the pass on arrival); **the Silent Village** joins it when the Whitehush falls | **The Last Fire**, kept by Haldor and Nessa at the top of the Last Descent |
-| Trade town (gear-2 7.1) | **Mossy Hollow** market: opens when the Drowning Dark falls (your home village, back in business once the fog is gone) and the Map Room is Lv 2 | Hallam's Landing: the Coast reached | New Emberlea: the Emberwaste reached | **The Silent Village**: the Whitehush beaten (gear-2's "Star-Fallen" row, renamed) | **Hollow's Rest** itself ("the road comes home"): the Gloamvale reached (gear-2's "Long Stair" row, renamed) |
-| Dungeon (decision O5) | **The Deepwell**, under the cliff beside camp (exists) | **The Drowned Nave**, under the Coral Nave band (zone 49) | **The Deep Kilns**, under the Kilns band (zone 84) | **The Starfall Crater** (regions-4-5.md 1.8), in the Starfall Fields band (zone 119) | None. After the ending the Deepwell grows its new stretch (regions-4-5.md 2.8) |
+| Home or outpost | **Hollow's Rest** (home; the only build queue) | **Hallam's Landing**, the ferryman's shingle, on the Grey Shingle band | **New Emberlea**, on the Lea's western hills where Emberlea's people rebuilt | **Rowan's Cairn** (a camp at the pass on arrival); **the Silent Village** joins it when the Whitehush falls | **The Last Fire**, kept by Haldor and Liv at the top of the Last Descent |
+| Trade town (gear-2 7.1) | **Mossy Hollow** market: opens when the Fenmother falls (your home village, back in business once the fog is gone) and the Map Room is Lv 2 | Hallam's Landing: the Coast reached | New Emberlea: the Emberwaste reached | **The Silent Village**: the Whitehush beaten (gear-2's "Star-Fallen" row, renamed) | **Hollow's Rest** itself ("the road comes home"): the Gloamvale reached (gear-2's "Long Stair" row, renamed) |
+| Dungeon (decision O5) | **The Deepwell**, under the cliff beside camp (exists) | **The Undercroft**, under the Coral Nave band (zone 49) | **The Furnace**, under the Kilns band (zone 84) | **The Starpit** (regions-4-5.md 1.8), in the Starscar band (zone 119) | None. After the ending the Deepwell grows its new stretch (regions-4-5.md 2.8) |
 | Raid homes (ux-overhaul 7.5; client table only) | **The Barrow Gate** (the Hollow King), **Wraithmarsh** (the Mire Colossus) | **The Glass Deep**, off Glimmer Lagoon (the Glass Hydra) | **Wyrmscale Ridge** (the Ashen Wyrm), **the Pyre's Mouth** (the Lantern Eater) | **The Frostgate pass** (the Pale Tyrant; before the plate exists it stays on Beyond) | None (the Voice is never in the raid) |
 | Great Lantern | Lantern Hill, above Hollow's Rest | **Saltreach Light**, on its rock under row X | **The Emberlea lamp tower**, in the middle of the Pyre band | **The Frostgate lantern**: new construction, drawn as scaffold until the fall | None: **the Seam**, a crack of grey sky over the Closed Orchard band (regions-4-5.md 2.7) |
 | Shroud hole | Wraithmarsh V (zone 35) | Zone 70, over Saltreach's reef | The Pyre (zone 105) | Frostgate Bastion (zone 140) | **The Heart** (zone 175): a hole twice a Shroud's size, the Voice |
@@ -373,7 +376,7 @@ Region notes:
 
 - **The Pale Reach has no Order lamps** (regions-4-5.md 1.1). Its road "lamps" are hand-lit sill candles in
   cairns: the same sprite at 8 x 10 with a stone base, smaller pools (x0.8).
-- **The Gloamvale has no lamps at all.** Each band you clear gets a candle that Haldor and Nessa carry down
+- **The Gloamvale has no lamps at all.** Each band you clear gets a candle that Haldor and Liv carry down
   and set on a cairn (the same cairn sprite, pools x0.6), so the road still lights up behind you, a little.
   The whole plate is shadow except those, the Last Fire and the frontier glow.
 - **Dungeons use one engine** (decision O5): the Deepwell's floors, Oil and boon draft with the region's
@@ -390,7 +393,7 @@ Region notes:
   an ellipse (34 x 24 art px; the Heart 68 x 48) centred on the boss zone's lamp. Inside it the level is
   forced to 0 (shadow) whatever lamp pools reach there; the edge is the usual 4 x 4 Bayer dither, but toward
   darker, with a 1-art-px rim of `#050816`. Lamp pools stop at its edge, so a lit road runs into black. The
-  boss zone's lamp is not drawn inside the hole; its label chip says "The Drowning Dark" in a cold grey.
+  boss zone's lamp is not drawn inside the hole; its label chip says "The Fenmother" in a cold grey.
 - **Only held light shows inside.** Saltreach Light's green glass and the Pyre's red lamps are fixed pixels
   that ignore the hole ("it lights nothing"). No other pin or event may sit inside a hole.
 - **The region's Great Lantern pin** is drawn dark with the cold grey underline (map-study), as today.
@@ -444,7 +447,7 @@ list, odds and rewards; this is how they sit on the map.
 | Pin | A 24 px icon pin with a 2-step glow ring (`steps(2)`, off under reduced motion) and the ember dot. It stands on a spot of its kind (below) in a region you have reached. Toasted once when it appears; the activity pill's dot shows while it waits (Watchtower's Lookout adds more). |
 | Never | inside a Shroud's hole, on top of another pin (48 px apart), or in a region not reached. |
 | Where | **Road events** on a lit road row of the region you are fighting in, at the lamp nearest You. **Camp events** at Hollow's Rest's gate. **Town events** at an outpost. **Wild events** off the road in the shadow (they carry their own small light). |
-| The Beacon | Its call (2.7) brings the next event now, placed by the same rules. |
+| The Balefire | Its call (2.7) brings the next event now, placed by the same rules. |
 
 The Shroud decides which events a region can roll:
 
@@ -468,7 +471,7 @@ The Shroud decides which events a region can roll:
 - **Before a hint:** nothing is drawn. Secrets are hidden zones, bosses and lore behind odd actions
   (roadmap-review 2.9).
 - **After a Tavern rumour:** a faint "?" hint mark (12 x 12, dusk palette, no glow) at the secret's spot.
-  Tapping it shows the rumour again. The Beacon Lv 2 shows unheard hint marks too, fainter.
+  Tapping it shows the rumour again. The Balefire Lv 2 shows unheard hint marks too, fainter.
 - **Found:** the mark becomes a small permanent landmark pin with its name ("The Hermit's Pool"), lit with
   its own small pool (radius 12 x 9). It ties to its secret achievement (58-deeds).
 - Secrets never sit inside a Shroud's hole; a secret *in* a shrouded place (the marsh's heart) appears only
@@ -534,7 +537,7 @@ else changes there.
 | gate | 820 | the gate (the Coast) | |
 | p16 | 858 | Lamp House | stake from zone 92; built at the Emberwaste's fall |
 | gate | 884 | the gate (the Emberwaste) | |
-| p17 | 918 | Beacon (on a rise; tall and thin, 14 x 60) | stake from zone 127; built at the Pale Reach's fall |
+| p17 | 918 | Balefire (on a rise; tall and thin, 14 x 60) | stake from zone 127; built at the Pale Reach's fall |
 | gate | 944-992 | the gate, then the road home (the Pale Reach on) | |
 
 - An unopened plot is plain ground. An open plot is a stake with a tag (63d's `paintPlot`). A milestone
@@ -648,7 +651,7 @@ and a Sheet button; an unread fire story shows a small lantern "!" over the pers
 | **Hunters** | A tiny figure (8 x 10) on the lamp of the zone a Hunter works, until the shift ends. |
 | **Caravans** | A cart chip on the road row between Hollow's Rest and the town, with the time left (as teams out, ux-overhaul 7.3). |
 | **Refining** | Nothing on the map (it happens at camp); the smoke above counts it. |
-| **The Beacon** | A small steady pool (radius 20 x 14, silver) on Lantern Hill once it stands, beside the Great Lantern. Its call button is on the Beacon's row and on the World head as a chip when a call is ready. |
+| **The Balefire** | A small steady pool (radius 20 x 14, silver) on Lantern Hill once it stands, beside the Great Lantern. Its call button is on the Balefire's row and on the World head as a chip when a call is ready. |
 | **The person's walk** | After a lift (3.3). The arrival card opens at Hollow's Rest. |
 
 | At camp | Comes from the map |
@@ -736,7 +739,7 @@ so the scene stays visible above it):
 - **Dungeon entrance views** in the Deepwell's shape (ux-overhaul 7.7) under their own view ids
   (`dn-nave`, `dn-kilns`, `dn-crater`).
 - **Event pins** (3.6), **hint marks** and **secret pins** (3.7).
-- The Beacon's **call** chip in the World head when a call is ready.
+- The Balefire's **call** chip in the World head when a call is ready.
 - Checks (`tools/check.mjs` section `world`, extended): every region's hole spot is its boss zone; no pin
   or event spot inside a hole; pins 48 px apart with outposts, dungeons and hint marks included.
 
@@ -754,7 +757,7 @@ CAMP2_B = {
   tannery:   { n: 'Tannery', max: 10, fam: { hide: 25, wood: 15 }, tro: 3, skill: 'loom', folk: 'rushby', stake: 30 },
   infirmary: { n: 'Infirmary', max: 10, fam: { fibre: 25, herb: 20 }, tro: 6, folk: 'penrow', stake: 57 },
   lamphouse: { n: 'Lamp House', max: 10, fam: { crystal: 25, ore: 15 }, tro: 6, folk: 'emberlea', stake: 92 },   // crystal = Gems
-  beacon:    { n: 'Beacon', max: 5, fam: { wood: 20, crystal: 20 }, tro: 1, folk: 'wick', stake: 127, noTree: 1 }
+  beacon:    { n: 'The Balefire', max: 5, fam: { wood: 20, crystal: 20 }, tro: 1, folk: 'wick', stake: 127, noTree: 1 }
 };
 CAMP2_RENAME = { bunk: { n: 'Tents', max: 9 }, library: { n: 'Chapel', max: 10 } };   // shrine retires
 CAMP_GRADE = [1, 1, 2, 3, 4, 5, 7, 8, 10, 13];              // material grade by row (2.2, 2.3)
@@ -774,7 +777,7 @@ CAMP_FOLK = {   // the milestone people (section 1)
   rushby:   { region: 'hollow', n: 'The Rushbys', b: 'tannery', hand: 'gil', power: 'proving' },
   penrow:   { region: 'coast', n: 'Mercy Penrow', b: 'infirmary', power: 'lanternlit' },
   emberlea: { region: 'ember', n: 'The Emberlea families', b: 'lamphouse', hand: 'brannoc', power: 'awaken' },
-  wick:     { region: 'pale', n: 'Wick', b: 'beacon', power: 'keystone3' }
+  wick:     { region: 'pale', n: 'Solveig', nick: 'Wick', b: 'beacon', power: 'keystone3' }
 };
 CAMP_PANO = { h: 96, ground: 82, w: [720, 832, 896, 960, 992], zoom: [2, 1], plots: { /* 4.2 */ }, spots: { /* 4.5: work spots by job */ } };
 OUTPOSTS = { coast: { n: "Hallam's Landing", at: [x, y], town: 'landing', dungeon: 'nave' }, /* 3.2 */ };
@@ -815,7 +818,7 @@ are not needed at all.
 | WC-T8 | A milestone building's Lv 1 | built within 15 minutes of its boss's first kill, every class |
 | WC-T9 | The Tannery at the Coast | Leather on hand for the first grade-4 medium piece within one check-in of arriving (with gear-2's Coast arrival gift and Gil) |
 | WC-T10 | Trees give identity, not power | the best and worst sensible tree layouts differ by at most 5% in `totalDps()` and 10% in gold an hour |
-| WC-T11 | The Beacon | events a day with the call: 3-5 (2-4 without); never more than 1 waiting |
+| WC-T11 | The Balefire | events a day with the call: 3-5 (2-4 without); never more than 1 waiting |
 | WC-P1 | Panorama frame (perf.mjs `--camp`, 10 gatherers and 8 heroes at camp, both zoom levels) | p95 at most 2 ms desktop / 6 ms phone; a re-bake chunk at most 16 ms phone; sprite caches under 1.5 MB; a zoom switch under 16 ms to first paint |
 | WC-P2 | Map plate with a Shroud | bake time +1 ms at most per plate; the lift runs on the compositor only |
 | WC-P3 | DOM on the map | outposts, dungeons, events and hint marks keep each region at most 40 nodes (ux-overhaul 7.12) |
@@ -840,13 +843,13 @@ should give one of them another letter). `14-art-camp.js` was reserved by camp.m
 | **UX-W3** (as ux-overhaul 8) plus outposts | Plus: outpost pins and sheets (3.1), town sheets for TR1, the dungeon entrance view shape with a view id per dungeon | `src/js/75-outposts-ui.js` | - | UX-W1 |
 | **N2** Camp panorama and camp life (Sonnet, M) | Section 4: the panorama painter, plots and stages, the skyline, scaffold, day and night, the two zoom levels, pan, edge arrows and the mini strip, gatherers (spots by job, idle poses, walking out and home with a pack, hit boxes, the long-press chooser) and heroes at their spots, lodgers, the critter, the People list, talk bubbles, the rack, the Trophy Wall through `trophyWall.paint`, the fire through `campPaintFire`, perf (WC-P1) | `src/js/14-art-camp.js` (data: building stages, tents, fixtures, skyline pieces), `src/js/63f-camp-pano.js` (painter, bake, frame), `src/styles/60-camp-pano.css` | `75-camp-ui.js` (mount above the chips), `12g-art-hands.js` (read only) | WC1, N3a (gatherer keys), BT1 (plot list) |
 | **N3b** (gatherers-2 12) plus the talk panel | 6.4: the talk panel and the job picker limited to the profession, fees shown before Send (N1c's numbers), Swap in for lodgers; N2's scene and the People list open it through `campTalk(id)` | N3b's files (`75-hands-ui.js`, `60-hands.css`) | - | N3a, N1c |
-| **EV1** Events and secrets | Its own spec work, using 3.6 and 3.7 for placement and the Shroud rules; the Beacon's call through `eventsCall()` | EV1's files (suggested `src/js/57j-events.js`, `src/js/75-events-ui.js`) | - | UX-W1, WM1 |
+| **EV1** Events and secrets | Its own spec work, using 3.6 and 3.7 for placement and the Shroud rules; the Balefire's call through `eventsCall()` | EV1's files (suggested `src/js/57j-events.js`, `src/js/75-events-ui.js`) | - | UX-W1, WM1 |
 | **R2-R5** each region | Its `OUTPOSTS` and `SHROUD_MAP` rows, its dungeon (the Deepwell engine with the region's foes and hazard), its plate's weather and motes | the region's own files | - | WM1, UX-W3 |
 | **LORE** | lore.md 4.4a updated to section 1.2; arrival lines for the four people; the Shroud lines on the stakes; outpost news lines (about 8 a region); event text with EV1 | `src/js/21v-camp-words.js` (new, data only: `CAMP_WORDS`; `21q-gatherers-talk.js` stays N1b's) | - | owner sign-off |
 
 Merge order: BT1 first (data and trees; the camp works without N2), then WM1 and N2 in parallel (WM1's camp
 side needs no art; N2 draws what BT1 lists), then UX-W2's extras. R2 adds the Coast's outpost and the
-Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and `node tools/perf.mjs --quick`.
+Undercroft. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and `node tools/perf.mjs --quick`.
 
 ---
 
@@ -858,7 +861,7 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
 | Arrival, the Hollow | The Rushbys came in from the marsh. Gil hunts. His family built you a Tannery. Your Proving is open. |
 | Arrival, the Coast | Mercy Penrow came ashore. She built an Infirmary for tired heroes. Your heroes can now reach Lanternlit. |
 | Arrival, the Emberwaste | The Emberlea families came home. Their lampwrights built the Lamp House. Heroes can now Awaken. |
-| Arrival, the Pale Reach | Wick carried her candle down the pass and lit the Beacon. The stars are back: you can light a third keystone. |
+| Arrival, the Pale Reach | Solveig carried her candle down the pass and lit the Balefire. The stars are back: you can light a third keystone. |
 | Tents row | 4 tents · 4 gatherers at work |
 | Send sheet | Send Nan to the grade-3 vein? Shift fee: 240 gold. Back in 2 h. |
 | Talk panel status | Out at the grade-3 vein · back in 1 h 12 m |
@@ -866,7 +869,7 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
 | Tree head | Points 3 of 5 |
 | Tree reset, busy | Busy: the Forge is building. Reset when it is done. |
 | Region-gated level | Lv 7 opens in the Emberwaste. |
-| The Beacon | Light the Beacon: something on the road will come to you now. |
+| The Balefire | Light the Balefire: something on the road will come to you now. |
 | A Lamp Gone Out | A lamp went out at zone 23 overnight. Fight there to light it again. |
 | Outpost, shrouded | Hallam's Landing · the fog sits on the water again tonight. |
 
@@ -876,9 +879,9 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
 
 - **O1. The milestone table (1.2).** The Hollow: the Rushbys raise the Tannery, the Proving opens. The
   Coast: Mercy Penrow (Silas's sister) raises the Infirmary, Lanternlit opens (and the Pinnacles, as they
-  already do). The Emberwaste: the Emberlea families (led by Tamsin Wray) raise the Lamp House, Awakenings
-  open. The Pale Reach: Wick raises the Beacon, a third keystone opens. Enchanting and trade routes stay
-  where gear-2 put them (on reaching the Coast). New names: the Rushbys, Mercy Penrow, Tamsin Wray.
+  already do). The Emberwaste: the Emberlea families (led by Constance Wray) raise the Lamp House, Awakenings
+  open. The Pale Reach: Solveig raises the Balefire, a third keystone opens. Enchanting and trade routes stay
+  where gear-2 put them (on reaching the Coast). New names: the Rushbys, Mercy Penrow, Constance Wray.
   Recommended: **yes**.
 - **O2. Outposts: one light forward camp per region** (a fire, the town, the dungeon's entrance and a
   noticeboard; no buildings, no build queue). Hollow's Rest stays the only camp. Recommended: **yes**.
@@ -890,9 +893,9 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
   the Bunkhouse becomes **the Tents** (your rule); the Smelter, the Saw and weaving are fixtures of the
   Forge, the Workbench and the Loom with a tree branch each; the Tannery is the only new chain building; the
   Still stays benched. Recommended: **yes**.
-- **O5. Region dungeons:** the Drowned Nave (Coast), the Deep Kilns (Emberwaste) and the Starfall Crater
+- **O5. Region dungeons:** the Undercroft (Coast), the Furnace (Emberwaste) and the Starpit
   (Pale Reach), each a 20-floor run on the Deepwell's engine with the region's foes, hazard and Sigils,
-  built with each region. The cheaper option is the Starfall Crater only. Recommended: **all three**, as
+  built with each region. The cheaper option is the Starpit only. Recommended: **all three**, as
   region content rather than new systems.
 - **O6. Building levels 6-10 open by region** (Lv 6 mid Coast, 7 the Emberwaste, 8 mid Emberwaste, 9 the
   Pale Reach, 10 the Gloamvale), one tree point a level, so a building ends Season 1 with 10 of its 12
@@ -901,6 +904,6 @@ Drowned Nave. Every task runs `node tools/build.mjs`, `node tools/check.mjs` and
   Coast's boss), 8 (the Emberwaste's), 10 (the Gloamvale). Tents turn into cabins at Hearth 5 and stone
   cottages at Hearth 10, all at once, free. Hire and shift fees show before you pay: on the hire card,
   the talk panel, the send sheet and the Send buttons. Recommended: **yes**.
-- **O8. The Beacon's call:** once a day (twice at Beacon Lv 3), bring the next event to you now. Events
+- **O8. The Balefire's call:** once a day (twice at Balefire Lv 3), bring the next event to you now. Events
   still wait and never expire. Recommended: **yes**; it gives an eager player more events without making
   anyone who plays less miss one.

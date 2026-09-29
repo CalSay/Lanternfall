@@ -171,10 +171,10 @@ Accessibility rules (A11Y, S1):
 | | | **Warden** | `holy` (procs on blocks and counters) | Taunt, Guard |
 | Ranger | `phys` | **Venomstalker** | `poison` | Venom |
 | | | **Trapper** | `frost` + `poison` (traps) | Mark, Root, Chill |
-| Mage | `frost` | **Warlock** | `fire` | Burn, Curse |
-| | | **Priest** | `holy` | Shield, Regen, Cleanse |
+| Lanternmage | `frost` | **Warlock** | `fire` | Burn, Curse |
+| | | **Lightkeeper** | `holy` | Shield, Regen, Cleanse |
 
-  Base Ranger keeps Mark (its Focus tap today). Base Mage keeps Chill.
+  Base Ranger keeps Mark (its Focus tap today). Base Lanternmage keeps Chill.
 - **Heroes:** each hero has one base type (`ROSTER[id].dt`, **new**, data only) and at most one status their
   signature applies. Rule for CL1: of the 18 heroes, each type is on at least 2, and each role has at least
   one non-physical hero. Heroes 19-32 (HER) fill gaps by region.
@@ -211,7 +211,7 @@ Accessibility rules (A11Y, S1):
 - Bosses use their family's row. A region boss may add one resist (the Pyre Knight: fire).
 - Region profiles (so RG1's buff items and CB2's elites line up): the Hollow tests physical and poison
   (beasts, plants, undead); the Coast is holy-weak and frost-resistant; the Emberwaste punishes fire and
-  rewards frost; the Pale Reach reverses that; the Long Stair rewards holy.
+  rewards frost; the Pale Reach reverses that; the Gloamvale rewards holy.
 
 ---
 
@@ -268,12 +268,12 @@ Cap: all damage-over-time on one party member together is at most 5% of max HP a
 | `keen` | Keen | 20% more damage for 3 s after a **perfect dodge** | One |
 | `taunt` | Taunting | Foes in reach must attack this unit | 3 s (`tauntT`); bosses obey taunt |
 
-**Action (not a status):** `cleanse` removes one harmful status (all its stacks) from an ally; a Priest's
+**Action (not a status):** `cleanse` removes one harmful status (all its stacks) from an ally; a Lightkeeper's
 cleanse removes two. Cleansing a Curse makes it detonate on nobody (the stored damage is lost).
 
 ### 3.2 Anti-heal
 
-Foes that heal (Marsh Wraith, Vampiric elites, the Brine Witch) are countered by **Curse** (no healing) and
+Foes that heal (Marsh Wraith, Leeching elites, the Brine Witch) are countered by **Curse** (no healing) and
 **Venom 5+** (half healing). They do not stack: Curse wins.
 
 ### 3.3 Taunt
@@ -324,7 +324,7 @@ with reduced motion it is text only, no shake.
 | **Swing** | everyone | - | Plain hits at attack speed, base type |
 | **Tap** | Lanternbearer | `tap` | The class tap (today: Heavy hit, Ember, Focus, Blessing). It also parries (the last 0.8 s of a heavy telegraph) and dodges (6.3) |
 | **Ability slot 1** | Lanternbearer | `ab1` | The base class ability. Always there |
-| **Ability slot 2** | Lanternbearer | `ab2` | Unlocks with the **first evolution** (the evolution's named ability: Rend, Stand Fast, Toxic Bloom, Snare Field, Hex Nova, Sanctuary) |
+| **Ability slot 2** | Lanternbearer | `ab2` | Unlocks with the **first evolution** (the evolution's named ability: Rend, Stand Fast, Deathcap, Snare Field, Witchfire, Sanctuary) |
 | **Ability slot 3** | Lanternbearer | `ab3` | **Reserved** for the second evolution tier (after 1.0). Save and UI leave room; nothing fills it in 1.0 |
 | **Finisher** | Lanternbearer | `fin` | One per Stagger (6.4). Class-specific, 6-10 P, tags `heavy`, `finisher` |
 | **Signature** | each hero | `sig` | The hero's one ability, on the same model. Awakening upgrades it (`sig` rank 2) and adds a passive |
@@ -425,15 +425,15 @@ Presets (ids): `boss`, `farm`, `deepwell`.
 |---|---|---|---|---|
 | `heavy` | Warrior, Reaver, Warden | metal | leather | armour, HP, block, threat |
 | `medium` | Ranger, Venomstalker, Trapper | wood | leather | attack speed, crit, some armour |
-| `light` | Mage, Warlock, Priest | cloth | wood | ability power, healing, ward |
+| `light` | Lanternmage, Warlock, Lightkeeper | cloth | wood | ability power, healing, ward |
 
 - The Lanternbearer wears **its own weight** in the armour positions (`helm`, `body`, `off`). Weapons are
   class kinds. `charm` and the tools (`pick`, `axe`, `sickle`) fit every class.
 - **Heroes wear by role weight:** tank `heavy`, striker `medium`, caster and support `light`. They keep their
   two positions (`wpn`, `trk`).
-- Small **accents** cross over (Warrior padding is cloth; Ranger arrowheads and Mage clasps are metal), so
+- Small **accents** cross over (Warrior padding is cloth; Ranger arrowheads and Lanternmage clasps are metal), so
   every gathering line matters a bit to every class.
-- The **Mage's main family is cloth** (armour is most of a set). Plan-4's table says "wood + cloth" in
+- The **Lanternmage's main family is cloth** (armour is most of a set). Plan-4's table says "wood + cloth" in
   the other order; the owner named both families without an order. RG1 may swap them with a change-log line.
 - A class change (Mirror of Embers) **retools** gear to the new weight, as `retoolItems()` does today:
   same id, grade, rarity, +N and lines.
@@ -446,7 +446,7 @@ Presets (ids): `boss`, `farm`, `deepwell`.
 | 2 The Sunken Coast | 4-6 | `coast` |
 | 3 The Emberwaste | 7-9 | `ember` |
 | 4 The Pale Reach (working name) | 10-12 | LORE-R45 |
-| 5 The Long Stair (working name) | 13-15 | LORE-R45 |
+| 5 The Gloamvale | 13-15 | LORE-R45 |
 
 **Item power by grade** (starting values; RG1 and BAL3 tune grades 6-15, **grades 1-5 are fixed**):
 
@@ -489,7 +489,7 @@ named like a gem, a stone or glass, so they are never confused with the `crystal
 | Family id | Name | Region | Found by | Top grade (`famTop`) |
 |---|---|---|---|---|
 | `pearl` | Tide Sigil | coast | fishing, Tide Pools (active finds more) | 6 |
-| `glass` | Ember Sigil | ember | Emberwaste mining | 9 |
+| `glass` | Cinder Sigil | ember | Emberwaste mining | 9 |
 | `star` | Frost Sigil | 4 (Pale Reach) | Starfall gathering (regions-4-5.md 1.3) | 12 |
 | `well` | Gloam Sigil | 5 (Gloamvale) | Mining the Flats of No Reflection and the Hush (regions-4-5.md 2.3) | 15 |
 
@@ -611,18 +611,18 @@ Existing ids stay (`heavy`, `dive`, `heal`). New ones:
 | Id | Name | Effect (CB2 tunes) | Counter |
 |---|---|---|---|
 | `shielded` | Shielded | Starts with a shield of 30% max HP, back after 5 s without damage | **Heavy hits** deal x2 to the shield (Warrior) |
-| `vampiric` | Vampiric | Heals 20% of the damage it deals | **Curse** or **Venom 5+** (anti-heal, 3.2) |
+| `vampiric` | Leeching | Heals 20% of the damage it deals | **Curse** or **Venom 5+** (anti-heal, 3.2) |
 | `explosive` | Explosive | On death, blasts the party after a 1.5 s `zone` warning | **Dodge**, or kill it while Chilled: it freezes and does not blast |
 | `summoner` | Summoner | Every 12 s casts a 2 s `summon` that calls 2 adds | **Interrupt** or stun; area damage |
 | `enraged` | Enraged | Below 50% HP, attacks 50% faster | **Chill** cancels the rage while it lasts; burst |
-| `frozen` | Frozen-armour | Takes half damage from physical and frost until 3 fire hits break the ice (it reforms after 8 s) | **Fire** |
+| `frozen` | Ice-Clad | Takes half damage from physical and frost until 3 fire hits break the ice (it reforms after 8 s) | **Fire** |
 | `cursed` | Cursed | Its hits Curse the member hit (no healing, 4 s) | **Holy** hits on it remove its aura for 5 s; **cleanse** |
 
 - Elites roll **1 trait** in Regions 2-3 and **2 traits** from Region 4. Two traits never share a counter.
   Region 1 elites keep today's rules (stronger, no trait).
 - Every damage type counters at least one trait, and so does every evolution: Reaver and Warrior
-  (Shielded), Warden (Cursed), Venomstalker (Vampiric), Trapper (Enraged, Summoner), Warlock (Frozen,
-  Vampiric), Priest (Cursed).
+  (Shielded), Warden (Cursed), Venomstalker (Leeching), Trapper (Enraged, Summoner), Warlock (Ice-Clad,
+  Leeching), Lightkeeper (Cursed).
 - Champions stay as today (a named strongest-of-kind, Trophies).
 
 ### 6.6 Active play rewards
@@ -642,7 +642,7 @@ A boss beaten with **3 or more** parries, dodges or interrupts drops **+1 signat
 | **Hero** | Someone who fights beside you. You field two |
 | **Party** | You and your two heroes |
 | **Slot** | Where a party member stands: **Front**, **Middle** or **Back** |
-| **Class** | Your way of fighting: **Warrior** (heavy armour), **Ranger** (medium), **Mage** (light) |
+| **Class** | Your way of fighting: **Warrior** (heavy armour), **Ranger** (medium), **Lanternmage** (light) |
 | **Evolution** | A new path for your class, opened by a trial at the end of the Hollow. It gives you a second ability |
 | **Ability** | A special move that charges over time. Tap it, or let it fire by itself |
 | **Signature** | A hero's own ability |
@@ -659,12 +659,12 @@ A boss beaten with **3 or more** parries, dodges or interrupts drops **+1 signat
 | **Stagger** | Fill a boss's stagger bar and it stops for 5 seconds and takes 50% more |
 | **Pack** | The foes you fight at once. **Brutes** come in threes, **swarms** in eights or more |
 | **Elite** | A stronger foe with a **trait**. Each trait has a counter |
-| **Boss** | A crowned foe with phases. Region bosses are **Listeners** |
+| **Boss** | A crowned foe with phases. Region bosses are **Shrouds** |
 | **Gear weight** | Heavy, medium or light. Your class wears one weight |
 | **Tier** | How strong gear and materials are, 1 to 15. Each region brings three |
 | **Rarity** | Common, Uncommon, Rare, Epic, Legendary. Higher rarity means more power and more sockets |
 | **Socket** | A space on gear for a buff item |
-| **Buff item (Sigil)** | A Sigil find from a region (Tide Sigils, Ember Sigils) that adds to your gear |
+| **Buff item (Sigil)** | A Sigil find from a region (Tide Sigils, Cinder Sigils) that adds to your gear |
 | **Enchanting** | Setting buff items into gear. Higher skill, stronger effect |
 | **Salvage Rune** | Saves a buff item when you take it out |
 | **Unique** | A boss's own item, with a power no crafted item has |
@@ -680,12 +680,12 @@ A boss beaten with **3 or more** parries, dodges or interrupts drops **+1 signat
 
 - **The Lanternbearer**, capital L, with "the". Never "the hero" or "the player" in copy. **Heroes** are the
   recruits (lower case).
-- **Classes and evolutions** are capitalised: Warrior, Ranger, Mage; Reaver, Warden, Venomstalker, Trapper,
-  Warlock, Priest. "Evolve into a Priest", "your Warlock".
+- **Classes and evolutions** are capitalised: Warrior, Ranger, Lanternmage; Reaver, Warden, Venomstalker, Trapper,
+  Warlock, Lightkeeper. "Evolve into a Lightkeeper", "your Warlock".
 - The old class names become lore words for the callings: Wardens hold, Rangers walk, **Lanternmages**
   burn, **Lightkeepers** keep. They are not class names any more (CHAR1 and LORE rework the lines).
 - **Damage types are lower case** in sentences ("holy damage", "weak to fire"). **Statuses, reactions,
-  traits and named buffs are capitalised** (Bleed, Blight, Vampiric, Keen, Reeling).
+  traits and named buffs are capitalised** (Bleed, Blight, Leeching, Keen, Reeling).
 - **"Reaction", not "combo",** for Blight, Shatter and Judgement: "combo" is already the Party screen's word
   for two roles in two slots (formation.md 2.2).
 - **No jargon in copy:** say "damage over time", "hits the whole pack", "damage a second", "comes back
@@ -762,14 +762,14 @@ S1 (types and statuses) is built from sections 1-3 and 6.1-6.3. It is the first 
 
 1. Does base Ranger's Focus stay at +25% (today) or become the standard +20% Mark? (This file allows 15-30%
    per source.)
-2. The Mage's base type: frost (roadmap and this file) or fire (the Lanternmage's Embers today)? If fire,
+2. The Lanternmage's base type: frost (roadmap and this file) or fire (the Lanternmage's Embers today)? If fire,
    Warlock needs another way to stand apart.
 3. Which heroes get which base type (2 or more per type among the 18)?
 4. How strong is the evolution power spike (+35% target) in terms of this file's buckets?
 
 **For RG1**
 
-5. The Mage's main family: cloth (this file) or wood (plan-4's table)?
+5. The Lanternmage's main family: cloth (this file) or wood (plan-4's table)?
 6. Relabel today's material names by index (Iron becomes Bronze) or keep them for grades 1-5? The draft's
    grade-9 "Emberite" clashes with today's tier-5 ore either way.
 7. The Enchanting level for 100% strength, and whether heroes' gear sockets are worth their Enchanting cost.
@@ -798,9 +798,9 @@ S1 (types and statuses) is built from sections 1-3 and 6.1-6.3. It is the first 
 | Date | Change | By | Signed off |
 |---|---|---|---|
 | 2026-09-28 | First version | CORE-G | - |
-| 2026-09-28 | **Proposed (CL1, classes-2.md 8.2-1):** 2.2 Mage row: base type `fire` (was `frost`); Warlock adds dark fire (type `fire`) and Curse; "Base Mage keeps Chill" becomes "keeps Burn" (Chill comes from the Trapper and frost heroes). Formalises the coordinator's 2026-09-28 decision | CL1 | coordinator |
-| 2026-09-28 | **Proposed (CL1, 8.2-2):** 2.3 exception: the Warlock's Curse detonations and Hex Nova treat "resists fire" as neutral ("Dark Turned"); weakness still counts | CL1 | coordinator |
-| 2026-09-28 | **Proposed (CL1, 8.2-3):** 4.1 the Priest's `ab2` stays Sanctuary (owner-named); its `ab1` is Rally Hymn (`hymn`, a `var` replacing Lantern Flare). Elowen's signature is shown as Chapel Light (hero data, decision D7) | CL1 | coordinator |
+| 2026-09-28 | **Proposed (CL1, classes-2.md 8.2-1):** 2.2 Lanternmage row: base type `fire` (was `frost`); Warlock adds dark fire (type `fire`) and Curse; "Base Lanternmage keeps Chill" becomes "keeps Burn" (Chill comes from the Trapper and frost heroes). Formalises the coordinator's 2026-09-28 decision | CL1 | coordinator |
+| 2026-09-28 | **Proposed (CL1, 8.2-2):** 2.3 exception: the Warlock's Curse detonations and Witchfire treat "resists fire" as neutral ("Dark Turned"); weakness still counts | CL1 | coordinator |
+| 2026-09-28 | **Proposed (CL1, 8.2-3):** 4.1 the Lightkeeper's `ab2` stays Sanctuary (owner-named); its `ab1` is Rally Hymn (`hymn`, a `var` replacing Lantern Flare). Elowen's signature is shown as Chapel Light (hero data, decision D7) | CL1 | coordinator |
 | 2026-09-28 | **Proposed (CL1, 8.2-4):** 4.4 ability shape: optional `var: { [evoId]: { type, fx, name } }`; new verbs `meter`, `trap`, `detonate`; `consume` takes a class meter id; per-fx options `{ perStack, base, ramp, hits, over, spread, to, v, overflow }` | CL1 | coordinator |
 | 2026-09-28 | **Proposed (CL1, 8.2-5):** 1.3/3.1 class meters (Grit, Fury, Bulwark, Embers, Blessing) are not statuses; each feeds one named bucket-T buff whose value follows the meter | CL1 | coordinator |
 | 2026-09-28 | **Proposed (CL1, 8.2-6):** 1.3 bucket Y: class and evolution auras sit with slot jobs, outside the +40% cap (as `HERO_CLASSES[].aura` today) | CL1 | coordinator |
