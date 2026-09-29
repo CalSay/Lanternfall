@@ -998,3 +998,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   counters land; BAL3 retunes. check passes after both merges.
 - NEXT: LORE-C1 (code renames per names.md "Code follow-up") and SAVE1 (export/import only: under the relaxed
   save rule, no migration backups; import also lets the coordinator hand the owner late-game test saves).
+- MERGED SAVE1 (55-savecode.js, 75-savecode-ui.js, 60-savecode.css, tools/savecode.mjs: LF1 save codes, export
+  copy/download, import with check + in-page confirm) and LORE-C1 (player-facing renames: the Fenmother,
+  Silas the Fogbound, Circle Crest; Shroud-framed lines; HANDS_FIRST trimmed). Coordinator tweak: the Hollow
+  arrival line now reads "One wraith here drowned every light in the marsh." (was "...took the lights, and
+  kept them": keeping lights is lamp-keeper framing). check passes.

@@ -53,7 +53,7 @@ const HOLLOW_ARRIVAL = [
   'Quarry Ruins. The stone stood up and walked. Some of it still does.',
   'Wraithmarsh. Green lights drift over the water. Do not follow them.'
 ];
-const HOLLOW_ARRIVAL_BOSS = "Wraithmarsh V. One wraith here took the marsh's own lights, and kept them.";
+const HOLLOW_ARRIVAL_BOSS = "Wraithmarsh V. One wraith here drowned every light in the marsh.";
 
 const HOLLOW_STORY = [
   { id: 'wisps', at: 7, title: 'Wisps',
