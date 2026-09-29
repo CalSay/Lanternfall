@@ -1,0 +1,10 @@
+/* 60-savecode: Save code panel (export/import) */
+.savecode-panel { display: grid; gap: 10px; }
+.savecode-sep { height: 2px; background: var(--line); margin: 2px 0; }
+.savecode-import { font-family: monospace; font-size: 12px; word-break: break-all; }
+.savecode-fallback { width: 100%; box-sizing: border-box; margin-top: 6px; font-family: monospace; font-size: 12px; background: var(--well); border: 2px solid var(--line); color: var(--bone); }
+.savecode-summary { display: grid; gap: 2px; padding: 10px; background: var(--well); border: 2px solid var(--line); }
+.savecode-summary p { margin: 0; }
+.savecode-replace { padding: 6px 12px; background: var(--gold); color: #1A1420; border: 2px solid var(--line); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+.savecode-replace:active { transform: scale(0.98); }
+.savecode-import-result { display: grid; gap: 8px; }
