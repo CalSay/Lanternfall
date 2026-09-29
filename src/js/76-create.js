@@ -32,7 +32,7 @@ var classUI;
   const CHANGED = {
     warden: ['Your class is called Warrior now. The Warden is its path, and it is yours.',
       'Guard stacks are Grit now. Each one also cuts the damage you take by 1%.',
-      'Shield Wall: 50% less damage taken and 20% more dealt (was 60% and 30%). You block 10% of hits.'],
+      'You block every tenth hit you take (half damage).'],
     ranger: ['You are still a Ranger, and sturdier: more health and 10 armour.',
       'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
     lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',

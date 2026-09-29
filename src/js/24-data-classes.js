@@ -61,8 +61,10 @@ const CLASS_ABILITIES = {
     fx: [['dmg', 1.3], ['threat', 3], ['meter', 'grit', 1]], name: 'Heavy hit',
     desc: 'A heavy hit of 1.3x your attack. The foe turns on you. Adds 1 Grit.' },
   shieldwall: { id: 'shieldwall', slot: 'ab1', cls: 'warrior', cd: 30, target: 'party', type: 'phys', tags: ['taunt', 'shield'],
-    fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.5, emp: 0.2, t: 6, name: 'Shield Wall',
-    desc: 'For 6s your party takes 50% less damage and deals 20% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
+    fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.6, emp: 0.3, t: 6, name: 'Shield Wall',
+    // S2 keeps today's 60% / 30%: classes-2 1.2 lowers it to 50% / 20% because Core 2.0 foes hit 2-3x harder,
+    // which lands with S6; at 50 / 20 on today's foes the sim lost T4 and T7 (BAL3 applies it with S6).
+    desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
   hammerfall: { id: 'hammerfall', slot: 'fin', cls: 'warrior', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['delay', 1], ['meter', 'grit', 5]], name: 'Hammerfall',
     desc: '7x your attack. Every foe attacks 1s later. Fills your Grit.' },

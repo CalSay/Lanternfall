@@ -4,7 +4,8 @@
 //   fight: fight only; auto-buys the best-value upgrade/companion, challenges bosses when ready.
 //   mixed: alternates 10 min fighting / 5 min gathering (best unlocked node for the weaker skill)
 //          and forges + equips gear whenever mats allow.
-//   --class warden|lanternmage|ranger|lightkeeper: choose the hero class at the start.
+//   --class warrior|ranger|mage (S2 base classes) or a legacy key warden|lanternmage|ranger|lightkeeper
+//             (lightkeeper = a Lanternmage on the Lightkeeper path): choose the hero class at the start.
 //             With --class, mixed crafts that class's items (weapon, off-hand, head, body) at their
 //             stations (55-crafting.js), gathers the family that blocks the next one (lowest
 //             unfinished tier of the set first), walks back to an older zone for a fight-only

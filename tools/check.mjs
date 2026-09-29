@@ -5209,7 +5209,7 @@ try {
     assert(E('Object.keys(LEGACY_CLS).join()') === 'warden,ranger,lanternmage,lightkeeper' && E('Object.keys(LEGACY_CLS).every(k => CLS_KIT(LEGACY_CLS[k].base, LEGACY_CLS[k].evo) === k)'), 'LEGACY_CLS maps the four old classes and each maps back to its own kit');
     assert(E('Object.keys(HERO_CLASSES).join()') === 'warden,lanternmage,ranger,lightkeeper' && E('HERO_CLASSES.warden.name') === 'Warrior' && E('HERO_CLASSES.lightkeeper.name') === 'Lightkeeper',
       'HERO_CLASSES stays a legacy view (4 kit keys, legacy order): the warden kit is shown as the Warrior');
-    assert(E('CLASS_ABILITIES.shieldwall.dr === 0.5 && CLASS_ABILITIES.shieldwall.emp === 0.2 && COMBAT_TUNE.wall === 0.5') && Math.abs(E('HERO_CLASSES.warden.ability.cd') - 30) < 1e-9, 'Shield Wall: 50% less taken, 20% more dealt (was 60 / 30), every 30s');
+    assert(E('COMBAT_TUNE.wall === CLASS_ABILITIES.shieldwall.dr && /60% less/.test(HERO_CLASSES.warden.ability.desc)') && Math.abs(E('HERO_CLASSES.warden.ability.cd') - 30) < 1e-9, 'Shield Wall reads its numbers from CLASS_ABILITIES (60% less taken, 30% more dealt until S6), every 30s');
     assert(E('COMBAT_TUNE.heroHp.ranger === 6 && COMBAT_TUNE.heroArmour.ranger === 10 && COMBAT_TUNE.heroHp.warden === 12 && COMBAT_TUNE.heroArmour.warden === 30 && COMBAT_TUNE.heroHp.lanternmage === 4'), 'base stats in combat: Warrior 12 / 30, Ranger 6 / 10 (was 5 / 0), Lanternmage 4 / 0');
     for (const f of ['24-data-classes.js', '55-classes.js']) {
       const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\/\/.*$/gm, '');
@@ -5228,7 +5228,7 @@ try {
     assert(Math.abs(idle - 0.025) < 1e-9, `idle taps add Grit at half strength (2.5% at 5, got ${idle})`);
     assert(E('heroGuardN()') === 5 && Math.abs(E('heroGritDr()') - 0.05) < 1e-9 && E('partyBuffs().some(b => b.name === "Grit" && b.stacks === 5)'), `Grit caps at 5 and cuts damage taken by 5% (${E('heroGritDr()')})`);
     secs(g, 0.2);
-    assert(E('combatUnits()[0].blockP') >= 0.1 - 1e-9, 'the Warrior blocks 10% of hits');
+    assert(E('combatUnits()[0].blockC') === 0.1 && E('combatUnits().slice(1).every(u => !u.blockC)'), 'the Warrior blocks every tenth hit (counted, no random draw); companions have no class block');
     const cw = E('critBase()');
     E('chooseClass("mage"); spawn()'); secs(g, 0.2);
     for (let i = 0; i < 9; i++) E('mob && !mob.dead && classTap({ target: "mob" })');

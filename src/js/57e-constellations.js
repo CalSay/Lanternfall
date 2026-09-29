@@ -94,7 +94,7 @@ const STAR_MAPS = {
       ['Oath', [
         ['Comrades', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
         ['Comrades II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Shield Brothers', "Shield Wall's party bonus +10% (x1.3, was x1.2).", { t: { wall: 0.1 } }, 1.02],
+        ['Shield Brothers', "Shield Wall's party bonus +10% (x1.4, was x1.3).", { t: { wall: 0.1 } }, 1.02],
         ['Drillmaster', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
         ['Comrades III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
         ['Banner Over Camp', '+6% gold and +6% away gains.', { m: { gold: 1.06, offline: 1.06 } }, 1],

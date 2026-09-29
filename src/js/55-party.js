@@ -4,8 +4,13 @@
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Contract: docs/design/stage-a-plan.md ("State (A1)", "Class data and actions (A1)").
 //
+// Classes 2.0 S2: the kits run by legacy kit key (S.party.cls: 'warden' = the Warrior's kit, 'lanternmage',
+// 'ranger', 'lightkeeper' = a Lanternmage on the Lightkeeper's path); the class itself is S.cls (55-classes.js)
+// and the numbers come from 24-data-classes.js. Grit (was guard stacks) also cuts damage taken
+// (heroGritDr, read by 59-combat); Lantern Flare Burns the pack; the Ranger's base crit is 15% (critBase).
+//
 // Exposed names: HERO_CLASSES, COMP_CHAR_KEYS, CHAR_ROLE, chooseClass, castAbility,
-// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField,
+// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField, heroGritDr,
 // and the stage HUD hooks unitHp, unitCd, bossTelegraph (Stage C combat replaces them).
 // Everything else is private (inside the block below, or prefixed pty).
 //
