@@ -514,7 +514,7 @@ let deeds, deedBonus, wearGet;
     N().ess += num(ess);
     if (!mob || !mob.boss || inAway || !DS().init) return;
     // zone boss secrets (live play only)
-    if (typeof fightBoss !== 'undefined' && num(bossTime) < 1) grantSecret('s_close');
+    if (typeof fightBoss !== 'undefined' && num(bossTime) < 1 && num(bossTime) >= 0) grantSecret('s_close');   // S6: under 1 s before the Enrage
     // (from zone 10: every new game beats its first bosses before it has a weapon or a full party)
     if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
     const U = safe(() => combatUnits(), null);

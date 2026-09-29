@@ -101,7 +101,7 @@ function uiFight() {
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
-    putText(G.desc, `${Math.ceil(bossTime)} seconds left. Tap fast.`);
+    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Tap fast.` : 'It is enraged. Finish it now.');
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
     putText(G.title, 'Rematch the zone boss');

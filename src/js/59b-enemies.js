@@ -60,15 +60,16 @@ const ENEMY_TUNE = {
   splitAt: 0.5, splitHp: 0.12, wraithEvery: 12, wraithHeal: 0.1, firstHeavy: 4, first2: 6   // (Elder Wraith: spec 20% every 10s; every region boss is a Wraith, so it is softer)
 };
 
-var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossStart, nextWindIn, resolveParry, cbTelegraph;
+var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossStart, nextWindIn, resolveParry, cbTelegraph, onPackTick;
 
 {
   const E = ENEMY_TUNE;
   // The telegraph showing now (one at a time). A kept object: the stage reads it every frame.
   const TELE = { kind: '', left: 0, dur: 0, target: null, foe: null, on: false, res: '', win: 0, unit: -1 };
-  const START_EV = { kind: '', dur: 0, target: null, foe: null }, RES_EV = { kind: '', result: '', by: '' };
+  const START_EV = { kind: '', dur: 0, target: null, foe: null }, RES_EV = { kind: '', result: '', by: '', foe: null };
   let boss = null;
-  cbTelegraph = () => TELE.on ? TELE : null;
+  // S6-B: the answer warning of 59g (kits, pack heavies, elites) first, else this file's own wind-up
+  cbTelegraph = () => (typeof actWarning === 'function' && actWarning()) || (TELE.on ? TELE : null);
   const units = () => combatUnits();
   const upUnits = () => { let n = 0; for (const u of units()) if (u.live && !u.down) n++; return n; };
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
@@ -86,7 +87,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast('The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
   }
   function endTele(result, by) {
-    RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || '';
+    RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || ''; RES_EV.foe = TELE.foe;
     TELE.on = false; TELE.foe = null; TELE.target = null;
     emit('telegraphResolve', RES_EV);
   }
@@ -113,12 +114,60 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   endDive = f => { f.diveT = 0; f.diveU = -1; f.diveX = 1; f.bt = 0; };
   function mostHurtFoe() { let b = null, v = 1; for (const o of combatFoes()) if (alive(o) && o.hp / o.max < v) { v = o.hp / o.max; b = o; } return b; }
 
+  // ---------------- S6-A pack cadences (combat-2 2.3) ----------------
+  // A behaviour that is fine on one foe in three becomes a wall on six, so behaviours run per pack: one timer per
+  // behaviour, and each time it fires one eligible member does it. Quotas are FOE_BEH[k].quota (21x FOE_TYPE).
+  // COMBAT_TUNE.sizes 0 keeps today's per-foe timers.
+  const PK = { t: 0, dive: 0, cloud: 0, gap: 0, chan: false, rise: 0 };
+  on('packSpawn', () => { PK.t = 0; PK.dive = 0; PK.cloud = 0; PK.gap = 0; PK.chan = false; PK.rise = 0; });
+  const quotas = () => COMBAT_TUNE.sizes > 0;
+  const q = (k, id, d) => { const b = FOE_BEH[k]; return b && b.quota && b.quota[id] != null ? b.quota[id] : d; };
+  function startDive(f) {
+    const u = pickDive(); if (!u) return false;
+    if (twoWalls(f)) return true;   // F2 Two Walls: the Middle tank taunts the pack's first diver
+    const two = f.z >= E.diveFrom;
+    f.diveU = u.i; f.diveT = (two ? E.diveT2 : E.diveT); f.diveX = (two ? E.diveX2 : 1) * f.bx; f.first = 1; f.swing = Math.min(f.swing, 0.3);
+    return true;
+  }
+  onPackTick = dt => {
+    if (!quotas()) return;
+    const list = combatFoes();
+    PK.t += dt; PK.dive += dt; PK.cloud += dt;
+    let diving = 0, diver = null, spores = 0, spore = null, chan = false, healer = null;
+    for (const f of list) {
+      if (!alive(f) || f.boss || f.born < COMBAT_TUNE.bornAct || f.stunT > 0) continue;
+      if (f.type === 'bat') { if (f.diveT > 0) diving++; else if (!diver && !(f.rootT > 0) && !(f.stgT > 0)) diver = f; }
+      else if (f.type === 'spore') { spores++; if (!spore || f.elite) spore = f; }
+      else if (f.type === 'wraith') { if (f.chanT > 0) chan = true; else if (!healer || f.elite) healer = f; }
+    }
+    // dives: every 5 s one diver, at most 2 diving at once
+    if (PK.dive >= q('bat', 'every', E.diveEvery)) { PK.dive = 0; if (diver && diving < q('bat', 'dive', 2)) startDive(diver); }
+    // spore cloud: every 6 s one cloud for the pack, x1.5 when 3+ Spore Caps stand
+    if (spore && PK.cloud >= q('spore', 'every', E.cloudEvery)) {
+      PK.cloud = 0;
+      const str = spores >= 3 ? 1.5 : 1, a = (typeof cbFoeAtk === 'function' ? cbFoeAtk(spore) : spore.atk) / (spore.share || 1);   // one old foe's cloud
+      for (const u of units()) {
+        if (!u.live || u.down) continue;
+        cbHitUnit(u, a * E.cloud * spore.bx * str, 'cloud', spore);
+        if (!u.down) stUnitApply(u, 'venom', Math.round(E.venom * spore.bx * str), { dur: E.poisonT, floor: true });
+      }
+    } else if (!spore) PK.cloud = 0;
+    // heal channels: one at a time; the next starts 2 s after the last ends (the first after healEvery)
+    if (chan) { PK.chan = true; PK.gap = 0; }
+    else {
+      if (PK.chan) { PK.chan = false; PK.gap = 0; }
+      PK.gap += dt;
+      if (healer && PK.t >= E.healEvery && PK.gap >= q('wraith', 'gap', 2) && mostHurtFoe()) { healer.chanT = E.healChan; PK.chan = true; }
+    }
+  };
+
   onEnemyTick = (f, dt) => {
     if (f.boss) return bossTick(f, dt);
     f.bt += dt;
     const t = f.type;
     if (t === 'bat') {
       if (f.diveT > 0) { f.diveT -= dt; if (f.diveT <= 0) endDive(f); }
+      else if (quotas()) f.bt = 0;   // S6-A: the pack starts dives
       else if (f.bt >= E.diveEvery && !(f.rootT > 0)) {   // S1: a Rooted foe cannot dive
         const u = pickDive();
         if (u && twoWalls(f)) { f.bt = 0; return false; }   // F2 Two Walls: the Middle tank taunts the pack's first diver
@@ -126,7 +175,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         f.bt = 0;
       }
     } else if (t === 'spore') {
-      if (f.bt >= E.cloudEvery) {
+      if (!quotas() && f.bt >= E.cloudEvery) {
         f.bt = 0;
         for (const u of units()) {
           if (!u.live || u.down) continue;
@@ -142,7 +191,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
         if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
         return true;
       }
-      if (f.bt >= E.healEvery) { const o = mostHurtFoe(); if (o) { f.chanT = E.healChan; return true; } }
+      if (!quotas() && f.bt >= E.healEvery) { const o = mostHurtFoe(); if (o) { f.chanT = E.healChan; return true; } }
     }
     return false;
   };
@@ -168,8 +217,8 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     return false;
   };
   onFoeDeath = (f, src, kind) => {
-    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn') {
-      f.again = true; f.hp = f.max * E.reassemble; f.hit = 0.2;
+    if (E.reassemble > 0 && f.type === 'bones' && !f.again && !f.boss && kind !== 'magic' && kind !== 'burn' && !(quotas() && PK.rise >= q('bones', 'rise', 2))) {
+      f.again = true; f.hp = f.max * E.reassemble; f.hit = 0.2; PK.rise++;   // S6-A: the first 2 that fall get up
       return true;
     }
     return false;
@@ -178,7 +227,9 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (TELE.on && TELE.foe === f) endTele('interrupt', 'kill');
     if (f === boss) boss = null;
   };
+  const STUN_EV = { foe: null };
   onFoeStun = f => {
+    STUN_EV.foe = f; emit('stunned', STUN_EV);   // S6-B (59g): a stun stops a cast (a boss's `sig` too, proposal 8.2-7)
     if (f.chanT > 0) { f.chanT = 0; f.bt = 0; CB_STATS.interrupts++; }
     if (TELE.on && TELE.foe === f) resolve('interrupt', 'stun');
     if (f.diveT > 0) endDive(f);
@@ -187,12 +238,18 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   // ---------------- bosses ----------------
   bossStart = f => {
     boss = f; TELE.on = false;
+    if (typeof kitStart === 'function' && kitStart(f)) { CB_STATS.bossTries++; return; }   // S6-C: a kit boss (59h)
     f.bt = E.firstHeavy; f.b2 = E.first2; f.split = false; f.addsT = 0;
     CB_STATS.bossTries++;
   };
-  nextWindIn = () => boss && alive(boss) ? Math.max(0, boss.bt) : 99;
+  nextWindIn = () => {
+    if (!boss || !alive(boss)) return 99;
+    if (boss.kit && boss.kitM) { let m = 99; for (let i = 0; i < boss.kitM.length; i++) if (boss.kitM[i].tele === 'heavy' && boss.kitM[i].ph <= boss.ph) m = Math.min(m, boss.kt[i]); return Math.max(0, m); }
+    return Math.max(0, boss.bt);
+  };
   const every = f => f.type === 'beetle' ? E.beetleEvery : E.heavyEvery;
   function bossTick(f, dt) {
+    if (f.kit) return kitTick(f, dt);   // S6-C: the kit interpreter (59h)
     if (TELE.on && TELE.foe === f) {
       TELE.left -= dt;
       if (TELE.left > 0) return true;
@@ -219,7 +276,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
   }
   function addFoes(f, type, n, share) {
     const ti = TYPES.findIndex(x => x.key === type), list = combatFoes();
-    for (let i = 0; i < n && list.length < 6; i++) {
+    for (let i = 0; i < n && list.length < 12; i++) {   // S6-A: the foe list holds 12
       const b = FOE_BEH[type], cyc = zoneCycle(f.z);
       const a = {
         key: type + cyc, type, rows: SPR[type], pal: shiftPal(TYPES[ti].pal, zoneHue(f.z)), boss: false, hp: f.max * share, max: f.max * share,
