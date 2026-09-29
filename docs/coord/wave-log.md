@@ -1053,3 +1053,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   style, and enemy ideas (orc, demon, blood monster). Heroes should be LESS chibi than the packs (taller
   proportions, smaller heads). The packs stay out of the repo (third-party files); reference copies live in
   the session scratchpad assets/ folder with a contact sheet. ART-STYLE1 brief to include all of this.
+- OWNER shared a hero reference (scratchpad assets/ref-hero-coat.png): the hero proportion target. About
+  22 x 44 art px on a ~50 px grid, roughly 3.5-4 heads tall (less chibi than the Tiny RPG packs), 1 px black
+  outline that is loose and broken in places (hair, coat hem), muted palette (mauve-brown hair, sand coat,
+  slate-blue trousers, rose skin, lavender eyes), 3-4 tones per material, asymmetric relaxed pose, flowing
+  hair/coat tail behind. Reference only; goes into the ART-STYLE1 brief with the packs.
