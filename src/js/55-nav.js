@@ -84,14 +84,14 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   const deepLive = () => typeof deepActive === 'function' && deepActive();
   const deepRun = () => typeof DW === 'object' && DW && typeof DW.run === 'function' ? DW.run() : null;
   navNow = () => {
-    if (deepLive()) { const r = deepRun(); const f = r ? r.floor : 1; return { act: 'deep', floor: f, text: `Deepwell · Floor ${f}`, icon: 'deep', full: false }; }
-    if (S.activity === 'raid') return { act: 'raid', text: `Raiding · ${online.world && online.world.name ? online.world.name : 'the world boss'}`, icon: 'raid', full: false };
+    if (deepLive()) { const r = deepRun(); const f = r ? r.floor : 1; return { act: 'deep', floor: f, text: `Deepwell · Floor ${f}`, short: `Floor ${f}`, icon: 'deep', full: false }; }
+    if (S.activity === 'raid') return { act: 'raid', text: `Raiding · ${online.world && online.world.name ? online.world.name : 'the world boss'}`, short: 'Raiding', icon: 'raid', full: false };
     if (gathering() && validNode(S.node)) {
       const { kind, t } = S.node, sk = skillOf(kind);
       const full = typeof stashFull === 'function' && stashFull(kind, t);
-      return { act: 'gather', skill: sk, kind, t, text: `${SKILL[sk]} · ${NODE_NAMES[kind][t - 1]}` + (full ? ' · full' : ''), icon: sk, full };
+      return { act: 'gather', skill: sk, kind, t, text: `${SKILL[sk]} · ${NODE_NAMES[kind][t - 1]}` + (full ? ' · full' : ''), short: NODE_NAMES[kind][t - 1] + (full ? ' · full' : ''), icon: sk, full };
     }
-    return { act: 'fight', zone: S.zone, text: `Fighting · Zone ${S.zone}`, icon: 'fight', full: false };
+    return { act: 'fight', zone: S.zone, text: `Fighting · Zone ${S.zone}`, short: `Zone ${S.zone}`, icon: 'fight', full: false };
   };
 
   // ---- recent places ----

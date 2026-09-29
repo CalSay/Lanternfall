@@ -338,8 +338,8 @@ registerView('party', { id: 'team', label: 'Team', order: 10, feature: 'party' }
 registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
-registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });
-registerView('gat', { id: 'pack', label: 'Storehouse', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
+registerView('gat', { id: 'forage', label: 'Forage', order: 30, feature: 'forage' });
+registerView('gat', { id: 'pack', label: 'Store', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
 registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' });
 registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
 registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });

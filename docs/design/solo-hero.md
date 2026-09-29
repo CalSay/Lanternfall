@@ -60,6 +60,14 @@ Party removed from play; the three starters are selectable; each has one ability
 Parry, Dodge and the ability as buttons. Built on the current (portrait) layout and current sprites; the new art,
 landscape layout and lane combat come after the owner plays this.
 
+## Switching heroes and the road (W1-D, playtest-2 P2-7)
+
+The road (zones cleared, `maxZone`), gold, gear and camp are shared. Each hero also remembers the zone they were fighting in
+(`S.solo.zn[hero]`, saved when you switch away). Switching to a hero returns you to that hero's remembered zone (never past
+`maxZone`). A hero with no remembered zone (never played) stays in the current zone. If that hero cannot farm the zone, pace
+(55-pace) walks them down to one they can ("You fell back to Zone 2 to keep earning") and forgets the old fall-back, so a
+weak hero never resets the strong hero's progress: switch back and you are in the strong hero's zone again.
+
 ## Removal and rework (owner answers, 2026-09-29)
 
 **Ascension and subclasses (owner).** The Proving stays: a region-boss fight that **Ascends** your hero and
