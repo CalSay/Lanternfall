@@ -9811,10 +9811,10 @@ const CLS_TUNE = {
   rangerCrit: 0.07, lightFeet: 0.2,
   // S3: 56e-formation reads the evolution rows once proven. The Trapper is a caster (ROLE_D 1.0, not the
   // striker's 1.82), so its floor is 1.4, not CL1's 0.7: about x1.1 of the Ranger's 0.7 x 1.82 (2.2's own damage)
-  // BAL3: the Ranger and Mage rows (and their paths) x2 / x1.6 with FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0,
+  // BAL3: the Ranger and Mage rows (and their paths) x1.71 / x1.35 with FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0,
   // venomstalker 0.75, trapper 1.4, warlock 1.0)
-  heroFloor: { warrior: 1.0, ranger: 1.4, mage: 1.6, reaver: 0.62, warden: 1.0,
-    venomstalker: 1.5, trapper: 2.8, warlock: 1.6, priest: 0 }
+  heroFloor: { warrior: 1.0, ranger: 1.2, mage: 1.35, reaver: 0.62, warden: 1.0,
+    venomstalker: 1.29, trapper: 2.4, warlock: 1.35, priest: 0 }
 };
 
 // ---- src/js/30-state.js ----
@@ -18282,9 +18282,9 @@ const FORM_TUNE = {
   bondH: [0.5, 3, 12, 36, 150], bondX: [0.5, 0.75, 1, 1.15, 1.3],
   bondAway: 0.75, bondCamp: 0.5, bondExped: 1, oldFriend: 1.5,
   seedActive: 12, seedStrong: 36, seedPerLv: 0.1,
-  // BAL3: ranger 0.7 -> 1.4, lanternmage 1.0 -> 1.6. Past the early game the hero hits at its floor; with the
+  // BAL3: ranger 0.7 -> 1.2, lanternmage 1.0 -> 1.35. Past the early game the hero hits at its floor; with the
   // recommended tank + support these two were the party's only damage and walled at the Coast's elders and Silas (P2)
-  heroFloor: { warden: 1.0, ranger: 1.4, lanternmage: 1.6, lightkeeper: 0 }, tapStand: 1,
+  heroFloor: { warden: 1.0, ranger: 1.2, lanternmage: 1.35, lightkeeper: 0 }, tapStand: 1,
   trioX: 1.35, trioFrom: 8, trioTo: 12,
   bossW: 0.35, bossWHard: 0.6, hyst: 0.06, dwell: 300, deep: 4, maxEst: 32, maxPins: 2
 };
