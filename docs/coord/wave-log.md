@@ -1089,3 +1089,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - OWNER asked the coordinator to fix GPT's 'connected' Wren pack (96 px, 40 colours; parts were good, assembly wasn't). Re-assembled from GPT's own parts with a small script (scratchpad assets/wren2/fix/: assemble.py, anim.py, out/): face uncovered (drawing hand moved to the jaw, back arm behind the torso), head up on the neck, arrow at grip height resting on the bow hand, code-drawn string meeting at the nock (slack after release), new idle/attack/hurt/death (rigid bow, bat lands on her back). Not in the game yet; it becomes ART-TEST1's input.
 - OWNER: the idle looks ready to fight; arms should be relaxed. DECISION: heroes get TWO idles: a ready idle for fights (between shots) and a relaxed idle for camp, the party sheet and menus. Wren's relaxed idle built (bow arm down, bow standing beside her, no arrow). Viewer: https://claude.ai/artifact/R2esehCtX9CkoCUe7aGcG6 (v2). Goes into ART-STYLE1's animation set: idle-fight, idle-camp, attack, hurt, death.
 - Wren rebuilt from GPT's extra parts (scratchpad assets/wren3/: build.py, anims.py, out/frames): drawing arm folded at shoulder height (quarter-turn parts only), hand at the nock beside the jaw; camp idle with relaxed arms, slung bow and chest strap (relaxed head's neck block trimmed). Viewer v3.
+- Wren viewer v5-v8 (owner feedback rounds): narrower camp shoulders, camp head lowered (no neck), fight head
+  lowered so the hood's scarf joins the chest scarf, string drawn over the bow arm. LESSON for ART-STYLE1:
+  hand-assembling rigid parts works for motion (breathing, cloth, bat, string, arrow flight) but not for
+  poses that need angled limbs (the full-draw arm) at this scale. Rule: GPT draws each KEY POSE as one full
+  sprite (anatomy correct); we animate on top (breath offsets, cloth, bat, code-drawn string, projectiles,
+  effects). Parts only for pieces that move independently (bat, arrow, bow string, cloak tips, head tilt).
