@@ -5689,7 +5689,7 @@ try {
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
       await page.goto('http://lf.test/'); await page.waitForTimeout(900);
       const X = s => page.evaluate(s => window.__t.x(s), s);
-      await X('onboardUnlockAll && onboardUnlockAll(); document.querySelectorAll(".away-card button, .welcome button").forEach(b => b.click()); S.activity = "fight"; spawn(); true');
+      await X('onboardUnlockAll && onboardUnlockAll(); document.querySelectorAll(".away-card button, .welcome button").forEach(b => b.click()); partySheet.close(); closeMenu(); S.activity = "fight"; spawn(); true');   // (the away card's Next up Go opens the hero sheet)
       await X('provingStart()'); await page.waitForTimeout(700);
       const hud = await page.evaluate(() => { const h = document.querySelector('.tr-hud'); if (!h || h.hidden) return null; const r = h.getBoundingClientRect(); return { txt: h.textContent, w: Math.round(r.right) }; });
       await X('trialEnd(true, "won")'); await page.waitForTimeout(900);
@@ -5701,9 +5701,10 @@ try {
       assert(hud && /The Running Wraith/.test(hud.txt) && /Give up/.test(hud.txt) && hud.w <= 360, `browser: the Proving banner on the stage at 360px ("${hud && hud.txt.slice(0, 60)}")`);
       assert(card && card.tabs.join() === 'Venomstalker,Trapper' && /permanent/.test(card.txt) && /Good with/.test(card.txt) && card.wide <= 360, `browser: passing opens the choice card (${card && card.tabs.join(' | ')}), within 360px`);
       assert(after.evo === 'trapper' && !after.card && /^Snare Field/.test(after.ab2 || ''), `browser: "Become a Trapper" asks in-page, then the Trapper's Snare Field button shows on the stage (${after.ab2 && after.ab2.slice(0, 30)})`);
-      await X('onboardUnlockAll(); partySheet.openHero()'); await page.waitForTimeout(400);
-      const sheet = await page.evaluate(() => { const b = document.querySelector('.csheet'); return b ? b.textContent : ''; });
-      assert(/Path: Trapper/.test(sheet) && /Snare Field/.test(sheet) && /Mirror of Embers/.test(sheet), 'browser: the class card shows the path, its second ability and the Mirror of Embers');
+      await X('onboardUnlockAll(); partySheet.openHero()');
+      let sheet = '';
+      for (let i = 0; i < 20 && !/Mirror of Embers/.test(sheet); i++) { await page.waitForTimeout(150); sheet = await page.evaluate(() => { const b = document.querySelector('.csheet'); return b ? b.textContent : ''; }); }
+      assert(/Path: Trapper/.test(sheet) && /Snare Field/.test(sheet) && /Mirror of Embers/.test(sheet), 'browser: the class card shows the path, its second ability and the Mirror of Embers' + (/Path: Trapper/.test(sheet) ? '' : ': ' + sheet.slice(0, 160)));
       assert(!errs2.length, 'browser: no evolution page errors' + (errs2.length ? ': ' + errs2[0] : ''));
     } finally { await browser.close(); }
   })();

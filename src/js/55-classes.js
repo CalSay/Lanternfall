@@ -298,6 +298,17 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     if (e.rewards && !e.quiet) e.rewards.push({ txt: `+${add} Mirror of Embers`, ic: ['orb', '#FF9E3D'] });
   });
 
+  // The Proving opening is news once (3.1), and a Next Up line while it (or the choice) waits.
+  let gateWas = null, gateFor = null, gateT = 0;
+  onTick(dt => {
+    gateT += dt; if (gateT < 1 && gateFor === S) return;
+    gateT = 0;
+    const p = provingInfo(), open = !!(p && p.open && !p.prove);
+    if (gateFor !== S) { gateFor = S; gateWas = open; return; }
+    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Party, your class card.', 'good', null, 'high');
+    gateWas = open;
+  });
+
   // Once per loaded save, and whenever the class may have changed.
   onTick(() => {
     lbSync();

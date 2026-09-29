@@ -576,6 +576,7 @@ let openSheet, partySheet;
     sheet.body.scrollTop = top;
   }
   function openFor(k) {
+    if (sheet) sheet.close(true);   // S3: close the open one first (its onClose would clear the new who)
     who = k; sig = ''; openStory = -1; swapOpen = false; mirrorArm = false;
     const label = k === 'hero' ? S.name : C(k) ? C(k).name : k;
     sheet = openSheet(() => {}, { label, small: k !== 'hero' && !isRecruited(k), onClose: () => { who = null; sheet = null; refs = {}; } });

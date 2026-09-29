@@ -425,6 +425,15 @@ var clsHeroStats, clsDr, clsHeroHitX, clsHeroHit, clsNoGrit, clsMarkAdd, clsStag
     if (live && ab2Cd <= 0 && autoOn() && autoUnlocked() && readyFor >= cdMax() * TU.ab2AutoWait && autoWants()) castAb2({ auto: true });
   });
 
+  // ---------------- Next Up (3.1): the Proving is open, or the choice waits (55-goals loads before this file) ----------------
+  registerGoal({
+    id: 'proving', sys: 'class', prio: 2, cap: 1,
+    label: () => (evoChoice() ? 'Choose your path' : provingInfo() && provingInfo().prove ? 'Prove your path: take the Proving' : 'Take the Proving'),
+    pct: () => { const p = typeof provingInfo === 'function' ? provingInfo() : null; return p && (p.open || p.choice) ? 1 : 0; },
+    go: () => ({ tab: 'party', fn: () => { if (typeof partySheet === 'object' && partySheet && partySheet.openHero) partySheet.openHero(); } }),
+    icon: { ic: ['orb', '#F2C14E'] }
+  });
+
   // ---------------- titles (classes-2 D5): c_<evo>, earned once proven ----------------
   if (typeof codexTitles === 'function') {
     const base = codexTitles;
