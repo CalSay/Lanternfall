@@ -99,3 +99,24 @@ Also rework: unique items whose effect is party damage (for example the Rattlebo
 more damage") need solo effects.
 
 **Keep:** gatherers, camp, gear and crafting, Deepwell, mastery, bestiary, the online raid.
+
+## Training: gold levels up your moves (owner idea, 2026-09-29; coordinator draft, to refine)
+
+Owner: replace (or change) today's gold upgrades (Blade, Swiftness, Precision on the Fight tab) with paying gold
+to level up the Attack and the abilities, with level caps.
+
+Draft:
+- **What you train with gold:** Attack, Parry, Dodge, and each ability the hero has unlocked (equipped or not).
+  Each has its own level. Levels belong to the hero (Wren's Echo Shot is Wren's).
+- **What a level gives:** mostly numbers. Attack: damage per hit. Abilities: power; every 5th level a small
+  milestone (shorter cooldown, a longer burn, one more target). Parry: counter damage; Dodge: shorter cooldown.
+  Parry and dodge windows never grow from gold (timing stays a skill).
+- **Caps:** a move can't go above the hero's level, and each class stage has a hard cap (for example 25 on the
+  base class, 50 after Ascension). Gold pays, hero level gates.
+- **Costs:** rise per level along the economy-2 gold curve, so gold stays the main sink and doesn't inflate.
+- **The split, so systems don't overlap:** gold = numbers (Training); star points = choices (the upgrade tree's
+  branches, e.g. Fireball splits in three); boss items at Elowen's chapel = new abilities; the hero's quest =
+  Hallowed; the Proving = Ascension and subclasses.
+- **Where:** the Hero tab gets a Training list; holding an action-bar slot shows its level and a Train button.
+- **Today's upgrades:** Blade becomes Attack training; Swiftness goes (attack speed is the Attack cooldown now);
+  Precision (crit damage) moves to gear and stars. Relics are reviewed in AUDIT1.
