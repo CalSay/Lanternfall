@@ -1114,3 +1114,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   left or top, panels beside it), a "turn your phone" screen for portrait, stage zoom rules for 1 art px =
   1 logical px, and what happens to the 360px-wide rules. Art spec section 8: backgrounds 480x270, ground
   y=216. Mossy Hollow first as the background test.
+- Mossy Hollow background v1 from GPT (1672x941, one flat image, shrouded + relit, same layout). Shrunk to 480x270 / 48 colours with the heroes on it: works at game size once pushed back in code (desaturate, lower contrast, dim toward navy). Issues: one flat image (no parallax layers), bottom foreground band too tall, day version too bright/saturated for behind-the-fight, monsters' eyes baked in. Saved to art/backgrounds/mossy-hollow/.
