@@ -1,5 +1,3 @@
-# Reference only (not wired into the build): the Pip art test. Procedural fire (noise heat field + 9-step ramp),
-# fire bolt, embers and smoke layered on GPT key poses. To become the fire module of tools/art when work resumes.
 from PIL import Image
 import io, base64, json, random, math
 A="/tmp/claude-0/-home-user-Lanternfall/d55bdcd9-a5da-5639-aa5d-0afaaaf27634/scratchpad/assets/pip"
