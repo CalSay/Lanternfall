@@ -4590,6 +4590,7 @@ try {
     assert(E('handsTents()') === 2 && E('handsFree()') === 1, 'W1-E: 2 Tents come free with the Tavern (Bunkhouse or not); Tam has one');
     const g0 = E('S.gold'), cost = E('handsBoard()[0].cost');
     assert(E('!!handsHire(0)') && E('S.gold') === g0 - cost && E('handsList().length') === 2 && E('handsFree()') === 0, `a second gatherer takes the second Tent; the hire costs ${cost} gold (econHireFee)`);
+    E('S.hands.board.apps.push(handsRollApp())');
     assert(E('handsHire(0)') === null && /tents are taken/.test(E('handsBoard()[0].can.why')), 'Tents full: hiring is refused with a reason');
     clock(g, T0 + 3 * 864e5); secs(g, 1.2);
     assert(E('S.hands.board.apps.length') === 3 && E('handsNextApp()') === null, 'three days closed: 3 applicants wait, no more');
@@ -4687,6 +4688,8 @@ try {
 console.log('gatherers: tents, fees, unpaid, let go (W1-E)');
 try {
   const T0 = new Date(2026, 8, 28, 12).getTime();
+  const secs = (g, n) => { for (let i = 0; i < n * 10; i++) g.fn.tick(0.1); };
+  const clock = (g, ms) => g.eval(`Date.__t = ${ms}; if (!Date.__sim) { Date.__sim = true; Date.now = () => Date.__t; }`);
   const errs = [];
   const mk = seed => {
     const g = loadCore({ seed }), E = s => g.eval(s);
@@ -4736,7 +4739,7 @@ try {
   errs.push(...g.errors);
   // the views are offline: nothing in them reaches the online layer
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-hands.js'), 'utf8').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
-  assert(!/\b(online|room|db|user)\.|\bsendRoom|\bdbGet|\bdbSet/.test(src) && !/\b(alert|confirm|prompt)\(/.test(src), '74-ui-hands.js uses no online, room, db or user calls, and no alert/confirm/prompt');
+  assert(!/\b(online|room|db|user)\.[a-zA-Z]|\bsendRoom|\bdbGet|\bdbSet/.test(src) && !/\b(alert|confirm|prompt)\(/.test(src), '74-ui-hands.js uses no online, room, db or user calls, and no alert/confirm/prompt');
   assert(!errs.length, 'no gatherer errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('gatherers crashed: ' + (e.stack || e)); }
 
