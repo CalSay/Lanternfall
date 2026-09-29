@@ -6352,6 +6352,7 @@ try {
         for (const [key, file] of def.poses.map(p => [p[0], 'poses/' + p[1]]).concat((def.fx || []).map(p => [p[0], 'fx/' + p[1]]))) {
           const d = E(`(() => { const d = heroArtDecode(${JSON.stringify(id)}, ${JSON.stringify(key)}); return d && { x0: d.x0, y0: d.y0, w: d.w, h: d.h, full: d.full, idx: Array.from(d.idx) }; })()`);
           const png = readPNG(path.join(ROOT, 'art', 'heroes', id, file + '.png'));
+          if (def.trim && file.startsWith('poses/')) HA.trimOutline(png);
           if (!d || !d.full) { bad.push(`${id}/${key}: runs do not fill the box`); continue; }
           if (file.startsWith('poses/') && (png.w !== 224 || png.h !== 192 || d.x0 < 0 || d.y0 < 0 || d.x0 + d.w > 224 || d.y0 + d.h > 192)) { bad.push(`${id}/${key}: outside 224x192`); continue; }
           let diff = 0, maxI = 0;
@@ -6365,7 +6366,7 @@ try {
           if (diff || maxI > pal.length / 6) bad.push(`${id}/${key}: ${diff} pixels differ from the PNG`);
         }
       }
-      assert(!bad.length, 'hero art: every pose and fx sprite decodes to its PNG exactly (palette index + runs)' + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+      assert(!bad.length, 'hero art: every pose and fx sprite decodes to its PNG exactly (palette index + runs; Wren after the outline trim)' + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
       // the viewer's frame counts and timings (art/viewer/hero-animations.html)
       const st = JSON.parse(E('JSON.stringify({ wren: heroArtStates("wren"), tobin: heroArtStates("tobin"), pip: heroArtStates("pip") })'));
       const want = { wren: { campIdle: [8, 160], fightIdle: [8, 160], attack: [10, 90], hurt: [6, 90], death: [16, 130] },

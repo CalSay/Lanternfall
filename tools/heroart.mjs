@@ -24,13 +24,31 @@ const W = 224, H = 192, AX = 96, AY = 132;
 
 // hero -> [pose key, file] (the keys 64h uses)
 export const HEROES = {
-  wren: { poses: [['draw', 'full-draw'], ['release', 'just-released'], ['camp', 'relaxed-camp'], ['hurt', 'hurt']],
+  // trim: the outer outline is dropped wherever dark shading already sits inside it (trimOutline below)
+  wren: { trim: true, poses: [['draw', 'full-draw'], ['release', 'just-released'], ['camp', 'relaxed-camp'], ['hurt', 'hurt']],
     fx: [['bat', 'bat'], ['arrow', 'arrow'], ['waves', 'sound_waves']] },
   tobin: { poses: [['ready', '01-ready-guard'], ['wind', '02-wind-up'], ['strike', '03-strike'], ['block', '04-braced-block'],
     ['camp', '05-relaxed-camp'], ['hurt', '06-hurt'], ['kneel', '07-kneeling'], ['fallen', '08-fallen']] },
   pip: { poses: [['ready', '01-ready'], ['wind', '02-wind-up'], ['cast', '03-cast'], ['camp', '04-relaxed-camp'],
     ['hurt', '05-hurt'], ['kneel', '06-kneeling'], ['fallen', '07-fallen']] }
 };
+
+// ---- outline trim (owner, 2026-09-29: Wren's border read about 4 px thick) ----
+// An outer outline pixel (near-black, touching the transparent outside) is cleared when every pixel just inside it,
+// opposite each open side, is dark too: that shading becomes the edge, so the dark band is one pixel thinner and the
+// line sits closer to the figure. Pixels with a light inside (a face, gold trim) keep their outline. Edits img in place.
+const lum = (r, g, b) => 0.3 * r + 0.59 * g + 0.11 * b;
+export function trimOutline(img) {
+  const { w, h, rgba } = img, src = Uint8Array.from(rgba);
+  const op = (x, y) => x >= 0 && y >= 0 && x < w && y < h && src[(y * w + x) * 4 + 3] > 0;
+  const L = (x, y) => { const i = (y * w + x) * 4; return lum(src[i], src[i + 1], src[i + 2]); };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!op(x, y) || L(x, y) >= 20) continue;
+    const outs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => !op(x + dx, y + dy));
+    if (outs.length && outs.every(([dx, dy]) => op(x - dx, y - dy) && L(x - dx, y - dy) < 45)) rgba[(y * w + x) * 4 + 3] = 0;
+  }
+  return img;
+}
 
 // ---- a small PNG reader: 8-bit, non-interlaced, colour types 0, 2, 3, 4, 6 -> RGBA ----
 export function readPNG(file) {
@@ -113,6 +131,7 @@ export function pack() {
     const poses = {}, fx = {};
     for (const [key, file] of def.poses) {
       const img = readPNG(path.join(ART, id, 'poses', file + '.png'));
+      if (def.trim) trimOutline(img);
       if (img.w !== W || img.h !== H) throw new Error(`${id}/${file}: ${img.w}x${img.h}, want ${W}x${H}`);
       const e = encode(img, pal, `${id}/${file}`);
       poses[key] = [e.x0, e.y0, e.w, e.h, e.b64];
