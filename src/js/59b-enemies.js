@@ -84,7 +84,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     START_EV.kind = kind; START_EV.dur = TELE.dur; START_EV.target = TELE.target; START_EV.foe = f;
     emit('telegraphStart', START_EV);
     // The first wind-up a player sees explains the parry once (S.combat.tip).
-    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast('The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
+    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast(soloOn() ? 'The boss winds up a heavy hit. Press Parry as the red ring closes, or Dodge.' : 'The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
   }
   function endTele(result, by) {
     RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || ''; RES_EV.foe = TELE.foe;

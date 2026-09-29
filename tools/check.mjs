@@ -12,13 +12,18 @@ import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, sub
 // A new game starts at a cold Hearth (55-hearth, H1). Sections written before it play the old warm
 // start (hearthWarm() undoes a pristine cold start; loaded saves are untouched): pass { cold: true }
 // to keep the cold start (the 'cold hearth' section).
+// SOLO1: the shipped game is one hero (24b-data-solo.js). The sections written for the party game check the dormant
+// party build: a prelude sets __SOLO = 0 before any game file (SOLO_TUNE.on 0). The solo sections pass { solo: true }.
 function loadCore(opts) {
-  const g = loadCoreRaw(opts);
+  const o = opts || {};
+  const g = loadCoreRaw({ ...o, prelude: (o.solo ? '' : 'var __SOLO = 0;\n') + (o.prelude || '') });
   try { g.eval("typeof almanac === 'object' && almanac.force && almanac.force('none')"); } catch (e) {}
   if (!(opts && opts.cold)) try { g.eval("typeof hearthWarm === 'function' && hearthWarm()"); } catch (e) {}
   return g;
 }
 
+// SOLO1: the browser checks written for the party game (the class picker, the Mirror) run on the dormant party build.
+const partyDist = h => h.replace("(() => {\n'use strict';\n", "(() => {\n'use strict';\nvar __SOLO = 0;\n");
 let failed = 0;
 const ok = msg => console.log('  ok   ' + msg);
 const fail = msg => { failed++; console.log('  FAIL ' + msg); };
@@ -26,7 +31,7 @@ const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
-const KEY = 'lanternfall.save.v2';
+const KEY = 'lanternfall.save.v3';   // SOLO1: the save key moved to v3 (the solo hero starts fresh)
 
 // ---- 1. dist syntax ----
 console.log('dist');
@@ -3571,7 +3576,7 @@ try {
   assert(ev.join() === 'campOpen:false,lit' && !E('hearthLight()'), 'campOpen { quiet: false } and hearthLit, once');
   assert(E('campList().includes("bench") && !campList().includes("forge") && !campList().includes("loom")'), 'the Workbench plot opens with the fire (the Forge and Loom wait)');
   const c1 = E('campCost("bench", 1)');
-  assert(c1.gold === 0 && JSON.stringify(c1.mats) === '[["wood",1,20]]' && c1.secs === 30, `Workbench Lv 1: 20 Oak, no gold, 30 s (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
+  assert(c1.gold === 0 && JSON.stringify(c1.mats) === '[["wood",1,20]]' && c1.secs === 10, `Workbench Lv 1: 20 Oak, no gold, 10 s (playtest-1 note 8: was 30 s) (${JSON.stringify(c1.mats)}, ${c1.gold} gold, ${c1.secs} s)`);
   assert(E('JSON.stringify(campCost("bench", 2))') === E('(() => { const f = hearthFirst; hearthFirst = () => null; try { return JSON.stringify(campCost("bench", 2)); } finally { hearthFirst = f; } })()'), 'Lv 2 keeps the old row');
   E('S.mats.wood[0] = 20');
   assert(E('campBuild("bench")') && E('S.mats.wood[0]') === 0, 'Workbench building');
@@ -3589,7 +3594,7 @@ try {
   E('S.maxZone = 6'); assert(E('campList().includes("ench") && !campList().includes("tavern")'), "zone 6: the Enchanter's Table plot");
   E('S.maxZone = 8'); assert(E('campList().includes("tavern")'), 'zone 8: the Tavern plot');
   E('S.maxZone = 1');
-  assert(E('JSON.stringify(campCost("tavern", 1).mats)') === '[["wood",1,40],["herb",1,20]]' && E('campCost("ench", 1).secs') === 180, "Tavern and Enchanter's Table rows as the spec (1.3)");
+  assert(E('JSON.stringify(campCost("tavern", 1).mats)') === '[["wood",1,40],["herb",1,20]]' && E('campCost("ench", 1).secs') === 45, "Tavern and Enchanter's Table rows as the spec (1.3; Lv 1 in 45 s, playtest-1 note 8)");
   // round trip: a cold save stays cold and keeps what it built
   g.fn.save();
   const g2 = loadCore({ seed: 22, cold: true, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
@@ -4222,7 +4227,7 @@ try {
     assert(C('hearthCold()') && C('S.camp.b.store') === 0 && C('S.store.mig.at') > 0 && C('S.store.mig.lv') === 0 && C('storeCap("wood", 1)') === C0 && !C('campList().includes("store")'),
       `a new game (cold Hearth): no Storehouse, packs hold ${N(C0)}, the migration marked done with nothing given, the plot not open yet`);
     C(`S.mats.wood[0] = ${Math.ceil(C0 * 0.8) + 10}`);
-    assert(C('hearthLight()') && C('campList().includes("store")') && C('campCost("store", 1).secs') === 90, 'packs 80% full: the Storehouse plot opens (H1 rule) with its 90 s Lv 1 row');
+    assert(C('hearthLight()') && C('campList().includes("store")') && C('campCost("store", 1).secs') === 20, 'packs 80% full: the Storehouse plot opens (H1 rule) with its 20 s Lv 1 row (playtest-1 note 8)');
     errs.push(...c.errors);
   }
   // rare finds (H2) are a flow: none are made on a full pile
@@ -4279,7 +4284,7 @@ try {
   // gifts: a cancelled build refunds in full, even above the cap
   E('S.camp.open = true; S.camp.b.hearth = 1; S.camp.b.store = 0; S.mats.wood[0] = 100; S.mats.ore[0] = 100; S.gold = 1e6');
   const c1 = E('campCan("store")');
-  assert(c1.ok && c1.cost.gold === 0 && JSON.stringify(c1.cost.mats) === '[["wood",1,30],["ore",1,20]]' && c1.dur === 90000, 'Storehouse Lv 1 (a camp building): 30 Oak Log, 20 Copper Ore, no gold, 90 s');
+  assert(c1.ok && c1.cost.gold === 0 && JSON.stringify(c1.cost.mats) === '[["wood",1,30],["ore",1,20]]' && c1.dur === 20000, 'Storehouse Lv 1 (a camp building): 30 Oak Log, 20 Copper Ore, no gold, 20 s');
   E(`campBuild("store"); S.mats.wood[0] = ${C0}`);
   assert(E('campCancel("store")') && E('S.mats.wood[0]') === C0 + 15 && E('S.mats.wood[0] > storeCap("wood", 1)'), 'a refund is a gift: it lands above the packs\' cap (half back once started: +15 on a full pile)');
   E('campBuild("store")'); E('S.camp.builds[0].end = Date.now() - 1'); ticks(g, 2);
@@ -4885,8 +4890,8 @@ try {
     assert(E('typeRel("slime", "fire") === 1 && typeRel("slime", "poison") === -1 && typeRel("beetle", "fire") === 0'), 'typeRel: weak 1, resisted -1, neutral 0 (the number marks)');
     // zone 7 is Wraithmarsh I: 72% Wraiths, 28% the next type (Moss Slime, zone 8)
     assert(near(E('typeZone("phys", 7)'), 0.72 * R + 0.28 * 1) && near(E('typeZone("fire", 7)'), 0.72 * 1 + 0.28 * 1.5), 'typeZone weighs a zone\'s pack (72% its type, 28% the next)');
-    assert(E('Object.keys(ST_ICONS).length === 8 && Object.keys(STATUS_DEFS).every(id => ST_ICONS[id] && ST_ICONS[id].rows.length === 5 && ST_ICONS[id].rows.every(r => r.length === 5 && [...r].every(c => c === "." || ST_ICONS[id].pal[c])))'),
-      'eight harmful statuses, each with a 5x5 badge in its own shape (core-2 3.1)');
+    assert(E('Object.keys(ST_ICONS).length === 9 && Object.keys(STATUS_DEFS).every(id => ST_ICONS[id] && ST_ICONS[id].rows.length === 5 && ST_ICONS[id].rows.every(r => r.length === 5 && [...r].every(c => c === "." || ST_ICONS[id].pal[c])))'),
+      'eight harmful statuses and Staggered (SOLO1: a parry), each with a 5x5 badge in its own shape (core-2 3.1)');
     assert(!g.errors.length, 'no type chart errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
   }
   // 2. foe data (combat-2 2.1): every Hollow and Coast foe has size, members, family, hit type and weakness
@@ -5373,7 +5378,7 @@ try {
     } catch (e) {}
     const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
     if (!pw || !exe || !fs.existsSync(distFile)) { ok('classes (browser): Playwright or Chromium not here, skipped'); return; }
-    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html0 = partyDist(fs.readFileSync(distFile, 'utf8')), end = html0.lastIndexOf('})();\n</script>');   // the party-era UI (SOLO1: __SOLO = 0)
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
@@ -5696,7 +5701,7 @@ try {
     } catch (e) {}
     const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
     if (!pw || !exe || !fs.existsSync(distFile)) { ok('evolutions (browser): Playwright or Chromium not here, skipped'); return; }
-    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html0 = partyDist(fs.readFileSync(distFile, 'utf8')), end = html0.lastIndexOf('})();\n</script>');   // the party-era UI (SOLO1: __SOLO = 0)
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const raw = JSON.parse(rawOf('save-v3-four.json')); raw.L = 35;
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
@@ -5805,11 +5810,11 @@ try {
   const V1 = ['lanternfall', 'save', 'v1'].join('.');   // the old key (spelled so the tools scan below finds no v1 key here)
   const st = memoryStorage({ [V1]: v1raw });
   const h = loadCore({ seed: 42, storage: st }), H = s => h.eval(s);
-  assert(H('KEY') === 'lanternfall.save.v2' && H('S.v') === 3 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v2, S.v 3: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
+  assert(H('KEY') === 'lanternfall.save.v3' && H('S.v') === 3 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v3 (SOLO1; ECON-A made it v2), S.v 3: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
   for (let i = 0; i < 600; i++) h.fn.tick(0.1);
   H('save()');
-  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v2')).v === 3 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v2');
-  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v2': 'not json' });
+  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v3')).v === 3 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v3');
+  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v3': 'not json' });
   const j = loadCore({ seed: 43, storage: junk });
   assert(j.eval('S.v') === 3 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
   for (const t of ['check.mjs', 'sim.mjs', 'savecode.mjs', 'perf.mjs']) {
@@ -6025,6 +6030,240 @@ try {
   }
   assert(!errs.length, 'no cb2 errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('cb2 crashed: ' + (e.stack || e)); }
+
+// ---- SOLO1: the solo hero (24b-data-solo.js, 59j-solo.js, 75-solo-ui.js; docs/design/solo-hero.md) ----
+console.log('solo hero');
+try {
+  const errs = [];
+  const T = () => { const g = loadCore({ solo: true, seed: 101 }); g.eval('SOLO_TUNE.trashEvery = 1e9'); return g; };   // no random trash heavies: each check makes its own
+  const run = (g, secs) => { for (let i = 0; i < Math.round(secs * 10); i++) g.fn.tick(0.1); };
+  // 1. three starters, selectable; the party is gone
+  {
+    const g = loadCore({ solo: true, seed: 100 }), E = s => g.eval(s);
+    assert(E('soloOn() && soloHero() === null && !S.party.chosen && JSON.stringify(SOLO_ORDER)') === '["wren","tobin","pip"]', 'a new game has no hero yet; the picker offers Wren, Tobin and Pip');
+    const want = { wren: ['ranger', 'ranger', 'Wren', 'Echo Shot'], tobin: ['warden', 'warrior', 'Tobin', 'Shield Bash'], pip: ['lanternmage', 'mage', 'Pip', 'Fireball'] };
+    for (const k of ['wren', 'tobin', 'pip']) {
+      const h = loadCore({ solo: true, seed: 100 }), X = s => h.eval(s);
+      const got = X(`soloPick("${k}") && [soloHero(), S.party.cls, S.cls.base, S.name, abilityInfo().name, !!BIOS["${k}"]].join('|')`);
+      const [kit, base, nm, ab] = want[k];
+      assert(got === [k, kit, base, nm, ab, true].join('|'), `${nm} plays the ${base} kit (${kit}) with ${ab} (${got})`);
+      errs.push(...h.errors);
+    }
+    E('soloPick("wren")'); run(g, 90);
+    assert(E('S.party.field.length === 0 && ROSTER_KEYS.every(k => !isRecruited(k)) && compDps() === 0 && combatUnits().filter(u => u.live).length === 1'), 'no companions: the field is empty, nobody is recruited, only the hero fights');
+    E('S.maxZone = 12; S.gold = 1e9');
+    assert(E('!canRecruit("wren") && !recruit("tobin") && !unlockChar("pip", "progress")'), 'nobody can be recruited, whatever the route');
+    E('onboardUnlockAll()');
+    assert(E('!isUnlocked("roster") && !isUnlocked("synergy") && !isUnlocked("exped")'), 'the Roster, Bonds and Expeditions never open (not even with "Show every tab")');
+    assert(E('(ONBOARD.gate = true, !topGoals(9).some(x => ["roster", "exped", "maproom"].includes(x.sys)))'), 'Next Up shows no recruit, promotion, expedition or Map Room goal');
+    assert(E('!DEED_TRACKS.some(t => (t.g === "comp" || t.g === "exped") && deeds.tracks().some(r => r.id === t.id))'), 'no Companions or Expeditions achievements show');
+    assert(E('!campList().includes("maproom")'), 'the Map Room (expeditions) is not offered at camp');
+    errs.push(...g.errors);
+  }
+  // 2. switching heroes: gold, gear and camp shared; each hero keeps its own level
+  {
+    const g = loadCore({ solo: true, seed: 102 }), E = s => g.eval(s);
+    E('soloPick("wren"); S.L = 7; S.xp = 3; S.gold = 500');
+    assert(E('soloPick("tobin") && S.L === 1 && S.xp === 0 && S.gold === 500 && S.party.cls === "warden"'), 'switching to Tobin: his own level (1), the same gold');
+    E('S.L = 4');
+    assert(E('soloPick("wren") && S.L === 7 && S.xp === 3 && soloLevels().tobin.L === 4 && soloLevels().pip.L === 1'), 'back to Wren: her level 7 again; Tobin keeps his 4');
+    errs.push(...g.errors);
+  }
+  // 3. the buttons: Attack's cooldown; Parry tighter than Dodge; a missed parry opens you up; dodge = no damage;
+  //    parry = no damage, a stagger for the counter's length, the counter lands inside it
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren")'); run(g, 2);
+    assert(E('soloAttack()') === 'hit' && E('soloAttack()') === 'cd', 'Attack hits, then waits for its cooldown (mashing does nothing)');
+    run(g, E('SOLO_TUNE.atkCd') + 0.05);
+    assert(E('soloAttack()') === 'hit', `Attack is back after ${E('SOLO_TUNE.atkCd')} s`);
+    assert(E('SOLO_TUNE.parryWin < SOLO_TUNE.dodgeWin'), `the parry window (${E('SOLO_TUNE.parryWin')} s) is tighter than the dodge window (${E('SOLO_TUNE.dodgeWin')} s)`);
+    const heavy = () => E(`(() => { const f = combatFoes().find(x => x && !x.dead && x.hp > 0); f.hp = f.max = 1e12; return actWarn({ kind: 'heavy', id: 'test', foe: f, unit: 0, x: 3, dur: 1.5, land: (w, m) => cbHitUnit(cbUnitByKey('hero'), cbUnitByKey('hero').maxHp * 0.3 * m, 'heavy', w.foe) }); })()`);
+    const until = left => { for (let i = 0; i < 40 && E('(w => w ? w.left : -1)(actWarning())') > left; i++) run(g, 0.05); };
+    let heavyHits = 0; g.fn.on('unitHit', h => { if (h.key === 'hero' && h.kind === 'heavy') heavyHits++; });
+    run(g, 1.2); heavy(); until(0.6);   // inside the dodge window, outside the parry window
+    assert(E('soloParry()') === 'miss' && E('soloTakenX() > 1 - SOLO_TUNE.drX'), 'a parry outside its window misses: you are open (more damage taken)');
+    assert(E('soloParry()') === 'locked', 'while open, Parry does nothing');
+    assert(E('soloDodge()') === 'dodge', 'the same moment is inside the easier dodge window');
+    assert(E('soloDodge()') === 'cd', 'Dodge has a short cooldown');
+    run(g, 1);
+    assert(heavyHits === 0, 'a dodged heavy hit deals no damage');
+    run(g, 2.5);
+    heavy(); until(0.25);
+    const f0 = E('(() => { globalThis.__pf = actWarning().foe; return __pf.hp; })()');
+    assert(E('soloParry()') === 'parry', 'a parry in the last moment lands');
+    assert(E('stLeft(__pf, "stagger") > 0 && __pf.reelT > 0'), 'the parried foe is Staggered at once (the Staggered status, 59a)');
+    run(g, E('SOLO_TUNE.counterAt') + 0.05);
+    assert(E('__pf.hp') < f0 && E('stLeft(__pf, "stagger") > 0') && E('SOLO_STATS.counters') === 1, 'the counter attack lands while the foe is still staggered');
+    run(g, E('SOLO_TUNE.counterT'));
+    assert(E('stLeft(__pf, "stagger") === 0'), 'the stagger ends when the counter ends');
+    assert(heavyHits === 0, 'a parried heavy hit deals no damage');
+    errs.push(...g.errors);
+  }
+  // 4. bosses (owner): a parry staggers the boss and delays its next attack; a dodge does not stagger
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("tobin"); S.kills = 10; challenge()'); run(g, 0.5);
+    assert(E('fightBoss && mob.boss && !!mob.kit'), 'the zone 1 boss runs its kit');
+    const waitHeavy = () => { for (let i = 0; i < 300 && !E('(w => !!(w && w.kind === "heavy" && w.foe && w.foe.boss && w.left > 0.9))(actWarning())'); i++) run(g, 0.1); return E('(w => !!(w && w.kind === "heavy"))(actWarning())'); };
+    E('mob.hp = mob.max = 1e12; bossTime = 1e6');
+    assert(waitHeavy(), 'the boss winds up a heavy hit');
+    for (let i = 0; i < 40 && E('actWarning().left') > E('SOLO_TUNE.dodgeWin') - 0.1; i++) run(g, 0.05);
+    assert(E('soloDodge()') === 'dodge', 'Dodge answers the boss heavy');
+    run(g, 0.8);
+    assert(E('stLeft(mob, "stagger") === 0 && !(mob.reelT > 0)') && E('SOLO_STATS.counters') === 0, 'a dodge does not stagger the boss and gives no counter');
+    run(g, E('SOLO_TUNE.dodgeCd'));
+    assert(waitHeavy(), 'the boss winds up its next heavy hit');
+    for (let i = 0; i < 40 && E('actWarning().left') > E('SOLO_TUNE.parryWin') - 0.1; i++) run(g, 0.05);
+    assert(E('soloParry()') === 'parry' && E('stLeft(mob, "stagger") > 0'), 'a parry on the boss heavy staggers the boss');
+    const kt0 = E('JSON.stringify(mob.kt)');
+    run(g, 0.2);
+    assert(E('JSON.stringify(mob.kt)') === kt0 && E('!actWarning() || actWarning().foe !== mob'), 'while staggered the boss does nothing: its next telegraph timer waits');
+    run(g, E('SOLO_TUNE.counterT'));
+    assert(E('stLeft(mob, "stagger") === 0') && E('JSON.stringify(mob.kt)') !== kt0 && E('SOLO_STATS.counters') === 1, 'the stagger clears when the counter ends; the boss timers run again from there');
+    errs.push(...g.errors);
+  }
+  // 5. each ability does what it says (the status system: Mark, Stun, Burn)
+  {
+    const setup = k => { const g = T(), E = s => g.eval(s); E(`soloPick("${k}")`); run(g, 1.5); E('combatFoes().forEach(f => { if (f && !f.dead) { f.hp = f.max = 1e9; } }); S.party.abilityCd = 0'); return [g, E]; };
+    let [g, E] = setup('wren');
+    const n = E('combatFoes().filter(f => f && !f.dead && f.hp > 0).length');
+    assert(n >= 2 && E('soloAbility()') && E('combatFoes().filter(f => f && !f.dead && f.hp > 0).every(f => f.hp < f.max && stHas(f, "mark"))'), `Echo Shot hits every foe in the lane (${n}) and Marks them`);
+    assert(E('S.party.abilityCd') > 0 && !E('soloAbility()'), 'the ability then waits for its cooldown');
+    errs.push(...g.errors);
+    [g, E] = setup('tobin');
+    assert(E('soloAbility()') && E('combatFoes().some(f => f && !f.dead && f.hp < f.max && stHas(f, "stun"))') && E('(u => u.drT > 0 && u.drV >= SOLO_TUNE.bash.dr)(cbUnitByKey("hero"))'), 'Shield Bash hits the front foe, Stuns it, and Tobin takes less damage for a few seconds');
+    errs.push(...g.errors);
+    [g, E] = setup('pip');
+    assert(E('soloAbility()') && E('combatFoes().filter(f => f && !f.dead && f.hp > 0).every(f => stHas(f, "burn") && f.hp < f.max)') && E('soloAbilityInfo().patch') > 0, 'Fireball bursts on the target, Burns it and nearby foes, and leaves a burning patch');
+    run(g, 2.2);
+    assert(E('combatFoes().filter(f => f && !f.dead && f.hp > 0).every(f => stHas(f, "burn"))'), 'the burning patch keeps every foe on it burning');
+    errs.push(...g.errors);
+  }
+  // 6. idle and away play: the hero fights and casts on its own; parries, dodges and counters are active only
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("pip"); SOLO_TUNE.trashEvery = 20'); run(g, 180);
+    assert(E('SOLO_STATS.auto') >= 5 && E('S.totalKills') > 5 && E('SOLO_STATS.attacks + SOLO_STATS.parries + SOLO_STATS.dodges + SOLO_STATS.counters') === 0 && E('SOLO_STATS.trash') > 0, `idle: the hero kills (${E('S.totalKills')} packs) and casts its ability alone (${E('SOLO_STATS.auto')} casts); no parries, dodges or counters`);
+    const g0 = E('S.gold'), r = g.fn.awayGains(3600);
+    assert(E('S.gold') > g0 && /held/.test(r.note), `away: an hour earns gold (${Math.round(E('S.gold') - g0)}) ("${r.note}")`);
+    errs.push(...g.errors);
+  }
+  // 7. a fresh save through the first 10 minutes of play, each hero, with a player's buttons: no errors
+  for (const k of ['wren', 'tobin', 'pip']) {
+    const g = loadCore({ solo: true, seed: 110 }), E = s => g.eval(s);
+    E(`soloPick("${k}")`);
+    for (let sec = 0; sec < 600; sec++) {
+      for (let i = 0; i < 10; i++) { if (i === 3) E('soloAttack(); soloAbility()'); if (i === 7 && E('(w => !!(w && w.kind === "heavy" && w.left < 0.3))(actWarning())')) E('soloParry()'); g.fn.tick(0.1); }
+      if (sec % 10 === 0) E('while (buyHero("blade", "1")) {} if (bossReady()) challenge()');
+    }
+    const bad = badNumbers(E('S'));
+    assert(!g.errors.length && !bad.length && E('S.maxZone') >= 3, `${k}: 10 minutes from a fresh save, no errors (zone ${E('S.maxZone')}, level ${E('S.L')}, ${E('SOLO_STATS.parries')} parries)` + (g.errors.length ? ': ' + g.errors[0] : '') + (bad.length ? ': ' + bad[0] : ''));
+    E('save()');
+    const h = loadCore({ solo: true, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(h.eval('soloHero()') === k && h.eval('S.maxZone') === E('S.maxZone') && !h.errors.length, `${k}: the save loads back with its hero`);
+  }
+  // 8. the save key moved to v3: a v2 save is never read
+  {
+    const g = loadCore({ solo: true, storage: memoryStorage({ 'lanternfall.save.v2': fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2-late.json'), 'utf8') }) });
+    assert(g.eval('S.maxZone === 1 && soloHero() === null && !S.party.chosen') && !g.errors.length, 'a v2 save is not read: a new game starts (v3)');
+  }
+  // 9. playtest-1 notes 5 and 8: a unique sword fits only a sword hand; Lv 1 buildings build fast
+  {
+    const g = loadCore({ solo: true, seed: 103 }), E = s => g.eval(s);
+    E('soloPick("wren"); dropUnique("sproutblade", 1)');
+    const id = E('S.items.find(it => it.u === "sproutblade").id');
+    assert(!E(`fits(itemById(${id}), "weapon", "hero")`) && !E(`equipItem(${id})`), 'Wren (a bow) cannot equip the Sproutblade (a sword)');
+    E('soloPick("tobin")');
+    assert(E(`fits(itemById(${id}), "weapon", "hero")`), 'Tobin (sword and shield) can');
+    assert(E('HEARTH_TUNE.first.bench.secs <= 15 && HEARTH_TUNE.first.forge.secs <= 20 && CAMP_TUNE.secs[0] <= 60 && CAMP_TUNE.secs[1] <= 1800'), 'Lv 1 buildings build in seconds (Workbench 10 s, Forge 15 s, other rows 45 s; Lv 2 20 min)');
+    errs.push(...g.errors);
+  }
+  // 10. the guide: the solo first session, one step at a time; it pauses the game while a step waits
+  {
+    const g = T(), E = s => g.eval(s);
+    const ids = E('GUIDE_STEPS.map(x => x.id).join()');
+    assert(/^attack,ability,dodge,parry,boss,upgrade,gather,chop,light/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(E('GUIDE_STEPS.every(x => x.pause || x.id === "chop")'), 'every step but chopping pauses the game while it shows (build steps end when the build starts)');
+    E('soloPick("wren")'); run(g, 0.5);
+    assert(E('onboardStep().id') === 'attack', 'after choosing a hero: "Press Attack"');
+    E('soloAttack()');
+    assert(E('onboardStep().id') === 'ability', 'then the ability');
+    E('soloAbility()');
+    E(`actWarn({ kind: 'heavy', id: 't', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
+    assert(E('onboardStep().id') === 'dodge' && E('soloDodge(true)') === 'dodge', 'a heavy hit: "Press Dodge" (the guide\'s first press always counts)');
+    run(g, 2.5);
+    E(`actWarn({ kind: 'heavy', id: 't2', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
+    assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
+    errs.push(...g.errors);
+  }
+  // 11. the stage and the UI (static): tapping the stage no longer attacks in a fight; the button row and the picker
+  {
+    const st = fs.readFileSync(path.join(ROOT, 'src', 'js', '62-stage.js'), 'utf8'), ui = fs.readFileSync(path.join(ROOT, 'src', 'js', '75-solo-ui.js'), 'utf8');
+    assert(/if \(soloOn\(\) && target\(\) === 'mob'\) return;/.test(st), 'a tap on the fight stage does not attack (62-stage)');
+    assert(['soloAttack', 'soloParry', 'soloDodge', 'soloAbility', "registerSection('camp'"].every(x => ui.includes(x)), 'the button row calls Attack, Parry, Dodge and the ability; "Choose your hero" is on the Camp view');
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '59j-solo.js'), 'utf8').replace(/\/\/.*$/gm, '');
+    assert(!/\b(document|window|localStorage|canvas)\b/.test(src), '59j-solo.js is a core file: no DOM, window, canvas or storage');
+  }
+  assert(!errs.length, 'no solo errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('solo crashed: ' + (e.stack || e)); }
+
+// ---- SOLO1 in Chromium at 360 x 740: the picker, the buttons, no party UI, and every guide target of the first session ----
+console.log('solo hero (browser)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const heroes = await page.$$eval('#createScreen .ccard', l => l.map(b => b.dataset.hero + ':' + b.querySelector('b').textContent));
+      assert(heroes.join() === 'wren:Wren Hollowmere,tobin:Tobin Reed,pip:Pip Cinderly', `the picker offers exactly the three starters (${heroes.join(', ')})`);
+      const k0 = await X('S.totalKills + ":" + (mob ? mob.hp : 0)'); await page.waitForTimeout(600);
+      assert(await X('S.totalKills + ":" + (mob ? mob.hp : 0)') === k0, 'the game waits while the hero is being chosen');
+      await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+      assert(await X('soloHero() === "pip" && heroSpec().comp === "pip"'), 'Pip is the hero on the stage (her own art)');
+      const bar = await page.$eval('#soloBar', b => { const r = b.getBoundingClientRect(), s = document.getElementById('stage').getBoundingClientRect(); return { top: Math.round(r.top), stageBottom: Math.round(s.bottom), n: b.querySelectorAll('.sbtn').length, w: [...b.querySelectorAll('.sbtn')].map(x => Math.round(x.getBoundingClientRect().width)), hMin: Math.round(Math.min(...[...b.querySelectorAll('.sbtn')].map(x => x.getBoundingClientRect().height))), hidden: b.hidden }; });
+      assert(!bar.hidden && bar.n === 4 && bar.hMin >= 48 && Math.min(...bar.w) >= 60 && bar.top >= bar.stageBottom - 1, `four thumb-size buttons under the stage, not over the fighters (${JSON.stringify(bar)})`);
+      const party = await X('[!!document.querySelector("#sec-party-form, #sec-party-bench, #sec-party-roster, #sec-party-field, #sec-party-bonds, #sec-visitor"), document.querySelector(".tab[data-tab=party]").textContent.trim(), stageStats().front.map(a => a[0]).join()].join("|")');
+      assert(/^false\|Hero\|hero$/.test(party), `no party UI (formation, bench, roster, Bonds, visitor); the tab is Hero; only the hero on the stage (${party})`);
+      // walk the guide: each step's target exists, is visible, and the ring marks it; one hint; the game waits while it shows
+      const seen = [];
+      for (let i = 0; i < 60 && seen.length < 6; i++) {
+        const st = await X('(s => s ? s.id : "")(onboardStep())');
+        if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
+        await page.waitForTimeout(400);
+        const chk = await X(`(() => { const sp = onboardSpec(${JSON.stringify(st)}); if (!sp || !sp.node) return { ok: false, why: 'no target' }; const n = sp.node, r = n.getBoundingClientRect(), ring = document.querySelector('.ob-ring').getBoundingClientRect();
+          const vis = !!(n.getClientRects().length && n.offsetParent !== null && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.left < innerWidth && r.right > 0);
+          const cx = ring.left + ring.width / 2, cy = ring.top + ring.height / 2;
+          return { ok: vis && cx >= r.left - 30 && cx <= r.right + 30 && cy >= r.top - 30 && cy <= r.bottom + 30, paused: ONBOARD.paused, bubs: [...document.querySelectorAll('.ob-bub')].filter(b => !b.hidden).length, sel: n.id || n.className }; })()`);
+        if (!seen.includes(st)) { seen.push(st); assert(chk.ok && chk.bubs === 1 && (chk.paused || st === 'chop'), `guide step "${st}": its target (${chk.sel}) exists, is visible and marked; one hint; the game waits (${JSON.stringify(chk)})`); }
+        // do the step through its own target (the buttons act on pointerdown)
+        if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab' : st}`); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
+        else if (st === 'boss') await page.click('.ob-ok');
+        else await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
+        await page.waitForTimeout(300);
+        // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
+        await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
+        if (await X('S.tab && !["upgrade"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);
+      }
+      assert(['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x)), `the first session walks Attack, the ability, Dodge and Parry (${seen.join(', ')})`);
+      assert(!errs.length, 'no page errors in the solo run' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('solo (browser) crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

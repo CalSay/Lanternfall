@@ -199,17 +199,18 @@ const ELITE_TUNE = {
 // ---------------- words (S6-H) ----------------
 const BOSS_COPY = {
   first: {
-    heavy: 'A red ! means a heavy hit. Tap as it ends to parry it.',
-    zone: 'Orange ground means DODGE. Tap in the last moment to step out. Wait for the very end for a perfect dodge.',
-    slam: 'It will slam your Front slot. Tap as the warning ends to step out.',
-    sig: 'It is casting its big move. Hit it with an ability while it casts to stop it.',
-    heal: 'It is healing. Tap to stop it.',
-    summon: 'It is calling help. Tap or use an ability to stop it.',
-    line: 'This hits your whole party. Shields and heals are the answer.',
+    // SOLO1: the buttons (Attack, Parry, Dodge, the ability) replace the stage tap
+    heavy: 'A red ring means a heavy hit. Dodge it, or Parry just before it lands to stagger it and counter.',
+    zone: 'Orange ground means DODGE. Press Dodge as it ends. Wait for the very end for a perfect dodge.',
+    slam: 'It will slam where you stand. Press Dodge as the warning ends.',
+    sig: 'It is casting its big move. Hit it with your ability while it casts to stop it.',
+    heal: 'It is healing. Press Attack to stop it.',
+    summon: 'It is calling help. Press Attack or your ability to stop it.',
+    line: 'This hits you wherever you stand. Nothing to dodge: heal up after.',
     hard: 'Nothing stops this one. Get ready for what comes next.',
-    dive: 'It dives at your back line. A tank or a stun stops it.',
-    stagger: 'Staggered! Tap for your Finisher.',
-    packHeavy: 'Big foes wind up heavy hits too. Tap as the red ! ends to parry.',
+    dive: 'It dives at you. A stun stops it.',
+    stagger: 'Staggered! Press Attack for your Finisher.',
+    packHeavy: 'Big foes wind up heavy hits too. Dodge, or Parry as the ring closes.',
     activeKill: 'Played it well: +50% XP.'
   },
   roar: 'It stops listening.',

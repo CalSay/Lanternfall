@@ -293,7 +293,7 @@ const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
 // and its sub-views; their ids still open it (setTab('raid')).
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
-const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const TAB_TITLE = { adv: 'Fight', party: soloOn() ? 'Hero' : 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };   // SOLO1: the Party tab is the hero's
 const TAB_HIDDEN = new Set(), TAB_ICON = {};   // registerTab({ hidden: true }): menus with no tab button, and their header icons
 const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
 const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view

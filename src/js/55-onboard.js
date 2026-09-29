@@ -22,6 +22,7 @@
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
+let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
 // paused: the UI shows a guide step that waits for its action (SOLO1, playtest-1 note 1); 90-boot skips the tick.
 const ONBOARD = { gate: false, paused: false };
 // function declaration: 55-goals.js (loaded earlier) calls it at run time.

@@ -206,15 +206,23 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const f = frontFoe();
     if (!f || f.born < 0.3 || f.stunT > 0 || f.reelT > 0 || f.stgT > 0) return;
     trashT = 0; ST.trash++;
-    actWarn({ kind: 'heavy', id: 'soloHeavy', foe: f, unit: 0, x: T.trashX, src: 'pack', hint: BOSS_COPY.first.packHeavy,
+    actWarn({ kind: 'heavy', id: 'soloHeavy', foe: f, unit: 0, x: T.trashX, src: 'pack',   // no first-use toast: the guide's Dodge and Parry steps teach it
       land: (w, m) => { const u = heroU(); if (u && !u.down && alive(f)) cbHitUnit(u, cbFoeAtk(f) * w.x * m, 'heavy', f); } });
   }
   on('telegraphStart', p => { if (p && p.kind === 'heavy') ST.heavies++; });
 
   // ---- the tick ----
+  // A save that chose a class before the solo hero (a tool's save, a code): play that class's starter.
+  function adopt() {
+    const s = Sx();
+    if (s.hero || !S.party || !S.party.chosen) return;
+    const k = SOLO_BY_BASE[(S.cls && S.cls.base) || S.party.cls];
+    if (k) { s.hero = k; if (typeof gearDirty === 'function') gearDirty(); }
+  }
   onTick(dt => {
     if (!soloOn()) return;
     clock += dt;
+    adopt();
     clearField();
     if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
     counterTick(dt);

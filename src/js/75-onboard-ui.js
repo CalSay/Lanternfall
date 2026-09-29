@@ -204,6 +204,7 @@
     ONBOARD.paused = !!step.pause;
     putHidden(okb, !step.ok);
   }
+  soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
   onboardSpec = id => { const table = SOLO_G && SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null;

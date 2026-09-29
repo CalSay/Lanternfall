@@ -607,7 +607,7 @@ let deeds, deedBonus, wearGet;
       sx.dareMask = num(sx.dareMask) | bit;
       if (sx.dareMask === 127) grantSecret('s_dare');
     }
-    if (S.name !== lastName) { lastName = S.name; if (nameHit()) grantSecret('s_name'); }
+    if (S.name !== lastName) { lastName = S.name; if (nameHit() && !soloOn()) grantSecret('s_name'); }   // SOLO1: the hero is a companion now, by name
     const hr = new Date(now()).getHours(), live = !inAway;
     if (live && S.activity === 'fight' && typeof target === 'function' && target() === 'mob') {
       if (hr >= T.nightFrom && hr < T.nightTo) { sx.night = num(sx.night) + 1; if (sx.night >= T.nightSecs) grantSecret('s_night'); }

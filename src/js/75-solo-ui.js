@@ -138,7 +138,7 @@
   setInterval(() => { try { update(); } catch (e) {} }, 250);
 
   // ---- floats for the answers (the stage draws them) ----
-  on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); else emit('float', { txt: 'PARRY', color: '#FFD27A', big: true, x: 0.3, y: 0.38 }); });
+  on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); });   // a parry's PARRY is the stage's (62-stage, the parry event)
   on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
 
   // ---- "Choose your hero" at camp ----
