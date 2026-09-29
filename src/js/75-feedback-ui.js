@@ -140,7 +140,7 @@
     },
     update() {
       // Keep the note in sync (in case S changes or something resets the field)
-      const ta = $('log').querySelector('.feedback-note');
+      const root = $('sec-feedback'), ta = root && root.querySelector('.feedback-note');   // W1-D: $('log') is null (the Journal is a sheet)
       if (ta && ta.value !== feedbackState.note) ta.value = feedbackState.note;
     }
   });

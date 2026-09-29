@@ -41,15 +41,18 @@ let navUI = null;
   pill.addEventListener('click', () => openSwitcher());
   let pSig = '', pIcon = '';
   function updatePill() {
-    const n = navNow(), sig = n.text + '|' + n.act + '|' + (n.full ? 1 : 0);
+    // W1-D (playtest-2 P2-2): a phone-width header has room for about 100 px of text, so the pill drops the activity word
+    // (its icon says it) and shows "Zone 12" or "Pine Grove"; the aria label keeps the whole line
+    const n = navNow(), narrow = innerWidth <= 420 && !!n.short, sig = (narrow ? n.short : n.text) + '|' + n.act + '|' + (n.full ? 1 : 0);
     if (sig === pSig) return;
     pSig = sig;
-    putText(pTx, n.text);
+    putText(pTx, narrow ? n.short : n.text);
     if (n.icon !== pIcon) { pIcon = n.icon; pIc.src = (ICON_OF[n.icon] || ICON_OF.fight)(); }
     putClass(pill, 'act-pill ' + n.act + (n.full ? ' full' : ''));
     putAttr(pill, 'aria-label', `${n.text}. Switch activity`);
   }
   uiHooks.push(updatePill);
+  addEventListener('resize', () => { pSig = ''; updatePill(); });
 
   // ---------------- the control row ----------------
   const gBtn = document.querySelector('#modeSeg button[data-act="gather"]');

@@ -2286,6 +2286,19 @@ span.cf-d { font-weight: 600; }
 
 /* ---- toasts that lead somewhere (go): a chevron at the right edge ---- */
 .toast .go { margin-left: auto; padding-left: 6px; font: 700 16px/1 var(--body); color: var(--gold); }
+
+/* W1-D (playtest-2 P2-2): phone width. Four sub-view tabs share 336 px, so their labels use a smaller face; the control row
+   (Fight, Gather, Switch, zone arrows) tightens so it never runs past the screen edge. */
+@media (max-width: 420px) {
+  .vseg button { font-size: calc(12px * var(--display-k, 1)); padding: 0 2px; }
+  .act-pill .ap-tx { font-size: calc(13px * var(--display-k, 1)); }
+  .game .ctrl { gap: 4px; }
+  .game .modeseg button { min-width: 44px; padding: 0 6px; }
+  .game .ctrl-switch { padding: 0 6px; gap: 4px; }
+  .game .ctrl-switch .nvs-chev { display: none; }
+  .game .navbtn { width: 30px; }
+  .game .znum { min-width: 0; padding: 0 2px; font-size: calc(12px * var(--display-k, 1)); }
+}
 /* 60-onboard: the guide's hint (75-onboard-ui.js) and "new" marks on tabs and views.
    The layer never takes taps except the small dismiss button: play goes on under it. */
 .ob-layer { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
@@ -2720,6 +2733,18 @@ body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important
 .ob-ok[hidden] { display: none; }
 /* party-only UI left in the shell (the Fight tab's Party rows) */
 .solo-off { display: none !important; }
+/* W1-D (playtest-2 P1-5): short landscape (a phone on its side, 740 x 360). The two button rows sit side by side (Ability 1-3, then
+   Parry, Dodge, Attack), the control row slims down and the stage takes what is left, so the whole bar shows above the fold.
+   The landscape layout proper is UX-L1. Portrait and desktop are untouched. */
+@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
+  .game.solo-game > .stagebox { min-height: 110px; }
+  .game.solo-game > .ctrl { padding: 2px var(--gut) 2px; }
+  .game.solo-game .modeseg button { min-height: 32px; }
+  .game.solo-game .navbtn { height: 36px; }
+  .game.solo-game .ctrl-switch { min-height: 36px; }
+  .sbar { grid-auto-flow: column; grid-template-columns: none; justify-content: center; gap: 14px; padding: 5px var(--gut) 6px; }
+  .sb-row { width: 168px; gap: 6px; }
+}
 /* 60-stars: the Stars view on the Party tab (75-stars-ui.js, docs/design/constellations.md) */
 .st-sec { gap: 10px; }
 .st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -14159,14 +14184,14 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
   const deepLive = () => typeof deepActive === 'function' && deepActive();
   const deepRun = () => typeof DW === 'object' && DW && typeof DW.run === 'function' ? DW.run() : null;
   navNow = () => {
-    if (deepLive()) { const r = deepRun(); const f = r ? r.floor : 1; return { act: 'deep', floor: f, text: `Deepwell · Floor ${f}`, icon: 'deep', full: false }; }
-    if (S.activity === 'raid') return { act: 'raid', text: `Raiding · ${online.world && online.world.name ? online.world.name : 'the world boss'}`, icon: 'raid', full: false };
+    if (deepLive()) { const r = deepRun(); const f = r ? r.floor : 1; return { act: 'deep', floor: f, text: `Deepwell · Floor ${f}`, short: `Floor ${f}`, icon: 'deep', full: false }; }
+    if (S.activity === 'raid') return { act: 'raid', text: `Raiding · ${online.world && online.world.name ? online.world.name : 'the world boss'}`, short: 'Raiding', icon: 'raid', full: false };
     if (gathering() && validNode(S.node)) {
       const { kind, t } = S.node, sk = skillOf(kind);
       const full = typeof stashFull === 'function' && stashFull(kind, t);
-      return { act: 'gather', skill: sk, kind, t, text: `${SKILL[sk]} · ${NODE_NAMES[kind][t - 1]}` + (full ? ' · full' : ''), icon: sk, full };
+      return { act: 'gather', skill: sk, kind, t, text: `${SKILL[sk]} · ${NODE_NAMES[kind][t - 1]}` + (full ? ' · full' : ''), short: NODE_NAMES[kind][t - 1] + (full ? ' · full' : ''), icon: sk, full };
     }
-    return { act: 'fight', zone: S.zone, text: `Fighting · Zone ${S.zone}`, icon: 'fight', full: false };
+    return { act: 'fight', zone: S.zone, text: `Fighting · Zone ${S.zone}`, short: `Zone ${S.zone}`, icon: 'fight', full: false };
   };
 
   // ---- recent places ----
@@ -14389,11 +14414,16 @@ const stockOf = (fam, t, n) => [fam, t, n];
 const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
 const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
 const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
+// W1-D (playtest-2 P0): a combat step pauses the game only while what it asks for can happen right now, so the pause can
+// never freeze the clock the step needs (a respawn, a heavy hit landing, a cooldown running out). `pauseWhen`: the
+// extra condition for the pause. Attack and the ability need a live foe; Dodge and Parry need a wind-up still on its
+// way, and the guide's press ignores a cooldown left by an earlier press (59j: `forgive`), so a paused game never waits on one.
+const liveFoe = () => { try { return combatFoes().some(f => f && !f.dead && f.hp > 0 && !f.gone); } catch (e) { return false; } };
 const SOLO_STEPS = [
-  { id: 'attack', pause: 1, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
-  { id: 'ability', pause: 1, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
-  { id: 'dodge', pause: 1, when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
-  { id: 'parry', pause: 1, when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'attack', pause: 1, pauseWhen: liveFoe, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, pauseWhen: liveFoe, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
   { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
@@ -14506,7 +14536,7 @@ function craftReady() {
   onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
   // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
   // the materials the action costs (the player could not press it and the clock they need would be stopped).
-  onboardPaused = step => !!(step && step.pause && !onboardNeed(step.id).length);
+  onboardPaused = step => { if (!(step && step.pause && !onboardNeed(step.id).length)) return false; try { return !step.pauseWhen || !!step.pauseWhen(); } catch (e) { return true; } };
   onboardDone = id => { if (!O().done[id]) { O().done[id] = 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
   onboardStep = () => {
@@ -27817,7 +27847,8 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
 // Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
-// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 }, zn: { key: zone } }).
+//   zn: the zone each hero was fighting in when you switched away (W1-D): switching back returns you there.
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
 // ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only. Active (SOLO2): every
 // hit comes from the buttons, and they hit harder (atkX, abHandX).
@@ -27837,8 +27868,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
-  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -27861,7 +27892,18 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (from === key && chosen) return true;
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
     if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
-    if (from && from !== key) { const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0; }
+    if (from && from !== key) {
+      const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0;
+      // W1-D (playtest-2 P2-7): the road belongs to the lamp, but each hero remembers where they stood. Leaving hero A saves A's
+      // zone; arriving as B goes back to B's own zone (never past the furthest zone cleared). A hero with no zone kept
+      // (never played) stays where you are. Pace (55-pace) then walks a weaker hero down to a zone they can farm and
+      // forgets the old fall-back, so the strong hero's return is not held to it.
+      if (!s.zn || typeof s.zn !== 'object') s.zn = {};
+      if (SOLO_HEROES[from] && chosen) s.zn[from] = S.zone;
+      const back = s.zn[key] | 0;
+      if (chosen && typeof S.pace === 'object') S.pace.fell = 0;
+      if (chosen && back >= 1 && back !== S.zone && typeof setZone === 'function') setZone(Math.min(back, Math.max(1, S.maxZone)));
+    }
     s.hero = key;
     const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : key;
     const ok = chooseClass(h.base, nm, { now: o.now, free: !!from });
@@ -27919,7 +27961,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   soloParry = forgive => {
     soloTouch();
     if (!fighting()) return '';
-    if (parryT > 0 || openT > 0) return 'locked';
+    if ((parryT > 0 || openT > 0) && !forgive) return 'locked';   // the guide's press (forgive) ignores a cooldown an earlier press left: the game is paused, so it would never end
     const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
     if (r === 'parry') { ST.parries++; parryT = T.parryCd; emit('soloParry', { res: 'parry' }); return 'parry'; }
     // outside the window (or nothing to parry): open for a moment
@@ -27930,7 +27972,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   soloDodge = forgive => {
     soloTouch();
     if (!fighting()) return '';
-    if (dodgeT > 0) return 'cd';
+    if (dodgeT > 0 && !forgive) return 'cd';
     dodgeT = T.dodgeCd;
     const r = typeof actDodge === 'function' ? actDodge(!!forgive) : '';
     if (r === 'dodge' || r === 'perfect') ST.dodges++;
@@ -29816,6 +29858,8 @@ let resize, animate, draw, stageStats, warmScene;
     tank.go = Math.min(0, t.hx + 18 - tank.hx); tank.goT = 2;
   }
   // ================= events =================
+  // W1-D (playtest-2 P2-5): leaving a fight for a gather scene drops the combat numbers still rising (a COUNTER floated over the woodcutting)
+  on('sceneReset', () => { if (S.activity !== 'fight') { for (const f of floats) f.on = false; for (const n of nums) n.on = false; } });
   on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
@@ -33893,8 +33937,9 @@ let lookIconURL, looksPreview, lookCritterDraw;
 //        down read as attack, hurt and death; gathering shows the camp idle), sets a._x, a._y, a._f like a baked frame
 //        (Pip's flame is a light, so the key light follows her staff). False = draw the old sprite.
 //   heroArtDecode(id, pose) -> { x0, y0, w, h, idx }   (checks) the palette indices of one pose
+//   heroArtPreview(cv, id) -> bool   the camp pose, feet at the bottom centre of the canvas (the hero picker and the camp switch; W1-D)
 //   heroArtPortraitURL(id) -> data URL of a 28x28 crop of the camp pose's head (the header portrait; 1 art px = 1 CSS px)
-var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL;
+var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview;
 {
   const D = typeof HERO_ART !== 'undefined' ? HERO_ART : null;
   const AX = 96, AY = 132, CUT = 118;
@@ -34183,6 +34228,14 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     const f = INFO.f; f.c = r.P.c; f.ox = AX - r.P.x0; f.oy = AY - r.P.y0; f.lights.length = 0;
     if (r.light) { r.light.x -= r.P.x0; r.light.y -= r.P.y0; f.lights.push(r.light); }
     return INFO;
+  };
+
+  // The picker and the camp hero switch: the camp pose, centred, feet near the bottom, at art scale (1 art px = 1 canvas px).
+  heroArtPreview = (cv, id) => {
+    if (!D || !D.heroes[id] || !cv) return false;
+    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    g.clearRect(0, 0, cv.width, cv.height);
+    return !!heroArtDraw(g, id, 'campIdle', 0, cv.width / 2, cv.height - 4, { frame: 0 });
   };
 
   // ================= the stage adapter (62-stage drawActor hook) =================
@@ -34683,8 +34736,8 @@ registerView('party', { id: 'team', label: 'Team', order: 10, feature: 'party' }
 registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
-registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });
-registerView('gat', { id: 'pack', label: 'Storehouse', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
+registerView('gat', { id: 'forage', label: 'Forage', order: 30, feature: 'forage' });
+registerView('gat', { id: 'pack', label: 'Store', order: 40, feature: 'gather' });   // UX-A: the Pack is the Storehouse (id kept)
 registerView('forge', { id: 'make', label: 'Make', order: 10, feature: 'craft' });
 registerView('forge', { id: 'gear', label: 'Gear', order: 20, feature: 'craft' });
 registerView('forge', { id: 'uniques', label: 'Uniques', order: 30, feature: 'uniques' });
@@ -40131,7 +40184,7 @@ let deedsUI = null;
     },
     update() {
       // Keep the note in sync (in case S changes or something resets the field)
-      const ta = $('log').querySelector('.feedback-note');
+      const root = $('sec-feedback'), ta = root && root.querySelector('.feedback-note');   // W1-D: $('log') is null (the Journal is a sheet)
       if (ta && ta.value !== feedbackState.note) ta.value = feedbackState.note;
     }
   });
@@ -41087,15 +41140,18 @@ let navUI = null;
   pill.addEventListener('click', () => openSwitcher());
   let pSig = '', pIcon = '';
   function updatePill() {
-    const n = navNow(), sig = n.text + '|' + n.act + '|' + (n.full ? 1 : 0);
+    // W1-D (playtest-2 P2-2): a phone-width header has room for about 100 px of text, so the pill drops the activity word
+    // (its icon says it) and shows "Zone 12" or "Pine Grove"; the aria label keeps the whole line
+    const n = navNow(), narrow = innerWidth <= 420 && !!n.short, sig = (narrow ? n.short : n.text) + '|' + n.act + '|' + (n.full ? 1 : 0);
     if (sig === pSig) return;
     pSig = sig;
-    putText(pTx, n.text);
+    putText(pTx, narrow ? n.short : n.text);
     if (n.icon !== pIcon) { pIcon = n.icon; pIc.src = (ICON_OF[n.icon] || ICON_OF.fight)(); }
     putClass(pill, 'act-pill ' + n.act + (n.full ? ' full' : ''));
     putAttr(pill, 'aria-label', `${n.text}. Switch activity`);
   }
   uiHooks.push(updatePill);
+  addEventListener('resize', () => { pSig = ''; updatePill(); });
 
   // ---------------- the control row ----------------
   const gBtn = document.querySelector('#modeSeg button[data-act="gather"]');
@@ -43327,7 +43383,7 @@ let openSheet, partySheet;
         row.append(b);
         return b;
       });
-      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
+      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; if (!(typeof heroArtPreview === 'function' && heroArtPreview(b._cv, b.dataset.hero))) drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
       sec._up = () => {
         const lv = soloLevels(), cur = soloHero();
         for (const b of sec._cards) {
@@ -44933,7 +44989,7 @@ var classUI;
     const nextFig = () => {
       if (root !== built || !figs.length) return;
       const [cv, k] = figs.shift();
-      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof heroArtPreview === 'function' && heroArtPreview(cv, k)) { /* the new art */ } else if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
       if (figs.length) setTimeout(nextFig, 0);
     };
     requestAnimationFrame(() => setTimeout(nextFig, 0));

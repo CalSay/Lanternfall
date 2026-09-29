@@ -258,7 +258,7 @@
         row.append(b);
         return b;
       });
-      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
+      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; if (!(typeof heroArtPreview === 'function' && heroArtPreview(b._cv, b.dataset.hero))) drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
       sec._up = () => {
         const lv = soloLevels(), cur = soloHero();
         for (const b of sec._cards) {

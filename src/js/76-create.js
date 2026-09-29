@@ -227,7 +227,7 @@ var classUI;
     const nextFig = () => {
       if (root !== built || !figs.length) return;
       const [cv, k] = figs.shift();
-      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof heroArtPreview === 'function' && heroArtPreview(cv, k)) { /* the new art */ } else if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
       if (figs.length) setTimeout(nextFig, 0);
     };
     requestAnimationFrame(() => setTimeout(nextFig, 0));

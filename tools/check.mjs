@@ -4791,7 +4791,7 @@ try {
     const src = f => fs.readFileSync(path.join(ROOT, 'src', ...f.split('/')), 'utf8');
     const nav = src('js/75-nav-ui.js'), ui = src('js/70-ui.js'), gat = src('js/72-ui-gather.js'), shell = src('shell.html');
     assert(/on\('navGo'[\s\S]{0,200}closeMenu\(\)/.test(nav) && /uiHooks\.push\(updatePill\)/.test(nav) && /NAV_TUNE\.pillReplacesName/.test(nav), '75-nav-ui: the pill updates through uiHooks, navGo { close } closes menus, the header flag picks the variant');
-    assert(/const uiHooks = \[\]/.test(ui) && /for \(const f of uiHooks\) f\(force\)/.test(ui) && /function followGo\(/.test(ui) && /label: 'Storehouse'/.test(ui) && /id: 'pack'/.test(ui), '70-ui: uiHooks, followGo (toast go), the Pack view is labelled Storehouse (id kept)');
+    assert(/const uiHooks = \[\]/.test(ui) && /for \(const f of uiHooks\) f\(force\)/.test(ui) && /function followGo\(/.test(ui) && /label: 'Store'/.test(ui) && /id: 'pack'/.test(ui), '70-ui: uiHooks, followGo (toast go), the Pack view is labelled Store (id kept)');
     assert(/show: \(\) => navSkillOpen\('mine'\)/.test(gat) && /registerGatherRowNote/.test(gat) && !/lays down their swords/.test(gat + shell), '72-ui-gather: Mining shows once open, the Hands hook is there, the stale "lays down their swords" copy is gone');
     assert(/<section class="panel" id="p-gat" hidden><\/section>/.test(shell), 'shell: the Gather panel is built by script');
     if (fs.existsSync(distFile)) {
@@ -4824,12 +4824,12 @@ try {
       for (let i = 0; i < 4; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(300); }
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await X(`setTab('make')`); await page.waitForTimeout(300);
-      const pill0 = await page.textContent('#actPill');
+      const pill0 = await page.getAttribute('#actPill', 'aria-label');   // W1-D: at 360 px the pill shows the short text; the label keeps the whole line
       await page.click('#actPill'); await page.waitForTimeout(250);
       const rows = await page.$$eval('.nv-sheet .nv-row', rs => rs.map(r => r.textContent));
       await page.click('.nv-sheet .nv-row:nth-child(3) .nv-act');   // Woodcutting: Chop
       await page.waitForTimeout(300);
-      const after = JSON.parse(await X(`JSON.stringify({ tab: S.tab, act: S.activity, kind: S.node.kind, sheet: !!document.querySelector('.bsheet-ov'), pill: document.getElementById('actPill').textContent, open: document.getElementById('app').classList.contains('menu-open') })`));
+      const after = JSON.parse(await X(`JSON.stringify({ tab: S.tab, act: S.activity, kind: S.node.kind, sheet: !!document.querySelector('.bsheet-ov'), pill: document.getElementById('actPill').getAttribute('aria-label'), open: document.getElementById('app').classList.contains('menu-open') })`));
       assert(/^Mining · Cobalt Crater/.test(pill0) && rows.length === 4 && after.tab === '' && !after.open && !after.sheet && after.act === 'gather' && after.kind === 'wood' && /^Woodcutting · /.test(after.pill),
         `browser: from inside the Craft menu the pill opens the switcher (${rows.length} rows); Chop switches to ${after.pill}, closes the sheet and the menu`);
       await X(`setTab('mine')`); await page.waitForTimeout(300);
@@ -6217,6 +6217,44 @@ try {
     assert(E('onboardStep().id') === 'parry' && E('soloParry(true)') === 'parry', 'the next heavy hit: "Press Parry" and counter');
     errs.push(...g.errors);
   }
+  // W1-D (playtest-2 P0): a combat step never pauses a game that cannot give it what it waits for
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren"); soloTouch()'); run(g, 0.5);
+    E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
+    E('soloAttack()');
+    assert(E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === true, 'W1-D: the ability step pauses while a foe is alive');
+    E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = 1; })'); run(g, 0.8); E('soloAttack()'); run(g, 0.1);   // Wren's Attack clears the pack (the 44% lock)
+    assert(!E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardStep().id') === 'ability' && E('onboardPaused(onboardStep())') === false, 'W1-D: ...and does not pause once the pack is dead, so the respawn can happen');
+    run(g, 1.5);
+    assert(E('combatFoes().some(f => f && !f.dead && f.hp > 0)') && E('onboardPaused(onboardStep())') === true && E('soloAbility()') === true, 'W1-D: a foe respawns, the step pauses again and the ability casts (Echo Shot needs a target)');
+  }
+  {
+    // the Dodge step: an earlier press (with no heavy hit yet) left the button on cooldown; the paused game must not wait on it
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren"); soloTouch()'); run(g, 0.5);
+    E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');
+    E('soloAttack()'); E('soloAbility()');
+    E('soloDodge()');
+    E(`actWarn({ kind: 'heavy', id: 't', foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 1.5, land: () => {} })`); run(g, 0.1);
+    assert(E('onboardStep().id') === 'dodge' && E('soloButtons().dodge.left') > 0 && E('soloDodge(true)') === 'dodge', 'W1-D: the guide\'s Dodge counts even when an earlier press left the button on cooldown (the paused game could never clear it)');
+    errs.push(...g.errors);
+  }
+  // W1-D (playtest-2 P2-7): each hero remembers their own zone; a weak hero never resets the strong hero's progress
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("wren"); S.maxZone = 12; setZone(12); S.L = 30;');
+    E('soloPick("tobin")');
+    assert(E('S.zone') === 12 && E('S.maxZone') === 12 && E('S.L') === 1, 'W1-D: switching to a hero who has not played keeps the road (zone 12); their level is their own');
+    E('setZone(2); S.pace.fell = 12;');   // pace walks the level 1 hero down to a zone they can farm
+    E('soloPick("wren")');
+    assert(E('S.zone') === 12 && E('S.L') === 30 && E('S.pace.fell') === 0, 'W1-D: switching back returns Wren to zone 12 at level 30 (not the zone the weak hero fell to)');
+    E('soloPick("tobin")');
+    assert(E('S.zone') === 2, 'W1-D: ...and Tobin to his own zone 2');
+    E('S.maxZone = 5; soloPick("wren");');
+    assert(E('S.zone') <= 5, 'W1-D: a remembered zone never goes past the furthest zone cleared');
+    errs.push(...g.errors);
+  }
   // 12. SOLO2: active vs idle. Any combat press makes the player active for activeFor s; while active nothing fights
   //     for you (no auto swing, auto-tap or auto-cast); idle, auto-play runs. The page hidden (soloGoIdle) = idle at once.
   {
@@ -6311,7 +6349,7 @@ try {
   E('S.mats.wood[0] = 0; S.mats.ore[0] = 0');
   const need0 = JSON.parse(E('JSON.stringify(onboardNeed("stock:bench"))'));
   assert(need0.length === 1 && need0[0].name === 'Pine Log' && need0[0].n === 20 && need0[0].have === 0 && need0[0].kind === 'wood', `the Workbench step needs 20 Pine Log (${JSON.stringify(need0)})`);
-  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "attack"))') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; Attack does pause');
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused({ id: "attack", pause: 1 })') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; a plain press step does pause');
   E('S.mats.wood[0] = 20');
   assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 20 Pine Log in hand the Workbench press step pauses again');
   // no player-facing copy calls the first wood Oak
@@ -6528,6 +6566,97 @@ try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('solo (browser) crashed: ' + (e.stack || e)); }
+// ---- W1-D: guide locks, landscape bar, Journal errors, combat numbers on gather scenes, picker art, header labels (Chromium) ----
+console.log('W1-D (browser)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('W1-D (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    const open = async (w, h) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: w < 800, hasTouch: w < 800 });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      page.on('console', m => { if (m.type() === 'error' && /lanternfall/.test(m.text())) errs.push(m.text()); });
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      return { ctx, page, errs, X: s => page.evaluate(s => window.__t.x(s), s) };
+    };
+    try {
+      // 1. the first session never locks: fresh starts per hero, real presses on the guide's targets every 0.4 s
+      const locks = [];
+      for (const hero of ['wren', 'tobin', 'pip']) for (let n = 0; n < 4; n++) {
+        const { ctx, page, X } = await open(360, 740);
+        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(400);
+        let last = '', since = 0, stuck = false;
+        for (let i = 0; i < 70; i++) {
+          const st = await X('(s => s ? s.id : "")(onboardStep())');
+          if (['boss', 'upgrade', 'gather'].includes(st) || await X('!!S.onboard.done.parry')) break;
+          if (st !== last) { last = st; since = i; }
+          if (['attack', 'ability', 'dodge', 'parry'].includes(st)) {
+            const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab0' : st}`); const r = b && await b.boundingBox();
+            if (r) { await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
+          }
+          if (i - since > 22 && await X('ONBOARD.paused')) { stuck = true; break; }   // paused for 9 s of presses on the same step
+          await page.waitForTimeout(400);
+        }
+        if (stuck) locks.push(`${hero}@${last}`);
+        await ctx.close();
+      }
+      assert(!locks.length, `W1-D: 12 fresh starts (4 per hero) press through the first combat steps and the game never stays paused on one (${locks.join(', ') || 'none locked'})`);
+    } catch (e) { fail('W1-D lock loop crashed: ' + (e.stack || e)); }
+    try {
+      // 2. landscape 740 x 360: the whole bar shows and the guide points at a visible slot
+      const { ctx, page } = await open(740, 360);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(800);
+      const m = await page.evaluate(() => { const r = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
+        return { slots: [...document.querySelectorAll('#soloBar .sbtn')].map(r), stage: r(document.getElementById('stageBox')), ring: r(document.querySelector('.ob-ring')), vh: innerHeight, atk: r(document.querySelector('#soloBar .sb-atk')) }; });
+      assert(m.slots.length === 6 && m.slots.every(b => b[1] >= 0 && b[3] <= m.vh && b[0] >= 0 && b[2] <= 740 && b[2] - b[0] >= 44), `W1-D: at 740x360 all six action slots are on screen, 44 px or bigger (${m.slots.map(b => Math.round(b[1]) + '-' + Math.round(b[3])).join(' ')})`);
+      assert(m.stage[3] <= m.slots[0][1] + 1 && m.stage[3] - m.stage[1] >= 150, `W1-D: ...and the stage still has room above them (${Math.round(m.stage[3] - m.stage[1])} px tall)`);
+      assert(m.ring[1] >= 0 && m.ring[3] <= m.vh + 6 && (m.ring[0] + m.ring[2]) / 2 >= m.atk[0] - 30 && (m.ring[0] + m.ring[2]) / 2 <= m.atk[2] + 30, 'W1-D: the guide ring marks the Attack slot, inside the screen');
+      await ctx.close();
+    } catch (e) { fail('W1-D landscape crashed: ' + (e.stack || e)); }
+    try {
+      // 3. the picker art, the header labels, combat numbers on a gather scene, the Journal
+      const { ctx, page, errs, X } = await open(360, 740);
+      await page.waitForTimeout(600);
+      const same = await X(`[...document.querySelectorAll('#createScreen .ccard')].map(b => { const cv = b.querySelector('canvas'), c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; return heroArtPreview(c2, b.dataset.hero) && c2.toDataURL() === cv.toDataURL(); }).join()`);
+      assert(same === 'true,true,true', `W1-D: the hero picker draws the new hand-drawn art for Wren, Tobin and Pip (${same})`);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(500);
+      await X('S.onboard.tips = false; onboardUnlockAll(); S.maxZone = 12; S.zone = 12; S.L = 20; true'); await page.waitForTimeout(400);
+      const clip = async () => page.evaluate(() => [...document.querySelectorAll('.vseg button, .act-pill .ap-tx, .tab, .znum, .modeseg button, .ctrl-switch')].filter(b => b.offsetParent && b.scrollWidth > b.clientWidth + 1).map(b => b.textContent.trim() + ' ' + b.scrollWidth + '>' + b.clientWidth));
+      const bad = [];
+      bad.push(...await clip());
+      for (const tab of ['adv', 'gat', 'forge', 'world', 'party']) {
+        await page.evaluate(t => document.querySelector(`.tab[data-tab="${t}"]`).click(), tab); await page.waitForTimeout(250);
+        for (const v of await page.$$eval('#viewSeg button', l => l.map(b => b.dataset.view))) { await page.evaluate(v2 => document.querySelector(`#viewSeg button[data-view="${v2}"]`).click(), v); await page.waitForTimeout(80); bad.push(...(await clip()).map(x => tab + '/' + v + ': ' + x)); }
+      }
+      assert(!bad.length, `W1-D: at 360 px no header pill, tab or sub-view label is cut off (${[...new Set(bad)].slice(0, 4).join('; ') || 'none'})`);
+      const ctl = await page.evaluate(() => Math.round(document.getElementById('zNext').getBoundingClientRect().right));
+      assert(ctl <= 360, `W1-D: the zone arrows stay on screen at 360 px (right edge ${ctl})`);
+      await page.evaluate(() => document.getElementById('menuX').click()); await page.waitForTimeout(300);
+      await X(`(() => { emit('float', { txt: 'COUNTER 1.5K', color: '#FF9E3D', big: true, crit: true }); return 0; })()`);
+      const live0 = await X('stageStats().critLive.length');
+      await X('setActivity("gather"); true'); await page.waitForTimeout(150);
+      const live1 = await X('stageStats().critLive.length');
+      assert(live0 >= 1 && live1 === 0, `W1-D: a COUNTER number still rising is dropped when you go to a gather scene (${live0} -> ${live1})`);
+      await X('setActivity("fight"); true'); await page.waitForTimeout(200);
+      await page.evaluate(() => document.getElementById('bellBtn').click()); await page.waitForTimeout(500);
+      await page.evaluate(() => { const b = document.querySelector('button[data-v="journal"]'); if (b) b.click(); }); await page.waitForTimeout(900);
+      const je = errs.filter(e => /section .* update failed|querySelector/.test(e));
+      assert(!je.length && await X('!!document.getElementById("sec-feedback")'), `W1-D: the Journal open for 1 s raises no "section update failed" error (${je.length} errors)`);
+      await ctx.close();
+    } catch (e) { fail('W1-D ui checks crashed: ' + (e.stack || e)); }
+    await browser.close();
+  }
+} catch (e) { fail('W1-D (browser) crashed: ' + (e.stack || e)); }
 // ==== HEROART1: the hand-drawn hero art (tools/heroart.mjs -> 21y-data-heroart.js, 64h-hero-sprites.js) ====
 // Kept as one block at the end of the file (other tasks edit check.mjs too).
 console.log('hero art');

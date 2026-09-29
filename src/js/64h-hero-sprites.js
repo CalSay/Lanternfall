@@ -24,8 +24,9 @@
 //        down read as attack, hurt and death; gathering shows the camp idle), sets a._x, a._y, a._f like a baked frame
 //        (Pip's flame is a light, so the key light follows her staff). False = draw the old sprite.
 //   heroArtDecode(id, pose) -> { x0, y0, w, h, idx }   (checks) the palette indices of one pose
+//   heroArtPreview(cv, id) -> bool   the camp pose, feet at the bottom centre of the canvas (the hero picker and the camp switch; W1-D)
 //   heroArtPortraitURL(id) -> data URL of a 28x28 crop of the camp pose's head (the header portrait; 1 art px = 1 CSS px)
-var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL;
+var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtPortraitURL, heroArtPreview;
 {
   const D = typeof HERO_ART !== 'undefined' ? HERO_ART : null;
   const AX = 96, AY = 132, CUT = 118;
@@ -314,6 +315,14 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     const f = INFO.f; f.c = r.P.c; f.ox = AX - r.P.x0; f.oy = AY - r.P.y0; f.lights.length = 0;
     if (r.light) { r.light.x -= r.P.x0; r.light.y -= r.P.y0; f.lights.push(r.light); }
     return INFO;
+  };
+
+  // The picker and the camp hero switch: the camp pose, centred, feet near the bottom, at art scale (1 art px = 1 canvas px).
+  heroArtPreview = (cv, id) => {
+    if (!D || !D.heroes[id] || !cv) return false;
+    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    g.clearRect(0, 0, cv.width, cv.height);
+    return !!heroArtDraw(g, id, 'campIdle', 0, cv.width / 2, cv.height - 4, { frame: 0 });
   };
 
   // ================= the stage adapter (62-stage drawActor hook) =================

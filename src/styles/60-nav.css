@@ -76,3 +76,16 @@
 
 /* ---- toasts that lead somewhere (go): a chevron at the right edge ---- */
 .toast .go { margin-left: auto; padding-left: 6px; font: 700 16px/1 var(--body); color: var(--gold); }
+
+/* W1-D (playtest-2 P2-2): phone width. Four sub-view tabs share 336 px, so their labels use a smaller face; the control row
+   (Fight, Gather, Switch, zone arrows) tightens so it never runs past the screen edge. */
+@media (max-width: 420px) {
+  .vseg button { font-size: calc(12px * var(--display-k, 1)); padding: 0 2px; }
+  .act-pill .ap-tx { font-size: calc(13px * var(--display-k, 1)); }
+  .game .ctrl { gap: 4px; }
+  .game .modeseg button { min-width: 44px; padding: 0 6px; }
+  .game .ctrl-switch { padding: 0 6px; gap: 4px; }
+  .game .ctrl-switch .nvs-chev { display: none; }
+  .game .navbtn { width: 30px; }
+  .game .znum { min-width: 0; padding: 0 2px; font-size: calc(12px * var(--display-k, 1)); }
+}

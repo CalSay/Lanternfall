@@ -20,7 +20,8 @@
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
 // Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
-// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 }, zn: { key: zone } }).
+//   zn: the zone each hero was fighting in when you switched away (W1-D): switching back returns you there.
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
 // ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only. Active (SOLO2): every
 // hit comes from the buttons, and they hit harder (atkX, abHandX).
@@ -40,8 +41,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
-  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -64,7 +65,18 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (from === key && chosen) return true;
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
     if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
-    if (from && from !== key) { const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0; }
+    if (from && from !== key) {
+      const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0;
+      // W1-D (playtest-2 P2-7): the road belongs to the lamp, but each hero remembers where they stood. Leaving hero A saves A's
+      // zone; arriving as B goes back to B's own zone (never past the furthest zone cleared). A hero with no zone kept
+      // (never played) stays where you are. Pace (55-pace) then walks a weaker hero down to a zone they can farm and
+      // forgets the old fall-back, so the strong hero's return is not held to it.
+      if (!s.zn || typeof s.zn !== 'object') s.zn = {};
+      if (SOLO_HEROES[from] && chosen) s.zn[from] = S.zone;
+      const back = s.zn[key] | 0;
+      if (chosen && typeof S.pace === 'object') S.pace.fell = 0;
+      if (chosen && back >= 1 && back !== S.zone && typeof setZone === 'function') setZone(Math.min(back, Math.max(1, S.maxZone)));
+    }
     s.hero = key;
     const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : key;
     const ok = chooseClass(h.base, nm, { now: o.now, free: !!from });
@@ -122,7 +134,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   soloParry = forgive => {
     soloTouch();
     if (!fighting()) return '';
-    if (parryT > 0 || openT > 0) return 'locked';
+    if ((parryT > 0 || openT > 0) && !forgive) return 'locked';   // the guide's press (forgive) ignores a cooldown an earlier press left: the game is paused, so it would never end
     const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
     if (r === 'parry') { ST.parries++; parryT = T.parryCd; emit('soloParry', { res: 'parry' }); return 'parry'; }
     // outside the window (or nothing to parry): open for a moment
@@ -133,7 +145,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   soloDodge = forgive => {
     soloTouch();
     if (!fighting()) return '';
-    if (dodgeT > 0) return 'cd';
+    if (dodgeT > 0 && !forgive) return 'cd';
     dodgeT = T.dodgeCd;
     const r = typeof actDodge === 'function' ? actDodge(!!forgive) : '';
     if (r === 'dodge' || r === 'perfect') ST.dodges++;
