@@ -56,7 +56,7 @@ const CODEX_MILESTONES = [
   { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Saved: it hangs in camp once the camp scene shows decorations.' }] },
   { at: 100, rw: [{ id: 'hints', kind: 'qol', n: 'Exact Codex hints', txt: 'Every blank entry says exactly where to find it, at any Library level.', live: true }] },
   { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Saved: hero lantern colours arrive with hero cosmetics.' }] },
-  { at: 200, rw: [{ id: 'expslot', kind: 'qol', n: '+1 expedition slot', txt: 'The Map Room sends one more team.', live: true }] },
+  { at: 200, rw: [soloOn() ? { id: 't_wayfinder', kind: 'title', n: 'Title: the Wayfinder', live: true } : { id: 'expslot', kind: 'qol', n: '+1 expedition slot', txt: 'The Map Room sends one more team.', live: true }] },   // W1-C: no expeditions in solo: a title
   { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Saved for later, like the basic filter.' }] },
   { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
@@ -100,7 +100,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const exact = () => (typeof campLevel === 'function' && campLevel('library') >= 3) || !!CX().got[100];
   codexExact = exact;
 
-  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); CODEX_PAGE_IDS.push(id); };
+  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); if (!(d.noSolo && soloOn())) CODEX_PAGE_IDS.push(id); };
 
   // ---------------- 1. Bestiary: 7 types x (4 tiers x2, Elder x3, champion x2) ----------------
   page('bestiary', {
@@ -170,6 +170,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const live = () => typeof rosterLive === 'function' && rosterLive();
   page('companions', {
     n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Kindheart', pic: 'char',
+    noSolo: true,   // W1-C: no companions in solo: the page is left out (page())
     tiles: x => {
       const on = live(), out = [];
       for (const id of ROSTER_KEYS) {
@@ -240,6 +241,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 9. Lore: expedition Lore pages x2, Keepsakes x1 ----------------
   page('lore', {
     n: 'Lore', bless: 'wayfarer', seal: { key: 'expHaul', v: 0.03, txt: 'Expeditions bring back 3% more' }, title: 'Loremaster', pic: 'rows',
+    noSolo: true,   // W1-C: expedition Lore has no way in solo
     show: () => !!S.exped && typeof EXPED_LORE === 'object',
     tiles: x => {
       const out = [];

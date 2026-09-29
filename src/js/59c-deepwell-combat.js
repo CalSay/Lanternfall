@@ -113,7 +113,7 @@ let deepCombatOn, dcLifeline, DWC;
     lifeLeft = T.lifeSaves;
     if (!partyCombatOn() || S.deepCombat.tip) return;
     S.deepCombat.tip = 1;
-    toast("Your party's health carries from floor to floor. Each floor you clear heals a little. If everyone falls, the run ends.", 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
+    toast(soloOn() ? 'Your health carries from floor to floor. Each floor you clear heals a little. If you fall, the run ends.' : "Your party's health carries from floor to floor. Each floor you clear heals a little. If everyone falls, the run ends.", 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
   });
   // Going below or coming back up (57d emits sceneReset in both): the party is whole, and the pack
   // of the world just left is set aside (no zone foe under the arena, no well foe in the zone).

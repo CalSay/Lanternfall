@@ -54,7 +54,7 @@ let craftUI = null;
   const trophTotal = () => troph().reduce((a, b) => a + (b || 0), 0);
   const skillOfSt = st => CRAFT_STATIONS[st].skill;
   const lvOf = sk => (S.skills[sk] || { lv: 1 }).lv;
-  const roster = () => (typeof rosterLive === 'function' && rosterLive() && typeof rosterList === 'function' ? safe(() => rosterList(), []) : []);
+  const roster = () => soloOn() ? [] : (typeof rosterLive === 'function' && rosterLive() && typeof rosterList === 'function' ? safe(() => rosterList(), []) : []);
   const fielded = k => !!(S.party && Array.isArray(S.party.field) && S.party.field.includes(k));
   const firstName = k => (k === 'hero' ? 'You' : ROSTER[k] ? ROSTER[k].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0] : k);
   const portraitOf = k => {
@@ -195,7 +195,7 @@ let craftUI = null;
   // ================= Recipes =================
   let rec = null;
   function kindsFor(st) {
-    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy; }); // Sword/Helm are no longer made
+    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy && !(soloOn() && d.comp && !d.pos); });   // W1-C: no companion-only recipes in solo // Sword/Helm are no longer made
   }
   const POS_ORDER = [...CRAFT_HERO_POS, ...CRAFT_COMP_POS];
   const kindOrder = k => { const d = CRAFT_KINDS[k]; return POS_ORDER.indexOf(d.pos || d.comp || 'charm'); };
@@ -216,7 +216,7 @@ let craftUI = null;
   function subFor(k) {
     const d = CRAFT_KINDS[k], bits = [];
     if (d.pos) bits.push(posName(d.pos) + (heroFits(k) ? '' : d.cls ? ` · ${HERO_CLASSES[d.cls] ? HERO_CLASSES[d.cls].name : d.cls}` : ''));
-    if (d.comp) {
+    if (d.comp && !soloOn()) {
       const who = partyFits(k);
       const roleTxt = d.role === 'any' ? 'any companion' : ROLE_NAME[d.role] + 's';
       bits.push(`${d.pos ? 'also ' : ''}${d.comp === 'trk' ? 'Trinket' : 'weapon'} for ${who.length ? who.slice(0, 3).map(firstName).join(', ') + (who.length > 3 ? ` +${who.length - 3}` : '') : roleTxt}`);
@@ -264,7 +264,7 @@ let craftUI = null;
     id: 'craft-recipes', title: 'Recipes',
     mount(sec) {
       const filt = el('div', 'seg cf-seg cf-filt'); filt.setAttribute('aria-label', 'Show recipes');
-      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']]) {
+      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']].filter(x => !(soloOn() && x[0] === 'party'))) {
         const b = el('button', null, n); b.type = 'button'; b.dataset.f = f;
         b.addEventListener('click', () => { st8.filt = f; ui(true); });
         filt.append(b);
@@ -329,7 +329,7 @@ let craftUI = null;
           ks = [];
         }
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
-        if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes and companions. Tap All to see them.`));
+        if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
       } else {
         for (const k of ks) {
           const r = rec.rows[k], rs = rowSig(k, t);
@@ -567,7 +567,7 @@ let craftUI = null;
     who.append(el('div', 'cf-im', meta));
     const fit = [];
     if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
-    if (d && d.comp) fit.push(d.comp === 'trk' ? 'Trinket for any companion' : `${d.pos ? 'Also for' : 'Weapon for'} ${ROLE_NAME[d.role].toLowerCase()} companions`);
+    if (d && d.comp && !soloOn()) fit.push(d.comp === 'trk' ? 'Trinket for any companion' : `${d.pos ? 'Also for' : 'Weapon for'} ${ROLE_NAME[d.role].toLowerCase()} companions`);
     who.append(el('div', 'cf-im', fit.join(' · ') + ` · Power ${fmt(itemPower(it))}`));
     if (wr) { const wb = el('div', 'cf-worn'); wb.append(img(portraitOf(wr.who)), el('span', null, wr.who === 'hero' ? `You wear it (${posName(wr.pos)})` : `${firstName(wr.who)} wears it`)); who.append(wb); }
     head.append(tile, who); body.append(head);
@@ -585,7 +585,7 @@ let craftUI = null;
       r.append(tx);
       if (L.g === 'mw') r.append(el('small', 'cf-tag', 'Masterwork'));
       else if (L.g === 'affix') r.append(el('small', 'cf-tag', 'Bonus'));
-      if (!liveNow) r.append(el('small', 'cf-wait', '(active with party combat)'));
+      if (!liveNow) r.append(el('small', 'cf-wait', '(not active yet)'));
       lines.append(r);
     }
     const lgl = LG() && safe(() => LG().lines(it), null);   // the power and circle mark lines (55-legend)
@@ -596,7 +596,7 @@ let craftUI = null;
     body.append(secBox('What it does', lines));
     const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
     if (tlb) body.append(tlb);
-    if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
+    if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item and switch on in a later update.'));
     body.append(...lgb.filter(b => !b.dataset.top));
 
     // ---- compare ----
@@ -615,7 +615,7 @@ let craftUI = null;
         if (!rows.children.length) rows.append(el('p', 'note', 'Same stats.'));
         box.append(rows);
         if (it.u || cur.u) box.append(el('p', 'note', 'Unique effects are not in this list.'));
-        if (keys.some(k => !CRAFT_STATS[k].live)) box.append(el('p', 'note', '* active with party combat'));
+        if (keys.some(k => !CRAFT_STATS[k].live)) box.append(el('p', 'note', '* not active yet'));
       }
       body.append(secBox('Compare', box));
     }
@@ -628,7 +628,7 @@ let craftUI = null;
       b.addEventListener('click', () => equipHero(it.id, d.pos));
       wear.push(b);
     }
-    const giveToggle = d && d.comp && heroFitsIt(it);
+    const giveToggle = !soloOn() && d && d.comp && heroFitsIt(it);
     if (giveToggle) {
       const b = el('button', 'big cf-act cf-give', sheet.mode === 'give' ? 'Hide companions' : 'Give to...'); b.type = 'button';
       b.addEventListener('click', () => { sheet.mode = sheet.mode === 'give' ? null : 'give'; renderItem(); });

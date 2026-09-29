@@ -13,7 +13,7 @@ const BESTIARY_PERKS = {
   bones: { mod: 'keen', label: 'crit damage', val: ECON.crit.bones },   // ECON-A: was +3/6/10/15% gold
   beetle: { mod: 'gatherSpeed', label: 'gather speed' },
   spore: { mod: 'offline', label: 'offline gains' },
-  golem: { mod: 'tap', label: 'tap damage' },
+  golem: { mod: 'tap', label: 'Attack damage' },
   wraith: { mod: 'xp', label: 'XP' }
 };
 

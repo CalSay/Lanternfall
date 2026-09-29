@@ -98,7 +98,7 @@
           : x.reached ? `Dark. Beat the zone ${x.z1} boss to light it. You are at zone ${S.maxZone}.`
           : `Dark. Zones ${x.z0} to ${x.z1}. Reach zone ${x.z0} to walk this far.`;
         tx.append(el('div', 'gl-sh-n', name), el('div', 'gl-sh-sub', sub));
-        if (x.here) tx.append(el('div', 'gl-sh-here', 'Your party is here'));
+        if (x.here) tx.append(el('div', 'gl-sh-here', soloOn() ? 'You are here' : 'Your party is here'));
         row.append(ic, tx);
         list.append(row);
       }

@@ -78,29 +78,30 @@ const STAR_MAPS = {
         ['Deep Grit', 'Grit cap +2.', { t: { guardMax: 2 } }, 1.02],
         ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
         ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more Grit.'],
+        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'You take 10% less damage while you hold 5 or more Grit.'],
         ['Lasting Grit II', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
         ['Unbroken', 'Your Grit never falls off while you land a heavy hit at least every 3s. Grit cap +5, but each Grit gives 1% less damage.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each Grit also gives 2 armour.']
       ]],
       ['Vanguard', [
-        ['Heavy Arm', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Heavy Arm', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Edge', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
         ['Hard Hits', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
-        ['Heavy Arm II', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Challenger', 'Your taps deal +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Taps taunt every foe for 2s, and you take 20% less damage while taunting.']
+        ['Challenger', 'Your Attack deals +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Your Attack draws every foe for 2s, and you take 20% less damage while it does.']
       ]],
       ['Oath', [
-        ['Comrades', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Comrades II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Shield Brothers', "Shield Wall's party bonus +10% (x1.4, was x1.3).", { t: { wall: 0.1 } }, 1.02],
-        ['Drillmaster', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
-        ['Comrades III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Comrades', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Comrades II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Shield Brothers', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.02],
+        ['Drillmaster', 'Hero XP +5%.', { m: { xp: 1.05 } }, 1.003],
+        ['Comrades III', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Banner Over Camp', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
-        ['Comrades IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
+        ['Comrades IV', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        soloOn() ? ['Oathsworn', 'You deal 10% more damage.', { m: { dmg: 1.1 } }, 1.035]
+          : ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
       ]]
     ],
     crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
@@ -111,9 +112,9 @@ const STAR_MAPS = {
       ['Kindle', [
         ['More Tinder', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.012],
         ['Hot Coals', 'Each Ember adds 2% more to Flare.', { t: { flarePerEmber: 0.02 } }, 1.006],
-        ['Twin Spark', 'A tap has a 25% chance to plant 2 Embers.', { ks: 'twinSpark' }, 1.015],
+        ['Twin Spark', 'An Attack press has a 25% chance to plant 2 Embers.', { ks: 'twinSpark' }, 1.015],
         ['More Tinder II', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.01],
-        ['Quick Fingers', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Quick Fingers', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Slow Burn', 'Each Ember burns its foe for 0.05x your attack every second.', { ks: 'slowBurn' }, 1.02],
         ['Hot Coals II', 'Each Ember adds 2% more to Flare.', { t: { flarePerEmber: 0.02 } }, 1.006],
         ['Wildfire', 'When a foe with Embers dies, its Embers jump to the next foe.', { ks: 'wildfire' }, 1.035, 'They spread to every foe in the pack at half the count.']
@@ -136,7 +137,7 @@ const STAR_MAPS = {
         ['Clean Cut', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
         ['Overkill', 'Damage past a kill carries to the next foe.', { ks: 'overflow' }, 1.02],
         ['Spark IV', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your taps deal half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
+        ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your Attack deals half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
       ]]
     ],
     crown: ['Everburn', 'Each Ember burns its foe for 0.1x your attack every second, and Flare plants 2 new Embers after it goes off.', { ks: 'everburn' }, 1.035]
@@ -150,16 +151,16 @@ const STAR_MAPS = {
         ['Next in Line', 'When a marked foe dies, the next foe starts marked for 4s.', { ks: 'nextMark' }, 1.02],
         ['Open Wound II', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
         ['Long Mark II', 'Focus lasts 2s longer.', { t: { markT: 2 } }, 1.006],
-        ['Boss Stalker', 'Your party deals +6% to bosses, and a boss you marked drops its unique 10% more often.', { live: 'stalker' }, 1.02],
+        ['Boss Stalker', 'You deal +6% to bosses, and a boss you marked drops its unique 10% more often.', { live: 'stalker' }, 1.02],
         ['Open Wound III', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
-        ['Pack Leader', "Focus gives your party +50% on the mark (was +25%), but you lose your own crit bonus on marked foes.", { ks: 'pack', t: { mark: 0.25 } }, 1.035]
+        ['Pack Leader', "Focus hits the mark for +50% (was +25%), but you lose your own crit bonus on marked foes.", { ks: 'pack', t: { mark: 0.25 } }, 1.035]
       ]],
       ['Volley', [
         ['Quick Nock', 'Volley cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
         ['Full Quiver', 'Volley fires 1 more arrow.', { t: { volleyHits: 1 } }, 1.008],
         ['Quiver Song', 'The haste after Volley lasts 3s longer.', { t: { hasteT: 3 } }, 1.02],
         ['Quick Nock II', 'Volley cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hunting Call', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Hunting Call', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Steady Draw', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
         ['Full Quiver II', 'Volley fires 1 more arrow.', { t: { volleyHits: 1 } }, 1.008],
         ['Quickdraw', "Volley's cooldown is 40% shorter. It fires 4 fewer arrows, each at 2.5x your attack (was 1.5x).", { ks: 'quickdraw', t: { volleyHits: -4 }, m: { abilityCd: 0.6 } }, 1.03]
@@ -168,14 +169,14 @@ const STAR_MAPS = {
         ['Steady Aim', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Barbs', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
         ['Hawk Eye', 'Your first hit on each foe always crits.', { ks: 'hawk' }, 1.02],
-        ['Fast Hands', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Fast Hands', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Barbs II', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
         ['Finisher', 'Foes under 20% health take +20% from you.', { live: 'finisher' }, 1.015],
         ['Steady Aim II', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Deadeye', 'You mark one foe at a time, and the mark lasts until it dies. Your crits on it deal double.', { ks: 'deadeye' }, 1.035]
       ]]
     ],
-    crown: ['Rain of Arrows', 'Every 10th tap fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
+    crown: ['Rain of Arrows', 'Every 10th Attack press fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
   },
   lightkeeper: {
     name: 'Lightkeeper', legacy: 1, hearth: 'Small Light', color: '#F2C14E',
@@ -197,18 +198,18 @@ const STAR_MAPS = {
         ['Short Verse II', 'Rally Hymn cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
         ['Loud Verse II', 'Rally Hymn +4%.', { t: { hymn: 0.04 } }, 1.008],
         ['Steady Voice', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
-        ['Teacher', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
+        ['Teacher', 'Hero XP +5%.', { m: { xp: 1.05 } }, 1.003],
         ['Sanctuary Hymn', 'Rally Hymn lasts 8s longer, but its cooldown is 50% longer.', { ks: 'sanctuary', t: { hymnT: 8 }, m: { abilityCd: 1.5 } }, 1.03, 'The Hymn heals 5% of max health every second.']
       ]],
       ['Martyr', [
-        ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Gift', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Gift II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Lantern Share', 'The damage you give up goes 6% further.', { t: { lkShare: 0.06 } }, 1.015],
-        ['Gift III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Wider Glow', 'Your aura +2% (companions +12%, was +10%).', { t: { lkAura: 0.02 } }, 1.012],
+        ['Gift III', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Wider Glow', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.012],
         ['Vigil', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
-        ['Gift IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+        ['Gift IV', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ["Martyr's Light", 'You deal 12% more damage.', { m: { dmg: 1.12 } }, 1.035]
       ]]
     ],
     crown: ['Lamp of Ages', 'While Rally Hymn is up, Blessings do not fade, and the Hymn adds a Blessing every 2s.', { ks: 'ages' }, 1.035]
@@ -217,7 +218,7 @@ const STAR_MAPS = {
 // The crown ring, shared by every class: [name, text, fx, p].
 const STAR_BRIDGES = [
   ['Ring of Might', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
-  ['Ring of Friends', 'Companions deal +1.5%.', { m: { party: 1.015 } }, 1.011],
+  ['Ring of Friends', 'You deal +1.5% damage.', { m: { dmg: 1.015 } }, 1.011],
   ['Ring of Haste', 'Ability cooldown -3%.', { m: { abilityCd: 0.97 } }, 1.005],
   ['Ring of Fire', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
   ['Ring of Learning', 'Hero XP +4%.', { m: { xp: 1.04 } }, 1]
@@ -549,7 +550,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   // ---- news: new points ----
   on('levelup', ({ L, quiet }) => {
     if (quiet || L % T.every !== 0 || !starCls() || typeof isUnlocked !== 'function' || !isUnlocked('stars')) return;
-    toast(`+1 star point. You have ${starFree()} to spend in Party, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
+    toast(`+1 star point. You have ${starFree()} to spend in Hero, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
   });
   // The points come from greatLanternsLit(); the Great Lantern card (55-lantern, 75-lantern-ui) says so.
   // A quiet catch-up (a save already past the boss) has counted them all along: nothing new to list.

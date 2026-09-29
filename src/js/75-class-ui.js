@@ -37,7 +37,7 @@ var classEvoUI;
     box.append(el('b', null, `The Proving: ${tr.name}`), el('p', null, p.prove ? 'Prove what you already are. ' + tr.text : tr.text), el('p', 'cl-note', tr.how));
     if (p.n) box.append(el('p', 'cl-rec', `Tries: ${p.n}. Best: ${p.best}%.`));
     box.append(btn('mini go cl-go', 'Take the Proving', () => { closeSheet(); startProving(); }));
-    box.append(el('small', null, 'Free, and you can try again at once. Your party waits while you fight alone.'));
+    box.append(el('small', null, 'Free, and you can try again at once. The road waits while you fight.'));
     return box;
   }
   function rows(info) {
