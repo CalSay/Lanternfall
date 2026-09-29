@@ -1048,3 +1048,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   ART-STYLE1 (sonnet): use the packs as the style reference for all our sprites; ART-IMPORT1: convert the 4
   characters to our pixel-map format (Soldier -> Warrior base, Orc/Demon/Blood Monster -> foes) if the licence
   allows, with credit. Paused: not launched.
+- OWNER on the asset packs: REFERENCE ONLY, never used directly (no pixels copied). Take from them: the
+  animation set (idle, walk, 2-3 attacks with swoosh arcs, hurt, death; 6-8 frames), outline and shading
+  style, and enemy ideas (orc, demon, blood monster). Heroes should be LESS chibi than the packs (taller
+  proportions, smaller heads). The packs stay out of the repo (third-party files); reference copies live in
+  the session scratchpad assets/ folder with a contact sheet. ART-STYLE1 brief to include all of this.
