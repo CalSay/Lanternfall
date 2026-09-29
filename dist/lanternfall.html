@@ -2530,6 +2530,16 @@ span.cf-d { font-weight: 600; }
 .rt-in.rt-away { background: var(--r-rare); color: #0B0810; }
 .rtile .rt-out { color: #9CC1FF; }
 .rtile .rt-out { -webkit-line-clamp: 3; overflow-wrap: anywhere; }
+/* 60-savecode: Save code panel (export/import) */
+.savecode-panel { display: grid; gap: 10px; }
+.savecode-sep { height: 2px; background: var(--line); margin: 2px 0; }
+.savecode-import { font-family: monospace; font-size: 12px; word-break: break-all; }
+.savecode-fallback { width: 100%; box-sizing: border-box; margin-top: 6px; font-family: monospace; font-size: 12px; background: var(--well); border: 2px solid var(--line); color: var(--bone); }
+.savecode-summary { display: grid; gap: 2px; padding: 10px; background: var(--well); border: 2px solid var(--line); }
+.savecode-summary p { margin: 0; }
+.savecode-replace { padding: 6px 12px; background: var(--gold); color: #1A1420; border: 2px solid var(--line); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+.savecode-replace:active { transform: scale(0.98); }
+.savecode-import-result { display: grid; gap: 8px; }
 /* 60-stars: the Stars view on the Party tab (75-stars-ui.js, docs/design/constellations.md) */
 .st-sec { gap: 10px; }
 .st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -13276,6 +13286,121 @@ let wellRested, restParty, restNote;
     if (!(g >= 1) || S.activity !== 'gather') return null;
     return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'Your party rested at the Hearth' };
   }
+}
+
+// ---- src/js/55-savecode.js ----
+// 55-savecode: save export/import codes (SAVE1). No DOM: pure functions the UI (75-savecode-ui.js)
+// calls to turn a save object into a short text code and back.
+// CORE FILE: must not touch document, window, canvas or localStorage.
+//
+// Code shape: `LF1:<base64 of UTF-8 JSON>:<checksum>`. The checksum is a cheap hash of the
+// base64 payload, so a single changed or dropped character is caught before JSON.parse ever
+// sees the tampered data.
+//
+// encodeSave(obj) -> string                      turn a save object into a code
+// decodeSave(code) -> { ok: true, data } | { ok: false, error }   parse and validate a code
+// summarizeSave(data) -> { name, level, maxZone, region, heroes, savedAt }   short preview
+
+const SAVECODE_HEADER = 'LF1';
+const SAVECODE_B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+// UTF-8 in and out, without relying on TextEncoder/atob/btoa/Buffer (browser and Node vm alike).
+function savecodeUtf8Encode(str) {
+  const bytes = [];
+  for (let i = 0; i < str.length; i++) {
+    let code = str.codePointAt(i);
+    if (code > 0xFFFF) i++; // consumed the low surrogate too
+    if (code < 0x80) bytes.push(code);
+    else if (code < 0x800) bytes.push(0xC0 | (code >> 6), 0x80 | (code & 0x3F));
+    else if (code < 0x10000) bytes.push(0xE0 | (code >> 12), 0x80 | ((code >> 6) & 0x3F), 0x80 | (code & 0x3F));
+    else bytes.push(0xF0 | (code >> 18), 0x80 | ((code >> 12) & 0x3F), 0x80 | ((code >> 6) & 0x3F), 0x80 | (code & 0x3F));
+  }
+  return bytes;
+}
+function savecodeUtf8Decode(bytes) {
+  let str = '', i = 0;
+  while (i < bytes.length) {
+    const b0 = bytes[i++];
+    if (b0 < 0x80) str += String.fromCharCode(b0);
+    else if ((b0 & 0xE0) === 0xC0) str += String.fromCharCode(((b0 & 0x1F) << 6) | (bytes[i++] & 0x3F));
+    else if ((b0 & 0xF0) === 0xE0) { const b1 = bytes[i++], b2 = bytes[i++]; str += String.fromCharCode(((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F)); }
+    else { const b1 = bytes[i++], b2 = bytes[i++], b3 = bytes[i++]; str += String.fromCodePoint(((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F)); }
+  }
+  return str;
+}
+function savecodeB64Encode(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i], b1 = bytes[i + 1], b2 = bytes[i + 2];
+    out += SAVECODE_B64[b0 >> 2];
+    out += SAVECODE_B64[((b0 & 3) << 4) | (b1 === undefined ? 0 : b1 >> 4)];
+    out += b1 === undefined ? '=' : SAVECODE_B64[((b1 & 0xF) << 2) | (b2 === undefined ? 0 : b2 >> 6)];
+    out += b2 === undefined ? '=' : SAVECODE_B64[b2 & 0x3F];
+  }
+  return out;
+}
+function savecodeB64Decode(str) {
+  const bytes = [];
+  let buffer = 0, bits = 0;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (ch === '=') break;
+    const val = SAVECODE_B64.indexOf(ch);
+    if (val === -1) continue;
+    buffer = (buffer << 6) | val;
+    bits += 6;
+    if (bits >= 8) { bits -= 8; bytes.push((buffer >> bits) & 0xFF); }
+  }
+  return bytes;
+}
+// A short, order-sensitive hash: any single changed character in the payload changes it.
+function savecodeChecksum(str) {
+  let h = 5381 >>> 0;
+  for (let i = 0; i < str.length; i++) h = (((h * 33) >>> 0) ^ str.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+function encodeSave(obj) {
+  const json = JSON.stringify(obj);
+  const b64 = savecodeB64Encode(savecodeUtf8Encode(json));
+  return `${SAVECODE_HEADER}:${b64}:${savecodeChecksum(b64)}`;
+}
+
+// Fields a real save always has; a code missing any of these is not treated as one.
+const SAVECODE_REQUIRED = ['v', 'L', 'gold', 'zone', 'maxZone'];
+
+function decodeSave(code) {
+  try {
+    if (typeof code !== 'string' || !code.trim()) return { ok: false, error: 'Paste a save code first.' };
+    const trimmed = code.trim();
+    const m = /^LF1:([A-Za-z0-9+/=]+):([0-9a-z]+)$/.exec(trimmed);
+    if (!m) return { ok: false, error: "That doesn't look like a Lanternfall save code." };
+    const [, b64, sum] = m;
+    if (savecodeChecksum(b64) !== sum) return { ok: false, error: 'This code is incomplete or was changed. Copy it again.' };
+    let data;
+    try { data = JSON.parse(savecodeUtf8Decode(savecodeB64Decode(b64))); }
+    catch (e) { return { ok: false, error: "Couldn't read this code's save data." }; }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, error: 'This code does not hold a save.' };
+    for (const k of SAVECODE_REQUIRED) if (typeof data[k] !== 'number') return { ok: false, error: 'This does not look like a Lanternfall save.' };
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: "Couldn't read that code." };
+  }
+}
+
+function summarizeSave(data) {
+  const region = (typeof regionOf === 'function') ? regionOf(data.maxZone || 1) : null;
+  const heroes = data.party && Array.isArray(data.party.field) ? data.party.field.length + 1 : 1;
+  let savedAt = '';
+  try { savedAt = data.last ? new Date(data.last).toLocaleString() : ''; } catch (e) {}
+  return {
+    name: (data.name && String(data.name).trim()) || 'Wanderer',
+    level: data.L || 1,
+    maxZone: data.maxZone || 1,
+    region: (region && region.name) || 'The Hollow',
+    heroes,
+    savedAt
+  };
 }
 
 // ---- src/js/55-skillpace.js ----
@@ -37783,6 +37908,167 @@ let openSheet, partySheet;
   });
   // Keep an open sheet live while the tab updates.
   registerSection('party', { id: 'party-live', title: '', view: '*', mount(sec) { sec.hidden = true; }, update: guard('sheet', () => partySheet.refresh()) });
+}
+
+// ---- src/js/75-savecode-ui.js ----
+// 75-savecode-ui: "Save code" panel in the Journal, next to Send feedback (SAVE1).
+// Export: a compact text code of the current save, to copy or download.
+// Import: paste a code, check it, see a short summary, then confirm to replace the save.
+{
+  const st = { note: '', armed: false, checkedCode: '', summary: null, error: '', importErr: '' };
+
+  function currentCode() {
+    try { return encodeSave(S); } catch (e) { return ''; }
+  }
+
+  function copyToClipboard(text, onSuccess, onFail) {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(() => { if (onSuccess) onSuccess(); }, () => fallbackCopy(text, onSuccess, onFail));
+    } else fallbackCopy(text, onSuccess, onFail);
+  }
+  function fallbackCopy(text, onSuccess, onFail) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) { if (onSuccess) onSuccess(); } else if (onFail) onFail();
+    } catch (e) { if (onFail) onFail(); }
+  }
+
+  function downloadCode(text) {
+    try {
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = el('a'); a.href = url;
+      const d = new Date(), pad = n => String(n).padStart(2, '0');
+      a.download = `lanternfall-save-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.txt`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 4000);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function resetImport() { st.armed = false; st.checkedCode = ''; st.summary = null; st.error = ''; st.importErr = ''; }
+
+  function doImport(data, box) {
+    try {
+      storage.set(KEY, JSON.stringify(data));
+    } catch (e) {
+      st.importErr = "Couldn't save that to this device. Nothing was changed.";
+      resetImport(); renderImport(box);
+      return;
+    }
+    // Go through the normal load path so fresh()/registerState defaults merge in, then get a
+    // clean run of every system rather than patch each one's caches by hand.
+    try { location.reload(); return; } catch (e) {}
+    try {
+      loadSave();
+      closeMenu();
+      ui(true);
+      toast('Save loaded.', 'good');
+    } catch (e) {
+      toast('Save loaded. Reload the page if anything looks off.', 'good');
+    }
+    resetImport(); renderImport(box);
+  }
+
+  function renderImport(box) {
+    box.textContent = '';
+    if (st.importErr) box.append(el('p', 'note warn', st.importErr));
+    if (!st.summary) {
+      if (st.error) box.append(el('p', 'note warn', st.error));
+      return;
+    }
+    const s = st.summary;
+    const card = el('div', 'savecode-summary');
+    card.append(el('p', null, `${s.name} - Level ${s.level}, Zone ${s.maxZone}, ${s.region}`));
+    card.append(el('p', 'note', `${s.heroes} hero${s.heroes === 1 ? '' : 'es'}${s.savedAt ? ' - saved ' + s.savedAt : ''}`));
+    box.append(card);
+    if (!st.armed) {
+      const go = el('button', 'savecode-replace', 'Replace my save'); go.type = 'button';
+      go.addEventListener('click', () => { st.armed = true; renderImport(box); });
+      box.append(go);
+    } else {
+      box.append(el('p', 'note warn', 'This throws away your current save and puts this one in its place. This cannot be undone.'));
+      const row = el('div', 'feedback-buttons');
+      const yes = el('button', 'savecode-replace', 'Yes, replace it'); yes.type = 'button';
+      yes.addEventListener('click', () => doImport(st.summary._data, box));
+      const no = el('button', 'feedback-clear', 'Cancel'); no.type = 'button';
+      no.addEventListener('click', () => { st.armed = false; renderImport(box); });
+      row.append(yes, no); box.append(row);
+    }
+  }
+
+  registerSection('log', {
+    id: 'savecode', title: 'Save code',
+    mount(sec) {
+      const panel = el('div', 'feedback-panel savecode-panel');
+
+      panel.append(el('p', 'note', 'Copy a code of your save to keep as a backup, move to another device, or hand to someone testing the game.'));
+
+      const exportButtons = el('div', 'feedback-buttons');
+      const copyBtn = el('button', 'feedback-copy', 'Copy save code'); copyBtn.type = 'button';
+      const dlBtn = el('button', 'feedback-clear', 'Download file'); dlBtn.type = 'button';
+      const exportNote = el('p', 'note');
+
+      copyBtn.addEventListener('click', () => {
+        const code = currentCode();
+        if (!code) { exportNote.textContent = "Couldn't build a save code."; return; }
+        copyToClipboard(code, () => {
+          const orig = copyBtn.textContent;
+          copyBtn.textContent = 'Copied!';
+          exportNote.textContent = '';
+          setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+        }, () => {
+          exportNote.textContent = "Couldn't copy automatically. Here's the code to copy by hand:";
+          const ta = el('textarea', 'savecode-fallback'); ta.readOnly = true; ta.rows = 4; ta.value = code;
+          exportNote.after(ta);
+          ta.focus(); ta.select();
+        });
+      });
+      dlBtn.addEventListener('click', () => {
+        const code = currentCode();
+        if (!code) { exportNote.textContent = "Couldn't build a save code."; return; }
+        if (!downloadCode(code)) exportNote.textContent = "Couldn't download a file here. Use Copy save code instead.";
+        else exportNote.textContent = '';
+      });
+      exportButtons.append(copyBtn, dlBtn);
+      panel.append(exportButtons, exportNote);
+
+      panel.append(el('div', 'savecode-sep'));
+
+      panel.append(el('label', null, 'Have a save code? Paste it here:'));
+      const importArea = el('textarea', 'feedback-note savecode-import');
+      importArea.placeholder = 'LF1:...';
+      importArea.rows = 4;
+      importArea.addEventListener('input', (e) => { st.note = e.target.value; resetImport(); renderImport(importBox); });
+      panel.append(importArea);
+
+      const importButtons = el('div', 'feedback-buttons');
+      const checkBtn = el('button', 'feedback-clear', 'Check'); checkBtn.type = 'button';
+      checkBtn.addEventListener('click', () => {
+        const res = decodeSave(st.note);
+        if (!res.ok) { st.error = res.error; st.summary = null; st.armed = false; renderImport(importBox); return; }
+        st.error = ''; st.armed = false; st.importErr = '';
+        st.summary = summarizeSave(res.data); st.summary._data = res.data;
+        renderImport(importBox);
+      });
+      importButtons.append(checkBtn);
+      panel.append(importButtons);
+
+      const importBox = el('div', 'savecode-import-result');
+      panel.append(importBox);
+
+      sec.append(panel);
+    },
+    update() {
+      const root = $('log'); if (!root) return;
+      const ta = root.querySelector('.savecode-import');
+      if (ta && document.activeElement !== ta && ta.value !== st.note) ta.value = st.note;
+    }
+  });
 }
 
 // ---- src/js/75-stars-ui.js ----

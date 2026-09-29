@@ -5126,5 +5126,50 @@ try {
   assert(!g.errors.length, 'no handler errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('error capture crashed: ' + (e.stack || e)); }
 
+// ---- 9. save codes (55-savecode.js, SAVE1) ----
+console.log('save codes');
+try {
+  for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json'))) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const g = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: raw }) });
+    const E = s => g.eval(s);
+    const before = JSON.parse(JSON.stringify(E('S')));
+    const code = E('encodeSave(S)');
+    assert(typeof code === 'string' && code.startsWith('LF1:'), `${f}: encodeSave makes an LF1: code`);
+    const res = E(`decodeSave(${JSON.stringify(code)})`);
+    assert(res.ok, `${f}: its own code round-trips (decodeSave.ok)` + (res.ok ? '' : ': ' + res.error));
+    const d = deepDiff(before, res.data);
+    assert(!d, `${f}: round-trip keeps every field` + (d ? ': ' + d : ''));
+    const sum = E(`summarizeSave(${JSON.stringify(res.data)})`);
+    assert(sum && typeof sum.level === 'number' && typeof sum.maxZone === 'number' && typeof sum.region === 'string'
+      && typeof sum.heroes === 'number' && typeof sum.name === 'string' && 'savedAt' in sum,
+      `${f}: summarizeSave has level, maxZone, region, heroes, name, savedAt (got ${JSON.stringify(sum)})`);
+  }
+
+  const g2 = loadCore({ seed: 2 });
+  const E2b = s => g2.eval(s);
+  const okCode = E2b('encodeSave(S)');
+  // Flip one character in the base64 payload (not the header or the final ':'-separated checksum).
+  const parts = okCode.split(':');
+  const mid = parts[1];
+  const flipAt = Math.floor(mid.length / 2);
+  const flipChar = mid[flipAt] === 'A' ? 'B' : 'A';
+  const tampered = parts[0] + ':' + mid.slice(0, flipAt) + flipChar + mid.slice(flipAt + 1) + ':' + parts[2];
+  const badRes = E2b(`decodeSave(${JSON.stringify(tampered)})`);
+  assert(!badRes.ok && typeof badRes.error === 'string', 'decodeSave rejects a one-character change with a checksum error, never throws');
+
+  for (const junk of ['', 'not a save code', 'LF1:', 'LF1:%%%:1', '{"v":2}', null, undefined, 12345, {}]) {
+    let res, threw = false;
+    try { res = E2b(`decodeSave(${JSON.stringify(junk)})`); } catch (e) { threw = true; }
+    assert(!threw, `decodeSave never throws on garbage input (${JSON.stringify(junk)})`);
+    assert(res && res.ok === false && typeof res.error === 'string', `decodeSave rejects garbage input cleanly (${JSON.stringify(junk)})`);
+  }
+  assert(!g2.errors.length, 'save codes: no errors' + (g2.errors.length ? ': ' + g2.errors[0] : ''));
+
+  // Core file: no DOM, window, canvas or localStorage.
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-savecode.js'), 'utf8');
+  assert(!/\b(document|window|localStorage)\b/.test(src.replace(/\/\/.*$/gm, '')), '55-savecode.js is a core file: no DOM, window or storage');
+} catch (e) { fail('save codes crashed: ' + (e.stack || e)); }
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
