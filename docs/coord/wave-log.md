@@ -1097,3 +1097,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   effects). Parts only for pieces that move independently (bat, arrow, bow string, cloak tips, head tilt).
 - Wren v9 from GPT's four full poses (scratchpad assets/wren4/build5.py): breathing by shifting rows above y118, code string behind her at full draw, released sprite swap with a flying code arrow and waves, hurt sprite, death = buckle then a quarter-turned camp pose lying down. Key-pose rule confirmed. Wanted next from GPT: kneel and fallen poses for a proper death.
 - NEW docs/design/art-pipeline.md: the GPT key-pose + code-animation plan (fixed spec, pose sets per class, prompt template, review checklist). Next test hero: Tobin (Warrior tank, 7 poses).
+- MERGED BAL3 + BAL-E (the last task before the pause). sim --targets 8/22 -> 15/22 (seed 1); P1 and P2 in
+  band for all four classes; the Lanternmage/Ranger wall at Silas was a pacing bug (farm check ignored hero
+  party damage). Promotions 120 foes a rank; Blade 6x1.05^n, Swiftness 10x1.15^n, Precision 10,000x1.6^n;
+  boss heal 2%; region boss HP x1.15; hero floors raised; Almanac at 7 min. Tuning log at the end of core-2.md.
+  OPEN (for resume): P2 sim should run each class on an evolution path; T7 vs auto-challenge (bossGate);
+  D1 band 17-23; EC6 hearthH[2] 4 -> 2 + sim gathers camp logs; EC2/EC5 need N3a shift fees and Tents;
+  evolution spread (Priest from a Mage save -15 zones at day 20). check passes. WORK NOW PAUSED: no agents.
