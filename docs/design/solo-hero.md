@@ -15,7 +15,9 @@ Replaces the party. Owner's reasons: party combat was cluttered on screen, hard 
     square framed slots with a pixel icon each, in two rows under the stage: the bottom row is Parry, Dodge,
     Attack (left to right); the top row is Ability 1, 2, 3. The player chooses which unlocked abilities go in
     the three slots (tap a slot to pick). The bar sits as low as possible on a phone, just above the bottom tabs, for
-    thumb comfort; Attack is bottom-right because it is the easiest reach. The ability slots carry art for their ability; the basic three are plainer. Cooldown shown as a dark sweep with the
+    thumb comfort; Attack is bottom-right because it is the easiest reach.
+    Fight view order, top to bottom (owner): header; everything not directly combat-related (Next Up, the
+    Fight/Mining toggle, Switch, zone arrows); the stage; the action bar; the bottom tabs. The ability slots carry art for their ability; the basic three are plainer. Cooldown shown as a dark sweep with the
     seconds left. Parry and Dodge glow when a heavy hit is coming. Keyboard labels on desktop.
   - Parry: harder to time. On a success the enemy is staggered at once, your counter attack lands during the stagger, and the enemy recovers when the counter ends.
   - Heavy, telegraphed attacks that need Dodge or Parry come mainly from bosses and elites (owner, 2026-09-29).
