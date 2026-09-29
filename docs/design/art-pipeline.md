@@ -132,6 +132,9 @@ lowest and brightest. Draw back to front.
 
 ## 11. Lane combat (owner, 2026-09-29)
 
+> **Scrapped (owner, 2026-09-29, with the solo-hero change).** Enemies do not walk in; packs stand on the right.
+> Enemy prompts do not need walk-cycle poses. Short ground patches (like Fireball's) are still code effects.
+
 Enemies walk in from the right along the road (Age of War style); the front ones fight, the rest queue behind.
 Area attacks are drawn as **ground zones** on the road (a fire patch, a poison cloud, a frost field) that hurt
 anything walking through until they fade: code effects, like the fire. **Every enemy needs a walk cycle**:

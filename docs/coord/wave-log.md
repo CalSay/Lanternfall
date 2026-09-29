@@ -1149,3 +1149,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Owner: parry order is stagger at once, counter lands during the stagger, enemy recovers when the counter ends. Heavy telegraphed attacks come mainly from bosses and elites (sent to SOLO1; solo-hero.md updated).
 - HEROART1 (opus) launched in parallel with SOLO1: new files only (encoded pose data, sprite runtime, build tool) plus one small hook where the stage and camp draw the hero. Merge after SOLO1 and re-apply the hook by hand.
 - Mossy Hollow background art stays in art/ and is not integrated (paused).
+
+### 2026-09-29: roadmap decisions while SOLO1 and HEROART1 run
+- Proving: region-boss fight that Ascends the hero into a subclass (new abilities) or upgrades the base class if they stay.
+- Hero quests Hallow one ability (renamed from Awakening): chosen from the hero's signature abilities; bigger effects, often a new colour, about +40% power, -20% cooldown, one bonus by ability shape; movable at the chapel for a cost.
+- 32 heroes for 1.0 (18 in code + 14 in heroes-2). Bonds replaced by an NPC campaign story. Expeditions become gatherer trade runs.
+- Lane combat (enemies walking in) scrapped. Packs stand on the right as today.

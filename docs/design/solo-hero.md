@@ -33,7 +33,9 @@ Replaces the party. Owner's reasons: party combat was cluttered on screen, hard 
 
 ## Still to design
 
-- Lane combat (CB3: enemies walk in; ground zones vs instant bursts, cleaves, lines, single target) now for one hero.
+- Solo combat spec (CB3): **no lane combat** (owner, 2026-09-29: enemies walking in is scrapped with the solo
+  change). Packs stand on the right as today; the spec covers bursts, cleaves, lines, single target and short
+  ground patches for one hero, and bosses/elites with heavy telegraphed attacks to parry or dodge.
 - What heroes not carrying the lamp do (camp work, expeditions, swapping between fights or mid-fight).
 - The campaign story told through NPCs around the world map (replaces Bonds, below).
 
@@ -53,7 +55,15 @@ subclass upgrade only (or the upgrade of the base class if you stay).
 
 **Hero quests enhance an ability (owner).** The per-hero Awakening in heroes-2 stays separate from Ascension:
 finishing a hero's quest enhances one of that hero's current abilities. The name is **Hallowed** (owner):
-"Pip's Fireball is Hallowed". Which ability, and how a Hallowed ability differs: see the open question below.
+"Pip's Fireball is Hallowed". How it works (owner, 2026-09-29):
+- The player chooses which ability to Hallow, from the hero's **signature abilities** (their unique ones,
+  not the shared class pool). One Hallowed ability per hero; it can be moved to another signature ability
+  at Elowen's chapel for a cost.
+- A Hallowed ability mostly **looks more impactful**: bigger, brighter effects, often in a different colour
+  from the original (each signature ability gets its own Hallowed look), plus a white-gold halo mark on its button.
+- It is also stronger: about +40% power and a 20% shorter cooldown, plus one bonus by ability shape:
+  single target hits a second foe; a line or pierce is longer and hits twice; a burst gets a wider radius;
+  a ground patch lasts longer and slows; a self buff or guard also heals a little.
 
 **Bonds become campaign story (owner).** The 21 Bonds, their 42 stories and Sworn lines leave the game.
 In their place, a campaign story told through NPCs around the world map that the player gets to know:
