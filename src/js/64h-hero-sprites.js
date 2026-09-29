@@ -333,23 +333,30 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     const t = now(), A = ANIMS[id], tg = typeof target === 'function' ? target() : 'mob';
     if (id !== ST.id) { ST.id = id; go('fightIdle'); }
     if (a.down) { if (ST.s !== 'death') go('death'); }
-    else if (tg === 'node') { if (ST.s !== 'campIdle') go('campIdle'); }
-    else {
+    else if (tg === 'node') {
+      // Gathering. A real `gather` pose set (ANIMS[id].gather: wind-up, `hit` frame, follow-through, like `attack`) plays on
+      // each swing when the art has one. Until then the fight strike stands in for it (W1-A stopgap): the stage's swing
+      // (a.st 1 = wind, 2 = strike; the chips fly on the strike) plays the attack frames, then the hero settles into the camp pose.
+      if (ST.s === 'death') go('campIdle');
+      const GA = A.gather ? 'gather' : 'attack';
+      if (a.st === 1 && ST.lastSt !== 1) go(GA);
+      else if (ST.s !== GA && ST.s !== 'campIdle') go('campIdle');
+    } else {
       if (ST.s === 'death' || ST.s === 'campIdle') go('fightIdle');
       if (a.st === 1 && ST.lastSt !== 1) go(t - ST.ab < 0.35 ? 'ability' : 'attack');
       else if (ST.parry > ST.sawParry) { ST.sawParry = ST.parry; if (ST.s === 'fightIdle' || ST.s === 'hurt') go('block'); }
       else if (a.flash > 0.03 && a.flash > ST.lastFl + 0.01 && ST.s === 'fightIdle') go('hurt');
     }
     ST.lastSt = a.st; ST.lastFl = a.flash;
-    const an = A[ST.s] || A.fightIdle;
+    const an = A[ST.s] || A.fightIdle, rest = tg === 'node' ? 'campIdle' : 'fightIdle';   // where a finished swing settles
     let frame;
-    if ((ST.s === 'attack' || ST.s === 'ability') && an.hit) {
+    if ((ST.s === 'attack' || ST.s === 'ability' || ST.s === 'gather') && an.hit) {
       if (ST.hitT < 0 && a.st === 1) frame = Math.min(an.hit - 1, Math.floor((t - ST.t0) / WIND * an.hit));
       else { if (ST.hitT < 0) ST.hitT = t; frame = an.hit + Math.floor((t - ST.hitT) * 1000 / an.ms); }
-      if (frame >= an.f.length) { go('fightIdle'); frame = null; }
+      if (frame >= an.f.length) { go(rest); frame = null; }
     } else if (!an.loop && ST.s !== 'death') {
       frame = Math.floor((t - ST.t0) * 1000 / an.ms);
-      if (frame >= an.f.length) { go('fightIdle'); frame = null; }
+      if (frame >= an.f.length) { go(rest); frame = null; }
     }
     // The art is wider than the baked sprites: on a narrow stage the whole hero (and Wren's bat) stays in view.
     x = Math.max(x, set(id).left + 2);

@@ -22,7 +22,7 @@ let campPaintFire = null;
   const box = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w * P, h * P); };
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const lit = () => typeof hearthLit === 'function' && hearthLit();
-  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood' && S.node.t === 1;   // the Oak Grove only
+  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood' && S.node.t === 1;   // the Pine Grove only
   const showing = tg => typeof hearthScene === 'function' && hearthScene() && atGrove(tg);
 
   // ---- the fire: base centre (x, y = the ground line) ----
@@ -127,7 +127,7 @@ let campPaintFire = null;
   fire.addEventListener('pointerdown', e => e.stopPropagation());   // not a chop
   fire.addEventListener('click', e => {
     e.stopPropagation();
-    if (!hearthLight()) { const c = hearthCan(); if (c.why && !c.lit) toast(`Chop more Oak first: ${c.why}.`, 'bad', { mat: ['wood', 1] }, 'normal'); return; }
+    if (!hearthLight()) { const c = hearthCan(); if (c.why && !c.lit) toast(`Chop more Pine Log first: ${c.why}.`, 'bad', { mat: ['wood', 1] }, 'normal'); return; }
     ui(true);
   });
   let lastSig = '';
@@ -141,8 +141,8 @@ let campPaintFire = null;
     putStyle(fire, 'left', (at.x / at.SW * 100).toFixed(2) + '%');
     putStyle(fire, 'top', (at.y / at.SH * 100).toFixed(2) + '%');
     putToggle(fire, 'ready', c.ok);
-    putText(tag, c.ok ? 'Light' : `${have}/8 Oak`);
-    putAttr(fire, 'aria-label', c.ok ? 'Light the fire (8 Oak Log)' : `The fire needs 8 Oak Log. You have ${have}.`);
+    putText(tag, c.ok ? 'Light' : `${have}/8 Pine`);
+    putAttr(fire, 'aria-label', c.ok ? 'Light the fire (8 Pine Log)' : `The fire needs 8 Pine Log. You have ${have}.`);
   }
   setInterval(place, 200);
 

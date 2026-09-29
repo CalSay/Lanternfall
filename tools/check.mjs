@@ -6202,8 +6202,8 @@ try {
   {
     const g = T(), E = s => g.eval(s);
     const ids = E('GUIDE_STEPS.map(x => x.id).join()');
-    assert(/^attack,ability,dodge,parry,boss,upgrade,gather,chop,light/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
-    assert(E('GUIDE_STEPS.every(x => x.pause || x.id === "chop")'), 'every step but chopping pauses the game while it shows (build steps end when the build starts)');
+    assert(/^attack,ability,dodge,parry,boss,upgrade,gather,chop,light,stock:bench,bench/.test(ids), `the guide: Attack, the ability, Dodge, Parry, the first boss, an upgrade, Gather, chop, light the fire, then camp (${ids})`);
+    assert(E('GUIDE_STEPS.every(x => x.pause || x.needs || x.id === "tab:party" || x.id === "nextup")'), 'every step pauses the game while it shows, except the ones that wait for materials (live progress) and two notes (W1-A: see "solo guide pause rules")');
     E('soloPick("wren")'); run(g, 0.5);
     E('combatFoes().forEach(f => { if (f && !f.dead) f.hp = f.max = 1e9; })');   // SOLO2: a hand Attack and Echo Shot would clear the pack before the heavy steps
     assert(E('onboardStep().id') === 'attack', 'after choosing a hero: "Press Attack"');
@@ -6296,6 +6296,94 @@ try {
   assert(!errs.length, 'no solo errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('solo crashed: ' + (e.stack || e)); }
 
+// ---- W1-A: the guide's pause rules (audit-1 3.1, 3.8): a step that waits for time or materials never pauses the game ----
+console.log('solo guide pause rules');
+try {
+  const g = loadCore({ solo: true, cold: true, seed: 103 }), E = s => g.eval(s);
+  const steps = JSON.parse(E('JSON.stringify(GUIDE_STEPS.map(s => ({ id: s.id, pause: !!s.pause, needs: !!s.needs, pauseUnless: !!s.pauseUnless, ok: !!s.ok })))'));
+  const bad = steps.filter(s => s.needs && s.pause).map(s => s.id);
+  assert(steps.some(s => s.needs) && !bad.length, `no guide step that waits for materials has pause (${steps.filter(s => s.needs).map(s => s.id).join(', ')})${bad.length ? '; pausing: ' + bad.join(', ') : ''}`);
+  const build = steps.filter(s => s.pauseUnless);
+  assert(build.map(s => s.id).join() === 'bench,tool,forge,store' && build.every(s => s.pause), 'the press steps that cost materials (bench, tool, forge, store) pause only through pauseUnless');
+  assert(build.every(s => steps.some(t => t.needs && t.id === 'stock:' + s.id)), 'each of them has a stock step that says what to gather');
+  assert(steps.filter(s => s.id === 'nextup' || s.id === 'tab:party').every(s => !s.pause) && steps.find(s => s.id === 'nextup').ok, 'Next Up and the Hero tab hint never pause the game (Next Up is a Got it note)');
+  // the guard: a paused step with an unmet material need does not pause; with the materials in hand it does
+  E('S.mats.wood[0] = 0; S.mats.ore[0] = 0');
+  const need0 = JSON.parse(E('JSON.stringify(onboardNeed("stock:bench"))'));
+  assert(need0.length === 1 && need0[0].name === 'Pine Log' && need0[0].n === 20 && need0[0].have === 0 && need0[0].kind === 'wood', `the Workbench step needs 20 Pine Log (${JSON.stringify(need0)})`);
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === false && E('onboardPaused(GUIDE_STEPS.find(s => s.id === "attack"))') === true, 'the guard: the Workbench press step does not pause while 20 Pine Log are missing; Attack does pause');
+  E('S.mats.wood[0] = 20');
+  assert(E('onboardPaused(GUIDE_STEPS.find(s => s.id === "bench"))') === true && !E('onboardNeed("bench").length'), 'with 20 Pine Log in hand the Workbench press step pauses again');
+  // no player-facing copy calls the first wood Oak
+  const srcs = ['75-onboard-ui', '75-camp-ui', '56-roster', '63d-scenery-camp', '55-onboard'];
+  const oak = srcs.filter(f => fs.readFileSync(path.join(ROOT, 'src', 'js', f + '.js'), 'utf8').split('\n').some(l => /\bOak\b/.test(l) && !/^\s*\/\//.test(l)));
+  assert(!oak.length && E('matName("wood", 1)') === 'Pine Log', `the first wood is Pine Log in the guide, camp, roster and fire copy (Oak left in: ${oak.join(', ') || 'none'})`);
+} catch (e) { fail('solo guide pause rules crashed: ' + (e.stack || e)); }
+
+// ---- W1-A in Chromium: a fresh game follows the guide with no taps on the gather node and reaches a built Workbench ----
+console.log('solo guide: gathering never freezes (browser)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo guide (browser): Playwright or Chromium not here, skipped');
+  else {
+    // the SOLO build (not the dormant party build): the page as shipped
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+      // the fight steps (Attack ... the first boss) are walked by the check above; here the first boss is down
+      await X('for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.blade = 1; true');
+      await page.waitForTimeout(1300);
+      const trail = [], waited = [];
+      let built = false, frozen = '';
+      const taps0 = await X('S.onboard.taps');
+      const isBuilt = () => X('campLevel("bench") >= 1 || !!campPending("bench")');
+      for (let i = 0; i < 400 && !built; i++) {
+        const info = JSON.parse(await X('(() => { const s = onboardStep(), b = document.querySelector(".ob-bub"); return JSON.stringify({ id: s ? s.id : "", paused: ONBOARD.paused, need: s ? onboardNeed(s.id).length : 0, hasNeeds: !!(s && s.needs), t: S.onboard.t }); })()'));
+        if (!info.id) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); await page.waitForTimeout(280); built = await isBuilt(); continue; }
+        if (!trail.includes(info.id)) trail.push(info.id);
+        if (info.hasNeeds || info.need) {
+          // a step that waits for materials: the clock must keep running on its own (no tick calls from here for 0.6 s)
+          await page.waitForTimeout(600);
+          const t1 = await X('S.onboard.t');
+          if (!(t1 > info.t + 0.3) || info.paused) frozen += `${info.id} (paused ${info.paused}, ${info.t} -> ${t1}) `;
+          if (!waited.includes(info.id)) waited.push(info.id);
+          // a Go button sends the hero to the node that yields the material; pressing it is what the guide asks
+          if (await X('(b => !!(b && !b.hidden && /^(Chop|Mine)/.test(b.textContent)))(document.querySelector(".ob-ok"))')) await page.click('.ob-ok');
+          // then wait by ticking (no taps on the node)
+          await X('for (let k = 0; k < 40; k++) tick(0.1); true'); await page.waitForTimeout(280);
+          continue;
+        }
+        // a press step: do what the guide points at
+        await page.waitForTimeout(350);
+        if (info.id === 'gather') await page.click('#modeSeg button[data-act="gather"]');
+        else await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(info.id)}))`);
+        await page.waitForTimeout(300);
+        built = await isBuilt();
+      }
+      const tapsMade = (await X('S.onboard.taps')) - taps0;
+      assert(built && await X('hearthLit()'), `a fresh game that only presses what the guide asks reaches a Workbench build (steps: ${trail.join(' > ')})`);
+      assert(tapsMade === 0 && waited.includes('chop') && waited.includes('stock:bench'), `no taps on the gather node; the guide waited on Pine Log twice (${waited.join(', ')})`);
+      assert(!frozen, 'the game clock advanced on every step that waited for materials, and none of them paused' + (frozen ? ': ' + frozen : ''));
+      try { await page.waitForFunction(() => window.__t.x('campLevel("bench") >= 1'), null, { timeout: 20000 }); } catch (e) {}   // the build timer runs on the wall clock (10 s)
+      assert(await X('campLevel("bench")') >= 1, 'the Workbench finishes building');
+      assert(!errs.length, 'no guide errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('solo guide (browser) crashed: ' + (e.stack || e)); }
+
 // ---- SOLO1 in Chromium at 360 x 740: the picker, the buttons, no party UI, and every guide target of the first session ----
 console.log('solo hero (browser)');
 try {
@@ -6345,8 +6433,8 @@ try {
         const chk = await X(`(() => { const sp = onboardSpec(${JSON.stringify(st)}); if (!sp || !sp.node) return { ok: false, why: 'no target' }; const n = sp.node, r = n.getBoundingClientRect(), ring = document.querySelector('.ob-ring').getBoundingClientRect();
           const vis = !!(n.getClientRects().length && n.offsetParent !== null && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.left < innerWidth && r.right > 0);
           const cx = ring.left + ring.width / 2, cy = ring.top + ring.height / 2;
-          return { ok: vis && cx >= r.left - 30 && cx <= r.right + 30 && cy >= r.top - 30 && cy <= r.bottom + 30, paused: ONBOARD.paused, bubs: [...document.querySelectorAll('.ob-bub')].filter(b => !b.hidden).length, sel: n.id || n.className }; })()`);
-        if (!seen.includes(st)) { seen.push(st); assert(chk.ok && chk.bubs === 1 && (chk.paused || st === 'chop'), `guide step "${st}": its target (${chk.sel}) exists, is visible and marked; one hint; the game waits (${JSON.stringify(chk)})`); }
+          return { ok: vis && cx >= r.left - 30 && cx <= r.right + 30 && cy >= r.top - 30 && cy <= r.bottom + 30, paused: ONBOARD.paused, want: onboardPaused(onboardStep()), bubs: [...document.querySelectorAll('.ob-bub')].filter(b => !b.hidden).length, sel: n.id || n.className }; })()`);
+        if (!seen.includes(st)) { seen.push(st); assert(chk.ok && chk.bubs === 1 && chk.paused === chk.want, `guide step "${st}": its target (${chk.sel}) exists, is visible and marked; one hint; the game waits exactly when the step waits for a press (${JSON.stringify(chk)})`); }
         // do the step through its own target (the buttons act on pointerdown)
         if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab0' : st}`); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
         else if (st === 'boss') await page.click('.ob-ok');

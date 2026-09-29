@@ -12905,13 +12905,13 @@ var forgeGoalPicks = 0;
 //
 // Who is cold: a NEW game only. At load, S.camp is undefined and the save has no progress
 // (S.totalKills 0, S.L 1, S.maxZone 1). It gets S.hearth.cold = 1, starts at the unlit fire,
-// gathering the Oak Grove by the fire, with the Forge, Workbench, Loom, Enchanter's Table and
+// gathering the Pine Grove by the fire, with the Forge, Workbench, Loom, Enchanter's Table and
 // Tavern at Lv 0 (plots to build). Every other save is warm and nothing here changes it: its
 // stations stay at Lv 1 (57-camp's defaults), the camp opens at zone 5 as before.
 //
 // Rules (cold saves; knobs in HEARTH_TUNE):
 //   - Fighting is never gated. The fire is the first thing to do, not a wall.
-//   - hearthLight(): pays 8 Oak Log, Hearth 1, the camp opens (campOpen { quiet: false }),
+//   - hearthLight(): pays 8 Pine Log, Hearth 1, the camp opens (campOpen { quiet: false }),
 //     emits hearthLit, and the hero walks out to zone 1 (S.activity = 'fight'). Instant.
 //   - Stations are built on plots. A plot opens by its rule (HEARTH_PLOT); an unopened plot is not
 //     listed (57-camp campList). Lv 1 of a station costs HEARTH_TUNE.first (no gold, a short
@@ -12927,7 +12927,7 @@ var forgeGoalPicks = 0;
 //   hearthCold() -> bool      this save began at a cold Hearth
 //   hearthLit() -> bool       the fire burns (always true for warm saves)
 //   hearthCan() -> { ok, why, cost: [[fam, t, n]] }   can the fire be lit now
-//   hearthLight() -> bool     light the fire (cold, unlit, 8 Oak)
+//   hearthLight() -> bool     light the fire (cold, unlit, 8 Pine Log)
 //   hearthPlotOpen(id) -> bool   57-camp: is this building's plot open (warm: always)
 //   hearthFirst(id) -> { mats, secs } | null   57-camp: the Lv 1 row of a station
 //   hearthStationWhy(st) -> '' | 'Build the Workbench first.'   (st: CRAFT_STATIONS key)
@@ -12944,7 +12944,7 @@ var forgeGoalPicks = 0;
 
 const HEARTH_TUNE = {
   on: 1,                               // 0: new games start warm, as before (tools)
-  light: [['wood', 1, 8]],             // the fire: 8 Oak Log
+  light: [['wood', 1, 8]],             // the fire: 8 Pine Log
   // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
   first: {
     // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
@@ -12979,7 +12979,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   if (isNew && HEARTH_TUNE.on) {
     coldStart = true;
     Hs().cold = 1;
-    // SOLO1: the solo hero starts on the road (the guide sends it to the Oak Grove after the first boss)
+    // SOLO1: the solo hero starts on the road (the guide sends it to the Pine Grove after the first boss)
     if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
     else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
@@ -12987,7 +12987,7 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
   hearthCold = () => !!Hs().cold;   // a save that started cold (stays set)
   hearthLit = () => !hearthCold() || !!Hs().lit;
-  // The opening camp scene (fire, Hesketh, plot stakes) belongs to the Oak Grove only until the first
+  // The opening camp scene (fire, Hesketh, plot stakes) belongs to the Pine Grove only until the first
   // stations stand (owner: a campfire in the woods later made no sense). After the Forge, woods are woods.
   hearthScene = () => hearthCold() && (!Hs().lit || lv('forge') < 1);
 
@@ -14136,6 +14136,8 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // onboardStep() -> step | null the guide step to show now: { id, ...GUIDE_STEPS entry }.
 // onboardDone(id)              mark a guide step done (the UI's "x", or a UI-only action).
 // onboardTips(on)              guide on/off ("Skip tips" in the Journal).
+// onboardNeed(id) -> [{ fam, t, kind, have, n, name }]   what step `id` still waits for in materials ([] = nothing).
+// onboardPaused(step) -> bool  should the game wait while this step shows (see PAUSE RULES below).
 // goalGate(goal) -> bool       Next Up filter: false while the goal's system is still hidden.
 //                              Only active once the UI turns it on (ONBOARD.gate), so the Node
 //                              tools see every goal.
@@ -14143,7 +14145,7 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts, rec }.
 // Old saves (any progress, no S.onboard yet) start with everything unlocked and the guide finished.
-let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck;
+let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
 let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
@@ -14202,12 +14204,26 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
 // tab:world and tab:forge are done from the start (chop, light and tool replace them).
 // SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
-// the counter, the first boss, an upgrade, then Gather (Oak for the fire) and camp. `pause`: the game waits while
-// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button.
-// Steps that need time to pass (chop, the build timers) do not pause; build steps complete when the build starts.
+// the counter, the first boss, an upgrade, then Gather (Pine Log for the fire) and camp. `pause`: the game waits while
+// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button;
+// `needs`: the materials a step waits for (no pause, live progress). Build steps complete when the build starts.
 const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
 const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
 const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
+// PAUSE RULES (W1-A; owner: "the game pauses while a tutorial step is open"). A step pauses the game only while it waits
+// for the player to READ or PRESS something right now. A step whose goal needs game time (chop logs, wait for a build,
+// earn gold) never pauses: it has `needs` (the materials it waits for) and shows live progress instead. A press step whose
+// build or recipe is still short of materials has `pauseUnless` (the same list): it does not pause while any is missing,
+// so no step can freeze the clock it needs. tools/check.mjs holds all three rules.
+//   attack, ability, dodge, parry, gather, light, upgrade   pause (press this now)
+//   boss                                                     pause (Got it)
+//   chop, stock:bench, stock:tool, stock:forge, stock:store  no pause (needs materials: live progress)
+//   bench, tool, forge, store                                pause only once the materials are in hand (pauseUnless)
+//   tab:party, nextup                                        no pause (a pointer or a Got it; nothing waits on them)
+const stockOf = (fam, t, n) => [fam, t, n];
+const matsOfBuild = id => (typeof hearthFirst === 'function' && hearthFirst(id) ? hearthFirst(id).mats : []);
+const toolMats = () => { try { const c = canCraft('pick', 1); return Object.entries((c.cost && c.cost.mats) || {}).map(([f, n]) => stockOf(f, 1, n)); } catch (e) { return []; } };
+const fireMats = () => (typeof HEARTH_TUNE === 'object' ? HEARTH_TUNE.light : []);
 const SOLO_STEPS = [
   { id: 'attack', pause: 1, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
   { id: 'ability', pause: 1, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
@@ -14216,15 +14232,21 @@ const SOLO_STEPS = [
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
   { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
-  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'chop', needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
-  { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
-  { id: 'tool', pause: 1, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
-  { id: 'forge', pause: 1, when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
-  { id: 'store', pause: 1, when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
-  { id: 'tab:party', pause: 1, when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
-  { id: 'nextup', pause: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+  { id: 'stock:bench', needs: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench') && !!needShort(matsOfBuild('bench')).length, done: () => !coldH() || campBusy('bench') },
+  { id: 'bench', pause: 1, pauseUnless: () => matsOfBuild('bench'), when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'stock:tool', needs: toolMats, when: () => coldH() && campLv('bench') >= 1 && !!needShort(toolMats()).length, done: () => !coldH() || toolMade() },
+  { id: 'tool', pause: 1, pauseUnless: toolMats, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || toolMade() },
+  { id: 'stock:forge', needs: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge') && !!needShort(matsOfBuild('forge')).length, done: () => !coldH() || campBusy('forge') },
+  { id: 'forge', pause: 1, pauseUnless: () => matsOfBuild('forge'), when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'stock:store', needs: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store') && !!needShort(matsOfBuild('store')).length, done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'store', pause: 1, pauseUnless: () => matsOfBuild('store'), when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  // a Got it note: it never pauses and never blocks (audit-1 3.8); the Next Up chip or Got it ends it
+  { id: 'nextup', ok: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
 ];
+const toolMade = () => S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool);
 const PARTY_STEPS = [
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
@@ -14247,6 +14269,16 @@ const GUIDE_STEPS = SOLO_G ? SOLO_STEPS : PARTY_STEPS;
 
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
+// Materials still short: [[fam, tier, n]] -> [{ fam, t, kind, have, n, name }]. kind: the gather node that yields it.
+const matHave = (f, t) => (S.mats && S.mats[f] && S.mats[f][t - 1]) || 0;
+function needShort(mats) {
+  const out = [];
+  for (const [fam, t, n] of mats || []) {
+    const have = matHave(fam, t);
+    if (have < n) out.push({ fam, t, kind: typeof NODE_NAMES === 'object' && NODE_NAMES[fam] ? fam : null, have, n, name: matName(fam, t) });
+  }
+  return out;
+}
 const cheapestUp = () => { let c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) c = p.cost; } return c; };
 const abilityOk = () => { try { const a = typeof abilityInfo === 'function' && abilityInfo(); return !!(a && a.ready); } catch (e) { return false; } };
 function recruitable() {
@@ -14305,6 +14337,11 @@ function craftReady() {
 
   // ---- the guide ----
   onboardTips = on => { O().tips = on === undefined ? !O().tips : !!on; return O().tips; };
+  const stepById = id => GUIDE_STEPS.find(s => s.id === id) || null;
+  onboardNeed = id => { const s = stepById(id), f = s && (s.needs || s.pauseUnless); try { return f ? needShort(f()) : []; } catch (e) { return []; } };
+  // The pause guard: a step that waits for the player pauses the game, but never while it is also short of
+  // the materials the action costs (the player could not press it and the clock they need would be stopped).
+  onboardPaused = step => !!(step && step.pause && !onboardNeed(step.id).length);
   onboardDone = id => { if (!O().done[id]) { O().done[id] = 1; emit('onboardStep', { id }); } };
   const guideOver = () => GUIDE_STEPS.every(s => O().done[s.id]);
   onboardStep = () => {
@@ -16096,7 +16133,7 @@ const ROSTER = {
   wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', idx: 1, route: { type: 'progress', zone: 8, kills: 30 }, how: 'Reach zone 8, then pay her in gold.' },
   hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', idx: -1, route: { type: 'progress', zone: 11, kills: 0 }, how: 'Reach zone 11. He joins for free.' },
   pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', idx: 2, route: { type: 'progress', zone: 12, kills: 60 }, how: 'Reach zone 12, then pay her in gold.' },
-  bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Oak Logs to his camp.' },
+  bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Pine Logs to his camp.' },
   maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', idx: -1, route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
   aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', idx: 3, route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
   kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', idx: 4, route: { type: 'progress', zone: 20, kills: 300 }, how: 'Reach zone 20, then pay her in gold.' },
@@ -32766,7 +32803,7 @@ let campPaintFire = null;
   const box = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w * P, h * P); };
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const lit = () => typeof hearthLit === 'function' && hearthLit();
-  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood' && S.node.t === 1;   // the Oak Grove only
+  const atGrove = tg => tg === 'node' && S.node && S.node.kind === 'wood' && S.node.t === 1;   // the Pine Grove only
   const showing = tg => typeof hearthScene === 'function' && hearthScene() && atGrove(tg);
 
   // ---- the fire: base centre (x, y = the ground line) ----
@@ -32871,7 +32908,7 @@ let campPaintFire = null;
   fire.addEventListener('pointerdown', e => e.stopPropagation());   // not a chop
   fire.addEventListener('click', e => {
     e.stopPropagation();
-    if (!hearthLight()) { const c = hearthCan(); if (c.why && !c.lit) toast(`Chop more Oak first: ${c.why}.`, 'bad', { mat: ['wood', 1] }, 'normal'); return; }
+    if (!hearthLight()) { const c = hearthCan(); if (c.why && !c.lit) toast(`Chop more Pine Log first: ${c.why}.`, 'bad', { mat: ['wood', 1] }, 'normal'); return; }
     ui(true);
   });
   let lastSig = '';
@@ -32885,8 +32922,8 @@ let campPaintFire = null;
     putStyle(fire, 'left', (at.x / at.SW * 100).toFixed(2) + '%');
     putStyle(fire, 'top', (at.y / at.SH * 100).toFixed(2) + '%');
     putToggle(fire, 'ready', c.ok);
-    putText(tag, c.ok ? 'Light' : `${have}/8 Oak`);
-    putAttr(fire, 'aria-label', c.ok ? 'Light the fire (8 Oak Log)' : `The fire needs 8 Oak Log. You have ${have}.`);
+    putText(tag, c.ok ? 'Light' : `${have}/8 Pine`);
+    putAttr(fire, 'aria-label', c.ok ? 'Light the fire (8 Pine Log)' : `The fire needs 8 Pine Log. You have ${have}.`);
   }
   setInterval(place, 200);
 
@@ -33993,23 +34030,30 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     const t = now(), A = ANIMS[id], tg = typeof target === 'function' ? target() : 'mob';
     if (id !== ST.id) { ST.id = id; go('fightIdle'); }
     if (a.down) { if (ST.s !== 'death') go('death'); }
-    else if (tg === 'node') { if (ST.s !== 'campIdle') go('campIdle'); }
-    else {
+    else if (tg === 'node') {
+      // Gathering. A real `gather` pose set (ANIMS[id].gather: wind-up, `hit` frame, follow-through, like `attack`) plays on
+      // each swing when the art has one. Until then the fight strike stands in for it (W1-A stopgap): the stage's swing
+      // (a.st 1 = wind, 2 = strike; the chips fly on the strike) plays the attack frames, then the hero settles into the camp pose.
+      if (ST.s === 'death') go('campIdle');
+      const GA = A.gather ? 'gather' : 'attack';
+      if (a.st === 1 && ST.lastSt !== 1) go(GA);
+      else if (ST.s !== GA && ST.s !== 'campIdle') go('campIdle');
+    } else {
       if (ST.s === 'death' || ST.s === 'campIdle') go('fightIdle');
       if (a.st === 1 && ST.lastSt !== 1) go(t - ST.ab < 0.35 ? 'ability' : 'attack');
       else if (ST.parry > ST.sawParry) { ST.sawParry = ST.parry; if (ST.s === 'fightIdle' || ST.s === 'hurt') go('block'); }
       else if (a.flash > 0.03 && a.flash > ST.lastFl + 0.01 && ST.s === 'fightIdle') go('hurt');
     }
     ST.lastSt = a.st; ST.lastFl = a.flash;
-    const an = A[ST.s] || A.fightIdle;
+    const an = A[ST.s] || A.fightIdle, rest = tg === 'node' ? 'campIdle' : 'fightIdle';   // where a finished swing settles
     let frame;
-    if ((ST.s === 'attack' || ST.s === 'ability') && an.hit) {
+    if ((ST.s === 'attack' || ST.s === 'ability' || ST.s === 'gather') && an.hit) {
       if (ST.hitT < 0 && a.st === 1) frame = Math.min(an.hit - 1, Math.floor((t - ST.t0) / WIND * an.hit));
       else { if (ST.hitT < 0) ST.hitT = t; frame = an.hit + Math.floor((t - ST.hitT) * 1000 / an.ms); }
-      if (frame >= an.f.length) { go('fightIdle'); frame = null; }
+      if (frame >= an.f.length) { go(rest); frame = null; }
     } else if (!an.loop && ST.s !== 'death') {
       frame = Math.floor((t - ST.t0) * 1000 / an.ms);
-      if (frame >= an.f.length) { go('fightIdle'); frame = null; }
+      if (frame >= an.f.length) { go(rest); frame = null; }
     }
     // The art is wider than the baked sprites: on a narrow stage the whole hero (and Wren's bat) stays in view.
     x = Math.max(x, set(id).left + 2);
@@ -36321,7 +36365,7 @@ let bondsUI = null;
       closed = el('div', 'card camp-closed');
       closedTxt = el('p', 'note');
       const bar = el('div', 'bar'); closedBar = el('i'); bar.append(closedBar);
-      lightBtn = btn('big cb-go', 'Light the fire · 8 Oak'); lightBtn.hidden = true;
+      lightBtn = btn('big cb-go', 'Light the fire · 8 Pine Log'); lightBtn.hidden = true;
       lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
       closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
@@ -36345,12 +36389,12 @@ let bondsUI = null;
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
       if (!open) {
-        // H1: a cold Hearth waits for its fire (8 Oak Log), not for a zone.
+        // H1: a cold Hearth waits for its fire (8 Pine Log), not for a zone.
         const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
         putHidden(lightBtn, !cold);
         if (cold) {
           const have = Math.min(8, S.mats.wood[0] || 0);
-          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Oak Log to light it. You have ${have}.`);
+          setTxt(closedTxt, hc.ok ? 'The fire is laid. Light it to make camp.' : `The fire is out. Chop 8 Pine Log to light it. You have ${have}.`);
           putStyle(closedBar, 'width', have / 8 * 100 + '%');
           putDisabled(lightBtn, !hc.ok);
           return;
@@ -41064,7 +41108,9 @@ let navUI = null;
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
   bub.append(arrow, txt, okb, x);
-  okb.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
+  // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
+  let curGo = null;
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) onboardDone(cur.id); tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   const chip = $('nuChip');
@@ -41086,6 +41132,28 @@ let navUI = null;
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
+  // W1-A: a step that waits for materials shows live progress and never pauses the game.
+  // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
+  // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
+  const VERB = { wood: 'Chop', ore: 'Mine' };
+  const stockSpec = (id, what, tail) => {
+    const need = onboardNeed(id); if (!need.length) return null;
+    const x = need[0], verb = VERB[x.kind] || 'Gather';
+    const text = need.length > 1
+      ? `Gather for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+    const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
+    const spec = { text, live: 1 };
+    if (there) {
+      spec.node = onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`); spec.at = onGame() ? [0.74, 0.62] : null; spec.side = 'up';
+    } else {
+      const go = q('#modeSeg button[data-act="gather"]');
+      spec.node = onGame() ? (S.activity !== 'gather' && go && !go.hidden ? go : $('stage')) : q(`.tab[data-tab="${S.tab}"]`);
+      if (spec.node === $('stage')) { spec.at = [0.74, 0.62]; spec.side = 'up'; }
+      if (x.kind) spec.go = { label: `${verb} at the ${NODE_NAMES[x.kind][x.t - 1]}`, fn: () => { if (setNode(x.kind, x.t)) setActivity('gather'); } };
+    }
+    return spec;
+  };
   // SOLO1: the button row under the stage (75-solo-ui)
   const sbtn = id => q(`#soloBar .sb-${id}`);
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
@@ -41098,17 +41166,21 @@ let navUI = null;
     gather: () => {
       if (!onGame()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
-      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Oak for a camp fire.' } : null;
+      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
   };
   const STEP_UI = {
-    chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
+    chop: () => onGame() && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree to chop faster.') : null,
+    'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
+    'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
+    'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
+    'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
     light: () => {
       if (!onGame()) return null;
       const f = $('hearthFire');
       if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
-      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Oak for the fire.' };
+      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Pine Log for the fire.' };
       return null;
     },
     bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
@@ -41144,7 +41216,7 @@ let navUI = null;
 
   const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
@@ -41162,11 +41234,13 @@ let navUI = null;
     const table = SOLO_G && SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
-    cur = step;
+    cur = step; curGo = spec.go || null;
     place(spec);
-    // the game waits while a step that needs your action shows (playtest-1 note 1: steps never overlap)
-    ONBOARD.paused = !!step.pause;
-    putHidden(okb, !step.ok);
+    // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
+    // never for a step that needs materials or time, and never while a press step is still short of what it costs
+    ONBOARD.paused = onboardPaused(step);
+    putHidden(okb, !(step.ok || curGo));
+    putText(okb, curGo ? curGo.label : 'Got it');
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -41177,8 +41251,9 @@ let navUI = null;
     if (layer.hidden) layer.hidden = false;
     if (bub.hidden) bub.hidden = false;
     if (key !== lastKey) {
-      lastKey = key; txt.textContent = spec.text;
-      bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); }
+      const fresh = !lastKey; lastKey = key; txt.textContent = spec.text;
+      // live progress ("12/20") updates in place; only a new hint pops
+      if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; lastNode = spec.node;

@@ -100,7 +100,9 @@
   // SOLO1: a step whose action is reading it (the first boss) has a Got it button
   const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
   bub.append(arrow, txt, okb, x);
-  okb.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
+  // A waiting step may carry a Go button (spec.go): it takes the hero to the node that yields what the step needs.
+  let curGo = null;
+  okb.addEventListener('click', e => { e.stopPropagation(); if (curGo) curGo.fn(); else if (cur) onboardDone(cur.id); tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   const chip = $('nuChip');
@@ -122,6 +124,28 @@
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
+  // W1-A: a step that waits for materials shows live progress and never pauses the game.
+  // "Chop 20 Pine Log for the Workbench (12/20)". When the hero is not at the node that yields the
+  // material, a Go button sends it there (setNode + Gather), so the player is never left guessing.
+  const VERB = { wood: 'Chop', ore: 'Mine' };
+  const stockSpec = (id, what, tail) => {
+    const need = onboardNeed(id); if (!need.length) return null;
+    const x = need[0], verb = VERB[x.kind] || 'Gather';
+    const text = need.length > 1
+      ? `Gather for ${what}: ${need.map(m => `${m.name} ${m.have}/${m.n}`).join(', ')}.`
+      : `${verb} ${x.n} ${x.name} for ${what} (${x.have}/${x.n}).${tail ? ' ' + tail : ''}`;
+    const there = S.activity === 'gather' && x.kind && S.node.kind === x.kind && S.node.t === x.t;
+    const spec = { text, live: 1 };
+    if (there) {
+      spec.node = onGame() ? $('stage') : q(`.tab[data-tab="${S.tab}"]`); spec.at = onGame() ? [0.74, 0.62] : null; spec.side = 'up';
+    } else {
+      const go = q('#modeSeg button[data-act="gather"]');
+      spec.node = onGame() ? (S.activity !== 'gather' && go && !go.hidden ? go : $('stage')) : q(`.tab[data-tab="${S.tab}"]`);
+      if (spec.node === $('stage')) { spec.at = [0.74, 0.62]; spec.side = 'up'; }
+      if (x.kind) spec.go = { label: `${verb} at the ${NODE_NAMES[x.kind][x.t - 1]}`, fn: () => { if (setNode(x.kind, x.t)) setActivity('gather'); } };
+    }
+    return spec;
+  };
   // SOLO1: the button row under the stage (75-solo-ui)
   const sbtn = id => q(`#soloBar .sb-${id}`);
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
@@ -134,17 +158,21 @@
     gather: () => {
       if (!onGame()) return null;
       const b = q('#modeSeg button[data-act="gather"]');
-      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Oak for a camp fire.' } : null;
+      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Pine Log for a camp fire.' } : null;
     },
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
   };
   const STEP_UI = {
-    chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
+    chop: () => onGame() && atGrove() ? stockSpec('chop', 'the camp fire', 'Tap the tree to chop faster.') : null,
+    'stock:bench': () => stockSpec('stock:bench', 'the Workbench'),
+    'stock:tool': () => stockSpec('stock:tool', 'a Copper Pickaxe'),
+    'stock:forge': () => stockSpec('stock:forge', 'the Forge'),
+    'stock:store': () => stockSpec('stock:store', 'the Storehouse'),
     light: () => {
       if (!onGame()) return null;
       const f = $('hearthFire');
       if (atGrove() && f && !f.hidden) return { node: f, round: true, side: 'up', text: 'Tap the fire to light it.' };
-      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Oak for the fire.' };
+      if (S.activity !== 'gather') return { node: q('#modeSeg button[data-act="gather"]'), text: hearthCan().ok ? 'Tap Gather, then light the fire.' : 'Tap Gather to chop Pine Log for the fire.' };
       return null;
     },
     bench: () => campPath('bench', ['The fire burns. Open Camp to build.', 'Open Camp.', 'Build the Workbench. It makes tools.']),
@@ -180,7 +208,7 @@
 
   const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; curGo = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
@@ -198,11 +226,13 @@
     const table = SOLO_G && SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
     try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
-    cur = step;
+    cur = step; curGo = spec.go || null;
     place(spec);
-    // the game waits while a step that needs your action shows (playtest-1 note 1: steps never overlap)
-    ONBOARD.paused = !!step.pause;
-    putHidden(okb, !step.ok);
+    // the game waits only while the step waits for you to read or press something now (playtest-1 note 1, W1-A):
+    // never for a step that needs materials or time, and never while a press step is still short of what it costs
+    ONBOARD.paused = onboardPaused(step);
+    putHidden(okb, !(step.ok || curGo));
+    putText(okb, curGo ? curGo.label : 'Got it');
   }
   soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
   // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
@@ -213,8 +243,9 @@
     if (layer.hidden) layer.hidden = false;
     if (bub.hidden) bub.hidden = false;
     if (key !== lastKey) {
-      lastKey = key; txt.textContent = spec.text;
-      bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); }
+      const fresh = !lastKey; lastKey = key; txt.textContent = spec.text;
+      // live progress ("12/20") updates in place; only a new hint pops
+      if (fresh || !spec.live) { bub.classList.remove('pop'); if (!reduced) { void bub.offsetWidth; bub.classList.add('pop'); } }
     }
     if (!changed) return;   // no real layout change and the same target/text: leave it exactly where it is
     dirty = false; lastNode = spec.node;
