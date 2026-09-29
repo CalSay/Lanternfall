@@ -18,6 +18,9 @@ wood + gem, armour cloth + leather. Material names come from docs/design/materia
 | Tobin Reed | Kite shield with a wheat emblem | Off-hand | Forge | Metal + wood | Yes: rim and face colour. Tank's block pose uses it |
 | Tobin Reed | Baker's cap (cream, red stripe) | Head | Loom | Cloth + leather | Trim only (his story look) |
 | Tobin Reed | Apron-tabard with a wheat emblem | Body | Loom | Cloth + leather | Trim only |
+| Pip Cinderly | Twisted staff with an ember orb | Weapon | Workbench | Wood + gem (the orb) | Yes: wood and orb colour. Flame is code |
+| Pip Cinderly | Singed spellbook (torn last chapter) | Off-hand (Tome) | Loom | Cloth + leather | Cover colour only (story item) |
+| Pip Cinderly | Witch hat with a gold charm | Head | Loom | Cloth + leather | Trim only |
 
 Not craftable (character, not gear): Wren's scarf, chest strap and bat companion; Tobin's red scarf and cape.
 

@@ -81,3 +81,9 @@ Fill in the brackets and paste the whole thing:
 Give GPT the character's story, role, weapon type and the few details the story requires. Let it design the
 outfit, palette and details itself: Wren's best choices came from GPT. Only step in when a result breaks the
 checklist or reads as the wrong class.
+
+## 7. Heights (owner, 2026-09-29)
+
+Heroes may differ in height to fit their character (Pip, who is young, is about 86 px; adults about 96 px).
+Ask GPT to draw at the target height **natively**. Don't shrink a 96 px sprite by a non-whole factor: it drops
+rows and columns and breaks outlines. Pip's trial was shrunk this way, so her final poses should be redrawn at 86 px.
