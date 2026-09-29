@@ -1007,3 +1007,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   file" button silently does nothing in the claude.ai viewer (no download permission); hide it there or use
   the downloads capability; it works on Netlify. LAUNCHED S2 (opus): three base classes, migration, star maps.
   Late-game test save code generated from fixture save-v3-four (zone 38, Coast, four heroes) for the owner.
+- MERGED S2 (24-data-classes.js, 55-classes.js, 60-classes.css + edits): Warrior/Ranger/Lanternmage base
+  classes, S.cls, migration (Warden -> Warrior + Warden path granted; Lightkeeper -> Lanternmage +
+  Lightkeeper path granted, old kit runs until S3), star maps warrior/ranger/mage, free switch, class card.
+  sim 12/22 -> 12/22, T3 spread better (0.84-1.16). COORDINATOR SIGN-OFF on deviations: S.party.cls stays the
+  running kit key (reader pass to lbHas in S3); Shield Wall stays 60/30 until S6; Warrior block as every 10th
+  hit. check passes. NEXT: S3 (evolutions, the Proving, second slot, looks, Mirror respec) and SAVE1b.
