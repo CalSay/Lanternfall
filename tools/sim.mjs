@@ -1120,7 +1120,9 @@ async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
   const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'store', 'storeaway', 'storeswitch', 'hands'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
-  const classes = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  // SOLO1: one hero per class (the Lightkeeper path is Pip's too); the party-only targets run with --party 1
+  const classes = PARTY ? ['warden', 'lanternmage', 'ranger', 'lightkeeper'] : ['warden', 'lanternmage', 'ranger'];
+  if (PARTY) pass.push('--party', '1');
   const nDays = +(args.days || 45);
   // T3 averages three seeds (one seed swings a class by +-10%); the rest read the first seed.
   const seed0 = +(args.seed || 1), passNoSeed = pass.filter((x, i) => x !== '--seed' && pass[i - 1] !== '--seed');
@@ -1130,12 +1132,12 @@ async function runTargets() {
     Promise.all(classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...pass]))),
     Promise.all(classes.map(c => run(['--days', String(nDays), '--class', c, '--json', '1', ...pass]))),
     Promise.all([1, 2].flatMap(k => classes.map(c => run(['--policy', 'mixed', '--hours', '3', '--class', c, '--every', '600', ...passNoSeed, '--seed', String(seed0 + k)])))),
-    Promise.all(classes.map(c => run(['--days', String(trainDays), '--class', c, '--train', '3', '--json', '1', ...pass])))
+    PARTY ? Promise.all(classes.map(c => run(['--days', String(trainDays), '--class', c, '--train', '3', '--json', '1', ...pass]))) : Promise.resolve([])
   ]);
   // Party combat (Stage C): the line-ups of spec 4.13 (T12; the balanced one also runs T5, T7, T8, T13),
   // a balanced Lanternmage party for T6 (its tank and support can be swapped out), and active vs idle (T4).
   const L = (c, ids, ...more) => run(['--policy', 'mixed', '--hours', '4', '--class', c, '--lineup', ids, '--every', '600', ...more, ...pass]);
-  const combatRuns = await Promise.all([
+  const combatRuns = !PARTY ? [] : await Promise.all([
     // F3: trios of formation.md 4.6 (the hero is the third): balanced Warden (F), Wren (M), Hesketh (B);
     // attrition Tobin (F), Elowen (M), Lightkeeper (B); glass Warden (F), Kestrel (M), Wren (B); caster
     // Aldric (F), Oriel (M), Lanternmage (B); T6 Tobin (F), Anselm (M), Lanternmage (B)
@@ -1161,14 +1163,14 @@ async function runTargets() {
   const med = t15.slice().sort((a, b) => a - b), m15 = (med[1] + med[2]) / 2;
   res.push([ok(t15.every(v => inR(v / m15, [0.85, 1.15]))), 'T3 class parity: time to zone 15 (mean of 3 seeds) within 0.85-1.15 of the median', classes.map((c, i) => `${c} ${t15[i].toFixed(0)}m (${(t15[i] / m15).toFixed(2)})`).join(', ')]);
   const t10 = cont.map(o => num(o, /longest gap (\d+)m/));
-  res.push([ok(t10.every(m => m <= 30)), 'T10 roster step (promotion due or drill) every <= 30m before 2h', classes.map((c, i) => `${c} ${t10[i]}m`).join(', ')]);
+  if (PARTY) res.push([ok(t10.every(m => m <= 30)), 'T10 roster step (promotion due or drill) every <= 30m before 2h', classes.map((c, i) => `${c} ${t10[i]}m`).join(', ')]);
   const js = dys.map(o => JSON.parse(o.split('\n').find(l => l.startsWith('JSON ')).slice(5)));
   // T16: first recruit and first Rare from the continuous runs (minutes), Epic and Legendary from normal play (days).
   const cmin = (o, re) => { const m = o.match(re); if (!m) return Infinity; return m[1].endsWith('h') ? parseFloat(m[1]) * 60 : parseFloat(m[1]); };
   const tJoin = cont.map(o => cmin(o, /T16 first recruit ([\d.]+m)/)), tRare = cont.map(o => cmin(o, /first Rare ([\d.]+[mh])/));
   const dEpic = js.map(j => j.rec.epic ? j.rec.epic.day : Infinity), dLeg = js.map(j => j.rec.legendary ? j.rec.legendary.day : Infinity);
   const f1 = x => Number.isFinite(x) ? x.toFixed(1) : '-', f0 = x => Number.isFinite(x) ? x.toFixed(0) : '-';
-  res.push([ok(tJoin.every(v => inR(v, [15, 30])) && tRare.every(v => inR(v, [90, 180])) && dEpic.every(v => inR(v, [2, 4])) && dLeg.every(v => inR(v, [14, 21]))),
+  if (PARTY) res.push([ok(tJoin.every(v => inR(v, [15, 30])) && tRare.every(v => inR(v, [90, 180])) && dEpic.every(v => inR(v, [2, 4])) && dLeg.every(v => inR(v, [14, 21]))),
     'T16 recruits: first 15-30m, Rare 1.5-3h, Epic day 2-4, Legendary day 14-21',
     classes.map((c, i) => `${c} ${f0(tJoin[i])}m/${f1(tRare[i] / 60)}h/d${f1(dEpic[i])}/d${f1(dLeg[i])}`).join(', ')]);
   const d1 = js.map(j => j.rows[0].zone);
@@ -1201,6 +1203,7 @@ async function runTargets() {
     res.push([ok(js.every(j => j.store && j.store.d13 != null && j.store.d13 <= 0.2 && (j.store.d721 == null || j.store.d721 <= 0.35))), 'HS7 time at the cap (share of gathering, live and away): days 1-3 <= 20%, days 7-21 <= 35%',
       classes.map((c, i) => `${c} ${pc(js[i].store && js[i].store.d13)} / ${pc(js[i].store && js[i].store.d721)} (Lv d7 ${js[i].store ? js[i].store.lv[6] : '-'}, d21 ${js[i].store ? js[i].store.lv[20] : '-'})`).join(', ')]);
   }
+  if (PARTY) {
   // ---- party combat targets (docs/design/party-and-classes.md 9) ----
   const z20 = o => num(o, /toZone20=([\d.]+)m/);
   const t4i = z20(idle4), t4a = z20(active4), faster = 1 - t4a / t4i;
@@ -1235,11 +1238,12 @@ async function runTargets() {
   res.push([ok(t14 >= 90 && res[2][0] === 'PASS'), 'T14 Lightkeeper-led party: companions deal >= 90% of the damage, and T3 passes', `${t14}%`]);
   const t18 = starter.map(o => [num(o, /toZone5=([\d.]+)m/), num(o, /before zone 5 (\d+)/)]);
   res.push([ok(t18.every(([m, w]) => inR(m, [6, 12]) && w === 0)), 'T18 each class with its starter only, idle (fighting, hero upgrades, no crafting): zone 5 in 6-12 min, no wipes', classes.map((c, i) => `${c} ${t18[i][0]}m ${t18[i][1]} wipes`).join(', ')]);
+  }
   for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
   console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} targets pass`);
   for (const [i, c] of classes.entries()) console.log(`curve (${c}): ` + js[i].rows.filter(r => r.day <= 10 || r.day % 5 === 0).map(r => `d${r.day} ${r.zone}`).join(' '));
-  console.log('recruits (first after the starter / Rare / Epic / Legendary):');
-  for (const [i, c] of classes.entries()) {
+  if (PARTY) console.log('recruits (first after the starter / Rare / Epic / Legendary):');
+  if (PARTY) for (const [i, c] of classes.entries()) {
     const o = cont[i], j = js[i], id = re => (o.match(re) || [])[1] || '-';
     const rj = j.rec;
     console.log(`  ${c.padEnd(11)} ${f0(tJoin[i])}m ${id(/T16 first recruit [\d.]+m \((\w+)\)/)} | ${f1(tRare[i] / 60)}h ${id(/first Rare [\d.]+[mh] \((\w+)\)/)} | day ${rj.epic ? rj.epic.day.toFixed(1) + ' ' + rj.epic.id : '-'} | day ${rj.legendary ? rj.legendary.day.toFixed(1) + ' ' + rj.legendary.id : '-'}`);
