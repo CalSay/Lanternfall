@@ -1058,3 +1058,12 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   outline that is loose and broken in places (hair, coat hem), muted palette (mauve-brown hair, sand coat,
   slate-blue trousers, rose skin, lavender eyes), 3-4 tones per material, asymmetric relaxed pose, flowing
   hair/coat tail behind. Reference only; goes into the ART-STYLE1 brief with the packs.
+- OWNER shared a 9-character reference sheet (promptbase preview; scratchpad assets/ref-chunky-casters.webp):
+  "I really like this style", chunky, may need a landscape UI. Coordinator read: AI-generated pixel style,
+  ~48-64 px tall, ~2.5-3 heads (chunkier than the coat ref), rich jewel palette (teal, violet, navy) with gold
+  trim, glowing focal props (orbs, crystal blades, fire), bold hood/hat silhouettes, soft sub-pixel shading
+  (not a strict grid). Reference only. Risks: hand-authored pixel maps at this detail cost far more per
+  sprite and per animation frame; landscape is a big layout change for a mobile-first portrait game.
+  Proposal for resume: ART-TEST1 (one hero, e.g. Wren, drawn at ~48 px in this style, idle + attack),
+  shown in-game in portrait 360 px and in a landscape mock, so the owner picks the scale and orientation
+  before any art or layout work.
