@@ -694,6 +694,24 @@ button * { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .bld-row .bar > i, .cb-timer .bar > i { transition: none; }
 }
+/* 60-classes: Classes 2.0 S2 (76-create.js): the picker's weight line, the free-change button and the
+   class card rows on the hero sheet (evolution, second path, what changed). No motion. */
+.ccard .cl-wt { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.create-back { justify-self: center; min-height: 44px; padding: 8px 16px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.create-back:hover { color: var(--bone); }
+
+.cl-row .cl-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.cl-row .cl-top small { font-size: 12px; color: var(--muted); }
+.cl-row.off b { color: var(--muted); }
+.cl-row.cl-evo:not(.off) { border-color: var(--gold); }
+.cl-note { font-size: 12.5px !important; color: var(--bone) !important; }
+.cl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.cl-chip { font-size: 12px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); }
+.cl-chip.on { color: var(--bone); border-color: var(--gold); }
+.cl-changed { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
+.cl-changed summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--gold); font-weight: 600; }
+.cl-changed ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); line-height: 1.35; }
+.cl-switch b { color: var(--gold); }
 /* 60-codex: the Codex sheet and its Journal card (75-codex-ui.js). */
 
 .cx-sheet .bsheet-body { gap: 12px; }
@@ -8835,7 +8853,7 @@ const DEED_FEATS = [
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
   { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox' },
   { id: 'f_book', n: 'Every Legend Known', needs: 'Every power in the Lantern Book, 10 of them at rank V', about: 'months', rar: 'legendary', title: 'Lorebearer', look: 'l_book' },
-  { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 4 class maps', about: 'months (4 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
+  { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 3 class maps', about: 'months (3 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_sworn', n: 'All Sworn', needs: 'All 21 Bonds at Sworn', about: 'months', rar: 'epic', title: 'Heartsworn', look: 'a_bond', wait: 'F2' },
   { id: 'f_town', n: "Warden of Hollow's Rest", needs: 'Every building at its top level, 6 Hands housed, a Legendary Hand, the Kitchen at its top level', about: '2-3 months', rar: 'rare', title: 'the Steward', look: 'cr_cat', wait: 'N1' },
   { id: 'f_stock', n: 'Quartermaster', needs: 'Every gathered and fought material cell full at Storehouse 8, at the same moment', about: 'weeks of planning', rar: 'epic', title: 'Quartermaster', look: 'l_store', wait: 'H3' },
@@ -8936,6 +8954,142 @@ const DEED_RARITY = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic
 const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, near: 0.9, nearMax: 0.97, featToast: 1, secretAfterDays: 30, secretAfterFound: 3,
   nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: 300, streak: 10,
   overX: 1000, lateMs: 7 * 864e5, ratHits: 100, crowd: 3, oddZone: 10 };
+
+// ---- src/js/24-data-classes.js ----
+// 24-data-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 1, 3.5, 4, 7, 8.3 and the appendix).
+// CORE FILE, data only: no DOM. The engine is 55-classes.js (state, migration, lbClass) and 55-party.js
+// (the kits); 59-combat.js reads the base stats.
+//
+// Exposed names:
+//   CLASS_BASES          ['warrior', 'ranger', 'mage'] (the picker's order)
+//   CLASS_DEFS[base]     { id, name, weight, home, role, dt, kit, col, pitch, how, meter, tap, ab1, finisher,
+//                        hp, armour, block, ward, threat, crit, area, aura: { name, text }, passives: [{ name, text, s }],
+//                        evos: [damage, utility], trial } the three base classes (1.1-1.4)
+//   CLASS_ABILITIES[id]  taps, ab1s and base Finishers in the core-2 4.4 shape plus { name, desc } (the words
+//                        the player reads); `var: { [evoId]: { id, name, desc, cd } }` an evolution's variant
+//                        (the legacy Lightkeeper's Blessing tap and Rally Hymn live here until S3)
+//   LEGACY_CLS[key]      { base, evo } the four old classes (7.1)
+//   CLS_KIT(base, evo)   -> the legacy kit key that runs ('warden' | 'ranger' | 'lanternmage' | 'lightkeeper' | null)
+//   CLS_STAR_MAP[kit]    the star map a kit uses ('warrior' | 'ranger' | 'mage'; the legacy 'lightkeeper' map
+//                        until S3's ring); CLS_STAR_FROM[map] the legacy map copied into it once (4.4)
+//   EVO_NAMES[evo]       { name, title, base, kind: 'damage' | 'utility', role, line } names only (owner-chosen,
+//                        fixed); EVO_DEFS is empty until S3 fills the kits
+//   CLS_TUNE             the appendix numbers (evoLv, unproven, secondThoughtsMin, respec, grit, embers, ...)
+//
+// Ids never change once shipped. Numbers are starting values for tools/sim.mjs (BAL3 tunes them).
+
+const CLASS_BASES = ['warrior', 'ranger', 'mage'];
+
+const CLASS_DEFS = {
+  warrior: {
+    id: 'warrior', name: 'Warrior', weight: 'heavy', home: 'front', role: 'tank', dt: 'phys', kit: 'warden', col: '#3E63C9',
+    pitch: 'Stand in front. Nothing gets past.',
+    how: 'Tap a foe for a heavy hit. It turns on you and adds 1 Grit: +3% damage and 1% less damage taken for 10s, up to 5.',
+    meter: 'grit', tap: 'heavy', ab1: 'shieldwall', finisher: 'hammerfall',
+    hp: 12, armour: 30, block: 0.1, ward: 0, threat: 6, crit: 0.08, area: 0,
+    aura: { name: 'Shieldmates', text: 'Tanks in your party get +40% health and +20 armour.' },
+    passives: [{ name: 'Heavy Hands', text: 'Your heavy hits deal double damage to shields.', s: 'S6' }],
+    evos: ['reaver', 'warden'], trial: 'warrior'
+  },
+  ranger: {
+    id: 'ranger', name: 'Ranger', weight: 'medium', home: 'mid', role: 'striker', dt: 'phys', kit: 'ranger', col: '#3E8A4E',
+    pitch: 'Find the weak spot. Hit it hard.',
+    how: 'Tap a foe to mark it for 8s. Your whole party deals 25% more to it, and you crit 1.5x as often on it.',
+    meter: null, tap: 'focus', ab1: 'volley', finisher: 'killshot',
+    hp: 6, armour: 10, block: 0, ward: 0, threat: 1, crit: 0.15, area: 0,
+    aura: { name: "Hunters' Company", text: 'Strikers in your party get +10% crit chance and +50% crit damage.' },
+    passives: [{ name: 'Light Feet', text: 'You take 20% less from dives and slams.' }],
+    evos: ['venomstalker', 'trapper'], trial: 'ranger'
+  },
+  mage: {
+    id: 'mage', name: 'Lanternmage', weight: 'light', home: 'back', role: 'caster', dt: 'fire', kit: 'lanternmage', col: '#8A4FC9',
+    pitch: 'Burn the whole pack at once.',
+    how: 'Tap a foe to hit it with fire and plant an Ember on it, up to 5. Lantern Flare sets them all off.',
+    meter: 'embers', tap: 'ember', ab1: 'flare', finisher: 'lanternburst',
+    hp: 4, armour: 0, block: 0, ward: 0.1, threat: 1.2, crit: 0.08, area: 0.15,
+    aura: { name: 'Kindred Sparks', text: 'Casters in your party get +30% attack.' },
+    passives: [{ name: 'Lantern Glass', text: 'Your hits splash 15% to the rest of the pack.' }],
+    evos: ['warlock', 'priest'], trial: 'mage'
+  }
+};
+
+// core-2 4.4 shape. Taps carry `coef` (x P). Finishers are data now and fire with S6's stagger bar.
+const CLASS_ABILITIES = {
+  heavy: { id: 'heavy', slot: 'tap', cls: 'warrior', type: 'phys', coef: 1.3, tags: ['heavy'],
+    fx: [['dmg', 1.3], ['threat', 3], ['meter', 'grit', 1]], name: 'Heavy hit',
+    desc: 'A heavy hit of 1.3x your attack. The foe turns on you. Adds 1 Grit.' },
+  shieldwall: { id: 'shieldwall', slot: 'ab1', cls: 'warrior', cd: 30, target: 'party', type: 'phys', tags: ['taunt', 'shield'],
+    fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.6, emp: 0.3, t: 6, name: 'Shield Wall',
+    // S2 keeps today's 60% / 30%: classes-2 1.2 lowers it to 50% / 20% because Core 2.0 foes hit 2-3x harder,
+    // which lands with S6; at 50 / 20 on today's foes the sim lost T4 and T7 (BAL3 applies it with S6).
+    desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
+  hammerfall: { id: 'hammerfall', slot: 'fin', cls: 'warrior', type: 'phys', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 7], ['delay', 1], ['meter', 'grit', 5]], name: 'Hammerfall',
+    desc: '7x your attack. Every foe attacks 1s later. Fills your Grit.' },
+  focus: { id: 'focus', slot: 'tap', cls: 'ranger', type: 'phys', coef: 1, tags: [],
+    fx: [['dmg', 1], ['apply', 'mark', 1, { v: 0.25, dur: 8 }]], name: 'Focus',
+    desc: 'Marks the foe for 8s: your whole party deals 25% more to it.' },
+  volley: { id: 'volley', slot: 'ab1', cls: 'ranger', cd: 30, target: 'single', type: 'phys', tags: [],
+    fx: [['dmg', 1.5, { hits: 10, over: 2, spread: 0.5 }], ['buff', 'volleyQuick', 8]], name: 'Volley',
+    desc: '10 arrows of 1.5x your attack, then your party attacks 50% faster for 8s.' },
+  killshot: { id: 'killshot', slot: 'fin', cls: 'ranger', type: 'phys', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 7], ['apply', 'mark', 1, { v: 0.3, dur: 8 }]], name: 'Kill Shot',
+    desc: '7x your attack. Marks the foe: your party deals 30% more to it for 8s.' },
+  ember: { id: 'ember', slot: 'tap', cls: 'mage', type: 'fire', coef: 1.3, tags: [],
+    fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
+    desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
+    var: { priest: { id: 'bless', name: 'Blessing', type: 'holy', coef: 1,
+      desc: 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
+  flare: { id: 'flare', slot: 'ab1', cls: 'mage', cd: 25, target: 'splash', type: 'fire', tags: ['aoe'],
+    fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
+    desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
+    var: { priest: { id: 'hymn', name: 'Rally Hymn', cd: 40, type: 'holy',
+      desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.' } } },
+  lanternburst: { id: 'lanternburst', slot: 'fin', cls: 'mage', type: 'fire', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 7], ['meter', 'embers', 5], ['apply', 'burn', 1, { to: 'pack' }]], name: 'Lanternburst',
+    desc: '7x your attack as fire. Plants 5 Embers and sets the whole pack burning.' }
+};
+
+// The four old classes (7.1). Runs once per save; the kit it becomes plays the same (7.2).
+const LEGACY_CLS = {
+  warden: { base: 'warrior', evo: 'warden' },
+  ranger: { base: 'ranger', evo: null },
+  lanternmage: { base: 'mage', evo: null },
+  lightkeeper: { base: 'mage', evo: 'priest' }
+};
+// The legacy kit key that runs for a class (until S3 gives the evolutions their own kits, a granted Warden
+// plays the Warrior's kit and a granted Lightkeeper the old Lightkeeper's).
+const CLS_KIT = (base, evo) => !base || !CLASS_DEFS[base] ? null : base === 'mage' && evo === 'priest' ? 'lightkeeper' : CLASS_DEFS[base].kit;
+
+// Star maps by kit (4.1-4.4). The legacy Lightkeeper map stays live for a Lightkeeper until S3 moves its
+// stars into the Lightkeeper ring; its points are never lost.
+const CLS_STAR_MAP = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'lightkeeper' };
+const CLS_STAR_FROM = { warrior: 'warden', mage: 'lanternmage' };
+
+// Names only (owner-chosen, fixed; names.md "Coordinator override"). S3 fills EVO_DEFS with the kits.
+const EVO_NAMES = {
+  reaver: { name: 'Reaver', title: 'the Red Lamp', base: 'warrior', kind: 'damage', role: 'striker', line: 'Hit harder the worse it gets.' },
+  warden: { name: 'Warden', title: 'the Unmoved', base: 'warrior', kind: 'utility', role: 'tank', line: 'Nothing gets past. Nothing.' },
+  venomstalker: { name: 'Venomstalker', title: 'the Quiet Thorn', base: 'ranger', kind: 'damage', role: 'striker', line: 'One drop at a time.' },
+  trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
+  warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
+  priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
+    pitch: 'Keep them standing.', aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+};
+const EVO_DEFS = {};
+
+// Appendix (starting values). Only the S2 parts are read today: grit, embers, secondThoughtsMin, evoLv,
+// rangerCrit, lightFeet; the rest wait for S3/S6.
+const CLS_TUNE = {
+  evoLv: 35, unproven: 0.6, secondThoughtsMin: 10,
+  respec: { evo: { mirrors: 1, essHours: 2 }, base: { mirrors: 2, essHours: 4 }, t2: null, esc: 0.5, escMax: 3 },
+  trialRef: { L: 35, grade: 3, plus: 3, stars: 0 }, trialIdlePass: 1.25,
+  grit: { v: 0.03, dr: 0.01, max: 5, t: 10 },
+  embers: { max: 5 },
+  rangerCrit: 0.07, lightFeet: 0.2,
+  heroFloor: { warrior: 1.0, ranger: 0.7, mage: 1.0, reaver: 0.62, warden: 1.0,
+    venomstalker: 0.75, trapper: 0.7, warlock: 1.0, priest: 0 }
+};
 
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load/migrate, save(), registered feature fields, and
@@ -9103,7 +9257,9 @@ const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + 
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
 const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
-const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
+// critBase: the hero's flat crit chance before multipliers (S2: bonus('critBase') carries the class's own, the Ranger's +7%).
+const critBase = () => 0.08 + bonus('critBase') + gear().crit / 100;
+const critChance = () => Math.min(0.75, critBase() * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
 const tapMult = () => gear().tap * mod('tap');
 // Once the save is migrated to the roster (56-roster.js), companions are named characters.
@@ -10458,6 +10614,170 @@ let OMENS, WEEKLY_GOALS;
   bountyRefresh(true);
   // exported to later files via the shared scope
   var BOUNTY_API = { refresh: bountyRefresh, claim: claimBounty, reroll: rerollBounty, text: bountyText, reward: bountyReward };
+}
+
+// ---- src/js/55-classes.js ----
+// 55-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 3.4-3.5, 7, 8.3). The class state S.cls,
+// the one-time migration from the four old classes, the class accessors, the base-class choice and the
+// one free "second thoughts" switch. Data: 24-data-classes.js. The kits themselves run in 55-party.js.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// How the class is kept (S2):
+//   S.cls = { v, base, evo, evo2, proven, trials, respec, free, at, slots, auto, mig, from } (3.5).
+//   S.party.cls keeps its legacy values ('warden' | 'ranger' | 'lanternmage' | 'lightkeeper'): it names the
+//   kit that runs (CLS_KIT(base, evo)), so every reader written before S2 keeps working. 55-classes writes
+//   it; nothing else should. When the two disagree (an old save, a tool that sets S.party.cls), the legacy
+//   key wins and S.cls follows it through LEGACY_CLS (lbSync). New code reads lbClass() / lbHas().
+//
+// API:
+//   lbClass()  -> { base, evo, evo2 } (a kept object: copy what you keep)
+//   lbHas(tag) -> bool   'base:warrior', 'evo:priest', 'cls:warden' (the legacy data tag: every Warrior),
+//                        'cls:lanternmage', 'cls:ranger', 'cls:lightkeeper'
+//   lbRole()   -> 'tank' | 'striker' | 'caster' | 'support' | null (the evolution's role, else the base's)
+//   lbHome()   -> 'front' | 'mid' | 'back' | null
+//   lbKit()    -> the legacy kit key or null
+//   clsResolve(key) -> { base, evo, kit } | null   key: a base id or a legacy class key
+//   chooseBase(base, opts) -> bool   the player's choice (the picker): a first choice, a Mirror's choice,
+//                        or the free switch within CLS_TUNE.secondThoughtsMin minutes (once per save)
+//   clsSwitchInfo(now) -> { ok, left (ms), used }   the free switch
+//   clsInfo()  -> the class card's facts (76-create.js draws them)
+//   clsSet(base, evo, opts)  55-party's chooseClass writes the class through this (no rules)
+// Events: classMigrated { from, base, evo, proven } (once per save).
+
+let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo, clsInfo, clsSet, lbSync;
+
+{
+  registerState('cls', {
+    v: 1, base: null, evo: null, evo2: null, proven: {}, trials: {}, respec: 0, free: 1, at: 0,
+    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null
+  });
+  const C = () => S.cls;
+  const OUT = { base: null, evo: null, evo2: null };
+  const clsNow = () => Date.now();
+  const pastBoss = () => lanternsLitAt(S.maxZone) >= 1;   // the Fenmother (zone 35, the Hollow's boss) beaten once
+
+  clsResolve = key => {
+    if (!key) return null;
+    if (CLASS_DEFS[key]) return { base: key, evo: null, kit: CLS_KIT(key, null) };
+    const l = LEGACY_CLS[key];
+    return l ? { base: l.base, evo: l.evo, kit: key } : null;
+  };
+
+  // The one-time migration (7.1) and the repair that keeps S.cls in step with the kit key.
+  let syncFor = null, syncKey, said = null;
+  lbSync = () => {
+    const p = S.party, c = C();
+    if (!p || !c) return;
+    const key = p.cls || null;
+    if (syncFor === S && syncKey === key && CLS_KIT(c.base, c.evo) === key) return;
+    syncFor = S; syncKey = key;
+    if (!key || !LEGACY_CLS[key]) {
+      // No class yet (a new game, or "choose your path"). An S.cls left from a tool resetting the class clears.
+      if (c.base && !key) { c.base = null; c.evo = null; }
+      return;
+    }
+    if (CLS_KIT(c.base, c.evo) === key) return;
+    const l = LEGACY_CLS[key];
+    if (!c.base && !c.mig) {
+      // An old save: its class becomes a base class (and the Warden or Lightkeeper path, granted).
+      c.base = l.base; c.evo = l.evo; c.mig = 1; c.from = key; c.at = 0;
+      const proven = !!(l.evo && pastBoss());
+      if (proven) c.proven[l.evo] = 1;
+      // Said on the first tick (the UI listens by then; a toast in the first seconds folds into What's new).
+      said = { from: key, base: l.base, evo: l.evo, proven };
+      return;
+    }
+    // The kit key changed under us (a tool or an older code path set it): follow it.
+    c.base = l.base; c.evo = l.evo;
+  };
+
+  lbClass = () => { lbSync(); const c = C(); OUT.base = c.base; OUT.evo = c.evo; OUT.evo2 = c.evo2; return OUT; };
+  lbKit = () => { lbSync(); return S.party && LEGACY_CLS[S.party.cls] ? S.party.cls : null; };
+  lbHas = tag => {
+    const i = String(tag).indexOf(':'), k = String(tag).slice(0, i), v = String(tag).slice(i + 1);
+    const c = lbClass();
+    if (k === 'base') return c.base === v;
+    if (k === 'evo') return c.evo === v;
+    if (k === 'cls') {
+      // Legacy data tags (item kinds, powers, boons, Bonds keep their cls fields): the kit they belonged to.
+      if (v === 'warden') return c.base === 'warrior';
+      if (v === 'lanternmage') return c.base === 'mage';
+      if (v === 'lightkeeper') return c.base === 'mage' && c.evo === 'priest';
+      return c.base === v;
+    }
+    return false;
+  };
+  lbRole = () => { const c = lbClass(); return c.evo && EVO_NAMES[c.evo] ? EVO_NAMES[c.evo].role : c.base ? CLASS_DEFS[c.base].role : null; };
+  lbHome = () => { const c = lbClass(); return c.base ? CLASS_DEFS[c.base].home : null; };
+
+  // Writes the class (55-party's chooseClass calls it; no rules here). Changing base clears the evolution
+  // (3.4), unless the new class is a legacy key that carries one. Returns the kit key.
+  clsSet = (base, evo, opts) => {
+    const c = C(), o = opts || {};
+    if (!CLASS_DEFS[base]) return null;
+    const same = c.base === base;
+    c.base = base;
+    c.evo = evo !== undefined ? evo : same ? c.evo : null;
+    if (!same || o.stamp) c.at = o.now || clsNow();
+    const kit = CLS_KIT(c.base, c.evo);
+    if (S.party) S.party.cls = kit;
+    syncFor = S; syncKey = kit;
+    return kit;
+  };
+
+  clsSwitchInfo = now => {
+    const c = C(), t = now || clsNow(), win = CLS_TUNE.secondThoughtsMin * 60e3;
+    const left = c.at > 0 ? c.at + win - t : 0;
+    const ok = !!(S.party && S.party.chosen && c.base && c.free > 0 && left > 0);
+    return { ok, left: ok ? left : 0, used: !(c.free > 0) };
+  };
+
+  // The player's choice from the picker. opts: { name, now }.
+  chooseBase = (base, opts) => {
+    lbSync();
+    const o = opts || {}, c = C(), p = S.party;
+    if (!CLASS_DEFS[base] || !p || typeof chooseClass !== 'function') return false;
+    if (p.chosen && c.base) {
+      if (c.base === base) return true;
+      const sw = clsSwitchInfo(o.now);
+      if (!sw.ok) return false;
+      c.free = 0;
+      const okd = chooseClass(base, o.name, { now: o.now, free: true });
+      if (okd) c.at = 0;   // the window closes once used
+      return okd;
+    }
+    return chooseClass(base, o.name, { now: o.now });
+  };
+
+  // The class card's facts: base, evolution (granted or locked), tier 2 (locked), the free switch.
+  clsInfo = now => {
+    const c = lbClass(), s = C();
+    if (!c.base) return null;
+    const d = CLASS_DEFS[c.base], ev = c.evo ? EVO_NAMES[c.evo] : null;
+    const gateLv = S.L >= CLS_TUNE.evoLv, gateBoss = pastBoss();
+    return {
+      base: c.base, name: d.name, weight: d.weight, home: d.home, role: lbRole(), col: d.col,
+      evo: c.evo, evoName: ev ? ev.name : null, evoTitle: ev ? ev.title : null,
+      proven: !!(c.evo && s.proven[c.evo]), migrated: !!s.mig, from: s.from,
+      paths: d.evos.map(id => ({ id, name: EVO_NAMES[id].name, kind: EVO_NAMES[id].kind, line: EVO_NAMES[id].line })),
+      gate: { lv: CLS_TUNE.evoLv, lvOk: gateLv, bossOk: gateBoss, open: gateLv && gateBoss },
+      sw: clsSwitchInfo(now)
+    };
+  };
+
+  // Once per loaded save, and whenever the class may have changed.
+  onTick(() => {
+    lbSync();
+    if (!said) return;
+    const m = said; said = null;
+    emit('classMigrated', m);
+    const nm = CLASS_DEFS[m.base].name;
+    toast(m.evo
+      ? `Classes changed. You are a ${nm} on the ${EVO_NAMES[m.evo].name}'s path. Nothing was lost.`
+      : `Classes changed. You are still a ${nm}. Your Proving opens at the Fenmother.`, 'good', null, 'normal');
+  });
+  on('classChosen', () => lbSync());
+  lbSync();
 }
 
 // ---- src/js/55-crafting.js ----
@@ -12183,7 +12503,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   addModifier('crit', () => {
     const r = activeRank('contract'); if (!r) return 1;
     const add = legendVal('contract', 'crit', r) * members('dusk') * legendScale(); if (!(add > 0)) return 1;
-    return 1 + add / (0.08 + gear().crit / 100);   // + flat crit chance on critChance()'s base
+    return 1 + add / critBase();   // + flat crit chance on critChance()'s base
   });
   addModifier('critDmg', () => setOn('dusk', 2) ? 1 + LEG_SETS.dusk.tiers[2].fx.critDmg * legendScale() : 1);
   addModifier('abilityCd', () => setOn('wayfarers', 2) ? 1 - LEG_SETS.wayfarers.tiers[2].fx.cd * legendScale() : 1);
@@ -12834,8 +13154,13 @@ let paceCheck;
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Contract: docs/design/stage-a-plan.md ("State (A1)", "Class data and actions (A1)").
 //
+// Classes 2.0 S2: the kits run by legacy kit key (S.party.cls: 'warden' = the Warrior's kit, 'lanternmage',
+// 'ranger', 'lightkeeper' = a Lanternmage on the Lightkeeper's path); the class itself is S.cls (55-classes.js)
+// and the numbers come from 24-data-classes.js. Grit (was guard stacks) also cuts damage taken
+// (heroGritDr, read by 59-combat); Lantern Flare Burns the pack; the Ranger's base crit is 15% (critBase).
+//
 // Exposed names: HERO_CLASSES, COMP_CHAR_KEYS, CHAR_ROLE, chooseClass, castAbility,
-// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField,
+// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField, heroGritDr,
 // and the stage HUD hooks unitHp, unitCd, bossTelegraph (Stage C combat replaces them).
 // Everything else is private (inside the block below, or prefixed pty).
 //
@@ -12844,36 +13169,21 @@ let paceCheck;
 // Hero-only damage scaling (Lightkeeper x0.2) is applied as 'dmg' x k and 'party' x 1/k,
 // so companions are unaffected.
 
-const HERO_CLASSES = {
-  warden: {
-    name: 'Warden', role: 'tank', row: 'front', pitch: 'Stand in front. Nothing gets past.',
-    how: 'Tap a foe for a heavy hit. It turns on you, and each hit adds a guard stack: +3% damage for 10s, up to 5.',
-    tapName: 'Heavy hit',
-    ability: { name: 'Shield Wall', desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.', cd: 30 },
-    aura: 'Tanks in your party get +40% health and +20 armour.'
-  },
-  lanternmage: {
-    name: 'Lanternmage', role: 'caster', row: 'back', pitch: 'Burn the whole pack at once.',
-    how: 'Tap a foe to plant an Ember on it, up to 5. Lantern Flare sets them all off.',
-    tapName: 'Ember',
-    ability: { name: 'Lantern Flare', desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers.', cd: 25 },
-    aura: 'Casters in your party get +30% attack.'
-  },
-  ranger: {
-    name: 'Ranger', role: 'striker', row: 'mid', pitch: 'Find the weak spot. Hit it hard.',
-    how: 'Tap a foe to mark it for 8s. Your whole party deals 25% more to it, and you crit more often.',
-    tapName: 'Focus',
-    ability: { name: 'Volley', desc: '10 arrows of 1.5x your attack, then your party attacks 50% faster for 8s.', cd: 30 },
-    aura: 'Strikers in your party get +10% crit chance and +50% crit damage.'
-  },
-  lightkeeper: {
-    name: 'Lightkeeper', role: 'support', row: 'back', pitch: 'Keep them standing.',
-    how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
-    tapName: 'Blessing',
-    ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
-    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.'
+// The legacy view of the classes (classes-2 8.3): the four kit keys every reader written before S2 uses
+// (S.party.cls, item kinds, powers, boons, Bonds), built from 24-data-classes.js. 'warden' is the
+// Warrior's kit, 'lanternmage' the Lanternmage's, 'lightkeeper' a Lanternmage on the Lightkeeper's path.
+const HERO_CLASSES = (() => {
+  const A = CLASS_ABILITIES, out = {};
+  for (const b of ['warrior', 'mage', 'ranger']) {   // the legacy key order (LEG_CLASSES and older readers)
+    const d = CLASS_DEFS[b], tap = A[d.tap], ab = A[d.ab1];
+    out[d.kit] = { name: d.name, base: b, role: d.role, row: d.home, pitch: d.pitch, how: d.how, tapName: tap.name,
+      ability: { name: ab.name, desc: ab.desc, cd: ab.cd }, aura: d.aura.text };
   }
-};
+  const pr = EVO_NAMES.priest, bl = A.ember.var.priest, hy = A.flare.var.priest;
+  out.lightkeeper = { name: pr.name, base: 'mage', evo: 'priest', role: pr.role, row: 'back', pitch: pr.pitch, how: bl.desc, tapName: bl.name,
+    ability: { name: hy.name, desc: hy.desc, cd: hy.cd }, aura: pr.aura };
+  return out;
+})();
 
 // Old S.comp index -> companion character key (stage-a-plan.md).
 const COMP_CHAR_KEYS = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
@@ -12887,7 +13197,7 @@ const CHAR_ROLE = {
 let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField;
 // Stage C / Constellations helpers: heroGuardN() live guard stacks, partyHymnOn() Rally Hymn up,
 // partyClock() this file's clock (mob.markUntil is on it), hawkCrit() the Hawk Eye first-hit crit.
-let heroGuardN, partyHymnOn, partyClock, hawkCrit;
+let heroGuardN, heroGritDr, partyHymnOn, partyClock, hawkCrit;
 // Stage HUD hooks (read by 62-stage.js about 10 times a second; Stage C combat fills them in).
 //   unitHp(key)     -> { hp, max, shield } | null   key: 'hero' or a character key. Party HP is not
 //                      simulated yet, so every unit is full. null = draw no bar.
@@ -12906,16 +13216,18 @@ let unitHp, unitCd, bossTelegraph;
 
   // Starter per class: character key and the old S.comp slot it uses for the maths.
   const STARTER = { warden: ['wren', 1], lanternmage: ['tobin', 0], ranger: ['tobin', 0], lightkeeper: ['bram', 0] };
-  // Tuning knobs (Stage A interim).
+  // Tuning knobs (Stage A interim). S2: the class numbers come from 24-data-classes.js (CLASS_ABILITIES,
+  // CLS_TUNE); the knob names stay (stars and Deepwell boons tune them through bonus('tune:<knob>')).
+  const A = CLASS_ABILITIES, G = CLS_TUNE.grit;
   const T = {
     heroMul: { warden: 1, lanternmage: 1, ranger: 1, lightkeeper: 0.2 },
-    tapMul: { warden: 1.3, lanternmage: 1.3, ranger: 1, lightkeeper: 1 },
-    guard: 0.03, guardMax: 5, guardT: 10,
-    embersMax: 5, flare: 20, flarePerEmber: 0.3,
+    tapMul: { warden: A.heavy.coef, lanternmage: A.ember.coef, ranger: A.focus.coef, lightkeeper: A.ember.var.priest.coef },
+    guard: G.v, guardMax: G.max, guardT: G.t,   // Grit (was "guard stacks"): +3% damage and 1% less taken each
+    embersMax: CLS_TUNE.embers.max, flare: A.flare.fx[1][1], flarePerEmber: A.flare.fx[1][2].perStack,
     markT: 8, mark: 1.25, markCrit: 1.5,
     volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
     bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.25, lkShare: 1,   // (F1, formation.md 4.4) lkAura was 1.1: a support is half the field now
-    wall: 1.3, wallT: 6, wallPause: 3, hymn: 1.4, hymnT: 8,
+    wall: 1 + A.shieldwall.emp, wallT: A.shieldwall.t, wallPause: 3, hymn: 1.4, hymnT: 8,
     autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCd: 0, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
   };
 
@@ -12937,9 +13249,9 @@ let unitHp, unitCd, bossTelegraph;
   const P = () => S.party;
   const cls = () => P().cls && HERO_CLASSES[P().cls] ? P().cls : null;
   const stackSum = l => { let s = 0; for (const b of l) if (b.until > clock) s += b.v; return s; };
-  const pushStack = (l, v, dur, max) => {
+  const pushStack = (l, v, dur, max, e) => {
     for (let i = l.length - 1; i >= 0; i--) if (l[i].until <= clock) l.splice(i, 1);
-    l.push({ until: clock + dur, v });
+    l.push({ until: clock + dur, v, e: e == null ? 1 : e });   // e: the stack's strength (auto-taps 0.5)
     while (l.length > max) l.shift();
   };
   const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || S.comp.some(n => n > 0);
@@ -12984,12 +13296,19 @@ let unitHp, unitCd, bossTelegraph;
   }
 
   // ---- class choice ----
-  chooseClass = function (key, heroName) {
+  // key: a base class ('warrior' | 'ranger' | 'mage') or a legacy class key (tools, old callers: 'lightkeeper'
+  // is a Lanternmage on the Lightkeeper's path). No rules here: the picker goes through chooseBase (55-classes).
+  // opts: { now, free } (free: the one free switch; 55-classes counts it).
+  chooseClass = function (key, heroName, opts) {
     ensureInit();
-    if (!HERO_CLASSES[key]) return false;
-    const p = P(), first = !p.cls && !p.chosen, from = p.cls;
+    const r = clsResolve(key);
+    if (!r || !HERO_CLASSES[r.kit]) return false;
+    const p = P(), first = !p.cls && !p.chosen, from = p.cls, o = opts || {};
     if (typeof heroName === 'string') { const n = heroName.trim().slice(0, 16); if (n) S.name = n; }
-    p.cls = key; p.chosen = true; p.abilityCd = 0; readyFor = 0;
+    // A base id keeps a granted path on the same base; a legacy key names its path.
+    const evo = LEGACY_CLS[key] ? r.evo : undefined;
+    key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
+    p.chosen = true; p.abilityCd = 0; readyFor = 0;
     guard = []; bless = []; volleyLeft = 0;
     toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
     if (first && p.newGame) {
@@ -13001,7 +13320,8 @@ let unitHp, unitCd, bossTelegraph;
       }
     }
     partyRefreshField(true);
-    emit('classChosen', { cls: key, from });
+    const lc = lbClass();
+    emit('classChosen', { cls: key, from, base: lc.base, evo: lc.evo, free: !!o.free });
     return true;
   };
 
@@ -13036,6 +13356,11 @@ let unitHp, unitCd, bossTelegraph;
       if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
       if (!world && typeof stTagNext === 'function') stTagNext('ab');   // S1: an ability (the reaction window's x1.25)
       heroSwing(heroAtk() * tn('flare') * (1 + tn('flarePerEmber') * n), false);
+      // S2 (classes-2 1.4): the Flare sets every foe in the pack burning (Burn spreads when one dies).
+      if (!world && typeof stApply === 'function' && typeof combatFoes === 'function' && combatOn()) {
+        const pw = heroAtk();
+        for (const f of combatFoes()) if (f && !f.dead) stApply(f, 'burn', 1, pw, 0);
+      }
       // Everburn: Flare plants 2 new Embers after it goes off.
       if (ks('everburn')) { const em = tn('embersMax'), k = STAR_KS.everburn.plant; if (world) worldEmbers = Math.min(em, worldEmbers + k); else if (mob) mob.embers = Math.min(em, (mob.embers || 0) + k); }
       emit('shake', 0.3);
@@ -13072,7 +13397,7 @@ let unitHp, unitCd, bossTelegraph;
     const out = [], add = (id, name, until, stacks) => { if (until > clock) out.push({ id, name, left: until - clock, stacks }); };
     const live = l => l.filter(b => b.until > clock);
     const g = live(guard), b = live(bless);
-    if (g.length) add('guard', 'Guard', Math.max(...g.map(x => x.until)), g.length);
+    if (g.length) add('guard', 'Grit', Math.max(...g.map(x => x.until)), g.length);
     if (b.length) add('bless', 'Blessing', Math.max(...b.map(x => x.until)), b.length);
     add('wall', 'Shield Wall', wallUntil); add('hymn', 'Rally Hymn', hymnUntil); add('haste', 'Volley haste', hasteUntil);
     if (mob && !mob.dead && mob.markUntil) add('mark', 'Focus', mob.markUntil);
@@ -13099,7 +13424,7 @@ let unitHp, unitCd, bossTelegraph;
       kind = 'heavy'; heavyN++;
       // Unbroken: while heavy hits land at least every 3s, the stacks never fall off.
       if (ks('unbroken')) { const hold = clock + STAR_KS.unbroken.holdSecs; for (const g of guard) if (g.until < hold) g.until = hold; }
-      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'));
+      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);
       if (ks('crush') && heavyN % STAR_KS.crush.every === 0) tapX = STAR_KS.crush.mult;   // Crushing Blow
       if (ks('bastion') && P().abilityCd > 0) P().abilityCd = Math.max(0, P().abilityCd - STAR_KS.bastion.cdPerHeavy);
     }
@@ -13159,6 +13484,10 @@ let unitHp, unitCd, bossTelegraph;
   addModifier('crit', () => cls() === 'ranger' && marked() && !ks('pack') ? T.markCrit : 1);
   addModifier('critDmg', () => cls() === 'ranger' && marked() && ks('deadeye') ? STAR_KS.deadeye.critMult : 1);
   heroGuardN = () => { let n = 0; for (const g of guard) if (g.until > clock) n++; return n; };
+  // Grit's damage taken (S2, classes-2 1.2): 1% less per Grit, at the stack's strength (59-combat reads it).
+  heroGritDr = () => { if (cls() !== 'warden') return 0; let e = 0; for (const g of guard) if (g.until > clock) e += g.e; return CLS_TUNE.grit.dr * e; };
+  // The Ranger's crit (S2, classes-2 1.1): 15% base (8% + 7%), before Keen Eye on a marked foe.
+  addBonus('critBase', () => cls() === 'ranger' ? CLS_TUNE.rangerCrit : 0);
   partyHymnOn = () => hymnUntil > clock;
   partyClock = () => clock;
   // Hawk Eye: the hero's first hit on each foe always crits (50-sim heroSwing asks once per swing).
@@ -15289,10 +15618,10 @@ const SYNERGIES = [
   { id: 'lasttwo', name: 'The Last Two', layer: 'bond', pair: ['caedmon', 'elowen'], needs: 'Caedmon and Elowen',
     stories: ['Fire and Candle', 'What They Saw That Night'],
     parts: [{ text: 'The party takes 5% less damage. When Caedmon turns Ashen, Elowen heals the party 10% of max HP.', stage: 'C' }] },
-  { id: 'sword', name: 'The Borrowed Sword', layer: 'bond', pair: ['hero', 'tobin'], cls: 'warden', needs: 'A Warden hero and Tobin',
+  { id: 'sword', name: 'The Borrowed Sword', layer: 'bond', pair: ['hero', 'tobin'], cls: 'warden', needs: 'A Warrior hero and Tobin',
     stories: ['Your Spare Sword', 'He Gives It Back'],
     parts: [{ text: 'While Tobin stands next to you, you both take 8% less damage. His Guard also covers you.', stage: 'C' }] },
-  { id: 'banner', name: 'The Banner', layer: 'bond', pair: ['hero', 'aldric'], cls: 'warden', needs: 'A Warden hero and Aldric',
+  { id: 'banner', name: 'The Banner', layer: 'bond', pair: ['hero', 'aldric'], cls: 'warden', needs: 'A Warrior hero and Aldric',
     stories: ['A Banner Nobody Remembers', 'Yours Now'],
     parts: [{ text: 'Shield Wall lasts 1s longer.', stage: 'C' }, { text: 'Aldric deals 10% more damage.' }] },
   { id: 'page', name: 'The Missing Page', layer: 'bond', pair: ['hero', 'pip'], cls: 'lanternmage', needs: 'A Lanternmage hero and Pip',
@@ -15748,7 +16077,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
   addModifier('crit', () => {
     if (!live()) return 1;
     const dc = cur().a.heroCrit * T.today; if (!dc) return 1;
-    const base = 0.08 + gear().crit / 100;
+    const base = critBase();
     return base > 0 ? (base + dc) / base : 1;
   });
   // The hero's ability: Warded Casting (a fraction) and Two Bows (seconds off Volley).
@@ -19254,7 +19583,7 @@ const DEEP_BOON_IDS = [];
   B('map', 'Bounty Map', 'c', [], 1, null, 1, () => '+1 Depth Mark for each floor from now on');
   B('study', 'Quick Study', 'c', [], 1, null, 1, () => '+1 reroll now');
   B('kindle', 'Kindling', 'c', ['path'], 2, 'lanternmage', 2, k => `You can stack ${2 * k} more Embers`);
-  B('shield', 'Shield Drill', 'c', ['path'], 2, 'warden', 2, k => `You can hold ${2 * k} more guard stacks`);
+  B('shield', 'Shield Drill', 'c', ['path'], 2, 'warden', 2, k => `You can hold ${2 * k} more Grit`);
   B('fletch', 'Fletching', 'c', ['path'], 2, 'ranger', 4, k => `Focus lasts ${4 * k}s longer`);
   B('psalm', 'Psalm', 'c', ['path'], 2, 'lightkeeper', 1, k => `You can stack ${k} more Blessing${k > 1 ? 's' : ''}`);
   // Rare
@@ -19269,7 +19598,7 @@ const DEEP_BOON_IDS = [];
   B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `Companions deal +${pc(0.25 * k)} on elite and boss floors`);
   B('focus', "Hunter's Focus", 'r', ['path'], 1, 'ranger', 0.25, () => 'Focused foes take +50% from everyone (was +25%)');
   B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each tap plants 2 Embers');
-  B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each guard stack gives +5% (was +3%)');
+  B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each Grit gives +5% damage (was +3%)');
   B('choir', 'Choir', 'r', ['path'], 1, 'lightkeeper', 4, () => 'Blessings last 10s (was 6s)');
   // Epic
   B('twice', 'Kindle Twice', 'e', ['path'], 1, 'lanternmage', 1, () => 'Once a floor, Lantern Flare leaves its Embers in place');
@@ -19285,7 +19614,7 @@ const DEEP_BOON_IDS = [];
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
   B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'Your tanks reflect 30% of the damage they take', 1);
   B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `Tanks +${pc(0.2 * k)} max health`, 1);
-  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warden taps taunt for 2s', 1);
+  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warrior taps taunt for 2s', 1);
   B('dward', 'Deep Ward', 'r', ['mend'], 1, null, 0.2, () => 'Overhealing becomes a shield, up to 20% max health', 1);
   B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `The party heals ${pc(0.1 * k)} max health per floor cleared`, 1);
   B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, a member who would go down stays at 1 health', 1);
@@ -20073,7 +20402,7 @@ const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'guardT', 'wall', 'wallT', 'wallP
   'markT', 'mark', 'volleyHits', 'hasteT', 'blessT', 'blessMax', 'bless', 'hymn', 'hymnT', 'hymnFloor', 'lkShare', 'lkAura', 'autoEff', 'autoCd', 'charges'];
 // Numbers the combat code should use for each ks flag (the text on the star says the same).
 const STAR_KS = {
-  unbroken: { holdSecs: 3 },                  // guard stacks never fall off while a heavy hit lands at least every 3s
+  unbroken: { holdSecs: 3 },                  // Grit (was guard stacks) never falls off while a heavy hit lands at least every 3s
   crush: { every: 5, mult: 3 },               // every 5th heavy hit deals x3
   challenger: { taunt: true },                // [C] taps taunt for 2s, -20% damage taken while taunting
   bastion: { cdPerHeavy: 1, wallPauseFull: true }, // each heavy hit takes 1s off Shield Wall; the Wall stops the boss timer for its whole length
@@ -20097,22 +20426,25 @@ const STAR_KS = {
   ages: { blessEvery: 2 }                     // while the Hymn is up Blessings do not fade; +1 Blessing every 2s
 };
 
-// ---- the four maps ----
+// ---- the maps ----
 // Each arm: [name, stars 1..8]; star: [name, text, fx, p, cText?]. Slots 3 and 6 are notables (2
 // points), slot 8 the keystone (3 points), the rest minors (1 point).
+// S2 (classes-2 4.1-4.4): one map per base class, keyed warrior / ranger / mage (today's Warden and
+// Lanternmage maps, same ids and effects, copied once from the legacy keys). The legacy Lightkeeper map
+// (legacy: 1) stays live for a Lanternmage on the Lightkeeper's path until S3 moves it into that ring.
 const STAR_MAPS = {
-  warden: {
-    hearth: "Warden's Oath", color: '#3E63C9',
+  warrior: {
+    name: 'Warrior', hearth: "Warrior's Oath", color: '#3E63C9',
     arms: [
       ['Bulwark', [
-        ['Long Guard', 'Guard stacks last 2s longer.', { t: { guardT: 2 } }, 1.004],
-        ['Firm Stance', 'Each guard stack gives +0.4% more damage.', { t: { guard: 0.004 } }, 1.01],
-        ['Deep Guard', 'Guard cap +2.', { t: { guardMax: 2 } }, 1.02],
+        ['Lasting Grit', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
+        ['Firm Stance', 'Each Grit gives +0.4% more damage.', { t: { guard: 0.004 } }, 1.01],
+        ['Deep Grit', 'Grit cap +2.', { t: { guardMax: 2 } }, 1.02],
         ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
         ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more guard.'],
-        ['Long Guard II', 'Guard stacks last 2s longer.', { t: { guardT: 2 } }, 1.004],
-        ['Unbroken', 'Guard stacks never fall off while you land a heavy hit at least every 3s. Guard cap +5, but each stack gives 1% less.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each guard stack also gives 2 armour.']
+        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more Grit.'],
+        ['Lasting Grit II', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
+        ['Unbroken', 'Your Grit never falls off while you land a heavy hit at least every 3s. Grit cap +5, but each Grit gives 1% less damage.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each Grit also gives 2 armour.']
       ]],
       ['Vanguard', [
         ['Heavy Arm', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
@@ -20137,8 +20469,8 @@ const STAR_MAPS = {
     ],
     crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
   },
-  lanternmage: {
-    hearth: 'First Spark', color: '#8A4FC9',
+  mage: {
+    name: 'Lanternmage', hearth: 'First Spark', color: '#8A4FC9',
     arms: [
       ['Kindle', [
         ['More Tinder', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.012],
@@ -20174,7 +20506,7 @@ const STAR_MAPS = {
     crown: ['Everburn', 'Each Ember burns its foe for 0.1x your attack every second, and Flare plants 2 new Embers after it goes off.', { ks: 'everburn' }, 1.035]
   },
   ranger: {
-    hearth: 'Keen Eye', color: '#3E8A4E',
+    name: 'Ranger', hearth: 'Keen Eye', color: '#3E8A4E',
     arms: [
       ['Hunt', [
         ['Long Mark', 'Focus lasts 2s longer.', { t: { markT: 2 } }, 1.006],
@@ -20210,7 +20542,7 @@ const STAR_MAPS = {
     crown: ['Rain of Arrows', 'Every 10th tap fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
   },
   lightkeeper: {
-    hearth: 'Small Light', color: '#F2C14E',
+    name: 'Lightkeeper', legacy: 1, hearth: 'Small Light', color: '#F2C14E',
     arms: [
       ['Dawn', [
         ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
@@ -20269,7 +20601,9 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   starEffects, starPowerEst, starBest, starText, starValidate;
 
 {
-  registerState('stars', { v: 1, maps: {}, seen: 0 });
+  // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
+  // into them once (legacy keys stay untouched in the save).
+  registerState('stars', { v: 2, maps: {}, seen: 0 });
   const T = STAR_TUNE;
   const ST = () => S.stars;
   const KIND_COST = { minor: 1, notable: 2, key: 3, bridge: 1, crown: 3, hearth: 0 };
@@ -20313,7 +20647,8 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   starPoints = () => Math.floor((S.L || 1) / T.every) + T.lanternPts * greatLanternsLit();
 
   // ---- state ----
-  starCls = () => S.party && S.party.cls && STAR_MAPS[S.party.cls] ? S.party.cls : null;
+  // The map of the kit that runs (55-classes lbKit: Warrior, Ranger, Lanternmage; a Lightkeeper keeps its map).
+  starCls = () => { const k = typeof lbKit === 'function' ? lbKit() : S.party && S.party.cls, m = k && CLS_STAR_MAP[k]; return m && STAR_MAPS[m] ? m : null; };
   function mapRec(cls, make) {
     const m = ST().maps;
     let r = m[cls];
@@ -20455,6 +20790,10 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const st = ST();
     if (!st.maps || typeof st.maps !== 'object' || Array.isArray(st.maps)) st.maps = {};
     if (!(st.seen >= 0)) st.seen = 0;
+    if (!(st.v >= 2)) {
+      for (const to in CLS_STAR_FROM) { const from = st.maps[CLS_STAR_FROM[to]]; if (from && typeof from === 'object' && !st.maps[to]) st.maps[to] = JSON.parse(JSON.stringify(from)); }
+      st.v = 2;
+    }
     for (const k of Object.keys(st.maps)) { if (!STAR_MAPS[k]) continue; starValidate(k); }
     bump();
   }
@@ -21331,14 +21670,19 @@ let deeds, deedBonus, wearGet;
   const pagesOf = keysList => { let n = 0; for (const k of keysList) n += masteryApi.tierFor(num(S.mastery.types[k])); return n; };
   const allTypeKeys = () => TYPES.map(t => t.key);
   const hollowTypeKeys = () => REGIONS[0].types.map(i => TYPES[i].key);
+  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts and its legacy map's (same ids).
   const starBest = cls => {
-    const m = starMap(cls), r = S.stars && S.stars.maps && S.stars.maps[cls];
-    if (!m || !r || !Array.isArray(r.layouts)) return 0;
+    const m = starMap(cls), maps = S.stars && S.stars.maps;
+    if (!m || !maps) return 0;
     let best = 0;
-    for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
+    for (const key of [cls, typeof CLS_STAR_FROM === 'object' ? CLS_STAR_FROM[cls] : null]) {
+      const r = key && maps[key];
+      if (!r || !Array.isArray(r.layouts)) continue;
+      for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
+    }
     return best;
   };
-  const starClasses = () => Object.keys(STAR_MAPS);
+  const starClasses = () => Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy);
   const bookIds = () => (typeof LEG_CLASS_IDS === 'object' ? Object.values(LEG_CLASS_IDS).flat().concat(LEG_COMP_IDS) : []);
   const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
   const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
@@ -22188,8 +22532,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     hp: { tank: 12, striker: 5, caster: 4, support: 6 },
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
-    heroHp: { warden: 12, lanternmage: 4, ranger: 5, lightkeeper: 6 },
-    armour: { tank: 20, striker: 0, caster: 0, support: 10 }, heroArmour: { warden: 30, lanternmage: 0, ranger: 0, lightkeeper: 10 },
+    // S2: the base classes' HP scale and armour are CLASS_DEFS (24-data-classes; Ranger 6 / 10, was 5 / 0)
+    heroHp: { warden: CLASS_DEFS.warrior.hp, lanternmage: CLASS_DEFS.mage.hp, ranger: CLASS_DEFS.ranger.hp, lightkeeper: 6 },
+    armour: { tank: 20, striker: 0, caster: 0, support: 10 },
+    heroArmour: { warden: CLASS_DEFS.warrior.armour, lanternmage: CLASS_DEFS.mage.armour, ranger: CLASS_DEFS.ranger.armour, lightkeeper: 10 },
     aldricArmour: 20, braced: 10, redMax: 0.6, tankDr: 0.4,   // (BAL2) tankDr: tanks take 40% less (no-tank line-ups hold 2-4 zones lower)
     wardenTankHp: 0.4, wardenTankArmour: 20, wardenDr: 0.1, wardenThreat: 6,
     lkHeal: 1.2, lkAura: 0.4, lkCd: 0.25, heal: 0.8,   // heal: a support heals 0.8 x power a second (spec 1.2; T6 wants a support worth 2-4 zones of hold)
@@ -22223,7 +22569,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     sanct: 0.2, sanctHot: 0.03, sanctT: 5, lowFlame: 4, oathCd: 5, lastLight: 0.1,
     unburnt: 0.08, vowT: 5, pyre: 0.3, pyreT: 4, pyreSh: 0.15,
     hearthDr: 0.1, hearthHeal: 0.2, hedgeSh: 0.1, chosenHeal: 0.03,
-    wall: 0.6, wallT: 6, hymnHeal: 0.4, hymnCd: 0.5, lkTap: 0.08, wardenTaunt: 3,
+    wall: CLASS_ABILITIES.shieldwall.dr, wallT: 6, hymnHeal: 0.4, hymnCd: 0.5, lkTap: 0.08, wardenTaunt: 3,   // S2: Shield Wall from CLASS_ABILITIES
     blockX: 0.5, poison: 0.02, poisonT: 4,
     // S1 (59a-status): Morwen's Vigil Burn is a strong Burn (P = vigilBurnP x her hit power) so her Burns keep
     // today's total; statuses and types themselves are core-2's numbers (21x-data-types.js)
@@ -22255,7 +22601,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     return {
       i, key: '', id: null, live: false, role: 'tank', cls: null, col: 2, lane: 0, melee: true, ranged: false,
       pow: 0, hpP: 0, maxHp: 1, hp: 1, sh: 0, shT: 0, armour: 0, thX: 1, dps: 0, spd: 1, swing: 0, heal: 0, healT: 0, healX: 1, healIn: 1,
-      down: false, downT: 0, cd: 0, cdMax: 0, cdRate: 1, lv: 1, blockP: 0, ward: 0, pierce: 0, area: 0, ctrl: 1,
+      down: false, downT: 0, cd: 0, cdMax: 0, cdRate: 1, lv: 1, blockP: 0, blockC: 0, blockN: 0, ward: 0, pierce: 0, area: 0, ctrl: 1,
       drT: 0, drV: 0, untarg: 0, strikeT: 0, trust: 0, stubborn: false, vow: false, ashenT: 0, rock: 0, rockT: 0,
       icLeft: 0, icFor: -1, icUsed: 0, poisonT: 0, poisonDps: 0, reflT: 0, hotT: 0, hotV: 0, fight: 0, lifeline: false,
       dmg: 0, healed: 0, taken: 0, verse: 0, verseT: 0, tollT: 0, dt: 'phys', us: null, jdgAt: -9, jdgGot: 0
@@ -22325,7 +22671,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.melee = cls === 'warden'; u.ranged = !u.melee;
       u.dps = 0; u.spd = aps();
       u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') : 0;   // F1: Out of place heals less
-      u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
+      // S2: the base class's own block and ward (the Warrior blocks 10%); the legacy Lightkeeper kit keeps its own
+      const cd = cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base];
+      u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100 + (cd ? cd.ward : 0)); u.pierce = Math.min(1, g.pierce / 100);
+      u.blockC = cd ? cd.block : 0;   // the class's block: every 1 / blockC-th hit, counted (no random draw)
       u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
       u.cdMax = 0;
     } else {
@@ -22348,7 +22697,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (p && p.cls === 'lightkeeper') hx *= 1 + T.lkAura;
       }
       u.heal = role === 'support' ? T.heal * u.hpP * hx * offSlotMult(key) : 0;   // F1: Out of place heals less (damage: charMod)
-      u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
+      u.blockP = Math.min(0.4, g.block / 100); u.blockC = 0; u.ward = Math.min(0.4, g.ward / 100); u.pierce = Math.min(1, g.pierce / 100);
       u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
       if (key === 'maren') { maxHp *= 1 + T.sturdy; if (lv >= 10) { let n = 0; for (const k of fieldIds()) if (k !== 'maren' && OATH[k]) n++; if (p && p.cls === null) n += 0; maxHp *= 1 + T.keeper * n; } }
       // cooldown: Encore (Vesper), Wayfarers, the Lightkeeper's Blessing, Haste gear, Low Flame and The Old Oath
@@ -22980,6 +23329,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // damage reduction stack
     let dr = 1;
     if (S.party && S.party.cls === 'warden') dr *= 1 - T.wardenDr;
+    if (u.i === 0 && typeof heroGritDr === 'function') dr *= 1 - heroGritDr();   // S2: Grit, 1% less each
+    if (u.i === 0 && (kind === 'dive' || kind === 'slam') && S.party && S.party.cls === 'ranger') dr *= 1 - CLS_TUNE.lightFeet;   // S2: Light Feet
     if (has('caedmon')) dr *= 1 - T.unburnt;
     if (wallUntil > clock) dr *= 1 - T.wall;
     if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
@@ -22997,6 +23348,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     a *= dr;
     let blocked = false;
     if (u.blockP > 0 && !dot && Math.random() < u.blockP) { a *= T.blockX; blocked = true; ST.blocked++; }
+    if (!blocked && u.blockC > 0 && !dot && (u.blockN = (u.blockN || 0) + u.blockC) >= 1) { u.blockN -= 1; a *= T.blockX; blocked = true; ST.blocked++; }   // S2
     let sh = 0;
     if (u.sh > 0) { sh = Math.min(u.sh, a); u.sh -= sh; a -= sh; }
     u.hp -= a; u.taken += a + sh; ST.taken += a + sh;
@@ -37103,7 +37455,8 @@ let openSheet, partySheet;
       auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
       ab.append(auto);
       const au = el('div', 'cs-kit1'); au.append(el('b', null, 'Class aura'), el('p', null, c.aura));
-      body.append(section('Class', tap, ab, au));
+      const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
+      body.append(section('Class', tap, ab, au, ...cu));
     }
     const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
     const g = el('div', 'cs-hgear');
@@ -37132,13 +37485,14 @@ let openSheet, partySheet;
       mir.append(b);
     }
     const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
-    body.append(section('Class change', mir));
+    const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
+    body.append(sw ? section('Class change', sw, mir) : section('Class change', mir));
     sheet.foot.textContent = '';
   }
 
   const sigOf = k => (bondsUI ? bondsUI.sig() + '|' : '') + sigOf0(k);   // F4: a Bond level or story read redraws
   const sigOf0 = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
     return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, (S.legend ? JSON.stringify(S.legend.book) : '') + ['wpn', 'trk'].map(w => { const it = gearOf(k, w); return it && it.lg ? it.lg : ''; }).join(), inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
@@ -38208,7 +38562,7 @@ let openSheet, partySheet;
     const map = starMap(cls);
     R.mapBox.textContent = '';
     const [vx, vy, vw, vh] = STAR_GEO.view, cx = STAR_GEO.cx, cy = STAR_GEO.cy;
-    const svg = sv('svg', { viewBox: STAR_GEO.view.join(' '), class: 'st-svg', role: 'group', 'aria-label': `${HERO_CLASSES[cls].name} star map` });
+    const svg = sv('svg', { viewBox: STAR_GEO.view.join(' '), class: 'st-svg', role: 'group', 'aria-label': `${STAR_MAPS[cls].name} star map` });
     svg.style.setProperty('--role', map.color);
     // backdrop: faint rings and dust (seeded, static)
     const bg = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
@@ -38319,7 +38673,7 @@ let openSheet, partySheet;
     const s2 = [cls, ai, lay.lit.join(','), pts, lock || '', sel, UI.mode, lays[0].name, lays[1].name].join('|');
     if (!force && s2 === sig) return;
     sig = s2;
-    putText(R.title, `${HERO_CLASSES[cls].name} stars`);
+    putText(R.title, `${STAR_MAPS[cls].name} stars`);
     putText(R.pts, `${free} of ${plural(pts, 'point')} left`);
     putToggle(R.pts, 'has', free > 0);
     putText(R.keys, `Keystones ${keys} of ${STAR_TUNE.keyMax}`);
@@ -39389,14 +39743,22 @@ document.addEventListener('click', e => {
 })();
 
 // ---- src/js/76-create.js ----
-// 76-create: character creation (new games) and the one-time "Choose your path" screen
-// (existing saves, and again after a Mirror of Embers). Browser-only.
-// Needs HERO_CLASSES and chooseClass (55-party.js, A1); drawCharPreview/heroSpec (60b-baker.js,
-// A2) are optional. Without HERO_CLASSES or S.party the screen never opens.
+// 76-create: character creation (new games), the one-time "Choose your path" screen (existing saves,
+// and again after a Mirror of Embers), the free switch (S2) and the class card rows on the hero sheet.
+// Browser-only. S2 (classes-2 1, 3.4, 7.2): the picker offers the three base classes (CLASS_BASES,
+// 24-data-classes.js) and chooses through chooseBase (55-classes.js). drawCharPreview/heroSpec (60b-baker.js,
+// A2) are optional. Without CLASS_DEFS or S.party the screen never opens.
+//
+// classUI (read by 75-party-sheet.js): rows() -> [el] the class card's extra rows (passives, the evolution
+// row, the locked second-tier row, what changed for a migrated save); switchRow() -> el | null (the free
+// switch, while it is open); sig() -> a string that changes when those rows would; open(mode).
+var classUI;
 {
-  const ORDER = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
+  const ORDER = CLASS_BASES;
   const ROLE_NAME = { tank: 'Tank', striker: 'Striker', caster: 'Caster', support: 'Support' };
-  const STARTER = { warden: 'wren', lanternmage: 'tobin', ranger: 'tobin', lightkeeper: 'bram' };
+  const WEIGHT_NAME = { heavy: 'Heavy armour', medium: 'Medium armour', light: 'Light armour' };
+  const HOME_NAME = { front: 'Front', mid: 'Middle', back: 'Back' };
+  const STARTER = { warrior: 'wren', mage: 'tobin', ranger: 'tobin' };
   const STARTER_NAME = { wren: 'Wren Hollowmere', tobin: 'Tobin Reed', bram: 'Bram Hollis' };
   const JOIN = {
     wren: ['An arrow lands at your feet, then another in the slime behind you.',
@@ -39410,19 +39772,32 @@ document.addEventListener('click', e => {
       'Bram Hollis walks ahead of you, into the dark.']
   };
   // Fallback look when the new baker is not in: today's hero sprite, tinted per class.
-  const TINT = { warden: '#3E63C9', lanternmage: '#8A4FC9', ranger: '#3E8A4E', lightkeeper: '#EFE6D6' };
+  const TINT = { warrior: '#3E63C9', mage: '#8A4FC9', ranger: '#3E8A4E' };
+  // A migrated save's "What changed" (classes-2 7.2): three points per old class.
+  const CHANGED = {
+    warden: ['Your class is called Warrior now. The Warden is its path, and it is yours.',
+      'Guard stacks are Grit now. Each one also cuts the damage you take by 1%.',
+      'You block every tenth hit you take (half damage).'],
+    ranger: ['You are still a Ranger, and sturdier: more health and 10 armour.',
+      'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
+    lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',
+      'Your Proving opens after the Fenmother.'],
+    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing, Rally Hymn and Lightkeeper stars.',
+      'New Lightkeeper powers come in a later update.']
+  };
 
-  const classes = () => (typeof HERO_CLASSES === 'object' && HERO_CLASSES) ? HERO_CLASSES : null;
-  const needsChoice = () => !!(classes() && typeof S === 'object' && S.party && !S.party.chosen && typeof chooseClass === 'function');
+  const classes = () => (typeof CLASS_DEFS === 'object' && CLASS_DEFS && typeof HERO_CLASSES === 'object') ? CLASS_DEFS : null;
+  const needsChoice = () => !!(classes() && typeof S === 'object' && S.party && !S.party.chosen && typeof chooseBase === 'function');
 
-  let root = null, pick = 'warden', mode = 'new', lastFocus = null;
+  let root = null, pick = 'warrior', mode = 'new', lastFocus = null, armed = false;
 
   function previewSpec(k) {
-    if (typeof classPreviewSpec === 'function') return classPreviewSpec(k);
+    const kit = CLASS_DEFS[k] ? CLASS_DEFS[k].kit : k;
+    if (typeof classPreviewSpec === 'function') return classPreviewSpec(kit);
     if (typeof heroSpec !== 'function') return null;
-    // heroSpec() reads S.party.cls; borrow it for this class, then put it back.
+    // heroSpec() reads S.party.cls (the kit key); borrow it for this class, then put it back.
     const prev = S.party.cls;
-    try { S.party.cls = k; return heroSpec(k); } finally { S.party.cls = prev; }
+    try { S.party.cls = kit; return heroSpec(kit); } finally { S.party.cls = prev; }
   }
   function drawPreview(cv, k) {
     cv.width = 56; cv.height = 100; // B1 sprites: about 70 CSS px tall, staffs reach higher
@@ -39440,15 +39815,21 @@ document.addEventListener('click', e => {
     root = el('div', 'create'); root.id = 'createScreen';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
     const inner = el('div', 'create-in');
-    const h = el('h1', null, mode === 'new' ? 'Who carries the lantern?' : mode === 'mirror' ? 'The mirror shows another path' : 'Choose your path'); h.id = 'createTitle';
+    const h = el('h1', null, mode === 'new' ? 'Who carries the lantern?' : mode === 'mirror' ? 'The mirror shows another path'
+      : mode === 'switch' ? 'Change your class' : 'Choose your path'); h.id = 'createTitle';
     const lede = el('p', 'create-lede', mode === 'new'
       ? 'You carry one of the last lanterns. Pick who you are, then name yourself.'
       : mode === 'mirror'
         ? 'Pick a new class. Your level, gear and upgrades stay with you.'
-        : 'Heroes now have classes. Warden fights like you always have, so one tap keeps things as they are.');
-    const warn = el('p', 'create-warn', 'This choice is for good. Only a rare Mirror of Embers, dropped by bosses deep in the world, lets you change it.');
+        : mode === 'switch'
+          ? 'Changed your mind? Pick another class. Your level, gear and upgrades stay with you.'
+          : 'Heroes now have classes. The Warrior fights like you always have, so one tap keeps things as they are.');
+    const mins = CLS_TUNE.secondThoughtsMin;
+    const warn = el('p', 'create-warn', mode === 'switch'
+      ? 'This uses your one free change. After it, only a rare Mirror of Embers lets you change class.'
+      : `You can change your mind once, free, in the first ${mins} minutes. After that only a rare Mirror of Embers, dropped by bosses deep in the world, lets you change it.`);
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero class');
-    const keys = ORDER.filter(k => C[k]).concat(Object.keys(C).filter(k => !ORDER.includes(k)));
+    const keys = ORDER.filter(k => C[k]);
     const figs = [];
     const btns = keys.map(k => {
       const c = C[k];
@@ -39459,9 +39840,12 @@ document.addEventListener('click', e => {
       const top = el('div', 'ctop'); top.append(el('b', null, c.name || k));
       if (c.role) top.append(el('span', 'pip r-' + c.role, ROLE_NAME[c.role] || c.role));
       txt.append(top);
+      txt.append(el('div', 'cl-wt', `${WEIGHT_NAME[c.weight] || ''} · ${HOME_NAME[c.home] || ''}`));
       if (c.pitch) txt.append(el('div', 'pitch', '"' + c.pitch + '"'));
       if (c.how) txt.append(el('div', 'how', c.how));
-      if (c.ability) { const ab = el('div', 'ab'); ab.append(el('em', null, c.ability.name + ': '), document.createTextNode(c.ability.desc || '')); txt.append(ab); }
+      const ab1 = CLASS_ABILITIES[c.ab1];
+      if (ab1) { const ab = el('div', 'ab'); ab.append(el('em', null, ab1.name + ': '), document.createTextNode(ab1.desc || '')); txt.append(ab); }
+      if (mode === 'switch' && S.cls && S.cls.base === k) txt.append(el('div', 'how', 'Your class now.'));
       if (mode === 'new' && STARTER[k]) txt.append(el('div', 'how', 'Starts with ' + STARTER_NAME[STARTER[k]] + '.'));
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
@@ -39487,12 +39871,14 @@ document.addEventListener('click', e => {
     };
     requestAnimationFrame(() => setTimeout(nextFig, 0));
     function select(k) {
-      pick = k;
+      pick = k; armed = false;
+      if (begin) putText(begin, goLabel());
       for (const b of btns) {
         const on = b.dataset.cls === k;
         b.setAttribute('aria-checked', String(on)); b.setAttribute('aria-pressed', String(on)); b.tabIndex = on ? 0 : -1;
       }
     }
+    let begin = null;
     inner.append(h, lede, warn, cards);
     let nameIn = null;
     if (mode === 'new') {
@@ -39502,12 +39888,28 @@ document.addEventListener('click', e => {
       nameIn.value = S.name && S.name !== 'Wanderer' ? S.name.slice(0, 16) : 'Wanderer';
       nf.append(lb, nameIn); inner.append(nf);
     }
-    const begin = el('button', 'big forge create-go', mode === 'new' ? 'Begin' : 'Take this path'); begin.type = 'button';
+    function goLabel() {
+      if (mode !== 'switch') return mode === 'new' ? 'Begin' : 'Take this path';
+      if (S.cls && S.cls.base === pick) return 'Keep my class';
+      return armed ? `Tap again: become a ${C[pick].name}` : `Switch to ${C[pick].name}`;
+    }
+    begin = el('button', 'big forge create-go', goLabel()); begin.type = 'button';
     begin.addEventListener('click', () => {
       let name;
       if (nameIn) name = nameIn.value.replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯]/g, '').trim().slice(0, 16) || 'Wanderer';
       const wasMode = mode;
-      try { chooseClass(pick, name); } catch (e) { console.error('[lanternfall] chooseClass', e); return; }
+      if (mode === 'switch') {
+        // In-page confirm: the first tap arms, the second switches (the free change is used once).
+        if (S.cls && S.cls.base === pick) { close(); return; }
+        if (!armed) { armed = true; putText(begin, goLabel()); return; }
+        let okd = false;
+        try { okd = chooseBase(pick); } catch (e) { console.error('[lanternfall] chooseBase', e); }
+        try { save(); } catch (e) {}
+        close();
+        if (!okd) toast('The free change has run out. A Mirror of Embers can still change your class.', 'raid');
+        return;
+      }
+      try { if (!chooseBase(pick, { name })) return; } catch (e) { console.error('[lanternfall] chooseBase', e); return; }
       if (name && S.name !== name) S.name = name;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();
@@ -39516,6 +39918,12 @@ document.addEventListener('click', e => {
       else { close(); toast(`You walk on as a ${C[pick].name}.`, 'good'); }
     });
     inner.append(begin);
+    if (mode === 'switch') {
+      const back = el('button', 'textlink create-back', 'Keep my class'); back.type = 'button';
+      back.addEventListener('click', close);
+      inner.append(back);
+      root.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
     root.append(inner);
     select(pick);
     root.addEventListener('keydown', trapTab);
@@ -39551,12 +39959,20 @@ document.addEventListener('click', e => {
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 
-  function open() {
-    if (root || !needsChoice()) return;
-    // Mirror mode: the class was already chosen earlier in this session (useMirror reopened it).
-    mode = sawChosen && S.party.cls ? 'mirror' : S.party.newGame ? 'new' : 'path';
-    pick = mode === 'mirror' ? S.party.cls : 'warden';
-    if (!classes()[pick]) pick = Object.keys(classes())[0];
+  function open(want) {
+    if (root) return;
+    if (want === 'switch') {
+      if (!classes() || typeof clsSwitchInfo !== 'function' || !clsSwitchInfo().ok) return;
+      mode = 'switch';
+    } else {
+      if (!needsChoice()) return;
+      // Mirror mode: the class was already chosen earlier in this session (useMirror reopened it).
+      mode = sawChosen && S.party.cls ? 'mirror' : S.party.newGame ? 'new' : 'path';
+    }
+    const base = S.cls && S.cls.base;
+    pick = (mode === 'mirror' || mode === 'switch') && base ? base : 'warrior';
+    if (!classes()[pick]) pick = ORDER[0];
+    armed = false;
     lastFocus = document.activeElement;
     document.body.append(build());
     const sel = root.querySelector('.ccard[aria-checked="true"]');
@@ -39569,6 +39985,72 @@ document.addEventListener('click', e => {
     ui(true);
     emit('createDone', { mode });   // 75-onboard-ui.js: the guide's first hint (tap the foe) starts now
   }
+
+  // ---- the class card rows (hero sheet, 75-party-sheet.js) ----
+  const row = (title, sub, text, cls) => {
+    const d = el('div', 'cs-kit1 cl-row' + (cls ? ' ' + cls : ''));
+    const top = el('div', 'cl-top'); top.append(el('b', null, title)); if (sub) top.append(el('small', null, sub));
+    d.append(top);
+    if (text) d.append(el('p', null, text));
+    return d;
+  };
+  const chip = (txt, on) => el('span', 'cl-chip' + (on ? ' on' : ''), (on ? '\u2713 ' : '') + txt);
+  classUI = {
+    rows() {
+      const info = typeof clsInfo === 'function' ? clsInfo() : null;
+      if (!info) return [];
+      const d = CLASS_DEFS[info.base], out = [];
+      for (const ps of d.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
+      // The evolution: granted (a migrated Warden or Lightkeeper), or the two paths and their gate.
+      if (info.evo) {
+        const txt = info.evo === 'priest'
+          ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
+          : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
+        const r = row(`Path: ${info.evoName}`, info.proven ? info.evoTitle : 'Granted', txt, 'cl-evo');
+        if (!info.proven) r.append(el('p', 'cl-note', `The title ${info.evoTitle} waits for your Proving, after the Fenmother.`));
+        out.push(r);
+      } else {
+        const names = info.paths.map(x => `${x.name} (${x.kind})`).join(' or ');
+        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const chips = el('div', 'cl-chips');
+        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        r.append(chips);
+        if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
+        out.push(r);
+      }
+      out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+      if (info.migrated && CHANGED[info.from]) {
+        const det = el('details', 'cl-changed');
+        det.append(el('summary', null, 'What changed'));
+        const ul = el('ul'); for (const t of CHANGED[info.from]) ul.append(el('li', null, t));
+        det.append(ul);
+        out.push(det);
+      }
+      return out;
+    },
+    head() {
+      const info = typeof clsInfo === 'function' ? clsInfo() : null;
+      if (!info) return '';
+      const d = CLASS_DEFS[info.base];
+      return `${WEIGHT_NAME[d.weight]} · ${HOME_NAME[d.home]}`;
+    },
+    switchRow() {
+      const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null;
+      if (!sw || !sw.ok) return null;
+      const m = Math.max(1, Math.ceil(sw.left / 60e3));
+      const box = el('div', 'cs-mirror cl-switch');
+      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch class for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
+      const b = el('button', 'mini go', 'Switch'); b.type = 'button';
+      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); open('switch'); });
+      box.append(t, b);
+      return box;
+    },
+    sig() {
+      const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null, c = S.cls || {};
+      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone].join('/');
+    },
+    open
+  };
 
   // Open now if needed, and whenever the choice reopens (a Mirror of Embers).
   let sawChosen = !!(typeof S === 'object' && S.party && S.party.chosen);
