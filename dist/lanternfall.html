@@ -9905,7 +9905,7 @@ const SOLO_TUNE = {
   openX: 1.5,
   counterT: 0.55,      // a parry staggers the foe for the counter's length; the counter lands at counterAt
   counterAt: 0.3,
-  counterX: 3,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
+  counterX: 4,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
   // ---- the ability (one per starter) ----
   autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
   echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked
@@ -9914,9 +9914,13 @@ const SOLO_TUNE = {
   // ---- telegraphs (owner: heavy hits come mainly from bosses and elites; trash rarely, and softer) ----
   trashEvery: 20, trashFirst: 9, trashX: 1.6, trashFrom: 1,   // a pack foe's heavy: every 20 s of fighting (first at 9 s)
   // ---- balance for one hero (sim.mjs --targets early pacing) ----
-  dmgX: 1.6,           // the hero's damage (the party's share folded in)
+  dmgX: 1.75,          // the hero's damage (the party's share folded in)
+  ramp: [8, 12, 1.35], // ... rising x1.35 from max zone 8 to 12 (the old party's trio step)
+  heroX: { wren: 0.85, tobin: 1.2, pip: 1.15 },   // per hero damage, for parity (the Ranger kit crits more; the Warrior's is a tank's)
+  heroHp: { wren: 1.1, tobin: 1, pip: 1.6 },      // per hero HP (Pip wears cloth and stands alone)
   hpX: 2.6,            // the hero's HP (it takes every hit now)
-  drX: 0.25            // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
+  drX: 0.25,           // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
+  bossHitX: 0.6        // a boss's (and its adds') hits on the lone hero (bosses were tuned against a tank)
 };
 
 const SOLO_HEROES = {
@@ -10273,6 +10277,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos]) return false;
     const w = resolveWho(pos, who);
     if (RETOOL.on && RT_KINDS[kind] && w !== 'any' && !(it && typeof it === 'object' && it.u)) return false;
+    // playtest-1 note 5 (SOLO1): a unique sword (the zone bosses' weapons) is a sword: only a sword hand holds it
+    if (kind === 'weapon' && it && typeof it === 'object' && it.u && (who == null || who === 'hero') && w !== 'any' && w !== 'warden') return false;
     return craftFits(kind, pos, w);
   };
 
@@ -12840,12 +12846,13 @@ const HEARTH_TUNE = {
   light: [['wood', 1, 8]],             // the fire: 8 Oak Log
   // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
   first: {
-    bench: { mats: [['wood', 1, 20]], secs: 30 },
-    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 60 },
-    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 90 },
-    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 120 },
-    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 180 },
-    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 180 }
+    // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
+    bench: { mats: [['wood', 1, 20]], secs: 10 },
+    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 15 },
+    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 20 },
+    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 30 },
+    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 45 },
+    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 45 }
   },
   near: 0.8,       // the Storehouse plot also opens when any pile reaches 80% of what the packs hold
   packs: 100,      // what the packs hold before a Storehouse (H3's storeCap wins when it exists)
@@ -19061,7 +19068,7 @@ const CAMP_TUNE = {
   goldPerLv: 60,            // (unused since ECON-A: building gold is ECON.rowH hours of income at the gate zone, 55-econ econRowGold)
   mult: [0.6, 1.5, 2, 3, 4], // material multiplier by row (building level); (BAL1) row 1 was 1: the first build lands in the first 10-20 min
   troph: [0, 0, 0, 1, 2],   // trophies by row
-  secs: [180, 3600, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row
+  secs: [45, 1200, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row (playtest-1 note 8, SOLO1: row 1 was 180 s, row 2 an hour)
   shrineSecs: [6 * 3600, 16 * 3600, 30 * 3600],
   awayMax: 24,              // hours: the away cap never goes above this
   trophyEss: 10             // until trophies have a source: each trophy costs this much essence of the row's tier
@@ -23921,7 +23928,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.pow = hp0 / T.heroPow;
       u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
       maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
-      if (soloOn()) maxHp *= SOLO_TUNE.hpX;   // SOLO1: the hero takes every hit now
+      if (soloOn()) maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // SOLO1: the hero takes every hit now
       u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
       if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
@@ -24668,7 +24675,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (has('caedmon')) dr *= 1 - T.unburnt;
     if (wallUntil > clock) dr *= 1 - T.wall;
     if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
-    if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX();   // SOLO1: the solo hero's cut, and x1.5 while open after a missed parry
+    if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX(f);   // SOLO1: the solo hero's cut (bosses and adds softer), x1.5 while open after a missed parry
     if (u.drT > 0) dr *= 1 - u.drV;
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
@@ -25068,7 +25075,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // reductions, capped) against the party's HP and healing: it must outlast the kill by bossLive.
     let hpSum = 0, heal = 0, front = EST[0];
     for (let i = 0; i < n; i++) { hpSum += EST[i].maxHp; heal += EST[i].heal; if (EST[i].col > front.col || (EST[i].col === front.col && EST[i].role === 'tank')) front = EST[i]; }
-    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? 1 - SOLO_TUNE.drX : 1);
+    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? (1 - SOLO_TUNE.drX) * SOLO_TUNE.bossHitX : 1);
     const swing = Math.min(atk * dr, front.maxHp * T.caps.boss) * T.bossSpd, heavy = Math.min(atk * ENEMY_TUNE.heavyX * dr, front.maxHp * T.caps.tele) / ENEMY_TUNE.heavyEvery;
     const net = swing + heavy - heal - hpSum * T.regen;
     return !(net > 0) || hpSum / net >= T.bossLive * hp / Math.max(1e-9, D);
@@ -27502,7 +27509,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 {
   const T = SOLO_TUNE;
   // the hero's damage: the party's share folded in (retuned for one hero by sim.mjs --targets)
-  addModifier('dmg', () => (soloHero() ? T.dmgX : 1));
+  addModifier('dmg', () => {
+    const k = soloHero(); if (!k) return 1;
+    const r = T.ramp, f = Math.max(0, Math.min(1, ((S.maxZone || 1) - r[0]) / Math.max(1, r[1] - r[0])));
+    return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
+  });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
   registerState('solo', { v: 1, hero: null, lv: {} });
   const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {} });
@@ -27595,7 +27606,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return res;
   };
   // 59-combat cbHitUnit: the hero's damage taken (the solo cut, and more while open after a missed parry).
-  soloTakenX = () => (soloOn() ? (1 - T.drX) * (openT > 0 ? T.openX : 1) : 1);
+  soloTakenX = f => (soloOn() ? (1 - T.drX) * (f && (f.boss || f.adds) ? T.bossHitX : 1) * (openT > 0 ? T.openX : 1) : 1);
 
   // ---- the counter (59g calls it on a parry): it lands inside the stagger ----
   const counters = [];

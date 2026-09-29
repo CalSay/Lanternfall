@@ -24,7 +24,11 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
 {
   const T = SOLO_TUNE;
   // the hero's damage: the party's share folded in (retuned for one hero by sim.mjs --targets)
-  addModifier('dmg', () => (soloHero() ? T.dmgX : 1));
+  addModifier('dmg', () => {
+    const k = soloHero(); if (!k) return 1;
+    const r = T.ramp, f = Math.max(0, Math.min(1, ((S.maxZone || 1) - r[0]) / Math.max(1, r[1] - r[0])));
+    return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
+  });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
   registerState('solo', { v: 1, hero: null, lv: {} });
   const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {} });
@@ -117,7 +121,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return res;
   };
   // 59-combat cbHitUnit: the hero's damage taken (the solo cut, and more while open after a missed parry).
-  soloTakenX = () => (soloOn() ? (1 - T.drX) * (openT > 0 ? T.openX : 1) : 1);
+  soloTakenX = f => (soloOn() ? (1 - T.drX) * (f && (f.boss || f.adds) ? T.bossHitX : 1) * (openT > 0 ? T.openX : 1) : 1);
 
   // ---- the counter (59g calls it on a parry): it lands inside the stagger ----
   const counters = [];

@@ -18,6 +18,13 @@
 //   --transmute 1: with --class, break higher tiers down (Transmute) to cover a class craft's shortfall.
 //   --active: taps the stage every 0.5s and casts the class ability on cooldown.
 //             Without it, the game's own idle auto-play and auto-cast run.
+//             SOLO1: in solo (the default; --party 1 for the old party game) --class picks the class's starter
+//             (warden/warrior -> Tobin, ranger -> Wren, lanternmage/mage -> Pip). Idle: the hero swings, taps at half
+//             strength and casts its ability on its own. --active: presses Attack about once a second (the 0.6 s
+//             cooldown caps it), casts the ability when ready, and answers heavy wind-ups like a decent player:
+//             45% try a Parry (a quarter of them too early: open), 35% Dodge inside its window, 20% nothing.
+//   --report early (SOLO1): the three starters, idle and active, 1 h of mixed play each: first boss, zone 5,
+//             zone 10, zones at 30 and 60 min, wipes, answers; PASS/FAIL against the early targets.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
 //             possible (saving gold for it first); the game's own planner (56d autoPlan, F3) keeps
 //             the best 2 fielded, re-planning on events with its 6% margin and 300 s dwell.
@@ -73,9 +80,14 @@
 //   play in parallel and prints PASS/FAIL for T1-T3, T10, T16, D1, P1-P4 (docs/design/pacing.md),
 //   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
 //   --eval/--camp pass through.
-import { loadCore } from './lib/core.mjs';
+import { loadCore as loadCoreRaw } from './lib/core.mjs';
+// SOLO1: the game is one hero now (24b-data-solo.js SOLO_TUNE.on). --party 1 runs the dormant party game
+// (a prelude sets __SOLO = 0 before any game file) for its old targets.
+const PARTY = process.argv.includes('--party') && process.argv[process.argv.indexOf('--party') + 1] !== '0';
+const loadCore = opts => loadCoreRaw({ ...(opts || {}), prelude: (PARTY ? 'var __SOLO = 0;\n' : '') + ((opts && opts.prelude) || '') });
 import { writeFileSync } from 'node:fs';
 
+const SAVE_KEY = 'lanternfall.save.v3';   // SOLO1 (30-state.js)
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
   if (x.startsWith('--')) a.push([x.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
   return a;
@@ -99,7 +111,8 @@ const profile = args.profile ? PROFILES[args.profile] : null;
 if (args.profile && !profile) { console.error('--profile must be idle, normal or active'); process.exit(1); }
 if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === undefined) args[k] = String(profile[k]);
 
-if (args.targets) { await runTargets(); process.exit(0); }
+if (args.report === 'early') { await runEarlyReport(); process.exit(0); }
+if (args.targets) { if (!PARTY) await runEarlyReport(true); await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
 if (args.report === 'deeds') { await runDeedsReport(); process.exit(0); }
 if (args.report === 'hands') { await runHandsReport(); process.exit(0); }
@@ -117,7 +130,7 @@ if (!args['from-save']) E('S.bounties.slots = []; BOUNTY_API.refresh()');
 if (args['from-save']) {
   // Start from a real save file (e.g. tests/fixtures/save-mid-v2.json) instead of a fresh game.
   const fs = await import('node:fs');
-  g.storage.set('lanternfall.save.v2', fs.readFileSync(args['from-save'], 'utf8'));
+  g.storage.set(SAVE_KEY, fs.readFileSync(args['from-save'], 'utf8'));
   E('loadSave(); gearDirty(); spawn()');
 }
 E('S.amt = "1"');
@@ -223,7 +236,8 @@ const storeAwayPick = () => {
 };
 // A full pile: move to the next node of the same skill that is not full (a player would).
 const storeFullSwitch = () => { if (storeOn && storeSw && E('S.activity === "gather" && stashFull(S.node.kind, S.node.t)')) E('storeSwitch()'); };
-if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
+const SOLO = E('soloOn()');
+if (cls && !E(SOLO ? `soloPick(SOLO_BY_BASE[${JSON.stringify(cls)}] || ${JSON.stringify(cls)})` : `chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
 // --evo reaver|warden|venomstalker|trapper|warlock|priest (S3, classes-2 6.3): evolves as soon as the Proving
 // opens (the Fenmother beaten, level 35), as a passed Proving and the choice card would; --evo none stays base.
 if (args.evo && args.evo !== 'none') {
@@ -693,6 +707,22 @@ function coldStep() {
   if (want) { if (!coldTrip || coldTrip[0] !== want[0] || coldTrip[1] !== want[1] || E('S.activity !== "gather"')) { coldTrip = want; fn.setNode(want[0], want[1]); fn.setActivity('gather'); } }
   else if (coldTrip) { coldTrip = null; fn.setActivity('fight'); }
 }
+// SOLO1 --active: a decent player on the buttons (see the header). One plan per wind-up (telegraphStart).
+let soloPlan = null;
+const rnd = (() => { let x = (seed * 2654435761) >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; })();
+fn.on('telegraphStart', e => {
+  if (!active || !SOLO || !e || (e.kind !== 'heavy' && e.kind !== 'zone' && e.kind !== 'slam')) { soloPlan = null; return; }
+  const r = rnd(), pw = E('SOLO_TUNE.parryWin'), dw = E('SOLO_TUNE.dodgeWin');
+  if (e.kind === 'heavy' && r < 0.45) soloPlan = { act: 'soloParry()', at: rnd() < 0.25 ? pw + 0.1 + rnd() * 0.3 : Math.max(0.05, pw - rnd() * 0.25) };
+  else if (r < 0.8) soloPlan = { act: 'soloDodge()', at: Math.max(0.05, dw - rnd() * (dw - 0.1)) };
+  else soloPlan = null;
+});
+function soloActive() {
+  if (E('target() !== "mob"')) return;
+  if (soloPlan) { const w = E('(w => w ? w.left : -1)(actWarning())'); if (w < 0) soloPlan = null; else if (w <= soloPlan.at) { E(soloPlan.act); soloPlan = null; } }
+  if (rnd() < 0.2) E('soloAttack()');
+  E('soloAbility()');
+}
 function playSecond(sec) {
   coldStep();
   if (policy === 'mixed' && sec % 60 === 0) {
@@ -714,7 +744,8 @@ function playSecond(sec) {
   if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
   if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15 && cbBossReady()')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
-    if (active) {
+    if (active && SOLO) soloActive();
+    else if (active) {
       if (k % 5 === 0) fn.playerTap({ x: 0.66, y: 0.5 });
       if (cls) E('castAbility()');
     }
@@ -740,7 +771,7 @@ line(total);
 if (t11Snap) {
   const h = loadCore({ seed: seed + 11 });
   if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
-  h.storage.set('lanternfall.save.v2', t11Snap);
+  h.storage.set(SAVE_KEY, t11Snap);
   h.eval('loadSave(); gearDirty(); spawn(); S.auto = false');
   const newId = h.eval("ROSTER_KEYS.find(k => !isRecruited(k) && ROSTER[k].role !== 'tank' && ROSTER[k].role !== 'support')");
   h.eval(`unlockChar(${JSON.stringify(newId)}, 'test', true); S.party.autoField = false; const f = S.party.field.slice(); fieldChar(${JSON.stringify(newId)}, f[f.length - 1])`);
@@ -754,6 +785,7 @@ if (t11Snap) {
   t11 = { id: newId, min: tt / 60, lv: h.eval(`charRec(${JSON.stringify(newId)}).lv`), target: target() };
 }
 const zAt = s => { let z = 1; for (const [k, v] of Object.entries(reached)) if (v <= s && +k > z) z = +k; return z; };
+if (SOLO) console.log(`early: boss1=${reached[2] ? (reached[2] / 60).toFixed(1) : '-'}m toZone5=${reached[5] ? (reached[5] / 60).toFixed(1) : '-'}m toZone10=${reached[10] ? (reached[10] / 60).toFixed(1) : '-'}m wipes<z10=${wipeAt.filter(x => !reached[10] || x < reached[10]).length} bossFails=${bossTries} hero=${E('soloHero()')} L${E('S.L')} solo=${E('JSON.stringify(SOLO_STATS)')}`);
 console.log(`summary: class=${cls || 'none'} ${active ? 'active' : 'idle'} maxZone@30m=${zAt(1800)} @1h=${zAt(3600)} @2h=${zAt(7200)} @3h=${zAt(10800)} end=${E('S.maxZone')} toZone15=${reached[15] ? (reached[15] / 60).toFixed(1) + 'm' : '-'} toZone20=${reached[20] ? (reached[20] / 60).toFixed(1) + 'm' : '-'} casts=${casts}`);
 {
   const out = planCh.filter(c => c.reason !== 'recruit' && c.reason !== 'call' && c.reason !== 'on');
@@ -801,7 +833,7 @@ if (E('partyCombatOn()')) {
   const st = E('CB_STATS'), ft = Object.values(firstTry), z5 = reached[5];
   const pct = x => (100 * x).toFixed(0) + '%';
   console.log(`combat: wipes ${wipeAt.length} (${(wipeAt.length / (total / 3600)).toFixed(2)}/h), before zone 5 ${wipeAt.filter(x => z5 === undefined || x < z5).length} | toZone5=${z5 !== undefined ? (z5 / 60).toFixed(1) + 'm' : '-'} | T13 tank share ${pct(st.tankSecs / Math.max(1e-9, st.enemySecs))} | T14 companion damage ${pct(st.compDmg / Math.max(1e-9, st.compDmg + st.heroDmg))} | T7 first boss tries ${ft.filter(x => x).length}/${ft.length} (${pct(ft.filter(x => x).length / Math.max(1, ft.length))}) | kos ${st.kos} telegraphs ${st.tele} parries ${st.parries} heavy hits ${st.hitByHeavy} abilities ${st.abilities} pushes ${st.pushes}`);
-  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set('lanternfall.save.v2', snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
+  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set(SAVE_KEY, snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
   if (t2Snap && args.t5) {
     // T5: an hour of farming at maxZone - 2 with the same field (auto off): wipes.
     const h = fork(t2Snap, 5), w = [];
@@ -1037,6 +1069,53 @@ function runDays() {
 //   P4  boredom before the Region 2 boss: at most 3 check-ins in a row with no new zone, gear
 //       tier, recruit or promotion
 //   C1  the Camp: first build within 10-20 min, full camp after 14+ days (INFO)
+// ================= --report early (SOLO1): the solo hero's first hour =================
+// The three starters (Wren, Tobin, Pip by their base classes), idle and active, 1 h of mixed play (the policy
+// gathers, crafts and builds like a player). Targets (docs/design/solo-hero.md, the playtest brief):
+//   E1 idle: the first zone boss falls within the first few minutes (<= 4 min)
+//   E2 idle: zone 5 in 8-12 min
+//   E3 idle: zone 10 in 25-35 min
+//   E4 active (buttons, some parries and dodges) reaches zone 10 10-35% sooner than idle (mean of the three)
+//   E5 idle: no wipes before zone 10
+//   E6 hero parity: each hero's idle time to zone 10 within 0.8-1.2 of the median
+async function runEarlyReport(inTargets) {
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
+  const pass = ['pace', 'eval', 'camp', 'combat', 'enemy', 'store', 'hands'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const heroes = [['wren', 'ranger'], ['tobin', 'warden'], ['pip', 'lanternmage']];
+  const hrs = String(args.hours || 1), seed0 = +(args.seed || 1), nSeeds = +(args.seeds || 3), seeds = Array.from({ length: nSeeds }, (_, i) => seed0 + i);
+  // every hero x idle / active x seeds; a row is the mean over the seeds (one seed swings a zone by minutes)
+  const jobs = heroes.flatMap(([, c]) => [false, true].flatMap(a => seeds.map(sd => ['--policy', 'mixed', '--hours', hrs, '--class', c, '--every', '600', '--t11', '0', '--seed', String(sd), ...(a ? ['--active', '1'] : []), ...pass])));
+  const outs = await Promise.all(jobs.map(run));
+  const num = (o, re) => { const m = o.match(re); return m ? +m[1] : NaN; };
+  const avg = l => { const v = l.filter(Number.isFinite); return v.length === l.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN; };
+  const rows = heroes.map(([h], i) => [false, true].map((a, j) => {
+    const os = seeds.map((_, k) => outs[(i * 2 + j) * nSeeds + k]);
+    const m = re => avg(os.map(o => num(o, re)));
+    const sum = k => os.reduce((acc, o) => { const x = (o.match(/solo=(\{[^}]*\})/) || [])[1]; return acc + (x ? JSON.parse(x)[k] || 0 : 0); }, 0);
+    return { h, a, b1: m(/boss1=([\d.]+)m/), z5: m(/toZone5=([\d.]+)m/), z10: m(/toZone10=([\d.]+)m/), z30: m(/@30m=(\d+)/), z60: m(/@1h=(\d+)/),
+      wipes: os.reduce((acc, o) => acc + num(o, /wipes<z10=(\d+)/), 0), fails: os.reduce((acc, o) => acc + num(o, /bossFails=(\d+)/), 0), lv: m(/ L(\d+) solo=/),
+      solo: { parries: sum('parries'), dodges: sum('dodges'), counters: sum('counters') }, z10s: os.map(o => num(o, /toZone10=([\d.]+)m/)) };
+  }));
+  const f1 = v => Number.isFinite(v) ? v.toFixed(1) : '-';
+  console.log(`early pacing (SOLO1): ${hrs} h mixed play, mean of seeds ${seeds.join(', ')} (wipes, boss fails and answers are totals)`);
+  console.log('  hero   mode    boss1   zone5  zone10  @30m  @60m  lvl  wipes<10  bossFails  parries/dodges/counters');
+  for (const r of rows.flat()) console.log(`  ${r.h.padEnd(6)} ${(r.a ? 'active' : 'idle').padEnd(6)} ${f1(r.b1).padStart(6)}m ${f1(r.z5).padStart(6)}m ${f1(r.z10).padStart(6)}m ${f1(r.z30).padStart(5)} ${f1(r.z60).padStart(5)} ${f1(r.lv).padStart(4)} ${String(r.wipes).padStart(9)} ${String(r.fails).padStart(10)}  ${r.solo.parries || 0}/${r.solo.dodges || 0}/${r.solo.counters || 0}`);
+  const idle = rows.map(r => r[0]), act = rows.map(r => r[1]);
+  const inR = (v, [a, b]) => v >= a && v <= b, ok = b => b ? 'PASS' : 'FAIL';
+  const res = [];
+  res.push([ok(idle.every(r => r.b1 <= 4)), 'E1 idle: first zone boss within 4 min', idle.map(r => `${r.h} ${f1(r.b1)}m`).join(', ')]);
+  res.push([ok(idle.every(r => inR(r.z5, [8, 12]))), 'E2 idle: zone 5 in 8-12 min', idle.map(r => `${r.h} ${f1(r.z5)}m`).join(', ')]);
+  res.push([ok(idle.every(r => inR(r.z10, [25, 35]))), 'E3 idle: zone 10 in 25-35 min', idle.map(r => `${r.h} ${f1(r.z10)}m`).join(', ')]);
+  const mean = l => l.reduce((a, b) => a + b, 0) / l.length, fast = 1 - mean(act.map(r => r.z10)) / mean(idle.map(r => r.z10));
+  res.push([ok(inR(fast, [0.1, 0.35])), 'E4 active reaches zone 10 10-35% sooner than idle', `${Number.isFinite(fast) ? Math.round(fast * 100) : '-'}% (idle ${f1(mean(idle.map(r => r.z10)))}m, active ${f1(mean(act.map(r => r.z10)))}m)`]);
+  res.push([ok(idle.every(r => r.wipes === 0)), 'E5 idle: no wipes before zone 10', idle.map(r => `${r.h} ${r.wipes}`).join(', ')]);
+  const med = idle.map(r => r.z10).sort((a, b) => a - b)[1];
+  res.push([ok(idle.every(r => inR(r.z10 / med, [0.8, 1.2]))), 'E6 hero parity: idle time to zone 10 within 0.8-1.2 of the median', idle.map(r => `${r.h} ${(r.z10 / med).toFixed(2)}`).join(', ')]);
+  for (const [st, name, v] of res) console.log(`${st}  ${name}: ${v}`);
+  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.length} early targets pass${inTargets ? '\n(the party-era targets follow: T10, T11, T12-T14, T16 and T17 measure the party and do not apply to one hero)\n' : ''}`);
+}
+
 async function runTargets() {
   const { execFile } = await import('node:child_process');
   const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
@@ -1136,7 +1215,7 @@ async function runTargets() {
   res.push([ok(inR(t8, [0.85, 1.15])), 'T8 offline estimate (live rate, before the away share) vs 1h of simulated fighting (gold): within 15%', (bal.match(/T8 offline estimate vs 1h live at zone \d+: [^|]*/) || ['-'])[0].trim()]);
   {
     const fs = await import('node:fs'), path = await import('node:path'), { memoryStorage } = await import('./lib/core.mjs');
-    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ 'lanternfall.save.v2': fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
+    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ [SAVE_KEY]: fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
     res.push([ok(t9.every(([, r]) => inR(r, [1, 1.3]))), 'T9 migration of both fixtures: field damage vs old compDps() in 1.00-1.30', t9.map(([f, r]) => `${f} ${r.toFixed(2)}`).join(', ')]);
   }
   // CU1 (owner, 2026-09-28: no rapid catch-up; "an achievement for maxing out all heroes shouldn't be

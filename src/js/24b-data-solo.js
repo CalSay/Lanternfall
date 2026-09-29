@@ -22,7 +22,7 @@ const SOLO_TUNE = {
   openX: 1.5,
   counterT: 0.55,      // a parry staggers the foe for the counter's length; the counter lands at counterAt
   counterAt: 0.3,
-  counterX: 3,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
+  counterX: 4,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
   // ---- the ability (one per starter) ----
   autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
   echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked
@@ -31,9 +31,13 @@ const SOLO_TUNE = {
   // ---- telegraphs (owner: heavy hits come mainly from bosses and elites; trash rarely, and softer) ----
   trashEvery: 20, trashFirst: 9, trashX: 1.6, trashFrom: 1,   // a pack foe's heavy: every 20 s of fighting (first at 9 s)
   // ---- balance for one hero (sim.mjs --targets early pacing) ----
-  dmgX: 1.6,           // the hero's damage (the party's share folded in)
+  dmgX: 1.75,          // the hero's damage (the party's share folded in)
+  ramp: [8, 12, 1.35], // ... rising x1.35 from max zone 8 to 12 (the old party's trio step)
+  heroX: { wren: 0.85, tobin: 1.2, pip: 1.15 },   // per hero damage, for parity (the Ranger kit crits more; the Warrior's is a tank's)
+  heroHp: { wren: 1.1, tobin: 1, pip: 1.6 },      // per hero HP (Pip wears cloth and stands alone)
   hpX: 2.6,            // the hero's HP (it takes every hit now)
-  drX: 0.25            // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
+  drX: 0.25,           // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
+  bossHitX: 0.6        // a boss's (and its adds') hits on the lone hero (bosses were tuned against a tank)
 };
 
 const SOLO_HEROES = {

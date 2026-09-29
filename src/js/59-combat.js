@@ -224,7 +224,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.pow = hp0 / T.heroPow;
       u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
       maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
-      if (soloOn()) maxHp *= SOLO_TUNE.hpX;   // SOLO1: the hero takes every hit now
+      if (soloOn()) maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // SOLO1: the hero takes every hit now
       u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
       if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
@@ -971,7 +971,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (has('caedmon')) dr *= 1 - T.unburnt;
     if (wallUntil > clock) dr *= 1 - T.wall;
     if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
-    if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX();   // SOLO1: the solo hero's cut, and x1.5 while open after a missed parry
+    if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX(f);   // SOLO1: the solo hero's cut (bosses and adds softer), x1.5 while open after a missed parry
     if (u.drT > 0) dr *= 1 - u.drV;
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
@@ -1371,7 +1371,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // reductions, capped) against the party's HP and healing: it must outlast the kill by bossLive.
     let hpSum = 0, heal = 0, front = EST[0];
     for (let i = 0; i < n; i++) { hpSum += EST[i].maxHp; heal += EST[i].heal; if (EST[i].col > front.col || (EST[i].col === front.col && EST[i].role === 'tank')) front = EST[i]; }
-    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? 1 - SOLO_TUNE.drX : 1);
+    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? (1 - SOLO_TUNE.drX) * SOLO_TUNE.bossHitX : 1);
     const swing = Math.min(atk * dr, front.maxHp * T.caps.boss) * T.bossSpd, heavy = Math.min(atk * ENEMY_TUNE.heavyX * dr, front.maxHp * T.caps.tele) / ENEMY_TUNE.heavyEvery;
     const net = swing + heavy - heal - hpSum * T.regen;
     return !(net > 0) || hpSum / net >= T.bossLive * hp / Math.max(1e-9, D);
