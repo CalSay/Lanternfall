@@ -1164,3 +1164,9 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Preview republished (save key preview.r3). UX-C1 (combat screen mock-up, opus) running.
 - Follow-ups (owner): ranged heroes stand further left; action bar slots fill the width (square, capped by height); Wren's bat at her top right; hero HP bar over the drawn head; solo stage zoomed out one step (at least 300 logical px across). Parry-glow check de-flaked. Preview v54.
 - UX-C1 merged: docs/design/mockups/combat-screen.html, published privately at https://claude.ai/artifact/CwSnk2FeSyi35quFfqQxeu. Proposes a left tab rail in landscape and the bar in the bottom-right; 9 owner questions in its notes.
+
+### 2026-09-29 (evening): owner asks for a full review and tidy-up
+- Owner: "do a full review of the system. Have an agent play testing and figuring out what's broken... idle resource gathering isn't working... come up with ideas to replace anything that's been changed with the party removal. Assess everything and tidy it up... I need you to be hard at work on the back end". Owner works on art tomorrow.
+- Size today: ~41k lines of game JS (139 files), 3k CSS, 8.7k tools (check.mjs ~6.4k).
+- Running: SOLO2 (opus, active vs idle play, Space dodges, de-flake parry-glow check). AUDIT1 (opus, read-only): system map with keep/rework/remove verdicts, party fallout + solo replacements, provable bugs (gathering first), size/efficiency, a wave plan -> docs/coord/audit-1.md.
+- Next: after SOLO2 merges, PLAY1 (playtest agent in Chromium: fresh save first hour per hero + late-game save), then fix and cleanup waves from AUDIT1 + PLAY1 (max 3 agents at once).
