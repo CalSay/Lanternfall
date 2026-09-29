@@ -25,7 +25,9 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   saves, bump the save key (e.g. `lanternfall.save.v2`) so the game starts fresh instead of loading
   broken state; never ship code that crashes on an old save. New state fields still need defaults in
   `fresh()`. The coordinator sets up late-game test saves on request.
-- Works at 360px wide. Respects `prefers-reduced-motion`.
+- Mobile is moving to **landscape only** (owner, 2026-09-29): design for about 740x360 CSS px landscape
+  phones (and desktop). Until the landscape layout lands (task UX-L1), the current portrait layout must
+  keep working at 360px wide. Respects `prefers-reduced-motion`.
 
 ## Shared online data (do not change shape without coordinator sign-off)
 

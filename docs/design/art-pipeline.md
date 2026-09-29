@@ -87,3 +87,13 @@ checklist or reads as the wrong class.
 Heroes may differ in height to fit their character (Pip, who is young, is about 86 px; adults about 96 px).
 Ask GPT to draw at the target height **natively**. Don't shrink a 96 px sprite by a non-whole factor: it drops
 rows and columns and breaks outlines. Pip's trial was shrunk this way, so her final poses should be redrawn at 86 px.
+
+## 8. Stage and backgrounds (owner, 2026-09-29: landscape only on mobile)
+
+- Heroes and scenery share one scale: **1 art px = 1 logical px** (the stage's layout unit).
+- Background canvas: **480 x 270 art px** (16:9), ground line at **y = 216**, key landmarks between x = 100
+  and 380, the strip above the ground kept clear for fighters. Separate transparent layers: sky, far, mid,
+  ground, optional foreground. Two states per area: shrouded and relit. Lamps drawn unlit or softly lit;
+  glow, fog, flicker and fireflies are code.
+- On a landscape phone (about 740 x 360 CSS px) the stage is about 480 x 240 logical px, so a 96 px hero is
+  about 40% of the stage height, and a party of three plus a pack of 8-10 fits across.

@@ -1109,3 +1109,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Pip 86 px trial (GPT, shrunk from 96 by nearest-neighbour): owner likes her shorter. Animated in code (staff flame, gathering embers, fireball, smoke, flame gutters out in death); viewer v13 with a Pip tab. Rule added: heights may vary per hero but must be drawn natively (redraw Pip at 86 px). Accessories register: Pip's staff, book, hat.
 - OWNER approved Pip's code fire (v16): noise-driven heat field, 9-colour ramp, rounded bowl base, ragged bolt trail. Script kept at tools/art/pip_build_reference.py for the future tools/art fire module (reusable for torches, braziers, the Hearth).
 - SAVED all hero art to the repo (art/heroes/{wren,tobin,pip}: poses, palettes, animate scripts, Wren's fx sprites; art/viewer; art/lanternfall-hero-style-pack.zip; art/README.md). Scratch copies were session-only.
+- OWNER: mobile moves to LANDSCAPE ONLY. CLAUDE.md constraint updated (portrait must keep working until the
+  landscape layout lands). NEW TASK UX-L1 (opus, design first): the landscape one-screen layout (stage on the
+  left or top, panels beside it), a "turn your phone" screen for portrait, stage zoom rules for 1 art px =
+  1 logical px, and what happens to the 360px-wide rules. Art spec section 8: backgrounds 480x270, ground
+  y=216. Mossy Hollow first as the background test.
