@@ -95,4 +95,7 @@ groups); pinnacle bosses and combat-2's backline divers, guards, taunts and inte
 lane combat, CB3); expeditions become **trade expeditions run by gatherers** (owner): you send a gatherer away to trade, and
 they come back with goods. They no longer use heroes.
 
+Also rework: unique items whose effect is party damage (for example the Rattlebone Charm, "Your party deals 15%
+more damage") need solo effects.
+
 **Keep:** gatherers, camp, gear and crafting, Deepwell, mastery, bestiary, the online raid.
