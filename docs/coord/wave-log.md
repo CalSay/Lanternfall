@@ -1041,3 +1041,10 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   docs/coord/playtest-1.md. PAUSED: weekday and weekend check-in triggers disabled (re-enable on resume; their
   prompts still say the v1 preview sed: fix to v2 before re-enabling). Only BAL3 (running) finishes; merge it,
   then no new agents.
+- OWNER shared two free asset packs (Tiny RPG Character Asset Pack 01 Soldier&Orc, 02 Demon_A&Blood
+  Monster_A; zips in the session uploads, not in the repo). Coordinator review: 100x100 frames with ~17-22 px
+  chibi characters, 9-25 colours, dark outlines, 6-8 frame idle/walk/attack/hurt/death with white swoosh arcs.
+  No licence file in either zip: verify the itch.io page before shipping any pixels. Proposal for resume:
+  ART-STYLE1 (sonnet): use the packs as the style reference for all our sprites; ART-IMPORT1: convert the 4
+  characters to our pixel-map format (Soldier -> Warrior base, Orc/Demon/Blood Monster -> foes) if the licence
+  allows, with credit. Paused: not launched.
