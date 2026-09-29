@@ -3135,9 +3135,10 @@ try {
   // C9: the ratio. The band (0.90-1.30, T9) is BAL3's to tune: saves below FORM_TUNE.trioFrom get no trio
   // bonus yet and lose their third companion's damage. Hard floor: nobody loses more than a third.
   for (const r of T9) console.log(`       INFO C9 T9 ${r.f} (zone ${r.z}): party damage ${r.ratio.toFixed(2)} (${r.old.join(',')} -> ${r.field.join(',')}; band 0.90-1.30: ${r.ratio >= 0.9 && r.ratio <= 1.3 ? 'in' : 'MISS, BAL3'})`);
-  // F2: slot jobs, combos and seeded Bonds add on top of the trio (up to +40% per member, 2.5); the upper bound is 1.6 until BAL3.
-  assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.6),
-    `C9 party damage after vs before the migration stays within 0.70-1.60 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
+  // F2: slot jobs, combos and seeded Bonds add on top of the trio (up to +40% per member, 2.5). BAL3: upper bound 1.6 -> 1.8
+  // (the Lanternmage's floor 1.0 -> 1.5 lifts save-v3-four's Lanternmage party to ~1.7; a gain, and old saves are never read since ECON-A).
+  assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.8),
+    `C9 party damage after vs before the migration stays within 0.70-1.80 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
   // C6: a new game: the starter and the hero in their homes; one recruit fills the third slot
   {
     const g = loadCore({ seed: 63 }), E = s => g.eval(s);
@@ -5494,7 +5495,8 @@ try {
     for (const evo of EVOS) {
       const g = late(11), E = s => g.eval(s);
       const okEvo = evolve(g, evo);
-      E('S.activity = "fight"; S.zone = 30; fightBoss = false; spawn()');
+      // BAL3: zone 36 (was 30): with the Ranger paths' floors x2.57 the Trapper cleared zone-30 packs before a trap sprang
+      E('S.activity = "fight"; S.zone = 36; fightBoss = false; spawn()');
       const st0 = J(g, 'CLS_STATS'), dmg0 = E('CB_STATS.heroDmg');
       fight(g, 45, true);
       const st1 = J(g, 'CLS_STATS'), dmg1 = E('CB_STATS.heroDmg');
@@ -5753,7 +5755,7 @@ try {
     ['hire Common, Region 1', 'econHireFee("common", 1)', 1500], ['hire Legendary, Region 1', 'econHireFee("legendary", 1)', 20000], ['hire Common, Region 2', 'econHireFee("common", 40)', 5100], ['hire Legendary, Region 5', 'econHireFee(4, 150)', 2900000],
     ['shift grade 1 Lv 1', 'econShiftFee(1, 1)', 2000], ['shift grade 4 Lv 1', 'econShiftFee(4, 1)', 4100], ['shift grade 15 Lv 1', 'econShiftFee(15, 1)', 110000], ['shift grade 1 Lv 20', 'econShiftFee(1, 20)', 2800],
     ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 4400], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 320000],
-    ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330], ['promotion rank 0 at zone 20', 'foesGold(20, ROSTER_TUNE.promoGold)', 2900]];
+    ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330], ['promotion rank 0 at zone 20', 'foesGold(20, ROSTER_TUNE.promoGold)', 1200]];
   const exBad = ex.filter(([, x, v]) => P(x) !== v);
   assert(!exBad.length, `prices as economy-2 lists them (${ex.length}: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge, promotion)` + (exBad.length ? ': ' + exBad.map(([n, x, v]) => `${n} ${P(x)} != ${v}`).join('; ') : ''));
   assert(E('(() => { const it = { id: 0, slot: "charm", t: 5, r: "rare", plus: 9 }; return kindUpgradeCost(it).gold === econUpgradeGold(5, 9) && craftReforgeCost(5, 0).gold === econReforgeGold(5, 0); })()'), 'item upgrades and reforges charge the econ price');
@@ -5771,7 +5773,7 @@ try {
   assert(!bigP.length && tables.blade[260] < 1e8, `EC10 (static) every price under 1e8 (biggest: Tent 10 ${E('fmt(econTentGold(10))')}, Blade Lv 260 ${E(`fmt(${tables.blade[260]})`)})` + (bigP.length ? ': ' + bigP.join('; ') : ''));
   const up = E('HERO_UPS.map(u => [u.id, u.base, u.r, u.cap || 0].join(":")).join()');
   assert(up === `blade:${E('ECON.blade.base')}:${E('ECON.blade.r')}:0,swift:${E('ECON.swift.base')}:${E('ECON.swift.r')}:40,precision:${E('ECON.precision.base')}:${E('ECON.precision.r')}:${E('ECON.precision.cap')}`,
-    `the Lanternbearer's upgrades: Blade 10 x 1.05^n (economy-2 proposed 5), Swiftness 20 x 1.25^n (cap 40), Precision 200 x 1.45^n (cap 15), equal to ECON (${up})`);
+    `the Lanternbearer's upgrades (BAL3): Blade 6 x 1.05^n, Swiftness 10 x 1.15^n (cap 40), Precision 10,000 x 1.6^n (cap 15), equal to ECON (${up})`);
   assert(E('RELICS.map(r => r.id).join()') === 'banner,edge,heart,glass' && E('RELICS[1].name') === 'Loaded Die' && E('RELICS[1].cap') === 5 && E('UNIQ.hollowcrown.fx.gold') === 10,
     'the Lucky Coin is the Loaded Die (cap 5), the Crown of Hollows gives +10% gold (raid docs untouched)');
   // No gold-gain source outside gear: every save field maxed, gold stays at the gear cap x the Omen

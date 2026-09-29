@@ -58,7 +58,8 @@ const PACE = {
   regionStep: [1.7, 1.1],   // (BAL2 1.7 / 1.1, BAL1 1.7 / 1.2, was 5 / 2.5) mob HP x this from each region's last zone on
                             //   (x1.7 from zone 35, x1.1 more from 70; the last value repeats). The
                             //   step stays, so the zones after a region boss are no easier
-  regionBoss: 1.33,         // extra x on region bosses only (S6-A: x2 over the old 8 in all, for the 60 s timer; was 1)
+  regionBoss: 1.15,         // extra x on region bosses only (BAL3 1.15: x1.73 over the old 8, the kit's phases and adds eat the rest of
+                            //   the 60 s; S6-A 1.33 walled Silas at the level cap, P2 / CX4; was 1)
   compLv: 75,               // (BAL2 75, BAL1 80, was 90) companion levels past compLv need more XP...
   compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 85: x3, 95: x9.6)...
   compXpMax: 250,           //   ...(BAL2 250, BAL1 200, was 80) up to x250 from level 124 on: Region 2 is a few levels a day

@@ -22,7 +22,7 @@ is open (Fight's Upgrades view always is).
 | forage | Gather: Foraging | zone 5, or Foraging above level 1 |
 | craft | Craft tab (Make, Gear) | materials for a first recipe the hero can wear, any item in the bag, or zone 6 |
 | bestiary | Fight: Bestiary | zone 6, or 60 kills |
-| almanac | Camp: Almanac + the Omen banner | 8 minutes played, or zone 8 |
+| almanac | Camp: Almanac + the Omen banner | 7 minutes played, or zone 7 (BAL3; was 8 / 8) |
 | roster | Party: Roster | 10 minutes played, zone 7, or someone can be recruited |
 | uniques | Craft: Uniques | first unique, 12 minutes played, or zone 10 |
 | tavern | Camp: Tavern | 14 minutes played, or zone 8 |

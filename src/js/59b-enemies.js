@@ -54,7 +54,7 @@ for (const k in FOE_BEH) { const r = FOE_TYPE[k]; if (r) Object.assign(FOE_BEH[k
 const ENEMY_TUNE = {
   diveEvery: 10, diveT: 3, diveT2: 5, diveX2: 2, diveFrom: 8,
   cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4, venom: 3,   // S1: the cloud's poison is Venom (venom stacks, poisonT s)
-  slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, reassemble: 0.2,
+  slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, healBoss: 0.02, reassemble: 0.2,   // BAL3 healBoss: a Wraith's heal on a boss (the Fenmother's Echoes, Silas's Toll) is 2% of its HP, not the pack's 15%
   heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2, dodgeX: 0.5,
   beetleEvery: 6, golemX: 6, cloudBossX: 1.5, batDiveEvery: 12, batDiveX: 2, bonesEvery: 15, bonesAdds: 2, addHp: 0.08,
   splitAt: 0.5, splitHp: 0.12, wraithEvery: 12, wraithHeal: 0.1, firstHeavy: 4, first2: 6   // (Elder Wraith: spec 20% every 10s; every region boss is a Wraith, so it is softer)
@@ -188,7 +188,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     } else if (t === 'wraith') {
       if (f.chanT > 0) {
         f.chanT -= dt;
-        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
+        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * (o.boss ? E.healBoss : E.heal) * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
         return true;
       }
       if (!quotas() && f.bt >= E.healEvery) { const o = mostHurtFoe(); if (o) { f.chanT = E.healChan; return true; } }

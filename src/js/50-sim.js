@@ -221,6 +221,7 @@ function harvest() {
 // r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
   const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
+  failDps = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);

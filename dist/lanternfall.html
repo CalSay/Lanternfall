@@ -6455,11 +6455,11 @@ const COMPS = [
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
 const HERO_UPS = [
-  // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
+  // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares; BAL3 retuned all three) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
   // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.
-  { id: 'blade', name: 'Blade', base: 10, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
-  { id: 'swift', name: 'Swiftness', base: 20, r: 1.25, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
-  { id: 'precision', name: 'Precision', base: 200, r: 1.45, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
+  { id: 'blade', name: 'Blade', base: 6, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
+  { id: 'swift', name: 'Swiftness', base: 10, r: 1.15, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
+  { id: 'precision', name: 'Precision', base: 10000, r: 1.6, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
 ];
 const RELICS = [
   { id: 'banner', name: 'Warbanner', base: 5, r: 1.6, ic: ['banner', '#E0524F'], desc: () => `+20% damage everywhere per level.` },
@@ -8300,7 +8300,7 @@ const BOSS_KITS = {
       { id: 'lamp', name: 'Lamp Swing', tele: 'heavy', ph: 1, every: 8, first: 4, wind: 1.5, x: 4, answer: 'parry', idle: 'Shield Wall, a stun' },
       { id: 'beam', name: 'Green Beam', tele: 'zone', ph: 1, every: 14, first: 7, wind: 1.8, x: 2.5, slots: 2, dt: 'frost', answer: 'dodge', idle: 'frost resist, a clear slot' },
       { id: 'undertow', name: 'Undertow', tele: 'dive', ph: 2, every: 12, first: 3, wind: 1.5, x: 1.5, secs: 5, answer: 'taunt', idle: 'a tank covering' },
-      { id: 'toll', name: 'Toll the Drowned Bell', tele: 'sig', ph: 3, every: 15, first: 3, wind: 2.5, adds: ['self', 2, 0.06], answer: 'interrupt', idle: 'area damage' },
+      { id: 'toll', name: 'Toll the Drowned Bell', tele: 'sig', ph: 3, every: 15, first: 3, wind: 2.5, adds: ['self', 2, 0.04], answer: 'interrupt', idle: 'area damage' },   // BAL3: adds 6% -> 4% (single-target parties walled at the cap)
       { id: 'flare', name: 'The Lens Flares', tele: 'hard', ph: 2, at: 0.66, roar: 1, wind: 1.5, fx: ['none', 0], answer: '-', idle: '-' }
     ] }
 };
@@ -8782,10 +8782,11 @@ const ECON = {
   zones: 35,                     // zones a region (PACE.region)
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
   // ---- the Lanternbearer's upgrades (3.3, 4.4): price of level n+1 = base x r^n ----
-  blade: { base: 10, r: 1.05 },  // was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
+  blade: { base: 6, r: 1.05 },   // BAL3: base 10 -> 6 (EC9/T1: continuous play lost ~3 zones at 2 h). Was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
                                  // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
-  swift: { base: 20, r: 1.25 },  // was 50 x 1.6^n (cap 40 unchanged)
-  precision: { base: 200, r: 1.45, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level
+  swift: { base: 10, r: 1.15 },  // BAL3: was 20 x 1.25^n (early pace; the cap 40 bounds it). Before ECON-A 50 x 1.6^n (cap 40 unchanged)
+  precision: { base: 10000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: was 200 x 1.45^n, maxed
+                                                            //   before the Region 1 boss: EC7 +26% vs 6-14%; now a Region 1-3 sink, EC5)
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----
   hearthH: [0, 0, 4, 6, 9, 12, 16, 20, 24, 30, 36],
   // Building rows: Lv 1 is materials only; rows 6-10 (not built yet, WC1 2.3) take world-camp-2 2.9's
@@ -8822,7 +8823,7 @@ const ECON = {
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   sigilSetFoes: 60, sigilTuneFoes: 30, temperFoes: 150, inscribeFoes: 200,   // foesGold(S.maxZone, k)
   // ---- people (3.3) ----
-  promoFoes: 300,                // promotion: foesGold(S.maxZone, 300 x (rank + 1))
+  promoFoes: 120,                // promotion: foesGold(S.maxZone, 120 x (rank + 1)) (BAL3: was 300, ~1 h a rank walled continuous play; ROSTER_TUNE.promoGold reads it)
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
   tradeSigilFoes: 30,
@@ -9810,8 +9811,10 @@ const CLS_TUNE = {
   rangerCrit: 0.07, lightFeet: 0.2,
   // S3: 56e-formation reads the evolution rows once proven. The Trapper is a caster (ROLE_D 1.0, not the
   // striker's 1.82), so its floor is 1.4, not CL1's 0.7: about x1.1 of the Ranger's 0.7 x 1.82 (2.2's own damage)
-  heroFloor: { warrior: 1.0, ranger: 0.7, mage: 1.0, reaver: 0.62, warden: 1.0,
-    venomstalker: 0.75, trapper: 1.4, warlock: 1.0, priest: 0 }
+  // BAL3: the Ranger and Mage rows (and their paths) x2.57 / x1.5 with FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0,
+  // venomstalker 0.75, trapper 1.4, warlock 1.0)
+  heroFloor: { warrior: 1.0, ranger: 1.8, mage: 1.5, reaver: 0.62, warden: 1.0,
+    venomstalker: 1.93, trapper: 3.6, warlock: 1.5, priest: 0 }
 };
 
 // ---- src/js/30-state.js ----
@@ -9948,7 +9951,8 @@ const PACE = {
   regionStep: [1.7, 1.1],   // (BAL2 1.7 / 1.1, BAL1 1.7 / 1.2, was 5 / 2.5) mob HP x this from each region's last zone on
                             //   (x1.7 from zone 35, x1.1 more from 70; the last value repeats). The
                             //   step stays, so the zones after a region boss are no easier
-  regionBoss: 1.33,         // extra x on region bosses only (S6-A: x2 over the old 8 in all, for the 60 s timer; was 1)
+  regionBoss: 1.15,         // extra x on region bosses only (BAL3 1.15: x1.73 over the old 8, the kit's phases and adds eat the rest of
+                            //   the 60 s; S6-A 1.33 walled Silas at the level cap, P2 / CX4; was 1)
   compLv: 75,               // (BAL2 75, BAL1 80, was 90) companion levels past compLv need more XP...
   compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 85: x3, 95: x9.6)...
   compXpMax: 250,           //   ...(BAL2 250, BAL1 200, was 80) up to x250 from level 124 on: Region 2 is a few levels a day
@@ -10546,6 +10550,7 @@ function harvest() {
 // r.lines/r.note are the base summary; line icons are specs (see toast()).
 function awayGains(secs) {
   const r = { t: Math.min(secs, (4 + 2 * S.relic.glass + bonus('awayHours')) * 3600), secs, lines: [] };
+  failDps = 0;   // BAL3: back from away, auto-challenge may retry a boss it failed (a reload did this; a kept tab walled idle play at the cap)
   emit('awayBegin', r);
   awayBase(r);
   emit('away', r);
@@ -13939,7 +13944,7 @@ const FEATURES = [
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
   { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
-  { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '8 minutes played or zone 8', when: () => O().t >= 480 || S.maxZone >= 8 },
+  { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '7 minutes played or zone 7', when: () => O().t >= 420 || S.maxZone >= 7 },   // BAL3: was 8 / 8 (the cheaper Blade front-loads the first 5 minutes)
   { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
   { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
   { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
@@ -15884,7 +15889,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     gapMax: 4,
     xpSecs: 5.5, xpWorthMax: 8,          // (BAL1 5, BAL2 5.5) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
     commonXp: 1.5, offlineXp: 1,         // Commons earn +50% XP (a rarity trait, not a catch-up); (BAL1) offlineXp was 0.75
-    promoGold: 300, promoEss: 10,        // (ECON-A 300, BAL1 60) gold = promoGold x (rank + 1) foes of your max zone (ECON.promoFoes; about 1 h a rank)
+    promoGold: ECON.promoFoes, promoEss: 10,   // (BAL3 120, ECON-A 300, BAL1 60) gold = promoGold x (rank + 1) foes of your max zone (ECON.promoFoes; about 1 h a rank)
     commonPromo: 0.5, maxRank: 7,
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
@@ -18274,7 +18279,9 @@ const FORM_TUNE = {
   bondH: [0.5, 3, 12, 36, 150], bondX: [0.5, 0.75, 1, 1.15, 1.3],
   bondAway: 0.75, bondCamp: 0.5, bondExped: 1, oldFriend: 1.5,
   seedActive: 12, seedStrong: 36, seedPerLv: 0.1,
-  heroFloor: { warden: 1.0, ranger: 0.7, lanternmage: 1.0, lightkeeper: 0 }, tapStand: 1,
+  // BAL3: ranger 0.7 -> 1.8, lanternmage 1.0 -> 1.5. Past the early game the hero hits at its floor; with the
+  // recommended tank + support these two were the party's only damage and walled at the Coast's elders and Silas (P2)
+  heroFloor: { warden: 1.0, ranger: 1.8, lanternmage: 1.5, lightkeeper: 0 }, tapStand: 1,
   trioX: 1.35, trioFrom: 8, trioTo: 12,
   bossW: 0.35, bossWHard: 0.6, hyst: 0.06, dwell: 300, deep: 4, maxEst: 32, maxPins: 2
 };
@@ -25343,7 +25350,7 @@ for (const k in FOE_BEH) { const r = FOE_TYPE[k]; if (r) Object.assign(FOE_BEH[k
 const ENEMY_TUNE = {
   diveEvery: 10, diveT: 3, diveT2: 5, diveX2: 2, diveFrom: 8,
   cloudEvery: 6, cloud: 0.8, poison: 0.02, poisonT: 4, venom: 3,   // S1: the cloud's poison is Venom (venom stacks, poisonT s)
-  slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, reassemble: 0.2,
+  slamEvery: 3, healEvery: 5, healChan: 1.5, heal: 0.15, healBoss: 0.02, reassemble: 0.2,   // BAL3 healBoss: a Wraith's heal on a boss (the Fenmother's Echoes, Silas's Toll) is 2% of its HP, not the pack's 15%
   heavyEvery: 8, heavyWind: 1.5, heavyX: 4, parryWin: 0.8, marenWin: 0.3, marenLead: 0.4, stagger: 2, vulnT: 2, dodgeX: 0.5,
   beetleEvery: 6, golemX: 6, cloudBossX: 1.5, batDiveEvery: 12, batDiveX: 2, bonesEvery: 15, bonesAdds: 2, addHp: 0.08,
   splitAt: 0.5, splitHp: 0.12, wraithEvery: 12, wraithHeal: 0.1, firstHeavy: 4, first2: 6   // (Elder Wraith: spec 20% every 10s; every region boss is a Wraith, so it is softer)
@@ -25477,7 +25484,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     } else if (t === 'wraith') {
       if (f.chanT > 0) {
         f.chanT -= dt;
-        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * E.heal * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
+        if (f.chanT <= 0) { const o = mostHurtFoe(); if (o) o.hp = Math.min(o.max, o.hp + o.max * (o.boss ? E.healBoss : E.heal) * f.bx * stHealX(o)); f.bt = 0; }   // S1: Curse / Venom 5+ anti-heal
         return true;
       }
       if (!quotas() && f.bt >= E.healEvery) { const o = mostHurtFoe(); if (o) { f.chanT = E.healChan; return true; } }

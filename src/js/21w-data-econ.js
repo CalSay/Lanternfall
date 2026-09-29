@@ -17,10 +17,11 @@ const ECON = {
   zones: 35,                     // zones a region (PACE.region)
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
   // ---- the Lanternbearer's upgrades (3.3, 4.4): price of level n+1 = base x r^n ----
-  blade: { base: 10, r: 1.05 },  // was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
+  blade: { base: 6, r: 1.05 },   // BAL3: base 10 -> 6 (EC9/T1: continuous play lost ~3 zones at 2 h). Was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
                                  // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
-  swift: { base: 20, r: 1.25 },  // was 50 x 1.6^n (cap 40 unchanged)
-  precision: { base: 200, r: 1.45, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level
+  swift: { base: 10, r: 1.15 },  // BAL3: was 20 x 1.25^n (early pace; the cap 40 bounds it). Before ECON-A 50 x 1.6^n (cap 40 unchanged)
+  precision: { base: 10000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: was 200 x 1.45^n, maxed
+                                                            //   before the Region 1 boss: EC7 +26% vs 6-14%; now a Region 1-3 sink, EC5)
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----
   hearthH: [0, 0, 4, 6, 9, 12, 16, 20, 24, 30, 36],
   // Building rows: Lv 1 is materials only; rows 6-10 (not built yet, WC1 2.3) take world-camp-2 2.9's
@@ -57,7 +58,7 @@ const ECON = {
   reforgeFoes: 15, reforgeGrow: 1.5,   // reforge: 15 x foeGold(gradeZ) x 1.5^n
   sigilSetFoes: 60, sigilTuneFoes: 30, temperFoes: 150, inscribeFoes: 200,   // foesGold(S.maxZone, k)
   // ---- people (3.3) ----
-  promoFoes: 300,                // promotion: foesGold(S.maxZone, 300 x (rank + 1))
+  promoFoes: 120,                // promotion: foesGold(S.maxZone, 120 x (rank + 1)) (BAL3: was 300, ~1 h a rank walled continuous play; ROSTER_TUNE.promoGold reads it)
   // ---- trade (3.5, TR1 reads it): a unit's price = foeGold(grade's first zone) x famW ----
   famW: { gathered: 0.06, gem: 0.075, herb: 0.075, hide: 0.09, ess: 0.18, secondary: 0.03, refined: 0.15 },
   tradeSigilFoes: 30,
