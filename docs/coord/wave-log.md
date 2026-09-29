@@ -1085,3 +1085,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   into a long ribbon in death). Auto palette reduction to 16-24 colours kills the gold and violet glows: it
   needs a hand-picked shared palette. Next GPT round: stricter prompt (listed in the reply). Our side at
   resume: palette-lock + outline clean-up tool, re-animate hurt/death from the parts in code.
+- OWNER: keep GPT Wren's violet/magenta/gold palette (suits the bats); only the witch hat becomes a bat-eared hood. Note for ART-STYLE1: keep Wren's violet distinct from caster palettes (Warlock/Lanternmage).
