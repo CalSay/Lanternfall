@@ -9,16 +9,16 @@
   const skillLv = k => S.skills[k].lv;
   // cur() returns progress toward need. bonus: [modifier key, fraction].
   const ACH = [
-    { id: 'zone10', name: 'Into the Dark', desc: 'Reach zone 10', need: 10, cur: () => S.maxZone, bonus: ['gold', 0.02], ic: 'banner' },
+    { id: 'zone10', name: 'Into the Dark', desc: 'Reach zone 10', need: 10, cur: () => S.maxZone, bonus: ['keen', 0.01], ic: 'banner' },
     { id: 'zone25', name: 'Deep Delver', desc: 'Reach zone 25', need: 25, cur: () => S.maxZone, bonus: ['dmg', 0.03], ic: 'banner' },
-    { id: 'zone50', name: 'Lantern Bearer', desc: 'Reach zone 50', need: 50, cur: () => S.maxZone, bonus: ['gold', 0.05], ic: 'banner' },
+    { id: 'zone50', name: 'Lantern Bearer', desc: 'Reach zone 50', need: 50, cur: () => S.maxZone, bonus: ['keen', 0.025], ic: 'banner' },
     { id: 'lv20', name: 'Seasoned', desc: 'Reach hero level 20', need: 20, cur: () => S.L, bonus: ['xp', 0.03], ic: 'helm' },
     { id: 'lv50', name: 'Veteran', desc: 'Reach hero level 50', need: 50, cur: () => S.L, bonus: ['dmg', 0.03], ic: 'helm' },
-    { id: 'kill1k', name: 'Monster Hunter', desc: 'Defeat 1,000 foes', need: 1000, cur: () => S.totalKills, bonus: ['gold', 0.02], ic: 'sword' },
+    { id: 'kill1k', name: 'Monster Hunter', desc: 'Defeat 1,000 foes', need: 1000, cur: () => S.totalKills, bonus: ['keen', 0.01], ic: 'sword' },
     { id: 'kill25k', name: 'Slayer', desc: 'Defeat 25,000 foes', need: 25000, cur: () => S.totalKills, bonus: ['dmg', 0.03], ic: 'sword' },
-    { id: 'kill100k', name: 'Legend of the Wilds', desc: 'Defeat 100,000 foes', need: 100000, cur: () => S.totalKills, bonus: ['gold', 0.03], ic: 'sword' },
-    { id: 'gold1m', name: 'Coin Collector', desc: 'Earn 1M gold', need: 1e6, cur: () => S.totalGold, bonus: ['gold', 0.02], ic: 'coin' },
-    { id: 'gold1b', name: 'Dragon Hoard', desc: 'Earn 1B gold', need: 1e9, cur: () => S.totalGold, bonus: ['gold', 0.03], ic: 'coin' },
+    { id: 'kill100k', name: 'Legend of the Wilds', desc: 'Defeat 100,000 foes', need: 100000, cur: () => S.totalKills, bonus: ['keen', 0.015], ic: 'sword' },
+    { id: 'gold1m', name: 'Coin Collector', desc: 'Earn 100K gold', need: 1e5, cur: () => S.totalGold, bonus: ['keen', 0.01], ic: 'coin' },
+    { id: 'gold1b', name: 'Dragon Hoard', desc: 'Earn 10M gold', need: 1e7, cur: () => S.totalGold, bonus: ['keen', 0.015], ic: 'coin' },
     { id: 'mine25', name: 'Stonebreaker', desc: 'Mining level 25', need: 25, cur: () => skillLv('mine'), bonus: ['gatherSpeed', 0.03], ic: 'pick' },
     { id: 'wood25', name: 'Timberfeller', desc: 'Woodcutting level 25', need: 25, cur: () => skillLv('wood'), bonus: ['gatherSpeed', 0.03], ic: 'axe' },
     { id: 'smith25', name: 'Master Smith', desc: 'Smithing level 25', need: 25, cur: () => skillLv('smith'), bonus: ['skillXp', 0.03], ic: 'anvil' },
@@ -30,15 +30,16 @@
     { id: 'uniq7', name: 'Curator', desc: 'Find 7 uniques', need: 7, cur: uniqCount, bonus: ['dmg', 0.05], ic: 'charm' },
     { id: 'party', name: 'Full Party', desc: 'Recruit 7 companions', need: 7, cur: () => Math.max(S.comp.filter(n => n > 0).length, typeof rosterList === 'function' && rosterLive() ? rosterList().length : 0), bonus: ['party', 0.03], ic: 'mug' },
     { id: 'bty10', name: 'Bounty Hunter', desc: 'Claim 10 bounties', need: 10, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['offline', 0.03], ic: 'coin' },
-    { id: 'bty50', name: 'Board Regular', desc: 'Claim 50 bounties', need: 50, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['gold', 0.03], ic: 'coin' }
+    { id: 'bty50', name: 'Board Regular', desc: 'Claim 50 bounties', need: 50, cur: () => (S.bounties ? S.bounties.claimed : 0), bonus: ['keen', 0.015], ic: 'coin' }
   ];
-  const BONUS_NAME = { gold: 'gold', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', party: 'party damage', offline: 'away gains' };
-  const achBonusText = a => `+${Math.round(a.bonus[1] * 100)}% ${BONUS_NAME[a.bonus[0]] || a.bonus[0]}`;
+  const BONUS_NAME = { keen: 'crit damage', gold: 'gold', dmg: 'damage', xp: 'hero XP', skillXp: 'skill XP', gatherSpeed: 'gather speed', crit: 'crit chance', essence: 'essence chance', party: 'party damage', offline: 'away gains' };
+  const achBonusText = a => `+${+(a.bonus[1] * 100).toFixed(1)}% ${BONUS_NAME[a.bonus[0]] || a.bonus[0]}`;
 
   // One modifier per key; cached sum rebuilt when something unlocks.
   const achSum = {};
   const achRebuild = () => { for (const k in achSum) achSum[k] = 0; for (const a of ACH) if (A().got[a.id]) achSum[a.bonus[0]] = (achSum[a.bonus[0]] || 0) + a.bonus[1]; };
-  for (const k of new Set(ACH.map(a => a.bonus[0]))) { achSum[k] = 0; addModifier(k, () => 1 + achSum[k]); }
+  // ECON-A (economy-2 6.2): the gold bonuses became half as much crit damage (keen, the capped pool).
+  for (const k of new Set(ACH.map(a => a.bonus[0]))) { achSum[k] = 0; if (k === 'keen') keenSource('ach', 'Achievements', () => achSum.keen); else addModifier(k, () => 1 + achSum[k]); }
 
   on('itemAdded', ({ item }) => { if (item.u) return; A().forged++; if (item.r === 'epic') A().epic = true; });
 

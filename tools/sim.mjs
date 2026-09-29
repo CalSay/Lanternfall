@@ -104,7 +104,7 @@ if (!args['from-save']) E('S.bounties.slots = []; BOUNTY_API.refresh()');
 if (args['from-save']) {
   // Start from a real save file (e.g. tests/fixtures/save-mid-v2.json) instead of a fresh game.
   const fs = await import('node:fs');
-  g.storage.set('lanternfall.save.v1', fs.readFileSync(args['from-save'], 'utf8'));
+  g.storage.set('lanternfall.save.v2', fs.readFileSync(args['from-save'], 'utf8'));
   E('loadSave(); gearDirty(); spawn()');
 }
 E('S.amt = "1"');
@@ -722,7 +722,7 @@ line(total);
 if (t11Snap) {
   const h = loadCore({ seed: seed + 11 });
   if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
-  h.storage.set('lanternfall.save.v1', t11Snap);
+  h.storage.set('lanternfall.save.v2', t11Snap);
   h.eval('loadSave(); gearDirty(); spawn(); S.auto = false');
   const newId = h.eval("ROSTER_KEYS.find(k => !isRecruited(k) && ROSTER[k].role !== 'tank' && ROSTER[k].role !== 'support')");
   h.eval(`unlockChar(${JSON.stringify(newId)}, 'test', true); S.party.autoField = false; const f = S.party.field.slice(); fieldChar(${JSON.stringify(newId)}, f[f.length - 1])`);
@@ -783,7 +783,7 @@ if (E('partyCombatOn()')) {
   const st = E('CB_STATS'), ft = Object.values(firstTry), z5 = reached[5];
   const pct = x => (100 * x).toFixed(0) + '%';
   console.log(`combat: wipes ${wipeAt.length} (${(wipeAt.length / (total / 3600)).toFixed(2)}/h), before zone 5 ${wipeAt.filter(x => z5 === undefined || x < z5).length} | toZone5=${z5 !== undefined ? (z5 / 60).toFixed(1) + 'm' : '-'} | T13 tank share ${pct(st.tankSecs / Math.max(1e-9, st.enemySecs))} | T14 companion damage ${pct(st.compDmg / Math.max(1e-9, st.compDmg + st.heroDmg))} | T7 first boss tries ${ft.filter(x => x).length}/${ft.length} (${pct(ft.filter(x => x).length / Math.max(1, ft.length))}) | kos ${st.kos} telegraphs ${st.tele} parries ${st.parries} heavy hits ${st.hitByHeavy} abilities ${st.abilities} pushes ${st.pushes}`);
-  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set('lanternfall.save.v1', snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
+  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set('lanternfall.save.v2', snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
   if (t2Snap && args.t5) {
     // T5: an hour of farming at maxZone - 2 with the same field (auto off): wipes.
     const h = fork(t2Snap, 5), w = [];
@@ -1096,7 +1096,7 @@ async function runTargets() {
   res.push([ok(inR(t8, [0.85, 1.15])), 'T8 offline estimate (live rate, before the away share) vs 1h of simulated fighting (gold): within 15%', (bal.match(/T8 offline estimate vs 1h live at zone \d+: [^|]*/) || ['-'])[0].trim()]);
   {
     const fs = await import('node:fs'), path = await import('node:path'), { memoryStorage } = await import('./lib/core.mjs');
-    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ 'lanternfall.save.v1': fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
+    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ 'lanternfall.save.v2': fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
     res.push([ok(t9.every(([, r]) => inR(r, [1, 1.3]))), 'T9 migration of both fixtures: field damage vs old compDps() in 1.00-1.30', t9.map(([f, r]) => `${f} ${r.toFixed(2)}`).join(', ')]);
   }
   // CU1 (owner, 2026-09-28: no rapid catch-up; "an achievement for maxing out all heroes shouldn't be

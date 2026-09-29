@@ -78,7 +78,7 @@ function upgradeEquipped(slot) {
 function buyHero(id, amt) {
   const u = HERO_UPS.find(h => h.id === id);
   const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, amt);
-  if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; return true; }
+  if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; econSpend('up', p.cost); return true; }
   return false;
 }
 // Retired once the roster is live (56-roster.js): companions are recruited by name.

@@ -139,7 +139,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     switch (slot) {
       case 'weapon': return [['might', p]];
       case 'helm': return [['crit', Math.min(35, p * 0.12)], ['critMult', p / 200], ['armour', p * 0.1]];
-      case 'charm': return [['gold', p * 0.8], ['ess', p * 0.3]];
+      case 'charm': return [['gold', p * ECON.charmGold], ['ess', p * 0.3]];   // ECON-A: gold was p x 0.8
       // H2: old tools gain the rare find line (a new stat; the old two lines are unchanged).
       case 'pick': return [['mineSpd', p * 0.6], ['oreDbl', Math.min(60, p * 0.1)], craftBaseLines('pick', p)[2]];
       case 'axe': return [['woodSpd', p * 0.6], ['woodDbl', Math.min(60, p * 0.1)], craftBaseLines('axe', p)[2]];
@@ -194,7 +194,7 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     const m = {};
     for (const [k, n] of Object.entries(CRAFT_KINDS[it.slot].rec)) m[k] = Math.ceil(n * 0.6 * (it.plus + 1));
     if (it.u) m.ess = (m.ess || 0) + 2 * (it.plus + 1);
-    const c = { mats: m, gold: 40 * Math.pow(5, it.t) * (it.plus + 1) };
+    const c = { mats: m, gold: econUpgradeGold(it.t, it.plus) };   // ECON-A: 20 foes of the grade's first zone x (plus + 1); was 40 x 5^t x (plus + 1)
     // +8, +9 and +10 each need a Trophy of any type (owner decision); K6 enforces it.
     const tr = craftUpgradeTrophies(it.plus); if (tr) c.troph = tr;
     return c;

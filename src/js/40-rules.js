@@ -11,7 +11,7 @@ function slotStats(slot, p) {
   switch (slot) {
     case 'weapon': return `+${fmt(p)}% damage`;
     case 'helm': return `+${Math.min(35, p * 0.12).toFixed(1)}% crit chance, +${(p / 200).toFixed(1)}x crit damage`;
-    case 'charm': return `+${fmt(p * 0.8)}% gold, +${fmt(p * 0.3)}% essence drops`;
+    case 'charm': return `+${fmt(p * ECON.charmGold)}% gold, +${fmt(p * 0.3)}% essence drops`;
     case 'pick': return `+${fmt(p * 0.6)}% mining speed, ${Math.min(60, p * 0.1).toFixed(0)}% double ore`;
     case 'axe': return `+${fmt(p * 0.6)}% chopping speed, ${Math.min(60, p * 0.1).toFixed(0)}% double logs`;
   }
@@ -88,7 +88,9 @@ const regionHp = z => { let m = 1; const st = [].concat(PACE.regionStep); for (l
 // ================= formulas =================
 const lvlMult = () => 1 + PACE.heroLv * (S.L - 1);
 const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mod('dmg');
-const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + gear().gold / 100) * mod('gold');
+// ECON-A (economy-2 6.1): gear is the only gold-gain (capped +30%, gearGold in 55-econ); mod('gold') carries
+// only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).
+const goldMult = () => (1 + gearGold() / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
 const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
@@ -105,7 +107,8 @@ const heroDps = () => { const nc = mod('nonCrit'), cc = critChance(); return her
 const totalDps = () => heroDps() + compDps();
 // Before M6: 40 * 1.42^(z-1) for every zone.
 const mobHp = z => PACE.hp0 * Math.pow(PACE.hpEarly, Math.min(z, PACE.early) - 1) * Math.pow(PACE.hpGrowth, Math.max(0, Math.min(z, PACE.bend) - Math.max(1, PACE.early))) * Math.pow(PACE.hpLate, Math.max(0, z - PACE.bend)) * regionHp(z);
-const mobGold = z => Math.max(1, mobHp(z) * 0.05) * goldMult();
+// ECON-A (economy-2 2.1): gold per foe steps up by region (foeGoldBase, 21w-data-econ); was mobHp(z) x 0.05.
+const mobGold = z => foeGoldBase(z) * goldMult();
 // Essence (and unique) tier of a zone. Before M6: min(5, 1 + floor((z - 1) / 6)), so Starlit
 // (tier 5) began at zone 25 and a tier-5 weapon arrived before the Region 1 boss.
 const zoneTier = z => Math.max(1, PACE.essTier.filter(s => z >= s).length);

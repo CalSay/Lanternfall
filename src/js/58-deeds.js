@@ -239,6 +239,7 @@ let deeds, deedBonus, wearGet;
   deedBonus = key => T.bonusOn === 0 ? 0 : Math.min(DEED_CAP[key] != null ? DEED_CAP[key] : 0, BSUM[key] || 0);
   for (const k of Object.keys(DEED_CAP)) {
     if (k === 'deepOil') addBonus(k, () => deedBonus(k));
+    else if (k === 'keen') keenSource('deeds', 'Deeds', () => deedBonus(k));   // ECON-A: the old gold key, now crit damage
     else if (k === 'buildTime') addModifier(k, () => 1 - deedBonus(k));
     else addModifier(k, () => 1 + deedBonus(k));
   }

@@ -24,7 +24,9 @@ const ok = msg => console.log('  ok   ' + msg);
 const fail = msg => { failed++; console.log('  FAIL ' + msg); };
 const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
-const KEY = 'lanternfall.save.v1';
+// ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
+// load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
+const KEY = 'lanternfall.save.v2';
 
 // ---- 1. dist syntax ----
 console.log('dist');
@@ -5683,7 +5685,7 @@ try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v1', s); } catch (e) {} }, JSON.stringify(raw));
+      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v2', s); } catch (e) {} }, JSON.stringify(raw));
       const page = await ctx.newPage(); const errs2 = [];
       page.on('pageerror', e => errs2.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());

@@ -45,7 +45,7 @@
 //   one-time glow). mSeen: highest milestone the player has looked at (the "New" dot).
 
 const CODEX_TUNE = { every: 5, sweep: 60, goalFrom: 0.6 };
-const CODEX_CAP = { dmg: 0.05, gold: 0.05, uniqueChance: 0.05, skillXp: 0.05, compXp: 0.05, offline: 0.05,
+const CODEX_CAP = { dmg: 0.05, critDmg: 0.05, uniqueChance: 0.05, skillXp: 0.05, compXp: 0.05, offline: 0.05,
   gatherSpeed: 0.05, buildTime: 0.05, expHaul: 0.05, essence: 0.05 };
 
 // Milestones. kind: title | qol | cosmetic. live: false = the unlock is stored and switches on
@@ -122,7 +122,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   });
   // ---------------- 2. Zones: 35 zones x 5 mastery stars ----------------
   page('zones', {
-    n: 'Zones', bless: 'coin', seal: { key: 'gold', v: 0.03, txt: '+3% gold' }, title: 'Wayfinder', pic: 'rows',
+    n: 'Zones', bless: 'edge', seal: { key: 'critDmg', v: 0.03, txt: '+3% crit damage' }, title: 'Wayfinder', pic: 'rows',
     tiles: x => {
       const out = [];
       for (let z = 1; z <= REGION_ZONES; z++) {
@@ -395,7 +395,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   rebuildSeals();   // Seals saved earlier count from the first frame
   codexBonus = key => Math.min(CODEX_CAP[key] != null ? CODEX_CAP[key] : Infinity, sealSum[key] || 0);
   addModifier('dmg', () => 1 + codexBonus('dmg'));
-  addModifier('gold', () => 1 + codexBonus('gold'));
+  keenSource('codex', 'Codex seal', () => codexBonus('critDmg'));   // ECON-A: was +3% gold
   addModifier('uniqueChance', () => 1 + codexBonus('uniqueChance'));
   for (const k of ['smith', 'bench', 'loom', 'ench']) addModifier('skillXp:' + k, () => 1 + codexBonus('skillXp'));
   addModifier('compXp', () => 1 + codexBonus('compXp'));

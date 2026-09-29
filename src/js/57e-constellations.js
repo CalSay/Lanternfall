@@ -20,7 +20,8 @@
 //   starKeystone(id), starEffects(), starPowerEst(cls, lit), starBest(cls, points), starText(star).
 //
 // Wiring (all effects go through the shared registries; nothing here edits 55-party.js):
-//   m     addModifier keys: dmg, party, tap, crit, critDmg, abilityCd, xp, compXp, gold, offline.
+//   m     addModifier keys: dmg, party, tap, crit, critDmg, abilityCd, xp, compXp, offline.
+//   keen  crit damage into the capped pool (55-econ; ECON-A: Banner Over Camp and Vigil were +6% gold).
 //   hero  hero-only damage (the A1 trick: dmg x k, party x 1/k, so companions are unchanged).
 //   t     bonus('tune:<knob>') for 55-party.js's class knobs (T table). Knobs 55-party routes
 //         through tn() today: STAR_TUNE_ROUTED. The rest wait for the combat owner (see report).
@@ -97,7 +98,7 @@ const STAR_MAPS = {
         ['Shield Brothers', "Shield Wall's party bonus +10% (x1.4, was x1.3).", { t: { wall: 0.1 } }, 1.02],
         ['Drillmaster', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
         ['Comrades III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Banner Over Camp', '+6% gold and +6% away gains.', { m: { gold: 1.06, offline: 1.06 } }, 1],
+        ['Banner Over Camp', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
         ['Comrades IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
         ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
       ]]
@@ -205,7 +206,7 @@ const STAR_MAPS = {
         ['Lantern Share', 'The damage you give up goes 6% further.', { t: { lkShare: 0.06 } }, 1.015],
         ['Gift III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
         ['Wider Glow', 'Your aura +2% (companions +12%, was +10%).', { t: { lkAura: 0.02 } }, 1.012],
-        ['Vigil', '+6% gold and +6% away gains.', { m: { gold: 1.06, offline: 1.06 } }, 1],
+        ['Vigil', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
         ['Gift IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
         ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
       ]]
@@ -472,7 +473,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   }
 
   // ---- effects ----
-  const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'gold', 'offline'];
+  const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'offline'];   // ECON-A: gold left (keen: the crit damage pool)
   const TUNE_KEYS = new Set(), KS_IDS = new Set(Object.keys(STAR_KS));
   for (const c in STAR_MAPS) for (const s of Object.values(starMap(c).stars)) { for (const k in (s.fx.t || {})) TUNE_KEYS.add(k); if (s.fx.ks) KS_IDS.add(s.fx.ks); }
   for (const e in EVO_DEFS) for (const [, , fx] of EVO_DEFS[e].ring) { for (const k in (fx.t || {})) TUNE_KEYS.add(k); if (fx.ks) KS_IDS.add(fx.ks); }   // S3 rings
@@ -492,7 +493,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       if (!starIsLit(id, cls) && starLight(id, cls)) n++;
     return n;
   };
-  const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
+  const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1, keen: 0 };
   // Cached per class and layout version: the modifiers below run on every hit and dps read.
   let eff = NONE, effCls, effVer = -1;
   starEffects = () => {
@@ -501,7 +502,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     if (cls === effCls && ver === effVer) return eff;
     effCls = cls; effVer = ver;
     if (!cls) return (eff = NONE);
-    const map = starMap(cls), e = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
+    const map = starMap(cls), e = { m: {}, t: {}, ks: {}, live: {}, hero: 1, keen: 0 };
     for (const id of starLayout(cls).lit) {
       const s = map.stars[id]; if (!s) continue;
       const fx = s.fx;
@@ -510,12 +511,14 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       if (fx.ks) e.ks[fx.ks] = 1;
       if (fx.live) e.live[fx.live] = 1;
       if (fx.hero) e.hero *= fx.hero;
+      if (fx.keen) e.keen += fx.keen;
     }
     if (e.live.challenger) e.live.bash = 0;   // Challenger replaces Bash
     return (eff = e);
   };
   starKeystone = id => !!starEffects().ks[id];
   for (const k of MOD_KEYS) addModifier(k, () => starEffects().m[k] || 1);
+  keenSource('constel', 'Constellations', () => starEffects().keen || 0);
   for (const k of TUNE_KEYS) addBonus('tune:' + k, () => starEffects().t[k] || 0);
   for (const id of KS_IDS) addBonus('ks:' + id, () => starEffects().ks[id] ? 1 : 0);
 

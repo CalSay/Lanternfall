@@ -9,7 +9,7 @@
 //   1. Slot jobs (12): each member gets the job of its role in its slot (FORM_TUNE.job). Always on,
 //      outside the caps. SLOT_JOBS[role][slot] = { name, label }; slotJob(key) for one member.
 //   2. Combos (8): two roles in two named slots (the hero counts as its class role). Kin (4): two
-//      fielded companions of one circle (replaces the circle synergies; Hedgefolk gold +5%).
+//      fielded companions of one circle (replaces the circle synergies; Hedgefolk crit damage +3%, ECON-A: was gold +5%).
 //   3. Bonds (21): named pairs (the hero of one class counts for 8). Active from Bond level 1; the
 //      strength is FORM_TUNE.bondX[level - 1] (50% ... 130%). Level 3 = the old synergy's numbers.
 //   Common Cause: Kin and Bonds with a Common member are 25% stronger (not combos, not jobs).
@@ -28,7 +28,7 @@
 //          synergyStatus(id) -> { active, layer, lv, members, missing: [ids or words], text, strength }
 //          charTraits(id)    -> [{ kind, name, text, lv, active, stageC }]
 //                            kind: speciality | trait | passive | aura | upgrade | bond (Old Friend)
-//          synergyMods()     -> today's numbers { party, hero, gold, compXp, heroCrit, heroCritDmg,
+//          synergyMods()     -> today's numbers { party, hero, keen, compXp, heroCrit, heroCritDmg,
 //                               char: { id: mult } } (for the UI, checks and the sim)
 //          slotJob(key)      -> { role, slot, name, label, text } | null  (the member's job, 2.1)
 //          synUnit(key)      -> { dr, hp, heal, healIn, th, cd, ctrl, area }: one member's combat numbers
@@ -47,7 +47,7 @@
 // Bond levels (56f, S.bond), so benching a character removes their effects at once.
 //
 // Hooks used: addModifier('dmg') (whole party, hero included), addModifier('party') (undoes
-// hero-only bonuses for companions, as 55-party does), addModifier('crit'|'critDmg'|'gold'|
+// hero-only bonuses for companions, as 55-party does), keenSource('kin') (ECON-A, was gold), addModifier('crit'|'critDmg'|
 // 'compXp'|'abilityCd'), addBonus('tune:flare'|'tune:wallT') (hero ability numbers, 55-party tn()),
 // addCharModifier(fn(id)) from 56-roster.js (one companion's damage), on('foeDown') (The Contract).
 // 59-combat reads activeSynergies() (flags: Bond levers scale with strength), synUnit and synParty;
@@ -206,7 +206,7 @@ const SYNERGIES = [
   { id: 'hearth', name: 'Lifeline', layer: 'combo', need: [['tank', 'front'], ['support', 'back']], needs: 'A tank in Front and a support in Back',
     parts: [{ text: 'The tank takes 10% less damage and gets 20% more healing.', stage: 'C' }] },
   { id: 'hedgefolk', name: 'Hedgefolk', layer: 'kin', circle: 'hedgefolk', needs: 'Two Hedgefolk companions',
-    parts: [{ text: 'The party attacks 15% faster.' }, { text: 'You get 5% more gold.' }] },
+    parts: [{ text: 'The party attacks 15% faster.' }, { text: 'Crit damage +3%.' }] },   // ECON-A: was 5% more gold
   { id: 'oldoath', name: 'The Old Oath', layer: 'bond', pair: ['aldric', 'elowen'], needs: 'Aldric and Elowen',
     stories: ["The Order's Last Night", 'What the Banner Meant'],
     parts: [{ text: 'Intercept also heals the ally 10% of max HP. Sanctuary comes back 5s sooner.', stage: 'C' }] },
@@ -323,7 +323,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
     // slot jobs (the numbers are FORM_TUNE.job): Overwatch's share of hits on divers and the Back column
     owUp: 1 / 3,
     // Kin (the old circle synergies; F2: Hedgefolk gold +10% with 3 -> +5% with 2)
-    hedgeSpeed: 0.15, hedgeGold: 0.05, dusk: 0.25, duskExec: 0.1, wayXp: 0.1, wayCd: 0.1, oathkin: 0.05,
+    hedgeSpeed: 0.15, hedgeKeen: 0.03, dusk: 0.25, duskExec: 0.1, wayXp: 0.1, wayCd: 0.1, oathkin: 0.05,
     // the old named pairs, now Bonds (numbers at 100% = level 3)
     kindleStar: 0.3, bellsong: 0.5, waxKindle: 1, waxPip: 0.1, oldEnemies: 0.15, lampBeacon: 0.5,
     // combos (strength 1)
@@ -426,7 +426,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
   // Accumulator. party: hero + companions ('dmg'). hero: hero only. char[id]: one companion.
   // cb[key]: combat numbers per member (59-combat statUnit); sdr: synergy damage taken (capped).
   function newAcc(ctx) {
-    const a = { party: 1, hero: 1, gold: 1, compXp: 1, heroCrit: 0, heroCritDmg: 1, char: {}, crit: {}, critDmg: {}, abil: {}, cd: {}, dyn: {},
+    const a = { party: 1, hero: 1, keen: 1, compXp: 1, heroCrit: 0, heroCritDmg: 1, char: {}, crit: {}, critDmg: {}, abil: {}, cd: {}, dyn: {},
       heroCd: 0, heroCdS: 0, flare: 0, wallT: 0, cb: {}, pdr: 1, revive: 0, diveTaunt: null };
     for (const k of ctx.field) { a.char[k] = 1; a.crit[k] = 0; a.critDmg[k] = 1; a.abil[k] = 0; a.cd[k] = 0; a.dyn[k] = []; }
     for (const k of ctx.keys) a.cb[k] = { sdr: 1, hp: 1, heal: 1, healIn: 1, th: 1, cd: 0, ctrl: 1, area: 0 };
@@ -548,7 +548,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
     twinblades: (c, a, s, r) => { for (const k of r.members) a.dmgK(k, 1 + T.twinSpd * s); a.cb[r.members[0]].sdr *= 1 - T.twinDr * s; },
     twolights: (c, a, s) => { for (const k of c.keys) a.cb[k].healIn *= 1 + T.twoLights * s; a.revive = Math.max(a.revive, T.twoLightsRevive); },
     // Kin
-    hedgefolk: (c, a, s) => { a.partyMul(1 + T.hedgeSpeed * s); a.gold *= 1 + T.hedgeGold * s; },
+    hedgefolk: (c, a, s) => { a.partyMul(1 + T.hedgeSpeed * s); a.keen *= 1 + T.hedgeKeen * s; },
     oathkin: (c, a, s) => { a.pdr *= 1 - T.oathkin * s; },
     dusk: (c, a, s) => {
       a.partyMul(1 + T.dusk * T.lowUp * s);
@@ -620,7 +620,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
   // A fresh accumulator with the kit part of src (kits never touch cb or the hero's ability fields).
   function cloneAcc(ctx, src) {
     const a = newAcc(ctx);
-    a.party = src.party; a.hero = src.hero; a.gold = src.gold; a.compXp = src.compXp; a.heroCrit = src.heroCrit; a.heroCritDmg = src.heroCritDmg;
+    a.party = src.party; a.hero = src.hero; a.keen = src.keen; a.compXp = src.compXp; a.heroCrit = src.heroCrit; a.heroCritDmg = src.heroCritDmg;
     for (const k of ctx.field) { a.char[k] = src.char[k]; a.crit[k] = src.crit[k]; a.critDmg[k] = src.critDmg[k]; a.abil[k] = src.abil[k]; a.cd[k] = src.cd[k]; a.dyn[k] = src.dyn[k]; }
     return a;
   }
@@ -723,7 +723,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
   addCharModifier(id => live() && T.auras ? auraMult(id) : 1);
   addModifier('dmg', () => { if (!live()) return 1; const v = cur(); return dp(v.a.party) * dp(heroMult(v)); });
   addModifier('party', () => { if (!live()) return 1; return 1 / dp(heroMult(cur())); });
-  addModifier('gold', () => live() ? dp(cur().a.gold) : 1);
+  keenSource('kin', 'Kin: Hedgefolk', () => live() ? dp(cur().a.keen) - 1 : 0);   // ECON-A: was +5% gold
   addModifier('compXp', () => live() ? dp(cur().a.compXp) : 1);
   addModifier('critDmg', () => live() ? dp(cur().a.heroCritDmg) : 1);
   addModifier('crit', () => {
@@ -807,10 +807,10 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
   };
 
   synergyMods = () => {
-    if (!live()) return { party: 1, hero: 1, gold: 1, compXp: 1, heroCrit: 0, heroCritDmg: 1, char: {} };
+    if (!live()) return { party: 1, hero: 1, keen: 1, compXp: 1, heroCrit: 0, heroCritDmg: 1, char: {} };
     const v = cur(), char = {};
     for (const k of v.ctx.field) char[k] = dp(compMult(v, k));
-    return { party: dp(v.a.party), hero: dp(heroMult(v)), gold: dp(v.a.gold), compXp: dp(v.a.compXp), heroCrit: v.a.heroCrit * T.today, heroCritDmg: dp(v.a.heroCritDmg), char };
+    return { party: dp(v.a.party), hero: dp(heroMult(v)), keen: dp(v.a.keen), compXp: dp(v.a.compXp), heroCrit: v.a.heroCrit * T.today, heroCritDmg: dp(v.a.heroCritDmg), char };
   };
 
   // Layer 1 for one member: { role, slot, name, label, text } (the slot card line), or null.

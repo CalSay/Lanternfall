@@ -25,7 +25,7 @@
       zRow.desc.textContent = s >= MASTERY_STARS.length
         ? `${fmt(n)} kills. Fully mastered.`
         : `${fmt(n)} kills. ${fmt(MASTERY_STARS[s] - n)} more for the next star.`;
-      zRow.fx.textContent = `Here: +${s * 10}% gold and damage. All zones: +${all}% damage (${all} stars).`;
+      zRow.fx.textContent = `Here: +${s * 10}% damage and +${s}% crit damage. All zones: +${all}% damage (${all} stars).`;
     }
   });
 
@@ -53,7 +53,7 @@
         r.desc.textContent = tier >= BESTIARY_TIERS.length
           ? 'All milestones reached.'
           : seen
-            ? `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct(BESTIARY_PERK_VAL[tier])} ${perk.label}.`
+            ? `Next: ${fmt(BESTIARY_TIERS[tier])} slain for +${pct((perk.val || BESTIARY_PERK_VAL)[tier])} ${perk.label}.`
             : 'Not yet met.';
       }
     }

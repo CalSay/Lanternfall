@@ -40,7 +40,7 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
-  { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + S.fortune > 0 || S.maxZone >= 2 },
+  { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + (S.precision || 0) > 0 || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start', when: () => coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
@@ -78,7 +78,7 @@ const GUIDE_STEPS = [
   { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
   { id: 'ability', when: () => stepDone('tap') && abilityOk(), done: () => O().casts >= 1 },
   { id: 'boss', when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
-  { id: 'upgrade', when: () => S.gold >= cheapestUp(), done: () => S.blade + S.swift + S.fortune > 0 },
+  { id: 'upgrade', when: () => S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
   { id: 'tab:party', when: () => isUnlocked('party'), done: () => !!O().seen.party },
   { id: 'bench', when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campLv('bench') >= 1 },
   { id: 'tool', when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },

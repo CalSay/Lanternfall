@@ -94,7 +94,7 @@ function kill() {
   if (arena && (mob.deep || mob.trial)) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
   mob.hp = 0; mob.dead = 0.001;
   const g = mob.gold;
-  S.gold += g; S.totalGold += g; S.totalKills++;
+  S.gold += g; S.totalGold += g; S.totalKills++; econEarn('fight', g);
   addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
   burst(0.68, 0.62, mob.pal[1] || mob.pal[5] || mob.pal[3], 14);
   killPack(mob, g);
@@ -261,7 +261,7 @@ function awayBase(r) {
   const est = pc ? partyHoldEstimate(S.zone) : null, z = pc ? est.zone : farmableZone(S.zone, baseDps);
   const kills = pc ? t * est.packsPerSec * COMBAT_TUNE.awayRate * boost : baseDps > 0 ? t / (mobHp(z) / baseDps + 0.45) * 0.75 * boost : 0;
   const gold = kills * mobGold(z) * (pc ? COMBAT_TUNE.packGold : 1), tier = zoneTier(z), ess = stashAdd('ess', tier, Math.floor(kills * essChance()), 'flow', true);
-  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills);
+  S.gold += gold; S.totalGold += gold; S.totalKills += Math.floor(kills); econEarn('away', gold);
   // Hero XP while away (constellations.md, M6): PACE.heroAwayXp of the away kills' XP.
   if (kills > 0) gainXp(kills * Math.ceil(1.5 * z) * PACE.heroAwayXp, true);
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
