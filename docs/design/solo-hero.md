@@ -48,9 +48,12 @@ landscape layout and lane combat come after the owner plays this.
 **Ascension and subclasses (owner).** The Proving stays: a region-boss fight that **Ascends** your hero and
 opens their subclasses. Each subclass brings new abilities. The player may also **stay as their current
 class** (no penalty beyond not getting the subclass abilities). The six evolutions of classes-2 become the
-subclass branches; the per-hero ability tree hangs off the chosen subclass. Coordinator default until the owner
-says otherwise: the per-hero Awakening in heroes-2 folds into Ascension, and the hero's quest becomes the story
-that leads to their Proving.
+subclass branches; the per-hero ability tree hangs off the chosen subclass. The Proving is the
+subclass upgrade only (or the upgrade of the base class if you stay).
+
+**Hero quests enhance an ability (owner).** The per-hero Awakening in heroes-2 stays separate from Ascension:
+finishing a hero's quest enhances one of that hero's current abilities. It gets a new name (coordinator
+proposal: **Kindling**, "Pip's Fireball is Kindled"; owner to confirm).
 
 **Bonds become campaign story (owner).** The 21 Bonds, their 42 stories and Sworn lines leave the game.
 In their place, a campaign story told through NPCs around the world map that the player gets to know:
