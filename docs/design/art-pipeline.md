@@ -112,9 +112,9 @@ rows and columns and breaks outlines. Pip's trial was shrunk this way, so her fi
 Mock-up: art/backgrounds/mossy-hollow/formation-clean.png.
 1. **Quiet background behind the fight.** Code pushes the far and mid layers well back (lower saturation and
    contrast, dimmed toward night blue) and adds a soft vignette, so only the road and the fighters are bright.
-2. **Show at most 4 foe bodies.** A pack can be 8-10 in the rules, but the stage draws at most 3-4 bodies and a
-   small "+N" counter; the next body steps in when one dies. (Needs sign-off: it changes how S6's packs look,
-   not how they fight.)
+2. **All foes stay visible (owner: up to 10 on screen).** Size follows pack size, as combat-2 already sets
+   pack sizes: brute packs of 3 at about 96 px, normal packs of 5-6 at about 48 px, swarms of 8-10 at about
+   24-32 px, in 2-3 staggered rows on the right half. Mock-up: art/backgrounds/mossy-hollow/packs-mock.png.
 3. **A clear gap in the middle** of the road between the two sides, for arrows, fireballs and swooshes.
 4. **Contact shadows** under every fighter, so they stand on the road instead of floating on the picture.
 5. **Lower foreground.** The front plants stay a thin dark strip, so they frame the road without covering feet.
