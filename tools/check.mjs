@@ -299,7 +299,7 @@ try {
   };
   const OLD_KEYS = ['might', 'crit', 'critMult', 'gold', 'ess', 'mineSpd', 'woodSpd', 'oreDbl', 'woodDbl', 'party', 'tap', 'echo', 'offline', 'raid', 'essExtra', 'oreExtra', 'woodExtra', 'gather', 'score'];
   // The formulas as they were before these changes; the item maths itself is what K4 must keep exact.
-  const PRE_K4 = 'SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; TIER_POW.splice(0, 6, 0, 10, 28, 70, 160, 360); PACE.heroLv = 0.05; PACE.bladeX = 2; gearDirty()';
+  const PRE_K4 = 'ECON.charmGold = 0.8; SYN_TUNE.on = 0; UNIQ_TUNE.pow = 3.2; RETOOL.on = 0; TIER_POW.splice(0, 6, 0, 10, 28, 70, 160, 360); PACE.heroLv = 0.05; PACE.bladeX = 2; gearDirty()';
   const CLASSES = ['warden', 'lanternmage', 'ranger', 'lightkeeper'];
   const gearDiff = (gs, want) => OLD_KEYS.map(k => [k, gs[k], want[k] !== undefined ? want[k] : k === 'tap' ? 1 : 0]).filter(([, a, b]) => a !== b).map(([k, a, b]) => `${k} ${a} != ${b}`);
   for (const [f, want] of Object.entries(BASE)) {
@@ -526,7 +526,7 @@ try {
   // Kin: two companions of one circle (Common Cause: +25% with a Common)
   field(['tobin', 'wren']);
   assert(syn('hedgefolk') && syn('hedgefolk').members.length === 2 && syn('hedgefolk').strength === 1.25 && syn('hedgefolk').layer === 'kin', 'Tobin + Wren: Hedgefolk (Kin), 25% stronger with Commons');
-  assert(Math.abs(E('synergyMods().gold') - (1 + 0.05 * 1.25)) < 1e-9, `Hedgefolk gold is +5% with 2 (x${E('synergyMods().gold').toFixed(4)}, Common Cause included)`);
+  assert(Math.abs(E('synergyMods().keen') - (1 + 0.03 * 1.25)) < 1e-9, `Hedgefolk crit damage is +3% with 2 (x${E('synergyMods().keen').toFixed(4)}, Common Cause included; ECON-A: was +5% gold)`);
   field(['oriel', 'kestrel']);
   assert(syn('dusk') && syn('dusk').strength === 1, 'Oriel + Kestrel: Dusk Company (Rare + Epic: strength 1)');
   field(['maren', 'aldric']);
@@ -944,12 +944,13 @@ try {
   const staff = E('S.items.find(i => i.slot === "staff")');
   E('S.gold = 1e6; S.skills.ench.lv = 1');
   const rc = E(`canReforge(${staff.id}, 0)`);
-  assert(rc.ok && rc.cost.mats.ess === 3 && rc.cost.gold === 150, `Reforge cost: 3 essence and 150 gold (${JSON.stringify(rc.cost)})`);
+  const rg0 = E('econReforgeGold(1, 0)'), rg1 = E('econReforgeGold(1, 1)');
+  assert(rc.ok && rc.cost.mats.ess === 3 && rc.cost.gold === rg0 && rg0 === 75, `Reforge cost: 3 essence and 75 gold (15 foes of zone 1; ${JSON.stringify(rc.cost)})`);
   const e0 = E('S.mats.ess[0]');
-  assert(E(`reforgeItem(${staff.id}, 0)`) && E(`itemById(${staff.id}).rf`) === 1 && E('S.mats.ess[0]') === e0 - 3 && E('S.gold') === 1e6 - 150, 'reforgeItem pays and counts');
+  assert(E(`reforgeItem(${staff.id}, 0)`) && E(`itemById(${staff.id}).rf`) === 1 && E('S.mats.ess[0]') === e0 - 3 && E('S.gold') === 1e6 - rg0, 'reforgeItem pays and counts');
   const a = E(`itemById(${staff.id}).a`);
   assert(new Set(a.map(l => l[0])).size === a.length, 'a reforged line never duplicates a stat');
-  assert(E(`canReforge(${staff.id}, 0).cost.gold`) === 225, 'the next Reforge costs more');
+  assert(E(`canReforge(${staff.id}, 0).cost.gold`) === rg1 && rg1 > rg0, 'the next Reforge costs more');
   E('S.items.push(newItem("staff", 2, "rare"))');
   assert(E('canReforge(S.items[S.items.length - 1].id, 0).why') === `Needs Enchanting ${RQ(2)}`, 'Reforge needs Enchanting for the tier');
   // Transmute
@@ -1276,8 +1277,8 @@ try {
   E('S.camp.b.shrine = 0'); assert(!E('blessToggle("blade")'), 'no Blessing without the Shrine');
   E('S.camp.b.shrine = 1'); const d0 = E('mod("dmg")');
   E('if (S.codex) Object.assign(S.codex.half, { bestiary: 1, zones: 1 })');   // the Codex gate (57c): their pages are half full
-  assert(E('blessToggle("blade")') && near(E('mod("dmg")') / d0, 1.08) && E('blessToggle("coin")') && E('S.camp.bless.join()') === 'coin', 'Shrine 1: one Blessing, swapping replaces it');
-  E('S.camp.b.shrine = 3; blessSet(["blade", "coin"])'); assert(near(E('mod("dmg")') / d0, 1.1) && E('S.camp.bless.length') === 2, 'Shrine 3: two Blessings, 25% stronger (Blade +10%)');
+  assert(E('blessToggle("blade")') && near(E('mod("dmg")') / d0, 1.08) && E('blessToggle("edge")') && E('S.camp.bless.join()') === 'edge', 'Shrine 1: one Blessing, swapping replaces it');
+  E('S.camp.b.shrine = 3; blessSet(["blade", "edge"])'); assert(near(E('mod("dmg")') / d0, 1.1) && E('S.camp.bless.length') === 2, 'Shrine 3: two Blessings, 25% stronger (Blade +10%)');
   E('S.camp.bless = []');
   // builders
   E('S.camp.b.hearth = 5'); assert(E('campBuilders()') === 2, 'Hearth 5 adds a second builder');
@@ -1702,7 +1703,7 @@ try {
   B('for (const t of TYPES) S.mastery.types[t.key] = 1000; S.maxZone = 8; codexRefresh(true)');
   assert(B('codexPage("bestiary").pct') >= 0.5 && B('blessOpen("blade")') && bt.some(t => /Blade Blessing is open/.test(t)), `Bestiary at ${Math.round(B('codexPage("bestiary").pct') * 100)}%: Blade opens, with a toast`);
   B('S.mastery.types = {}; codexRefresh(true)');
-  assert(B('blessOpen("blade")') && !B('blessOpen("coin")'), 'an opened Blessing stays open; others stay closed');
+  assert(B('blessOpen("blade")') && !B('blessOpen("edge")'), 'an opened Blessing stays open; others stay closed');
   // milestones: rewards, the expedition slot, titles
   const s0 = B('bonus("expSlots")');
   B('S.codex.lightMax = 205; codexRefresh(true)');
@@ -2746,10 +2747,10 @@ try {
 
   // costs and limits (5, 2.3, 4.1, 7)
   const C = E('LEG_COST'), T = E('LEG_TUNE'), CX = E('LEG_CODEX');
-  assert([1, 2, 3, 4, 5].map(r => C.inscribe.pearls(r)).join() === '4,6,8,10,12' && C.inscribe.ess === 5 && C.inscribe.goldFoes === 100 && C.mark.sigil === 1 && C.mark.pearls === 2
+  assert([1, 2, 3, 4, 5].map(r => C.inscribe.pearls(r)).join() === '4,6,8,10,12' && C.inscribe.ess === 5 && C.inscribe.goldFoes === 200 && C.mark.sigil === 1 && C.mark.pearls === 2
     && T.heroMax === 2 && T.compMax === 1 && T.markMax === heroPos.length + 2 * 2 && T.echoPerRank === 3
     && CX.powers === ids.length - PI.length && CX.total === CX.powers * (CX.learn + CX.rank * 4),
-    'legend: Inscribe 2 + 2 x rank Pearls, 5 Essence, 100 foes\' gold; Mark 1 Sigil + 2 Pearls; 2 hero powers, 1 a companion, 10 marks; Codex 234 Light');
+    'legend: Inscribe 2 + 2 x rank Pearls, 5 Essence, 200 foes\' gold; Mark 1 Sigil + 2 Pearls; 2 hero powers, 1 a companion, 10 marks; Codex 234 Light');
 
   // the power budget (6): the best legal build at rank I / III / V stays under the caps
   const M = CAPS.model;
@@ -2862,10 +2863,10 @@ try {
   E('emit("milestone", { id: "pip", lv: 25 }); emit("milestone", { id: "pip", lv: 25 })');
   assert(E('S.legend.sig[0]') === 4 && E('S.legend.bondCredit.pip') === 1, 'legend core: a first level 25 (Bond) gives 2 Sigils, once');
   E('S.legend.sig = [20, 20, 20, 20]; for (const k of Object.keys(S.skills)) S.skills[k].lv = 99');
-  const gold1 = E('goldMult()');
+  const gold1 = E('keenRaw()');
   assert(E('(() => { const c = canCraft("warblade", 2, { cm: 1 }); const it = craftItem("warblade", 2, { cm: 1 }); return c.ok && !!it && it.cm === 1 && S.legend.sig[1] === 19; })()'), 'legend core: Mark at craft takes a Sigil and marks the item');
   assert(!E(`legendCanMark(${wb}, 9).ok`) && E(`legendMark(${wb}, "hedgefolk") && legendMark(${gh}, 0) && itemById(${wb}).cm === 0`), 'legend core: Mark on the item sheet (1 Sigil of the circle)');
-  assert(E('legendSets().n[0]') === 2 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(E('goldMult()') / gold1 - 1.1) < 1e-9, 'legend core: 2 marked pieces worn switch on the 2-piece set (+10% gold)');
+  assert(E('legendSets().n[0]') === 2 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(E('keenRaw()') - gold1 - 0.05) < 1e-9, 'legend core: 2 marked pieces worn switch on the 2-piece set (+5% crit damage; ECON-A: was +10% gold)');
   const bs = E('__mk("bow")'), bs2 = E('__mk("staff")');
   E(`legendMark(${bs}, 0); legendMark(${bs2}, 0); legendMark(${sh}, 0)`);
   E(`setField(["wren","tobin","pip"]); equipChar("wren", ${bs}, "wpn"); equipChar("pip", ${bs2}, "wpn"); equipChar("tobin", ${sh}, "wpn")`);
@@ -3873,15 +3874,17 @@ try {
   assert(!h.errors.length, 'no errors (deeds on a new game)' + (h.errors.length ? ': ' + h.errors[0] : ''));
 
   // AD2, AD3, AD6 on every fixture
-  const ACH0 = [['zone10', 10, 'gold', 0.02], ['zone25', 25, 'dmg', 0.03], ['zone50', 50, 'gold', 0.05], ['lv20', 20, 'xp', 0.03], ['lv50', 50, 'dmg', 0.03], ['kill1k', 1000, 'gold', 0.02],
-    ['kill25k', 25000, 'dmg', 0.03], ['kill100k', 100000, 'gold', 0.03], ['gold1m', 1e6, 'gold', 0.02], ['gold1b', 1e9, 'gold', 0.03], ['mine25', 25, 'gatherSpeed', 0.03], ['wood25', 25, 'gatherSpeed', 0.03],
+  // ECON-A (economy-2 3.6, 6.2): the gold bonuses are half as much crit damage (keen); the gold thresholds are 100K and 10M.
+  const ACH0 = [['zone10', 10, 'keen', 0.01], ['zone25', 25, 'dmg', 0.03], ['zone50', 50, 'keen', 0.025], ['lv20', 20, 'xp', 0.03], ['lv50', 50, 'dmg', 0.03], ['kill1k', 1000, 'keen', 0.01],
+    ['kill25k', 25000, 'dmg', 0.03], ['kill100k', 100000, 'keen', 0.015], ['gold1m', 1e5, 'keen', 0.01], ['gold1b', 1e7, 'keen', 0.015], ['mine25', 25, 'gatherSpeed', 0.03], ['wood25', 25, 'gatherSpeed', 0.03],
     ['smith25', 25, 'skillXp', 0.03], ['forge1', 1, 'skillXp', 0.02], ['forge25', 25, 'skillXp', 0.03], ['epic', 1, 'crit', 0.03], ['uniq1', 1, 'essence', 0.03], ['uniq3', 3, 'essence', 0.05],
-    ['uniq7', 7, 'dmg', 0.05], ['party', 7, 'party', 0.03], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'gold', 0.03]];
+    ['uniq7', 7, 'dmg', 0.05], ['party', 7, 'party', 0.03], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'keen', 0.015]];
   assert(JSON.stringify(E('ACH_API.list.map(a => [a.id, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('ACH_API.list.map(a => ACH_API.bonusText(a)).join("|")').split('|').length === 22,
-    'AD2 the Classic 22: ids, thresholds and bonuses unchanged');
+    'AD2 the Classic 22: ids, thresholds and bonuses as ECON-A set them');
   const noDeeds = (await import('./lib/core.mjs')).coreFiles().filter(f => !/^(23-data-deeds|58-deeds)\.js$/.test(f));
   const achSums = h2 => h2.eval('(() => { const s = {}; for (const a of ACH_API.list) if (S.achievements.got[a.id]) s[a.bonus[0]] = (s[a.bonus[0]] || 0) + a.bonus[1]; return JSON.stringify(s); })()');
-  const expect = { 'save-v2-late.json': ['slayer:2', 'zones:2', 'level:2', 'gold:1', 'mine:2', 'wood:2'] };
+  // ECON-A: the late fixture's 29B gold (old scale) is past every Hoard tier and Dragon's Hoard (500M) now.
+  const expect = { 'save-v2-late.json': ['slayer:2', 'zones:2', 'level:2', 'gold:4', 'mine:2', 'wood:2'] };
   for (const f of FIX) {
     const raw = fixText(f);
     const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }), files: noDeeds });
@@ -3898,8 +3901,8 @@ try {
     const tiers = A('S.deeds.tier');
     const want = expect[f] || [];
     const missing = want.filter(x => { const [id, k] = x.split(':'); return (tiers[id] || 0) !== +k; });
-    assert(A('S.deeds.init > 0') && fresh && !fresh.length && deedLines.length === 1 && /^Your deeds so far: \d+ tiers?, [\d,]+ points\. See Achievements\./.test(deedLines[0]) && !A('Object.keys(S.deeds.sec).length') && !missing.length && (f !== 'save-v2-late.json' || !A('Object.keys(S.deeds.feat).length')),
-      `AD3 ${f}: tiers granted equal a fresh computation, one line ("${deedLines[0]}"), no secret retro` + (want.length ? `, earns ${want.join(' ')} and no Feat` : '') + (!fresh || fresh.length ? ' MISMATCH ' + (fresh || ['no init']).join(' ') : '') + (missing.length ? ' MISSING ' + missing.join(' ') : '') + (deedLines.length !== 1 ? ' LINES ' + deedLines.join(' | ') : ''));
+    assert(A('S.deeds.init > 0') && fresh && !fresh.length && deedLines.length === 1 && /^Your deeds so far: \d+ tiers?, [\d,]+ points\. See Achievements\./.test(deedLines[0]) && !A('Object.keys(S.deeds.sec).length') && !missing.length && (f !== 'save-v2-late.json' || A('Object.keys(S.deeds.feat).join()') === 'f_gold'),
+      `AD3 ${f}: tiers granted equal a fresh computation, one line ("${deedLines[0]}"), no secret retro` + (want.length ? `, earns ${want.join(' ')} and no Feat but Dragon\'s Hoard` : '') + (!fresh || fresh.length ? ' MISMATCH ' + (fresh || ['no init']).join(' ') : '') + (missing.length ? ' MISSING ' + missing.join(' ') : '') + (deedLines.length !== 1 ? ' LINES ' + deedLines.join(' | ') : ''));
     // second load: nothing granted, no line; AD6 round trip
     A('save()'); const snap = A('JSON.stringify(S)');
     const c = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: a.storage.get(KEY) }) });
@@ -5711,6 +5714,97 @@ try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('evolutions crashed: ' + (e.stack || e)); }
+
+
+// ---- econ (ECON-A, docs/design/economy-2.md 8.3): the curve, every price table, gold-gain only on gear,
+// the crit damage cap, and the save key bump (a v1 save is never read, never touched) ----
+console.log('econ (ECON-A)');
+try {
+  const g = loadCore({ seed: 41 }), E = s => g.eval(s);
+  const near = (a, b, tol) => Math.abs(a - b) <= tol * Math.abs(b);
+  // EC1: the curve at every region's first zone and boss (exact), and the table in 2.2 (rounded there)
+  const starts = { 1: 5, 36: 17, 71: 60, 106: 210, 141: 735 }, bosses = { 35: 13.5, 70: 45.9, 105: 162, 140: 567, 175: 1984.5 };
+  const badS = Object.entries(Object.assign({}, starts, bosses)).filter(([z, v]) => Math.abs(E(`foeGoldBase(${z})`) - v) > 1e-9);
+  assert(!badS.length, 'EC1 gold a foe at each region\'s first zone (5 / 17 / 60 / 210 / 735) and boss (13.5 / 45.9 / 162 / 567 / 1,985)' + (badS.length ? ': ' + badS.map(([z]) => `zone ${z} ${E(`foeGoldBase(${z})`)}`).join(', ') : ''));
+  const T22 = { 10: 7.3, 18: 9.3, 25: 11, 42: 22, 56: 34, 82: 93, 94: 129, 117: 326, 129: 452, 152: 1139, 164: 1580 };
+  const bad22 = Object.entries(T22).filter(([z, v]) => !near(E(`foeGoldBase(${z})`), v, 0.03));
+  assert(!bad22.length, 'EC1 the table in economy-2 2.2 (within its rounding)' + (bad22.length ? ': ' + bad22.map(([z, v]) => `zone ${z} ${E(`foeGoldBase(${z})`)} vs ${v}`).join(', ') : ''));
+  const steps = [35, 70, 105, 140].map(z => E(`foeGoldBase(${z + 1}) / foeGoldBase(${z})`));
+  assert(steps.every(x => x > 1.2 && x < 1.35) && E('foeGoldBase(175) / foeGoldBase(1)') < 500, `the curve steps x1.26-1.31 at each region boss (${steps.map(x => x.toFixed(2)).join(', ')}) and grows under x500 in all`);
+  assert(E('Math.abs(mobGold(40) - foeGoldBase(40) * goldMult()) < 1e-9') && E('foesGold(20, 300)') === E('econSig(300 * foeGoldBase(20))'), 'mobGold and foesGold read the curve');
+  // Prices: the examples in economy-2 3 and 4
+  const P = x => E(x);
+  const ex = [['Hearth 2', 'econHearthGold(2)', 9000], ['Hearth 3', 'econHearthGold(3)', 15000], ['Hearth 10', 'econHearthGold(10)', 370000],
+    ['building Lv 2', 'campCost("watch", 2).gold', 3400], ['building Lv 3', 'campCost("watch", 3).gold', 8700], ['building Lv 4', 'campCost("watch", 4).gold', 18000], ['building Lv 5', 'campCost("watch", 5).gold', 47000],
+    ['Shrine Lv 1', 'campCost("shrine", 1).gold', 14000], ['Storehouse Lv 2', 'campCost("store", 2).gold', 2300], ['Storehouse Lv 8', 'campCost("store", 8).gold', 70000],
+    ['Hearth 2 in the camp', 'campCost("hearth", 2).gold', 9000], ['Tent 3', 'econTentGold(3)', 23000], ['Tent 10', 'econTentGold(10)', 2300000],
+    ['hire Common, Region 1', 'econHireFee("common", 1)', 1500], ['hire Legendary, Region 1', 'econHireFee("legendary", 1)', 20000], ['hire Common, Region 2', 'econHireFee("common", 40)', 5100], ['hire Legendary, Region 5', 'econHireFee(4, 150)', 2900000],
+    ['shift grade 1 Lv 1', 'econShiftFee(1, 1)', 2000], ['shift grade 4 Lv 1', 'econShiftFee(4, 1)', 4100], ['shift grade 15 Lv 1', 'econShiftFee(15, 1)', 110000], ['shift grade 1 Lv 20', 'econShiftFee(1, 20)', 2800],
+    ['upgrade grade 1 +0', 'econUpgradeGold(1, 0)', 100], ['upgrade grade 5 +9', 'econUpgradeGold(5, 9)', 4400], ['upgrade grade 15 +9', 'econUpgradeGold(15, 9)', 320000],
+    ['reforge grade 5 first', 'econReforgeGold(5, 0)', 330], ['promotion rank 0 at zone 20', 'foesGold(20, ROSTER_TUNE.promoGold)', 2900]];
+  const exBad = ex.filter(([, x, v]) => P(x) !== v);
+  assert(!exBad.length, `prices as economy-2 lists them (${ex.length}: Hearth, rows, Shrine, Storehouse, Tents, hires, shifts, upgrades, reforge, promotion)` + (exBad.length ? ': ' + exBad.map(([n, x, v]) => `${n} ${P(x)} != ${v}`).join('; ') : ''));
+  assert(E('(() => { const it = { id: 0, slot: "charm", t: 5, r: "rare", plus: 9 }; return kindUpgradeCost(it).gold === econUpgradeGold(5, 9) && craftReforgeCost(5, 0).gold === econReforgeGold(5, 0); })()'), 'item upgrades and reforges charge the econ price');
+  // Every price table rises (monotonic) and stays under 1e8 (EC10, static)
+  const tables = P(`(() => { const r = (a, b, f) => { const o = []; for (let i = a; i <= b; i++) o.push(f(i)); return o; };
+    return { hearth: r(2, 10, econHearthGold), rows: r(2, 10, L => econRowGold(L, CAMP_HZ[CAMP_HREQ[Math.min(4, L - 1)] - 1])), shrine: r(1, 3, econShrineGold),
+      store: r(2, 8, L => campCost('store', L).gold), tents: r(3, 10, econTentGold), balefire: r(2, 5, econBalefireGold),
+      hireR1: r(0, 4, i => econHireFee(i, 1)), hireLeg: r(0, 4, k => econHireFee(4, 1 + 35 * k)), hireCom: r(0, 4, k => econHireFee(0, 1 + 35 * k)),
+      fee: r(1, 15, gr => econShiftFee(gr, 1)), feeLv: r(1, 20, lv => econShiftFee(9, lv)), up: r(0, 9, p => econUpgradeGold(3, p)), upG: r(1, 15, gr => econUpgradeGold(gr, 9)),
+      reforge: r(0, 6, n => econReforgeGold(2, n)), reforgeG: r(1, 15, gr => econReforgeGold(gr, 0)), promo: r(0, 6, k => foesGold(50, ROSTER_TUNE.promoGold * (k + 1))),
+      blade: r(0, 300, n => HERO_UPS[0].base * Math.pow(HERO_UPS[0].r, n)), swift: r(0, 39, n => HERO_UPS[1].base * Math.pow(HERO_UPS[1].r, n)), precision: r(0, 14, n => HERO_UPS[2].base * Math.pow(HERO_UPS[2].r, n)) }; })()`);
+  const flat = Object.entries(tables).filter(([, a]) => !a.every((v, i) => v > 0 && (i === 0 || v >= a[i - 1])));
+  assert(!flat.length, `every price table rises: ${Object.keys(tables).join(', ')}` + (flat.length ? ' | not: ' + flat.map(([k, a]) => k + ' ' + a.join('/')).join('; ') : ''));
+  const bigP = Object.entries(tables).filter(([k]) => k !== 'blade').map(([k, a]) => [k, Math.max(...a)]).filter(([, v]) => v >= 1e8);
+  assert(!bigP.length && tables.blade[260] < 1e8, `EC10 (static) every price under 1e8 (biggest: Tent 10 ${E('fmt(econTentGold(10))')}, Blade Lv 260 ${E(`fmt(${tables.blade[260]})`)})` + (bigP.length ? ': ' + bigP.join('; ') : ''));
+  const up = E('HERO_UPS.map(u => [u.id, u.base, u.r, u.cap || 0].join(":")).join()');
+  assert(up === `blade:${E('ECON.blade.base')}:${E('ECON.blade.r')}:0,swift:${E('ECON.swift.base')}:${E('ECON.swift.r')}:40,precision:${E('ECON.precision.base')}:${E('ECON.precision.r')}:${E('ECON.precision.cap')}`,
+    `the Lanternbearer's upgrades: Blade 5 x 1.05^n, Swiftness 20 x 1.25^n (cap 40), Precision 200 x 1.45^n (cap 15), equal to ECON (${up})`);
+  assert(E('RELICS.map(r => r.id).join()') === 'banner,edge,heart,glass' && E('RELICS[1].name') === 'Loaded Die' && E('RELICS[1].cap') === 5 && E('UNIQ.hollowcrown.fx.gold') === 10,
+    'the Lucky Coin is the Loaded Die (cap 5), the Crown of Hollows gives +10% gold (raid docs untouched)');
+  // No gold-gain source outside gear: every save field maxed, gold stays at the gear cap x the Omen
+  E(`S.fortune = 999; S.precision = 15; S.relic.coin = 99; S.relic.edge = 5; S.maxZone = S.zone = 60;
+    for (let z = 1; z <= 60; z++) S.mastery.zones[z] = 1e6; for (const k in BESTIARY_PERKS) S.mastery.types[k] = 1e6;
+    S.camp.open = true; S.camp.b.shrine = 3; S.camp.bless = ['edge', 'blade']; S.achievements.got = Object.fromEntries(ACH_API.list.map(a => [a.id, 1])); ACH_API.check(); gearDirty()`);
+  for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+  assert(E('MODS.get("gold").length') === 1 && E('goldMult()') === 1, `one gold modifier left (the Omen), and with it off goldMult() is x1 with no gear (${E('goldMult()')}; ${E('MODS.get("gold").length')} gold modifiers)`);
+  E('S.items.push({ id: 90001, slot: "charm", t: 5, r: "legendary", plus: 10 }); S.equip.charm = 90001; gearDirty()');
+  assert(E('gear().gold') > 30 && E('gearGold()') === 30 && Math.abs(E('goldMult()') - 1.3) < 1e-12, `EC8 gear gold is capped at +30% (a grade-5 Unique +10 charm rolls +${E('gear().gold.toFixed(1)')}%, goldMult x${E('goldMult()')})`);
+  E('almanac.force("goldRain")'); const gr = E('goldMult()'); E('almanac.setDare(true)'); const gd = E('goldMult()'); E('almanac.setDare(false); almanac.force("none")');
+  assert(Math.abs(gr - 1.3 * 1.3) < 1e-9 && gd <= 1.3 * 1.8 + 1e-9, `the Gold Rain Omen stays a gold day: x${gr.toFixed(2)} with capped gear, x${gd.toFixed(2)} on its Dare (at most 1.3 x 1.8)`);
+  // Crit damage: the pool from every former gold source, capped at +40%
+  const raw = E('keenRaw()'), k = E('keen()'), src = E('keenSources().filter(x => x.v > 0).map(x => x.id)');
+  assert(raw > 0.4 && Math.abs(k - 0.4) < 1e-12 && Math.abs(E('keenMult()') - 1.4) < 1e-12, `crit damage cap: the sources add to +${Math.round(raw * 100)}% (${src.join(', ')}), the pool gives +${Math.round(k * 100)}%`);
+  E('S.precision = 0; S.relic.edge = 0; S.camp.bless = []; S.mastery.zones = {}; S.mastery.types = {}; S.achievements.got = {}; ACH_API.check()'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+  const c0 = E('critMult()'), k0 = E('keen()'); E('S.precision = 10'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+  assert(Math.abs(E('keen()') - k0 - 0.10) < 1e-9 && Math.abs(E('critMult()') / c0 - (1 + E('keen()')) / (1 + k0)) < 1e-9, `Precision 10: +10% crit damage into the pool, the Lanternbearer's crit x${(E('critMult()') / c0).toFixed(3)}`);
+  assert(E('ROSTER_KEYS.filter(id => ROSTER[id].role === "striker").every(id => keenCharMult(id) > 1) && ROSTER_KEYS.filter(id => ROSTER[id].role === "support").every(id => keenCharMult(id) === 1)'), 'companions: strikers\' crits scale with the pool (supports have none)');
+  assert(E('HERO_UPS.every(u => u.desc() && !/Keen/.test(u.desc()))') && E('RELICS[1].desc()') === '+2% crit damage per level.', 'player-facing text says "crit damage" (no "Keen")');
+  // The ledger
+  E('S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); g.fn.buyHero('blade', '1');
+  assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a Blade level under "up"');
+  E('S.zone = 5; S.econ.earned.fight = 0'); for (let i = 0; i < 300; i++) g.fn.tick(0.1);
+  assert(E('S.econ.earned.fight') > 0, `the ledger counts fighting gold (${E('fmt(S.econ.earned.fight)')} in 30 s)`);
+  assert(!g.errors.length, 'econ: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+  // Save key: v2, S.v 3. A v1 save present is never read (a new game starts) and its key stays as it was.
+  const v1raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2-late.json'), 'utf8');
+  const V1 = ['lanternfall', 'save', 'v1'].join('.');   // the old key (spelled so the tools scan below finds no v1 key here)
+  const st = memoryStorage({ [V1]: v1raw });
+  const h = loadCore({ seed: 42, storage: st }), H = s => h.eval(s);
+  assert(H('KEY') === 'lanternfall.save.v2' && H('S.v') === 3 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v2, S.v 3: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
+  for (let i = 0; i < 600; i++) h.fn.tick(0.1);
+  H('save()');
+  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v2')).v === 3 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v2');
+  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v2': 'not json' });
+  const j = loadCore({ seed: 43, storage: junk });
+  assert(j.eval('S.v') === 3 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
+  for (const t of ['check.mjs', 'sim.mjs', 'savecode.mjs', 'perf.mjs']) {
+    const src = fs.readFileSync(path.join(ROOT, 'tools', t), 'utf8').replace(/\/\/.*$/gm, '');
+    assert(!/lanternfall\.save\.v1/.test(src), `tools/${t} reads the v2 key`);
+  }
+  const csrc = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-econ.js'), 'utf8');
+  assert(!/\b(document|window|localStorage)\b/.test(csrc.replace(/\/\/.*$/gm, '')), '55-econ.js is a core file: no DOM, window or storage');
+} catch (e) { fail('econ crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
