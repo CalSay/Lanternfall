@@ -43,8 +43,9 @@ Fill in the brackets and paste the whole thing:
 > stays fully visible and calm in every pose. Leave out [code-drawn things: bow string / swooshes / spell
 > effects / companion]; I add those.
 >
-> **Character:** [name, title]. [Two-line personality.] [Look: silhouette, clothes, colours, weapon.]
-> **Palette:** [main colours], distinct from [other heroes' colours].
+> **Character:** [name, title], [class and role]. [Their story and personality in a few lines.] [Only the story
+> facts the look must show, e.g. "a borrowed sword too big for him".] Design the outfit, colours and details
+> yourself to fit the character.
 >
 > **Poses:**
 > 1. [pose]: [one sentence of exact body position].
@@ -68,3 +69,9 @@ Fill in the brackets and paste the whole thing:
 - Bow string: drawn over the body but under the drawing forearm. It meets at the hand at full draw and runs straight after the release.
 - Projectiles, swooshes, spell effects and sound waves, timed to the hit frame.
 - Companions (Wren's bat). Palette lock and outline clean-up. Frames go straight into the game.
+
+## 6. Keep the design direction light (owner, 2026-09-29)
+
+Give GPT the character's story, role, weapon type and the few details the story requires. Let it design the
+outfit, palette and details itself: Wren's best choices came from GPT. Only step in when a result breaks the
+checklist or reads as the wrong class.
