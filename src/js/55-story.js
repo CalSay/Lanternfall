@@ -10,7 +10,7 @@
 //                 `at` (the coast's) plays when its system calls storyBeat(id). A beat the save got
 //                 past without standing there (it jumped) plays quiet: its one-line note.
 //   Elder line    the first time a boss of a type appears (intro) and its first kill (fall). The
-//                 Hollow's zone 35 boss is the Listener (lore.md 4.2), with its own lines.
+//                 Hollow's zone 35 boss is the Fenmother (lore.md 4.4), with its own lines.
 //   Great Lantern the card is 55-lantern's; this file only files its beat (COAST_STORY[beat]) in
 //                 the story list so it can be read again, and gives the card its `say` lines.
 // Old saves (S.story new to them): everything already behind them (zones below S.maxZone) is marked
@@ -77,7 +77,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
     if (!(z >= 1) || typeof LORE_ELDERS === 'undefined') return null;
     const r = regionOf(z);
     if (r.id === 'hollow' && z === r.z1) return LORE_ELDERS.listener ? 'listener' : null;
-    if (z === r.z1) return null;                                     // other region bosses have their own lines (the Keeper: 21b)
+    if (z === r.z1) return null;                                     // other region bosses have their own lines (the Fogbound: 21b)
     const t = TYPES[zoneType(z)];
     return t && LORE_ELDERS[t.key] ? t.key : null;
   };
@@ -173,7 +173,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
   on('spawn', ({ mob, zone }) => {
     if (!mob || !mob.boss || (typeof arena !== 'undefined' && arena)) return;
     ready();
-    // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Listener")
+    // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
     const k = storyElderKey(zone); if (!k) return;

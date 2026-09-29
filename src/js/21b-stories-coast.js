@@ -10,7 +10,7 @@
 //                            text: the card (2-5 sentences). note: the one-line bell notice for live
 //                            saves that skip the card (12.2). head: the Great Lantern card headline
 //                            (beats 0 and 5). say: { characterKey: line } spoken only if recruited.
-//   KEEPER_LINES[k]       -> the Drowned Keeper's barks (under 60 chars), each a list to pick from:
+//   KEEPER_LINES[k]       -> Silas Penrow, the Fogbound's barks (under 60 chars), each a list to pick from:
 //                            intro, swing (Lamp Swing), beam (Green Beam), undertow, bell (the Drowned
 //                            Bell), feed (High tide heal), rocks (Low tide), win (the party fails),
 //                            fall (first kill), rematch (after the Coast is relit)
@@ -49,12 +49,12 @@ const COAST_STORY = [
     text: 'Saltreach was a fishing village once. The sea took it the night the lights went out, and it never gave it back. The lamps still hang in the streets, under the water, and some of them burn green. You walk the roofs at Low tide and try not to look down.',
     note: 'You reach Saltreach. Its lamps still burn, under the water.',
     say: { thessaly: 'Every drowned village looks the same from above.' } },
-  { id: 'letters', title: 'The Keeper\'s Letters',
+  { id: 'letters', title: 'Silas\'s Letters',
     text: 'In the Coral Nave you find letters sealed in a jar. The Saltreach keeper wrote them, a lampwarden who swore the Oath. When the dark came, a voice under the water promised that his light would never go out, if he gave it to the sea. He carried the lens down the steps and into the water. The lighthouse has burned green ever since.',
     note: 'You find the keeper\'s letters in the Coral Nave.',
     say: { maren: 'A lampwarden gives his light to no one. He knew that.' } },
   { id: 'coastLantern', title: 'The Great Lantern of the Coast', head: 'The Great Lantern of the Coast burns again.',
-    text: 'The Keeper falls, and you carry the lens back up the stairs. You set it in the lamp room, and it burns gold. Down on the shingle, Hallam takes off his hat. From the gallery you see a red glow far inland, where the Emberwaste burns. Out on the reef, something green sinks out of sight.',
+    text: 'Silas falls, and you carry the lens back up the stairs. You set it in the lamp room, and it burns gold. Down on the shingle, Hallam takes off his hat. From the gallery you see a red glow far inland, where the Emberwaste burns. Out on the reef, something green sinks out of sight.',
     note: 'The lighthouse burns gold. Far inland, the Emberwaste glows red.',
     say: { caedmon: 'I know that fire. It knows me too.' } }
 ];
@@ -67,8 +67,8 @@ const KEEPER_LINES = {
   bell: ['All hands. All drowned hands.', 'Ring for the crew.', 'The bell calls them home.'],
   feed: ['High water. It sings to me.', 'The sea feeds the lens.'],
   rocks: ['The water leaves me. It always comes back.', 'Wait for the tide. Just wait.'],
-  win: ['The light stays lit. That was the promise.', 'Go home. Keep your little lamps.'],
-  fall: ['It promised the light would never go out.', 'Take the lens. The song stays with me.', 'Tell Hallam I kept it lit.'],
+  win: ['The fog stays. That was never about the light.', 'Go home. Keep your little lamps.'],
+  fall: ['It never wanted my light. It wanted the fog.', 'Take the lens. The song stays with me.', 'Tell Hallam the fog was never mine to keep.'],
   rematch: ['Gold again. I had forgotten gold.', 'Come to keep me company?', 'Still listening, down there. Always.']
 };
 
@@ -76,7 +76,7 @@ const COAST_LORE = {
   6: [
     { title: 'Hallam\'s Tide Book', by: 'hallam',
       text: 'Hallam kept a tide book for thirty years. The early pages show two tides a day, as tides should be. After the night the lights went out, the entries crowd together, twice an hour, every hour. The last page says only: "It is not the moon pulling it now."' },
-    { title: 'A Keeper\'s First Letter', by: 'keeper',
+    { title: 'Silas\'s First Letter', by: 'keeper',
       text: '"Hallam, the tower is taller than it looks from your ferry, and the stairs count two hundred and six. I polished the lens until I could see my face in it. Tonight every ship on the coast will see my light. Silas."' }
   ],
   7: [

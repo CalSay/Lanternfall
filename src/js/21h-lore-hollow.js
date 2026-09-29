@@ -8,7 +8,7 @@
 //   HOLLOW_ARRIVAL[place]  -> one-line arrival notice for Hollow place 0-6 (zonePlace(z)), in cycle order:
 //                             Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep,
 //                             Quarry Ruins, Wraithmarsh
-//   HOLLOW_ARRIVAL_BOSS    -> the arrival notice for zone 35 (Wraithmarsh V, the Listener)
+//   HOLLOW_ARRIVAL_BOSS    -> the arrival notice for zone 35 (Wraithmarsh V, the Fenmother)
 //   HOLLOW_STORY[i]        -> beat i (0-3, lore.md 8.1 and 9.4): { id, at, title, text, note, say? }
 //                             at: the zone whose first arrival plays it. text: the card (2-5 sentences).
 //                             note: the one-line bell notice for saves already past it. say:
@@ -23,9 +23,9 @@
 //                             TYPES[i].name if the coast keys end up different. region: 'hollow' | 'coast'.
 //   LORE_ELDERS[key]       -> { name, intro, fall }: narration (elders do not talk). intro plays the
 //                             first time a boss of that type appears; fall on its first kill. Same
-//                             14 keys, plus `listener` (the Hollow's zone 35 boss, lore.md 4.2), which
-//                             also has `line`, its bestiary line. The Drowned Keeper's lines are
-//                             KEEPER_LINES (21b).
+//                             14 keys, plus `listener` (the Hollow's zone 35 boss, the Fenmother,
+//                             lore.md 4.4), which also has `line`, its bestiary line. Silas Penrow,
+//                             the Fogbound's lines are KEEPER_LINES (21b).
 //   RAID_LORE[bossName]    -> one flavour line per world raid foe, keyed by the BOSSES names
 //                             (20-data.js). Client text only: it never touches world/boss or raiders.
 //
@@ -53,7 +53,7 @@ const HOLLOW_ARRIVAL = [
   'Quarry Ruins. The stone stood up and walked. Some of it still does.',
   'Wraithmarsh. Green lights drift over the water. Do not follow them.'
 ];
-const HOLLOW_ARRIVAL_BOSS = 'Wraithmarsh V. One wraith here does not tend the others. It listens.';
+const HOLLOW_ARRIVAL_BOSS = "Wraithmarsh V. One wraith here took the marsh's own lights, and kept them.";
 
 const HOLLOW_STORY = [
   { id: 'wisps', at: 7, title: 'Wisps',
@@ -68,9 +68,9 @@ const HOLLOW_STORY = [
     text: 'On the hill above the road stands a dark chapel. One candle burns inside, very low, and does not go out. Someone is keeping it.',
     note: 'A candle burns in the dark chapel on the hill.',
     say: { anselm: 'I rang the dusk bell in that chapel. Every night.' } },
-  { id: 'listener', at: 35, title: 'The Listener',
-    text: 'At the heart of the marsh, one wraith does not tend the others. It stands still, head tilted, as if someone far away is talking. While it listens, no lamp in the Hollow will hold.',
-    note: 'One wraith in the marsh is listening to something far away.',
+  { id: 'listener', at: 35, title: 'The Fenmother',
+    text: 'At the heart of the marsh stands the first wraith the marsh ever took. It drowned the marsh\'s own lights the night the dark came, and it has held the fog over the Hollow ever since. While it stands, no lamp here will hold.',
+    note: 'One wraith in the marsh took the first light. It still holds the fog down.',
     say: { wren: 'The caves sang my name like that. I never answered.' } }
 ];
 const HOLLOW_LANTERN_SAY = { hesketh: 'Forty years I lit the small ones. Never this one.' };
@@ -103,7 +103,7 @@ const LORE_BESTIARY = {
     champ: 'Cut from the deepest seam. Stone only knows weight, and this one has plenty.' },
   wraith: { name: 'Marsh Wraith', region: 'hollow',
     foe: 'People who followed green lights into the marsh. Now they lure lamps in and drown them.',
-    elder: 'Each Elder Wraith listens. The one at the heart of the marsh listens hardest.',
+    elder: 'Each Elder Wraith took a light once. The one at the heart of the marsh took the first.',
     champ: 'It was a keeper once. It still keeps the others going, for the dark now.' },
   // the Sunken Coast (the keys R2-1 should use; see the header)
   crab: { name: 'Shinglecrab', region: 'coast',
@@ -158,10 +158,10 @@ const LORE_ELDERS = {
   wraith: { name: 'Elder Marsh Wraith',
     intro: 'An Elder Wraith rises from the reeds and gathers the others to it.',
     fall: 'It sinks into the water, quiet at last. The marsh smells of rain.' },
-  listener: { name: 'The Listener',
-    intro: 'It stops listening, and turns to your lamp.',
-    fall: 'It goes quiet. Far away, something stops talking.',
-    line: 'The first wraith to hear a voice in the dark. While it listens, no lamp here holds.' },
+  listener: { name: 'The Fenmother',
+    intro: 'It turns from the reeds it drowned, and comes for your light.',
+    fall: 'It sinks at last. The fog does not lift, not yet, but it will.',
+    line: 'The first wraith the marsh ever took. While it stands, no lamp in the Hollow holds.' },
   crab: { name: 'Elder Shinglecrab',
     intro: 'A crab as big as a rowing boat. It shuts its shell and waits, like the sea.',
     fall: 'The great shell opens and stays open. Only the tide comes and goes.' },

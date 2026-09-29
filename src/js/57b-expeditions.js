@@ -28,7 +28,7 @@
 //          expedCatchUp(now, auto) -> [results]
 //
 // Events: expedSent { r, grade, h, team }, expedBack { r, grade, haul, auto, recall, g, team, circles }
-//         (g: grade index; circles: { circle: members } of the returning team, for Circle Sigils in 55-legend;
+//         (g: grade index; circles: { circle: members } of the returning team, for Circle Crests in 55-legend;
 //         secs: seconds the team was out, for Bonds in 56f),
 //         expedPick { id } (the Roster board's Send button; the UI opens the send sheet),
 //         expedGoto (the Map Room's Expeditions button). Emits kingslayerCredit { n } (56c).

@@ -116,7 +116,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
-        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Listener
+        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Fenmother
         lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
     })
   });
@@ -314,7 +314,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 
   // ---------------- 16. Legendaries: the 39 powers in the Lantern Book (legendaries.md 7) ----------------
   // 2 Light for a learned power, +1 per rank above I (234 in all). Title only, no power bonus. Opens with
-  // the first legendary drop or Circle Sigil (the Powers view's rule). Pinnacle powers score on their page.
+  // the first legendary drop or Circle Crest (the Powers view's rule). Pinnacle powers score on their page.
   const legOpen = () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length));
   page('legendaries', {
     n: 'Legendaries', seal: { key: null, txt: '' }, title: LEG_CODEX.title, pic: 'rows',
