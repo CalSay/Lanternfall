@@ -1039,7 +1039,9 @@ let resize, animate, draw, stageStats, warmScene;
     }
     return d;
   }
-  const actorA = a => a.alpha < 1 ? a.alpha : rtA;
+  // S3 (59f-trials): in a solo fight the heroes it does not field step back and watch, dimmed.
+  const trialOut = a => a.key !== 'hero' && typeof trialField === 'function' && !!trialField() && !trialField().includes(a.key);
+  const actorA = a => a.alpha < 1 ? a.alpha : trialOut(a) ? 0.3 * rtA : rtA;
   function drawActor(a, cam) {
     const f = frameOf(a); if (!f) return;
     const hx = ax(a) - cam, al = actorA(a);

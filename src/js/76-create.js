@@ -37,8 +37,8 @@ var classUI;
       'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
     lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',
       'Your Proving opens after the Fenmother.'],
-    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing, Rally Hymn and Lightkeeper stars.',
-      'New Lightkeeper powers come in a later update.']
+    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing and Rally Hymn, and gain Sanctuary, a second ability.',
+      'Your Lightkeeper stars moved into the Lightkeeper ring on the Lanternmage map. Their points are free to spend again.']
   };
 
   const classes = () => (typeof CLASS_DEFS === 'object' && CLASS_DEFS && typeof HERO_CLASSES === 'object') ? CLASS_DEFS : null;
@@ -256,8 +256,10 @@ var classUI;
       if (!info) return [];
       const d = CLASS_DEFS[info.base], out = [];
       for (const ps of d.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
+      // S3: the evolution rows, the Proving and the choice are 75-class-ui's
+      if (typeof classEvoUI === 'object' && classEvoUI) out.push(...classEvoUI.rows(info));
       // The evolution: granted (a migrated Warden or Lightkeeper), or the two paths and their gate.
-      if (info.evo) {
+      else if (info.evo) {
         const txt = info.evo === 'priest'
           ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
           : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
@@ -273,7 +275,7 @@ var classUI;
         if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
         out.push(r);
       }
-      out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+      if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
       if (info.migrated && CHANGED[info.from]) {
         const det = el('details', 'cl-changed');
         det.append(el('summary', null, 'What changed'));
@@ -294,16 +296,21 @@ var classUI;
       if (!sw || !sw.ok) return null;
       const m = Math.max(1, Math.ceil(sw.left / 60e3));
       const box = el('div', 'cs-mirror cl-switch');
-      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch class for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
+      // S3: once evolved, the free change switches the path (75-class-ui's sheet), not the class
+      const evo = S.cls && S.cls.evo && typeof classEvoUI === 'object' && classEvoUI;
+      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch ${evo ? 'path' : 'class'} for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
       const b = el('button', 'mini go', 'Switch'); b.type = 'button';
-      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); open('switch'); });
+      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); if (evo) classEvoUI.openRespec(); else open('switch'); });
       box.append(t, b);
       return box;
     },
     sig() {
       const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null, c = S.cls || {};
-      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone].join('/');
+      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone,
+        typeof classEvoUI === 'object' && classEvoUI ? classEvoUI.sig() : ''].join('/');
     },
+    // S3: the Mirror of Embers row (75-class-ui: the respec sheet), or null (the sheet keeps its own)
+    mirrorRow() { return typeof classEvoUI === 'object' && classEvoUI ? classEvoUI.mirrorRow() : null; },
     open
   };
 

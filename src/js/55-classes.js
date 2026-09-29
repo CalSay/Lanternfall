@@ -25,12 +25,26 @@
 //   clsSet(base, evo, opts)  55-party's chooseClass writes the class through this (no rules)
 // Events: classMigrated { from, base, evo, proven } (once per save).
 
+//
+// S3 (classes-2 2, 3.1-3.7): the evolutions on top of the kits.
+//   clsEvo() -> the evolution whose kit runs (granted or chosen) or null; clsProven(); clsStrength() -> 1 proven,
+//     CLS_TUNE.unproven (0.6) for a granted path not yet proven (3.7), 0 none; clsGate() -> { lv, lvOk, bossOk, open }
+//   provingInfo() -> { id, trial, n, won, best, prove, gate, open, choice, why }; provingStart(opts) (59f-trials runs it)
+//   evoChoice() -> bool (the choice card is open: a Proving passed and no evolution yet)
+//   chooseEvo(evo, opts) (the choice card; or the one free change inside its window)
+//   respecCost('evo' | 'base') -> { mirrors, ess: { t, n }, esc, have, needM, needE, ok, why }
+//   respecEvo(evo, opts), respecBase(base, opts) (the Mirror of Embers, 3.4); useMirror (55-party) pays the base cost
+//   clsTactics() -> { slots, conds, acts, presets } (3.6, for S7)
+// State added: S.cls.lm (Great Lanterns that paid a Mirror). Events: evoChosen { evo, from, base, free },
+//   evoProven { evo }, provingPassed { base, respec } (the UI opens the choice card).
+
 let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo, clsInfo, clsSet, lbSync;
+let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoice, chooseEvo, respecCost, respecPay, respecEvo, respecBase, clsTactics;
 
 {
   registerState('cls', {
     v: 1, base: null, evo: null, evo2: null, proven: {}, trials: {}, respec: 0, free: 1, at: 0,
-    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null
+    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null, lm: 0
   });
   const C = () => S.cls;
   const OUT = { base: null, evo: null, evo2: null };
@@ -120,6 +134,7 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
     if (!CLASS_DEFS[base] || !p || typeof chooseClass !== 'function') return false;
     if (p.chosen && c.base) {
       if (c.base === base) return true;
+      if (c.evo && c.proven[c.evo] && !c.mig) return false;   // S3: once evolved, the free change is for the path (chooseEvo)
       const sw = clsSwitchInfo(o.now);
       if (!sw.ok) return false;
       c.free = 0;
@@ -142,9 +157,159 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
       proven: !!(c.evo && s.proven[c.evo]), migrated: !!s.mig, from: s.from,
       paths: d.evos.map(id => ({ id, name: EVO_NAMES[id].name, kind: EVO_NAMES[id].kind, line: EVO_NAMES[id].line })),
       gate: { lv: CLS_TUNE.evoLv, lvOk: gateLv, bossOk: gateBoss, open: gateLv && gateBoss },
-      sw: clsSwitchInfo(now)
+      sw: clsSwitchInfo(now),
+      // S3: the evolution's kit and strength, the Proving, the choice card
+      str: typeof clsStrength === 'function' ? clsStrength() : 0,
+      proving: typeof provingInfo === 'function' ? provingInfo() : null,
+      choice: typeof evoChoice === 'function' ? evoChoice() : false
     };
   };
+
+  // ================= S3: the evolutions, the Proving, the respec (classes-2 2, 3) =================
+  const now0 = o => (o && o.now) || clsNow();
+  const trialRec = id => { const t = C().trials; return t[id] && typeof t[id] === 'object' ? t[id] : { n: 0, won: 0, best: 0 }; };
+  clsGate = () => ({ lv: CLS_TUNE.evoLv, lvOk: S.L >= CLS_TUNE.evoLv, bossOk: pastBoss(), open: S.L >= CLS_TUNE.evoLv && pastBoss() });
+  clsProven = () => { const c = lbClass(); return !!(c.evo && C().proven[c.evo]); };
+  // The strength of the evolution's new parts: 1 proven, CLS_TUNE.unproven for a granted path (3.7), 0 none.
+  clsStrength = () => { const c = lbClass(); return !c.evo || !EVO_DEFS[c.evo] ? 0 : C().proven[c.evo] ? 1 : CLS_TUNE.unproven; };
+  // The evolution whose kit runs (granted or chosen), or null.
+  clsEvo = () => { const c = lbClass(); return c.evo && EVO_DEFS[c.evo] ? c.evo : null; };
+  const anyWon = () => { const t = C().trials; for (const k in t) if (t[k] && t[k].won) return true; return false; };
+  // The choice card is open: a Proving passed (any, 3.4: a base change keeps it) and no evolution yet.
+  evoChoice = () => { const c = lbClass(); return !!(c.base && !c.evo && S.party && S.party.chosen && anyWon()); };
+  provingInfo = () => {
+    const c = lbClass(); if (!c.base) return null;
+    const tr = CLASS_TRIALS[CLASS_DEFS[c.base].trial], rec = trialRec(tr.id), g = clsGate();
+    const prove = !!(c.evo && !C().proven[c.evo]);   // a granted path proves itself (3.7)
+    const need = prove || (!c.evo && !anyWon());
+    return { id: tr.id, trial: tr, n: rec.n || 0, won: !!rec.won, best: rec.best || 0, prove, gate: g, open: g.open && need, choice: evoChoice(),
+      why: !need ? '' : !g.bossOk ? 'Beat the Fenmother first.' : !g.lvOk ? `Reach level ${g.lv} first.` : '' };
+  };
+  provingStart = opts => {
+    const p = provingInfo();
+    if (!p || !p.open || typeof trialStart !== 'function') return false;
+    return trialStart(p.id, Object.assign({ kind: 'proving' }, opts || {}));
+  };
+  on('trialEnd', e => {
+    if (!e || e.kind !== 'proving') return;
+    const c = C(), r = Object.assign({ n: 0, won: 0, best: 0 }, trialRec(e.id));
+    r.n++; r.best = Math.max(r.best || 0, Math.round(e.pct || 0)); if (e.won) r.won = 1;
+    c.trials[e.id] = r;
+    if (!e.won) return;
+    const lc = lbClass();
+    if (lc.evo && !c.proven[lc.evo]) {
+      c.proven[lc.evo] = 1;
+      const d = EVO_DEFS[lc.evo];
+      toast(`You passed the Proving. You are ${d.title} now: the ${d.name} at full strength.`, 'good', null, 'high');
+      emit('evoProven', { evo: lc.evo });
+    } else if (evoChoice()) {
+      toast('You passed the Proving. Choose your path.', 'good', null, 'high');
+      emit('provingPassed', { base: lc.base });
+    }
+  });
+
+  // Choose an evolution (the choice card, 3.3), or use the one free change within the window (3.4).
+  // opts: { now }. Returns true when the evolution changed (or was already this one).
+  const setEvo = (evo, o, free) => {
+    const c = C(), lc = lbClass(), from = lc.evo, fromKit = S.party.cls;
+    // Proven when a Proving was passed or a path already proven (a switch keeps it, 3.4); a granted path not yet
+    // proven that switches stays unproven until its Proving (3.7).
+    if (anyWon() || Object.keys(c.proven).some(k => c.proven[k])) c.proven[evo] = 1;
+    c.at = now0(o);
+    const kit = clsSet(lc.base, evo, { now: c.at, stamp: true });
+    const d = EVO_DEFS[evo], ab = CLASS_ABILITIES[d.ab2];
+    emit('evoChosen', { evo, from, base: lc.base, free: !!free });
+    emit('classChosen', { cls: kit, from: fromKit, base: lc.base, evo, free: !!free });
+    toast(`You are a ${d.name} now. ${ab.name} is ready.`, 'good', null, 'high');
+    return true;
+  };
+  chooseEvo = (evo, opts) => {
+    lbSync();
+    const c = C(), lc = lbClass(), d = EVO_DEFS[evo];
+    if (!d || !lc.base || d.base !== lc.base) return false;
+    if (lc.evo === evo) return true;
+    if (!lc.evo) return evoChoice() ? setEvo(evo, opts, false) : false;
+    const sw = clsSwitchInfo(now0(opts));
+    if (!sw.ok) return false;
+    c.free = 0;
+    setEvo(evo, opts, true);
+    c.at = 0;   // the window closes once used
+    return true;
+  };
+
+  // ---- the Mirror of Embers (3.4) ----
+  // Essence worth `hours` of fighting at the farm zone: packs an hour at the pace farm time x the Essence chance.
+  const essFor = hours => {
+    const z = typeof farmableZone === 'function' ? Math.max(1, Math.min(S.maxZone, farmableZone())) : S.maxZone;
+    const perH = 3600 / (PACE.farmSecs + 0.45) * essChance();
+    return { t: zoneTier(z), n: Math.max(1, Math.ceil(perH * hours)) };
+  };
+  // kind: 'evo' (switch path, same base) | 'base' (change class). -> { kind, mirrors, ess: { t, n }, esc, have, needM, needE, ok, why }
+  respecCost = kind => {
+    const k = kind === 'base' ? 'base' : 'evo', row = CLS_TUNE.respec[k], c = C();
+    const esc = Math.min(CLS_TUNE.respec.escMax, 1 + CLS_TUNE.respec.esc * (c.respec || 0));
+    const e = essFor(row.essHours * esc), mirrors = row.mirrors;
+    const haveM = (S.party && S.party.mirrors) || 0, haveE = (S.mats && S.mats.ess && S.mats.ess[e.t - 1]) || 0;
+    const needM = Math.max(0, mirrors - haveM), needE = Math.max(0, e.n - haveE);
+    const why = needM ? `You need ${needM} more Mirror${needM > 1 ? 's' : ''} of Embers.` : needE ? `You need ${fmt(needE)} more ${MAT.ess.short[e.t - 1]} Essence.` : '';
+    return { kind: k, mirrors, ess: e, esc, have: { mirrors: haveM, ess: haveE }, needM, needE, ok: !why, why };
+  };
+  const pay = cost => { S.party.mirrors -= cost.mirrors; S.mats.ess[cost.ess.t - 1] -= cost.ess.n; C().respec = (C().respec || 0) + 1; };
+  respecPay = kind => { const c = respecCost(kind); if (!c.ok) return false; pay(c); return true; };
+  // Switch to the other evolution of the same base: the free change inside its window, else 1 Mirror + Essence.
+  respecEvo = (evo, opts) => {
+    lbSync();
+    const lc = lbClass(), d = EVO_DEFS[evo];
+    if (!d || !lc.evo || d.base !== lc.base || evo === lc.evo) return false;
+    if (clsSwitchInfo(now0(opts)).ok) return chooseEvo(evo, opts);
+    const cost = respecCost('evo'); if (!cost.ok) return false;
+    pay(cost);
+    setEvo(evo, opts, false);
+    return true;
+  };
+  // Change base class: 2 Mirrors + Essence. Gear retools (55-crafting on classChosen), each class keeps its
+  // star layouts, the evolution clears; a save that passed a Proving picks the new class's path at once.
+  respecBase = (base, opts) => {
+    lbSync();
+    const lc = lbClass();
+    if (!CLASS_DEFS[base] || !lc.base || base === lc.base || typeof chooseClass !== 'function') return false;
+    const cost = respecCost('base'); if (!cost.ok) return false;
+    pay(cost);
+    const okd = chooseClass(base, undefined, { now: now0(opts), respec: true });
+    if (okd && evoChoice()) emit('provingPassed', { base, respec: true });
+    return okd;
+  };
+
+  // Tactics (3.6, for S7): rule slots and the conditions and actions this class has.
+  clsTactics = () => {
+    const c = lbClass(); if (!c.base) return null;
+    const A = CLS_TACTICS.all, B = CLS_TACTICS[c.base], ev = c.evo && C().proven[c.evo] ? EVO_DEFS[c.evo] : null;
+    return { slots: ev ? 2 : 1, conds: A.conds.concat(B.conds, ev ? ev.tactics.conds : []), acts: A.acts.concat(B.acts, ev ? ev.tactics.acts : []),
+      presets: [B.preset].concat(ev ? [ev.tactics.preset] : []) };
+  };
+
+  // Mirrors from Great Lanterns (3.4): one on each relit from Region 2 on (a quiet catch-up pays too, once).
+  on('greatLantern', e => {
+    if (!e || !(e.n >= CLS_TUNE.mirrorFromRegion) || !S.party) return;
+    const c = C();
+    if ((c.lm || 0) >= e.n) return;
+    const add = e.n - Math.max(c.lm || 0, CLS_TUNE.mirrorFromRegion - 1);
+    c.lm = e.n;
+    if (add <= 0) return;
+    S.party.mirrors = (S.party.mirrors || 0) + add;
+    if (e.rewards && !e.quiet) e.rewards.push({ txt: `+${add} Mirror of Embers`, ic: ['orb', '#FF9E3D'] });
+  });
+
+  // The Proving opening is news once (3.1), and a Next Up line while it (or the choice) waits.
+  let gateWas = null, gateFor = null, gateT = 0;
+  onTick(dt => {
+    gateT += dt; if (gateT < 1 && gateFor === S) return;
+    gateT = 0;
+    const p = provingInfo(), open = !!(p && p.open && !p.prove);
+    if (gateFor !== S) { gateFor = S; gateWas = open; return; }
+    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Party, your class card.', 'good', null, 'high');
+    gateWas = open;
+  });
 
   // Once per loaded save, and whenever the class may have changed.
   onTick(() => {

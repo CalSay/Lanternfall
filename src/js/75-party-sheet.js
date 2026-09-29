@@ -546,7 +546,8 @@ let openSheet, partySheet;
     }
     const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
-    body.append(sw ? section('Class change', sw, mir) : section('Class change', mir));
+    const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
+    body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));
     sheet.foot.textContent = '';
   }
 
@@ -575,6 +576,7 @@ let openSheet, partySheet;
     sheet.body.scrollTop = top;
   }
   function openFor(k) {
+    if (sheet) sheet.close(true);   // S3: close the open one first (its onClose would clear the new who)
     who = k; sig = ''; openStory = -1; swapOpen = false; mirrorArm = false;
     const label = k === 'hero' ? S.name : C(k) ? C(k).name : k;
     sheet = openSheet(() => {}, { label, small: k !== 'hero' && !isRecruited(k), onClose: () => { who = null; sheet = null; refs = {}; } });

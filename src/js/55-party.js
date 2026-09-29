@@ -178,8 +178,11 @@ let unitHp, unitCd, bossTelegraph;
   useMirror = function () {
     ensureInit();
     const p = P();
-    if (p.mirrors <= 0 || !p.chosen) return false;
-    p.mirrors--; p.chosen = false;
+    // S3 (classes-2 3.4): changing class costs 2 Mirrors and Essence (respecPay, 55-classes); the picker reopens.
+    if (!p.chosen) return false;
+    if (typeof respecPay === 'function') { if (!respecPay('base')) return false; }
+    else { if (p.mirrors <= 0) return false; p.mirrors--; }
+    p.chosen = false;
     toast('The Mirror of Embers shows you another path. Choose again.', 'good');
     emit('mirrorUsed', { cls: p.cls });
     return true;
@@ -274,7 +277,7 @@ let unitHp, unitCd, bossTelegraph;
       kind = 'heavy'; heavyN++;
       // Unbroken: while heavy hits land at least every 3s, the stacks never fall off.
       if (ks('unbroken')) { const hold = clock + STAR_KS.unbroken.holdSecs; for (const g of guard) if (g.until < hold) g.until = hold; }
-      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);
+      if (!(typeof clsNoGrit === 'function' && clsNoGrit())) pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);   // S3: a Reaver has Fury instead (59e)
       if (ks('crush') && heavyN % STAR_KS.crush.every === 0) tapX = STAR_KS.crush.mult;   // Crushing Blow
       if (ks('bastion') && P().abilityCd > 0) P().abilityCd = Math.max(0, P().abilityCd - STAR_KS.bastion.cdPerHeavy);
     }
@@ -286,7 +289,7 @@ let unitHp, unitCd, bossTelegraph;
     else if (c === 'ranger') {
       kind = 'mark';
       if (m) {
-        const mk = tn('mark');
+        const mk = tn('mark') + (typeof clsMarkAdd === 'function' ? clsMarkAdd() : 0);   // S3: the Trapper's Focus marks 30%
         // Deadeye: one mark at a time, and it lasts until its foe dies.
         if (ks('deadeye')) { if (typeof combatFoes === 'function') for (const f of combatFoes()) if (f !== m) f.markUntil = 0; m.markUntil = clock + 1e6; }
         else m.markUntil = clock + tn('markT');

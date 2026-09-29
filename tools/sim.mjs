@@ -13,6 +13,8 @@
 //             with any kind it makes (the legacy Sword/Helm are no longer made), and reports G1/G2 (first full tier-1/tier-2 class set incl. the Charm), G4 (gather
 //             share, first 3h), G6 (family the next set craft waits on) and G9 (first Trophy).
 //             The cycle starts 5 min in (fight 5, gather 5, then fight 10 / gather 5).
+//   --evo reaver|warden|venomstalker|trapper|warlock|priest (S3): with --class of its base, evolve when the
+//             Proving opens (Fenmother + level 35), as a pass and the choice would; --evo none stays base.
 //   --transmute 1: with --class, break higher tiers down (Transmute) to cover a class craft's shortfall.
 //   --active: taps the stage every 0.5s and casts the class ability on cooldown.
 //             Without it, the game's own idle auto-play and auto-cast run.
@@ -209,6 +211,14 @@ const storeAwayPick = () => {
 // A full pile: move to the next node of the same skill that is not full (a player would).
 const storeFullSwitch = () => { if (storeOn && storeSw && E('S.activity === "gather" && stashFull(S.node.kind, S.node.t)')) E('storeSwitch()'); };
 if (cls && !E(`chooseClass(${JSON.stringify(cls)})`)) { console.error('--class must be one of ' + E('Object.keys(HERO_CLASSES).join(", ")')); process.exit(1); }
+// --evo reaver|warden|venomstalker|trapper|warlock|priest (S3, classes-2 6.3): evolves as soon as the Proving
+// opens (the Fenmother beaten, level 35), as a passed Proving and the choice card would; --evo none stays base.
+if (args.evo && args.evo !== 'none') {
+  const ev = String(args.evo);
+  if (!E(`!!EVO_DEFS[${JSON.stringify(ev)}] && lbClass().base === EVO_DEFS[${JSON.stringify(ev)}].base`)) { console.error('--evo must be an evolution of the --class base: ' + E('Object.keys(EVO_DEFS).join(", ")')); process.exit(1); }
+  E(`onTick(() => { const c = lbClass(); if (c.evo === ${JSON.stringify(ev)} && clsProven()) return; if (!clsGate().open) return;
+    if (c.evo) clsSet(c.base, null); S.cls.trials[CLASS_DEFS[c.base].trial] = { n: 1, won: 1, best: 100 }; chooseEvo(${JSON.stringify(ev)}); })`);
+}
 // --combat k=v,...: COMBAT_TUNE knobs (59-combat.js); --enemy k=v,...: ENEMY_TUNE (59b-enemies.js).
 // Nested knobs use dots (hp.tank=10). applyKnobs also runs on the forks (T5, T6, T8, T11).
 function applyKnobs(h) {

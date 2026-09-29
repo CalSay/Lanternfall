@@ -131,7 +131,10 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   const clsOf = () => { const p = P(); return p && p.cls && HERO_CLASSES[p.cls] ? p.cls : null; };
   const CLS_ROLE = { warden: 'tank', ranger: 'striker', lanternmage: 'caster', lightkeeper: 'support' };
-  const roleOf = k => k === 'hero' ? CLS_ROLE[clsOf() || 'warden'] : (R(k) ? R(k).role : 'striker');
+  // S3: a proven evolution's role (59e clsHeroStats: a Reaver is a striker in Front, a Trapper a caster in the Middle)
+  const evoStats = () => (typeof clsHeroStats === 'function' ? clsHeroStats() : null);
+  const heroRole = () => { const e = evoStats(); return e ? e.role : CLS_ROLE[clsOf() || 'warden']; };
+  const roleOf = k => k === 'hero' ? heroRole() : (R(k) ? R(k).role : 'striker');
   const fieldIds = () => ((P() && P().field) || []).filter(k => R(k) && isRecruited(k)).slice(0, max());
   const members = () => ['hero'].concat(fieldIds());
   formMembers = members;
@@ -321,10 +324,12 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   };
   heroFloorDps = () => {
     if (!combatOn() || legacy || !rosterLive()) return 0;
-    const cls = clsOf() || 'warden', fl = T.heroFloor[cls] || 0, f = fieldIds();
+    // S3: a proven evolution has its own floor (CLS_TUNE.heroFloor) in its own role
+    const cls = clsOf() || 'warden', ev = evoStats() && typeof clsEvo === 'function' ? clsEvo() : null;
+    const fl = ev && CLS_TUNE.heroFloor[ev] != null ? CLS_TUNE.heroFloor[ev] : T.heroFloor[cls] || 0, f = fieldIds();
     if (!(fl > 0) || !f.length) return 0;
     let sum = 0; for (const k of f) sum += charPow(k);
-    return fl * (sum / f.length) * (ROLE_D[CLS_ROLE[cls]] || 0);
+    return fl * (sum / f.length) * (ROLE_D[heroRole()] || 0);
   };
   heroCombatDps = () => {
     const d = heroDps();

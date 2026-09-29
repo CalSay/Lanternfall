@@ -1,6 +1,6 @@
 # Classes 2.0: three base classes and six evolutions (CL1)
 
-Status: design spec CL1, written 2026-09-28, finished after a restart (review pass: owner names kept exactly, Sanctuary restored, numbers checked against core-2). It fills in the class and evolution kits that the shared
+Status: design spec CL1, written 2026-09-28, finished after a restart (review pass: owner names kept exactly, Sanctuary restored, numbers checked against core-2). **Built:** S2 (base classes, migration, star maps) and S3 (the six evolutions, the Proving, `ab2`, rings, looks, the Mirror respec; 2026-09-29): what S3 built and deferred is in core-2 section 10. It fills in the class and evolution kits that the shared
 rulebook [core-2.md](core-2.md) leaves to CL1 (core-2 9.1): taps, `ab1`, `ab2`, Finishers, passives and
 core mechanics with coefficients; class base stats; the trials; the class migration; star maps per class;
 hero base types (`dt`) and signature statuses; Bonds that react to the class; the Tactics unlock order.

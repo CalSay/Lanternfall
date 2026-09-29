@@ -2839,6 +2839,74 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .hu-hint { margin-top: 2px; font: 600 calc(12.5px * var(--display-k))/1.25 var(--display); color: var(--gold); }
 .hu-hint[hidden] { display: none; }
 .hu-row.far .buy .price { opacity: .6; }
+/* 61-class: Classes 2.0 S3 (75-class-ui.js): the evolution rows on the class card, the Proving banner on the
+   stage, the second ability button and the meter, the choice card, the respec sheet, the evolution ring
+   under the star map, and the lamp flash (off under reduced motion). */
+.cl-row.cl-evo { border-color: var(--evo, var(--gold)); }
+.cl-prove { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--gold); background: var(--well); }
+.cl-prove p { margin: 0; font-size: 13px; line-height: 1.35; color: var(--muted); }
+.cl-prove small { font-size: 12px; color: var(--muted); }
+.cl-prove .cl-go, .cl-row .cl-go { justify-self: start; min-height: 44px; padding: 8px 14px; }
+.cl-rec { color: var(--bone) !important; }
+.cl-ab2 .pc-auto { display: flex; gap: 6px; align-items: center; min-height: 36px; font-size: 13px; color: var(--muted); }
+.cl-cost { font-size: 13px; color: var(--bone); margin: 0; }
+.cl-need { font-size: 12.5px; color: var(--ember, #FF9E3D); margin: 0; }
+.cl-mirror .mini { min-height: 44px; }
+.evo-opt { display: grid; gap: 6px; }
+.evo-opt .mini { justify-self: start; min-height: 44px; padding: 8px 14px; }
+.evo-opt .mini:disabled { opacity: .5; cursor: default; }
+
+/* The Proving on the stage */
+.tr-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 30; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: #0B0810; border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
+.tr-hud[hidden] { display: none; }
+.tr-top { display: flex; justify-content: space-between; gap: 8px; min-width: 0; grid-column: 1; }
+.tr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); }
+.tr-time { font-variant-numeric: tabular-nums; }
+.tr-goal { grid-column: 1; font-size: 12.5px; color: var(--muted); }
+.tr-bar { grid-column: 1; height: 6px; background: #241a2c; overflow: hidden; }
+.tr-bar i { display: block; height: 100%; background: var(--gold); transform-origin: left; }
+.tr-hold .tr-bar i { background: #FFD27A; }
+.tr-quit { grid-column: 2; grid-row: 1 / span 3; align-self: center; min-height: 44px; }
+
+/* The second ability and the meter */
+.abil.abil2 { right: 64px; border-color: var(--evo, var(--gold)); }
+.abil2 .abil2-ic { font: 700 calc(18px * var(--display-k, 1)) var(--display, inherit); color: var(--evo, var(--bone)); text-shadow: 0 2px 0 #0B0810; }
+.stage.tall .abil.abil2 { right: 110px; }
+.cl-meter { position: absolute; right: 8px; bottom: calc(20% + 64px); display: flex; align-items: center; gap: 6px; padding: 3px 6px; background: rgba(11,8,16,.8); border: 1px solid var(--line); font-size: 12px; color: var(--bone); pointer-events: none; }
+.cl-meter[hidden] { display: none; }
+.cl-mbar { width: 56px; height: 5px; background: #241a2c; overflow: hidden; }
+.cl-mbar i { display: block; height: 100%; background: var(--ember, #FF9E3D); transform-origin: left; }
+.cl-mnum { font-variant-numeric: tabular-nums; }
+.stage.tall .cl-meter { right: 42px; bottom: 76px; }
+
+/* The choice card */
+.evo-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.evo-tab { min-height: 44px; border: 2px solid var(--line); background: var(--panel); color: var(--bone); font: inherit; font-weight: 700; cursor: pointer; }
+.evo-tab.on { border-color: var(--gold); color: var(--gold); }
+.evo-body { display: grid; gap: 8px; padding: 10px; border: 2px solid var(--evo, var(--gold)); background: var(--panel); touch-action: pan-y; }
+.evo-top { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; }
+.evo-fig { width: 56px; height: 100px; image-rendering: pixelated; }
+.evo-body h2 { margin: 0; font-size: 20px; letter-spacing: .04em; color: var(--evo, var(--gold)); }
+.evo-title { font-size: 13px; color: var(--muted); }
+.evo-bul { margin: 0; padding-left: 18px; display: grid; gap: 4px; line-height: 1.35; }
+.evo-line, .evo-good { margin: 0; font-size: 13.5px; line-height: 1.35; }
+.evo-good .own { color: var(--bone); }
+.evo-good .not { color: var(--muted); opacity: .7; }
+.evo-confirm { display: grid; gap: 8px; padding: 10px; border: 2px solid var(--gold); background: var(--well); }
+.evo-confirm[hidden] { display: none; }
+.evo-confirm p { margin: 0; }
+
+/* The evolution ring under the star map */
+.st-ringbox { display: grid; gap: 4px; margin-top: 8px; padding: 8px; border: 1px solid var(--line); background: var(--well); }
+.st-ringbox .note { margin: 0; }
+.st-ring-svg { width: 100%; max-width: 340px; justify-self: center; aspect-ratio: 240 / 170; }
+.st-suggest { justify-self: start; min-height: 44px; }
+
+/* The lamp flash when an evolution is chosen or proven */
+.evo-flash { position: absolute; inset: 0; pointer-events: none; z-index: 5; background: radial-gradient(circle at 30% 65%, var(--evo) 0, transparent 55%); opacity: 0; animation: evo-flash 1.3s ease-out; }
+@keyframes evo-flash { 0% { opacity: 0; } 20% { opacity: .75; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .evo-flash { animation: none; display: none; } }
+@media (max-width: 380px) { .evo-top { grid-template-columns: 56px 1fr; } .tr-hud { font-size: 12px; } }
 @media (max-width: 380px) { .tab { font-size: 11.5px; } .ic { width: 36px; height: 36px; } .ic img { width: 24px; height: 24px; } .modeseg button { padding: 0 9px; min-width: 50px; } .znum { min-width: 50px; } .skill .sn { letter-spacing: .03em; } }
 @media (prefers-reduced-motion: reduce) {
   .toast { animation: none; transition: none; } .bar > i, .hpbar > i.trail { transition: none; } .ic.f-legendary::after { animation: none; }
@@ -8973,8 +9041,19 @@ const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, 
 //   CLS_STAR_MAP[kit]    the star map a kit uses ('warrior' | 'ranger' | 'mage'; the legacy 'lightkeeper' map
 //                        until S3's ring); CLS_STAR_FROM[map] the legacy map copied into it once (4.4)
 //   EVO_NAMES[evo]       { name, title, base, kind: 'damage' | 'utility', role, line } names only (owner-chosen,
-//                        fixed); EVO_DEFS is empty until S3 fills the kits
+//                        fixed)
 //   CLS_TUNE             the appendix numbers (evoLv, unproven, secondThoughtsMin, respec, grit, embers, ...)
+// S3 (classes-2 2, 3, 4.3; below the S2 blocks):
+//   EVO_DEFS[evo]        the six evolutions: { id, name, title, base, kind, role, dt, adds, col (lamp colour),
+//                        tint, pitch, bullets, good, beats, hp, armour, block, ward, threat, crit, area, ctrl,
+//                        tankDr, line { name, text }, meter, ab2, finisher, replaces, passives, aura, idle,
+//                        active, ringKs, ring: [[name, text, fx, p] x 8] (e1s1-e1s8), tactics }
+//   CLASS_ABILITIES      + the six ab2s and six evolution Finishers, + var.trapper (Focus 30%) and
+//                        var.warlock (the cursing Flare)
+//   CLASS_TRIALS[base]   the three Provings (3.2): { id, name, tpl: 'hold' | 'hunt' | 'wave', secs, text, how,
+//                        ... } read by 59f-trials.js
+//   CLS_TACTICS          Tactics unlock order (3.6): per base class { conds, acts, preset } (evolutions: EVO_DEFS
+//                        .tactics); slot 1 when Tactics arrive (S7), slot 2 on evolving
 //
 // Ids never change once shipped. Numbers are starting values for tools/sim.mjs (BAL3 tunes them).
 
@@ -9050,6 +9129,49 @@ const CLASS_ABILITIES = {
     desc: '7x your attack as fire. Plants 5 Embers and sets the whole pack burning.' }
 };
 
+// ---- S3: the six ab2s and the evolution Finishers (classes-2 2.3-2.8, core-2 4.4 shape) ----
+Object.assign(CLASS_ABILITIES, {
+  rend: { id: 'rend', slot: 'ab2', cls: 'reaver', cd: 14, target: 'line', type: 'phys', tags: ['heavy'],
+    fx: [['dmg', 2.5], ['apply', 'bleed', 3], ['stagger', 10], ['meter', 'fury', 15]], name: 'Rend',
+    desc: 'Cleaves every foe in the front line for 2.5x your attack and makes them bleed. Adds 15 Fury.' },
+  redharvest: { id: 'redharvest', slot: 'fin', cls: 'reaver', type: 'phys', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 8], ['consume', 'bleed'], ['meter', 'fury', 100]], perBleed: 0.4, name: 'Red Harvest',
+    desc: '8x your attack, +0.4x for each Bleed on the foe (it uses them up). Fills your Fury.' },
+  standfast: { id: 'standfast', slot: 'ab2', cls: 'warden', cd: 18, target: 'pack', type: 'holy', tags: ['taunt', 'shield'],
+    fx: [['taunt', 4], ['buff', 'standfastGuard', 4], ['consume', 'bulwark'], ['dmg', 0.6, { perStack: 1, base: 0 }],
+      ['shield', 0.15, { perStack: 1, base: 0, to: 'party' }], ['stagger', 3, { perStack: 1, base: 0 }], ['buff', 'standfastEmpower', 6]],
+    guard: 0.3, emp: 0.15, name: 'Stand Fast',
+    desc: 'Every foe turns on you for 4s and you take 30% less. Your stored Bulwark bursts as holy light on every foe and shields your party. Your party deals 15% more for 6s.' },
+  oathstrike: { id: 'oathstrike', slot: 'fin', cls: 'warden', type: 'holy', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 8], ['shield', 0.1, { to: 'party' }], ['taunt', 3], ['meter', 'bulwark', 5]], name: 'Oathstrike',
+    desc: '8x your attack as holy. Shields your party for 10% of their health, taunts every foe and stores 5 Bulwark.' },
+  bloom: { id: 'bloom', slot: 'ab2', cls: 'venomstalker', cd: 16, target: 'single', type: 'poison', tags: ['dot', 'aoe'],
+    fx: [['consume', 'venom'], ['dmg', 0.4, { perStack: 1, ramp: 0.1 }], ['apply', 'venom', 3], ['apply', 'venom', 4, { to: 'pack-others' }]], name: 'Deathcap',
+    desc: 'Bursts the Venom on your foe: 0.4x your attack per stack, more the more stacks. It keeps 3, and every other foe gets 4.' },
+  heartseeker: { id: 'heartseeker', slot: 'fin', cls: 'venomstalker', type: 'poison', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 8], ['apply', 'venom', 10]], name: 'Heartseeker', desc: '8x your attack as poison. Puts 10 Venom on the foe at once.' },
+  snarefield: { id: 'snarefield', slot: 'ab2', cls: 'trapper', cd: 20, target: 'pack', type: 'frost', tags: ['cc', 'aoe'],
+    fx: [['dmg', 1.0], ['apply', 'root', 1, { dur: 3 }], ['apply', 'chill', 1, { dur: 4 }], ['apply', 'mark', 1, { v: 0.2, dur: 8 }], ['stagger', 15], ['trap', 'rearm']], name: 'Snare Field',
+    desc: 'Roots, chills and marks every foe (your party deals 20% more to them for 8s), then re-arms both your traps.' },
+  deadfall: { id: 'deadfall', slot: 'fin', cls: 'trapper', type: 'frost', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 7], ['apply', 'root', 1, { to: 'pack' }], ['apply', 'mark', 1, { v: 0.3, dur: 10 }], ['apply', 'chill', 1, { dur: 6 }]], name: 'Deadfall',
+    desc: '7x your attack as frost. Roots the pack, and marks and chills the boss.' },
+  hexnova: { id: 'hexnova', slot: 'ab2', cls: 'warlock', cd: 15, target: 'pack', type: 'fire', tags: ['aoe'],
+    fx: [['detonate', 'curse', 1.5], ['dmg', 1.2], ['apply', 'curse', 1, { dur: 6 }]], name: 'Witchfire',
+    desc: 'Every Curse goes off at once for 1.5x what it stored. Then 1.2x your attack as fire on every foe, and a fresh Curse on each.' },
+  unmaking: { id: 'unmaking', slot: 'fin', cls: 'warlock', type: 'fire', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 9], ['detonate', 'curse', 2]], name: 'Unmaking', desc: "9x your attack as fire. The foe's Curse goes off at double, and the whole pack takes all of it." },
+  sanctuary: { id: 'sanctuary', slot: 'ab2', cls: 'priest', cd: 20, target: 'party', type: 'holy', tags: ['heal', 'shield', 'aoe'],
+    fx: [['apply', 'regen', 1, { dur: 6, v: 0.8 }], ['shield', 0, { overflow: 1 }], ['dmg', 0.6, { hits: 6, over: 6, to: 'pack' }], ['stagger', 10]], name: 'Sanctuary',
+    desc: 'Holy ground under your party for 6s: it heals them every second, healing past full becomes a shield, and every foe takes holy damage each second.' },
+  dawnbreak: { id: 'dawnbreak', slot: 'fin', cls: 'priest', type: 'holy', tags: ['heavy', 'finisher'],
+    fx: [['dmg', 7], ['heal', 3, { to: 'party' }], ['cleanse', 1], ['meter', 'blessing', 3]], name: 'Dawnbreak',
+    desc: '7x your attack as holy. Heals your party, cleanses one harm from each, and sets your Blessing to III.' }
+});
+CLASS_ABILITIES.focus.var = { trapper: { id: 'focus', name: 'Focus', v: 0.3, desc: 'Marks the foe for 8s: your whole party deals 30% more to it.' } };
+CLASS_ABILITIES.flare.var.warlock = { id: 'flare', name: 'Lantern Flare', curse: 1,
+  desc: 'A burst of 20x your attack, +30% for each Ember. It curses the foe and sets the whole pack burning.' };
+
 // The four old classes (7.1). Runs once per save; the kit it becomes plays the same (7.2).
 const LEGACY_CLS = {
   warden: { base: 'warrior', evo: 'warden' },
@@ -9061,9 +9183,9 @@ const LEGACY_CLS = {
 // plays the Warrior's kit and a granted Lightkeeper the old Lightkeeper's).
 const CLS_KIT = (base, evo) => !base || !CLASS_DEFS[base] ? null : base === 'mage' && evo === 'priest' ? 'lightkeeper' : CLASS_DEFS[base].kit;
 
-// Star maps by kit (4.1-4.4). The legacy Lightkeeper map stays live for a Lightkeeper until S3 moves its
-// stars into the Lightkeeper ring; its points are never lost.
-const CLS_STAR_MAP = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'lightkeeper' };
+// Star maps by kit (4.1-4.4). S3: a Lightkeeper plays the Lanternmage map and the Lightkeeper ring (its stars
+// moved there); the legacy maps.lightkeeper layouts stay untouched in the save, their points free again.
+const CLS_STAR_MAP = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'mage' };
 const CLS_STAR_FROM = { warrior: 'warden', mage: 'lanternmage' };
 
 // Names only (owner-chosen, fixed; names.md "Coordinator override"). S3 fills EVO_DEFS with the kits.
@@ -9076,19 +9198,229 @@ const EVO_NAMES = {
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
     pitch: 'Keep them standing.', aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
 };
-const EVO_DEFS = {};
+// ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
+// Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
+// Ring stars: [name, text, fx, p] for e1s1-e1s8 (s3 and s6 notables, s8 the ring keystone); fx as the star
+// maps (57e): m (modifiers), t (bonus('tune:<knob>'): knobs 59e-class-combat.js reads), ks, hero.
+const EVO_DEFS = {
+  reaver: {
+    id: 'reaver', dt: 'phys', adds: ['fire'], col: '#FF6A2A', tint: '#D55E00',
+    pitch: 'Hit harder the worse it gets.',
+    bullets: ['Every heavy hit builds Fury.', 'Rend cleaves the front and makes it bleed.', 'Best with a healer behind you.'],
+    good: ['hesketh', 'elowen', 'thessaly', 'kestrel', 'isolde', 'corvin'], beats: ['Shielded', 'Ice-Clad', 'Enraged'],
+    hp: 12, armour: 25, block: 0.05, ward: 0, threat: 4, crit: 0.08, area: 0, ctrl: 1, tankDr: 0.5,
+    line: { name: "Reaver's Edge", text: '10% more damage.' }, dmg: 0.1,
+    meter: 'fury', ab2: 'rend', finisher: 'redharvest', replaces: ['grit', 'stats', 'hammerfall'],
+    passives: [
+      { name: 'Bloodlust', text: 'Heavy hits, hits you take and kills build Fury. Every 10 Fury: 2% more damage. From 50 your heavy hits burn the front line; at 100 nothing stuns or roots you for 4s.' },
+      { name: 'Blood Price', text: 'Below half health you deal 20% more, and your hits heal you for 4% of their damage.' },
+      { name: 'Heavy Hands', text: 'Your heavy hits deal double damage to shields.', s: 'S6' }],
+    aura: null,
+    idle: 'You hold the front, and hits build your Fury by themselves. Rend fires every 14s.',
+    active: 'Tap heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.',
+    ringKs: 'bloodrage',
+    ring: [
+      ['Hot Blood', 'Fury +1 for each hit you take.', { t: { furyHit: 1 } }, 1.006],
+      ['Hot Blood II', 'Fury +1 for each hit you take.', { t: { furyHit: 1 } }, 1.006],
+      ['Deep Cuts', 'Rend adds 1 more Bleed.', { t: { rendBleed: 1 } }, 1.015],
+      ['Keen Edge', '+1.5% damage.', { hero: 1.015 }, 1.012],
+      ['Early Embers', 'Cinder Edge starts at 40 Fury (was 50).', { t: { cinderAt: -10 } }, 1.01],
+      ['Blood Price', 'Blood Price starts below 60% health (was 50%).', { t: { bloodAt: 0.1 } }, 1.015],
+      ['Keen Edge II', '+1.5% damage.', { hero: 1.015 }, 1.012],
+      ['Bloodrage', 'Fury never drains below 50 during a fight. You take 10% more damage.', { ks: 'bloodrage' }, 1.03]
+    ],
+    tactics: { conds: ['staggerNear', 'meter'], acts: [], preset: 'IF staggerFull THEN use ab2' }
+  },
+  warden: {
+    id: 'warden', dt: 'phys', adds: ['holy'], col: '#FFE680', tint: '#F0E442',
+    pitch: 'Nothing gets past. Nothing.',
+    bullets: ['Blocked hits are stored as light.', 'Stand Fast pulls every foe onto you and gives the light back.', 'Your party staggers bosses faster.'],
+    good: ['wren', 'kestrel', 'isolde', 'corvin', 'pip', 'oriel', 'morwen', 'grenna', 'bram'], beats: ['Cursed', 'Shielded', 'Summoner'],
+    hp: 15, armour: 45, block: 0.25, ward: 0, threat: 8, crit: 0.08, area: 0, ctrl: 1, tankDr: 1,
+    line: { name: "Warden's Mail", text: '25% more health.' }, hpX: 0.25,
+    meter: 'bulwark', ab2: 'standfast', finisher: 'oathstrike', replaces: ['stats', 'hammerfall'],
+    passives: [
+      { name: 'Bulwark', text: 'Each hit you block stores 1 Bulwark (a parry stores 3, up to 10) and throws a Holy Spark at the attacker.' },
+      { name: 'Oath of the Order', text: 'While you stand, your Middle and Back take 10% less damage, and your party staggers foes 30% faster.' }],
+    aura: { name: 'Oath of the Order', text: 'Your Middle and Back take 10% less damage.' },
+    idle: 'You block a quarter of all hits. Bulwark fills, and Stand Fast fires every 18s with what you stored.',
+    active: 'Parry for 3 Bulwark each, and hold Stand Fast for the big hit.',
+    ringKs: 'aegis',
+    ring: [
+      ['Firm Shield', 'You block 2% more hits.', { t: { wBlock: 0.02 } }, 1.006],
+      ['Firm Shield II', 'You block 2% more hits.', { t: { wBlock: 0.02 } }, 1.006],
+      ['Bright Spark', 'Holy Sparks deal 0.1x more of your attack.', { t: { spark: 0.1 } }, 1.012],
+      ['Deep Bulwark', 'Bulwark cap +2.', { t: { bulwarkMax: 2 } }, 1.01],
+      ['Stout', '+3% health.', { t: { wHp: 0.03 } }, 1.004],
+      ['Rally', 'Stand Fast gives 5% more damage.', { t: { sfEmp: 0.05 } }, 1.015],
+      ['Stout II', '+3% health.', { t: { wHp: 0.03 } }, 1.004],
+      ['Aegis of the Order', 'Stand Fast also shields your party for 20% of its holy damage, and any block in your party stores Bulwark for you. Stand Fast comes back 30% slower.', { ks: 'aegis' }, 1.03]
+    ],
+    tactics: { conds: ['castBar', 'allyHp'], acts: ['taunt', 'interrupt'], preset: 'IF castBar sig THEN use ab2' }
+  },
+  venomstalker: {
+    id: 'venomstalker', dt: 'phys', adds: ['poison'], col: '#3FD49A', tint: '#009E73',
+    pitch: 'One drop at a time.',
+    bullets: ['Your arrows stack Venom, up to 10.', 'Deathcap bursts it and spreads it.', 'Best with a fire hero (Blight).'],
+    good: ['pip', 'morwen', 'caedmon', 'isolde', 'corvin', 'maren'], beats: ['Leeching'],
+    hp: 6, armour: 10, block: 0, ward: 0, threat: 1, crit: 0.15, area: 0, ctrl: 1, tankDr: 0,
+    line: { name: "Venomstalker's Craft", text: '10% more damage, 25% more status damage.' }, dmg: 0.1, stX: 0.25,
+    meter: null, ab2: 'bloom', finisher: 'heartseeker', replaces: ['killshot'],
+    passives: [
+      { name: 'Venom', text: 'Every 3rd hit puts 1 Venom on the foe; Focus puts 2, and each Volley arrow 1. When a foe with Venom dies, half of it seeps to the next.' },
+      { name: 'Patient Hunter', text: 'You deal 2% more for each Venom on the foe (up to 20%).' }],
+    aura: null,
+    idle: 'Venom ramps by itself and seeps across the pack. Deathcap fires with whatever it has.',
+    active: 'Hold Deathcap until 10 Venom, and Focus the healer first: Venom 5+ halves their healing.',
+    ringKs: 'lingering',
+    ring: [
+      ['Toxin', 'Status damage +3%.', { t: { stDmg: 0.03 } }, 1.008],
+      ['Toxin II', 'Status damage +3%.', { t: { stDmg: 0.03 } }, 1.008],
+      ['Quick Venom', 'On your Focus-marked foe, every 2nd hit adds Venom (was every 3rd).', { t: { venomQuick: 1 } }, 1.018],
+      ['Seep Deeper', 'Seep carries 60% of the Venom (was 50%).', { t: { seep: 0.1 } }, 1.008],
+      ['Sharp Eye', 'Crits come 2% more often.', { m: { crit: 1.02 } }, 1.005],
+      ['Black Bloom', 'Deathcap deals 0.05x more of your attack per stack.', { t: { bloom: 0.05 } }, 1.015],
+      ['Toxin III', 'Status damage +3%.', { t: { stDmg: 0.03 } }, 1.008],
+      ['Lingering Death', 'Deathcap bursts every stack but uses only half. Venom no longer seeps when a foe dies.', { ks: 'lingering' }, 1.03]
+    ],
+    tactics: { conds: ['stacks'], acts: [], preset: 'IF stacks venom 10 THEN use ab2' }
+  },
+  trapper: {
+    id: 'trapper', dt: 'phys', adds: ['frost', 'poison'], col: '#7FCBFF', tint: '#56B4E9',
+    pitch: 'The road fights for you.',
+    bullets: ['Traps wait at the front of every pack.', 'Snare Field roots and marks the whole pack.', 'Best with heavy hitters and fire.'],
+    good: ['grenna', 'aldric', 'bram', 'pip', 'morwen', 'caedmon', 'hesketh', 'elowen', 'maren', 'thessaly'], beats: ['Enraged', 'Summoner', 'Explosive'],
+    hp: 7, armour: 15, block: 0, ward: 0, threat: 1, crit: 0.15, area: 0, ctrl: 1.3, tankDr: 0,
+    line: { name: "Trapper's Kit", text: 'Stun, Root and Chill last 30% longer.' },
+    meter: 'traps', ab2: 'snarefield', finisher: 'deadfall', replaces: ['mark', 'killshot'],
+    passives: [
+      { name: 'Traps', text: 'You hold 2 traps. They lay themselves at the front of every pack: a Frost Snare roots and chills, a Spore Pit poisons its line. One comes back every 10s.' },
+      { name: "Hunter's Mark", text: 'Your Focus marks for 30% (was 25%).' },
+      { name: 'Tripwire', text: 'A foe that dives at your back line springs a trap in mid-air.' }],
+    aura: null,
+    idle: 'Traps lay themselves on every pack and Snare Field fires every 20s. Divers never reach your back line.',
+    active: 'Focus the foe that matters, and fire Snare Field when the pack is full.',
+    ringKs: 'killground',
+    ring: [
+      ['Barbed Pit', 'Spore Pits add 1 more Venom.', { t: { pitVenom: 1 } }, 1.006],
+      ['Barbed Pit II', 'Spore Pits add 1 more Venom.', { t: { pitVenom: 1 } }, 1.006],
+      ['Marked Wire', 'Tripwire also marks the diver.', { t: { wireMark: 1 } }, 1.012],
+      ['Quick Hands', 'Traps come back 1s sooner.', { t: { trapBack: -1 } }, 1.01],
+      ['Tight Snares', 'Control lasts 5% longer.', { t: { trapCtrl: 0.05 } }, 1.006],
+      ['Long Watch', 'Snare Field marks for 2s longer.', { t: { snareMark: 2 } }, 1.015],
+      ['Quick Hands II', 'Traps come back 1s sooner.', { t: { trapBack: -1 } }, 1.01],
+      ['Killing Ground', 'Traps come back every 5s against bosses and elites. Snare Field no longer roots.', { ks: 'killground' }, 1.03]
+    ],
+    tactics: { conds: ['elite', 'packSize'], acts: ['moveTo'], preset: 'IF elite summoner THEN use ab2' }
+  },
+  warlock: {
+    id: 'warlock', dt: 'fire', adds: ['fire'], col: '#E0303F', tint: '#8A1A2A',
+    pitch: "Take the dark's fire. Throw it back.",
+    bullets: ['Your Embers curse what they touch.', 'Witchfire sets off every curse at once.', 'Best with a tank and big hitters.'],
+    good: ['isolde', 'kestrel', 'grenna', 'aldric', 'corvin', 'caedmon', 'morwen'], beats: ['Leeching', 'Ice-Clad', 'Summoner'],
+    hp: 4, armour: 0, block: 0, ward: 0.1, threat: 1.2, crit: 0.08, area: 0.2, ctrl: 1, tankDr: 0,
+    line: { name: "Warlock's Pact", text: '10% more damage.' }, dmg: 0.1,
+    meter: 'curse', ab2: 'hexnova', finisher: 'unmaking', replaces: ['lanternburst'],
+    passives: [
+      { name: 'Hex', text: 'A foe with 3 or more Embers is Cursed for 6s, and so is the target of your Flare. A Curse stores 20% of the damage the foe takes, then goes off.' },
+      { name: 'Creeping Hex', text: 'When a Cursed foe dies, a fresh Curse jumps to the next foe (3 jumps).' },
+      { name: 'Held Light', text: 'Each Curse that goes off brings your abilities 10% closer.' },
+      { name: 'Dark Turned', text: 'Witchfire ignores fire resistance.' }],
+    aura: null,
+    idle: 'Embers curse the focus foe, and Witchfire curses the pack every 15s. Strong on packs.',
+    active: 'Let a Curse fill with big hits, then Witchfire to set it off early at 1.5x.',
+    ringKs: 'pactcinder',
+    ring: [
+      ['Held Light', 'A Curse that goes off brings your abilities 2% closer more.', { t: { held: 0.02 } }, 1.006],
+      ['Held Light II', 'A Curse that goes off brings your abilities 2% closer more.', { t: { held: 0.02 } }, 1.006],
+      ['Deep Hex', 'Witchfire sets off Curses for 8% more.', { t: { hexDet: 0.08 } }, 1.015],
+      ['Wide Glass', 'Your splash reaches 3% further.', { t: { wArea: 0.03 } }, 1.008],
+      ['Wide Glass II', 'Your splash reaches 3% further.', { t: { wArea: 0.03 } }, 1.008],
+      ['Witchfire Wick', 'Witchfire deals 0.1x more of your attack.', { t: { nova: 0.1 } }, 1.015],
+      ['Held Light III', 'A Curse that goes off brings your abilities 2% closer more.', { t: { held: 0.02 } }, 1.006],
+      ['Pact of Cinders', 'Every Curse that goes off also burns the foes it hits, and Creeping Hex has no jump limit. You take 10% more damage.', { ks: 'pactcinder' }, 1.03]
+    ],
+    tactics: { conds: ['foeHas', 'meter'], acts: [], preset: 'IF meter curse 80 THEN use ab2' }
+  },
+  priest: {
+    id: 'priest', dt: 'holy', adds: ['holy'], col: '#FFF3B0', tint: '#F0E442',
+    pitch: 'Give your light away.',
+    bullets: ['Your heroes deal the damage you give up.', 'Sanctuary heals the party, turns spare healing into shields and burns the dead.', 'Best with two damage heroes.'],
+    good: ['wren', 'isolde', 'kestrel', 'corvin', 'oriel', 'pip', 'morwen', 'anselm', 'vesper'], beats: ['Cursed'],
+    hp: 6, armour: 10, block: 0, ward: 0.3, threat: 0.5, crit: 0.08, area: 0, ctrl: 1, tankDr: 0,
+    line: { name: "Lightkeeper's Vows", text: '30% more healing.' }, healX: 0.3,
+    meter: 'blessing', ab2: 'sanctuary', finisher: 'dawnbreak', replaces: ['ember', 'flare', 'embers', 'lanternburst'],
+    passives: [
+      { name: 'Given Light', text: 'You hit softly, and your heroes deal the damage you give up. Your hits are holy.' },
+      { name: 'Blessing', text: 'Each tap heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
+      { name: 'Ward', text: 'Healing past full health becomes a shield, up to 30% of health.' }],
+    aura: { name: "Keeper's Light", text: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' },
+    idle: 'Blessing sits at about II. Rally Hymn and Sanctuary fire by themselves, and spare healing turns to shields.',
+    active: 'Keep Blessing at III, and drop Sanctuary just before the big hit lands.',
+    ringKs: 'martyr',
+    ring: [
+      ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
+      ['Warm Light', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
+      ['Morning Choir', 'Blessing cap +1.', { t: { blessMax: 1 } }, 1.02],
+      ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      ['Warm Light II', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
+      ['Refrain', 'Rally Hymn lasts 2s longer.', { t: { hymnT: 2 } }, 1.02],
+      ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+    ],
+    tactics: { conds: ['allyHas', 'allyHp'], acts: ['cleanse'], preset: 'IF allyHas curse THEN cleanse' }
+  }
+};
+for (const k in EVO_DEFS) Object.assign(EVO_DEFS[k], { name: EVO_NAMES[k].name, title: EVO_NAMES[k].title, base: EVO_NAMES[k].base, kind: EVO_NAMES[k].kind, role: EVO_NAMES[k].role });
 
-// Appendix (starting values). Only the S2 parts are read today: grit, embers, secondThoughtsMin, evoLv,
-// rangerCrit, lightFeet; the rest wait for S3/S6.
+// Tactics unlock order (3.6, for S7): slot 1 when Tactics arrive, slot 2 on evolving (EVO_DEFS[evo].tactics).
+const CLS_TACTICS = {
+  all: { conds: ['always', 'bossHp', 'selfHp', 'staggerFull'], acts: ['use', 'hold'] },
+  warrior: { conds: ['telegraph'], acts: [], preset: 'IF telegraph slam THEN use ab1' },
+  ranger: { conds: ['foeLacks'], acts: ['focus'], preset: 'IF foeLacks mark THEN focus' },
+  mage: { conds: ['packSize'], acts: [], preset: 'IF packSize 5 THEN use ab1' }
+};
+
+// The Proving (3.2): one solo fight per base class, at fixed strength (a reference Lanternbearer who just beat
+// the Fenmother: TRIAL_TUNE in 59f-trials.js). Free and repeatable; the farm pauses while it runs.
+const CLASS_TRIALS = {
+  warrior: { id: 'warrior', name: 'Hold the Bridge', tpl: 'hold', secs: 60,
+    text: 'Four packs cross the bridge, and a lamp stands behind you. Keep it lit for 60 seconds.',
+    how: 'Hit every foe: one you leave alone for 4 seconds walks past you to the lamp. Shield Wall pulls them all back.',
+    packs: 4, every: 14, lamp: 100, slip: 4, types: ['bones', 'beetle'] },
+  ranger: { id: 'ranger', name: 'The Running Wraith', tpl: 'hunt', secs: 45,
+    text: "The Fenmother's herald flees across the marsh. Bring it down before it escapes.",
+    how: 'Keep your Focus on the wraith, not the bats. It stops at three lamps: hit it hard there.',
+    quarry: 'wraith', screen: 'bat', screenN: 3, stops: 3, stopT: 2 },
+  mage: { id: 'mage', name: 'The Cursed Wave', tpl: 'wave', secs: 75,
+    text: 'Three waves come at you. Clear them all before your health runs out.',
+    how: 'Flare the bat swarm, burn the spore caps before their clouds curse you, and stop the wraiths healing.',
+    waves: [['bat', 6], ['spore', 5], ['wraith', 3]] }
+};
+
+// Appendix (starting values). S2 reads grit, embers, secondThoughtsMin, evoLv, rangerCrit, lightFeet; S3 the
+// evolution numbers (59e-class-combat.js), the respec costs and the Mirrors from Great Lanterns (55-classes.js).
 const CLS_TUNE = {
   evoLv: 35, unproven: 0.6, secondThoughtsMin: 10,
   respec: { evo: { mirrors: 1, essHours: 2 }, base: { mirrors: 2, essHours: 4 }, t2: null, esc: 0.5, escMax: 3 },
+  mirrorFromRegion: 2,        // +1 Mirror on each Great Lantern relit from Region 2 on (3.4)
+  ab2AutoWait: 0.5,           // ab2 auto-cast waits half a cooldown more than a tap would (idle about 67% of the rate)
+  fury: { heavy: 8, heavyAuto: 4, hit: 3, rend: 15, kill: 5, idleAfter: 3, drain: 10, per10: 0.02,
+    cinderAt: 50, cinder: 0.5, stopAt: 100, stopT: 4, stopCd: 20, rageFloor: 50, rageTaken: 0.1 },
+  bloodPrice: { at: 0.5, dmg: 0.2, leech: 0.04, leechCap: 0.03 },
+  bulwark: { max: 10, block: 1, parry: 3, spark: 0.3, drainOut: 1, stag: 0.3, backDr: 0.1 },
+  venom: { every: 3, focus: 2, volley: 1, seep: 0.5, seepJumps: 3, perStack: 0.02, perStackMax: 0.2 },
+  traps: { charges: 2, back: 10, backBoss: 5, snare: 1.5, pit: 1.0, pitVenom: 4, bossStag: 24, springAfter: 0.8, rootT: 3, chillT: 4 },
+  sanctuary: { regen: 0.8, t: 6, smite: 0.6, shieldCap: 0.4 },
+  hex: { embersToCurse: 3, curseT: 6, heldLight: 0.1, heldCap: 0.3, creepJumps: 3 },
   trialRef: { L: 35, grade: 3, plus: 3, stars: 0 }, trialIdlePass: 1.25,
   grit: { v: 0.03, dr: 0.01, max: 5, t: 10 },
   embers: { max: 5 },
   rangerCrit: 0.07, lightFeet: 0.2,
+  // S3: 56e-formation reads the evolution rows once proven. The Trapper is a caster (ROLE_D 1.0, not the
+  // striker's 1.82), so its floor is 1.4, not CL1's 0.7: about x1.1 of the Ranger's 0.7 x 1.82 (2.2's own damage)
   heroFloor: { warrior: 1.0, ranger: 0.7, mage: 1.0, reaver: 0.62, warden: 1.0,
-    venomstalker: 0.75, trapper: 0.7, warlock: 1.0, priest: 0 }
+    venomstalker: 0.75, trapper: 1.4, warlock: 1.0, priest: 0 }
 };
 
 // ---- src/js/30-state.js ----
@@ -9688,7 +10020,7 @@ function tapNode() {
 }
 
 function kill() {
-  if (arena && mob.deep) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
+  if (arena && (mob.deep || mob.trial)) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
   mob.hp = 0; mob.dead = 0.001;
   const g = mob.gold;
   S.gold += g; S.totalGold += g; S.totalKills++;
@@ -10644,12 +10976,26 @@ let OMENS, WEEKLY_GOALS;
 //   clsSet(base, evo, opts)  55-party's chooseClass writes the class through this (no rules)
 // Events: classMigrated { from, base, evo, proven } (once per save).
 
+//
+// S3 (classes-2 2, 3.1-3.7): the evolutions on top of the kits.
+//   clsEvo() -> the evolution whose kit runs (granted or chosen) or null; clsProven(); clsStrength() -> 1 proven,
+//     CLS_TUNE.unproven (0.6) for a granted path not yet proven (3.7), 0 none; clsGate() -> { lv, lvOk, bossOk, open }
+//   provingInfo() -> { id, trial, n, won, best, prove, gate, open, choice, why }; provingStart(opts) (59f-trials runs it)
+//   evoChoice() -> bool (the choice card is open: a Proving passed and no evolution yet)
+//   chooseEvo(evo, opts) (the choice card; or the one free change inside its window)
+//   respecCost('evo' | 'base') -> { mirrors, ess: { t, n }, esc, have, needM, needE, ok, why }
+//   respecEvo(evo, opts), respecBase(base, opts) (the Mirror of Embers, 3.4); useMirror (55-party) pays the base cost
+//   clsTactics() -> { slots, conds, acts, presets } (3.6, for S7)
+// State added: S.cls.lm (Great Lanterns that paid a Mirror). Events: evoChosen { evo, from, base, free },
+//   evoProven { evo }, provingPassed { base, respec } (the UI opens the choice card).
+
 let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo, clsInfo, clsSet, lbSync;
+let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoice, chooseEvo, respecCost, respecPay, respecEvo, respecBase, clsTactics;
 
 {
   registerState('cls', {
     v: 1, base: null, evo: null, evo2: null, proven: {}, trials: {}, respec: 0, free: 1, at: 0,
-    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null
+    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null, lm: 0
   });
   const C = () => S.cls;
   const OUT = { base: null, evo: null, evo2: null };
@@ -10739,6 +11085,7 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
     if (!CLASS_DEFS[base] || !p || typeof chooseClass !== 'function') return false;
     if (p.chosen && c.base) {
       if (c.base === base) return true;
+      if (c.evo && c.proven[c.evo] && !c.mig) return false;   // S3: once evolved, the free change is for the path (chooseEvo)
       const sw = clsSwitchInfo(o.now);
       if (!sw.ok) return false;
       c.free = 0;
@@ -10761,9 +11108,159 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
       proven: !!(c.evo && s.proven[c.evo]), migrated: !!s.mig, from: s.from,
       paths: d.evos.map(id => ({ id, name: EVO_NAMES[id].name, kind: EVO_NAMES[id].kind, line: EVO_NAMES[id].line })),
       gate: { lv: CLS_TUNE.evoLv, lvOk: gateLv, bossOk: gateBoss, open: gateLv && gateBoss },
-      sw: clsSwitchInfo(now)
+      sw: clsSwitchInfo(now),
+      // S3: the evolution's kit and strength, the Proving, the choice card
+      str: typeof clsStrength === 'function' ? clsStrength() : 0,
+      proving: typeof provingInfo === 'function' ? provingInfo() : null,
+      choice: typeof evoChoice === 'function' ? evoChoice() : false
     };
   };
+
+  // ================= S3: the evolutions, the Proving, the respec (classes-2 2, 3) =================
+  const now0 = o => (o && o.now) || clsNow();
+  const trialRec = id => { const t = C().trials; return t[id] && typeof t[id] === 'object' ? t[id] : { n: 0, won: 0, best: 0 }; };
+  clsGate = () => ({ lv: CLS_TUNE.evoLv, lvOk: S.L >= CLS_TUNE.evoLv, bossOk: pastBoss(), open: S.L >= CLS_TUNE.evoLv && pastBoss() });
+  clsProven = () => { const c = lbClass(); return !!(c.evo && C().proven[c.evo]); };
+  // The strength of the evolution's new parts: 1 proven, CLS_TUNE.unproven for a granted path (3.7), 0 none.
+  clsStrength = () => { const c = lbClass(); return !c.evo || !EVO_DEFS[c.evo] ? 0 : C().proven[c.evo] ? 1 : CLS_TUNE.unproven; };
+  // The evolution whose kit runs (granted or chosen), or null.
+  clsEvo = () => { const c = lbClass(); return c.evo && EVO_DEFS[c.evo] ? c.evo : null; };
+  const anyWon = () => { const t = C().trials; for (const k in t) if (t[k] && t[k].won) return true; return false; };
+  // The choice card is open: a Proving passed (any, 3.4: a base change keeps it) and no evolution yet.
+  evoChoice = () => { const c = lbClass(); return !!(c.base && !c.evo && S.party && S.party.chosen && anyWon()); };
+  provingInfo = () => {
+    const c = lbClass(); if (!c.base) return null;
+    const tr = CLASS_TRIALS[CLASS_DEFS[c.base].trial], rec = trialRec(tr.id), g = clsGate();
+    const prove = !!(c.evo && !C().proven[c.evo]);   // a granted path proves itself (3.7)
+    const need = prove || (!c.evo && !anyWon());
+    return { id: tr.id, trial: tr, n: rec.n || 0, won: !!rec.won, best: rec.best || 0, prove, gate: g, open: g.open && need, choice: evoChoice(),
+      why: !need ? '' : !g.bossOk ? 'Beat the Fenmother first.' : !g.lvOk ? `Reach level ${g.lv} first.` : '' };
+  };
+  provingStart = opts => {
+    const p = provingInfo();
+    if (!p || !p.open || typeof trialStart !== 'function') return false;
+    return trialStart(p.id, Object.assign({ kind: 'proving' }, opts || {}));
+  };
+  on('trialEnd', e => {
+    if (!e || e.kind !== 'proving') return;
+    const c = C(), r = Object.assign({ n: 0, won: 0, best: 0 }, trialRec(e.id));
+    r.n++; r.best = Math.max(r.best || 0, Math.round(e.pct || 0)); if (e.won) r.won = 1;
+    c.trials[e.id] = r;
+    if (!e.won) return;
+    const lc = lbClass();
+    if (lc.evo && !c.proven[lc.evo]) {
+      c.proven[lc.evo] = 1;
+      const d = EVO_DEFS[lc.evo];
+      toast(`You passed the Proving. You are ${d.title} now: the ${d.name} at full strength.`, 'good', null, 'high');
+      emit('evoProven', { evo: lc.evo });
+    } else if (evoChoice()) {
+      toast('You passed the Proving. Choose your path.', 'good', null, 'high');
+      emit('provingPassed', { base: lc.base });
+    }
+  });
+
+  // Choose an evolution (the choice card, 3.3), or use the one free change within the window (3.4).
+  // opts: { now }. Returns true when the evolution changed (or was already this one).
+  const setEvo = (evo, o, free) => {
+    const c = C(), lc = lbClass(), from = lc.evo, fromKit = S.party.cls;
+    // Proven when a Proving was passed or a path already proven (a switch keeps it, 3.4); a granted path not yet
+    // proven that switches stays unproven until its Proving (3.7).
+    if (anyWon() || Object.keys(c.proven).some(k => c.proven[k])) c.proven[evo] = 1;
+    c.at = now0(o);
+    const kit = clsSet(lc.base, evo, { now: c.at, stamp: true });
+    const d = EVO_DEFS[evo], ab = CLASS_ABILITIES[d.ab2];
+    emit('evoChosen', { evo, from, base: lc.base, free: !!free });
+    emit('classChosen', { cls: kit, from: fromKit, base: lc.base, evo, free: !!free });
+    toast(`You are a ${d.name} now. ${ab.name} is ready.`, 'good', null, 'high');
+    return true;
+  };
+  chooseEvo = (evo, opts) => {
+    lbSync();
+    const c = C(), lc = lbClass(), d = EVO_DEFS[evo];
+    if (!d || !lc.base || d.base !== lc.base) return false;
+    if (lc.evo === evo) return true;
+    if (!lc.evo) return evoChoice() ? setEvo(evo, opts, false) : false;
+    const sw = clsSwitchInfo(now0(opts));
+    if (!sw.ok) return false;
+    c.free = 0;
+    setEvo(evo, opts, true);
+    c.at = 0;   // the window closes once used
+    return true;
+  };
+
+  // ---- the Mirror of Embers (3.4) ----
+  // Essence worth `hours` of fighting at the farm zone: packs an hour at the pace farm time x the Essence chance.
+  const essFor = hours => {
+    const z = typeof farmableZone === 'function' ? Math.max(1, Math.min(S.maxZone, farmableZone())) : S.maxZone;
+    const perH = 3600 / (PACE.farmSecs + 0.45) * essChance();
+    return { t: zoneTier(z), n: Math.max(1, Math.ceil(perH * hours)) };
+  };
+  // kind: 'evo' (switch path, same base) | 'base' (change class). -> { kind, mirrors, ess: { t, n }, esc, have, needM, needE, ok, why }
+  respecCost = kind => {
+    const k = kind === 'base' ? 'base' : 'evo', row = CLS_TUNE.respec[k], c = C();
+    const esc = Math.min(CLS_TUNE.respec.escMax, 1 + CLS_TUNE.respec.esc * (c.respec || 0));
+    const e = essFor(row.essHours * esc), mirrors = row.mirrors;
+    const haveM = (S.party && S.party.mirrors) || 0, haveE = (S.mats && S.mats.ess && S.mats.ess[e.t - 1]) || 0;
+    const needM = Math.max(0, mirrors - haveM), needE = Math.max(0, e.n - haveE);
+    const why = needM ? `You need ${needM} more Mirror${needM > 1 ? 's' : ''} of Embers.` : needE ? `You need ${fmt(needE)} more ${MAT.ess.short[e.t - 1]} Essence.` : '';
+    return { kind: k, mirrors, ess: e, esc, have: { mirrors: haveM, ess: haveE }, needM, needE, ok: !why, why };
+  };
+  const pay = cost => { S.party.mirrors -= cost.mirrors; S.mats.ess[cost.ess.t - 1] -= cost.ess.n; C().respec = (C().respec || 0) + 1; };
+  respecPay = kind => { const c = respecCost(kind); if (!c.ok) return false; pay(c); return true; };
+  // Switch to the other evolution of the same base: the free change inside its window, else 1 Mirror + Essence.
+  respecEvo = (evo, opts) => {
+    lbSync();
+    const lc = lbClass(), d = EVO_DEFS[evo];
+    if (!d || !lc.evo || d.base !== lc.base || evo === lc.evo) return false;
+    if (clsSwitchInfo(now0(opts)).ok) return chooseEvo(evo, opts);
+    const cost = respecCost('evo'); if (!cost.ok) return false;
+    pay(cost);
+    setEvo(evo, opts, false);
+    return true;
+  };
+  // Change base class: 2 Mirrors + Essence. Gear retools (55-crafting on classChosen), each class keeps its
+  // star layouts, the evolution clears; a save that passed a Proving picks the new class's path at once.
+  respecBase = (base, opts) => {
+    lbSync();
+    const lc = lbClass();
+    if (!CLASS_DEFS[base] || !lc.base || base === lc.base || typeof chooseClass !== 'function') return false;
+    const cost = respecCost('base'); if (!cost.ok) return false;
+    pay(cost);
+    const okd = chooseClass(base, undefined, { now: now0(opts), respec: true });
+    if (okd && evoChoice()) emit('provingPassed', { base, respec: true });
+    return okd;
+  };
+
+  // Tactics (3.6, for S7): rule slots and the conditions and actions this class has.
+  clsTactics = () => {
+    const c = lbClass(); if (!c.base) return null;
+    const A = CLS_TACTICS.all, B = CLS_TACTICS[c.base], ev = c.evo && C().proven[c.evo] ? EVO_DEFS[c.evo] : null;
+    return { slots: ev ? 2 : 1, conds: A.conds.concat(B.conds, ev ? ev.tactics.conds : []), acts: A.acts.concat(B.acts, ev ? ev.tactics.acts : []),
+      presets: [B.preset].concat(ev ? [ev.tactics.preset] : []) };
+  };
+
+  // Mirrors from Great Lanterns (3.4): one on each relit from Region 2 on (a quiet catch-up pays too, once).
+  on('greatLantern', e => {
+    if (!e || !(e.n >= CLS_TUNE.mirrorFromRegion) || !S.party) return;
+    const c = C();
+    if ((c.lm || 0) >= e.n) return;
+    const add = e.n - Math.max(c.lm || 0, CLS_TUNE.mirrorFromRegion - 1);
+    c.lm = e.n;
+    if (add <= 0) return;
+    S.party.mirrors = (S.party.mirrors || 0) + add;
+    if (e.rewards && !e.quiet) e.rewards.push({ txt: `+${add} Mirror of Embers`, ic: ['orb', '#FF9E3D'] });
+  });
+
+  // The Proving opening is news once (3.1), and a Next Up line while it (or the choice) waits.
+  let gateWas = null, gateFor = null, gateT = 0;
+  onTick(dt => {
+    gateT += dt; if (gateT < 1 && gateFor === S) return;
+    gateT = 0;
+    const p = provingInfo(), open = !!(p && p.open && !p.prove);
+    if (gateFor !== S) { gateFor = S; gateWas = open; return; }
+    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Party, your class card.', 'good', null, 'high');
+    gateWas = open;
+  });
 
   // Once per loaded save, and whenever the class may have changed.
   onTick(() => {
@@ -13328,8 +13825,11 @@ let unitHp, unitCd, bossTelegraph;
   useMirror = function () {
     ensureInit();
     const p = P();
-    if (p.mirrors <= 0 || !p.chosen) return false;
-    p.mirrors--; p.chosen = false;
+    // S3 (classes-2 3.4): changing class costs 2 Mirrors and Essence (respecPay, 55-classes); the picker reopens.
+    if (!p.chosen) return false;
+    if (typeof respecPay === 'function') { if (!respecPay('base')) return false; }
+    else { if (p.mirrors <= 0) return false; p.mirrors--; }
+    p.chosen = false;
     toast('The Mirror of Embers shows you another path. Choose again.', 'good');
     emit('mirrorUsed', { cls: p.cls });
     return true;
@@ -13424,7 +13924,7 @@ let unitHp, unitCd, bossTelegraph;
       kind = 'heavy'; heavyN++;
       // Unbroken: while heavy hits land at least every 3s, the stacks never fall off.
       if (ks('unbroken')) { const hold = clock + STAR_KS.unbroken.holdSecs; for (const g of guard) if (g.until < hold) g.until = hold; }
-      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);
+      if (!(typeof clsNoGrit === 'function' && clsNoGrit())) pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);   // S3: a Reaver has Fury instead (59e)
       if (ks('crush') && heavyN % STAR_KS.crush.every === 0) tapX = STAR_KS.crush.mult;   // Crushing Blow
       if (ks('bastion') && P().abilityCd > 0) P().abilityCd = Math.max(0, P().abilityCd - STAR_KS.bastion.cdPerHeavy);
     }
@@ -13436,7 +13936,7 @@ let unitHp, unitCd, bossTelegraph;
     else if (c === 'ranger') {
       kind = 'mark';
       if (m) {
-        const mk = tn('mark');
+        const mk = tn('mark') + (typeof clsMarkAdd === 'function' ? clsMarkAdd() : 0);   // S3: the Trapper's Focus marks 30%
         // Deadeye: one mark at a time, and it lasts until its foe dies.
         if (ks('deadeye')) { if (typeof combatFoes === 'function') for (const f of combatFoes()) if (f !== m) f.markUntil = 0; m.markUntil = clock + 1e6; }
         else m.markUntil = clock + tn('markT');
@@ -17301,7 +17801,10 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const onExped = id => { try { return typeof expedOut === 'function' && !!expedOut(id); } catch (e) { return false; } };
   const clsOf = () => { const p = P(); return p && p.cls && HERO_CLASSES[p.cls] ? p.cls : null; };
   const CLS_ROLE = { warden: 'tank', ranger: 'striker', lanternmage: 'caster', lightkeeper: 'support' };
-  const roleOf = k => k === 'hero' ? CLS_ROLE[clsOf() || 'warden'] : (R(k) ? R(k).role : 'striker');
+  // S3: a proven evolution's role (59e clsHeroStats: a Reaver is a striker in Front, a Trapper a caster in the Middle)
+  const evoStats = () => (typeof clsHeroStats === 'function' ? clsHeroStats() : null);
+  const heroRole = () => { const e = evoStats(); return e ? e.role : CLS_ROLE[clsOf() || 'warden']; };
+  const roleOf = k => k === 'hero' ? heroRole() : (R(k) ? R(k).role : 'striker');
   const fieldIds = () => ((P() && P().field) || []).filter(k => R(k) && isRecruited(k)).slice(0, max());
   const members = () => ['hero'].concat(fieldIds());
   formMembers = members;
@@ -17491,10 +17994,12 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   };
   heroFloorDps = () => {
     if (!combatOn() || legacy || !rosterLive()) return 0;
-    const cls = clsOf() || 'warden', fl = T.heroFloor[cls] || 0, f = fieldIds();
+    // S3: a proven evolution has its own floor (CLS_TUNE.heroFloor) in its own role
+    const cls = clsOf() || 'warden', ev = evoStats() && typeof clsEvo === 'function' ? clsEvo() : null;
+    const fl = ev && CLS_TUNE.heroFloor[ev] != null ? CLS_TUNE.heroFloor[ev] : T.heroFloor[cls] || 0, f = fieldIds();
     if (!(fl > 0) || !f.length) return 0;
     let sum = 0; for (const k of f) sum += charPow(k);
-    return fl * (sum / f.length) * (ROLE_D[CLS_ROLE[cls]] || 0);
+    return fl * (sum / f.length) * (ROLE_D[heroRole()] || 0);
   };
   heroCombatDps = () => {
     const d = heroDps();
@@ -20595,10 +21100,14 @@ const STAR_GEO = {
   slot: [[50, 0], [95, 0], [140, 0], [185, 0], [172, 19], [172, -19], [150, -38], [150, 38]],
   ring: 104, ringOff: 34
 };
+// S3: the evolution ring's own view (75-stars-ui draws it under the map): seven stars on a circle, the keystone
+// in the middle. Needs: RING_NEED ring stars lit before a ring notable / the ring keystone.
+const RING_GEO = { view: [0, 0, 240, 170], cx: 120, cy: 86, r: 66 };
+const RING_NEED = { notable: 2, key: 5 };
 
 let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLayout, starLayouts, starIsLit,
   starCheck, starLight, starUnlight, starReset, starUseLayout, starRename, starLocked, starKeysLit, starKeystone,
-  starEffects, starPowerEst, starBest, starText, starValidate;
+  starEffects, starPowerEst, starBest, starText, starValidate, starRingEvo, starSuggest;
 
 {
   // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
@@ -20611,7 +21120,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   // ---- build each class map once: stars by id, edges, adjacency ----
   const MAPS = {};
   const polar = (deg, r) => { const a = deg * Math.PI / 180; return [Math.round(STAR_GEO.cx + r * Math.cos(a)), Math.round(STAR_GEO.cy + r * Math.sin(a))]; };
-  function build(cls) {
+  function build(cls, evo) {
     const d = STAR_MAPS[cls]; if (!d) return null;
     const stars = {}, order = [], edges = [], adj = {};
     const add = s => { stars[s.id] = s; order.push(s.id); adj[s.id] = []; };
@@ -20637,10 +21146,38 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       link(`a${a}s3`, id);
     }
     link('b0', 'b1'); link('b2', 'b3'); link('b4', 'crown');
-    return { cls, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj };
+    // S3 (classes-2 4.3): the evolution ring, e1s1-e1s8, once the evolution is proven. Seven stars on a circle
+    // and the ring keystone in its middle (linked to the two notables, s3 and s6). e1s1, e1s4 and e1s7 open from
+    // star 5 of arms 1, 2 and 3. Ring positions are in the ring's own view (RING_GEO: drawn under the map).
+    const ev = evo && EVO_DEFS[evo], rEdges = [];
+    if (ev) {
+      ev.ring.forEach(([name, text, fx, p], i) => {
+        const slot = i + 1, kind = slot === 8 ? 'key' : slot === 3 || slot === 6 ? 'notable' : 'minor';
+        const a = -Math.PI / 2 + (i * 2 * Math.PI) / 7;
+        const pos = slot === 8 ? [RING_GEO.cx, RING_GEO.cy] : [Math.round(RING_GEO.cx + RING_GEO.r * Math.cos(a)), Math.round(RING_GEO.cy + RING_GEO.r * Math.sin(a))];
+        add({ id: 'e1s' + slot, name, kind, cost: KIND_COST[kind], text, c: '', fx, p, pos, arm: -2, slot, ring: 1, armName: ev.name + ' ring', evo });
+      });
+      const rl = (a, b) => { rEdges.push([a, b]); adj[a].push(b); adj[b].push(a); };
+      for (let i = 1; i <= 7; i++) rl('e1s' + i, 'e1s' + (i % 7 + 1));
+      rl('e1s8', 'e1s3'); rl('e1s8', 'e1s6');
+      [['e1s1', 'a0s5'], ['e1s4', 'a1s5'], ['e1s7', 'a2s5']].forEach(([r, s]) => { adj[r].push(s); adj[s].push(r); stars[r].entry = s; });
+    }
+    return { cls, evo: ev ? evo : null, color: d.color, armNames: d.arms.map(x => x[0]), stars, order, edges, adj, ringEdges: rEdges };
   }
-  starMap = cls => cls && STAR_MAPS[cls] ? (MAPS[cls] || (MAPS[cls] = build(cls))) : null;
+  // The evolution whose ring shows on a base map: the current base's proven evolution (55-classes).
+  starRingEvo = cls => {
+    if (typeof lbClass !== 'function' || typeof clsProven !== 'function') return null;
+    const c = lbClass(), map = c.base && CLS_STAR_MAP[CLS_KIT(c.base, null)];
+    return map === cls && c.evo && EVO_DEFS[c.evo] && clsProven() ? c.evo : null;
+  };
+  starMap = cls => {
+    if (!cls || !STAR_MAPS[cls]) return null;
+    const ev = STAR_MAPS[cls].legacy ? null : starRingEvo(cls), k = cls + '|' + (ev || '');
+    return MAPS[k] || (MAPS[k] = build(cls, ev));
+  };
   const isKey = s => s.kind === 'key' || s.kind === 'crown';
+  // A star with a need: an arm keystone, the crown, or a ring notable or keystone (2 and 5 ring stars first).
+  const hasNeed = s => isKey(s) || (s.ring && s.kind === 'notable');
 
   // ---- points ----
   greatLanternsLit = () => lanternsLitAt(S.maxZone);   // region bosses beaten (22-data-regions)
@@ -20667,10 +21204,16 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 
   // ---- rules ----
   const litSet = lit => new Set(['hearth', ...lit]);
-  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s)) n++; } return n; }
+  // The ring keystone does not count toward the base map's 2 (classes-2 4.1).
+  function keysIn(map, set) { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && isKey(s) && !s.ring) n++; } return n; }
   const armCount = (map, set, a) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.arm === a && s.kind !== 'key') n++; } return n; };
+  const ringCount = (map, set, not) => { let n = 0; for (const id of set) { const s = map.stars[id]; if (s && s.ring && id !== not) n++; } return n; };
   // Why a lit keystone's need is not met in this set (null when it is).
   function needWhy(map, s, set) {
+    if (s.ring) {
+      const need = RING_NEED[s.kind] || 0, n = ringCount(map, set, s.id);
+      return n >= need ? null : `Light ${need} ring stars first (${n} of ${need}).`;
+    }
     if (s.kind === 'key') { const n = armCount(map, set, s.arm); return n >= T.armKeyNeed ? null : `Light ${T.armKeyNeed} stars in ${s.armName} first (${n} of ${T.armKeyNeed}).`; }
     if (s.kind === 'crown') {
       let b = 0; for (const id of set) if (map.stars[id] && map.stars[id].kind === 'bridge') b++;
@@ -20702,14 +21245,14 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
       set.delete(id);
       let why = null;
       if (!connected(map, set)) why = 'Other lit stars hang from this one. Unlight them first.';
-      else for (const o of set) { const os = map.stars[o]; if (os && isKey(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
+      else for (const o of set) { const os = map.stars[o]; if (os && hasNeed(os) && needWhy(map, os, set)) { why = `${os.name} needs this star. Unlight it first.`; break; } }
       if (!why && lock) why = lock;
       return { ok: !why, act: 'unlight', why };
     }
     let why = null;
-    if (isKey(s) && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
+    if (isKey(s) && !s.ring && keysIn(map, set) >= T.keyMax) why = `Unlight a keystone first (${T.keyMax} of ${T.keyMax} lit).`;
     else if (!map.adj[id].some(n => set.has(n))) why = 'Light a star next to it first.';
-    else if (isKey(s)) why = needWhy(map, s, set);
+    else if (hasNeed(s)) why = needWhy(map, s, set);
     if (!why) { const free = starPoints() - spentOf(map, lit); if (free < s.cost) why = `Needs ${s.cost} point${s.cost > 1 ? 's' : ''} (you have ${free}).`; }
     if (!why && lock) why = lock;
     return { ok: !why, act: 'light', why };
@@ -20758,7 +21301,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const before = Array.isArray(l.lit) ? l.lit.length : 0;
     const seen = new Set();
     let lit = (Array.isArray(l.lit) ? l.lit : []).filter(id => typeof id === 'string' && map.stars[id] && id !== 'hearth' && !seen.has(id) && seen.add(id));
-    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (isKey(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
+    const ok = arr => { const set = litSet(arr); if (!connected(map, set) || keysIn(map, set) > T.keyMax) return false; for (const id of arr) if (hasNeed(map.stars[id]) && needWhy(map, map.stars[id], set)) return false; return spentOf(map, arr) <= points; };
     let guard = 64;
     while (!ok(lit) && guard-- > 0) {
       // drop the latest star whose removal keeps the rest connected (a tip); else the latest one
@@ -20802,6 +21345,23 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   const MOD_KEYS = ['dmg', 'party', 'tap', 'crit', 'critDmg', 'abilityCd', 'xp', 'compXp', 'gold', 'offline'];
   const TUNE_KEYS = new Set(), KS_IDS = new Set(Object.keys(STAR_KS));
   for (const c in STAR_MAPS) for (const s of Object.values(starMap(c).stars)) { for (const k in (s.fx.t || {})) TUNE_KEYS.add(k); if (s.fx.ks) KS_IDS.add(s.fx.ks); }
+  for (const e in EVO_DEFS) for (const [, , fx] of EVO_DEFS[e].ring) { for (const k in (fx.t || {})) TUNE_KEYS.add(k); if (fx.ks) KS_IDS.add(fx.ks); }   // S3 rings
+  // S3: an evolution chosen or switched: the ring's stars go dark on every layout of that base map (refunded, 4.4);
+  // a proof or a switch changes which ring shows, so the effects are read again.
+  on('evoChosen', ({ base, from, evo }) => {
+    const m = CLS_STAR_MAP[CLS_KIT(base, null)], r = m && mapRec(m, false);
+    if (r && from !== evo) for (const l of r.layouts) if (l && Array.isArray(l.lit)) l.lit = l.lit.filter(id => !/^e1s/.test(id));
+    bump();
+  });
+  on('evoProven', () => bump());
+  // A Lightkeeper's suggested layout (4.4): the Flare arm, then the Lightkeeper ring, as far as the points go.
+  starSuggest = () => {
+    const cls = starCls(); if (!cls || starLocked()) return 0;
+    let n = 0;
+    for (const id of ['a1s1', 'a1s2', 'a1s3', 'a1s4', 'a1s5', 'e1s4', 'e1s5', 'e1s3', 'e1s6', 'e1s2', 'e1s1', 'e1s7', 'e1s8', 'a1s6', 'a1s7'])
+      if (!starIsLit(id, cls) && starLight(id, cls)) n++;
+    return n;
+  };
   const NONE = { m: {}, t: {}, ks: {}, live: {}, hero: 1 };
   // Cached per class and layout version: the modifiers below run on every hit and dps read.
   let eff = NONE, effCls, effVer = -1;
@@ -22619,7 +23179,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   combatFoes = () => foes;
   cbUnitByKey = key => { for (let i = 0; i < nU; i++) if (U[i].key === key) return U[i]; return null; };
 
-  const fieldIds = () => (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
+  // S3: a solo fight (59f-trials trialField: the Proving, the Stand) fields only the heroes it names.
+  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
   const has = id => { for (let i = 0; i < nU; i++) if (U[i].id === id) return U[i]; return null; };
   const upHas = id => { const u = has(id); return u && !u.down ? u : null; };
   const synOn = id => { try { return typeof synergyStatus === 'function' && synergyStatus(id).active; } catch (e) { return false; } };
@@ -22658,24 +23219,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let maxHp, role;
     if (key === 'hero') {
       const cls = p && p.cls && HERO_CLASSES[p.cls] ? p.cls : 'warden';
-      role = CLASS_ROLE[cls]; u.cls = cls; u.id = null; u.lv = S.L;
+      // S3 (59e clsHeroStats): a proven evolution's own stats and role replace the base kit's (null = the kit's)
+      const ev = typeof clsHeroStats === 'function' ? clsHeroStats() : null;
+      role = ev ? ev.role : CLASS_ROLE[cls]; u.cls = cls; u.id = null; u.lv = S.L;
       const g = gear(), hp0 = heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1);
       u.pow = hp0 / T.heroPow;
       u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
-      maxHp = T.heroHp[cls] * u.hpP * (1 + g.hp / 100);
-      u.armour = T.heroArmour[cls] + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
+      maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
+      u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
       if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
       emberBurn = cls === 'lanternmage' ? heroAtk() * (ks('everburn') ? STAR_KS.everburn.perEmber : ks('slowBurn') ? STAR_KS.slowBurn.perEmber : 0) : 0;
-      u.thX = (cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
+      u.thX = (ev ? ev.threat : cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
       u.melee = cls === 'warden'; u.ranged = !u.melee;
       u.dps = 0; u.spd = aps();
-      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') : 0;   // F1: Out of place heals less
+      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') * (ev ? ev.healX : 1) : 0;   // F1: Out of place heals less
       // S2: the base class's own block and ward (the Warrior blocks 10%); the legacy Lightkeeper kit keeps its own
-      const cd = cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base];
+      const cd = ev || (cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base]);
       u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100 + (cd ? cd.ward : 0)); u.pierce = Math.min(1, g.pierce / 100);
       u.blockC = cd ? cd.block : 0;   // the class's block: every 1 / blockC-th hit, counted (no random draw)
-      u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
+      u.area = Math.min(0.5, g.area / 100 + (ev ? ev.area : 0)); u.ctrl = (1 + Math.min(1, g.control / 100)) * (ev ? ev.ctrl : 1);
       u.cdMax = 0;
     } else {
       const R = ROSTER[key], g = charGear(key), lv = lvOf(key);
@@ -22978,7 +23541,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // S1: the hit's type (the hero's base type; the Lightkeeper's party share has none) and its tags
     const ty = isHero && hero ? hero.dt : '', tags = (isHero && typeof stTagNext === 'function' ? stTagNext.take() : 0) | (big ? ST_CRIT : 0);
     // Warden taps taunt their target (a class tap: see the classTap listener).
-    const d = cbDamageFoe(f, amount, idx, kind, ty, tags);
+    // S3 (59e): the evolution's multiplier on this foe before the hit, its riders after; hHit: when the hero last hit it (59f)
+    const d = cbDamageFoe(f, amount * (isHero && typeof clsHeroHitX === 'function' ? clsHeroHitX(f, tags) : 1), idx, kind, ty, tags);
+    if (isHero) { f.hHit = clock; if (typeof clsHeroHit === 'function') clsHeroHit(f, d, tags); }
     const rel = ty && typeof ST_LAST === 'object' ? ST_LAST.rel : 0;
     if (isHero && hero && hero.cls === 'lanternmage') {
       const sp = (T.lmSplash + hero.area) * amount;
@@ -23339,6 +23904,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
     dr *= u.synDr || 1;   // F2: combos, Kin and Bonds (Lifeline, Two Walls, The Oath, ...; capped in 56b)
     if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
+    if (typeof clsDr === 'function') dr *= clsDr(u, kind, f);   // S3 (59e): the Reaver's half cut, Stand Fast, Oath of the Order
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && (f.slowT > 0 || f.chillT > 0) && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
@@ -23479,7 +24045,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbHeroUp = () => !partyCombatOn() || !(nU > 0) || (!U[0].down && wipeT <= 0);
   combatTick = dt => {
     clock += dt;
-    if (arena && mob && mob.deep && !mob.th && !mob.dead) adoptArena(mob);
+    if (arena && mob && (mob.deep || mob.trial) && !mob.th && !mob.dead) adoptArena(mob);
     if (wipeT > 0) { wipeT -= dt; for (const f of foes) if (f.dead) f.dead += dt; if (wipeT <= 0) endWipe(); return; }
     refreshT -= dt;
     if (refreshT <= 0) { refreshT = T.refresh; refreshUnits(false); }
@@ -24541,6 +25107,690 @@ let deepCombatOn, dcLifeline, DWC;
   DWC = { hpAt: () => { const r = R(); return r ? r.hpAt || null : null; }, tune: T };
 }
 
+// ---- src/js/59e-class-combat.js ----
+// 59e-class-combat: the six evolutions on party combat (Classes 2.0 slice S3; docs/design/classes-2.md 2.3-2.8).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Data: 24-data-classes.js (EVO_DEFS, CLASS_ABILITIES, CLS_TUNE). State: 55-classes.js (clsEvo, clsStrength).
+//
+// The kit that runs is still the base class's (55-party.js, by legacy kit key: a Reaver or Warden plays the
+// Warrior's taps and Shield Wall, a Warlock the Lanternmage's, a Lightkeeper the legacy Lightkeeper kit). This
+// file adds what each evolution brings on top, through events and a few hooks 59-combat calls:
+//   Reaver       Fury (replaces Grit: clsNoGrit), Cinder Edge, Unstoppable, Blood Price; Rend
+//   Warden       Bulwark, Holy Sparks, Oath of the Order (Middle and Back take 10% less); Stand Fast
+//   Venomstalker the Venom ramp, Seep, Patient Hunter, status damage +25%; Deathcap
+//   Trapper      Focus Marks 30% (clsMarkAdd), traps (2 charges, laid on every pack), Tripwire; Snare Field
+//   Warlock      Hex (3 Embers or a Flare curse), Creeping Hex, Held Light, Dark Turned (Witchfire); Witchfire
+//   Lightkeeper  (the legacy kit: Given Light, Blessing, Rally Hymn) + ward 30%, Vows; Sanctuary
+// A granted path not yet proven (a migrated Warden or Lightkeeper, 3.7) runs its new parts at
+// CLS_TUNE.unproven (0.6) and keeps the base stats; the evolution line (bucket C) and stats wait for the Proving.
+// Stagger (`f.stag`) is only counted until S6 adds the bar; clsStagX() is the Warden's +30% for S6 to read.
+//
+// Exposed:
+//   hooks  clsHeroStats() -> { role, hp, hpX, armour, block, ward, threat, area, ctrl, healX } | null (59-combat
+//          statUnit; null = the base kit's stats), clsDr(u, kind, f) -> damage-taken multiplier (59-combat
+//          cbHitUnit), clsHeroHitX(f, tags) -> the hero's damage multiplier on foe f and clsHeroHit(f, dealt, tags)
+//          (59-combat cbStrike), clsNoGrit(), clsMarkAdd() (55-party), clsStagX()
+//   ab2    castAb2(opts) -> bool, ab2Info() -> { id, name, desc, cd, left, ready, auto, autoOn, unlocked, str } | null,
+//          ab2Auto(on) (S.cls.auto.ab2; S.party.autoCast stays the master switch)
+//   ui     clsMeter() -> { id, name, v, max } | null, clsFinisher() -> the Finisher's CLASS_ABILITIES row (S6),
+//          evoLamp() -> '#hex' | null (the lamp colour look), CLS_STATS (counters for checks and the sim)
+// Events: ability2 { evo, id, name, auto }. Titles: codexTitles() gains c_<evo> (classes-2 D5).
+
+var clsHeroStats, clsDr, clsHeroHitX, clsHeroHit, clsNoGrit, clsMarkAdd, clsStagX, castAb2, ab2Info, ab2Auto,
+  clsMeter, clsFinisher, evoLamp, CLS_STATS;
+
+{
+  const TU = CLS_TUNE, A = CLASS_ABILITIES, LK_MUL = 0.2;   // LK_MUL: the legacy Lightkeeper's own-hit share (55-party T.heroMul)
+  const tn = k => bonus('tune:' + k);
+  const ks = id => bonus('ks:' + id) > 0;
+  const on_ = () => typeof partyCombatOn === 'function' && partyCombatOn() && target() === 'mob';
+  const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
+  const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
+  const hero = () => { const u = typeof combatUnits === 'function' ? combatUnits()[0] : null; return u && u.live && u.key === 'hero' ? u : null; };
+  const anyFoe = () => { for (const f of foes()) if (alive(f)) return true; return false; };
+  const ST = CLS_STATS = { ab2: 0, auto: 0, fury: 0, stops: 0, cinder: 0, leech: 0, bulwark: 0, sparks: 0, standfast: 0, venom: 0, seep: 0, bloom: 0,
+    traps: 0, wires: 0, snare: 0, curses: 0, creep: 0, dets: 0, nova: 0, sanct: 0, sanctHeal: 0, sanctShield: 0, rend: 0, dmg: 0 };
+
+  // ---- the evolution now (cheap reads, refreshed each tick) ----
+  let evo = null, str = 0, proven = false, def = null;
+  function readEvo() {
+    evo = typeof clsEvo === 'function' ? clsEvo() : null;
+    def = evo ? EVO_DEFS[evo] : null;
+    str = evo && typeof clsStrength === 'function' ? clsStrength() : 0;
+    proven = str >= 1;
+  }
+  // The hero's hit power for abilities: attack x its combat stand (floor and trio, as a swing gets), before the
+  // Lightkeeper's own-hit cut (abilities are not reduced, 2.8).
+  const P = () => heroAtk() * (typeof heroStand === 'function' ? heroStand(false) : 1) / (evo === 'priest' ? LK_MUL : 1);
+
+  // ---- runtime (never saved) ----
+  let clock = 0;
+  let fury = 0, lastHit = -9, stopT = 0, stopCd = 0, leechT = 0, leechGot = 0;
+  let bulwark = 0, guardUntil = -1, empUntil = -1;
+  let hitN = 0, volleyUntil = -1;
+  let charges = TU.traps.charges, backT = 0, laid = [], nextKind = 0;
+  let heldT = 0, heldGot = 0;
+  let sancUntil = -1, sancBeat = 0;
+  let ab2Cd = 0, readyFor = 0, ab2For = null;
+  let heroK = 1, partyK = 1;
+  const reset = () => { fury = 0; bulwark = 0; charges = TU.traps.charges; backT = 0; laid = []; stopT = 0; stopCd = 0; sancUntil = -1; guardUntil = -1; empUntil = -1; ab2Cd = 0; readyFor = 0; };
+
+  // ---------------- hooks for 59-combat and 55-party ----------------
+  const HS = { role: '', hp: 0, hpX: 1, armour: 0, block: 0, ward: 0, threat: 1, area: 0, ctrl: 1, healX: 1 };
+  clsHeroStats = () => {
+    const e = typeof clsEvo === 'function' ? clsEvo() : null;
+    if (!e || !(typeof clsProven === 'function' && clsProven())) return null;
+    const d = EVO_DEFS[e];
+    HS.role = d.role; HS.hp = d.hp; HS.armour = d.armour; HS.ward = d.ward; HS.threat = d.threat; HS.area = d.area;
+    HS.block = Math.min(0.5, d.block + (e === 'warden' ? tn('wBlock') : 0));
+    HS.hpX = 1 + (d.hpX || 0) + (e === 'warden' ? tn('wHp') : 0);
+    HS.ctrl = d.ctrl + (e === 'trapper' ? tn('trapCtrl') : 0);
+    HS.healX = 1 + (d.healX || 0);
+    return HS;
+  };
+  clsNoGrit = () => (typeof clsEvo === 'function' ? clsEvo() : null) === 'reaver';
+  clsMarkAdd = () => (evo === 'trapper' && proven ? CLASS_ABILITIES.focus.var.trapper.v - 0.25 : 0);
+  clsStagX = () => (evo === 'warden' ? 1 + TU.bulwark.stag * str : 1);
+  // Damage taken (59-combat cbHitUnit, after the tank cut).
+  clsDr = (u, kind, f) => {
+    if (!evo) return 1;
+    let m = 1;
+    if (u.i === 0) {
+      if (evo === 'reaver' && proven) m *= 1 - COMBAT_TUNE.tankDr * def.tankDr;   // half the tank cut: heavy armour, no shield
+      if (evo === 'reaver' && ks('bloodrage')) m *= 1 + TU.fury.rageTaken;
+      if (evo === 'warlock' && ks('pactcinder')) m *= 1 + TU.fury.rageTaken;
+      if (evo === 'warden' && guardUntil > clock) m *= 1 - A.standfast.guard;
+    } else if (evo === 'warden' && u.col < 2) {
+      const h = hero(); if (h && !h.down) m *= 1 - TU.bulwark.backDr * str;   // Oath of the Order
+    }
+    return m;
+  };
+  // The hero's hit on foe f (before it lands): Patient Hunter.
+  clsHeroHitX = (f, tags) => {
+    if (evo === 'venomstalker' && f) { const n = stStacks(f, 'venom'); if (n > 0) return 1 + Math.min(TU.venom.perStackMax, TU.venom.perStack * n); }
+    return 1;
+  };
+  const stX = () => (evo === 'venomstalker' && proven ? 1 + def.stX + tn('stDmg') : 1);
+  const venomOn = (f, n) => { if (alive(f) && stApply(f, 'venom', n, P() * stX(), 0)) { ST.venom += n; return true; } return false; };
+  // After the hero's hit landed: Cinder Edge, Blood Price, the Venom ramp and Volley's Spore-tipped arrows.
+  clsHeroHit = (f, dealt, tags) => {
+    if (!evo || !f) return;
+    lastHit = clock;
+    const tg = tags | 0;
+    if (evo === 'reaver') {
+      if ((tg & ST_HEAVY) && fury >= TU.fury.cinderAt + tn('cinderAt')) cinder(f);
+      const h = hero();
+      if (h && !h.down && dealt > 0 && h.hp < h.maxHp * (TU.bloodPrice.at + tn('bloodAt'))) {
+        if (clock - leechT >= 1) { leechT = clock; leechGot = 0; }
+        const room = h.maxHp * TU.bloodPrice.leechCap - leechGot, amt = Math.min(room, dealt * TU.bloodPrice.leech);
+        if (amt > 0) { leechGot += amt; ST.leech += cbHealUnit(h, amt, null); }
+      }
+    } else if (evo === 'venomstalker' && alive(f)) {
+      if ((tg & ST_AB) && clock < volleyUntil) { venomOn(f, TU.venom.volley); return; }
+      hitN++;
+      const every = tn('venomQuick') > 0 && f.markUntil > (typeof partyClock === 'function' ? partyClock() : 0) ? 2 : TU.venom.every;
+      if (hitN % every === 0) venomOn(f, 1);
+    }
+  };
+  function cinder(f) {
+    ST.cinder++;
+    const p = P() * TU.fury.cinder;
+    for (const o of foes()) if (o !== f && alive(o) && o.row === f.row) cbDamageFoe(o, p, 0, 'magic', 'fire');
+    if (alive(f)) stApply(f, 'burn', 1, P(), 0);
+  }
+  const addFury = n => { if (evo !== 'reaver') return; fury = Math.min(100, fury + n); ST.fury += n; };
+  const bulMax = () => TU.bulwark.max + tn('bulwarkMax');
+  const addBulwark = n => { if (evo !== 'warden') return; const b = bulwark; bulwark = Math.min(bulMax(), bulwark + n * str); ST.bulwark += bulwark - b; };
+
+  // ---------------- events ----------------
+  on('classTap', ({ cls, kind, auto }) => {
+    if (!evo || !on_()) return;
+    const m = typeof mob !== 'undefined' ? mob : null;
+    if (kind === 'parry') { addFury(TU.fury.heavy); addBulwark(TU.bulwark.parry); lastHit = clock; return; }
+    if (evo === 'reaver' && kind === 'heavy') addFury(auto ? TU.fury.heavyAuto : TU.fury.heavy);
+    else if (evo === 'venomstalker' && kind === 'mark' && alive(m)) venomOn(m, TU.venom.focus);
+    else if (evo === 'warlock' && kind === 'ember' && alive(m) && (m.embers || 0) >= TU.hex.embersToCurse) curse(m, 0);
+  });
+  on('ability', ({ cls }) => {
+    if (!evo || !on_()) return;
+    const m = typeof mob !== 'undefined' ? mob : null;
+    if (evo === 'venomstalker' && cls === 'ranger') volleyUntil = clock + 2.3;
+    else if (evo === 'warlock' && cls === 'lanternmage' && alive(m)) curse(m, 0);   // the cursing Flare (var.warlock)
+  });
+  on('unitHit', ({ key, kind, foe, blocked }) => {
+    if (!evo || !on_()) return;
+    const dot = kind === 'poison' || kind === 'burn' || kind === 'bleed';
+    if (key === 'hero' && !dot) { addFury(TU.fury.hit + tn('furyHit')); lastHit = clock; }
+    if (evo === 'warden' && blocked && (key === 'hero' || ks('aegis'))) {
+      addBulwark(TU.bulwark.block);
+      if (key === 'hero' && alive(foe)) { ST.sparks++; cbDamageFoe(foe, (TU.bulwark.spark + tn('spark')) * P() * str, 0, 'magic', 'holy'); }
+    }
+  });
+  on('foeDown', ({ mob: f }) => {
+    if (!evo || !f) return;
+    addFury(TU.fury.kill);
+    if (evo === 'venomstalker' && !ks('lingering')) seep(f);
+    if (evo === 'warlock' && f.hexOn) { f.hexOn = 0; detonated(f); creep(f); }
+  });
+  on('packSpawn', () => {
+    if (!evo) return;
+    if (evo === 'trapper') layTraps();
+  });
+  on('telegraphStart', ({ kind, foe }) => {
+    // A laid trap springs under the boss on its heavy or slam wind-up: 24 stagger and the boss's slow.
+    if (evo !== 'trapper' || !(kind === 'heavy' || kind === 'slam') || !alive(foe)) return;
+    const t = laid.shift() || (charges > 0 ? (charges--, { kind: 0 }) : null);
+    if (!t) return;
+    spring(foe, 0);
+    foe.stag = (foe.stag || 0) + TU.traps.bossStag;
+  });
+  on('classChosen', () => { reset(); readEvo(); });
+  on('evoChosen', () => { reset(); readEvo(); });
+  on('wipe', () => { fury = 0; laid = []; });
+
+  // ---------------- Venomstalker: Seep ----------------
+  function nearest(f, ok) {
+    let b = null, bd = 1e9;
+    for (const o of foes()) if (o !== f && alive(o) && (!ok || ok(o))) { const d = Math.abs((o.row || 0) - (f.row || 0)); if (d < bd) { bd = d; b = o; } }
+    return b;
+  }
+  function seep(f) {
+    const v = f.ss && f.ss.venom, n = v ? v.n : 0, j = f.seepJ || 0;
+    if (!(n > 0) || j >= TU.venom.seepJumps) return;
+    const k = Math.floor(n * (TU.venom.seep + tn('seep'))); if (k <= 0) return;
+    const o = nearest(f); if (!o) return;
+    if (stApply(o, 'venom', k, v.p || P(), 0)) { o.seepJ = j + 1; ST.seep++; }
+  }
+
+  // ---------------- Trapper: traps ----------------
+  const frontFoe = () => { let r = -1, b = null; for (const f of foes()) if (alive(f) && (f.row > r || (f.row === r && b && f.hp < b.hp))) { r = f.row; b = f; } return b; };
+  function layTraps() {
+    laid = [];
+    while (charges > 0) { charges--; laid.push({ f: null, t: TU.traps.springAfter * (1 + laid.length * 0.5), kind: nextKind }); nextKind = 1 - nextKind; }
+  }
+  const ctrl = () => { const h = hero(); return h ? h.ctrl : 1; };
+  // kind 0: Frost Snare (1.5 P frost, Root 3 s, Chill 4 s); 1: Spore Pit (1 P poison to its line, Venom 4 each)
+  function spring(f, kind) {
+    if (!alive(f)) return;
+    ST.traps++;
+    const p = P() * str;
+    if (kind === 0) {
+      cbDamageFoe(f, TU.traps.snare * p, 0, 'magic', 'frost', ST_AB);
+      if (alive(f)) { stApply(f, 'root', 1, 0, 0, { dur: TU.traps.rootT * ctrl() }); stApply(f, 'chill', 1, 0, 0, { dur: TU.traps.chillT * ctrl() }); }
+    } else {
+      for (const o of foes()) if (alive(o) && o.row === f.row) {
+        cbDamageFoe(o, TU.traps.pit * p, 0, 'magic', 'poison', ST_AB);
+        if (alive(o)) stApply(o, 'venom', TU.traps.pitVenom + tn('pitVenom'), P(), 0);
+      }
+    }
+  }
+  function trapTick(dt) {
+    const bossy = foes().some(f => alive(f) && (f.boss || f.elite));
+    const back = bossy && ks('killground') ? TU.traps.backBoss : Math.max(2, TU.traps.back + tn('trapBack'));
+    if (charges + laid.length < TU.traps.charges) { backT += dt; if (backT >= back) { backT = 0; if (anyFoe()) laid.push({ f: null, t: TU.traps.springAfter, kind: (nextKind = 1 - nextKind) }); else charges++; } }
+    else backT = 0;
+    // Tripwire: a diver in the air springs a charge where it is (a Root ends the dive).
+    for (const f of foes()) if (alive(f) && f.diveT > 0 && !f.wired && (laid.length || charges > 0)) {
+      f.wired = 1; ST.wires++;
+      if (laid.length) laid.shift(); else charges--;
+      stApply(f, 'root', 1, 0, 0, { dur: TU.traps.rootT * ctrl() });
+      if (tn('wireMark') > 0) stApply(f, 'mark', 1, 0, 0, { v: 0.15, dur: 4 });
+    }
+    // Laid traps spring on the front foe after a moment (the first to step in); bosses spring them on a wind-up.
+    for (let i = laid.length - 1; i >= 0; i--) {
+      const t = laid[i]; t.t -= dt;
+      if (t.t > 0) continue;
+      const f = frontFoe(); if (!f) continue;
+      if (f.boss) { t.t = 0; continue; }   // waits for the boss's heavy or slam wind-up
+      laid.splice(i, 1);
+      spring(f, t.kind);
+    }
+  }
+
+  // ---------------- Warlock: Hex ----------------
+  function curse(f, j) {
+    if (!alive(f) || stHas(f, 'curse')) return false;
+    if (!stApply(f, 'curse', 1, P(), 0, { dur: TU.hex.curseT })) return false;
+    f.hexJ = j || 0; f.hexOn = 1; ST.curses++;
+    return true;
+  }
+  function creep(f) {
+    const j = (f.hexJ || 0) + 1;
+    if (j > TU.hex.creepJumps && !ks('pactcinder')) return;
+    const o = nearest(f, x => !stHas(x, 'curse'));
+    if (o && curse(o, j)) ST.creep++;
+  }
+  // A Curse went off (it ran out, or its foe died): Held Light brings the abilities closer (at most 30% a second).
+  function detonated(f) {
+    ST.dets++;
+    if (ks('pactcinder') && f) for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, P(), 0);
+    if (clock - heldT >= 1) { heldT = clock; heldGot = 0; }
+    const x = Math.min(TU.hex.heldCap - heldGot, (TU.hex.heldLight + tn('held')) * str);
+    if (x <= 0) return;
+    heldGot += x;
+    const p = S.party; if (p && p.abilityCd > 0 && typeof abilityInfo === 'function') { const ai = abilityInfo(); if (ai) p.abilityCd = Math.max(0, p.abilityCd - ai.cd * x); }
+    if (ab2Cd > 0) ab2Cd = Math.max(0, ab2Cd - cdMax() * x);
+  }
+  function hexTick() {
+    for (const f of foes()) {
+      if (!alive(f)) continue;
+      if ((f.embers || 0) >= TU.hex.embersToCurse && !stHas(f, 'curse')) curse(f, 0);
+      if (f.hexOn && !stHas(f, 'curse')) { f.hexOn = 0; detonated(f); }
+    }
+  }
+  // Dark Turned: Witchfire treats fire resistance as neutral (a weakness still counts).
+  const darkX = f => { const x = typeX(f, 'fire'); return x < 1 ? 1 / x : 1; };
+
+  // ---------------- the second ability slot (ab2) ----------------
+  const cdMax = () => { const a = def && A[def.ab2]; return a ? a.cd * mod('abilityCd') * (evo === 'warden' && ks('aegis') ? 1.3 : 1) : 1; };
+  const stag = (f, n) => { f.stag = (f.stag || 0) + n * clsStagX(); };
+  const AB2_EV = { evo: '', id: '', name: '', auto: false };
+  castAb2 = opts => {
+    if (!evo || !def || ab2Cd > 0 || !on_() || !anyFoe()) return false;
+    const auto = !!(opts && opts.auto), p = P(), h = hero(), m = typeof mob !== 'undefined' && alive(mob) ? mob : null;
+    const list = foes().filter(alive);
+    if (evo === 'reaver') {
+      let r = -1; for (const f of list) if (f.row > r) r = f.row;
+      const hot = fury >= TU.fury.cinderAt + tn('cinderAt');
+      for (const f of list) {
+        if (f.row !== r) continue;
+        cbDamageFoe(f, 2.5 * p, 0, 'phys', 'phys', ST_HEAVY | ST_AB);
+        if (alive(f)) stApply(f, 'bleed', 3 + tn('rendBleed'), p, 0);
+        if (alive(f) && hot) { cbDamageFoe(f, TU.fury.cinder * p, 0, 'magic', 'fire'); if (alive(f)) stApply(f, 'burn', 1, p, 0); }
+        stag(f, 10);
+      }
+      addFury(TU.fury.rend); ST.rend++;
+    } else if (evo === 'warden') {
+      if (h) cbTaunt(h, list, 4);
+      guardUntil = clock + 4; empUntil = clock + 6;
+      const n = bulwark; bulwark = 0;
+      let holy = 0;
+      for (const f of list) { holy += cbDamageFoe(f, 0.6 * n * p * str, 0, 'magic', 'holy', ST_AB); stag(f, 3 * n); }
+      const sh = 0.15 * n * p * str + (ks('aegis') ? 0.2 * holy : 0);
+      if (sh > 0) for (const u of combatUnits()) if (u.live && !u.down) cbShield(u, sh, TU.sanctuary.shieldCap);
+      ST.standfast++;
+    } else if (evo === 'venomstalker') {
+      const f = m || list[0], v = f.ss && f.ss.venom, n = v && v.t > 0 ? v.n : 0;
+      if (n > 0) cbDamageFoe(f, (0.4 + tn('bloom')) * p * n * (1 + 0.1 * n) * stX(), 0, 'magic', 'poison', ST_AB);
+      if (alive(f) && v && v.t > 0) { v.n = ks('lingering') ? Math.ceil(n / 2) : 0; if (!v.n) v.t = 0; }
+      if (alive(f) && !ks('lingering')) venomOn(f, 3);
+      for (const o of list) if (o !== f) venomOn(o, 4);
+      ST.bloom++;
+    } else if (evo === 'trapper') {
+      const c = ctrl();
+      for (const f of list) {
+        cbDamageFoe(f, 1.0 * p, 0, 'magic', 'frost', ST_AB);
+        if (!alive(f)) continue;
+        if (!ks('killground')) stApply(f, 'root', 1, 0, 0, { dur: 3 * c });
+        stApply(f, 'chill', 1, 0, 0, { dur: 4 * c });
+        stApply(f, 'mark', 1, 0, 0, { v: 0.2, dur: 8 + tn('snareMark') });
+        stag(f, 15);
+      }
+      charges = TU.traps.charges; laid = []; layTraps(); ST.snare++;
+    } else if (evo === 'warlock') {
+      const x = 1.5 * (1 + tn('hexDet'));
+      for (const f of list) {
+        const c = f.ss && f.ss.curse;
+        if (!c || !(c.t > 0)) continue;
+        const amt = c.v * x; c.t = 0; c.v = 0; f.hexOn = 0;
+        if (amt > 0) {
+          if (alive(f)) cbDamageFoe(f, amt * darkX(f), 0, 'dot', 'fire');
+          for (const o of list) if (o !== f && alive(o)) cbDamageFoe(o, amt * 0.5 * darkX(o), 0, 'dot', 'fire');
+        }
+        detonated(f);
+      }
+      for (const f of list) if (alive(f)) cbDamageFoe(f, (1.2 + tn('nova')) * p * darkX(f), 0, 'magic', 'fire', ST_AB);
+      for (const f of list) curse(f, 0);
+      ST.nova++;
+    } else if (evo === 'priest') {
+      sancUntil = clock + TU.sanctuary.t; sancBeat = 0;
+      for (const f of list) stag(f, 10);
+      ST.sanct++;
+    }
+    ab2Cd = cdMax(); readyFor = 0; ST.ab2++; if (auto) ST.auto++;
+    AB2_EV.evo = evo; AB2_EV.id = def.ab2; AB2_EV.name = A[def.ab2].name; AB2_EV.auto = auto;
+    emit('ability2', AB2_EV);
+    return true;
+  };
+  // When auto-cast fires ab2 (it never wastes it: Deathcap waits for Venom, Stand Fast for Bulwark).
+  function autoWants() {
+    const m = typeof mob !== 'undefined' && alive(mob) ? mob : null;
+    if (evo === 'venomstalker') return !!m && (stStacks(m, 'venom') >= 7 || readyFor > cdMax());
+    if (evo === 'warden') return bulwark >= Math.min(4, bulMax()) || readyFor > cdMax();
+    if (evo === 'warlock') { let n = 0; for (const f of foes()) if (alive(f) && stHas(f, 'curse')) n++; return n > 0 || readyFor > cdMax(); }
+    if (evo === 'priest') { for (const u of combatUnits()) if (u.live && !u.down && u.hp < u.maxHp * 0.85) return true; return readyFor > cdMax(); }
+    return true;
+  }
+  const autoOn = () => !!(S.party && S.party.autoCast && S.cls && S.cls.auto && S.cls.auto.ab2);
+  const autoUnlocked = () => S.maxZone >= 10;   // the ab1 rule (55-party autoCastZone)
+  ab2Info = () => {
+    if (!evo || !def) return null;
+    const a = A[def.ab2];
+    return { id: a.id, name: a.name, desc: a.desc, cd: cdMax(), left: Math.max(0, ab2Cd), ready: ab2Cd <= 0, auto: autoUnlocked() && autoOn(), autoOn: autoOn(), unlocked: autoUnlocked(), str, evo };
+  };
+  ab2Auto = v => { if (!S.cls || !S.cls.auto) return false; S.cls.auto.ab2 = (v === undefined ? !S.cls.auto.ab2 : !!v) ? 1 : 0; return !!S.cls.auto.ab2; };
+
+  // ---------------- meters, finisher, lamp ----------------
+  const METER = { id: '', name: '', v: 0, max: 0 };
+  clsMeter = () => {
+    if (!evo) return null;
+    if (evo === 'reaver') { METER.id = 'fury'; METER.name = 'Fury'; METER.v = Math.round(fury); METER.max = 100; }
+    else if (evo === 'warden') { METER.id = 'bulwark'; METER.name = 'Bulwark'; METER.v = Math.floor(bulwark); METER.max = bulMax(); }
+    else if (evo === 'trapper') { METER.id = 'traps'; METER.name = 'Traps'; METER.v = charges + laid.length; METER.max = TU.traps.charges; }
+    else return null;
+    return METER;
+  };
+  clsFinisher = () => { const c = typeof lbClass === 'function' ? lbClass() : null; if (!c || !c.base) return null; return A[c.evo && EVO_DEFS[c.evo] ? EVO_DEFS[c.evo].finisher : CLASS_DEFS[c.base].finisher] || null; };
+  evoLamp = () => { const e = typeof clsEvo === 'function' ? clsEvo() : null; return e ? EVO_DEFS[e].col : null; };
+
+  // ---------------- damage modifiers ----------------
+  // Hero-only (the A1 trick: dmg x k, party x 1/k): the evolution line, Fury, Blood Price. Party-wide: Stand Fast.
+  addModifier('dmg', () => heroK * partyK);
+  addModifier('party', () => (heroK !== 1 ? 1 / heroK : 1));
+  function readK() {
+    let k = 1, pk = 1;
+    if (evo) {
+      if (proven && def.dmg) k *= 1 + def.dmg;
+      if (evo === 'reaver') {
+        k *= 1 + TU.fury.per10 * Math.floor(fury / 10);
+        const h = hero(); if (h && !h.down && on_() && h.hp < h.maxHp * (TU.bloodPrice.at + tn('bloodAt'))) k *= 1 + TU.bloodPrice.dmg;
+      }
+      if (evo === 'warden' && empUntil > clock) pk *= 1 + (A.standfast.emp + tn('sfEmp')) * str;
+    }
+    heroK = k; partyK = pk;
+  }
+
+  // ---------------- the tick ----------------
+  onTick(dt => {
+    clock += dt;
+    readEvo();
+    if (ab2For !== S) { ab2For = S; reset(); }
+    if (!evo) { heroK = 1; partyK = 1; return; }
+    if (ab2Cd > 0) { ab2Cd = Math.max(0, ab2Cd - dt); readyFor = 0; } else readyFor += dt;
+    const live = on_() && anyFoe();
+    if (evo === 'reaver') {
+      if (clock - lastHit > TU.fury.idleAfter) fury = Math.max(ks('bloodrage') && live ? Math.min(fury, TU.fury.rageFloor) : 0, fury - TU.fury.drain * dt);
+      if (stopCd > 0) stopCd -= dt;
+      if (fury >= TU.fury.stopAt && stopCd <= 0 && live) { stopT = TU.fury.stopT; stopCd = TU.fury.stopCd; ST.stops++; }
+      if (stopT > 0) { stopT -= dt; const h = hero(); if (h && h.us) { if (h.us.stun) h.us.stun.t = 0; if (h.us.root) h.us.root.t = 0; } }
+    } else if (evo === 'warden') {
+      if (!live && bulwark > 0) bulwark = Math.max(0, bulwark - TU.bulwark.drainOut * dt);
+    } else if (evo === 'trapper' && live) trapTick(dt);
+    else if (evo === 'warlock' && live) hexTick();
+    else if (evo === 'priest' && sancUntil > clock && live) {
+      sancBeat += dt;
+      if (sancBeat >= 1) {
+        sancBeat -= 1;
+        const p = P() * str, heal = TU.sanctuary.regen * p;
+        for (const u of combatUnits()) {
+          if (!u.live || u.down) continue;
+          const got = cbHealUnit(u, heal, null); ST.sanctHeal += got;
+          const over = heal * (u.healIn || 1) - got;
+          if (over > 0) ST.sanctShield += cbShield(u, over, TU.sanctuary.shieldCap);
+        }
+        for (const f of foes()) if (alive(f)) cbDamageFoe(f, TU.sanctuary.smite * p, 0, 'magic', 'holy', ST_AB);
+      }
+    }
+    readK();
+    if (live && ab2Cd <= 0 && autoOn() && autoUnlocked() && readyFor >= cdMax() * TU.ab2AutoWait && autoWants()) castAb2({ auto: true });
+  });
+
+  // ---------------- Next Up (3.1): the Proving is open, or the choice waits (55-goals loads before this file) ----------------
+  registerGoal({
+    id: 'proving', sys: 'class', prio: 2, cap: 1,
+    label: () => (evoChoice() ? 'Choose your path' : provingInfo() && provingInfo().prove ? 'Prove your path: take the Proving' : 'Take the Proving'),
+    pct: () => { const p = typeof provingInfo === 'function' ? provingInfo() : null; return p && (p.open || p.choice) ? 1 : 0; },
+    go: () => ({ tab: 'party', fn: () => { if (typeof partySheet === 'object' && partySheet && partySheet.openHero) partySheet.openHero(); } }),
+    icon: { ic: ['orb', '#F2C14E'] }
+  });
+
+  // ---------------- titles (classes-2 D5): c_<evo>, earned once proven ----------------
+  if (typeof codexTitles === 'function') {
+    const base = codexTitles;
+    codexTitles = () => base().concat(Object.keys(EVO_DEFS).map(e => ({ id: 'c_' + e, n: EVO_DEFS[e].title.replace(/^the /, 'The '), src: `The ${EVO_DEFS[e].name}'s Proving`, got: !!(S.cls && S.cls.proven && S.cls.proven[e]) })));
+  }
+}
+
+// ---- src/js/59f-trials.js ----
+// 59f-trials: the solo fight runner and the three Provings (Classes 2.0 slice S3; classes-2.md 3.2).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Data: CLASS_TRIALS (24-data-classes.js). The Proving's state and what a pass does: 55-classes.js.
+//
+// The runner is reusable (heroes-2.md 1.4: HER's "the Stand" runs on it with a second unit): a fight on the
+// normal party-combat loop (59-combat), with its own arena (50-sim `arena`, like the Deepwell's), its own
+// field (trialField(): only the units it names; the Lanternbearer always), and a template that spawns the
+// foes, runs the twist each tick and decides the pass. Free and repeatable; the farm pauses while it runs
+// and resumes after (no gold, XP or kills are paid; the field and the zone are untouched).
+//
+// Fixed strength (3.2): foe health is set from a reference Lanternbearer who just beat the Fenmother, not from
+// the player: trialRefDps(base) = the reference party's damage at zone TRIAL_TUNE.refZone (a pack in
+// PACE.farmSecs) x the base class's share of it. So the Proving gets easier as you grow. Foe hits are a share of
+// your own health, so the fight stays a fight at any power (idle passes from about 1.25x the reference).
+//
+// Templates (TRIAL_TPL; heroes-2 1.4 names the same three, plus keep and duel for HER):
+//   hold  (Warrior)     packs cross; a foe you have not hit (or taunted) for `slip` s walks past you and hits
+//                       the lamp behind you; the last pack's lead is a boss with heavy wind-ups. Pass: the lamp
+//                       is lit and you stand at the end (or every pack is down).
+//   hunt  (Ranger)      a fleeing quarry and its screen; it stops at 3 lamps (takes x1.5 for 2 s). Pass: it
+//                       falls before it escapes.
+//   wave  (Lanternmage) three waves; spore caps curse you (no healing, a slow drain), your lamp heals you while
+//                       you are not cursed, wraiths heal each other (59b). Pass: every wave down in time.
+//
+// API: trialStart(id, opts) -> bool   id: a CLASS_TRIALS key (or any id with opts.def); opts: { kind: 'proving'
+//        | 'stand' | ..., units: [heroId] (default none: solo), def: a trial row (the Stand's), ref: foe health x }
+//      trialEnd(won, reason) -> the record | null; trialLive() -> the run | null (read only);
+//      trialInfo() -> { id, name, tpl, kind, t, secs, left, pct, lamp, lampMax, wave, waves, goal } | null;
+//      trialField() -> [heroIds] while a run is live (59-combat fieldIds), else null; trialRefDps(base)
+// Events: trialStart { id, kind }, trialEnd { id, kind, won, pct, reason, secs }. Runtime only: nothing saved.
+
+var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialInfo, trialField, trialRefDps;
+
+{
+  const T = TRIAL_TUNE = {
+    refZone: 35,                                      // the Fenmother's zone
+    share: { warrior: 0.1, ranger: 0.5, mage: 0.2 },  // the base class's share of its party's damage at the reference
+    hold: { foeSecs: 10, bossSecs: 35, hitPct: 0.03, bossHitPct: 0.05, lampHit: 5.8 },
+    hunt: { quarrySecs: 52, markX: 1.25, screenSecs: 1.5, hitPct: 0.02, stops: [9, 20, 31], stopX: 1.5 },
+    wave: { secs: { bat: 4.2, spore: 8.4, wraith: 14 }, hitPct: 0.008, curseEvery: 4, curseT: 3, drain: 0.015, lampHeal: 0.03 }
+  };
+  const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
+  const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
+  const hero = () => { const u = typeof combatUnits === 'function' ? combatUnits()[0] : null; return u && u.live ? u : null; };
+  const cbT = () => (typeof cbClock === 'function' ? cbClock() : 0);
+  trialRefDps = base => mobHp(T.refZone) * COMBAT_TUNE.packHp / PACE.farmSecs * (T.share[base] || 0.2);
+
+  let run = null;
+  trialLive = () => run;
+  trialField = () => (run ? run.units : null);
+
+  // A foe of the given type at the reference zone's look; health in seconds of the reference damage.
+  function foe(type, secs, o) {
+    const ti = Math.max(0, TYPES.findIndex(x => x.key === type)), t = TYPES[ti], z = T.refZone;
+    const hp = Math.max(1, run.ref * secs * run.refDps);
+    return Object.assign({
+      key: type + zoneCycle(z), type, rows: SPR[type], pal: shiftPal(t.pal, zoneHue(z)), boss: false, champ: false,
+      hp, max: hp, name: t.name, gold: 0, xp: 0, hit: 0, dead: 0, born: 0, trial: run.id
+    }, o || {});
+  }
+  const pack = list => { const lead = list.find(m => m.boss) || list[0]; lead.pack = list; return lead; };
+
+  // ---------------- templates ----------------
+  TRIAL_TPL = {
+    hold: {
+      init(r) { r.lamp = r.lampMax = r.def.lamp || 100; r.packs = 0; },
+      spawn(r) {
+        const d = r.def, n = d.packs || 4;
+        if (r.packs >= n) return null;
+        r.packs++;
+        const ty = d.types || ['bones', 'beetle'], last = r.packs === n, list = [];
+        for (let i = 0; i < 3; i++) list.push(foe(ty[(i + r.packs) % ty.length], T.hold.foeSecs));
+        if (last) list[0] = foe('beetle', T.hold.bossSecs, { boss: true, name: 'Bridge Beetle' });
+        return pack(list);
+      },
+      hitPct: f => (f.boss ? T.hold.bossHitPct : T.hold.hitPct),
+      tick(r, dt) {
+        const now = cbT(), slip = r.def.slip || 4;
+        for (const f of foes()) {
+          if (!alive(f) || f.boss) continue;
+          const held = now - Math.max(f.hHit || 0, f.tIn || 0) < slip || (f.forceT > 0 && f.forceU === 0);
+          f.slip = held ? 0 : 1;
+          if (!held) { f.knockT = Math.max(f.knockT || 0, 0.25); r.lamp -= T.hold.lampHit * dt; }
+        }
+        if (r.lamp <= 0) { r.lamp = 0; return 'lamp'; }
+        if (r.t >= r.secs) return 'won';
+        return null;
+      },
+      cleared(r) { return r.packs >= (r.def.packs || 4) ? 'won' : null; },
+      pct: r => Math.round(100 * Math.min(1, r.t / r.secs) * (r.lamp > 0 ? 1 : 0.5)),
+      goal: r => `Keep the lamp lit: ${Math.ceil(r.lamp)} of ${r.lampMax}`
+    },
+    hunt: {
+      init(r) { r.quarry = null; r.stop = -1; },
+      spawn(r) {
+        if (r.quarry) return null;
+        const d = r.def, list = [];
+        r.quarry = foe(d.quarry || 'wraith', T.hunt.quarrySecs * T.hunt.markX, { champ: true, name: "The Fenmother's Herald", quarry: 1 });
+        list.push(r.quarry);
+        for (let i = 0; i < (d.screenN || 3); i++) list.push(foe(d.screen || 'bat', T.hunt.screenSecs));
+        return pack(list);
+      },
+      hitPct: f => (f.quarry ? 0 : T.hunt.hitPct),
+      tick(r, dt) {
+        const q = r.quarry;
+        if (q && !alive(q) && q.th) return 'won';
+        if (q && alive(q)) {
+          q.bt = 0; q.chanT = 0;   // the herald flees: it never stops to heal
+          for (let i = 0; i < T.hunt.stops.length; i++) {
+            const at = T.hunt.stops[i];
+            if (r.t >= at && r.stop < i) { r.stop = i; q.vulnT = r.def.stopT || 2; emit('trialStop', { i }); }
+          }
+        }
+        if (r.t >= r.secs) return 'escaped';
+        return null;
+      },
+      cleared: () => 'won',
+      pct: r => (r.quarry ? Math.round(100 * Math.max(0, Math.min(1, 1 - r.quarry.hp / r.quarry.max))) : 0),
+      goal: r => (r.quarry && alive(r.quarry) && r.quarry.vulnT > 0 ? 'It stopped at a lamp. Hit it now!' : 'Bring down the herald before it escapes')
+    },
+    wave: {
+      init(r) { r.wave = 0; r.waves = (r.def.waves || []).length; r.curseT = 0; },
+      spawn(r) {
+        const w = (r.def.waves || [])[r.wave]; if (!w) return null;
+        r.wave++;
+        const [type, n] = w, list = [];
+        for (let i = 0; i < Math.min(6, n); i++) list.push(foe(type, T.wave.secs[type] || 2));
+        return pack(list);
+      },
+      hitPct: () => T.wave.hitPct,
+      tick(r, dt) {
+        const h = hero(); if (!h || h.down) return null;
+        let spores = 0; for (const f of foes()) if (alive(f) && f.type === 'spore') spores++;
+        r.curseT += dt;
+        if (spores && r.curseT >= T.wave.curseEvery) { r.curseT = 0; stUnitApply(h, 'curse', 1, { dur: T.wave.curseT }); }
+        if (stUnitNoHeal(h)) cbHitUnit(h, h.maxHp * T.wave.drain * dt, 'poison', null);
+        else if (h.hp < h.maxHp) cbHealUnit(h, h.maxHp * T.wave.lampHeal * dt, null);
+        if (r.t >= r.secs) return 'time';
+        return null;
+      },
+      cleared(r) { return r.wave >= r.waves ? 'won' : null; },
+      pct: r => Math.round(100 * (r.wave - (foes().some(alive) ? 1 : 0)) / Math.max(1, r.waves)),
+      goal: r => `Wave ${Math.max(1, r.wave)} of ${r.waves}`
+    }
+  };
+
+  // ---------------- the arena (50-sim calls it) ----------------
+  TRIAL_ARENA = {
+    spawn() {
+      if (!run) return null;
+      if (mob && mob.trial === run.id && !mob.dead) return mob;
+      return run.tpl.spawn(run);
+    },
+    onKill() {
+      if (!run) return;
+      const r = run.tpl.cleared(run);
+      if (r) run.pending = r;
+    }
+  };
+  // Foe hits: a share of the hero's own health (set once the pack is adopted by 59-combat).
+  on('packSpawn', p => {
+    const list = p.foes, lead = list && list[0];
+    if (!run || !lead || lead.trial !== run.id) return;
+    const h = hero(), hp = h ? h.maxHp : 1, now = cbT();
+    for (const f of list) { if (f.trialAtk) continue; f.trialAtk = 1; f.atk = hp * run.tpl.hitPct(f); f.tIn = now; }
+  });
+  // Hold: Shield Wall taunts every foe (classes-2 1.2's ['taunt', 3]), and a heavy tap turns the foe that is
+  // about to walk past (the one you left alone longest) back onto you. Auto-taps turn it for half as long.
+  on('ability', ({ cls }) => {
+    if (!run || cls !== 'warden' || run.def.tpl !== 'hold') return;
+    const h = hero(); if (h && typeof cbTaunt === 'function') cbTaunt(h, foes().filter(alive), 3);
+  });
+  on('classTap', ({ kind, auto }) => {
+    if (!run || run.def.tpl !== 'hold' || kind !== 'heavy') return;
+    const h = hero(); if (!h || typeof cbTaunt !== 'function') return;
+    let b = null, bt = Infinity;
+    for (const f of foes()) { if (!alive(f) || f.boss) continue; const t = Math.max(f.hHit || 0, f.tIn || 0, f.forceT > 0 && f.forceU === 0 ? Infinity : 0); if (t < bt) { bt = t; b = f; } }
+    if (b) cbTaunt(h, [b], auto ? 1.5 : 3);
+  });
+  on('wipe', p => { if (run && p && p.arena) run.pending = 'fell'; });
+  on('awayBegin', () => { if (run) trialEnd(false, 'away'); });
+
+  const retire = () => { if (mob && !mob.dead) { mob.hp = 0; mob.dead = 0.001; } };
+  trialStart = (id, opts) => {
+    const o = opts || {}, def = o.def || CLASS_TRIALS[id];
+    if (run || !def || !TRIAL_TPL[def.tpl]) return false;
+    if (typeof deepActive === 'function' && deepActive()) return false;
+    if (!(typeof partyCombatOn === 'function' && partyCombatOn())) return false;
+    const base = def.base || id;
+    run = { id, def, kind: o.kind || 'trial', tpl: TRIAL_TPL[def.tpl], t: 0, secs: def.secs || 60, units: (o.units || []).slice(0, 2),
+      act: S.activity || 'fight', ref: o.ref > 0 ? o.ref : 1, refDps: trialRefDps(base), pending: null };
+    run.tpl.init(run);
+    S.activity = 'fight'; fightBoss = false;
+    retire();
+    if (typeof cbRestore === 'function') cbRestore(true);
+    arena = TRIAL_ARENA;
+    emit('sceneReset');
+    emit('trialStart', { id, kind: run.kind });
+    spawn();
+    return true;
+  };
+  trialEnd = (won, reason) => {
+    if (!run) return null;
+    const r = run, pct = won ? 100 : Math.max(0, Math.min(99, r.tpl.pct(r) || 0));
+    const rec = { id: r.id, kind: r.kind, won: !!won, pct, reason: reason || (won ? 'won' : 'lost'), secs: Math.round(r.t) };
+    run = null;
+    retire();
+    if (typeof cbRestore === 'function') cbRestore(true);
+    if (arena === TRIAL_ARENA) arena = null;
+    fightBoss = false;
+    S.activity = r.act === 'raid' && !(online.ready && online.canWrite) ? 'fight' : r.act;
+    emit('sceneReset');
+    if (S.activity === 'fight') spawn();
+    emit('trialEnd', rec);
+    emit('activity', { activity: S.activity });
+    return rec;
+  };
+  const INFO = { id: '', name: '', tpl: '', kind: '', t: 0, secs: 0, left: 0, pct: 0, lamp: 0, lampMax: 0, wave: 0, waves: 0, goal: '' };
+  trialInfo = () => {
+    if (!run) return null;
+    const r = run;
+    INFO.id = r.id; INFO.name = r.def.name || ''; INFO.tpl = r.def.tpl; INFO.kind = r.kind; INFO.t = r.t; INFO.secs = r.secs;
+    INFO.left = Math.max(0, r.secs - r.t); INFO.pct = r.tpl.pct(r) || 0; INFO.lamp = r.lamp || 0; INFO.lampMax = r.lampMax || 0;
+    INFO.wave = r.wave || 0; INFO.waves = r.waves || 0; INFO.goal = r.tpl.goal(r);
+    return INFO;
+  };
+
+  onTick(dt => {
+    if (!run) return;
+    if (arena !== TRIAL_ARENA || target() !== 'mob') { trialEnd(false, 'left'); return; }
+    run.t += dt;
+    let res = run.pending || run.tpl.tick(run, dt);
+    // Nothing on the field (between packs): the next one steps up at once.
+    if (!res && !foes().some(alive) && !(mob && mob.trial === run.id && !mob.dead)) { const m = TRIAL_ARENA.spawn(); if (m) { mob = m; cbArena(m); } }
+    if (!res) return;
+    trialEnd(res === 'won', res);
+  });
+}
+
 // ---- src/js/60-gfx.js ----
 // 60-gfx: browser-only helpers shared by render and UI: DOM shortcuts, reduced-motion
 // flag, canvas sprite rendering, icon data URLs.
@@ -24964,7 +26214,11 @@ const ART = (() => {
     const spec = { cls, gear };
     if (party.skin != null) spec.skin = party.skin;
     if (party.hair != null) spec.hair = party.hair;
-    const acc = typeof lookAcc === 'function' ? lookAcc() : null; if (acc) spec.acc = acc;
+    let acc = typeof lookAcc === 'function' ? lookAcc() : null;
+    // S3: the evolution's lamp colour (classes-2 2.x looks), unless a flame look is worn
+    const ev = typeof evoLamp === 'function' ? evoLamp() : null;
+    if (ev && !(acc && acc.fl)) acc = Object.assign({}, acc || {}, { fl: ev });
+    if (acc) spec.acc = acc;
     return spec;
   }
   // Creation screen: the class in its base look (tier 1 Common weapon, off-hand, head and body).
@@ -26449,7 +27703,9 @@ let resize, animate, draw, stageStats, warmScene;
     }
     return d;
   }
-  const actorA = a => a.alpha < 1 ? a.alpha : rtA;
+  // S3 (59f-trials): in a solo fight the heroes it does not field step back and watch, dimmed.
+  const trialOut = a => a.key !== 'hero' && typeof trialField === 'function' && !!trialField() && !trialField().includes(a.key);
+  const actorA = a => a.alpha < 1 ? a.alpha : trialOut(a) ? 0.3 * rtA : rtA;
   function drawActor(a, cam) {
     const f = frameOf(a); if (!f) return;
     const hx = ax(a) - cam, al = actorA(a);
@@ -32742,6 +33998,307 @@ let bondsUI = null;
   });
 }
 
+// ---- src/js/75-class-ui.js ----
+// 75-class-ui: the evolutions on screen (Classes 2.0 slice S3; classes-2.md 3.1-3.4, 3.7). Browser-only.
+// Core: 55-classes.js (the Proving, chooseEvo, the respec), 59e-class-combat.js (ab2, meters), 59f-trials.js.
+//
+//  - the class card's evolution rows (76-create classUI.rows calls classEvoUI.rows): the path and its parts,
+//    the second ability (ab2) with its auto-cast switch, the Proving (take it, your record), the choice
+//  - the choice card (3.3): full screen, two tabs, a figure (still under reduced motion), an in-page confirm
+//  - the respec sheet (3.4): the Mirror of Embers row (classUI.mirrorRow), both costs shown in full
+//  - the Proving on the stage: a banner with the trial's name, time, goal and progress, and Give up
+//  - the second ability button on the stage (next to the first) and the evolution's meter
+//  - the ceremony: a lamp flash in the new colour (reduced motion: none), the toast comes from the core
+//
+// classEvoUI: { rows(info), mirrorRow(), sig(), openChoice(), openRespec(), closeAll() }
+
+var classEvoUI;
+{
+  const A = CLASS_ABILITIES;
+  const ROLE_NAME = { tank: 'Tank', striker: 'Damage', caster: 'Caster', support: 'Support' };
+  const HOME_NAME = { front: 'Front', mid: 'Middle', back: 'Back' };
+  const heroName = id => (typeof ROSTER === 'object' && ROSTER[id] ? ROSTER[id].name.split(' ')[0] : id);
+  const owned = id => typeof isRecruited === 'function' && isRecruited(id);
+  const safe = (f, d) => { try { return f(); } catch (e) { console.error('[lanternfall] class ui', e); return d; } };
+  const btn = (cls, txt, fn) => { const b = el('button', cls, txt); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); fn(e); }); return b; };
+  const row = (title, sub, text, cls) => {
+    const d = el('div', 'cs-kit1 cl-row' + (cls ? ' ' + cls : ''));
+    const top = el('div', 'cl-top'); top.append(el('b', null, title)); if (sub) top.append(el('small', null, sub));
+    d.append(top);
+    if (text) d.append(el('p', null, text));
+    return d;
+  };
+  const chip = (txt, on) => el('span', 'cl-chip' + (on ? ' on' : ''), (on ? '✓ ' : '') + txt);
+  const closeSheet = () => { if (typeof partySheet === 'object' && partySheet && partySheet.close) safe(() => partySheet.close()); };
+
+  // ---------------- the class card rows ----------------
+  function provingBox(p) {
+    const box = el('div', 'cl-prove');
+    const tr = p.trial;
+    box.append(el('b', null, `The Proving: ${tr.name}`), el('p', null, p.prove ? 'Prove what you already are. ' + tr.text : tr.text), el('p', 'cl-note', tr.how));
+    if (p.n) box.append(el('p', 'cl-rec', `Tries: ${p.n}. Best: ${p.best}%.`));
+    box.append(btn('mini go cl-go', 'Take the Proving', () => { closeSheet(); startProving(); }));
+    box.append(el('small', null, 'Free, and you can try again at once. Your party waits while you fight alone.'));
+    return box;
+  }
+  function rows(info) {
+    const out = [];
+    const d = CLASS_DEFS[info.base], p = info.proving;
+    if (info.evo && EVO_DEFS[info.evo]) {
+      const ev = EVO_DEFS[info.evo], full = info.proven;
+      const r = row(`Path: ${ev.name}`, full ? ev.title : 'Granted', full ? `"${ev.pitch}" ${ev.line.name}: ${ev.line.text}` : `Its new powers work at ${Math.round(CLS_TUNE.unproven * 100)}% until you pass the Proving.`, 'cl-evo');
+      r.style.setProperty('--evo', ev.tint);
+      if (!full) r.append(el('p', 'cl-note', `The title ${ev.title} and the ${ev.name} ring wait for your Proving.`));
+      out.push(r);
+      for (const ps of ev.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
+      const ab = A[ev.ab2], ai = typeof ab2Info === 'function' ? ab2Info() : null;
+      const ar = row(`${ab.name} · every ${ab.cd}s`, 'Second ability', ab.desc, 'cl-ab2');
+      const lb = el('label', 'pc-auto'); const box = el('input'); box.type = 'checkbox'; box.checked = !!(ai && ai.autoOn);
+      box.addEventListener('change', () => { if (typeof ab2Auto === 'function') ab2Auto(box.checked); save(); });
+      lb.append(box, document.createTextNode(` Cast ${ab.name} for me when idle (from zone 10)`));
+      ar.append(lb); out.push(ar);
+      const fin = A[ev.finisher];
+      if (fin) out.push(row(`Finisher: ${fin.name}`, 'with active combat', fin.desc, 'off'));
+      if (p && p.open) out.push(provingBox(p));
+    } else {
+      const names = info.paths.map(x => `${x.name} (${x.kind})`).join(' or ');
+      if (info.choice) {
+        const r = row('Evolution', 'Ready', `You passed the Proving. Choose your path: ${names}. The choice is for good.`, 'cl-evo');
+        r.append(btn('mini go cl-go', 'Choose your path', () => { closeSheet(); openChoice(); }));
+        out.push(r);
+      } else {
+        const r = row('Evolution', 'Locked', `Two paths open after the Fenmother: ${names}. The choice is for good.`, 'cl-evo off');
+        const chips = el('div', 'cl-chips');
+        chips.append(chip('Beat the Fenmother', info.gate.bossOk), chip(`Level ${info.gate.lv}`, info.gate.lvOk));
+        r.append(chips);
+        out.push(r);
+        if (p && p.open) out.push(provingBox(p));
+      }
+    }
+    out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+    return out;
+  }
+  const sig = () => {
+    const c = S.cls || {}, ai = typeof ab2Info === 'function' ? ab2Info() : null, p = typeof provingInfo === 'function' ? provingInfo() : null;
+    return [c.evo, JSON.stringify(c.trials || {}), ai ? ai.autoOn : '', p ? p.open + '' + p.choice : '', S.party && S.party.mirrors, c.respec].join('/');
+  };
+
+  // ---------------- the Proving ----------------
+  function startProving() {
+    if (typeof provingStart !== 'function' || !provingStart()) { toast('The Proving cannot start now. Finish what you are doing first.', 'raid'); return; }
+    if (typeof closeMenu === 'function') safe(() => closeMenu());
+  }
+  const stage = $('stage');
+  const hud = el('div', 'tr-hud'); hud.hidden = true; hud.setAttribute('role', 'status');
+  const hTop = el('div', 'tr-top'), hName = el('b', 'tr-name'), hTime = el('span', 'tr-time');
+  hTop.append(hName, hTime);
+  const hGoal = el('div', 'tr-goal'), hBar = el('div', 'tr-bar'), hFill = el('i');
+  hBar.append(hFill);
+  const hQuit = btn('mini tr-quit', 'Give up', () => { if (typeof trialEnd === 'function') trialEnd(false, 'quit'); });
+  hud.append(hTop, hGoal, hBar, hQuit);
+  hud.addEventListener('pointerdown', e => e.stopPropagation());
+  if (stage) stage.append(hud);
+  on('trialStart', () => { putHidden(hud, false); updateHud(); });
+  on('trialEnd', e => {
+    putHidden(hud, true);
+    if (!e || e.kind !== 'proving' || e.won) return;
+    const why = { lamp: 'The lamp went out.', escaped: 'The herald got away.', time: 'Time ran out.', fell: 'You fell.', quit: 'You stepped back.' }[e.reason] || '';
+    toast(`The Proving: not this time. ${why} Best so far: ${Math.max(e.pct, (S.cls.trials[e.id] || {}).best || 0)}%. Try again: it is free.`, 'raid', null, 'high');
+  });
+  function updateHud() {
+    const t = typeof trialInfo === 'function' ? trialInfo() : null;
+    if (!t) { putHidden(hud, true); return; }
+    putHidden(hud, false);
+    putText(hName, t.name); putText(hTime, `${Math.ceil(t.left)}s`); putText(hGoal, t.goal);
+    const f = t.tpl === 'hold' ? t.lamp / Math.max(1, t.lampMax) : Math.max(0, Math.min(1, t.pct / 100));
+    putStyle(hFill, 'transform', `scaleX(${f.toFixed(3)})`);
+    putClass(hud, 'tr-hud tr-' + t.tpl);
+  }
+
+  // ---------------- the second ability button and the meter ----------------
+  const ab2 = el('button', 'abil abil2'); ab2.type = 'button'; ab2.hidden = true;
+  const ab2Ic = el('span', 'abil2-ic'), ab2Cd = el('span', 'cd'), ab2N = el('span', 'n');
+  ab2.append(ab2Ic, ab2Cd, ab2N);
+  ab2.addEventListener('pointerdown', e => e.stopPropagation());
+  ab2.addEventListener('click', e => { e.stopPropagation(); if (!(typeof castAb2 === 'function' && castAb2())) { ab2.classList.remove('nope'); void ab2.offsetWidth; ab2.classList.add('nope'); } });
+  const meter = el('div', 'cl-meter'); meter.hidden = true; meter.setAttribute('aria-live', 'off');
+  const mName = el('b'), mBar = el('span', 'cl-mbar'), mFill = el('i'), mNum = el('span', 'cl-mnum');
+  mBar.append(mFill); meter.append(mName, mBar, mNum);
+  if (stage) stage.append(ab2, meter);
+  let abFor = '';
+  function updateAb2() {
+    const info = typeof ab2Info === 'function' ? ab2Info() : null;
+    const show = !!info && target() === 'mob';
+    putHidden(ab2, !show);
+    if (show) {
+      if (abFor !== info.id) {
+        abFor = info.id;
+        ab2Ic.textContent = info.name.slice(0, 1);
+        ab2.setAttribute('aria-label', `${info.name}: ${info.desc}`); ab2.title = info.name;
+        ab2.style.setProperty('--evo', EVO_DEFS[info.evo].tint);
+      }
+      ab2Cd.style.setProperty('--cd', info.cd ? (info.left / info.cd).toFixed(3) : 0);
+      putText(ab2N, info.left > 0 ? String(Math.ceil(info.left)) : '');
+      putToggle(ab2, 'ready', info.ready); putToggle(ab2, 'auto', info.auto);
+    }
+    const m = show && typeof clsMeter === 'function' ? clsMeter() : null;
+    putHidden(meter, !m);
+    if (m) { putText(mName, m.name); putText(mNum, `${m.v}/${m.max}`); putStyle(mFill, 'transform', `scaleX(${(m.v / Math.max(1, m.max)).toFixed(3)})`); }
+  }
+  uiHooks.push(() => { updateHud(); updateAb2(); });
+
+  // ---------------- a full-screen card (the choice, the respec) ----------------
+  let root = null, lastFocus = null;
+  function openCard(title, build) {
+    closeAll();
+    lastFocus = document.activeElement;
+    root = el('div', 'create evo-card'); root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', title);
+    const inner = el('div', 'create-in');
+    root.append(inner);
+    build(inner);
+    root.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+    document.body.append(root);
+    const f = root.querySelector('button'); if (f) f.focus();
+  }
+  function closeAll() {
+    if (!root) return;
+    root.remove(); root = null;
+    if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
+    ui(true);
+  }
+
+  // The choice card (3.3).
+  function figure(evo) {
+    const cv = el('canvas', 'px evo-fig'); cv.width = 56; cv.height = 100;
+    requestAnimationFrame(() => safe(() => {
+      if (typeof drawCharPreview !== 'function' || typeof classPreviewSpec !== 'function') return;
+      const spec = classPreviewSpec(CLS_KIT(EVO_DEFS[evo].base, evo));
+      spec.acc = { fl: EVO_DEFS[evo].col };
+      drawCharPreview(cv, spec, 1);
+    }));
+    return cv;
+  }
+  function openChoice(pick) {
+    const c = typeof lbClass === 'function' ? lbClass() : null;
+    if (!c || !c.base || !(typeof evoChoice === 'function' && evoChoice())) return;
+    const paths = CLASS_DEFS[c.base].evos;
+    let cur = pick && paths.includes(pick) ? pick : paths[0], armed = false;
+    openCard('Choose your path', inner => {
+      inner.append(el('h1', null, 'You passed the Proving.'), el('p', 'create-lede', 'Choose your path. It is permanent.'));
+      const tabs = el('div', 'seg evo-tabs'); tabs.setAttribute('role', 'tablist');
+      const body = el('div', 'evo-body');
+      const go = el('button', 'big forge create-go'); go.type = 'button';
+      const later = btn('textlink create-back', 'Choose later', closeAll);
+      const confirm = el('div', 'evo-confirm'); confirm.hidden = true;
+      const tabBtns = paths.map(id => { const b = btn('evo-tab', EVO_DEFS[id].name, () => { cur = id; armed = false; draw(); }); b.setAttribute('role', 'tab'); tabs.append(b); return b; });
+      let sx = null;
+      body.addEventListener('pointerdown', e => { sx = e.clientX; });
+      body.addEventListener('pointerup', e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 50) { cur = paths[(paths.indexOf(cur) + (dx < 0 ? 1 : paths.length - 1)) % paths.length]; armed = false; draw(); } });
+      function draw() {
+        const ev = EVO_DEFS[cur], ab = A[ev.ab2];
+        tabBtns.forEach((b, i) => { b.setAttribute('aria-selected', String(paths[i] === cur)); putToggle(b, 'on', paths[i] === cur); });
+        body.textContent = '';
+        body.style.setProperty('--evo', ev.tint);
+        const top = el('div', 'evo-top'); const txt = el('div');
+        txt.append(el('h2', null, ev.name.toUpperCase()), el('div', 'evo-title', ev.title), el('div', 'pitch', `"${ev.pitch}"`));
+        top.append(figure(cur), txt);
+        const ul = el('ul', 'evo-bul'); for (const t of ev.bullets) ul.append(el('li', null, t));
+        const good = el('p', 'evo-good'); good.append(el('b', null, 'Good with: '));
+        const list = ev.good.slice().sort((a, b) => owned(b) - owned(a)).slice(0, 5);
+        list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
+        body.append(top, ul,
+          el('p', 'evo-line', `New ability: ${ab.name}. ${ab.desc}`),
+          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}, in the ${HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
+          good, el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
+          el('p', 'note', `Idle: ${ev.idle} Active: ${ev.active}`));
+        putText(go, `Become a ${ev.name}`);
+        confirm.hidden = true;
+        confirm.textContent = '';
+        confirm.append(el('p', null, `Become a ${ev.name}? This is permanent. You can change it later with a Mirror of Embers and Essence.`));
+        const yes = btn('big forge', `Yes, become a ${ev.name}`, () => {
+          let okd = false;
+          okd = safe(() => chooseEvo(cur), false);
+          try { save(); } catch (e) {}
+          if (okd) { closeAll(); ceremony(cur); if (typeof updatePortrait === 'function') safe(() => updatePortrait()); }
+        });
+        const no = btn('textlink create-back', 'Not yet', () => { confirm.hidden = true; go.hidden = false; });
+        confirm.append(yes, no);
+        go.hidden = false;
+      }
+      go.addEventListener('click', () => { go.hidden = true; confirm.hidden = false; const y = confirm.querySelector('button'); if (y) y.focus(); });
+      inner.append(tabs, body, go, confirm, later);
+      draw();
+    });
+  }
+
+  // The ceremony: the lamp flashes its new colour (reduced motion: nothing moves; the toast says it).
+  function ceremony(evo) {
+    if (reduced || !stage) return;
+    const f = el('div', 'evo-flash'); f.style.setProperty('--evo', EVO_DEFS[evo].col);
+    stage.append(f); setTimeout(() => f.remove(), 1400);
+  }
+  on('provingPassed', () => { setTimeout(() => safe(() => openChoice()), 400); });
+  on('evoProven', ({ evo }) => ceremony(evo));
+
+  // ---------------- the Mirror of Embers (3.4) ----------------
+  const costTxt = c => `${c.mirrors} Mirror${c.mirrors > 1 ? 's' : ''} of Embers and ${fmt(c.ess.n)} ${MAT.ess.short[c.ess.t - 1]} Essence`;
+  function mirrorRow() {
+    const n = (S.party && S.party.mirrors) || 0, c = typeof lbClass === 'function' ? lbClass() : null;
+    const box = el('div', 'cs-mirror cl-mirror');
+    const t = el('div');
+    t.append(el('b', null, `Mirror of Embers: ${n}`), el('small', null, n ? `You have ${n} Mirror${n > 1 ? 's' : ''}. Change your path or your class.` : 'Region bosses from the Sunken Coast on, and bosses from zone 36, give them. They let you change your path or class.'));
+    box.append(t);
+    if (c && c.base && typeof respecCost === 'function') box.append(btn('mini go', 'Change', () => { closeSheet(); openRespec(); }));
+    return box;
+  }
+  function openRespec() {
+    const c = typeof lbClass === 'function' ? lbClass() : null;
+    if (!c || !c.base) return;
+    let armed = null;
+    openCard('Mirror of Embers', inner => {
+      const draw = () => {
+        inner.textContent = '';
+        const n = (S.party && S.party.mirrors) || 0;
+        inner.append(el('h1', null, 'The Mirror of Embers'), el('p', 'create-lede', n ? `You have ${n} Mirror${n > 1 ? 's' : ''}.` : 'You have no Mirror of Embers yet.'));
+        const opts = [];
+        if (c.evo && EVO_DEFS[c.evo]) {
+          const other = CLASS_DEFS[c.base].evos.find(e => e !== c.evo), free = typeof clsSwitchInfo === 'function' && clsSwitchInfo().ok;
+          opts.push({ key: 'evo:' + other, title: `Switch path: become a ${EVO_DEFS[other].name}`, what: 'New second ability, Finisher, title and look. Your ring stars go dark and their points come back. Your Proving stays passed.',
+            cost: free ? null : respecCost('evo'), free, run: () => respecEvo(other) });
+        }
+        for (const b of CLASS_BASES) if (b !== c.base) opts.push({ key: 'base:' + b, title: `Change class: become a ${CLASS_DEFS[b].name}`,
+          what: 'Your gear changes to the new class. Each class keeps its own stars. Your path is cleared; if you passed a Proving, you choose the new class\'s path at once.',
+          cost: respecCost('base'), run: () => respecBase(b) });
+        for (const o of opts) {
+          const d = el('div', 'cs-kit1 cl-row evo-opt');
+          d.append(el('b', null, o.title), el('p', null, o.what));
+          if (o.free) d.append(el('p', 'cl-note', 'Free: your one free change, within 10 minutes of choosing.'));
+          else {
+            d.append(el('p', 'cl-cost', `Costs ${costTxt(o.cost)}.` + (o.cost.esc > 1 ? ` (Each change after the first costs more Essence.)` : '')));
+            if (!o.cost.ok) d.append(el('p', 'cl-need', o.cost.why));
+          }
+          const can = o.free || o.cost.ok;
+          const b = btn('mini ' + (armed === o.key ? 'warn' : 'go'), armed === o.key ? 'Tap again to change' : 'Change', () => {
+            if (armed !== o.key) { armed = o.key; draw(); return; }
+            const okd = safe(o.run, false);
+            try { save(); } catch (e) {}
+            closeAll();
+            if (!okd) toast('That change did not go through.', 'raid');
+            else if (typeof updatePortrait === 'function') safe(() => updatePortrait());
+          });
+          b.disabled = !can;
+          d.append(b);
+          inner.append(d);
+        }
+        inner.append(btn('textlink create-back', 'Close', closeAll));
+      };
+      draw();
+    });
+  }
+
+  classEvoUI = { rows: info => safe(() => rows(info), []), mirrorRow: () => safe(mirrorRow, null), sig, openChoice, openRespec, closeAll };
+}
+
 // ---- src/js/75-codex-ui.js ----
 // 75-codex-ui: the Codex sheet (docs/design/codex.md 5). Browser-only; reads 57c-codex.js.
 // Where it lives (docs/design/layout.md): the Camp tab already has 4 views, so the Codex is a
@@ -37486,7 +39043,8 @@ let openSheet, partySheet;
     }
     const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
-    body.append(sw ? section('Class change', sw, mir) : section('Class change', mir));
+    const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
+    body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));
     sheet.foot.textContent = '';
   }
 
@@ -37515,6 +39073,7 @@ let openSheet, partySheet;
     sheet.body.scrollTop = top;
   }
   function openFor(k) {
+    if (sheet) sheet.close(true);   // S3: close the open one first (its onClose would clear the new who)
     who = k; sig = ''; openStory = -1; swapOpen = false; mirrorArm = false;
     const label = k === 'hero' ? S.name : C(k) ? C(k).name : k;
     sheet = openSheet(() => {}, { label, small: k !== 'hero' && !isRecruited(k), onClose: () => { who = null; sheet = null; refs = {}; } });
@@ -38513,7 +40072,9 @@ let openSheet, partySheet;
     cn.addEventListener('click', () => { R.confirm.hidden = true; });
 
     R.lock = el('p', 'note warn st-lock'); R.lock.hidden = true;
-
+    // S3: a Lightkeeper's stars moved into the Lightkeeper ring; one tap lights the Flare arm and the ring.
+    R.suggest = el('button', 'mini go st-suggest', 'Suggested layout'); R.suggest.type = 'button'; R.suggest.hidden = true;
+    R.suggest.addEventListener('click', () => { if (typeof starSuggest === 'function' && starSuggest()) save(); else flashLock(); refresh(true); });
     R.mode = el('div', 'seg st-mode'); R.mode.setAttribute('role', 'group'); R.mode.setAttribute('aria-label', 'Show as');
     R.modeBtns = ['map', 'list'].map(m => {
       const b = el('button', null, m === 'map' ? 'Map' : 'List'); b.type = 'button';
@@ -38533,7 +40094,7 @@ let openSheet, partySheet;
     R.list = el('div', 'st-list');
     R.none = el('p', 'note', 'Choose a class to see its stars.'); R.none.hidden = true;
     R.sub.append(R.keys, R.mode);
-    sec.append(head, R.sub, bar, R.rename, R.confirm, R.lock, R.mapBox, R.card, R.list, R.how, R.none);
+    sec.append(head, R.sub, bar, R.rename, R.confirm, R.lock, R.suggest, R.mapBox, R.card, R.list, R.how, R.none);
   }
 
   // After a tap on the map, bring the card into view if it is below the fold (the map stays mostly on screen).
@@ -38590,6 +40151,21 @@ let openSheet, partySheet;
     svg.append(eg);
     const ng = sv('g', { class: 'st-nodes' });
     R.nodes = {};
+    // S3: the evolution ring is its own small map under this one (its stars open from star 5 of each arm)
+    let rsvg = null, rng_ = null;
+    if (map.evo) {
+      rsvg = sv('svg', { viewBox: RING_GEO.view.join(' '), class: 'st-svg st-ring-svg', role: 'group', 'aria-label': `${EVO_DEFS[map.evo].name} ring` });
+      rsvg.style.setProperty('--role', EVO_DEFS[map.evo].tint);
+      const rb = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
+      rb.append(sv('circle', { cx: RING_GEO.cx, cy: RING_GEO.cy, r: RING_GEO.r, class: 'st-orbit' }));
+      const re = sv('g', { class: 'st-edges', 'aria-hidden': 'true' });
+      for (const [a, b] of map.ringEdges) {
+        const [x1, y1] = map.stars[a].pos, [x2, y2] = map.stars[b].pos;
+        const ln = sv('line', { x1, y1, x2, y2, class: 'st-edge' }); re.append(ln); R.edges.push({ a, b, ln });
+      }
+      rng_ = sv('g', { class: 'st-nodes' });
+      rsvg.append(rb, re, rng_);
+    }
     for (const id of map.order) {
       const s = map.stars[id], [x, y] = s.pos, r = KIND_R[s.kind];
       const g = sv('g', { class: `st-star k-${s.kind}`, transform: `translate(${x} ${y})`, tabindex: '0', role: 'button', 'data-id': id, 'aria-label': `${s.name}, ${starText(s)}` });
@@ -38604,30 +40180,39 @@ let openSheet, partySheet;
       const lock = sv('g', { class: 'st-lockic', transform: `translate(${r * 0.7} ${-r * 0.9})` });
       lock.append(sv('rect', { x: -4, y: -1, width: 8, height: 6, rx: 1 }), sv('path', { d: 'M-2.5 -1 v-2 a2.5 2.5 0 0 1 5 0 v2', fill: 'none' }));
       g.append(glow, ring, body, lock);
-      ng.append(g);
+      (s.ring ? rng_ : ng).append(g);
       R.nodes[id] = { g, s };
     }
     svg.append(ng);
     // Tap: the nearest star within reach (the map is 336px wide on a phone, so stars are about 40px apart).
-    svg.addEventListener('click', e => {
-      const r = svg.getBoundingClientRect(); if (!r.width) return;
-      const k = vw / r.width, x = vx + (e.clientX - r.left) * k, y = vy + (e.clientY - r.top) * (vh / r.height);
+    const onTap = (box, view, ring) => box.addEventListener('click', e => {
+      const r = box.getBoundingClientRect(); if (!r.width) return;
+      const [bx, by, bw, bh] = view, k = bw / r.width, x = bx + (e.clientX - r.left) * k, y = by + (e.clientY - r.top) * (bh / r.height);
       let best = null, bd = 34 * Math.max(1, k * 0.9);
-      for (const id of map.order) { const [sx, sy] = map.stars[id].pos, d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = id; } }
+      for (const id of map.order) { if (!map.stars[id].ring !== !ring) continue; const [sx, sy] = map.stars[id].pos, d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; best = id; } }
       if (best) { sel = best; closePanels(); refresh(true); showCard(); }
     });
-    svg.addEventListener('keydown', e => {
+    const onKey = box => box.addEventListener('keydown', e => {
       const id = e.target && e.target.getAttribute && e.target.getAttribute('data-id');
       if (!id || (e.key !== 'Enter' && e.key !== ' ')) return;
       e.preventDefault();
       if (sel === id) act(id); else { sel = id; refresh(true); showCard(); }
     });
+    onTap(svg, STAR_GEO.view, false); onKey(svg);
+    if (rsvg) { onTap(rsvg, RING_GEO.view, true); onKey(rsvg); }
     R.svg = svg;
     // legend: which arm points where, and how many of its stars are lit
     R.legend = el('div', 'st-legend');
     R.legBits = map.armNames.map((n, a) => { const b = el('span', 'st-leg'); b.append(el('i', 'st-arrow', ['↑', '↘', '↙'][a]), el('b', null, n), el('span', 'st-legn')); R.legend.append(b); return b; });
     const rb = el('span', 'st-leg'); rb.append(el('i', 'st-arrow', '○'), el('b', null, 'Ring'), el('span', 'st-legn')); R.legend.append(rb); R.legBits.push(rb);
     R.mapBox.append(svg, R.legend);
+    if (rsvg) {
+      const eb = el('span', 'st-leg'); eb.append(el('i', 'st-arrow', '✦'), el('b', null, EVO_DEFS[map.evo].name), el('span', 'st-legn')); R.legend.append(eb); R.legBits.push(eb);
+      const box = el('div', 'st-ringbox');
+      box.append(el('h4', 'st-gtitle', `${EVO_DEFS[map.evo].name} ring`),
+        el('p', 'note', 'Opens from star 5 of any arm. Its keystone does not count toward your 2.'), rsvg);
+      R.mapBox.append(box);
+    }
   }
 
   // ---- the list view (built once per class) ----
@@ -38661,6 +40246,7 @@ let openSheet, partySheet;
     group('Hearthstar', ['hearth']);
     map.armNames.forEach((n, a) => group(n, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `a${a}s${k}`)));
     group('Crown ring', ['b0', 'b1', 'b2', 'b3', 'b4', 'crown']);
+    if (map.evo) group(`${EVO_DEFS[map.evo].name} ring`, [1, 2, 3, 4, 5, 6, 7, 8].map(k => `e1s${k}`));
   }
 
   // ---- update ----
@@ -38671,8 +40257,9 @@ let openSheet, partySheet;
     for (const n of [R.mode, R.mapBox, R.card, R.list, R.lock]) if (!cls) putHidden(n, true);
     putDisabled(R.renBtn, !cls); putDisabled(R.resetBtn, !cls);
     if (!cls) { putText(R.title, 'Stars'); putText(R.pts, ''); putText(R.keys, ''); R.chipBtns.forEach(b => putHidden(b, true)); return; }
-    if (builtFor !== cls) { builtFor = cls; sel = null; buildMap(cls); buildList(cls); sig = ''; }
-    const map = starMap(cls), lay = starLayout(), lays = starLayouts(), ai = S.stars.maps[cls] ? S.stars.maps[cls].active : 0;
+    const map = starMap(cls), key = cls + '|' + (map.evo || '');   // S3: the evolution ring rebuilds the map
+    if (builtFor !== key) { builtFor = key; sel = null; buildMap(cls); buildList(cls); sig = ''; }
+    const lay = starLayout(), lays = starLayouts(), ai = S.stars.maps[cls] ? S.stars.maps[cls].active : 0;
     const pts = starPoints(), free = starFree(), keys = starKeysLit(), lock = starLocked();
     if (!sel || !map.stars[sel]) {
       // default: the cheapest star you can light, else the Hearthstar
@@ -38690,6 +40277,7 @@ let openSheet, partySheet;
     putToggle(R.keys, 'full', keys >= STAR_TUNE.keyMax);
     R.chipBtns.forEach((b, i) => { putHidden(b, false); putText(b, lays[i].name); putAttr(b, 'aria-pressed', String(i === ai)); putAttr(b, 'title', 'Hold to rename'); });
     putHidden(R.lock, !lock); if (lock) putText(R.lock, lock + ' Your stars stay as they are until it ends.');
+    putHidden(R.suggest, !(map.evo === 'priest' && !lay.lit.length && free > 0));
     putHidden(R.mode, false);
     R.modeBtns.forEach((b, i) => putAttr(b, 'aria-pressed', String((i === 0) === (UI.mode === 'map'))));
     putHidden(R.mapBox, UI.mode !== 'map'); putHidden(R.card, UI.mode !== 'map'); putHidden(R.list, UI.mode !== 'list');
@@ -38708,9 +40296,9 @@ let openSheet, partySheet;
         const n = R.nodes[id], st = state[id];
         svgClass(n.g, `st-star k-${n.s.kind}${st.lit ? ' lit' : st.open ? ' open' : st.near ? ' near' : ' dim'}${st.keyBlocked ? ' kblock' : ''}${sel === id ? ' sel' : ''}`);
       }
-      const cnt = [0, 0, 0, 0];
-      for (const id of lay.lit) { const s = map.stars[id]; if (s) cnt[s.arm >= 0 ? s.arm : 3]++; }
-      R.legBits.forEach((b, i) => putText(b.lastChild, `${cnt[i]}/${i < 3 ? 8 : 6}`));
+      const cnt = [0, 0, 0, 0, 0];
+      for (const id of lay.lit) { const s = map.stars[id]; if (s) cnt[s.ring ? 4 : s.arm >= 0 ? s.arm : 3]++; }
+      R.legBits.forEach((b, i) => putText(b.lastChild, `${cnt[i]}/${i < 3 || i === 4 ? 8 : 6}`));
       for (const e of R.edges) svgClass(e.ln, 'st-edge' + (litSet.has(e.a) && litSet.has(e.b) ? ' lit' : litSet.has(e.a) || litSet.has(e.b) ? ' half' : ''));
       // detail card
       const s = map.stars[sel], st = state[sel], c = sel === 'hearth' ? null : starCheck(sel);
@@ -39792,8 +41380,8 @@ var classUI;
       'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
     lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',
       'Your Proving opens after the Fenmother.'],
-    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing, Rally Hymn and Lightkeeper stars.',
-      'New Lightkeeper powers come in a later update.']
+    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing and Rally Hymn, and gain Sanctuary, a second ability.',
+      'Your Lightkeeper stars moved into the Lightkeeper ring on the Lanternmage map. Their points are free to spend again.']
   };
 
   const classes = () => (typeof CLASS_DEFS === 'object' && CLASS_DEFS && typeof HERO_CLASSES === 'object') ? CLASS_DEFS : null;
@@ -40011,8 +41599,10 @@ var classUI;
       if (!info) return [];
       const d = CLASS_DEFS[info.base], out = [];
       for (const ps of d.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
+      // S3: the evolution rows, the Proving and the choice are 75-class-ui's
+      if (typeof classEvoUI === 'object' && classEvoUI) out.push(...classEvoUI.rows(info));
       // The evolution: granted (a migrated Warden or Lightkeeper), or the two paths and their gate.
-      if (info.evo) {
+      else if (info.evo) {
         const txt = info.evo === 'priest'
           ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
           : `You play the ${d.name}'s kit for now. The ${info.evoName}'s own powers come in a later update.`;
@@ -40028,7 +41618,7 @@ var classUI;
         if (info.gate.open) r.append(el('p', 'cl-note', 'The Proving comes in a later update.'));
         out.push(r);
       }
-      out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
+      if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
       if (info.migrated && CHANGED[info.from]) {
         const det = el('details', 'cl-changed');
         det.append(el('summary', null, 'What changed'));
@@ -40049,16 +41639,21 @@ var classUI;
       if (!sw || !sw.ok) return null;
       const m = Math.max(1, Math.ceil(sw.left / 60e3));
       const box = el('div', 'cs-mirror cl-switch');
-      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch class for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
+      // S3: once evolved, the free change switches the path (75-class-ui's sheet), not the class
+      const evo = S.cls && S.cls.evo && typeof classEvoUI === 'object' && classEvoUI;
+      const t = el('div'); t.append(el('b', null, 'Free change'), el('small', null, `Changed your mind? Switch ${evo ? 'path' : 'class'} for free. Once only, ${m} more minute${m === 1 ? '' : 's'}.`));
       const b = el('button', 'mini go', 'Switch'); b.type = 'button';
-      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); open('switch'); });
+      b.addEventListener('click', () => { if (typeof partySheet === 'object' && partySheet) partySheet.close(); if (evo) classEvoUI.openRespec(); else open('switch'); });
       box.append(t, b);
       return box;
     },
     sig() {
       const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null, c = S.cls || {};
-      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone].join('/');
+      return [c.base, c.evo, JSON.stringify(c.proven || {}), sw && sw.ok ? Math.ceil(sw.left / 60e3) : 0, S.L >= CLS_TUNE.evoLv, S.maxZone,
+        typeof classEvoUI === 'object' && classEvoUI ? classEvoUI.sig() : ''].join('/');
     },
+    // S3: the Mirror of Embers row (75-class-ui: the respec sheet), or null (the sheet keeps its own)
+    mirrorRow() { return typeof classEvoUI === 'object' && classEvoUI ? classEvoUI.mirrorRow() : null; },
     open
   };
 

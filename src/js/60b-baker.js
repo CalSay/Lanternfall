@@ -363,7 +363,11 @@ const ART = (() => {
     const spec = { cls, gear };
     if (party.skin != null) spec.skin = party.skin;
     if (party.hair != null) spec.hair = party.hair;
-    const acc = typeof lookAcc === 'function' ? lookAcc() : null; if (acc) spec.acc = acc;
+    let acc = typeof lookAcc === 'function' ? lookAcc() : null;
+    // S3: the evolution's lamp colour (classes-2 2.x looks), unless a flame look is worn
+    const ev = typeof evoLamp === 'function' ? evoLamp() : null;
+    if (ev && !(acc && acc.fl)) acc = Object.assign({}, acc || {}, { fl: ev });
+    if (acc) spec.acc = acc;
     return spec;
   }
   // Creation screen: the class in its base look (tier 1 Common weapon, off-hand, head and body).
