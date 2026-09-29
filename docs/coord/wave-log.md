@@ -1003,3 +1003,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   Silas the Fogbound, Circle Crest; Shroud-framed lines; HANDS_FIRST trimmed). Coordinator tweak: the Hollow
   arrival line now reads "One wraith here drowned every light in the marsh." (was "...took the lights, and
   kept them": keeping lights is lamp-keeper framing). check passes.
+- Preview republished (v47: types/statuses, renames, save codes). Follow-up SAVE1b (haiku): the "Download
+  file" button silently does nothing in the claude.ai viewer (no download permission); hide it there or use
+  the downloads capability; it works on Netlify. LAUNCHED S2 (opus): three base classes, migration, star maps.
+  Late-game test save code generated from fixture save-v3-four (zone 38, Coast, four heroes) for the owner.
