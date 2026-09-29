@@ -1162,3 +1162,5 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - HEROART1 merged: hand-drawn Wren/Tobin/Pip on the stage and portrait (+100 KB). Coordinator fixes: HP bar reads the art frame's head; the art's in-flight arrow/bolt skipped (stage projectile only).
 - Rough: old party-era checks test the dormant party build; perf.mjs fails in this container before and after; no gather tool poses; Wren has no kneel/fallen poses.
 - Preview republished (save key preview.r3). UX-C1 (combat screen mock-up, opus) running.
+- Follow-ups (owner): ranged heroes stand further left; action bar slots fill the width (square, capped by height); Wren's bat at her top right; hero HP bar over the drawn head; solo stage zoomed out one step (at least 300 logical px across). Parry-glow check de-flaked. Preview v54.
+- UX-C1 merged: docs/design/mockups/combat-screen.html, published privately at https://claude.ai/artifact/CwSnk2FeSyi35quFfqQxeu. Proposes a left tab rail in landscape and the bar in the bottom-right; 9 owner questions in its notes.
