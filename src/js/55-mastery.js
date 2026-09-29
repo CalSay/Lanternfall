@@ -1,5 +1,5 @@
 // 55-mastery: zone mastery stars and the bestiary. Permanent progress, no DOM.
-// Zone mastery: kills per zone number -> up to 5 stars; +10% gold/dmg per star in that zone,
+// Zone mastery: kills per zone number -> up to 5 stars; +10% dmg and +1% crit damage (ECON-A: was +10% gold) per star in that zone,
 // +1% dmg per star across all zones. Bestiary: kills per monster type -> 4 perk tiers.
 // Counts live kills only (offline/away gains do not emit per-kill events).
 
@@ -10,7 +10,7 @@ const BESTIARY_PERK_VAL = [0.03, 0.06, 0.10, 0.15];
 const BESTIARY_PERKS = {
   slime: { mod: 'essence', label: 'essence drops' },
   bat: { mod: 'crit', label: 'crit chance' },
-  bones: { mod: 'gold', label: 'gold' },
+  bones: { mod: 'keen', label: 'crit damage', val: ECON.crit.bones },   // ECON-A: was +3/6/10/15% gold
   beetle: { mod: 'gatherSpeed', label: 'gather speed' },
   spore: { mod: 'offline', label: 'offline gains' },
   golem: { mod: 'tap', label: 'tap damage' },
@@ -28,7 +28,7 @@ const masteryApi = {};
   const zoneKills = z => S.mastery.zones[z] || 0;
   const typeKills = k => S.mastery.types[k] || 0;
   const totalStars = () => { let s = 0; for (const z in S.mastery.zones) s += starsFor(S.mastery.zones[z]); return s; };
-  const perkBonus = k => { const t = tierFor(typeKills(k)); return t ? BESTIARY_PERK_VAL[t - 1] : 0; };
+  const perkBonus = k => { const t = tierFor(typeKills(k)); return t ? (BESTIARY_PERKS[k].val || BESTIARY_PERK_VAL)[t - 1] : 0; };
 
   Object.assign(masteryApi, { starsFor, tierFor, zoneKills, typeKills, totalStars, perkBonus });
 
@@ -38,7 +38,7 @@ const masteryApi = {};
     m.zones[zone] = (m.zones[zone] || 0) + (mob && mob.boss ? 5 : 1) * (1 + bonus('masteryMult'));
     const za = starsFor(m.zones[zone]);
     if (za > zb) {
-      toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% gold and damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
+      toast(`${zoneName(zone)}: mastery star ${za} of 5. +10% damage and +1% crit damage here.`, 'good', { ic: ['banner', '#F2C14E'] });
     }
     const key = mob && mob.key ? String(mob.key).replace(/\d+$/, '') : null;
     if (!key || !BESTIARY_PERKS[key]) return;
@@ -47,11 +47,14 @@ const masteryApi = {};
     const ta = tierFor(m.types[key]);
     if (ta > tb) {
       const t = TYPES.find(x => x.key === key);
-      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round(BESTIARY_PERK_VAL[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good', null, 'low');
+      toast(`Bestiary: ${fmt(BESTIARY_TIERS[ta - 1])} ${t ? t.name : key} slain. +${Math.round((BESTIARY_PERKS[key].val || BESTIARY_PERK_VAL)[ta - 1] * 100)}% ${BESTIARY_PERKS[key].label}.`, 'good', null, 'low');
     }
   });
 
   addModifier('dmg', () => (1 + 0.1 * starsFor(zoneKills(S.zone))) * (1 + 0.01 * totalStars()));
-  addModifier('gold', () => 1 + 0.1 * starsFor(zoneKills(S.zone)));
-  for (const k in BESTIARY_PERKS) addModifier(BESTIARY_PERKS[k].mod, () => 1 + perkBonus(k));
+  keenSource('mastery', 'Zone mastery stars', () => ECON.crit.star * starsFor(zoneKills(S.zone)));
+  for (const k in BESTIARY_PERKS) {
+    if (BESTIARY_PERKS[k].mod === 'keen') keenSource('bestiary', 'Bestiary: ' + BESTIARY_PERKS[k].label, () => perkBonus(k));
+    else addModifier(BESTIARY_PERKS[k].mod, () => 1 + perkBonus(k));
+  }
 }

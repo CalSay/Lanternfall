@@ -447,7 +447,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   legendInscribe = (id, itemId) => {
     const c = legendCanInscribe(id, itemId); if (!c.ok) return false;
     const it = itemById(itemId), k = c.cost;
-    pearlPay(k.t, k.pearls); S.mats.ess[k.t - 1] -= k.ess; S.gold -= k.gold;
+    pearlPay(k.t, k.pearls); S.mats.ess[k.t - 1] -= k.ess; S.gold -= k.gold; econSpend('craft', k.gold);
     it.lg = id;
     changed(); gearDirty();
     toast(`${itemName(it)} now carries ${P(id).n}.`, 'loot', { item: it }, 'normal');
@@ -537,7 +537,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   });
   addModifier('critDmg', () => setOn('dusk', 2) ? 1 + LEG_SETS.dusk.tiers[2].fx.critDmg * legendScale() : 1);
   addModifier('abilityCd', () => setOn('wayfarers', 2) ? 1 - LEG_SETS.wayfarers.tiers[2].fx.cd * legendScale() : 1);
-  addModifier('gold', () => setOn('hedgefolk', 2) ? 1 + LEG_SETS.hedgefolk.tiers[2].fx.gold : 1);
+  keenSource('set', 'Set: Hearth and Hedge', () => setOn('hedgefolk', 2) ? LEG_SETS.hedgefolk.tiers[2].fx.keen : 0);   // ECON-A: was +10% gold
   addBonus('tune:embersMax', () => { const r = activeRank('wayfarer'); return r ? legendVal('wayfarer', 'embers', r) * members('wayfarers') : 0; });
   addBonus('tune:blessMax', () => { const r = activeRank('hedgelight'); return r ? legendVal('hedgelight', 'bless', r) * members('hedgefolk') : 0; });
   addBonus('lg:cause', () => {

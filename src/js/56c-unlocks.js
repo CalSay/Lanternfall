@@ -184,7 +184,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   };
   const tradeOffer = () => {
     const t = zoneTier(S.maxZone);
-    return { t, n: T.trade.n, gold: Math.ceil(T.trade.goldKills * mobGold(Math.max(1, S.maxZone - 1))) };
+    return { t, n: T.trade.n, gold: foesGold(Math.max(1, S.maxZone - 1), T.trade.goldKills) };   // ECON-A: foes' worth, no gold bonuses
   };
   // Visitor route open: today's visitor, from their zone, not yet hired today.
   const visiting = id => {
@@ -209,7 +209,7 @@ let leads, addRenown, renown, caedmonRenown, tokenChance, unlockTokenRoll, addTo
   buyTrade = () => {
     const o = visitorToday(); if (o.kind !== 'trade' || o.done || S.gold < o.cost.gold) return false;
     if (!stashFits([['ess', o.trade.t, o.trade.n]])) { toast(stashNeed([['ess', o.trade.t, o.trade.n]]), 'raid', { mat: ['ess', o.trade.t] }, 'normal'); return false; }   // H3: a parcel waits
-    S.gold -= o.cost.gold; stashAdd('ess', o.trade.t, o.trade.n, 'parcel'); dayState().bought = true;
+    S.gold -= o.cost.gold; econSpend('other', o.cost.gold); stashAdd('ess', o.trade.t, o.trade.n, 'parcel'); dayState().bought = true;
     toast(`The trader sells you ${o.trade.n} ${ess(o.trade.t)}.`, 'loot', { mat: ['ess', o.trade.t] }, 'normal');
     save();
     return true;

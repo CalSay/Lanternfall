@@ -83,7 +83,7 @@ const UNIQ = {
   golemfist: { name: 'Golemfist', slot: 'weapon', col: '#9C8F7A', src: 'Zone boss · Quarry Ruins', fx: { tap: 2 }, txt: 'Your taps deal double damage.' },
   wispaxe: { name: 'Wisp Axe', slot: 'axe', col: '#9FD8C9', src: 'Zone boss · Wraithmarsh', fx: { woodSpd: 30, woodExtra: 0.2 }, txt: '30% faster chopping, 20% chance of an extra log.' },
   wyrmscale: { name: 'Wyrmscale Helm', slot: 'helm', col: '#C9463E', src: 'World raid · The Ashen Wyrm', fx: { raid: 25 }, txt: '+25% raid damage.' },
-  hollowcrown: { name: 'Crown of Hollows', slot: 'helm', col: '#F2C14E', src: 'World raid · The Hollow King', fx: { gold: 40 }, txt: '+40% gold.' },
+  hollowcrown: { name: 'Crown of Hollows', slot: 'helm', col: '#F2C14E', src: 'World raid · The Hollow King', fx: { gold: 10 }, txt: '+10% gold.' },
   colossuspick: { name: 'Colossus Pick', slot: 'pick', col: '#6E7F4A', src: 'World raid · The Mire Colossus', fx: { gather: 40 }, txt: 'All gathering 40% faster.' },
   hydraglass: { name: 'Hydra Glass', slot: 'charm', col: '#7FD6E0', src: 'World raid · The Glass Hydra', fx: { crit: 10 }, txt: '+10% critical hit chance.' },
   eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { party: 20, might: 30 }, txt: '+30% damage and your party deals 20% more.' },
@@ -109,13 +109,16 @@ const COMPS = [
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
 const HERO_UPS = [
-  { id: 'blade', name: 'Blade', base: 10, r: 1.18, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
-  { id: 'swift', name: 'Swiftness', base: 50, r: 1.6, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
-  { id: 'fortune', name: 'Fortune', base: 100, r: 1.35, ic: ['coin', '#F2C14E'], desc: () => `x${goldMult().toFixed(2)} gold from every kill.` }
+  // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
+  // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.
+  { id: 'blade', name: 'Blade', base: 10, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
+  { id: 'swift', name: 'Swiftness', base: 20, r: 1.25, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
+  { id: 'precision', name: 'Precision', base: 200, r: 1.45, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
 ];
 const RELICS = [
   { id: 'banner', name: 'Warbanner', base: 5, r: 1.6, ic: ['banner', '#E0524F'], desc: () => `+20% damage everywhere per level.` },
-  { id: 'coin', name: 'Lucky Coin', base: 5, r: 1.6, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+25% gold per level.` },
+  // ECON-A: the Lucky Coin (+25% gold a level) became the Loaded Die (S.relic.edge; S.relic.coin stays at 0, unused).
+  { id: 'edge', name: 'Loaded Die', base: 5, r: 1.6, cap: 5, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+${Math.round(100 * ECON.crit.die)}% crit damage per level.` },
   { id: 'heart', name: 'Ember Heart', base: 4, r: 1.5, ic: ['heart', '#FF7A3D'], desc: () => `+30% raid damage per level.` },
   { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `Your party works for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
 ];

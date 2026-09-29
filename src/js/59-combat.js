@@ -126,6 +126,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // BAL2: the Lightkeeper's aura (supports heal 40% more) also makes their Smite 40% stronger, so a
   // party of healers still kills (the attrition line-up of spec 4.13, T12).
   if (typeof addCharModifier === 'function') addCharModifier(id => partyCombatOn() && S.party && S.party.cls === 'lightkeeper' && ROSTER[id] && ROSTER[id].role === 'support' ? 1 + T.lkAura : 1);
+  // ECON-A (economy-2 6.2): the crit damage pool scales every companion's crit multiplier (55-econ keenCharMult).
+  if (typeof addCharModifier === 'function') addCharModifier(keenCharMult);
   // Haste gear (K11): the hero's ability comes back sooner too (capped at -30% in gear()).
   addModifier('abilityCd', () => partyCombatOn() ? 1 - gear().haste / 100 : 1);
 
@@ -340,7 +342,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     refreshUnits(false);
     if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
-      const f = mkFoe(zt, hp, mobHp(z) * 0.05 * goldMult() * 6, Math.ceil(1.5 * z) * 5, z, true, 'Elder ' + TYPES[zt].name, cyc);
+      const f = mkFoe(zt, hp, mobGold(z) * 6, Math.ceil(1.5 * z) * 5, z, true, 'Elder ' + TYPES[zt].name, cyc);
       foes.push(f); lead = f;
       bossStart(f);
     } else {
@@ -481,7 +483,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (typeof onFoeDeath === 'function' && onFoeDeath(f, src, kind)) return;   // 59b: Rattlebones reassemble
     f.over = -f.hp; f.hp = 0; f.dead = 0.001;
     if (!inArena && !f.boss) {
-      const g = f.gold; S.gold += g; S.totalGold += g;
+      const g = f.gold; S.gold += g; S.totalGold += g; econEarn('fight', g);
       if (g > 0) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
     }
     burst(0.68, 0.62, f.pal[1] || f.pal[5] || f.pal[3], 10);
@@ -964,7 +966,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     S.totalKills++;   // a pack counts as one foe (Foes slain, achievements, the Bestiary unlock)
     // the pack pays as one foe: 50-sim killPack does the rest of the old kill()
     const m = lead || last;
-    if (m.boss) { S.gold += m.gold; S.totalGold += m.gold; addFloat('+' + fmt(m.gold) + 'g', '#F2C14E', false, 0.68, 0.3); }
+    if (m.boss) { S.gold += m.gold; S.totalGold += m.gold; econEarn('fight', m.gold); addFloat('+' + fmt(m.gold) + 'g', '#F2C14E', false, 0.68, 0.3); }
     mob = last;
     killPack(m, m.boss ? m.gold : packGold);
   }

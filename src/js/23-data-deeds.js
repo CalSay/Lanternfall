@@ -37,7 +37,7 @@ const DEED_TIERS = [
 const DEED_PTS = { tier: [5, 10, 20, 40], star: 10, grpGold: 25, grpEver: 50, classic: 10, feat: 100, capstone: 250, secret: 15, chStep: 5, chDone: 25 };
 const DEED_BONUS = { gold: 0.005, everflame: 0.005, deepOil: 1 };
 const DEED_CAP = {
-  dmg: 0.05, party: 0.04, tap: 0.01, xp: 0.04, gold: 0.03, essence: 0.01, uniqueChance: 0.01, offline: 0.04,
+  dmg: 0.05, party: 0.04, tap: 0.01, xp: 0.04, keen: 0.03, essence: 0.01, uniqueChance: 0.01, offline: 0.04,
   bountyPay: 0.03, buildTime: 0.03, compXp: 0.04, expHaul: 0.04, raid: 0.03, skillXp: 0.04,
   'skillXp:smith': 0.01, 'skillXp:bench': 0.01, 'skillXp:loom': 0.01, 'skillXp:ench': 0.01,
   gatherSpeed: 0.03, 'gatherSpeed:mine': 0.02, 'gatherSpeed:wood': 0.02, 'gatherSpeed:forage': 0.02, 'gatherSpeed:fish': 0.02,
@@ -45,7 +45,7 @@ const DEED_CAP = {
   deepOil: 8
 };
 const DEED_KEY_TXT = {
-  dmg: 'damage', party: 'party damage', tap: 'tap damage', xp: 'hero XP', gold: 'gold', essence: 'essence chance',
+  dmg: 'damage', party: 'party damage', tap: 'tap damage', xp: 'hero XP', keen: 'crit damage', essence: 'essence chance',
   uniqueChance: 'unique drops', offline: 'away gains', bountyPay: 'bounty rewards', buildTime: 'faster builds',
   compXp: 'companion XP', expHaul: 'expedition haul', raid: 'raid damage', skillXp: 'skill XP',
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
@@ -92,10 +92,10 @@ const DEED_TRACKS = [
   { id: 'crowns', g: 'road', n: 'Crownbreaker', what: 'Elder kinds beaten, and the Great Lantern bosses', need: [3, 7, 15, 22], star: null, bonus: 'xp', src: 'derived', u: ['elder', 'elders'], lock: { 3: 'Opens with the Coast', 4: 'Opens with the Emberwaste' } },
   { id: 'light', g: 'road', n: 'Hours of Light', what: 'Hours played and away', need: [10, 100, 500, 2e3], star: X10, bonus: 'offline', src: 'save', u: ['hour', 'hours'] },
   // ---- 2.3 Wealth and loot ----
-  { id: 'gold', g: 'wealth', n: 'Hoard', what: 'Gold earned, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'gold', src: 'save', more: 'gold' },
+  { id: 'gold', g: 'wealth', n: 'Hoard', what: 'Gold earned, lifetime', need: [1e5, 1e6, 1e7, 1e8], star: X10, bonus: 'keen', src: 'save', more: 'gold' },
   { id: 'essence', g: 'wealth', n: 'Essence Keeper', what: 'Essence gained, all tiers', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'essence', src: 'new', u: ['essence', 'essence'] },
   { id: 'curator', g: 'wealth', n: 'Curator', what: 'Kinds of unique found', need: [3, 7, 10, 13], star: null, bonus: 'uniqueChance', src: 'save', u: ['unique', 'uniques'] },
-  { id: 'trophies', g: 'wealth', n: 'Trophy Case', what: 'Trophies earned', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'gold', src: 'new', u: ['Trophy', 'Trophies'] },
+  { id: 'trophies', g: 'wealth', n: 'Trophy Case', what: 'Trophies earned', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'keen', src: 'new', u: ['Trophy', 'Trophies'] },
   // ---- 2.4 Gathering ----
   { id: 'mine', g: 'gather', n: 'Miner', what: 'Mining level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:mine', src: 'save', kind: 'level', u: ['Mining level', 'Mining levels'] },
   { id: 'wood', g: 'gather', n: 'Woodcutter', what: 'Woodcutting level', need: [14, 30, 112, 200], star: null, bonus: 'gatherSpeed:wood', src: 'save', kind: 'level', u: ['Woodcutting level', 'Woodcutting levels'] },
@@ -129,7 +129,7 @@ const DEED_TRACKS = [
   { id: 'hearth', g: 'camp', n: 'Hearthkeeper', what: 'Hearth level', need: [2, 5, 8, 10], star: null, bonus: 'buildTime', src: 'save', kind: 'level', u: ['Hearth level', 'Hearth levels'] },
   { id: 'builder', g: 'camp', n: 'Builder', what: 'Building levels, all buildings', need: [10, 25, 40, 53], star: null, bonus: 'buildTime', src: 'save', kind: 'level', u: ['building level', 'building levels'] },
   { id: 'store', g: 'camp', n: 'Storehouse', what: 'Storehouse level', need: [2, 4, 6, 8], star: null, bonus: 'buildTime', src: 'save', kind: 'level', wait: 'H3', u: ['Storehouse level', 'Storehouse levels'] },
-  { id: 'stock', g: 'camp', n: 'Well Stocked', what: 'Materials held at once, all cells', need: [1e3, 1e4, 1e5, 2.5e5], star: null, bonus: 'gold', src: 'derived', u: ['material', 'materials'], lock: { 4: 'Opens with the Storehouse' } },
+  { id: 'stock', g: 'camp', n: 'Well Stocked', what: 'Materials held at once, all cells', need: [1e3, 1e4, 1e5, 2.5e5], star: null, bonus: 'keen', src: 'derived', u: ['material', 'materials'], lock: { 4: 'Opens with the Storehouse' } },
   { id: 'hands', g: 'camp', n: 'Many Hands', what: 'Hands hired, lifetime', need: [1, 5, 15, 40], star: null, bonus: 'offline', src: 'save', wait: 'N1', u: ['Hand', 'Hands'] },
   { id: 'handhrs', g: 'camp', n: 'Hard Work', what: 'Hours worked by Hands', need: [10, 100, 1e3, 1e4], star: X10, bonus: 'offline', src: 'save', wait: 'N1', u: ['hour', 'hours'] },
   { id: 'meals', g: 'camp', n: 'Well Fed', what: 'Meals cooked', need: [10, 100, 500, 2e3], star: X10, bonus: 'offline', src: 'new', wait: 'K12', u: ['meal', 'meals'] },
@@ -196,7 +196,7 @@ const DEED_FEATS = [
   { id: 'f_stamps', n: 'Every Week Counts', needs: '52 Almanac Stamps (any weeks)', about: 'a year or more', rar: 'legendary', title: 'Omenwise', look: 'cr_moth' },
   { id: 'f_parry', n: 'The Unmoved', needs: '25,000 parries', about: 'months of active play', rar: 'epic', title: 'the Unmoved', look: 'a_steel' },
   { id: 'f_hit', n: 'Thunderclap', needs: 'One hit of 2T damage', about: 'late Region 2 build', rar: 'epic', title: 'Thunderhand', look: 'fl_storm', need: 2e12 },
-  { id: 'f_gold', n: "Dragon's Hoard", needs: '1Sp gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 1e24 },
+  { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
   { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox' },

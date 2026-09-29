@@ -68,7 +68,7 @@ const LEG_TUNE = {
 };
 
 const LEG_COST = {
-  inscribe: { pearls: rank => 2 + 2 * rank, ess: 5, goldFoes: 100 },   // Pearls and Essence of the item's tier; foesGold(S.maxZone, 100)
+  inscribe: { pearls: rank => 2 + 2 * rank, ess: 5, goldFoes: 200 },   // Pearls and Essence of the item's tier; foesGold(S.maxZone, 200) (ECON-A, was 100)
   mark: { sigil: 1, pearls: 2 },                                       // 1 Sigil of the circle + 2 Pearls of the item's tier
   learn: {}                                                            // free (the item's normal salvage comes back)
 };
@@ -271,7 +271,7 @@ function legendP(id, r) { const p = LEG_POWERS[id]; return p ? p.p1 + (p.p5 - p.
 // tiers of a set add up to the spec's "6-piece sets about +12-18%"). fx: the numbers L2 / L3 read.
 const LEG_SETS = {
   hedgefolk: { circle: 'hedgefolk', i: 0, n: 'Hearth and Hedge', tiers: {
-    2: { txt: '+10% gold. Common Cause is 10% stronger.', p: 0.03, fx: { gold: 0.10, cause: 0.10 } },
+    2: { txt: '+5% crit damage. Common Cause is 10% stronger.', p: 0.03, fx: { keen: 0.05, cause: 0.10 } },   // ECON-A (keen: the crit damage pool): was +10% gold
     4: { txt: 'Hedgefolk companions attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
     6: { n: 'Common Courage', txt: 'Common companions you field get x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
   oath: { circle: 'oath', i: 1, n: 'The Old Oath', tiers: {

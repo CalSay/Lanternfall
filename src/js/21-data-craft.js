@@ -191,7 +191,7 @@ const CRAFT_KINDS = {
   mitre: { noun: 'Mitre', pos: 'helm', st: 'loom', rec: { fibre: 4, herb: 2, crystal: 1 }, pre: 'fibre', base: [['hp', 0.5]], role: 'support', cls: 'lightkeeper' },
   vestments: { noun: 'Vestments', pos: 'body', st: 'loom', rec: { fibre: 7, herb: 2, ess: 2 }, pre: 'fibre', base: [['hp', 1]], role: 'support', cls: 'lightkeeper' },
   trinket: { noun: 'Trinket', comp: 'trk', st: 'ench', rec: { crystal: 2, herb: 2, ess: 2 }, pre: 'crystal', base: [['hp', 0.6], ['haste', 0.05, 25]], role: 'any' },
-  charm: { noun: 'Charm', pos: 'charm', st: 'ench', rec: RECIPE.charm, pre: 'ess', base: [['gold', 0.8], ['ess', 0.3]], ic: 'charm' },
+  charm: { noun: 'Charm', pos: 'charm', st: 'ench', rec: RECIPE.charm, pre: 'ess', base: [['gold', 0.04], ['ess', 0.3]], ic: 'charm' },   // ECON-A: gold 0.04 x p (= ECON.charmGold; was 0.8), gear gold capped +30%
   // Tools (H2, hearth-and-hands.md 2): all at the Workbench, gated on max(Woodcraft, Smithing)
   // (55-crafting stationLevel). Lines: speed, double yield, rare find (per-line caps 60 and 8).
   pick: { noun: 'Pickaxe', pos: 'pick', st: 'bench', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60], ['oreFind', 0.012, 8]], tool: true, ic: 'pick' },
@@ -272,7 +272,8 @@ function craftAffixValue(id, p, q) {
 const CRAFT_REFORGE = { ess: 3, gold: 30, grow: 1.5 };
 function craftReforgeCost(t, n = 0) {
   const g = Math.pow(CRAFT_REFORGE.grow, n);
-  return { mats: { ess: Math.ceil(craftScale(CRAFT_REFORGE.ess, t) * g) }, gold: Math.round(CRAFT_REFORGE.gold * Math.pow(5, t) * g) };
+  // ECON-A (economy-2 3.4): gold is 15 foes of the grade's first zone x 1.5^n (econReforgeGold); was 30 x 5^t x 1.5^n.
+  return { mats: { ess: Math.ceil(craftScale(CRAFT_REFORGE.ess, t) * g) }, gold: econReforgeGold(t, n) };
 }
 
 // ================= trophies =================

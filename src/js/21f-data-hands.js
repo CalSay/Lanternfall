@@ -24,7 +24,7 @@ const HANDS_TUNE = {
   perLv: 0.0025,                       // +0.25% share per level above 1 (Common Lv 20: 14.75%, Legendary Lv 20: 24.75%)
   shiftH: [2, 3, 4, 6, 8],             // shift length in hours before levels and traits
   traits: [1, 1, 2, 2, 2],             // traits by rarity (Legendaries also have a calling)
-  hireFoes: [100, 250, 600, 1500, 4000],       // hire price: foesGold(S.maxZone, k)
+  hireFoes: [100, 250, 600, 1500, 4000],       // unused since ECON-A: the hire fee is ECON.hireFoes x the region's base (econHireFee)
   arriveH: 8, arriveFastH: 6, fastTavern: 3,  // one applicant every 8 h (6 h from Tavern Lv 3), wall clock
   maxWait: 3,                          // applicants waiting at most
   beds: [0, 1, 2, 3, 4, 5],            // beds by Bunkhouse level (57-camp CAMP_B.bunk; owner: Hands live at camp)

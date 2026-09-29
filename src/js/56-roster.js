@@ -137,7 +137,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     gapMax: 4,
     xpSecs: 5.5, xpWorthMax: 8,          // (BAL1 5, BAL2 5.5) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
     commonXp: 1.5, offlineXp: 1,         // Commons earn +50% XP (a rarity trait, not a catch-up); (BAL1) offlineXp was 0.75
-    promoGold: 60, promoEss: 10,         // (BAL1) gold = promoGold x (rank + 1) foes of your max zone (was promoGold x mobGold(cap / 3): levels no longer track zones)
+    promoGold: 300, promoEss: 10,        // (ECON-A 300, BAL1 60) gold = promoGold x (rank + 1) foes of your max zone (ECON.promoFoes; about 1 h a rank)
     commonPromo: 0.5, maxRank: 7,
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:
@@ -166,8 +166,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   rosterList = () => ROSTER_KEYS.filter(isRecruited);
 
   // ---------------- levels ----------------
-  // Gold worth k normal foes of zone z (before gold bonuses), rounded up to 2 significant digits.
-  foesGold = (z, k) => { if (!(k > 0)) return 0; const x = k * 0.05 * mobHp(z), m = Math.pow(10, Math.max(0, Math.floor(Math.log10(x)) - 1)); return Math.ceil(x / m) * m; };
+  // Gold worth k normal foes of zone z (before gold bonuses), rounded to 2 significant digits.
+  // ECON-A (economy-2 2.1): on the region-stepped curve (foeGoldBase); was k x 0.05 x mobHp(z), rounded up.
+  foesGold = (z, k) => k > 0 ? econSig(k * foeGoldBase(z)) : 0;
   levelCap = rank => 25 * (rank + 1);
   // Drills passed by level lv (every stepEvery levels, not counting the promotion levels).
   drillsAt = lv => Math.floor(lv / T.stepEvery) - Math.floor(lv / 25);
@@ -394,8 +395,8 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // so a player past zone 6 can still pay a Dim Essence cost.
   const essHave = t => { let n = 0; for (let i = t - 1; i < 5; i++) n += S.mats.ess[i]; return n; };
   const affordable = c => S.gold >= c.gold && (!c.ess || essHave(c.ess[0]) >= c.ess[1]);
-  const pay = c => {
-    S.gold -= c.gold;
+  const pay = (c, cat) => {
+    S.gold -= c.gold; econSpend(cat || 'recruit', c.gold);
     if (!c.ess) return;
     let left = c.ess[1];
     for (let i = c.ess[0] - 1; i < 5 && left > 0; i++) { const n = Math.min(left, S.mats.ess[i]); S.mats.ess[i] -= n; left -= n; }
@@ -452,7 +453,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   promoteChar = id => {
     if (!canPromote(id)) return false;
     const r = charRec(id);
-    pay(promoteCost(id));
+    pay(promoteCost(id), 'recruit');
     r.rank++;
     toast(`${R(id).name} is promoted. Damage ${rankXTxt()}, level cap ${levelCap(r.rank)}.`, 'good', null, 'high');
     emit('promote', { id, rank: r.rank });

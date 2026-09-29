@@ -45,6 +45,8 @@ All JS files share one scope: top-level `const`/`function` in one file is visibl
 | 55-lantern.js | core | the Great Lantern moments (region-2.md 8, task R0): a region boss's first kill emits `greatLantern` once per save (a save already past it gets one bell line instead); `lanternSync()`, `lanternRoad()`; state `S.lantern` (`lit` = time relit per region). UI: 75-lantern-ui.js (the full-screen card, the Lantern Road strip on the Camp view and its sheet) |
 | 55-story.js | core | the story (lore.md 9-10, LORE3): arrival lines on the first fight in each place, story beats at their zones (`at`) or by call, elder intro and fall lines once per type (the Hollow's zone 35 boss is the Listener, named from `REGIONS[i].boss.name` on `spawn`), bestiary lines for the Codex; old saves file what is behind them quietly (one "Catch up on the story" entry in the Codex). API for the Coast tasks: `storyBeat(id, { quiet })` -> 'card' \| 'quiet' \| false; also `storyList()`, `storyRead(id)`, `storyUnread()`, `storyLate()`, `storySay(map)`, `storyElderKey(z)`, `storyBestiary(key, got)`; state `S.story`. Words: 21h-lore-hollow.js, 21b-stories-coast.js. UI: 75-story-ui.js (stage captions and the story chip, the beat card sheet, `storyUI.codexRow()` on the Codex home) |
 | 55-pace.js | core | idle income never stalls (BAL1): with auto-progress on, a zone whose foe takes > `PACE.farmSecs` drops to `farmableZone()` (one toast) and climbs back later; `paceCheck()`; state `S.pace.fell` |
+| 21w-data-econ.js | core (data) | Economy 2.0 (economy-2.md, ECON-A): `ECON` (the gold curve `base`/`inc`, hour rows for the Hearth, building rows, Shrine, Storehouse, Balefire, Tents, hire and shift fee tables, upgrade/reforge/Sigil/inscribe foes, trade weights, the gear gold cap, crit damage sources and cap, ledger categories) and the pure curve: `foeGoldBase(z)`, `econH(z)` (an hour of normal income), `econHours(h, z)`, `econSig(x)` (2 significant digits), `econRegion(z)`, `econGradeZ(g)`. BAL-E tunes numbers here only |
+| 55-econ.js | core | Economy 2.0 core: prices (`econHearthGold`, `econRowGold`, `econShrineGold`, `econStoreGold`, `econTentGold`, `econBalefireGold`, `econHireFee(rar, z)`, `econShiftFee(grade, lv)`, `econUpgradeGold`, `econReforgeGold`), `gearGold()` (gear gold capped +30%; `goldMult` reads it), the crit damage pool (`keenSource(id, name, fn)`, `keenSources()`, `keenRaw()`, `keen()` capped at +40%, `keenMult()`, `keenCharMult(id)`; player-facing name "crit damage"), the ledger `S.econ` (`econSpend(cat, n)`, `econEarn(cat, n)`, `econLedger()`) |
 | 55-crafting.js | core | crafting actions (K6): `craftItem`/`canCraft`, `upgradeItem` (Trophy gate +8..+10), `reforgeItem`, `transmute`, `equipChar`/`unequipChar` (one wearer per item), class-change unequip, Star Chart, Tonics; state in `S.craft` |
 | 55-gathering.js | core | gathering for every family (K5): Foraging catch-up, home ground (`yield:<fam>`), signature fight drops, champions and Trophies, the Glint, offline drops; `homeFamily`, `homeBonus`, `sigDropChance`, `awaySigDrops`, `champChance`, `addTrophy`, `glint`, `whereToGet`, `GATHER_KINDS` |
 | 55-tools.js | core | tools as items and tool mastery (hearth-and-hands.md 2, H2): rough tool = empty slot (tier 0), right tool (`toolRight(skill, t)`, read by `nodeTime`), rare finds (`toolFind`, on `harvest`), mastery per tool kind (`toolMastery`, `toolMasteryAdd`, `toolPerks`, `toolHandsMult`), `equippedTool(skill)` -> `{ kind, tier, item }`, `toolLook`, `toolName`, `toolBest(skill)` (sim policy), knobs `TOOL_TUNE` (`on: 0` = old rules, sim `--tools 0`); state `S.tools`. UI: 75-tools-ui.js (the Gather card, the item sheet's Mastery box) |
@@ -110,7 +112,7 @@ registerState('bounty', { count: 0, claimed: {} });
 ```js
 addModifier(key, fn) -> remove()   // fn() returns a multiplier; mod(key) = product of all, 1 if none
 ```
-Keys used by formulas: `dmg`, `gold`, `xp`, `skillXp`, `gatherSpeed` (higher = faster),
+Keys used by formulas: `dmg`, `gold` (ECON-A: only the Gold Rain Omen; other gold-gain is crit damage through `keenSource`, 55-econ), `xp`, `skillXp`, `gatherSpeed` (higher = faster),
 `offline`, `essence`, `crit`, `critDmg`, `tap`, `party`, `raid`, `compXp` (companion XP).
 ```js
 addModifier('gold', () => 1 + 0.05 * S.bounty.count);
@@ -336,7 +338,8 @@ Party combat payloads (`packSpawn` to `telegraphResolve`) are reused objects: co
 
 ## Save
 
-Key `lanternfall.save.v1`, `S.v = 2`. Never rename or repurpose a field; add fields with
+Key `lanternfall.save.v2`, `S.v = 3` (ECON-A, economy-2.md 9: a v1 save is never read and never touched; a new game starts). The fixtures in `tests/fixtures/` are old-scale saves that the tools load under the v2 key to keep the load paths checked.
+`S.econ` (55-econ): `{ v, spent: { shift, hire, tent, camp, up, craft, recruit, other }, earned: { fight, away, bounty, trade, other } }`; `S.precision` (0-15); `S.relic.edge` (the Loaded Die, 0-5). `S.fortune` and `S.relic.coin` stay at 0, unused. Never rename or repurpose a field; add fields with
 `registerState` (or in `fresh()` for shared-core changes). `tests/fixtures/save-v2.json` must
 keep loading without loss, and so must every fixture in `tests/fixtures/` (`save-v3-four.json`: a
 chosen class and a full old field of 3 with gear, for the F1 party-of-three migration). `S.tab` is the open menu's tab, or `''` on the game view (portrait).
@@ -363,6 +366,7 @@ node tools/sim.mjs --days 20 --class ranger --evo trapper   # S3: evolve as soon
 node tools/sim.mjs --targets                          # PASS/FAIL for T1-T18, D1, P1-P4 (docs/design/pacing.md, party-and-classes.md 9) and the recruit table; retune with --pace/--tune/--unlock/--combat/--enemy k=v
 node tools/sim.mjs --class warden --lineup hesketh,wren,pip --t5 1 --t6 1 --t8 1   # a fixed line-up; party combat forks at 2h (T5 wipes, T6 hold zones, T8 offline vs live)
 node tools/sim.mjs --report skills [--days 30]  # GP1: time to each gathering tier (focused, hours) and the day each skill opens each tier in normal play
+node tools/sim.mjs --report econ [--days 45] [--class warden]   # ECON-A: EC1-EC13 over the three profiles (--profile idle|normal|active on any --days run; --upshare 0.35 the Blade budget)
 node tools/sim.mjs --report hands [--days 35]   # N1: HS9-HS12, HS17, units per family by source, hires by rarity (--hands 0 turns Hands off anywhere)
 node tools/perf.mjs --quick                  # frame, load, tap and memory benchmark vs the budget (docs/design/perf.md)
 node tools/serve.mjs [port]                  # serve dist/ at http://localhost:5173 (launch config "lanternfall")

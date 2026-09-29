@@ -8,7 +8,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadCore, memoryStorage } from './lib/core.mjs';
 
-const KEY = 'lanternfall.save.v1';
+// ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
+// load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
+const KEY = 'lanternfall.save.v2';
 
 export function saveCodeFor(json) {
   const g = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: json }) });

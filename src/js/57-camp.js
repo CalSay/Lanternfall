@@ -48,7 +48,7 @@
 
 const CAMP_TUNE = {
   openZone: 5,              // camp opens at this max zone (Hearth 1 is free)
-  goldPerLv: 60,            // (BAL1, was 600) building gold = goldPerLv x L foes' worth at the gate zone
+  goldPerLv: 60,            // (unused since ECON-A: building gold is ECON.rowH hours of income at the gate zone, 55-econ econRowGold)
   mult: [0.6, 1.5, 2, 3, 4], // material multiplier by row (building level); (BAL1) row 1 was 1: the first build lands in the first 10-20 min
   troph: [0, 0, 0, 1, 2],   // trophies by row
   secs: [180, 3600, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row
@@ -60,7 +60,8 @@ const CAMP_TUNE = {
 const CAMP_HZ = [5, 10, 14, 18, 22, 27, 32, 38, 46, 55];
 const CAMP_HREQ = [1, 2, 4, 6, 8];
 const CAMP_SHRINE_HREQ = [4, 6, 8];
-// Hearth rows 2..10: gold in foes' worth at the gate zone, mats [family, tier, n], trophies, timer.
+// Hearth rows 2..10: mats [family, tier, n], trophies, timer. k (foes' worth, before ECON-A) is unused: the gold is
+// ECON.hearthH hours of income at the gate zone (55-econ econHearthGold).
 const CAMP_HEARTH = [
   null, null,
   { k: 1500, mats: [['wood', 1, 120], ['ore', 1, 100], ['ess', 1, 30]], troph: 0, secs: 2 * 3600 },
@@ -101,7 +102,8 @@ const CAMP_IDS = Object.keys(CAMP_B);
 // Blessings (the Shrine). page: the Codex page that unlocks it (codex.md). v: base strength.
 const CAMP_BLESS = {
   blade: { n: 'Blade', page: 'Bestiary', v: 0.08, fx: v => `+${pc(v)} damage` },
-  coin: { n: 'Coin', page: 'Zones', v: 0.12, fx: v => `+${pc(v)} gold` },
+  // ECON-A: the Coin Blessing (+12% gold) became Edge (crit damage, into the capped pool).
+  edge: { n: 'Edge', page: 'Zones', v: 0.06, fx: v => `+${pc(v)} crit damage` },
   hunt: { n: 'Hunt', page: 'Uniques', v: 0.15, fx: v => `+${pc(v)} damage to zone bosses` },
   anvil: { n: 'Anvil', page: 'Armoury', v: 0.15, fx: v => `+${pc(v)} crafting XP` },
   kin: { n: 'Kin', page: 'Companions', v: 0.15, fx: v => `+${pc(v)} companion XP` },
@@ -160,7 +162,8 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     return Math.max(CAMP_HREQ[to - 1] || 99, B(id).opens || 1);
   };
   const row = (id, to) => id === 'shrine' ? to + 2 : to;   // cost row 1..5 (the Shrine uses rows 3-5)
-  const campGold = (z, k) => Math.ceil(k * mobHp(z) * 0.05);
+  // ECON-A: a price in hours of income at zone z (Storehouse rows; 55-store calls it with its hours).
+  const campGold = (z, h) => econHours(h, z);
 
   // ---------------- costs ----------------
   // cost: { gold, mats: [[family, tier, n]], troph: [[typeIndex, n]] }, after the source fallbacks.
@@ -176,7 +179,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     const d = B(id); if (!d || to < 1 || to > d.max) return null;
     if (id === 'hearth') {
       const h = CAMP_HEARTH[to]; if (!h) return { gold: 0, mats: [], troph: [], secs: 0 };
-      const c = liveCost(campGold(CAMP_HZ[to - 1], h.k), h.mats, 5, h.troph, Math.min(5, Math.max(1, ...h.mats.map(m => m[1]))));
+      const c = liveCost(econHearthGold(to), h.mats, 5, h.troph, Math.min(5, Math.max(1, ...h.mats.map(m => m[1]))));
       c.troph = c.troph.length ? [['any', h.troph]] : [];
       c.secs = h.secs;
       return c;
@@ -187,7 +190,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     if (d.cost) return d.cost(to, campGold);
     const r = row(id, to), zRef = CAMP_HZ[Math.min(9, hearthNeed(id, to)) - 1];
     const mats = Object.entries(d.fam).map(([f, m]) => [f, r, Math.ceil(m * T.mult[r - 1])]);
-    const c = liveCost(campGold(zRef, T.goldPerLv * to), mats, d.tro, T.troph[r - 1], r);
+    const c = liveCost(id === 'shrine' ? econShrineGold(to) : econRowGold(to, zRef), mats, d.tro, T.troph[r - 1], r);
     c.secs = id === 'shrine' ? T.shrineSecs[to - 1] : T.secs[r - 1];
     return c;
   };
@@ -204,7 +207,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     return out;
   };
   const pay = (c, sign) => {
-    S.gold -= sign * c.gold;
+    S.gold -= sign * c.gold; econSpend('camp', sign * c.gold);
     for (const [f, t, n] of c.mats) if (sign < 0) stashAdd(f, t, n, 'gift'); else S.mats[f][t - 1] -= n;   // refunds always land (H3)
     // Trophies of "any" type: take from the biggest pile first; refunds go to the first type paid.
     for (const [i, n] of c.troph) {
@@ -467,7 +470,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   };
   const bossNow = () => target() === 'mob' && !!mob && !!mob.boss;
   addModifier('dmg', () => 1 + bv('blade') + (bossNow() ? bv('hunt') : 0));
-  addModifier('gold', () => 1 + bv('coin'));
+  keenSource('edge', 'Blessing: Edge', () => bv('edge'));
   for (const k of ['smith', 'bench', 'loom', 'ench']) addModifier('skillXp:' + k, () => 1 + bv('anvil'));
   addModifier('compXp', () => 1 + bv('kin'));
   addModifier('offline', () => 1 + bv('road'));

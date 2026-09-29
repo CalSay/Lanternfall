@@ -13,7 +13,7 @@
 //   - Beds (data-driven, HANDS_TUNE.beds by Bunkhouse level): 1-5, +1 at Hearth 8, 6 at most; later
 //     systems add beds with addBonus('handBeds', fn) and raise the cap with addBonus('handBedsMax', fn)
 //     (a late-game rise; K13's refining Hands). No upkeep. Hire price
-//     foesGold(S.maxZone, HANDS_TUNE.hireFoes[rarity]).
+//     econHireFee(rarity) (55-econ, ECON-A; was foesGold(S.maxZone, HANDS_TUNE.hireFoes[rarity])).
 //   - A shift: a Hand and an open node. At send the length, the rate (units an hour) and a seed are
 //     fixed and stored in the Hand's job, like an expedition, so reload and offline pay the same.
 //     Rate = the hero's live rate at that node (skill, tool, mastery, gear; NO Tonic, Omen, meal,
@@ -302,7 +302,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   addModifier('offline', () => handsCampTrait('story') ? 1 + T.story : 1);
 
   // ---------------- applicants ----------------
-  handsHireCost = app => app && app.free ? 0 : Math.max(1, typeof foesGold === 'function' ? foesGold(Math.max(1, S.maxZone), T.hireFoes[rIdx(app && app.r)]) : 100);
+  // ECON-A (economy-2 4.1): the hire fee by rarity at the region you have reached (econHireFee); was foesGold(S.maxZone, hireFoes[r]).
+  handsHireCost = app => app && app.free ? 0 : Math.max(1, econHireFee(rIdx(app && app.r)));
   const usedNames = () => new Set(H().list.map(x => x.n).concat(H().board.apps.map(x => x.n)));
   const usedKeys = () => new Set(H().list.map(x => x.key).concat(H().board.apps.map(x => x.key)).filter(Boolean));
   function rollRarity() {
@@ -358,7 +359,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     if (!app || !handsOpen() || !handsFree()) return null;
     const cost = handsHireCost(app);
     if (S.gold < cost) return null;
-    S.gold -= cost;
+    S.gold -= cost; econSpend('hire', cost);
     const wasFull = h.board.apps.length >= T.maxWait;
     h.board.apps.splice(i, 1); freed(wasFull);
     const x = newHand(app, now());

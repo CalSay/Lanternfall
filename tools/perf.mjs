@@ -25,7 +25,7 @@ const args = process.argv.slice(2);
 const QUICK = args.includes('--quick');
 const argVal = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const ONLY = argVal('--only'), ONLY_SAVE = argVal('--save'), JSON_OUT = argVal('--json'), TRACE = argVal('--trace'), HTML = argVal('--html');
-const KEY = 'lanternfall.save.v1';
+const KEY = 'lanternfall.save.v2';   // ECON-A: the save key moved to v2
 
 // ---------------- budget (keep in sync with docs/design/perf.md) ----------------
 // Times are for this harness: headless Chromium, software canvas, phone CPU slowed x4.
@@ -233,11 +233,11 @@ async function runScenario(browser, base, { dev, save }) {
   // ---- tap to response on the first hero upgrade ----
   await page.evaluate(() => {
     const T = window.__tap = { list: [], cur: null };
-    addEventListener('pointerdown', e => { T.cur = { down: e.timeStamp, before: JSON.stringify([window.__lf.S().blade, window.__lf.S().swift, window.__lf.S().fortune]) }; }, true);
+    addEventListener('pointerdown', e => { T.cur = { down: e.timeStamp, before: JSON.stringify([window.__lf.S().blade, window.__lf.S().swift, window.__lf.S().precision]) }; }, true);
     addEventListener('click', e => {
       const c = T.cur; if (!c) return; c.handled = performance.now();
       c.onBtn = !!(e.target.closest && e.target.closest('#heroRows .buy'));
-      c.changed = JSON.stringify([window.__lf.S().blade, window.__lf.S().swift, window.__lf.S().fortune]) !== c.before;
+      c.changed = JSON.stringify([window.__lf.S().blade, window.__lf.S().swift, window.__lf.S().precision]) !== c.before;
       requestAnimationFrame(() => setTimeout(() => { c.painted = performance.now(); T.list.push(c); }, 0));
       T.cur = null;
     });

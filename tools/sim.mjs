@@ -86,11 +86,24 @@ const hours = +(args.hours || 2), seed = +(args.seed || 1), every = +(args.every
 if (!['fight', 'mixed'].includes(policy)) { console.error('--policy must be fight or mixed'); process.exit(1); }
 const cls = args.class || null, active = !!args.active && args.active !== '0';
 const rosterPolicy = (args.roster || 'auto') !== 'off', doT11 = args.t11 !== '0';
+// ECON-A (economy-2 8.1): --profile idle|normal|active sets the check-ins, the session length and the away
+// activity (normal: the morning gap gathers, the rest fight; idle and active fight every gap). --checkins,
+// --session and --first still win when given. The crew policy (send every gatherer at each check-in) is
+// handsStep's; shift fees are charged once N3a builds them.
+const PROFILES = {
+  idle: { checkins: '8,20', session: 10, first: 60, gatherGap: false },
+  normal: { checkins: '8,13,19', session: 15, first: 60, gatherGap: true },
+  active: { checkins: '8,10,12,14,17,20,22', session: 30, first: 60, gatherGap: false }
+};
+const profile = args.profile ? PROFILES[args.profile] : null;
+if (args.profile && !profile) { console.error('--profile must be idle, normal or active'); process.exit(1); }
+if (profile) for (const k of ['checkins', 'session', 'first']) if (args[k] === undefined) args[k] = String(profile[k]);
 
 if (args.targets) { await runTargets(); process.exit(0); }
 if (args.report === 'skills') { await runSkillsReport(); process.exit(0); }
 if (args.report === 'deeds') { await runDeedsReport(); process.exit(0); }
 if (args.report === 'hands') { await runHandsReport(); process.exit(0); }
+if (args.report === 'econ') { await runEconReport(); process.exit(0); }
 const g = loadCore({ seed });
 const { fn } = g, E = s => g.eval(s);
 Object.assign(fn, g.eval('({ craftItem, canCraft })'));   // 55-crafting.js (K6)
@@ -104,7 +117,7 @@ if (!args['from-save']) E('S.bounties.slots = []; BOUNTY_API.refresh()');
 if (args['from-save']) {
   // Start from a real save file (e.g. tests/fixtures/save-mid-v2.json) instead of a fresh game.
   const fs = await import('node:fs');
-  g.storage.set('lanternfall.save.v1', fs.readFileSync(args['from-save'], 'utf8'));
+  g.storage.set('lanternfall.save.v2', fs.readFileSync(args['from-save'], 'utf8'));
   E('loadSave(); gearDirty(); spawn()');
 }
 E('S.amt = "1"');
@@ -251,21 +264,26 @@ const fieldLineup = h => h.eval(`(() => { const ids = ${JSON.stringify(lineup)},
 })()`);
 if (lineup) fieldLineup(g);
 
-// Best value = most dps gained per gold (Fortune valued by its gold share of dps, roughly).
+// Best value = most dps gained per gold (Precision's crit damage shows up in totalDps).
+// ECON-A (economy-2 8.1): the Lanternbearer's upgrades (Blade, Swiftness, Precision) take at most --upshare of
+// the gold earned (default 0.35; --upseed N adds N gold to that budget);
+// the rest waits for camp builds, hires, recruits and crafting. --upshare 1 spends everything (the old policy).
+const upShare = args.upshare !== undefined ? +args.upshare : 0.35, upSeed = args.upseed !== undefined ? +args.upseed : 0;
+const upBudget = () => upShare >= 1 ? Infinity : upSeed + upShare * E('S.totalGold') - E('S.econ ? S.econ.spent.up : 0');
 function buyBest() {
   for (let guard = 0; guard < 500; guard++) {
-    const base = fn.totalDps();
+    const base = fn.totalDps(), budget = upBudget();
     const opts = [];
     const tryOpt = (label, apply) => {
       const snap = E('JSON.stringify(S)');
       const gold0 = E('S.gold');
       if (!apply()) return;
       const cost = gold0 - E('S.gold');
-      const gain = label === 'fortune' ? base * 0.1 / E('1 + 0.1 * (S.fortune - 1)') : fn.totalDps() - base;
+      const gain = fn.totalDps() - base;
       E(`S = JSON.parse(${JSON.stringify(snap)}); gearDirty()`);
-      if (cost > 0) opts.push({ label, apply, v: gain / cost });
+      if (cost > 0 && cost <= budget) opts.push({ label, apply, v: gain / cost });
     };
-    for (const id of ['blade', 'swift', 'fortune']) tryOpt(id, () => fn.buyHero(id, '1'));
+    for (const id of E('HERO_UPS.map(u => u.id)')) tryOpt(id, () => fn.buyHero(id, '1'));
     if (!E('rosterLive()')) for (let i = 0; i < 7; i++) tryOpt('c' + i, () => fn.hireComp(i, '1'));
     if (!opts.length) return;
     opts.sort((a, b) => b.v - a.v);
@@ -711,7 +729,7 @@ for (let sec = 0; sec < total; sec++) {
   if (sec === 7200 && (args.t5 || args.t6 || args.t8)) t2Snap = E('JSON.stringify(S)');
   // --snap MIN:path writes the save at that minute (debugging).
   if (args.snap && sec === Math.round(parseFloat(String(args.snap).split(':')[0]) * 60)) (await import('node:fs')).writeFileSync(String(args.snap).split(':')[1], E('JSON.stringify(S)'));
-  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("[S.blade, S.swift, S.fortune, S.L].join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
+  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("[S.blade, S.swift, S.precision, S.L].join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
   playSecond(sec);
 }
 line(total);
@@ -722,7 +740,7 @@ line(total);
 if (t11Snap) {
   const h = loadCore({ seed: seed + 11 });
   if (args.tune) for (const kv of String(args.tune).split(',')) { const [k, v] = kv.split('='); h.eval(`ROSTER_TUNE[${JSON.stringify(k)}] = ${+v}`); }
-  h.storage.set('lanternfall.save.v1', t11Snap);
+  h.storage.set('lanternfall.save.v2', t11Snap);
   h.eval('loadSave(); gearDirty(); spawn(); S.auto = false');
   const newId = h.eval("ROSTER_KEYS.find(k => !isRecruited(k) && ROSTER[k].role !== 'tank' && ROSTER[k].role !== 'support')");
   h.eval(`unlockChar(${JSON.stringify(newId)}, 'test', true); S.party.autoField = false; const f = S.party.field.slice(); fieldChar(${JSON.stringify(newId)}, f[f.length - 1])`);
@@ -783,7 +801,7 @@ if (E('partyCombatOn()')) {
   const st = E('CB_STATS'), ft = Object.values(firstTry), z5 = reached[5];
   const pct = x => (100 * x).toFixed(0) + '%';
   console.log(`combat: wipes ${wipeAt.length} (${(wipeAt.length / (total / 3600)).toFixed(2)}/h), before zone 5 ${wipeAt.filter(x => z5 === undefined || x < z5).length} | toZone5=${z5 !== undefined ? (z5 / 60).toFixed(1) + 'm' : '-'} | T13 tank share ${pct(st.tankSecs / Math.max(1e-9, st.enemySecs))} | T14 companion damage ${pct(st.compDmg / Math.max(1e-9, st.compDmg + st.heroDmg))} | T7 first boss tries ${ft.filter(x => x).length}/${ft.length} (${pct(ft.filter(x => x).length / Math.max(1, ft.length))}) | kos ${st.kos} telegraphs ${st.tele} parries ${st.parries} heavy hits ${st.hitByHeavy} abilities ${st.abilities} pushes ${st.pushes}`);
-  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set('lanternfall.save.v1', snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
+  const fork = (snap, off) => { const h = loadCore({ seed: seed + off }); applyKnobs(h); h.storage.set('lanternfall.save.v2', snap); h.eval('loadSave(); gearDirty(); spawn()'); return h; };
   if (t2Snap && args.t5) {
     // T5: an hour of farming at maxZone - 2 with the same field (auto off): wipes.
     const h = fork(t2Snap, 5), w = [];
@@ -857,6 +875,12 @@ function runDays() {
   const comps = () => E("rosterLive() ? rosterList().map(k => k + ' ' + charRec(k).lv + 'r' + charRec(k).rank).join(', ') : S.comp.join('/')");
   const bossAt = {};  // region boss cleared (zone 35 / 70 / 105): wall hours
   fn.on('zoneClear', ({ zone }) => { if (zone % 35 === 0 && bossAt[zone] === undefined) bossAt[zone] = wall / H; });
+  // ECON-A (economy-2 8.3): the gold ledger by day, banked gold after each check-in, the crit damage pool at
+  // each region boss, when each camp level landed, and the five biggest single purchases.
+  const eco = { days: [], bank: [], keenAt: {}, campAt: {}, top: [] };
+  fn.on('zoneClear', ({ zone }) => { if (zone % 35 === 0 && eco.keenAt[zone] === undefined) eco.keenAt[zone] = E('keen()'); });
+  fn.on('campBuilt', ({ id, lv }) => { if (eco.campAt[id + lv] === undefined) eco.campAt[id + lv] = +(wall / H).toFixed(2); });
+  E(`(() => { const f = econSpend; econSpend = (c, n) => { f(c, n); if (n > 0) { const a = (globalThis.__ecoTop = globalThis.__ecoTop || []); a.push([c, n, S.maxZone]); a.sort((x, y) => y[1] - x[1]); if (a.length > 5) a.length = 5; } }; })()`);
 
   // The session list: [start wall s, length s].
   const sessions = [];
@@ -918,8 +942,9 @@ function runDays() {
       if (train.id && train.at === null && E(`charRec(${JSON.stringify(train.id)}).lv`) >= train.target) train.at = wall / H / 24;
       if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
       handsStep();
+      eco.bank.push([+(wall / H).toFixed(2), E('S.gold'), E('S.totalGold'), E('S.maxZone')]);
       // Leaving: pick the away activity.
-      if (sIdx % checkins.length === 0 && checkins.length > 1 && (bestNode(true), storeAwayPick())) fn.setActivity('gather');
+      if ((!profile || profile.gatherGap) && sIdx % checkins.length === 0 && checkins.length > 1 && (bestNode(true), storeAwayPick())) fn.setActivity('gather');
       else { fn.setActivity('fight'); if (E('S.zone !== S.maxZone')) fn.setZone(E('S.maxZone')); }
     }
     // Day summary at 24:00 (the away gains for the rest of the night land in the next gap).
@@ -932,10 +957,11 @@ function runDays() {
     const r = { day: d, zone: E('S.maxZone'), lvl: E('S.L'), goldH, tier: topTier(), skills: `${E('S.skills.mine.lv')}/${E('S.skills.wood.lv')}/${E('S.skills.smith.lv')}`, bored: (act - last.act) / 60, comps: comps(), camp: campLv, campMax };
     r.sk = Object.fromEntries(SKILL_KEYS.map(k => [k, E(`S.skills.${k}.lv`)]));
     if (hasDeeds) {
-      r.deeds = E('({ pts: deeds.points(), tiers: Object.values(S.deeds.tier).reduce((a, k) => a + k, 0), feats: Object.keys(S.deeds.feat).length, dmg: deedBonus("dmg"), party: deedBonus("party"), xp: deedBonus("xp"), gold: deedBonus("gold"), hit: S.deeds.rec.hit, totalGold: S.totalGold })');
+      r.deeds = E('({ pts: deeds.points(), tiers: Object.values(S.deeds.tier).reduce((a, k) => a + k, 0), feats: Object.keys(S.deeds.feat).length, dmg: deedBonus("dmg"), party: deedBonus("party"), xp: deedBonus("xp"), keen: deedBonus("keen"), hit: S.deeds.rec.hit, totalGold: S.totalGold })');
       if (d === 7) dd.v7 = E('Object.fromEntries(deeds.tracks().map(t => [t.id, t.v]))');
     }
     if (handsOn) { handsSim.byDay.push(handsSim.cur); handsSim.cur = hsFresh(); }
+    eco.days.push(E('({ zone: S.maxZone, foe: foeGoldBase(S.maxZone), gold: S.gold, blade: S.blade, swift: S.swift, precision: S.precision, keen: keen(), earned: Object.assign({}, S.econ.earned), spent: Object.assign({}, S.econ.spent) })'));
     rows.push(r);
     if (train.id) train.lv.push([d, E(`charRec(${JSON.stringify(train.id)}).lv`)]);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
@@ -959,6 +985,10 @@ function runDays() {
   let run2 = 0, gapCi2 = 0, gapEnd2 = 0; for (let i = 0; i < sessions.length && sessions[i][0] <= cut; i++) { run2 = hit2.has(i) ? 0 : run2 + 1; if (run2 > gapCi2) { gapCi2 = run2; gapEnd2 = sessions[i][0] / H / 24; } }
   if (args.debug) console.log(`   longest empty run to the Region 2 boss: ${gapCi2} check-ins, ending day ${gapEnd2.toFixed(2)}`);
   console.log(`regions: ${[35, 70, 105].map(z => `zone ${z} boss ${bossAt[z] === undefined ? '-' : 'day ' + (bossAt[z] / 24).toFixed(1)}`).join(', ')}`);
+  {
+    const L = E('S.econ'), sp = Object.values(L.spent).reduce((a, b) => a + b, 0) || 1, pc = k => Math.round(100 * (L.spent[k] || 0) / sp) + '%';
+    console.log(`econ: earned ${fmt(E('S.totalGold'))} (fight ${fmt(L.earned.fight)}, away ${fmt(L.earned.away)}, bounty ${fmt(L.earned.bounty)}), spent ${fmt(sp)}: up ${pc('up')}, camp ${pc('camp')}, craft ${pc('craft')}, recruit ${pc('recruit')}, hire ${pc('hire')}, other ${pc('other')} | bank ${fmt(E('S.gold'))} | Blade ${E('S.blade')}, Swiftness ${E('S.swift')}, Precision ${E('S.precision')} | crit damage +${Math.round(100 * E('keen()'))}%${Object.keys(eco.keenAt).length ? ' (bosses ' + Object.entries(eco.keenAt).map(([z, k]) => `${z}: +${Math.round(100 * k)}%`).join(', ') + ')' : ''}`);
+  }
   console.log(`boredom to the Region 2 boss: longest gap ${(gapAct2 / 60).toFixed(0)} active min, longest run of empty check-ins ${gapCi2}`);
   console.log(`boredom (whole run): longest gap ${(gapAct / 60).toFixed(0)} active min (ending day ${(gapAt / 24 / H).toFixed(1)}), longest run of empty check-ins ${gapCi}, empty check-ins ${empty}/${sessions.length}`);
   console.log(`active play ${(act / H).toFixed(1)}h over ${days} days; away gaps ${awayN}${g.errors.length ? '; errors: ' + g.errors.length : ''}`);
@@ -986,7 +1016,7 @@ function runDays() {
     // train.at: the end of the first check-in at which it stood at the target (wall days)
     console.log(`T11 train: ${train.id} fielded (for ${train.out}) on day ${train.from.toFixed(2)} at L1, the pair at L${train.target.toFixed(1)}; reached it ${train.at === null ? 'not by day ' + days : 'on day ' + train.at.toFixed(2) + ' (' + (train.at - train.from).toFixed(1) + ' days)'} | levels by day ${train.lv.map(([d, l]) => 'd' + d + ' ' + l).join(' ')}`);
   }
-  if (args.json) console.log('JSON ' + JSON.stringify({ train: train.id ? { id: train.id, from: train.from, target: train.target, at: train.at, lv: train.lv } : null, store, rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), errors: g.errors.length }));
+  if (args.json) console.log('JSON ' + JSON.stringify({ train: train.id ? { id: train.id, from: train.from, target: train.target, at: train.at, lv: train.lv } : null, store, rec, campFirst, campFull: campStats.full, campRows: rows.map(r => r.camp), campMax: rows.length ? rows[rows.length - 1].campMax : 0, rows: rows.map(r => ({ day: r.day, zone: r.zone, lvl: r.lvl, sk: r.sk, deeds: r.deeds })), deeds: hasDeeds ? Object.assign(dd, { groups: E('Object.fromEntries(DEED_TRACKS.map(t => [t.id, t.g]))'), live: E('deeds.tracks().map(t => t.id)') }) : null, bossAt, skTier, skGather, gapAct, gapCi, empty, toR2: { gapAct: gapAct2, gapCi: gapCi2 }, sessions: sessions.length, hands: handsJson(), econ: Object.assign(eco, { top: E('globalThis.__ecoTop || []') }), errors: g.errors.length }));
 }
 
 // ================= --targets: PASS/FAIL for the balance targets =================
@@ -1071,6 +1101,16 @@ async function runTargets() {
   res.push([ok(js.every(j => inR(day(j, 70), P.r2))), 'P2 Region 2 boss in 21-42 days', classes.map((c, i) => `${c} ${dtxt(js[i], 70)}${!Number.isFinite(day(js[i], 70)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
   res.push(['INFO', 'P3 Region 3 boss (needs Region 3 power: ranks past 7, tier 6)', classes.map((c, i) => `${c} ${dtxt(js[i], 105)}${!Number.isFinite(day(js[i], 105)) ? ` (zone ${js[i].rows[js[i].rows.length - 1].zone} at day ${nDays})` : ''}`).join(', ')]);
   res.push([ok(js.every(j => j.toR2.gapCi <= P.emptyRun)), `P4 before the Region 2 boss: <= ${P.emptyRun} empty check-ins in a row`, classes.map((c, i) => `${c} ${js[i].toR2.gapCi} (longest ${Math.round(js[i].toR2.gapAct / 60)} active min)`).join(', ')]);
+  {
+    // ECON-A EC9 (economy-2 8.2): max zone at days 1, 3, 8, 15, 30 within 10% of today's (before ECON-A, the
+    // warden..lightkeeper curves measured at commit b486204) and the Blade's share of all gold spent.
+    const TODAY = ec9Today(), at = (j, d) => (j.rows[d - 1] || {}).zone;
+    const eDays = [1, 3, 8, 15, 30].filter(d => d <= nDays);
+    const within = (j, c) => eDays.every(d => !TODAY[c] || !at(j, d) || Math.abs(at(j, d) / TODAY[c][d] - 1) <= 0.1);
+    res.push(['INFO', 'EC9 pace unchanged by ECON-A: max zone at days ' + eDays.join('/') + ' within 10% of before (and Blade share of spend)',
+      classes.map((c, i) => { const j = js[i], sp = j.econ && j.econ.days.length ? j.econ.days[j.econ.days.length - 1].spent : null, tot = sp ? Object.values(sp).reduce((a, b) => a + b, 0) : 0;
+        return `${c} ${within(j, c) ? 'ok' : 'off'} ${eDays.map(d => `${at(j, d) || '-'}/${TODAY[c] ? TODAY[c][d] : '-'}`).join(' ')} Blade ${j.econ && j.econ.days.length ? j.econ.days[j.econ.days.length - 1].blade : '-'} up ${tot ? Math.round(100 * sp.up / tot) : 0}%`; }).join(', ')]);
+  }
   res.push(['INFO', 'C1 Camp: first build 10-20 min after install, full camp over several weeks', classes.map((c, i) => { const j = js[i]; const at = d => j.campRows[d - 1] !== undefined ? j.campRows[d - 1] : '-'; return `${c} first ${j.campFirst ? j.campFirst.min.toFixed(0) + 'm ' + j.campFirst.id : '-'}, d7 ${at(7)}/${j.campMax}, d14 ${at(14)}, d30 ${at(30)}, full ${j.campFull ? 'day ' + j.campFull : '-'}`; }).join('; ')]);
   // ---- the Storehouse (H3, hearth-and-hands.md 7.2): HS4, HS7 ----
   if (args.store !== '0') {
@@ -1096,7 +1136,7 @@ async function runTargets() {
   res.push([ok(inR(t8, [0.85, 1.15])), 'T8 offline estimate (live rate, before the away share) vs 1h of simulated fighting (gold): within 15%', (bal.match(/T8 offline estimate vs 1h live at zone \d+: [^|]*/) || ['-'])[0].trim()]);
   {
     const fs = await import('node:fs'), path = await import('node:path'), { memoryStorage } = await import('./lib/core.mjs');
-    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ 'lanternfall.save.v1': fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
+    const t9 = ['save-v2.json', 'save-v2-late.json'].map(f => { const h = loadCore({ storage: memoryStorage({ 'lanternfall.save.v2': fs.readFileSync(path.join(path.dirname(process.argv[1]), '..', 'tests', 'fixtures', f), 'utf8') }) }); return [f, h.eval('rosterNoLoss().ratio')]; });
     res.push([ok(t9.every(([, r]) => inR(r, [1, 1.3]))), 'T9 migration of both fixtures: field damage vs old compDps() in 1.00-1.30', t9.map(([f, r]) => `${f} ${r.toFixed(2)}`).join(', ')]);
   }
   // CU1 (owner, 2026-09-28: no rapid catch-up; "an achievement for maxing out all heroes shouldn't be
@@ -1348,4 +1388,102 @@ async function runHandsReport() {
   }
   console.log("Hands' share by day: " + classes.map((c, i) => `${c} ` + [1, 2, 3, 5, 7, 10, 14, 21, 28, 35].filter(d => d <= nDays).map(d => `d${d} ${pc(shareOn(js[i], d))}`).join(' ')).join('\n  '));
   if (js.some(j => j.errors)) console.log('WARN  game errors in a run (run it alone to see them)');
+}
+
+// ================= --report econ: Economy 2.0 targets (docs/design/economy-2.md 8, ECON-A) =================
+// Runs --days (default 45; the spec's full check is --days 90) of play for each --profile (idle, normal,
+// active) with one --class (default warden) and prints EC1-EC13: EC1, EC8 (cap), EC10 (static) and EC11 are
+// read from the data; EC2, EC4-EC7, EC9 and EC10 from the runs; EC3 in closed form from the fee table and the
+// measured idle income; EC12 and EC13 need the gatherers' fees (N3a) and print INFO until then.
+// The max zone of today's (pre-ECON-A) normal play for EC9, commit b486204, --days 45, seed 1.
+function ec9Today() {
+  return {
+    warden: { 1: 17, 3: 27, 8: 37, 15: 50, 30: 72 },
+    lanternmage: { 1: 15, 3: 26, 8: 37, 15: 60, 30: 67 },
+    ranger: { 1: 18, 3: 30, 8: 38, 15: 56, 30: 72 },
+    lightkeeper: { 1: 17, 3: 27, 8: 35, 15: 44, 30: 67 }
+  };
+}
+async function runEconReport() {
+  const { execFile } = await import('node:child_process');
+  const run = a => new Promise((res, rej) => execFile(process.execPath, [process.argv[1], ...a], { maxBuffer: 1 << 26 }, (e, out) => e ? rej(e) : res(out)));
+  const nDays = +(args.days || 45), c = String(args.class || 'warden');
+  const pass = ['pace', 'tune', 'unlock', 'syn', 'seed', 'bounties', 'forge', 'eval', 'camp', 'combat', 'enemy', 'store', 'hands', 'upshare', 'upseed'].flatMap(k => args[k] ? ['--' + k, String(args[k])] : []);
+  const profs = ['idle', 'normal', 'active'];
+  const outs = await Promise.all(profs.map(p => run(['--days', String(nDays), '--class', c, '--profile', p, '--json', '1', ...pass])));
+  const J = Object.fromEntries(profs.map((p, i) => [p, JSON.parse(outs[i].split('\n').find(l => l.startsWith('JSON ')).slice(5))]));
+  const h = loadCore({ seed: 1 }), X = s => h.eval(s);
+  const ok = b => b ? 'PASS' : 'FAIL', inR = (v, [a, b]) => v >= a && v <= b, res = [];
+  const f0 = x => Number.isFinite(x) ? Math.round(x).toLocaleString('en-US') : '-', f2 = x => Number.isFinite(x) ? x.toFixed(2) : '-', pc = x => Number.isFinite(x) ? Math.round(100 * x) + '%' : '-';
+  const regionOfZ = z => Math.min(4, Math.floor((z - 1) / 35));
+  const RN = ['Hollow', 'Coast', 'Emberwaste', 'Pale Reach', 'Gloamvale'];
+  // Per day: gold earned that day (fight, away, bounty) in foe-equivalents of the zone the day ended at.
+  const perDay = j => j.econ.days.map((d, i) => {
+    const prev = i ? j.econ.days[i - 1] : { earned: {}, spent: {} };
+    const earn = ['fight', 'away', 'bounty'].reduce((a, k) => a + (d.earned[k] || 0) - (prev.earned[k] || 0), 0);
+    const spent = {}; for (const k in d.spent) spent[k] = (d.spent[k] || 0) - (prev.spent[k] || 0);
+    return { day: i + 1, zone: d.zone, r: regionOfZ(d.zone), earn, foes: earn / d.foe, spent, blade: d.blade, keen: d.keen, gold: d.gold };
+  });
+  const D = Object.fromEntries(profs.map(p => [p, perDay(J[p])]));
+  // EC1: static
+  const e1 = [[1, 5], [35, 13.5], [36, 17], [70, 45.9], [71, 60], [105, 162], [106, 210], [140, 567], [141, 735], [175, 1984.5]].filter(([z, v]) => Math.abs(X(`foeGoldBase(${z})`) - v) > 1e-9);
+  res.push([ok(!e1.length), 'EC1 foeGold(z) matches economy-2 2.2 at every region start and boss', e1.length ? e1.map(([z]) => 'zone ' + z).join(', ') : 'exact']);
+  // EC2: foe-equivalents a day by region (skip day 1: the install day), per profile
+  const B2 = { idle: [5000, 7000], normal: [6500, 8500], active: [9000, 12000] };
+  const byR = (rows, f) => { const o = {}; for (const r of rows) { (o[r.r] = o[r.r] || []).push(f(r)); } return Object.fromEntries(Object.entries(o).map(([k, a]) => [k, a.reduce((x, y) => x + y, 0) / a.length])); };
+  const inc = Object.fromEntries(profs.map(p => [p, byR(D[p].slice(1), r => r.foes)]));
+  res.push([ok(profs.every(p => Object.values(inc[p]).every(v => inR(v, B2[p])))), 'EC2 income a day (foe-equivalents, 24 h average, from day 2): idle 5,000-7,000; normal 6,500-8,500; active 9,000-12,000',
+    profs.map(p => `${p} ${Object.entries(inc[p]).map(([r, v]) => `${RN[r]} ${f0(v)}`).join(' / ')}`).join('; ')]);
+  // EC3: closed form, the full crew sending 6 shifts a day over the idle profile's income at the region's first and last 5 zones
+  const crew = [3, 5, 7, 9, 10], idleFoes = r => inc.idle[r] || 6000;
+  const e3 = [0, 1, 2, 3, 4].map(r => {
+    const z0 = 35 * r + 1, g0 = 3 * r + 1;
+    const early = crew[r] * 6 * X(`econShiftFee(${g0}, 1)`) / (idleFoes(r) * X(`foeGoldBase(${z0 + 2})`));
+    const late = crew[r] * 6 * X(`econShiftFee(${g0 + 2}, 10)`) / (idleFoes(r) * X(`foeGoldBase(${z0 + 32})`));
+    return { r, early, late, measured: inc.idle[r] !== undefined };
+  });
+  const e3ok = e3.every(x => x.r === 0 ? inR(x.early, [0.45, 0.8]) && inR(x.late, [0.45, 0.8]) : inR(x.early, [1.05, 1.4]) && inR(x.late, [0.5, 0.75]));
+  res.push([ok(e3ok), 'EC3 crew pressure (full crew, 6 shifts a day, over idle fighting income): Region 1 0.45-0.80; Regions 2-5 first zones 1.05-1.40, last zones 0.50-0.75',
+    e3.map(x => `${RN[x.r]} ${f2(x.early)} / ${f2(x.late)}${x.measured ? '' : ' (income assumed 6,000)'}`).join(', ')]);
+  // EC4: normal play, the spend split per region
+  const split = r => { const a = {}; for (const d of D.normal.filter(d => d.r === r)) for (const k in d.spent) a[k] = (a[k] || 0) + d.spent[k]; const t = Object.values(a).reduce((x, y) => x + y, 0) || 1;
+    return { shift: (a.shift || 0) / t, camp: ((a.camp || 0) + (a.tent || 0)) / t, up: (a.up || 0) / t, rest: ((a.hire || 0) + (a.recruit || 0) + (a.craft || 0) + (a.other || 0)) / t, t }; };
+  const regs = [...new Set(D.normal.map(d => d.r))], sp = Object.fromEntries(regs.map(r => [r, split(r)]));
+  const e4 = regs.every(r => inR(sp[r].camp, [0.25, 0.4]) && inR(sp[r].up, [0.15, 0.3]) && inR(sp[r].rest, [0.05, 0.2]));
+  res.push([X('typeof handsShiftFee') === 'function' ? ok(e4 && regs.every(r => inR(sp[r].shift, [0.25, 0.45]))) : 'INFO', 'EC4 normal play, spend split per region: shifts 25-45%, camp 25-40%, Blade/Swiftness/Precision 15-30%, the rest 5-20%' + (X('typeof handsShiftFee') === 'function' ? '' : ' (INFO: no shift fees until N3a)'),
+    regs.map(r => `${RN[r]} shifts ${pc(sp[r].shift)}, camp ${pc(sp[r].camp)}, upgrades ${pc(sp[r].up)}, rest ${pc(sp[r].rest)} of ${f0(sp[r].t)}`).join('; ')]);
+  // EC5: banked gold after spending at a check-in, under a day of income (the last 24 h), at 90% of check-ins
+  const bankShare = j => { const b = j.econ.bank; let n = 0, k = 0; for (let i = 0; i < b.length; i++) { const t = b[i][0]; if (t < 24) continue; const back = b.find(x => x[0] >= t - 24) || b[0]; const day = b[i][2] - back[2]; k++; if (b[i][1] < Math.max(1, day)) n++; } return k ? n / k : 1; };
+  res.push([ok(profs.every(p => bankShare(J[p]) >= 0.9)), 'EC5 gold always has a use: banked gold under 1 day of income at 90% of check-ins', profs.map(p => `${p} ${pc(bankShare(J[p]))}`).join(', ')]);
+  // EC6: camp pacing (normal): Hearth 2 in hours 2-6 of play; the last Region 2 row not before day 30
+  const h2 = J.normal.econ.campAt.hearth2, h2h = h2 === undefined ? Infinity : h2 - 8, full = J.normal.campFull;
+  res.push([ok(inR(h2h, [2, 6]) && (full === null || full >= 30)), 'EC6 camp pacing (normal): Hearth 2 in hours 2-6 after install; the whole camp not before day 30',
+    `Hearth 2 at ${Number.isFinite(h2h) ? h2h.toFixed(1) + ' h' : '-'}; camp full ${full === null ? 'not by day ' + nDays : 'day ' + full}`]);
+  // EC7: the crit damage pool at each region boss (normal)
+  const kA = J.normal.econ.keenAt, B7 = { 35: [0.06, 0.14], 70: [0.14, 0.24], 105: [0.22, 0.32] };
+  const e7 = Object.entries(B7).filter(([z]) => kA[z] !== undefined);
+  res.push([e7.length ? ok(e7.every(([z, b]) => inR(kA[z], b))) : 'INFO', 'EC7 crit damage (normal): Region 1 boss 6-14%, Region 2 boss 14-24%, Region 3 boss 22-32%; cap not before Region 5',
+    Object.keys(B7).map(z => `zone ${z} ${kA[z] === undefined ? '-' : '+' + pc(kA[z])}`).join(', ') + ` | day ${nDays}: +${pc(D.normal[D.normal.length - 1].keen)}`]);
+  // EC8: static cap (check.mjs measures the charm's damage cost once line sets exist, S4)
+  res.push(['INFO', 'EC8 gear gold never above +30% (static: gearGold() caps it; check.mjs "econ"); the Fortune charm\'s damage cost needs the charm line sets (S4)', `cap ${X('ECON.gearGoldCap')}%`]);
+  // EC9: pace vs today's
+  const today = ec9Today()[c] || ec9Today().warden, zAt = d => (J.normal.rows[d - 1] || {}).zone;
+  const eDays = [1, 3, 8, 15, 30].filter(d => d <= nDays);
+  const upShareNow = (() => { const d = J.normal.econ.days[J.normal.econ.days.length - 1].spent, t = Object.values(d).reduce((a, b) => a + b, 0); return t ? d.up / t : 0; })();
+  res.push([ok(eDays.every(d => zAt(d) && Math.abs(zAt(d) / today[d] - 1) <= 0.1)), 'EC9 pace unchanged: max zone (normal) at days ' + eDays.join(', ') + ' within 10% of before ECON-A',
+    eDays.map(d => `d${d} ${zAt(d) || '-'} (was ${today[d]})`).join(', ') + ` | Blade ${J.normal.econ.days[J.normal.econ.days.length - 1].blade}, upgrades ${pc(upShareNow)} of all spend`]);
+  // EC10: no inflation
+  const maxGold = Math.max(...profs.flatMap(p => J[p].econ.bank.map(b => b[1])));
+  const top = J.normal.econ.top;
+  res.push([ok(maxGold < 1e8 && top.every(t => t[1] < 1e8)), 'EC10 no inflation: S.gold and every price under 1e8',
+    `most gold held ${f0(maxGold)}; biggest buys (normal): ${top.map(([k, n, z]) => `${k} ${f0(n)} (zone ${z})`).join(', ')}`]);
+  // EC11: levelling pays (static): units per gold at Lv 20 over Lv 1
+  // the fee rule before its 2-digit rounding (a rounded pair can swing the ratio by 5%): Lv 20 pays x(1 + 19 feeLv)
+  const e11 = (1 + X('ECON.sharePerLv') * 19) / (1 + X('ECON.feeLv') * 19);
+  res.push([ok(e11 >= 1.12), 'EC11 levelling pays: units per gold at Lv 20 over Lv 1 (share x1.57 over the fee), same job and grade: 1.12 or more', f2(e11)]);
+  res.push(['INFO', 'EC12 the choice is real (--crew 0 vs full crew): needs shift fees (N3a)', '-']);
+  res.push(['INFO', 'EC13 named gatherers are worth their fee: needs shift fees and rarity shares (N3a)', '-']);
+  for (const [r, name, detail] of res) console.log(`${r}  ${name}\n      ${detail}`);
+  console.log(`${res.filter(r => r[0] === 'PASS').length}/${res.filter(r => r[0] !== 'INFO').length} econ targets pass (${c}, ${nDays} days)`);
+  for (const p of profs) console.log(`  ${p.padEnd(6)} day ${nDays}: zone ${D[p][D[p].length - 1].zone}, bosses ${Object.entries(J[p].bossAt).map(([z, t]) => `${z} d${(t / 24).toFixed(1)}`).join(' ') || '-'}, gold a day ${D[p].filter(d => [1, 3, 8, 15, 30, 45].includes(d.day)).map(d => `d${d.day} ${f0(d.earn)}`).join(' ')}`);
 }

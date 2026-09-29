@@ -129,7 +129,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   craftItem = (kind, t, opts = {}) => {
     if (kind === 'starChart') return craftStarChart() ? { kind: 'starChart', t: STAR.t } : null;
     const c = canCraft(kind, t, opts); if (!c.ok) return null;
-    payMats(c.cost.mats, t); S.gold -= c.cost.gold;
+    payMats(c.cost.mats, t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     if (opts.mw != null) C().troph[opts.mw]--;
     const r = rollRarity(stationLevel(kind));
     const it = newItem(kind, t, r, { role: opts.role, mw: opts.mw });
@@ -163,7 +163,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   upgradeItem = (id, trophIdx) => {
     const c = canUpgrade(id, trophIdx); if (!c.ok) return false;
     const it = itemById(id);
-    payMats(c.cost.mats, it.t); S.gold -= c.cost.gold;
+    payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     if (c.cost.troph) C().troph[pickTrophy(trophIdx)] -= c.cost.troph;
     it.plus++;
     gearDirty();
@@ -194,7 +194,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   reforgeItem = (id, idx) => {
     const c = canReforge(id, idx); if (!c.ok) return false;
     const it = itemById(id), res = reforgeLine(it, idx); if (!res) return false;
-    payMats(c.cost.mats, it.t); S.gold -= c.cost.gold;
+    payMats(c.cost.mats, it.t); S.gold -= c.cost.gold; econSpend('craft', c.cost.gold);
     it.a = res.a; it.rf = res.rf;
     gearDirty();
     gainStation('ench', CRAFT_XP.reforge(it.t));

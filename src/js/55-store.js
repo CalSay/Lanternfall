@@ -64,7 +64,7 @@ const STORE_TUNE = {
     { h: 20, t: 5, lv: 135, tool: [5, 'epic', 10], m: 20, hl: 7 },
     { h: 24, t: 5, lv: 210, tool: [5, 'epic', 10], m: 20, hl: 8 }],
   spill: 3,                // Spillover opens at this level
-  goldPerLv: 60,           // gold = campGold(Hearth zone, goldPerLv x level); none at Lv 1
+  goldPerLv: 60,           // unused since ECON-A: gold = ECON.storeH hours of income at the Hearth gate zone; none at Lv 1
   warn: 0.9,               // the pouch bar turns amber from here
   fullMins: 10             // Next Up suggests the next level after this many minutes with a full cell
 };
@@ -235,7 +235,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
   storeCampCost = (to, campGold) => {
     const r = STORE_COST[to - 1]; if (!r) return null;
     const z = typeof CAMP_HZ !== 'undefined' ? CAMP_HZ[STORE_HREQ[to - 1] - 1] : 5;
-    return { gold: to <= 1 ? 0 : campGold(z, T.goldPerLv * to), mats: r.mats.map(m => m.slice()), troph: r.troph ? [['any', r.troph]] : [], secs: r.secs };
+    return { gold: to <= 1 ? 0 : econStoreGold(to, z), mats: r.mats.map(m => m.slice()), troph: r.troph ? [['any', r.troph]] : [], secs: r.secs };
   };
   storeEffects = lv => {
     const g = storeCapAt('ore', 1, lv), h = storeCapAt('hide', 1, lv);
