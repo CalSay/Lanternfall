@@ -12,7 +12,13 @@ We do not hand-assemble limbs from parts. It failed at this scale: floating head
 - Up to **40 colours** per hero, 4-6 shade ramps per material, cooler shadows and warmer highlights.
 - The head sits on the shoulders: the hood or collar base joins the chest with no visible neck gap.
 - The face stays fully visible in every pose. Closed-eye lines curve up or stay level (calm, never sad).
-- **Leave out** anything we draw in code: bow strings, arrows in flight, magic, swooshes, companions, glows.
+- **Leave out** anything that moves or changes in code: bow strings, arrows in flight, spells being cast,
+  swooshes, companions, and live flames or pulsing glows.
+- **Draw the prop, not the effect.** A staff's ember holder, a crystal focus, a lantern, a rune on a blade:
+  draw them as part of the object, in a calm "resting" state (a faint warm tint on an ember, a crystal with
+  its own colour and highlight). Code adds the live part on top (flickering flame, glow pulse, sparks) and can
+  turn it up in fights and down at camp or in death. A baked-in flame can't flicker, shows even when she's
+  knocked out, and fights the code flame for the same pixels.
   A bow is drawn **without its string**.
 - Export each pose as its own PNG, plus a contact sheet and `palette.png`.
 
