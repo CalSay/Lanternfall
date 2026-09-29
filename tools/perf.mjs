@@ -5,6 +5,8 @@
 //
 //   node tools/perf.mjs            full run (~6 min): phone (360x740, CPU x4) and desktop (1280x800), new game + late save
 //   node tools/perf.mjs --quick    ~40 s: phone only, shorter windows (run after every merge)
+//   S6: scenarios swarm10 (a swarm of 10 with Burns and an Explosive elite, vs packs of 3 at the same zone) and bossKit
+//   (a kit boss through its phases, a summon, a Stagger and its Finisher); the quick run measures them on the late save
 //   options: --json out.json (write raw results)  --only phone|desktop  --save new|late
 //            --html file (benchmark another build, e.g. an older commit's dist, for before/after)
 //            --trace dir (write a Chrome trace of each steady-fight window, open in DevTools Performance)
@@ -30,8 +32,8 @@ const KEY = 'lanternfall.save.v1';
 // ---------------- budget (keep in sync with docs/design/perf.md) ----------------
 // Times are for this harness: headless Chromium, software canvas, phone CPU slowed x4.
 const BUDGET = {
-  phone: { firstFrame: 1500, jsP95: 8, jsP99: 16.7, over16: 1, gapP95: 34, longPer10s: 1, uiP95: 8, tabJsP95: 12, tabLong: 150, eventLong: 150, heapMin: 2, dom: 5000, tap: 150 },
-  desktop: { firstFrame: 600, jsP95: 4, jsP99: 8, over16: 0.5, gapP95: 20, longPer10s: 0, uiP95: 2, tabJsP95: 6, tabLong: 50, eventLong: 50, heapMin: 2, dom: 5000, tap: 50 }
+  phone: { firstFrame: 1500, jsP95: 8, jsP99: 16.7, over16: 1, gapP95: 34, longPer10s: 1, uiP95: 8, tabJsP95: 12, tabLong: 150, eventLong: 150, heapMin: 2, dom: 5000, tap: 150, swarmOver: 1.5 },
+  desktop: { firstFrame: 600, jsP95: 4, jsP99: 8, over16: 0.5, gapP95: 20, longPer10s: 0, uiP95: 2, tabJsP95: 6, tabLong: 50, eventLong: 50, heapMin: 2, dom: 5000, tap: 50, swarmOver: 1.5 }
 };
 
 // ---------------- windows ----------------
@@ -225,6 +227,34 @@ async function runScenario(browser, base, { dev, save }) {
   }
   const uis = await uiSince(ui0);
   out.fight = { ...summarize(wf), uiMed: r2(pct(uis, 50)), uiP95: r2(pct(uis, 95)), uiCalls: uis.length };
+  // ---- S6 (combat-2 2.8, 8.5): swarm10 and bossKit ----
+  // swarm10: the highest Cave Bat zone the save has, packs of 10, Burns on every foe, an Explosive elite in each pack,
+  // against the same zone with packs of 3 (COMBAT_TUNE.sizes 0); bossKit: a kit boss (the Fenmother on the late save)
+  // through its phase changes, a summon, a Stagger and its Finisher.
+  if (!QUICK || save === 'late') {
+    await page.evaluate(() => window.__lf.x(`(() => {
+      if (S.activity !== 'fight') setActivity('fight');
+      S.auto = false; let z = 2; for (let k = S.maxZone; k >= 1; k--) if (TYPES[zoneType(k)].key === 'bat') { z = k; break; }
+      window.__sw = { z, on: false };
+      on('packSpawn', p => { if (!window.__sw.on || !p.foes || !p.foes[1] || p.foes[0].boss) return; const e = p.foes[1]; e.elite = true; e.tr = ['explosive']; });
+      window.__swT = setInterval(() => { if (!window.__sw.on) return; for (const f of combatFoes()) if (!f.dead && f.hp > 0) stApply(f, 'burn', 1, heroAtk(), 0); }, 2000);
+      return z; })()`));
+    out.base3 = summarize(await window_(W.fight, () => page.evaluate(() => window.__lf.x("COMBAT_TUNE.sizes = 0; fightBoss = false; setZone(window.__sw.z)"))));
+    out.swarm10 = summarize(await window_(W.fight, () => page.evaluate(() => window.__lf.x("COMBAT_TUNE.sizes = 1; FOE_BEH.bat.n = 10; window.__sw.on = true; fightBoss = false; setZone(window.__sw.z)"))));
+    out.swarm10.n = await page.evaluate(() => window.__lf.x('combatFoes().length'));
+    await page.evaluate(() => window.__lf.x('window.__sw.on = false; clearInterval(window.__swT); FOE_BEH.bat.n = 9'));
+    // (the boss starts before the window: its first bake is the boss kill row's business, not a phase change's)
+    await page.evaluate(() => window.__lf.x(`(() => { S.zone = Math.min(S.maxZone, 35); S.kills = 10; fightBoss = false; addModifier('bossHp', () => 50); challenge(); return mob && mob.name; })()`));
+    out.bossKitName = await page.evaluate(() => window.__lf.x('mob && mob.name'));
+    await page.waitForTimeout(1500);
+    out.bossKit = summarize(await window_(W.fight, async () => {
+      await page.evaluate(() => window.__lf.x('mob && mob.boss && (mob.hp = mob.max * 0.6)'));
+      await page.waitForTimeout(1500); await page.evaluate(() => window.__lf.x('mob && mob.boss && (mob.hp = mob.max * 0.3)'));
+      await page.waitForTimeout(1000); await page.evaluate(() => window.__lf.x('mob && mob.boss && actStag(mob, 500, 0)'));
+    }));
+    out.bossKitStats = await page.evaluate(() => window.__lf.x('JSON.stringify({ phases: KIT_STATS.phases, adds: KIT_STATS.adds, staggers: ACT_STATS.staggers, fins: ACT_STATS.fins })'));
+    await page.evaluate(() => window.__lf.x('fightBoss = false; spawn()'));
+  }
   const rest = W.heap - (Date.now() - tH0); if (rest > 0) await page.waitForTimeout(rest);
   const h1 = await heap(), mins = (Date.now() - tH0) / 60000;
   const dom = await cdp.send('Memory.getDOMCounters');
@@ -293,6 +323,14 @@ function judge(o) {
     chk(`tab ${id}: longest task (open + updates)`, t.longMax, B.tabLong, 'ms');
   }
   chk('toast burst: longest task', o.toasts.longMax, B.eventLong, 'ms');
+  if (o.swarm10) {   // S6 (combat-2 2.8)
+    chk('swarm10: JS/frame p95', o.swarm10.jsP95, B.jsP95, 'ms');
+    chk('swarm10: JS/frame p95 over packs of 3', r2(o.swarm10.jsP95 - o.base3.jsP95), B.swarmOver, 'ms');
+    chk('swarm10: frame gap p95', o.swarm10.gapP95, B.gapP95, 'ms');
+    chk('swarm10: longest task', o.swarm10.longMax, 50, 'ms');
+    chk('bossKit: frame gap p95', o.bossKit.gapP95, B.gapP95, 'ms');
+    chk('bossKit: longest task', o.bossKit.longMax, 50, 'ms');
+  }
   chk('boss kill: longest task', o.boss.longMax, B.eventLong, 'ms');
   for (const [k, g] of Object.entries(o.gather || {})) {
     chk(`gather ${k}: JS/frame p95`, g.jsP95, B.jsP95, 'ms');
@@ -330,6 +368,9 @@ function report(all) {
     ...Object.keys(all[0].tabs).map(id => row(`tab ${id} gap p95, long (n/max)`, o => `${o.tabs[id].gapP95}, ${o.tabs[id].long}/${o.tabs[id].longMax}`)),
     row('toast burst JS p95, long n/max', o => `${o.toasts.jsP95}, ${o.toasts.long}/${o.toasts.longMax}`),
     row('boss kill JS max, long n/max', o => `${o.boss.jsMax}, ${o.boss.long}/${o.boss.longMax}`),
+    row('S6 packs of 3 JS p95, gap p95', o => o.base3 ? `${o.base3.jsP95}, ${o.base3.gapP95}` : '-'),
+    row('S6 swarm10 foes, JS p95/p99, gap p95, long n/max', o => o.swarm10 ? `${o.swarm10.n}, ${o.swarm10.jsP95}/${o.swarm10.jsP99}, ${o.swarm10.gapP95}, ${o.swarm10.long}/${o.swarm10.longMax}` : '-'),
+    row('S6 bossKit JS p95, gap p95, long n/max', o => o.bossKit ? `${o.bossKit.jsP95}, ${o.bossKit.gapP95}, ${o.bossKit.long}/${o.bossKit.longMax} (${o.bossKitName}; ${o.bossKitStats})` : '-'),
     ...Object.keys(all[0].gather || {}).map(k => row(`gather ${k} fps, JS p95/p99, gap med/p95`, o => `${o.gather[k].fps}, ${o.gather[k].jsP95}/${o.gather[k].jsP99}, ${o.gather[k].gapMed}/${o.gather[k].gapP95}`)),
     ...Object.keys(all[0].gather || {}).map(k => row(`gather ${k} long (n / max), switch max`, o => `${o.gather[k].long} / ${o.gather[k].longMax}, ${o.gather[k].switchLong}`)),
     row('heap MB, growth MB/min', o => `${o.mem.heapMB}, ${o.mem.growthMBmin}`),
