@@ -110,7 +110,9 @@ const FORM_TUNE = {
   bondH: [0.5, 3, 12, 36, 150], bondX: [0.5, 0.75, 1, 1.15, 1.3],
   bondAway: 0.75, bondCamp: 0.5, bondExped: 1, oldFriend: 1.5,
   seedActive: 12, seedStrong: 36, seedPerLv: 0.1,
-  heroFloor: { warden: 1.0, ranger: 0.7, lanternmage: 1.0, lightkeeper: 0 }, tapStand: 1,
+  // BAL3: ranger 0.7 -> 1.2, lanternmage 1.0 -> 1.35. Past the early game the hero hits at its floor; with the
+  // recommended tank + support these two were the party's only damage and walled at the Coast's elders and Silas (P2)
+  heroFloor: { warden: 1.0, ranger: 1.2, lanternmage: 1.35, lightkeeper: 0 }, tapStand: 1,
   trioX: 1.35, trioFrom: 8, trioTo: 12,
   bossW: 0.35, bossWHard: 0.6, hyst: 0.06, dwell: 300, deep: 4, maxEst: 32, maxPins: 2
 };

@@ -137,7 +137,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
     gapMax: 4,
     xpSecs: 5.5, xpWorthMax: 8,          // (BAL1 5, BAL2 5.5) a kill gives foe seconds / xpSecs kills of XP, at most xpWorthMax (see killWorth)
     commonXp: 1.5, offlineXp: 1,         // Commons earn +50% XP (a rarity trait, not a catch-up); (BAL1) offlineXp was 0.75
-    promoGold: 300, promoEss: 10,        // (ECON-A 300, BAL1 60) gold = promoGold x (rank + 1) foes of your max zone (ECON.promoFoes; about 1 h a rank)
+    promoGold: ECON.promoFoes, promoEss: 10,   // (BAL3 120, ECON-A 300, BAL1 60) gold = promoGold x (rank + 1) foes of your max zone (ECON.promoFoes; about 1 h a rank)
     commonPromo: 0.5, maxRank: 7,
     bankLv: 25,                          // (BAL1) levels of XP a character at the level cap can bank (was 1)
     promoTierMax: 4, promoTierLag: 1,    // (BAL1) promotions take essence of tier rank + 1 - lag, at most tier 4 (was rank + 1 up to 5:

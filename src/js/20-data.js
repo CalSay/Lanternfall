@@ -109,11 +109,11 @@ const COMPS = [
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
 const HERO_UPS = [
-  // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
+  // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares; BAL3 retuned all three) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
   // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.
-  { id: 'blade', name: 'Blade', base: 10, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
-  { id: 'swift', name: 'Swiftness', base: 20, r: 1.25, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
-  { id: 'precision', name: 'Precision', base: 200, r: 1.45, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
+  { id: 'blade', name: 'Blade', base: 6, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
+  { id: 'swift', name: 'Swiftness', base: 10, r: 1.15, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
+  { id: 'precision', name: 'Precision', base: 10000, r: 1.6, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
 ];
 const RELICS = [
   { id: 'banner', name: 'Warbanner', base: 5, r: 1.6, ic: ['banner', '#E0524F'], desc: () => `+20% damage everywhere per level.` },

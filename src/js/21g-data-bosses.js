@@ -136,7 +136,7 @@ const BOSS_KITS = {
       { id: 'lamp', name: 'Lamp Swing', tele: 'heavy', ph: 1, every: 8, first: 4, wind: 1.5, x: 4, answer: 'parry', idle: 'Shield Wall, a stun' },
       { id: 'beam', name: 'Green Beam', tele: 'zone', ph: 1, every: 14, first: 7, wind: 1.8, x: 2.5, slots: 2, dt: 'frost', answer: 'dodge', idle: 'frost resist, a clear slot' },
       { id: 'undertow', name: 'Undertow', tele: 'dive', ph: 2, every: 12, first: 3, wind: 1.5, x: 1.5, secs: 5, answer: 'taunt', idle: 'a tank covering' },
-      { id: 'toll', name: 'Toll the Drowned Bell', tele: 'sig', ph: 3, every: 15, first: 3, wind: 2.5, adds: ['self', 2, 0.06], answer: 'interrupt', idle: 'area damage' },
+      { id: 'toll', name: 'Toll the Drowned Bell', tele: 'sig', ph: 3, every: 15, first: 3, wind: 2.5, adds: ['self', 2, 0.04], answer: 'interrupt', idle: 'area damage' },   // BAL3: adds 6% -> 4% (single-target parties walled at the cap)
       { id: 'flare', name: 'The Lens Flares', tele: 'hard', ph: 2, at: 0.66, roar: 1, wind: 1.5, fx: ['none', 0], answer: '-', idle: '-' }
     ] }
 };

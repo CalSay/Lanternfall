@@ -47,7 +47,8 @@ function rollRarity(lv) {
 // the companion XP curve below, and the HP curve only has to match the power per level.
 const PACE = {
   hp0: 80,                  // (BAL2, was 40) zone 1 mob HP
-  hpEarly: 1.83, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+  hpEarly: 1.83, early: 11, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+                            //   (BAL3: early 12 -> 11, zones 11-15 took ~25 min each after S6/ECON-A: T1 2h, T3, T12)
   hpGrowth: 1.48,           // (BAL2 1.48, BAL1 1.46, M6 1.48) mob HP x per zone from `early` to the bend
   bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
   hpLate: 1.22,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
@@ -58,7 +59,8 @@ const PACE = {
   regionStep: [1.7, 1.1],   // (BAL2 1.7 / 1.1, BAL1 1.7 / 1.2, was 5 / 2.5) mob HP x this from each region's last zone on
                             //   (x1.7 from zone 35, x1.1 more from 70; the last value repeats). The
                             //   step stays, so the zones after a region boss are no easier
-  regionBoss: 1.33,         // extra x on region bosses only (S6-A: x2 over the old 8 in all, for the 60 s timer; was 1)
+  regionBoss: 1.15,         // extra x on region bosses only (BAL3 1.15: x1.73 over the old 8, the kit's phases and adds eat the rest of
+                            //   the 60 s; S6-A 1.33 walled Silas at the level cap, P2 / CX4; was 1)
   compLv: 75,               // (BAL2 75, BAL1 80, was 90) companion levels past compLv need more XP...
   compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 85: x3, 95: x9.6)...
   compXpMax: 250,           //   ...(BAL2 250, BAL1 200, was 80) up to x250 from level 124 on: Region 2 is a few levels a day
