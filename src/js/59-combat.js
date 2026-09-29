@@ -1090,7 +1090,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      toast('Your party fell to the zone boss. Grow stronger and try again.', 'raid');
+      toast(soloOn() ? 'The zone boss beat you. Grow stronger and try again.' : 'Your party fell to the zone boss. Grow stronger and try again.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
@@ -1098,7 +1098,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
-      toast(stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
+      toast(soloOn() ? (stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.') : stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;

@@ -1852,7 +1852,7 @@ let resize, animate, draw, stageStats, warmScene;
   let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
   function updateAbilityButton() {
     const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
-    const show = !!info && target() !== 'node';
+    const show = !!info && target() !== 'node' && !soloOn();   // SOLO1: the button row (75-solo-ui) has the ability
     if (abBtn.hidden === show) abBtn.hidden = !show;
     if (!show) return;
     const cls = S.party.cls;
@@ -1876,6 +1876,7 @@ let resize, animate, draw, stageStats, warmScene;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
+    if (soloOn() && target() === 'mob') return;   // SOLO1: tapping the stage no longer attacks (the Attack button does)
     const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });

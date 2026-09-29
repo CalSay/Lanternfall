@@ -185,6 +185,78 @@ var classUI;
     return root;
   }
 
+  // SOLO1: the three starters (Wren, Tobin, Pip). Each plays a base class kit; the camp switches them later.
+  function buildSolo() {
+    root = el('div', 'create create-solo'); root.id = 'createScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
+    const inner = el('div', 'create-in');
+    const h = el('h1', null, 'Who carries the lantern?'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
+    const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
+    const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
+    const keys = SOLO_ORDER.filter(k => SOLO_HEROES[k] && ROSTER[k]);
+    if (!keys.includes(pick)) pick = keys[0];
+    const figs = [];
+    let begin = null;
+    const btns = keys.map(k => {
+      const H = SOLO_HEROES[k], R = ROSTER[k];
+      const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k; b.dataset.hero = k;
+      b.setAttribute('role', 'radio');
+      const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
+      const txt = el('div', 'ctxt');
+      const top = el('div', 'ctop'); top.append(el('b', null, R.name));
+      top.append(el('span', 'pip r-' + (R.role || 'striker'), H.role));
+      txt.append(top);
+      txt.append(el('div', 'cl-wt', `${R.title.replace(/^the /, 'The ')} · ${H.range} · ${H.weapon}`));
+      if (typeof BIOS === 'object' && BIOS[k]) txt.append(el('div', 'how', BIOS[k]));
+      const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab);
+      b.append(fig, txt);
+      b.addEventListener('click', () => select(k));
+      b.addEventListener('keydown', e => {
+        const i = keys.indexOf(k);
+        const d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return; e.preventDefault();
+        const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
+      });
+      cards.append(b);
+      cv.width = 56; cv.height = 100;
+      figs.push([cv, k]);
+      return b;
+    });
+    const built = root;
+    const nextFig = () => {
+      if (root !== built || !figs.length) return;
+      const [cv, k] = figs.shift();
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      if (figs.length) setTimeout(nextFig, 0);
+    };
+    requestAnimationFrame(() => setTimeout(nextFig, 0));
+    const first = k => ROSTER[k].name.split(' ')[0];
+    function select(k) {
+      pick = k;
+      if (begin) putText(begin, `Begin as ${first(k)}`);
+      for (const b of btns) {
+        const on_ = b.dataset.cls === k;
+        b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
+      }
+    }
+    begin = el('button', 'big forge create-go', ''); begin.type = 'button';
+    begin.addEventListener('click', () => {
+      let okd = false;
+      try { okd = soloPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      if (!okd) return;
+      try { save(); } catch (e) {}
+      if (typeof updatePortrait === 'function') updatePortrait();
+      close();
+      toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
+    });
+    inner.append(h, lede, warn, cards, begin);
+    root.append(inner);
+    select(pick);
+    root.addEventListener('keydown', trapTab);
+    return root;
+  }
+
   function showJoin(inner, key) {
     inner.textContent = '';
     const box = el('div', 'join');
@@ -216,6 +288,16 @@ var classUI;
 
   function open(want) {
     if (root) return;
+    if (typeof soloOn === 'function' && soloOn()) {
+      // SOLO1: one screen for a new game (and any save that has no hero yet); switching is at camp
+      if (want === 'switch' || !needsChoice()) return;
+      mode = 'new'; pick = (typeof soloHero === 'function' && soloHero()) || SOLO_ORDER[0];
+      lastFocus = document.activeElement;
+      document.body.append(buildSolo());
+      const sel = root.querySelector('.ccard[aria-checked="true"]');
+      (sel || root.querySelector('button')).focus();
+      return;
+    }
     if (want === 'switch') {
       if (!classes() || typeof clsSwitchInfo !== 'function' || !clsSwitchInfo().ok) return;
       mode = 'switch';
@@ -292,6 +374,7 @@ var classUI;
       return `${WEIGHT_NAME[d.weight]} · ${HOME_NAME[d.home]}`;
     },
     switchRow() {
+      if (typeof soloOn === 'function' && soloOn()) return null;   // SOLO1: heroes switch at camp
       const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null;
       if (!sw || !sw.ok) return null;
       const m = Math.max(1, Math.ceil(sw.left / 60e3));

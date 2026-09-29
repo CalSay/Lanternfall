@@ -150,6 +150,7 @@ const TOOL_ART = (() => {
     return d;
   }
   function gatherSpec(spec, tool) {
+    if (spec && spec.comp) return spec;   // SOLO1: a starter hero gathers in its own art (no tool sprite yet)
     const g = (spec && spec.gear) || {}, gear = {};
     for (const s of ['head', 'body', 'charm']) if (g[s]) gear[s] = g[s];
     const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };

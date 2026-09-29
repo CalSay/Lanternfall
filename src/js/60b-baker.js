@@ -357,6 +357,9 @@ const ART = (() => {
       if (u && u.col) o.glow = u.col;
       return o;
     };
+    // SOLO1: the hero is the chosen character (Wren, Tobin or Pip) in that character's own art; the weapon's tier shows
+    const solo = typeof soloHero === 'function' ? soloHero() : null;
+    if (solo && CHARS[solo]) { const w = slotOf('weapon'); return w ? { comp: solo, cls, t: w.t, r: w.r } : { comp: solo, cls }; }
     const gear = { weapon: slotOf('weapon') || { t: 1, r: 0 }, off: { t: 1, r: 0 }, body: { t: 1, r: 0 } };
     const h = slotOf('helm'); if (h) gear.head = h;
     const c = slotOf('charm'); if (c) gear.charm = c;

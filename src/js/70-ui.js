@@ -135,6 +135,7 @@ function newsEntry(lines) {
 // One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
@@ -626,7 +627,7 @@ function ui(force) {
   putHidden(H.statNums, tg === 'node');
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
-  putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : soloOn() && tg === 'mob' ? '' : 'Tap to strike');   // SOLO1: the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).

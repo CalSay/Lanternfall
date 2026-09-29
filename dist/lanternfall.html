@@ -2611,6 +2611,64 @@ span.cf-d { font-weight: 600; }
 .savecode-replace { padding: 6px 12px; background: var(--gold); color: #1A1420; border: 2px solid var(--line); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
 .savecode-replace:active { transform: scale(0.98); }
 .savecode-import-result { display: grid; gap: 8px; }
+/* 60-solo.css: the solo hero's button row under the stage and the camp's hero picker (75-solo-ui.js, SOLO1). */
+.sbar { flex: none; display: grid; grid-template-columns: 1.25fr 1fr 1fr 1.15fr; gap: 6px; padding: 6px var(--gut) 0; }
+.sbar[hidden] { display: none; }
+.sbtn { position: relative; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 4px 2px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 3px 0 #0B0810;
+  color: var(--bone); font: 600 calc(15px * var(--display-k, 1)) var(--display); letter-spacing: .02em; cursor: pointer; overflow: hidden;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
+.sbtn:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 #0B0810; }
+.sbtn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.sb-ic { width: 24px; height: 24px; image-rendering: pixelated; position: relative; z-index: 1; }
+.sb-lb { position: relative; z-index: 1; line-height: 1; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.sb-n { position: absolute; top: 3px; right: 5px; z-index: 1; font: 600 13px var(--display); color: var(--bone); }
+/* the cooldown: a dark sweep from the top that shrinks as the button comes back (--cd 1 -> 0) */
+.sb-ring { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: conic-gradient(rgba(11, 8, 16, .72) calc(var(--cd, 0) * 360deg), transparent 0); }
+.sb-atk { background: #3A2A2A; border-color: #0B0810; }
+.sb-atk .sb-lb { color: #FFD9B0; }
+.sb-parry .sb-lb { color: var(--gold); }
+.sb-dodge .sb-lb { color: #8FB8FF; }
+.sb-ab { background: #2E2240; }
+.sb-ab.ready { box-shadow: inset 0 0 0 2px var(--gold), 0 3px 0 #0B0810; }
+/* a heavy hit is winding up: Parry and Dodge light up */
+.sbtn.live { box-shadow: inset 0 0 0 2px #E0524F, 0 3px 0 #0B0810; }
+.sb-dodge.live { box-shadow: inset 0 0 0 2px #8FB8FF, 0 3px 0 #0B0810; }
+/* missed parry: open for a moment */
+.sb-parry.open { background: #4A1E22; }
+.sbtn.nope { animation: sb-nope .25s steps(3); }
+.sbtn.good { animation: sb-good .45s ease-out; }
+.sbtn.hit { animation: sb-hit .2s ease-out; }
+@keyframes sb-nope { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-3px); } 66% { transform: translateX(3px); } }
+@keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
+@keyframes sb-hit { 0% { background: #5A3A30; } 100% { } }
+.sb-tip { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #16111C; color: var(--bone);
+  border: 2px solid #0B0810; outline: 2px solid var(--line-hi, #4A3F57); font: 14px/1.35 var(--body, sans-serif); pointer-events: none; }
+.sb-tip b { font: 600 17px var(--display); color: var(--gold); }
+.sb-tip small { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.hit { animation: none; } .sbtn:active { transform: none; } }
+/* landscape / wide: the row sits under the stage in the game column; keep it compact */
+@media (min-width: 900px) { .sbar { grid-template-columns: repeat(4, minmax(0, 120px)); justify-content: center; } }
+@media (max-height: 520px) { .sbtn { min-height: 48px; } .sb-ic { width: 18px; height: 18px; } }
+
+/* ---- "Choose your hero" (the Camp view) ---- */
+.solo-pick .sp-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.sp-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; min-height: 44px; background: var(--panel-2);
+  border: 2px solid #0B0810; color: var(--bone); cursor: pointer; font: inherit; }
+.sp-card.on { box-shadow: inset 0 0 0 2px var(--gold); }
+.sp-card[data-armed="1"] { box-shadow: inset 0 0 0 2px var(--ember); }
+.sp-card b { font: 600 18px var(--display); }
+.sp-card small { color: var(--muted); font-size: 12px; text-align: center; }
+.sp-lv { font: 600 14px var(--display); color: var(--gold); }
+.sp-fig { width: 56px; height: 80px; image-rendering: pixelated; }
+
+/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
+.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
+  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.ob-ok[hidden] { display: none; }
+/* party-only UI left in the shell (the Fight tab's Party rows) */
+.solo-off { display: none !important; }
 /* 60-stars: the Stars view on the Party tab (75-stars-ui.js, docs/design/constellations.md) */
 .st-sec { gap: 10px; }
 .st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -3807,6 +3865,7 @@ const TOOL_ART = (() => {
     return d;
   }
   function gatherSpec(spec, tool) {
+    if (spec && spec.comp) return spec;   // SOLO1: a starter hero gathers in its own art (no tool sprite yet)
     const g = (spec && spec.gear) || {}, gear = {};
     for (const s of ['head', 'body', 'charm']) if (g[s]) gear[s] = g[s];
     const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };
@@ -10395,7 +10454,8 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Your party rests at the Hearth.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const solo = soloOn();   // SOLO1: one hero, no party
+  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
   toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
@@ -10638,7 +10698,7 @@ function awayBase(r) {
     const dmg = dps * raidMult() * t * 0.5;
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
-    r.note = 'Your party kept hammering the raid boss.';
+    r.note = soloOn() ? 'You kept hammering the raid boss.' : 'Your party kept hammering the raid boss.';
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
@@ -10655,7 +10715,7 @@ function awayBase(r) {
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: z, lines: r.lines });
-  r.note = pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
+  r.note = soloOn() ? `You held ${zoneName(z)}.` : pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
   return r;
 }
 
@@ -13976,7 +14036,9 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // Old saves (any progress, no S.onboard yet) start with everything unlocked and the guide finished.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
-const ONBOARD = { gate: false };
+let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
+// paused: the UI shows a guide step that waits for its action (SOLO1, playtest-1 note 1); 90-boot skips the tick.
+const ONBOARD = { gate: false, paused: false };
 // function declaration: 55-goals.js (loaded earlier) calls it at run time.
 function goalGate(g) { return !ONBOARD.gate || typeof onboardGoalOk !== 'function' || onboardGoalOk(g); }
 let onboardGoalOk;
@@ -13993,19 +14055,21 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // FEATURES: one row per thing that unlocks. tab/view say where it lives (for the UI's toast and
 // "new" marks); when() is checked about once a second; `why` is the rule in words (docs and checks).
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
+const SOLO_G = typeof soloOn === 'function' && soloOn();   // SOLO1: the solo hero's guide and unlocks
 const FEATURES = [
-  { id: 'party', tab: 'party', view: 'team', name: 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
+  { id: 'party', tab: 'party', view: 'team', name: SOLO_G ? 'Hero' : 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + (S.precision || 0) > 0 || S.maxZone >= 2 },
-  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start', when: () => coldH() || S.maxZone >= 3 },
+  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start (solo: after the first boss)', when: () => SOLO_G ? S.maxZone >= 2 || S.activity === 'gather' : coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
   { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '7 minutes played or zone 7', when: () => O().t >= 420 || S.maxZone >= 7 },   // BAL3: was 8 / 8 (the cheaper Blade front-loads the first 5 minutes)
-  { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
-  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
-  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
+  // SOLO1: no roster, expeditions (companions away) or Bonds: late and never, so "Show every tab" leaves them out too
+  { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7 (solo: never)', late: SOLO_G, when: () => !SOLO_G && (O().t >= 600 || S.maxZone >= 7 || recruitable()) },
+  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot (solo: never)', late: SOLO_G, when: () => !SOLO_G && typeof expedOpen === 'function' && expedOpen() },
+  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three (solo: never)', late: SOLO_G, when: () => !SOLO_G && !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
@@ -14027,7 +14091,31 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
 // Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
 // tab:world and tab:forge are done from the start (chop, light and tool replace them).
-const GUIDE_STEPS = [
+// SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
+// the counter, the first boss, an upgrade, then Gather (Oak for the fire) and camp. `pause`: the game waits while
+// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button.
+// Steps that need time to pass (chop, the build timers) do not pause; build steps complete when the build starts.
+const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
+const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
+const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
+const SOLO_STEPS = [
+  { id: 'attack', pause: 1, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', pause: 1, when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', pause: 1, when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
+  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
+  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
+  { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'tool', pause: 1, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
+  { id: 'forge', pause: 1, when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'store', pause: 1, when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', pause: 1, when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  { id: 'nextup', pause: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+];
+const PARTY_STEPS = [
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
   { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
@@ -14045,6 +14133,7 @@ const GUIDE_STEPS = [
   { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => coldH() || !!O().seen.forge },
   { id: 'recruit', when: () => !!O().rec || recruitable(), done: () => !!O().rec && !!O().seen.partyAfterRec }
 ];
+const GUIDE_STEPS = SOLO_G ? SOLO_STEPS : PARTY_STEPS;
 
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
@@ -14075,7 +14164,7 @@ function craftReady() {
 {
   // Decide before registerState fills in the defaults: an old save has progress and no S.onboard.
   const oldSave = S.onboard === undefined && (S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (S.comp || []).some(n => n > 0));
-  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
+  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '', atk: 0, dodges: 0, parries: 0 });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
@@ -14128,6 +14217,10 @@ function craftReady() {
   // A cold save's chops (taps on the tree) do not count toward "tap a foe".
   on('tap', e => { if (e && e.node && coldH()) return; if (!O().all || !guideOver()) O().taps++; });
   on('ability', e => { if (!e || !e.auto) O().casts++; });
+  // SOLO1: the buttons
+  on('soloAttack', () => { O().atk = (O().atk || 0) + 1; });
+  on('soloDodge', e => { if (e && (e.res === 'dodge' || e.res === 'perfect')) O().dodges = (O().dodges || 0) + 1; });
+  on('soloParry', e => { if (e && e.res === 'parry') O().parries = (O().parries || 0) + 1; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
   let lateAcc = 0;
@@ -14182,7 +14275,7 @@ let paceCheck;
       if (z >= S.zone) return 0;
       P().fell = Math.max(P().fell || 0, S.zone);
       setZone(z);
-      toast(`Your party fell back to Zone ${z} to keep earning.`, 'good', null, 'normal');
+      toast(`${soloOn() ? 'You fell' : 'Your party fell'} back to Zone ${z} to keep earning.`, 'good', null, 'normal');
       return z;
     }
     const fell = P().fell || 0;
@@ -24692,7 +24785,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      toast('Your party fell to the zone boss. Grow stronger and try again.', 'raid');
+      toast(soloOn() ? 'The zone boss beat you. Grow stronger and try again.' : 'Your party fell to the zone boss. Grow stronger and try again.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
@@ -24700,7 +24793,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
-      toast(stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
+      toast(soloOn() ? (stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.') : stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;
@@ -28041,6 +28134,9 @@ const ART = (() => {
       if (u && u.col) o.glow = u.col;
       return o;
     };
+    // SOLO1: the hero is the chosen character (Wren, Tobin or Pip) in that character's own art; the weapon's tier shows
+    const solo = typeof soloHero === 'function' ? soloHero() : null;
+    if (solo && CHARS[solo]) { const w = slotOf('weapon'); return w ? { comp: solo, cls, t: w.t, r: w.r } : { comp: solo, cls }; }
     const gear = { weapon: slotOf('weapon') || { t: 1, r: 0 }, off: { t: 1, r: 0 }, body: { t: 1, r: 0 } };
     const h = slotOf('helm'); if (h) gear.head = h;
     const c = slotOf('charm'); if (c) gear.charm = c;
@@ -30349,7 +30445,7 @@ let resize, animate, draw, stageStats, warmScene;
   let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
   function updateAbilityButton() {
     const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
-    const show = !!info && target() !== 'node';
+    const show = !!info && target() !== 'node' && !soloOn();   // SOLO1: the button row (75-solo-ui) has the ability
     if (abBtn.hidden === show) abBtn.hidden = !show;
     if (!show) return;
     const cls = S.party.cls;
@@ -30373,6 +30469,7 @@ let resize, animate, draw, stageStats, warmScene;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
+    if (soloOn() && target() === 'mob') return;   // SOLO1: tapping the stage no longer attacks (the Attack button does)
     const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });
@@ -33470,6 +33567,7 @@ function newsEntry(lines) {
 // One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
@@ -33961,7 +34059,7 @@ function ui(force) {
   putHidden(H.statNums, tg === 'node');
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
-  putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : soloOn() && tg === 'mob' ? '' : 'Tap to strike');   // SOLO1: the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
@@ -34218,11 +34316,11 @@ function uiFight() {
   if (S.activity !== 'fight') {
     // UX-A copy: the heroes rest at the Hearth while the Lanternbearer gathers.
     putText(G.title, S.activity === 'raid' ? 'You are at the raid' : 'You are gathering');
-    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : 'Your heroes rest at the Hearth. Fight here to clear zones and earn gold and essence.');
+    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : (soloOn() ? '' : 'Your heroes rest at the Hearth. ') + 'Fight here to clear zones and earn gold and essence.');
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
-    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Tap fast.` : 'It is enraged. Finish it now.');
+    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
     putText(G.title, 'Rematch the zone boss');
@@ -34230,7 +34328,7 @@ function uiFight() {
     putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
     putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
-    putText(G.desc, `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
   HERO_UPS.forEach((u, i) => {
@@ -35041,12 +35139,12 @@ let showAwayReport;
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
       fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `Your party worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `${soloOn() ? 'You worked' : 'Your party worked'} ${hm(r.t)} of ${hm(r.cap)}`));
       top.append(lim);
     }
     if (r.capped) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your party stops after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
+      cap.append(img(IC.glass()), el('span', null, `${soloOn() ? 'You stop' : 'Your party stops'} after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
       top.append(cap);
     }
     body.append(top);
@@ -40282,8 +40380,9 @@ let navUI = null;
   }
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
+  const SOLO_G = typeof soloOn === 'function' && soloOn();
   const OPEN_TXT = {
-    party: 'New tab: Party. See who fights beside you.',
+    party: SOLO_G ? 'New tab: Hero. Your gear, level and star map.' : 'New tab: Party. See who fights beside you.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
     camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
@@ -40339,7 +40438,10 @@ let navUI = null;
   const arrow = el('i', 'ob-arrow');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
-  bub.append(arrow, txt, x);
+  // SOLO1: a step whose action is reading it (the first boss) has a Got it button
+  const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
+  bub.append(arrow, txt, okb, x);
+  okb.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   const chip = $('nuChip');
@@ -40361,6 +40463,22 @@ let navUI = null;
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
+  // SOLO1: the button row under the stage (75-solo-ui)
+  const sbtn = id => q(`#soloBar .sb-${id}`);
+  const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
+  const SOLO_UI = {
+    attack: () => onGame() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
+    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab'), side: 'up', text: `${abName()} is ready. Press it. (Hold any button to see what it does.)` } : null,
+    dodge: () => onGame() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
+    parry: () => onGame() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
+    boss: () => onGame() && target() === 'mob' && mob && mob.boss ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' } : null,
+    gather: () => {
+      if (!onGame()) return null;
+      const b = q('#modeSeg button[data-act="gather"]');
+      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Oak for a camp fire.' } : null;
+    },
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
+  };
   const STEP_UI = {
     chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
     light: () => {
@@ -40403,7 +40521,7 @@ let navUI = null;
 
   const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
@@ -40418,11 +40536,17 @@ let navUI = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
     let spec = null;
-    try { spec = STEP_UI[step.id] ? STEP_UI[step.id]() : null; } catch (e) { spec = null; }
+    const table = SOLO_G && SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
+    try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     cur = step;
     place(spec);
+    // the game waits while a step that needs your action shows (playtest-1 note 1: steps never overlap)
+    ONBOARD.paused = !!step.pause;
+    putHidden(okb, !step.ok);
   }
+  // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
+  onboardSpec = id => { const table = SOLO_G && SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null;
   function place(spec) {
     const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;
@@ -40456,6 +40580,8 @@ let navUI = null;
   setInterval(tick, 250);
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
+  on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
+  on('soloHero', () => setTimeout(tick, 0));
   on('menuView', invalidate);
 
   // ---------------- Journal: Tips ----------------
@@ -41461,7 +41587,7 @@ let openSheet, partySheet;
     const nm = el('b', null, S.name);
     const ctl = el('small', 'pc-ctitle'); ctl.hidden = true;   // the Codex title (57c), when the player picked one
     const sub = el('small');
-    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
+    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName && !soloOn()) tags.append(el('small', null, 'Tap: ' + c.tapName));
     who.append(nm, ctl, sub, tags);
     top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
@@ -41469,7 +41595,8 @@ let openSheet, partySheet;
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
-      const t = el('div'); t.append(el('em', null, c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
+      const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;   // SOLO1: the hero's own ability
+      const t = el('div'); t.append(el('em', null, sa ? sa.name : c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
       const cast = btn('mini go pc-cast', 'Cast', e => { e.stopPropagation(); if (typeof castAbility === 'function' && castAbility()) ui(true); });
       line.append(t, cast);
       const cd = el('div', 'pc-cd'); cd.append(el('i'));
@@ -41506,7 +41633,8 @@ let openSheet, partySheet;
     const hl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;
     putHidden(r.pw, !hl); if (hl) { setT(r.pw, hl.txt); putToggle(r.pw, 'none', !hl.n); }
     if (r.cdBar) {
-      const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
+      const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;
+      const cdMax = (sa ? sa.cd : c.ability.cd) || 30, left = Math.max(0, +P().abilityCd || 0);
       putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
       setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
       putDisabled(r.cast, left > 0 || typeof castAbility !== 'function');
@@ -41769,16 +41897,18 @@ let openSheet, partySheet;
   const pdot = el('span', 'dot pdot'); pdot.id = 'partyDot'; pdot.hidden = true;
   if (tabBtn) { tabBtn.append(pdot); }
   function updateDot() {
-    if (!live()) { pdot.hidden = true; return; }
+    if (!live() || (typeof soloOn === 'function' && soloOn())) { pdot.hidden = true; return; }
     const any = rosterList().some(needsYou) || bondNews();
     putHidden(pdot, !any || S.tab === 'party');
     if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
   // An unread Bond story (56f) marks the Team view.
   const bondNews = () => typeof bondUnreadAll === 'function' && safe(() => bondUnreadAll(), 0) > 0;
-  registerView('party', { id: 'team', label: 'Team', order: 10, dot: () => live() && bondNews() });
+  // SOLO1: the party is gone. The tab is the hero's (its card, gear and the star map); no roster, bench or Bonds.
+  const SOLO = typeof soloOn === 'function' && soloOn();
+  registerView('party', { id: 'team', label: SOLO ? 'Hero' : 'Team', order: 10, dot: () => !SOLO && live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
-  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
+  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -41786,29 +41916,29 @@ let openSheet, partySheet;
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  if (!SOLO) registerSection('party', {
     id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('div', 'syn-sets')); },
     update: guard('combos', () => {
       const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
       if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
     })
   });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', {
     id: 'party-bonds', title: 'Bonds', feature: 'synergy', mount(sec) { sec.append(el('div', 'bd-rows')); },
     update: guard('bonds', () => { if (live() && bondsUI) bondsUI.rows(document.querySelector('#sec-party-bonds .bd-rows')); })
   });
-  registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
+  if (!SOLO) registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
   });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', {
     id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
-  registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  if (!SOLO) registerSection('party', {
     id: 'party-leads', title: 'Leads', view: 'roster', mount(sec) { sec.append(el('div', 'leads')); },
     update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
   });
@@ -41984,6 +42114,191 @@ let openSheet, partySheet;
       const ta = root.querySelector('.savecode-import');
       if (ta && document.activeElement !== ta && ta.value !== st.note) ta.value = st.note;
     }
+  });
+}
+
+// ---- src/js/75-solo-ui.js ----
+// 75-solo-ui: the solo hero on screen (task SOLO1, docs/design/solo-hero.md). Browser file.
+//   - the fight's button row under the stage: Attack, Parry, Dodge and the hero's ability, each with a
+//     cooldown ring; a long press (or the keyboard's i) shows what a button does. Keys on desktop:
+//     A or Space = Attack, S = Parry, D = Dodge, F = the ability.
+//   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
+// Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloButtons, soloPick, soloLevels).
+// Reduced motion: no pulses (60-solo.css).
+{
+  const game = $('game'), box = $('stageBox');
+  const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Combat');
+  bar.hidden = true;
+  const INFO = {
+    atk: { name: 'Attack', desc: 'Strike the foe in front. Short cooldown, so time it rather than mash it.', key: 'A' },
+    parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (the ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'S' },
+    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'D' }
+  };
+  function mkBtn(id, label) {
+    const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
+    const ring = el('span', 'sb-ring'), ic = el('canvas', 'sb-ic px'), lb = el('span', 'sb-lb', label), n = el('span', 'sb-n');
+    ic.width = 12; ic.height = 12;
+    b.append(ring, ic, lb, n);
+    b._ring = ring; b._lb = lb; b._n = n; b._ic = ic;
+    bar.append(b);
+    return b;
+  }
+  const bAtk = mkBtn('atk', 'Attack'), bParry = mkBtn('parry', 'Parry'), bDodge = mkBtn('dodge', 'Dodge'), bAb = mkBtn('ab', 'Ability');
+  if (box && box.parentNode === game) box.after(bar); else if (game) game.append(bar);
+
+  // ---- icons (12 x 12 pixel maps) ----
+  const PAL = { k: '#0B0810', w: '#FFF3C4', s: '#DCE4F0', g: '#7C8290', y: '#F2C14E', o: '#FF9E3D', r: '#E0524F', b: '#8FB8FF', l: '#7ED36A', t: '#C8B89A' };
+  const ICON = {
+    atk: ['..........kk', '.........ksk', '........ksk.', '.......ksk..', '......ksk...', '.k...ksk....', '.kk.ksk.....', '..kksk......', '...kyk......', '..kyykk.....', '.kyk..kk....', 'kyk.........'],
+    parry: ['..kkkkkkkk..', '.kssssssssk.', '.ksyyyyyysk.', '.ksyssssysk.', '.ksysyysysk.', '.ksysyysysk.', '.ksyssssysk.', '..ksyyyysk..', '..kssssssk..', '...kssssk...', '....kssk....', '.....kk.....'],
+    dodge: ['............', '.....kk.....', '....kbbk....', '....kbbk....', '.....kk..bb.', '...kbbbk.b..', '..k.kbk.bbbb', '....kbk..b..', '...kb.bk..bb', '..kb...bk...', '..k.....k...', '............'],
+    echo: ['............', '........kk..', '.......kwk..', 'kkk...kwk...', 'kllkkkwk....', '.kllwwwk....', 'kllkkkwk....', 'kkk...kwk...', '.......kwk..', '........kk..', '............', '............'],
+    bash: ['.kkkkkkkkkk.', 'ksssssyyssk.', 'ksssssyyssk.', 'ksyyyyyyyysk', 'ksyyyyyyyysk', 'ksssssyyssk.', 'ksssssyyssk.', '.ksssyysssk.', '..kssyyssk..', '...ksyysk...', '....kssk....', '.....kk.....'],
+    fire: ['.....kk.....', '....koko....', '...kooyok...', '..kooyyok...', '..koyyyook..', '.kooywwyok..', '.koywwwyook.', '.koywwwwyok.', '.kooyywyyok.', '..kooyyook..', '...kooook...', '....kkkk....']
+  };
+  function drawIc(cv, rows) {
+    const g = cv.getContext('2d'); g.clearRect(0, 0, 12, 12);
+    rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = PAL[r[x]]; if (c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } } });
+  }
+  drawIc(bAtk._ic, ICON.atk); drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
+  let abId = '';
+
+  // ---- feedback ----
+  const nope = b => { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); };
+  const flash = (b, cls) => { b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); };
+  const act = {
+    atk: () => { const r = soloAttack(); if (r === 'cd' || !r) nope(bAtk); else flash(bAtk, 'hit'); },
+    parry: () => { const r = soloParry(guideWants('parry')); if (r === 'parry') flash(bParry, 'good'); else nope(bParry); },
+    dodge: () => { const r = soloDodge(guideWants('dodge')); if (r === 'dodge' || r === 'perfect') flash(bDodge, 'good'); else nope(bDodge); },
+    ab: () => { if (!soloAbility()) nope(bAb); else flash(bAb, 'good'); }
+  };
+  // The guide's Parry / Dodge steps pause the game on a heavy hit; the first press there always counts (59j forgive).
+  const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
+
+  // ---- long press: what the button does ----
+  const tip = el('div', 'sb-tip'); tip.hidden = true; tip.setAttribute('role', 'tooltip'); tip.id = 'soloTip';
+  document.body.append(tip);
+  function infoOf(id) {
+    if (id !== 'ab') return INFO[id];
+    const a = typeof soloAbilityInfo === 'function' ? soloAbilityInfo() : null;
+    return a ? { name: a.name, desc: a.desc + ` Cooldown ${Math.round(a.cd)} s. Your hero casts it alone if you wait.`, key: 'F' } : null;
+  }
+  function showTip(b) {
+    const i = infoOf(b.dataset.act); if (!i) return;
+    tip.textContent = '';
+    tip.append(el('b', null, i.name), el('span', null, i.desc), el('small', null, `Key: ${i.key}`));
+    tip.hidden = false;
+    const r = b.getBoundingClientRect();
+    const w = Math.min(280, innerWidth - 16);
+    tip.style.width = w + 'px';
+    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+    tip.style.bottom = (innerHeight - r.top + 8) + 'px';
+    clearTimeout(tip._t); tip._t = setTimeout(() => { tip.hidden = true; }, 4000);
+  }
+  let press = null;
+  for (const b of [bAtk, bParry, bDodge, bAb]) {
+    b.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      const id = b.dataset.act;
+      press = { b, long: false, t: setTimeout(() => { if (press && press.b === b) { press.long = true; showTip(b); } }, 550) };
+      // Attack, Parry and Dodge act on the press (timing matters); the ability waits for the release (a long press is info)
+      if (id !== 'ab') act[id]();
+    });
+    const endPress = () => { if (!press || press.b !== b) return; clearTimeout(press.t); const long = press.long; press = null; if (!long && b.dataset.act === 'ab') act.ab(); };
+    b.addEventListener('pointerup', endPress);
+    b.addEventListener('pointerleave', () => { if (press && press.b === b) { clearTimeout(press.t); press = null; } });
+    b.addEventListener('pointercancel', () => { if (press && press.b === b) { clearTimeout(press.t); press = null; } });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+    // keyboard users: Enter / Space on a focused button
+    b.addEventListener('click', e => { if (e.detail === 0) act[b.dataset.act](); });
+  }
+  addEventListener('keydown', e => {
+    if (bar.hidden || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    const k = e.key.toLowerCase();
+    const id = k === 'a' || k === ' ' ? 'atk' : k === 's' ? 'parry' : k === 'd' ? 'dodge' : k === 'f' ? 'ab' : k === 'i' ? 'info' : '';
+    if (!id) return;
+    e.preventDefault();
+    if (id === 'info') { showTip(bAb); return; }
+    act[id]();
+  });
+
+  // ---- update (about 10 times a second) ----
+  const setRing = (b, left, max) => {
+    const f = max > 0 ? Math.max(0, Math.min(1, left / max)) : 0, v = f.toFixed(2);
+    if (b._cd !== v) { b._cd = v; b.style.setProperty('--cd', v); b.classList.toggle('cool', f > 0); }
+  };
+  const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
+  let t = 0;
+  function update() {
+    const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
+    if (bar.hidden === show) { bar.hidden = !show; if (!show) tip.hidden = true; }
+    if (!show) return;
+    const s = soloButtons();
+    if (s.ab.id !== abId) {
+      abId = s.ab.id; drawIc(bAb._ic, ICON[abId] || ICON.fire); putText(bAb._lb, s.ab.name || 'Ability');
+      const i = infoOf('ab'); bAb.setAttribute('aria-label', i ? `${i.name}. ${i.desc}` : 'Ability');
+    }
+    setRing(bAtk, s.atk.left, s.atk.max);
+    setRing(bParry, s.parry.left, s.parry.max);
+    setRing(bDodge, s.dodge.left, s.dodge.max);
+    setRing(bAb, s.ab.left, s.ab.max);
+    setN(bAb, s.ab.left > 0 ? String(Math.ceil(s.ab.left)) : '');
+    bAb.classList.toggle('ready', s.ab.ready);
+    bParry.classList.toggle('open', s.parry.open > 0);
+    // a heavy hit is winding up: Parry and Dodge light up (the stage ring shows when)
+    bParry.classList.toggle('live', s.tele === 'heavy');
+    bDodge.classList.toggle('live', !!s.tele && s.tele !== 'hard' && s.tele !== 'line' && s.tele !== 'dive' && s.tele !== 'sig' && s.tele !== 'heal' && s.tele !== 'summon');
+  }
+  bAtk.setAttribute('aria-label', 'Attack. ' + INFO.atk.desc);
+  bParry.setAttribute('aria-label', 'Parry. ' + INFO.parry.desc);
+  bDodge.setAttribute('aria-label', 'Dodge. ' + INFO.dodge.desc);
+  onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo buttons', e); } });
+  // the paused game (the guide) does not tick: keep the row fresh anyway
+  setInterval(() => { try { update(); } catch (e) {} }, 250);
+
+  // ---- floats for the answers (the stage draws them) ----
+  on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); else emit('float', { txt: 'PARRY', color: '#FFD27A', big: true, x: 0.3, y: 0.38 }); });
+  on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
+
+  // ---- "Choose your hero" at camp ----
+  if (soloOn()) registerSection('camp', {
+    id: 'solo-hero', title: 'Choose your hero',
+    mount(sec) {
+      sec.classList.add('solo-pick');
+      if (sec.parentNode) sec.parentNode.prepend(sec);   // first on the Camp view
+      const note = el('p', 'note', 'Switch any time, for free. Gold, gear and camp are shared. Each hero keeps their own level.');
+      const row = el('div', 'sp-row');
+      sec.append(note, row);
+      sec._cards = SOLO_ORDER.map(k => {
+        const h = SOLO_HEROES[k], R = ROSTER[k];
+        const b = el('button', 'sp-card'); b.type = 'button'; b.dataset.hero = k;
+        const cv = el('canvas', 'sp-fig px'); cv.width = 56; cv.height = 80;
+        const nm = el('b', null, R ? R.name.split(' ')[0] : k), sub = el('small', null, `${h.role} · ${h.weapon}`), lv = el('span', 'sp-lv', 'Lv 1');
+        b.append(cv, nm, sub, lv);
+        b._lv = lv; b._cv = cv;
+        b.addEventListener('click', () => {
+          if (soloHero() === k) return;
+          if (b.dataset.armed !== '1') { for (const c of sec._cards) c.dataset.armed = ''; b.dataset.armed = '1'; putText(b._lv, 'Tap again'); return; }
+          b.dataset.armed = '';
+          if (soloPick(k)) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
+          sec._up(true);
+        });
+        row.append(b);
+        return b;
+      });
+      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
+      sec._up = () => {
+        const lv = soloLevels(), cur = soloHero();
+        for (const b of sec._cards) {
+          const k = b.dataset.hero, on_ = k === cur;
+          b.setAttribute('aria-pressed', on_ ? 'true' : 'false');
+          b.classList.toggle('on', on_);
+          if (b.dataset.armed !== '1') putText(b._lv, on_ ? `Lv ${lv[k].L} · Playing` : `Lv ${lv[k].L}`);
+        }
+      };
+    },
+    update() { const s = $('sec-solo-hero'); if (s && s._up) s._up(); }
   });
 }
 
@@ -43521,6 +43836,78 @@ var classUI;
     return root;
   }
 
+  // SOLO1: the three starters (Wren, Tobin, Pip). Each plays a base class kit; the camp switches them later.
+  function buildSolo() {
+    root = el('div', 'create create-solo'); root.id = 'createScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
+    const inner = el('div', 'create-in');
+    const h = el('h1', null, 'Who carries the lantern?'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
+    const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
+    const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
+    const keys = SOLO_ORDER.filter(k => SOLO_HEROES[k] && ROSTER[k]);
+    if (!keys.includes(pick)) pick = keys[0];
+    const figs = [];
+    let begin = null;
+    const btns = keys.map(k => {
+      const H = SOLO_HEROES[k], R = ROSTER[k];
+      const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k; b.dataset.hero = k;
+      b.setAttribute('role', 'radio');
+      const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
+      const txt = el('div', 'ctxt');
+      const top = el('div', 'ctop'); top.append(el('b', null, R.name));
+      top.append(el('span', 'pip r-' + (R.role || 'striker'), H.role));
+      txt.append(top);
+      txt.append(el('div', 'cl-wt', `${R.title.replace(/^the /, 'The ')} · ${H.range} · ${H.weapon}`));
+      if (typeof BIOS === 'object' && BIOS[k]) txt.append(el('div', 'how', BIOS[k]));
+      const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab);
+      b.append(fig, txt);
+      b.addEventListener('click', () => select(k));
+      b.addEventListener('keydown', e => {
+        const i = keys.indexOf(k);
+        const d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return; e.preventDefault();
+        const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
+      });
+      cards.append(b);
+      cv.width = 56; cv.height = 100;
+      figs.push([cv, k]);
+      return b;
+    });
+    const built = root;
+    const nextFig = () => {
+      if (root !== built || !figs.length) return;
+      const [cv, k] = figs.shift();
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      if (figs.length) setTimeout(nextFig, 0);
+    };
+    requestAnimationFrame(() => setTimeout(nextFig, 0));
+    const first = k => ROSTER[k].name.split(' ')[0];
+    function select(k) {
+      pick = k;
+      if (begin) putText(begin, `Begin as ${first(k)}`);
+      for (const b of btns) {
+        const on_ = b.dataset.cls === k;
+        b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
+      }
+    }
+    begin = el('button', 'big forge create-go', ''); begin.type = 'button';
+    begin.addEventListener('click', () => {
+      let okd = false;
+      try { okd = soloPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      if (!okd) return;
+      try { save(); } catch (e) {}
+      if (typeof updatePortrait === 'function') updatePortrait();
+      close();
+      toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
+    });
+    inner.append(h, lede, warn, cards, begin);
+    root.append(inner);
+    select(pick);
+    root.addEventListener('keydown', trapTab);
+    return root;
+  }
+
   function showJoin(inner, key) {
     inner.textContent = '';
     const box = el('div', 'join');
@@ -43552,6 +43939,16 @@ var classUI;
 
   function open(want) {
     if (root) return;
+    if (typeof soloOn === 'function' && soloOn()) {
+      // SOLO1: one screen for a new game (and any save that has no hero yet); switching is at camp
+      if (want === 'switch' || !needsChoice()) return;
+      mode = 'new'; pick = (typeof soloHero === 'function' && soloHero()) || SOLO_ORDER[0];
+      lastFocus = document.activeElement;
+      document.body.append(buildSolo());
+      const sel = root.querySelector('.ccard[aria-checked="true"]');
+      (sel || root.querySelector('button')).focus();
+      return;
+    }
     if (want === 'switch') {
       if (!classes() || typeof clsSwitchInfo !== 'function' || !clsSwitchInfo().ok) return;
       mode = 'switch';
@@ -43628,6 +44025,7 @@ var classUI;
       return `${WEIGHT_NAME[d.weight]} · ${HOME_NAME[d.home]}`;
     },
     switchRow() {
+      if (typeof soloOn === 'function' && soloOn()) return null;   // SOLO1: heroes switch at camp
       const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null;
       if (!sw || !sw.ok) return null;
       const m = Math.max(1, Math.ceil(sw.left / 60e3));
@@ -43800,7 +44198,9 @@ function frame(now) {
   if (dt > 1) dt = 0;
   dt = Math.min(dt, 0.1);
   T += dt;
-  tick(dt); animate(dt); draw();
+  // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen
+  if (!(ONBOARD.paused || document.getElementById('createScreen'))) tick(dt);
+  animate(dt); draw();
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
   warmT -= dt; if (warmT <= 0) { warmT = 1; warmNextZone(); }
