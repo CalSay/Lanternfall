@@ -1076,6 +1076,8 @@ let resize, animate, draw, stageStats, warmScene;
   const trialOut = a => a.key !== 'hero' && typeof trialField === 'function' && !!trialField() && !trialField().includes(a.key);
   const actorA = a => a.alpha < 1 ? a.alpha : trialOut(a) ? 0.3 * rtA : rtA;
   function drawActor(a, cam) {
+    // HEROART1 hook: Wren, Tobin and Pip draw from the hand-drawn art (64h-hero-sprites.js); anyone else, the baked frames
+    if (a === hero && typeof heroArtStage === 'function' && heroArtStage(ctx, a, ax(a) - cam, actorA(a))) return;
     const f = frameOf(a); if (!f) return;
     const hx = ax(a) - cam, al = actorA(a);
     if (al <= 0.01) { a._f = null; return; }

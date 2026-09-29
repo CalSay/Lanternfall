@@ -1,7 +1,8 @@
 # Lanternfall art source
 
 Hero art made with the GPT key-pose pipeline (docs/design/art-pipeline.md). These are source files. The game
-build doesn't read this folder yet; wiring the heroes into the game is the art tool's job when work resumes.
+build reads the poses, palettes and Wren's fx through `node tools/heroart.mjs`, which writes `src/js/21y-data-heroart.js`
+(run it again after changing a pose); `src/js/64h-hero-sprites.js` ports the code layers from `animate.py`.
 
 | Hero | Class | Poses | Version | Notes |
 |---|---|---|---|---|

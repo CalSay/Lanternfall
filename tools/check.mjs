@@ -6314,6 +6314,101 @@ try {
     } finally { await browser.close(); }
   }
 } catch (e) { fail('solo (browser) crashed: ' + (e.stack || e)); }
+// ==== HEROART1: the hand-drawn hero art (tools/heroart.mjs -> 21y-data-heroart.js, 64h-hero-sprites.js) ====
+// Kept as one block at the end of the file (other tasks edit check.mjs too).
+console.log('hero art');
+try {
+  const HA = await import('./heroart.mjs');
+  const { pack, readPNG, HEROES: HA_HEROES } = HA;
+  const { coreFiles } = await import('./lib/core.mjs');
+  const dataSrc = fs.readFileSync(path.join(ROOT, 'src', 'js', '21y-data-heroart.js'), 'utf8');
+  assert(pack().src === dataSrc, 'hero art: src/js/21y-data-heroart.js is up to date with art/heroes (node tools/heroart.mjs)');
+  const bytes = Buffer.byteLength(dataSrc) + fs.statSync(path.join(ROOT, 'src', 'js', '64h-hero-sprites.js')).size;
+  assert(bytes < 140 * 1024, `hero art: the data and the module stay modest (${(bytes / 1024).toFixed(1)} KB)`);
+  // a stub canvas: records every drawImage and checks its numbers
+  const mkStub = red => `
+    const __hd = { n: 0, bad: [], put: 0 };
+    const __ctx = () => ({ globalAlpha: 1, fillStyle: '', imageSmoothingEnabled: false,
+      drawImage(c, ...a) { __hd.n++; if (!c || !(c.width > 0) || a.some(v => !Number.isFinite(v))) __hd.bad.push(a.join(',')); },
+      putImageData(img) { __hd.put++; if (!img || !img.data || img.data.length !== img.width * img.height * 4) __hd.bad.push('put'); },
+      createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4), width: w, height: h }),
+      fillRect(...a) { if (a.some(v => !Number.isFinite(v))) __hd.bad.push('fill ' + a.join(',')); } });
+    const document = { createElement: () => ({ width: 0, height: 0, getContext: __ctx, toDataURL: () => 'data:image/png;base64,AA' }), getElementById: () => null };
+    class ImageData { constructor(d, w, h) { if (d.length !== w * h * 4) throw new Error('ImageData size'); this.data = d; this.width = w; this.height = h; } }
+    const reduced = ${red};
+    let T = 0;   // the stage clock (62-stage owns it in the browser)
+  `;
+  const errs = [];
+  for (const red of [false, true]) {
+    const g = loadCoreRaw({ seed: 7, prelude: mkStub(red), files: coreFiles().concat(['64h-hero-sprites.js']) }), E = s => g.eval(s);
+    if (!red) {
+      // every pose decodes to exactly its box, inside the 224x192 canvas, and matches the source PNG pixel for pixel
+      const bad = [];
+      const info = JSON.parse(E('JSON.stringify({ w: HERO_ART.w, h: HERO_ART.h, ax: HERO_ART.ax, ay: HERO_ART.ay, pal: Object.fromEntries(Object.entries(HERO_ART.heroes).map(([k, h]) => [k, h.pal.length / 6])) })'));
+      assert(info.w === 224 && info.h === 192 && info.ax === 96 && info.ay === 132, 'hero art: 224x192 frames, feet on the anchor (96, 132)');
+      assert(['wren', 'tobin', 'pip'].every(id => info.pal[id] === 40), `hero art: each hero has its 40-colour palette (${JSON.stringify(info.pal)})`);
+      for (const [id, def] of Object.entries(HA_HEROES)) {
+        const pal = E(`HERO_ART.heroes.${id}.pal`);
+        for (const [key, file] of def.poses.map(p => [p[0], 'poses/' + p[1]]).concat((def.fx || []).map(p => [p[0], 'fx/' + p[1]]))) {
+          const d = E(`(() => { const d = heroArtDecode(${JSON.stringify(id)}, ${JSON.stringify(key)}); return d && { x0: d.x0, y0: d.y0, w: d.w, h: d.h, full: d.full, idx: Array.from(d.idx) }; })()`);
+          const png = readPNG(path.join(ROOT, 'art', 'heroes', id, file + '.png'));
+          if (!d || !d.full) { bad.push(`${id}/${key}: runs do not fill the box`); continue; }
+          if (file.startsWith('poses/') && (png.w !== 224 || png.h !== 192 || d.x0 < 0 || d.y0 < 0 || d.x0 + d.w > 224 || d.y0 + d.h > 192)) { bad.push(`${id}/${key}: outside 224x192`); continue; }
+          let diff = 0, maxI = 0;
+          for (let y = 0; y < png.h; y++) for (let x = 0; x < png.w; x++) {
+            const i = (y * png.w + x) * 4, a = png.rgba[i + 3] > 0, inBox = x >= d.x0 && y >= d.y0 && x < d.x0 + d.w && y < d.y0 + d.h;
+            const k = inBox ? d.idx[(y - d.y0) * d.w + (x - d.x0)] : 0; maxI = Math.max(maxI, k);
+            const hex = k ? pal.slice((k - 1) * 6, k * 6) : '';
+            const want = a ? ((png.rgba[i] << 16) | (png.rgba[i + 1] << 8) | png.rgba[i + 2]).toString(16).padStart(6, '0') : '';
+            if (hex !== want) diff++;
+          }
+          if (diff || maxI > pal.length / 6) bad.push(`${id}/${key}: ${diff} pixels differ from the PNG`);
+        }
+      }
+      assert(!bad.length, 'hero art: every pose and fx sprite decodes to its PNG exactly (palette index + runs)' + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+      // the viewer's frame counts and timings (art/viewer/hero-animations.html)
+      const st = JSON.parse(E('JSON.stringify({ wren: heroArtStates("wren"), tobin: heroArtStates("tobin"), pip: heroArtStates("pip") })'));
+      const want = { wren: { campIdle: [8, 160], fightIdle: [8, 160], attack: [10, 90], hurt: [6, 90], death: [16, 130] },
+        tobin: { campIdle: [8, 160], fightIdle: [8, 160], attack: [10, 80], ability: [6, 110], hurt: [6, 90], death: [16, 130] },
+        pip: { campIdle: [8, 160], fightIdle: [8, 130], attack: [10, 90], hurt: [6, 90], death: [16, 130] } };
+      const off = [];
+      for (const id in want) for (const k in want[id]) { const s = st[id][k]; if (!s || s.n !== want[id][k][0] || s.ms !== want[id][k][1]) off.push(`${id}.${k}`); }
+      for (const id in st) for (const k of ['fightIdle', 'attack', 'ability', 'campIdle', 'hurt', 'death', 'block']) if (!st[id][k]) off.push(`${id}.${k} missing`);
+      assert(!off.length, 'hero art: frame counts and timings match the approved viewer; every hero has all seven states' + (off.length ? ': ' + off.join(', ') : ''));
+      // the hero on the stage: SOLO1's soloHero() when it exists, else the class
+      const ids = E(`(() => { const out = []; for (const c of ['ranger', 'warden', 'lanternmage', 'lightkeeper']) { S.party.cls = c; out.push(heroArtId()); } return out.join(); })()`);
+      assert(ids === 'wren,tobin,pip,' || E('typeof soloHero === "function"'), `hero art: Ranger -> wren, Warden -> tobin, Lanternmage -> pip, others keep the old sprite (${ids})`);
+    }
+    // heroArtDraw: every hero, state and frame (and past the end of the one-shots) draws without throwing
+    const r = JSON.parse(E(`(() => { const g = document.createElement('canvas').getContext('2d'), out = { calls: 0, fails: [], n0: __hd.n };
+      for (const id of ['wren', 'tobin', 'pip']) { const st = heroArtStates(id);
+        for (const k in st) { for (let i = 0; i <= st[k].n; i++) { try { const inf = heroArtDraw(g, id, k, i * st[k].ms / 1000, 120.4, 180, { flameT: i * 0.37 });
+          out.calls++; if (!inf || !inf.f || !inf.f.c || !Number.isFinite(inf.x0) || inf.f.ox <= 0 || inf.f.oy <= 0) out.fails.push(id + '.' + k + ' ' + i); } catch (e) { out.fails.push(id + '.' + k + ' ' + i + ': ' + e.message); } } } }
+      out.draws = __hd.n - out.n0; out.bad = __hd.bad.slice(0, 3); return JSON.stringify(out); })()`));
+    assert(!r.fails.length && !r.bad.length && r.draws >= r.calls, `hero art${red ? ' (reduced motion)' : ''}: heroArtDraw draws every state and frame of all three heroes (${r.calls} frames, ${r.draws} draws)` + (r.fails.length ? ': ' + r.fails.slice(0, 3).join('; ') : '') + (r.bad.length ? ' bad args: ' + r.bad.join('; ') : ''));
+    // the stage adapter over a swing, a hit, a fall and a stand-up (a fake actor like 62-stage's)
+    const sa = JSON.parse(E(`(() => { const g = document.createElement('canvas').getContext('2d'), out = [];
+      for (const cls of ['ranger', 'warden', 'lanternmage']) { S.party.cls = cls; S.activity = 'fight';
+        const a = { st: 0, t: 0, flash: 0, down: false, hy: 150, dy: 0, _x: 0, _y: 0, _f: null }; let ok = true;
+        const step = (n, f) => { for (let i = 0; i < n; i++) { T += 0.05; f && f(i); if (!heroArtStage(g, a, 100, 1) || !(a._f || a.down)) ok = false; } };
+        step(5); step(1, () => { a.st = 1; }); step(3, i => { if (i === 2) a.st = 2; }); step(20, () => { a.st = 0; });
+        step(1, () => { a.flash = 0.08; }); step(10, () => { a.flash = Math.max(0, a.flash - 0.05); });
+        emit('ability', { cls: 'solo' }); step(1, () => { a.st = 1; }); step(20, i => { a.st = i < 2 ? 1 : 0; });
+        step(1, () => { a.down = true; }); step(40); step(1, () => { a.down = false; }); step(5);
+        S.activity = 'gather'; step(5); S.activity = 'fight';
+        out.push(ok && Number.isFinite(a._x) && Number.isFinite(a._y)); }
+      S.party.cls = 'lightkeeper'; out.push(heroArtStage(g, { st: 0, flash: 0, down: false, hy: 150, dy: 0 }, 100, 1) === (typeof soloHero === 'function' && !!soloHero()));
+      return JSON.stringify(out); })()`));
+    assert(sa.every(Boolean), `hero art${red ? ' (reduced motion)' : ''}: the stage hook plays idle, attack, hurt, ability, death and camp for each hero and sets _x, _y, _f; other classes fall back (${sa.join(',')})`);
+    errs.push(...g.errors);
+  }
+  const src64 = fs.readFileSync(path.join(ROOT, 'src', 'js', '64h-hero-sprites.js'), 'utf8');
+  assert(/HEROART1 hook/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '62-stage.js'), 'utf8')) && /heroArtStage\(ctx, a, ax\(a\) - cam, actorA\(a\)\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '62-stage.js'), 'utf8')), 'hero art: 62-stage drawActor calls heroArtStage for the hero (the one hook)');
+  assert(!/localStorage|registerState/.test(src64) && !/\b(document|window|canvas)\b/.test(dataSrc.replace(/\/\/.*$/gm, '')), 'hero art: no save field or storage; the data file is pure data');
+  assert(!errs.length, 'hero art: no errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('hero art crashed: ' + (e.stack || e)); }
+// ==== end HEROART1 ====
+
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
