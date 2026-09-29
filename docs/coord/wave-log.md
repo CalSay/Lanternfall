@@ -1022,3 +1022,14 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   damage floor 1.4; mid-trial reload returns to fighting). File name: legendaries L3 moves to 59l-legend-combat
   (59e now taken by classes). Preview/Netlify: next [deploy] at the 09:38 check-in.
 - LAUNCHED S6 (opus, active combat, sub-tasks S6-A..H) and ECON-A (opus, gold curve + prices + save key bump to v2). Note for the preview sed: once ECON-A lands, the key becomes lanternfall.save.v2.
+- MERGED ECON-A (pushed): 21w-data-econ.js, 55-econ.js; every price on the new curve; crit damage replaces
+  non-gear gold gain (Precision, Loaded Die, Edge); save key now lanternfall.save.v2 (preview sed must replace
+  v2). COORDINATOR SIGN-OFF: Blade base 10 (not 5; onboarding pace). OPEN for BAL-E: promotions at 300 foes a
+  rank slow continuous play (zone 12 at 2 h vs 16); EC2 income high on Coast/Emberwaste; EC5/EC6 gold banks
+  and Hearth 2 at 72 h (target 2-6 h: materials, not gold?); EC7 crit damage +26% at the R1 boss (6-14%).
+  sim 11/22 -> 11/22.
+- MERGED S6 locally (commit 3d531c4, NOT pushed): S6-A..E, Deepwell part of F, G checks/perf, H copy.
+  Remaining: 59j raid local fight, 56d lean counters, sim --cbtap/--cbharness, 13d art, half-size swarm
+  sprites. Its sim alone: 12/22 -> 14/22 but P1 slower (day 9.6-12.3) and the Lanternmage walls at Silas.
+  Merge conflicts with ECON-A resolved (boss/pack gold via the new curve + ledger). 2 S6 checks fail on the
+  new economy (a hard-coded pre-ECON gold baseline; idle XP NaN): fixer agent running; push after it passes.
