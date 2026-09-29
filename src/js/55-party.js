@@ -4,8 +4,13 @@
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Contract: docs/design/stage-a-plan.md ("State (A1)", "Class data and actions (A1)").
 //
+// Classes 2.0 S2: the kits run by legacy kit key (S.party.cls: 'warden' = the Warrior's kit, 'lanternmage',
+// 'ranger', 'lightkeeper' = a Lanternmage on the Lightkeeper's path); the class itself is S.cls (55-classes.js)
+// and the numbers come from 24-data-classes.js. Grit (was guard stacks) also cuts damage taken
+// (heroGritDr, read by 59-combat); Lantern Flare Burns the pack; the Ranger's base crit is 15% (critBase).
+//
 // Exposed names: HERO_CLASSES, COMP_CHAR_KEYS, CHAR_ROLE, chooseClass, castAbility,
-// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField,
+// classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField, heroGritDr,
 // and the stage HUD hooks unitHp, unitCd, bossTelegraph (Stage C combat replaces them).
 // Everything else is private (inside the block below, or prefixed pty).
 //
@@ -14,36 +19,21 @@
 // Hero-only damage scaling (Lightkeeper x0.2) is applied as 'dmg' x k and 'party' x 1/k,
 // so companions are unaffected.
 
-const HERO_CLASSES = {
-  warden: {
-    name: 'Warden', role: 'tank', row: 'front', pitch: 'Stand in front. Nothing gets past.',
-    how: 'Tap a foe for a heavy hit. It turns on you, and each hit adds a guard stack: +3% damage for 10s, up to 5.',
-    tapName: 'Heavy hit',
-    ability: { name: 'Shield Wall', desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.', cd: 30 },
-    aura: 'Tanks in your party get +40% health and +20 armour.'
-  },
-  lanternmage: {
-    name: 'Lanternmage', role: 'caster', row: 'back', pitch: 'Burn the whole pack at once.',
-    how: 'Tap a foe to plant an Ember on it, up to 5. Lantern Flare sets them all off.',
-    tapName: 'Ember',
-    ability: { name: 'Lantern Flare', desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers.', cd: 25 },
-    aura: 'Casters in your party get +30% attack.'
-  },
-  ranger: {
-    name: 'Ranger', role: 'striker', row: 'mid', pitch: 'Find the weak spot. Hit it hard.',
-    how: 'Tap a foe to mark it for 8s. Your whole party deals 25% more to it, and you crit more often.',
-    tapName: 'Focus',
-    ability: { name: 'Volley', desc: '10 arrows of 1.5x your attack, then your party attacks 50% faster for 8s.', cd: 30 },
-    aura: 'Strikers in your party get +10% crit chance and +50% crit damage.'
-  },
-  lightkeeper: {
-    name: 'Lightkeeper', role: 'support', row: 'back', pitch: 'Keep them standing.',
-    how: 'You hit softly, but your companions deal the damage you give up, and you heal your party. Tap to bless them (+20% damage for 6s, up to 3 times) and heal the most hurt.',
-    tapName: 'Blessing',
-    ability: { name: 'Rally Hymn', desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.', cd: 40 },
-    aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.'
+// The legacy view of the classes (classes-2 8.3): the four kit keys every reader written before S2 uses
+// (S.party.cls, item kinds, powers, boons, Bonds), built from 24-data-classes.js. 'warden' is the
+// Warrior's kit, 'lanternmage' the Lanternmage's, 'lightkeeper' a Lanternmage on the Lightkeeper's path.
+const HERO_CLASSES = (() => {
+  const A = CLASS_ABILITIES, out = {};
+  for (const b of ['warrior', 'mage', 'ranger']) {   // the legacy key order (LEG_CLASSES and older readers)
+    const d = CLASS_DEFS[b], tap = A[d.tap], ab = A[d.ab1];
+    out[d.kit] = { name: d.name, base: b, role: d.role, row: d.home, pitch: d.pitch, how: d.how, tapName: tap.name,
+      ability: { name: ab.name, desc: ab.desc, cd: ab.cd }, aura: d.aura.text };
   }
-};
+  const pr = EVO_NAMES.priest, bl = A.ember.var.priest, hy = A.flare.var.priest;
+  out.lightkeeper = { name: pr.name, base: 'mage', evo: 'priest', role: pr.role, row: 'back', pitch: pr.pitch, how: bl.desc, tapName: bl.name,
+    ability: { name: hy.name, desc: hy.desc, cd: hy.cd }, aura: pr.aura };
+  return out;
+})();
 
 // Old S.comp index -> companion character key (stage-a-plan.md).
 const COMP_CHAR_KEYS = ['tobin', 'wren', 'pip', 'aldric', 'kestrel', 'oriel', 'elowen'];
@@ -57,7 +47,7 @@ const CHAR_ROLE = {
 let chooseClass, castAbility, classTap, useMirror, toggleAutoCast, abilityInfo, partyBuffs, partyRefreshField;
 // Stage C / Constellations helpers: heroGuardN() live guard stacks, partyHymnOn() Rally Hymn up,
 // partyClock() this file's clock (mob.markUntil is on it), hawkCrit() the Hawk Eye first-hit crit.
-let heroGuardN, partyHymnOn, partyClock, hawkCrit;
+let heroGuardN, heroGritDr, partyHymnOn, partyClock, hawkCrit;
 // Stage HUD hooks (read by 62-stage.js about 10 times a second; Stage C combat fills them in).
 //   unitHp(key)     -> { hp, max, shield } | null   key: 'hero' or a character key. Party HP is not
 //                      simulated yet, so every unit is full. null = draw no bar.
@@ -76,16 +66,18 @@ let unitHp, unitCd, bossTelegraph;
 
   // Starter per class: character key and the old S.comp slot it uses for the maths.
   const STARTER = { warden: ['wren', 1], lanternmage: ['tobin', 0], ranger: ['tobin', 0], lightkeeper: ['bram', 0] };
-  // Tuning knobs (Stage A interim).
+  // Tuning knobs (Stage A interim). S2: the class numbers come from 24-data-classes.js (CLASS_ABILITIES,
+  // CLS_TUNE); the knob names stay (stars and Deepwell boons tune them through bonus('tune:<knob>')).
+  const A = CLASS_ABILITIES, G = CLS_TUNE.grit;
   const T = {
     heroMul: { warden: 1, lanternmage: 1, ranger: 1, lightkeeper: 0.2 },
-    tapMul: { warden: 1.3, lanternmage: 1.3, ranger: 1, lightkeeper: 1 },
-    guard: 0.03, guardMax: 5, guardT: 10,
-    embersMax: 5, flare: 20, flarePerEmber: 0.3,
+    tapMul: { warden: A.heavy.coef, lanternmage: A.ember.coef, ranger: A.focus.coef, lightkeeper: A.ember.var.priest.coef },
+    guard: G.v, guardMax: G.max, guardT: G.t,   // Grit (was "guard stacks"): +3% damage and 1% less taken each
+    embersMax: CLS_TUNE.embers.max, flare: A.flare.fx[1][1], flarePerEmber: A.flare.fx[1][2].perStack,
     markT: 8, mark: 1.25, markCrit: 1.5,
     volleyHits: 10, volleyAtk: 1.5, volleyT: 2, haste: 1.5, hasteT: 8,
     bless: 0.2, blessMax: 3, blessT: 6, lkAura: 1.25, lkShare: 1,   // (F1, formation.md 4.4) lkAura was 1.1: a support is half the field now
-    wall: 1.3, wallT: 6, wallPause: 3, hymn: 1.4, hymnT: 8,
+    wall: 1 + A.shieldwall.emp, wallT: A.shieldwall.t, wallPause: 3, hymn: 1.4, hymnT: 8,
     autoIdle: 4, autoEvery: 2, autoEff: 0.5, autoCd: 0, autoCastZone: 10, mirrorZone: 36, mirrorChance: 0.02
   };
 
@@ -107,9 +99,9 @@ let unitHp, unitCd, bossTelegraph;
   const P = () => S.party;
   const cls = () => P().cls && HERO_CLASSES[P().cls] ? P().cls : null;
   const stackSum = l => { let s = 0; for (const b of l) if (b.until > clock) s += b.v; return s; };
-  const pushStack = (l, v, dur, max) => {
+  const pushStack = (l, v, dur, max, e) => {
     for (let i = l.length - 1; i >= 0; i--) if (l[i].until <= clock) l.splice(i, 1);
-    l.push({ until: clock + dur, v });
+    l.push({ until: clock + dur, v, e: e == null ? 1 : e });   // e: the stack's strength (auto-taps 0.5)
     while (l.length > max) l.shift();
   };
   const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || S.comp.some(n => n > 0);
@@ -154,12 +146,19 @@ let unitHp, unitCd, bossTelegraph;
   }
 
   // ---- class choice ----
-  chooseClass = function (key, heroName) {
+  // key: a base class ('warrior' | 'ranger' | 'mage') or a legacy class key (tools, old callers: 'lightkeeper'
+  // is a Lanternmage on the Lightkeeper's path). No rules here: the picker goes through chooseBase (55-classes).
+  // opts: { now, free } (free: the one free switch; 55-classes counts it).
+  chooseClass = function (key, heroName, opts) {
     ensureInit();
-    if (!HERO_CLASSES[key]) return false;
-    const p = P(), first = !p.cls && !p.chosen, from = p.cls;
+    const r = clsResolve(key);
+    if (!r || !HERO_CLASSES[r.kit]) return false;
+    const p = P(), first = !p.cls && !p.chosen, from = p.cls, o = opts || {};
     if (typeof heroName === 'string') { const n = heroName.trim().slice(0, 16); if (n) S.name = n; }
-    p.cls = key; p.chosen = true; p.abilityCd = 0; readyFor = 0;
+    // A base id keeps a granted path on the same base; a legacy key names its path.
+    const evo = LEGACY_CLS[key] ? r.evo : undefined;
+    key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
+    p.chosen = true; p.abilityCd = 0; readyFor = 0;
     guard = []; bless = []; volleyLeft = 0;
     toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
     if (first && p.newGame) {
@@ -171,7 +170,8 @@ let unitHp, unitCd, bossTelegraph;
       }
     }
     partyRefreshField(true);
-    emit('classChosen', { cls: key, from });
+    const lc = lbClass();
+    emit('classChosen', { cls: key, from, base: lc.base, evo: lc.evo, free: !!o.free });
     return true;
   };
 
@@ -206,6 +206,11 @@ let unitHp, unitCd, bossTelegraph;
       if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
       if (!world && typeof stTagNext === 'function') stTagNext('ab');   // S1: an ability (the reaction window's x1.25)
       heroSwing(heroAtk() * tn('flare') * (1 + tn('flarePerEmber') * n), false);
+      // S2 (classes-2 1.4): the Flare sets every foe in the pack burning (Burn spreads when one dies).
+      if (!world && typeof stApply === 'function' && typeof combatFoes === 'function' && combatOn()) {
+        const pw = heroAtk();
+        for (const f of combatFoes()) if (f && !f.dead) stApply(f, 'burn', 1, pw, 0);
+      }
       // Everburn: Flare plants 2 new Embers after it goes off.
       if (ks('everburn')) { const em = tn('embersMax'), k = STAR_KS.everburn.plant; if (world) worldEmbers = Math.min(em, worldEmbers + k); else if (mob) mob.embers = Math.min(em, (mob.embers || 0) + k); }
       emit('shake', 0.3);
@@ -242,7 +247,7 @@ let unitHp, unitCd, bossTelegraph;
     const out = [], add = (id, name, until, stacks) => { if (until > clock) out.push({ id, name, left: until - clock, stacks }); };
     const live = l => l.filter(b => b.until > clock);
     const g = live(guard), b = live(bless);
-    if (g.length) add('guard', 'Guard', Math.max(...g.map(x => x.until)), g.length);
+    if (g.length) add('guard', 'Grit', Math.max(...g.map(x => x.until)), g.length);
     if (b.length) add('bless', 'Blessing', Math.max(...b.map(x => x.until)), b.length);
     add('wall', 'Shield Wall', wallUntil); add('hymn', 'Rally Hymn', hymnUntil); add('haste', 'Volley haste', hasteUntil);
     if (mob && !mob.dead && mob.markUntil) add('mark', 'Focus', mob.markUntil);
@@ -269,7 +274,7 @@ let unitHp, unitCd, bossTelegraph;
       kind = 'heavy'; heavyN++;
       // Unbroken: while heavy hits land at least every 3s, the stacks never fall off.
       if (ks('unbroken')) { const hold = clock + STAR_KS.unbroken.holdSecs; for (const g of guard) if (g.until < hold) g.until = hold; }
-      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'));
+      pushStack(guard, tn('guard') * eff, tn('guardT'), tn('guardMax'), eff);
       if (ks('crush') && heavyN % STAR_KS.crush.every === 0) tapX = STAR_KS.crush.mult;   // Crushing Blow
       if (ks('bastion') && P().abilityCd > 0) P().abilityCd = Math.max(0, P().abilityCd - STAR_KS.bastion.cdPerHeavy);
     }
@@ -329,6 +334,10 @@ let unitHp, unitCd, bossTelegraph;
   addModifier('crit', () => cls() === 'ranger' && marked() && !ks('pack') ? T.markCrit : 1);
   addModifier('critDmg', () => cls() === 'ranger' && marked() && ks('deadeye') ? STAR_KS.deadeye.critMult : 1);
   heroGuardN = () => { let n = 0; for (const g of guard) if (g.until > clock) n++; return n; };
+  // Grit's damage taken (S2, classes-2 1.2): 1% less per Grit, at the stack's strength (59-combat reads it).
+  heroGritDr = () => { if (cls() !== 'warden') return 0; let e = 0; for (const g of guard) if (g.until > clock) e += g.e; return CLS_TUNE.grit.dr * e; };
+  // The Ranger's crit (S2, classes-2 1.1): 15% base (8% + 7%), before Keen Eye on a marked foe.
+  addBonus('critBase', () => cls() === 'ranger' ? CLS_TUNE.rangerCrit : 0);
   partyHymnOn = () => hymnUntil > clock;
   partyClock = () => clock;
   // Hawk Eye: the hero's first hit on each foe always crits (50-sim heroSwing asks once per swing).

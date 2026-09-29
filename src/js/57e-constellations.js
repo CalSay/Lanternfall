@@ -37,7 +37,7 @@ const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'guardT', 'wall', 'wallT', 'wallP
   'markT', 'mark', 'volleyHits', 'hasteT', 'blessT', 'blessMax', 'bless', 'hymn', 'hymnT', 'hymnFloor', 'lkShare', 'lkAura', 'autoEff', 'autoCd', 'charges'];
 // Numbers the combat code should use for each ks flag (the text on the star says the same).
 const STAR_KS = {
-  unbroken: { holdSecs: 3 },                  // guard stacks never fall off while a heavy hit lands at least every 3s
+  unbroken: { holdSecs: 3 },                  // Grit (was guard stacks) never falls off while a heavy hit lands at least every 3s
   crush: { every: 5, mult: 3 },               // every 5th heavy hit deals x3
   challenger: { taunt: true },                // [C] taps taunt for 2s, -20% damage taken while taunting
   bastion: { cdPerHeavy: 1, wallPauseFull: true }, // each heavy hit takes 1s off Shield Wall; the Wall stops the boss timer for its whole length
@@ -61,22 +61,25 @@ const STAR_KS = {
   ages: { blessEvery: 2 }                     // while the Hymn is up Blessings do not fade; +1 Blessing every 2s
 };
 
-// ---- the four maps ----
+// ---- the maps ----
 // Each arm: [name, stars 1..8]; star: [name, text, fx, p, cText?]. Slots 3 and 6 are notables (2
 // points), slot 8 the keystone (3 points), the rest minors (1 point).
+// S2 (classes-2 4.1-4.4): one map per base class, keyed warrior / ranger / mage (today's Warden and
+// Lanternmage maps, same ids and effects, copied once from the legacy keys). The legacy Lightkeeper map
+// (legacy: 1) stays live for a Lanternmage on the Lightkeeper's path until S3 moves it into that ring.
 const STAR_MAPS = {
-  warden: {
-    hearth: "Warden's Oath", color: '#3E63C9',
+  warrior: {
+    name: 'Warrior', hearth: "Warrior's Oath", color: '#3E63C9',
     arms: [
       ['Bulwark', [
-        ['Long Guard', 'Guard stacks last 2s longer.', { t: { guardT: 2 } }, 1.004],
-        ['Firm Stance', 'Each guard stack gives +0.4% more damage.', { t: { guard: 0.004 } }, 1.01],
-        ['Deep Guard', 'Guard cap +2.', { t: { guardMax: 2 } }, 1.02],
+        ['Lasting Grit', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
+        ['Firm Stance', 'Each Grit gives +0.4% more damage.', { t: { guard: 0.004 } }, 1.01],
+        ['Deep Grit', 'Grit cap +2.', { t: { guardMax: 2 } }, 1.02],
         ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
         ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more guard.'],
-        ['Long Guard II', 'Guard stacks last 2s longer.', { t: { guardT: 2 } }, 1.004],
-        ['Unbroken', 'Guard stacks never fall off while you land a heavy hit at least every 3s. Guard cap +5, but each stack gives 1% less.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each guard stack also gives 2 armour.']
+        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more Grit.'],
+        ['Lasting Grit II', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
+        ['Unbroken', 'Your Grit never falls off while you land a heavy hit at least every 3s. Grit cap +5, but each Grit gives 1% less damage.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each Grit also gives 2 armour.']
       ]],
       ['Vanguard', [
         ['Heavy Arm', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
@@ -101,8 +104,8 @@ const STAR_MAPS = {
     ],
     crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
   },
-  lanternmage: {
-    hearth: 'First Spark', color: '#8A4FC9',
+  mage: {
+    name: 'Lanternmage', hearth: 'First Spark', color: '#8A4FC9',
     arms: [
       ['Kindle', [
         ['More Tinder', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.012],
@@ -138,7 +141,7 @@ const STAR_MAPS = {
     crown: ['Everburn', 'Each Ember burns its foe for 0.1x your attack every second, and Flare plants 2 new Embers after it goes off.', { ks: 'everburn' }, 1.035]
   },
   ranger: {
-    hearth: 'Keen Eye', color: '#3E8A4E',
+    name: 'Ranger', hearth: 'Keen Eye', color: '#3E8A4E',
     arms: [
       ['Hunt', [
         ['Long Mark', 'Focus lasts 2s longer.', { t: { markT: 2 } }, 1.006],
@@ -174,7 +177,7 @@ const STAR_MAPS = {
     crown: ['Rain of Arrows', 'Every 10th tap fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
   },
   lightkeeper: {
-    hearth: 'Small Light', color: '#F2C14E',
+    name: 'Lightkeeper', legacy: 1, hearth: 'Small Light', color: '#F2C14E',
     arms: [
       ['Dawn', [
         ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
@@ -233,7 +236,9 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   starEffects, starPowerEst, starBest, starText, starValidate;
 
 {
-  registerState('stars', { v: 1, maps: {}, seen: 0 });
+  // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
+  // into them once (legacy keys stay untouched in the save).
+  registerState('stars', { v: 2, maps: {}, seen: 0 });
   const T = STAR_TUNE;
   const ST = () => S.stars;
   const KIND_COST = { minor: 1, notable: 2, key: 3, bridge: 1, crown: 3, hearth: 0 };
@@ -277,7 +282,8 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   starPoints = () => Math.floor((S.L || 1) / T.every) + T.lanternPts * greatLanternsLit();
 
   // ---- state ----
-  starCls = () => S.party && S.party.cls && STAR_MAPS[S.party.cls] ? S.party.cls : null;
+  // The map of the kit that runs (55-classes lbKit: Warrior, Ranger, Lanternmage; a Lightkeeper keeps its map).
+  starCls = () => { const k = typeof lbKit === 'function' ? lbKit() : S.party && S.party.cls, m = k && CLS_STAR_MAP[k]; return m && STAR_MAPS[m] ? m : null; };
   function mapRec(cls, make) {
     const m = ST().maps;
     let r = m[cls];
@@ -419,6 +425,10 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const st = ST();
     if (!st.maps || typeof st.maps !== 'object' || Array.isArray(st.maps)) st.maps = {};
     if (!(st.seen >= 0)) st.seen = 0;
+    if (!(st.v >= 2)) {
+      for (const to in CLS_STAR_FROM) { const from = st.maps[CLS_STAR_FROM[to]]; if (from && typeof from === 'object' && !st.maps[to]) st.maps[to] = JSON.parse(JSON.stringify(from)); }
+      st.v = 2;
+    }
     for (const k of Object.keys(st.maps)) { if (!STAR_MAPS[k]) continue; starValidate(k); }
     bump();
   }

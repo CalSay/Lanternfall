@@ -999,7 +999,7 @@ try {
   assert(E('S.items.length') === cnt && E('S.items.map(i => i.id).join()') === ids0 && E(`itemById(${up}).rt === "staff" && itemById(${helm}).rt === "helm" && itemById(${up}).plus === 4`), 'class change: same ids, count, +N; rt keeps the original kind');
   const hd1 = E('(() => { SYN_TUNE.on = 0; const d = heroDps(); SYN_TUNE.on = 1; return d; })()');
   assert(E('JSON.stringify(gear())') === gear0 && hd1 >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${hd1.toFixed(1)}, synergies aside)`);
-  assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
+  assert(toasts.includes('Your old helm was reforged into Warrior gear.') && toasts.includes('Your Lanternmage gear was reforged into Warrior gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
   E(`S.skills.ench.lv = ${RQ(3) - 1}`);
   assert(E('canCraft("starChart", 3).why') === `Needs Enchanting ${RQ(3)}`, `Star Chart needs Enchanting ${RQ(3)}`);
@@ -2302,13 +2302,13 @@ try {
   const errs = [];
   // points from hero levels and Great Lanterns
   const g = loadCore({ seed: 41 }), E = s => g.eval(s);
-  assert(E('JSON.stringify(S.stars)') === '{"v":1,"maps":{},"seen":0}', 'new game: S.stars defaults');
+  assert(E('JSON.stringify(S.stars)') === '{"v":2,"maps":{},"seen":0}', 'new game: S.stars defaults');
   const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
   assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
   assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
-  assert(E('Object.values(STAR_MAPS).every((_, i) => true) && ["warden","lanternmage","ranger","lightkeeper"].every(c => starMap(c).order.length === 31 && starMap(c).edges.length === 33)'), 'four maps of 31 stars (Hearthstar, 3 arms of 8, 5 ring stars, crown)');
-  assert(E('["warden","lanternmage","ranger","lightkeeper"].every(c => { const m = starMap(c); return Object.values(m.stars).filter(s => s.kind === "key" || s.kind === "crown").length === 4 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44; })'), 'each map: 4 keystones, 44 points to light it all');
-  assert(E('["warden","lanternmage","ranger","lightkeeper"].every(c => { const st = Object.values(starMap(c).stars); for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (Math.hypot(st[i].pos[0] - st[j].pos[0], st[i].pos[1] - st[j].pos[1]) < 44) return false; return true; })'), 'stars sit at least 44 map units apart (clean taps at 360px)');
+  assert(E('Object.values(STAR_MAPS).every((_, i) => true) && ["warrior","mage","ranger","lightkeeper"].every(c => starMap(c).order.length === 31 && starMap(c).edges.length === 33)'), 'four maps of 31 stars (3 classes and the legacy Lightkeeper map) (Hearthstar, 3 arms of 8, 5 ring stars, crown)');
+  assert(E('["warrior","mage","ranger","lightkeeper"].every(c => { const m = starMap(c); return Object.values(m.stars).filter(s => s.kind === "key" || s.kind === "crown").length === 4 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44; })'), 'each map: 4 keystones, 44 points to light it all');
+  assert(E('["warrior","mage","ranger","lightkeeper"].every(c => { const st = Object.values(starMap(c).stars); for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (Math.hypot(st[i].pos[0] - st[j].pos[0], st[i].pos[1] - st[j].pos[1]) < 44) return false; return true; })'), 'stars sit at least 44 map units apart (clean taps at 360px)');
   // allocation rules
   E('chooseClass("warden"); S.L = 30; S.maxZone = 20; S.stars.maps = {}');
   assert(E('starPoints()') === 10 && E('starFree()') === 10, 'warden at level 30: 10 points');
@@ -2357,10 +2357,10 @@ try {
   assert(E('starUseLayout(0)') && E('starLayout().lit.join()') === 'a0s1,a0s2', 'back to Farm: its stars are kept');
   E('save()');
   const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starLayouts("warden")[1].lit.join()') === 'a1s1', 'layouts survive save and load');
+  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starLayouts("warrior")[1].lit.join()') === 'a1s1', 'layouts survive save and load');
   // Mirror of Embers: another class starts empty, warden keeps its map
   E('S.party.chosen = false; chooseClass("ranger")');
-  assert(E('starLayout().lit.length') === 0 && E('starEffects().m.dmg') === undefined && E('starLayouts("warden")[0].lit.length') === 2, 'changing class keeps each class\'s map');
+  assert(E('starLayout().lit.length') === 0 && E('starEffects().m.dmg') === undefined && E('starLayouts("warrior")[0].lit.length') === 2, 'changing class keeps each class\'s map');
   // Next Up
   E('S.onboard.t = 5; onboardReveal("stars")');
   const gl = E('(topGoals(60, { sticky: false }).find(x => x.id === "stars") || {}).label');
@@ -2372,7 +2372,7 @@ try {
     const o = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }) });
     const b = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }), files: noStars });
     const raw = JSON.parse(rawOf(f)), want = Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35);
-    assert(o.eval('JSON.stringify(S.stars)') === '{"v":1,"maps":{},"seen":0}' && o.eval('starPoints()') === want, `${f}: empty star maps and the ${want} points it earned`);
+    assert(o.eval('JSON.stringify(S.stars)') === '{"v":2,"maps":{},"seen":0}' && o.eval('starPoints()') === want, `${f}: empty star maps and the ${want} points it earned`);
     assert(Math.abs(o.eval('totalDps()') / b.eval('totalDps()') - 1) < 1e-12, `${f}: totalDps unchanged`);
     errs.push(...o.errors);
   }
@@ -2380,12 +2380,12 @@ try {
   bad.stars = { v: 1, maps: { warden: { layouts: [{ name: 'X', lit: ['a0s2', 'zzz', 'a0s1', 'a0s1', 'a0s3', 'a0s4'] }], active: 5 }, nope: {} }, seen: 2 };
   bad.party = Object.assign({}, bad.party || {}, { cls: 'warden', chosen: true });
   const v = loadCore({ seed: 44, storage: memoryStorage({ [KEY]: JSON.stringify(bad) }) });
-  assert(v.eval('S.stars.maps.warden.layouts.length === 2 && S.stars.maps.warden.active === 0 && S.stars.maps.nope !== undefined'), 'a broken map gets 2 layouts and a valid active one (unknown classes kept)');
-  assert(v.eval('starLayouts("warden")[0].lit.join()') === 'a0s2,a0s1' && v.eval('starSpent("warden") <= starPoints()'), `over-budget layout trimmed from the tips to fit ${v.eval('starPoints()')} points (${v.eval('starLayouts("warden")[0].lit.join()')})`);
+  assert(v.eval('S.stars.maps.warrior.layouts.length === 2 && S.stars.maps.warrior.active === 0 && S.stars.maps.warden.active === 5 && S.stars.maps.nope !== undefined'), 'a broken map gets 2 layouts and a valid active one (the legacy warden map is copied once and left untouched; unknown classes kept)');
+  assert(v.eval('starLayouts("warrior")[0].lit.join()') === 'a0s2,a0s1' && v.eval('starSpent("warrior") <= starPoints()'), `over-budget layout trimmed from the tips to fit ${v.eval('starPoints()')} points (${v.eval('starLayouts("warrior")[0].lit.join()')})`);
   errs.push(...v.errors.filter(e => !/toast/.test(e)));
   // power: the best build stays inside the pace caps (docs/design/pacing.md; owner wants a slower game)
   const out = [];
-  for (const c of ['warden', 'lanternmage', 'ranger', 'lightkeeper']) {
+  for (const c of ["warrior", "mage", "ranger", "lightkeeper"]) {
     const r = [6, 17, 28].map(p => E(`starBest("${c}", ${p}).p`));
     out.push(`${c} ${r.map(x => '+' + ((x - 1) * 100).toFixed(0) + '%').join('/')}`);
     assert(r[0] <= 1.15 && r[1] <= 1.25 && r[2] <= 1.35, `best build at 6/17/28 points (L20/L40/L60) within +15/+25/+35%: ${out[out.length - 1]}`);
@@ -4695,6 +4695,7 @@ try {
     const nav = JSON.parse(E('JSON.stringify(S.nav)'));
     const sk = E('skillOf(S.node.kind)');
     const cur = JSON.parse(E('JSON.stringify(S)')); delete cur.party; const o2 = Object.assign({}, old); delete o2.party;   // the party's own migrations (F1) are checked in their sections
+    if (o2.stars) o2.stars = Object.assign({}, o2.stars, { v: cur.stars.v });   // S2: the star maps' v 1 -> 2 (checked in 'classes')
     const d = subsetDiff(o2, cur);
     assert(nav && nav.v === 1 && Array.isArray(nav.recent) && nav.recent.length === 0 && nav.last && ['mine', 'wood', 'forage'].every(k => k in nav.last)
       && (!nav.last[sk] || (nav.last[sk].kind === old.node.kind && nav.last[sk].t === old.node.t)) && !d && !g.errors.length,
@@ -5058,6 +5059,7 @@ try {
       const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
       const h = loadCore({ seed: 75, storage: memoryStorage({ [KEY]: raw }) }), H = s => h.eval(s);
       const cmp = JSON.parse(raw); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
+      if (cmp.stars) delete cmp.stars.v;   // S2: the star maps' v 1 -> 2 (checked in 'classes')
       const d = subsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
       H('S.activity = "fight"; spawn()');
       for (let i = 0; i < 600; i++) h.fn.tick(0.1);
@@ -5170,6 +5172,223 @@ try {
   const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-savecode.js'), 'utf8');
   assert(!/\b(document|window|localStorage)\b/.test(src.replace(/\/\/.*$/gm, '')), '55-savecode.js is a core file: no DOM, window or storage');
 } catch (e) { fail('save codes crashed: ' + (e.stack || e)); }
+
+// ---- classes (S2): three base classes, the migration, star maps for 3 classes, the free switch ----
+console.log('classes (S2)');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const secs = (g, s, dt = 0.1) => { for (let i = 0; i < s / dt; i++) g.fn.tick(dt); };
+  const J = (g, s) => JSON.parse(g.eval(`JSON.stringify(${s})`));
+  const errs = [];
+
+  // 1. class data complete (classes-2 1, 3.5, 7.1, appendix)
+  {
+    const g = loadCore({ seed: 1 }), E = s => g.eval(s);
+    assert(E('CLASS_BASES.join()') === 'warrior,ranger,mage', 'three base classes: Warrior, Ranger, Lanternmage');
+    const bad = J(g, `CLASS_BASES.flatMap(b => {
+      const d = CLASS_DEFS[b], out = [], A = CLASS_ABILITIES;
+      for (const k of ['name', 'weight', 'home', 'role', 'dt', 'kit', 'col', 'pitch', 'how', 'tap', 'ab1', 'finisher', 'trial']) if (!d[k]) out.push(b + '.' + k);
+      for (const k of ['hp', 'armour', 'block', 'ward', 'threat', 'crit', 'area']) if (!(d[k] >= 0)) out.push(b + '.' + k);
+      if (!d.aura || !d.aura.name || !d.aura.text) out.push(b + '.aura');
+      if (!Array.isArray(d.passives) || !d.passives.length) out.push(b + '.passives');
+      for (const [id, slot] of [[d.tap, 'tap'], [d.ab1, 'ab1'], [d.finisher, 'fin']]) {
+        const a = A[id];
+        if (!a || a.slot !== slot || a.cls !== b || !a.name || !a.desc || !DMG_TYPES.includes(a.type) || !Array.isArray(a.fx) || !a.fx.length) out.push(b + ':' + id);
+        if (slot === 'ab1' && !(a && a.cd > 0)) out.push(b + ':' + id + '.cd');
+        if (slot === 'tap' && !(a && a.coef > 0)) out.push(b + ':' + id + '.coef');
+      }
+      if (d.evos.length !== 2 || d.evos.some(e => !EVO_NAMES[e] || EVO_NAMES[e].base !== b) || d.evos.map(e => EVO_NAMES[e].kind).sort().join() !== 'damage,utility') out.push(b + '.evos');
+      return out;
+    })`);
+    assert(!bad.length, 'every base class has its stats, home, role, type, aura, passives, tap, ab1 (with a cooldown), Finisher and one damage and one utility evolution' + (bad.length ? ': ' + bad.join(', ') : ''));
+    assert(E('CLASS_DEFS.warrior.home === "front" && CLASS_DEFS.ranger.home === "mid" && CLASS_DEFS.mage.home === "back" && CLASS_DEFS.warrior.weight === "heavy" && CLASS_DEFS.ranger.weight === "medium" && CLASS_DEFS.mage.weight === "light"'), 'weights and homes: heavy Front, medium Middle, light Back');
+    assert(E('CLASS_DEFS.mage.dt === "fire" && CLASS_DEFS.warrior.dt === "phys" && CLASS_DEFS.ranger.dt === "phys" && CLASS_BASES.every(b => LB_DT[b === "mage" ? "mage" : b === "warrior" ? "warrior" : "ranger"] === CLASS_DEFS[b].dt)'), 'base types: Warrior and Ranger physical, Lanternmage fire (same as LB_DT)');
+    const titles = E('["reaver","warden","venomstalker","trapper","warlock","priest"].map(e => EVO_NAMES[e].name + "/" + EVO_NAMES[e].title).join()');
+    assert(titles === 'Reaver/the Red Lamp,Warden/the Unmoved,Venomstalker/the Quiet Thorn,Trapper/the Pathfinder,Warlock/the Shadowbinder,Lightkeeper/the Given Light', `owner-chosen evolution names and titles kept (${titles})`);
+    assert(E('Object.keys(EVO_DEFS).length === 0'), 'EVO_DEFS stays empty until S3');
+    assert(E('Object.keys(LEGACY_CLS).join()') === 'warden,ranger,lanternmage,lightkeeper' && E('Object.keys(LEGACY_CLS).every(k => CLS_KIT(LEGACY_CLS[k].base, LEGACY_CLS[k].evo) === k)'), 'LEGACY_CLS maps the four old classes and each maps back to its own kit');
+    assert(E('Object.keys(HERO_CLASSES).join()') === 'warden,lanternmage,ranger,lightkeeper' && E('HERO_CLASSES.warden.name') === 'Warrior' && E('HERO_CLASSES.lightkeeper.name') === 'Lightkeeper',
+      'HERO_CLASSES stays a legacy view (4 kit keys, legacy order): the warden kit is shown as the Warrior');
+    assert(E('COMBAT_TUNE.wall === CLASS_ABILITIES.shieldwall.dr && /60% less/.test(HERO_CLASSES.warden.ability.desc)') && Math.abs(E('HERO_CLASSES.warden.ability.cd') - 30) < 1e-9, 'Shield Wall reads its numbers from CLASS_ABILITIES (60% less taken, 30% more dealt until S6), every 30s');
+    assert(E('COMBAT_TUNE.heroHp.ranger === 6 && COMBAT_TUNE.heroArmour.ranger === 10 && COMBAT_TUNE.heroHp.warden === 12 && COMBAT_TUNE.heroArmour.warden === 30 && COMBAT_TUNE.heroHp.lanternmage === 4'), 'base stats in combat: Warrior 12 / 30, Ranger 6 / 10 (was 5 / 0), Lanternmage 4 / 0');
+    for (const f of ['24-data-classes.js', '55-classes.js']) {
+      const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\/\/.*$/gm, '');
+      assert(!/\b(document|window|localStorage|canvas)\b/.test(src), `${f} is a core file: no DOM, window, canvas or storage`);
+    }
+    errs.push(...g.errors);
+  }
+
+  // 2. meters and caps: Grit (5, 1% less taken each, half from idle taps), Embers (5), the Flare's Burn, the Ranger's crit
+  {
+    const g = loadCore({ seed: 2 }), E = s => g.eval(s);
+    E('chooseBase("warrior"); S.auto = false; S.maxZone = 5; setZone(5); spawn()'); secs(g, 0.2);
+    for (let i = 0; i < 6; i++) E('classTap({ target: "mob", auto: true })');
+    const idle = E('heroGritDr()');
+    for (let i = 0; i < 8; i++) E('classTap({ target: "mob" })');
+    assert(Math.abs(idle - 0.025) < 1e-9, `idle taps add Grit at half strength (2.5% at 5, got ${idle})`);
+    assert(E('heroGuardN()') === 5 && Math.abs(E('heroGritDr()') - 0.05) < 1e-9 && E('partyBuffs().some(b => b.name === "Grit" && b.stacks === 5)'), `Grit caps at 5 and cuts damage taken by 5% (${E('heroGritDr()')})`);
+    secs(g, 0.2);
+    assert(E('combatUnits()[0].blockC') === 0.1 && E('combatUnits().slice(1).every(u => !u.blockC)'), 'the Warrior blocks every tenth hit (counted, no random draw); companions have no class block');
+    const cw = E('critBase()');
+    E('chooseClass("mage"); spawn()'); secs(g, 0.2);
+    for (let i = 0; i < 9; i++) E('mob && !mob.dead && classTap({ target: "mob" })');
+    assert(E('!mob || mob.dead || mob.embers === CLS_TUNE.embers.max'), 'Embers cap at 5 on a foe');
+    E('S.party.abilityCd = 0'); const fl = E('castAbility()');
+    const burning = E('combatFoes().filter(f => !f.dead).every(f => stHas(f, "burn"))');
+    assert(fl && burning, 'Lantern Flare sets every foe in the pack burning');
+    E('chooseClass("ranger")');
+    const cr = E('critBase()');
+    assert(Math.abs(cw - 0.08) < 1e-9 && Math.abs(cr - 0.15) < 1e-9 && E('gear().crit') === 0, `base crit with no gear: Warrior 8%, Ranger 15% (${(cw * 100).toFixed(1)}% / ${(cr * 100).toFixed(1)}%), before slot jobs and Keen Eye`);
+    errs.push(...g.errors);
+  }
+
+  // 3. every fixture migrates once, keeps its class and stars, loads and fights (classes-2 7)
+  {
+    const WANT = { warden: ['warrior', 'warden'], ranger: ['ranger', null], lanternmage: ['mage', null], lightkeeper: ['mage', 'priest'] };
+    const FIX = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json')).sort();
+    const rows = [];
+    for (const f of FIX) {
+      const raw = JSON.parse(rawOf(f)), old = raw.party && raw.party.cls;
+      const g = loadCore({ seed: 5, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), E = s => g.eval(s);
+      const migs = []; g.fn.on('classMigrated', e => migs.push(e));
+      secs(g, 0.2);
+      const c = J(g, 'S.cls'), w = old ? WANT[old] : [null, null];
+      const okCls = c.base === w[0] && c.evo === w[1] && E('S.party.cls') === (old || null) && (!old || (c.mig === 1 && c.from === old));
+      E('S.activity = "fight"; spawn()'); secs(g, 60);
+      E('save(); loadSave()'); secs(g, 1);
+      const c2 = J(g, 'S.cls');
+      const bad = badNumbers(E('S')).concat(badNumbers(J(g, 'combatUnits().map(u => [u.hp, u.maxHp])')));
+      assert(okCls && c2.base === c.base && c2.evo === c.evo && !bad.length && !g.errors.length,
+        `${f}: ${old || 'no class'} -> ${c.base || 'choose'}${c.evo ? ' + ' + c.evo : ''}; loads, fights a minute, saves and loads again` + (bad.length ? ': ' + bad[0] : g.errors.length ? ': ' + g.errors[0] : ''));
+      rows.push(f);
+      errs.push(...g.errors);
+    }
+    // each old class from the late party fixture (with a star layout on its old map): once, idempotent, stars carried
+    for (const old of Object.keys(WANT)) {
+      const raw = JSON.parse(rawOf('save-v3-four.json'));
+      raw.party.cls = old;
+      const map = { warden: 'warden', ranger: 'ranger', lanternmage: 'lanternmage', lightkeeper: 'lightkeeper' }[old];
+      raw.stars = { v: 1, maps: { [map]: { layouts: [{ name: 'Farm', lit: ['a0s1', 'a0s2', 'a1s1'] }, { name: 'Push', lit: [] }], active: 0 } }, seen: 0 };
+      const g = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) }), E = s => g.eval(s);
+      const migs = [], toasts = []; g.fn.on('classMigrated', e => migs.push(e)); g.fn.on('toast', t => toasts.push(t.msg));
+      secs(g, 0.2);
+      const c = J(g, 'S.cls'), [b, e] = WANT[old];
+      const newMap = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'lightkeeper' }[old];
+      const starsOk = E(`starCls() === ${JSON.stringify(newMap)} && starLayout().lit.join() === "a0s1,a0s2,a1s1" && JSON.stringify(S.stars.maps[${JSON.stringify(map)}].layouts[0].lit) === '["a0s1","a0s2","a1s1"]'`);
+      const proven = e ? c.proven[e] === 1 : Object.keys(c.proven).length === 0;   // this fixture is past zone 35
+      E('save()');
+      const g2 = loadCore({ seed: 6, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+      const m2 = []; g2.fn.on('classMigrated', x => m2.push(x)); secs(g2, 0.5);
+      const again = J(g2, 'S.cls');
+      g2.eval('S.activity = "fight"; spawn()'); secs(g2, 30);
+      const bad = badNumbers(g2.eval('S'));
+      assert(c.base === b && c.evo === e && c.mig === 1 && c.from === old && E('S.party.cls') === old && proven && starsOk && m2.length === 0 && JSON.stringify(again) === JSON.stringify(c) && !bad.length && !g.errors.length && !g2.errors.length,
+        `old ${old}: ${b}${e ? ' on the ' + e + ' path' : ''}${e ? ' (proven past the Fenmother)' : ''}, stars carried to the ${newMap} map, runs once (reload: no second migration), fights` + (g.errors.length ? ': ' + g.errors[0] : g2.errors.length ? ': ' + g2.errors[0] : bad.length ? ': ' + bad[0] : ''));
+      assert(migs.length === 1 && toasts.filter(t => /^Classes changed\./.test(t)).length === 1 && m2.length === 0, `old ${old}: one plain toast on the first tick, never again ("${toasts.find(t => /^Classes changed/.test(t)) || ''}")`);
+      errs.push(...g.errors, ...g2.errors);
+    }
+    // an old Lightkeeper below the Fenmother: the path is granted but not proven (3.7)
+    {
+      const g = loadCore({ seed: 7, storage: memoryStorage({ [KEY]: rawOf('save-a-v1.json') }) });
+      secs(g, 0.2);
+      const c = J(g, 'S.cls');
+      assert(c.base === 'mage' && c.evo === 'priest' && !c.proven.priest && g.eval('lbHas("cls:lightkeeper") && lbHas("evo:priest") && lbRole() === "support" && lbHome() === "back"'), 'an old Lightkeeper at zone 9: Lanternmage on the Lightkeeper path, granted but not proven; lbHas / lbRole / lbHome');
+      errs.push(...g.errors);
+    }
+  }
+
+  // 4. star maps for 3 classes: 31 stars and 44 points each, the deeds count 3 maps, every kit has a map
+  {
+    const g = loadCore({ seed: 8 }), E = s => g.eval(s);
+    assert(E('["warrior","ranger","mage"].every(c => { const m = starMap(c); return m && m.order.length === 31 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44 && !STAR_MAPS[c].legacy; })'), 'the Warrior, Ranger and Lanternmage maps: 31 stars and 44 points each');
+    assert(E('Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy).join()') === 'warrior,mage,ranger' && E('STAR_MAPS.lightkeeper.legacy === 1'), 'three class maps; the legacy Lightkeeper map is marked legacy (kept for old Lightkeepers until S3)');
+    assert(E('Object.keys(HERO_CLASSES).every(k => STAR_MAPS[CLS_STAR_MAP[k]])') && E('!STAR_MAPS.warden && !STAR_MAPS.lanternmage'), 'every kit has a star map; the old warden / lanternmage keys are save keys only');
+    assert(!/[Gg]uard stack/.test(E('JSON.stringify(STAR_MAPS.warrior)')) && /Grit/.test(E('JSON.stringify(STAR_MAPS.warrior)')), 'Warrior stars say Grit, never "guard stack"');
+    E('chooseBase("warrior"); S.L = 60'); E('starLight("a0s1"); starLight("a0s2")');
+    assert(E('starCls()') === 'warrior' && E('JSON.stringify(Object.keys(S.stars.maps))') === '["warrior"]' && E('S.stars.v') === 2, 'a new Warrior lights stars on maps.warrior (S.stars v 2)');
+    assert(/on each of the 3 class maps/.test(E('DEED_FEATS.find(d => d.id === "f_stars").needs')), 'the Stars in Every Sky Feat counts 3 class maps');
+    errs.push(...g.errors);
+  }
+
+  // 5. the free switch: once per save, within 10 minutes of choosing; a Mirror choice does not use it
+  {
+    const g = loadCore({ seed: 9 }), E = s => g.eval(s);
+    E('S.party.chosen = false; S.party.cls = null; S.cls.base = null');
+    const t0 = 1.9e12, min = 60e3;
+    assert(E(`chooseBase("warrior", { now: ${t0} })`) && E('S.cls.at') === t0 && E(`clsSwitchInfo(${t0 + min}).ok`), 'choosing a class opens the free change window');
+    assert(E(`chooseBase("warrior", { now: ${t0 + min} })`) && E('S.cls.free') === 1, 'choosing the same class again changes nothing and keeps the free change');
+    const comp0 = E('JSON.stringify(S.comp) + ROSTER_KEYS.filter(k => charRec(k)).length');
+    assert(E(`chooseBase("mage", { now: ${t0 + 9 * min} })`) && E('S.cls.base') === 'mage' && E('S.party.cls') === 'lanternmage' && E('S.cls.free') === 0 && !E(`clsSwitchInfo(${t0 + 9 * min}).ok`),
+      'within 10 minutes: a free switch to the Lanternmage (the window closes, S.cls.free 0)');
+    assert(E('JSON.stringify(S.comp) + ROSTER_KEYS.filter(k => charRec(k)).length') === comp0, 'a switch brings no second starter companion');
+    assert(!E(`chooseBase("ranger", { now: ${t0 + 9.5 * min} })`) && E('S.cls.base') === 'mage', 'a second switch is refused');
+    const h = loadCore({ seed: 10 }), H = s => h.eval(s);
+    H('S.party.chosen = false; S.party.cls = null; S.cls.base = null');
+    H(`chooseBase("ranger", { now: ${t0} })`);
+    assert(!H(`clsSwitchInfo(${t0 + 10 * min + 1}).ok`) && !H(`chooseBase("warrior", { now: ${t0 + 11 * min} })`) && H('S.cls.base') === 'ranger' && H('S.cls.free') === 1, 'after 10 minutes the free change is gone (and not used up)');
+    H('S.party.mirrors = 1; useMirror()');
+    assert(H(`chooseBase("warrior", { now: ${t0 + 60 * min} })`) && H('S.cls.base') === 'warrior' && H('S.cls.free') === 1 && H(`clsSwitchInfo(${t0 + 61 * min}).ok`), 'a Mirror of Embers choice works without the free change, and opens the window again');
+    // a legacy save's granted path stays on the same base; changing base clears it (3.4)
+    const m = loadCore({ seed: 11, storage: memoryStorage({ [KEY]: rawOf('save-a-v1.json') }) }), M = s => m.eval(s);
+    secs(m, 0.1);
+    assert(M('S.cls.at') === 0 && !M('clsSwitchInfo().ok'), 'a migrated save gets no free change window (nothing was chosen)');
+    M('S.party.mirrors = 1; useMirror()');
+    assert(M('chooseBase("mage")') && M('S.cls.evo') === 'priest' && M('S.party.cls') === 'lightkeeper', 'a Mirror back to the same base keeps the granted Lightkeeper path');
+    M('S.party.mirrors = 1; useMirror()');
+    assert(M('chooseBase("warrior")') && M('S.cls.evo') === null && M('S.party.cls') === 'warden', 'a Mirror to another base clears the path (you play the Warrior)');
+    // tools that set S.party.cls directly: S.cls follows the kit key
+    M('S.party.cls = "ranger"'); secs(m, 0.1);
+    assert(M('lbClass().base') === 'ranger' && M('lbKit()') === 'ranger' && M('lbHas("cls:ranger") && lbHas("base:ranger") && !lbHas("cls:warden")'), 'a tool that sets S.party.cls: lbClass() follows it');
+    errs.push(...g.errors, ...h.errors, ...m.errors);
+  }
+
+  assert(!errs.length, 'no class errors' + (errs.length ? ': ' + errs[0] : ''));
+
+  // 6. the picker and the class card in Chromium at 360px (when Playwright is here)
+  await (async () => {
+    let pw = null;
+    try {
+      const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+      for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+    } catch (e) {}
+    const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+    if (!pw || !exe || !fs.existsSync(distFile)) { ok('classes (browser): Playwright or Chromium not here, skipped'); return; }
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      const page = await ctx.newPage(); const errs2 = [];
+      page.on('pageerror', e => errs2.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      const cards = await page.$$eval('#createScreen .ccard', cs => cs.map(c => c.dataset.cls));
+      const wide = await page.evaluate(() => document.scrollingElement.scrollWidth);
+      await page.click('#createScreen .ccard[data-cls="ranger"]');
+      await page.click('#createScreen .create-go');
+      await page.waitForTimeout(300);
+      for (let i = 0; i < 3; i++) { const b = await page.$('#createScreen .create-go'); if (!b) break; await b.click(); await page.waitForTimeout(250); }
+      const got = JSON.parse(await X('JSON.stringify({ base: S.cls.base, kit: S.party.cls, open: clsSwitchInfo().ok })'));
+      assert(cards.join() === 'warrior,ranger,mage' && wide <= 360 && got.base === 'ranger' && got.kit === 'ranger' && got.open,
+        `browser: a new game offers 3 classes at 360px (${cards.join()}, width ${wide}); picking the Ranger sets S.cls and opens the free change`);
+      await X('onboardUnlockAll && onboardUnlockAll(); partySheet.openHero()'); await page.waitForTimeout(300);
+      const card = await page.evaluate(() => { const b = document.querySelector('.csheet'); if (!b) return null; const r = b.getBoundingClientRect(); return { txt: b.textContent, w: Math.round(r.width), sw: b.querySelector('.cl-switch .mini') ? 1 : 0 }; });
+      assert(card && /Evolution/.test(card.txt) && /Venomstalker \(damage\) or Trapper \(utility\)/.test(card.txt) && /A second path opens in a later season/.test(card.txt) && card.sw === 1 && card.w <= 360,
+        `browser: the class card shows the locked evolution row, the locked second path and the free change (${card && card.w}px)`);
+      await page.click('.csheet .cl-switch .mini'); await page.waitForTimeout(300);
+      const sw = await page.$$eval('#createScreen .ccard', cs => cs.length);
+      await page.click('#createScreen .ccard[data-cls="warrior"]');
+      await page.click('#createScreen .create-go');
+      const armed = await page.textContent('#createScreen .create-go');
+      await page.click('#createScreen .create-go'); await page.waitForTimeout(300);
+      const after = JSON.parse(await X('JSON.stringify({ base: S.cls.base, kit: S.party.cls, free: S.cls.free, screen: !!document.getElementById("createScreen") })'));
+      assert(sw === 3 && /^Tap again/.test(armed) && after.base === 'warrior' && after.kit === 'warden' && after.free === 0 && !after.screen,
+        `browser: the free change asks twice in-page ("${armed}"), then switches to the Warrior and closes`);
+      assert(!errs2.length, 'browser: no class page errors' + (errs2.length ? ': ' + errs2[0] : ''));
+    } finally { await browser.close(); }
+  })();
+} catch (e) { fail('classes crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

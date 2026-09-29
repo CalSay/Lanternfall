@@ -92,7 +92,9 @@ const goldMult = () => (1 + 0.1 * S.fortune) * (1 + 0.25 * S.relic.coin) * (1 + 
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
 const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
 const aps = () => Math.min(5, 1 + 0.1 * S.swift);
-const critChance = () => Math.min(0.75, (0.08 + gear().crit / 100) * mod('crit'));
+// critBase: the hero's flat crit chance before multipliers (S2: bonus('critBase') carries the class's own, the Ranger's +7%).
+const critBase = () => 0.08 + bonus('critBase') + gear().crit / 100;
+const critChance = () => Math.min(0.75, critBase() * mod('crit'));
 const critMult = () => (4 + gear().critMult) * mod('critDmg');
 const tapMult = () => gear().tap * mod('tap');
 // Once the save is migrated to the roster (56-roster.js), companions are named characters.
