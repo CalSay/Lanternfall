@@ -118,3 +118,10 @@ Mock-up: art/backgrounds/mossy-hollow/formation-clean.png.
 3. **A clear gap in the middle** of the road between the two sides, for arrows, fireballs and swooshes.
 4. **Contact shadows** under every fighter, so they stand on the road instead of floating on the picture.
 5. **Lower foreground.** The front plants stay a thin dark strip, so they frame the road without covering feet.
+
+### 10a. Party spacing (owner: the heroes looked cluttered)
+
+Mock-up: art/backgrounds/mossy-hollow/formation-spread.png. With foes capped at 3-4 visible bodies, the party
+gets the whole left half: three distinct spots about 80 px apart, heroes barely touching. The back row stands a
+little higher on the road and is shaded slightly darker for depth; the front row (the tank by default) stands
+lowest and brightest. Draw back to front.
