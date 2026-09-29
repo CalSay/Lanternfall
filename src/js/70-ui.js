@@ -616,7 +616,7 @@ function ui(force) {
       setHp(mob.hp / mob.max * 100);
       putStyle(H.mBar, 'background', mob.boss ? 'linear-gradient(90deg, #E0524F, #FF9E3D)' : 'var(--hp)');
       putHidden(H.tWrap, !mob.boss);
-      if (mob.boss) putStyle(H.tBar, 'width', Math.max(0, bossTime / Math.max(5, 30 + bonus('bossTime')) * 100) + '%');
+      if (mob.boss) putStyle(H.tBar, 'width', Math.max(0, bossTime / bossTimer(S.zone) * 100) + '%');   // S6-A: the Enrage timer
     }
   }
   putHidden(H.zStep, tg !== 'mob');

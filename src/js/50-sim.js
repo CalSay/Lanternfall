@@ -36,7 +36,7 @@ let arena = null;
 function spawn() {
   if (arena) { const m = arena.spawn(); if (m) { mob = m; if (partyCombatOn()) cbArena(m); } return; }
   // Party combat (59-combat.js): a pack of foes; mob is the one the stage shows.
-  if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = Math.max(5, 30 + bonus('bossTime')); return; }
+  if (partyCombatOn()) { cbSpawn(fightBoss); if (fightBoss) bossTime = bossTimer(S.zone); return; }   // S6-A: 45 s / 60 s, then Enrage
   const z = S.zone, cyc = zoneCycle(z);
   const boss = fightBoss;
   const ti = boss || Math.random() < 0.72 ? zoneType(z) : zoneNextType(z);
@@ -47,7 +47,7 @@ function spawn() {
     name: (boss ? 'Elder ' : '') + t.name, gold: mobGold(z) * (boss ? 6 : 1), xp: Math.ceil(1.5 * z) * (boss ? 5 : 1),
     hit: 0, dead: 0, born: 0
   };
-  if (boss) bossTime = Math.max(5, 30 + bonus('bossTime'));
+  if (boss) bossTime = bossTimer(z);
   emit('spawn', { mob, zone: z }); // listeners may change the new foe (55-gathering: champions)
 }
 
@@ -188,7 +188,9 @@ function tick(dt) {
     }
     if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
       bossTime -= dt;
-      if (bossTime <= 0) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
+      // S6-A (combat-2 1.5): at 0 the boss enrages; the fight fails COMBAT_TUNE.enrageFail s later (party combat)
+      if (bossTime <= 0 && pc) cbEnrage();
+      if (bossTime <= (pc ? -COMBAT_TUNE.enrageFail : 0)) { fightBoss = false; failDps = totalDps(); toast('The zone boss held its ground. Grow stronger and try again.', 'raid'); emit('bossFail', { zone: S.zone, dps: failDps }); spawn(); }
     }
     if (mob && mob.dead && !pc) mob.dead += dt;
     if (mob && !pc) mob.born += dt;

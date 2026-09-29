@@ -20,7 +20,7 @@ function typeIcon(dt) {
   return c;
 }
 function statusIcon(id) {
-  const m = typeof ST_ICONS === 'object' && ST_ICONS[id];
+  const m = (typeof ST_ICONS === 'object' && ST_ICONS[id]) || (typeof TRAIT_ICONS === 'object' && TRAIT_ICONS[id]);   // S6-E: elite trait badges (59i)
   if (!m) return null;
   let c = STATUS_ICONS[id];
   if (c) return c;

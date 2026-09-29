@@ -54,7 +54,8 @@ function partyCombatOn() { return !(COMBAT_TUNE && !COMBAT_TUNE.on) && !(S && S.
 // var: other files (56-roster at load, 55-party) may ask before this file has run.
 var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrike, cbHeroUp, cbPush,
   cbUnitHp, cbUnitCd, cbHitUnit, cbHealUnit, cbShield, cbDamageFoe, cbUnitByKey, cbTaunt, cbStun, cbDebug,
-  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady, cbRestore;
+  partyHoldEstimate, partyHolds, cbClock, cbWallOn, cbArena, cbBossUp, cbBossReady, cbRestore,
+  cbPack, cbFoeAtk, cbEnrage, bossTimer;
 
 {
   const T = {
@@ -66,8 +67,23 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // party power); zones below easeZone hit softer (x (z / easeZone)^easePow) so a class and its starter hold.
     // BAL2: atk 0.006 -> 0.025 (sustain binds near the push zone, so a missing tank or healer costs 2-4 zones,
     // T6); bossAtk 2.5 -> 0.75 keeps a boss's hits (and 4x heavy hits) near their Stage C size
-    atk: 0.025, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 0.75, bossSpd: 0.6,
-    armourX: 0.85,                       // physical hits on armoured foes (Rattlebones, Golems; spec 0.5, softened for class parity, T3)
+    // S6-A (combat-2 1.1): packs hit 2.5x (atk 0.025 -> 0.0625) and bosses 6.5x (bossAtk 0.75 -> 1.95); a pack's
+    // damage is split across its members by size (packAtkN: the old pack of 3), so a swarm of 9 hits as hard as 3 did
+    atk: 0.0625, easeZone: 12, easePow: 1.5, spd: 0.8, bossAtk: 1.95, bossSpd: 0.6,
+    armourX: 0.8,                        // physical hits on armoured foes (combat-2 1.1: 20% cut; core-2 1.2 range 15-25%)
+    // S6-A packs (combat-2 2.1-2.4): members by the zone type's size (sizes 0 = today's packs of 3, sim --combat sizes=0);
+    // swarms total swarmHp HP and pay swarmPay; area damage is spread so a big pack is not a free multiplier (aoeN:
+    // the other foes a splash is worth, aoeSwarm: swarms pay area parties more, CX8); first swings 0.6-2.0 s;
+    // a foe acts once it has arrived (bornAct); members walk in in 3 groups (arriveGap s apart)
+    sizes: 1, swarmHp: PACK_TUNE.swarmHp, swarmPay: PACK_TUNE.swarmPay, packAtkN: 3, aoeN: 2, aoeSwarm: 1.5,
+    swing0: 0.6, swingR: 1.4, bornAct: 0.3, arriveGap: 0.15, elite2From: 3, elite2P: 0.1,
+    // S6-A hit caps (combat-2 1.4): a share of the target's max HP after reductions, before shields
+    caps: { tele: 0.35, boss: 0.15, pack: 0.1, swarm: 0.04, blast: 0.2 },
+    // S6-A the Enrage timer (combat-2 1.5, owner D1): zone elders 45 s, region bosses 60 s; at 0 the boss attacks
+    // enrageSpd faster and deals enrageDmg more each second; the fight fails enrageFail s later. bossLive: the
+    // survival test for auto-challenge: the closed-form time to fall must reach bossLive x the kill time (spec 1.1;
+    // S6 pick 0.7: the estimate ignores parries, Shield Wall and the 15 s Enrage window, and at 1.1 it walled Silas)
+    bossT: 45, regionBossT: 60, enrageSpd: 0.5, enrageDmg: 0.1, enrageFail: 15, bossLive: 0.7,
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     hp: { tank: 12, striker: 5, caster: 4, support: 6 },
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow
@@ -118,7 +134,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const ST = CB_STATS = { enemySecs: 0, tankSecs: 0, wipes: 0, packs: 0, kos: 0, revives: 0, healed: 0, shielded: 0, heroDmg: 0, compDmg: 0,
     getUps: 0, stalls: 0,   // F5: members who got up mid-pack, packs given up (the soft-lock guard)
     tele: 0, parries: 0, dodges: 0, blocked: 0, hitByHeavy: 0, interrupts: 0, abilities: 0, bossTries: 0, bossWins: 0, pushes: 0, taken: 0,
-    crits: 0, maxHit: 0, maxOver: 0, heroHits: 0 };   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
+    crits: 0, maxHit: 0, maxOver: 0, heroHits: 0,
+    partyOver: 0, capped: 0, enrages: 0 };   // S6-A: the biggest hit on a member as a share of its max HP (after caps), hits capped, Enrages   // AC2 (58-deeds reads these once a second and resets maxHit/maxOver)
   on('crit', () => { ST.crits++; });
 
   registerState('combat', { on: 1, back: 0, tip: 0 });
@@ -152,7 +169,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const EST = [mkUnit(0), mkUnit(1), mkUnit(2), mkUnit(3)];   // scratch units for partyHoldEstimate
   let nU = 0;                      // live units in U
   let foes = [];                   // foe objects (mob-shaped), rebuilt per pack
-  const FOE_MAX = 6;
+  const FOE_MAX = 12;   // S6-A: a swarm of 10 and a boss with its adds
   let clock = 0, refreshT = 0, pushT = 0, wipeT = 0, wipeBoss = false, fieldSig = '', packDown = false, packT = 0;
   let packGold = 0, lead = null, partyAcc = 0, partyTickT = 0, focusIdx = -1, showT = 0, inArena = false;
   cbClock = () => clock;
@@ -323,19 +340,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   // ---------------- foes ----------------
   // Foe attack per hit at zone z (4.1, tuned: see T.atk).
   const zoneAtk = z => T.atk * mobHp(z) * Math.pow(Math.min(1, z / T.easeZone), T.easePow);
-  function mkFoe(ti, hp, gold, xp, z, boss, name, cyc) {
+  // atkX (S6-A): the member's share of the old pack-of-3 attack (packAtkN / members x its shares).
+  function mkFoe(ti, hp, gold, xp, z, boss, name, cyc, atkX) {
     const t = TYPES[ti], b = FOE_BEH[t.key] || FOE_BEH.slime;
     return {
       key: t.key + cyc, type: t.key, rows: SPR[t.key], pal: shiftPal(t.pal, zoneHue(z)), boss: !!boss, hp, max: hp,
       name, gold, xp, hit: 0, dead: 0, born: 0,
-      ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk), spd: boss ? T.bossSpd : T.spd * b.spd,
-      swing: 0.6 + Math.random() * 0.8, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1,
+      ti, row: b.row, ranged: !!b.ranged, armoured: !!b.armoured, atk: zoneAtk(z) * (boss ? T.bossAtk : b.atk * (atkX || 1)), spd: boss ? T.bossSpd : T.spd * b.spd,
+      swing: T.swing0 + Math.random() * T.swingR, th: new Float64Array(4), tgt: -1, forceT: 0, forceU: -1, sz: boss ? 'boss' : b.size || 'brute', enr: -1, tr: null, share: boss ? 1 : atkX || 1,
       stunT: 0, slowT: 0, slowV: 0, knockT: 0, burnT: 0, burnDps: 0, markT: 0, focusT: 0, vulnT: 0, bx: 1, elite: false,
       bt: 0, b2: 0, diveT: 0, diveU: -1, diveX: 1, chanT: 0, hits: 0, again: false, first: 0, split: false, z, adds: false, gone: false,
       dt: b.dt || 'phys', chillT: 0, rootT: 0, rxT: 0, mkV: 0, stag: 0, ss: null, blight: false   // S1: hit type, statuses (59a)
     };
   }
   // Called by 50-sim spawn() in place of its single foe. Returns the foe the stage shows.
+  // S6-A (combat-2 2.1-2.4): the pack takes the zone type's size (brute 3, normal 5-6, swarm 8-10). Up to a third
+  // of the members come from the next type of the cycle (mixP each), never two size steps apart (a brute never
+  // joins a swarm); a brute in a normal pack takes 2 shares. HP and gold are the pack's totals split by shares.
+  const SZ_I = { brute: 0, normal: 1, swarm: 2 };
+  let packN = 3, packSize = 'brute', aoeK = 1;
+  const PLAN = [];
   cbSpawn = boss => {
     const z = S.zone, cyc = zoneCycle(z), zt = zoneType(z);
     foes = []; packDown = false; packT = 0; focusIdx = -1; lead = null; packGold = 0; inArena = false;
@@ -343,23 +367,42 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (boss) {
       const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
       const f = mkFoe(zt, hp, mobGold(z) * 6, Math.ceil(1.5 * z) * 5, z, true, 'Elder ' + TYPES[zt].name, cyc);
-      foes.push(f); lead = f;
+      foes.push(f); lead = f; packN = 1; packSize = 'boss'; aoeK = 1;
       bossStart(f);
     } else {
-      const n = T.packSize, tot = mobHp(z) * T.packHp * mod('foeHp');
-      for (let i = 0; i < n; i++) {
-        const ti = Math.random() < T.mixP ? zt : zoneNextType(z);
-        const hp = tot / n * (0.9 + Math.random() * 0.2);
-        const f = mkFoe(ti, hp, mobGold(z) * T.packGold / n, 0, z, false, TYPES[ti].name, cyc);
+      const nt = zoneNextType(z), ba = FOE_BEH[TYPES[zt].key] || FOE_BEH.slime, bb = FOE_BEH[TYPES[nt].key] || ba;
+      const size = T.sizes ? ba.size || 'brute' : 'brute', n = T.sizes ? Math.max(1, Math.min(FOE_MAX, ba.n || T.packSize)) : T.packSize;
+      const swarm = size === 'swarm', sizeB = T.sizes ? bb.size || size : size;
+      const mixOk = nt !== zt && Math.abs((SZ_I[size] || 0) - (SZ_I[sizeB] || 0)) < 2, mixMax = T.sizes ? Math.max(1, Math.floor(n / 3)) : n;
+      // the plan: one type index per member and its shares (a brute in a normal pack is 2)
+      PLAN.length = 0;
+      let shares = 0, mixN = 0;
+      while (shares < n) {
+        let ti = zt;
+        if (mixOk && mixN < mixMax && Math.random() >= T.mixP) ti = nt;
+        let w = ti === nt && sizeB === 'brute' && size === 'normal' ? 2 : 1;
+        if (shares + w > n) { ti = zt; w = 1; }
+        if (ti === nt) mixN++;
+        PLAN.push(ti, w); shares += w;
+      }
+      const tot = mobHp(z) * T.packHp * mod('foeHp') * (swarm ? T.swarmHp : 1), gold = mobGold(z) * T.packGold * (swarm ? T.swarmPay : 1);
+      for (let i = 0; i < PLAN.length; i += 2) {
+        const ti = PLAN[i], w = PLAN[i + 1];
+        const hp = tot / n * w * (0.9 + Math.random() * 0.2);
+        const f = mkFoe(ti, hp, gold / n * w, 0, z, false, TYPES[ti].name, cyc, T.packAtkN / n * w);
         foes.push(f);
       }
+      packN = foes.length; packSize = size;
+      // area damage: a splash is worth aoeN other foes in all (today's pack of 3), x aoeSwarm on a swarm (CX8)
+      aoeK = packN > 1 ? Math.min(1, T.aoeN / (packN - 1)) * (swarm ? T.aoeSwarm : 1) : 1;
       // the lead (champion roll, the `kill` event, its drops) is the first foe: zone type 72% of the time, as before packs
       lead = foes[0];
-      lead.xp = Math.ceil(1.5 * z * T.packHp);
-      if (z >= T.eliteFrom && Math.random() < T.eliteP) {
-        const e = foes[1 + ((Math.random() * (n - 1)) | 0)] || foes[0];   // never the lead (it may be a champion)
-        e.elite = true; e.bx = 2; e.hp *= T.eliteHp; e.max = e.hp; e.gold *= T.eliteGold; e.name = 'Elite ' + e.name;
-      }
+      lead.xp = Math.ceil(Math.ceil(1.5 * z * T.packHp) * (swarm ? T.swarmPay : 1));
+      if (z >= T.eliteFrom && Math.random() < T.eliteP) makeElite(1);
+      // Region 4 on (combat-2 2.1): a second elite in normal and swarm packs
+      if (z >= T.eliteFrom && size !== 'brute' && typeof regionIdx === 'function' && regionIdx(z) >= T.elite2From && Math.random() < T.elite2P) makeElite(2);
+      // arrival (2.4): three groups 0.15 s apart, the front column first
+      for (const f of foes) f.born = -T.arriveGap * (2 - Math.max(0, Math.min(2, f.row)));
     }
     sortFoes();
     openThreat();
@@ -373,6 +416,20 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     emitPack();
     return mob;
   };
+  // An elite (never the lead: it may be a champion); k: the second one tries another member.
+  function makeElite(k) {
+    for (let tries = 0; tries < 4; tries++) {
+      const e = foes[1 + ((Math.random() * (foes.length - 1)) | 0)] || foes[0];
+      if (e.elite || (e === foes[0] && foes.length > 1)) continue;
+      e.elite = true; e.bx = 2; e.hp *= T.eliteHp; e.max = e.hp; e.gold *= T.eliteGold; e.name = 'Elite ' + e.name;
+      if (typeof eliteRoll === 'function') eliteRoll(e, k);   // S6-D (59i): traits
+      return e;
+    }
+    return null;
+  }
+  // S6-A: the pack's shape for other files (59b quotas, 59g, the stage): members at spawn, size id, area factor.
+  cbPack = () => { PACK_OUT.n = packN; PACK_OUT.size = packSize; PACK_OUT.aoeK = aoeK; return PACK_OUT; };
+  const PACK_OUT = { n: 3, size: 'brute', aoeK: 1 };
   // Deepwell arena: its foe becomes a pack (m.pack: the floor's foes, 59c-deepwell-combat.js; else a pack of one).
   cbArena = m => { if (m && !m.th) adoptArena(m); };
   function adoptArena(m) {
@@ -380,6 +437,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (!list.includes(m)) list.unshift(m);
     for (const x of list) adoptFoe(x);
     foes = list; sortFoes(); lead = m; packDown = false; packT = 0; focusIdx = 0; inArena = true;
+    packN = list.length; packSize = m.boss ? 'boss' : (FOE_BEH[m.type] && FOE_BEH[m.type].size) || 'brute';
+    aoeK = packN > 1 ? Math.min(1, T.aoeN / (packN - 1)) : 1;
     refreshUnits(false);
     if (m.boss) bossStart(m);
     openThreat();
@@ -397,7 +456,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   const PACK_EV = { foes: null };
   function emitPack() { PACK_EV.foes = foes; emit('packSpawn', PACK_EV); }
   // Front foes first (the stage shows mob; a sorted list keeps melee reach cheap).
-  function sortFoes() { foes.sort((a, b) => b.row - a.row); }
+  // S6-A (2.5): within a column the lowest-HP member stands in front (it is the one melee reaches).
+  function sortFoes() { foes.sort((a, b) => b.row - a.row || a.hp - b.hp); }
   function openThreat() {
     for (const f of foes) {
       f.th.fill(0);
@@ -458,6 +518,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.armoured && kind === 'phys' && (!ty || ty === 'phys') && !(f.markT > 0)) { const pr = src >= 0 && U[src] ? U[src].pierce : 0; a *= T.armourX + (1 - T.armourX) * pr; }
     if (typeof stFoeHit === 'function') a = stFoeHit(f, a, src, kind, ty, tags);   // S1: type, Mark, timing, Shatter
     if (f.vulnT > 0) a *= 1.5;
+    if (f.stgT > 0) a *= ACT_TUNE.stag.x;                                  // S6-B: a Staggered foe takes x1.5
+    if (f.physX > 0 && f.physX !== 1 && kind === 'phys' && (!ty || ty === 'phys')) a *= f.physX;   // S6-C: Shell Up, Reef Wall (59h)
+    if (src >= 0 && U[src] && U[src].keenT > 0) a *= 1 + ACT_TUNE.keen;    // S6-B: Keen (a perfect dodge)
+    // +5 stagger for a heavy hit: the Lanternbearer's tagged heavy hits (its swings carry the floor x trio, so size alone is no sign)
+    if ((f.boss || f.elite) && typeof actHeavy === 'function' && (src === 0 ? (tags & ST_HEAVY) : typeof ST_LAST === 'object' && ST_LAST.heavy) && kind !== 'dot' && kind !== 'burn') actHeavy(f, src);
+    if (f.tr && typeof eliteHit === 'function') { a = eliteHit(f, a, src, kind, ty, tags); if (!(a > 0)) return 0; }   // S6-D: traits (59i)
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
     if (src >= 0 && U[src] && U[src].role === 'striker' && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
@@ -474,17 +540,18 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       foeDies(f, src, kind);
       // Overkill carries to the next foe (a pack is one old foe's HP split three ways: no hit is wasted
       // on a small foe). Burns, splashes and AoE shares do not carry (carry = false while they land).
-      if (carry && kind !== 'dot' && over > 0 && !f.hp && anyFoe()) { const n = focusFoe(); if (n && n !== f) { carry = false; cbDamageFoe(n, over / Math.max(0.1, typeof typeX === 'function' ? typeX(f, ty) : 1), src, kind, ty); carry = true; } }
+      // S6-A: the carry chains through small foes (a pack of 9 wastes no more of a big hit than a pack of 3 did)
+      if (carry && kind !== 'dot' && over > 0 && !f.hp && anyFoe() && carryN < FOE_MAX) { const n = focusFoe(); if (n && n !== f) { carryN++; cbDamageFoe(n, over / Math.max(0.1, typeof typeX === 'function' ? typeX(f, ty) : 1), src, kind, ty); carryN--; } }
     }
     return a;
   };
-  let carry = true;
+  let carry = true, carryN = 0;
   function foeDies(f, src, kind) {
     if (typeof onFoeDeath === 'function' && onFoeDeath(f, src, kind)) return;   // 59b: Rattlebones reassemble
     f.over = -f.hp; f.hp = 0; f.dead = 0.001;
     if (!inArena && !f.boss) {
       const g = f.gold; S.gold += g; S.totalGold += g; econEarn('fight', g);
-      if (g > 0) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
+      if (g > 0 && packN <= 3) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);   // S6-E: a big pack shows one gold number at its clear
     }
     burst(0.68, 0.62, f.pal[1] || f.pal[5] || f.pal[3], 10);
     if (typeof stFoeDies === 'function') stFoeDies(f);   // S1: Burn spreads (Blight carries Venom), Curse detonates
@@ -495,11 +562,22 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (ks('wildfire') && f.embers > 0) { for (const o of foes) if (o !== f && alive(o)) o.embers = Math.min(cap, (o.embers || 0) + Math.ceil(f.embers / 2)); }
       else { const o = focusFoe(); if (o && o !== f && f.embers > 0) o.embers = Math.min(cap, (o.embers || 0) + f.embers); }   // Burns spread by themselves now (59a)
     }
+    // S6-A: a pack is one old foe split in pieces, so what the Lanternbearer put on the focus foe moves on when it
+    // dies (the Ranger's Focus with its time left, the Lanternmage's Embers): the class tap is not wasted on small foes.
+    if (!f.boss && T.sizes && anyFoe()) {
+      const o = focusFoe();
+      if (o && o !== f) {
+        const pc = typeof partyClock === 'function' ? partyClock() : 0;
+        if (f.markUntil > pc && !(o.markUntil > f.markUntil)) { o.markUntil = f.markUntil; o.markV = f.markV; }
+        if (f.embers > 0 && !(ks('wildfire') || boon('wild'))) { o.embers = Math.min(5 + bonus('tune:embersMax'), (o.embers || 0) + f.embers); f.embers = 0; }
+      }
+    }
     // Next in Line (a notable): when a marked foe dies, the next foe starts marked for 4s.
     if (ks('nextMark') && typeof partyClock === 'function' && f.markUntil > partyClock()) { const o = focusFoe(); if (o && o !== f && !(o.markUntil > partyClock())) { o.markUntil = partyClock() + STAR_KS.nextMark.secs; o.markV = f.markV; } }
     FOE_EV.mob = f; FOE_EV.src = src >= 0 && U[src] ? U[src].key : '';
     emit('foeDown', FOE_EV);
     if (typeof onFoeDown === 'function') onFoeDown(f, src);
+    if (f.tr && typeof eliteDies === 'function') eliteDies(f);   // S6-D: the Explosive blast (59i)
     // Corvin Cold Work, Isolde reset, Wax Seal are in the damage averages (56b); nothing more here.
     if (f.boss) { for (const o of foes) if (o !== f && alive(o)) { o.gone = true; o.hp = 0; o.dead = 0.001; } }
     if (!anyFoe()) packCleared(f);
@@ -527,7 +605,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (isHero) { f.hHit = clock; if (typeof clsHeroHit === 'function') clsHeroHit(f, d, tags); }
     const rel = ty && typeof ST_LAST === 'object' ? ST_LAST.rel : 0;
     if (isHero && hero && hero.cls === 'lanternmage') {
-      const sp = (T.lmSplash + hero.area) * amount;
+      const sp = (T.lmSplash + hero.area) * amount * aoeK;   // S6-A: spread over a big pack
       carry = ks('overflow');   // Overkill (a notable): the splash's overkill carries too
       for (const o of foes) if (o !== f && alive(o)) cbDamageFoe(o, sp, 0, 'magic', ty);
       carry = true;
@@ -555,7 +633,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         else if (u.role === 'caster') {
           const f = focusFoe(); if (f) {
             cbDamageFoe(f, hit, u.i, 'magic');
-            const o = (T.aoeOther + u.area) * hit;
+            const o = (T.aoeOther + u.area) * hit * aoeK;   // S6-A: spread over a big pack
             carry = false;
             for (const x of foes) if (x !== f && alive(x)) cbDamageFoe(x, o, u.i, 'magic');
             carry = true;
@@ -665,14 +743,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (id === 'hesketh') { const l = lowestAlly(); return !!l && l.hp / l.maxHp < 0.75; }
     if (id === 'elowen' || id === 'anselm') { let hurt = 0; for (let i = 0; i < nU; i++) if (!U[i].down && U[i].hp / U[i].maxHp < 0.7) hurt++; return hurt >= 1; }
     if (id === 'aldric') {
-      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t) return true; }
+      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t) return t.kind === 'heavy' || t.kind === 'cloud' || t.kind === 'heal' || t.kind === 'sig' || t.kind === 'summon'; }   // S6-B: a parry or an interrupt, not a dodge
       if (lead && lead.boss && alive(lead) && typeof nextWindIn === 'function' && nextWindIn() < u.cdMax * 0.6) return false;
       return true;
     }
     // Grenna's Earthshatter stuns: she spends it on a healer's channel (a Marsh Wraith, the Elder Wraith's
     // green wind-up) before she thinks of taunting.
     if (id === 'grenna') {
-      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t && t.kind === 'heal') return true; }
+      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t && (t.kind === 'heal' || t.kind === 'sig' || t.kind === 'summon')) return true; }   // S6-B: casts
       for (const f of foes) if (alive(f) && f.chanT > 0) return true;
     }
     if (id === 'isolde') { const th = execTh(u); for (const f of foes) if (alive(f) && f.hp / f.max < th) return true; return u.cd < -2; }
@@ -690,7 +768,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // Felling Blow are heavy (Shatter). The type is the hero's own (u.dt).
     const tg = ST_AB | (id === 'aldric' || id === 'grenna' || id === 'bram' ? ST_HEAVY : 0);
     const hitOne = (f, m, kind) => { if (f) { cbDamageFoe(f, burstD * (m || 1), u.i, kind || 'phys', '', tg); partyAcc += burstD * (m || 1); } };
-    const hitAll = (m, kind) => { let n = 0; for (const f of foes) if (alive(f)) n++; carry = false; for (const f of foes) if (alive(f)) cbDamageFoe(f, burstD * (m || 1) / Math.max(1, n) * (1 + (n - 1) * 0.5), u.i, kind || 'magic', '', tg); carry = true; partyAcc += burstD * (m || 1); };
+    // S6-A: the extra from area stays today's pack of 3 (+50% per other foe, at most aoeN of them; x aoeSwarm on a swarm)
+    const hitAll = (m, kind) => { let n = 0; for (const f of foes) if (alive(f)) n++; const ex = Math.min(n - 1, T.aoeN) * 0.5 * (packSize === 'swarm' ? T.aoeSwarm : 1); carry = false; for (const f of foes) if (alive(f)) cbDamageFoe(f, burstD * (m || 1) / Math.max(1, n) * (1 + ex), u.i, kind || 'magic', '', tg); carry = true; partyAcc += burstD * (m || 1); };
     switch (id) {
       case 'tobin': {
         cbTaunt(u, reach(u), T.tauntT); u.drV = Math.max(u.drV, T.guardDr); u.drT = T.guardT;
@@ -700,7 +779,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       }
       case 'wren': { const f = f0; if (f) stApply(f, 'mark', 1, 0, u.i, { dur: (5 + 3 * synFlags.hunting) * u.ctrl }); hitOne(f, 1); if (u.lv >= 20) { const o = foes.find(x => x !== f && alive(x)); hitOne(o, 0.5); } break; }
       case 'hesketh': { const mx = 1 + SYN_TUNE.unlitMend * synFlags.unlit, a = lowestAlly(); if (a) cbHealUnit(a, a.maxHp * T.mend * mx * healMul(u), u); if (u.lv >= 20) { const b = lowestAlly(a); if (b) cbHealUnit(b, b.maxHp * T.mend * mx * healMul(u), u); } break; }
-      case 'pip': { hitAll(1, 'magic'); for (const f of foes) burn(f, hitPow(u), u); break; }
+      case 'pip': { hitAll(1, 'magic'); for (const f of foes) burn(f, hitPow(u) * (f === f0 ? 1 : aoeK), u); break; }
       case 'bram': { const f = meleeTarget(f0); hitOne(f, 1); if (f) stApply(f, 'bleed', 2, hitPow(u), u.i); if (u.lv >= 10 && f) knock(f, 1 * u.ctrl); if (u.lv >= 20) for (const o of foes) if (o !== f && alive(o) && f && o.row === f.row) hitOne(o, 0.5); break; }
       case 'maren': {
         cbTaunt(u, foes, 4); cbHealUnit(u, u.maxHp * T.beacon * (1 + (T.beaconLamp / T.beacon - 1) * synFlags.lampward), u);
@@ -745,7 +824,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         break;
       }
       case 'oriel': { hitAll(1, 'magic'); for (const f of foes) cbStun(f, T.starStun * u.ctrl, u.i); break; }   // S1: her status is the stun (the slow is dropped, classes-2 5.1)
-      case 'morwen': { for (const f of foes) { burn(f, hitPow(u) * T.vigilBurnP, u); if (u.lv >= 20) cbSlow(f, T.vigilSlow, T.vigilT * u.ctrl); } hitAll(0.5, 'magic'); break; }
+      case 'morwen': { for (const f of foes) { burn(f, hitPow(u) * T.vigilBurnP * (f === f0 ? 1 : aoeK), u); if (u.lv >= 20) cbSlow(f, T.vigilSlow, T.vigilT * u.ctrl); } hitAll(0.5, 'magic'); break; }
       case 'vesper': {
         for (let i = 0; i < nU; i++) { const x = U[i]; if (x.down) continue; cbShield(x, x.maxHp * T.verseWard * 2, T.verseWard * 2); cbHealUnit(x, x.maxHp * T.verseMend * 2 * healMul(u), u); }
         if (u.lv >= 20) { let b = null; for (let i = 0; i < nU; i++) if (U[i].id && U[i] !== u && (!b || U[i].cd > b.cd)) b = U[i]; if (b) b.cd = 0; }
@@ -830,6 +909,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   function foeTick(f, dt) {
     if (f.dead) { f.dead += dt; return; }
     f.born += dt; if (f.hit > 0) f.hit -= dt;
+    if (f.born < T.bornAct) return;   // S6-A (2.4): a foe acts once it has fully arrived
+    if (f.enr >= 0) f.enr += dt;      // S6-A: seconds since the Enrage
     // (S1: Burn and every other damage over time tick in 59a stTick, once a second)
     if (emberBurn > 0 && f.embers > 0) { carry = false; cbDamageFoe(f, f.embers * emberBurn * dt, 0, 'burn'); carry = true; if (!alive(f)) return; }
     if (f.markT > 0) f.markT -= dt;
@@ -837,10 +918,13 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.vulnT > 0) f.vulnT -= dt;
     if (f.forceT > 0) f.forceT -= dt;
     if (f.slowT > 0) { f.slowT -= dt; if (f.slowT <= 0) f.slowV = 0; }
+    if (f.tr && typeof eliteTick === 'function') eliteTick(f, dt);   // S6-D: trait timers (59i)
     if (f.stunT > 0) { f.stunT -= dt; return; }
+    if (f.stgT > 0 || f.reelT > 0) return;                              // S6-B: Staggered or Reeling: it does nothing
     if (typeof onEnemyTick === 'function' && onEnemyTick(f, dt)) return;   // 59b: behaviours, channels, boss mechanics
+    if (typeof actBusy === 'function' && actBusy(f)) return;             // S6-B: winding up or casting (59g)
     if (f.knockT > 0) { f.knockT -= dt; return; }
-    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0));   // S1: Chill
+    f.swing -= dt * (1 - Math.max(f.slowT > 0 ? f.slowV : 0, f.chillT > 0 ? stSlow(f) : 0)) * (f.enr >= 0 ? 1 + T.enrageSpd : 1) * (f.spdX || 1);   // S1: Chill; S6: Enrage, traits (spdX)
     const t = pickTarget(f);
     f.tgt = t;
     if (t >= 0) {
@@ -850,8 +934,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     f.swing += 1 / f.spd;
     if (t < 0) return;
     if (typeof onFoeAttack === 'function' && onFoeAttack(f, U[t])) return;   // 59b: slams, dives
-    cbHitUnit(U[t], f.atk * (f.diveT > 0 ? f.diveX || 1 : 1), f.ranged ? 'ranged' : 'hit', f);
+    cbHitUnit(U[t], cbFoeAtk(f) * (f.diveT > 0 ? f.diveX || 1 : 1), f.ranged ? 'ranged' : 'hit', f);
   }
+  // S6-A: a foe's attack now (the Enrage adds enrageDmg a second; 59i traits set atkX). 59g/59h hit with it.
+  cbFoeAtk = f => f.atk * (f.enr >= 0 ? 1 + T.enrageDmg * f.enr : 1) * (f.atkX || 1);
+  // S6-A (1.5): 50-sim calls it when the boss timer runs out.
+  cbEnrage = () => { if (lead && lead.boss && alive(lead) && lead.enr < 0) { lead.enr = 0; ST.enrages++; emit('enrage', { foe: lead }); return true; } return false; };
+  // The boss timer for zone z: 45 s zone elders, 60 s region bosses (plus the Almanac's and stars' bossTime).
+  bossTimer = z => Math.max(5, (typeof isRegionBoss === 'function' && isRegionBoss(z) ? T.regionBossT : T.bossT) + bonus('bossTime'));
 
   // ---------------- damage to the party ----------------
   const HIT_EV = { key: '', amount: 0, kind: '', foe: null, blocked: false, shield: 0 };
@@ -896,6 +986,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let blocked = false;
     if (u.blockP > 0 && !dot && Math.random() < u.blockP) { a *= T.blockX; blocked = true; ST.blocked++; }
     if (!blocked && u.blockC > 0 && !dot && (u.blockN = (u.blockN || 0) + u.blockC) >= 1) { u.blockN -= 1; a *= T.blockX; blocked = true; ST.blocked++; }   // S2
+    // S6-A hit caps (combat-2 1.4): after reductions and block, before shields; damage over time is 59a's (5% a tick)
+    if (!dot) {
+      const cp = capOf(kind, f);
+      if (a > cp * u.maxHp) { a = cp * u.maxHp; ST.capped++; }
+      if (u.maxHp > 0 && a / u.maxHp > ST.partyOver) ST.partyOver = a / u.maxHp;
+    }
     let sh = 0;
     if (u.sh > 0) { sh = Math.min(u.sh, a); u.sh -= sh; a -= sh; }
     u.hp -= a; u.taken += a + sh; ST.taken += a + sh;
@@ -923,11 +1019,22 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
         if (synFlags.oldoath) cbHealUnit(u, u.maxHp * T.oathHeal * synFlags.oldoath, al);
       }
     }
+    if (f && f.tr && typeof eliteDealt === 'function') eliteDealt(f, a + sh, u);   // S6-D: Leeching, Cursed (59i)
     HIT_EV.key = u.key; HIT_EV.amount = a; HIT_EV.kind = kind; HIT_EV.foe = f; HIT_EV.blocked = blocked; HIT_EV.shield = sh;
     emit('unitHit', HIT_EV);
     return a;
   };
   const isAdj = (a, b) => Math.abs(a.col - b.col) === 1;   // F1: adjacent = the next slot
+  // S6-A (1.4): telegraphed hits 35%, an Explosive blast 20%, a boss's swing 15%, a pack swing 10% (a swarm foe 4%).
+  const TELE_KIND = { heavy: 1, slam: 1, zone: 1, line: 1, sig: 1 };
+  function capOf(kind, f) {
+    const C = T.caps;
+    if (TELE_KIND[kind]) return C.tele;
+    if (kind === 'blast') return C.blast;
+    if (f && f.boss) return kind === 'dive' || kind === 'cloud' ? C.tele : C.boss;
+    if (f && f.sz === 'swarm' && !f.elite) return kind === 'dive' ? C.swarm * 2 : C.swarm;
+    return C.pack;
+  }
   // S1: a member's resist to a damage type (gear res* lines; none exist before S4/S5, so 0 until then).
   const RES = { holy: 'resHoly', poison: 'resPoison', fire: 'resFire', frost: 'resFrost' };
   function resOf(u, ty) {
@@ -967,6 +1074,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // the pack pays as one foe: 50-sim killPack does the rest of the old kill()
     const m = lead || last;
     if (m.boss) { S.gold += m.gold; S.totalGold += m.gold; econEarn('fight', m.gold); addFloat('+' + fmt(m.gold) + 'g', '#F2C14E', false, 0.68, 0.3); }
+    else if (packN > 3 && packGold > 0) addFloat('+' + fmt(packGold) + 'g', '#F2C14E', false, 0.68, 0.3);
     mob = last;
     killPack(m, m.boss ? m.gold : packGold);
   }
@@ -1059,6 +1167,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     if (!anyFoe()) return;
     // foes
+    if (typeof onPackTick === 'function') onPackTick(dt);   // S6-A: pack cadences (59b)
+    if (typeof actTick === 'function') actTick(dt);                     // S6-B: warnings, stagger, Finishers (59g)
     for (let i = 0; i < foes.length; i++) foeTick(foes[i], dt);
     stTick(dt);   // S1: status timers and the one-a-second damage-over-time beat (59a)
     if (!anyFoe()) return;
@@ -1089,7 +1199,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     else if (cls === 'lanternmage' && synFlags.chosen) { let n = 0; for (const f of foes) if (alive(f)) n++; healAll(T.chosenHeal * synFlags.chosen * n, U[0]); }
   });
   on('classTap', ({ cls, kind, auto }) => {
-    if (!partyCombatOn() || !nU || kind === 'parry') return;
+    if (!partyCombatOn() || !nU || kind === 'parry' || kind === 'answer') return;   // S6-B: an answer tap is not a class tap
     if (cls === 'warden' && mob && alive(mob)) {
       cbTaunt(U[0], [mob], (T.wardenTaunt + (boon('taunt') ? 2 : 0)) * (auto ? 0.5 : 1));
       if (ks('challenger')) { cbTaunt(U[0], foes, 2); challUntil = clock + 2; }   // Challenger: taps taunt every foe for 2s
@@ -1189,7 +1299,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       let D = 0;
       for (let i = 0; i < n; i++) D += unitD(EST[i], i, z, physX);
       D *= T.estEff;
-      const packHp = mobHp(z) * T.packHp * mod('foeHp') * (1 + fheal);
+      const zb = FOE_BEH[TYPES[zoneType(z)].key] || FOE_BEH.slime, zsw = T.sizes && zb.size === 'swarm', zn = T.sizes ? zb.n || T.packSize : T.packSize;   // S6-A
+      const packHp = mobHp(z) * T.packHp * mod('foeHp') * (1 + fheal) * (zsw ? T.swarmHp : 1);
       let packSecs = D > 0 ? packHp / D + T.respawn : Infinity;
       const atk = zoneAtk(z), alive = 1.5, rng = w('ranged'), dmgX = w('dmg');
       // melee share on `front`, ranged share on `top` (the back row takes 20% less from ranged), spread on everyone
@@ -1222,10 +1333,10 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (!o.sustain) holds = holds && packSecs - T.respawn <= PACE.farmSecs * T.packHp;
       if (holds || o.one) {
         const z0 = S.zone; S.zone = z;   // gold bonuses read the current zone (mastery stars)
-        let g = mobGold(z) * T.packGold;
+        let g = mobGold(z) * T.packGold * (zsw ? T.swarmPay : 1);
         S.zone = z0;
-        if (z >= T.eliteFrom) g *= 1 + T.eliteP * (T.eliteGold - 1) / T.packSize;
-        if (typeof champChance === 'function') g *= 1 + champChance(z) * 2 / T.packSize;
+        if (z >= T.eliteFrom) g *= 1 + T.eliteP * (T.eliteGold - 1) / zn;
+        if (typeof champChance === 'function') g *= 1 + champChance(z) * 2 / zn;
         best = EST_OUT;
         best.zone = z; best.holds = holds; best.dps = D; best.packSecs = packSecs; best.packsPerSec = Number.isFinite(packSecs) && packSecs > 0 ? 1 / packSecs : 0;
         best.goldPerSec = best.packsPerSec * g; best.tgt = (front || hero).key; best.inc = incMax; best.sus = heal;
@@ -1252,6 +1363,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let D = heroCombatDps() * T.autoCast * (hero.cls === 'lanternmage' || hero.dt !== 'phys' ? 1 : phys) * tx(hero);   // F1: the hero's floor and trio
     for (let i = 1; i < n; i++) D += EST[i].dps * (EST[i].role === 'caster' || EST[i].role === 'support' || EST[i].dt !== 'phys' ? 1 : phys) * tx(EST[i]);
     const hp = mobHp(z) * bossHpMult(z) * mod('bossHp') * mod('foeHp');
-    return D * Math.max(5, 30 + bonus('bossTime')) * T.bossGate >= hp;   // BAL2: estEff tunes the away estimate only
+    if (!(D * bossTimer(z) * T.bossGate >= hp)) return false;   // BAL2: estEff tunes the away estimate only
+    // S6-A (1.5): the survival test. The boss's swings and heavy hits on the front member (armour, tank and synergy
+    // reductions, capped) against the party's HP and healing: it must outlast the kill by bossLive.
+    let hpSum = 0, heal = 0, front = EST[0];
+    for (let i = 0; i < n; i++) { hpSum += EST[i].maxHp; heal += EST[i].heal; if (EST[i].col > front.col || (EST[i].col === front.col && EST[i].role === 'tank')) front = EST[i]; }
+    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1);
+    const swing = Math.min(atk * dr, front.maxHp * T.caps.boss) * T.bossSpd, heavy = Math.min(atk * ENEMY_TUNE.heavyX * dr, front.maxHp * T.caps.tele) / ENEMY_TUNE.heavyEvery;
+    const net = swing + heavy - heal - hpSum * T.regen;
+    return !(net > 0) || hpSum / net >= T.bossLive * hp / Math.max(1e-9, D);
   };
 }

@@ -27,6 +27,9 @@ const DEEP_COMBAT_TUNE = {
   landingHeal: 0.6,   // a Quiet Landing heals this share of max HP
   refund: 5,          // Oil refunds this many seconds higher (HP is run health too now)
   parryOil: 2,        // Oil back for each parried (or Shield Wall-blocked) Elder wind-up
+  // S6-F (combat-2 6.1): Oil for answers: an interrupt +2 s, a perfect dodge +1 s (+2 with The Dance), a Finisher
+  // +3 s; answers (parries too) give at most answerCap s a floor
+  intrOil: 2, perfOil: 1, danceOil: 2, finOil: 3, answerCap: 12,
   tauntT: 2,          // Taunt Drill: seconds a class tap makes the front tank taunt (a Warden hero: 59-combat)
   lifeSaves: 1,       // Lifeline: saves a floor, for the whole party
   edge: 0.2,          // Deep Edge (D8): damage below per rank. Full Deep Lore vs none: about +20% depth (D8 band 15-25%)
@@ -88,7 +91,7 @@ let deepCombatOn, dcLifeline, DWC;
   on('packSpawn', p => {
     const list = p.foes, lead = list && list[0];
     if (!lead || !lead.deep) return;
-    for (const f of list) if (f.deep && !f.dcA) { f.dcA = 1; f.atk *= T.atk; }
+    for (const f of list) if (f.deep && !f.dcA) { f.dcA = 1; f.atk *= T.atk; if (f.elite && !f.boss && !f.tr && typeof eliteRollDeep === 'function') eliteRollDeep(f, f.floor || 0); }   // S6-F: traits from floor 8
     const r = R(); if (!r) return;
     const k = r.id + ':' + r.floor;
     if (packFor === k) return;
@@ -134,17 +137,25 @@ let deepCombatOn, dcLifeline, DWC;
   });
 
   // ---------------- Oil: parries ----------------
-  on('telegraphResolve', p => {
-    if (p.result !== 'parry' || !deepCombatOn()) return;
+  let oilFloor = '', oilGot = 0;
+  function answerOil(s) {
     const r = R(), f = foes0();
-    if (!r || r.phase !== 'fight' || !f || !f.deep) return;
-    r.oil = Math.min(DW.oilMax(), r.oil + T.parryOil);
-  });
+    if (!deepCombatOn() || !r || r.phase !== 'fight' || !f || !f.deep) return;
+    const k = r.id + ':' + r.floor; if (k !== oilFloor) { oilFloor = k; oilGot = 0; }
+    const add = Math.min(s, T.answerCap - oilGot); if (!(add > 0)) return;
+    oilGot += add; r.oil = Math.min(DW.oilMax(), r.oil + add);
+  }
+  on('telegraphResolve', p => { if (p.result === 'parry') answerOil(T.parryOil); });
+  on('interrupt', () => answerOil(T.intrOil));
+  on('dodge', p => { if (p && p.perfect) { const r = R(); answerOil(T.perfOil + (r && typeof DW.setProgress === 'function' && (DW.setProgress().find(x => x.id === 'dance') || {}).on ? T.danceOil : 0)); } });
+  on('finisher', () => answerOil(T.finOil));
+  // An active Deep Elder kill (59g, combat-2 3.8): the next draft shows four cards, all Rare or better.
+  on('activeKill', () => { const r = R(); if (deepCombatOn() && r) r.actKill = 1; });
   addBonus('deepRefund', () => partyCombatOn() && R() ? T.refund : 0);
 
   // ---------------- Taunt Drill for every class ----------------
   on('classTap', p => {
-    if (!deepCombatOn() || p.kind === 'parry' || p.cls === 'warden') return;
+    if (!deepCombatOn() || p.kind === 'parry' || p.kind === 'answer' || p.cls === 'warden') return;
     const r = R(); if (!r || !r.boons.taunt || !mob || mob.dead || !mob.deep) return;
     let tank = null;
     for (const u of units()) if (u.live && !u.down && u.role === 'tank' && (!tank || u.col > tank.col)) tank = u;

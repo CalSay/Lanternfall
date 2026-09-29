@@ -35,7 +35,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
 {
   const D = STATUS_DEFS, UD = UNIT_STATUS, K = ST_TUNE;
   ST_HEAVY = 1; ST_AB = 2; ST_CRIT = 4;
-  ST_LAST = { dt: '', rel: 0, x: 1, shatter: false };
+  ST_LAST = { dt: '', rel: 0, x: 1, shatter: false, heavy: false };
   ST_STATS = { applied: {}, reactions: { blight: 0, shatter: 0, judgement: 0 }, beats: 0, dot: 0, spread: 0, healed: 0, immune: 0, dr: 0 };
   for (const id in D) ST_STATS.applied[id] = 0;
 
@@ -201,7 +201,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     const vu = stVuln(f);
     if (vu > 0) a *= 1 + vu;
     const tg = tags | 0;
-    if ((tg & ST_AB) && f.rxT > 0) a *= K.rxX;   // a reaction window (Stagger's window is S6)
+    if ((tg & ST_AB) && (f.rxT > 0 || f.stgT > 0)) a *= K.rxX;   // a reaction window or a Stagger (S6-B: timingX x1.25)
     // heavy: tagged, or a single hit of heavyP x P or more (a crit is not heavy by itself)
     let heavy = !!(tg & ST_HEAVY);
     if (!heavy && kind !== 'burn' && kind !== 'dot') {
@@ -209,6 +209,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
       const base = (tg & ST_CRIT) && typeof critMult === 'function' ? amount / Math.max(1, critMult()) : amount;
       heavy = P > 0 && base >= K.heavyP * P;
     }
+    ST_LAST.heavy = heavy;   // S6-B: 59-combat fills the stagger bar (+5)
     if (heavy) {
       const c = peek(f, 'chill');
       if (c && c.t > 0) {

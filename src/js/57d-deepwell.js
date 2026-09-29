@@ -69,6 +69,7 @@ const DEEP_SETS = {
   company: { n: 'Company', fx: 'Shoulder to Shoulder: companions +2% damage per floor cleared (max +60%)' },
   path: { n: 'Path', fx: 'True Path: your class ability cooldown halves' },
   guard: { n: 'Guard', fx: 'Iron Line: tanks take 25% less damage', c: true },
+  dance: { n: 'The Dance', fx: 'Each perfect dodge also gives 2s of Oil', c: true },   // S6-F (combat-2 6.1)
   mend: { n: 'Mend', fx: 'Deep Mercy: all healing +30%', c: true }
 };
 const DEEP_BOONS = {};
@@ -126,6 +127,12 @@ const DEEP_BOON_IDS = [];
   B('wild', 'Wildfire', 'e', ['flame'], 1, null, 1, () => 'Burns and Embers jump to a new foe when their foe dies', 1);
   B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => "Each striker's first hit on a foe always crits", 1);
   B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => 'The parry window is 0.4s longer', 1);
+  // S6-F (combat-2 6.1): boons for active play (59g reads them), and one for idle drafts
+  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => 'The dodge window is 0.3s longer; a perfect dodge 0.2s longer', 1);
+  B('breaker', 'Breaker', 'r', ['dance'], 1, null, 0.3, () => 'Your party fills the stagger bar 30% faster', 1);
+  B('coup', 'Coup de Grace', 'e', ['dance'], 1, null, 0.5, () => 'Finishers deal 50% more; the one that fires by itself hits at 80%', 1);
+  B('silence', 'Silence', 'r', [], 1, null, 0.3, () => 'An ability that stops a cast gives back 30% of its cooldown', 1);
+  B('lward', 'Lamplight Ward', 'c', [], 1, null, 0.3, () => 'A wind-up you do not answer deals 30% less', 1);
 }
 
 // ---------------- the weekly Trial's rules (spec 5) ----------------
@@ -304,6 +311,7 @@ let DEEP_ARENA = null;
     const rule = ruleOf(r);
     let n = T.offers, rar = null, need = null;
     if (kind === 'boss' && loreOf(r, 'wider')) n = 4;
+    if (kind === 'boss' && r.actKill) { n = Math.max(n, 4); rar = ['r', 'e']; r.actKill = 0; }   // S6-F: a Deep Elder beaten with your own answers
     if (!r.trial) n += Math.max(0, Math.round(bonus('deepOffers')));
     if (rule === 'wick') n = 4;
     if (rule === 'rare') { n = 2; rar = ['r', 'e']; }

@@ -53,12 +53,12 @@ const PACE = {
   hpLate: 1.22,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
                             //   about 2 companion levels a zone, so Region 2 is paced by their XP
                             //   and the level-200 roster cap lands just past the Region 2 boss
-  bossHp: 8,                // zone boss HP x a normal mob (unchanged)
+  bossHp: 12,               // zone boss HP x a normal mob (S6-A, combat-2 1.5: x1.5 for the 45 s Enrage timer; was 8)
   region: 35,               // zones per region (zones 35, 70, 105 hold the region bosses)
   regionStep: [1.7, 1.1],   // (BAL2 1.7 / 1.1, BAL1 1.7 / 1.2, was 5 / 2.5) mob HP x this from each region's last zone on
                             //   (x1.7 from zone 35, x1.1 more from 70; the last value repeats). The
                             //   step stays, so the zones after a region boss are no easier
-  regionBoss: 1,            // extra x on region bosses only (a one-off wall; 1 = none)
+  regionBoss: 1.33,         // extra x on region bosses only (S6-A: x2 over the old 8 in all, for the 60 s timer; was 1)
   compLv: 75,               // (BAL2 75, BAL1 80, was 90) companion levels past compLv need more XP...
   compXp: 1.12,             //   ...(BAL1, was 1.2) x1.12 per level past it (level 85: x3, 95: x9.6)...
   compXpMax: 250,           //   ...(BAL2 250, BAL1 200, was 80) up to x250 from level 124 on: Region 2 is a few levels a day

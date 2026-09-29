@@ -1365,7 +1365,8 @@ try {
   E('S.craft.troph = [0, 0, 0, 0, 0, 0, 0]; S.craft.champ = 0; S.maxZone = 30; S.zone = 22; fightBoss = false');
   E('{ const r = Math.random; Math.random = () => 0; spawn(); Math.random = r; }');
   // Stage C: the champion is the pack's lead foe (a third of the pack's HP before the x3).
-  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / (mobHp(22) * COMBAT_TUNE.packHp / COMBAT_TUNE.packSize) })');
+  // S6-A: a pack splits its HP by its members (the zone type's size; swarms total swarmHp)
+  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / (mobHp(22) * COMBAT_TUNE.packHp * (cbPack().size === "swarm" ? COMBAT_TUNE.swarmHp : 1) / cbPack().n) })');
   const zt = E('zoneType(22)'), sig = E(`CRAFT_SIG_DROPS[TYPES[${zt}].key]`), before = E(`S.mats.${sig.fam}[3]`);
   E('kill()');
   assert(ch.champ && /^Champion /.test(ch.name) && ch.ratio > 2.6, `champion spawns with x3 HP (${ch.name})`);
@@ -1899,8 +1900,10 @@ try {
   assert(E('DW.refundFor("boss")') === 35 + E('DEEP_COMBAT_TUNE.refund'), 'Oil refunds are 5s higher with party combat');
   // the [C] boons
   const B = s => E('DW.run().boons.' + s);
-  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); ticks(g, 3);
-  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, 'Iron Wall II: tanks +40% max HP, others unchanged');
+  // (S6-A: HP follows the party's power, which reads the hero's live damage buffs; measure both sides one tick apart)
+  B('iron = 0'); E('emit("fieldChange", {})'); g.fn.tick(0.1);
+  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); E('emit("fieldChange", {})'); g.fn.tick(0.1);
+  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, `Iron Wall II: tanks +40% max HP, others unchanged (x${(E('cbUnitByKey("tobin").maxHp') / mh0).toFixed(3)}, x${(E('cbUnitByKey("wren").maxHp') / mw0).toFixed(3)})`);
   const hitTank = () => E('(() => { const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const a = cbHitUnit(u, u.maxHp * 0.01, "poison", null); u.hp = u.maxHp; return a; })()');
   const t0 = hitTank(); B('thorn = 1'); B('taunt = 1'); ticks(g, 1);
   assert(E('DW.setProgress().find(s => s.id === "guard").on') && Math.abs(hitTank() / t0 - 0.75) < 0.01, 'the Guard set (Thorn Plate, Iron Wall, Taunt Drill): tanks take 25% less');
@@ -1918,10 +1921,12 @@ try {
   const dm0 = E('mod("dmg")'); E('S.deep.lore.edge = 4');
   assert(Math.abs(E('mod("dmg")') / dm0 - 1.8) < 1e-6 && E('DW.shop("lore").some(r => r.id === "edge" && r.max === 4)'), 'Deep Edge IV: +80% damage below; sold in the Deep Lore shop');
   // a wipe ends the run: the floors cleared count and pay; the party stands up whole above
+  // (S6-F: more boons in the pool change the picks, so the run may be between floors here: fight the next one)
+  if (E('DW.run().phase') === 'draft') { E('DW.pick(DW.offerView().cards[0].id)'); ticks(g, 1); }
   const top = E('DW.run().top'), marks = E('DW.marksNow()'), m0 = E('S.deep.marks');
   E('for (let i = 0; i < 4; i++) combatUnits().forEach(u => { if (u.live && !u.down) { u.lifeline = true; cbHitUnit(u, 1e300, "poison", null); } })');
   ticks(g, 2);
-  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")');
+  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")' + (E('S.deep.run === null') ? '' : ': ' + E('JSON.stringify({ ph: S.deep.run.phase, fl: S.deep.run.floor, units: combatUnits().filter(u => u.live).map(u => u.key + (u.down ? ":down" : ":" + Math.round(u.hp))), foes: combatFoes().length, boons: Object.keys(S.deep.run.boons) })')));
   assert(E('S.deep.last.floor') === top && E('S.deep.best') >= top && E('S.deep.marks') - m0 === marks, `the run's depth counts: floor ${top}, ${marks} Depth Marks paid`);
   assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().every(f => !f.deep)') && E('mod("dmg")') < dm0 * 1.0001, 'back above: the party is whole, no well foe is left, boons and Deep Edge are off');
   assert(E('S.activity') === 'fight' && E('!!mob && !mob.deep'), 'the zone fight resumes');
@@ -1935,7 +1940,7 @@ try {
   E('combatFoes().forEach(f => { f.atk = 0; if (f.boss) { f.max *= 10; f.hp = f.max; } })');
   let guard = 0; while (!E('cbTelegraph() && cbTelegraph().left <= cbTelegraph().win - 0.05') && guard++ < 150) ticks(g, 1);
   assert(E('mob.deep && mob.boss && DW.run().floor === 5') && tele && tele.deep, `floor 5: a Deep Elder, and it winds up a telegraph (${tele && tele.kind})`);
-  const oilP = E('DW.run().oil'); E('resolveParry("tap")');
+  const oilP = E('DW.run().oil'); E('typeof actTap === "function" ? actTap() : resolveParry("tap")');   // S6-B: the tap answers 59g's warnings
   assert(Math.abs(E('DW.run().oil') - Math.min(E('DW.oilMax()'), oilP + E('DEEP_COMBAT_TUNE.parryOil'))) < 1e-9, 'parrying the Elder gives 2s of Oil back');
   E('DW.run().oil = 0.05'); ticks(g, 3);
   assert(E('S.deep.run === null && S.deep.last.reason === "oil" && !cbTelegraph()'), 'Oil still ends a run; no Elder telegraph is left above');
@@ -1981,7 +1986,8 @@ try {
     const { g, E } = party(51, 'lanternmage', ['tobin', 'hesketh'], 40);   // F1: two companions; the Lanternmage is the third
     const par = holdZone(E);
     E(`S.maxZone = ${par}; setZone(${par})`);
-    assert(E('combatFoes().length') === 3 && E('combatFoes().every(f => f.th && f.max > 0)'), `a pack of 3 foes with threat tables (zone ${par}, the highest this party holds)`);
+    const pn = E('combatFoes().length'), psz = E('cbPack().size'), rng = E(`PACK_SIZES[cbPack().size]`);
+    assert(pn === E('cbPack().n') && pn >= rng[0] - 1 && pn <= rng[1] && E('combatFoes().every(f => f.th && f.max > 0)'), `a pack of ${pn} foes (${psz}) with threat tables (zone ${par}, the highest this party holds)`);
     E('Object.keys(CB_STATS).forEach(k => CB_STATS[k] = 0)');
     secs(g, 180);
     const st = E('CB_STATS'), share = st.tankSecs / Math.max(1e-9, st.enemySecs);
@@ -1998,7 +2004,7 @@ try {
   for (const [ids, frac] of [[['hesketh', 'wren'], 0.3], [['elowen', 'wren'], 0.6]]) {
     const { g, E } = party(52, 'warden', ids, 20);
     E('S.maxZone = 10; setZone(10)'); secs(g, 1);
-    E('cbHitUnit(cbUnitByKey("wren"), 1e30, "hit", null)');
+    E('cbHitUnit(cbUnitByKey("wren"), 1e30, "poison", null)');   // S6-A: a plain hit is capped at 10% now; damage over time is not
     const down = E('cbUnitByKey("wren").down');
     E('combatFoes().forEach(f => { if (!f.dead) cbDamageFoe(f, 1e30, 1, "magic"); })');
     const u = E('cbUnitByKey("wren")');
@@ -2011,7 +2017,7 @@ try {
     const { g, E } = party(53, 'warden', ['hesketh', 'wren'], 20);
     const ev = []; g.fn.on('wipe', w => ev.push(Object.assign({}, w))); const ups = []; g.fn.on('unitUp', u => ups.push(u.key));
     E('S.maxZone = 12; S.zone = 12; setZone(12)'); secs(g, 1);
-    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "hit", null); })');
+    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "poison", null); })');
     assert(ev.length === 1 && ev[0].zone === 12 && ev[0].to === 11 && E('S.zone') === 11 && E('S.combat.back') === 12, 'a wipe retreats one zone (12 -> 11) and remembers where it fell');
     secs(g, 5.2);
     assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().some(f => !f.dead)'), 'after 5s the party stands up at full HP and fights on');
@@ -2020,7 +2026,7 @@ try {
     // a wipe in a boss fight is a failed attempt, not a retreat
     const fails = []; g.fn.on('bossFail', x => fails.push(x));
     E('S.kills = 10; challenge()');
-    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "hit", null); })');
+    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "poison", null); })');
     assert(fails.length === 1 && E('S.zone') === 12 && !E('fightBoss'), 'a wipe against the zone boss fails the attempt (bossFail) without a retreat');
     errs.push(...g.errors);
   }
@@ -2037,7 +2043,8 @@ try {
       kinds[E(`TYPES[zoneType(${z})].key`)] = [...seen].sort().join('+');
       errs.push(...g.errors);
     }
-    const want = { slime: 'heavy', bat: 'dive+heavy', bones: 'heavy', beetle: 'heavy', spore: 'cloud', golem: 'heavy', wraith: 'heal+heavy' };
+    // S6-C: the kits (21g BOSS_KITS) in phase 1 (the Elder never reaches half here)
+    const want = { slime: 'heavy+zone', bat: 'dive+heavy', bones: 'heavy+summon', beetle: 'heavy', spore: 'line', golem: 'heavy', wraith: 'heal+heavy' };
     assert(Object.keys(want).every(k => kinds[k] === want[k]), 'each Elder shows its telegraphs: ' + Object.entries(kinds).map(([k, v]) => `${k} ${v}`).join(', '));
     // parry: the class tap in the window; the stage hook returns one kept object
     const { g, E } = party(70, 'warden', ['hesketh', 'wren'], 30);
@@ -2049,13 +2056,13 @@ try {
     for (let i = 0; i < 40 && E('bossTelegraph() && bossTelegraph().left > bossTelegraph().win'); i++) g.fn.tick(0.1);
     const hp0 = E('combatUnits().map(u => u.hp).join()'), tapKinds = []; g.fn.on('classTap', c => tapKinds.push(c.kind));
     g.fn.playerTap({ x: 0.66, y: 0.5 });
-    assert(t1 && t1.kind === 'heavy' && t2 && res.length === 1 && res[0].result === 'parry' && tapKinds[0] === 'parry' && E('!bossTelegraph()') && E('mob.boss && mob.stunT > 1.5 && mob.vulnT > 0'), 'a tap in the last moments of the wind-up parries: no hit, the boss is staggered and takes +50%');
+    assert(t1 && t1.kind === 'heavy' && t2 && res.length === 1 && res[0].result === 'parry' && tapKinds[0] === 'parry' && E('!bossTelegraph()') && E('mob.boss && (mob.reelT > 1.5 || mob.stunT > 1.5) && mob.vulnT > 0'), 'a tap in the last moments of the wind-up parries: no hit, the boss is Reeling and takes +50%');
     // an early tap dodges (half damage)
     const hits = []; g.fn.on('unitHit', h => { if (h.kind === 'heavy') hits.push(h.amount); });
-    for (let i = 0; i < 200 && !E('bossTelegraph()'); i++) g.fn.tick(0.1);
+    for (let i = 0; i < 200 && !E('bossTelegraph() && bossTelegraph().kind === "heavy"'); i++) g.fn.tick(0.1);   // S6-C: the next heavy (a kit also has zones)
     g.fn.playerTap({ x: 0.66, y: 0.5 });
-    const dodged = E('bossTelegraph() && bossTelegraph().res === "dodge"');
-    for (let i = 0; i < 40 && E('!!bossTelegraph()'); i++) g.fn.tick(0.1);
+    const dodged = E('bossTelegraph() && (bossTelegraph().res === "dodge" || bossTelegraph().res === "early")');   // S6-B: 59g calls it early
+    for (let i = 0; i < 40 && E('!!bossTelegraph() && bossTelegraph().kind === "heavy"'); i++) g.fn.tick(0.1);
     assert(dodged && res[res.length - 1].result === 'dodge' && hits.length === 1, 'an early tap is a Dodge: the heavy hit lands at half');
     // Aldric's Shield Bash counts as a parry
     const a = party(71, 'lanternmage', ['aldric', 'hesketh'], 30);
@@ -2126,7 +2133,7 @@ try {
     // Wildfire: Embers spread to every other foe at half the count when their foe dies
     lm.E('setZone(10); addBonus("ks:wildfire", () => 1)'); secs(lm.g, 0.1);
     const spread = lm.E('(() => { const fs = combatFoes().filter(f => !f.dead); if (fs.length < 3) return null; fs.forEach(f => f.embers = 0); fs[0].embers = 4; cbDamageFoe(fs[0], fs[0].hp, 0, "magic"); return fs.slice(1).map(f => f.embers).join(); })()');
-    assert(spread === '2,2', `Wildfire: a foe with 4 Embers dies, the other two get 2 each (${spread})`);
+    assert(spread && spread.split(',').length >= 2 && spread.split(',').every(v => v === '2'), `Wildfire: a foe with 4 Embers dies, every other foe gets 2 (${spread})`);
     // Pack Leader: the Ranger loses its own crit bonus on marked foes
     const rg = party(102, 'ranger', ['tobin', 'hesketh'], 20);
     rg.E('S.maxZone = 10; setZone(10)'); secs(rg.g, 1);
@@ -2153,7 +2160,7 @@ try {
   // Deepwell: the [C] boons join the pool now
   {
     const g = loadCore({ seed: 1 });
-    assert(g.eval('deepStageC() && DEEP_BOON_IDS.filter(id => DEEP_BOONS[id].c).length === 9'), 'deepStageC() is true: the 9 party-combat boons are in the Deepwell pool');
+    assert(g.eval('deepStageC() && DEEP_BOON_IDS.filter(id => DEEP_BOONS[id].c).length === 14'), 'deepStageC() is true: the 14 party-combat boons are in the Deepwell pool (S6-F: five for active play)');
   }
   assert(!errs.length, 'no combat errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('combat crashed: ' + (e.stack || e)); }
@@ -2969,6 +2976,9 @@ try {
   // in any slot, and a high-level Lanternmage or Ranger hero holds the Front for packs; a Lightkeeper cannot.
   {
     const { E, J } = mk(52, 'lightkeeper', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
+    // (S6-A: with packs split by size these heroes run out of damage before sustain binds; foes that hit 3x harder
+    // make the zone hold on sustain, which is the planner rule this checks)
+    E('COMBAT_TUNE.atk *= 3');
     let found = null;
     for (let z = 10; z <= 80 && !found; z++) {
       const a = J(`bestLineup({ zone: ${z}, boss: false })`), b = J(`bestLineup({ zone: ${z}, boss: false, filter: k => ROSTER[k].role !== 'tank' })`);
@@ -4474,7 +4484,8 @@ try {
     assert(w === 'wipe:true:6' && E('CB_STATS.stalls') >= 1 && !g.errors.length,
       `F5 a pack the party cannot finish in ${E('COMBAT_TUNE.stallT')} s counts as a wipe: the party falls back from zone 7 to 6 (${w})` + (g.errors.length ? ': ' + g.errors[0] : ''));
     secs(g, E('COMBAT_TUNE.wipeT') + 1);
-    assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns (alive, or already beaten: not the locked one)');
+    for (let i = 0; i < 20 && !E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'); i++) g.fn.tick(0.1);   // S6-A: small foes may all be down between packs
+    assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns');
     // not in a boss fight: the boss timer ends those
     E('S.party.autoField = false; S.maxZone = 8; setZone(7); challenge()'); secs(g, 0.2);
     E('combatFoes().forEach(f => { f.atk = 0; }); globalThis.__k = S.party.field[0]; cbHitUnit(cbUnitByKey(__k), 1e40, "poison", null)');
@@ -4993,7 +5004,7 @@ try {
     const again = E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
     assert(near(again, light * 1.25) || near(again, light), 'once per Chill: the next heavy hit is plain (the window may still add x1.25 to abilities only)');
     F('f.boss = true; f.stag = 0; stApply(f, "chill", 1, 0, -1)'); E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
-    assert(near(F('f.stag'), 20 + 0), 'a Shatter on a boss fills 20 stagger');
+    assert(near(F('f.stag'), 20 + E('ACT_TUNE.stag.heavy * (typeof clsStagX === "function" ? clsStagX() : 1)')), 'a Shatter on a boss fills 20 stagger (and the heavy hit its +5, S6-B)');
     F('f.boss = false');
     // heavy by size: a single hit of 3 P or more (a crit's multiplier does not count)
     E('stApply(__f, "chill", 1, 0, -1)');
@@ -5036,8 +5047,9 @@ try {
     assert(E('__u.hp') === hc, 'a Cursed member takes no healing');
     E('stUnitClear(__u); __u.hp = __u.maxHp');
     // a spore cloud: Venom 3 (a floor, not added) for 4 s
-    E('(() => { const f = combatFoes().find(x => x.type === "spore" && !x.dead) || combatFoes()[0]; f.type = "spore"; f.atk = 1; f.bt = ENEMY_TUNE.cloudEvery; f.bx = 1; onEnemyTick(f, 0.01); f.bt = ENEMY_TUNE.cloudEvery; onEnemyTick(f, 0.01); f.atk = 0; })()');
-    assert(E('__u.us.venom.n') === 3 && near(E('__u.us.venom.t'), 4), 'a Spore cloud Venoms the party: 3 stacks for 4 s, not added up by a second cloud (S1, until S6\'s pack cadence)');
+    // S6-A: the cloud is a pack cadence (one cloud every 6 s for the pack, 59b onPackTick)
+    E('(() => { const L = combatFoes(), f = L.find(x => !x.dead) || L[0]; for (const x of L) if (x !== f && !x.dead) { x.type = "slime"; } f.type = "spore"; f.atk = 1; f.share = 1; f.bx = 1; f.born = 1; f.stunT = 0; f.elite = false; onPackTick(ENEMY_TUNE.cloudEvery); onPackTick(ENEMY_TUNE.cloudEvery); f.atk = 0; })()');
+    assert(E('__u.us.venom.n') === 3 && near(E('__u.us.venom.t'), 4), 'a Spore cloud Venoms the party: 3 stacks for 4 s, not added up by a second cloud (one cloud per pack, S6-A)');
     // typed hits: half armour and the resist to that type
     E('__u.armour = 100; stUnitClear(__u); __u.hp = __u.maxHp; __u.sh = 0; __u.blockP = 0; __u.drT = 0');
     const mk = t => `({ dt: ${JSON.stringify(t)}, atk: 0, gone: false, dead: 0, hp: 0 })`;
@@ -5805,6 +5817,206 @@ try {
   const csrc = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-econ.js'), 'utf8');
   assert(!/\b(document|window|localStorage)\b/.test(csrc.replace(/\/\/.*$/gm, '')), '55-econ.js is a core file: no DOM, window or storage');
 } catch (e) { fail('econ crashed: ' + (e.stack || e)); }
+// ---- S6: active combat, elite traits, boss kits (docs/design/combat-2.md 8.5, the "cb2" section) ----
+console.log('cb2');
+try {
+  const rawOf = f => fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+  const late = seed => { const g = loadCore({ seed, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }); g.eval('for (let i = 0; i < 20; i++) tick(0.1)'); return g; };
+  const errs = [];
+  const g0 = loadCore({ seed: 90 }), D = s => g0.eval(s);
+  // 1. kits: 2-3 phases; each later phase adds exactly one mechanic; core-2 telegraph ids; answers; wind-ups and casts
+  {
+    const TELE = ['heavy', 'dive', 'heal', 'zone', 'slam', 'line', 'sig', 'hard', 'summon', 'hazard', 'enrage', 'challenge', 'cleanse', 'swap'];
+    const bad = D(`(() => { const out = [], TELE = ${JSON.stringify(TELE)};
+      for (const [id, k] of Object.entries(BOSS_KITS)) {
+        const P = k.phases.length + 1;
+        if (P < 2 || P > 3) out.push(id + ': phases ' + P);
+        for (let ph = 2; ph <= P; ph++) { const n = k.mech.filter(m => m.ph === ph && !m.repeat && !m.roar).length; if (n !== 1) out.push(id + ': phase ' + ph + ' adds ' + n); }
+        for (const m of k.mech) {
+          if (!TELE.includes(m.tele)) out.push(id + '.' + m.id + ': telegraph ' + m.tele);
+          if (!m.answer || !m.idle) out.push(id + '.' + m.id + ': no answer or idle answer');
+          const cast = ['sig', 'heal', 'summon', 'hard'].includes(m.tele);
+          if (!(m.wind >= (cast ? 1.5 : 1.2))) out.push(id + '.' + m.id + ': wind ' + m.wind);
+          if (!(m.every > 0) && m.at == null) out.push(id + '.' + m.id + ': no cadence');
+          if (m.x > 0 && !(m.x <= 8)) out.push(id + '.' + m.id + ': x ' + m.x);
+        }
+        if (k.boss && !(k.phases.length >= 2 || k.mech.some(m => m.tele === 'hard'))) out.push(id + ': a region boss needs a hard cast');
+        if (!['heavy', 'zone', 'slam', 'sig', 'heal', 'summon'].filter(t => k.mech.some(m => m.tele === t)).length) out.push(id + ': no answer kind');
+      }
+      return out; })()`);
+    assert(!bad.length, `boss kits: ${D('Object.keys(BOSS_KITS).length')} rows, 2-3 phases, one new mechanic a phase, core-2 telegraph ids, an answer and an idle answer each, wind-ups >= 1.2 s, casts >= 1.5 s, region bosses have a hard cast` + (bad.length ? ': ' + bad.slice(0, 4).join('; ') : ''));
+    assert(D('["slime","bat","bones","beetle","spore","golem","wraith","fenmother"].every(k => BOSS_KITS[k] && BOSS_KITS[k].region === 0 && !BOSS_KITS[k].sig)'), 'the Hollow\'s seven elders and the Fenmother have kits and carry no buff item (owner D2)');
+    assert(D('COMBAT_TUNE.caps.tele === 0.35 && COMBAT_TUNE.caps.boss === 0.15 && COMBAT_TUNE.caps.pack === 0.1 && COMBAT_TUNE.caps.swarm === 0.04 && COMBAT_TUNE.caps.blast === 0.2'), 'hit caps: telegraphed 35%, boss swings 15%, pack swings 10% (swarm 4%), a blast 20% (combat-2 1.4)');
+  }
+  // 2. traits: core-2's seven; Explosive + Enraged never roll together; Region 1 rolls none; leans name real traits
+  {
+    assert(D('ELITE_ORDER.join()') === 'shielded,vampiric,explosive,summoner,enraged,frozen,cursed' && D('ELITE_ORDER.every(id => ELITE_TRAITS[id] && ELITE_TRAITS[id].first && ELITE_TRAITS[id].badge.length === 5)'), 'elite traits: exactly core-2\'s seven, each with a first-sighting line and a 5x5 badge');
+    assert(D('ELITE_WEIGHTS[0].n === 0 && ELITE_WEIGHTS[0].w.every(v => v === 0) && ELITE_WEIGHTS[1].n === 1 && ELITE_WEIGHTS[3].n === 2'), 'Region 1 elites roll no trait; the Coast 1; the Pale Reach 2');
+    assert(D('[1, 2, 3, 4].every(r => ELITE_LEANS[r].length === 7 && ELITE_LEANS[r].every(p => p.length === 2 && p.every(id => ELITE_TRAITS[id])))'), 'every region\'s 7 zone places lean to two real traits');
+    const pairs = D(`(() => { const seen = {}; const r = Math.random; let x = 1; Math.random = () => { x = (x * 16807) % 2147483647; return x / 2147483647; };
+      for (let i = 0; i < 4000; i++) { const f = { z: 40, max: 100, hp: 100, name: 'Elite X', tr: null }; eliteRollDeep(f, 25); if (f.tr) seen[f.tr.slice().sort().join('+')] = 1; }
+      Math.random = r; return Object.keys(seen); })()`);
+    assert(pairs.length > 5 && !pairs.some(p => p.includes('explosive') && p.includes('enraged')) && pairs.every(p => p.split('+').length === 2), `two traits never share a counter: ${pairs.length} pairs rolled (Deepwell floor 25, equal weights), never Explosive + Enraged`);
+  }
+  // 3. foes: size, family, hit type, members in range
+  {
+    const bad = D('Object.entries(FOE_TYPE).filter(([k, r]) => !PACK_SIZES[r.size] || !FOE_FAMS[r.fam] || !DMG_TYPES.includes(r.dt) || r.n < PACK_SIZES[r.size][0] || r.n > PACK_SIZES[r.size][1]).map(([k]) => k)');
+    assert(!bad.length && D('Object.keys(FOE_BEH).every(k => FOE_BEH[k].size && FOE_BEH[k].n)'), 'every foe type has a size, a family, a hit type and its members in range' + (bad.length ? ': ' + bad.join(', ') : ''));
+  }
+  // 4. pack totals: the members' HP sum to the pack's (x1.25 for swarms), gold to the pack's gold; kill once a pack
+  {
+    const g = loadCore({ seed: 91 }), E = s => g.eval(s);
+    E('chooseClass("warrior"); S.auto = false; S.maxZone = 40');
+    const rows = [];
+    for (const z of [29, 30, 31, 32]) {
+      rows.push(JSON.parse(E(`(() => { const r = Math.random; Math.random = () => 0.5; S.zone = ${z}; fightBoss = false; spawn(); Math.random = r;
+        const L = combatFoes(), sw = cbPack().size === 'swarm', hp = L.reduce((a, f) => a + f.max, 0), gold = L.reduce((a, f) => a + f.gold, 0);
+        return JSON.stringify({ z: ${z}, n: L.length, size: cbPack().size, hp: hp / (mobHp(${z}) * COMBAT_TUNE.packHp * (sw ? COMBAT_TUNE.swarmHp : 1)), gold: gold / (mobGold(${z}) * COMBAT_TUNE.packGold * (sw ? COMBAT_TUNE.swarmPay : 1)) }); })()`)));
+    }
+    assert(rows.every(r => Math.abs(r.hp - 1) < 1e-6 && Math.abs(r.gold - 1) < 1e-6), 'pack totals: members\' HP and gold sum to the pack\'s (swarms x1.25): ' + rows.map(r => `z${r.z} ${r.size} ${r.n}`).join(', '));
+    let kills = 0; g.fn.on('kill', () => kills++);
+    E('S.zone = 30; fightBoss = false; spawn(); combatFoes().forEach(f => { if (!f.dead) cbDamageFoe(f, 1e40, -1, "magic"); })');
+    assert(kills === 1 && E('combatFoes().length') >= 8, `a swarm of ${E('combatFoes().length')} dies as one kill (${kills})`);
+    errs.push(...g.errors);
+  }
+  // 5. caps: 120 s of each Hollow elder against the late fixture, no party hit above 35%
+  {
+    const over = [];
+    for (const z of [29, 30, 31, 32, 33, 34, 35]) {
+      const g = late(92), E = s => g.eval(s);
+      E(`S.auto = false; S.zone = ${z}; S.kills = 10; addModifier('bossHp', () => 1e4); fightBoss = false; challenge(); CB_STATS.partyOver = 0`);
+      for (let i = 0; i < 1200 && E('fightBoss'); i++) g.fn.tick(0.1);
+      over.push([E('mob && mob.kit ? mob.kit.name : TYPES[zoneType(' + z + ')].key'), E('CB_STATS.partyOver')]);
+      errs.push(...g.errors);
+    }
+    assert(over.every(([, v]) => v <= 0.35 + 1e-9), 'no one-shots: 120 s of each Hollow elder, the biggest hit on a member ' + over.map(([k, v]) => `${k.replace(/^Elder /, '')} ${Math.round(100 * v)}%`).join(', '));
+  }
+  // 6. idle is whole (CX7): the late fixture's idle gold a minute at zone 36 >= 97% of HEAD (b486204: 2.509e10, seeds 7-9)
+  {
+    let sum = 0;
+    for (const seed of [7, 8, 9]) {
+      const g = loadCore({ seed, storage: memoryStorage({ [KEY]: rawOf('save-v2-late.json') }) }), E = s => g.eval(s);
+      E("almanac.force('none')"); E('for (let i = 0; i < 20; i++) tick(0.1); S.auto = false; S.zone = 36; fightBoss = false; spawn();');
+      const g0 = E('S.gold'); for (let i = 0; i < 6000; i++) g.fn.tick(0.1);
+      sum += (E('S.gold') - g0) / 10;
+    }
+    const HEAD = 2.509e10, r = sum / 3 / HEAD;
+    assert(r >= 0.97, `idle is whole: idle gold a minute at zone 36, 10 minutes, late fixture: ${(100 * r).toFixed(1)}% of HEAD's (want >= 97%)`);
+  }
+  // 7. no overlap: answer warnings one at a time, at least 1 s apart (50 fights per kit)
+  {
+    const res = [];
+    for (const [z, zone] of [[29, 29], [30, 30], [31, 31], [32, 32], [33, 33], [34, 34], [35, 35], ['fen', 35]]) {
+      const g = late(93), E = s => g.eval(s);
+      E('ACT_STATS.minGap = 99; ACT_STATS.overlap = 0');
+      let n = 0;
+      for (let k = 0; k < 50; k++) {
+        // (every other fight starts the boss at 30% health: its later phases, roars and adds join in)
+        E(`S.auto = false; S.zone = ${zone}; S.maxZone = Math.max(S.maxZone, ${zone}); S.kills = 10; fightBoss = false; challenge(); combatUnits().forEach(u => { u.hp = u.maxHp; }); mob.max = 1e40; mob.hp = mob.max * ${k % 2 ? 0.3 : 1};` + (z === 'fen' ? '' : ' mob.kit = null; mob.kitM = null; kitStart(mob);'));
+        for (let i = 0; i < 80 && E('fightBoss'); i++) g.fn.tick(0.1);
+        n += 1;
+      }
+      res.push([z, E('ACT_STATS.minGap'), E('ACT_STATS.warns')]);
+      errs.push(...g.errors);
+    }
+    assert(res.every(([, gap]) => gap >= 1 - 1e-6) && res.reduce((a, r) => a + r[2], 0) > 200, 'no overlap: in 50 fights per kit, answer warnings one at a time and >= 1.0 s apart (' + res.map(([z, gap, w]) => `${z}: ${w} warnings, gap ${gap.toFixed(2)}`).join('; ') + ')');
+  }
+  // 8. Enrage: bossTime 0 enrages, the fail comes 15 s later, Short Fuse still takes 10 s off
+  {
+    const g = late(94), E = s => g.eval(s);
+    const fails = []; g.fn.on('bossFail', x => fails.push(x));
+    E('S.auto = false; S.zone = 33; S.kills = 10; addModifier("bossHp", () => 1e4); fightBoss = false; challenge(); mob.atk = 0');
+    assert(E('bossTime') === 45 && E('bossTimer(35)') === 60, `the Enrage timer: 45 s for a zone elder, 60 s for a region boss (${E('bossTime')}, ${E('bossTimer(35)')})`);
+    E('bossTime = 0.05'); g.fn.tick(0.1);
+    const enr = E('mob.enr >= 0') && E('fightBoss');
+    for (let i = 0; i < 140; i++) g.fn.tick(0.1);
+    const still = E('fightBoss');
+    for (let i = 0; i < 15; i++) g.fn.tick(0.1);
+    assert(enr && still && !E('fightBoss') && fails.length === 1, 'at 0 the boss enrages; the attempt fails 15 s later (bossFail)');
+    E('addBonus("bossTime", () => -10)');
+    assert(E('bossTimer(33)') === 35 && E('bossTimer(35)') === 50, 'Short Fuse (bossTime -10) still takes 10 s off the Enrage timer');
+    errs.push(...g.errors);
+  }
+  // 9. the active reward: 3 of your own answers on a boss: +50% XP on the kill; idle: none
+  {
+    const run = active => {
+      const g = late(95), E = s => g.eval(s);
+      E('chooseClass("warrior"); S.auto = false; S.zone = 29; S.kills = 10; fightBoss = false; challenge(); mob.atk = 0; mob.hp = mob.max = 1e40');
+      let answers = 0;
+      for (let i = 0; i < 900 && answers < 3; i++) {
+        g.fn.tick(0.1);
+        if (active) { const w = E('(() => { const w = actWarning(); return w ? w.kind + ":" + (w.left <= w.win ? 1 : 0) + ":" + (w.left <= (w.perf || 0) ? 1 : 0) : ""; })()'); if (/^(heavy|zone|slam):1/.test(w)) { const k = E('actTap()'); if (k === 'parry' || k === 'dodge') answers++; } }
+      }
+      const xp0 = E('mob.xp');
+      E('mob.hp = 1; cbDamageFoe(mob, 10, -1, "magic")');
+      const out = { answers, xp: E('mob.xp') / xp0, act: E('S.cb2.n.act'), perfect: E('S.cb2.n.perfect'), fins: E('ACT_STATS.fins') };
+      errs.push(...g.errors);
+      return out;
+    };
+    const a = run(true), i = run(false);
+    assert(a.answers >= 3 && Math.abs(a.xp - 1.5) < 1e-9 && a.act === 1 && i.xp === 1 && i.act === 0, `the active reward: 3 of your own answers give +50% XP on the kill (x${a.xp}, ${a.answers} answers); idle x${i.xp} (buff items wait for S5)`);
+  }
+  // stagger and the Finisher: a full bar Staggers the boss (x1.5, does nothing), the Finisher fires by itself at 50%
+  {
+    const g = late(96), E = s => g.eval(s);
+    E('chooseClass("warrior"); S.auto = false; S.zone = 30; S.kills = 10; fightBoss = false; challenge(); mob.hp = mob.max = 1e40; mob.atk = 0');
+    for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+    E('actStag(mob, 200, 0)'); g.fn.tick(0.1);
+    E('mob.markT = 0; mob.mkV = 0; mob.vulnT = 0; mob.markUntil = 0');
+    const on = E('mob.stgT > 4.5 && mob.stgN === 1'), a = E('cbDamageFoe(mob, 100, -1, "magic", "fire", 0)');
+    const fins = []; g.fn.on('finisher', f => fins.push(Object.assign({}, f)));
+    for (let i = 0; i < 30; i++) g.fn.tick(0.1);
+    assert(on && Math.abs(a / (100 * E('typeXKey(mob.type, "fire")')) - 1.5) < 1e-6 && fins.length === 1 && fins[0].auto && fins[0].fin === 'hammerfall', `a full stagger bar: Staggered 5 s, takes x1.5; the Finisher fires by itself (${fins.map(f => f.fin + (f.auto ? ' auto' : '')).join()})`);
+    E('actStag(mob, 1000, 0)'); g.fn.tick(0.1);
+    assert(E('mob.stgT') === 0 || E('actStagMax(mob)') > 100, 'each later Stagger needs 25% more fill');
+    errs.push(...g.errors);
+  }
+  // elite traits at work
+  {
+    const g = late(97), E = s => g.eval(s);
+    E('S.auto = false; S.zone = 40; fightBoss = false; spawn(); globalThis.__e = combatFoes().find(f => !f.dead); __e.elite = true; __e.tr = null');
+    const clr = '__e.markT = 0; __e.mkV = 0; __e.vulnT = 0; __e.markUntil = 0; __e.ss = null; __e.chillT = 0; __e.rxT = 0; __e.armoured = false';
+    E('__e.tr = ["shielded"]; __e.eshMax = __e.max * 0.3; __e.esh = __e.eshMax; __e.eshT = 0; __e.hp = __e.max; ' + clr);
+    const px = E('typeXKey(__e.type, "phys")');
+    const h0 = E('__e.hp'); E(clr); E('cbDamageFoe(__e, __e.max * 0.1, -1, "magic", "phys", 0)');
+    const sh1 = E('__e.esh / __e.max'), h1 = E('__e.hp');
+    E(clr); E('cbDamageFoe(__e, __e.max * 0.04, -1, "magic", "phys", ST_HEAVY)');
+    const sh2 = E('__e.esh / __e.max');
+    assert(h1 === h0 && Math.abs(sh1 - (0.3 - 0.1 * px)) < 1e-6 && Math.abs(sh2 - (sh1 - 0.08 * px)) < 1e-6, `Shielded: the shield takes the hit first; heavy hits deal x2 to it (${sh1.toFixed(2)} -> ${sh2.toFixed(2)})`);
+    E('__e.tr = ["frozen"]; __e.esh = 0; __e.ice = true; __e.iceN = 0; __e.hp = __e.max; ' + clr);
+    const p1 = E('cbDamageFoe(__e, 100, -1, "magic", "phys", 0)');
+    E('for (let i = 0; i < 3; i++) cbDamageFoe(__e, 1, -1, "magic", "fire", 0)');
+    E(clr); const p2 = E('cbDamageFoe(__e, 100, -1, "magic", "phys", 0)');
+    assert(Math.abs(p2 / p1 - 2) < 1e-6 && !E('__e.ice'), `Ice-Clad: half from physical until 3 fire hits break the ice (${p1.toFixed(0)} -> ${p2.toFixed(0)})`);
+    const warns0 = E('ACT_STATS.warns + ACT_STATS.queued');
+    E('__e.tr = ["explosive"]; __e.chillT = 0; stApply(__e, "chill", 1, 0, -1); cbDamageFoe(__e, 1e40, -1, "magic")');
+    assert(E('ELITE_STATS.fizzles') === 1 && E('ELITE_STATS.blasts') === 0, 'Explosive: killed while Chilled it fizzles, no blast');
+    errs.push(...g.errors);
+  }
+  // 10. save: the cb2 round trip; every fixture loads with it; no runtime combat state in the save
+  {
+    const g = loadCore({ seed: 98 }), E = s => g.eval(s);
+    assert(E('S.cb2 && S.cb2.v === 1 && S.cb2.haptic === 1 && S.cb2.left === 0 && S.cb2.n.parry === 0'), 'S.cb2 { v, haptic, left, seen, n } for a new game');
+    E('S.cb2.n.parry = 4; S.cb2.left = 1; save()');
+    const h = loadCore({ seed: 98, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(h.eval('S.cb2.n.parry === 4 && S.cb2.left === 1'), 'the cb2 counters and settings survive a save and load');
+    const bad = [];
+    for (const f of fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter(f => f.endsWith('.json'))) {
+      const k = loadCore({ seed: 99, storage: memoryStorage({ [KEY]: rawOf(f) }) });
+      if (!k.eval('S.cb2 && S.cb2.v === 1 && typeof S.cb2.n === "object"') || k.errors.length) bad.push(f);
+      k.eval('for (let i = 0; i < 50; i++) tick(0.1); save()');
+      const saved = JSON.parse(k.storage.get(KEY));
+      if (saved.combat && Object.keys(saved.combat).some(x => !['on', 'back', 'tip'].includes(x))) bad.push(f + ' combat');
+    }
+    assert(!bad.length, 'every fixture loads with S.cb2; stagger, casts, traits and phases stay out of the save' + (bad.length ? ': ' + bad.join(', ') : ''));
+  }
+  // core files: no DOM
+  for (const f of ['59g-active.js', '59h-bosses.js', '59i-elites.js', '21g-data-bosses.js']) {
+    const src = fs.readFileSync(path.join(ROOT, 'src', 'js', f), 'utf8').replace(/\/\/.*$/gm, '');
+    assert(!/\b(document|window|localStorage|canvas)\b/.test(src), `${f} is a core file: no DOM, window, canvas or storage`);
+  }
+  assert(!errs.length, 'no cb2 errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('cb2 crashed: ' + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);
