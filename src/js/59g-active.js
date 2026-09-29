@@ -26,7 +26,7 @@
 //   (59b's shapes) so the stage flashes and rings every warning. Payloads are reused objects.
 // Save: registerState('cb2', { v, haptic, left, seen, n }) (combat-2 8.4; Assist timing is parked, owner D5).
 
-var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag, actHeavy, actTick, cbState, actSeen;
+var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
 
 {
   const T = ACT_TUNE = {
@@ -214,7 +214,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
   // Shield Wall blocks the heavy hit on the hero (59b resolveParry('wall') for its own; here at land time).
 
   // ---------------- stagger (3.4) ----------------
-  const stagMax = f => (f.boss ? T.stag.boss : T.stag.elite) * Math.min(T.stag.stepMax, 1 + T.stag.step * (f.stgN || 0));
+  const stagMax = actStagMax = f => (f.boss ? T.stag.boss : T.stag.elite) * Math.min(T.stag.stepMax, 1 + T.stag.step * (f.stgN || 0));
   const stagX = () => { let x = typeof clsStagX === 'function' ? clsStagX() : 1; try { x *= 1 + Math.min(T.stag.statCap, (gear().stag || 0) / 100); } catch (e) {} return x; };
   actStag = (f, pts, src, why) => { if (!bar(f) || !alive(f) || f.stgT > 0 || !(pts > 0)) return; const v = pts * stagX(); f.stag = (f.stag || 0) + v; f.stagMine = (f.stagMine || 0) + v; ST.fill[why || 'other'] = (ST.fill[why || 'other'] || 0) + v; };
   // A unit's heavy hits fill at most heavyRate points a second in all (proposal 8.2-2: tap speed alone cannot stagger).

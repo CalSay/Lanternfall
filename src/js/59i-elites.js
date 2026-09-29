@@ -13,12 +13,16 @@
 //   ELITE_STATS counters
 // Runtime on the foe (never saved): tr (trait ids), esh / eshMax / eshT (shield), ice / iceN / iceT, sumT, curseOff, leech.
 
-var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, eliteDies, ELITE_STATS;
+var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, eliteDies, ELITE_STATS, TRAIT_ICONS;
 
 {
   const K = ELITE_TUNE;
   ELITE_STATS = { rolled: {}, shieldAbs: 0, leech: 0, blasts: 0, fizzles: 0, summons: 0, iceBreaks: 0, curses: 0 };
   for (const id of ELITE_ORDER) ELITE_STATS.rolled[id] = 0;
+  // Trait badges (5x5, combat-2 5.1) in the status badges' shape (61b statusIcon draws them; data only).
+  const BADGE_PAL = { w: '#E4F6FF', r: '#E0524F', o: '#FF9B3D', y: '#FFE08A', v: '#B47BFF', V: '#5A2E8E', b: '#9CDCFF' };
+  TRAIT_ICONS = {};
+  for (const id of ELITE_ORDER) { const t = ELITE_TRAITS[id]; TRAIT_ICONS['tr_' + id] = { col: t.col, pal: BADGE_PAL, rows: t.badge }; }
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const never = (a, b) => ELITE_NEVER.some(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a));
 

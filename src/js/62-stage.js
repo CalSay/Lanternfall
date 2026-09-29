@@ -116,8 +116,11 @@ let resize, animate, draw, stageStats, warmScene;
   // CW x CH: the container in CSS px, re-read on every resize.
   let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
   const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196;
+  // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
+  // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
+  let zoomX = 1, zoomKey = '';
   function pickZoom(w, h, dpr) {
-    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = ZOOM_W - (ZOOM_W - ZOOM_WT) * k;
+    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = (ZOOM_W - (ZOOM_W - ZOOM_WT) * k) * zoomX;
     let z = 1;
     for (const c of ZOOMS) {
       if (Number.isInteger(dpr) && !Number.isInteger(c * dpr)) continue;
@@ -360,7 +363,7 @@ let resize, animate, draw, stageStats, warmScene;
     hm: null, hpF: null, trail: 1, dX: 0, dY: 0, dF: null });
   const solo = mkFoeV();
   let foe = solo;
-  const NSLOT = 6, slots = [], drawOrd = [], ONE = [null];
+  const NSLOT = 12, slots = [], drawOrd = [], ONE = [null];   // S6-E: a swarm of 10, a boss and its adds
   for (let i = 0; i < NSLOT; i++) slots.push(mkFoeV());
   let packList = null, packN = 0, packBoss = false, packDirty = false, colX0 = 0, lastFL = null;
   const foePad = () => (tall || target() === 'node' ? 0 : Math.round(50 / ZM));
@@ -450,6 +453,21 @@ let resize, animate, draw, stageStats, warmScene;
         drawOrd.push(i);
       }
       drawOrd.sort((a, b) => slots[a].lane - slots[b].lane || slots[b].hx - slots[a].hx);
+    } else if (n > 6) {
+      // S6-E (combat-2 2.5): a big pack stands in its 3 columns several ranks deep; each rear rank 10 px up and
+      // 8 px back, drawn first and dimmed (lane 0). A column takes its members front to back in list order
+      // (59-combat sorts the lowest HP of a row first, so the one melee reaches stands in front).
+      const per = Math.min(4, Math.ceil(n / 3)), cnt = [0, 0, 0];
+      for (let i = 0; i < n; i++) {
+        const s = slots[i], pc = 2 - Math.max(0, Math.min(2, s.m && s.m.row != null ? s.m.row : 2));
+        let c = pc;
+        for (const d of CELL_TRY) { const k = pc + d; if (k >= 0 && k <= 2 && cnt[k] < per) { c = k; break; } }
+        const r = cnt[c]++;
+        s.lane = r === 0 ? 1 : 0; s.rank = r;
+        s.hx = (c === 0 ? x0 : c === 1 ? cx1 : x2) + 8 * r; s.hy = GY - 10 * r;
+        drawOrd.push(i);
+      }
+      drawOrd.sort((a, b) => (slots[b].rank || 0) - (slots[a].rank || 0) || slots[b].hx - slots[a].hx);
     } else {
       let used = 0;
       for (let i = 0; i < n; i++) {
@@ -798,6 +816,21 @@ let resize, animate, draw, stageStats, warmScene;
     for (const n of nums) n.on = false;
     if (hero.fr) refreshHero(false);   // a new gather node may need another tool
   });
+  // S6-E: the zoom step (a swarm zone, or a boss fight with 3+ adds in its kit): one resize at the zone change or boss start
+  function zoomStep() {
+    let want = 1, key = '';
+    if (target() === 'mob' && partyCombatOn()) {
+      const boss = typeof fightBoss !== 'undefined' && fightBoss, b = typeof FOE_BEH === 'object' && TYPES[zoneType(S.zone)] && FOE_BEH[TYPES[zoneType(S.zone)].key];
+      key = S.zone + (boss ? 'B' : '');
+      if (boss) { const k = mob && typeof kitOf === 'function' && kitOf(mob); if (k && k.mech.some(x => x.adds && x.adds[1] >= 3)) want = 1.4; }
+      else if (b && b.size === 'swarm' && COMBAT_TUNE.sizes) want = 1.4;
+    }
+    if (key === zoomKey) return;
+    zoomKey = key;
+    if (want !== zoomX) { zoomX = want; CW = 0; resize(); }
+  }
+  on('packSpawn', () => zoomStep());
+  on('activity', () => zoomStep());
   on('gear', () => refreshHero(true));
   on('classChosen', () => { refreshHero(true); refreshParty(); });
   on('mirrorUsed', () => refreshHero(true));
@@ -1682,17 +1715,29 @@ let resize, animate, draw, stageStats, warmScene;
   // One foe's HUD (device px): its HP bar (not for bosses: their HP is in the header) with a crown
   // (champion) or a mark (elite), its threat pip, its chips (Focus, Embers), a green "+" while a
   // Marsh Wraith channels its heal, and the boss "!". Returns the top of what it drew.
+  const OTHER_BADGE = ['stun', 'root', 'burn', 'curse', 'mark'];
   function foeHud(s, X, Y, cam, minY, tele, showT) {
     if (!slotLive(s) || s.m.born < 0.1) return null;
     const m = s.m, K = DPR * ZM, cx = X(s.x - cam);
     let y = Y(s.gy - s.h + headTop(s.fr.idle0)) - 2 * U;
     const a = showT ? threatOf(s) : null, pipCol = a ? (s.red > 0 ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker) : null;
+    // S6-E (combat-2 2.6): in a pack of 4+ only the focus foe, elites and champions show a bar; the others show at
+    // most one badge (Stun, Root, Burn, Curse, Mark) and a threat pip only while they hit a non-tank
+    if (packN > 3 && s !== foe && !m.elite && !m.champ && !m.boss) {
+      if (pipCol && a.role !== 'tank') { y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U); }
+      if (typeof stLeft === 'function') for (const id of OTHER_BADGE) if (stLeft(m, id) > 0) { pushChip(id, 0, -1); const h = chipRow(cx, y - U); if (h) y -= h + U; break; }
+      if (m.cast && m.cast.left > 0 && m.cast.kind !== 'hard') { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }
+      if (tele && tele.foe === m && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
+      return y;
+    }
     if (!m.boss && s.hpF != null) {
       const fw = packN > 1 ? Math.max(10 * U, Math.min(16 * U, Math.round(s.w * 0.45 * K / U) * U)) : Math.max(14 * U, Math.min(24 * U, Math.round(s.w * 0.5 * K / U) * U));
       y = Math.max(minY, y - 4 * U);
       const x0 = cx - (fw >> 1) - U;
       bar(x0, y, fw, s.hpF, s.trail, 0, m.champ ? CHAMP_COL : FOE_COL, -1, m.champ ? '#F2C14E' : m.elite ? '#B58CFF' : null);
       if (m.champ || m.elite) badge(x0 - 7 * U, y - (U >> 1), m.champ ? 'crown' : 'elite');
+      // S6-E: an elite's stagger fill, a 1 HUD px gold line under its bar once it has any (combat-2 3.4)
+      if (m.elite && (m.sb > 0 || m.stgT > 0) && typeof actStagMax === 'function') { ctx.fillStyle = '#F2C14E'; ctx.fillRect(x0 + U, y + 4 * U, Math.max(U, Math.round((fw - 2 * U) * (m.stgT > 0 ? 1 : Math.min(1, m.sb / actStagMax(m))))), U); }
       if (pipCol) { const px = x0 + fw + 2 * U + U; ctx.fillStyle = HK; ctx.fillRect(px, y - (U >> 1), 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(px + U, y + (U >> 1), 3 * U, 3 * U); }
     } else if (pipCol) {
       y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U);
@@ -1701,6 +1746,8 @@ let resize, animate, draw, stageStats, warmScene;
     if (m.embers | 0) pushChip('ember', m.embers | 0, -1);
     // S1 (combat-2 2.6): the focus foe's statuses, up to 4 badges with stack digits and time left
     if (s === foe && typeof stBadges === 'function') for (const b of stBadges(m)) if (chipList.length < 6) pushChip(b.id, b.n, b.f);
+    // S6-E: an elite's traits, up to 2 badges (59i TRAIT_ICONS 'tr_<id>', drawn by 61b statusIcon)
+    if (m.tr) for (let i = 0; i < m.tr.length && i < 2; i++) pushChip('tr_' + m.tr[i], 0, -1);
     const h = chipRow(cx, y - U);
     if (h) y -= h + U;
     if (m.chanT > 0 && !m.boss) { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }

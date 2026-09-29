@@ -547,7 +547,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     f.over = -f.hp; f.hp = 0; f.dead = 0.001;
     if (!inArena && !f.boss) {
       const g = f.gold; S.gold += g; S.totalGold += g;
-      if (g > 0) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);
+      if (g > 0 && packN <= 3) addFloat('+' + fmt(g) + 'g', '#F2C14E', false, 0.68, 0.3);   // S6-E: a big pack shows one gold number at its clear
     }
     burst(0.68, 0.62, f.pal[1] || f.pal[5] || f.pal[3], 10);
     if (typeof stFoeDies === 'function') stFoeDies(f);   // S1: Burn spreads (Blight carries Venom), Curse detonates
@@ -1070,6 +1070,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // the pack pays as one foe: 50-sim killPack does the rest of the old kill()
     const m = lead || last;
     if (m.boss) { S.gold += m.gold; S.totalGold += m.gold; addFloat('+' + fmt(m.gold) + 'g', '#F2C14E', false, 0.68, 0.3); }
+    else if (packN > 3 && packGold > 0) addFloat('+' + fmt(packGold) + 'g', '#F2C14E', false, 0.68, 0.3);
     mob = last;
     killPack(m, m.boss ? m.gold : packGold);
   }
