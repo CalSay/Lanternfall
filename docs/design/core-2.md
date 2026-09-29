@@ -824,3 +824,77 @@ S1 (types and statuses) is built from sections 1-3 and 6.1-6.3. It is the first 
 | 2026-09-29 | **S3 built** (24-data-classes.js `EVO_DEFS`/`CLASS_TRIALS`/`CLS_TACTICS`, 55-classes.js, 59e-class-combat.js, 59f-trials.js, 75-class-ui.js, 61-class.css; small edits in 50-sim, 55-party, 56e, 57e, 59-combat, 60b-baker, 62-stage, 75-party-sheet, 75-stars-ui, 76-create): the six evolutions on top of the base kit that runs (kit keys unchanged: a Reaver or Warden runs the Warrior's taps and Shield Wall), each with its core mechanic, `ab2` (auto-cast per slot from zone 10, waits half a cooldown more when idle), stats and role once proven, the lamp colour, an 8-star ring (`e1s1-e1s8`, its keystone outside the 2), Tactics slot data, titles `c_<evo>`; the Proving (solo runner, reusable for the Stand: hold / hunt / wave at a fixed reference = zone-35 pack in `PACE.farmSecs` x the base's share 0.1 / 0.5 / 0.2; measured: active passes at 1x, idle at 1.25x, idle fails at 0.5x); the choice card, the one free path change, the Mirror respec (1 Mirror + 2 h Essence / 2 Mirrors + 4 h, +50% a respec up to x3), a Mirror per Great Lantern from Region 2; granted Warden / Lightkeeper paths are real evolutions (60% until proven); the Lightkeeper's old star map moved into its ring (old layout untouched, points free). Picks: Trapper `heroFloor` 1.4 (caster role, not 0.7); foe hits in a Proving are a share of your own health; Dark Turned applies to Witchfire only (59a's own detonations are untouched); Finishers stay data (S6). **Deferred:** the 5 new Bonds and Bond evolution lines, the Focus as a Mark status (Focus stays x1.25, the Trapper's x1.30), Shield Wall 60 / 30 (S6), stagger (`clsStagX` for S6), Proving entry from the Fenmother's boss button, CP6 tuning (sim --evo, 30 days, seed 1, zone at day 30 vs base: Reaver +3, Warden 0, Venomstalker +1, Trapper -2, Warlock +4, Lightkeeper +1): BAL3 | S3 | pending |
 | 2026-09-29 | **ECON-A built** (economy-2.md 10, coordinator sign-off: owner decisions 1-6 yes): (1) 1.1 `gold`: the economy line `gold` is capped at **+30% total from gear** (`gearGold()`); nothing else adds gold except the Gold Rain Omen. (2) 1.1 `critMult` and 1.3 bucket A: an account-wide crit damage pool (`keen()`, 55-econ; player-facing "crit damage") multiplies every party member's crit multiplier by `1 + min(0.40, keen)`: the Lanternbearer through `mod('critDmg')`, companions through `keenCharMult` (59-combat, one hook). Every former gold-gain source outside gear feeds it (economy-2 6.2). (3) 8.2 reserved keys: `S.econ`, `S.precision`, `S.relic.edge` (`S.camp.b.tent` stays reserved for N3a); save key `v2`, `S.v` 3 | ECON-A | coordinator |
 | 2026-09-29 | **S6 built (partial: S6-A to S6-E, the Deepwell part of S6-F, S6-G checks and perf scenarios, S6-H copy in 21g)** (59g-active.js, 59h-bosses.js, 59i-elites.js, 21g-data-bosses.js, 75-combat2-ui.js, 60-combat2.css; edits in 59-combat, 59b, 59a, 59c, 57d, 50-sim, 40-rules, 55-party, 62-stage, 61b, 70-ui, 71-ui-fight, 58-deeds, 24-data-classes): packs by size (brute 3, normal 5-6, swarm 8-10; swarms x1.25 HP and pay), pack cadences, hit caps, the Enrage timer (45 s / 60 s, boss HP x1.5 / x2), the answer scheduler, dodge, cast bars and interrupts, the stagger bar and Finishers, the active reward (XP only until S5's buff items), 16 boss kits, the seven elite traits, the pack heavy, Oil for answers and five Deepwell boons. Shield Wall stays 60% / 30% (at 50% / 20% the Warrior's Proving no longer passes idle at 1.25x: BAL3 with the Proving). Picks: area damage on a big pack is spread (a splash is worth 2 other foes in all, x1.5 on swarms); the Ranger's Focus and the Lanternmage's Embers move to the next foe when theirs dies; overkill chains through small foes; Reeling stays today's x1.5 (8.2-1 pending); any Lanternbearer ability stops a cast on the boss; heroes' stagger fills only from their tagged heavy hits (their swings carry the floor x trio). **Not built:** the raid's local fight (59j), the planner's lean counters (56d), Assist timing (parked), swarm sprites at half size and 13d's overlays (hatch, glints), Tactics hooks beyond `cbState()`, sim `--cbtap` / `--cbharness` | S6 | pending |
+
+## BAL3 tuning log
+
+BAL3 + BAL-E (2026-09-29): the balance pass after S1-S3, S6 and ECON-A. Measured with `tools/sim.mjs`
+(--targets on seed 1, T3 on 3 seeds; days runs and boss probes on seeds 1-2). One line a change: old -> new, why, target.
+
+### Changes
+
+| Knob | Old -> new | Why | Target |
+|---|---|---|---|
+| `ECON.promoFoes` (`ROSTER_TUNE.promoGold` now reads it) | 300 -> 120 foes x (rank + 1) | 300 was about an hour of income a rank for each of two companions: continuous play sat at the rank caps (zone 12 at 2 h) | T1, T3, T10, EC9 |
+| Blade (`ECON.blade`, `HERO_UPS`) | 10 x 1.05^n -> 6 x 1.05^n | the 35% upgrade budget bought Blade 50 at 2 h (72 before ECON-A); a base shift only (+10 levels for the same gold, same slope late) | T1, EC9 |
+| Swiftness | 20 x 1.25^n -> 10 x 1.15^n (cap 40 kept) | the cap bounds it; attack speed now arrives in the first hour | T1, T18 |
+| Precision | 200 x 1.45^n -> 10,000 x 1.6^n (cap 15) | it maxed before the Region 1 boss (+14% of the +26% crit damage); now a Region 1-3 gold sink | EC7, EC5 |
+| `ENEMY_TUNE.healBoss` (new; 59b) | a Wraith heal on a boss 15% -> 2% of the boss's HP (packs keep 15%) | the Fenmother's Echoes and Silas's Toll adds (Marsh Wraiths) healed 15% a channel: the Fenmother went from 55% back to full; Ranger P1 day 12 | P1, no class walled |
+| `PACE.regionBoss` | 1.33 -> 1.15 (region bosses x13.8 a mob, x1.73 over the old 8 x 30 s) | their phases and adds eat part of the 60 s; at 1.33 Silas walled every class at the level cap | P2, CX4 |
+| `BOSS_KITS.silas` Toll adds | 6% -> 4% of Silas's HP | single-target parties spent Silas's last 15 s on the adds | P2 |
+| 50-sim `awayGains` (logic) | a failed boss is retried after you come back (`failDps = 0`) | a reload always did this; a kept tab (and the sim) waited for +15% dps, which never comes at the level cap | P2, P4 |
+| 55-pace `paceCheck` (logic) | party combat reads `heroCombatDps() + compDps()`, not `totalDps()` | the hero hits at its floor past the early game; a Ranger or Lanternmage party looked like a fraction of its damage and fell back from every zone it could farm, so it never got 10 kills at zone 70 (**the Lanternmage / Ranger wall at 69-70**) | P2, P4, no class walled |
+| `FORM_TUNE.heroFloor` (base classes) | ranger 0.7 -> 1.2, lanternmage 1.0 -> 1.35 (warden 1.0, lightkeeper 0 kept) | with the recommended tank + support the hero is the party's only damage; both lagged the Warrior and Priest lines by a region | P1, P2, T3 |
+| `CLS_TUNE.heroFloor` (paths) | ranger 0.7 -> 1.2, mage 1.0 -> 1.35 (mirror); venomstalker 0.75 -> 1.45, trapper 1.4 -> 2.65, warlock 1.0 -> 1.6, reaver 0.62 -> 0.56 | the base floors rose, so the paths' step came back up with them; the Reaver was +3-5 zones | CP6 |
+| `PACE.early` | 12 -> 11 (the x1.83 early HP curve ends a zone sooner) | zones 11-15 took ~25 min each after S6 and ECON-A | T1, T3, T12, P1 |
+| 55-onboard: the Almanac opens | 8 minutes or zone 8 -> 7 minutes or zone 7 | the cheaper Blade front-loads the first 5 minutes; the check's "something new every 3 minutes" had a 190 s gap | onboarding check |
+
+Checks updated (tools/check.mjs), each with its reason in place: the promotion price at zone 20 (2,900 -> 1,200); the
+Lanternbearer upgrade line; C9's migration band 0.70-1.60 -> 0.70-1.80 (save-v3-four's Lanternmage party gains from the
+floor; old saves are never read since ECON-A); the Trapper's kit test fights at zone 36 (was 30: its floor cleared a
+zone-30 pack before a trap sprang).
+
+### Kept, measured
+
+- `ST_TUNE.resistHollow` stays x0.85. At x0.7 / x0.6 no class walls any more (the Ranger is fine), but the Warrior and
+  Lightkeeper parties lose 10-25% to zone 15 and T3 fails (Lightkeeper 1.19 of the median at both). Revisit when S4/S5
+  resist lines land.
+- `COMBAT_TUNE.bossGate` stays 1. At 2 the first boss tries fall to 62% (T7 in band), but each extra fail waits for
+  +15% dps and auto line-ups lose 10-25% of early pace (T1, T3); 1.35-1.6 help the fixed balanced line-up only.
+- Enrage 45 / 60 s, swarms 1.25x, auto-Finisher 50%, Shield Wall 60 / 30, gear gold cap +30%, crit damage cap +40%: untouched.
+
+### Proposals (targets and design, not changed)
+
+- **P2 and the evolutions.** The sim's legacy keys `warden` and `lightkeeper` are evolutions (Warden, Priest) while
+  `lanternmage` and `ranger` stay base classes. Every player can evolve at the Fenmother + level 35, long before Silas,
+  so P2 should run each class on a path (or report both). P2 is also a threshold: a class either beats Silas when it
+  arrives (day 15-22) or waits for the level cap (day ~27); seed 2 moves a Ranger or Lanternmage by up to 20 days.
+- **T7** (first boss tries 40-70%) fights the auto-challenge rule: see bossGate above. Propose counting only the first
+  try of each elder that opens a new region row, or a softer retry rule (retry after N minutes instead of +15% dps).
+- **D1** (day 1 zone 20-26) has not passed since before ECON-A (day-1 zones 15-19 at commit b486204): day 1 is 90
+  active minutes and T1 wants 15-19 at 2 h of continuous play. Propose D1 17-23.
+- **EC6** Hearth 2 at 2-6 h: gated by 120 Pine Log (the sim never sends a 4 h away trip for camp logs) and by 9,000
+  gold (4 h of zone-10 income; the day-1 budget never banks it). Propose `ECON.hearthH[2]` 4 -> 2 together with a
+  sim policy that gathers a camp build's missing logs away; not changed here.
+- **EC5 / EC2** after the level cap nothing absorbs gold (Blade barely moves a hero that hits at its floor; Precision
+  caps) and parties parked at zones 70-73 out-kill the zone, which lifts the Coast's foe-equivalents a day. Both need
+  N3a's shift fees and Tents (EC4) rather than a price change; propose measuring EC2 only up to each region boss.
+- **CX1** (pack damage 8-20% of party HP): not tuned. A live probe (damage taken a pack / party max HP, medians a
+  30 min) reads 0-5% at the farm zone and 13-16% while pushing. Raising `COMBAT_TUNE.atk` moves T5, T6 and T8, and
+  needs the planned `--cbtap` harness to measure at the farm zone properly.
+
+### Results (seed 1 unless noted)
+
+| Measure | Before BAL3 (commit 1f23e5a) | After |
+|---|---|---|
+| `sim --targets` | 8/22 | **15/22** (T3, P1, P2, T6, T11, T14, T18 now pass; T1, T16, D1, P4, T4, T7, T12 fail) |
+| T1 zone at 30m/1h/2h | 7-8 / 9-10 / 12-13 | 8-9 / 10-12 / 14-16 |
+| T3 time to zone 15 (3 seeds) | 158 m / - / 164 m / - | 110 / 128 / 114 / 129 m (0.91-1.07) |
+| P1 (warden, mage, ranger, lightkeeper) | 9.3 / 10.8 / 13.3 / 11.8 | 6.5 / 5.6 / 7.8 / 7.8 |
+| P2 | 34.8 / walled at 70 / walled at 68 / 40.6 | 29.3 / 38.5 / 22.5 / 32.3 (seed 2 moves the Ranger and Mage by up to ±20 days) |
+| EC2 normal a day, Hollow / Coast / Emberwaste | 9,530 / 15,920 / 15,792 | 7,964 / 12,607 / 10,514 |
+| EC5 banked under a day of income (normal) | 34% | 30% |
+| EC6 Hearth 2 | 48 h | 29 h (the logs gate it, see proposals) |
+| EC7 crit damage at the Region 1 / 2 boss | +26% / +33% | +15% / +25% |
+| EC9 pace vs before ECON-A | pass | pass (d8 39 vs 37, d30 72 vs 72) |
+| `--report econ` | 4/9 | 4/9 (EC2, EC3, EC5, EC6, EC7 fail; EC7 by a point) |
+| Evolutions, zone at day 30 vs base (`--evo`) | Reaver +2, Warden +2, Venomstalker +2, Trapper 0, Warlock -1, Priest -1 | +1, +3, +2, 0, +3, -3 (day 30 sits at Silas; at day 20: +3, +5, +1, +1, +2, and the Priest -15 with the Mage's tank + healer pair) |

@@ -20,7 +20,7 @@ const ECON = {
   blade: { base: 6, r: 1.05 },   // BAL3: base 10 -> 6 (EC9/T1: continuous play lost ~3 zones at 2 h). Was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
                                  // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
   swift: { base: 10, r: 1.15 },  // BAL3: was 20 x 1.25^n (early pace; the cap 40 bounds it). Before ECON-A 50 x 1.6^n (cap 40 unchanged)
-  precision: { base: 15000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: 15,000 x 1.6^n, was 200 x 1.45^n, maxed
+  precision: { base: 10000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: 10,000 x 1.6^n, was 200 x 1.45^n, maxed
                                                             //   before the Region 1 boss: EC7 +26% vs 6-14%; now a Region 1-3 sink, EC5)
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----
   hearthH: [0, 0, 4, 6, 9, 12, 16, 20, 24, 30, 36],

@@ -6459,7 +6459,7 @@ const HERO_UPS = [
   // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.
   { id: 'blade', name: 'Blade', base: 6, r: 1.05, ic: ['sword', '#A9B1BD'], desc: () => `Attack ${fmt(heroAtk())}. +2.5 per level, x${PACE.bladeX} every ${PACE.bladeEvery}.` },
   { id: 'swift', name: 'Swiftness', base: 10, r: 1.15, cap: 40, ic: ['boot', '#8C6A43', { 6: '#8C6A43', 7: '#F2C14E' }], desc: () => `${aps().toFixed(1)} attacks per second. +0.1 per level.` },
-  { id: 'precision', name: 'Precision', base: 15000, r: 1.6, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
+  { id: 'precision', name: 'Precision', base: 10000, r: 1.6, cap: 15, ic: ['sword', '#F2C14E'], desc: () => `+${Math.round(100 * ECON.precision.v * S.precision)}% crit damage. +1% per level. Crit damage in all: +${Math.round(100 * keen())}% (most +${Math.round(100 * ECON.critCap)}%).` }
 ];
 const RELICS = [
   { id: 'banner', name: 'Warbanner', base: 5, r: 1.6, ic: ['banner', '#E0524F'], desc: () => `+20% damage everywhere per level.` },
@@ -8785,7 +8785,7 @@ const ECON = {
   blade: { base: 6, r: 1.05 },   // BAL3: base 10 -> 6 (EC9/T1: continuous play lost ~3 zones at 2 h). Was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
                                  // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
   swift: { base: 10, r: 1.15 },  // BAL3: was 20 x 1.25^n (early pace; the cap 40 bounds it). Before ECON-A 50 x 1.6^n (cap 40 unchanged)
-  precision: { base: 15000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: 15,000 x 1.6^n, was 200 x 1.45^n, maxed
+  precision: { base: 10000, r: 1.6, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level (BAL3: 10,000 x 1.6^n, was 200 x 1.45^n, maxed
                                                             //   before the Region 1 boss: EC7 +26% vs 6-14%; now a Region 1-3 sink, EC5)
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----
   hearthH: [0, 0, 4, 6, 9, 12, 16, 20, 24, 30, 36],
