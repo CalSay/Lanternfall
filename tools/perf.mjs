@@ -27,7 +27,7 @@ const args = process.argv.slice(2);
 const QUICK = args.includes('--quick');
 const argVal = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const ONLY = argVal('--only'), ONLY_SAVE = argVal('--save'), JSON_OUT = argVal('--json'), TRACE = argVal('--trace'), HTML = argVal('--html');
-const KEY = 'lanternfall.save.v2';   // ECON-A: the save key moved to v2
+const KEY = 'lanternfall.save.v3';   // SOLO1: the save key moved to v3 (ECON-A: v2)
 
 // ---------------- budget (keep in sync with docs/design/perf.md) ----------------
 // Times are for this harness: headless Chromium, software canvas, phone CPU slowed x4.

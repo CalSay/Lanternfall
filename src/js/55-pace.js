@@ -35,7 +35,7 @@ let paceCheck;
       if (z >= S.zone) return 0;
       P().fell = Math.max(P().fell || 0, S.zone);
       setZone(z);
-      toast(`Your party fell back to Zone ${z} to keep earning.`, 'good', null, 'normal');
+      toast(`${soloOn() ? 'You fell' : 'Your party fell'} back to Zone ${z} to keep earning.`, 'good', null, 'normal');
       return z;
     }
     const fell = P().fell || 0;

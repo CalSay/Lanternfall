@@ -59,7 +59,9 @@ function frame(now) {
   if (dt > 1) dt = 0;
   dt = Math.min(dt, 0.1);
   T += dt;
-  tick(dt); animate(dt); draw();
+  // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen
+  if (!(ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen'))) tick(dt);
+  animate(dt); draw();
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
   warmT -= dt; if (warmT <= 0) { warmT = 1; warmNextZone(); }

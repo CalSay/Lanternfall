@@ -86,12 +86,12 @@ let showAwayReport;
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
       fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `Your party worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `${soloOn() ? 'You worked' : 'Your party worked'} ${hm(r.t)} of ${hm(r.cap)}`));
       top.append(lim);
     }
     if (r.capped) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your party stops after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
+      cap.append(img(IC.glass()), el('span', null, `${soloOn() ? 'You stop' : 'Your party stops'} after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
       top.append(cap);
     }
     body.append(top);

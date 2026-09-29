@@ -319,7 +319,7 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const ROLE_D = { tank: 0.5, striker: 1.82, caster: 1.0, support: 0 };
   let legacy = false;   // true while the migration measures the old party of 3 (no trio, floor or slots)
   trioMult = () => {
-    if (!combatOn() || legacy) return 1;
+    if (!combatOn() || legacy || soloOn()) return 1;   // SOLO1: no trio
     const span = T.trioTo - T.trioFrom, z = S.maxZone || 1;
     const r = span > 0 ? Math.max(0, Math.min(1, (z - T.trioFrom) / span)) : z >= T.trioTo ? 1 : 0;
     return 1 + (T.trioX - 1) * r;

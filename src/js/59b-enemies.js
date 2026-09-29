@@ -84,7 +84,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     START_EV.kind = kind; START_EV.dur = TELE.dur; START_EV.target = TELE.target; START_EV.foe = f;
     emit('telegraphStart', START_EV);
     // The first wind-up a player sees explains the parry once (S.combat.tip).
-    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast('The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
+    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast(soloOn() ? 'The boss winds up a heavy hit. Press Parry as the red ring closes, or Dodge.' : 'The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
   }
   function endTele(result, by) {
     RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || ''; RES_EV.foe = TELE.foe;
@@ -300,7 +300,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     }
     if (res === 'parry') { resolve('parry', 'tap'); return; }
     if (typeof cbWallOn === 'function' && cbWallOn() && wallBlocks()) { resolve('parry', 'wall'); return; }
-    const x = res === 'dodge' ? E.dodgeX : 1;
+    const x = res === 'dodge' ? (soloOn() ? 0 : E.dodgeX) : 1;   // SOLO1: a dodge avoids the hit
     if (res === 'dodge') CB_STATS.dodges++;
     CB_STATS.hitByHeavy++;
     if (kind === 'cloud') {
@@ -323,7 +323,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (result === 'parry') CB_STATS.parries++;
     else if (result === 'interrupt') CB_STATS.interrupts++;
     endTele(kind === 'heal' ? 'interrupt' : result, by);
-    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
+    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, soloOn() && by === 'tap' ? SOLO_TUNE.counterT : E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
   }
   // Shield Wall blocks a heavy hit (or the Elder Spore's cloud) aimed at the hero; with Lantern Bastion
   // (a crown keystone) on anyone.

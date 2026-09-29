@@ -21,7 +21,10 @@
 // Old saves (any progress, no S.onboard yet) start with everything unlocked and the guide finished.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
-const ONBOARD = { gate: false };
+let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
+let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
+// paused: the UI shows a guide step that waits for its action (SOLO1, playtest-1 note 1); 90-boot skips the tick.
+const ONBOARD = { gate: false, paused: false };
 // function declaration: 55-goals.js (loaded earlier) calls it at run time.
 function goalGate(g) { return !ONBOARD.gate || typeof onboardGoalOk !== 'function' || onboardGoalOk(g); }
 let onboardGoalOk;
@@ -38,19 +41,21 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // FEATURES: one row per thing that unlocks. tab/view say where it lives (for the UI's toast and
 // "new" marks); when() is checked about once a second; `why` is the rule in words (docs and checks).
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
+const SOLO_G = typeof soloOn === 'function' && soloOn();   // SOLO1: the solo hero's guide and unlocks
 const FEATURES = [
-  { id: 'party', tab: 'party', view: 'team', name: 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
+  { id: 'party', tab: 'party', view: 'team', name: SOLO_G ? 'Hero' : 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + (S.precision || 0) > 0 || S.maxZone >= 2 },
-  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start', when: () => coldH() || S.maxZone >= 3 },
+  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start (solo: after the first boss)', when: () => SOLO_G ? S.maxZone >= 2 || S.activity === 'gather' : coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
   { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '7 minutes played or zone 7', when: () => O().t >= 420 || S.maxZone >= 7 },   // BAL3: was 8 / 8 (the cheaper Blade front-loads the first 5 minutes)
-  { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
-  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
-  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
+  // SOLO1: no roster, expeditions (companions away) or Bonds: late and never, so "Show every tab" leaves them out too
+  { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7 (solo: never)', late: SOLO_G, when: () => !SOLO_G && (O().t >= 600 || S.maxZone >= 7 || recruitable()) },
+  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot (solo: never)', late: SOLO_G, when: () => !SOLO_G && typeof expedOpen === 'function' && expedOpen() },
+  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three (solo: never)', late: SOLO_G, when: () => !SOLO_G && !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
@@ -72,7 +77,31 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
 // Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
 // tab:world and tab:forge are done from the start (chop, light and tool replace them).
-const GUIDE_STEPS = [
+// SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
+// the counter, the first boss, an upgrade, then Gather (Oak for the fire) and camp. `pause`: the game waits while
+// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button.
+// Steps that need time to pass (chop, the build timers) do not pause; build steps complete when the build starts.
+const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
+const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
+const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
+const SOLO_STEPS = [
+  { id: 'attack', pause: 1, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', pause: 1, when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', pause: 1, when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
+  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
+  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
+  { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'tool', pause: 1, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
+  { id: 'forge', pause: 1, when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'store', pause: 1, when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', pause: 1, when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  { id: 'nextup', pause: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+];
+const PARTY_STEPS = [
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
   { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
@@ -90,6 +119,7 @@ const GUIDE_STEPS = [
   { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => coldH() || !!O().seen.forge },
   { id: 'recruit', when: () => !!O().rec || recruitable(), done: () => !!O().rec && !!O().seen.partyAfterRec }
 ];
+const GUIDE_STEPS = SOLO_G ? SOLO_STEPS : PARTY_STEPS;
 
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
@@ -120,7 +150,7 @@ function craftReady() {
 {
   // Decide before registerState fills in the defaults: an old save has progress and no S.onboard.
   const oldSave = S.onboard === undefined && (S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (S.comp || []).some(n => n > 0));
-  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
+  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '', atk: 0, dodges: 0, parries: 0 });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
@@ -167,12 +197,17 @@ function craftReady() {
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { roster: 'roster', bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', exped: 'exped', codex: 'codex', deep: 'deep' };
-  onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
+  const SOLO_NO_GOAL = { roster: 1, exped: 1, maproom: 1, bond: 1, bonds: 1, lineup: 1 };   // SOLO1: goals that point at the party
+  onboardGoalOk = g => !(SOLO_G && SOLO_NO_GOAL[g.sys]) && isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
   // A cold save's chops (taps on the tree) do not count toward "tap a foe".
   on('tap', e => { if (e && e.node && coldH()) return; if (!O().all || !guideOver()) O().taps++; });
   on('ability', e => { if (!e || !e.auto) O().casts++; });
+  // SOLO1: the buttons
+  on('soloAttack', () => { O().atk = (O().atk || 0) + 1; });
+  on('soloDodge', e => { if (e && (e.res === 'dodge' || e.res === 'perfect')) O().dodges = (O().dodges || 0) + 1; });
+  on('soloParry', e => { if (e && e.res === 'parry') O().parries = (O().parries || 0) + 1; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
   let lateAcc = 0;

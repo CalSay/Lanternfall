@@ -249,9 +249,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // migN: the B3 migration below still picks and levels a field of 3 (old saves keep their levels);
   // 56e-formation then keeps the best 2 of them.
   let migN = 0;
-  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
+  const fieldKeys = () => typeof soloOn === 'function' && soloOn() ? [] : (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
   const fieldRaw = keys => (keys || fieldKeys()).reduce((a, k) => a + rawDps(k, charRec(k)), 0);
-  fieldCompDps = () => { const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
+  fieldCompDps = () => { if (typeof soloOn === 'function' && soloOn()) return 0; const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
   supportBuff = () => {
     let sup = 0, oth = 0;
     for (const k of fieldKeys()) { const d = modDps(k, charRec(k)); if (R(k).role === 'support') sup += d; else oth += d; }
@@ -403,7 +403,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   };
   // Cost of the first route whose condition is met, or null (no open route, or recruited).
   recruitCost = id => { if (!R(id) || isRecruited(id)) return null; const rt = readyRoute(id); return rt ? costOf(rt) : null; };
-  canRecruit = id => { const c = recruitCost(id); return !!c && affordable(c); };
+  canRecruit = id => { if (typeof soloOn === 'function' && soloOn()) return false; const c = recruitCost(id); return !!c && affordable(c); };   // SOLO1: nobody joins a party
   recruit = id => {
     if (!canRecruit(id)) return false;
     const rt = readyRoute(id);
@@ -420,6 +420,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // Adds a character to the roster at level 1, whatever the route. Used by every avenue.
   unlockChar = (id, source, quiet) => {
     if (!R(id) || isRecruited(id)) return false;
+    if (typeof soloOn === 'function' && soloOn() && source !== 'test') return false;   // SOLO1: the party is gone (tools may still add one)
     recs()[id] = newRec(1, 0, source || 'progress');
     if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good', null, 'high');
     const f = fieldKeys();

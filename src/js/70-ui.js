@@ -120,6 +120,8 @@ function followGo(go) {
 // one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
 // the list), e.g. the camp welcome (55-welcome.js).
 const NEWS = { open: true, t: 0, lines: [], entry: null };
+// SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
+if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;
 function newsEntry(lines) {
   const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
   if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
@@ -135,6 +137,7 @@ function newsEntry(lines) {
 // One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
@@ -292,7 +295,7 @@ const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
 // and its sub-views; their ids still open it (setTab('raid')).
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
-const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const TAB_TITLE = { adv: 'Fight', party: soloOn() ? 'Hero' : 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };   // SOLO1: the Party tab is the hero's
 const TAB_HIDDEN = new Set(), TAB_ICON = {};   // registerTab({ hidden: true }): menus with no tab button, and their header icons
 const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
 const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
@@ -626,7 +629,7 @@ function ui(force) {
   putHidden(H.statNums, tg === 'node');
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
-  putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : soloOn() && tg === 'mob' ? '' : 'Tap to strike');   // SOLO1: the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).

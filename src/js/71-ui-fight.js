@@ -97,11 +97,11 @@ function uiFight() {
   if (S.activity !== 'fight') {
     // UX-A copy: the heroes rest at the Hearth while the Lanternbearer gathers.
     putText(G.title, S.activity === 'raid' ? 'You are at the raid' : 'You are gathering');
-    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : 'Your heroes rest at the Hearth. Fight here to clear zones and earn gold and essence.');
+    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : (soloOn() ? '' : 'Your heroes rest at the Hearth. ') + 'Fight here to clear zones and earn gold and essence.');
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
-    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Tap fast.` : 'It is enraged. Finish it now.');
+    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
     putText(G.title, 'Rematch the zone boss');
@@ -109,7 +109,7 @@ function uiFight() {
     putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
     putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
-    putText(G.desc, `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
   HERO_UPS.forEach((u, i) => {

@@ -6,7 +6,7 @@
 // ================= save =================
 // ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
 // read (a new game starts) and never touched: its key stays in storage as it was.
-const KEY = 'lanternfall.save.v2';
+const KEY = 'lanternfall.save.v3';   // SOLO1: the solo hero starts fresh (v2 saves are never read)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));

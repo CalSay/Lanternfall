@@ -16,7 +16,7 @@
 
   // ---------------- Tavern visitor ----------------
   let V = null, vSig = '';
-  registerSection('tav', {
+  if (!(typeof soloOn === 'function' && soloOn())) registerSection('tav', {   // SOLO1: nobody joins a party
     id: 'visitor', title: 'Visitor today',
     mount(sec) {
       // First in the Tavern, right under its heading.

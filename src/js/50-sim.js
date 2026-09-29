@@ -10,7 +10,8 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Your party rests at the Hearth.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const solo = soloOn();   // SOLO1: one hero, no party
+  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
   toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
@@ -253,7 +254,7 @@ function awayBase(r) {
     const dmg = dps * raidMult() * t * 0.5;
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
-    r.note = 'Your party kept hammering the raid boss.';
+    r.note = soloOn() ? 'You kept hammering the raid boss.' : 'Your party kept hammering the raid boss.';
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
@@ -270,6 +271,6 @@ function awayBase(r) {
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: z, lines: r.lines });
-  r.note = pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
+  r.note = soloOn() ? `You held ${zoneName(z)}.` : pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
   return r;
 }

@@ -375,7 +375,7 @@
     const nm = el('b', null, S.name);
     const ctl = el('small', 'pc-ctitle'); ctl.hidden = true;   // the Codex title (57c), when the player picked one
     const sub = el('small');
-    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
+    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName && !soloOn()) tags.append(el('small', null, 'Tap: ' + c.tapName));
     who.append(nm, ctl, sub, tags);
     top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
@@ -383,7 +383,8 @@
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
-      const t = el('div'); t.append(el('em', null, c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
+      const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;   // SOLO1: the hero's own ability
+      const t = el('div'); t.append(el('em', null, sa ? sa.name : c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
       const cast = btn('mini go pc-cast', 'Cast', e => { e.stopPropagation(); if (typeof castAbility === 'function' && castAbility()) ui(true); });
       line.append(t, cast);
       const cd = el('div', 'pc-cd'); cd.append(el('i'));
@@ -420,7 +421,8 @@
     const hl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;
     putHidden(r.pw, !hl); if (hl) { setT(r.pw, hl.txt); putToggle(r.pw, 'none', !hl.n); }
     if (r.cdBar) {
-      const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
+      const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;
+      const cdMax = (sa ? sa.cd : c.ability.cd) || 30, left = Math.max(0, +P().abilityCd || 0);
       putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
       setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
       putDisabled(r.cast, left > 0 || typeof castAbility !== 'function');
@@ -683,16 +685,18 @@
   const pdot = el('span', 'dot pdot'); pdot.id = 'partyDot'; pdot.hidden = true;
   if (tabBtn) { tabBtn.append(pdot); }
   function updateDot() {
-    if (!live()) { pdot.hidden = true; return; }
+    if (!live() || (typeof soloOn === 'function' && soloOn())) { pdot.hidden = true; return; }
     const any = rosterList().some(needsYou) || bondNews();
     putHidden(pdot, !any || S.tab === 'party');
     if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
   // An unread Bond story (56f) marks the Team view.
   const bondNews = () => typeof bondUnreadAll === 'function' && safe(() => bondUnreadAll(), 0) > 0;
-  registerView('party', { id: 'team', label: 'Team', order: 10, dot: () => live() && bondNews() });
+  // SOLO1: the party is gone. The tab is the hero's (its card, gear and the star map); no roster, bench or Bonds.
+  const SOLO = typeof soloOn === 'function' && soloOn();
+  registerView('party', { id: 'team', label: SOLO ? 'Hero' : 'Team', order: 10, dot: () => !SOLO && live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
-  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
+  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -700,29 +704,29 @@
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  if (!SOLO) registerSection('party', {
     id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('div', 'syn-sets')); },
     update: guard('combos', () => {
       const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
       if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
     })
   });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', {
     id: 'party-bonds', title: 'Bonds', feature: 'synergy', mount(sec) { sec.append(el('div', 'bd-rows')); },
     update: guard('bonds', () => { if (live() && bondsUI) bondsUI.rows(document.querySelector('#sec-party-bonds .bd-rows')); })
   });
-  registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
+  if (!SOLO) registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
   });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', {
     id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
-  registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  if (!SOLO) registerSection('party', {
     id: 'party-leads', title: 'Leads', view: 'roster', mount(sec) { sec.append(el('div', 'leads')); },
     update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
   });

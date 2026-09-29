@@ -46,12 +46,13 @@ const HEARTH_TUNE = {
   light: [['wood', 1, 8]],             // the fire: 8 Oak Log
   // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
   first: {
-    bench: { mats: [['wood', 1, 20]], secs: 30 },
-    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 60 },
-    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 90 },
-    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 120 },
-    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 180 },
-    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 180 }
+    // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
+    bench: { mats: [['wood', 1, 20]], secs: 10 },
+    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 15 },
+    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 20 },
+    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 30 },
+    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 45 },
+    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 45 }
   },
   near: 0.8,       // the Storehouse plot also opens when any pile reaches 80% of what the packs hold
   packs: 100,      // what the packs hold before a Storehouse (H3's storeCap wins when it exists)
@@ -77,7 +78,9 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   if (isNew && HEARTH_TUNE.on) {
     coldStart = true;
     Hs().cold = 1;
-    S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0;
+    // SOLO1: the solo hero starts on the road (the guide sends it to the Oak Grove after the first boss)
+    if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
+    else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;

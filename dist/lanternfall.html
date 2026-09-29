@@ -2611,6 +2611,104 @@ span.cf-d { font-weight: 600; }
 .savecode-replace { padding: 6px 12px; background: var(--gold); color: #1A1420; border: 2px solid var(--line); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
 .savecode-replace:active { transform: scale(0.98); }
 .savecode-import-result { display: grid; gap: 8px; }
+/* 60-solo.css: the solo hero's action bar, its ability picker and the camp's hero picker (75-solo-ui.js, SOLO1). */
+/* The Fight view (owner): header, then what is not combat (Next Up, Fight / Gather, Switch, zones), then the stage and,
+   touching it, the action bar, the lowest thing above the tab bar (thumbs). */
+.game.solo-game > .nu-slot { order: 0; padding: 4px var(--gut) 0; }
+.game.solo-game > .ctrl { order: 1; padding: 4px var(--gut) 4px; }
+.game.solo-game > .stagebox { order: 2; }
+.game.solo-game > .sbar { order: 3; }
+/* The action bar: two rows of framed square slots. Top: Ability 1-3. Bottom: Parry, Dodge, Attack (Attack bottom right). */
+.sbar { flex: none; display: grid; justify-content: center; gap: 6px; padding: 6px var(--gut) 8px; }
+.sbar[hidden] { display: none; }
+.sb-row { display: grid; grid-template-columns: repeat(3, var(--sz, 56px)); gap: 8px; }
+.sbtn { --sz: 56px; position: relative; width: var(--sz); height: var(--sz); padding: 0; display: flex; align-items: center; justify-content: center;
+  background: #1C1624; border: 2px solid #0B0810; outline: 2px solid #4E4060; outline-offset: -4px;
+  box-shadow: inset 0 0 0 4px #2A2233, 0 3px 0 #0B0810;
+  color: var(--bone); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
+.sbtn:focus-visible { outline-color: var(--gold); }
+.sbtn:active, .sbtn.hit { transform: translateY(2px); box-shadow: inset 0 0 0 4px #2A2233, 0 1px 0 #0B0810; }
+.sb-ic { position: relative; z-index: 1; width: 24px; height: 24px; margin-top: -8px; image-rendering: pixelated; }
+.sb-lb { position: absolute; z-index: 1; left: 2px; right: 2px; bottom: 5px; font: 600 calc(11px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; color: var(--muted); }
+.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
+@media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
+/* the cooldown: a dark sweep, clockwise from the top, that leaves the icon as the slot comes back (--cd 1 -> 0) */
+.sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent calc((1 - var(--cd, 0)) * 360deg), rgba(8, 5, 12, .78) 0); }
+.sb-n { position: absolute; z-index: 3; inset: 0; display: flex; align-items: center; justify-content: center; margin-top: -6px; pointer-events: none;
+  font: 700 calc(20px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
+/* the basic three are plain; the ability slots wear a gold frame so they read as special */
+.sb-atk { background: #2A1C1C; }
+.sb-atk .sb-lb { color: #FFD9B0; }
+.sb-parry .sb-lb { color: var(--gold); }
+.sb-dodge .sb-lb { color: #8FB8FF; }
+.sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
+.sb-abslot .sb-lb { color: var(--gold); }
+.sb-abslot.ready { outline-color: var(--gold); }
+.sb-abslot.empty { background: #16111C; outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
+.sb-abslot.empty .sb-lb { color: #6B6275; }
+/* disabled: nothing to hit right now */
+.sbtn.off .sb-ic { opacity: .45; }
+/* a telegraphed hit is coming: Parry and Dodge glow */
+.sb-parry.live { outline-color: #E0524F; box-shadow: inset 0 0 0 4px #3A1A20, 0 0 10px rgba(224, 82, 79, .75), 0 3px 0 #0B0810; }
+.sb-dodge.live { outline-color: #8FB8FF; box-shadow: inset 0 0 0 4px #1A2640, 0 0 10px rgba(143, 184, 255, .75), 0 3px 0 #0B0810; }
+.sb-parry.open { background: #4A1E22; }   /* a missed parry: open for a moment */
+.sbtn.nope { animation: sb-nope .25s steps(3); }
+.sbtn.good { animation: sb-good .45s ease-out; }
+.sbtn.ready-now { animation: sb-ready .45s ease-out; }
+@keyframes sb-nope { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-3px); } 66% { transform: translateX(3px); } }
+@keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
+@keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
+.sb-tip { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #16111C; color: var(--bone);
+  border: 2px solid #0B0810; outline: 2px solid var(--line-hi, #4A3F57); font: 14px/1.35 var(--body, sans-serif); pointer-events: none; }
+.sb-tip b { font: 600 17px var(--display); color: var(--gold); }
+.sb-tip small { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
+@media (max-height: 640px) { .sbtn { --sz: 50px; } .sb-row { grid-template-columns: repeat(3, 50px); } }
+@media (max-height: 520px) { .sbtn { --sz: 46px; } .sb-row { grid-template-columns: repeat(3, 46px); } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
+/* the old floating ability circles over the stage (62-stage .abil, 75-class-ui .abil2): the bar has them now */
+body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important; }
+
+/* ---- the ability picker (a small sheet; the game waits while it is open) ---- */
+.sp-ov { position: fixed; inset: 0; z-index: 45; display: flex; align-items: flex-end; justify-content: center; background: rgba(10, 7, 14, .6); }
+.sp-sheet { width: min(420px, 100%); display: grid; gap: 8px; padding: 12px var(--gut, 12px) 16px; background: var(--panel, #221B2B); border: 2px solid var(--line-hi); border-bottom: 0; box-shadow: 0 -4px 0 #0B0810; }
+.sp-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: start; }
+.sp-head b { font: 600 20px var(--display); color: var(--gold); }
+.sp-head small { grid-column: 1; color: var(--muted); }
+.sp-x { grid-row: 1 / span 2; grid-column: 2; width: 44px; height: 44px; background: none; border: 0; color: var(--muted); font: 600 24px/1 var(--display); cursor: pointer; }
+.sp-ab { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; text-align: left; background: #231A30; color: var(--bone);
+  border: 2px solid #0B0810; outline: 2px solid #6B5320; outline-offset: -4px; cursor: pointer; font: inherit; }
+.sp-ab.on { outline-color: var(--gold); }
+.sp-ic { width: 36px; height: 36px; margin-left: 6px; image-rendering: pixelated; }
+.sp-t { display: grid; gap: 1px; }
+.sp-t b { font: 600 18px var(--display); color: var(--gold); }
+.sp-t small { color: var(--muted); }
+.sp-more { margin: 0; }
+.sp-clear { min-height: 44px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 16px var(--display); cursor: pointer; }
+.sp-clear:disabled { opacity: .5; cursor: default; }
+
+/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
+.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
+  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.ob-ok[hidden] { display: none; }
+
+/* ---- "Choose your hero" (the Camp view) ---- */
+.solo-pick .sp-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.sp-card { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; min-height: 44px; background: var(--panel-2);
+  border: 2px solid #0B0810; color: var(--bone); cursor: pointer; font: inherit; }
+.sp-card.on { box-shadow: inset 0 0 0 2px var(--gold); }
+.sp-card[data-armed="1"] { box-shadow: inset 0 0 0 2px var(--ember); }
+.sp-card b { font: 600 18px var(--display); }
+.sp-card small { color: var(--muted); font-size: 12px; text-align: center; }
+.sp-lv { font: 600 14px var(--display); color: var(--gold); }
+.sp-fig { width: 56px; height: 80px; image-rendering: pixelated; }
+
+/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
+.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
+  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.ob-ok[hidden] { display: none; }
+/* party-only UI left in the shell (the Fight tab's Party rows) */
+.solo-off { display: none !important; }
 /* 60-stars: the Stars view on the Party tab (75-stars-ui.js, docs/design/constellations.md) */
 .st-sec { gap: 10px; }
 .st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -2998,7 +3096,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
         <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
         <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
       </div>
-      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Tap <b id="sTap">0</b></span></div>
+      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Hit <b id="sTap">0</b></span></div>
     </div>
     <div class="toasts" id="toasts" aria-live="polite"></div>
   </div>
@@ -3163,7 +3261,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="adv" data-ic="sword" aria-selected="true">Fight</button>
-    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Party</button>
+    <button class="tab" role="tab" data-tab="party" data-ic="party" aria-selected="false">Hero</button>
     <button class="tab" role="tab" data-tab="gat" data-ic="pick" aria-selected="false">Gather</button>
     <button class="tab" role="tab" data-tab="forge" data-ic="anvil" aria-selected="false">Craft<span class="dot" id="forgeDot" hidden></span></button>
     <button class="tab" role="tab" data-tab="world" data-ic="camp" aria-selected="false">Camp<span class="dot" id="raidDot" hidden></span></button>
@@ -3807,6 +3905,7 @@ const TOOL_ART = (() => {
     return d;
   }
   function gatherSpec(spec, tool) {
+    if (spec && spec.comp) return spec;   // SOLO1: a starter hero gathers in its own art (no tool sprite yet)
     const g = (spec && spec.gear) || {}, gear = {};
     for (const s of ['head', 'body', 'charm']) if (g[s]) gear[s] = g[s];
     const out = { cls: spec && spec.cls, gear, tool: { k: tool.k, t: tool.t, r: tool.r || 0 } };
@@ -8363,17 +8462,18 @@ const ELITE_TUNE = {
 // ---------------- words (S6-H) ----------------
 const BOSS_COPY = {
   first: {
-    heavy: 'A red ! means a heavy hit. Tap as it ends to parry it.',
-    zone: 'Orange ground means DODGE. Tap in the last moment to step out. Wait for the very end for a perfect dodge.',
-    slam: 'It will slam your Front slot. Tap as the warning ends to step out.',
-    sig: 'It is casting its big move. Hit it with an ability while it casts to stop it.',
-    heal: 'It is healing. Tap to stop it.',
-    summon: 'It is calling help. Tap or use an ability to stop it.',
-    line: 'This hits your whole party. Shields and heals are the answer.',
+    // SOLO1: the buttons (Attack, Parry, Dodge, the ability) replace the stage tap
+    heavy: 'A red ring means a heavy hit. Dodge it, or Parry just before it lands to stagger it and counter.',
+    zone: 'Orange ground means DODGE. Press Dodge as it ends. Wait for the very end for a perfect dodge.',
+    slam: 'It will slam where you stand. Press Dodge as the warning ends.',
+    sig: 'It is casting its big move. Hit it with your ability while it casts to stop it.',
+    heal: 'It is healing. Press Attack to stop it.',
+    summon: 'It is calling help. Press Attack or your ability to stop it.',
+    line: 'This hits you wherever you stand. Nothing to dodge: heal up after.',
     hard: 'Nothing stops this one. Get ready for what comes next.',
-    dive: 'It dives at your back line. A tank or a stun stops it.',
-    stagger: 'Staggered! Tap for your Finisher.',
-    packHeavy: 'Big foes wind up heavy hits too. Tap as the red ! ends to parry.',
+    dive: 'It dives at you. A stun stops it.',
+    stagger: 'Staggered! Press Attack for your Finisher.',
+    packHeavy: 'Big foes wind up heavy hits too. Dodge, or Parry as the ring closes.',
     activeKill: 'Played it well: +50% XP.'
   },
   roar: 'It stops listening.',
@@ -8990,7 +9090,9 @@ const STATUS_DEFS = {
   stun: { n: 'Stun', dur: 1, min: 1, maxDur: 3, max: 1, keep: 'none', cap: 3 },
   root: { n: 'Root', dur: 3, max: 1, keep: 'none', cap: 4 },
   mark: { n: 'Mark', v: 0.2, vMin: 0.15, vMax: 0.3, dur: 8, max: 1, keep: 'stronger' },
-  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 }
+  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 },
+  // SOLO1: a parried foe is Staggered for the counter's length (it does nothing; bosses too). Reads and writes f.reelT.
+  stagger: { n: 'Staggered', dur: 0.55, cap: 1, max: 1, keep: 'refresh' }
 };
 
 // On a party member: damage over time is a share of the member's max HP a tick (per stack for bleed and
@@ -9025,7 +9127,7 @@ const ST_TUNE = { tick: 1, vulnCap: 0.6, rxWin: 3, rxX: 1.25, heavyP: 3, resCap:
 
 // The focus foe shows up to 4 badges, the most important first (combat-2 2.6 and its "other members" order).
 // Mark is left out here: the stage already draws its own Mark chip (the Ranger's Focus and Mark share it).
-const ST_BADGE_ORDER = ['stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
+const ST_BADGE_ORDER = ['stagger', 'stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
 
 // 5x5 badge shapes (core-2 3.1): three slashes, a drop, a small flame, a flake, a spiral, a chain link,
 // a crosshair, a cracked ring. Each carries its own palette (the stage's chip draws it on a dark plate).
@@ -9037,7 +9139,8 @@ const ST_ICONS = {
   stun: { col: '#F0E442', pal: { y: '#F0E442' }, rows: ['.yyy.', 'y...y', 'y.y.y', 'y.yy.', '.y...'] },
   root: { col: '#C8B89A', pal: { s: '#C8B89A', S: '#8A7A5E' }, rows: ['ss...', 's.S..', '.sSs.', '..S.s', '...ss'] },
   mark: { col: '#7ED36A', pal: { l: '#7ED36A', w: '#FFFFFF' }, rows: ['..l..', '.l.l.', 'll.ll', '.l.l.', '..l..'] },
-  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] }
+  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] },
+  stagger: { col: '#FFD27A', pal: { y: '#FFD27A', w: '#FFFFFF' }, rows: ['y...y', '.y.y.', '..w..', '.y.y.', 'y...y'] }
 };
 
 // ---- src/js/22-data-regions.js ----
@@ -9817,6 +9920,71 @@ const CLS_TUNE = {
     venomstalker: 1.45, trapper: 2.65, warlock: 1.6, priest: 0 }
 };
 
+// ---- src/js/24b-data-solo.js ----
+// 24b-data-solo: the solo hero (task SOLO1, docs/design/solo-hero.md). Data and knobs only.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// The party is gone: one hero fights at a time. The three starters are roster characters played as the
+// hero; each maps onto a base class kit (stats, gear weights, star maps), so balance keeps its tables.
+//   SOLO_TUNE        knobs (sim --eval "SOLO_TUNE.x = ..."); on: 0 turns the whole layer off (the dormant party
+//                    game; check.mjs runs its legacy party sections that way through a prelude `var __SOLO = 0`)
+//   SOLO_ABILITIES   the abilities: { id, name, cd, line, desc }
+//   SOLO_HEROES      the starters: { key, base, kit, weapon, role, range, abs (unlocked ids), eq (starting slots), ab (the signature) }
+//   SOLO_ORDER       picker order
+//   soloOn() -> bool the solo layer is on
+// Runtime and state: 59j-solo.js. UI: 75-solo-ui.js, 76-create.js.
+
+const SOLO_TUNE = {
+  on: typeof __SOLO === 'undefined' ? 1 : +__SOLO,
+  // ---- the buttons ----
+  atkCd: 0.6,          // Attack: one class hit, then a short cooldown (mashing is not a win)
+  parryWin: 0.35,      // Parry: the last 0.35 s of a heavy wind-up (tight)
+  dodgeWin: 0.8,       // Dodge: the last 0.8 s of any heavy, slam or ground wind-up (easier)
+  dodgeCd: 1.2,        // Dodge: cooldown after every press
+  parryCd: 0.4,        // Parry: a short lock after a success
+  openT: 1.0,          // a parry outside the window: open this long (Parry locked, hits taken x openX)
+  openX: 1.5,
+  counterT: 0.55,      // a parry staggers the foe for the counter's length; the counter lands at counterAt
+  counterAt: 0.3,
+  counterX: 4,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
+  // ---- the ability (one per starter) ----
+  autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
+  echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked
+  bash: { x: 3.2, stun: 2, dr: 0.4, drT: 4 },                  // Shield Bash: the front foe, Stun, less damage taken
+  fire: { x: 2.4, xOther: 1.0, patchT: 3, burnP: 1.5 },        // Fireball: burst, Burn, a burning patch
+  // ---- telegraphs (owner: heavy hits come mainly from bosses and elites; trash rarely, and softer) ----
+  trashEvery: 20, trashFirst: 9, trashX: 1.6, trashFrom: 1,   // a pack foe's heavy: every 20 s of fighting (first at 9 s)
+  // ---- balance for one hero (sim.mjs --targets early pacing) ----
+  dmgX: 1.75,          // the hero's damage (the party's share folded in)
+  ramp: [8, 12, 1.35], // ... rising x1.35 from max zone 8 to 12 (the old party's trio step)
+  heroX: { wren: 0.85, tobin: 1.2, pip: 1.15 },   // per hero damage, for parity (the Ranger kit crits more; the Warrior's is a tank's)
+  heroHp: { wren: 1.1, tobin: 1, pip: 1.6 },      // per hero HP (Pip wears cloth and stands alone)
+  hpX: 2.6,            // the hero's HP (it takes every hit now)
+  drX: 0.25,           // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
+  bossHitX: 0.6        // a boss's (and its adds') hits on the lone hero (bosses were tuned against a tank)
+};
+
+// The abilities (one per starter for now; the ability trees of solo-hero.md come later). line: the picker's one line.
+const SOLO_ABILITIES = {
+  echo: { id: 'echo', name: 'Echo Shot', short: 'Echo', cd: 9, line: 'Pierces the whole line and Marks every foe.',
+    desc: 'A piercing arrow down the line. It hits every foe in its path and Marks them (they take 20% more).' },
+  bash: { id: 'bash', name: 'Shield Bash', short: 'Bash', cd: 8, line: 'Stuns the front foe; you take less damage.',
+    desc: 'A heavy blow to the front foe. It Stuns it, and Tobin takes 40% less damage for 4 seconds.' },
+  fire: { id: 'fire', name: 'Fireball', short: 'Fireball', cd: 10, line: 'Burns the target and nearby foes; leaves fire.',
+    desc: 'A burst of fire on the target. It Burns it and nearby foes, and leaves a burning patch for 3 seconds.' }
+};
+// abs: the abilities the hero has unlocked; eq: the three slots a new game starts with (S.solo.eq per hero).
+const SOLO_HEROES = {
+  wren: { key: 'wren', base: 'ranger', kit: 'ranger', weapon: 'Bow', role: 'Archer', range: 'Ranged', abs: ['echo'], eq: ['echo', null, null] },
+  tobin: { key: 'tobin', base: 'warrior', kit: 'warden', weapon: 'Sword and shield', role: 'Tank', range: 'Melee', abs: ['bash'], eq: ['bash', null, null] },
+  pip: { key: 'pip', base: 'mage', kit: 'lanternmage', weapon: 'Staff', role: 'Caster', range: 'Ranged, fire', abs: ['fire'], eq: ['fire', null, null] }
+};
+for (const k in SOLO_HEROES) SOLO_HEROES[k].ab = SOLO_ABILITIES[SOLO_HEROES[k].abs[0]];   // the signature ability (the picker and the guide name it)
+const SOLO_ORDER = ['wren', 'tobin', 'pip'];
+// The hero key for a base class (a tool that picks a class picks its starter).
+const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
+function soloOn() { return !!SOLO_TUNE.on; }
+
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load/migrate, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
@@ -9826,7 +9994,7 @@ const CLS_TUNE = {
 // ================= save =================
 // ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
 // read (a new game starts) and never touched: its key stays in storage as it was.
-const KEY = 'lanternfall.save.v2';
+const KEY = 'lanternfall.save.v3';   // SOLO1: the solo hero starts fresh (v2 saves are never read)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
@@ -10158,6 +10326,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos]) return false;
     const w = resolveWho(pos, who);
     if (RETOOL.on && RT_KINDS[kind] && w !== 'any' && !(it && typeof it === 'object' && it.u)) return false;
+    // playtest-1 note 5 (SOLO1): a unique sword (the zone bosses' weapons) is a sword: only a sword hand holds it
+    if (kind === 'weapon' && it && typeof it === 'object' && it.u && (who == null || who === 'hero') && w !== 'any' && w !== 'warden') return false;
     return craftFits(kind, pos, w);
   };
 
@@ -10340,7 +10510,8 @@ function setActivity(a) {
   S.activity = a; fightBoss = false; emit('sceneReset');
   if (a === 'fight') spawn();
   if (a === 'gather') S.gProg = 0;
-  const msg = { fight: `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}. Your party rests at the Hearth.`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
+  const solo = soloOn();   // SOLO1: one hero, no party
+  const msg = { fight: solo ? `You return to ${zoneName(S.zone)}.` : `Your party returns to ${zoneName(S.zone)}.`, gather: `You head to the ${NODE_NAMES[S.node.kind][S.node.t - 1]}.${solo ? '' : ' Your party rests at the Hearth.'}`, raid: 'Your party marches to the raid. Zone gold pauses while you fight the world boss.' }[a];
   toast(msg, a === 'raid' ? 'raid' : 'good', null, a === 'raid' ? 'normal' : 'low');
   emit('activity', { activity: a });
 }
@@ -10583,7 +10754,7 @@ function awayBase(r) {
     const dmg = dps * raidMult() * t * 0.5;
     S.raid.dmg += dmg;
     r.lines.push({ icon: { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, txt: `${fmt(dmg)} raid damage` });
-    r.note = 'Your party kept hammering the raid boss.';
+    r.note = soloOn() ? 'You kept hammering the raid boss.' : 'Your party kept hammering the raid boss.';
     return r;
   }
   // Kills are capped by the respawn gap, same as live play; away play earns 75% of the live rate.
@@ -10600,7 +10771,7 @@ function awayBase(r) {
   r.lines.push({ icon: { ic: ['coin', '#F2C14E'] }, txt: '+' + fmt(gold) });
   if (ess) r.lines.push({ icon: { mat: ['ess', tier] }, txt: `+${fmt(ess)} ${matName('ess', tier)}` });
   emit('awayKills', { kills, zone: z, lines: r.lines });
-  r.note = pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
+  r.note = soloOn() ? `You held ${zoneName(z)}.` : pc ? `Your party held ${zoneName(z)}.` : `Your party kept fighting in ${zoneName(z)}.`;
   return r;
 }
 
@@ -12724,12 +12895,13 @@ const HEARTH_TUNE = {
   light: [['wood', 1, 8]],             // the fire: 8 Oak Log
   // Lv 1 of each station (spec 1.3): materials [fam, tier, n] and seconds. No gold.
   first: {
-    bench: { mats: [['wood', 1, 20]], secs: 30 },
-    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 60 },
-    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 90 },
-    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 120 },
-    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 180 },
-    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 180 }
+    // playtest-1 note 8 (SOLO1): Lv 1 builds much faster (were 30 / 60 / 90 / 120 / 180 / 180 s)
+    bench: { mats: [['wood', 1, 20]], secs: 10 },
+    forge: { mats: [['ore', 1, 25], ['wood', 1, 10]], secs: 15 },
+    store: { mats: [['wood', 1, 30], ['ore', 1, 20]], secs: 20 },
+    loom: { mats: [['fibre', 1, 20], ['wood', 1, 10], ['hide', 1, 5]], secs: 30 },
+    ench: { mats: [['crystal', 1, 15], ['ess', 1, 10], ['wood', 1, 10]], secs: 45 },
+    tavern: { mats: [['wood', 1, 40], ['herb', 1, 20]], secs: 45 }
   },
   near: 0.8,       // the Storehouse plot also opens when any pile reaches 80% of what the packs hold
   packs: 100,      // what the packs hold before a Storehouse (H3's storeCap wins when it exists)
@@ -12755,7 +12927,9 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   if (isNew && HEARTH_TUNE.on) {
     coldStart = true;
     Hs().cold = 1;
-    S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0;
+    // SOLO1: the solo hero starts on the road (the guide sends it to the Oak Grove after the first boss)
+    if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
+    else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
@@ -13919,7 +14093,10 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // Old saves (any progress, no S.onboard yet) start with everything unlocked and the guide finished.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
-const ONBOARD = { gate: false };
+let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
+let soloGuideWants = () => '';   // set by 75-onboard-ui.js: the step on screen ('dodge' / 'parry': the first press counts, 59j forgive)
+// paused: the UI shows a guide step that waits for its action (SOLO1, playtest-1 note 1); 90-boot skips the tick.
+const ONBOARD = { gate: false, paused: false };
 // function declaration: 55-goals.js (loaded earlier) calls it at run time.
 function goalGate(g) { return !ONBOARD.gate || typeof onboardGoalOk !== 'function' || onboardGoalOk(g); }
 let onboardGoalOk;
@@ -13936,19 +14113,21 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 // FEATURES: one row per thing that unlocks. tab/view say where it lives (for the UI's toast and
 // "new" marks); when() is checked about once a second; `why` is the rule in words (docs and checks).
 // A tab shows while any of its views is unlocked (Fight's Upgrades view is always there).
+const SOLO_G = typeof soloOn === 'function' && soloOn();   // SOLO1: the solo hero's guide and unlocks
 const FEATURES = [
-  { id: 'party', tab: 'party', view: 'team', name: 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
+  { id: 'party', tab: 'party', view: 'team', name: SOLO_G ? 'Hero' : 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
   { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + (S.precision || 0) > 0 || S.maxZone >= 2 },
-  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start', when: () => coldH() || S.maxZone >= 3 },
+  { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start (solo: after the first boss)', when: () => SOLO_G ? S.maxZone >= 2 || S.activity === 'gather' : coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
   { id: 'forage', tab: 'gat', view: 'forage', name: 'Foraging', why: 'zone 5', when: () => S.maxZone >= 5 || S.skills.forage.lv > 1 },
   { id: 'craft', tab: 'forge', view: 'make', name: 'Craft', why: 'materials for a first recipe, any gear, or zone 6; a cold Hearth: the Workbench is built', when: () => coldH() ? campLv('bench') >= 1 : S.maxZone >= 6 || S.items.length > 0 || craftReady() },
   { id: 'bestiary', tab: 'adv', view: 'bestiary', name: 'Bestiary', why: 'zone 6 or 60 kills', when: () => S.maxZone >= 6 || S.totalKills >= 60 },
   { id: 'almanac', tab: 'world', view: 'almanac', name: 'Almanac', why: '7 minutes played or zone 7', when: () => O().t >= 420 || S.maxZone >= 7 },   // BAL3: was 8 / 8 (the cheaper Blade front-loads the first 5 minutes)
-  { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7', when: () => O().t >= 600 || S.maxZone >= 7 || recruitable() },
-  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot', when: () => typeof expedOpen === 'function' && expedOpen() },
-  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three', when: () => !!(S.party && S.party.field && S.party.field.length >= 2) },
+  // SOLO1: no roster, expeditions (companions away) or Bonds: late and never, so "Show every tab" leaves them out too
+  { id: 'roster', tab: 'party', view: 'roster', name: 'Roster', why: '10 minutes played or zone 7 (solo: never)', late: SOLO_G, when: () => !SOLO_G && (O().t >= 600 || S.maxZone >= 7 || recruitable()) },
+  { id: 'exped', tab: 'world', view: 'camp', name: 'Expeditions', why: 'the Map Room opens a slot (solo: never)', late: SOLO_G, when: () => !SOLO_G && typeof expedOpen === 'function' && expedOpen() },
+  { id: 'synergy', tab: 'party', view: 'team', name: 'Combos and Bonds', why: 'a full party of three (solo: never)', late: SOLO_G, when: () => !SOLO_G && !!(S.party && S.party.field && S.party.field.length >= 2) },
   { id: 'uniques', tab: 'forge', view: 'uniques', name: 'Uniques', why: 'first unique loot, 12 minutes played, or zone 10', when: () => O().t >= 720 || S.maxZone >= 10 || Object.keys(S.found || {}).length > 0 },
   { id: 'tavern', tab: 'world', view: 'tav', name: 'Tavern', why: '14 minutes played, or zone 8; a cold Hearth: the Tavern is built', when: () => coldH() ? campLv('tavern') >= 1 : O().t >= 840 || S.maxZone >= 8 },
   { id: 'codex', name: 'Codex', why: 'zone 10', when: () => S.maxZone >= 10 },
@@ -13970,7 +14149,31 @@ const FEATURE_OF = Object.fromEntries(FEATURES.map(f => [f.id, f]));
 // done() completes a step by doing the thing. Targets and sentences live in 75-onboard-ui.js.
 // Cold-Hearth steps (chop, light, bench, tool, forge, store) show only on a cold save; there tab:gat,
 // tab:world and tab:forge are done from the start (chop, light and tool replace them).
-const GUIDE_STEPS = [
+// SOLO1 (the solo hero's first session): choose a hero (the create screen), Attack, the ability, Dodge, Parry and
+// the counter, the first boss, an upgrade, then Gather (Oak for the fire) and camp. `pause`: the game waits while
+// the step shows (the UI sets ONBOARD.paused; steps never overlap); `ok`: a step whose action is a Got it button.
+// Steps that need time to pass (chop, the build timers) do not pause; build steps complete when the build starts.
+const campBusy = id => campLv(id) >= 1 || (typeof campPending === 'function' && !!campPending(id));
+const heavyShowing = () => { try { const w = typeof actWarning === 'function' && actWarning(); return !!(w && w.kind === 'heavy' && !w.res && w.left > 0.15); } catch (e) { return false; } };
+const fightingNow = () => S.activity === 'fight' && !!(S.party && S.party.chosen);
+const SOLO_STEPS = [
+  { id: 'attack', pause: 1, when: () => fightingNow(), done: () => (O().atk || 0) >= 1 || S.totalKills >= 12 },
+  { id: 'ability', pause: 1, when: () => stepDone('attack') && fightingNow() && abilityOk(), done: () => O().casts >= 1 },
+  { id: 'dodge', pause: 1, when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
+  { id: 'parry', pause: 1, when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
+  { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
+  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
+  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
+  { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
+  { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
+  { id: 'tool', pause: 1, when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
+  { id: 'forge', pause: 1, when: () => coldH() && stepDone('tool') && plotOpen('forge'), done: () => !coldH() || campBusy('forge') },
+  { id: 'store', pause: 1, when: () => coldH() && plotOpen('store'), done: () => !coldH() || !(typeof CAMP_B === 'object' && CAMP_B.store) || campBusy('store') },
+  { id: 'tab:party', pause: 1, when: () => isUnlocked('party') && S.maxZone >= 3 && !unlit(), done: () => !!O().seen.party },
+  { id: 'nextup', pause: 1, when: () => isUnlocked('nextup') && stepDone('upgrade') && S.maxZone >= 3, done: () => false }
+];
+const PARTY_STEPS = [
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', when: () => unlit() && (oak8() || S.maxZone >= 2), done: () => !unlit() },
   { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
@@ -13988,6 +14191,7 @@ const GUIDE_STEPS = [
   { id: 'tab:forge', when: () => isUnlocked('craft'), done: () => coldH() || !!O().seen.forge },
   { id: 'recruit', when: () => !!O().rec || recruitable(), done: () => !!O().rec && !!O().seen.partyAfterRec }
 ];
+const GUIDE_STEPS = SOLO_G ? SOLO_STEPS : PARTY_STEPS;
 
 const O = () => S.onboard || (S.onboard = {});
 const stepDone = id => !!O().done[id];
@@ -14018,7 +14222,7 @@ function craftReady() {
 {
   // Decide before registerState fills in the defaults: an old save has progress and no S.onboard.
   const oldSave = S.onboard === undefined && (S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (S.comp || []).some(n => n > 0));
-  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '' });
+  registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, rec: '', atk: 0, dodges: 0, parries: 0 });
   if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
@@ -14065,12 +14269,17 @@ function craftReady() {
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { roster: 'roster', bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', exped: 'exped', codex: 'codex', deep: 'deep' };
-  onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
+  const SOLO_NO_GOAL = { roster: 1, exped: 1, maproom: 1, bond: 1, bonds: 1, lineup: 1 };   // SOLO1: goals that point at the party
+  onboardGoalOk = g => !(SOLO_G && SOLO_NO_GOAL[g.sys]) && isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
   // A cold save's chops (taps on the tree) do not count toward "tap a foe".
   on('tap', e => { if (e && e.node && coldH()) return; if (!O().all || !guideOver()) O().taps++; });
   on('ability', e => { if (!e || !e.auto) O().casts++; });
+  // SOLO1: the buttons
+  on('soloAttack', () => { O().atk = (O().atk || 0) + 1; });
+  on('soloDodge', e => { if (e && (e.res === 'dodge' || e.res === 'perfect')) O().dodges = (O().dodges || 0) + 1; });
+  on('soloParry', e => { if (e && e.res === 'parry') O().parries = (O().parries || 0) + 1; });
   on('recruit', e => { if (e && e.source !== 'starter' && e.source !== 'test' && !O().rec) O().rec = e.id; });
   let acc = 0;
   let lateAcc = 0;
@@ -14125,7 +14334,7 @@ let paceCheck;
       if (z >= S.zone) return 0;
       P().fell = Math.max(P().fell || 0, S.zone);
       setZone(z);
-      toast(`Your party fell back to Zone ${z} to keep earning.`, 'good', null, 'normal');
+      toast(`${soloOn() ? 'You fell' : 'Your party fell'} back to Zone ${z} to keep earning.`, 'good', null, 'normal');
       return z;
     }
     const fell = P().fell || 0;
@@ -14302,8 +14511,8 @@ let unitHp, unitCd, bossTelegraph;
     key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
     p.chosen = true; p.abilityCd = 0; readyFor = 0;
     guard = []; bless = []; volleyLeft = 0;
-    toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
-    if (first && p.newGame) {
+    if (!soloOn()) toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
+    if (first && p.newGame && !soloOn()) {   // SOLO1: no starter companion
       const [ck, slot] = STARTER[key];
       if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
       else {
@@ -14339,6 +14548,7 @@ let unitHp, unitCd, bossTelegraph;
   const canHit = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
   castAbility = function (opts) {
     ensureInit();
+    if (soloOn() && typeof soloAbility === 'function') return soloAbility(opts);   // SOLO1: the hero's own ability
     const c = cls(), p = P();
     if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
     const auto = !!(opts && opts.auto);
@@ -14369,6 +14579,7 @@ let unitHp, unitCd, bossTelegraph;
   };
 
   abilityInfo = function () {
+    if (soloOn() && typeof soloAbilityInfo === 'function') return soloAbilityInfo();
     const c = cls(); if (!c) return null;
     const ab = HERO_CLASSES[c].ability, p = P();
     return { name: ab.name, desc: ab.desc, cd: abCd(c), left: p.abilityCd, ready: p.abilityCd <= 0 || spare > 0, spare,
@@ -14410,7 +14621,8 @@ let unitHp, unitCd, bossTelegraph;
     const c = cls();
     // Stage C / S6-B: the tap does what is showing first (59g actTap: a Finisher, a parry, a dodge, an interrupt),
     // else the class tap. Without 59g, a tap during a boss wind-up is the parry (59b resolveParry).
-    if (!auto && tg === 'mob') {
+    // SOLO1: the Attack button answers nothing (Parry and Dodge have their own buttons): o.noAnswer.
+    if (!auto && tg === 'mob' && !o.noAnswer) {
       const k = typeof actTap === 'function' ? actTap() : typeof resolveParry === 'function' && resolveParry('tap') ? 'parry' : '';
       if (k) { emit('classTap', { cls: c, kind: k === 'parry' || k === 'early' ? 'parry' : 'answer', act: k, target: tg, auto }); return; }
     }
@@ -14507,7 +14719,7 @@ let unitHp, unitCd, bossTelegraph;
     if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
     // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
     // S6-B (59g actHold): auto-cast waits up to 1.5 s when the focus foe's Stagger is at 90% or more
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
+    if (!soloOn() && p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
       if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
@@ -14539,7 +14751,7 @@ let unitHp, unitCd, bossTelegraph;
   });
   on('deepFloor', () => { if (hymnUntil > clock + tn('hymnT')) hymnUntil = clock; });
   on('zoneClear', ({ zone }) => {
-    if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
+    if (zone + 1 === T.autoCastZone && cls() && !soloOn()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
   });
 
   ensureInit();
@@ -16004,9 +16216,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // migN: the B3 migration below still picks and levels a field of 3 (old saves keep their levels);
   // 56e-formation then keeps the best 2 of them.
   let migN = 0;
-  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
+  const fieldKeys = () => typeof soloOn === 'function' && soloOn() ? [] : (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
   const fieldRaw = keys => (keys || fieldKeys()).reduce((a, k) => a + rawDps(k, charRec(k)), 0);
-  fieldCompDps = () => { const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
+  fieldCompDps = () => { if (typeof soloOn === 'function' && soloOn()) return 0; const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
   supportBuff = () => {
     let sup = 0, oth = 0;
     for (const k of fieldKeys()) { const d = modDps(k, charRec(k)); if (R(k).role === 'support') sup += d; else oth += d; }
@@ -16158,7 +16370,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   };
   // Cost of the first route whose condition is met, or null (no open route, or recruited).
   recruitCost = id => { if (!R(id) || isRecruited(id)) return null; const rt = readyRoute(id); return rt ? costOf(rt) : null; };
-  canRecruit = id => { const c = recruitCost(id); return !!c && affordable(c); };
+  canRecruit = id => { if (typeof soloOn === 'function' && soloOn()) return false; const c = recruitCost(id); return !!c && affordable(c); };   // SOLO1: nobody joins a party
   recruit = id => {
     if (!canRecruit(id)) return false;
     const rt = readyRoute(id);
@@ -16175,6 +16387,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // Adds a character to the roster at level 1, whatever the route. Used by every avenue.
   unlockChar = (id, source, quiet) => {
     if (!R(id) || isRecruited(id)) return false;
+    if (typeof soloOn === 'function' && soloOn() && source !== 'test') return false;   // SOLO1: the party is gone (tools may still add one)
     recs()[id] = newRec(1, 0, source || 'progress');
     if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good', null, 'high');
     const f = fieldKeys();
@@ -18491,7 +18704,7 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const ROLE_D = { tank: 0.5, striker: 1.82, caster: 1.0, support: 0 };
   let legacy = false;   // true while the migration measures the old party of 3 (no trio, floor or slots)
   trioMult = () => {
-    if (!combatOn() || legacy) return 1;
+    if (!combatOn() || legacy || soloOn()) return 1;   // SOLO1: no trio
     const span = T.trioTo - T.trioFrom, z = S.maxZone || 1;
     const r = span > 0 ? Math.max(0, Math.min(1, (z - T.trioFrom) / span)) : z >= T.trioTo ? 1 : 0;
     return 1 + (T.trioX - 1) * r;
@@ -18905,7 +19118,7 @@ const CAMP_TUNE = {
   goldPerLv: 60,            // (unused since ECON-A: building gold is ECON.rowH hours of income at the gate zone, 55-econ econRowGold)
   mult: [0.6, 1.5, 2, 3, 4], // material multiplier by row (building level); (BAL1) row 1 was 1: the first build lands in the first 10-20 min
   troph: [0, 0, 0, 1, 2],   // trophies by row
-  secs: [180, 3600, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row
+  secs: [45, 1200, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row (playtest-1 note 8, SOLO1: row 1 was 180 s, row 2 an hour)
   shrineSecs: [6 * 3600, 16 * 3600, 30 * 3600],
   awayMax: 24,              // hours: the away cap never goes above this
   trophyEss: 10             // until trophies have a source: each trophy costs this much essence of the row's tier
@@ -18948,7 +19161,7 @@ const CAMP_B = {
   // N1 (57f-hands.js): beds for Hands at camp; effect lines from HANDS_TUNE (21f). Its plot opens after the Tavern.
   bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => !!HANDS_TUNE.on },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
-  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped },
+  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped && !soloOn() },   // SOLO1: expeditions send companions: gone
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
 };
 const CAMP_IDS = Object.keys(CAMP_B);
@@ -22845,7 +23058,7 @@ let deeds, deedBonus, wearGet;
   const tierOfId = id => num(DS().tier[id]);
   const tierName = k => k <= 0 ? '' : k <= 4 ? DEED_TIERS[k - 1].n : `Everflame ★${k - 4}`;
   const tierLabel = (id, k) => { const t = TR[id]; return !t ? '' : k <= 4 ? `${t.n} ${roman(k)}` : `${t.n} ★${k - 4}`; };
-  const trackLive = t => waitOk(t.wait);
+  const trackLive = t => !(soloOn() && (t.g === 'comp' || t.g === 'exped')) && waitOk(t.wait);   // SOLO1: no companions or expeditions
   const bonusTxt = (t, k) => {
     if (!t.bonus || (k !== 3 && k !== 4)) return '';
     if (t.bonus === 'deepOil') return `+${DEED_BONUS.deepOil}s ${DEED_KEY_TXT.deepOil}`;
@@ -23237,7 +23450,7 @@ let deeds, deedBonus, wearGet;
       sx.dareMask = num(sx.dareMask) | bit;
       if (sx.dareMask === 127) grantSecret('s_dare');
     }
-    if (S.name !== lastName) { lastName = S.name; if (nameHit()) grantSecret('s_name'); }
+    if (S.name !== lastName) { lastName = S.name; if (nameHit() && !soloOn()) grantSecret('s_name'); }   // SOLO1: the hero is a companion now, by name
     const hr = new Date(now()).getHours(), live = !inAway;
     if (live && S.activity === 'fight' && typeof target === 'function' && target() === 'mob') {
       if (hr >= T.nightFrom && hr < T.nightTo) { sx.night = num(sx.night) + 1; if (sx.night >= T.nightSecs) grantSecret('s_night'); }
@@ -23719,7 +23932,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbUnitByKey = key => { for (let i = 0; i < nU; i++) if (U[i].key === key) return U[i]; return null; };
 
   // S3: a solo fight (59f-trials trialField: the Proving, the Stand) fields only the heroes it names.
-  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
+  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (soloOn() ? [] : null) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
   const has = id => { for (let i = 0; i < nU; i++) if (U[i].id === id) return U[i]; return null; };
   const upHas = id => { const u = has(id); return u && !u.down ? u : null; };
   const synOn = id => { try { return typeof synergyStatus === 'function' && synergyStatus(id).active; } catch (e) { return false; } };
@@ -23765,6 +23978,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.pow = hp0 / T.heroPow;
       u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
       maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
+      if (soloOn()) maxHp *= SOLO_TUNE.hpX * ((typeof soloHero === 'function' && SOLO_TUNE.heroHp[soloHero()]) || 1);   // SOLO1: the hero takes every hit now
       u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
       if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
@@ -24511,6 +24725,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (has('caedmon')) dr *= 1 - T.unburnt;
     if (wallUntil > clock) dr *= 1 - T.wall;
     if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
+    if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX(f);   // SOLO1: the solo hero's cut (bosses and adds softer), x1.5 while open after a missed parry
     if (u.drT > 0) dr *= 1 - u.drV;
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
@@ -24629,7 +24844,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (inArena) { WIPE_EV.to = z; emit('wipe', WIPE_EV); return; }   // 59c-deepwell-combat ends the run
     if (fightBoss) {
       fightBoss = false; failDps = totalDps();
-      toast('Your party fell to the zone boss. Grow stronger and try again.', 'raid');
+      toast(soloOn() ? 'The zone boss beat you. Grow stronger and try again.' : 'Your party fell to the zone boss. Grow stronger and try again.', 'raid');
       emit('bossFail', { zone: z, dps: failDps });
       WIPE_EV.to = z;
     } else {
@@ -24637,7 +24852,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       if (to < z) { S.combat.back = Math.max(S.combat.back || 0, z); S.zone = to; }
       backWipes = backZone === z ? backWipes + 1 : 1; backZone = z; backAt = clock;
       WIPE_EV.to = to;
-      toast(stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
+      toast(soloOn() ? (stall ? "You couldn't finish the pack and fell back a zone." : 'You fell back a zone to recover.') : stall ? "Your party couldn't finish the pack and fell back to regroup." : 'Your party fell back to regroup.', 'raid', null, 'normal');
     }
     for (const f of foes) { f.gone = true; f.dead = f.dead || 0.001; }
     if (mob && !mob.dead) mob.dead = 0.001;
@@ -24828,6 +25043,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
+    if (soloOn()) dr0 *= 1 - SOLO_TUNE.drX;   // SOLO1
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
     const drOf = u => dr0 * (u.synDr || 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *   // F2: synergy damage reduction
       (u.col < 2 && coverOf(u, EST, n) ? 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark) : 1);   // F1 cover and bulwark
@@ -24909,7 +25125,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // reductions, capped) against the party's HP and healing: it must outlast the kill by bossLive.
     let hpSum = 0, heal = 0, front = EST[0];
     for (let i = 0; i < n; i++) { hpSum += EST[i].maxHp; heal += EST[i].heal; if (EST[i].col > front.col || (EST[i].col === front.col && EST[i].role === 'tank')) front = EST[i]; }
-    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1);
+    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? (1 - SOLO_TUNE.drX) * SOLO_TUNE.bossHitX : 1);
     const swing = Math.min(atk * dr, front.maxHp * T.caps.boss) * T.bossSpd, heavy = Math.min(atk * ENEMY_TUNE.heavyX * dr, front.maxHp * T.caps.tele) / ENEMY_TUNE.heavyEvery;
     const net = swing + heavy - heal - hpSum * T.regen;
     return !(net > 0) || hpSum / net >= T.bossLive * hp / Math.max(1e-9, D);
@@ -25054,6 +25270,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
       }
       return true;
     }
+    if (id === 'stagger') { f.reelT = Math.max(f.reelT || 0, (o && o.dur) || d.dur); return true; }   // SOLO1: a parry's stagger
     if (id === 'mark') {
       const v = Math.max(d.vMin, Math.min(d.vMax, (o && o.v) || d.v)), dur = (o && o.dur) || d.dur;
       if (f.markT > 0 && (f.mkV || d.v) > v) return false;   // the stronger Mark stays
@@ -25074,6 +25291,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     if (!f) return 0;
     if (id === 'stun') return Math.max(0, f.stunT || 0);
     if (id === 'mark') return Math.max(0, f.markT || 0);
+    if (id === 'stagger') return Math.max(0, f.reelT || 0);
     const r = peek(f, id); return r && r.t > 0 ? r.t : 0;
   };
   stHas = (f, id) => stLeft(f, id) > 0;
@@ -25383,7 +25601,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     START_EV.kind = kind; START_EV.dur = TELE.dur; START_EV.target = TELE.target; START_EV.foe = f;
     emit('telegraphStart', START_EV);
     // The first wind-up a player sees explains the parry once (S.combat.tip).
-    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast('The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
+    if (S.combat && !S.combat.tip && kind !== 'heal') { S.combat.tip = 1; toast(soloOn() ? 'The boss winds up a heavy hit. Press Parry as the red ring closes, or Dodge.' : 'The boss winds up a heavy hit. Tap the stage as the red ! ends to parry it.', 'raid', null, 'high'); }
   }
   function endTele(result, by) {
     RES_EV.kind = TELE.kind; RES_EV.result = result; RES_EV.by = by || ''; RES_EV.foe = TELE.foe;
@@ -25599,7 +25817,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     }
     if (res === 'parry') { resolve('parry', 'tap'); return; }
     if (typeof cbWallOn === 'function' && cbWallOn() && wallBlocks()) { resolve('parry', 'wall'); return; }
-    const x = res === 'dodge' ? E.dodgeX : 1;
+    const x = res === 'dodge' ? (soloOn() ? 0 : E.dodgeX) : 1;   // SOLO1: a dodge avoids the hit
     if (res === 'dodge') CB_STATS.dodges++;
     CB_STATS.hitByHeavy++;
     if (kind === 'cloud') {
@@ -25622,7 +25840,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (result === 'parry') CB_STATS.parries++;
     else if (result === 'interrupt') CB_STATS.interrupts++;
     endTele(kind === 'heal' ? 'interrupt' : result, by);
-    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
+    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, soloOn() && by === 'tap' ? SOLO_TUNE.counterT : E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
   }
   // Shield Wall blocks a heavy hit (or the Elder Spore's cloud) aimed at the hero; with Lantern Bastion
   // (a crown keystone) on anyone.
@@ -26530,7 +26748,7 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
 //   (59b's shapes) so the stage flashes and rings every warning. Payloads are reused objects.
 // Save: registerState('cb2', { v, haptic, left, seen, n }) (combat-2 8.4; Assist timing is parked, owner D5).
 
-var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
+var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodge, actAnswer, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
 
 {
   const T = ACT_TUNE = {
@@ -26586,6 +26804,10 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     W.dur = Math.max(minD, spec.dur || (k === 'heavy' ? T.heavyWind + heavyLead() : DODGE[k] ? T.dodgeWind : 2));
     W.left = W.dur;
     W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
+    // SOLO1: Parry and Dodge are buttons. A heavy takes either (Parry in the tight window, Dodge in the long one);
+    // a slam or a ground zone takes Dodge only. W.win is the parry window on a heavy (the banner marks both).
+    if (soloOn()) { W.win = k === 'heavy' ? SOLO_TUNE.parryWin : 0; W.dwin = k === 'heavy' || DODGE[k] ? SOLO_TUNE.dodgeWin : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
+    else W.dwin = 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
     const g = clock - lastEnd; if (g < ST.minGap) ST.minGap = g;
@@ -26635,6 +26857,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
       if (typeof cbWallOn === 'function' && cbWallOn() && (w.target === 'hero' || bonus('ks:bastion') > 0)) { parried(f, 'wall', false); return; }
     }
     if (DODGE[w.kind] && (res === 'dodge' || res === 'perfect')) { if (w.miss) w.miss(w, res); end(res, 'tap'); return; }
+    if (w.kind === 'heavy' && res === 'dodge' && soloOn()) { end('dodge', 'tap'); return; }   // SOLO1: a dodged heavy misses
     ST.landed++;
     const mult = (w.kind === 'heavy' && res === 'early' ? T.earlyX : 1) * (dboon('lward') ? 0.7 : 1);   // Lamplight Ward
     if (w.land) { try { w.land(w, mult); } catch (e) { console.error('[lanternfall] warning land failed', e); } }
@@ -26644,7 +26867,11 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
   function parried(f, by, active) {
     ST.parries++; CB_STATS.parries++;
     end('parry', by);
-    if (f && alive(f)) { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
+    if (f && alive(f)) {
+      // SOLO1 (owner): the parry staggers the foe at once for the counter's length; the counter lands inside it (59j)
+      if (soloOn() && active) { stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); f.swing = Math.max(f.swing, 0.3); actStag(f, T.stag.parry, 0); if (typeof soloCounter === 'function') soloCounter(f); }
+      else { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
+    }
     if (active) { N().parry++; answered(); }
     PARRY_EV.foe = f; PARRY_EV.by = by; PARRY_EV.active = !!active; emit('parry', PARRY_EV);
   }
@@ -26696,6 +26923,55 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     if (typeof resolveParry === 'function' && resolveParry('tap')) return 'parry';
     return '';
   };
+  // ---------------- SOLO1: the Parry, Dodge and Attack buttons ----------------
+  // actParry(forgive) -> 'parry' | 'miss' | ''   '' = no heavy hit showing (the press still misses: 59j opens you up)
+  // actDodge(forgive) -> 'dodge' | 'perfect' | 'early' | ''
+  // actAnswer() -> 'finisher' | 'interrupt' | ''   what the Attack button does first (a Finisher, stop a heal or a summon)
+  // forgive: the guide's first Parry / Dodge (the game paused on the warning): any press inside the wind-up counts.
+  const heavyOn = () => W.on && W.kind === 'heavy' && W.foe && (alive(W.foe) || W.spec.dead);
+  actParry = forgive => {
+    if (heavyOn()) {
+      if (W.res === 'dodge') return '';
+      if (W.left <= W.win || forgive) { W.res = 'parry'; land(); return 'parry'; }
+      return 'miss';
+    }
+    // 59b's own wind-ups (a boss without a kit)
+    const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
+    if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
+      if (t.left <= SOLO_TUNE.parryWin || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
+      return 'miss';
+    }
+    return '';
+  };
+  actDodge = forgive => {
+    if (W.on && W.foe && (alive(W.foe) || W.spec.dead) && (W.kind === 'heavy' || DODGE[W.kind])) {
+      if (W.res) return '';
+      if (W.left <= (W.dwin || T.dodgeWin) || forgive) {
+        W.res = W.kind !== 'heavy' && W.left <= W.perf ? 'perfect' : 'dodge';
+        ST.dodges++; CB_STATS.dodges++; N().dodge++;
+        if (W.res === 'perfect') { ST.perfect++; N().perfect++; keenPatch(W.slots); if (W.foe && alive(W.foe) && bar(W.foe)) actStag(W.foe, T.stag.perfect, 0); }
+        answered();
+        DODGE_EV.foe = W.foe; DODGE_EV.perfect = W.res === 'perfect'; emit('dodge', DODGE_EV);
+        return W.res;
+      }
+      W.wait = 0.4;
+      return 'early';
+    }
+    const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
+    if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
+      if (t.res) return '';
+      if (t.left <= SOLO_TUNE.dodgeWin || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
+      return 'early';
+    }
+    return '';
+  };
+  actAnswer = () => {
+    if (FIN.on && FIN.f && alive(FIN.f)) { fireFinisher(false); return 'finisher'; }
+    if (W.on && W.foe && alive(W.foe) && (W.kind === 'heal' || W.kind === 'summon') && !W.foe.boss && canInterrupt('tap')) return interrupt('tap', true) && 'interrupt';
+    for (const f of foes()) if (alive(f) && f.chanT > 0) { f.chanT = 0; f.bt = 0; ST.intr++; CB_STATS.interrupts++; N().intr++; INT_EV.foe = f; INT_EV.kind = 'heal'; INT_EV.by = 'tap'; INT_EV.active = true; emit('interrupt', INT_EV); return 'interrupt'; }
+    return '';
+  };
+
   // Keen on each member standing in the struck slots (proposal 8.2-11).
   function keenPatch(slots) {
     for (const u of units()) if (u.live && !u.down && (!slots || (slots & (1 << u.col)))) u.keenT = T.keenT;
@@ -26889,7 +27165,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, enrage: false, rxWin: false, elites: [] };
   cbState = () => {
     const s = SNAP, t = s.tele, c = s.cast;
-    t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
+    t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.dwin = W.dwin || 0; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
     c.kind = ''; c.foe = null;
     const list = foes();
     let boss = null;
@@ -27254,6 +27530,313 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
       list.push(a);
     }
   }
+}
+
+// ---- src/js/59j-solo.js ----
+// 59j-solo: the solo hero (task SOLO1, docs/design/solo-hero.md). One hero fights; the three starters are
+// playable; the fight has buttons (Attack, Parry, Dodge, the hero's ability) instead of tap-to-attack.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Data and knobs: 24b-data-solo.js (SOLO_TUNE, SOLO_HEROES). UI: 75-solo-ui.js; the picker: 76-create.js.
+//
+// Exposed names:
+//   state    soloHero() -> 'wren' | 'tobin' | 'pip' | null; soloPick(key, { now }) -> bool (the first choice, or
+//            the free switch at camp: gold, gear and camp are shared, each hero keeps its own level and XP);
+//            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live)
+//   buttons  soloAttack() -> '' | 'hit' | 'finisher' | 'interrupt' | 'cd'; soloParry(forgive) -> 'parry' | 'miss' | 'locked';
+//            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ slot, auto }) -> bool
+//   slots    soloAbilities(hero) -> unlocked ids; soloEquipped() -> [id | null] x 3 (the playing hero's, saved in S.solo.eq);
+//            soloEquip(slot, id | null) -> bool (place, swapping if equipped elsewhere, or clear); idle casts what is equipped
+//   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
+//            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
+//   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash }
+// Events: soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
+//   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
+// Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
+// ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only.
+
+var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
+  soloTakenX, soloCounter, SOLO_STATS;
+
+{
+  const T = SOLO_TUNE;
+  // the hero's damage: the party's share folded in (retuned for one hero by sim.mjs --targets)
+  addModifier('dmg', () => {
+    const k = soloHero(); if (!k) return 1;
+    const r = T.ramp, f = Math.max(0, Math.min(1, ((S.maxZone || 1) - r[0]) / Math.max(1, r[1] - r[0])));
+    return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
+  });
+  const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
+  const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
+  const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
+  const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
+  const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
+  const fighting = () => soloOn() && !!soloHero() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
+  const heroUp = () => typeof cbHeroUp !== 'function' || cbHeroUp();
+  const anyFoe = () => { for (const f of foes()) if (alive(f)) return true; return false; };
+
+  soloHero = () => (soloOn() && S && S.solo && SOLO_HEROES[S.solo.hero] ? S.solo.hero : null);
+  soloLevels = () => {
+    const out = {}, s = Sx();
+    for (const k of SOLO_ORDER) out[k] = k === s.hero ? { L: S.L, xp: S.xp } : (s.lv[k] ? { L: s.lv[k].L, xp: s.lv[k].xp } : { L: 1, xp: 0 });
+    return out;
+  };
+
+  // ---- choosing and switching ----
+  soloPick = (key, opts) => {
+    const h = SOLO_HEROES[key], o = opts || {};
+    if (!soloOn() || !h || typeof chooseClass !== 'function') return false;
+    const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
+    if (from === key && chosen) return true;
+    // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
+    if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
+    if (from && from !== key) { const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0; }
+    s.hero = key;
+    const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : key;
+    const ok = chooseClass(h.base, nm, { now: o.now, free: !!from });
+    if (!ok) return false;
+    if (S.party) S.party.abilityCd = 0;
+    atkT = 0; dodgeT = 0; parryT = 0; openT = 0; for (const id in cds) cds[id] = 0; readyFor.fill(0);
+    if (typeof gearDirty === 'function') gearDirty();
+    emit('soloHero', { key, from: from || null });
+    if (from && from !== key) toast(`${nm} takes up the lamp.`, 'good', null, 'normal');
+    return true;
+  };
+  // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
+  on('classChosen', ({ base } = {}) => {
+    if (!soloOn()) return;
+    const s = Sx(), want = SOLO_BY_BASE[base];
+    if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base)) {
+      if (s.hero && SOLO_HEROES[s.hero]) s.lv[s.hero] = { L: S.L, xp: S.xp };
+      s.hero = want;
+    }
+  });
+
+  // ---- the party is gone: keep the field empty ----
+  function clearField() {
+    const p = S.party; if (!p) return;
+    if (Array.isArray(p.field) && p.field.length) { p.field = []; p.cells = { hero: { col: 2, lane: 1 } }; emit('fieldChange', { field: p.field }); }
+  }
+
+  // ---- the buttons ----
+  let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
+  const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
+  const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
+  soloAttack = () => {
+    if (!fighting() || !heroUp()) return '';
+    if (atkT > 0) return 'cd';
+    atkT = T.atkCd;
+    ST.attacks++;
+    // the Attack button fires a Finisher, or stops a heal or a summon, first (the old tap's other answers)
+    const a = typeof actAnswer === 'function' ? actAnswer() : '';
+    if (a) { emit('soloAttack', { kind: a }); return a; }
+    if (!anyFoe()) return '';
+    classTap({ target: 'mob', noAnswer: true });
+    emit('lunge');
+    emit('soloAttack', { kind: 'hit' });
+    return 'hit';
+  };
+  soloParry = forgive => {
+    if (!fighting()) return '';
+    if (parryT > 0 || openT > 0) return 'locked';
+    const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
+    if (r === 'parry') { ST.parries++; parryT = T.parryCd; emit('soloParry', { res: 'parry' }); return 'parry'; }
+    // outside the window (or nothing to parry): open for a moment
+    ST.misses++; openT = T.openT;
+    emit('soloParry', { res: 'miss' });
+    return 'miss';
+  };
+  soloDodge = forgive => {
+    if (!fighting()) return '';
+    if (dodgeT > 0) return 'cd';
+    dodgeT = T.dodgeCd;
+    const r = typeof actDodge === 'function' ? actDodge(!!forgive) : '';
+    if (r === 'dodge' || r === 'perfect') ST.dodges++;
+    else ST.early++;
+    const res = r || 'miss';
+    emit('soloDodge', { res });
+    return res;
+  };
+  // 59-combat cbHitUnit: the hero's damage taken (the solo cut, and more while open after a missed parry).
+  soloTakenX = f => (soloOn() ? (1 - T.drX) * (f && (f.boss || f.adds) ? T.bossHitX : 1) * (openT > 0 ? T.openX : 1) : 1);
+
+  // ---- the counter (59g calls it on a parry): it lands inside the stagger ----
+  const counters = [];
+  soloCounter = f => { if (f) counters.push({ f, t: 0, done: false }); };
+  function counterTick(dt) {
+    for (let i = counters.length - 1; i >= 0; i--) {
+      const c = counters[i]; c.t += dt;
+      if (!c.done && c.t >= T.counterAt) {
+        c.done = true;
+        if (alive(c.f)) {
+          const P = heroAtkNow(false);
+          const dmg = cbDamageFoe(c.f, P * T.counterX, 0, 'phys', unitType('hero'), ST_HEAVY);
+          ST.counters++;
+          emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FFD27A', big: true });
+          emit('shake', 0.2); emit('lunge');
+          emit('soloCounter', { foe: c.f, dmg: dmg || 0 });
+        }
+      }
+      if (c.t >= T.counterT) counters.splice(i, 1);
+    }
+  }
+  on('sceneReset', () => { counters.length = 0; });
+
+  // ---- the abilities: three slots per hero (owner: the player picks what goes where) ----
+  // S.solo.eq[hero] = [id | null] x 3. soloAbilities(k) the hero's unlocked ids (one each for now), soloEquipped() the
+  // playing hero's slots, soloEquip(slot, id | null) places (swapping if equipped elsewhere) or clears; saved.
+  soloAbilities = k => { k = k || soloHero(); return k && SOLO_HEROES[k] ? SOLO_HEROES[k].abs.filter(id => SOLO_ABILITIES[id]) : []; };
+  soloEquipped = () => {
+    const k = soloHero(); if (!k) return [null, null, null];
+    const s = Sx(), own = soloAbilities(k);
+    if (!s.eq || typeof s.eq !== 'object') s.eq = EQ0();
+    let row = s.eq[k];
+    if (!Array.isArray(row)) row = s.eq[k] = SOLO_HEROES[k].eq.slice();
+    for (let i = 0; i < 3; i++) if (row[i] != null && !own.includes(row[i])) row[i] = null;   // a stale id (a tool, an old code)
+    while (row.length < 3) row.push(null);
+    if (row.length > 3) row.length = 3;
+    return row;
+  };
+  soloEquip = (slot, id) => {
+    const k = soloHero(); if (!k || !(slot >= 0 && slot < 3)) return false;
+    const row = soloEquipped();
+    if (id == null) { row[slot] = null; emit('soloEquip', { hero: k, slot, id: null }); return true; }
+    if (!soloAbilities(k).includes(id)) return false;
+    const was = row.indexOf(id);
+    if (was >= 0 && was !== slot) row[was] = row[slot];   // swap: the slot's old ability goes where this one was
+    row[slot] = id;
+    emit('soloEquip', { hero: k, slot, id });
+    return true;
+  };
+  const abAt = slot => { const id = soloEquipped()[slot]; return id ? SOLO_ABILITIES[id] : null; };
+  const abCd = a => (a ? a.cd * mod('abilityCd') : 0);
+  const cdOf = a => (a ? Math.max(0, cds[a.id] || 0) : 0);
+  let patchT = 0, patchTick = 0, patchP = 0;
+  function frontFoe() {
+    let r = -1; for (const f of foes()) if (alive(f) && f.row > r) r = f.row;
+    let best = null; for (const f of foes()) if (alive(f) && f.row === r && (!best || f.hp < best.hp)) best = f;
+    return best;
+  }
+  const focus = () => (typeof mob !== 'undefined' && alive(mob) ? mob : frontFoe());
+  // opts: { slot (0-2; none = the first equipped ability that is ready), auto }
+  soloAbility = opts => {
+    const o = opts || {}, p = S.party, auto = !!o.auto;
+    let slot = o.slot;
+    if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
+    const a = abAt(slot);
+    if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
+    const P = heroAtkNow(auto), ty = unitType('hero');
+    const tags = ST_AB;
+    if (a.id === 'echo') {
+      // a piercing arrow down the lane: every foe, front to back, and a Mark on each
+      const list = foes().filter(alive).sort((x, y) => y.row - x.row);
+      list.forEach((f, i) => {
+        if (!alive(f)) return;
+        stApply(f, 'mark', 1, 0, 0, { dur: T.echo.mark });
+        cbDamageFoe(f, P * (i === 0 ? T.echo.x : T.echo.xOther), 0, 'phys', ty, tags);
+      });
+    } else if (a.id === 'bash') {
+      const f = frontFoe();
+      if (f) { cbDamageFoe(f, P * T.bash.x, 0, 'phys', ty, tags | ST_HEAVY); if (alive(f)) cbStun(f, T.bash.stun, 0); }
+      const u = heroU(); if (u) { u.drV = Math.max(u.drV || 0, T.bash.dr); u.drT = Math.max(u.drT || 0, T.bash.drT); }
+      emit('shake', 0.25);
+    } else if (a.id === 'fire') {
+      const f = focus();
+      if (f) {
+        cbDamageFoe(f, P * T.fire.x, 0, 'magic', 'fire', tags);
+        for (const o2 of foes()) if (o2 !== f && alive(o2)) cbDamageFoe(o2, P * T.fire.xOther, 0, 'magic', 'fire', tags);
+        for (const o2 of foes()) if (alive(o2)) stApply(o2, 'burn', 1, P * T.fire.burnP, 0);
+      }
+      patchT = T.fire.patchT; patchTick = 1; patchP = P * T.fire.burnP;
+      emit('shake', 0.3);
+    }
+    cds[a.id] = abCd(a); readyFor[slot] = 0;
+    mirrorCd();
+    ST.casts++; if (auto) ST.auto++;
+    emit('float', { txt: a.name, color: '#FFD27A', big: true });
+    emit('ability', { cls: 'solo', id: a.id, name: a.name, auto, slot });
+    return true;
+  };
+  // 55-party's readers (the hero card, the guide's "ready") keep S.party.abilityCd: the first equipped slot's cooldown
+  function mirrorCd() { const p = S.party; if (p) { const a = abAt(0) || abAt(1) || abAt(2); p.abilityCd = cdOf(a); } }
+  // slot: 0-2 (none: the first equipped slot); null when the slot is empty
+  soloAbilityInfo = slot => {
+    const eq = soloEquipped(), i = slot == null ? Math.max(0, eq.findIndex(Boolean)) : slot, a = abAt(i);
+    if (!a || !S.party) return null;
+    const left = cdOf(a);
+    return { id: a.id, name: a.name, desc: a.desc, line: a.line, cd: abCd(a), left, ready: !(left > 0), spare: 0, slot: i,
+      autoUnlocked: true, autoCast: true, patch: patchT };
+  };
+
+  // ---- telegraphs for one hero: the rare trash heavy (bosses and elites keep their own) ----
+  let trashT = T.trashEvery - T.trashFirst;
+  function trashTick(dt) {
+    if (typeof fightBoss !== 'undefined' && fightBoss) return;
+    if (typeof cbBossUp === 'function' && cbBossUp()) return;
+    if (S.zone < T.trashFrom || typeof actWarn !== 'function' || !anyFoe()) return;
+    trashT += dt;
+    if (trashT < T.trashEvery || (typeof actWarning === 'function' && actWarning())) return;
+    const f = frontFoe();
+    if (!f || f.born < 0.3 || f.stunT > 0 || f.reelT > 0 || f.stgT > 0) return;
+    trashT = 0; ST.trash++;
+    actWarn({ kind: 'heavy', id: 'soloHeavy', foe: f, unit: 0, x: T.trashX, src: 'pack',   // no first-use toast: the guide's Dodge and Parry steps teach it
+      land: (w, m) => { const u = heroU(); if (u && !u.down && alive(f)) cbHitUnit(u, cbFoeAtk(f) * w.x * m, 'heavy', f); } });
+  }
+  on('telegraphStart', p => { if (p && p.kind === 'heavy') ST.heavies++; });
+
+  // ---- the tick ----
+  // A save that chose a class before the solo hero (a tool's save, a code): play that class's starter.
+  function adopt() {
+    const s = Sx();
+    if (s.hero || !S.party || !S.party.chosen) return;
+    const k = SOLO_BY_BASE[(S.cls && S.cls.base) || S.party.cls];
+    if (k) { s.hero = k; if (typeof gearDirty === 'function') gearDirty(); }
+  }
+  onTick(dt => {
+    if (!soloOn()) return;
+    clock += dt;
+    adopt();
+    clearField();
+    if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
+    counterTick(dt);
+    if (patchT > 0) {
+      patchT -= dt; patchTick -= dt;
+      if (patchTick <= 0) { patchTick += 1; for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, patchP, 0); }
+    }
+    for (const id in cds) if (cds[id] > 0) cds[id] = Math.max(0, cds[id] - dt);
+    mirrorCd();
+    if (!fighting()) { readyFor.fill(0); return; }
+    trashTick(dt);
+    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance)
+    const eq = soloEquipped(), can = anyFoe() && heroUp();
+    for (let i = 0; i < 3; i++) {
+      const a = eq[i] ? SOLO_ABILITIES[eq[i]] : null;
+      if (a && can && !(cds[a.id] > 0)) { readyFor[i] += dt; if (readyFor[i] >= T.autoDelay) soloAbility({ slot: i, auto: true }); }
+      else readyFor[i] = 0;
+    }
+  });
+
+  // ---- the snapshot the buttons read (a kept object) ----
+  const AB = () => ({ left: 0, max: 0, ready: false, name: '', id: '' });
+  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: AB(), abs: [AB(), AB(), AB()], tele: '', inParry: false, inDodge: false, fight: false };
+  soloButtons = () => {
+    const b = BTN;
+    b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
+    b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
+    b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
+    for (let i = 0; i < 3; i++) {
+      const a = soloAbilityInfo(i), o = b.abs[i];
+      o.left = a ? a.left : 0; o.max = a ? a.cd : 0; o.ready = !!(a && a.ready); o.name = a ? a.name : ''; o.id = a ? a.id : '';
+    }
+    Object.assign(b.ab, b.abs[Math.max(0, soloEquipped().findIndex(Boolean))]);
+    b.fight = fighting() && heroUp() && anyFoe();
+    const w = typeof actWarning === 'function' ? actWarning() : null;
+    b.tele = w ? w.kind : ''; b.inParry = !!(w && w.kind === 'heavy' && w.left <= w.win); b.inDodge = !!(w && w.dwin && w.left <= w.dwin);
+    return b;
+  };
 }
 
 // ---- src/js/60-gfx.js ----
@@ -27673,6 +28256,9 @@ const ART = (() => {
       if (u && u.col) o.glow = u.col;
       return o;
     };
+    // SOLO1: the hero is the chosen character (Wren, Tobin or Pip) in that character's own art; the weapon's tier shows
+    const solo = typeof soloHero === 'function' ? soloHero() : null;
+    if (solo && CHARS[solo]) { const w = slotOf('weapon'); return w ? { comp: solo, cls, t: w.t, r: w.r } : { comp: solo, cls }; }
     const gear = { weapon: slotOf('weapon') || { t: 1, r: 0 }, off: { t: 1, r: 0 }, body: { t: 1, r: 0 } };
     const h = slotOf('helm'); if (h) gear.head = h;
     const c = slotOf('charm'); if (c) gear.charm = c;
@@ -29981,7 +30567,7 @@ let resize, animate, draw, stageStats, warmScene;
   let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
   function updateAbilityButton() {
     const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
-    const show = !!info && target() !== 'node';
+    const show = !!info && target() !== 'node' && !soloOn();   // SOLO1: the button row (75-solo-ui) has the ability
     if (abBtn.hidden === show) abBtn.hidden = !show;
     if (!show) return;
     const cls = S.party.cls;
@@ -30005,6 +30591,7 @@ let resize, animate, draw, stageStats, warmScene;
     emit('tap', { node: target() === 'node' });
     if (!S.hintDone) { S.hintDone = true; $('hint').style.opacity = 0; }
     if (target() === 'node') { attack(hero); tapNode(); return; }
+    if (soloOn() && target() === 'mob') return;   // SOLO1: tapping the stage no longer attacks (the Attack button does)
     const r = stageRect || (stageRect = stageEl.getBoundingClientRect());
     playerTap({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height - 0.06 });
   });
@@ -32205,9 +32792,12 @@ let campPaintFire = null;
     if (!cold() || lit()) return;
     toast('Old Hesketh\'s lamp has gone out. "Wood first. Then we talk."', 'good', { mat: ['wood', 1] }, 'high');
   };
-  on('createDone', ({ mode } = {}) => { if (mode === 'new') opening(); });
+  // SOLO1: the solo hero starts on the road; Hesketh speaks when it first walks to the grove (after the first boss)
+  const soloG = typeof soloOn === 'function' && soloOn();
+  on('createDone', ({ mode } = {}) => { if (mode === 'new' && !soloG) opening(); });
+  on('activity', ({ activity } = {}) => { if (soloG && activity === 'gather') opening(); });
   // A reload before the fire is lit (the class is already chosen): the card again.
-  setTimeout(() => { if (S.party && S.party.chosen) opening(); }, 600);
+  setTimeout(() => { if (S.party && S.party.chosen && (!soloG || S.activity === 'gather')) opening(); }, 600);
   on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
 }
 
@@ -33087,6 +33677,8 @@ function followGo(go) {
 // one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
 // the list), e.g. the camp welcome (55-welcome.js).
 const NEWS = { open: true, t: 0, lines: [], entry: null };
+// SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
+if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;
 function newsEntry(lines) {
   const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
   if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
@@ -33102,6 +33694,7 @@ function newsEntry(lines) {
 // One toast says so (after "Choose your path", if that is open); a tap on it opens the bell.
 function newsToast() {
   NEWS.wait = !!document.getElementById('createScreen'); if (NEWS.wait) return;
+  if (S.party && S.party.newGame && !(S.totalKills > 0)) return;   // SOLO1 (playtest): a new game has no "since your last visit"; the lines wait in the bell
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
@@ -33259,7 +33852,7 @@ const TAB_IDS = ['adv', 'party', 'gat', 'forge', 'world'];
 // and its sub-views; their ids still open it (setTab('raid')).
 const TAB_ALIAS = { raid: 'world', tav: 'world', camp: 'world' };
 if (TAB_ALIAS[S.tab]) S.tab = TAB_ALIAS[S.tab];
-const TAB_TITLE = { adv: 'Fight', party: 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };
+const TAB_TITLE = { adv: 'Fight', party: soloOn() ? 'Hero' : 'Party', gat: 'Gather', forge: 'Craft', world: 'Camp' };   // SOLO1: the Party tab is the hero's
 const TAB_HIDDEN = new Set(), TAB_ICON = {};   // registerTab({ hidden: true }): menus with no tab button, and their header icons
 const VIEWS = {};    // tabId -> [{ id, label, order, dot }], sorted by order
 const VIEW_OF = {};  // view id -> tabId, so setTab(viewId) opens the right tab and view
@@ -33593,7 +34186,7 @@ function ui(force) {
   putHidden(H.statNums, tg === 'node');
   putText(H.sDps, fmt(totalDps() * (tg === 'world' ? raidMult() : 1)));
   putText(H.sTap, fmt(heroAtk() * tapMult() * (tg === 'world' ? raidMult() : 1)));
-  putText(H.hint, tg === 'node' ? 'Tap to work faster' : 'Tap to strike');
+  putText(H.hint, tg === 'node' ? 'Tap to work faster' : soloOn() && tg === 'mob' ? '' : 'Tap to strike');   // SOLO1: the buttons strike
   for (const f of uiHooks) f(force);   // UX-A
 
   // Built-in panels update only while their view shows (setTab and setView call ui(true) on a switch).
@@ -33850,11 +34443,11 @@ function uiFight() {
   if (S.activity !== 'fight') {
     // UX-A copy: the heroes rest at the Hearth while the Lanternbearer gathers.
     putText(G.title, S.activity === 'raid' ? 'You are at the raid' : 'You are gathering');
-    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : 'Your heroes rest at the Hearth. Fight here to clear zones and earn gold and essence.');
+    putText(G.desc, S.activity === 'raid' ? 'Fight here to clear zones and earn gold and essence.' : (soloOn() ? '' : 'Your heroes rest at the Hearth. ') + 'Fight here to clear zones and earn gold and essence.');
     putText(gq, 'Back to'); putText(gp, 'Fight'); putDisabled(gb, false);
   } else if (fightBoss) {
     putText(G.title, 'Boss fight underway');
-    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Tap fast.` : 'It is enraged. Finish it now.');
+    putText(G.desc, bossTime > 0 ? `It enrages in ${Math.ceil(bossTime)} seconds. Hit it hard.` : 'It is enraged. Finish it now.');
     putText(gq, 'Boss'); putText(gp, 'Fighting'); putDisabled(gb, true);
   } else if (S.zone < S.maxZone) {
     putText(G.title, 'Rematch the zone boss');
@@ -33862,7 +34455,7 @@ function uiFight() {
     putText(gq, 'Boss'); putText(gp, 'Rematch'); putDisabled(gb, false);
   } else {
     putText(G.title, bossReady() ? 'The zone boss is ready' : `Clear ${10 - S.kills} more foes to face the zone boss`);
-    putText(G.desc, `Win within 30 seconds to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
+    putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
   HERO_UPS.forEach((u, i) => {
@@ -34673,12 +35266,12 @@ let showAwayReport;
       const lim = el('div', 'away-lim'), bar = el('div', 'bar'), fill = el('i');
       fill.style.width = Math.min(100, r.t / r.cap * 100) + '%';
       bar.append(fill);
-      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `Your party worked ${hm(r.t)} of ${hm(r.cap)}`));
+      lim.append(bar, el('span', null, r.capped ? "Away limit reached" : `${soloOn() ? 'You worked' : 'Your party worked'} ${hm(r.t)} of ${hm(r.cap)}`));
       top.append(lim);
     }
     if (r.capped) {
       const cap = el('div', 'away-cap');
-      cap.append(img(IC.glass()), el('span', null, `Your party stops after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
+      cap.append(img(IC.glass()), el('span', null, `${soloOn() ? 'You stop' : 'Your party stops'} after ${hm(r.cap)} away. Hourglass relics and the Watchtower add more, up to 24 hours.`));
       top.append(cap);
     }
     body.append(top);
@@ -39914,8 +40507,9 @@ let navUI = null;
   }
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
+  const SOLO_G = typeof soloOn === 'function' && soloOn();
   const OPEN_TXT = {
-    party: 'New tab: Party. See who fights beside you.',
+    party: SOLO_G ? 'New tab: Hero. Your gear, level and star map.' : 'New tab: Party. See who fights beside you.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
     camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
@@ -39971,7 +40565,10 @@ let navUI = null;
   const arrow = el('i', 'ob-arrow');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
-  bub.append(arrow, txt, x);
+  // SOLO1: a step whose action is reading it (the first boss) has a Got it button
+  const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
+  bub.append(arrow, txt, okb, x);
+  okb.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   const chip = $('nuChip');
@@ -39993,6 +40590,22 @@ let navUI = null;
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
+  // SOLO1: the button row under the stage (75-solo-ui)
+  const sbtn = id => q(`#soloBar .sb-${id}`);
+  const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
+  const SOLO_UI = {
+    attack: () => onGame() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
+    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
+    dodge: () => onGame() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
+    parry: () => onGame() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
+    boss: () => onGame() && target() === 'mob' && mob && mob.boss ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' } : null,
+    gather: () => {
+      if (!onGame()) return null;
+      const b = q('#modeSeg button[data-act="gather"]');
+      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Oak for a camp fire.' } : null;
+    },
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
+  };
   const STEP_UI = {
     chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
     light: () => {
@@ -40035,7 +40648,7 @@ let navUI = null;
 
   const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
@@ -40050,11 +40663,18 @@ let navUI = null;
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
     let spec = null;
-    try { spec = STEP_UI[step.id] ? STEP_UI[step.id]() : null; } catch (e) { spec = null; }
+    const table = SOLO_G && SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
+    try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     cur = step;
     place(spec);
+    // the game waits while a step that needs your action shows (playtest-1 note 1: steps never overlap)
+    ONBOARD.paused = !!step.pause;
+    putHidden(okb, !step.ok);
   }
+  soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
+  // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
+  onboardSpec = id => { const table = SOLO_G && SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null;
   function place(spec) {
     const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;
@@ -40088,6 +40708,8 @@ let navUI = null;
   setInterval(tick, 250);
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
+  on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
+  on('soloHero', () => setTimeout(tick, 0));
   on('menuView', invalidate);
 
   // ---------------- Journal: Tips ----------------
@@ -41093,7 +41715,7 @@ let openSheet, partySheet;
     const nm = el('b', null, S.name);
     const ctl = el('small', 'pc-ctitle'); ctl.hidden = true;   // the Codex title (57c), when the player picked one
     const sub = el('small');
-    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName) tags.append(el('small', null, 'Tap: ' + c.tapName));
+    const tags = el('div', 'pc-tags'); if (c) tags.append(pip(c.role)); if (c && c.tapName && !soloOn()) tags.append(el('small', null, 'Tap: ' + c.tapName));
     who.append(nm, ctl, sub, tags);
     top.append(pt, who, el('span', 'pc-more', '›'));
     card.append(top);
@@ -41101,7 +41723,8 @@ let openSheet, partySheet;
     if (c && c.ability) {
       const ab = el('div', 'pc-ab');
       const line = el('div', 'pc-abline');
-      const t = el('div'); t.append(el('em', null, c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
+      const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;   // SOLO1: the hero's own ability
+      const t = el('div'); t.append(el('em', null, sa ? sa.name : c.ability.name)); const cdTxt = el('small', 'pc-cdtxt'); t.append(cdTxt);
       const cast = btn('mini go pc-cast', 'Cast', e => { e.stopPropagation(); if (typeof castAbility === 'function' && castAbility()) ui(true); });
       line.append(t, cast);
       const cd = el('div', 'pc-cd'); cd.append(el('i'));
@@ -41138,7 +41761,8 @@ let openSheet, partySheet;
     const hl = typeof legendUI === 'object' && legendUI ? safe(() => legendUI.heroLine(), null) : null;
     putHidden(r.pw, !hl); if (hl) { setT(r.pw, hl.txt); putToggle(r.pw, 'none', !hl.n); }
     if (r.cdBar) {
-      const cdMax = c.ability.cd || 30, left = Math.max(0, +P().abilityCd || 0);
+      const sa = soloOn() && typeof abilityInfo === 'function' ? abilityInfo() : null;
+      const cdMax = (sa ? sa.cd : c.ability.cd) || 30, left = Math.max(0, +P().abilityCd || 0);
       putStyle(r.cdBar, 'width', (100 - Math.min(100, left / cdMax * 100)) + '%');
       setT(r.cdTxt, left > 0 ? ` · ready in ${Math.ceil(left)}s` : ' · ready');
       putDisabled(r.cast, left > 0 || typeof castAbility !== 'function');
@@ -41401,16 +42025,18 @@ let openSheet, partySheet;
   const pdot = el('span', 'dot pdot'); pdot.id = 'partyDot'; pdot.hidden = true;
   if (tabBtn) { tabBtn.append(pdot); }
   function updateDot() {
-    if (!live()) { pdot.hidden = true; return; }
+    if (!live() || (typeof soloOn === 'function' && soloOn())) { pdot.hidden = true; return; }
     const any = rosterList().some(needsYou) || bondNews();
     putHidden(pdot, !any || S.tab === 'party');
     if (tabBtn) putAttr(tabBtn, 'aria-label', 'Party' + (any ? ', something new' : ''));
   }
   // An unread Bond story (56f) marks the Team view.
   const bondNews = () => typeof bondUnreadAll === 'function' && safe(() => bondUnreadAll(), 0) > 0;
-  registerView('party', { id: 'team', label: 'Team', order: 10, dot: () => live() && bondNews() });
+  // SOLO1: the party is gone. The tab is the hero's (its card, gear and the star map); no roster, bench or Bonds.
+  const SOLO = typeof soloOn === 'function' && soloOn();
+  registerView('party', { id: 'team', label: SOLO ? 'Hero' : 'Team', order: 10, dot: () => !SOLO && live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
-  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => live() && rosterList().some(needsYou) });
+  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -41418,29 +42044,29 @@ let openSheet, partySheet;
 
   // ================= sections =================
   const guard = (name, fn) => (...a) => { try { fn(...a); } catch (e) { console.error('[lanternfall] party ' + name, e); } };
-  registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', { id: 'party-form', title: 'Your party', mount: buildForm, update: guard('formation', () => { updateForm(); updateWhy(); }) });
+  if (!SOLO) registerSection('party', {
     id: 'party-syn', title: 'Combos', feature: 'synergy', mount(sec) { sec.hidden = true; sec.append(el('div', 'syn-row'), el('div', 'syn-sets')); },
     update: guard('combos', () => {
       const sec = document.getElementById('sec-party-syn'); updateSyn(sec);
       if (!sec.hidden && typeof legendUI === 'object' && legendUI) legendUI.setsRow(sec.querySelector('.syn-sets'));   // circle Sets chips
     })
   });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', {
     id: 'party-bonds', title: 'Bonds', feature: 'synergy', mount(sec) { sec.append(el('div', 'bd-rows')); },
     update: guard('bonds', () => { if (live() && bondsUI) bondsUI.rows(document.querySelector('#sec-party-bonds .bd-rows')); })
   });
-  registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
+  if (!SOLO) registerSection('party', { id: 'party-bench', title: 'Bench', mount: buildBench, update: guard('bench', updateBench) });
   registerSection('party', {
     id: 'party-hero', title: 'Your hero', mount(sec) { sec.append(el('div', 'pc-herobox')); },
     update: guard('hero', () => updateHero(document.querySelector('#sec-party-hero .pc-herobox')))
   });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', {
     id: 'party-field', title: 'Fighting beside you', mount(sec) { sec.append(el('div', 'pcards')); },
     update: guard('companions', () => { if (live()) updateComps(document.querySelector('#sec-party-field .pcards')); })
   });
-  registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
-  registerSection('party', {
+  if (!SOLO) registerSection('party', { id: 'party-roster', title: 'Roster', view: 'roster', mount: buildRosterHead, update: guard('roster', updateRoster) });
+  if (!SOLO) registerSection('party', {
     id: 'party-leads', title: 'Leads', view: 'roster', mount(sec) { sec.append(el('div', 'leads')); },
     update: guard('leads', () => updateLeads(document.getElementById('sec-party-leads')))
   });
@@ -41616,6 +42242,260 @@ let openSheet, partySheet;
       const ta = root.querySelector('.savecode-import');
       if (ta && document.activeElement !== ta && ta.value !== st.note) ta.value = st.note;
     }
+  });
+}
+
+// ---- src/js/75-solo-ui.js ----
+// 75-solo-ui: the solo hero on screen (task SOLO1, docs/design/solo-hero.md). Browser file.
+//   - the action bar (owner: like a MOBA ability bar, never over the fight; the lowest thing on the Fight view, right
+//     above the tab bar, for the thumbs): two rows of framed square slots.
+//       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
+//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Attack too)  Attack bottom right
+//     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
+//     telegraphed hit is coming. A long press on Attack, Parry or Dodge says what it does; on an ability slot it opens
+//     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
+//     pick one to place it (swapping if it sits in another slot) or clear the slot.
+//   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
+// Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
+// Reduced motion: no flashes or pulses (60-solo.css).
+{
+  const game = $('game');
+  if (soloOn()) document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
+  const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Combat');
+  bar.hidden = true;
+  const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
+  bar.append(rowAb, rowAct);
+  const INFO = {
+    atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it.', key: 'D or Space' },
+    parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (as the red ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'A' },
+    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'S' }
+  };
+  const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };
+  function mkSlot(row, id, label) {
+    const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
+    const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label);
+    ic.width = 12; ic.height = 12;
+    b.append(ic, sweep, n, k, lb);
+    b._ring = sweep; b._n = n; b._ic = ic; b._lb = lb;
+    row.append(b);
+    return b;
+  }
+  const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
+  const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge'), bAtk = mkSlot(rowAct, 'atk', 'Attack');
+  if (game) game.append(bar);   // the last thing on the Fight view: right above the tab bar
+  // Owner (SOLO1 layout): what is not combat sits above the stage (Next Up, then Fight / Gather, Switch and the zone
+  // arrows); the stage and the bar touch; the bar is the lowest thing above the tab bar. Next Up opens a sheet, so
+  // nothing grows under the stage.
+  if (soloOn() && game) {
+    const box = $('stageBox'), ctrl = game.querySelector(':scope > .ctrl'), nu = $('nuSlot');
+    if (box && nu) game.insertBefore(nu, box);
+    if (box && ctrl) game.insertBefore(ctrl, box);
+    game.classList.add('solo-game');
+  }
+
+  // ---- icons (12 x 12 pixel maps, drawn at 2x) ----
+  const PAL = { k: '#0B0810', w: '#FFF3C4', s: '#DCE4F0', g: '#7C8290', y: '#F2C14E', o: '#FF9E3D', r: '#E0524F', b: '#8FB8FF', l: '#7ED36A', t: '#C8B89A', n: '#9A6A3E', v: '#B58CFF', m: '#4E4060' };
+  const ICON = {
+    sword: ['..........kk', '.........ksk', '........ksk.', '.......ksk..', '......ksk...', '.k...ksk....', '.kk.ksk.....', '..kksk......', '...kyk......', '..kyykk.....', '.kyk..kk....', 'kyk.........'],
+    bow: ['...nn.......', '..n..n......', '.n....s.....', '.n.....s....', 'n......s....', 'n..kttttsww.', 'n......s....', '.n.....s....', '.n....s.....', '..n..n......', '...nn.......', '............'],
+    staff: ['.....oo.....', '....oyyo....', '...oywwyo...', '....oyyo....', '.....oo.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....kk.....'],
+    parry: ['s.........s.', '.s.......s..', '..s.....s...', '...s...s....', '....sws.....', '.....w......', '....sws.....', '...s...s....', '..y.....y...', '.yy.....yy..', 'y.........y.', '............'],
+    dodge: ['............', '.......bbb..', '......bbbbb.', 'bbbb..bbbbb.', '......bbbb..', '.bbbb..bbb..', '.......bb...', '..bbb..bb.bb', '......bbbbbb', '.......bbbb.', '............', '............'],
+    echo: ['.......b....', '........b...', '.....b...b..', '......b..b..', 'kk...wsw.b..', 'kttttsssw.b.', 'kk...wsw.b..', '......b..b..', '.....b...b..', '........b...', '.......b....', '............'],
+    bash: ['y...kkkkkkk.', '.y.ksssyssk.', '...ksssyssk.', 'yy.kyyyyyyk.', '...ksssyssk.', '.y.ksssyssk.', 'y...ksyysk..', '.....ksyk...', '......kk....', '............', '............', '............'],
+    fire: ['.....kk.....', '....koko....', '...kooyok...', '..kooyyok...', '..koyyyook..', '.kooywwyok..', '.koywwwyook.', '.koywwwwyok.', '.kooyywyyok.', '..kooyyook..', '...kooook...', '....kkkk....'],
+    empty: ['............', '............', '............', '.....mm.....', '.....mm.....', '...mmmmmm...', '...mmmmmm...', '.....mm.....', '.....mm.....', '............', '............', '............']
+  };
+  const WEAPON_IC = { wren: 'bow', tobin: 'sword', pip: 'staff' };
+  function drawIc(cv, rows) {
+    const g = cv.getContext('2d'); g.clearRect(0, 0, 12, 12);
+    rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = PAL[r[x]]; if (c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } } });
+  }
+  drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
+  const abIds = ['?', '?', '?'];
+  let heroK = '';
+
+  // ---- feedback ----
+  const nope = b => { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); };
+  const flash = (b, cls) => { b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); };
+  // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
+  const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
+  const castSlot = i => {
+    if (!soloEquipped()[i]) { openPicker(i); return; }
+    if (!soloAbility({ slot: i })) nope(bAbs[i]); else flash(bAbs[i], 'good');
+  };
+  const act = {
+    atk: () => { const r = soloAttack(); if (r === 'cd' || !r) nope(bAtk); else flash(bAtk, 'hit'); },
+    parry: () => { const r = soloParry(guideWants('parry')); if (r === 'parry') flash(bParry, 'good'); else nope(bParry); },
+    dodge: () => { const r = soloDodge(guideWants('dodge')); if (r === 'dodge' || r === 'perfect') flash(bDodge, 'good'); else nope(bDodge); },
+    ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
+  };
+
+  // ---- long press on Attack, Parry, Dodge: what it does ----
+  const tip = el('div', 'sb-tip'); tip.hidden = true; tip.setAttribute('role', 'tooltip'); tip.id = 'soloTip';
+  document.body.append(tip);
+  function showTip(b) {
+    const i = INFO[b.dataset.act]; if (!i) return;
+    tip.textContent = '';
+    tip.append(el('b', null, i.name), el('span', null, i.desc), el('small', null, `Key: ${i.key}`));
+    tip.hidden = false;
+    const r = b.getBoundingClientRect(), w = Math.min(280, innerWidth - 16);
+    tip.style.width = w + 'px';
+    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+    tip.style.bottom = (innerHeight - bar.getBoundingClientRect().top + 8) + 'px';
+    clearTimeout(tip._t); tip._t = setTimeout(() => { tip.hidden = true; }, 4000);
+  }
+
+  // ---- the ability picker (a small sheet over the fight; the game waits while it is open) ----
+  let pick = null;
+  function closePicker() { if (!pick) return; pick.remove(); pick = null; update(); }
+  function openPicker(slot) {
+    closePicker(); tip.hidden = true;
+    const k = soloHero(); if (!k) return;
+    const ov = el('div', 'sp-ov'); ov.id = 'abPicker'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', `Ability slot ${slot + 1}`);
+    const sh = el('div', 'sp-sheet');
+    const head = el('div', 'sp-head'); head.append(el('b', null, `Ability slot ${slot + 1}`), el('small', null, `${ROSTER[k] ? ROSTER[k].name.split(' ')[0] : ''}'s abilities. Pick one for this slot.`));
+    const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.addEventListener('click', closePicker);
+    head.append(x);
+    sh.append(head);
+    const eq = soloEquipped();
+    for (const id of soloAbilities(k)) {
+      const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
+      const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
+      const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
+      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Cooldown ${a.cd} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
+      r.append(cv, t);
+      r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
+      sh.append(r);
+    }
+    sh.append(el('p', 'note sp-more', 'More abilities come from rare boss drops, later.'));
+    const clr = el('button', 'sp-clear', 'Clear this slot'); clr.type = 'button'; clr.disabled = !eq[slot];
+    clr.addEventListener('click', () => { soloEquip(slot, null); try { save(); } catch (e) {} closePicker(); });
+    sh.append(clr);
+    ov.append(sh);
+    ov.addEventListener('pointerdown', e => { if (e.target === ov) closePicker(); });
+    ov.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+    document.body.append(ov); pick = ov;
+    (sh.querySelector('.sp-ab') || x).focus();
+  }
+  soloPickerOpen = () => !!pick;
+
+  let press = null;
+  for (const b of [...bAbs, bParry, bDodge, bAtk]) {
+    const id = b.dataset.act, isAb = id.startsWith('ab');
+    b.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      press = { b, long: false, t: setTimeout(() => { if (press && press.b === b) { press.long = true; if (isAb) openPicker(+b.dataset.slot); else showTip(b); } }, 550) };
+      // Attack, Parry and Dodge act on the press (timing matters); an ability slot waits for the release (a long press picks)
+      if (!isAb) act[id]();
+    });
+    const endPress = () => { if (!press || press.b !== b) return; clearTimeout(press.t); const long = press.long; press = null; if (!long && isAb) act[id](); };
+    b.addEventListener('pointerup', endPress);
+    b.addEventListener('pointerleave', () => { if (press && press.b === b) { clearTimeout(press.t); press = null; } });
+    b.addEventListener('pointercancel', () => { if (press && press.b === b) { clearTimeout(press.t); press = null; } });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+    b.addEventListener('click', e => { if (e.detail === 0) act[id](); });   // keyboard users: Enter / Space on a focused slot
+  }
+  const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'atk' };
+  addEventListener('keydown', e => {
+    if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    if (S.tab && !isWide()) return;   // a menu covers the fight
+    const id = KEYS[e.key.toLowerCase()]; if (!id) return;
+    e.preventDefault();
+    act[id]();
+  });
+
+  // ---- update (about 10 times a second) ----
+  // LoL-style: the dark part sweeps clockwise off the icon as the slot comes back (--cd 1 -> 0); a flash when ready.
+  const setCd = (b, left, max) => {
+    const f = max > 0 ? Math.max(0, Math.min(1, left / max)) : 0, v = f.toFixed(2);
+    if (b._cd === v) return;
+    const was = b._cd != null && +b._cd > 0;
+    b._cd = v; b.style.setProperty('--cd', v); b.classList.toggle('cool', f > 0);
+    if (was && f === 0) flash(b, 'ready-now');
+  };
+  const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
+  const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
+  let t = 0;
+  function update() {
+    const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
+    if (bar.hidden === show) { bar.hidden = !show; if (!show) { tip.hidden = true; closePicker(); } }
+    if (!show) return;
+    const s = soloButtons(), k = soloHero();
+    if (k !== heroK) { heroK = k; drawIc(bAtk._ic, ICON[WEAPON_IC[k]] || ICON.sword); }
+    for (let i = 0; i < 3; i++) {
+      const o = s.abs[i], b = bAbs[i];
+      if (o.id !== abIds[i]) {
+        abIds[i] = o.id; drawIc(b._ic, o.id ? ICON[o.id] || ICON.fire : ICON.empty); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
+        b.classList.toggle('empty', !o.id);
+        const a = o.id ? SOLO_ABILITIES[o.id] : null;
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+      }
+      setCd(b, o.left, o.max); setN(b, secs(o.left));
+      b.classList.toggle('ready', !!o.id && o.ready);
+    }
+    setCd(bAtk, s.atk.left, s.atk.max);
+    setCd(bParry, s.parry.left, s.parry.max);
+    setCd(bDodge, s.dodge.left, s.dodge.max);
+    setN(bDodge, secs(s.dodge.left)); setN(bParry, s.parry.open > 0 ? '!' : '');
+    bParry.classList.toggle('open', s.parry.open > 0);
+    // disabled: nothing to hit right now (between packs, the hero down)
+    const idle = !s.fight;
+    for (const b of [bAtk, bParry, bDodge, ...bAbs]) if (b.classList.contains('off') !== idle) b.classList.toggle('off', idle);
+    // a telegraphed hit is coming: Parry and Dodge glow (the stage ring shows when)
+    bParry.classList.toggle('live', s.tele === 'heavy');
+    bDodge.classList.toggle('live', s.tele === 'heavy' || s.tele === 'zone' || s.tele === 'slam');
+  }
+  bAtk.setAttribute('aria-label', 'Attack (D or Space). ' + INFO.atk.desc);
+  bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
+  bDodge.setAttribute('aria-label', 'Dodge (S). ' + INFO.dodge.desc);
+  onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo bar', e); } });
+  // the paused game (the guide, the picker) does not tick: keep the bar fresh anyway
+  setInterval(() => { try { update(); } catch (e) {} }, 250);
+
+  // ---- floats for the answers (the stage draws them; a parry's PARRY is the stage's own, 62-stage) ----
+  on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); });
+  on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
+
+  // ---- "Choose your hero" at camp ----
+  if (soloOn()) registerSection('camp', {
+    id: 'solo-hero', title: 'Choose your hero',
+    mount(sec) {
+      sec.classList.add('solo-pick');
+      if (sec.parentNode) sec.parentNode.prepend(sec);   // first on the Camp view
+      const note = el('p', 'note', 'Switch any time, for free. Gold, gear and camp are shared. Each hero keeps their own level.');
+      const row = el('div', 'sp-row');
+      sec.append(note, row);
+      sec._cards = SOLO_ORDER.map(k => {
+        const h = SOLO_HEROES[k], R = ROSTER[k];
+        const b = el('button', 'sp-card'); b.type = 'button'; b.dataset.hero = k;
+        const cv = el('canvas', 'sp-fig px'); cv.width = 56; cv.height = 80;
+        const nm = el('b', null, R ? R.name.split(' ')[0] : k), sub = el('small', null, `${h.role} · ${h.weapon}`), lv = el('span', 'sp-lv', 'Lv 1');
+        b.append(cv, nm, sub, lv);
+        b._lv = lv; b._cv = cv;
+        b.addEventListener('click', () => {
+          if (soloHero() === k) return;
+          if (b.dataset.armed !== '1') { for (const c of sec._cards) c.dataset.armed = ''; b.dataset.armed = '1'; putText(b._lv, 'Tap again'); return; }
+          b.dataset.armed = '';
+          if (soloPick(k)) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
+          sec._up(true);
+        });
+        row.append(b);
+        return b;
+      });
+      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
+      sec._up = () => {
+        const lv = soloLevels(), cur = soloHero();
+        for (const b of sec._cards) {
+          const k = b.dataset.hero, on_ = k === cur;
+          b.setAttribute('aria-pressed', on_ ? 'true' : 'false');
+          b.classList.toggle('on', on_);
+          if (b.dataset.armed !== '1') putText(b._lv, on_ ? `Lv ${lv[k].L} · Playing` : `Lv ${lv[k].L}`);
+        }
+      };
+    },
+    update() { const s = $('sec-solo-hero'); if (s && s._up) s._up(); }
   });
 }
 
@@ -42727,7 +43607,7 @@ let toolsUI = null;
 
   // ---------------- Tavern visitor ----------------
   let V = null, vSig = '';
-  registerSection('tav', {
+  if (!(typeof soloOn === 'function' && soloOn())) registerSection('tav', {   // SOLO1: nobody joins a party
     id: 'visitor', title: 'Visitor today',
     mount(sec) {
       // First in the Tavern, right under its heading.
@@ -43153,6 +44033,78 @@ var classUI;
     return root;
   }
 
+  // SOLO1: the three starters (Wren, Tobin, Pip). Each plays a base class kit; the camp switches them later.
+  function buildSolo() {
+    root = el('div', 'create create-solo'); root.id = 'createScreen';
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
+    const inner = el('div', 'create-in');
+    const h = el('h1', null, 'Who carries the lantern?'); h.id = 'createTitle';
+    const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
+    const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
+    const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
+    const keys = SOLO_ORDER.filter(k => SOLO_HEROES[k] && ROSTER[k]);
+    if (!keys.includes(pick)) pick = keys[0];
+    const figs = [];
+    let begin = null;
+    const btns = keys.map(k => {
+      const H = SOLO_HEROES[k], R = ROSTER[k];
+      const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k; b.dataset.hero = k;
+      b.setAttribute('role', 'radio');
+      const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
+      const txt = el('div', 'ctxt');
+      const top = el('div', 'ctop'); top.append(el('b', null, R.name));
+      top.append(el('span', 'pip r-' + (R.role || 'striker'), H.role));
+      txt.append(top);
+      txt.append(el('div', 'cl-wt', `${R.title.replace(/^the /, 'The ')} · ${H.range} · ${H.weapon}`));
+      if (typeof BIOS === 'object' && BIOS[k]) txt.append(el('div', 'how', BIOS[k]));
+      const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab);
+      b.append(fig, txt);
+      b.addEventListener('click', () => select(k));
+      b.addEventListener('keydown', e => {
+        const i = keys.indexOf(k);
+        const d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return; e.preventDefault();
+        const nk = keys[(i + d + keys.length) % keys.length]; select(nk); btns.find(x => x.dataset.cls === nk).focus();
+      });
+      cards.append(b);
+      cv.width = 56; cv.height = 100;
+      figs.push([cv, k]);
+      return b;
+    });
+    const built = root;
+    const nextFig = () => {
+      if (root !== built || !figs.length) return;
+      const [cv, k] = figs.shift();
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      if (figs.length) setTimeout(nextFig, 0);
+    };
+    requestAnimationFrame(() => setTimeout(nextFig, 0));
+    const first = k => ROSTER[k].name.split(' ')[0];
+    function select(k) {
+      pick = k;
+      if (begin) putText(begin, `Begin as ${first(k)}`);
+      for (const b of btns) {
+        const on_ = b.dataset.cls === k;
+        b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
+      }
+    }
+    begin = el('button', 'big forge create-go', ''); begin.type = 'button';
+    begin.addEventListener('click', () => {
+      let okd = false;
+      try { okd = soloPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      if (!okd) return;
+      try { save(); } catch (e) {}
+      if (typeof updatePortrait === 'function') updatePortrait();
+      close();
+      toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
+    });
+    inner.append(h, lede, warn, cards, begin);
+    root.append(inner);
+    select(pick);
+    root.addEventListener('keydown', trapTab);
+    return root;
+  }
+
   function showJoin(inner, key) {
     inner.textContent = '';
     const box = el('div', 'join');
@@ -43184,6 +44136,16 @@ var classUI;
 
   function open(want) {
     if (root) return;
+    if (typeof soloOn === 'function' && soloOn()) {
+      // SOLO1: one screen for a new game (and any save that has no hero yet); switching is at camp
+      if (want === 'switch' || !needsChoice()) return;
+      mode = 'new'; pick = (typeof soloHero === 'function' && soloHero()) || SOLO_ORDER[0];
+      lastFocus = document.activeElement;
+      document.body.append(buildSolo());
+      const sel = root.querySelector('.ccard[aria-checked="true"]');
+      (sel || root.querySelector('button')).focus();
+      return;
+    }
     if (want === 'switch') {
       if (!classes() || typeof clsSwitchInfo !== 'function' || !clsSwitchInfo().ok) return;
       mode = 'switch';
@@ -43260,6 +44222,7 @@ var classUI;
       return `${WEIGHT_NAME[d.weight]} · ${HOME_NAME[d.home]}`;
     },
     switchRow() {
+      if (typeof soloOn === 'function' && soloOn()) return null;   // SOLO1: heroes switch at camp
       const sw = typeof clsSwitchInfo === 'function' ? clsSwitchInfo() : null;
       if (!sw || !sw.ok) return null;
       const m = Math.max(1, Math.ceil(sw.left / 60e3));
@@ -43432,7 +44395,9 @@ function frame(now) {
   if (dt > 1) dt = 0;
   dt = Math.min(dt, 0.1);
   T += dt;
-  tick(dt); animate(dt); draw();
+  // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen
+  if (!(ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen'))) tick(dt);
+  animate(dt); draw();
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
   warmT -= dt; if (warmT <= 0) { warmT = 1; warmNextZone(); }

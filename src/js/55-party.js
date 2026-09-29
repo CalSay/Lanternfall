@@ -160,8 +160,8 @@ let unitHp, unitCd, bossTelegraph;
     key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
     p.chosen = true; p.abilityCd = 0; readyFor = 0;
     guard = []; bless = []; volleyLeft = 0;
-    toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
-    if (first && p.newGame) {
+    if (!soloOn()) toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
+    if (first && p.newGame && !soloOn()) {   // SOLO1: no starter companion
       const [ck, slot] = STARTER[key];
       if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
       else {
@@ -197,6 +197,7 @@ let unitHp, unitCd, bossTelegraph;
   const canHit = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
   castAbility = function (opts) {
     ensureInit();
+    if (soloOn() && typeof soloAbility === 'function') return soloAbility(opts);   // SOLO1: the hero's own ability
     const c = cls(), p = P();
     if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
     const auto = !!(opts && opts.auto);
@@ -227,6 +228,7 @@ let unitHp, unitCd, bossTelegraph;
   };
 
   abilityInfo = function () {
+    if (soloOn() && typeof soloAbilityInfo === 'function') return soloAbilityInfo();
     const c = cls(); if (!c) return null;
     const ab = HERO_CLASSES[c].ability, p = P();
     return { name: ab.name, desc: ab.desc, cd: abCd(c), left: p.abilityCd, ready: p.abilityCd <= 0 || spare > 0, spare,
@@ -268,7 +270,8 @@ let unitHp, unitCd, bossTelegraph;
     const c = cls();
     // Stage C / S6-B: the tap does what is showing first (59g actTap: a Finisher, a parry, a dodge, an interrupt),
     // else the class tap. Without 59g, a tap during a boss wind-up is the parry (59b resolveParry).
-    if (!auto && tg === 'mob') {
+    // SOLO1: the Attack button answers nothing (Parry and Dodge have their own buttons): o.noAnswer.
+    if (!auto && tg === 'mob' && !o.noAnswer) {
       const k = typeof actTap === 'function' ? actTap() : typeof resolveParry === 'function' && resolveParry('tap') ? 'parry' : '';
       if (k) { emit('classTap', { cls: c, kind: k === 'parry' || k === 'early' ? 'parry' : 'answer', act: k, target: tg, auto }); return; }
     }
@@ -365,7 +368,7 @@ let unitHp, unitCd, bossTelegraph;
     if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
     // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
     // S6-B (59g actHold): auto-cast waits up to 1.5 s when the focus foe's Stagger is at 90% or more
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
+    if (!soloOn() && p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
       if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
@@ -397,7 +400,7 @@ let unitHp, unitCd, bossTelegraph;
   });
   on('deepFloor', () => { if (hymnUntil > clock + tn('hymnT')) hymnUntil = clock; });
   on('zoneClear', ({ zone }) => {
-    if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
+    if (zone + 1 === T.autoCastZone && cls() && !soloOn()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
   });
 
   ensureInit();

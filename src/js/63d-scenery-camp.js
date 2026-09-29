@@ -151,8 +151,11 @@ let campPaintFire = null;
     if (!cold() || lit()) return;
     toast('Old Hesketh\'s lamp has gone out. "Wood first. Then we talk."', 'good', { mat: ['wood', 1] }, 'high');
   };
-  on('createDone', ({ mode } = {}) => { if (mode === 'new') opening(); });
+  // SOLO1: the solo hero starts on the road; Hesketh speaks when it first walks to the grove (after the first boss)
+  const soloG = typeof soloOn === 'function' && soloOn();
+  on('createDone', ({ mode } = {}) => { if (mode === 'new' && !soloG) opening(); });
+  on('activity', ({ activity } = {}) => { if (soloG && activity === 'gather') opening(); });
   // A reload before the fire is lit (the class is already chosen): the card again.
-  setTimeout(() => { if (S.party && S.party.chosen) opening(); }, 600);
+  setTimeout(() => { if (S.party && S.party.chosen && (!soloG || S.activity === 'gather')) opening(); }, 600);
   on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
 }

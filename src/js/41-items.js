@@ -91,6 +91,8 @@ let itemKind, kindPos, fits, heroWho, retoolItems, RETOOL, itemLines, itemStats,
     if (!CRAFT_KINDS[kind] || !CRAFT_FITS[pos]) return false;
     const w = resolveWho(pos, who);
     if (RETOOL.on && RT_KINDS[kind] && w !== 'any' && !(it && typeof it === 'object' && it.u)) return false;
+    // playtest-1 note 5 (SOLO1): a unique sword (the zone bosses' weapons) is a sword: only a sword hand holds it
+    if (kind === 'weapon' && it && typeof it === 'object' && it.u && (who == null || who === 'hero') && w !== 'any' && w !== 'warden') return false;
     return craftFits(kind, pos, w);
   };
 

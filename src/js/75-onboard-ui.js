@@ -39,8 +39,9 @@
   }
 
   // What opened, in one plain sentence. Tabs pop (high); views and smaller things are normal.
+  const SOLO_G = typeof soloOn === 'function' && soloOn();
   const OPEN_TXT = {
-    party: 'New tab: Party. See who fights beside you.',
+    party: SOLO_G ? 'New tab: Hero. Your gear, level and star map.' : 'New tab: Party. See who fights beside you.',
     gather: 'New tab: Gather. Mine ore and chop wood.',
     camp: typeof hearthCold === 'function' && hearthCold() ? 'New tab: Camp. Build your first station there.' : 'You made camp. A new tab: Camp.',
     craft: 'New tab: Craft. Make gear from your materials.',
@@ -96,7 +97,10 @@
   const arrow = el('i', 'ob-arrow');
   const txt = el('span', 'ob-txt');
   const x = el('button', 'ob-x'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss this tip'); x.textContent = '×';
-  bub.append(arrow, txt, x);
+  // SOLO1: a step whose action is reading it (the first boss) has a Got it button
+  const okb = el('button', 'ob-ok'); okb.type = 'button'; okb.textContent = 'Got it'; okb.hidden = true;
+  bub.append(arrow, txt, okb, x);
+  okb.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   let cur = null;   // the step on screen
   x.addEventListener('click', e => { e.stopPropagation(); if (cur) onboardDone(cur.id); tick(); });
   const chip = $('nuChip');
@@ -118,6 +122,22 @@
   const cold = () => typeof hearthCold === 'function' && hearthCold();
   const atGrove = () => target() === 'node' && S.node.kind === 'wood';
   const campPath = (id, words) => path('world', 'camp', `#camp-b-${id} .cb-quick`, words);
+  // SOLO1: the button row under the stage (75-solo-ui)
+  const sbtn = id => q(`#soloBar .sb-${id}`);
+  const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
+  const SOLO_UI = {
+    attack: () => onGame() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
+    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
+    dodge: () => onGame() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
+    parry: () => onGame() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
+    boss: () => onGame() && target() === 'mob' && mob && mob.boss ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' } : null,
+    gather: () => {
+      if (!onGame()) return null;
+      const b = q('#modeSeg button[data-act="gather"]');
+      return b && !b.hidden ? { node: b, text: 'The road is cold. Tap Gather and chop Oak for a camp fire.' } : null;
+    },
+    'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Hero. See your gear, level and star map.' }
+  };
   const STEP_UI = {
     chop: () => onGame() && atGrove() ? { node: $('stage'), at: [0.74, 0.62], side: 'up', text: 'Tap the tree to chop faster.' } : null,
     light: () => {
@@ -160,7 +180,7 @@
 
   const BLOCK = '.create, .join-ov, .away-ov, .bsheet-ov, .modal, .dw-ov';
   let lastKey = '';
-  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; }
+  function hide() { if (!layer.hidden) layer.hidden = true; if (!bub.hidden) bub.hidden = true; cur = null; lastKey = ''; lastNode = null; ONBOARD.paused = false; }
   // The hint used to re-read the target's pixel position and re-place itself every 250ms, so it
   // jumped whenever the stage moved under it (camera/zoom, screen shake, a pack spawning) even
   // though nothing about the guide itself had changed. Now `tick` only ever polls for a step change;
@@ -175,11 +195,18 @@
     try { step = onboardStep(); } catch (e) { console.error('[lanternfall] onboard step', e); }
     if (!step || document.hidden || q(BLOCK)) return hide();
     let spec = null;
-    try { spec = STEP_UI[step.id] ? STEP_UI[step.id]() : null; } catch (e) { spec = null; }
+    const table = SOLO_G && SOLO_UI[step.id] ? SOLO_UI : STEP_UI;
+    try { spec = table[step.id] ? table[step.id]() : null; } catch (e) { spec = null; }
     if (!spec || !vis(spec.node)) return hide();
     cur = step;
     place(spec);
+    // the game waits while a step that needs your action shows (playtest-1 note 1: steps never overlap)
+    ONBOARD.paused = !!step.pause;
+    putHidden(okb, !step.ok);
   }
+  soloGuideWants = () => (cur && !layer.hidden ? cur.id : '');
+  // The guide's steps and their targets, for tools/check.mjs (the browser check walks the first session).
+  onboardSpec = id => { const table = SOLO_G && SOLO_UI[id] ? SOLO_UI : STEP_UI; try { return table[id] ? table[id]() : null; } catch (e) { return null; } };
   let lastNode = null;
   function place(spec) {
     const key = spec.text, changed = dirty || spec.node !== lastNode || key !== lastKey;
@@ -213,6 +240,8 @@
   setInterval(tick, 250);
   addEventListener('resize', () => { invalidate(); tick(); });
   on('onboardStep', () => setTimeout(tick, 0));
+  on('telegraphStart', () => setTimeout(tick, 0));   // SOLO1: the Dodge and Parry steps catch the wind-up at its start
+  on('soloHero', () => setTimeout(tick, 0));
   on('menuView', invalidate);
 
   // ---------------- Journal: Tips ----------------
