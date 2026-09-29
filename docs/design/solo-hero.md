@@ -11,7 +11,7 @@ Replaces the party. Owner's reasons: party combat was cluttered on screen, hard 
 - **Starters: Wren Hollowmere (archer), Tobin Reed (tank), Pip Cinderly (caster),** the three with new art.
   The other heroes return later as unlockable playable characters.
 - **Combat buttons** (no tap-to-attack): Attack, Parry, Dodge, and up to 3 equipped abilities.
-  - Parry: harder to time; a success gives a counter attack and briefly staggers the enemy (it stops attacking for a moment).
+  - Parry: harder to time. On a success the enemy is staggered at once, your counter attack lands during the stagger, and the enemy recovers when the counter ends.
   - Heavy, telegraphed attacks that need Dodge or Parry come mainly from bosses and elites (owner, 2026-09-29).
     Normal foes hit lightly. Dodge avoids the hit but gives no counter or stagger.
   - Dodge: easier to time; avoids the hit.
