@@ -1130,3 +1130,8 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   contact and blocking, range bands per class and hero, ground-zone rules (size, duration, ticks, stacking,
   per damage type), knockback/pull, how S6's warnings, parry/dodge, stagger and Finishers map onto the lane,
   boss entrances, the sim model, and a rebalance plan. Replaces S6's standing packs.
+- OWNER clarification for CB3: two kinds of area attack. (1) GROUND ZONES persist on the floor and hit anything
+  that walks through until they fade. (2) Everything else is INSTANT and only hits enemies inside its shape at
+  that moment, within the hero's range: a burst (radius at the impact point), a cleave (the front few), a
+  piercing line (down the lane, e.g. Wren's Awakened shot). Enemies still off-screen or out of range are never
+  hit. Each ability in classes-2/heroes-2 gets tagged zone / burst / cleave / line / single in CB3.
