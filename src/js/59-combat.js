@@ -559,13 +559,12 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       else { const o = focusFoe(); if (o && o !== f && f.embers > 0) o.embers = Math.min(cap, (o.embers || 0) + f.embers); }   // Burns spread by themselves now (59a)
     }
     // S6-A: a pack is one old foe split in pieces, so what the Lanternbearer put on the focus foe moves on when it
-    // dies (the Ranger's Focus and a Mark with their time left, the Lanternmage's Embers): small foes waste nothing.
+    // dies (the Ranger's Focus with its time left, the Lanternmage's Embers): the class tap is not wasted on small foes.
     if (!f.boss && T.sizes && anyFoe()) {
       const o = focusFoe();
       if (o && o !== f) {
         const pc = typeof partyClock === 'function' ? partyClock() : 0;
         if (f.markUntil > pc && !(o.markUntil > f.markUntil)) { o.markUntil = f.markUntil; o.markV = f.markV; }
-        if (f.markT > 0 && !(o.markT > 0)) { o.markT = f.markT; o.mkV = f.mkV; }
         if (f.embers > 0 && !(ks('wildfire') || boon('wild'))) { o.embers = Math.min(5 + bonus('tune:embersMax'), (o.embers || 0) + f.embers); f.embers = 0; }
       }
     }
@@ -740,14 +739,14 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (id === 'hesketh') { const l = lowestAlly(); return !!l && l.hp / l.maxHp < 0.75; }
     if (id === 'elowen' || id === 'anselm') { let hurt = 0; for (let i = 0; i < nU; i++) if (!U[i].down && U[i].hp / U[i].maxHp < 0.7) hurt++; return hurt >= 1; }
     if (id === 'aldric') {
-      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t) return true; }
+      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t) return t.kind === 'heavy' || t.kind === 'cloud' || t.kind === 'heal' || t.kind === 'sig' || t.kind === 'summon'; }   // S6-B: a parry or an interrupt, not a dodge
       if (lead && lead.boss && alive(lead) && typeof nextWindIn === 'function' && nextWindIn() < u.cdMax * 0.6) return false;
       return true;
     }
     // Grenna's Earthshatter stuns: she spends it on a healer's channel (a Marsh Wraith, the Elder Wraith's
     // green wind-up) before she thinks of taunting.
     if (id === 'grenna') {
-      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t && t.kind === 'heal') return true; }
+      if (typeof bossTelegraph === 'function') { const t = bossTelegraph(); if (t && (t.kind === 'heal' || t.kind === 'sig' || t.kind === 'summon')) return true; }   // S6-B: casts
       for (const f of foes) if (alive(f) && f.chanT > 0) return true;
     }
     if (id === 'isolde') { const th = execTh(u); for (const f of foes) if (alive(f) && f.hp / f.max < th) return true; return u.cd < -2; }
@@ -1195,7 +1194,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     else if (cls === 'lanternmage' && synFlags.chosen) { let n = 0; for (const f of foes) if (alive(f)) n++; healAll(T.chosenHeal * synFlags.chosen * n, U[0]); }
   });
   on('classTap', ({ cls, kind, auto }) => {
-    if (!partyCombatOn() || !nU || kind === 'parry') return;
+    if (!partyCombatOn() || !nU || kind === 'parry' || kind === 'answer') return;   // S6-B: an answer tap is not a class tap
     if (cls === 'warden' && mob && alive(mob)) {
       cbTaunt(U[0], [mob], (T.wardenTaunt + (boon('taunt') ? 2 : 0)) * (auto ? 0.5 : 1));
       if (ks('challenger')) { cbTaunt(U[0], foes, 2); challUntil = clock + 2; }   // Challenger: taps taunt every foe for 2s

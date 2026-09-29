@@ -85,7 +85,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     const g = clock - lastEnd; if (g < ST.minGap) ST.minGap = g;
     START_EV.kind = k; START_EV.dur = W.dur; START_EV.target = W.target; START_EV.foe = W.foe;
     emit('telegraphStart', START_EV);
-    hint(W.id, spec.hint);
+    hint(W.kind, spec.hint);
   }
   function end(result, by) {
     if (!W.on) return;
@@ -102,7 +102,8 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
       const d = Math.max(CAST[spec.kind] ? T.castMin : T.windMin, spec.dur || 2);
       PASSIVE.push({ kind: spec.kind, left: d, dur: d, foe: spec.foe || null, land: spec.land || null, spec });
       if (CAST[spec.kind] && spec.foe) spec.foe.cast = { kind: spec.kind, id: spec.id || spec.kind, name: spec.name || '', left: d, dur: d };
-      hint(spec.id || spec.kind, spec.hint);
+      if (spec.id !== 'roar') { START_EV.kind = spec.kind; START_EV.dur = d; START_EV.target = null; START_EV.foe = spec.foe || null; emit('telegraphStart', START_EV); }
+      hint(spec.kind, spec.hint);
       return true;
     }
     if (!W.on && clock - lastEnd >= T.gap && !queue.length) { start(spec); return true; }

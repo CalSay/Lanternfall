@@ -144,7 +144,7 @@ let deepCombatOn, dcLifeline, DWC;
 
   // ---------------- Taunt Drill for every class ----------------
   on('classTap', p => {
-    if (!deepCombatOn() || p.kind === 'parry' || p.cls === 'warden') return;
+    if (!deepCombatOn() || p.kind === 'parry' || p.kind === 'answer' || p.cls === 'warden') return;
     const r = R(); if (!r || !r.boons.taunt || !mob || mob.dead || !mob.deep) return;
     let tank = null;
     for (const u of units()) if (u.live && !u.down && u.role === 'tank' && (!tank || u.col > tank.col)) tank = u;

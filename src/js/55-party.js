@@ -266,8 +266,12 @@ let unitHp, unitCd, bossTelegraph;
     if (!auto) lastTap = clock;
     if (tg === 'node') { tapNode(); emit('classTap', { cls: cls(), kind: 'gather', target: tg, auto }); return; }
     const c = cls();
-    // Stage C: a tap during a boss wind-up is the parry (59b-enemies.js resolveParry), not the class tap.
-    if (!auto && tg === 'mob' && typeof resolveParry === 'function' && resolveParry('tap')) { emit('classTap', { cls: c, kind: 'parry', target: tg, auto }); return; }
+    // Stage C / S6-B: the tap does what is showing first (59g actTap: a Finisher, a parry, a dodge, an interrupt),
+    // else the class tap. Without 59g, a tap during a boss wind-up is the parry (59b resolveParry).
+    if (!auto && tg === 'mob') {
+      const k = typeof actTap === 'function' ? actTap() : typeof resolveParry === 'function' && resolveParry('tap') ? 'parry' : '';
+      if (k) { emit('classTap', { cls: c, kind: k === 'parry' || k === 'early' ? 'parry' : 'answer', act: k, target: tg, auto }); return; }
+    }
     if (!c) { heroSwing(heroAtk(), true, at); emit('classTap', { cls: null, kind: 'strike', target: tg, auto }); return; }
     if (tg === 'mob' && !(mob && !mob.dead)) return;
     let kind = 'strike';
@@ -360,7 +364,8 @@ let unitHp, unitCd, bossTelegraph;
     if (spare > extra) spare = extra;
     if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
     // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd'))) castAbility({ auto: true });
+    // S6-B (59g actHold): auto-cast waits up to 1.5 s when the focus foe's Stagger is at 90% or more
+    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
       if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;

@@ -1362,7 +1362,8 @@ try {
   E('S.craft.troph = [0, 0, 0, 0, 0, 0, 0]; S.craft.champ = 0; S.maxZone = 30; S.zone = 22; fightBoss = false');
   E('{ const r = Math.random; Math.random = () => 0; spawn(); Math.random = r; }');
   // Stage C: the champion is the pack's lead foe (a third of the pack's HP before the x3).
-  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / (mobHp(22) * COMBAT_TUNE.packHp / COMBAT_TUNE.packSize) })');
+  // S6-A: a pack splits its HP by its members (the zone type's size; swarms total swarmHp)
+  const ch = E('({ champ: !!mob.champ, name: mob.name, ratio: mob.hp / (mobHp(22) * COMBAT_TUNE.packHp * (cbPack().size === "swarm" ? COMBAT_TUNE.swarmHp : 1) / cbPack().n) })');
   const zt = E('zoneType(22)'), sig = E(`CRAFT_SIG_DROPS[TYPES[${zt}].key]`), before = E(`S.mats.${sig.fam}[3]`);
   E('kill()');
   assert(ch.champ && /^Champion /.test(ch.name) && ch.ratio > 2.6, `champion spawns with x3 HP (${ch.name})`);
@@ -1896,8 +1897,10 @@ try {
   assert(E('DW.refundFor("boss")') === 35 + E('DEEP_COMBAT_TUNE.refund'), 'Oil refunds are 5s higher with party combat');
   // the [C] boons
   const B = s => E('DW.run().boons.' + s);
-  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); ticks(g, 3);
-  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, 'Iron Wall II: tanks +40% max HP, others unchanged');
+  // (S6-A: HP follows the party's power, which reads the hero's live damage buffs; measure both sides one tick apart)
+  B('iron = 0'); E('emit("fieldChange", {})'); g.fn.tick(0.1);
+  const mh0 = E('cbUnitByKey("tobin").maxHp'), mw0 = E('cbUnitByKey("wren").maxHp'); B('iron = 2'); E('emit("fieldChange", {})'); g.fn.tick(0.1);
+  assert(Math.abs(E('cbUnitByKey("tobin").maxHp') / mh0 - 1.4) < 0.01 && Math.abs(E('cbUnitByKey("wren").maxHp') / mw0 - 1) < 1e-9, `Iron Wall II: tanks +40% max HP, others unchanged (x${(E('cbUnitByKey("tobin").maxHp') / mh0).toFixed(3)}, x${(E('cbUnitByKey("wren").maxHp') / mw0).toFixed(3)})`);
   const hitTank = () => E('(() => { const u = cbUnitByKey("tobin"); u.hp = u.maxHp; u.sh = 0; const a = cbHitUnit(u, u.maxHp * 0.01, "poison", null); u.hp = u.maxHp; return a; })()');
   const t0 = hitTank(); B('thorn = 1'); B('taunt = 1'); ticks(g, 1);
   assert(E('DW.setProgress().find(s => s.id === "guard").on') && Math.abs(hitTank() / t0 - 0.75) < 0.01, 'the Guard set (Thorn Plate, Iron Wall, Taunt Drill): tanks take 25% less');
@@ -1932,7 +1935,7 @@ try {
   E('combatFoes().forEach(f => { f.atk = 0; if (f.boss) { f.max *= 10; f.hp = f.max; } })');
   let guard = 0; while (!E('cbTelegraph() && cbTelegraph().left <= cbTelegraph().win - 0.05') && guard++ < 150) ticks(g, 1);
   assert(E('mob.deep && mob.boss && DW.run().floor === 5') && tele && tele.deep, `floor 5: a Deep Elder, and it winds up a telegraph (${tele && tele.kind})`);
-  const oilP = E('DW.run().oil'); E('resolveParry("tap")');
+  const oilP = E('DW.run().oil'); E('typeof actTap === "function" ? actTap() : resolveParry("tap")');   // S6-B: the tap answers 59g's warnings
   assert(Math.abs(E('DW.run().oil') - Math.min(E('DW.oilMax()'), oilP + E('DEEP_COMBAT_TUNE.parryOil'))) < 1e-9, 'parrying the Elder gives 2s of Oil back');
   E('DW.run().oil = 0.05'); ticks(g, 3);
   assert(E('S.deep.run === null && S.deep.last.reason === "oil" && !cbTelegraph()'), 'Oil still ends a run; no Elder telegraph is left above');
@@ -1978,7 +1981,8 @@ try {
     const { g, E } = party(51, 'lanternmage', ['tobin', 'hesketh'], 40);   // F1: two companions; the Lanternmage is the third
     const par = holdZone(E);
     E(`S.maxZone = ${par}; setZone(${par})`);
-    assert(E('combatFoes().length') === 3 && E('combatFoes().every(f => f.th && f.max > 0)'), `a pack of 3 foes with threat tables (zone ${par}, the highest this party holds)`);
+    const pn = E('combatFoes().length'), psz = E('cbPack().size'), rng = E(`PACK_SIZES[cbPack().size]`);
+    assert(pn === E('cbPack().n') && pn >= rng[0] - 1 && pn <= rng[1] && E('combatFoes().every(f => f.th && f.max > 0)'), `a pack of ${pn} foes (${psz}) with threat tables (zone ${par}, the highest this party holds)`);
     E('Object.keys(CB_STATS).forEach(k => CB_STATS[k] = 0)');
     secs(g, 180);
     const st = E('CB_STATS'), share = st.tankSecs / Math.max(1e-9, st.enemySecs);
@@ -1995,7 +1999,7 @@ try {
   for (const [ids, frac] of [[['hesketh', 'wren'], 0.3], [['elowen', 'wren'], 0.6]]) {
     const { g, E } = party(52, 'warden', ids, 20);
     E('S.maxZone = 10; setZone(10)'); secs(g, 1);
-    E('cbHitUnit(cbUnitByKey("wren"), 1e30, "hit", null)');
+    E('cbHitUnit(cbUnitByKey("wren"), 1e30, "poison", null)');   // S6-A: a plain hit is capped at 10% now; damage over time is not
     const down = E('cbUnitByKey("wren").down');
     E('combatFoes().forEach(f => { if (!f.dead) cbDamageFoe(f, 1e30, 1, "magic"); })');
     const u = E('cbUnitByKey("wren")');
@@ -2008,7 +2012,7 @@ try {
     const { g, E } = party(53, 'warden', ['hesketh', 'wren'], 20);
     const ev = []; g.fn.on('wipe', w => ev.push(Object.assign({}, w))); const ups = []; g.fn.on('unitUp', u => ups.push(u.key));
     E('S.maxZone = 12; S.zone = 12; setZone(12)'); secs(g, 1);
-    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "hit", null); })');
+    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "poison", null); })');
     assert(ev.length === 1 && ev[0].zone === 12 && ev[0].to === 11 && E('S.zone') === 11 && E('S.combat.back') === 12, 'a wipe retreats one zone (12 -> 11) and remembers where it fell');
     secs(g, 5.2);
     assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().some(f => !f.dead)'), 'after 5s the party stands up at full HP and fights on');
@@ -2017,7 +2021,7 @@ try {
     // a wipe in a boss fight is a failed attempt, not a retreat
     const fails = []; g.fn.on('bossFail', x => fails.push(x));
     E('S.kills = 10; challenge()');
-    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "hit", null); })');
+    E('for (let k = 0; k < 3; k++) combatUnits().forEach(u => { if (u.live && !u.down) cbHitUnit(u, 1e30, "poison", null); })');
     assert(fails.length === 1 && E('S.zone') === 12 && !E('fightBoss'), 'a wipe against the zone boss fails the attempt (bossFail) without a retreat');
     errs.push(...g.errors);
   }
@@ -2034,7 +2038,8 @@ try {
       kinds[E(`TYPES[zoneType(${z})].key`)] = [...seen].sort().join('+');
       errs.push(...g.errors);
     }
-    const want = { slime: 'heavy', bat: 'dive+heavy', bones: 'heavy', beetle: 'heavy', spore: 'cloud', golem: 'heavy', wraith: 'heal+heavy' };
+    // S6-C: the kits (21g BOSS_KITS) in phase 1 (the Elder never reaches half here)
+    const want = { slime: 'heavy+zone', bat: 'dive+heavy', bones: 'heavy+summon', beetle: 'heavy', spore: 'line', golem: 'heavy', wraith: 'heal+heavy' };
     assert(Object.keys(want).every(k => kinds[k] === want[k]), 'each Elder shows its telegraphs: ' + Object.entries(kinds).map(([k, v]) => `${k} ${v}`).join(', '));
     // parry: the class tap in the window; the stage hook returns one kept object
     const { g, E } = party(70, 'warden', ['hesketh', 'wren'], 30);
@@ -2046,13 +2051,13 @@ try {
     for (let i = 0; i < 40 && E('bossTelegraph() && bossTelegraph().left > bossTelegraph().win'); i++) g.fn.tick(0.1);
     const hp0 = E('combatUnits().map(u => u.hp).join()'), tapKinds = []; g.fn.on('classTap', c => tapKinds.push(c.kind));
     g.fn.playerTap({ x: 0.66, y: 0.5 });
-    assert(t1 && t1.kind === 'heavy' && t2 && res.length === 1 && res[0].result === 'parry' && tapKinds[0] === 'parry' && E('!bossTelegraph()') && E('mob.boss && mob.stunT > 1.5 && mob.vulnT > 0'), 'a tap in the last moments of the wind-up parries: no hit, the boss is staggered and takes +50%');
+    assert(t1 && t1.kind === 'heavy' && t2 && res.length === 1 && res[0].result === 'parry' && tapKinds[0] === 'parry' && E('!bossTelegraph()') && E('mob.boss && (mob.reelT > 1.5 || mob.stunT > 1.5) && mob.vulnT > 0'), 'a tap in the last moments of the wind-up parries: no hit, the boss is Reeling and takes +50%');
     // an early tap dodges (half damage)
     const hits = []; g.fn.on('unitHit', h => { if (h.kind === 'heavy') hits.push(h.amount); });
-    for (let i = 0; i < 200 && !E('bossTelegraph()'); i++) g.fn.tick(0.1);
+    for (let i = 0; i < 200 && !E('bossTelegraph() && bossTelegraph().kind === "heavy"'); i++) g.fn.tick(0.1);   // S6-C: the next heavy (a kit also has zones)
     g.fn.playerTap({ x: 0.66, y: 0.5 });
-    const dodged = E('bossTelegraph() && bossTelegraph().res === "dodge"');
-    for (let i = 0; i < 40 && E('!!bossTelegraph()'); i++) g.fn.tick(0.1);
+    const dodged = E('bossTelegraph() && (bossTelegraph().res === "dodge" || bossTelegraph().res === "early")');   // S6-B: 59g calls it early
+    for (let i = 0; i < 40 && E('!!bossTelegraph() && bossTelegraph().kind === "heavy"'); i++) g.fn.tick(0.1);
     assert(dodged && res[res.length - 1].result === 'dodge' && hits.length === 1, 'an early tap is a Dodge: the heavy hit lands at half');
     // Aldric's Shield Bash counts as a parry
     const a = party(71, 'lanternmage', ['aldric', 'hesketh'], 30);
@@ -2123,7 +2128,7 @@ try {
     // Wildfire: Embers spread to every other foe at half the count when their foe dies
     lm.E('setZone(10); addBonus("ks:wildfire", () => 1)'); secs(lm.g, 0.1);
     const spread = lm.E('(() => { const fs = combatFoes().filter(f => !f.dead); if (fs.length < 3) return null; fs.forEach(f => f.embers = 0); fs[0].embers = 4; cbDamageFoe(fs[0], fs[0].hp, 0, "magic"); return fs.slice(1).map(f => f.embers).join(); })()');
-    assert(spread === '2,2', `Wildfire: a foe with 4 Embers dies, the other two get 2 each (${spread})`);
+    assert(spread && spread.split(',').length >= 2 && spread.split(',').every(v => v === '2'), `Wildfire: a foe with 4 Embers dies, every other foe gets 2 (${spread})`);
     // Pack Leader: the Ranger loses its own crit bonus on marked foes
     const rg = party(102, 'ranger', ['tobin', 'hesketh'], 20);
     rg.E('S.maxZone = 10; setZone(10)'); secs(rg.g, 1);
@@ -2966,6 +2971,9 @@ try {
   // in any slot, and a high-level Lanternmage or Ranger hero holds the Front for packs; a Lightkeeper cannot.
   {
     const { E, J } = mk(52, 'lightkeeper', [['tobin', 150], ['wren', 150], ['kestrel', 150], ['pip', 150], ['oriel', 150]], 60);
+    // (S6-A: with packs split by size these heroes run out of damage before sustain binds; foes that hit 3x harder
+    // make the zone hold on sustain, which is the planner rule this checks)
+    E('COMBAT_TUNE.atk *= 3');
     let found = null;
     for (let z = 10; z <= 80 && !found; z++) {
       const a = J(`bestLineup({ zone: ${z}, boss: false })`), b = J(`bestLineup({ zone: ${z}, boss: false, filter: k => ROSTER[k].role !== 'tank' })`);
@@ -4469,6 +4477,7 @@ try {
     assert(w === 'wipe:true:6' && E('CB_STATS.stalls') >= 1 && !g.errors.length,
       `F5 a pack the party cannot finish in ${E('COMBAT_TUNE.stallT')} s counts as a wipe: the party falls back from zone 7 to 6 (${w})` + (g.errors.length ? ': ' + g.errors[0] : ''));
     secs(g, E('COMBAT_TUNE.wipeT') + 1);
+    for (let i = 0; i < 20 && !E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'); i++) g.fn.tick(0.1);   // S6-A: small foes may all be down between packs
     assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns');
     // not in a boss fight: the boss timer ends those
     E('S.party.autoField = false; S.maxZone = 8; setZone(7); challenge()'); secs(g, 0.2);
@@ -4988,7 +4997,7 @@ try {
     const again = E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
     assert(near(again, light * 1.25) || near(again, light), 'once per Chill: the next heavy hit is plain (the window may still add x1.25 to abilities only)');
     F('f.boss = true; f.stag = 0; stApply(f, "chill", 1, 0, -1)'); E('cbDamageFoe(__f, 100, -1, "magic", "fire", ST_HEAVY)');
-    assert(near(F('f.stag'), 20 + 0), 'a Shatter on a boss fills 20 stagger');
+    assert(near(F('f.stag'), 20 + E('ACT_TUNE.stag.heavy * (typeof clsStagX === "function" ? clsStagX() : 1)')), 'a Shatter on a boss fills 20 stagger (and the heavy hit its +5, S6-B)');
     F('f.boss = false');
     // heavy by size: a single hit of 3 P or more (a crit's multiplier does not count)
     E('stApply(__f, "chill", 1, 0, -1)');
@@ -5031,8 +5040,9 @@ try {
     assert(E('__u.hp') === hc, 'a Cursed member takes no healing');
     E('stUnitClear(__u); __u.hp = __u.maxHp');
     // a spore cloud: Venom 3 (a floor, not added) for 4 s
-    E('(() => { const f = combatFoes().find(x => x.type === "spore" && !x.dead) || combatFoes()[0]; f.type = "spore"; f.atk = 1; f.bt = ENEMY_TUNE.cloudEvery; f.bx = 1; onEnemyTick(f, 0.01); f.bt = ENEMY_TUNE.cloudEvery; onEnemyTick(f, 0.01); f.atk = 0; })()');
-    assert(E('__u.us.venom.n') === 3 && near(E('__u.us.venom.t'), 4), 'a Spore cloud Venoms the party: 3 stacks for 4 s, not added up by a second cloud (S1, until S6\'s pack cadence)');
+    // S6-A: the cloud is a pack cadence (one cloud every 6 s for the pack, 59b onPackTick)
+    E('(() => { const L = combatFoes(), f = L.find(x => !x.dead) || L[0]; for (const x of L) if (x !== f && !x.dead) { x.type = "slime"; } f.type = "spore"; f.atk = 1; f.share = 1; f.bx = 1; f.born = 1; f.stunT = 0; f.elite = false; onPackTick(ENEMY_TUNE.cloudEvery); onPackTick(ENEMY_TUNE.cloudEvery); f.atk = 0; })()');
+    assert(E('__u.us.venom.n') === 3 && near(E('__u.us.venom.t'), 4), 'a Spore cloud Venoms the party: 3 stacks for 4 s, not added up by a second cloud (one cloud per pack, S6-A)');
     // typed hits: half armour and the resist to that type
     E('__u.armour = 100; stUnitClear(__u); __u.hp = __u.maxHp; __u.sh = 0; __u.blockP = 0; __u.drT = 0');
     const mk = t => `({ dt: ${JSON.stringify(t)}, atk: 0, gone: false, dead: 0, hp: 0 })`;
