@@ -1033,3 +1033,6 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   sprites. Its sim alone: 12/22 -> 14/22 but P1 slower (day 9.6-12.3) and the Lanternmage walls at Silas.
   Merge conflicts with ECON-A resolved (boss/pack gold via the new curve + ledger). 2 S6 checks fail on the
   new economy (a hard-coded pre-ECON gold baseline; idle XP NaN): fixer agent running; push after it passes.
+- MERGED cb2 check fix: idle-gold baseline re-measured on the ECON-A merge (515.2/min; S6 = 99.6%), active
+  reward NaN was the test hitting S6's Enrage (check bug). check passes. COMBINED sim --targets after ECON-A +
+  S6: 8/22 (was 11). NEXT: BAL3 + BAL-E combined balance pass (opus), before S4/S5.
