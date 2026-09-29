@@ -97,3 +97,12 @@ rows and columns and breaks outlines. Pip's trial was shrunk this way, so her fi
   glow, fog, flicker and fireflies are code.
 - On a landscape phone (about 740 x 360 CSS px) the stage is about 480 x 240 logical px, so a 96 px hero is
   about 40% of the stage height, and a party of three plus a pack of 8-10 fits across.
+
+## 9. Formation and enemy sizes (owner, 2026-09-29)
+
+- The party stands **staggered and overlapping** on the road: the back lane a few pixels higher (further up
+  the road), the front lane lower and slightly in front, so three 96 px heroes fit in the left ~40% of the
+  stage. Mock-up: art/backgrounds/mossy-hollow/formation-mock.png.
+- Enemies are sized by pack type, not all hero-sized: **swarm foes about 24-36 px** (bats, slimes, spores),
+  **normal foes about 48-64 px**, **brutes and elders about 96 px**, region bosses bigger. Packs stand in 2-3
+  staggered rows in the right half. Heroes are never shrunk (pixel art can't be scaled down cleanly).
