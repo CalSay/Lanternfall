@@ -35,10 +35,38 @@ Replaces the party. Owner's reasons: party combat was cluttered on screen, hard 
 
 - Lane combat (CB3: enemies walk in; ground zones vs instant bursts, cleaves, lines, single target) now for one hero.
 - What heroes not carrying the lamp do (camp work, expeditions, swapping between fights or mid-fight).
-- Bonds as camp relationships and story scenes.
+- The campaign story told through NPCs around the world map (replaces Bonds, below).
 
 ## First build (playtest)
 
 Party removed from play; the three starters are selectable; each has one ability; the combat page has Attack,
 Parry, Dodge and the ability as buttons. Built on the current (portrait) layout and current sprites; the new art,
 landscape layout and lane combat come after the owner plays this.
+
+## Removal and rework (owner answers, 2026-09-29)
+
+**Ascension and subclasses (owner).** The Proving stays: a region-boss fight that **Ascends** your hero and
+opens their subclasses. Each subclass brings new abilities. The player may also **stay as their current
+class** (no penalty beyond not getting the subclass abilities). The six evolutions of classes-2 become the
+subclass branches; the per-hero ability tree hangs off the chosen subclass. Open: how this sits with the
+per-hero Awakenings in heroes-2 (fold the Awakening into Ascension, or keep it as the hero's quest payoff).
+
+**Bonds become campaign story (owner).** The 21 Bonds, their 42 stories and Sworn lines leave the game.
+In their place, a campaign story told through NPCs around the world map that the player gets to know:
+the gatherers, the tavern keep and others. Bond writing stays in the repo as source material only.
+
+**Heroes (owner).** No new heroes are designed beyond the roster already planned. Count to confirm (18 in
+code, 32 planned in heroes-2).
+
+**Remove from the game:** the formation (slots, line-up planner, bench, Party tab team view); Bonds,
+combos and Kin; companion XP, caps and promotions; the companion achievements (Full Table, Seasoned
+Company, Kindred, Side by Side) and the "party damage" and "companion XP" bonus types; Tavern recruiting
+(the visitor and recruit rumours; the Tavern's upgrade tiers need new perks); the old code-drawn companion
+sprites once new art replaces them.
+
+**Rework:** recruit routes (quests, Renown, boss tokens, bestiary) become the ways to unlock a playable hero;
+the star map becomes each hero's upgrade tree; legendary circle sets are regrouped (the circles were companion
+groups); pinnacle bosses and combat-2's backline divers, guards, taunts and interrupts get solo versions (with
+lane combat, CB3); expeditions to be decided (cut, or a long gatherer job).
+
+**Keep:** gatherers, camp, gear and crafting, Deepwell, mastery, bestiary, the online raid.
