@@ -120,6 +120,8 @@ function followGo(go) {
 // one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
 // the list), e.g. the camp welcome (55-welcome.js).
 const NEWS = { open: true, t: 0, lines: [], entry: null };
+// SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
+if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;
 function newsEntry(lines) {
   const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
   if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }

@@ -91,7 +91,7 @@ const SOLO_STEPS = [
   { id: 'parry', pause: 1, when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
-  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },

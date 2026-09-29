@@ -6269,7 +6269,7 @@ try {
       assert(/^false\|Hero\|hero$/.test(party), `no party UI (formation, bench, roster, Bonds, visitor); the tab is Hero; only the hero on the stage (${party})`);
       // walk the guide: each step's target exists, is visible, and the ring marks it; one hint; the game waits while it shows
       const seen = [];
-      for (let i = 0; i < 60 && seen.length < 6; i++) {
+      for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
         const st = await X('(s => s ? s.id : "")(onboardStep())');
         if (!st) { await X('for (let k = 0; k < 20; k++) tick(0.1); true'); await page.waitForTimeout(300); continue; }
         await page.waitForTimeout(400);
@@ -6281,6 +6281,7 @@ try {
         // do the step through its own target (the buttons act on pointerdown)
         if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab0' : st}`); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
         else if (st === 'boss') await page.click('.ob-ok');
+        else if (st === 'gather') await X('onboardDone("gather"); true');   // checked; stay on the road so the Parry step can come
         else await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
         await page.waitForTimeout(300);
         // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
@@ -6294,9 +6295,16 @@ try {
       await X('soloAbility({ slot: 0 }); true'); await page.waitForTimeout(350);
       const cd = await page.$eval('#soloBar .sb-ab0', b => ({ cd: +getComputedStyle(b).getPropertyValue('--cd'), n: b.querySelector('.sb-n').textContent, cool: b.classList.contains('cool') }));
       assert(cd.cool && cd.cd > 0 && /^\d+$/.test(cd.n), `after a cast the slot sweeps dark with the seconds left (${JSON.stringify(cd)})`);
-      await X('actWarn({ kind: "heavy", id: "t3", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true'); await page.waitForTimeout(350);
+      // a heavy wind-up (59g shows one warning at a time, 1 s apart: wait until it is the one showing)
+      await X('SOLO_TUNE.trashEvery = 1e9; true');
+      for (let i = 0; i < 40 && !(await X('(w => !!(w && w.id === "t3"))(actWarning())')); i++) {
+        await X('if (!actWarning() || actWarning().id !== "t3") { if (!S.__t3) { S.__t3 = 1; actWarn({ kind: "heavy", id: "t3", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 3, land: () => { S.__t3 = 0; } }); } } for (let k = 0; k < 2; k++) tick(0.1); true');
+        await page.waitForTimeout(60);
+      }
+      await page.waitForTimeout(350);
       const glow = await page.$$eval('#soloBar .sb-parry, #soloBar .sb-dodge', l => l.map(b => b.classList.contains('live')));
-      assert(glow.every(Boolean), 'a heavy hit coming: Parry and Dodge glow');
+      assert(glow.every(Boolean) && await X('(w => !!(w && w.kind === "heavy"))(actWarning())'), 'a heavy hit coming: Parry and Dodge glow');
+      await X('delete S.__t3; true');
       const s2 = await page.$('#soloBar .sb-ab1'); const r2 = await s2.boundingBox(); await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250);
       const pk = await page.$$eval('#abPicker .sp-ab', l => l.map(b => b.dataset.ab));
       assert(pk.join() === 'fire' && await X('soloPickerOpen()'), `tapping an empty slot opens the picker with the hero's unlocked abilities (${pk.join()})`);

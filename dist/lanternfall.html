@@ -3096,7 +3096,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
         <div class="hpbar"><i class="trail" id="mTrail"></i><i class="fill" id="mBar"></i></div>
         <div class="timer" id="tWrap" hidden><i id="tBar"></i></div>
       </div>
-      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Tap <b id="sTap">0</b></span></div>
+      <div class="stat-nums" id="statNums"><span>DPS <b id="sDps">0</b></span><span>Hit <b id="sTap">0</b></span></div>
     </div>
     <div class="toasts" id="toasts" aria-live="polite"></div>
   </div>
@@ -14163,7 +14163,7 @@ const SOLO_STEPS = [
   { id: 'parry', pause: 1, when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
   { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
-  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
+  { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
   { id: 'bench', pause: 1, when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campBusy('bench') },
@@ -32792,9 +32792,12 @@ let campPaintFire = null;
     if (!cold() || lit()) return;
     toast('Old Hesketh\'s lamp has gone out. "Wood first. Then we talk."', 'good', { mat: ['wood', 1] }, 'high');
   };
-  on('createDone', ({ mode } = {}) => { if (mode === 'new') opening(); });
+  // SOLO1: the solo hero starts on the road; Hesketh speaks when it first walks to the grove (after the first boss)
+  const soloG = typeof soloOn === 'function' && soloOn();
+  on('createDone', ({ mode } = {}) => { if (mode === 'new' && !soloG) opening(); });
+  on('activity', ({ activity } = {}) => { if (soloG && activity === 'gather') opening(); });
   // A reload before the fire is lit (the class is already chosen): the card again.
-  setTimeout(() => { if (S.party && S.party.chosen) opening(); }, 600);
+  setTimeout(() => { if (S.party && S.party.chosen && (!soloG || S.activity === 'gather')) opening(); }, 600);
   on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
 }
 
@@ -33674,6 +33677,8 @@ function followGo(go) {
 // one line. emit('whatsNew', { msg, icon, first }) adds a line at any time (first: at the top of
 // the list), e.g. the camp welcome (55-welcome.js).
 const NEWS = { open: true, t: 0, lines: [], entry: null };
+// SOLO1 (playtest): a new game has nothing to catch up on: its first toasts show as toasts, not as "What's new".
+if (!(S.totalKills > 0 || S.L > 1 || S.maxZone > 1)) NEWS.open = false;
 function newsEntry(lines) {
   const e = NEWS.entry && notes.log.includes(NEWS.entry) ? NEWS.entry : null;
   if (e) { e.list.push(...lines.filter(l => !l.first)); e.list.unshift(...lines.filter(l => l.first)); e.msg = `What's new: ${e.list.length} things since your last visit.`; e.at = Date.now(); e.id = ++notes.seq; notes.log.splice(notes.log.indexOf(e), 1); notes.log.unshift(e); }
