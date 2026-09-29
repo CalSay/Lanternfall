@@ -104,8 +104,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       s.poses.lie = { x0: AX - (w >> 1) + 6, y0: 131 - h + 1, w, h, c: idxCanvas(r, pal), d: r };
     }
     for (const k of Object.keys(s.poses)) delete s.poses[k].d;
-    // the art's widest reach left of the anchor (Wren's bat flits at x 28..36)
-    s.left = AX - Math.min(id === 'wren' ? 28 : 224, ...Object.values(s.poses).map(p => p.x0));
+    // the art's widest reach left of the anchor (Wren's bat now flits at her top right, inside the poses)
+    s.left = AX - Math.min(...Object.values(s.poses).map(p => p.x0));
     SETS[id] = s;
     return s;
   }
@@ -196,24 +196,26 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   // A frame: { p: pose, br: breath 0/1, dx, buckle: [shift, bottomFrom], str: 'draw'|'release', arrow, waves, bat: [x, y],
   //   sw: swoosh fade, spark: [x, y, s], fl: Pip's flame size, em: embers step, fb: [x, y, k] bolt, sm: [x, y, t] smoke }.
   const BR = [0, 0, 1, 1, 1, 1, 0, 0];
-  const BAT = [[34, 56], [35, 54], [36, 53], [35, 54], [34, 56], [33, 57], [32, 56], [33, 55]];
+  // Wren's bat flits at her top right, over the bow's top limb (owner, 2026-09-29: it used to sit on her left)
+  const BAT_D = [80, -42], batAt = b => [b[0] + BAT_D[0], b[1] + BAT_D[1]];
+  const BAT = [[34, 56], [35, 54], [36, 53], [35, 54], [34, 56], [33, 57], [32, 56], [33, 55]].map(batAt);
   const ORB = { ready: [134, 57], wind: [93, 29], cast: [151, 59], camp: [124, 56], hurt: [140, 62], kneel: [130, 56], fallen: [149, 103] };
   const range = n => Array.from({ length: n }, (_, i) => i);
   function wrenAnims() {
-    const fight = (o = {}) => Object.assign({ p: 'draw', str: 'draw', bat: [34, 56] }, o);
+    const fight = (o = {}) => Object.assign({ p: 'draw', str: 'draw', bat: batAt([34, 56]) }, o);
     const rel = o => Object.assign({ p: 'release', str: 'release' }, o);
-    const hurt = (bat, dx = 0) => ({ p: 'hurt', bat, dx });
+    const hurt = (bat, dx = 0) => ({ p: 'hurt', bat: batAt(bat), dx });
     const attack = [fight(), fight({ br: 1 }), fight({ br: 1 })]
-      .concat([0, 18, 36, 54].map((ax, k) => rel({ arrow: [118 + ax, 63], waves: k < 3 ? [118 + ax + 48, 57] : null, bat: [34, 52] })))
-      .concat([rel({ bat: [34, 54] }), fight({ bat: [34, 55] }), fight()]);
-    const path = [[60, 40], [80, 44], [100, 54], [110, 70], [104, 86], [90, 94], [80, 98], [74, 102], [70, 104], [68, 105], [68, 106], [68, 106]];
+      .concat([0, 18, 36, 54].map((ax, k) => rel({ arrow: [118 + ax, 63], waves: k < 3 ? [118 + ax + 48, 57] : null, bat: batAt([34, 52]) })))
+      .concat([rel({ bat: batAt([34, 54]) }), fight({ bat: batAt([34, 55]) }), fight()]);
+    const path = [[96, 26], [96, 36], [100, 54], [110, 70], [104, 86], [90, 94], [80, 98], [74, 102], [70, 104], [68, 105], [68, 106], [68, 106]];
     return {
       campIdle: { ms: 160, loop: true, f: range(8).map(i => ({ p: 'camp', br: BR[i], bat: BAT[i] })) },
       fightIdle: { ms: 160, loop: true, f: range(8).map(i => fight({ br: BR[i], bat: BAT[i] })) },
       attack: { ms: 90, hit: 3, f: attack },
       ability: { ms: 90, hit: 3, f: attack.map(f => (f.arrow ? Object.assign({}, f, { echo: true, waves: [f.arrow[0] + 48, 57] }) : f)) },   // Echo Shot: three waves on every flight frame
       hurt: { ms: 90, f: [fight(), hurt([30, 46]), hurt([28, 42], -1), hurt([30, 46], -1), hurt([32, 52]), fight()] },
-      death: { ms: 130, f: [hurt([30, 46]), hurt([28, 42], -1), { p: 'hurt', buckle: [4, 118], bat: [34, 40] }, { p: 'hurt', buckle: [9, 122], bat: [44, 38] }]
+      death: { ms: 130, f: [hurt([30, 46]), hurt([28, 42], -1), { p: 'hurt', buckle: [4, 118], bat: batAt([34, 40]) }, { p: 'hurt', buckle: [9, 122], bat: [100, 20] }]
         .concat(path.map(b => ({ p: 'lie', bat: b }))) }
     };
   }

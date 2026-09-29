@@ -2619,24 +2619,25 @@ span.cf-d { font-weight: 600; }
 .game.solo-game > .stagebox { order: 2; }
 .game.solo-game > .sbar { order: 3; }
 /* The action bar: two rows of framed square slots. Top: Ability 1-3. Bottom: Parry, Dodge, Attack (Attack bottom right). */
-.sbar { flex: none; display: grid; justify-content: center; gap: 6px; padding: 6px var(--gut) 8px; }
+/* the slots fill the width, square; capped by the screen height so the stage keeps its room (owner, 2026-09-29) */
+.sbar { flex: none; display: grid; justify-content: stretch; gap: 8px; padding: 6px var(--gut) 8px; }
 .sbar[hidden] { display: none; }
-.sb-row { display: grid; grid-template-columns: repeat(3, var(--sz, 56px)); gap: 8px; }
-.sbtn { --sz: 56px; position: relative; width: var(--sz); height: var(--sz); padding: 0; display: flex; align-items: center; justify-content: center;
+.sb-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: min(100%, calc(45dvh + 16px), 352px); justify-self: center; }
+.sbtn { position: relative; width: 100%; height: auto; aspect-ratio: 1; padding: 0; display: flex; align-items: center; justify-content: center;
   background: #1C1624; border: 2px solid #0B0810; outline: 2px solid #4E4060; outline-offset: -4px;
   box-shadow: inset 0 0 0 4px #2A2233, 0 3px 0 #0B0810;
   color: var(--bone); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
 .sbtn:focus-visible { outline-color: var(--gold); }
 .sbtn:active, .sbtn.hit { transform: translateY(2px); box-shadow: inset 0 0 0 4px #2A2233, 0 1px 0 #0B0810; }
-.sb-ic { position: relative; z-index: 1; width: 24px; height: 24px; margin-top: -8px; image-rendering: pixelated; }
-.sb-lb { position: absolute; z-index: 1; left: 2px; right: 2px; bottom: 5px; font: 600 calc(11px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; color: var(--muted); }
+.sb-ic { position: relative; z-index: 1; width: 48px; height: 48px; margin-top: -12px; image-rendering: pixelated; }
+.sb-lb { position: absolute; z-index: 1; left: 2px; right: 2px; bottom: 8px; font: 600 calc(13px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; color: var(--muted); }
 .sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
 @media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
 /* the cooldown: a dark sweep, clockwise from the top, that leaves the icon as the slot comes back (--cd 1 -> 0) */
 .sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
   background: conic-gradient(from 0deg, transparent calc((1 - var(--cd, 0)) * 360deg), rgba(8, 5, 12, .78) 0); }
 .sb-n { position: absolute; z-index: 3; inset: 0; display: flex; align-items: center; justify-content: center; margin-top: -6px; pointer-events: none;
-  font: 700 calc(20px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
+  font: 700 calc(28px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
 /* the basic three are plain; the ability slots wear a gold frame so they read as special */
 .sb-atk { background: #2A1C1C; }
 .sb-atk .sb-lb { color: #FFD9B0; }
@@ -2664,8 +2665,8 @@ span.cf-d { font-weight: 600; }
 .sb-tip b { font: 600 17px var(--display); color: var(--gold); }
 .sb-tip small { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
-@media (max-height: 640px) { .sbtn { --sz: 50px; } .sb-row { grid-template-columns: repeat(3, 50px); } }
-@media (max-height: 520px) { .sbtn { --sz: 46px; } .sb-row { grid-template-columns: repeat(3, 46px); } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
+@media (max-height: 640px) { .sb-ic { width: 36px; height: 36px; margin-top: -10px; } .sb-lb { font-size: calc(11px * var(--display-k, 1)); } }
+@media (max-height: 520px) { .sb-ic { width: 24px; height: 24px; } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
 /* the old floating ability circles over the stage (62-stage .abil, 75-class-ui .abil2): the bar has them now */
 body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important; }
 
@@ -30443,7 +30444,7 @@ let resize, animate, draw, stageStats, warmScene;
     // members and a party falling back show none.
     for (const a of order) {
       if (a.alpha < 1 || !a.fr || !(a.hpT >= 0) || a.down || rtA < 0.5) continue;
-      const f = (a === hero && a._f && a._f.c) ? a._f : a.fr.idle0, cx = X(ax(a) - cam);   // hand-drawn hero art: its own frame's head
+      const art = a === hero && a._f && a._f.c, f = art ? a._f : a.fr.idle0, cx = art ? X(a._x + a._f.ox) : X(ax(a) - cam);   // hand-drawn hero art: over its own frame's head (as drawn)
       const bh = 4 * U + (a.cdF >= 0 ? gaugeH() : 0);
       const y = Math.max(minY + (a === hero && heroChips ? 4 * U : 0), Y(a.hy - f.oy + headTop(f)) - gap - bh);
       bar(cx - (bw >> 1) - U, y, bw, a.hpF == null ? a.hpT : a.hpF, a.trail || 0, a.shF || 0, a.hpT > 0.5 ? HP_COL[0] : a.hpT > 0.25 ? HP_COL[1] : HP_COL[2], a.cdF);
@@ -33700,8 +33701,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       s.poses.lie = { x0: AX - (w >> 1) + 6, y0: 131 - h + 1, w, h, c: idxCanvas(r, pal), d: r };
     }
     for (const k of Object.keys(s.poses)) delete s.poses[k].d;
-    // the art's widest reach left of the anchor (Wren's bat flits at x 28..36)
-    s.left = AX - Math.min(id === 'wren' ? 28 : 224, ...Object.values(s.poses).map(p => p.x0));
+    // the art's widest reach left of the anchor (Wren's bat now flits at her top right, inside the poses)
+    s.left = AX - Math.min(...Object.values(s.poses).map(p => p.x0));
     SETS[id] = s;
     return s;
   }
@@ -33792,24 +33793,26 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
   // A frame: { p: pose, br: breath 0/1, dx, buckle: [shift, bottomFrom], str: 'draw'|'release', arrow, waves, bat: [x, y],
   //   sw: swoosh fade, spark: [x, y, s], fl: Pip's flame size, em: embers step, fb: [x, y, k] bolt, sm: [x, y, t] smoke }.
   const BR = [0, 0, 1, 1, 1, 1, 0, 0];
-  const BAT = [[34, 56], [35, 54], [36, 53], [35, 54], [34, 56], [33, 57], [32, 56], [33, 55]];
+  // Wren's bat flits at her top right, over the bow's top limb (owner, 2026-09-29: it used to sit on her left)
+  const BAT_D = [80, -42], batAt = b => [b[0] + BAT_D[0], b[1] + BAT_D[1]];
+  const BAT = [[34, 56], [35, 54], [36, 53], [35, 54], [34, 56], [33, 57], [32, 56], [33, 55]].map(batAt);
   const ORB = { ready: [134, 57], wind: [93, 29], cast: [151, 59], camp: [124, 56], hurt: [140, 62], kneel: [130, 56], fallen: [149, 103] };
   const range = n => Array.from({ length: n }, (_, i) => i);
   function wrenAnims() {
-    const fight = (o = {}) => Object.assign({ p: 'draw', str: 'draw', bat: [34, 56] }, o);
+    const fight = (o = {}) => Object.assign({ p: 'draw', str: 'draw', bat: batAt([34, 56]) }, o);
     const rel = o => Object.assign({ p: 'release', str: 'release' }, o);
-    const hurt = (bat, dx = 0) => ({ p: 'hurt', bat, dx });
+    const hurt = (bat, dx = 0) => ({ p: 'hurt', bat: batAt(bat), dx });
     const attack = [fight(), fight({ br: 1 }), fight({ br: 1 })]
-      .concat([0, 18, 36, 54].map((ax, k) => rel({ arrow: [118 + ax, 63], waves: k < 3 ? [118 + ax + 48, 57] : null, bat: [34, 52] })))
-      .concat([rel({ bat: [34, 54] }), fight({ bat: [34, 55] }), fight()]);
-    const path = [[60, 40], [80, 44], [100, 54], [110, 70], [104, 86], [90, 94], [80, 98], [74, 102], [70, 104], [68, 105], [68, 106], [68, 106]];
+      .concat([0, 18, 36, 54].map((ax, k) => rel({ arrow: [118 + ax, 63], waves: k < 3 ? [118 + ax + 48, 57] : null, bat: batAt([34, 52]) })))
+      .concat([rel({ bat: batAt([34, 54]) }), fight({ bat: batAt([34, 55]) }), fight()]);
+    const path = [[96, 26], [96, 36], [100, 54], [110, 70], [104, 86], [90, 94], [80, 98], [74, 102], [70, 104], [68, 105], [68, 106], [68, 106]];
     return {
       campIdle: { ms: 160, loop: true, f: range(8).map(i => ({ p: 'camp', br: BR[i], bat: BAT[i] })) },
       fightIdle: { ms: 160, loop: true, f: range(8).map(i => fight({ br: BR[i], bat: BAT[i] })) },
       attack: { ms: 90, hit: 3, f: attack },
       ability: { ms: 90, hit: 3, f: attack.map(f => (f.arrow ? Object.assign({}, f, { echo: true, waves: [f.arrow[0] + 48, 57] }) : f)) },   // Echo Shot: three waves on every flight frame
       hurt: { ms: 90, f: [fight(), hurt([30, 46]), hurt([28, 42], -1), hurt([30, 46], -1), hurt([32, 52]), fight()] },
-      death: { ms: 130, f: [hurt([30, 46]), hurt([28, 42], -1), { p: 'hurt', buckle: [4, 118], bat: [34, 40] }, { p: 'hurt', buckle: [9, 122], bat: [44, 38] }]
+      death: { ms: 130, f: [hurt([30, 46]), hurt([28, 42], -1), { p: 'hurt', buckle: [4, 118], bat: batAt([34, 40]) }, { p: 'hurt', buckle: [9, 122], bat: [100, 20] }]
         .concat(path.map(b => ({ p: 'lie', bat: b }))) }
     };
   }
