@@ -212,7 +212,9 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
   // opts: { now }. Returns true when the evolution changed (or was already this one).
   const setEvo = (evo, o, free) => {
     const c = C(), lc = lbClass(), from = lc.evo, fromKit = S.party.cls;
-    c.proven[evo] = 1;
+    // Proven when a Proving was passed or a path already proven (a switch keeps it, 3.4); a granted path not yet
+    // proven that switches stays unproven until its Proving (3.7).
+    if (anyWon() || Object.keys(c.proven).some(k => c.proven[k])) c.proven[evo] = 1;
     c.at = now0(o);
     const kit = clsSet(lc.base, evo, { now: c.at, stamp: true });
     const d = EVO_DEFS[evo], ab = CLASS_ABILITIES[d.ab2];
