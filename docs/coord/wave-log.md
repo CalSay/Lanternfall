@@ -1135,3 +1135,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   that moment, within the hero's range: a burst (radius at the impact point), a cleave (the front few), a
   piercing line (down the lane, e.g. Wren's Awakened shot). Enemies still off-screen or out of range are never
   hit. Each ability in classes-2/heroes-2 gets tagged zone / burst / cleave / line / single in CB3.
+- Mossy Hollow relit v3 (Codex pixel-processing pass): compliant (full 480x270 layers, hard alpha, 47 colours shared, foreground y238-269). Shrouded now GENERATED in code by a palette remap (cold hue, drained, darker; warm lamp glass forced dark) and a crossfade gives the relighting moment. Weak spot: the 47-colour reduction blotched the ground; the road lost its shape (reads as mottled grass, heroes sink into it). Saved art/backgrounds/mossy-hollow/v3/.
