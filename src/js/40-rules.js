@@ -47,7 +47,8 @@ function rollRarity(lv) {
 // the companion XP curve below, and the HP curve only has to match the power per level.
 const PACE = {
   hp0: 80,                  // (BAL2, was 40) zone 1 mob HP
-  hpEarly: 1.83, early: 12, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+  hpEarly: 1.83, early: 11, // (BAL1) mob HP x per zone up to zone `early`: zones 1-6 in minutes, then T1 30m
+                            //   (BAL3: early 12 -> 11, zones 11-15 took ~25 min each after S6/ECON-A: T1 2h, T3, T12)
   hpGrowth: 1.48,           // (BAL2 1.48, BAL1 1.46, M6 1.48) mob HP x per zone from `early` to the bend
   bend: 27,                 // (BAL1, was 30) zones past the bend grow by hpLate instead
   hpLate: 1.22,             // (BAL1, was 1.29) mob HP x per zone past the bend: matches the power of
