@@ -17,7 +17,8 @@ const ECON = {
   zones: 35,                     // zones a region (PACE.region)
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
   // ---- the Lanternbearer's upgrades (3.3, 4.4): price of level n+1 = base x r^n ----
-  blade: { base: 5, r: 1.05 },   // was 10 x 1.18^n
+  blade: { base: 10, r: 1.05 },  // was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
+                                 // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
   swift: { base: 20, r: 1.25 },  // was 50 x 1.6^n (cap 40 unchanged)
   precision: { base: 200, r: 1.45, cap: 15, v: 0.01 },   // replaces Fortune: +1% crit damage a level
   // ---- camp (3.1): hours of income at the gate zone (index = level) ----

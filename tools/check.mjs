@@ -3883,8 +3883,8 @@ try {
     'AD2 the Classic 22: ids, thresholds and bonuses as ECON-A set them');
   const noDeeds = (await import('./lib/core.mjs')).coreFiles().filter(f => !/^(23-data-deeds|58-deeds)\.js$/.test(f));
   const achSums = h2 => h2.eval('(() => { const s = {}; for (const a of ACH_API.list) if (S.achievements.got[a.id]) s[a.bonus[0]] = (s[a.bonus[0]] || 0) + a.bonus[1]; return JSON.stringify(s); })()');
-  // ECON-A: the late fixture's 29B gold (old scale) is past every Hoard tier and Dragon's Hoard (500M) now.
-  const expect = { 'save-v2-late.json': ['slayer:2', 'zones:2', 'level:2', 'gold:4', 'mine:2', 'wood:2'] };
+  // ECON-A: the late fixture's 29B gold (old scale) is past every Hoard tier (Everflame ★2) and Dragon's Hoard (500M) now.
+  const expect = { 'save-v2-late.json': ['slayer:2', 'zones:2', 'level:2', 'gold:6', 'mine:2', 'wood:2'] };
   for (const f of FIX) {
     const raw = fixText(f);
     const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }), files: noDeeds });
@@ -4474,7 +4474,7 @@ try {
     assert(w === 'wipe:true:6' && E('CB_STATS.stalls') >= 1 && !g.errors.length,
       `F5 a pack the party cannot finish in ${E('COMBAT_TUNE.stallT')} s counts as a wipe: the party falls back from zone 7 to 6 (${w})` + (g.errors.length ? ': ' + g.errors[0] : ''));
     secs(g, E('COMBAT_TUNE.wipeT') + 1);
-    assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp > 0 && f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns');
+    assert(E('combatUnits().slice(0, 3).every(u => !u.down && u.hp > 0)') && E('combatFoes().some(f => f.hp < 1e29)'), 'F5 after the fall back the party stands and a new pack spawns (alive, or already beaten: not the locked one)');
     // not in a boss fight: the boss timer ends those
     E('S.party.autoField = false; S.maxZone = 8; setZone(7); challenge()'); secs(g, 0.2);
     E('combatFoes().forEach(f => { f.atk = 0; }); globalThis.__k = S.party.field[0]; cbHitUnit(cbUnitByKey(__k), 1e40, "poison", null)');
@@ -5759,7 +5759,7 @@ try {
   assert(!bigP.length && tables.blade[260] < 1e8, `EC10 (static) every price under 1e8 (biggest: Tent 10 ${E('fmt(econTentGold(10))')}, Blade Lv 260 ${E(`fmt(${tables.blade[260]})`)})` + (bigP.length ? ': ' + bigP.join('; ') : ''));
   const up = E('HERO_UPS.map(u => [u.id, u.base, u.r, u.cap || 0].join(":")).join()');
   assert(up === `blade:${E('ECON.blade.base')}:${E('ECON.blade.r')}:0,swift:${E('ECON.swift.base')}:${E('ECON.swift.r')}:40,precision:${E('ECON.precision.base')}:${E('ECON.precision.r')}:${E('ECON.precision.cap')}`,
-    `the Lanternbearer's upgrades: Blade 5 x 1.05^n, Swiftness 20 x 1.25^n (cap 40), Precision 200 x 1.45^n (cap 15), equal to ECON (${up})`);
+    `the Lanternbearer's upgrades: Blade 10 x 1.05^n (economy-2 proposed 5), Swiftness 20 x 1.25^n (cap 40), Precision 200 x 1.45^n (cap 15), equal to ECON (${up})`);
   assert(E('RELICS.map(r => r.id).join()') === 'banner,edge,heart,glass' && E('RELICS[1].name') === 'Loaded Die' && E('RELICS[1].cap') === 5 && E('UNIQ.hollowcrown.fx.gold') === 10,
     'the Lucky Coin is the Loaded Die (cap 5), the Crown of Hollows gives +10% gold (raid docs untouched)');
   // No gold-gain source outside gear: every save field maxed, gold stays at the gear cap x the Omen

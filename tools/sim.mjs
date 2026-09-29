@@ -266,9 +266,9 @@ if (lineup) fieldLineup(g);
 
 // Best value = most dps gained per gold (Precision's crit damage shows up in totalDps).
 // ECON-A (economy-2 8.1): the Lanternbearer's upgrades (Blade, Swiftness, Precision) take at most --upshare of
-// the gold earned (default 0.35, after a --upseed of 1,000 for the first minutes, when nothing else costs gold);
+// the gold earned (default 0.35; --upseed N adds N gold to that budget);
 // the rest waits for camp builds, hires, recruits and crafting. --upshare 1 spends everything (the old policy).
-const upShare = args.upshare !== undefined ? +args.upshare : 0.35, upSeed = args.upseed !== undefined ? +args.upseed : 1000;
+const upShare = args.upshare !== undefined ? +args.upshare : 0.35, upSeed = args.upseed !== undefined ? +args.upseed : 0;
 const upBudget = () => upShare >= 1 ? Infinity : upSeed + upShare * E('S.totalGold') - E('S.econ ? S.econ.spent.up : 0');
 function buyBest() {
   for (let guard = 0; guard < 500; guard++) {
