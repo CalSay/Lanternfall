@@ -45,7 +45,7 @@ const REGIONS = (() => {
   return [
     { id: 'hollow', n: 'the Hollow', z0: 1, z1: 35, types: [0, 1, 2, 3, 4, 5, 6], names: ZONES, themes: ZONE_THEME,
       uniq: ZONE_UNIQ, home: CRAFT_HOME, hue0: 0, hueStep: 70,
-      boss: { zone: 35, name: 'The Listener', place: null }, // the Elder of Wraithmarsh V, shown as the Listener (lore.md 4.2; 55-story names the foe)
+      boss: { zone: 35, name: 'The Fenmother', place: null }, // the Elder of Wraithmarsh V, shown as the Fenmother (lore.md 4.4; 55-story names the foe)
       lantern: 'The Great Lantern of the Hollow', beat: 0, col: '#F2C14E', plugged: true },
     { id: 'coast', n: 'the Sunken Coast', z0: 36, z1: 70, types: coast.types, names: coast.names, themes: coast.themes,
       uniq: coast.uniq, home: coast.home, hue0: coast.hue0, hueStep: coast.hueStep,

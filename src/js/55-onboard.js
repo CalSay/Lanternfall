@@ -59,8 +59,8 @@ const FEATURES = [
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
   // late: a system that arrives after the guide. It stays gated on old saves (S.onboard.all) and after
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
-  // Powers: the first legendary power, or a first Circle Sigil (Sigils are spent in the same view).
-  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Sigil', late: true,
+  // Powers: the first legendary power, or a first Circle Crest (Crests are spent in the same view).
+  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Crest', late: true,
     when: () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length || (S.legend.sig || []).some(n => n > 0))) },
   // Hands (N1, 57f-hands.js): Hearth 2 and the Tavern built. The probe is safe before 57f has loaded.
   { id: 'hands', tab: 'world', view: 'tav', name: 'Hands', why: 'Hearth 2 and the Tavern built', late: true,

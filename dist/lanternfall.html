@@ -3419,7 +3419,7 @@ const CRAFT_NODE_RIGS = {
 //                           (10-art, 11-art-craft) recoloured: no new power maps.
 //   legendIcon(id)       -> [name, main, extra] for iconURL(...legendIcon(id)) or a toast spec { ic: legendIcon(id) }
 //   SIGIL_ICONS          -> 4 new maps, registered: sigil_hedgefolk, sigil_oath, sigil_dusk, sigil_wayfarers
-//   sigilIcon(i | circle) -> [name, main, extra] for a Circle Sigil (i = the LEG_CIRCLES index / item cm)
+//   sigilIcon(i | circle) -> [name, main, extra] for a Circle Crest (i = the LEG_CIRCLES index / item cm)
 // Palette: the craft icon meaning (11-art-craft): 1-3 main ramp (icShade / icLight), 4 and 6 second colour,
 // 5 glint, 7 trim. Every power icon gets the legendary orange trim on 7, so the family reads at a glance.
 
@@ -3492,7 +3492,7 @@ function legendIcon(id) {
   return [name, m, Object.assign({ 1: m, 2: icShade(m), 3: icLight(m), 4: o, 6: icShade(o), 5: '#FFFFFF', 7: LEG_FRAME.col }, fix)];
 }
 
-// ---------------- Circle Sigils ----------------
+// ---------------- Circle Crests ----------------
 // A struck token: rim 4 (light, top left) and 6 (shade), face 1-3, emblem 5 with 7 as its shade.
 // Emblems: Hedgefolk a leaf, the Oath an upright sword, Dusk Company a crescent moon, Wayfarers a road star.
 const SIGIL_ICONS = {
@@ -6897,7 +6897,7 @@ const STORIES = {
 //                            text: the card (2-5 sentences). note: the one-line bell notice for live
 //                            saves that skip the card (12.2). head: the Great Lantern card headline
 //                            (beats 0 and 5). say: { characterKey: line } spoken only if recruited.
-//   KEEPER_LINES[k]       -> the Drowned Keeper's barks (under 60 chars), each a list to pick from:
+//   KEEPER_LINES[k]       -> Silas Penrow, the Fogbound's barks (under 60 chars), each a list to pick from:
 //                            intro, swing (Lamp Swing), beam (Green Beam), undertow, bell (the Drowned
 //                            Bell), feed (High tide heal), rocks (Low tide), win (the party fails),
 //                            fall (first kill), rematch (after the Coast is relit)
@@ -6936,12 +6936,12 @@ const COAST_STORY = [
     text: 'Saltreach was a fishing village once. The sea took it the night the lights went out, and it never gave it back. The lamps still hang in the streets, under the water, and some of them burn green. You walk the roofs at Low tide and try not to look down.',
     note: 'You reach Saltreach. Its lamps still burn, under the water.',
     say: { thessaly: 'Every drowned village looks the same from above.' } },
-  { id: 'letters', title: 'The Keeper\'s Letters',
+  { id: 'letters', title: 'Silas\'s Letters',
     text: 'In the Coral Nave you find letters sealed in a jar. The Saltreach keeper wrote them, a lampwarden who swore the Oath. When the dark came, a voice under the water promised that his light would never go out, if he gave it to the sea. He carried the lens down the steps and into the water. The lighthouse has burned green ever since.',
     note: 'You find the keeper\'s letters in the Coral Nave.',
     say: { maren: 'A lampwarden gives his light to no one. He knew that.' } },
   { id: 'coastLantern', title: 'The Great Lantern of the Coast', head: 'The Great Lantern of the Coast burns again.',
-    text: 'The Keeper falls, and you carry the lens back up the stairs. You set it in the lamp room, and it burns gold. Down on the shingle, Hallam takes off his hat. From the gallery you see a red glow far inland, where the Emberwaste burns. Out on the reef, something green sinks out of sight.',
+    text: 'Silas falls, and you carry the lens back up the stairs. You set it in the lamp room, and it burns gold. Down on the shingle, Hallam takes off his hat. From the gallery you see a red glow far inland, where the Emberwaste burns. Out on the reef, something green sinks out of sight.',
     note: 'The lighthouse burns gold. Far inland, the Emberwaste glows red.',
     say: { caedmon: 'I know that fire. It knows me too.' } }
 ];
@@ -6954,8 +6954,8 @@ const KEEPER_LINES = {
   bell: ['All hands. All drowned hands.', 'Ring for the crew.', 'The bell calls them home.'],
   feed: ['High water. It sings to me.', 'The sea feeds the lens.'],
   rocks: ['The water leaves me. It always comes back.', 'Wait for the tide. Just wait.'],
-  win: ['The light stays lit. That was the promise.', 'Go home. Keep your little lamps.'],
-  fall: ['It promised the light would never go out.', 'Take the lens. The song stays with me.', 'Tell Hallam I kept it lit.'],
+  win: ['The fog stays. That was never about the light.', 'Go home. Keep your little lamps.'],
+  fall: ['It never wanted my light. It wanted the fog.', 'Take the lens. The song stays with me.', 'Tell Hallam the fog was never mine to keep.'],
   rematch: ['Gold again. I had forgotten gold.', 'Come to keep me company?', 'Still listening, down there. Always.']
 };
 
@@ -6963,7 +6963,7 @@ const COAST_LORE = {
   6: [
     { title: 'Hallam\'s Tide Book', by: 'hallam',
       text: 'Hallam kept a tide book for thirty years. The early pages show two tides a day, as tides should be. After the night the lights went out, the entries crowd together, twice an hour, every hour. The last page says only: "It is not the moon pulling it now."' },
-    { title: 'A Keeper\'s First Letter', by: 'keeper',
+    { title: 'Silas\'s First Letter', by: 'keeper',
       text: '"Hallam, the tower is taller than it looks from your ferry, and the stairs count two hundred and six. I polished the lens until I could see my face in it. Tonight every ship on the coast will see my light. Silas."' }
   ],
   7: [
@@ -7659,7 +7659,7 @@ const PIN_CODEX = {
 //   PIN_UI_TEXT          -> the locked line, unlock guide and toast, the 3 first-entry tips, goals, Assist
 // Lore kept straight: the voice under the water (the Lurelight), the voice in the fire (Caedmon's story) and
 // the Climber's voice are one voice. The Hollow King's court knelt to it too. The Voice card names no
-// source, only a direction: inland, where the Emberwaste burns. Silas Penrow is the Drowned Keeper; his
+// source, only a direction: inland, where the Emberwaste burns. Silas Penrow is the Fogbound; his
 // letters went to Old Hallam. Maud Tallow keeps the lantern at the bottom of the Deepwell; Morwen is a Tallow.
 
 const PIN_STORY = {
@@ -7869,8 +7869,8 @@ const PIN_WEEK_NAMES = {
 
 const PIN_UI_TEXT = {
   section: 'Pinnacles',
-  locked: 'Pinnacles: beat the Drowned Keeper and keep an Oath of 15',
-  lockParts: ['Beat the Drowned Keeper', 'Keep an Oath of 15'],
+  locked: 'Pinnacles: beat Silas, the Fogbound, and keep an Oath of 15',
+  lockParts: ['Beat Silas, the Fogbound', 'Keep an Oath of 15'],
   guide: 'Four great foes wait off the road. Fight > Bestiary > Pinnacles.',
   toast: 'Four great foes wait off the road.',
   tips: [
@@ -7907,7 +7907,7 @@ const PIN_UI_TEXT = {
 //   HANDS_LEGENDS     the five named Legendary Hands { key, n, sk, cl, tr, about }
 //   HANDS_TAM         Tam, the free starter { key, n, r, sk, tr, about }
 //   HANDS_LATER       optional Hands who arrive later (the Hollises, LORE8b): data hook, off (live: 0)
-//   HANDS_FIRST       40 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
+//   HANDS_FIRST       35 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
 
 const HANDS_TUNE = {
   on: 1,                               // 0: Hands off (tools/sim.mjs --hands 0): no Tam, no applicants, no pay
@@ -7985,9 +7985,9 @@ const HANDS_LATER = [
   { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', tr: ['strong'], live: 0, about: "Bram's boy, not small any more.",
     when: () => typeof isRecruited === 'function' && isRecruited('bram') && !!(REGIONS[1] && S.lantern && S.lantern.lit && S.lantern.lit[REGIONS[1].id]) }
 ];
-const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Hobb', 'Ivo', 'Jessa',
-  'Kit', 'Lotte', 'Mabel', 'Ned', 'Orla', 'Perrin', 'Quill', 'Rosa', 'Sim', 'Tilly',
-  'Ulric', 'Vi', 'Wat', 'Yara', 'Agnes', 'Bartle', 'Clem', 'Dora', 'Elspeth', 'Fitch',
+const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Ivo', 'Jessa',
+  'Kit', 'Lotte', 'Mabel', 'Perrin', 'Rosa', 'Sim', 'Tilly',
+  'Ulric', 'Vi', 'Wat', 'Yara', 'Agnes', 'Bartle', 'Clem', 'Dora', 'Elspeth',
   'Hal', 'Ines', 'Jem', 'Kate', 'Lem', 'Moll', 'Nell', 'Osric', 'Rufus', 'Tess'];
 const HANDS_TRADE = ['Cooper', 'Fletcher', 'Thatcher', 'Mason', 'Carter', 'Tanner', 'Miller', 'Dyer', 'Collier', 'Sawyer',
   'Wainwright', 'Chandler', 'Potter', 'Weaver', 'Shepherd', 'Brewer', 'Tinker', 'Hayward', 'Salter', 'Turner',
@@ -8029,7 +8029,7 @@ const BOND_SWORN = {};
 //   HOLLOW_ARRIVAL[place]  -> one-line arrival notice for Hollow place 0-6 (zonePlace(z)), in cycle order:
 //                             Mossy Hollow, Batwing Caves, The Bonefield, Beetle Barrows, Fungal Deep,
 //                             Quarry Ruins, Wraithmarsh
-//   HOLLOW_ARRIVAL_BOSS    -> the arrival notice for zone 35 (Wraithmarsh V, the Listener)
+//   HOLLOW_ARRIVAL_BOSS    -> the arrival notice for zone 35 (Wraithmarsh V, the Fenmother)
 //   HOLLOW_STORY[i]        -> beat i (0-3, lore.md 8.1 and 9.4): { id, at, title, text, note, say? }
 //                             at: the zone whose first arrival plays it. text: the card (2-5 sentences).
 //                             note: the one-line bell notice for saves already past it. say:
@@ -8044,9 +8044,9 @@ const BOND_SWORN = {};
 //                             TYPES[i].name if the coast keys end up different. region: 'hollow' | 'coast'.
 //   LORE_ELDERS[key]       -> { name, intro, fall }: narration (elders do not talk). intro plays the
 //                             first time a boss of that type appears; fall on its first kill. Same
-//                             14 keys, plus `listener` (the Hollow's zone 35 boss, lore.md 4.2), which
-//                             also has `line`, its bestiary line. The Drowned Keeper's lines are
-//                             KEEPER_LINES (21b).
+//                             14 keys, plus `listener` (the Hollow's zone 35 boss, the Fenmother,
+//                             lore.md 4.4), which also has `line`, its bestiary line. Silas Penrow,
+//                             the Fogbound's lines are KEEPER_LINES (21b).
 //   RAID_LORE[bossName]    -> one flavour line per world raid foe, keyed by the BOSSES names
 //                             (20-data.js). Client text only: it never touches world/boss or raiders.
 //
@@ -8074,7 +8074,7 @@ const HOLLOW_ARRIVAL = [
   'Quarry Ruins. The stone stood up and walked. Some of it still does.',
   'Wraithmarsh. Green lights drift over the water. Do not follow them.'
 ];
-const HOLLOW_ARRIVAL_BOSS = 'Wraithmarsh V. One wraith here does not tend the others. It listens.';
+const HOLLOW_ARRIVAL_BOSS = "Wraithmarsh V. One wraith here took the marsh's own lights, and kept them.";
 
 const HOLLOW_STORY = [
   { id: 'wisps', at: 7, title: 'Wisps',
@@ -8089,9 +8089,9 @@ const HOLLOW_STORY = [
     text: 'On the hill above the road stands a dark chapel. One candle burns inside, very low, and does not go out. Someone is keeping it.',
     note: 'A candle burns in the dark chapel on the hill.',
     say: { anselm: 'I rang the dusk bell in that chapel. Every night.' } },
-  { id: 'listener', at: 35, title: 'The Listener',
-    text: 'At the heart of the marsh, one wraith does not tend the others. It stands still, head tilted, as if someone far away is talking. While it listens, no lamp in the Hollow will hold.',
-    note: 'One wraith in the marsh is listening to something far away.',
+  { id: 'listener', at: 35, title: 'The Fenmother',
+    text: 'At the heart of the marsh stands the first wraith the marsh ever took. It drowned the marsh\'s own lights the night the dark came, and it has held the fog over the Hollow ever since. While it stands, no lamp here will hold.',
+    note: 'One wraith in the marsh took the first light. It still holds the fog down.',
     say: { wren: 'The caves sang my name like that. I never answered.' } }
 ];
 const HOLLOW_LANTERN_SAY = { hesketh: 'Forty years I lit the small ones. Never this one.' };
@@ -8124,7 +8124,7 @@ const LORE_BESTIARY = {
     champ: 'Cut from the deepest seam. Stone only knows weight, and this one has plenty.' },
   wraith: { name: 'Marsh Wraith', region: 'hollow',
     foe: 'People who followed green lights into the marsh. Now they lure lamps in and drown them.',
-    elder: 'Each Elder Wraith listens. The one at the heart of the marsh listens hardest.',
+    elder: 'Each Elder Wraith took a light once. The one at the heart of the marsh took the first.',
     champ: 'It was a keeper once. It still keeps the others going, for the dark now.' },
   // the Sunken Coast (the keys R2-1 should use; see the header)
   crab: { name: 'Shinglecrab', region: 'coast',
@@ -8179,10 +8179,10 @@ const LORE_ELDERS = {
   wraith: { name: 'Elder Marsh Wraith',
     intro: 'An Elder Wraith rises from the reeds and gathers the others to it.',
     fall: 'It sinks into the water, quiet at last. The marsh smells of rain.' },
-  listener: { name: 'The Listener',
-    intro: 'It stops listening, and turns to your lamp.',
-    fall: 'It goes quiet. Far away, something stops talking.',
-    line: 'The first wraith to hear a voice in the dark. While it listens, no lamp here holds.' },
+  listener: { name: 'The Fenmother',
+    intro: 'It turns from the reeds it drowned, and comes for your light.',
+    fall: 'It sinks at last. The fog does not lift, not yet, but it will.',
+    line: 'The first wraith the marsh ever took. While it stands, no lamp in the Hollow holds.' },
   crab: { name: 'Elder Shinglecrab',
     intro: 'A crab as big as a rowing boat. It shuts its shell and waits, like the sea.',
     fall: 'The great shell opens and stays open. Only the tide comes and goes.' },
@@ -8229,7 +8229,7 @@ const RAID_LORE = {
 //                               LORE_LIMITS.keep characters or less.
 //
 // The mystery ladder (lore.md 8.5): a band's pages drop only after its last zone boss (band I
-// after zone 7 ... band V and the Hollow Court after zone 35, the Listener). So bands I-IV stay
+// after zone 7 ... band V and the Hollow Court after zone 35, the Fenmother). So bands I-IV stay
 // inside days 1-7 (the dead woke, stone walked, the marsh took people, some lamps held, someone
 // keeps a candle in the chapel). Band V may look west to the green light at sea and feel a warm
 // wind from the east, and no further. Nobody here names the Voice.
@@ -8610,7 +8610,7 @@ const REGIONS = (() => {
   return [
     { id: 'hollow', n: 'the Hollow', z0: 1, z1: 35, types: [0, 1, 2, 3, 4, 5, 6], names: ZONES, themes: ZONE_THEME,
       uniq: ZONE_UNIQ, home: CRAFT_HOME, hue0: 0, hueStep: 70,
-      boss: { zone: 35, name: 'The Listener', place: null }, // the Elder of Wraithmarsh V, shown as the Listener (lore.md 4.2; 55-story names the foe)
+      boss: { zone: 35, name: 'The Fenmother', place: null }, // the Elder of Wraithmarsh V, shown as the Fenmother (lore.md 4.4; 55-story names the foe)
       lantern: 'The Great Lantern of the Hollow', beat: 0, col: '#F2C14E', plugged: true },
     { id: 'coast', n: 'the Sunken Coast', z0: 36, z1: 70, types: coast.types, names: coast.names, themes: coast.themes,
       uniq: coast.uniq, home: coast.home, hue0: coast.hue0, hueStep: coast.hueStep,
@@ -11669,7 +11669,7 @@ let lanternSync, lanternRoad;
 //            legendInscribe(id, itemId) / legendCanInscribe(id, itemId)   cost { pearls, ess, gold, t, rank }
 //            legendMark(itemId, circle) / legendCanMark(itemId, circle)   cost { sigil, pearls, t }; circle: index or key
 //            legendMarkWhy(kind, t, circle) -> '' | why, legendMarkPay(item, circle) (Mark at craft, 55-crafting)
-//            legendSigil(circle, n, source) -> adds Circle Sigils (Oath elders at 8+ call this, O1)
+//            legendSigil(circle, n, source) -> adds Circle Crests (Oath elders at 8+ call this, O1)
 //   limits   legendHeroCheck(itemId, pos) -> { ok, why, off: itemId | null } (the in-page "take off X?" ask)
 //            legendCanWear(charId, item, pos) -> { ok, why } (a companion carries 1 power; equipChar asks)
 //   read     legendActive() -> { hero: [{ id, rank, item, pos }], comp: [{ id, rank, char, item, pos }],
@@ -12647,8 +12647,8 @@ const FEATURES = [
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
   // late: a system that arrives after the guide. It stays gated on old saves (S.onboard.all) and after
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
-  // Powers: the first legendary power, or a first Circle Sigil (Sigils are spent in the same view).
-  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Sigil', late: true,
+  // Powers: the first legendary power, or a first Circle Crest (Crests are spent in the same view).
+  { id: 'powers', tab: 'forge', view: 'powers', name: 'Powers', why: 'first legendary power or Circle Crest', late: true,
     when: () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length || (S.legend.sig || []).some(n => n > 0))) },
   // Hands (N1, 57f-hands.js): Hearth 2 and the Tavern built. The probe is safe before 57f has loaded.
   { id: 'hands', tab: 'world', view: 'tav', name: 'Hands', why: 'Hearth 2 and the Tavern built', late: true,
@@ -13892,7 +13892,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
 //                 `at` (the coast's) plays when its system calls storyBeat(id). A beat the save got
 //                 past without standing there (it jumped) plays quiet: its one-line note.
 //   Elder line    the first time a boss of a type appears (intro) and its first kill (fall). The
-//                 Hollow's zone 35 boss is the Listener (lore.md 4.2), with its own lines.
+//                 Hollow's zone 35 boss is the Fenmother (lore.md 4.4), with its own lines.
 //   Great Lantern the card is 55-lantern's; this file only files its beat (COAST_STORY[beat]) in
 //                 the story list so it can be read again, and gives the card its `say` lines.
 // Old saves (S.story new to them): everything already behind them (zones below S.maxZone) is marked
@@ -13959,7 +13959,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
     if (!(z >= 1) || typeof LORE_ELDERS === 'undefined') return null;
     const r = regionOf(z);
     if (r.id === 'hollow' && z === r.z1) return LORE_ELDERS.listener ? 'listener' : null;
-    if (z === r.z1) return null;                                     // other region bosses have their own lines (the Keeper: 21b)
+    if (z === r.z1) return null;                                     // other region bosses have their own lines (the Fogbound: 21b)
     const t = TYPES[zoneType(z)];
     return t && LORE_ELDERS[t.key] ? t.key : null;
   };
@@ -14055,7 +14055,7 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
   on('spawn', ({ mob, zone }) => {
     if (!mob || !mob.boss || (typeof arena !== 'undefined' && arena)) return;
     ready();
-    // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Listener")
+    // the region boss's display name (REGIONS[i].boss.name; the Hollow: "The Fenmother")
     const r = regionOf(zone);
     if (zone === r.z1 && r.boss && r.boss.name) mob.name = r.boss.name;
     const k = storyElderKey(zone); if (!k) return;
@@ -18098,7 +18098,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 //          expedCatchUp(now, auto) -> [results]
 //
 // Events: expedSent { r, grade, h, team }, expedBack { r, grade, haul, auto, recall, g, team, circles }
-//         (g: grade index; circles: { circle: members } of the returning team, for Circle Sigils in 55-legend;
+//         (g: grade index; circles: { circle: members } of the returning team, for Circle Crests in 55-legend;
 //         secs: seconds the team was out, for Bonds in 56f),
 //         expedPick { id } (the Roster board's Send button; the UI opens the send sheet),
 //         expedGoto (the Map Room's Expeditions button). Emits kingslayerCredit { n } (56c).
@@ -18704,7 +18704,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
       else if (!champ) hint = x.exact ? `Beat a champion ${t.name}. Champions show up from zone 20.` : 'A stronger one is out there.';
       return { key: t.key, n: t.name, got: tier + elder + champ, max: 6, pts: tier * 4 + elder * 6 + champ * 4, ptsMax: 26, hint,
         sub: `Tier ${tier} of 4${elder ? ' · Elder' : ''}${champ ? ' · Champion' : ''}`, kills, mob: t.key,
-        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Listener
+        // LORE3: the bestiary lines (21h LORE_BESTIARY) for what is found: the foe at tier 1, its Elder, its champion, the Fenmother
         lore: typeof storyBestiary === 'function' ? storyBestiary(t.key, { foe: tier >= 1, elder, champ, listener: i === 6 && S.maxZone > REGION_ZONES }) : [] };
     })
   });
@@ -18902,7 +18902,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
 
   // ---------------- 16. Legendaries: the 39 powers in the Lantern Book (legendaries.md 7) ----------------
   // 2 Light for a learned power, +1 per rank above I (234 in all). Title only, no power bonus. Opens with
-  // the first legendary drop or Circle Sigil (the Powers view's rule). Pinnacle powers score on their page.
+  // the first legendary drop or Circle Crest (the Powers view's rule). Pinnacle powers score on their page.
   const legOpen = () => !!(S.legend && ((S.legend.n && S.legend.n.drops > 0) || Object.keys(S.legend.book || {}).length));
   page('legendaries', {
     n: 'Legendaries', seal: { key: null, txt: '' }, title: LEG_CODEX.title, pic: 'rows',
@@ -21322,7 +21322,7 @@ let deeds, deedBonus, wearGet;
   const hollowZones = () => REGIONS[0].z1;
   function elders() {
     // Elder kinds beaten: each distinct zone kind whose boss has fallen (a zone below maxZone), plus
-    // each Great Lantern boss (the Listener, the Keeper). The placeholder Coast reuses the Hollow's kinds.
+    // each Great Lantern boss (the Fenmother, the Fogbound). The placeholder Coast reuses the Hollow's kinds.
     let mask = 0, n = 0;
     const top = Math.min(S.maxZone - 1, REGIONS[REGIONS.length - 1].z1);
     for (let z = 1; z <= top; z++) { const ti = zoneType(z); if (ti < 31 && !(mask & (1 << ti))) { mask |= 1 << ti; n++; } }
@@ -35490,7 +35490,7 @@ let deedsUI = null;
 // 75-legend-ui: legendary powers and circle sets, the UI (docs/design/legendaries.md 7, task L4). Browser-only.
 // Reads the L2 core (55-legend.js) only through its API; every action goes through a legendX/legendCanX pair.
 //
-// Craft tab, view 'powers' (feature 'powers': the first legendary power or Circle Sigil, 55-onboard):
+// Craft tab, view 'powers' (feature 'powers': the first legendary power or Circle Crest, 55-onboard):
 //   Your powers   the hero's 2 slots and each fielded companion's power, the legend budget ("capped"
 //                 chip when legendBudget().hit), and legendary items waiting to be learned (Learn, in-page confirm)
 //   Lantern Book  every power by class / companion (For you / For your party / All): icon, rank pips,
@@ -35868,7 +35868,7 @@ let legendUI = null;
       const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
       const cap = el('span', 'lg-capchip', 'Capped'); cap.hidden = true;
       head.append(cap); sec.prepend(head);
-      const sig = el('div', 'lg-sigils'); sig.setAttribute('aria-label', 'Circle Sigils');
+      const sig = el('div', 'lg-sigils'); sig.setAttribute('aria-label', 'Circle Crests');
       const sigEls = LEG_CIRCLES.map((c, i) => {
         const s = el('div', 'lg-sig'); s.append(img(sigURL(i)));
         const n = el('b'); const t = el('small', null, shortName(i));
@@ -35876,7 +35876,7 @@ let legendUI = null;
         s.append(n, t); sig.append(s); return n;
       });
       const list = el('div', 'lg-sets');
-      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Sigil and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Sigils.`);
+      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Crest and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Crests.`);
       sec.append(sig, list, note);
       Z = { cap, sigEls, list, sig: '' };
     },
@@ -35986,7 +35986,7 @@ let legendUI = null;
       const box = el('div', 'lg-ibox');
       const have = S.legend.sig;
       if (it.cm != null && LEG_CIRCLES[it.cm]) box.append(el('p', 'note', `It carries the ${circleName(it.cm)} mark. A new mark replaces it.`));
-      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Sigil. Expeditions with 2 or more of one circle bring them.'));
+      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Crest. Expeditions with 2 or more of one circle bring them.'));
       else {
         const row = el('div', 'lg-marks');
         LEG_CIRCLES.forEach((c, i) => {
@@ -36056,7 +36056,7 @@ let legendUI = null;
     if (!away || !(away.drops || away.sig)) return null;
     const bits = [];
     if (away.drops) bits.push(`${away.drops} legendary power${away.drops > 1 ? 's' : ''} found`);
-    if (away.sig) bits.push(`${away.sig} Circle Sigil${away.sig > 1 ? 's' : ''}`);
+    if (away.sig) bits.push(`${away.sig} Circle Crest${away.sig > 1 ? 's' : ''}`);
     return { icon: { ic: legendIcon('tidewall') }, txt: bits.join(', '), sub: 'See Craft, then Powers' };
   });
 

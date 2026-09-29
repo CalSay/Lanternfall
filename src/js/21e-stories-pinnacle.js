@@ -19,7 +19,7 @@
 //   PIN_UI_TEXT          -> the locked line, unlock guide and toast, the 3 first-entry tips, goals, Assist
 // Lore kept straight: the voice under the water (the Lurelight), the voice in the fire (Caedmon's story) and
 // the Climber's voice are one voice. The Hollow King's court knelt to it too. The Voice card names no
-// source, only a direction: inland, where the Emberwaste burns. Silas Penrow is the Drowned Keeper; his
+// source, only a direction: inland, where the Emberwaste burns. Silas Penrow is the Fogbound; his
 // letters went to Old Hallam. Maud Tallow keeps the lantern at the bottom of the Deepwell; Morwen is a Tallow.
 
 const PIN_STORY = {
@@ -229,8 +229,8 @@ const PIN_WEEK_NAMES = {
 
 const PIN_UI_TEXT = {
   section: 'Pinnacles',
-  locked: 'Pinnacles: beat the Drowned Keeper and keep an Oath of 15',
-  lockParts: ['Beat the Drowned Keeper', 'Keep an Oath of 15'],
+  locked: 'Pinnacles: beat Silas, the Fogbound, and keep an Oath of 15',
+  lockParts: ['Beat Silas, the Fogbound', 'Keep an Oath of 15'],
   guide: 'Four great foes wait off the road. Fight > Bestiary > Pinnacles.',
   toast: 'Four great foes wait off the road.',
   tips: [

@@ -1,7 +1,7 @@
 // 75-legend-ui: legendary powers and circle sets, the UI (docs/design/legendaries.md 7, task L4). Browser-only.
 // Reads the L2 core (55-legend.js) only through its API; every action goes through a legendX/legendCanX pair.
 //
-// Craft tab, view 'powers' (feature 'powers': the first legendary power or Circle Sigil, 55-onboard):
+// Craft tab, view 'powers' (feature 'powers': the first legendary power or Circle Crest, 55-onboard):
 //   Your powers   the hero's 2 slots and each fielded companion's power, the legend budget ("capped"
 //                 chip when legendBudget().hit), and legendary items waiting to be learned (Learn, in-page confirm)
 //   Lantern Book  every power by class / companion (For you / For your party / All): icon, rank pips,
@@ -379,7 +379,7 @@ let legendUI = null;
       const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
       const cap = el('span', 'lg-capchip', 'Capped'); cap.hidden = true;
       head.append(cap); sec.prepend(head);
-      const sig = el('div', 'lg-sigils'); sig.setAttribute('aria-label', 'Circle Sigils');
+      const sig = el('div', 'lg-sigils'); sig.setAttribute('aria-label', 'Circle Crests');
       const sigEls = LEG_CIRCLES.map((c, i) => {
         const s = el('div', 'lg-sig'); s.append(img(sigURL(i)));
         const n = el('b'); const t = el('small', null, shortName(i));
@@ -387,7 +387,7 @@ let legendUI = null;
         s.append(n, t); sig.append(s); return n;
       });
       const list = el('div', 'lg-sets');
-      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Sigil and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Sigils.`);
+      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Crest and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Crests.`);
       sec.append(sig, list, note);
       Z = { cap, sigEls, list, sig: '' };
     },
@@ -497,7 +497,7 @@ let legendUI = null;
       const box = el('div', 'lg-ibox');
       const have = S.legend.sig;
       if (it.cm != null && LEG_CIRCLES[it.cm]) box.append(el('p', 'note', `It carries the ${circleName(it.cm)} mark. A new mark replaces it.`));
-      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Sigil. Expeditions with 2 or more of one circle bring them.'));
+      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Crest. Expeditions with 2 or more of one circle bring them.'));
       else {
         const row = el('div', 'lg-marks');
         LEG_CIRCLES.forEach((c, i) => {
@@ -567,7 +567,7 @@ let legendUI = null;
     if (!away || !(away.drops || away.sig)) return null;
     const bits = [];
     if (away.drops) bits.push(`${away.drops} legendary power${away.drops > 1 ? 's' : ''} found`);
-    if (away.sig) bits.push(`${away.sig} Circle Sigil${away.sig > 1 ? 's' : ''}`);
+    if (away.sig) bits.push(`${away.sig} Circle Crest${away.sig > 1 ? 's' : ''}`);
     return { icon: { ic: legendIcon('tidewall') }, txt: bits.join(', '), sub: 'See Craft, then Powers' };
   });
 

@@ -8,7 +8,7 @@
 //                           (10-art, 11-art-craft) recoloured: no new power maps.
 //   legendIcon(id)       -> [name, main, extra] for iconURL(...legendIcon(id)) or a toast spec { ic: legendIcon(id) }
 //   SIGIL_ICONS          -> 4 new maps, registered: sigil_hedgefolk, sigil_oath, sigil_dusk, sigil_wayfarers
-//   sigilIcon(i | circle) -> [name, main, extra] for a Circle Sigil (i = the LEG_CIRCLES index / item cm)
+//   sigilIcon(i | circle) -> [name, main, extra] for a Circle Crest (i = the LEG_CIRCLES index / item cm)
 // Palette: the craft icon meaning (11-art-craft): 1-3 main ramp (icShade / icLight), 4 and 6 second colour,
 // 5 glint, 7 trim. Every power icon gets the legendary orange trim on 7, so the family reads at a glance.
 
@@ -81,7 +81,7 @@ function legendIcon(id) {
   return [name, m, Object.assign({ 1: m, 2: icShade(m), 3: icLight(m), 4: o, 6: icShade(o), 5: '#FFFFFF', 7: LEG_FRAME.col }, fix)];
 }
 
-// ---------------- Circle Sigils ----------------
+// ---------------- Circle Crests ----------------
 // A struck token: rim 4 (light, top left) and 6 (shade), face 1-3, emblem 5 with 7 as its shade.
 // Emblems: Hedgefolk a leaf, the Oath an upright sword, Dusk Company a crescent moon, Wayfarers a road star.
 const SIGIL_ICONS = {

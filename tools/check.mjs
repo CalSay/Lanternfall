@@ -2215,7 +2215,7 @@ try {
   assert(E('S.onboard.all && FEATURES.every(x => x.late || isUnlocked(x.id))'), 'Show every tab: everything opens');
   assert(E('!isUnlocked("powers")'), 'a late feature (Powers) stays hidden after "Show every tab" until its rule holds');
   E('S.legend.sig[2] = 1'); for (let i = 0; i < 12; i++) g.fn.tick(0.1);
-  assert(E('isUnlocked("powers")'), 'Powers opens with a first Circle Sigil, also on an all-open save');
+  assert(E('isUnlocked("powers")'), 'Powers opens with a first Circle Crest, also on an all-open save');
   assert(E('GOALS.every(x => goalGate(x))'), 'Next Up shows every system again once it is open');
   assert(E('(onboardReveal("deep"), true)'), 'reveal after all is harmless');
   errs.push(...g.errors);
@@ -2507,7 +2507,7 @@ try {
   assert(all.length === 14 && all.filter(b => b.region === 'hollow').length === 7 && coast.length === 7 && !cBad.length
     && all.every(b => ['foe', 'elder', 'champ'].every(p => str(b[p], L.bestiary))), 'hollow: 14 bestiary entries (7 Hollow, 7 Coast), each with its Elder\'s lines' + (cBad.length ? ': ' + cBad[0] : ''));
   const ls = EL.listener || {};
-  assert(str(ls.name, 32) && str(ls.intro, L.elder) && str(ls.fall, L.elder) && str(ls.line, L.bestiary), 'hollow: the Listener (zone 35) has its name, intro, fall and bestiary line');
+  assert(str(ls.name, 32) && str(ls.intro, L.elder) && str(ls.fall, L.elder) && str(ls.line, L.bestiary), 'hollow: the Fenmother (zone 35) has its name, intro, fall and bestiary line');
   const R = E('RAID_LORE'), bosses = E('BOSSES');
   assert(bosses.every(n => str(R[n], L.raid)) && Object.keys(R).length === bosses.length, `hollow: a raid line for each of the ${bosses.length} great foes, ${L.raid} chars or less`);
   // The verbs of the dark (lore.md 9.5): nothing is drawn to, hungry for or aching for light
@@ -3989,7 +3989,7 @@ try {
     E(`S.zone = ${z}; S.maxZone = ${z}`); ticks(g, 2);
     beatsAt[z] = ev.beat.length;
     E('fightBoss = true; spawn()'); ticks(g, 1);
-    if (z === 35) assert(E('mob.name') === 'The Listener' && E('REGIONS[0].boss.name') === 'The Listener', `story: the zone 35 boss shows as "${E('mob.name')}"`);
+    if (z === 35) assert(E('mob.name') === 'The Fenmother' && E('REGIONS[0].boss.name') === 'The Fenmother', `story: the zone 35 boss shows as "${E('mob.name')}"`);
     E(`emit('kill', { mob: mob, zone: ${z}, gold: 0, ess: 0, tier: 1 }); fightBoss = false`);
   }
   // walk back through old zones: nothing plays again
@@ -4005,13 +4005,13 @@ try {
   const intro = ev.elder.filter(e => e.kind === 'intro'), fall = ev.elder.filter(e => e.kind === 'fall');
   assert(keys.every(k => intro.filter(e => e.key === k).length === 1 && fall.filter(e => e.key === k).length === 1)
     && intro.length === 8 && fall.length === 8 && ev.elder.every(e => e.line === E(`LORE_ELDERS.${e.key}.${e.kind}`)),
-    'story: every Hollow elder and the Listener shows its intro when it first appears and its fall on its first kill, once');
+    'story: every Hollow elder and the Fenmother shows its intro when it first appears and its fall on its first kill, once');
   assert(ev.arr.length + ev.beat.length + ev.elder.length === n0, 'story: walking back through beaten zones plays nothing again');
   if (E('REGIONS[1].plugged')) {
     const coastKeys = E('REGIONS[1].types.map(i => TYPES[i].key)');
     assert(coastKeys.every(k => E(`!!LORE_ELDERS[${JSON.stringify(k)}]`)), 'story: every coast foe has elder lines (the coast is plugged in)');
   } else ok('story: the coast is not plugged in yet (R2-1): coast arrivals wait for it; its elders reuse the Hollow types, already seen');
-  assert(E('storyElderKey(70)') === null && E('storyElderKey(35)') === 'listener' && E('storyElderKey(8)') === 'slime', 'story: storyElderKey: zone 8 slime, 35 the Listener, 70 none (the Keeper has his own lines)');
+  assert(E('storyElderKey(70)') === null && E('storyElderKey(35)') === 'listener' && E('storyElderKey(8)') === 'slime', 'story: storyElderKey: zone 8 slime, 35 the Fenmother, 70 none (the Fogbound has his own lines)');
   // The Great Lantern card: Hesketh's line when he is recruited; the beat joins the story list, read
   const gl = []; g.fn.on('greatLantern', e => gl.push(e));
   E('unlockChar("hesketh", "progress", true)');
@@ -4060,7 +4060,7 @@ try {
     'story: Codex bestiary tiles show no line before tier 1; the foe line at tier 1, then the Elder line once beaten');
   C2('S.mastery.types.wraith = 12; S.maxZone = 40; codexRefresh(true)');
   const w = C2('codexPage("bestiary").tiles[6]');
-  assert(w.lore.includes(B.wraith.foe) && w.lore.includes(B.wraith.elder) && w.lore.includes(C2('LORE_ELDERS.listener.line')), 'story: the Marsh Wraith tile adds the Listener\'s line once zone 35 is beaten');
+  assert(w.lore.includes(B.wraith.foe) && w.lore.includes(B.wraith.elder) && w.lore.includes(C2('LORE_ELDERS.listener.line')), 'story: the Marsh Wraith tile adds the Fenmother\'s line once zone 35 is beaten');
   // UI wiring (browser-only files): the pieces are there
   const rd = f => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8');
   const ui = rd('js/75-story-ui.js'), css = rd('styles/60-story.css'), codexUi = rd('js/75-codex-ui.js'), glUi = rd('js/75-lantern-ui.js');

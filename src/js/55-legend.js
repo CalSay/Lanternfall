@@ -19,7 +19,7 @@
 //            legendInscribe(id, itemId) / legendCanInscribe(id, itemId)   cost { pearls, ess, gold, t, rank }
 //            legendMark(itemId, circle) / legendCanMark(itemId, circle)   cost { sigil, pearls, t }; circle: index or key
 //            legendMarkWhy(kind, t, circle) -> '' | why, legendMarkPay(item, circle) (Mark at craft, 55-crafting)
-//            legendSigil(circle, n, source) -> adds Circle Sigils (Oath elders at 8+ call this, O1)
+//            legendSigil(circle, n, source) -> adds Circle Crests (Oath elders at 8+ call this, O1)
 //   limits   legendHeroCheck(itemId, pos) -> { ok, why, off: itemId | null } (the in-page "take off X?" ask)
 //            legendCanWear(charId, item, pos) -> { ok, why } (a companion carries 1 power; equipChar asks)
 //   read     legendActive() -> { hero: [{ id, rank, item, pos }], comp: [{ id, rank, char, item, pos }],

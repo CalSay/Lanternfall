@@ -11,7 +11,7 @@
 //                               LORE_LIMITS.keep characters or less.
 //
 // The mystery ladder (lore.md 8.5): a band's pages drop only after its last zone boss (band I
-// after zone 7 ... band V and the Hollow Court after zone 35, the Listener). So bands I-IV stay
+// after zone 7 ... band V and the Hollow Court after zone 35, the Fenmother). So bands I-IV stay
 // inside days 1-7 (the dead woke, stone walked, the marsh took people, some lamps held, someone
 // keeps a candle in the chapel). Band V may look west to the green light at sea and feel a warm
 // wind from the east, and no further. Nobody here names the Voice.

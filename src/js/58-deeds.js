@@ -110,7 +110,7 @@ let deeds, deedBonus, wearGet;
   const hollowZones = () => REGIONS[0].z1;
   function elders() {
     // Elder kinds beaten: each distinct zone kind whose boss has fallen (a zone below maxZone), plus
-    // each Great Lantern boss (the Listener, the Keeper). The placeholder Coast reuses the Hollow's kinds.
+    // each Great Lantern boss (the Fenmother, the Fogbound). The placeholder Coast reuses the Hollow's kinds.
     let mask = 0, n = 0;
     const top = Math.min(S.maxZone - 1, REGIONS[REGIONS.length - 1].z1);
     for (let z = 1; z <= top; z++) { const ti = zoneType(z); if (ti < 31 && !(mask & (1 << ti))) { mask |= 1 << ti; n++; } }

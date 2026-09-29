@@ -14,7 +14,7 @@
 //   HANDS_LEGENDS     the five named Legendary Hands { key, n, sk, cl, tr, about }
 //   HANDS_TAM         Tam, the free starter { key, n, r, sk, tr, about }
 //   HANDS_LATER       optional Hands who arrive later (the Hollises, LORE8b): data hook, off (live: 0)
-//   HANDS_FIRST       40 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
+//   HANDS_FIRST       35 first names; HANDS_TRADE: 30 trade names (random Hands: "Cora Thatcher")
 
 const HANDS_TUNE = {
   on: 1,                               // 0: Hands off (tools/sim.mjs --hands 0): no Tam, no applicants, no pay
@@ -92,9 +92,9 @@ const HANDS_LATER = [
   { key: 'pell', n: 'Pell Hollis', r: 'uncommon', sk: 'wood', tr: ['strong'], live: 0, about: "Bram's boy, not small any more.",
     when: () => typeof isRecruited === 'function' && isRecruited('bram') && !!(REGIONS[1] && S.lantern && S.lantern.lit && S.lantern.lit[REGIONS[1].id]) }
 ];
-const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Hobb', 'Ivo', 'Jessa',
-  'Kit', 'Lotte', 'Mabel', 'Ned', 'Orla', 'Perrin', 'Quill', 'Rosa', 'Sim', 'Tilly',
-  'Ulric', 'Vi', 'Wat', 'Yara', 'Agnes', 'Bartle', 'Clem', 'Dora', 'Elspeth', 'Fitch',
+const HANDS_FIRST = ['Alys', 'Beck', 'Cora', 'Dunstan', 'Edda', 'Finch', 'Gwen', 'Ivo', 'Jessa',
+  'Kit', 'Lotte', 'Mabel', 'Perrin', 'Rosa', 'Sim', 'Tilly',
+  'Ulric', 'Vi', 'Wat', 'Yara', 'Agnes', 'Bartle', 'Clem', 'Dora', 'Elspeth',
   'Hal', 'Ines', 'Jem', 'Kate', 'Lem', 'Moll', 'Nell', 'Osric', 'Rufus', 'Tess'];
 const HANDS_TRADE = ['Cooper', 'Fletcher', 'Thatcher', 'Mason', 'Carter', 'Tanner', 'Miller', 'Dyer', 'Collier', 'Sawyer',
   'Wainwright', 'Chandler', 'Potter', 'Weaver', 'Shepherd', 'Brewer', 'Tinker', 'Hayward', 'Salter', 'Turner',
