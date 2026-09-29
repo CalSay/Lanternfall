@@ -37,30 +37,30 @@ const CLASS_DEFS = {
   warrior: {
     id: 'warrior', name: 'Warrior', weight: 'heavy', home: 'front', role: 'tank', dt: 'phys', kit: 'warden', col: '#3E63C9',
     pitch: 'Stand in front. Nothing gets past.',
-    how: 'Tap a foe for a heavy hit. It turns on you and adds 1 Grit: +3% damage and 1% less damage taken for 10s, up to 5.',
+    how: 'A heavy hit. It adds 1 Grit: +3% damage and 1% less damage taken for 10s, up to 5.',
     meter: 'grit', tap: 'heavy', ab1: 'shieldwall', finisher: 'hammerfall',
     hp: 12, armour: 30, block: 0.1, ward: 0, threat: 6, crit: 0.08, area: 0,
-    aura: { name: 'Shieldmates', text: 'Tanks in your party get +40% health and +20 armour.' },
+    aura: { name: 'Shieldmates', text: 'You get +40% health and +20 armour.' },
     passives: [{ name: 'Heavy Hands', text: 'Your heavy hits deal double damage to shields.', s: 'S6' }],
     evos: ['reaver', 'warden'], trial: 'warrior'
   },
   ranger: {
     id: 'ranger', name: 'Ranger', weight: 'medium', home: 'mid', role: 'striker', dt: 'phys', kit: 'ranger', col: '#3E8A4E',
     pitch: 'Find the weak spot. Hit it hard.',
-    how: 'Tap a foe to mark it for 8s. Your whole party deals 25% more to it, and you crit 1.5x as often on it.',
+    how: 'Marks the foe for 8s: you deal 25% more to it and crit 1.5x as often on it.',
     meter: null, tap: 'focus', ab1: 'volley', finisher: 'killshot',
     hp: 6, armour: 10, block: 0, ward: 0, threat: 1, crit: 0.15, area: 0,
-    aura: { name: "Hunters' Company", text: 'Strikers in your party get +10% crit chance and +50% crit damage.' },
+    aura: { name: "Hunter's Eye", text: 'You get +10% crit chance and +50% crit damage.' },
     passives: [{ name: 'Light Feet', text: 'You take 20% less from dives and slams.' }],
     evos: ['venomstalker', 'trapper'], trial: 'ranger'
   },
   mage: {
     id: 'mage', name: 'Lanternmage', weight: 'light', home: 'back', role: 'caster', dt: 'fire', kit: 'lanternmage', col: '#8A4FC9',
     pitch: 'Burn the whole pack at once.',
-    how: 'Tap a foe to hit it with fire and plant an Ember on it, up to 5. Lantern Flare sets them all off.',
+    how: 'A fire hit. It plants an Ember on the foe, up to 5.',
     meter: 'embers', tap: 'ember', ab1: 'flare', finisher: 'lanternburst',
     hp: 4, armour: 0, block: 0, ward: 0.1, threat: 1.2, crit: 0.08, area: 0.15,
-    aura: { name: 'Kindred Sparks', text: 'Casters in your party get +30% attack.' },
+    aura: { name: 'Kindred Sparks', text: 'You get +30% attack.' },
     passives: [{ name: 'Lantern Glass', text: 'Your hits splash 15% to the rest of the pack.' }],
     evos: ['warlock', 'priest'], trial: 'mage'
   }
@@ -75,19 +75,19 @@ const CLASS_ABILITIES = {
     fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.6, emp: 0.3, t: 6, name: 'Shield Wall',
     // S2 keeps today's 60% / 30%: classes-2 1.2 lowers it to 50% / 20% because Core 2.0 foes hit 2-3x harder,
     // which lands with S6; at 50 / 20 on today's foes the sim lost T4 and T7 (BAL3 applies it with S6).
-    desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
+    desc: 'For 6s you take 60% less damage and deal 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
   hammerfall: { id: 'hammerfall', slot: 'fin', cls: 'warrior', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['delay', 1], ['meter', 'grit', 5]], name: 'Hammerfall',
     desc: '7x your attack. Every foe attacks 1s later. Fills your Grit.' },
   focus: { id: 'focus', slot: 'tap', cls: 'ranger', type: 'phys', coef: 1, tags: [],
     fx: [['dmg', 1], ['apply', 'mark', 1, { v: 0.25, dur: 8 }]], name: 'Focus',
-    desc: 'Marks the foe for 8s: your whole party deals 25% more to it.' },
+    desc: 'Marks the foe for 8s: you deal 25% more to it.' },
   volley: { id: 'volley', slot: 'ab1', cls: 'ranger', cd: 30, target: 'single', type: 'phys', tags: [],
     fx: [['dmg', 1.5, { hits: 10, over: 2, spread: 0.5 }], ['buff', 'volleyQuick', 8]], name: 'Volley',
-    desc: '10 arrows of 1.5x your attack, then your party attacks 50% faster for 8s.' },
+    desc: '10 arrows of 1.5x your attack, then you attack 50% faster for 8s.' },
   killshot: { id: 'killshot', slot: 'fin', cls: 'ranger', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['apply', 'mark', 1, { v: 0.3, dur: 8 }]], name: 'Kill Shot',
-    desc: '7x your attack. Marks the foe: your party deals 30% more to it for 8s.' },
+    desc: '7x your attack. Marks the foe: you deal 30% more to it for 8s.' },
   ember: { id: 'ember', slot: 'tap', cls: 'mage', type: 'fire', coef: 1.3, tags: [],
     fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
     desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
@@ -97,7 +97,7 @@ const CLASS_ABILITIES = {
     fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
     desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
     var: { priest: { id: 'hymn', name: 'Rally Hymn', cd: 40, type: 'holy',
-      desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.' } } },
+      desc: 'Heals you for 40% of your health. You deal 40% more damage for 8s, and your abilities come back sooner.' } } },
   lanternburst: { id: 'lanternburst', slot: 'fin', cls: 'mage', type: 'fire', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['meter', 'embers', 5], ['apply', 'burn', 1, { to: 'pack' }]], name: 'Lanternburst',
     desc: '7x your attack as fire. Plants 5 Embers and sets the whole pack burning.' }
@@ -115,10 +115,10 @@ Object.assign(CLASS_ABILITIES, {
     fx: [['taunt', 4], ['buff', 'standfastGuard', 4], ['consume', 'bulwark'], ['dmg', 0.6, { perStack: 1, base: 0 }],
       ['shield', 0.15, { perStack: 1, base: 0, to: 'party' }], ['stagger', 3, { perStack: 1, base: 0 }], ['buff', 'standfastEmpower', 6]],
     guard: 0.3, emp: 0.15, name: 'Stand Fast',
-    desc: 'Every foe turns on you for 4s and you take 30% less. Your stored Bulwark bursts as holy light on every foe and shields your party. Your party deals 15% more for 6s.' },
+    desc: 'Every foe turns on you for 4s and you take 30% less. Your stored Bulwark bursts as holy light on every foe and shields you. You deal 15% more for 6s.' },
   oathstrike: { id: 'oathstrike', slot: 'fin', cls: 'warden', type: 'holy', tags: ['heavy', 'finisher'],
     fx: [['dmg', 8], ['shield', 0.1, { to: 'party' }], ['taunt', 3], ['meter', 'bulwark', 5]], name: 'Oathstrike',
-    desc: '8x your attack as holy. Shields your party for 10% of their health, taunts every foe and stores 5 Bulwark.' },
+    desc: '8x your attack as holy. Shields you for 10% of your health, taunts every foe and stores 5 Bulwark.' },
   bloom: { id: 'bloom', slot: 'ab2', cls: 'venomstalker', cd: 16, target: 'single', type: 'poison', tags: ['dot', 'aoe'],
     fx: [['consume', 'venom'], ['dmg', 0.4, { perStack: 1, ramp: 0.1 }], ['apply', 'venom', 3], ['apply', 'venom', 4, { to: 'pack-others' }]], name: 'Deathcap',
     desc: 'Bursts the Venom on your foe: 0.4x your attack per stack, more the more stacks. It keeps 3, and every other foe gets 4.' },
@@ -126,7 +126,7 @@ Object.assign(CLASS_ABILITIES, {
     fx: [['dmg', 8], ['apply', 'venom', 10]], name: 'Heartseeker', desc: '8x your attack as poison. Puts 10 Venom on the foe at once.' },
   snarefield: { id: 'snarefield', slot: 'ab2', cls: 'trapper', cd: 20, target: 'pack', type: 'frost', tags: ['cc', 'aoe'],
     fx: [['dmg', 1.0], ['apply', 'root', 1, { dur: 3 }], ['apply', 'chill', 1, { dur: 4 }], ['apply', 'mark', 1, { v: 0.2, dur: 8 }], ['stagger', 15], ['trap', 'rearm']], name: 'Snare Field',
-    desc: 'Roots, chills and marks every foe (your party deals 20% more to them for 8s), then re-arms both your traps.' },
+    desc: 'Roots, chills and marks every foe (you deal 20% more to them for 8s), then re-arms both your traps.' },
   deadfall: { id: 'deadfall', slot: 'fin', cls: 'trapper', type: 'frost', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['apply', 'root', 1, { to: 'pack' }], ['apply', 'mark', 1, { v: 0.3, dur: 10 }], ['apply', 'chill', 1, { dur: 6 }]], name: 'Deadfall',
     desc: '7x your attack as frost. Roots the pack, and marks and chills the boss.' },
@@ -137,12 +137,12 @@ Object.assign(CLASS_ABILITIES, {
     fx: [['dmg', 9], ['detonate', 'curse', 2]], name: 'Unmaking', desc: "9x your attack as fire. The foe's Curse goes off at double, and the whole pack takes all of it." },
   sanctuary: { id: 'sanctuary', slot: 'ab2', cls: 'priest', cd: 20, target: 'party', type: 'holy', tags: ['heal', 'shield', 'aoe'],
     fx: [['apply', 'regen', 1, { dur: 6, v: 0.8 }], ['shield', 0, { overflow: 1 }], ['dmg', 0.6, { hits: 6, over: 6, to: 'pack' }], ['stagger', 10]], name: 'Sanctuary',
-    desc: 'Holy ground under your party for 6s: it heals them every second, healing past full becomes a shield, and every foe takes holy damage each second.' },
+    desc: 'Holy ground under you for 6s: it heals you every second, healing past full becomes a shield, and every foe takes holy damage each second.' },
   dawnbreak: { id: 'dawnbreak', slot: 'fin', cls: 'priest', type: 'holy', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['heal', 3, { to: 'party' }], ['cleanse', 1], ['meter', 'blessing', 3]], name: 'Dawnbreak',
-    desc: '7x your attack as holy. Heals your party, cleanses one harm from each, and sets your Blessing to III.' }
+    desc: '7x your attack as holy. Heals you, cleanses one harm, and sets your Blessing to III.' }
 });
-CLASS_ABILITIES.focus.var = { trapper: { id: 'focus', name: 'Focus', v: 0.3, desc: 'Marks the foe for 8s: your whole party deals 30% more to it.' } };
+CLASS_ABILITIES.focus.var = { trapper: { id: 'focus', name: 'Focus', v: 0.3, desc: 'Marks the foe for 8s: you deal 30% more to it.' } };
 CLASS_ABILITIES.flare.var.warlock = { id: 'flare', name: 'Lantern Flare', curse: 1,
   desc: 'A burst of 20x your attack, +30% for each Ember. It curses the foe and sets the whole pack burning.' };
 
@@ -170,7 +170,7 @@ const EVO_NAMES = {
   trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
   warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
-    pitch: 'Keep them standing.', aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+    pitch: 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
 };
 // ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
 // Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
@@ -208,14 +208,14 @@ const EVO_DEFS = {
   warden: {
     id: 'warden', dt: 'phys', adds: ['holy'], col: '#FFE680', tint: '#F0E442',
     pitch: 'Nothing gets past. Nothing.',
-    bullets: ['Blocked hits are stored as light.', 'Stand Fast pulls every foe onto you and gives the light back.', 'Your party staggers bosses faster.'],
+    bullets: ['Blocked hits are stored as light.', 'Stand Fast pulls every foe onto you and gives the light back.', 'You stagger bosses faster.'],
     good: ['wren', 'kestrel', 'isolde', 'corvin', 'pip', 'oriel', 'morwen', 'grenna', 'bram'], beats: ['Cursed', 'Shielded', 'Summoner'],
     hp: 15, armour: 45, block: 0.25, ward: 0, threat: 8, crit: 0.08, area: 0, ctrl: 1, tankDr: 1,
     line: { name: "Warden's Mail", text: '25% more health.' }, hpX: 0.25,
     meter: 'bulwark', ab2: 'standfast', finisher: 'oathstrike', replaces: ['stats', 'hammerfall'],
     passives: [
       { name: 'Bulwark', text: 'Each hit you block stores 1 Bulwark (a parry stores 3, up to 10) and throws a Holy Spark at the attacker.' },
-      { name: 'Oath of the Order', text: 'While you stand, your Middle and Back take 10% less damage, and your party staggers foes 30% faster.' }],
+      { name: 'Oath of the Order', text: 'While you stand you take 10% less damage, and you stagger foes 30% faster.' }],
     aura: { name: 'Oath of the Order', text: 'Your Middle and Back take 10% less damage.' },
     idle: 'You block a quarter of all hits. Bulwark fills, and Stand Fast fires every 18s with what you stored.',
     active: 'Parry for 3 Bulwark each, and hold Stand Fast for the big hit.',
@@ -228,7 +228,7 @@ const EVO_DEFS = {
       ['Stout', '+3% health.', { t: { wHp: 0.03 } }, 1.004],
       ['Rally', 'Stand Fast gives 5% more damage.', { t: { sfEmp: 0.05 } }, 1.015],
       ['Stout II', '+3% health.', { t: { wHp: 0.03 } }, 1.004],
-      ['Aegis of the Order', 'Stand Fast also shields your party for 20% of its holy damage, and any block in your party stores Bulwark for you. Stand Fast comes back 30% slower.', { ks: 'aegis' }, 1.03]
+      ['Aegis of the Order', 'Stand Fast also shields you for 20% of its holy damage. Stand Fast comes back 30% slower.', { ks: 'aegis' }, 1.03]
     ],
     tactics: { conds: ['castBar', 'allyHp'], acts: ['taunt', 'interrupt'], preset: 'IF castBar sig THEN use ab2' }
   },
@@ -319,7 +319,7 @@ const EVO_DEFS = {
   priest: {
     id: 'priest', dt: 'holy', adds: ['holy'], col: '#FFF3B0', tint: '#F0E442',
     pitch: 'Give your light away.',
-    bullets: ['Your heroes deal the damage you give up.', 'Sanctuary heals the party, turns spare healing into shields and burns the dead.', 'Best with two damage heroes.'],
+    bullets: ['Your heroes deal the damage you give up.', 'Sanctuary heals you, turns spare healing into shields and burns the dead.', 'Best with two damage heroes.'],
     good: ['wren', 'isolde', 'kestrel', 'corvin', 'oriel', 'pip', 'morwen', 'anselm', 'vesper'], beats: ['Cursed'],
     hp: 6, armour: 10, block: 0, ward: 0.3, threat: 0.5, crit: 0.08, area: 0, ctrl: 1, tankDr: 0,
     line: { name: "Lightkeeper's Vows", text: '30% more healing.' }, healX: 0.3,
@@ -328,7 +328,7 @@ const EVO_DEFS = {
       { name: 'Given Light', text: 'You hit softly, and your heroes deal the damage you give up. Your hits are holy.' },
       { name: 'Blessing', text: 'Each tap heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
       { name: 'Ward', text: 'Healing past full health becomes a shield, up to 30% of health.' }],
-    aura: { name: "Keeper's Light", text: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' },
+    aura: { name: "Keeper's Light", text: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' },
     idle: 'Blessing sits at about II. Rally Hymn and Sanctuary fire by themselves, and spare healing turns to shields.',
     active: 'Keep Blessing at III, and drop Sanctuary just before the big hit lands.',
     ringKs: 'martyr',
@@ -336,11 +336,11 @@ const EVO_DEFS = {
       ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
       ['Warm Light', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
       ['Morning Choir', 'Blessing cap +1.', { t: { blessMax: 1 } }, 1.02],
-      ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      SOLO_LOAD ? ['Gift', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015] : ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
       ['Warm Light II', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
       ['Refrain', 'Rally Hymn lasts 2s longer.', { t: { hymnT: 2 } }, 1.02],
-      ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-      ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+      SOLO_LOAD ? ['Gift II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015] : ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      SOLO_LOAD ? ["Martyr's Light", 'You deal 12% more damage.', { m: { dmg: 1.12 } }, 1.035] : ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
     ],
     tactics: { conds: ['allyHas', 'allyHp'], acts: ['cleanse'], preset: 'IF allyHas curse THEN cleanse' }
   }
@@ -360,15 +360,15 @@ const CLS_TACTICS = {
 const CLASS_TRIALS = {
   warrior: { id: 'warrior', name: 'Hold the Bridge', tpl: 'hold', secs: 60,
     text: 'Four packs cross the bridge, and a lamp stands behind you. Keep it lit for 60 seconds.',
-    how: 'Hit every foe: one you leave alone for 4 seconds walks past you to the lamp. Shield Wall pulls them all back.',
+    how: 'Hit every foe: one you leave alone for 4 seconds walks past you to the lamp. Shield Bash holds the front foe.',
     packs: 4, every: 14, lamp: 100, slip: 4, types: ['bones', 'beetle'] },
   ranger: { id: 'ranger', name: 'The Running Wraith', tpl: 'hunt', secs: 45,
     text: "The Fenmother's herald flees across the marsh. Bring it down before it escapes.",
-    how: 'Keep your Focus on the wraith, not the bats. It stops at three lamps: hit it hard there.',
+    how: 'Keep your marks on the wraith, not the bats. It stops at three lamps: hit it hard there.',
     quarry: 'wraith', screen: 'bat', screenN: 3, stops: 3, stopT: 2 },
   mage: { id: 'mage', name: 'The Cursed Wave', tpl: 'wave', secs: 75,
     text: 'Three waves come at you. Clear them all before your health runs out.',
-    how: 'Flare the bat swarm, burn the spore caps before their clouds curse you, and stop the wraiths healing.',
+    how: 'Fireball the bat swarm, burn the spore caps before their clouds curse you, and stop the wraiths healing.',
     waves: [['bat', 6], ['spore', 5], ['wraith', 3]] }
 };
 

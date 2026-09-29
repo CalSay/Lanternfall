@@ -31,10 +31,12 @@ let OMENS, WEEKLY_GOALS;
   const AL_NEEDS = {
     K5: () => !!(S.skills && S.skills.forage),              // foraging arrives with K5 gathering
     K6: () => typeof craftItem === 'function',               // K6 crafting core
-    B1: () => rosterLive(),                                  // named companions
+    B1: () => rosterLive() && !soloOn(),                     // named companions (W1-C: none in solo)
+    Solo: () => soloOn(),                                    // W1-C: the solo hero's own Omens and goals
     B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
+    Visitor: () => typeof unlockTokenRoll === 'function' && !soloOn(),   // W1-C: the Tavern visitor (no visitors in solo)
     Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
-    Expeditions: () => !!S.exped,
+    Expeditions: () => !!S.exped && !soloOn(),              // W1-C: no expeditions in solo
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
   let alEarly = false;       // a probe threw since the flag was last cleared
@@ -72,7 +74,8 @@ let OMENS, WEEKLY_GOALS;
       dare: { n: 'Knife Edge', fx: "Your hero's hits that do not crit deal 25% less. Crits deal 60% more.", mod: { nonCrit: 0.75, critDmg: 1.6 } } },
     { id: 'scholarSky', n: "Scholar's Sky", cat: 'fight', fx: 'Hero XP +50%', mod: { xp: 1.5 }, ic: ['glass', '#6FCB6A'], go: { fight: 'best' },
       dare: { n: 'Hard Lessons', fx: 'Foes have 25% more HP. Hero XP is x2.5 instead of +50%.', mod: { foeHp: 1.25, xp: 2.5 } } },
-    { id: 'companyFeast', n: 'Company Feast', cat: 'fight', fx: 'Companions earn +50% XP', mod: { compXp: 1.5 }, needs: 'B1', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
+    soloOn() ? { id: 'huntersFeast', n: "Hunter's Feast", cat: 'fight', fx: 'You deal +15% damage', mod: { dmg: 1.15 }, ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } }   // W1-C: the solo Company Feast
+    : { id: 'companyFeast', n: 'Company Feast', cat: 'fight', fx: 'Companions earn +50% XP', mod: { compXp: 1.5 }, needs: 'B1', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
     { id: 'bestiaryDay', n: 'Bestiary Day', cat: 'fight', fx: 'Kills count double toward bestiary perks', bonus: { bestiaryMult: 1 }, ic: ['banner', '#B58CFF'], go: { fight: 'best' } },
     { id: 'masteryDay', n: 'Mastery Day', cat: 'fight', fx: 'Kills count double toward zone mastery', bonus: { masteryMult: 1 }, ic: ['banner', '#F2C14E'], go: { fight: 'here' } },
     { id: 'bossHunt', n: 'Boss Hunt', cat: 'fight', fx: '+25% damage to zone bosses', mod: { dmg: 1.25 }, when: bossNow, ic: ['sword', '#E0524F'], go: { fight: 'boss' },
@@ -86,7 +89,7 @@ let OMENS, WEEKLY_GOALS;
 
     { id: 'buildersMoon', n: "Builder's Moon", cat: 'road', fx: 'Builds started today are 25% faster', mod: { buildTime: 0.75 }, needs: 'Camp', ic: ['anvil', '#D08A4E'], go: { tab: 'world' } },
     { id: 'fairWinds', n: 'Fair Winds', cat: 'road', fx: 'Expeditions sent today bring back +30%', mod: { expHaul: 1.3 }, needs: 'Expeditions', ic: ['boot', '#6B4A2E'], go: { tab: 'world' } },
-    { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'B7', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
+    { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'Visitor', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
     { id: 'bountyDay', n: 'Bounty Day', cat: 'road', fx: 'Bounties refill at once and pay +50%', bonus: { bountyNoWait: 1 }, mod: { bountyPay: 1.5 }, ic: ['banner', '#E0524F'], go: { tab: 'adv' } },
     { id: 'renownDay', n: 'Renown Day', cat: 'road', fx: 'Bounties give double Renown', mod: { renown: 2 }, needs: 'B7', ic: ['banner', '#F2C14E'], go: { tab: 'adv' } },
 
@@ -232,7 +235,7 @@ let OMENS, WEEKLY_GOALS;
   const bestWraith = () => { for (let z = S.maxZone; z >= 1; z--) if (zoneType(z) === 6) return z; return 0; };
   function hintFor(o) {
     const g = o && o.go;
-    if (!g) return { txt: o && o.id === 'longNight' ? 'Best today: rest easy. Set your party up before you go.' : 'Best today: rest easy.', go: null };
+    if (!g) return { txt: o && o.id === 'longNight' ? 'Best today: rest easy. Get ready before you go.' : 'Best today: rest easy.', go: null };
     if (g.gather) {
       let kind = g.gather;
       if (kind === 'any') kind = S.activity === 'gather' ? S.node.kind : S.skills.mine.lv <= S.skills.wood.lv ? 'ore' : 'wood';
@@ -278,6 +281,9 @@ let OMENS, WEEKLY_GOALS;
     wKill: { tier: 'easy', kind: 'kill', need: 1000, scale: true, txt: n => `Defeat ${num(n)} foes`, ic: ['sword', '#C9C3D6'] },
     wTrans: { tier: 'easy', kind: 'trans', need: 5, needs: 'K6', txt: n => `Transmute ${n} times`, ic: ['orb', '#B58CFF'] },
     wBoss2: { tier: 'steady', kind: 'boss', need: 25, txt: n => `Beat ${n} zone bosses`, ic: ['banner', '#E0524F'] },
+    wParry: { tier: 'easy', kind: 'parry', need: 15, needs: 'Solo', txt: n => `Land ${n} parries`, ic: ['sword', '#DCE4F0'] },
+    wCast: { tier: 'easy', kind: 'cast', need: 25, needs: 'Solo', txt: n => `Cast ${n} abilities by hand`, ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }] },
+    wCounter: { tier: 'steady', kind: 'counter', need: 20, needs: 'Solo', txt: n => `Land ${n} counters`, ic: ['sword', '#FF9E3D'] },
     wLvl: { tier: 'steady', kind: 'lvl', need: 20, needs: 'B1', txt: n => `Gain ${n} companion levels`, ic: ['heart', '#5F8BE8'] },
     wPromo: { tier: 'steady', kind: 'promo', need: 1, needs: 'B1', ok: () => rosterList().some(k => { const r = charRec(k); return r.rank < 7 && r.lv >= levelCap(r.rank) - 10; }), txt: () => 'Promote a companion', ic: ['banner', '#B58CFF'] },
     wUp: { tier: 'steady', kind: 'up', need: 10, txt: n => `Upgrade gear ${n} times`, ic: ['anvil', '#FF9E3D'] },
@@ -401,6 +407,10 @@ let OMENS, WEEKLY_GOALS;
   on('bountyDone', () => count('bty'));
   on('charLevel', ({ id, quiet }) => { if (!quiet && S.party && S.party.field && S.party.field.includes(id)) count('lvl'); });
   on('promote', () => count('promo'));
+  // W1-C: the solo hero's goals
+  on('soloParry', p => { if (p && p.res === 'parry') count('parry'); });
+  on('soloCounter', () => count('counter'));
+  on('ability', p => { if (p && p.cls === 'solo' && !p.auto) count('cast'); });
   // Events named by the later specs; they count as soon as those systems emit them.
   on('expedSent', () => count('exp'));
   on('expedBack', p => { if (p && /great|perfect/i.test(String(p.grade))) count('grade'); });

@@ -45,7 +45,7 @@ const DEED_CAP = {
   deepOil: 8
 };
 const DEED_KEY_TXT = {
-  dmg: 'damage', party: 'party damage', tap: 'tap damage', xp: 'hero XP', keen: 'crit damage', essence: 'essence chance',
+  dmg: 'damage', party: 'party damage', tap: SOLO_LOAD ? 'Attack damage' : 'tap damage', xp: 'hero XP', keen: 'crit damage', essence: 'essence chance',
   uniqueChance: 'unique drops', offline: 'away gains', bountyPay: 'bounty rewards', buildTime: 'faster builds',
   compXp: 'companion XP', expHaul: 'expedition haul', raid: 'raid damage', skillXp: 'skill XP',
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
@@ -79,11 +79,11 @@ const DEED_TRACKS = [
   { id: 'bosses', g: 'combat', n: 'Bossbane', what: 'Bosses beaten, of any kind', need: [10, 50, 250, 1e3], star: X10, bonus: 'dmg', src: 'save', u: ['boss', 'bosses'] },
   { id: 'crits', g: 'combat', n: 'Critical Mass', what: 'Critical hits', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'dmg', src: 'new', u: ['crit', 'crits'] },
   { id: 'bighit', g: 'combat', n: 'Heavy Hand', what: 'Biggest single hit', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'dmg', src: 'new', kind: 'record', more: 'damage in one hit' },
-  { id: 'damage', g: 'combat', n: 'Lantern Fury', what: 'Damage dealt by the party, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'dmg', src: 'new', more: 'damage' },
+  { id: 'damage', g: 'combat', n: 'Lantern Fury', what: SOLO_LOAD ? 'Damage dealt, lifetime' : 'Damage dealt by the party, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'dmg', src: 'new', more: 'damage' },
   { id: 'parry', g: 'combat', n: 'Parry!', what: 'Parries', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'dmg', src: 'new', u: ['parry', 'parries'] },
-  { id: 'intr', g: 'combat', n: 'Not Today', what: 'Interrupts', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'party', src: 'new', u: ['interrupt', 'interrupts'] },
-  { id: 'abil', g: 'combat', n: 'Signature Moves', what: 'Abilities used by the party', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'party', src: 'new', u: ['ability', 'abilities'] },
-  { id: 'taps', g: 'combat', n: 'Tap Tap Tap', what: 'Taps on the stage', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'tap', src: 'save', u: ['tap', 'taps'] },
+  { id: 'intr', g: 'combat', n: 'Not Today', what: 'Interrupts', need: [10, 100, 1e3, 5e3], star: X10, bonus: SOLO_LOAD ? 'keen' : 'party', src: 'new', u: ['interrupt', 'interrupts'] },
+  { id: 'abil', g: 'combat', n: 'Signature Moves', what: SOLO_LOAD ? 'Abilities cast' : 'Abilities used by the party', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: SOLO_LOAD ? 'dmg' : 'party', src: 'new', u: ['ability', 'abilities'] },
+  { id: 'taps', g: 'combat', n: SOLO_LOAD ? 'Press On' : 'Tap Tap Tap', what: SOLO_LOAD ? 'Attack presses' : 'Taps on the stage', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'tap', src: 'save', u: SOLO_LOAD ? ['press', 'presses'] : ['tap', 'taps'] },
   // ---- 2.2 The Road ----
   { id: 'zones', g: 'road', n: 'Roadwalker', what: 'Best zone', need: [10, 35, 70, 105], star: { add: 35 }, bonus: 'xp', src: 'save', kind: 'level', u: ['zone', 'zones'], lock: { 4: 'Opens with the Emberwaste' } },
   { id: 'level', g: 'road', n: 'Hero', what: 'Hero level', need: [10, 25, 50, 75], star: { add: 25 }, bonus: 'xp', src: 'save', kind: 'level', u: ['hero level', 'hero levels'] },
@@ -189,7 +189,7 @@ const DEED_TRACKS = [
 const DEED_FEATS = [
   { id: 'f_lamps', n: 'Every Lamp Lit', needs: 'All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages', about: '3-6 months', rar: 'epic', title: 'Hollowwarden', look: 'cr_moss' },
   { id: 'f_watch', n: 'The Long Watch', needs: '2,000 hours of light (played and away)', about: 'about 3 months', rar: 'rare', title: 'the Watchful', look: 'l_watch' },
-  { id: 'f_company', n: 'The Full Company', needs: 'Every companion at Lanternborn rank', about: '3-5 months', rar: 'epic', title: 'the Captain', look: 'c_company' },
+  { id: 'f_company', n: 'The Full Company', needs: 'Every companion at Lanternborn rank', about: '3-5 months', rar: 'epic', title: 'the Captain', look: 'c_company', wait: 'NS' },
   { id: 'f_trades', n: 'Master of Every Trade', needs: 'All 7 skills at level 200 and all 3 tools at mastery 20', about: '2-4 months', rar: 'epic', title: 'Masterhand', look: 'h_artisan' },
   { id: 'f_deep', n: 'Wellborn', needs: 'Reach Deepwell floor 75', about: 'skill, months', rar: 'legendary', title: 'Wellborn', look: 'l_well' },
   { id: 'f_trials', n: 'A Year Below', needs: '52 Trial Seals (any weeks; gaps cost nothing)', about: 'a year or more', rar: 'legendary', title: 'Stairwarden', look: 'h_warden' },
@@ -199,7 +199,7 @@ const DEED_FEATS = [
   { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
-  { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox' },
+  { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox', wait: 'NS' },
   { id: 'f_book', n: 'Every Legend Known', needs: 'Every power in the Lantern Book, 10 of them at rank V', about: 'months', rar: 'legendary', title: 'Lorebearer', look: 'l_book' },
   { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 3 class maps', about: 'months (3 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_sworn', n: 'All Sworn', needs: 'All 21 Bonds at Sworn', about: 'months', rar: 'epic', title: 'Heartsworn', look: 'a_bond', wait: 'F2' },
@@ -213,17 +213,17 @@ const DEED_FEATS = [
 const DEED_SECRETS = [
   { id: 's_night', n: 'Night Owl', riddle: "The fire burns low. You don't.", how: '10 minutes of fighting between 02:00 and 04:00', title: 'Nightowl', look: 'h_night' },
   { id: 's_wisp', n: 'A Wisp Followed You Home', riddle: "Hesketh said not to follow them. He never said they couldn't follow you.", how: '10 minutes in a Wraithmarsh zone between 21:00 and 05:00', title: 'Wispfriend', look: 'cr_wisp' },
-  { id: 's_name', n: 'Namesake', riddle: "What's in a name? Ask a friend.", how: "Rename your hero to a companion's name", title: 'Namesake' },
+  { id: 's_name', n: 'Namesake', riddle: "What's in a name? Ask a friend.", how: "Rename your hero to a companion's name", title: 'Namesake', wait: 'NS' },
   { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
-  { id: 's_bare', n: 'Bare-Knuckled', riddle: 'Who needs a sword?', how: 'Beat a zone boss with no hero weapon', title: 'Barefist' },
-  { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Two down. One lamp left.', how: 'Beat a zone boss while only the hero stands', title: 'Lone Lamp' },
+  { id: 's_bare', n: SOLO_LOAD ? 'Untouched' : 'Bare-Knuckled', riddle: SOLO_LOAD ? 'Not a scratch.' : 'Who needs a sword?', how: SOLO_LOAD ? 'Beat a zone boss from zone 10 without taking a hit' : 'Beat a zone boss with no hero weapon', title: SOLO_LOAD ? 'Unscathed' : 'Barefist' },
+  { id: 's_alone', n: 'Last Lamp Standing', riddle: SOLO_LOAD ? 'Nearly out. One flicker left.' : 'Two down. One lamp left.', how: SOLO_LOAD ? 'Beat a zone boss from zone 10 after your health fell under 10%' : 'Beat a zone boss while only the hero stands', title: 'Lone Lamp' },
   { id: 's_wrong', n: 'All the Wrong Places', riddle: 'Everyone out of place, and it worked.', how: 'Beat a zone boss with all three off their home slots', title: 'Contrarian', wait: 'F1' },
   { id: 's_close', n: 'Just in Time', riddle: 'The sand was nearly out.', how: 'Beat a boss with under 1 second on its timer', title: 'Clutch' },
   { id: 's_over', n: 'Overkill', riddle: 'It was already beaten. You made sure.', how: "One hit for 1,000x the foe's max health", title: 'Overkill' },
-  { id: 's_drum', n: 'Drummer', riddle: 'Tap like rain on a roof.', how: '300 taps in one minute', title: 'Drummer' },
+  { id: 's_drum', n: 'Drummer', riddle: SOLO_LOAD ? 'Press like rain on a roof.' : 'Tap like rain on a roof.', how: SOLO_LOAD ? '60 Attack presses in one minute' : '300 taps in one minute', title: 'Drummer' },
   { id: 's_streak', n: 'Hot Streak', riddle: 'Ten in a row. Every one a crit.', how: '10 hero crits in a row', title: 'the Lucky' },
   { id: 's_oil', n: 'Last Drop', riddle: 'Out of the Well with nothing to spare.', how: 'Leave a Deepwell run with under 1s of Oil', title: 'Lastdrop' },
-  { id: 's_late', n: 'Fashionably Late', riddle: "They waited a week. They didn't mind.", how: 'Collect an expedition 7 days after it came back', title: 'the Tardy' },
+  { id: 's_late', n: 'Fashionably Late', riddle: "They waited a week. They didn't mind.", how: 'Collect an expedition 7 days after it came back', title: 'the Tardy', wait: 'NS' },
   { id: 's_rat', n: 'Pack Rat', riddle: 'Full. Full again. Full again.', how: 'Hit a Storehouse cap 100 times', title: 'Packrat', wait: 'H3' },
   { id: 's_crowd', n: 'Shoulder to Shoulder', riddle: 'Four lamps under one wyrm.', how: 'Raid while 3 or more others in the room are raiding', title: 'Shieldmate' },
   { id: 's_dare', n: 'Daredevil', riddle: 'Seven days, seven Dares.', how: 'Take the Dare on every day of one week', title: 'Daredevil' }
@@ -300,5 +300,5 @@ const DEED_RARITY = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic
 // initAfter: tick seconds before the first-load credit (after the Classic check at 1 s and the Codex at 2 s).
 // bonusOn: 0 switches every deeds bonus off (tools/sim.mjs AP4 compares with and without).
 const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, near: 0.9, nearMax: 0.97, featToast: 1, secretAfterDays: 30, secretAfterFound: 3,
-  nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: 300, streak: 10,
+  nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: SOLO_LOAD ? 60 : 300, streak: 10,
   overX: 1000, lateMs: 7 * 864e5, ratHits: 100, crowd: 3, oddZone: 10 };

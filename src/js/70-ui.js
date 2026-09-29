@@ -411,7 +411,7 @@ registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bo
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
 registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30, feature: 'bestiary' });
 registerView('party', { id: 'team', label: 'Team', order: 10, feature: 'party' });
-registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });
+if (!soloOn()) registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });   // W1-C: no roster in solo
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
 registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });

@@ -58,6 +58,8 @@ const OMEN_LINES = {
   wyrmStirs: 'The sky over the Emberwaste burns brighter tonight.'
 };
 
+if (SOLO_LOAD) OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit hard.';   // W1-C: the solo Omen that replaces Company Feast
+
 const DARE_LINES = {
   goldRain: 'Gold in every pack, and every pack fights back.',
   championsDay: 'Hunt the biggest thing on the road. Bring it home.',

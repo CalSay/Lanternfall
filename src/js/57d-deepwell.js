@@ -65,10 +65,10 @@ const DEEP_SETS = {
   flame: { n: 'Flame', fx: 'Bonfire: +20% damage' },
   oil: { n: 'Oil', fx: 'Deep Breath: no Oil drain for the first 4s of each floor' },
   crit: { n: 'Crit', fx: 'Starburst: crits strike again for 30%' },
-  tap: { n: 'Tap', fx: 'Drumbeat: every 25th tap hits for 15x your attack' },
-  company: { n: 'Company', fx: 'Shoulder to Shoulder: companions +2% damage per floor cleared (max +60%)' },
+  tap: { n: 'Attack', fx: 'Drumbeat: every 25th Attack press hits for 15x your attack' },
+  company: { n: 'Vigour', fx: 'Second Wind: you deal +2% damage per floor cleared (max +60%)' },
   path: { n: 'Path', fx: 'True Path: your class ability cooldown halves' },
-  guard: { n: 'Guard', fx: 'Iron Line: tanks take 25% less damage', c: true },
+  guard: { n: 'Guard', fx: 'Iron Line: you take 25% less damage', c: true },
   dance: { n: 'The Dance', fx: 'Each perfect dodge also gives 2s of Oil', c: true },   // S6-F (combat-2 6.1)
   mend: { n: 'Mend', fx: 'Deep Mercy: all healing +30%', c: true }
 };
@@ -80,10 +80,10 @@ const DEEP_BOON_IDS = [];
   // Common
   B('whet', 'Whetstone', 'c', ['flame'], 3, null, 0.12, k => `+${pc(0.12 * k)} damage`);
   B('luck', 'Lucky Break', 'c', ['crit'], 3, null, 0.2, k => `Crits come ${pc(0.2 * k)} more often`);
-  B('heavy', 'Heavy Hand', 'c', ['tap'], 3, null, 0.4, k => `Taps deal +${pc(0.4 * k)}`);
+  B('heavy', 'Heavy Hand', 'c', ['tap'], 3, null, 0.4, k => `Attack deals +${pc(0.4 * k)}`);
   B('warm', 'Warm Oil', 'c', ['oil'], 3, null, 15, k => `+15s Oil now. Clears refund +${2 * k}s`);
   B('steady', 'Steady Flame', 'c', ['oil'], 2, null, 0.1, k => `Oil drains ${pc(0.1 * k)} slower`);
-  B('drill', 'Company Drill', 'c', ['company'], 3, null, 0.15, k => `Companions deal +${pc(0.15 * k)}`);
+  B('drill', 'Battle Drill', 'c', ['company'], 3, null, 0.15, k => `You deal +${pc(0.15 * k)}`);
   B('sharp', 'Sharp Eye', 'c', ['crit'], 3, null, 0.2, k => `Crit damage +${pc(0.2 * k)}`);
   B('first', 'First Strike', 'c', ['flame'], 1, null, 0.5, () => 'The first foe on each floor starts at half health');
   B('map', 'Bounty Map', 'c', [], 1, null, 1, () => '+1 Depth Mark for each floor from now on');
@@ -98,12 +98,12 @@ const DEEP_BOON_IDS = [];
   B('exec', 'Executioner', 'r', ['crit'], 1, null, 0.15, () => 'Foes below 15% health die at once');
   B('sconce', 'Oil Sconce', 'r', ['oil'], 2, null, 15, k => `Boss floors refund ${15 * k}s more Oil`);
   B('twin', 'Twin Flame', 'r', ['path'], 2, 'any', 0.15, k => `Your ability cooldown is ${pc(0.15 * k)} shorter`);
-  B('rhythm', 'Tap Rhythm', 'r', ['tap'], 1, null, 0.05, () => 'Quick taps build a combo: +5% tap damage per step, up to +60%');
+  B('rhythm', 'Attack Rhythm', 'r', ['tap'], 1, null, 0.05, () => 'Quick Attack presses build a combo: +5% Attack damage per step, up to +60%');
   B('cascade', 'Crit Cascade', 'r', ['crit', 'oil'], 1, null, 0.2, () => 'Each crit gives back 0.2s of Oil (up to 3s a floor)');
   B('glass', 'Cracked Lantern', 'r', ['flame'], 1, null, 0.45, () => '+45% damage, but clears refund 4s less Oil');
-  B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `Companions deal +${pc(0.25 * k)} on elite and boss floors`);
+  B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `You deal +${pc(0.25 * k)} on elite and boss floors`);
   B('focus', "Hunter's Focus", 'r', ['path'], 1, 'ranger', 0.25, () => 'Focused foes take +50% from everyone (was +25%)');
-  B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each tap plants 2 Embers');
+  B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each Attack press plants 2 Embers');
   B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each Grit gives +5% damage (was +3%)');
   B('choir', 'Choir', 'r', ['path'], 1, 'lightkeeper', 4, () => 'Blessings last 10s (was 6s)');
   // Epic
@@ -116,20 +116,20 @@ const DEEP_BOON_IDS = [];
   B('relight', 'Quick Relight', 'e', ['oil'], 1, null, 6, () => 'Floors cleared in under 6s refund double Oil');
   B('crown', 'Crown of the Deep', 'e', [], 1, null, 1, () => 'Each boss floor you clear gives a free Rare boon (pick 1 of 3)');
   B('mass', 'Critical Mass', 'e', ['crit'], 1, null, 0.5, () => 'Crits come 50% more often and deal +50%');
-  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'Companions deal +60%');
+  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
-  B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'Your tanks reflect 30% of the damage they take', 1);
-  B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `Tanks +${pc(0.2 * k)} max health`, 1);
-  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warrior taps taunt for 2s', 1);
+  B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'You reflect 30% of the damage you take', 1);
+  B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `You have +${pc(0.2 * k)} max health`, 1);
+  B('taunt', 'Parry Drill', 'c', ['guard'], 1, null, 0.5, () => 'Your counters after a parry deal 50% more', 1);
   B('dward', 'Deep Ward', 'r', ['mend'], 1, null, 0.2, () => 'Overhealing becomes a shield, up to 20% max health', 1);
-  B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `The party heals ${pc(0.1 * k)} max health per floor cleared`, 1);
-  B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, a member who would go down stays at 1 health', 1);
+  B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `You heal ${pc(0.1 * k)} max health per floor cleared`, 1);
+  B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, if you would go down you stay at 1 health', 1);
   B('wild', 'Wildfire', 'e', ['flame'], 1, null, 1, () => 'Burns and Embers jump to a new foe when their foe dies', 1);
-  B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => "Each striker's first hit on a foe always crits", 1);
-  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => 'The parry window is 0.4s longer', 1);
+  B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => 'Your first hit on each foe always crits', 1);
+  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => soloOn() ? 'The parry window is 0.15s longer' : 'The parry window is 0.4s longer', 1);
   // S6-F (combat-2 6.1): boons for active play (59g reads them), and one for idle drafts
-  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => 'The dodge window is 0.3s longer; a perfect dodge 0.2s longer', 1);
-  B('breaker', 'Breaker', 'r', ['dance'], 1, null, 0.3, () => 'Your party fills the stagger bar 30% faster', 1);
+  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => soloOn() ? 'The dodge window is 0.2s longer' : 'The dodge window is 0.3s longer; a perfect dodge 0.2s longer', 1);
+  B('breaker', 'Breaker', 'r', ['dance'], 1, null, 0.3, () => 'You fill the stagger bar 30% faster', 1);
   B('coup', 'Coup de Grace', 'e', ['dance'], 1, null, 0.5, () => 'Finishers deal 50% more; the one that fires by itself hits at 80%', 1);
   B('silence', 'Silence', 'r', [], 1, null, 0.3, () => 'An ability that stops a cast gives back 30% of its cooldown', 1);
   B('lward', 'Lamplight Ward', 'c', [], 1, null, 0.3, () => 'A wind-up you do not answer deals 30% less', 1);
@@ -138,8 +138,8 @@ const DEEP_BOON_IDS = [];
 // ---------------- the weekly Trial's rules (spec 5) ----------------
 const DEEP_RULES = [
   { id: 'glass', n: 'Glass Week', fx: 'Damage x2. Your most Oil is 60s' },
-  { id: 'company', n: 'Company Week', fx: 'Your hero barely scratches. Companions x2' },
-  { id: 'drum', n: 'Drum Week', fx: 'Taps x3. Auto-attacks x0.5' },
+  { id: 'echo', n: 'Echo Week', fx: 'Abilities come back twice as fast. Attack hits for half' },
+  { id: 'drum', n: 'Drum Week', fx: 'Attack hits x3. Everything else hits for half' },
   { id: 'rush', n: 'Boss Rush', fx: 'Every 3rd floor is a boss floor' },
   { id: 'rare', n: 'Rare Air', fx: 'Drafts show 2 boons, both Rare or better' },
   { id: 'drought', n: 'Drought', fx: 'Oil refunds halved. Start with 150s Oil' },
@@ -296,7 +296,7 @@ let DEEP_ARENA = null;
     if ((r.boons[id] || 0) >= b.max) return false;
     if (r.banned.includes(id)) return false;
     if (b.cls === 'any' ? !cls() : b.cls && b.cls !== cls()) return false;
-    if (b.sets.includes('company') && !hasCompanions()) return false;
+    if (b.sets.includes('company') && !soloOn() && !hasCompanions()) return false;
     if (opts && opts.rar && !opts.rar.includes(b.r)) return false;
     if (ruleOf(r) === 'one' && !r.boons[id] && b.sets.some(s => setCount(s, r) >= 1)) return false;
     return true;
@@ -630,20 +630,24 @@ let DEEP_ARENA = null;
     if (setOn('flame')) m *= 1.2;
     const rule = ruleOf(r);
     if (rule === 'glass') m *= 2;
-    if (rule === 'company') m *= 0.01;
     if (rule === 'drum') m *= 0.5;
+    if (soloOn()) m *= vigour(r);   // W1-C: the Company boons and the Vigour set are the hero's damage in solo
     return m;
   });
-  addModifier('party', () => {
-    if (!on_()) return 1;
-    const r = R();
+  // The Company boons (Battle Drill, Field Rations, Warband) and the Vigour set: companions' damage in the party game,
+  // the hero's own in solo (W1-C).
+  function vigour(r) {
     let m = (1 + DEEP_BOONS.drill.v * rank('drill')) * (r.boons.warband ? 1.6 : 1);
     const fk = r.phase === 'fight' ? floorKind(r.floor) : null;
     if ((fk === 'elite' || fk === 'boss') && r.boons.ration) m *= 1 + DEEP_BOONS.ration.v * rank('ration');
     if (setOn('company')) m *= 1 + Math.min(0.6, 0.02 * r.cleared);
-    const rule = ruleOf(r);
-    if (rule === 'company') m *= 200;       // hero x0.01 on dmg; companions net x2
-    if (rule === 'drum') m *= 2;            // dmg x0.5 on everyone; companions net x1
+    return m;
+  }
+  addModifier('party', () => {
+    if (!on_()) return 1;
+    const r = R();
+    let m = vigour(r);
+    if (ruleOf(r) === 'drum') m *= 2;       // dmg x0.5 on everyone; companions net x1
     return m;
   });
   addModifier('crit', () => {
@@ -658,9 +662,10 @@ let DEEP_ARENA = null;
     let m = 1 + DEEP_BOONS.heavy.v * rank('heavy');
     if (r.boons.rhythm) m *= 1 + Math.min(0.6, DEEP_BOONS.rhythm.v * r.combo);
     if (ruleOf(r) === 'drum') m *= 6;       // dmg x0.5 -> taps net x3
+    if (ruleOf(r) === 'echo') m *= 0.5;     // Echo Week: Attack hits for half
     return m;
   });
-  addModifier('abilityCd', () => on_() ? (1 - DEEP_BOONS.twin.v * rank('twin')) * (setOn('path') ? 0.5 : 1) : 1);
+  addModifier('abilityCd', () => on_() ? (1 - DEEP_BOONS.twin.v * rank('twin')) * (setOn('path') ? 0.5 : 1) * (ruleOf(R()) === 'echo' ? 0.5 : 1) : 1);
   const TUNES = { embersMax: 'kindle', guardMax: 'shield', markT: 'fletch', blessMax: 'psalm', mark: 'focus', emberPerTap: 'double', guard: 'bulwark', blessT: 'choir', volleyHits: 'storm', charges: 'lheart' };
   for (const k in TUNES) addBonus('tune:' + k, () => on_() ? DEEP_BOONS[TUNES[k]].v * rank(TUNES[k]) : 0);
   addBonus('tune:keepEmbers', () => on_() && R().boons.twice && !R().twiceUsed ? 1 : 0);

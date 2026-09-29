@@ -106,11 +106,11 @@ const CAMP_BLESS = {
   edge: { n: 'Edge', page: 'Zones', v: 0.06, fx: v => `+${pc(v)} crit damage` },
   hunt: { n: 'Hunt', page: 'Uniques', v: 0.15, fx: v => `+${pc(v)} damage to zone bosses` },
   anvil: { n: 'Anvil', page: 'Armoury', v: 0.15, fx: v => `+${pc(v)} crafting XP` },
-  kin: { n: 'Kin', page: 'Companions', v: 0.15, fx: v => `+${pc(v)} companion XP` },
+  kin: { n: 'Kin', page: 'Companions', v: 0.15, fx: v => `+${pc(v)} companion XP`, needs: () => !soloOn() },   // W1-C: no companions in solo (the Codex page is hidden too)
   road: { n: 'Road', page: 'Stories', v: 0.12, fx: v => `+${pc(v)} away gains` },
   wild: { n: 'Wild', page: 'Materials', v: 0.12, fx: v => `Gathering ${pc(v)} faster` },
   hearth: { n: 'Hearth', page: 'Camp', v: 0.10, fx: v => `Builds ${pc(v)} faster` },
-  wayfarer: { n: 'Wayfarer', page: 'Lore', v: 0.15, fx: v => `Expeditions bring back +${pc(v)}`, needs: () => !!S.exped },
+  wayfarer: { n: 'Wayfarer', page: 'Lore', v: 0.15, fx: v => `Expeditions bring back +${pc(v)}`, needs: () => !!S.exped && !soloOn() },
   deep: { n: 'Deep', page: 'Deepwell', v: 15, fx: v => `Deepwell runs start with +${Math.round(v)}s Oil`, needs: () => !!S.deep },
   oath: { n: 'Oath', page: 'Achievements', v: 0.10, fx: v => `+${pc(v)} essence drops` }
   // Sky (Omens: Dares pay +25%) joins when the Almanac reads a Dare-reward modifier.
@@ -346,7 +346,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
   // Library: gathering XP +5% per level; companion XP +5% per level after the first.
   for (const k of ['mine', 'wood', 'forage']) addModifier('skillXp:' + k, () => 1 + 0.05 * lv('library'));
-  addModifier('compXp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));
+  addModifier(soloOn() ? 'xp' : 'compXp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));   // W1-C: solo, the Library's second perk is hero XP
   // Map Room: expedition slots (read by the Expeditions system).
   const MAP = { slots: [0, 1, 2, 2, 3, 3], route: [0, 4, 4, 8, 8, 12] };
   addBonus('expSlots', () => MAP.slots[lv('maproom')] || 0);
@@ -360,8 +360,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
 
   // Effect lines for a building at a level (the UI shows now -> next). Lv 0 = not built.
-  const TAV = ['', 'The daily visitor', 'Rumours: the next 3 visitors and tomorrow\'s Omen', 'Rumours also name your closest recruits and 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
-  const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Companion XP +${5 * (l - 1)}%`] : []);
+  const TAV = soloOn() ? ['', 'The keep tells the day\'s gossip', 'Rumours: tomorrow\'s Omen', 'Rumours: the next 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown']
+    : ['', 'The daily visitor', 'Rumours: the next 3 visitors and tomorrow\'s Omen', 'Rumours also name your closest recruits and 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
+  const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`${soloOn() ? 'Hero' : 'Companion'} XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
     const d = B(id);
@@ -373,7 +374,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       if (l >= 5) out.push(STN_FIVE[id].txt);
       return out;
     }
-    if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? ['Away report shows the zone your party could hold'] : []);
+    if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? [soloOn() ? 'Away report shows the zone you could hold' : 'Away report shows the zone your party could hold'] : []);
     if (id === 'library') return LIB(l);
     if (id === 'maproom') { const m = MAP; return [`${m.slots[l]} expedition slot${m.slots[l] > 1 ? 's' : ''}`, `Routes up to ${m.route[l]}h`].concat(l >= 5 ? ['Repeats while you are away'] : []); }
     if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
@@ -419,7 +420,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     const l = lv('tavern'), out = [];
     if (l < 2 || !campOpen()) return out;
     try {
-      if (typeof visitorToday === 'function' && typeof daysUntilVisit === 'function' && rosterLive()) {
+      if (!soloOn() && typeof visitorToday === 'function' && typeof daysUntilVisit === 'function' && rosterLive()) {
         const seen = new Set();
         for (const id of Object.keys(UNLOCK_TUNE.visitors)) {
           const n = daysUntilVisit(id); if (n < 1 || n > 3 || seen.has(n)) continue;
@@ -429,7 +430,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
         }
         out.sort((a, b) => a.n - b.n);
       }
-      if (l >= 3 && typeof leads === 'function') {
+      if (!soloOn() && l >= 3 && typeof leads === 'function') {
         for (const x of leads().slice(0, 3)) out.push({ char: x.id, txt: `${x.name}: ${x.how}`, go: x.tab || 'party' });
       }
       if (typeof almanac === 'object' && almanac.omenFor) {
@@ -548,7 +549,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     awayDone = [];
     if (lv('watch') >= 2 && campOpen() && S.activity === 'fight') {
       const z = campHoldZone();
-      if (z > S.zone) out.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `The Watchtower says your party could hold zone ${z}. You are in zone ${S.zone}.`, go: () => { if (S.zone !== z) setZone(z); emit('campGoto', { tab: 'adv' }); } });
+      if (z > S.zone) out.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `The Watchtower says you could hold zone ${z}. You are in zone ${S.zone}.`, go: () => { if (S.zone !== z) setZone(z); emit('campGoto', { tab: 'adv' }); } });
     }
     return out;
   });

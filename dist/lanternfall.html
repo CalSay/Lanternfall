@@ -3113,7 +3113,7 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
   </div>
 
   <div class="ctrl">
-    <div class="modeseg" id="modeSeg" role="group" aria-label="What your party is doing">
+    <div class="modeseg" id="modeSeg" role="group" aria-label="What your hero is doing">
       <button data-act="fight" aria-pressed="true">Fight</button>
       <button data-act="gather" aria-pressed="false">Gather</button>
       <!-- UX-A (ux-overhaul.md 4.3, approved): Raid left the control row; it is in the quick switcher (online) -->
@@ -3286,6 +3286,9 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 // ---- src/js/00-util.js ----
 // 00-util: pure helpers, the event bus and the extension registries.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+
+// The solo layer is on for this build (24b-data-solo.js owns the knob; data files that load before it read this).
+const SOLO_LOAD = !!(typeof __SOLO === 'undefined' ? 1 : +__SOLO);
 
 // ================= numbers =================
 const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
@@ -6533,16 +6536,16 @@ const RECIPE = { weapon: { ore: 6, wood: 3, ess: 2 }, helm: { ore: 5, ess: 3 }, 
 const UNIQ = {
   sproutblade: { name: 'Sproutblade', slot: 'weapon', col: '#6FCB6A', src: 'Zone boss · Mossy Hollow', fx: { essExtra: 0.1 }, txt: 'Kills have a 10% chance to drop extra essence.' },
   echocowl: { name: 'Echo Cowl', slot: 'helm', col: '#8A6FC8', src: 'Zone boss · Batwing Caves', fx: { echo: 0.5 }, txt: 'Critical hits strike again for 50%.' },
-  rattlecharm: { name: 'Rattlebone Charm', slot: 'charm', col: '#EFE6D6', src: 'Zone boss · The Bonefield', fx: { party: 15 }, txt: 'Your party deals 15% more damage.' },
+  rattlecharm: { name: 'Rattlebone Charm', slot: 'charm', col: '#EFE6D6', src: 'Zone boss · The Bonefield', fx: { abil: 20 }, txt: 'Your abilities deal 20% more damage.' },
   carapacepick: { name: 'Carapace Pick', slot: 'pick', col: '#3F8FA8', src: 'Zone boss · Beetle Barrows', fx: { oreExtra: 0.25 }, txt: '25% chance of an extra ore per swing.' },
   sporeheart: { name: 'Sporeheart', slot: 'charm', col: '#D9534F', src: 'Zone boss · Fungal Deep', fx: { offline: 50 }, txt: '+50% gains while you are away.' },
-  golemfist: { name: 'Golemfist', slot: 'weapon', col: '#9C8F7A', src: 'Zone boss · Quarry Ruins', fx: { tap: 2 }, txt: 'Your taps deal double damage.' },
+  golemfist: { name: 'Golemfist', slot: 'weapon', col: '#9C8F7A', src: 'Zone boss · Quarry Ruins', fx: { tap: 2 }, txt: 'Your Attack deals double damage.' },
   wispaxe: { name: 'Wisp Axe', slot: 'axe', col: '#9FD8C9', src: 'Zone boss · Wraithmarsh', fx: { woodSpd: 30, woodExtra: 0.2 }, txt: '30% faster chopping, 20% chance of an extra log.' },
   wyrmscale: { name: 'Wyrmscale Helm', slot: 'helm', col: '#C9463E', src: 'World raid · The Ashen Wyrm', fx: { raid: 25 }, txt: '+25% raid damage.' },
   hollowcrown: { name: 'Crown of Hollows', slot: 'helm', col: '#F2C14E', src: 'World raid · The Hollow King', fx: { gold: 10 }, txt: '+10% gold.' },
   colossuspick: { name: 'Colossus Pick', slot: 'pick', col: '#6E7F4A', src: 'World raid · The Mire Colossus', fx: { gather: 40 }, txt: 'All gathering 40% faster.' },
   hydraglass: { name: 'Hydra Glass', slot: 'charm', col: '#7FD6E0', src: 'World raid · The Glass Hydra', fx: { crit: 10 }, txt: '+10% critical hit chance.' },
-  eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { party: 20, might: 30 }, txt: '+30% damage and your party deals 20% more.' },
+  eaterfang: { name: "Lantern Eater's Fang", slot: 'weapon', col: '#FF9E3D', src: 'World raid · The Lantern Eater', fx: { might: 30, counter: 100 }, txt: '+30% damage. Your counters after a parry deal double.' },
   tyrantaxe: { name: "Pale Tyrant's Axe", slot: 'axe', col: '#E6E1F0', src: 'World raid · The Pale Tyrant', fx: { woodExtra: 0.3, gather: 20 }, txt: '30% chance of an extra log, all gathering 20% faster.' }
 };
 // Uniques are about their effect, not raw power (owner, 2026-09-27): base power at Rare level (was the
@@ -6576,7 +6579,7 @@ const RELICS = [
   // ECON-A: the Lucky Coin (+25% gold a level) became the Loaded Die (S.relic.edge; S.relic.coin stays at 0, unused).
   { id: 'edge', name: 'Loaded Die', base: 5, r: 1.6, cap: 5, ic: ['coin', '#6FCB6A', { 7: '#6FCB6A' }], desc: () => `+${Math.round(100 * ECON.crit.die)}% crit damage per level.` },
   { id: 'heart', name: 'Ember Heart', base: 4, r: 1.5, ic: ['heart', '#FF7A3D'], desc: () => `+30% raid damage per level.` },
-  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `Your party works for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
+  { id: 'glass', name: 'Hourglass', base: 8, r: 2, cap: 5, ic: ['glass', '#F2E27A'], desc: () => `You keep working for ${4 + 2 * S.relic.glass}h while you're away. +2h per level.` }
 ];
 
 // ---- src/js/21-data-craft.js ----
@@ -8860,6 +8863,8 @@ const OMEN_LINES = {
   wyrmStirs: 'The sky over the Emberwaste burns brighter tonight.'
 };
 
+if (SOLO_LOAD) OMEN_LINES.huntersFeast = 'A big pot on the fire. Tonight you eat well and hit hard.';   // W1-C: the solo Omen that replaces Company Feast
+
 const DARE_LINES = {
   goldRain: 'Gold in every pack, and every pack fights back.',
   championsDay: 'Hunt the biggest thing on the road. Bring it home.',
@@ -9305,7 +9310,7 @@ const DEED_CAP = {
   deepOil: 8
 };
 const DEED_KEY_TXT = {
-  dmg: 'damage', party: 'party damage', tap: 'tap damage', xp: 'hero XP', keen: 'crit damage', essence: 'essence chance',
+  dmg: 'damage', party: 'party damage', tap: SOLO_LOAD ? 'Attack damage' : 'tap damage', xp: 'hero XP', keen: 'crit damage', essence: 'essence chance',
   uniqueChance: 'unique drops', offline: 'away gains', bountyPay: 'bounty rewards', buildTime: 'faster builds',
   compXp: 'companion XP', expHaul: 'expedition haul', raid: 'raid damage', skillXp: 'skill XP',
   'skillXp:smith': 'Smithing XP', 'skillXp:bench': 'Woodcraft XP', 'skillXp:loom': 'Tailoring XP', 'skillXp:ench': 'Enchanting XP',
@@ -9339,11 +9344,11 @@ const DEED_TRACKS = [
   { id: 'bosses', g: 'combat', n: 'Bossbane', what: 'Bosses beaten, of any kind', need: [10, 50, 250, 1e3], star: X10, bonus: 'dmg', src: 'save', u: ['boss', 'bosses'] },
   { id: 'crits', g: 'combat', n: 'Critical Mass', what: 'Critical hits', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'dmg', src: 'new', u: ['crit', 'crits'] },
   { id: 'bighit', g: 'combat', n: 'Heavy Hand', what: 'Biggest single hit', need: [1e6, 1e9, 1e12, 1e15], star: X1K, bonus: 'dmg', src: 'new', kind: 'record', more: 'damage in one hit' },
-  { id: 'damage', g: 'combat', n: 'Lantern Fury', what: 'Damage dealt by the party, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'dmg', src: 'new', more: 'damage' },
+  { id: 'damage', g: 'combat', n: 'Lantern Fury', what: SOLO_LOAD ? 'Damage dealt, lifetime' : 'Damage dealt by the party, lifetime', need: [1e9, 1e12, 1e15, 1e18], star: X1K, bonus: 'dmg', src: 'new', more: 'damage' },
   { id: 'parry', g: 'combat', n: 'Parry!', what: 'Parries', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'dmg', src: 'new', u: ['parry', 'parries'] },
-  { id: 'intr', g: 'combat', n: 'Not Today', what: 'Interrupts', need: [10, 100, 1e3, 5e3], star: X10, bonus: 'party', src: 'new', u: ['interrupt', 'interrupts'] },
-  { id: 'abil', g: 'combat', n: 'Signature Moves', what: 'Abilities used by the party', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: 'party', src: 'new', u: ['ability', 'abilities'] },
-  { id: 'taps', g: 'combat', n: 'Tap Tap Tap', what: 'Taps on the stage', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'tap', src: 'save', u: ['tap', 'taps'] },
+  { id: 'intr', g: 'combat', n: 'Not Today', what: 'Interrupts', need: [10, 100, 1e3, 5e3], star: X10, bonus: SOLO_LOAD ? 'keen' : 'party', src: 'new', u: ['interrupt', 'interrupts'] },
+  { id: 'abil', g: 'combat', n: 'Signature Moves', what: SOLO_LOAD ? 'Abilities cast' : 'Abilities used by the party', need: [100, 1e3, 1e4, 1e5], star: X10, bonus: SOLO_LOAD ? 'dmg' : 'party', src: 'new', u: ['ability', 'abilities'] },
+  { id: 'taps', g: 'combat', n: SOLO_LOAD ? 'Press On' : 'Tap Tap Tap', what: SOLO_LOAD ? 'Attack presses' : 'Taps on the stage', need: [1e3, 1e4, 1e5, 1e6], star: X10, bonus: 'tap', src: 'save', u: SOLO_LOAD ? ['press', 'presses'] : ['tap', 'taps'] },
   // ---- 2.2 The Road ----
   { id: 'zones', g: 'road', n: 'Roadwalker', what: 'Best zone', need: [10, 35, 70, 105], star: { add: 35 }, bonus: 'xp', src: 'save', kind: 'level', u: ['zone', 'zones'], lock: { 4: 'Opens with the Emberwaste' } },
   { id: 'level', g: 'road', n: 'Hero', what: 'Hero level', need: [10, 25, 50, 75], star: { add: 25 }, bonus: 'xp', src: 'save', kind: 'level', u: ['hero level', 'hero levels'] },
@@ -9449,7 +9454,7 @@ const DEED_TRACKS = [
 const DEED_FEATS = [
   { id: 'f_lamps', n: 'Every Lamp Lit', needs: 'All 35 Hollow zones at 5 mastery stars and all 28 Hollow bestiary pages', about: '3-6 months', rar: 'epic', title: 'Hollowwarden', look: 'cr_moss' },
   { id: 'f_watch', n: 'The Long Watch', needs: '2,000 hours of light (played and away)', about: 'about 3 months', rar: 'rare', title: 'the Watchful', look: 'l_watch' },
-  { id: 'f_company', n: 'The Full Company', needs: 'Every companion at Lanternborn rank', about: '3-5 months', rar: 'epic', title: 'the Captain', look: 'c_company' },
+  { id: 'f_company', n: 'The Full Company', needs: 'Every companion at Lanternborn rank', about: '3-5 months', rar: 'epic', title: 'the Captain', look: 'c_company', wait: 'NS' },
   { id: 'f_trades', n: 'Master of Every Trade', needs: 'All 7 skills at level 200 and all 3 tools at mastery 20', about: '2-4 months', rar: 'epic', title: 'Masterhand', look: 'h_artisan' },
   { id: 'f_deep', n: 'Wellborn', needs: 'Reach Deepwell floor 75', about: 'skill, months', rar: 'legendary', title: 'Wellborn', look: 'l_well' },
   { id: 'f_trials', n: 'A Year Below', needs: '52 Trial Seals (any weeks; gaps cost nothing)', about: 'a year or more', rar: 'legendary', title: 'Stairwarden', look: 'h_warden' },
@@ -9459,7 +9464,7 @@ const DEED_FEATS = [
   { id: 'f_gold', n: "Dragon's Hoard", needs: '500M gold earned', about: '3-5 months', rar: 'epic', title: 'Goldwyrm', look: 'fl_coin', need: 5e8 },   // ECON-A (economy-2 3.6): was 1e24
   { id: 'f_raid', n: 'Wyrmfall', needs: '100 raid bosses felled', about: 'months (shared)', rar: 'epic', title: 'Wyrmslayer', look: 'c_wyrm' },
   { id: 'f_champs', n: 'Bane of Champions', needs: '10,000 champions defeated', about: 'about 10 months', rar: 'legendary', title: 'Championbane', look: 'a_ember' },
-  { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox' },
+  { id: 'f_perfect', n: 'Flawless Planner', needs: '1,000 Perfect expeditions and all 12 keepsakes', about: '4-8 months', rar: 'epic', title: 'Pathmaster', look: 'cr_fox', wait: 'NS' },
   { id: 'f_book', n: 'Every Legend Known', needs: 'Every power in the Lantern Book, 10 of them at rank V', about: 'months', rar: 'legendary', title: 'Lorebearer', look: 'l_book' },
   { id: 'f_stars', n: 'Stars in Every Sky', needs: '36 star points spent on each of the 3 class maps', about: 'months (3 classes)', rar: 'legendary', title: 'Starwright', look: 'a_star' },
   { id: 'f_sworn', n: 'All Sworn', needs: 'All 21 Bonds at Sworn', about: 'months', rar: 'epic', title: 'Heartsworn', look: 'a_bond', wait: 'F2' },
@@ -9473,17 +9478,17 @@ const DEED_FEATS = [
 const DEED_SECRETS = [
   { id: 's_night', n: 'Night Owl', riddle: "The fire burns low. You don't.", how: '10 minutes of fighting between 02:00 and 04:00', title: 'Nightowl', look: 'h_night' },
   { id: 's_wisp', n: 'A Wisp Followed You Home', riddle: "Hesketh said not to follow them. He never said they couldn't follow you.", how: '10 minutes in a Wraithmarsh zone between 21:00 and 05:00', title: 'Wispfriend', look: 'cr_wisp' },
-  { id: 's_name', n: 'Namesake', riddle: "What's in a name? Ask a friend.", how: "Rename your hero to a companion's name", title: 'Namesake' },
+  { id: 's_name', n: 'Namesake', riddle: "What's in a name? Ask a friend.", how: "Rename your hero to a companion's name", title: 'Namesake', wait: 'NS' },
   { id: 's_fire', n: 'Sit a While', riddle: 'Some evenings you just sit.', how: 'The camp open for 5 minutes with no taps', title: 'Firesitter' },
-  { id: 's_bare', n: 'Bare-Knuckled', riddle: 'Who needs a sword?', how: 'Beat a zone boss with no hero weapon', title: 'Barefist' },
-  { id: 's_alone', n: 'Last Lamp Standing', riddle: 'Two down. One lamp left.', how: 'Beat a zone boss while only the hero stands', title: 'Lone Lamp' },
+  { id: 's_bare', n: SOLO_LOAD ? 'Untouched' : 'Bare-Knuckled', riddle: SOLO_LOAD ? 'Not a scratch.' : 'Who needs a sword?', how: SOLO_LOAD ? 'Beat a zone boss from zone 10 without taking a hit' : 'Beat a zone boss with no hero weapon', title: SOLO_LOAD ? 'Unscathed' : 'Barefist' },
+  { id: 's_alone', n: 'Last Lamp Standing', riddle: SOLO_LOAD ? 'Nearly out. One flicker left.' : 'Two down. One lamp left.', how: SOLO_LOAD ? 'Beat a zone boss from zone 10 after your health fell under 10%' : 'Beat a zone boss while only the hero stands', title: 'Lone Lamp' },
   { id: 's_wrong', n: 'All the Wrong Places', riddle: 'Everyone out of place, and it worked.', how: 'Beat a zone boss with all three off their home slots', title: 'Contrarian', wait: 'F1' },
   { id: 's_close', n: 'Just in Time', riddle: 'The sand was nearly out.', how: 'Beat a boss with under 1 second on its timer', title: 'Clutch' },
   { id: 's_over', n: 'Overkill', riddle: 'It was already beaten. You made sure.', how: "One hit for 1,000x the foe's max health", title: 'Overkill' },
-  { id: 's_drum', n: 'Drummer', riddle: 'Tap like rain on a roof.', how: '300 taps in one minute', title: 'Drummer' },
+  { id: 's_drum', n: 'Drummer', riddle: SOLO_LOAD ? 'Press like rain on a roof.' : 'Tap like rain on a roof.', how: SOLO_LOAD ? '60 Attack presses in one minute' : '300 taps in one minute', title: 'Drummer' },
   { id: 's_streak', n: 'Hot Streak', riddle: 'Ten in a row. Every one a crit.', how: '10 hero crits in a row', title: 'the Lucky' },
   { id: 's_oil', n: 'Last Drop', riddle: 'Out of the Well with nothing to spare.', how: 'Leave a Deepwell run with under 1s of Oil', title: 'Lastdrop' },
-  { id: 's_late', n: 'Fashionably Late', riddle: "They waited a week. They didn't mind.", how: 'Collect an expedition 7 days after it came back', title: 'the Tardy' },
+  { id: 's_late', n: 'Fashionably Late', riddle: "They waited a week. They didn't mind.", how: 'Collect an expedition 7 days after it came back', title: 'the Tardy', wait: 'NS' },
   { id: 's_rat', n: 'Pack Rat', riddle: 'Full. Full again. Full again.', how: 'Hit a Storehouse cap 100 times', title: 'Packrat', wait: 'H3' },
   { id: 's_crowd', n: 'Shoulder to Shoulder', riddle: 'Four lamps under one wyrm.', how: 'Raid while 3 or more others in the room are raiding', title: 'Shieldmate' },
   { id: 's_dare', n: 'Daredevil', riddle: 'Seven days, seven Dares.', how: 'Take the Dare on every day of one week', title: 'Daredevil' }
@@ -9560,7 +9565,7 @@ const DEED_RARITY = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic
 // initAfter: tick seconds before the first-load credit (after the Classic check at 1 s and the Codex at 2 s).
 // bonusOn: 0 switches every deeds bonus off (tools/sim.mjs AP4 compares with and without).
 const DEED_TUNE = { every: 1, parts: 4, initAfter: 2.2, bonusOn: 1, quiet: 180, near: 0.9, nearMax: 0.97, featToast: 1, secretAfterDays: 30, secretAfterFound: 3,
-  nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: 300, streak: 10,
+  nightFrom: 2, nightTo: 4, nightSecs: 600, wispFrom: 21, wispTo: 5, wispSecs: 600, fireSecs: 300, drumTaps: SOLO_LOAD ? 60 : 300, streak: 10,
   overX: 1000, lateMs: 7 * 864e5, ratHits: 100, crowd: 3, oddZone: 10 };
 
 // ---- src/js/23n-data-notices.js ----
@@ -9647,7 +9652,7 @@ const NOTICES = [
   // While the guide runs it points at each new tab itself, so the tab lines only pop once tips are off.
   { id: 'unlock-tab', re: /^(New tab: |Next Up shows your best next goal|You made camp\. A new tab)/, ch: (m, n, ctx) => ctx && ctx.guide ? 'log' : 'pop', wait: 30,
     site: /toast\(OPEN_TXT\[id\]/, why: 'the guide points at the tab' },
-  { id: 'unlock-stars', re: /^New on the Party tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
+  { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
   { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'bell',
     why: 'the tab shows a New mark', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
@@ -9695,7 +9700,7 @@ const NOTICES = [
   { id: 'legend-off', re: /^Your hero carries \d+ legendary powers/, site: /toast\(msg, 'raid', null, 'high'\)/, ch: 'bell' },
 
   // ---- the Deepwell ----
-  { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your Oil is running low)/,
+  { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,
     site: /toast\(txt, 'good'/, ch: 'pop', wait: 20, why: 'you are in the Deepwell and it is new' },
   { id: 'deep', re: /^(Trial Seal earned|That Trial has closed)/, ch: 'bell' },
   { id: 'deep-small', re: /^(Set bonus: |Trial: floor |Deep Elder beaten)/, ch: 'log' },
@@ -9768,30 +9773,30 @@ const CLASS_DEFS = {
   warrior: {
     id: 'warrior', name: 'Warrior', weight: 'heavy', home: 'front', role: 'tank', dt: 'phys', kit: 'warden', col: '#3E63C9',
     pitch: 'Stand in front. Nothing gets past.',
-    how: 'Tap a foe for a heavy hit. It turns on you and adds 1 Grit: +3% damage and 1% less damage taken for 10s, up to 5.',
+    how: 'A heavy hit. It adds 1 Grit: +3% damage and 1% less damage taken for 10s, up to 5.',
     meter: 'grit', tap: 'heavy', ab1: 'shieldwall', finisher: 'hammerfall',
     hp: 12, armour: 30, block: 0.1, ward: 0, threat: 6, crit: 0.08, area: 0,
-    aura: { name: 'Shieldmates', text: 'Tanks in your party get +40% health and +20 armour.' },
+    aura: { name: 'Shieldmates', text: 'You get +40% health and +20 armour.' },
     passives: [{ name: 'Heavy Hands', text: 'Your heavy hits deal double damage to shields.', s: 'S6' }],
     evos: ['reaver', 'warden'], trial: 'warrior'
   },
   ranger: {
     id: 'ranger', name: 'Ranger', weight: 'medium', home: 'mid', role: 'striker', dt: 'phys', kit: 'ranger', col: '#3E8A4E',
     pitch: 'Find the weak spot. Hit it hard.',
-    how: 'Tap a foe to mark it for 8s. Your whole party deals 25% more to it, and you crit 1.5x as often on it.',
+    how: 'Marks the foe for 8s: you deal 25% more to it and crit 1.5x as often on it.',
     meter: null, tap: 'focus', ab1: 'volley', finisher: 'killshot',
     hp: 6, armour: 10, block: 0, ward: 0, threat: 1, crit: 0.15, area: 0,
-    aura: { name: "Hunters' Company", text: 'Strikers in your party get +10% crit chance and +50% crit damage.' },
+    aura: { name: "Hunter's Eye", text: 'You get +10% crit chance and +50% crit damage.' },
     passives: [{ name: 'Light Feet', text: 'You take 20% less from dives and slams.' }],
     evos: ['venomstalker', 'trapper'], trial: 'ranger'
   },
   mage: {
     id: 'mage', name: 'Lanternmage', weight: 'light', home: 'back', role: 'caster', dt: 'fire', kit: 'lanternmage', col: '#8A4FC9',
     pitch: 'Burn the whole pack at once.',
-    how: 'Tap a foe to hit it with fire and plant an Ember on it, up to 5. Lantern Flare sets them all off.',
+    how: 'A fire hit. It plants an Ember on the foe, up to 5.',
     meter: 'embers', tap: 'ember', ab1: 'flare', finisher: 'lanternburst',
     hp: 4, armour: 0, block: 0, ward: 0.1, threat: 1.2, crit: 0.08, area: 0.15,
-    aura: { name: 'Kindred Sparks', text: 'Casters in your party get +30% attack.' },
+    aura: { name: 'Kindred Sparks', text: 'You get +30% attack.' },
     passives: [{ name: 'Lantern Glass', text: 'Your hits splash 15% to the rest of the pack.' }],
     evos: ['warlock', 'priest'], trial: 'mage'
   }
@@ -9806,19 +9811,19 @@ const CLASS_ABILITIES = {
     fx: [['buff', 'shieldwall', 6], ['buff', 'wallEmpower', 6], ['taunt', 3], ['stagger', 10]], dr: 0.6, emp: 0.3, t: 6, name: 'Shield Wall',
     // S2 keeps today's 60% / 30%: classes-2 1.2 lowers it to 50% / 20% because Core 2.0 foes hit 2-3x harder,
     // which lands with S6; at 50 / 20 on today's foes the sim lost T4 and T7 (BAL3 applies it with S6).
-    desc: 'For 6s your party takes 60% less damage and deals 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
+    desc: 'For 6s you take 60% less damage and deal 30% more. It blocks a boss heavy hit on you, and the boss timer stops for 3s.' },
   hammerfall: { id: 'hammerfall', slot: 'fin', cls: 'warrior', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['delay', 1], ['meter', 'grit', 5]], name: 'Hammerfall',
     desc: '7x your attack. Every foe attacks 1s later. Fills your Grit.' },
   focus: { id: 'focus', slot: 'tap', cls: 'ranger', type: 'phys', coef: 1, tags: [],
     fx: [['dmg', 1], ['apply', 'mark', 1, { v: 0.25, dur: 8 }]], name: 'Focus',
-    desc: 'Marks the foe for 8s: your whole party deals 25% more to it.' },
+    desc: 'Marks the foe for 8s: you deal 25% more to it.' },
   volley: { id: 'volley', slot: 'ab1', cls: 'ranger', cd: 30, target: 'single', type: 'phys', tags: [],
     fx: [['dmg', 1.5, { hits: 10, over: 2, spread: 0.5 }], ['buff', 'volleyQuick', 8]], name: 'Volley',
-    desc: '10 arrows of 1.5x your attack, then your party attacks 50% faster for 8s.' },
+    desc: '10 arrows of 1.5x your attack, then you attack 50% faster for 8s.' },
   killshot: { id: 'killshot', slot: 'fin', cls: 'ranger', type: 'phys', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['apply', 'mark', 1, { v: 0.3, dur: 8 }]], name: 'Kill Shot',
-    desc: '7x your attack. Marks the foe: your party deals 30% more to it for 8s.' },
+    desc: '7x your attack. Marks the foe: you deal 30% more to it for 8s.' },
   ember: { id: 'ember', slot: 'tap', cls: 'mage', type: 'fire', coef: 1.3, tags: [],
     fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
     desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
@@ -9828,7 +9833,7 @@ const CLASS_ABILITIES = {
     fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
     desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
     var: { priest: { id: 'hymn', name: 'Rally Hymn', cd: 40, type: 'holy',
-      desc: 'Heals your party 40% of their health. They deal 40% more damage for 8s, and their abilities come back sooner.' } } },
+      desc: 'Heals you for 40% of your health. You deal 40% more damage for 8s, and your abilities come back sooner.' } } },
   lanternburst: { id: 'lanternburst', slot: 'fin', cls: 'mage', type: 'fire', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['meter', 'embers', 5], ['apply', 'burn', 1, { to: 'pack' }]], name: 'Lanternburst',
     desc: '7x your attack as fire. Plants 5 Embers and sets the whole pack burning.' }
@@ -9846,10 +9851,10 @@ Object.assign(CLASS_ABILITIES, {
     fx: [['taunt', 4], ['buff', 'standfastGuard', 4], ['consume', 'bulwark'], ['dmg', 0.6, { perStack: 1, base: 0 }],
       ['shield', 0.15, { perStack: 1, base: 0, to: 'party' }], ['stagger', 3, { perStack: 1, base: 0 }], ['buff', 'standfastEmpower', 6]],
     guard: 0.3, emp: 0.15, name: 'Stand Fast',
-    desc: 'Every foe turns on you for 4s and you take 30% less. Your stored Bulwark bursts as holy light on every foe and shields your party. Your party deals 15% more for 6s.' },
+    desc: 'Every foe turns on you for 4s and you take 30% less. Your stored Bulwark bursts as holy light on every foe and shields you. You deal 15% more for 6s.' },
   oathstrike: { id: 'oathstrike', slot: 'fin', cls: 'warden', type: 'holy', tags: ['heavy', 'finisher'],
     fx: [['dmg', 8], ['shield', 0.1, { to: 'party' }], ['taunt', 3], ['meter', 'bulwark', 5]], name: 'Oathstrike',
-    desc: '8x your attack as holy. Shields your party for 10% of their health, taunts every foe and stores 5 Bulwark.' },
+    desc: '8x your attack as holy. Shields you for 10% of your health, taunts every foe and stores 5 Bulwark.' },
   bloom: { id: 'bloom', slot: 'ab2', cls: 'venomstalker', cd: 16, target: 'single', type: 'poison', tags: ['dot', 'aoe'],
     fx: [['consume', 'venom'], ['dmg', 0.4, { perStack: 1, ramp: 0.1 }], ['apply', 'venom', 3], ['apply', 'venom', 4, { to: 'pack-others' }]], name: 'Deathcap',
     desc: 'Bursts the Venom on your foe: 0.4x your attack per stack, more the more stacks. It keeps 3, and every other foe gets 4.' },
@@ -9857,7 +9862,7 @@ Object.assign(CLASS_ABILITIES, {
     fx: [['dmg', 8], ['apply', 'venom', 10]], name: 'Heartseeker', desc: '8x your attack as poison. Puts 10 Venom on the foe at once.' },
   snarefield: { id: 'snarefield', slot: 'ab2', cls: 'trapper', cd: 20, target: 'pack', type: 'frost', tags: ['cc', 'aoe'],
     fx: [['dmg', 1.0], ['apply', 'root', 1, { dur: 3 }], ['apply', 'chill', 1, { dur: 4 }], ['apply', 'mark', 1, { v: 0.2, dur: 8 }], ['stagger', 15], ['trap', 'rearm']], name: 'Snare Field',
-    desc: 'Roots, chills and marks every foe (your party deals 20% more to them for 8s), then re-arms both your traps.' },
+    desc: 'Roots, chills and marks every foe (you deal 20% more to them for 8s), then re-arms both your traps.' },
   deadfall: { id: 'deadfall', slot: 'fin', cls: 'trapper', type: 'frost', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['apply', 'root', 1, { to: 'pack' }], ['apply', 'mark', 1, { v: 0.3, dur: 10 }], ['apply', 'chill', 1, { dur: 6 }]], name: 'Deadfall',
     desc: '7x your attack as frost. Roots the pack, and marks and chills the boss.' },
@@ -9868,12 +9873,12 @@ Object.assign(CLASS_ABILITIES, {
     fx: [['dmg', 9], ['detonate', 'curse', 2]], name: 'Unmaking', desc: "9x your attack as fire. The foe's Curse goes off at double, and the whole pack takes all of it." },
   sanctuary: { id: 'sanctuary', slot: 'ab2', cls: 'priest', cd: 20, target: 'party', type: 'holy', tags: ['heal', 'shield', 'aoe'],
     fx: [['apply', 'regen', 1, { dur: 6, v: 0.8 }], ['shield', 0, { overflow: 1 }], ['dmg', 0.6, { hits: 6, over: 6, to: 'pack' }], ['stagger', 10]], name: 'Sanctuary',
-    desc: 'Holy ground under your party for 6s: it heals them every second, healing past full becomes a shield, and every foe takes holy damage each second.' },
+    desc: 'Holy ground under you for 6s: it heals you every second, healing past full becomes a shield, and every foe takes holy damage each second.' },
   dawnbreak: { id: 'dawnbreak', slot: 'fin', cls: 'priest', type: 'holy', tags: ['heavy', 'finisher'],
     fx: [['dmg', 7], ['heal', 3, { to: 'party' }], ['cleanse', 1], ['meter', 'blessing', 3]], name: 'Dawnbreak',
-    desc: '7x your attack as holy. Heals your party, cleanses one harm from each, and sets your Blessing to III.' }
+    desc: '7x your attack as holy. Heals you, cleanses one harm, and sets your Blessing to III.' }
 });
-CLASS_ABILITIES.focus.var = { trapper: { id: 'focus', name: 'Focus', v: 0.3, desc: 'Marks the foe for 8s: your whole party deals 30% more to it.' } };
+CLASS_ABILITIES.focus.var = { trapper: { id: 'focus', name: 'Focus', v: 0.3, desc: 'Marks the foe for 8s: you deal 30% more to it.' } };
 CLASS_ABILITIES.flare.var.warlock = { id: 'flare', name: 'Lantern Flare', curse: 1,
   desc: 'A burst of 20x your attack, +30% for each Ember. It curses the foe and sets the whole pack burning.' };
 
@@ -9901,7 +9906,7 @@ const EVO_NAMES = {
   trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
   warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
-    pitch: 'Keep them standing.', aura: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+    pitch: 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
 };
 // ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
 // Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
@@ -9939,14 +9944,14 @@ const EVO_DEFS = {
   warden: {
     id: 'warden', dt: 'phys', adds: ['holy'], col: '#FFE680', tint: '#F0E442',
     pitch: 'Nothing gets past. Nothing.',
-    bullets: ['Blocked hits are stored as light.', 'Stand Fast pulls every foe onto you and gives the light back.', 'Your party staggers bosses faster.'],
+    bullets: ['Blocked hits are stored as light.', 'Stand Fast pulls every foe onto you and gives the light back.', 'You stagger bosses faster.'],
     good: ['wren', 'kestrel', 'isolde', 'corvin', 'pip', 'oriel', 'morwen', 'grenna', 'bram'], beats: ['Cursed', 'Shielded', 'Summoner'],
     hp: 15, armour: 45, block: 0.25, ward: 0, threat: 8, crit: 0.08, area: 0, ctrl: 1, tankDr: 1,
     line: { name: "Warden's Mail", text: '25% more health.' }, hpX: 0.25,
     meter: 'bulwark', ab2: 'standfast', finisher: 'oathstrike', replaces: ['stats', 'hammerfall'],
     passives: [
       { name: 'Bulwark', text: 'Each hit you block stores 1 Bulwark (a parry stores 3, up to 10) and throws a Holy Spark at the attacker.' },
-      { name: 'Oath of the Order', text: 'While you stand, your Middle and Back take 10% less damage, and your party staggers foes 30% faster.' }],
+      { name: 'Oath of the Order', text: 'While you stand you take 10% less damage, and you stagger foes 30% faster.' }],
     aura: { name: 'Oath of the Order', text: 'Your Middle and Back take 10% less damage.' },
     idle: 'You block a quarter of all hits. Bulwark fills, and Stand Fast fires every 18s with what you stored.',
     active: 'Parry for 3 Bulwark each, and hold Stand Fast for the big hit.',
@@ -9959,7 +9964,7 @@ const EVO_DEFS = {
       ['Stout', '+3% health.', { t: { wHp: 0.03 } }, 1.004],
       ['Rally', 'Stand Fast gives 5% more damage.', { t: { sfEmp: 0.05 } }, 1.015],
       ['Stout II', '+3% health.', { t: { wHp: 0.03 } }, 1.004],
-      ['Aegis of the Order', 'Stand Fast also shields your party for 20% of its holy damage, and any block in your party stores Bulwark for you. Stand Fast comes back 30% slower.', { ks: 'aegis' }, 1.03]
+      ['Aegis of the Order', 'Stand Fast also shields you for 20% of its holy damage. Stand Fast comes back 30% slower.', { ks: 'aegis' }, 1.03]
     ],
     tactics: { conds: ['castBar', 'allyHp'], acts: ['taunt', 'interrupt'], preset: 'IF castBar sig THEN use ab2' }
   },
@@ -10050,7 +10055,7 @@ const EVO_DEFS = {
   priest: {
     id: 'priest', dt: 'holy', adds: ['holy'], col: '#FFF3B0', tint: '#F0E442',
     pitch: 'Give your light away.',
-    bullets: ['Your heroes deal the damage you give up.', 'Sanctuary heals the party, turns spare healing into shields and burns the dead.', 'Best with two damage heroes.'],
+    bullets: ['Your heroes deal the damage you give up.', 'Sanctuary heals you, turns spare healing into shields and burns the dead.', 'Best with two damage heroes.'],
     good: ['wren', 'isolde', 'kestrel', 'corvin', 'oriel', 'pip', 'morwen', 'anselm', 'vesper'], beats: ['Cursed'],
     hp: 6, armour: 10, block: 0, ward: 0.3, threat: 0.5, crit: 0.08, area: 0, ctrl: 1, tankDr: 0,
     line: { name: "Lightkeeper's Vows", text: '30% more healing.' }, healX: 0.3,
@@ -10059,7 +10064,7 @@ const EVO_DEFS = {
       { name: 'Given Light', text: 'You hit softly, and your heroes deal the damage you give up. Your hits are holy.' },
       { name: 'Blessing', text: 'Each tap heals the most hurt ally and blesses your heroes: +20% damage for 6s, up to 3 times.' },
       { name: 'Ward', text: 'Healing past full health becomes a shield, up to 30% of health.' }],
-    aura: { name: "Keeper's Light", text: 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' },
+    aura: { name: "Keeper's Light", text: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' },
     idle: 'Blessing sits at about II. Rally Hymn and Sanctuary fire by themselves, and spare healing turns to shields.',
     active: 'Keep Blessing at III, and drop Sanctuary just before the big hit lands.',
     ringKs: 'martyr',
@@ -10067,11 +10072,11 @@ const EVO_DEFS = {
       ['Lingering Light', 'Blessings last 1s longer.', { t: { blessT: 1 } }, 1.008],
       ['Warm Light', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
       ['Morning Choir', 'Blessing cap +1.', { t: { blessMax: 1 } }, 1.02],
-      ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      SOLO_LOAD ? ['Gift', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015] : ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
       ['Warm Light II', 'Each Blessing gives +1.5% more.', { t: { bless: 0.015 } }, 1.012],
       ['Refrain', 'Rally Hymn lasts 2s longer.', { t: { hymnT: 2 } }, 1.02],
-      ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-      ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+      SOLO_LOAD ? ['Gift II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015] : ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+      SOLO_LOAD ? ["Martyr's Light", 'You deal 12% more damage.', { m: { dmg: 1.12 } }, 1.035] : ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
     ],
     tactics: { conds: ['allyHas', 'allyHp'], acts: ['cleanse'], preset: 'IF allyHas curse THEN cleanse' }
   }
@@ -10091,15 +10096,15 @@ const CLS_TACTICS = {
 const CLASS_TRIALS = {
   warrior: { id: 'warrior', name: 'Hold the Bridge', tpl: 'hold', secs: 60,
     text: 'Four packs cross the bridge, and a lamp stands behind you. Keep it lit for 60 seconds.',
-    how: 'Hit every foe: one you leave alone for 4 seconds walks past you to the lamp. Shield Wall pulls them all back.',
+    how: 'Hit every foe: one you leave alone for 4 seconds walks past you to the lamp. Shield Bash holds the front foe.',
     packs: 4, every: 14, lamp: 100, slip: 4, types: ['bones', 'beetle'] },
   ranger: { id: 'ranger', name: 'The Running Wraith', tpl: 'hunt', secs: 45,
     text: "The Fenmother's herald flees across the marsh. Bring it down before it escapes.",
-    how: 'Keep your Focus on the wraith, not the bats. It stops at three lamps: hit it hard there.',
+    how: 'Keep your marks on the wraith, not the bats. It stops at three lamps: hit it hard there.',
     quarry: 'wraith', screen: 'bat', screenN: 3, stops: 3, stopT: 2 },
   mage: { id: 'mage', name: 'The Cursed Wave', tpl: 'wave', secs: 75,
     text: 'Three waves come at you. Clear them all before your health runs out.',
-    how: 'Flare the bat swarm, burn the spore caps before their clouds curse you, and stop the wraiths healing.',
+    how: 'Fireball the bat swarm, burn the spore caps before their clouds curse you, and stop the wraiths healing.',
     waves: [['bat', 6], ['spore', 5], ['wraith', 3]] }
 };
 
@@ -11169,10 +11174,12 @@ let OMENS, WEEKLY_GOALS;
   const AL_NEEDS = {
     K5: () => !!(S.skills && S.skills.forage),              // foraging arrives with K5 gathering
     K6: () => typeof craftItem === 'function',               // K6 crafting core
-    B1: () => rosterLive(),                                  // named companions
+    B1: () => rosterLive() && !soloOn(),                     // named companions (W1-C: none in solo)
+    Solo: () => soloOn(),                                    // W1-C: the solo hero's own Omens and goals
     B7: () => typeof unlockTokenRoll === 'function',         // unlock avenues (Renown)
+    Visitor: () => typeof unlockTokenRoll === 'function' && !soloOn(),   // W1-C: the Tavern visitor (no visitors in solo)
     Camp: () => !!(S.camp && S.camp.open),                  // 57-camp.js: the camp is open (zone 5)
-    Expeditions: () => !!S.exped,
+    Expeditions: () => !!S.exped && !soloOn(),              // W1-C: no expeditions in solo
     Deepwell: () => !!S.deep && (typeof deepUnlocked !== 'function' || deepUnlocked())
   };
   let alEarly = false;       // a probe threw since the flag was last cleared
@@ -11210,7 +11217,8 @@ let OMENS, WEEKLY_GOALS;
       dare: { n: 'Knife Edge', fx: "Your hero's hits that do not crit deal 25% less. Crits deal 60% more.", mod: { nonCrit: 0.75, critDmg: 1.6 } } },
     { id: 'scholarSky', n: "Scholar's Sky", cat: 'fight', fx: 'Hero XP +50%', mod: { xp: 1.5 }, ic: ['glass', '#6FCB6A'], go: { fight: 'best' },
       dare: { n: 'Hard Lessons', fx: 'Foes have 25% more HP. Hero XP is x2.5 instead of +50%.', mod: { foeHp: 1.25, xp: 2.5 } } },
-    { id: 'companyFeast', n: 'Company Feast', cat: 'fight', fx: 'Companions earn +50% XP', mod: { compXp: 1.5 }, needs: 'B1', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
+    soloOn() ? { id: 'huntersFeast', n: "Hunter's Feast", cat: 'fight', fx: 'You deal +15% damage', mod: { dmg: 1.15 }, ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } }   // W1-C: the solo Company Feast
+    : { id: 'companyFeast', n: 'Company Feast', cat: 'fight', fx: 'Companions earn +50% XP', mod: { compXp: 1.5 }, needs: 'B1', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { fight: 'best' } },
     { id: 'bestiaryDay', n: 'Bestiary Day', cat: 'fight', fx: 'Kills count double toward bestiary perks', bonus: { bestiaryMult: 1 }, ic: ['banner', '#B58CFF'], go: { fight: 'best' } },
     { id: 'masteryDay', n: 'Mastery Day', cat: 'fight', fx: 'Kills count double toward zone mastery', bonus: { masteryMult: 1 }, ic: ['banner', '#F2C14E'], go: { fight: 'here' } },
     { id: 'bossHunt', n: 'Boss Hunt', cat: 'fight', fx: '+25% damage to zone bosses', mod: { dmg: 1.25 }, when: bossNow, ic: ['sword', '#E0524F'], go: { fight: 'boss' },
@@ -11224,7 +11232,7 @@ let OMENS, WEEKLY_GOALS;
 
     { id: 'buildersMoon', n: "Builder's Moon", cat: 'road', fx: 'Builds started today are 25% faster', mod: { buildTime: 0.75 }, needs: 'Camp', ic: ['anvil', '#D08A4E'], go: { tab: 'world' } },
     { id: 'fairWinds', n: 'Fair Winds', cat: 'road', fx: 'Expeditions sent today bring back +30%', mod: { expHaul: 1.3 }, needs: 'Expeditions', ic: ['boot', '#6B4A2E'], go: { tab: 'world' } },
-    { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'B7', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
+    { id: 'busyTavern', n: 'Busy Tavern', cat: 'road', fx: 'The Tavern visitor costs 25% less', bonus: { tavernDeal: 1 }, needs: 'Visitor', ic: ['mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' }], go: { tab: 'world' } },
     { id: 'bountyDay', n: 'Bounty Day', cat: 'road', fx: 'Bounties refill at once and pay +50%', bonus: { bountyNoWait: 1 }, mod: { bountyPay: 1.5 }, ic: ['banner', '#E0524F'], go: { tab: 'adv' } },
     { id: 'renownDay', n: 'Renown Day', cat: 'road', fx: 'Bounties give double Renown', mod: { renown: 2 }, needs: 'B7', ic: ['banner', '#F2C14E'], go: { tab: 'adv' } },
 
@@ -11370,7 +11378,7 @@ let OMENS, WEEKLY_GOALS;
   const bestWraith = () => { for (let z = S.maxZone; z >= 1; z--) if (zoneType(z) === 6) return z; return 0; };
   function hintFor(o) {
     const g = o && o.go;
-    if (!g) return { txt: o && o.id === 'longNight' ? 'Best today: rest easy. Set your party up before you go.' : 'Best today: rest easy.', go: null };
+    if (!g) return { txt: o && o.id === 'longNight' ? 'Best today: rest easy. Get ready before you go.' : 'Best today: rest easy.', go: null };
     if (g.gather) {
       let kind = g.gather;
       if (kind === 'any') kind = S.activity === 'gather' ? S.node.kind : S.skills.mine.lv <= S.skills.wood.lv ? 'ore' : 'wood';
@@ -11416,6 +11424,9 @@ let OMENS, WEEKLY_GOALS;
     wKill: { tier: 'easy', kind: 'kill', need: 1000, scale: true, txt: n => `Defeat ${num(n)} foes`, ic: ['sword', '#C9C3D6'] },
     wTrans: { tier: 'easy', kind: 'trans', need: 5, needs: 'K6', txt: n => `Transmute ${n} times`, ic: ['orb', '#B58CFF'] },
     wBoss2: { tier: 'steady', kind: 'boss', need: 25, txt: n => `Beat ${n} zone bosses`, ic: ['banner', '#E0524F'] },
+    wParry: { tier: 'easy', kind: 'parry', need: 15, needs: 'Solo', txt: n => `Land ${n} parries`, ic: ['sword', '#DCE4F0'] },
+    wCast: { tier: 'easy', kind: 'cast', need: 25, needs: 'Solo', txt: n => `Cast ${n} abilities by hand`, ic: ['flame', '#FF9E3D', { 5: '#FFB347', 7: '#FFF3C4' }] },
+    wCounter: { tier: 'steady', kind: 'counter', need: 20, needs: 'Solo', txt: n => `Land ${n} counters`, ic: ['sword', '#FF9E3D'] },
     wLvl: { tier: 'steady', kind: 'lvl', need: 20, needs: 'B1', txt: n => `Gain ${n} companion levels`, ic: ['heart', '#5F8BE8'] },
     wPromo: { tier: 'steady', kind: 'promo', need: 1, needs: 'B1', ok: () => rosterList().some(k => { const r = charRec(k); return r.rank < 7 && r.lv >= levelCap(r.rank) - 10; }), txt: () => 'Promote a companion', ic: ['banner', '#B58CFF'] },
     wUp: { tier: 'steady', kind: 'up', need: 10, txt: n => `Upgrade gear ${n} times`, ic: ['anvil', '#FF9E3D'] },
@@ -11539,6 +11550,10 @@ let OMENS, WEEKLY_GOALS;
   on('bountyDone', () => count('bty'));
   on('charLevel', ({ id, quiet }) => { if (!quiet && S.party && S.party.field && S.party.field.includes(id)) count('lvl'); });
   on('promote', () => count('promo'));
+  // W1-C: the solo hero's goals
+  on('soloParry', p => { if (p && p.res === 'parry') count('parry'); });
+  on('soloCounter', () => count('counter'));
+  on('ability', p => { if (p && p.cls === 'solo' && !p.auto) count('cast'); });
   // Events named by the later specs; they count as soon as those systems emit them.
   on('expedSent', () => count('exp'));
   on('expedBack', p => { if (p && /great|perfect/i.test(String(p.grade))) count('grade'); });
@@ -11665,7 +11680,7 @@ let OMENS, WEEKLY_GOALS;
     forge: b => b.need > 1 ? `Forge ${b.need} items` : 'Forge an item',
     boss: b => b.need > 1 ? `Beat ${b.need} zone bosses` : 'Beat a zone boss',
     crit: b => `Land ${b.need} critical hits`,
-    tap: b => `Tap the stage ${b.need} times`
+    tap: b => soloOn() ? `Press Attack ${b.need} times` : `Tap the stage ${b.need} times`
   };
 
   function btyNew(exclude) {
@@ -11708,7 +11723,8 @@ let OMENS, WEEKLY_GOALS;
   on('harvest', ({ kind, n }) => { if (kind === 'ore') btyAdd('mine', n); else if (kind === 'wood') btyAdd('chop', n); });
   on('itemAdded', ({ item }) => { if (!item.u) btyAdd('forge', 1); });
   on('crit', () => btyAdd('crit', 1));
-  on('tap', () => btyAdd('tap', 1));
+  on('tap', () => { if (!soloOn()) btyAdd('tap', 1); });
+  on('soloAttack', p => { if (p && p.kind === 'hit') btyAdd('tap', 1); });   // W1-C: in solo the Attack button is the tap
   let btyAcc = 0;
   onTick(dt => { btyAcc += dt; if (btyAcc >= 1) { btyAcc = 0; bountyRefresh(); } });
 
@@ -12050,7 +12066,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     gateT = 0;
     const p = provingInfo(), open = !!(p && p.open && !p.prove);
     if (gateFor !== S) { gateFor = S; gateWas = open; return; }
-    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Party, your class card.', 'good', null, 'high');
+    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Hero tab, your class card.', 'good', null, 'high');
     gateWas = open;
   });
 
@@ -14026,7 +14042,7 @@ const BESTIARY_PERKS = {
   bones: { mod: 'keen', label: 'crit damage', val: ECON.crit.bones },   // ECON-A: was +3/6/10/15% gold
   beetle: { mod: 'gatherSpeed', label: 'gather speed' },
   spore: { mod: 'offline', label: 'offline gains' },
-  golem: { mod: 'tap', label: 'tap damage' },
+  golem: { mod: 'tap', label: 'Attack damage' },
   wraith: { mod: 'xp', label: 'XP' }
 };
 
@@ -15041,6 +15057,7 @@ let wellRested, restParty, restNote;
   const R = () => S.rested && typeof S.rested === 'object' ? S.rested : (S.rested = { left: 0 });
   let inAway = false, awayGain = 0, lineOn = false;
   restParty = () => {
+    if (typeof soloOn === 'function' && soloOn()) return true;   // W1-C: solo, gathering rests the hero himself or herself
     if (typeof rosterLive === 'function' && rosterLive()) return ((S.party && S.party.field) || []).some(k => typeof isRecruited === 'function' && isRecruited(k));
     return Array.isArray(S.comp) && S.comp.some(n => n > 0);
   };
@@ -15053,7 +15070,11 @@ let wellRested, restParty, restNote;
   const dur = s => s >= 60 ? `${Math.round(s / 60)} min` : `${Math.max(1, Math.round(s))} s`;
 
   // The Gather tab's status line: ' Your party rests at the Hearth: +10% damage for 2m 30s in your next fight.'
-  restNote = () => !restParty() ? '' : R().left >= 1 ? ` Your party rests at the Hearth: +${pct()}% damage for ${fmtTime(R().left)} in your next fight${R().left >= REST_TUNE.cap ? ' (full)' : ''}.` : ' Your party rests at the Hearth.';
+  restNote = () => {
+    if (!restParty()) return '';
+    const who = soloOn() ? 'Gathering rests you' : 'Your party rests at the Hearth';
+    return R().left >= 1 ? ` ${who}: +${pct()}% damage for ${fmtTime(R().left)} in your next fight${R().left >= REST_TUNE.cap ? ' (full)' : ''}.` : ` ${who}.`;
+  };
 
   addModifier('dmg', () => active() ? 1 + REST_TUNE.dmg : 1);
   onTick(dt => {
@@ -15080,7 +15101,7 @@ let wellRested, restParty, restNote;
   function awayLine() {
     const g = awayGain; awayGain = 0;
     if (!(g >= 1) || S.activity !== 'gather') return null;
-    return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: 'Your party rested at the Hearth' };
+    return { icon: { ic: ['mug', '#F2C14E'] }, txt: `Well Rested: +${pct()}% damage for ${dur(R().left)}`, sub: soloOn() ? 'You rested while you gathered' : 'Your party rested at the Hearth' };
   }
 }
 
@@ -15304,7 +15325,8 @@ const statsApi = {};
   }
 
   onTick(dt => { ST().played += dt; });
-  on('tap', () => { ST().taps++; });
+  on('tap', () => { if (!soloOn()) ST().taps++; });   // W1-C: in solo the count is Attack presses
+  on('soloAttack', p => { if (p && p.kind === 'hit') ST().taps++; });
   on('kill', ({ mob }) => { if (mob && mob.boss) ST().bosses++; });
   on('loot', () => { ST().uniques++; });
   on('harvest', ({ n }) => { ST().gathered += n || 0; });
@@ -19430,11 +19452,11 @@ const CAMP_BLESS = {
   edge: { n: 'Edge', page: 'Zones', v: 0.06, fx: v => `+${pc(v)} crit damage` },
   hunt: { n: 'Hunt', page: 'Uniques', v: 0.15, fx: v => `+${pc(v)} damage to zone bosses` },
   anvil: { n: 'Anvil', page: 'Armoury', v: 0.15, fx: v => `+${pc(v)} crafting XP` },
-  kin: { n: 'Kin', page: 'Companions', v: 0.15, fx: v => `+${pc(v)} companion XP` },
+  kin: { n: 'Kin', page: 'Companions', v: 0.15, fx: v => `+${pc(v)} companion XP`, needs: () => !soloOn() },   // W1-C: no companions in solo (the Codex page is hidden too)
   road: { n: 'Road', page: 'Stories', v: 0.12, fx: v => `+${pc(v)} away gains` },
   wild: { n: 'Wild', page: 'Materials', v: 0.12, fx: v => `Gathering ${pc(v)} faster` },
   hearth: { n: 'Hearth', page: 'Camp', v: 0.10, fx: v => `Builds ${pc(v)} faster` },
-  wayfarer: { n: 'Wayfarer', page: 'Lore', v: 0.15, fx: v => `Expeditions bring back +${pc(v)}`, needs: () => !!S.exped },
+  wayfarer: { n: 'Wayfarer', page: 'Lore', v: 0.15, fx: v => `Expeditions bring back +${pc(v)}`, needs: () => !!S.exped && !soloOn() },
   deep: { n: 'Deep', page: 'Deepwell', v: 15, fx: v => `Deepwell runs start with +${Math.round(v)}s Oil`, needs: () => !!S.deep },
   oath: { n: 'Oath', page: 'Achievements', v: 0.10, fx: v => `+${pc(v)} essence drops` }
   // Sky (Omens: Dares pay +25%) joins when the Almanac reads a Dare-reward modifier.
@@ -19670,7 +19692,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
   // Library: gathering XP +5% per level; companion XP +5% per level after the first.
   for (const k of ['mine', 'wood', 'forage']) addModifier('skillXp:' + k, () => 1 + 0.05 * lv('library'));
-  addModifier('compXp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));
+  addModifier(soloOn() ? 'xp' : 'compXp', () => 1 + 0.05 * Math.max(0, lv('library') - 1));   // W1-C: solo, the Library's second perk is hero XP
   // Map Room: expedition slots (read by the Expeditions system).
   const MAP = { slots: [0, 1, 2, 2, 3, 3], route: [0, 4, 4, 8, 8, 12] };
   addBonus('expSlots', () => MAP.slots[lv('maproom')] || 0);
@@ -19684,8 +19706,9 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
 
   // Effect lines for a building at a level (the UI shows now -> next). Lv 0 = not built.
-  const TAV = ['', 'The daily visitor', 'Rumours: the next 3 visitors and tomorrow\'s Omen', 'Rumours also name your closest recruits and 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
-  const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Companion XP +${5 * (l - 1)}%`] : []);
+  const TAV = soloOn() ? ['', 'The keep tells the day\'s gossip', 'Rumours: tomorrow\'s Omen', 'Rumours: the next 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown']
+    : ['', 'The daily visitor', 'Rumours: the next 3 visitors and tomorrow\'s Omen', 'Rumours also name your closest recruits and 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
+  const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`${soloOn() ? 'Hero' : 'Companion'} XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
     const d = B(id);
@@ -19697,7 +19720,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
       if (l >= 5) out.push(STN_FIVE[id].txt);
       return out;
     }
-    if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? ['Away report shows the zone your party could hold'] : []);
+    if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? [soloOn() ? 'Away report shows the zone you could hold' : 'Away report shows the zone your party could hold'] : []);
     if (id === 'library') return LIB(l);
     if (id === 'maproom') { const m = MAP; return [`${m.slots[l]} expedition slot${m.slots[l] > 1 ? 's' : ''}`, `Routes up to ${m.route[l]}h`].concat(l >= 5 ? ['Repeats while you are away'] : []); }
     if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
@@ -19743,7 +19766,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     const l = lv('tavern'), out = [];
     if (l < 2 || !campOpen()) return out;
     try {
-      if (typeof visitorToday === 'function' && typeof daysUntilVisit === 'function' && rosterLive()) {
+      if (!soloOn() && typeof visitorToday === 'function' && typeof daysUntilVisit === 'function' && rosterLive()) {
         const seen = new Set();
         for (const id of Object.keys(UNLOCK_TUNE.visitors)) {
           const n = daysUntilVisit(id); if (n < 1 || n > 3 || seen.has(n)) continue;
@@ -19753,7 +19776,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
         }
         out.sort((a, b) => a.n - b.n);
       }
-      if (l >= 3 && typeof leads === 'function') {
+      if (!soloOn() && l >= 3 && typeof leads === 'function') {
         for (const x of leads().slice(0, 3)) out.push({ char: x.id, txt: `${x.name}: ${x.how}`, go: x.tab || 'party' });
       }
       if (typeof almanac === 'object' && almanac.omenFor) {
@@ -19872,7 +19895,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     awayDone = [];
     if (lv('watch') >= 2 && campOpen() && S.activity === 'fight') {
       const z = campHoldZone();
-      if (z > S.zone) out.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `The Watchtower says your party could hold zone ${z}. You are in zone ${S.zone}.`, go: () => { if (S.zone !== z) setZone(z); emit('campGoto', { tab: 'adv' }); } });
+      if (z > S.zone) out.push({ icon: { ic: ['banner', '#F2C14E'] }, txt: `The Watchtower says you could hold zone ${z}. You are in zone ${S.zone}.`, go: () => { if (S.zone !== z) setZone(z); emit('campGoto', { tab: 'adv' }); } });
     }
     return out;
   });
@@ -20455,7 +20478,7 @@ const CODEX_MILESTONES = [
   { at: 75, rw: [{ id: 'd_string', kind: 'cosmetic', n: 'Camp decoration: Lantern String', later: 'Saved: it hangs in camp once the camp scene shows decorations.' }] },
   { at: 100, rw: [{ id: 'hints', kind: 'qol', n: 'Exact Codex hints', txt: 'Every blank entry says exactly where to find it, at any Library level.', live: true }] },
   { at: 150, rw: [{ id: 'c_amber', kind: 'cosmetic', n: 'Lantern colour: Hearth Amber', later: 'Saved: hero lantern colours arrive with hero cosmetics.' }] },
-  { at: 200, rw: [{ id: 'expslot', kind: 'qol', n: '+1 expedition slot', txt: 'The Map Room sends one more team.', live: true }] },
+  { at: 200, rw: [soloOn() ? { id: 't_wayfinder', kind: 'title', n: 'Title: the Wayfinder', live: true } : { id: 'expslot', kind: 'qol', n: '+1 expedition slot', txt: 'The Map Room sends one more team.', live: true }] },   // W1-C: no expeditions in solo: a title
   { at: 250, rw: [{ id: 'salvage2', kind: 'qol', n: 'Auto-salvage, full', txt: 'Rules per kind by rarity and tier, with a switch to keep Masterwork gear.', later: 'Saved for later, like the basic filter.' }] },
   { at: 300, rw: [{ id: 't_relighter', kind: 'title', n: 'Title: Relighter', live: true }, { id: 'd_moth', kind: 'cosmetic', n: 'Camp decoration: Moth Lanterns', later: 'Saved: shows once the camp scene shows decorations.' }] },
   { at: 350, rw: [{ id: 'bag10', kind: 'qol', n: 'Bag +10', txt: 'Ten more spare items fit in your bag.', later: 'Saved: the bag grows when it learns to read this bonus.' }] },
@@ -20499,7 +20522,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const exact = () => (typeof campLevel === 'function' && campLevel('library') >= 3) || !!CX().got[100];
   codexExact = exact;
 
-  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); CODEX_PAGE_IDS.push(id); };
+  const page = (id, d) => { CODEX_PAGES[id] = Object.assign({ id }, d); if (!(d.noSolo && soloOn())) CODEX_PAGE_IDS.push(id); };
 
   // ---------------- 1. Bestiary: 7 types x (4 tiers x2, Elder x3, champion x2) ----------------
   page('bestiary', {
@@ -20569,6 +20592,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const live = () => typeof rosterLive === 'function' && rosterLive();
   page('companions', {
     n: 'Companions', bless: 'kin', seal: { key: 'compXp', v: 0.03, txt: '+3% companion XP' }, title: 'Kindheart', pic: 'char',
+    noSolo: true,   // W1-C: no companions in solo: the page is left out (page())
     tiles: x => {
       const on = live(), out = [];
       for (const id of ROSTER_KEYS) {
@@ -20639,6 +20663,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 9. Lore: expedition Lore pages x2, Keepsakes x1 ----------------
   page('lore', {
     n: 'Lore', bless: 'wayfarer', seal: { key: 'expHaul', v: 0.03, txt: 'Expeditions bring back 3% more' }, title: 'Loremaster', pic: 'rows',
+    noSolo: true,   // W1-C: expedition Lore has no way in solo
     show: () => !!S.exped && typeof EXPED_LORE === 'object',
     tiles: x => {
       const out = [];
@@ -21046,10 +21071,10 @@ const DEEP_SETS = {
   flame: { n: 'Flame', fx: 'Bonfire: +20% damage' },
   oil: { n: 'Oil', fx: 'Deep Breath: no Oil drain for the first 4s of each floor' },
   crit: { n: 'Crit', fx: 'Starburst: crits strike again for 30%' },
-  tap: { n: 'Tap', fx: 'Drumbeat: every 25th tap hits for 15x your attack' },
-  company: { n: 'Company', fx: 'Shoulder to Shoulder: companions +2% damage per floor cleared (max +60%)' },
+  tap: { n: 'Attack', fx: 'Drumbeat: every 25th Attack press hits for 15x your attack' },
+  company: { n: 'Vigour', fx: 'Second Wind: you deal +2% damage per floor cleared (max +60%)' },
   path: { n: 'Path', fx: 'True Path: your class ability cooldown halves' },
-  guard: { n: 'Guard', fx: 'Iron Line: tanks take 25% less damage', c: true },
+  guard: { n: 'Guard', fx: 'Iron Line: you take 25% less damage', c: true },
   dance: { n: 'The Dance', fx: 'Each perfect dodge also gives 2s of Oil', c: true },   // S6-F (combat-2 6.1)
   mend: { n: 'Mend', fx: 'Deep Mercy: all healing +30%', c: true }
 };
@@ -21061,10 +21086,10 @@ const DEEP_BOON_IDS = [];
   // Common
   B('whet', 'Whetstone', 'c', ['flame'], 3, null, 0.12, k => `+${pc(0.12 * k)} damage`);
   B('luck', 'Lucky Break', 'c', ['crit'], 3, null, 0.2, k => `Crits come ${pc(0.2 * k)} more often`);
-  B('heavy', 'Heavy Hand', 'c', ['tap'], 3, null, 0.4, k => `Taps deal +${pc(0.4 * k)}`);
+  B('heavy', 'Heavy Hand', 'c', ['tap'], 3, null, 0.4, k => `Attack deals +${pc(0.4 * k)}`);
   B('warm', 'Warm Oil', 'c', ['oil'], 3, null, 15, k => `+15s Oil now. Clears refund +${2 * k}s`);
   B('steady', 'Steady Flame', 'c', ['oil'], 2, null, 0.1, k => `Oil drains ${pc(0.1 * k)} slower`);
-  B('drill', 'Company Drill', 'c', ['company'], 3, null, 0.15, k => `Companions deal +${pc(0.15 * k)}`);
+  B('drill', 'Battle Drill', 'c', ['company'], 3, null, 0.15, k => `You deal +${pc(0.15 * k)}`);
   B('sharp', 'Sharp Eye', 'c', ['crit'], 3, null, 0.2, k => `Crit damage +${pc(0.2 * k)}`);
   B('first', 'First Strike', 'c', ['flame'], 1, null, 0.5, () => 'The first foe on each floor starts at half health');
   B('map', 'Bounty Map', 'c', [], 1, null, 1, () => '+1 Depth Mark for each floor from now on');
@@ -21079,12 +21104,12 @@ const DEEP_BOON_IDS = [];
   B('exec', 'Executioner', 'r', ['crit'], 1, null, 0.15, () => 'Foes below 15% health die at once');
   B('sconce', 'Oil Sconce', 'r', ['oil'], 2, null, 15, k => `Boss floors refund ${15 * k}s more Oil`);
   B('twin', 'Twin Flame', 'r', ['path'], 2, 'any', 0.15, k => `Your ability cooldown is ${pc(0.15 * k)} shorter`);
-  B('rhythm', 'Tap Rhythm', 'r', ['tap'], 1, null, 0.05, () => 'Quick taps build a combo: +5% tap damage per step, up to +60%');
+  B('rhythm', 'Attack Rhythm', 'r', ['tap'], 1, null, 0.05, () => 'Quick Attack presses build a combo: +5% Attack damage per step, up to +60%');
   B('cascade', 'Crit Cascade', 'r', ['crit', 'oil'], 1, null, 0.2, () => 'Each crit gives back 0.2s of Oil (up to 3s a floor)');
   B('glass', 'Cracked Lantern', 'r', ['flame'], 1, null, 0.45, () => '+45% damage, but clears refund 4s less Oil');
-  B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `Companions deal +${pc(0.25 * k)} on elite and boss floors`);
+  B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `You deal +${pc(0.25 * k)} on elite and boss floors`);
   B('focus', "Hunter's Focus", 'r', ['path'], 1, 'ranger', 0.25, () => 'Focused foes take +50% from everyone (was +25%)');
-  B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each tap plants 2 Embers');
+  B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each Attack press plants 2 Embers');
   B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each Grit gives +5% damage (was +3%)');
   B('choir', 'Choir', 'r', ['path'], 1, 'lightkeeper', 4, () => 'Blessings last 10s (was 6s)');
   // Epic
@@ -21097,20 +21122,20 @@ const DEEP_BOON_IDS = [];
   B('relight', 'Quick Relight', 'e', ['oil'], 1, null, 6, () => 'Floors cleared in under 6s refund double Oil');
   B('crown', 'Crown of the Deep', 'e', [], 1, null, 1, () => 'Each boss floor you clear gives a free Rare boon (pick 1 of 3)');
   B('mass', 'Critical Mass', 'e', ['crit'], 1, null, 0.5, () => 'Crits come 50% more often and deal +50%');
-  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'Companions deal +60%');
+  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
-  B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'Your tanks reflect 30% of the damage they take', 1);
-  B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `Tanks +${pc(0.2 * k)} max health`, 1);
-  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warrior taps taunt for 2s', 1);
+  B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'You reflect 30% of the damage you take', 1);
+  B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `You have +${pc(0.2 * k)} max health`, 1);
+  B('taunt', 'Parry Drill', 'c', ['guard'], 1, null, 0.5, () => 'Your counters after a parry deal 50% more', 1);
   B('dward', 'Deep Ward', 'r', ['mend'], 1, null, 0.2, () => 'Overhealing becomes a shield, up to 20% max health', 1);
-  B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `The party heals ${pc(0.1 * k)} max health per floor cleared`, 1);
-  B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, a member who would go down stays at 1 health', 1);
+  B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `You heal ${pc(0.1 * k)} max health per floor cleared`, 1);
+  B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, if you would go down you stay at 1 health', 1);
   B('wild', 'Wildfire', 'e', ['flame'], 1, null, 1, () => 'Burns and Embers jump to a new foe when their foe dies', 1);
-  B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => "Each striker's first hit on a foe always crits", 1);
-  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => 'The parry window is 0.4s longer', 1);
+  B('duel', 'Duelist', 'r', ['crit'], 1, null, 1, () => 'Your first hit on each foe always crits', 1);
+  B('parry', 'Quick Parry', 'r', [], 1, null, 0.4, () => soloOn() ? 'The parry window is 0.15s longer' : 'The parry window is 0.4s longer', 1);
   // S6-F (combat-2 6.1): boons for active play (59g reads them), and one for idle drafts
-  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => 'The dodge window is 0.3s longer; a perfect dodge 0.2s longer', 1);
-  B('breaker', 'Breaker', 'r', ['dance'], 1, null, 0.3, () => 'Your party fills the stagger bar 30% faster', 1);
+  B('feet', 'Steady Feet', 'r', ['dance'], 1, null, 0.3, () => soloOn() ? 'The dodge window is 0.2s longer' : 'The dodge window is 0.3s longer; a perfect dodge 0.2s longer', 1);
+  B('breaker', 'Breaker', 'r', ['dance'], 1, null, 0.3, () => 'You fill the stagger bar 30% faster', 1);
   B('coup', 'Coup de Grace', 'e', ['dance'], 1, null, 0.5, () => 'Finishers deal 50% more; the one that fires by itself hits at 80%', 1);
   B('silence', 'Silence', 'r', [], 1, null, 0.3, () => 'An ability that stops a cast gives back 30% of its cooldown', 1);
   B('lward', 'Lamplight Ward', 'c', [], 1, null, 0.3, () => 'A wind-up you do not answer deals 30% less', 1);
@@ -21119,8 +21144,8 @@ const DEEP_BOON_IDS = [];
 // ---------------- the weekly Trial's rules (spec 5) ----------------
 const DEEP_RULES = [
   { id: 'glass', n: 'Glass Week', fx: 'Damage x2. Your most Oil is 60s' },
-  { id: 'company', n: 'Company Week', fx: 'Your hero barely scratches. Companions x2' },
-  { id: 'drum', n: 'Drum Week', fx: 'Taps x3. Auto-attacks x0.5' },
+  { id: 'echo', n: 'Echo Week', fx: 'Abilities come back twice as fast. Attack hits for half' },
+  { id: 'drum', n: 'Drum Week', fx: 'Attack hits x3. Everything else hits for half' },
   { id: 'rush', n: 'Boss Rush', fx: 'Every 3rd floor is a boss floor' },
   { id: 'rare', n: 'Rare Air', fx: 'Drafts show 2 boons, both Rare or better' },
   { id: 'drought', n: 'Drought', fx: 'Oil refunds halved. Start with 150s Oil' },
@@ -21277,7 +21302,7 @@ let DEEP_ARENA = null;
     if ((r.boons[id] || 0) >= b.max) return false;
     if (r.banned.includes(id)) return false;
     if (b.cls === 'any' ? !cls() : b.cls && b.cls !== cls()) return false;
-    if (b.sets.includes('company') && !hasCompanions()) return false;
+    if (b.sets.includes('company') && !soloOn() && !hasCompanions()) return false;
     if (opts && opts.rar && !opts.rar.includes(b.r)) return false;
     if (ruleOf(r) === 'one' && !r.boons[id] && b.sets.some(s => setCount(s, r) >= 1)) return false;
     return true;
@@ -21611,20 +21636,24 @@ let DEEP_ARENA = null;
     if (setOn('flame')) m *= 1.2;
     const rule = ruleOf(r);
     if (rule === 'glass') m *= 2;
-    if (rule === 'company') m *= 0.01;
     if (rule === 'drum') m *= 0.5;
+    if (soloOn()) m *= vigour(r);   // W1-C: the Company boons and the Vigour set are the hero's damage in solo
     return m;
   });
-  addModifier('party', () => {
-    if (!on_()) return 1;
-    const r = R();
+  // The Company boons (Battle Drill, Field Rations, Warband) and the Vigour set: companions' damage in the party game,
+  // the hero's own in solo (W1-C).
+  function vigour(r) {
     let m = (1 + DEEP_BOONS.drill.v * rank('drill')) * (r.boons.warband ? 1.6 : 1);
     const fk = r.phase === 'fight' ? floorKind(r.floor) : null;
     if ((fk === 'elite' || fk === 'boss') && r.boons.ration) m *= 1 + DEEP_BOONS.ration.v * rank('ration');
     if (setOn('company')) m *= 1 + Math.min(0.6, 0.02 * r.cleared);
-    const rule = ruleOf(r);
-    if (rule === 'company') m *= 200;       // hero x0.01 on dmg; companions net x2
-    if (rule === 'drum') m *= 2;            // dmg x0.5 on everyone; companions net x1
+    return m;
+  }
+  addModifier('party', () => {
+    if (!on_()) return 1;
+    const r = R();
+    let m = vigour(r);
+    if (ruleOf(r) === 'drum') m *= 2;       // dmg x0.5 on everyone; companions net x1
     return m;
   });
   addModifier('crit', () => {
@@ -21639,9 +21668,10 @@ let DEEP_ARENA = null;
     let m = 1 + DEEP_BOONS.heavy.v * rank('heavy');
     if (r.boons.rhythm) m *= 1 + Math.min(0.6, DEEP_BOONS.rhythm.v * r.combo);
     if (ruleOf(r) === 'drum') m *= 6;       // dmg x0.5 -> taps net x3
+    if (ruleOf(r) === 'echo') m *= 0.5;     // Echo Week: Attack hits for half
     return m;
   });
-  addModifier('abilityCd', () => on_() ? (1 - DEEP_BOONS.twin.v * rank('twin')) * (setOn('path') ? 0.5 : 1) : 1);
+  addModifier('abilityCd', () => on_() ? (1 - DEEP_BOONS.twin.v * rank('twin')) * (setOn('path') ? 0.5 : 1) * (ruleOf(R()) === 'echo' ? 0.5 : 1) : 1);
   const TUNES = { embersMax: 'kindle', guardMax: 'shield', markT: 'fletch', blessMax: 'psalm', mark: 'focus', emberPerTap: 'double', guard: 'bulwark', blessT: 'choir', volleyHits: 'storm', charges: 'lheart' };
   for (const k in TUNES) addBonus('tune:' + k, () => on_() ? DEEP_BOONS[TUNES[k]].v * rank(TUNES[k]) : 0);
   addBonus('tune:keepEmbers', () => on_() && R().boons.twice && !R().twiceUsed ? 1 : 0);
@@ -21937,29 +21967,30 @@ const STAR_MAPS = {
         ['Deep Grit', 'Grit cap +2.', { t: { guardMax: 2 } }, 1.02],
         ['Brace', 'Shield Wall lasts 1s longer.', { t: { wallT: 1 } }, 1.008],
         ['Ready Shield', 'Shield Wall cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'The party takes 10% less damage while you hold 5 or more Grit.'],
+        ['Hold the Line', 'Shield Wall stops the boss timer 2s longer.', { t: { wallPause: 2 } }, 1.01, 'You take 10% less damage while you hold 5 or more Grit.'],
         ['Lasting Grit II', 'Grit lasts 2s longer.', { t: { guardT: 2 } }, 1.004],
         ['Unbroken', 'Your Grit never falls off while you land a heavy hit at least every 3s. Grit cap +5, but each Grit gives 1% less damage.', { ks: 'unbroken', t: { guardMax: 5, guard: -0.01 } }, 1.03, 'Each Grit also gives 2 armour.']
       ]],
       ['Vanguard', [
-        ['Heavy Arm', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Heavy Arm', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Edge', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
         ['Hard Hits', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
-        ['Heavy Arm II', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Challenger', 'Your taps deal +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Taps taunt every foe for 2s, and you take 20% less damage while taunting.']
+        ['Challenger', 'Your Attack deals +20%, and each heavy hit on a boss adds 0.3s to its timer, up to 10s a fight (instead of Bash).', { ks: 'challenger', live: 'challenger', m: { tap: 1.2 } }, 1.03, 'Your Attack draws every foe for 2s, and you take 20% less damage while it does.']
       ]],
       ['Oath', [
-        ['Comrades', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Comrades II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Shield Brothers', "Shield Wall's party bonus +10% (x1.4, was x1.3).", { t: { wall: 0.1 } }, 1.02],
-        ['Drillmaster', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
-        ['Comrades III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Comrades', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Comrades II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Shield Brothers', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.02],
+        ['Drillmaster', 'Hero XP +5%.', { m: { xp: 1.05 } }, 1.003],
+        ['Comrades III', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Banner Over Camp', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
-        ['Comrades IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
+        ['Comrades IV', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        soloOn() ? ['Oathsworn', 'You deal 10% more damage.', { m: { dmg: 1.1 } }, 1.035]
+          : ['Oathsworn', 'You deal 25% less. Your companions deal 10% more.', { ks: 'oathsworn', hero: 0.75, m: { party: 1.1 } }, 1.035, 'Tanks get +80% health and +40 armour (was +40% and +20).']
       ]]
     ],
     crown: ['Lantern Bastion', "Every heavy hit takes 1s off Shield Wall's cooldown, and Shield Wall stops the boss timer for its whole length.", { ks: 'bastion' }, 1.05, "Shield Wall also blocks the boss's next heavy hit on anyone."]
@@ -21970,9 +22001,9 @@ const STAR_MAPS = {
       ['Kindle', [
         ['More Tinder', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.012],
         ['Hot Coals', 'Each Ember adds 2% more to Flare.', { t: { flarePerEmber: 0.02 } }, 1.006],
-        ['Twin Spark', 'A tap has a 25% chance to plant 2 Embers.', { ks: 'twinSpark' }, 1.015],
+        ['Twin Spark', 'An Attack press has a 25% chance to plant 2 Embers.', { ks: 'twinSpark' }, 1.015],
         ['More Tinder II', 'Ember cap +1.', { t: { embersMax: 1 } }, 1.01],
-        ['Quick Fingers', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Quick Fingers', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Slow Burn', 'Each Ember burns its foe for 0.05x your attack every second.', { ks: 'slowBurn' }, 1.02],
         ['Hot Coals II', 'Each Ember adds 2% more to Flare.', { t: { flarePerEmber: 0.02 } }, 1.006],
         ['Wildfire', 'When a foe with Embers dies, its Embers jump to the next foe.', { ks: 'wildfire' }, 1.035, 'They spread to every foe in the pack at half the count.']
@@ -21995,7 +22026,7 @@ const STAR_MAPS = {
         ['Clean Cut', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
         ['Overkill', 'Damage past a kill carries to the next foe.', { ks: 'overflow' }, 1.02],
         ['Spark IV', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your taps deal half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
+        ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your Attack deals half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
       ]]
     ],
     crown: ['Everburn', 'Each Ember burns its foe for 0.1x your attack every second, and Flare plants 2 new Embers after it goes off.', { ks: 'everburn' }, 1.035]
@@ -22009,16 +22040,16 @@ const STAR_MAPS = {
         ['Next in Line', 'When a marked foe dies, the next foe starts marked for 4s.', { ks: 'nextMark' }, 1.02],
         ['Open Wound II', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
         ['Long Mark II', 'Focus lasts 2s longer.', { t: { markT: 2 } }, 1.006],
-        ['Boss Stalker', 'Your party deals +6% to bosses, and a boss you marked drops its unique 10% more often.', { live: 'stalker' }, 1.02],
+        ['Boss Stalker', 'You deal +6% to bosses, and a boss you marked drops its unique 10% more often.', { live: 'stalker' }, 1.02],
         ['Open Wound III', 'Marked foes take 3% more.', { t: { mark: 0.03 } }, 1.015],
-        ['Pack Leader', "Focus gives your party +50% on the mark (was +25%), but you lose your own crit bonus on marked foes.", { ks: 'pack', t: { mark: 0.25 } }, 1.035]
+        ['Pack Leader', "Focus hits the mark for +50% (was +25%), but you lose your own crit bonus on marked foes.", { ks: 'pack', t: { mark: 0.25 } }, 1.035]
       ]],
       ['Volley', [
         ['Quick Nock', 'Volley cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
         ['Full Quiver', 'Volley fires 1 more arrow.', { t: { volleyHits: 1 } }, 1.008],
         ['Quiver Song', 'The haste after Volley lasts 3s longer.', { t: { hasteT: 3 } }, 1.02],
         ['Quick Nock II', 'Volley cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
-        ['Hunting Call', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Hunting Call', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Steady Draw', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
         ['Full Quiver II', 'Volley fires 1 more arrow.', { t: { volleyHits: 1 } }, 1.008],
         ['Quickdraw', "Volley's cooldown is 40% shorter. It fires 4 fewer arrows, each at 2.5x your attack (was 1.5x).", { ks: 'quickdraw', t: { volleyHits: -4 }, m: { abilityCd: 0.6 } }, 1.03]
@@ -22027,14 +22058,14 @@ const STAR_MAPS = {
         ['Steady Aim', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Barbs', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
         ['Hawk Eye', 'Your first hit on each foe always crits.', { ks: 'hawk' }, 1.02],
-        ['Fast Hands', 'Taps +5%.', { m: { tap: 1.05 } }, 1.006],
+        ['Fast Hands', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Barbs II', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
         ['Finisher', 'Foes under 20% health take +20% from you.', { live: 'finisher' }, 1.015],
         ['Steady Aim II', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Deadeye', 'You mark one foe at a time, and the mark lasts until it dies. Your crits on it deal double.', { ks: 'deadeye' }, 1.035]
       ]]
     ],
-    crown: ['Rain of Arrows', 'Every 10th tap fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
+    crown: ['Rain of Arrows', 'Every 10th Attack press fires a free 5-arrow volley at 1x your attack.', { ks: 'rain' }, 1.03]
   },
   lightkeeper: {
     name: 'Lightkeeper', legacy: 1, hearth: 'Small Light', color: '#F2C14E',
@@ -22056,18 +22087,18 @@ const STAR_MAPS = {
         ['Short Verse II', 'Rally Hymn cooldown -4%.', { m: { abilityCd: 0.96 } }, 1.006],
         ['Loud Verse II', 'Rally Hymn +4%.', { t: { hymn: 0.04 } }, 1.008],
         ['Steady Voice', 'Auto-cast waits 1.5x the cooldown (was 2x).', { t: { autoCd: -0.5 } }, 1.02],
-        ['Teacher', 'Companion XP +5%.', { m: { compXp: 1.05 } }, 1.003],
+        ['Teacher', 'Hero XP +5%.', { m: { xp: 1.05 } }, 1.003],
         ['Sanctuary Hymn', 'Rally Hymn lasts 8s longer, but its cooldown is 50% longer.', { ks: 'sanctuary', t: { hymnT: 8 }, m: { abilityCd: 1.5 } }, 1.03, 'The Hymn heals 5% of max health every second.']
       ]],
       ['Martyr', [
-        ['Gift', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Gift II', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
+        ['Gift', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Gift II', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
         ['Lantern Share', 'The damage you give up goes 6% further.', { t: { lkShare: 0.06 } }, 1.015],
-        ['Gift III', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ['Wider Glow', 'Your aura +2% (companions +12%, was +10%).', { t: { lkAura: 0.02 } }, 1.012],
+        ['Gift III', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ['Wider Glow', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.012],
         ['Vigil', '+3% crit damage and +6% away gains.', { keen: 0.03, m: { offline: 1.06 } }, 1],
-        ['Gift IV', 'Companions deal +2%.', { m: { party: 1.02 } }, 1.015],
-        ["Martyr's Light", 'Your own hits deal half. Your companions deal 12% more.', { ks: 'martyr', hero: 0.5, m: { party: 1.12 } }, 1.035]
+        ['Gift IV', 'You deal +2% damage.', { m: { dmg: 1.02 } }, 1.015],
+        ["Martyr's Light", 'You deal 12% more damage.', { m: { dmg: 1.12 } }, 1.035]
       ]]
     ],
     crown: ['Lamp of Ages', 'While Rally Hymn is up, Blessings do not fade, and the Hymn adds a Blessing every 2s.', { ks: 'ages' }, 1.035]
@@ -22076,7 +22107,7 @@ const STAR_MAPS = {
 // The crown ring, shared by every class: [name, text, fx, p].
 const STAR_BRIDGES = [
   ['Ring of Might', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
-  ['Ring of Friends', 'Companions deal +1.5%.', { m: { party: 1.015 } }, 1.011],
+  ['Ring of Friends', 'You deal +1.5% damage.', { m: { dmg: 1.015 } }, 1.011],
   ['Ring of Haste', 'Ability cooldown -3%.', { m: { abilityCd: 0.97 } }, 1.005],
   ['Ring of Fire', '+1% damage.', { m: { dmg: 1.01 } }, 1.01],
   ['Ring of Learning', 'Hero XP +4%.', { m: { xp: 1.04 } }, 1]
@@ -22408,7 +22439,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   // ---- news: new points ----
   on('levelup', ({ L, quiet }) => {
     if (quiet || L % T.every !== 0 || !starCls() || typeof isUnlocked !== 'function' || !isUnlocked('stars')) return;
-    toast(`+1 star point. You have ${starFree()} to spend in Party, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
+    toast(`+1 star point. You have ${starFree()} to spend in Hero, Stars.`, 'good', { ic: ['constel', STAR_MAPS[starCls()].color] }, 'normal');
   });
   // The points come from greatLanternsLit(); the Great Lantern card (55-lantern, 75-lantern-ui) says so.
   // A quiet catch-up (a save already past the boss) has counted them all along: nothing new to list.
@@ -23173,13 +23204,14 @@ let deeds, deedBonus, wearGet;
     N1: () => !!S.hands && typeof S.hands === 'object',
     K12: () => !!S.kitchen && typeof S.kitchen === 'object',
     N1K12: () => WAIT.N1() && WAIT.K12(),
-    F1: () => typeof offSlot === 'function',
-    F2: () => !!S.bond && typeof S.bond === 'object',
+    NS: () => !soloOn(),                                   // W1-C: needs a party or expeditions: not in solo
+    F1: () => !soloOn() && typeof offSlot === 'function',
+    F2: () => !soloOn() && !!S.bond && typeof S.bond === 'object',
     R2: () => !!(REGIONS[1] && REGIONS[1].plugged),
     R3: () => REGIONS.length >= 3,
     O1: () => !!S.oath && typeof S.oath === 'object',
     PB1: () => !!S.pin && typeof S.pin === 'object',
-    R2O1: () => WAIT.R2() && WAIT.O1()
+    R2O1: () => WAIT.R2() && WAIT.O1() && !soloOn()   // (Tidewalker: tide turns with the party fielded)
   };
   const waitOk = w => !w || safe(() => !!WAIT[w](), false);
   // Tiers that open with later content (lock text in the data).
@@ -23388,16 +23420,19 @@ let deeds, deedBonus, wearGet;
     if (k === 'pts') return !!d.mil[x];
     return false;
   };
+  const groupLive = id => DEED_TRACKS.some(t => t.g === id && trackLive(t));
   const lookLive = l => {
     const [k, x] = l.src.split(':');
     if (k === 'feat') return waitOk(FE[x] && FE[x].wait);
     if (k === 'sec') return waitOk(SE[x] && SE[x].wait);
     if (k === 'ch') return waitOk(CH[x] && CH[x].wait);
+    if (k === 'grp') return groupLive(x);   // W1-C: a group with no track in solo (Companions, Expeditions) gives no look
     return true;
   };
   function titleList() {
     const d = DS(), out = [];
     for (const g of DEED_GROUPS) {
+      if (!groupLive(g.id)) continue;
       out.push({ id: 'a_g_' + g.id, n: g.gold, src: `${g.n} at Gold`, got: num(d.grp[g.id]) >= 1, at: d.at['g:' + g.id + ':1'] || 0 });
       out.push({ id: 'a_e_' + g.id, n: g.ever, src: `${g.n} at Everflame`, got: num(d.grp[g.id]) >= 2, at: d.at['g:' + g.id + ':2'] || 0 });
     }
@@ -23622,16 +23657,31 @@ let deeds, deedBonus, wearGet;
     // zone boss secrets (live play only)
     if (typeof fightBoss !== 'undefined' && num(bossTime) < 1 && num(bossTime) >= 0) grantSecret('s_close');   // S6: under 1 s before the Enrage
     // (from zone 10: every new game beats its first bosses before it has a weapon or a full party)
-    if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
     const U = safe(() => combatUnits(), null);
+    if (soloOn()) {
+      // W1-C: the solo versions. Untouched: a boss from zone 10 without one hit taken. Last Lamp Standing: your health fell under 10% during the fight (a boss kill heals you a little, so the lowest point counts).
+      if (S.zone >= T.oddZone && bossHurt === 0) grantSecret('s_bare');
+      const h = U && U[0];
+      if (S.zone >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
+    } else {
+    if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
     if (U && U[0] && U[0].live && !U[0].down) {
       let others = 0, up = 0; for (let i = 1; i < U.length; i++) if (U[i].live) { others++; if (!U[i].down) up++; }
       if (others >= 2 && up === 0 && S.zone >= T.oddZone) grantSecret('s_alone');
+    }
     }
     if (waitOk('F1')) {
       const f = S.party && Array.isArray(S.party.field) ? S.party.field : [];
       if (f.length >= 3 && f.every(id => safe(() => !!offSlot(id), false))) grantSecret('s_wrong');
     }
+  });
+  // Untouched (solo): hits the hero takes while a zone boss is up (the count resets when a boss spawns)
+  let bossHurt = 0, bossLow = 1;
+  on('spawn', ({ mob: m }) => { if (m && m.boss) { bossHurt = 0; bossLow = 1; } });
+  on('unitHit', h => {
+    if (!h || !(h.amount > 0)) return;
+    bossHurt++;
+    const u = safe(() => combatUnits()[0], null); if (u && u.maxHp > 0) bossLow = Math.min(bossLow, u.hp / u.maxHp);
   });
   on('deepFloor', ({ kind }) => { if (kind === 'boss') N().boss++; });
   on('trophy', ({ n }) => { N().troph += n == null ? 1 : num(n); });
@@ -23681,11 +23731,12 @@ let deeds, deedBonus, wearGet;
   // Drummer: taps in the last 60 seconds of tick time (60 one-second buckets, no allocation).
   const drum = new Uint16Array(60); let drumSum = 0, drumSec = 0;
   let campSince = -1, lastView = '';
+  const drumHit = () => { const b = drumSec % 60; drum[b]++; drumSum++; if (drumSum >= T.drumTaps) grantSecret('s_drum'); };
   on('tap', () => {
-    const b = drumSec % 60; drum[b]++; drumSum++;
-    if (drumSum >= T.drumTaps) grantSecret('s_drum');
+    if (!soloOn()) drumHit();   // W1-C: in solo the Drummer counts Attack presses (below)
     if (campSince >= 0) campSince = clock;
   });
+  on('soloAttack', p => { if (p && p.kind === 'hit') drumHit(); });
   on('menuView', ({ view }) => { lastView = view || ''; campSince = lastView === 'camp' ? clock : -1; });
 
   // Per-second secrets and polls.
@@ -24295,7 +24346,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (p && p.cls === 'warden' && role === 'tank' && key !== 'hero') { const k = ks('oathsworn') ? 2 : 1; maxHp *= 1 + T.wardenTankHp * k; u.armour += T.wardenTankArmour * k; }
     if (u.col === 2) u.armour += role === 'tank' ? T.braced : FORM_TUNE.bracedAll;   // F1: Braced is for anyone in Front
     if (upHas('elowen') || has('elowen')) maxHp *= 1 + T.lastLight;
-    if (role === 'tank' && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
+    if ((role === 'tank' || soloOn()) && boon('iron')) maxHp *= 1 + 0.2 * boon('iron');
     u.healIn = (has('elowen') ? 1 + T.lastLight : 1) * sx.healIn * (setOnC('mend') ? 1.3 : 1);   // F2: Lifeline, Two Lights
     if (!(maxHp > 0) || !Number.isFinite(maxHp)) maxHp = 1;
     if (keepHp && u.maxHp > 0) { const f = u.hp / u.maxHp; u.maxHp = maxHp; u.hp = u.down ? 0 : Math.max(0, Math.min(maxHp, f * maxHp)); }
@@ -24542,7 +24593,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if ((f.boss || f.elite) && typeof actHeavy === 'function' && (src === 0 ? (tags & ST_HEAVY) : typeof ST_LAST === 'object' && ST_LAST.heavy) && kind !== 'dot' && kind !== 'burn') actHeavy(f, src);
     if (f.tr && typeof eliteHit === 'function') { a = eliteHit(f, a, src, kind, ty, tags); if (!(a > 0)) return 0; }   // S6-D: traits (59i)
     // Deepwell Duelist: each striker's first hit on a foe always crits (x3 over the average x1.3).
-    if (src >= 0 && U[src] && U[src].role === 'striker' && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
+    if (src >= 0 && U[src] && (U[src].role === 'striker' || soloOn()) && !(f.duel & (1 << src)) && boon('duel')) { f.duel = (f.duel || 0) | (1 << src); a *= 2.3; }
     f.hp -= a; f.hit = 0.08;
     if (typeof stFoeDealt === 'function') stFoeDealt(f, a, src, ty);   // S1: Curse stores, Judgement heals
     if (a > ST.maxHit) ST.maxHit = a; if (f.max > 0 && a > ST.maxOver * f.max) ST.maxOver = a / f.max;   // AC2 records
@@ -24994,7 +25045,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     dr *= u.synDr || 1;   // F2: combos, Kin and Bonds (Lifeline, Two Walls, The Oath, ...; capped in 56b)
     if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
     if (typeof clsDr === 'function') dr *= clsDr(u, kind, f);   // S3 (59e): the Reaver's half cut, Stand Fast, Oath of the Order
-    if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
+    if ((u.role === 'tank' || soloOn()) && setOnC('guard')) dr *= 1 - 0.25;   // W1-C: solo, the hero is the one in front
     if (f && (f.slowT > 0 || f.chillT > 0) && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
     // Cover (F1, formation.md 1.1): a tank in Front covers the Middle (cover), a tank in the Middle the Back (bulwark).
@@ -25018,7 +25069,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       let back = 0;
       if (u.id === 'maren' || u.id === 'caedmon') back += (a + sh) * T.burnBack * (u.id === 'maren' && (f.slowT > 0 || f.chillT > 0) ? 1 + synFlags.mirelamp : 1);
       if (u.reflT > 0) back += (a + sh) * T.pyre;
-      if (u.role === 'tank' && boon('thorn')) back += (a + sh) * 0.3;
+      if ((u.role === 'tank' || soloOn()) && boon('thorn')) back += (a + sh) * 0.3;
       // S1: Maren's Lanternlight burns back holy; Caedmon's fire, and his Pyre Guard sets a Burn on the attacker
       if (back > 0) { carry = false; cbDamageFoe(f, back, u.i, 'burn', u.id === 'maren' ? 'holy' : u.dt); carry = true; }
       if (u.reflT > 0 && u.id === 'caedmon' && alive(f)) burn(f, hitPow(u), u);
@@ -26237,7 +26288,7 @@ let deepCombatOn, dcLifeline, DWC;
     lifeLeft = T.lifeSaves;
     if (!partyCombatOn() || S.deepCombat.tip) return;
     S.deepCombat.tip = 1;
-    toast("Your party's health carries from floor to floor. Each floor you clear heals a little. If everyone falls, the run ends.", 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
+    toast(soloOn() ? 'Your health carries from floor to floor. Each floor you clear heals a little. If you fall, the run ends.' : "Your party's health carries from floor to floor. Each floor you clear heals a little. If everyone falls, the run ends.", 'good', { ic: ['orb', '#7FB2FF'] }, 'normal');
   });
   // Going below or coming back up (57d emits sceneReset in both): the party is whole, and the pack
   // of the world just left is set aside (no zone foe under the arena, no well foe in the zone).
@@ -27054,6 +27105,9 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
   const parryWin = () => (typeof ENEMY_TUNE === 'object' ? ENEMY_TUNE.parryWin : T.parryWin)
     + (units().some(u => u.live && u.id === 'maren') ? ENEMY_TUNE.marenWin : 0)
     + (typeof deepActive === 'function' && deepActive() && DW.run() && DW.run().boons && DW.run().boons.parry ? 0.4 : 0);
+  // W1-C: the Deepwell's Quick Parry and Steady Feet boons reach the solo buttons (the wider windows are smaller than the party's)
+  const soloParryWin = () => SOLO_TUNE.parryWin + (dboon('parry') ? 0.15 : 0);
+  const soloDodgeWin = () => SOLO_TUNE.dodgeWin + (dboon('feet') ? 0.2 : 0);
   const heavyLead = () => (units().some(u => u.live && u.id === 'maren') ? ENEMY_TUNE.marenLead : 0);
 
   function start(spec) {
@@ -27068,7 +27122,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
     // SOLO1: Parry and Dodge are buttons. A heavy takes either (Parry in the tight window, Dodge in the long one);
     // a slam or a ground zone takes Dodge only. W.win is the parry window on a heavy (the banner marks both).
-    if (soloOn()) { W.win = k === 'heavy' ? SOLO_TUNE.parryWin : 0; W.dwin = k === 'heavy' || DODGE[k] ? SOLO_TUNE.dodgeWin : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
+    if (soloOn()) { W.win = k === 'heavy' ? soloParryWin() : 0; W.dwin = k === 'heavy' || DODGE[k] ? soloDodgeWin() : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
     else W.dwin = 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
@@ -27200,7 +27254,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     // 59b's own wind-ups (a boss without a kit)
     const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
     if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
-      if (t.left <= SOLO_TUNE.parryWin || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
+      if (t.left <= soloParryWin() || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
       return 'miss';
     }
     return '';
@@ -27222,7 +27276,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
     if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
       if (t.res) return '';
-      if (t.left <= SOLO_TUNE.dodgeWin || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
+      if (t.left <= soloDodgeWin() || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
       return 'early';
     }
     return '';
@@ -27953,12 +28007,14 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
           const P = heroAtkNow(false), cm = critMult();
-          const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
+          let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
+          try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
+          const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
           ST.counters++;
           emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FF9E3D', big: true, crit: true });
           emit('crit', { tap: true, counter: true }); emit('shake', 0.2); emit('lunge');
           const echo = gear().echo;
-          if (echo && alive(c.f)) { const e2 = cbDamageFoe(c.f, P * T.counterX * aps() * cm * echo, 0, 'phys', unitType('hero'), 0); emit('float', { txt: fmt(e2 || 0), color: '#FFD27A', big: false }); }
+          if (echo && alive(c.f)) { const e2 = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx * echo, 0, 'phys', unitType('hero'), 0); emit('float', { txt: fmt(e2 || 0), color: '#FFD27A', big: false }); }
           emit('soloCounter', { foe: c.f, dmg: dmg || 0 });
         }
       }
@@ -28011,7 +28067,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
-    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX), ty = unitType('hero');   // by hand it hits harder (SOLO2)
+    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
     const tags = ST_AB;
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
@@ -34680,7 +34736,7 @@ registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bo
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
 registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30, feature: 'bestiary' });
 registerView('party', { id: 'team', label: 'Team', order: 10, feature: 'party' });
-registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });
+if (!soloOn()) registerView('party', { id: 'roster', label: 'Roster', order: 20, feature: 'roster' });   // W1-C: no roster in solo
 registerView('gat', { id: 'mine', label: 'Mining', order: 10, feature: 'gather' });
 registerView('gat', { id: 'wood', label: 'Wood', order: 20, feature: 'gather' });
 registerView('gat', { id: 'forage', label: 'Foraging', order: 30, feature: 'forage' });
@@ -35522,10 +35578,10 @@ function gxNow(R) {
   }
   // The heroes rest at the Hearth while the Lanternbearer gathers (G1, 55-rested).
   // A new game has no heroes yet: no line.
-  const heroes = !!(S.party && Array.isArray(S.party.field) && S.party.field.length);
+  const heroes = soloOn() || !!(S.party && Array.isArray(S.party.field) && S.party.field.length);   // W1-C: solo, the note is about you
   const rest = heroes && typeof restNote === 'function' ? restNote().trim() : '';
   putHidden(R.nrest, !heroes);
-  if (heroes) putText(R.nrest, rest ? rest.replace('Your party rests at the Hearth', 'Your heroes rest at the Hearth') : 'Your heroes rest at the Hearth while you gather.');
+  if (heroes) putText(R.nrest, rest ? rest.replace('Your party rests at the Hearth', 'Your heroes rest at the Hearth') : soloOn() ? 'Gathering rests you. Rest turns into extra damage in your next fight.' : 'Your heroes rest at the Hearth while you gather.');
   if (typeof toolsUI === 'object' && toolsUI) toolsUI.chipUpdate(R.tool, sk);
   const e = equippedTool(sk), on_ = TOOL_TUNE.on, right = e.tier >= t;
   putHidden(R.right, !on_);
@@ -36830,7 +36886,7 @@ let bondsUI = null;
     id: 'camp-roster', title: 'Roster board',
     mount(sec) { rosNote = el('p', 'note'); rosBox = el('div', 'ros-list'); sec.append(rosNote, rosBox); },
     update() {
-      const sec = rosBox.parentNode, live = campOpen() && rosterLive();
+      const sec = rosBox.parentNode, live = campOpen() && rosterLive() && !soloOn();   // W1-C: no roster board in solo
       putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);
@@ -36931,7 +36987,7 @@ var classEvoUI;
     box.append(el('b', null, `The Proving: ${tr.name}`), el('p', null, p.prove ? 'Prove what you already are. ' + tr.text : tr.text), el('p', 'cl-note', tr.how));
     if (p.n) box.append(el('p', 'cl-rec', `Tries: ${p.n}. Best: ${p.best}%.`));
     box.append(btn('mini go cl-go', 'Take the Proving', () => { closeSheet(); startProving(); }));
-    box.append(el('small', null, 'Free, and you can try again at once. Your party waits while you fight alone.'));
+    box.append(el('small', null, 'Free, and you can try again at once. The road waits while you fight.'));
     return box;
   }
   function rows(info) {
@@ -37703,7 +37759,7 @@ let craftUI = null;
   const trophTotal = () => troph().reduce((a, b) => a + (b || 0), 0);
   const skillOfSt = st => CRAFT_STATIONS[st].skill;
   const lvOf = sk => (S.skills[sk] || { lv: 1 }).lv;
-  const roster = () => (typeof rosterLive === 'function' && rosterLive() && typeof rosterList === 'function' ? safe(() => rosterList(), []) : []);
+  const roster = () => soloOn() ? [] : (typeof rosterLive === 'function' && rosterLive() && typeof rosterList === 'function' ? safe(() => rosterList(), []) : []);
   const fielded = k => !!(S.party && Array.isArray(S.party.field) && S.party.field.includes(k));
   const firstName = k => (k === 'hero' ? 'You' : ROSTER[k] ? ROSTER[k].name.replace(/^(Ser|Old|Brother|Saint) /, '').split(' ')[0] : k);
   const portraitOf = k => {
@@ -37844,7 +37900,7 @@ let craftUI = null;
   // ================= Recipes =================
   let rec = null;
   function kindsFor(st) {
-    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy; }); // Sword/Helm are no longer made
+    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy && !(soloOn() && d.comp && !d.pos); });   // W1-C: no companion-only recipes in solo // Sword/Helm are no longer made
   }
   const POS_ORDER = [...CRAFT_HERO_POS, ...CRAFT_COMP_POS];
   const kindOrder = k => { const d = CRAFT_KINDS[k]; return POS_ORDER.indexOf(d.pos || d.comp || 'charm'); };
@@ -37865,7 +37921,7 @@ let craftUI = null;
   function subFor(k) {
     const d = CRAFT_KINDS[k], bits = [];
     if (d.pos) bits.push(posName(d.pos) + (heroFits(k) ? '' : d.cls ? ` · ${HERO_CLASSES[d.cls] ? HERO_CLASSES[d.cls].name : d.cls}` : ''));
-    if (d.comp) {
+    if (d.comp && !soloOn()) {
       const who = partyFits(k);
       const roleTxt = d.role === 'any' ? 'any companion' : ROLE_NAME[d.role] + 's';
       bits.push(`${d.pos ? 'also ' : ''}${d.comp === 'trk' ? 'Trinket' : 'weapon'} for ${who.length ? who.slice(0, 3).map(firstName).join(', ') + (who.length > 3 ? ` +${who.length - 3}` : '') : roleTxt}`);
@@ -37913,7 +37969,7 @@ let craftUI = null;
     id: 'craft-recipes', title: 'Recipes',
     mount(sec) {
       const filt = el('div', 'seg cf-seg cf-filt'); filt.setAttribute('aria-label', 'Show recipes');
-      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']]) {
+      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']].filter(x => !(soloOn() && x[0] === 'party'))) {
         const b = el('button', null, n); b.type = 'button'; b.dataset.f = f;
         b.addEventListener('click', () => { st8.filt = f; ui(true); });
         filt.append(b);
@@ -37978,7 +38034,7 @@ let craftUI = null;
           ks = [];
         }
         for (const k of ks) { const row = recipeRow(k, t); rec.rows[k] = { row, sig: rowSig(k, t) }; rec.list.append(row); }
-        if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes and companions. Tap All to see them.`));
+        if (extra > 0) rec.list.append(el('p', 'note', `${extra} more recipe${extra > 1 ? 's' : ''} here for other classes. Tap All to see them.`));
       } else {
         for (const k of ks) {
           const r = rec.rows[k], rs = rowSig(k, t);
@@ -38216,7 +38272,7 @@ let craftUI = null;
     who.append(el('div', 'cf-im', meta));
     const fit = [];
     if (d && d.pos) fit.push(heroFitsIt(it) ? `${posName(d.pos)} for you` : `${posName(d.pos)} for ${d.cls && HERO_CLASSES[d.cls] ? 'a ' + HERO_CLASSES[d.cls].name : 'a hero with no class'}`);
-    if (d && d.comp) fit.push(d.comp === 'trk' ? 'Trinket for any companion' : `${d.pos ? 'Also for' : 'Weapon for'} ${ROLE_NAME[d.role].toLowerCase()} companions`);
+    if (d && d.comp && !soloOn()) fit.push(d.comp === 'trk' ? 'Trinket for any companion' : `${d.pos ? 'Also for' : 'Weapon for'} ${ROLE_NAME[d.role].toLowerCase()} companions`);
     who.append(el('div', 'cf-im', fit.join(' · ') + ` · Power ${fmt(itemPower(it))}`));
     if (wr) { const wb = el('div', 'cf-worn'); wb.append(img(portraitOf(wr.who)), el('span', null, wr.who === 'hero' ? `You wear it (${posName(wr.pos)})` : `${firstName(wr.who)} wears it`)); who.append(wb); }
     head.append(tile, who); body.append(head);
@@ -38234,7 +38290,7 @@ let craftUI = null;
       r.append(tx);
       if (L.g === 'mw') r.append(el('small', 'cf-tag', 'Masterwork'));
       else if (L.g === 'affix') r.append(el('small', 'cf-tag', 'Bonus'));
-      if (!liveNow) r.append(el('small', 'cf-wait', '(active with party combat)'));
+      if (!liveNow) r.append(el('small', 'cf-wait', '(not active yet)'));
       lines.append(r);
     }
     const lgl = LG() && safe(() => LG().lines(it), null);   // the power and circle mark lines (55-legend)
@@ -38245,7 +38301,7 @@ let craftUI = null;
     body.append(secBox('What it does', lines));
     const tlb = typeof toolsUI === 'object' && toolsUI ? safe(() => toolsUI.itemBox(it), null) : null;   // tool mastery (75-tools-ui, H2)
     if (tlb) body.append(tlb);
-    if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item now and switch on when party combat arrives.'));
+    if (anyWait) body.append(el('p', 'note', 'Dimmed lines are stored on the item and switch on in a later update.'));
     body.append(...lgb.filter(b => !b.dataset.top));
 
     // ---- compare ----
@@ -38264,7 +38320,7 @@ let craftUI = null;
         if (!rows.children.length) rows.append(el('p', 'note', 'Same stats.'));
         box.append(rows);
         if (it.u || cur.u) box.append(el('p', 'note', 'Unique effects are not in this list.'));
-        if (keys.some(k => !CRAFT_STATS[k].live)) box.append(el('p', 'note', '* active with party combat'));
+        if (keys.some(k => !CRAFT_STATS[k].live)) box.append(el('p', 'note', '* not active yet'));
       }
       body.append(secBox('Compare', box));
     }
@@ -38277,7 +38333,7 @@ let craftUI = null;
       b.addEventListener('click', () => equipHero(it.id, d.pos));
       wear.push(b);
     }
-    const giveToggle = d && d.comp && heroFitsIt(it);
+    const giveToggle = !soloOn() && d && d.comp && heroFitsIt(it);
     if (giveToggle) {
       const b = el('button', 'big cf-act cf-give', sheet.mode === 'give' ? 'Hide companions' : 'Give to...'); b.type = 'button';
       b.addEventListener('click', () => { sheet.mode = sheet.mode === 'give' ? null : 'give'; renderItem(); });
@@ -39498,7 +39554,7 @@ let deedsUI = null;
     const o = mkOverlay('dw-end in', 'Your run is over');
     const s = o.inner;
     const head = el('div', 'dw-dhead'); const tt = el('div', 'dw-dtitle');
-    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', wipe: 'Your party fell. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
+    const why = { oil: 'Your lantern gutters. You climb back up with everything you found.', wipe: soloOn() ? 'You fell. You climb back up with everything you found.' : 'Your party fell. You climb back up with everything you found.', leave: 'You climb back up with everything you found.', abandon: 'You leave the run. You keep everything you found.', closed: 'That Trial has closed. Your run was scored.' }[x.reason] || '';
     tt.append(el('div', 'dw-eye', x.trial ? `This week's Trial: ${DW.trialRule(x.week).n}` : 'The Deepwell'), el('h2', null, `Floor ${x.floor}`), el('div', 'dw-dsub', why));
     head.append(tt); s.append(head);
     const kv = el('dl', 'kv dw-kv');
@@ -40363,7 +40419,7 @@ let deedsUI = null;
           : x.reached ? `Dark. Beat the zone ${x.z1} boss to light it. You are at zone ${S.maxZone}.`
           : `Dark. Zones ${x.z0} to ${x.z1}. Reach zone ${x.z0} to walk this far.`;
         tx.append(el('div', 'gl-sh-n', name), el('div', 'gl-sh-sub', sub));
-        if (x.here) tx.append(el('div', 'gl-sh-here', 'Your party is here'));
+        if (x.here) tx.append(el('div', 'gl-sh-here', soloOn() ? 'You are here' : 'Your party is here'));
         row.append(ic, tx);
         list.append(row);
       }
@@ -40536,7 +40592,7 @@ let legendUI = null;
         : bu.hit ? `Your powers are at their cap: ${pc(bu.capped)} damage. They would give ${pc(bu.raw)}; higher ranks raise the cap.`
           : `Your powers and sets add about ${pc(bu.raw)} damage (cap ${pc(bu.cap)} at rank ${rn(bu.rank)}).`);
       putToggle(B.budget, 'hit', bu.hit);
-      const field = (S.party && Array.isArray(S.party.field) && typeof rosterLive === 'function' && rosterLive() ? S.party.field.filter(isRecruited).slice(0, 3) : []);
+      const field = (!soloOn() && S.party && Array.isArray(S.party.field) && typeof rosterLive === 'function' && rosterLive() ? S.party.field.filter(isRecruited).slice(0, 3) : []);
       const sig = [cls(), a.hero.map(x => x.id + x.rank + x.item.id).join(), a.comp.map(x => x.char + x.id + x.rank).join(), field.join(), JSON.stringify(S.legend.book)].join('|');
       if (force || sig !== B.sig) {
         B.sig = sig;
@@ -40609,7 +40665,7 @@ let legendUI = null;
 
   // ---------------- Lantern Book ----------------
   let K = null, bookFilt = 'you', openId = null;
-  try { const v = JSON.parse(localStorage.getItem('lanternfall.legend.ui') || '{}'); if (['you', 'party', 'all'].includes(v.f)) bookFilt = v.f; } catch (e) {}
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.legend.ui') || '{}'); if (['you', 'party', 'all'].includes(v.f) && !(soloOn() && v.f === 'party')) bookFilt = v.f; } catch (e) {}
   const keepUi = () => { try { localStorage.setItem('lanternfall.legend.ui', JSON.stringify({ f: bookFilt })); } catch (e) {} };
   function bookIds(f) {
     const c = cls(), known = id => legendKnown(id) > 0;
@@ -40621,7 +40677,7 @@ let legendUI = null;
       const pin = LEG_PIN_IDS.filter(id => P(id) && known(id));
       if (pin.length) groups.push({ n: 'Pinnacle', ids: pin });
     }
-    if (f === 'party' || f === 'all') groups.push({ n: 'Companions', ids: LEG_COMP_IDS.slice() });
+    if (!soloOn() && (f === 'party' || f === 'all')) groups.push({ n: 'Companions', ids: LEG_COMP_IDS.slice() });
     for (const g of groups) g.ids.sort((a, b) => (known(b) - known(a)) || (legendKnown(b) - legendKnown(a)));
     return groups;
   }
@@ -40631,7 +40687,7 @@ let legendUI = null;
       const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
       const count = el('span', 'note lg-count'); head.append(count); sec.prepend(head);
       const filt = el('div', 'seg cf-seg lg-filt'); filt.setAttribute('aria-label', 'Show powers');
-      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']]) {
+      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']].filter(x => !(soloOn() && x[0] === 'party'))) {
         const b = btn(null, n, () => { bookFilt = f; keepUi(); K.sig = ''; ui(true); }); b.dataset.f = f; filt.append(b);
       }
       const list = el('div', 'lg-book');
@@ -40652,7 +40708,7 @@ let legendUI = null;
       K.sig = sig;
       K.list.textContent = '';
       const groups = bookIds(bookFilt);
-      if (!groups.length) { K.list.append(el('p', 'note', 'Choose a class to find hero powers. Companion powers are under For your party.')); return; }
+      if (!groups.length) { K.list.append(el('p', 'note', 'Choose a class to find hero powers.')); return; }
       const activeIds = new Set(a.hero.map(x => x.id).concat(a.comp.map(x => x.id)));
       for (const g of groups) {
         const n = g.ids.filter(id => legendKnown(id)).length;
@@ -40793,7 +40849,7 @@ let legendUI = null;
         s.append(n, t); sig.append(s); return n;
       });
       const list = el('div', 'lg-sets');
-      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Crest and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Crests.`);
+      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Crest and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces you wear count. Two sets can be on at once. Circle Crests are not on the road yet.`);
       sec.append(sig, list, note);
       Z = { cap, sigEls, list, sig: '' };
     },
@@ -40903,7 +40959,7 @@ let legendUI = null;
       const box = el('div', 'lg-ibox');
       const have = S.legend.sig;
       if (it.cm != null && LEG_CIRCLES[it.cm]) box.append(el('p', 'note', `It carries the ${circleName(it.cm)} mark. A new mark replaces it.`));
-      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Crest. Expeditions with 2 or more of one circle bring them.'));
+      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Crest. They are not on the road yet.'));
       else {
         const row = el('div', 'lg-marks');
         LEG_CIRCLES.forEach((c, i) => {
@@ -42058,6 +42114,16 @@ let openSheet, partySheet;
     if (row.children.length) foot.append(row);
   }
 
+  // W1-C: what a solo hero presses. Attack is the class's own hit (CLASS_DEFS how); Parry and Dodge read the solo knobs.
+  function soloKitRows(c) {
+    const T = SOLO_TUNE, h = SOLO_HEROES[typeof soloHero === 'function' ? soloHero() : ''] || null, out = [];
+    const kit = (title, text) => { const d = el('div', 'cs-kit1'); d.append(el('b', null, title), el('p', null, text)); return d; };
+    out.push(kit('Attack (D)', c.how + ' A short cooldown, so time it. While you press buttons, your hero stops attacking alone.'));
+    out.push(kit('Parry (A)', `Press it in the last ${T.parryWin} seconds of a heavy hit. The foe staggers and you counter for ${T.counterX}x damage, a sure crit. Too early, and you are open for ${T.openT} second${T.openT === 1 ? '' : 's'}.`));
+    out.push(kit('Dodge (S)', `Press it in the last ${T.dodgeWin} seconds of a heavy hit or a ground attack and you take no damage. No counter. It takes ${T.dodgeCd} seconds to come back.`));
+    if (h && h.ab) out.push(kit(`${h.ab.name} (Q) · every ${h.ab.cd}s`, h.ab.desc + ' Left alone, your hero casts it for you.'));
+    return out;
+  }
   function buildHero() {
     const body = sheet.body; body.textContent = ''; refs = {};
     sheet.sheet.setAttribute('aria-labelledby', 'csName');
@@ -42072,6 +42138,9 @@ let openSheet, partySheet;
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
+      const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
+      if (soloOn()) body.append(section('Kit', ...safe(() => soloKitRows(c), []), ...cu));   // W1-C: Attack, Parry, Dodge and the ability
+      else {
       const tap = el('div', 'cs-kit1'); tap.append(el('b', null, 'Tap: ' + c.tapName), el('p', null, c.how));
       const ab = el('div', 'cs-kit1'); ab.append(el('b', null, `${c.ability.name} · every ${c.ability.cd}s`), el('p', null, c.ability.desc));
       const auto = el('label', 'pc-auto');
@@ -42080,8 +42149,8 @@ let openSheet, partySheet;
       auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
       ab.append(auto);
       const au = el('div', 'cs-kit1'); au.append(el('b', null, 'Class aura'), el('p', null, c.aura));
-      const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
       body.append(section('Class', tap, ab, au, ...cu));
+      }
     }
     const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
     const g = el('div', 'cs-hgear');
@@ -42109,7 +42178,7 @@ let openSheet, partySheet;
       });
       mir.append(b);
     }
-    const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
+    const bd = !soloOn() && bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
     const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
     body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));
@@ -42857,7 +42926,7 @@ let openSheet, partySheet;
   const SOLO = typeof soloOn === 'function' && soloOn();
   registerView('party', { id: 'team', label: SOLO ? 'Hero' : 'Team', order: 10, dot: () => !SOLO && live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
-  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
+  if (!SOLO) registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
@@ -43365,7 +43434,7 @@ let openSheet, partySheet;
   on('menuView', ({ view }) => { if (view === 'stars' && S.stars) S.stars.seen = Math.max(S.stars.seen, starPoints()); });
   on('unlock', ({ id, quiet }) => {
     if (id !== 'stars' || quiet) return;
-    toast('New on the Party tab: Stars. Spend star points on your class.', 'good', ICON_OF(starCls()), 'high');
+    toast('New on the Hero tab: Stars. Spend star points on your class.', 'good', ICON_OF(starCls()), 'high');
   });
 
   let R = null;      // DOM refs
@@ -43653,7 +43722,7 @@ let openSheet, partySheet;
       putText(R.cName, s.name);
       putText(R.cKind, starText(s) + (s.arm >= 0 ? ` · ${map.armNames[s.arm]}` : ''));
       putText(R.cText, s.text);
-      putHidden(R.cC, !s.c); if (s.c) putText(R.cC, 'With party combat: ' + s.c);
+      putHidden(R.cC, !s.c); if (s.c) putText(R.cC, 'Also: ' + s.c);
       putHidden(R.cBtn, !c);
       if (c) {
         putText(R.cBtn, st.lit ? 'Unlight' : c.ok ? `Light (${s.cost})` : 'Locked');
@@ -43721,7 +43790,7 @@ let openSheet, partySheet;
 
   // Tiles: [label, value() -> number | string | null (hidden), opts]. opts: time (seconds), txt (a
   // string value), sub() (a small line), since() (counted since), rec() (exact view's extra line).
-  const G = [
+  const G0 = [
     ['Hero', [
       ['Time away', () => ST().away, { time: 1 }],
       ['Hours of light', () => (D ? Math.floor(D.light) : null), { sub: () => 'played and away' }],
@@ -43741,7 +43810,7 @@ let openSheet, partySheet;
       ['Dodges', () => n('dodge'), { since: () => since('dodge') }],
       ['Interrupts', () => n('intr'), { since: () => since('intr') }],
       ['Abilities used', () => n('abil'), { since: () => since('abil') }],
-      ['Taps', () => ST().taps, { since: late }],
+      [soloOn() ? 'Attack presses' : 'Taps', () => ST().taps, { since: late }],
       ['Damage taken', () => n('taken'), { since: () => since('taken') }],
       ['Healing and shields', () => n('heal'), { since: () => since('heal') }]
     ]],
@@ -43803,6 +43872,8 @@ let openSheet, partySheet;
       ['Embers earned', () => n('embers'), { since: () => since('embers') }]
     ]]
   ];
+  // W1-C: no companions and no expeditions in solo (the tiles would be empty)
+  const G = soloOn() ? G0.filter(g => g[0] !== 'Companions' && g[0] !== 'Expeditions') : G0;
   const FAMS = ['ore', 'crystal', 'wood', 'fibre', 'herb', 'pearl', 'fish'];
 
   const big = {}, tiles = [], ac = {}, mats = {};

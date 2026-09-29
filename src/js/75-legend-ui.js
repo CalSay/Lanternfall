@@ -130,7 +130,7 @@ let legendUI = null;
         : bu.hit ? `Your powers are at their cap: ${pc(bu.capped)} damage. They would give ${pc(bu.raw)}; higher ranks raise the cap.`
           : `Your powers and sets add about ${pc(bu.raw)} damage (cap ${pc(bu.cap)} at rank ${rn(bu.rank)}).`);
       putToggle(B.budget, 'hit', bu.hit);
-      const field = (S.party && Array.isArray(S.party.field) && typeof rosterLive === 'function' && rosterLive() ? S.party.field.filter(isRecruited).slice(0, 3) : []);
+      const field = (!soloOn() && S.party && Array.isArray(S.party.field) && typeof rosterLive === 'function' && rosterLive() ? S.party.field.filter(isRecruited).slice(0, 3) : []);
       const sig = [cls(), a.hero.map(x => x.id + x.rank + x.item.id).join(), a.comp.map(x => x.char + x.id + x.rank).join(), field.join(), JSON.stringify(S.legend.book)].join('|');
       if (force || sig !== B.sig) {
         B.sig = sig;
@@ -203,7 +203,7 @@ let legendUI = null;
 
   // ---------------- Lantern Book ----------------
   let K = null, bookFilt = 'you', openId = null;
-  try { const v = JSON.parse(localStorage.getItem('lanternfall.legend.ui') || '{}'); if (['you', 'party', 'all'].includes(v.f)) bookFilt = v.f; } catch (e) {}
+  try { const v = JSON.parse(localStorage.getItem('lanternfall.legend.ui') || '{}'); if (['you', 'party', 'all'].includes(v.f) && !(soloOn() && v.f === 'party')) bookFilt = v.f; } catch (e) {}
   const keepUi = () => { try { localStorage.setItem('lanternfall.legend.ui', JSON.stringify({ f: bookFilt })); } catch (e) {} };
   function bookIds(f) {
     const c = cls(), known = id => legendKnown(id) > 0;
@@ -215,7 +215,7 @@ let legendUI = null;
       const pin = LEG_PIN_IDS.filter(id => P(id) && known(id));
       if (pin.length) groups.push({ n: 'Pinnacle', ids: pin });
     }
-    if (f === 'party' || f === 'all') groups.push({ n: 'Companions', ids: LEG_COMP_IDS.slice() });
+    if (!soloOn() && (f === 'party' || f === 'all')) groups.push({ n: 'Companions', ids: LEG_COMP_IDS.slice() });
     for (const g of groups) g.ids.sort((a, b) => (known(b) - known(a)) || (legendKnown(b) - legendKnown(a)));
     return groups;
   }
@@ -225,7 +225,7 @@ let legendUI = null;
       const head = el('div', 'sec-head'); head.append(sec.querySelector('.sec-title'));
       const count = el('span', 'note lg-count'); head.append(count); sec.prepend(head);
       const filt = el('div', 'seg cf-seg lg-filt'); filt.setAttribute('aria-label', 'Show powers');
-      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']]) {
+      for (const [f, n] of [['you', 'For you'], ['party', 'For your party'], ['all', 'All']].filter(x => !(soloOn() && x[0] === 'party'))) {
         const b = btn(null, n, () => { bookFilt = f; keepUi(); K.sig = ''; ui(true); }); b.dataset.f = f; filt.append(b);
       }
       const list = el('div', 'lg-book');
@@ -246,7 +246,7 @@ let legendUI = null;
       K.sig = sig;
       K.list.textContent = '';
       const groups = bookIds(bookFilt);
-      if (!groups.length) { K.list.append(el('p', 'note', 'Choose a class to find hero powers. Companion powers are under For your party.')); return; }
+      if (!groups.length) { K.list.append(el('p', 'note', 'Choose a class to find hero powers.')); return; }
       const activeIds = new Set(a.hero.map(x => x.id).concat(a.comp.map(x => x.id)));
       for (const g of groups) {
         const n = g.ids.filter(id => legendKnown(id)).length;
@@ -387,7 +387,7 @@ let legendUI = null;
         s.append(n, t); sig.append(s); return n;
       });
       const list = el('div', 'lg-sets');
-      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Crest and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces worn by your hero and fielded companions count. Two sets can be on at once. Expeditions with 2 or more of one circle bring its Crests.`);
+      const note = el('p', 'note', `Mark gear on its item sheet: 1 Circle Crest and ${LEG_COST.mark.pearls} Pearls of its tier. Marked pieces you wear count. Two sets can be on at once. Circle Crests are not on the road yet.`);
       sec.append(sig, list, note);
       Z = { cap, sigEls, list, sig: '' };
     },
@@ -497,7 +497,7 @@ let legendUI = null;
       const box = el('div', 'lg-ibox');
       const have = S.legend.sig;
       if (it.cm != null && LEG_CIRCLES[it.cm]) box.append(el('p', 'note', `It carries the ${circleName(it.cm)} mark. A new mark replaces it.`));
-      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Crest. Expeditions with 2 or more of one circle bring them.'));
+      if (!have.some(n => n > 0)) box.append(el('p', 'note', 'Marking needs a Circle Crest. They are not on the road yet.'));
       else {
         const row = el('div', 'lg-marks');
         LEG_CIRCLES.forEach((c, i) => {

@@ -307,7 +307,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     gateT = 0;
     const p = provingInfo(), open = !!(p && p.open && !p.prove);
     if (gateFor !== S) { gateFor = S; gateWas = open; return; }
-    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Party, your class card.', 'good', null, 'high');
+    if (open && gateWas === false) toast('The Fenmother has fallen. Your Proving is open: Hero tab, your class card.', 'good', null, 'high');
     gateWas = open;
   });
 

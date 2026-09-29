@@ -42,7 +42,8 @@ const statsApi = {};
   }
 
   onTick(dt => { ST().played += dt; });
-  on('tap', () => { ST().taps++; });
+  on('tap', () => { if (!soloOn()) ST().taps++; });   // W1-C: in solo the count is Attack presses
+  on('soloAttack', p => { if (p && p.kind === 'hit') ST().taps++; });
   on('kill', ({ mob }) => { if (mob && mob.boss) ST().bosses++; });
   on('loot', () => { ST().uniques++; });
   on('harvest', ({ n }) => { ST().gathered += n || 0; });

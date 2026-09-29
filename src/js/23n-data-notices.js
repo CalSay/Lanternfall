@@ -81,7 +81,7 @@ const NOTICES = [
   // While the guide runs it points at each new tab itself, so the tab lines only pop once tips are off.
   { id: 'unlock-tab', re: /^(New tab: |Next Up shows your best next goal|You made camp\. A new tab)/, ch: (m, n, ctx) => ctx && ctx.guide ? 'log' : 'pop', wait: 30,
     site: /toast\(OPEN_TXT\[id\]/, why: 'the guide points at the tab' },
-  { id: 'unlock-stars', re: /^New on the Party tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
+  { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
   { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'bell',
     why: 'the tab shows a New mark', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
@@ -129,7 +129,7 @@ const NOTICES = [
   { id: 'legend-off', re: /^Your hero carries \d+ legendary powers/, site: /toast\(msg, 'raid', null, 'high'\)/, ch: 'bell' },
 
   // ---- the Deepwell ----
-  { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your Oil is running low)/,
+  { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,
     site: /toast\(txt, 'good'/, ch: 'pop', wait: 20, why: 'you are in the Deepwell and it is new' },
   { id: 'deep', re: /^(Trial Seal earned|That Trial has closed)/, ch: 'bell' },
   { id: 'deep-small', re: /^(Set bonus: |Trial: floor |Deep Elder beaten)/, ch: 'log' },

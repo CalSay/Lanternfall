@@ -69,13 +69,14 @@ let deeds, deedBonus, wearGet;
     N1: () => !!S.hands && typeof S.hands === 'object',
     K12: () => !!S.kitchen && typeof S.kitchen === 'object',
     N1K12: () => WAIT.N1() && WAIT.K12(),
-    F1: () => typeof offSlot === 'function',
-    F2: () => !!S.bond && typeof S.bond === 'object',
+    NS: () => !soloOn(),                                   // W1-C: needs a party or expeditions: not in solo
+    F1: () => !soloOn() && typeof offSlot === 'function',
+    F2: () => !soloOn() && !!S.bond && typeof S.bond === 'object',
     R2: () => !!(REGIONS[1] && REGIONS[1].plugged),
     R3: () => REGIONS.length >= 3,
     O1: () => !!S.oath && typeof S.oath === 'object',
     PB1: () => !!S.pin && typeof S.pin === 'object',
-    R2O1: () => WAIT.R2() && WAIT.O1()
+    R2O1: () => WAIT.R2() && WAIT.O1() && !soloOn()   // (Tidewalker: tide turns with the party fielded)
   };
   const waitOk = w => !w || safe(() => !!WAIT[w](), false);
   // Tiers that open with later content (lock text in the data).
@@ -284,16 +285,19 @@ let deeds, deedBonus, wearGet;
     if (k === 'pts') return !!d.mil[x];
     return false;
   };
+  const groupLive = id => DEED_TRACKS.some(t => t.g === id && trackLive(t));
   const lookLive = l => {
     const [k, x] = l.src.split(':');
     if (k === 'feat') return waitOk(FE[x] && FE[x].wait);
     if (k === 'sec') return waitOk(SE[x] && SE[x].wait);
     if (k === 'ch') return waitOk(CH[x] && CH[x].wait);
+    if (k === 'grp') return groupLive(x);   // W1-C: a group with no track in solo (Companions, Expeditions) gives no look
     return true;
   };
   function titleList() {
     const d = DS(), out = [];
     for (const g of DEED_GROUPS) {
+      if (!groupLive(g.id)) continue;
       out.push({ id: 'a_g_' + g.id, n: g.gold, src: `${g.n} at Gold`, got: num(d.grp[g.id]) >= 1, at: d.at['g:' + g.id + ':1'] || 0 });
       out.push({ id: 'a_e_' + g.id, n: g.ever, src: `${g.n} at Everflame`, got: num(d.grp[g.id]) >= 2, at: d.at['g:' + g.id + ':2'] || 0 });
     }
@@ -518,16 +522,31 @@ let deeds, deedBonus, wearGet;
     // zone boss secrets (live play only)
     if (typeof fightBoss !== 'undefined' && num(bossTime) < 1 && num(bossTime) >= 0) grantSecret('s_close');   // S6: under 1 s before the Enrage
     // (from zone 10: every new game beats its first bosses before it has a weapon or a full party)
-    if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
     const U = safe(() => combatUnits(), null);
+    if (soloOn()) {
+      // W1-C: the solo versions. Untouched: a boss from zone 10 without one hit taken. Last Lamp Standing: your health fell under 10% during the fight (a boss kill heals you a little, so the lowest point counts).
+      if (S.zone >= T.oddZone && bossHurt === 0) grantSecret('s_bare');
+      const h = U && U[0];
+      if (S.zone >= T.oddZone && h && h.live && !h.down && bossLow < 0.1) grantSecret('s_alone');
+    } else {
+    if (S.zone >= T.oddZone && !safe(() => equipped('weapon'), true)) grantSecret('s_bare');
     if (U && U[0] && U[0].live && !U[0].down) {
       let others = 0, up = 0; for (let i = 1; i < U.length; i++) if (U[i].live) { others++; if (!U[i].down) up++; }
       if (others >= 2 && up === 0 && S.zone >= T.oddZone) grantSecret('s_alone');
+    }
     }
     if (waitOk('F1')) {
       const f = S.party && Array.isArray(S.party.field) ? S.party.field : [];
       if (f.length >= 3 && f.every(id => safe(() => !!offSlot(id), false))) grantSecret('s_wrong');
     }
+  });
+  // Untouched (solo): hits the hero takes while a zone boss is up (the count resets when a boss spawns)
+  let bossHurt = 0, bossLow = 1;
+  on('spawn', ({ mob: m }) => { if (m && m.boss) { bossHurt = 0; bossLow = 1; } });
+  on('unitHit', h => {
+    if (!h || !(h.amount > 0)) return;
+    bossHurt++;
+    const u = safe(() => combatUnits()[0], null); if (u && u.maxHp > 0) bossLow = Math.min(bossLow, u.hp / u.maxHp);
   });
   on('deepFloor', ({ kind }) => { if (kind === 'boss') N().boss++; });
   on('trophy', ({ n }) => { N().troph += n == null ? 1 : num(n); });
@@ -577,11 +596,12 @@ let deeds, deedBonus, wearGet;
   // Drummer: taps in the last 60 seconds of tick time (60 one-second buckets, no allocation).
   const drum = new Uint16Array(60); let drumSum = 0, drumSec = 0;
   let campSince = -1, lastView = '';
+  const drumHit = () => { const b = drumSec % 60; drum[b]++; drumSum++; if (drumSum >= T.drumTaps) grantSecret('s_drum'); };
   on('tap', () => {
-    const b = drumSec % 60; drum[b]++; drumSum++;
-    if (drumSum >= T.drumTaps) grantSecret('s_drum');
+    if (!soloOn()) drumHit();   // W1-C: in solo the Drummer counts Attack presses (below)
     if (campSince >= 0) campSince = clock;
   });
+  on('soloAttack', p => { if (p && p.kind === 'hit') drumHit(); });
   on('menuView', ({ view }) => { lastView = view || ''; campSince = lastView === 'camp' ? clock : -1; });
 
   // Per-second secrets and polls.

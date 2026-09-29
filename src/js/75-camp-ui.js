@@ -368,7 +368,7 @@
     id: 'camp-roster', title: 'Roster board',
     mount(sec) { rosNote = el('p', 'note'); rosBox = el('div', 'ros-list'); sec.append(rosNote, rosBox); },
     update() {
-      const sec = rosBox.parentNode, live = campOpen() && rosterLive();
+      const sec = rosBox.parentNode, live = campOpen() && rosterLive() && !soloOn();   // W1-C: no roster board in solo
       putHidden(sec, !live); if (!live) return;
       const list = benchList().map(id => ({ id, s: campStatus(id), r: charRec(id) }))
         .sort((a, b) => (ORDER[a.s.status] || 9) - (ORDER[b.s.status] || 9) || b.r.lv - a.r.lv);

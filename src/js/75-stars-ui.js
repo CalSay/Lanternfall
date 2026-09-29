@@ -20,7 +20,7 @@
   on('menuView', ({ view }) => { if (view === 'stars' && S.stars) S.stars.seen = Math.max(S.stars.seen, starPoints()); });
   on('unlock', ({ id, quiet }) => {
     if (id !== 'stars' || quiet) return;
-    toast('New on the Party tab: Stars. Spend star points on your class.', 'good', ICON_OF(starCls()), 'high');
+    toast('New on the Hero tab: Stars. Spend star points on your class.', 'good', ICON_OF(starCls()), 'high');
   });
 
   let R = null;      // DOM refs
@@ -308,7 +308,7 @@
       putText(R.cName, s.name);
       putText(R.cKind, starText(s) + (s.arm >= 0 ? ` · ${map.armNames[s.arm]}` : ''));
       putText(R.cText, s.text);
-      putHidden(R.cC, !s.c); if (s.c) putText(R.cC, 'With party combat: ' + s.c);
+      putHidden(R.cC, !s.c); if (s.c) putText(R.cC, 'Also: ' + s.c);
       putHidden(R.cBtn, !c);
       if (c) {
         putText(R.cBtn, st.lit ? 'Unlight' : c.ok ? `Light (${s.cost})` : 'Locked');

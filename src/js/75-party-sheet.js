@@ -493,6 +493,16 @@ let openSheet, partySheet;
     if (row.children.length) foot.append(row);
   }
 
+  // W1-C: what a solo hero presses. Attack is the class's own hit (CLASS_DEFS how); Parry and Dodge read the solo knobs.
+  function soloKitRows(c) {
+    const T = SOLO_TUNE, h = SOLO_HEROES[typeof soloHero === 'function' ? soloHero() : ''] || null, out = [];
+    const kit = (title, text) => { const d = el('div', 'cs-kit1'); d.append(el('b', null, title), el('p', null, text)); return d; };
+    out.push(kit('Attack (D)', c.how + ' A short cooldown, so time it. While you press buttons, your hero stops attacking alone.'));
+    out.push(kit('Parry (A)', `Press it in the last ${T.parryWin} seconds of a heavy hit. The foe staggers and you counter for ${T.counterX}x damage, a sure crit. Too early, and you are open for ${T.openT} second${T.openT === 1 ? '' : 's'}.`));
+    out.push(kit('Dodge (S)', `Press it in the last ${T.dodgeWin} seconds of a heavy hit or a ground attack and you take no damage. No counter. It takes ${T.dodgeCd} seconds to come back.`));
+    if (h && h.ab) out.push(kit(`${h.ab.name} (Q) · every ${h.ab.cd}s`, h.ab.desc + ' Left alone, your hero casts it for you.'));
+    return out;
+  }
   function buildHero() {
     const body = sheet.body; body.textContent = ''; refs = {};
     sheet.sheet.setAttribute('aria-labelledby', 'csName');
@@ -507,6 +517,9 @@ let openSheet, partySheet;
     hn.textContent = `${Math.floor(Math.min(1, S.xp / xpNeed()) * 100)}% to Lv ${S.L + 1}`;
     if (c) {
       body.append(el('p', 'cs-bio pitch', '"' + c.pitch + '"'));
+      const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
+      if (soloOn()) body.append(section('Kit', ...safe(() => soloKitRows(c), []), ...cu));   // W1-C: Attack, Parry, Dodge and the ability
+      else {
       const tap = el('div', 'cs-kit1'); tap.append(el('b', null, 'Tap: ' + c.tapName), el('p', null, c.how));
       const ab = el('div', 'cs-kit1'); ab.append(el('b', null, `${c.ability.name} · every ${c.ability.cd}s`), el('p', null, c.ability.desc));
       const auto = el('label', 'pc-auto');
@@ -515,8 +528,8 @@ let openSheet, partySheet;
       auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
       ab.append(auto);
       const au = el('div', 'cs-kit1'); au.append(el('b', null, 'Class aura'), el('p', null, c.aura));
-      const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
       body.append(section('Class', tap, ab, au, ...cu));
+      }
     }
     const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
     const g = el('div', 'cs-hgear');
@@ -544,7 +557,7 @@ let openSheet, partySheet;
       });
       mir.append(b);
     }
-    const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
+    const bd = !soloOn() && bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
     const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
     const mr = typeof classUI === 'object' && classUI && classUI.mirrorRow ? safe(() => classUI.mirrorRow(), null) : null;   // S3: the respec sheet
     body.append(sw ? section('Class change', sw, mr || mir) : section('Class change', mr || mir));

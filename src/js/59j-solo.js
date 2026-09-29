@@ -156,12 +156,14 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
           const P = heroAtkNow(false), cm = critMult();
-          const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
+          let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
+          try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
+          const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
           ST.counters++;
           emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FF9E3D', big: true, crit: true });
           emit('crit', { tap: true, counter: true }); emit('shake', 0.2); emit('lunge');
           const echo = gear().echo;
-          if (echo && alive(c.f)) { const e2 = cbDamageFoe(c.f, P * T.counterX * aps() * cm * echo, 0, 'phys', unitType('hero'), 0); emit('float', { txt: fmt(e2 || 0), color: '#FFD27A', big: false }); }
+          if (echo && alive(c.f)) { const e2 = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx * echo, 0, 'phys', unitType('hero'), 0); emit('float', { txt: fmt(e2 || 0), color: '#FFD27A', big: false }); }
           emit('soloCounter', { foe: c.f, dmg: dmg || 0 });
         }
       }
@@ -214,7 +216,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
-    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX), ty = unitType('hero');   // by hand it hits harder (SOLO2)
+    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
     const tags = ST_AB;
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each

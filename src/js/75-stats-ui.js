@@ -36,7 +36,7 @@
 
   // Tiles: [label, value() -> number | string | null (hidden), opts]. opts: time (seconds), txt (a
   // string value), sub() (a small line), since() (counted since), rec() (exact view's extra line).
-  const G = [
+  const G0 = [
     ['Hero', [
       ['Time away', () => ST().away, { time: 1 }],
       ['Hours of light', () => (D ? Math.floor(D.light) : null), { sub: () => 'played and away' }],
@@ -56,7 +56,7 @@
       ['Dodges', () => n('dodge'), { since: () => since('dodge') }],
       ['Interrupts', () => n('intr'), { since: () => since('intr') }],
       ['Abilities used', () => n('abil'), { since: () => since('abil') }],
-      ['Taps', () => ST().taps, { since: late }],
+      [soloOn() ? 'Attack presses' : 'Taps', () => ST().taps, { since: late }],
       ['Damage taken', () => n('taken'), { since: () => since('taken') }],
       ['Healing and shields', () => n('heal'), { since: () => since('heal') }]
     ]],
@@ -118,6 +118,8 @@
       ['Embers earned', () => n('embers'), { since: () => since('embers') }]
     ]]
   ];
+  // W1-C: no companions and no expeditions in solo (the tiles would be empty)
+  const G = soloOn() ? G0.filter(g => g[0] !== 'Companions' && g[0] !== 'Expeditions') : G0;
   const FAMS = ['ore', 'crystal', 'wood', 'fibre', 'herb', 'pearl', 'fish'];
 
   const big = {}, tiles = [], ac = {}, mats = {};

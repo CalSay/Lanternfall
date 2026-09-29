@@ -70,6 +70,9 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
   const parryWin = () => (typeof ENEMY_TUNE === 'object' ? ENEMY_TUNE.parryWin : T.parryWin)
     + (units().some(u => u.live && u.id === 'maren') ? ENEMY_TUNE.marenWin : 0)
     + (typeof deepActive === 'function' && deepActive() && DW.run() && DW.run().boons && DW.run().boons.parry ? 0.4 : 0);
+  // W1-C: the Deepwell's Quick Parry and Steady Feet boons reach the solo buttons (the wider windows are smaller than the party's)
+  const soloParryWin = () => SOLO_TUNE.parryWin + (dboon('parry') ? 0.15 : 0);
+  const soloDodgeWin = () => SOLO_TUNE.dodgeWin + (dboon('feet') ? 0.2 : 0);
   const heavyLead = () => (units().some(u => u.live && u.id === 'maren') ? ENEMY_TUNE.marenLead : 0);
 
   function start(spec) {
@@ -84,7 +87,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
     // SOLO1: Parry and Dodge are buttons. A heavy takes either (Parry in the tight window, Dodge in the long one);
     // a slam or a ground zone takes Dodge only. W.win is the parry window on a heavy (the banner marks both).
-    if (soloOn()) { W.win = k === 'heavy' ? SOLO_TUNE.parryWin : 0; W.dwin = k === 'heavy' || DODGE[k] ? SOLO_TUNE.dodgeWin : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
+    if (soloOn()) { W.win = k === 'heavy' ? soloParryWin() : 0; W.dwin = k === 'heavy' || DODGE[k] ? soloDodgeWin() : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
     else W.dwin = 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
@@ -216,7 +219,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     // 59b's own wind-ups (a boss without a kit)
     const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
     if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
-      if (t.left <= SOLO_TUNE.parryWin || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
+      if (t.left <= soloParryWin() || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
       return 'miss';
     }
     return '';
@@ -238,7 +241,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
     if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
       if (t.res) return '';
-      if (t.left <= SOLO_TUNE.dodgeWin || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
+      if (t.left <= soloDodgeWin() || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
       return 'early';
     }
     return '';

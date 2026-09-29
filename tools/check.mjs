@@ -6814,5 +6814,227 @@ try {
 // ==== end W1-B ====
 
 
+// ==== W1-C: solo copy and dead effects (audit-1 section 2) ====
+// A solo player never sees the old party's words. The scan reads the string tables of the game core (solo build) and,
+// in Chromium, every tab and sub-view at 360x740, the hero sheet, Achievements, the bell and the Journal.
+const W1C_RE = /\b(part(y|ies)|compan\w*|bonds?|formation|roster|recruit\w*|expeditions?)\b|tap the stage|your taps?\b|taps (deal|on the stage)|tap damage|\btap: /i;
+// Words that are allowed, and why (the reason is what a reader needs: keep it short and true).
+const W1C_ALLOW = [
+  [/Dusk Company/, 'a circle of the Lantern Book (a faction name in the lore), not a party'],
+];
+const w1cAllowed = t => W1C_ALLOW.some(([re]) => re.test(t));
+console.log('solo copy (W1-C)');
+try {
+  const g = loadCore({ solo: true, seed: 7 }), E = s => g.eval(s);
+  // keys that hold ids, links or numbers, not player text
+  const SKIP = new Set(['id', 'target', 'to', 'sets', 'look', 'src', 'bonus', 'page', 'at', 'why', 'grp', 'key', 'ic', 'col', 'go', 'sys', 'sel', 'tab', 'view', 'cls', 'kit', 'base', 'slot', 'route', 'circle', 'char', 'wait', 'needs', 'pre', 'st', 'mod', 'kind', 'ks', 'live', 'hero', 'm', 't']);
+  const TEXTKEY = /^(desc|txt|text|fx|label|how|line|note|sub|msg|title|hint|blurb|bio|say|pitch|bullets|aura|tip|f|n|name|s|d|passives|ring|arms|crown|paths|evos)$/;
+  const hits = []; let strings = 0;
+  const walk = (v, p, seen, depth, key) => {
+    if (depth > 9) return;
+    if (typeof v === 'string') { strings++; if (W1C_RE.test(v) && !w1cAllowed(v)) hits.push(`${p}: ${v.slice(0, 90)}`); return; }
+    if (typeof v === 'function') { if (v.length <= 1 && (TEXTKEY.test(key) || /^\d+$/.test(key))) { try { const r = v(1); if (typeof r === 'string') walk(r, p + '()', seen, depth + 1, key); } catch (e) {} } return; }
+    if (!v || typeof v !== 'object' || seen.has(v)) return; seen.add(v);
+    if (typeof v.needs === 'function') { let ok = true; try { ok = !!v.needs(); } catch (e) {} if (!ok) return; }   // a building or Blessing whose system is off in solo is not offered
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, `${p}[${i}]`, seen, depth + 1, key)); return; }
+    for (const k of Object.keys(v)) { if (!SKIP.has(k)) walk(v[k], `${p}.${k}`, seen, depth + 1, k); }
+  };
+  const tables = ['UNIQ', 'RELICS', 'HERO_UPS', 'HERO_CLASSES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'CLASS_TRIALS', 'EVO_DEFS', 'EVO_NAMES', 'SOLO_ABILITIES', 'SOLO_HEROES',
+    'DEEP_SETS', 'DEEP_BOONS', 'DEEP_RULES', 'DEEP_SHOP', 'STAR_MAPS', 'STAR_BRIDGES', 'CAMP_BLESS', 'CODEX_MILESTONES', 'BESTIARY_PERKS', 'CRAFT_STATS', 'CRAFT_AFFIXES', 'CRAFT_KINDS',
+    'CRAFT_STATIONS', 'CRAFT_TROPHIES', 'DEED_LADDER', 'DEED_CHAPTERS'];
+  let missing = [];
+  for (const n of tables) { let v; try { v = E(n); } catch (e) { missing.push(n); continue; } walk(v, n, new Set(), 0, n); }
+  // live listings: what the game would show now
+  for (const id of E('CODEX_PAGE_IDS')) walk(E(`CODEX_PAGES[${JSON.stringify(id)}]`), 'CODEX_PAGES.' + id, new Set(), 0, 'page');
+  for (const f of ['tracks', 'groups', 'feats', 'secrets']) walk(JSON.parse(E(`JSON.stringify(deeds.${f}())`)), 'deeds.' + f, new Set(), 0, f);
+  for (const k of E('Object.keys(WEEKLY_GOALS)')) if (E(`almanac.goalOk(${JSON.stringify(k)})`)) walk(E(`WEEKLY_GOALS[${JSON.stringify(k)}].txt(5)`), 'WEEKLY_GOALS.' + k, new Set(), 0, 'txt');
+  const omens = new Map(); for (let d = 0; d < 400; d++) { const o = E(`(o => o && { id: o.id, n: o.n, fx: o.fx })(almanac.omenFor(${d}))`); if (o) omens.set(o.id, o); }
+  for (const o of omens.values()) walk(o, 'Omen.' + o.id, new Set(), 0, 'omen');
+  assert(!missing.length && strings > 2000, `the scan reads ${strings} strings from ${tables.length - missing.length} tables, the Codex pages, the Deeds lists, the weekly goals and ${omens.size} Omens${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
+  assert(!hits.length, 'no "party", "companion", "Bond", "formation", "roster", "recruit" or "expedition" (or a tap-the-stage line) in the data a solo player can reach' + (hits.length ? `: ${hits.length}, e.g. ${hits.slice(0, 4).join(' | ')}` : ''));
+  E('soloPick("wren")');
+  const bt = E('(() => { S.bounties.slots = [{ k: "tap", need: 100, have: 0, t: 1, z: 1, rewT: 1, wait: 0, rr: 0, id: 1, rew: "gold" }]; return BOUNTY_API.text(S.bounties.slots[0]); })()');
+  assert(bt === 'Press Attack 100 times', `the tap bounty says "${bt}"`);
+  assert(!E('almanac.goalOk("wExp") || almanac.goalOk("wLvl") || almanac.goalOk("wPromo") || almanac.goalOk("wGrade")') && E('almanac.goalOk("wParry") && almanac.goalOk("wCast") && almanac.goalOk("wCounter")'),
+    'the weekly board offers no expedition or companion goals; it offers parries, casts and counters');
+  assert(!E('deeds.tracks().some(t => ["party", "compXp", "expHaul"].includes((DEED_TRACKS.find(x => x.id === t.id) || {}).bonus))') && E('DEED_TRACKS.find(x => x.id === "abil").bonus') === 'dmg' && E('DEED_TRACKS.find(x => x.id === "intr").bonus') === 'keen',
+    'no Deed that shows in solo pays a party, companion or expedition bonus (Signature Moves pay damage, Not Today pays crit damage)');
+  assert(E('!deeds.feats().some(f => ["f_company", "f_perfect", "f_sworn", "f_tides"].includes(f.id)) && !deeds.secrets().some(s => ["s_name", "s_wrong", "s_late"].includes(s.id))'), 'the companion, expedition and Bond Feats and secrets are hidden in solo');
+  assert(E('!CODEX_PAGE_IDS.includes("companions") && !CODEX_PAGE_IDS.includes("lore") && CODEX_MILESTONES.find(m => m.at === 200).rw[0].id === "t_wayfinder"'), 'the Codex has no Companions or Lore page in solo; the 200 Light reward is a title, not an expedition slot');
+  for (const x of [g]) assert(!x.errors.length, 'no handler errors in the solo copy scan' + (x.errors.length ? ': ' + x.errors[0] : ''));
+} catch (e) { fail('solo copy (static) crashed: ' + (e.stack || e)); }
+
+console.log('solo effects (W1-C)');
+try {
+  const errs = [];
+  const mk = (seed, pre) => { const g = loadCore({ solo: true, seed }); g.eval('SOLO_TUNE.trashEvery = 1e9'); if (pre) g.eval(pre); return g; };
+  const run = (g, secs) => { for (let i = 0; i < Math.round(secs * 10); i++) g.fn.tick(0.1); };
+  const foeHp = g => g.eval('combatFoes().filter(f => f && !f.dead && f.hp > 0).reduce((a, f) => a + f.hp, 0)');
+  // 1. Rattlebone Charm: +20% ability damage (it was "your party deals 15% more", and the party is gone)
+  {
+    const dmg = charm => {
+      const g = mk(201, 'soloPick("wren")'), E = s => g.eval(s);
+      run(g, 1);   // (idle play casts after 1.5 s: cast by hand before that)
+      if (charm) E('(() => { dropUnique("rattlecharm", 1); const it = S.items.find(i => i.u === "rattlecharm"); equipItem(it.id); gearDirty(); })()');
+      E('combatFoes().forEach(f => { f.hp = f.max = 1e9; })');
+      const a = foeHp(g); E('soloAbility({ slot: 0 })'); const d = a - foeHp(g);
+      errs.push(...g.errors); return { d, abil: E('gear().abil || 0') };
+    };
+    const a = dmg(false), b = dmg(true);
+    assert(b.abil === 20 && a.abil === 0 && a.d > 0 && Math.abs(b.d / a.d - 1.2) < 0.01, `the Rattlebone Charm makes a by-hand Echo Shot hit ${(b.d / a.d).toFixed(3)}x as hard (gear().abil ${b.abil})`);
+  }
+  // 2. Lantern Eater's Fang: +30% damage, and the counter after a parry hits twice as hard
+  {
+    const counter = fang => {
+      const g = mk(202, 'soloPick("tobin"); ' + (fang ? '' : 'UNIQ.eaterfang.fx.counter = 0;')), E = s => g.eval(s);
+      run(g, 2);
+      E('(() => { dropUnique("eaterfang", 1); const it = S.items.find(i => i.u === "eaterfang"); equipItem(it.id); gearDirty(); })()');
+      const heavy = () => E(`(() => { const f = combatFoes().find(x => x && !x.dead && x.hp > 0); f.hp = f.max = 1e12; return actWarn({ kind: 'heavy', id: 'test', foe: f, unit: 0, x: 3, dur: 1.5, land: (w, m) => cbHitUnit(cbUnitByKey('hero'), 10, 'heavy', f) }); })()`);
+      const until = left => { for (let i = 0; i < 40 && E('(w => w ? w.left : -1)(actWarning())') > left; i++) run(g, 0.05); };
+      run(g, 1.2); heavy(); until(0.25);
+      const f0 = E('(() => { globalThis.__pf = actWarning().foe; return __pf.hp; })()');
+      const r = E('soloParry()'); run(g, E('SOLO_TUNE.counterAt') + 0.05);
+      errs.push(...g.errors);
+      return { r, d: f0 - E('__pf.hp'), might: E('gear().might'), cnt: E('gear().counter || 0'), eq: E('S.equip.weapon && itemById(S.equip.weapon).u') };
+    };
+    const a = counter(false), b = counter(true);
+    assert(a.r === 'parry' && b.r === 'parry' && b.eq === 'eaterfang' && a.d > 0 && Math.abs(b.d / a.d - 2) < 0.02, `with the Fang the counter deals ${(b.d / a.d).toFixed(3)}x (counter ${b.cnt}%, gear().might ${b.might}%; the same fang without its counter line is the baseline)`);
+  }
+  // 3. Well Rested: gathering rests the hero; the next fight is +10% damage
+  {
+    const g = mk(203, 'soloPick("wren"); S.maxZone = 4; S.zone = 3'), E = s => g.eval(s);
+    run(g, 1); const m0 = E('mod("dmg")');
+    g.fn.setActivity('gather'); run(g, 60);
+    const left = E('S.rested.left'); g.fn.setActivity('fight'); run(g, 0.3);
+    assert(left >= 25 && E('restParty()') && E('restNote()').includes('Gathering rests you') && !E('restNote()').includes('party'), `gathering banks rest for the hero (${left.toFixed(0)} s after a minute; "${E('restNote()').trim()}")`);
+    assert(Math.abs(E('mod("dmg")') / m0 - 1.1) < 1e-9 && E('wellRested().on'), `the next fight is Well Rested: +10% damage (x${(E('mod("dmg")') / m0).toFixed(3)})`);
+    errs.push(...g.errors);
+  }
+  // 4. the Deepwell: Echo Week (was Company Week: hero x0.01), the Vigour boons (were the companions'), Parry Drill (was Taunt Drill)
+  {
+    const g = mk(204, 'soloPick("wren"); S.maxZone = 40; S.zone = 40; S.camp.b.hearth = 3'), E = s => g.eval(s);
+    run(g, 2);
+    assert(E('deepUnlocked() && DW.start(false)'), 'a solo Deepwell run starts');
+    const m0 = E('mod("dmg")'), cd0 = E('mod("abilityCd")'), tap0 = E('mod("tap")');
+    E('DW.run().boons.drill = 3; DW.run().boons.warband = 1');
+    assert(Math.abs(E('mod("dmg")') / m0 - (1 + 0.15 * 3) * 1.6) < 1e-9, `Battle Drill III and Warband add up to x${(E('mod("dmg")') / m0).toFixed(3)} to your own damage (they were the companions')`);
+    E('DW.run().boons = {}; DW.run().trial = true; DW.run().rule = "echo"');
+    assert(Math.abs(E('mod("abilityCd")') / cd0 - 0.5) < 1e-9 && Math.abs(E('mod("tap")') / tap0 - 0.5) < 1e-9 && Math.abs(E('mod("dmg")') / m0 - 1) < 1e-9, 'Echo Week: abilities come back twice as fast, Attack hits for half, your damage is not cut to 1% (Company Week was unwinnable solo)');
+    assert(E('DEEP_RULES.some(r => r.id === "echo") && !DEEP_RULES.some(r => /Company/.test(r.n))'), 'the rule list has Echo Week and no Company Week');
+    E('DW.run().rule = null; DW.run().trial = false; DW.run().boons = { parry: 1, feet: 1 }');
+    const heavy = () => E(`(() => { const f = combatFoes().find(x => x && !x.dead && x.hp > 0); f.hp = f.max = 1e12; return actWarn({ kind: 'heavy', id: 'test', foe: f, unit: 0, x: 3, dur: 1.5, land: (w, m) => 0 }); })()`);
+    heavy(); const w1 = E('actWarning().win'), d1 = E('actWarning().dwin');
+    assert(Math.abs(w1 - (E('SOLO_TUNE.parryWin') + 0.15)) < 1e-9 && Math.abs(d1 - (E('SOLO_TUNE.dodgeWin') + 0.2)) < 1e-9, `Quick Parry and Steady Feet reach the solo buttons (parry ${w1.toFixed(2)} s, dodge ${d1.toFixed(2)} s)`);
+    errs.push(...g.errors);
+  }
+  {
+    // Parry Drill: counters after a parry deal 50% more
+    const counter = drill => {
+      const g = mk(205, 'soloPick("wren"); S.maxZone = 40; S.zone = 40; S.camp.b.hearth = 3'), E = s => g.eval(s);
+      run(g, 2); E('DW.start(false)'); E(`DW.run().boons = ${drill ? '{ taunt: 1 }' : '{}'}`);
+      const heavy = () => E(`(() => { const f = combatFoes().find(x => x && !x.dead && x.hp > 0); f.hp = f.max = 1e12; return actWarn({ kind: 'heavy', id: 'test', foe: f, unit: 0, x: 3, dur: 1.5, land: (w, m) => 0 }); })()`);
+      const until = left => { for (let i = 0; i < 40 && E('(w => w ? w.left : -1)(actWarning())') > left; i++) run(g, 0.05); };
+      run(g, 1.2); heavy(); until(0.25);
+      const f0 = E('(() => { globalThis.__pf = actWarning().foe; return __pf.hp; })()');
+      const r = E('soloParry()'); run(g, E('SOLO_TUNE.counterAt') + 0.05);
+      errs.push(...g.errors);
+      return { r, d: f0 - E('__pf.hp') };
+    };
+    const a = counter(false), b = counter(true);
+    assert(a.r === 'parry' && b.r === 'parry' && a.d > 0 && Math.abs(b.d / a.d - 1.5) < 0.02, `Parry Drill: the counter hits ${(b.d / a.d).toFixed(3)}x`);
+  }
+  // 5. the weekly goals count what the solo hero does
+  {
+    const g = mk(206, 'soloPick("wren")'), E = s => g.eval(s);
+    E('S.almanac.goals = [{ k: "wParry", tier: "easy", need: 2, have: 0, done: false, claimed: false }, { k: "wCast", tier: "easy", need: 2, have: 0, done: false, claimed: false }, { k: "wCounter", tier: "steady", need: 2, have: 0, done: false, claimed: false }]');
+    for (let i = 0; i < 2; i++) E('emit("soloParry", { res: "parry" }); emit("soloCounter", {}); emit("ability", { cls: "solo", auto: false })');
+    E('emit("ability", { cls: "solo", auto: true })');
+    assert(E('S.almanac.goals.every(x => x.done && x.have === 2)'), 'parries, counters and abilities cast by hand count toward their weekly goals (idle casts do not)');
+  }
+  // 6. the solo secrets
+  {
+    const boss = (hit, hpFrac, taps) => {
+      const g = mk(207, 'soloPick("tobin"); S.maxZone = 10; S.zone = 10; S.kills = 10'), E = s => g.eval(s);
+      run(g, 4);   // the Deeds start counting a moment after the game starts
+      E('S.auto = false; S.zone = 10; S.maxZone = 10; S.kills = 10; challenge()'); run(g, 0.3);   // (a weak hero would fall back a zone to keep earning)
+      if (hpFrac != null) E(`(u => { u.hp = u.maxHp * ${hpFrac}; })(combatUnits()[0])`);
+      if (hit) E('cbHitUnit(cbUnitByKey("hero"), 1, "heavy", combatFoes()[0])');
+      E('mob.hp = 1; strike(10, "#fff")'); run(g, 0.5);
+      errs.push(...g.errors);
+      return E('({ bare: !!deeds.secrets().find(s => s.id === "s_bare").got, alone: !!deeds.secrets().find(s => s.id === "s_alone").got })');
+    };
+    const clean = boss(false, null), hurt = boss(true, null), low = boss(true, 0.05);
+    assert(clean.bare && !clean.alone, 'Untouched (was Bare-Knuckled, which fired for any early hero with no weapon): a zone 10 boss beaten without a hit takes it');
+    assert(!hurt.bare && !hurt.alone, 'Untouched does not fire once you took a hit; Last Lamp Standing does not fire at full health');
+    assert(low.alone && !low.bare, 'Last Lamp Standing (solo): a zone 10 boss beaten after your health fell under 10%');
+    const g = mk(208, 'soloPick("wren")'), E = s => g.eval(s);
+    run(g, 4); for (let i = 0; i < 130; i++) { E('soloAttack()'); run(g, 0.5); }
+    assert(E('deeds.secrets().find(s => s.id === "s_drum").got') && E('DEED_TUNE.drumTaps') === 60, 'Drummer (solo): 60 Attack presses in a minute');
+    errs.push(...g.errors);
+  }
+  assert(!errs.length, 'no handler errors in the solo effect checks' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('solo effects crashed: ' + (e.stack || e)); }
+
+console.log('solo copy (browser, W1-C)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo copy (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const shown = { n: 0, views: 0 }, bad = new Map();
+      for (const hero of ['wren', 'tobin', 'pip']) {
+        const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(500);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
+        // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
+        await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
+        const scan = async label => {
+          const txt = await page.evaluate(() => { const out = []; for (const e of document.querySelectorAll('body *')) { const t = [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').trim(); if (t && e.offsetParent !== null) out.push(t); } out.push(...[...document.querySelectorAll('[aria-label],[title],[alt]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('alt')].filter(Boolean).join(' '))); return out; });
+          shown.n += txt.length; shown.views++;
+          for (const t of txt) if (W1C_RE.test(t) && !w1cAllowed(t)) { const k = t.slice(0, 120); if (!bad.has(k)) bad.set(k, `${hero} ${label}`); }
+        };
+        const pressAll = async (sel, label) => {
+          const n = Math.min(await page.locator(sel).count(), 50);
+          for (let i = 0; i < n; i++) { try { await page.locator(sel).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape'); } catch (e) {} }
+        };
+        for (const t of ['adv', 'party', 'gat', 'forge', 'world']) {
+          await X(`setTab('${t}')`); await page.waitForTimeout(120);
+          const views = JSON.parse(await X(`JSON.stringify(shownViews('${t}').map(v => v.id))`));
+          for (const v of views) {
+            await X(`setView('${t}', '${v}')`); await page.waitForTimeout(150);
+            await scan(`${t}/${v}`);
+            await pressAll(`#p-${t} button:not(:disabled), #p-${t} .card, #p-${t} [role=button]`, `${t}/${v}`);
+            await X(`setTab('${t}'); setView('${t}', '${v}')`);
+          }
+        }
+        await X('closeMenu()'); await scan('fight');
+        await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(250); await scan('hero sheet');
+        await X('deedsUI.open()'); await page.waitForTimeout(300);
+        for (const nm of ['Tracks', 'Feats', 'Looks', 'Deeds']) { const b = page.locator(`button:text-is("${nm}")`).first(); if (await b.count()) { await b.click({ force: true }); await page.waitForTimeout(150); await scan('Achievements ' + nm); } }
+        await X(`document.getElementById('bellBtn').click()`); await page.waitForTimeout(250); await scan('bell');
+        const jb = page.locator('button:text-is("Journal")').first(); if (await jb.count()) { await jb.click({ force: true }); await page.waitForTimeout(250); await scan('Journal'); }
+        await X(`classEvoUI.openChoice && classEvoUI.openChoice()`); await page.waitForTimeout(250); await scan('evolution choice');
+        assert(!errs.length, `${hero}: no page errors while reading every screen` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+      assert(shown.views > 60 && shown.n > 3000, `the scan read ${shown.n} texts in ${shown.views} screens (three heroes, every tab, sub-view and sheet at 360x740)`);
+      assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit or expedition text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('solo copy (browser) crashed: ' + (e.stack || e)); }
+// ==== end W1-C ====
+
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

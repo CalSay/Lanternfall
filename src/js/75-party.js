@@ -696,7 +696,7 @@
   const SOLO = typeof soloOn === 'function' && soloOn();
   registerView('party', { id: 'team', label: SOLO ? 'Hero' : 'Team', order: 10, dot: () => !SOLO && live() && bondNews() });
   // The same news marks the Roster sub-view (70-ui registerView).
-  registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
+  if (!SOLO) registerView('party', { id: 'roster', label: 'Roster', order: 20, dot: () => !SOLO && live() && rosterList().some(needsYou) });
   let dotT = 0;
   onTick(dt => { dotT -= dt; if (dotT <= 0) { dotT = 1; try { updateDot(); } catch (e) {} } });
   for (const ev of ['milestone', 'promote', 'recruit', 'storiesRead', 'bondLevel', 'bondStory']) on(ev, () => { try { updateDot(); } catch (e) {} });
