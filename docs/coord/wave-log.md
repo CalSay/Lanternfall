@@ -1105,3 +1105,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   D1 band 17-23; EC6 hearthH[2] 4 -> 2 + sim gathers camp logs; EC2/EC5 need N3a shift fees and Tents;
   evolution spread (Priest from a Mage save -15 zones at day 20). check passes. WORK NOW PAUSED: no agents.
 - Tobin v2 from GPT (8 full poses, light direction; GPT gave him a baker's cap, wheat-emblem apron and shield: a nod to his baker story). Close match to Wren's style (same scale, anchor, 40 colours, near-black outline). Animated in code (scratchpad assets/tobin/build.py): camp, fight idle, attack with code swoosh, block with spark, hurt, death via kneel and fallen. Viewer now has a hero switch (v11). Accessories register updated.
+- Tobin v3 (GPT, from the style pack): heavier inner dark separations, broader shapes; owner: much better. Viewer updated. Style pack's Tobin poses swapped to v3.
