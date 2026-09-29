@@ -6295,10 +6295,10 @@ try {
       await X('soloAbility({ slot: 0 }); true'); await page.waitForTimeout(350);
       const cd = await page.$eval('#soloBar .sb-ab0', b => ({ cd: +getComputedStyle(b).getPropertyValue('--cd'), n: b.querySelector('.sb-n').textContent, cool: b.classList.contains('cool') }));
       assert(cd.cool && cd.cd > 0 && /^\d+$/.test(cd.n), `after a cast the slot sweeps dark with the seconds left (${JSON.stringify(cd)})`);
-      // a heavy wind-up (59g shows one warning at a time, 1 s apart: wait until it is the one showing)
+      // a heavy wind-up (59g shows one warning at a time, 1 s apart: wait until it is the one showing) (dur 8: a 3 s wind-up could land during the real-time wait on a slow machine)
       await X('SOLO_TUNE.trashEvery = 1e9; true');
       for (let i = 0; i < 40 && !(await X('(w => !!(w && w.id === "t3"))(actWarning())')); i++) {
-        await X('if (!actWarning() || actWarning().id !== "t3") { if (!S.__t3) { S.__t3 = 1; actWarn({ kind: "heavy", id: "t3", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 3, land: () => { S.__t3 = 0; } }); } } for (let k = 0; k < 2; k++) tick(0.1); true');
+        await X('if (!actWarning() || actWarning().id !== "t3") { if (!S.__t3) { S.__t3 = 1; actWarn({ kind: "heavy", id: "t3", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 8, land: () => { S.__t3 = 0; } }); } } for (let k = 0; k < 2; k++) tick(0.1); true');
         await page.waitForTimeout(60);
       }
       await page.waitForTimeout(350);

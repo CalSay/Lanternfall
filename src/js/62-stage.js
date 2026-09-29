@@ -115,12 +115,14 @@ let resize, animate, draw, stageStats, warmScene;
   // would otherwise stay small under a tall empty sky. ZOOM_WT still fits 3 columns and the foe.
   // CW x CH: the container in CSS px, re-read on every resize.
   let SW = 0, SH = 0, SCH = 0, CW = 0, CH = 0, ZM = 1, DPR = 1, GY = 1, scene = null, curTheme = '', curHue = -1, hudB = 0;
-  const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196;
+  const ZOOMS = [1.5, 2, 2.5, 3, 3.5, 4], ZOOM_W = 272, ZOOM_WT = 216, ZOOM_H = 196, SOLO_MIN_W = 300;
   // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
   // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
   let zoomX = 1, zoomKey = '';
   function pickZoom(w, h, dpr) {
-    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = (ZOOM_W - (ZOOM_W - ZOOM_WT) * k) * zoomX;
+    // Solo (owner, 2026-09-29): the stage shows at least SOLO_MIN_W logical px across, so the hand-drawn hero (about
+    // 96 px tall, up to 110 wide) leaves the foes room: one zoom step out on portrait phones.
+    const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = Math.max((ZOOM_W - (ZOOM_W - ZOOM_WT) * k) * zoomX, typeof soloOn === 'function' && soloOn() ? SOLO_MIN_W : 0);
     let z = 1;
     for (const c of ZOOMS) {
       if (Number.isInteger(dpr) && !Number.isInteger(c * dpr)) continue;
