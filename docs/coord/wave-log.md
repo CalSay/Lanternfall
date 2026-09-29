@@ -1021,3 +1021,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   day 30 vs ~+1.5 target: BAL3. COORDINATOR SIGN-OFF on deviations (Proving damage scales with your HP; Trapper
   damage floor 1.4; mid-trial reload returns to fighting). File name: legendaries L3 moves to 59l-legend-combat
   (59e now taken by classes). Preview/Netlify: next [deploy] at the 09:38 check-in.
+- LAUNCHED S6 (opus, active combat, sub-tasks S6-A..H) and ECON-A (opus, gold curve + prices + save key bump to v2). Note for the preview sed: once ECON-A lands, the key becomes lanternfall.save.v2.
