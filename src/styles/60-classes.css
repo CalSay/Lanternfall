@@ -1,0 +1,18 @@
+/* 60-classes: Classes 2.0 S2 (76-create.js): the picker's weight line, the free-change button and the
+   class card rows on the hero sheet (evolution, second path, what changed). No motion. */
+.ccard .cl-wt { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.create-back { justify-self: center; min-height: 44px; padding: 8px 16px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.create-back:hover { color: var(--bone); }
+
+.cl-row .cl-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.cl-row .cl-top small { font-size: 12px; color: var(--muted); }
+.cl-row.off b { color: var(--muted); }
+.cl-row.cl-evo:not(.off) { border-color: var(--gold); }
+.cl-note { font-size: 12.5px !important; color: var(--bone) !important; }
+.cl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.cl-chip { font-size: 12px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); }
+.cl-chip.on { color: var(--bone); border-color: var(--gold); }
+.cl-changed { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
+.cl-changed summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--gold); font-weight: 600; }
+.cl-changed ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); line-height: 1.35; }
+.cl-switch b { color: var(--gold); }

@@ -515,7 +515,8 @@ let openSheet, partySheet;
       auto.append(box, document.createTextNode(' Cast it for me when idle (from zone 10, half as often)'));
       ab.append(auto);
       const au = el('div', 'cs-kit1'); au.append(el('b', null, 'Class aura'), el('p', null, c.aura));
-      body.append(section('Class', tap, ab, au));
+      const cu = typeof classUI === 'object' && classUI ? safe(() => classUI.rows(), []) : [];   // S2: passives, the evolution rows (76-create)
+      body.append(section('Class', tap, ab, au, ...cu));
     }
     const nouns = (S.party && HERO_GEAR_NOUN[S.party.cls]) || {};
     const g = el('div', 'cs-hgear');
@@ -544,13 +545,14 @@ let openSheet, partySheet;
       mir.append(b);
     }
     const bd = bondsUI && safe(() => bondsUI.charSection('hero'), null); if (bd) body.append(bd);   // F4: the hero's Bonds
-    body.append(section('Class change', mir));
+    const sw = typeof classUI === 'object' && classUI ? safe(() => classUI.switchRow(), null) : null;   // S2: the free change
+    body.append(sw ? section('Class change', sw, mir) : section('Class change', mir));
     sheet.foot.textContent = '';
   }
 
   const sigOf = k => (bondsUI ? bondsUI.sig() + '|' : '') + sigOf0(k);   // F4: a Bond level or story read redraws
   const sigOf0 = k => {
-    if (k === 'hero') return 'hero|' + S.party.cls + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
+    if (k === 'hero') return 'hero|' + S.party.cls + '|' + (typeof classUI === 'object' && classUI ? classUI.sig() : '') + '|' + JSON.stringify(S.equip) + '|' + S.party.mirrors + '|' + S.L + '|' + heroTitle() + '|' + (S.legend ? JSON.stringify(S.legend.book) : '');
     const r = charRec(k);
     if (!r) return 'L|' + k + '|' + JSON.stringify(recruitCost(k)) + '|' + canRecruit(k) + '|' + JSON.stringify(pctOf(leadFor(k)));
     return [k, r.lv, r.rank, r.wpn, r.trk, r.seen, (S.legend ? JSON.stringify(S.legend.book) : '') + ['wpn', 'trk'].map(w => { const it = gearOf(k, w); return it && it.lg ? it.lg : ''; }).join(), inField(k), JSON.stringify(S.party.cells && S.party.cells[k]), canPromote(k), xpInfo(k).atCap,
