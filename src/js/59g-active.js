@@ -26,7 +26,7 @@
 //   (59b's shapes) so the stage flashes and rings every warning. Payloads are reused objects.
 // Save: registerState('cb2', { v, haptic, left, seen, n }) (combat-2 8.4; Assist timing is parked, owner D5).
 
-var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
+var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodge, actAnswer, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
 
 {
   const T = ACT_TUNE = {
@@ -82,6 +82,10 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     W.dur = Math.max(minD, spec.dur || (k === 'heavy' ? T.heavyWind + heavyLead() : DODGE[k] ? T.dodgeWind : 2));
     W.left = W.dur;
     W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
+    // SOLO1: Parry and Dodge are buttons. A heavy takes either (Parry in the tight window, Dodge in the long one);
+    // a slam or a ground zone takes Dodge only. W.win is the parry window on a heavy (the banner marks both).
+    if (soloOn()) { W.win = k === 'heavy' ? SOLO_TUNE.parryWin : 0; W.dwin = k === 'heavy' || DODGE[k] ? SOLO_TUNE.dodgeWin : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
+    else W.dwin = 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
     const g = clock - lastEnd; if (g < ST.minGap) ST.minGap = g;
@@ -131,6 +135,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
       if (typeof cbWallOn === 'function' && cbWallOn() && (w.target === 'hero' || bonus('ks:bastion') > 0)) { parried(f, 'wall', false); return; }
     }
     if (DODGE[w.kind] && (res === 'dodge' || res === 'perfect')) { if (w.miss) w.miss(w, res); end(res, 'tap'); return; }
+    if (w.kind === 'heavy' && res === 'dodge' && soloOn()) { end('dodge', 'tap'); return; }   // SOLO1: a dodged heavy misses
     ST.landed++;
     const mult = (w.kind === 'heavy' && res === 'early' ? T.earlyX : 1) * (dboon('lward') ? 0.7 : 1);   // Lamplight Ward
     if (w.land) { try { w.land(w, mult); } catch (e) { console.error('[lanternfall] warning land failed', e); } }
@@ -140,7 +145,11 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
   function parried(f, by, active) {
     ST.parries++; CB_STATS.parries++;
     end('parry', by);
-    if (f && alive(f)) { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
+    if (f && alive(f)) {
+      // SOLO1 (owner): the parry staggers the foe at once for the counter's length; the counter lands inside it (59j)
+      if (soloOn() && active) { stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); f.swing = Math.max(f.swing, 0.3); actStag(f, T.stag.parry, 0); if (typeof soloCounter === 'function') soloCounter(f); }
+      else { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
+    }
     if (active) { N().parry++; answered(); }
     PARRY_EV.foe = f; PARRY_EV.by = by; PARRY_EV.active = !!active; emit('parry', PARRY_EV);
   }
@@ -192,6 +201,55 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     if (typeof resolveParry === 'function' && resolveParry('tap')) return 'parry';
     return '';
   };
+  // ---------------- SOLO1: the Parry, Dodge and Attack buttons ----------------
+  // actParry(forgive) -> 'parry' | 'miss' | ''   '' = no heavy hit showing (the press still misses: 59j opens you up)
+  // actDodge(forgive) -> 'dodge' | 'perfect' | 'early' | ''
+  // actAnswer() -> 'finisher' | 'interrupt' | ''   what the Attack button does first (a Finisher, stop a heal or a summon)
+  // forgive: the guide's first Parry / Dodge (the game paused on the warning): any press inside the wind-up counts.
+  const heavyOn = () => W.on && W.kind === 'heavy' && W.foe && (alive(W.foe) || W.spec.dead);
+  actParry = forgive => {
+    if (heavyOn()) {
+      if (W.res === 'dodge') return '';
+      if (W.left <= W.win || forgive) { W.res = 'parry'; land(); return 'parry'; }
+      return 'miss';
+    }
+    // 59b's own wind-ups (a boss without a kit)
+    const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
+    if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
+      if (t.left <= SOLO_TUNE.parryWin || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
+      return 'miss';
+    }
+    return '';
+  };
+  actDodge = forgive => {
+    if (W.on && W.foe && (alive(W.foe) || W.spec.dead) && (W.kind === 'heavy' || DODGE[W.kind])) {
+      if (W.res) return '';
+      if (W.left <= (W.dwin || T.dodgeWin) || forgive) {
+        W.res = W.kind !== 'heavy' && W.left <= W.perf ? 'perfect' : 'dodge';
+        ST.dodges++; CB_STATS.dodges++; N().dodge++;
+        if (W.res === 'perfect') { ST.perfect++; N().perfect++; keenPatch(W.slots); if (W.foe && alive(W.foe) && bar(W.foe)) actStag(W.foe, T.stag.perfect, 0); }
+        answered();
+        DODGE_EV.foe = W.foe; DODGE_EV.perfect = W.res === 'perfect'; emit('dodge', DODGE_EV);
+        return W.res;
+      }
+      W.wait = 0.4;
+      return 'early';
+    }
+    const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
+    if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
+      if (t.res) return '';
+      if (t.left <= SOLO_TUNE.dodgeWin || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
+      return 'early';
+    }
+    return '';
+  };
+  actAnswer = () => {
+    if (FIN.on && FIN.f && alive(FIN.f)) { fireFinisher(false); return 'finisher'; }
+    if (W.on && W.foe && alive(W.foe) && (W.kind === 'heal' || W.kind === 'summon') && !W.foe.boss && canInterrupt('tap')) return interrupt('tap', true) && 'interrupt';
+    for (const f of foes()) if (alive(f) && f.chanT > 0) { f.chanT = 0; f.bt = 0; ST.intr++; CB_STATS.interrupts++; N().intr++; INT_EV.foe = f; INT_EV.kind = 'heal'; INT_EV.by = 'tap'; INT_EV.active = true; emit('interrupt', INT_EV); return 'interrupt'; }
+    return '';
+  };
+
   // Keen on each member standing in the struck slots (proposal 8.2-11).
   function keenPatch(slots) {
     for (const u of units()) if (u.live && !u.down && (!slots || (slots & (1 << u.col)))) u.keenT = T.keenT;
@@ -385,7 +443,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, enrage: false, rxWin: false, elites: [] };
   cbState = () => {
     const s = SNAP, t = s.tele, c = s.cast;
-    t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
+    t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.dwin = W.dwin || 0; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
     c.kind = ''; c.foe = null;
     const list = foes();
     let boss = null;

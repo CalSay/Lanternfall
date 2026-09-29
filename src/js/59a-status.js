@@ -135,6 +135,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
       }
       return true;
     }
+    if (id === 'stagger') { f.reelT = Math.max(f.reelT || 0, (o && o.dur) || d.dur); return true; }   // SOLO1: a parry's stagger
     if (id === 'mark') {
       const v = Math.max(d.vMin, Math.min(d.vMax, (o && o.v) || d.v)), dur = (o && o.dur) || d.dur;
       if (f.markT > 0 && (f.mkV || d.v) > v) return false;   // the stronger Mark stays
@@ -155,6 +156,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     if (!f) return 0;
     if (id === 'stun') return Math.max(0, f.stunT || 0);
     if (id === 'mark') return Math.max(0, f.markT || 0);
+    if (id === 'stagger') return Math.max(0, f.reelT || 0);
     const r = peek(f, id); return r && r.t > 0 ? r.t : 0;
   };
   stHas = (f, id) => stLeft(f, id) > 0;

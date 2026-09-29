@@ -300,7 +300,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     }
     if (res === 'parry') { resolve('parry', 'tap'); return; }
     if (typeof cbWallOn === 'function' && cbWallOn() && wallBlocks()) { resolve('parry', 'wall'); return; }
-    const x = res === 'dodge' ? E.dodgeX : 1;
+    const x = res === 'dodge' ? (soloOn() ? 0 : E.dodgeX) : 1;   // SOLO1: a dodge avoids the hit
     if (res === 'dodge') CB_STATS.dodges++;
     CB_STATS.hitByHeavy++;
     if (kind === 'cloud') {
@@ -323,7 +323,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (result === 'parry') CB_STATS.parries++;
     else if (result === 'interrupt') CB_STATS.interrupts++;
     endTele(kind === 'heal' ? 'interrupt' : result, by);
-    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
+    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, soloOn() && by === 'tap' ? SOLO_TUNE.counterT : E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
   }
   // Shield Wall blocks a heavy hit (or the Elder Spore's cloud) aimed at the hero; with Lantern Bastion
   // (a crown keystone) on anyone.

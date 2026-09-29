@@ -113,7 +113,9 @@ const STATUS_DEFS = {
   stun: { n: 'Stun', dur: 1, min: 1, maxDur: 3, max: 1, keep: 'none', cap: 3 },
   root: { n: 'Root', dur: 3, max: 1, keep: 'none', cap: 4 },
   mark: { n: 'Mark', v: 0.2, vMin: 0.15, vMax: 0.3, dur: 8, max: 1, keep: 'stronger' },
-  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 }
+  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 },
+  // SOLO1: a parried foe is Staggered for the counter's length (it does nothing; bosses too). Reads and writes f.reelT.
+  stagger: { n: 'Staggered', dur: 0.55, cap: 1, max: 1, keep: 'refresh' }
 };
 
 // On a party member: damage over time is a share of the member's max HP a tick (per stack for bleed and
@@ -148,7 +150,7 @@ const ST_TUNE = { tick: 1, vulnCap: 0.6, rxWin: 3, rxX: 1.25, heavyP: 3, resCap:
 
 // The focus foe shows up to 4 badges, the most important first (combat-2 2.6 and its "other members" order).
 // Mark is left out here: the stage already draws its own Mark chip (the Ranger's Focus and Mark share it).
-const ST_BADGE_ORDER = ['stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
+const ST_BADGE_ORDER = ['stagger', 'stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
 
 // 5x5 badge shapes (core-2 3.1): three slashes, a drop, a small flame, a flake, a spiral, a chain link,
 // a crosshair, a cracked ring. Each carries its own palette (the stage's chip draws it on a dark plate).
@@ -160,5 +162,6 @@ const ST_ICONS = {
   stun: { col: '#F0E442', pal: { y: '#F0E442' }, rows: ['.yyy.', 'y...y', 'y.y.y', 'y.yy.', '.y...'] },
   root: { col: '#C8B89A', pal: { s: '#C8B89A', S: '#8A7A5E' }, rows: ['ss...', 's.S..', '.sSs.', '..S.s', '...ss'] },
   mark: { col: '#7ED36A', pal: { l: '#7ED36A', w: '#FFFFFF' }, rows: ['..l..', '.l.l.', 'll.ll', '.l.l.', '..l..'] },
-  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] }
+  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] },
+  stagger: { col: '#FFD27A', pal: { y: '#FFD27A', w: '#FFFFFF' }, rows: ['y...y', '.y.y.', '..w..', '.y.y.', 'y...y'] }
 };

@@ -8990,7 +8990,9 @@ const STATUS_DEFS = {
   stun: { n: 'Stun', dur: 1, min: 1, maxDur: 3, max: 1, keep: 'none', cap: 3 },
   root: { n: 'Root', dur: 3, max: 1, keep: 'none', cap: 4 },
   mark: { n: 'Mark', v: 0.2, vMin: 0.15, vMax: 0.3, dur: 8, max: 1, keep: 'stronger' },
-  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 }
+  curse: { n: 'Curse', dt: 'fire', store: 0.2, storeCap: 10, splash: 0.5, dur: 6, max: 1, keep: 'none', noHeal: 1 },
+  // SOLO1: a parried foe is Staggered for the counter's length (it does nothing; bosses too). Reads and writes f.reelT.
+  stagger: { n: 'Staggered', dur: 0.55, cap: 1, max: 1, keep: 'refresh' }
 };
 
 // On a party member: damage over time is a share of the member's max HP a tick (per stack for bleed and
@@ -9025,7 +9027,7 @@ const ST_TUNE = { tick: 1, vulnCap: 0.6, rxWin: 3, rxX: 1.25, heavyP: 3, resCap:
 
 // The focus foe shows up to 4 badges, the most important first (combat-2 2.6 and its "other members" order).
 // Mark is left out here: the stage already draws its own Mark chip (the Ranger's Focus and Mark share it).
-const ST_BADGE_ORDER = ['stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
+const ST_BADGE_ORDER = ['stagger', 'stun', 'root', 'burn', 'curse', 'venom', 'bleed', 'chill'];
 
 // 5x5 badge shapes (core-2 3.1): three slashes, a drop, a small flame, a flake, a spiral, a chain link,
 // a crosshair, a cracked ring. Each carries its own palette (the stage's chip draws it on a dark plate).
@@ -9037,7 +9039,8 @@ const ST_ICONS = {
   stun: { col: '#F0E442', pal: { y: '#F0E442' }, rows: ['.yyy.', 'y...y', 'y.y.y', 'y.yy.', '.y...'] },
   root: { col: '#C8B89A', pal: { s: '#C8B89A', S: '#8A7A5E' }, rows: ['ss...', 's.S..', '.sSs.', '..S.s', '...ss'] },
   mark: { col: '#7ED36A', pal: { l: '#7ED36A', w: '#FFFFFF' }, rows: ['..l..', '.l.l.', 'll.ll', '.l.l.', '..l..'] },
-  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] }
+  curse: { col: '#B47BFF', pal: { v: '#B47BFF', V: '#5A2E8E' }, rows: ['.vvv.', 'v...v', 'v.V.v', 'v..V.', '.vv..'] },
+  stagger: { col: '#FFD27A', pal: { y: '#FFD27A', w: '#FFFFFF' }, rows: ['y...y', '.y.y.', '..w..', '.y.y.', 'y...y'] }
 };
 
 // ---- src/js/22-data-regions.js ----
@@ -9817,6 +9820,58 @@ const CLS_TUNE = {
     venomstalker: 1.45, trapper: 2.65, warlock: 1.6, priest: 0 }
 };
 
+// ---- src/js/24b-data-solo.js ----
+// 24b-data-solo: the solo hero (task SOLO1, docs/design/solo-hero.md). Data and knobs only.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// The party is gone: one hero fights at a time. The three starters are roster characters played as the
+// hero; each maps onto a base class kit (stats, gear weights, star maps), so balance keeps its tables.
+//   SOLO_TUNE        knobs (sim --eval "SOLO_TUNE.x = ..."); on: 0 turns the whole layer off (the dormant party
+//                    game; check.mjs runs its legacy party sections that way through a prelude `var __SOLO = 0`)
+//   SOLO_HEROES      the starters: { key, base, kit, weapon, role, ab: { id, name, desc, cd } }
+//   SOLO_ORDER       picker order
+//   soloOn() -> bool the solo layer is on
+// Runtime and state: 59j-solo.js. UI: 75-solo-ui.js, 76-create.js.
+
+const SOLO_TUNE = {
+  on: typeof __SOLO === 'undefined' ? 1 : +__SOLO,
+  // ---- the buttons ----
+  atkCd: 0.6,          // Attack: one class hit, then a short cooldown (mashing is not a win)
+  parryWin: 0.35,      // Parry: the last 0.35 s of a heavy wind-up (tight)
+  dodgeWin: 0.8,       // Dodge: the last 0.8 s of any heavy, slam or ground wind-up (easier)
+  dodgeCd: 1.2,        // Dodge: cooldown after every press
+  parryCd: 0.4,        // Parry: a short lock after a success
+  openT: 1.0,          // a parry outside the window: open this long (Parry locked, hits taken x openX)
+  openX: 1.5,
+  counterT: 0.55,      // a parry staggers the foe for the counter's length; the counter lands at counterAt
+  counterAt: 0.3,
+  counterX: 3,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
+  // ---- the ability (one per starter) ----
+  autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
+  echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked
+  bash: { x: 3.2, stun: 2, dr: 0.4, drT: 4 },                  // Shield Bash: the front foe, Stun, less damage taken
+  fire: { x: 2.4, xOther: 1.0, patchT: 3, burnP: 1.5 },        // Fireball: burst, Burn, a burning patch
+  // ---- telegraphs (owner: heavy hits come mainly from bosses and elites; trash rarely, and softer) ----
+  trashEvery: 20, trashFirst: 9, trashX: 1.6, trashFrom: 1,   // a pack foe's heavy: every 20 s of fighting (first at 9 s)
+  // ---- balance for one hero (sim.mjs --targets early pacing) ----
+  dmgX: 1.6,           // the hero's damage (the party's share folded in)
+  hpX: 2.6,            // the hero's HP (it takes every hit now)
+  drX: 0.25            // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
+};
+
+const SOLO_HEROES = {
+  wren: { key: 'wren', base: 'ranger', kit: 'ranger', weapon: 'Bow', role: 'Archer', range: 'Ranged',
+    ab: { id: 'echo', name: 'Echo Shot', cd: 9, desc: 'A piercing arrow down the line. It hits every foe in its path and Marks them (they take 20% more).' } },
+  tobin: { key: 'tobin', base: 'warrior', kit: 'warden', weapon: 'Sword and shield', role: 'Tank', range: 'Melee',
+    ab: { id: 'bash', name: 'Shield Bash', cd: 8, desc: 'A heavy blow to the front foe. It Stuns it, and Tobin takes 40% less damage for 4 seconds.' } },
+  pip: { key: 'pip', base: 'mage', kit: 'lanternmage', weapon: 'Staff', role: 'Caster', range: 'Ranged, fire',
+    ab: { id: 'fire', name: 'Fireball', cd: 10, desc: 'A burst of fire on the target. It Burns it and nearby foes, and leaves a burning patch for 3 seconds.' } }
+};
+const SOLO_ORDER = ['wren', 'tobin', 'pip'];
+// The hero key for a base class (a tool that picks a class picks its starter).
+const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
+function soloOn() { return !!SOLO_TUNE.on; }
+
 // ---- src/js/30-state.js ----
 // 30-state: the save (S), load/migrate, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
@@ -9826,7 +9881,7 @@ const CLS_TUNE = {
 // ================= save =================
 // ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
 // read (a new game starts) and never touched: its key stays in storage as it was.
-const KEY = 'lanternfall.save.v2';
+const KEY = 'lanternfall.save.v3';   // SOLO1: the solo hero starts fresh (v2 saves are never read)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
@@ -12755,7 +12810,9 @@ let hearthCold, hearthLit, hearthScene, hearthCan, hearthLight, hearthPlotOpen, 
   if (isNew && HEARTH_TUNE.on) {
     coldStart = true;
     Hs().cold = 1;
-    S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0;
+    // SOLO1: the solo hero starts on the road (the guide sends it to the Oak Grove after the first boss)
+    if (typeof soloOn === 'function' && soloOn()) { S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
+    else { S.activity = 'gather'; S.node = { kind: 'wood', t: 1 }; S.gProg = 0; }
   } else if (!hadField) Hs().said = noProgress() && S.camp === undefined ? 1 : 0;   // an old save: one What's new line
 
   const lv = id => (S.camp && S.camp.b && S.camp.b[id]) || 0;
@@ -14302,8 +14359,8 @@ let unitHp, unitCd, bossTelegraph;
     key = clsSet(r.base, evo, { now: o.now, stamp: !p.chosen || o.free });
     p.chosen = true; p.abilityCd = 0; readyFor = 0;
     guard = []; bless = []; volleyLeft = 0;
-    toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
-    if (first && p.newGame) {
+    if (!soloOn()) toast(`You walk the path of the ${HERO_CLASSES[key].name}.`, 'good');
+    if (first && p.newGame && !soloOn()) {   // SOLO1: no starter companion
       const [ck, slot] = STARTER[key];
       if (rosterLive()) unlockChar(ROSTER_STARTER[key] || ck, 'starter');
       else {
@@ -14339,6 +14396,7 @@ let unitHp, unitCd, bossTelegraph;
   const canHit = () => { const tg = target(); return tg === 'world' || (tg === 'mob' && mob && !mob.dead); };
   castAbility = function (opts) {
     ensureInit();
+    if (soloOn() && typeof soloAbility === 'function') return soloAbility(opts);   // SOLO1: the hero's own ability
     const c = cls(), p = P();
     if (!c || (p.abilityCd > 0 && spare <= 0) || !canHit()) return false;
     const auto = !!(opts && opts.auto);
@@ -14369,6 +14427,7 @@ let unitHp, unitCd, bossTelegraph;
   };
 
   abilityInfo = function () {
+    if (soloOn() && typeof soloAbilityInfo === 'function') return soloAbilityInfo();
     const c = cls(); if (!c) return null;
     const ab = HERO_CLASSES[c].ability, p = P();
     return { name: ab.name, desc: ab.desc, cd: abCd(c), left: p.abilityCd, ready: p.abilityCd <= 0 || spare > 0, spare,
@@ -14410,7 +14469,8 @@ let unitHp, unitCd, bossTelegraph;
     const c = cls();
     // Stage C / S6-B: the tap does what is showing first (59g actTap: a Finisher, a parry, a dodge, an interrupt),
     // else the class tap. Without 59g, a tap during a boss wind-up is the parry (59b resolveParry).
-    if (!auto && tg === 'mob') {
+    // SOLO1: the Attack button answers nothing (Parry and Dodge have their own buttons): o.noAnswer.
+    if (!auto && tg === 'mob' && !o.noAnswer) {
       const k = typeof actTap === 'function' ? actTap() : typeof resolveParry === 'function' && resolveParry('tap') ? 'parry' : '';
       if (k) { emit('classTap', { cls: c, kind: k === 'parry' || k === 'early' ? 'parry' : 'answer', act: k, target: tg, auto }); return; }
     }
@@ -14507,7 +14567,7 @@ let unitHp, unitCd, bossTelegraph;
     if (extra > 0 && p.abilityCd <= 0 && spare < extra) { spareT += dt; if (spareT >= abCd(c)) { spare++; spareT = 0; } } else spareT = 0;
     // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
     // S6-B (59g actHold): auto-cast waits up to 1.5 s when the focus foe's Stagger is at 90% or more
-    if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
+    if (!soloOn() && p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd')) && !(typeof actHold === 'function' && actHold())) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
       if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
@@ -14539,7 +14599,7 @@ let unitHp, unitCd, bossTelegraph;
   });
   on('deepFloor', () => { if (hymnUntil > clock + tn('hymnT')) hymnUntil = clock; });
   on('zoneClear', ({ zone }) => {
-    if (zone + 1 === T.autoCastZone && cls()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
+    if (zone + 1 === T.autoCastZone && cls() && !soloOn()) toast(`Your hero now casts ${HERO_CLASSES[cls()].ability.name} alone, at half speed. Tap it yourself to cast it twice as often.`, 'good');
   });
 
   ensureInit();
@@ -16004,9 +16064,9 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // migN: the B3 migration below still picks and levels a field of 3 (old saves keep their levels);
   // 56e-formation then keeps the best 2 of them.
   let migN = 0;
-  const fieldKeys = () => (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
+  const fieldKeys = () => typeof soloOn === 'function' && soloOn() ? [] : (P().field || []).filter(isRecruited).slice(0, migN || T.fieldMax);
   const fieldRaw = keys => (keys || fieldKeys()).reduce((a, k) => a + rawDps(k, charRec(k)), 0);
-  fieldCompDps = () => { const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
+  fieldCompDps = () => { if (typeof soloOn === 'function' && soloOn()) return 0; const f = fieldKeys(); return f.length ? f.reduce((a, k) => a + modDps(k, charRec(k)), 0) * sharedMult() : 0; };
   supportBuff = () => {
     let sup = 0, oth = 0;
     for (const k of fieldKeys()) { const d = modDps(k, charRec(k)); if (R(k).role === 'support') sup += d; else oth += d; }
@@ -16158,7 +16218,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   };
   // Cost of the first route whose condition is met, or null (no open route, or recruited).
   recruitCost = id => { if (!R(id) || isRecruited(id)) return null; const rt = readyRoute(id); return rt ? costOf(rt) : null; };
-  canRecruit = id => { const c = recruitCost(id); return !!c && affordable(c); };
+  canRecruit = id => { if (typeof soloOn === 'function' && soloOn()) return false; const c = recruitCost(id); return !!c && affordable(c); };   // SOLO1: nobody joins a party
   recruit = id => {
     if (!canRecruit(id)) return false;
     const rt = readyRoute(id);
@@ -16175,6 +16235,7 @@ let ROSTER_TUNE, bankXp, foesGold, routeGold, drillsAt, isDrillLv, rankXTxt, add
   // Adds a character to the roster at level 1, whatever the route. Used by every avenue.
   unlockChar = (id, source, quiet) => {
     if (!R(id) || isRecruited(id)) return false;
+    if (typeof soloOn === 'function' && soloOn() && source !== 'test') return false;   // SOLO1: the party is gone (tools may still add one)
     recs()[id] = newRec(1, 0, source || 'progress');
     if (!quiet) toast(`${R(id).name}, ${R(id).title}, joins your party.`, 'good', null, 'high');
     const f = fieldKeys();
@@ -18491,7 +18552,7 @@ let formNoLoss, homeSlot, slotOf, whoIn, offSlot, adjacentKeys, formLine, formWa
   const ROLE_D = { tank: 0.5, striker: 1.82, caster: 1.0, support: 0 };
   let legacy = false;   // true while the migration measures the old party of 3 (no trio, floor or slots)
   trioMult = () => {
-    if (!combatOn() || legacy) return 1;
+    if (!combatOn() || legacy || soloOn()) return 1;   // SOLO1: no trio
     const span = T.trioTo - T.trioFrom, z = S.maxZone || 1;
     const r = span > 0 ? Math.max(0, Math.min(1, (z - T.trioFrom) / span)) : z >= T.trioTo ? 1 : 0;
     return 1 + (T.trioX - 1) * r;
@@ -23719,7 +23780,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbUnitByKey = key => { for (let i = 0; i < nU; i++) if (U[i].key === key) return U[i]; return null; };
 
   // S3: a solo fight (59f-trials trialField: the Proving, the Stand) fields only the heroes it names.
-  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
+  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (soloOn() ? [] : null) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
   const has = id => { for (let i = 0; i < nU; i++) if (U[i].id === id) return U[i]; return null; };
   const upHas = id => { const u = has(id); return u && !u.down ? u : null; };
   const synOn = id => { try { return typeof synergyStatus === 'function' && synergyStatus(id).active; } catch (e) { return false; } };
@@ -23765,6 +23826,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
       u.pow = hp0 / T.heroPow;
       u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
       maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
+      if (soloOn()) maxHp *= SOLO_TUNE.hpX;   // SOLO1: the hero takes every hit now
       u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
       if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
@@ -24511,6 +24573,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (has('caedmon')) dr *= 1 - T.unburnt;
     if (wallUntil > clock) dr *= 1 - T.wall;
     if (u.i === 0 && challUntil > clock) dr *= 1 - 0.2;   // Challenger: 20% less while taunting
+    if (u.i === 0 && typeof soloTakenX === 'function') dr *= soloTakenX();   // SOLO1: the solo hero's cut, and x1.5 while open after a missed parry
     if (u.drT > 0) dr *= 1 - u.drV;
     if (u.id === 'tobin') dr *= 1 - Math.min(T.trustMax, u.trust);
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
@@ -24828,6 +24891,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     let dr0 = 1;
     if (S.party && S.party.cls === 'warden') dr0 *= 1 - T.wardenDr;
+    if (soloOn()) dr0 *= 1 - SOLO_TUNE.drX;   // SOLO1
     for (let i = 1; i < n; i++) if (EST[i].id === 'caedmon') dr0 *= 1 - T.unburnt;
     const drOf = u => dr0 * (u.synDr || 1) * (u.role === 'tank' ? 1 - T.tankDr : 1) *   // F2: synergy damage reduction
       (u.col < 2 && coverOf(u, EST, n) ? 1 - (u.col === 1 ? T.cover : FORM_TUNE.bulwark) : 1);   // F1 cover and bulwark
@@ -24909,7 +24973,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // reductions, capped) against the party's HP and healing: it must outlast the kill by bossLive.
     let hpSum = 0, heal = 0, front = EST[0];
     for (let i = 0; i < n; i++) { hpSum += EST[i].maxHp; heal += EST[i].heal; if (EST[i].col > front.col || (EST[i].col === front.col && EST[i].role === 'tank')) front = EST[i]; }
-    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1);
+    const atk = zoneAtk(z) * T.bossAtk, dr = (1 - red(front.armour)) * (front.synDr || 1) * (front.role === 'tank' ? 1 - T.tankDr : 1) * (S.party && S.party.cls === 'warden' ? 1 - T.wardenDr : 1) * (soloOn() ? 1 - SOLO_TUNE.drX : 1);
     const swing = Math.min(atk * dr, front.maxHp * T.caps.boss) * T.bossSpd, heavy = Math.min(atk * ENEMY_TUNE.heavyX * dr, front.maxHp * T.caps.tele) / ENEMY_TUNE.heavyEvery;
     const net = swing + heavy - heal - hpSum * T.regen;
     return !(net > 0) || hpSum / net >= T.bossLive * hp / Math.max(1e-9, D);
@@ -25054,6 +25118,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
       }
       return true;
     }
+    if (id === 'stagger') { f.reelT = Math.max(f.reelT || 0, (o && o.dur) || d.dur); return true; }   // SOLO1: a parry's stagger
     if (id === 'mark') {
       const v = Math.max(d.vMin, Math.min(d.vMax, (o && o.v) || d.v)), dur = (o && o.dur) || d.dur;
       if (f.markT > 0 && (f.mkV || d.v) > v) return false;   // the stronger Mark stays
@@ -25074,6 +25139,7 @@ var typeX, typeXKey, typeRel, typeZone, lbType, heroType, unitType,
     if (!f) return 0;
     if (id === 'stun') return Math.max(0, f.stunT || 0);
     if (id === 'mark') return Math.max(0, f.markT || 0);
+    if (id === 'stagger') return Math.max(0, f.reelT || 0);
     const r = peek(f, id); return r && r.t > 0 ? r.t : 0;
   };
   stHas = (f, id) => stLeft(f, id) > 0;
@@ -25599,7 +25665,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     }
     if (res === 'parry') { resolve('parry', 'tap'); return; }
     if (typeof cbWallOn === 'function' && cbWallOn() && wallBlocks()) { resolve('parry', 'wall'); return; }
-    const x = res === 'dodge' ? E.dodgeX : 1;
+    const x = res === 'dodge' ? (soloOn() ? 0 : E.dodgeX) : 1;   // SOLO1: a dodge avoids the hit
     if (res === 'dodge') CB_STATS.dodges++;
     CB_STATS.hitByHeavy++;
     if (kind === 'cloud') {
@@ -25622,7 +25688,7 @@ var onEnemyTick, onFoeAttack, onFoeDeath, onFoeDown, onFoeStun, endDive, bossSta
     if (result === 'parry') CB_STATS.parries++;
     else if (result === 'interrupt') CB_STATS.interrupts++;
     endTele(kind === 'heal' ? 'interrupt' : result, by);
-    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
+    if (f && alive(f) && kind !== 'heal') { f.stunT = Math.max(f.stunT, soloOn() && by === 'tap' ? SOLO_TUNE.counterT : E.stagger); if (result === 'parry') f.vulnT = E.vulnT; f.swing = Math.max(f.swing, 0.5); }
   }
   // Shield Wall blocks a heavy hit (or the Elder Spore's cloud) aimed at the hero; with Lantern Bastion
   // (a crown keystone) on anyone.
@@ -26530,7 +26596,7 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
 //   (59b's shapes) so the stage flashes and rings every warning. Payloads are reused objects.
 // Save: registerState('cb2', { v, haptic, left, seen, n }) (combat-2 8.4; Assist timing is parked, owner D5).
 
-var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
+var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodge, actAnswer, actHold, actStag, actHeavy, actTick, cbState, actSeen, actStagMax;
 
 {
   const T = ACT_TUNE = {
@@ -26586,6 +26652,10 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     W.dur = Math.max(minD, spec.dur || (k === 'heavy' ? T.heavyWind + heavyLead() : DODGE[k] ? T.dodgeWind : 2));
     W.left = W.dur;
     W.win = k === 'heavy' ? parryWin() : DODGE[k] ? T.dodgeWin + (dboon('feet') ? 0.3 : 0) : 0; W.perf = DODGE[k] ? T.perfWin + (dboon('feet') ? 0.2 : 0) : 0;
+    // SOLO1: Parry and Dodge are buttons. A heavy takes either (Parry in the tight window, Dodge in the long one);
+    // a slam or a ground zone takes Dodge only. W.win is the parry window on a heavy (the banner marks both).
+    if (soloOn()) { W.win = k === 'heavy' ? SOLO_TUNE.parryWin : 0; W.dwin = k === 'heavy' || DODGE[k] ? SOLO_TUNE.dodgeWin : 0; W.perf = DODGE[k] ? T.perfWin : 0; }
+    else W.dwin = 0;
     if (W.cast && W.foe) W.foe.cast = { kind: k, id: W.id, name: W.name, left: W.dur, dur: W.dur };
     ST.warns++;
     const g = clock - lastEnd; if (g < ST.minGap) ST.minGap = g;
@@ -26635,6 +26705,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
       if (typeof cbWallOn === 'function' && cbWallOn() && (w.target === 'hero' || bonus('ks:bastion') > 0)) { parried(f, 'wall', false); return; }
     }
     if (DODGE[w.kind] && (res === 'dodge' || res === 'perfect')) { if (w.miss) w.miss(w, res); end(res, 'tap'); return; }
+    if (w.kind === 'heavy' && res === 'dodge' && soloOn()) { end('dodge', 'tap'); return; }   // SOLO1: a dodged heavy misses
     ST.landed++;
     const mult = (w.kind === 'heavy' && res === 'early' ? T.earlyX : 1) * (dboon('lward') ? 0.7 : 1);   // Lamplight Ward
     if (w.land) { try { w.land(w, mult); } catch (e) { console.error('[lanternfall] warning land failed', e); } }
@@ -26644,7 +26715,11 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
   function parried(f, by, active) {
     ST.parries++; CB_STATS.parries++;
     end('parry', by);
-    if (f && alive(f)) { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
+    if (f && alive(f)) {
+      // SOLO1 (owner): the parry staggers the foe at once for the counter's length; the counter lands inside it (59j)
+      if (soloOn() && active) { stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); f.swing = Math.max(f.swing, 0.3); actStag(f, T.stag.parry, 0); if (typeof soloCounter === 'function') soloCounter(f); }
+      else { f.reelT = T.reelT; f.vulnT = Math.max(f.vulnT || 0, ENEMY_TUNE.vulnT); f.swing = Math.max(f.swing, 0.5); actStag(f, T.stag.parry, 0); }
+    }
     if (active) { N().parry++; answered(); }
     PARRY_EV.foe = f; PARRY_EV.by = by; PARRY_EV.active = !!active; emit('parry', PARRY_EV);
   }
@@ -26696,6 +26771,55 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     if (typeof resolveParry === 'function' && resolveParry('tap')) return 'parry';
     return '';
   };
+  // ---------------- SOLO1: the Parry, Dodge and Attack buttons ----------------
+  // actParry(forgive) -> 'parry' | 'miss' | ''   '' = no heavy hit showing (the press still misses: 59j opens you up)
+  // actDodge(forgive) -> 'dodge' | 'perfect' | 'early' | ''
+  // actAnswer() -> 'finisher' | 'interrupt' | ''   what the Attack button does first (a Finisher, stop a heal or a summon)
+  // forgive: the guide's first Parry / Dodge (the game paused on the warning): any press inside the wind-up counts.
+  const heavyOn = () => W.on && W.kind === 'heavy' && W.foe && (alive(W.foe) || W.spec.dead);
+  actParry = forgive => {
+    if (heavyOn()) {
+      if (W.res === 'dodge') return '';
+      if (W.left <= W.win || forgive) { W.res = 'parry'; land(); return 'parry'; }
+      return 'miss';
+    }
+    // 59b's own wind-ups (a boss without a kit)
+    const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
+    if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
+      if (t.left <= SOLO_TUNE.parryWin || forgive) { const f = t.foe; if (resolveParry('tap')) { if (typeof soloCounter === 'function') soloCounter(f); stApply(f, 'stagger', 1, 0, 0, { dur: SOLO_TUNE.counterT }); N().parry++; answered(); return 'parry'; } }
+      return 'miss';
+    }
+    return '';
+  };
+  actDodge = forgive => {
+    if (W.on && W.foe && (alive(W.foe) || W.spec.dead) && (W.kind === 'heavy' || DODGE[W.kind])) {
+      if (W.res) return '';
+      if (W.left <= (W.dwin || T.dodgeWin) || forgive) {
+        W.res = W.kind !== 'heavy' && W.left <= W.perf ? 'perfect' : 'dodge';
+        ST.dodges++; CB_STATS.dodges++; N().dodge++;
+        if (W.res === 'perfect') { ST.perfect++; N().perfect++; keenPatch(W.slots); if (W.foe && alive(W.foe) && bar(W.foe)) actStag(W.foe, T.stag.perfect, 0); }
+        answered();
+        DODGE_EV.foe = W.foe; DODGE_EV.perfect = W.res === 'perfect'; emit('dodge', DODGE_EV);
+        return W.res;
+      }
+      W.wait = 0.4;
+      return 'early';
+    }
+    const t = typeof cbTelegraph === 'function' ? cbTelegraph() : null;
+    if (t && t !== W && t.on && t.foe && alive(t.foe) && t.kind !== 'heal') {
+      if (t.res) return '';
+      if (t.left <= SOLO_TUNE.dodgeWin || forgive) { t.res = 'dodge'; N().dodge++; answered(); DODGE_EV.foe = t.foe; DODGE_EV.perfect = false; emit('dodge', DODGE_EV); return 'dodge'; }
+      return 'early';
+    }
+    return '';
+  };
+  actAnswer = () => {
+    if (FIN.on && FIN.f && alive(FIN.f)) { fireFinisher(false); return 'finisher'; }
+    if (W.on && W.foe && alive(W.foe) && (W.kind === 'heal' || W.kind === 'summon') && !W.foe.boss && canInterrupt('tap')) return interrupt('tap', true) && 'interrupt';
+    for (const f of foes()) if (alive(f) && f.chanT > 0) { f.chanT = 0; f.bt = 0; ST.intr++; CB_STATS.interrupts++; N().intr++; INT_EV.foe = f; INT_EV.kind = 'heal'; INT_EV.by = 'tap'; INT_EV.active = true; emit('interrupt', INT_EV); return 'interrupt'; }
+    return '';
+  };
+
   // Keen on each member standing in the struck slots (proposal 8.2-11).
   function keenPatch(slots) {
     for (const u of units()) if (u.live && !u.down && (!slots || (slots & (1 << u.col)))) u.keenT = T.keenT;
@@ -26889,7 +27013,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actHold, actStag,
     stag: { v: 0, max: 0, on: false, left: 0 }, fin: { on: false, left: 0 }, phase: 0, packN: 0, ans: 0, enrage: false, rxWin: false, elites: [] };
   cbState = () => {
     const s = SNAP, t = s.tele, c = s.cast;
-    t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
+    t.kind = W.on ? W.kind : ''; t.left = W.left; t.dur = W.dur; t.win = W.win; t.dwin = W.dwin || 0; t.perf = W.perf; t.foe = W.on ? W.foe : null; t.res = W.res; t.wait = W.wait; t.name = W.name;
     c.kind = ''; c.foe = null;
     const list = foes();
     let boss = null;
@@ -27254,6 +27378,250 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
       list.push(a);
     }
   }
+}
+
+// ---- src/js/59j-solo.js ----
+// 59j-solo: the solo hero (task SOLO1, docs/design/solo-hero.md). One hero fights; the three starters are
+// playable; the fight has buttons (Attack, Parry, Dodge, the hero's ability) instead of tap-to-attack.
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+// Data and knobs: 24b-data-solo.js (SOLO_TUNE, SOLO_HEROES). UI: 75-solo-ui.js; the picker: 76-create.js.
+//
+// Exposed names:
+//   state    soloHero() -> 'wren' | 'tobin' | 'pip' | null; soloPick(key, { now }) -> bool (the first choice, or
+//            the free switch at camp: gold, gear and camp are shared, each hero keeps its own level and XP);
+//            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live)
+//   buttons  soloAttack() -> '' | 'hit' | 'finisher' | 'interrupt' | 'cd'; soloParry(forgive) -> 'parry' | 'miss' | 'locked';
+//            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ auto }) -> bool
+//   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
+//            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
+//   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash }
+// Events: soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
+//   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } } }).
+// Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
+// ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only.
+
+var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons,
+  soloTakenX, soloCounter, SOLO_STATS;
+
+{
+  const T = SOLO_TUNE;
+  // the hero's damage: the party's share folded in (retuned for one hero by sim.mjs --targets)
+  addModifier('dmg', () => (soloHero() ? T.dmgX : 1));
+  const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
+  registerState('solo', { v: 1, hero: null, lv: {} });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {} });
+  const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
+  const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
+  const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
+  const fighting = () => soloOn() && !!soloHero() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
+  const heroUp = () => typeof cbHeroUp !== 'function' || cbHeroUp();
+  const anyFoe = () => { for (const f of foes()) if (alive(f)) return true; return false; };
+
+  soloHero = () => (soloOn() && S && S.solo && SOLO_HEROES[S.solo.hero] ? S.solo.hero : null);
+  soloLevels = () => {
+    const out = {}, s = Sx();
+    for (const k of SOLO_ORDER) out[k] = k === s.hero ? { L: S.L, xp: S.xp } : (s.lv[k] ? { L: s.lv[k].L, xp: s.lv[k].xp } : { L: 1, xp: 0 });
+    return out;
+  };
+
+  // ---- choosing and switching ----
+  soloPick = (key, opts) => {
+    const h = SOLO_HEROES[key], o = opts || {};
+    if (!soloOn() || !h || typeof chooseClass !== 'function') return false;
+    const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
+    if (from === key && chosen) return true;
+    // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
+    if (from && SOLO_HEROES[from]) s.lv[from] = { L: S.L, xp: S.xp };
+    if (from && from !== key) { const r = s.lv[key]; S.L = r ? Math.max(1, r.L | 0) : 1; S.xp = r ? Math.max(0, +r.xp || 0) : 0; }
+    s.hero = key;
+    const nm = typeof ROSTER === 'object' && ROSTER[key] ? ROSTER[key].name.split(' ')[0] : key;
+    const ok = chooseClass(h.base, nm, { now: o.now, free: !!from });
+    if (!ok) return false;
+    if (S.party) S.party.abilityCd = 0;
+    atkT = 0; dodgeT = 0; parryT = 0; openT = 0; readyFor = 0;
+    if (typeof gearDirty === 'function') gearDirty();
+    emit('soloHero', { key, from: from || null });
+    if (from && from !== key) toast(`${nm} takes up the lamp.`, 'good', null, 'normal');
+    return true;
+  };
+  // A tool or an old path that picks a class (chooseBase, chooseClass) plays that class's starter.
+  on('classChosen', ({ base } = {}) => {
+    if (!soloOn()) return;
+    const s = Sx(), want = SOLO_BY_BASE[base];
+    if (want && s.hero !== want && !(s.hero && SOLO_HEROES[s.hero] && SOLO_HEROES[s.hero].base === base)) {
+      if (s.hero && SOLO_HEROES[s.hero]) s.lv[s.hero] = { L: S.L, xp: S.xp };
+      s.hero = want;
+    }
+  });
+
+  // ---- the party is gone: keep the field empty ----
+  function clearField() {
+    const p = S.party; if (!p) return;
+    if (Array.isArray(p.field) && p.field.length) { p.field = []; p.cells = { hero: { col: 2, lane: 1 } }; emit('fieldChange', { field: p.field }); }
+  }
+
+  // ---- the buttons ----
+  let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, readyFor = 0, clock = 0;
+  const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
+  soloAttack = () => {
+    if (!fighting() || !heroUp()) return '';
+    if (atkT > 0) return 'cd';
+    atkT = T.atkCd;
+    ST.attacks++;
+    // the Attack button fires a Finisher, or stops a heal or a summon, first (the old tap's other answers)
+    const a = typeof actAnswer === 'function' ? actAnswer() : '';
+    if (a) { emit('soloAttack', { kind: a }); return a; }
+    if (!anyFoe()) return '';
+    classTap({ target: 'mob', noAnswer: true });
+    emit('lunge');
+    emit('soloAttack', { kind: 'hit' });
+    return 'hit';
+  };
+  soloParry = forgive => {
+    if (!fighting()) return '';
+    if (parryT > 0 || openT > 0) return 'locked';
+    const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
+    if (r === 'parry') { ST.parries++; parryT = T.parryCd; emit('soloParry', { res: 'parry' }); return 'parry'; }
+    // outside the window (or nothing to parry): open for a moment
+    ST.misses++; openT = T.openT;
+    emit('soloParry', { res: 'miss' });
+    return 'miss';
+  };
+  soloDodge = forgive => {
+    if (!fighting()) return '';
+    if (dodgeT > 0) return 'cd';
+    dodgeT = T.dodgeCd;
+    const r = typeof actDodge === 'function' ? actDodge(!!forgive) : '';
+    if (r === 'dodge' || r === 'perfect') ST.dodges++;
+    else ST.early++;
+    const res = r || 'miss';
+    emit('soloDodge', { res });
+    return res;
+  };
+  // 59-combat cbHitUnit: the hero's damage taken (the solo cut, and more while open after a missed parry).
+  soloTakenX = () => (soloOn() ? (1 - T.drX) * (openT > 0 ? T.openX : 1) : 1);
+
+  // ---- the counter (59g calls it on a parry): it lands inside the stagger ----
+  const counters = [];
+  soloCounter = f => { if (f) counters.push({ f, t: 0, done: false }); };
+  function counterTick(dt) {
+    for (let i = counters.length - 1; i >= 0; i--) {
+      const c = counters[i]; c.t += dt;
+      if (!c.done && c.t >= T.counterAt) {
+        c.done = true;
+        if (alive(c.f)) {
+          const P = heroAtkNow(false);
+          const dmg = cbDamageFoe(c.f, P * T.counterX, 0, 'phys', unitType('hero'), ST_HEAVY);
+          ST.counters++;
+          emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FFD27A', big: true });
+          emit('shake', 0.2); emit('lunge');
+          emit('soloCounter', { foe: c.f, dmg: dmg || 0 });
+        }
+      }
+      if (c.t >= T.counterT) counters.splice(i, 1);
+    }
+  }
+  on('sceneReset', () => { counters.length = 0; });
+
+  // ---- the ability ----
+  const abOf = () => { const k = soloHero(); return k ? SOLO_HEROES[k].ab : null; };
+  const abCd = () => { const a = abOf(); return a ? a.cd * mod('abilityCd') : 0; };
+  let patchT = 0, patchTick = 0, patchP = 0;
+  function frontFoe() {
+    let r = -1; for (const f of foes()) if (alive(f) && f.row > r) r = f.row;
+    let best = null; for (const f of foes()) if (alive(f) && f.row === r && (!best || f.hp < best.hp)) best = f;
+    return best;
+  }
+  const focus = () => (typeof mob !== 'undefined' && alive(mob) ? mob : frontFoe());
+  soloAbility = opts => {
+    const a = abOf(), p = S.party, auto = !!(opts && opts.auto);
+    if (!a || !p || !fighting() || !heroUp() || p.abilityCd > 0 || !anyFoe()) return false;
+    const P = heroAtkNow(auto), ty = unitType('hero');
+    const tags = ST_AB;
+    if (a.id === 'echo') {
+      // a piercing arrow down the lane: every foe, front to back, and a Mark on each
+      const list = foes().filter(alive).sort((x, y) => y.row - x.row);
+      list.forEach((f, i) => {
+        if (!alive(f)) return;
+        stApply(f, 'mark', 1, 0, 0, { dur: T.echo.mark });
+        cbDamageFoe(f, P * (i === 0 ? T.echo.x : T.echo.xOther), 0, 'phys', ty, tags);
+      });
+    } else if (a.id === 'bash') {
+      const f = frontFoe();
+      if (f) { cbDamageFoe(f, P * T.bash.x, 0, 'phys', ty, tags | ST_HEAVY); if (alive(f)) cbStun(f, T.bash.stun, 0); }
+      const u = heroU(); if (u) { u.drV = Math.max(u.drV || 0, T.bash.dr); u.drT = Math.max(u.drT || 0, T.bash.drT); }
+      emit('shake', 0.25);
+    } else if (a.id === 'fire') {
+      const f = focus();
+      if (f) {
+        cbDamageFoe(f, P * T.fire.x, 0, 'magic', 'fire', tags);
+        for (const o of foes()) if (o !== f && alive(o)) cbDamageFoe(o, P * T.fire.xOther, 0, 'magic', 'fire', tags);
+        for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, P * T.fire.burnP, 0);
+      }
+      patchT = T.fire.patchT; patchTick = 1; patchP = P * T.fire.burnP;
+      emit('shake', 0.3);
+    }
+    p.abilityCd = abCd(); readyFor = 0;
+    ST.casts++; if (auto) ST.auto++;
+    emit('float', { txt: a.name, color: '#FFD27A', big: true });
+    emit('ability', { cls: 'solo', id: a.id, name: a.name, auto });
+    return true;
+  };
+  soloAbilityInfo = () => {
+    const a = abOf(), p = S.party; if (!a || !p) return null;
+    return { id: a.id, name: a.name, desc: a.desc, cd: abCd(), left: Math.max(0, p.abilityCd || 0), ready: !(p.abilityCd > 0), spare: 0,
+      autoUnlocked: true, autoCast: true, patch: patchT };
+  };
+
+  // ---- telegraphs for one hero: the rare trash heavy (bosses and elites keep their own) ----
+  let trashT = T.trashEvery - T.trashFirst;
+  function trashTick(dt) {
+    if (typeof fightBoss !== 'undefined' && fightBoss) return;
+    if (typeof cbBossUp === 'function' && cbBossUp()) return;
+    if (S.zone < T.trashFrom || typeof actWarn !== 'function' || !anyFoe()) return;
+    trashT += dt;
+    if (trashT < T.trashEvery || (typeof actWarning === 'function' && actWarning())) return;
+    const f = frontFoe();
+    if (!f || f.born < 0.3 || f.stunT > 0 || f.reelT > 0 || f.stgT > 0) return;
+    trashT = 0; ST.trash++;
+    actWarn({ kind: 'heavy', id: 'soloHeavy', foe: f, unit: 0, x: T.trashX, src: 'pack', hint: BOSS_COPY.first.packHeavy,
+      land: (w, m) => { const u = heroU(); if (u && !u.down && alive(f)) cbHitUnit(u, cbFoeAtk(f) * w.x * m, 'heavy', f); } });
+  }
+  on('telegraphStart', p => { if (p && p.kind === 'heavy') ST.heavies++; });
+
+  // ---- the tick ----
+  onTick(dt => {
+    if (!soloOn()) return;
+    clock += dt;
+    clearField();
+    if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
+    counterTick(dt);
+    if (patchT > 0) {
+      patchT -= dt; patchTick -= dt;
+      if (patchTick <= 0) { patchTick += 1; for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, patchP, 0); }
+    }
+    if (!fighting()) { readyFor = 0; return; }
+    trashTick(dt);
+    // idle: the ability goes off once it has waited autoDelay (the player gets the first chance)
+    const p = S.party;
+    if (p && !(p.abilityCd > 0) && anyFoe() && heroUp()) { readyFor += dt; if (readyFor >= T.autoDelay) soloAbility({ auto: true }); }
+    else readyFor = 0;
+  });
+
+  // ---- the snapshot the buttons read (a kept object) ----
+  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: { left: 0, max: 0, ready: false, name: '', id: '' }, tele: '', inParry: false, inDodge: false };
+  soloButtons = () => {
+    const b = BTN;
+    b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
+    b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
+    b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
+    const a = soloAbilityInfo();
+    b.ab.left = a ? a.left : 0; b.ab.max = a ? a.cd : 0; b.ab.ready = !!(a && a.ready); b.ab.name = a ? a.name : ''; b.ab.id = a ? a.id : '';
+    const w = typeof actWarning === 'function' ? actWarning() : null;
+    b.tele = w ? w.kind : ''; b.inParry = !!(w && w.kind === 'heavy' && w.left <= w.win); b.inDodge = !!(w && w.dwin && w.left <= w.dwin);
+    return b;
+  };
 }
 
 // ---- src/js/60-gfx.js ----
