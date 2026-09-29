@@ -263,7 +263,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     if (b > a && d > c) g.drawImage(P.c, a - P.x0, c - P.y0, b - a, d - c, ox + a, oy + c + dy, b - a, d - c);
   }
   const put1 = (g, x, y, c) => { g.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; g.fillRect(x, y, 1, 1); };
-  function drawFrame(g, id, fr, ox, oy, flT, calm) {
+  function drawFrame(g, id, fr, ox, oy, flT, calm, noFly) {
     const S0 = set(id), P = S0.poses[fr.p], br = calm ? 0 : fr.br | 0;
     if (fr.buckle) { rows(g, P, ox, oy, 0, CUT, fr.buckle[0]); rows(g, P, ox, oy, fr.buckle[1], 192, 0); }
     else if (br) { rows(g, P, ox, oy, 0, CUT, br, fr.dx); rows(g, P, ox, oy, CUT, 192, 0, fr.dx); }
@@ -285,13 +285,13 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
       const o = ORB[fr.p], r = rng(fr.em * 97), n = fr.big ? 12 : 7, rad = (fr.big ? 16 : 12) * (1 - fr.em / 4);
       for (let i = 0; i < n; i++) { const a = r() * 6.28, d = rad + r() * 2 - 1; put1(g, ox + Math.trunc(o[0] + d * Math.cos(a)), oy + Math.trunc(o[1] + d * Math.sin(a)), i % 2 ? EO : EY); }
     }
-    if (fr.fb) { const P2 = FB[fr.big ? 'b' : 'n']; g.drawImage(boltSprite(fr.fb[2], fr.big), ox + fr.fb[0] - P2.x, oy + fr.fb[1] - P2.y); }
+    if (fr.fb && !noFly) { const P2 = FB[fr.big ? 'b' : 'n']; g.drawImage(boltSprite(fr.fb[2], fr.big), ox + fr.fb[0] - P2.x, oy + fr.fb[1] - P2.y); }
     if (fr.sm) {
       const [x, y, t] = fr.sm, pts = [[0, 0], [1, -1], [-1, -2], [0, -3], [2, -4], [1, -5]];
       pts.forEach(([dx, dy], i) => { if (i <= t + 2) put1(g, ox + x + dx, oy + y + dy - t * 2, SMK[i % 2]); });
     }
-    if (fr.arrow) g.drawImage(S0.fx.arrow.c, ox + fr.arrow[0], oy + fr.arrow[1]);
-    if (fr.waves) {
+    if (fr.arrow && !noFly) g.drawImage(S0.fx.arrow.c, ox + fr.arrow[0], oy + fr.arrow[1]);
+    if (fr.waves && !noFly) {
       g.drawImage(S0.fx.waves.c, ox + fr.waves[0], oy + fr.waves[1]);
       if (fr.echo) { g.drawImage(S0.fx.waves.c, ox + fr.waves[0] - 12, oy + fr.waves[1] - 14); g.drawImage(S0.fx.waves.c, ox + fr.waves[0] - 12, oy + fr.waves[1] + 14); }
     }
@@ -307,7 +307,7 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     i = an.loop ? (calm ? 0 : ((i % n) + n) % n) : Math.max(0, Math.min(n - 1, i));
     const ox = Math.round(x) - AX, oy = Math.round(y) - AY;
     if (o.alpha != null) g.globalAlpha = o.alpha;
-    const r = drawFrame(g, id, an.f[i], ox, oy, o.flameT != null ? o.flameT : t, calm);
+    const r = drawFrame(g, id, an.f[i], ox, oy, o.flameT != null ? o.flameT : t, calm, o.noFly);
     INFO.frame = i; INFO.n = n; INFO.done = done; INFO.x0 = ox + r.P.x0; INFO.y0 = oy + r.P.y0;
     const f = INFO.f; f.c = r.P.c; f.ox = AX - r.P.x0; f.oy = AY - r.P.y0; f.lights.length = 0;
     if (r.light) { r.light.x -= r.P.x0; r.light.y -= r.P.y0; f.lights.push(r.light); }
@@ -351,7 +351,8 @@ var heroArtId, heroArtDraw, heroArtStates, heroArtStage, heroArtDecode, heroArtP
     }
     // The art is wider than the baked sprites: on a narrow stage the whole hero (and Wren's bat) stays in view.
     x = Math.max(x, set(id).left + 2);
-    const info = heroArtDraw(g, id, ST.s, t - ST.t0, x, a.hy + a.dy, { frame, flameT: t, alpha });
+    // noFly: the stage fires its own arrow or bolt at the target (62-stage fire()), so the art's in-flight one is skipped
+    const info = heroArtDraw(g, id, ST.s, t - ST.t0, x, a.hy + a.dy, { frame, flameT: t, alpha, noFly: true });
     if (!info) return false;
     a._x = info.x0; a._y = info.y0;
     // a frame record like the baker's (the stage reads c, ox, oy, lights); a fallen hero has none, like a down member

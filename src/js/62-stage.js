@@ -1691,7 +1691,7 @@ let resize, animate, draw, stageStats, warmScene;
     // members and a party falling back show none.
     for (const a of order) {
       if (a.alpha < 1 || !a.fr || !(a.hpT >= 0) || a.down || rtA < 0.5) continue;
-      const f = a.fr.idle0, cx = X(ax(a) - cam);
+      const f = (a === hero && a._f && a._f.c) ? a._f : a.fr.idle0, cx = X(ax(a) - cam);   // hand-drawn hero art: its own frame's head
       const bh = 4 * U + (a.cdF >= 0 ? gaugeH() : 0);
       const y = Math.max(minY + (a === hero && heroChips ? 4 * U : 0), Y(a.hy - f.oy + headTop(f)) - gap - bh);
       bar(cx - (bw >> 1) - U, y, bw, a.hpF == null ? a.hpT : a.hpF, a.trail || 0, a.shF || 0, a.hpT > 0.5 ? HP_COL[0] : a.hpT > 0.25 ? HP_COL[1] : HP_COL[2], a.cdF);
