@@ -158,7 +158,8 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   combatFoes = () => foes;
   cbUnitByKey = key => { for (let i = 0; i < nU; i++) if (U[i].key === key) return U[i]; return null; };
 
-  const fieldIds = () => (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
+  // S3: a solo fight (59f-trials trialField: the Proving, the Stand) fields only the heroes it names.
+  const fieldIds = () => (typeof trialField === 'function' && trialField()) || (S.party && S.party.field || []).filter(k => ROSTER[k] && typeof charRec === 'function' && charRec(k)).slice(0, (typeof ROSTER_TUNE === 'object' && ROSTER_TUNE && ROSTER_TUNE.fieldMax) || 2);   // F5: the field is 2 (the hero is the third)
   const has = id => { for (let i = 0; i < nU; i++) if (U[i].id === id) return U[i]; return null; };
   const upHas = id => { const u = has(id); return u && !u.down ? u : null; };
   const synOn = id => { try { return typeof synergyStatus === 'function' && synergyStatus(id).active; } catch (e) { return false; } };
@@ -197,24 +198,26 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     let maxHp, role;
     if (key === 'hero') {
       const cls = p && p.cls && HERO_CLASSES[p.cls] ? p.cls : 'warden';
-      role = CLASS_ROLE[cls]; u.cls = cls; u.id = null; u.lv = S.L;
+      // S3 (59e clsHeroStats): a proven evolution's own stats and role replace the base kit's (null = the kit's)
+      const ev = typeof clsHeroStats === 'function' ? clsHeroStats() : null;
+      role = ev ? ev.role : CLASS_ROLE[cls]; u.cls = cls; u.id = null; u.lv = S.L;
       const g = gear(), hp0 = heroAtk() * aps() / (cls === 'lightkeeper' ? 0.2 : 1);
       u.pow = hp0 / T.heroPow;
       u.hpP = hpPow(u.pow, heroP);   // F5: at the companions' real levels (see readPartyP)
-      maxHp = T.heroHp[cls] * u.hpP * (1 + g.hp / 100);
-      u.armour = T.heroArmour[cls] + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
+      maxHp = (ev ? ev.hp * ev.hpX : T.heroHp[cls]) * u.hpP * (1 + g.hp / 100);
+      u.armour = (ev ? ev.armour : T.heroArmour[cls]) + g.armour + 0.1 * (equipped('helm') ? itemPower(equipped('helm')) : 0);
       // Unbroken: each guard stack also gives 2 armour. Slow Burn / Everburn: Embers burn their foe.
       if (cls === 'warden' && ks('unbroken') && typeof heroGuardN === 'function') u.armour += 2 * heroGuardN();
       emberBurn = cls === 'lanternmage' ? heroAtk() * (ks('everburn') ? STAR_KS.everburn.perEmber : ks('slowBurn') ? STAR_KS.slowBurn.perEmber : 0) : 0;
-      u.thX = (cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
+      u.thX = (ev ? ev.threat : cls === 'warden' ? T.wardenThreat : T.threat[role]) * (1 + g.threat / 100);
       u.melee = cls === 'warden'; u.ranged = !u.melee;
       u.dps = 0; u.spd = aps();
-      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') : 0;   // F1: Out of place heals less
+      u.heal = cls === 'lightkeeper' ? T.lkHeal * u.hpP * (1 + g.heal / 100) * offSlotMult('hero') * (ev ? ev.healX : 1) : 0;   // F1: Out of place heals less
       // S2: the base class's own block and ward (the Warrior blocks 10%); the legacy Lightkeeper kit keeps its own
-      const cd = cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base];
+      const cd = ev || (cls === 'lightkeeper' ? null : CLASS_DEFS[HERO_CLASSES[cls].base]);
       u.blockP = Math.min(0.4, g.block / 100); u.ward = Math.min(0.4, g.ward / 100 + (cd ? cd.ward : 0)); u.pierce = Math.min(1, g.pierce / 100);
       u.blockC = cd ? cd.block : 0;   // the class's block: every 1 / blockC-th hit, counted (no random draw)
-      u.area = Math.min(0.5, g.area / 100); u.ctrl = 1 + Math.min(1, g.control / 100);
+      u.area = Math.min(0.5, g.area / 100 + (ev ? ev.area : 0)); u.ctrl = (1 + Math.min(1, g.control / 100)) * (ev ? ev.ctrl : 1);
       u.cdMax = 0;
     } else {
       const R = ROSTER[key], g = charGear(key), lv = lvOf(key);
@@ -517,7 +520,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     // S1: the hit's type (the hero's base type; the Lightkeeper's party share has none) and its tags
     const ty = isHero && hero ? hero.dt : '', tags = (isHero && typeof stTagNext === 'function' ? stTagNext.take() : 0) | (big ? ST_CRIT : 0);
     // Warden taps taunt their target (a class tap: see the classTap listener).
-    const d = cbDamageFoe(f, amount, idx, kind, ty, tags);
+    // S3 (59e): the evolution's multiplier on this foe before the hit, its riders after; hHit: when the hero last hit it (59f)
+    const d = cbDamageFoe(f, amount * (isHero && typeof clsHeroHitX === 'function' ? clsHeroHitX(f, tags) : 1), idx, kind, ty, tags);
+    if (isHero) { f.hHit = clock; if (typeof clsHeroHit === 'function') clsHeroHit(f, d, tags); }
     const rel = ty && typeof ST_LAST === 'object' ? ST_LAST.rel : 0;
     if (isHero && hero && hero.cls === 'lanternmage') {
       const sp = (T.lmSplash + hero.area) * amount;
@@ -878,6 +883,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (u.id === 'grenna') { dr *= 1 - u.rock; if (kind === 'heavy' || kind === 'slam') dr *= 1 - T.bedrock; }
     dr *= u.synDr || 1;   // F2: combos, Kin and Bonds (Lifeline, Two Walls, The Oath, ...; capped in 56b)
     if (u.role === 'tank') dr *= 1 - T.tankDr;   // BAL2: tanks shrug off hits (a no-tank line-up holds 2-4 zones lower, T6)
+    if (typeof clsDr === 'function') dr *= clsDr(u, kind, f);   // S3 (59e): the Reaver's half cut, Stand Fast, Oath of the Order
     if (u.role === 'tank' && setOnC('guard')) dr *= 1 - 0.25;
     if (f && (f.slowT > 0 || f.chillT > 0) && upHas('thessaly') && upHas('thessaly').lv >= 10) dr *= 1 - T.deepWater;
     if ((kind === 'ranged' || area) && u.col === 0) dr *= 1 - T.backRanged;
@@ -1018,7 +1024,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
   cbHeroUp = () => !partyCombatOn() || !(nU > 0) || (!U[0].down && wipeT <= 0);
   combatTick = dt => {
     clock += dt;
-    if (arena && mob && mob.deep && !mob.th && !mob.dead) adoptArena(mob);
+    if (arena && mob && (mob.deep || mob.trial) && !mob.th && !mob.dead) adoptArena(mob);
     if (wipeT > 0) { wipeT -= dt; for (const f of foes) if (f.dead) f.dead += dt; if (wipeT <= 0) endWipe(); return; }
     refreshT -= dt;
     if (refreshT <= 0) { refreshT = T.refresh; refreshUnits(false); }

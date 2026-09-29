@@ -91,7 +91,7 @@ function tapNode() {
 }
 
 function kill() {
-  if (arena && mob.deep) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
+  if (arena && (mob.deep || mob.trial)) { const over = -mob.hp; mob.hp = 0; mob.dead = 0.001; respawn = 0.45; arena.onKill(mob, over); return; }
   mob.hp = 0; mob.dead = 0.001;
   const g = mob.gold;
   S.gold += g; S.totalGold += g; S.totalKills++;
