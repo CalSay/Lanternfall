@@ -3136,7 +3136,7 @@ try {
   // bonus yet and lose their third companion's damage. Hard floor: nobody loses more than a third.
   for (const r of T9) console.log(`       INFO C9 T9 ${r.f} (zone ${r.z}): party damage ${r.ratio.toFixed(2)} (${r.old.join(',')} -> ${r.field.join(',')}; band 0.90-1.30: ${r.ratio >= 0.9 && r.ratio <= 1.3 ? 'in' : 'MISS, BAL3'})`);
   // F2: slot jobs, combos and seeded Bonds add on top of the trio (up to +40% per member, 2.5). BAL3: upper bound 1.6 -> 1.8
-  // (the Lanternmage's floor 1.0 -> 1.5 lifts save-v3-four's Lanternmage party to ~1.7; a gain, and old saves are never read since ECON-A).
+  // (the Lanternmage's floor 1.0 -> 1.6 lifts save-v3-four's Lanternmage party to ~1.7; a gain, and old saves are never read since ECON-A).
   assert(T9.length === FORM_FIX.length && T9.every(r => Number.isFinite(r.ratio) && r.ratio >= 0.7 && r.ratio <= 1.8),
     `C9 party damage after vs before the migration stays within 0.70-1.80 on every fixture (${T9.map(r => r.ratio.toFixed(2)).join(' / ')})`);
   // C6: a new game: the starter and the hero in their homes; one recruit fills the third slot
@@ -5495,7 +5495,7 @@ try {
     for (const evo of EVOS) {
       const g = late(11), E = s => g.eval(s);
       const okEvo = evolve(g, evo);
-      // BAL3: zone 36 (was 30): with the Ranger paths' floors x2.57 the Trapper cleared zone-30 packs before a trap sprang
+      // BAL3: zone 36 (was 30): with the Ranger paths' floors x2 the Trapper cleared zone-30 packs before a trap sprang
       E('S.activity = "fight"; S.zone = 36; fightBoss = false; spawn()');
       const st0 = J(g, 'CLS_STATS'), dmg0 = E('CB_STATS.heroDmg');
       fight(g, 45, true);

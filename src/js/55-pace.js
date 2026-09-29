@@ -21,7 +21,9 @@ let paceCheck;
   let loadedFor = null;
   paceCheck = () => {
     if (!S.auto || S.activity !== 'fight' || fightBoss || arena) return 0;
-    const dps = totalDps();
+    // BAL3: in party combat the hero hits at its floor (56e heroCombatDps), not heroDps(): a Ranger or Lanternmage party
+    // read as a fraction of its damage and fell back from every zone it could farm (the zone-70 wall: no 10 kills there)
+    const dps = typeof partyCombatOn === 'function' && partyCombatOn() && typeof heroCombatDps === 'function' ? heroCombatDps() + compDps() : totalDps();
     // Stage C: on the first check after a load (an old save meeting party combat), a zone the party
     // cannot hold (59-combat.js partyHolds) falls back like a slow one. During play a wipe retreats
     // on its own (59-combat.js), and climbing back waits until the next zone holds.

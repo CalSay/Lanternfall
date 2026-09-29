@@ -393,8 +393,8 @@ const CLS_TUNE = {
   rangerCrit: 0.07, lightFeet: 0.2,
   // S3: 56e-formation reads the evolution rows once proven. The Trapper is a caster (ROLE_D 1.0, not the
   // striker's 1.82), so its floor is 1.4, not CL1's 0.7: about x1.1 of the Ranger's 0.7 x 1.82 (2.2's own damage)
-  // BAL3: the Ranger and Mage rows (and their paths) x2.57 / x1.5 with FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0,
+  // BAL3: the Ranger and Mage rows (and their paths) x2 / x1.6 with FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0,
   // venomstalker 0.75, trapper 1.4, warlock 1.0)
-  heroFloor: { warrior: 1.0, ranger: 1.8, mage: 1.5, reaver: 0.62, warden: 1.0,
-    venomstalker: 1.93, trapper: 3.6, warlock: 1.5, priest: 0 }
+  heroFloor: { warrior: 1.0, ranger: 1.4, mage: 1.6, reaver: 0.62, warden: 1.0,
+    venomstalker: 1.5, trapper: 2.8, warlock: 1.6, priest: 0 }
 };
