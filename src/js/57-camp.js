@@ -51,7 +51,7 @@ const CAMP_TUNE = {
   goldPerLv: 60,            // (unused since ECON-A: building gold is ECON.rowH hours of income at the gate zone, 55-econ econRowGold)
   mult: [0.6, 1.5, 2, 3, 4], // material multiplier by row (building level); (BAL1) row 1 was 1: the first build lands in the first 10-20 min
   troph: [0, 0, 0, 1, 2],   // trophies by row
-  secs: [180, 3600, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row
+  secs: [45, 1200, 6 * 3600, 16 * 3600, 30 * 3600],   // build timer by row (playtest-1 note 8, SOLO1: row 1 was 180 s, row 2 an hour)
   shrineSecs: [6 * 3600, 16 * 3600, 30 * 3600],
   awayMax: 24,              // hours: the away cap never goes above this
   trophyEss: 10             // until trophies have a source: each trophy costs this much essence of the row's tier
@@ -94,7 +94,7 @@ const CAMP_B = {
   // N1 (57f-hands.js): beds for Hands at camp; effect lines from HANDS_TUNE (21f). Its plot opens after the Tavern.
   bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => !!HANDS_TUNE.on },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
-  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped },
+  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped && !soloOn() },   // SOLO1: expeditions send companions: gone
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
 };
 const CAMP_IDS = Object.keys(CAMP_B);

@@ -196,7 +196,8 @@ function craftReady() {
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { roster: 'roster', bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', exped: 'exped', codex: 'codex', deep: 'deep' };
-  onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
+  const SOLO_NO_GOAL = { roster: 1, exped: 1, maproom: 1, bond: 1, bonds: 1, lineup: 1 };   // SOLO1: goals that point at the party
+  onboardGoalOk = g => !(SOLO_G && SOLO_NO_GOAL[g.sys]) && isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
   // A cold save's chops (taps on the tree) do not count toward "tap a foe".

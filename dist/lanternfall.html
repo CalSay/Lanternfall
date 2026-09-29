@@ -2612,7 +2612,7 @@ span.cf-d { font-weight: 600; }
 .savecode-replace:active { transform: scale(0.98); }
 .savecode-import-result { display: grid; gap: 8px; }
 /* 60-solo.css: the solo hero's button row under the stage and the camp's hero picker (75-solo-ui.js, SOLO1). */
-.sbar { flex: none; display: grid; grid-template-columns: 1.25fr 1fr 1fr 1.15fr; gap: 6px; padding: 6px var(--gut) 0; }
+.sbar { flex: none; display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.3fr; gap: 6px; padding: 6px var(--gut) 0; }
 .sbar[hidden] { display: none; }
 .sbtn { position: relative; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   padding: 4px 2px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 3px 0 #0B0810;
@@ -2631,6 +2631,7 @@ span.cf-d { font-weight: 600; }
 .sb-parry .sb-lb { color: var(--gold); }
 .sb-dodge .sb-lb { color: #8FB8FF; }
 .sb-ab { background: #2E2240; }
+.sb-ab .sb-lb { font-size: calc(13px * var(--display-k, 1)); letter-spacing: 0; }
 .sb-ab.ready { box-shadow: inset 0 0 0 2px var(--gold), 0 3px 0 #0B0810; }
 /* a heavy hit is winding up: Parry and Dodge light up */
 .sbtn.live { box-shadow: inset 0 0 0 2px #E0524F, 0 3px 0 #0B0810; }
@@ -14211,7 +14212,8 @@ function craftReady() {
 
   // ---- Next Up: hide goals whose system is still hidden (only while ONBOARD.gate is on) ----
   const GOAL_FEATURE = { roster: 'roster', bounty: 'bounties', bestiary: 'bestiary', skill: 'gather', forge: 'craft', camp: 'camp', exped: 'exped', codex: 'codex', deep: 'deep' };
-  onboardGoalOk = g => isUnlocked(GOAL_FEATURE[g.sys] || null);
+  const SOLO_NO_GOAL = { roster: 1, exped: 1, maproom: 1, bond: 1, bonds: 1, lineup: 1 };   // SOLO1: goals that point at the party
+  onboardGoalOk = g => !(SOLO_G && SOLO_NO_GOAL[g.sys]) && isUnlocked(GOAL_FEATURE[g.sys] || null);
 
   // ---- counters and the clock ----
   // A cold save's chops (taps on the tree) do not count toward "tap a foe".
@@ -19102,7 +19104,7 @@ const CAMP_B = {
   // N1 (57f-hands.js): beds for Hands at camp; effect lines from HANDS_TUNE (21f). Its plot opens after the Tavern.
   bunk: { n: 'Bunkhouse', max: 5, opens: 2, fam: { wood: 30, fibre: 15 }, tro: 2, fx: l => handsBunkFx(l), needs: () => !!HANDS_TUNE.on },
   library: { n: 'Library', max: 5, opens: 2, fam: { fibre: 20, crystal: 15, ess: 10 }, tro: 6 },
-  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped },
+  maproom: { n: 'Map Room', max: 5, opens: 2, fam: { hide: 25, fibre: 20 }, tro: 2, needs: () => !!S.exped && !soloOn() },   // SOLO1: expeditions send companions: gone
   shrine: { n: 'Shrine', max: 3, opens: 4, fam: { crystal: 25, ess: 25 }, tro: 4 }
 };
 const CAMP_IDS = Object.keys(CAMP_B);
@@ -22999,7 +23001,7 @@ let deeds, deedBonus, wearGet;
   const tierOfId = id => num(DS().tier[id]);
   const tierName = k => k <= 0 ? '' : k <= 4 ? DEED_TIERS[k - 1].n : `Everflame ★${k - 4}`;
   const tierLabel = (id, k) => { const t = TR[id]; return !t ? '' : k <= 4 ? `${t.n} ${roman(k)}` : `${t.n} ★${k - 4}`; };
-  const trackLive = t => waitOk(t.wait);
+  const trackLive = t => !(soloOn() && (t.g === 'comp' || t.g === 'exped')) && waitOk(t.wait);   // SOLO1: no companions or expeditions
   const bonusTxt = (t, k) => {
     if (!t.bonus || (k !== 3 && k !== 4)) return '';
     if (t.bonus === 'deepOil') return `+${DEED_BONUS.deepOil}s ${DEED_KEY_TXT.deepOil}`;
@@ -43410,7 +43412,7 @@ let toolsUI = null;
 
   // ---------------- Tavern visitor ----------------
   let V = null, vSig = '';
-  registerSection('tav', {
+  if (!(typeof soloOn === 'function' && soloOn())) registerSection('tav', {   // SOLO1: nobody joins a party
     id: 'visitor', title: 'Visitor today',
     mount(sec) {
       // First in the Tavern, right under its heading.

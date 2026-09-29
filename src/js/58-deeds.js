@@ -215,7 +215,7 @@ let deeds, deedBonus, wearGet;
   const tierOfId = id => num(DS().tier[id]);
   const tierName = k => k <= 0 ? '' : k <= 4 ? DEED_TIERS[k - 1].n : `Everflame ★${k - 4}`;
   const tierLabel = (id, k) => { const t = TR[id]; return !t ? '' : k <= 4 ? `${t.n} ${roman(k)}` : `${t.n} ★${k - 4}`; };
-  const trackLive = t => waitOk(t.wait);
+  const trackLive = t => !(soloOn() && (t.g === 'comp' || t.g === 'exped')) && waitOk(t.wait);   // SOLO1: no companions or expeditions
   const bonusTxt = (t, k) => {
     if (!t.bonus || (k !== 3 && k !== 4)) return '';
     if (t.bonus === 'deepOil') return `+${DEED_BONUS.deepOil}s ${DEED_KEY_TXT.deepOil}`;
