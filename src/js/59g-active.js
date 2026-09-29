@@ -408,7 +408,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     for (let i = queue.length - 1; i >= 0; i--) { queue[i].t += dt; const q = queue[i]; if (q.t > T.waitMax || (q.spec.foe && !alive(q.spec.foe) && !q.spec.dead)) { queue.splice(i, 1); ST.skipped++; if (q.spec.skip) q.spec.skip(); } }
     if (!W.on && queue.length && clock - lastEnd >= T.gap) start(queue.shift().spec);
     // the Finisher: by itself at half strength after 2.5 s (elites 1.5 s)
-    if (FIN.on) { FIN.t += dt; if (!alive(FIN.f) || !(FIN.f.stgT > 0)) FIN.on = false; else if (FIN.t >= FIN.auto) fireFinisher(true); }
+    if (FIN.on) { FIN.t += dt; if (!alive(FIN.f) || !(FIN.f.stgT > 0)) FIN.on = false; else if (FIN.t >= FIN.auto && !(typeof soloActive === 'function' && soloActive())) fireFinisher(true); }   // SOLO2: not while the solo player is active
     // auto-cast hold
     const m = typeof mob !== 'undefined' ? mob : null;
     if (bar(m) && alive(m) && m.sb >= T.hold.at * stagMax(m)) holdT += dt; else holdT = 0;

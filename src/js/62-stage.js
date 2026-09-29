@@ -35,9 +35,13 @@ let resize, animate, draw, stageStats, warmScene;
   const FONTS = new Map(), TXT_K = 1.15;
   const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Handjet", "Arial Narrow", monospace`; FONTS.set(s, f); } return f; };
   const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
-  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
+  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, crit: false, life: 0, max: 0.95, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
+  // SOLO2 (owner): a crit's number pops (up to x1.35 fast, settling to x1 by CRIT_POP s), rises a little higher and
+  // slower (it lives CRIT_LIFE s), with three pixel sparks behind it. Reduced motion: no pop, no rise, static sparks.
+  const CRIT_POP = 0.18, CRIT_LIFE = 1.2;
+  let critFloats = 0;   // crit numbers raised (stageStats: the check reads it)
   // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
-  function pushFloat(txt, color, big, x, y, dt, rel) {
+  function pushFloat(txt, color, big, x, y, dt, rel, crit) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -50,7 +54,9 @@ let resize, animate, draw, stageStats, warmScene;
     let row = BUSY.indexOf(0);
     if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
     const f = free || last;
-    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
+    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.crit = !!crit; f.max = crit ? CRIT_LIFE : 0.95; f.life = f.max; f.x = fx;
+    if (crit) critFloats++;
+    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -82,6 +88,19 @@ let resize, animate, draw, stageStats, warmScene;
       g.closePath(); g.lineWidth = Math.max(1, l * 0.6); g.strokeStyle = '#0B0810'; g.stroke(); g.fillStyle = rel > 0 ? '#FFE680' : '#B9B2C6'; g.fill();
     }
     r.k = K; r.bw = w / K; r.bh = h / K; r.by = by / K;
+  }
+  // SOLO2: the crit number's pop: up to x1.35 in the first 0.04 s, then back to x1 by CRIT_POP (eased)
+  const critPop = age => (age < 0.04 ? 1 + 0.35 * (age / 0.04) : age < CRIT_POP ? 1 + 0.35 * Math.pow(1 - (age - 0.04) / (CRIT_POP - 0.04), 2) : 1);
+  // three small pixel sparks (4-point stars) behind a crit number: they drift out a little (static with reduced motion)
+  const SPARK = [[-0.5, -0.55, 3], [0.52, -0.4, 2], [0.1, -0.95, 2]];
+  function critSparks(x, y, w, age) {
+    const d = reduced ? 0 : Math.min(1, age / 0.25) * 4;
+    for (const [sx, sy, s] of SPARK) {
+      const cx = Math.round(x + sx * (w * 0.5 + d)), cy = Math.round(y + sy * 10 - d * 0.6);
+      ctx.fillStyle = '#0B0810'; ctx.fillRect(cx - s - 1, cy - 1, s * 2 + 3, 3); ctx.fillRect(cx - 1, cy - s - 1, 3, s * 2 + 3);
+      ctx.fillStyle = '#FFD27A'; ctx.fillRect(cx - s, cy, s * 2 + 1, 1); ctx.fillRect(cx, cy - s, 1, s * 2 + 1);
+      ctx.fillStyle = '#FFF3C4'; ctx.fillRect(cx, cy, 1, 1);
+    }
   }
   // x: the centre, y: the baseline (logical px); whole device px when not popping.
   function drawText(r, x, y, pop) {
@@ -798,7 +817,7 @@ let resize, animate, draw, stageStats, warmScene;
     tank.go = Math.min(0, t.hx + 18 - tank.hx); tank.goT = 2;
   }
   // ================= events =================
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -1343,21 +1362,23 @@ let resize, animate, draw, stageStats, warmScene;
     const xr = SW - (target() === 'node' || tall ? 4 : 60 / ZM), fTop = hud ? Math.min(foe.top, hudFoeTop) : foe.top;
     for (const f of floats) {
       if (!f.on) continue;
-      const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
+      const age = f.max - f.life, pop = reduced ? 1 : f.crit ? critPop(age) : age < 0.08 ? 1.35 - age * 4 : 1;
       const base = (f.big ? 21 : 15) * tz * TXT_K;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
       const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, fTop + 2)) : lo + band * 0.5;
       const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz * TXT_K);
-      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
+      const yr = y0 - (reduced ? 0 : age * (f.crit ? 28 : f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
       const al = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
       if (al <= 0) continue;
       if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0, f.dt, f.rel); f.wz = base; }
       // over a pack, a text stays over the foe it was raised on (its x then) as the next steps up
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
-      ctx.globalAlpha = al; drawText(f, x, y, pop);
+      ctx.globalAlpha = al;
+      if (f.crit) critSparks(x, y - f.by * 0.45, f.bw, age);
+      drawText(f, x, y, pop);
     }
     // party numbers: over each member's head, stacked upward, rising a little and fading
     for (const n of nums) {
@@ -1895,5 +1916,5 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
+  stageStats = () => ({ critFloats, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }

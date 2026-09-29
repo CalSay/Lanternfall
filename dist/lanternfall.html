@@ -2667,6 +2667,16 @@ span.cf-d { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
 @media (max-height: 640px) { .sb-ic { width: 36px; height: 36px; margin-top: -10px; } .sb-lb { font-size: calc(11px * var(--display-k, 1)); } }
 @media (max-height: 520px) { .sb-ic { width: 24px; height: 24px; } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
+/* the Auto badge (SOLO2): bottom left of the stage, over the DPS line; lit while auto-play fights, dim while you are active */
+.auto-badge { position: absolute; left: 8px; bottom: 26px; z-index: 2; display: flex; align-items: center; gap: 4px; padding: 2px 6px 2px 4px;
+  background: #16111C; border: 2px solid #0B0810; box-shadow: inset 0 0 0 1px #3A3046; pointer-events: none;
+  font: 600 calc(12px * var(--display-k, 1))/1 var(--display); letter-spacing: .04em; text-transform: uppercase; color: #6B6275; opacity: .6; }
+.auto-badge[hidden] { display: none; }
+.auto-badge .ab-dot { width: 6px; height: 6px; background: #4E4060; box-shadow: 0 0 0 1px #0B0810; }
+.auto-badge.on { color: #1A1420; background: var(--gold, #F2C14E); box-shadow: inset 0 0 0 1px #FFF3C4, 0 0 6px rgba(242, 193, 78, .55); opacity: 1; }
+.auto-badge.on .ab-dot { background: #FFF3C4; animation: ab-blink 1.6s steps(2) infinite; }
+@keyframes ab-blink { 50% { background: #9A6A1E; } }
+@media (prefers-reduced-motion: reduce) { .auto-badge.on .ab-dot { animation: none; } }
 /* the old floating ability circles over the stage (62-stage .abil, 75-class-ui .abil2): the bar has them now */
 body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important; }
 
@@ -9971,6 +9981,10 @@ const CLS_TUNE = {
 
 const SOLO_TUNE = {
   on: typeof __SOLO === 'undefined' ? 1 : +__SOLO,
+  // ---- active vs idle (SOLO2): a combat press makes you active for activeFor s; while active nothing fights for you ----
+  activeFor: 5,
+  atkX: 3.5,            // an Attack press: the class tap x atkX x attack speed (while active there is no auto swing)
+  abHandX: 2.5,         // an ability cast by hand hits this much harder than the idle auto-cast
   // ---- the buttons ----
   atkCd: 0.6,          // Attack: one class hit, then a short cooldown (mashing is not a win)
   parryWin: 0.35,      // Parry: the last 0.35 s of a heavy wind-up (tight)
@@ -9981,7 +9995,7 @@ const SOLO_TUNE = {
   openX: 1.5,
   counterT: 0.55,      // a parry staggers the foe for the counter's length; the counter lands at counterAt
   counterAt: 0.3,
-  counterX: 4,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
+  counterX: 4,         // the counter's damage (x the hero's attack x attack speed), and it always crits (x critMult); +stagger on bosses and elites
   // ---- the ability (one per starter) ----
   autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
   echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked
@@ -10588,19 +10602,20 @@ function spawn() {
 }
 
 // Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
-const addFloat = (txt, color, big, x, y) => emit('float', { txt, color, big, x, y });
+const addFloat = (txt, color, big, x, y, crit) => emit('float', { txt, color, big, x, y, crit: !!crit });   // crit: the crit number's own look (62-stage)
 const burst = (x, y, color, n, spd) => emit('burst', { x, y, color, n, spd });
 
 // at: optional {x, y} stage position for the damage number (taps); label overrides its text.
 // strikeSrc: 'hero' while heroSwing strikes, else 'party' (party combat credits threat and damage by it).
-let strikeSrc = 'party';
+// strikeCrit: true while heroSwing strikes a crit (the float carries it: the crit number's look, SOLO2).
+let strikeSrc = 'party', strikeCrit = false;
 function strike(amount, color, big, at, label) {
   const tg = target();
-  if (tg === 'world') { addRaidDmg(amount); addFloat(label || fmt(amount), color, big, at ? at.x : 0.72 + (Math.random() - 0.5) * 0.14, at ? at.y : 0.38); emit('wyrmHit'); burst(0.7, 0.5, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5); return; }
+  if (tg === 'world') { addRaidDmg(amount); addFloat(label || fmt(amount), color, big, at ? at.x : 0.72 + (Math.random() - 0.5) * 0.14, at ? at.y : 0.38, strikeCrit); emit('wyrmHit'); burst(0.7, 0.5, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5); return; }
   if (tg !== 'mob' || !mob || mob.dead) { if (tg === 'mob' && partyCombatOn()) cbStrike(amount, strikeSrc, at, label, color, big); return; }
   if (partyCombatOn()) { cbStrike(amount, strikeSrc, at, label, color, big); return; }
   mob.hp -= amount; mob.hit = 0.08;
-  addFloat(label || fmt(amount), color, big, at ? at.x : undefined, at ? at.y : undefined);
+  addFloat(label || fmt(amount), color, big, at ? at.x : undefined, at ? at.y : undefined, strikeCrit);
   burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   if (mob.hp <= 0) kill();
 }
@@ -10610,8 +10625,9 @@ function heroSwing(base, tap, at) {
   // F1 (56e-formation heroStand): in party combat the hero's hits on foes rise to its damage floor x trio.
   const stand = target() === 'mob' && typeof heroStand === 'function' ? heroStand(tap) : 1;
   const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1) * stand;
-  strikeSrc = 'hero';
+  strikeSrc = 'hero'; strikeCrit = crit;
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
+  strikeCrit = false;
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
   strikeSrc = 'party';
   return { crit, dmg };
@@ -10720,7 +10736,8 @@ function tick(dt) {
     heroTimer -= dt;
     if (heroTimer <= 0) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
-      if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()))) { emit('lunge'); heroSwing(heroAtk(), false); }
+      // SOLO2: no auto swing on the fight while the solo player is active (every hit comes from the buttons)
+      if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()) && !(tg === 'mob' && typeof soloActive === 'function' && soloActive()))) { emit('lunge'); heroSwing(heroAtk(), false); }
     }
     if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
       bossTime -= dt;
@@ -14691,7 +14708,7 @@ let unitHp, unitCd, bossTelegraph;
     }
     else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
     if (c === 'warden' && tg === 'mob' && typeof stTagNext === 'function') stTagNext('heavy');   // S1: the Heavy hit is heavy (Shatter)
-    const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX, true, at);
+    const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX * (o.x || 1), true, at);   // o.x: SOLO2's Attack button
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
     if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * tn('lkShare'), '#B58CFF', false);
     // Rain of Arrows: every 10th tap fires a free volley.
@@ -14771,7 +14788,8 @@ let unitHp, unitCd, bossTelegraph;
     } else agesT = 0;
     if (pauseUntil > clock && fightBoss && mob && mob.boss && !mob.dead) bossTime += dt;
     // Idle auto-play: a half-strength class tap every 2s after 4s without a tap.
-    if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead) {
+    // SOLO2: never while the solo player is active (every hit comes from the buttons)
+    if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead && !(typeof soloActive === 'function' && soloActive())) {
       nextAuto = clock + T.autoEvery;
       classTap({ target: 'mob', auto: true });
     }
@@ -24376,7 +24394,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
 
   // Hero hits (50-sim strike -> here). src 'hero' or 'party' (the Lightkeeper's lost damage).
   let heroCrit = false;
-  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0 };   // reused: the stage copies it
+  const FLOAT_EV = { txt: '', color: '', big: false, x: undefined, y: undefined, dt: '', rel: 0, crit: false };   // reused: the stage copies it
   cbStrike = (amount, src, at, label, color, big) => {
     if (src !== 'party') ST.heroHits++;   // AC2: hero strikes (the Hot Streak secret)
     if (!anyFoe()) return;
@@ -24402,7 +24420,7 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     }
     // S1 (core-2 2.1): the number carries its type icon and a weak / resisted mark; a crit ends in "!"
     FLOAT_EV.txt = label || fmt(d || amount) + (big ? '!' : ''); FLOAT_EV.color = color; FLOAT_EV.big = big;
-    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel;
+    FLOAT_EV.x = at ? at.x : undefined; FLOAT_EV.y = at ? at.y : undefined; FLOAT_EV.dt = ty; FLOAT_EV.rel = rel; FLOAT_EV.crit = !!strikeCrit;   // SOLO2: the crit number's look
     emit('float', FLOAT_EV);
     burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   };
@@ -27165,7 +27183,7 @@ var ACT_TUNE, ACT_STATS, actWarn, actWarning, actBusy, actTap, actParry, actDodg
     for (let i = queue.length - 1; i >= 0; i--) { queue[i].t += dt; const q = queue[i]; if (q.t > T.waitMax || (q.spec.foe && !alive(q.spec.foe) && !q.spec.dead)) { queue.splice(i, 1); ST.skipped++; if (q.spec.skip) q.spec.skip(); } }
     if (!W.on && queue.length && clock - lastEnd >= T.gap) start(queue.shift().spec);
     // the Finisher: by itself at half strength after 2.5 s (elites 1.5 s)
-    if (FIN.on) { FIN.t += dt; if (!alive(FIN.f) || !(FIN.f.stgT > 0)) FIN.on = false; else if (FIN.t >= FIN.auto) fireFinisher(true); }
+    if (FIN.on) { FIN.t += dt; if (!alive(FIN.f) || !(FIN.f.stgT > 0)) FIN.on = false; else if (FIN.t >= FIN.auto && !(typeof soloActive === 'function' && soloActive())) fireFinisher(true); }   // SOLO2: not while the solo player is active
     // auto-cast hold
     const m = typeof mob !== 'undefined' ? mob : null;
     if (bar(m) && alive(m) && m.sb >= T.hold.at * stagMax(m)) holdT += dt; else holdT = 0;
@@ -27583,14 +27601,20 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 //            soloEquip(slot, id | null) -> bool (place, swapping if equipped elsewhere, or clear); idle casts what is equipped
 //   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
 //            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
-//   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash }
-// Events: soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
+//   active   soloActive() -> bool: the player pressed a combat input (Attack, Parry, Dodge, an ability slot) in the last
+//            SOLO_TUNE.activeFor s (SOLO2). While active nothing fights for you: no auto swing (50-sim), no idle auto-tap
+//            (55-party), no auto-cast, no auto Finisher (59g). soloTouch() marks it (each button does); soloGoIdle()
+//            ends it at once (75-solo-ui: the page hidden or backgrounded). Opening the picker or a long press does not count.
+//   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
+// Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
 // Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
-// ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only.
+// ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only. Active (SOLO2): every
+// hit comes from the buttons, and they hit harder (atkX, abHandX).
 
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {};
 var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
@@ -27602,7 +27626,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const r = T.ramp, f = Math.max(0, Math.min(1, ((S.maxZone || 1) - r[0]) / Math.max(1, r[1] - r[0])));
     return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
   });
-  const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
+  const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
   registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
   const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
@@ -27656,11 +27680,20 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (Array.isArray(p.field) && p.field.length) { p.field = []; p.cells = { hero: { col: 2, lane: 1 } }; emit('fieldChange', { field: p.field }); }
   }
 
+  // ---- active vs idle (SOLO2): a combat press makes the player active for activeFor s ----
+  let activeT = 0;
+  const ACT_EV = { on: false };
+  const flip = v => { ACT_EV.on = v; emit('soloActive', ACT_EV); };
+  soloActive = () => soloOn() && activeT > 0;
+  soloTouch = () => { if (!soloOn() || !soloHero()) return; const was = activeT > 0; activeT = T.activeFor; if (!was) flip(true); };
+  soloGoIdle = () => { if (activeT > 0) { activeT = 0; flip(false); } };
+
   // ---- the buttons ----
   let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
   const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
   soloAttack = () => {
+    soloTouch();
     if (!fighting() || !heroUp()) return '';
     if (atkT > 0) return 'cd';
     atkT = T.atkCd;
@@ -27669,12 +27702,13 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const a = typeof actAnswer === 'function' ? actAnswer() : '';
     if (a) { emit('soloAttack', { kind: a }); return a; }
     if (!anyFoe()) return '';
-    classTap({ target: 'mob', noAnswer: true });
+    classTap({ target: 'mob', noAnswer: true, x: T.atkX * aps() });   // SOLO2: a press is worth atkX auto swings' time (it scales with attack speed like the auto swing)
     emit('lunge');
     emit('soloAttack', { kind: 'hit' });
     return 'hit';
   };
   soloParry = forgive => {
+    soloTouch();
     if (!fighting()) return '';
     if (parryT > 0 || openT > 0) return 'locked';
     const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
@@ -27685,6 +27719,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return 'miss';
   };
   soloDodge = forgive => {
+    soloTouch();
     if (!fighting()) return '';
     if (dodgeT > 0) return 'cd';
     dodgeT = T.dodgeCd;
@@ -27707,11 +27742,14 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       if (!c.done && c.t >= T.counterAt) {
         c.done = true;
         if (alive(c.f)) {
-          const P = heroAtkNow(false);
-          const dmg = cbDamageFoe(c.f, P * T.counterX, 0, 'phys', unitType('hero'), ST_HEAVY);
+          // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
+          const P = heroAtkNow(false), cm = critMult();
+          const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
           ST.counters++;
-          emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FFD27A', big: true });
-          emit('shake', 0.2); emit('lunge');
+          emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FF9E3D', big: true, crit: true });
+          emit('crit', { tap: true, counter: true }); emit('shake', 0.2); emit('lunge');
+          const echo = gear().echo;
+          if (echo && alive(c.f)) { const e2 = cbDamageFoe(c.f, P * T.counterX * aps() * cm * echo, 0, 'phys', unitType('hero'), 0); emit('float', { txt: fmt(e2 || 0), color: '#FFD27A', big: false }); }
           emit('soloCounter', { foe: c.f, dmg: dmg || 0 });
         }
       }
@@ -27759,11 +27797,12 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // opts: { slot (0-2; none = the first equipped ability that is ready), auto }
   soloAbility = opts => {
     const o = opts || {}, p = S.party, auto = !!o.auto;
+    if (!auto) soloTouch();
     let slot = o.slot;
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
-    const P = heroAtkNow(auto), ty = unitType('hero');
+    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX), ty = unitType('hero');   // by hand it hits harder (SOLO2)
     const tags = ST_AB;
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
@@ -27790,7 +27829,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     }
     cds[a.id] = abCd(a); readyFor[slot] = 0;
     mirrorCd();
-    ST.casts++; if (auto) ST.auto++;
+    ST.casts++; if (auto) ST.auto++; else ST.hand++;
     emit('float', { txt: a.name, color: '#FFD27A', big: true });
     emit('ability', { cls: 'solo', id: a.id, name: a.name, auto, slot });
     return true;
@@ -27835,6 +27874,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     clock += dt;
     adopt();
     clearField();
+    if (activeT > 0) { activeT -= dt; if (activeT <= 0) { activeT = 0; flip(false); } }
     if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
     counterTick(dt);
     if (patchT > 0) {
@@ -27845,8 +27885,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     mirrorCd();
     if (!fighting()) { readyFor.fill(0); return; }
     trashTick(dt);
-    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance)
-    const eq = soloEquipped(), can = anyFoe() && heroUp();
+    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance); never while active
+    const eq = soloEquipped(), can = anyFoe() && heroUp() && !(activeT > 0);
     for (let i = 0; i < 3; i++) {
       const a = eq[i] ? SOLO_ABILITIES[eq[i]] : null;
       if (a && can && !(cds[a.id] > 0)) { readyFor[i] += dt; if (readyFor[i] >= T.autoDelay) soloAbility({ slot: i, auto: true }); }
@@ -28785,9 +28825,13 @@ let resize, animate, draw, stageStats, warmScene;
   const FONTS = new Map(), TXT_K = 1.15;
   const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Handjet", "Arial Narrow", monospace`; FONTS.set(s, f); } return f; };
   const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
-  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
+  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, crit: false, life: 0, max: 0.95, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
+  // SOLO2 (owner): a crit's number pops (up to x1.35 fast, settling to x1 by CRIT_POP s), rises a little higher and
+  // slower (it lives CRIT_LIFE s), with three pixel sparks behind it. Reduced motion: no pop, no rise, static sparks.
+  const CRIT_POP = 0.18, CRIT_LIFE = 1.2;
+  let critFloats = 0;   // crit numbers raised (stageStats: the check reads it)
   // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
-  function pushFloat(txt, color, big, x, y, dt, rel) {
+  function pushFloat(txt, color, big, x, y, dt, rel, crit) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -28800,7 +28844,9 @@ let resize, animate, draw, stageStats, warmScene;
     let row = BUSY.indexOf(0);
     if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
     const f = free || last;
-    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
+    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.crit = !!crit; f.max = crit ? CRIT_LIFE : 0.95; f.life = f.max; f.x = fx;
+    if (crit) critFloats++;
+    f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -28832,6 +28878,19 @@ let resize, animate, draw, stageStats, warmScene;
       g.closePath(); g.lineWidth = Math.max(1, l * 0.6); g.strokeStyle = '#0B0810'; g.stroke(); g.fillStyle = rel > 0 ? '#FFE680' : '#B9B2C6'; g.fill();
     }
     r.k = K; r.bw = w / K; r.bh = h / K; r.by = by / K;
+  }
+  // SOLO2: the crit number's pop: up to x1.35 in the first 0.04 s, then back to x1 by CRIT_POP (eased)
+  const critPop = age => (age < 0.04 ? 1 + 0.35 * (age / 0.04) : age < CRIT_POP ? 1 + 0.35 * Math.pow(1 - (age - 0.04) / (CRIT_POP - 0.04), 2) : 1);
+  // three small pixel sparks (4-point stars) behind a crit number: they drift out a little (static with reduced motion)
+  const SPARK = [[-0.5, -0.55, 3], [0.52, -0.4, 2], [0.1, -0.95, 2]];
+  function critSparks(x, y, w, age) {
+    const d = reduced ? 0 : Math.min(1, age / 0.25) * 4;
+    for (const [sx, sy, s] of SPARK) {
+      const cx = Math.round(x + sx * (w * 0.5 + d)), cy = Math.round(y + sy * 10 - d * 0.6);
+      ctx.fillStyle = '#0B0810'; ctx.fillRect(cx - s - 1, cy - 1, s * 2 + 3, 3); ctx.fillRect(cx - 1, cy - s - 1, 3, s * 2 + 3);
+      ctx.fillStyle = '#FFD27A'; ctx.fillRect(cx - s, cy, s * 2 + 1, 1); ctx.fillRect(cx, cy - s, 1, s * 2 + 1);
+      ctx.fillStyle = '#FFF3C4'; ctx.fillRect(cx, cy, 1, 1);
+    }
   }
   // x: the centre, y: the baseline (logical px); whole device px when not popping.
   function drawText(r, x, y, pop) {
@@ -29548,7 +29607,7 @@ let resize, animate, draw, stageStats, warmScene;
     tank.go = Math.min(0, t.hx + 18 - tank.hx); tank.goT = 2;
   }
   // ================= events =================
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel, f.crit); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -30093,21 +30152,23 @@ let resize, animate, draw, stageStats, warmScene;
     const xr = SW - (target() === 'node' || tall ? 4 : 60 / ZM), fTop = hud ? Math.min(foe.top, hudFoeTop) : foe.top;
     for (const f of floats) {
       if (!f.on) continue;
-      const age = 0.95 - f.life, pop = !reduced && age < 0.08 ? 1.35 - age * 4 : 1;
+      const age = f.max - f.life, pop = reduced ? 1 : f.crit ? critPop(age) : age < 0.08 ? 1.35 - age * 4 : 1;
       const base = (f.big ? 21 : 15) * tz * TXT_K;
       const lo = top + base, onFoe = f.x > 0.55 && foe.fr;
       // one start line per side (just over the foe's head, or half way down the band), then each
       // row one line higher; a row that would start above the band starts at its top and fades sooner
       const y1 = onFoe ? Math.min(GY - 6, Math.max(lo + base, fTop + 2)) : lo + band * 0.5;
       const y0 = Math.max(lo + 2, y1 - f.off * 23 * tz * TXT_K);
-      const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
+      const yr = y0 - (reduced ? 0 : age * (f.crit ? 28 : f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
       const al = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
       if (al <= 0) continue;
       if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0, f.dt, f.rel); f.wz = base; }
       // over a pack, a text stays over the foe it was raised on (its x then) as the next steps up
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
-      ctx.globalAlpha = al; drawText(f, x, y, pop);
+      ctx.globalAlpha = al;
+      if (f.crit) critSparks(x, y - f.by * 0.45, f.bw, age);
+      drawText(f, x, y, pop);
     }
     // party numbers: over each member's head, stacked upward, rising a little and fading
     for (const n of nums) {
@@ -30645,7 +30706,7 @@ let resize, animate, draw, stageStats, warmScene;
   addEventListener('scroll', () => { stageRect = null; }, { capture: true, passive: true });
 
   new ResizeObserver(() => { resize(); stageRect = stageEl.getBoundingClientRect(); }).observe(stageEl);
-  stageStats = () => ({ drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
+  stageStats = () => ({ critFloats, critLive: floats.filter(f => f.on && f.crit).map(f => ({ txt: f.txt, color: f.color, life: f.max })), drawMs: Math.round(drawMs * 100) / 100, SW, SH, CW, CH, ZM, DPR, GY, hudB: Math.round(hudB), tall, actors: order.length, foes: slots.slice(0, packN).map(s => s.fr ? [s.key, s.x, s.gy, s.w, s.h, s.fr.idle0.ox, leftEdge(s.fr.idle0)] : null), front: order.map(a => [a.key, a.hx, a.hy]), bake: bakeStats(), idle: ART.idleStats ? ART.idleStats() : null });
 }
 
 // ---- src/js/63-scenery.js ----
@@ -42685,11 +42746,13 @@ let openSheet, partySheet;
 //   - the action bar (owner: like a MOBA ability bar, never over the fight; the lowest thing on the Fight view, right
 //     above the tab bar, for the thumbs): two rows of framed square slots.
 //       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
-//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Attack too)  Attack bottom right
+//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Dodge, SOLO2)  Attack bottom right
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
 //     telegraphed hit is coming. A long press on Attack, Parry or Dodge says what it does; on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
+//   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
+//     (idle) and dimmed while you are active (any combat press, 59j soloActive). The page hidden = idle at once.
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
@@ -42701,11 +42764,11 @@ let openSheet, partySheet;
   const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
   bar.append(rowAb, rowAct);
   const INFO = {
-    atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it.', key: 'D or Space' },
+    atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it. While you fight by hand, your hero stops attacking alone.', key: 'D' },
     parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (as the red ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'A' },
-    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'S' }
+    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'S or Space' }
   };
-  const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };
+  const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };   // Space dodges too (the Dodge help says so)
   function mkSlot(row, id, label) {
     const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
     const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label);
@@ -42831,7 +42894,7 @@ let openSheet, partySheet;
     b.addEventListener('contextmenu', e => e.preventDefault());
     b.addEventListener('click', e => { if (e.detail === 0) act[id](); });   // keyboard users: Enter / Space on a focused slot
   }
-  const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'atk' };
+  const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
@@ -42852,11 +42915,31 @@ let openSheet, partySheet;
   };
   const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
   const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
+  // ---- the Auto badge (SOLO2): lit while auto-play fights for you, dim while you are active ----
+  const badge = el('div', 'auto-badge'); badge.id = 'autoBadge'; badge.hidden = true; badge.setAttribute('role', 'status');
+  badge.append(el('i', 'ab-dot'), el('span', null, 'Auto'));
+  const hud = $('stageBox') && $('stageBox').querySelector('.hud');
+  if (hud) hud.append(badge);
+  const setBadge = () => {
+    const on_ = !soloActive();
+    if (badge._on === on_) return;
+    badge._on = on_; badge.classList.toggle('on', on_);
+    badge.setAttribute('aria-label', on_ ? 'Auto: your hero fights alone' : 'Auto off: you are fighting');
+    badge.title = on_ ? 'Your hero fights alone. Press any combat button to take over.' : 'You are fighting. Auto comes back after 5 seconds without a press.';
+  };
+  on('soloActive', setBadge);
+  // the page hidden or the app in the background: idle at once (auto-play takes over)
+  const goIdle = () => { try { if (document.hidden) soloGoIdle(); } catch (e) {} };
+  document.addEventListener('visibilitychange', goIdle);
+  addEventListener('pagehide', () => { try { soloGoIdle(); } catch (e) {} });
+
   let t = 0;
   function update() {
     const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
     if (bar.hidden === show) { bar.hidden = !show; if (!show) { tip.hidden = true; closePicker(); } }
+    if (badge.hidden === show) badge.hidden = !show;
     if (!show) return;
+    setBadge();
     const s = soloButtons(), k = soloHero();
     if (k !== heroK) { heroK = k; drawIc(bAtk._ic, ICON[WEAPON_IC[k]] || ICON.sword); }
     for (let i = 0; i < 3; i++) {
@@ -42882,9 +42965,9 @@ let openSheet, partySheet;
     bParry.classList.toggle('live', s.tele === 'heavy');
     bDodge.classList.toggle('live', s.tele === 'heavy' || s.tele === 'zone' || s.tele === 'slam');
   }
-  bAtk.setAttribute('aria-label', 'Attack (D or Space). ' + INFO.atk.desc);
+  bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
-  bDodge.setAttribute('aria-label', 'Dodge (S). ' + INFO.dodge.desc);
+  bDodge.setAttribute('aria-label', 'Dodge (S or Space). ' + INFO.dodge.desc);
   onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo bar', e); } });
   // the paused game (the guide, the picker) does not tick: keep the bar fresh anyway
   setInterval(() => { try { update(); } catch (e) {} }, 250);

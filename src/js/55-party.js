@@ -305,7 +305,7 @@ let unitHp, unitCd, bossTelegraph;
     }
     else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
     if (c === 'warden' && tg === 'mob' && typeof stTagNext === 'function') stTagNext('heavy');   // S1: the Heavy hit is heavy (Shatter)
-    const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX, true, at);
+    const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX * (o.x || 1), true, at);   // o.x: SOLO2's Attack button
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
     if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * tn('lkShare'), '#B58CFF', false);
     // Rain of Arrows: every 10th tap fires a free volley.
@@ -385,7 +385,8 @@ let unitHp, unitCd, bossTelegraph;
     } else agesT = 0;
     if (pauseUntil > clock && fightBoss && mob && mob.boss && !mob.dead) bossTime += dt;
     // Idle auto-play: a half-strength class tap every 2s after 4s without a tap.
-    if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead) {
+    // SOLO2: never while the solo player is active (every hit comes from the buttons)
+    if (target() === 'mob' && clock - lastTap >= T.autoIdle && clock >= nextAuto && mob && !mob.dead && !(typeof soloActive === 'function' && soloActive())) {
       nextAuto = clock + T.autoEvery;
       classTap({ target: 'mob', auto: true });
     }
