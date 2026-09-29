@@ -204,6 +204,7 @@ let unitHp, unitCd, bossTelegraph;
       const world = target() === 'world';
       const n = world ? worldEmbers : (mob.embers || 0);
       if (!(bonus('tune:keepEmbers') > 0)) { if (world) worldEmbers = 0; else mob.embers = 0; }
+      if (!world && typeof stTagNext === 'function') stTagNext('ab');   // S1: an ability (the reaction window's x1.25)
       heroSwing(heroAtk() * tn('flare') * (1 + tn('flarePerEmber') * n), false);
       // Everburn: Flare plants 2 new Embers after it goes off.
       if (ks('everburn')) { const em = tn('embersMax'), k = STAR_KS.everburn.plant; if (world) worldEmbers = Math.min(em, worldEmbers + k); else if (mob) mob.embers = Math.min(em, (mob.embers || 0) + k); }
@@ -288,6 +289,7 @@ let unitHp, unitCd, bossTelegraph;
       }
     }
     else if (c === 'lightkeeper') { kind = 'bless'; pushStack(bless, tn('bless') * eff, tn('blessT'), tn('blessMax')); }
+    if (c === 'warden' && tg === 'mob' && typeof stTagNext === 'function') stTagNext('heavy');   // S1: the Heavy hit is heavy (Shatter)
     const r = heroSwing(heroAtk() * T.tapMul[c] * eff * tapX, true, at);
     // Lightkeeper: the party strikes with the tap damage the hero gave up.
     if (c === 'lightkeeper') strike(r.dmg * (1 / T.heroMul[c] - 1) * tn('lkShare'), '#B58CFF', false);
@@ -348,7 +350,7 @@ let unitHp, unitCd, bossTelegraph;
     // Auto-cast at half rate: it waits (1 + autoCd) extra cooldowns after the ability is ready (autoCd 0; stars lower it).
     if (p.autoCast && S.maxZone >= T.autoCastZone && p.abilityCd <= 0 && readyFor >= abCd(c) * (1 + tn('autoCd'))) castAbility({ auto: true });
     if (volleyLeft > 0 && clock >= volleyNext) {
-      if (canHit()) heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false);   // Quickdraw: fewer, harder arrows
+      if (canHit()) { if (target() === 'mob' && typeof stTagNext === 'function') stTagNext('ab'); heroSwing(heroAtk() * (ks('quickdraw') ? STAR_KS.quickdraw.atk : T.volleyAtk) * volleyEff, false); }   // Quickdraw: fewer, harder arrows
       volleyLeft--; volleyNext = clock + T.volleyT / T.volleyHits;
     }
     if (rainLeft > 0 && clock >= rainNext) {

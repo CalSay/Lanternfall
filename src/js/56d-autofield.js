@@ -160,10 +160,13 @@ var afRealPow = null;
   function memberDmg(field, z) {
     const beh = (typeof FOE_BEH === 'object' && FOE_BEH[foeKey(z)]) || {};
     const ax = num(CT('armourX'), 0.85), ao = num(CT('aoeOther'), 0.5), sp = num(CT('lmSplash'), 0.15), ac = num(CT('autoCast'), 1);
-    const marked = field.includes('wren'), phys = k => beh.armoured && !marked && !T.stPierce[k] ? ax : 1;
+    // S1 (59a): each member's type against the zone's pack (px) and its Elder (sx); armour cuts physical hits only
+    const fk = foeKey(z), dtOf = k => typeof unitType === 'function' ? unitType(k) : 'phys';
+    const tp = k => typeof typeZone === 'function' ? typeZone(dtOf(k), z, num(CT('mixP'), 0.72)) : 1, tb = k => typeof typeXKey === 'function' ? typeXKey(fk, dtOf(k)) : 1;
+    const marked = field.includes('wren'), phys = k => beh.armoured && !marked && !T.stPierce[k] && dtOf(k) === 'phys' ? ax : 1;
     const cls = heroCls() || 'warden', out = [];
-    out.push({ k: 'hero', d: heroCombatDps() * ac, px: cls === 'lanternmage' ? 1 + sp * 0.9 : 1, sx: (cls === 'lanternmage' ? 1 : phys('hero')) * (cls === 'ranger' ? T.markX : 1) });
-    for (const k of field) { const r = R(k).role; out.push({ k, d: charDps(k), px: r === 'caster' ? 1 + ao * 0.9 : 1, sx: (r === 'caster' || r === 'support' ? 1 : phys(k)) * (T.stX[k] || 1) }); }
+    out.push({ k: 'hero', d: heroCombatDps() * ac, px: (cls === 'lanternmage' ? 1 + sp * 0.9 : 1) * tp('hero'), sx: (cls === 'lanternmage' ? 1 : phys('hero')) * (cls === 'ranger' ? T.markX : 1) * tb('hero') });
+    for (const k of field) { const r = R(k).role; out.push({ k, d: charDps(k), px: (r === 'caster' ? 1 + ao * 0.9 : 1) * tp(k), sx: (r === 'caster' || r === 'support' ? 1 : phys(k)) * (T.stX[k] || 1) * tb(k) }); }
     return out;
   }
   const stOf = m => m.reduce((a, x) => a + x.d * x.sx, 0);

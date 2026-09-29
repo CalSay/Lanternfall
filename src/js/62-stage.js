@@ -35,8 +35,9 @@ let resize, animate, draw, stageStats, warmScene;
   const FONTS = new Map(), TXT_K = 1.15;
   const fontPx = s => { let f = FONTS.get(s); if (!f) { f = `700 ${s}px "Handjet", "Arial Narrow", monospace`; FONTS.set(s, f); } return f; };
   const NF = 24, floats = [], BUSY = [0, 0, 0, 0];
-  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0 });
-  function pushFloat(txt, color, big, x, y) {
+  for (let i = 0; i < NF; i++) floats.push({ on: false, txt: '', color: '', big: false, life: 0, x: 0, y: 0, row: 0, off: 0, ax: 0, w: 0, wz: 0, cv: null, k: 0, bw: 0, bh: 0, by: 0, dt: '', rel: 0 });
+  // S1 (core-2 2.1): dt, rel: a hit's damage type (its icon goes in front) and 1 weak / -1 resisted (a mark after)
+  function pushFloat(txt, color, big, x, y, dt, rel) {
     const fx = x ?? (0.7 + (Math.random() - 0.5) * 0.12);
     // Each new text takes the first free row (0-3) near its spot, one line below the texts still
     // rising there; when all rows are busy the oldest text there fades out and gives up its row.
@@ -49,7 +50,7 @@ let resize, animate, draw, stageStats, warmScene;
     let row = BUSY.indexOf(0);
     if (row < 0) { row = oldest.row; oldest.life = Math.min(oldest.life, 0.1); oldest.row = -1; }
     const f = free || last;
-    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0;
+    f.on = true; f.txt = txt; f.color = color; f.big = !!big; f.life = 0.95; f.x = fx; f.y = y ?? 0.42; f.row = row; f.off = row; f.wz = 0; f.dt = dt || ''; f.rel = rel | 0;
     f.ax = foe && foe.fr ? foe.x : SW * 0.7;
   }
   // Party numbers (C4): hits, heals and shields over each member, from unitHit / unitHeal. Each member
@@ -60,17 +61,26 @@ let resize, animate, draw, stageStats, warmScene;
   // Text sprites: each text is drawn once (outline, fill, the shield glyph) at device size into its
   // record's own canvas; frames only copy it (scaled during the first pop), so a screen of numbers
   // costs a few drawImage calls, not a stroke and a fill of text each. Rebaked on a zoom change.
-  function bakeText(r, txt, col, size, lw, glyph) {
+  // S1: dt puts the type icon in front (instead of a glyph); rel 1 / -1 adds a weak / resisted triangle after.
+  function bakeText(r, txt, col, size, lw, glyph, dt, rel) {
     const K = DPR * ZM, px = Math.max(6, Math.round(size * K)), l = Math.max(1, Math.round(lw * K));
     const c = r.cv || (r.cv = document.createElement('canvas'));
     let g = c.getContext('2d'); g.font = fontPx(px);
+    const tIc = dt ? typeIcon(dt) : null; if (tIc) glyph = 1;
     const tw = Math.ceil(g.measureText(txt).width), gw = glyph ? Math.round(px * 0.7) : 0, gap = glyph ? Math.round(px * 0.12) : 0;
-    const w = tw + gw + gap + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
+    const aw = rel ? Math.round(px * 0.5) + gap : 0;
+    const w = tw + gw + gap + aw + l * 2 + 4, h = Math.ceil(px * 1.25) + l * 2;
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } else g.clearRect(0, 0, w, h);
     g = c.getContext('2d'); g.font = fontPx(px); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
     const bx = l + 2 + gw + gap, by = Math.round(l + px);
     g.lineWidth = l; g.strokeStyle = '#0B0810'; g.strokeText(txt, bx, by); g.fillStyle = col; g.fillText(txt, bx, by);
-    if (gw) { g.imageSmoothingEnabled = false; g.drawImage(icon('shield'), l + 2, Math.round(by - gw * 0.95), gw, gw); }
+    if (gw) { g.imageSmoothingEnabled = false; g.drawImage(tIc || icon('shield'), l + 2, Math.round(by - gw * 0.95), gw, gw); }
+    if (rel) {   // ▲ weak (points up), ▼ resisted (points down): a shape, not only a colour
+      const s = Math.round(px * 0.5), x0 = bx + tw + gap, yb = Math.round(by - px * 0.1), yt = yb - s;
+      g.beginPath();
+      if (rel > 0) { g.moveTo(x0, yb); g.lineTo(x0 + s, yb); g.lineTo(x0 + s / 2, yt); } else { g.moveTo(x0, yt); g.lineTo(x0 + s, yt); g.lineTo(x0 + s / 2, yb); }
+      g.closePath(); g.lineWidth = Math.max(1, l * 0.6); g.strokeStyle = '#0B0810'; g.stroke(); g.fillStyle = rel > 0 ? '#FFE680' : '#B9B2C6'; g.fill();
+    }
     r.k = K; r.bw = w / K; r.bh = h / K; r.by = by / K;
   }
   // x: the centre, y: the baseline (logical px); whole device px when not popping.
@@ -765,7 +775,7 @@ let resize, animate, draw, stageStats, warmScene;
     tank.go = Math.min(0, t.hx + 18 - tank.hx); tank.goT = 2;
   }
   // ================= events =================
-  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y); if (f.color === '#B58CFF') partyPulse(); });
+  on('float', f => { pushFloat(f.txt, f.color, f.big, f.x, f.y, f.dt, f.rel); if (f.color === '#B58CFF') partyPulse(); });
   on('burst', b => {
     // Core bursts use the old stage fractions; the ones aimed at the foe are re-centred on it (on a
     // pack: the foe that died this instant, its dead timer just set, else the shown foe).
@@ -1301,7 +1311,7 @@ let resize, animate, draw, stageStats, warmScene;
       const yr = y0 - (reduced ? 0 : age * (f.big ? 30 : 22) * tz), y = Math.max(lo, yr);
       const al = Math.max(0, Math.min(1, f.life * 2.2, 1 - (lo - yr) / (10 * tz)));
       if (al <= 0) continue;
-      if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0); f.wz = base; }
+      if (f.wz !== base || f.k !== K) { bakeText(f, f.txt, f.color, base, 4 * tz, 0, f.dt, f.rel); f.wz = base; }
       // over a pack, a text stays over the foe it was raised on (its x then) as the next steps up
       const fx = onFoe && (packN > 1 || gath) ? f.ax + (f.x - 0.7) * SW * 0.5 : f.x * SW;
       const hw = f.bw * pop / 2, x = Math.max(hw, Math.min(xr - hw, fx));
@@ -1448,7 +1458,8 @@ let resize, animate, draw, stageStats, warmScene;
     if (!c) {
       c = icons[id] = document.createElement('canvas'); c.width = 5; c.height = 5;
       const g = c.getContext('2d');
-      IMAP[id].forEach((r, y) => { for (let x = 0; x < 5; x++) if (IP[r[x]]) { g.fillStyle = IP[r[x]]; g.fillRect(x, y, 1, 1); } });
+      if (IMAP[id]) IMAP[id].forEach((r, y) => { for (let x = 0; x < 5; x++) if (IP[r[x]]) { g.fillStyle = IP[r[x]]; g.fillRect(x, y, 1, 1); } });
+      else { const st = statusIcon(id); if (st) g.drawImage(st, 0, 0); }   // S1: status badges (61b, 21x ST_ICONS)
     }
     return c;
   }
@@ -1541,7 +1552,7 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.fillStyle = HBG; ctx.fillRect(X + e, Y + e, w - 2 * e, h - 2 * e);
     ctx.drawImage(icon(id), X + U, Y + U, 5 * U, 5 * U);
     if (n > 0) ctx.drawImage(glyphs(BONE), Math.min(9, n) * 4, 0, 3, 5, X + 7 * U, Y + U, 3 * U, 5 * U);
-    if (frac >= 0) { ctx.fillStyle = ICOL[id]; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
+    if (frac >= 0) { ctx.fillStyle = ICOL[id] || (ST_ICONS[id] && ST_ICONS[id].col) || '#DCE8FF'; ctx.fillRect(X + U, Y + 6 * U, Math.max(e, Math.round((w - 2 * U) * frac)), U); }
     return w;
   }
   // A 5x5 icon on a dark plate (7x7 HUD px), top-left at X, Y.
@@ -1686,6 +1697,8 @@ let resize, animate, draw, stageStats, warmScene;
     }
     if ((s === foe && markLeft > 0) || m.markT > 0) pushChip('mark', 0, Math.min(1, (s === foe && markLeft > 0 ? markLeft : m.markT) / 8));
     if (m.embers | 0) pushChip('ember', m.embers | 0, -1);
+    // S1 (combat-2 2.6): the focus foe's statuses, up to 4 badges with stack digits and time left
+    if (s === foe && typeof stBadges === 'function') for (const b of stBadges(m)) if (chipList.length < 6) pushChip(b.id, b.n, b.f);
     const h = chipRow(cx, y - U);
     if (h) y -= h + U;
     if (m.chanT > 0 && !m.boss) { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }

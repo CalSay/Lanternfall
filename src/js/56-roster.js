@@ -91,6 +91,8 @@ const ROSTER = {
   caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', idx: -1, route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with enough Renown.' },
   corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', idx: -1, route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
 };
+// S1 (classes-2 5.1): each hero's base damage type and signature status (21x-data-types HERO_DT): ROSTER[id].dt, .sst
+for (const k in HERO_DT) if (ROSTER[k]) Object.assign(ROSTER[k], HERO_DT[k]);
 const ROSTER_KEYS = Object.keys(ROSTER);
 const ROSTER_RANKS = ['Recruit', 'Veteran', 'Captain', 'Champion', 'Paragon', 'Legend', 'Mythic', 'Lanternborn'];
 const ROSTER_STARTER = { warden: 'wren', lanternmage: 'tobin', ranger: 'tobin', lightkeeper: 'bram' };
