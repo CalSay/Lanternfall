@@ -88,6 +88,11 @@
     }
   }
 
+  // Detect if running inside an iframe (e.g., claude.ai artifact viewer)
+  function isInFrame() {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }
+
   registerSection('log', {
     id: 'savecode', title: 'Save code',
     mount(sec) {
@@ -99,6 +104,10 @@
       const copyBtn = el('button', 'feedback-copy', 'Copy save code'); copyBtn.type = 'button';
       const dlBtn = el('button', 'feedback-clear', 'Download file'); dlBtn.type = 'button';
       const exportNote = el('p', 'note');
+      const frameTip = el('p', 'note', 'Tip: copy the code and paste it somewhere safe.');
+
+      const inFrame = isInFrame();
+      if (inFrame) dlBtn.style.display = 'none';
 
       copyBtn.addEventListener('click', () => {
         const code = currentCode();
@@ -123,6 +132,7 @@
       });
       exportButtons.append(copyBtn, dlBtn);
       panel.append(exportButtons, exportNote);
+      if (inFrame) panel.append(frameTip);
 
       panel.append(el('div', 'savecode-sep'));
 
