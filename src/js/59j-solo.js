@@ -239,7 +239,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   });
 
   // ---- the snapshot the buttons read (a kept object) ----
-  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: { left: 0, max: 0, ready: false, name: '', id: '' }, tele: '', inParry: false, inDodge: false };
+  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: { left: 0, max: 0, ready: false, name: '', id: '' }, tele: '', inParry: false, inDodge: false, fight: false };
   soloButtons = () => {
     const b = BTN;
     b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
@@ -247,6 +247,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
     const a = soloAbilityInfo();
     b.ab.left = a ? a.left : 0; b.ab.max = a ? a.cd : 0; b.ab.ready = !!(a && a.ready); b.ab.name = a ? a.name : ''; b.ab.id = a ? a.id : '';
+    b.fight = fighting() && heroUp() && anyFoe();
     const w = typeof actWarning === 'function' ? actWarning() : null;
     b.tele = w ? w.kind : ''; b.inParry = !!(w && w.kind === 'heavy' && w.left <= w.win); b.inDodge = !!(w && w.dwin && w.left <= w.dwin);
     return b;

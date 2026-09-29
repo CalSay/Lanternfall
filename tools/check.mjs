@@ -5707,7 +5707,7 @@ try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v2', s); } catch (e) {} }, JSON.stringify(raw));
+      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v3', s); } catch (e) {} }, JSON.stringify(raw));
       const page = await ctx.newPage(); const errs2 = [];
       page.on('pageerror', e => errs2.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
