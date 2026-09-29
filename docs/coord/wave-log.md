@@ -1096,3 +1096,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   sprite (anatomy correct); we animate on top (breath offsets, cloth, bat, code-drawn string, projectiles,
   effects). Parts only for pieces that move independently (bat, arrow, bow string, cloak tips, head tilt).
 - Wren v9 from GPT's four full poses (scratchpad assets/wren4/build5.py): breathing by shifting rows above y118, code string behind her at full draw, released sprite swap with a flying code arrow and waves, hurt sprite, death = buckle then a quarter-turned camp pose lying down. Key-pose rule confirmed. Wanted next from GPT: kneel and fallen poses for a proper death.
+- NEW docs/design/art-pipeline.md: the GPT key-pose + code-animation plan (fixed spec, pose sets per class, prompt template, review checklist). Next test hero: Tobin (Warrior tank, 7 poses).
