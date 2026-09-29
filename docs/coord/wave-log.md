@@ -1037,3 +1037,7 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   reward NaN was the test hitting S6's Enrage (check bug). check passes. COMBINED sim --targets after ECON-A +
   S6: 8/22 (was 11). NEXT: BAL3 + BAL-E combined balance pass (opus), before S4/S5.
 - Preview v49 published (active combat + new economy). Preview sed now swaps lanternfall.save.v2 -> lanternfall.preview.r2 (fresh preview save). LAUNCHED BAL3+BAL-E (opus). No [deploy] until BAL3 lands.
+- OWNER (2026-09-29 morning): "Finish your next task and then pause work." Playtest notes triaged in
+  docs/coord/playtest-1.md. PAUSED: weekday and weekend check-in triggers disabled (re-enable on resume; their
+  prompts still say the v1 preview sed: fix to v2 before re-enabling). Only BAL3 (running) finishes; merge it,
+  then no new agents.
