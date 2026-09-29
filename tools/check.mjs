@@ -1918,10 +1918,12 @@ try {
   const dm0 = E('mod("dmg")'); E('S.deep.lore.edge = 4');
   assert(Math.abs(E('mod("dmg")') / dm0 - 1.8) < 1e-6 && E('DW.shop("lore").some(r => r.id === "edge" && r.max === 4)'), 'Deep Edge IV: +80% damage below; sold in the Deep Lore shop');
   // a wipe ends the run: the floors cleared count and pay; the party stands up whole above
+  // (S6-F: more boons in the pool change the picks, so the run may be between floors here: fight the next one)
+  if (E('DW.run().phase') === 'draft') { E('DW.pick(DW.offerView().cards[0].id)'); ticks(g, 1); }
   const top = E('DW.run().top'), marks = E('DW.marksNow()'), m0 = E('S.deep.marks');
   E('for (let i = 0; i < 4; i++) combatUnits().forEach(u => { if (u.live && !u.down) { u.lifeline = true; cbHitUnit(u, 1e300, "poison", null); } })');
   ticks(g, 2);
-  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")');
+  assert(E('S.deep.run === null && S.deep.last.reason === "wipe" && arena === null'), 'a party wipe ends the run (reason "wipe")' + (E('S.deep.run === null') ? '' : ': ' + E('JSON.stringify({ ph: S.deep.run.phase, fl: S.deep.run.floor, units: combatUnits().filter(u => u.live).map(u => u.key + (u.down ? ":down" : ":" + Math.round(u.hp))), foes: combatFoes().length, boons: Object.keys(S.deep.run.boons) })')));
   assert(E('S.deep.last.floor') === top && E('S.deep.best') >= top && E('S.deep.marks') - m0 === marks, `the run's depth counts: floor ${top}, ${marks} Depth Marks paid`);
   assert(E('combatUnits().filter(u => u.live).every(u => !u.down && u.hp === u.maxHp)') && E('combatFoes().every(f => !f.deep)') && E('mod("dmg")') < dm0 * 1.0001, 'back above: the party is whole, no well foe is left, boons and Deep Edge are off');
   assert(E('S.activity') === 'fight' && E('!!mob && !mob.deep'), 'the zone fight resumes');
@@ -2155,7 +2157,7 @@ try {
   // Deepwell: the [C] boons join the pool now
   {
     const g = loadCore({ seed: 1 });
-    assert(g.eval('deepStageC() && DEEP_BOON_IDS.filter(id => DEEP_BOONS[id].c).length === 9'), 'deepStageC() is true: the 9 party-combat boons are in the Deepwell pool');
+    assert(g.eval('deepStageC() && DEEP_BOON_IDS.filter(id => DEEP_BOONS[id].c).length === 14'), 'deepStageC() is true: the 14 party-combat boons are in the Deepwell pool (S6-F: five for active play)');
   }
   assert(!errs.length, 'no combat errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('combat crashed: ' + (e.stack || e)); }
