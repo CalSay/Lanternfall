@@ -81,8 +81,9 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     caps: { tele: 0.35, boss: 0.15, pack: 0.1, swarm: 0.04, blast: 0.2 },
     // S6-A the Enrage timer (combat-2 1.5, owner D1): zone elders 45 s, region bosses 60 s; at 0 the boss attacks
     // enrageSpd faster and deals enrageDmg more each second; the fight fails enrageFail s later. bossLive: the
-    // survival test for auto-challenge (the party must outlast the kill by 10%)
-    bossT: 45, regionBossT: 60, enrageSpd: 0.5, enrageDmg: 0.1, enrageFail: 15, bossLive: 1.1,
+    // survival test for auto-challenge: the closed-form time to fall must reach bossLive x the kill time (spec 1.1;
+    // S6 pick 0.7: the estimate ignores parries, Shield Wall and the 15 s Enrage window, and at 1.1 it walled Silas)
+    bossT: 45, regionBossT: 60, enrageSpd: 0.5, enrageDmg: 0.1, enrageFail: 15, bossLive: 0.7,
     aoeOther: 0.5, lmSplash: 0.15,       // caster hits on the other foes; the Lanternmage's splash
     hp: { tank: 12, striker: 5, caster: 4, support: 6 },
     heroPow: 1.4, hpClamp: [0.15, 6],   // the hero's power = its damage / heroPow (a striker's 1.4 x power); see hpPow

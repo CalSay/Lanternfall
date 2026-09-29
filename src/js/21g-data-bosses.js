@@ -51,7 +51,8 @@ const BOSS_KITS = {
   spore: { name: 'Elder Spore Cap', fam: 'plant', dt: 'poison', phases: [0.5], timer: 45, atk: 1, sig: null, heart: '#C9F08A',
     uniq: null, theme: 'venom bloom', gem: ['body', 0, -8], region: 0,
     mech: [
-      { id: 'burst', name: 'Spore Burst', tele: 'line', ph: 1, every: 8, first: 4, wind: 1.5, x: 1.5, apply: ['venom', 2, 8], answer: 'shield', idle: 'shields, a cleanse' },
+      { id: 'burst', name: 'Spore Burst', tele: 'line', ph: 1, every: 8, first: 4, wind: 1.5, x: 1,   // S6 pick: 1x, not 1.5x (a line cannot be parried or dodged; at 1.5x it walled Ranger parties at zone 68)
+      apply: ['venom', 2, 8], answer: 'shield', idle: 'shields, a cleanse' },
       { id: 'bloom', name: 'Spore Bloom', tele: 'sig', ph: 2, every: 16, first: 3, wind: 2.5, fx: ['venomAll', 5], answer: 'interrupt', idle: 'a stun, a cleanse' }
     ] },
   golem: { name: 'Elder Quarry Golem', fam: 'construct', dt: 'phys', phases: [0.5], timer: 45, atk: 1, sig: null, heart: '#9FD8FF',

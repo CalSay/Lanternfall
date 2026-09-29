@@ -250,9 +250,9 @@ async function runScenario(browser, base, { dev, save }) {
     out.bossKit = summarize(await window_(W.fight, async () => {
       await page.evaluate(() => window.__lf.x('mob && mob.boss && (mob.hp = mob.max * 0.6)'));
       await page.waitForTimeout(1500); await page.evaluate(() => window.__lf.x('mob && mob.boss && (mob.hp = mob.max * 0.3)'));
-      await page.waitForTimeout(1000); await page.evaluate(() => window.__lf.x('mob && mob.boss && actStag(mob, 500, 0)'));
+      await page.waitForTimeout(1000); await page.evaluate(() => window.__lf.x('typeof actStag === "function" && mob && mob.boss && actStag(mob, 500, 0)'));
     }));
-    out.bossKitStats = await page.evaluate(() => window.__lf.x('JSON.stringify({ phases: KIT_STATS.phases, adds: KIT_STATS.adds, staggers: ACT_STATS.staggers, fins: ACT_STATS.fins })'));
+    out.bossKitStats = await page.evaluate(() => window.__lf.x('typeof KIT_STATS === "object" ? JSON.stringify({ phases: KIT_STATS.phases, adds: KIT_STATS.adds, staggers: ACT_STATS.staggers, fins: ACT_STATS.fins }) : "-"'));
     await page.evaluate(() => window.__lf.x('fightBoss = false; spawn()'));
   }
   const rest = W.heap - (Date.now() - tH0); if (rest > 0) await page.waitForTimeout(rest);
