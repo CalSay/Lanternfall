@@ -16,7 +16,7 @@
 .evo-opt .mini:disabled { opacity: .5; cursor: default; }
 
 /* The Proving on the stage */
-.tr-hud { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 6; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: rgba(11,8,16,.86); border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
+.tr-hud { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: min(340px, calc(100% - 24px)); z-index: 30; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; background: #0B0810; border: 2px solid var(--gold); color: var(--bone); font-size: 13px; }
 .tr-hud[hidden] { display: none; }
 .tr-top { display: flex; justify-content: space-between; gap: 8px; min-width: 0; grid-column: 1; }
 .tr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); }
@@ -58,7 +58,7 @@
 /* The evolution ring under the star map */
 .st-ringbox { display: grid; gap: 4px; margin-top: 8px; padding: 8px; border: 1px solid var(--line); background: var(--well); }
 .st-ringbox .note { margin: 0; }
-.st-ring-svg { width: 100%; max-width: 340px; justify-self: center; }
+.st-ring-svg { width: 100%; max-width: 340px; justify-self: center; aspect-ratio: 240 / 170; }
 .st-suggest { justify-self: start; min-height: 44px; }
 
 /* The lamp flash when an evolution is chosen or proven */
