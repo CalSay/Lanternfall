@@ -35,7 +35,7 @@ var TRIAL_TUNE, TRIAL_ARENA, TRIAL_TPL, trialStart, trialEnd, trialLive, trialIn
   const T = TRIAL_TUNE = {
     refZone: 35,                                      // the Fenmother's zone
     share: { warrior: 0.1, ranger: 0.5, mage: 0.2 },  // the base class's share of its party's damage at the reference
-    hold: { foeSecs: 10, bossSecs: 35, hitPct: 0.03, bossHitPct: 0.05, lampHit: 6.2 },
+    hold: { foeSecs: 10, bossSecs: 35, hitPct: 0.03, bossHitPct: 0.05, lampHit: 5.8 },
     hunt: { quarrySecs: 52, markX: 1.25, screenSecs: 1.5, hitPct: 0.02, stops: [9, 20, 31], stopX: 1.5 },
     wave: { secs: { bat: 4.2, spore: 8.4, wraith: 14 }, hitPct: 0.008, curseEvery: 4, curseT: 3, drain: 0.015, lampHeal: 0.03 }
   };
