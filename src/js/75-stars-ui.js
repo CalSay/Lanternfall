@@ -134,7 +134,7 @@
     const map = starMap(cls);
     R.mapBox.textContent = '';
     const [vx, vy, vw, vh] = STAR_GEO.view, cx = STAR_GEO.cx, cy = STAR_GEO.cy;
-    const svg = sv('svg', { viewBox: STAR_GEO.view.join(' '), class: 'st-svg', role: 'group', 'aria-label': `${HERO_CLASSES[cls].name} star map` });
+    const svg = sv('svg', { viewBox: STAR_GEO.view.join(' '), class: 'st-svg', role: 'group', 'aria-label': `${STAR_MAPS[cls].name} star map` });
     svg.style.setProperty('--role', map.color);
     // backdrop: faint rings and dust (seeded, static)
     const bg = sv('g', { class: 'st-bg', 'aria-hidden': 'true' });
@@ -245,7 +245,7 @@
     const s2 = [cls, ai, lay.lit.join(','), pts, lock || '', sel, UI.mode, lays[0].name, lays[1].name].join('|');
     if (!force && s2 === sig) return;
     sig = s2;
-    putText(R.title, `${HERO_CLASSES[cls].name} stars`);
+    putText(R.title, `${STAR_MAPS[cls].name} stars`);
     putText(R.pts, `${free} of ${plural(pts, 'point')} left`);
     putToggle(R.pts, 'has', free > 0);
     putText(R.keys, `Keystones ${keys} of ${STAR_TUNE.keyMax}`);

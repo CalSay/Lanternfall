@@ -999,7 +999,7 @@ try {
   assert(E('S.items.length') === cnt && E('S.items.map(i => i.id).join()') === ids0 && E(`itemById(${up}).rt === "staff" && itemById(${helm}).rt === "helm" && itemById(${up}).plus === 4`), 'class change: same ids, count, +N; rt keeps the original kind');
   const hd1 = E('(() => { SYN_TUNE.on = 0; const d = heroDps(); SYN_TUNE.on = 1; return d; })()');
   assert(E('JSON.stringify(gear())') === gear0 && hd1 >= hd0, `class change keeps every gear() line (hero dps ${hd0.toFixed(1)} -> ${hd1.toFixed(1)}, synergies aside)`);
-  assert(toasts.includes('Your old helm was reforged into Warden gear.') && toasts.includes('Your Lanternmage gear was reforged into Warden gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
+  assert(toasts.includes('Your old helm was reforged into Warrior gear.') && toasts.includes('Your Lanternmage gear was reforged into Warrior gear.'), 'class change tells the player once: ' + toasts.filter(t => /reforged/.test(t)).join(' | '));
   // Star Chart -> Oriel
   E(`S.skills.ench.lv = ${RQ(3) - 1}`);
   assert(E('canCraft("starChart", 3).why') === `Needs Enchanting ${RQ(3)}`, `Star Chart needs Enchanting ${RQ(3)}`);
@@ -2302,13 +2302,13 @@ try {
   const errs = [];
   // points from hero levels and Great Lanterns
   const g = loadCore({ seed: 41 }), E = s => g.eval(s);
-  assert(E('JSON.stringify(S.stars)') === '{"v":1,"maps":{},"seen":0}', 'new game: S.stars defaults');
+  assert(E('JSON.stringify(S.stars)') === '{"v":2,"maps":{},"seen":0}', 'new game: S.stars defaults');
   const pts = (L, z) => E(`S.L = ${L}; S.maxZone = ${z}; starPoints()`);
   assert(pts(1, 1) === 0 && pts(3, 1) === 1 && pts(20, 20) === 6 && pts(35, 35) === 11, 'a star point every 3 hero levels');
   assert(pts(35, 36) === 15 && pts(54, 71) === 26 && E('greatLanternsLit()') === 2, 'a Great Lantern (+4) for each region boss: the zone 35 boss first');
-  assert(E('Object.values(STAR_MAPS).every((_, i) => true) && ["warden","lanternmage","ranger","lightkeeper"].every(c => starMap(c).order.length === 31 && starMap(c).edges.length === 33)'), 'four maps of 31 stars (Hearthstar, 3 arms of 8, 5 ring stars, crown)');
-  assert(E('["warden","lanternmage","ranger","lightkeeper"].every(c => { const m = starMap(c); return Object.values(m.stars).filter(s => s.kind === "key" || s.kind === "crown").length === 4 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44; })'), 'each map: 4 keystones, 44 points to light it all');
-  assert(E('["warden","lanternmage","ranger","lightkeeper"].every(c => { const st = Object.values(starMap(c).stars); for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (Math.hypot(st[i].pos[0] - st[j].pos[0], st[i].pos[1] - st[j].pos[1]) < 44) return false; return true; })'), 'stars sit at least 44 map units apart (clean taps at 360px)');
+  assert(E('Object.values(STAR_MAPS).every((_, i) => true) && ["warrior","mage","ranger","lightkeeper"].every(c => starMap(c).order.length === 31 && starMap(c).edges.length === 33)'), 'four maps of 31 stars (3 classes and the legacy Lightkeeper map) (Hearthstar, 3 arms of 8, 5 ring stars, crown)');
+  assert(E('["warrior","mage","ranger","lightkeeper"].every(c => { const m = starMap(c); return Object.values(m.stars).filter(s => s.kind === "key" || s.kind === "crown").length === 4 && Object.values(m.stars).reduce((a, s) => a + s.cost, 0) === 44; })'), 'each map: 4 keystones, 44 points to light it all');
+  assert(E('["warrior","mage","ranger","lightkeeper"].every(c => { const st = Object.values(starMap(c).stars); for (let i = 0; i < st.length; i++) for (let j = i + 1; j < st.length; j++) if (Math.hypot(st[i].pos[0] - st[j].pos[0], st[i].pos[1] - st[j].pos[1]) < 44) return false; return true; })'), 'stars sit at least 44 map units apart (clean taps at 360px)');
   // allocation rules
   E('chooseClass("warden"); S.L = 30; S.maxZone = 20; S.stars.maps = {}');
   assert(E('starPoints()') === 10 && E('starFree()') === 10, 'warden at level 30: 10 points');
@@ -2357,10 +2357,10 @@ try {
   assert(E('starUseLayout(0)') && E('starLayout().lit.join()') === 'a0s1,a0s2', 'back to Farm: its stars are kept');
   E('save()');
   const g2 = loadCore({ seed: 42, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
-  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starLayouts("warden")[1].lit.join()') === 'a1s1', 'layouts survive save and load');
+  assert(g2.eval('JSON.stringify(S.stars)') === E('JSON.stringify(S.stars)') && g2.eval('starLayouts("warrior")[1].lit.join()') === 'a1s1', 'layouts survive save and load');
   // Mirror of Embers: another class starts empty, warden keeps its map
   E('S.party.chosen = false; chooseClass("ranger")');
-  assert(E('starLayout().lit.length') === 0 && E('starEffects().m.dmg') === undefined && E('starLayouts("warden")[0].lit.length') === 2, 'changing class keeps each class\'s map');
+  assert(E('starLayout().lit.length') === 0 && E('starEffects().m.dmg') === undefined && E('starLayouts("warrior")[0].lit.length') === 2, 'changing class keeps each class\'s map');
   // Next Up
   E('S.onboard.t = 5; onboardReveal("stars")');
   const gl = E('(topGoals(60, { sticky: false }).find(x => x.id === "stars") || {}).label');
@@ -2372,7 +2372,7 @@ try {
     const o = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }) });
     const b = loadCore({ seed: 43, storage: memoryStorage({ [KEY]: rawOf(f) }), files: noStars });
     const raw = JSON.parse(rawOf(f)), want = Math.floor(raw.L / 3) + 4 * Math.floor((raw.maxZone - 1) / 35);
-    assert(o.eval('JSON.stringify(S.stars)') === '{"v":1,"maps":{},"seen":0}' && o.eval('starPoints()') === want, `${f}: empty star maps and the ${want} points it earned`);
+    assert(o.eval('JSON.stringify(S.stars)') === '{"v":2,"maps":{},"seen":0}' && o.eval('starPoints()') === want, `${f}: empty star maps and the ${want} points it earned`);
     assert(Math.abs(o.eval('totalDps()') / b.eval('totalDps()') - 1) < 1e-12, `${f}: totalDps unchanged`);
     errs.push(...o.errors);
   }
@@ -2380,12 +2380,12 @@ try {
   bad.stars = { v: 1, maps: { warden: { layouts: [{ name: 'X', lit: ['a0s2', 'zzz', 'a0s1', 'a0s1', 'a0s3', 'a0s4'] }], active: 5 }, nope: {} }, seen: 2 };
   bad.party = Object.assign({}, bad.party || {}, { cls: 'warden', chosen: true });
   const v = loadCore({ seed: 44, storage: memoryStorage({ [KEY]: JSON.stringify(bad) }) });
-  assert(v.eval('S.stars.maps.warden.layouts.length === 2 && S.stars.maps.warden.active === 0 && S.stars.maps.nope !== undefined'), 'a broken map gets 2 layouts and a valid active one (unknown classes kept)');
-  assert(v.eval('starLayouts("warden")[0].lit.join()') === 'a0s2,a0s1' && v.eval('starSpent("warden") <= starPoints()'), `over-budget layout trimmed from the tips to fit ${v.eval('starPoints()')} points (${v.eval('starLayouts("warden")[0].lit.join()')})`);
+  assert(v.eval('S.stars.maps.warrior.layouts.length === 2 && S.stars.maps.warrior.active === 0 && S.stars.maps.warden.active === 5 && S.stars.maps.nope !== undefined'), 'a broken map gets 2 layouts and a valid active one (the legacy warden map is copied once and left untouched; unknown classes kept)');
+  assert(v.eval('starLayouts("warrior")[0].lit.join()') === 'a0s2,a0s1' && v.eval('starSpent("warrior") <= starPoints()'), `over-budget layout trimmed from the tips to fit ${v.eval('starPoints()')} points (${v.eval('starLayouts("warrior")[0].lit.join()')})`);
   errs.push(...v.errors.filter(e => !/toast/.test(e)));
   // power: the best build stays inside the pace caps (docs/design/pacing.md; owner wants a slower game)
   const out = [];
-  for (const c of ['warden', 'lanternmage', 'ranger', 'lightkeeper']) {
+  for (const c of ["warrior", "mage", "ranger", "lightkeeper"]) {
     const r = [6, 17, 28].map(p => E(`starBest("${c}", ${p}).p`));
     out.push(`${c} ${r.map(x => '+' + ((x - 1) * 100).toFixed(0) + '%').join('/')}`);
     assert(r[0] <= 1.15 && r[1] <= 1.25 && r[2] <= 1.35, `best build at 6/17/28 points (L20/L40/L60) within +15/+25/+35%: ${out[out.length - 1]}`);
@@ -4695,6 +4695,7 @@ try {
     const nav = JSON.parse(E('JSON.stringify(S.nav)'));
     const sk = E('skillOf(S.node.kind)');
     const cur = JSON.parse(E('JSON.stringify(S)')); delete cur.party; const o2 = Object.assign({}, old); delete o2.party;   // the party's own migrations (F1) are checked in their sections
+    if (o2.stars) o2.stars = Object.assign({}, o2.stars, { v: cur.stars.v });   // S2: the star maps' v 1 -> 2 (checked in 'classes')
     const d = subsetDiff(o2, cur);
     assert(nav && nav.v === 1 && Array.isArray(nav.recent) && nav.recent.length === 0 && nav.last && ['mine', 'wood', 'forage'].every(k => k in nav.last)
       && (!nav.last[sk] || (nav.last[sk].kind === old.node.kind && nav.last[sk].t === old.node.t)) && !d && !g.errors.length,
@@ -5058,6 +5059,7 @@ try {
       const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
       const h = loadCore({ seed: 75, storage: memoryStorage({ [KEY]: raw }) }), H = s => h.eval(s);
       const cmp = JSON.parse(raw); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
+      if (cmp.stars) delete cmp.stars.v;   // S2: the star maps' v 1 -> 2 (checked in 'classes')
       const d = subsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
       H('S.activity = "fight"; spawn()');
       for (let i = 0; i < 600; i++) h.fn.tick(0.1);

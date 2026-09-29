@@ -88,7 +88,7 @@ const DEEP_BOON_IDS = [];
   B('map', 'Bounty Map', 'c', [], 1, null, 1, () => '+1 Depth Mark for each floor from now on');
   B('study', 'Quick Study', 'c', [], 1, null, 1, () => '+1 reroll now');
   B('kindle', 'Kindling', 'c', ['path'], 2, 'lanternmage', 2, k => `You can stack ${2 * k} more Embers`);
-  B('shield', 'Shield Drill', 'c', ['path'], 2, 'warden', 2, k => `You can hold ${2 * k} more guard stacks`);
+  B('shield', 'Shield Drill', 'c', ['path'], 2, 'warden', 2, k => `You can hold ${2 * k} more Grit`);
   B('fletch', 'Fletching', 'c', ['path'], 2, 'ranger', 4, k => `Focus lasts ${4 * k}s longer`);
   B('psalm', 'Psalm', 'c', ['path'], 2, 'lightkeeper', 1, k => `You can stack ${k} more Blessing${k > 1 ? 's' : ''}`);
   // Rare
@@ -103,7 +103,7 @@ const DEEP_BOON_IDS = [];
   B('ration', 'Field Rations', 'r', ['company'], 2, null, 0.25, k => `Companions deal +${pc(0.25 * k)} on elite and boss floors`);
   B('focus', "Hunter's Focus", 'r', ['path'], 1, 'ranger', 0.25, () => 'Focused foes take +50% from everyone (was +25%)');
   B('double', 'Double Ember', 'r', ['path'], 1, 'lanternmage', 1, () => 'Each tap plants 2 Embers');
-  B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each guard stack gives +5% (was +3%)');
+  B('bulwark', 'Bulwark', 'r', ['path'], 1, 'warden', 0.02, () => 'Each Grit gives +5% damage (was +3%)');
   B('choir', 'Choir', 'r', ['path'], 1, 'lightkeeper', 4, () => 'Blessings last 10s (was 6s)');
   // Epic
   B('twice', 'Kindle Twice', 'e', ['path'], 1, 'lanternmage', 1, () => 'Once a floor, Lantern Flare leaves its Embers in place');
@@ -119,7 +119,7 @@ const DEEP_BOON_IDS = [];
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
   B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'Your tanks reflect 30% of the damage they take', 1);
   B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `Tanks +${pc(0.2 * k)} max health`, 1);
-  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warden taps taunt for 2s', 1);
+  B('taunt', 'Taunt Drill', 'c', ['guard'], 1, null, 2, () => 'Tank and Warrior taps taunt for 2s', 1);
   B('dward', 'Deep Ward', 'r', ['mend'], 1, null, 0.2, () => 'Overhealing becomes a shield, up to 20% max health', 1);
   B('mend', 'Mending Light', 'c', ['mend'], 2, null, 0.1, k => `The party heals ${pc(0.1 * k)} max health per floor cleared`, 1);
   B('life', 'Lifeline', 'e', ['mend'], 1, null, 1, () => 'Once a floor, a member who would go down stays at 1 health', 1);

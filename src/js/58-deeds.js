@@ -119,14 +119,19 @@ let deeds, deedBonus, wearGet;
   const pagesOf = keysList => { let n = 0; for (const k of keysList) n += masteryApi.tierFor(num(S.mastery.types[k])); return n; };
   const allTypeKeys = () => TYPES.map(t => t.key);
   const hollowTypeKeys = () => REGIONS[0].types.map(i => TYPES[i].key);
+  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts and its legacy map's (same ids).
   const starBest = cls => {
-    const m = starMap(cls), r = S.stars && S.stars.maps && S.stars.maps[cls];
-    if (!m || !r || !Array.isArray(r.layouts)) return 0;
+    const m = starMap(cls), maps = S.stars && S.stars.maps;
+    if (!m || !maps) return 0;
     let best = 0;
-    for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
+    for (const key of [cls, typeof CLS_STAR_FROM === 'object' ? CLS_STAR_FROM[cls] : null]) {
+      const r = key && maps[key];
+      if (!r || !Array.isArray(r.layouts)) continue;
+      for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
+    }
     return best;
   };
-  const starClasses = () => Object.keys(STAR_MAPS);
+  const starClasses = () => Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy);
   const bookIds = () => (typeof LEG_CLASS_IDS === 'object' ? Object.values(LEG_CLASS_IDS).flat().concat(LEG_COMP_IDS) : []);
   const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
   const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
