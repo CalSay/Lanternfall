@@ -5891,7 +5891,10 @@ try {
     }
     assert(over.every(([, v]) => v <= 0.35 + 1e-9), 'no one-shots: 120 s of each Hollow elder, the biggest hit on a member ' + over.map(([k, v]) => `${k.replace(/^Elder /, '')} ${Math.round(100 * v)}%`).join(', '));
   }
-  // 6. idle is whole (CX7): the late fixture's idle gold a minute at zone 36 >= 97% of HEAD (b486204: 2.509e10, seeds 7-9)
+  // 6. idle is whole (CX7): the late fixture's idle gold a minute at zone 36 >= 97% of HEAD. HEAD is ECON-A's
+  // gold curve before S6 (2ea0456, "Merge ECON-A"), not the old pre-ECON-A number: 2.509e10 was measured on
+  // b486204 under the pre-ECON-A gold curve and is meaningless once gold is GOLD_BASE[region] x (1 + 0.05
+  // (z - z0)). Re-measured on 2ea0456 with this same snippet (seeds 7-9): 515.5, 516.9, 513.3, avg 515.2.
   {
     let sum = 0;
     for (const seed of [7, 8, 9]) {
@@ -5900,7 +5903,7 @@ try {
       const g0 = E('S.gold'); for (let i = 0; i < 6000; i++) g.fn.tick(0.1);
       sum += (E('S.gold') - g0) / 10;
     }
-    const HEAD = 2.509e10, r = sum / 3 / HEAD;
+    const HEAD = 515.2, r = sum / 3 / HEAD;
     assert(r >= 0.97, `idle is whole: idle gold a minute at zone 36, 10 minutes, late fixture: ${(100 * r).toFixed(1)}% of HEAD's (want >= 97%)`);
   }
   // 7. no overlap: answer warnings one at a time, at least 1 s apart (50 fights per kit)
@@ -5941,7 +5944,10 @@ try {
   {
     const run = active => {
       const g = late(95), E = s => g.eval(s);
-      E('chooseClass("warrior"); S.auto = false; S.zone = 29; S.kills = 10; fightBoss = false; challenge(); mob.atk = 0; mob.hp = mob.max = 1e40');
+      // S6's Enrage timer (45 s + 15 s fail) would otherwise end this fight partway through the idle
+      // loop below (it never answers, so it always runs the full 90 s) and replace mob with a fresh
+      // farming pack, reading a stale mob.xp of 0 (0/0 = NaN). Hold it off like the hp/atk hack does.
+      E('chooseClass("warrior"); S.auto = false; S.zone = 29; S.kills = 10; fightBoss = false; challenge(); mob.atk = 0; mob.hp = mob.max = 1e40; bossTime = 1e6');
       let answers = 0;
       for (let i = 0; i < 900 && answers < 3; i++) {
         g.fn.tick(0.1);
