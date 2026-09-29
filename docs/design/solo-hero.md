@@ -71,6 +71,9 @@ the gatherers, the tavern keep and others. Bond writing stays in the repo as sou
 
 **Heroes (owner).** 32 playable heroes for 1.0: the 18 in code plus the 14 designed in heroes-2. No more
 beyond that for now. Three are starters; the rest unlock through their routes.
+They arrive **gradually as the game develops** (owner), a few at a time, not all at once. Each new hero ships
+complete: GPT art (poses, palette) plus code animation, a kit (signature abilities and their Hallowed looks,
+shared-pool access, subclasses), an unlock route, a hero quest, and their part in the campaign story.
 
 **Remove from the game:** the formation (slots, line-up planner, bench, Party tab team view); Bonds,
 combos and Kin; companion XP, caps and promotions; the companion achievements (Full Table, Seasoned
