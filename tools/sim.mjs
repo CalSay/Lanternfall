@@ -20,9 +20,11 @@
 //             Without it, the game's own idle auto-play and auto-cast run.
 //             SOLO1: in solo (the default; --party 1 for the old party game) --class picks the class's starter
 //             (warden/warrior -> Tobin, ranger -> Wren, lanternmage/mage -> Pip). Idle: the hero swings, taps at half
-//             strength and casts its ability on its own. --active: presses Attack about once a second (the 0.6 s
-//             cooldown caps it), casts the ability when ready, and answers heavy wind-ups like a decent player:
-//             45% try a Parry (a quarter of them too early: open), 35% Dodge inside its window, 20% nothing.
+//             strength and casts its ability on its own. --active (SOLO2: the player is active, so nothing fights for
+//             them: no auto swing, auto-tap or auto-cast): presses Attack each time it comes off cooldown after a human
+//             0.1-0.25 s (now and then a longer 0.5-1.5 s lapse), casts each ability 0.2-0.5 s after it is ready, and
+//             answers heavy wind-ups like a decent player: about half the heavies parried (60% try, one in six of those
+//             too early: open), most of the rest dodged (a dodge lands 80% of the time), slams and ground zones dodged 80%.
 //   --report early (SOLO1): the three starters, idle and active, 1 h of mixed play each: first boss, zone 5,
 //             zone 10, zones at 30 and 60 min, wipes, answers; PASS/FAIL against the early targets.
 //   --roster auto|off: roster policy (default auto): recruit when affordable, promote when
@@ -707,21 +709,41 @@ function coldStep() {
   if (want) { if (!coldTrip || coldTrip[0] !== want[0] || coldTrip[1] !== want[1] || E('S.activity !== "gather"')) { coldTrip = want; fn.setNode(want[0], want[1]); fn.setActivity('gather'); } }
   else if (coldTrip) { coldTrip = null; fn.setActivity('fight'); }
 }
-// SOLO1 --active: a decent player on the buttons (see the header). One plan per wind-up (telegraphStart).
-let soloPlan = null;
+// SOLO1/SOLO2 --active: a decent human on the buttons (see the header). One plan per wind-up (telegraphStart);
+// the plan's second step (a dodge after a parry that came too early) runs if the window still allows it.
+let soloPlan = null, simClock = 0, atkAt = -1;
+const abAt = [-1, -1, -1];
 const rnd = (() => { let x = (seed * 2654435761) >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; })();
+const dodgeAt = dw => (rnd() < 0.8 ? 0.05 + rnd() * (dw - 0.1) : dw + 0.15 + rnd() * 0.4);   // 80% inside the window, else too early
 fn.on('telegraphStart', e => {
   if (!active || !SOLO || !e || (e.kind !== 'heavy' && e.kind !== 'zone' && e.kind !== 'slam')) { soloPlan = null; return; }
-  const r = rnd(), pw = E('SOLO_TUNE.parryWin'), dw = E('SOLO_TUNE.dodgeWin');
-  if (e.kind === 'heavy' && r < 0.45) soloPlan = { act: 'soloParry()', at: rnd() < 0.25 ? pw + 0.1 + rnd() * 0.3 : Math.max(0.05, pw - rnd() * 0.25) };
-  else if (r < 0.8) soloPlan = { act: 'soloDodge()', at: Math.max(0.05, dw - rnd() * (dw - 0.1)) };
-  else soloPlan = null;
+  const pw = E('SOLO_TUNE.parryWin'), dw = E('SOLO_TUNE.dodgeWin');
+  if (e.kind === 'heavy' && rnd() < 0.6) {
+    const early = rnd() < 1 / 6;
+    soloPlan = [{ act: 'soloParry()', at: early ? pw + 0.1 + rnd() * 0.3 : Math.max(0.05, pw - 0.05 - rnd() * (pw - 0.1)) }];
+    if (early && rnd() < 0.5) soloPlan.push({ act: 'soloDodge()', at: 0.05 + rnd() * 0.3 });
+  } else soloPlan = [{ act: 'soloDodge()', at: dodgeAt(dw) }];
 });
-function soloActive() {
-  if (E('target() !== "mob"')) return;
-  if (soloPlan) { const w = E('(w => w ? w.left : -1)(actWarning())'); if (w < 0) soloPlan = null; else if (w <= soloPlan.at) { E(soloPlan.act); soloPlan = null; } }
-  if (rnd() < 0.2) E('soloAttack()');
-  E('soloAbility()');
+function soloPlayer() {
+  simClock += dt;
+  if (E('target() !== "mob"')) { atkAt = -1; abAt.fill(-1); return; }
+  if (soloPlan) {
+    const w = E('(w => w ? w.left : -1)(actWarning())');
+    if (w < 0) soloPlan = null;
+    else if (w <= soloPlan[0].at) { E(soloPlan[0].act); soloPlan.shift(); if (!soloPlan.length) soloPlan = null; }
+  }
+  const b = E('(b => ({ f: b.fight, a: b.atk.left, ab: b.abs.map(o => (o.id && o.ready ? 1 : 0)) }))(soloButtons())');
+  if (!b.f) { atkAt = -1; abAt.fill(-1); return; }
+  // Attack: pressed a human beat after it comes back (now and then a longer lapse)
+  if (b.a <= 0) {
+    if (atkAt < 0) atkAt = simClock + (rnd() < 0.06 ? 0.5 + rnd() : 0.1 + rnd() * 0.15);
+    if (simClock >= atkAt) { E('soloAttack()'); atkAt = -1; }
+  } else atkAt = -1;
+  for (let i = 0; i < 3; i++) {
+    if (!b.ab[i]) { abAt[i] = -1; continue; }
+    if (abAt[i] < 0) abAt[i] = simClock + 0.2 + rnd() * 0.3;
+    if (simClock >= abAt[i]) { E(`soloAbility({ slot: ${i} })`); abAt[i] = -1; }
+  }
 }
 function playSecond(sec) {
   coldStep();
@@ -744,7 +766,7 @@ function playSecond(sec) {
   if (sec < 3 * 3600) { craftStats.sec3h++; if (E('S.activity') === 'gather') craftStats.gatherSec++; }
   if (sec % 5 === 0 && E('S.activity') === 'fight') { withReserve(E, rosterStep(E), buyBest); if (fn.bossReady() && E('totalDps() > failDps * 1.15 && cbBossReady()')) fn.challenge(); }
   for (let k = 0; k < 10; k++) {
-    if (active && SOLO) soloActive();
+    if (active && SOLO) soloPlayer();
     else if (active) {
       if (k % 5 === 0) fn.playerTap({ x: 0.66, y: 0.5 });
       if (cls) E('castAbility()');
@@ -1075,7 +1097,7 @@ function runDays() {
 //   E1 idle: the first zone boss falls within the first few minutes (<= 4 min)
 //   E2 idle: zone 5 in 8-12 min
 //   E3 idle: zone 10 in 25-35 min
-//   E4 active (buttons, some parries and dodges) reaches zone 10 10-35% sooner than idle (mean of the three)
+//   E4 active (buttons, some parries and dodges) reaches zone 10 25-35% sooner than idle (mean of the three; SOLO2)
 //   E5 idle: no wipes before zone 10
 //   E6 hero parity: each hero's idle time to zone 10 within 0.8-1.2 of the median
 async function runEarlyReport(inTargets) {
@@ -1108,7 +1130,7 @@ async function runEarlyReport(inTargets) {
   res.push([ok(idle.every(r => inR(r.z5, [8, 12]))), 'E2 idle: zone 5 in 8-12 min', idle.map(r => `${r.h} ${f1(r.z5)}m`).join(', ')]);
   res.push([ok(idle.every(r => inR(r.z10, [25, 35]))), 'E3 idle: zone 10 in 25-35 min', idle.map(r => `${r.h} ${f1(r.z10)}m`).join(', ')]);
   const mean = l => l.reduce((a, b) => a + b, 0) / l.length, fast = 1 - mean(act.map(r => r.z10)) / mean(idle.map(r => r.z10));
-  res.push([ok(inR(fast, [0.1, 0.35])), 'E4 active reaches zone 10 10-35% sooner than idle', `${Number.isFinite(fast) ? Math.round(fast * 100) : '-'}% (idle ${f1(mean(idle.map(r => r.z10)))}m, active ${f1(mean(act.map(r => r.z10)))}m)`]);
+  res.push([ok(inR(fast, [0.25, 0.35])), 'E4 active reaches zone 10 25-35% sooner than idle (SOLO2)', `${Number.isFinite(fast) ? Math.round(fast * 100) : '-'}% (idle ${f1(mean(idle.map(r => r.z10)))}m, active ${f1(mean(act.map(r => r.z10)))}m)`]);
   res.push([ok(idle.every(r => r.wipes === 0)), 'E5 idle: no wipes before zone 10', idle.map(r => `${r.h} ${r.wipes}`).join(', ')]);
   const med = idle.map(r => r.z10).sort((a, b) => a - b)[1];
   res.push([ok(idle.every(r => inR(r.z10 / med, [0.8, 1.2]))), 'E6 hero parity: idle time to zone 10 within 0.8-1.2 of the median', idle.map(r => `${r.h} ${(r.z10 / med).toFixed(2)}`).join(', ')]);

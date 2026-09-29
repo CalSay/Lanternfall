@@ -2,11 +2,13 @@
 //   - the action bar (owner: like a MOBA ability bar, never over the fight; the lowest thing on the Fight view, right
 //     above the tab bar, for the thumbs): two rows of framed square slots.
 //       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
-//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Attack too)  Attack bottom right
+//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Dodge, SOLO2)  Attack bottom right
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
 //     telegraphed hit is coming. A long press on Attack, Parry or Dodge says what it does; on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
+//   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
+//     (idle) and dimmed while you are active (any combat press, 59j soloActive). The page hidden = idle at once.
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
@@ -18,11 +20,11 @@
   const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
   bar.append(rowAb, rowAct);
   const INFO = {
-    atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it.', key: 'D or Space' },
+    atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it. While you fight by hand, your hero stops attacking alone.', key: 'D' },
     parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (as the red ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'A' },
-    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'S' }
+    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'S or Space' }
   };
-  const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };
+  const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };   // Space dodges too (the Dodge help says so)
   function mkSlot(row, id, label) {
     const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
     const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label);
@@ -148,7 +150,7 @@
     b.addEventListener('contextmenu', e => e.preventDefault());
     b.addEventListener('click', e => { if (e.detail === 0) act[id](); });   // keyboard users: Enter / Space on a focused slot
   }
-  const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'atk' };
+  const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'dodge' };   // SOLO2: Space dodges
   addEventListener('keydown', e => {
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
@@ -169,11 +171,31 @@
   };
   const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
   const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
+  // ---- the Auto badge (SOLO2): lit while auto-play fights for you, dim while you are active ----
+  const badge = el('div', 'auto-badge'); badge.id = 'autoBadge'; badge.hidden = true; badge.setAttribute('role', 'status');
+  badge.append(el('i', 'ab-dot'), el('span', null, 'Auto'));
+  const hud = $('stageBox') && $('stageBox').querySelector('.hud');
+  if (hud) hud.append(badge);
+  const setBadge = () => {
+    const on_ = !soloActive();
+    if (badge._on === on_) return;
+    badge._on = on_; badge.classList.toggle('on', on_);
+    badge.setAttribute('aria-label', on_ ? 'Auto: your hero fights alone' : 'Auto off: you are fighting');
+    badge.title = on_ ? 'Your hero fights alone. Press any combat button to take over.' : 'You are fighting. Auto comes back after 5 seconds without a press.';
+  };
+  on('soloActive', setBadge);
+  // the page hidden or the app in the background: idle at once (auto-play takes over)
+  const goIdle = () => { try { if (document.hidden) soloGoIdle(); } catch (e) {} };
+  document.addEventListener('visibilitychange', goIdle);
+  addEventListener('pagehide', () => { try { soloGoIdle(); } catch (e) {} });
+
   let t = 0;
   function update() {
     const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
     if (bar.hidden === show) { bar.hidden = !show; if (!show) { tip.hidden = true; closePicker(); } }
+    if (badge.hidden === show) badge.hidden = !show;
     if (!show) return;
+    setBadge();
     const s = soloButtons(), k = soloHero();
     if (k !== heroK) { heroK = k; drawIc(bAtk._ic, ICON[WEAPON_IC[k]] || ICON.sword); }
     for (let i = 0; i < 3; i++) {
@@ -199,9 +221,9 @@
     bParry.classList.toggle('live', s.tele === 'heavy');
     bDodge.classList.toggle('live', s.tele === 'heavy' || s.tele === 'zone' || s.tele === 'slam');
   }
-  bAtk.setAttribute('aria-label', 'Attack (D or Space). ' + INFO.atk.desc);
+  bAtk.setAttribute('aria-label', 'Attack (D). ' + INFO.atk.desc);
   bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
-  bDodge.setAttribute('aria-label', 'Dodge (S). ' + INFO.dodge.desc);
+  bDodge.setAttribute('aria-label', 'Dodge (S or Space). ' + INFO.dodge.desc);
   onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo bar', e); } });
   // the paused game (the guide, the picker) does not tick: keep the bar fresh anyway
   setInterval(() => { try { update(); } catch (e) {} }, 250);

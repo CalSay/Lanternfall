@@ -23,6 +23,13 @@ Replaces the party. Owner's reasons: party combat was cluttered on screen, hard 
   - Heavy, telegraphed attacks that need Dodge or Parry come mainly from bosses and elites (owner, 2026-09-29).
     Normal foes hit lightly. Dodge avoids the hit but gives no counter or stagger.
   - Dodge: easier to time; avoids the hit.
+  - **Active vs idle (owner, SOLO2):** any combat press (Attack, Parry, Dodge, an ability slot, by tap, click or key)
+    makes you ACTIVE for 5 s; opening the picker or a long press for info does not. While active nothing fights for
+    you: no auto swing, auto-tap or auto-cast; every hit comes from the buttons, and they hit harder (Attack x3.5 x
+    attack speed, a hand cast x2.5 the auto-cast). The page hidden or backgrounded is idle at once. An "Auto" badge on
+    the stage lights while auto-play is in charge. Space dodges (D attacks). The parry's counter is always a crit;
+    crit numbers pop, rise a little higher and carry small sparks. Target: an active player reaches zone 10 25-35%
+    sooner than idle (sim.mjs --report early, E4).
   - Idle/away play: the hero auto-attacks and uses abilities as they come off cooldown; parry, dodge and
     counters are the reward for active play.
 

@@ -13,6 +13,10 @@
 
 const SOLO_TUNE = {
   on: typeof __SOLO === 'undefined' ? 1 : +__SOLO,
+  // ---- active vs idle (SOLO2): a combat press makes you active for activeFor s; while active nothing fights for you ----
+  activeFor: 5,
+  atkX: 3.5,            // an Attack press: the class tap x atkX x attack speed (while active there is no auto swing)
+  abHandX: 2.5,         // an ability cast by hand hits this much harder than the idle auto-cast
   // ---- the buttons ----
   atkCd: 0.6,          // Attack: one class hit, then a short cooldown (mashing is not a win)
   parryWin: 0.35,      // Parry: the last 0.35 s of a heavy wind-up (tight)
@@ -23,7 +27,7 @@ const SOLO_TUNE = {
   openX: 1.5,
   counterT: 0.55,      // a parry staggers the foe for the counter's length; the counter lands at counterAt
   counterAt: 0.3,
-  counterX: 4,         // the counter's damage (x the hero's attack); +stagger on bosses and elites
+  counterX: 4,         // the counter's damage (x the hero's attack x attack speed), and it always crits (x critMult); +stagger on bosses and elites
   // ---- the ability (one per starter) ----
   autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
   echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked

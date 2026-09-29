@@ -53,19 +53,20 @@ function spawn() {
 }
 
 // Visual feedback. x/y are stage fractions (0..1); omitted x/y use render defaults.
-const addFloat = (txt, color, big, x, y) => emit('float', { txt, color, big, x, y });
+const addFloat = (txt, color, big, x, y, crit) => emit('float', { txt, color, big, x, y, crit: !!crit });   // crit: the crit number's own look (62-stage)
 const burst = (x, y, color, n, spd) => emit('burst', { x, y, color, n, spd });
 
 // at: optional {x, y} stage position for the damage number (taps); label overrides its text.
 // strikeSrc: 'hero' while heroSwing strikes, else 'party' (party combat credits threat and damage by it).
-let strikeSrc = 'party';
+// strikeCrit: true while heroSwing strikes a crit (the float carries it: the crit number's look, SOLO2).
+let strikeSrc = 'party', strikeCrit = false;
 function strike(amount, color, big, at, label) {
   const tg = target();
-  if (tg === 'world') { addRaidDmg(amount); addFloat(label || fmt(amount), color, big, at ? at.x : 0.72 + (Math.random() - 0.5) * 0.14, at ? at.y : 0.38); emit('wyrmHit'); burst(0.7, 0.5, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5); return; }
+  if (tg === 'world') { addRaidDmg(amount); addFloat(label || fmt(amount), color, big, at ? at.x : 0.72 + (Math.random() - 0.5) * 0.14, at ? at.y : 0.38, strikeCrit); emit('wyrmHit'); burst(0.7, 0.5, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5); return; }
   if (tg !== 'mob' || !mob || mob.dead) { if (tg === 'mob' && partyCombatOn()) cbStrike(amount, strikeSrc, at, label, color, big); return; }
   if (partyCombatOn()) { cbStrike(amount, strikeSrc, at, label, color, big); return; }
   mob.hp -= amount; mob.hit = 0.08;
-  addFloat(label || fmt(amount), color, big, at ? at.x : undefined, at ? at.y : undefined);
+  addFloat(label || fmt(amount), color, big, at ? at.x : undefined, at ? at.y : undefined, strikeCrit);
   burst(0.66, 0.6, big ? '#FFD27A' : '#FFFFFF', big ? 8 : 3, 0.5);
   if (mob.hp <= 0) kill();
 }
@@ -75,8 +76,9 @@ function heroSwing(base, tap, at) {
   // F1 (56e-formation heroStand): in party combat the hero's hits on foes rise to its damage floor x trio.
   const stand = target() === 'mob' && typeof heroStand === 'function' ? heroStand(tap) : 1;
   const dmg = base * (crit ? critMult() : mod('nonCrit')) * (tap ? tapMult() : 1) * (target() === 'world' ? raidMult() : 1) * stand;
-  strikeSrc = 'hero';
+  strikeSrc = 'hero'; strikeCrit = crit;
   strike(dmg, crit ? '#FF9E3D' : '#FFFFFF', crit, at, at && crit ? 'CRIT ' + fmt(dmg) : null);
+  strikeCrit = false;
   if (crit) { emit('crit', { tap: !!tap }); emit('shake', 0.16); if (gear().echo) strike(dmg * gear().echo, '#FFD27A', false); }
   strikeSrc = 'party';
   return { crit, dmg };
@@ -185,7 +187,8 @@ function tick(dt) {
     heroTimer -= dt;
     if (heroTimer <= 0) {
       heroTimer += 1 / aps(); if (heroTimer < 0) heroTimer = 0;
-      if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()))) { emit('lunge'); heroSwing(heroAtk(), false); }
+      // SOLO2: no auto swing on the fight while the solo player is active (every hit comes from the buttons)
+      if (tg === 'world' || (mob && !mob.dead && (!pc || cbHeroUp()) && !(tg === 'mob' && typeof soloActive === 'function' && soloActive()))) { emit('lunge'); heroSwing(heroAtk(), false); }
     }
     if (tg === 'mob' && (pc ? fightBoss && cbBossUp() : mob && mob.boss && !mob.dead) && !arena) {
       bossTime -= dt;

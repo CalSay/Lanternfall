@@ -13,14 +13,20 @@
 //            soloEquip(slot, id | null) -> bool (place, swapping if equipped elsewhere, or clear); idle casts what is equipped
 //   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
 //            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
-//   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash }
-// Events: soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
+//   active   soloActive() -> bool: the player pressed a combat input (Attack, Parry, Dodge, an ability slot) in the last
+//            SOLO_TUNE.activeFor s (SOLO2). While active nothing fights for you: no auto swing (50-sim), no idle auto-tap
+//            (55-party), no auto-cast, no auto Finisher (59g). soloTouch() marks it (each button does); soloGoIdle()
+//            ends it at once (75-solo-ui: the page hidden or backgrounded). Opening the picker or a long press does not count.
+//   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash, hand }
+// Events: soloActive { on } (active <-> idle), soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
 // Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
-// ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only.
+// ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only. Active (SOLO2): every
+// hit comes from the buttons, and they hit harder (atkX, abHandX).
 
 var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var soloActive = () => false, soloTouch = () => {}, soloGoIdle = () => {};
 var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
@@ -32,7 +38,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const r = T.ramp, f = Math.max(0, Math.min(1, ((S.maxZone || 1) - r[0]) / Math.max(1, r[1] - r[0])));
     return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
   });
-  const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
+  const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
   registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
   const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
@@ -86,11 +92,20 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (Array.isArray(p.field) && p.field.length) { p.field = []; p.cells = { hero: { col: 2, lane: 1 } }; emit('fieldChange', { field: p.field }); }
   }
 
+  // ---- active vs idle (SOLO2): a combat press makes the player active for activeFor s ----
+  let activeT = 0;
+  const ACT_EV = { on: false };
+  const flip = v => { ACT_EV.on = v; emit('soloActive', ACT_EV); };
+  soloActive = () => soloOn() && activeT > 0;
+  soloTouch = () => { if (!soloOn() || !soloHero()) return; const was = activeT > 0; activeT = T.activeFor; if (!was) flip(true); };
+  soloGoIdle = () => { if (activeT > 0) { activeT = 0; flip(false); } };
+
   // ---- the buttons ----
   let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
   const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
   soloAttack = () => {
+    soloTouch();
     if (!fighting() || !heroUp()) return '';
     if (atkT > 0) return 'cd';
     atkT = T.atkCd;
@@ -99,12 +114,13 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const a = typeof actAnswer === 'function' ? actAnswer() : '';
     if (a) { emit('soloAttack', { kind: a }); return a; }
     if (!anyFoe()) return '';
-    classTap({ target: 'mob', noAnswer: true });
+    classTap({ target: 'mob', noAnswer: true, x: T.atkX * aps() });   // SOLO2: a press is worth atkX auto swings' time (it scales with attack speed like the auto swing)
     emit('lunge');
     emit('soloAttack', { kind: 'hit' });
     return 'hit';
   };
   soloParry = forgive => {
+    soloTouch();
     if (!fighting()) return '';
     if (parryT > 0 || openT > 0) return 'locked';
     const r = typeof actParry === 'function' ? actParry(!!forgive) : '';
@@ -115,6 +131,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return 'miss';
   };
   soloDodge = forgive => {
+    soloTouch();
     if (!fighting()) return '';
     if (dodgeT > 0) return 'cd';
     dodgeT = T.dodgeCd;
@@ -137,11 +154,14 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       if (!c.done && c.t >= T.counterAt) {
         c.done = true;
         if (alive(c.f)) {
-          const P = heroAtkNow(false);
-          const dmg = cbDamageFoe(c.f, P * T.counterX, 0, 'phys', unitType('hero'), ST_HEAVY);
+          // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
+          const P = heroAtkNow(false), cm = critMult();
+          const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
           ST.counters++;
-          emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FFD27A', big: true });
-          emit('shake', 0.2); emit('lunge');
+          emit('float', { txt: 'COUNTER ' + fmt(dmg || 0), color: '#FF9E3D', big: true, crit: true });
+          emit('crit', { tap: true, counter: true }); emit('shake', 0.2); emit('lunge');
+          const echo = gear().echo;
+          if (echo && alive(c.f)) { const e2 = cbDamageFoe(c.f, P * T.counterX * aps() * cm * echo, 0, 'phys', unitType('hero'), 0); emit('float', { txt: fmt(e2 || 0), color: '#FFD27A', big: false }); }
           emit('soloCounter', { foe: c.f, dmg: dmg || 0 });
         }
       }
@@ -189,11 +209,12 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // opts: { slot (0-2; none = the first equipped ability that is ready), auto }
   soloAbility = opts => {
     const o = opts || {}, p = S.party, auto = !!o.auto;
+    if (!auto) soloTouch();
     let slot = o.slot;
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
-    const P = heroAtkNow(auto), ty = unitType('hero');
+    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX), ty = unitType('hero');   // by hand it hits harder (SOLO2)
     const tags = ST_AB;
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
@@ -220,7 +241,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     }
     cds[a.id] = abCd(a); readyFor[slot] = 0;
     mirrorCd();
-    ST.casts++; if (auto) ST.auto++;
+    ST.casts++; if (auto) ST.auto++; else ST.hand++;
     emit('float', { txt: a.name, color: '#FFD27A', big: true });
     emit('ability', { cls: 'solo', id: a.id, name: a.name, auto, slot });
     return true;
@@ -265,6 +286,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     clock += dt;
     adopt();
     clearField();
+    if (activeT > 0) { activeT -= dt; if (activeT <= 0) { activeT = 0; flip(false); } }
     if (atkT > 0) atkT -= dt; if (dodgeT > 0) dodgeT -= dt; if (parryT > 0) parryT -= dt; if (openT > 0) openT -= dt;
     counterTick(dt);
     if (patchT > 0) {
@@ -275,8 +297,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     mirrorCd();
     if (!fighting()) { readyFor.fill(0); return; }
     trashTick(dt);
-    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance)
-    const eq = soloEquipped(), can = anyFoe() && heroUp();
+    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance); never while active
+    const eq = soloEquipped(), can = anyFoe() && heroUp() && !(activeT > 0);
     for (let i = 0; i < 3; i++) {
       const a = eq[i] ? SOLO_ABILITIES[eq[i]] : null;
       if (a && can && !(cds[a.id] > 0)) { readyFor[i] += dt; if (readyFor[i] >= T.autoDelay) soloAbility({ slot: i, auto: true }); }
