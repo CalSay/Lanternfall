@@ -48,8 +48,10 @@
     for (const a of ACH) if (!g[a.id] && a.cur() >= a.need) { g[a.id] = Date.now(); fresh.push(a); }
     if (!fresh.length) return;
     achRebuild();
-    if (!A().init) toast(`${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds. Tap the bell, then Journal.`, 'good', { ic: ['banner', '#F2C14E'] });
-    else for (const a of fresh) { toast(`Achievement: ${a.name}. ${achBonusText(a)}.`, 'good', { ic: [a.ic, '#F2C14E'] }); emit('achievement', { id: a.id }); }
+    // W1-B (audit 3.12): Deeds (58-deeds) is the one achievement voice. These still grant their bonuses and
+    // show in the Codex, but their notices go nowhere (23n-data-notices 'ach-old'). Merge them into Deeds later.
+    if (!A().init) emit('toast', { key: 'ach-old', msg: `${fresh.length} achievement${fresh.length > 1 ? 's' : ''} earned from your past deeds.`, kind: 'good' });
+    else for (const a of fresh) { emit('toast', { key: 'ach-old', msg: `Achievement: ${a.name}. ${achBonusText(a)}.`, kind: 'good' }); emit('achievement', { id: a.id }); }
     A().init = true;
     save();
   }

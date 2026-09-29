@@ -6623,6 +6623,195 @@ try {
   assert(!errs.length, 'hero art: no errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('hero art crashed: ' + (e.stack || e)); }
 // ==== end HEROART1 ====
+// ==== W1-B: the notice policy (src/js/23n-data-notices.js, 70-ui.js notify) ====
+// (1) table-driven: every toast source in src/js has a channel in NOTICES; (2) a fresh solo game in Chromium
+// at 360 x 740 stays quiet: few pops, never two within 20 s, none while the guide speaks.
+console.log('notices (W1-B)');
+try {
+  const g = loadCore({ solo: true, seed: 5 }), E = s => g.eval(s);
+  const jsDir = path.join(ROOT, 'src', 'js');
+  // a small JS scanner: skip strings, templates (with ${} code), comments; find balanced ends
+  const skipStr = (s, i) => { const q = s[i++]; while (i < s.length && s[i] !== q) { if (s[i] === '\\') i++; i++; } return i + 1; };
+  const skipTpl = (s, i) => { i++; while (i < s.length && s[i] !== '`') { if (s[i] === '\\') { i += 2; continue; } if (s[i] === '$' && s[i + 1] === '{') { i = skipCode(s, i + 2); continue; } i++; } return i + 1; };
+  function skipCode(s, i) {   // from just inside an open bracket to just after its close
+    let d = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if (c === '"' || c === "'") { i = skipStr(s, i); continue; }
+      if (c === '`') { i = skipTpl(s, i); continue; }
+      if (c === '/' && s[i + 1] === '/') { i = s.indexOf('\n', i); if (i < 0) return s.length; continue; }
+      if (c === '/' && s[i + 1] === '*') { i = s.indexOf('*/', i) + 2; continue; }
+      if ('([{'.includes(c)) d++;
+      else if (')]}'.includes(c)) { if (!d) return i + 1; d--; }
+      i++;
+    }
+    return i;
+  }
+  // top-level split of an expression at `sep` (a char), or the first top-level `?` of a ternary
+  function topSplit(s, test) {
+    const out = []; let d = 0, last = 0;
+    for (let i = 0; i < s.length;) {
+      const c = s[i];
+      if (c === '"' || c === "'") { i = skipStr(s, i); continue; }
+      if (c === '`') { i = skipTpl(s, i); continue; }
+      if ('([{'.includes(c)) d++; else if (')]}'.includes(c)) d--;
+      const n = !d && test(s, i);
+      if (n) { out.push(s.slice(last, i)); i += n; last = i; continue; }
+      i++;
+    }
+    out.push(s.slice(last));
+    return out;
+  }
+  const lit = x => { x = x.trim(); if (/^(['"])[\s\S]*\1$/.test(x) && skipStr(x, 0) === x.length) return x.slice(1, -1).replace(/\\(.)/g, '$1');
+    if (x[0] === '`' && skipTpl(x, 0) === x.length) { let o = '', i = 1; while (i < x.length - 1) { if (x[i] === '\\') { o += x[i + 1]; i += 2; continue; } if (x[i] === '$' && x[i + 1] === '{') { i = skipCode(x, i + 2); o += '…'; continue; } o += x[i++]; } return o; }
+    return null; };
+  // every text an expression can be: strings, templates (${} as …), ternaries, ||, + ; null marks a part that is not literal
+  function samples(x) {
+    x = x.trim();
+    while (x[0] === '(' && skipCode(x, 1) === x.length) x = x.slice(1, -1).trim();
+    const q = topSplit(x, (s, i) => s[i] === '?' && s[i + 1] !== '.' && s[i + 1] !== '?' && s[i - 1] !== '?' ? 1 : 0);
+    if (q.length > 1) {
+      const rest = q.slice(1).join('?');
+      let d2 = 0, at = -1;   // the ':' that closes this ternary (nested ones count)
+      topSplit(rest, (s, i) => { if (at >= 0) return 0; if (s[i] === '?' && s[i + 1] !== '.') d2++; else if (s[i] === ':') { if (!d2) at = i; else d2--; } return 0; });
+      if (at >= 0) return samples(rest.slice(0, at)).concat(samples(rest.slice(at + 1)));
+    }
+    const or = topSplit(x, (s, i) => s[i] === '|' && s[i + 1] === '|' ? 2 : 0);
+    if (or.length > 1) return or.map(samples).flat();
+    const plus = topSplit(x, (s, i) => s[i] === '+' && s[i + 1] !== '+' && s[i - 1] !== '+' ? 1 : 0);
+    if (plus.length > 1) { const parts = plus.map(p => { const l = lit(p); if (l != null) return [l]; const sm = /^\s*\(/.test(p) ? samples(p).filter(v => v != null) : []; return sm.length ? sm : ['…']; });
+      return plus.some(p => lit(p) != null) ? [parts.map(p => p[0]).join('')] : [null]; }
+    const l = lit(x);
+    return [l];
+  }
+  const sites = [];
+  for (const f of fs.readdirSync(jsDir).filter(f => f.endsWith('.js') && f !== '23n-data-notices.js').sort()) {
+    const src = fs.readFileSync(path.join(jsDir, f), 'utf8');
+    for (const m of src.matchAll(/(?<![\w.$])toast\(|emit\('toast', \{|noticeAsk\('/g)) {
+      if (f === '00-util.js') continue;   // toast() itself: emit('toast', { msg, kind, icon, prio })
+      const ls = src.lastIndexOf('\n', m.index) + 1;
+      if (/^\s*\/\//.test(src.slice(ls, m.index))) continue;   // a comment
+      const open = m.index + m[0].length, end = skipCode(src, m[0].endsWith("'") ? open - 1 : open);
+      const body = src.slice(open, end - 1), line = src.slice(0, m.index).split('\n').length, call = src.slice(m.index, end);
+      if (m[0].startsWith('noticeAsk')) { sites.push({ f, line, key: /^([\w:-]+)'/.exec(body)[1], call }); continue; }
+      if (m[0].startsWith('emit')) {
+        const k = /(?:^|[\s,{])key: '([\w:-]+)'/.exec(body), mm = topSplit(body, (s, i) => s[i] === ',' ? 1 : 0).find(p => /^\s*msg:/.test(p));
+        sites.push({ f, line, key: k && k[1], texts: mm ? samples(mm.replace(/^\s*msg:/, '')) : [null], call });
+        continue;
+      }
+      const args = topSplit(body, (s, i) => s[i] === ',' ? 1 : 0);
+      sites.push({ f, line, texts: samples(args[0]), call });
+    }
+  }
+  const keys = new Set(JSON.parse(E('JSON.stringify(Object.keys(NOTICE_BY_KEY))')));
+  const rules = JSON.parse(E('JSON.stringify(NOTICES.map(r => ({ id: r.id, key: r.key || "", site: r.site ? r.site.source : "", ch: typeof r.ch === "function" ? "fn" : r.ch })))'));
+  const used = new Set(), bad = [];
+  const ruleOf = t => E(`(r => r ? r.id : '')(noticeRule(${JSON.stringify(t)}))`);
+  for (const s of sites) {
+    const where = `${s.f}:${s.line}`;
+    if (s.key) { if (keys.has(s.key)) used.add(E(`NOTICE_BY_KEY[${JSON.stringify(s.key)}].id`)); else bad.push(`${where} key "${s.key}" is not in NOTICES`); continue; }
+    for (const t of s.texts) {
+      const id = t != null && ruleOf(t);
+      if (id) { used.add(id); continue; }
+      // a text only known at run time (or with its words in data): the rule names the call site
+      const r = rules.find(r => r.site && new RegExp(r.site).test(s.call));
+      if (r) used.add(r.id); else bad.push(t != null ? `${where} "${t.slice(0, 60)}" matches no rule` : `${where} a message that is not a literal, and no rule's site matches: ${s.call.slice(0, 70)}`);
+    }
+  }
+  // the unlock lines (75-onboard-ui OPEN_TXT): each text has its own rule
+  const ob = fs.readFileSync(path.join(jsDir, '75-onboard-ui.js'), 'utf8'), oi = ob.indexOf('const OPEN_TXT = {') + 'const OPEN_TXT = {'.length;
+  const openTxt = topSplit(ob.slice(oi, skipCode(ob, oi) - 1), (s, i) => s[i] === ',' ? 1 : 0).filter(p => p.trim()).map(p => p.slice(p.indexOf(':') + 1));
+  for (const x of openTxt) for (const t of samples(x)) { const id = t != null && ruleOf(t); if (id) used.add(id); else bad.push(`75-onboard-ui OPEN_TXT "${String(t).slice(0, 50)}" matches no rule`); }
+  // keys handed on by name (captions in 75-story-ui, the Deeds queue, the What's new toast): a quoted key in the source counts
+  const allSrc = fs.readdirSync(jsDir).filter(f => f.endsWith('.js') && f !== '23n-data-notices.js').map(f => fs.readFileSync(path.join(jsDir, f), 'utf8')).join('\n');
+  for (const r of rules) if (r.key && allSrc.includes(`'${r.key}'`)) used.add(r.id);
+  const unused = rules.filter(r => !used.has(r.id)).map(r => r.id);
+  assert(sites.length >= 120 && openTxt.length >= 15 && !bad.length, `every toast source has a channel: ${sites.length} call sites in src/js and ${openTxt.length} unlock lines each match a NOTICES rule (by key, message or call site)` + (bad.length ? ': ' + bad.slice(0, 6).join('; ') : ''));
+  assert(!unused.length, 'every NOTICES rule has a source (no dead rules)' + (unused.length ? ': ' + unused.join(', ') : ''));
+  const chk = JSON.parse(E(`JSON.stringify((() => { const ids = NOTICES.map(r => r.id), out = { dup: ids.filter((x, i) => ids.indexOf(x) !== i), badCh: [] };
+    for (const r of NOTICES) for (const m of ['x', 'Level 10. Your hero hits 4% harder.', 'Level 7. Your hero hits 4% harder.']) for (const n of [{}, { tier: 4 }, { lv: 2 }]) for (const gd of [true, false]) {
+      const c = noticeChannel(r, m, n, { guide: gd }); if (!NOTICE_CH.includes(c)) out.badCh.push(r.id + ':' + c); }
+    return out; })())`));
+  assert(!chk.dup.length && !chk.badCh.length, `NOTICES: unique ids; every rule gives one of ${E('NOTICE_CH.join(", ")')}` + (chk.dup.length || chk.badCh.length ? ': ' + JSON.stringify(chk) : ''));
+  const pol = JSON.parse(E(`JSON.stringify({
+    lv: [5, 10, 25].map(L => noticeChannel(noticeRule('', 'level'), 'Level ' + L + '. Your hero hits 4% harder.')),
+    tab: [true, false].map(gd => noticeChannel(noticeRule('New tab: Gather. Mine ore and chop wood.'), 'New tab: Gather. Mine ore and chop wood.', {}, { guide: gd })),
+    go: ['You head to the Pine Grove.', 'You return to Batwing Caves.', 'Work starts on the Workbench, Lv 1. Ready in 10s.', 'The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.', 'Achievement: Trophy Hunter. +3% essence chance.'].map(m => noticeChannel(noticeRule(m), m)),
+    fall: noticeChannel(noticeRule('', 'caption:fall'), ''), deeds: [1, 2, 3, 4].map(t => noticeChannel(noticeRule('', 'deed-tier'), 'x', { tier: t })) })`));
+  assert(pol.lv.join() === 'log,log,bell' && pol.tab.join() === 'log,pop' && pol.go.join() === 'none,none,none,log,none' && pol.fall === 'none' && pol.deeds.join() === 'log,log,bell,pop',
+    `policy: level ups go to the bell list (every 25th counts); "New tab" lines are quiet while the guide runs; "You head to", "Work starts", the old achievements say nothing; the fire goes to the bell list; no elder fall caption; Deeds Bronze/Silver quiet, Gold bell, Everflame pops (${JSON.stringify(pol)})`);
+  // audit 3.4: a brand-new game never reports "Lantern Light from your past deeds"
+  const n = loadCore({ solo: true, seed: 6, cold: true }), nt = []; n.fn.on('toast', t => nt.push(t.msg));
+  n.eval('soloPick("wren")'); for (let i = 0; i < 400; i++) n.fn.tick(0.1);
+  assert(n.eval('S.codex.init && S.totalKills > 0') && !nt.some(m => /past deeds/.test(m)), `a new game's Codex says nothing about past deeds (${n.eval('S.totalKills')} kills in 40 s; ${nt.filter(m => /Codex/.test(m)).join(' | ') || 'no Codex lines'})`);
+} catch (e) { fail('notices (static) crashed: ' + (e.stack || e)); }
+console.log('notices (browser, W1-B)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('notices (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(600);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(300);
+      // a player who follows the guide, presses Attack, casts, parries heavy hits and buys upgrades; the game runs
+      // fast (about 6x): 2 s of play per step, the page's own timers get a moment between steps
+      await X(`(() => {
+        const R = globalThis.__nb = { toasts: 0, bell: 0, stall: 0 };
+        const mk = makeToast; makeToast = function () { R.toasts++; return mk.apply(this, arguments); };
+        let last = '', same = 0;
+        globalThis.__nbStep = () => {
+          const st = soloGuideWants(), step = onboardStep();
+          same = st && st === last ? same + 1 : 0; last = st;
+          if (same > 12 && /^(attack|ability|dodge|parry|boss|upgrade|gather|light)$/.test(st) && document.querySelector('.ob-x')) { R.stall++; document.querySelector('.ob-x').click(); same = 0; }
+          try {
+            if (st === 'attack') soloAttack(); else if (st === 'ability') soloAbility({ slot: 0 });
+            else if (st === 'dodge') soloDodge(true); else if (st === 'parry') soloParry(true);
+            else if (st && document.querySelector('.ob-ok') && !document.querySelector('.ob-ok').hidden) document.querySelector('.ob-ok').click();
+            else if (st && !/^stock:|^chop$/.test(st)) { const sp = onboardSpec(st); if (sp && sp.node) sp.node.click(); }
+          } catch (e) {}
+          if (S.tab && !st) closeMenu();
+          if (!step && S.activity !== 'fight') setActivity('fight');
+          try { let best = null, c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) { c = p.cost; best = u.id; } } if (best && S.gold >= c && S.onboard.done.upgrade) buyHero(best, '1'); } catch (e) {}
+          for (let k = 0; k < 20; k++) {
+            if (ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen')) break;
+            tick(0.1);
+            if (S.activity === 'fight') { const w = actWarning(); if (w && w.kind === 'heavy' && !w.res && w.left <= 0.25) soloParry(); else soloAttack(); try { if (soloButtons().abs[0].ready) soloAbility({ slot: 0 }); } catch (e) {} }
+          }
+          R.bell = Math.max(R.bell, notes.unread);
+          return notes.clock;
+        };
+        return true; })()`);
+      for (let i = 0; i < 700; i++) { const t = await X('__nbStep()'); await page.waitForTimeout(90); if (t >= 600) break; }
+      const r = JSON.parse(await X('JSON.stringify({ t: notes.clock, st: notes.stats, nb: __nb, zone: S.maxZone, L: S.L, unread: notes.unread })'));
+      const pops = r.st.filter(s => s.ch === 'pop' && s.id !== 'reply'), unknown = r.st.filter(s => s.id === '?');
+      let close = null; for (let i = 1; i < pops.length; i++) if (pops[i].t - pops[i - 1].t < 20) close = [pops[i - 1], pops[i]];
+      const inGuide = pops.filter(s => s.g);
+      const list = pops.map(s => `${Math.round(s.t)}s ${s.id}`).join(', ');
+      assert(r.t >= 590 && r.zone >= 5, `the bot played 10 minutes of a fresh solo game (${Math.round(r.t)} s, zone ${r.zone}, level ${r.L}, ${r.st.length} notices)`);
+      assert(pops.length <= 8 && pops.length >= 2, `a fresh game's first 10 minutes pop at most 8 notices (toasts and captions): ${pops.length} (${list})`);
+      assert(!close, 'never two pops within 20 s' + (close ? `: ${JSON.stringify(close)}` : ''));
+      assert(!inGuide.length, 'nothing pops while a guide step shows' + (inGuide.length ? ': ' + inGuide.map(s => s.id).join(', ') : ''));
+      assert(r.nb.toasts <= pops.length + r.st.filter(s => s.ch === 'pop' && s.id === 'reply').length, `every toast on screen went through the policy (${r.nb.toasts} drawn, ${pops.length} pops)`);
+      assert(r.nb.bell <= 5, `the bell stays calm: at most 5 unread at any time (max ${r.nb.bell})`);
+      assert(!unknown.length, 'every notice raised in play matched a rule' + (unknown.length ? ': ' + unknown.map(s => s.msg).slice(0, 3).join(' | ') : ''));
+      assert(!errs.length, 'no page errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('notices (browser) crashed: ' + (e.stack || e)); }
+// ==== end W1-B ====
 
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');

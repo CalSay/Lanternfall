@@ -3,11 +3,12 @@
 //
 // On the stage (one caption at a time, in the stage's open sky; a tap dismisses it):
 //   - an arrival banner the first time the party fights in a place: the place name, one line
-//   - an elder line when a boss of a new type appears (intro) and on its first kill (fall)
+//   - an elder line when a boss of a new type appears (intro). W1-B: its fall line no longer shows.
 //   - a story chip when a beat plays: "New story: Wisps. Read" (tap opens the card; it waits in the
-//     Codex if it goes unread). A quiet beat (a save that got past it) shows its one-line note.
-// Captions wait while a menu covers the stage or a full-screen card is up; arrival and elder lines
-// that could not show within a few seconds are dropped (they belong to the moment), story chips wait.
+//     Codex if it goes unread). A quiet beat (a save that got past it) goes to the bell list only.
+// Captions wait while a menu covers the stage or a full-screen card is up, and ask the notice policy
+// (70-ui noticeAsk) before they show: arrival and elder lines that could not show in time go to the bell
+// (they belong to the moment), story chips wait.
 // Reduced motion: no slide or fade, the caption just appears and goes.
 // The beat card: a small bottom sheet (title, 2-5 sentences, lines from recruited companions).
 // The Codex home gets a "Story" row (storyUI.codexRow, read by 75-codex-ui): the story so far, and
@@ -28,7 +29,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   let cur = null, pumpT = 0;
   const stageBox = () => document.getElementById('stageBox');
   function push(item) {
-    item.at = Date.now();
+    item.at = playS();
     // one arrival at a time: a newer place replaces an older one still waiting
     if (item.kind === 'arrival') for (let i = queue.length - 1; i >= 0; i--) if (queue[i].kind === 'arrival') queue.splice(i, 1);
     // an elder's line jumps ahead of story chips (it belongs to the fight on screen)
@@ -36,17 +37,31 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
     queue.push(item);
     pump();
   }
+  // W1-B: every caption asks the notice policy first (70-ui noticeAsk, 23n-data-notices): the place title
+  // and a new elder's line pop within the pop budget and never while the guide speaks; they wait for a quiet
+  // moment (the title while the hero stays in that zone, up to NOTICE_TUNE.arrivalWait s; an elder's line
+  // NOTICE_TUNE.elderWait s) and then go to the bell. An elder's fall line and a walked-past page never pop.
+  const capKey = q => q.kind === 'arrival' ? 'caption:arrival' : q.kind === 'beat' ? (q.quiet ? 'caption:beat-quiet' : 'caption:beat') : /fall/.test(q.kind) ? 'caption:fall' : 'caption:elder';
+  const capText = q => q.kind === 'beat' ? `New story: ${q.title}.` : `${q.head ? q.head + ': ' : ''}${q.line}`;
+  const playS = () => (typeof notes === 'object' ? notes.clock : Date.now() / 1000);   // seconds of play (70-ui): a paused game waits too
+  const ask = (q, wait) => (typeof noticeAsk === 'function' ? noticeAsk(capKey(q), capText(q), { wait }) : 'pop');
   function pump() {
     clearTimeout(pumpT);
     if (cur || !queue.length) return;
-    const now = Date.now();
+    const now = playS();
     for (let i = queue.length - 1; i >= 0; i--) {
-      const q = queue[i];
-      if (q.kind !== 'beat' && (now - q.at > 12000 || (q.zone && q.zone !== S.zone))) queue.splice(i, 1);   // the moment has passed
+      const q = queue[i], wait = q.kind === 'arrival' ? NOTICE_TUNE.arrivalWait : NOTICE_TUNE.elderWait;
+      if (q.kind !== 'beat' && (now - q.at > wait || (q.zone && q.zone !== S.zone))) {   // the moment has passed
+        queue.splice(i, 1);
+        if (typeof noticeDrop === 'function' && !/fall/.test(q.kind)) noticeDrop(capKey(q), capText(q));
+      }
     }
     if (!queue.length) return;
     if (covered() || !stageBox()) { pumpT = setTimeout(pump, 500); return; }
-    show(queue.shift());
+    const r = ask(queue[0], true);
+    if (r === 'wait') { pumpT = setTimeout(pump, 1000); return; }
+    const q = queue.shift();
+    if (r === 'pop') show(q); else pump();
   }
   function hide(node, instant) {
     if (!node || node._gone) return;

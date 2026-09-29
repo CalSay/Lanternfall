@@ -434,13 +434,14 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     if (quiet) return out;
     for (const x of out.pages) {
       const P = CODEX_PAGES[x.id];
-      if (x.kind === 'half' && x.p.bless) toast(`Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, 'good', { ic: ['banner', '#F2C14E'] }, 'normal');
-      else if (x.kind === 'half') toast(`Codex: the ${P.n} page is half full.`, 'good', { ic: ['banner', '#F2C14E'] }, 'low');
-      if (x.kind === 'seal') toast(`Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, 'good', { ic: ['banner', '#F2C14E'] }, 'high');
+      // W1-B: channels in 23n-data-notices ('codex': the bell; 'codex-small': the bell list only)
+      if (x.kind === 'half' && x.p.bless) emit('toast', { key: 'codex', msg: `Codex: the ${P.n} page is half full. The ${x.p.bless.n} Blessing is open at the Shrine.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'normal' });
+      else if (x.kind === 'half') emit('toast', { key: 'codex-small', msg: `Codex: the ${P.n} page is half full.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'low' });
+      if (x.kind === 'seal') emit('toast', { key: 'codex', msg: `Page Seal: ${P.n}.${P.seal && P.seal.txt ? ' ' + P.seal.txt + '.' : ''} New title: ${P.title}.`, kind: 'good', icon: { ic: ['banner', '#F2C14E'] }, prio: 'high' });
       emit('codexPage', { id: x.id, kind: x.kind });
     }
     for (const m of out.miles) {
-      toast(`${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, 'good', { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'normal');
+      emit('toast', { key: 'codex', msg: `${m.at} Lantern Light: ${m.rw.map(r => r.n).join(', ')}.`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'normal' });
       emit('codexMilestone', { at: m.at, rewards: m.rw.map(r => r.id) });
     }
     if (out.gain > 0) emit('codexLight', { light, gain: out.gain });
@@ -467,10 +468,13 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
     CX().mSeen = CODEX_MILESTONES.filter(m => CX().got[m.at]).reduce((a, m) => Math.max(a, m.at), 0);
     CX().init = true;
     cache = c; dirty = false;
-    const past = S.totalKills > 0 || S.maxZone > 1;
+    // audit 3.4 (W1-B): a new game (its guide still young) has no past deeds to report; only a save with
+    // progress from before this build's Codex does. The line goes to the bell (23n-data-notices 'codex-past').
+    const young = !!(S.onboard && !S.onboard.all && (S.onboard.t || 0) < 120);
+    const past = !young && (S.totalKills > 0 || S.maxZone > 1);
     if (past && g.light > 0) {
       const where = typeof campLevel === 'function' && campLevel('library') > 0 ? 'See the Library in camp.' : 'Open it from the bell, then Journal.';
-      toast(`Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, 'good', { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'high');
+      emit('toast', { key: 'codex-past', msg: `Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'high' });
     }
     emit('codexInit', { light: g.light });
   }

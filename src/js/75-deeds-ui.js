@@ -680,6 +680,7 @@ let deedsUI = null;
     const isCh = q.kind === 'chapter', f = isCh ? null : FE[q.id], ch = isCh ? DEED_CHAPTERS.find(c => c.id === q.id) : null;
     if (!f && !ch) { nextCard(); return; }
     const lk = LK[f ? f.look : ch.look];
+    if (typeof noticeAsk === 'function') noticeAsk('card:feat', f ? `Feat: ${f.n}.` : `Chapter done: ${ch.n}.`);   // W1-B: the card is the one voice (bell list line)
     const ov = el('div', 'dd-fc-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', f ? `Feat: ${f.n}` : `Chapter done: ${ch.n}`);
     const card = el('div', 'dd-fc');

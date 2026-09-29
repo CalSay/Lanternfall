@@ -33,6 +33,7 @@
     if (ov || !queue.length) return;
     if (blocked()) { setTimeout(showNext, 600); return; }
     const e = queue.shift(), r = regionById(e.region) || REGIONS[0];
+    if (typeof noticeAsk === 'function') noticeAsk('card:lantern', e.head);   // W1-B: a card moment (23n-data-notices)
     lastFocus = document.activeElement;
     ov = el('div', 'gl-ov' + (reduced ? ' still' : ''));
     ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'glHead');
