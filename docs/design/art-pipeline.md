@@ -106,3 +106,15 @@ rows and columns and breaks outlines. Pip's trial was shrunk this way, so her fi
 - Enemies are sized by pack type, not all hero-sized: **swarm foes about 24-36 px** (bats, slimes, spores),
   **normal foes about 48-64 px**, **brutes and elders about 96 px**, region bosses bigger. Packs stand in 2-3
   staggered rows in the right half. Heroes are never shrunk (pixel art can't be scaled down cleanly).
+
+## 10. Keeping the fight readable (owner: "it looks so cluttered", 2026-09-29)
+
+Mock-up: art/backgrounds/mossy-hollow/formation-clean.png.
+1. **Quiet background behind the fight.** Code pushes the far and mid layers well back (lower saturation and
+   contrast, dimmed toward night blue) and adds a soft vignette, so only the road and the fighters are bright.
+2. **Show at most 4 foe bodies.** A pack can be 8-10 in the rules, but the stage draws at most 3-4 bodies and a
+   small "+N" counter; the next body steps in when one dies. (Needs sign-off: it changes how S6's packs look,
+   not how they fight.)
+3. **A clear gap in the middle** of the road between the two sides, for arrows, fireballs and swooshes.
+4. **Contact shadows** under every fighter, so they stand on the road instead of floating on the picture.
+5. **Lower foreground.** The front plants stay a thin dark strip, so they frame the road without covering feet.
