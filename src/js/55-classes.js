@@ -45,7 +45,7 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
   };
 
   // The one-time migration (7.1) and the repair that keeps S.cls in step with the kit key.
-  let syncFor = null, syncKey;
+  let syncFor = null, syncKey, said = null;
   lbSync = () => {
     const p = S.party, c = C();
     if (!p || !c) return;
@@ -64,12 +64,8 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
       c.base = l.base; c.evo = l.evo; c.mig = 1; c.from = key; c.at = 0;
       const proven = !!(l.evo && pastBoss());
       if (proven) c.proven[l.evo] = 1;
-      emit('classMigrated', { from: key, base: l.base, evo: l.evo, proven });
-      const nm = CLASS_DEFS[l.base].name;
-      const msg = l.evo
-        ? `Classes changed. You are a ${nm} on the ${EVO_NAMES[l.evo].name}'s path. Nothing was lost.`
-        : `Classes changed. You are still a ${nm}. Your Proving opens at the Fenmother.`;
-      toast(msg, 'good', null, 'normal');
+      // Said on the first tick (the UI listens by then; a toast in the first seconds folds into What's new).
+      said = { from: key, base: l.base, evo: l.evo, proven };
       return;
     }
     // The kit key changed under us (a tool or an older code path set it): follow it.
@@ -151,7 +147,16 @@ let lbClass, lbHas, lbRole, lbHome, lbKit, clsResolve, chooseBase, clsSwitchInfo
   };
 
   // Once per loaded save, and whenever the class may have changed.
-  onTick(() => lbSync());
+  onTick(() => {
+    lbSync();
+    if (!said) return;
+    const m = said; said = null;
+    emit('classMigrated', m);
+    const nm = CLASS_DEFS[m.base].name;
+    toast(m.evo
+      ? `Classes changed. You are a ${nm} on the ${EVO_NAMES[m.evo].name}'s path. Nothing was lost.`
+      : `Classes changed. You are still a ${nm}. Your Proving opens at the Fenmother.`, 'good', null, 'normal');
+  });
   on('classChosen', () => lbSync());
   lbSync();
 }

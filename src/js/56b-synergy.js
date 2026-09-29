@@ -729,7 +729,7 @@ var synUnit, synParty;   // var: 59-combat and 59b ask for these by typeof
   addModifier('crit', () => {
     if (!live()) return 1;
     const dc = cur().a.heroCrit * T.today; if (!dc) return 1;
-    const base = 0.08 + gear().crit / 100;
+    const base = critBase();
     return base > 0 ? (base + dc) / base : 1;
   });
   // The hero's ability: Warded Casting (a fraction) and Two Bows (seconds off Volley).

@@ -533,7 +533,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   addModifier('crit', () => {
     const r = activeRank('contract'); if (!r) return 1;
     const add = legendVal('contract', 'crit', r) * members('dusk') * legendScale(); if (!(add > 0)) return 1;
-    return 1 + add / (0.08 + gear().crit / 100);   // + flat crit chance on critChance()'s base
+    return 1 + add / critBase();   // + flat crit chance on critChance()'s base
   });
   addModifier('critDmg', () => setOn('dusk', 2) ? 1 + LEG_SETS.dusk.tiers[2].fx.critDmg * legendScale() : 1);
   addModifier('abilityCd', () => setOn('wayfarers', 2) ? 1 - LEG_SETS.wayfarers.tiers[2].fx.cd * legendScale() : 1);

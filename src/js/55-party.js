@@ -332,7 +332,7 @@ let unitHp, unitCd, bossTelegraph;
   // Grit's damage taken (S2, classes-2 1.2): 1% less per Grit, at the stack's strength (59-combat reads it).
   heroGritDr = () => { if (cls() !== 'warden') return 0; let e = 0; for (const g of guard) if (g.until > clock) e += g.e; return CLS_TUNE.grit.dr * e; };
   // The Ranger's crit (S2, classes-2 1.1): 15% base (8% + 7%), before Keen Eye on a marked foe.
-  addModifier('crit', () => cls() === 'ranger' ? 1 + CLS_TUNE.rangerCrit / (0.08 + gear().crit / 100) : 1);
+  addBonus('critBase', () => cls() === 'ranger' ? CLS_TUNE.rangerCrit : 0);
   partyHymnOn = () => hymnUntil > clock;
   partyClock = () => clock;
   // Hawk Eye: the hero's first hit on each foe always crits (50-sim heroSwing asks once per swing).
