@@ -1118,3 +1118,15 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Mossy Hollow v2 layer bundle (GPT, 480x270, 5 layers x 2 states). Assembled with the heroes: works. Issues for GPT: relit sky/far layers don't fill the canvas (holes), ground doesn't reach the foreground (seam), foreground ~25% tall (limit 12%), soft partial alpha everywhere (needs hard 0/255 alpha), thousands of colours per layer, the two states don't share geometry (fences/stones move), shrouded is warm sunset with lit lamps (should be cold, lamps dead). Saved art/backgrounds/mossy-hollow/v2/.
 - OWNER: the formation mock-up looks cluttered. Coordinator proposal (art-pipeline.md section 10): quieter graded background + vignette, at most 3-4 foe bodies drawn with a '+N' counter, a clear middle gap, contact shadows, a thin dark foreground. Mock-up saved (formation-clean.png).
 - OWNER: up to 10 enemies must show. RULE: enemy size follows pack size (brutes 3 x ~96 px, normal 5-6 x ~48 px, swarms 8-10 x ~24-32 px); the '+N' counter idea dropped. Mock-up art/backgrounds/mossy-hollow/packs-mock.png.
+- OWNER DECISION (combat presentation -> lane combat, "Age of War style"): enemies march in a stream from the
+  right along the road; the front ones fight at full size, the rest queue and walk in behind (packs of up to
+  10 stay in the rules, all visible along the road or entering). AoE becomes GROUND ZONES: an area attack
+  marks the floor, and any enemy that walks on it takes the effect until it fades (fire patch, poison cloud,
+  frost field, holy circle...). Every enemy needs a walk cycle (2 extra GPT poses).
+  Coordinator notes for the spec: it fits the lore ("Hold the road": the tank holds the front and enemies
+  queue behind the first one they meet); ranged heroes and casters hit anything within their range down the
+  lane; idle play works as-is. QUEUED CB3 (opus, design first, before any build): "Lane combat" spec folding
+  in the playtest-1 item 3 question (combat buttons instead of tap-to-attack). Covers lane length, walk speed,
+  contact and blocking, range bands per class and hero, ground-zone rules (size, duration, ticks, stacking,
+  per damage type), knockback/pull, how S6's warnings, parry/dodge, stagger and Finishers map onto the lane,
+  boss entrances, the sim model, and a rebalance plan. Replaces S6's standing packs.

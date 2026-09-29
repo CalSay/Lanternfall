@@ -125,3 +125,10 @@ Mock-up: art/backgrounds/mossy-hollow/formation-spread.png. With foes capped at 
 gets the whole left half: three distinct spots about 80 px apart, heroes barely touching. The back row stands a
 little higher on the road and is shaded slightly darker for depth; the front row (the tank by default) stands
 lowest and brightest. Draw back to front.
+
+## 11. Lane combat (owner, 2026-09-29)
+
+Enemies walk in from the right along the road (Age of War style); the front ones fight, the rest queue behind.
+Area attacks are drawn as **ground zones** on the road (a fire patch, a poison cloud, a frost field) that hurt
+anything walking through until they fade: code effects, like the fire. **Every enemy needs a walk cycle**:
+add two poses to each enemy prompt ("walking, left foot forward" and "walking, right foot forward"), facing left.
