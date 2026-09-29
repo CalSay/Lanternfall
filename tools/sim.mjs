@@ -1478,7 +1478,8 @@ async function runEconReport() {
   res.push([ok(maxGold < 1e8 && top.every(t => t[1] < 1e8)), 'EC10 no inflation: S.gold and every price under 1e8',
     `most gold held ${f0(maxGold)}; biggest buys (normal): ${top.map(([k, n, z]) => `${k} ${f0(n)} (zone ${z})`).join(', ')}`]);
   // EC11: levelling pays (static): units per gold at Lv 20 over Lv 1
-  const e11 = (1 + 0.03 * 19) / (X('econShiftFee(9, 20)') / X('econShiftFee(9, 1)'));
+  // the fee rule before its 2-digit rounding (a rounded pair can swing the ratio by 5%): Lv 20 pays x(1 + 19 feeLv)
+  const e11 = (1 + X('ECON.sharePerLv') * 19) / (1 + X('ECON.feeLv') * 19);
   res.push([ok(e11 >= 1.12), 'EC11 levelling pays: units per gold at Lv 20 over Lv 1 (share x1.57 over the fee), same job and grade: 1.12 or more', f2(e11)]);
   res.push(['INFO', 'EC12 the choice is real (--crew 0 vs full crew): needs shift fees (N3a)', '-']);
   res.push(['INFO', 'EC13 named gatherers are worth their fee: needs shift fees and rarity shares (N3a)', '-']);
