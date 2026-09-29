@@ -50,7 +50,7 @@ Design rules:
 | **Inscribe** | Put a power from the Book onto a crafted item that fits it. The item keeps its affixes and Masterwork |
 | **Echo** | A repeat drop of a power you know. 3 Echoes raise its rank by one |
 | **Circle mark** | A mark on an item for one of the 4 circles (Hedgefolk, the Oath, Dusk Company, Wayfarers) |
-| **Circle Sigil** | The token a circle mark costs |
+| **Circle Crest** | The token a circle mark costs |
 | **Circle set** | Marked pieces worn across the party: 2, 4 and 6 pieces of one circle switch on its bonuses |
 
 Naming: items with a power show the rarity word **Legendary** in orange (`#FF8A3D`). The existing
@@ -180,20 +180,20 @@ party spec's companion uniques (5.3), which were never built and now live here.
 
 ## 4. Circle sets
 
-### 4.1 Marks and Sigils
+### 4.1 Marks and Crests
 
 - A **Circle mark** goes on a hero class piece (weapon, off-hand, head, body) or a companion's
   role weapon or trinket: at most **10 pieces** across a party (4 hero + 2 x 3 companions).
 - **Marking:** at crafting (a "Mark" choice under Masterwork on the recipe) or later at the
-  Enchanter's Table (**Mark** on the item sheet; it replaces an old mark). Cost: **1 Circle Sigil**
+  Enchanter's Table (**Mark** on the item sheet; it replaces an old mark). Cost: **1 Circle Crest**
   of that circle + **2 Pearls** of the item's tier.
-- **Circle Sigils** (4 counts, one per circle):
+- **Circle Crests** (4 counts, one per circle):
 
-| Source | Sigils |
+| Source | Crests |
 |---|---|
-| Expeditions | A returning team with 2+ members of one circle brings 1 Sigil of it on Good, 2 on Perfect |
-| Oath elders at level 8+ | 1 Sigil of a random fielded companion's circle |
-| Bond | A character's first level 25 (Bond) gives 2 Sigils of their circle. Old saves are credited on load for characters already past 25 (at most 10 per circle) |
+| Expeditions | A returning team with 2+ members of one circle brings 1 Crest of it on Good, 2 on Perfect |
+| Oath elders at level 8+ | 1 Crest of a random fielded companion's circle |
+| Bond | A character's first level 25 (Bond) gives 2 Crests of their circle. Old saves are credited on load for characters already past 25 (at most 10 per circle) |
 
 ### 4.2 The sets
 
@@ -220,7 +220,7 @@ circles can be active at once (for example 6 + 4).
 |---|---|---|---|
 | **Learn** | item sheet of a legendary item, or the Powers view | nothing (in-page confirm) | The item breaks down (normal salvage materials back); its power enters the Book at its rank (or adds an Echo) |
 | **Inscribe** | Powers view: pick a power, then a fitting item | Pearls of the item's tier `2 + 2 x rank`, Essence of the item's tier 5, gold 100 foes' worth (`foesGold(S.maxZone, 100)`) | The item gets the power line (top of the card, orange). One power per item; inscribing another replaces it (no refund) |
-| **Mark** | item sheet | 1 Circle Sigil + 2 Pearls of the item's tier | The item joins that circle's set |
+| **Mark** | item sheet | 1 Circle Crest + 2 Pearls of the item's tier | The item joins that circle's set |
 
 - Inscribing does not change the item's tier, rarity, `+N`, affixes, Masterwork or Pearl setting.
 - Upgrading and salvaging an inscribed item work as today; salvage returns no Pearls and the power
@@ -276,9 +276,9 @@ registerState('legend', {
   v: 1,
   book: {},            // power id -> rank (1-5)
   echo: {},            // power id -> echoes toward the next rank (0-2)
-  sig: [0, 0, 0, 0],   // Circle Sigils: Hedgefolk, the Oath, Dusk Company, Wayfarers
+  sig: [0, 0, 0, 0],   // Circle Crests: Hedgefolk, the Oath, Dusk Company, Wayfarers
   coastGrant: 0,       // 1 once the 7 coast-elder powers were granted to an old save
-  bondCredit: {},      // character id -> 1 once their Bond Sigils were given
+  bondCredit: {},      // character id -> 1 once their Bond Crests were given
   seen: {}             // powers whose "New" dot was seen
 });
 ```
@@ -321,10 +321,10 @@ majority circle).
 | Task | Owns | Small edits in | Depends on |
 |---|---|---|---|
 | L1 Data: 39 powers (ids, fits, texts by rank, values, `p1`/`p5`, wiring kind), 4 sets, costs | `src/js/21c-data-legend.js` (core, data only) | - | - |
-| L2 Core: Book, drops (`legendDrop(rank, source)`), Echoes, Learn, Inscribe, Mark, Sigils (expedition return, Oath elders, Bond), limits, set counting, simple powers through `addModifier`/`addBonus('lg:<id>')`, `legendBest`, goals | `src/js/55-legend.js` | `src/js/41-items.js` (the power and mark lines on item cards; a `lg` fits check), `src/js/55-crafting.js` (Mark at craft; the 2-power check in `equipChar`), `src/js/57b-expeditions.js` (emit the returning team's circles) | K4-K6, O1 (drops) |
+| L2 Core: Book, drops (`legendDrop(rank, source)`), Echoes, Learn, Inscribe, Mark, Crests (expedition return, Oath elders, Bond), limits, set counting, simple powers through `addModifier`/`addBonus('lg:<id>')`, `legendBest`, goals | `src/js/55-legend.js` | `src/js/41-items.js` (the power and mark lines on item cards; a `lg` fits check), `src/js/55-crafting.js` (Mark at craft; the 2-power check in `equipChar`), `src/js/57b-expeditions.js` (emit the returning team's circles) | K4-K6, O1 (drops) |
 | L3 Combat powers: the behaviour-changing powers and set tiers through Stage C events and a few hooks | `src/js/59e-legend-combat.js` | `src/js/55-party.js` (read `lg:` bonuses in the tap, Flare, Volley, Blessing, Hymn branches), `src/js/59-combat.js` (hooks: on heal, burn tick, ability hit, crit) | Stage C, L2 |
 | L4 UI: Powers view, item sheet buttons, hero and companion pips, Sets chips, toasts, Codex page | `src/js/75-legend-ui.js`, `src/styles/60-legend.css` | `src/js/57c-codex.js` (page; drop the companion-unique rows), `src/js/75-party.js` (Sets chips, "Powers 2/2") | L2 |
-| L5 Icons: orange frame, 39 power icons as recoloured specs of existing icons, 4 Sigil icons | `src/js/11b-art-legend.js` (data) | - | - |
+| L5 Icons: orange frame, 39 power icons as recoloured specs of existing icons, 4 Crest icons | `src/js/11b-art-legend.js` (data) | - | - |
 | L6 Sim and checks: `--legend`, L1-L8, caps in check.mjs | `tools/sim.mjs` | `tools/check.mjs` | L2, L3, O4 |
 
 ---

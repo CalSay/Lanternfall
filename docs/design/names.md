@@ -1,3 +1,5 @@
+Adopted by the coordinator 2026-09-29: all best picks; applied by NAME2.
+
 # Names: a quality pass over every new name in the specs (NAME1)
 
 Status: task NAME1, written 2026-09-28 for the owner's note: "your first thoughts on names probably
@@ -453,3 +455,37 @@ Next five, if there is room: Ser Hadric -> **Ser Durand** (rhymes with Aldric); 
 | 13. Essence (10), coal/salt/dye (12), Sigils (6) | 8 | 20 |
 | **Total (246 names or rows)** | **153** | **93** |
 | 14. Shipped names worth changing | - | 2 (Circle Sigil; five pool names) |
+
+---
+
+## Code follow-up (LORE-C1)
+
+Applied by NAME2 (docs only, per CLAUDE.md). These are the shipped strings in `src/js` a code task
+should update to match the names now adopted across `docs/design`. Grepped 2026-09-29.
+
+| File | What | Change |
+|---|---|---|
+| `src/js/21h-lore-hollow.js` | Comment line 11 `(Wraithmarsh V, the Listener)`; the `listener` beat's `title: 'The Listener'` (line 71) and `name: 'The Listener'` (line 161) | Display text becomes **"The Fenmother"**. The beat id `listener` can stay as the code id (matches `keen` staying `keen`) |
+| `src/js/22-data-regions.js` | Line 48: `boss: { zone: 35, name: 'The Listener', ... }` and its comment | `name` becomes `'The Fenmother'`; comment updates to match |
+| `src/js/55-story.js` | Comments at lines 13 and 176 name "the Listener" for the Hollow boss's display-name slot | Update the comment text to "the Fenmother" |
+| `src/js/57c-codex.js` | Comment (~line 119) mentions "the Listener"; the `listener:` key passed to `storyBestiary()` (line ~120) | Comment updates; the object key can stay `listener` (code id) |
+| `src/js/58-deeds.js` | Comment (~line 113): "each Great Lantern boss (the Listener, the Keeper)" | Update to "(the Fenmother, the Fogbound)" |
+| `src/js/21i-lore-exped.js` | Comment (~line 14): "the Hollow Court after zone 35, the Listener" | Update to "the Fenmother" |
+| `src/js/21b-stories-coast.js` | Comment line 13 ("the Drowned Keeper's barks"); the `KEEPER_LINES` const (line 62, code id, can stay); **player-facing strings**: `title: 'The Keeper's Letters'` (line 52), the `win`/`fall` text at line 57 ("The Keeper falls, and you carry the lens..."), `title: 'A Keeper's First Letter'` (line 79) | Rename the display strings to Silas / "the Fogbound" (e.g. "Silas's Letters", "Silas falls, and you carry the lens...", "Silas's First Letter"). This is real lore-voice copy, not a mechanical rename — a writing pass (LORE), not a find-replace |
+| `src/js/21e-stories-pinnacle.js` | Comment line 22 ("Silas Penrow is the Drowned Keeper"); **player-facing** `locked: 'Pinnacles: beat the Drowned Keeper and keep an Oath of 15'` and `lockParts: ['Beat the Drowned Keeper', 'Keep an Oath of 15']` (lines 232-233) | Update comment; change both display strings to "Silas, the Fogbound" / "Beat Silas, the Fogbound" |
+| `src/js/21f-data-hands.js` | `HANDS_FIRST` pool (line 95-97) still has **Hobb, Ned, Orla, Quill, Fitch** | Remove those five from the array (names.md section 14). The pool only picks a name at hire and stores it, so existing Hands named from it keep their names; nothing else changes |
+| `src/js/11b-art-legend.js` | Comment line 11 and the "Circle Sigils" section comment (~line 84) | Update comments to "Circle Crest(s)" |
+| `src/js/55-legend.js` | Comment (~line 22): "adds Circle Sigils" | Update to "Circle Crests" |
+| `src/js/55-onboard.js` | Comment (~line 62); **player-facing** `why: 'first legendary power or Circle Sigil'` (~line 63) | Update comment and the display string to "Circle Crest" |
+| `src/js/57b-expeditions.js` | Comment (~line 31): "Circle Sigils in 55-legend" | Update to "Circle Crests" |
+| `src/js/57c-codex.js` | Comment (~line 317): "the first legendary drop or Circle Sigil" | Update to "Circle Crest" |
+| `src/js/75-legend-ui.js` | **Player-facing**: `aria-label` "Circle Sigils" (~line 382); the note text "Mark gear on its item sheet: 1 Circle Sigil and..." (~line 390) and "Marking needs a Circle Sigil..." (~line 500); "`${away.sig} Circle Sigil${away.sig > 1 ? 's' : ''}`" (~line 570); the comment at the top of the file (~line 4) | Rename every display string and the comment to "Circle Crest(s)". The save field `S.legend.sig` and the `sig` key stay (names.md: "the save key `S.legend.sig` stays") |
+
+Not yet shipped, so no code follow-up needed (each already lives only in a docs/design spec awaiting its
+own build task): Classes 2.0's Adder/Lightkeeper/Lanternmage/Deathcap/Witchfire/Leeching/Ice-Clad (CL1,
+not built); the Balefire building, Solveig, Sten/Runa, Old Amos, Liv, Constance Wray, Cobb, Pascoe, Jago
+(WC1/N3a, not built); every Region 4/5 place and foe name (LORE-R45b, not built); the Cinder Sigil /
+Frost Sigil / Gloam Sigil families and the Loaded Die relic (MAT1/ECON-A, not built); the Essence 6-15
+ladder (MAT1, not built). `grep`s for `Vampiric`, `Frozen-armour`, `Priest`, `Venomstalker`, `'Mage'`, and
+the Sunken Coast's Region 4/5 unique item strings all came back empty in `src/js` — confirmed nothing
+there needs touching yet.

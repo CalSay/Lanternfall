@@ -82,7 +82,7 @@ mushrooms and a quarry. The land past your last lamp waits in the night palette.
   are the smallest of the three (10 x 20 CSS px) but read through their light pools.
 - **Five regions:** each region gets a tile palette and 2-3 stamps. The Coast has a sea, shingle
   and pines, with Saltreach Light on a rock. The Emberwaste has ash ground, lava cracks and dead
-  trees. The Pale Reach has snow and frosted pines. The Long Stair has cave floor and glowing
+  trees. The Pale Reach has snow and frosted pines. The Gloamvale has cave floor and glowing
   crystals. See the strip at the bottom of `map-a-closeups.png`.
 - **Locked region (next or Beyond):** the dim palette from spec 7.11 (desaturated 80%, mixed toward
   `#1E1A20`), dark lamps, and a barred gate with a gold padlock across the road.
@@ -156,8 +156,8 @@ camp plateau under the moon, and the Great Lantern stands on Lantern Hill.
   night) and the B1 characters best. The zone vignettes give the band sheet a preview for free.
 - **Five regions:** each region swaps its backdrop and terrace palette: sea behind the Coast's
   terraces with Saltreach Light at the end, a red sky and ash for the Emberwaste, snow peaks and an
-  aurora for the Pale Reach, a cave ceiling with crystals for the Long Stair. The road itself goes
-  down the whole way, which fits the Long Stair ending (lore.md 8.4). Each region needs its 7
+  aurora for the Pale Reach, a cave ceiling with crystals for the Gloamvale. The road itself goes
+  down the whole way, which fits the Gloamvale ending (lore.md 8.4). Each region needs its 7
   vignettes (16 x 16), which can share the stage's zone art.
 - **Locked region:** pitch night (desaturated 70%, mixed 70% toward `#06060C`), the road running
   off into the dark, and a chained gate with a dark lantern. Beyond shows the raid foe lit against a
@@ -296,7 +296,7 @@ silhouettes, and fireflies drift there. As you progress, more pools light up alo
   fire `#FF9A48`, Deepwell `#6FD0E8`, raid `#FF6B3D`, lit Great Lantern `#FFD27A`. The painted colour
   itself never shows, because the whole map is night.
 - **Fixed pixels** ignore the light: lit lamp glass, a few moonlit crests on the sea (`#1C2C44`), faint
-  lava cracks in Beyond (`#5A1A14`), and the Long Stair's crystals.
+  lava cracks in Beyond (`#5A1A14`), and the Gloamvale's crystals.
 
 ### The light model
 
@@ -363,10 +363,10 @@ Nothing runs per frame except the firefly sprites, and those animate on the comp
 A new region adds only numbers and a palette, as in ux-overhaul 7.10. The light model stays the same.
 
 - **Ground:** A's tile palette and 2-3 stamps per region. The Coast has sea, shingle and pines; the
-  Emberwaste ash, cracks and dead trees; the Pale Reach snow and frosted pines; the Long Stair cave
+  Emberwaste ash, cracks and dead trees; the Pale Reach snow and frosted pines; the Gloamvale cave
   floor and crystals.
 - **Lamp tint:** warm `#FFBA60` in the Hollow, `#FFC890` on the Coast, a hotter `#FF8A50` in the
-  Emberwaste, pale `#FFE0B0` on the Pale Reach and crystal violet `#C8A0FF` on the Long Stair.
+  Emberwaste, pale `#FFE0B0` on the Pale Reach and crystal violet `#C8A0FF` on the Gloamvale.
 - **One set of fixed pixels** per region, so its dark is never plain black: sea crests, lava cracks,
   frost glints or crystals.
 - **One mote kind:** fireflies, sea motes, embers, snow or crystal sparks.

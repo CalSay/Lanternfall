@@ -71,7 +71,7 @@ HINT1, SAVE1, SFX1 (independent)
 |---|---|---|---|---|
 | **Phase A: design** | | | | |
 | CORE-G | Core 2.0 glossary: damage types, statuses, stats, the ability model, gear weights, buff families, tiers | – | Opus | S |
-| CL1 | Classes 2.0: Warrior/Ranger/Mage, 6 evolutions, trials, abilities, types, synergies, the migration, room for tier 2 | CORE-G | Opus | L |
+| CL1 | Classes 2.0: Warrior/Ranger/Lanternmage, 6 evolutions, trials, abilities, types, synergies, the migration, room for tier 2 | CORE-G | Opus | L |
 | RG1 | Resources and Gear 2.0: weights, 15 tiers, chains, enchanting, buff items, crafted slots, Uniques 2.0 (boss-themed) | CORE-G, LORE-R45 | Opus | L |
 | CB2 | Active combat: dodge, stagger, interrupts, boss phases, elite traits, enemy damage | CORE-G | Opus | L |
 | WC1 | World and Camp 2.0: the building catalogue and trees, the camp panorama, outposts/towns/dungeons/raids per region, events on the map | LORE-R45 | Opus | M |

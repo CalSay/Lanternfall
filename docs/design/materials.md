@@ -91,16 +91,16 @@ still appends "Essence" the way it does today) and carrying it up by region mood
 | 3 | Hollow | Radiant (unchanged) |
 | 4 | Coast | Blazing (unchanged) |
 | 5 | Coast | Starlit (unchanged) |
-| 6 | Coast | Tidal |
-| 7 | Emberwaste | Molten |
-| 8 | Emberwaste | Scorched |
-| 9 | Emberwaste | Ashen |
-| 10 | Pale Reach | Frozen |
-| 11 | Pale Reach | Frostbound |
-| 12 | Pale Reach | Starbound |
-| 13 | Gloamvale | Shadowed |
-| 14 | Gloamvale | Wraithlit |
-| 15 | Gloamvale | Dreaming |
+| 6 | Coast | Lucent |
+| 7 | Emberwaste | Searing |
+| 8 | Emberwaste | Blinding |
+| 9 | Emberwaste | Dawnlit |
+| 10 | Pale Reach | Auroral |
+| 11 | Pale Reach | Prismatic |
+| 12 | Pale Reach | Celestial |
+| 13 | Gloamvale | Undimmed |
+| 14 | Gloamvale | Unfading |
+| 15 | Gloamvale | Old Light |
 
 ## 4. What changes in the code (grades 1-5 only; this task)
 
@@ -143,10 +143,10 @@ notes (sea coal, sea salt, madder are real materials):
 
 | Region | Coal (Mining) | Salt (Foraging) | Dye (Foraging) |
 |---|---|---|---|
-| 2 Coast | Sea Coal | Sea Salt | Madder |
-| 3 Emberwaste | Kiln Coal | Glass Salt | Cinderroot |
-| 4 Pale Reach | Rime Coal | Rime Salt | Frostbloom |
-| 5 Gloamvale | Dead Coal | Grey Salt | Nightbloom |
+| 2 Coast | Sea Coal | Sea Salt | Murex |
+| 3 Emberwaste | Charcoal | Potash | Madder |
+| 4 Pale Reach | Peat | Rock Salt | Woad |
+| 5 Gloamvale | Anthracite | Grey Salt | Inkcap |
 
 These replace the LORE-R45 placeholders "Glimmercoal", "Frostsalt" and "Frostbloom Dye" (regions-4-5.md
 1.4) and give Regions 3 and 5 names they never had. None of this is built in code yet (gear-2.md 1.3),
@@ -164,7 +164,7 @@ change.
 | Region | Family id | Family's player-facing name | Old name it replaces |
 |---|---|---|---|
 | Coast | `pearl` | **Tide Sigil** | Lantern Pearl |
-| Emberwaste | `glass` | **Ember Sigil** | Ember-glass / Emberglass (spelling clash, now moot) |
+| Emberwaste | `glass` | **Cinder Sigil** | Ember-glass / Emberglass (spelling clash, now moot) |
 | Pale Reach | `star` | **Frost Sigil** | Starshard |
 | Gloamvale | `well` | **Gloam Sigil** | Wellglass |
 
