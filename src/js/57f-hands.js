@@ -81,7 +81,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus, handsShare, handsShiftSecs, handsRate, handsPreview, handsSuggest, handsNodes, handsCanSend,
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
-  handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsCatchUp, handsExclude, handsRollApp;
+  handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsCatchUp, handsExclude, handsRollApp,
+  handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots;
 
 {
   const T = HANDS_TUNE;
@@ -129,7 +130,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       if (!(x.xp >= 0)) x.xp = 0;
       if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
       if (x.job && !Array.isArray(x.job.bo)) x.job.bo = [];
-      for (const k of ['talk', 'st', 'hrs', 'got', 'back']) if (!(x[k] >= 0)) x[k] = 0;
+      for (const k of ['talk', 'st', 'hrs', 'got', 'back', 'sent']) if (!(x[k] >= 0)) x[k] = 0;
       if (x.last === undefined) x.last = null;
       if (x.cl === undefined) x.cl = null;
       if (x.key === undefined) x.key = null;
@@ -144,7 +145,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const inClock = (c, t) => { const h = new Date(t).getHours(); return c[0] < c[1] ? h >= c[0] && h < c[1] : h >= c[0] || h < c[1]; };
 
   // ---------------- open, beds ----------------
-  handsOpen = () => !!T.on && !!S.camp && safe(() => campOpen(), false) && lvOf('hearth') >= T.openHearth && lvOf('tavern') >= 1 && lvOf('bunk') >= 1;
+  handsOpen = () => !!T.on && !!S.camp && safe(() => campOpen(), false) && lvOf('hearth') >= T.openHearth && lvOf('tavern') >= 1;   // W1-E: Tents (2 free), not the Bunkhouse (economy-2 5)
   handsBedsAt = (bunk, hearth) => !(bunk >= 1) ? 0 : Math.max(0, Math.min(T.bedMax + Math.floor(bonus('handBedsMax')),
     (T.beds[Math.min(T.beds.length - 1, bunk)] || 0) + (hearth >= T.hallHearth ? T.hallBeds : 0) + Math.floor(bonus('handBeds'))));
   handsBeds = () => handsBedsAt(lvOf('bunk'), lvOf('hearth'));
@@ -158,7 +159,10 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     S.camp.b.bunk = 1;
     emit('whatsNew', { msg: 'Your camp has a Bunkhouse now. Hands, townsfolk who gather for the heroes, sleep there. Hire them at the Tavern.', icon });
   };
-  handsFree = () => Math.max(0, handsBeds() - H().list.length);
+  // W1-E: the cap is Tents (economy-2 5): 2 free with the Tavern at Hearth 2; a built Bunkhouse still adds room
+  // until the Tent build (CAMP_B.tent) lands.
+  handsTents = () => handsOpen() ? Math.max(ECON.tentFree, handsBeds()) : 0;
+  handsFree = () => Math.max(0, handsTents() - H().list.length);
   handsList = () => H().list;
   handsGet = id => H().list.find(x => x.id === id) || null;
   const period = () => (lvOf('tavern') >= T.fastTavern ? T.arriveFastH : T.arriveH) * HOUR;
@@ -303,7 +307,14 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
 
   // ---------------- applicants ----------------
   // ECON-A (economy-2 4.1): the hire fee by rarity at the region you have reached (econHireFee); was foesGold(S.maxZone, hireFoes[r]).
-  handsHireCost = app => app && app.free ? 0 : Math.max(1, econHireFee(rIdx(app && app.r)));
+  handsHireCost = app => app && (app.free || app.ret) ? 0 : Math.max(1, econHireFee(rIdx(app && app.r)));
+  // Named Hands on the board are star spots: they never leave and do not count toward the waiting limit.
+  const randApps = () => H().board.apps.filter(a => !a.key);
+  handsRandomApps = () => randApps();
+  handsLegendSpots = () => HANDS_LEGENDS.map(x => {
+    const h = handsGet(x.key), a = H().board.apps.find(o => o.key === x.key);
+    return { key: x.key, n: x.n, sk: x.sk, about: x.about, state: h ? 'hired' : a ? 'board' : H().met[x.key] ? 'board' : 'away', app: a || null };
+  });
   const usedNames = () => new Set(H().list.map(x => x.n).concat(H().board.apps.map(x => x.n)));
   const usedKeys = () => new Set(H().list.map(x => x.key).concat(H().board.apps.map(x => x.key)).filter(Boolean));
   function rollRarity() {
@@ -339,7 +350,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const b = H().board;
     if (!b.next) return 0;
     let n = 0;
-    for (let g = 0; g < 50 && b.next <= t && b.apps.length < T.maxWait; g++) { addApp(makeApp(b.next), quiet); b.next += period(); n++; }
+    for (let g = 0; g < 50 && b.next <= t && randApps().length < T.maxWait; g++) { addApp(makeApp(b.next), quiet); b.next += period(); n++; }
     return n;
   }
   const freed = wasFull => { const b = H().board; if (wasFull) b.next = Math.max(b.next, now() + period()); };
@@ -347,22 +358,23 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const free = handsFree();
     return H().board.apps.map((app, i) => {
       const cost = handsHireCost(app), sg = handsSuggest(app) || { kind: 'wood', t: 1 };
-      const why = !handsOpen() ? 'Hands are not open yet.' : !free ? 'No free bed. Build the Bunkhouse up, or let a Hand go.' : S.gold < cost ? `Needs ${fmt(cost)} gold.` : '';
+      const why = !handsOpen() ? 'Hands are not open yet.' : !free ? `All ${handsTents()} tents are taken. Let a gatherer go to make room.` : S.gold < cost ? `Needs ${fmt(cost)} gold.` : '';
       return { i, app, cost, free: !!app.free, rate: handsRate(Object.assign({ lv: 1 }, app), sg.kind, sg.t), kind: sg.kind, t: sg.t, afford: S.gold >= cost, can: { ok: !why, why } };
     });
   };
-  handsNextApp = () => handsOpen() && H().board.next && H().board.apps.length < T.maxWait ? Math.max(0, H().board.next - now()) : null;
+  handsNextApp = () => handsOpen() && H().board.next && randApps().length < T.maxWait ? Math.max(0, H().board.next - now()) : null;
   const newHand = (app, t) => ({ id: app.id, n: app.n, r: app.r, sk: app.sk, tr: app.tr.slice(), cl: app.cl || null, key: app.key || null,
-    lv: 1, xp: 0, job: null, pack: [], last: null, talk: 0, st: 0, hired: t, hrs: 0, got: 0, back: 0 });
+    lv: 1, xp: 0, job: null, pack: [], last: null, talk: 0, st: 0, hired: t, hrs: 0, got: 0, back: 0, sent: 0 });
   handsHire = i => {
     const h = H(), app = h.board.apps[i];
     if (!app || !handsOpen() || !handsFree()) return null;
     const cost = handsHireCost(app);
     if (S.gold < cost) return null;
     S.gold -= cost; econSpend('hire', cost);
-    const wasFull = h.board.apps.length >= T.maxWait;
+    const wasFull = randApps().length >= T.maxWait;
     h.board.apps.splice(i, 1); freed(wasFull);
     const x = newHand(app, now());
+    if (app.ret) { for (const k of ['lv', 'xp', 'hrs', 'got', 'st', 'talk']) if (app.ret[k] >= 0) x[k] = app.ret[k]; x.last = app.ret.last || null; }
     h.list.push(x); h.hired = (h.hired | 0) + 1;
     if (x.key && !h.met[x.key]) h.met[x.key] = now();
     emit('handsHire', { id: x.id, r: x.r, free: !!app.free });
@@ -371,7 +383,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   };
   handsTurnAway = i => {
     const h = H(), app = h.board.apps[i]; if (!app) return false;
-    const wasFull = h.board.apps.length >= T.maxWait;
+    const wasFull = randApps().length >= T.maxWait;
     h.board.apps.splice(i, 1); freed(wasFull);
     emit('handsTurnAway', { app }); save();
     return true;
@@ -379,11 +391,16 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsLetGo = id => {
     const h = H(), x = handsGet(id); if (!x || x.job || x.pack.length) return false;
     h.list.splice(h.list.indexOf(x), 1);
+    // A named gatherer goes back to the Tavern's star spot with their level; hiring them again is free.
+    if (x.key) h.board.apps.push({ id: x.id, n: x.n, r: x.r, sk: x.sk, tr: x.tr.slice(), cl: x.cl || null, key: x.key, at: now(), free: 1,
+      ret: { lv: x.lv, xp: x.xp, hrs: x.hrs, got: x.got, st: x.st, talk: x.talk, last: x.last } });
     emit('handsLetGo', { id, n: x.n }); save();
     return true;
   };
 
   // ---------------- shifts ----------------
+  // W1-E (economy-2 4.2): a shift's fee is paid at send. Grade = the node's tier. Tam's first shifts are free.
+  handsFee = (x, kind, t) => !x ? 0 : x.key === 'tam' && (x.sent | 0) < ECON.tamFree ? 0 : econShiftFee(t, x.lv || 1);
   handsCanSend = (id, kind, t) => {
     const x = handsGet(id);
     if (!T.on || !x) return { ok: false, why: 'No such Hand.' };
@@ -391,7 +408,15 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     if (x.pack.length) return { ok: false, why: `${x.n}'s pack waits for room in the Storehouse.` };
     if (!CRAFT_NODES[kind] || !(t >= 1 && t <= 5)) return { ok: false, why: 'Pick a node.' };
     if (!open(kind, t)) return { ok: false, why: 'Your hero has not opened this node yet.' };
+    const fee = handsFee(x, kind, t);
+    if (S.gold < fee) return { ok: false, why: `Needs ${fmt(fee - Math.floor(S.gold))} more gold for the shift.` };
     return { ok: true, why: '' };
+  };
+  // Idle at camp and too poor for the next shift: they wait, they never leave.
+  handsUnpaid = x => {
+    if (!x || x.job || x.pack.length) return false;
+    const w = (x.last && open(x.last.kind, x.last.t) ? x.last : handsSuggest(x));
+    return !!w && S.gold < handsFee(x, w.kind, w.t);
   };
   const out = (x, t) => !!x.job && x.job.end > t;
   handsSend = (id, kind, t) => {
@@ -407,6 +432,9 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const wood = k => skillOf(k) === 'wood';
     if (x.cl === 'felling') { for (const o of H().list) if (o !== x && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b']); }
     else if (wood(kind)) { const b = H().list.find(o => o !== x && o.cl === 'felling' && out(o, at)); if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b']); }
+    const fee = handsFee(x, kind, t);
+    if (fee > 0) { S.gold -= fee; econSpend('shift', fee); }
+    job.fee = fee; x.sent = (x.sent | 0) + 1;
     x.job = job; x.last = { kind, t };
     emit('handsSend', { id, kind, t, end: job.end, secs });
     save();
@@ -514,17 +542,17 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       const tam = newHand({ id: 'tam', n: HANDS_TAM.n, r: HANDS_TAM.r, sk: HANDS_TAM.sk, tr: HANDS_TAM.tr, cl: null, key: HANDS_TAM.key }, t);
       h.list.push(tam); h.hired = (h.hired | 0) + 1;
       emit('handsHire', { id: tam.id, r: tam.r, free: true });
-      toast(quiet ? 'Tam, Hesketh\'s nephew, has a bed in the Bunkhouse. He gathers for the heroes. Hire more Hands at the Tavern.'
-        : 'Tam, Hesketh\'s nephew, comes to the fire. "Uncle said the Lanternbearer\'s lamp catches." He takes a bed in the Bunkhouse and gathers for the heroes.', 'good', icon, quiet ? 'normal' : 'high');
+      toast(quiet ? 'Tam, Hesketh\'s nephew, has a tent at camp. He gathers for the heroes. Hire more gatherers at the Tavern board.'
+        : 'Tam, Hesketh\'s nephew, comes to the fire. "Uncle said the Lanternbearer\'s lamp catches." He takes a tent and gathers for the heroes.', 'good', icon, quiet ? 'normal' : 'high');
     }
-    if (!h.board.next) { h.board.next = t + period(); if (h.board.apps.length < T.maxWait) addApp(makeApp(t), quiet); }
+    if (!h.board.next) { h.board.next = t + period(); if (randApps().length < T.maxWait) addApp(makeApp(t), quiet); }
     emit('handsOpen', { quiet: !!quiet });
   }
   // Later Hands (HANDS_LATER: the Hollises, off until LORE8b): a free applicant, once each.
   function later() {
     for (const x of HANDS_LATER) {
       if (!x.live || H().met[x.key] || usedKeys().has(x.key) || !safe(() => x.when(), false)) continue;
-      if (H().board.apps.length >= T.maxWait) return;
+      if (randApps().length >= T.maxWait) return;
       H().seq = (H().seq | 0) + 1;
       addApp({ id: 'h' + H().seq, n: x.n, r: x.r, sk: x.sk, tr: x.tr.slice(), cl: null, key: x.key, at: now(), free: 1 }, false);
       H().met[x.key] = now();

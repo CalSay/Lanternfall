@@ -4587,10 +4587,10 @@ try {
   {
     const [g, E] = mk(84, 1);
     assert(E('S.hands.tam') === 1 && E('handsGet("tam").sk') === 'wood' && E('handsGet("tam").tr.join()') === 'steady' && E('handsGet("tam").r') === 'common', 'Tam arrives free: a Common Woodcutter, Steady');
-    assert(E('handsFree()') === 0 && E('handsHire(0)') === null && /No free bed/.test(E('handsBoard()[0].can.why')), 'Bunkhouse Lv 1: one bed, Tam has it, hiring is refused');
-    E('S.camp.b.bunk = 2');
+    assert(E('handsTents()') === 2 && E('handsFree()') === 1, 'W1-E: 2 Tents come free with the Tavern (Bunkhouse or not); Tam has one');
     const g0 = E('S.gold'), cost = E('handsBoard()[0].cost');
-    assert(E('!!handsHire(0)') && E('S.gold') === g0 - cost && E('handsList().length') === 2 && E('handsFree()') === 0, `Bunkhouse Lv 2: a second bed; the hire costs ${cost} gold (foesGold)`);
+    assert(E('!!handsHire(0)') && E('S.gold') === g0 - cost && E('handsList().length') === 2 && E('handsFree()') === 0, `a second gatherer takes the second Tent; the hire costs ${cost} gold (econHireFee)`);
+    assert(E('handsHire(0)') === null && /tents are taken/.test(E('handsBoard()[0].can.why')), 'Tents full: hiring is refused with a reason');
     clock(g, T0 + 3 * 864e5); secs(g, 1.2);
     assert(E('S.hands.board.apps.length') === 3 && E('handsNextApp()') === null, 'three days closed: 3 applicants wait, no more');
     E('handsTurnAway(0)');
@@ -4683,6 +4683,115 @@ try {
   }
   assert(!errs.length, 'no hands errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('hands crashed: ' + (e.stack || e)); }
+// ---- W1-E: hire and send gatherers (74-ui-hands.js over 57f-hands.js): tents, shift fees, unpaid, let go ----
+console.log('gatherers: tents, fees, unpaid, let go (W1-E)');
+try {
+  const T0 = new Date(2026, 8, 28, 12).getTime();
+  const errs = [];
+  const mk = seed => {
+    const g = loadCore({ seed }), E = s => g.eval(s);
+    clock(g, T0);
+    E('S.maxZone = 12; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.camp.b.store = 1; S.gold = 1e9');
+    secs(g, 1.2);
+    return [g, E];
+  };
+  const [g, E] = mk(191);
+  assert(E('handsOpen()') && E('campLevel("bunk") <= 1') && E('handsTents()') === 2 && E('handsList().length') === 1, 'Hands open with Hearth 2 and the Tavern (no Bunkhouse needed): 2 Tents, Tam in one');
+  assert(E('handsBoard().length') >= 1 && E('handsBoard()[0].can.ok') && E('handsBoard()[0].cost') > 0, 'the board has an applicant with a price, and it can be hired');
+  // hiring spends gold and uses a tent
+  const g0 = E('S.gold'), cost = E('handsBoard()[0].cost'), name = E('handsBoard()[0].app.n');
+  E('handsHire(0)');
+  assert(E('S.gold') === g0 - cost && E('handsList().length') === 2 && E('handsFree()') === 0 && E('handsList()[1].n') === name, `hiring ${name} spends ${cost} gold and takes the second Tent`);
+  // tent cap blocks the next hire with a plain reason
+  E('S.hands.board.apps.push(handsRollApp())');
+  const capWhy = E('handsBoard()[0].can.why');
+  assert(E('handsHire(0)') === null && /tents are taken/.test(capWhy) && E('!handsBoard()[0].can.ok'), `Tents full: the hire is refused ("${capWhy}")`);
+  E('handsTurnAway(0)');
+  // Tam works free for his first shifts; a hired gatherer pays the fee at send
+  assert(E('handsFee(handsGet("tam"), "wood", 1)') === 0, 'Tam\'s first shifts are free');
+  const hid = E('handsList()[1].id'), nd = JSON.parse(E('JSON.stringify(handsNodes(handsGet(handsList()[1].id)).filter(n => n.own)[0] || null)'));
+  assert(nd, `the hired gatherer has a job of their profession open (${nd && nd.kind} tier ${nd && nd.t})`);
+  const fee = E(`handsFee(handsGet("${hid}"), "${nd.kind}", ${nd.t})`), gb = E('S.gold'), sp0 = E('S.econ.spent.shift');
+  assert(fee > 0 && E(`handsPreview(handsGet("${hid}"), "${nd.kind}", ${nd.t}).haul`) > 0, `a shift shows a fee (${fee}) and a haul before you send`);
+  assert(E(`!!handsSend("${hid}", "${nd.kind}", ${nd.t})`) && E('S.gold') === gb - fee && E('S.econ.spent.shift') === sp0 + fee && E(`handsStatus("${hid}").st`) === 'out', 'Send on a job charges the fee once and the gatherer goes out');
+  // fast-forward: the shift ends, the haul lands
+  const have0 = E(`S.mats.${nd.kind}[${nd.t - 1}]`);
+  clock(g, T0 + 9 * 3600e3); secs(g, 1.5);
+  assert(E(`handsStatus("${hid}").st`) === 'camp' && E(`S.mats.${nd.kind}[${nd.t - 1}]`) > have0, `after the shift the gatherer is home and the haul is in the Storehouse (+${E(`S.mats.${nd.kind}[${nd.t - 1}]`) - have0})`);
+  // unpaid: no gold, no shift, nobody leaves
+  E('S.gold = 0');
+  const why = E(`handsCanSend("${hid}", "${nd.kind}", ${nd.t}).why`);
+  assert(E(`handsSend("${hid}", "${nd.kind}", ${nd.t})`) === null && /Needs .* more gold/.test(why) && E(`handsUnpaid(handsGet("${hid}"))`) && E('handsList().length') === 2 && E('S.gold') === 0, `no gold: the shift does not start ("${why}"), the gatherer is unpaid and stays`);
+  clock(g, T0 + 20 * 3600e3); secs(g, 1.5);
+  assert(E('handsList().length') === 2, 'unpaid gatherers never leave, even after hours');
+  // let go: a random gatherer leaves, a named one returns to the board with the level
+  E('S.gold = 1e9');
+  assert(E(`handsLetGo("${hid}")`) && E('handsList().length') === 1 && E('handsFree()') === 1, 'Let go frees the Tent; a random gatherer leaves for good');
+  E('handsGet("tam").lv = 7; handsGet("tam").xp = 2');
+  E('handsLetGo("tam")');
+  const back = JSON.parse(E('JSON.stringify(S.hands.board.apps.find(a => a.key === "tam"))'));
+  assert(back && back.ret && back.ret.lv === 7 && E('handsBoard().find(b => b.app.key === "tam").cost') === 0, 'a named gatherer let go returns to the board with their level, free to hire again');
+  const gh = E('S.gold'); E('handsHire(S.hands.board.apps.findIndex(a => a.key === "tam"))');
+  assert(E('handsGet("tam").lv') === 7 && E('S.gold') === gh, 'hiring them back is free and keeps the level');
+  errs.push(...g.errors);
+  // the views are offline: nothing in them reaches the online layer
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '74-ui-hands.js'), 'utf8').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+  assert(!/\b(online|room|db|user)\.|\bsendRoom|\bdbGet|\bdbSet/.test(src) && !/\b(alert|confirm|prompt)\(/.test(src), '74-ui-hands.js uses no online, room, db or user calls, and no alert/confirm/prompt');
+  assert(!errs.length, 'no gatherer errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('gatherers crashed: ' + (e.stack || e)); }
+
+// ---- W1-E in Chromium at 360 x 740: the board and your gatherers ----
+console.log('gatherers UI (browser)');
+try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('gatherers UI (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage(); const errs = [];
+      page.on('pageerror', e => errs.push(String(e)));
+      await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+      await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+      const X = s => page.evaluate(s => window.__t.x(s), s);
+      await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+      await X('S.maxZone = 12; S.zone = 12; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.camp.b.store = 1; S.gold = 1e9; for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); tick(1.2); tick(1.2); true');
+      await X('setTab("tav"); ui(true); true'); await page.waitForTimeout(500);
+      const n = s => page.evaluate(s => document.querySelectorAll(s).length, s);
+      const vis = s => page.evaluate(s => { const e = document.querySelector(s); return !!(e && e.offsetParent !== null); }, s);
+      assert(await vis('#sec-hands') && await n('#sec-hands .hd-card') >= 1 && await n('#sec-hands-crew .hd-card') >= 1, 'the Tavern shows the board with an applicant and Your gatherers with Tam');
+      assert(await X('!!document.querySelector("#online") && !!document.querySelector("#board") && !!document.querySelector("#renameForm")'), 'the online parts of the Tavern are still there');
+      const list0 = await X('handsList().length'), gold0 = await X('S.gold'), cost = await X('handsBoard()[0].cost');
+      await page.click('#sec-hands .hd-card .hd-act .mini.go'); await page.waitForTimeout(150);
+      assert(await X('handsList().length') === list0 && /Tap again/.test(await page.textContent('#sec-hands .hd-card .hd-act .mini.go')), 'Hire asks once first (in the page, no dialog)');
+      await page.click('#sec-hands .hd-card .hd-act .mini.go'); await page.waitForTimeout(200);
+      assert(await X('handsList().length') === list0 + 1 && await X('S.gold') === gold0 - cost && /Tents 2\/2/.test(await page.textContent('#sec-hands .hd-top')), 'the second tap hires: gold spent, Tents 2/2');
+      await X('S.hands.board.apps.push(handsRollApp()); ui(true); true'); await page.waitForTimeout(300);
+      assert(await page.evaluate(() => { const b = document.querySelector('#sec-hands .hd-card .hd-act .mini.go'); return !!b && b.disabled; }) && /tents are taken/.test(await page.textContent('#sec-hands .hd-why')), 'with no free tent the Hire button is off and says why');
+      // send the hired gatherer
+      const crew = '#sec-hands-crew .hd-card:nth-of-type(2)';
+      await page.click(crew + ' .hd-act .mini.go'); await page.waitForTimeout(200);
+      const gb = await X('S.gold'); const jobs = await n(crew + ' .hd-job');
+      await page.click(crew + ' .hd-job:not([disabled])'); await page.waitForTimeout(250);
+      assert(jobs >= 1 && await X('handsList()[1].job !== null') && await X('S.gold') < gb && /On shift/.test(await page.textContent(crew + ' .hd-stat')), 'Send on a job: pick a job, the fee is charged, the card says On shift');
+      await X('const x = handsList()[1]; x.job.end = Date.now() - 1000; handsCatchUp(Date.now(), false); S.gold = 0; ui(true); true'); await page.waitForTimeout(300);
+      assert(/Unpaid/.test(await page.textContent(crew + ' .hd-stat')) && await X('handsList().length') === 2, 'no gold: the gatherer shows Unpaid and stays');
+      await page.click(crew + ' .hd-act .mini.warn'); await page.waitForTimeout(150);
+      assert(await X('handsList().length') === 2, 'Let go asks first');
+      await page.click(crew + ' .hd-act .mini.warn'); await page.waitForTimeout(200);
+      assert(await X('handsList().length') === 1, 'the second tap lets them go');
+      assert(!errs.length, 'no gatherer UI errors' + (errs.length ? ': ' + errs[0] : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('gatherers UI (browser) crashed: ' + (e.stack || e)); }
+
 // ---- CU1: no rapid catch-up XP for heroes (owner, 2026-09-28: "They shouldn't have rapid catch-up XP
 // either. We could have an achievement for maxing out all heroes and that shouldn't be spoonfed.") ----
 console.log('no catch-up (CU1)');
