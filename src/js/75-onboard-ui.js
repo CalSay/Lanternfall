@@ -127,7 +127,7 @@
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
     attack: () => onGame() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
-    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab'), side: 'up', text: `${abName()} is ready. Press it. (Hold any button to see what it does.)` } : null,
+    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
     dodge: () => onGame() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
     parry: () => onGame() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
     boss: () => onGame() && target() === 'mob' && mob && mob.boss ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' } : null,

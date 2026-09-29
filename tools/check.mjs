@@ -6069,6 +6069,25 @@ try {
     assert(E('soloPick("wren") && S.L === 7 && S.xp === 3 && soloLevels().tobin.L === 4 && soloLevels().pip.L === 1'), 'back to Wren: her level 7 again; Tobin keeps his 4');
     errs.push(...g.errors);
   }
+  // 2b. three ability slots per hero (owner): equip, clear, swap; saved; idle play casts what is equipped
+  {
+    const g = T(), E = s => g.eval(s);
+    E('soloPick("pip")');
+    assert(E('JSON.stringify(soloEquipped())') === '["fire",null,null]' && E('JSON.stringify(soloAbilities())') === '["fire"]', 'a new hero starts with its ability in slot 1; slots 2 and 3 are empty');
+    assert(E('soloEquip(2, "fire") && JSON.stringify(soloEquipped())') === '[null,null,"fire"]', 'placing it in slot 3 moves it there (a swap with the empty slot 1)');
+    assert(!E('soloEquip(1, "echo")') && E('JSON.stringify(soloEquipped())') === '[null,null,"fire"]', "another hero's ability cannot be equipped");
+    run(g, 3);
+    assert(E('SOLO_STATS.auto') >= 1 && E('SOLO_STATS.casts') === E('SOLO_STATS.auto'), 'idle play casts the ability from whatever slot holds it');
+    E('save()');
+    const h = loadCore({ solo: true, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }) });
+    assert(h.eval('JSON.stringify(soloEquipped())') === '[null,null,"fire"]', 'the slots are saved per hero');
+    assert(E('soloEquip(2, null) && JSON.stringify(soloEquipped())') === '[null,null,null]', 'a slot can be cleared');
+    const c0 = E('SOLO_STATS.casts'); run(g, 12);
+    assert(E('SOLO_STATS.casts') === c0 && !E('soloAbility()'), 'with every slot empty nothing is cast, idle or by hand');
+    E('soloPick("wren")');
+    assert(E('JSON.stringify(soloEquipped())') === '["echo",null,null]' && E('JSON.stringify(S.solo.eq.pip)') === '[null,null,null]', "each hero keeps its own slots (Wren's are hers; Pip's stay cleared)");
+    errs.push(...g.errors);
+  }
   // 3. the buttons: Attack's cooldown; Parry tighter than Dodge; a missed parry opens you up; dodge = no damage;
   //    parry = no damage, a stagger for the counter's length, the counter lands inside it
   {
@@ -6125,7 +6144,7 @@ try {
   }
   // 5. each ability does what it says (the status system: Mark, Stun, Burn)
   {
-    const setup = k => { const g = T(), E = s => g.eval(s); E(`soloPick("${k}")`); run(g, 1.5); E('combatFoes().forEach(f => { if (f && !f.dead) { f.hp = f.max = 1e9; } }); S.party.abilityCd = 0'); return [g, E]; };
+    const setup = k => { const g = T(), E = s => g.eval(s); E(`soloPick("${k}")`); run(g, 1.0); E('combatFoes().forEach(f => { if (f && !f.dead) { f.hp = f.max = 1e9; } }); S.party.abilityCd = 0'); return [g, E]; };
     let [g, E] = setup('wren');
     const n = E('combatFoes().filter(f => f && !f.dead && f.hp > 0).length');
     assert(n >= 2 && E('soloAbility()') && E('combatFoes().filter(f => f && !f.dead && f.hp > 0).every(f => f.hp < f.max && stHas(f, "mark"))'), `Echo Shot hits every foe in the lane (${n}) and Marks them`);
@@ -6235,8 +6254,17 @@ try {
       assert(await X('S.totalKills + ":" + (mob ? mob.hp : 0)') === k0, 'the game waits while the hero is being chosen');
       await page.click('#createScreen .ccard[data-hero="pip"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
       assert(await X('soloHero() === "pip" && heroSpec().comp === "pip"'), 'Pip is the hero on the stage (her own art)');
-      const bar = await page.$eval('#soloBar', b => { const r = b.getBoundingClientRect(), s = document.getElementById('stage').getBoundingClientRect(); return { top: Math.round(r.top), stageBottom: Math.round(s.bottom), n: b.querySelectorAll('.sbtn').length, w: [...b.querySelectorAll('.sbtn')].map(x => Math.round(x.getBoundingClientRect().width)), hMin: Math.round(Math.min(...[...b.querySelectorAll('.sbtn')].map(x => x.getBoundingClientRect().height))), hidden: b.hidden }; });
-      assert(!bar.hidden && bar.n === 4 && bar.hMin >= 48 && Math.min(...bar.w) >= 60 && bar.top >= bar.stageBottom - 1, `four thumb-size buttons under the stage, not over the fighters (${JSON.stringify(bar)})`);
+      const bar = await page.$eval('#soloBar', b => {
+        const r = b.getBoundingClientRect(), s = document.getElementById('stageBox').getBoundingClientRect(), nav = document.querySelector('.tabs').getBoundingClientRect();
+        const rows = [...b.querySelectorAll('.sb-row')].map(row => [...row.querySelectorAll('.sbtn')].map(x => { const q = x.getBoundingClientRect(); return { act: x.dataset.act, x: Math.round(q.left), y: Math.round(q.top), w: Math.round(q.width), h: Math.round(q.height), cls: x.className }; }));
+        const game = document.getElementById('game'), kids = [...game.children].filter(k => !k.hidden && k.getClientRects().length).map(k => k.id || k.className.split(' ')[0]);
+        return { rows, top: Math.round(r.top), bottom: Math.round(r.bottom), stageBottom: Math.round(s.bottom), navTop: Math.round(nav.top), hidden: b.hidden, order: kids.join('>') };
+      });
+      const flat = bar.rows.flat();
+      assert(!bar.hidden && bar.rows.length === 2 && bar.rows.map(r => r.map(x => x.act).join()).join('|') === 'ab0,ab1,ab2|parry,dodge,atk', `the action bar: two rows, Ability 1-3 over Parry, Dodge, Attack (${bar.rows.map(r => r.map(x => x.act).join()).join(' | ')})`);
+      assert(flat.every(x => x.w >= 48 && x.h >= 48 && Math.abs(x.w - x.h) <= 1) && bar.rows[0].every((x, i) => x.y < bar.rows[1][i].y) && bar.rows[1][2].x > bar.rows[1][0].x, `six square slots of 48 px or more; Attack bottom right (${flat.map(x => x.w + 'x' + x.h).join(' ')})`);
+      assert(bar.top >= bar.stageBottom - 1 && bar.top - bar.stageBottom <= 8 && bar.bottom <= bar.navTop && bar.navTop - bar.bottom <= 16 && /stageBox>soloBar$/.test(bar.order), `the bar touches the stage (not over it) and is the lowest thing above the tab bar (${bar.order}; stage ${bar.stageBottom}, bar ${bar.top}-${bar.bottom}, tabs ${bar.navTop})`);
+      assert(/sb-abslot/.test(flat[0].cls) && !/empty/.test(flat[0].cls) && /empty/.test(flat[1].cls) && /empty/.test(flat[2].cls), 'slot 1 holds the hero\'s ability; slots 2 and 3 show empty');
       const party = await X('[!!document.querySelector("#sec-party-form, #sec-party-bench, #sec-party-roster, #sec-party-field, #sec-party-bonds, #sec-visitor"), document.querySelector(".tab[data-tab=party]").textContent.trim(), stageStats().front.map(a => a[0]).join()].join("|")');
       assert(/^false\|Hero\|hero$/.test(party), `no party UI (formation, bench, roster, Bonds, visitor); the tab is Hero; only the hero on the stage (${party})`);
       // walk the guide: each step's target exists, is visible, and the ring marks it; one hint; the game waits while it shows
@@ -6251,7 +6279,7 @@ try {
           return { ok: vis && cx >= r.left - 30 && cx <= r.right + 30 && cy >= r.top - 30 && cy <= r.bottom + 30, paused: ONBOARD.paused, bubs: [...document.querySelectorAll('.ob-bub')].filter(b => !b.hidden).length, sel: n.id || n.className }; })()`);
         if (!seen.includes(st)) { seen.push(st); assert(chk.ok && chk.bubs === 1 && (chk.paused || st === 'chop'), `guide step "${st}": its target (${chk.sel}) exists, is visible and marked; one hint; the game waits (${JSON.stringify(chk)})`); }
         // do the step through its own target (the buttons act on pointerdown)
-        if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab' : st}`); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
+        if (['attack', 'ability', 'dodge', 'parry'].includes(st)) { const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab0' : st}`); const r = await b.boundingBox(); await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
         else if (st === 'boss') await page.click('.ob-ok');
         else await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
         await page.waitForTimeout(300);
@@ -6260,6 +6288,20 @@ try {
         if (await X('S.tab && !["upgrade"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);
       }
       assert(['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x)), `the first session walks Attack, the ability, Dodge and Parry (${seen.join(', ')})`);
+      // the slot states: a cooldown sweep and seconds after a cast; Parry and Dodge glow on a heavy hit; the picker
+      await X('S.onboard.tips = false; closeMenu(); S.activity === "fight" || setActivity("fight"); true'); await page.waitForTimeout(300);
+      for (let i = 0; i < 30 && !(await X('soloButtons().fight && soloButtons().abs[0].ready')); i++) { await X('for (let k = 0; k < 10; k++) tick(0.1); true'); await page.waitForTimeout(50); }
+      await X('soloAbility({ slot: 0 }); true'); await page.waitForTimeout(350);
+      const cd = await page.$eval('#soloBar .sb-ab0', b => ({ cd: +getComputedStyle(b).getPropertyValue('--cd'), n: b.querySelector('.sb-n').textContent, cool: b.classList.contains('cool') }));
+      assert(cd.cool && cd.cd > 0 && /^\d+$/.test(cd.n), `after a cast the slot sweeps dark with the seconds left (${JSON.stringify(cd)})`);
+      await X('actWarn({ kind: "heavy", id: "t3", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true'); await page.waitForTimeout(350);
+      const glow = await page.$$eval('#soloBar .sb-parry, #soloBar .sb-dodge', l => l.map(b => b.classList.contains('live')));
+      assert(glow.every(Boolean), 'a heavy hit coming: Parry and Dodge glow');
+      const s2 = await page.$('#soloBar .sb-ab1'); const r2 = await s2.boundingBox(); await page.mouse.move(r2.x + r2.width / 2, r2.y + r2.height / 2); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(250);
+      const pk = await page.$$eval('#abPicker .sp-ab', l => l.map(b => b.dataset.ab));
+      assert(pk.join() === 'fire' && await X('soloPickerOpen()'), `tapping an empty slot opens the picker with the hero's unlocked abilities (${pk.join()})`);
+      await page.click('#abPicker .sp-ab[data-ab="fire"]'); await page.waitForTimeout(250);
+      assert(await X('JSON.stringify(soloEquipped())') === '[null,"fire",null]' && !(await X('soloPickerOpen()')), 'picking places it in that slot (swapping it out of slot 1)');
       assert(!errs.length, 'no page errors in the solo run' + (errs.length ? ': ' + errs[0] : ''));
     } finally { await browser.close(); }
   }

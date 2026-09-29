@@ -8,17 +8,20 @@
 //            the free switch at camp: gold, gear and camp are shared, each hero keeps its own level and XP);
 //            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live)
 //   buttons  soloAttack() -> '' | 'hit' | 'finisher' | 'interrupt' | 'cd'; soloParry(forgive) -> 'parry' | 'miss' | 'locked';
-//            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ auto }) -> bool
+//            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ slot, auto }) -> bool
+//   slots    soloAbilities(hero) -> unlocked ids; soloEquipped() -> [id | null] x 3 (the playing hero's, saved in S.solo.eq);
+//            soloEquip(slot, id | null) -> bool (place, swapping if equipped elsewhere, or clear); idle casts what is equipped
 //   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
 //            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash }
 // Events: soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
-// Save: registerState('solo', { v, hero, lv: { key: { L, xp } } }).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
 // ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only.
 
-var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons,
+var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
 {
@@ -30,8 +33,9 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
   });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
-  registerState('solo', { v: 1, hero: null, lv: {} });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {} });
+  const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -60,7 +64,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const ok = chooseClass(h.base, nm, { now: o.now, free: !!from });
     if (!ok) return false;
     if (S.party) S.party.abilityCd = 0;
-    atkT = 0; dodgeT = 0; parryT = 0; openT = 0; readyFor = 0;
+    atkT = 0; dodgeT = 0; parryT = 0; openT = 0; for (const id in cds) cds[id] = 0; readyFor.fill(0);
     if (typeof gearDirty === 'function') gearDirty();
     emit('soloHero', { key, from: from || null });
     if (from && from !== key) toast(`${nm} takes up the lamp.`, 'good', null, 'normal');
@@ -83,7 +87,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   }
 
   // ---- the buttons ----
-  let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, readyFor = 0, clock = 0;
+  let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
+  const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
   soloAttack = () => {
     if (!fighting() || !heroUp()) return '';
@@ -145,9 +150,35 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   }
   on('sceneReset', () => { counters.length = 0; });
 
-  // ---- the ability ----
-  const abOf = () => { const k = soloHero(); return k ? SOLO_HEROES[k].ab : null; };
-  const abCd = () => { const a = abOf(); return a ? a.cd * mod('abilityCd') : 0; };
+  // ---- the abilities: three slots per hero (owner: the player picks what goes where) ----
+  // S.solo.eq[hero] = [id | null] x 3. soloAbilities(k) the hero's unlocked ids (one each for now), soloEquipped() the
+  // playing hero's slots, soloEquip(slot, id | null) places (swapping if equipped elsewhere) or clears; saved.
+  soloAbilities = k => { k = k || soloHero(); return k && SOLO_HEROES[k] ? SOLO_HEROES[k].abs.filter(id => SOLO_ABILITIES[id]) : []; };
+  soloEquipped = () => {
+    const k = soloHero(); if (!k) return [null, null, null];
+    const s = Sx(), own = soloAbilities(k);
+    if (!s.eq || typeof s.eq !== 'object') s.eq = EQ0();
+    let row = s.eq[k];
+    if (!Array.isArray(row)) row = s.eq[k] = SOLO_HEROES[k].eq.slice();
+    for (let i = 0; i < 3; i++) if (row[i] != null && !own.includes(row[i])) row[i] = null;   // a stale id (a tool, an old code)
+    while (row.length < 3) row.push(null);
+    if (row.length > 3) row.length = 3;
+    return row;
+  };
+  soloEquip = (slot, id) => {
+    const k = soloHero(); if (!k || !(slot >= 0 && slot < 3)) return false;
+    const row = soloEquipped();
+    if (id == null) { row[slot] = null; emit('soloEquip', { hero: k, slot, id: null }); return true; }
+    if (!soloAbilities(k).includes(id)) return false;
+    const was = row.indexOf(id);
+    if (was >= 0 && was !== slot) row[was] = row[slot];   // swap: the slot's old ability goes where this one was
+    row[slot] = id;
+    emit('soloEquip', { hero: k, slot, id });
+    return true;
+  };
+  const abAt = slot => { const id = soloEquipped()[slot]; return id ? SOLO_ABILITIES[id] : null; };
+  const abCd = a => (a ? a.cd * mod('abilityCd') : 0);
+  const cdOf = a => (a ? Math.max(0, cds[a.id] || 0) : 0);
   let patchT = 0, patchTick = 0, patchP = 0;
   function frontFoe() {
     let r = -1; for (const f of foes()) if (alive(f) && f.row > r) r = f.row;
@@ -155,9 +186,13 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return best;
   }
   const focus = () => (typeof mob !== 'undefined' && alive(mob) ? mob : frontFoe());
+  // opts: { slot (0-2; none = the first equipped ability that is ready), auto }
   soloAbility = opts => {
-    const a = abOf(), p = S.party, auto = !!(opts && opts.auto);
-    if (!a || !p || !fighting() || !heroUp() || p.abilityCd > 0 || !anyFoe()) return false;
+    const o = opts || {}, p = S.party, auto = !!o.auto;
+    let slot = o.slot;
+    if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
+    const a = abAt(slot);
+    if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
     const P = heroAtkNow(auto), ty = unitType('hero');
     const tags = ST_AB;
     if (a.id === 'echo') {
@@ -177,21 +212,27 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       const f = focus();
       if (f) {
         cbDamageFoe(f, P * T.fire.x, 0, 'magic', 'fire', tags);
-        for (const o of foes()) if (o !== f && alive(o)) cbDamageFoe(o, P * T.fire.xOther, 0, 'magic', 'fire', tags);
-        for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, P * T.fire.burnP, 0);
+        for (const o2 of foes()) if (o2 !== f && alive(o2)) cbDamageFoe(o2, P * T.fire.xOther, 0, 'magic', 'fire', tags);
+        for (const o2 of foes()) if (alive(o2)) stApply(o2, 'burn', 1, P * T.fire.burnP, 0);
       }
       patchT = T.fire.patchT; patchTick = 1; patchP = P * T.fire.burnP;
       emit('shake', 0.3);
     }
-    p.abilityCd = abCd(); readyFor = 0;
+    cds[a.id] = abCd(a); readyFor[slot] = 0;
+    mirrorCd();
     ST.casts++; if (auto) ST.auto++;
     emit('float', { txt: a.name, color: '#FFD27A', big: true });
-    emit('ability', { cls: 'solo', id: a.id, name: a.name, auto });
+    emit('ability', { cls: 'solo', id: a.id, name: a.name, auto, slot });
     return true;
   };
-  soloAbilityInfo = () => {
-    const a = abOf(), p = S.party; if (!a || !p) return null;
-    return { id: a.id, name: a.name, desc: a.desc, cd: abCd(), left: Math.max(0, p.abilityCd || 0), ready: !(p.abilityCd > 0), spare: 0,
+  // 55-party's readers (the hero card, the guide's "ready") keep S.party.abilityCd: the first equipped slot's cooldown
+  function mirrorCd() { const p = S.party; if (p) { const a = abAt(0) || abAt(1) || abAt(2); p.abilityCd = cdOf(a); } }
+  // slot: 0-2 (none: the first equipped slot); null when the slot is empty
+  soloAbilityInfo = slot => {
+    const eq = soloEquipped(), i = slot == null ? Math.max(0, eq.findIndex(Boolean)) : slot, a = abAt(i);
+    if (!a || !S.party) return null;
+    const left = cdOf(a);
+    return { id: a.id, name: a.name, desc: a.desc, line: a.line, cd: abCd(a), left, ready: !(left > 0), spare: 0, slot: i,
       autoUnlocked: true, autoCast: true, patch: patchT };
   };
 
@@ -230,23 +271,32 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       patchT -= dt; patchTick -= dt;
       if (patchTick <= 0) { patchTick += 1; for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, patchP, 0); }
     }
-    if (!fighting()) { readyFor = 0; return; }
+    for (const id in cds) if (cds[id] > 0) cds[id] = Math.max(0, cds[id] - dt);
+    mirrorCd();
+    if (!fighting()) { readyFor.fill(0); return; }
     trashTick(dt);
-    // idle: the ability goes off once it has waited autoDelay (the player gets the first chance)
-    const p = S.party;
-    if (p && !(p.abilityCd > 0) && anyFoe() && heroUp()) { readyFor += dt; if (readyFor >= T.autoDelay) soloAbility({ auto: true }); }
-    else readyFor = 0;
+    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance)
+    const eq = soloEquipped(), can = anyFoe() && heroUp();
+    for (let i = 0; i < 3; i++) {
+      const a = eq[i] ? SOLO_ABILITIES[eq[i]] : null;
+      if (a && can && !(cds[a.id] > 0)) { readyFor[i] += dt; if (readyFor[i] >= T.autoDelay) soloAbility({ slot: i, auto: true }); }
+      else readyFor[i] = 0;
+    }
   });
 
   // ---- the snapshot the buttons read (a kept object) ----
-  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: { left: 0, max: 0, ready: false, name: '', id: '' }, tele: '', inParry: false, inDodge: false, fight: false };
+  const AB = () => ({ left: 0, max: 0, ready: false, name: '', id: '' });
+  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: AB(), abs: [AB(), AB(), AB()], tele: '', inParry: false, inDodge: false, fight: false };
   soloButtons = () => {
     const b = BTN;
     b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
     b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
     b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
-    const a = soloAbilityInfo();
-    b.ab.left = a ? a.left : 0; b.ab.max = a ? a.cd : 0; b.ab.ready = !!(a && a.ready); b.ab.name = a ? a.name : ''; b.ab.id = a ? a.id : '';
+    for (let i = 0; i < 3; i++) {
+      const a = soloAbilityInfo(i), o = b.abs[i];
+      o.left = a ? a.left : 0; o.max = a ? a.cd : 0; o.ready = !!(a && a.ready); o.name = a ? a.name : ''; o.id = a ? a.id : '';
+    }
+    Object.assign(b.ab, b.abs[Math.max(0, soloEquipped().findIndex(Boolean))]);
     b.fight = fighting() && heroUp() && anyFoe();
     const w = typeof actWarning === 'function' ? actWarning() : null;
     b.tele = w ? w.kind : ''; b.inParry = !!(w && w.kind === 'heavy' && w.left <= w.win); b.inDodge = !!(w && w.dwin && w.left <= w.dwin);

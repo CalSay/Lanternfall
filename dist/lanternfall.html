@@ -2611,47 +2611,86 @@ span.cf-d { font-weight: 600; }
 .savecode-replace { padding: 6px 12px; background: var(--gold); color: #1A1420; border: 2px solid var(--line); font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
 .savecode-replace:active { transform: scale(0.98); }
 .savecode-import-result { display: grid; gap: 8px; }
-/* 60-solo.css: the solo hero's button row under the stage and the camp's hero picker (75-solo-ui.js, SOLO1). */
-.sbar { flex: none; display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.3fr; gap: 6px; padding: 6px var(--gut) 0; }
+/* 60-solo.css: the solo hero's action bar, its ability picker and the camp's hero picker (75-solo-ui.js, SOLO1). */
+/* The Fight view (owner): header, then what is not combat (Next Up, Fight / Gather, Switch, zones), then the stage and,
+   touching it, the action bar, the lowest thing above the tab bar (thumbs). */
+.game.solo-game > .nu-slot { order: 0; padding: 4px var(--gut) 0; }
+.game.solo-game > .ctrl { order: 1; padding: 4px var(--gut) 4px; }
+.game.solo-game > .stagebox { order: 2; }
+.game.solo-game > .sbar { order: 3; }
+/* The action bar: two rows of framed square slots. Top: Ability 1-3. Bottom: Parry, Dodge, Attack (Attack bottom right). */
+.sbar { flex: none; display: grid; justify-content: center; gap: 6px; padding: 6px var(--gut) 8px; }
 .sbar[hidden] { display: none; }
-.sbtn { position: relative; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  padding: 4px 2px; background: var(--panel-2); border: 2px solid #0B0810; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 3px 0 #0B0810;
-  color: var(--bone); font: 600 calc(15px * var(--display-k, 1)) var(--display); letter-spacing: .02em; cursor: pointer; overflow: hidden;
-  -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
-.sbtn:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 #0B0810; }
-.sbtn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
-.sb-ic { width: 24px; height: 24px; image-rendering: pixelated; position: relative; z-index: 1; }
-.sb-lb { position: relative; z-index: 1; line-height: 1; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.sb-n { position: absolute; top: 3px; right: 5px; z-index: 1; font: 600 13px var(--display); color: var(--bone); }
-/* the cooldown: a dark sweep from the top that shrinks as the button comes back (--cd 1 -> 0) */
-.sb-ring { position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: conic-gradient(rgba(11, 8, 16, .72) calc(var(--cd, 0) * 360deg), transparent 0); }
-.sb-atk { background: #3A2A2A; border-color: #0B0810; }
+.sb-row { display: grid; grid-template-columns: repeat(3, var(--sz, 56px)); gap: 8px; }
+.sbtn { --sz: 56px; position: relative; width: var(--sz); height: var(--sz); padding: 0; display: flex; align-items: center; justify-content: center;
+  background: #1C1624; border: 2px solid #0B0810; outline: 2px solid #4E4060; outline-offset: -4px;
+  box-shadow: inset 0 0 0 4px #2A2233, 0 3px 0 #0B0810;
+  color: var(--bone); cursor: pointer; overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation; -webkit-touch-callout: none; }
+.sbtn:focus-visible { outline-color: var(--gold); }
+.sbtn:active, .sbtn.hit { transform: translateY(2px); box-shadow: inset 0 0 0 4px #2A2233, 0 1px 0 #0B0810; }
+.sb-ic { position: relative; z-index: 1; width: 24px; height: 24px; margin-top: -8px; image-rendering: pixelated; }
+.sb-lb { position: absolute; z-index: 1; left: 2px; right: 2px; bottom: 5px; font: 600 calc(11px * var(--display-k, 1))/1 var(--display); letter-spacing: .01em; text-align: center; white-space: nowrap; overflow: hidden; color: var(--muted); }
+.sb-key { position: absolute; z-index: 3; top: 5px; left: 6px; font: 600 10px/1 var(--display); color: #8E80A0; }
+@media (hover: none) and (pointer: coarse) { .sb-key { display: none; } }
+/* the cooldown: a dark sweep, clockwise from the top, that leaves the icon as the slot comes back (--cd 1 -> 0) */
+.sb-ring { position: absolute; inset: 4px; z-index: 2; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent calc((1 - var(--cd, 0)) * 360deg), rgba(8, 5, 12, .78) 0); }
+.sb-n { position: absolute; z-index: 3; inset: 0; display: flex; align-items: center; justify-content: center; margin-top: -6px; pointer-events: none;
+  font: 700 calc(20px * var(--display-k, 1))/1 var(--display); color: #FFF3C4; text-shadow: 0 1px 0 #0B0810, 1px 0 0 #0B0810, -1px 0 0 #0B0810, 0 -1px 0 #0B0810; }
+/* the basic three are plain; the ability slots wear a gold frame so they read as special */
+.sb-atk { background: #2A1C1C; }
 .sb-atk .sb-lb { color: #FFD9B0; }
 .sb-parry .sb-lb { color: var(--gold); }
 .sb-dodge .sb-lb { color: #8FB8FF; }
-.sb-ab { background: #2E2240; }
-.sb-ab .sb-lb { font-size: calc(13px * var(--display-k, 1)); letter-spacing: 0; }
-.sb-ab.ready { box-shadow: inset 0 0 0 2px var(--gold), 0 3px 0 #0B0810; }
-/* a heavy hit is winding up: Parry and Dodge light up */
-.sbtn.live { box-shadow: inset 0 0 0 2px #E0524F, 0 3px 0 #0B0810; }
-.sb-dodge.live { box-shadow: inset 0 0 0 2px #8FB8FF, 0 3px 0 #0B0810; }
-/* missed parry: open for a moment */
-.sb-parry.open { background: #4A1E22; }
+.sb-abslot { outline-color: #9A7A2E; box-shadow: inset 0 0 0 4px #33283E, inset 0 0 0 5px #6B5320, 0 3px 0 #0B0810; background: #231A30; }
+.sb-abslot .sb-lb { color: var(--gold); }
+.sb-abslot.ready { outline-color: var(--gold); }
+.sb-abslot.empty { background: #16111C; outline-color: #3A3046; box-shadow: inset 0 0 0 4px #1E1826, 0 3px 0 #0B0810; }
+.sb-abslot.empty .sb-lb { color: #6B6275; }
+/* disabled: nothing to hit right now */
+.sbtn.off .sb-ic { opacity: .45; }
+/* a telegraphed hit is coming: Parry and Dodge glow */
+.sb-parry.live { outline-color: #E0524F; box-shadow: inset 0 0 0 4px #3A1A20, 0 0 10px rgba(224, 82, 79, .75), 0 3px 0 #0B0810; }
+.sb-dodge.live { outline-color: #8FB8FF; box-shadow: inset 0 0 0 4px #1A2640, 0 0 10px rgba(143, 184, 255, .75), 0 3px 0 #0B0810; }
+.sb-parry.open { background: #4A1E22; }   /* a missed parry: open for a moment */
 .sbtn.nope { animation: sb-nope .25s steps(3); }
 .sbtn.good { animation: sb-good .45s ease-out; }
-.sbtn.hit { animation: sb-hit .2s ease-out; }
+.sbtn.ready-now { animation: sb-ready .45s ease-out; }
 @keyframes sb-nope { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-3px); } 66% { transform: translateX(3px); } }
 @keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
-@keyframes sb-hit { 0% { background: #5A3A30; } 100% { } }
+@keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
 .sb-tip { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #16111C; color: var(--bone);
   border: 2px solid #0B0810; outline: 2px solid var(--line-hi, #4A3F57); font: 14px/1.35 var(--body, sans-serif); pointer-events: none; }
 .sb-tip b { font: 600 17px var(--display); color: var(--gold); }
 .sb-tip small { color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.hit { animation: none; } .sbtn:active { transform: none; } }
-/* landscape / wide: the row sits under the stage in the game column; keep it compact */
-@media (min-width: 900px) { .sbar { grid-template-columns: repeat(4, minmax(0, 120px)); justify-content: center; } }
-@media (max-height: 520px) { .sbtn { min-height: 48px; } .sb-ic { width: 18px; height: 18px; } }
+@media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
+@media (max-height: 640px) { .sbtn { --sz: 50px; } .sb-row { grid-template-columns: repeat(3, 50px); } }
+@media (max-height: 520px) { .sbtn { --sz: 46px; } .sb-row { grid-template-columns: repeat(3, 46px); } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
+/* the old floating ability circles over the stage (62-stage .abil, 75-class-ui .abil2): the bar has them now */
+body.solo-on .stage .abil, body.solo-on .stage .abil2 { display: none !important; }
+
+/* ---- the ability picker (a small sheet; the game waits while it is open) ---- */
+.sp-ov { position: fixed; inset: 0; z-index: 45; display: flex; align-items: flex-end; justify-content: center; background: rgba(10, 7, 14, .6); }
+.sp-sheet { width: min(420px, 100%); display: grid; gap: 8px; padding: 12px var(--gut, 12px) 16px; background: var(--panel, #221B2B); border: 2px solid var(--line-hi); border-bottom: 0; box-shadow: 0 -4px 0 #0B0810; }
+.sp-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: start; }
+.sp-head b { font: 600 20px var(--display); color: var(--gold); }
+.sp-head small { grid-column: 1; color: var(--muted); }
+.sp-x { grid-row: 1 / span 2; grid-column: 2; width: 44px; height: 44px; background: none; border: 0; color: var(--muted); font: 600 24px/1 var(--display); cursor: pointer; }
+.sp-ab { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: center; min-height: 56px; padding: 6px 8px; text-align: left; background: #231A30; color: var(--bone);
+  border: 2px solid #0B0810; outline: 2px solid #6B5320; outline-offset: -4px; cursor: pointer; font: inherit; }
+.sp-ab.on { outline-color: var(--gold); }
+.sp-ic { width: 36px; height: 36px; margin-left: 6px; image-rendering: pixelated; }
+.sp-t { display: grid; gap: 1px; }
+.sp-t b { font: 600 18px var(--display); color: var(--gold); }
+.sp-t small { color: var(--muted); }
+.sp-more { margin: 0; }
+.sp-clear { min-height: 44px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 16px var(--display); cursor: pointer; }
+.sp-clear:disabled { opacity: .5; cursor: default; }
+
+/* the guide's Got it button (75-onboard-ui, a step whose action is reading it) */
+.ob-ok { pointer-events: auto; flex: none; min-height: 36px; padding: 0 12px; background: var(--gold); color: #1A1420; border: 2px solid #0B0810;
+  font: 600 calc(15px * var(--display-k, 1)) var(--display); cursor: pointer; }
+.ob-ok[hidden] { display: none; }
 
 /* ---- "Choose your hero" (the Camp view) ---- */
 .solo-pick .sp-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
@@ -9889,7 +9928,8 @@ const CLS_TUNE = {
 // hero; each maps onto a base class kit (stats, gear weights, star maps), so balance keeps its tables.
 //   SOLO_TUNE        knobs (sim --eval "SOLO_TUNE.x = ..."); on: 0 turns the whole layer off (the dormant party
 //                    game; check.mjs runs its legacy party sections that way through a prelude `var __SOLO = 0`)
-//   SOLO_HEROES      the starters: { key, base, kit, weapon, role, ab: { id, name, desc, cd } }
+//   SOLO_ABILITIES   the abilities: { id, name, cd, line, desc }
+//   SOLO_HEROES      the starters: { key, base, kit, weapon, role, range, abs (unlocked ids), eq (starting slots), ab (the signature) }
 //   SOLO_ORDER       picker order
 //   soloOn() -> bool the solo layer is on
 // Runtime and state: 59j-solo.js. UI: 75-solo-ui.js, 76-create.js.
@@ -9924,14 +9964,22 @@ const SOLO_TUNE = {
   bossHitX: 0.6        // a boss's (and its adds') hits on the lone hero (bosses were tuned against a tank)
 };
 
-const SOLO_HEROES = {
-  wren: { key: 'wren', base: 'ranger', kit: 'ranger', weapon: 'Bow', role: 'Archer', range: 'Ranged',
-    ab: { id: 'echo', name: 'Echo Shot', cd: 9, desc: 'A piercing arrow down the line. It hits every foe in its path and Marks them (they take 20% more).' } },
-  tobin: { key: 'tobin', base: 'warrior', kit: 'warden', weapon: 'Sword and shield', role: 'Tank', range: 'Melee',
-    ab: { id: 'bash', name: 'Shield Bash', cd: 8, desc: 'A heavy blow to the front foe. It Stuns it, and Tobin takes 40% less damage for 4 seconds.' } },
-  pip: { key: 'pip', base: 'mage', kit: 'lanternmage', weapon: 'Staff', role: 'Caster', range: 'Ranged, fire',
-    ab: { id: 'fire', name: 'Fireball', cd: 10, desc: 'A burst of fire on the target. It Burns it and nearby foes, and leaves a burning patch for 3 seconds.' } }
+// The abilities (one per starter for now; the ability trees of solo-hero.md come later). line: the picker's one line.
+const SOLO_ABILITIES = {
+  echo: { id: 'echo', name: 'Echo Shot', short: 'Echo', cd: 9, line: 'Pierces the whole line and Marks every foe.',
+    desc: 'A piercing arrow down the line. It hits every foe in its path and Marks them (they take 20% more).' },
+  bash: { id: 'bash', name: 'Shield Bash', short: 'Bash', cd: 8, line: 'Stuns the front foe; you take less damage.',
+    desc: 'A heavy blow to the front foe. It Stuns it, and Tobin takes 40% less damage for 4 seconds.' },
+  fire: { id: 'fire', name: 'Fireball', short: 'Fireball', cd: 10, line: 'Burns the target and nearby foes; leaves fire.',
+    desc: 'A burst of fire on the target. It Burns it and nearby foes, and leaves a burning patch for 3 seconds.' }
 };
+// abs: the abilities the hero has unlocked; eq: the three slots a new game starts with (S.solo.eq per hero).
+const SOLO_HEROES = {
+  wren: { key: 'wren', base: 'ranger', kit: 'ranger', weapon: 'Bow', role: 'Archer', range: 'Ranged', abs: ['echo'], eq: ['echo', null, null] },
+  tobin: { key: 'tobin', base: 'warrior', kit: 'warden', weapon: 'Sword and shield', role: 'Tank', range: 'Melee', abs: ['bash'], eq: ['bash', null, null] },
+  pip: { key: 'pip', base: 'mage', kit: 'lanternmage', weapon: 'Staff', role: 'Caster', range: 'Ranged, fire', abs: ['fire'], eq: ['fire', null, null] }
+};
+for (const k in SOLO_HEROES) SOLO_HEROES[k].ab = SOLO_ABILITIES[SOLO_HEROES[k].abs[0]];   // the signature ability (the picker and the guide name it)
 const SOLO_ORDER = ['wren', 'tobin', 'pip'];
 // The hero key for a base class (a tool that picks a class picks its starter).
 const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
@@ -27495,17 +27543,20 @@ var eliteRoll, eliteRollDeep, eliteTraits, eliteHit, eliteDealt, eliteTick, elit
 //            the free switch at camp: gold, gear and camp are shared, each hero keeps its own level and XP);
 //            soloLevels() -> { key: { L, xp } } (each hero's level; the one playing reads S.L live)
 //   buttons  soloAttack() -> '' | 'hit' | 'finisher' | 'interrupt' | 'cd'; soloParry(forgive) -> 'parry' | 'miss' | 'locked';
-//            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ auto }) -> bool
+//            soloDodge(forgive) -> 'dodge' | 'perfect' | 'early' | 'miss' | 'cd'; soloAbility({ slot, auto }) -> bool
+//   slots    soloAbilities(hero) -> unlocked ids; soloEquipped() -> [id | null] x 3 (the playing hero's, saved in S.solo.eq);
+//            soloEquip(slot, id | null) -> bool (place, swapping if equipped elsewhere, or clear); idle casts what is equipped
 //   read     soloAbilityInfo() (55-party abilityInfo in solo), soloButtons() -> a reused snapshot for the UI,
 //            soloTakenX() (59-combat: the hero's damage taken), soloCounter(f) (59g: a parry's counter)
 //   stats    SOLO_STATS { attacks, parries, misses, dodges, early, counters, casts, auto, heavies, trash }
 // Events: soloHero { key, from }, soloAttack { kind }, soloParry { res }, soloDodge { res }, soloCounter { foe, dmg },
 //   ability { cls: 'solo', id, name, auto } (the 55-party event every reader already listens to).
-// Save: registerState('solo', { v, hero, lv: { key: { L, xp } } }).
+// Save: registerState('solo', { v, hero, lv: { key: { L, xp } }, eq: { key: [id | null] x 3 } }).
 // Idle and away: the hero swings on its own (50-sim), taps at half strength after 4 s (55-party) and casts its
 // ability when it has waited SOLO_TUNE.autoDelay; parries, dodges and counters are active-only.
 
-var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons,
+var soloPickerOpen = () => false;   // 75-solo-ui: the ability picker is open (90-boot waits)
+var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbility, soloAbilityInfo, soloButtons, soloAbilities, soloEquipped, soloEquip,
   soloTakenX, soloCounter, SOLO_STATS;
 
 {
@@ -27517,8 +27568,9 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return T.dmgX * (1 + (r[2] - 1) * f) * (T.heroX[k] || 1);
   });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0 };
-  registerState('solo', { v: 1, hero: null, lv: {} });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {} });
+  const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0() });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0() });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -27547,7 +27599,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const ok = chooseClass(h.base, nm, { now: o.now, free: !!from });
     if (!ok) return false;
     if (S.party) S.party.abilityCd = 0;
-    atkT = 0; dodgeT = 0; parryT = 0; openT = 0; readyFor = 0;
+    atkT = 0; dodgeT = 0; parryT = 0; openT = 0; for (const id in cds) cds[id] = 0; readyFor.fill(0);
     if (typeof gearDirty === 'function') gearDirty();
     emit('soloHero', { key, from: from || null });
     if (from && from !== key) toast(`${nm} takes up the lamp.`, 'good', null, 'normal');
@@ -27570,7 +27622,8 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   }
 
   // ---- the buttons ----
-  let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, readyFor = 0, clock = 0;
+  let atkT = 0, dodgeT = 0, parryT = 0, openT = 0, clock = 0;
+  const readyFor = [0, 0, 0], cds = {};   // idle wait per ability slot; cooldown left per ability id (runtime)
   const heroAtkNow = auto => heroAtk() * (typeof heroStand === 'function' ? heroStand(!auto) : 1);
   soloAttack = () => {
     if (!fighting() || !heroUp()) return '';
@@ -27632,9 +27685,35 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   }
   on('sceneReset', () => { counters.length = 0; });
 
-  // ---- the ability ----
-  const abOf = () => { const k = soloHero(); return k ? SOLO_HEROES[k].ab : null; };
-  const abCd = () => { const a = abOf(); return a ? a.cd * mod('abilityCd') : 0; };
+  // ---- the abilities: three slots per hero (owner: the player picks what goes where) ----
+  // S.solo.eq[hero] = [id | null] x 3. soloAbilities(k) the hero's unlocked ids (one each for now), soloEquipped() the
+  // playing hero's slots, soloEquip(slot, id | null) places (swapping if equipped elsewhere) or clears; saved.
+  soloAbilities = k => { k = k || soloHero(); return k && SOLO_HEROES[k] ? SOLO_HEROES[k].abs.filter(id => SOLO_ABILITIES[id]) : []; };
+  soloEquipped = () => {
+    const k = soloHero(); if (!k) return [null, null, null];
+    const s = Sx(), own = soloAbilities(k);
+    if (!s.eq || typeof s.eq !== 'object') s.eq = EQ0();
+    let row = s.eq[k];
+    if (!Array.isArray(row)) row = s.eq[k] = SOLO_HEROES[k].eq.slice();
+    for (let i = 0; i < 3; i++) if (row[i] != null && !own.includes(row[i])) row[i] = null;   // a stale id (a tool, an old code)
+    while (row.length < 3) row.push(null);
+    if (row.length > 3) row.length = 3;
+    return row;
+  };
+  soloEquip = (slot, id) => {
+    const k = soloHero(); if (!k || !(slot >= 0 && slot < 3)) return false;
+    const row = soloEquipped();
+    if (id == null) { row[slot] = null; emit('soloEquip', { hero: k, slot, id: null }); return true; }
+    if (!soloAbilities(k).includes(id)) return false;
+    const was = row.indexOf(id);
+    if (was >= 0 && was !== slot) row[was] = row[slot];   // swap: the slot's old ability goes where this one was
+    row[slot] = id;
+    emit('soloEquip', { hero: k, slot, id });
+    return true;
+  };
+  const abAt = slot => { const id = soloEquipped()[slot]; return id ? SOLO_ABILITIES[id] : null; };
+  const abCd = a => (a ? a.cd * mod('abilityCd') : 0);
+  const cdOf = a => (a ? Math.max(0, cds[a.id] || 0) : 0);
   let patchT = 0, patchTick = 0, patchP = 0;
   function frontFoe() {
     let r = -1; for (const f of foes()) if (alive(f) && f.row > r) r = f.row;
@@ -27642,9 +27721,13 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return best;
   }
   const focus = () => (typeof mob !== 'undefined' && alive(mob) ? mob : frontFoe());
+  // opts: { slot (0-2; none = the first equipped ability that is ready), auto }
   soloAbility = opts => {
-    const a = abOf(), p = S.party, auto = !!(opts && opts.auto);
-    if (!a || !p || !fighting() || !heroUp() || p.abilityCd > 0 || !anyFoe()) return false;
+    const o = opts || {}, p = S.party, auto = !!o.auto;
+    let slot = o.slot;
+    if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
+    const a = abAt(slot);
+    if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
     const P = heroAtkNow(auto), ty = unitType('hero');
     const tags = ST_AB;
     if (a.id === 'echo') {
@@ -27664,21 +27747,27 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       const f = focus();
       if (f) {
         cbDamageFoe(f, P * T.fire.x, 0, 'magic', 'fire', tags);
-        for (const o of foes()) if (o !== f && alive(o)) cbDamageFoe(o, P * T.fire.xOther, 0, 'magic', 'fire', tags);
-        for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, P * T.fire.burnP, 0);
+        for (const o2 of foes()) if (o2 !== f && alive(o2)) cbDamageFoe(o2, P * T.fire.xOther, 0, 'magic', 'fire', tags);
+        for (const o2 of foes()) if (alive(o2)) stApply(o2, 'burn', 1, P * T.fire.burnP, 0);
       }
       patchT = T.fire.patchT; patchTick = 1; patchP = P * T.fire.burnP;
       emit('shake', 0.3);
     }
-    p.abilityCd = abCd(); readyFor = 0;
+    cds[a.id] = abCd(a); readyFor[slot] = 0;
+    mirrorCd();
     ST.casts++; if (auto) ST.auto++;
     emit('float', { txt: a.name, color: '#FFD27A', big: true });
-    emit('ability', { cls: 'solo', id: a.id, name: a.name, auto });
+    emit('ability', { cls: 'solo', id: a.id, name: a.name, auto, slot });
     return true;
   };
-  soloAbilityInfo = () => {
-    const a = abOf(), p = S.party; if (!a || !p) return null;
-    return { id: a.id, name: a.name, desc: a.desc, cd: abCd(), left: Math.max(0, p.abilityCd || 0), ready: !(p.abilityCd > 0), spare: 0,
+  // 55-party's readers (the hero card, the guide's "ready") keep S.party.abilityCd: the first equipped slot's cooldown
+  function mirrorCd() { const p = S.party; if (p) { const a = abAt(0) || abAt(1) || abAt(2); p.abilityCd = cdOf(a); } }
+  // slot: 0-2 (none: the first equipped slot); null when the slot is empty
+  soloAbilityInfo = slot => {
+    const eq = soloEquipped(), i = slot == null ? Math.max(0, eq.findIndex(Boolean)) : slot, a = abAt(i);
+    if (!a || !S.party) return null;
+    const left = cdOf(a);
+    return { id: a.id, name: a.name, desc: a.desc, line: a.line, cd: abCd(a), left, ready: !(left > 0), spare: 0, slot: i,
       autoUnlocked: true, autoCast: true, patch: patchT };
   };
 
@@ -27717,23 +27806,33 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
       patchT -= dt; patchTick -= dt;
       if (patchTick <= 0) { patchTick += 1; for (const o of foes()) if (alive(o)) stApply(o, 'burn', 1, patchP, 0); }
     }
-    if (!fighting()) { readyFor = 0; return; }
+    for (const id in cds) if (cds[id] > 0) cds[id] = Math.max(0, cds[id] - dt);
+    mirrorCd();
+    if (!fighting()) { readyFor.fill(0); return; }
     trashTick(dt);
-    // idle: the ability goes off once it has waited autoDelay (the player gets the first chance)
-    const p = S.party;
-    if (p && !(p.abilityCd > 0) && anyFoe() && heroUp()) { readyFor += dt; if (readyFor >= T.autoDelay) soloAbility({ auto: true }); }
-    else readyFor = 0;
+    // idle: each equipped ability goes off once it has waited autoDelay (the player gets the first chance)
+    const eq = soloEquipped(), can = anyFoe() && heroUp();
+    for (let i = 0; i < 3; i++) {
+      const a = eq[i] ? SOLO_ABILITIES[eq[i]] : null;
+      if (a && can && !(cds[a.id] > 0)) { readyFor[i] += dt; if (readyFor[i] >= T.autoDelay) soloAbility({ slot: i, auto: true }); }
+      else readyFor[i] = 0;
+    }
   });
 
   // ---- the snapshot the buttons read (a kept object) ----
-  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: { left: 0, max: 0, ready: false, name: '', id: '' }, tele: '', inParry: false, inDodge: false };
+  const AB = () => ({ left: 0, max: 0, ready: false, name: '', id: '' });
+  const BTN = { atk: { left: 0, max: 0 }, parry: { left: 0, max: 0, open: 0 }, dodge: { left: 0, max: 0 }, ab: AB(), abs: [AB(), AB(), AB()], tele: '', inParry: false, inDodge: false, fight: false };
   soloButtons = () => {
     const b = BTN;
     b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
     b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
     b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
-    const a = soloAbilityInfo();
-    b.ab.left = a ? a.left : 0; b.ab.max = a ? a.cd : 0; b.ab.ready = !!(a && a.ready); b.ab.name = a ? a.name : ''; b.ab.id = a ? a.id : '';
+    for (let i = 0; i < 3; i++) {
+      const a = soloAbilityInfo(i), o = b.abs[i];
+      o.left = a ? a.left : 0; o.max = a ? a.cd : 0; o.ready = !!(a && a.ready); o.name = a ? a.name : ''; o.id = a ? a.id : '';
+    }
+    Object.assign(b.ab, b.abs[Math.max(0, soloEquipped().findIndex(Boolean))]);
+    b.fight = fighting() && heroUp() && anyFoe();
     const w = typeof actWarning === 'function' ? actWarning() : null;
     b.tele = w ? w.kind : ''; b.inParry = !!(w && w.kind === 'heavy' && w.left <= w.win); b.inDodge = !!(w && w.dwin && w.left <= w.dwin);
     return b;
@@ -40491,7 +40590,7 @@ let navUI = null;
   const abName = () => { try { const a = abilityInfo(); return a ? a.name : 'Your ability'; } catch (e) { return 'Your ability'; } };
   const SOLO_UI = {
     attack: () => onGame() && target() === 'mob' ? { node: sbtn('atk'), side: 'up', text: 'Foes ahead. Press Attack to strike the one in front.' } : null,
-    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab'), side: 'up', text: `${abName()} is ready. Press it. (Hold any button to see what it does.)` } : null,
+    ability: () => onGame() && target() === 'mob' ? { node: sbtn('ab0'), side: 'up', text: `${abName()} is ready. Press it. (Hold an ability slot to change what it holds.)` } : null,
     dodge: () => onGame() && target() === 'mob' ? { node: sbtn('dodge'), side: 'up', text: 'A foe winds up a heavy hit (the red ring). Press Dodge to step out of the way.' } : null,
     parry: () => onGame() && target() === 'mob' ? { node: sbtn('parry'), side: 'up', text: 'Another heavy hit. Press Parry just before it lands: no damage, the foe staggers and you counter.' } : null,
     boss: () => onGame() && target() === 'mob' && mob && mob.boss ? { node: $('stage'), at: [0.72, 0.62], side: 'up', text: 'The zone boss! Beat it before the timer runs out. Its red rings are your cue: Dodge, or Parry at the last moment.' } : null,
@@ -42143,146 +42242,215 @@ let openSheet, partySheet;
 
 // ---- src/js/75-solo-ui.js ----
 // 75-solo-ui: the solo hero on screen (task SOLO1, docs/design/solo-hero.md). Browser file.
-//   - the fight's button row under the stage: Attack, Parry, Dodge and the hero's ability, each with a
-//     cooldown ring; a long press (or the keyboard's i) shows what a button does. Keys on desktop:
-//     A or Space = Attack, S = Parry, D = Dodge, F = the ability.
+//   - the action bar (owner: like a MOBA ability bar, never over the fight; the lowest thing on the Fight view, right
+//     above the tab bar, for the thumbs): two rows of framed square slots.
+//       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
+//       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Attack too)  Attack bottom right
+//     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
+//     telegraphed hit is coming. A long press on Attack, Parry or Dodge says what it does; on an ability slot it opens
+//     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
+//     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
-// Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloButtons, soloPick, soloLevels).
-// Reduced motion: no pulses (60-solo.css).
+// Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
+// Reduced motion: no flashes or pulses (60-solo.css).
 {
-  const game = $('game'), box = $('stageBox');
-  const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Combat');
+  const game = $('game');
+  if (soloOn()) document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
+  const bar = el('div', 'sbar'); bar.id = 'soloBar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Combat');
   bar.hidden = true;
+  const rowAb = el('div', 'sb-row sb-row-ab'), rowAct = el('div', 'sb-row sb-row-act');
+  bar.append(rowAb, rowAct);
   const INFO = {
-    atk: { name: 'Attack', desc: 'Strike the foe in front. Short cooldown, so time it rather than mash it.', key: 'A' },
-    parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (the ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'S' },
-    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'D' }
+    atk: { name: 'Attack', desc: 'Strike the foe in front. A short cooldown, so time it rather than mash it.', key: 'D or Space' },
+    parry: { name: 'Parry', desc: 'Press it just before a heavy hit lands (as the red ring closes). No damage, the foe staggers and you counter. Too early leaves you open for a moment.', key: 'A' },
+    dodge: { name: 'Dodge', desc: 'Press it as a heavy hit or a ground attack is about to land. You take no damage. Easier than a parry, but no counter.', key: 'S' }
   };
-  function mkBtn(id, label) {
+  const KEY_LB = { atk: 'D', parry: 'A', dodge: 'S', ab0: 'Q', ab1: 'W', ab2: 'E' };
+  function mkSlot(row, id, label) {
     const b = el('button', 'sbtn sb-' + id); b.type = 'button'; b.dataset.act = id;
-    const ring = el('span', 'sb-ring'), ic = el('canvas', 'sb-ic px'), lb = el('span', 'sb-lb', label), n = el('span', 'sb-n');
+    const ic = el('canvas', 'sb-ic px'), sweep = el('span', 'sb-ring'), n = el('span', 'sb-n'), k = el('span', 'sb-key', KEY_LB[id]), lb = el('span', 'sb-lb', label);
     ic.width = 12; ic.height = 12;
-    b.append(ring, ic, lb, n);
-    b._ring = ring; b._lb = lb; b._n = n; b._ic = ic;
-    bar.append(b);
+    b.append(ic, sweep, n, k, lb);
+    b._ring = sweep; b._n = n; b._ic = ic; b._lb = lb;
+    row.append(b);
     return b;
   }
-  const bAtk = mkBtn('atk', 'Attack'), bParry = mkBtn('parry', 'Parry'), bDodge = mkBtn('dodge', 'Dodge'), bAb = mkBtn('ab', 'Ability');
-  if (box && box.parentNode === game) box.after(bar); else if (game) game.append(bar);
+  const bAbs = [0, 1, 2].map(i => { const b = mkSlot(rowAb, 'ab' + i, ''); b.classList.add('sb-abslot'); b.dataset.slot = i; return b; });
+  const bParry = mkSlot(rowAct, 'parry', 'Parry'), bDodge = mkSlot(rowAct, 'dodge', 'Dodge'), bAtk = mkSlot(rowAct, 'atk', 'Attack');
+  if (game) game.append(bar);   // the last thing on the Fight view: right above the tab bar
+  // Owner (SOLO1 layout): what is not combat sits above the stage (Next Up, then Fight / Gather, Switch and the zone
+  // arrows); the stage and the bar touch; the bar is the lowest thing above the tab bar. Next Up opens a sheet, so
+  // nothing grows under the stage.
+  if (soloOn() && game) {
+    const box = $('stageBox'), ctrl = game.querySelector(':scope > .ctrl'), nu = $('nuSlot');
+    if (box && nu) game.insertBefore(nu, box);
+    if (box && ctrl) game.insertBefore(ctrl, box);
+    game.classList.add('solo-game');
+  }
 
-  // ---- icons (12 x 12 pixel maps) ----
-  const PAL = { k: '#0B0810', w: '#FFF3C4', s: '#DCE4F0', g: '#7C8290', y: '#F2C14E', o: '#FF9E3D', r: '#E0524F', b: '#8FB8FF', l: '#7ED36A', t: '#C8B89A' };
+  // ---- icons (12 x 12 pixel maps, drawn at 2x) ----
+  const PAL = { k: '#0B0810', w: '#FFF3C4', s: '#DCE4F0', g: '#7C8290', y: '#F2C14E', o: '#FF9E3D', r: '#E0524F', b: '#8FB8FF', l: '#7ED36A', t: '#C8B89A', n: '#9A6A3E', v: '#B58CFF', m: '#4E4060' };
   const ICON = {
-    atk: ['..........kk', '.........ksk', '........ksk.', '.......ksk..', '......ksk...', '.k...ksk....', '.kk.ksk.....', '..kksk......', '...kyk......', '..kyykk.....', '.kyk..kk....', 'kyk.........'],
-    parry: ['..kkkkkkkk..', '.kssssssssk.', '.ksyyyyyysk.', '.ksyssssysk.', '.ksysyysysk.', '.ksysyysysk.', '.ksyssssysk.', '..ksyyyysk..', '..kssssssk..', '...kssssk...', '....kssk....', '.....kk.....'],
-    dodge: ['............', '.....kk.....', '....kbbk....', '....kbbk....', '.....kk..bb.', '...kbbbk.b..', '..k.kbk.bbbb', '....kbk..b..', '...kb.bk..bb', '..kb...bk...', '..k.....k...', '............'],
-    echo: ['............', '........kk..', '.......kwk..', 'kkk...kwk...', 'kllkkkwk....', '.kllwwwk....', 'kllkkkwk....', 'kkk...kwk...', '.......kwk..', '........kk..', '............', '............'],
-    bash: ['.kkkkkkkkkk.', 'ksssssyyssk.', 'ksssssyyssk.', 'ksyyyyyyyysk', 'ksyyyyyyyysk', 'ksssssyyssk.', 'ksssssyyssk.', '.ksssyysssk.', '..kssyyssk..', '...ksyysk...', '....kssk....', '.....kk.....'],
-    fire: ['.....kk.....', '....koko....', '...kooyok...', '..kooyyok...', '..koyyyook..', '.kooywwyok..', '.koywwwyook.', '.koywwwwyok.', '.kooyywyyok.', '..kooyyook..', '...kooook...', '....kkkk....']
+    sword: ['..........kk', '.........ksk', '........ksk.', '.......ksk..', '......ksk...', '.k...ksk....', '.kk.ksk.....', '..kksk......', '...kyk......', '..kyykk.....', '.kyk..kk....', 'kyk.........'],
+    bow: ['...nn.......', '..n..n......', '.n....s.....', '.n.....s....', 'n......s....', 'n..kttttsww.', 'n......s....', '.n.....s....', '.n....s.....', '..n..n......', '...nn.......', '............'],
+    staff: ['.....oo.....', '....oyyo....', '...oywwyo...', '....oyyo....', '.....oo.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....nn.....', '.....kk.....'],
+    parry: ['s.........s.', '.s.......s..', '..s.....s...', '...s...s....', '....sws.....', '.....w......', '....sws.....', '...s...s....', '..y.....y...', '.yy.....yy..', 'y.........y.', '............'],
+    dodge: ['............', '.......bbb..', '......bbbbb.', 'bbbb..bbbbb.', '......bbbb..', '.bbbb..bbb..', '.......bb...', '..bbb..bb.bb', '......bbbbbb', '.......bbbb.', '............', '............'],
+    echo: ['.......b....', '........b...', '.....b...b..', '......b..b..', 'kk...wsw.b..', 'kttttsssw.b.', 'kk...wsw.b..', '......b..b..', '.....b...b..', '........b...', '.......b....', '............'],
+    bash: ['y...kkkkkkk.', '.y.ksssyssk.', '...ksssyssk.', 'yy.kyyyyyyk.', '...ksssyssk.', '.y.ksssyssk.', 'y...ksyysk..', '.....ksyk...', '......kk....', '............', '............', '............'],
+    fire: ['.....kk.....', '....koko....', '...kooyok...', '..kooyyok...', '..koyyyook..', '.kooywwyok..', '.koywwwyook.', '.koywwwwyok.', '.kooyywyyok.', '..kooyyook..', '...kooook...', '....kkkk....'],
+    empty: ['............', '............', '............', '.....mm.....', '.....mm.....', '...mmmmmm...', '...mmmmmm...', '.....mm.....', '.....mm.....', '............', '............', '............']
   };
+  const WEAPON_IC = { wren: 'bow', tobin: 'sword', pip: 'staff' };
   function drawIc(cv, rows) {
     const g = cv.getContext('2d'); g.clearRect(0, 0, 12, 12);
     rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = PAL[r[x]]; if (c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } } });
   }
-  drawIc(bAtk._ic, ICON.atk); drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
-  let abId = '';
+  drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
+  const abIds = ['?', '?', '?'];
+  let heroK = '';
 
   // ---- feedback ----
   const nope = b => { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); };
   const flash = (b, cls) => { b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), 450); };
+  // The guide's Dodge and Parry steps pause the game on a heavy hit; the first press there always counts (59j forgive).
+  const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
+  const castSlot = i => {
+    if (!soloEquipped()[i]) { openPicker(i); return; }
+    if (!soloAbility({ slot: i })) nope(bAbs[i]); else flash(bAbs[i], 'good');
+  };
   const act = {
     atk: () => { const r = soloAttack(); if (r === 'cd' || !r) nope(bAtk); else flash(bAtk, 'hit'); },
     parry: () => { const r = soloParry(guideWants('parry')); if (r === 'parry') flash(bParry, 'good'); else nope(bParry); },
     dodge: () => { const r = soloDodge(guideWants('dodge')); if (r === 'dodge' || r === 'perfect') flash(bDodge, 'good'); else nope(bDodge); },
-    ab: () => { if (!soloAbility()) nope(bAb); else flash(bAb, 'good'); }
+    ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
   };
-  // The guide's Parry / Dodge steps pause the game on a heavy hit; the first press there always counts (59j forgive).
-  const guideWants = id => { try { return typeof soloGuideWants === 'function' && soloGuideWants() === id; } catch (e) { return false; } };
 
-  // ---- long press: what the button does ----
+  // ---- long press on Attack, Parry, Dodge: what it does ----
   const tip = el('div', 'sb-tip'); tip.hidden = true; tip.setAttribute('role', 'tooltip'); tip.id = 'soloTip';
   document.body.append(tip);
-  function infoOf(id) {
-    if (id !== 'ab') return INFO[id];
-    const a = typeof soloAbilityInfo === 'function' ? soloAbilityInfo() : null;
-    return a ? { name: a.name, desc: a.desc + ` Cooldown ${Math.round(a.cd)} s. Your hero casts it alone if you wait.`, key: 'F' } : null;
-  }
   function showTip(b) {
-    const i = infoOf(b.dataset.act); if (!i) return;
+    const i = INFO[b.dataset.act]; if (!i) return;
     tip.textContent = '';
     tip.append(el('b', null, i.name), el('span', null, i.desc), el('small', null, `Key: ${i.key}`));
     tip.hidden = false;
-    const r = b.getBoundingClientRect();
-    const w = Math.min(280, innerWidth - 16);
+    const r = b.getBoundingClientRect(), w = Math.min(280, innerWidth - 16);
     tip.style.width = w + 'px';
     tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
-    tip.style.bottom = (innerHeight - r.top + 8) + 'px';
+    tip.style.bottom = (innerHeight - bar.getBoundingClientRect().top + 8) + 'px';
     clearTimeout(tip._t); tip._t = setTimeout(() => { tip.hidden = true; }, 4000);
   }
+
+  // ---- the ability picker (a small sheet over the fight; the game waits while it is open) ----
+  let pick = null;
+  function closePicker() { if (!pick) return; pick.remove(); pick = null; update(); }
+  function openPicker(slot) {
+    closePicker(); tip.hidden = true;
+    const k = soloHero(); if (!k) return;
+    const ov = el('div', 'sp-ov'); ov.id = 'abPicker'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', `Ability slot ${slot + 1}`);
+    const sh = el('div', 'sp-sheet');
+    const head = el('div', 'sp-head'); head.append(el('b', null, `Ability slot ${slot + 1}`), el('small', null, `${ROSTER[k] ? ROSTER[k].name.split(' ')[0] : ''}'s abilities. Pick one for this slot.`));
+    const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.addEventListener('click', closePicker);
+    head.append(x);
+    sh.append(head);
+    const eq = soloEquipped();
+    for (const id of soloAbilities(k)) {
+      const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
+      const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
+      const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
+      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Cooldown ${a.cd} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
+      r.append(cv, t);
+      r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
+      sh.append(r);
+    }
+    sh.append(el('p', 'note sp-more', 'More abilities come from rare boss drops, later.'));
+    const clr = el('button', 'sp-clear', 'Clear this slot'); clr.type = 'button'; clr.disabled = !eq[slot];
+    clr.addEventListener('click', () => { soloEquip(slot, null); try { save(); } catch (e) {} closePicker(); });
+    sh.append(clr);
+    ov.append(sh);
+    ov.addEventListener('pointerdown', e => { if (e.target === ov) closePicker(); });
+    ov.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+    document.body.append(ov); pick = ov;
+    (sh.querySelector('.sp-ab') || x).focus();
+  }
+  soloPickerOpen = () => !!pick;
+
   let press = null;
-  for (const b of [bAtk, bParry, bDodge, bAb]) {
+  for (const b of [...bAbs, bParry, bDodge, bAtk]) {
+    const id = b.dataset.act, isAb = id.startsWith('ab');
     b.addEventListener('pointerdown', e => {
       e.stopPropagation();
-      const id = b.dataset.act;
-      press = { b, long: false, t: setTimeout(() => { if (press && press.b === b) { press.long = true; showTip(b); } }, 550) };
-      // Attack, Parry and Dodge act on the press (timing matters); the ability waits for the release (a long press is info)
-      if (id !== 'ab') act[id]();
+      press = { b, long: false, t: setTimeout(() => { if (press && press.b === b) { press.long = true; if (isAb) openPicker(+b.dataset.slot); else showTip(b); } }, 550) };
+      // Attack, Parry and Dodge act on the press (timing matters); an ability slot waits for the release (a long press picks)
+      if (!isAb) act[id]();
     });
-    const endPress = () => { if (!press || press.b !== b) return; clearTimeout(press.t); const long = press.long; press = null; if (!long && b.dataset.act === 'ab') act.ab(); };
+    const endPress = () => { if (!press || press.b !== b) return; clearTimeout(press.t); const long = press.long; press = null; if (!long && isAb) act[id](); };
     b.addEventListener('pointerup', endPress);
     b.addEventListener('pointerleave', () => { if (press && press.b === b) { clearTimeout(press.t); press = null; } });
     b.addEventListener('pointercancel', () => { if (press && press.b === b) { clearTimeout(press.t); press = null; } });
     b.addEventListener('contextmenu', e => e.preventDefault());
-    // keyboard users: Enter / Space on a focused button
-    b.addEventListener('click', e => { if (e.detail === 0) act[b.dataset.act](); });
+    b.addEventListener('click', e => { if (e.detail === 0) act[id](); });   // keyboard users: Enter / Space on a focused slot
   }
+  const KEYS = { q: 'ab0', w: 'ab1', e: 'ab2', a: 'parry', s: 'dodge', d: 'atk', ' ': 'atk' };
   addEventListener('keydown', e => {
-    if (bar.hidden || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
-    const k = e.key.toLowerCase();
-    const id = k === 'a' || k === ' ' ? 'atk' : k === 's' ? 'parry' : k === 'd' ? 'dodge' : k === 'f' ? 'ab' : k === 'i' ? 'info' : '';
-    if (!id) return;
+    if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
+    if (S.tab && !isWide()) return;   // a menu covers the fight
+    const id = KEYS[e.key.toLowerCase()]; if (!id) return;
     e.preventDefault();
-    if (id === 'info') { showTip(bAb); return; }
     act[id]();
   });
 
   // ---- update (about 10 times a second) ----
-  const setRing = (b, left, max) => {
+  // LoL-style: the dark part sweeps clockwise off the icon as the slot comes back (--cd 1 -> 0); a flash when ready.
+  const setCd = (b, left, max) => {
     const f = max > 0 ? Math.max(0, Math.min(1, left / max)) : 0, v = f.toFixed(2);
-    if (b._cd !== v) { b._cd = v; b.style.setProperty('--cd', v); b.classList.toggle('cool', f > 0); }
+    if (b._cd === v) return;
+    const was = b._cd != null && +b._cd > 0;
+    b._cd = v; b.style.setProperty('--cd', v); b.classList.toggle('cool', f > 0);
+    if (was && f === 0) flash(b, 'ready-now');
   };
   const setN = (b, s) => { if (b._nv !== s) { b._nv = s; b._n.textContent = s; } };
+  const secs = x => (x > 0 ? (x < 1 ? x.toFixed(1).replace(/^0/, '') : String(Math.ceil(x))) : '');
   let t = 0;
   function update() {
     const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
-    if (bar.hidden === show) { bar.hidden = !show; if (!show) tip.hidden = true; }
+    if (bar.hidden === show) { bar.hidden = !show; if (!show) { tip.hidden = true; closePicker(); } }
     if (!show) return;
-    const s = soloButtons();
-    if (s.ab.id !== abId) {
-      abId = s.ab.id; drawIc(bAb._ic, ICON[abId] || ICON.fire); putText(bAb._lb, s.ab.name || 'Ability');
-      const i = infoOf('ab'); bAb.setAttribute('aria-label', i ? `${i.name}. ${i.desc}` : 'Ability');
+    const s = soloButtons(), k = soloHero();
+    if (k !== heroK) { heroK = k; drawIc(bAtk._ic, ICON[WEAPON_IC[k]] || ICON.sword); }
+    for (let i = 0; i < 3; i++) {
+      const o = s.abs[i], b = bAbs[i];
+      if (o.id !== abIds[i]) {
+        abIds[i] = o.id; drawIc(b._ic, o.id ? ICON[o.id] || ICON.fire : ICON.empty); putText(b._lb, o.id ? (SOLO_ABILITIES[o.id].short || o.name) : 'Empty');
+        b.classList.toggle('empty', !o.id);
+        const a = o.id ? SOLO_ABILITIES[o.id] : null;
+        b.setAttribute('aria-label', a ? `${a.name} (${KEY_LB['ab' + i]}). ${a.desc} Hold to change the slot.` : `Empty ability slot ${i + 1} (${KEY_LB['ab' + i]}). Tap to choose an ability.`);
+      }
+      setCd(b, o.left, o.max); setN(b, secs(o.left));
+      b.classList.toggle('ready', !!o.id && o.ready);
     }
-    setRing(bAtk, s.atk.left, s.atk.max);
-    setRing(bParry, s.parry.left, s.parry.max);
-    setRing(bDodge, s.dodge.left, s.dodge.max);
-    setRing(bAb, s.ab.left, s.ab.max);
-    setN(bAb, s.ab.left > 0 ? String(Math.ceil(s.ab.left)) : '');
-    bAb.classList.toggle('ready', s.ab.ready);
+    setCd(bAtk, s.atk.left, s.atk.max);
+    setCd(bParry, s.parry.left, s.parry.max);
+    setCd(bDodge, s.dodge.left, s.dodge.max);
+    setN(bDodge, secs(s.dodge.left)); setN(bParry, s.parry.open > 0 ? '!' : '');
     bParry.classList.toggle('open', s.parry.open > 0);
-    // a heavy hit is winding up: Parry and Dodge light up (the stage ring shows when)
+    // disabled: nothing to hit right now (between packs, the hero down)
+    const idle = !s.fight;
+    for (const b of [bAtk, bParry, bDodge, ...bAbs]) if (b.classList.contains('off') !== idle) b.classList.toggle('off', idle);
+    // a telegraphed hit is coming: Parry and Dodge glow (the stage ring shows when)
     bParry.classList.toggle('live', s.tele === 'heavy');
-    bDodge.classList.toggle('live', !!s.tele && s.tele !== 'hard' && s.tele !== 'line' && s.tele !== 'dive' && s.tele !== 'sig' && s.tele !== 'heal' && s.tele !== 'summon');
+    bDodge.classList.toggle('live', s.tele === 'heavy' || s.tele === 'zone' || s.tele === 'slam');
   }
-  bAtk.setAttribute('aria-label', 'Attack. ' + INFO.atk.desc);
-  bParry.setAttribute('aria-label', 'Parry. ' + INFO.parry.desc);
-  bDodge.setAttribute('aria-label', 'Dodge. ' + INFO.dodge.desc);
-  onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo buttons', e); } });
-  // the paused game (the guide) does not tick: keep the row fresh anyway
+  bAtk.setAttribute('aria-label', 'Attack (D or Space). ' + INFO.atk.desc);
+  bParry.setAttribute('aria-label', 'Parry (A). ' + INFO.parry.desc);
+  bDodge.setAttribute('aria-label', 'Dodge (S). ' + INFO.dodge.desc);
+  onTick(dt => { t += dt; if (t < 0.08) return; t = 0; try { update(); } catch (e) { console.error('[lanternfall] solo bar', e); } });
+  // the paused game (the guide, the picker) does not tick: keep the bar fresh anyway
   setInterval(() => { try { update(); } catch (e) {} }, 250);
 
-  // ---- floats for the answers (the stage draws them) ----
-  on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); });   // a parry's PARRY is the stage's (62-stage, the parry event)
+  // ---- floats for the answers (the stage draws them; a parry's PARRY is the stage's own, 62-stage) ----
+  on('soloParry', ({ res }) => { if (res === 'miss') emit('float', { txt: 'Open!', color: '#E0524F', big: false, x: 0.27, y: 0.42 }); });
   on('soloDodge', ({ res }) => { if (res === 'dodge' || res === 'perfect') emit('float', { txt: res === 'perfect' ? 'Perfect dodge' : 'Dodged', color: '#8FB8FF', big: true, x: 0.27, y: 0.4 }); else if (res === 'early') emit('float', { txt: 'Too early', color: '#A9B1BD', big: false, x: 0.27, y: 0.42 }); });
 
   // ---- "Choose your hero" at camp ----
@@ -44223,7 +44391,7 @@ function frame(now) {
   dt = Math.min(dt, 0.1);
   T += dt;
   // SOLO1: the game waits while a guide step waits for its action, or while the hero is being chosen
-  if (!(ONBOARD.paused || document.getElementById('createScreen'))) tick(dt);
+  if (!(ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen'))) tick(dt);
   animate(dt); draw();
   uiTimer -= dt; slowTick -= dt;
   if (uiTimer <= 0) { uiTimer = 0.2; ui(false); }
