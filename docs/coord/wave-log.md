@@ -1077,3 +1077,11 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
   ART PLAN for resume (coordinator): ART-STYLE1 writes one style guide from all references; then, cheapest
   win first: ART-ICON1 (item, material and Sigil icons in this style), ART-TEST1 (one hero at ~48 px, portrait
   vs landscape mock), then region backdrops (static, baked once).
+- OWNER tried GPT: Wren cutout animation pack (scratchpad assets/wren/: 9 parts, rig.json, animations.json,
+  112x96 frames, anchor 48,66, ~48 px tall; idle 8, attack 10, hurt 6, death 16). Coordinator review: the
+  pipeline works (right size, clean alpha, parts + rig + timings, a bat companion and sound waves that fit her
+  lore), but it drifted off-brief (a witch hat, purple/magenta/orange; the green hood and ranger read are gone),
+  ~1,170 colours a frame (noisy, not true pixel art), a broken outline, and weak hurt/death (the bow stretches
+  into a long ribbon in death). Auto palette reduction to 16-24 colours kills the gold and violet glows: it
+  needs a hand-picked shared palette. Next GPT round: stricter prompt (listed in the reply). Our side at
+  resume: palette-lock + outline clean-up tool, re-animate hurt/death from the parts in code.
