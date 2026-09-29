@@ -302,6 +302,9 @@ let resize, animate, draw, stageStats, warmScene;
       if (d > 0 && a.hx - ext < 2) k = Math.min(k, Math.max(0.5, (x1 - 2 - ext) / d));
     }
     if (k < 1) for (const a of order) a.hx = Math.round(x1 - (x1 - a.hx) * k);
+    // Solo: a ranged hero (arrow or bolt) stands well back on the left, leaving the middle of the road for
+    // the shot; the hand-drawn art keeps the whole sprite in view (64h heroArtStage). Melee stays at the front.
+    if (typeof soloOn === 'function' && soloOn() && hero.kind && target() === 'mob') hero.hx = Math.min(hero.hx, Math.round(SW * 0.2));
     order.sort((a, b) => a.lane - b.lane || a.col - b.col);
     front = hero;
     for (const a of order) if (a.alpha === 1 && (a.col > front.col || (a.col === front.col && a.lane > front.lane))) front = a;
