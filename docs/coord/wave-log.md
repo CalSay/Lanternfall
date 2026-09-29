@@ -1170,3 +1170,4 @@ see docs/design/plan-3.md. Wave 1: D6, D7, G1, G2, W6b.
 - Size today: ~41k lines of game JS (139 files), 3k CSS, 8.7k tools (check.mjs ~6.4k).
 - Running: SOLO2 (opus, active vs idle play, Space dodges, de-flake parry-glow check). AUDIT1 (opus, read-only): system map with keep/rework/remove verdicts, party fallout + solo replacements, provable bugs (gathering first), size/efficiency, a wave plan -> docs/coord/audit-1.md.
 - Next: after SOLO2 merges, PLAY1 (playtest agent in Chromium: fresh save first hour per hero + late-game save), then fix and cleanup waves from AUDIT1 + PLAY1 (max 3 agents at once).
+- Owner: "The early game is still spammed with notifications. That is a big issue for me." Added to AUDIT1 (measure every source in the first 30 min, propose a quiet policy) and to wave 1.
