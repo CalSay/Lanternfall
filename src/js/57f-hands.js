@@ -115,10 +115,11 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       if (!Array.isArray(x.pack)) x.pack = [];
       if (!(x.lv >= 1)) x.lv = 1;
       if (!(x.xp >= 0)) x.xp = 0;
-      if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
-      if (x.job && !Array.isArray(x.job.bo)) x.job.bo = [];
-      if (x.job && !Array.isArray(x.job.queue)) x.job.queue = [];
-      if (x.job) syncQueue(x.job);
+      if (x.job && x.job.role === 'trade') { if (typeof handsTradeRepair === 'function') handsTradeRepair(x); }
+      else if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
+      if (x.job && x.job.role !== 'trade' && !Array.isArray(x.job.bo)) x.job.bo = [];
+      if (x.job && x.job.role !== 'trade' && !Array.isArray(x.job.queue)) x.job.queue = [];
+      if (x.job && x.job.role !== 'trade') syncQueue(x.job);
       for (const k of ['talk', 'st', 'hrs', 'got', 'back', 'sent']) if (!(x[k] >= 0)) x[k] = 0;
       if (x.last === undefined) x.last = null;
       if (x.cl === undefined) x.cl = null;
@@ -272,6 +273,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus = hh => {
     const h = typeof hh === 'string' ? handsGet(hh) : hh; if (!h) return null;
     const t = now(), j = h.job;
+    if (j && j.role === 'trade' && typeof handsTradeStatus === 'function') return handsTradeStatus(h, t);
     if (j && j.start > t) return { st: 'rest', label: 'Resting before the next shift', left: (j.start - t) / 1000, pct: 0, kind: j.kind, t: j.t, spot: 'fire' };
     if (j && j.end > t) return { st: 'out', label: `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
     if (j) return { st: 'back', label: 'Walking home', left: 0, pct: 1, kind: j.kind, t: j.t, spot: 'road' };
@@ -405,16 +407,17 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const out = (x, t) => !!x.job && x.job.start <= t && x.job.end > t;
   function syncQueue(j) { j.q = (j.queue || []).length; j.qFee = (j.queue || []).reduce((a, q) => a + q.fee, 0); }
   function linkJob(x, job) {
+    if (job.role === 'trade') return;
     const at = job.start;
     if (has(x, 'friendly')) {
-      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
+      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
       if (y) { const e = Math.min(job.end, y.job.end); job.bo.push([T.friendly, at, e, 'f', y.id]); y.job.bo.push([T.friendly, at, e, 'f', x.id]); }
     }
     const wood = k => skillOf(k) === 'wood';
     if (x.cl === 'felling') {
-      for (const o of H().list) if (o !== x && o.job && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
+      for (const o of H().list) if (o !== x && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
     } else if (wood(job.kind)) {
-      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.linked !== false && out(o, at));
+      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at));
       if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b', b.id]);
     }
     job.linked = true;
@@ -509,17 +512,23 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   // Starts and returns in time order keep overlap, XP and pack order identical live and away.
   handsCatchUp = (t = now(), away = false) => {
     const back = [];
+    if (!Number.isFinite(t) || t < 0) return back;
+    for (const x of H().list) if (x.job && x.job.role === 'trade' && typeof handsTradeRepair === 'function') handsTradeRepair(x);
     for (;;) {
-      const due = H().list.filter(x => x.job && (x.job.linked === false ? x.job.start : x.job.end) <= t)
-        .sort((a, b) => (a.job.linked === false ? a.job.start : a.job.end) - (b.job.linked === false ? b.job.start : b.job.end))[0];
+      const due = H().list.filter(x => x.job && (x.job.role !== 'trade' && x.job.linked === false ? x.job.start : x.job.end) <= t)
+        .sort((a, b) => (a.job.role !== 'trade' && a.job.linked === false ? a.job.start : a.job.end) - (b.job.role !== 'trade' && b.job.linked === false ? b.job.start : b.job.end))[0];
       if (!due) break;
-      if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
+      if (due.job.role === 'trade') {
+        if (typeof handsTradeFinish !== 'function') break;
+        handsTradeFinish(due, away, t);
+      } else if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
     }
     unload(); return back;
   };
   handsRecall = id => {
     const x = handsGet(id); if (!x || !x.job) return false;
     const at = now(); handsCatchUp(at, false); const j = x.job; if (!j) return false;
+    if (j.role === 'trade') return typeof handsTradeRecall === 'function' && handsTradeRecall(x, at);
     const waiting = j.start > at, queue = (j.queue || []).slice();
     if (waiting) queue.unshift({ fee: j.fee || 0 });
     refund(x, queue, 'you recalled them', false); j.queue = []; syncQueue(j);
@@ -535,15 +544,15 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const full = h.list.filter(x => x.pack.length).sort((a, b) => a.back - b.back);
     for (const x of full) {
       for (let i = 0; i < x.pack.length;) {
-        const [f, t, n] = x.pack[i];
+        const [f, t, n, source] = x.pack[i];
         let got = 0;
         if (f === 'troph') got = typeof addTrophy === 'function' ? addTrophy(t, n, 'hands') : 0;
         else if (S.mats[f]) got = stashAdd(f, t, n, 'parcel');
         else { x.pack.splice(i, 1); continue; }   // a family this build does not know: drop the line
         if (got > 0 || !(n > 0)) {
           x.pack.splice(i, 1);
-          if (f !== 'troph') { x.got += got; h.got = (h.got || 0) + got; }
-          emit('handsUnload', { id: x.id, fam: f, t, n: got });
+          if (f !== 'troph' && source !== 'trade-refund') { x.got += got; h.got = (h.got || 0) + got; }
+          emit(source === 'trade-refund' ? 'handsTradeCargoBack' : 'handsUnload', { id: x.id, fam: f, t, n: got });
         } else i++;
       }
     }
