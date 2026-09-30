@@ -274,7 +274,7 @@
   on('deepOil', () => toast('Your Oil is running low. Clear the floor to refill it.', 'raid', { ic: ['flame', '#E0524F', { 5: '#FFB347', 7: '#FFF3C4' }] }, 'normal'));
   on('deepKill', ({ mob: m }) => { if (typeof SFX === 'object' && SFX.play) SFX.play('kill', m && m.boss); });
   on('deepFloor', ({ floor, kind }) => { if (kind === 'boss') toast(`Deep Elder beaten on floor ${floor}.`, 'good', { ic: ['banner', '#7FB2FF'] }, 'low'); });
-  const closeMenuIfTall = () => { if (typeof isWide === 'function' && !isWide() && S.tab) closeMenu(); };
+  const closeMenuIfTall = () => { if (S.tab) closeMenu(); };   // UX-L1: a landscape menu covers most of the stage too
 
   // ---------------- Fight tab: the Deepwell view ----------------
   registerView('adv', { id: 'deep', label: 'Deepwell', order: 40, feature: 'deep', dot: () => { const d = S.deep; return !!d && ((d.run && d.run.paused) || (deepUnlocked() && !d.runs && !d.run)); } });
@@ -313,7 +313,7 @@
       setTxt(ent.sub, 'Go down floor by floor. Oil is your run: it drains while a foe stands. Your farm keeps working while you are below.');
       if (r && !r.paused) {
         b.append(el('p', 'dw-now', `You are below, on floor ${r.floor}.`));
-        if (typeof isWide === 'function' && !isWide()) b.append(btn('big dw-go', 'Back to the well', () => closeMenu()));
+        b.append(btn('big dw-go', 'Back to the well', () => closeMenu()));
         return;
       }
       if (r) {

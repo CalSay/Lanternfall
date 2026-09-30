@@ -41,26 +41,7 @@
 /* Next Up chip slot on the game view (75-goals-ui.js, 60-goals.css) */
 .nu-slot { flex: none; padding: 0 var(--gut) 8px; }
 
-/* ---- landscape, tablets, desktop: game left, menu right, always open ---- */
-@media (min-aspect-ratio: 1/1) and (min-width: 600px) {
-  .app { max-width: 1480px; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
-    grid-template-areas: "top menu" "main menu" "main tabs"; }
-  .app:not(.menu-open) .menu, .menu { transform: none; visibility: visible; transition: none; }
-  .menu { grid-area: menu; border-top: 0; border-left: 2px solid var(--line); box-shadow: -4px 0 0 #0B0810; }
-  .tabs { border-left: 2px solid var(--line); }
-  .menu-grab, .menu-x { display: none; }
-  .menu-head { touch-action: auto; }
-  .stagebox { max-height: none; }
-}
-/* short landscape (phones turned sideways): the tab bar names the tab, so the title row goes */
-@media (min-aspect-ratio: 1/1) and (min-width: 600px) and (max-height: 500px) {
-  .app { --tabs-h: 48px; }
-  .menu-bar { display: none; }
-  .vseg { margin-top: 8px; margin-bottom: 8px; }
-  .vseg button { min-height: 36px; font-size: 13px; }
-  .tab { min-height: 48px; padding: 4px 2px; }
-  .tab img { width: 18px; height: 18px; }
-}
+/* Landscape phones, tablets and desktop (UX-L1): the rail, top row, stage and side column are in 80-landscape.css. */
 .panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .sec { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }

@@ -174,7 +174,7 @@ var soloIconURL = () => '';
   addEventListener('keydown', e => {
     if (bar.hidden || pick || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable || (t.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))) return;
-    if (S.tab && !isWide()) return;   // a menu covers the fight
+    if (S.tab && !isWide()) return;   // a menu covers the fight (UX-L1: in landscape the bar stays live beside the menu)
     const id = KEYS[e.key.toLowerCase()]; if (!id) return;
     e.preventDefault();
     act[id]();

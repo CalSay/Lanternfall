@@ -24,28 +24,81 @@ scrolling content. It closes on: the close button, tapping the open tab again, E
 (on the title row, or on the content while it is scrolled to the top; 110 px, or a quick 36 px flick).
 The tab bar stays live, so the player hops between menus without closing them.
 
-**Wide (viewport at least as wide as tall and 600 px or wider: phones turned sideways, tablets, desktop).**
-Game on the left (1.4 fr, about 58%), the menu on the right (1 fr, at least 300 px). A menu is always
-open; there is no close button or overlay. The header sits over the game column, the tab bar under the
-menu column. Below 500 px tall (phones sideways) the menu drops its title row (the tab bar names the
-tab) and the tab bar shrinks to 48 px.
+**Landscape (UX-L1, 2026-09-30; viewport at least as wide as tall and 600 px or wider: phones on their side,
+tablets, desktop).** The main target now (owner: mobile is landscape only). From the approved mock-up
+(docs/design/mockups/combat-screen.html). Styles: `src/styles/80-landscape.css`; `isWide()` in 70-ui is this layout.
+
+```
++------+----------------------------------------------+-------------+
+| port | gold  [Fight|Gather] [Switch] [< Zone 14 >]              bell|  top row 44 (48 on screens 600+ tall)
+|------+----------------------------------------------+-------------|
+| Fight|                                              | Next Up     |
+| Hero |  the stage; combat info in its sky:          | notices     |
+| ...  |  place top left, foe plate top right         | [Q] [W] [E] |
+| rail |                                              | [A] [S] [D] |  the bar: Attack in the corner
++------+----------------------------------------------+-------------+
+```
+
+- **Rail** (52 px; 64 on tall screens): the portrait and level on top, then the five tabs (54 px each, 62 tall).
+  The left thumb navigates, the right thumb fights; the bottom edge stays free, so the stage gets the full height.
+- **Top row**: everything not combat: gold and embers, Fight / Gather, Switch, the zone arrows, the bell. The XP
+  bar is its 3 px bottom line. The activity pill is hidden (Switch does the same).
+- **Stage**: everything between. Whole-pixel zoom only (62-stage `LAND_ZOOMS`): the largest of x1-x4 that
+  leaves at least 360 x 280 logical px, so the heroes keep their ~96 art px: x1 on phones, x2 at 1280 x 720 and
+  1024 x 768, x3 at 1920 x 1080. The sky carries the combat info: the place on the left, the foe's plate (name,
+  HP, the boss strip under it) on the right; the hero's HP sits over the hero.
+- **Side column** (clamp(208 px, 20vw, 272 px)): Next Up at the top (eyebrow, status and +N on one line, the goal
+  under it), notices under it, the action bar in the bottom-right corner (two rows; slots 60 px on phones, 75 on
+  desktop; labels and key letters only where the slots are big enough).
+- **Safe areas**: the app is padded by the left and right insets (a notch pushes the rail or the side column in);
+  the rail and the bar keep the bottom inset.
+
+**Menus in landscape: a panel over the right part of the stage** (decision, UX-L1). A tab opens its menu as a
+panel between the stage's left strip and the side column: width `min(560px, max(320px, stage - 120px))`
+(360 px at 740 x 360, 464 at 844 x 390, 560 at 1280 x 720). Why this and not the other options:
+- The bar, Next Up and notices stay live on the right, so a boss's heavy hit can still be parried or dodged
+  with a menu open (keys too). Covering the bar would make every menu visit a gamble in a boss fight.
+- The strip on the left is where the hero stands: you still see them fight and their HP over their head. The
+  foes' side is what the panel covers; the fight runs on as usual (auto-play unless you press the bar).
+- A true split (stage shrunk beside a menu) would re-lay out and re-zoom the stage on every open and close, and
+  at 740 px it leaves neither a readable stage nor a 300 px menu.
+- The top row stays too: gold is in view while you spend it, and Fight / Gather / Switch work from any menu.
+
+The panel slides in from the right (0.2 s; none under reduced motion). Its head is one row: the view switcher
+and a close button (a right chevron); with one view, the title shows instead. It closes with that button, the lit
+tab, or Escape (no swipe down in landscape). Every layout now starts on the game view (landscape used to reopen
+the last menu). Picking a new activity (the quick switcher, "Go" buttons) closes the menu in both layouts, so you
+see the change. Guide hints dock at the bottom of the panel while it is open (on the stage under the sky
+otherwise); a hint whose target is on the covered stage points at the lit tab instead ("Close this menu...").
+The guide scrolls a target inside a menu into view. Sheets (the picker, the Attack sheet, bottom sheets) are
+centred and capped to the screen height, scrolling inside.
+
+| Viewport | Stage box (zoom, logical) | Menu panel (scroll area) | Slot |
+|---|---|---|---|
+| 740 x 360 | 480 x 316 (x1, 480 x 316) | 360 x 316 (358 x 266) | 60 |
+| 844 x 390 | 584 x 346 (x1) | 464 x 346 (462 x 296) | 60 |
+| 915 x 412 | 655 x 368 (x1) | 535 x 368 (533 x 318) | 60 |
+| 1024 x 768 | 752 x 720 (x2, 376 x 360) | 560 x 720 (558 x 670) | 60 |
+| 1280 x 720 | 960 x 672 (x2, 480 x 336) | 560 x 672 (558 x 622) | 75 |
+
+Screenshots: `docs/coord/uxl1-shots/` (fight, a boss, each menu, Training, the Tavern's gatherer board, the
+picker, the Attack sheet at 740 x 360 and 1280 x 720; the first guide step at 740 x 360; 844 x 390; portrait).
+
+**Portrait (secondary until the owner drops it)** is unchanged:
 
 | Viewport | Stage box | Menu content (scroll area) |
 |---|---|---|
 | 360 x 740 | 336 x 526 (71%) | 360 x 528 (was 416-460) |
 | 412 x 915 | 388 x 701 (77%) | 412 x 703 (was 503-635) |
-| 740 x 360 | 408 x 200 | 306 x 254 |
-| 915 x 412 | 510 x 252 | 379 x 306 |
-| 1280 x 800 | 723 x 640 | 531 x 640 |
 
 Mid/late save (`tests/fixtures/save-v2-late.json` with a class chosen), Chromium. The portrait stage
 fills what the header, control row, chip and tab bar leave (more than the 45-60% first sketched, because
 the alternative is empty space under it).
 
-Screenshots (`img/menus-*.png`): `menus-360-game`, `-fight`, `-party`, `-gather`, `-craft`, `-camp`,
+Screenshots (`img/menus-*.png`, portrait): `menus-360-game`, `-fight`, `-party`, `-gather`, `-craft`, `-camp`,
 `-camp-tavern`, `-nextup`, `-journal`; `menus-412-game`, `-fight` (Bounties), `-party` (Roster),
-`-gather` (Pack), `-craft` (Gear), `-camp` (Almanac); `menus-740x360-fight`, `-camp`;
-`menus-915x412-party`, `-craft`; `menus-1280x800-fight`, `-gather`.
+`-gather` (Pack), `-craft` (Gear), `-camp` (Almanac). (The old wide-layout shots, `menus-740x360-*`,
+`menus-915x412-*`, `menus-1280x800-*`, show the layout UX-L1 replaced.)
 
 ## Sub-views
 
@@ -67,8 +120,8 @@ promotion, milestone or new face; same rule as the Party tab's dot), Camp (a bui
 views has news and the tab is not open (unless the tab already shows its own dot).
 
 The last view per tab and the last tab are remembered in `localStorage` key `lanternfall.ui.v1`
-(`{ tab, views: { tabId: viewId, log } }`), not in the save. Portrait always starts on the game view;
-wide screens reopen the last menu.
+(`{ tab, views: { tabId: viewId, log } }`), not in the save. Every layout starts on the game view
+(UX-L1; `tab` is still written but no longer reopened).
 
 ## Navigation
 
@@ -78,7 +131,7 @@ wide screens reopen the last menu.
 - Next Up `go: { tab, view, sel, fn }` goes through `setTab`, then scrolls smoothly and flashes the row.
   All built-in goals were checked to land on a visible target (promote and recruit now go to the Roster;
   they pointed at the retired companion rows).
-- `closeMenu()` returns to the game view (portrait only). `S.tab` is `''` while no menu is open, so
+- `closeMenu()` returns to the game view (both layouts since UX-L1). `S.tab` is `''` while no menu is open, so
   "is this tab open?" checks (`S.tab === 'world'`) stay true only while the player can see it.
 
 ## Notices (toasts)
@@ -101,7 +154,7 @@ To tune: change a rule's `ch` in NOTICES (or `NOTICE_TUNE` for the budget). A ne
 - On the game view, toasts sit in the stage box under the HP bar, never over the control row or the
   ability button (right 62 px stay clear). At most 2 on a stage 200 px or taller, else 1.
 - While a menu covers the game (portrait), the toast stack moves over the bottom of the menu, just above
-  the tab bar, full width, at most 2. Wide screens keep them on the stage (it stays visible).
+  the tab bar, full width, at most 2. Landscape: toasts always sit in the side column, above the action bar.
 - Tap or swipe a toast away. Repeats become "+1". Every notice but `none` goes to the bell log (last 50, this visit).
 - **What's new** (Q1): notices raised in the first 2.5 s of play (old-save catch-ups: achievements, Codex
   Light, retooled gear, the camp and its welcome) fold into one bell notice with a short list, and one toast
@@ -133,5 +186,7 @@ To tune: change a rule's `ch` in NOTICES (or `NOTICE_TUNE` for the budget). A ne
 - Tap targets stay 44 px or larger. No horizontal scroll at 360 px or in a 300 px wide menu column:
   panel and section grids use `minmax(0, 1fr)` and their children `min-width: 0`.
 - Side gutter is `--gut` (12 px). The menu slide and every new motion respect `prefers-reduced-motion`.
-- Checks when you touch layout: portrait 360x740 and 412x915 (game view and each tab), landscape 740x360
-  and 915x412, desktop 1280x800; no console errors; no horizontal scroll.
+- Checks when you touch layout: landscape 740x360, 844x390 and desktop 1280x720 (tools/check.mjs `landscape ...
+  (browser, UX-L1)`), portrait 360x740 and 412x915 (game view and each tab); no console errors; no horizontal scroll.
+- Landscape: new controls never go on the stage or the side column; the side column holds Next Up, notices and
+  the bar only.

@@ -20,7 +20,7 @@ var storyUI;   // var: 75-codex-ui (earlier in the build) reads it at run time
   const safe = (fn, d) => { try { return fn(); } catch (e) { console.error('[lanternfall] story ui', e); return d; } };
   const PAGE_IC = () => iconURL('charm', '#F2E27A');
   const BLOCK = '.away-ov, #createScreen, .join-ov, .gl-ov, .bsheet-ov, .dd-fc-ov, .dw-ov';
-  const covered = () => (!!S.tab && !(typeof isWide === 'function' && isWide())) || !!document.querySelector(BLOCK);
+  const covered = () => !!S.tab || !!document.querySelector(BLOCK);   // UX-L1: a landscape menu covers most of the stage too
   const REGION_N = { hollow: 'the Hollow', coast: 'the Sunken Coast' };
   const chapterOf = r => { const i = REGIONS.findIndex(x => x.id === r); return i >= 0 ? `Chapter ${i + 1}: ${REGIONS[i].n}` : ''; };
 

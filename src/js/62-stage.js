@@ -138,7 +138,17 @@ let resize, animate, draw, stageStats, warmScene;
   // S6-E (combat-2 2.5): the width floor rises x1.4 for a swarm zone or a boss with 3+ adds (zoomX), one step out,
   // chosen per zone or boss fight (sceneReset, a boss's first pack), never between packs of one zone.
   let zoomX = 1, zoomKey = '';
+  // UX-L1 (landscape: the rail, top row and side column layout, 80-landscape.css): whole CSS pixels only, so 1 art px is
+  // 1, 2, 3 or 4 CSS px and the hand-drawn heroes keep their ~96 art px. The largest zoom that leaves the stage at least
+  // LAND_MIN_W x LAND_MIN_H logical px: a phone on its side (stage about 480 x 316) draws at 1, a 1280 x 720 desktop
+  // (960 x 672) at 2, a 1920 x 1080 one at 3. The swarm step (zoomX) asks for more width, as in portrait.
+  const LAND_Q = matchMedia('(min-aspect-ratio: 1/1) and (min-width: 600px)'), LAND_ZOOMS = [2, 3, 4], LAND_MIN_W = 360, LAND_MIN_H = 280;
   function pickZoom(w, h, dpr) {
+    if (LAND_Q.matches && typeof soloOn === 'function' && soloOn()) {
+      let z = 1;
+      for (const c of LAND_ZOOMS) if (w / c >= LAND_MIN_W * zoomX && h / c >= LAND_MIN_H) z = c;
+      return z;
+    }
     // Solo (owner, 2026-09-29): the stage shows at least SOLO_MIN_W logical px across, so the hand-drawn hero (about
     // 96 px tall, up to 110 wide) leaves the foes room: one zoom step out on portrait phones.
     const k = Math.max(0, Math.min(1, (h / w - 1) / 0.3)), minW = Math.max((ZOOM_W - (ZOOM_W - ZOOM_WT) * k) * zoomX, typeof soloOn === 'function' && soloOn() ? SOLO_MIN_W : 0);

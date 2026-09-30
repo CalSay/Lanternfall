@@ -170,7 +170,7 @@ function popToast(msg, kind, url, p, go) {
   const same = live.find(t => t._msg === msg);
   if (same) { same._more++; fillToast(same, msg, url); armToast(same); return; }
   // Two toasts fit under the HUD on a full stage (or over an open menu); a short stage takes one.
-  const room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
+  const room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   for (let i = 0; i <= live.length - room; i++) { const out = live[i]; out._gone = true; clearTimeout(out._timer); out.remove(); }
   const t = makeToast(msg, kind, url, p, go);
   box.appendChild(t);
@@ -223,7 +223,7 @@ function newsToast() {
   const box = $('toasts');
   for (const t of [...box.children]) if (t._news) { t._gone = true; clearTimeout(t._timer); t.remove(); }
   // Room as for a high notice: retire the oldest normal toasts first.
-  const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
+  const live = [...box.children].filter(t => !t._gone), room = box.classList.contains('over-menu') || box.classList.contains('side-dock') || (stageBoxH || $('stageBox').offsetHeight) >= 200 ? 2 : 1;
   const order = live.filter(t => t._p < 2).concat(live.filter(t => t._p === 2));
   for (let i = 0; i <= live.length - room; i++) { const o = order[i]; o._gone = true; clearTimeout(o._timer); o.remove(); }
   const t = makeToast(msg, 'good', NEWS.entry.url, 2);
@@ -362,8 +362,9 @@ $('goldIc').src = iconURL('coin', '#F2C14E');
 
 // ================= menus: tabs, sub-views, open and close =================
 // Layout rules: docs/design/layout.md. Portrait: tapping a tab opens its menu full-screen over the game
-// (S.tab = that tab); closing it returns to the game view (S.tab = ''). Landscape and desktop (WIDE_Q):
-// the game sits left and a menu is always open on the right.
+// (S.tab = that tab); closing it returns to the game view (S.tab = ''). Landscape and desktop (WIDE_Q, UX-L1,
+// 80-landscape.css): the tabs are a rail on the left and a menu opens as a panel over the right part of the
+// stage; the side column (Next Up, notices, the action bar) stays live. It closes the same ways (S.tab = '').
 // Each tab has 2-4 sub-views (registerView). Every direct child of a tab's panel belongs to one view
 // (data-view; none = the tab's first view; '*' = every view). The last view per tab is kept in
 // localStorage under UI_KEY (not the save).
@@ -486,11 +487,13 @@ function viewDots() {
 }
 
 // Toasts live on the stage; while a menu covers the game they move over the bottom of the menu.
+// Landscape (UX-L1): they live in the side column, above the action bar, menu or not.
 function placeToasts() {
-  const box = $('toasts'), over = !!S.tab && !isWide();
-  const home = over ? $('app') : $('stageBox');
+  const wide = isWide(), box = $('toasts'), over = !!S.tab && !wide;
+  const home = over || wide ? $('app') : $('stageBox');
   if (box.parentNode !== home) home.append(box);
   box.classList.toggle('over-menu', over);
+  box.classList.toggle('side-dock', wide);
 }
 function scrollMenuTo(node, smooth) {
   const box = $('panels');
@@ -552,33 +555,29 @@ function setTab(t, sel) {
   emit('menuView', { tab: t, view: curView(t) });
   if (target && target.offsetParent !== null) scrollMenuTo(target);
 }
-// Back to the game view (portrait only: wide screens always show a menu).
+// Back to the game view (UX-L1: in landscape too; the panel closes and the whole stage shows).
 function closeMenu() {
-  if (!S.tab || isWide()) return;
+  if (!S.tab) return;
   // Keyboard users keep their place: focus goes back to the tab that opened the menu.
   if ($('menu').contains(document.activeElement)) { const tb = document.querySelector(`.tab[data-tab="${S.tab}"]`); if (tb) try { tb.focus({ preventScroll: true }); } catch (e) {} }
   S.tab = '';
   renderMenu('');
   ui(true); viewDots();
 }
-// Boot (90-boot.js): portrait starts on the game view; wide screens open the last menu.
+// Boot (90-boot.js): every layout starts on the game view (UX-L1: landscape no longer reopens the last menu).
 function initMenus() {
   menusReady = true;
-  const ok = t => TAB_IDS.includes(t) && !TAB_HIDDEN.has(t);
-  const last = ok(uiPrefs.tab) ? uiPrefs.tab : ok(S.tab) ? S.tab : 'adv';
   S.tab = '';
-  if (isWide()) setTab(last); else { renderMenu(''); ui(true); viewDots(); }
+  renderMenu(''); ui(true); viewDots();
 }
-wideMQ.addEventListener('change', () => {
-  if (isWide() && !S.tab) setTab(TAB_IDS.includes(uiPrefs.tab) ? uiPrefs.tab : 'adv');
-  else renderMenu(S.tab);
-});
-// Tapping the open tab again closes its menu (portrait).
-function tabClick(t) { if (S.tab === t && !isWide()) closeMenu(); else setTab(t); }
+// Turning the phone keeps the open menu (or none); the toasts and the hint move to the new layout's dock.
+wideMQ.addEventListener('change', () => { renderMenu(S.tab); ui(true); });
+// Tapping the open tab again closes its menu.
+function tabClick(t) { if (S.tab === t) closeMenu(); else setTab(t); }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => tabClick(b.dataset.tab)));
 $('menuX').addEventListener('click', closeMenu);
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape' || !S.tab || isWide()) return;
+  if (e.key !== 'Escape' || !S.tab) return;
   if (document.querySelector('.bsheet-ov, .modal, .away-ov, .join-ov, .create')) return;
   closeMenu();
 });

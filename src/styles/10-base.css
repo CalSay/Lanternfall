@@ -44,7 +44,7 @@ img.px, .ic img, .portrait img, .tab img, .mat img, .cost img { image-rendering:
 
 /* One-screen layout (docs/design/layout.md). Portrait: header, then the game view (stage, control row,
    Next Up chip), then the tab bar. An open menu covers the game view (same grid cell) and slides up.
-   Landscape and desktop (min-aspect-ratio 1/1, 600px+ wide, see 30-panels.css): game left, menu right. */
+   Landscape and desktop (min-aspect-ratio 1/1, 600px+ wide): the rail, top row, stage and side column of 80-landscape.css. */
 .app { --gut: 12px; --tabs-h: 54px;
   position: relative; height: 100%; max-width: 560px; margin: 0 auto; overflow: hidden;
   display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;

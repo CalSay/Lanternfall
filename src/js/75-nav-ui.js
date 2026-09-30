@@ -8,7 +8,7 @@
 //     (uiHooks) and writes only when its text changes: nothing runs per frame.
 //   - The quick switcher (a small sheet): Fight at your zone, each open skill's last node, up to 3
 //     recent places, "All nodes ›" and "Raid ›" (online only). One tap switches the activity and
-//     closes the sheet and any open menu (portrait); on wide screens the menu stays and updates.
+//     closes the sheet and any open menu (UX-L1: in landscape too, so you see the stage).
 //   - The control row (4.3): [Fight · Z37] [Mining] [Switch]. Fight names the zone while you do something
 //     else, the Gather button the skill it resumes, Switch opens the switcher. Raid left the row (approved):
 //     the switcher has a Raid row online.
@@ -109,7 +109,7 @@ let navUI = null;
       api.sheet.classList.add('nv-sheet');
       const pickGo = place => { api.close(true); navGo(Object.assign({ close: true }, place)); };
       const head = el('div', 'nv-head');
-      head.append(el('h2', 'nv-title', 'Switch activity'), el('span', 'nv-hint', isWide() ? '' : 'Menus close when you pick'));
+      head.append(el('h2', 'nv-title', 'Switch activity'), el('span', 'nv-hint', 'Menus close when you pick'));
       const list = el('div', 'dz-list nv-list');
       const now = navNow(), deep = now.act === 'deep';
       if (deep) row(list, { icon: ICON_OF.deep(), title: `Deepwell · Floor ${now.floor}`, meta: 'Now · climb out to switch', here: true });
