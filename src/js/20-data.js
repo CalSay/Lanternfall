@@ -108,6 +108,7 @@ const COMPS = [
 ];
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
+// W2-A: the dormant party game only. The solo game trains moves with gold instead (55-training.js, SOLO_TUNE.train).
 const HERO_UPS = [
   // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares; BAL3 retuned all three) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
   // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.

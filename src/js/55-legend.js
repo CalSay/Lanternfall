@@ -178,6 +178,9 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
         if (!has && it.lg && legendItemRank(it) > 0 && compUses(it.lg, k, pos)) { has = true; comp.push({ id: it.lg, rank: legendItemRank(it), char: k, item: it, pos }); }
       }
     }
+    // W1-F: a lone hero has no companions to field, so a circle's "members" are the pieces you wear marked with it
+    // (Oathkeeper's Banner, Dusk Contract, Wayfarer's Lamp and Hedgelight Lamp count them).
+    if (soloOn()) LEG_CIRCLES.forEach((c, i) => { members[c] = n[i]; });
     const tierOf = c => T.setTiers.filter(t => c >= t).pop() || 0;
     const order = LEG_CIRCLES.map((c, i) => i).filter(i => tierOf(n[i]) > 0).sort((a, b) => n[b] - n[a] || a - b).slice(0, T.setsActive);
     const tier = {}; for (const c of LEG_CIRCLES) tier[c] = 0;
@@ -231,7 +234,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
       return { on: false, why: `Your hero carries ${T.heroMax} legendary powers.`, rank };
     }
     if (p.only && who !== p.only) return { on: false, why: `Works for ${charName(p.only)} only.`, rank };
-    if (who === 'hero' || !who) return { on: false, why: p.fits === 'trinket' ? 'A companion must wear it.' : `A ${ROLE_STATS[p.fits].n.toLowerCase()} companion must wear it.`, rank };
+    if (who === 'hero' || !who) return { on: false, why: soloOn() ? 'This power does not work for your hero.' : p.fits === 'trinket' ? 'A companion must wear it.' : `A ${ROLE_STATS[p.fits].n.toLowerCase()} companion must wear it.`, rank };
     if (p.fits !== 'trinket' && ROSTER[who] && ROSTER[who].role !== p.fits) return { on: false, why: `Works on a ${ROLE_STATS[p.fits].n.toLowerCase()} only.`, rank };
     if (a.comp.some(x => x.item === it)) return { on: true, why: '', rank };
     if (!fieldKeys().includes(who)) return { on: false, why: `${charName(who)} is not in the party.`, rank };
@@ -461,7 +464,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   legendMarkWhy = (kind, t, circle) => {
     const i = circleIdx(circle);
     if (i < 0) return 'Pick a circle.';
-    if (!markable(kind)) return 'A mark goes on a class piece, a companion weapon or a Trinket.';
+    if (!markable(kind)) return soloOn() ? 'A mark goes on a class weapon, off-hand, helm or body piece.' : 'A mark goes on a class piece, a companion weapon or a Trinket.';
     if ((L().sig[i] | 0) < LEG_COST.mark.sigil) return `Needs 1 ${circleName(i)} Sigil`;
     if (pearlHave(t) < LEG_COST.mark.pearls) return pearlWhy(t, LEG_COST.mark.pearls);
     return '';

@@ -16,7 +16,13 @@ const ECON = {
   inc: 0.05,                     // +5% of the region's base a zone (x2.7 by the region boss)
   zones: 35,                     // zones a region (PACE.region)
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
-  // ---- the Lanternbearer's upgrades (3.3, 4.4): price of level n+1 = base x r^n ----
+  // ---- Training (W2-A, solo-hero.md "Training"): the price of a move's level n+1 = base x r a level to Lv bend, x r2 a
+  // level to bend2, x r3 a level past it (55-training trainCost). A move gains about one level a hero level, so the price
+  // follows the time between hero levels: minutes in the first hour (to about Lv 20), hours on day 1 (it ends near Lv 26),
+  // a day or more from Lv 33. Past bend2 (the base class's cap, 40) Ascension's regions pay x3.4 a region, so it rises
+  // gently. Attack and the abilities are the main sink; Parry and Dodge pay off only by hand. Lv 80 stays under 1e8 (EC10).
+  train: { atk: { base: 6 }, ab: { base: 8 }, parry: { base: 10 }, dodge: { base: 8 }, r: 1.2, bend: 20, r2: 1.28, bend2: 40, r3: 1.15 },
+  // ---- the Lanternbearer's upgrades (3.3, 4.4), the dormant party game only (Training replaced them): price of level n+1 = base x r^n ----
   blade: { base: 6, r: 1.05 },   // BAL3: base 10 -> 6 (EC9/T1: continuous play lost ~3 zones at 2 h). Was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
                                  // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
   swift: { base: 10, r: 1.15 },  // BAL3: was 20 x 1.25^n (early pace; the cap 40 bounds it). Before ECON-A 50 x 1.6^n (cap 40 unchanged)

@@ -2716,10 +2716,6 @@ span.cf-d { font-weight: 600; }
 @keyframes sb-nope { 0%, 100% { transform: translateX(0); } 33% { transform: translateX(-3px); } 66% { transform: translateX(3px); } }
 @keyframes sb-good { 0% { background: #6B5A20; } 100% { } }
 @keyframes sb-ready { 0% { box-shadow: inset 0 0 0 4px #FFF3C4, 0 0 14px #F2C14E, 0 3px 0 #0B0810; } 100% { } }
-.sb-tip { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #16111C; color: var(--bone);
-  border: 2px solid #0B0810; outline: 2px solid var(--line-hi, #4A3F57); font: 14px/1.35 var(--body, sans-serif); pointer-events: none; }
-.sb-tip b { font: 600 17px var(--display); color: var(--gold); }
-.sb-tip small { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .sbtn.nope, .sbtn.good, .sbtn.ready-now { animation: none; } .sbtn:active, .sbtn.hit { transform: none; } }
 @media (max-height: 640px) { .sb-ic { width: 36px; height: 36px; margin-top: -10px; } .sb-lb { font-size: calc(11px * var(--display-k, 1)); } }
 @media (max-height: 520px) { .sb-ic { width: 24px; height: 24px; } .sb-lb { display: none; } .sb-ic { margin-top: 0; } .sb-n { margin-top: 0; } }
@@ -3012,6 +3008,28 @@ button.mat:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px;
 .tl-perks li.on { color: var(--bone); opacity: 1; }
 .tl-perks li.on::before { content: "✓ "; color: var(--xp); }
 .tl-box.master h4 { color: var(--gold); }
+/* 60-training: Training (W2-A, 75-training-ui.js): the Hero tab's Training list and the action bar's long-press block. */
+.tr-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.tr-head .tr-note { flex: 1 1 180px; margin: 0; }
+.tr-list { display: grid; gap: 8px; }
+.tr-row .row-name { flex-wrap: nowrap; }
+.tr-row .ic.tr-ic img, .tr-ic img { image-rendering: pixelated; }
+.tr-ms { margin-top: 2px; font-size: 12px; color: var(--gold); }
+.tr-row.tr-max .tr-ms { color: var(--muted); }
+.tr-go { min-width: 92px; }
+.tr-go.tr-ok { animation: tr-ok .45s steps(3); }
+@keyframes tr-ok { 0% { box-shadow: 0 0 0 0 var(--gold); } 50% { box-shadow: 0 0 0 3px var(--gold); } 100% { box-shadow: 0 0 0 0 transparent; } }
+/* the long-press block (75-solo-ui's sheet and the ability picker) */
+.sp-desc { margin: 0; font-size: 14px; color: var(--bone); }
+.tr-card { display: grid; gap: 4px; padding: 8px 10px; background: #1B1424; border: 2px solid #0B0810; outline: 2px solid #6B5320; outline-offset: -4px; }
+.tr-c-top { display: flex; align-items: baseline; gap: 6px; }
+.tr-c-lv { font: 600 18px var(--display); color: var(--gold); }
+.tr-c-cap { color: var(--muted); }
+.tr-c-now { font-size: 14px; color: var(--bone); }
+.tr-c-row { display: flex; gap: 8px; align-items: stretch; margin-top: 4px; }
+.tr-c-row .buy { flex: 1 1 auto; min-height: 44px; }
+.tr-c-more { flex: 0 0 auto; min-height: 44px; padding: 0 12px; background: var(--panel-2); color: var(--bone); border: 2px solid #0B0810; font: 600 15px var(--display); cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .tr-go.tr-ok { animation: none; } }
 /* 60-unlocks: the Tavern visitor card and the joining moment overlay (75-unlocks-ui.js). */
 
 /* ---- Tavern visitor ---- */
@@ -6635,6 +6653,7 @@ const COMPS = [
 ];
 
 // desc() thunks read live numbers from 40-rules; only the UI calls them.
+// W2-A: the dormant party game only. The solo game trains moves with gold instead (55-training.js, SOLO_TUNE.train).
 const HERO_UPS = [
   // ECON-A (economy-2 4.4): prices equal ECON.blade / swift / precision (21w loads later; check.mjs compares; BAL3 retuned all three) (Blade was 10 x 1.18^n, Swiftness 50 x 1.6^n); Fortune became
   // Precision (+1% crit damage a level, cap 15). S.fortune stays in the save at 0, unused.
@@ -7442,25 +7461,25 @@ const LEG_POWERS = {
     V => `Shield Wall also taunts every foe. While it is up, you reflect ${legPc(V('reflect'))} of the damage it blocks as fire.`),
   anvil: legRow('anvil', 'Anvil of Patience', 'class', 'hero', 'warden', 0.08, 0.16, 'class', '55-party tap branch',
     { shock: legLine(0.8, 1.6), cap: legSame(5) },
-    V => `Your taps no longer strike. Each hit you take adds a Guard stack (up to ${V('cap')}). A tap at full Guard spends them all: ${legNum(V('shock'))}x your attack per stack to the whole pack.`),
+    V => `Your Attack no longer strikes. Each hit you take adds a Guard stack (up to ${V('cap')}). An Attack at full Guard spends them all: ${legNum(V('shock'))}x your attack per stack to the whole pack.`),
   banner: legRow('banner', 'Oathkeeper\'s Banner', 'class', 'hero', 'warden', 0.05, 0.10, 'mod', 'addModifier(\'party\')',
     { dmg: legLine(0.05, 0.10), armour: legSame(10) },
-    V => `For each Oath companion you field, your party deals +${legPc(V('dmg'))} damage and you gain +${V('armour')} armour.`,
+    V => `For each Oath-marked piece you wear, you deal +${legPc(V('dmg'))} damage and gain +${V('armour')} armour.`,
     { per: 'oath', pPer: true }),
   bulwark: legRow('bulwark', 'Bulwark of Hollows', 'class', 'hero', 'warden', 0.06, 0.11, 'hook', 'threat check in 59-combat',
     { less: legLine(0.20, 0.35), more: legSame(0.15) },
-    V => `While every living foe targets you, your Mid and Back allies take ${legPc(V('less'))} less damage. You take ${legPc(V('more'))} more.`),
+    V => `While every living foe targets you, you take ${legPc(V('less'))} less damage.`),
   cinder: legRow('cinder', 'Cinder Heart', 'class', 'hero', 'warden', 0.05, 0.10, 'event', 'unitHit',
     { burn: legLine(0.04, 0.08), secs: legSame(4) },
     V => `Foes that hit you burn for ${legPc(V('burn'))} of the hit each second for ${V('secs')}s. Burns on foes you taunted deal double.`),
   cadence: legRow('cadence', 'Warlord\'s Cadence', 'class', 'hero', 'warden', 0.07, 0.13, 'class', '55-party heavy hit',
     { cd: legLine(1, 2), every: legSame(4) },
-    V => `Every ${V('every')}th heavy hit takes ${legNum(V('cd'))}s off every companion's ability cooldown.`),
+    V => `Every ${V('every')}th heavy hit you take takes ${legNum(V('cd'))}s off your ability cooldowns.`),
 
   // ---------------- 3.2 Lanternmage ----------------
   kindled: legRow('kindled', 'Kindled Crown', 'class', 'hero', 'lanternmage', 0.06, 0.12, 'hook', 'burn tick hook',
     { chance: legLine(0.10, 0.20) },
-    V => `Each burn tick from a companion has a ${legPc(V('chance'))} chance to plant an Ember on its foe.`),
+    V => `Each burn tick on a foe has a ${legPc(V('chance'))} chance to plant an Ember on it.`),
   starwell: legRow('starwell', 'Starwell Lens', 'class', 'hero', 'lanternmage', 0.07, 0.14, 'class', '55-party Flare',
     { pulse: legLine(0.40, 0.50), pulses: legSame(3), cd: legSame(3) },
     V => `Lantern Flare fires in ${V('pulses')} pulses of ${legPc(V('pulse'))} each. Each pulse that kills takes ${V('cd')}s off Flare's cooldown.`),
@@ -7472,11 +7491,11 @@ const LEG_POWERS = {
     V => `Lantern Flare deals +${legPc(V('flare'))}. If it kills the whole pack, its cooldown resets. If not, the cooldown is ${legPc(V('slow'))} longer.`),
   mirror: legRow('mirror', 'Mirror Flame', 'class', 'hero', 'lanternmage', 0.06, 0.12, 'hook', 'ability hit hook',
     { gap: legLine(3, 1.5) },
-    V => `When a companion's ability hits foes, each one gets an Ember. This happens at most once every ${legNum(V('gap'))}s.`,
+    V => `When your ability hits foes, each one gets an Ember. This happens at most once every ${legNum(V('gap'))}s.`,
     { down: ['gap'] }),
   wayfarer: legRow('wayfarer', 'Wayfarer\'s Lamp', 'class', 'hero', 'lanternmage', 0.05, 0.10, 'tune', 'tune:embersMax, tune:flare',
     { flare: legLine(0.06, 0.12), embers: legSame(1) },
-    V => `For each Wayfarer you field, you hold ${V('embers')} more Ember and Lantern Flare deals +${legPc(V('flare'))}.`,
+    V => `For each Wayfarer-marked piece you wear, you hold ${V('embers')} more Ember and Lantern Flare deals +${legPc(V('flare'))}.`,
     { per: 'wayfarers', pPer: true }),
 
   // ---------------- 3.3 Ranger ----------------
@@ -7485,7 +7504,7 @@ const LEG_POWERS = {
     V => `Volley fires only at your marked foe, with +${legPc(V('arrow'))} per arrow. Each crit adds ${V('markAdd')}s to the mark.`),
   contract: legRow('contract', 'Dusk Contract', 'class', 'hero', 'ranger', 0.05, 0.10, 'mod', 'addModifier(\'crit\')',
     { crit: legLine(0.04, 0.08), heal: legSame(0.01) },
-    V => `For each Dusk Company companion you field, your party gets +${legPc(V('crit'))} crit chance. Crits on marked foes heal the striker ${legPc(V('heal'))} of max HP.`,
+    V => `For each Dusk-marked piece you wear, you get +${legPc(V('crit'))} crit chance. Crits on marked foes heal you for ${legPc(V('heal'))} of max HP.`,
     { per: 'dusk', pPer: true }),
   stormfeather: legRow('stormfeather', 'Stormfeather', 'class', 'hero', 'ranger', 0.06, 0.12, 'hook', 'crit hook',
     { mult: legLine(1, 2), every: legSame(3) },
@@ -7495,7 +7514,7 @@ const LEG_POWERS = {
     V => `You attack half as fast. A hit after ${V('wait')}s without attacking deals x${legNum(V('mult'))} damage and always crits.`),
   wolves: legRow('wolves', 'Pack of Wolves', 'class', 'hero', 'ranger', 0.07, 0.14, 'class', 'mark code',
     { share: legLine(0.60, 1.00), marks: legSame(3) },
-    V => `Each striker you field marks its own target (up to ${V('marks')} marks). Your mark bonus works on all of them at ${legPc(V('share'))}.`),
+    V => `Your Mark spreads to up to ${V('marks')} foes at once. Your mark bonus works on all of them at ${legPc(V('share'))}.`),
   lastlight: legRow('lastlight', 'Last Light Arrow', 'class', 'hero', 'ranger', 0.06, 0.12, 'hook', 'hero hit hook',
     { exec: legLine(0.12, 0.20), bossAt: legSame(0.20), boss: legSame(0.5) },
     V => `Your hits kill normal foes below ${legPc(V('exec'))} HP. Bosses below ${legPc(V('bossAt'))} HP take +${legPc(V('boss'))} damage from you.`),
@@ -7503,23 +7522,23 @@ const LEG_POWERS = {
   // ---------------- 3.4 Lightkeeper ----------------
   unsleeping: legRow('unsleeping', 'Candle of the Unsleeping', 'class', 'hero', 'lightkeeper', 0.07, 0.14, 'class', '55-party Blessing',
     { dmg: legLine(0.25, 0.50), uses: legSame(3) },
-    V => `Blessings no longer fade with time. A companion spends its Blessing over its next ${V('uses')} abilities, and they deal +${legPc(V('dmg'))}.`),
+    V => `Blessings no longer fade with time. You spend your Blessing over your next ${V('uses')} abilities, and they deal +${legPc(V('dmg'))}.`),
   reliquary: legRow('reliquary', 'Saint\'s Reliquary', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'hook', 'heal hook',
     { heal: legLine(0.08, 0.15) },
-    V => `Your heals on Oath companions also bless them. For each Oath companion you field, your healing is +${legPc(V('heal'))}.`,
+    V => `Your heals also bless you. For each Oath-marked piece you wear, your healing is +${legPc(V('heal'))}.`,
     { per: 'oath', pPer: false }),
   bell: legRow('bell', 'Bell of Tolling', 'class', 'hero', 'lightkeeper', 0.06, 0.12, 'class', '55-party Hymn',
     { secs: legLine(2, 3), every: legSame(10), str: legSame(0.5) },
     V => `After Rally Hymn ends, it echoes every ${V('every')}s: a half-strength Hymn for ${legNum(V('secs'))}s.`),
   ebbflow: legRow('ebbflow', 'Ebb and Flow', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'event', 'unitHeal',
     { shield: legLine(0.10, 0.20) },
-    V => `Overhealing becomes a shield shared by the whole party, up to ${legPc(V('shield'))} of each member's max HP.`),
+    V => `Overhealing becomes a shield on you, up to ${legPc(V('shield'))} of your max HP.`),
   smite: legRow('smite', 'Smiting Light', 'class', 'hero', 'lightkeeper', 0.06, 0.12, 'hook', 'tap and hit hooks',
     { heal: legLine(0.02, 0.04), secs: legSame(4) },
-    V => `Your taps brand a foe for ${V('secs')}s. Companion hits on it heal your weakest ally for ${legPc(V('heal'))} of the damage.`),
+    V => `Your Attack brands a foe for ${V('secs')}s. Your hits on it heal you for ${legPc(V('heal'))} of the damage.`),
   hedgelight: legRow('hedgelight', 'Hedgelight Lamp', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'tune', 'tune:blessMax, 56b Common Cause',
     { cause: legLine(0.08, 0.15), bless: legSame(1) },
-    V => `For each Hedgefolk you field, you hold ${V('bless')} more Blessing and Common Cause is +${legPc(V('cause'))} stronger.`,
+    V => `For each Hedgefolk-marked piece you wear, you hold ${V('bless')} more Blessing and Common Cause is +${legPc(V('cause'))} stronger.`,
     { per: 'hedgefolk', pPer: true }),
 
   // ---------------- 3.5 Companion powers ----------------
@@ -7603,20 +7622,20 @@ function legendP(id, r) { const p = LEG_POWERS[id]; return p ? p.p1 + (p.p5 - p.
 const LEG_SETS = {
   hedgefolk: { circle: 'hedgefolk', i: 0, n: 'Hearth and Hedge', tiers: {
     2: { txt: '+5% crit damage. Common Cause is 10% stronger.', p: 0.03, fx: { keen: 0.05, cause: 0.10 } },   // ECON-A (keen: the crit damage pool): was +10% gold
-    4: { txt: 'Hedgefolk companions attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
-    6: { n: 'Common Courage', txt: 'Common companions you field get x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
+    4: { txt: 'You attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
+    6: { n: 'Common Courage', txt: 'Common gear you wear gets x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
   oath: { circle: 'oath', i: 1, n: 'The Old Oath', tiers: {
-    2: { txt: 'Your party takes 5% less damage.', p: 0.03, fx: { less: 0.05 } },
-    4: { txt: 'A tank\'s taunt heals it for 6% of max HP.', p: 0.03, fx: { tauntHeal: 0.06 } },
-    6: { n: 'Unbroken Oath', txt: 'Once a pack, the first ally to fall stands at 40% HP (Oath members at 80%).', p: 0.06, fx: { hp: 0.40, oathHp: 0.80 } } } },
+    2: { txt: 'You take 5% less damage.', p: 0.03, fx: { less: 0.05 } },
+    4: { txt: 'Your taunt heals you for 6% of max HP.', p: 0.03, fx: { tauntHeal: 0.06 } },
+    6: { n: 'Unbroken Oath', txt: 'Once a pack, the first time you fall you stand up again at 40% HP.', p: 0.06, fx: { hp: 0.40, oathHp: 0.80 } } } },
   dusk: { circle: 'dusk', i: 2, n: 'Night Work', tiers: {
     2: { txt: '+10% crit damage.', p: 0.03, fx: { critDmg: 0.10 } },
-    4: { txt: 'A striker\'s kill gives your party +10% damage for 4s (stacks twice).', p: 0.06, fx: { dmg: 0.10, secs: 4, stacks: 2 } },
-    6: { n: 'Contract Kept', txt: 'Each striker\'s first hit on a new pack always crits. Strikers kill normal foes below 12% HP.', p: 0.07, fx: { firstCrit: 1, exec: 0.12 } } } },
+    4: { txt: 'A kill gives you +10% damage for 4s (stacks twice).', p: 0.06, fx: { dmg: 0.10, secs: 4, stacks: 2 } },
+    6: { n: 'Contract Kept', txt: 'Your first hit on a new pack always crits. You kill normal foes below 12% HP.', p: 0.07, fx: { firstCrit: 1, exec: 0.12 } } } },
   wayfarers: { circle: 'wayfarers', i: 3, n: 'Road Songs', tiers: {
     2: { txt: 'Ability cooldowns are 6% shorter.', p: 0.03, fx: { cd: 0.06 } },
     4: { txt: 'Burns, slows and songs last 30% longer.', p: 0.04, fx: { longer: 0.30 } },
-    6: { n: 'Encore Road', txt: 'Every 12s, a random companion you field finishes its ability cooldown.', p: 0.07, fx: { every: 12 } } } }
+    6: { n: 'Encore Road', txt: 'Every 12s, one of your abilities finishes its cooldown.', p: 0.07, fx: { every: 12 } } } }
 };
 
 // ---------------- 7 the Codex page ----------------
@@ -7916,19 +7935,19 @@ const PIN_REWARDS = {
 const PIN_POWERS = {
   nokneel: { id: 'nokneel', n: 'Crown of No One', boss: 'king', fits: 'hero', cls: null, p1: 0.05, p5: 0.10,
     v: { every: [20, 18, 16, 14, 12], dmg: [0.05, 0.0625, 0.075, 0.0875, 0.10], secs: [4, 4, 4, 4, 4] },
-    txt: r => `Your party ignores the first stun, bind, charm or kneel every ${PIN_POWERS.nokneel.v.every[r - 1]}s. Each one ignored gives the party +${Math.round(PIN_POWERS.nokneel.v.dmg[r - 1] * 1000) / 10}% damage for 4s.`,
+    txt: r => `You ignore the first stun, bind, charm or kneel every ${PIN_POWERS.nokneel.v.every[r - 1]}s. Each one ignored gives you +${Math.round(PIN_POWERS.nokneel.v.dmg[r - 1] * 1000) / 10}% damage for 4s.`,
     wire: 'cc' },
   lurebreak: { id: 'lurebreak', n: 'Lurebreaker\'s Hook', boss: 'lure', fits: 'hero', cls: null, p1: 0.05, p5: 0.10,
     v: { heal: [0.03, 0.0375, 0.045, 0.0525, 0.06], cd: [1, 1, 1, 1, 1] },
-    txt: r => `Every interrupt and cleanse by your party heals the party ${Math.round(PIN_POWERS.lurebreak.v.heal[r - 1] * 1000) / 10}% of max HP and takes 1s off your hero ability.`,
+    txt: r => `Every interrupt and cleanse you make heals you for ${Math.round(PIN_POWERS.lurebreak.v.heal[r - 1] * 1000) / 10}% of max HP and takes 1s off your ability cooldowns.`,
     wire: 'telegraph' },
   onehour: { id: 'onehour', n: 'One More Hour', boss: 'fire', fits: 'hero', cls: null, p1: 0.04, p5: 0.08,
     v: { hp: [0.30, 0.375, 0.45, 0.525, 0.60], secs: [5, 6, 7, 9, 10] },
-    txt: r => `Once a boss fight, when your party would fall, every member stands at ${Math.round(PIN_POWERS.onehour.v.hp[r - 1] * 1000) / 10}% HP and the boss timer gains ${PIN_POWERS.onehour.v.secs[r - 1]}s.`,
+    txt: r => `Once a boss fight, when you would fall, you stand at ${Math.round(PIN_POWERS.onehour.v.hp[r - 1] * 1000) / 10}% HP and the boss timer gains ${PIN_POWERS.onehour.v.secs[r - 1]}s.`,
     wire: 'wipe' },
   maudlamp: { id: 'maudlamp', n: 'Maud\'s Lantern', boss: 'below', fits: 'hero', cls: null, p1: 0.06, p5: 0.12,
     v: { early: [0.3, 0.35, 0.4, 0.45, 0.5], dmg: [0.02, 0.025, 0.03, 0.035, 0.04], stacks: [3, 3, 3, 3, 3], secs: [6, 6, 6, 6, 6] },
-    txt: r => `Wind-ups show ${PIN_POWERS.maudlamp.v.early[r - 1]}s earlier and your parry window grows by the same. Each parry gives the party +${Math.round(PIN_POWERS.maudlamp.v.dmg[r - 1] * 1000) / 10}% damage for 6s, up to 3 times.`,
+    txt: r => `Wind-ups show ${PIN_POWERS.maudlamp.v.early[r - 1]}s earlier and your parry window grows by the same. Each parry gives you +${Math.round(PIN_POWERS.maudlamp.v.dmg[r - 1] * 1000) / 10}% damage for 6s, up to 3 times.`,
     wire: 'parry' }
 };
 
@@ -8965,7 +8984,13 @@ const ECON = {
   inc: 0.05,                     // +5% of the region's base a zone (x2.7 by the region boss)
   zones: 35,                     // zones a region (PACE.region)
   hourFoes: 312,                 // foe-equivalents an hour of normal play (24 h average): H(z) = 312 x foe gold
-  // ---- the Lanternbearer's upgrades (3.3, 4.4): price of level n+1 = base x r^n ----
+  // ---- Training (W2-A, solo-hero.md "Training"): the price of a move's level n+1 = base x r a level to Lv bend, x r2 a
+  // level to bend2, x r3 a level past it (55-training trainCost). A move gains about one level a hero level, so the price
+  // follows the time between hero levels: minutes in the first hour (to about Lv 20), hours on day 1 (it ends near Lv 26),
+  // a day or more from Lv 33. Past bend2 (the base class's cap, 40) Ascension's regions pay x3.4 a region, so it rises
+  // gently. Attack and the abilities are the main sink; Parry and Dodge pay off only by hand. Lv 80 stays under 1e8 (EC10).
+  train: { atk: { base: 6 }, ab: { base: 8 }, parry: { base: 10 }, dodge: { base: 8 }, r: 1.2, bend: 20, r2: 1.28, bend2: 40, r3: 1.15 },
+  // ---- the Lanternbearer's upgrades (3.3, 4.4), the dormant party game only (Training replaced them): price of level n+1 = base x r^n ----
   blade: { base: 6, r: 1.05 },   // BAL3: base 10 -> 6 (EC9/T1: continuous play lost ~3 zones at 2 h). Was 10 x 1.18^n. economy-2 4.4 proposed 5 x 1.05^n; ECON-A starts at 10 (the first level costs 10, as
                                  // before): at 5 the first minutes ran ahead (zone 5 in under 5 min, onboarding gaps over 3 min)
   swift: { base: 10, r: 1.15 },  // BAL3: was 20 x 1.25^n (early pace; the cap 40 bounds it). Before ECON-A 50 x 1.6^n (cap 40 unchanged)
@@ -9723,6 +9748,9 @@ const NOTICES = [
   { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
   { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'bell',
     why: 'the tab shows a New mark', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
+  // W2-A Training: the player just pressed Train and the row shows it; a stage cap is worth a bell line
+  { id: 'training', key: 'training', re: /^Training: .* Lv \d+\. /, ch: 'log', why: 'an ability milestone; the Training row shows it' },
+  { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
   { id: 'stars-reset', re: /^Your star map changed/, ch: 'bell' },
 
@@ -9896,7 +9924,7 @@ const CLASS_ABILITIES = {
     fx: [['dmg', 1.3], ['meter', 'embers', 1]], name: 'Ember',
     desc: '1.3x your attack as fire. Plants an Ember on the foe, up to 5.',
     var: { priest: { id: 'bless', name: 'Blessing', type: 'holy', coef: 1,
-      desc: 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
+      desc: SOLO_LOAD ? 'You hit softly, but each Attack blesses you: +20% damage for 6s, up to 3 times.' : 'You hit softly, but your heroes deal the damage you give up. Each tap blesses them: +20% damage for 6s, up to 3 times.' } } },
   flare: { id: 'flare', slot: 'ab1', cls: 'mage', cd: 25, target: 'splash', type: 'fire', tags: ['aoe'],
     fx: [['consume', 'embers'], ['dmg', 20, { perStack: 0.3 }], ['apply', 'burn', 1]], name: 'Lantern Flare',
     desc: 'A burst of 20x your attack, +30% for each Ember on the foe. Uses up the Embers and sets the whole pack burning.',
@@ -9974,7 +10002,7 @@ const EVO_NAMES = {
   trapper: { name: 'Trapper', title: 'the Pathfinder', base: 'ranger', kind: 'utility', role: 'caster', line: 'The road fights for you.' },
   warlock: { name: 'Warlock', title: 'the Shadowbinder', base: 'mage', kind: 'damage', role: 'caster', line: "Take the dark's fire. Throw it back." },
   priest: { name: 'Lightkeeper', title: 'the Given Light', base: 'mage', kind: 'utility', role: 'support', line: 'Give your light away.',
-    pitch: 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
+    pitch: SOLO_LOAD ? 'Keep the light burning.' : 'Keep them standing.', aura: SOLO_LOAD ? 'You heal 40% more and hit 40% harder.' : 'Supports in your party heal 40% more and hit 40% harder. All companions deal 25% more damage.' }
 };
 // ---- S3: the six evolutions (classes-2 2.3-2.9, 3.3, 4.3) ----
 // Stats replace the base class's once proven (3.7). tankDr: the share of the tank role's damage cut it takes.
@@ -10150,6 +10178,26 @@ const EVO_DEFS = {
   }
 };
 for (const k in EVO_DEFS) Object.assign(EVO_DEFS[k], { name: EVO_NAMES[k].name, title: EVO_NAMES[k].title, base: EVO_NAMES[k].base, kind: EVO_NAMES[k].kind, role: EVO_NAMES[k].role });
+// W1-F: the subclass cards say what a lone hero gets. Each row replaces the party-era text of one path (the bullets
+// that said "best with a healer / a tank / two damage heroes", "your heroes deal...", "tap", "back line", "Middle and Back").
+// The numbers stay. Sanctuary, Deathcap and the rest keep their names. The `good` (best partners) list is not shown in solo.
+if (SOLO_LOAD) {
+  const EVO_SOLO = {
+    reaver: { bullets: { 2: 'Best when you can take hits and keep swinging.' }, active: 'Press Attack on heavy hits to keep Fury at 100, parry for free Fury, and Rend into a stagger.' },
+    warden: { aura: { name: 'Oath of the Order', text: 'You take 10% less damage.' } },
+    venomstalker: { bullets: { 2: 'Best in long fights, where Venom stays up.' } },
+    trapper: { bullets: { 2: 'Best in long fights: your traps come back.' }, idle: 'Traps lay themselves on every pack and Snare Field fires every 20s. Divers never reach you.' },
+    warlock: { bullets: { 2: 'Best on packs, where Curses jump from foe to foe.' } },
+    priest: { bullets: { 0: 'Each Attack blesses you.', 2: 'Best in long fights, where Blessing stacks.' },
+      passives: { 0: 'You hit softly, and each Attack builds your Blessing. Your hits are holy.', 1: 'Each Attack heals you and blesses you: +20% damage for 6s, up to 3 times.' } }
+  };
+  for (const k in EVO_SOLO) {
+    const e = EVO_DEFS[k], s = EVO_SOLO[k];
+    for (const i in s.bullets || {}) e.bullets[i] = s.bullets[i];
+    for (const i in s.passives || {}) e.passives[i].text = s.passives[i];
+    for (const f of ['active', 'idle', 'aura']) if (s[f] != null) e[f] = s[f];
+  }
+}
 
 // Tactics unlock order (3.6, for S7): slot 1 when Tactics arrive, slot 2 on evolving (EVO_DEFS[evo].tactics).
 const CLS_TACTICS = {
@@ -10221,7 +10269,7 @@ const SOLO_TUNE = {
   on: typeof __SOLO === 'undefined' ? 1 : +__SOLO,
   // ---- active vs idle (SOLO2): a combat press makes you active for activeFor s; while active nothing fights for you ----
   activeFor: 5,
-  atkX: 3.5,            // an Attack press: the class tap x atkX x attack speed (while active there is no auto swing)
+  atkX: 5,              // an Attack press: the class tap x atkX (W2-A: 3.5 x attack speed before Swiftness left; while active there is no auto swing)
   abHandX: 2.5,         // an ability cast by hand hits this much harder than the idle auto-cast
   // ---- the buttons ----
   atkCd: 0.6,          // Attack: one class hit, then a short cooldown (mashing is not a win)
@@ -10237,18 +10285,33 @@ const SOLO_TUNE = {
   // ---- the ability (one per starter) ----
   autoDelay: 1.5,      // idle: the hero casts a ready ability after it has waited this long (the player goes first)
   echo: { x: 2.2, xOther: 1.4, mark: 6 },                      // Echo Shot: every foe in the lane, Marked
-  bash: { x: 3.2, stun: 2, dr: 0.4, drT: 4 },                  // Shield Bash: the front foe, Stun, less damage taken
+  bash: { x: 3.2, xOther: 1.6, stun: 2, dr: 0.4, drT: 4 },                  // Shield Bash: the front foe, Stun, less damage taken
   fire: { x: 2.4, xOther: 1.0, patchT: 3, burnP: 1.5 },        // Fireball: burst, Burn, a burning patch
   // ---- telegraphs (owner: heavy hits come mainly from bosses and elites; trash rarely, and softer) ----
   trashEvery: 20, trashFirst: 9, trashX: 1.6, trashFrom: 1,   // a pack foe's heavy: every 20 s of fighting (first at 9 s)
   // ---- balance for one hero (sim.mjs --targets early pacing) ----
   dmgX: 1.75,          // the hero's damage (the party's share folded in)
   ramp: [8, 12, 1.35], // ... rising x1.35 from max zone 8 to 12 (the old party's trio step)
-  heroX: { wren: 0.85, tobin: 1.2, pip: 1.15 },   // per hero damage, for parity (the Ranger kit crits more; the Warrior's is a tank's)
+  heroX: { wren: 0.76, tobin: 1.2, pip: 1.15 },   // per hero damage, for parity (the Ranger kit crits more; the Warrior's is a tank's). W2-A: wren 0.85 -> 0.76
   heroHp: { wren: 1.1, tobin: 1, pip: 1.6 },      // per hero HP (Pip wears cloth and stands alone)
   hpX: 2.6,            // the hero's HP (it takes every hit now)
   drX: 0.25,           // the hero shrugs off 25% of every hit (a party's cover and heals folded in)
-  bossHitX: 0.6        // a boss's (and its adds') hits on the lone hero (bosses were tuned against a tank)
+  bossHitX: 0.6,       // a boss's (and its adds') hits on the lone hero (bosses were tuned against a tank)
+  // ---- Training (W2-A, solo-hero.md "Training"): gold levels up each hero's moves. Runtime: 55-training.js ----
+  // Attack's damage curve is PACE.atkPer / atkX / atkEvery (40-rules atkCurve). Prices: ECON.train (21w).
+  train: {
+    cap: [40, 80],       // the class-stage cap: base class, then after Ascension (the Proving). A move also never passes the hero's level.
+                         //   40: the Proving's level (35, CLS_TUNE.evoLv) and a little room; it binds near day 11 today
+    aps: { wren: 1, tobin: 1, pip: 1 },   // idle auto swings a second, fixed per hero (Swiftness is gone; the Attack cooldown sets a hand's speed)
+    abPer: 3, abX: 1.55, abX2: 1.8,   // an ability's power: (4 + abPer x level) x abX every 5th level, abX2 past PACE.atkBend (x the hero's level, gear and damage)
+    every: 5,            // a milestone every 5th level (Attack and abilities)
+    // each ability's milestones, in turn: cd -0.5 s cooldown; mark +2 s Mark; target +1 foe; stun +0.5 s Stun; patch +1 s burning patch
+    ms: { echo: ['cd', 'mark'], bash: ['target', 'stun'], fire: ['patch', 'cd'] },
+    msv: { cd: 0.5, mark: 2, target: 1, stun: 0.5, patch: 1 },
+    cdMin: 0.5,          // milestones never take a cooldown under half its base
+    parry: 0.1,          // Parry: +10% counter damage a level
+    dodge: 0.97, dodgeMin: 0.4   // Dodge: its cooldown x0.97 a level, never under 0.4 s (the dodge window never grows)
+  }
 };
 
 // The abilities (one per starter for now; the ability trees of solo-hero.md come later). line: the picker's one line.
@@ -10268,6 +10331,8 @@ const SOLO_HEROES = {
 };
 for (const k in SOLO_HEROES) SOLO_HEROES[k].ab = SOLO_ABILITIES[SOLO_HEROES[k].abs[0]];   // the signature ability (the picker and the guide name it)
 const SOLO_ORDER = ['wren', 'tobin', 'pip'];
+// W2-A: each hero's Training levels (S.solo.tr[hero] = { atk, parry, dodge, <ability id> }): all 0 on a new game.
+const TRAIN0 = () => { const o = {}; for (const k of SOLO_ORDER) { o[k] = { atk: 0, parry: 0, dodge: 0 }; for (const id of SOLO_HEROES[k].abs) o[k][id] = 0; } return o; };
 // The hero key for a base class (a tool that picks a class picks its starter).
 const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
 function soloOn() { return !!SOLO_TUNE.on; }
@@ -10281,7 +10346,7 @@ function soloOn() { return !!SOLO_TUNE.on; }
 // ================= save =================
 // ECON-A (economy-2 9): the save key moved to v2 (S.v 3) with the gold economy. An old v1 save is never
 // read (a new game starts) and never touched: its key stays in storage as it was.
-const KEY = 'lanternfall.save.v3';   // SOLO1: the solo hero starts fresh (v2 saves are never read)
+const KEY = 'lanternfall.save.v4';   // W2-A: Training replaced Blade and Swiftness, so v3 saves are never read (SOLO1 made it v3)
 // Feature save fields added with registerState(key, defaults). Kept in registration order.
 const STATE_DEFAULTS = {};
 const cloneJSON = v => v === undefined ? v : JSON.parse(JSON.stringify(v));
@@ -10294,7 +10359,7 @@ function fillDefaults(target, defs) {
   return target;
 }
 const fresh = () => Object.assign({
-  v: 3, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
+  v: 4, name: 'Wanderer', L: 1, xp: 0, gold: 0, embers: 0, zone: 1, maxZone: 1, kills: 0,
   blade: 0, swift: 0, fortune: 0, precision: 0, comp: [0, 0, 0, 0, 0, 0, 0], relic: { banner: 0, coin: 0, heart: 0, glass: 0, edge: 0 },
   auto: true, activity: 'fight', raid: { gen: 0, dmg: 0, maxHp: 0, name: '' }, wyrms: 0,
   totalKills: 0, totalGold: 0, amt: '1', tab: 'adv', last: Date.now(), hintDone: false,
@@ -10416,7 +10481,11 @@ const PACE = {
                             //   (tier 5) began at 25). Starlit gear is the mid-Region 2 step (no burst after zone 35)
   heroAwayXp: 0.5,          // hero XP while away, as a share of the away kills' XP (was 0)
   // BAL1 (owner: "damage ramps too fast"): the hero's power steps.
-  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25)
+  bladeX: 1.5, bladeEvery: 25, // Blade attack x bladeX every bladeEvery levels (was x2 every 25) (the dormant party game only)
+  // W2-A (solo): Training's Attack level sets the hit: (4 + atkPer x level) x atkX every atkEvery levels. It carries what
+  //   Blade (3-4 levels a hero level) and Swiftness (up to 5 attacks a second) gave, at one level a hero level. Past atkBend
+  //   each step is atkX2 (Blade's late levels and the Swiftness cap made days 2-10 steeper than the first hour).
+  atkPer: 6, atkX: 1.7, atkEvery: 5, atkBend: 25, atkX2: 2,
   heroLv: 0.04,             // hero damage + heroLv per hero level (was +5%)
   // BAL1: idle income never stalls. A normal foe that takes longer than farmSecs to kill means
   // the zone cannot be farmed: auto-progress (and the away gains) use the highest zone that can.
@@ -10442,8 +10511,14 @@ const dmgMult = () => (1 + 0.2 * S.relic.banner) * (1 + gear().might / 100) * mo
 // only the Gold Rain Omen. Fortune and the Lucky Coin became crit damage (Precision, the Loaded Die).
 const goldMult = () => (1 + gearGold() / 100) * mod('gold');
 const raidMult = () => (1 + 0.3 * S.relic.heart) * (1 + gear().raid / 100) * (Date.now() < rallyUntil ? 1.25 : 1) * mod('raid');
-const heroAtk = () => (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery)) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
-const aps = () => Math.min(5, 1 + 0.1 * S.swift);
+// W2-A Training (solo): the Attack level's hit before the hero's level, gear and damage (heroPow). The party game keeps Blade.
+const atkSteps = (a, x, x2) => { const n = Math.floor(a / PACE.atkEvery), b = Math.floor(PACE.atkBend / PACE.atkEvery); return Math.pow(x, Math.min(n, b)) * Math.pow(x2, Math.max(0, n - b)); };
+const atkCurve = a => (4 + PACE.atkPer * a) * atkSteps(a, PACE.atkX, PACE.atkX2);
+const heroPow = () => lvlMult() * dmgMult() * (1 + gear().attack / 100);
+// (the product is written out in the old order so a party save's numbers stay bit-identical: check.mjs pre-K4)
+const heroAtk = () => (soloOn() ? atkCurve(trainLv('atk')) : (4 + 2.5 * S.blade) * Math.pow(PACE.bladeX, Math.floor(S.blade / PACE.bladeEvery))) * lvlMult() * dmgMult() * (1 + gear().attack / 100);
+// Solo: fixed per hero (SOLO_TUNE.train.aps; Swiftness is gone). The party game keeps Swiftness.
+const aps = () => soloOn() ? trainAps() : Math.min(5, 1 + 0.1 * S.swift);
 // critBase: the hero's flat crit chance before multipliers (S2: bonus('critBase') carries the class's own, the Ranger's +7%).
 const critBase = () => 0.08 + bonus('critBase') + gear().crit / 100;
 const critChance = () => Math.min(0.75, critBase() * mod('crit'));
@@ -11143,7 +11218,9 @@ function upgradeEquipped(slot) {
 
 // ================= shops =================
 // amt: '1' | '10' | 'max' (defaults to the player's x1/x10/Max choice).
+// W2-A: the party game's Blade, Swiftness and Precision. The solo game trains moves instead (55-training train()).
 function buyHero(id, amt) {
+  if (soloOn()) return false;
   const u = HERO_UPS.find(h => h.id === id);
   const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, amt);
   if (p.n > 0 && S.gold >= p.cost) { S.gold -= p.cost; S[u.id] += p.n; econSpend('up', p.cost); return true; }
@@ -12575,7 +12652,8 @@ let goldPerFoe, econRegionReached, econHearthGold, econRowGold, econShrineGold, 
   addModifier('critDmg', keenMult);
   // Precision (the Lanternbearer's upgrade that replaced Fortune) and the Loaded Die (the relic that
   // replaced the Lucky Coin).
-  keenSource('precision', 'Precision', () => ECON.precision.v * Math.min(ECON.precision.cap, S.precision || 0));
+  // W2-A: Precision is the party game's; in solo its +15% moved to each class's crit damage stars (57e, into this pool).
+  if (!soloOn()) keenSource('precision', 'Precision', () => ECON.precision.v * Math.min(ECON.precision.cap, S.precision || 0));
   keenSource('die', 'Loaded Die', () => ECON.crit.die * Math.min(ECON.crit.dieCap, (S.relic && S.relic.edge) || 0));
 
   // ---------------- gold on gear ----------------
@@ -12972,8 +13050,10 @@ var forgeGoalPicks = 0;
   const plural = s => /s$/.test(s) ? s : s + 's';
   const noun = s => s.split(' ')[0];
 
-  // Hero upgrades: the cheapest next level (x1).
+  // Hero upgrades: the cheapest next level (x1). W2-A (solo): the cheapest Training level the hero can take (55-training
+  // trainNext; nothing while every move sits at its cap), on the Hero tab's Training view.
   const heroNext = () => {
+    if (soloOn()) { const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null; }
     let best = null;
     for (const u of HERO_UPS) {
       const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, '1');
@@ -12984,10 +13064,11 @@ var forgeGoalPicks = 0;
   registerGoal({
     id: 'hero-up', sys: 'hero', prio: -1,
     pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
-    label: () => { const b = heroNext(); if (!b) return ''; const lv = S[b.u.id] + 1;
+    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.train ? b.lv : S[b.u.id] + 1;
+      if (b.train) return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`;
       return S.gold >= b.cost ? `${b.u.name} Lv ${lv}: ready to buy` : `${b.u.name} Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
     icon: () => { const b = heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
-    go: { tab: 'adv', sel: '#heroRows' }
+    go: () => { const b = soloOn() && heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'adv', sel: '#heroRows' }; }
   });
 
   // Next zone boss: foes left at the frontier, or the boss is ready.
@@ -13610,6 +13691,9 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
         if (!has && it.lg && legendItemRank(it) > 0 && compUses(it.lg, k, pos)) { has = true; comp.push({ id: it.lg, rank: legendItemRank(it), char: k, item: it, pos }); }
       }
     }
+    // W1-F: a lone hero has no companions to field, so a circle's "members" are the pieces you wear marked with it
+    // (Oathkeeper's Banner, Dusk Contract, Wayfarer's Lamp and Hedgelight Lamp count them).
+    if (soloOn()) LEG_CIRCLES.forEach((c, i) => { members[c] = n[i]; });
     const tierOf = c => T.setTiers.filter(t => c >= t).pop() || 0;
     const order = LEG_CIRCLES.map((c, i) => i).filter(i => tierOf(n[i]) > 0).sort((a, b) => n[b] - n[a] || a - b).slice(0, T.setsActive);
     const tier = {}; for (const c of LEG_CIRCLES) tier[c] = 0;
@@ -13663,7 +13747,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
       return { on: false, why: `Your hero carries ${T.heroMax} legendary powers.`, rank };
     }
     if (p.only && who !== p.only) return { on: false, why: `Works for ${charName(p.only)} only.`, rank };
-    if (who === 'hero' || !who) return { on: false, why: p.fits === 'trinket' ? 'A companion must wear it.' : `A ${ROLE_STATS[p.fits].n.toLowerCase()} companion must wear it.`, rank };
+    if (who === 'hero' || !who) return { on: false, why: soloOn() ? 'This power does not work for your hero.' : p.fits === 'trinket' ? 'A companion must wear it.' : `A ${ROLE_STATS[p.fits].n.toLowerCase()} companion must wear it.`, rank };
     if (p.fits !== 'trinket' && ROSTER[who] && ROSTER[who].role !== p.fits) return { on: false, why: `Works on a ${ROLE_STATS[p.fits].n.toLowerCase()} only.`, rank };
     if (a.comp.some(x => x.item === it)) return { on: true, why: '', rank };
     if (!fieldKeys().includes(who)) return { on: false, why: `${charName(who)} is not in the party.`, rank };
@@ -13893,7 +13977,7 @@ let legendKnown, legendEchoes, legendEchoCap, legendDrop, legendOwe, legendPayOw
   legendMarkWhy = (kind, t, circle) => {
     const i = circleIdx(circle);
     if (i < 0) return 'Pick a circle.';
-    if (!markable(kind)) return 'A mark goes on a class piece, a companion weapon or a Trinket.';
+    if (!markable(kind)) return soloOn() ? 'A mark goes on a class weapon, off-hand, helm or body piece.' : 'A mark goes on a class piece, a companion weapon or a Trinket.';
     if ((L().sig[i] | 0) < LEG_COST.mark.sigil) return `Needs 1 ${circleName(i)} Sigil`;
     if (pearlHave(t) < LEG_COST.mark.pearls) return pearlWhy(t, LEG_COST.mark.pearls);
     return '';
@@ -14419,7 +14503,7 @@ const unlit = () => coldH() && typeof hearthLit === 'function' && !hearthLit();
 const SOLO_G = typeof soloOn === 'function' && soloOn();   // SOLO1: the solo hero's guide and unlocks
 const FEATURES = [
   { id: 'party', tab: 'party', view: 'team', name: SOLO_G ? 'Hero' : 'Party', why: 'hero level 3', when: () => S.L >= 3 || S.maxZone >= 2 },
-  { id: 'nextup', name: 'Next Up', why: 'first upgrade bought, or zone 2', when: () => S.blade + S.swift + (S.precision || 0) > 0 || S.maxZone >= 2 },
+  { id: 'nextup', name: 'Next Up', why: 'first upgrade bought (solo: first Training level), or zone 2', when: () => upBought() || S.maxZone >= 2 },
   { id: 'gather', tab: 'gat', view: 'mine', name: 'Gather', why: 'zone 3 (two bosses down); a cold Hearth: from the start (solo: after the first boss)', when: () => SOLO_G ? S.maxZone >= 2 || S.activity === 'gather' : coldH() || S.maxZone >= 3 },
   { id: 'bounties', tab: 'adv', view: 'bounties', name: 'Bounties', why: 'zone 4', when: () => S.maxZone >= 4 },
   { id: 'camp', tab: 'world', view: 'camp', name: 'Camp', why: 'the camp opens (zone 5; a cold Hearth: the fire is lit)', when: () => (!coldH() && S.maxZone >= 5) || (typeof campOpen === 'function' && campOpen()) },
@@ -14484,7 +14568,8 @@ const SOLO_STEPS = [
   { id: 'dodge', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('ability') && fightingNow() && heavyShowing(), done: () => (O().dodges || 0) >= 1 },
   { id: 'parry', pause: 1, pauseWhen: () => liveFoe() && heavyShowing(), when: () => stepDone('dodge') && fightingNow() && heavyShowing(), done: () => (O().parries || 0) >= 1 },
   { id: 'boss', pause: 1, ok: 1, when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
-  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
+  // W2-A: Train Attack on the Hero tab (it opens with the step: the tab is unlocked by then, hero level 3 or zone 2)
+  { id: 'upgrade', pause: 1, when: () => stepDone('ability') && isUnlocked('party') && S.gold >= cheapestUp(), done: () => upBought() },
   { id: 'gather', pause: 1, when: () => S.maxZone >= 2 && isUnlocked('gather') && unlit() && S.activity !== 'gather', done: () => !unlit() || S.activity === 'gather' || oak8() },
   { id: 'chop', needs: fireMats, when: () => unlit() && S.activity === 'gather', done: () => !unlit() || oak8() },
   { id: 'light', pause: 1, when: () => unlit() && oak8(), done: () => !unlit() },
@@ -14507,7 +14592,7 @@ const PARTY_STEPS = [
   { id: 'tap', when: () => !unlit() || S.activity !== 'gather', done: () => O().taps >= 3 || S.totalKills >= 25 },
   { id: 'ability', when: () => stepDone('tap') && abilityOk(), done: () => O().casts >= 1 },
   { id: 'boss', when: () => S.maxZone === 1 && S.zone === 1 && typeof fightBoss !== 'undefined' && !!fightBoss, done: () => S.maxZone >= 2 },
-  { id: 'upgrade', when: () => S.gold >= cheapestUp(), done: () => S.blade + S.swift + (S.precision || 0) > 0 },
+  { id: 'upgrade', when: () => S.gold >= cheapestUp(), done: () => upBought() },
   { id: 'tab:party', when: () => isUnlocked('party'), done: () => !!O().seen.party },
   { id: 'bench', when: () => coldH() && plotOpen('bench'), done: () => !coldH() || campLv('bench') >= 1 },
   { id: 'tool', when: () => coldH() && campLv('bench') >= 1, done: () => !coldH() || S.items.some(it => CRAFT_KINDS[it.slot] && CRAFT_KINDS[it.slot].tool) },
@@ -14533,7 +14618,12 @@ function needShort(mats) {
   }
   return out;
 }
-const cheapestUp = () => { let c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) c = p.cost; } return c; };
+// W2-A: solo teaches Training's Attack (the first level costs what Blade's did); the party game its upgrades.
+const cheapestUp = () => {
+  if (SOLO_G) { const p = typeof trainPlan === 'function' && soloHero() ? trainPlan('atk', '1') : null; return p && p.n > 0 ? p.cost : Infinity; }
+  let c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) c = p.cost; } return c;
+};
+const upBought = () => SOLO_G ? !!(S.solo && S.solo.tr && Object.values(S.solo.tr).some(r => r && Object.values(r).some(v => v > 0))) : S.blade + S.swift + (S.precision || 0) > 0;
 const abilityOk = () => { try { const a = typeof abilityInfo === 'function' && abilityInfo(); return !!(a && a.ready); } catch (e) { return false; } };
 function recruitable() {
   try {
@@ -16192,6 +16282,184 @@ function toolRight(skill, t) {
     return { kind, t, cur, ok: !!c.ok, why: c.why };
   };
   toolsReady = true;
+}
+
+// ---- src/js/55-training.js ----
+// 55-training: Training (task W2-A, docs/design/solo-hero.md "Training"). Gold levels up each hero's moves:
+// Attack, Parry, Dodge and every ability the hero has unlocked. It replaced the gold upgrades Blade, Swiftness and
+// Precision in the solo game (the dormant party game keeps them: HERO_UPS, buyHero).
+// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
+//
+// Rules (knobs: SOLO_TUNE.train in 24b; Attack's curve: PACE.atkPer / atkX / atkEvery in 40-rules; prices: ECON.train):
+//   - Levels belong to the hero (S.solo.tr[hero][move]); a new move starts at 0.
+//   - Cap: a move never passes the hero's level, nor the class stage's cap (SOLO_TUNE.train.cap: base class, then
+//     after the Proving). Gold pays, hero level gates.
+//   - Attack: the hit (atkCurve: x1.7 every 5th level). Ability: its power ((4 + 3 x level) x1.55 every 5th level) and
+//     a milestone every 5th level (SOLO_TUNE.train.ms: a shorter cooldown, a longer effect, one more foe). Parry: +10%
+//     counter damage a level. Dodge: a shorter cooldown. Timing windows never grow from gold.
+//   - Price of level n+1 = ECON.train[kind].base x r a level to bend (20), r2 to bend2 (40), r3 past it; x mod('trainCost').
+//
+// API (function declarations: 40-rules and 59j call them at run time):
+//   trainMoves(k?) -> ['atk', ...ability ids, 'parry', 'dodge']   k: a hero key (default: the one playing)
+//   trainLv(move, k?) -> level; trainCap(k?) -> { cap, by: 'level' | 'stage', lv, stage, stageCap }
+//   trainStage(k?) -> 0 base class | 1 after the Proving; trainKind(move) -> 'atk' | 'ab' | 'parry' | 'dodge'
+//   trainCost(move, n) -> the price of level n + 1; trainPlan(move, amt?, k?) -> { n, cost } (x1 / x10 / Max within the cap; n 0 = at the cap)
+//   train(move, amt?) -> levels bought (the playing hero; pays gold, ledger 'up', event train { hero, move, from, to })
+//   trainName(move) -> 'Attack' | ability name | 'Parry' | 'Dodge'
+//   read   trainAps(k?), trainAbPow(id, lv?) (the ability's hit before hand / gear: its curve x heroPow()),
+//          trainCounterX(lv?), trainDodgeCd(lv?), trainMs(id, lv?) -> { cd, mark, target, stun, patch } (milestones reached),
+//          trainAbCd(id, base, lv?) (the cooldown after milestones), trainInfo(move, k?) -> the UI's facts,
+//          trainNext(k?) -> { move, cost } the cheapest level to train now (Next Up, the guide), trainEst(active) (a rough dps
+//          for the sim's buyer)
+// Events: train { hero, move, from, to }, trainCap { hero, move, lv } (a move reached the stage cap).
+// Save: S.solo.tr / S.solo.asc (defaults in 59j's registerState: TRAIN0() in 24b). The key moved to v4 with this.
+
+const TRAIN_BASIC = ['atk', 'parry', 'dodge'];
+function trainHero(k) { return k || (typeof soloHero === 'function' ? soloHero() : null) || (S.solo && S.solo.hero) || 'wren'; }
+function trainRec(k) {
+  k = trainHero(k);
+  const s = S.solo || (S.solo = {});
+  if (!s.tr || typeof s.tr !== 'object') s.tr = TRAIN0();
+  if (!s.tr[k] || typeof s.tr[k] !== 'object') s.tr[k] = { atk: 0, parry: 0, dodge: 0 };
+  return s.tr[k];
+}
+function trainKind(mv) { return TRAIN_BASIC.includes(mv) ? mv : 'ab'; }
+function trainMoves(k) {
+  k = trainHero(k);
+  const abs = typeof soloAbilities === 'function' ? soloAbilities(k) : (SOLO_HEROES[k] ? SOLO_HEROES[k].abs : []);
+  return ['atk', ...abs, 'parry', 'dodge'];
+}
+function trainName(mv) { return mv === 'atk' ? 'Attack' : mv === 'parry' ? 'Parry' : mv === 'dodge' ? 'Dodge' : (SOLO_ABILITIES[mv] ? SOLO_ABILITIES[mv].name : mv); }
+function trainLv(mv, k) { if (!S || !S.solo) return 0; const v = trainRec(k)[mv]; return v > 0 ? Math.floor(v) : 0; }
+function trainStage(k) {
+  k = trainHero(k);
+  const s = S.solo || {};
+  if (s.asc && s.asc[k]) return 1;
+  return k === (typeof soloHero === 'function' && soloHero()) && typeof clsProven === 'function' && clsProven() ? 1 : 0;
+}
+function trainCap(k) {
+  k = trainHero(k);
+  const T = SOLO_TUNE.train, stage = trainStage(k), stageCap = T.cap[Math.min(stage, T.cap.length - 1)];
+  const lv = typeof soloLevels === 'function' ? soloLevels()[k].L : S.L;
+  return { cap: Math.min(lv, stageCap), by: lv < stageCap ? 'level' : 'stage', lv, stage, stageCap };
+}
+// The price of level n + 1 (n = the level now); mod('trainCost') is a hook for discounts (none yet).
+function trainCost(mv, n) {
+  const E = ECON.train, b = E[trainKind(mv)].base;
+  return b * Math.pow(E.r, Math.min(n, E.bend)) * Math.pow(E.r2, Math.max(0, Math.min(n, E.bend2) - E.bend)) * Math.pow(E.r3, Math.max(0, n - E.bend2)) * mod('trainCost');
+}
+// plan() for Training: amt '1' | '10' | 'max' (default: the player's x1 / x10 / Max). 'max' is what the gold buys (at
+// least 1, so the button shows the next price). Never past the cap. { n: 0, cost: Infinity } at the cap.
+function trainPlan(mv, amt, k) {
+  const lv = trainLv(mv, k), c = trainCap(k).cap;
+  if (lv >= c) return { n: 0, cost: Infinity };
+  amt = amt === undefined ? S.amt : amt;
+  let n = 0, cost = 0;
+  if (amt === 'max') {
+    while (lv + n < c) { const x = trainCost(mv, lv + n); if (n > 0 && cost + x > S.gold) break; cost += x; n++; }
+  } else {
+    n = Math.min(+amt || 1, c - lv);
+    for (let i = 0; i < n; i++) cost += trainCost(mv, lv + i);
+  }
+  return { n, cost };
+}
+function train(mv, amt) {
+  const k = typeof soloHero === 'function' ? soloHero() : null;
+  if (!k || !trainMoves(k).includes(mv)) return 0;
+  const p = trainPlan(mv, amt, k);
+  if (!(p.n > 0) || S.gold < p.cost) return 0;
+  const r = trainRec(k), from = trainLv(mv, k);
+  S.gold -= p.cost; r[mv] = from + p.n;
+  econSpend('up', p.cost);
+  if (typeof gearDirty === 'function' && mv === 'atk') gearDirty();
+  emit('train', { hero: k, move: mv, from, to: r[mv] });
+  const T = SOLO_TUNE.train;
+  // a milestone reached on an ability: one quiet line (the row shows it too)
+  if (trainKind(mv) === 'ab' && Math.floor(r[mv] / T.every) > Math.floor(from / T.every)) {
+    const line = trainMsLine(mv, Math.floor(r[mv] / T.every) * T.every);
+    if (line) emit('toast', { msg: `Training: ${trainName(mv)} Lv ${Math.floor(r[mv] / T.every) * T.every}. ${line}`, kind: 'good', key: 'training', prio: 'low' });
+  }
+  const cap = trainCap(k);
+  if (cap.by === 'stage' && r[mv] >= cap.stageCap) {
+    emit('trainCap', { hero: k, move: mv, lv: r[mv] });
+    emit('toast', { msg: cap.stage ? `Training: ${trainName(mv)} is at Lv ${cap.stageCap}, the most it can train.`
+      : `Training: ${trainName(mv)} is at Lv ${cap.stageCap}, the most a base class can train. Pass the Proving to train on.`, kind: 'good', key: 'training-cap', prio: 'normal' });
+  }
+  return p.n;
+}
+
+// ---- what a level does ----
+function trainAps(k) { k = trainHero(k); const a = SOLO_TUNE.train.aps; return a[k] || 1; }
+function trainAbCurve(lv) { const T = SOLO_TUNE.train; return (4 + T.abPer * lv) * atkSteps(lv, T.abX, T.abX2); }
+function trainAbPow(id, lv) { return trainAbCurve(lv === undefined ? trainLv(id) : lv) * heroPow(); }
+function trainCounterX(lv) { return 1 + SOLO_TUNE.train.parry * (lv === undefined ? trainLv('parry') : lv); }
+function trainDodgeCd(lv) { const T = SOLO_TUNE.train; return Math.max(T.dodgeMin, SOLO_TUNE.dodgeCd * Math.pow(T.dodge, lv === undefined ? trainLv('dodge') : lv)); }
+// milestones reached by an ability at a level: the kinds take turns (echo: cd at 5, mark at 10, cd at 15, ...)
+function trainMs(id, lv) {
+  const T = SOLO_TUNE.train, list = T.ms[id] || [], out = { cd: 0, mark: 0, target: 0, stun: 0, patch: 0 };
+  const n = Math.floor((lv === undefined ? trainLv(id) : lv) / T.every);
+  for (let i = 0; i < n && list.length; i++) out[list[i % list.length]]++;
+  return out;
+}
+// the milestone at level lv (a multiple of every), in words
+function trainMsKind(id, lv) { const T = SOLO_TUNE.train, list = T.ms[id] || []; const i = Math.floor(lv / T.every) - 1; return i >= 0 && list.length ? list[i % list.length] : null; }
+function trainMsLine(id, lv) {
+  const v = SOLO_TUNE.train.msv, k = trainMsKind(id, lv);
+  return k === 'cd' ? `Cooldown ${v.cd} s shorter.` : k === 'mark' ? `The Mark lasts ${v.mark} s longer.` : k === 'target' ? 'Hits one more foe.'
+    : k === 'stun' ? `The Stun lasts ${v.stun} s longer.` : k === 'patch' ? `The fire on the ground lasts ${v.patch} s longer.` : '';
+}
+function trainAbCd(id, base, lv) { const T = SOLO_TUNE.train; return Math.max(base * T.cdMin, base - T.msv.cd * trainMs(id, lv).cd); }
+
+// ---- the UI's facts for one move: { move, name, kind, lv, cap, by, now, next, ms, plan } ----
+function trainInfo(mv, k) {
+  k = trainHero(k);
+  const lv = trainLv(mv, k), c = trainCap(k), kind = trainKind(mv), T = SOLO_TUNE.train, playing = k === (typeof soloHero === 'function' && soloHero());
+  const pow = heroPow(), f = x => fmt(x);
+  let now = '', next = '', ms = '';
+  if (kind === 'atk') {
+    now = `Hits for ${f(atkCurve(lv) * pow)}`; next = `${f(atkCurve(lv + 1) * pow)}`;
+    const m = (Math.floor(lv / PACE.atkEvery) + 1) * PACE.atkEvery; ms = `Lv ${m}: hits x${m > PACE.atkBend ? PACE.atkX2 : PACE.atkX} harder`;
+  } else if (kind === 'ab') {
+    const a = SOLO_ABILITIES[mv], x = mv === 'echo' ? SOLO_TUNE.echo.x : mv === 'bash' ? SOLO_TUNE.bash.x : mv === 'fire' ? SOLO_TUNE.fire.x : 1;
+    now = `Hits for ${f(trainAbCurve(lv) * pow * x)}`; next = `${f(trainAbCurve(lv + 1) * pow * x)}`;
+    const m = (Math.floor(lv / T.every) + 1) * T.every, l = trainMsLine(mv, m); ms = `Lv ${m}: ${l.charAt(0).toLowerCase() + l.slice(1, -1)}`;
+    if (a) now += `, every ${+trainAbCd(mv, a.cd, lv).toFixed(1)} s`;
+  } else if (kind === 'parry') {
+    now = `Counter x${trainCounterX(lv).toFixed(1)}`; next = `x${trainCounterX(lv + 1).toFixed(1)}`;
+  } else {
+    const a = trainDodgeCd(lv), b = trainDodgeCd(lv + 1);
+    now = `Cooldown ${a.toFixed(2)} s`; next = b < a ? `${b.toFixed(2)} s` : '';
+  }
+  const p = playing ? trainPlan(mv, undefined, k) : { n: 0, cost: Infinity };
+  return { move: mv, name: trainName(mv), kind, lv, cap: c.cap, by: c.by, stageCap: c.stageCap, stage: c.stage, heroLv: c.lv, now, next, ms, plan: p, max: lv >= c.cap };
+}
+// The next level to train (Next Up, 55-goals): the cheapest of Attack and the equipped abilities (Attack on a tie); Parry
+// and Dodge only once those are at their cap (they pay off only by hand). null when every move is at its cap.
+function trainNext(k) {
+  k = trainHero(k);
+  const eq = k === (typeof soloHero === 'function' && soloHero()) && typeof soloEquipped === 'function' ? soloEquipped() : [];
+  const pick = list => { let best = null; for (const mv of list) { const p = trainPlan(mv, '1', k); if (p.n > 0 && (!best || p.cost < best.cost)) best = { move: mv, cost: p.cost, lv: trainLv(mv, k) + 1 }; } return best; };
+  return pick(trainMoves(k).filter(mv => mv === 'atk' || eq.includes(mv))) || pick(['parry', 'dodge']);
+}
+// A rough dps for the sim's buyer (tools/sim.mjs): the auto swing, the equipped abilities at their cooldown, and for an
+// active player the counters (about one parry every 20 s) and presses.
+function trainEst(active) {
+  const hd = heroDps();
+  let ab = 0;
+  const eq = typeof soloEquipped === 'function' ? soloEquipped() : [];
+  for (const id of eq) {
+    if (!id || !SOLO_ABILITIES[id]) continue;
+    const t = SOLO_TUNE, x = id === 'echo' ? t.echo.x + 2 * t.echo.xOther : id === 'bash' ? t.bash.x * (1 + 0.5 * trainMs(id).target) : id === 'fire' ? t.fire.x + 2 * t.fire.xOther + 3 * t.fire.burnP : 1;
+    ab += trainAbPow(id) * x * (active ? t.abHandX : 1) / trainAbCd(id, SOLO_ABILITIES[id].cd * mod('abilityCd'));
+  }
+  // counters are rare (a heavy hit every 20 s of fighting, about a third parried): one a minute at most
+  const counter = active ? heroAtk() * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() / 90 : 0;
+  return (active ? hd * SOLO_TUNE.atkX * 0.8 : hd) + ab + counter + (active ? 0.01 * hd * (SOLO_TUNE.dodgeCd / trainDodgeCd()) : 0);
+}
+
+{
+  // the Proving passed while this hero plays: its cap rises for good (W5-A moves this onto Ascension)
+  on('evoProven', () => { const k = typeof soloHero === 'function' && soloHero(); if (k && S.solo) { if (!S.solo.asc || typeof S.solo.asc !== 'object') S.solo.asc = {}; S.solo.asc[k] = 1; } });
 }
 
 // ---- src/js/55-welcome.js ----
@@ -21195,7 +21463,7 @@ const DEEP_BOON_IDS = [];
   B('relight', 'Quick Relight', 'e', ['oil'], 1, null, 6, () => 'Floors cleared in under 6s refund double Oil');
   B('crown', 'Crown of the Deep', 'e', [], 1, null, 1, () => 'Each boss floor you clear gives a free Rare boon (pick 1 of 3)');
   B('mass', 'Critical Mass', 'e', ['crit'], 1, null, 0.5, () => 'Crits come 50% more often and deal +50%');
-  B('warband', 'Warband', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
+  B('warband', 'War Cry', 'e', ['company'], 1, null, 0.6, () => 'You deal +60%');
   // Stage C (party combat): in the data now, in the pool once deepStageC() is true
   B('thorn', 'Thorn Plate', 'r', ['guard'], 1, null, 0.3, () => 'You reflect 30% of the damage you take', 1);
   B('iron', 'Iron Wall', 'c', ['guard'], 3, null, 0.2, k => `You have +${pc(0.2 * k)} max health`, 1);
@@ -22024,6 +22292,11 @@ const STAR_KS = {
   ages: { blessEvery: 2 }                     // while the Hymn is up Blessings do not fade; +1 Blessing every 2s
 };
 
+// W2-A: Precision (the gold upgrade, +15% crit damage) left the solo game. Its value moved here: each class's crit damage
+// stars add to the crit damage pool (55-econ, capped at +40%) instead of multiplying on top, and sum to +15% a class
+// with the pool stars already there (Warrior: Hard Hits 12 + Banner Over Camp 3; Ranger: Barbs 8 + Barbs II 7; Mage:
+// Focused Lens 10 + Clean Cut 5). The party game keeps its old stars.
+const starCd = (name, party, solo, p) => soloOn() ? [name, `+${Math.round(solo * 100)}% crit damage.`, { keen: solo }, p] : [name, `Crit damage +${Math.round((party - 1) * 100)}%.`, { m: { critDmg: party } }, p];
 // ---- the maps ----
 // Each arm: [name, stars 1..8]; star: [name, text, fx, p, cText?]. Slots 3 and 6 are notables (2
 // points), slot 8 the keystone (3 points), the rest minors (1 point).
@@ -22048,7 +22321,7 @@ const STAR_MAPS = {
         ['Heavy Arm', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Edge', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Crushing Blow', 'Every 5th heavy hit deals triple damage.', { ks: 'crush' }, 1.02],
-        ['Hard Hits', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Hard Hits', 1.04, 0.12, 1.009),
         ['Heavy Arm II', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
         ['Bash', 'Heavy hits on a boss add 0.2s to its timer, up to 6s a fight.', { live: 'bash' }, 1.01, 'Heavy hits stagger for 0.3s.'],
         ['Edge II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
@@ -22094,9 +22367,9 @@ const STAR_MAPS = {
       ['Glass', [
         ['Spark II', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Clear Eye', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
-        ['Focused Lens', 'Crit damage +10%.', { m: { critDmg: 1.1 } }, 1.022],
+        starCd('Focused Lens', 1.1, 0.10, 1.022),
         ['Spark III', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
-        ['Clean Cut', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Clean Cut', 1.04, 0.05, 1.009),
         ['Overkill', 'Damage past a kill carries to the next foe.', { ks: 'overflow' }, 1.02],
         ['Spark IV', '+1.5% damage.', { m: { dmg: 1.015 } }, 1.015],
         ['Glass Lantern', 'Ember cap +5 and each Ember adds 10% more to Flare, but your Attack deals half.', { ks: 'glass', t: { embersMax: 5, flarePerEmber: 0.1 }, m: { tap: 0.5 } }, 1.03]
@@ -22129,10 +22402,10 @@ const STAR_MAPS = {
       ]],
       ['Deadeye', [
         ['Steady Aim', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
-        ['Barbs', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Barbs', 1.04, 0.08, 1.009),
         ['Hawk Eye', 'Your first hit on each foe always crits.', { ks: 'hawk' }, 1.02],
         ['Fast Hands', 'Attack +5%.', { m: { tap: 1.05 } }, 1.006],
-        ['Barbs II', 'Crit damage +4%.', { m: { critDmg: 1.04 } }, 1.009],
+        starCd('Barbs II', 1.04, 0.07, 1.009),
         ['Finisher', 'Foes under 20% health take +20% from you.', { live: 'finisher' }, 1.015],
         ['Steady Aim II', 'Crits come 3% more often.', { m: { crit: 1.03 } }, 1.006],
         ['Deadeye', 'You mark one foe at a time, and the mark lasts until it dies. Your crits on it deal double.', { ks: 'deadeye' }, 1.035]
@@ -27993,8 +28266,9 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   });
   const ST = SOLO_STATS = { attacks: 0, parries: 0, misses: 0, dodges: 0, early: 0, counters: 0, casts: 0, auto: 0, heavies: 0, trash: 0, hand: 0 };
   const EQ0 = () => { const o = {}; for (const k of SOLO_ORDER) o[k] = SOLO_HEROES[k].eq.slice(); return o; };
-  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
-  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {} });
+  // tr: Training levels per hero (W2-A, 55-training.js); asc: heroes that passed the Proving (their training cap rises)
+  registerState('solo', { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {} });
+  const Sx = () => S.solo || (S.solo = { v: 1, hero: null, lv: {}, eq: EQ0(), zn: {}, tr: TRAIN0(), asc: {} });
   const alive = f => f && !f.dead && f.hp > 0 && !f.gone;
   const foes = () => (typeof combatFoes === 'function' ? combatFoes() : []);
   const heroU = () => (typeof cbUnitByKey === 'function' ? cbUnitByKey('hero') : null);
@@ -28098,7 +28372,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     soloTouch();
     if (!fighting()) return '';
     if (dodgeT > 0 && !forgive) return 'cd';
-    dodgeT = T.dodgeCd;
+    dodgeT = trainDodgeCd();   // W2-A: Dodge training shortens it
     const r = typeof actDodge === 'function' ? actDodge(!!forgive) : '';
     if (r === 'dodge' || r === 'perfect') ST.dodges++;
     else ST.early++;
@@ -28119,7 +28393,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         c.done = true;
         if (alive(c.f)) {
           // owner (SOLO2): the counter always crits: the crit multiplier, the crit event, the gear's echo, the crit number
-          const P = heroAtkNow(false), cm = critMult();
+          const P = heroAtkNow(false) * trainCounterX(), cm = critMult();   // W2-A: Parry training: counter damage
           let cx = 1 + (gear().counter || 0) / 100;   // W1-C: the Lantern Eater's Fang: counters deal double
           try { const dr = typeof deepActive === 'function' && deepActive() && DW.run(); if (dr && dr.boons && dr.boons.taunt) cx *= 1 + DEEP_BOONS.taunt.v * dr.boons.taunt; } catch (e) {}   // the Deepwell's Parry Drill
           const dmg = cbDamageFoe(c.f, P * T.counterX * aps() * cm * cx, 0, 'phys', unitType('hero'), ST_HEAVY | ST_CRIT);
@@ -28163,7 +28437,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     return true;
   };
   const abAt = slot => { const id = soloEquipped()[slot]; return id ? SOLO_ABILITIES[id] : null; };
-  const abCd = a => (a ? a.cd * mod('abilityCd') : 0);
+  const abCd = a => (a ? trainAbCd(a.id, a.cd) * mod('abilityCd') : 0);   // W2-A: a cooldown milestone takes 0.5 s off
   const cdOf = a => (a ? Math.max(0, cds[a.id] || 0) : 0);
   let patchT = 0, patchTick = 0, patchP = 0;
   function frontFoe() {
@@ -28180,19 +28454,21 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     if (slot == null) { const eq = soloEquipped(); slot = eq.findIndex(id => id && !(cds[id] > 0)); if (slot < 0) slot = 0; }
     const a = abAt(slot);
     if (!a || !p || !fighting() || !heroUp() || cdOf(a) > 0 || !anyFoe()) return false;
-    const P = heroAtkNow(auto) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
-    const tags = ST_AB;
+    // W2-A: an ability hits with its own Training level (trainAbPow), not the Attack's
+    const P = trainAbPow(a.id) * (typeof heroStand === 'function' ? heroStand(!auto) : 1) * (auto ? 1 : T.abHandX) * (1 + (gear().abil || 0) / 100), ty = unitType('hero');   // W1-C: the Rattlebone Charm's +% ability damage   // by hand it hits harder (SOLO2)
+    const tags = ST_AB, TT = T.train, ms = trainMs(a.id);
     if (a.id === 'echo') {
       // a piercing arrow down the lane: every foe, front to back, and a Mark on each
       const list = foes().filter(alive).sort((x, y) => y.row - x.row);
       list.forEach((f, i) => {
         if (!alive(f)) return;
-        stApply(f, 'mark', 1, 0, 0, { dur: T.echo.mark });
+        stApply(f, 'mark', 1, 0, 0, { dur: T.echo.mark + ms.mark * TT.msv.mark });
         cbDamageFoe(f, P * (i === 0 ? T.echo.x : T.echo.xOther), 0, 'phys', ty, tags);
       });
     } else if (a.id === 'bash') {
-      const f = frontFoe();
-      if (f) { cbDamageFoe(f, P * T.bash.x, 0, 'phys', ty, tags | ST_HEAVY); if (alive(f)) cbStun(f, T.bash.stun, 0); }
+      // W2-A milestones: one more foe hit (the next ones back, at xOther) and a longer Stun
+      const list = foes().filter(alive).sort((x, y) => y.row - x.row || x.hp - y.hp).slice(0, 1 + ms.target), stun = T.bash.stun + ms.stun * TT.msv.stun;
+      list.forEach((f, i) => { cbDamageFoe(f, P * (i ? T.bash.xOther : T.bash.x), 0, 'phys', ty, tags | ST_HEAVY); if (alive(f)) cbStun(f, stun, 0); });
       const u = heroU(); if (u) { u.drV = Math.max(u.drV || 0, T.bash.dr); u.drT = Math.max(u.drT || 0, T.bash.drT); }
       emit('shake', 0.25);
     } else if (a.id === 'fire') {
@@ -28202,7 +28478,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
         for (const o2 of foes()) if (o2 !== f && alive(o2)) cbDamageFoe(o2, P * T.fire.xOther, 0, 'magic', 'fire', tags);
         for (const o2 of foes()) if (alive(o2)) stApply(o2, 'burn', 1, P * T.fire.burnP, 0);
       }
-      patchT = T.fire.patchT; patchTick = 1; patchP = P * T.fire.burnP;
+      patchT = T.fire.patchT + ms.patch * TT.msv.patch; patchTick = 1; patchP = P * T.fire.burnP;
       emit('shake', 0.3);
     }
     cds[a.id] = abCd(a); readyFor[slot] = 0;
@@ -28279,7 +28555,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
     const b = BTN;
     b.atk.left = Math.max(0, atkT); b.atk.max = T.atkCd;
     b.parry.left = Math.max(0, parryT, openT); b.parry.max = openT > 0 ? T.openT : T.parryCd; b.parry.open = Math.max(0, openT);
-    b.dodge.left = Math.max(0, dodgeT); b.dodge.max = T.dodgeCd;
+    b.dodge.left = Math.max(0, dodgeT); b.dodge.max = trainDodgeCd();
     for (let i = 0; i < 3; i++) {
       const a = soloAbilityInfo(i), o = b.abs[i];
       o.left = a ? a.left : 0; o.max = a ? a.cd : 0; o.ready = !!(a && a.ready); o.name = a ? a.name : ''; o.id = a ? a.id : '';
@@ -34855,7 +35131,7 @@ function registerView(tabId, { id, label, order = 50, dot, feature, show } = {})
 function safeDot(f) { try { return !!f(); } catch (e) { return false; } }
 // Progressive unlocks (55-onboard.js): a view or section with a feature id shows once it is unlocked.
 const featOk = f => !f || typeof isUnlocked !== 'function' || isUnlocked(f);
-registerView('adv', { id: 'upgrades', label: 'Upgrades', order: 10 });
+registerView('adv', { id: 'upgrades', label: soloOn() ? 'Boss' : 'Upgrades', order: 10 });   // W2-A: solo trains on the Hero tab, so this view is the boss gate
 registerView('adv', { id: 'bounties', label: 'Bounties', order: 20, feature: 'bounties',
   dot: () => ((S.bounties && S.bounties.slots) || []).some(b => b && b.k && b.have >= b.need) });
 registerView('adv', { id: 'bestiary', label: 'Bestiary', order: 30, feature: 'bestiary' });
@@ -35343,7 +35619,9 @@ function splitDesc(box) {
 // Hero upgrade rows: icon, name, level, the stat in one line and the buy button. A tap on the row
 // shows the rest of the description.
 $('heroRows').classList.add('dz-list');
-const heroRows = HERO_UPS.map(u => {
+// W2-A: the solo game trains moves on the Hero tab (75-training-ui.js); these rows are the party game's.
+if (soloOn()) $('heroRows').parentElement.hidden = true;
+const heroRows = soloOn() ? [] : HERO_UPS.map(u => {
   const r = makeRow($('heroRows'), u.name, false, iconURL(...u.ic));
   r.btn.addEventListener('click', () => { if (buyHero(u.id)) ui(true); });
   r.row.classList.add('hu-row');
@@ -35426,8 +35704,8 @@ function uiFight() {
     putText(G.desc, `Win before it enrages to open the next zone. ${Math.round(UNIQ_TUNE.first * 100)}% chance of the unique ${uq}.`);
     putText(gq, 'Boss'); putText(gp, 'Fight'); putDisabled(gb, !bossReady());
   }
-  HERO_UPS.forEach((u, i) => {
-    const r = heroRows[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
+  heroRows.forEach((r, i) => {
+    const u = HERO_UPS[i], p = plan(u.base, u.r, S[u.id], S.gold, u.cap);
     putText(r.own, 'Lv ' + S[u.id]);
     r.setDesc(u.desc());
     putText(r.qty, p.n ? 'Buy ' + p.n : 'Maxed');
@@ -37491,13 +37769,13 @@ var classEvoUI;
         txt.append(el('h2', null, ev.name.toUpperCase()), el('div', 'evo-title', ev.title), el('div', 'pitch', `"${ev.pitch}"`));
         top.append(figure(cur), txt);
         const ul = el('ul', 'evo-bul'); for (const t of ev.bullets) ul.append(el('li', null, t));
-        const good = el('p', 'evo-good'); good.append(el('b', null, 'Good with: '));
+        const good = el('p', 'evo-good'); if (!soloOn()) good.append(el('b', null, 'Good with: '));   // W1-F: no partners in solo
         const list = ev.good.slice().sort((a, b) => owned(b) - owned(a)).slice(0, 5);
-        list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
+        if (!soloOn()) list.forEach((id, i) => { good.append(el('span', owned(id) ? 'own' : 'not', heroName(id))); if (i < list.length - 1) good.append(document.createTextNode(', ')); });
         body.append(top, ul,
           el('p', 'evo-line', `New ability: ${ab.name}. ${ab.desc}`),
-          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}, in the ${HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
-          good, el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
+          el('p', 'evo-line', `Role: ${ROLE_NAME[ev.role]}${soloOn() ? '' : ', in the ' + HOME_NAME[CLASS_DEFS[ev.base].home]}. ${ev.line.name}: ${ev.line.text}`),
+          ...(soloOn() ? [] : [good]), el('p', 'evo-line', `Beats: ${ev.beats.join(', ')}`),
           el('p', 'note', `Idle: ${ev.idle} Active: ${ev.active}`));
         putText(go, `Become a ${ev.name}`);
         confirm.hidden = true;
@@ -38691,7 +38969,7 @@ let craftUI = null;
       b.addEventListener('click', () => act(() => f(wr.who, wr.pos)) && renderItem());
       body.append(b);
     }
-    if (d && d.comp && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));
+    if (d && d.comp && !soloOn() && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));   // W1-F: no companions to give to in solo
 
     // ---- upgrade ----
     const upBox = el('div', 'cf-up-box');
@@ -41847,7 +42125,11 @@ let navUI = null;
       return onGame() && a ? { node: n, round: true, text: `${a.name} is ready. Tap it.` } : null;
     },
     boss: () => onGame() && mob && mob.boss ? { node: $('stage'), at: [0.78, 0.7], side: 'up', text: 'A boss! Beat it before the timer runs out.' } : null,
-    upgrade: () => Object.assign(path('adv', 'upgrades', () => q('#heroRows .buy:not(:disabled)') || q('#heroRows .buy'),
+    upgrade: () => soloOn()
+      // W2-A: Training. Hero tab, Training view, Train on Attack.
+      ? Object.assign(path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
+        ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' })
+      : Object.assign(path('adv', 'upgrades', () => q('#heroRows .buy:not(:disabled)') || q('#heroRows .buy'),
       ['You have gold. Open Fight to spend it.', 'Open Upgrades.', 'Buy an upgrade to hit harder.']), { side: S.tab === 'adv' ? 'up' : '' }),
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Party. Tap it to meet your team.' },
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },
@@ -43484,7 +43766,7 @@ let openSheet, partySheet;
 //       top row     Ability 1, Ability 2, Ability 3   (keys Q, W, E)  the player picks what goes in each slot
 //       bottom row  Parry, Dodge, Attack              (keys A, S, D; Space = Dodge, SOLO2)  Attack bottom right
 //     Cooldowns sweep dark clockwise with the seconds in the middle and flash when ready; Parry and Dodge glow while a
-//     telegraphed hit is coming. A long press on Attack, Parry or Dodge says what it does; on an ability slot it opens
+//     telegraphed hit is coming. A long press on Attack, Parry or Dodge opens a sheet: what it does and its Training; on an ability slot it opens
 //     the picker (an empty slot opens it on a tap): that hero's unlocked abilities (icon, name, one line, cooldown),
 //     pick one to place it (swapping if it sits in another slot) or clear the slot.
 //   - the Auto badge (SOLO2): a small chip at the stage's bottom left, over the DPS line, lit while auto-play fights
@@ -43492,6 +43774,10 @@ let openSheet, partySheet;
 //   - "Choose your hero" at camp: the three starters, each with its own level; a free switch.
 // Core: 59j-solo.js (soloAttack, soloParry, soloDodge, soloAbility, soloEquip, soloButtons, soloPick, soloLevels).
 // Reduced motion: no flashes or pulses (60-solo.css).
+// W2-A Training: a long press on Attack, Parry or Dodge opens a small sheet (what it does, its Training level and a Train
+// button); on an ability slot the picker shows the slot's ability level and a Train button too. soloIconURL(move) gives
+// the bar's icon for a move (the Training list uses it: 'atk' is the hero's weapon).
+var soloIconURL = () => '';
 {
   const game = $('game');
   if (soloOn()) document.body.classList.add('solo-on');   // 60-solo.css: the old floating ability circles stay hidden
@@ -43546,6 +43832,13 @@ let openSheet, partySheet;
     rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const c = PAL[r[x]]; if (c) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } } });
   }
   drawIc(bParry._ic, ICON.parry); drawIc(bDodge._ic, ICON.dodge);
+  const icURLs = {};
+  soloIconURL = mv => {
+    const id = mv === 'atk' ? WEAPON_IC[soloHero()] || 'sword' : mv;
+    if (icURLs[id]) return icURLs[id];
+    const cv = document.createElement('canvas'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
+    try { return (icURLs[id] = cv.toDataURL()); } catch (e) { return ''; }
+  };
   const abIds = ['?', '?', '?'];
   let heroK = '';
 
@@ -43565,26 +43858,33 @@ let openSheet, partySheet;
     ab0: () => castSlot(0), ab1: () => castSlot(1), ab2: () => castSlot(2)
   };
 
-  // ---- long press on Attack, Parry, Dodge: what it does ----
-  const tip = el('div', 'sb-tip'); tip.hidden = true; tip.setAttribute('role', 'tooltip'); tip.id = 'soloTip';
-  document.body.append(tip);
+  // ---- long press on Attack, Parry, Dodge: what it does, and its Training (W2-A) ----
+  // A small sheet like the picker (the game waits while it is open; soloPickerOpen covers both).
+  const MOVE = { atk: 'atk', parry: 'parry', dodge: 'dodge' };
   function showTip(b) {
-    const i = INFO[b.dataset.act]; if (!i) return;
-    tip.textContent = '';
-    tip.append(el('b', null, i.name), el('span', null, i.desc), el('small', null, `Key: ${i.key}`));
-    tip.hidden = false;
-    const r = b.getBoundingClientRect(), w = Math.min(280, innerWidth - 16);
-    tip.style.width = w + 'px';
-    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
-    tip.style.bottom = (innerHeight - bar.getBoundingClientRect().top + 8) + 'px';
-    clearTimeout(tip._t); tip._t = setTimeout(() => { tip.hidden = true; }, 4000);
+    const id = b.dataset.act, i = INFO[id]; if (!i) return;
+    closePicker();
+    const ov = el('div', 'sp-ov'); ov.id = 'moveSheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', i.name);
+    const sh = el('div', 'sp-sheet');
+    const head = el('div', 'sp-head'); head.append(el('b', null, i.name), el('small', null, `Key: ${i.key}`));
+    const x = el('button', 'sp-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.addEventListener('click', closePicker);
+    head.append(x);
+    sh.append(head, el('p', 'sp-desc', i.desc));
+    if (typeof trainCard === 'function' && MOVE[id]) { const c = trainCard(MOVE[id]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
+    ov.append(sh);
+    ov.addEventListener('pointerdown', e => { if (e.target === ov) closePicker(); });
+    ov.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+    document.body.append(ov); pick = ov;
+    (sh.querySelector('.tr-go') || x).focus();
   }
 
   // ---- the ability picker (a small sheet over the fight; the game waits while it is open) ----
   let pick = null;
   function closePicker() { if (!pick) return; pick.remove(); pick = null; update(); }
+  // the open sheet's Training block stays live (gold comes in; the game is paused, so a timer)
+  setInterval(() => { try { if (pick && pick._card) pick._card._up(); } catch (e) {} }, 400);
   function openPicker(slot) {
-    closePicker(); tip.hidden = true;
+    closePicker();
     const k = soloHero(); if (!k) return;
     const ov = el('div', 'sp-ov'); ov.id = 'abPicker'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', `Ability slot ${slot + 1}`);
     const sh = el('div', 'sp-sheet');
@@ -43593,11 +43893,13 @@ let openSheet, partySheet;
     head.append(x);
     sh.append(head);
     const eq = soloEquipped();
+    // W2-A: the slot's ability, its Training level and a Train button
+    if (eq[slot] && typeof trainCard === 'function') { const c = trainCard(eq[slot]); c.onLeave = closePicker; sh.append(c); ov._card = c; }
     for (const id of soloAbilities(k)) {
       const a = SOLO_ABILITIES[id], where = eq.indexOf(id);
       const r = el('button', 'sp-ab' + (where === slot ? ' on' : '')); r.type = 'button'; r.dataset.ab = id;
       const cv = el('canvas', 'sp-ic px'); cv.width = 12; cv.height = 12; drawIc(cv, ICON[id] || ICON.fire);
-      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Cooldown ${a.cd} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
+      const t = el('div', 'sp-t'); t.append(el('b', null, a.name), el('span', null, a.line), el('small', null, `Lv ${typeof trainLv === 'function' ? trainLv(id) : 0} · cooldown ${+(typeof trainAbCd === 'function' ? trainAbCd(id, a.cd) : a.cd).toFixed(1)} s` + (where >= 0 ? ` · in slot ${where + 1}` : '')));
       r.append(cv, t);
       r.addEventListener('click', () => { soloEquip(slot, id); try { save(); } catch (e) {} closePicker(); });
       sh.append(r);
@@ -43672,7 +43974,7 @@ let openSheet, partySheet;
   let t = 0;
   function update() {
     const show = soloOn() && !!soloHero() && target() === 'mob' && !!(S.party && S.party.chosen);
-    if (bar.hidden === show) { bar.hidden = !show; if (!show) { tip.hidden = true; closePicker(); } }
+    if (bar.hidden === show) { bar.hidden = !show; if (!show) closePicker(); }
     if (badge.hidden === show) badge.hidden = !show;
     if (!show) return;
     setBadge();
@@ -44856,6 +45158,116 @@ let toolsUI = null;
       if (mk) { mk.textContent = `Make better: ${kindName(it.slot, bestMake(TOOL_KINDS[it.slot].skill).t)} ›`; mk.classList.add('tl-better'); box.append(mk); }
       return box;
     }
+  };
+}
+
+// ---- src/js/75-training-ui.js ----
+// 75-training-ui: Training on screen (task W2-A, docs/design/solo-hero.md "Training"). Browser file.
+//   - Hero tab > Training: one row per move of the hero you play (Attack, each ability, Parry, Dodge): the icon from the
+//     action bar, the name, Lv n / cap, what the next level gives, and Train with its price. x1 / x10 / Max (S.amt, the
+//     same choice the old upgrades used). A note says what caps the moves (the hero's level, or the class stage).
+//   - trainCard(move) -> el: the Training block the action bar's long press shows (75-solo-ui), with its own Train button.
+// Core: 55-training.js (train, trainInfo, trainPlan, trainMoves). Icons: soloIconURL (75-solo-ui).
+var trainCard = null;
+{
+  const SOLO = soloOn();
+  const icon = mv => (typeof soloIconURL === 'function' ? soloIconURL(mv) : iconURL('sword', '#A9B1BD'));
+  const heroName = () => { const k = soloHero(); return k && typeof ROSTER === 'object' && ROSTER[k] ? ROSTER[k].name.split(' ')[0] : 'Your hero'; };
+  const capWhy = i => i.by === 'stage'
+    ? (i.stage ? `Lv ${i.stageCap} is the most a move can train.` : `Lv ${i.stageCap} is the most a base class can train. Pass the Proving to train on.`)
+    : `Your hero is Lv ${i.heroLv}. Level up to train more.`;
+  const qtyTxt = (i, amt) => i.max ? 'Maxed' : amt === '1' || i.plan.n === 1 ? 'Train' : `Train ${i.plan.n}`;
+  // what the next level gives, in one line
+  const nextTxt = i => i.max ? `${i.now}.` : i.next ? `${i.now}. Next level: ${i.next}.` : `${i.now}.`;
+  function doTrain(mv, btn, amt) {
+    const n = train(mv, amt);
+    if (n > 0) {
+      btn.classList.remove('tr-ok'); void btn.offsetWidth; btn.classList.add('tr-ok');
+      try { save(); } catch (e) {}
+      ui(true);
+    }
+    return n;
+  }
+
+  // ---- the Training view ----
+  let rows = [], rowsFor = '', head = null, amtBtns = [];
+  function build(sec) {
+    sec.classList.add('tr-sec');
+    head = el('p', 'note tr-note');
+    const bar = el('div', 'sec-head tr-head');
+    const seg = el('div', 'seg tr-amt'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'How many levels a press trains');
+    amtBtns = [['1', 'x1'], ['10', 'x10'], ['max', 'Max']].map(([a, t]) => {
+      const b = el('button', null, t); b.type = 'button'; b.dataset.amt = a; b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => { S.amt = a; ui(true); });
+      seg.append(b); return b;
+    });
+    bar.append(head, seg);
+    const list = el('div', 'sec dz-list tr-list'); list.id = 'trainRows';
+    sec.append(bar, list);
+  }
+  function makeRows(list) {
+    list.textContent = ''; rows = [];
+    for (const mv of trainMoves()) {
+      const r = makeRow(list, trainName(mv), false, icon(mv), 'tr-ic');
+      r.row.classList.add('tr-row'); r.row.dataset.mv = mv;
+      r.ms = el('div', 'tr-ms'); r.desc.after(r.ms);
+      r.btn.classList.add('tr-go');
+      r.btn.addEventListener('click', () => doTrain(mv, r.btn));
+      r.mv = mv; rows.push(r);
+    }
+  }
+  function refresh() {
+    const list = document.getElementById('trainRows'); if (!list || !soloHero()) return;
+    const key = soloHero() + '|' + trainMoves().join(',');
+    if (key !== rowsFor) { rowsFor = key; makeRows(list); }
+    for (const b of amtBtns) putAttr(b, 'aria-pressed', String(b.dataset.amt === S.amt));
+    const c = trainCap();
+    putText(head, c.by === 'stage'
+      ? (c.stage ? `${heroName()}'s moves train to Lv ${c.stageCap}, the most they can.` : `${heroName()}'s moves train to Lv ${c.stageCap} on a base class. The Proving lifts it to ${SOLO_TUNE.train.cap[1]}.`)
+      : `Gold trains ${heroName()}'s moves. A move can't pass your hero's level (Lv ${c.lv}).`);
+    for (const r of rows) {
+      const i = trainInfo(r.mv);
+      putText(r.own, `Lv ${i.lv}/${i.cap}`);
+      putText(r.desc, nextTxt(i));
+      putText(r.ms, i.max ? capWhy(i) : i.ms || '');
+      putHidden(r.ms, !(i.max || i.ms));
+      putText(r.qty, qtyTxt(i, S.amt));
+      setPrice(r.btn, i.max ? Infinity : i.plan.cost);
+      putDisabled(r.btn, i.max || S.gold < i.plan.cost);
+      putToggle(r.row, 'tr-max', i.max);
+      putAttr(r.btn, 'aria-label', i.max ? `${i.name}: at Lv ${i.lv}, the most for now` : `Train ${i.name} ${i.plan.n > 1 ? i.plan.n + ' levels' : ''} for ${fmt(i.plan.cost)} gold`);
+    }
+  }
+  if (SOLO) {
+    registerView('party', { id: 'training', label: 'Training', order: 20, feature: 'party' });
+    registerSection('party', { id: 'training', title: 'Training', view: 'training', feature: 'party', mount: build, update: () => { try { refresh(); } catch (e) { console.error('[lanternfall] training', e); } } });
+  }
+
+  // ---- the block the action bar's long press shows (75-solo-ui) ----
+  // x1 always (a quick press); the Training view has x10 and Max.
+  trainCard = mv => {
+    const box = el('div', 'tr-card'); box.dataset.mv = mv;
+    const top = el('div', 'tr-c-top'), lv = el('b', 'tr-c-lv'), cap = el('small', 'tr-c-cap');
+    top.append(lv, cap);
+    const now = el('div', 'tr-c-now'), ms = el('div', 'tr-ms');
+    const btn = el('button', 'buy tr-go'); btn.type = 'button'; btn.innerHTML = '<span class="qty"></span><span class="price"></span>';
+    const more = el('button', 'tr-c-more', 'All training'); more.type = 'button';
+    const row = el('div', 'tr-c-row'); row.append(btn, more);
+    box.append(top, now, ms, row);
+    btn.addEventListener('click', () => { doTrain(mv, btn, '1'); box._up(); });
+    more.addEventListener('click', () => { if (typeof box.onLeave === 'function') box.onLeave(); setTab('training'); });
+    box._up = () => {
+      const i = trainInfo(mv), p = i.max ? { n: 0, cost: Infinity } : trainPlan(mv, '1');
+      putText(lv, `${i.name} Lv ${i.lv}`);
+      putText(cap, `of ${i.cap}`);
+      putText(now, nextTxt(i));
+      putText(ms, i.max ? capWhy(i) : i.ms || ''); putHidden(ms, !(i.max || i.ms));
+      putText(btn.querySelector('.qty'), i.max ? 'Maxed' : 'Train');
+      setPrice(btn, p.cost);
+      putDisabled(btn, i.max || S.gold < p.cost);
+    };
+    box._up();
+    return box;
   };
 }
 

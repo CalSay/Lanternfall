@@ -52,7 +52,7 @@ takes no taps except that button, never shows over a sheet or pop-up, and holds 
 | tap | from the start | Tap the foe to strike. (the foe) | 3 taps (or 25 kills) |
 | ability | after tap, ability ready | Shield Wall is ready. Tap it. (ability button) | one cast by hand |
 | boss | first boss fight | A boss! Beat it before the timer runs out. (the boss) | zone 2 |
-| upgrade | gold for an upgrade | You have gold. Open Fight to spend it. / Open Upgrades. / Buy an upgrade to hit harder. | an upgrade bought |
+| upgrade | gold for an upgrade (solo, W2-A: gold for Attack Lv 1, Hero tab open) | party: You have gold. Open Fight to spend it. / Open Upgrades. / Buy an upgrade to hit harder. Solo: You have gold. Open Hero to train. / Open Training. / Train Attack. Each level hits harder. | an upgrade bought (solo: any Training level) |
 | tab:party | Party opens | New tab: Party. Tap it to meet your team. | tab opened |
 | nextup | after the first upgrade and boss | Next Up shows your best next goal. Tap it. | chip tapped |
 | tab:gat | Gather opens | New tab: Gather. Tap it to see what you can mine. | tab opened |

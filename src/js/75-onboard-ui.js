@@ -191,7 +191,11 @@
       return onGame() && a ? { node: n, round: true, text: `${a.name} is ready. Tap it.` } : null;
     },
     boss: () => onGame() && mob && mob.boss ? { node: $('stage'), at: [0.78, 0.7], side: 'up', text: 'A boss! Beat it before the timer runs out.' } : null,
-    upgrade: () => Object.assign(path('adv', 'upgrades', () => q('#heroRows .buy:not(:disabled)') || q('#heroRows .buy'),
+    upgrade: () => soloOn()
+      // W2-A: Training. Hero tab, Training view, Train on Attack.
+      ? Object.assign(path('party', 'training', '#trainRows .tr-row[data-mv="atk"] .buy',
+        ['You have gold. Open Hero to train.', 'Open Training.', 'Train Attack. Each level hits harder.']), { side: S.tab === 'party' ? 'up' : '' })
+      : Object.assign(path('adv', 'upgrades', () => q('#heroRows .buy:not(:disabled)') || q('#heroRows .buy'),
       ['You have gold. Open Fight to spend it.', 'Open Upgrades.', 'Buy an upgrade to hit harder.']), { side: S.tab === 'adv' ? 'up' : '' }),
     'tab:party': () => S.tab === 'party' ? null : { node: q('.tab[data-tab="party"]'), text: 'New tab: Party. Tap it to meet your team.' },
     'tab:gat': () => S.tab === 'gat' ? null : { node: q('.tab[data-tab="gat"]'), text: 'New tab: Gather. Tap it to see what you can mine.' },

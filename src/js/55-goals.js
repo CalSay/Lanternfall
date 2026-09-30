@@ -102,8 +102,10 @@ var forgeGoalPicks = 0;
   const plural = s => /s$/.test(s) ? s : s + 's';
   const noun = s => s.split(' ')[0];
 
-  // Hero upgrades: the cheapest next level (x1).
+  // Hero upgrades: the cheapest next level (x1). W2-A (solo): the cheapest Training level the hero can take (55-training
+  // trainNext; nothing while every move sits at its cap), on the Hero tab's Training view.
   const heroNext = () => {
+    if (soloOn()) { const t = typeof trainNext === 'function' && soloHero() ? trainNext() : null; return t ? { u: { id: t.move, name: trainName(t.move), ic: ['sword', '#A9B1BD'] }, cost: t.cost, lv: t.lv, train: 1 } : null; }
     let best = null;
     for (const u of HERO_UPS) {
       const p = plan(u.base, u.r, S[u.id], S.gold, u.cap, '1');
@@ -114,10 +116,11 @@ var forgeGoalPicks = 0;
   registerGoal({
     id: 'hero-up', sys: 'hero', prio: -1,
     pct: () => { const b = heroNext(); return b ? need(S.gold, b.cost) : null; },
-    label: () => { const b = heroNext(); if (!b) return ''; const lv = S[b.u.id] + 1;
+    label: () => { const b = heroNext(); if (!b) return ''; const lv = b.train ? b.lv : S[b.u.id] + 1;
+      if (b.train) return S.gold >= b.cost ? `Train ${b.u.name} to Lv ${lv}: ready` : `Train ${b.u.name} to Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`;
       return S.gold >= b.cost ? `${b.u.name} Lv ${lv}: ready to buy` : `${b.u.name} Lv ${lv}: ${fmt(Math.ceil(b.cost - S.gold))} more gold`; },
     icon: () => { const b = heroNext(); return { ic: b ? b.u.ic : ['sword', '#A9B1BD'] }; },
-    go: { tab: 'adv', sel: '#heroRows' }
+    go: () => { const b = soloOn() && heroNext(); return b ? { tab: 'party', view: 'training', sel: `#trainRows .tr-row[data-mv="${b.u.id}"]` } : { tab: 'adv', sel: '#heroRows' }; }
   });
 
   // Next zone boss: foes left at the frontier, or the boss is ready.

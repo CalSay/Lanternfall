@@ -84,6 +84,9 @@ const NOTICES = [
   { id: 'unlock-stars', re: /^New on the (Party|Hero) tab: Stars\./, ch: 'pop', wait: 60, why: 'level 10: star points to spend' },
   { id: 'unlock', re: /^(New on the |.* (is|are) open on the Camp tab\.$|The Codex is open\.|Where each one stands matters)/, ch: 'bell',
     why: 'the tab shows a New mark', merge: ms => `New: ${ms.map(m => (/^New on the [^:]+: (the )?([^.]+)/.exec(m) || [0, 0, m.replace(/\..*$/, '')])[2]).join(', ')}.` },
+  // W2-A Training: the player just pressed Train and the row shows it; a stage cap is worth a bell line
+  { id: 'training', key: 'training', re: /^Training: .* Lv \d+\. /, ch: 'log', why: 'an ability milestone; the Training row shows it' },
+  { id: 'training-cap', key: 'training-cap', re: /^Training: .* is at Lv \d+, the most /, ch: 'bell', why: 'a move reached its class-stage cap (the Proving lifts it)' },
   { id: 'star-point', re: /^\+1 star point\. /, ch: 'log', merge: ms => `+${ms.length} star points. ${ms[ms.length - 1].replace(/^\+1 star point\. /, '')}` },
   { id: 'stars-reset', re: /^Your star map changed/, ch: 'bell' },
 

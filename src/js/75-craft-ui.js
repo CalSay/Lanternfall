@@ -647,7 +647,7 @@ let craftUI = null;
       b.addEventListener('click', () => act(() => f(wr.who, wr.pos)) && renderItem());
       body.append(b);
     }
-    if (d && d.comp && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));
+    if (d && d.comp && !soloOn() && (sheet.mode === 'give' || !giveToggle)) body.append(giveList(it));   // W1-F: no companions to give to in solo
 
     // ---- upgrade ----
     const upBox = el('div', 'cf-up-box');

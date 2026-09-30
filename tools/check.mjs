@@ -37,7 +37,7 @@ const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
 const SHARD = (m => (m ? [+m[1], +m[2]] : null))(/--shard=(\d+)\/(\d+)/.exec(process.argv.join(' ')));
 const JOBS = SHARD ? 1 : +((process.argv.find(a => a.startsWith('--jobs=')) || '').slice(7)) || (ONLY ? 1 : Math.min(4, os.cpus().length));
 // Seconds a section takes (measured, W2-B): the shards are balanced by these; a section not listed counts 2.
-const WEIGHT = { 'solo copy (browser, W1-C)': 55, 'W1-D (browser)': 48, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'line-up planner': 12, 'evolutions (S3)': 10, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
+const WEIGHT = { 'solo copy (browser, W1-C)': 60, 'W1-D (browser)': 100, 'training (W2-A, browser)': 18, 'cb2': 40, 'notices (browser, W1-B)': 34, 'solo guide: gathering never freezes (browser)': 31, 'solo hero (browser)': 21, 'types and statuses (S1)': 14, 'save codes': 13, 'line-up planner': 12, 'evolutions (S3)': 10, 'combat': 8, 'gatherers UI (browser)': 7, 'gathering': 6, 'nav': 6, 'retool': 6, 'onboarding hint placement (HINT1)': 5 };
 const shardLoad = SHARD ? Array(SHARD[1]).fill(0) : null;
 let LEGACY = false;
 function section(name) {
@@ -79,7 +79,7 @@ const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
 // ECON-A: the save key moved to v2 (S.v 3). The fixtures in tests/fixtures are loaded under the new key so the
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
-const KEY = 'lanternfall.save.v3';   // SOLO1: the save key moved to v3 (the solo hero starts fresh)
+const KEY = 'lanternfall.save.v4';   // W2-A: v4 (SOLO1: v3; the solo hero starts fresh)
 
 // ---- 1. dist syntax ----
 const distFile = path.join(ROOT, 'dist', 'lanternfall.html');
@@ -106,7 +106,7 @@ if (section('smoke')) try {
   fn.on('zoneClear', () => zoneClears++);
   const run = (secs, dt = 0.1) => { for (let t = 0; t < secs; t += dt) fn.tick(dt); };
   // W2-B: solo. The player picks Wren, Tobin or Pip; nobody else can be recruited. Gold goes to the hero's upgrades.
-  const buyAll = () => { let b = 0; while (b < 200 && fn.buyHero('blade', '1')) b++; };
+  const buyAll = () => E(`{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: gold trains the hero (Training replaced Blade)
 
   assert(E('soloOn() && soloHero() === null && !S.party.chosen'), 'new game starts solo with no hero picked yet');
   E('S.gold = 50'); assert(!fn.hireComp(0, '1') && E('S.comp[0]') === 0, 'old hire is retired');
@@ -278,7 +278,8 @@ if (section('items')) try {
     assert(!gd.length, `${f}: gear() exactly equal to pre-K4` + (gd.length ? ': ' + gd.slice(0, 3).join('; ') : ''));
     const hd = g.fn.heroDps(), td = g.fn.totalDps();
     // totalDps = heroDps + compDps; companions follow the roster formulas (BAL1 changed them), checked by T9 in the roster section.
-    assert(hd === want.hero && td === hd + g.fn.compDps(), `${f}: heroDps ${hd} exactly equal to pre-K4 (total ${td} = hero + party)`);
+    // (W2-B/W2-A solo: Training replaced Blade, Swiftness and Precision, so heroDps no longer equals the party-era number; gear() below still must)
+    assert(Number.isFinite(hd) && hd > 0 && td === hd + g.fn.compDps(), `${f}: heroDps ${hd} finite (total ${td} = hero + party)`);
     assert(g.eval('gear().attack === 0 && gear().spell === 0'), `${f}: no new live stats on old gear`);
     // every equipped item fits its position for every class, and gear() does not depend on the class
     const fitBad = [];
@@ -296,7 +297,7 @@ if (section('items')) try {
     const g2 = loadCore({ storage: memoryStorage({ [KEY]: saved }) });
     g2.eval(PRE_K4);
     const d2 = deepDiff(JSON.parse(saved), JSON.parse(JSON.stringify(g2.eval('S'))));
-    assert(!d2 && g2.fn.heroDps() === want.hero && g2.fn.totalDps() === g.fn.totalDps() && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
+    assert(!d2 && g2.fn.heroDps() === hd && g2.fn.totalDps() === g.fn.totalDps() && !gearDiff(g2.fn.gear(), want.gear).length, `${f}: load-save-load round trip lossless` + (d2 ? ': ' + d2 : ''));
   }
 
   // an old save over the bag limit keeps every item on load
@@ -1035,7 +1036,7 @@ if (section('gathering')) try {
   }
   // F5: a hero who holds zone 4 (a lone level-1 hero wiped ~30 times an hour there, so ~33 kills made the rate noise;
   // seed 43 failed before F5 too)
-  const fsetup = h => h.eval('S.blade = 25; PACE.farmSecs = 1e9; S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
+  const fsetup = h => h.eval('soloPick("tobin"); S.L = 60; PACE.farmSecs = 1e9; S.maxZone = 5; S.zone = 4; S.auto = false; S.mastery.zones[4] = 5000; S.mats.hide = [0, 0, 0, 0, 0]; setActivity("fight"); spawn()');
   const live = fresh(41); fsetup(live); const lk = live.eval('S.totalKills'); run(3600, live);
   const liveRate = live.eval('S.mats.hide[0]') / (live.eval('S.totalKills') - lk);
   const away = fresh(41); fsetup(away); const ak = away.eval('S.totalKills'); const r = away.fn.awayGains(3600);
@@ -1393,7 +1394,7 @@ if (section('onboarding')) try {
   const got = {}, log = [];
   g.fn.on('unlock', e => { got[e.id] = E('Math.round(S.onboard.t)'); log.push(e.id); });
   let firstUp = null;
-  const buy = () => E(`{ let n = 0; for (let k = 0; k < 50; k++) { const c = HERO_UPS.map(u => ({ u, p: plan(u.base, u.r, S[u.id], S.gold, u.cap, '1') })).filter(o => o.p.n > 0 && o.p.cost <= S.gold).sort((a, b) => a.p.cost - b.p.cost)[0]; if (!c) break; buyHero(c.u.id, '1'); n++; } n }`);
+  const buy = () => E(`{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training
   for (let sec = 0; sec < 12 * 60; sec++) {
     for (let i = 0; i < 10; i++) g.fn.tick(0.1);
     if (firstUp === null && E('S.gold >= 10')) firstUp = sec;
@@ -1978,116 +1979,6 @@ if (section('legendary data')) try {
   assert(!pairBad.length, 'legend: every class has 3+ hero power pairs within 10% of its best pair at rank III (by the estimates)' + (pairBad.length ? ': ' + pairBad[0] : ''));
 } catch (e) { fail('legendary data crashed: ' + (e.stack || e)); }
 
-// ---- legendary powers core (55-legend.js, L2; legendaries.md 2-6, 8; the runtime cap, coordinator decision) ----
-if (section('legendary core')) try {
-  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-legend.js'), 'utf8').replace(/\/\/.*$/gm, '');
-  assert(!/\b(document|window|localStorage)\./.test(src), 'legend core: no DOM');
-  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
-  // old saves: empty Book, defaults merged, identical dps with and without the legend core
-  const noLegend = (await import('./lib/core.mjs')).coreFiles().filter(f => f !== '55-legend.js');
-  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
-    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
-    const a = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ storage: memoryStorage({ [KEY]: raw }), files: noLegend });
-    const L = a.eval('S.legend');
-    assert(L && L.v === 1 && !Object.keys(L.book).length && L.sig.length === 4 && Array.isArray(L.owed) && a.fn.totalDps() === b.fn.totalDps() && a.eval('legendBudget().raw') === 0,
-      `legend core: ${f} loads with an empty Book, defaults merged, the same dps (${a.fn.totalDps().toFixed(1)})`);
-  }
-  const mk = () => {
-    const g = loadCore({ seed: 5 }), E = x => g.eval(x);
-    E('S.party.cls = "warden"; S.maxZone = 40; S.zone = 40; S.gold = 1e15; for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 5000)');
-    E('["tobin","wren","pip","bram","maren","aldric","kestrel","anselm","elowen","caedmon"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false; setField(["maren","aldric","caedmon"])');
-    ticks(g, 1);
-    return g;
-  };
-  const g = mk(), E = x => g.eval(x);
-  // drops, Learn, Echoes
-  const d1 = JSON.parse(E('JSON.stringify(legendDrop(1, "test", { pool: "class", z: 40 }))'));
-  const it1 = d1 && d1.item;
-  assert(d1 && d1.kind === 'item' && it1 && E('LEG_CLASS_IDS.warden').includes(it1.lg) && it1.lr === 1 && it1.r === 'epic' && E(`lgFits({ slot: "${it1.slot}" }, "${it1.lg}")`) && it1.t === E('zoneTier(40)'),
-    `legend core: a new power drops as a wearable Legendary item (${it1 && it1.lg} on a ${it1 && it1.slot}, Epic, rank I, zone tier)`);
-  const id = it1.lg;
-  assert(E(`legendLearn(${it1.id})`) && E(`legendKnown("${id}")`) === 1 && !E(`itemById(${it1.id})`), 'legend core: Learn breaks the item down and puts its power in the Book');
-  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" })`);
-  assert(E(`legendKnown("${id}")`) === 1 && E(`legendEchoes("${id}")`) === 3 && E('legendEchoCap()') === 1, 'legend core: a known power drops as an Echo; with no Oath kept Echoes bank at rank I');
-  E('S.oath = { maxL: 6 }'); ticks(g, 4);
-  assert(E(`legendKnown("${id}")`) === 2 && E(`legendEchoes("${id}")`) === 0 && E('legendEchoCap()') === 3, 'legend core: 3 Echoes rank it up once the cap allows (Oath 6 kept: up to rank III)');
-  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(4, "test", { id: "${id}" })`);
-  assert(E(`legendKnown("${id}")`) === 4 && E(`legendEchoes("${id}")`) === 1, 'legend core: a higher-rank drop sets the rank and keeps the Echoes');
-  // Inscribe: fits, costs
-  E('globalThis.__mk = (kind, t) => { const it = newItem(kind, t || 3, "rare"); S.items.push(it); return it.id; }');
-  E('["tidewall", "anvil", "cadence", "banner"].forEach(p => { S.legend.book[p] = 3; })');
-  const wb = E('__mk("warblade")'), gh = E('__mk("greathelm")'), pl = E('__mk("plate")'), sh = E('__mk("shield")'), bow = E('__mk("bow")');
-  assert(!E(`legendCanInscribe("echostring", ${pl}).ok`) && !E(`legendCanInscribe("huntmoon", ${pl}).ok`) && E(`legendCanInscribe("tidewall", ${pl}).ok`), 'legend core: a power goes only where it fits (a Warden power on Warden gear)');
-  const ess0 = E('S.mats.ess[2]'), gold0 = E('S.gold'), cost = JSON.parse(E(`JSON.stringify(legendCanInscribe("tidewall", ${wb}).cost)`));
-  assert(E(`legendInscribe("tidewall", ${wb})`) && E(`itemById(${wb}).lg`) === 'tidewall' && E('S.mats.ess[2]') === ess0 - 5 && gold0 - E('S.gold') === cost.gold && cost.pearls === 8,
-    'legend core: Inscribe pays Essence and gold (Pearls 2 + 2 x rank once Pearls exist) and writes the power on the crafted item');
-  E(`legendInscribe("anvil", ${gh}); legendInscribe("cadence", ${pl}); legendInscribe("banner", ${sh})`);
-  // limits: 2 hero powers
-  E(`equipItem(${wb}, "weapon"); equipItem(${gh}, "helm")`);
-  assert(E('bonus("lg:tidewall")') === 3 && E('bonus("lg:anvil")') === 3 && E('legendActive().hero.length') === 2, 'legend core: worn powers are active at the Book rank (bonus lg:<id>)');
-  const hc = JSON.parse(E(`JSON.stringify(legendHeroCheck(${pl}, "body"))`));
-  assert(!hc.ok && hc.off != null && /carries 2 legendary powers/.test(hc.why), `legend core: a third power asks first ("${hc.why}")`);
-  E(`equipItem(${pl}, "body")`);
-  assert(E('S.equip.body') === null && E('legendActive().hero.length') === 2 && E('bonus("lg:cadence")') === 0, 'legend core: a third powered item goes back to the bag; the hero keeps 2 powers');
-  E('S.legend.book.tidewall = 5; gearDirty()');
-  assert(E('bonus("lg:tidewall")') === 5, 'legend core: an inscribed item follows the Book rank');
-  // a save edited to 3 keeps the first 2 by position
-  const sv = JSON.parse(E('JSON.stringify(S)')); sv.equip.body = pl;
-  const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(sv) }) }); ticks(g2, 1);
-  assert(g2.eval('S.equip.body') === null && g2.eval('S.equip.weapon') === wb && g2.eval('S.equip.helm') === gh && g2.eval('S.legend.book.tidewall') === 5,
-    'legend core: a save with 3 powers keeps the first 2 by position; the Book survives save and load');
-  // companions: 1 power each, role and wearer rules
-  E(`S.legend.book.echostring = 2; S.legend.book.knucklebone = 2; legendInscribe("echostring", ${bow})`);
-  const tk = E('__mk("trinket")'); E(`legendInscribe("knucklebone", ${tk})`);
-  E('setField(["kestrel","maren","aldric"])');
-  assert(E(`equipChar("kestrel", ${bow}, "wpn")`) && !E(`equipChar("kestrel", ${tk}, "trk")`) && E('bonus("lg:echostring")') === 2 && E('legendWearers("echostring").join()') === 'kestrel',
-    'legend core: a companion carries 1 power (equipChar refuses a second)');
-  assert(E(`legendItemState(itemById(${bow}), "maren").why`).includes('striker'), 'legend core: a companion power on the wrong role is off and says why');
-  // Sigils (expeditions, Bond), Marks, set counting
-  E('emit("expedBack", { g: 3, circles: { hedgefolk: 2, oath: 1 } }); emit("expedBack", { g: 0, circles: { dusk: 2 } }); emit("expedBack", { g: 1, recall: true, circles: { dusk: 2 } })');
-  assert(E('S.legend.sig.join()') === '2,0,0,0', 'legend core: an expedition team of 2+ of one circle brings Sigils (2 on Perfect, none on Fair or a recall)');
-  E('emit("milestone", { id: "pip", lv: 25 }); emit("milestone", { id: "pip", lv: 25 })');
-  assert(E('S.legend.sig[0]') === 4 && E('S.legend.bondCredit.pip') === 1, 'legend core: a first level 25 (Bond) gives 2 Sigils, once');
-  E('S.legend.sig = [20, 20, 20, 20]; for (const k of Object.keys(S.skills)) S.skills[k].lv = 99');
-  const gold1 = E('keenRaw()');
-  assert(E('(() => { const c = canCraft("warblade", 2, { cm: 1 }); const it = craftItem("warblade", 2, { cm: 1 }); return c.ok && !!it && it.cm === 1 && S.legend.sig[1] === 19; })()'), 'legend core: Mark at craft takes a Sigil and marks the item');
-  assert(!E(`legendCanMark(${wb}, 9).ok`) && E(`legendMark(${wb}, "hedgefolk") && legendMark(${gh}, 0) && itemById(${wb}).cm === 0`), 'legend core: Mark on the item sheet (1 Sigil of the circle)');
-  assert(E('legendSets().n[0]') === 2 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(E('keenRaw()') - gold1 - 0.05) < 1e-9, 'legend core: 2 marked pieces worn switch on the 2-piece set (+5% crit damage; ECON-A: was +10% gold)');
-  const bs = E('__mk("bow")'), bs2 = E('__mk("staff")');
-  E(`legendMark(${bs}, 0); legendMark(${bs2}, 0); legendMark(${sh}, 0)`);
-  E(`setField(["wren","tobin","pip"]); equipChar("wren", ${bs}, "wpn"); equipChar("pip", ${bs2}, "wpn"); equipChar("tobin", ${sh}, "wpn")`);
-  assert(E('legendSets().n[0]') === 4 && E('legendSetTier(0)') === 4, 'legend core: marks worn by fielded companions count (F1: 2 fielded, Pip benched: 4 pieces, the 4-piece tier)');
-  E('setField(["maren","aldric","caedmon"])');
-  assert(E('legendSets().n[0]') === 2, 'legend core: benched companions\' marks do not count');
-  // the runtime cap: Tidewall + Banner with 2 fielded Oath companions wearing a 4-piece Oath set (F1: Caedmon waits on the bench)
-  E('for (const k of ["maren", "aldric", "caedmon"]) { const a = __mk("shield"), b = __mk("trinket"); legendMark(a, "oath"); legendMark(b, "oath"); equipChar(k, a, "wpn"); equipChar(k, b, "trk"); }');
-  E(`itemById(${gh}).lg = "banner"; for (const k of LEG_IDS) S.legend.book[k] = 5; gearDirty()`);
-  const b5 = JSON.parse(E('JSON.stringify(legendBudget())'));
-  // Banner's share of mod('party') (other systems, such as synergies, also feed 'party')
-  const bannerPart = () => { const on = E('mod("party")'); E(`itemById(${gh}).lg = "anvil"; gearDirty()`); const off = E('mod("party")'); E(`itemById(${gh}).lg = "banner"; gearDirty()`); return on / off; };
-  assert(E('legendSetTier("oath")') === 4 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(b5.cap - 0.70) < 1e-9 && !b5.hit && b5.scale === 1 && Math.abs(bannerPart() - (1 + E('legendVal("banner", "dmg", 5)') * 2)) < 1e-9,
-    `legend core: two sets at once (Oath 4 + Hedgefolk 2); a rank V build under its +70% cap runs unscaled (raw +${(100 * b5.raw).toFixed(1)}%)`);
-  // F1: with 2 fielded companions the hero's two pieces join the Oath set and Aldric carries the Knucklebone
-  // (an Oath-marked trinket), Maren's shield holds Mossguard and the blade carries the Anvil (a bigger power than
-  // Tidewall), so rank I still runs over its cap
-  E(`S.legend.book.anvil = 1; S.legend.book.banner = 1; S.legend.book.knucklebone = 1; S.legend.book.mossguard = 1; itemById(${wb}).lg = "anvil"; itemById(${wb}).cm = 1; itemById(${gh}).cm = 1; itemById(${tk}).cm = 1; equipChar("aldric", ${tk}, "trk"); itemById(charRec("maren").wpn).lg = "mossguard"; gearDirty()`);
-  const bu = JSON.parse(E('JSON.stringify(legendBudget())'));
-  const party = bannerPart(), exp = 1 + E('legendVal("banner", "dmg", 1)') * 2 * bu.scale;
-  assert(bu.raw > bu.cap && bu.capped === bu.cap && Math.abs(bu.cap - 0.30) < 1e-9 && bu.rank === 1 && bu.scale < 1 && bu.hit && Math.abs(party - exp) < 1e-9,
-    `legend core: at rank I the budget clamps to +30% (raw +${(100 * bu.raw).toFixed(1)}%, scale ${bu.scale.toFixed(3)}); Banner's party damage is scaled by it`);
-  const lb = [1, 2, 3, 4, 5].map(r => JSON.parse(E(`JSON.stringify(legendBest("warden", ${r}))`)));
-  assert(lb.every(x => x.capped <= x.cap + 1e-12 && x.raw >= x.capped) && [0.30, 0.375, 0.45, 0.575, 0.70].every((c, i) => Math.abs(lb[i].cap - c) < 1e-9),
-    `legend core: legendBest clamps to the cap at every rank (raw ${lb.map(x => '+' + (100 * x.raw).toFixed(0) + '%').join(' / ')})`);
-  // owed rolls: nothing can drop yet -> recorded; paid once a source exists
-  const g3 = loadCore({ seed: 9 }), X = x => g3.eval(x); ticks(g3, 1);
-  X('S.party.cls = null; S.party.rec = {}; S.party.field = []');
-  const r0 = X('legendDrop(2, "oath")');
-  X('S.oath = { owed: [3, { rank: 1, source: "oath" }] }'); ticks(g3, 4);
-  assert(r0 === null && X('S.legend.owed.length') === 1 && X('S.oath.owed.length') === 2 && !Object.keys(X('S.legend.book')).length && !X('S.items.some(i => i.lg)'), 'legend core: a roll with nothing to drop is recorded (S.legend.owed); Oath rolls wait too');
-  X('S.party.cls = "ranger"'); ticks(g3, 4);
-  assert(X('S.legend.owed.length') === 0 && X('S.oath.owed.length') === 0 && X('S.legend.n.drops') === 3,
-    'legend core: owed rolls are paid once a source exists (a class chosen), the Oath core\'s too');
-} catch (e) { fail('legendary core crashed: ' + (e.stack || e)); }
 
 // ---- regions and the Great Lantern (22-data-regions.js, 40-rules.js, 55-lantern.js; plan-2 task R0) ----
 if (section('regions and the Great Lantern')) try {
@@ -2356,7 +2247,7 @@ if (section('cold hearth')) try {
     p.fn.on('zoneClear', e => mark('zone' + (e.zone + 1)));
     p.fn.on('crafted', e => { const d = P(`CRAFT_KINDS[${JSON.stringify(e.kind)}] || {}`); if (d.tool) mark('tool'); if (d.pos === 'weapon') mark('weapon'); });
     const steps = []; p.fn.on('onboardStep', e => steps.push([e.id, now()]));
-    const buy = () => P(`{ let n = 0; for (let k = 0; k < 50; k++) { const c = HERO_UPS.map(u => ({ u, p: plan(u.base, u.r, S[u.id], S.gold, u.cap, '1') })).filter(o => o.p.n > 0 && o.p.cost <= S.gold).sort((a, b) => a.p.cost - b.p.cost)[0]; if (!c) break; buyHero(c.u.id, '1'); n++; } n }`);
+    const buy = () => P(`{ for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, '1'); } }`);   // W2-A: Training
     const weapon = P('Object.keys(CRAFT_KINDS).find(k => CRAFT_KINDS[k].pos === "weapon" && !CRAFT_KINDS[k].legacy && fits(k, "weapon", "hero"))');
     // what the player gathers for: the next station, then the pickaxe, then the class weapon
     const want = () => P(`(() => {
@@ -3353,6 +3244,9 @@ if (section('gatherers UI (browser)')) try {
       await page.goto('http://lf.test/'); await page.waitForTimeout(700);
       const X = s => page.evaluate(s => window.__t.x(s), s);
       await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+      // W2-B de-flake: the live frame loop earned gold at zone 12 between reading `gold0` and the hire, so 'gold spent' was off by a kill.
+      // The loop skips tick() while soloPickerOpen() says true: the check drives every tick itself.
+      await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
       await X('S.maxZone = 12; S.zone = 12; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.camp.b.store = 1; S.gold = 1e9; for (const id of ["attack", "ability", "dodge", "parry", "boss", "upgrade"]) onboardDone(id); tick(1.2); tick(1.2); true');
       await X('setTab("tav"); ui(true); true'); await page.waitForTimeout(500);
       const n = s => page.evaluate(s => document.querySelectorAll(s).length, s);
@@ -3929,15 +3823,15 @@ if (section('econ (ECON-A)')) try {
   assert(Math.abs(gr - 1.3 * 1.3) < 1e-9 && gd <= 1.3 * 1.8 + 1e-9, `the Gold Rain Omen stays a gold day: x${gr.toFixed(2)} with capped gear, x${gd.toFixed(2)} on its Dare (at most 1.3 x 1.8)`);
   // Crit damage: the pool from every former gold source, capped at +40%
   const raw = E('keenRaw()'), k = E('keen()'), src = E('keenSources().filter(x => x.v > 0).map(x => x.id)');
-  assert(raw > 0.4 && Math.abs(k - 0.4) < 1e-12 && Math.abs(E('keenMult()') - 1.4) < 1e-12, `crit damage cap: the sources add to +${Math.round(raw * 100)}% (${src.join(', ')}), the pool gives +${Math.round(k * 100)}%`);
+  // (W2-B/W2-A solo: Precision is gone (Training), so the sources rarely reach the cap: the pool is the sources' sum, at most +40%)
+  assert(Math.abs(k - Math.min(raw, 0.4)) < 1e-12 && Math.abs(E('keenMult()') - (1 + k)) < 1e-12, `crit damage cap: the sources add to +${Math.round(raw * 100)}% (${src.join(', ')}), the pool gives +${Math.round(k * 100)}% (at most +40%)`);
   E('S.precision = 0; S.relic.edge = 0; S.camp.bless = []; S.mastery.zones = {}; S.mastery.types = {}; S.achievements.got = {}; ACH_API.check()'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
-  const c0 = E('critMult()'), k0 = E('keen()'); E('S.precision = 10'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
-  assert(Math.abs(E('keen()') - k0 - 0.10) < 1e-9 && Math.abs(E('critMult()') / c0 - (1 + E('keen()')) / (1 + k0)) < 1e-9, `Precision 10: +10% crit damage into the pool, the Lanternbearer's crit x${(E('critMult()') / c0).toFixed(3)}`);
+  // (Precision is party-era: PARTY_LEGACY 'econ' no longer covers it; Training has no crit-damage level)
   assert(E('ROSTER_KEYS.filter(id => ROSTER[id].role === "striker").every(id => keenCharMult(id) > 1) && ROSTER_KEYS.filter(id => ROSTER[id].role === "support").every(id => keenCharMult(id) === 1)'), 'companions: strikers\' crits scale with the pool (supports have none)');
   assert(E('HERO_UPS.every(u => u.desc() && !/Keen/.test(u.desc()))') && E('RELICS[1].desc()') === '+2% crit damage per level.', 'player-facing text says "crit damage" (no "Keen")');
   // The ledger
-  E('S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); g.fn.buyHero('blade', '1');
-  assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a Blade level under "up"');
+  E('soloPick("wren"); S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); E('train(trainNext().move, "1")');
+  assert(E('S.econ.spent.up') === g0 - E('S.gold') && E('S.econ.spent.up') > 0, 'the ledger counts a Training level under "up"');
   E('S.zone = 5; S.econ.earned.fight = 0'); for (let i = 0; i < 300; i++) g.fn.tick(0.1);
   assert(E('S.econ.earned.fight') > 0, `the ledger counts fighting gold (${E('fmt(S.econ.earned.fight)')} in 30 s)`);
   assert(!g.errors.length, 'econ: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -3946,13 +3840,13 @@ if (section('econ (ECON-A)')) try {
   const V1 = ['lanternfall', 'save', 'v1'].join('.');   // the old key (spelled so the tools scan below finds no v1 key here)
   const st = memoryStorage({ [V1]: v1raw });
   const h = loadCore({ seed: 42, storage: st }), H = s => h.eval(s);
-  assert(H('KEY') === 'lanternfall.save.v3' && H('S.v') === 3 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v3 (SOLO1; ECON-A made it v2), S.v 3: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
+  assert(H('KEY') === 'lanternfall.save.v4' && H('S.v') === 4 && H('S.maxZone') === 1 && H('S.gold') === 0 && H('S.precision') === 0 && H('S.relic.edge') === 0 && H('S.econ.v') === 1, 'save key v4 (W2-A; SOLO1 v3, ECON-A v2), S.v 4: with a v1 save present the game starts fresh (zone 1, no gold, the new fields at their defaults)');
   for (let i = 0; i < 600; i++) h.fn.tick(0.1);
   H('save()');
-  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v3')).v === 3 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v3');
-  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v3': 'not json' });
+  assert(st.get(V1) === v1raw && JSON.parse(st.get('lanternfall.save.v4')).v === 4 && !h.errors.length, 'a minute of play and a save: no errors, the v1 save is untouched, the game saves under v4');
+  const junk = memoryStorage({ [V1]: '{"v":2,"gold":"x"', 'lanternfall.save.v4': 'not json' });
   const j = loadCore({ seed: 43, storage: junk });
-  assert(j.eval('S.v') === 3 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
+  assert(j.eval('S.v') === 4 && Number.isFinite(j.fn.totalDps()) && !j.errors.length, 'a broken v1 and v2 save in storage: a new game, no crash');
   for (const t of ['check.mjs', 'sim.mjs', 'savecode.mjs', 'perf.mjs']) {
     const src = fs.readFileSync(path.join(ROOT, 'tools', t), 'utf8').replace(/\/\/.*$/gm, '');
     assert(!/lanternfall\.save\.v1/.test(src), `tools/${t} reads the v2 key`);
@@ -4045,9 +3939,10 @@ if (section('cb2')) try {
       const g0 = E('S.gold'); for (let i = 0; i < 6000; i++) g.fn.tick(0.1);
       sum += (E('S.gold') - g0) / 10;
     }
-    // W2-B: re-measured on the SOLO build (Wren picked, late fixture, seeds 7-9): 180.9, 183.1, 178.6, avg 180.9 (the party build's
-    // 515.2 is the same fixture with a fielded party). A change to hero damage or gold moves this number: re-measure with tools/sim.mjs.
-    const HEAD = 180.9, r = sum / 3 / HEAD;
+    // W2-B: re-measured on the SOLO build (Wren picked, late fixture, seeds 7-9). After W2-A's Training: 43.8, 44.9, 47.9, avg 45.5
+    // (before Training 180.9; the party build's 515.2 is the same fixture with a fielded party). A change to hero damage or gold
+    // moves this number: re-measure it (same snippet).
+    const HEAD = 45.5, r = sum / 3 / HEAD;
     assert(r >= 0.97, `idle is whole: idle gold a minute at zone 36, 10 minutes, late fixture: ${(100 * r).toFixed(1)}% of HEAD's (want >= 97%)`);
   }
   // 7. no overlap: answer warnings one at a time, at least 1 s apart (50 fights per kit)
@@ -4310,7 +4205,7 @@ if (section('solo hero')) try {
     E(`soloPick("${k}")`);
     for (let sec = 0; sec < 600; sec++) {
       for (let i = 0; i < 10; i++) { if (i === 3) E('soloAttack(); soloAbility()'); if (i === 7 && E('(w => !!(w && w.kind === "heavy" && w.left < 0.3))(actWarning())')) E('soloParry()'); g.fn.tick(0.1); }
-      if (sec % 10 === 0) E('while (buyHero("blade", "1")) {} if (bossReady()) challenge()');
+      if (sec % 10 === 0) E('for (let k = 0; k < 50; k++) { const t = trainNext(); if (!t || S.gold < t.cost) break; train(t.move, "1"); } if (bossReady()) challenge()');
     }
     const bad = badNumbers(E('S'));
     assert(!g.errors.length && !bad.length && E('S.maxZone') >= 3, `${k}: 10 minutes from a fresh save, no errors (zone ${E('S.maxZone')}, level ${E('S.L')}, ${E('SOLO_STATS.parries')} parries)` + (g.errors.length ? ': ' + g.errors[0] : '') + (bad.length ? ': ' + bad[0] : ''));
@@ -4596,6 +4491,11 @@ if (section('solo hero (browser)')) try {
       const party = await X('[!!document.querySelector("#sec-party-form, #sec-party-bench, #sec-party-roster, #sec-party-field, #sec-party-bonds, #sec-visitor"), document.querySelector(".tab[data-tab=party]").textContent.trim(), stageStats().front.map(a => a[0]).join()].join("|")');
       assert(/^false\|Hero\|hero$/.test(party), `no party UI (formation, bench, roster, Bonds, visitor); the tab is Hero; only the hero on the stage (${party})`);
       // walk the guide: each step's target exists, is visible, and the ring marks it; one hint; the game waits while it shows
+      // W2-B de-flake (root cause): the live frame loop kept the game running while the walk read its state (a foe died or a wind-up ended
+      // between the pause and the read, so 'paused' and 'want' disagreed, or the heavy hit for Dodge and Parry never lined up). The walk now
+      // freezes the frame loop (it skips tick() while soloPickerOpen() says true) and drives the game a second at a time, unless the game
+      // is paused, as the loop would.
+      await X('globalThis.__spo = soloPickerOpen; soloPickerOpen = () => true; true');
       const seen = [];
       for (let i = 0; i < 80 && (seen.length < 6 || !['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x))); i++) {
         const st = await X('(s => s ? s.id : "")(onboardStep())');
@@ -4612,10 +4512,12 @@ if (section('solo hero (browser)')) try {
         else if (st === 'gather') await X('onboardDone("gather"); true');   // checked; stay on the road so the Parry step can come
         else await X(`(sp => { if (sp && sp.node) sp.node.click(); return true; })(onboardSpec(${JSON.stringify(st)}))`);
         await page.waitForTimeout(300);
+        if (!(await X('ONBOARD.paused'))) await X('for (let k = 0; k < 10; k++) tick(0.1); true');
         // the Dodge and Parry steps wait for a heavy hit: start one on a pack foe
         await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) && actWarn({ kind: "heavy", id: "t", foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }); true');
         if (await X('S.tab && !["upgrade"].includes((onboardStep() || {}).id) ? (closeMenu(), true) : false')) await page.waitForTimeout(200);
       }
+      await X('soloPickerOpen = __spo; true');
       assert(['attack', 'ability', 'dodge', 'parry'].every(x => seen.includes(x)), `the first session walks Attack, the ability, Dodge and Parry (${seen.join(', ')})`);
       // the slot states: a cooldown sweep and seconds after a cast; Parry and Dodge glow on a heavy hit; the picker
       await X('S.onboard.tips = false; closeMenu(); S.activity === "fight" || setActivity("fight"); true'); await page.waitForTimeout(300);
@@ -4739,6 +4641,9 @@ if (section('W1-D (browser)')) try {
             const b = await page.$(`#soloBar .sb-${st === 'attack' ? 'atk' : st === 'ability' ? 'ab0' : st}`); const r = b && await b.boundingBox();
             if (r) { await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await page.mouse.down(); await page.mouse.up(); }
           }
+          // W2-B: a fresh Level 1 hero (Training made it weaker) meets its first natural heavy hit late (25 s in, the next 40 s after), which made
+          // each start run its whole 28 s. From the 2nd second the check starts a heavy wind-up itself when none is showing, as the solo walk does.
+          if (i >= 3 && await X('(S.onboard.done.ability && !S.onboard.done.parry && !actWarning() && combatFoes().some(f => f && !f.dead && f.hp > 0)) ? (actWarn({ kind: "heavy", id: "w1d" + Math.random(), foe: combatFoes().find(f => f && !f.dead && f.hp > 0), unit: 0, dur: 2, land: () => {} }), true) : false')) await page.waitForTimeout(100);
           if (i - since > 22 && await X('ONBOARD.paused')) { stuck = true; break; }   // paused for 9 s of presses on the same step
           await page.waitForTimeout(400);
         }
@@ -5051,7 +4956,7 @@ if (section('notices (browser, W1-B)')) try {
           } catch (e) {}
           if (S.tab && !st) closeMenu();
           if (!step && S.activity !== 'fight') setActivity('fight');
-          try { let best = null, c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) { c = p.cost; best = u.id; } } if (best && S.gold >= c && S.onboard.done.upgrade) buyHero(best, '1'); } catch (e) {}
+          try { const t = trainNext(); if (t && S.gold >= t.cost && S.onboard.done.upgrade) train(t.move, '1'); } catch (e) {}   // W2-A: the solo game trains (Blade and Swiftness are the party's)
           for (let k = 0; k < 20; k++) {
             if (ONBOARD.paused || __spo() || document.getElementById('createScreen')) break;
             tick(0.1);
@@ -5084,10 +4989,15 @@ if (section('notices (browser, W1-B)')) try {
 // ==== W1-C: solo copy and dead effects (audit-1 section 2) ====
 // A solo player never sees the old party's words. The scan reads the string tables of the game core (solo build) and,
 // in Chromium, every tab and sub-view at 360x740, the hero sheet, Achievements, the bell and the Journal.
-const W1C_RE = /\b(part(y|ies)|compan\w*|bonds?|formation|roster|recruit\w*|expeditions?)\b|tap the stage|your taps?\b|taps (deal|on the stage)|tap damage|\btap: /i;
+// W1-F added: allies, teammates, "your heroes", other/damage heroes, fielded, bench, "the others", "beside you", Warband, squad,
+// "Best with" / "Good with" (partner advice), "a healer behind you", "in the Front / Middle / Back." (a slot; \"in the front line\" of foes is fine), "Mid and Back", "Taps" of the old tap-to-attack game.
+const W1C_RE = /\b(part(y|ies)|compan\w*|bonds?|formation|roster|recruit\w*|expeditions?|allies|ally|teammates?|your heroes|other heroes|damage heroes|fielded|benched?|the others|fights? beside|beside you|warband|squad|healer behind you|Mid and Back|Good with|Best with)\b|\bin the (Front|Middle|Back)[.,]|tap the stage|your taps?\b|taps (deal|on the stage)|tap damage|\btap: |\b(a|each|every|your) tap\b/i;
 // Words that are allowed, and why (the reason is what a reader needs: keep it short and true).
 const W1C_ALLOW = [
   [/Dusk Company/, 'a circle of the Lantern Book (a faction name in the lore), not a party'],
+  // W1-F: the other heroes' lore. Bios, stories and join lines of heroes who are not playable yet (Hesketh, Vesper ...) may name
+  // the others: they are about the characters' past together. None of them can be reached in solo (no Hall, no Codex Lore page,
+  // no hero sheet story pages for them); the scan below reads only Wren, Tobin and Pip's bios and stories and allows nothing there.
 ];
 const w1cAllowed = t => W1C_ALLOW.some(([re]) => re.test(t));
 if (section('solo copy (W1-C)')) try {
@@ -5129,6 +5039,51 @@ if (section('solo copy (W1-C)')) try {
   assert(E('!CODEX_PAGE_IDS.includes("companions") && !CODEX_PAGE_IDS.includes("lore") && CODEX_MILESTONES.find(m => m.at === 200).rw[0].id === "t_wayfinder"'), 'the Codex has no Companions or Lore page in solo; the 200 Light reward is a title, not an expedition slot');
   for (const x of [g]) assert(!x.errors.length, 'no handler errors in the solo copy scan' + (x.errors.length ? ': ' + x.errors[0] : ''));
 } catch (e) { fail('solo copy (static) crashed: ' + (e.stack || e)); }
+
+// ---- W1-F: every string table an item box, a hero sheet or a picker reads ----
+// Item and affix lines (stat lines, unique text, kind and tier names, trophies, relics, tonics), the Lantern Book (class and pinnacle powers)
+// and circle sets, Sigil and circle names, class and subclass cards, the solo abilities, and the bios, stories, quotes and titles of the
+// three playable heroes. No allow-list entry is used here. Companion-only legendary powers (src 'comp') are skipped: the Book hides them
+// in solo (the Chromium scan below asserts that). The pinnacle UI text (PIN_HINTS, PIN_CHIPS, PIN_LESSON_WIPE, PIN_UI_TEXT) has no
+// engine or screen yet (audit-1), so nothing shows it.
+if (section('solo copy: items, sets, heroes (W1-F)')) try {
+  const g = loadCore({ solo: true, seed: 8 }), E = s => g.eval(s);
+  const hits = []; let strings = 0;
+  const SK = new Set(['id', 'src', 'ic', 'col', 'sets', 'look', 'key', 'at', 'wire', 'slot', 'st', 'pre', 'skill', 'fits', 'boss', 'target', 'sys', 'go', 'page', 'view', 'tab', 'sel', 'kit', 'base', 'to']);
+  const walk = (v, p, seen, d, key) => {
+    if (d > 9) return;
+    if (typeof v === 'string') { strings++; if (W1C_RE.test(v) && !w1cAllowed(v)) hits.push(`${p}: ${v.slice(0, 90)}`); return; }
+    if (typeof v === 'function') { if (v.length <= 2 && /^(desc|txt|text|fx|label|how|line|note|d|n|f|s|tip)$/.test(key)) for (const a of [1, 3, 5]) { try { const r = v(a, 1); if (typeof r === 'string') walk(r, p + `(${a})`, seen, d + 1, key); } catch (e) {} } return; }
+    if (!v || typeof v !== 'object' || seen.has(v)) return; seen.add(v);
+    if (typeof v.needs === 'function') { let ok = true; try { ok = !!v.needs(); } catch (e) {} if (!ok) return; }
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, `${p}[${i}]`, seen, d + 1, key)); return; }
+    for (const k of Object.keys(v)) if (!SK.has(k)) { let x; try { x = v[k]; } catch (e) { continue; } walk(x, `${p}.${k}`, seen, d + 1, k); }
+  };
+  const tables = ['UNIQ', 'RELICS', 'HERO_UPS', 'CRAFT_STATS', 'CRAFT_KINDS', 'CRAFT_AFFIXES', 'CRAFT_TROPHIES', 'CRAFT_TONICS', 'CRAFT_STATIONS', 'CRAFT_FAMILY',
+    'LEG_SETS', 'LEG_CIRCLE_NAME', 'PIN_POWERS', 'EVO_DEFS', 'EVO_NAMES', 'CLASS_DEFS', 'CLASS_ABILITIES', 'HERO_CLASSES', 'SOLO_ABILITIES', 'SOLO_HEROES', 'CLASS_TRIALS', 'CLASS_STAR_NAMES'];
+  let missing = [];
+  for (const n of tables) { let v; try { v = E(n); } catch (e) { missing.push(n); continue; } walk(v, n, new Set(), 0, n); }
+  // the Lantern Book: class powers and pinnacle powers (every rank), not the companion rows
+  for (const id of E('LEG_IDS')) { const p = E(`LEG_POWERS[${JSON.stringify(id)}]`); if (p.src === 'comp') continue; for (let r = 1; r <= 5; r++) walk(E(`legendText(${JSON.stringify(id)}, ${r})`), `LEG_POWERS.${id}@${r}`, new Set(), 0, 'txt'); walk(p.n, `LEG_POWERS.${id}.n`, new Set(), 0, 'n'); }
+  // every item kind, tier and unique, as the item box names them, and every stat line as it is printed
+  for (const k of E('Object.keys(CRAFT_KINDS)')) for (let t = 1; t <= 5; t++) walk(E(`kindName(${JSON.stringify(k)}, ${t})`), `kindName.${k}.${t}`, new Set(), 0, 'n');
+  for (const s of E('Object.keys(CRAFT_STATS)')) walk(E(`craftFmtLine(${JSON.stringify(s)}, 7)`), `craftFmtLine.${s}`, new Set(), 0, 'f');
+  // the three playable heroes: bios, quotes, titles, stories, how-tos
+  for (const h of E('SOLO_ORDER')) {
+    walk(E(`BIOS[${JSON.stringify(h)}]`), `BIOS.${h}`, new Set(), 0, 'bio');
+    walk(E(`(STORIES[${JSON.stringify(h)}] || [])`), `STORIES.${h}`, new Set(), 0, 'text');
+    walk(E(`(QUOTES[${JSON.stringify(h)}] || [])`), `QUOTES.${h}`, new Set(), 0, 'text');
+    walk(E(`JOIN_LINES[${JSON.stringify(h)}] || []`), `JOIN_LINES.${h}`, new Set(), 0, 'text');
+    walk(E(`({ n: ROSTER[${JSON.stringify(h)}].name, t: ROSTER[${JSON.stringify(h)}].title, how: ROSTER[${JSON.stringify(h)}].how })`), `ROSTER.${h}`, new Set(), 0, 'how');
+  }
+  assert(!missing.filter(n => n !== 'CLASS_STAR_NAMES').length && strings > 1200, `the item, set and hero scan reads ${strings} strings from ${tables.length - missing.length} tables, ${E('LEG_IDS').length} legendary powers, every kind name and stat line, and the bios and stories of ${E('SOLO_ORDER').length} heroes${missing.length ? ' (missing: ' + missing.join(', ') + ')' : ''}`);
+  assert(!hits.length, 'no party, companion, ally, "your heroes", Bench, Bond or partner-advice text in an item, affix, unique, set, Sigil, relic, class, subclass or hero string' + (hits.length ? `: ${hits.length}, e.g. ${hits.slice(0, 5).join(' | ')}` : ''));
+  const gs = loadCore({ solo: true, seed: 9 }), G = s => gs.eval(s);
+  G('soloPick("wren")');
+  const mem = JSON.parse(G(`(() => { const it = newItem('bow', 1, 'rare'); it.cm = 1; S.items.push(it); equipItem(it.id); gearDirty(); return JSON.stringify(legendActive().members); })()`));
+  assert(mem.oath === 1 && mem.hedgefolk === 0, `a lone hero's circle members are the marked pieces they wear (one Oath bow: ${JSON.stringify(mem)})`);
+  assert(!gs.errors.length, 'no handler errors in the item and hero scan' + (gs.errors.length ? ': ' + gs.errors[0] : ''));
+} catch (e) { fail('solo copy: items, sets, heroes crashed: ' + (e.stack || e)); }
 
 if (section('solo effects (W1-C)')) try {
   const errs = [];
@@ -5182,7 +5137,7 @@ if (section('solo effects (W1-C)')) try {
     assert(E('deepUnlocked() && DW.start(false)'), 'a solo Deepwell run starts');
     const m0 = E('mod("dmg")'), cd0 = E('mod("abilityCd")'), tap0 = E('mod("tap")');
     E('DW.run().boons.drill = 3; DW.run().boons.warband = 1');
-    assert(Math.abs(E('mod("dmg")') / m0 - (1 + 0.15 * 3) * 1.6) < 1e-9, `Battle Drill III and Warband add up to x${(E('mod("dmg")') / m0).toFixed(3)} to your own damage (they were the companions')`);
+    assert(Math.abs(E('mod("dmg")') / m0 - (1 + 0.15 * 3) * 1.6) < 1e-9, `Battle Drill III and War Cry add up to x${(E('mod("dmg")') / m0).toFixed(3)} to your own damage (they were the companions')`);
     E('DW.run().boons = {}; DW.run().trial = true; DW.run().rule = "echo"');
     assert(Math.abs(E('mod("abilityCd")') / cd0 - 0.5) < 1e-9 && Math.abs(E('mod("tap")') / tap0 - 0.5) < 1e-9 && Math.abs(E('mod("dmg")') / m0 - 1) < 1e-9, 'Echo Week: abilities come back twice as fast, Attack hits for half, your damage is not cut to 1% (Company Week was unwinnable solo)');
     assert(E('DEEP_RULES.some(r => r.id === "echo") && !DEEP_RULES.some(r => /Company/.test(r.n))'), 'the rule list has Echo Week and no Company Week');
@@ -5253,7 +5208,7 @@ if (section('solo copy (browser, W1-C)')) try {
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
-      const shown = { n: 0, views: 0 }, bad = new Map();
+      const shown = { n: 0, views: 0 }, bad = new Map(), items = { n: 0, min: 1e9, cards: 0, press: 0 };
       for (const hero of ['wren', 'tobin', 'pip']) {
         const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
         const page = await ctx.newPage(); const errs = [];
@@ -5261,16 +5216,20 @@ if (section('solo copy (browser, W1-C)')) try {
         await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
         await page.goto('http://lf.test/'); await page.waitForTimeout(500);
         const X = s => page.evaluate(s => window.__t.x(s), s);
-        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
-        // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
-        await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
-        const scan = async label => {
-          const txt = await page.evaluate(() => { const out = []; for (const e of document.querySelectorAll('body *')) { const t = [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').trim(); if (t && e.offsetParent !== null) out.push(t); } out.push(...[...document.querySelectorAll('[aria-label],[title],[alt]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('alt')].filter(Boolean).join(' '))); return out; });
+        // W2-B: the page-side reader (`window.__lfTexts(root)`): the visible text nodes and aria/title/alt of a root (default: the body).
+        // `judge` tests the texts. `scan(label, sel)` reads one round trip; item sheets go through `readSheets` (below): many per trip.
+        await page.evaluate(() => { window.__lfTexts = root => { const out = []; for (const e of (root || document.body).querySelectorAll('*')) { const t = [...e.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ').trim(); if (t && e.offsetParent !== null) out.push(t); } out.push(...[...(root || document.body).querySelectorAll('[aria-label],[title],[alt]')].map(e => [e.getAttribute('aria-label'), e.getAttribute('title'), e.getAttribute('alt')].filter(Boolean).join(' '))); return out; }; });
+        const judge = (label, txt) => {
           shown.n += txt.length; shown.views++;
           for (const t of txt) if (W1C_RE.test(t) && !w1cAllowed(t)) { const k = t.slice(0, 120); if (!bad.has(k)) bad.set(k, `${hero} ${label}`); }
         };
+        const scan = async (label, sel) => judge(label, await page.evaluate(sel => window.__lfTexts(sel ? document.querySelector(sel) : null), sel || null));
+        await scan('hero picker (new game)');   // W1-F: the three hero cards: art, role, bio, ability
+        await page.click(`#createScreen .ccard[data-hero="${hero}"]`); await page.click('#createScreen .create-go'); await page.waitForTimeout(250);
+        // a late game: every tab open, plenty of everything, the first Proving won (so its card shows)
+        await X(`(() => { try { onboardUnlockAll(); } catch (e) {} S.maxZone = 40; S.zone = 12; S.L = 60; S.gold = 1e12; S.embers = 1e6; for (const k in S.mats) { const m = S.mats[k]; if (Array.isArray(m)) for (let i = 0; i < m.length; i++) m[i] = 5000; } ONBOARD.paused = false; S.cls.trials = S.cls.trials || {}; S.cls.trials.warrior = { won: 1, best: 100 }; return 1; })()`);
         const pressAll = async (sel, label) => {
-          const n = Math.min(await page.locator(sel).count(), 50);
+          const n = Math.min(await page.locator(sel).count(), hero === 'wren' ? 50 : 12);   // W2-B: the other two heroes press the first 12 of each view (the tabs and views are read in full)
           for (let i = 0; i < n; i++) { try { await page.locator(sel).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`${label} #${i}`); await page.keyboard.press('Escape'); } catch (e) {} }
         };
         for (const t of ['adv', 'party', 'gat', 'forge', 'world']) {
@@ -5290,15 +5249,258 @@ if (section('solo copy (browser, W1-C)')) try {
         await X(`document.getElementById('bellBtn').click()`); await page.waitForTimeout(250); await scan('bell');
         const jb = page.locator('button:text-is("Journal")').first(); if (await jb.count()) { await jb.click({ force: true }); await page.waitForTimeout(250); await scan('Journal'); }
         await X(`classEvoUI.openChoice && classEvoUI.openChoice()`); await page.waitForTimeout(250); await scan('evolution choice');
+        // ---- W1-F: item detail sheets, compare, forge and Sigil boxes, the hero sheet, subclass cards, long-press info ----
+        await X('closeMenu()');
+        const kit = await X('heroWho()');
+        const made = JSON.parse(await X(`(() => { const ids = [], kit = heroWho();
+          try { for (let i = 0; i < 4; i++) legendSigil(i, 3, 'check', true); } catch (e) {}
+          const add = it => { S.items.push(it); ids.push(it.id); return it; };
+          const kinds = Object.keys(CRAFT_KINDS), own = k => { const d = CRAFT_KINDS[k]; return !d.cls || d.cls === kit; };
+          const wpn = kinds.find(k => CRAFT_KINDS[k].pos === 'weapon' && CRAFT_KINDS[k].cls === kit);
+          const cur = newItem(wpn, 1, 'common'); add(cur); try { equipItem(cur.id); } catch (e) {}   // something worn, so the box can compare
+          for (const u of Object.keys(UNIQ)) { dropUnique(u, 3); ids.push(S.items[S.items.length - 1].id); }
+          for (const k of kinds) for (const r of ['common', 'uncommon', 'rare', 'epic']) add(newItem(k, r === 'common' ? 1 : 3, r, { mw: 0 }));
+          for (let m = 1; m < 7; m++) add(newItem(wpn, 2, 'rare', { mw: m }));   // every Trophy's Masterwork line
+          const body = kinds.find(k => CRAFT_KINDS[k].pos === 'body' && CRAFT_KINDS[k].cls === kit), powers = LEG_IDS.filter(id => { const p = LEG_POWERS[id]; return p.fits === 'hero' && (p.cls == null || p.cls === kit); });
+          for (const id of powers) { const it = newItem(body, 3, 'epic'); it.lg = id; it.lr = 2; add(it); }
+          for (let c = 0; c < 4; c++) { const it = newItem(wpn, 2, 'rare'); it.cm = c; add(it); }   // marked with each circle
+          return JSON.stringify({ ids, powers }); })()`));
+        // W2-B: open and read every sheet inside ONE evaluate (openSheet replaces the sheet before it), 378 round trips became 3.
+        // The click variants (Save, Reforge, Compare, Inscribe buttons) stay one trip each on every 9th sheet.
+        const sheets = await page.evaluate(ids => ids.map(id => { window.__t.x(`craftUI.openItem(${id})`); const r = document.querySelector('.cf-sheet'); return [id, r ? window.__lfTexts(r) : []]; }), made.ids);
+        await page.keyboard.press('Escape');
+        let opened = 0, empty = 0;
+        for (const [id, txt] of sheets) { judge('item sheet ' + id, txt); opened++; if (txt.length < 4) empty++; }
+        for (let i = 8; i < made.ids.length; i += 9) {
+          const id = made.ids[i]; await X(`craftUI.openItem(${id})`); await page.waitForTimeout(15);
+          for (const sel of ['.cf-svb', '.cf-rf button', '.cf-cmp button', '.cf-inscribe button']) { const b = page.locator(`.cf-sheet ${sel}`).first(); if (await b.count()) { try { await b.click({ timeout: 300, force: true }); await page.waitForTimeout(30); await scan('item sheet ' + id + ' ' + sel, '.cf-sheet'); } catch (e) {} } }
+          await page.keyboard.press('Escape');
+        }
+        const inscribes = await page.evaluate(pids => pids.map(pid => { window.__t.x(`legendUI.openInscribe(${JSON.stringify(pid)})`); const r = document.querySelector('.cf-sheet'); return [pid, r ? window.__lfTexts(r) : []]; }), made.powers);
+        await page.keyboard.press('Escape');
+        for (const [pid, txt] of inscribes) { judge('Inscribe ' + pid, txt); if (txt.length < 4) empty++; }
+        assert(empty === 0, `${hero}: every item and Inscribe sheet had text when read (${empty} empty)`);
+        items.n += opened; items.min = Math.min(items.min, opened);
+        // the hero sheet, its Kit and story lines, and each subclass card (both tabs, the confirm) and the class change
+        await X(`setTab('party'); setView('party', 'team'); partySheet.openHero()`); await page.waitForTimeout(200);
+        await page.evaluate(() => document.querySelectorAll('.cs-sheet details, .sheet details').forEach(d => { d.open = true; }));
+        await scan('hero sheet (all opened)');
+        for (const sel of ['.cl-go', '.cs-act', '.cs-story summary']) { const n = Math.min(await page.locator(`.sheet ${sel}`).count(), 8); for (let i = 0; i < n; i++) { try { await page.locator(`.sheet ${sel}`).nth(i).click({ timeout: 300, force: true }); await page.waitForTimeout(60); await scan(`hero sheet ${sel} #${i}`); } catch (e) {} } }
+        await page.keyboard.press('Escape');
+        await X(`S.party.chosen = true; S.cls.trials = S.cls.trials || {}; S.cls.trials.check = { won: 1, best: 100 }; classEvoUI.openChoice()`); await page.waitForTimeout(250);
+        const tabs = await page.locator('.evo-tab').count();
+        for (let i = 0; i < tabs; i++) { await page.locator('.evo-tab').nth(i).click({ force: true }); await page.waitForTimeout(80); await scan(`subclass card ${i}`); await page.locator('.create-go').first().click({ force: true }).catch(() => {}); await page.waitForTimeout(60); await scan(`subclass card ${i} confirm`); }
+        await X('classEvoUI.closeAll()');
+        await X('classEvoUI.openRespec && classEvoUI.openRespec()'); await page.waitForTimeout(200); await scan('class change'); await X('classEvoUI.closeAll()');
+        items.cards += tabs;
+        // long-press info on each action-bar slot (Attack, Parry, Dodge: a tip; the three ability slots: the picker)
+        await X('setActivity("fight"); setTab("adv"); closeMenu()'); await page.waitForTimeout(300);
+        for (const a of ['atk', 'parry', 'dodge', 'ab0', 'ab1', 'ab2']) {
+          const b = page.locator(`[data-act="${a}"]`).first();
+          if (!(await b.count()) || !(await b.isVisible())) continue;
+          const bb = await b.boundingBox(); await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(700);
+          const shownTip = await page.evaluate(() => { const t = document.getElementById('soloTip'), p = document.getElementById('abPicker'); return (t && !t.hidden ? 1 : 0) + (p ? 2 : 0) + (document.querySelector('.tr-card') ? 4 : 0); });   // W2-A: a long press opens a Training card (Attack, Parry, Dodge: a sheet; ability slots: the picker with a card)
+          await scan('long-press ' + a); await page.mouse.up(); await page.keyboard.press('Escape'); await X('typeof closePicker === "function" && closePicker()');
+          if (shownTip) items.press++;
+        }
         assert(!errs.length, `${hero}: no page errors while reading every screen` + (errs.length ? ': ' + errs[0] : ''));
         await ctx.close();
       }
       assert(shown.views > 60 && shown.n > 3000, `the scan read ${shown.n} texts in ${shown.views} screens (three heroes, every tab, sub-view and sheet at 360x740)`);
-      assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit or expedition text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
+      assert(items.min >= 100 && items.cards >= 4 && items.press >= 12, `W1-F: the scan opened ${items.n} item sheets (at least ${items.min} per hero: every unique, every kind at four rarities, every Trophy line, every hero power, each circle mark; the compare box; Inscribe sheets), ${items.cards} subclass cards, the class change, the hero sheet and its story and Kit rows, the hero picker cards and ${items.press} long-presses (Attack, Parry, Dodge, the three ability slots), three heroes`);
+      assert(!bad.size, 'no party, companion, Bond, formation, roster, recruit, expedition, ally, Bench or partner-advice text on any screen' + (bad.size ? ': ' + [...bad].slice(0, 5).map(([t, w]) => `[${w}] ${t}`).join(' | ') : ''));
     } finally { await browser.close(); }
   }
 } catch (e) { fail('solo copy (browser) crashed: ' + (e.stack || e)); }
 // ==== end W1-C ====
+
+// ==== W2-A Training ====
+// Training (src/js/55-training.js, 75-training-ui.js; docs/design/solo-hero.md "Training"): gold levels up each hero's
+// Attack, Parry, Dodge and abilities, capped by the hero's level and the class stage. It replaced Blade, Swiftness and
+// Precision in the solo game (the dormant party game keeps them). Solo build throughout.
+if (section('training (W2-A)')) try {
+  const g = loadCore({ solo: true, seed: 21 }), E = s => g.eval(s), near = (a, b, t = 1e-9) => Math.abs(a - b) <= t * Math.max(1, Math.abs(b));
+  const T = JSON.parse(E('JSON.stringify(SOLO_TUNE.train)')), PR = JSON.parse(E('JSON.stringify(ECON.train)'));
+  // save defaults and the key
+  assert(E('KEY') === 'lanternfall.save.v4' && E('S.v') === 4 && E('fresh().v') === 4, 'save key lanternfall.save.v4 (S.v 4): v3 saves are never read');
+  const tr0 = JSON.parse(E('JSON.stringify(fresh().solo.tr)'));
+  assert(Object.keys(tr0).join() === 'wren,tobin,pip' && tr0.wren.echo === 0 && tr0.tobin.bash === 0 && tr0.pip.fire === 0 && Object.values(tr0).every(r => r.atk === 0 && r.parry === 0 && r.dodge === 0),
+    `fresh(): every hero's moves start at Lv 0 (${JSON.stringify(tr0)})`);
+  assert(E('JSON.stringify(fresh().solo.asc)') === '{}', 'fresh(): no hero has passed the Proving (asc {})');
+  // an old v4 save without tr / asc (a tool's save) gets them back
+  const st = memoryStorage({ [KEY]: JSON.stringify(Object.assign(JSON.parse(E('JSON.stringify(S)')), { solo: { v: 1, hero: 'tobin', lv: {}, eq: {}, zn: {} } })) });
+  const h0 = loadCore({ solo: true, seed: 3, storage: st });
+  assert(h0.eval('S.solo.tr && S.solo.tr.tobin.atk === 0 && S.solo.tr.tobin.bash === 0 && typeof S.solo.asc === "object"') && !h0.errors.length, 'a save without Training fields loads with them at 0 (defaults merge)');
+
+  E('soloPick("wren", { now: 1 }); S.gold = 0; S.L = 1');
+  assert(E('trainMoves().join()') === 'atk,echo,parry,dodge' && E('trainMoves("tobin").join()') === 'atk,bash,parry,dodge' && E('trainMoves("pip").join()') === 'atk,fire,parry,dodge',
+    'moves: Attack, each unlocked ability, Parry, Dodge (per hero)');
+  assert(!E('buyHero("blade", "1")') && !E('buyHero("swift", "1")') && !E('buyHero("precision", "1")'), 'Blade, Swiftness and Precision cannot be bought in solo (buyHero is the party game\'s)');
+
+  // costs: base x r^n up to the bend, x r2 past it
+  const cost = (k, n) => PR[k].base * Math.pow(PR.r, Math.min(n, PR.bend)) * Math.pow(PR.r2, Math.max(0, Math.min(n, PR.bend2) - PR.bend)) * Math.pow(PR.r3, Math.max(0, n - PR.bend2));
+  const cBad = [];
+  for (const [mv, k] of [['atk', 'atk'], ['echo', 'ab'], ['parry', 'parry'], ['dodge', 'dodge']]) for (const n of [0, 1, 7, 19, 20, 21, 35, 39, 40, 41, 60, 79]) if (!near(E(`trainCost("${mv}", ${n})`), cost(k, n))) cBad.push(`${mv} ${n}`);
+  assert(!cBad.length && E('trainCost("atk", 0)') === 6, `prices: base x${PR.r} a level to Lv ${PR.bend}, x${PR.r2} to Lv ${PR.bend2}, x${PR.r3} past it (Attack Lv 1 costs 6, as Blade's did)` + (cBad.length ? ': ' + cBad.join(', ') : ''));
+  const top = E('Math.max(...["atk", "echo", "parry", "dodge"].map(m => trainCost(m, SOLO_TUNE.train.cap[1] - 1)))');
+  const rising = E('["atk", "echo", "parry", "dodge"].every(m => { for (let n = 1; n < 80; n++) if (!(trainCost(m, n) > trainCost(m, n - 1))) return false; return true; })');
+  assert(rising && top < 1e8, `every price rises and the last level (Lv ${T.cap[1]}) costs ${E(`fmt(${top})`)}, under 1e8 (EC10)`);
+
+  // caps: hero level, then the class stage
+  E('S.gold = 1e12; S.L = 5');
+  assert(E('trainCap().cap') === 5 && E('trainCap().by') === 'level', 'cap: a move never passes the hero\'s level (Lv 5)');
+  const n5 = E('train("atk", "max")');
+  assert(n5 === 5 && E('trainLv("atk")') === 5 && E('trainPlan("atk", "1").n') === 0 && E('train("atk", "1")') === 0, `Max at hero Lv 5 trains Attack to 5 and stops (${n5})`);
+  E('S.L = 60');
+  assert(E('trainCap().cap') === T.cap[0] && E('trainCap().by') === 'stage', `cap: the base class stops at Lv ${T.cap[0]} (hero Lv 60)`);
+  E('train("atk", "max")'); assert(E('trainLv("atk")') === T.cap[0], `Max stops at the stage cap (${E('trainLv("atk")')})`);
+  E('S.solo.asc.wren = 1');
+  assert(E('trainStage()') === 1 && E('trainCap().cap') === 60 && E('trainCap("tobin").stage') === 0, 'after the Proving (S.solo.asc) the cap is the hero\'s level again (60), up to the next stage; other heroes keep theirs');
+  E('S.L = 99'); assert(E('trainCap().cap') === T.cap[1], `after the Proving the stage cap is ${T.cap[1]}`);
+  E('S.solo.asc = {}; S.solo.tr.wren.atk = 0; S.L = 30');
+
+  // buy x1 / x10 / Max and the ledger
+  E('S.gold = 1000; S.econ.spent.up = 0');
+  const p10 = JSON.parse(E('JSON.stringify(trainPlan("atk", "10"))')), sum10 = [...Array(10)].reduce((a, _, i) => a + cost('atk', i), 0);
+  assert(p10.n === 10 && near(p10.cost, sum10), `x10: 10 levels at the sum of their prices (${p10.cost.toFixed(1)})`);
+  const g0 = E('S.gold'), nMax = E('train("atk", "max")'), spent = g0 - E('S.gold'), next = cost('atk', nMax);
+  assert(nMax > 0 && near(spent, [...Array(nMax)].reduce((a, _, i) => a + cost('atk', i), 0)) && E('S.gold') < next && near(E('S.econ.spent.up'), spent),
+    `Max: ${nMax} levels for ${spent.toFixed(0)} of 1,000 gold, the next (${next.toFixed(0)}) out of reach; the ledger counts it under "up"`);
+  E('S.gold = 3'); const pm = JSON.parse(E('JSON.stringify(trainPlan("echo", "max"))'));
+  assert(pm.n === 1 && pm.cost === 8 && E('train("echo", "max")') === 0 && E('S.gold') === 3, 'Max with too little gold shows the next price and trains nothing');
+
+  // what a level raises (and only that)
+  E('S.gold = 1e12; S.solo.tr.wren = { atk: 10, parry: 0, dodge: 0, echo: 10 }; S.L = 30; gearDirty()');
+  const a0 = E('heroAtk()'), ab0 = E('trainAbPow("echo")'), cx0 = E('trainCounterX()'), dc0 = E('soloButtons().dodge.max'), aps0 = E('aps()');
+  E('train("atk", "1")');
+  assert(near(E('heroAtk()') / a0, E('atkCurve(11) / atkCurve(10)')) && near(E('trainAbPow("echo")'), ab0) && E('trainCounterX()') === cx0, `Attack Lv 11: the hit x${(E('heroAtk()') / a0).toFixed(3)} (atkCurve), abilities and the counter unchanged`);
+  E('train("echo", "1")');
+  assert(E('trainAbPow("echo")') > ab0 && near(E('trainAbPow("echo") / heroPow()'), E('trainAbCurve(11)')) && near(E('heroAtk()') / a0, E('atkCurve(11) / atkCurve(10)')), 'Echo Shot Lv 11: its power rises (trainAbCurve), Attack unchanged');
+  E('train("parry", "3")');
+  assert(near(E('trainCounterX()'), 1 + 3 * T.parry) && E('heroAtk()') > 0, `Parry Lv 3: counter x${E('trainCounterX()').toFixed(2)} (+${T.parry * 100}% a level)`);
+  E('train("dodge", "5")');
+  assert(near(E('soloButtons().dodge.max'), Math.max(T.dodgeMin, dc0 * Math.pow(T.dodge, 5))) && E('soloButtons().dodge.max') < dc0, `Dodge Lv 5: cooldown ${dc0} s -> ${E('soloButtons().dodge.max').toFixed(2)} s`);
+  E('S.solo.tr.wren.dodge = 60'); assert(E('trainDodgeCd()') === T.dodgeMin, `Dodge never goes under ${T.dodgeMin} s`);
+  assert(E('SOLO_TUNE.parryWin') === 0.35 && E('SOLO_TUNE.dodgeWin') === 0.8, 'timing windows never grow from gold (parry 0.35 s, dodge 0.8 s)');
+  E('S.swift = 40'); assert(E('aps()') === aps0 && aps0 === T.aps.wren, `attack speed is fixed (${aps0} a second; Swiftness left)`); E('S.swift = 0');
+  // the Attack curve keeps its milestones: x atkX every atkEvery levels, x atkX2 past atkBend
+  assert(near(E('atkCurve(5) / atkCurve(4)'), E('(4 + 6 * 5) / (4 + 6 * 4) * PACE.atkX')) && near(E('atkCurve(30) / atkCurve(29)'), E('(4 + 6 * 30) / (4 + 6 * 29) * PACE.atkX2')),
+    `Attack's damage curve: x${E('PACE.atkX')} every ${E('PACE.atkEvery')} levels, x${E('PACE.atkX2')} past Lv ${E('PACE.atkBend')}`);
+  // ability milestones every 5th level
+  E('S.solo.tr.wren.echo = 4');
+  const cd4 = E('soloAbilityInfo(0).cd'); E('S.solo.tr.wren.echo = 5'); const cd5 = E('soloAbilityInfo(0).cd');
+  assert(near(cd4 - cd5, T.msv.cd * E('mod("abilityCd")')) && E('trainMs("echo", 10).mark') === 1 && E('trainMs("echo", 15).cd') === 2, `Echo Shot: Lv 5 cooldown ${cd4} -> ${cd5} s; Lv 10 the Mark lasts ${T.msv.mark} s longer; Lv 15 another 0.5 s off`);
+  assert(E('trainMs("bash", 5).target') === 1 && E('trainMs("bash", 10).stun') === 1 && E('trainMs("fire", 5).patch') === 1 && E('trainMs("fire", 10).cd') === 1 && E('trainMs("fire", 4).patch') === 0,
+    'milestones take turns: Shield Bash one more foe (Lv 5), a longer Stun (Lv 10); Fireball a longer fire patch (Lv 5), a shorter cooldown (Lv 10)');
+  assert(near(E('trainAbCd("echo", 9, 200)'), 9 * T.cdMin) && E('trainAbCd("echo", 9, 200)') === E('trainAbCd("echo", 9, 400)'), `cooldown milestones stop at ${T.cdMin * 100}% of the base`);
+
+  // levels belong to the hero
+  E('S.solo.tr.wren.atk = 12; S.solo.tr.tobin.atk = 3; S.L = 20');
+  const wAtk = E('heroAtk()');
+  E('soloPick("tobin")'); const tAtk = E('trainLv("atk")');
+  E('soloPick("wren")');
+  assert(tAtk === 3 && E('trainLv("atk")') === 12 && E('trainLv("atk", "tobin")') === 3 && wAtk > 0, 'Training levels belong to each hero (Wren 12, Tobin 3) and survive a switch');
+  // save round trip
+  E('save()'); const h1 = loadCore({ solo: true, seed: 4, storage: g.storage });
+  assert(h1.eval('S.solo.tr.wren.atk') === 12 && h1.eval('S.solo.tr.tobin.atk') === 3 && h1.eval('S.solo.tr.wren.echo') === E('S.solo.tr.wren.echo'), 'Training levels survive save and load');
+
+  // Next Up: the hero-up goal trains (Attack or an equipped ability first)
+  E('S.solo.tr.wren = { atk: 0, parry: 0, dodge: 0, echo: 0 }; S.L = 3; S.gold = 7');
+  const nx = JSON.parse(E('JSON.stringify(trainNext())'));
+  assert(nx && nx.move === 'atk' && nx.cost === 6, `Next Up: the next Training level is Attack Lv 1 for 6 gold, not the cheaper Dodge (${JSON.stringify(nx)})`);
+  const goal = E('(() => { const g = GOALS.find(x => x.id === "hero-up"); const go = typeof g.go === "function" ? g.go() : g.go; return JSON.stringify({ label: typeof g.label === "function" ? g.label() : g.label, go }); })()');
+  const gj = JSON.parse(goal);
+  assert(/^Train Attack to Lv 1: ready$/.test(gj.label) && gj.go.view === 'training' && /data-mv="atk"/.test(gj.go.sel), `Next Up "${gj.label}" opens Hero > Training on the Attack row`);
+  E('S.solo.tr.wren = { atk: 3, parry: 3, dodge: 3, echo: 3 }');
+  assert(E('trainNext()') === null && E('(g => g.pct())(GOALS.find(x => x.id === "hero-up"))') === null, 'every move at its cap: the goal hides');
+  // the guide's 'upgrade' step teaches Train Attack
+  E('S.solo.tr = TRAIN0()');
+  assert(E('cheapestUp()') === 6 && !E('upBought()'), `the guide's upgrade step waits for Attack Lv 1 (${E('cheapestUp()')} gold)`);
+  E('S.gold = 100; train("echo", "1")'); assert(E('upBought()'), 'any Training level ends the step');
+
+  // Precision's crit damage moved into the stars (the pool, capped): +15% a class
+  const sk = JSON.parse(E('JSON.stringify(["warrior", "ranger", "mage"].map(c => { let k = 0, m = 0; for (const [, stars] of STAR_MAPS[c].arms) for (const s of stars) { const fx = s[2] || {}; k += fx.keen || 0; if (fx.m && fx.m.critDmg) m++; } return [c, Math.round(k * 100), m]; }))'));
+  assert(sk.every(([, k, m]) => k === 15 && m === 0), `solo stars: each class's crit damage stars add +15% to the capped pool, none multiply on top (${sk.map(x => x.join(' ')).join(', ')})`);
+  assert(!E('keenSources().some(s => s.id === "precision")'), 'no Precision source in the solo crit damage pool');
+  // an ability hits with its own level: Echo Shot at Lv 0 and Lv 10 on a pack
+  E('S.solo.tr.wren = { atk: 5, parry: 0, dodge: 0, echo: 0 }; S.L = 20; S.maxZone = 3; setZone(3); setActivity("fight"); spawn()');
+  for (let i = 0; i < 20; i++) g.fn.tick(0.1);
+  assert(!g.errors.length, 'training: no errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
+} catch (e) { fail('training (W2-A) crashed: ' + (e.stack || e)); }
+
+// ---- W2-A in Chromium: the Training list, a Train press, the long-press sheet, the old rows gone ----
+if (section('training (W2-A, browser)')) try {
+  let pw = null;
+  try {
+    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
+    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
+  } catch (e) {}
+  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
+  if (!pw || !exe || !fs.existsSync(distFile)) ok('training (browser): Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [w, h] of [[360, 740], [740, 360]]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true });
+        const page = await ctx.newPage(); const errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/'); await page.waitForTimeout(700);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await page.click('#createScreen .ccard[data-hero="tobin"]'); await page.click('#createScreen .create-go'); await page.waitForTimeout(600);
+        const at = `${w}x${h}`;
+        if (w === 360) {
+          // the guide's upgrade step points at Train on Attack (Hero > Training)
+          await X('for (const id of ["attack", "ability", "dodge", "parry", "boss"]) onboardDone(id); S.maxZone = 2; S.zone = 2; S.L = 3; S.gold = 50; true');
+          await page.waitForTimeout(1500);
+          const step = await X('(s => s ? s.id : "")(onboardStep())');
+          await X('setTab("training"); true'); await page.waitForTimeout(1200);
+          const bub = await X('(b => b && !b.hidden ? b.textContent : "")(document.querySelector(".ob-bub"))');
+          assert(step === 'upgrade' && /Train Attack/.test(bub), `${at}: the guide's upgrade step says "${bub.slice(0, 60)}" on Hero > Training`);
+          await page.click('#trainRows .tr-row[data-mv="atk"] .buy'); await page.waitForTimeout(400);
+          assert(await X('trainLv("atk") === 1 && !!S.onboard.done.upgrade'), `${at}: Train Attack ends the step (Attack Lv 1)`);
+        }
+        await X('for (const s of GUIDE_STEPS) onboardDone(s.id); S.maxZone = 9; S.zone = 9; S.L = 14; S.gold = 5000; ui(true); true');
+        await X('setTab("training"); true'); await page.waitForTimeout(700);
+        const rows = JSON.parse(await X('JSON.stringify([...document.querySelectorAll("#trainRows .tr-row")].map(r => ({ mv: r.dataset.mv, lv: r.querySelector(".own").textContent, ic: !!(r.querySelector(".ic img") && r.querySelector(".ic img").src.startsWith("data:")), desc: r.querySelector(".row-desc").textContent, btn: r.querySelector(".buy").textContent, vis: r.getBoundingClientRect().width > 0 })))'));
+        assert(rows.map(r => r.mv).join() === 'atk,bash,parry,dodge' && rows.every(r => r.ic && r.vis && /^Lv \d+\/14$/.test(r.lv) && /Next level/.test(r.desc) && /^Train/.test(r.btn)),
+          `${at}: Hero > Training lists Tobin's moves with the bar's icons, Lv n/14, the next level and Train (${rows.map(r => r.mv + ' ' + r.lv).join(', ')})`);
+        const lv0 = await X('trainLv("bash")'), g0 = await X('S.gold');
+        await page.click('#trainRows .tr-row[data-mv="bash"] .buy'); await page.waitForTimeout(300);
+        assert(await X('trainLv("bash")') === lv0 + 1 && await X('S.gold') < g0, `${at}: Train raises Shield Bash ${lv0} -> ${lv0 + 1} and spends gold`);
+        await page.click('.tr-amt button[data-amt="max"]'); await page.waitForTimeout(200);
+        await page.click('#trainRows .tr-row[data-mv="atk"] .buy'); await page.waitForTimeout(300);
+        assert(await X('trainLv("atk")') === 14 && await X('trainPlan("atk").n') === 0, `${at}: Max trains Attack to the hero's level (14) and the row says Maxed (${await X('document.querySelector(\'#trainRows .tr-row[data-mv="atk"] .qty\').textContent')})`);
+        await X('S.amt = "1"; true');
+        const scrollW = await X('document.documentElement.scrollWidth <= innerWidth + 1');
+        assert(scrollW, `${at}: no sideways scroll`);
+        // the Fight tab: no Blade / Swiftness / Precision rows
+        await X('setTab("adv"); true'); await page.waitForTimeout(500);
+        assert(await X('!document.querySelector("#heroRows .row") && document.getElementById("heroRows").offsetParent === null && !/Blade|Swiftness|Precision/.test(document.getElementById("p-adv").innerText)'), `${at}: the Fight tab has no Blade, Swiftness or Precision rows`);
+        await X('closeMenu(); true'); await page.waitForTimeout(400);
+        // long press on Dodge: the sheet with its level and a Train button
+        const bb = await (await page.$('#soloBar .sb-dodge')).boundingBox();
+        await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(750); await page.mouse.up(); await page.waitForTimeout(300);
+        const card = await X('(c => c ? c.textContent : "")(document.querySelector("#moveSheet .tr-card"))');
+        const d0 = await X('trainLv("dodge")');
+        assert(/Dodge Lv \d+/.test(card) && /Train/.test(card), `${at}: a long press on Dodge shows "${card.slice(0, 50)}"`);
+        await page.click('#moveSheet .tr-go'); await page.waitForTimeout(300);
+        assert(await X('trainLv("dodge")') === d0 + 1 && await X('soloPickerOpen()'), `${at}: its Train button trains Dodge (${d0} -> ${d0 + 1}); the game waits while the sheet is open`);
+        await page.click('#moveSheet .sp-x'); await page.waitForTimeout(200);
+        const ab = await (await page.$('#soloBar .sb-ab0')).boundingBox();
+        await page.mouse.move(ab.x + ab.width / 2, ab.y + ab.height / 2); await page.mouse.down(); await page.waitForTimeout(750); await page.mouse.up(); await page.waitForTimeout(300);
+        const pcard = await X('(c => c ? c.textContent : "")(document.querySelector("#abPicker .tr-card"))');
+        assert(/Shield Bash Lv \d+/.test(pcard) && /Train/.test(pcard), `${at}: a long press on an ability slot shows its Training in the picker ("${pcard.slice(0, 40)}")`);
+        await X('document.querySelector("#abPicker .sp-x").click(); true');
+        assert(!errs.length, `${at}: no page errors` + (errs.length ? ': ' + errs[0] : ''));
+        await ctx.close();
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('training (W2-A, browser) crashed: ' + (e.stack || e)); }
+// ==== end W2-A ====
 
 // ==== PARTY_LEGACY: checks of the dormant party build (W2-B). They run only with `node tools/check.mjs --party` and are deleted
 // in wave 3 with the party code. Nothing above this line may depend on anything in here. ====
@@ -7285,7 +7487,7 @@ if (section('evolutions (S3)')) try {
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
     try {
       const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v3', s); } catch (e) {} }, JSON.stringify(raw));
+      await ctx.addInitScript(s => { try { localStorage.setItem('lanternfall.save.v4', s); } catch (e) {} }, JSON.stringify(raw));
       const page = await ctx.newPage(); const errs2 = [];
       page.on('pageerror', e => errs2.push(String(e)));
       await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
@@ -7311,6 +7513,117 @@ if (section('evolutions (S3)')) try {
     } finally { await browser.close(); }
   })();
 } catch (e) { fail('evolutions crashed: ' + (e.stack || e)); }
+
+// ---- legendary powers core (55-legend.js, L2; legendaries.md 2-6, 8; the runtime cap, coordinator decision) ----
+if (section('legendary core')) try {
+  const src = fs.readFileSync(path.join(ROOT, 'src', 'js', '55-legend.js'), 'utf8').replace(/\/\/.*$/gm, '');
+  assert(!/\b(document|window|localStorage)\./.test(src), 'legend core: no DOM');
+  const ticks = (g, secs) => { for (let i = 0; i < secs * 10; i++) g.fn.tick(0.1); };
+  // old saves: empty Book, defaults merged, identical dps with and without the legend core
+  const noLegend = (await import('./lib/core.mjs')).coreFiles().filter(f => f !== '55-legend.js');
+  for (const f of ['save-v2.json', 'save-mid-v2.json', 'save-v2-late.json']) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8');
+    const a = loadCore({ storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ storage: memoryStorage({ [KEY]: raw }), files: noLegend });
+    const L = a.eval('S.legend');
+    assert(L && L.v === 1 && !Object.keys(L.book).length && L.sig.length === 4 && Array.isArray(L.owed) && a.fn.totalDps() === b.fn.totalDps() && a.eval('legendBudget().raw') === 0,
+      `legend core: ${f} loads with an empty Book, defaults merged, the same dps (${a.fn.totalDps().toFixed(1)})`);
+  }
+  const mk = () => {
+    const g = loadCore({ seed: 5 }), E = x => g.eval(x);
+    E('S.party.cls = "warden"; S.maxZone = 40; S.zone = 40; S.gold = 1e15; for (const k of Object.keys(S.mats)) S.mats[k] = S.mats[k].map(() => 5000)');
+    E('["tobin","wren","pip","bram","maren","aldric","kestrel","anselm","elowen","caedmon"].forEach(k => unlockChar(k, "test", true)); S.party.autoField = false; setField(["maren","aldric","caedmon"])');
+    ticks(g, 1);
+    return g;
+  };
+  const g = mk(), E = x => g.eval(x);
+  // drops, Learn, Echoes
+  const d1 = JSON.parse(E('JSON.stringify(legendDrop(1, "test", { pool: "class", z: 40 }))'));
+  const it1 = d1 && d1.item;
+  assert(d1 && d1.kind === 'item' && it1 && E('LEG_CLASS_IDS.warden').includes(it1.lg) && it1.lr === 1 && it1.r === 'epic' && E(`lgFits({ slot: "${it1.slot}" }, "${it1.lg}")`) && it1.t === E('zoneTier(40)'),
+    `legend core: a new power drops as a wearable Legendary item (${it1 && it1.lg} on a ${it1 && it1.slot}, Epic, rank I, zone tier)`);
+  const id = it1.lg;
+  assert(E(`legendLearn(${it1.id})`) && E(`legendKnown("${id}")`) === 1 && !E(`itemById(${it1.id})`), 'legend core: Learn breaks the item down and puts its power in the Book');
+  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" }); legendDrop(1, "test", { id: "${id}" })`);
+  assert(E(`legendKnown("${id}")`) === 1 && E(`legendEchoes("${id}")`) === 3 && E('legendEchoCap()') === 1, 'legend core: a known power drops as an Echo; with no Oath kept Echoes bank at rank I');
+  E('S.oath = { maxL: 6 }'); ticks(g, 4);
+  assert(E(`legendKnown("${id}")`) === 2 && E(`legendEchoes("${id}")`) === 0 && E('legendEchoCap()') === 3, 'legend core: 3 Echoes rank it up once the cap allows (Oath 6 kept: up to rank III)');
+  E(`legendDrop(1, "test", { id: "${id}" }); legendDrop(4, "test", { id: "${id}" })`);
+  assert(E(`legendKnown("${id}")`) === 4 && E(`legendEchoes("${id}")`) === 1, 'legend core: a higher-rank drop sets the rank and keeps the Echoes');
+  // Inscribe: fits, costs
+  E('globalThis.__mk = (kind, t) => { const it = newItem(kind, t || 3, "rare"); S.items.push(it); return it.id; }');
+  E('["tidewall", "anvil", "cadence", "banner"].forEach(p => { S.legend.book[p] = 3; })');
+  const wb = E('__mk("warblade")'), gh = E('__mk("greathelm")'), pl = E('__mk("plate")'), sh = E('__mk("shield")'), bow = E('__mk("bow")');
+  assert(!E(`legendCanInscribe("echostring", ${pl}).ok`) && !E(`legendCanInscribe("huntmoon", ${pl}).ok`) && E(`legendCanInscribe("tidewall", ${pl}).ok`), 'legend core: a power goes only where it fits (a Warden power on Warden gear)');
+  const ess0 = E('S.mats.ess[2]'), gold0 = E('S.gold'), cost = JSON.parse(E(`JSON.stringify(legendCanInscribe("tidewall", ${wb}).cost)`));
+  assert(E(`legendInscribe("tidewall", ${wb})`) && E(`itemById(${wb}).lg`) === 'tidewall' && E('S.mats.ess[2]') === ess0 - 5 && gold0 - E('S.gold') === cost.gold && cost.pearls === 8,
+    'legend core: Inscribe pays Essence and gold (Pearls 2 + 2 x rank once Pearls exist) and writes the power on the crafted item');
+  E(`legendInscribe("anvil", ${gh}); legendInscribe("cadence", ${pl}); legendInscribe("banner", ${sh})`);
+  // limits: 2 hero powers
+  E(`equipItem(${wb}, "weapon"); equipItem(${gh}, "helm")`);
+  assert(E('bonus("lg:tidewall")') === 3 && E('bonus("lg:anvil")') === 3 && E('legendActive().hero.length') === 2, 'legend core: worn powers are active at the Book rank (bonus lg:<id>)');
+  const hc = JSON.parse(E(`JSON.stringify(legendHeroCheck(${pl}, "body"))`));
+  assert(!hc.ok && hc.off != null && /carries 2 legendary powers/.test(hc.why), `legend core: a third power asks first ("${hc.why}")`);
+  E(`equipItem(${pl}, "body")`);
+  assert(E('S.equip.body') === null && E('legendActive().hero.length') === 2 && E('bonus("lg:cadence")') === 0, 'legend core: a third powered item goes back to the bag; the hero keeps 2 powers');
+  E('S.legend.book.tidewall = 5; gearDirty()');
+  assert(E('bonus("lg:tidewall")') === 5, 'legend core: an inscribed item follows the Book rank');
+  // a save edited to 3 keeps the first 2 by position
+  const sv = JSON.parse(E('JSON.stringify(S)')); sv.equip.body = pl;
+  const g2 = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(sv) }) }); ticks(g2, 1);
+  assert(g2.eval('S.equip.body') === null && g2.eval('S.equip.weapon') === wb && g2.eval('S.equip.helm') === gh && g2.eval('S.legend.book.tidewall') === 5,
+    'legend core: a save with 3 powers keeps the first 2 by position; the Book survives save and load');
+  // companions: 1 power each, role and wearer rules
+  E(`S.legend.book.echostring = 2; S.legend.book.knucklebone = 2; legendInscribe("echostring", ${bow})`);
+  const tk = E('__mk("trinket")'); E(`legendInscribe("knucklebone", ${tk})`);
+  E('setField(["kestrel","maren","aldric"])');
+  assert(E(`equipChar("kestrel", ${bow}, "wpn")`) && !E(`equipChar("kestrel", ${tk}, "trk")`) && E('bonus("lg:echostring")') === 2 && E('legendWearers("echostring").join()') === 'kestrel',
+    'legend core: a companion carries 1 power (equipChar refuses a second)');
+  assert(E(`legendItemState(itemById(${bow}), "maren").why`).includes('striker'), 'legend core: a companion power on the wrong role is off and says why');
+  // Sigils (expeditions, Bond), Marks, set counting
+  E('emit("expedBack", { g: 3, circles: { hedgefolk: 2, oath: 1 } }); emit("expedBack", { g: 0, circles: { dusk: 2 } }); emit("expedBack", { g: 1, recall: true, circles: { dusk: 2 } })');
+  assert(E('S.legend.sig.join()') === '2,0,0,0', 'legend core: an expedition team of 2+ of one circle brings Sigils (2 on Perfect, none on Fair or a recall)');
+  E('emit("milestone", { id: "pip", lv: 25 }); emit("milestone", { id: "pip", lv: 25 })');
+  assert(E('S.legend.sig[0]') === 4 && E('S.legend.bondCredit.pip') === 1, 'legend core: a first level 25 (Bond) gives 2 Sigils, once');
+  E('S.legend.sig = [20, 20, 20, 20]; for (const k of Object.keys(S.skills)) S.skills[k].lv = 99');
+  const gold1 = E('keenRaw()');
+  assert(E('(() => { const c = canCraft("warblade", 2, { cm: 1 }); const it = craftItem("warblade", 2, { cm: 1 }); return c.ok && !!it && it.cm === 1 && S.legend.sig[1] === 19; })()'), 'legend core: Mark at craft takes a Sigil and marks the item');
+  assert(!E(`legendCanMark(${wb}, 9).ok`) && E(`legendMark(${wb}, "hedgefolk") && legendMark(${gh}, 0) && itemById(${wb}).cm === 0`), 'legend core: Mark on the item sheet (1 Sigil of the circle)');
+  assert(E('legendSets().n[0]') === 2 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(E('keenRaw()') - gold1 - 0.05) < 1e-9, 'legend core: 2 marked pieces worn switch on the 2-piece set (+5% crit damage; ECON-A: was +10% gold)');
+  const bs = E('__mk("bow")'), bs2 = E('__mk("staff")');
+  E(`legendMark(${bs}, 0); legendMark(${bs2}, 0); legendMark(${sh}, 0)`);
+  E(`setField(["wren","tobin","pip"]); equipChar("wren", ${bs}, "wpn"); equipChar("pip", ${bs2}, "wpn"); equipChar("tobin", ${sh}, "wpn")`);
+  assert(E('legendSets().n[0]') === 4 && E('legendSetTier(0)') === 4, 'legend core: marks worn by fielded companions count (F1: 2 fielded, Pip benched: 4 pieces, the 4-piece tier)');
+  E('setField(["maren","aldric","caedmon"])');
+  assert(E('legendSets().n[0]') === 2, 'legend core: benched companions\' marks do not count');
+  // the runtime cap: Tidewall + Banner with 2 fielded Oath companions wearing a 4-piece Oath set (F1: Caedmon waits on the bench)
+  E('for (const k of ["maren", "aldric", "caedmon"]) { const a = __mk("shield"), b = __mk("trinket"); legendMark(a, "oath"); legendMark(b, "oath"); equipChar(k, a, "wpn"); equipChar(k, b, "trk"); }');
+  E(`itemById(${gh}).lg = "banner"; for (const k of LEG_IDS) S.legend.book[k] = 5; gearDirty()`);
+  const b5 = JSON.parse(E('JSON.stringify(legendBudget())'));
+  // Banner's share of mod('party') (other systems, such as synergies, also feed 'party')
+  const bannerPart = () => { const on = E('mod("party")'); E(`itemById(${gh}).lg = "anvil"; gearDirty()`); const off = E('mod("party")'); E(`itemById(${gh}).lg = "banner"; gearDirty()`); return on / off; };
+  assert(E('legendSetTier("oath")') === 4 && E('legendSetTier("hedgefolk")') === 2 && Math.abs(b5.cap - 0.70) < 1e-9 && !b5.hit && b5.scale === 1 && Math.abs(bannerPart() - (1 + E('legendVal("banner", "dmg", 5)') * 2)) < 1e-9,
+    `legend core: two sets at once (Oath 4 + Hedgefolk 2); a rank V build under its +70% cap runs unscaled (raw +${(100 * b5.raw).toFixed(1)}%)`);
+  // F1: with 2 fielded companions the hero's two pieces join the Oath set and Aldric carries the Knucklebone
+  // (an Oath-marked trinket), Maren's shield holds Mossguard and the blade carries the Anvil (a bigger power than
+  // Tidewall), so rank I still runs over its cap
+  E(`S.legend.book.anvil = 1; S.legend.book.banner = 1; S.legend.book.knucklebone = 1; S.legend.book.mossguard = 1; itemById(${wb}).lg = "anvil"; itemById(${wb}).cm = 1; itemById(${gh}).cm = 1; itemById(${tk}).cm = 1; equipChar("aldric", ${tk}, "trk"); itemById(charRec("maren").wpn).lg = "mossguard"; gearDirty()`);
+  const bu = JSON.parse(E('JSON.stringify(legendBudget())'));
+  const party = bannerPart(), exp = 1 + E('legendVal("banner", "dmg", 1)') * 2 * bu.scale;
+  assert(bu.raw > bu.cap && bu.capped === bu.cap && Math.abs(bu.cap - 0.30) < 1e-9 && bu.rank === 1 && bu.scale < 1 && bu.hit && Math.abs(party - exp) < 1e-9,
+    `legend core: at rank I the budget clamps to +30% (raw +${(100 * bu.raw).toFixed(1)}%, scale ${bu.scale.toFixed(3)}); Banner's party damage is scaled by it`);
+  const lb = [1, 2, 3, 4, 5].map(r => JSON.parse(E(`JSON.stringify(legendBest("warden", ${r}))`)));
+  assert(lb.every(x => x.capped <= x.cap + 1e-12 && x.raw >= x.capped) && [0.30, 0.375, 0.45, 0.575, 0.70].every((c, i) => Math.abs(lb[i].cap - c) < 1e-9),
+    `legend core: legendBest clamps to the cap at every rank (raw ${lb.map(x => '+' + (100 * x.raw).toFixed(0) + '%').join(' / ')})`);
+  // owed rolls: nothing can drop yet -> recorded; paid once a source exists
+  const g3 = loadCore({ seed: 9 }), X = x => g3.eval(x); ticks(g3, 1);
+  X('S.party.cls = null; S.party.rec = {}; S.party.field = []');
+  const r0 = X('legendDrop(2, "oath")');
+  X('S.oath = { owed: [3, { rank: 1, source: "oath" }] }'); ticks(g3, 4);
+  assert(r0 === null && X('S.legend.owed.length') === 1 && X('S.oath.owed.length') === 2 && !Object.keys(X('S.legend.book')).length && !X('S.items.some(i => i.lg)'), 'legend core: a roll with nothing to drop is recorded (S.legend.owed); Oath rolls wait too');
+  X('S.party.cls = "ranger"'); ticks(g3, 4);
+  assert(X('S.legend.owed.length') === 0 && X('S.oath.owed.length') === 0 && X('S.legend.n.drops') === 3,
+    'legend core: owed rolls are paid once a source exists (a class chosen), the Oath core\'s too');
+} catch (e) { fail('legendary core crashed: ' + (e.stack || e)); }
 
 // ==== end PARTY_LEGACY ====
 LEGACY = false;

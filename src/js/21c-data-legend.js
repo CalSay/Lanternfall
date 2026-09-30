@@ -111,25 +111,25 @@ const LEG_POWERS = {
     V => `Shield Wall also taunts every foe. While it is up, you reflect ${legPc(V('reflect'))} of the damage it blocks as fire.`),
   anvil: legRow('anvil', 'Anvil of Patience', 'class', 'hero', 'warden', 0.08, 0.16, 'class', '55-party tap branch',
     { shock: legLine(0.8, 1.6), cap: legSame(5) },
-    V => `Your taps no longer strike. Each hit you take adds a Guard stack (up to ${V('cap')}). A tap at full Guard spends them all: ${legNum(V('shock'))}x your attack per stack to the whole pack.`),
+    V => `Your Attack no longer strikes. Each hit you take adds a Guard stack (up to ${V('cap')}). An Attack at full Guard spends them all: ${legNum(V('shock'))}x your attack per stack to the whole pack.`),
   banner: legRow('banner', 'Oathkeeper\'s Banner', 'class', 'hero', 'warden', 0.05, 0.10, 'mod', 'addModifier(\'party\')',
     { dmg: legLine(0.05, 0.10), armour: legSame(10) },
-    V => `For each Oath companion you field, your party deals +${legPc(V('dmg'))} damage and you gain +${V('armour')} armour.`,
+    V => `For each Oath-marked piece you wear, you deal +${legPc(V('dmg'))} damage and gain +${V('armour')} armour.`,
     { per: 'oath', pPer: true }),
   bulwark: legRow('bulwark', 'Bulwark of Hollows', 'class', 'hero', 'warden', 0.06, 0.11, 'hook', 'threat check in 59-combat',
     { less: legLine(0.20, 0.35), more: legSame(0.15) },
-    V => `While every living foe targets you, your Mid and Back allies take ${legPc(V('less'))} less damage. You take ${legPc(V('more'))} more.`),
+    V => `While every living foe targets you, you take ${legPc(V('less'))} less damage.`),
   cinder: legRow('cinder', 'Cinder Heart', 'class', 'hero', 'warden', 0.05, 0.10, 'event', 'unitHit',
     { burn: legLine(0.04, 0.08), secs: legSame(4) },
     V => `Foes that hit you burn for ${legPc(V('burn'))} of the hit each second for ${V('secs')}s. Burns on foes you taunted deal double.`),
   cadence: legRow('cadence', 'Warlord\'s Cadence', 'class', 'hero', 'warden', 0.07, 0.13, 'class', '55-party heavy hit',
     { cd: legLine(1, 2), every: legSame(4) },
-    V => `Every ${V('every')}th heavy hit takes ${legNum(V('cd'))}s off every companion's ability cooldown.`),
+    V => `Every ${V('every')}th heavy hit you take takes ${legNum(V('cd'))}s off your ability cooldowns.`),
 
   // ---------------- 3.2 Lanternmage ----------------
   kindled: legRow('kindled', 'Kindled Crown', 'class', 'hero', 'lanternmage', 0.06, 0.12, 'hook', 'burn tick hook',
     { chance: legLine(0.10, 0.20) },
-    V => `Each burn tick from a companion has a ${legPc(V('chance'))} chance to plant an Ember on its foe.`),
+    V => `Each burn tick on a foe has a ${legPc(V('chance'))} chance to plant an Ember on it.`),
   starwell: legRow('starwell', 'Starwell Lens', 'class', 'hero', 'lanternmage', 0.07, 0.14, 'class', '55-party Flare',
     { pulse: legLine(0.40, 0.50), pulses: legSame(3), cd: legSame(3) },
     V => `Lantern Flare fires in ${V('pulses')} pulses of ${legPc(V('pulse'))} each. Each pulse that kills takes ${V('cd')}s off Flare's cooldown.`),
@@ -141,11 +141,11 @@ const LEG_POWERS = {
     V => `Lantern Flare deals +${legPc(V('flare'))}. If it kills the whole pack, its cooldown resets. If not, the cooldown is ${legPc(V('slow'))} longer.`),
   mirror: legRow('mirror', 'Mirror Flame', 'class', 'hero', 'lanternmage', 0.06, 0.12, 'hook', 'ability hit hook',
     { gap: legLine(3, 1.5) },
-    V => `When a companion's ability hits foes, each one gets an Ember. This happens at most once every ${legNum(V('gap'))}s.`,
+    V => `When your ability hits foes, each one gets an Ember. This happens at most once every ${legNum(V('gap'))}s.`,
     { down: ['gap'] }),
   wayfarer: legRow('wayfarer', 'Wayfarer\'s Lamp', 'class', 'hero', 'lanternmage', 0.05, 0.10, 'tune', 'tune:embersMax, tune:flare',
     { flare: legLine(0.06, 0.12), embers: legSame(1) },
-    V => `For each Wayfarer you field, you hold ${V('embers')} more Ember and Lantern Flare deals +${legPc(V('flare'))}.`,
+    V => `For each Wayfarer-marked piece you wear, you hold ${V('embers')} more Ember and Lantern Flare deals +${legPc(V('flare'))}.`,
     { per: 'wayfarers', pPer: true }),
 
   // ---------------- 3.3 Ranger ----------------
@@ -154,7 +154,7 @@ const LEG_POWERS = {
     V => `Volley fires only at your marked foe, with +${legPc(V('arrow'))} per arrow. Each crit adds ${V('markAdd')}s to the mark.`),
   contract: legRow('contract', 'Dusk Contract', 'class', 'hero', 'ranger', 0.05, 0.10, 'mod', 'addModifier(\'crit\')',
     { crit: legLine(0.04, 0.08), heal: legSame(0.01) },
-    V => `For each Dusk Company companion you field, your party gets +${legPc(V('crit'))} crit chance. Crits on marked foes heal the striker ${legPc(V('heal'))} of max HP.`,
+    V => `For each Dusk-marked piece you wear, you get +${legPc(V('crit'))} crit chance. Crits on marked foes heal you for ${legPc(V('heal'))} of max HP.`,
     { per: 'dusk', pPer: true }),
   stormfeather: legRow('stormfeather', 'Stormfeather', 'class', 'hero', 'ranger', 0.06, 0.12, 'hook', 'crit hook',
     { mult: legLine(1, 2), every: legSame(3) },
@@ -164,7 +164,7 @@ const LEG_POWERS = {
     V => `You attack half as fast. A hit after ${V('wait')}s without attacking deals x${legNum(V('mult'))} damage and always crits.`),
   wolves: legRow('wolves', 'Pack of Wolves', 'class', 'hero', 'ranger', 0.07, 0.14, 'class', 'mark code',
     { share: legLine(0.60, 1.00), marks: legSame(3) },
-    V => `Each striker you field marks its own target (up to ${V('marks')} marks). Your mark bonus works on all of them at ${legPc(V('share'))}.`),
+    V => `Your Mark spreads to up to ${V('marks')} foes at once. Your mark bonus works on all of them at ${legPc(V('share'))}.`),
   lastlight: legRow('lastlight', 'Last Light Arrow', 'class', 'hero', 'ranger', 0.06, 0.12, 'hook', 'hero hit hook',
     { exec: legLine(0.12, 0.20), bossAt: legSame(0.20), boss: legSame(0.5) },
     V => `Your hits kill normal foes below ${legPc(V('exec'))} HP. Bosses below ${legPc(V('bossAt'))} HP take +${legPc(V('boss'))} damage from you.`),
@@ -172,23 +172,23 @@ const LEG_POWERS = {
   // ---------------- 3.4 Lightkeeper ----------------
   unsleeping: legRow('unsleeping', 'Candle of the Unsleeping', 'class', 'hero', 'lightkeeper', 0.07, 0.14, 'class', '55-party Blessing',
     { dmg: legLine(0.25, 0.50), uses: legSame(3) },
-    V => `Blessings no longer fade with time. A companion spends its Blessing over its next ${V('uses')} abilities, and they deal +${legPc(V('dmg'))}.`),
+    V => `Blessings no longer fade with time. You spend your Blessing over your next ${V('uses')} abilities, and they deal +${legPc(V('dmg'))}.`),
   reliquary: legRow('reliquary', 'Saint\'s Reliquary', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'hook', 'heal hook',
     { heal: legLine(0.08, 0.15) },
-    V => `Your heals on Oath companions also bless them. For each Oath companion you field, your healing is +${legPc(V('heal'))}.`,
+    V => `Your heals also bless you. For each Oath-marked piece you wear, your healing is +${legPc(V('heal'))}.`,
     { per: 'oath', pPer: false }),
   bell: legRow('bell', 'Bell of Tolling', 'class', 'hero', 'lightkeeper', 0.06, 0.12, 'class', '55-party Hymn',
     { secs: legLine(2, 3), every: legSame(10), str: legSame(0.5) },
     V => `After Rally Hymn ends, it echoes every ${V('every')}s: a half-strength Hymn for ${legNum(V('secs'))}s.`),
   ebbflow: legRow('ebbflow', 'Ebb and Flow', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'event', 'unitHeal',
     { shield: legLine(0.10, 0.20) },
-    V => `Overhealing becomes a shield shared by the whole party, up to ${legPc(V('shield'))} of each member's max HP.`),
+    V => `Overhealing becomes a shield on you, up to ${legPc(V('shield'))} of your max HP.`),
   smite: legRow('smite', 'Smiting Light', 'class', 'hero', 'lightkeeper', 0.06, 0.12, 'hook', 'tap and hit hooks',
     { heal: legLine(0.02, 0.04), secs: legSame(4) },
-    V => `Your taps brand a foe for ${V('secs')}s. Companion hits on it heal your weakest ally for ${legPc(V('heal'))} of the damage.`),
+    V => `Your Attack brands a foe for ${V('secs')}s. Your hits on it heal you for ${legPc(V('heal'))} of the damage.`),
   hedgelight: legRow('hedgelight', 'Hedgelight Lamp', 'class', 'hero', 'lightkeeper', 0.05, 0.10, 'tune', 'tune:blessMax, 56b Common Cause',
     { cause: legLine(0.08, 0.15), bless: legSame(1) },
-    V => `For each Hedgefolk you field, you hold ${V('bless')} more Blessing and Common Cause is +${legPc(V('cause'))} stronger.`,
+    V => `For each Hedgefolk-marked piece you wear, you hold ${V('bless')} more Blessing and Common Cause is +${legPc(V('cause'))} stronger.`,
     { per: 'hedgefolk', pPer: true }),
 
   // ---------------- 3.5 Companion powers ----------------
@@ -272,20 +272,20 @@ function legendP(id, r) { const p = LEG_POWERS[id]; return p ? p.p1 + (p.p5 - p.
 const LEG_SETS = {
   hedgefolk: { circle: 'hedgefolk', i: 0, n: 'Hearth and Hedge', tiers: {
     2: { txt: '+5% crit damage. Common Cause is 10% stronger.', p: 0.03, fx: { keen: 0.05, cause: 0.10 } },   // ECON-A (keen: the crit damage pool): was +10% gold
-    4: { txt: 'Hedgefolk companions attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
-    6: { n: 'Common Courage', txt: 'Common companions you field get x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
+    4: { txt: 'You attack 20% faster.', p: 0.05, fx: { speed: 0.20, circle: 'hedgefolk' } },
+    6: { n: 'Common Courage', txt: 'Common gear you wear gets x1.35 base power.', p: 0.07, fx: { base: 1.35, rarity: 'common' } } } },
   oath: { circle: 'oath', i: 1, n: 'The Old Oath', tiers: {
-    2: { txt: 'Your party takes 5% less damage.', p: 0.03, fx: { less: 0.05 } },
-    4: { txt: 'A tank\'s taunt heals it for 6% of max HP.', p: 0.03, fx: { tauntHeal: 0.06 } },
-    6: { n: 'Unbroken Oath', txt: 'Once a pack, the first ally to fall stands at 40% HP (Oath members at 80%).', p: 0.06, fx: { hp: 0.40, oathHp: 0.80 } } } },
+    2: { txt: 'You take 5% less damage.', p: 0.03, fx: { less: 0.05 } },
+    4: { txt: 'Your taunt heals you for 6% of max HP.', p: 0.03, fx: { tauntHeal: 0.06 } },
+    6: { n: 'Unbroken Oath', txt: 'Once a pack, the first time you fall you stand up again at 40% HP.', p: 0.06, fx: { hp: 0.40, oathHp: 0.80 } } } },
   dusk: { circle: 'dusk', i: 2, n: 'Night Work', tiers: {
     2: { txt: '+10% crit damage.', p: 0.03, fx: { critDmg: 0.10 } },
-    4: { txt: 'A striker\'s kill gives your party +10% damage for 4s (stacks twice).', p: 0.06, fx: { dmg: 0.10, secs: 4, stacks: 2 } },
-    6: { n: 'Contract Kept', txt: 'Each striker\'s first hit on a new pack always crits. Strikers kill normal foes below 12% HP.', p: 0.07, fx: { firstCrit: 1, exec: 0.12 } } } },
+    4: { txt: 'A kill gives you +10% damage for 4s (stacks twice).', p: 0.06, fx: { dmg: 0.10, secs: 4, stacks: 2 } },
+    6: { n: 'Contract Kept', txt: 'Your first hit on a new pack always crits. You kill normal foes below 12% HP.', p: 0.07, fx: { firstCrit: 1, exec: 0.12 } } } },
   wayfarers: { circle: 'wayfarers', i: 3, n: 'Road Songs', tiers: {
     2: { txt: 'Ability cooldowns are 6% shorter.', p: 0.03, fx: { cd: 0.06 } },
     4: { txt: 'Burns, slows and songs last 30% longer.', p: 0.04, fx: { longer: 0.30 } },
-    6: { n: 'Encore Road', txt: 'Every 12s, a random companion you field finishes its ability cooldown.', p: 0.07, fx: { every: 12 } } } }
+    6: { n: 'Encore Road', txt: 'Every 12s, one of your abilities finishes its cooldown.', p: 0.07, fx: { every: 12 } } } }
 };
 
 // ---------------- 7 the Codex page ----------------

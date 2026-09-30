@@ -89,7 +89,7 @@ const PARTY = process.argv.includes('--party') && process.argv[process.argv.inde
 const loadCore = opts => loadCoreRaw({ ...(opts || {}), prelude: (PARTY ? 'var __SOLO = 0;\n' : '') + ((opts && opts.prelude) || '') });
 import { writeFileSync } from 'node:fs';
 
-const SAVE_KEY = 'lanternfall.save.v3';   // SOLO1 (30-state.js)
+const SAVE_KEY = 'lanternfall.save.v4';   // W2-A (30-state.js; SOLO1 made it v3)
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, arr) => {
   if (x.startsWith('--')) a.push([x.slice(2), arr[i + 1] && !arr[i + 1].startsWith('--') ? arr[i + 1] : true]);
   return a;
@@ -286,20 +286,25 @@ if (lineup) fieldLineup(g);
 // the rest waits for camp builds, hires, recruits and crafting. --upshare 1 spends everything (the old policy).
 const upShare = args.upshare !== undefined ? +args.upshare : 0.35, upSeed = args.upseed !== undefined ? +args.upseed : 0;
 const upBudget = () => upShare >= 1 ? Infinity : upSeed + upShare * E('S.totalGold') - E('S.econ ? S.econ.spent.up : 0');
+// W2-A (solo): Training. The value of a level is the gain in trainEst(active) (55-training: the auto swing, the equipped
+// abilities at their cooldown, and for --active the presses and counters) per gold; idle never trains Parry or Dodge
+// (they pay only by hand). Same budget (--upshare) and ledger ('up') as the old upgrades.
+const dpsNow = () => SOLO ? E(`trainEst(${active})`) : fn.totalDps();
 function buyBest() {
   for (let guard = 0; guard < 500; guard++) {
-    const base = fn.totalDps(), budget = upBudget();
+    const base = dpsNow(), budget = upBudget();
     const opts = [];
     const tryOpt = (label, apply) => {
       const snap = E('JSON.stringify(S)');
       const gold0 = E('S.gold');
       if (!apply()) return;
       const cost = gold0 - E('S.gold');
-      const gain = fn.totalDps() - base;
+      const gain = dpsNow() - base;
       E(`S = JSON.parse(${JSON.stringify(snap)}); gearDirty()`);
       if (cost > 0 && cost <= budget) opts.push({ label, apply, v: gain / cost });
     };
-    for (const id of E('HERO_UPS.map(u => u.id)')) tryOpt(id, () => fn.buyHero(id, '1'));
+    if (SOLO) { for (const mv of E('trainMoves()')) tryOpt(mv, () => E(`train(${JSON.stringify(mv)}, '1')`) > 0); }
+    else for (const id of E('HERO_UPS.map(u => u.id)')) tryOpt(id, () => fn.buyHero(id, '1'));
     if (!E('rosterLive()')) for (let i = 0; i < 7; i++) tryOpt('c' + i, () => fn.hireComp(i, '1'));
     if (!opts.length) return;
     opts.sort((a, b) => b.v - a.v);
@@ -782,7 +787,7 @@ for (let sec = 0; sec < total; sec++) {
   if (sec === 7200 && (args.t5 || args.t6 || args.t8)) t2Snap = E('JSON.stringify(S)');
   // --snap MIN:path writes the save at that minute (debugging).
   if (args.snap && sec === Math.round(parseFloat(String(args.snap).split(':')[0]) * 60)) (await import('node:fs')).writeFileSync(String(args.snap).split(':')[1], E('JSON.stringify(S)'));
-  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("[S.blade, S.swift, S.precision, S.L].join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
+  if (sec >= nextLine) { line(sec); nextLine += every * 60; if (args.debug) console.log("   ", E("(soloOn() ? trainMoves().map(m => m + ' ' + trainLv(m)).concat('L' + S.L) : [S.blade, S.swift, S.precision, S.L]).join(\"/\")"), E("rosterList().map(k => k + ' L' + charRec(k).lv + 'r' + charRec(k).rank).join(', ')"), 'dmgMult', E('dmgMult().toFixed(1)'), 'might', E('gear().might.toFixed(0)'), 'heroDps', E('heroDps().toExponential(2)'), 'mod(dmg)', E("mod('dmg').toFixed(2)"), 'party', E("mod('party').toFixed(2)")); }
   playSecond(sec);
 }
 line(total);
@@ -994,7 +999,7 @@ function runDays() {
       }
       checkTiers();
       if (train.id && train.at === null && E(`charRec(${JSON.stringify(train.id)}).lv`) >= train.target) train.at = wall / H / 24;
-      if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} blade ${E('S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
+      if (args.debug) console.log(`   d${d} ${checkins[sIdx % checkins.length]}h zone ${E('S.maxZone')} L${E('S.L')} ${comps()} | might ${E('gear().might.toFixed(0)')} gear ${Math.round(gs())} ${SOLO ? 'attack' : 'blade'} ${E(SOLO ? "trainLv('atk')" : 'S.blade')} dps ${fmt(fn.totalDps())} hero ${Math.round(100 * fn.heroDps() / fn.totalDps())}%`);
       handsStep();
       eco.bank.push([+(wall / H).toFixed(2), E('S.gold'), E('S.totalGold'), E('S.maxZone')]);
       // Leaving: pick the away activity.
@@ -1015,7 +1020,7 @@ function runDays() {
       if (d === 7) dd.v7 = E('Object.fromEntries(deeds.tracks().map(t => [t.id, t.v]))');
     }
     if (handsOn) { handsSim.byDay.push(handsSim.cur); handsSim.cur = hsFresh(); }
-    eco.days.push(E('({ zone: S.maxZone, foe: foeGoldBase(S.maxZone), gold: S.gold, blade: S.blade, swift: S.swift, precision: S.precision, keen: keen(), earned: Object.assign({}, S.econ.earned), spent: Object.assign({}, S.econ.spent) })'));
+    eco.days.push(E('({ zone: S.maxZone, foe: foeGoldBase(S.maxZone), gold: S.gold, blade: soloOn() ? trainLv("atk") : S.blade, swift: soloOn() ? 0 : S.swift, precision: S.precision, keen: keen(), earned: Object.assign({}, S.econ.earned), spent: Object.assign({}, S.econ.spent) })'));
     rows.push(r);
     if (train.id) train.lv.push([d, E(`charRec(${JSON.stringify(train.id)}).lv`)]);
     out([d, r.zone, r.lvl, fmt(goldH), r.tier, r.skills, r.bored.toFixed(0) + 'm', `camp ${campLv}/${campMax} | ` + r.comps]);
@@ -1041,7 +1046,7 @@ function runDays() {
   console.log(`regions: ${[35, 70, 105].map(z => `zone ${z} boss ${bossAt[z] === undefined ? '-' : 'day ' + (bossAt[z] / 24).toFixed(1)}`).join(', ')}`);
   {
     const L = E('S.econ'), sp = Object.values(L.spent).reduce((a, b) => a + b, 0) || 1, pc = k => Math.round(100 * (L.spent[k] || 0) / sp) + '%';
-    console.log(`econ: earned ${fmt(E('S.totalGold'))} (fight ${fmt(L.earned.fight)}, away ${fmt(L.earned.away)}, bounty ${fmt(L.earned.bounty)}), spent ${fmt(sp)}: up ${pc('up')}, camp ${pc('camp')}, craft ${pc('craft')}, recruit ${pc('recruit')}, hire ${pc('hire')}, other ${pc('other')} | bank ${fmt(E('S.gold'))} | Blade ${E('S.blade')}, Swiftness ${E('S.swift')}, Precision ${E('S.precision')} | crit damage +${Math.round(100 * E('keen()'))}%${Object.keys(eco.keenAt).length ? ' (bosses ' + Object.entries(eco.keenAt).map(([z, k]) => `${z}: +${Math.round(100 * k)}%`).join(', ') + ')' : ''}`);
+    console.log(`econ: earned ${fmt(E('S.totalGold'))} (fight ${fmt(L.earned.fight)}, away ${fmt(L.earned.away)}, bounty ${fmt(L.earned.bounty)}), spent ${fmt(sp)}: up ${pc('up')}, camp ${pc('camp')}, craft ${pc('craft')}, recruit ${pc('recruit')}, hire ${pc('hire')}, other ${pc('other')} | bank ${fmt(E('S.gold'))} | ${SOLO ? 'Training ' + E("trainMoves().map(m => trainName(m) + ' ' + trainLv(m)).join(', ')") : `Blade ${E('S.blade')}, Swiftness ${E('S.swift')}, Precision ${E('S.precision')}`} | crit damage +${Math.round(100 * E('keen()'))}%${Object.keys(eco.keenAt).length ? ' (bosses ' + Object.entries(eco.keenAt).map(([z, k]) => `${z}: +${Math.round(100 * k)}%`).join(', ') + ')' : ''}`);
   }
   console.log(`boredom to the Region 2 boss: longest gap ${(gapAct2 / 60).toFixed(0)} active min, longest run of empty check-ins ${gapCi2}`);
   console.log(`boredom (whole run): longest gap ${(gapAct / 60).toFixed(0)} active min (ending day ${(gapAt / 24 / H).toFixed(1)}), longest run of empty check-ins ${gapCi}, empty check-ins ${empty}/${sessions.length}`);
