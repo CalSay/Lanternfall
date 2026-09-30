@@ -157,3 +157,179 @@ let campPaintFire = null;
   setTimeout(() => { if (S.party && S.party.chosen && S.activity === 'gather') opening(); }, 600);
   on('hearthLit', () => { lastSig = ''; place(); emit('shake', 0.15); });
 }
+
+// C2: the warm camp panorama. The UI owns scrolling, the canvas and accessible
+// gatherer buttons. Coordinates are CSS pixels; actor x/y is the foot centre.
+// Painting never moves hit targets, advances jobs, or changes the save.
+const CAMP_SCENE_SIZE = Object.freeze({ width: 1024, height: 192, homeX: 360 });
+let campSceneLayout, campPaintScene;
+{
+  const PLOTS = [
+    ['tavern', 154], ['watch', 250], ['bench', 444], ['forge', 514],
+    ['store', 594], ['loom', 678], ['ench', 750], ['library', 832], ['shrine', 916]
+  ];
+  const SPOTS = { fire: 360, bench: 444, store: 594, kitchen: 98, road: 960 };
+  const hash = value => { let h = 0; for (const c of String(value)) h = (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0; return h; };
+  const level = id => typeof campLevel === 'function' ? campLevel(id) : 0;
+  campSceneLayout = () => {
+    const open = typeof campOpen === 'function' && campOpen();
+    const phase = typeof campClock === 'function' ? campClock().phase : 'day';
+    const view = Object.assign({}, CAMP_SCENE_SIZE, { open, phase, actors: [], away: [],
+      lit: open && level('hearth') > 0, tents: open ? level('tent') : 0,
+      buildings: open ? PLOTS.filter(([id]) => level(id) > 0).map(([id, x]) => ({ id, x, lv: level(id) })) : [] });
+    if (!open || typeof handsList !== 'function' || typeof handsStatus !== 'function') return view;
+    const used = new Set(), slots = Array.from({ length: 18 }, (_, i) => 36 + i * 56);
+    // Roster order is stable across reloads. Claim the nearest free place, keeping
+    // the whole button inside the panorama even when all ten tents are occupied.
+    for (const h of handsList()) {
+      const status = handsStatus(h); if (!status) continue;
+      if (status.st === 'out' || status.st === 'back') { view.away.push({ id: h.id, name: h.n, status }); continue; }
+      const want = SPOTS[status.spot] || SPOTS.fire;
+      const x = slots.filter(p => !used.has(p)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || a - b)[0];
+      if (x == null) continue;
+      used.add(x);
+      view.actors.push({ id: h.id, name: h.n, x, y: 164, w: 56, h: 96, status,
+        spot: status.spot, sk: h.sk, look: hash(h.key || h.id) % 3 });
+    }
+    return view;
+  };
+
+  // Small, bounded B1 outfits: the same body/shadow/pixel baker as the heroes,
+  // with work clothes and tools. These are scene looks, never recruitable heroes.
+  const frameCache = new Map();
+  function workerFrame(actor) {
+    if (typeof AK === 'undefined' || typeof charFrames !== 'function') return null;
+    const job = ['wood', 'mine', 'forage'].includes(actor.sk) ? actor.sk : 'any';
+    const v = actor.look % 3, key = 'camp_worker_' + job + '_' + v;
+    if (frameCache.has(key)) return frameCache.get(key);
+    const { m, R, P, E, legs, arm, torsoShape, belt, head, face, hairShort, hairFringe, beard } = AK;
+    const shirt = m(({ wood: ['#976349', '#A87842', '#7F626D'], mine: ['#687A8A', '#7D6D86', '#748477'],
+      forage: ['#69845D', '#8E7D54', '#628576'], any: ['#8C7954', '#777490', '#9C6C65'] })[job][v]);
+    const skin = m(AK.SKINS[v], 'skin'), hair = m(AK.HAIRS[(v + (job === 'mine' ? 2 : 0)) % 4], 'hair');
+    const leather = m('#694C38', 'leather'), boots = m('#443B38', 'leather');
+    const iron = m('#9296A0', 'metal'), timber = m('#947045', 'wood');
+    AK.CHARS[key] = {
+      name: 'Camp gatherer', circle: 'camp', hs: [1, .94, 1.04][v], ws: [1, 1.1, .92][v],
+      aF: -.18, aB: .08, anim: 'slash', wpn: { fam: 'ore', t: 1, r: 0 },
+      build(k) {
+        legs(k, m('#53515A'), boots, { patch: leather });
+        arm(k, 'B', shirt, skin);
+        k.add(3, 'up', shirt, torsoShape(k, { bw: 1.12 }), { bev: 1 });
+        if (job === 'mine') k.add(3.3, 'up', leather, R(-k.sw * .65, k.shY + 3, k.sw * 1.3, -k.shY + k.hiY + 1));
+        belt(k, leather, { buckle: iron });
+        head(k, skin); face(k, { eye: '#282737', brow: '#493B37' });
+        if (v === 1) hairFringe(k, hair); else hairShort(k, hair);
+        if (job === 'mine' && v === 2) beard(k, hair);
+        if (job === 'forage') {
+          k.add(6.1, 'head', m('#A7915F'), E(k.hx, k.top + 1, k.hw + 2, 1.7));
+          k.add(6.2, 'head', m('#8D7B51'), R(k.hx - k.hw * .75, k.top - 2, k.hw * 1.5, 3));
+        }
+        arm(k, 'F', shirt, skin);
+        if (job === 'wood') k.held(7, 'F', -.25, [
+          [timber, R(-.8, -10, 1.6, 16)], [iron, P(0, -10, 5, -11, 6, -6, 0, -7)]
+        ]);
+        else if (job === 'mine') k.held(7, 'F', -.22, [
+          [timber, R(-.8, -10, 1.6, 16)], [iron, P(-6, -8, -2, -11, 3, -11, 6, -8, 1, -9, -2, -9)]
+        ]);
+        else k.held(7, 'F', 0, [[leather, E(1, 4, 3.6, 4.2)], [timber, R(-2.5, 1, 7, 1.3)]]);
+      }
+    };
+    const frames = charFrames({ comp: key }, true), frame = frames && frames.idle0;
+    frameCache.set(key, frame || null); return frame;
+  }
+  const rect = (g, x, y, w, h, color) => { g.fillStyle = color; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  function roof(g, x, y, w, color) {
+    for (let i = 0; i < 5; i++) rect(g, x - w / 2 + i * 4, y - i * 4, w - i * 8, 4, color);
+    rect(g, x - w / 2, y + 4, w, 3, '#342938');
+  }
+  function crate(g, x, y) {
+    rect(g, x, y, 16, 16, '#553E36'); rect(g, x + 2, y + 2, 12, 12, '#94704E');
+    rect(g, x + 2, y + 7, 12, 2, '#493933'); rect(g, x + 7, y + 2, 2, 12, '#493933');
+  }
+  function station(g, b, night) {
+    const x = b.x, y = 120, timber = '#76583E', light = '#B68B5A', dark = '#392F32';
+    rect(g, x - 31, y, 62, 4, 'rgba(16,13,24,.3)');
+    if (b.id === 'tavern' || b.id === 'store' || b.id === 'library') {
+      rect(g, x - 28, y - 43, 56, 43, timber); rect(g, x - 25, y - 39, 50, 3, light);
+      for (let i = 1; i < 4; i++) rect(g, x - 28, y - i * 10, 56, 2, dark);
+      roof(g, x, y - 46, 68, b.id === 'tavern' ? '#8E514B' : b.id === 'library' ? '#626880' : '#666352');
+      rect(g, x - 7, y - 28, 14, 28, dark); rect(g, x + 3, y - 15, 2, 2, light);
+      for (const dx of [-21, 13]) {
+        rect(g, x + dx, y - 31, 9, 13, dark); rect(g, x + dx + 2, y - 29, 5, 9, night ? '#F3C579' : '#B5AB91');
+      }
+      if (b.id === 'store') { crate(g, x + 19, y - 16); crate(g, x + 31, y - 13); }
+      if (b.id === 'tavern') { rect(g, x + 31, y - 38, 3, 34, dark); rect(g, x + 30, y - 37, 14, 12, '#C49A59'); rect(g, x + 34, y - 34, 5, 6, '#5E4236'); }
+    } else if (b.id === 'watch') {
+      rect(g, x - 19, y - 65, 5, 65, dark); rect(g, x + 14, y - 65, 5, 65, dark);
+      for (let i = 0; i < 5; i++) rect(g, x - 14, y - 8 - i * 10, 28, 3, timber);
+      rect(g, x - 25, y - 58, 50, 13, timber); rect(g, x - 25, y - 58, 50, 3, light);
+      roof(g, x, y - 70, 56, '#6B6654');
+    } else if (b.id === 'bench') {
+      for (const dx of [-21, 15]) rect(g, x + dx, y - 23, 5, 23, dark);
+      rect(g, x - 26, y - 29, 55, 7, timber); rect(g, x - 26, y - 29, 55, 2, light);
+      rect(g, x - 10, y - 34, 25, 4, '#A9A6A7');
+      for (let i = 0; i < 3; i++) { rect(g, x - 29 + i * 13, y - 9, 12, 8, '#80583E'); rect(g, x - 28 + i * 13, y - 8, 3, 5, '#C19766'); }
+    } else if (b.id === 'forge') {
+      rect(g, x - 24, y - 36, 21, 36, '#55505A'); rect(g, x - 23, y - 30, 16, 18, '#272335');
+      rect(g, x - 21, y - 20, 12, 7, '#DC7745'); rect(g, x - 17, y - 18, 5, 4, '#EAB96F');
+      rect(g, x - 24, y - 57, 12, 22, '#625763');
+      rect(g, x + 5, y - 19, 16, 19, dark); rect(g, x - 1, y - 28, 30, 8, '#91919A');
+      rect(g, x + 5, y - 28, 19, 2, '#C0B6B6');
+    } else if (b.id === 'loom') {
+      rect(g, x - 22, y - 42, 5, 42, timber); rect(g, x + 17, y - 42, 5, 42, timber);
+      rect(g, x - 22, y - 43, 44, 5, light); rect(g, x - 15, y - 36, 30, 29, '#A99E79');
+      for (let i = 0; i < 7; i++) rect(g, x - 14 + i * 4, y - 36, 1, 29, '#D2C6A3');
+      rect(g, x - 15, y - 13, 30, 6, '#8D6369');
+    } else if (b.id === 'ench') {
+      rect(g, x - 18, y - 21, 4, 21, dark); rect(g, x + 14, y - 21, 4, 21, dark);
+      rect(g, x - 23, y - 27, 46, 7, '#6D5C78'); rect(g, x - 16, y - 31, 17, 4, '#C2B397');
+      rect(g, x + 6, y - 41, 8, 14, '#ACA2D0'); rect(g, x + 8, y - 44, 4, 17, '#CEC3E5');
+    } else if (b.id === 'shrine') {
+      rect(g, x - 21, y - 5, 42, 5, '#827A89'); rect(g, x - 15, y - 10, 30, 5, '#AEA4AC');
+      rect(g, x - 10, y - 36, 20, 26, '#827A89'); rect(g, x - 6, y - 40, 12, 30, '#AEA4AC');
+      rect(g, x - 3, y - 33, 6, 11, '#E4CC89');
+    }
+    g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#E8DDC5';
+    const label = { tavern: 'Tavern', watch: 'Watchtower', bench: 'Woodpile', forge: 'Forge', store: 'Storehouse',
+      loom: 'Loom', ench: 'Enchanter', library: 'Library', shrine: 'Shrine' }[b.id];
+    g.fillText(label, x, y + 15);
+  }
+  campPaintScene = (g, view = campSceneLayout(), time = 0) => {
+    if (!g || !view) return;
+    const t = typeof reduced !== 'undefined' && reduced ? 0 : Math.max(0, Number.isFinite(time) ? time : 0);
+    const night = view.phase === 'night' || view.phase === 'dusk';
+    const sky = { dawn: ['#605D75', '#AC867C'], day: ['#617F8E', '#A6B6A0'], dusk: ['#51435E', '#98716E'], night: ['#211E36', '#3D3B51'] }[view.phase] || ['#617F8E', '#A6B6A0'];
+    g.save(); g.imageSmoothingEnabled = false;
+    rect(g, 0, 0, view.width, 65, sky[0]); rect(g, 0, 65, view.width, 54, sky[1]);
+    if (night) for (let i = 0; i < 21; i++) rect(g, 15 + (i * 173) % view.width, 8 + (i * 13) % 42, 2, 2, '#A59DAC');
+    // Broad pixel silhouettes keep the crew legible at phone size.
+    for (let i = 0; i < 22; i++) {
+      const x = i * 51 - 10, h = 28 + (i * 17) % 30;
+      rect(g, x + 16, 111 - h, 5, h, night ? '#323442' : '#536A63');
+      for (let j = 0; j < 4; j++) rect(g, x + j * 5, 99 - h + j * 10, 40 - j * 8, 18, night ? '#343E49' : '#607B6C');
+    }
+    rect(g, 0, 104, view.width, 88, night ? '#343D39' : '#62714E');
+    rect(g, 0, 137, view.width, 42, night ? '#554D49' : '#96836C');
+    for (let i = 0; i < 55; i++) rect(g, (i * 137) % view.width, 141 + (i * 7) % 32, 5, 2, night ? '#625850' : '#AD987A');
+    for (let i = 0; i < Math.min(10, view.tents || 0); i++) {
+      const x = 35 + i * 41, y = 99;
+      roof(g, x, y - 4, 36, i % 2 ? '#918265' : '#9D9070');
+      rect(g, x - 5, y - 5, 10, 9, '#4C443E'); rect(g, x, y - 13, 2, 17, '#C5B491');
+    }
+    for (const b of view.buildings || []) station(g, b, night);
+    if (view.open && typeof campPaintFire === 'function') {
+      rect(g, view.homeX - 42, 115, 84, 11, '#4B3C36'); rect(g, view.homeX - 38, 114, 76, 3, '#94724D');
+      campPaintFire(g, view.homeX, 142, view.lit, t);
+    }
+    for (const a of view.actors || []) {
+      rect(g, a.x - 15, a.y - 2, 32, 5, 'rgba(20,16,26,.32)');
+      const f = workerFrame(a);
+      if (f) g.drawImage(f.c, Math.round(a.x - f.ox), Math.round(a.y - f.oy));
+      if (a.status.st === 'pack') { rect(g, a.x + 14, a.y - 17, 12, 16, '#A68B5F'); rect(g, a.x + 17, a.y - 20, 6, 4, '#6B513D'); }
+      if (a.status.st === 'rest') { g.font = '10px sans-serif'; g.fillStyle = '#DFD4B6'; g.textAlign = 'center'; g.fillText('Resting', a.x, a.y - 78); }
+    }
+    // Sparse foreground tufts, below the fixed foot line and above the labels.
+    for (let i = 0; i < 27; i++) rect(g, (i * 83) % view.width, 181 + (i % 3) * 3, 7, 2, night ? '#444E40' : '#84905D');
+    g.restore();
+  };
+}
