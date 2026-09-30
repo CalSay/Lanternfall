@@ -1441,12 +1441,12 @@ async function runTurnReport() {
       if (mode !== 'legacy-auto' && attackOnly) e(`soloEquipped=()=>[];const __baseTurnProfile=turnMakeProfile;turnMakeProfile=(...a)=>{const p=__baseTurnProfile(...a);if(p)p.ability=null;return p;};`);
       e(`gearDirty(); spawn();
         globalThis.__turnBench={kills:0,ess:0,deaths:0,mastery:JSON.stringify(S.mastery),defence:null,action:null,clock:0,
-          fight:null,completedFights:0,totalHeroTurns:0,totalFightSeconds:0,parryAttempts:0,parries:0,rng:${sd}};
+          fight:null,completedFights:0,totalHeroTurns:0,totalFightSeconds:0,totalDirectHits:0,parryAttempts:0,parries:0,rng:${sd}};
         on('kill', x=>{ __turnBench.kills++; __turnBench.ess+=Number(x.ess)||0; S.mastery=JSON.parse(__turnBench.mastery); });
         on('wipe',()=>{__turnBench.deaths++;});
-        on('fightStart',()=>{const b=__turnBench;b.defence=null;b.action=null;b.fight={heroTurns:0};});
+        on('fightStart',()=>{const b=__turnBench;b.defence=null;b.action=null;b.fight={heroTurns:0,hitsAt:CB_STATS.heroHits};});
         on('turn',x=>{if(x.who==='hero' && __turnBench.fight)__turnBench.fight.heroTurns++;});
-        on('fightEnd',x=>{const b=__turnBench;if(x.reason==='victory'&&b.fight){b.completedFights++;b.totalHeroTurns+=b.fight.heroTurns;b.totalFightSeconds+=x.now;}b.fight=null;});
+        on('fightEnd',x=>{const b=__turnBench;if(x.reason==='victory'&&b.fight){b.completedFights++;b.totalHeroTurns+=b.fight.heroTurns;b.totalFightSeconds+=x.now;b.totalDirectHits+=CB_STATS.heroHits-b.fight.hitsAt;}b.fight=null;});
         on('soloParry',x=>{if(!x.auto){__turnBench.parryAttempts++;if(x.res==='parry')__turnBench.parries++;}});`);
       const before = e('({kills:S.totalKills,ess:S.mats.ess[0],gold:S.gold,cap:(4+2*S.relic.glass+bonus("awayHours"))*3600,boost:(1+gear().offline/100)*mod("offline")})');
       let sampled = null, awayResult = null;
@@ -1487,20 +1487,22 @@ async function runTurnReport() {
         normalizedKillsPerHour:kills*3600/actualSeconds/boost,
         normalizedEssPerHour:generatedEss===null?null:generatedEss*3600/actualSeconds/boost,
         completedFights:stats?.completedFights??null,
+        meanDirectHits:stats?.completedFights ? stats.totalDirectHits/stats.completedFights : null,
         meanHeroTurns:stats?.completedFights ? stats.totalHeroTurns/stats.completedFights : null,
         meanFightSeconds:stats?.completedFights ? stats.totalFightSeconds/stats.completedFights : null,
         parryAttempts:after.events.parryAttempts,parries:after.events.parries,sampled});
     }
   }
   console.log('C20 stationary zone-1 rates; XP/mastery frozen, Deeds off. Hand perfect=.2s/100% parry; realistic=.35s/60% intended parry. Attack-only='+attackOnly);
-  console.log('profile / mode / seed / kills/h / generated Essence/h / stored Essence/h / deaths / hero turns / fight seconds / normalized away kills/Essence per hour');
+  console.log('profile / mode / seed / kills/h / generated Essence/h / stored Essence/h / deaths / direct hits / hero turns / fight seconds / normalized away kills/Essence per hour');
   for (const r of rows) { const rate=n=>n===null?'n/a':(n*3600/r.seconds).toFixed(2), num=n=>n==null?'n/a':n.toFixed(2);
-    console.log(`${r.profile} / ${r.mode} / ${r.seed} / ${rate(r.kills)} / ${rate(r.generatedEss)} / ${rate(r.storedEss)} / ${r.deaths??'n/a'} / ${num(r.meanHeroTurns)} / ${num(r.meanFightSeconds)} / ${num(r.normalizedKillsPerHour)}/${num(r.normalizedEssPerHour)}`); }
+    console.log(`${r.profile} / ${r.mode} / ${r.seed} / ${rate(r.kills)} / ${rate(r.generatedEss)} / ${rate(r.storedEss)} / ${r.deaths??'n/a'} / ${num(r.meanDirectHits)} / ${num(r.meanHeroTurns)} / ${num(r.meanFightSeconds)} / ${num(r.normalizedKillsPerHour)}/${num(r.normalizedEssPerHour)}`); }
   const report={seconds,seeds:count,attackOnly,rows,notes:['Early save moved from zone8 to prototype zone1.',
     'Storehouse caps retained; report distinguishes generated and stored Essence.',
     'Away totals use awayGains; reward-free sampled results and completed-fight metrics retained separately.',
     'Offline bonuses retained; normalized rates divide actual rewards by offlineBoost.',
     'Fight seconds include intro but exclude between-fight respawn and deaths. Legacy has no turn metrics.',
+    'Direct hits count Attack, ability and counter damage; burn ticks are excluded. Mean is per completed victory.',
     'Realistic policy uses separate seeded RNG for60% attempted parries landing,0.35s action reaction; perfect uses0.2s and100%.',
     'Tuning overrides apply only to turn modes; legacy remains the shipped comparison.']};
   if(args.json && args.json!=='1') fs.writeFileSync(String(args.json),JSON.stringify(report,null,2)+'\n');

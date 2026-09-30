@@ -4,7 +4,9 @@ const TURN_TUNE = {
   on: 0, heroRecovery: 0.28, foeWindup: 0.85, foeRecovery: 0.28,
   introHand: 1.2, introAuto: 0.6, attackCd: 1, echoCd: 5, bashCd: 4, fireCd: 5,
   heroHaste: { wren: 10, tobin: 9, pip: 10 }, foeHaste: 9,
-  foeHpX: 1.8, foeAtkX: 1, autoAttackX: 0.75,
+  foeHpX: 1.6, foeAtkX: 1, autoAttackX: 0.75,
+  // Effective heroX only inside this default-off prototype; legacy SOLO_TUNE.heroX is unchanged.
+  heroX: { wren: 1.45, tobin: 1.2, pip: 1.26 },
   autoParry: 0.1, autoDodge: 0.25, autoParryCap: 0.3, autoDodgeCap: 0.5,
   autoParryCounters: true, essenceX: 1
 };
@@ -38,15 +40,16 @@ function turnEffects() { return { mark: 0, markV: 0, focus: 0, focusV: 0,
 function turnMakeProfile(f, u) {
   if (!f || !u || !soloHero()) return null;
   const key = soloHero(), g = gear(), cls = S.party && S.party.cls, ab = SOLO_HEROES[key].ab;
+  const heroX = (TURN_TUNE.heroX[key] || SOLO_TUNE.heroX[key]) / SOLO_TUNE.heroX[key];
   const tap = cls === 'warden' ? CLASS_ABILITIES.heavy.coef : cls === 'lanternmage' ? CLASS_ABILITIES.ember.coef : CLASS_ABILITIES.focus.coef;
-  const pow = trainAbPow(ab.id) * (1 + (g.abil || 0) / 100);
+  const pow = trainAbPow(ab.id) * heroX * (1 + (g.abil || 0) / 100);
   const ar = Math.max(0, u.armour || 0), armRed = Math.min(COMBAT_TUNE.redMax, ar / (ar + 100));
   const classDr = cls === 'warden' ? (1 - COMBAT_TUNE.wardenDr) * (1 - COMBAT_TUNE.tankDr) : 1;
   const foeDamage = cbFoeAtk(f) * TURN_TUNE.foeAtkX * (1 - SOLO_TUNE.drX) * classDr * (1 - armRed);
   const heroHaste = (TURN_TUNE.heroHaste[key] || 0) + (g.initiative || 0), foeHaste = TURN_TUNE.foeHaste;
   return { heroKey: key, zone: S.zone, heroHp: u.hp, heroMaxHp: u.maxHp,
-    heroAtk: heroAtk() * tap * SOLO_TUNE.atkX * aps() * tapMult(),
-    counterDamage: heroAtk() * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() *
+    heroAtk: heroAtk() * heroX * tap * SOLO_TUNE.atkX * aps() * tapMult(),
+    counterDamage: heroAtk() * heroX * SOLO_TUNE.counterX * aps() * critMult() * trainCounterX() *
       (1 + (g.counter || 0) / 100) * (1 + (g.echo || 0)),
     abilityDamage: { echo: pow * SOLO_TUNE.echo.x, bash: pow * SOLO_TUNE.bash.x, fire: pow * SOLO_TUNE.fire.x },
     fireBurn: pow * SOLO_TUNE.fire.burnP, foeHp: f.max, foeAtk: foeDamage,
@@ -108,12 +111,14 @@ function turnScalarHeroStart(e) { if (e.guard > 0) e.guard--; }
 function turnNew(first, auto, io) {
   const m = { now: 0, phase: 'intro', until: auto ? TURN_TUNE.introAuto : TURN_TUNE.introHand,
     next: first, first, n: 0, auto, lockedAuto: auto, defense: '', usedDefense: false, skipFoe: false,
-    cooldowns: { attack: 0, echo: 0, bash: 0, fire: 0 }, ended: false };
+    cooldowns: io.initialCooldowns ? { ...io.initialCooldowns() } :
+      { attack: 0, echo: 0, bash: 0, fire: 0 }, ended: false };
   return m;
 }
 function turnEnd(m, reason, io) {
   if (!m || m.ended) return;
   m.ended = true; m.phase = 'off'; m.next = null;
+  if (io.endFight) io.endFight(m, reason);
   io.emit('fightEnd', { reason, now: m.now });
 }
 function turnBegin(m, who, io) {
@@ -181,6 +186,7 @@ function turnResolve(m, cmd, dt, io) {
 }
 
 let TURN_LIVE = null, TURN_RECOVER = 0, TURN_LAST_PROFILE = null;
+let TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 };
 const TURN_NONE = { now: 0, phase: 'off', auto: false, foe: null, next: null, n: 0,
   cooldowns: { attack: 0, echo: 0, bash: 0, fire: 0 }, dodgeOpensAt: 0, parryOpensAt: 0,
   closesAt: 0, heroHaste: 0, foeHaste: 0 };
@@ -202,6 +208,9 @@ function turnCombatProfile() {
 }
 const TURN_LIVE_IO = {
   heroHaste: 0, foeHaste: 0,
+  initialCooldowns: () => TURN_CARRY_CDS,
+  endFight: (m, reason) => { TURN_CARRY_CDS = reason === 'victory' ? { ...m.cooldowns } :
+    { attack: 0, echo: 0, bash: 0, fire: 0 }; },
   random: () => Math.random(), auto: () => !soloActive(), odds: () => TURN_LIVE.profile.odds,
   emit: (name, payload) => emit(name, payload),
   alive: () => { const u = cbUnitByKey('hero'); return { hero: !!u && !u.down && u.hp > 0,
@@ -258,7 +267,8 @@ function turnCombatTick(dt) {
   if (dt > 0 && S.turn) { S.turn.awayProfile = null; S.turn.awaySample = null; S.turn.awaySig = ''; } // Live play starts a new sampling session.
   if (!turnCombatScope()) {
     if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
-    TURN_LIVE = null; TURN_RECOVER = 0; return;
+    TURN_LIVE = null; TURN_RECOVER = 0;
+    TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; return;
   }
   if (TURN_RECOVER > 0) { TURN_RECOVER -= dt; if (TURN_RECOVER <= 0) { cbRestore(true); spawn(); } return; }
   const f = combatFoes().find(x => x && !x.dead && x.hp > 0 && !x.gone);
@@ -280,19 +290,29 @@ function turnCombatTick(dt) {
 }
 on('sceneReset', () => { if (TURN_LIVE && !TURN_LIVE.ended)
   turnEnd(TURN_LIVE, TURN_LIVE_IO.alive().hero ? 'abandon' : 'defeat', TURN_LIVE_IO);
-  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
-on('soloHero', () => { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; });
+  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;
+  TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; });
+on('soloHero', () => { if (TURN_LIVE && !TURN_LIVE.ended) turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO);
+  TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;
+  TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; });
 onTick(() => { if (TURN_LIVE && !TURN_LIVE.ended && !turnCombatScope()) {
-  turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null; } });
+  turnEnd(TURN_LIVE, 'abandon', TURN_LIVE_IO); TURN_LIVE = null; TURN_RECOVER = 0; TURN_LAST_PROFILE = null;
+  TURN_CARRY_CDS = { attack: 0, echo: 0, bash: 0, fire: 0 }; } });
 
 // Reward-free scratch run using precisely the same scheduler and scalar rules as live play.
 function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
   if (!p || !(seconds > 0) || !['auto', 'hand'].includes(mode)) return null;
   let x = (seed | 0) || 1, roll = () => ((x = (Math.imul(x, 1664525) + 1013904223) | 0) >>> 0) / 4294967296;
   const out = { seconds, kills: 0, deaths: 0, generatedEss: 0, damageDone: 0, damageTaken: 0,
-    foeHits: 0, blocks: 0, completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
-  let heroHp = p.heroHp, foeHp = p.foeHp, blockN = p.blockN || 0, m, downtime = 0, fightHeroTurns = 0;
+    foeHits: 0, blocks: 0, directHits: 0, totalDirectHits: 0,
+    completedFights: 0, totalHeroTurns: 0, totalFightSeconds: 0 };
+  let heroHp = p.heroHp, foeHp = p.foeHp, blockN = p.blockN || 0, m, downtime = 0,
+    carryCds = { attack: 0, echo: 0, bash: 0, fire: 0 },
+    fightHeroTurns = 0, fightDirectHits = 0;
   const io = { heroHaste: p.heroHaste, foeHaste: p.foeHaste, random: roll,
+    initialCooldowns: () => carryCds,
+    endFight: (state, reason) => { carryCds = reason === 'victory' ? { ...state.cooldowns } :
+      { attack: 0, echo: 0, bash: 0, fire: 0 }; },
     auto: () => mode === 'auto', odds: () => p.odds, emit: () => {},
     alive: () => ({ hero: heroHp > 0, foe: foeHp > 0 }), cooldown: id => p.cooldowns[id],
     abilityId: () => p.ability,
@@ -301,13 +321,13 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
       else { const z = turnScalarFoeStart(state.effects); state.skipFoe = z.skip;
         if (z.burn > 0) { foeHp -= z.burn; out.damageDone += z.burn; } } },
     heroAction: (id, _, auto) => { const d = turnScalarHit(p, m.effects, id, auto, roll);
-      if (!(d > 0)) return false; foeHp -= d; out.damageDone += d; return true; },
+      if (!(d > 0)) return false; foeHp -= d; out.damageDone += d; out.directHits++; fightDirectHits++; return true; },
     foeHit: () => { const z = turnScalarFoeHit(p, m.effects, roll); blockN = m.effects.blockN;
       out.foeHits++; if (z.blocked) out.blocks++;
       heroHp -= z.amount; out.damageTaken += z.amount; },
     counter: auto => { const d = turnScalarHit(p, m.effects, 'counter', auto, roll);
-      foeHp -= d; out.damageDone += d; }, defense: () => {} };
-  const start = () => { foeHp = p.foeHp; fightHeroTurns = 0;
+      foeHp -= d; out.damageDone += d; out.directHits++; fightDirectHits++; }, defense: () => {} };
+  const start = () => { foeHp = p.foeHp; fightHeroTurns = 0; fightDirectHits = 0;
     m = turnNew(p.heroHaste >= p.foeHaste ? 'hero' : 'foe', mode === 'auto', io);
     m.effects = turnEffects(); m.effects.blockN = blockN;
     io.emit('fightStart', { heroHaste: p.heroHaste, foeHaste: p.foeHaste, first: m.first }); };
@@ -324,6 +344,7 @@ function turnCombatSample({ profile: p, seconds, seed = 1, mode = 'auto' }) {
     if (m.ended) {
       if (foeHp <= 0) {
         out.kills++; out.completedFights++; out.totalHeroTurns += fightHeroTurns;
+        out.totalDirectHits += fightDirectHits;
         out.totalFightSeconds += m.now; const ess = p.essChance;
         out.generatedEss += Math.floor(ess) + (roll() < ess % 1 ? 1 : 0) + (roll() < p.essExtra ? 1 : 0);
         heroHp = Math.min(p.heroMaxHp, heroHp + p.heroMaxHp * p.healOnKill);

@@ -6611,6 +6611,13 @@ if (section('gather scene warmup (C12, browser)')) try {
 if (section('C20 turn combat (core)')) try {
   const g = loadCore({ seed: 2020 }), E = src => g.eval(src);
   assert(E('TURN_TUNE.on === 0 && !turnCombatOn() && SOLO_TUNE.turnParryWindow === 0.18 && SOLO_TUNE.turnDodgeWindow === 0.35'), 'C20: prototype defaults off; owner-approved manual windows are exposed as knobs');
+  const starterHits=['wren','tobin','pip'].map(hero=>{
+    const h=loadCore({seed:1}), H=x=>h.eval(x);
+    H(`soloPick(${JSON.stringify(hero)},{now:true});S.zone=1;S.activity='fight';TURN_TUNE.on=1;gearDirty();spawn()`);
+    return H(`(()=>{const p=turnCombatProfile(),out={hero:p.heroKey,legacyHeroX:SOLO_TUNE.heroX[p.heroKey]};for(const auto of [false,true]){const e=turnEffects();let hp=p.foeHp,n=0;while(hp>0&&n<20){hp-=turnScalarHit(p,e,'attack',auto,()=>1);n++;turnScalarFoeStart(e)}out[auto?'auto':'manual']=n}return out})()`);
+  });
+  assert(starterHits.every(x=>x.auto===3&&x.manual===3) && starterHits[0].legacyHeroX===.76,
+    `C20: first foe takes three noncritical basic hits by hand and Auto for each starter; legacy damage stays unchanged (${starterHits.map(x=>x.hero+':'+x.manual+'/'+x.auto).join(', ')})`);
   E('TURN_TUNE.on=1; soloPick("wren"); soloSetAuto(false); S.auto=false; globalThis.__turnEvents=[]; on("fightStart", x=>__turnEvents.push(["start",x.first,turnCombatSnapshot().phase])); on("turn",x=>__turnEvents.push(["turn",x.who,x.n])); on("fightEnd",x=>__turnEvents.push(["end",x.reason])); spawn()');
   g.fn.tick(0.1);
   assert(E('combatFoes().filter(f=>f.hp>0&&!f.dead).length===1 && __turnEvents.length===1 && __turnEvents[0].join() === "start,hero,intro" && turnCombatSnapshot().foe.key===combatFoes()[0].key'), 'C20: one foe and a complete intro snapshot exist when fightStart fires');
@@ -6624,6 +6631,16 @@ if (section('C20 turn combat (core)')) try {
   assert(E('soloParry()==="parry" && soloDodge()==="miss"'), 'C20: a timed parry succeeds and a second defense attempt cannot replace it');
   for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   assert(E('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===3'), 'C20: timed parry refunds one, then the next hero turn decrements one');
+  const carryCore=loadCore({seed:2030}), C=x=>carryCore.eval(x);
+  C('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);S.auto=false;spawn();combatFoes()[0].hp=1');
+  for(let i=0;i<25;i++) carryCore.fn.tick(.05);
+  assert(C('turnCombatSnapshot().phase==="hero" && soloAbility({slot:0}) && TURN_CARRY_CDS.echo===5'),
+    'C20: a winning ability retains its turn cooldown for the next normal foe');
+  for(let i=0;i<40;i++) carryCore.fn.tick(.05);
+  assert(C('turnCombatSnapshot().phase==="hero" && turnCombatSnapshot().cooldowns.echo===4 && !soloAbility({slot:0})'),
+    'C20: the next fight decrements a carried cooldown on its first hero turn');
+  C('setZone(2)');
+  assert(C('TURN_CARRY_CDS.echo===0'), 'C20: leaving prototype scope clears carried cooldowns');
   const cadence = E(`(() => {
     const run = dt => { let hero=1e9, foe=1e9; const io={heroHaste:10,foeHaste:9,emit:()=>{},auto:()=>true,
       random:()=>1,odds:()=>({parry:0,dodge:0,parryWindow:.18,dodgeWindow:.35}),
