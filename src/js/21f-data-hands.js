@@ -49,18 +49,19 @@ const HANDS_RAR_NAME = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', e
 const HANDS_SKILLS = ['mine', 'wood', 'forage'];
 
 // y: yield (additive, +0.10 = +10%), sh: shift hours added, sx: shift multiplier, fam: families the
-// yield applies to, clock: [from, to) device hours at send, camp: works while at camp (not stacked).
+// yield applies to, tiers: node grades it applies to, clock: [from, to) device hours at the initial
+// send (including its queued shifts), camp: works while at camp (not stacked).
 const HANDS_TRAITS = [
   { id: 'steady', n: 'Steady', txt: '+10% yield', y: 0.10 },
   { id: 'strong', n: 'Strong Back', txt: 'Works a four-hour shift' },
-  { id: 'mule', n: 'Packmule', txt: '+15% haul', y: 0.15 },
-  { id: 'home', n: 'Homebody', txt: '+40% yield', y: 0.40 },
+  { id: 'mule', n: 'Packmule', txt: '+15% haul on grades 3–5', y: 0.15, tiers: [3, 4, 5] },
+  { id: 'home', n: 'Homebody', txt: '+15% yield on grades 1–2', y: 0.15, tiers: [1, 2] },
   { id: 'wander', n: 'Wanderer', txt: '-10% yield', y: -0.10 },
   { id: 'keen', n: 'Keen Eye', txt: 'Rare finds: 2% of units come back one tier up' },
-  { id: 'early', n: 'Early Riser', txt: '+20% yield on shifts sent 05:00-11:00', y: 0.20, clock: [5, 11] },
+  { id: 'early', n: 'Early Riser', txt: '+20% yield when sent 05:00–11:00, including queued shifts', y: 0.20, clock: [5, 11] },
   { id: 'owl', n: 'Night Owl', txt: 'Works a four-hour shift at night too' },
-  { id: 'stone', n: 'Stonecutter', txt: '+25% yield on Crystal', y: 0.25, fam: ['crystal'] },
-  { id: 'green', n: 'Green Thumb', txt: '+25% yield on Fibre and Herbs', y: 0.25, fam: ['fibre', 'herb'] },
+  { id: 'stone', n: 'Stonecutter', txt: '+20% yield on Crystal', y: 0.20, fam: ['crystal'] },
+  { id: 'green', n: 'Green Thumb', txt: '+20% yield on Fibre and Herbs', y: 0.20, fam: ['fibre', 'herb'] },
   { id: 'lucky', n: 'Lucky', txt: 'Each shift: 2% chance to bring 1 Trophy' },
   { id: 'friendly', n: 'Friendly', txt: '+10% yield while another Friendly Hand is out too' },
   { id: 'chatter', n: 'Chatterbox', txt: 'At camp: other Hands earn 10% more level XP', camp: 1 },
