@@ -12535,6 +12535,9 @@ function validateSave(data) {
       for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
     }
     if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
+    // C9: optional route maps are validated before storage or feature load; missing v5 maps use defaults.
+    if (data.party && data.party.unlock !== undefined && !heroUnlockStateValid(data.party.unlock)) fail('party.unlock');
+
     for (const k of ['xp', 'embers', 'kills', 'totalKills', 'totalGold', 'gProg']) if (has(data, k)) num(data[k], k);
     if (has(data, 'name')) text(data.name, 'name');
     if (has(data, 'last')) num(data.last, 'last', 0, 864e13);
@@ -13606,16 +13609,11 @@ function trainEst(active) {
 }
 
 // ---- src/js/56-roster.js ----
-// 56-roster: the hero registry. The 18 named characters of the old companion roster, kept as data for the playable
-// heroes that arrive later (32 for 1.0: solo-hero.md "Heroes"). Names, titles, rarity, role, circle and unlock route live
-// here; the bios and stories are in 21-stories.js and 21b-stories-coast.js, the art in 12b-12f and 21y-data-heroart.js.
-// The companion machinery (levels, promotions, recruiting, formation, synergy, Bonds) is deleted (W3-A): three starters
-// are playable (24b-data-solo.js SOLO_HEROES) and every other character waits for its unlock route.
-// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-//
-// Exposed names: CHAR_RARITY, ROLE_STATS (role names), ROSTER (id -> { name, title, rarity, role, circle, route, how, dt, sst }),
-// ROSTER_KEYS. ROSTER[id].route = { type: starter | progress | quest | renown | token | bestiary | achievement | tavern | craft, ... }
-// is the unlock route as data; UNLOCK_TUNE (56c-unlocks.js) holds its numbers.
+// 56-roster (C9): 32 named heroes: the 18 original rows plus 14 designed data stubs (heroes-2.md).
+// Three starters have complete solo kits. Names, titles, rarity, role, circle and route live here; existing bios
+// and stories stay in 21-stories.js, designed bios live on their stub rows, art in 21y-data-heroart.js.
+// CORE FILE: no DOM or storage. Runtime route numbers and claims live in 56c-unlocks.js (UNLOCK_TUNE).
+// Exposed: CHAR_RARITY, ROLE_STATS, ROSTER, ROSTER_KEYS, HERO_ORDER, heroKnown, heroBio, heroHasKit.
 const CHAR_RARITY = {
   common: { n: 'Common', m: 1, col: '#A9B1BD' },
   rare: { n: 'Rare', m: 1.5, col: '#7FB2FF' },
@@ -13629,41 +13627,71 @@ const ROLE_STATS = {
 // route.type: starter | progress | quest | renown | token | bestiary | achievement | tavern | craft.
 // `how` is only a fallback: recruitHow(id) builds the line from the tuned route (BAL1), so it
 // names no numbers that could go stale.
-// Only 'progress' routes are live in this task; other routes are wired by B7 with addRecruitRoute().
+// C9: routes are resolved by heroRouteInfo (56c-unlocks.js). Numerical gates live in UNLOCK_TUNE.
 const ROSTER = {
-  tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', rarity: 'common', role: 'tank', circle: 'hedgefolk', route: { type: 'progress', zone: 8, kills: 0 }, how: 'Reach zone 8. He joins for free.' },
-  wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', route: { type: 'progress', zone: 8, kills: 30 }, how: 'Reach zone 8, then pay her in gold.' },
-  hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', route: { type: 'progress', zone: 11, kills: 0 }, how: 'Reach zone 11. He joins for free.' },
-  pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', route: { type: 'progress', zone: 12, kills: 60 }, how: 'Reach zone 12, then pay her in gold.' },
+  tobin: { name: 'Tobin Reed', title: 'the Hedge Squire', rarity: 'common', role: 'tank', circle: 'hedgefolk', route: { type: 'starter' }, how: 'Unlocked. Pick up the lamp.' },
+  wren: { name: 'Wren Hollowmere', title: 'the Batwing Archer', rarity: 'common', role: 'striker', ranged: true, circle: 'hedgefolk', route: { type: 'starter' }, how: 'Unlocked. Pick up the lamp.' },
+  hesketh: { name: 'Old Hesketh', title: 'the Lamplighter', rarity: 'common', role: 'support', circle: 'hedgefolk', route: { type: 'progress' }, how: 'Meet Hesketh on the Lantern Road.' },
+  pip: { name: 'Pip Cinderly', title: 'the Hedge Mage', rarity: 'common', role: 'caster', circle: 'hedgefolk', route: { type: 'starter' }, how: 'Unlocked. Pick up the lamp.' },
   bram: { name: 'Bram Hollis', title: 'the Woodcutter', rarity: 'common', role: 'striker', circle: 'hedgefolk', route: { type: 'quest' }, how: 'Quest: bring Pine Logs to his camp.' },
   maren: { name: 'Maren Ashvale', title: 'the Lampwarden', rarity: 'rare', role: 'tank', circle: 'oath', route: { type: 'quest' }, how: 'Quest: bring Essence to the Barrow Lamp.' },
   aldric: { name: 'Ser Aldric Vane', title: 'the Oathbound', rarity: 'rare', role: 'tank', circle: 'oath', route: { type: 'renown' }, how: 'Earn Renown on the bounty board, then pay him in gold.' },
-  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', route: { type: 'progress', zone: 20, kills: 300 }, how: 'Reach zone 20, then pay her in gold.' },
+  kestrel: { name: 'Kestrel Thane', title: 'the Skyfall Dragoon', rarity: 'rare', role: 'striker', circle: 'dusk', route: { type: 'progress' }, how: 'Meet Kestrel on the Lantern Road, then bring gold.' },
   thessaly: { name: 'Thessaly Gloam', title: 'the Bog Seer', rarity: 'rare', role: 'caster', circle: 'wayfarers', route: { type: 'bestiary' }, how: 'Finish the Marsh Wraith page in the bestiary.' },
-  anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', route: { type: 'tavern' }, how: 'Visits the Tavern. Hire him with gold and Essence.' },
+  anselm: { name: 'Brother Anselm', title: 'the Bellringer', rarity: 'rare', role: 'support', circle: 'oath', route: { type: 'tavern' }, how: 'Meet him at the Tavern and bring gold and Essence.' },
   grenna: { name: 'Grenna Holt', title: 'the Stonebreaker', rarity: 'epic', role: 'tank', circle: 'wayfarers', route: { type: 'token' }, how: "Win a Stonebreaker's Token from Quarry Ruins bosses." },
   isolde: { name: 'Isolde Marrow', title: 'the Duskblade', rarity: 'epic', role: 'striker', circle: 'dusk', route: { type: 'token' }, how: 'Win a Dusk Contract from zone bosses.' },
   oriel: { name: 'Oriel Vess', title: 'the Starcaller', rarity: 'epic', role: 'caster', circle: 'dusk', route: { type: 'craft' }, how: "Craft a Star Chart at the Enchanter's Table." },
-  morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', route: { type: 'quest' }, how: 'Beat a Fungal Deep boss with no support in your party.' },
-  vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', route: { type: 'tavern' }, how: 'Visits the Tavern. Hire her with gold and Essence, or earn Renown.' },
+  morwen: { name: 'Morwen Tallow', title: 'the Candlewitch', rarity: 'epic', role: 'caster', circle: 'wayfarers', route: { type: 'quest' }, how: 'Beat the Fungal Deep boss.' },
+  vesper: { name: 'Vesper Lark', title: 'the Songweaver', rarity: 'epic', role: 'support', circle: 'wayfarers', route: { type: 'tavern' }, how: 'Earn Renown on the bounty board.' },
   elowen: { name: 'Saint Elowen', title: 'the Last Lantern', rarity: 'legendary', role: 'support', circle: 'oath', route: { type: 'quest' }, how: 'Quest: relight the chapel with gold and Essence.' },
-  caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', route: { type: 'renown' }, how: 'Clear Region 1 (the zone 35 boss) with enough Renown.' },
-  corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', route: { type: 'achievement' }, how: 'Kingslayer: beat 150 zone bosses and fill every bestiary page to tier 2.' }
+  caedmon: { name: 'Caedmon the Unburnt', title: 'the Ashen Knight', rarity: 'legendary', role: 'tank', circle: 'oath', route: { type: 'renown' }, how: 'Relight the Hollow with enough Renown.' },
+  corvin: { name: 'Corvin Black', title: "the Hollow King's Blade", rarity: 'legendary', role: 'striker', circle: 'dusk', route: { type: 'achievement' }, how: 'Kingslayer: beat zone bosses and fill every bestiary page.' },
+  // C9: designed heroes are data stubs, not solo combat kits (heroes-2.md 3.5).
+  cass: {"name": "Cass Penhallow", "title": "the Reef Harpooner", "rarity": "rare", "role": "striker", "circle": "wayfarers", "route": {"type": "quest"}, "dt": "poison", "sst": "venom", "bio": "Cass hunted eels off Saltreach with her brother until the green light took his boat. She tips her harpoons in Lanternjelly sting, and she does not miss twice.", "ranged": true},
+  loveday: {"name": "Loveday Penrow", "title": "the Keeper’s Daughter", "rarity": "epic", "role": "caster", "circle": "oath", "route": {"type": "quest"}, "dt": "holy", "sst": "mark", "bio": "Loveday is Silas Penrow’s daughter. She stayed ashore the night he carried the lens down. She has kept his lamp-oath ever since, word for word, including the line he scratched out."},
+  davy: {"name": "Davy Ashby", "title": "the Water-Carrier", "rarity": "rare", "role": "support", "circle": "wayfarers", "route": {"type": "quest"}, "dt": "phys", "sst": "shield", "bio": "Davy carried water up the Emberlea road for the hour Caedmon held it. He was nine. He has carried something for somebody ever since, and he never puts it down first."},
+  ferrin: {"name": "Ferrin Slake", "title": "the Kiln Rat", "rarity": "rare", "role": "striker", "circle": "dusk", "route": {"type": "token"}, "dt": "poison", "sst": "venom", "bio": "Ferrin broke things in the Kilns for the Dusk Company when they still burned for the dark. He smells of sulphur, owes everyone money, and is better at his job than he looks."},
+  linnet: {"name": "Linnet Cole", "title": "the Glassblower", "rarity": "epic", "role": "caster", "circle": "wayfarers", "route": {"type": "bestiary"}, "dt": "frost", "sst": "chill", "bio": "Linnet blew glass on the Lea before the falling lights turned the fields to glass. She cools molten things with a breath, and the Glass Flats are the job she never finished."},
+  oswin: {"name": "Oswin Hale", "title": "the Ash Squire", "rarity": "epic", "role": "tank", "circle": "oath", "route": {"type": "quest"}, "dt": "phys", "sst": "taunt", "bio": "Oswin carried Ser Durand’s shield on the Emberlea road. When his knight said yes to the fire, Oswin was told to run, and he ran. He has not put the shield down since."},
+  hob: {"name": "Hob Tarrow", "title": "the Icehouse Man", "rarity": "rare", "role": "tank", "circle": "hedgefolk", "route": {"type": "quest"}, "dt": "frost", "sst": "chill", "bio": "Hob cut ice in the Hollow and sold it east to Emberlea. On the night of the Fall he hid forty people in his icehouse. They came out cold, cross and alive."},
+  beatrix: {"name": "Beatrix Fairweather", "title": "the Wandering Scholar", "rarity": "legendary", "role": "support", "circle": "hedgefolk", "route": {"type": "quest"}, "dt": "holy", "sst": "regen", "bio": "Beatrix wrote the book Pip taught herself fire from, then went east to learn if its last chapter was true. She tore that chapter out herself. It was true, and she has carried it through the ash ever since."},
+  eskil: {"name": "Eskil Hauk", "title": "the Pass Scout", "rarity": "rare", "role": "striker", "circle": "dusk", "route": {"type": "progress"}, "dt": "poison", "sst": "venom", "bio": "Eskil scouted the pass with Rowan and Kestrel for the Dusk Company. He came down the mountain the winter Rowan didn’t, and he has waited by the cairn every storm since, to learn why.", "ranged": true},
+  brynja: {"name": "Brynja Berg", "title": "the Doorward", "rarity": "epic", "role": "tank", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "burn", "bio": "Brynja stood in the Silent Village’s last warm doorway for three nights with a brazier and a door-bar. When the brazier finally went out, she carried it down the mountain. It was still warm."},
+  inga: {"name": "Inga Fallow", "title": "the Stardigger", "rarity": "epic", "role": "caster", "circle": "dusk", "route": {"type": "quest"}, "dt": "frost", "sst": "chill", "bio": "Inga reads the Starscar’s craters the way Oriel reads the sky, from underneath. The Dusk Company paid her to find the shards before the dark did. She kept finding them."},
+  ragna: {"name": "Ragna Vik", "title": "the Lichen-Witch", "rarity": "epic", "role": "caster", "circle": "reachfolk", "route": {"type": "token"}, "dt": "poison", "sst": "venom", "bio": "Ragna scrapes lichen off the Rimewood’s glass branches and boils it into things wolves hate. She talks to the snow. The snow, she says, listens better than people."},
+  solveig: {"name": "Solveig Lund", "title": "the Sill-Candle", "rarity": "legendary", "role": "support", "circle": "reachfolk", "route": {"type": "quest"}, "dt": "fire", "sst": "regen", "bio": "For ten winters Solveig kept one candle lit in the Silent Village, for everyone in it, alone. She is quiet, practical and very hard to impress."},
+  asta: {"name": "Asta Grey", "title": "the Guide", "rarity": "epic", "role": "support", "circle": "reachfolk", "route": {"type": "progress"}, "dt": "fire", "sst": "empower", "bio": "Asta guided traders over every pass in the Reach for forty years. She walked down into the Gloamvale once, turned back, and has been sorry she turned back ever since."}
 };
 // S1 (classes-2 5.1): each hero's base damage type and signature status (21x-data-types HERO_DT): ROSTER[id].dt, .sst
 for (const k in HERO_DT) if (ROSTER[k]) Object.assign(ROSTER[k], HERO_DT[k]);
 const ROSTER_KEYS = Object.keys(ROSTER);
 
+// Pickers keep starters first, followed by the registry’s story order.
+const HERO_ORDER = ['wren', 'tobin', 'pip', ...ROSTER_KEYS.filter(k => !['wren', 'tobin', 'pip'].includes(k))];
+function heroKnown(id) { return typeof id === 'string' && Object.prototype.hasOwnProperty.call(ROSTER, id); }
+function heroBio(id) { return heroKnown(id) ? (ROSTER[id].bio || (typeof BIOS === 'object' && BIOS[id]) || '') : ''; }
+// A registration alone is not a solo kit. Require shipped art, real abilities, a usable class and switch bookkeeping.
+function heroHasKit(id) {
+  const h = SOLO_HEROES[id], art = HERO_ART.heroes[id];
+  const pose = r => Array.isArray(r) && r.length === 5 && r.slice(0, 4).every(Number.isFinite) && r[2] > 0 && r[3] > 0 && typeof r[4] === 'string' && r[4].length > 0;
+  return !!(heroKnown(id) && h && SOLO_ORDER.includes(id) && art && typeof art.pal === 'string' && /^(?:[0-9a-f]{6})+$/i.test(art.pal) && art.poses && pose(art.poses.camp) && pose(art.poses.hurt)
+    && Object.keys(art.poses).length > 2 && CLASS_DEFS[h.base] && HERO_CLASSES[h.kit]
+    && CLASS_DEFS[h.base].kit === h.kit && Array.isArray(h.abs) && h.abs.length
+    && h.abs.every(a => SOLO_ABILITIES[a] && SOLO_ABILITIES[a].name && SOLO_ABILITIES[a].cd > 0)
+    && Array.isArray(h.eq) && h.eq.length === 3 && h.eq.some(a => h.abs.includes(a))
+    && h.eq.every(a => a === null || h.abs.includes(a)));
+}
+
 // ---- src/js/56c-unlocks.js ----
-// 56c-unlocks: the unlock routes as data, and Renown. The routes (character quests, Renown, boss tokens with pity, the
-// bestiary, the Kingslayer feat, the Star Chart, the Tavern visitor) used to recruit companions; recruiting is deleted
-// (W3-A). UNLOCK_TUNE keeps the numbers of every route as the data the later hero-unlock task reads (W3-B; solo-hero.md
-// "Rework": these become the ways to unlock a playable hero). Only Renown still runs: bounties pay it.
-// CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
-//
-// Exposed names: UNLOCK_TUNE, renown(), addRenown(n, source), caedmonRenown() (Renown + 5 per Ashen Wyrm raid kill).
-// Events: renown { n, total, source }. Listens: bountyDone (+1 Renown, elite 3).
-// Save: S.party.unlock = { renown: n }.
+// 56c-unlocks (C9): permanent hero routes, boss-token pity and bounty Renown.
+// CORE FILE: no DOM or storage. Pickers call heroRouteInfo/heroUnlock; only complete solo kits can carry the lamp.
+// Reads never spend resources or add progress. Free routes are filed once a second; paid routes require one claim.
+// Save defaults under S.party.unlock: renown (existing), heroes {id:1}, quests {id:1}, tokens {id:{miss,won}},
+// milestones {id:timestamp}. No save-key change: missing maps default empty; starters stay unlocked.
+// API: heroHasKit/heroBio (56-roster), heroRouteInfo -> {state,unlocked,playable,ready,how,bio,cost},
+// heroUnlocked, heroCanPlay, heroUnlock -> bool, heroPick -> bool; tokenChance/unlockTokenRoll for tools.
+// Events: heroUnlocked {id}, heroToken {id,won,chance}, renown {n,total,source}. No new toast source.
 
 const UNLOCK_TUNE = {
   renownBounty: 1, renownElite: 3,
@@ -13677,7 +13705,9 @@ const UNLOCK_TUNE = {
     morwen: { zone: 33 }                         // (sim) spec 12 (Fungal Deep II); 33 = Fungal Deep V
   },
   tokens: {
-    grenna: { name: "Stonebreaker's Token", base: 0.08, step: 0.08, pity: 12, zoneType: 5, from: 27 },   // (sim) spec: every Quarry Ruins boss
+    grenna: { name: "Stonebreaker's Token", base: 0.08, step: 0.08, pity: 12, zoneType: 5, from: 27, regionFrom: 1 },   // (sim) spec: every Quarry Ruins boss
+    ferrin: { name: 'Kiln Tally', base: 0.10, step: 0.10, pity: 10, from: 71, regionFrom: 71, place: 'Kilns' },
+    ragna: { name: 'Lichen Bundle', base: 0.08, step: 0.08, pity: 12, from: 106, regionFrom: 106, placeIndex: 5 },
     isolde: { name: 'Dusk Contract', base: 0.10, step: 0.10, pity: 10, from: 31 }                         // (sim) spec from zone 16; (BAL2) 31, was 29: a lucky first roll gave the fastest class an Epic on day 1.8
   },
   thessaly: { type: 'wraith', tier: 3 },
@@ -13691,24 +13721,167 @@ const UNLOCK_TUNE = {
     thessaly: { from: 16, kills: 900, ess: [3, 20] },
     grenna: { from: 33, kills: 1500, ess: [4, 30] }   // (BAL2) from 31: the fastest class hired her (an Epic) on day 1.8 (T16 wants day 2-4)
   },
-  trade: { n: 10, goldKills: 150 }
+  trade: { n: 10, goldKills: 150 },
+  progress: { hesketh: { zone: 11 }, kestrel: { zone: 20, kills: 300 } },
+  // C9: original Renown routes CHECK the balance; never spend it on an automatic probe.
+  // A later paid Renown route can opt into spendRenown on its tune row.
+  // heroes-2 fixes the gates/materials/pity below. Unspecified fees stay unclaimable until designed.
+  designed: {
+    cass: { from: 39, elder: 'kelp', fallback: 50, pendingFee: 'gold' },
+    loveday: { from: 62, beat: 'letters', crystal: [5, 30], fallbackBoss: 70 },
+    davy: { place: 'Emberlea Ruins', hand: 'ashby', fallback: 80 },
+    ferrin: { fallback: 90, pendingFee: 'gold' },
+    linnet: { type: 'glasswalker', tier: 2, fallback: 92 },
+    oswin: { from: 85, pendingFee: 'gold and grade-8 Essence', fallbackBoss: 105 },
+    hob: { place: 'Cinder Road', cycle: 2, hand: 'nan', rumour: 'hob', fallback: 85 },
+    beatrix: { boss: 105, waitSecs: 86400 },
+    eskil: { from: 113, pendingFee: 'gold', fallback: 120 },
+    brynja: { from: 110, fibre: [10, 60], hide: [10, 40], fallback: 128 },
+    inga: { from: 108, place: 2, pendingFee: 'grade-10 Essence', fallback: 124 },
+    ragna: { pendingFee: 'grade-11 Essence', fallback: 134 },
+    solveig: { boss: 140 },
+    asta: { from: 141, freeWith: 'solveig', pendingFee: 'gold' }
+  }
+
 };
 
-let addRenown, renown, caedmonRenown;
-
+let addRenown, renown, caedmonRenown, heroRouteInfo, heroUnlocked, heroCanPlay, heroUnlock, heroPick,
+  tokenChance, unlockTokenRoll, heroProbe;
 {
   const T = UNLOCK_TUNE;
-  fillDefaults(STATE_DEFAULTS.party, { unlock: { renown: 0 } });
-  const U = () => (S.party.unlock || (S.party.unlock = { renown: 0 }));
+  const DEF = { renown: 0, heroes: {}, quests: {}, tokens: {}, milestones: {} };
+  fillDefaults(STATE_DEFAULTS.party, { unlock: DEF });
+  fillDefaults(S.party, { unlock: DEF });
+  const U = () => S.party.unlock;
+  const got = id => !!(U().heroes && U().heroes[id]);
+  const quest = id => !!(U().quests && U().quests[id]);
+  const token = id => (U().tokens && U().tokens[id]) || { miss: 0, won: false };
+  const have = (k, t) => (S.mats[k] || []).slice(t - 1).reduce((a, n) => a + n, 0);
+  const reachedPlace = (name, cycle = 1) => REGIONS.some(r => { const p = r.names.findIndex(n => n.replace(/^The /, '').toLowerCase() === name.replace(/^The /, '').toLowerCase()); return p >= 0 && S.maxZone >= r.z0 + p + (cycle - 1) * r.names.length; });
+  const hand = id => !!(S.hands && S.hands.list && S.hands.list.some(h => h.key === id));
+  const bestiary = (type, tier) => ((S.mastery && S.mastery.types[type]) || 0) >= BESTIARY_TIERS[tier - 1];
+  const goldOf = q => (q.kills || 0) * goldPerFoe(q.zone || q.from || 1);
+  const matText = (k, t, n) => `${n} grade-${t} ${k === 'ess' ? 'Essence' : k === 'crystal' ? 'gems' : k}`;
+  const claim = (q, how, open = S.maxZone >= (q.from || q.zone || 1)) => {
+    const mats = ['wood', 'ess', 'crystal', 'fibre', 'hide'].filter(k => q[k]).map(k => [k, ...q[k]]);
+    const gold = goldOf(q), rn = q.spendRenown ? (q.renown || 0) : 0;
+    const price = [gold ? `${fmt(gold)} gold` : '', ...mats.map(l => matText(...l)), rn ? `${rn} Renown` : ''].filter(Boolean).join(' and ');
+    return { pending: !!q.pendingFee, gated: !!open, ready: !q.pendingFee && !!open && S.gold >= gold && mats.every(([k, t, n]) => have(k, t) >= n) && renown() >= rn,
+      how: how + (q.pendingFee ? ` The ${q.pendingFee} fee is still being designed.` : price ? ` Bring ${price}.` : ''), cost: { gold, mats, renown: rn }, paid: !!(gold || mats.length || rn) };
+  };
+  const free = (ready, how) => ({ ready: !!ready, how, cost: { gold: 0, mats: [], renown: 0 }, paid: false });
+  const fallback = q => (q.fallback && S.maxZone >= q.fallback) || (q.fallbackBoss && S.maxZone > q.fallbackBoss);
+  const fallbackText = q => q.fallback ? ` Or reach zone ${q.fallback}.` : q.fallbackBoss ? ` Or beat the zone ${q.fallbackBoss} boss.` : '';
+  const designed = id => {
+    const q = T.designed[id], fb = fallback(q), end = fallbackText(q);
+    if (id === 'cass') return claim(q, `Beat the Kelp Strangler’s Eldest in Kelp Shallows.${end}`, fb || (S.maxZone >= q.from && quest(id)));
+    if (id === 'loveday') return fb ? free(true, `Beat the zone ${q.fallbackBoss} boss.`) : claim(q, `Read the Keeper’s Letters and reach zone ${q.from}.${end}`, S.maxZone >= q.from && !!(S.story && S.story.seen['b:' + q.beat]));
+    if (id === 'davy') return free(fb || (reachedPlace(q.place) && hand(q.hand)), `Meet Mother Ashby at camp and reach Emberlea Ruins.${end}`);
+    if (id === 'ferrin' || id === 'ragna') return claim(q, `Find a ${T.tokens[id].name} from ${id === 'ferrin' ? 'Kilns' : 'Rimewood'} elders.${end}`, fb || token(id).won);
+    if (id === 'linnet') return free(fb || bestiary(q.type, q.tier), `Fill the Glasswalker bestiary page to tier ${q.tier}.${end}`);
+    if (id === 'oswin') return fb ? free(true, `Beat the zone ${q.fallbackBoss} boss.`) : claim(q, `Meet Oswin at the Tavern from zone ${q.from}.${end}`, S.maxZone >= q.from && (S.camp.b.tavern || 0) > 0);
+    if (id === 'hob') return free(fb || (reachedPlace(q.place, q.cycle) && hand(q.hand) && !!(S.tavernLeads && S.tavernLeads.heard[q.rumour])), `Meet Nan at camp, hear her brother’s rumour, then reach Cinder Road II.${end}`);
+    if (id === 'beatrix') return free(S.maxZone > q.boss && !!U().milestones.beatrix && Date.now() >= U().milestones.beatrix + q.waitSecs * 1000, `Beat the Pyre Knight (zone ${q.boss}), then wait ${q.waitSecs / 3600} hours.`);
+    if (id === 'eskil') return fb ? free(true, `Reach zone ${q.fallback}.`) : claim(q, `Reach Frostgate Pass II (zone ${q.from}).${end}`);
+    if (id === 'brynja') return fb ? free(true, `Reach zone ${q.fallback}.`) : claim(q, `Reach the Silent Village (zone ${q.from}).${end}`);
+    if (id === 'inga') return fb ? free(true, `Reach zone ${q.fallback}.`) : claim(q, `Gather in the Starscar.${end}`, quest(id));
+    if (id === 'solveig') return free(S.maxZone > q.boss, `Beat the Whitehush (zone ${q.boss}).`);
+    if (id === 'asta') return claim(got(q.freeWith) ? { ...q, pendingFee: null } : q, `Reach the Last Descent (zone ${q.from}). Free if Solveig is at camp.`);
+    return free(false, ROSTER[id].how || 'More of this route comes later.');
+  };
+  const route = id => {
+    const r = heroKnown(id) && ROSTER[id]; if (!r) return free(false, 'Unknown hero.');
+    if (r.route.type === 'starter') return free(true, 'Unlocked. Pick up the lamp.');
+    if (T.designed[id]) return designed(id);
+    if (T.progress[id]) { const q = T.progress[id]; return claim(q, `Reach zone ${q.zone}.`); }
+    if (['bram', 'maren', 'elowen'].includes(id)) { const q = T.quests[id]; return claim(q, `Reach zone ${q.from} and ${id === 'bram' ? 'bring wood to Bram’s camp' : id === 'maren' ? 'relight the Barrow Lamp' : 'relight the chapel'}.`); }
+    if (id === 'morwen') return free(quest(id), `Beat the Fungal Deep boss at zone ${T.quests.morwen.zone}.`);
+    if (id === 'aldric') return claim(T.aldric, `Earn ${T.aldric.renown} Renown on the bounty board and reach zone ${T.aldric.zone}.`, renown() >= T.aldric.renown && S.maxZone >= T.aldric.zone);
+    if (id === 'vesper') return free(renown() >= T.vesperRenown, `Earn ${T.vesperRenown} Renown on the bounty board.`);
+    if (id === 'caedmon') return free(caedmonRenown() >= T.caedmon.renown && S.maxZone > T.caedmon.zone, `Beat the zone ${T.caedmon.zone} boss and earn ${T.caedmon.renown} Renown. Each world boss kill counts as ${T.wyrmRenown} Renown.`);
+    if (id === 'anselm') return { ...free(false, 'Anselm’s route was a Tavern visit. His solo unlock route is still being designed.'), pending: true, gated: S.maxZone >= T.visitors.anselm.from };
+    if (T.tokens[id]) { const q = T.tokens[id]; return free(token(id).won, `Win a ${q.name} from ${q.zoneType != null ? ZONES[q.zoneType] + ' bosses' : 'zone bosses'} from zone ${q.from}. You will find one within ${q.pity} eligible wins.`); }
+    if (id === 'thessaly') return free(bestiary(T.thessaly.type, T.thessaly.tier), `Fill the Marsh Wraith bestiary page to tier ${T.thessaly.tier}.`);
+    if (id === 'corvin') return free((S.stats.bosses || 0) >= T.corvin.bosses && TYPES.every(t => bestiary(t.key, T.corvin.tier)), `Kingslayer: beat ${T.corvin.bosses} zone bosses and fill every bestiary page to tier ${T.corvin.tier}.`);
+    if (id === 'oriel') return free((S.craft.starChart || 0) > 0, 'Craft a Star Chart at the Enchanter’s Table.');
+    return free(false, r.how);
+  };
+
   renown = () => U().renown;
-  caedmonRenown = () => U().renown + T.wyrmRenown * (+S.wyrms || 0);
+  caedmonRenown = () => renown() + T.wyrmRenown * (+S.wyrms || 0);
   addRenown = (n, source) => {
-    if (!(n > 0)) return U().renown;
-    const u = U(); u.renown += n;
-    emit('renown', { n, total: u.renown, source: source || 'other' });
-    return u.renown;
+    if (!(n > 0) || !Number.isFinite(n)) return renown();
+    U().renown += n; emit('renown', { n, total: renown(), source: source || 'other' }); return renown();
   };
   on('bountyDone', b => addRenown(b && b.elite ? T.renownElite : T.renownBounty, 'bounty'));
+  heroUnlocked = id => heroKnown(id) && (ROSTER[id].route.type === 'starter' || got(id) || (route(id).ready && !route(id).paid));
+  heroCanPlay = id => heroUnlocked(id) && heroHasKit(id);
+  heroRouteInfo = id => {
+    if (!heroKnown(id)) return null;
+    const r = route(id), unlocked = heroUnlocked(id), kit = heroHasKit(id);
+    return { id, ...r, unlocked, playable: unlocked && kit, state: unlocked ? (kit ? 'unlocked' : 'coming-soon') : r.pending && r.gated ? 'coming-soon' : 'locked', bio: heroBio(id) };
+  };
+  heroUnlock = id => {
+    if (!heroKnown(id)) return false;
+    if (ROSTER[id].route.type === 'starter' || got(id)) return true;
+    const r = route(id); if (!r.ready) return false;
+    // Recheck and pay in one synchronous action. Repeated clicks and probes never pay twice.
+    for (const [k, t, count] of r.cost.mats) {
+      let n = count;
+      for (let i = t - 1; i < S.mats[k].length && n > 0; i++) { const take = Math.min(n, S.mats[k][i]); S.mats[k][i] -= take; n -= take; }
+    }
+    S.gold -= r.cost.gold; U().renown -= r.cost.renown;
+    if (r.cost.gold) econSpend('other', r.cost.gold);
+    U().heroes[id] = 1;
+    emit('heroUnlocked', { id }); return true;
+  };
+  heroPick = (id, opts) => heroCanPlay(id) && typeof soloPick === 'function' && soloPick(id, opts);
+  heroProbe = () => {
+    // A late save beyond the Pyre Knight starts the one-day visit clock once.
+    if (S.maxZone > T.designed.beatrix.boss && !U().milestones.beatrix) U().milestones.beatrix = Math.max(1, Date.now());
+    for (const id of ROSTER_KEYS) { if (got(id) || ROSTER[id].route.type === 'starter') continue; const r = route(id); if (!r.paid && r.ready) heroUnlock(id); }
+  };
+  let acc = 0;
+  onTick(dt => { acc += dt; if (acc < 1) return; acc = 0; heroProbe(); });
+
+  tokenChance = id => { const q = T.tokens[id]; if (!q || got(id) || token(id).won) return 0; const miss = token(id).miss; return miss >= q.pity - 1 ? 1 : Math.min(1, q.base + q.step * miss); };
+  unlockTokenRoll = (id, roll) => {
+    const q = T.tokens[id], chance = tokenChance(id); if (!q || !chance) return null;
+    const r = roll === undefined ? Math.random() : roll; if (!Number.isFinite(r) || r < 0 || r >= 1) return null;
+    const s = U().tokens[id] || (U().tokens[id] = { miss: 0, won: false });
+    const won = r < chance; if (won) s.won = true; else s.miss++;
+    emit('heroToken', { id, won, chance }); if (won && !route(id).paid) heroUnlock(id); return won;
+  };
+  const rollBoss = z => {
+    for (const id in T.tokens) { const q = T.tokens[id]; if (z >= q.from && (q.zoneType == null || zoneType(z) === q.zoneType) && (q.placeIndex == null || zonePlace(z) === q.placeIndex) && (!q.regionFrom || regionOf(z).z0 === q.regionFrom) && (!q.place || regionOf(z).names[zonePlace(z)].includes(q.place))) unlockTokenRoll(id); }
+  };
+  on('kill', ({ mob, zone } = {}) => {
+    if (!mob || !mob.boss || mob.deep || mob.trial) return;
+    rollBoss(zone);
+    if (zone === T.quests.morwen.zone) U().quests.morwen = 1;
+    if (String(mob.key || '').replace(/\d+$/, '') === T.designed.cass.elder && regionOf(zone).id === 'coast') U().quests.cass = 1;
+  });
+  on('harvest', e => { if (e && e.n > 0 && regionOf(S.zone).z0 === T.designed.inga.from - T.designed.inga.place && zonePlace(S.zone) === T.designed.inga.place) U().quests.inga = 1; });
+  on('awayEnd', r => { if (r && r.zones) for (let z = r.zones.from; z < r.zones.to; z++) { rollBoss(z); if (z === T.quests.morwen.zone) U().quests.morwen = 1; } });
+}
+
+// C9: pure save-code boundary hook (the coordinator wires this into validateSave).
+// Missing maps are compatible v5 defaults. Reject unsafe dynamic keys and values before feature code runs.
+function heroUnlockStateValid(u) {
+  const obj = x => !!x && typeof x === 'object' && !Array.isArray(x);
+  const num = x => typeof x === 'number' && Number.isFinite(x) && x >= 0;
+  if (!obj(u) || (u.renown !== undefined && !num(u.renown))) return false;
+  for (const key of ['heroes', 'quests', 'tokens', 'milestones']) {
+    if (u[key] === undefined) continue;
+    if (!obj(u[key])) return false;
+    for (const [id, value] of Object.entries(u[key])) {
+      if (!Object.prototype.hasOwnProperty.call(ROSTER, id)) return false;
+      if (key === 'heroes' || key === 'quests') { if (value !== 1) return false; }
+      if (key === 'milestones' && (id !== 'beatrix' || !num(value) || value > 864e13)) return false;
+      if (key === 'tokens' && (!UNLOCK_TUNE.tokens[id] || !obj(value) || !Number.isInteger(value.miss) || value.miss < 0 || value.miss >= UNLOCK_TUNE.tokens[id].pity || typeof value.won !== 'boolean')) return false;
+    }
+  }
+  return true;
 }
 
 // ---- src/js/57-camp.js ----
@@ -21460,7 +21633,7 @@ var soloHero, soloPick, soloLevels, soloAttack, soloParry, soloDodge, soloAbilit
   // ---- choosing and switching ----
   soloPick = (key, opts) => {
     const h = SOLO_HEROES[key], o = opts || {};
-    if (!h || typeof chooseClass !== 'function') return false;
+    if (!h || typeof chooseClass !== 'function' || !heroCanPlay(key)) return false;
     const s = Sx(), from = s.hero, chosen = !!(S.party && S.party.chosen);
     if (from === key && chosen) return true;
     // each hero keeps its own level and XP; the lamp (gold, gear, camp, the road) is shared
@@ -35469,33 +35642,45 @@ var soloIconURL = () => '';
       const note = el('p', 'note', 'Switch any time, for free. Gold, gear and camp are shared. Each hero keeps their own level.');
       const row = el('div', 'sp-row');
       sec.append(note, row);
-      sec._cards = SOLO_ORDER.map(k => {
+      // C9: all 32 heroes share the same route states as the new-game picker.
+      sec._cards = HERO_ORDER.map(k => {
         const h = SOLO_HEROES[k], R = ROSTER[k];
         const b = el('button', 'sp-card'); b.type = 'button'; b.dataset.hero = k;
         const cv = el('canvas', 'sp-fig px'); cv.width = 56; cv.height = 80;
-        const nm = el('b', null, R ? R.name.split(' ')[0] : k), sub = el('small', null, `${h.role} · ${h.weapon}`), lv = el('span', 'sp-lv', 'Lv 1');
-        b.append(cv, nm, sub, lv);
-        b._lv = lv; b._cv = cv;
+        const nm = el('b', null, R.name), sub = el('small', null, h ? `${h.role} · ${h.weapon}` : R.title);
+        const lv = el('span', 'sp-lv'), route = el('small'), bio = el('small', null, heroBio(k));
+        b.append(cv, nm, sub, lv, route, bio);
+        b._lv = lv; b._cv = cv; b._route = route;
         b.addEventListener('click', () => {
-          if (soloHero() === k) return;
-          if (b.dataset.armed !== '1') { for (const c of sec._cards) c.dataset.armed = ''; b.dataset.armed = '1'; putText(b._lv, 'Tap again'); return; }
+          const info = heroRouteInfo(k), action = info.playable ? 'switch' : info.ready && !info.unlocked ? 'unlock' : '';
+          if (!action || (action === 'switch' && soloHero() === k)) return;
+          if (b.dataset.armed !== '1' || b._action !== action) {
+            for (const c of sec._cards) c.dataset.armed = '';
+            b.dataset.armed = '1'; b._action = action;
+            sec._up(); putText(b._lv, action === 'unlock' ? 'Tap again to unlock' : 'Tap again'); return;
+          }
           b.dataset.armed = '';
-          if (soloPick(k)) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
-          sec._up(true);
+          const ok = action === 'unlock' ? heroUnlock(k) : heroPick(k);
+          if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
+          sec._up();
         });
         row.append(b);
         return b;
       });
-      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; if (!(typeof heroArtPreview === 'function' && heroArtPreview(b._cv, b.dataset.hero))) drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
+      requestAnimationFrame(() => { for (const b of sec._cards) { try { if (heroHasKit(b.dataset.hero) && typeof heroArtPreview === 'function') heroArtPreview(b._cv, b.dataset.hero); } catch (e) {} } });
       sec._up = () => {
         const lv = soloLevels(), cur = soloHero();
         for (const b of sec._cards) {
-          const k = b.dataset.hero, on_ = k === cur;
+          const k = b.dataset.hero, on_ = k === cur, info = heroRouteInfo(k);
+          b.dataset.state = info.state;
+          b.disabled = !info.playable && !(info.ready && !info.unlocked);
           b.setAttribute('aria-pressed', on_ ? 'true' : 'false');
           b.classList.toggle('on', on_);
-          if (b.dataset.armed !== '1') putText(b._lv, on_ ? `Lv ${lv[k].L} · Playing` : `Lv ${lv[k].L}`);
+          putText(b._route, info.unlocked ? (info.playable ? 'Unlocked' : 'Route complete. The solo kit comes later.') : info.how);
+          if (b.dataset.armed !== '1') putText(b._lv, info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked');
         }
       };
+      sec._up();
     },
     update() { const s = $('sec-solo-hero'); if (s && s._up) s._up(); }
   });
@@ -36835,7 +37020,7 @@ var classUI;
 
   let root = null, pick = 'warrior', mode = 'new', lastFocus = null;
 
-  // The three starters (Wren, Tobin, Pip). Each plays a base class kit; the camp switches them later.
+  // C9: the complete registry, with three playable starters and plain unlock routes.
   function buildSolo() {
     root = el('div', 'create create-solo'); root.id = 'createScreen';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
@@ -36844,22 +37029,24 @@ var classUI;
     const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
     const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
-    const keys = SOLO_ORDER.filter(k => SOLO_HEROES[k] && ROSTER[k]);
-    if (!keys.includes(pick)) pick = keys[0];
+    const keys = HERO_ORDER;
+    if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
     const figs = [];
     let begin = null;
     const btns = keys.map(k => {
-      const H = SOLO_HEROES[k], R = ROSTER[k];
+      const H = SOLO_HEROES[k], R = ROSTER[k], info = heroRouteInfo(k);
       const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k; b.dataset.hero = k;
       b.setAttribute('role', 'radio');
       const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
       const txt = el('div', 'ctxt');
       const top = el('div', 'ctop'); top.append(el('b', null, R.name));
-      top.append(el('span', 'pip r-' + (R.role || 'striker'), H.role));
+      top.append(el('span', 'pip r-' + (R.role || 'striker'), H ? H.role : ROLE_STATS[R.role].n));
       txt.append(top);
-      txt.append(el('div', 'cl-wt', `${R.title.replace(/^the /, 'The ')} · ${H.range} · ${H.weapon}`));
-      if (typeof BIOS === 'object' && BIOS[k]) txt.append(el('div', 'how', BIOS[k]));
-      const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab);
+      txt.append(el('div', 'cl-wt', R.title.replace(/^the /, 'The ') + (H ? ` · ${H.range} · ${H.weapon}` : '')));
+      if (info.bio) txt.append(el('div', 'how', info.bio));
+      const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
+      b._state = state; b._route = route;
+      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
       b.addEventListener('keydown', e => {
@@ -36877,30 +37064,39 @@ var classUI;
     const nextFig = () => {
       if (root !== built || !figs.length) return;
       const [cv, k] = figs.shift();
-      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof heroArtPreview === 'function' && heroArtPreview(cv, k)) { /* the new art */ } else if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (heroHasKit(k) && typeof heroArtPreview === 'function') heroArtPreview(cv, k); } catch (e) { console.error('[lanternfall] hero preview', e); }
       if (figs.length) setTimeout(nextFig, 0);
     };
     requestAnimationFrame(() => setTimeout(nextFig, 0));
     const first = k => ROSTER[k].name.split(' ')[0];
     function select(k) {
       pick = k;
-      if (begin) putText(begin, `Begin as ${first(k)}`);
+      const info = heroRouteInfo(k);
+      if (begin) { begin.disabled = !info.playable && !(info.ready && !info.unlocked); putText(begin, info.playable ? `Begin as ${first(k)}` : info.ready && !info.unlocked ? `Unlock ${first(k)}` : info.unlocked ? 'Coming soon' : 'Locked'); }
       for (const b of btns) {
-        const on_ = b.dataset.cls === k;
+        const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
+        b.dataset.state = state.state;
+        // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
+        putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
+        putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.how);
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
     begin = el('button', 'big forge create-go', ''); begin.type = 'button';
     begin.addEventListener('click', () => {
+      const info = heroRouteInfo(pick);
+      if (!info.playable) { if (info.ready && !info.unlocked && heroUnlock(pick)) { try { save(); } catch (e) {} select(pick); } return; }
       let okd = false;
-      try { okd = soloPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      try { okd = heroPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();
       close();
       toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
     });
-    inner.append(h, lede, warn, cards, begin);
+    // Keep Begin within reach while the full registry scrolls.
+    begin.style.position = 'sticky'; begin.style.top = '0'; begin.style.zIndex = '1';
+    inner.append(h, lede, warn, begin, cards);
     root.append(inner);
     select(pick);
     root.addEventListener('keydown', trapTab);
