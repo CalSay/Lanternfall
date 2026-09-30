@@ -268,33 +268,45 @@ var soloIconURL = () => '';
       const note = el('p', 'note', 'Switch any time, for free. Gold, gear and camp are shared. Each hero keeps their own level.');
       const row = el('div', 'sp-row');
       sec.append(note, row);
-      sec._cards = SOLO_ORDER.map(k => {
+      // C9: all 32 heroes share the same route states as the new-game picker.
+      sec._cards = HERO_ORDER.map(k => {
         const h = SOLO_HEROES[k], R = ROSTER[k];
         const b = el('button', 'sp-card'); b.type = 'button'; b.dataset.hero = k;
         const cv = el('canvas', 'sp-fig px'); cv.width = 56; cv.height = 80;
-        const nm = el('b', null, R ? R.name.split(' ')[0] : k), sub = el('small', null, `${h.role} · ${h.weapon}`), lv = el('span', 'sp-lv', 'Lv 1');
-        b.append(cv, nm, sub, lv);
-        b._lv = lv; b._cv = cv;
+        const nm = el('b', null, R.name), sub = el('small', null, h ? `${h.role} · ${h.weapon}` : R.title);
+        const lv = el('span', 'sp-lv'), route = el('small'), bio = el('small', null, heroBio(k));
+        b.append(cv, nm, sub, lv, route, bio);
+        b._lv = lv; b._cv = cv; b._route = route;
         b.addEventListener('click', () => {
-          if (soloHero() === k) return;
-          if (b.dataset.armed !== '1') { for (const c of sec._cards) c.dataset.armed = ''; b.dataset.armed = '1'; putText(b._lv, 'Tap again'); return; }
+          const info = heroRouteInfo(k), action = info.playable ? 'switch' : info.ready && !info.unlocked ? 'unlock' : '';
+          if (!action || (action === 'switch' && soloHero() === k)) return;
+          if (b.dataset.armed !== '1' || b._action !== action) {
+            for (const c of sec._cards) c.dataset.armed = '';
+            b.dataset.armed = '1'; b._action = action;
+            sec._up(); putText(b._lv, action === 'unlock' ? 'Tap again to unlock' : 'Tap again'); return;
+          }
           b.dataset.armed = '';
-          if (soloPick(k)) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
-          sec._up(true);
+          const ok = action === 'unlock' ? heroUnlock(k) : heroPick(k);
+          if (ok) { try { save(); } catch (e) {} ui(true); if (typeof updatePortrait === 'function') updatePortrait(); }
+          sec._up();
         });
         row.append(b);
         return b;
       });
-      requestAnimationFrame(() => { for (const b of sec._cards) { try { const x = b._cv.getContext('2d'); x.imageSmoothingEnabled = false; if (!(typeof heroArtPreview === 'function' && heroArtPreview(b._cv, b.dataset.hero))) drawCharPreview(b._cv, companionSpec(b.dataset.hero), 1); } catch (e) {} } });
+      requestAnimationFrame(() => { for (const b of sec._cards) { try { if (heroHasKit(b.dataset.hero) && typeof heroArtPreview === 'function') heroArtPreview(b._cv, b.dataset.hero); } catch (e) {} } });
       sec._up = () => {
         const lv = soloLevels(), cur = soloHero();
         for (const b of sec._cards) {
-          const k = b.dataset.hero, on_ = k === cur;
+          const k = b.dataset.hero, on_ = k === cur, info = heroRouteInfo(k);
+          b.dataset.state = info.state;
+          b.disabled = !info.playable && !(info.ready && !info.unlocked);
           b.setAttribute('aria-pressed', on_ ? 'true' : 'false');
           b.classList.toggle('on', on_);
-          if (b.dataset.armed !== '1') putText(b._lv, on_ ? `Lv ${lv[k].L} · Playing` : `Lv ${lv[k].L}`);
+          putText(b._route, info.unlocked ? (info.playable ? 'Unlocked' : 'Route complete. The solo kit comes later.') : info.how);
+          if (b.dataset.armed !== '1') putText(b._lv, info.state === 'coming-soon' ? 'Coming soon' : info.playable ? `Lv ${(lv[k] || { L: 1 }).L}` + (on_ ? ' · Playing' : '') : info.ready ? 'Locked · Unlock' : 'Locked');
         }
       };
+      sec._up();
     },
     update() { const s = $('sec-solo-hero'); if (s && s._up) s._up(); }
   });

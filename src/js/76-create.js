@@ -16,7 +16,7 @@ var classUI;
 
   let root = null, pick = 'warrior', mode = 'new', lastFocus = null;
 
-  // The three starters (Wren, Tobin, Pip). Each plays a base class kit; the camp switches them later.
+  // C9: the complete registry, with three playable starters and plain unlock routes.
   function buildSolo() {
     root = el('div', 'create create-solo'); root.id = 'createScreen';
     root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'createTitle');
@@ -25,22 +25,24 @@ var classUI;
     const lede = el('p', 'create-lede', 'One hero walks the Lantern Road. Pick who picks the lamp up.');
     const warn = el('p', 'create-warn', 'You can switch heroes at camp later, for free. Gold, gear and camp are shared.');
     const cards = el('div', 'ccards'); cards.setAttribute('role', 'radiogroup'); cards.setAttribute('aria-label', 'Hero');
-    const keys = SOLO_ORDER.filter(k => SOLO_HEROES[k] && ROSTER[k]);
-    if (!keys.includes(pick)) pick = keys[0];
+    const keys = HERO_ORDER;
+    if (!keys.includes(pick) || !heroCanPlay(pick)) pick = keys.find(heroCanPlay);
     const figs = [];
     let begin = null;
     const btns = keys.map(k => {
-      const H = SOLO_HEROES[k], R = ROSTER[k];
+      const H = SOLO_HEROES[k], R = ROSTER[k], info = heroRouteInfo(k);
       const b = el('button', 'ccard'); b.type = 'button'; b.dataset.cls = k; b.dataset.hero = k;
       b.setAttribute('role', 'radio');
       const fig = el('div', 'fig'); const cv = el('canvas', 'px'); fig.append(cv);
       const txt = el('div', 'ctxt');
       const top = el('div', 'ctop'); top.append(el('b', null, R.name));
-      top.append(el('span', 'pip r-' + (R.role || 'striker'), H.role));
+      top.append(el('span', 'pip r-' + (R.role || 'striker'), H ? H.role : ROLE_STATS[R.role].n));
       txt.append(top);
-      txt.append(el('div', 'cl-wt', `${R.title.replace(/^the /, 'The ')} · ${H.range} · ${H.weapon}`));
-      if (typeof BIOS === 'object' && BIOS[k]) txt.append(el('div', 'how', BIOS[k]));
-      const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab);
+      txt.append(el('div', 'cl-wt', R.title.replace(/^the /, 'The ') + (H ? ` · ${H.range} · ${H.weapon}` : '')));
+      if (info.bio) txt.append(el('div', 'how', info.bio));
+      const state = el('b', 'sp-lv'), route = el('div', 'how'); txt.append(state, route);
+      b._state = state; b._route = route;
+      if (H && H.ab) { const ab = el('div', 'ab'); ab.append(el('em', null, H.ab.name + ': '), document.createTextNode(H.ab.desc)); txt.append(ab); }
       b.append(fig, txt);
       b.addEventListener('click', () => select(k));
       b.addEventListener('keydown', e => {
@@ -58,30 +60,39 @@ var classUI;
     const nextFig = () => {
       if (root !== built || !figs.length) return;
       const [cv, k] = figs.shift();
-      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (typeof heroArtPreview === 'function' && heroArtPreview(cv, k)) { /* the new art */ } else if (typeof drawCharPreview === 'function' && typeof companionSpec === 'function') drawCharPreview(cv, companionSpec(k), 1); } catch (e) { console.error('[lanternfall] hero preview', e); }
+      try { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; if (heroHasKit(k) && typeof heroArtPreview === 'function') heroArtPreview(cv, k); } catch (e) { console.error('[lanternfall] hero preview', e); }
       if (figs.length) setTimeout(nextFig, 0);
     };
     requestAnimationFrame(() => setTimeout(nextFig, 0));
     const first = k => ROSTER[k].name.split(' ')[0];
     function select(k) {
       pick = k;
-      if (begin) putText(begin, `Begin as ${first(k)}`);
+      const info = heroRouteInfo(k);
+      if (begin) { begin.disabled = !info.playable && !(info.ready && !info.unlocked); putText(begin, info.playable ? `Begin as ${first(k)}` : info.ready && !info.unlocked ? `Unlock ${first(k)}` : info.unlocked ? 'Coming soon' : 'Locked'); }
       for (const b of btns) {
-        const on_ = b.dataset.cls === k;
+        const on_ = b.dataset.cls === k, state = heroRouteInfo(b.dataset.hero);
+        b.dataset.state = state.state;
+        // Cards can be inspected; the Begin/Unlock button enforces whether this hero can be chosen.
+        putText(b._state, state.state === 'coming-soon' ? 'Coming soon' : state.unlocked ? 'Unlocked' : 'Locked');
+        putText(b._route, state.unlocked ? (state.playable ? 'Ready to carry the lamp.' : 'Route complete. This hero’s art and solo kit come later.') : state.how);
         b.setAttribute('aria-checked', String(on_)); b.setAttribute('aria-pressed', String(on_)); b.tabIndex = on_ ? 0 : -1;
       }
     }
     begin = el('button', 'big forge create-go', ''); begin.type = 'button';
     begin.addEventListener('click', () => {
+      const info = heroRouteInfo(pick);
+      if (!info.playable) { if (info.ready && !info.unlocked && heroUnlock(pick)) { try { save(); } catch (e) {} select(pick); } return; }
       let okd = false;
-      try { okd = soloPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
+      try { okd = heroPick(pick); } catch (e) { console.error('[lanternfall] soloPick', e); }
       if (!okd) return;
       try { save(); } catch (e) {}
       if (typeof updatePortrait === 'function') updatePortrait();
       close();
       toast(`${first(pick)} picks up the lamp. The road is dark.`, 'good');
     });
-    inner.append(h, lede, warn, cards, begin);
+    // Keep Begin within reach while the full registry scrolls.
+    begin.style.position = 'sticky'; begin.style.top = '0'; begin.style.zIndex = '1';
+    inner.append(h, lede, warn, begin, cards);
     root.append(inner);
     select(pick);
     root.addEventListener('keydown', trapTab);
