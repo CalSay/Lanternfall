@@ -1,0 +1,48 @@
+RECOMMENDED SUPPORTING-RESOURCE CORRECTIONS
+
+These are complete design choices for review, not new implemented drops or currencies. All existing ore names and indices remain unchanged.
+
+SECONDARY MATERIALS — one fuel, tanning salt and dye per region
+Hollow: none. Keep early recipes raw and simple.
+Coast: Sea Coal — exposed fossil seams in sea cliffs; black nodules with pale shell inclusions. Brinesalt — scrape mineral crust from exposed salt pans; broad white crystals. Murex Dye — pigment deposits in abandoned reef-snail shells; purple material in a ribbed shell. No new tide lockout.
+Emberwaste: Cinder Coal — ancient buried coal reheated beneath the Kilns; fractured dark chunks with rust-red seams. Glass Salt — evaporite crust caught between cooled glass ridges; pale angular crust, not edible glass or a gem. Cinder Ochre — collect mineral pigment from ash-clay banks; dull red powder cake. This avoids a fresh green dye crop before the region is healed.
+Pale Reach: Frost Peat — cut preserved old bog beds exposed beneath snow; fibrous dark slabs, not a living green bog. Rime Salt — scrape salt-rich mineral crust at Frostgate; short white-blue needles distinct from ordinary ice. Frostcap Dye — pale blue pigment from sheltered cold-adapted fungi under old Rimewood roots; squat blue caps, no warm red/green foliage.
+Gloamvale: Dead Coal — dense coal exposed beneath ancient ruined foundations; flat near-black blocks. Grey Salt — mineral crust at old Blind Mere margins; low grey shelves. Inkcap Dye — preserved powder from dead inkcap remains in Coldhearth; collapsed grey-violet caps, no living fungal garden.
+
+Why these are stronger: fuels tolerate the region's forging demands; salts prepare its tougher hides; dyes bind its more unusual fibres. Their region identity is not a hidden damage bonus. These twelve designs replace both conflicting secondary-name tables; old alternatives should be retired together in materials.md and gear-2.md after approval.
+
+RAW MATERIALS AND REFINING
+Wood is gathered as logs, fibre as raw strands, hides as skins/pelts, herbs as plant material and Gems as intact stones or rough mineral pieces. Do not display a field of finished linen or a harvested roll of cloth.
+Region 2 onward: ore -> ingot; wood -> plank; hide -> leather; fibre -> cloth; herb -> tincture. Keep existing recipe role and grade. Use a material stem for the finished name: Tide Kelpie Hide -> Tide Kelpie Leather, Duskfang Pelt -> Duskfang Leather, Hemp Fibre -> Hemp Cloth. No 'Hide Leather' or 'Leather Leathers'. Sea Silk is raw byssus fibre; Sea Silk Cloth is the woven product. The loot icon and refined icon need distinct silhouettes.
+Gems remain family key crystal but player-facing label Gems. Replace the blanket 'Shard' suffix with 'Gem' as the generic family unit, or supply full per-grade display names: Tide Pearl is an intact pearl, never 'Pearl Shard'. A mineable uplifted shellstone pocket avoids inventing a new underwater harvesting control. No Gem Ingot or Pearl Ingot.
+
+SIGILS — keep the four established families
+Coast: Tide Sigil (internal family pearl).
+Emberwaste: Cinder Sigil (glass).
+Pale Reach: Frost Sigil (star).
+Gloamvale: Gloam Sigil (well).
+They are socket items, not crafting materials. Give them carved/inscribed shapes and approved rarity treatment; resource gems have no Sigil border or aura. Individual names remain '<boss or theme> Sigil'. A Coast buff/currency reference that still says Pearl must become Tide Sigil; only the crafting gem uses Tide Pearl. No new Sigil family, socket mechanic or yield is proposed.
+
+CURRENCIES — retain their existing roles
+Gold: coin stack, warm yellow; ordinary economy.
+Renown: laurel medal; live bounty and hero-unlock currency.
+Embers: cooled coal-like shards with orange seams; raid/relic currency. Distinguish the currency from Pip's class meter through its label and UI context.
+Do not add regional currencies merely because a region has new materials.
+
+TROPHIES — complete regional visual/source proposals
+Trophies are grade-independent keepsakes, not extra hides, Gems or currencies. Keep the seven current Hollow trophies. Later-region rows below are art/naming proposals for documented foes; they must have an approved recipe or collection use before new drops/stock are added. Do not invent repeatable farming of a unique story boss or a captive person's light.
+Hollow (existing): Moss Slime -> Moss Heart; Cave Bat -> Bat Fang; Rattlebones -> Grave Knuckle; Barrow Beetle -> Beetle Horn; Spore Cap -> Spore Crown; Quarry Golem -> Golem Core; Marsh Wraith -> Wraith Veil.
+Coast (proposed): Shinglecrab -> Shingle Claw; Stormgull -> Storm Pinion; Drowned Deckhand -> Wreck Medallion; Kelp Strangler -> Strangler Knot; Lanternjelly -> Jelly Mantle; Brine Witch -> Brine Charm; Coral Warden -> Coral Crest. Use pale shell, weathered metal, tangled kelp and sea-green shapes.
+Emberwaste (proposed, region enemy roster is itself design-stage): Cinder Hound -> Cinder Fang; Ashwalker -> Ashen Token (an ash-formed keepsake, not a human remain); Ash Moth -> Sootwing; Glasswalker -> Glass Talon; Slagback -> Slag Plate; Wyrmling -> Wyrmling Scale; Kept Light -> Broken Shackle (binding falls away as the captive light is freed; never consume the light). Copper-red, charcoal and pale fused-glass shapes.
+Pale Reach (proposed): Rimewolf -> Rime Fang; Skua -> Skua Pinion; Star Golem -> Star Golem Knuckle (construct fragment, not Frost Sigil); Ice Wraith -> Frost Veil; Palefolk -> Sill Token (left-behind household token); Icewisp -> Rime Husk. Six regular foe types are documented; do not fabricate a seventh normal enemy in the boss slot. Cold white-blue-grey shapes with no warm fire aura.
+Gloamvale (proposed): Lurcher -> Lurcher Fang; Stillwalker -> Stillwood Knot; Merewight -> Mere Shroud; Scarecrow -> Dusk Binding; Hearthless -> Coldhearth Token; Orchard Husk -> Stonefruit Husk. Six regular foe types are documented; the Voice is not a repeatable resource source. Ash-grey/violet silhouettes; no thriving vegetation or fresh warm blood.
+
+PROGRESSION AND IMPLEMENTATION CORRECTIONS
+Planned grades: Hollow 1-3, Coast 4-6, Emberwaste 7-9, Pale Reach 10-12, Gloamvale 13-15.
+Current code differs: only five material grades exist; Essence zone thresholds are 1/7/13/19/42, and gathering unlocks use skill levels 1/14/30/64/112 without region checks. Therefore the first five icons cannot be treated as one icon per region, and changing art does not fix access.
+Recommended access rule for coordinator design: a grade requires BOTH its region to be reached AND its skill/progression requirement; previously unlocked grades remain accessible. Do not set unmeasured new numeric thresholds in this art review. Fight-drop grade must use the same regional grade band as gathering, with a separately approved within-region progression rule. Grades retain their intended power values.
+Implementation must reconcile name/source tables, recipes/refined-name formatting, node labels, colours, item names, Bestiary/gathering text, preview metadata and onboarding examples. Expanding to fifteen grades also touches state/inventory lengths, live and away drop calculation, UI loops, save handling and tests. Coordinator controls that gameplay scope; this audit changes no live balances, arrays or saves.
+Relevant files: 20-data.js; 21-data-craft.js; 22-data-regions.js; 40-rules.js; 30-state.js; 55-gathering.js; 50-sim.js; 55-crafting.js; 55-store.js; 57f-hands.js; 57k-trade.js; 57c-codex.js; art renderer/data and direct material-name UI consumers. Reconcile materials.md, gear-2.md and old Coast Pearl wording together. The complete source evidence is preserved in system-evidence.txt.
+
+ARTWORK CONSEQUENCES
+The current 45-icon preview is a draft subset. This design calls for all 105 primary slots (including the 15 unchanged ores), plus twelve secondary icons, four Sigil family treatments, three currency icons and the current/future trophy sets. Existing first-five Ore art stays. Revise only accepted name/source changes after this full design is reviewed. Each actual node/beast pack needs every state and authored effect; showing a source name alone is not a complete art pack.
