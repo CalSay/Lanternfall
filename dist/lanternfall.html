@@ -13950,7 +13950,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
 
   // Effect lines for a building at a level (the UI shows now -> next). Lv 0 = not built.
-  const TAV = ['', 'The keep tells the day\'s gossip', 'Rumours: tomorrow\'s Omen', 'Rumours: the next 2 Omens', 'Bounties pay +15%', 'Every 5th bounty gives +1 Renown'];
+  // C3: cumulative Tavern perks are defined in 57g-tavern-perks.js.
   const LIB = l => [`Gathering XP +${5 * l}%`].concat(l >= 2 ? [`Hero XP +${5 * (l - 1)}%`] : []);
   const SHR = ['', '1 Blessing', 'Blessings 25% stronger', '2 Blessings'];
   campEffects = (id, l) => {
@@ -13965,7 +13965,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
     }
     if (id === 'watch') return [`Away limit +${2 * l}h`].concat(l >= 2 ? ['Away report shows the zone you could hold'] : []);
     if (id === 'library') return LIB(l);
-    if (id === 'tavern') return (l <= 3 ? [TAV[l]] : [TAV[3]].concat(TAV.slice(4, l + 1))).concat(typeof handsTavernFx === 'function' ? handsTavernFx(l) : []);   // N1: where Hands apply
+    if (id === 'tavern') return typeof tavernPerks === 'function' ? tavernPerks(l) : [];
     if (id === 'shrine') return [SHR[Math.min(3, l)]].concat(l >= 3 ? ['Blessings 25% stronger'] : []);
     return [];
   };
@@ -14004,7 +14004,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   // ---------------- Tavern rumours ----------------
   campRumours = () => {
     const l = lv('tavern'), out = [];
-    if (l < 2 || !campOpen()) return out;
+    if (l < 1 || !campOpen()) return out;
     try {
       if (typeof almanac === 'object' && almanac.omenFor) {
         const d = deviceDay(now());
@@ -16779,6 +16779,102 @@ function handsBunkFx(l) {
 function handsTavernFx(l) {
   const T = HANDS_TUNE;
   return !T.on || !(l > 0) ? [] : [`Hands apply here: one every ${l >= T.fastTavern ? T.arriveFastH : T.arriveH} h`];
+}
+
+// ---- src/js/57g-tavern-perks.js ----
+// 57g-tavern-perks: solo Tavern perks and named-gatherer rumours (C3).
+// CORE FILE: no DOM or storage access. The online Tavern is separate and untouched.
+//
+// Lv 1: tomorrow's Omen and the 8 h applicant board (Hands still need Hearth 2).
+// Lv 2: hear named gatherer rumours. Lv 3: 6 h applicants and two Omen forecasts.
+// Lv 4-5: existing +15% bounty rewards and every fifth bounty's +1 Renown (57-camp).
+// Hire/shift fees, rarity odds, pity and the board cap retain economy-2's numbers.
+//
+// C1 integrates through registerHandsRoute only. Until that API exists, named rumour
+// actions are hidden and refused; no duplicate applicant or recruitment machinery.
+// Dorrie: hear the Lv 2 pedlar rumour. Rook: hear Nan's rumour while she is at camp,
+// then mine tier-2 ore for 20 minutes. The documented zone fallbacks remain C1's.
+//
+// Work time: live tick seconds while the hero actually targets that node; offline
+// uses awayBegin.r.t, the capped gathering interval, before C1's away route probes.
+// This measures time working even if the pile fills, just as the hero keeps mining.
+// Clicking/glints, harvest amounts, gatherer shifts, idle time and other nodes add none.
+// Saved partial progress resumes; gathering before hearing the rumour earns nothing.
+//
+// API: tavernPerks(level?) -> cumulative effect strings
+//      tavernRumours() -> [{key,name,txt,hint,state,progress,need,can:{ok,why}}]
+//        state: locked | available | working | done; progress/need in seconds for Rook.
+//      tavernHearRumour(key) -> bool; a completed route is processed by C1's next probe.
+// Save defaults: S.tavernLeads = {v:1, heard:{}, rookSecs:0}; heard[key] is a timestamp.
+// Events: tavernRumour {key}, tavernLeadReady {key}.
+let tavernPerks, tavernRumours, tavernHearRumour;
+{
+  registerState('tavernLeads', { v: 1, heard: {}, rookSecs: 0 });
+  const NEED = 20 * 60;
+  const L = () => S.tavernLeads;
+  const heard = key => !!(L().heard && L().heard[key]);
+  const worked = () => Math.min(NEED, Math.max(0, Number.isFinite(L().rookSecs) ? L().rookSecs : 0));
+  const integrated = () => typeof registerHandsRoute === 'function';
+  const open = () => integrated() && campOpen() && campLevel('tavern') >= 2 && handsOpen();
+  const crew = key => handsList().find(x => x.key === key);
+  const applicant = key => S.hands.board.apps.find(x => x.key === key);
+  const met = key => !!(crew(key) || applicant(key) || S.hands.met[key]);
+  const nanHome = () => {
+    const nan = crew('nan'); if (!nan) return false;
+    const status = handsStatus(nan);
+    return status && ['camp', 'pack', 'rest'].includes(status.st);
+  };
+  const ready = key => heard(key) && (key === 'dorrie' || worked() >= NEED);
+
+  tavernPerks = (level = campLevel('tavern')) => {
+    if (!(level > 0)) return ['Not built'];
+    const lines = [level >= 3 ? 'Rumours: the next 2 Omens' : "Rumours: tomorrow's Omen"];
+    if (level >= 2) lines.push('Named gatherer rumours');
+    if (level >= 4) lines.push('Bounties pay +15%');
+    if (level >= 5) lines.push('Every 5th bounty gives +1 Renown');
+    return lines.concat(typeof handsTavernFx === 'function' ? handsTavernFx(level) : []);
+  };
+  tavernRumours = () => {
+    if (!open()) return [];
+    return ['dorrie', 'rook'].map(key => {
+      const rook = key === 'rook', name = rook ? 'Rook' : 'Dorrie Fitch';
+      const known = met(key), started = heard(key), done = known || ready(key);
+      const why = known ? (crew(key) ? 'Already hired.' : 'Already at the Tavern.')
+        : started ? 'You have heard this rumour.' : rook && !nanHome() ? 'Hire Nan Tarrow and meet her at camp first.' : '';
+      const state = done ? 'done' : started ? 'working' : why ? 'locked' : 'available';
+      const txt = known ? (crew(key) ? name + ' has a tent at camp.' : name + ' is waiting at the Tavern.')
+        : done ? name + ' is on the way to the Tavern.'
+        : rook ? "Nan knows a lad still down in the quarry. He follows the sound of a pick."
+        : 'A pedlar is nearby. The keep knows how to reach her.';
+      const hint = done ? '' : rook ? 'After hearing the rumour, mine tier-2 ore for 20 minutes. Time gathering while away counts.'
+        : 'Hear where Dorrie Fitch is staying. She is looking for work.';
+      return { key, name, txt, hint, state, progress: rook ? worked() : started || known ? 1 : 0, need: rook ? NEED : 1, can: { ok: !why, why } };
+    });
+  };
+  tavernHearRumour = key => {
+    const row = tavernRumours().find(x => x.key === key);
+    if (!row || !row.can.ok) return false;
+    if (!L().heard || typeof L().heard !== 'object') L().heard = {};
+    L().heard[key] = Math.max(1, Date.now());
+    emit('tavernRumour', { key }); save(); return true;
+  };
+
+  if (integrated()) {
+    registerHandsRoute('dorrie', () => ready('dorrie'));
+    registerHandsRoute('rook', () => ready('rook'));
+  }
+  const mining = () => S.activity === 'gather' && S.node && S.node.kind === 'ore' && S.node.t === 2 && skillTierOpen('mine', 2);
+  function advance(seconds) {
+    if (!integrated() || !heard('rook') || met('rook') || !(seconds > 0) || !Number.isFinite(seconds)) return;
+    const before = worked(); L().rookSecs = Math.min(NEED, before + seconds);
+    if (before < NEED && worked() >= NEED) { emit('tavernLeadReady', { key: 'rook' }); save(); }
+  }
+  onTick(dt => {
+    if (mining() && target() === 'node' && !(typeof ONBOARD === 'object' && ONBOARD.paused)) advance(dt);
+  });
+  on('awayBegin', report => {
+    if (mining() && report) advance(report.t);
+  });
 }
 
 // ---- src/js/58-deeds.js ----
@@ -28941,6 +29037,68 @@ async function uiTavern() {
   });
 }
 
+// ---- src/js/74a-ui-tavern-perks.js ----
+// C3: offline Tavern perks and named gatherer leads. The shared online Tavern UI is separate.
+var renderTavernLeads = (box, rows) => {
+  if (!rows.length) return;
+  const list = el('div', 'rumours');
+  list.append(el('div', 'rum-h', 'Gatherer leads'));
+  for (const lead of rows) {
+    const row = el('div', 'rum');
+    row.append(img(iconURL('mug', '#8C6A43', { 1: '#6B4A2E', 7: '#F2C14E', 5: '#EFE6D6' })));
+    const text = el('div');
+    text.append(el('b', null, lead.name), el('div', null, lead.txt));
+    if (lead.hint && lead.hint !== lead.txt) text.append(el('div', 'note', lead.hint));
+    if (lead.state === 'working' && lead.need > 0) {
+      text.append(el('div', 'note', `${Math.floor((lead.progress || 0) / 60)} of ${Math.ceil(lead.need / 60)} minutes done.`));
+    }
+    if (lead.state === 'available' && lead.can && lead.can.ok) {
+      const hear = el('button', 'mini go', 'Hear rumour'); hear.type = 'button';
+      hear.style.minHeight = '44px';
+      hear.setAttribute('aria-label', `Hear the rumour about ${lead.name}`);
+      hear.addEventListener('click', () => { if (tavernHearRumour(lead.key)) ui(true); });
+      text.append(hear);
+    } else if (lead.state === 'locked' && lead.can && lead.can.why) {
+      text.append(el('div', 'note', lead.can.why));
+    }
+    row.append(text); list.append(row);
+  }
+  box.append(list);
+};
+
+{
+  let sec, perks, omens, leads, sig = '';
+  registerSection('tav', {
+    id: 'tavern-leads', title: 'Rumours and perks',
+    mount(node) {
+      sec = node; perks = el('p', 'note'); omens = el('div'); leads = el('div');
+      sec.append(perks, omens, leads);
+    },
+    update() {
+      if (!sec) return;
+      const level = campLevel('tavern'), rows = tavernRumours(), lines = tavernPerks(level), forecast = campRumours();
+      sec.hidden = !level;
+      if (!level) return;
+      const next = JSON.stringify([level, lines, forecast.map(r => r.txt), rows.map(r => [r.key, r.txt, r.hint, r.state, Math.floor((r.progress || 0) / 60), r.need, r.can])]);
+      if (next === sig) return; sig = next;
+      perks.textContent = `Tavern Lv ${level}: ${lines.join(' · ')}`;
+      omens.textContent = '';
+      if (forecast.length) {
+        const box = el('div', 'rumours'); box.append(el('div', 'rum-h', 'Omens ahead'));
+        for (const omen of forecast) {
+          const row = el('div', 'rum');
+          row.append(img(omen.ic ? iconURL(...omen.ic) : iconURL('mug', '#8C6A43')),
+            el('span', null, omen.txt));
+          box.append(row);
+        }
+        omens.append(box);
+      }
+      leads.textContent = '';
+      renderTavernLeads(leads, rows);
+    }
+  });
+}
+
 // ---- src/js/75-almanac-ui.js ----
 // 75-almanac-ui: the Omen banner on the Fight tab (tap for details) and the Almanac part of
 // the World tab (today's Omen, the Dare, tomorrow, the weekly board). Core: 55-almanac.js.
@@ -29712,7 +29870,8 @@ let showAwayReport;
   function extras(k, id) {
     const acts = campActions(id);
     const rum = id === 'tavern' ? campRumours() : [];
-    const sig = JSON.stringify([acts.map(a => a.label), rum.map(r => r.txt)]);
+    const leads = id === 'tavern' ? tavernRumours() : [];
+    const sig = JSON.stringify([acts.map(a => a.label), rum.map(r => r.txt), leads.map(r => [r.key, r.txt, r.hint, r.state, Math.floor((r.progress || 0) / 60), r.need, r.can])]);
     if (k.exSig === sig) return; k.exSig = sig; k.extra.textContent = '';
     if (rum.length) {
       const box = el('div', 'rumours');
@@ -29725,7 +29884,11 @@ let showAwayReport;
         box.append(line);
       }
       k.extra.append(box);
-    } else if (id === 'tavern' && campLevel('tavern') < 2) k.extra.append(el('p', 'note', 'At Lv 2 the Tavern hears rumours about who visits next.'));
+    }
+    if (id === 'tavern') {
+      renderTavernLeads(k.extra, leads);
+      if (!rum.length && !leads.length) k.extra.append(el('p', 'note', 'The keep has no rumours today.'));
+    }
     for (const a of acts) { const b = btn('mini go', a.label); b.addEventListener('click', () => { try { a.fn(); } catch (e) { console.error('[lanternfall] camp action', e); } ui(true); }); k.extra.append(b); }
   }
   // The Trophy Wall card (63e-scenery-wall.js, AC5): a small scene at the road gate; a tap opens Feats.
