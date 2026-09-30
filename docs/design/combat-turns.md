@@ -19,13 +19,21 @@ real-time spec (`docs/design/combat-3.md` on `codex/c20-combat`) once signed off
 - **Haste decides who goes first.** Each fight opens with a haste check between the hero and the enemy. Before the
   fight starts it must be very clear who goes first.
 - **Haste can be bought with gold** in the hero's upgrade tree (the stat tree, not abilities), once that tree is
-  designed.
+  designed. Haste on gear: undecided (owner is thinking about it).
+- **A versus card opens every fight**, like a fighting-game intro: the hero on one side, the enemy on the other,
+  "VS" between them. The card says who goes first.
+- **An auto parry gives no cooldown refund.** It still blocks the hit (and counters, unless the owner says otherwise).
+  Only a timed parry takes a turn off every cooldown.
+- **Enchantments affect both modes:** they raise Auto's parry and dodge odds and widen the timing window when you play
+  by hand.
+- **More Essence per kill.** Fewer kills per hour must not starve Essence: raise drops so Essence per hour stays about
+  where it is now (set from the prototype's measured kills per hour).
+- **Hunting** (C24, #25) gives Hide outside fights, by killing hostile beasts, not farm animals.
 
 ## Proposed details (for owner sign-off)
 
 - **Auto rolls, per enemy attack:** roll parry first (10%). If that misses, roll dodge (25%). If that misses too,
-  the hit lands. Together that avoids about 32% of hits. An auto parry works like a timed one: counter, and
-  1 turn off every cooldown.
+  the hit lands. Together that avoids about 32% of hits. An auto parry blocks and counters, with no refund.
 - **Caps so playing by hand stays better:** auto parry at most 30%, auto dodge at most 50%. Aim for hand play to
   beat Auto by about 25-40% through perfect timing, refunds and weaknesses.
 - **Auto's choices:** abilities as soon as they are ready, in bar order; otherwise Attack. It also plays the
@@ -35,9 +43,10 @@ real-time spec (`docs/design/combat-3.md` on `codex/c20-combat`) once signed off
   - Haste doesn't give extra turns. It only decides the opening. (Open question: a speed bar, where haste also
     gives extra turns, would be a later option.)
   - Enemy haste rises by zone. Bosses have high haste, so building haste matters for bosses.
-- **Showing who goes first:** a short card before each fight: "You go first" or "Mire Hag goes first", with both
-  haste numbers side by side. Plus a small turn strip over the stage showing the next 4 turns (hero and enemy
-  portraits), always visible during the fight.
+- **The versus card:** about 1.2 s (shorter in Auto, a plain fade with reduced motion). Hero portrait left, enemy
+  right, both haste numbers under them, and a banner: "You go first" or "Mire Hag goes first". An unknown enemy shows
+  "?" for its haste until its profile has it. Plus a small turn strip over the stage showing the next 4 turns,
+  always visible during the fight.
 - **Profile tiers**, per enemy kind:
 
   | Kills | You learn |
@@ -51,9 +60,8 @@ real-time spec (`docs/design/combat-3.md` on `codex/c20-combat`) once signed off
 
 ## Open questions
 
-1. Does an auto parry give the full cooldown refund, or half?
-2. Do enchantments that raise parry/dodge also widen the timing window for hand play, or only raise Auto's odds?
-3. Is haste only a skill-tree purchase, or can gear carry it too?
+1. Is haste only a skill-tree purchase, or can gear carry it too? (Owner thinking.)
+2. Does an auto parry still counter? (Assumed yes.)
 
 ## Build plan
 
