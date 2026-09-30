@@ -63,7 +63,9 @@ without counter or refund.
 
 Consume Claude's existing `S.solo.auto` (default true), `soloAuto()` and
 `soloSetAuto(v)`; add no second Auto-state field. The UI toggle changes immediately;
-only engine scheduling adopts its value at the next actor boundary. Preserve
+only engine scheduling adopts its value at the next actor boundary. A waiting,
+uncommitted hero action is a boundary: enabling Auto resumes immediately. A committed
+enemy wind-up retains its selected mode. Preserve
 `soloActive() = !auto && !pageHidden` and the existing `soloGoIdle()`/`soloWake()`
 hidden-page handling; combat presses never flip Auto. Tests use `soloSetAuto(false)`
 for manual play. Auto uses the first ready equipped ability in bar order, otherwise
@@ -116,4 +118,3 @@ Request narrow exceptions for live `50-sim.js` routing (away branch already assi
 Use existing shared state/check extension points. No shell/stage edits, crafting-stat
 rename or profile system in C20. Claude must approve these boundaries, provisional
 values, cooldown/training semantics and event timing before build work starts.
-
