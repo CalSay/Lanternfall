@@ -590,7 +590,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     if (x.last) lines.push(`Last time I worked at the ${nodeName(x.last.kind, x.last.t)}.`);
     lines.push(campClock().phase === 'night' ? 'The fire is warm. There is room beside me.' : 'Good to see you back at camp.');
     const n = Math.max(0, (Number.isFinite(x.talk) ? Math.floor(x.talk) : 0) - 1);
-    const line = status.st === 'pack' ? 'My pack is still full. Make room in the Storehouse before I head out again.'
+    const line = status.role === 'trade' ? x.n + ': ' + status.label + '.'
+      : status.st === 'pack' ? 'My pack is still full. Make room in the Storehouse before I head out again.'
       : status.st === 'rest' ? 'A little rest, then I will head back to the node.'
       : status.st === 'out' ? `${x.n} is working at the ${nodeName(status.kind, status.t)}.`
       : status.st === 'back' ? `${x.n} is on the way home.` : lines[n % lines.length];
