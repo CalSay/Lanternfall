@@ -276,7 +276,8 @@
   function extras(k, id) {
     const acts = campActions(id);
     const rum = id === 'tavern' ? campRumours() : [];
-    const sig = JSON.stringify([acts.map(a => a.label), rum.map(r => r.txt)]);
+    const leads = id === 'tavern' ? tavernRumours() : [];
+    const sig = JSON.stringify([acts.map(a => a.label), rum.map(r => r.txt), leads.map(r => [r.key, r.txt, r.hint, r.state, Math.floor((r.progress || 0) / 60), r.need, r.can])]);
     if (k.exSig === sig) return; k.exSig = sig; k.extra.textContent = '';
     if (rum.length) {
       const box = el('div', 'rumours');
@@ -289,7 +290,11 @@
         box.append(line);
       }
       k.extra.append(box);
-    } else if (id === 'tavern' && campLevel('tavern') < 2) k.extra.append(el('p', 'note', 'At Lv 2 the Tavern hears rumours about who visits next.'));
+    }
+    if (id === 'tavern') {
+      renderTavernLeads(k.extra, leads);
+      if (!rum.length && !leads.length) k.extra.append(el('p', 'note', 'The keep has no rumours today.'));
+    }
     for (const a of acts) { const b = btn('mini go', a.label); b.addEventListener('click', () => { try { a.fn(); } catch (e) { console.error('[lanternfall] camp action', e); } ui(true); }); k.extra.append(b); }
   }
   // The Trophy Wall card (63e-scenery-wall.js, AC5): a small scene at the road gate; a tap opens Feats.
