@@ -1,30 +1,36 @@
 # C20 zone-one turn prototype: stationary rate evidence
 
-Engine commit: `a8550b5` (based on Claude checkpoint `f46c990`). Reproduce with bundled Node 24:
+Engine commit `1be5c40`, based on Claude checkpoint `3c0208e`. Reproduce with bundled Node 24:
 `node tools/sim.mjs --report turns --hours 1 --seeds 3 --seed 1 --json rates.json`.
-The report ran 48 real-core cases (four profiles, four modes, seeds 1–3), each for one simulated hour. The early Wren fixture is `tests/fixtures/save-early.json`, explicitly moved from zone 8 to zone 1. No purchases or boss progression occur. XP and mastery gains are frozen after each kill, and Deed bonuses are off, so each case measures a fixed combat profile rather than a normal advancing playthrough. Equipment and training remain active. Generated Essence counts kill rewards before storage caps; stored Essence is the actual inventory change. All rows had zero deaths and generated equalled stored Essence in this run.
+This ran 60 real-core cases: four profiles, five modes and seeds 1–3, one simulated hour each. The early Wren fixture (`tests/fixtures/save-early.json`) was moved from zone 8 to zone 1. XP/mastery gains and Deed bonuses were disabled to hold profiles fixed; equipment and training remained active. No purchases or boss progression occurred. All cases had zero deaths, and stored Essence equalled generated Essence. Rates below are three-seed means.
 
-| Profile | Mode | Kills/hour | Generated Essence/hour | Stored Essence/hour |
-|---|---|---:|---:|---:|
-| Fresh Wren | Legacy Auto | 669.33 | 169.00 | 169.00 |
-| Fresh Wren | Turn Auto | 639.33 | 166.00 | 166.00 |
-| Fresh Wren | Turn hand | 1028.00 | 268.00 | 268.00 |
-| Fresh Wren | Turn away | 633.00 | 171.00 | 171.00 |
-| Fresh Tobin | Legacy Auto | 597.67 | 154.33 | 154.33 |
-| Fresh Tobin | Turn Auto | 914.00 | 236.00 | 236.00 |
-| Fresh Tobin | Turn hand | 984.67 | 247.33 | 247.33 |
-| Fresh Tobin | Turn away | 917.00 | 232.00 | 232.00 |
-| Fresh Pip | Legacy Auto | 874.67 | 218.00 | 218.00 |
-| Fresh Pip | Turn Auto | 781.33 | 198.00 | 198.00 |
-| Fresh Pip | Turn hand | 1218.33 | 300.00 | 300.00 |
-| Fresh Pip | Turn away | 784.00 | 204.00 | 204.00 |
-| Early Wren | Legacy Auto | 3672.00 | 975.00 | 975.00 |
-| Early Wren | Turn Auto | 3428.00 | 934.67 | 934.67 |
-| Early Wren | Turn hand | 1894.00 | 515.33 | 515.33 |
-| Early Wren | Turn away | 3472.00 | 904.00 | 904.00 |
+| Profile | Mode | Kills/h | Essence/h | Direct hits/fight | Hero turns/fight | Fight seconds |
+|---|---|---:|---:|---:|---:|---:|
+| Fresh Wren | Legacy Auto | 669.33 | 169.00 | — | — | — |
+| Fresh Wren | Turn Auto | 1321.33 | 324.33 | 2.16 | 2.04 | 2.27 |
+| Fresh Wren | Turn hand, perfect | 1350.67 | 333.00 | 1.67 | 1.00 | 2.20 |
+| Fresh Wren | Turn hand, realistic | 1154.67 | 308.00 | 1.74 | 1.30 | 2.64 |
+| Fresh Wren | Turn away | 1334.00 | 349.00 | 2.15 | 2.03 | 2.25 |
+| Fresh Tobin | Legacy Auto | 597.67 | 154.33 | — | — | — |
+| Fresh Tobin | Turn Auto | 933.00 | 250.33 | 3.38 | 3.22 | 3.41 |
+| Fresh Tobin | Turn hand, perfect | 1096.00 | 263.67 | 2.34 | 1.45 | 2.83 |
+| Fresh Tobin | Turn hand, realistic | 917.33 | 229.00 | 2.46 | 1.89 | 3.45 |
+| Fresh Tobin | Turn away | 933.00 | 237.00 | 3.37 | 3.21 | 3.40 |
+| Fresh Pip | Legacy Auto | 874.67 | 218.00 | — | — | — |
+| Fresh Pip | Turn Auto | 960.67 | 241.67 | 2.85 | 2.66 | 3.30 |
+| Fresh Pip | Turn hand, perfect | 1218.33 | 300.00 | 1.92 | 1.00 | 2.50 |
+| Fresh Pip | Turn hand, realistic | 997.33 | 244.33 | 2.07 | 1.45 | 3.14 |
+| Fresh Pip | Turn away | 964.00 | 241.00 | 2.86 | 2.67 | 3.31 |
+| Early Wren | Legacy Auto | 3672.00 | 975.00 | — | — | — |
+| Early Wren | Turn Auto | 3428.00 | 934.67 | 1.00 | 1.00 | 0.60 |
+| Early Wren | Turn hand, perfect | 1894.00 | 515.33 | 1.00 | 1.00 | 1.40 |
+| Early Wren | Turn hand, realistic | 1756.00 | 477.33 | 1.00 | 1.00 | 1.55 |
+| Early Wren | Turn away | 3636.00 | 950.00 | 1.00 | 1.00 | 0.60 |
 
-Hand is an **idealized upper-bound policy**: a scripted 0.2-second response to each hero turn, first-ready equipped ability, and perfectly timed parry at the middle of every offered window. It does not predict average human play. The early fixture's 1.2-second manual intro versus 0.6-second Auto intro dominates its one-hit fights; changing that timing needs design sign-off. Away retains the existing offline boost (1.00 for fresh heroes; 1.06 for early Wren), and reports actual `awayGains` rewards, while the separately stored scratch sample remains reward-free. Normalize early away by 1.06 before comparing it with live Auto.
+The owner's opening target is **about three basic hits**, and an ability-free, noncritical core probe confirms exactly three manual and three Auto basic attacks for each fresh starter. The fight table includes abilities, critical hits, parry counters and burns. “Direct hits” counts Attack, ability and counter damage, excluding burn ticks; one hero turn can therefore contain two hits. Normal Auto averages 2.16, 3.38 and 2.85 direct hits for Wren, Tobin and Pip. Ability cooldowns carry between normal foes and decrement only at hero-turn starts; they reset on hero/scope change or defeat. The separate turn-only damage ratios preserve the default-off legacy hero values.
 
-Turn Auto versus legacy Auto changes kills/hour by roughly −4% Wren, +53% Tobin, −11% Pip, and −7% early Wren. Hand versus turn Auto changes kills/hour by roughly +61%, +8%, +56%, and −45%, respectively; the requested 25–40% hand premium is not met across profiles. One global Essence multiplier cannot restore legacy hourly income across the four profiles. Keep `essenceX=1` and the current timing/HP/attack knobs until Claude and the owner choose the tradeoff. A per-profile target computed as legacy generated Essence divided by Turn Auto kills would be approximately 0.264, 0.169, 0.279, and 0.284 Essence per kill, respectively; those are diagnostics, not proposed balance values.
+Perfect hand is an idealized upper bound: 0.2-second action response and every parry timed correctly. The realistic scripted policy uses 0.35-second response and lands 60% of attempted parries. Against Turn Auto, perfect-hand kills/h gain +2%, +17% and +27% for fresh Wren, Tobin and Pip; realistic-hand changes are −13%, −2% and +4%. These miss the proposed +25–40% hand premium for most starters. Early Wren remains one-hit with trained gear, so the retained 1.2-second hand intro versus 0.6-second Auto intro dominates its rate; the owner's three-hit target applies to fresh first enemies, not every progressed character.
 
-The shared live/scratch resolver includes the existing starter attack riders, Ranger's 25% Focus mark and marked-target crit bonus, Warrior's deterministic 10% class block, Grit's damage cut, hero armour, per-second regeneration, training and gear attack/crit/cooldown modifiers, and the 15% heal on pack clear. Focus Auto applies its existing half-strength mark. Early Wren's gear has attack, crit and pierce; it has no block, ward, heal or echo, and zone-one Slimes are unarmoured, so pierce does not affect these measured rates. This is still a narrow prototype: constellation/Deepwell passives, typed enemy resistances, shields/overheal, and future elite or boss effects are not yet represented by the scalar adapter. Its rates should not be extrapolated to those systems or beyond zone one. Focused checks cover off-switch fallback, event order, turn cadence, defense, shared passive math (including a multi-hit live/scratch class-block case), away sample purity/cache, and split-session rewards after save/reload. Full-suite status is recorded in the C20 handoff.
+No single Essence multiplier gives all three fresh Turn Auto profiles within ±10% of their legacy Auto Essence/h. The feasible multiplier intervals are Wren **0.47–0.57**, Tobin **0.55–0.68**, Pip **0.81–0.99**; their intersection is empty. `TURN_TUNE.essenceX` remains 1 pending Claude's balance choice. Generated Essence means pre-cap rewards and stored means actual inventory change; both matched here. Away retains the existing offline boost (1.00 fresh; 1.06 early Wren). The early away row normalized by 1.06 is 3427.28 kills/h and 895.47 Essence/h versus live Auto 3428 and 934.67; kills now match after the scratch respawn timing correction, while seeded reward variation accounts for the remaining Essence difference. The raw away row includes the intended boost.
+
+The shared live/scratch resolver includes starter attack riders, Ranger's Focus mark and marked crit, Warrior class block, Grit damage cut, hero armour, regeneration, gear and training modifiers, and pack-clear healing. Early Wren's gear has attack, crit and pierce; zone-one Slimes are unarmoured, so pierce is inert here. Constellation/Deepwell passives, typed resistances, shields/overheal and future elite/boss effects remain outside this zone-one prototype. Do not extrapolate these stationary rates to those systems. Focused checks cover default-off fallback, turn/event order, live/scratch class-block and respawn parity, lethal wipe reentrancy, cooldown carry, away sample purity/cache and split-session rewards after save/reload. Full-suite status belongs in the C20 handoff.
