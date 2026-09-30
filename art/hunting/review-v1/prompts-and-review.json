@@ -1,0 +1,24 @@
+{
+  "status": "Direction drafts only; not owner-approved and not production-ready.",
+  "generator": "Built-in image_gen",
+  "date": "2026-09-30",
+  "prompts": {
+    "beasts": "Use case: stylized-concept. Create a Lanternfall Hunting art direction REVIEW SHEET, not a screenshot or UI. Strict clean low-resolution pixel art: chunky small RPG sprites, one-pixel dark outlines, warm amber highlights, cool purple shadows, restrained ~40-color palette, 4–6-color ramps, no smooth painted shading, no antialiasing or dithering. Style matches a tiny purple hooded ranger with gold trim, stocky brown-haired armored guardian in tan/red/green, and orange-hooded mage; do not draw those heroes. Sheet has three evenly spaced horizontal rows on transparent background. Row1: the SAME enraged bristly brown wild boar in six distinct side-view poses, facing LEFT: idle, alert, windup, strike, hurt, fallen. Row2: the SAME dark slate bristleback wolf in those six poses. Row3: the SAME moss-green armored fen lizard in those six poses. All beasts hostile wilderness creatures with expressive readable silhouettes, no gore. Exact 18 separate sprites with generous gutters, consistent size and baseline within each row, no overlaps, no backgrounds, no shadows beyond sprite, no labels, no text, no borders, no watermarks. Small authentic pixel sprites, not high detail illustrations. Transparent alpha.",
+    "scene": "Use case: stylized-concept. Lanternfall Hunting Grounds standalone pixel-art game background, landscape 2:1. A small secluded wild forest clearing bordering a fen, mossy rocks and roots at sides, dark purple-green dense woodland behind, restrained warm golden light from upper left, low grasses and unobstructed flat earthen ground across lower third for small side-view game characters. Peaceful but untamed, readable at phone size. Authentic low-resolution RPG pixel art with crisp blocky clusters and limited earthy palette, one-pixel dark outlines on foreground forms, simple 4–6 tone ramps, cool purple shadows. Match a game whose heroes are tiny purple-hooded ranger, stocky tan-armored guardian and orange-hooded mage; draw NO characters. New original scene. No animals, no buildings, no weapons, no items, no HUD, no text or watermark. Avoid photographic texture, smooth gradients, blur, painterly detail and busy foreground. Background only; keep center empty for gameplay.",
+    "spearEffects": "Use case: stylized-concept. A small low-resolution pixel sprite atlas on completely transparent background. Draw three simple wooden hunting spears across top: horizontal pointing right, diagonal up-right, small inventory icon. Below, six frames of an ordinary NON-MAGICAL weapon thrust motion stroke made from 2 to 8 opaque ivory square pixels per frame. Below that, six frames of a tiny ordinary impact burst made from 3 to 12 opaque ochre/ivory square pixels per frame. Extremely restrained flat 16-color pixel art, each spear should use only about 40 by 8 logical pixels, displayed nearest-neighbour enlarged. Sharp stair-step edges, blackish-purple single pixel outline around spear, simple flat 3-color shading. No luminous light anywhere. No bloom, glow, gradients, haze, smooth texture, antialiasing, shadows, smoky background or translucent pixels. Only solid sprite pixels and fully empty alpha. The effects are small solid geometric pixel flecks and SHORT strokes, NOT fire or magic. No text, no borders. Consistent small sprites with large empty gutters."
+  },
+  "issues": [
+    "Beast sheet needs exact logical pixel grid, frame rectangles, pivots and target-scale review against existing heroes.",
+    "Scene needs target-scale review against heroes; dense detail may need simplifying.",
+    "Spear/effects still contain soft halos despite explicit no-glow request; reject for runtime use pending cleanup.",
+    "No sprite slicing, conversion or runtime art wiring performed. huntingArtReady must remain false."
+  ],
+  "states": [
+    "idle",
+    "alert",
+    "windup",
+    "strike",
+    "hurt",
+    "fallen"
+  ]
+}

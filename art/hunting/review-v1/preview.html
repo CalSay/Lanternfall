@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lanternfall — Hunting Grounds preview</title>
+<style>
+:root{color-scheme:dark;font-family:Georgia,'Times New Roman',serif;color:#eee1c7;background:#101014}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#272032,#101014 70%);min-height:100vh}
+main{max-width:1020px;margin:auto;padding:28px 24px 32px}.eyebrow{font:11px/1.5 system-ui;letter-spacing:.2em;color:#bba981;text-transform:uppercase}
+header{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:18px}h1{font-size:30px;font-weight:400;line-height:1.15;margin:5px 0 0}.tag{font:12px system-ui;color:#d5b878;border:1px solid #625033;border-radius:20px;padding:7px 11px;white-space:nowrap}
+.stage{position:relative;overflow:hidden;background:#1b2021;border:1px solid #574c39;border-radius:9px;box-shadow:0 18px 50px #0008;aspect-ratio:740/360}
+canvas{display:block;width:100%;height:100%;image-rendering:auto}
+.hud{position:absolute;top:15px;left:17px;pointer-events:none;text-shadow:0 2px 5px #000}.hud strong{display:block;font-size:19px;font-weight:400}.hud span{font:11px system-ui;letter-spacing:.11em;color:#e0d0a9}
+.beast-label{position:absolute;top:40%;left:49%;width:24%;text-align:center;text-shadow:0 2px 4px #000}.beast-label b{display:block;font-size:14px;font-weight:400}.beast-label small{font:11px system-ui;color:#d3c4a3}.hp{height:4px;background:#171514c9;margin:7px auto 0;width:83%;border-radius:2px;overflow:hidden}.hp i{display:block;height:100%;width:100%;background:#c78662;transition:width .18s}
+.controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-top:20px}label{display:grid;gap:7px;font:12px system-ui;color:#b8ac95;flex:1;min-width:150px}select,button{font:14px system-ui;color:#eadfc9;background:#25222b;border:1px solid #51483d;border-radius:6px;min-height:43px;padding:10px 13px}select{width:100%}button{cursor:pointer;white-space:nowrap}button:hover{background:#36303a}button:focus-visible,select:focus-visible{outline:2px solid #ead098;outline-offset:3px}button.primary{background:#c6a268;color:#211b14;border-color:#dfbc80;font-weight:600}button.primary:hover{background:#deba80}button:disabled{opacity:.5;cursor:default}
+.note{display:flex;justify-content:space-between;gap:20px;font:12px/1.6 system-ui;color:#b7ac9c;margin-top:14px}.note p{margin:0;max-width:620px}.status{color:#ddc998;white-space:nowrap}
+details{font:12px/1.7 system-ui;color:#c2b5a0;margin-top:24px;border-top:1px solid #36313a;padding-top:14px}summary{cursor:pointer;color:#d2c2a6}details ul{padding-left:18px;max-width:780px}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:#16151b}.loading[hidden]{display:none}
+@media(max-width:600px){main{padding:18px 12px}h1{font-size:24px}header{align-items:center}.tag{font-size:10px;padding:6px 8px}.controls{gap:8px;margin-top:14px}label{min-width:135px}button{flex:1}.hud{top:9px;left:10px}.hud strong{font-size:13px}.hud span{font-size:8px}.beast-label b{font-size:10px}.beast-label small{font-size:8px}.beast-label{top:36%;width:34%;left:44%}.hp{margin-top:4px;height:3px}.note{display:block}.status{margin-top:7px!important}}
+@media(prefers-reduced-motion:reduce){.hp i{transition:none}}
+</style></head><body><main>
+<header><div><div class="eyebrow">Lanternfall · Art direction</div><h1>The Hunting Grounds</h1></div><span class="tag">Shaded beasts · v3</span></header>
+<section class="stage" aria-label="Hunting scene preview">
+<canvas id="scene" width="1480" height="720" aria-label="A hero faces a hostile beast in a forest clearing"></canvas>
+<div class="hud"><span>MOSSY HOLLOW</span><strong>Hunting Grounds</strong></div>
+<div class="beast-label"><b id="beast-name">Enraged Boar</b><small id="beast-drop">Rawhide · Hunting level 1</small><div class="hp"><i id="hp"></i></div></div>
+<div class="loading" id="loading">Preparing the clearing…</div>
+</section>
+<div class="controls">
+<label>Hero<select id="hero"><option value="0">Wren</option><option value="1">Tobin</option><option value="2">Pip</option></select></label>
+<label>Beast<select id="beast"><option value="0">Enraged Boar</option><option value="1">Bristleback Wolf</option><option value="2">Fen Lizard</option></select></label>
+<label>Beast pose<select id="pose"><option value="0">Idle</option><option value="1">Alert</option><option value="2">Crouch</option><option value="3">Attack</option><option value="4">Hit reaction</option><option value="5">Defeated</option></select></label>
+<button class="primary" id="strike" type="button">Show a strike</button>
+<button id="sequence" type="button">Play hunting sequence</button>
+</div>
+<section aria-label="All six beast poses" style="margin-top:22px"><div class="eyebrow">All six poses · selected beast</div><canvas id="poses" width="1480" height="280" style="width:100%;height:auto;margin-top:8px;background:#1b1922;border-radius:8px" aria-label="Idle, alert, crouch, attack, hit reaction and defeated poses"></canvas></section>
+<div class="note"><p>Draft art at game scale. This is a visual preview; its strike timing and progress bar do not set Hunting's gameplay balance.</p><p class="status" id="status" aria-live="polite">Ready in the clearing</p></div>
+<details><summary>What still needs polishing</summary><ul><li>The heroes now use forward spear thrusts, aligned to each beast’s silhouette at impact.</li><li>Sprite edges, frame alignment and the background's level of detail need a final pass at phone size.</li><li>The separate spark/effect draft has unwanted glow and is excluded from this preview.</li><li>No existing game art has been replaced. Hunting remains hidden in the game until the whole pack is approved.</li></ul></details>
+</main><script src="frames.js?v=beast-shading-v3"></script><script>
+(()=>{
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+const names=['Wren','Tobin','Pip'],beasts=['Enraged Boar','Bristleback Wolf','Fen Lizard'];
+const drops=['Rawhide · Hunting level 1','Leather · Hunting level 14','Wolfhide · Hunting level 30'];
+const heroSelect=document.getElementById('hero'),beastSelect=document.getElementById('beast');
+const strike=document.getElementById('strike'),sequence=document.getElementById('sequence'),status=document.getElementById('status');
+let hero=0,beast=0,heroPose=2,beastPose=0,hp=100,busy=false,token=0,art={},heroOffset=0,beastOffset=0;
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const load=src=>new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(Error('Could not load '+src));i.src=src;});
+function sprite(key,row,col,x,ground,targetHeight){
+ const frames=HUNTING_FRAMES[key].frames, f=frames[row][col], ref=frames[row][key==='heroes'?1:0];
+ const scale=targetHeight/ref.h;
+ ctx.drawImage(art[key],f.x,f.y,f.w,f.h,x-f.anchor*scale,ground-f.h*scale,f.w*scale,f.h*scale);
+}
+function draw(){
+ const rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+ const width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);
+ if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+ ctx.setTransform(width/740,0,0,height/360,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.clearRect(0,0,740,360);
+ ctx.drawImage(art.bg,0,0,740,370);
+ // Existing generated pixels only; no code-drawn props, creatures or effects.
+ sprite('heroes',hero,heroPose,247+heroOffset,282,hero===2?86:96);
+ sprite('beasts',beast,beastPose,452+beastOffset,282,beast===1?88:84);
+}
+new ResizeObserver(()=>{if(art.bg)draw();}).observe(canvas);
+function drawPoses(){
+ const strip=document.getElementById('poses'),c=strip.getContext('2d');
+ const width=Math.round(strip.getBoundingClientRect().width*(devicePixelRatio||1));
+ strip.width=width;strip.height=Math.round(width*140/740);
+ c.setTransform(width/740,0,0,width/740,0,0);c.clearRect(0,0,740,140);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+ const labels=['Idle','Alert','Crouch','Attack','Hit reaction','Defeated'];
+ const frames=HUNTING_FRAMES.beasts.frames[beast];
+ const scale=Math.min(98/Math.max(...frames.map(f=>f.w)),85/Math.max(...frames.map(f=>f.h)));
+ frames.forEach((f,i)=>{const center=(i+.5)*740/6;c.drawImage(art.beasts,f.x,f.y,f.w,f.h,center-f.w*scale/2,105-f.h*scale,f.w*scale,f.h*scale);c.fillStyle='#eadfc9';c.font='11px system-ui';c.textAlign='center';c.fillText(labels[i],center,127);});
+}
+new ResizeObserver(()=>{if(art.beasts)drawPoses();}).observe(document.getElementById('poses'));
+document.getElementById('pose').addEventListener('change',e=>{reset();beastPose=+e.target.value;status.textContent=e.target.selectedOptions[0].text+' pose';draw();});
+function setHp(v){hp=v;document.getElementById('hp').style.width=v+'%';}
+function reset(){
+ token++;busy=false;heroPose=2;beastPose=0;heroOffset=beastOffset=0;window.previewContact=null;setHp(100);strike.disabled=sequence.disabled=false;
+ status.textContent='Ready in the clearing';if(art.bg)draw();
+}
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,reduced?Math.min(ms,110):ms));}
+function contact(){
+ const h=HUNTING_FRAMES.heroes.frames[hero][1],b=HUNTING_FRAMES.beasts.frames[beast][beastPose];
+ const hs=(hero===2?86:96)/h.h,bs=(beast===1?88:84)/HUNTING_FRAMES.beasts.frames[beast][0].h;
+ const y=282-h.h*hs+h.tipY*hs;
+ const row=Math.round((y-(282-b.h*bs))/bs);
+ if(row<0||row>=b.h||b.front[row]===null)throw Error('Spear misses beast silhouette');
+ const surface=452-b.anchor*bs+b.front[row]*bs;
+ const tip=247+(h.w-1-h.anchor)*hs;
+ return {offset:surface+3-tip,tip:{x:surface+3,y},surface:{x:surface,y},hero:names[hero],beast:beasts[beast],penetration:3};
+}
+function move(id,ms,update){
+ return new Promise(resolve=>{
+  const start=performance.now();
+  function step(now){if(id!==token){resolve(false);return;}
+   const t=reduced?1:Math.min(1,(now-start)/ms);update(t);draw();
+   if(t===1)resolve(true);else requestAnimationFrame(step);
+  }requestAnimationFrame(step);
+ });
+}
+async function hit(id){
+ document.getElementById('pose').value='0';window.previewContact=null;heroPose=0;beastPose=1;heroOffset=-6;beastOffset=0;
+ status.textContent=names[hero]+' draws the spear back';draw();await wait(220);if(id!==token)return false;
+ beastPose=3;status.textContent=beasts[beast]+' attacks';draw();await wait(120);if(id!==token)return false;
+ const c=contact();heroPose=1;
+ if(!await move(id,170,t=>{heroOffset=-6+(c.offset+6)*t;}))return false;
+ window.previewContact=c;setHp(Math.max(0,hp-25));status.textContent='Spear makes contact';draw();
+ while(window.previewTestHold){await wait(16);if(id!==token)return false;}
+ await wait(110);if(id!==token)return false;
+ beastPose=4;status.textContent='Beast recoils';
+ if(!await move(id,100,t=>{beastOffset=4*t;}))return false;
+ heroPose=2;
+ if(!await move(id,220,t=>{heroOffset=c.offset*(1-t);beastOffset=4*(1-t);} ))return false;
+ beastPose=hp<=0?5:0;status.textContent=hp<=0?'Beast down · Hide gathered':'Back to ready';draw();await wait(200);return id===token;
+}
+async function play(all){
+ if(busy)return;if(hp<=0)reset();busy=true;strike.disabled=sequence.disabled=true;const id=++token;
+ if(all)setHp(100);
+ for(let i=0;i<(all?4:1);i++){if(!await hit(id))return;}
+ if(all){await wait(950);if(id!==token)return;setHp(100);beastPose=0;status.textContent='A new beast enters the clearing';draw();}
+ busy=false;strike.disabled=sequence.disabled=false;
+}
+heroSelect.addEventListener('change',()=>{hero=+heroSelect.value;reset();canvas.setAttribute('aria-label',names[hero]+' faces '+beasts[beast]+' in a forest clearing');});
+beastSelect.addEventListener('change',()=>{beast=+beastSelect.value;document.getElementById('pose').value='0';drawPoses();document.getElementById('beast-name').textContent=beasts[beast];document.getElementById('beast-drop').textContent=drops[beast];reset();canvas.setAttribute('aria-label',names[hero]+' faces '+beasts[beast]+' in a forest clearing');});
+strike.addEventListener('click',()=>play(false));sequence.addEventListener('click',()=>play(true));
+Promise.all([load('hunting-grounds-draft.png'),load(HUNTING_FRAMES.heroes.file),load(HUNTING_FRAMES.beasts.file+'?v=shading-v3')]).then(([bg,heroes,beasts])=>{art={bg,heroes,beasts};draw();drawPoses();document.getElementById('loading').hidden=true;window.previewReady=true;}).catch(e=>{document.getElementById('loading').textContent=e.message;});
+})();
+</script></body></html>
