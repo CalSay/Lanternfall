@@ -58,7 +58,7 @@ let deedsUI = null;
     const ic = ICON[SLOT_IC[slot]] ? SLOT_IC[slot] : 'charm';
     return iconURL(ic, lookCol(slot, id));
   };
-  const trophyURL = id => (typeof featTrophyURL === 'function' && safe(() => featTrophyURL(id), '')) || CUP();
+  const trophyURL = id => FE[id] && FE[id].legacy ? iconURL(FE[id].ic, '#F2C14E') : (typeof featTrophyURL === 'function' && safe(() => featTrophyURL(id), '')) || CUP();
   const groupIc = g => iconURL(...(g && g.ic ? g.ic : ['banner', '#F2C14E']));
 
   // ---------------- small shared reads ----------------
@@ -253,7 +253,7 @@ let deedsUI = null;
       const T = DEED_PTS;
       src.append(el('h3', 'dd-h', 'Where points come from'));
       for (const [a, b] of [['Tiers', `Bronze ${T.tier[0]}, Silver ${T.tier[1]}, Gold ${T.tier[2]}, Everflame ${T.tier[3]}, each star ${T.star}`], ['Groups', `every track at Gold ${T.grpGold}, at Everflame ${T.grpEver}`],
-        ['Feats', `${T.feat} each (Lanternfall ${T.capstone})`], ['Secrets', `${T.secret} each`], ['Classic', `${T.classic} each`], ['Chapters', `${T.chStep} a step, ${T.chDone} when done`]]) {
+        ['Hard feats', `${T.feat} each (Lanternfall ${T.capstone})`], ['Secrets', `${T.secret} each`], ['Milestone feats', `${T.milestone} each`], ['Chapters', `${T.chStep} a step, ${T.chDone} when done`]]) {
         const r = el('div', 'dd-kv'); r.append(el('b', null, a), el('span', null, b)); src.append(r);
       }
       api.body.append(src);
@@ -293,9 +293,9 @@ let deedsUI = null;
     update(force) {
       const t = Date.now(); if (!force && t - tracksAt < 1000) return; tracksAt = t;
       const groups = deeds.groups();
-      if (curGroup !== 'classic' && !groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : 'classic';
+      if (!groups.some(g => g.id === curGroup)) curGroup = groups.length ? groups[0].id : null;
       // chips
-      const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup + '|' + classicGot();
+      const csig = groups.map(g => g.id + g.atGold + '/' + g.atEver + '/' + g.tracks + g.lv).join() + '|' + curGroup;
       if (csig !== chipsSig) {
         chipsSig = csig; tv.chips.textContent = '';
         for (const g of groups) {
@@ -305,13 +305,7 @@ let deedsUI = null;
           c.addEventListener('click', () => { curGroup = g.id; tracksSig = ''; chipsSig = ''; runTracks(); });
           tv.chips.append(c);
         }
-        const c = btn('dd-chip' + (curGroup === 'classic' ? ' on' : ''));
-        c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', String(curGroup === 'classic'));
-        c.append(img(iconURL('banner', '#F2C14E')), el('b', null, 'Classic'), el('span', null, `${classicGot()}/${ACH_API.list.length}`));
-        c.addEventListener('click', () => { curGroup = 'classic'; tracksSig = ''; chipsSig = ''; runTracks(); });
-        tv.chips.append(c);
       }
-      if (curGroup === 'classic') return classicUpdate(force);
       const g = groups.find(x => x.id === curGroup);
       const rows = deeds.tracks(curGroup);
       const sig = curGroup + '|' + rows.map(r => r.id).join();
@@ -343,25 +337,6 @@ let deedsUI = null;
     tv.head.append(a, b);
     if (g.fresh) tv.head.append(el('p', 'note', `${g.fresh} new track${g.fresh > 1 ? 's' : ''} to catch up. Your reward stays yours.`));
   }
-  // ---- the Classic 22 (56-achievements.js, unchanged) ----
-  const classicGot = () => ACH_API.list.filter(a => S.achievements.got[a.id]).length;
-  function classicUpdate(force) {
-    const got = S.achievements.got;
-    const sig = 'classic|' + ACH_API.list.map(a => got[a.id] ? 1 : Math.floor(Math.min(1, safe(() => a.cur(), 0) / a.need) * 50)).join();
-    if (sig === tracksSig && !force) return;
-    tracksSig = sig; tv.list.textContent = ''; tv.rows.clear(); tv.head.textContent = '';
-    tv.head.append(el('p', 'note', `The first achievements. Each gives a small bonus for good and ${DEED_PTS.classic} points.`));
-    for (const a of ACH_API.list) {
-      const on_ = !!got[a.id], c = Math.min(a.need, safe(() => a.cur(), 0));
-      const row = el('div', 'dd-trow classic' + (on_ ? ' done' : ''));
-      const ic = el('span', 'dd-ric'); ic.append(img(iconURL(a.ic, on_ ? '#F2C14E' : '#8A7F96')));
-      const tx = el('span', 'dd-rtx'); const top = el('span', 'dd-ttop'); top.append(el('b', null, a.name), el('span', 'dd-fx', ACH_API.bonusText(a)));
-      const bar = el('span', 'dd-bar'), fill = el('i'); bar.append(fill); fill.style.width = pctW(on_ ? 1 : c / a.need);
-      tx.append(top, el('span', 'dd-rsub', a.desc + (on_ ? (typeof got[a.id] === 'number' && got[a.id] > 1 ? ` · ${dateTxt(got[a.id])}` : ' · done') : ` · ${fmt(c)} / ${fmt(a.need)}`)), bar);
-      row.append(ic, tx); tv.list.append(row);
-    }
-  }
-
   // ---- a track's detail sheet ----
   function trackSheet(id) {
     const t = TR[id]; if (!t) return;
@@ -420,7 +395,7 @@ let deedsUI = null;
     id: 'ach-feats', view: 'ach-feats',
     mount(sec) {
       sec.classList.add('dd-sec');
-      fv.intro = el('p', 'note', 'Feats are the hardest deeds. Each one takes weeks or months and gives a title and a new look. None adds power.');
+      fv.intro = el('p', 'note', 'Milestone feats give a small permanent bonus. Harder feats earn titles and looks. Each reward is shown below.');
       fv.grid = el('div', 'dd-fgrid');
       fv.sh = el('h3', 'dd-h', 'Secrets');
       fv.sgrid = el('div', 'dd-sgrid');
@@ -453,7 +428,7 @@ let deedsUI = null;
         const rw = el('span', 'dd-frw');
         const lk = LK[f.look];
         if (lk) rw.append(img(lookIcon(lk.slot, lk.id)));
-        rw.append(el('span', null, f.title));
+        rw.append(el('span', null, f.bonusTxt || f.title));
         if (wall.includes(f.id)) rw.append(el('span', 'dd-pin', 'Pinned'));
         c.append(rw);
         c.addEventListener('click', () => featSheet(f.id));
@@ -500,22 +475,22 @@ let deedsUI = null;
         api.body.append(parts);
         const lk = LK[f.look];
         const rw = el('div', 'dd-srw');
-        const t1 = el('div', 'dd-kv'); t1.append(el('b', null, 'Title'), el('span', null, f.title)); rw.append(t1);
+        const t1 = el('div', 'dd-kv'); t1.append(el('b', null, f.legacy ? 'Bonus' : 'Title'), el('span', null, f.bonusTxt || f.title)); rw.append(t1);
         if (lk) { const t2 = el('div', 'dd-kv'); t2.append(el('b', null, DEED_SLOT_TXT[lk.slot]), el('span', null, lk.n)); rw.append(t2); }
         const t3 = el('div', 'dd-kv'); t3.append(el('b', null, 'Points'), el('span', null, String(f.pts))); rw.append(t3);
         const t4 = el('div', 'dd-kv'); t4.append(el('b', null, 'About'), el('span', null, f.about)); rw.append(t4);
         api.body.append(rw);
-        if (f.got) api.body.append(el('p', 'note', `Earned on ${dateLong(f.at)}.`));
+        if (f.got) api.body.append(el('p', 'note', f.at > 1 ? `Earned on ${dateLong(f.at)}.` : 'Earned.'));
         const foot = el('div', 'dd-sfoot');
         if (f.got && lk && deeds.owned(lk.id)) {
           const worn = deeds.wearGet(lk.slot) === lk.id;
           foot.append(btn('mini' + (worn ? '' : ' go'), worn ? 'Wearing it' : 'Wear it', () => { if (!worn && deeds.wear(lk.slot, lk.id)) { lookSig = ''; draw(); } }));
         }
         const wall = deeds.wall(), pinned = wall.includes(id);
-        if (f.got) foot.append(btn('mini', pinned ? 'Unpin from the wall' : 'Pin to the wall', () => {
+        if (f.got && !f.legacy) foot.append(btn('mini', pinned ? 'Unpin from the wall' : 'Pin to the wall', () => {
           const w = deeds.wall(); deeds.pin(pinned ? w.filter(x => x !== id) : w.concat(id)); featsSig = ''; draw();
         }));
-        if (f.got) foot.append(el('span', 'note', pinned ? `Pinned: ${wall.length} of 12.` : 'Your Trophy Wall at camp shows it.'));
+        if (f.got && !f.legacy) foot.append(el('span', 'note', pinned ? `Pinned: ${wall.length} of 12.` : 'Your Trophy Wall at camp shows it.'));
         api.body.append(foot);
       };
       draw();
@@ -671,6 +646,7 @@ let deedsUI = null;
   const cardQ = [];
   let cardOpen = false;
   function featCard(id, kind) {
+    if (FE[id] && FE[id].legacy) return;
     cardQ.push({ id, kind: kind || 'feat' });
     if (!cardOpen) nextCard();
   }

@@ -125,6 +125,17 @@ function validateSave(data) {
       else if (typeof v !== typeof d) fail(p, 'has the wrong type');
     };
     const defaults = fresh(); shape(data, defaults, 'save');
+    // C11: accept and validate the retired optional v5 record before Deeds absorbs it.
+    if (data.achievements !== undefined) {
+      const a = data.achievements; record(a, 'achievements');
+      if (a.got !== undefined) {
+        record(a.got, 'achievements.got');
+        for (const [id, v] of Object.entries(a.got)) if (typeof v !== 'boolean') num(v, 'achievements.got.' + id);
+      }
+      if (a.forged !== undefined) int(a.forged, 'achievements.forged');
+      for (const k of ['init', 'epic']) if (a[k] !== undefined && typeof a[k] !== 'boolean') fail('achievements.' + k, 'has the wrong type');
+    }
+    if (data.deeds && data.deeds.n && data.deeds.n.forged !== undefined) int(data.deeds.n.forged, 'deeds.n.forged');
     for (const k of ['xp', 'embers', 'kills', 'totalKills', 'totalGold', 'gProg']) if (has(data, k)) num(data[k], k);
     if (has(data, 'name')) text(data.name, 'name');
     if (has(data, 'last')) num(data.last, 'last', 0, 864e13);

@@ -129,7 +129,7 @@ let featTrophyURL, trophyWall;
   function earned() {
     const d = DS(); if (!d) return [];
     const at = d.at || {}, out = [];
-    const feats = (typeof DEED_FEATS === 'object' ? DEED_FEATS : []).filter(f => d.feat && d.feat[f.id]);
+    const feats = (typeof DEED_FEATS === 'object' ? DEED_FEATS : []).filter(f => !f.legacy && d.feat && d.feat[f.id]);
     feats.sort((a, b) => (at[b.id] || 0) - (at[a.id] || 0));
     for (const f of feats) out.push({ kind: 'feat', id: f.id });
     for (const c of (typeof DEED_CHAPTERS === 'object' ? DEED_CHAPTERS : [])) if (d.ch && (+d.ch[c.id] || 0) >= c.steps) out.push({ kind: 'ch', id: c.id });

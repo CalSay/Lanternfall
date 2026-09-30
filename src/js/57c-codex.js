@@ -31,7 +31,7 @@
 //   codexMilestone { at, rewards }, codexOpen { page } (UI: open the Codex sheet), codexInit { light }.
 // Listens: kill (champions), itemAdded / reforged (affixes, Masterwork), synergyChange, bondLevel, harvest,
 //   trophy, and marks pages dirty on recruit, promote, charLevel, campBuilt, omen,
-//   weeklyClaim, achievement, zoneClear, loot, transmuted, crafted.
+//   weeklyClaim, deedFeat, zoneClear, loot, transmuted, crafted.
 // Hooks: setBlessingGate (57-camp), registerGoal (Next Up), registerAwayLine, addModifier for the
 //   Seal keys, addBonus: deepOil, and three
 //   stored-for-later keys nothing reads yet: bag, buildQueue, deepRerolls.
@@ -235,10 +235,10 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   // ---------------- 13. Achievements x2 ----------------
   page('achievements', {
     n: 'Achievements', bless: 'oath', seal: { key: 'essence', v: 0.02, txt: '+2% essence' }, title: 'the Accomplished', pic: 'rows',
-    show: () => typeof ACH_API === 'object',
-    tiles: x => ACH_API.list.map(a => {
-      const got = S.achievements.got[a.id] ? 1 : 0;
-      return { key: a.id, n: a.name, got, max: 1, pts: got * 4, ptsMax: 4, ic: [a.ic, '#F2C14E'], sub: got ? ACH_API.bonusText(a) : '', hint: got ? '' : a.desc + '.' };
+    show: () => typeof deeds === 'object',
+    tiles: x => deeds.milestones().map(a => {
+      const got = a.got ? 1 : 0;
+      return { key: a.legacy, n: a.n, got, max: 1, pts: got * 4, ptsMax: 4, ic: [a.ic, '#F2C14E'], sub: got ? a.bonusTxt : '', hint: got ? '' : a.needs + '.' };
     })
   });
   // ---------------- 14. Wardrobe (locked until the Deepwell shop exists) ----------------
@@ -294,7 +294,7 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   on('reforged', ({ item }) => { markAff(item); dirty = true; });
   on('harvest', ({ kind, t }) => { if (CRAFT_FAMILIES.includes(kind) && t >= 1 && t <= 5) R().mat[kind] = (R().mat[kind] | 0) | (1 << (t - 1)); dirty = true; });
   on('trophy', ({ i }) => { if (i >= 0 && i < 7) R().mat.troph = (R().mat.troph | 0) | (1 << i); dirty = true; });
-  for (const e of ['campBuilt', 'omen', 'weeklyClaim', 'achievement', 'zoneClear', 'loot', 'transmuted', 'crafted'])
+  for (const e of ['campBuilt', 'omen', 'weeklyClaim', 'deedFeat', 'zoneClear', 'loot', 'transmuted', 'crafted'])
     on(e, dirt);
 
   // ---------------- rewards: Seals (capped), milestones, the Blessing gate ----------------

@@ -86,6 +86,23 @@ const E2 = (g, src) => g.eval(src);
 // load paths they exercise keep their checks; section 'econ' checks that a v1 save is never read.
 const KEY = 'lanternfall.save.v5';   // W3-A
 
+// C11: fixture comparisons prove the retired record's conversion before checking every other field.
+function c11SaveSubsetDiff(saved, loaded) {
+  if (Object.hasOwn(loaded, 'achievements')) return 'C11: retired achievements record remains';
+  const { achievements: old, ...kept } = saved;
+  if (old) {
+    const d = loaded.deeds || {}, known = ['zone10', 'zone25', 'zone50', 'lv20', 'lv50', 'kill1k', 'kill25k', 'kill100k', 'gold1m', 'gold1b', 'mine25', 'wood25', 'smith25', 'forge1', 'forge25', 'epic', 'uniq1', 'uniq3', 'uniq7', 'bty10', 'bty50'];
+    for (const id of known) if (old.got && old.got[id]) {
+      const key = 'f_m_' + id, at = saved.deeds && saved.deeds.at && saved.deeds.at[key] || (typeof old.got[id] === 'number' ? old.got[id] : 0);
+      if (!d.feat || d.feat[key] !== 1) return 'C11: earned milestone missing: ' + id;
+      if (!d.at || d.at[key] !== at) return 'C11: earned milestone date changed: ' + id;
+    }
+    if (!d.n || !(d.n.forged >= (old.forged || 0))) return 'C11: lifetime crafting count lost';
+    if (old.epic && (!d.rec || d.rec.epic !== true)) return 'C11: epic crafting flag lost';
+  }
+  return subsetDiff(kept, loaded);
+}
+
 // ---- 1. dist syntax ----
 const distFile = path.join(ROOT, 'dist', 'lanternfall.html');
 if (SHARD && SHARD[0] !== 0) {}   // (shard 0 checks the dist file for everyone)
@@ -178,7 +195,7 @@ if (section('saves')) try {
     assert(old.v === 5, `${f}: is a v5 save`);
     const g = loadCore({ storage: memoryStorage({ [KEY]: raw }), extraSource: "registerState('zz_feature', { n: 0 });\n" });
     const S = JSON.parse(JSON.stringify(g.eval('S')));
-    const d = subsetDiff(old, S);
+    const d = c11SaveSubsetDiff(old, S);
     assert(!d, `${f}: every saved field is kept` + (d ? ': ' + d : ''));
     assert(S.zz_feature && S.zz_feature.n === 0, `${f}: a newly registered feature field is added with its default`);
     assert(Number.isFinite(g.fn.totalDps()) && g.fn.totalDps() > 0, `${f}: dps is finite`);
@@ -1708,7 +1725,7 @@ if (section('tools and Well Rested')) try {
   for (const f of ['save-early.json', 'save-late.json']) {
     const raw = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', f), 'utf8')); delete raw.rested;
     const h = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(raw) }) });
-    const d = subsetDiff(raw, JSON.parse(JSON.stringify(h.eval('S'))));
+    const d = c11SaveSubsetDiff(raw, JSON.parse(JSON.stringify(h.eval('S'))));
     assert(!raw.rested && h.eval('S.rested.left === 0 && mod("dmg") > 0') && !d && !h.errors.length, `${f}: a save without S.rested gets { left: 0 }, nothing lost` + (d ? ': ' + d : ''));
   }
   {
@@ -1945,7 +1962,7 @@ if (section('deeds')) try {
   const titles = E('deeds.titles()');
   assert(uniq(D.tracks.map(t => t.id)) && uniq(D.feats.map(f => f.id)) && uniq(D.secrets.map(s => s.id)) && uniq(D.looks.map(l => l.id)) && uniq(titles.map(t => t.id)) && uniq(D.groups.map(x => x.id)),
     `AD1 ids unique: ${D.tracks.length} tracks, ${D.feats.length} Feats, ${D.secrets.length} secrets, ${D.looks.length} looks, ${D.groups.length} groups`);
-  assert(D.tracks.length === 73 && D.feats.length === 16 && D.secrets.length === 13 && D.looks.filter(l => l.slot !== 'frame').length === 29 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 10, 'AD1 counts: 73 tracks, 16 Feats, 13 secrets, 29 accessories and 4 frames, 10 groups');
+  assert(D.tracks.length === 73 && D.feats.length === 37 && D.feats.filter(f => f.legacy).length === 21 && D.secrets.length === 13 && D.looks.filter(l => l.slot !== 'frame').length === 29 && D.looks.filter(l => l.slot === 'frame').length === 4 && D.groups.length === 10, 'AD1 counts: 73 tracks, 21 milestone and 16 hard Feats, 13 secrets, 29 accessories and 4 frames, 10 groups');
   const bad = D.tracks.filter(t => !(t.need.length === 4 && t.need.every((v, i) => i === 0 || v > t.need[i - 1]) && t.need[0] > 0) || !t.g || !D.groups.some(x => x.id === t.g) || (t.bonus && !(t.bonus in D.cap)));
   assert(!bad.length, 'AD1 every track rises tier to tier, sits in a group, and feeds a capped key' + (bad.length ? ': ' + bad.map(t => t.id).join(', ') : ''));
   // every look has exactly one source, and that source names it back
@@ -1959,9 +1976,9 @@ if (section('deeds')) try {
   const EXC = ['the Last Lantern'];
   const long = titles.filter(t => !EXC.includes(t.n) && (t.n.length > 14 || t.n.trim().split(/\s+/).length > 2));
   assert(!long.length && titles.filter(t => /^a_(g|e)_/.test(t.id)).length === 20 &&   // W2-B: solo lists 20 group titles (Companions is hidden)
-     D.feats.every(f => f.title) && D.secrets.every(s => s.title),
+     D.feats.every(f => f.title || f.bonus) && D.secrets.every(s => s.title),
     `AD1 titles are short epithets (<= 14 characters, <= 2 words): ${titles.length} listed now` + (long.length ? '; too long: ' + long.map(t => t.n).join(', ') : ''));
-  const allTitles = D.groups.flatMap(x => [x.gold, x.ever]).concat(D.feats.map(f => f.title), D.secrets.map(s => s.title), D.chapters.map(c => c.title), D.ladder.filter(m => m.title).map(m => m.title));
+  const allTitles = D.groups.flatMap(x => [x.gold, x.ever]).concat(D.feats.filter(f => f.title).map(f => f.title), D.secrets.map(s => s.title), D.chapters.map(c => c.title), D.ladder.filter(m => m.title).map(m => m.title));
   const tooLong = allTitles.filter(n => !EXC.includes(n) && (n.length > 14 || n.split(' ').length > 2));
   assert(allTitles.length === 56 && !tooLong.length, `AD1 all 56 designed titles fit the rule (${allTitles.length}; kept by name: ${EXC.join(', ')})` + (tooLong.length ? ': ' + tooLong.join(', ') : ''));
   const live = E('deeds.tracks().map(t => t.id)'), hidden = D.tracks.filter(t => !live.includes(t.id)).map(t => t.id);
@@ -2048,18 +2065,17 @@ if (section('deeds')) try {
     ['kill25k', 25000, 'dmg', 0.03], ['kill100k', 100000, 'keen', 0.015], ['gold1m', 1e5, 'keen', 0.01], ['gold1b', 1e7, 'keen', 0.015], ['mine25', 25, 'gatherSpeed', 0.03], ['wood25', 25, 'gatherSpeed', 0.03],
     ['smith25', 25, 'skillXp', 0.03], ['forge1', 1, 'skillXp', 0.02], ['forge25', 25, 'skillXp', 0.03], ['epic', 1, 'crit', 0.03], ['uniq1', 1, 'essence', 0.03], ['uniq3', 3, 'essence', 0.05],
     ['uniq7', 7, 'dmg', 0.05], ['bty10', 10, 'offline', 0.03], ['bty50', 50, 'keen', 0.015]];
-  assert(JSON.stringify(E('ACH_API.list.map(a => [a.id, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('ACH_API.list.map(a => ACH_API.bonusText(a)).join("|")').split('|').length === 21,
-    'AD2 the Classic 21: ids, thresholds and bonuses as ECON-A set them');
-  const noDeeds = (await import('./lib/core.mjs')).coreFiles().filter(f => !/^(23-data-deeds|58-deeds)\.js$/.test(f));
-  const achSums = h2 => h2.eval('(() => { const s = {}; for (const a of ACH_API.list) if (S.achievements.got[a.id]) s[a.bonus[0]] = (s[a.bonus[0]] || 0) + a.bonus[1]; return JSON.stringify(s); })()');
+  assert(JSON.stringify(E('DEED_FEATS.filter(a => a.legacy).map(a => [a.legacy, a.need, a.bonus[0], a.bonus[1]])')) === JSON.stringify(ACH0) && E('deeds.feats().filter(a => a.legacy).map(a => a.bonusTxt).join("|")').split('|').length === 21,
+    'AD2 the 21 milestone feats: ids, thresholds and bonuses as ECON-A set them');
   for (const f of FIX) {
     const raw = fixText(f);
-    const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) }), b = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }), files: noDeeds });
-    const atLoad = JSON.parse(a.eval('JSON.stringify(S)')), atLoadB = JSON.parse(b.eval('JSON.stringify(S)'));
-    delete atLoad.deeds; atLoad.last = atLoadB.last;
+    const a = loadCore({ seed: 3, storage: memoryStorage({ [KEY]: raw }) });
+    const atLoad = JSON.parse(a.eval('JSON.stringify(S)')), atLoadB = JSON.parse(raw);
     const lines = []; a.fn.on('whatsNew', w => lines.push(w.msg)); a.fn.on('toast', t => lines.push(t.msg));
-    for (let i = 0; i < 15; i++) { a.fn.tick(0.1); b.fn.tick(0.1); }
-    assert(achSums(a) === achSums(b), `AD2 ${f}: Classic sums match the build without deeds ${achSums(a)}`);
+    for (let i = 0; i < 15; i++) { a.fn.tick(0.1); }
+    const sums = {};
+    for (const [id, need, key, v] of ACH0) if (atLoadB.achievements.got[id]) sums[key] = (sums[key] || 0) + v;
+    assert(Object.entries(sums).every(([k, v]) => Math.abs(a.eval(`deeds.milestoneBonus(${JSON.stringify(k)})`) - v) < 1e-12), `AD2 ${f}: converted rewards retain the saved milestone sums`);
     for (let i = 0; i < 15; i++) a.fn.tick(0.1);
     const A = s => a.eval(s);
     const deedLines = lines.filter(m => /deeds so far|achievement points|\((Bronze|Silver|Gold|Everflame)\)|^Feat:|Everflame ★|every track at/.test(m));
@@ -2070,10 +2086,10 @@ if (section('deeds')) try {
     const c = loadCore({ seed: 4, storage: memoryStorage({ [KEY]: a.storage.get(KEY) }) });
     const again = []; c.fn.on('deedTier', x => again.push(x.id)); c.fn.on('deedsInit', () => again.push('init')); c.fn.on('whatsNew', w => { if (/deeds so far/.test(w.msg)) again.push('line'); });
     const back = JSON.parse(c.eval('JSON.stringify(S)'));
-    const rt = deepDiff(JSON.parse(snap), back), old = Object.keys(JSON.parse(raw)).filter(k => k !== 'deeds').map(k => deepDiff(atLoadB[k], atLoad[k], k)).find(Boolean) || null;   // the save's own fields load as they do without deeds
+    const rt = deepDiff(JSON.parse(snap), back), old = Object.keys(JSON.parse(raw)).filter(k => !['deeds', 'achievements', 'last'].includes(k)).map(k => subsetDiff(atLoadB[k], atLoad[k], k)).find(Boolean) || null;   // conversion preserves every unrelated saved field
     c.eval('S.activity = "gather"'); for (let i = 0; i < 30; i++) c.fn.tick(0.1);
     assert(!again.length, `AD3 ${f}: a second load grants nothing` + (again.length ? ': ' + again.join(' ') : ''));
-    assert(!rt && !old && back.deeds && back.deeds.init > 0, `AD6 ${f}: save and load round-trip with S.deeds; the save's own fields load exactly as they do without deeds` + (rt ? ' RT ' + rt : '') + (old ? ' OLD ' + old : ''));
+    assert(!rt && !old && back.deeds && back.deeds.init > 0, `AD6 ${f}: save and load round-trip with S.deeds; unrelated saved fields are preserved` + (rt ? ' RT ' + rt : '') + (old ? ' OLD ' + old : ''));
     assert(!a.errors.length && !c.errors.length, `${f}: no errors` + (a.errors.length ? ': ' + a.errors[0] : c.errors.length ? ': ' + c.errors[0] : ''));
   }
 
@@ -2467,7 +2483,7 @@ if (section('wall')) try {
   for (let i = 0; i < 30; i++) w.fn.tick(0.1);
   const art = W(`(() => {
     const TW = trophyWall, bad = [], seen = new Set(), hex = c => /^#[0-9A-F]{6}$/i.test(c);
-    for (const f of DEED_FEATS) {
+    for (const f of DEED_FEATS.filter(f => !f.legacy)) {
       const m = TW.TROPHY[f.id];
       if (!m) { bad.push(f.id + ' no trophy'); continue; }
       if (m.length !== 12 || m.some(r => r.length !== 12)) bad.push(f.id + ' not 12 x 12');
@@ -2482,7 +2498,7 @@ if (section('wall')) try {
     const its = [{ kind: 'ch', id: 'ch1' }, { kind: 'ch', id: 'ch2' }].concat(DEED_GROUPS.map(g => ({ kind: 'grp', id: g.id, lv: 1 })), DEED_GROUPS.map(g => ({ kind: 'grp', id: g.id, lv: 2 })));
     for (const it of its) for (const f of [0, 1]) { const px = TW.itemPx(it, f); if (!px.length || !px.every(([x, y, c]) => x >= 0 && y >= 0 && x < 12 && y < 12 && hex(c))) bad.push(it.kind + ':' + it.id + ' pixels'); }
     const p0 = JSON.stringify(TW.itemPx({ kind: 'ch', id: 'ch1' }, 0)), p1 = JSON.stringify(TW.itemPx({ kind: 'ch', id: 'ch1' }, 1));
-    const urls = DEED_FEATS.filter(f => !/^data:image/.test(featTrophyURL(f.id))).map(f => f.id);
+    const urls = DEED_FEATS.filter(f => !f.legacy && !/^data:image/.test(featTrophyURL(f.id))).map(f => f.id);
     return { bad, stir: p0 !== p1, urls, none: featTrophyURL('nope') === '', hooks: [0, 1, 2, 3].map(TW.hooks) };
   })()`);
   assert(!art.bad.length, 'wall: 19 Feat trophies (12 x 12, B1 tones, ink outline, each its own), pennants and 11 group medals at Gold and Everflame' + (art.bad.length ? ': ' + art.bad.slice(0, 6).join('; ') : ''));
@@ -2798,7 +2814,7 @@ if (section('nav')) try {
     const sk = E('skillOf(S.node.kind)');
     const cur = JSON.parse(E('JSON.stringify(S)')); delete cur.party; const o2 = Object.assign({}, old); delete o2.party;   // the party's own migrations (F1) are checked in their sections
     if (o2.stars) o2.stars = Object.assign({}, o2.stars, { v: cur.stars.v });   // S2: the star maps' v 1 -> 2 (checked in 'classes')
-    const d = subsetDiff(o2, cur);
+    const d = c11SaveSubsetDiff(o2, cur);
     assert(nav && nav.v === 1 && Array.isArray(nav.recent) && nav.last && ['mine', 'wood', 'forage'].every(k => k in nav.last)
       && !deepDiff(old.nav, nav) && !d && !g.errors.length,
       `${f}: S.nav loads as saved (last ${JSON.stringify(nav.last)}), no field lost` + (d ? ': ' + d : '') + (g.errors.length ? ': ' + g.errors[0] : ''));
@@ -3160,7 +3176,7 @@ if (section('types and statuses (S1)')) try {
       const h = loadCore({ seed: 75, storage: memoryStorage({ [KEY]: raw }) }), H = s => h.eval(s);
       const cmp = JSON.parse(raw); if (cmp.party) { delete cmp.party.field; delete cmp.party.cells; }
       if (cmp.stars) delete cmp.stars.v;   // S2: the star maps' v 1 -> 2 (checked in 'classes')
-      const d = subsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
+      const d = c11SaveSubsetDiff(cmp, JSON.parse(JSON.stringify(H('S'))));
       H('S.activity = "fight"; spawn()');
       for (let i = 0; i < 600; i++) h.fn.tick(0.1);
       H('save(); loadSave()');
@@ -3316,7 +3332,7 @@ if (section('econ (ECON-A)')) try {
   // No gold-gain source outside gear: every save field maxed, gold stays at the gear cap x the Omen
   E(`S.fortune = 999; S.precision = 15; S.relic.coin = 99; S.relic.edge = 5; S.maxZone = S.zone = 60;
     for (let z = 1; z <= 60; z++) S.mastery.zones[z] = 1e6; for (const k in BESTIARY_PERKS) S.mastery.types[k] = 1e6;
-    S.camp.open = true; S.camp.b.shrine = 3; S.camp.bless = ['edge', 'blade']; S.achievements.got = Object.fromEntries(ACH_API.list.map(a => [a.id, 1])); ACH_API.check(); gearDirty()`);
+    S.camp.open = true; S.camp.b.shrine = 3; S.camp.bless = ['edge', 'blade']; for (const f of DEED_FEATS.filter(f => f.legacy)) S.deeds.feat[f.id] = 1; deeds._rebuild(); gearDirty()`);
   for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   assert(E('MODS.get("gold").length') === 1 && E('goldMult()') === 1, `one gold modifier left (the Omen), and with it off goldMult() is x1 with no gear (${E('goldMult()')}; ${E('MODS.get("gold").length')} gold modifiers)`);
   E('S.items.push({ id: 90001, slot: "charm", t: 5, r: "legendary", plus: 10 }); S.equip.charm = 90001; gearDirty()');
@@ -3327,7 +3343,7 @@ if (section('econ (ECON-A)')) try {
   const raw = E('keenRaw()'), k = E('keen()'), src = E('keenSources().filter(x => x.v > 0).map(x => x.id)');
   // (W2-B/W2-A solo: Precision is gone (Training), so the sources rarely reach the cap: the pool is the sources' sum, at most +40%)
   assert(Math.abs(k - Math.min(raw, 0.4)) < 1e-12 && Math.abs(E('keenMult()') - (1 + k)) < 1e-12, `crit damage cap: the sources add to +${Math.round(raw * 100)}% (${src.join(', ')}), the pool gives +${Math.round(k * 100)}% (at most +40%)`);
-  E('S.precision = 0; S.relic.edge = 0; S.camp.bless = []; S.mastery.zones = {}; S.mastery.types = {}; S.achievements.got = {}; ACH_API.check()'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
+  E('S.precision = 0; S.relic.edge = 0; S.camp.bless = []; S.mastery.zones = {}; S.mastery.types = {}; for (const f of DEED_FEATS.filter(f => f.legacy)) delete S.deeds.feat[f.id]; deeds._rebuild()'); for (let i = 0; i < 5; i++) g.fn.tick(0.1);
   assert(E('RELICS[1].desc()') === '+2% crit damage per level.', 'player-facing text says "crit damage" (no "Keen")');
   // The ledger
   E('soloPick("wren"); S.gold = 1e6; S.econ.spent.up = 0'); const g0 = E('S.gold'); E('train(trainNext().move, "1")');
@@ -4388,10 +4404,10 @@ if (section('notices (W1-B)')) try {
   const pol = JSON.parse(E(`JSON.stringify({
     lv: [5, 10, 25].map(L => noticeChannel(noticeRule('', 'level'), 'Level ' + L + '. Your hero hits 4% harder.')),
     tab: [true, false].map(gd => noticeChannel(noticeRule('New tab: Gather. Mine ore and chop wood.'), 'New tab: Gather. Mine ore and chop wood.', {}, { guide: gd })),
-    go: ['You head to the Pine Grove.', 'You return to Batwing Caves.', 'Work starts on the Workbench, Lv 1. Ready in 10s.', 'The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.', 'Achievement: Trophy Hunter. +3% essence chance.'].map(m => noticeChannel(noticeRule(m), m)),
+    go: ['You head to the Pine Grove.', 'You return to Batwing Caves.', 'Work starts on the Workbench, Lv 1. Ready in 10s.', 'The fire catches. Hesketh: "Every road needs a place to come back to." See the Camp tab.'].map(m => noticeChannel(noticeRule(m), m)),
     fall: noticeChannel(noticeRule('', 'caption:fall'), ''), deeds: [1, 2, 3, 4].map(t => noticeChannel(noticeRule('', 'deed-tier'), 'x', { tier: t })) })`));
-  assert(pol.lv.join() === 'log,log,bell' && pol.tab.join() === 'log,pop' && pol.go.join() === 'none,none,none,log,none' && pol.fall === 'none' && pol.deeds.join() === 'log,log,bell,pop',
-    `policy: level ups go to the bell list (every 25th counts); "New tab" lines are quiet while the guide runs; "You head to", "Work starts", the old achievements say nothing; the fire goes to the bell list; no elder fall caption; Deeds Bronze/Silver quiet, Gold bell, Everflame pops (${JSON.stringify(pol)})`);
+  assert(pol.lv.join() === 'log,log,bell' && pol.tab.join() === 'log,pop' && pol.go.join() === 'none,none,none,log' && pol.fall === 'none' && pol.deeds.join() === 'log,log,bell,pop',
+    `policy: level ups go to the bell list (every 25th counts); "New tab" lines are quiet while the guide runs; "You head to", "Work starts" say nothing; the fire goes to the bell list; no elder fall caption; Deeds Bronze/Silver quiet, Gold bell, Everflame pops (${JSON.stringify(pol)})`);
   // audit 3.4: a brand-new game never reports "Lantern Light from your past deeds"
   const n = loadCore({ solo: true, seed: 6, cold: true }), nt = []; n.fn.on('toast', t => nt.push(t.msg));
   n.eval('soloPick("wren")'); for (let i = 0; i < 400; i++) n.fn.tick(0.1);
@@ -6161,6 +6177,128 @@ if (section('gatherer trait balance (C8)')) try {
   }
   assert(games.every(q=>!q.errors.length), 'C8: trait probes produce no core handler errors');
 } catch (e) { fail('C8 trait balance crashed: ' + (e.stack || e)); }
+
+// ---- C11: one achievement engine; current-v5 progress and reward equivalence ----
+if (section('milestone feats (C11)')) try {
+  const keys = ['keen', 'dmg', 'xp', 'skillXp', 'gatherSpeed', 'crit', 'essence', 'offline'];
+  const close = (a, b) => Math.abs(a - b) < 1e-12;
+  // Captured from the pre-C11 build at 3ddba26. Track rewards are a separate factor.
+  const expected = {
+    early: { sum: [0, 0, 0, .02, 0, 0, 0, 0], points: 45, light: 2, forged: 16, epic: false },
+    mid: { sum: [.045, 0, .03, .08, .06, .03, .03, .03], points: 535, light: 26, forged: 820, epic: true },
+    late: { sum: [.06, .06, .03, .08, .06, .03, .08, .03], points: 1520, light: 34, forged: 24356, epic: true }
+  };
+  for (const [name, want] of Object.entries(expected)) {
+    const raw = fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', `save-${name}.json`), 'utf8'), old = JSON.parse(raw);
+    const g = loadCore({ seed: 311, storage: memoryStorage({ [KEY]: raw }) }), E = s => g.eval(s);
+    const events = []; g.fn.on('deedFeat', x => events.push(x)); g.fn.on('toast', x => events.push(x));
+    const flags = E('Object.fromEntries(DEED_FEATS.filter(f => f.legacy && S.deeds.feat[f.id]).map(f => [f.legacy,S.deeds.at[f.id]]))');
+    assert(!deepDiff(flags, old.achievements.got) && E('!Object.hasOwn(S,"achievements") && typeof ACH_API === "undefined"'), `C11 ${name}: every saved earned flag/date transfers; retired state/API are absent`);
+    assert(keys.every((k, i) => close(E(`deeds.milestoneBonus('${k}')`), want.sum[i])) && E('deeds.points()') === want.points && E('statsApi.forged()') === want.forged && E('S.deeds.rec.epic') === want.epic, `C11 ${name}: measured milestone rewards, points and crafting counters unchanged`);
+    const page = E('codexPage("achievements")');
+    assert(page.light === want.light && page.ptsMax === 84 && page.max === 21 && page.half === (want.light >= 21) && !page.seal && !page.tiles.some(t => t.key.startsWith('f_m_')), `C11 ${name}: 21 fixed Codex tiles, 2 Light each, unchanged half/Seal gates`);
+    for (const k of keys.filter(k => k !== 'keen')) {
+      const withMilestones = E(`mod('${k}')`);
+      E('for (const f of DEED_FEATS.filter(f => f.legacy)) delete S.deeds.feat[f.id]; deeds._rebuild()');
+      const without = E(`mod('${k}')`);
+      E(`Object.assign(S.deeds.feat,${JSON.stringify(Object.fromEntries(Object.keys(old.achievements.got).map(id => ['f_m_' + id, 1])))});deeds._rebuild()`);
+      assert(close(withMilestones / without, 1 + want.sum[keys.indexOf(k)]), `C11 ${name}: ${k} retains its independent milestone multiplier`);
+    }
+    const code = E('encodeSave(S)'), decoded = E(`decodeSave(${JSON.stringify(code)})`);
+    assert(decoded.ok && !('achievements' in decoded.data), `C11 ${name}: new export contains only Deeds progress`);
+    const back = loadCore({ seed: 311, storage: memoryStorage({ [KEY]: JSON.stringify(decoded.data) }) });
+    const again = []; back.fn.on('deedFeat', x => again.push(x)); back.fn.on('toast', x => again.push(x));
+    g.fn.tick(1.1); back.fn.tick(1.1);
+    assert(!events.some(x => x.id || x.key === 'deed-milestone') && !again.some(x => x.id || x.key === 'deed-milestone') && back.eval('deeds.points()') === want.points && back.eval('statsApi.forged()') === want.forged, `C11 ${name}: first load, export/import and repeated load grant no duplicate feats or notices`);
+    assert(!g.errors.length && !back.errors.length, `C11 ${name}: no handler errors`);
+  }
+  const g = loadCore({ seed: 311 }), E = s => g.eval(s);
+  const base = E('JSON.stringify(S)'), rows = E('DEED_FEATS.filter(f => f.legacy)');
+  const mixed = JSON.parse(base);
+  mixed.deeds.n.forged = 30; mixed.deeds.rec.epic = true; mixed.deeds.feat.f_m_forge1 = 1; mixed.deeds.at.f_m_forge1 = 777;
+  mixed.achievements = { forged: 25, epic: false, init: true, got: { forge1: 123, zone10: true, ignored: 456 } };
+  const m = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(mixed) }) });
+  assert(m.eval('S.deeds.n.forged===30 && S.deeds.rec.epic && S.deeds.at.f_m_forge1===777 && S.deeds.feat.f_m_zone10===1 && Object.keys(S.deeds.feat).length===2 && !S.achievements'), 'C11 mixed v5 record: max counter, OR epic, original earned date and known flags survive once');
+  const converted = JSON.parse(m.eval('JSON.stringify(S)'));
+  const comparisonSave = { ...converted, achievements: mixed.achievements };
+  const convertedDiff = c11SaveSubsetDiff(comparisonSave, converted);
+  assert(!convertedDiff, 'C11 fixture comparison accepts preserved mixed progress after conversion' + (convertedDiff ? ': ' + convertedDiff : ''));
+  const damaged = change => { const s = JSON.parse(JSON.stringify(converted)); change(s); return !!c11SaveSubsetDiff(comparisonSave, s); };
+  assert(damaged(s => { delete s.deeds.feat.f_m_zone10; }) && damaged(s => { s.deeds.at.f_m_zone10 = 99; }) && damaged(s => { s.deeds.n.forged = 0; }) && damaged(s => { s.deeds.rec.epic = false; }), 'C11 fixture comparison rejects lost flags, dates, crafting counts and epic progress');
+  assert(damaged(s => { s.achievements = {}; }) && damaged(s => { s.gold++; }), 'C11 fixture comparison rejects retained legacy state and unrelated saved-field changes');
+  const all = JSON.parse(base);
+  all.achievements = { got: Object.fromEntries(rows.map((f, i) => [f.legacy, 100 + i])), forged: 99, epic: true, init: true };
+  all.deeds.feat.f_all = 1; all.deeds.at.f_all = 999; all.deeds.wall = ['f_all']; all.codex.title = 'a_f_all';
+  const allGame = loadCore({ storage: memoryStorage({ [KEY]: JSON.stringify(all) }) });
+  assert(allGame.eval('Object.keys(S.deeds.feat).length===22 && deeds.points()===460 && S.deeds.at.f_all===999 && S.codex.title==="a_f_all" && deeds.wall()[0]==="f_all"') && rows.every((f,i)=>allGame.eval(`S.deeds.at.${f.id}`)===100+i), 'C11 all 21 saved flags/dates survive alongside an earned capstone, selected title and trophy pin');
+  for (const a of [null, [], { got: [] }, { got: { forge1: 'yes' } }, { got: { forge1: -1 } }, { forged: -1 }, { forged: 1.5 }, { epic: 1 }, { init: 'yes' }]) {
+    const x = JSON.parse(base); x.achievements = a;
+    const raw = JSON.stringify(x), r = E(`validateSave(JSON.parse(${JSON.stringify(raw)}))`);
+    assert(!r.ok && E('JSON.stringify(S)') === base, 'C11 malformed optional v5 achievement record rejected without mutating game');
+  }
+  assert(E('(()=>{const s=fresh();s.deeds.n.forged=-1;return !validateSave(s).ok})()') && E('(()=>{const s=fresh();s.deeds.rec.epic=1;return !validateSave(s).ok})()'), 'C11 new counters reject negative counts and non-boolean epic flags');
+  // Exercise each earning boundary against its actual live statistic, then lower it again.
+  const stat = { zones:'S.maxZone', level:'S.L', slayer:'S.totalKills', gold:'S.totalGold', mine:'S.skills.mine.lv', wood:'S.skills.wood.lv', smith:'S.skills.smith.lv', made:'S.deeds.n.forged', wanted:'S.bounties.claimed' };
+  for (const f of rows) {
+    const h = loadCore({ seed: 311 }), H = s => h.eval(s);
+    H('deeds.check(true,true)');
+    const set = v => f.stat === 'curator' ? `S.found=Object.fromEntries(Object.keys(UNIQ).slice(0,${v}).map(k=>[k,1]))` : f.stat === 'epicCraft' ? `S.deeds.rec.epic=${!!v}` : `${stat[f.stat]}=${v}`;
+    H(set(f.need - 1) + ';deeds.check(true,true)'); const below = H(`!S.deeds.feat.${f.id}`);
+    H(set(f.need) + ';deeds.check(true,true)'); const earned = H(`S.deeds.feat.${f.id}===1`), reward = H(`deeds.milestoneBonus('${f.bonus[0]}')`), date = H(`S.deeds.at.${f.id}`);
+    H(set(0) + ';deeds.check(true,true)');
+    assert(below && earned && H(`S.deeds.feat.${f.id}===1 && S.deeds.at.${f.id}===${date}`) && close(H(`deeds.milestoneBonus('${f.bonus[0]}')`), reward), `C11 ${f.legacy}: exact earning boundary and permanent reward after statistic drops`);
+  }
+  const live = loadCore({ seed: 311 }), L = s => live.eval(s), notices = [];
+  live.fn.tick(1.1); live.fn.on('toast', x => notices.push(x));
+  L(`emit('itemAdded',{item:{u:'test',r:'epic'}});emit('itemAdded',{item:{r:'legendary'}})`);
+  assert(L('S.deeds.n.forged===1 && !S.deeds.rec.epic'), 'C11 item semantics: unique additions excluded; legendary does not invent epic credit');
+  live.fn.tick(.5); const beforeSecond = L('!S.deeds.feat.f_m_forge1'); live.fn.tick(.6);
+  L(`emit('itemAdded',{item:{r:'epic'}})`); live.fn.tick(1.1);
+  assert(beforeSecond && L('S.deeds.feat.f_m_forge1 && S.deeds.feat.f_m_epic && statsApi.forged()===2') && notices.filter(x => x.key === 'deed-milestone').length === 2, 'C11 live item additions earn once on the one-second cadence with one log notice each');
+  assert(L(`noticeChannel(noticeRule('', 'deed-milestone'),'')==='log' && !NOTICE_BY_KEY['ach-old']`), 'C11 notice policy: small milestone log replaces removed legacy rule');
+  E('for(const f of DEED_FEATS.filter(f=>f.legacy))S.deeds.feat[f.id]=1;for(const t of DEED_TRACKS)S.deeds.tier[t.id]=4;deeds._rebuild()');
+  assert(close(E('deeds.milestoneBonus("dmg")'), .14) && close(E('(1+deeds.milestoneBonus("dmg"))*(1+deedBonus("dmg"))'), 1.197) && close(E('deeds.milestoneBonus("keen")'), .10), 'C11 all milestone rewards retain 14% damage and 10% keen; capped track damage combines to x1.197');
+  E('DEED_TUNE.bonusOn=0'); assert(close(E('deeds.milestoneBonus("dmg")'), .14) && E('deedBonus("dmg")') === 0, 'C11 disabling track bonuses leaves milestone rewards intact');
+  E('keenSource("c11-saturation","test",()=>.5)'); assert(close(E('keen()'), .4), 'C11 milestone keen uses the shared 40% cap');
+  const cap = E('deeds.feats().find(f=>f.id==="f_all").parts[0]');
+  assert(cap.have === 0 && cap.need === E('DEED_FEATS.filter(f=>!f.legacy&&f.id!=="f_all"&&deeds.feats().some(x=>x.id===f.id)).length') && E('deeds.pin(["f_m_forge1"]).length===0 && !deeds.titles().some(t=>t.id.startsWith("a_f_m_"))'), 'C11 milestones add no capstone requirement, trophy pin, title or cosmetic');
+} catch (e) { assert(false, 'C11 milestone feats: ' + e.stack); }
+
+// ---- C11: unified milestone view, quiet conversion/reload and Journal counter in Chromium ----
+if (section('milestone feats UI (C11, browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C11 milestone UI: Playwright or Chromium unavailable');
+  else {
+    const source = fs.readFileSync(distFile, 'utf8'), end = source.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">' + source.slice(0, end) + '\n;window.__c11={x:s=>eval(s)};\n' + source.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const page = await browser.newPage({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true });
+      const errors = []; page.on('pageerror', e => errors.push(String(e)));
+      const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-early.json'), 'utf8'));
+      await page.addInitScript(({ key, data }) => { if (!localStorage.getItem(key)) { data.last = Date.now(); localStorage.setItem(key, JSON.stringify(data)); } }, { key: KEY, data: old });
+      await page.route('**/*', r => r.request().url() === 'http://c11.test/' ? r.fulfill({ status: 200, body: html, contentType: 'text/html; charset=utf-8' }) : r.abort());
+      await page.goto('http://c11.test/'); await page.waitForFunction(() => window.__c11);
+      const X = s => page.evaluate(s => window.__c11.x(s), s);
+      await X('soloPickerOpen=()=>true;document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());tick(1.1);deedsUI.open("feats");ui(true)');
+      assert(await page.locator('#ach-ft-f_m_forge1').count() === 1 && (await page.locator('#ach-ft-f_m_forge1').innerText()).includes('+2% skill XP'), 'C11 UI: converted First Spark appears once in the unified feat grid with its exact bonus');
+      assert(await page.locator('.dd-fc-ov').count() === 0 && await X('!Object.hasOwn(S,"achievements")'), 'C11 UI: legacy v5 load removes old state without opening feat cards');
+      await page.locator('#ach-ft-f_m_forge1').click();
+      const detail = await page.locator('.dd-sheet').innerText();
+      assert(detail.includes('Bonus') && detail.includes('+2% skill XP') && !detail.includes('undefined') && !detail.includes('Pin to the wall') && !detail.includes('Title'), 'C11 UI: milestone detail shows its reward and has no invented title or trophy controls');
+      await X('deedsUI.open("tracks");ui(true)');
+      assert(!await page.getByRole('tab', { name: /Classic/ }).count() && !await page.locator('.dd-trow.classic').count(), 'C11 UI: Classic group/grid are removed');
+      await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());uiPrefs.views.log="journal";openNoticeLog();ui(true)');
+      assert(await page.getByRole('button', { name: 'Items crafted: 16', exact: true }).count() === 1, 'C11 UI: Journal retains the lifetime crafting count');
+      await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());S.deeds.n.forged=25;tick(1.1);deedsUI.open("feats");ui(true)');
+      assert(await X('!!S.deeds.feat.f_m_forge25') && await page.locator('.dd-fc-ov').count() === 0 && (await page.locator('#ach-ft-f_m_forge25').innerText()).includes('+3% skill XP'), 'C11 UI: live Busy Anvil earning updates the grid without a hard-feat card');
+      await X('save()'); await page.reload(); await page.waitForFunction(() => window.__c11);
+      await X('soloPickerOpen=()=>true;document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());tick(1.1);deedsUI.open("feats");ui(true)');
+      assert(await X('statsApi.forged()===25 && !!S.deeds.feat.f_m_forge25 && !S.achievements') && await page.locator('.dd-fc-ov').count() === 0, 'C11 UI: converted save reload retains counters/feats quietly');
+      assert(!errors.length, 'C11 UI: no browser errors' + (errors.length ? ': ' + errors.join('; ') : ''));
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C11 milestone UI crashed: ' + (e.stack || e)); }
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
