@@ -796,7 +796,10 @@ if (section('art')) try {
     return { bad: [...new Set(bad)], classes: Object.keys(AK.CLASSES), chars: Object.keys(AK.CHARS), missing: roster.filter(k => !AK.CHARS[k]) };
   })()`);
   assert(r.classes.join() === 'warden,lanternmage,ranger,lightkeeper', 'four hero classes drawn: ' + r.classes.join(', '));
-  assert(r.chars.length === 18 && !r.missing.length, `every roster character has an outfit (${r.chars.length}${r.missing.length ? ', missing ' + r.missing.join(', ') : ''})`);
+  // C9: the 14 designed registry stubs intentionally have no outfit until their solo kits ship.
+  const expectedStubs = ['cass', 'loveday', 'davy', 'ferrin', 'linnet', 'oswin', 'hob', 'beatrix', 'eskil', 'brynja', 'inga', 'ragna', 'solveig', 'asta'];
+  assert(r.chars.length === 18 && r.missing.slice().sort().join() === expectedStubs.slice().sort().join(),
+    `the 18 shipped outfits remain, with exactly 14 designed registry stubs (${r.chars.length}${r.missing.length ? ', missing ' + r.missing.join(', ') : ''})`);
   assert(!r.bad.length, 'every outfit builds in every pose and tier without bad numbers' + (r.bad.length ? ': ' + r.bad.join(', ') : ''));
   assert(!g.errors.length, 'no art errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('art crashed: ' + (e.stack || e)); }
