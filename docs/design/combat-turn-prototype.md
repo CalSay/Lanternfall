@@ -1,6 +1,6 @@
 # C20: turn-based combat prototype
 
-Status: proposed, awaiting Claude's sign-off. Based on `8fc7107` and the latest
+Status: proposed, awaiting Claude's sign-off. Based on `badf298` and the latest
 [C20 direction](https://github.com/CalSay/Lanternfall/issues/21#issuecomment-5916888721).
 [Owner decisions](combat-turns.md) remain authoritative. No engine changes in this proposal.
 All numbers and implementation choices below are provisional unless already owner-decided.
@@ -61,8 +61,12 @@ Keep current counter strength initially; measure before tuning. With Attack C=1,
 its refund makes it ready early but never grants another action. Dodge blocks
 without counter or refund.
 
-Auto is an explicit toggle; no inactivity takeover. Changes apply at the next
-actor boundary. Auto uses the first ready equipped ability in bar order, otherwise
+Consume Claude's existing `S.solo.auto` (default true), `soloAuto()` and
+`soloSetAuto(v)`; add no second Auto-state field. The UI toggle changes immediately;
+only engine scheduling adopts its value at the next actor boundary. Preserve
+`soloActive() = !auto && !pageHidden` and the existing `soloGoIdle()`/`soloWake()`
+hidden-page handling; combat presses never flip Auto. Tests use `soloSetAuto(false)`
+for manual play. Auto uses the first ready equipped ability in bar order, otherwise
 Attack. Per enemy attack, roll parry at 10%, then dodge at 25% only on failure:
 32.5% combined avoidance. Caps are 30%/50%. Auto parry counters without refund
 (pending confirmation). Enchantments improve both Auto odds and manual windows;
@@ -70,7 +74,7 @@ prototype exposes modifiers without changing crafting data yet.
 
 ## Engine/UI contract
 
-Claude owns toggle, versus card, turn strip and action bar. Proposed events:
+Claude maintains the Auto toggle and owns the versus card, turn strip and action bar. Proposed events:
 
 - `fightStart {heroHaste, foeHaste, first}` once after creation; `first` is `hero`
   or `foe`. Core intro lasts 1.2 seconds manually, 0.6 in Auto. UI mirrors it;
@@ -112,3 +116,4 @@ Request narrow exceptions for live `50-sim.js` routing (away branch already assi
 Use existing shared state/check extension points. No shell/stage edits, crafting-stat
 rename or profile system in C20. Claude must approve these boundaries, provisional
 values, cooldown/training semantics and event timing before build work starts.
+
