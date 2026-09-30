@@ -29,6 +29,14 @@ Single-player depth. Do not change the online layer (world raid, tavern, leaderb
   phones (and desktop). Until the landscape layout lands (task UX-L1), the current portrait layout must
   keep working at 360px wide. Respects `prefers-reduced-motion`.
 
+## Art freeze (owner, 2026-09-30)
+
+- No art goes into the game until the owner has vetted the **whole pack** for that character or scene, and every piece
+  matches the others and suits the game. No partial packs, no stopgaps.
+- Effects and props (arrows, bow strings, tools, sparks, chips) come from the artist in the pack, drawn to match the
+  art. Agents do not draw art assets in code and do not tell the owner that code will add them.
+- Until then, agents do not wire, convert, retune or redraw art. Art tooling and art data files stay as they are.
+
 ## Shared online data (do not change shape without coordinator sign-off)
 
 - `world/boss` doc: `{gen, name, maxHp, spawnedAt}`.
