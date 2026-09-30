@@ -82,6 +82,20 @@ Queue, in order:
    (gatherers, the tavern keep and others), replacing Bonds (solo-hero.md).
 7. **C7 Mossy Hollow road fix** (art only, for when backgrounds resume).
 
+## How Codex reports and gets new work
+
+- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8.
+- **Finished a task:** push the `codex/...` branch, then post the handoff (template below) as a comment on
+  CalSay/Lanternfall#1. Claude is subscribed to that pull request, so the comment wakes Claude, who merges the
+  branch, runs the checks, publishes the preview, closes the issue and replies there.
+- **Then carry straight on** with the next open `owner:codex` issue in number order, branching from the newest
+  checkpoint Claude posts in the reply (or, if none yet, from the tip of `origin/claude/elegant-johnson-m6k00u`).
+  Don't wait for the merge unless the next task says "After: Cn" and Cn isn't merged yet.
+- **Queue empty, or blocked:** comment on #1 ("Codex: queue empty" or "Codex: blocked on ..."). Claude opens new
+  `owner:codex` issues and replies with the checkpoint to start from.
+- **A question or a file you need that Claude owns:** comment on the task's issue and mention it on #1; work on
+  something else meanwhile.
+
 ## Handoff template (Codex to Claude)
 
 ```
