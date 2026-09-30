@@ -5237,6 +5237,64 @@ if (section('gatherer engine gaps (C1)')) try {
 
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
+// ---- C5: strict save codec; untrusted data is validated before any load-time migration ----
+if (section('save codec validation (C5)')) try {
+  const g=loadCore({seed:505}), E=s=>g.eval(s), original=E('JSON.stringify(S)');
+  const rawCheck=raw=>E(`validateSave(JSON.parse(${JSON.stringify(raw)}))`), base=()=>JSON.parse(original);
+  const validate=data=>rawCheck(JSON.stringify(data)), decode=code=>E(`decodeSave(${JSON.stringify(code)})`);
+  const codeForBytes=bytes=>{ const b64=Buffer.from(bytes).toString('base64'); return `LF1:${b64}:${E(`savecodeChecksum(${JSON.stringify(b64)})`)}`; };
+  const round=(game,label)=>{ const before=game.eval('JSON.stringify(S)'), r=game.eval('decodeSave(encodeSave(S))'); assert(r.ok&&!deepDiff(JSON.parse(before),r.data)&&game.eval('JSON.stringify(S)')===before,`C5: ${label} round-trips without mutation`+(r.ok?'':': '+r.error)); };
+  for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json'))) {
+    const raw=fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'), v=rawCheck(raw), r=E(`decodeSave(encodeSave(JSON.parse(${JSON.stringify(raw)})))`);
+    assert(v.ok&&r.ok&&!deepDiff(JSON.parse(raw),r.data),`C5: raw ${f} keeps every field before any migration`);
+  }
+  const optional=base(); for(const k of ['camp','hands','solo','craft','tavernLeads','deeds']) delete optional[k];
+  assert(validate(optional).ok&&!('hands' in validate(optional).data),'C5: absent optional fields are allowed without being filled');
+  const benign=base(); benign.gold=12.375; benign.solo.eq.wren=[null,null,null]; benign.almanac.dare.day=-1; benign.econ.spent.camp=-12; benign.name='Zo\u00eb \u677e \ud83c\udfee';
+  const uni=decode(codeForBytes(Buffer.from(JSON.stringify(benign))));
+  assert(uni.ok&&!deepDiff(benign,uni.data),'C5: fractional gold, null ability slots, negative ledger/sentinels and Unicode names are retained');
+  assert(E('(()=>{const s=fresh(),r=validateSave(s);return r.ok&&r.data===s;})()'),'C5: validation returns the original object reference');
+  const invalid=[
+    ['v4',s=>s.v=4],['missing items',s=>delete s.items],['null item',s=>s.items=[null]],['dangling equipment',s=>s.equip.weapon=912],
+    ['duplicate IDs',s=>{s.items=[{id:1,slot:'pick',t:1,r:'common',plus:0},{id:1,slot:'axe',t:1,r:'common',plus:0}];s.nextId=2;}],
+    ['reused next ID',s=>{s.items=[{id:1,slot:'pick',t:1,r:'common',plus:0}];s.nextId=1;}],
+    ...[['kind','slot','bogus'],['rarity','r','bogus'],['tier','t',6]].map(([label,key,value])=>['unknown item '+label,s=>{s.items=[{id:1,slot:'pick',t:1,r:'common',plus:0,[key]:value}];s.nextId=2;}]),
+    ['null skills',s=>s.skills=null],['null skill',s=>s.skills.mine=null],['absurd skill XP',s=>s.skills.mine.xp=1e99],
+    ['negative materials',s=>s.mats.ore[0]=-1],['unknown material family',s=>s.mats.bogus=[1,0,0,0,0]],
+    ['null camp',s=>s.camp=null],['null camp build',s=>s.camp.builds=[null]],['null hand',s=>s.hands.list=[null]],['null board',s=>s.hands.board=null],
+    ['bad solo slots',s=>s.solo.eq.wren=['echo']],['wrong hero ability',s=>s.solo.eq.wren=['fire',null,null]],['null training',s=>s.solo.tr.wren=null],
+    ['invalid activity',s=>s.activity='bogus'],['negative gold',s=>s.gold=-1],['absurd level',s=>s.L=1e30],['frontier behind zone',s=>{s.zone=2;s.maxZone=1;}],['absurd relic level',s=>s.relic.coin=1e30]
+  ];
+  for(const [label,mutate] of invalid){const s=base();mutate(s);const r=validate(s);assert(!r.ok&&typeof r.error==='string',`C5: rejects ${label} before loading`);}
+  for(const key of ['__proto__','constructor','prototype']){const raw=original.slice(0,-1)+',"extra":{'+JSON.stringify(key)+':{"polluted":true}}}';assert(!rawCheck(raw).ok&&!decode(codeForBytes(Buffer.from(raw))).ok,`C5: rejects reserved ${key} at any depth`);}
+  assert(!rawCheck(original.replace(/"gold":[0-9.]+/,'"gold":1e309')).ok,'C5: rejects JSON numeric overflow');
+  assert(E('(()=>{const s=fresh();s.extra=s;return !validateSave(s).ok;})()')&&E('(()=>{const s=fresh();s.extra=Array(2);return !validateSave(s).ok;})()'),'C5: cycles and sparse non-JSON lists are rejected');
+  const deep=base();let cursor=deep;for(let i=0;i<66;i++)cursor=cursor.extra={};assert(!validate(deep).ok,'C5: deeply nested data is rejected');
+  assert(!E('decodeSave(" ".repeat(SAVECODE_LIMITS.codeChars+1)).ok'),'C5: text-size limit applies before trimming');
+  assert(E('(()=>{const s=fresh();s.extra="x".repeat(SAVECODE_LIMITS.jsonBytes);try{encodeSave(s);return false;}catch{return true;}})()'),'C5: oversized exports are refused');
+  const prefix=Buffer.from('{"name":"'),suffix=Buffer.from('",'+original.slice(1));
+  for(const bytes of [[0xC0,0xAF],[0xE2,0x82],[0xED,0xA0,0x80],[0xF4,0x90,0x80,0x80],[0x80]]) assert(!decode(codeForBytes(Buffer.concat([prefix,Buffer.from(bytes),suffix]))).ok,`C5: checksummed malformed UTF-8 ${bytes.map(n=>n.toString(16)).join(' ')} is rejected`);
+  let padded=original;while(Buffer.byteLength(padded)%3===0)padded+=' ';
+  const canonical=Buffer.from(padded).toString('base64'),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const pos=canonical.indexOf('=')-1,noncanonical=canonical.slice(0,pos)+alphabet[alphabet.indexOf(canonical[pos])+1]+canonical.slice(pos+1);
+  for(const b64 of [canonical.replace(/=+$/,''),canonical+'=',noncanonical])assert(!decode(`LF1:${b64}:${E(`savecodeChecksum(${JSON.stringify(b64)})`)}`).ok,'C5: a new checksum cannot legitimise malformed Base64 padding or bits');
+  assert(E('JSON.stringify(S)')===original,'C5: failed validations leave the live game untouched');
+  const live=loadCore({seed:505,prelude:'Date.__t=1790596800000;Date.now=()=>Date.__t'}),L=s=>live.eval(s);
+  L(`S.maxZone=32;S.camp.open=true;S.camp.b.hearth=4;S.camp.b.tavern=2;S.camp.b.store=8;S.gold=1e9;for(const a of Object.values(S.mats))a.fill(1e5);S.craft.troph.fill(100);for(const s of Object.values(S.skills))s.lv=30;soloPick('pip');S.L=10;train('atk','1');soloEquip(0,null);soloEquip(1,'fire');craftItem('robe',1,{mw:0});forgeItem('pick',1);dropUnique(Object.keys(UNIQ)[0],1);brewTonic('vigor',1);drinkTonic('vigor',1);campBuild('watch');campBuild('forge');for(let i=0;i<12;i++)tick(.1);S.mats.wood[0]=0;handsSend('tam','wood',1,{shifts:2});`);
+  assert(L('S.camp.builds.length===2&&S.camp.builds[1].start===0&&S.items.some(i=>i.a&&i.mw===0)&&S.items.some(i=>i.u)&&S.items.some(i=>i.slot==="pick")&&S.craft.tonic&&handsGet("tam").job.q===1&&trainLv("atk")===1'),'C5: real runtime creates active/queued builds, affixes, unique/masterwork/tool, tonic, queued shift and training');
+  round(live,'real active feature state');assert(L('summarizeSave(S).hero')==='Pip','C5: preview names the selected solo hero');
+  L('Date.__t=handsGet("tam").job.end;handsCatchUp(Date.now())');
+  assert(L('handsStatus(handsGet("tam")).st')==='rest','C5: runtime return creates rest');round(live,'real gatherer rest');
+  L('S.mats.wood[0]=storeCap("wood",1);Date.__t=handsGet("tam").job.end;handsCatchUp(Date.now())');
+  assert(L('handsGet("tam").pack.length>0'),'C5: full store creates a waiting pack');round(live,'real waiting pack');
+  L('campCancel("watch");campCancel("forge");S.camp.b.hearth=5;S.maxZone=55;campBuild("hearth")');
+  assert(L('S.camp.builds.some(b=>b.id==="hearth"&&b.cost.troph.some(t=>t[0]==="any"))'),'C5: runtime creates a trophy-cost Hearth build');round(live,'real trophy-cost build');
+  const {saveCodeFor}=await import('./savecode.mjs');
+  for(const raw of ['null','{}','{',JSON.stringify({...base(),v:4}),JSON.stringify({...base(),items:[null]})]){let refused=false;try{saveCodeFor(raw);}catch{refused=true;}assert(refused,'C5: CLI rejects bad data before loading it');}
+  for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json')))assert(decode(saveCodeFor(fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'))).ok,`C5: CLI accepts ${f}`);
+  assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
+} catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
