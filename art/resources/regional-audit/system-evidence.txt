@@ -1,0 +1,63 @@
+Regional gem and Essence audit — C26 proposal, read-only game audit
+Date: 2026-09-30
+Scope: proposal artifact only; no game, art, save, economy, or source edits. User direction: all five regions and all 15 grades; fantasy-forward; do not sideline later regions; keep ores unchanged. Grade rows and approved gem names are sourced from docs/design/materials.md; region contexts from docs/design/lore.md, region-2.md and regions-4-5.md; runtime evidence from 20-data.js, 21-data-craft.js, 40-rules.js, 50-sim.js and 55-gathering.js.
+
+Files
+- gem-essence.json has exactly 30 entries: grades 1–15 for crystal/Gems and ess/Essence. The current field means live runtime name/state, not just a name in a design table.
+- Grades 1–5 are live names. Crystal grades 6–15 are owner-approved MAT1 display names in docs, but are not in live MAT arrays. Essence grades 6–15 are draft names from materials.md section 3 and need owner approval.
+- Regional gem habitats/visuals beyond grades 1–5 are proposals grounded in named region landmarks, not approved node placements. Region specs still own exact nodes.
+- No grade 16+ or ore change is proposed. The unchanged MAT1 ore ladder is Copper, Iron, Silver, Cobalt, Mithril, Orichalcum, Emberite, Adamantite, Dragonsteel, Moonsilver, Starmetal, Arcanite, Darksteel, Aetherium and Voidsteel (grades 1–15).
+
+Name and source consistency
+- The live gem key stays crystal, the family label is Gems, and the raw stack name is <gem> Shard. Therefore grade-4 raw material is Pearl Shard.
+- Pearl at grade 4 is a raw gem. Tide Sigil is the Coast buff-item family/category; the old buff family id pearl is not a gem stack. Individual Sigils use <boss/theme> Sigil names. Never label a Tide Sigil as Pearl or count it in crystal stock.
+- There is stale, conflicting language in docs/design/region-2.md: sections 2, 3, 5, 6 and 9 still use Pearls/Lantern Pearls for Tide-Pool finds, settings, drops, costs, bounties and currency. MAT1 materials.md section 7 and gear-2.md MAT1 note say Coast buff/currency uses become Tide Sigils. Only Pearl Shard should mean the gem. Reconcile this Coast doc before implementation.
+- Generic crystal source is Mining geodes; MAT1 says gems are mined from Geodes and CRAFT_FAMILY says Quarry Golems drop a few. Make the Coast Pearl deposit reef/shellstone so its organic name has a grounded habitat. Pale Reach Starscar gathers Frost Sigils, not gems; Gloamvale Blind Mere/Stillwood gather Gloam Sigils, not gems. Do not reuse those Sigil activities as gem nodes without a separate node spec.
+- The MAT1 refined-good rule appends the refined unit to the exact raw name (e.g. Hide + Leather, Ore + Ingot). Gems are not one of the five refined families, so the raw form is Pearl Shard; do not invent Pearl Ingot. Essence keeps the unit Essence: Lucent Essence, etc.
+- Gem rank is a regional/economic grade, not a monotonic hardness claim. Pearl, Opal, Sunstone, Moonstone and Onyx do not form a strict physical hardness progression. No code should infer combat strength from mineral hardness. JSON strength states material grade only.
+- Essence grades 6–15 proposal has four owner-review points: Lucent after Starlit may read softer; Dawnlit may imply daylight before Emberwaste healing; Undimmed/Unfading are close synonyms; Old Light may sound aged rather than strongest. Keep the Gloamvale essence as persistent potent light against darkness, never corrupted/dark essence.
+
+Current implementation boundary and unlock mismatch
+- Runtime has only five crystal and five Essence names/colors. 21-data-craft.js defines crystal/Essence arrays and five crystal NODE_NAMES; 20-data.js defines shared Essence MAT and matName.
+- Current Essence grade assignment is zone-based in 40-rules.js: PACE.essTier = [1,7,13,19,42]. Zone 19 is tier 4 inside Hollow/Region 1 (zones 1–35); tier 5 begins at zone 42 in Coast/Region 2 (zones 36–70). This does not match the intended grade/region map: 1–3 Hollow, 4–6 Coast, 7–9 Emberwaste, 10–12 Pale Reach, 13–15 Gloamvale.
+- Gathered node tiers are skill-based: NODE_REQ [1,14,30,64,112], independent of region. Tier 4 can open by skill before Coast; tier 5 also has no Region 2 gate. gear-2.md section 0 explicitly says current tiers follow zones and skill, not regions. Do not imply the future grade-region gates are implemented.
+- Grade expansion is broader than renaming: separately specify one region-to-grade rule for fight drops and gathered nodes, then update data arrays, state inventory lengths, UI/codex max counts, colors/icons, away simulation and tests together. This is gameplay/data scope and was not changed here.
+
+Artwork/current preview
+- art/resources/review-v1 is a draft, not canonical. Its source/manifest depicts five grades of seven families plus three currencies and seven trophies (45 icons). The gem group is titled Crystal, stale versus MAT1's Gems label. Essence art only covers Dim through Starlit.
+- The proposal covers all 15 grades so later regions are represented equally. Production art needs 15 Gem and 15 Essence icons reviewed; preserve distinct silhouettes/region palettes rather than presenting the five-grade preview as the full ladder.
+
+Secondary resources (12; competing drafts, approval needed)
+- Region 2, Coast — materials.md section 6: Sea Coal / Sea Salt / Murex. gear-2.md section 1.3: Sea Coal / Sea Salt / Madder. Region-2 lore says dye comes from shells in the Coral Nave, supporting Murex.
+- Region 3, Emberwaste — materials.md: Charcoal / Potash / Madder. gear-2.md: Kiln Coal / Glass Salt / Cinderroot. Lore grounds ash, glass and kilns; exact dye plant needs D4.
+- Region 4, Pale Reach — materials.md: Peat / Rock Salt / Woad. gear-2.md: Rime Coal / Rime Salt / Frostbloom. Region text supports peat near Starscar, rock salt at Frostgate, and night-opening Woad.
+- Region 5, Gloamvale — materials.md: Anthracite / Grey Salt / Inkcap. gear-2.md: Dead Coal / Grey Salt / Nightbloom. Gloamvale lore supports dead-grey roots and Inkcap as a dark fungus; exact mine/source remains for spec.
+Do not silently combine lists: choose an owner-approved table, then reconcile gear-2 and region docs before coding.
+
+Sigil families (MAT1 display names; future system)
+- pearl id, Coast grade cap 6: Tide Sigil; Coast buff-item system / Tide Pools. Item names follow <boss/theme> Sigil.
+- glass id, Emberwaste cap 9: Cinder Sigil; Emberwaste mining.
+- star id, Pale Reach cap 12: Frost Sigil; Starscar activity, separate from Gems.
+- well id, Gloamvale cap 15: Gloam Sigil; Blind Mere and Stillwood, separate from Gems.
+The four are not live material stacks.
+
+Currencies (three in the art source list)
+- Gold: live core fight/camp currency.
+- Renown: live bounty currency, awarded by the bounty board and used for hero unlocks.
+- Embers: raid reward/relic currency in design/code. Distinguish currency Embers from the Lanternmage class-meter Embers by context and icon use.
+
+Trophies (seven live names; current Hollow zone-type set, grade-independent)
+- Moss Heart — Moss Slime / Mossy Hollow.
+- Bat Fang — Cave Bat / Batwing Caves.
+- Grave Knuckle — Rattlebones / The Bonefield.
+- Beetle Horn — Barrow Beetle / Beetle Barrows.
+- Spore Crown — Spore Cap / Fungal Deep.
+- Golem Core — Quarry Golem / Quarry Ruins.
+- Wraith Veil — Marsh Wraith / Wraithmarsh.
+These are current grade-independent trophies, not a complete five-region trophy roster. Do not assign later-region trophies until data/spec exists.
+
+Eventual approved name/data implementation inventory — no edits made
+- Labels/data: 20-data.js (shared MAT.ess, matName); 21-data-craft.js (MAT.crystal, MAT.ess arrays, units/colors, NODE_NAMES, CRAFT_FAMILY source text).
+- Central matName consumers: 50-sim.js, 55-gathering.js, 55-crafting.js, 55-store.js, 57f-hands.js, 57k-trade.js. Most UI should inherit approved text through matName/MAT labels.
+- Direct Essence short-name/color assumptions: 40-rules.js for grade/drop mapping; 55-classes.js, 55-bounties.js, 75-class-ui.js and 50-sim.js. Node-label consumers include 55-nav.js, 55-almanac.js, 72-ui-gather.js and 75-nav-ui.js.
+- Full grade implementation is broader than renaming: 30-state.js inventory defaults/lengths; 40-rules.js zoneTier/NODE_REQ; 55-gathering.js node/drop logic; 50-sim.js live/away rewards; 57c-codex.js currently grades 1–5; 60-gfx.js needs distinct new-grade icon art; tools/check.mjs needs per-region name/gate/yield, Pearl/Tide Sigil separation and full-icon coverage checks. Exact boundaries must follow the approved design.
