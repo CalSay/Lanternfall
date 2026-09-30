@@ -261,19 +261,21 @@ function awayBase(r) {
   }
   // C20: sample one fixed Auto profile in scratch state, then apply one aggregate reward path.
   if (typeof turnCombatScope === 'function' && turnCombatScope()) {
-    const q = S.turn || (S.turn = { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySig: '' });
+    const q = S.turn || (S.turn = { awayKillsCarry: 0, awayEssCarry: 0, awayProfile: null, awaySample: null, awaySig: '' });
     // Level and XP can change as a claim is credited. Keep the sampled profile across split
     // claims and save/reload, but invalidate it when the player changes gear, training or zone.
     const sig = JSON.stringify([S.solo.hero, S.zone, S.equip, S.solo.tr && S.solo.tr[S.solo.hero],
       TURN_TUNE.foeHpX, TURN_TUNE.foeAtkX, TURN_TUNE.essenceX]);
     let p = q.awaySig === sig && q.awayProfile && q.awayProfile.foeHp > 0 ? q.awayProfile : null;
     if (!p) { p = turnCombatProfile(); if (!p) { spawn(); p = turnCombatProfile(); }
-      if (p) { q.awayProfile = p; q.awaySig = sig; } }
+      if (p) { q.awayProfile = p; q.awaySample = null; q.awaySig = sig; } }
     if (!p || !(t > 0)) {
       r.turnCombat = { generatedEss: 0, storedEss: 0, kills: 0, deaths: 0, sampledSeconds: 0, boost, zone: S.zone };
       return r;
     }
-    const sampledSeconds = 3600, sample = turnCombatSample({ profile: p, seconds: sampledSeconds, seed: 1, mode: 'auto' });
+    const sampledSeconds = 3600, sample = q.awaySample && q.awaySample.seconds === sampledSeconds ? q.awaySample :
+      turnCombatSample({ profile: p, seconds: sampledSeconds, seed: 1, mode: 'auto' });
+    q.awaySample = sample;
     const carry = v => Number.isFinite(v) && v >= 0 && v < 1 ? v : 0;
     const ratio = t * boost / sampledSeconds;
     const k0 = sample.kills * ratio + carry(q.awayKillsCarry), kills = Math.floor(k0);

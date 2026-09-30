@@ -6658,6 +6658,15 @@ if (section('C20 turn combat (core)')) try {
   assert(dotOrder.windows===0 && dotOrder.ends===1 && dotOrder.phase==='off',
     'C20: a foe killed at turn start ends once before a defense window is offered');
   const profile = E('turnCombatProfile()'), before = E('JSON.stringify(S)');
+  const passives = E(`(() => {
+    const p=turnCombatProfile(), e=turnEffects(); e.blockN=0;
+    const mark=turnScalarHit({...p,heroKey:'wren',critChance:0,nonCrit:1,armoured:false},e,'attack',false,()=>1);
+    const damage=turnScalarFoeHit({...p,foeAtk:100,hitCap:1000,blockP:0,blockC:.1,blockX:.5,heroMaxHp:100,regen:.005},
+      {guard:0,grit:0,blockN:.9},()=>1);
+    return {mark,markV:e.markV,damage,regen:turnScalarRegen({heroMaxHp:100,regen:.005},50,1)};
+  })()`);
+  assert(passives.markV===.25 && passives.damage.blocked && passives.damage.amount===50 && passives.regen===50.5,
+    'C20: Ranger Focus mark, Warrior class block and legacy regeneration use the shared scalar rules');
   E('globalThis.__rngCalls=0; Math.random=()=>{__rngCalls++;return 0.5}');
   const sample = E('turnCombatSample({profile:turnCombatProfile(),seconds:30,seed:77,mode:"auto"})');
   assert(sample && sample.seconds===30 && sample.kills>=0 && E('JSON.stringify(S)')===before && E('__rngCalls===0'), 'C20: reward-free scratch sampling does not mutate the save or consume live RNG');
@@ -6669,16 +6678,18 @@ if (section('C20 turn combat (core)')) try {
   V('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(false);globalThis.__ends=[];on("fightEnd",x=>__ends.push(x.reason));spawn()');
   toggled.fn.tick(0.1); V('TURN_TUNE.on=0'); toggled.fn.tick(0.1); toggled.fn.tick(0.1);
   assert(V('__ends.join()==="abandon" && !turnCombatOn()'), 'C20: disabling the switch mid-fight abandons exactly once and returns to legacy ticks');
-  const mk = seed => { const h=loadCore({seed}), H=x=>h.eval(x); H('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(true);S.auto=false;spawn();globalThis.__awayN=0;on("awayKills",()=>__awayN++)'); h.fn.tick(0.1); return {h,H}; };
+  const mk = seed => { const h=loadCore({seed}), H=x=>h.eval(x); H('TURN_TUNE.on=1;soloPick("wren");soloSetAuto(true);S.auto=false;spawn();globalThis.__awayN=0;globalThis.__sampleCalls=0;globalThis.__sampleOrig=turnCombatSample;turnCombatSample=(...a)=>{__sampleCalls++;return __sampleOrig(...a)};on("awayKills",()=>__awayN++)'); h.fn.tick(0.1); return {h,H}; };
   const a=mk(2021), b=mk(2021);
   const one=a.H('awayGains(3600)'), half1=b.H('awayGains(1800)'), half2=b.H('awayGains(1800)');
   assert(one.turnCombat && half1.turnCombat && half2.turnCombat && one.turnCombat.sampledSeconds===3600 && a.H('__awayN')===1 && b.H('__awayN')===2, 'C20: away Auto reports generated and stored Essence and emits one reward event per claim');
   assert(one.turnCombat.kills===half1.turnCombat.kills+half2.turnCombat.kills && one.turnCombat.generatedEss===half1.turnCombat.generatedEss+half2.turnCombat.generatedEss, 'C20: fractional carry makes a one-hour claim equal two half-hour claims');
+  assert(a.H('__sampleCalls===1') && b.H('__sampleCalls===1'), 'C20: split away claims reuse the fixed one-hour combat sample');
   const whole=mk(2022), split=mk(2022), twoHours=whole.H('awayGains(7200)'), firstHour=split.H('awayGains(3600)');
   split.H('save()');
   const re=loadCore({seed:2022,storage:memoryStorage(split.h.storage.dump())}), R=x=>re.eval(x);
   R('TURN_TUNE.on=1;loadSave();gearDirty();spawn()');
   const secondHour=R('awayGains(3600)');
+  assert(R('S.turn.awaySample && S.turn.awaySample.seconds===3600'), 'C20: the fixed away sample persists across save/reload');
   assert(twoHours.turnCombat.kills===firstHour.turnCombat.kills+secondHour.turnCombat.kills &&
     twoHours.turnCombat.generatedEss===firstHour.turnCombat.generatedEss+secondHour.turnCombat.generatedEss &&
     Math.abs(whole.H('S.gold')-R('S.gold'))<1e-8, 'C20: a progressing two-hour claim equals two one-hour claims with save/reload between');

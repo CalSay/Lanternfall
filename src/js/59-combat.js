@@ -441,10 +441,11 @@ var COMBAT_TUNE, CB_STATS, combatUnits, combatFoes, combatTick, cbSpawn, cbStrik
     if (f.hp <= 0) foeDies(f, 0, kind || 'turn');
     return a;
   };
-  cbTurnHitHero = amount => {
+  cbTurnHitHero = (amount, blocked) => {
     const u = U[0]; if (!u || u.down || !(amount > 0)) return 0;
     const a = Math.max(0, amount); u.hp -= a; u.taken += a; ST.taken += a;
-    emit('unitHit', { key: u.key, amount: a, kind: 'hit', foe: mob, blocked: false, shield: 0 });
+    if (blocked) ST.blocked++;
+    emit('unitHit', { key: u.key, amount: a, kind: 'hit', foe: mob, blocked: !!blocked, shield: 0 });
     if (u.hp <= 0) knockOut(u);
     return a;
   };
