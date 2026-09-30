@@ -55,6 +55,7 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     }
     return { week, lines };
   };
+  const creditFits = gold => Number.isFinite(S.gold) && S.gold >= 0 && S.gold + gold <= Number.MAX_SAFE_INTEGER;
   const price = (f, t, demand) => Math.round(foeGoldBase(econGradeZ(t)) * ECON.famW[TRADE_FAMILIES[f]] * demand * UNIT / 100);
   handsTradeCargo = id => {
     const h = handsGet(id); if (!h) return [];
@@ -76,11 +77,13 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
       if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, grades 1–3.');
       if (stock(f, t) < n) return no('Not enough ' + matName(f, t) + ' in the Storehouse.');
       const demand = market.lines.find(l => l.kind === f && l.t === t).demand, micros = price(f, t, demand);
+      if (!Number.isSafeInteger(micros) || micros <= 0 || micros > T.maxUnitGold * UNIT) return no('This trade is not available.');
       value += n * micros; q.units += n;
       q.lines.push({ kind: f, t, n, name: matName(f, t), demand, unitGold: micros / UNIT, gold: n * micros / UNIT });
     }
     q.gold = Math.floor(value / UNIT);
     if (!(q.gold > 0)) return no('Add enough cargo to earn at least 1 gold.');
+    if (!creditFits(q.gold)) return no('Spend some gold before sending another trade run.');
     q.ok = true; return q;
   };
   const sameQuote = (a, b) => a && a.ok && a.week === b.week && a.town === b.town && a.secs === b.secs && a.gold === b.gold
@@ -98,9 +101,9 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     if (!j || j.role !== 'trade' || j.v !== 1 || j.town !== TRADE_TOWN.id || !cargoOK(j.cargo)) return false;
     if (!Number.isSafeInteger(j.start) || j.start < 0 || !Number.isSafeInteger(j.end) || j.end - j.start !== T.secs * 1000) return false;
     const q = j.quote;
-    if (!q || !Number.isSafeInteger(q.week) || !Number.isSafeInteger(q.gold) || !(q.gold > 0)
+    if (!q || !Number.isSafeInteger(q.week) || q.week !== Math.floor((j.start - EPOCH) / WEEK) || !Number.isSafeInteger(q.gold) || !(q.gold > 0)
       || !Array.isArray(q.micros) || q.micros.length !== j.cargo.length || !Array.isArray(q.demand) || q.demand.length !== j.cargo.length) return false;
-    if (!q.micros.every(n => Number.isSafeInteger(n) && n > 0) || !q.demand.every(n => Number.isInteger(n) && n >= T.glutMin && n <= T.wantMax)) return false;
+    if (!q.micros.every(n => Number.isSafeInteger(n) && n > 0 && n <= T.maxUnitGold * UNIT) || !q.demand.every(n => Number.isInteger(n) && n >= T.glutMin && n <= T.wantMax)) return false;
     const value = j.cargo.reduce((sum, l, i) => sum + l[2] * q.micros[i], 0);
     return Number.isSafeInteger(value) && Math.floor(value / UNIT) === q.gold;
   };
@@ -118,14 +121,14 @@ let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTra
     const j = h && h.job;
     if (!handsTradeValid(j)) return { st: 'back', role: 'trade', label: 'Trade run needs checking', left: 0, pct: 0, kind: null, t: null, spot: 'road' };
     const left = Math.max(0, (j.end - at) / 1000);
-    return { st: left > 0 ? 'out' : 'back', role: 'trade', label: left > 0 ? 'Trading at ' + TRADE_TOWN.n : 'Returning from ' + TRADE_TOWN.n,
+    return { st: left > 0 ? 'out' : 'back', role: 'trade', label: left > 0 ? 'Trading at ' + TRADE_TOWN.n : !creditFits(j.quote.gold) ? 'Trade gold waits: spend some gold first' : 'Returning from ' + TRADE_TOWN.n,
       left, pct: Math.max(0, Math.min(1, (at - j.start) / (j.end - j.start))), kind: null, t: null, spot: left > 0 ? null : 'road' };
   };
   let awayReturns = [];
   handsTradeFinish = (h, away = false, at = Date.now()) => {
     if (!h || !h.job || h.job.role !== 'trade') return false;
     if (!handsTradeValid(h.job)) { handsTradeRepair(h); return false; }
-    if (!Number.isFinite(at) || h.job.end > at) return false;
+    if (!Number.isFinite(at) || h.job.end > at || !creditFits(h.job.quote.gold)) return false;
     const j = h.job, gold = j.quote.gold, units = j.cargo.reduce((n, l) => n + l[2], 0);
     h.job = null; h.back = j.end;   // clear the reservation before any event can re-enter
     S.gold += gold; econEarn('trade', gold);

@@ -512,16 +512,16 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   }
   // Starts and returns in time order keep overlap, XP and pack order identical live and away.
   handsCatchUp = (t = now(), away = false) => {
-    const back = [];
+    const back = [], blockedTrade = new Set();
     if (!Number.isFinite(t) || t < 0) return back;
     for (const x of H().list) if (x.job && x.job.role === 'trade' && typeof handsTradeRepair === 'function') handsTradeRepair(x);
     for (;;) {
-      const due = H().list.filter(x => x.job && (x.job.role !== 'trade' && x.job.linked === false ? x.job.start : x.job.end) <= t)
+      const due = H().list.filter(x => x.job && !blockedTrade.has(x) && (x.job.role !== 'trade' && x.job.linked === false ? x.job.start : x.job.end) <= t)
         .sort((a, b) => (a.job.role !== 'trade' && a.job.linked === false ? a.job.start : a.job.end) - (b.job.role !== 'trade' && b.job.linked === false ? b.job.start : b.job.end))[0];
       if (!due) break;
       if (due.job.role === 'trade') {
         if (typeof handsTradeFinish !== 'function') break;
-        handsTradeFinish(due, away, t);
+        if (!handsTradeFinish(due, away, t)) blockedTrade.add(due);
       } else if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
     }
     unload(); return back;
