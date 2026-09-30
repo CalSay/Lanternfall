@@ -6463,6 +6463,86 @@ if (section('C9 hero registry (browser)')) try {
   }
 } catch (e) { fail('C9 hero registry browser crashed: '+(e.stack||e)); }
 
+// ---- C23: batch salvage protects gear and pays the existing return formula exactly once ----
+if (section('bulk salvage (C23 core)')) try {
+  let writes=0;const backing=memoryStorage(),g=loadCore({seed:2300,storage:{get:k=>backing.get(k),set:(k,v)=>{writes++;backing.set(k,v);}}}),E=s=>g.eval(s);
+  E('S.camp.b.store=8;S.mats.ore[0]=1000;S.mats.wood[0]=1000;for(let i=0;i<5;i++)forgeItem("pick",1);S.items[0].plus=2;equipItem(S.items[0].id,"pick");globalThis.__c23Toast=[];on("toast",e=>__c23Toast.push(e.msg));');
+  const worn=E('S.equip.pick'), ids=E('S.items.map(i=>i.id)'), before=E('JSON.stringify(S.mats)'), eq=E('JSON.stringify(S.equip)');
+  const expected=E('(()=>{const out={};for(const it of S.items.filter(i=>i.id!==S.equip.pick))for(const[f,n]of Object.entries(CRAFT_KINDS[it.slot].rec))out[f]=(out[f]||0)+Math.floor(n*(1+.5*(it.t-1))*.4*(1+it.plus*.3)*mod("salvage"));return out;})()');
+  writes=0;const count=E(`salvageItems(${JSON.stringify([...ids,ids[1],-1,999999])})`), mats=E('S.mats');
+  assert(count===4&&E('S.items.length')===1&&E('S.items[0].id')===worn&&E('JSON.stringify(S.equip)')===eq,'C23: five actual crafts salvage four spares, protecting the worn tool and equipment');
+  assert(Object.entries(expected).every(([f,n])=>mats[f][0]-JSON.parse(before)[f][0]===n),'C23: batch materials match the sum of unchanged per-item previews');
+  assert(writes===1&&E('__c23Toast.length===1&&__c23Toast[0]==="Salvaged 4 items for materials."'),'C23: duplicate requested IDs still produce exactly one batch toast and one save');
+  const state=E('JSON.stringify(S)');writes=0;assert(E(`salvageItems(${JSON.stringify(ids)})`)===0&&E('salvageItems(null)')===0&&E('JSON.stringify(S)')===state&&writes===0,'C23: repeated/stale and invalid batches neither repay nor save');
+  E('dropUnique(Object.keys(UNIQ)[0],1);S.items.push(newItem("axe",2,"rare"));S.items.push(newItem("sickle",1,"common"));');
+  const unique=E('S.items.find(i=>i.u).id'),axe=E('S.items.find(i=>i.slot==="axe").id'),sickle=E('S.items.find(i=>i.slot==="sickle").id');
+  E(`equipItem(${axe},"axe")`);writes=0;E('__c23Toast=[]');
+  assert(E(`salvageItems([${unique},${axe},${sickle},${sickle}])`)===1&&E(`!!itemById(${unique})&&S.equip.axe===${axe}`)&&writes===1,'C23: uniques and items equipped after selection are protected by the core');
+  E('S.items.push(newItem("pick",1,"common"));S.items.push({...S.items[S.items.length-1]});');
+  const ambiguous=E('S.items[S.items.length-1].id');assert(E(`salvageItems([${ambiguous}])`)===0&&E(`S.items.filter(i=>i.id===${ambiguous}).length`)===2,'C23: ambiguous duplicate bag IDs are not destroyed or paid twice');
+  E(`S.items=S.items.filter(i=>i.id!==${ambiguous});S.items.push(newItem("pick",1,"common"));S.items.push(newItem("pick",1,"common"));S.mats.ore[0]=storeCap("ore",1)-1;S.mats.wood[0]=storeCap("wood",1)-1`);
+  assert(E('salvageItems(S.items.filter(i=>!isEquipped(i.id)&&!i.u).map(i=>i.id))')===2&&E('S.mats.ore[0]===storeCap("ore",1)&&S.mats.wood[0]===storeCap("wood",1)'),'C23: combined returns stop at Storehouse capacity');
+  E('S.items.push(newItem("robe",2,"rare"));S.mats.ess[1]=0;S.mats.fibre[1]=0;Math.random=()=>0;addModifier("salvage",()=>1.5);');
+  const robe=E('S.items[S.items.length-1]'),fibre=E('Math.floor(CRAFT_KINDS.robe.rec.fibre*1.5*.4*mod("salvage"))'),ess=E('Math.floor(CRAFT_KINDS.robe.rec.ess*1.5*.4*mod("salvage"))+1');
+  assert(E(`salvageItems([${robe.id}])`)===1&&E('S.mats.fibre[1]')===fibre&&E('S.mats.ess[1]')===ess,'C23: existing salvage modifier and affix essence chance still run for each item');
+  assert(E('NOTICES.some(n=>n.id==="did"&&n.re.test("Salvaged 4 items for materials."))'),'C23: the existing salvage notice matcher covers the batch toast');
+  assert(!g.errors.length,'C23: no core handler errors');
+} catch(e){fail('C23 bulk salvage core crashed: '+(e.stack||e));}
+
+// ---- C23: real bag selection, review and batch action in narrow and short viewports ----
+if (section('bulk salvage (C23 browser)')) try {
+  const {pw,exe}=browserTools;
+  if(!pw||!exe||!fs.existsSync(distFile))skipBrowser('C23: Playwright or Chromium not here, skipped');
+  else {
+    const fixture=loadCore({seed:2301});fixture.eval('soloPick("wren");hearthWarm();S.maxZone=12;S.camp.open=true;S.camp.b.hearth=2;S.camp.b.store=8;onboardUnlockAll();onboardTips(false);save()');
+    const raw=fixture.storage.get(KEY),html0=fs.readFileSync(distFile,'utf8'),end=html0.lastIndexOf('})();\n</script>');
+    const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n'+html0.slice(0,end)+'\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n'+html0.slice(end);
+    const browser=await pw.chromium.launch({executablePath:exe,args:['--no-sandbox']});
+    try { for(const [width,height]of[[740,360],[360,740]]) {
+      const at=`${width}x${height}`,ctx=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+      try {
+        await ctx.addInitScript(({raw,key})=>localStorage.setItem(key,raw),{raw,key:KEY});
+        const page=await ctx.newPage(),errs=[];page.on('pageerror',e=>errs.push(String(e)));page.on('console',m=>{if(m.type()==='error'&&/lanternfall/.test(m.text()))errs.push(m.text());});
+        await page.route('**/*',r=>r.request().url()==='http://lf.test/'?r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}):r.abort());
+        await page.goto('http://lf.test/');await page.waitForFunction(()=>!!window.__t);const X=s=>page.evaluate(s=>window.__t.x(s),s);
+        await X('S.items=[];for(const p of Object.keys(S.equip))S.equip[p]=null;S.mats.ore[0]=1000;S.mats.wood[0]=1000;for(let i=0;i<5;i++)forgeItem("pick",1);S.items[0].plus=2;equipItem(S.items[0].id,"pick");dropUnique(Object.keys(UNIQ)[0],1);setTab("forge");setView("forge","gear");ui(true);true');
+        const bag=page.locator('#sec-craft-bag'),worn=await X('S.equip.pick'),unique=await X('S.items.find(i=>i.u).id'),before=await X('JSON.stringify(S.mats)'),eq=await X('JSON.stringify(S.equip)');
+        await bag.locator('.cf-bulk-spares').click();
+        assert(await bag.locator('.cf-tile[aria-pressed="true"]').count()===4&&await bag.locator(`[data-item-id="${worn}"]`).isDisabled()&&await bag.locator(`[data-item-id="${unique}"]`).isDisabled(),`C23 ${at}: real Salvage spares selects four unworn crafts and protects worn/unique buttons`);
+        const toggle=bag.locator('.cf-tile[aria-pressed="true"]').first(),toggleId=await toggle.getAttribute('data-item-id');
+        await toggle.click();assert(await bag.locator('.cf-tile[aria-pressed="true"]').count()===3,`C23 ${at}: selection toggles instead of opening an item sheet`);
+        await bag.locator(`[data-item-id="${toggleId}"]`).press('Space');
+        assert(await bag.locator('.cf-tile[aria-pressed="true"]').count()===4,`C23 ${at}: keyboard selection preserves focus and toggles the item back`);
+        await bag.locator('.cf-bulk-review').click();
+        const chips=await bag.locator('.cf-bulk .cost').evaluateAll(ns=>ns.map(n=>[n.dataset.fam,+n.dataset.t,+n.dataset.amount]));
+        assert(chips.length>0&&await bag.locator('.cf-bulk').innerText().then(t=>t.includes('Salvage 4 items? They are gone for good.'))&&await X('S.items.length')===6,`C23 ${at}: one in-page review combines returns without destroying items`);
+        const confirm=bag.locator('.cf-bulk-confirm');await confirm.scrollIntoViewIfNeeded();
+        const fit=await confirm.evaluate(b=>{const r=b.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&(hit===b||b.contains(hit))&&document.documentElement.scrollWidth<=innerWidth+1;});
+        assert(fit,`C23 ${at}: confirm is in view, receives taps and creates no horizontal page overflow`);
+        await X('globalThis.__c23Confirm=document.querySelector(".cf-bulk-confirm");S.mats.ore[0]++;ui();true');
+        assert(await X('document.querySelector(".cf-bulk-confirm")===__c23Confirm'),`C23 ${at}: an ordinary stock gain with ample room keeps the same reviewed confirmation button`);
+        const settledBefore=await X('JSON.stringify(S.mats)');await confirm.click();
+        const mats=await X('S.mats');assert(await X(`S.items.length===2&&!!itemById(${worn})&&!!itemById(${unique})`)&&await X('JSON.stringify(S.equip)')===eq&&chips.every(([f,t,n])=>mats[f][t-1]-JSON.parse(settledBefore)[f][t-1]===n),`C23 ${at}: confirming removes exactly four and pays the displayed aggregate; worn gear is unchanged`);
+        // Without a worn item, keep one best copy per kind: grade before plus before rarity, deterministic ties.
+        await X('S.items=[];for(const p of Object.keys(S.equip))S.equip[p]=null;for(const[k,t,r,plus]of[["pick",1,"legendary",10],["pick",2,"common",0],["axe",1,"epic",0],["axe",1,"common",1],["axe",1,"common",1],["sickle",1,"common",0],["sickle",1,"rare",0]])S.items.push(Object.assign(newItem(k,t,r),{plus}));globalThis.__c23Keep=[S.items[1].id,S.items[3].id,S.items[6].id];ui(true);true');
+        await bag.locator('.cf-bulk-spares').click();const selected=await bag.locator('.cf-tile[aria-pressed="true"]').evaluateAll(ns=>ns.map(n=>+n.dataset.itemId));
+        assert(selected.length===4&&!(await X('__c23Keep')).some(id=>selected.includes(id)),`C23 ${at}: no-worn ranking keeps one best copy per kind by grade, plus, rarity, then stable tie`);
+        // Aggregate capacity: every individual return fits, but their sum does not.
+        await bag.locator('.cf-bulk-select').click();
+        await X('S.items=[];for(let i=0;i<3;i++)S.items.push(newItem("pick",1,"common"));S.equip.pick=S.items[0].id;S.mats.ore[0]=storeCap("ore",1)-Math.floor(CRAFT_KINDS.pick.rec.ore*.4*mod("salvage"));S.mats.wood[0]=0;ui(true);true');
+        await bag.locator('.cf-bulk-spares').click();await bag.locator('.cf-bulk-review').click();
+        assert((await bag.locator('.cf-bulk').innerText()).includes('Your Storehouse is full for some of this. The rest is lost.'),`C23 ${at}: combined overflow warns even when each item fits on its own`);
+        const beforeStale=await X('S.items.length');
+        // Hold a real rendered button while changing a selected item; the click must revalidate.
+        await X('S.equip.pick=S.items[1].id;document.querySelector(".cf-bulk-confirm").click();true');
+        assert(await X('S.items.length')===beforeStale&&(await bag.locator('.cf-bulk').innerText()).includes('changed'),`C23 ${at}: an item equipped after review invalidates confirmation without loss`);
+        await bag.locator('.cf-bulk-review').click();await X('S.mats.ore[0]=storeCap("ore",1);document.querySelector(".cf-bulk-confirm").click();true');
+        assert(await X('S.items.length')===beforeStale&&(await bag.locator('.cf-bulk').innerText()).includes('changed'),`C23 ${at}: reduced collectible returns require a fresh review`);
+        assert(!errs.length,`C23 ${at}: no browser or handler errors`+(errs.length?': '+errs[0]:''));
+      } finally {await ctx.close();}
+    }} finally {await browser.close();}
+  }
+} catch(e){fail('C23 bulk salvage browser crashed: '+(e.stack||e));}
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

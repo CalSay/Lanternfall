@@ -47,6 +47,21 @@ function salvageItem(id) {
   toast(`Salvaged ${itemName(it)} for materials.`, 'good', null, 'low'); save();
   return true;
 }
+// C23: batch salvage rechecks protection at commit time. Duplicate input IDs pay only once;
+// ambiguous duplicate IDs in a damaged bag are skipped instead of deleting an unseen copy.
+function salvageItems(ids) {
+  if (!Array.isArray(ids)) return 0;
+  const requested = new Set(ids.filter(Number.isSafeInteger)), worn = equippedIds(), counts = new Map();
+  for (const it of S.items) counts.set(it.id, (counts.get(it.id) || 0) + 1);
+  const batch = [];
+  for (const it of S.items) if (requested.has(it.id) && counts.get(it.id) === 1 && !it.u && !worn.has(it.id)) batch.push(it);
+  if (!batch.length) return 0;
+  for (const it of batch) salvageGive(it);
+  const removed = new Set(batch.map(it => it.id));
+  S.items = S.items.filter(it => !removed.has(it.id));
+  toast(`Salvaged ${batch.length} items for materials.`, 'good', null, 'low'); save();
+  return batch.length;
+}
 // Forge a new item of slot/tier. Returns the item, or null if not allowed.
 // Kinds added by the crafting overhaul go through craftItem (55-crafting.js); the five
 // original kinds keep this exact path (Smithing gate, rng use and XP). The legacy Sword and
