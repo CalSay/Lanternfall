@@ -1417,63 +1417,92 @@ async function runEconReport() {
 }
 
 // C20: fixed starting profiles, real live core versus the real away entry point.
-// Usage: --report turns --hours 1 --seeds 3 [--json path]. No purchases/boss progression.
-// XP/mastery progression and Deed bonuses are frozen for a stationary rate comparison.
+// Usage: --report turns --hours 1 --seeds 3 [--json path] [--attack-only 1].
+// --eval/--evalfile adjust turn cases only; legacy comparison keeps the shipped knobs.
 async function runTurnReport() {
-  const fs = await import('node:fs');
-  const path = await import('node:path');
+  const fs = await import('node:fs'), path = await import('node:path');
   const { ROOT } = await import('./lib/core.mjs');
   const seconds = Number(args.hours || 1) * 3600, count = Number(args.seeds || 3);
   if (!(seconds > 0) || !Number.isFinite(seconds) || !Number.isInteger(count) || count < 1) throw new Error('Positive hours and integer seeds required');
-  const startSeed = Number(args.seed || 1), rows = [];
+  const startSeed = Number(args.seed || 1), rows = [], attackOnly = args['attack-only'] === '1';
+  const tuning = [args.eval || '', args.evalfile ? fs.readFileSync(args.evalfile, 'utf8') : ''].join('\n');
   const early = fs.readFileSync(path.join(ROOT, 'tests/fixtures/save-early.json'), 'utf8');
   const profiles = [['fresh-wren', 'wren'], ['fresh-tobin', 'tobin'], ['fresh-pip', 'pip'], ['early-wren', 'wren', early]];
   for (const [name, hero, save] of profiles) for (let i = 0; i < count; i++) {
     const sd = startSeed + i;
-    for (const mode of ['legacy-auto', 'turn-auto', 'turn-hand', 'turn-away']) {
+    for (const mode of ['legacy-auto', 'turn-auto', 'turn-hand', 'turn-hand-realistic', 'turn-away']) {
+      const hand = mode === 'turn-hand' || mode === 'turn-hand-realistic', realistic = mode === 'turn-hand-realistic';
       const core = loadCore({ seed: sd, prelude: 'Date.now = () => 1791187200000;' }), e = s => core.eval(s);
       if (save) { core.storage.set(SAVE_KEY, save); e('loadSave()'); }
       e(`soloPick(${JSON.stringify(hero)}, {now:true}); S.zone=1; S.activity='fight'; S.auto=false; fightBoss=false; arena=null; almanac.force('none');
-        TURN_TUNE.on=${mode === 'legacy-auto' ? 0 : 1}; soloSetAuto(${mode === 'turn-hand' ? 'false' : 'true'});
-        DEED_TUNE.bonusOn=0; gainXp=()=>{}; gearDirty(); spawn();
-        globalThis.__turnBench={kills:0,ess:0,deaths:0,mastery:JSON.stringify(S.mastery),defence:null,action:null,clock:0};
+        TURN_TUNE.on=${mode === 'legacy-auto' ? 0 : 1}; soloSetAuto(${!hand});
+        DEED_TUNE.bonusOn=0; gainXp=()=>{};`);
+      if (mode !== 'legacy-auto' && tuning) e(tuning);
+      if (mode !== 'legacy-auto' && attackOnly) e(`soloEquipped=()=>[];const __baseTurnProfile=turnMakeProfile;turnMakeProfile=(...a)=>{const p=__baseTurnProfile(...a);if(p)p.ability=null;return p;};`);
+      e(`gearDirty(); spawn();
+        globalThis.__turnBench={kills:0,ess:0,deaths:0,mastery:JSON.stringify(S.mastery),defence:null,action:null,clock:0,
+          fight:null,completedFights:0,totalHeroTurns:0,totalFightSeconds:0,parryAttempts:0,parries:0,rng:${sd}};
         on('kill', x=>{ __turnBench.kills++; __turnBench.ess+=Number(x.ess)||0; S.mastery=JSON.parse(__turnBench.mastery); });
         on('wipe',()=>{__turnBench.deaths++;});
-        on('fightStart',()=>{__turnBench.defence=null;__turnBench.action=null;});`);
+        on('fightStart',()=>{const b=__turnBench;b.defence=null;b.action=null;b.fight={heroTurns:0};});
+        on('turn',x=>{if(x.who==='hero' && __turnBench.fight)__turnBench.fight.heroTurns++;});
+        on('fightEnd',x=>{const b=__turnBench;if(x.reason==='victory'&&b.fight){b.completedFights++;b.totalHeroTurns+=b.fight.heroTurns;b.totalFightSeconds+=x.now;}b.fight=null;});
+        on('soloParry',x=>{if(!x.auto){__turnBench.parryAttempts++;if(x.res==='parry')__turnBench.parries++;}});`);
       const before = e('({kills:S.totalKills,ess:S.mats.ess[0],gold:S.gold,cap:(4+2*S.relic.glass+bonus("awayHours"))*3600,boost:(1+gear().offline/100)*mod("offline")})');
       let sampled = null, awayResult = null;
       if (mode === 'turn-away') {
-        // Sampler is reward-free; the actual awayGains below validates aggregate accounting.
+        if (attackOnly) e("TURN_LAST_PROFILE=null;"); // profile snapshot below reflects current fixture
         sampled = e(`turnCombatSample({profile:turnCombatProfile(),seconds:${Math.min(seconds,before.cap)},seed:${sd},mode:'auto'})`);
         awayResult = e(`awayGains(${seconds})`);
       } else {
-        // Run inside the VM to avoid per-frame tool/VM boundary overhead. Hand policy is
-        // deterministic perfect timing with 0.2s reaction, explicitly an upper-bound case.
         e(`for(let elapsed=0;elapsed<${seconds};){
           const step=Math.min(0.05,${seconds}-elapsed);
-          if (${mode === 'turn-hand'} && turnCombatOn()) {
+          if (${hand} && turnCombatOn()) {
             const q=turnCombatSnapshot(), b=__turnBench;
             if(q.phase==='hero') {
-              if(!b.action || b.action.n!==q.n) b.action={n:q.n,at:q.now+0.2,done:false};
-              if(!b.action.done && q.now>=b.action.at){b.action.done=true;if(!soloAbility())soloAttack();}
+              if(!b.action || b.action.n!==q.n) b.action={n:q.n,at:q.now+${realistic ? 0.35 : 0.2},done:false};
+              if(!b.action.done && q.now+1e-9>=b.action.at){b.action.done=true;if(${attackOnly}||!soloAbility())soloAttack();}
             }
-            if(q.phase==='foeWindup' && b.defence!==q.n && q.now>=(q.parryOpensAt+q.closesAt)/2){b.defence=q.n;soloParry();}
+            if(q.phase==='foeWindup'){
+              if(!b.defence||b.defence.n!==q.n){
+                b.rng=(Math.imul(b.rng,1664525)+1013904223)|0;
+                const land=!${realistic}||((b.rng>>>0)/4294967296)<0.6;
+                b.defence={n:q.n,at:land?(q.parryOpensAt+q.closesAt)/2:Math.max(q.now,q.parryOpensAt-0.1),done:false};
+              }
+              if(!b.defence.done&&q.now+1e-9>=b.defence.at){b.defence.done=true;soloParry();}
+            }
           }
-          tick(step); elapsed+=step; __turnBench.clock=elapsed;
+          __turnBench.clock=elapsed+step; tick(step); elapsed+=step;
         }`);
       }
       const after = e('({kills:S.totalKills,ess:S.mats.ess[0],gold:S.gold,events:__turnBench})');
       if (core.errors.length) throw new Error(`${name}/${mode}: ${core.errors.join('; ')}`);
       const actualSeconds = awayResult ? awayResult.t : seconds;
-      rows.push({profile:name,mode,seed:sd,seconds:actualSeconds,kills:after.kills-before.kills,
-        generatedEss:mode === 'turn-away' ? (awayResult.turnCombat?.generatedEss ?? null) : after.events.ess,storedEss:after.ess-before.ess,
-        deaths:mode === 'turn-away' ? (awayResult.turnCombat?.deaths ?? null) : after.events.deaths,gold:after.gold-before.gold,offlineBoost:before.boost,sampled});
+      const stats = mode === 'turn-away' ? sampled : after.events;
+      const generatedEss = mode === 'turn-away' ? (awayResult.turnCombat?.generatedEss ?? null) : after.events.ess;
+      const kills = after.kills-before.kills, boost = mode === 'turn-away' ? before.boost : 1;
+      rows.push({profile:name,mode,seed:sd,seconds:actualSeconds,kills,generatedEss,storedEss:after.ess-before.ess,
+        deaths:mode === 'turn-away' ? (awayResult.turnCombat?.deaths ?? null) : after.events.deaths,
+        gold:after.gold-before.gold,offlineBoost:before.boost,
+        normalizedKillsPerHour:kills*3600/actualSeconds/boost,
+        normalizedEssPerHour:generatedEss===null?null:generatedEss*3600/actualSeconds/boost,
+        completedFights:stats?.completedFights??null,
+        meanHeroTurns:stats?.completedFights ? stats.totalHeroTurns/stats.completedFights : null,
+        meanFightSeconds:stats?.completedFights ? stats.totalFightSeconds/stats.completedFights : null,
+        parryAttempts:after.events.parryAttempts,parries:after.events.parries,sampled});
     }
   }
-  console.log('C20 stationary zone-1 rate report; no purchases, XP/mastery frozen, Deed bonuses off. Hand = perfect parry, 0.2s reaction.');
-  console.log('profile / mode / seed / kills/h / generated Essence/h / stored Essence/h / deaths');
-  for (const r of rows) { const rate=n=>n===null?'n/a':(n*3600/r.seconds).toFixed(2); console.log(`${r.profile} / ${r.mode} / ${r.seed} / ${rate(r.kills)} / ${rate(r.generatedEss)} / ${rate(r.storedEss)} / ${r.deaths??'n/a'}`); }
-  const report={seconds,seeds:count,rows,notes:['Existing early save is explicitly moved from zone8 to prototype zone1.', 'Storehouse caps retained; generated and stored Essence differ.', 'Away totals come from awayGains; reward-free sampled results are retained separately.', 'Offline bonuses retained; compare using offlineBoost.']};
+  console.log('C20 stationary zone-1 rates; XP/mastery frozen, Deeds off. Hand perfect=.2s/100% parry; realistic=.35s/60% intended parry. Attack-only='+attackOnly);
+  console.log('profile / mode / seed / kills/h / generated Essence/h / stored Essence/h / deaths / hero turns / fight seconds / normalized away kills/Essence per hour');
+  for (const r of rows) { const rate=n=>n===null?'n/a':(n*3600/r.seconds).toFixed(2), num=n=>n==null?'n/a':n.toFixed(2);
+    console.log(`${r.profile} / ${r.mode} / ${r.seed} / ${rate(r.kills)} / ${rate(r.generatedEss)} / ${rate(r.storedEss)} / ${r.deaths??'n/a'} / ${num(r.meanHeroTurns)} / ${num(r.meanFightSeconds)} / ${num(r.normalizedKillsPerHour)}/${num(r.normalizedEssPerHour)}`); }
+  const report={seconds,seeds:count,attackOnly,rows,notes:['Early save moved from zone8 to prototype zone1.',
+    'Storehouse caps retained; report distinguishes generated and stored Essence.',
+    'Away totals use awayGains; reward-free sampled results and completed-fight metrics retained separately.',
+    'Offline bonuses retained; normalized rates divide actual rewards by offlineBoost.',
+    'Fight seconds include intro but exclude between-fight respawn and deaths. Legacy has no turn metrics.',
+    'Realistic policy uses separate seeded RNG for60% attempted parries landing,0.35s action reaction; perfect uses0.2s and100%.',
+    'Tuning overrides apply only to turn modes; legacy remains the shipped comparison.']};
   if(args.json && args.json!=='1') fs.writeFileSync(String(args.json),JSON.stringify(report,null,2)+'\n');
   return report;
 }
