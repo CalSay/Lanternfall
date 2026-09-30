@@ -113,23 +113,19 @@ let deeds, deedBonus, wearGet;
   const pagesOf = keysList => { let n = 0; for (const k of keysList) n += masteryApi.tierFor(num(S.mastery.types[k])); return n; };
   const allTypeKeys = () => TYPES.map(t => t.key);
   const hollowTypeKeys = () => REGIONS[0].types.map(i => TYPES[i].key);
-  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts and its legacy map's (same ids).
+  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts.
   const starBest = cls => {
     const m = starMap(cls), maps = S.stars && S.stars.maps;
     if (!m || !maps) return 0;
     let best = 0;
-    for (const key of [cls, typeof CLS_STAR_FROM === 'object' ? CLS_STAR_FROM[cls] : null]) {
-      const r = key && maps[key];
-      if (!r || !Array.isArray(r.layouts)) continue;
-      for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
-    }
+    const r = maps[cls];
+    if (r && Array.isArray(r.layouts)) for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
     return best;
   };
   const starClasses = () => Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy);
   const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
   const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
   const seamLadder = skill => { let k = 0; if (skillUnits(skill, 2) >= 1e3) k = 1; else return 0; if (skillUnits(skill, 3) >= 1e3) k = 2; else return k; if (skillUnits(skill, 4) >= 1e3) k = 3; else return k; if (skillUnits(skill, 5) >= 1e4) k = 4; return k; };
-  const relicSpent = () => { let s = 0; for (const u of RELICS) { const lv = num(S.relic[u.id]); for (let i = 0; i < lv; i++) s += u.base * Math.pow(u.r, i); } return s; };
   const fineOf = it => {
     if (!it || it.u) return 0;
     const r = it.r === 'epic' || it.r === 'legendary' ? 3 : it.r === 'rare' ? 2 : it.r === 'uncommon' ? 1 : 0;
@@ -515,14 +511,6 @@ let deeds, deedBonus, wearGet;
   on('raidReward', ({ embers }) => { N().embers += num(embers); });
   on('meal', () => { N().meal++; });
   on('storeCap', () => { const sx = DS().sx; sx.rat = num(sx.rat) + 1; if (sx.rat >= T.ratHits) grantSecret('s_rat'); });
-  const markKeys = () => {
-    const ks = DS().rec.ks;
-    for (const c of starClasses()) {
-      const m = starMap(c), r = S.stars && S.stars.maps && S.stars.maps[c];
-      if (!m || !r || !Array.isArray(r.layouts)) continue;
-      for (const l of r.layouts) for (const id of (l && l.lit) || []) { const s = m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) ks[c + ':' + id] = 1; }
-    }
-  };
   on('starLit', ({ cls, id }) => { const m = safe(() => starMap(cls), null), s = m && m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) DS().rec.ks[cls + ':' + id] = 1; });
   let oilSeen = Infinity;
   on('deepEnd', ({ summary }) => { if (summary && summary.reason === 'leave' && oilSeen < 1) grantSecret('s_oil'); oilSeen = Infinity; });
@@ -576,41 +564,15 @@ let deeds, deedBonus, wearGet;
     const run = S.deep && S.deep.run; oilSeen = run ? num(run.oil) : oilSeen;
   }
 
-  // ---------------- first load: old saves get full credit, quietly ----------------
-  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (Array.isArray(S.items) && S.items.length > 0);
-  function seed() {
-    const d = DS(), n = d.n;
-    for (const f of GATHER) { const m = S.mats[f]; if (!Array.isArray(m)) continue; const row = gRow(f); for (let t = 0; t < 5; t++) row[t] = Math.max(num(row[t]), Math.floor(num(m[t]))); }
-    n.ess = Math.max(n.ess, sumArr(S.mats.ess));
-    n.troph = Math.max(n.troph, sumArr(S.craft && S.craft.troph));
-    n.embers = Math.max(n.embers, num(S.embers) + safe(relicSpent, 0));
-    n.dare = Math.max(n.dare, keys(S.codex && S.codex.rec && S.codex.rec.dare));
-    n.weekly = Math.max(n.weekly, num(S.almanac && S.almanac.stamps) * 3);
-    safe(markKeys, 0);
-    for (const it of S.items || []) { const f = fineOf(it); if (f > d.rec.fine) d.rec.fine = f; }
-    if (hasProgress()) {
-      const tm = now();
-      for (const k of ['crit', 'parry', 'dodge', 'intr', 'abil', 'dmg', 'taken', 'heal', 'hit', 'g', 'ess', 'troph', 'glint', 'up', 'ref', 'trans', 'embers', 'dare', 'weekly', 'boss'])
-        if (!d.since[k]) d.since[k] = tm;
-    }
-    const dr = S.almanac && S.almanac.dare; if (dr && dr.on) { d.sx.dareDay = dr.day; dareSeen = dr.day; }
-  }
+  // ---------------- first load: the deeds start counting ----------------
   function init() {
     const d = DS();
     if (d.init) return null;
     dirtyPts();
-    seed();
     const before = pointsNow();
     const res = pass(true, true);
-    const feats = DEED_FEATS.filter(f => d.feat[f.id]), looks = DEED_LOOKS.filter(l => owned(l.id));
     d.init = now();
     const tiers = Object.keys(d.tier).reduce((a, id) => a + num(d.tier[id]), 0), pts = pointsNow();
-    if (hasProgress() && (tiers > 0 || pts > 0)) {
-      const ch = Object.keys(d.ch).reduce((a, id) => a + num(d.ch[id]), 0);
-      let msg = `Your deeds so far: ${tiers} tier${tiers === 1 ? '' : 's'}${ch ? `, ${ch} chapter step${ch === 1 ? '' : 's'}` : ''}, ${pts.toLocaleString('en-US')} points. See Achievements.`;
-      if (feats.length || looks.length) msg += ` New looks: ${looks.map(l => l.n).join(', ')}.`;
-      emit('whatsNew', { msg, icon: { ic: ['banner', '#F2C14E'] } });
-    }
     emit('deedsInit', { tiers, pts, gain: pts - before, res });
     save();
     return { tiers, pts };

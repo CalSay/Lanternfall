@@ -11,7 +11,7 @@
 //   Trapper      Focus Marks 30% (clsMarkAdd), traps (2 charges, laid on every pack), Tripwire; Snare Field
 //   Warlock      Hex (3 Embers or a Flare curse), Creeping Hex, Held Light, Dark Turned (Witchfire); Witchfire
 //   Lightkeeper  (the legacy kit: Given Light, Blessing, Rally Hymn) + ward 30%, Vows; Sanctuary
-// A granted path not yet proven (a migrated Warden or Lightkeeper, 3.7) runs its new parts at
+// A path not yet proven (3.7) runs its new parts at
 // CLS_TUNE.unproven (0.6) and keeps the base stats; the evolution line (bucket C) and stats wait for the Proving.
 // Stagger (`f.stag`) is only counted until S6 adds the bar; clsStagX() is the Warden's +30% for S6 to read.
 //

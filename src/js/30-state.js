@@ -1,4 +1,4 @@
-// 30-state: the save (S), load/migrate, save(), registered feature fields, and
+// 30-state: the save (S), load, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Save compatibility is sacred: never rename or repurpose a field below.

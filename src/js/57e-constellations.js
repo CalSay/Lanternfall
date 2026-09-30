@@ -31,7 +31,7 @@
 //   p     the design's estimate of the star's effective damage at the push zone (x). starPowerEst
 //         multiplies them; check.mjs keeps the best build under the pace caps.
 
-const STAR_TUNE = { every: 3, lanternPts: 4, lanternZone: 35, keyMax: 2, armKeyNeed: 5, crownBridges: 3, crownArm: 3, nameMax: 12 };
+const STAR_TUNE = { every: 3, lanternPts: 4, keyMax: 2, armKeyNeed: 5, crownBridges: 3, crownArm: 3, nameMax: 12 };
 // Knobs 55-party.js reads through tn()/bonus() (Stage C routed them all; ks flags live in 55-party.js and 59-combat.js).
 const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'guardT', 'wall', 'wallT', 'wallPause', 'embersMax', 'emberPerTap', 'flare', 'flarePerEmber', 'keepEmbers',
   'markT', 'mark', 'volleyHits', 'hasteT', 'blessT', 'blessMax', 'bless', 'hymn', 'hymnT', 'hymnFloor', 'lkShare', 'lkAura', 'autoEff', 'autoCd', 'charges'];
@@ -245,8 +245,6 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   starEffects, starPowerEst, starBest, starText, starValidate, starRingEvo, starSuggest;
 
 {
-  // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
-  // into them once (legacy keys stay untouched in the save).
   registerState('stars', { v: 2, maps: {}, seen: 0 });
   const T = STAR_TUNE;
   const ST = () => S.stars;
@@ -468,10 +466,6 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const st = ST();
     if (!st.maps || typeof st.maps !== 'object' || Array.isArray(st.maps)) st.maps = {};
     if (!(st.seen >= 0)) st.seen = 0;
-    if (!(st.v >= 2)) {
-      for (const to in CLS_STAR_FROM) { const from = st.maps[CLS_STAR_FROM[to]]; if (from && typeof from === 'object' && !st.maps[to]) st.maps[to] = JSON.parse(JSON.stringify(from)); }
-      st.v = 2;
-    }
     for (const k of Object.keys(st.maps)) { if (!STAR_MAPS[k]) continue; starValidate(k); }
     bump();
   }

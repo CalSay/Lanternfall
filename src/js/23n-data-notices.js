@@ -115,11 +115,9 @@ const NOTICES = [
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
   { id: 'codex-small', key: 'codex-small', re: /^Codex: the .* page is half full\.$/, ch: 'log' },
-  { id: 'codex-past', key: 'codex-past', re: /^Your Codex holds \d+ Lantern Light from your past deeds/, ch: 'bell', why: 'only a save with progress at load (audit 3.4)' },
 
   // ---- class ----
   { id: 'class', re: /^(You passed the Proving|You are an? .* now\.|The Fenmother has fallen\. Your Proving|The Proving: not this time)/, ch: 'pop', wait: 40, why: 'a card after Ascension lands (W5-A)' },
-  { id: 'class-migrate', re: /^Classes changed\./, ch: 'bell' },
   { id: 'mirror', re: /^The boss dropped a Mirror of Embers/, ch: 'pop' },
   // ---- the Deepwell ----
   { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,

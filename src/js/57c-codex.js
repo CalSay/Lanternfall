@@ -4,8 +4,7 @@
 // Rules: most entries are READ from state other systems already save (mastery, S.found, the
 // roster, stories, camp levels, the Almanac, achievements). The
 // Codex records only what nothing else keeps: champion kills by type, affix tiers and Masterwork
-// lines seen, synergies switched on, materials held by tier, Dares taken. Old saves get full
-// credit on first load (recorded parts are seeded from the bag, the pack and the field).
+// lines seen, synergies switched on, materials held by tier, Dares taken.
 // Lantern Light = sum over visible pages of entries found x Light each, halves rounded down at
 // the end. It is never spent and never goes down (codexLight() is the highest value seen).
 // Light gives no direct power: milestones give titles, cosmetics and quality-of-life perks.
@@ -14,7 +13,7 @@
 //
 // Performance: pages are recomputed only when an event marked the Codex dirty, at most every
 // CODEX_TUNE.every seconds (a few hundred cheap reads), plus a slow safety sweep. Nothing here
-// scans the bag or other big collections on a tick; S.items is read once, on the first load.
+// scans the bag or other big collections on a tick.
 //
 // Exposed names:
 //   data   CODEX_PAGES (page defs), CODEX_PAGE_IDS, CODEX_MILESTONES, CODEX_CAP, CODEX_TUNE
@@ -366,29 +365,17 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const seenStr = p => p.tiles.map(t => b36(t.got)).join('');
   const seenAt = (id, i) => { const s = CX().seen[id]; if (typeof s !== 'string' || i >= s.length) return 0; return parseInt(s[i], 36) || 0; };
 
-  // ---------------- first load: retro credit ----------------
+  // ---------------- first load: the Codex starts recording ----------------
   function init() {
     if (CX().init) return;
-    if (typeof ACH_API === 'object' && S.achievements && !S.achievements.init) safe(() => ACH_API.check(), null);
-    for (const it of S.items || []) markAff(it);
     markMats(); markDare();
-    // Champions: a save that has beaten champions and holds that type's Trophy gets credit.
-    if (S.craft && (S.craft.champ | 0) > 0) (S.craft.troph || []).forEach((n, i) => { if (n > 0 && TYPES[i]) R().champ[TYPES[i].key] = 1; });
     const c = compute();
-    const g = grant(c, true);
+    grant(c, true);
     for (const p of c.pages) if (!p.locked) CX().seen[p.id] = seenStr(p);
     CX().mSeen = CODEX_MILESTONES.filter(m => CX().got[m.at]).reduce((a, m) => Math.max(a, m.at), 0);
     CX().init = true;
     cache = c; dirty = false;
-    // audit 3.4 (W1-B): a new game (its guide still young) has no past deeds to report; only a save with
-    // progress from before this build's Codex does. The line goes to the bell (23n-data-notices 'codex-past').
-    const young = !!(S.onboard && !S.onboard.all && (S.onboard.t || 0) < 120);
-    const past = !young && (S.totalKills > 0 || S.maxZone > 1);
-    if (past && g.light > 0) {
-      const where = typeof campLevel === 'function' && campLevel('library') > 0 ? 'See the Library in camp.' : 'Open it from the bell, then Journal.';
-      emit('toast', { key: 'codex-past', msg: `Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'high' });
-    }
-    emit('codexInit', { light: g.light });
+    emit('codexInit', { light: CX().lightMax });
   }
 
   // quiet: record rewards without toasts (the away card lists them instead).

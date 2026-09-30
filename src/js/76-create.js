@@ -5,25 +5,12 @@
 // A2) are optional. Without CLASS_DEFS or S.party the screen never opens.
 //
 // classUI (read by 75-party-sheet.js): rows() -> [el] the class card's extra rows (passives, the evolution
-// row, the locked second-tier row, what changed for a migrated save); switchRow() -> el | null (the free
+// row, the locked second-tier row); switchRow() -> el | null (the free
 // switch, while it is open); sig() -> a string that changes when those rows would; open(mode).
 var classUI;
 {
   const WEIGHT_NAME = { heavy: 'Heavy armour', medium: 'Medium armour', light: 'Light armour' };
   const HOME_NAME = { front: 'Front', mid: 'Middle', back: 'Back' };
-  // A migrated save's "What changed" (classes-2 7.2): three points per old class.
-  const CHANGED = {
-    warden: ['Your class is called Warrior now. The Warden is its path, and it is yours.',
-      'Guard stacks are Grit now. Each one also cuts the damage you take by 1%.',
-      'You block every tenth hit you take (half damage).'],
-    ranger: ['You are still a Ranger, and sturdier: more health and 10 armour.',
-      'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
-    lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',
-      'Your Proving opens after the Fenmother.'],
-    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing and Rally Hymn, and gain Sanctuary, a second ability.',
-      'Your Lightkeeper stars moved into the Lightkeeper ring on the Lanternmage map. Their points are free to spend again.']
-  };
-
   const classes = () => (typeof CLASS_DEFS === 'object' && CLASS_DEFS && typeof HERO_CLASSES === 'object') ? CLASS_DEFS : null;
   const needsChoice = () => !!(classes() && typeof S === 'object' && S.party && !S.party.chosen && typeof chooseBase === 'function');
 
@@ -145,7 +132,7 @@ var classUI;
       for (const ps of d.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
       // S3: the evolution rows, the Proving and the choice are 75-class-ui's
       if (typeof classEvoUI === 'object' && classEvoUI) out.push(...classEvoUI.rows(info));
-      // The evolution: granted (a migrated Warden or Lightkeeper), or the two paths and their gate.
+      // The evolution: granted or the two paths and their gate.
       else if (info.evo) {
         const txt = info.evo === 'priest'
           ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
@@ -163,13 +150,6 @@ var classUI;
         out.push(r);
       }
       if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
-      if (info.migrated && CHANGED[info.from]) {
-        const det = el('details', 'cl-changed');
-        det.append(el('summary', null, 'What changed'));
-        const ul = el('ul'); for (const t of CHANGED[info.from]) ul.append(el('li', null, t));
-        det.append(ul);
-        out.push(det);
-      }
       return out;
     },
     head() {

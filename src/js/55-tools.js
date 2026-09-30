@@ -42,7 +42,6 @@
 const TOOL_TUNE = {
   on: 1,
   right: 0.25,        // right tool: +25% speed
-  findPer: 0.012,     // rare find per point of item power (the data line uses it via CRAFT_KINDS)
   findCap: 8,         // rare find line cap (%)
   top: 2,             // a find on a tier-5 node brings this many more tier-5 units
   masteryMins: 5,     // minutes to the next level = masteryMins x level

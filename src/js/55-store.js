@@ -24,15 +24,13 @@
 //   data  STORE_TUNE, STORE_HREQ, STORE_COST, STORE_STATS (runtime counters for tools/sim.mjs), storeNum(n)
 //   read  storeLevel(), storeCap(fam, t), storeCapAt(fam, t, lv), stashRoom(fam, t),
 //         stashFull(fam, t), stashOver(fam, t), stashFits(lines), stashNeed(lines) -> '' | text,
-//         stashPreview(lines) -> [[fam, t, n, fit]], storeLevelFor(mats) -> lv, storeOverAt(mats, lv),
+//         stashPreview(lines) -> [[fam, t, n, fit]], storeOverAt(mats, lv),
 //         storeNextNode(kind) -> { kind, t } | null, storeSpillOn(), storeFullCells(),
 //         storeEffects(lv), storeCampCost(to, campGold), storeWhy(fam, t) (player text at the cap)
 //   act   stashAdd(fam, t, n, how, quiet), storeSwitch() -> bool, storeSpill(on) -> bool,
-//         storeMigrate() (57-camp calls it after registerState('camp'); also once per loaded save),
 //         storeAwayGather(kind, tier, got, r) -> units added (50-sim's away gather branch)
 // Events: storeFull and storeCap { fam, t } (a flow hit the cap, once per fill; storeCap is the name 58-deeds reads), storeSpill { from, to } (Spillover moved on).
-// Save: registerState('store', { v, mig: { lv, at, over }, spill, said }). mig: what the migration
-//   gave (at = 0: not run yet); spill: Spillover on (Lv 3); said: cells already toasted this fill.
+// Save: registerState('store', { v, spill, said }). spill: Spillover on (Lv 3); said: cells already toasted this fill.
 
 // The cap table (owner, 2026-09-28: "an idle game: the Storehouse should scale up quite quickly;
 // meaningful, not ridiculous, never so small it's only worth idling for 10 minutes").
@@ -90,12 +88,12 @@ const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, 
 const storeNum = n => Number.isFinite(n) && Math.abs(n) < 1e7 ? String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : fmt(n);
 
 let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
-  storeLevelFor, storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
-  stashAdd, storeSwitch, storeSpill, storeMigrate, storeAwayGather;
+  storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
+  stashAdd, storeSwitch, storeSpill, storeAwayGather;
 
 {
   const T = STORE_TUNE;
-  registerState('store', { v: 1, mig: { lv: 0, at: 0, over: [] }, spill: 0, said: {} });
+  registerState('store', { v: 1, spill: 0, said: {} });
   const ST = () => S.store;
   const key = (f, t) => f + ':' + t;
   const have = (f, t) => (S.mats[f] && S.mats[f][t - 1]) || 0;
@@ -132,7 +130,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     return out;
   };
 
-  // ---------------- levels for a pile (migration, sim) ----------------
+  // ---------------- piles over a cap ----------------
   storeOverAt = (mats, lv) => {
     const out = [];
     for (const [f, a] of Object.entries(mats || {})) {
@@ -141,11 +139,6 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     }
     return out;
   };
-  storeLevelFor = mats => {
-    for (let lv = 0; lv < T.caps.length; lv++) if (!storeOverAt(mats, lv).length) return lv;
-    return T.caps.length - 1;
-  };
-
   // ---------------- credits ----------------
   const said = () => ST().said || (ST().said = {});
   function blocked(f, t, lost, how, quiet) {
@@ -243,37 +236,11 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     return [`Holds ${storeNum(g)} of each material`, `${storeNum(h)} hide and essence`].concat(lv >= T.spill ? ['Spillover: move on when a pile is full'] : []);
   };
 
-  // ---------------- migration (spec 4.7) ----------------
-  // A save with progress gets the lowest level that holds every pile (at least 1), ignoring the
-  // Hearth gate. If none does, Lv 8 and the piles above it stay over the cap. S.mats is untouched.
-  let note = null;
-  const progress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || capped().some(f => S.mats[f].some(n => n > 0));
-  storeMigrate = () => {
-    if (!S.camp || !S.camp.b || ST().mig.at) return 0;
-    if (!progress()) { ST().mig = { lv: 0, at: Date.now(), over: [] }; return 0; }
-    const lv = Math.max(1, storeLevelFor(S.mats));
-    S.camp.b.store = Math.max(S.camp.b.store | 0, lv);
-    const over = storeOverAt(S.mats, S.camp.b.store);
-    ST().mig = { lv: S.camp.b.store, at: Date.now(), over };
-    note = { lv: S.camp.b.store, over };
-    return lv;
-  };
-  function sayMigration() {
-    if (!note) return;
-    const { lv, over } = note; note = null;
-    // a save that has not reached the camp yet meets the Storehouse there (no notice now)
-    if (!(typeof campOpen === 'function' && campOpen()) && !(typeof CAMP_TUNE === 'object' && S.maxZone >= CAMP_TUNE.openZone)) return;
-    const ic = { ic: ['anvil', '#B08A5A'] };
-    emit('whatsNew', { msg: `Your camp has a Storehouse now, at level ${lv}. It holds up to ${storeNum(storeCapAt('ore', 1, lv))} of each material.`, icon: ic });
-    for (const [f, t] of over) emit('whatsNew', { msg: `${name(f, t)} is over the cap. You keep all of it. Spend below ${storeNum(storeCapAt(f, t, lv))} to gain more.`, icon: { mat: [f, t] } });
-  }
-
   // ---------------- each second ----------------
   let initFor = null, acc = 0, fullSecs = 0, fullLv = -1;
   onTick(dt => {
-    if (initFor !== S) { initFor = S; storeMigrate(); fullSecs = 0; }
+    if (initFor !== S) { initFor = S; fullSecs = 0; }
     acc += dt; if (acc < 1) return; acc -= 1; if (acc > 1) acc = 0;
-    sayMigration();
     // a cell below its cap again may toast on its next fill
     const sd = said();
     for (const k of Object.keys(sd)) { const [f, t] = k.split(':'); if (!stashFull(f, +t)) delete sd[k]; }

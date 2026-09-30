@@ -137,7 +137,7 @@ async function runScenario(browser, base, { dev, save }) {
     : { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   let seed = null;
   if (save === 'late') {
-    seed = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-v2-late.json'), 'utf8'));
+    seed = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'save-late.json'), 'utf8'));
   }
   await ctx.addInitScript(([key, raw]) => {
     // Seed the save before the page's scripts run (the away card stays closed: last = now).

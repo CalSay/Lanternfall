@@ -127,7 +127,7 @@ setClock(g, clock0);
 // The first bounties were drawn while the game loaded, before Math.random was seeded: redraw them.
 if (!args['from-save']) E('S.bounties.slots = []; BOUNTY_API.refresh()');
 if (args['from-save']) {
-  // Start from a real save file (e.g. tests/fixtures/save-mid-v2.json) instead of a fresh game.
+  // Start from a real save file (e.g. tests/fixtures/save-mid.json) instead of a fresh game.
   const fs = await import('node:fs');
   g.storage.set(SAVE_KEY, fs.readFileSync(args['from-save'], 'utf8'));
   E('loadSave(); gearDirty(); spawn()');
@@ -911,7 +911,7 @@ function runDays() {
   console.log(`regions: ${[35, 70, 105].map(z => `zone ${z} boss ${bossAt[z] === undefined ? '-' : 'day ' + (bossAt[z] / 24).toFixed(1)}`).join(', ')}`);
   {
     const L = E('S.econ'), sp = Object.values(L.spent).reduce((a, b) => a + b, 0) || 1, pc = k => Math.round(100 * (L.spent[k] || 0) / sp) + '%';
-    console.log(`econ: earned ${fmt(E('S.totalGold'))} (fight ${fmt(L.earned.fight)}, away ${fmt(L.earned.away)}, bounty ${fmt(L.earned.bounty)}), spent ${fmt(sp)}: up ${pc('up')}, camp ${pc('camp')}, craft ${pc('craft')}, hire ${pc('hire')}, other ${pc('other')} | bank ${fmt(E('S.gold'))} | ${SOLO ? 'Training ' + E("trainMoves().map(m => trainName(m) + ' ' + trainLv(m)).join(', ')") : `Blade ${E('S.blade')}, Swiftness ${E('S.swift')}, Precision ${E('S.precision')}`} | crit damage +${Math.round(100 * E('keen()'))}%${Object.keys(eco.keenAt).length ? ' (bosses ' + Object.entries(eco.keenAt).map(([z, k]) => `${z}: +${Math.round(100 * k)}%`).join(', ') + ')' : ''}`);
+    console.log(`econ: earned ${fmt(E('S.totalGold'))} (fight ${fmt(L.earned.fight)}, away ${fmt(L.earned.away)}, bounty ${fmt(L.earned.bounty)}), spent ${fmt(sp)}: up ${pc('up')}, camp ${pc('camp')}, craft ${pc('craft')}, hire ${pc('hire')}, other ${pc('other')} | bank ${fmt(E('S.gold'))} | Training ${E("trainMoves().map(m => trainName(m) + ' ' + trainLv(m)).join(', ')")} | crit damage +${Math.round(100 * E('keen()'))}%${Object.keys(eco.keenAt).length ? ' (bosses ' + Object.entries(eco.keenAt).map(([z, k]) => `${z}: +${Math.round(100 * k)}%`).join(', ') + ')' : ''}`);
   }
   console.log(`boredom to the Region 2 boss: longest gap ${(gapAct2 / 60).toFixed(0)} active min, longest run of empty check-ins ${gapCi2}`);
   console.log(`boredom (whole run): longest gap ${(gapAct / 60).toFixed(0)} active min (ending day ${(gapAt / 24 / H).toFixed(1)}), longest run of empty check-ins ${gapCi}, empty check-ins ${empty}/${sessions.length}`);

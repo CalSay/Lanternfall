@@ -4,8 +4,7 @@
 // Rules (spec 5; section 9 decisions accepted, wave-log D7):
 //   - Hands live AT CAMP (owner, 2026-09-28): they sleep in the Bunkhouse, a camp building (57-camp
 //     CAMP_B.bunk; its plot opens after the Tavern), and apply at the Tavern. Hands open at Hearth 2
-//     with the Tavern and the Bunkhouse built. Tam, Hesketh's nephew, arrives free then. Old saves at
-//     Hearth 2+ get the Bunkhouse at Lv 1 at their first load with this build (and so Tam). Hands
+//     with the Tavern and the Bunkhouse built. Tam, Hesketh's nephew, arrives free then. Hands
 //     replace the never-built bench jobs.
 //   - Applicants: one every 8 h of wall clock (6 h from Tavern Lv 3), at most 3 waiting; the first
 //     arrives with Tam. A turned-away or hired applicant frees the spot; when the board was full, the
@@ -67,8 +66,7 @@
 // Later (K13, production chains): Hands who refine at stations or gather secondary resources. The
 //   hand record keeps its fields; a new optional `role` (missing = 'gather') and job fields can be added.
 // Save: registerState('hands', { v, seq, list, board: { apps, next }, pity: [rare, epic, legendary],
-//   tam, log, hired, hrs, got, met, heard, open, rs, mig }). rs: the Hands' own random stream (applicants, seeds).
-//   mig: the one-time old-save step ran (Bunkhouse Lv 1 at Hearth 2+).
+//   tam, log, hired, hrs, got, met, heard, open, rs }). rs: the Hands' own random stream (applicants, seeds).
 //   list[i] = { id, n, r, sk, tr: [trait ids], cl (calling | null), key (named Hand | null), lv, xp (hours
 //     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t } | null,
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
@@ -87,7 +85,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
 {
   const T = HANDS_TUNE;
   registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [],
-    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, mig: 0 });
+    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0 });
   const H = () => S.hands;
   const now = () => Date.now();
   const HOUR = 3600e3;
@@ -151,14 +149,6 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsBeds = () => handsBedsAt(lvOf('bunk'), lvOf('hearth'));
   // H1's plot rule (cold saves): the Bunkhouse plot opens once the Tavern stands.
   if (typeof HEARTH_PLOT === 'object' && HEARTH_PLOT) HEARTH_PLOT.bunk = () => lvOf('tavern') >= 1;
-  // Old saves at Hearth 2+ (they predate the Bunkhouse) get it at Lv 1 once, so Tam can come.
-  const migrate = () => {
-    const h = H(); if (h.mig) return;
-    h.mig = 1;
-    if (!T.on || !S.camp || !S.camp.b || !safe(() => campOpen(), false) || lvOf('hearth') < T.openHearth || lvOf('bunk') >= 1) return;
-    S.camp.b.bunk = 1;
-    emit('whatsNew', { msg: 'Your camp has a Bunkhouse now. Hands, townsfolk who gather for the heroes, sleep there. Hire them at the Tavern.', icon });
-  };
   // W1-E: the cap is Tents (economy-2 5): 2 free with the Tavern at Hearth 2; a built Bunkhouse still adds room
   // until the Tent build (CAMP_B.tent) lands.
   handsTents = () => handsOpen() ? Math.max(ECON.tentFree, handsBeds()) : 0;
@@ -569,7 +559,6 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     acc += dt; if (acc < 1) return; acc = 0;
     if (!T.on) return;
     const q = first; first = false;
-    migrate();
     if (!handsOpen()) return;
     if (!H().tam || !H().board.next) openHands(q);
     const t = now();
@@ -585,7 +574,6 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     init();
     awayBack = []; awayApps = 0;
     if (!T.on) return;
-    migrate();
     if (!handsOpen()) return;
     if (!H().tam || !H().board.next) openHands(true);
     const t = now();
