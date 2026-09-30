@@ -13,6 +13,13 @@ import { loadCore, memoryStorage } from './lib/core.mjs';
 const KEY = 'lanternfall.save.v5';   // W3-A
 
 export function saveCodeFor(json) {
+  // Validate in a clean core before any feature's load-time code sees this file.
+  const clean = loadCore({ seed: 1 });
+  const limit = clean.eval('SAVECODE_LIMITS.jsonBytes');
+  if (typeof json !== 'string' || Buffer.byteLength(json, 'utf8') > limit) throw new Error('Save JSON is missing or too large.');
+  try { JSON.parse(json); } catch { throw new Error('The file does not contain valid save JSON.'); }
+  const result = clean.eval(`validateSave(JSON.parse(${JSON.stringify(json)}))`);
+  if (!result.ok) throw new Error(result.error);
   const g = loadCore({ seed: 1, storage: memoryStorage({ [KEY]: json }) });
   return g.eval('encodeSave(S)');
 }
@@ -22,6 +29,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (!file) { console.error('usage: node tools/savecode.mjs <fixture.json>'); process.exit(1); }
   const abs = path.isAbsolute(file) ? file : path.join(process.cwd(), file);
   if (!fs.existsSync(abs)) { console.error(`not found: ${abs}`); process.exit(1); }
-  const raw = fs.readFileSync(abs, 'utf8');
-  console.log(saveCodeFor(raw));
+  try {
+    const limit = loadCore({ seed: 1 }).eval('SAVECODE_LIMITS.jsonBytes');
+    if (fs.statSync(abs).size > limit) throw new Error('Save JSON is too large.');
+    const raw = new TextDecoder('utf-8', { fatal: true }).decode(fs.readFileSync(abs));
+    console.log(saveCodeFor(raw));
+  } catch (e) { console.error('Cannot make a save code: ' + e.message); process.exitCode = 1; }
 }

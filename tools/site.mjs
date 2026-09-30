@@ -3,7 +3,8 @@
 // Netlify site to the given folder (default site/): index.html, _headers (always fetch the newest page)
 // and netlify.toml (no build step: the page is built locally by tools/build.mjs first).
 import fs from 'fs'; import path from 'path';
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+import { fileURLToPath } from 'node:url';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.resolve(process.argv[2] || path.join(ROOT, 'site'));
 const page = fs.readFileSync(path.join(ROOT, 'dist', 'lanternfall.html'), 'utf8');
 fs.mkdirSync(out, { recursive: true });
