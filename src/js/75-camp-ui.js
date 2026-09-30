@@ -144,6 +144,48 @@
 
   // ---------------- the camp part ----------------
   let lightBtn, head, closed, closedBar, closedTxt, hearthCard, H = {}, buildersBox, bSig = '';
+  let scenePort, sceneCanvas, sceneButtons, sceneCtx, sceneSig = '', sceneCentered = false, crewStrip, crewCounts;
+  function drawCampScene() {
+    if (!scenePort || typeof campSceneLayout !== 'function' || typeof campPaintScene !== 'function') return;
+    const layout = campSceneLayout();
+    campPaintScene(sceneCtx, layout, Date.now() / 1000);
+    if (!sceneCentered && scenePort.clientWidth) {
+      scenePort.scrollLeft = Math.max(0, layout.homeX - scenePort.clientWidth / 2);
+      sceneCentered = true;
+    }
+    const actors = layout.actors || [];
+    const sig = JSON.stringify(actors.map(a => [a.id, a.name, a.x, a.y, a.status && a.status.st]));
+    if (sig !== sceneSig) {
+      const focusedId = sceneButtons.contains(document.activeElement) ? document.activeElement.dataset.handId : null;
+      sceneSig = sig; sceneButtons.textContent = '';
+      for (const actor of actors) {
+        const b = btn('camp-person', ''); b.dataset.handId = actor.id;
+        b.style.cssText = `position:absolute;left:${actor.x - 28}px;top:${actor.y - 84}px;width:56px;height:96px;background:transparent;border:0;cursor:pointer;pointer-events:auto;touch-action:auto`;
+        const label = el('span', null, actor.name.split(' ')[0]);
+        label.style.cssText = 'position:absolute;left:0;right:0;bottom:-12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10px var(--body);line-height:14px;color:var(--bone);background:rgba(11,8,16,.75);pointer-events:none';
+        b.append(label);
+        const status = handsStatus(actor.id);
+        b.setAttribute('aria-label', `Talk to ${actor.name}${status ? ', ' + status.label : ''}`);
+        b.title = `Talk to ${actor.name}`;
+        b.addEventListener('focus', () => { b.style.outline = '2px solid var(--gold)'; b.style.outlineOffset = '-2px'; });
+        b.addEventListener('blur', () => { b.style.outline = ''; });
+        let down = null, dragged = false;
+        b.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; dragged = false; });
+        b.addEventListener('pointermove', e => { if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 8) dragged = true; });
+        b.addEventListener('pointercancel', () => { down = null; dragged = true; });
+        b.addEventListener('click', e => {
+          down = null;
+          if (dragged) { dragged = false; e.preventDefault(); return; }
+          handsTalkOpen(actor.id, b);
+        });
+        sceneButtons.append(b);
+      }
+      if (focusedId) {
+        const next = [...sceneButtons.children].find(b => b.dataset.handId === focusedId);
+        (next || scenePort).focus();
+      }
+    }
+  }
   registerSection('camp', {
     id: 'camp', title: null,
     mount(sec) {
@@ -156,6 +198,25 @@
       lightBtn = btn('big cb-go', 'Light the fire · 8 Pine Log'); lightBtn.hidden = true;
       lightBtn.addEventListener('click', () => { if (hearthLight()) ui(true); });
       closed.append(el('h3', null, 'No camp yet'), closedTxt, bar, lightBtn);
+      const size = typeof CAMP_SCENE_SIZE === 'object' ? CAMP_SCENE_SIZE : { width: 1024, height: 192 };
+      scenePort = el('div'); scenePort.id = 'camp-scene-scroll'; scenePort.tabIndex = 0;
+      scenePort.setAttribute('role', 'region'); scenePort.setAttribute('aria-label', 'Camp scene. Scroll sideways to visit your gatherers.');
+      scenePort.style.cssText = 'width:100%;max-width:100%;min-width:0;height:192px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;touch-action:auto;background:var(--well)';
+      const track = el('div'); track.style.cssText = `position:relative;width:${size.width}px;height:${size.height}px`;
+      sceneCanvas = el('canvas'); sceneCanvas.id = 'camp-scene-world'; sceneCanvas.width = size.width; sceneCanvas.height = size.height;
+      sceneCanvas.style.cssText = `position:absolute;left:0;top:0;width:${size.width}px;height:${size.height}px;image-rendering:pixelated;pointer-events:none`;
+      sceneCtx = sceneCanvas.getContext('2d'); sceneCtx.imageSmoothingEnabled = false;
+      sceneButtons = el('div'); sceneButtons.id = 'camp-scene-hands';
+      sceneButtons.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+      track.append(sceneCanvas, sceneButtons); scenePort.append(track);
+      crewStrip = el('div'); crewStrip.id = 'camp-crew-status';
+      crewStrip.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;background:var(--well);border:1px solid var(--line)';
+      crewCounts = el('span', 'note'); crewCounts.setAttribute('role', 'status');
+      const crewGo = btn('mini', 'View gatherers'); crewGo.style.minHeight = '44px';
+      crewGo.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }));
+      crewStrip.append(crewCounts, crewGo);
+      const talkHost = el('div');
+      if (typeof handsTalkMount === 'function') handsTalkMount(talkHost, scenePort);
       hearthCard = el('div', 'card camp-hearth'); hearthCard.id = 'camp-b-hearth';
       const top = el('div', 'ch-top'), ic = el('div', 'ic ch-ic'); ic.append(img(icon('hearth')));
       const who = el('div', 'ch-who');
@@ -171,11 +232,13 @@
       H.deco.hidden = true; H.decoSig = '';
       hearthCard.append(top, H.deco, H.next, H.cost, H.costs, H.timer.el, H.act.el);
       buildersBox = el('div', 'camp-builders');
-      sec.append(head, closed, hearthCard, buildersBox);
+      sec.append(head, closed, scenePort, crewStrip, talkHost, hearthCard, buildersBox);
     },
     update() {
       const open = campOpen();
       putHidden(closed, open); putHidden(hearthCard, !open); putHidden(buildersBox, !open);
+      putHidden(scenePort, !open);
+      putHidden(crewStrip, !open || !handsOpen());
       if (!open) {
         // H1: a cold Hearth waits for its fire (8 Pine Log), not for a zone.
         const cold = typeof hearthCold === 'function' && hearthCold(), hc = cold ? hearthCan() : null;
@@ -191,6 +254,19 @@
         putStyle(closedBar, 'width', Math.min(100, S.maxZone / CAMP_TUNE.openZone * 100) + '%');
         return;
       }
+      drawCampScene();
+      if (!crewStrip.hidden) {
+        const n = { ready: 0, out: 0, rest: 0, pack: 0 };
+        for (const h of handsList()) {
+          const s = handsStatus(h); if (!s) continue;
+          if (s.st === 'camp') n.ready++;
+          else if (s.st === 'rest') n.rest++;
+          else if (s.st === 'pack') n.pack++;
+          else n.out++;
+        }
+        setTxt(crewCounts, `Ready ${n.ready} · Out ${n.out} · Resting ${n.rest} · Full packs ${n.pack}`);
+      }
+      if (typeof handsTalkUpdate === 'function') handsTalkUpdate();
       const l = campLevel('hearth'), c = campCan('hearth'), pend = campPending('hearth'), nx = campNextUnlock();
       setTxt(H.name, CAMP_HEARTH_NAMES[l - 1]);
       setTxt(H.lv, `Hearth ${l}/10`);

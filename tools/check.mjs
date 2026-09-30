@@ -5268,6 +5268,144 @@ if (section('gatherer engine gaps (C1)')) try {
   assert(!errs.length, 'C1: no gatherer or camp handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C1 gatherer engine gaps crashed: ' + (e.stack || e)); }
 
+// ---- C2: gatherers in the camp scene, ordinary conversation and profession jobs ----
+if (section('gatherers at camp (C2)')) try {
+  const T0 = new Date(2026, 8, 28, 12).getTime(), HOUR = 3600e3, games = [];
+  const clock = (g, t) => g.eval(`Date.__t = ${t}; Date.now = () => Date.__t`);
+  const mk = opts => {
+    const g = loadCore({ seed: 7201, prelude: `Date.__t = ${T0}; Date.now = () => Date.__t;`, ...opts }); games.push(g);
+    g.eval('S.maxZone=12; S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.store=8; S.gold=1e9; S.skills.mine.lv=20; S.skills.wood.lv=20; S.skills.forage.lv=20; tick(1.2)');
+    return g;
+  };
+  // Opening and refreshing a conversation is a read; ordinary talk never consumes an earned story.
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('handsGet("tam").lv=10');
+    const before = E('JSON.stringify(S.hands)'), info = E('handsTalkInfo("tam")');
+    assert(info && info.id === 'tam' && info.name === 'Tam' && info.lv === 10 && typeof info.line === 'string' && info.line.length > 0, 'C2: talk info identifies the gatherer and gives a real conversation line');
+    E('handsTalkInfo("tam"); handsTalkInfo("tam")');
+    assert(E('JSON.stringify(S.hands)') === before && E('handsTalkInfo("missing")') === null, 'C2: reading talk info is pure and a missing gatherer has no panel data');
+    const due = E('handsStoryDue(handsGet("tam"))'), heard = E('S.hands.heard'), stories = E('handsGet("tam").st');
+    assert(due === 5 && E('handsTalk("tam")') === 1, 'C2: ordinary conversation advances its own counter with an earned story waiting');
+    assert(E('handsStoryDue(handsGet("tam"))') === due && E('S.hands.heard') === heard && E('handsGet("tam").st') === stories, 'C2: ordinary talk does not mark a level story heard');
+    const h = loadCore({ seed: 7202, storage: memoryStorage({ [KEY]: g.storage.get(KEY) }), prelude: `Date.__t=${T0};Date.now=()=>Date.__t` }); games.push(h);
+    assert(h.eval('handsGet("tam").talk') === 1 && h.eval('handsStoryDue(handsGet("tam"))') === 5, 'C2: the talk action persists its counter while preserving the pending story');
+    assert(E('handsTalk("missing")') === 0 && E('S.hands.heard') === heard, 'C2: a stale conversation target cannot change story state');
+  }
+  // Every offered job is executable for that gatherer's actual profession, including loaded random workers.
+  {
+    const g = mk(), E = s => g.eval(s);
+    for (const sk of ['mine', 'wood', 'forage']) {
+      E(`Object.assign(handsGet("tam"), {sk:${JSON.stringify(sk)},job:null,pack:[],key:null,sent:99})`);
+      const jobs = E('handsTalkInfo("tam").jobs');
+      assert(jobs.length > 0 && jobs.every(n => n.own && E(`skillOf(${JSON.stringify(n.kind)})`) === sk), `C2: ${sk} conversation offers only open jobs in its own profession`);
+      const job = jobs.find(n => n.can.ok);
+      assert(job && E(`!!handsSend("tam",${JSON.stringify(job.kind)},${job.t})`) && E('handsGet("tam").job.kind') === job.kind, `C2: the ${sk} conversation's offered job starts the real gatherer shift`);
+    }
+    const busy = E('handsTalkInfo("tam")');
+    assert(busy.jobs.every(n => !n.can.ok), 'C2: a gatherer already away cannot be sent from stale conversation data');
+    E('handsGet("tam").job=null; handsGet("tam").pack=[["wood",1,5]]');
+    assert(E('handsTalkInfo("tam").jobs.every(n=>!n.can.ok)'), 'C2: a pack waiting in camp keeps every send action unavailable');
+    E('handsGet("tam").pack=[]; S.gold=0');
+    assert(E('handsTalkInfo("tam").jobs.every(n=>!n.can.ok)'), 'C2: an unpaid gatherer gets the core fee checks in the conversation');
+  }
+  // Run the real scene painter and conversation DOM in Node; the adapter records canvas calls and button actions.
+  const { coreFiles } = await import('./lib/core.mjs');
+  const stub = `
+    Date.__t=${T0}; Date.now=()=>Date.__t;
+    let reduced=true, stageDeco=null;
+    class ImageData { constructor(data,width,height){this.data=data;this.width=width;this.height=height;} }
+    const __paint=[], __sections={}, __timers=[];
+    const __ctx=()=>({ fillStyle:'',globalAlpha:1,fillRect(...a){__paint.push(['rect',this.fillStyle,...a]);},clearRect(){},drawImage(c,...a){__paint.push(['image',...a]);},save(){},restore(){},setTransform(){},scale(){},translate(){},beginPath(){},arc(){},fill(){},stroke(){},moveTo(){},lineTo(){},fillText(){},
+      createImageData(w,h){return {data:new Uint8ClampedArray(w*h*4),width:w,height:h};},putImageData(){},createLinearGradient(){return {addColorStop(){}};},createRadialGradient(){return {addColorStop(){}};}});
+    class __Node {
+      constructor(tag='div',cls='',text=''){this.tagName=tag.toUpperCase();this.className=cls||'';this.children=[];this.dataset={};this.attrs={};this.events={};this.hidden=false;this.scrollLeft=0;this.style={setProperty(k,v){this[k]=v;}};this._text=text||'';
+        this.classList={add:(c)=>{this.className+=' '+c;},remove:(c)=>{this.className=this.className.split(' ').filter(x=>x!==c).join(' ');},contains:(c)=>this.className.split(' ').includes(c),toggle:(c,on)=>{const yes=on===undefined?!this.classList.contains(c):on;this.classList[yes?'add':'remove'](c);return yes;}};}
+      append(...nodes){for(const n of nodes){if(n.remove)n.remove();this.children.push(n);if(n&&typeof n==='object')n.parentNode=this;}}
+      appendChild(n){this.append(n);return n;} prepend(...nodes){for(const n of nodes.reverse()){if(n.remove)n.remove();this.children.unshift(n);n.parentNode=this;}}
+      insertBefore(n,b){if(n.remove)n.remove();const i=this.children.indexOf(b);if(i<0)this.append(n);else{this.children.splice(i,0,n);n.parentNode=this;}return n;}
+      replaceChildren(...nodes){for(const n of this.children)n.parentNode=null;this.children=[];this.append(...nodes);} remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+      get firstChild(){return this.children[0]||null;} get nextSibling(){return this.parentNode?.children[this.parentNode.children.indexOf(this)+1]||null;} get isConnected(){return document.body.contains(this)||document.head.contains(this);} get clientWidth(){return 740;}
+      set textContent(v){this._text=String(v);this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent||'').join('');}
+      setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;} removeAttribute(k){delete this.attrs[k];}
+      addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} removeEventListener(k,f){this.events[k]=(this.events[k]||[]).filter(x=>x!==f);}
+      fire(k,props={}){const e={target:this,currentTarget:this,detail:1,button:0,pointerId:1,clientX:0,clientY:0,preventDefault(){},stopPropagation(){},...props};for(const f of this.events[k]||[])f(e);}
+      click(){this.fire('click');} focus(){document.activeElement=this;} contains(n){return this===n||this.children.some(c=>c.contains&&c.contains(n));}
+      querySelectorAll(s){const out=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):s[0]==='['?Object.hasOwn(n.attrs,s.slice(1,-1))||s==='[data-hand-id]'&&!!n.dataset.handId:n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children||[]){if(match(c))out.push(c);walk(c);}};walk(this);return out;}
+      querySelector(s){return this.querySelectorAll(s)[0]||null;} getContext(){return this._ctx||(this._ctx=__ctx());} toDataURL(){return 'data:image/png;base64,AA';}
+      getBoundingClientRect(){return {left:0,top:0,width:740,height:192};} setPointerCapture(){} releasePointerCapture(){} scrollTo(o){this.scrollLeft=o.left||0;}
+    }
+    const document={body:new __Node('body'),head:new __Node('head'),activeElement:null,hidden:false,createElement:t=>new __Node(t),getElementById(id){return this.body.querySelector('#'+id)||this.head.querySelector('#'+id);},querySelector(s){return this.body.querySelector(s);}};
+    const el=(t,c,x)=>new __Node(t,c,x), img=()=>new __Node('img'), $=id=>document.getElementById(id)||document.body;
+    const iconURL=()=>'',matIcon=()=>'',registerSection=(tab,s)=>{__sections[s.id]=s;},ui=()=>{if(typeof handsTalkUpdate==='function')handsTalkUpdate();};
+    const disclose=()=>({open:false,chev:el('span')}),setTab=()=>{};
+    const putStyle=(e,k,v)=>{e.style[k]=v;},putText=(e,t)=>{e.textContent=t;},putAttr=(e,k,v)=>e.setAttribute(k,v),putToggle=(e,k,v)=>e.classList.toggle(k,v),putHidden=(e,v)=>{e.hidden=!!v;},putDisabled=(e,v)=>{e.disabled=!!v;};
+    const setTimeout=f=>{__timers.push(f);return __timers.length;},setInterval=setTimeout,clearTimeout=()=>{},clearInterval=()=>{};
+  `;
+  const w = mk({ prelude: stub, files: coreFiles().concat(['60b-baker.js','63d-scenery-camp.js','74-ui-hands.js','75-camp-ui.js']) }), W = s => w.eval(s);
+  {
+    const layout = W('campSceneLayout()');
+    assert(layout.width === 1024 && layout.height === 192 && layout.actors.some(x=>x.id==='tam'), 'C2: the wide 1,024×192 camp scene includes Tam at home');
+    W('handsSend("tam","wood",1,{shifts:2})');
+    assert(W('!campSceneLayout().actors.some(x=>x.id==="tam") && campSceneLayout().away.some(x=>x.id==="tam")'), 'C2: an away gatherer leaves the camp actors and appears in the away list');
+    clock(w,T0+4*HOUR);
+    assert(W('handsStatus("tam").st === "back" && !campSceneLayout().actors.some(x=>x.id==="tam")'), 'C2: an overdue return stays off the scene until its job is settled');
+    W('handsCatchUp(Date.now())');
+    assert(W('handsStatus("tam").st === "rest" && campSceneLayout().actors.some(x=>x.id==="tam")'), 'C2: a gatherer resting between shifts remains visible in camp');
+    W('handsRecall("tam"); handsGet("tam").pack=[["wood",1,5]]');
+    assert(W('campSceneLayout().actors.some(x=>x.id==="tam")'), 'C2: a gatherer with a waiting pack remains visible in camp');
+    W('handsGet("tam").pack=[]; S.camp.b.tent=10; for(let i=1;i<10;i++) S.hands.list.push(Object.assign(JSON.parse(JSON.stringify(handsGet("tam"))),{id:"c2-"+i,n:"Worker "+i,key:null,sk:["mine","wood","forage"][i%3]}))');
+    const crew = W('campSceneLayout().actors');
+    assert(crew.length === 10 && crew.every(a=>a.w>=44&&a.h>=44&&a.x-a.w/2>=0&&a.x+a.w/2<=1024&&a.y<=192) && new Set(crew.map(a=>a.x+":"+a.y)).size===10, 'C2: ten workers have distinct, generously sized hit areas inside the panorama');
+    const before = W('JSON.stringify(S.hands)');
+    W('globalThis.__c2ctx=__ctx(); campPaintScene(__c2ctx,campSceneLayout(),0); __paint.length=0; campPaintScene(__c2ctx,campSceneLayout(),0)');
+    const still = W('JSON.stringify(__paint)'), images = W('__paint.filter(x=>x[0]==="image").length');
+    W('__paint.length=0; campPaintScene(__c2ctx,campSceneLayout(),30)');
+    assert(W('JSON.stringify(__paint)') === still && images >= 10 && W('bakeStats().bakes') > 0, 'C2: reduced motion keeps the procedural worker sprites and camp painting still');
+    assert(W('JSON.stringify(S.hands)') === before, 'C2: drawing and laying out the camp never change jobs, conversations or story counters');
+    W('globalThis.__c2variants=campSceneLayout(); __c2variants.actors=["mine","wood","forage","any"].flatMap((sk,i)=>[0,1,2].map(look=>({id:sk+look,name:sk,x:40+(i*3+look)*80,y:164,w:56,h:96,status:{st:"camp"},sk,look}))); __paint.length=0; campPaintScene(__c2ctx,__c2variants,0)');
+    W('__paint.length=0; campPaintScene(__c2ctx,__c2variants,0)');
+    assert(W('__paint.filter(x=>x[0]==="image").length') === 12 && W('Object.keys(AK.CHARS).filter(k=>k.startsWith("camp_worker_")).length') === 12, 'C2: all twelve job/outfit variants bake and paint through the real B1 character renderer');
+    const baked = W('bakeStats().bakes'); W('campPaintScene(__c2ctx,__c2variants,10)');
+    assert(W('bakeStats().bakes') === baked, 'C2: repeated scene draws reuse worker sprite caches');
+  }
+  {
+    W('S.hands.list=S.hands.list.slice(0,1); Object.assign(handsGet("tam"),{job:null,pack:[],lv:10,sk:"mine",key:null,sent:99}); globalThis.__part=el("div"); globalThis.__camp=el("section"); __part.append(__camp); document.body.append(__part); __sections.camp.mount(__camp); __sections.camp.update()');
+    assert(W('$("camp-scene-scroll").tabIndex===0 && $("camp-scene-world").width===1024 && $("camp-scene-scroll").style.cssText.includes("overflow-x:auto")'), 'C2: the real Camp mount provides a keyboard-focusable native horizontal panorama');
+    W('globalThis.__person=$("camp-scene-hands").children.find(x=>x.dataset.handId==="tam")');
+    assert(W('__person.tagName==="BUTTON" && __person.getAttribute("aria-label").includes("Tam")'), 'C2: the scene exposes the gatherer as a named native button');
+    const talk = W('handsGet("tam").talk||0');
+    W('__person.fire("pointerdown",{clientX:10}); __person.fire("pointermove",{clientX:40}); __person.fire("click")');
+    assert(W('handsGet("tam").talk||0') === talk && W('$("hands-talk").hidden'), 'C2: dragging from a worker does not open a conversation');
+    W('__person.fire("pointerdown"); __person.fire("pointercancel"); __person.fire("click")');
+    assert(W('handsGet("tam").talk||0') === talk, 'C2: a cancelled touch does not accidentally talk');
+    W('__person.fire("click",{detail:0})');
+    assert(W('!$("hands-talk").hidden && handsGet("tam").talk') === talk + 1, 'C2: keyboard activation opens the conversation and counts exactly one talk');
+    W('handsTalkUpdate(); handsTalkUpdate()');
+    assert(W('handsGet("tam").talk') === talk + 1 && W('handsStoryDue(handsGet("tam"))') === 5, 'C2: panel refreshes neither retell a conversation nor consume the pending story');
+    W('$("hands-talk").querySelectorAll("button").find(b=>b.textContent==="Send on a job").click()');
+    const offered = W('handsTalkInfo("tam").jobs');
+    assert(W('$("hands-talk").querySelectorAll(".hd-job").length') === offered.length && offered.every(n=>W(`skillOf(${JSON.stringify(n.kind)})`) === 'mine'), 'C2: the actual talk picker renders the miner’s available profession nodes');
+    W('$("hands-talk").querySelector(".hd-job").focus(); S.gold-=100; handsTalkUpdate()');
+    assert(W('document.activeElement.classList.contains("hd-job")'), 'C2: an affordability refresh preserves keyboard focus in the job picker');
+    const fee = W('handsCanSend("tam",handsTalkInfo("tam").jobs[0].kind,handsTalkInfo("tam").jobs[0].t).fee'), money = W('S.gold');
+    W('$("hands-talk").querySelector(".hd-job").click(); __sections.camp.update()');
+    assert(W('!!handsGet("tam").job && skillOf(handsGet("tam").job.kind)==="mine"') && W('S.gold') === money - fee, 'C2: clicking a talk job starts the real mining shift and charges its actual fee');
+    assert(W('!$("camp-scene-hands").children.some(b=>b.dataset.handId==="tam") && $("hands-talk").querySelectorAll("button").find(b=>b.textContent==="Send on a job").disabled'), 'C2: sending removes the scene button and disables another send in the open panel');
+    W('$("hands-talk").querySelectorAll("button").find(b=>b.textContent==="Close").click()');
+    assert(W('$("hands-talk").hidden && document.activeElement===$("camp-scene-scroll")'), 'C2: closing after departure restores focus to the scene when the worker button is gone');
+    W('globalThis.__dest=null; on("campGoto",d=>{__dest=d;}); $("camp-crew-status").querySelector("button").click()');
+    assert(W('__dest.tab==="world" && __dest.view==="tav" && __dest.sel==="#sec-hands-crew"'), 'C2: the status strip shortcut targets the existing Tavern crew section');
+    W('globalThis.__tav=el("div"); const head=el("h2","world-head"); globalThis.__board=el("section"); __board.id="sec-hands"; globalThis.__crew=el("section"); __crew.id="sec-hands-crew"; __tav.append(head,__board,__crew); document.body.append(__tav); __sections.hands.mount(__board); __sections["hands-crew"].mount(__crew)');
+    assert(W('__tav.children.indexOf(__crew)<__tav.children.indexOf(__board) && __tav.children[0].classList.contains("world-head")'), 'C2: the real Tavern mounts hired gatherers before new applicants under its heading');
+    W('const base=JSON.parse(JSON.stringify(handsGet("tam"))); S.hands.list=[base,...["ready","rest","pack"].map(id=>({...JSON.parse(JSON.stringify(base)),id,n:id,job:null,pack:[]}))]; handsGet("rest").job={...JSON.parse(JSON.stringify(base.job)),start:Date.now()+1800000,end:Date.now()+16200000}; handsGet("pack").pack=[["ore",1,5]]; __sections.camp.update()');
+    assert(W('$("camp-crew-status").textContent.includes("Ready 1 · Out 1 · Resting 1 · Full packs 1")'), 'C2: the status strip counts ready, away, resting and waiting-pack gatherers separately');
+    assert(W('$("camp-scene-hands").children.length===3 && !$("camp-scene-hands").children.some(b=>b.dataset.handId==="tam")'), 'C2: the mounted scene keeps resting and pack workers present while the outgoing miner stays absent');
+  }
+  const errs = games.flatMap(g => g.errors);
+  assert(!errs.length, 'C2: no camp conversation handler errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('C2 gatherers at camp crashed: ' + (e.stack || e)); }
+
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
 if (section('removed systems (W2-C)')) try {

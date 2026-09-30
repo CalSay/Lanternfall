@@ -38,7 +38,8 @@
 //         handsRecall(id) -> bool; handsQueueMax() -> 2; handsSendAgainPreview(id?) -> { count, ready, fee }; registerHandsRoute(key, probe) -> remove()
 //         handsEmpty(id) -> units thrown away (the UI asks first: "Throw away 120 Oak Log?")
 //         handsStoryHeard(id) -> level of the story told | 0 (N2, when the player hears it)
-//         handsTalk(id) -> talk counter after the tap (N2 rotates lines with it)
+//         handsTalk(id) -> saved ordinary talk counter; never consumes an earned story
+//         handsTalkInfo(id) -> { id, name, rar, jobName, lv, line, status, traits, jobs, suggest } | null
 //         handsCatchUp(now, away) -> [returns]   (tick and away phase; tools)
 //         handsRollApp() -> a new applicant (not placed on the board; pity counts it). Tools only (check.mjs pity).
 //         handsExclude(fn(key) -> mult) -> remove()   a transient speed bonus to leave out of the rate
@@ -67,7 +68,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus, handsShare, handsShiftSecs, handsRate, handsPreview, handsSuggest, handsNodes, handsCanSend,
   handsHeroRate, handsTraits, handsName, handsRarName, handsSkillName, handsNodeName, handsLevelNeed, handsStoryDue,
   handsCampTrait, handsMealMult, handsMealBonus, campClock, handsStats, handsHire, handsTurnAway, handsLetGo,
-  handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsCatchUp, handsExclude, handsRollApp,
+  handsSend, handsSendAgain, handsEmpty, handsStoryHeard, handsTalk, handsTalkInfo, handsCatchUp, handsExclude, handsRollApp,
   handsTents, handsFee, handsUnpaid, handsRandomApps, handsLegendSpots, handsRecall, handsQueueMax, registerHandsRoute, handsSendAgainPreview;
 
 {
@@ -570,7 +571,38 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     emit('handsStory', { id, lv }); save();
     return lv;
   };
-  handsTalk = id => { const x = handsGet(id); if (!x) return 0; x.talk = (x.talk | 0) + 1; return x.talk; };
+  // C2: short camp conversations. Authored story chapters remain available for C6.
+  handsTalk = id => {
+    const x = handsGet(id); if (!x) return 0;
+    x.talk = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Number.isFinite(x.talk) ? Math.floor(x.talk) : 0) + 1);
+    save(); return x.talk;
+  };
+  handsTalkInfo = id => {
+    const x = handsGet(id); if (!x) return null;
+    const status = handsStatus(x), named = x.key === HANDS_TAM.key ? HANDS_TAM : LEG[x.key];
+    const work = {
+      wood: 'My axe is ready. Point me toward a grove.',
+      mine: 'My pick is ready. Tell me which vein needs working.',
+      forage: 'I know what grows by the path. What does the camp need?',
+      any: 'I know a little of every trade. Show me what needs doing.'
+    }[x.sk] || 'Tell me what the camp needs.';
+    const lines = [work];
+    if (x.last) lines.push(`Last time I worked at the ${nodeName(x.last.kind, x.last.t)}.`);
+    lines.push(campClock().phase === 'night' ? 'The fire is warm. There is room beside me.' : 'Good to see you back at camp.');
+    const n = Math.max(0, (Number.isFinite(x.talk) ? Math.floor(x.talk) : 0) - 1);
+    const line = status.st === 'pack' ? 'My pack is still full. Make room in the Storehouse before I head out again.'
+      : status.st === 'rest' ? 'A little rest, then I will head back to the node.'
+      : status.st === 'out' ? `${x.n} is working at the ${nodeName(status.kind, status.t)}.`
+      : status.st === 'back' ? `${x.n} is on the way home.` : lines[n % lines.length];
+    const jobs = handsNodes(x).filter(o => o.own).map(o => Object.assign({}, o, {
+      name: nodeName(o.kind, o.t), preview: handsPreview(x, o.kind, o.t), can: handsCanSend(id, o.kind, o.t)
+    }));
+    const suggested = handsSuggest(x);
+    const suggest = suggested && jobs.some(o => o.kind === suggested.kind && o.t === suggested.t) ? suggested
+      : jobs.length ? { kind: jobs[0].kind, t: jobs[0].t, why: 'A node for your profession.' } : null;
+    return { id: x.id, name: x.n, rar: handsRarName(x), jobName: handsSkillName(x), lv: x.lv,
+      line, about: named && named.about || '', status, traits: handsTraits(x), jobs, suggest };
+  };
   handsStats = () => {
     const h = H(), byRar = {};
     for (const x of h.list) byRar[x.r] = (byRar[x.r] || 0) + 1;
