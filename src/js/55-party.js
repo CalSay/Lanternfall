@@ -241,6 +241,7 @@ let unitHp, unitCd, bossTelegraph;
   onTick(dt => {
     ensureInit();
     clock += dt;
+    if (typeof turnCombatOn === 'function' && turnCombatOn()) return; // C20: one turn action, no idle tap or legacy effect tick.
     const p = P(), c = cls();
     if (!c) return;
     if (p.abilityCd > 0) p.abilityCd = Math.max(0, p.abilityCd - dt);
