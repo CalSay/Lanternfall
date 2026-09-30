@@ -44,6 +44,7 @@ not silently test a different browser.
 
 ```text
 node tools/savecode.mjs tests/fixtures/save-late.json
+node tools/offline-parity.mjs --json=/tmp/lanternfall-offline-parity.json
 node tools/site.mjs
 node tools/serve.mjs
 ```
@@ -51,3 +52,11 @@ node tools/serve.mjs
 The save-code tool validates the JSON before loading it and prints an import code. The site tool wraps
 the built artifact in a local `site/` folder; it does not upload or publish it. The server exposes the
 built game for local testing. Keep real player saves out of commits and test with disposable fixtures.
+
+The offline audit compares actual live ticks with away progress from the same seeded save at 30 minutes,
+2 hours, the 4-hour starting cap, 8 hours and 24 hours. It also checks the 24-hour maximum cap.
+Add `--mastered` for the same gathering fixture with Pickaxe mastery already complete. This is a
+core-only diagnostic, not a requirement that intentional offline rates equal live rates; see
+`docs/coord/offline-c14-recovery.md`. Hero comparisons match the live snapshot to credited away time;
+workers and other scheduled systems retain the full wall-clock comparison. The table shows raw away
+gains and the boost-normalized hero delta, while optional JSON retains every snapshot and report line.

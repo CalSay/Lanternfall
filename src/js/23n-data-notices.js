@@ -139,7 +139,9 @@ const NOTICES = [
   // ---- C4: completed gatherer trade runs ----
   { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' },
   // C11: a milestone feat is a small permanent reward, recorded without a celebration card.
-  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' }
+  { id: 'deed-milestone', key: 'deed-milestone', ch: 'log' },
+  // ---- C14: the merged away report owns its source summaries ----
+  { id: 'away-report', key: 'away-report', ch: 'card' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.

@@ -95,7 +95,8 @@ const statsApi = {};
     r.items = S.items.filter(i => i.id >= b.nextId);
     r.skills = Object.keys(S.skills).filter(k => S.skills[k].lv > (b.skills[k] || 1)).map(k => ({ k, from: b.skills[k] || 1, to: S.skills[k].lv }));
     ST().away += r.t;
-    for (const m of r.mats) if (CRAFT_NODES[m.k]) ST().gathered += m.n; // gathered families only
+    // C14: harvest events already count hero gathering. The material diff also includes
+    // worker deliveries and returned trade cargo, so it is not a second harvest total.
     r.extra = [];
     for (const fn of AWAY_LINES.slice()) {
       try { const out = fn(r); if (out) r.extra.push(...[].concat(out).filter(Boolean)); }

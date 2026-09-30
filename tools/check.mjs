@@ -2636,7 +2636,7 @@ if (section('hands')) try {
   };
   {
     const a = shift(true), b = shift(false), c = shift(true);
-    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => /Tam is back from the Pine Grove: \+[\d.,]+K? Pine Log/.test(l.txt));
+    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => l.group === 'Gatherers' && /^Tam finished 1 shift: \+[\d,]+ Pine Log\.$/.test(l.txt));
     assert(a.j && Math.abs(a.j.end - a.j.start - 4 * 3600e3) < 1 && a.j.rate > 0, `C1: a Lv 1 shift is 4 h, fixed at send (rate ${a.j.rate.toFixed(1)} an hour)`);
     assert(E('handsList().every(x => !x.job && !x.pack.length)') && E('handsStatus("tam").st') === 'camp' && a.wood > 0, `the shift ends: Tam comes home, the pack unloads (+${a.wood} Pine Log), he waits at camp`);
     assert(a.log === b.log && a.wood === b.wood && !!backLine, `the same haul online and through awayGains (${a.log}); the away card: "${backLine ? backLine.txt : '-'}"`);
@@ -6556,6 +6556,122 @@ if (section('future-dated save')) try {
   assert(/Math\.max\(0, \(Date\.now\(\) - S\.last\) \/ 1000\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '90-boot.js'), 'utf8')), 'boot measures time away as at least 0 (90-boot)');
   assert(!g.errors.length, 'a future-dated save loads without core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('future-dated save crashed: ' + (e.stack || e)); }
+// ---- C14: actual harvest accounting and wall-clock schedules across the hero cap ----
+if (section('offline accounting and schedules (C14)')) try {
+  const { AUDIT_START, AUDIT_SPANS, offlineFixture, offlineGame, offlineRun, offlineLiveUntil, offlineSnapshot } = await import('./offline-parity.mjs');
+  const raw = offlineFixture(), games = [];
+  const live = offlineGame(raw); games.push(live); offlineLiveUntil(live, 0, 1800);
+  const lv = offlineSnapshot(live), first = offlineRun(raw, 1800);
+  assert(live.eval('S.solo.auto===true'), 'C14: the fight fixture explicitly enables the current Auto setting');
+  assert(lv.heroUnits > 0 && lv.gathered === lv.heroUnits && first.state.gathered === first.state.heroUnits,
+    'C14: real live and away harvests each add their actual units to Gathered exactly once');
+  assert(first.report.mats.some(m => m.k === 'ore' && m.t === 2 && m.n > 0), 'C14: removing duplicate statistics preserves the actual away material report');
+  for (const secs of AUDIT_SPANS) {
+    const off = offlineRun(raw, secs), s = off.state, h = secs / 3600;
+    const shifts = secs >= 30600 ? 2 : secs >= 14400 ? 1 : 0;
+    assert(off.report.t === Math.min(secs, 14400) && s.workerHours === shifts * 4 && s.workerUnits === shifts * 1698 && s.gathered === s.heroUnits,
+      `C14 ${h}h: hero work respects its cap; paid worker shifts follow their own schedule without adding hero Gathered units`);
+    assert(s.trade.trips === +(secs >= 7200) && s.trade.gold === (secs >= 7200 ? 300 : 0), `C14 ${h}h: the reserved trade settles at its two-hour deadline exactly once`);
+    assert(s.camp.bench === 2 && s.camp.forge === (secs >= 2400 ? 2 : 1) && s.builds.length === +(secs < 2400), `C14 ${h}h: both camp builds retain their ordered twenty-minute schedules`);
+    assert(s.applicants.filter(a => !a.key).length === Math.min(3, 1 + Math.floor(secs / 21600)) && s.applicants.filter(a => a.key === 'rook').length === 1 && s.rook === 1200,
+      `C14 ${h}h: Tavern arrivals use wall time and the heard Rook lead earns its required mining time once`);
+    assert(s.rest === 180 && off.errors.length === 0, `C14 ${h}h: gathering banks at most three minutes of Well Rested with no handler errors`);
+  }
+  const masteryLive = offlineGame(raw), masteryAway = offlineGame(raw); games.push(masteryLive, masteryAway);
+  masteryAway.eval('S.relic.glass=10');
+  let masteryFrom = 0;
+  for (const secs of AUDIT_SPANS) {
+    offlineLiveUntil(masteryLive, masteryFrom, secs);
+    masteryAway.eval(`Date.__t=${AUDIT_START + secs * 1000};globalThis.__masteryReport=awayGains(${secs - masteryFrom})`);
+    const l = offlineSnapshot(masteryLive), a = offlineSnapshot(masteryAway), pct = (a.heroUnits / a.boost / Math.max(1, l.heroUnits) - 1) * 100;
+    const masterySeconds = m => 300 * m[0] * (m[0] - 1) / 2 + m[1], masteryDelta = masterySeconds(l.tools.pick) - masterySeconds(a.tools.pick);
+    assert(Math.abs(masteryDelta) <= 1.1,
+      `C14 ${secs / 3600}h: live and away pick mastery match within 1.1s at level/progress ${JSON.stringify(l.tools.pick)} / ${JSON.stringify(a.tools.pick)} (${masteryDelta.toFixed(2)}s)`);
+    assert(Math.abs(pct) <= 5,
+      `C14 ${secs / 3600}h: matched-duration live/away harvest yields stay within 5% after offline boost normalization (${pct.toFixed(2)}%)`);
+    masteryFrom = secs;
+  }
+  const capRaw = offlineFixture(), capLive = offlineGame(capRaw), capAway = offlineGame(capRaw); games.push(capLive, capAway);
+  capLive.eval('S.tools.m.pick=[19,5699]'); capAway.eval('S.tools.m.pick=[19,5699]');
+  offlineLiveUntil(capLive, 0, 1800);
+  capAway.eval(`Date.__t=${AUDIT_START + 1800000};globalThis.__masteryReport=awayGains(1800)`);
+  assert(JSON.stringify(offlineSnapshot(capLive).tools.pick) === '[20,0]' && JSON.stringify(offlineSnapshot(capAway).tools.pick) === '[20,0]',
+    'C14: live and away gathering both reach the mastery cap without excess progress');
+  const masteryBeforeRepeat = masteryAway.eval('JSON.stringify(S.tools.m.pick)');
+  masteryAway.eval('awayGains(0)');
+  assert(masteryAway.eval('JSON.stringify(S.tools.m.pick)') === masteryBeforeRepeat,
+    'C14: a repeated zero-time away claim cannot award tool mastery twice');
+  const boundary = [30599, 30600].map(secs => offlineRun(raw, secs));
+  assert(boundary[0].state.workerHours === 4 && boundary[1].state.workerHours === 8, 'C14: a second four-hour shift finishes after its half-hour rest, not at eight hours');
+  const day = offlineRun(raw, 86400), max = offlineRun(raw, 86400, true);
+  assert(max.report.t === 86400 && max.state.heroUnits > day.state.heroUnits && max.state.workerUnits === day.state.workerUnits && max.state.trade.gold === day.state.trade.gold,
+    'C14: raising the hero cap to 24 hours extends hero work without paying scheduled jobs again');
+  const lines = day.report.extra, workerLines = lines.filter(l => l.group === 'Gatherers' && /finished/.test(l.txt));
+  assert(workerLines.length === 1 && /2 shifts/.test(workerLines[0].txt) && /3,396/.test(workerLines[0].txt), 'C14: two completed shifts merge into one truthful worker line');
+  assert(lines.filter(l => l.group === 'Camp').length === 1 && /Workbench.*Forge/.test(lines.find(l => l.group === 'Camp').txt), 'C14: completed camp builds merge into one source line');
+  assert(first.report.extra.some(l => l.group === 'Tavern' && /new applicant/.test(l.txt)), 'C14: the named Rook arrival appears in the away report even before a random applicant is due');
+  const refund = offlineGame(raw); games.push(refund);
+  refund.eval('handsRecall("tam"); S.mats.wood[0]=storeCap("wood",1); handsRecall("trade-worker"); S.mats.wood[0]-=1000; setActivity("fight"); globalThis.__beforeGathered=S.stats.gathered;');
+  const rr = refund.eval(`Date.__t=${AUDIT_START + 1800000};awayGains(1800)`);
+  assert(refund.eval('S.stats.gathered===__beforeGathered && handsGet("trade-worker").pack.length===0 && S.trade.trips===0') && rr.mats.some(m => m.k === 'wood' && m.n === 1000),
+    'C14: returning reserved cargo during away raises stock by 1000 but earns no hero or trade progress');
+  const twice = offlineGame(raw); games.push(twice);
+  twice.eval('handsTradeSend("nan-probe",[["wood",1,1000]])');
+  const tr = twice.eval(`Date.__t=${AUDIT_START + 7200000};awayGains(7200)`), tradeLines = tr.extra.filter(l => l.group === 'Trade');
+  assert(twice.eval('S.trade.trips===2 && S.trade.gold===600') && tradeLines.length === 1 && /2 trade runs.*600 gold/.test(tradeLines[0].txt), 'C14: two trades pay separately and merge into one summed return line');
+  const gold = twice.eval('S.gold'), second = twice.eval('awayGains(0)');
+  assert(twice.eval('S.gold') === gold && !second.extra.some(l => ['Trade','Camp','Tavern'].includes(l.group) || /finished.*shift/.test(l.txt)), 'C14: a subsequent report cannot repeat settled jobs, builds or arrivals');
+  for (const kind of ['ore','wood','crystal','fibre','herb']) {
+    const g = offlineGame(); games.push(g);
+    g.eval(`hearthWarm();soloPick('wren');S.camp.b.store=8;S.maxZone=100;for(const s of Object.values(S.skills))s.lv=100;setNode('${kind}',1);setActivity('gather')`);
+    g.eval(`Date.__t=${AUDIT_START + 1800000};awayGains(1800)`);
+    assert(g.eval('S.stats.gathered===__auditUnits && __auditUnits>0'), `C14: ${kind} away harvest units count once`);
+  }
+  const spill = offlineGame(); games.push(spill);
+  spill.eval('hearthWarm();soloPick("wren");S.camp.b.store=8;S.maxZone=100;S.skills.mine.lv=100;S.mats.ore[0]=storeCap("ore",1);storeSpill(true);setNode("ore",1);setActivity("gather");globalThis.__spill=awayGains(1800)');
+  assert(spill.eval('S.stats.gathered===__auditUnits && __auditUnits>0 && __spill.mats.some(m=>m.k!=="ore" || m.t!==1)'), 'C14: full-pile Spillover harvests also count exactly once and keep their material report');
+  const rested = offlineGame(offlineFixture('fight')); games.push(rested);
+  rested.eval('S.rested.left=180;globalThis.__r=awayGains(1800)');
+  assert(rested.eval('S.rested.left===0') && Math.abs(rested.eval('__r.gold') - offlineRun(offlineFixture('fight'),1800).report.gold) < 1e-6,
+    'C14: away fighting spends the resting bank without applying a live-only damage bonus to the whole absence');
+  assert(!games.some(g => g.errors.length), 'C14: accounting, multi-return and refund probes have no core handler errors');
+} catch (e) { fail('C14 offline accounting crashed: ' + (e.stack || e)); }
+
+// ---- C14: the away report uses one quiet, readable card in a fresh browser ----
+if (section('C14 away card (browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C14: Playwright or Chromium not here, skipped');
+  else {
+    const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      const ctx = await browser.newContext({ viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true });
+      try {
+        const page = await ctx.newPage(), errs = [];
+        page.on('pageerror', e => errs.push(String(e)));
+        await page.route('**/*', r => r.request().url() === 'http://lf.test/'
+          ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+        await page.goto('http://lf.test/');
+        await page.waitForSelector('#createScreen .ccard[data-state]');
+        await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+        await page.waitForTimeout(350);
+        const X = s => page.evaluate(s => window.__t.x(s), s);
+        await X(`showAwayReport({secs:1800,t:1800,cap:14400,capped:false,activity:'fight',note:'You held Cinder Road.',gold:300,xp:0,kills:0,
+          mats:[],items:[],skills:[],lines:[{txt:'Storehouse full',sub:'The Storehouse kept the extra ore safe.'}],
+          extra:[{group:'Gatherers',txt:'2 shifts finished: +3,396 ore.'},{group:'Trade',txt:'Trader returned: +300 gold.'},
+            {group:'Camp',txt:'Workbench and Forge finished.'},{group:'Tavern',txt:'A new applicant is waiting.'},{group:'Well Rested',txt:'3 minutes spent.'}]}); true`);
+        await page.waitForSelector('.away-ov[role="dialog"]');
+        const title = (await page.locator('.away-ov').innerText()).toLowerCase();
+        assert(title.includes('while you were away') && title.includes('30m') && title.includes('cinder road'), 'C14 browser: a fresh local game opens the away card with its time and hero summary (' + title.replace(/\n/g, ' | ') + ')');
+        assert(['gathering','gatherers','trade','camp','tavern','well rested'].every(g => title.includes(g)), 'C14 browser: the card displays the material explanation and each separate source group (' + title.replace(/\n/g, ' | ') + ')');
+        assert(await page.locator('.away-ov .away-go').innerText() === 'Collect' && await page.locator('.away-ov').getAttribute('aria-modal') === 'true', 'C14 browser: the card offers a modal Collect action');
+        assert(!await page.locator('.toast, .toasts').getByText(/While you were away/).count(), 'C14 browser: the keyed report is shown as a card without a duplicate toast');
+        assert(!errs.length, 'C14 browser: opening and reading the card raises no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
+      } finally { await ctx.close(); }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C14 away card browser crashed: ' + (e.stack || e)); }
 
 // ---- C12: real scene builders finish after a landscape resize and Gather menu open ----
 if (section('gather scene warmup (C12, browser)')) try {

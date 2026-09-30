@@ -33,7 +33,7 @@
 //   toolHandsMult(skill) -> 1.1 at mastery 20, else 1 (for N1's Hands)
 //   toolBest(skill) -> { kind, t, cur, ok, why }  the best tool tier worth making now (sim policy)
 //
-// Events: listens 'harvest' (rare finds), 'awayBegin' / 'away' (away mastery, the away line).
+// Events: listens 'harvest' (rare finds), 'awayBegin' (the away mastery line).
 // Emits 'rareFind' { kind, t, n, away } and 'toolMastery' { kind, lv, quiet }.
 // Rare finds credit through stashAdd (55-store, H3) in `credit` below: a flow, like gathering.
 // Save: registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 }).
@@ -182,10 +182,6 @@ function toolRight(skill, t) {
   on('awayBegin', () => {
     before = Object.fromEntries(Object.keys(TOOL_KINDS).map(k => [k, lvOf(k)]));
     if (!lineOn && typeof registerAwayLine === 'function') { lineOn = true; registerAwayLine(awayLine); }
-  });
-  on('away', r => {
-    if (S.activity !== 'gather' || !(r.t > 0)) return;
-    toolMasteryAdd(toolOf(skillOf(S.node.kind)), r.t, true);
   });
   function awayLine() {
     if (!before) return null;

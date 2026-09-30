@@ -497,7 +497,11 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   on('away', () => { awayDone = campCatchUp(now()); });
   registerAwayLine(r => {
     const out = [];
-    for (const x of awayDone) out.push({ icon: icFor, txt: `${nm(x.id, x.lv)} is finished.`, sub: campEffects(x.id, x.lv)[0], go: () => emit('campGoto', { tab: 'world', sel: '#camp-b-' + x.id }) });
+    if (awayDone.length) {
+      const first = awayDone[0], names = awayDone.map(x => nm(x.id, x.lv));
+      out.push({ icon: icFor, group: 'Camp', txt: names.length === 1 ? `${names[0]} is finished.` : `Finished: ${names.join(', ')}.`,
+        go: () => emit('campGoto', { tab: 'world', sel: '#camp-b-' + first.id }) });
+    }
     awayDone = [];
     if (lv('watch') >= 2 && campOpen() && S.activity === 'fight') {
       const z = campHoldZone();
