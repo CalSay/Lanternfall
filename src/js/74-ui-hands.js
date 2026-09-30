@@ -4,6 +4,7 @@
 //   #sec-hands       Hire gatherers: Tents used, route arrivals in star spots, then random applicants.
 //   #sec-hands-crew  Your gatherers: shifts, queues, recall, packs and send again.
 // Two-tap confirms for irreversible choices arm a button for 4 seconds; no confirm().
+let handsTalkMount, handsTalkOpen, handsTalkUpdate;
 {
   const RC = r => `var(--r-${r})`;
   const dur = secs => { secs = Math.ceil(secs); const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60); return secs < 60 ? secs + 's' : h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`; };
@@ -17,6 +18,7 @@
 
   let armed = null, armedAt = 0, picking = null, msg = '', msgAt = 0;
   const shiftChoice = Object.create(null);
+  let talkBox = null, talkId = null, talkLine = '', talkPicking = false, talkOrigin = null, talkFallback = null, talkSig = '';
   const isArmed = k => armed === k && Date.now() - armedAt < 4000;
   const arm = k => { armed = k; armedAt = Date.now(); picking = null; ui(true); };
   const say = t => { msg = t; msgAt = Date.now(); };
@@ -31,6 +33,71 @@
     const box = el('div', 'hd-tr');
     for (const t of handsTraits(x)) { const c = el('span', 'hd-trait' + (t.calling ? ' call' : ''), t.n); c.title = t.txt; box.append(c); }
     return box;
+  }
+
+  // C2: one inline talk card is shared by the Camp scene and its gatherer buttons.
+  // The job rows below are the same picker used by the Tavern crew cards.
+  handsTalkMount = (host, fallback) => {
+    talkFallback = fallback;
+    talkBox = el('section', 'hd-card'); talkBox.id = 'hands-talk'; talkBox.hidden = true;
+    talkBox.setAttribute('role', 'region'); talkBox.setAttribute('aria-label', 'Gatherer conversation');
+    talkBox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeTalk(); } });
+    host.append(talkBox);
+  };
+  const closeTalk = () => {
+    talkId = null; talkPicking = false; talkSig = '';
+    if (talkBox) { talkBox.hidden = true; talkBox.textContent = ''; }
+    const target = talkOrigin && talkOrigin.isConnected ? talkOrigin : talkFallback;
+    if (target) target.focus();
+  };
+  handsTalkOpen = (id, origin) => {
+    const x = handsGet(id);
+    if (!x || !talkBox) return false;
+    talkOrigin = origin || null; talkId = id; talkPicking = false; talkSig = '';
+    handsTalk(id); talkLine = handsTalkInfo(id).line;
+    renderTalk(true);
+    return true;
+  };
+  handsTalkUpdate = () => { if (talkId) renderTalk(false); };
+  function renderTalk(focus) {
+    if (!talkBox || !talkId) return;
+    const x = handsGet(talkId); if (!x) { closeTalk(); return; }
+    const info = handsTalkInfo(talkId), st = handsStatus(x), busy = !!x.job || !!x.pack.length;
+    if (busy) talkPicking = false;
+    const sig = JSON.stringify([x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q], x.pack, talkLine, st.st,
+      Math.ceil((st.left || 0) / 60), talkPicking, shiftChoice[x.id], Math.floor(S.gold / 10)]);
+    if (sig === talkSig && !focus) return;
+    talkSig = sig;
+    const focused = talkBox.contains(document.activeElement) ? [...talkBox.querySelectorAll('button')].indexOf(document.activeElement) : -1;
+    talkBox.hidden = false; talkBox.textContent = '';
+    const top = el('div', 'hd-head'), who = el('div', 'hd-id');
+    const title = el('h3', 'hd-name', info.name || x.n); title.id = 'hands-talk-title';
+    talkBox.setAttribute('aria-labelledby', title.id);
+    who.append(title, el('div', 'hd-sub2', `${handsRarName(x)} ${info.jobName || handsSkillName(x)} · Lv ${x.lv}`));
+    top.append(portrait(x), who);
+    const close = btn('mini', 'Close'); close.setAttribute('aria-label', `Close conversation with ${x.n}`);
+    close.addEventListener('click', closeTalk);
+    const line = el('p', 'note hd-line', ['out', 'back'].includes(st.st) ? talkLine : `“${talkLine}”`);
+    const status = el('p', 'hd-stat', statusText(x, st));
+    const act = el('div', 'hd-act'), send = btn('mini go', talkPicking ? 'Close jobs' : 'Send on a job');
+    send.disabled = busy;
+    send.addEventListener('click', () => { talkPicking = !talkPicking; renderTalk(true); });
+    act.append(send);
+    if (busy) {
+      const controls = btn('mini', 'Open gatherer controls');
+      controls.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }));
+      act.append(controls);
+    }
+    act.append(close);
+    talkBox.append(top, traitChips(x), line, status, act);
+    if (talkPicking && !busy) talkBox.append(jobPicker(x, info.jobs, () => {
+      talkPicking = false; talkLine = handsTalkInfo(x.id).line; renderTalk(true);
+    }));
+    if (focus || focused >= 0) {
+      const buttons = [...talkBox.querySelectorAll('button')];
+      const target = focus ? (talkPicking ? talkBox.querySelector('.hd-job') || close : close) : buttons[Math.min(focused, buttons.length - 1)] || close;
+      target.focus();
+    }
   }
 
   let B = null, C = null, boardSig = '', crewSig = '';
@@ -49,8 +116,8 @@
   registerSection('tav', {
     id: 'hands-crew', title: 'Your gatherers',
     mount(sec) {
-      const next = B && B.sec && B.sec.nextSibling;
-      if (next && next !== sec) sec.parentNode.insertBefore(sec, next);
+      // The people already at camp lead the Tavern view; applicants follow them.
+      if (B && B.sec) sec.parentNode.insertBefore(sec, B.sec);
       C = { sec, top: el('div', 'hd-act'), list: el('div', 'hd-list'), note: el('p', 'note hd-note') };
       sec.append(C.top, C.list, C.note);
     },
@@ -194,6 +261,12 @@
     if (x.lv < HANDS_TUNE.lvMax) card.append(el('p', 'note hd-line', `Level ${x.lv + 1} after ${dur(Math.max(0, handsLevelNeed(x.lv) - x.xp) * 3600)} more work.`));
     const busy = !!x.job || x.pack.length > 0;
     const act = el('div', 'hd-act');
+    const talk = btn('mini', 'Talk');
+    talk.setAttribute('aria-label', `Talk to ${x.n} at camp`);
+    talk.addEventListener('click', () => {
+      emit('campGoto', { tab: 'world', view: 'camp', sel: '#camp-scene-scroll' });
+      handsTalkOpen(x.id);
+    });
     const send = btn('mini go', picking === x.id ? 'Close' : 'Send on a job');
     send.disabled = busy;
     send.addEventListener('click', () => { picking = picking === x.id ? null : x.id; armed = null; ui(true); });
@@ -238,15 +311,15 @@
       if (handsLetGo(x.id)) say(named ? `${n} went back to the Tavern with their level.` : `${n} left camp.`);
       ui(true);
     });
-    act.prepend(send); act.append(go);
+    act.prepend(talk, send); act.append(go);
     card.append(act);
     if (picking === x.id && !busy) card.append(jobPicker(x));
     return card;
   }
 
-  function jobPicker(x) {
+  function jobPicker(x, offered = handsNodes(x).filter(n => n.own), onSent = null) {
     const box = el('div', 'hd-jobs');
-    const nodes = handsNodes(x).filter(n => n.own);
+    const nodes = offered.filter(n => n.own);
     if (!nodes.length) { box.append(el('p', 'note', 'No job is open for them yet. Open more nodes with your hero first.')); return box; }
     box.append(el('p', 'note', 'Pick a job. Every shift lasts 4 hours. Fees are paid now; the haul comes home to the Storehouse.'));
     const count = shiftChoice[x.id] || 1, choices = el('div', 'hd-shifts');
@@ -272,6 +345,7 @@
         if (!can.ok) { say(can.why); ui(true); return; }
         const j = handsSend(x.id, n.kind, n.t, { shifts: count });
         picking = null;
+        if (j && onSent) onSent(j);
         say(j ? `${x.n} heads out to the ${handsNodeName(n.kind, n.t)} for ${count} shift${count === 1 ? '' : 's'}.` : can.why);
         ui(true);
       });
