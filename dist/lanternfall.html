@@ -7195,6 +7195,20 @@ const DARE_LINES = {
 const omenLine = (id, dare) => (dare && DARE_LINES[id]) || OMEN_LINES[id]
   || (typeof COAST_OMEN_TEXT === 'object' && COAST_OMEN_TEXT[id] && COAST_OMEN_TEXT[id].say) || '';
 
+// ---- src/js/21o-data-trade.js ----
+// 21o-data-trade: C4, the first gatherer trade route. Data only.
+// Approved in issue #5: Tavern 2, no hero/Map Room, no fee or XP, gold returns only.
+// ECON.famW is the price source (economy-2 supersedes gear-2's older weights).
+const TRADE_TUNE = { tavern: 2, secs: 2 * 3600, cap: 5000, maxLines: 3, top: 3, logMax: 12,
+  maxUnitGold: 100, wanted: 3, glut: 2, wantMin: 130, wantMax: 160, glutMin: 60, glutMax: 80 };
+// maxUnitGold is a generous corruption check, not a market price or anti-cheat.
+// Apply it at Send too, so a future price above it cannot reserve cargo.
+const TRADE_TOWN = { id: 'mossy', n: 'Mossy Hollow', returns: ['gold'] };
+// Only live gathering nodes can be cargo. Hide and Essence have no gathering node.
+const TRADE_FAMILIES = { ore: 'gathered', wood: 'gathered', crystal: 'gem', fibre: 'gathered', herb: 'herb' };
+// Future goods returns belong in a separately approved price table. No Trophy,
+// Salvage Rune, new region or unauthored first-trip story is awarded by C4.
+
 // ---- src/js/21w-data-econ.js ----
 // 21w-data-econ: Economy 2.0 data (docs/design/economy-2.md, task ECON-A). Data plus the pure gold
 // curve; no S, no DOM. The helpers that read the save (prices at your zone, the ledger, crit damage)
@@ -7983,7 +7997,10 @@ const NOTICES = [
   // ---- answers to a press: they show at once (a reply is never held) ----
   { id: 'reply', ch: 'pop', reply: 1, site: /toast\(w, 'raid'/,
     re: /^(Chop more Pine Log first|Climb out of the Deepwell first|Give your hero a name first|The Proving cannot start now|That change did not go through|The free change has run out|Save loaded)/,
-    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() }
+    test: m => typeof starLocked === 'function' && (() => { try { return m === starLocked(); } catch (e) { return false; } })() },
+
+  // ---- C4: completed gatherer trade runs ----
+  { id: 'hands-trade', re: /^.+ returns from .+: \+.+ gold\.$/, ch: 'log' }
 ];
 const NOTICE_BY_KEY = Object.fromEntries(NOTICES.filter(r => r.key).map(r => [r.key, r]));
 // The rule for a message (or its key), or null.
@@ -16322,10 +16339,11 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
       if (!Array.isArray(x.pack)) x.pack = [];
       if (!(x.lv >= 1)) x.lv = 1;
       if (!(x.xp >= 0)) x.xp = 0;
-      if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
-      if (x.job && !Array.isArray(x.job.bo)) x.job.bo = [];
-      if (x.job && !Array.isArray(x.job.queue)) x.job.queue = [];
-      if (x.job) syncQueue(x.job);
+      if (x.job && x.job.role === 'trade') { if (typeof handsTradeRepair === 'function') handsTradeRepair(x); }
+      else if (x.job && !(x.job.end > 0 && x.job.rate >= 0 && x.job.kind)) x.job = null;
+      if (x.job && x.job.role !== 'trade' && !Array.isArray(x.job.bo)) x.job.bo = [];
+      if (x.job && x.job.role !== 'trade' && !Array.isArray(x.job.queue)) x.job.queue = [];
+      if (x.job && x.job.role !== 'trade') syncQueue(x.job);
       for (const k of ['talk', 'st', 'hrs', 'got', 'back', 'sent']) if (!(x[k] >= 0)) x[k] = 0;
       if (x.last === undefined) x.last = null;
       if (x.cl === undefined) x.cl = null;
@@ -16479,6 +16497,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsStatus = hh => {
     const h = typeof hh === 'string' ? handsGet(hh) : hh; if (!h) return null;
     const t = now(), j = h.job;
+    if (j && j.role === 'trade' && typeof handsTradeStatus === 'function') return handsTradeStatus(h, t);
     if (j && j.start > t) return { st: 'rest', label: 'Resting before the next shift', left: (j.start - t) / 1000, pct: 0, kind: j.kind, t: j.t, spot: 'fire' };
     if (j && j.end > t) return { st: 'out', label: `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
     if (j) return { st: 'back', label: 'Walking home', left: 0, pct: 1, kind: j.kind, t: j.t, spot: 'road' };
@@ -16612,16 +16631,17 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const out = (x, t) => !!x.job && x.job.start <= t && x.job.end > t;
   function syncQueue(j) { j.q = (j.queue || []).length; j.qFee = (j.queue || []).reduce((a, q) => a + q.fee, 0); }
   function linkJob(x, job) {
+    if (job.role === 'trade') return;
     const at = job.start;
     if (has(x, 'friendly')) {
-      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
+      const y = H().list.find(o => o !== x && has(o, 'friendly') && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at) && !o.job.bo.some(b => b[3] === 'f' && b[2] > at));
       if (y) { const e = Math.min(job.end, y.job.end); job.bo.push([T.friendly, at, e, 'f', y.id]); y.job.bo.push([T.friendly, at, e, 'f', x.id]); }
     }
     const wood = k => skillOf(k) === 'wood';
     if (x.cl === 'felling') {
-      for (const o of H().list) if (o !== x && o.job && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
+      for (const o of H().list) if (o !== x && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at) && wood(o.job.kind)) o.job.bo.push([T.felling, at, Math.min(job.end, o.job.end), 'b', x.id]);
     } else if (wood(job.kind)) {
-      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.linked !== false && out(o, at));
+      const b = H().list.find(o => o !== x && o.cl === 'felling' && o.job && o.job.role !== 'trade' && o.job.linked !== false && out(o, at));
       if (b) job.bo.push([T.felling, at, Math.min(job.end, b.job.end), 'b', b.id]);
     }
     job.linked = true;
@@ -16715,18 +16735,24 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   }
   // Starts and returns in time order keep overlap, XP and pack order identical live and away.
   handsCatchUp = (t = now(), away = false) => {
-    const back = [];
+    const back = [], blockedTrade = new Set();
+    if (!Number.isFinite(t) || t < 0) return back;
+    for (const x of H().list) if (x.job && x.job.role === 'trade' && typeof handsTradeRepair === 'function') handsTradeRepair(x);
     for (;;) {
-      const due = H().list.filter(x => x.job && (x.job.linked === false ? x.job.start : x.job.end) <= t)
-        .sort((a, b) => (a.job.linked === false ? a.job.start : a.job.end) - (b.job.linked === false ? b.job.start : b.job.end))[0];
+      const due = H().list.filter(x => x.job && !blockedTrade.has(x) && (x.job.role !== 'trade' && x.job.linked === false ? x.job.start : x.job.end) <= t)
+        .sort((a, b) => (a.job.role !== 'trade' && a.job.linked === false ? a.job.start : a.job.end) - (b.job.role !== 'trade' && b.job.linked === false ? b.job.start : b.job.end))[0];
       if (!due) break;
-      if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
+      if (due.job.role === 'trade') {
+        if (typeof handsTradeFinish !== 'function') break;
+        if (!handsTradeFinish(due, away, t)) blockedTrade.add(due);
+      } else if (due.job.linked === false) linkJob(due, due.job); else back.push(finishJob(due, away));
     }
     unload(); return back;
   };
   handsRecall = id => {
     const x = handsGet(id); if (!x || !x.job) return false;
     const at = now(); handsCatchUp(at, false); const j = x.job; if (!j) return false;
+    if (j.role === 'trade') return typeof handsTradeRecall === 'function' && handsTradeRecall(x, at);
     const waiting = j.start > at, queue = (j.queue || []).slice();
     if (waiting) queue.unshift({ fee: j.fee || 0 });
     refund(x, queue, 'you recalled them', false); j.queue = []; syncQueue(j);
@@ -16742,15 +16768,15 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const full = h.list.filter(x => x.pack.length).sort((a, b) => a.back - b.back);
     for (const x of full) {
       for (let i = 0; i < x.pack.length;) {
-        const [f, t, n] = x.pack[i];
+        const [f, t, n, source] = x.pack[i];
         let got = 0;
         if (f === 'troph') got = typeof addTrophy === 'function' ? addTrophy(t, n, 'hands') : 0;
         else if (S.mats[f]) got = stashAdd(f, t, n, 'parcel');
         else { x.pack.splice(i, 1); continue; }   // a family this build does not know: drop the line
         if (got > 0 || !(n > 0)) {
           x.pack.splice(i, 1);
-          if (f !== 'troph') { x.got += got; h.got = (h.got || 0) + got; }
-          emit('handsUnload', { id: x.id, fam: f, t, n: got });
+          if (f !== 'troph' && source !== 'trade-refund') { x.got += got; h.got = (h.got || 0) + got; }
+          emit(source === 'trade-refund' ? 'handsTradeCargoBack' : 'handsUnload', { id: x.id, fam: f, t, n: got });
         } else i++;
       }
     }
@@ -16787,7 +16813,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     if (x.last) lines.push(`Last time I worked at the ${nodeName(x.last.kind, x.last.t)}.`);
     lines.push(campClock().phase === 'night' ? 'The fire is warm. There is room beside me.' : 'Good to see you back at camp.');
     const n = Math.max(0, (Number.isFinite(x.talk) ? Math.floor(x.talk) : 0) - 1);
-    const line = status.st === 'pack' ? 'My pack is still full. Make room in the Storehouse before I head out again.'
+    const line = status.role === 'trade' ? x.n + ': ' + status.label + '.'
+      : status.st === 'pack' ? 'My pack is still full. Make room in the Storehouse before I head out again.'
       : status.st === 'rest' ? 'A little rest, then I will head back to the node.'
       : status.st === 'out' ? `${x.n} is working at the ${nodeName(status.kind, status.t)}.`
       : status.st === 'back' ? `${x.n} is on the way home.` : lines[n % lines.length];
@@ -17016,6 +17043,177 @@ let tavernPerks, tavernRumours, tavernHearRumour;
   });
   on('awayBegin', report => {
     if (mining() && report) advance(report.t);
+  });
+}
+
+// ---- src/js/57k-trade.js ----
+// 57k-trade: C4 gatherer trade runs. DOM-free; no hero or online activity.
+// API: handsTradeOpen(), handsTradeDemand(at?) -> { week, lines }, handsTradeCargo(id),
+// handsTradeQuote(id, cargo), handsTradeSend(id, cargo, expectedQuote?),
+// handsTradeDiagnostic(id, cargo). Cargo is [[family, tier, positive integer], ...].
+// Quote: { ok, why, town, townName, secs, cap, maxLines, units, gold, lines, week }.
+// Lines: { kind, t, n, name, demand (integer percent), unitGold, gold }.
+// expectedQuote is the displayed quote; a changed week/price/cargo rejects Send.
+// Waiting cargo refunds use pack lines [family,tier,n,'trade-refund']; unloading
+// them does not count as gathered material. Unknown job versions fail closed.
+// Internal 57f hooks: handsTradeValid(job), handsTradeRepair(hand),
+// handsTradeStatus(hand, at), handsTradeFinish(hand, away), handsTradeRecall(hand, at).
+// Save: S.trade { v:1, trips, sold, gold, log:[{ id,n,at,units,gold,town }] }.
+// A hand's job: { role:'trade', v:1, town, start,end, cargo, quote:{week,micros,demand,gold} }.
+// Quote prices use integer millionths of gold. Jobs never reroll or reprice on return.
+let handsTradeOpen, handsTradeDemand, handsTradeCargo, handsTradeQuote, handsTradeSend, handsTradeDiagnostic,
+  handsTradeValid, handsTradeRepair, handsTradeStatus, handsTradeFinish, handsTradeRecall;
+{
+  const T = TRADE_TUNE, UNIT = 1e6, WEEK = 7 * 864e5, EPOCH = Date.UTC(2026, 0, 5);
+  const DEF = { v: 1, trips: 0, sold: 0, gold: 0, log: [] };
+  registerState('trade', DEF);
+  const icon = { ic: ['boot', '#C9A36B'] }, own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  const stock = (f, t) => S.mats && Array.isArray(S.mats[f]) && Number.isFinite(S.mats[f][t - 1]) ? Math.max(0, Math.floor(S.mats[f][t - 1])) : 0;
+  const live = (f, t) => typeof f === 'string' && own(TRADE_FAMILIES, f) && Number.isInteger(t) && t >= 1 && t <= T.top
+    && own(CRAFT_NODES, f) && MAT[f] && Array.isArray(MAT[f].short) && MAT[f].short[t - 1] && S.mats && Array.isArray(S.mats[f]) && S.mats[f].length >= t;
+  const eligible = (h, f, t) => live(f, t) && (h.sk === 'any' || h.sk === skillOf(f)) && skillTierOpen(skillOf(f), t);
+  const ledger = () => {
+    if (!isPlainObj(S.trade)) S.trade = cloneJSON(DEF);
+    for (const k of ['trips', 'sold', 'gold']) if (!Number.isFinite(S.trade[k]) || S.trade[k] < 0) S.trade[k] = 0;
+    if (!Array.isArray(S.trade.log)) S.trade.log = [];
+    return S.trade;
+  };
+  function cargoOK(cargo) {
+    if (!Array.isArray(cargo) || !cargo.length || cargo.length > T.maxLines) return false;
+    const seen = new Set(); let total = 0;
+    for (const row of cargo) {
+      if (!Array.isArray(row) || row.length !== 3) return false;
+      const [f, t, n] = row; if (typeof f !== 'string') return false;
+      const key = f + ':' + t;
+      if (!live(f, t) || !Number.isSafeInteger(n) || n <= 0 || seen.has(key)) return false;
+      seen.add(key); total += n; if (total > T.cap) return false;
+    }
+    return true;
+  }
+  handsTradeOpen = () => handsOpen() && campLevel('tavern') >= T.tavern;
+  handsTradeDemand = (at = Date.now()) => {
+    const week = Math.floor(((Number.isFinite(at) ? at : Date.now()) - EPOCH) / WEEK);
+    const r = rng((Math.imul(week, 2654435761) ^ 0x4D4F5353) | 0), lines = [];
+    for (const f of Object.keys(TRADE_FAMILIES)) for (let t = 1; t <= T.top; t++)
+      if (live(f, t)) lines.push({ kind: f, t, demand: 100 });
+    const shuffled = lines.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    for (let i = 0; i < Math.min(shuffled.length, T.wanted + T.glut); i++) {
+      const min = i < T.wanted ? T.wantMin : T.glutMin, max = i < T.wanted ? T.wantMax : T.glutMax;
+      shuffled[i].demand = min + Math.floor(r() * (max - min + 1));
+    }
+    return { week, lines };
+  };
+  const creditFits = gold => Number.isFinite(S.gold) && S.gold >= 0 && S.gold + gold <= Number.MAX_SAFE_INTEGER;
+  const price = (f, t, demand) => Math.round(foeGoldBase(econGradeZ(t)) * ECON.famW[TRADE_FAMILIES[f]] * demand * UNIT / 100);
+  handsTradeCargo = id => {
+    const h = handsGet(id); if (!h) return [];
+    return handsTradeDemand().lines.filter(l => eligible(h, l.kind, l.t)).map(l => ({ ...l,
+      name: matName(l.kind, l.t), have: stock(l.kind, l.t), unitGold: price(l.kind, l.t, l.demand) / UNIT }));
+  };
+  handsTradeQuote = (id, cargo, at = Date.now()) => {
+    const h = handsGet(id), market = handsTradeDemand(at);
+    const q = { ok: false, why: '', town: TRADE_TOWN.id, townName: TRADE_TOWN.n, secs: T.secs,
+      cap: T.cap, maxLines: T.maxLines, units: 0, gold: 0, lines: [], week: market.week };
+    const no = why => Object.assign(q, { why });
+    if (!h || !handsOpen()) return no('Gatherers are not available.');
+    if (!handsTradeOpen()) return no('Trade runs open at Tavern level 2.');
+    if (h.job) return no(h.n + ' is already away or resting between shifts.');
+    if (h.pack.length) return no(h.n + "'s pack waits for room in the Storehouse.");
+    if (!cargoOK(cargo)) return no('Choose up to three different cargo lines, totalling 1–5,000 whole units.');
+    let value = 0;
+    for (const [f, t, n] of cargo) {
+      if (!eligible(h, f, t)) return no('Choose unlocked materials from this gatherer\'s profession, grades 1–3.');
+      if (stock(f, t) < n) return no('Not enough ' + matName(f, t) + ' in the Storehouse.');
+      const demand = market.lines.find(l => l.kind === f && l.t === t).demand, micros = price(f, t, demand);
+      if (!Number.isSafeInteger(micros) || micros <= 0 || micros > T.maxUnitGold * UNIT) return no('This trade is not available.');
+      value += n * micros; q.units += n;
+      q.lines.push({ kind: f, t, n, name: matName(f, t), demand, unitGold: micros / UNIT, gold: n * micros / UNIT });
+    }
+    q.gold = Math.floor(value / UNIT);
+    if (!(q.gold > 0)) return no('Add enough cargo to earn at least 1 gold.');
+    if (!creditFits(q.gold)) return no('Spend some gold before sending another trade run.');
+    q.ok = true; return q;
+  };
+  const sameQuote = (a, b) => a && a.ok && a.week === b.week && a.town === b.town && a.secs === b.secs && a.gold === b.gold
+    && Array.isArray(a.lines) && a.lines.length === b.lines.length && a.lines.every((l, i) => l && ['kind', 't', 'n', 'demand', 'unitGold'].every(k => l[k] === b.lines[i][k]));
+  handsTradeSend = (id, cargo, expectedQuote) => {
+    const at = Date.now(), q = handsTradeQuote(id, cargo, at); if (!q.ok || (expectedQuote !== undefined && !sameQuote(expectedQuote, q))) return null;
+    const h = handsGet(id);
+    const job = { role: 'trade', v: 1, town: TRADE_TOWN.id, start: at, end: at + T.secs * 1000,
+      cargo: cargo.map(l => l.slice()), quote: { week: q.week, micros: q.lines.map(l => Math.round(l.unitGold * UNIT)), demand: q.lines.map(l => l.demand), gold: q.gold } };
+    for (const [f, t, n] of job.cargo) S.mats[f][t - 1] -= n;
+    h.job = job; ledger(); save();
+    emit('handsTradeSend', { id, n: h.n, town: job.town, end: job.end, gold: q.gold }); return job;
+  };
+  handsTradeValid = j => {
+    if (!j || j.role !== 'trade' || j.v !== 1 || j.town !== TRADE_TOWN.id || !cargoOK(j.cargo)) return false;
+    if (!Number.isSafeInteger(j.start) || j.start < 0 || !Number.isSafeInteger(j.end) || j.end - j.start !== T.secs * 1000) return false;
+    const q = j.quote;
+    if (!q || !Number.isSafeInteger(q.week) || q.week !== Math.floor((j.start - EPOCH) / WEEK) || !Number.isSafeInteger(q.gold) || !(q.gold > 0)
+      || !Array.isArray(q.micros) || q.micros.length !== j.cargo.length || !Array.isArray(q.demand) || q.demand.length !== j.cargo.length) return false;
+    if (!q.micros.every(n => Number.isSafeInteger(n) && n > 0 && n <= T.maxUnitGold * UNIT) || !q.demand.every(n => Number.isInteger(n) && (n === 100 || (n >= T.glutMin && n <= T.glutMax) || (n >= T.wantMin && n <= T.wantMax)))) return false;
+    const value = j.cargo.reduce((sum, l, i) => sum + l[2] * q.micros[i], 0);
+    return Number.isSafeInteger(value) && Math.floor(value / UNIT) === q.gold;
+  };
+  const giveCargo = (h, cargo) => {
+    for (const [f, t, n] of cargo) if (!stashAdd(f, t, n, 'parcel', true)) h.pack.push([f, t, n, 'trade-refund']);
+  };
+  handsTradeRepair = h => {
+    if (!h || !h.job || h.job.role !== 'trade') return false;
+    if (handsTradeValid(h.job)) return true;
+    const j = h.job, cargo = j.cargo; h.job = null;
+    if (j.v === 1 && j.town === TRADE_TOWN.id && cargoOK(cargo)) giveCargo(h, cargo);   // never mint gold from a malformed quote
+    save(); return false;
+  };
+  handsTradeStatus = (h, at = Date.now()) => {
+    const j = h && h.job;
+    if (!handsTradeValid(j)) return { st: 'back', role: 'trade', label: 'Trade run needs checking', left: 0, pct: 0, kind: null, t: null, spot: 'road' };
+    const left = Math.max(0, (j.end - at) / 1000);
+    return { st: left > 0 ? 'out' : 'back', role: 'trade', label: left > 0 ? 'Trading at ' + TRADE_TOWN.n : !creditFits(j.quote.gold) ? 'Trade gold waits: spend some gold first' : 'Returning from ' + TRADE_TOWN.n,
+      left, pct: Math.max(0, Math.min(1, (at - j.start) / (j.end - j.start))), kind: null, t: null, spot: left > 0 ? null : 'road' };
+  };
+  let awayReturns = [];
+  handsTradeFinish = (h, away = false, at = Date.now()) => {
+    if (!h || !h.job || h.job.role !== 'trade') return false;
+    if (!handsTradeValid(h.job)) { handsTradeRepair(h); return false; }
+    if (!Number.isFinite(at) || h.job.end > at || !creditFits(h.job.quote.gold)) return false;
+    const j = h.job, gold = j.quote.gold, units = j.cargo.reduce((n, l) => n + l[2], 0);
+    h.job = null; h.back = j.end;   // clear the reservation before any event can re-enter
+    S.gold += gold; econEarn('trade', gold);
+    const s = ledger(); s.trips++; s.sold += units; s.gold += gold;
+    const e = { id: h.id, n: h.n, at: j.end, units, gold, town: j.town };
+    s.log.push(e); if (s.log.length > T.logMax) s.log.splice(0, s.log.length - T.logMax);
+    if (away) awayReturns.push(e); else toast(h.n + ' returns from ' + TRADE_TOWN.n + ': +' + fmt(gold) + ' gold.', 'good', icon, 'normal');
+    save(); emit('handsTradeBack', { ...e, away: !!away }); return true;
+  };
+  handsTradeRecall = (h, at = Date.now()) => {
+    if (!h || !h.job || h.job.role !== 'trade') return false;
+    if (!handsTradeValid(h.job)) { handsTradeRepair(h); return false; }
+    if (!Number.isFinite(at) || at < 0) return false;
+    if (h.job.end <= at) { handsTradeFinish(h, false, at); return false; }
+    const cargo = h.job.cargo; h.job = null; h.back = at; giveCargo(h, cargo);
+    save(); emit('handsRecall', { id: h.id, role: 'trade', cargo: cargo.map(l => l.slice()) }); return true;
+  };
+  handsTradeDiagnostic = (id, cargo) => {
+    const q = handsTradeQuote(id, cargo), h = handsGet(id);
+    const gather = !h ? [] : q.lines.map(l => {
+      const units = Math.floor(handsRate(h, l.kind, l.t) * T.secs / 3600);
+      return { kind: l.kind, t: l.t, units, marketGold: Math.floor(units * l.unitGold), shiftFee: handsFee(h, l.kind, l.t) };
+    });
+    return { quote: q, gather, heroFightGold: econH(S.maxZone) * T.secs / 3600,
+      note: 'Each gathering row is a separate two-hour alternative, before finds and overlapping gatherer bonuses. Shift fee is the full four-hour fee. Trade spends existing cargo; gathering creates new materials.' };
+  };
+  registerAwayLine(() => {
+    const rows = awayReturns.map(e => ({ icon, group: 'Trade', txt: e.n + ' returned from ' + TRADE_TOWN.n + ': +' + fmt(e.gold) + ' gold.',
+      go: () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands' }) }));
+    awayReturns = []; return rows;
+  });
+  // Existing jobs still return if a hand-edited save lowered the Tavern/Hearth.
+  on('away', () => { if (!handsOpen()) handsCatchUp(Date.now(), true); });
+  let elapsed = 0;
+  onTick(dt => { if (!(dt > 0) || !Number.isFinite(dt)) return; elapsed += dt; if (elapsed < 1) return; elapsed = 0;
+    if (!handsOpen() && handsList().some(h => h.job && h.job.role === 'trade')) handsCatchUp(Date.now(), false);
   });
 }
 
@@ -28991,6 +29189,16 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
   const isArmed = k => armed === k && Date.now() - armedAt < 4000;
   const arm = k => { armed = k; armedAt = Date.now(); picking = null; ui(true); };
   const say = t => { msg = t; msgAt = Date.now(); };
+  const tradeReason = () => !handsOpen() ? 'Gatherers need Hearth 2 and a built Tavern.'
+    : !handsTradeOpen() ? 'Build Tavern 2 so a trader starts passing through.' : '';
+  function tradeButton(x, busy, onOpen = null) {
+    const b = btn('mini', 'Trade run'), why = tradeReason();
+    b.classList.add('hd-trade'); b.disabled = busy || !!why;
+    b.setAttribute('aria-label', `Send ${x.n} on a trade run${why ? '. ' + why : ''}`);
+    if (why) b.title = why;
+    b.addEventListener('click', () => { if (onOpen) onOpen(); handsTradeOpenPicker(x.id); });
+    return b;
+  }
 
   // A gatherer's portrait: the job icon on a frame in the rarity colour, with their initial.
   function portrait(x) {
@@ -29033,8 +29241,8 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     const x = handsGet(talkId); if (!x) { closeTalk(); return; }
     const info = handsTalkInfo(talkId), st = handsStatus(x), busy = !!x.job || !!x.pack.length;
     if (busy) talkPicking = false;
-    const sig = JSON.stringify([x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q], x.pack, talkLine, st.st,
-      Math.ceil((st.left || 0) / 60), talkPicking, shiftChoice[x.id], Math.floor(S.gold / 10)]);
+    const sig = JSON.stringify([x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, talkLine, st.st,
+      Math.ceil((st.left || 0) / 60), talkPicking, shiftChoice[x.id], Math.floor(S.gold / 10), tradeReason()]);
     if (sig === talkSig && !focus) return;
     talkSig = sig;
     const focused = talkBox.contains(document.activeElement) ? [...talkBox.querySelectorAll('button')].indexOf(document.activeElement) : -1;
@@ -29051,7 +29259,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     const act = el('div', 'hd-act'), send = btn('mini go', talkPicking ? 'Close jobs' : 'Send on a job');
     send.disabled = busy;
     send.addEventListener('click', () => { talkPicking = !talkPicking; renderTalk(true); });
-    act.append(send);
+    act.append(send, tradeButton(x, busy, closeTalk));
     if (busy) {
       const controls = btn('mini', 'Open gatherer controls');
       controls.addEventListener('click', () => emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-crew' }));
@@ -29059,6 +29267,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     }
     act.append(close);
     talkBox.append(top, traitChips(x), line, status, act);
+    if (tradeReason()) talkBox.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (talkPicking && !busy) talkBox.append(jobPicker(x, info.jobs, () => {
       talkPicking = false; talkLine = handsTalkInfo(x.id).line; renderTalk(true);
     }));
@@ -29178,6 +29387,10 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
   const statusText = (x, st) => {
     const q = x.job && x.job.q || 0;
     const next = q ? ` · ${q} more shift${q === 1 ? '' : 's'} queued` : '';
+    if (x.job && x.job.role === 'trade') {
+      if (st.st === 'out') return `${st.label} · ${dur(st.left)} left`;
+      if (st.st === 'back') return 'Returning from trade';
+    }
     if (st.st === 'out') return `On shift: ${st.label.replace(/^Out at the /, '')}, ${dur(st.left)} left${next}`;
     if (st.st === 'rest') return `Resting at camp: next shift in ${dur(st.left)}${next}`;
     if (st.st === 'back') return 'Walking home';
@@ -29198,12 +29411,12 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       if (s && (s.st === 'out' || s.st === 'rest')) setTxt(row, statusText(x, s));
     }
     const againPlan = handsSendAgainPreview();
-    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking]);
+    const sig = JSON.stringify([list.map(x => [x.id, x.lv, x.job && [x.job.start, x.job.end, x.job.q, x.job.role], x.pack, x.last, x.sent, handsUnpaid(x), Math.floor(x.xp), shiftChoice[x.id]]), Math.floor(S.gold / 10), againPlan, armed, isArmed(armed), picking, tradeReason()]);
     if (sig === crewSig) return;
     crewSig = sig;
     C.top.textContent = '';
     if (againPlan.ready) {
-      const all = btn('mini', againPlan.count === againPlan.ready ? `Send all again: ${gold(againPlan.fee)}` : `Send ${againPlan.count} of ${againPlan.ready}: ${gold(againPlan.fee)}`);
+      const all = btn('mini', againPlan.count === againPlan.ready ? `Send shifts again: ${gold(againPlan.fee)}` : `Send ${againPlan.count} of ${againPlan.ready} shifts again: ${gold(againPlan.fee)}`);
       all.setAttribute('aria-label', `Send ${againPlan.count} of ${againPlan.ready} ready gatherers to their last jobs for ${gold(againPlan.fee)}`);
       all.disabled = !againPlan.count;
       all.addEventListener('click', () => { const n = handsSendAgain(); say(n ? `${n} gatherer${n === 1 ? '' : 's'} sent again.` : 'No gatherer could be sent. Check the shift fees and your gold.'); ui(true); });
@@ -29239,6 +29452,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
     const send = btn('mini go', picking === x.id ? 'Close' : 'Send on a job');
     send.disabled = busy;
     send.addEventListener('click', () => { picking = picking === x.id ? null : x.id; armed = null; ui(true); });
+    const trade = tradeButton(x, busy);
     if (!busy && x.last) {
       const plan = handsSendAgainPreview(x.id);
       const again = btn('mini', `Send again: ${gold(plan.fee)}`);
@@ -29248,15 +29462,19 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       act.append(again);
     }
     if (x.job) {
-      const k = 'recall:' + x.id, recall = btn('mini warn', isArmed(k) ? 'Tap again: recall' : 'Recall');
+      const k = 'recall:' + x.id, tradeRun = x.job.role === 'trade';
+      const recall = btn('mini warn', isArmed(k) ? (tradeRun ? 'Tap again: recall trade' : 'Tap again: recall') : 'Recall');
       recall.addEventListener('click', () => {
         if (!isArmed(k)) { arm(k); return; }
         armed = null;
-        say(handsRecall(x.id) ? `${x.n} is coming home with the haul so far.` : `${x.n} could not be recalled.`);
+        const recalled = handsRecall(x.id);
+        say(recalled ? tradeRun ? `${x.n} came home. Original cargo returned${x.pack.length ? '; what did not fit waits in their pack' : ''}. No gold earned.`
+          : `${x.n} is coming home with the haul so far.` : `${x.n} could not be recalled.`);
         ui(true);
       });
       act.append(recall);
-      card.append(el('p', 'note hd-line', st.st === 'rest'
+      card.append(el('p', 'note hd-line', tradeRun
+        ? 'Recall returns the original cargo. Anything that does not fit waits in their pack. No gold is earned.' : st.st === 'rest'
         ? 'Recall cancels the next shift and refunds it and any later shifts.'
         : 'Recall brings home the haul so far. This shift is paid; later shifts are refunded.'));
     }
@@ -29280,8 +29498,9 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       if (handsLetGo(x.id)) say(named ? `${n} went back to the Tavern with their level.` : `${n} left camp.`);
       ui(true);
     });
-    act.prepend(talk, send); act.append(go);
+    act.prepend(talk, send, trade); act.append(go);
     card.append(act);
+    if (tradeReason()) card.append(el('p', 'note hd-trade-lock', tradeReason()));
     if (picking === x.id && !busy) card.append(jobPicker(x));
     return card;
   }
@@ -29488,6 +29707,169 @@ var renderTavernLeads = (box, rows) => {
       leads.textContent = '';
       renderTavernLeads(leads, rows);
     }
+  });
+}
+
+// ---- src/js/74b-ui-trade.js ----
+// Offline trade runs. The Camp conversation and crew card open this picker;
+// the Hands core owns prices, stock and delivery.
+var handsTradeOpenPicker;
+{
+  let sec, body, note, picker, quoteBox, selected = null, catalogSig = '', quoteSig = '', reviewed = null, feedback = '';
+  const button = (label, cls = 'mini') => { const b = el('button', cls, label); b.type = 'button'; b.style.minHeight = '44px'; return b; };
+  const amount = n => fmt(Math.floor(n));
+  const cargo = () => picker ? [...picker.querySelectorAll('input[data-kind]')]
+    .map(i => [i.dataset.kind, Number(i.dataset.t), Math.floor(Number(i.value) || 0)])
+    .filter(row => row[2] > 0) : [];
+  const signature = q => JSON.stringify([q.week, q.units, q.gold, q.lines && q.lines.map(l => [l.kind, l.t, l.n, l.unitGold])]);
+
+  function showQuote() {
+    if (!quoteBox || !selected || !picker) return;
+    const actionFocused = quoteBox.contains(document.activeElement) && document.activeElement.tagName === 'BUTTON';
+    const x = handsGet(selected), rows = cargo();
+    quoteBox.textContent = '';
+    if (!x || x.job || x.pack.length) { reviewed = null; quoteBox.append(el('p', 'note', 'This gatherer is busy.')); return; }
+    const q = handsTradeQuote(selected, rows);
+    quoteSig = JSON.stringify([q.ok, q.why, signature(q)]);
+    if (reviewed && (!q.ok || JSON.stringify(rows) !== reviewed.cargo || signature(q) !== signature(reviewed.quote))) {
+      reviewed = null;
+      feedback = 'Stock or weekly prices changed. Review the quote again.';
+    }
+    if (!q.ok) {
+      reviewed = null;
+      if (feedback) quoteBox.append(el('p', 'note', feedback));
+      quoteBox.append(el('p', 'note', q.why || 'Choose cargo to see a quote.'));
+      if (actionFocused) picker.querySelector('input:not(:disabled)')?.focus();
+      return;
+    }
+    if (feedback) quoteBox.append(el('p', 'note', feedback));
+    const summary = el('p', 'hd-stat', `${amount(q.units)} units to ${q.townName} · 2 hours · ${amount(q.gold)} gold on return. No fee.`);
+    quoteBox.append(summary);
+    const lines = el('div', 'note');
+    for (const line of q.lines) lines.append(el('div', null, `${amount(line.n)} ${line.name} · ${line.demand}% demand · ${Number(line.unitGold).toFixed(2)} gold each`));
+    quoteBox.append(lines, el('p', 'note', 'This week’s prices are locked in when you send. Trade returns gold only.'));
+    const action = reviewed ? button('Send trade run', 'mini go') : button('Review quote', 'mini go');
+    action.addEventListener('click', () => {
+      if (!reviewed) {
+        reviewed = { quote: q, cargo: JSON.stringify(rows) };
+        feedback = 'Quote reviewed. Send this cargo when ready.';
+        showQuote();
+        quoteBox.querySelector('button')?.focus();
+        return;
+      }
+      const job = handsTradeSend(selected, rows, reviewed.quote);
+      reviewed = null;
+      feedback = job ? `${x.n} is trading at ${q.townName}. The cargo returns as gold in 2 hours.`
+        : 'Stock or weekly prices changed. Review the quote again.';
+      if (job) { catalogSig = ''; ui(true); body.focus(); }
+      else showQuote();
+    });
+    quoteBox.append(action);
+    if (actionFocused) action.focus();
+  }
+
+  function drawForm(rows) {
+    picker.textContent = '';
+    const intro = el('p', 'note', 'Choose up to 3 kinds of cargo, 5,000 units total. Only this gatherer’s unlocked materials can go.');
+    picker.append(intro);
+    if (!rows.length) { picker.append(el('p', 'note', 'No trade goods are open for this gatherer yet.')); return; }
+    for (const row of rows) {
+      const label = el('label', 'hd-trade-row');
+      label.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 0;';
+      const name = el('span', null, `${row.name} · ${amount(row.have)} in Storehouse`);
+      const input = el('input'); input.type = 'number'; input.min = '0'; input.max = String(row.have); input.step = '1'; input.inputMode = 'numeric'; input.value = '0';
+      input.disabled = row.have < 1; input.dataset.kind = row.kind; input.dataset.t = row.t;
+      input.setAttribute('aria-label', `${row.name} units to trade, ${amount(row.have)} available`);
+      input.style.cssText = 'width:6.5em;min-height:44px;box-sizing:border-box;';
+      input.addEventListener('input', () => { reviewed = null; feedback = ''; showQuote(); });
+      input.addEventListener('change', () => {
+        const before = JSON.stringify(cargo());
+        input.value = String(Math.min(row.have, Math.max(0, Math.floor(Number(input.value) || 0))));
+        // The input event already updated the quote. On blur, keep its action node in place
+        // so a pointer press on Review can finish as a click after leaving this field.
+        if (JSON.stringify(cargo()) !== before) { reviewed = null; showQuote(); }
+      });
+      label.append(name, input); picker.append(label);
+    }
+  }
+
+  function draw() {
+    if (!sec) return;
+    sec.hidden = !handsOpen() || !selected;
+    if (sec.hidden) return;
+    const x = handsGet(selected);
+    if (!x) { selected = null; sec.hidden = true; return; }
+    const open = handsTradeOpen();
+    if (!open) {
+      body.textContent = '';
+      catalogSig = ''; quoteSig = ''; reviewed = null; picker = null; quoteBox = null;
+      note.textContent = !handsOpen() ? 'Gatherers need Hearth 2 and a built Tavern.'
+        : 'Build Tavern 2 so a trader starts passing through.';
+      return;
+    }
+    note.textContent = `${x.n} · ${handsSkillName(x)}`;
+    if (x.job || x.pack.length) {
+      body.textContent = '';
+      const st = handsStatus(x);
+      body.append(el('p', 'hd-stat', x.job && x.job.role === 'trade'
+        ? st.st === 'out' ? `${st.label} · ${Math.ceil(st.left / 60)} minutes left. ${amount(x.job.quote && x.job.quote.gold || 0)} gold due on return.` : 'Returning from trade.'
+        : x.pack.length ? 'Their pack is waiting. Make room in the Storehouse, or manage the pack in the crew card.' : 'This gatherer is already working.'));
+      body.append(el('p', 'note', 'Recall a trade in the crew card to return the original cargo. Any cargo that cannot fit in the Storehouse waits in the pack. No gold is earned.'));
+      catalogSig = '';
+      return;
+    }
+    const rows = handsTradeCargo(selected);
+    const next = JSON.stringify([selected, rows.map(r => [r.kind, r.t, r.name, r.have])]);
+    if (next !== catalogSig) {
+      const old = cargo();
+      const focused = document.activeElement && document.activeElement.matches('input[data-kind]') && picker && picker.contains(document.activeElement)
+        ? [document.activeElement.dataset.kind, Number(document.activeElement.dataset.t), document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+      const actionFocused = quoteBox && quoteBox.contains(document.activeElement) && document.activeElement.tagName === 'BUTTON';
+      catalogSig = next;
+      body.textContent = '';
+      picker = el('div', 'hd-trade-picker'); quoteBox = el('div', 'hd-trade-quote');
+      quoteBox.setAttribute('role', 'status'); quoteBox.setAttribute('aria-live', 'polite');
+      body.append(picker, quoteBox);
+      drawForm(rows);
+      for (const [kind, t, n] of old) {
+        const input = [...picker.querySelectorAll('input[data-kind]')].find(i => i.dataset.kind === kind && Number(i.dataset.t) === t);
+        if (input) input.value = String(Math.min(n, Number(input.max)));
+      }
+      showQuote();
+      if (actionFocused) {
+        (quoteBox.querySelector('button') || picker.querySelector('input:not(:disabled)'))?.focus();
+      } else if (focused) {
+        const input = [...picker.querySelectorAll('input[data-kind]')].find(i => i.dataset.kind === focused[0] && Number(i.dataset.t) === focused[1]);
+        if (input && !input.disabled) {
+          input.focus();
+          try { input.setSelectionRange(focused[2], focused[3]); } catch (e) { /* number inputs do not support selection */ }
+        }
+      }
+    } else {
+      const q = handsTradeQuote(selected, cargo());
+      if (JSON.stringify([q.ok, q.why, signature(q)]) !== quoteSig) showQuote();
+    }
+  }
+
+  handsTradeOpenPicker = id => {
+    if (!handsGet(id)) return;
+    selected = id; reviewed = null; feedback = ''; catalogSig = ''; quoteSig = ''; picker = null;
+    draw();
+    emit('campGoto', { tab: 'world', view: 'tav', sel: '#sec-hands-trade' });
+    if (sec) sec.querySelector('input:not(:disabled)')?.focus();
+  };
+
+  registerSection('tav', {
+    id: 'hands-trade', title: 'Trade run',
+    mount(node) {
+      sec = node;
+      const crew = document.querySelector('#sec-hands-crew');
+      if (crew) crew.after(sec);
+      note = el('p', 'note'); body = el('div'); body.tabIndex = -1;
+      sec.append(note, body);
+      sec.hidden = true;
+    },
+    update() { draw(); }
   });
 }
 
