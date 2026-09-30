@@ -6,6 +6,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { findBrowser } from './lib/browser.mjs';
 import { ROOT, loadCore as loadCoreRaw, memoryStorage, badNumbers, deepDiff, subsetDiff } from './lib/core.mjs';
 
 // Every game this run loads has no Omen (almanac.force('none')), so a new real-world day never
@@ -24,6 +26,10 @@ function loadCore(opts) {
 }
 
 let failed = 0;
+const browserTools = findBrowser();
+let browserSkipped = 0;
+const browserSkipReasons = new Set();
+const browserSummary = (n, reasons) => `browser sections skipped: ${n} (${[...reasons].join('; ') || 'none'})`;
 // Every section starts with `if (section('name')) try {`. `--only=<regex>` runs just the sections whose name matches (dev loop).
 // `--jobs=N` (default 4 when the machine has the cores): the run splits into N child processes, each taking a share of the
 // sections (the sections are independent; the browser ones mostly wait), and the parent prints their output one after the other.
@@ -48,16 +54,21 @@ function section(name) {
 if (JOBS > 1 && !SHARD) {
   const argv = process.argv.slice(2).filter(a => !a.startsWith('--jobs='));
   const outs = await Promise.all(Array.from({ length: JOBS }, (_, i) => new Promise(res => {
-    const c = spawn(process.execPath, [new URL(import.meta.url).pathname, ...argv, `--shard=${i}/${JOBS}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), ...argv, `--shard=${i}/${JOBS}`], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = ''; c.stdout.on('data', d => (out += d)); c.stderr.on('data', d => (out += d));
     c.on('close', code => res({ out, code }));
   })));
   let bad = 0;
   for (const o of outs) {
-    const lines = o.out.split('\n').filter(l => !/^(all checks passed|\d+ check\(s\) failed)$/.test(l.trim()));
+    const lines = o.out.split('\n').filter(l => {
+      const skip = /^browser sections skipped: (\d+) \((.*)\)$/.exec(l.trim());
+      if (skip) { browserSkipped += +skip[1]; if (+skip[1]) browserSkipReasons.add(skip[2]); return false; }
+      return !/^(all checks passed|\d+ check\(s\) failed)$/.test(l.trim());
+    });
     console.log(lines.join('\n').replace(/\n+$/, '')); bad += (o.out.match(/^ {2}FAIL /gm) || []).length + (o.code && !/ FAIL /.test(o.out) ? 1 : 0);
   }
   console.log(bad ? `\n${bad} check(s) failed` : '\nall checks passed');
+  console.log(browserSummary(browserSkipped, browserSkipReasons));
   process.exit(bad ? 1 : 0);
 }
 // `--times`: print how long each section took (a section starts at its unindented console.log heading).
@@ -67,6 +78,7 @@ if (process.argv.includes('--times')) {
   process.on('exit', () => { if (cur) rows.push([Date.now() - t0, cur]); log0('\nsection times (s):'); rows.sort((x, y) => y[0] - x[0]).slice(0, 15).forEach(r => log0('  ' + (r[0] / 1000).toFixed(1).padStart(6) + '  ' + r[1])); });
 }
 const ok = msg => console.log('  ok   ' + msg);
+const skipBrowser = msg => { browserSkipped++; browserSkipReasons.add(browserTools.reason || 'dist/lanternfall.html missing; run node tools/build.mjs'); ok(msg); };
 const fail = msg => { failed++; console.log('  FAIL ' + msg); };
 const assert = (cond, msg) => (cond ? ok(msg) : fail(msg));
 const E2 = (g, src) => g.eval(src);
@@ -1336,13 +1348,8 @@ if (section('onboarding hint placement (HINT1)')) try {
   assert(/--toast-h/.test(css) && /--toast-h/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '70-ui.js'), 'utf8')), 'the hint band and placeToasts share --toast-h so they cannot collide');
   ok('source: tick only recomputes on a real change, the bubble is CSS-docked, toasts and hints share one band variable');
   // in Chromium: the band does not move while the game runs (ticks, an ability firing) under it
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) { ok('onboarding hint (browser): Playwright or Chromium not here, skipped'); }
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('onboarding hint (browser): Playwright or Chromium not here, skipped'); }
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -2732,13 +2739,8 @@ if (section('gatherers: tents, fees, unpaid, let go (W1-E)')) try {
 
 // ---- W1-E in Chromium at 360 x 740: the board and your gatherers ----
 if (section('gatherers UI (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('gatherers UI (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('gatherers UI (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -2882,13 +2884,8 @@ if (section('nav')) try {
   }
   // 6. in Chromium (when Playwright and /opt/pw-browsers are here): switching from inside a menu
   await (async () => {
-    let pw = null;
-    try {
-      const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-      for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-    } catch (e) {}
-    const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-    if (!pw || !exe || !fs.existsSync(distFile)) { ok('nav (browser): Playwright or Chromium not here, skipped'); return; }
+    const { pw, exe } = browserTools;
+    if (!pw || !exe || !fs.existsSync(distFile)) { skipBrowser('nav (browser): Playwright or Chromium not here, skipped'); return; }
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
     const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
@@ -3891,13 +3888,8 @@ if (section('solo guide pause rules')) try {
 
 // ---- W1-A in Chromium: a fresh game follows the guide with no taps on the gather node and reaches a built Workbench ----
 if (section('solo guide: gathering never freezes (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo guide (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('solo guide (browser): Playwright or Chromium not here, skipped');
   else {
     // the SOLO build (not the dormant party build): the page as shipped
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
@@ -3955,13 +3947,8 @@ if (section('solo guide: gathering never freezes (browser)')) try {
 
 // ---- SOLO1 in Chromium at 360 x 740: the picker, the buttons, no party UI, and every guide target of the first session ----
 if (section('solo hero (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('solo (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4108,13 +4095,8 @@ if (section('solo hero (browser)')) try {
 } catch (e) { fail('solo (browser) crashed: ' + (e.stack || e)); }
 // ---- W1-D: guide locks, landscape bar, Journal errors, combat numbers on gather scenes, picker art, header labels (Chromium) ----
 if (section('W1-D (browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('W1-D (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('W1-D (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4416,13 +4398,8 @@ if (section('notices (W1-B)')) try {
   assert(n.eval('S.codex.init && S.totalKills > 0') && !nt.some(m => /past deeds/.test(m)), `a new game's Codex says nothing about past deeds (${n.eval('S.totalKills')} kills in 40 s; ${nt.filter(m => /Codex/.test(m)).join(' | ') || 'no Codex lines'})`);
 } catch (e) { fail('notices (static) crashed: ' + (e.stack || e)); }
 if (section('notices (browser, W1-B)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('notices (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('notices (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4692,13 +4669,8 @@ if (section('solo effects (W1-C)')) try {
 } catch (e) { fail('solo effects crashed: ' + (e.stack || e)); }
 
 if (section('solo copy (browser, W1-C)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('solo copy (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('solo copy (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -4920,13 +4892,8 @@ if (section('training (W2-A)')) try {
 
 // ---- W2-A in Chromium: the Training list, a Train press, the long-press sheet, the old rows gone ----
 if (section('training (W2-A, browser)')) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('training (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('training (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -5405,9 +5372,305 @@ if (section('gatherers at camp (C2)')) try {
   const errs = games.flatMap(g => g.errors);
   assert(!errs.length, 'C2: no camp conversation handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C2 gatherers at camp crashed: ' + (e.stack || e)); }
+// ---- C5: portable browser discovery, Windows child paths and explicit skipped-section totals ----
+if (section('browser tooling portability (C5)')) try {
+  const driver = { chromium: { launch() {}, executablePath: () => '/managed/chrome' } };
+  const none = () => { throw Object.assign(new Error('not installed'), { code: 'MODULE_NOT_FOUND' }); };
+  const fake = overrides => findBrowser({ env: {}, platform: 'linux', requireModule: () => driver, fileExists: () => false, listDirectory: () => [], ...overrides });
+  {
+    const seen = [], exe = path.resolve(os.tmpdir(), 'C5 chosen browser.exe');
+    const b = fake({ env: { LF_PLAYWRIGHT: '/chosen/playwright', LF_CHROMIUM: exe }, requireModule: p => { seen.push(p); return driver; }, fileExists: p => p===exe || p==='/managed/chrome' });
+    assert(b.pw===driver && b.exe===exe && seen.join()==='/chosen/playwright' && !b.reason, 'C5: explicit module-folder and browser overrides win over discovered installations');
+    const badModule = fake({ env: { LF_PLAYWRIGHT: '/missing/explicit-driver' }, requireModule: none, fileExists: () => true });
+    assert(!badModule.pw && /LF_PLAYWRIGHT/.test(badModule.reason), 'C5: a broken module override reports its reason without silently using a fallback');
+    const badExe = fake({ env: { LF_CHROMIUM: exe }, fileExists: p => p==='/managed/chrome' });
+    assert(badExe.pw===driver && !badExe.exe && /LF_CHROMIUM/.test(badExe.reason), 'C5: a broken executable override reports its reason without switching browsers');
+  }
+  {
+    const tried = [], b = fake({ requireModule: p => { tried.push(p); return p==='playwright-core' ? driver : none(); }, fileExists: p => p==='/managed/chrome' });
+    assert(b.exe==='/managed/chrome' && tried.join()==='playwright,playwright-core', 'C5: a project playwright-core install and its managed browser work without global packages');
+    for (const exe of ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium-1300/chrome-linux64/chrome']) {
+      const b = fake({ requireModule: p => p==='/opt/node22/lib/node_modules/playwright' ? driver : none(), fileExists: p => p===exe, listDirectory: () => ['chromium-1300'] });
+      assert(b.pw===driver && b.exe===exe, `C5: the coordinator's Linux fallback remains usable at ${exe}`);
+    }
+    for (const exe of ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe']) {
+      const b = fake({ platform: 'win32', fileExists: p => p===exe });
+      assert(b.exe===exe && !b.reason, `C5: an installed Windows browser is discovered at ${exe}`);
+    }
+    assert(/Playwright not found/.test(fake({ requireModule: none }).reason) && /Chromium not found/.test(fake().reason), 'C5: missing driver and missing executable have distinct actionable explanations');
+  }
+  const { spawnSync } = await import('node:child_process');
+  const entry = fileURLToPath(import.meta.url);
+  const shards = spawnSync(process.execPath, [entry, '--jobs=2', '--only=^craft data$'], { encoding: 'utf8', timeout: 30000 });
+  assert(shards.status===0 && /craft tables consistent/.test(shards.stdout) && (shards.stdout.match(/^browser sections skipped: 0 \(none\)$/gm)||[]).length===1, 'C5: the real sharded runner resolves its file URL correctly and prints one final browser summary');
+  const missing = path.join(os.tmpdir(), 'lanternfall-c5-no-such-playwright-module');
+  const skipped = spawnSync(process.execPath, [entry, '--jobs=3', '--only=gatherers UI|landscape'], { encoding: 'utf8', timeout: 30000, env: { ...process.env, LF_PLAYWRIGHT: missing } });
+  assert(skipped.status===0 && (skipped.stdout.match(/^browser sections skipped:/gm)||[]).length===1 && /^browser sections skipped: 4 \(LF_PLAYWRIGHT/m.test(skipped.stdout), 'C5: the parent totals four intentionally skipped browser sections across shards and retains the reason');
+  const tempRoot = path.resolve(os.tmpdir()), fixture = fs.mkdtempSync(path.join(tempRoot, 'lanternfall-c5-site-'));
+  try {
+    const dir = path.join(fixture, 'space # café'), tool = path.join(dir, 'tools', 'site.mjs');
+    fs.mkdirSync(path.dirname(tool), { recursive: true }); fs.mkdirSync(path.join(dir, 'dist'));
+    fs.copyFileSync(path.join(ROOT, 'tools', 'site.mjs'), tool);
+    fs.writeFileSync(path.join(dir, 'dist', 'lanternfall.html'), '<title>C5 path fixture</title>');
+    const site = spawnSync(process.execPath, [tool], { cwd: dir, encoding: 'utf8', timeout: 30000 });
+    assert(site.status===0 && fs.readFileSync(path.join(dir, 'site', 'index.html'), 'utf8').includes('<title>C5 path fixture</title>'), 'C5: the actual site exporter resolves a path containing spaces, a hash and non-ASCII text');
+  } finally {
+    // Delete only this freshly allocated fixture, after verifying it stays under the intended temp root.
+    if (path.dirname(path.resolve(fixture))===tempRoot && path.basename(fixture).startsWith('lanternfall-c5-site-')) fs.rmSync(fixture, { recursive: true, force: true });
+  }
+} catch (e) { fail('C5 browser tooling portability crashed: ' + (e.stack || e)); }
+
+// ---- C5: import recovery runs the real save UI and boot lifecycle against a fallible storage adapter ----
+if (section('save import recovery UI (C5)')) try {
+  const { coreFiles } = await import('./lib/core.mjs');
+  const T0 = Date.UTC(2026, 8, 28, 12), games = [];
+  const stub = `Date.__t=${T0};Date.now=()=>Date.__t;
+    class SaveNode {
+      constructor(t='div',c='',s=''){this.tagName=t.toUpperCase();this.className=c||'';this.children=[];this.events={};this.attrs={};this.style={};this._text=s||'';this.value='';this.disabled=false;}
+      append(...ns){for(const n of ns){n.remove?.();this.children.push(n);n.parentNode=this;}} appendChild(n){this.append(n);return n;}
+      remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(n=>n!==this);this.parentNode=null;}
+      after(n){n.remove?.();const p=this.parentNode,i=p.children.indexOf(this);p.children.splice(i+1,0,n);n.parentNode=p;}
+      contains(n){return this===n||this.children.some(c=>c.contains(n));}
+      set textContent(s){this._text=String(s);for(const n of this.children)n.parentNode=null;this.children=[];} get textContent(){return this._text+this.children.map(n=>n.textContent).join('');}
+      setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k]??null;}
+      addEventListener(k,f){(this.events[k]||(this.events[k]=[])).push(f);} fire(k){for(const f of this.events[k]||[])f({target:this});} click(){if(!this.disabled)this.fire('click');} focus(){document.activeElement=this;} select(){this.selected=true;}
+      querySelectorAll(s){const a=[],match=n=>s[0]==='.'?n.className.split(' ').includes(s.slice(1)):s[0]==='#'?n.id===s.slice(1):n.tagName===s.toUpperCase();const walk=n=>{for(const c of n.children){if(match(c))a.push(c);walk(c);}};walk(this);return a;}
+      querySelector(s){return this.querySelectorAll(s)[0]||null;}
+    }
+    const __sections={},__events={},__timers=[];
+    const document={body:new SaveNode('body'),activeElement:null,hidden:false,createElement:t=>new SaveNode(t),execCommand:()=>false,addEventListener:(k,f)=>{__events[k]=f;}};
+    const window={};window.self=window;window.top=window;
+    const navigator={},location={reload(){__reloads++;if(__reloadMode==='throw')throw new Error('reload blocked');}};
+    let __reloads=0,__reloadMode='noop';
+    const el=(t,c,s)=>new SaveNode(t,c,s),$=id=>document.body.querySelector('#'+id),registerSection=(t,s)=>{__sections[s.id]=s;};
+    const performance={now:()=>0},resize=()=>{},updatePortrait=()=>{},initMenus=()=>{},connect=()=>{},flush=()=>{},maintainBoss=()=>{},pushPresence=()=>{},showAwayReport=()=>{};
+    const addEventListener=(k,f)=>{__events[k]=f;},requestAnimationFrame=()=>{},queueMicrotask=f=>f(),setTimeout=(f,ms)=>{__timers.push({f,ms,type:'timeout'});return __timers.length;},setInterval=(f,ms)=>{__timers.push({f,ms,type:'interval'});return __timers.length;};
+  `;
+  const mk = (writeInitial = true) => {
+    const store = memoryStorage(), control = { mode: 'normal', writes: [] };
+    const adapter = {
+      get(k) { if(control.mode==='bad-read' && k===KEY)return 'mismatched readback';return store.get(k); },
+      set(k,v) { control.writes.push([k,v]);if(control.mode==='throw')throw new Error('storage blocked');if(control.mode!=='swallow')store.set(k,v); }
+    };
+    const g = loadCore({ seed: 7505, storage: adapter, prelude: stub, files: coreFiles().concat(['75-savecode-ui.js','90-boot.js']) }); games.push(g);
+    g.eval('globalThis.__panel=el("section");__panel.id="log";document.body.append(__panel);__sections.savecode.mount(__panel);S.name="Current game";S.gold=123;');
+    if(writeInitial)g.fn.save();
+    g.eval('globalThis.__candidate=JSON.parse(JSON.stringify(S));__candidate.name="Imported game";__candidate.gold=456;globalThis.__code=encodeSave(__candidate);globalThis.__candidateRaw=JSON.stringify(decodeSave(__code).data)');
+    return { g, control, store, E: s => g.eval(s) };
+  };
+  const click = (E,label) => E(`__panel.querySelectorAll("button").find(b=>b.textContent===${JSON.stringify(label)}).click()`);
+  const prepare = E => {
+    E('const area=__panel.querySelector(".savecode-import");area.value=__code;area.fire("input")');
+    click(E,'Check');click(E,'Replace my save');
+  };
+  const lifecycle = E => E('S.gold+=999;save();__timers.find(t=>t.type==="interval"&&t.ms===5000).f();__events.pagehide();document.hidden=true;__events.visibilitychange();document.hidden=false');
+  {
+    const { E, control, store } = mk();
+    click(E,'Copy save code');click(E,'Copy save code');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && __panel.querySelector(".savecode-fallback").selected && decodeSave(__panel.querySelector(".savecode-fallback").value).ok'), 'C5 UI: repeated clipboard failure leaves one selected, valid manual-copy field');
+    const original = store.get(KEY);prepare(E);
+    assert(store.get(KEY)===original && E('S.name==="Current game" && __reloads===0'), 'C5 UI: checking and arming import neither writes the save nor changes the live game');
+    const backup = E('JSON.stringify(S)'), candidate = E('__candidateRaw');
+    click(E,'Yes, replace it');
+    assert(store.get(KEY)===candidate && E('__reloads===1 && S.name==="Current game" && S.gold===123'), 'C5 UI: confirmed import verifies exact candidate bytes before requesting reload');
+    assert(E('__panel.querySelector(".savecode-import").disabled && __panel.querySelectorAll("button").some(b=>b.textContent==="Retry reload")'), 'C5 UI: a no-op reload keeps a visible recovery state and prevents a second import');
+    lifecycle(E);
+    assert(store.get(KEY)===candidate, 'C5 UI: real autosave, pagehide and visibility handlers cannot overwrite the verified import');
+    click(E,'Copy backup of my game');click(E,'Copy backup of my game');
+    assert(E('__panel.querySelectorAll(".savecode-fallback").length===1 && decodeSave(__panel.querySelector(".savecode-fallback").value).data.gold===123 && decodeSave(__panel.querySelector(".savecode-fallback").value).data.name==="Current game"'), 'C5 UI: pending recovery can export the captured original game in one reusable manual-copy field');
+    E('storage.set("unrelated.test.key","still works")');
+    assert(store.get('unrelated.test.key')==='still works', 'C5 UI: the pending-import guard only blocks the game save key');
+    click(E,'Retry reload');
+    assert(E('__reloads')===2 && store.get(KEY)===candidate, 'C5 UI: Retry reload rechecks the candidate and does not write it again');
+    click(E,'Cancel and restore my game');
+    assert(store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: Cancel restores the exact captured current-game snapshot and releases the guard');
+    E('S.gold=222;__events.pagehide()');
+    assert(JSON.parse(store.get(KEY)).gold===222, 'C5 UI: the real pagehide save resumes after a verified restore');
+  }
+  {
+    const { E, store } = mk();E('__reloadMode="throw"');prepare(E);click(E,'Yes, replace it');
+    const candidate = E('__candidateRaw');lifecycle(E);
+    assert(store.get(KEY)===candidate && E('__panel.textContent.includes("Reload was blocked") && __panel.querySelectorAll("button").some(b=>b.textContent==="Retry reload")'), 'C5 UI: a thrown reload keeps the verified import protected and offers recovery');
+    E('__reloadMode="noop"');click(E,'Retry reload');
+    assert(E('__reloads')===2 && store.get(KEY)===candidate, 'C5 UI: retrying after a blocked reload keeps the same imported bytes');
+    store.set(KEY,'changed by another tab');click(E,'Retry reload');lifecycle(E);
+    assert(E('__reloads')===2 && store.get(KEY)==='changed by another tab' && E('__panel.querySelector(".savecode-import").disabled'), 'C5 UI: a changed stored candidate stops further reloads while keeping the guard');
+  }
+  {
+    const { E, control, store } = mk();prepare(E);const backup = E('JSON.stringify(S)');control.mode='swallow';click(E,'Yes, replace it');
+    assert(E('__reloads')===0 && store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: a swallowed import write is detected by readback and never reloads');
+    const h = mk();prepare(h.E);h.control.mode='bad-read';click(h.E,'Yes, replace it');
+    assert(h.E('__reloads')===0 && h.E('__panel.querySelector(".savecode-import").disabled'), 'C5 UI: failed write verification plus failed restore retains the recovery guard');
+    const stored = h.store.get(KEY);lifecycle(h.E);
+    assert(h.store.get(KEY)===stored, 'C5 UI: lifecycle saves remain blocked while restore cannot be verified');
+    h.control.mode='normal';click(h.E,'Restore my game');
+    assert(h.E('!__panel.querySelector(".savecode-import").disabled') && JSON.parse(h.store.get(KEY)).name==='Current game', 'C5 UI: restoring after storage recovers releases the guard only after exact readback');
+  }
+  {
+    const { E, control, store } = mk();prepare(E);const backup = E('JSON.stringify(S)');click(E,'Yes, replace it');const candidate = store.get(KEY);
+    control.mode='swallow';click(E,'Cancel and restore my game');lifecycle(E);
+    assert(store.get(KEY)===candidate && E('__panel.querySelector(".savecode-import").disabled && __panel.textContent.includes("Could not verify the restore")'), 'C5 UI: a failed cancellation leaves the import protected instead of falsely resuming autosave');
+    control.mode='normal';click(E,'Cancel and restore my game');
+    assert(store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: retrying cancellation restores the original snapshot once storage accepts writes');
+  }
+  {
+    const { E, control, store } = mk(false);prepare(E);const backup = E('JSON.stringify(S)');control.mode='throw';click(E,'Yes, replace it');
+    assert(E('__reloads')===0 && E('__panel.querySelector(".savecode-import").disabled'), 'C5 UI: throwing storage on a first import enters recovery without attempting reload');
+    click(E,'Copy backup of my game');
+    assert(E('decodeSave(__panel.querySelector(".savecode-fallback").value).data.name==="Current game"'), 'C5 UI: a current-game backup remains exportable even while storage throws');
+    control.mode='normal';click(E,'Restore my game');
+    assert(store.get(KEY)===backup && E('!__panel.querySelector(".savecode-import").disabled'), 'C5 UI: a game without an earlier persisted save recovers its captured live snapshot');
+  }
+  assert(!games.some(g=>g.errors.length), 'C5 UI: save recovery and real lifecycle callbacks produce no handler errors');
+} catch (e) { fail('C5 save import recovery UI crashed: ' + (e.stack || e)); }
 
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
+// ---- C5: strict save codec; untrusted data is validated before any load-time migration ----
+if (section('save codec validation (C5)')) try {
+  const g=loadCore({seed:505}), E=s=>g.eval(s), original=E('JSON.stringify(S)');
+  const rawCheck=raw=>E(`validateSave(JSON.parse(${JSON.stringify(raw)}))`), base=()=>JSON.parse(original);
+  const validate=data=>rawCheck(JSON.stringify(data)), decode=code=>E(`decodeSave(${JSON.stringify(code)})`);
+  const codeForBytes=bytes=>{ const b64=Buffer.from(bytes).toString('base64'); return `LF1:${b64}:${E(`savecodeChecksum(${JSON.stringify(b64)})`)}`; };
+  const round=(game,label)=>{ const before=game.eval('JSON.stringify(S)'), r=game.eval('decodeSave(encodeSave(S))'); assert(r.ok&&!deepDiff(JSON.parse(before),r.data)&&game.eval('JSON.stringify(S)')===before,`C5: ${label} round-trips without mutation`+(r.ok?'':': '+r.error)); };
+  for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json'))) {
+    const raw=fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'), v=rawCheck(raw), r=E(`decodeSave(encodeSave(JSON.parse(${JSON.stringify(raw)})))`);
+    assert(v.ok&&r.ok&&!deepDiff(JSON.parse(raw),r.data),`C5: raw ${f} keeps every field before any migration`);
+  }
+  const optional=base(); for(const k of ['camp','hands','solo','craft','tavernLeads','deeds']) delete optional[k];
+  assert(validate(optional).ok&&!('hands' in validate(optional).data),'C5: absent optional fields are allowed without being filled');
+  const benign=base(); benign.gold=12.375; benign.solo.eq.wren=[null,null,null]; benign.almanac.dare.day=-1; benign.econ.spent.camp=-12; benign.name='Zo\u00eb \u677e \ud83c\udfee';
+  const uni=decode(codeForBytes(Buffer.from(JSON.stringify(benign))));
+  assert(uni.ok&&!deepDiff(benign,uni.data),'C5: fractional gold, null ability slots, negative ledger/sentinels and Unicode names are retained');
+  assert(E('(()=>{const s=fresh(),r=validateSave(s);return r.ok&&r.data===s;})()'),'C5: validation returns the original object reference');
+  const invalid=[
+    ['v4',s=>s.v=4],['missing items',s=>delete s.items],['null item',s=>s.items=[null]],['dangling equipment',s=>s.equip.weapon=912],
+    ['duplicate IDs',s=>{s.items=[{id:1,slot:'pick',t:1,r:'common',plus:0},{id:1,slot:'axe',t:1,r:'common',plus:0}];s.nextId=2;}],
+    ['reused next ID',s=>{s.items=[{id:1,slot:'pick',t:1,r:'common',plus:0}];s.nextId=1;}],
+    ...[['kind','slot','bogus'],['rarity','r','bogus'],['tier','t',6]].map(([label,key,value])=>['unknown item '+label,s=>{s.items=[{id:1,slot:'pick',t:1,r:'common',plus:0,[key]:value}];s.nextId=2;}]),
+    ['null skills',s=>s.skills=null],['null skill',s=>s.skills.mine=null],['absurd skill XP',s=>s.skills.mine.xp=1e99],
+    ['negative materials',s=>s.mats.ore[0]=-1],['unknown material family',s=>s.mats.bogus=[1,0,0,0,0]],
+    ['null camp',s=>s.camp=null],['null camp build',s=>s.camp.builds=[null]],['null hand',s=>s.hands.list=[null]],['null board',s=>s.hands.board=null],
+    ['bad solo slots',s=>s.solo.eq.wren=['echo']],['wrong hero ability',s=>s.solo.eq.wren=['fire',null,null]],['null training',s=>s.solo.tr.wren=null],
+    ['invalid activity',s=>s.activity='bogus'],['negative gold',s=>s.gold=-1],['absurd level',s=>s.L=1e30],['frontier behind zone',s=>{s.zone=2;s.maxZone=1;}],['absurd relic level',s=>s.relic.coin=1e30]
+  ];
+  for(const [label,mutate] of invalid){const s=base();mutate(s);const r=validate(s);assert(!r.ok&&typeof r.error==='string',`C5: rejects ${label} before loading`);}
+  for(const key of ['__proto__','constructor','prototype']){const raw=original.slice(0,-1)+',"extra":{'+JSON.stringify(key)+':{"polluted":true}}}';assert(!rawCheck(raw).ok&&!decode(codeForBytes(Buffer.from(raw))).ok,`C5: rejects reserved ${key} at any depth`);}
+  assert(!rawCheck(original.replace(/"gold":[0-9.]+/,'"gold":1e309')).ok,'C5: rejects JSON numeric overflow');
+  assert(E('(()=>{const s=fresh();s.extra=s;return !validateSave(s).ok;})()')&&E('(()=>{const s=fresh();s.extra=Array(2);return !validateSave(s).ok;})()'),'C5: cycles and sparse non-JSON lists are rejected');
+  const deep=base();let cursor=deep;for(let i=0;i<66;i++)cursor=cursor.extra={};assert(!validate(deep).ok,'C5: deeply nested data is rejected');
+  assert(!E('decodeSave(" ".repeat(SAVECODE_LIMITS.codeChars+1)).ok'),'C5: text-size limit applies before trimming');
+  assert(E('(()=>{const s=fresh();s.extra="x".repeat(SAVECODE_LIMITS.jsonBytes);try{encodeSave(s);return false;}catch{return true;}})()'),'C5: oversized exports are refused');
+  const prefix=Buffer.from('{"name":"'),suffix=Buffer.from('",'+original.slice(1));
+  for(const bytes of [[0xC0,0xAF],[0xE2,0x82],[0xED,0xA0,0x80],[0xF4,0x90,0x80,0x80],[0x80]]) assert(!decode(codeForBytes(Buffer.concat([prefix,Buffer.from(bytes),suffix]))).ok,`C5: checksummed malformed UTF-8 ${bytes.map(n=>n.toString(16)).join(' ')} is rejected`);
+  let padded=original;while(Buffer.byteLength(padded)%3===0)padded+=' ';
+  const canonical=Buffer.from(padded).toString('base64'),alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const pos=canonical.indexOf('=')-1,noncanonical=canonical.slice(0,pos)+alphabet[alphabet.indexOf(canonical[pos])+1]+canonical.slice(pos+1);
+  for(const b64 of [canonical.replace(/=+$/,''),canonical+'=',noncanonical])assert(!decode(`LF1:${b64}:${E(`savecodeChecksum(${JSON.stringify(b64)})`)}`).ok,'C5: a new checksum cannot legitimise malformed Base64 padding or bits');
+  assert(E('JSON.stringify(S)')===original,'C5: failed validations leave the live game untouched');
+  const live=loadCore({seed:505,prelude:'Date.__t=1790596800000;Date.now=()=>Date.__t'}),L=s=>live.eval(s);
+  L(`S.maxZone=32;S.camp.open=true;S.camp.b.hearth=4;S.camp.b.tavern=2;S.camp.b.store=8;S.gold=1e9;for(const a of Object.values(S.mats))a.fill(1e5);S.craft.troph.fill(100);for(const s of Object.values(S.skills))s.lv=30;soloPick('pip');S.L=10;train('atk','1');soloEquip(0,null);soloEquip(1,'fire');craftItem('robe',1,{mw:0});forgeItem('pick',1);dropUnique(Object.keys(UNIQ)[0],1);brewTonic('vigor',1);drinkTonic('vigor',1);campBuild('watch');campBuild('forge');for(let i=0;i<12;i++)tick(.1);S.mats.wood[0]=0;handsSend('tam','wood',1,{shifts:2});`);
+  assert(L('S.camp.builds.length===2&&S.camp.builds[1].start===0&&S.items.some(i=>i.a&&i.mw===0)&&S.items.some(i=>i.u)&&S.items.some(i=>i.slot==="pick")&&S.craft.tonic&&handsGet("tam").job.q===1&&trainLv("atk")===1'),'C5: real runtime creates active/queued builds, affixes, unique/masterwork/tool, tonic, queued shift and training');
+  round(live,'real active feature state');assert(L('summarizeSave(S).hero')==='Pip','C5: preview names the selected solo hero');
+  L('Date.__t=handsGet("tam").job.end;handsCatchUp(Date.now())');
+  assert(L('handsStatus(handsGet("tam")).st')==='rest','C5: runtime return creates rest');round(live,'real gatherer rest');
+  L('S.mats.wood[0]=storeCap("wood",1);Date.__t=handsGet("tam").job.end;handsCatchUp(Date.now())');
+  assert(L('handsGet("tam").pack.length>0'),'C5: full store creates a waiting pack');round(live,'real waiting pack');
+  L('campCancel("watch");campCancel("forge");S.camp.b.hearth=5;S.maxZone=55;campBuild("hearth")');
+  assert(L('S.camp.builds.some(b=>b.id==="hearth"&&b.cost.troph.some(t=>t[0]==="any"))'),'C5: runtime creates a trophy-cost Hearth build');round(live,'real trophy-cost build');
+  const {saveCodeFor}=await import('./savecode.mjs');
+  for(const raw of ['null','{}','{',JSON.stringify({...base(),v:4}),JSON.stringify({...base(),items:[null]})]){let refused=false;try{saveCodeFor(raw);}catch{refused=true;}assert(refused,'C5: CLI rejects bad data before loading it');}
+  for(const f of fs.readdirSync(path.join(ROOT,'tests','fixtures')).filter(f=>f.endsWith('.json')))assert(decode(saveCodeFor(fs.readFileSync(path.join(ROOT,'tests','fixtures',f),'utf8'))).ok,`C5: CLI accepts ${f}`);
+  assert(!g.errors.length&&!live.errors.length,'C5: positive gameplay states have no handler errors');
+} catch(e){fail('C5 codec validation crashed: '+(e.stack||e));}
+
+// ---- C2: menu guide markers follow scrolling and reflow without moving the player's view ----
+if (section('camp guide tracking (C2, browser)')) try {
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('C2 guide tracking: Playwright or Chromium not here, skipped');
+  else {
+    // Drive the real 250ms callback explicitly: no race against the simulation or an interval.
+    const html0 = fs.readFileSync(distFile, 'utf8').replace('setInterval(tick, 250);', 'window.__c2GuideTick = tick;');
+    const end = html0.lastIndexOf('})();\n</script>');
+    const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
+    const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+    try {
+      for (const [width, height] of [[740, 360], [844, 390]]) {
+        const at = `${width}x${height}`, ctx = await browser.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+        try {
+          const page = await ctx.newPage(), errs = [];
+          page.on('pageerror', e => errs.push(String(e)));
+          await page.route('**/*', r => r.request().url() === 'http://lf.test/' ? r.fulfill({ status: 200, body: html, headers: { 'content-type': 'text/html; charset=utf-8' } }) : r.abort());
+          await page.goto('http://lf.test/');
+          await page.click('#createScreen .ccard[data-hero="wren"]'); await page.click('#createScreen .create-go');
+          const X = s => page.evaluate(s => window.__t.x(s), s);
+          await X(`soloPickerOpen = () => true; S.mats.wood[0] = 100; hearthLight();
+            onboardUnlockAll(); onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); setTab('camp'); ui(true); true`);
+          await page.waitForFunction(() => !!document.querySelector('#camp-b-bench .cb-quick'));
+          // Native scroll, with enough space around the existing target to test both directions.
+          await X(`globalThis.__c2Target = onboardSpec('bench').node;
+            globalThis.__c2Above = document.createElement('div'); __c2Above.style.height = '100px'; __c2Target.parentNode.before(__c2Above);
+            const tail = document.createElement('div'); tail.style.height = '700px'; $('sec-camp-buildings').append(tail);
+            $('panels').style.overflowAnchor = 'none'; $('panels').style.scrollBehavior = 'auto';
+            onboardStep = () => null; window.__c2GuideTick(); $('panels').scrollTop = 0;
+            onboardStep = () => GUIDE_STEPS.find(s => s.id === 'bench'); window.__c2GuideTick(); true`);
+          const settle = async (poll = true) => {
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            if (poll) await page.evaluate(() => window.__c2GuideTick());
+          };
+          const read = () => X(`(() => {
+            const n = onboardSpec('bench').node, r = n.getBoundingClientRect(), p = $('panels'), pr = p.getBoundingClientRect();
+            const ring = document.querySelector('.ob-ring'), rr = ring.getBoundingClientRect();
+            return { same: n === __c2Target, top: r.top, bottom: r.bottom, scroll: p.scrollTop,
+              visible: r.top >= pr.top && r.bottom <= pr.bottom, shown: !ring.parentNode.hidden,
+              error: Math.max(Math.abs(rr.left - (r.left - 4)), Math.abs(rr.top - (r.top - 4)), Math.abs(rr.width - (r.width + 8)), Math.abs(rr.height - (r.height + 8))) };
+          })()`);
+          await settle();
+          const revealed = await read();
+          assert(revealed.same && revealed.visible && revealed.shown && revealed.scroll > 0 && revealed.error <= 2,
+            `C2 ${at}: first showing an offscreen target still scrolls it into view (${JSON.stringify(revealed)})`);
+          // Put the target in the panel's middle, then let the scroll event reach the guide.
+          await X(`const p = $('panels'), r = __c2Target.getBoundingClientRect(), pr = p.getBoundingClientRect(); p.scrollTop += r.top - pr.top - 70; true`);
+          await settle();
+          const initial = await read();
+          assert(initial.same && initial.visible && initial.shown && initial.error <= 2, `C2 ${at}: the real Workbench target starts visible and marked (${JSON.stringify(initial)})`);
+          await X(`$('panels').scrollTop += 18; true`);
+          await settle(false);
+          const scrolled = await read();
+          assert(scrolled.same && scrolled.visible && scrolled.shown && Math.abs(scrolled.top - initial.top + 18) <= 2 && Math.abs(scrolled.scroll - initial.scroll - 18) <= 2 && scrolled.error <= 2,
+            `C2 ${at}: native panel scrolling tracks a visible target within 2px before the next guide poll (${JSON.stringify(scrolled)})`);
+          await X(`__c2Above.style.height = '124px'; true`);
+          await settle();
+          const reflow = await read();
+          assert(reflow.same && reflow.visible && reflow.shown && Math.abs(reflow.top - scrolled.top - 24) <= 2 && reflow.scroll === scrolled.scroll && reflow.error <= 2,
+            `C2 ${at}: content reflow above the same target moves its ring within 2px without scrolling (${JSON.stringify(reflow)})`);
+          await X(`$('panels').scrollTop += 240; true`);
+          const away = await read();
+          await settle();
+          for (let i = 0; i < 3; i++) await page.evaluate(() => window.__c2GuideTick());
+          const stayed = await read();
+          assert(!away.visible && stayed.same && stayed.scroll === away.scroll && Math.abs(stayed.top - away.top) <= 2,
+            `C2 ${at}: scrolling away from a target stays where the player left it across guide polls (${JSON.stringify(stayed)})`);
+          await page.evaluate(() => dispatchEvent(new Event('resize')));
+          const resized = await read();
+          assert(resized.scroll === away.scroll && Math.abs(resized.top - away.top) <= 2,
+            `C2 ${at}: a resize notification does not pull the player back to an offscreen target`);
+          // A stage animation can move the same node without changing the guide: preserve HINT1's cache.
+          await X(`closeMenu(); setActivity('fight'); mob.boss = true; onboardStep = () => GUIDE_STEPS.find(s => s.id === 'boss'); window.__c2GuideTick(); true`);
+          const stageRead = () => X(`(() => { const sp = onboardSpec('boss'), r = sp.node.getBoundingClientRect(), ring = document.querySelector('.ob-ring');
+            return { stage: sp.node === $('stage'), top: r.top, shown: !ring.parentNode.hidden, transform: ring.style.transform }; })()`);
+          const stage0 = await stageRead();
+          await X(`$('stage').style.transform = 'translateY(13px)'; window.__c2GuideTick(); true`);
+          const stage1 = await stageRead();
+          assert(stage0.stage && stage0.shown && stage1.stage && stage1.shown && Math.abs(stage1.top - stage0.top - 13) <= 2 && stage1.transform === stage0.transform,
+            `C2 ${at}: a moving stage keeps the cached guide marker (${JSON.stringify({ stage0, stage1 })})`);
+          assert(!errs.length, `C2 ${at}: no browser errors during guide tracking` + (errs.length ? ': ' + errs[0] : ''));
+        } finally { await ctx.close(); }
+      }
+    } finally { await browser.close(); }
+  }
+} catch (e) { fail('C2 guide tracking crashed: ' + (e.stack || e)); }
+
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');
   const files = [];
@@ -5437,13 +5700,8 @@ if (section('removed systems (W2-C)')) try {
   assert(E('S.legend === undefined && S.exped === undefined && S.pin === undefined && CAMP_B.maproom === undefined && CAMP_BLESS.wayfarer === undefined'), 'removed systems: a new save has no legend, exped or pin field, no Map Room and no Wayfarer Blessing');
   assert(!g.errors.length, 'removed systems: no handler errors on a new solo game' + (g.errors.length ? ': ' + g.errors[0] : ''));
   // one pass in Chromium over every tab and sub-view, and the menus that sat beside the removed screens
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('removed systems (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('removed systems (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -5480,13 +5738,8 @@ if (section('removed systems (W2-C)')) try {
 // closes and the bar stays usable meanwhile, notices dock in the side column, the picker, the Attack sheet (Training), the
 // Training view and the gatherer board fit, and nothing scrolls sideways.
 for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landscape ${w}x${h} (browser, UX-L1)`)) try {
-  let pw = null;
-  try {
-    const { createRequire } = await import('node:module'); const req = createRequire(import.meta.url);
-    for (const p of ['playwright', '/opt/node22/lib/node_modules/playwright', '/usr/local/lib/node_modules/playwright', '/usr/lib/node_modules/playwright']) { try { pw = req(p); break; } catch (e) {} }
-  } catch (e) {}
-  const exe = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
-  if (!pw || !exe || !fs.existsSync(distFile)) ok('landscape (browser): Playwright or Chromium not here, skipped');
+  const { pw, exe } = browserTools;
+  if (!pw || !exe || !fs.existsSync(distFile)) skipBrowser('landscape (browser): Playwright or Chromium not here, skipped');
   else {
     const html0 = fs.readFileSync(distFile, 'utf8'), end = html0.lastIndexOf('})();\n</script>');
     const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n' + html0.slice(0, end) + '\n;window.__t = { x: src => eval(src) };\n' + html0.slice(end);
@@ -5629,6 +5882,7 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
           const fit = async (view, sel) => {
             await X(`setTab(${JSON.stringify(view)}); ui(true); true`); await page.waitForTimeout(350);
             return page.evaluate(sel => { const e = document.querySelector(sel), p = document.getElementById('panels'), m = document.getElementById('menu').getBoundingClientRect(); if (!e || !e.offsetParent) return { ok: false, why: 'missing' };
+              e.scrollIntoView({ block: 'nearest' });
               const r = e.getBoundingClientRect(); return { ok: r.left >= m.left - 1 && r.right <= m.right + 1 && r.top < innerHeight && p.scrollWidth <= p.clientWidth, l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), ml: Math.round(m.left), mr: Math.round(m.right) }; }, sel);
           };
           const tr = await fit('training', '#trainRows'), hb = await fit('tav', '#sec-hands');
@@ -5667,4 +5921,5 @@ for (const [w, h] of [[740, 360], [844, 390], [1280, 720]]) if (section(`landsca
 } catch (e) { fail(`landscape ${w}x${h} (browser, UX-L1) crashed: ` + (e.stack || e)); }
 
 console.log(failed ?`\n${failed} check(s) failed` : '\nall checks passed');
+console.log(browserSummary(browserSkipped, browserSkipReasons));
 process.exit(failed ? 1 : 0);

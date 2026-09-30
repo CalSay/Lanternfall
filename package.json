@@ -1,0 +1,12 @@
+{
+  "name": "lanternfall",
+  "private": true,
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "node tools/check.mjs",
+    "perf": "node tools/perf.mjs --quick"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

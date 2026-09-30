@@ -49,7 +49,7 @@ Owns: `24b-data-solo.js`, `59j-solo.js`, `75-solo-ui.js`, `55-training.js`, `75-
 `tools/check.mjs`.
 
 Queue, in order:
-1. **Hero registry and unlock routes** (W3-B): the 32-hero registry, how a hero unlocks, the picker for more heroes.
+1. ~~Hero registry and unlock routes~~: moved to Codex as C9 (#10), with `56-roster.js`, `56c-unlocks.js`, `76-create.js` and the picker/switch code in `75-solo-ui.js` for that task.
 2. **Ability trees and per-hero upgrade trees** (W4-B): about 10 abilities per hero, the star map per hero.
 3. **Solo combat spec** (CB3): attack shapes, short ground patches, boss and elite heavy attacks.
 4. **Ascension and subclasses** (W5-A) through the Proving; **Hallowed** from hero quests.
@@ -84,7 +84,7 @@ Queue, in order:
 
 ## How Codex reports and gets new work
 
-- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8.
+- **Tasks:** one GitHub issue each, labelled `owner:codex`: C1 #2, C2 #3, C3 #4, C4 #5, C5 #6, C6 #7, C7 #8, C8 #9, C9 hero registry #10, C10 M1 refining #11, C11 deeds merge #12, C12 perf #13, C13 playtest #14.
 - **Finished a task:** push the `codex/...` branch, then post the handoff (template below) as a comment on
   CalSay/Lanternfall#1. Claude is subscribed to that pull request, so the comment wakes Claude, who merges the
   branch, runs the checks, publishes the preview, closes the issue and replies there.
