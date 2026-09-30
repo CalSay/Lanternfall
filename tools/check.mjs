@@ -5235,6 +5235,54 @@ if (section('gatherer engine gaps (C1)')) try {
   assert(!errs.length, 'C1: no gatherer or camp handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C1 gatherer engine gaps crashed: ' + (e.stack || e)); }
 
+// ---- C5: portable browser discovery, Windows child paths and explicit skipped-section totals ----
+if (section('browser tooling portability (C5)')) try {
+  const driver = { chromium: { launch() {}, executablePath: () => '/managed/chrome' } };
+  const none = () => { throw Object.assign(new Error('not installed'), { code: 'MODULE_NOT_FOUND' }); };
+  const fake = overrides => findBrowser({ env: {}, platform: 'linux', requireModule: () => driver, fileExists: () => false, listDirectory: () => [], ...overrides });
+  {
+    const seen = [], exe = path.resolve(os.tmpdir(), 'C5 chosen browser.exe');
+    const b = fake({ env: { LF_PLAYWRIGHT: '/chosen/playwright', LF_CHROMIUM: exe }, requireModule: p => { seen.push(p); return driver; }, fileExists: p => p===exe || p==='/managed/chrome' });
+    assert(b.pw===driver && b.exe===exe && seen.join()==='/chosen/playwright' && !b.reason, 'C5: explicit module-folder and browser overrides win over discovered installations');
+    const badModule = fake({ env: { LF_PLAYWRIGHT: '/missing/explicit-driver' }, requireModule: none, fileExists: () => true });
+    assert(!badModule.pw && /LF_PLAYWRIGHT/.test(badModule.reason), 'C5: a broken module override reports its reason without silently using a fallback');
+    const badExe = fake({ env: { LF_CHROMIUM: exe }, fileExists: p => p==='/managed/chrome' });
+    assert(badExe.pw===driver && !badExe.exe && /LF_CHROMIUM/.test(badExe.reason), 'C5: a broken executable override reports its reason without switching browsers');
+  }
+  {
+    const tried = [], b = fake({ requireModule: p => { tried.push(p); return p==='playwright-core' ? driver : none(); }, fileExists: p => p==='/managed/chrome' });
+    assert(b.exe==='/managed/chrome' && tried.join()==='playwright,playwright-core', 'C5: a project playwright-core install and its managed browser work without global packages');
+    for (const exe of ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium-1300/chrome-linux64/chrome']) {
+      const b = fake({ requireModule: p => p==='/opt/node22/lib/node_modules/playwright' ? driver : none(), fileExists: p => p===exe, listDirectory: () => ['chromium-1300'] });
+      assert(b.pw===driver && b.exe===exe, `C5: the coordinator's Linux fallback remains usable at ${exe}`);
+    }
+    for (const exe of ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe']) {
+      const b = fake({ platform: 'win32', fileExists: p => p===exe });
+      assert(b.exe===exe && !b.reason, `C5: an installed Windows browser is discovered at ${exe}`);
+    }
+    assert(/Playwright not found/.test(fake({ requireModule: none }).reason) && /Chromium not found/.test(fake().reason), 'C5: missing driver and missing executable have distinct actionable explanations');
+  }
+  const { spawnSync } = await import('node:child_process');
+  const entry = fileURLToPath(import.meta.url);
+  const shards = spawnSync(process.execPath, [entry, '--jobs=2', '--only=^craft data$'], { encoding: 'utf8', timeout: 30000 });
+  assert(shards.status===0 && /craft tables consistent/.test(shards.stdout) && (shards.stdout.match(/^browser sections skipped: 0 \(none\)$/gm)||[]).length===1, 'C5: the real sharded runner resolves its file URL correctly and prints one final browser summary');
+  const missing = path.join(os.tmpdir(), 'lanternfall-c5-no-such-playwright-module');
+  const skipped = spawnSync(process.execPath, [entry, '--jobs=3', '--only=gatherers UI|landscape'], { encoding: 'utf8', timeout: 30000, env: { ...process.env, LF_PLAYWRIGHT: missing } });
+  assert(skipped.status===0 && (skipped.stdout.match(/^browser sections skipped:/gm)||[]).length===1 && /^browser sections skipped: 4 \(LF_PLAYWRIGHT/m.test(skipped.stdout), 'C5: the parent totals four intentionally skipped browser sections across shards and retains the reason');
+  const tempRoot = path.resolve(os.tmpdir()), fixture = fs.mkdtempSync(path.join(tempRoot, 'lanternfall-c5-site-'));
+  try {
+    const dir = path.join(fixture, 'space # café'), tool = path.join(dir, 'tools', 'site.mjs');
+    fs.mkdirSync(path.dirname(tool), { recursive: true }); fs.mkdirSync(path.join(dir, 'dist'));
+    fs.copyFileSync(path.join(ROOT, 'tools', 'site.mjs'), tool);
+    fs.writeFileSync(path.join(dir, 'dist', 'lanternfall.html'), '<title>C5 path fixture</title>');
+    const site = spawnSync(process.execPath, [tool], { cwd: dir, encoding: 'utf8', timeout: 30000 });
+    assert(site.status===0 && fs.readFileSync(path.join(dir, 'site', 'index.html'), 'utf8').includes('<title>C5 path fixture</title>'), 'C5: the actual site exporter resolves a path containing spaces, a hash and non-ASCII text');
+  } finally {
+    // Delete only this freshly allocated fixture, after verifying it stays under the intended temp root.
+    if (path.dirname(path.resolve(fixture))===tempRoot && path.basename(fixture).startsWith('lanternfall-c5-site-')) fs.rmSync(fixture, { recursive: true, force: true });
+  }
+} catch (e) { fail('C5 browser tooling portability crashed: ' + (e.stack || e)); }
+
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
 // ---- C5: strict save codec; untrusted data is validated before any load-time migration ----
