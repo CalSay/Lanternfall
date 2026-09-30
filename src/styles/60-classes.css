@@ -12,7 +12,4 @@
 .cl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .cl-chip { font-size: 12px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); }
 .cl-chip.on { color: var(--bone); border-color: var(--gold); }
-.cl-changed { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
-.cl-changed summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--gold); font-weight: 600; }
-.cl-changed ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); line-height: 1.35; }
 .cl-switch b { color: var(--gold); }

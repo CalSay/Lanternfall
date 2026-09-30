@@ -156,10 +156,6 @@ button * { pointer-events: none; }
 .hud-btn.off { opacity: .6; }
 .hud-btn canvas { width: 14px; height: 14px; image-rendering: pixelated; }
 .stage.tall .hud-btn { right: 6px; bottom: 38px; }
-/* "Show targets" (62-stage, C4): left of the bars button; above it on tall stages */
-.hud-btn.tgt-btn { right: 70px; }
-.hud-btn.tgt-btn[hidden] { display: none; }
-.stage.tall .hud-btn.tgt-btn { right: 6px; bottom: 70px; }
 /* tab bar: fixed to the bottom of the app, in thumb reach; the lit edge marks the open tab */
 .tabs { grid-area: tabs; display: grid; grid-template-columns: repeat(5, 1fr); padding: 0 6px env(safe-area-inset-bottom, 0px); background: #17111E; border-top: 2px solid var(--line); box-shadow: 0 -3px 0 #0B0810; position: relative; z-index: 6; }
 .tab { min-height: 54px; background: none; border: 0; padding: 7px 2px 6px; cursor: pointer; font: 600 calc(12.5px * var(--display-k))/1.1 var(--display); color: var(--muted); border-top: 3px solid transparent; margin-top: -2px; display: grid; justify-items: center; align-content: center; gap: 3px; position: relative; }
@@ -671,9 +667,6 @@ button * { pointer-events: none; }
 .cl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .cl-chip { font-size: 12px; padding: 2px 8px; border: 1px solid var(--line); color: var(--muted); background: var(--panel); }
 .cl-chip.on { color: var(--bone); border-color: var(--gold); }
-.cl-changed { padding: 8px 10px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
-.cl-changed summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--gold); font-weight: 600; }
-.cl-changed ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); line-height: 1.35; }
 .cl-switch b { color: var(--gold); }
 /* 60-codex: the Codex sheet and its Journal card (75-codex-ui.js). */
 
@@ -7945,11 +7938,9 @@ const NOTICES = [
   // ---- the Codex (57c) ----
   { id: 'codex', key: 'codex', re: /^(Codex: the .* page is half full\. The|Page Seal: |\d+ Lantern Light: )/, ch: 'bell' },
   { id: 'codex-small', key: 'codex-small', re: /^Codex: the .* page is half full\.$/, ch: 'log' },
-  { id: 'codex-past', key: 'codex-past', re: /^Your Codex holds \d+ Lantern Light from your past deeds/, ch: 'bell', why: 'only a save with progress at load (audit 3.4)' },
 
   // ---- class ----
   { id: 'class', re: /^(You passed the Proving|You are an? .* now\.|The Fenmother has fallen\. Your Proving|The Proving: not this time)/, ch: 'pop', wait: 40, why: 'a card after Ascension lands (W5-A)' },
-  { id: 'class-migrate', re: /^Classes changed\./, ch: 'bell' },
   { id: 'mirror', re: /^The boss dropped a Mirror of Embers/, ch: 'pop' },
   // ---- the Deepwell ----
   { id: 'deep-tip', re: /^(Oil is your run|After each floor, pick 1 of 3 boons|You can climb out between floors|Your party's health carries|Your health carries|Your Oil is running low)/,
@@ -7987,7 +7978,7 @@ function noticeChannel(rule, msg, payload, ctx) {
 
 // ---- src/js/24-data-classes.js ----
 // 24-data-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 1, 3.5, 4, 7, 8.3 and the appendix).
-// CORE FILE, data only: no DOM. The engine is 55-classes.js (state, migration, lbClass) and 55-party.js
+// CORE FILE, data only: no DOM. The engine is 55-classes.js (state, lbClass) and 55-party.js
 // (the kits); 59-combat.js reads the base stats.
 //
 // Exposed names:
@@ -8001,7 +7992,7 @@ function noticeChannel(rule, msg, payload, ctx) {
 //   LEGACY_CLS[key]      { base, evo } the four old classes (7.1)
 //   CLS_KIT(base, evo)   -> the legacy kit key that runs ('warden' | 'ranger' | 'lanternmage' | 'lightkeeper' | null)
 //   CLS_STAR_MAP[kit]    the star map a kit uses ('warrior' | 'ranger' | 'mage'; the legacy 'lightkeeper' map
-//                        until S3's ring); CLS_STAR_FROM[map] the legacy map copied into it once (4.4)
+//                        until S3's ring)
 //   EVO_NAMES[evo]       { name, title, base, kind: 'damage' | 'utility', role, line } names only (owner-chosen,
 //                        fixed)
 //   CLS_TUNE             the appendix numbers (evoLv, unproven, secondThoughtsMin, respec, grit, embers, ...)
@@ -8148,7 +8139,6 @@ const CLS_KIT = (base, evo) => !base || !CLASS_DEFS[base] ? null : base === 'mag
 // Star maps by kit (4.1-4.4). S3: a Lightkeeper plays the Lanternmage map and the Lightkeeper ring (its stars
 // moved there); the legacy maps.lightkeeper layouts stay untouched in the save, their points free again.
 const CLS_STAR_MAP = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'mage' };
-const CLS_STAR_FROM = { warrior: 'warden', mage: 'lanternmage' };
 
 // Names only (owner-chosen, fixed; names.md "Coordinator override"). S3 fills EVO_DEFS with the kits.
 const EVO_NAMES = {
@@ -8395,16 +8385,9 @@ const CLS_TUNE = {
   traps: { charges: 2, back: 10, backBoss: 5, snare: 1.5, pit: 1.0, pitVenom: 4, bossStag: 24, springAfter: 0.8, rootT: 3, chillT: 4 },
   sanctuary: { regen: 0.8, t: 6, smite: 0.6, shieldCap: 0.4 },
   hex: { embersToCurse: 3, curseT: 6, heldLight: 0.1, heldCap: 0.3, creepJumps: 3 },
-  trialRef: { L: 35, grade: 3, plus: 3, stars: 0 }, trialIdlePass: 1.25,
   grit: { v: 0.03, dr: 0.01, max: 5, t: 10 },
   embers: { max: 5 },
-  rangerCrit: 0.07, lightFeet: 0.2,
-  // S3: 56e-formation reads the evolution rows once proven. The Trapper is a caster (ROLE_D 1.0, not the
-  // striker's 1.82), so its floor is 1.4, not CL1's 0.7: about x1.1 of the Ranger's 0.7 x 1.82 (2.2's own damage)
-  // BAL3: the Ranger and Mage rows follow FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0). Paths (CP6, ~+1.5 zones): venomstalker
-  // 0.75 -> 1.45, trapper 1.4 -> 2.65, warlock 1.0 -> 1.6 (the raised base floors had erased their step), reaver 0.62 -> 0.56 (+3-5 zones)
-  heroFloor: { warrior: 1.0, ranger: 1.2, mage: 1.35, reaver: 0.56, warden: 1.0,
-    venomstalker: 1.45, trapper: 2.65, warlock: 1.6, priest: 0 }
+  rangerCrit: 0.07, lightFeet: 0.2
 };
 
 // ---- src/js/24b-data-solo.js ----
@@ -8490,7 +8473,7 @@ const TRAIN0 = () => { const o = {}; for (const k of SOLO_ORDER) { o[k] = { atk:
 const SOLO_BY_BASE = { ranger: 'wren', warrior: 'tobin', mage: 'pip', warden: 'tobin', lanternmage: 'pip', lightkeeper: 'pip' };
 
 // ---- src/js/30-state.js ----
-// 30-state: the save (S), load/migrate, save(), registered feature fields, and
+// 30-state: the save (S), load, save(), registered feature fields, and
 // runtime (non-saved) shared-world state.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 // Save compatibility is sacred: never rename or repurpose a field below.
@@ -9967,15 +9950,15 @@ let OMENS, WEEKLY_GOALS;
 
 // ---- src/js/55-classes.js ----
 // 55-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 3.4-3.5, 7, 8.3). The class state S.cls,
-// the one-time migration from the four old classes, the class accessors, the base-class choice and the
+// the class accessors, the base-class choice and the
 // one free "second thoughts" switch. Data: 24-data-classes.js. The kits themselves run in 55-party.js.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
 // How the class is kept (S2):
-//   S.cls = { v, base, evo, evo2, proven, trials, respec, free, at, slots, auto, mig, from } (3.5).
+//   S.cls = { v, base, evo, evo2, proven, trials, respec, free, at, slots, auto } (3.5).
 //   S.party.cls keeps its legacy values ('warden' | 'ranger' | 'lanternmage' | 'lightkeeper'): it names the
 //   kit that runs (CLS_KIT(base, evo)), so every reader written before S2 keeps working. 55-classes writes
-//   it; nothing else should. When the two disagree (an old save, a tool that sets S.party.cls), the legacy
+//   it; nothing else should. When the two disagree (a tool that sets S.party.cls), the legacy
 //   key wins and S.cls follows it through LEGACY_CLS (lbSync). New code reads lbClass() / lbHas().
 //
 // API:
@@ -9991,7 +9974,6 @@ let OMENS, WEEKLY_GOALS;
 //   clsSwitchInfo(now) -> { ok, left (ms), used }   the free switch
 //   clsInfo()  -> the class card's facts (76-create.js draws them)
 //   clsSet(base, evo, opts)  55-party's chooseClass writes the class through this (no rules)
-// Events: classMigrated { from, base, evo, proven } (once per save).
 
 //
 // S3 (classes-2 2, 3.1-3.7): the evolutions on top of the kits.
@@ -10012,7 +9994,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 {
   registerState('cls', {
     v: 1, base: null, evo: null, evo2: null, proven: {}, trials: {}, respec: 0, free: 1, at: 0,
-    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null, lm: 0
+    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, lm: 0
   });
   const C = () => S.cls;
   const OUT = { base: null, evo: null, evo2: null };
@@ -10026,8 +10008,8 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     return l ? { base: l.base, evo: l.evo, kit: key } : null;
   };
 
-  // The one-time migration (7.1) and the repair that keeps S.cls in step with the kit key.
-  let syncFor = null, syncKey, said = null;
+  // The repair that keeps S.cls in step with the kit key.
+  let syncFor = null, syncKey;
   lbSync = () => {
     const p = S.party, c = C();
     if (!p || !c) return;
@@ -10041,15 +10023,6 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     }
     if (CLS_KIT(c.base, c.evo) === key) return;
     const l = LEGACY_CLS[key];
-    if (!c.base && !c.mig) {
-      // An old save: its class becomes a base class (and the Warden or Lightkeeper path, granted).
-      c.base = l.base; c.evo = l.evo; c.mig = 1; c.from = key; c.at = 0;
-      const proven = !!(l.evo && pastBoss());
-      if (proven) c.proven[l.evo] = 1;
-      // Said on the first tick (the UI listens by then; a toast in the first seconds folds into What's new).
-      said = { from: key, base: l.base, evo: l.evo, proven };
-      return;
-    }
     // The kit key changed under us (a tool or an older code path set it): follow it.
     c.base = l.base; c.evo = l.evo;
   };
@@ -10102,7 +10075,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     if (!CLASS_DEFS[base] || !p || typeof chooseClass !== 'function') return false;
     if (p.chosen && c.base) {
       if (c.base === base) return true;
-      if (c.evo && c.proven[c.evo] && !c.mig) return false;   // S3: once evolved, the free change is for the path (chooseEvo)
+      if (c.evo && c.proven[c.evo] ) return false;   // S3: once evolved, the free change is for the path (chooseEvo)
       const sw = clsSwitchInfo(o.now);
       if (!sw.ok) return false;
       c.free = 0;
@@ -10122,7 +10095,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     return {
       base: c.base, name: d.name, weight: d.weight, home: d.home, role: lbRole(), col: d.col,
       evo: c.evo, evoName: ev ? ev.name : null, evoTitle: ev ? ev.title : null,
-      proven: !!(c.evo && s.proven[c.evo]), migrated: !!s.mig, from: s.from,
+      proven: !!(c.evo && s.proven[c.evo]),
       paths: d.evos.map(id => ({ id, name: EVO_NAMES[id].name, kind: EVO_NAMES[id].kind, line: EVO_NAMES[id].line })),
       gate: { lv: CLS_TUNE.evoLv, lvOk: gateLv, bossOk: gateBoss, open: gateLv && gateBoss },
       sw: clsSwitchInfo(now),
@@ -10279,17 +10252,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     gateWas = open;
   });
 
-  // Once per loaded save, and whenever the class may have changed.
-  onTick(() => {
-    lbSync();
-    if (!said) return;
-    const m = said; said = null;
-    emit('classMigrated', m);
-    const nm = CLASS_DEFS[m.base].name;
-    toast(m.evo
-      ? `Classes changed. You are a ${nm} on the ${EVO_NAMES[m.evo].name}'s path. Nothing was lost.`
-      : `Classes changed. You are still a ${nm}. Your Proving opens at the Fenmother.`, 'good', null, 'normal');
-  });
+  onTick(() => { lbSync(); });
   on('classChosen', () => lbSync());
   lbSync();
 }
@@ -11745,7 +11708,6 @@ let navSkillOpen, navSkills, navLast, navNow, navRate, navFullIn, navRecent, bes
 // Events: unlock { id, tab, view, quiet } (a feature appeared), onboardStep { id } (a step completed).
 // State S.onboard: { v, all, got: { id: seconds played }, done: { stepId: 1 }, seen: { tabOrView: 1 },
 //   tips, t (seconds played while the guide runs), taps, casts }.
-// Old saves (any progress, no S.onboard yet) start with everything unlocked and the guide finished.
 let isUnlocked, onboardReveal, onboardUnlockAll, onboardStep, onboardDone, onboardTips, onboardCheck, onboardNeed, onboardPaused;
 let onboardIsNew = null;   // set by 75-onboard-ui.js; 70-ui.js marks new views with it
 let onboardSpec = null;    // set by 75-onboard-ui.js: step id -> { node, text } | null (the browser check)
@@ -11784,7 +11746,7 @@ const FEATURES = [
   { id: 'raid', tab: 'world', view: 'raid', name: 'World raid', why: 'zone 12', when: () => S.maxZone >= 12 || S.raid.dmg > 0 },
   { id: 'stars', tab: 'party', view: 'stars', name: 'Stars', why: 'hero level 10', when: () => S.L >= 10 },
   { id: 'deep', tab: 'adv', view: 'deep', name: 'Deepwell', why: 'zone 18 (it opens at zone 20 and Hearth 3)', when: () => S.maxZone >= 18 || !!(S.deep && S.deep.runs) },
-  // late: a system that arrives after the guide. It stays gated on old saves (S.onboard.all) and after
+  // late: a system that arrives after the guide. It stays gated after
   // "Show every tab" until its own rule holds, so nobody sees an empty view.
   // Hands (N1, 57f-hands.js): Hearth 2 and the Tavern built. The probe is safe before 57f has loaded.
   { id: 'hands', tab: 'world', view: 'tav', name: 'Hands', why: 'Hearth 2 and the Tavern built', late: true,
@@ -11879,10 +11841,7 @@ function craftReady() {
 }
 
 {
-  // Decide before registerState fills in the defaults: an old save has progress and no S.onboard.
-  const oldSave = S.onboard === undefined && (S.totalKills > 0 || S.L > 1 || S.maxZone > 1);
   registerState('onboard', { v: 1, all: false, got: {}, done: {}, seen: {}, tips: true, t: 0, taps: 0, casts: 0, atk: 0, dodges: 0, parries: 0 });
-  if (oldSave) { S.onboard.all = true; S.onboard.tips = false; for (const s of GUIDE_STEPS) S.onboard.done[s.id] = 1; }
 
   isUnlocked = id => !id || !FEATURE_OF[id] || O().got[id] != null || (O().all && !FEATURE_OF[id].late);
   function unlock(id, quiet) {
@@ -12601,15 +12560,13 @@ const statsApi = {};
 //   data  STORE_TUNE, STORE_HREQ, STORE_COST, STORE_STATS (runtime counters for tools/sim.mjs), storeNum(n)
 //   read  storeLevel(), storeCap(fam, t), storeCapAt(fam, t, lv), stashRoom(fam, t),
 //         stashFull(fam, t), stashOver(fam, t), stashFits(lines), stashNeed(lines) -> '' | text,
-//         stashPreview(lines) -> [[fam, t, n, fit]], storeLevelFor(mats) -> lv, storeOverAt(mats, lv),
+//         stashPreview(lines) -> [[fam, t, n, fit]], storeOverAt(mats, lv),
 //         storeNextNode(kind) -> { kind, t } | null, storeSpillOn(), storeFullCells(),
 //         storeEffects(lv), storeCampCost(to, campGold), storeWhy(fam, t) (player text at the cap)
 //   act   stashAdd(fam, t, n, how, quiet), storeSwitch() -> bool, storeSpill(on) -> bool,
-//         storeMigrate() (57-camp calls it after registerState('camp'); also once per loaded save),
 //         storeAwayGather(kind, tier, got, r) -> units added (50-sim's away gather branch)
 // Events: storeFull and storeCap { fam, t } (a flow hit the cap, once per fill; storeCap is the name 58-deeds reads), storeSpill { from, to } (Spillover moved on).
-// Save: registerState('store', { v, mig: { lv, at, over }, spill, said }). mig: what the migration
-//   gave (at = 0: not run yet); spill: Spillover on (Lv 3); said: cells already toasted this fill.
+// Save: registerState('store', { v, spill, said }). spill: Spillover on (Lv 3); said: cells already toasted this fill.
 
 // The cap table (owner, 2026-09-28: "an idle game: the Storehouse should scale up quite quickly;
 // meaningful, not ridiculous, never so small it's only worth idling for 10 minutes").
@@ -12667,12 +12624,12 @@ const STORE_STATS = { gatherSecs: 0, fullSecs: 0, awaySecs: 0, awayFullSecs: 0, 
 const storeNum = n => Number.isFinite(n) && Math.abs(n) < 1e7 ? String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : fmt(n);
 
 let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits, stashNeed, stashPreview,
-  storeLevelFor, storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
-  stashAdd, storeSwitch, storeSpill, storeMigrate, storeAwayGather;
+  storeOverAt, storeNextNode, storeSpillOn, storeFullCells, storeEffects, storeCampCost, storeWhy,
+  stashAdd, storeSwitch, storeSpill, storeAwayGather;
 
 {
   const T = STORE_TUNE;
-  registerState('store', { v: 1, mig: { lv: 0, at: 0, over: [] }, spill: 0, said: {} });
+  registerState('store', { v: 1, spill: 0, said: {} });
   const ST = () => S.store;
   const key = (f, t) => f + ':' + t;
   const have = (f, t) => (S.mats[f] && S.mats[f][t - 1]) || 0;
@@ -12709,7 +12666,7 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     return out;
   };
 
-  // ---------------- levels for a pile (migration, sim) ----------------
+  // ---------------- piles over a cap ----------------
   storeOverAt = (mats, lv) => {
     const out = [];
     for (const [f, a] of Object.entries(mats || {})) {
@@ -12718,11 +12675,6 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     }
     return out;
   };
-  storeLevelFor = mats => {
-    for (let lv = 0; lv < T.caps.length; lv++) if (!storeOverAt(mats, lv).length) return lv;
-    return T.caps.length - 1;
-  };
-
   // ---------------- credits ----------------
   const said = () => ST().said || (ST().said = {});
   function blocked(f, t, lost, how, quiet) {
@@ -12820,37 +12772,11 @@ let storeLevel, storeCap, storeCapAt, stashRoom, stashFull, stashOver, stashFits
     return [`Holds ${storeNum(g)} of each material`, `${storeNum(h)} hide and essence`].concat(lv >= T.spill ? ['Spillover: move on when a pile is full'] : []);
   };
 
-  // ---------------- migration (spec 4.7) ----------------
-  // A save with progress gets the lowest level that holds every pile (at least 1), ignoring the
-  // Hearth gate. If none does, Lv 8 and the piles above it stay over the cap. S.mats is untouched.
-  let note = null;
-  const progress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || capped().some(f => S.mats[f].some(n => n > 0));
-  storeMigrate = () => {
-    if (!S.camp || !S.camp.b || ST().mig.at) return 0;
-    if (!progress()) { ST().mig = { lv: 0, at: Date.now(), over: [] }; return 0; }
-    const lv = Math.max(1, storeLevelFor(S.mats));
-    S.camp.b.store = Math.max(S.camp.b.store | 0, lv);
-    const over = storeOverAt(S.mats, S.camp.b.store);
-    ST().mig = { lv: S.camp.b.store, at: Date.now(), over };
-    note = { lv: S.camp.b.store, over };
-    return lv;
-  };
-  function sayMigration() {
-    if (!note) return;
-    const { lv, over } = note; note = null;
-    // a save that has not reached the camp yet meets the Storehouse there (no notice now)
-    if (!(typeof campOpen === 'function' && campOpen()) && !(typeof CAMP_TUNE === 'object' && S.maxZone >= CAMP_TUNE.openZone)) return;
-    const ic = { ic: ['anvil', '#B08A5A'] };
-    emit('whatsNew', { msg: `Your camp has a Storehouse now, at level ${lv}. It holds up to ${storeNum(storeCapAt('ore', 1, lv))} of each material.`, icon: ic });
-    for (const [f, t] of over) emit('whatsNew', { msg: `${name(f, t)} is over the cap. You keep all of it. Spend below ${storeNum(storeCapAt(f, t, lv))} to gain more.`, icon: { mat: [f, t] } });
-  }
-
   // ---------------- each second ----------------
   let initFor = null, acc = 0, fullSecs = 0, fullLv = -1;
   onTick(dt => {
-    if (initFor !== S) { initFor = S; storeMigrate(); fullSecs = 0; }
+    if (initFor !== S) { initFor = S; fullSecs = 0; }
     acc += dt; if (acc < 1) return; acc -= 1; if (acc > 1) acc = 0;
-    sayMigration();
     // a cell below its cap again may toast on its next fill
     const sd = said();
     for (const k of Object.keys(sd)) { const [f, t] = k.split(':'); if (!stashFull(f, +t)) delete sd[k]; }
@@ -13123,7 +13049,6 @@ let storyBeat, storyBeatDef, storyHas, storyList, storyRead, storyUnread, storyL
 const TOOL_TUNE = {
   on: 1,
   right: 0.25,        // right tool: +25% speed
-  findPer: 0.012,     // rare find per point of item power (the data line uses it via CRAFT_KINDS)
   findCap: 8,         // rare find line cap (%)
   top: 2,             // a find on a tier-5 node brings this many more tier-5 units
   masteryMins: 5,     // minutes to the next level = masteryMins x level
@@ -13530,12 +13455,6 @@ function trainEst(active) {
     A().init = true;
     save();
   }
-  // Old saves: count what the bag already shows before the first check.
-  if (!A().init) {
-    const own = S.items.filter(i => !i.u);
-    A().forged = Math.max(A().forged, own.length);
-    if (own.some(i => i.r === 'epic')) A().epic = true;
-  }
   achRebuild();
   let achAcc = 0, achFirst = true;
   onTick(dt => {
@@ -13775,7 +13694,6 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
   });
   // 55-hearth (H1): a new game starts at a cold Hearth, its stations unbuilt (plots).
   if (typeof hearthApply === 'function') hearthApply();
-  if (typeof storeMigrate === 'function') storeMigrate();   // 55-store (H3): old saves get the Storehouse that holds their piles
   const C = () => S.camp;
   const T = CAMP_TUNE;
   const B = id => CAMP_B[id];
@@ -14157,8 +14075,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 // Rules: most entries are READ from state other systems already save (mastery, S.found, the
 // roster, stories, camp levels, the Almanac, achievements). The
 // Codex records only what nothing else keeps: champion kills by type, affix tiers and Masterwork
-// lines seen, synergies switched on, materials held by tier, Dares taken. Old saves get full
-// credit on first load (recorded parts are seeded from the bag, the pack and the field).
+// lines seen, synergies switched on, materials held by tier, Dares taken.
 // Lantern Light = sum over visible pages of entries found x Light each, halves rounded down at
 // the end. It is never spent and never goes down (codexLight() is the highest value seen).
 // Light gives no direct power: milestones give titles, cosmetics and quality-of-life perks.
@@ -14167,7 +14084,7 @@ let campLevel, campOpen, campBuilders, campMaxLevel, campCost, campCan, campPend
 //
 // Performance: pages are recomputed only when an event marked the Codex dirty, at most every
 // CODEX_TUNE.every seconds (a few hundred cheap reads), plus a slow safety sweep. Nothing here
-// scans the bag or other big collections on a tick; S.items is read once, on the first load.
+// scans the bag or other big collections on a tick.
 //
 // Exposed names:
 //   data   CODEX_PAGES (page defs), CODEX_PAGE_IDS, CODEX_MILESTONES, CODEX_CAP, CODEX_TUNE
@@ -14519,29 +14436,17 @@ let codexPages, codexPage, codexLight, codexNext, codexHas, codexBonus, codexTit
   const seenStr = p => p.tiles.map(t => b36(t.got)).join('');
   const seenAt = (id, i) => { const s = CX().seen[id]; if (typeof s !== 'string' || i >= s.length) return 0; return parseInt(s[i], 36) || 0; };
 
-  // ---------------- first load: retro credit ----------------
+  // ---------------- first load: the Codex starts recording ----------------
   function init() {
     if (CX().init) return;
-    if (typeof ACH_API === 'object' && S.achievements && !S.achievements.init) safe(() => ACH_API.check(), null);
-    for (const it of S.items || []) markAff(it);
     markMats(); markDare();
-    // Champions: a save that has beaten champions and holds that type's Trophy gets credit.
-    if (S.craft && (S.craft.champ | 0) > 0) (S.craft.troph || []).forEach((n, i) => { if (n > 0 && TYPES[i]) R().champ[TYPES[i].key] = 1; });
     const c = compute();
-    const g = grant(c, true);
+    grant(c, true);
     for (const p of c.pages) if (!p.locked) CX().seen[p.id] = seenStr(p);
     CX().mSeen = CODEX_MILESTONES.filter(m => CX().got[m.at]).reduce((a, m) => Math.max(a, m.at), 0);
     CX().init = true;
     cache = c; dirty = false;
-    // audit 3.4 (W1-B): a new game (its guide still young) has no past deeds to report; only a save with
-    // progress from before this build's Codex does. The line goes to the bell (23n-data-notices 'codex-past').
-    const young = !!(S.onboard && !S.onboard.all && (S.onboard.t || 0) < 120);
-    const past = !young && (S.totalKills > 0 || S.maxZone > 1);
-    if (past && g.light > 0) {
-      const where = typeof campLevel === 'function' && campLevel('library') > 0 ? 'See the Library in camp.' : 'Open it from the bell, then Journal.';
-      emit('toast', { key: 'codex-past', msg: `Your Codex holds ${g.light} Lantern Light from your past deeds. ${where}`, kind: 'good', icon: { ic: ['flame', '#F2C14E', { 5: '#FFB347', 7: '#FFF3C4' }] }, prio: 'high' });
-    }
-    emit('codexInit', { light: g.light });
+    emit('codexInit', { light: CX().lightMax });
   }
 
   // quiet: record rewards without toasts (the away card lists them instead).
@@ -15550,7 +15455,7 @@ let DEEP_ARENA = null;
 //   p     the design's estimate of the star's effective damage at the push zone (x). starPowerEst
 //         multiplies them; check.mjs keeps the best build under the pace caps.
 
-const STAR_TUNE = { every: 3, lanternPts: 4, lanternZone: 35, keyMax: 2, armKeyNeed: 5, crownBridges: 3, crownArm: 3, nameMax: 12 };
+const STAR_TUNE = { every: 3, lanternPts: 4, keyMax: 2, armKeyNeed: 5, crownBridges: 3, crownArm: 3, nameMax: 12 };
 // Knobs 55-party.js reads through tn()/bonus() (Stage C routed them all; ks flags live in 55-party.js and 59-combat.js).
 const STAR_TUNE_ROUTED = ['guard', 'guardMax', 'guardT', 'wall', 'wallT', 'wallPause', 'embersMax', 'emberPerTap', 'flare', 'flarePerEmber', 'keepEmbers',
   'markT', 'mark', 'volleyHits', 'hasteT', 'blessT', 'blessMax', 'bless', 'hymn', 'hymnT', 'hymnFloor', 'lkShare', 'lkAura', 'autoEff', 'autoCd', 'charges'];
@@ -15764,8 +15669,6 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
   starEffects, starPowerEst, starBest, starText, starValidate, starRingEvo, starSuggest;
 
 {
-  // v 2 (S2): maps.warrior / maps.mage exist; an older save copies its legacy warden / lanternmage layouts
-  // into them once (legacy keys stay untouched in the save).
   registerState('stars', { v: 2, maps: {}, seen: 0 });
   const T = STAR_TUNE;
   const ST = () => S.stars;
@@ -15987,10 +15890,6 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
     const st = ST();
     if (!st.maps || typeof st.maps !== 'object' || Array.isArray(st.maps)) st.maps = {};
     if (!(st.seen >= 0)) st.seen = 0;
-    if (!(st.v >= 2)) {
-      for (const to in CLS_STAR_FROM) { const from = st.maps[CLS_STAR_FROM[to]]; if (from && typeof from === 'object' && !st.maps[to]) st.maps[to] = JSON.parse(JSON.stringify(from)); }
-      st.v = 2;
-    }
     for (const k of Object.keys(st.maps)) { if (!STAR_MAPS[k]) continue; starValidate(k); }
     bump();
   }
@@ -16160,8 +16059,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 // Rules (spec 5; section 9 decisions accepted, wave-log D7):
 //   - Hands live AT CAMP (owner, 2026-09-28): they sleep in the Bunkhouse, a camp building (57-camp
 //     CAMP_B.bunk; its plot opens after the Tavern), and apply at the Tavern. Hands open at Hearth 2
-//     with the Tavern and the Bunkhouse built. Tam, Hesketh's nephew, arrives free then. Old saves at
-//     Hearth 2+ get the Bunkhouse at Lv 1 at their first load with this build (and so Tam). Hands
+//     with the Tavern and the Bunkhouse built. Tam, Hesketh's nephew, arrives free then. Hands
 //     replace the never-built bench jobs.
 //   - Applicants: one every 8 h of wall clock (6 h from Tavern Lv 3), at most 3 waiting; the first
 //     arrives with Tam. A turned-away or hired applicant frees the spot; when the board was full, the
@@ -16223,8 +16121,7 @@ let starPoints, greatLanternsLit, starFree, starSpent, starMap, starCls, starLay
 // Later (K13, production chains): Hands who refine at stations or gather secondary resources. The
 //   hand record keeps its fields; a new optional `role` (missing = 'gather') and job fields can be added.
 // Save: registerState('hands', { v, seq, list, board: { apps, next }, pity: [rare, epic, legendary],
-//   tam, log, hired, hrs, got, met, heard, open, rs, mig }). rs: the Hands' own random stream (applicants, seeds).
-//   mig: the one-time old-save step ran (Bunkhouse Lv 1 at Hearth 2+).
+//   tam, log, hired, hrs, got, met, heard, open, rs }). rs: the Hands' own random stream (applicants, seeds).
 //   list[i] = { id, n, r, sk, tr: [trait ids], cl (calling | null), key (named Hand | null), lv, xp (hours
 //     into the level), job, pack: [[fam, t, n]] ('troph', i, n for a Trophy), last: { kind, t } | null,
 //     talk, st (stories heard), hired (ms), hrs (hours worked), got (units delivered), back (ms home) }
@@ -16243,7 +16140,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
 {
   const T = HANDS_TUNE;
   registerState('hands', { v: 1, seq: 0, list: [], board: { apps: [], next: 0 }, pity: [0, 0, 0], tam: 0, log: [],
-    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0, mig: 0 });
+    hired: 0, hrs: 0, got: 0, met: {}, heard: 0, open: 0, rs: 0 });
   const H = () => S.hands;
   const now = () => Date.now();
   const HOUR = 3600e3;
@@ -16307,14 +16204,6 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   handsBeds = () => handsBedsAt(lvOf('bunk'), lvOf('hearth'));
   // H1's plot rule (cold saves): the Bunkhouse plot opens once the Tavern stands.
   if (typeof HEARTH_PLOT === 'object' && HEARTH_PLOT) HEARTH_PLOT.bunk = () => lvOf('tavern') >= 1;
-  // Old saves at Hearth 2+ (they predate the Bunkhouse) get it at Lv 1 once, so Tam can come.
-  const migrate = () => {
-    const h = H(); if (h.mig) return;
-    h.mig = 1;
-    if (!T.on || !S.camp || !S.camp.b || !safe(() => campOpen(), false) || lvOf('hearth') < T.openHearth || lvOf('bunk') >= 1) return;
-    S.camp.b.bunk = 1;
-    emit('whatsNew', { msg: 'Your camp has a Bunkhouse now. Hands, townsfolk who gather for the heroes, sleep there. Hire them at the Tavern.', icon });
-  };
   // W1-E: the cap is Tents (economy-2 5): 2 free with the Tavern at Hearth 2; a built Bunkhouse still adds room
   // until the Tent build (CAMP_B.tent) lands.
   handsTents = () => handsOpen() ? Math.max(ECON.tentFree, handsBeds()) : 0;
@@ -16725,7 +16614,6 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     acc += dt; if (acc < 1) return; acc = 0;
     if (!T.on) return;
     const q = first; first = false;
-    migrate();
     if (!handsOpen()) return;
     if (!H().tam || !H().board.next) openHands(q);
     const t = now();
@@ -16741,7 +16629,6 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     init();
     awayBack = []; awayApps = 0;
     if (!T.on) return;
-    migrate();
     if (!handsOpen()) return;
     if (!H().tam || !H().board.next) openHands(true);
     const t = now();
@@ -16907,23 +16794,19 @@ let deeds, deedBonus, wearGet;
   const pagesOf = keysList => { let n = 0; for (const k of keysList) n += masteryApi.tierFor(num(S.mastery.types[k])); return n; };
   const allTypeKeys = () => TYPES.map(t => t.key);
   const hollowTypeKeys = () => REGIONS[0].types.map(i => TYPES[i].key);
-  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts and its legacy map's (same ids).
+  // S2 (classes-2 4.4): 3 class maps; each reads the best of its own layouts.
   const starBest = cls => {
     const m = starMap(cls), maps = S.stars && S.stars.maps;
     if (!m || !maps) return 0;
     let best = 0;
-    for (const key of [cls, typeof CLS_STAR_FROM === 'object' ? CLS_STAR_FROM[cls] : null]) {
-      const r = key && maps[key];
-      if (!r || !Array.isArray(r.layouts)) continue;
-      for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
-    }
+    const r = maps[cls];
+    if (r && Array.isArray(r.layouts)) for (const l of r.layouts) { let s = 0; for (const id of (l && l.lit) || []) s += m.stars[id] ? m.stars[id].cost : 0; if (s > best) best = s; }
     return best;
   };
   const starClasses = () => Object.keys(STAR_MAPS).filter(c => !STAR_MAPS[c].legacy);
   const tiersByLadder = r => r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : r >= 1 ? 1 : 0;
   const skillUnits = (skill, t) => { let s = 0; for (const f of GATHER) if (DS().g[f] && safe(() => skillOf(f), '') === skill) s += num(DS().g[f][t - 1]); return s; };
   const seamLadder = skill => { let k = 0; if (skillUnits(skill, 2) >= 1e3) k = 1; else return 0; if (skillUnits(skill, 3) >= 1e3) k = 2; else return k; if (skillUnits(skill, 4) >= 1e3) k = 3; else return k; if (skillUnits(skill, 5) >= 1e4) k = 4; return k; };
-  const relicSpent = () => { let s = 0; for (const u of RELICS) { const lv = num(S.relic[u.id]); for (let i = 0; i < lv; i++) s += u.base * Math.pow(u.r, i); } return s; };
   const fineOf = it => {
     if (!it || it.u) return 0;
     const r = it.r === 'epic' || it.r === 'legendary' ? 3 : it.r === 'rare' ? 2 : it.r === 'uncommon' ? 1 : 0;
@@ -17309,14 +17192,6 @@ let deeds, deedBonus, wearGet;
   on('raidReward', ({ embers }) => { N().embers += num(embers); });
   on('meal', () => { N().meal++; });
   on('storeCap', () => { const sx = DS().sx; sx.rat = num(sx.rat) + 1; if (sx.rat >= T.ratHits) grantSecret('s_rat'); });
-  const markKeys = () => {
-    const ks = DS().rec.ks;
-    for (const c of starClasses()) {
-      const m = starMap(c), r = S.stars && S.stars.maps && S.stars.maps[c];
-      if (!m || !r || !Array.isArray(r.layouts)) continue;
-      for (const l of r.layouts) for (const id of (l && l.lit) || []) { const s = m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) ks[c + ':' + id] = 1; }
-    }
-  };
   on('starLit', ({ cls, id }) => { const m = safe(() => starMap(cls), null), s = m && m.stars[id]; if (s && (s.kind === 'key' || s.kind === 'crown')) DS().rec.ks[cls + ':' + id] = 1; });
   let oilSeen = Infinity;
   on('deepEnd', ({ summary }) => { if (summary && summary.reason === 'leave' && oilSeen < 1) grantSecret('s_oil'); oilSeen = Infinity; });
@@ -17370,41 +17245,15 @@ let deeds, deedBonus, wearGet;
     const run = S.deep && S.deep.run; oilSeen = run ? num(run.oil) : oilSeen;
   }
 
-  // ---------------- first load: old saves get full credit, quietly ----------------
-  const hasProgress = () => S.totalKills > 0 || S.L > 1 || S.maxZone > 1 || (Array.isArray(S.items) && S.items.length > 0);
-  function seed() {
-    const d = DS(), n = d.n;
-    for (const f of GATHER) { const m = S.mats[f]; if (!Array.isArray(m)) continue; const row = gRow(f); for (let t = 0; t < 5; t++) row[t] = Math.max(num(row[t]), Math.floor(num(m[t]))); }
-    n.ess = Math.max(n.ess, sumArr(S.mats.ess));
-    n.troph = Math.max(n.troph, sumArr(S.craft && S.craft.troph));
-    n.embers = Math.max(n.embers, num(S.embers) + safe(relicSpent, 0));
-    n.dare = Math.max(n.dare, keys(S.codex && S.codex.rec && S.codex.rec.dare));
-    n.weekly = Math.max(n.weekly, num(S.almanac && S.almanac.stamps) * 3);
-    safe(markKeys, 0);
-    for (const it of S.items || []) { const f = fineOf(it); if (f > d.rec.fine) d.rec.fine = f; }
-    if (hasProgress()) {
-      const tm = now();
-      for (const k of ['crit', 'parry', 'dodge', 'intr', 'abil', 'dmg', 'taken', 'heal', 'hit', 'g', 'ess', 'troph', 'glint', 'up', 'ref', 'trans', 'embers', 'dare', 'weekly', 'boss'])
-        if (!d.since[k]) d.since[k] = tm;
-    }
-    const dr = S.almanac && S.almanac.dare; if (dr && dr.on) { d.sx.dareDay = dr.day; dareSeen = dr.day; }
-  }
+  // ---------------- first load: the deeds start counting ----------------
   function init() {
     const d = DS();
     if (d.init) return null;
     dirtyPts();
-    seed();
     const before = pointsNow();
     const res = pass(true, true);
-    const feats = DEED_FEATS.filter(f => d.feat[f.id]), looks = DEED_LOOKS.filter(l => owned(l.id));
     d.init = now();
     const tiers = Object.keys(d.tier).reduce((a, id) => a + num(d.tier[id]), 0), pts = pointsNow();
-    if (hasProgress() && (tiers > 0 || pts > 0)) {
-      const ch = Object.keys(d.ch).reduce((a, id) => a + num(d.ch[id]), 0);
-      let msg = `Your deeds so far: ${tiers} tier${tiers === 1 ? '' : 's'}${ch ? `, ${ch} chapter step${ch === 1 ? '' : 's'}` : ''}, ${pts.toLocaleString('en-US')} points. See Achievements.`;
-      if (feats.length || looks.length) msg += ` New looks: ${looks.map(l => l.n).join(', ')}.`;
-      emit('whatsNew', { msg, icon: { ic: ['banner', '#F2C14E'] } });
-    }
     emit('deedsInit', { tiers, pts, gain: pts - before, res });
     save();
     return { tiers, pts };
@@ -19502,7 +19351,7 @@ let deepCombatOn, dcLifeline, DWC;
 //   Trapper      Focus Marks 30% (clsMarkAdd), traps (2 charges, laid on every pack), Tripwire; Snare Field
 //   Warlock      Hex (3 Embers or a Flare curse), Creeping Hex, Held Light, Dark Turned (Witchfire); Witchfire
 //   Lightkeeper  (the legacy kit: Given Light, Blessing, Rally Hymn) + ward 30%, Vows; Sanctuary
-// A granted path not yet proven (a migrated Warden or Lightkeeper, 3.7) runs its new parts at
+// A path not yet proven (3.7) runs its new parts at
 // CLS_TUNE.unproven (0.6) and keeps the base stats; the evolution line (bucket C) and stats wait for the Proving.
 // Stagger (`f.stag`) is only counted until S6 adds the bar; clsStagX() is the Warden's +30% for S6 to read.
 //
@@ -22218,7 +22067,7 @@ let resize, animate, draw, stageStats, warmScene;
   // ================= visual state (driven by core events) =================
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
-  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, lastEmbers = 0;
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
@@ -22455,10 +22304,10 @@ let resize, animate, draw, stageStats, warmScene;
   // knock-outs (a.down: the grey down pose, no bar) and the stand-up flash (a.upT). Numbers gather in
   // bD (hits), bC (DoT, heals, shields) before they show (flushNums).
   const mkActor = key => ({ key, fr: null, kind: '', pcol: '#fff', col: 0, lane: 0, hx: 0, hy: 0, dx: 0, dash: 0, st: 0, t: 0, pending: 0, flash: 0, slash: 0, ph: Math.random() * 2, alpha: 1,
-    role: '', aim: null, arc: 0, dy: 0, castTo: null, go: 0, goT: 0, mv: 0, kb: 0, down: false, upT: 0, eye: 0, fcd: 0,
+    role: '', aim: null, arc: 0, dy: 0, castTo: null, go: 0, goT: 0, mv: 0, kb: 0, down: false, upT: 0, fcd: 0,
     bD: 0, bBig: false, bBlk: false, bT: -1, bDot: 0, bH: 0, bS: 0, bC: -1, _x: 0, _y: 0, _f: null });
   const hero = mkActor('hero');
-  let comps = [], order = [], ghosts = [], front = hero, heroKey = '', checkT = 0, layoutDirty = true;
+  let order = [], ghosts = [], front = hero, heroKey = '', checkT = 0, layoutDirty = true;
 
   // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
   // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
@@ -22480,11 +22329,11 @@ let resize, animate, draw, stageStats, warmScene;
     toolsWarm = k;
     for (const sp of specs) idleTask(() => { const set = charFrames(sp, true); if (set) idleTask(() => void set.strike); });   // strike: where the hero stands
   }
-  function refreshParty() { comps = []; layoutDirty = true; }   // no companions (W3-A): the hero stands alone
+  function refreshParty() { layoutDirty = true; }   // the hero stands alone
   function layout() {
     layoutDirty = false;
     const cells = {}, used = {};
-    order = target() === 'node' ? [hero] : [hero].concat(comps);
+    order = target() === 'node' ? [hero] : [hero];
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
@@ -22577,7 +22426,7 @@ let resize, animate, draw, stageStats, warmScene;
   // Per-slot motion: a bat's dive (dv 0..1: a leap over the front line to its target and back), a
   // knockback slide (kb) and lunges (dx) toward its target; fl: a one-frame flash (reduced motion).
   const mkFoeV = () => ({ m: null, key: '', fr: null, anim: 'lunge', hover: false, st: 0, t: 0, next: 3, dx: 0, x: 0, gy: 0, cy: 0, left: 0, top: 0, w: 0, h: 0,
-    hx: 0, hy: 0, lane: 1, jx: 0, jy: 0, dv: 0, dvOn: false, dvA: null, kb: 0, kn: 0, fl: 0, hfc: 0, red: 0, lastTgt: -1, lastRole: '',
+    hx: 0, hy: 0, lane: 1, jx: 0, jy: 0, dv: 0, dvOn: false, dvA: null, kb: 0, kn: 0, fl: 0, hfc: 0,
     hm: null, hpF: null, trail: 1, dX: 0, dY: 0, dF: null });
   const solo = mkFoeV();
   let foe = solo;
@@ -22626,7 +22475,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
   function bindSlot(s, m) {
     s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
-    s.red = 0; s.lastTgt = -1; s.lastRole = ''; s.hm = null; s.hpF = null; s.trail = 1; s.dF = null;
+    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null;
     if (!m) { s.fr = null; s.key = ''; return; }
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
@@ -22877,7 +22726,6 @@ let resize, animate, draw, stageStats, warmScene;
     if (a.flash > 0) a.flash -= dt;
     if (a.slash > 0) a.slash -= dt;
     if (a.upT > 0) a.upT -= dt;
-    if (a.eye > 0) a.eye -= dt;
     if (a.fcd > 0) a.fcd -= dt;
     // the step (a taunt, a tank's intercept): eased over about 200 ms; reduced motion snaps with a flash
     if (a.goT > 0) { a.goT -= dt; if (a.goT <= 0) a.go = 0; }
@@ -22906,11 +22754,9 @@ let resize, animate, draw, stageStats, warmScene;
     }
     a.dx = base + d;
   }
-  // Companions attack in a staggered rhythm: every party-damage float, half of them swing. Supports
-  // deal no damage: they cast when they heal (unitHeal).
+  // Raid ghosts swing in a staggered rhythm on every party-damage float.
   function partyPulse() {
     partyN++;
-    comps.forEach((a, i) => { if (a.role !== 'support' && !a.down && (i + partyN) % 2 === 0) A.after(0.05 + i * 0.14, () => attack(a)); });
     ghosts.forEach((a, i) => { if ((i + partyN) % 3 === 0) A.after(0.1 + i * 0.2, () => attack(a)); });
   }
 
@@ -22987,15 +22833,6 @@ let resize, animate, draw, stageStats, warmScene;
     s.kn = live ? m.knockT : 0;
     if (s.kb > 0) { s.kb -= dt; const t = 0.35 - Math.max(0, s.kb); jx += 6 * (t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.2)); }
     s.jx = Math.round(jx); s.jy = Math.round(jy);
-    if (s.red > 0) s.red -= dt;
-    if (live && m.tgt !== s.lastTgt) {
-      const a = m.tgt >= 0 ? actorOf(unitKey(m.tgt)) : null;
-      if (a) {
-        if (s.lastRole === 'tank' && a.role !== 'tank' && !a.down) { s.red = 1; a.eye = 1; }
-        s.lastRole = a.role;
-      }
-      s.lastTgt = m.tgt;
-    }
   }
   // A diver leaves the line: the nearest standing tank steps back beside its target, taunts, and
   // returns after 2 s (a blue ring marks the target).
@@ -23063,9 +22900,6 @@ let resize, animate, draw, stageStats, warmScene;
     if (p.kind === 'heavy') { A.ring(hx + 4, top - 6, 2, 9, 0.35, '#8FB8FF', 1, 1); }
     else if (p.kind === 'ember') { A.after(WIND + 0.2, () => A.burstPx(foe.x, foe.cy, '#FF9E3D', 5, 35, 40, 4)); }
     else if (p.kind === 'mark') { markLeft = 8; A.ring(foe.x, foe.cy, foe.w * 0.9, foe.w * 0.45, 0.35, '#9CE06A', 1, 1.5); }
-    else if (p.kind === 'bless') {
-      for (const a of comps) for (let i = 0; i < 5; i++) A.part(a.hx + (Math.random() - 0.5) * 14, a.hy - 6 - Math.random() * 30, 0, -18 - Math.random() * 16, 0.7 + Math.random() * 0.3, '#F2C14E', 0, 1, 4);
-    }
   });
   on('ability', p => {
     attack(hero);
@@ -23186,7 +23020,7 @@ let resize, animate, draw, stageStats, warmScene;
   animate = function (dt) {
     if (!SW) return;
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); warmTools(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); readLooks(); warmWell(); warmTools(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
     // 70-ui keeps writing tWrap.hidden underneath)
     const dOn = deepOn();
@@ -23239,15 +23073,9 @@ let resize, animate, draw, stageStats, warmScene;
         A.proj('rain', tx - 50 - Math.random() * 20, -10, tx, ty, 0.3, '#8FD46A', 0, (x, y) => A.burstPx(x, y, '#E8DCC0', 2, 30));
       }
     }
-    if (blessN > 0 && !reduced) {
-      blessMote -= dt;
-      if (blessMote <= 0) { blessMote = 0.45; for (const a of comps) A.part(a.hx + (Math.random() - 0.5) * 12, a.hy - 10 - Math.random() * 30, 0, -14, 0.9, '#F2C14E', 0, 1, 3); }
-    }
     if (look.trail && hero._f) stepTrail(dt);
     A.step(dt);
     if (hudOn()) stepHud(dt);
-    abilityTimer -= dt;
-    if (abilityTimer <= 0) { abilityTimer = 0.1; updateAbilityButton(); }
   };
 
   // ================= drawing =================
@@ -23860,32 +23688,6 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.fillStyle = '#FFF6E0'; ctx.fillRect(x + 3 * s - e, y + 2 * s, s + 2 * e, 5 * s); ctx.fillRect(x + 3 * s - e, y + 8 * s, s + 2 * e, s + e);
     return h + 2 * s;
   }
-  // Threat (7.4): each foe's target, in the colour of that member's role (tank blue, striker green,
-  // caster violet, support gold): a pip by the foe's bar and a faint dotted line to the target. A foe
-  // that leaves a tank shows red for 1 s. Setting "Show targets": S.settings.targets (missing = on).
-  const targetsOn = () => !(S.settings && S.settings.targets === false);
-  const ROLE_COL = { tank: '#6A93FF', striker: '#63C96F', caster: '#B47BFF', support: '#F2C14E' }, THREAT_RED = '#FF4A4A';
-  const DASH = [2, 4], NO_DASH = [];
-  let dashU = 0;
-  function threatOf(s) {
-    const m = s.m;
-    if (!slotLive(s) || m.tgt < 0 || m.born < 0.3 || m.stunT > 0) return null;
-    const a = actorOf(unitKey(m.tgt));
-    return a && !a.down && a.fr && actorA(a) > 0.5 ? a : null;
-  }
-  function drawThreatLines(X, Y, cam) {
-    // one logical px wide, dots of one logical px every three (device px: K = DPR x zoom)
-    const K = DPR * ZM, w = Math.max(1, Math.round(K * 0.8));
-    if (dashU !== K) { dashU = K; DASH[0] = Math.max(1, Math.round(K)); DASH[1] = Math.max(2, Math.round(2 * K)); }
-    ctx.setLineDash(DASH); ctx.lineWidth = w;
-    for (let i = 0; i < packN; i++) {
-      const s = slots[i], a = threatOf(s); if (!a) continue;
-      const red = s.red > 0;
-      ctx.globalAlpha = red ? 0.9 : 0.55; ctx.strokeStyle = red ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker;
-      ctx.beginPath(); ctx.moveTo(X(s.left + 6 - cam), Y(s.cy)); ctx.lineTo(X(ax(a) + 10 - cam), Y(a.hy - 30)); ctx.stroke();
-    }
-    ctx.setLineDash(NO_DASH); ctx.globalAlpha = 1;
-  }
   function drawHud(cam, ox, oy) {
     const K = DPR * ZM, X = x => Math.round((x + ox) * K), Y = y => Math.round((y + oy) * K);
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -23905,8 +23707,6 @@ let resize, animate, draw, stageStats, warmScene;
     const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
     const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0 || restF > 0;
-    const showT = fight && targetsOn() && partyCombatOn();
-    if (showT) drawThreatLines(X, Y, cam);
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
     // (toward the foe: above it they would cover the face of an ally in the upper lane). Knocked-out
     // members and a party falling back show none.
@@ -23925,29 +23725,25 @@ let resize, animate, draw, stageStats, warmScene;
         if (restF > 0) pushChip('rest', 0, restF);
         chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
       }
-      // a foe just left a tank for this member: an eye by its bar
-      if (a.eye > 0 && showT && (reduced || (T * 5 % 1) < 0.7)) badge(cx - (bw >> 1) - 9 * U, y - U, 'eye');
       if (tele && tele.kind === 'dive' && tele.target === a.key) bangAt(cx, y, 'dive');
     }
     if (!fight) { hudFoeTop = foe.top; return; }
     for (let i = 0; i < packN; i++) {
-      const s = slots[i], top = foeHud(s, X, Y, cam, minY, tele, showT);
+      const s = slots[i], top = foeHud(s, X, Y, cam, minY, tele);
       if (s === foe && top != null) hudFoeTop = Math.min(foe.top, top / K - oy);
     }
   }
   // One foe's HUD (device px): its HP bar (not for bosses: their HP is in the header) with a crown
-  // (champion) or a mark (elite), its threat pip, its chips (Focus, Embers), a green "+" while a
+  // (champion) or a mark (elite), its chips (Focus, Embers), a green "+" while a
   // Marsh Wraith channels its heal, and the boss "!". Returns the top of what it drew.
   const OTHER_BADGE = ['stun', 'root', 'burn', 'curse', 'mark'];
-  function foeHud(s, X, Y, cam, minY, tele, showT) {
+  function foeHud(s, X, Y, cam, minY, tele) {
     if (!slotLive(s) || s.m.born < 0.1) return null;
     const m = s.m, K = DPR * ZM, cx = X(s.x - cam);
     let y = Y(s.gy - s.h + headTop(s.fr.idle0)) - 2 * U;
-    const a = showT ? threatOf(s) : null, pipCol = a ? (s.red > 0 ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker) : null;
     // S6-E (combat-2 2.6): in a pack of 4+ only the focus foe, elites and champions show a bar; the others show at
-    // most one badge (Stun, Root, Burn, Curse, Mark) and a threat pip only while they hit a non-tank
+    // most one badge (Stun, Root, Burn, Curse, Mark)
     if (packN > 3 && s !== foe && !m.elite && !m.champ && !m.boss) {
-      if (pipCol && a.role !== 'tank') { y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U); }
       if (typeof stLeft === 'function') for (const id of OTHER_BADGE) if (stLeft(m, id) > 0) { pushChip(id, 0, -1); const h = chipRow(cx, y - U); if (h) y -= h + U; break; }
       if (m.cast && m.cast.left > 0 && m.cast.kind !== 'hard') { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }
       if (tele && tele.foe === m && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
@@ -23961,9 +23757,6 @@ let resize, animate, draw, stageStats, warmScene;
       if (m.champ || m.elite) badge(x0 - 7 * U, y - (U >> 1), m.champ ? 'crown' : 'elite');
       // S6-E: an elite's stagger fill, a 1 HUD px gold line under its bar once it has any (combat-2 3.4)
       if (m.elite && (m.sb > 0 || m.stgT > 0) && typeof actStagMax === 'function') { ctx.fillStyle = '#F2C14E'; ctx.fillRect(x0 + U, y + 4 * U, Math.max(U, Math.round((fw - 2 * U) * (m.stgT > 0 ? 1 : Math.min(1, m.sb / actStagMax(m))))), U); }
-      if (pipCol) { const px = x0 + fw + 2 * U + U; ctx.fillStyle = HK; ctx.fillRect(px, y - (U >> 1), 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(px + U, y + (U >> 1), 3 * U, 3 * U); }
-    } else if (pipCol) {
-      y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U);
     }
     if ((s === foe && markLeft > 0) || m.markT > 0) pushChip('mark', 0, Math.min(1, (s === foe && markLeft > 0 ? markLeft : m.markT) / 8));
     if (m.embers | 0) pushChip('ember', m.embers | 0, -1);
@@ -23992,40 +23785,6 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
 
-  // ================= ability button =================
-  const ICONS = {};
-  function abilityIcon(cls) {
-    if (ICONS[cls]) return ICONS[cls];
-    const c = document.createElement('canvas'); c.width = 12; c.height = 12;
-    const g = c.getContext('2d'), P = { k: '#0B0810', 1: '#DCE4F0', 2: '#7C8290', 3: '#F2C14E', o: '#FF9E3D', y: '#FFD27A', w: '#FFF3C4' };
-    const map = rows => rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (P[r[x]]) { g.fillStyle = P[r[x]]; g.fillRect(x, y, 1, 1); } });
-    if (cls === 'warden') map(['.kkkkkkkkkk.', 'k1111332222k', 'k1111332222k', 'k1133333322k', 'k1133333322k', 'k1111332222k', 'k1111332222k', '.k11133222k.', '.k11133222k.', '..k113322k..', '...k1322k...', '....kkkk....']);
-    else if (cls === 'lanternmage') map(['.....kk.....', '....kook....', '....kook....', '...kooyok...', '...koyyok...', '..kooyyook..', '..koywwyok..', '.kooywwyook.', '.koyywwyyok.', '.kooyyyyook.', '..kooooook..', '...kkkkkk...']);
-    else if (cls === 'ranger') {
-      for (const o of [0, 4]) {
-        for (let i = 0; i < 8; i++) { g.fillStyle = '#E8DCC0'; g.fillRect(o + i, i + 1 - o / 2 + 1, 1, 1); }
-        g.fillStyle = '#8FD46A'; g.fillRect(o, 1 - o / 2 + 1, 2, 1); g.fillRect(o, 2 - o / 2 + 1, 1, 1);
-        g.fillStyle = '#FFFFFF'; g.fillRect(o + 7, 7 - o / 2 + 1, 2, 2);
-      }
-    } else {
-      for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) {
-        const d = Math.hypot(x - 5.5, y - 5.5), ray = (x === 5 || x === 6 || y === 5 || y === 6 || Math.abs(x - y) < 1 || Math.abs(x + y - 11) < 1);
-        const col = d < 2.2 ? '#FFF3C4' : d < 3.4 ? '#F2C14E' : d < 3.9 ? '#0B0810' : ray && d < 5.8 ? '#FFD27A' : null;
-        if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); }
-      }
-    }
-    return (ICONS[cls] = c);
-  }
-  const abBtn = el('button', 'abil'); abBtn.type = 'button'; abBtn.hidden = true;
-  const abIc = el('canvas', 'abil-ic'); abIc.width = 12; abIc.height = 12;
-  const abCd = el('span', 'cd'), abN = el('span', 'n');
-  abBtn.append(abIc, abCd, abN);
-  stageEl.append(abBtn);
-  abBtn.addEventListener('pointerdown', e => e.stopPropagation());
-  abBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!castAbility()) { abBtn.classList.remove('nope'); void abBtn.offsetWidth; abBtn.classList.add('nope'); }
-  });
   // Battle HUD toggle (S.settings.hud; a missing value means on): a small two-bar button.
   const hudBtn = el('button', 'hud-btn'); hudBtn.type = 'button';
   const hudIc = el('canvas'); hudIc.width = 7; hudIc.height = 7; hudBtn.append(hudIc);
@@ -24046,52 +23805,6 @@ let resize, animate, draw, stageStats, warmScene;
     S.settings.hud = !hudOn(); drawHudBtn(); save();
   });
   drawHudBtn(); stageEl.append(hudBtn);
-  // "Show targets" toggle (S.settings.targets; missing = on), next to the bars button: each foe's
-  // target pip and dotted line. Shown only in a fight with the battle bars on.
-  const tgtBtn = el('button', 'hud-btn tgt-btn'); tgtBtn.type = 'button';
-  const tgtIc = el('canvas'); tgtIc.width = 7; tgtIc.height = 7; tgtBtn.append(tgtIc);
-  let tgtBtnOn = null, tgtShow = null;
-  function drawTgtBtn() {
-    const on_ = tgtBtnOn = targetsOn(), g = tgtIc.getContext('2d');
-    g.clearRect(0, 0, 7, 7);
-    g.fillStyle = on_ ? '#E0524F' : '#6B6275'; g.fillRect(4, 0, 3, 3);
-    g.fillStyle = on_ ? '#6A93FF' : '#6B6275'; g.fillRect(0, 5, 2, 2); g.fillRect(2, 3, 1, 1); g.fillRect(3, 2, 1, 1); g.fillRect(1, 4, 1, 1);
-    tgtBtn.classList.toggle('off', !on_);
-    tgtBtn.title = on_ ? 'Showing who each foe attacks. Tap to hide.' : 'Tap to show who each foe attacks.';
-    tgtBtn.setAttribute('aria-label', 'Show targets'); tgtBtn.setAttribute('aria-pressed', on_ ? 'true' : 'false');
-  }
-  function checkTgtBtn() {
-    const show = hudOn() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
-    if (show !== tgtShow) { tgtShow = show; tgtBtn.hidden = !show; }
-    if (targetsOn() !== tgtBtnOn) drawTgtBtn();
-  }
-  tgtBtn.addEventListener('pointerdown', e => e.stopPropagation());
-  tgtBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!S.settings) return;
-    S.settings.targets = !targetsOn(); drawTgtBtn(); save();
-  });
-  drawTgtBtn(); stageEl.append(tgtBtn);
-  let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
-  function updateAbilityButton() {
-    const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
-    const show = false;   // the button row (75-solo-ui) has the ability; this stage button is dead (UX-L1 can drop it)
-    if (abBtn.hidden === show) abBtn.hidden = !show;
-    if (!show) return;
-    const cls = S.party.cls;
-    if (cls !== abCls) {
-      abCls = cls;
-      const g = abIc.getContext('2d'); g.clearRect(0, 0, 12, 12); g.drawImage(abilityIcon(cls), 0, 0);
-      abBtn.setAttribute('aria-label', info.name + ': ' + info.desc);
-      abBtn.title = info.name;
-    }
-    const left = Math.ceil(info.left * 10) / 10;
-    if (left !== abLeft) { abLeft = left; abCd.style.setProperty('--cd', info.cd ? (info.left / info.cd).toFixed(3) : 0); abN.textContent = info.left > 0 ? Math.ceil(info.left) : ''; }
-    if (info.ready !== abReady) { abReady = info.ready; abBtn.classList.toggle('ready', info.ready); }
-    const auto = info.autoUnlocked && info.autoCast;
-    if (auto !== abAuto) { abAuto = auto; abBtn.classList.toggle('auto', auto); }
-  }
-
   // ================= taps =================
   let lastTap = 0;
   stageEl.addEventListener('pointerdown', e => {
@@ -31360,7 +31073,6 @@ let craftUI = null;
     const backFn = back || null;
     const api = open(label, backFn, true);
     sheet = { api, id: null, back: backFn, picker: { pos } };
-    let pAsk = null;   // the item whose "Take off X?" question shows
     const render = () => {
       if (!sheet || sheet.api !== api || api.closed) return;
       const body = api.body; body.textContent = '';
@@ -31400,14 +31112,10 @@ let craftUI = null;
         t.addEventListener('click', () => openItem(it.id, backFn)); tx.addEventListener('click', () => openItem(it.id, backFn));
         const b = el('button', 'mini go', 'Equip'); b.type = 'button';
         b.addEventListener('click', () => {
-          const q = heroAsk(it.id, pos, pAsk === it.id);
-          if (q) { pAsk = it.id; render(); return; }
-          pAsk = null;
           act(() => equipItem(it.id, pos));
           render();
         });
         r.append(t, tx, b); body.append(r);
-        if (pAsk === it.id) { const q = heroAsk(it.id, pos); if (q) { b.textContent = 'Take it off'; b.classList.remove('go'); b.classList.add('cf-armb'); r.append(el('p', 'note warn cf-askp', q.why)); } }
       }
     };
     sheet.render = render;
@@ -35712,25 +35420,12 @@ document.addEventListener('click', e => {
 // A2) are optional. Without CLASS_DEFS or S.party the screen never opens.
 //
 // classUI (read by 75-party-sheet.js): rows() -> [el] the class card's extra rows (passives, the evolution
-// row, the locked second-tier row, what changed for a migrated save); switchRow() -> el | null (the free
+// row, the locked second-tier row); switchRow() -> el | null (the free
 // switch, while it is open); sig() -> a string that changes when those rows would; open(mode).
 var classUI;
 {
   const WEIGHT_NAME = { heavy: 'Heavy armour', medium: 'Medium armour', light: 'Light armour' };
   const HOME_NAME = { front: 'Front', mid: 'Middle', back: 'Back' };
-  // A migrated save's "What changed" (classes-2 7.2): three points per old class.
-  const CHANGED = {
-    warden: ['Your class is called Warrior now. The Warden is its path, and it is yours.',
-      'Guard stacks are Grit now. Each one also cuts the damage you take by 1%.',
-      'You block every tenth hit you take (half damage).'],
-    ranger: ['You are still a Ranger, and sturdier: more health and 10 armour.',
-      'Your base crit chance is 15% (was 8%).', 'Your Proving opens after the Fenmother.'],
-    lanternmage: ['You are still a Lanternmage.', 'Lantern Flare now sets the whole pack burning. Burn spreads when a burning foe dies.',
-      'Your Proving opens after the Fenmother.'],
-    lightkeeper: ["You are a Lanternmage on the Lightkeeper's path.", 'You keep your Blessing and Rally Hymn, and gain Sanctuary, a second ability.',
-      'Your Lightkeeper stars moved into the Lightkeeper ring on the Lanternmage map. Their points are free to spend again.']
-  };
-
   const classes = () => (typeof CLASS_DEFS === 'object' && CLASS_DEFS && typeof HERO_CLASSES === 'object') ? CLASS_DEFS : null;
   const needsChoice = () => !!(classes() && typeof S === 'object' && S.party && !S.party.chosen && typeof chooseBase === 'function');
 
@@ -35852,7 +35547,7 @@ var classUI;
       for (const ps of d.passives) out.push(row(ps.name, ps.s ? 'with active combat' : 'Passive', ps.text, ps.s ? 'off' : ''));
       // S3: the evolution rows, the Proving and the choice are 75-class-ui's
       if (typeof classEvoUI === 'object' && classEvoUI) out.push(...classEvoUI.rows(info));
-      // The evolution: granted (a migrated Warden or Lightkeeper), or the two paths and their gate.
+      // The evolution: granted or the two paths and their gate.
       else if (info.evo) {
         const txt = info.evo === 'priest'
           ? 'You keep your Blessing, Rally Hymn and Lightkeeper stars. New Lightkeeper powers come in a later update.'
@@ -35870,13 +35565,6 @@ var classUI;
         out.push(r);
       }
       if (!(typeof classEvoUI === 'object' && classEvoUI)) out.push(row('Second path', 'Locked', 'A second path opens in a later season.', 'off'));
-      if (info.migrated && CHANGED[info.from]) {
-        const det = el('details', 'cl-changed');
-        det.append(el('summary', null, 'What changed'));
-        const ul = el('ul'); for (const t of CHANGED[info.from]) ul.append(el('li', null, t));
-        det.append(ul);
-        out.push(det);
-      }
       return out;
     },
     head() {

@@ -1,13 +1,13 @@
 // 55-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 3.4-3.5, 7, 8.3). The class state S.cls,
-// the one-time migration from the four old classes, the class accessors, the base-class choice and the
+// the class accessors, the base-class choice and the
 // one free "second thoughts" switch. Data: 24-data-classes.js. The kits themselves run in 55-party.js.
 // CORE FILE: must not touch the DOM, window, document, canvas or localStorage.
 //
 // How the class is kept (S2):
-//   S.cls = { v, base, evo, evo2, proven, trials, respec, free, at, slots, auto, mig, from } (3.5).
+//   S.cls = { v, base, evo, evo2, proven, trials, respec, free, at, slots, auto } (3.5).
 //   S.party.cls keeps its legacy values ('warden' | 'ranger' | 'lanternmage' | 'lightkeeper'): it names the
 //   kit that runs (CLS_KIT(base, evo)), so every reader written before S2 keeps working. 55-classes writes
-//   it; nothing else should. When the two disagree (an old save, a tool that sets S.party.cls), the legacy
+//   it; nothing else should. When the two disagree (a tool that sets S.party.cls), the legacy
 //   key wins and S.cls follows it through LEGACY_CLS (lbSync). New code reads lbClass() / lbHas().
 //
 // API:
@@ -23,7 +23,6 @@
 //   clsSwitchInfo(now) -> { ok, left (ms), used }   the free switch
 //   clsInfo()  -> the class card's facts (76-create.js draws them)
 //   clsSet(base, evo, opts)  55-party's chooseClass writes the class through this (no rules)
-// Events: classMigrated { from, base, evo, proven } (once per save).
 
 //
 // S3 (classes-2 2, 3.1-3.7): the evolutions on top of the kits.
@@ -44,7 +43,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
 {
   registerState('cls', {
     v: 1, base: null, evo: null, evo2: null, proven: {}, trials: {}, respec: 0, free: 1, at: 0,
-    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, mig: 0, from: null, lm: 0
+    slots: { ab1: null, ab2: null, ab3: null }, auto: { ab1: 1, ab2: 1, ab3: 1 }, lm: 0
   });
   const C = () => S.cls;
   const OUT = { base: null, evo: null, evo2: null };
@@ -58,8 +57,8 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     return l ? { base: l.base, evo: l.evo, kit: key } : null;
   };
 
-  // The one-time migration (7.1) and the repair that keeps S.cls in step with the kit key.
-  let syncFor = null, syncKey, said = null;
+  // The repair that keeps S.cls in step with the kit key.
+  let syncFor = null, syncKey;
   lbSync = () => {
     const p = S.party, c = C();
     if (!p || !c) return;
@@ -73,15 +72,6 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     }
     if (CLS_KIT(c.base, c.evo) === key) return;
     const l = LEGACY_CLS[key];
-    if (!c.base && !c.mig) {
-      // An old save: its class becomes a base class (and the Warden or Lightkeeper path, granted).
-      c.base = l.base; c.evo = l.evo; c.mig = 1; c.from = key; c.at = 0;
-      const proven = !!(l.evo && pastBoss());
-      if (proven) c.proven[l.evo] = 1;
-      // Said on the first tick (the UI listens by then; a toast in the first seconds folds into What's new).
-      said = { from: key, base: l.base, evo: l.evo, proven };
-      return;
-    }
     // The kit key changed under us (a tool or an older code path set it): follow it.
     c.base = l.base; c.evo = l.evo;
   };
@@ -134,7 +124,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     if (!CLASS_DEFS[base] || !p || typeof chooseClass !== 'function') return false;
     if (p.chosen && c.base) {
       if (c.base === base) return true;
-      if (c.evo && c.proven[c.evo] && !c.mig) return false;   // S3: once evolved, the free change is for the path (chooseEvo)
+      if (c.evo && c.proven[c.evo] ) return false;   // S3: once evolved, the free change is for the path (chooseEvo)
       const sw = clsSwitchInfo(o.now);
       if (!sw.ok) return false;
       c.free = 0;
@@ -154,7 +144,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     return {
       base: c.base, name: d.name, weight: d.weight, home: d.home, role: lbRole(), col: d.col,
       evo: c.evo, evoName: ev ? ev.name : null, evoTitle: ev ? ev.title : null,
-      proven: !!(c.evo && s.proven[c.evo]), migrated: !!s.mig, from: s.from,
+      proven: !!(c.evo && s.proven[c.evo]),
       paths: d.evos.map(id => ({ id, name: EVO_NAMES[id].name, kind: EVO_NAMES[id].kind, line: EVO_NAMES[id].line })),
       gate: { lv: CLS_TUNE.evoLv, lvOk: gateLv, bossOk: gateBoss, open: gateLv && gateBoss },
       sw: clsSwitchInfo(now),
@@ -311,17 +301,7 @@ let clsEvo, clsProven, clsStrength, clsGate, provingInfo, provingStart, evoChoic
     gateWas = open;
   });
 
-  // Once per loaded save, and whenever the class may have changed.
-  onTick(() => {
-    lbSync();
-    if (!said) return;
-    const m = said; said = null;
-    emit('classMigrated', m);
-    const nm = CLASS_DEFS[m.base].name;
-    toast(m.evo
-      ? `Classes changed. You are a ${nm} on the ${EVO_NAMES[m.evo].name}'s path. Nothing was lost.`
-      : `Classes changed. You are still a ${nm}. Your Proving opens at the Fenmother.`, 'good', null, 'normal');
-  });
+  onTick(() => { lbSync(); });
   on('classChosen', () => lbSync());
   lbSync();
 }

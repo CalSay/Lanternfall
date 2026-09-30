@@ -688,7 +688,6 @@ let craftUI = null;
     const backFn = back || null;
     const api = open(label, backFn, true);
     sheet = { api, id: null, back: backFn, picker: { pos } };
-    let pAsk = null;   // the item whose "Take off X?" question shows
     const render = () => {
       if (!sheet || sheet.api !== api || api.closed) return;
       const body = api.body; body.textContent = '';
@@ -728,14 +727,10 @@ let craftUI = null;
         t.addEventListener('click', () => openItem(it.id, backFn)); tx.addEventListener('click', () => openItem(it.id, backFn));
         const b = el('button', 'mini go', 'Equip'); b.type = 'button';
         b.addEventListener('click', () => {
-          const q = heroAsk(it.id, pos, pAsk === it.id);
-          if (q) { pAsk = it.id; render(); return; }
-          pAsk = null;
           act(() => equipItem(it.id, pos));
           render();
         });
         r.append(t, tx, b); body.append(r);
-        if (pAsk === it.id) { const q = heroAsk(it.id, pos); if (q) { b.textContent = 'Take it off'; b.classList.remove('go'); b.classList.add('cf-armb'); r.append(el('p', 'note warn cf-askp', q.why)); } }
       }
     };
     sheet.render = render;

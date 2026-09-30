@@ -1,5 +1,5 @@
 // 24-data-classes: Classes 2.0, slice S2 (docs/design/classes-2.md 1, 3.5, 4, 7, 8.3 and the appendix).
-// CORE FILE, data only: no DOM. The engine is 55-classes.js (state, migration, lbClass) and 55-party.js
+// CORE FILE, data only: no DOM. The engine is 55-classes.js (state, lbClass) and 55-party.js
 // (the kits); 59-combat.js reads the base stats.
 //
 // Exposed names:
@@ -13,7 +13,7 @@
 //   LEGACY_CLS[key]      { base, evo } the four old classes (7.1)
 //   CLS_KIT(base, evo)   -> the legacy kit key that runs ('warden' | 'ranger' | 'lanternmage' | 'lightkeeper' | null)
 //   CLS_STAR_MAP[kit]    the star map a kit uses ('warrior' | 'ranger' | 'mage'; the legacy 'lightkeeper' map
-//                        until S3's ring); CLS_STAR_FROM[map] the legacy map copied into it once (4.4)
+//                        until S3's ring)
 //   EVO_NAMES[evo]       { name, title, base, kind: 'damage' | 'utility', role, line } names only (owner-chosen,
 //                        fixed)
 //   CLS_TUNE             the appendix numbers (evoLv, unproven, secondThoughtsMin, respec, grit, embers, ...)
@@ -160,7 +160,6 @@ const CLS_KIT = (base, evo) => !base || !CLASS_DEFS[base] ? null : base === 'mag
 // Star maps by kit (4.1-4.4). S3: a Lightkeeper plays the Lanternmage map and the Lightkeeper ring (its stars
 // moved there); the legacy maps.lightkeeper layouts stay untouched in the save, their points free again.
 const CLS_STAR_MAP = { warden: 'warrior', ranger: 'ranger', lanternmage: 'mage', lightkeeper: 'mage' };
-const CLS_STAR_FROM = { warrior: 'warden', mage: 'lanternmage' };
 
 // Names only (owner-chosen, fixed; names.md "Coordinator override"). S3 fills EVO_DEFS with the kits.
 const EVO_NAMES = {
@@ -407,14 +406,7 @@ const CLS_TUNE = {
   traps: { charges: 2, back: 10, backBoss: 5, snare: 1.5, pit: 1.0, pitVenom: 4, bossStag: 24, springAfter: 0.8, rootT: 3, chillT: 4 },
   sanctuary: { regen: 0.8, t: 6, smite: 0.6, shieldCap: 0.4 },
   hex: { embersToCurse: 3, curseT: 6, heldLight: 0.1, heldCap: 0.3, creepJumps: 3 },
-  trialRef: { L: 35, grade: 3, plus: 3, stars: 0 }, trialIdlePass: 1.25,
   grit: { v: 0.03, dr: 0.01, max: 5, t: 10 },
   embers: { max: 5 },
-  rangerCrit: 0.07, lightFeet: 0.2,
-  // S3: 56e-formation reads the evolution rows once proven. The Trapper is a caster (ROLE_D 1.0, not the
-  // striker's 1.82), so its floor is 1.4, not CL1's 0.7: about x1.1 of the Ranger's 0.7 x 1.82 (2.2's own damage)
-  // BAL3: the Ranger and Mage rows follow FORM_TUNE.heroFloor (was ranger 0.7, mage 1.0). Paths (CP6, ~+1.5 zones): venomstalker
-  // 0.75 -> 1.45, trapper 1.4 -> 2.65, warlock 1.0 -> 1.6 (the raised base floors had erased their step), reaver 0.62 -> 0.56 (+3-5 zones)
-  heroFloor: { warrior: 1.0, ranger: 1.2, mage: 1.35, reaver: 0.56, warden: 1.0,
-    venomstalker: 1.45, trapper: 2.65, warlock: 1.6, priest: 0 }
+  rangerCrit: 0.07, lightFeet: 0.2
 };

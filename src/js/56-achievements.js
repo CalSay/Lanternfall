@@ -54,12 +54,6 @@
     A().init = true;
     save();
   }
-  // Old saves: count what the bag already shows before the first check.
-  if (!A().init) {
-    const own = S.items.filter(i => !i.u);
-    A().forged = Math.max(A().forged, own.length);
-    if (own.some(i => i.r === 'epic')) A().epic = true;
-  }
   achRebuild();
   let achAcc = 0, achFirst = true;
   onTick(dt => {

@@ -23,7 +23,7 @@ let resize, animate, draw, stageStats, warmScene;
   // ================= visual state (driven by core events) =================
   let shake = 0, beamT = 0, ringT = 0, nodeShake = 0, wyrmHit = 0, flashA = 0, flashRgb = '255,210,122';
   let wallT = 0, hymnT = 0, volleyT = 0, volleyNext = 0, partyN = 0;
-  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, blessMote = 0, lastEmbers = 0;
+  let restF = 0, guardN = 0, blessN = 0, markLeft = 0, hasteLeft = 0, tall = false, buffPoll = 0, lastEmbers = 0;
   // Floating numbers and loot text. x is a stage fraction from the core (y is ignored: rows decide
   // the height); they are drawn in the band between the foe header and the ground, one row per
   // text near the same spot (stacked upward from the foe's head), and they fade out before they reach the header.
@@ -260,10 +260,10 @@ let resize, animate, draw, stageStats, warmScene;
   // knock-outs (a.down: the grey down pose, no bar) and the stand-up flash (a.upT). Numbers gather in
   // bD (hits), bC (DoT, heals, shields) before they show (flushNums).
   const mkActor = key => ({ key, fr: null, kind: '', pcol: '#fff', col: 0, lane: 0, hx: 0, hy: 0, dx: 0, dash: 0, st: 0, t: 0, pending: 0, flash: 0, slash: 0, ph: Math.random() * 2, alpha: 1,
-    role: '', aim: null, arc: 0, dy: 0, castTo: null, go: 0, goT: 0, mv: 0, kb: 0, down: false, upT: 0, eye: 0, fcd: 0,
+    role: '', aim: null, arc: 0, dy: 0, castTo: null, go: 0, goT: 0, mv: 0, kb: 0, down: false, upT: 0, fcd: 0,
     bD: 0, bBig: false, bBlk: false, bT: -1, bDot: 0, bH: 0, bS: 0, bC: -1, _x: 0, _y: 0, _f: null });
   const hero = mkActor('hero');
-  let comps = [], order = [], ghosts = [], front = hero, heroKey = '', checkT = 0, layoutDirty = true;
+  let order = [], ghosts = [], front = hero, heroKey = '', checkT = 0, layoutDirty = true;
 
   // Gathering (G1): the hero holds the right tool (11c-art-tools.js toolFor), baked per class, look,
   // tool and tier; the party rests at the Hearth, so only the hero stands in a gather scene (layout).
@@ -285,11 +285,11 @@ let resize, animate, draw, stageStats, warmScene;
     toolsWarm = k;
     for (const sp of specs) idleTask(() => { const set = charFrames(sp, true); if (set) idleTask(() => void set.strike); });   // strike: where the hero stands
   }
-  function refreshParty() { comps = []; layoutDirty = true; }   // no companions (W3-A): the hero stands alone
+  function refreshParty() { layoutDirty = true; }   // the hero stands alone
   function layout() {
     layoutDirty = false;
     const cells = {}, used = {};
-    order = target() === 'node' ? [hero] : [hero].concat(comps);
+    order = target() === 'node' ? [hero] : [hero];
     for (const a of order) { const c = cells[a.key] || { col: a === hero ? 2 : 1, lane: 1 }; a.col = c.col; a.lane = c.lane; used[c.col + ':' + c.lane] = 1; }
     // raid: other raiders stand in the free cells, faded
     for (const g of ghosts) {
@@ -382,7 +382,7 @@ let resize, animate, draw, stageStats, warmScene;
   // Per-slot motion: a bat's dive (dv 0..1: a leap over the front line to its target and back), a
   // knockback slide (kb) and lunges (dx) toward its target; fl: a one-frame flash (reduced motion).
   const mkFoeV = () => ({ m: null, key: '', fr: null, anim: 'lunge', hover: false, st: 0, t: 0, next: 3, dx: 0, x: 0, gy: 0, cy: 0, left: 0, top: 0, w: 0, h: 0,
-    hx: 0, hy: 0, lane: 1, jx: 0, jy: 0, dv: 0, dvOn: false, dvA: null, kb: 0, kn: 0, fl: 0, hfc: 0, red: 0, lastTgt: -1, lastRole: '',
+    hx: 0, hy: 0, lane: 1, jx: 0, jy: 0, dv: 0, dvOn: false, dvA: null, kb: 0, kn: 0, fl: 0, hfc: 0,
     hm: null, hpF: null, trail: 1, dX: 0, dY: 0, dF: null });
   const solo = mkFoeV();
   let foe = solo;
@@ -431,7 +431,7 @@ let resize, animate, draw, stageStats, warmScene;
   }
   function bindSlot(s, m) {
     s.m = m; s.st = 0; s.t = 0; s.dx = 0; s.jx = 0; s.jy = 0; s.dv = 0; s.dvOn = false; s.dvA = null; s.kb = 0; s.kn = 0; s.fl = 0;
-    s.red = 0; s.lastTgt = -1; s.lastRole = ''; s.hm = null; s.hpF = null; s.trail = 1; s.dF = null;
+    s.hm = null; s.hpF = null; s.trail = 1; s.dF = null;
     if (!m) { s.fr = null; s.key = ''; return; }
     const type = m.key.replace(/\d+$/, '');
     let key, fr;
@@ -682,7 +682,6 @@ let resize, animate, draw, stageStats, warmScene;
     if (a.flash > 0) a.flash -= dt;
     if (a.slash > 0) a.slash -= dt;
     if (a.upT > 0) a.upT -= dt;
-    if (a.eye > 0) a.eye -= dt;
     if (a.fcd > 0) a.fcd -= dt;
     // the step (a taunt, a tank's intercept): eased over about 200 ms; reduced motion snaps with a flash
     if (a.goT > 0) { a.goT -= dt; if (a.goT <= 0) a.go = 0; }
@@ -711,11 +710,9 @@ let resize, animate, draw, stageStats, warmScene;
     }
     a.dx = base + d;
   }
-  // Companions attack in a staggered rhythm: every party-damage float, half of them swing. Supports
-  // deal no damage: they cast when they heal (unitHeal).
+  // Raid ghosts swing in a staggered rhythm on every party-damage float.
   function partyPulse() {
     partyN++;
-    comps.forEach((a, i) => { if (a.role !== 'support' && !a.down && (i + partyN) % 2 === 0) A.after(0.05 + i * 0.14, () => attack(a)); });
     ghosts.forEach((a, i) => { if ((i + partyN) % 3 === 0) A.after(0.1 + i * 0.2, () => attack(a)); });
   }
 
@@ -792,15 +789,6 @@ let resize, animate, draw, stageStats, warmScene;
     s.kn = live ? m.knockT : 0;
     if (s.kb > 0) { s.kb -= dt; const t = 0.35 - Math.max(0, s.kb); jx += 6 * (t < 0.15 ? t / 0.15 : Math.max(0, 1 - (t - 0.15) / 0.2)); }
     s.jx = Math.round(jx); s.jy = Math.round(jy);
-    if (s.red > 0) s.red -= dt;
-    if (live && m.tgt !== s.lastTgt) {
-      const a = m.tgt >= 0 ? actorOf(unitKey(m.tgt)) : null;
-      if (a) {
-        if (s.lastRole === 'tank' && a.role !== 'tank' && !a.down) { s.red = 1; a.eye = 1; }
-        s.lastRole = a.role;
-      }
-      s.lastTgt = m.tgt;
-    }
   }
   // A diver leaves the line: the nearest standing tank steps back beside its target, taunts, and
   // returns after 2 s (a blue ring marks the target).
@@ -868,9 +856,6 @@ let resize, animate, draw, stageStats, warmScene;
     if (p.kind === 'heavy') { A.ring(hx + 4, top - 6, 2, 9, 0.35, '#8FB8FF', 1, 1); }
     else if (p.kind === 'ember') { A.after(WIND + 0.2, () => A.burstPx(foe.x, foe.cy, '#FF9E3D', 5, 35, 40, 4)); }
     else if (p.kind === 'mark') { markLeft = 8; A.ring(foe.x, foe.cy, foe.w * 0.9, foe.w * 0.45, 0.35, '#9CE06A', 1, 1.5); }
-    else if (p.kind === 'bless') {
-      for (const a of comps) for (let i = 0; i < 5; i++) A.part(a.hx + (Math.random() - 0.5) * 14, a.hy - 6 - Math.random() * 30, 0, -18 - Math.random() * 16, 0.7 + Math.random() * 0.3, '#F2C14E', 0, 1, 4);
-    }
   });
   on('ability', p => {
     attack(hero);
@@ -991,7 +976,7 @@ let resize, animate, draw, stageStats, warmScene;
   animate = function (dt) {
     if (!SW) return;
     checkT -= dt;
-    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); checkTgtBtn(); readLooks(); warmWell(); warmTools(); }
+    if (checkT <= 0 || !hero.fr) { checkT = 1; refreshHero(false); refreshGhosts(); readHud(); if (hudOn() !== hudBtnOn) drawHudBtn(); readLooks(); warmWell(); warmTools(); }
     // a live Deepwell run: no zone line, no boss timer (inline styles, written only on a change;
     // 70-ui keeps writing tWrap.hidden underneath)
     const dOn = deepOn();
@@ -1044,15 +1029,9 @@ let resize, animate, draw, stageStats, warmScene;
         A.proj('rain', tx - 50 - Math.random() * 20, -10, tx, ty, 0.3, '#8FD46A', 0, (x, y) => A.burstPx(x, y, '#E8DCC0', 2, 30));
       }
     }
-    if (blessN > 0 && !reduced) {
-      blessMote -= dt;
-      if (blessMote <= 0) { blessMote = 0.45; for (const a of comps) A.part(a.hx + (Math.random() - 0.5) * 12, a.hy - 10 - Math.random() * 30, 0, -14, 0.9, '#F2C14E', 0, 1, 3); }
-    }
     if (look.trail && hero._f) stepTrail(dt);
     A.step(dt);
     if (hudOn()) stepHud(dt);
-    abilityTimer -= dt;
-    if (abilityTimer <= 0) { abilityTimer = 0.1; updateAbilityButton(); }
   };
 
   // ================= drawing =================
@@ -1665,32 +1644,6 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.fillStyle = '#FFF6E0'; ctx.fillRect(x + 3 * s - e, y + 2 * s, s + 2 * e, 5 * s); ctx.fillRect(x + 3 * s - e, y + 8 * s, s + 2 * e, s + e);
     return h + 2 * s;
   }
-  // Threat (7.4): each foe's target, in the colour of that member's role (tank blue, striker green,
-  // caster violet, support gold): a pip by the foe's bar and a faint dotted line to the target. A foe
-  // that leaves a tank shows red for 1 s. Setting "Show targets": S.settings.targets (missing = on).
-  const targetsOn = () => !(S.settings && S.settings.targets === false);
-  const ROLE_COL = { tank: '#6A93FF', striker: '#63C96F', caster: '#B47BFF', support: '#F2C14E' }, THREAT_RED = '#FF4A4A';
-  const DASH = [2, 4], NO_DASH = [];
-  let dashU = 0;
-  function threatOf(s) {
-    const m = s.m;
-    if (!slotLive(s) || m.tgt < 0 || m.born < 0.3 || m.stunT > 0) return null;
-    const a = actorOf(unitKey(m.tgt));
-    return a && !a.down && a.fr && actorA(a) > 0.5 ? a : null;
-  }
-  function drawThreatLines(X, Y, cam) {
-    // one logical px wide, dots of one logical px every three (device px: K = DPR x zoom)
-    const K = DPR * ZM, w = Math.max(1, Math.round(K * 0.8));
-    if (dashU !== K) { dashU = K; DASH[0] = Math.max(1, Math.round(K)); DASH[1] = Math.max(2, Math.round(2 * K)); }
-    ctx.setLineDash(DASH); ctx.lineWidth = w;
-    for (let i = 0; i < packN; i++) {
-      const s = slots[i], a = threatOf(s); if (!a) continue;
-      const red = s.red > 0;
-      ctx.globalAlpha = red ? 0.9 : 0.55; ctx.strokeStyle = red ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker;
-      ctx.beginPath(); ctx.moveTo(X(s.left + 6 - cam), Y(s.cy)); ctx.lineTo(X(ax(a) + 10 - cam), Y(a.hy - 30)); ctx.stroke();
-    }
-    ctx.setLineDash(NO_DASH); ctx.globalAlpha = 1;
-  }
   function drawHud(cam, ox, oy) {
     const K = DPR * ZM, X = x => Math.round((x + ox) * K), Y = y => Math.round((y + oy) * K);
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -1710,8 +1663,6 @@ let resize, animate, draw, stageStats, warmScene;
     const fight = tg === 'mob', tele = fight && typeof bossTelegraph === 'function' ? bossTelegraph() : null;
     const bw = Math.max(10, Math.min(14, Math.round(16 * K / U))) * U;
     const heroChips = guardN > 0 || blessN > 0 || wallT > 0 || hymnT > 0 || hasteLeft > 0 || restF > 0;
-    const showT = fight && targetsOn() && partyCombatOn();
-    if (showT) drawThreatLines(X, Y, cam);
     // party: an HP bar (and ability gauge) over each head; the hero's chips to the right of its bar
     // (toward the foe: above it they would cover the face of an ally in the upper lane). Knocked-out
     // members and a party falling back show none.
@@ -1730,29 +1681,25 @@ let resize, animate, draw, stageStats, warmScene;
         if (restF > 0) pushChip('rest', 0, restF);
         chipRow(cx + (bw >> 1) + 2 * U, y + bh, true);
       }
-      // a foe just left a tank for this member: an eye by its bar
-      if (a.eye > 0 && showT && (reduced || (T * 5 % 1) < 0.7)) badge(cx - (bw >> 1) - 9 * U, y - U, 'eye');
       if (tele && tele.kind === 'dive' && tele.target === a.key) bangAt(cx, y, 'dive');
     }
     if (!fight) { hudFoeTop = foe.top; return; }
     for (let i = 0; i < packN; i++) {
-      const s = slots[i], top = foeHud(s, X, Y, cam, minY, tele, showT);
+      const s = slots[i], top = foeHud(s, X, Y, cam, minY, tele);
       if (s === foe && top != null) hudFoeTop = Math.min(foe.top, top / K - oy);
     }
   }
   // One foe's HUD (device px): its HP bar (not for bosses: their HP is in the header) with a crown
-  // (champion) or a mark (elite), its threat pip, its chips (Focus, Embers), a green "+" while a
+  // (champion) or a mark (elite), its chips (Focus, Embers), a green "+" while a
   // Marsh Wraith channels its heal, and the boss "!". Returns the top of what it drew.
   const OTHER_BADGE = ['stun', 'root', 'burn', 'curse', 'mark'];
-  function foeHud(s, X, Y, cam, minY, tele, showT) {
+  function foeHud(s, X, Y, cam, minY, tele) {
     if (!slotLive(s) || s.m.born < 0.1) return null;
     const m = s.m, K = DPR * ZM, cx = X(s.x - cam);
     let y = Y(s.gy - s.h + headTop(s.fr.idle0)) - 2 * U;
-    const a = showT ? threatOf(s) : null, pipCol = a ? (s.red > 0 ? THREAT_RED : ROLE_COL[a.role] || ROLE_COL.striker) : null;
     // S6-E (combat-2 2.6): in a pack of 4+ only the focus foe, elites and champions show a bar; the others show at
-    // most one badge (Stun, Root, Burn, Curse, Mark) and a threat pip only while they hit a non-tank
+    // most one badge (Stun, Root, Burn, Curse, Mark)
     if (packN > 3 && s !== foe && !m.elite && !m.champ && !m.boss) {
-      if (pipCol && a.role !== 'tank') { y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U); }
       if (typeof stLeft === 'function') for (const id of OTHER_BADGE) if (stLeft(m, id) > 0) { pushChip(id, 0, -1); const h = chipRow(cx, y - U); if (h) y -= h + U; break; }
       if (m.cast && m.cast.left > 0 && m.cast.kind !== 'hard') { y -= 8 * U; if (reduced || (T * 4 % 1) < 0.7) badge(cx - (7 * U >> 1), Math.max(minY, y), 'heal'); }
       if (tele && tele.foe === m && tele.kind !== 'dive') { const bs = y - 26 * U >= minY ? 2 * U : U; y -= bangAt(cx, Math.max(minY + 13 * bs, y), tele.kind, bs); }
@@ -1766,9 +1713,6 @@ let resize, animate, draw, stageStats, warmScene;
       if (m.champ || m.elite) badge(x0 - 7 * U, y - (U >> 1), m.champ ? 'crown' : 'elite');
       // S6-E: an elite's stagger fill, a 1 HUD px gold line under its bar once it has any (combat-2 3.4)
       if (m.elite && (m.sb > 0 || m.stgT > 0) && typeof actStagMax === 'function') { ctx.fillStyle = '#F2C14E'; ctx.fillRect(x0 + U, y + 4 * U, Math.max(U, Math.round((fw - 2 * U) * (m.stgT > 0 ? 1 : Math.min(1, m.sb / actStagMax(m))))), U); }
-      if (pipCol) { const px = x0 + fw + 2 * U + U; ctx.fillStyle = HK; ctx.fillRect(px, y - (U >> 1), 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(px + U, y + (U >> 1), 3 * U, 3 * U); }
-    } else if (pipCol) {
-      y -= 5 * U; ctx.fillStyle = HK; ctx.fillRect(cx - (5 * U >> 1), y, 5 * U, 5 * U); ctx.fillStyle = pipCol; ctx.fillRect(cx - (5 * U >> 1) + U, y + U, 3 * U, 3 * U);
     }
     if ((s === foe && markLeft > 0) || m.markT > 0) pushChip('mark', 0, Math.min(1, (s === foe && markLeft > 0 ? markLeft : m.markT) / 8));
     if (m.embers | 0) pushChip('ember', m.embers | 0, -1);
@@ -1797,40 +1741,6 @@ let resize, animate, draw, stageStats, warmScene;
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
 
-  // ================= ability button =================
-  const ICONS = {};
-  function abilityIcon(cls) {
-    if (ICONS[cls]) return ICONS[cls];
-    const c = document.createElement('canvas'); c.width = 12; c.height = 12;
-    const g = c.getContext('2d'), P = { k: '#0B0810', 1: '#DCE4F0', 2: '#7C8290', 3: '#F2C14E', o: '#FF9E3D', y: '#FFD27A', w: '#FFF3C4' };
-    const map = rows => rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (P[r[x]]) { g.fillStyle = P[r[x]]; g.fillRect(x, y, 1, 1); } });
-    if (cls === 'warden') map(['.kkkkkkkkkk.', 'k1111332222k', 'k1111332222k', 'k1133333322k', 'k1133333322k', 'k1111332222k', 'k1111332222k', '.k11133222k.', '.k11133222k.', '..k113322k..', '...k1322k...', '....kkkk....']);
-    else if (cls === 'lanternmage') map(['.....kk.....', '....kook....', '....kook....', '...kooyok...', '...koyyok...', '..kooyyook..', '..koywwyok..', '.kooywwyook.', '.koyywwyyok.', '.kooyyyyook.', '..kooooook..', '...kkkkkk...']);
-    else if (cls === 'ranger') {
-      for (const o of [0, 4]) {
-        for (let i = 0; i < 8; i++) { g.fillStyle = '#E8DCC0'; g.fillRect(o + i, i + 1 - o / 2 + 1, 1, 1); }
-        g.fillStyle = '#8FD46A'; g.fillRect(o, 1 - o / 2 + 1, 2, 1); g.fillRect(o, 2 - o / 2 + 1, 1, 1);
-        g.fillStyle = '#FFFFFF'; g.fillRect(o + 7, 7 - o / 2 + 1, 2, 2);
-      }
-    } else {
-      for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) {
-        const d = Math.hypot(x - 5.5, y - 5.5), ray = (x === 5 || x === 6 || y === 5 || y === 6 || Math.abs(x - y) < 1 || Math.abs(x + y - 11) < 1);
-        const col = d < 2.2 ? '#FFF3C4' : d < 3.4 ? '#F2C14E' : d < 3.9 ? '#0B0810' : ray && d < 5.8 ? '#FFD27A' : null;
-        if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); }
-      }
-    }
-    return (ICONS[cls] = c);
-  }
-  const abBtn = el('button', 'abil'); abBtn.type = 'button'; abBtn.hidden = true;
-  const abIc = el('canvas', 'abil-ic'); abIc.width = 12; abIc.height = 12;
-  const abCd = el('span', 'cd'), abN = el('span', 'n');
-  abBtn.append(abIc, abCd, abN);
-  stageEl.append(abBtn);
-  abBtn.addEventListener('pointerdown', e => e.stopPropagation());
-  abBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!castAbility()) { abBtn.classList.remove('nope'); void abBtn.offsetWidth; abBtn.classList.add('nope'); }
-  });
   // Battle HUD toggle (S.settings.hud; a missing value means on): a small two-bar button.
   const hudBtn = el('button', 'hud-btn'); hudBtn.type = 'button';
   const hudIc = el('canvas'); hudIc.width = 7; hudIc.height = 7; hudBtn.append(hudIc);
@@ -1851,52 +1761,6 @@ let resize, animate, draw, stageStats, warmScene;
     S.settings.hud = !hudOn(); drawHudBtn(); save();
   });
   drawHudBtn(); stageEl.append(hudBtn);
-  // "Show targets" toggle (S.settings.targets; missing = on), next to the bars button: each foe's
-  // target pip and dotted line. Shown only in a fight with the battle bars on.
-  const tgtBtn = el('button', 'hud-btn tgt-btn'); tgtBtn.type = 'button';
-  const tgtIc = el('canvas'); tgtIc.width = 7; tgtIc.height = 7; tgtBtn.append(tgtIc);
-  let tgtBtnOn = null, tgtShow = null;
-  function drawTgtBtn() {
-    const on_ = tgtBtnOn = targetsOn(), g = tgtIc.getContext('2d');
-    g.clearRect(0, 0, 7, 7);
-    g.fillStyle = on_ ? '#E0524F' : '#6B6275'; g.fillRect(4, 0, 3, 3);
-    g.fillStyle = on_ ? '#6A93FF' : '#6B6275'; g.fillRect(0, 5, 2, 2); g.fillRect(2, 3, 1, 1); g.fillRect(3, 2, 1, 1); g.fillRect(1, 4, 1, 1);
-    tgtBtn.classList.toggle('off', !on_);
-    tgtBtn.title = on_ ? 'Showing who each foe attacks. Tap to hide.' : 'Tap to show who each foe attacks.';
-    tgtBtn.setAttribute('aria-label', 'Show targets'); tgtBtn.setAttribute('aria-pressed', on_ ? 'true' : 'false');
-  }
-  function checkTgtBtn() {
-    const show = hudOn() && target() === 'mob' && typeof partyCombatOn === 'function' && partyCombatOn();
-    if (show !== tgtShow) { tgtShow = show; tgtBtn.hidden = !show; }
-    if (targetsOn() !== tgtBtnOn) drawTgtBtn();
-  }
-  tgtBtn.addEventListener('pointerdown', e => e.stopPropagation());
-  tgtBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!S.settings) return;
-    S.settings.targets = !targetsOn(); drawTgtBtn(); save();
-  });
-  drawTgtBtn(); stageEl.append(tgtBtn);
-  let abilityTimer = 0, abCls = '', abLeft = -1, abReady = null, abAuto = null;
-  function updateAbilityButton() {
-    const info = typeof abilityInfo === 'function' ? abilityInfo() : null;
-    const show = false;   // the button row (75-solo-ui) has the ability; this stage button is dead (UX-L1 can drop it)
-    if (abBtn.hidden === show) abBtn.hidden = !show;
-    if (!show) return;
-    const cls = S.party.cls;
-    if (cls !== abCls) {
-      abCls = cls;
-      const g = abIc.getContext('2d'); g.clearRect(0, 0, 12, 12); g.drawImage(abilityIcon(cls), 0, 0);
-      abBtn.setAttribute('aria-label', info.name + ': ' + info.desc);
-      abBtn.title = info.name;
-    }
-    const left = Math.ceil(info.left * 10) / 10;
-    if (left !== abLeft) { abLeft = left; abCd.style.setProperty('--cd', info.cd ? (info.left / info.cd).toFixed(3) : 0); abN.textContent = info.left > 0 ? Math.ceil(info.left) : ''; }
-    if (info.ready !== abReady) { abReady = info.ready; abBtn.classList.toggle('ready', info.ready); }
-    const auto = info.autoUnlocked && info.autoCast;
-    if (auto !== abAuto) { abAuto = auto; abBtn.classList.toggle('auto', auto); }
-  }
-
   // ================= taps =================
   let lastTap = 0;
   stageEl.addEventListener('pointerdown', e => {
