@@ -129,7 +129,7 @@ another copy of a milestone reward.
 The required short arc is Hesketh → Tam → an existing build → the Hollow relit → Hesketh.
 Nan and the other named workers deepen it when available. It must still finish for a player who
 never hires an optional legendary worker. No story condition changes the Fenmother fight,
-the Proving, the Great Lantern's rewards, C4's Tavern 2 gate, or C10's approved refining design.
+the Proving, the Great Lantern's rewards, C4's Tavern 2 gate, or a later approved C10 material-loop design.
 
 The chronology uses durable actions, not predicted days. The lore's “days 0–7” and old gatherer
 timelines are pacing estimates, not unlock timers. A future refining scene may use C10's first
