@@ -181,7 +181,17 @@ the Hone deed counts item upgrades and is unchanged. New notices: an ability mil
 cap now competes with Training. Proposal: cap it at 10 levels (+200%), or trim it to +10% a level, when the raid shop is
 reworked.
 
-**Pacing (sim.mjs, W2-A).** `--report early` 6/6 (idle: first boss 1.0-1.2 min, zone 5 8.2-9.6 min, zone 10 26.5-28.6 min;
-active 31% sooner). Training binds on hero level in the first hours (Attack = hero level) and on gold from day 2. Over 10
-days of normal play Training takes 25% of all gold spent (Blade, Swiftness and Precision took 37%; economy-2 EC4 wants
-15-30%). Max zone by day (normal, warden) is within a zone of the pre-W2-A solo game: see the wave-log numbers.
+**Pacing (sim.mjs, W2-A; "before" = the solo game at 7fd4f12).** Training binds on hero level in the first hours (Attack
+about equals the hero's level) and on gold from day 2. Over 10 days of normal play it takes 25% of all gold spent (Blade,
+Swiftness and Precision took 37%; economy-2 EC4 wants 15-30%).
+
+| | Wren (ranger) | Tobin (warden) | Pip (lanternmage) |
+|---|---|---|---|
+| `--report early` idle: first boss / zone 5 / zone 10 | 1.0 / 9.3 / 28.6 min (before 1.0 / 7.8 / 22.7) | 1.2 / 9.6 / 27.6 (1.3 / 10.0 / 28.6) | 1.0 / 8.2 / 26.5 (1.0 / 8.6 / 30.8) |
+| active zone 10 | 18.0 min | 21.4 min | 17.7 min |
+| continuous zone at 30 min / 1 h / 2 h / 3 h | 10 / 12 / 14 / 16 (11 / 14 / 16 / 17) | 10 / 12 / 14 / 16 (9 / 12 / 15 / 17) | 10 / 13 / 15 / 16 (9 / 12 / 14 / 16) |
+| normal play, zone at day 1 / 10 / 45 | 17 / 28 / 34 (17 / 35 / 42) | 15 / 26 / 31 (16 / 26 / 31) | 16 / 25 / 31 (16 / 27 / 31) |
+
+`--report early` 6/6 (before 2/6): active reaches zone 10 31% sooner than idle, no wipes, parity 0.96-1.04. Wren's damage
+went 0.85 -> 0.76 for parity (she ran ahead: 0.80 of the median before), which also takes away her lead past day 7. The
+day-1 target (D1, zones 20-26) and the Region 1 boss (P1) were already missed before W2-A; the solo combat retune (W4-A) owns them.

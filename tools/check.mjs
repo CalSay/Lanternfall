@@ -7025,7 +7025,7 @@ try {
           } catch (e) {}
           if (S.tab && !st) closeMenu();
           if (!step && S.activity !== 'fight') setActivity('fight');
-          try { let best = null, c = Infinity; for (const u of HERO_UPS) { const p = plan(u.base, u.r, S[u.id], 0, u.cap, '1'); if (p.cost < c) { c = p.cost; best = u.id; } } if (best && S.gold >= c && S.onboard.done.upgrade) buyHero(best, '1'); } catch (e) {}
+          try { const t = trainNext(); if (t && S.gold >= t.cost && S.onboard.done.upgrade) train(t.move, '1'); } catch (e) {}   // W2-A: the solo game trains (Blade and Swiftness are the party's)
           for (let k = 0; k < 20; k++) {
             if (ONBOARD.paused || soloPickerOpen() || document.getElementById('createScreen')) break;
             tick(0.1);
