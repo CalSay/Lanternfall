@@ -2562,11 +2562,11 @@ if (section('hands')) try {
     const rmB = E('(() => { globalThis.__rb = [addBonus("handBeds", () => 2), addBonus("handBedsMax", () => 2)]; return handsBedsAt(5, 8); })()');
     E('globalThis.__rb.forEach(f => f())');
     assert(rmB === 8 && E('handsBedsAt(5, 8)') === 6, 'the bed cap is data-driven: bonuses handBeds and handBedsMax raise it (8 with +2 / +2)');
-    assert(E('CAMP_B.bunk.opens') === 2 && E('campList().includes("bunk")') && E('campCan("bunk").to') === 2 && E('campCost("bunk", 2).mats.length') > 0, 'the Bunkhouse is a camp building (Lv 1-5, opens at Hearth 2)');
+    assert(E('!campList().includes("bunk") && !campCan("bunk").ok && campList().includes("tent")') && E('campCost("tent", 3).mats.length') > 0, 'C1: Tents replace new Bunkhouse builds; old bed data remains readable');
     {
       const c = loadCore({ seed: 91, cold: true }), C = s => c.eval(s);
       C('S.mats.wood[0] = 20; hearthLight()');
-      assert(C('hearthLit() && !campList().includes("bunk")') && C('(S.camp.b.tavern = 1, campList().includes("bunk"))'), 'a cold Hearth: the Bunkhouse plot opens after the Tavern');
+      assert(C('hearthLit() && !campList().includes("tent")') && C('(S.camp.b.tavern = 1, S.camp.b.hearth = 2, campList().includes("tent"))'), 'C1: a cold Hearth opens the Tents plot with Hearth 2 and the Tavern');
       errs.push(...c.errors);
     }
     errs.push(...g.errors);
@@ -2574,7 +2574,7 @@ if (section('hands')) try {
   // -- beds cap hires; Tam once; the board holds 3 and fills every 8 h --
   {
     const [g, E] = mk(84, 1);
-    assert(E('S.hands.tam') === 1 && E('handsGet("tam").sk') === 'wood' && E('handsGet("tam").tr.join()') === 'steady' && E('handsGet("tam").r') === 'common', 'Tam arrives free: a Common Woodcutter, Steady');
+    assert(E('S.hands.tam') === 1 && E('handsGet("tam").sk') === 'wood' && E('handsGet("tam").tr.join()') === 'steady' && E('handsGet("tam").r') === 'legendary', 'C1: Tam arrives free: a Legendary Woodcutter, Steady');
     assert(E('handsTents()') === 2 && E('handsFree()') === 1, 'W1-E: 2 Tents come free with the Tavern (Bunkhouse or not); Tam has one');
     const g0 = E('S.gold'), cost = E('handsBoard()[0].cost');
     assert(E('!!handsHire(0)') && E('S.gold') === g0 - cost && E('handsList().length') === 2 && E('handsFree()') === 0, `a second gatherer takes the second Tent; the hire costs ${cost} gold (econHireFee)`);
@@ -2608,35 +2608,35 @@ if (section('hands')) try {
   };
   {
     const a = shift(true), b = shift(false), c = shift(true);
-    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => /Tam is back from the Pine Grove: \+\d+ Pine Log/.test(l.txt));
-    assert(a.j && Math.abs(a.j.end - a.j.start - 2 * 3600e3) < 1 && a.j.rate > 0, `a Common Lv 1 shift is 2 h, fixed at send (rate ${a.j.rate.toFixed(1)} an hour)`);
+    const E = a.E, backLine = ((b.r && b.r.extra) || []).find(l => /Tam is back from the Pine Grove: \+[\d.,]+K? Pine Log/.test(l.txt));
+    assert(a.j && Math.abs(a.j.end - a.j.start - 4 * 3600e3) < 1 && a.j.rate > 0, `C1: a Lv 1 shift is 4 h, fixed at send (rate ${a.j.rate.toFixed(1)} an hour)`);
     assert(E('handsList().every(x => !x.job && !x.pack.length)') && E('handsStatus("tam").st') === 'camp' && a.wood > 0, `the shift ends: Tam comes home, the pack unloads (+${a.wood} Pine Log), he waits at camp`);
     assert(a.log === b.log && a.wood === b.wood && !!backLine, `the same haul online and through awayGains (${a.log}); the away card: "${backLine ? backLine.txt : '-'}"`);
     assert(a.log === c.log, 'the same seed gives the same haul');
     // (the Journal's away diff, 55-stats, counts every gathered family that grew while away, expedition and Hands' parcels included)
     const noG = x => JSON.stringify(JSON.parse(x).slice(0, 5));
     assert(a.ev.harvest === 0 && b.ev.harvest === 0 && a.st0 === a.st1 && noG(b.st0) === noG(b.st1), "Hands emit no harvest: no skill XP, no tool mastery, no rare finds, no achievement gathered units (live: no Journal units either)");
-    assert(E('handsGet("tam").lv') === 2 && Math.abs(E('S.hands.hrs') - E('handsList().reduce((a, x) => a + x.hrs, 0)')) < 1e-9 && E('handsGet("tam").hrs') === 2 && E('handsStats().hours') === E('S.hands.hrs') && E('handsStats().hired') === 2, `levels by hours worked (Tam Lv ${E('handsGet("tam").lv')} after 2 h; ${E('S.hands.hrs').toFixed(1)} h in all)`);
+    assert(E('handsGet("tam").lv') === 2 && Math.abs(E('S.hands.hrs') - E('handsList().reduce((a, x) => a + x.hrs, 0)')) < 1e-9 && E('handsGet("tam").hrs') === 4 && E('handsStats().hours') === E('S.hands.hrs') && E('handsStats().hired') === 2, `C1: levels by hours worked (Tam Lv ${E('handsGet("tam").lv')} after 4 h; ${E('S.hands.hrs').toFixed(1)} h in all)`);
   }
   // -- parcels wait for room; a Hand with a pack cannot be sent; Empty the pack --
   {
     const [g, E] = mk(86, 1);
     E('handsSend("tam", "wood", 1); S.mats.wood[0] = storeCap("wood", 1) - 10');
-    clock(g, T0 + 3 * 3600e3); secs(g, 1.2);
+    clock(g, T0 + 4 * 3600e3); secs(g, 1.2);
     const pack = JSON.parse(E('JSON.stringify(handsGet("tam").pack)'));
     assert(pack.length === 1 && pack[0][2] > 10 && E('S.mats.wood[0]') === E('storeCap("wood", 1)') - 10 && E('handsStatus("tam").st') === 'pack', `the pack waits whole when the Storehouse lacks room (${pack[0] && pack[0][2]} Oak Log, 10 free)`);
     assert(!E('handsCanSend("tam", "wood", 1).ok') && E('handsSend("tam", "wood", 1)') === null && /pack waits/.test(E('handsCanSend("tam", "wood", 1).why')), `a Hand with a pack cannot be sent ("${E('handsCanSend("tam", "wood", 1).why')}")`);
     assert(!E('handsLetGo("tam")'), 'a Hand with a pack cannot be let go');
     E('S.mats.wood[0] = 0'); secs(g, 1.2);
     assert(E('handsGet("tam").pack.length') === 0 && E('S.mats.wood[0]') === pack[0][2], '...and it lands once there is room');
-    E('handsSend("tam", "wood", 1); S.mats.wood[0] = storeCap("wood", 1)'); clock(g, T0 + 6 * 3600e3); secs(g, 1.2);
+    E('handsSend("tam", "wood", 1); S.mats.wood[0] = storeCap("wood", 1)'); clock(g, T0 + 8 * 3600e3); secs(g, 1.2);
     const n = E('handsGet("tam").pack[0][2]');
     assert(E('handsEmpty("tam")') === n && E('handsGet("tam").pack.length') === 0 && E('handsCanSend("tam", "wood", 1).ok'), `Empty the pack throws it away (${n}) and frees the Hand`);
     E('handsSend("tam", "wood", 1)');
     assert(!E('handsLetGo("tam")'), 'a Hand out on a shift cannot be let go');
     errs.push(...g.errors);
   }
-  // -- pity: Rare+ every 8, Epic+ every 25, Legendary every 90 --
+  // -- C1 pity: Rare+ every 8, Epic every 25, a named star spot every 90 --
   {
     const [g, E] = mk(87, 5);
     const gaps = E(`(() => {
@@ -2647,9 +2647,9 @@ if (section('hands')) try {
       }
       return { worst, got };
     })()`);
-    assert(gaps.worst[0] <= 8 && gaps.worst[1] <= 25 && gaps.worst[2] <= 90 && gaps.got.legendary > 0, `pity holds over 3,000 applicants: longest gaps ${gaps.worst.join(' / ')} (want <= 8 / 25 / 90); ${JSON.stringify(gaps.got)}`);
+    assert(gaps.worst[0] <= 8 && gaps.worst[1] <= 25 && !gaps.got.legendary, `C1: random pity holds over 3,000 applicants: Rare/Epic longest gaps ${gaps.worst.slice(0, 2).join(' / ')} (want <= 8 / 25); ${JSON.stringify(gaps.got)}`);
     const leg = E('(() => { S.hands.pity = [0, 0, 89]; return handsRollApp(); })()');
-    assert(leg.r === 'legendary' && !!leg.key && !!leg.cl && leg.tr.length === 2, `the 90th applicant without one is a named Legendary (${leg.n}, ${leg.cl})`);
+    assert(leg.r !== 'legendary' && !leg.key && E('S.hands.board.apps.some(a => a.key && a.r === "legendary")'), 'C1: Word on the Road puts named Legendaries in star spots; the 90th random applicant stays Common–Epic');
     errs.push(...g.errors);
   }
   // -- save round trip mid-shift: the job pays the same after a reload --
@@ -5102,6 +5102,171 @@ if (section('tavern perks and rumours (C3)')) try {
   const errs = games.flatMap(g => g.errors);
   assert(!errs.length, 'C3: no Tavern perk handler errors' + (errs.length ? ': ' + errs[0] : ''));
 } catch (e) { fail('C3 Tavern perks crashed: ' + (e.stack || e)); }
+// ---- C1: Tents, fixed shifts, queues, recall and named routes (economy-2 4-5) ----
+if (section('gatherer engine gaps (C1)')) try {
+  const HOUR = 3600e3, T0 = new Date(2026, 8, 28, 12).getTime(), games = [];
+  const clock = (g, t) => g.eval(`Date.__t = ${t}; Date.now = () => Date.__t`);
+  const pulse = g => { for (let i = 0; i < 12; i++) g.fn.tick(0.1); };
+  const mk = () => {
+    const g = loadCore({ seed: 7101, prelude: `Date.__t = ${T0}; Date.now = () => Date.__t` });
+    games.push(g);
+    g.eval('S.maxZone = 12; S.camp.open = true; S.camp.b.hearth = 2; S.camp.b.tavern = 1; S.camp.b.store = 8; S.gold = 1e9');
+    pulse(g);
+    return g;
+  };
+  const paid = g => g.eval('Object.assign(handsGet("tam"), { key: null, sent: 99, r: "common", tr: [], cl: null }); S.mats.wood[0] = 0');
+  const snap = g => g.eval('JSON.stringify([handsGet("tam"), S.hands.log, S.hands.hrs, S.mats.wood, S.econ.spent.shift])');
+  // Tents use camp builders, costs, timers and cancellation; starter Tents never depend on a Bunkhouse.
+  {
+    const g = mk(), E = s => g.eval(s);
+    assert(E('handsTents() === 2 && S.camp.b.tent === 2 && handsFree() === 1'), 'C1: the Tavern grants two Tents; Tam occupies one');
+    assert(E('campList().includes("tent") && !campList().includes("bunk") && campMaxLevel("tent") === 10'), 'C1: Tents replace the Bunkhouse in the camp, capped at ten');
+    E('S.camp.b.hearth = 3; for (const a of Object.values(S.mats)) if (Array.isArray(a)) a.fill(1e6)');
+    assert(!E('campCan("tent").ok') && !E('campBuild("tent")'), 'C1: Tent 3 cannot start before Hearth 4');
+    E('S.camp.b.hearth = 4');
+    const cost = JSON.parse(E('JSON.stringify(campCost("tent", 3))')), gold = E('S.gold'), wood = E('S.mats.wood[1]');
+    assert(cost.gold === 23000 && JSON.stringify(cost.mats) === JSON.stringify([['wood', 2, 120], ['fibre', 2, 80], ['hide', 2, 40]]), 'C1: Tent 3 costs 23,000 gold, 120 Birch, 80 Linen and 40 Leather');
+    assert(E('campBuild("tent")') && E('S.gold') === gold - 23000 && E('S.mats.wood[1]') === wood - 120 && E('handsTents()') === 2, 'C1: starting Tent 3 pays once and keeps capacity at two until completion');
+    assert(E('campBuilds().find(b => b.id === "tent").end - campBuilds().find(b => b.id === "tent").start') === HOUR, 'C1: Tent 3 takes one hour');
+    assert(E('campCancel("tent")') && E('S.gold') === gold - 11500 && E('S.mats.wood[1]') === wood - 60, 'C1: cancelling a started Tent refunds half its gold and materials');
+    E('campBuild("forge")'); const queuedGold = E('S.gold'), queuedWood = E('S.mats.wood[1]');
+    assert(E('campBuild("tent") && campPending("tent").start === 0 && campCancel("tent")') && E('S.gold') === queuedGold && E('S.mats.wood[1]') === queuedWood, 'C1: cancelling an unstarted Tent returns its entire gold and material cost');
+    E('campCancel("forge"); campBuild("tent")'); clock(g, T0 + HOUR); E('campCatchUp(Date.now())');
+    assert(E('handsTents() === 3 && campLevel("tent") === 3 && !campPending("tent")'), 'C1: a completed Tent increases the hiring cap once');
+    E('S.maxZone = 35'); assert(!E('campCan("tent").ok'), 'C1: Tent 4 requires the Coast');
+    E('S.maxZone = 36'); assert(E('campCan("tent").ok') && E('campCost("tent", 4).gold') === 42000, 'C1: Tent 4 opens on reaching the Coast');
+    // The authored future rows remain gated rather than silently replacing unshipped refined materials.
+    const rows = E('ECON.tents.slice(5).map((r, i) => ({ to: i + 5, zone: r.gate.zone, gold: r.gold }))');
+    for (const r of rows) {
+      E(`S.camp.b.tent = ${r.to - 1}; S.maxZone = ${r.zone - 1}`);
+      assert(!E('campCan("tent").ok'), `C1: Tent ${r.to} stays closed before zone ${r.zone}`);
+      E(`S.maxZone = ${r.zone}`);
+      assert(E(`campCost("tent", ${r.to}).gold`) === r.gold && !E('campCan("tent").ok') && /not available|not yet|unavailable|refin/i.test(E('campCan("tent").why')), `C1: Tent ${r.to} retains its authored price and explains its unavailable materials`);
+    }
+  }
+  // C1's current flat-four-hour instruction overrides the older spec's level duration extensions.
+  {
+    const g = mk(), E = s => g.eval(s);
+    assert(E('HANDS_RAR.every(r => [[], ["strong"], ["mule"], ["home"], ["wander"], ["owl"]].every(tr => [0, 12, 20].every(h => handsShiftSecs({r, lv: 1, tr}, "wood", new Date(2026, 8, 28, h).getTime()) === 14400)))'), 'C1: every rarity and former duration trait has a four-hour base, by day and night');
+    assert(E('[5,10,15,20].every(lv => handsShiftSecs({r:"common",lv,tr:[]},"wood",Date.now()) === 14400)'), 'C1: higher levels also keep the flat four-hour shift');
+    assert(E('handsGet("tam").r === "legendary" && handsFee(handsGet("tam"), "wood", 1) === 0'), 'C1: Tam is Legendary and his first shift is free');
+    const start = E('S.gold');
+    for (let n = 0; n < 3; n++) { E('handsSend("tam", "wood", 1)'); const end = E('handsGet("tam").job.end'); clock(g, end); E('handsCatchUp(Date.now()); S.mats.wood[0] = 0'); }
+    assert(E('S.gold') === start && E('handsGet("tam").sent') === 3 && E('handsFee(handsGet("tam"),"wood",1)') > 0, 'C1: exactly Tam\'s first three started shifts are free');
+    const fee = E('handsFee(handsGet("tam"),"wood",1)');
+    assert(E('handsSendAgain("tam")') === 1 && E('S.gold') === start - fee && E('handsGet("tam").job.kind === "wood" && handsGet("tam").job.t === 1'), 'C1: Send again repeats the previous node and pays the fourth shift fee');
+    assert(E('handsSendAgain("tam")') === 0, 'C1: Send again never sends an already busy gatherer twice');
+  }
+  // An active recall earns only elapsed work, retains the current fee, and returns unused queue fees once.
+  {
+    const g = mk(), E = s => g.eval(s); paid(g);
+    const skills = E('JSON.stringify([S.skills, S.tools.m])'), gold = E('S.gold');
+    const fee = E('handsFee(handsGet("tam"),"wood",1)');
+    assert(fee === 2000 && E('handsQueueMax()') === 2 && E('!!handsSend("tam","wood",1,{shifts:2})') && E('S.gold') === gold - 2 * fee, 'C1: two shifts pay both 2,000-gold fees at send');
+    const rate = E('handsGet("tam").job.rate'); clock(g, T0 + HOUR);
+    assert(E('handsRecall("tam")') && E('S.gold') === gold - fee && E('!handsGet("tam").job'), 'C1: recalling after an hour refunds only the unstarted shift');
+    assert(Math.abs(E('S.mats.wood[0]') - rate) <= 1 && E('handsGet("tam").hrs') === 1 && E('S.hands.hrs') === 1, 'C1: recall awards one hour of haul and work credit, with only seeded rounding');
+    assert(!E('handsRecall("tam")') && E('S.gold') === gold - fee && E('JSON.stringify([S.skills, S.tools.m])') === skills, 'C1: a second recall pays nothing and gatherers give no hero skill or tool XP');
+    E('S.gold = 0'); const state = E('JSON.stringify(handsGet("tam"))');
+    assert(!E('handsCanSend("tam","wood",1).ok') && E('handsSendAgain("tam")') === 0 && E('JSON.stringify(handsGet("tam"))') === state, 'C1: an unpaid gatherer stays home unchanged');
+  }
+  // Rest is part of the saved queue; cancelling before departure refunds that whole next shift.
+  {
+    const g = mk(), E = s => g.eval(s); paid(g); const gold = E('S.gold');
+    E('handsSend("tam","wood",1,{shifts:2})'); clock(g, T0 + 4 * HOUR); E('handsCatchUp(Date.now())');
+    assert(E('handsStatus("tam").st') === 'rest' && E('handsGet("tam").job.start') === T0 + 4.5 * HOUR, 'C1: the prepaid second shift waits thirty minutes before departure');
+    assert(E('handsRecall("tam")') && E('S.gold') === gold - 2000 && E('handsGet("tam").hrs') === 4, 'C1: recall during rest refunds the next fee without adding work');
+    const h = mk(), F = s => h.eval(s); paid(h); const before = F('S.gold');
+    F('handsSend("tam","wood",1,{shifts:2}); S.mats.wood[0] = storeCap("wood",1)'); clock(h, T0 + 12 * HOUR); F('handsCatchUp(Date.now())');
+    assert(F('handsGet("tam").pack.length > 0 && !handsGet("tam").job') && F('S.gold') === before - 2000 && F('handsGet("tam").hrs') === 4, 'C1: a full Storehouse stops the queue and refunds the unstarted shift');
+    F('handsCatchUp(Date.now()); handsRecall("tam")');
+    assert(F('S.gold') === before - 2000 && F('handsGet("tam").hrs') === 4, 'C1: repeated catch-up or recall cannot refund the blocked queue twice');
+    const pack = F('handsGet("tam").pack.reduce((n,l)=>n+l[2],0)');
+    assert(F('handsEmpty("tam")') === pack && F('handsGet("tam").pack.length') === 0 && F('handsCanSend("tam","wood",1).ok'), 'C1: Empty pack discards the blocked haul and frees the gatherer');
+  }
+  // Same stored seeds/rates/fees pay identically across frame-by-frame catch-up and a reloaded away phase.
+  {
+    const a = mk(); paid(a); a.eval('handsSend("tam","wood",1,{shifts:2}); save()');
+    const b = loadCore({ seed: 99, storage: memoryStorage({ [KEY]: a.storage.get(KEY) }), prelude: `Date.__t = ${T0}; Date.now = () => Date.__t` }); games.push(b);
+    assert(snap(a) === snap(b), 'C1: a save round trip preserves active shift, queued seed, fees and counters');
+    for (const h of [4, 4.25, 4.5, 8.5, 12]) { clock(a, T0 + h * HOUR); a.eval('handsCatchUp(Date.now())'); }
+    clock(b, T0 + 12 * HOUR); b.eval('emit("away", {})');
+    assert(snap(a) === snap(b) && a.eval('handsGet("tam").hrs') === 8, 'C1: both queued shifts pay the same after reload and offline, including the half-hour rest');
+    assert(a.eval('S.econ.spent.shift') === 4000, 'C1: levelling between queued shifts does not reprice prepaid fees');
+  }
+  {
+    const g = mk(), E = s => g.eval(s); paid(g); const gold = E('S.gold');
+    E('handsSend("tam","wood",1,{shifts:2})'); clock(g, T0 + 5.5 * HOUR);
+    assert(E('handsRecall("tam")') && E('handsGet("tam").hrs') === 5 && E('S.gold') === gold - 4000, 'C1: recalling an overdue first shift catches up, then recalls one hour of the already-started second shift without refund');
+    const h = mk(), F = s => h.eval(s), freeGold = F('S.gold');
+    F('handsSend("tam","wood",1,{shifts:2})'); clock(h, T0 + 4 * HOUR); F('handsRecall("tam")');
+    assert(F('handsGet("tam").sent') === 1 && F('S.gold') === freeGold && F('handsFee(handsGet("tam"),"wood",1)') === 0, 'C1: recalling Tam during rest consumes only the free shift he actually started');
+  }
+  // Staggered workers exercise chronological completions, overlap bonuses and at-camp XP traits.
+  {
+    const a = mk(); paid(a);
+    a.eval('handsGet("tam").tr = ["friendly", "chatter"]; handsGet("tam").cl = "felling"; S.hands.list.push(Object.assign(JSON.parse(JSON.stringify(handsGet("tam"))), {id:"c1-friend", n:"Friend", cl:null})); handsSend("tam","wood",1,{shifts:2})');
+    clock(a, T0 + HOUR); a.eval('handsSend("c1-friend","wood",1,{shifts:2}); save()');
+    const b = loadCore({ seed: 199, storage: memoryStorage({ [KEY]: a.storage.get(KEY) }), prelude: `Date.__t = ${T0 + HOUR}; Date.now = () => Date.__t` }); games.push(b);
+    for (let h = 1.25; h <= 12; h += 0.25) { clock(a, T0 + h * HOUR); a.eval('handsCatchUp(Date.now())'); }
+    clock(b, T0 + 12 * HOUR); b.eval('emit("away", {})');
+    const state = g => g.eval('JSON.stringify([S.hands.list, S.hands.log, S.hands.hrs, S.mats.wood, S.gold, S.econ.spent.shift])');
+    assert(state(a) === state(b), 'C1: staggered Friendly/Felling queues and at-camp Chatterbox XP match online and saved offline catch-up');
+  }
+  // Repeating a job preserves its queue; a limited budget starts cheaper jobs first.
+  {
+    const g = mk(), E = s => g.eval(s); paid(g);
+    E('handsSend("tam","wood",1,{shifts:2})'); clock(g, T0 + 12 * HOUR); E('handsCatchUp(Date.now())');
+    const gold = E('S.gold'), fee = E('handsFee(handsGet("tam"),"wood",1)');
+    assert(E('handsSendAgain("tam")') === 1 && E('handsGet("tam").job.q') === 1 && E('S.gold') === gold - 2 * fee, 'C1: Send again repeats the previous two-shift queue and charges its current full price');
+    const h = mk(), F = s => h.eval(s); paid(h);
+    F('Object.assign(handsGet("tam"), {lv:20,last:{kind:"wood",t:1}}); S.hands.list.push(Object.assign(JSON.parse(JSON.stringify(handsGet("tam"))), {id:"c1-cheap",n:"Cheap",lv:1})); S.gold=3000');
+    const before = F('JSON.stringify(S.hands)'), preview = F('handsSendAgainPreview()');
+    assert(preview.ready === 2 && preview.count === 1 && preview.fee === 2000 && F('JSON.stringify(S.hands)') === before && F('S.gold') === 3000, 'C1: Send all preview reports one of two ready gatherers and its 2,000-gold cost without changing state');
+    assert(F('handsSendAgain()') === 1 && F('!handsGet("tam").job && !!handsGet("c1-cheap").job && handsGet("c1-cheap").job.q === 0 && S.gold === 1000'), 'C1: Send all again starts the cheapest affordable job first and an old last-job record defaults to one shift');
+  }
+  {
+    const g = mk(), E = s => g.eval(s); paid(g);
+    E('handsGet("tam").cl="felling"; S.hands.list.push(Object.assign(JSON.parse(JSON.stringify(handsGet("tam"))), {id:"c1-wood",n:"Woodcutter",cl:null})); handsSend("tam","wood",1,{shifts:2}); handsSend("c1-wood","wood",1,{shifts:2})');
+    clock(g, T0 + 4.5 * HOUR); E('handsCatchUp(Date.now())');
+    assert(E('handsGet("c1-wood").job.bo.filter(b=>b[3]==="b").length') === 1, 'C1: simultaneous queued departures apply Felling Song exactly once');
+  }
+  // Named route arrivals occupy permanent star spots, separate from the three random places.
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.hands.board.apps = []; for (let i=0;i<3;i++) S.hands.board.apps.push(handsRollApp()); S.camp.b.loom = 2'); pulse(g);
+    assert(E('handsLegendSpots().some(b => b.app && b.app.key === "loy" && b.app.r === "legendary") && handsRandomApps().length === 3'), 'C1: Loom 2 brings Gammer Loy to a star spot even when three random applicants wait');
+    const i = E('S.hands.board.apps.findIndex(a=>a.key==="loy")');
+    assert(!E(`handsTurnAway(${i})`) && E('S.hands.board.apps.some(a=>a.key==="loy")'), 'C1: a named applicant cannot be turned away');
+    clock(g, T0 + 30 * 24 * HOUR); pulse(g);
+    assert(E('S.hands.board.apps.filter(a=>a.key==="loy").length') === 1, 'C1: named star spots neither expire nor duplicate over a month');
+    const cost = E('handsBoard().find(b=>b.app.key==="loy").cost'), gold = E('S.gold');
+    E('handsHire(S.hands.board.apps.findIndex(a=>a.key==="loy"))');
+    assert(cost === 20000 && E('S.gold') === gold - cost && E('handsList().some(x=>x.key==="loy")'), 'C1: a route arrival pays the Region 1 Legendary hire fee');
+    assert(E('handsLegendSpots().find(s=>s.key==="loy").state') === 'hired', 'C1: a hired named gatherer is marked hired in their star spot');
+    E('const x=handsList().find(x=>x.key==="loy"); x.lv=7; handsLetGo(x.id)');
+    assert(E('handsBoard().find(b=>b.app.key==="loy").cost') === 0 && E('S.hands.board.apps.find(a=>a.key==="loy").ret.lv') === 7, 'C1: letting a named gatherer go restores their star spot and preserves their level for free rehire');
+    const rolls = E('(()=>{const last=[0,0], worst=[0,0], got={}; for(let n=1;n<=1000;n++){const a=handsRollApp(),r=HANDS_RAR.indexOf(a.r); got[a.r]=(got[a.r]||0)+1; for(let k=0;k<2;k++) if(r>=k+2){worst[k]=Math.max(worst[k],n-last[k]);last[k]=n;} if(a.key) return {bad:true};} return {worst,got};})()');
+    assert(!rolls.bad && !rolls.got.legendary && rolls.worst[0] <= 8 && rolls.worst[1] <= 25, 'C1: 1,000 random applicants are Common–Epic only, with Rare/Epic pity intact');
+  }
+  {
+    const g = mk(), E = s => g.eval(s);
+    E('S.maxZone = 24'); pulse(g);
+    assert(E('!S.hands.board.apps.some(a=>["nan","bracken"].includes(a.key))'), 'C1: progress fallback does not reveal Nan or Bracken before zone 25');
+    E('S.maxZone = 25'); pulse(g);
+    assert(E('["nan","bracken"].every(k=>S.hands.board.apps.some(a=>a.key===k))'), 'C1: zone 25 brings Nan and Bracken even without their optional hero/elder routes');
+    E('S.maxZone = 30'); pulse(g);
+    assert(E('["rook","fennel"].every(k=>S.hands.board.apps.some(a=>a.key===k))'), 'C1: zone 30 brings Rook and Fennel without their unfinished rumour/quest systems');
+    E('S.maxZone = 32'); pulse(g);
+    assert(E('S.hands.board.apps.some(a=>a.key==="dorrie") && !S.hands.board.apps.some(a=>a.key==="jory")'), 'C1: zone 32 brings Dorrie while the unavailable Hunter route remains closed');
+    const h = mk(), F = s => h.eval(s);
+    const before = F('S.hands.board.apps.filter(a=>a.key).length');
+    F('S.hands.pity[2]=89; globalThis.__c1Road=handsRollApp()');
+    assert(F('__c1Road.r !== "legendary" && !__c1Road.key') && F('S.hands.board.apps.filter(a=>a.key).length') === before + 1, 'C1: the ninetieth-applicant pity brings a named star spot rather than rolling a random Legendary');
+  }
+  const errs = games.flatMap(g => g.errors);
+  assert(!errs.length, 'C1: no gatherer or camp handler errors' + (errs.length ? ': ' + errs[0] : ''));
+} catch (e) { fail('C1 gatherer engine gaps crashed: ' + (e.stack || e)); }
 
 // ---- W2-C: the dead leaf systems are gone (pinnacle bosses, legendary powers and circle sets, expeditions and the Map Room, the welcome and skill-pace old-save rules) ----
 // Static: no removed file, global, save field or CSS class is left anywhere in src/. Browser: every tab and sub-view opens with no page error.
