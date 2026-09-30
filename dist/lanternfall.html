@@ -38737,7 +38737,7 @@ let craftUI = null;
       ench.why.textContent = !f ? 'Transmute opens with the next crafting update.' : upShut ? `Trading up to ${nm(t + 1)} needs Enchanting Lv ${upReq}.` : dn && !dn.ok ? dn.why : '';
       // Star Chart (Oriel's recruit route): a recipe when K6 defines it as a kind or an action.
       const sc = K6.starChart(), made = !!(S.party && S.party.unlock && S.party.unlock.starChart);
-      ench.star.hidden = !(sc && !CRAFT_KINDS.starchart);
+      ench.star.hidden = soloOn() || !(sc && !CRAFT_KINDS.starchart);   // W2-B: solo has no Oriel to draw, so no Star Chart recipe
       if (!ench.star.hidden) {
         ench.star.textContent = '';
         ench.star.append(el('h3', null, 'Star Chart'), el('p', 'note', made ? 'You made the Star Chart. Oriel Vess has seen it.' : "Chart the sky to draw Oriel Vess, the Starcaller, to your camp."));

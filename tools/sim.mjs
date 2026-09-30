@@ -83,7 +83,7 @@
 //   the Camp (INFO) and the recruit table. --pace/--tune/--unlock/--syn/--seed/--bounties/--forge/
 //   --eval/--camp pass through.
 import { loadCore as loadCoreRaw } from './lib/core.mjs';
-// SOLO1: the game is one hero now (24b-data-solo.js SOLO_TUNE.on). --party 1 runs the dormant party game
+// SOLO1: the game is one hero now (24b-data-solo.js SOLO_TUNE.on); solo is the default here (W2-B). --party runs the dormant party game
 // (a prelude sets __SOLO = 0 before any game file) for its old targets.
 const PARTY = process.argv.includes('--party') && process.argv[process.argv.indexOf('--party') + 1] !== '0';
 const loadCore = opts => loadCoreRaw({ ...(opts || {}), prelude: (PARTY ? 'var __SOLO = 0;\n' : '') + ((opts && opts.prelude) || '') });

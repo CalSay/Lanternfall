@@ -8,6 +8,7 @@
 //   S6: scenarios swarm10 (a swarm of 10 with Burns and an Explosive elite, vs packs of 3 at the same zone) and bossKit
 //   (a kit boss through its phases, a summon, a Stagger and its Finisher); the quick run measures them on the late save
 //   options: --json out.json (write raw results)  --only phone|desktop  --save new|late
+//            --party (legacy: benchmark the dormant party build; solo, the shipped game, is the default)
 //            --html file (benchmark another build, e.g. an older commit's dist, for before/after)
 //            --trace dir (write a Chrome trace of each steady-fight window, open in DevTools Performance)
 //
@@ -27,6 +28,7 @@ const args = process.argv.slice(2);
 const QUICK = args.includes('--quick');
 const argVal = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const ONLY = argVal('--only'), ONLY_SAVE = argVal('--save'), JSON_OUT = argVal('--json'), TRACE = argVal('--trace'), HTML = argVal('--html');
+const PARTY = args.includes('--party');   // W2-B: solo (the shipped game) is the default; --party benchmarks the dormant party build
 const KEY = 'lanternfall.save.v4';   // W2-A: v4 (SOLO1: v3, ECON-A: v2)
 
 // ---------------- budget (keep in sync with docs/design/perf.md) ----------------
@@ -97,7 +99,8 @@ const HOOK = `
 function instrumented() {
   const file = HTML ? path.resolve(HTML) : path.join(ROOT, 'dist', 'lanternfall.html');
   if (!fs.existsSync(file)) throw new Error(file + ' missing: run node tools/build.mjs');
-  const html = fs.readFileSync(file, 'utf8');
+  let html = fs.readFileSync(file, 'utf8');
+  if (PARTY) html = html.replace("(() => {\n'use strict';\n", "(() => {\n'use strict';\nvar __SOLO = 0;\n");
   const end = html.lastIndexOf('})();\n</script>');
   if (end < 0) throw new Error('could not find the end of the game IIFE in dist');
   // The artifact host wraps the page in a document skeleton with a device-width viewport; do the
