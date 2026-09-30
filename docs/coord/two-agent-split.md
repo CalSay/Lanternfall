@@ -123,3 +123,29 @@ Claude keeps: integration, merges and publishing; design and balance sign-off; t
 `75-nav-ui.js`, landscape CSS, the action-bar layout and keys); stage drawing and hero art (`62-stage.js`,
 `61-anim.js`, `64h-hero-sprites.js`, `tools/heroart.mjs`); onboarding and the notices policy; the check harness
 structure; landscape check flakes; wiring new art.
+
+## 2026-09-30 evening: priority order after the pause (owner)
+
+Combat is going turn-based (`docs/design/combat-turns.md`). New issues: C23 bulk salvage #24, C24 Hunting #25,
+C25 enemy profiles #26. C20 (#21) is now the turn-based engine.
+
+**Codex, in order:**
+1. **C9 hero registry** (#10): finish. Rebase `codex/c9-hero-registry` on the latest checkpoint, run the full
+   suite, hand off.
+2. **C23 bulk salvage** (#24): finish the same way.
+3. **C20 turn-based combat** (#21): short spec for sign-off, then the engine behind a switch, then measurements.
+4. **C24 Hunting** (#25): numbers for sign-off, then build.
+5. **C10 Region 1 pacing** (#11): the gates now (Tent 3, Tent 4, Tam within an hour). Gold and Essence rates after
+   C20's measurements; count Hunting as a Hide source.
+6. **C25 enemy profiles** (#26): after C20.
+7. **C12 performance** (#13): finish the recovered WIP branch.
+8. **C14 offline parity** (#15): finish the accounting; offline combat rates follow C20.
+9. **C19 abilities and upgrade trees** (#20): cooldowns in turns; the stat tree includes haste bought with gold.
+10. **C15 Deepwell solo** (#16): after C20 (the recovered draft is a starting point).
+11. **C16 progress menus** (#17), then **C21 Ascension and Hallowed** (#22), **C22 Elowen's chapel** (#23).
+12. **C17 accessibility** (#18), **C13 playtest** (#14), **C18 docs and dead code** (#19).
+- Waiting: **C6 campaign NPCs** (#7) builds after M1. **C7 Mossy Hollow road** (#8) when backgrounds resume.
+
+**Claude:** the Auto toggle (replaces "auto after 5 s idle"); Wren's new poses and everyone's gathering poses, with
+code-drawn pickaxe, axe, sickle and spear; the versus card, turn strip and action bar for C20; merges and sign-offs;
+the landscape check flakes.
