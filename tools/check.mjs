@@ -932,7 +932,7 @@ if (section('gathering')) try {
   // Hide and essence come only from fights
   E('S.mats.hide = [0, 0, 0, 0, 0]; S.mats.ess = [0, 0, 0, 0, 0]; S.skills.forage.lv = 1; setNode("fibre", 1); setActivity("gather")');
   run(300);
-  assert(E('S.mats.hide.every(n => n === 0) && S.mats.ess.every(n => n === 0)') && E('!CRAFT_NODES.hide && !CRAFT_NODES.ess'), 'gathering never gives Hide or Essence');
+  assert(E('S.mats.hide.every(n => n === 0) && S.mats.ess.every(n => n === 0)') && E('!craftNodeEnabled("hide") && !CRAFT_NODES.ess'), 'default gathering never gives Hide or Essence');
   E('S.maxZone = 5; S.zone = 4; S.auto = false; setActivity("fight"); S.mastery.zones[4] = 0');
   const k0 = E('S.totalKills');
   for (let i = 0; i < 400; i++) E('spawn(); kill()');
@@ -1011,7 +1011,7 @@ if (section('gathering')) try {
 if (section('tools')) try {
   const fresh = seed => { const g = loadCore({ seed }); g.eval('almanac.force("none")'); return g; };
   const run = (h, secs) => { for (let t = 0; t < secs; t += 0.1) h.fn.tick(0.1); };
-  const M1 = JSON.stringify({ v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 });
+  const M1 = JSON.stringify({ v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0], spear: [1, 0] }, finds: 0 });
   {
     const g = fresh(71), E = s => g.eval(s);
     // data: every tool at the Workbench with three lines; the Woodaxe noun
@@ -6556,6 +6556,103 @@ if (section('future-dated save')) try {
   assert(/Math\.max\(0, \(Date\.now\(\) - S\.last\) \/ 1000\)/.test(fs.readFileSync(path.join(ROOT, 'src', 'js', '90-boot.js'), 'utf8')), 'boot measures time away as at least 0 (90-boot)');
   assert(!g.errors.length, 'a future-dated save loads without core errors' + (g.errors.length ? ': ' + g.errors[0] : ''));
 } catch (e) { fail('future-dated save crashed: ' + (e.stack || e)); }
+
+// ---- C24: approved Hunting mechanics; public art gate remains closed ----
+if (section('hunting (C24 core)')) try {
+  const games = [], T0 = new Date(2026, 8, 30, 12).getTime(), HOUR = 3600e3;
+  const mk = (on = true) => { const g = loadCore({seed:2401, prelude:`Date.__t = ${T0}; Date.now = () => Date.__t`}); games.push(g); g.eval(`HUNT_TUNE.on=${on}; soloPick('wren'); S.camp.open=true; S.camp.b.hearth=2; S.camp.b.tavern=1; S.camp.b.tent=4; S.camp.b.store=8; S.gold=10000`); return g; };
+  const g=mk(false), E=s=>g.eval(s), near=(a,b)=>Math.abs(a-b)<1e-8;
+  assert(!E('huntingOn()') && !E('gatherKinds().includes("hide")') && !E('handsApplicantSkills().includes("hunt")') && E('handsRate({r:"common",lv:1,sk:"hunt",tr:[]},"hide",1)')===0, 'C24: mechanics, nodes and Hunter applicant pool are off by default');
+  assert(!E('setNode("hide",1)') && !E('canCraft("spear",1).ok') && !E('fits({slot:"spear",t:1,r:"common",plus:0},"spear")'), 'C24: disabled direct node, craft and imported equipment entrypoints are blocked');
+  E('HUNT_TUNE.on=true');
+  assert(!E('setNode("hide",1)') && !E('canCraft("spear",1).ok') && !E('fits({slot:"spear",t:1,r:"common",plus:0},"spear")'), 'C24: public node/craft/equip guards stay closed until art approval');
+  assert(!E('huntingVisible()') && !E('navSkillOpen("hunt")') && !E('navGo({act:"gather",node:{kind:"hide",t:1}})') && E('huntingRenderData(1).sprite===null && huntingRenderData(1).scene===null'), 'C24: mechanics flag does not expose Hunting or reuse fallback art');
+  const rates=[];
+  for(const [t,lv] of [[1,1],[2,14],[3,30]]) {
+    E(`S.skills.hunt.lv=${lv}; S.skills.forage.lv=${lv}`);
+    assert(near(E(`nodeTime('hide',${t})`),E(`nodeTime('fibre',${t})`)*5) && near(E(`nodeYieldAvg('hide')/nodeTime('hide',${t})`),E(`nodeYieldAvg('fibre')/nodeTime('fibre',${t})`)) && near(E(`nodeXpFor('hide',${t})/nodeTime('hide',${t})`),E(`nodeXpFor('fibre',${t})/nodeTime('fibre',${t})`)), `C24 grade ${t}: time, Hide rate and skill XP rate match Fibre parity`);
+    const rate=E(`handsRate({r:'common',lv:1,sk:'hunt',tr:[]},'hide',${t})`);rates.push(Math.floor(rate*4));
+    assert(near(E(`handsRate({r:'common',lv:1,sk:'mine',tr:[]},'hide',${t})`),rate/2) && near(E(`handsRate({r:'common',lv:1,sk:'hunt',tr:['tracker']},'hide',${t})`),rate*1.2), `C24 grade ${t}: off-skill half share and Tracker +20%`);
+  }
+  assert(rates.join(',')==='621,602,613','C24: approved four-hour Common Hunter payouts 621/602/613 ('+rates.join('/')+')');
+  E('S.skills.hunt.lv=200');
+  assert(!E('craftNodeEnabled("hide",4)') && !E('craftNodeEnabled("hide",5)') && E('handsNodes({sk:"hunt"}).filter(x=>x.kind==="hide").every(x=>x.t<=3)'), 'C24: later-region beasts remain unavailable at any skill level');
+  const homes=E(`(()=>{const out=[];for(let z=1;z<=7;z++)if(['bat','bones','beetle'].includes(TYPES[zoneType(z)].key)){S.zone=z;out.push(homeBonus('hide'));}return out;})()`);
+  assert(homes.length===3 && homes.every(x=>x===0.25), 'C24: Hunting home grounds add 25% on bat, bones and beetle zones');
+  const star=E(`(()=>{const z=Array.from({length:7},(_,i)=>i+1).find(z=>TYPES[zoneType(z)].key==='bat');S.zone=z;const h={r:'common',lv:1,sk:'hunt',tr:[]};const rate=handsRate(h,'hide',1),family=homeFamily();S.mastery.zones[z]=MASTERY_STARS[2];return {bonus:homeBonus('hide'),same:rate===handsRate(h,'hide',1),old:homeFamily()===family};})()`);
+  assert(star.bonus===0.5 && star.same && star.old,'C24: three-star Hunting home bonus is 50%; Hands and existing home families are unchanged');
+  E('S.mastery.zones={};S.skills.hunt.lv=1;S.skills.forage.lv=1');
+  const craft=E(`(()=>{const names=['spear','sickle'];return names.map(kind=>({rec:craftRecipe(kind,3),v:craftBaseLines(kind,50).map(x=>x[1])}));})()`);
+  assert(JSON.stringify(craft[0])===JSON.stringify(craft[1]) && E('toolOf("hunt")')==='spear' && E('TOOL_KINDS.spear.pos')==='spear','C24: spear has separate equipment/mastery with Sickle recipe and numeric stat parity');
+  const traitBounds=E(`(()=>{let whole=0,off=true;const ids=['steady','home','mule','early','stone','green','tracker'];for(const t of[1,2,3])for(const hour of[4,5,11,23]){const at=new Date(2026,8,30,hour).getTime(),h={r:'common',lv:1,sk:'hunt',tr:[]},base=handsRate(h,'hide',t,at);for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)whole=Math.max(whole,handsRate({...h,tr:[ids[i],ids[j]]},'hide',t,at)/base);}for(const kind of GATHER_KINDS)off&&=handsRate({r:'common',lv:1,sk:'any',tr:['tracker']},kind,1)===handsRate({r:'common',lv:1,sk:'any',tr:[]},kind,1);return {whole,off};})()`);
+  assert(traitBounds.whole<=1.4+1e-9 && near(traitBounds.whole,1.4) && traitBounds.off,'C24: Tracker is Hide-only and all direct two-trait Hunting rolls stay within C8 1.40x');
+  const rolls=E('Array.from({length:512},()=>handsRollApp())');
+  assert(rolls.some(x=>x.sk==='hunt') && rolls.some(x=>x.tr.includes('tracker')),'C24: enabled applicant rolls include Hunters and Tracker');
+  E('S.zone=1;S.skills.hunt={lv:1,xp:0};S.node={kind:"hide",t:1};S.mats.hide[0]=0;globalThis.c24Harvest=0;globalThis.c24Kills=0;on("harvest",()=>c24Harvest++);on("kill",()=>c24Kills++)');
+  const before=E('JSON.stringify([S.gold,S.mats.ess,S.craft.troph,S.totalKills])');
+  E('harvest()');
+  assert(E('S.mats.hide[0]')===5 && E('S.skills.hunt.xp + Array.from({length:S.skills.hunt.lv-1},(_,i)=>skillNeed(i+1,"hunt")).reduce((a,b)=>a+b,0)')===35 && E('c24Harvest')===1 && E('c24Kills')===0 && E('JSON.stringify([S.gold,S.mats.ess,S.craft.troph,S.totalKills])')===before, 'C24: a beast gives five Hide and 35 XP through harvest without combat rewards');
+  E('S.mats.hide[0]=storeCap("hide",1);harvest()');
+  assert(E('S.mats.hide[0]===storeCap("hide",1)') && E('S.skills.hunt.xp + Array.from({length:S.skills.hunt.lv-1},(_,i)=>skillNeed(i+1,"hunt")).reduce((a,b)=>a+b,0)')===70,'C24: full Hide storage caps units but keeps skill XP');
+  const a=mk(),b=mk();
+  for(const c of[a,b])c.eval('S.skills.hunt={lv:1,xp:0};S.skills.forage={lv:1,xp:0};S.zone=1;CRAFT_CATCHUP.mult=1;S.mats.hide[0]=0;S.mats.fibre[0]=0');
+  a.eval('S.activity="gather";S.node={kind:"hide",t:1};awayGains(60)');b.eval('S.activity="gather";S.node={kind:"fibre",t:1};awayGains(60)');
+  assert(a.eval('S.mats.hide[0]')===b.eval('S.mats.fibre[0]') && near(a.eval('S.skills.hunt.xp'),b.eval('S.skills.forage.xp')), 'C24: real away resolver preserves Fibre unit and XP parity');
+  const h=mk();h.eval('S.hands.list=[{id:"c24",n:"Hunter",r:"common",lv:1,xp:0,sk:"hunt",tr:["tracker"],cl:null,job:null,pack:[],hrs:0,got:0,st:0}];handsSend("c24","hide",1,{shifts:2})');
+  const rate=h.eval('handsGet("c24").job.rate');h.eval('handsGet("c24").tr=[];S.skills.hunt.lv=99;save()');
+  const j=loadCore({seed:2401,storage:memoryStorage({[KEY]:h.storage.get(KEY)}),prelude:`Date.__t=${T0};Date.now=()=>Date.__t`});games.push(j);j.eval('HUNT_TUNE.on=true');
+  h.eval(`Date.__t=${T0+4*HOUR};handsCatchUp(Date.now())`);
+  assert(near(h.eval('handsGet("c24").job.rate'),rate) && h.eval('handsGet("c24").job.start')===T0+4.5*HOUR,'C24: queued Hunting preserves the sent rate and thirty-minute rest');
+  for(const c of[h,j])c.eval(`Date.__t=${T0+8.5*HOUR};handsCatchUp(Date.now(),true)`);
+  assert(h.eval('S.mats.hide[0]')===j.eval('S.mats.hide[0]') && h.eval('handsGet("c24").job===null') && h.eval('S.mats.hide[0]')>1400,'C24: split and single catch-up deliver both prepaid Hunting shifts identically');
+  const saved=JSON.parse(h.storage.get(KEY));delete saved.skills.hunt;delete saved.equip.spear;delete saved.tools.m.spear;
+  const old=loadCore({storage:memoryStorage({[KEY]:JSON.stringify(saved)})});games.push(old);
+  assert(old.eval('KEY')===KEY && old.eval('S.skills.hunt.lv===1&&S.skills.hunt.xp===0&&S.equip.spear===null&&S.tools.m.spear[0]===1') && old.eval('S.skills.mine.lv')===saved.skills.mine.lv,'C24: v5 loading adds only missing Hunting skill, equipment and mastery defaults');
+  const imported={...saved,activity:'gather',node:{kind:'hide',t:1},gProg:0.99,skills:{...saved.skills,hunt:{lv:30,xp:42}},items:[...saved.items,{id:240099,slot:'spear',t:1,r:'common',plus:0}],equip:{...saved.equip,spear:240099}};
+  const closed=loadCore({storage:memoryStorage({[KEY]:JSON.stringify(imported)})});games.push(closed);
+  closed.eval('globalThis.c24HiddenHarvest=0;on("harvest",e=>{if(e.kind==="hide")c24HiddenHarvest++});tick(.1);awayGains(60)');
+  assert(closed.eval('S.activity==="fight"&&S.node.kind==="ore"&&S.gProg===0&&S.skills.hunt.lv===30&&S.skills.hunt.xp===42&&S.equip.spear===240099&&c24HiddenHarvest===0&&!fits(itemById(240099),"spear")'), 'C24: imported hidden selection falls back before ticks/away; skill and inventory survive without Hide harvest or equipped spear effects');
+  assert(games.every(c=>!c.errors.length),'C24: no core event errors'+games.flatMap(c=>c.errors).join(';'));
+} catch(e) {fail('C24 Hunting core crashed: '+(e.stack||e));}
+
+// ---- C24: no player-facing Hunting before the complete art pack is approved ----
+if (section('hunting hidden (C24 browser)')) try {
+  const {pw,exe}=browserTools;
+  if(!pw||!exe||!fs.existsSync(distFile))skipBrowser('C24: Playwright or Chromium not here, skipped');
+  else {
+    const fixture=loadCore({seed:2402});fixture.eval('soloPick("wren");hearthWarm();S.maxZone=12;S.camp.open=true;S.camp.b.hearth=2;S.camp.b.store=8;onboardUnlockAll();onboardTips(false);save()');
+    fixture.eval('S.activity="gather";S.node={kind:"hide",t:1};S.gProg=.99;S.skills.hunt={lv:30,xp:42};S.items.push({id:240099,slot:"spear",t:1,r:"common",plus:0});S.equip.spear=240099;save()');
+    const raw=fixture.storage.get(KEY),html0=fs.readFileSync(distFile,'utf8'),end=html0.lastIndexOf('})();\n</script>');
+    const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">\n'+html0.slice(0,end)+'\n;soloPickerOpen=()=>true;window.__t={x:src=>eval(src)};\n'+html0.slice(end);
+    const browser=await pw.chromium.launch({executablePath:exe,args:['--no-sandbox']});
+    try {
+      const ctx=await browser.newContext({viewport:{width:740,height:360},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+      await ctx.addInitScript(({raw,key})=>localStorage.setItem(key,raw),{raw,key:KEY});
+      const page=await ctx.newPage(),errs=[];page.on('pageerror',e=>errs.push(String(e)));
+      await page.route('**/*',r=>r.request().url()==='http://lf.test/'?r.fulfill({status:200,body:html,headers:{'content-type':'text/html; charset=utf-8'}}):r.abort());
+      await page.goto('http://lf.test/');await page.waitForFunction(()=>!!window.__t);const X=s=>page.evaluate(s=>window.__t.x(s),s);
+      assert(await X('S.activity==="fight"&&S.node.kind==="ore"&&S.skills.hunt.lv===30&&!fits(itemById(240099),"spear")'), 'C24: imported hidden Gathering selection is normalized before its first browser frame');
+      for(const enabled of[false,true]) {
+        await X(`HUNT_TUNE.on=${enabled};setTab('gat');ui(true);true`);
+        assert(await page.locator('#viewSeg [data-view="hunt"]').count()===0 && !await X('navGo({act:"gather",node:{kind:"hide",t:1}})'),`C24 flag ${enabled}: Gathering and navigation keep Hunting hidden`);
+        await X('if(!S.items.some(i=>i.id===240099))S.items.push({id:240099,slot:"spear",t:1,r:"common",plus:0});setTab("forge");setView("forge","gear");ui(true);true');
+        assert(await page.locator('#sec-craft-bag [data-item-id="240099"]').count()===0,`C24 flag ${enabled}: imported spear stays out of the Bag`);
+        await X('craftUI.openItem(240099);craftUI.pick("hero","spear");true');
+        assert(await page.locator('.cf-sheet').count()===0,`C24 flag ${enabled}: imported item and picker entrypoints cannot open hidden spear sheets`);
+        assert(await page.getByRole('button',{name:/Hunting Spear/}).count()===0,`C24 flag ${enabled}: equipment has no empty or selectable spear slot`);
+        await X('setView("forge","make");ui(true);true');
+        await page.locator('#sec-craft-stations button').filter({hasText:'Workbench'}).click();
+        assert(await page.getByText(/Hunting Spear/,{exact:false}).count()===0,`C24 flag ${enabled}: crafting offers no hidden spear recipe`);
+        await X('whereSheet("hide",1);true');
+        assert(await page.getByRole('button',{name:/Hunt at/}).count()===0 && !await X('huntingVisible()'),`C24 flag ${enabled}: Hide help offers fighting without a hidden Hunting action`);
+        await X('document.querySelectorAll(".bsheet-ov .bsheet-x").forEach(x=>x.click());true');
+      }
+      assert(await X('gatherTheme("hide")===null&&huntingRenderData(1).sprite===null&&huntingRenderData(1).effects===null'), 'C24: no existing scene, sprite or effect fallback is selected');
+      assert(!errs.length,'C24: no hidden-feature browser errors'+(errs.length?': '+errs[0]:''));
+      await ctx.close();
+    } finally {await browser.close();}
+  }
+} catch(e){fail('C24 Hunting browser crashed: '+(e.stack||e));}
 
 if (section('removed systems (W2-C)')) try {
   const strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/([^:'"`\\])\/\/[^\n'"`]*$/gm, '$1');

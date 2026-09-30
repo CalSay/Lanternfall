@@ -55,9 +55,10 @@ const TOOL_TUNE = {
 const TOOL_KINDS = {
   pick: { skill: 'mine', n: 'Pickaxe', rough: 'Stone Pick', find: 'oreFind', pos: 'pick' },
   axe: { skill: 'wood', n: 'Woodaxe', rough: 'Flint Hatchet', find: 'woodFind', pos: 'axe' },
-  sickle: { skill: 'forage', n: 'Sickle', rough: 'Bone Sickle', find: 'forageFind', pos: 'sickle' }
+  sickle: { skill: 'forage', n: 'Sickle', rough: 'Bone Sickle', find: 'forageFind', pos: 'sickle' },
+  spear: { skill: 'hunt', n: 'Hunting Spear', rough: 'Hunting Spear', find: 'huntFind', pos: 'spear' }
 };
-const TOOL_OF_SKILL = { mine: 'pick', wood: 'axe', forage: 'sickle' };
+const TOOL_OF_SKILL = { mine: 'pick', wood: 'axe', forage: 'sickle', hunt: 'spear' };
 let toolOf, equippedTool, toolLook, toolName, toolFind, toolMastery, toolMasteryAdd, toolPerks,
   toolHandsMult, toolBest;
 // Hoisted so nodeTime (40-rules) can call it whatever the load order (1 until this file has run,
@@ -70,14 +71,14 @@ function toolRight(skill, t) {
 }
 
 {
-  registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0] }, finds: 0 });
+  registerState('tools', { v: 1, m: { pick: [1, 0], axe: [1, 0], sickle: [1, 0], spear: [1, 0] }, finds: 0 });
   const T = () => S.tools;
   const rec = kind => {
     const m = T().m; let r = m[kind];
     if (!Array.isArray(r) || !(r[0] >= 1)) r = m[kind] = [1, 0];
     return r;
   };
-  const famsOf = skill => GATHER_KINDS.filter(f => skillOf(f) === skill);
+  const famsOf = skill => GATHER_KINDS.concat('hide').filter(f => skillOf(f) === skill);
   const need = lv => TOOL_TUNE.masteryMins * lv * 60;
   const lvOf = kind => TOOL_KINDS[kind] ? rec(kind)[0] : 1;
   const roll = x => { const f = x % 1; return Math.floor(x) + (f > 1e-9 && Math.random() < f ? 1 : 0); };

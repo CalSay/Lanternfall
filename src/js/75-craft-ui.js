@@ -179,7 +179,7 @@ let craftUI = null;
   // ================= Recipes =================
   let rec = null;
   function kindsFor(st) {
-    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return d.st === st && !d.legacy && !(d.comp && !d.pos); });   // no companion-only recipes; Sword/Helm are no longer made
+    return Object.keys(CRAFT_KINDS).filter(k => { const d = CRAFT_KINDS[k]; return craftKindVisible(k) && d.st === st && !d.legacy && !(d.comp && !d.pos); });   // no companion-only recipes; Sword/Helm are no longer made
   }
   const POS_ORDER = [...CRAFT_HERO_POS, ...CRAFT_COMP_POS];
   const kindOrder = k => { const d = CRAFT_KINDS[k]; return POS_ORDER.indexOf(d.pos || d.comp || 'charm'); };
@@ -412,7 +412,7 @@ let craftUI = null;
     mount(sec) {
       const g = el('div', 'cf-gear');
       gearEls = {};
-      for (const p of CRAFT_HERO_POS) {
+      for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const b = el('button', 'cf-gs'); b.type = 'button';
         const tile = icTile(iconURL('charm', '#4E4060'), null, 'ghost');
         const lab = el('small', null, posName(p));
@@ -432,7 +432,7 @@ let craftUI = null;
       const EMPTY_IC = { weapon: 'sword', off: 'banner', helm: 'helm', body: 'plate', charm: 'charm', pick: 'pick', axe: 'axe', sickle: 'sickle' };
       const w = heroWho();
       if (w !== 'any') for (const p of ['weapon', 'helm']) { const k = ((CRAFT_FITS[p] || {})[w] || [])[0]; if (k && ICON[CRAFT_KINDS[k].ic]) EMPTY_IC[p] = CRAFT_KINDS[k].ic; }
-      for (const p of CRAFT_HERO_POS) {
+      for (const p of CRAFT_HERO_POS.filter(craftKindVisible)) {
         const e = gearEls[p], it = itemById(S.equip[p]);
         if (it) { setIc(e.tile, itemIc(it), frameOf(it)); e.plus.textContent = it.plus ? '+' + it.plus : ''; e.b.setAttribute('aria-label', `${posName(p)}: ${itemName(it)}`); }
         else {
@@ -562,7 +562,7 @@ let craftUI = null;
       const sig = [bulk.on, [...bulk.ids].join(), st8.bfilt, st8.sort, S.items.map(i => [i.id,i.slot,i.t,i.plus,i.r,i.u,i.rf || 0].join(':')).join(), [...w].map(([k, v]) => k + v.who).join(), [...st8.fresh].join()].join('|');
       if (!force && (sig === bag.sig || busy())) return;
       bag.sig = sig;
-      let list = S.items.slice();
+      let list = S.items.filter(it => craftKindVisible(it.slot));
       if (st8.bfilt === 'spare') list = list.filter(i => !w.has(i.id));
       if (st8.bfilt === 'worn') list = list.filter(i => w.has(i.id));
       list.sort(SORTS[st8.sort]);
@@ -602,7 +602,7 @@ let craftUI = null;
     return api;
   }
   function openItem(id, back) {
-    const it = itemById(id); if (!it) return;
+    const it = itemById(id); if (!it || !craftKindVisible(it.slot)) return;
     const api = open(itemName(it), back || (sheet && sheet.back));
     sheet = { api, id, back: back || null, mode: null, sel: -1, arm: null, flash: -1 };
     renderItem();
@@ -775,6 +775,7 @@ let craftUI = null;
 
   // ================= picker: choose gear for one position =================
   function pick(pos, back) {
+    if (!craftKindVisible(pos)) return;
     const label = `Your ${posName(pos).toLowerCase()}`;
     const backFn = back || null;
     const api = open(label, backFn, true);
@@ -785,7 +786,7 @@ let craftUI = null;
       const now = itemById(S.equip[pos]);
       body.append(el('h3', 'cf-ph', label));
       const w = wearers();
-      const list = S.items.filter(i => fits(i, pos, 'hero') && !(now && now.id === i.id)).sort(SORTS.power);
+      const list = S.items.filter(i => craftKindVisible(i.slot) && fits(i, pos, 'hero') && !(now && now.id === i.id)).sort(SORTS.power);
       if (now) {
         const r = el('div', 'cf-pr cur');
         const t = icTile(itemIc(now), frameOf(now)); r.append(t);
@@ -795,7 +796,7 @@ let craftUI = null;
         body.append(r);
       }
       if (!list.length) {
-        const kinds = Object.keys(CRAFT_KINDS).filter(k => !CRAFT_KINDS[k].legacy && fits(k, pos, 'hero'));
+        const kinds = Object.keys(CRAFT_KINDS).filter(k => craftKindVisible(k) && !CRAFT_KINDS[k].legacy && fits(k, pos, 'hero'));
         const k = kinds[0];
         body.append(el('p', 'note', k ? `Nothing in your bag fits. Craft a ${CRAFT_KINDS[k].noun} at the ${CRAFT_STATIONS[CRAFT_KINDS[k].st].n}.` : 'Nothing in your bag fits here.'));
         if (k) {

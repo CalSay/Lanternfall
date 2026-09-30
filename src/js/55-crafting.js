@@ -101,7 +101,7 @@ let craftItem, canCraft, stationOf, stationLevel, stationTierOpen, craftXpFor, u
   canCraft = (kind, t, opts = {}) => {
     if (kind === 'starChart') return canStar();
     const d = CRAFT_KINDS[kind];
-    if (!d) return no('Unknown item.');
+    if (!d || !craftKindVisible(kind)) return no('Unknown item.');
     if (d.legacy) return no('Swords and helms are no longer made. Craft your class weapon and head piece.');
     if (!validTier(t)) return no('Unknown tier.');
     const st = stationOf(kind), lv = stationLevel(kind), open = stationTierOpen(kind, t);

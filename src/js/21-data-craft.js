@@ -81,16 +81,34 @@ const CRAFT_FAMILY = {
   ess: { src: 'fight', skill: null, row: null, from: 'Fighting only. Every foe can drop it, and Marsh Wraiths drop extra.' }
 };
 
+// C24: mechanics are opt-in for checks. Public access also waits for the whole vetted art pack.
+const HUNT_TUNE = { on: false };
+const huntingOn = () => HUNT_TUNE.on === true;
+const huntingArtReady = () => false; // Replace only after owner approval and complete pack integration.
+const huntingVisible = () => huntingOn() && huntingArtReady();
+const HUNT_BEASTS = [
+  { key: 'enraged-boar', name: 'Enraged Boar', plural: 'Enraged Boars' },
+  { key: 'bristleback-wolf', name: 'Bristleback Wolf', plural: 'Bristleback Wolves' },
+  { key: 'fen-lizard', name: 'Fen Lizard', plural: 'Fen Lizards' }
+];
+// Render data only: no existing scene, sprite, weapon pose or effect is a fallback.
+const huntingRenderData = t => HUNT_BEASTS[t - 1] ? { beast: HUNT_BEASTS[t - 1].key, tool: 'spear', scene: null, sprite: null, effects: null } : null;
+const craftNodeEnabled = (kind, t = 1) => kind !== 'hide' || (huntingOn() && Number.isInteger(t) && t >= 1 && t <= HUNT_BEASTS.length);
+const craftNodeVisible = (kind, t = 1) => craftNodeEnabled(kind, t) && (kind !== 'hide' || huntingVisible());
+const craftKindVisible = kind => kind !== 'spear' || huntingVisible();
+
 // ================= gathering nodes =================
-Object.assign(SKILL, { forage: 'Foraging', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
+Object.assign(SKILL, { forage: 'Foraging', hunt: 'Hunting', bench: 'Woodcraft', loom: 'Tailoring', ench: 'Enchanting' });
 Object.assign(NODE_NAMES, {
+  hide: HUNT_BEASTS.map(x => x.name).concat(null, null), // grades 4–5 reserved, never offered
   crystal: ['Quartz Geode', 'Jasper Pocket', 'Amethyst Grotto', 'Pearl Rift', 'Aquamarine Heart'],
   fibre: ['Hemp Field', 'Linen Patch', 'Wool Meadow', 'Cotton Web', 'Silk Hollow'],
   herb: ['Sage Bed', 'Yarrow Patch', 'Foxglove Bank', 'Sea Lavender Ring', 'Mandrake Pool']
 });
-Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage' });
+Object.assign(NODE_SKILL, { crystal: 'mine', fibre: 'forage', herb: 'forage', hide: 'hunt' });
 // time: x base seconds per unit; xp: x nodeXp(t). Unlock levels stay NODE_REQ for every row.
 const CRAFT_NODES = {
+  hide: { skill: 'hunt', row: 'Hunting Grounds', tool: 'spear', time: 4.5, xp: 5, units: 5 },
   ore: { skill: 'mine', row: 'Veins', tool: 'pick', time: 1, xp: 1 },
   crystal: { skill: 'mine', row: 'Geodes', tool: 'pick', time: 1.25, xp: 1.25 },
   wood: { skill: 'wood', row: 'Groves', tool: 'axe', time: 1, xp: 1 },
@@ -120,10 +138,10 @@ const CRAFT_XP = {
 // ================= positions =================
 const CRAFT_POS = {
   weapon: { n: 'Weapon' }, off: { n: 'Off-hand' }, helm: { n: 'Head' }, body: { n: 'Body' },
-  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Woodaxe' }, sickle: { n: 'Sickle' },
+  charm: { n: 'Charm' }, pick: { n: 'Pickaxe' }, axe: { n: 'Woodaxe' }, sickle: { n: 'Sickle' }, spear: { n: 'Hunting Spear' },
   wpn: { n: 'Weapon', comp: true }, trk: { n: 'Trinket', comp: true }
 };
-const CRAFT_HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle'];
+const CRAFT_HERO_POS = ['weapon', 'off', 'helm', 'body', 'charm', 'pick', 'axe', 'sickle', 'spear'];
 const CRAFT_COMP_POS = ['wpn', 'trk'];
 
 // ================= stats =================
@@ -155,6 +173,9 @@ const CRAFT_STATS = {
   woodDbl: { n: 'Double logs', f: '{v}% double logs', dp: 0, live: true, gear: 'woodDbl' },
   forageSpd: { n: 'Foraging speed', f: '+{v}% foraging speed', live: true },
   forageDbl: { n: 'Double yield', f: '{v}% double fibre and herbs', dp: 0, live: true },
+  huntSpd: { n: 'Hunting speed', f: '+{v}% hunting speed', live: true },
+  huntDbl: { n: 'Double Hide', f: '{v}% double Hide', dp: 0, live: true },
+  huntFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
   gather: { n: 'Gathering speed', f: '+{v}% gathering speed', live: true, gear: 'gather' },
   // H2 (hearth-and-hands.md 2.2): each unit gathered may bring 1 of the next tier (55-tools.js).
   oreFind: { n: 'Rare find', f: '{v}% rare find', dp: 1, live: true },
@@ -197,6 +218,7 @@ const CRAFT_KINDS = {
   pick: { noun: 'Pickaxe', pos: 'pick', st: 'bench', rec: RECIPE.pick, pre: 'ore', base: [['mineSpd', 0.6], ['oreDbl', 0.1, 60], ['oreFind', 0.012, 8]], tool: true, ic: 'pick' },
   axe: { noun: 'Woodaxe', pos: 'axe', st: 'bench', rec: RECIPE.axe, pre: 'ore', base: [['woodSpd', 0.6], ['woodDbl', 0.1, 60], ['woodFind', 0.012, 8]], tool: true, ic: 'axe' },
   sickle: { noun: 'Sickle', pos: 'sickle', st: 'bench', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['forageSpd', 0.6], ['forageDbl', 0.1, 60], ['forageFind', 0.012, 8]], tool: true },
+  spear: { noun: 'Hunting Spear', pos: 'spear', st: 'bench', rec: { ore: 4, wood: 3 }, pre: 'ore', base: [['huntSpd', 0.6], ['huntDbl', 0.1, 60], ['huntFind', 0.012, 8]], tool: true },
   weapon: { noun: 'Sword', pos: 'weapon', st: 'forge', rec: RECIPE.weapon, pre: 'ore', base: [['might', 1]], legacy: true, ic: 'sword' },
   helm: { noun: 'Helm', pos: 'helm', st: 'forge', rec: RECIPE.helm, pre: 'ore', base: [['crit', 0.12, 35], ['critMult', 0.005], ['armour', 0.1]], legacy: true, ic: 'helm' }
 };
@@ -216,6 +238,7 @@ const CRAFT_FITS = {
   pick: { any: ['pick'] },
   axe: { any: ['axe'] },
   sickle: { any: ['sickle'] },
+  spear: { any: ['spear'] },
   wpn: { tank: ['shield'], striker: ['bow'], caster: ['staff'], support: ['tome'] },
   trk: { any: ['trinket'] }
 };

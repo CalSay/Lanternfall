@@ -146,7 +146,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
       setTxt(B.note, 'Gatherers open when your Hearth is Lv 2 and the Tavern is built.');
       return;
     }
-    const board = handsBoard(), tents = handsTents(), used = handsList().length;
+    const board = handsBoard().filter(b => b.app.sk !== 'hunt' || huntingVisible()), tents = handsTents(), used = handsList().length;
     const nxt = handsNextApp(), left = Math.max(1, HANDS_TUNE.pity[0] - S.hands.pity[0]);
     setTxt(B.note, (nxt === null ? 'The three random spots are full.' : `Next applicant in ${dur(nxt / 1000)}.`) +
       ` A Rare or better shows up within ${left === 1 ? 'the next applicant' : left + ' applicants'}.`);
@@ -340,7 +340,7 @@ let handsTalkMount, handsTalkOpen, handsTalkUpdate;
 
   function jobPicker(x, offered = handsNodes(x).filter(n => n.own), onSent = null) {
     const box = el('div', 'hd-jobs');
-    const nodes = offered.filter(n => n.own);
+    const nodes = offered.filter(n => n.own && craftNodeVisible(n.kind, n.t));
     if (!nodes.length) { box.append(el('p', 'note', 'No job is open for them yet. Open more nodes with your hero first.')); return box; }
     box.append(el('p', 'note', 'Pick a job. Every shift lasts 4 hours. Fees are paid now; the haul comes home to the Storehouse.'));
     const count = shiftChoice[x.id] || 1, choices = el('div', 'hd-shifts');

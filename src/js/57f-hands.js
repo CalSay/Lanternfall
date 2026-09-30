@@ -161,7 +161,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   // ---------------- names and text ----------------
   handsName = h => h ? h.n : '';
   handsRarName = h => HANDS_RAR_NAME[h && h.r] || 'Common';
-  const SK_NAME = { mine: 'Miner', wood: 'Woodcutter', forage: 'Forager', fish: 'Fisher', any: 'Jack of all trades' };
+  const SK_NAME = { mine: 'Miner', wood: 'Woodcutter', forage: 'Forager', hunt: 'Hunter', fish: 'Fisher', any: 'Jack of all trades' };
   handsSkillName = h => SK_NAME[h && h.sk] || '';
   handsTraits = h => {
     const out = (h.tr || []).filter(id => TR[id]).map(id => ({ id, n: TR[id].n, txt: TR[id].txt, camp: !!TR[id].camp, calling: false }));
@@ -211,7 +211,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     return Math.max(0.1, y);
   };
   handsRate = (h, kind, t, at = now()) => {
-    if (!h || !CRAFT_NODES[kind]) return 0;
+    if (!h || !CRAFT_NODES[kind] || !craftNodeEnabled(kind, t)) return 0;
     const sk = skillOf(kind), tm = typeof toolHandsMult === 'function' ? toolHandsMult(sk) : 1;
     return handsHeroRate(kind, t) * handsShare(h) * yieldOf(h, kind, t, at) * (own(h, kind) ? 1 : T.offSkill) * tm;
   };
@@ -221,8 +221,8 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
   const luckyP = h => h.cl === 'quick' ? T.quickLucky : has(h, 'lucky') ? T.lucky : 0;
 
   // ---------------- nodes ----------------
-  const open = (kind, t) => !!CRAFT_NODES[kind] && t >= 1 && t <= 5 && skillTierOpen(skillOf(kind), t);
-  const kinds = () => (typeof GATHER_KINDS !== 'undefined' ? GATHER_KINDS : ['ore', 'wood']);
+  const open = (kind, t) => !!CRAFT_NODES[kind] && craftNodeEnabled(kind, t) && t >= 1 && t <= 5 && skillTierOpen(skillOf(kind), t);
+  const kinds = () => gatherKinds();
   handsNodes = h => {
     const out = [];
     for (const kind of kinds()) for (let t = 5; t >= 1; t--) if (open(kind, t))
@@ -277,7 +277,7 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     const t = now(), j = h.job;
     if (j && j.role === 'trade' && typeof handsTradeStatus === 'function') return handsTradeStatus(h, t);
     if (j && j.start > t) return { st: 'rest', label: 'Resting before the next shift', left: (j.start - t) / 1000, pct: 0, kind: j.kind, t: j.t, spot: 'fire' };
-    if (j && j.end > t) return { st: 'out', label: `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
+    if (j && j.end > t) return { st: 'out', label: j.kind === 'hide' && HUNT_BEASTS[j.t - 1] ? `Hunting: ${HUNT_BEASTS[j.t - 1].plural}` : `Out at the ${nodeName(j.kind, j.t)}`, left: (j.end - t) / 1000, pct: Math.min(1, Math.max(0, (t - j.start) / Math.max(1, j.end - j.start))), kind: j.kind, t: j.t, spot: null };
     if (j) return { st: 'back', label: 'Walking home', left: 0, pct: 1, kind: j.kind, t: j.t, spot: 'road' };
     if (h.pack.length) return { st: 'pack', label: 'Pack waits by the Storehouse', left: 0, pct: 1, kind: h.last && h.last.kind, t: h.last && h.last.t, spot: 'store' };
     const ph = campClock(t).phase, want = SPOT[h.sk];
@@ -323,13 +323,13 @@ let handsOpen, handsBeds, handsBedsAt, handsFree, handsList, handsGet, handsBoar
     }
     // Keep retired duration traits readable in old saves, but do not roll new no-op or penalty-only traits.
     // C8: new Packmule rolls wait for a usable grade. Existing applicants/workers keep their IDs.
-    const muleOpen = HANDS_SKILLS.some(sk => skillTierOpen(sk, 3));
-    const pool = HANDS_TRAITS.filter(x => !['strong', 'owl', 'wander'].includes(x.id) && (x.id !== 'mule' || muleOpen)).map(x => x.id), tr = [];
+    const muleOpen = handsApplicantSkills().some(sk => skillTierOpen(sk, 3));
+    const pool = HANDS_TRAITS.filter(x => (x.id !== 'tracker' || huntingOn()) && !['strong', 'owl', 'wander'].includes(x.id) && (x.id !== 'mule' || muleOpen)).map(x => x.id), tr = [];
     while (tr.length < T.traits[r] && pool.length) tr.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
     let n = ''; const used = usedNames();
     for (let g = 0; g < 20; g++) { n = pick(HANDS_FIRST) + ' ' + pick(HANDS_TRADE); if (!used.has(n)) break; }
     h.seq = (h.seq | 0) + 1;
-    return { id: 'h' + h.seq, n, r: HANDS_RAR[r], sk: pick(HANDS_SKILLS), tr, cl: null, key: null, at, free: 0 };
+    return { id: 'h' + h.seq, n, r: HANDS_RAR[r], sk: pick(handsApplicantSkills()), tr, cl: null, key: null, at, free: 0 };
   }
   handsRollApp = () => makeApp(now());
   const addApp = (app, quiet) => { H().board.apps.push(app); emit('handsArrive', { app, quiet: !!quiet }); };

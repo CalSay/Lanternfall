@@ -21,7 +21,7 @@ function setZone(z) {
 // Pick the gathering node. Returns false if the skill level is too low. Does not
 // switch activity; call setActivity('gather') for that.
 function setNode(kind, t) {
-  if (!skillTierOpen(skillOf(kind), t)) return false;
+  if (!craftNodeVisible(kind, t) || !skillTierOpen(skillOf(kind), t)) return false;
   S.node = { kind, t }; S.gProg = 0; emit('sceneReset');
   return true;
 }
@@ -197,7 +197,7 @@ function tick(dt) {
 function harvest() {
   const { kind, t } = S.node, g = gear(), [, dk, ek] = nodeTool(kind);
   const dbl = Math.min(60, g[dk]) / 100, ex = ek ? g[ek] : 0;
-  let n = 1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0);
+  let n = nodeUnits(kind) * (1 + (Math.random() < dbl ? 1 : 0) + (Math.random() < ex ? 1 : 0));
   // Yield modifiers (Omens, home ground) round by chance, so +25% means +25% on average.
   const y = n * mod('yield:' + kind), fr = y % 1;
   n = stashAdd(kind, t, Math.max(1, Math.floor(y) + (fr > 1e-9 && Math.random() < fr ? 1 : 0)), 'flow');   // H3: up to the Storehouse cap

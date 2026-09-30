@@ -136,7 +136,7 @@ const bossHpFor = gen => Math.round(20000 * Math.pow(2.5, gen - 1));
 // Gathering per node kind (K5): the kind's tool (CRAFT_NODES[kind].tool) sets the speed, double
 // yield and extra-unit stats; craftNodeBase has the per-kind time (crystal x1.25, fibre x0.9).
 // Ore and wood give exactly the old numbers.
-const NODE_TOOL_STATS = { pick: ['mineSpd', 'oreDbl', 'oreExtra'], axe: ['woodSpd', 'woodDbl', 'woodExtra'], sickle: ['forageSpd', 'forageDbl', null] };
+const NODE_TOOL_STATS = { pick: ['mineSpd', 'oreDbl', 'oreExtra'], axe: ['woodSpd', 'woodDbl', 'woodExtra'], sickle: ['forageSpd', 'forageDbl', null], spear: ['huntSpd', 'huntDbl', null] };
 const nodeKind = kind => CRAFT_NODES[kind] ? kind : 'wood';
 const nodeTool = kind => NODE_TOOL_STATS[CRAFT_NODES[nodeKind(kind)].tool];
 function nodeTime(kind, t) {
@@ -146,7 +146,8 @@ function nodeTime(kind, t) {
   return craftNodeBase(nodeKind(kind), t) / ((1 + SKILL_TUNE.spdPerLv * (lv - 1)) * (1 + spd / 100)) / mod('gatherSpeed') / mod('gatherSpeed:' + skillOf(kind)) / toolRight(skillOf(kind), t);
 }
 // Average units per swing before yield modifiers: double yield plus unique extras (Carapace Pick).
-function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return 1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0); }
+const nodeUnits = kind => CRAFT_NODES[nodeKind(kind)].units || 1;
+function nodeYieldAvg(kind) { const g = gear(), [, dbl, ex] = nodeTool(kind); return nodeUnits(kind) * (1 + Math.min(60, g[dbl]) / 100 + (ex ? g[ex] : 0)); }
 const nodeXp = t => Math.round(SKILL_TUNE.nodeXp[0] * Math.pow(t, SKILL_TUNE.nodeXp[1]));
 const nodeXpFor = (kind, t) => nodeXp(t) * CRAFT_NODES[nodeKind(kind)].xp; // crystal x1.25
 

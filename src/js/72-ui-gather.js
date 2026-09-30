@@ -22,7 +22,7 @@
 // GX_VIEW { skill: view id } and gatherSkillOfView(view).
 
 const GX_VIEW = { mine: 'mine', wood: 'wood', forage: 'forage' };
-const gatherSkillOfView = v => NAV_SKILLS.includes(v) ? v : null;
+const gatherSkillOfView = v => NAV_SKILLS.includes(v) && (v !== 'hunt' || huntingVisible()) ? v : null;
 const GX_ICON = {
   mine: () => iconURL('pick', '#A9B1BD'),
   wood: () => iconURL('axe', '#A9B1BD'),
@@ -55,7 +55,7 @@ function whereSheet(k, t) {
     head.append(ic, tx);
     const w = whereToGet(k, t), i = w.indexOf(': ');
     api.body.append(head, el('h3', 'cs-h', 'Where to get it'), el('p', 'gw-where', i < 0 ? w : w.slice(i + 2)));
-    if (GATHER_KINDS.includes(k)) {
+    if (gatherKinds().includes(k) && craftNodeVisible(k, t)) {
       const sk = skillOf(k), req = skillReq(sk, t), open = skillTierOpen(sk, t);
       const here = S.activity === 'gather' && S.node.kind === k && S.node.t === t;
       const b = el('button', 'big horn gw-go', here ? 'You work here' : open ? `${NODE_VERB[k]} at the ${NODE_NAMES[k][t - 1]}` : `Needs ${SKILL[sk]} ${req}`);
