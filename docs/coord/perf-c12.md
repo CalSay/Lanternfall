@@ -1,8 +1,121 @@
 # C12 performance pass
 
-Recovery note: source, regression and report recovered from the cloud transcript onto c3c2cf3 on 2026-09-30. The cloud raw profile files are not available locally. Historical measurements below are retained as reported evidence, not fresh local validation. Syntax and whitespace checks pass; browser regression, paired local performance and full-suite validation remain pending. This is a WIP checkpoint, not a completion handoff.
+## Local Windows recovery
 
-Status: gather warm-up starvation reproduced and fixed; timed validation pending the next exclusive window. Base is C2 `bdc82f43e9df6ebd500dce6c9fc50d65ab110ed0` on `codex/c12-perf`.
+The recovered scheduling fix is based on `13af1fd`, first replayed as `2d8a2b2`
+on `b334967`, then rebased onto `f46c990`. The paired measurements below are of
+**b334967 and b334967 plus the scheduling fix**, not of the later integration
+checkpoint. The later checkpoint did not change the gathering warm-up source.
+Only `63c-scenery-gather.js` scheduling, an additive C12 check block and this report
+change. Art, renderer algorithms, save state and performance budgets are untouched.
+
+Environment: Windows, bundled Node 24.19.0, bundled Playwright, installed Microsoft
+Edge, eight reported CPUs. No other agent browser checks or simulations ran during
+timed samples. The normal benchmark's phone viewport is 360x740, DPR2, CPU x4.
+
+Artifacts are retained locally in
+`C:/Users/callu/AppData/Local/Temp/lanternfall-c12-local-b334967/`:
+`baseline.html`, `candidate.html`, their `*-quick.log`/`*-quick.json`, `profile.mjs`,
+`baseline-normal-*` and `candidate-normal-*` CPU profiles, Chrome traces and JSON
+summaries. The earlier `before*`/`baseline-profile*` diagnostics are exploratory;
+CPU x4 left the idle queue delayed, so they are not the final lifecycle comparison.
+Historical cloud numbers at the end are not fresh local results; their raw files
+were not recovered.
+
+Artifact SHA256:
+- Baseline: `f3733f53e6e17dc127709bed8948ae67dd9825dc30fd94163d58b3d52f6a4220`.
+- Candidate: `f57c391c3dcadc51f0aae0dba4336f90c329f02f4972f017d5994ddf295a98b5`.
+
+## Unchanged local budget run
+
+Ran `tools/perf.mjs --quick --html <artifact> --json <result>` sequentially for both
+artifacts, using the same `LF_PLAYWRIGHT` and `LF_CHROMIUM` paths. Each includes new
+and late saves. Both returned 1 for failed budgets, with zero game page errors.
+This is one paired sample, not a median or proof of overall improvement.
+
+| Metric | Baseline new / late | Candidate new / late | Budget |
+|---|---:|---:|---:|
+| Failed budgets | 29/40 / 39/46 | 32/40 / 39/46 | 0 |
+| First frame, ms | 7000 / 5294 | 5236 / 5328 | 1500 |
+| Fight JS p95, ms | 25.9 / 21.8 | 22.0 / 16.8 | 8 |
+| Fight long tasks | 18 / 6 | 11 / 2 | 1 |
+| Fight UI p95, ms | 16.0 / 15.9 | 18.0 / 9.2 | 8 |
+| Ore switch longest task, ms | 375 / 348 | 275 / 219 | 150 |
+| Wood switch longest task, ms | 280 / 250 | 214 / 207 | 150 |
+| Herb switch longest task, ms | 229 / 229 | 224 / 235 | 150 |
+| Crystal switch longest task, ms | 238 / 243 | 232 / 226 | 150 |
+
+Overall failures are 68/86 before and 71/86 after. The candidate does **not** pass the
+performance gate. Most sampled switches are shorter, but they still exceed budget;
+steady-stage, UI, cold-load and other costs remain. No budget was relaxed.
+
+## Confirmed local lifecycle fix
+
+The final diagnostic uses the real game, late-save fixture, landscape 740x360 then
+844x390, DPR2, normal CPU speed. It waits for the initial idle queue to drain,
+opens Gather and observes ten seconds. Instrumentation counts actual builder
+steps/completions and unfinished-cache evictions, and records CPU profiles/traces.
+It does not mock the renderer or scheduler. These timings are diagnostic only.
+
+| Ten-second warm-up | Baseline | Candidate |
+|---|---:|---:|
+| Mine / Glade / Woods / Meadow steps | 618 / 618 / 618 / 617 | 10 / 10 / 10 / 10 |
+| Completed scenes | 0 / 4 | 4 / 4 |
+| Unfinished-build evictions | 2468 | 0 |
+| Total instrumented builder time, ms | 4448.8 | 154.8 |
+| Game page errors | 0 | 0 |
+
+The baseline CPU profile attributes 2343 ms of self samples to `buildSteps` during
+warm-up; the candidate completes its work and returns to idle. Four independently
+rescheduled builders were evicting each other from the three-entry unfinished
+cache. The queue finishes one scene before starting the next while still yielding
+after every generator step. Cache limits, scene contents and gameplay are unchanged.
+
+## Remaining costs and proposed follow-up
+
+- Camp: the fixture has one present gatherer and nine buildings. Normal-speed camp
+  painting p95 was 1.3/3.5 ms, with cold maxima 16.1/35.2 ms. CPU x4 exploratory
+  cold paint reached 123.5 ms. `workerFrame` synchronously bakes a missing cached
+  frame. This does not justify rewriting the whole panorama. A separate measured
+  follow-up could warm the existing worker frame through idle scheduling before
+  opening Camp; no art-content changes are needed. Not included in this patch.
+- Stage (Claude): CPU profiles repeatedly identify native `drawImage` and atmosphere
+  drawing. In the x4 diagnostic, stage draw p95 was 9.6 ms and atmosphere 4.1 ms.
+  Proposed investigation in `62-stage.js`: warm existing device-size scene/atmosphere
+  plates for the impending gathering view, keyed by dimensions/DPR, then check if
+  the switch avoids first-frame scaling. Preserve visual output and cache bounds;
+  do not lower art quality or change drawing without measured evidence and approval.
+- Shell (Claude): a captured `warmSections` callback in `70-ui.js` took 51.8 ms at
+  normal speed. Its 30 ms budget is checked before each indivisible section update.
+  Proposed patch direction: permit costly section initialization to yield between
+  row batches; preserve immediate initialization of visible controls. Merely lowering
+  the outer budget cannot split a single expensive section. Camp traces also include
+  10-12 ms Layout tasks and sampled `updatePill` work; those samples alone do not
+  prove a specific DOM write is responsible. Do not bypass its existing signature cache.
+
+## Validation
+
+On `f46c990` plus this patch: build passes; source syntax passes; focused C12 browser
+regression passes five assertions with zero skipped browser sections. Both tested
+landscape resizes finish all four scenes in ten steps each, reopening reuses them,
+and there are no page errors. Earlier non-browser smoke passed as well.
+Full `tools/check.mjs --jobs=2` finished with 1,940 passing assertions, two failures
+and zero skipped browser sections. Both failures were in the existing 1280x720
+first-session guide: the walk stopped after `tool`, and only 19 states were seen
+against a minimum of 20. No bad-target detail or page error was reported. The
+guide loop has a 220-iteration limit. One diagnostic rerun with
+`--only=landscape 1280x720` passed all 15 assertions with zero skipped sections.
+No unchanged full rerun was made. Logs: `full-f46c990.log` and
+`landscape1280-isolated.log` in the artifact directory above.
+
+This is a WIP handoff pending the coordinator's validation decision; the full
+functional run and the performance gate are not green.
+
+## Historical cloud record (not local validation)
+
+The following material was recovered from the earlier cloud transcript. Its raw
+profiles are unavailable locally. The older checkpoint names and pending statuses
+below describe that historical run, not the current Windows validation.
 
 ## Measurement plan
 
@@ -71,4 +184,3 @@ in a bounded number of steps, and verifies reopening Gather reuses the completed
 check execution, a new-save baseline, and quiet paired late-save performance runs are still pending.
 Camp panorama and Claude-owned stage/hero/UI hotspots remain to be profiled; this patch makes no
 claim that all 38 baseline budget failures are resolved.
-
